@@ -363,7 +363,7 @@
     "name": "MARTIAL3-the-line-loses",
     "file": "src/combat/techniques.js",
     "old": "  if (!tech) return signatureInHand(entity, pw, item);",
-    "new": "  const sig0 = signatureInHand(entity, pw, item); if (sig0) return sig0;\n  if (!tech) return null;",
+    "new": "  const sig0 = signatureInHand(entity, pw, item);\n  if (sig0) return sig0;\n  if (!tech) return null;",
     "tests": [
       "test/systems/martial_paths.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "MARTIAL3-the-ladder-refuses-a-signature",
     "file": "src/combat/techniques.js",
-    "old": "  if (!hand.signature && !lootRarityOn()) return LADDER_OFF_TEXT;",
-    "new": "  if (!lootRarityOn()) return LADDER_OFF_TEXT;",
+    "old": "  if (!hand.signature && !lootRarityOn()) return LADDER_OFF_TEXT; // Loot-II law 6: off is DFU exactly - a found line sleeps (MARTIAL3: a path's signature is no found line)",
+    "new": "  if (!lootRarityOn()) return LADDER_OFF_TEXT; // Loot-II law 6: off is DFU exactly - a found line sleeps (MARTIAL3: a path's signature is no found line)",
     "tests": [
       "test/systems/martial_paths.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "MARTIAL3-the-chip-asks-the-ladder",
     "file": "src/combat/techniques.js",
-    "old": "  if (!hand || (!hand.signature && !lootRarityOn())) return NONE;",
-    "new": "  if (!hand || !lootRarityOn()) return NONE;",
+    "old": "  if (!hand || (!hand.signature && !lootRarityOn())) return NONE; // TECH-FX: no technique in hand - the frozen empty list, never a new one a frame (MARTIAL3: a signature needs no ladder)",
+    "new": "  if (!hand || !lootRarityOn()) return NONE; // TECH-FX: no technique in hand - the frozen empty list, never a new one a frame (MARTIAL3: a signature needs no ladder)",
     "tests": [
       "test/systems/martial_paths.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "MARTIAL3-the-forms-cooldowns-apart",
     "file": "src/combat/techniques.js",
-    "old": "  ...SIGNATURE_IDS.map((id) => [id, TECH_IDS.indexOf(`sig:${SIGNATURE_TECHNIQUES[id].path}`)])]));",
-    "new": "  ...SIGNATURE_IDS.map((id) => [id, TECH_IDS.indexOf(`sig:${SIGNATURE_TECHNIQUES[id].path}`) + (SIGNATURE_TECHNIQUES[id].mech === 'pierce' ? 1 : 0)])]));",
+    "old": "    ...SIGNATURE_IDS.map((id) => [id, TECH_IDS.indexOf(`sig:${SIGNATURE_TECHNIQUES[id].path}`)]),",
+    "new": "    ...SIGNATURE_IDS.map((id) => [\n      id,\n      TECH_IDS.indexOf(`sig:${SIGNATURE_TECHNIQUES[id].path}`) + (SIGNATURE_TECHNIQUES[id].mech === 'pierce' ? 1 : 0),\n    ]),",
     "tests": [
       "test/systems/martial_paths.test.js"
     ]
@@ -597,8 +597,8 @@
   {
     "name": "BAL10-the-claws-a-family",
     "file": "src/combat/swingLaw.js",
-    "old": "(weaponType === WEAPON_TYPES.Werecreature ? null : bare ? 'handToHand' : techniqueFamily(item));",
-    "new": "(bare ? 'handToHand' : techniqueFamily(item));",
+    "old": "const familyOf = (weaponType, item, bare) =>\n  weaponType === WEAPON_TYPES.Werecreature ? null : bare ? 'handToHand' : techniqueFamily(item);",
+    "new": "const familyOf = (weaponType, item, bare) => (bare ? 'handToHand' : techniqueFamily(item));",
     "tests": [
       "test/systems/martial_paths.test.js"
     ]

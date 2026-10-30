@@ -135,7 +135,7 @@
   {
     "name": "SWING-LAW-the-reader-reads-the-right-hand-always",
     "file": "src/combat/swingLaw.js",
-    "old": "const handItem = (entity, ctx) => entity.equip?.slots?.[ctx.usingRightHand === false ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand] ?? null;",
+    "old": "const handItem = (entity, ctx) =>\n  entity.equip?.slots?.[ctx.usingRightHand === false ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand] ?? null;",
     "new": "const handItem = (entity, ctx) => entity.equip?.slots?.[EQUIP_SLOTS.RightHand] ?? null;",
     "tests": [
       "test/systems/swinglaw.test.js"
@@ -162,8 +162,8 @@
   {
     "name": "SWING-LAW-the-reader-never-installed",
     "file": "src/combat/swingLaw.js",
-    "old": "export function installSwingLaw() { registerSwingReader(readSwing); }",
-    "new": "export function installSwingLaw() { }",
+    "old": "export function installSwingLaw() {\n  registerSwingReader(readSwing);\n}",
+    "new": "export function installSwingLaw() {}",
     "tests": [
       "test/systems/swinglaw.test.js"
     ]

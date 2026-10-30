@@ -223,8 +223,8 @@
   {
     "name": "S3-off-frame-counts-nothing",
     "file": "src/combat/shieldWidget.js",
-    "old": "function offFrame() { ++_widgetSteps; }",
-    "new": "function offFrame() { }",
+    "old": "  function offFrame() {\n    ++_widgetSteps;\n  }",
+    "new": "  function offFrame() {}",
     "tests": [
       "test/ui/enhanced/audit27h.test.js"
     ]

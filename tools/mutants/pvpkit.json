@@ -137,8 +137,8 @@
   {
     "name": "PVP-KIT-the-kit-poison-barred",
     "file": "src/combat/siegeCombat.js",
-    "old": "sp.element === PVP_POISON_ELEMENT && !sp.pvpKit ? null : e;",
-    "new": "sp.element === PVP_POISON_ELEMENT ? null : e;",
+    "old": "  if (PVP_SPELL_TYPES.includes(e.type)) return sp.element === PVP_POISON_ELEMENT && !sp.pvpKit ? null : e; // PVP-KIT: the bar's Damage may be Poison",
+    "new": "  if (PVP_SPELL_TYPES.includes(e.type)) return sp.element === PVP_POISON_ELEMENT ? null : e; // PVP-KIT: the bar's Damage may be Poison",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]

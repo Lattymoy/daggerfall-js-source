@@ -207,8 +207,8 @@
   {
     "name": "EGMADE-a-leap-refused-on-a-fight-floor",
     "file": "src/combat/techniques.js",
-    "old": "if (madeRuleHere('techFlight') === 'refused' && madeOnTraverse()) return",
-    "new": "if (madeRuleHere('techFlight') === 'refused') return",
+    "old": "    if (madeRuleHere('techFlight') === 'refused' && madeOnTraverse()) return madeSaysHere('techFlight');",
+    "new": "    if (madeRuleHere('techFlight') === 'refused') return madeSaysHere('techFlight');",
     "tests": [
       "test/systems/eliteGates/egmade_law.test.js"
     ]

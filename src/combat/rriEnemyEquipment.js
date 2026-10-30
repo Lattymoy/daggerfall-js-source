@@ -24,20 +24,26 @@
 // career's forbidden armor, an arm for a class it does not know. The arm
 // is this one; a copy's reads are its `read` (RRI_READ, RRI's own).
 import {
-  createWeapon, randomMaterial, randomArmorMaterial, rollEnemyEquipment, enemyArmorValues,
-  WEAPONS_ENUM, ARMOR_ENUM, ARROW_TEMPLATE,
+  createWeapon,
+  randomMaterial,
+  randomArmorMaterial,
+  rollEnemyEquipment,
+  enemyArmorValues,
+  WEAPONS_ENUM,
+  ARMOR_ENUM,
+  ARROW_TEMPLATE,
 } from './enemyEquipment.js';
 import { dice100 } from './formulas.js';
 import { mintCondition, setItemFields, templateByIndex, itemBaseValue } from '../systems/item/itemTemplates.js';
-import { markFound } from '../systems/item/foundMark.js';   // AUDIT MEND-THIRD L3-2: a worn kit's piece handed over marked
+import { markFound } from '../systems/item/foundMark.js'; // AUDIT MEND-THIRD L3-2: a worn kit's piece handed over marked
 import { rriModule, customItemClass } from '../systems/roleplayRealismItems/rriItems.js';
 import { MOBILE_TYPES } from '../characters/mobile/mobileTypes.js';
 import { DYE_COLORS } from '../characters/dyes.js';
 import { WEAPON_MATERIALS } from '../characters/weapons.js';
 import { ARMOR_MATERIAL as ARMOR_MATERIALS } from '../systems/armorMaterials.js';
-import { equipTableOf, getEquipSlot, wearLeavers, EQUIP_SLOTS } from '../systems/equip.js';   // AUDIT DEX E2: EquipItem's slot and what it takes off, one home
-import { rollEnemyWeaponPoison } from '../systems/poisons.js';   // AUDIT DEX E3: ItemHelper's poison, rolled inside its arm
-import { MENS_PLAIN_ROBES, WOMENS_PLAIN_ROBES } from '../systems/createItem.js';   // MensClothing / WomensClothing.Plain_robes, one home
+import { equipTableOf, getEquipSlot, wearLeavers, EQUIP_SLOTS } from '../systems/equip.js'; // AUDIT DEX E2: EquipItem's slot and what it takes off, one home
+import { rollEnemyWeaponPoison } from '../systems/poisons.js'; // AUDIT DEX E3: ItemHelper's poison, rolled inside its arm
+import { MENS_PLAIN_ROBES, WOMENS_PLAIN_ROBES } from '../systems/createItem.js'; // MensClothing / WomensClothing.Plain_robes, one home
 
 const M = MOBILE_TYPES;
 const W = WEAPONS_ENUM;
@@ -45,9 +51,20 @@ const A = ARMOR_ENUM;
 
 /** The mod's custom template indices (ItemXxx.cs `templateIndex`). */
 export const RRI_ITEM = Object.freeze({
-  ArchersAxe: 513, LightFlail: 514,
-  Hauberk: 515, Chausses: 516, LeftSpaulder: 517, RightSpaulder: 518, Sollerets: 519,
-  Jerkin: 520, Cuisse: 521, Helmet: 522, Boots: 523, Gloves: 524, LeftVambrace: 525, RightVambrace: 526,
+  ArchersAxe: 513,
+  LightFlail: 514,
+  Hauberk: 515,
+  Chausses: 516,
+  LeftSpaulder: 517,
+  RightSpaulder: 518,
+  Sollerets: 519,
+  Jerkin: 520,
+  Cuisse: 521,
+  Helmet: 522,
+  Boots: 523,
+  Gloves: 524,
+  LeftVambrace: 525,
+  RightVambrace: 526,
 });
 
 // ---- the roll helpers (:411-499), verbatim ------------------------------
@@ -58,7 +75,7 @@ const axeWnew = [W['Battle Axe'], W['War Axe'], RRI_ITEM.ArchersAxe];
 const newWeapons = () => rriModule('newWeapons');
 const newArmor = () => rriModule('newArmor');
 
-const range = (rolls, lo, hi) => lo + Math.floor(rolls() * (hi - lo));   // UnityEngine.Random.Range(lo, hi) - hi exclusive
+const range = (rolls, lo, hi) => lo + Math.floor(rolls() * (hi - lo)); // UnityEngine.Random.Range(lo, hi) - hi exclusive
 const coinFlip = (rolls) => range(rolls, 0, 2) === 0;
 const oneOf = (rolls, array) => array[range(rolls, 0, array.length)];
 const randomShield = (rolls) => range(rolls, A.Buckler, A.Round_Shield + 1);
@@ -69,26 +86,35 @@ const randomAxeOrBlade = (rolls) => (coinFlip(rolls) ? randomAxe(rolls) : random
 const randomBluntOrBlade = (rolls) => (coinFlip(rolls) ? randomBlunt(rolls) : randomLongblade(rolls));
 function randomBigWeapon(rolls) {
   let weapon = range(rolls, W.Claymore, W['War Axe'] + 1);
-  if (weapon === W['Dai-Katana'] && dice100(90, rolls())) weapon = W.Claymore;   // "Dai-katana's are very rare."
+  if (weapon === W['Dai-Katana'] && dice100(90, rolls())) weapon = W.Claymore; // "Dai-katana's are very rare."
   return weapon;
 }
 const randomBow = (rolls) => range(rolls, W['Short Bow'], W['Long Bow'] + 1);
 const randomShortblade = (rolls) => (dice100(40, rolls()) ? W.Shortsword : range(rolls, W.Dagger, W.Wakazashi + 1));
 function secondaryWeapon(rolls) {
   switch (range(rolls, 0, 4)) {
-    case 0: return W.Dagger;
-    case 1: return W.Shortsword;
-    case 2: return newWeapons() ? RRI_ITEM.ArchersAxe : W['Short Bow'];
-    default: return W['Short Bow'];
+    case 0:
+      return W.Dagger;
+    case 1:
+      return W.Shortsword;
+    case 2:
+      return newWeapons() ? RRI_ITEM.ArchersAxe : W['Short Bow'];
+    default:
+      return W['Short Bow'];
   }
 }
 function getCombatClassWeapon(enemyType, rolls) {
   switch (enemyType) {
-    case M.Barbarian: return randomBigWeapon(rolls);
-    case M.Knight: return coinFlip(rolls) ? randomBlunt(rolls) : randomLongblade(rolls);
-    case M.Knight_CityWatch: return randomAxeOrBlade(rolls);
-    case M.Monk: return randomBlunt(rolls);
-    default: return randomLongblade(rolls);
+    case M.Barbarian:
+      return randomBigWeapon(rolls);
+    case M.Knight:
+      return coinFlip(rolls) ? randomBlunt(rolls) : randomLongblade(rolls);
+    case M.Knight_CityWatch:
+      return randomAxeOrBlade(rolls);
+    case M.Monk:
+      return randomBlunt(rolls);
+    default:
+      return randomLongblade(rolls);
   }
 }
 const isFighter = (mob) => mob === M.Knight || mob === M.Warrior;
@@ -99,14 +125,34 @@ const isFighter = (mob) => mob === M.Knight || mob === M.Warrior;
 export function getArmorTemplateIndex(slot, prefChain = false, prefLeather = false, rolls = Math.random) {
   const rand = (prefChain || prefLeather) && newArmor();
   switch (slot) {
-    case 'ChestArmor': return rand ? (coinFlip(rolls) ? A.Cuirass : (prefChain ? RRI_ITEM.Hauberk : RRI_ITEM.Jerkin)) : A.Cuirass;
-    case 'LegsArmor': return rand ? (coinFlip(rolls) ? A.Greaves : (prefChain ? RRI_ITEM.Chausses : RRI_ITEM.Cuisse)) : A.Greaves;
-    case 'LeftArm': return rand ? (coinFlip(rolls) ? A.Left_Pauldron : (prefChain ? RRI_ITEM.LeftSpaulder : RRI_ITEM.LeftVambrace)) : A.Left_Pauldron;
-    case 'RightArm': return rand ? (coinFlip(rolls) ? A.Right_Pauldron : (prefChain ? RRI_ITEM.RightSpaulder : RRI_ITEM.RightVambrace)) : A.Right_Pauldron;
-    case 'Feet': return rand ? (coinFlip(rolls) ? A.Boots : (prefChain ? RRI_ITEM.Sollerets : RRI_ITEM.Boots)) : A.Boots;
-    case 'Gloves': return rand ? (coinFlip(rolls) ? A.Gauntlets : RRI_ITEM.Gloves) : A.Gauntlets;
-    case 'Head': return rand ? (coinFlip(rolls) ? A.Helm : RRI_ITEM.Helmet) : A.Helm;
-    default: return -1;
+    case 'ChestArmor':
+      return rand ? (coinFlip(rolls) ? A.Cuirass : prefChain ? RRI_ITEM.Hauberk : RRI_ITEM.Jerkin) : A.Cuirass;
+    case 'LegsArmor':
+      return rand ? (coinFlip(rolls) ? A.Greaves : prefChain ? RRI_ITEM.Chausses : RRI_ITEM.Cuisse) : A.Greaves;
+    case 'LeftArm':
+      return rand
+        ? coinFlip(rolls)
+          ? A.Left_Pauldron
+          : prefChain
+            ? RRI_ITEM.LeftSpaulder
+            : RRI_ITEM.LeftVambrace
+        : A.Left_Pauldron;
+    case 'RightArm':
+      return rand
+        ? coinFlip(rolls)
+          ? A.Right_Pauldron
+          : prefChain
+            ? RRI_ITEM.RightSpaulder
+            : RRI_ITEM.RightVambrace
+        : A.Right_Pauldron;
+    case 'Feet':
+      return rand ? (coinFlip(rolls) ? A.Boots : prefChain ? RRI_ITEM.Sollerets : RRI_ITEM.Boots) : A.Boots;
+    case 'Gloves':
+      return rand ? (coinFlip(rolls) ? A.Gauntlets : RRI_ITEM.Gloves) : A.Gauntlets;
+    case 'Head':
+      return rand ? (coinFlip(rolls) ? A.Helm : RRI_ITEM.Helmet) : A.Helm;
+    default:
+      return -1;
   }
 }
 
@@ -116,7 +162,15 @@ export function getArmorTemplateIndex(slot, prefChain = false, prefLeather = fal
  *  through the same SetItem writes as a classic one. */
 const mintWeapon = (templateIndex, material, rolls) => {
   if (customItemClass(templateIndex)) {
-    return mintCondition(setItemFields({ group: 'Weapons', templateIndex, material, flags: 0, value: itemBaseValue({ group: 'Weapons', templateIndex, material }) }));
+    return mintCondition(
+      setItemFields({
+        group: 'Weapons',
+        templateIndex,
+        material,
+        flags: 0,
+        value: itemBaseValue({ group: 'Weapons', templateIndex, material }),
+      }),
+    );
   }
   return createWeapon(templateIndex, material, rolls);
 };
@@ -130,16 +184,25 @@ const mintArmor = (templateIndex, material) =>
  *  dye Blue. */
 const mintClothing = (female, templateIndex, rolls) => {
   const variants = templateByIndex(templateIndex)?.variants ?? 0;
-  return mintCondition(setItemFields({
-    group: female ? 'WomensClothing' : 'MensClothing', templateIndex,
-    variant: variants > 0 ? range(rolls, 0, variants) : 0, dye: DYE_COLORS.Blue,
-  }));
+  return mintCondition(
+    setItemFields({
+      group: female ? 'WomensClothing' : 'MensClothing',
+      templateIndex,
+      variant: variants > 0 ? range(rolls, 0, variants) : 0,
+      dye: DYE_COLORS.Blue,
+    }),
+  );
 };
 /** AddOrEquipWornItem (:501-511): every armor, weapon and garment
  *  lands at `Range(0.3f, 0.75f)` of its max; `equip` puts it on (the
  *  arm's `add`). */
 function wornCondition(item, rolls) {
-  if (item.group === 'Armor' || item.group === 'Weapons' || item.group === 'MensClothing' || item.group === 'WomensClothing') {
+  if (
+    item.group === 'Armor' ||
+    item.group === 'Weapons' ||
+    item.group === 'MensClothing' ||
+    item.group === 'WomensClothing'
+  ) {
     item.currentCondition = Math.trunc((0.3 + rolls() * (0.75 - 0.3)) * (item.maxCondition ?? 0));
     // AUDIT MEND-THIRD L3-2 (A DEPARTURE, the mod's dice unmoved): SELL-AS-FOUND's mark (systems/item/foundMark.js). The body's
     // own roll re-wears and marks what stays on the corpse; a piece PLAIN-LOOT's keep let go never meets it, and PARTY-LOOT's
@@ -163,7 +226,8 @@ function wornCondition(item, rolls) {
  *  AddOrEquipWornItem with no `equip`, :573/:626). */
 export const RRI_READ = Object.freeze({
   classOf: (entity) => entity.mobileType,
-  armorTemplate: (slot, { prefChain, prefLeather }, rolls) => getArmorTemplateIndex(slot, prefChain, prefLeather, rolls),
+  armorTemplate: (slot, { prefChain, prefLeather }, rolls) =>
+    getArmorTemplateIndex(slot, prefChain, prefLeather, rolls),
   unknownArmed: false,
   equipsSecondary: false,
 });
@@ -173,7 +237,12 @@ export const RRI_READ = Object.freeze({
  *  minted for). A non-class enemy runs ItemHelper's own arm, its poison
  *  and then ConvertOrcish (below); null while the module is off, so the
  *  caller runs ItemHelper's. `read` is RRI_READ, or a copy's (DEX6). */
-export function assignRriEnemyEquipment(entity, variant, playerLevel, { player = null, rolls = Math.random, read = RRI_READ } = {}) {
+export function assignRriEnemyEquipment(
+  entity,
+  variant,
+  playerLevel,
+  { player = null, rolls = Math.random, read = RRI_READ } = {},
+) {
   if (!rriModule('realisticEnemyEquipment')) return null;
   const mob = entity.mobileType;
   if (!entity.isClass) {
@@ -186,8 +255,8 @@ export function assignRriEnemyEquipment(entity, variant, playerLevel, { player =
     convertOrcish(entity, eq, rolls);
     return { ...eq, armorValues: enemyArmorValues(entity, eq.armorPieces), poisonRolled: true };
   }
-  const items = [];   // enemyEntity.Items, in AddItem order
-  const table = {};   // enemyEntity.ItemEquipTable, on a stand-in - equipEnemy fills the spawn's own from `worn`
+  const items = []; // enemyEntity.Items, in AddItem order
+  const table = {}; // enemyEntity.ItemEquipTable, on a stand-in - equipEnemy fills the spawn's own from `worn`
   const slots = equipTableOf(table);
   const add = (item, equip = false) => {
     wornCondition(item, rolls);
@@ -209,14 +278,20 @@ export function assignRriEnemyEquipment(entity, variant, playerLevel, { player =
   let armored = 100;
   let prefChain = false;
   let prefLeather = false;
-  const cls = read.classOf(entity);   // what the class tests ask - the id itself in RRI's switch; the id tests below stay the id's in both
+  const cls = read.classOf(entity); // what the class tests ask - the id itself in RRI's switch; the id tests below stay the id's in both
 
   switch (cls) {
     // Ranged specialists:
     case M.Archer:
     case M.Ranger: {
       add(createWeapon(randomBow(rolls), randomMaterial(itemLevel, rolls), rolls), true);
-      add(mintWeapon(mob === M.Ranger ? randomLongblade(rolls) : randomShortblade(rolls), randomMaterial(itemLevel, rolls), rolls));
+      add(
+        mintWeapon(
+          mob === M.Ranger ? randomLongblade(rolls) : randomShortblade(rolls),
+          randomMaterial(itemLevel, rolls),
+          rolls,
+        ),
+      );
       const arrowPile = createWeapon(ARROW_TEMPLATE, WEAPON_MATERIALS.Iron, rolls);
       arrowPile.stackCount = range(rolls, 4, 17);
       items.push(arrowPile);
@@ -237,13 +312,20 @@ export function assignRriEnemyEquipment(entity, variant, playerLevel, { player =
         // Left hand shield?
         if (dice100(chance, rolls())) add(mintArmor(randomShield(rolls), randomArmorMaterial(itemLevel, rolls)), true);
         // left-hand weapon?
-        else if (dice100(chance, rolls())) add(mintWeapon(secondaryWeapon(rolls), randomMaterial(itemLevel, rolls), rolls), read.equipsSecondary);
+        else if (dice100(chance, rolls()))
+          add(mintWeapon(secondaryWeapon(rolls), randomMaterial(itemLevel, rolls), rolls), read.equipsSecondary);
         if (!isFighter(cls)) armored = 80;
       } else {
         add(mintWeapon(randomBigWeapon(rolls), randomMaterial(itemLevel, rolls), rolls), true);
-        if (!isFighter(cls)) { prefChain = true; armored = 90; }
+        if (!isFighter(cls)) {
+          prefChain = true;
+          armored = 90;
+        }
       }
-      if (cls === M.Barbarian) { armored = 30; prefLeather = true; }   // "Barbies tend to forgo armor or use leather"
+      if (cls === M.Barbarian) {
+        armored = 30;
+        prefLeather = true;
+      } // "Barbies tend to forgo armor or use leather"
       break;
     // Mage classes:
     case M.Mage:
@@ -275,7 +357,11 @@ export function assignRriEnemyEquipment(entity, variant, playerLevel, { player =
     case M.Nightblade:
     case M.Thief:
       add(mintWeapon(randomShortblade(rolls), randomMaterial(itemLevel, rolls), rolls), true);
-      if (dice100(chance, rolls())) add(mintWeapon(secondaryWeapon(rolls), randomMaterial(Math.trunc(itemLevel / 2), rolls), rolls), read.equipsSecondary);
+      if (dice100(chance, rolls()))
+        add(
+          mintWeapon(secondaryWeapon(rolls), randomMaterial(Math.trunc(itemLevel / 2), rolls), rolls),
+          read.equipsSecondary,
+        );
       armored = 50;
       prefLeather = true;
       if (mob === M.Nightblade) prefChain = true;
@@ -291,7 +377,7 @@ export function assignRriEnemyEquipment(entity, variant, playerLevel, { player =
 
   const armor = (slot) => {
     const templateIndex = read.armorTemplate(slot, { prefChain, prefLeather, career: entity.career ?? null }, rolls);
-    const material = randomArmorMaterial(itemLevel, rolls);   // an argument of CreateArmor - rolled whether or not a piece is minted
+    const material = randomArmorMaterial(itemLevel, rolls); // an argument of CreateArmor - rolled whether or not a piece is minted
     if (templateIndex !== -1) add(mintArmor(templateIndex, material), true);
   };
   // Torso
@@ -314,14 +400,28 @@ export function assignRriEnemyEquipment(entity, variant, playerLevel, { player =
   // The table as the last EquipItem left it: the worn set in AddItem order, the two hands, the armor pieces (a shield
   // among them) - the armor-value pass walks the table, as SetEnemyEquipment does.
   const worn = items.filter((it) => slots.includes(it));
-  const armorPieces = worn.filter((it) => it.group === 'Armor')
-    .map((item) => ({ piece: item.templateIndex, material: item.material, shield: item.templateIndex >= A.Buckler && item.templateIndex <= A.Tower_Shield, item }));
+  const armorPieces = worn
+    .filter((it) => it.group === 'Armor')
+    .map((item) => ({
+      piece: item.templateIndex,
+      material: item.material,
+      shield: item.templateIndex >= A.Buckler && item.templateIndex <= A.Tower_Shield,
+      item,
+    }));
   // The poisoned-weapon chance (:664-680) is the same roll as ItemHelper's
   // (5%, the Assassin's 60%, past player level 1) and rides the port's
   // one home for it - poisons.rollEnemyWeaponPoison, at the spawn seam,
   // over `poisonClass`: the class its Assassin test asks (a copy's read).
   // Read off the right hand the table holds: a foe left bare-handed rolls none.
-  return { rightHand: slots[EQUIP_SLOTS.RightHand], leftHand: slots[EQUIP_SLOTS.LeftHand], armorPieces, armorValues: enemyArmorValues(entity, armorPieces), items, worn, poisonClass: cls };
+  return {
+    rightHand: slots[EQUIP_SLOTS.RightHand],
+    leftHand: slots[EQUIP_SLOTS.LeftHand],
+    armorPieces,
+    armorValues: enemyArmorValues(entity, armorPieces),
+    items,
+    worn,
+    poisonClass: cls,
+  };
 }
 
 // ---- ConvertOrcish (:683-719) -----------------------------------------
@@ -334,17 +434,23 @@ export function assignRriEnemyEquipment(entity, variant, playerLevel, { player =
 export function convertOrcish(entity, eq, rolls = Math.random) {
   if (entity.basics?.team !== 'Orcs' || !dice100(80, rolls())) return eq;
   const convertFrom = entity.mobileType === M.OrcWarlord ? WEAPON_MATERIALS.Mithril : WEAPON_MATERIALS.Ebony;
-  const orcish = (material) => (material & 0xFF) >= convertFrom;
+  const orcish = (material) => (material & 0xff) >= convertFrom;
   for (const weapon of [eq.rightHand, eq.leftHand]) {
     if (!weapon || weapon.group !== 'Weapons' || !orcish(weapon.material ?? 0)) continue;
     weapon.material = WEAPON_MATERIALS.Orcish;
-    delete weapon.maxCondition; mintCondition(weapon);
+    delete weapon.maxCondition;
+    mintCondition(weapon);
     weapon.value = itemBaseValue(weapon);
   }
   for (const a of eq.armorPieces) {
-    if (!orcish(a.material ?? 0)) continue;   // leather 0x0000 and chain 0x0100 read 0 under the mask - only plate converts
+    if (!orcish(a.material ?? 0)) continue; // leather 0x0000 and chain 0x0100 read 0 under the mask - only plate converts
     a.material = ARMOR_MATERIALS.Orcish;
-    if (a.item) { a.item.material = ARMOR_MATERIALS.Orcish; delete a.item.maxCondition; mintCondition(a.item); a.item.value = itemBaseValue(a.item); }
+    if (a.item) {
+      a.item.material = ARMOR_MATERIALS.Orcish;
+      delete a.item.maxCondition;
+      mintCondition(a.item);
+      a.item.value = itemBaseValue(a.item);
+    }
   }
   // AUDIT-RR F10: `Items.SearchItems(Weapons)` + `(Armor)` (:691-692) - the loot table's rolls are in Items already
   // (GenerateItems runs before SetEnemyEquipment, EnemyEntity.cs:330-347), so they convert too
@@ -352,7 +458,9 @@ export function convertOrcish(entity, eq, rolls = Math.random) {
     if (it.group !== 'Weapons' && it.group !== 'Armor') continue;
     if (!orcish(it.material ?? 0)) continue;
     it.material = it.group === 'Weapons' ? WEAPON_MATERIALS.Orcish : ARMOR_MATERIALS.Orcish;
-    delete it.maxCondition; mintCondition(it); it.value = itemBaseValue(it);
+    delete it.maxCondition;
+    mintCondition(it);
+    it.value = itemBaseValue(it);
   }
   return eq;
 }

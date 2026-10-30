@@ -65,8 +65,8 @@
   {
     "name": "SHIELD-OUT-no-reread",
     "file": "src/combat/shieldWidget.js",
-    "old": "} else if (w.stale) updateShieldTextures(item);",
-    "new": "}",
+    "old": "    } else if (w.stale) updateShieldTextures(item); // SHIELD-OUT: the same shield, read again - its condition tier may have moved while another rig drew it",
+    "new": "    } // SHIELD-OUT: the same shield, read again - its condition tier may have moved while another rig drew it",
     "tests": [
       "test/combat/shieldout.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SHIELD-OUT-never-stale",
     "file": "src/combat/shieldWidget.js",
-    "old": "if (w.lastStep !== step - 1) w.stale = true;",
-    "new": "if (w.lastStep !== step - 1) w.stale = false;",
+    "old": "    if (w.lastStep !== step - 1) w.stale = true;",
+    "new": "    if (w.lastStep !== step - 1) w.stale = false;",
     "tests": [
       "test/combat/shieldout.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SHIELD-OUT-stale-forever",
     "file": "src/combat/shieldWidget.js",
-    "old": "    w.stale = false;\n",
-    "new": "",
+    "old": "    w.stale = false;\n    // Awake's tail (IL 0xb9): the shield OPENS in its stance rather than",
+    "new": "    // Awake's tail (IL 0xb9): the shield OPENS in its stance rather than",
     "tests": [
       "test/combat/shieldout.test.js"
     ]

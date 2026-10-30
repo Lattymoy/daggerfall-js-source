@@ -277,7 +277,7 @@ test('SW1 KEPT BUG FOR BUG: SetBlock’s left-handed animated branch writes CURR
   // which waits for current to reach target - therefore falls straight
   // through its wait. Pinned so a tidy-up cannot quietly "fix" the mod.
   const src = readFileSync('src/combat/shieldWidget.js', 'utf8');
-  assert.match(src, /if \(w\.s\.animated && w\.flipped\) w\.shieldPositionCurrent = rect;/,
+  assert.match(src, /if \(w\.s\.animated && w\.flipped\)\n\s*w\.shieldPositionCurrent = rect;/,
     'the slip is still written, and still named as the author’s');
   assert.match(src, /KEPT BUG FOR BUG/, 'and still labelled');
 

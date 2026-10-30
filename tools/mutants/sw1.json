@@ -51,7 +51,7 @@
   {
     "name": "SW1-the-shield-hides-on-a-pose-the-mod-would-draw",
     "file": "src/combat/shieldWidget.js",
-    "old": "    const hidden = (mode) => (a ? (mode === SHIELD_POSE.Hide || mode === SHIELD_POSE.OffScreen) && !animating\n      : mode === SHIELD_POSE.Hide);",
+    "old": "    const hidden = (mode) =>\n      a ? (mode === SHIELD_POSE.Hide || mode === SHIELD_POSE.OffScreen) && !animating : mode === SHIELD_POSE.Hide;",
     "new": "    const hidden = (mode) => mode !== SHIELD_POSE.Ready;",
     "tests": [
       "test/combat/sw1_shield_widget.test.js"
@@ -79,8 +79,8 @@
   {
     "name": "SW4-1-the-shield-door-flips-the-png",
     "file": "src/combat/shieldWidgetAssets.js",
-    "old": "        return toScreenOrder(await decodePng(new Uint8Array(await res.arrayBuffer())));",
-    "new": "        return toColor32(await decodePng(new Uint8Array(await res.arrayBuffer())));",
+    "old": "          return toScreenOrder(await decodePng(new Uint8Array(await res.arrayBuffer())));",
+    "new": "          return toColor32(await decodePng(new Uint8Array(await res.arrayBuffer())));",
     "tests": [
       "test/combat/sw1_shield_widget.test.js"
     ]

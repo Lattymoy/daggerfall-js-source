@@ -21,13 +21,21 @@
 // does for the first-person neck (fpArm.js `neckPitch`). A peer's body and a townsperson's stand at pitch 0
 // (net/peer/peerBodies.js: the wire carries no look), so their drawn bows keep the clip's own angle.
 
-import { MW_WEAPON_TYPE, MW_WEAPON_CLASS, weaponClass, rotNegX, applyRotateController } from '../formats/morrowind/mwFirstPerson.js';
+import {
+  MW_WEAPON_TYPE,
+  MW_WEAPON_CLASS,
+  weaponClass,
+  rotNegX,
+  applyRotateController,
+} from '../formats/morrowind/mwFirstPerson.js';
 
 /** addControllers' two bones (weaponanimation.cpp:175-211), spine1 first - the second hangs off it. */
 export const SPINE_AIM_BONES = Object.freeze(['bip01 spine1', 'bip01 spine2']);
 
 /** isRandomAttackAnimation (character.cpp:2934-2938): the groups with no pre-wind-up section to ease in over. */
-export const RANDOM_ATTACK_GROUPS = Object.freeze(new Set(['attack1', 'attack2', 'attack3', 'swimattack1', 'swimattack2', 'swimattack3']));
+export const RANDOM_ATTACK_GROUPS = Object.freeze(
+  new Set(['attack1', 'attack2', 'attack3', 'swimattack1', 'swimattack2', 'swimattack3']),
+);
 
 /** UpperBodyState above WeaponEquipped (character.hpp:107-117), by the names combat/fpArm.js UPPER_BODY_NAME gives them. */
 export const AIMING_STATES = Object.freeze(new Set(['AttackWindUp', 'AttackRelease', 'AttackEnd', 'Casting']));
@@ -40,7 +48,15 @@ export const AIMING_STATES = Object.freeze(new Set(['AttackWindUp', 'AttackRelea
  * (AnimState::getCompletion). Pure.
  * @param {{ upper?: string, weaponType?: number, group?: string | null, time?: number, startTime?: number, minAttackTime?: number, completion?: number }} s
  */
-export function spinePitchFactor({ upper = 'None', weaponType = MW_WEAPON_TYPE.None, group = null, time = -1, startTime = -1, minAttackTime = -1, completion = 0 } = {}) {
+export function spinePitchFactor({
+  upper = 'None',
+  weaponType = MW_WEAPON_TYPE.None,
+  group = null,
+  time = -1,
+  startTime = -1,
+  minAttackTime = -1,
+  completion = 0,
+} = {}) {
   const cls = weaponClass(weaponType);
   if (!AIMING_STATES.has(upper) || (cls !== MW_WEAPON_CLASS.Ranged && cls !== MW_WEAPON_CLASS.Thrown)) return 0;
   if (upper === 'AttackWindUp' && !RANDOM_ATTACK_GROUPS.has(group ?? '')) {
@@ -66,7 +82,8 @@ export function applySpineAim(skeleton, pose, rootRef, skelMats, pitch) {
   if (!pitch || !skeleton?.byName) return 0;
   const half = rotNegX(pitch / 2);
   let turned = 0;
-  for (const name of SPINE_AIM_BONES) if (applyRotateController(skeleton, pose, rootRef, skelMats, skeleton.byName.get(name), half)) turned++;
+  for (const name of SPINE_AIM_BONES)
+    if (applyRotateController(skeleton, pose, rootRef, skelMats, skeleton.byName.get(name), half)) turned++;
   return turned;
 }
 

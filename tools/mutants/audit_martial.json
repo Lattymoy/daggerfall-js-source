@@ -62,8 +62,8 @@
   {
     "name": "AUDIT-MARTIAL-L1L3-the-press-untold",
     "file": "src/combat/techniques.js",
-    "old": "  tellTechniqueUsed(hand.id, use, ctx.entity);\n",
-    "new": "",
+    "old": "  tellTechniqueUsed(hand.id, use, ctx.entity);\n}",
+    "new": "}",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -410,8 +410,8 @@
   {
     "name": "AUDIT-MARTIAL-L4L6-the-sleeping-line-keeps-the-key",
     "file": "src/combat/techniques.js",
-    "old": "  if (!lootRarityOn()) { const sig = signatureInHand(entity, pw, item); if (sig) return sig; }\n",
-    "new": "",
+    "old": "  if (!lootRarityOn()) {\n    const sig = signatureInHand(entity, pw, item);\n    if (sig) return sig;\n  }\n  const known = rarityKnown(item),",
+    "new": "  const known = rarityKnown(item),",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -420,8 +420,8 @@
   {
     "name": "AUDIT-MARTIAL-L4N1-the-local-name-in-english",
     "file": "src/combat/techniques.js",
-    "old": "notReadyText(hand.tech?.en ?? techniqueName(hand)",
-    "new": "notReadyText(techniqueName(hand)",
+    "old": "  if (left > 0) return notReadyText(hand.tech?.en ?? techniqueName(hand), Math.ceil(left)); // AUDIT MARTIAL L4 N1: an English line names a signature in English",
+    "new": "  if (left > 0) return notReadyText(techniqueName(hand), Math.ceil(left)); // AUDIT MARTIAL L4 N1: an English line names a signature in English",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -824,8 +824,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-ready-line-never-said",
     "file": "src/combat/techniques.js",
-    "old": "      if (hand && TECH_INDEX[hand.id] === i) { say(",
-    "new": "      if (hand?.id === TECH_IDS[i]) { say(",
+    "old": "      if (hand && TECH_INDEX[hand.id] === i) {",
+    "new": "      if (hand?.id === TECH_IDS[i]) {",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -834,8 +834,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-press-carries-no-token",
     "file": "src/combat/techniques.js",
-    "old": "  const use = { id: hand.id };",
-    "new": "  const use = undefined;",
+    "old": "  const use = { id: hand.id }; // MARTIAL3: ONE PRESS - the token its every blow and shaft carries (techniqueBlow.js tellTechniqueLanded)",
+    "new": "  const use = undefined; // MARTIAL3: ONE PRESS - the token its every blow and shaft carries (techniqueBlow.js tellTechniqueLanded)",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -844,8 +844,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-leap-blow-no-token",
     "file": "src/combat/techniques.js",
-    "old": "        : a.hand.tech.mech === 'dash' && a.foe ? { target: a.foe, use: a.use, backs: a.backs } : { use: a.use, backs: a.backs });",
-    "new": "        : a.hand.tech.mech === 'dash' && a.foe ? { target: a.foe, use: a.use, backs: a.backs } : { backs: a.backs });",
+    "old": "            : { use: a.use, backs: a.backs },",
+    "new": "            : { backs: a.backs },",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -854,8 +854,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-rain-no-token",
     "file": "src/combat/techniques.js",
-    "old": " h / ARROW_FLIGHT_SPEED + 0.2, weapon, use: a.use };",
-    "new": " h / ARROW_FLIGHT_SPEED + 0.2, weapon };",
+    "old": "    use: a.use,\n  };",
+    "new": "  };",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -864,8 +864,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-signature-wears-no-feel",
     "file": "src/combat/techniques.js",
-    "old": "  const fx = hand.tech?.fx ?? hand.id;",
-    "new": "  const fx = hand.id;",
+    "old": "  const fx = hand.tech?.fx ?? hand.id; // MARTIAL3: a signature wears a roster technique's feel (martialPaths.js `fx`), its own arc and strike",
+    "new": "  const fx = hand.id; // MARTIAL3: a signature wears a roster technique's feel (martialPaths.js `fx`), its own arc and strike",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -874,8 +874,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-signature-blow-unmade",
     "file": "src/combat/techniques.js",
-    "old": "export function swingBlow(id, value, cam, extra = {}) {\n  const t = techOf(id);",
-    "new": "export function swingBlow(id, value, cam, extra = {}) {\n  const t = techniqueById(id);",
+    "old": "  const t = techOf(id);",
+    "new": "  const t = techniqueById(id);",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"

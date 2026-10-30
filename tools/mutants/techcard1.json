@@ -390,8 +390,8 @@
   {
     "name": "FINALAUDIT-the-chip-awake-in-a-duel",
     "file": "src/combat/techniques.js",
-    "old": "  if (sigilDueling()) return NONE;   // FINAL AUDIT",
-    "new": "  if (false) return NONE;   // FINAL AUDIT",
+    "old": "  if (sigilDueling()) return NONE; // FINAL AUDIT: nor while a duel sleeps the key (law 3) - the set powers' chips' law, none while they sleep; the card's block says why",
+    "new": "  if (false) return NONE; // FINAL AUDIT: nor while a duel sleeps the key (law 3) - the set powers' chips' law, none while they sleep; the card's block says why",
     "tests": [
       "test/ui/techcard1.test.js"
     ]

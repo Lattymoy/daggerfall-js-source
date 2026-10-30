@@ -22,8 +22,8 @@
   {
     "name": "AUDIT-MEND-THIRD-L3-2-worn-kit-unmarked",
     "file": "src/combat/rriEnemyEquipment.js",
-    "old": "    markFound(item);\n  }\n  return item;\n}",
-    "new": "  }\n  return item;\n}",
+    "old": "    markFound(item);\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/auditmendthird.test.js"
     ],

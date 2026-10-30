@@ -48,7 +48,7 @@ keep a heal or a count.
 ## PVP-WARD: resistances against a player's spell
 
 A cast carries its spell's element (`el`, DFU's 0-4: fire, frost, poison, shock, magic;
-`siegeCombat.js:"export const pvpSpellElement = (sp) =>"`). The struck player reports, per element, what its Resist
+`siegeCombat.js:"export const pvpSpellElement"`). The struck player reports, per element, what its Resist
 effects let through, then its own saving throw - race, Willpower and gear, as a monster's spell meets it - summed over
 the dice (`spellcast.js:"export function savingLands("`; `pvpGuard.js:"export function pvpWardKept"`, the report's
 `w`). The caster's stand-in rolls no save. The referee holds each share to at least 15 - the owner's "85% resist", immunity included - and
@@ -83,13 +83,13 @@ laid on at `hostMagic.js:"applySpellToPlayer(pvpPotionBundle(bundle)"`). A depar
 
 ## PVP-NO-DRAIN: Drain stays home
 
-"remove drain till we can balance it": `siegeCombat.js:"export const PVP_SPELL_TYPES = Object.freeze([4]);"` - Damage
+"remove drain till we can balance it": `siegeCombat.js:"export const PVP_SPELL_TYPES"` - Damage
 alone, and a Heal Health, reach a player. Backstab was already off between players (BAL8).
 
 ## PVP-NO-POISON: no poison between players
 
 "poison need diable in pvp": a Damage spell of DFU's poison element
-(`siegeCombat.js:"export const PVP_POISON_ELEMENT = 2;"`) reaches no player. A weapon's poison never rode a PvP blow:
+(`siegeCombat.js:"export const PVP_POISON_ELEMENT"`) reaches no player. A weapon's poison never rode a PvP blow:
 the striker's stub weapon carries none (`duelCombat.js:"weapon.poisonType"`).
 
 ## PVP-ARMOUR-CAST: plate and chain slow a caster in a fight
@@ -105,7 +105,7 @@ costs 42% more and casts 21% slower. PvE is left whole. A departure: DFU has no 
 "spell cit is for this", "otherwise maghes fall off": a harmful spell at a player crits as a blow does under the overhaul
 (`combat/combatStats.js` criticalModel's damage arm): `pvpSpellCrit.js:"export function pvpSpellCrit(caster) {"` -
 Critical Strike / (4 - the Luck term) per cent, x(1 + 5% for each 5 points). Rolled once a cast on the caster's machine
-(`siegeCombat.js:"harm: Math.round(pvpCritHarm(caster ? Math.min(harm, pvpCastHold(caster)) : harm, caster, rolls)"`), before PVP-TRIANGLE's scale; the referee clips.
+(`siegeCombat.js:"harm: Math.round"`), before PVP-TRIANGLE's scale; the referee clips.
 PvE is left whole. A departure: DFU's spells never crit.
 
 PVP-CAST-SKILL (2026-10-30: "it was ment to scale with skill"): before the crit, a harmful spell at a player lands at most

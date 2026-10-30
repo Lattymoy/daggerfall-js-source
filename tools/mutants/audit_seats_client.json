@@ -844,8 +844,8 @@
   {
     "name": "AUDITSEATS-G5-shaft",
     "file": "src/combat/siegeCombat.js",
-    "old": "(by === 'arrow' ? SIEGE_HIT.Shaft : SIEGE_HIT.Melee)",
-    "new": "(SIEGE_HIT.Melee)",
+    "old": "export const siegeBlowKind = (by) => (by === 'arrow' ? SIEGE_HIT.Shaft : SIEGE_HIT.Melee);",
+    "new": "export const siegeBlowKind = (by) => SIEGE_HIT.Melee;",
     "tests": [
       "test/net/audit_seats_client.test.js"
     ]
@@ -853,8 +853,8 @@
   {
     "name": "AUDITSEATS-G5-clamp-wire",
     "file": "src/combat/siegeCombat.js",
-    "old": "Math.min(Math.max(0, Math.round(Number(n) || 0)), SIEGE_DMG_WIRE_MAX)",
-    "new": "Math.max(0, Math.round(Number(n) || 0))",
+    "old": "export const siegeCastClamp = (n, _heal = false) =>\n  Math.min(Math.max(0, Math.round(Number(n) || 0)), SIEGE_DMG_WIRE_MAX);",
+    "new": "export const siegeCastClamp = (n, _heal = false) => Math.max(0, Math.round(Number(n) || 0));",
     "tests": [
       "test/net/audit_seats_client.test.js"
     ]
@@ -862,8 +862,8 @@
   {
     "name": "AUDITSEATS-G5-gift-no-save",
     "file": "src/combat/siegeCombat.js",
-    "old": "run({ ...sp, rangeType: 0, effects: [first] }",
-    "new": "run({ ...sp, effects: [first] }",
+    "old": "      { ...sp, rangeType: 0, effects: [first] },",
+    "new": "      { ...sp, effects: [first] },",
     "tests": [
       "test/net/audit_seats_client.test.js"
     ]
@@ -871,8 +871,8 @@
   {
     "name": "AUDITSEATS-G5-stand-in-kept",
     "file": "src/combat/siegeCombat.js",
-    "old": "finally { if (standIn) standIn.activeEffects = []; }",
-    "new": "finally { void 0; }",
+    "old": "      if (standIn) standIn.activeEffects = [];",
+    "new": "      void 0;",
     "tests": [
       "test/net/audit_seats_client.test.js"
     ]
@@ -880,8 +880,8 @@
   {
     "name": "AUDITSEATS-G5-harm-counted",
     "file": "src/combat/siegeCombat.js",
-    "old": "if (into === 'harm') harm += v; else heal += v;",
-    "new": "if (into === 'harm') heal += v; else heal += v;",
+    "old": "      if (into === 'harm') harm += v;",
+    "new": "      if (into === 'harm') heal += v;",
     "tests": [
       "test/net/audit_seats_client.test.js"
     ]
@@ -889,8 +889,8 @@
   {
     "name": "AUDITSEATS-G5-barred",
     "file": "src/combat/siegeCombat.js",
-    "old": "Object.freeze([43, 14])",
-    "new": "Object.freeze([43])",
+    "old": "export const SIEGE_BARRED_EFFECTS = Object.freeze([43, 14]);",
+    "new": "export const SIEGE_BARRED_EFFECTS = Object.freeze([43]);",
     "tests": [
       "test/net/audit_seats_client.test.js"
     ]

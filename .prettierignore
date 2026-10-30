@@ -109,8 +109,16 @@
 !/src/combat/pvpSpellCrit.js
 !/src/combat/pvpTriangle.js
 !/src/combat/rigMuzzle.js
+!/src/combat/rriEnemyEquipment.js
+!/src/combat/shieldWidget.js
+!/src/combat/shieldWidgetAssets.js
+!/src/combat/siegeCombat.js
+!/src/combat/spineAim.js
+!/src/combat/swingLaw.js
 !/src/combat/technique/
 /src/combat/technique/*/
+!/src/combat/techniques.js
+!/src/combat/thunderlockArt.js
 !/src/combat/twoHands/
 /src/combat/twoHands/*/
 !/src/formats/

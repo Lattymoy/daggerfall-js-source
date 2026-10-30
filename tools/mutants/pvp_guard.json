@@ -101,8 +101,8 @@
   {
     "name": "PVP-WARD-the-stand-in-saves",
     "file": "src/combat/siegeCombat.js",
-    "old": "  if (harmful && !run({ ...harmful, rangeType: 0 }, {",
-    "new": "  if (harmful && !run(harmful, {",
+    "old": "    !run(\n      { ...harmful, rangeType: 0 },\n      {\n        hurt: count('harm'),\n        heal: none,\n        drainFatigue: none,\n        restoreFatigue: none,\n        drainMagicka: none,\n        restoreMagicka: none,\n      },\n    )",
+    "new": "    !run(harmful, {\n      hurt: count('harm'),\n      heal: none,\n      drainFatigue: none,\n      restoreFatigue: none,\n      drainMagicka: none,\n      restoreMagicka: none,\n    })",
     "tests": [
       "test/systems/auditcc_pvp.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "PVP-TRIANGLE-the-spell-unscaled",
     "file": "src/combat/siegeCombat.js",
-    "old": "harm: Math.round(pvpCritHarm(caster ? Math.min(harm, pvpCastHold(caster)) : harm, caster, rolls) * pvpSpellScale(level))",
-    "new": "harm: Math.round(pvpCritHarm(caster ? Math.min(harm, pvpCastHold(caster)) : harm, caster, rolls))",
+    "old": "    harm: Math.round(\n      pvpCritHarm(caster ? Math.min(harm, pvpCastHold(caster)) : harm, caster, rolls) * pvpSpellScale(level),\n    ),",
+    "new": "    harm: Math.round(pvpCritHarm(caster ? Math.min(harm, pvpCastHold(caster)) : harm, caster, rolls)),",
     "tests": [
       "test/systems/auditcc_pvp.test.js",
       "test/combat/pvp_guard.test.js"
@@ -408,8 +408,8 @@
   {
     "name": "PVP-SPELL-CRIT-uncalled",
     "file": "src/combat/siegeCombat.js",
-    "old": "harm: Math.round(pvpCritHarm(caster ? Math.min(harm, pvpCastHold(caster)) : harm, caster, rolls) * pvpSpellScale(level))",
-    "new": "harm: Math.round((caster ? Math.min(harm, pvpCastHold(caster)) : harm) * pvpSpellScale(level))",
+    "old": "    harm: Math.round(\n      pvpCritHarm(caster ? Math.min(harm, pvpCastHold(caster)) : harm, caster, rolls) * pvpSpellScale(level),\n    ),",
+    "new": "    harm: Math.round((caster ? Math.min(harm, pvpCastHold(caster)) : harm) * pvpSpellScale(level)),",
     "tests": [
       "test/systems/auditcc_pvp.test.js",
       "test/combat/pvp_guard.test.js"
@@ -419,8 +419,8 @@
   {
     "name": "PVP-CAST-SKILL-the-hold-off",
     "file": "src/combat/siegeCombat.js",
-    "old": "pvpCritHarm(caster ? Math.min(harm, pvpCastHold(caster)) : harm, caster, rolls)",
-    "new": "pvpCritHarm(harm, caster, rolls)",
+    "old": "  return {\n    harm: Math.round(\n      pvpCritHarm(caster ? Math.min(harm, pvpCastHold(caster)) : harm, caster, rolls) * pvpSpellScale(level),\n    ),\n    heal: Math.round(heal),\n  }; // PVP-CAST-SKILL, PVP-SPELL-CRIT, then PVP-TRIANGLE: a harm's",
+    "new": "  return { harm: Math.round(pvpCritHarm(harm, caster, rolls) * pvpSpellScale(level)), heal: Math.round(heal) }; // PVP-CAST-SKILL, PVP-SPELL-CRIT, then PVP-TRIANGLE: a harm's",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]

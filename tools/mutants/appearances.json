@@ -730,8 +730,8 @@
   {
     "name": "AUDIT-E2-the-shield-covers-the-look-s-parts",
     "file": "src/combat/shieldWidget.js",
-    "old": "shieldProtectedBodyParts(item?.coverTemplate ?? item?.templateIndex ?? -1)",
-    "new": "shieldProtectedBodyParts(item?.templateIndex ?? -1)",
+    "old": "  const parts = shieldProtectedBodyParts(item?.coverTemplate ?? item?.templateIndex ?? -1); // AUDIT HORIZONTAL E2: the piece's own, under any look (weaponRig.js shieldItem)",
+    "new": "  const parts = shieldProtectedBodyParts(item?.templateIndex ?? -1); // AUDIT HORIZONTAL E2: the piece's own, under any look (weaponRig.js shieldItem)",
     "tests": [
       "test/systems/appearances_audit.test.js"
     ]
