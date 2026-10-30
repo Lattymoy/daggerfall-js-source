@@ -53,7 +53,7 @@ export function cardReceiptValid(c) {
   if (typeof c.j !== 'string' || !STAKE_ID_RE.test(c.j)) return false;
   if (!Number.isSafeInteger(c.r) || c.r < 0 || c.r > CARD_CASHOUT_MAX) return false;
   if (!CARD_RECEIPT_WHY.includes(c.w)) return false;
-  if ((c.w === 'broke' || c.w === 'joined') && c.r !== 0) return false;   // out of chips is nothing back; a top-up's is its seat's
+  if ((c.w === 'broke' || c.w === 'joined') && c.r !== 0) return false; // out of chips is nothing back; a top-up's is its seat's
   if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
   if (c.e <= c.i || c.e - c.i > CARD_RECEIPT_TTL_S) return false;
   return true;
@@ -72,7 +72,9 @@ export async function mintCardReceipt({ s, j, r, w }, privateKey, { subtle, nowS
   if (!cardReceiptValid(claims)) throw new TypeError('mintCardReceipt refused a claim set it could not verify');
   const body = _b64url.encode(enc.encode(JSON.stringify(claims)));
   if (!privateKey) return `${CARD_RECEIPT_V}.${body}.`;
-  const sig = new Uint8Array(await subtle.sign({ name: 'Ed25519' }, privateKey, enc.encode(`${CARD_RECEIPT_V}.${body}`)));
+  const sig = new Uint8Array(
+    await subtle.sign({ name: 'Ed25519' }, privateKey, enc.encode(`${CARD_RECEIPT_V}.${body}`)),
+  );
   return `${CARD_RECEIPT_V}.${body}.${_b64url.encode(sig)}`;
 }
 
@@ -88,7 +90,11 @@ export function readCardReceipt(r) {
   const raw = _b64url.decode(parts[1]);
   if (!raw) return null;
   let c;
-  try { c = JSON.parse(dec.decode(raw)); } catch { return null; }
+  try {
+    c = JSON.parse(dec.decode(raw));
+  } catch {
+    return null;
+  }
   return cardReceiptValid(c) ? { ...c, signed: parts[2].length > 0 } : null;
 }
 
@@ -113,10 +119,18 @@ export async function verifyCardReceipt(r, publicKey, { subtle, nowS, skewS = SK
   const raw = _b64url.decode(body);
   if (!raw) return { ok: false, why: 'body-shape' };
   let good = false;
-  try { good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(`${v}.${body}`)); } catch { return { ok: false, why: 'verify-threw' }; }
+  try {
+    good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(`${v}.${body}`));
+  } catch {
+    return { ok: false, why: 'verify-threw' };
+  }
   if (!good) return { ok: false, why: 'signature' };
   let claims;
-  try { claims = JSON.parse(dec.decode(raw)); } catch { return { ok: false, why: 'json' }; }
+  try {
+    claims = JSON.parse(dec.decode(raw));
+  } catch {
+    return { ok: false, why: 'json' };
+  }
   if (!cardReceiptValid(claims)) return { ok: false, why: 'claims' };
   if (!Number.isSafeInteger(nowS)) return { ok: false, why: 'clock' };
   if (!anyAge && nowS >= claims.e) return { ok: false, why: 'expired' };

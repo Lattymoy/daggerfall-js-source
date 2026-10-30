@@ -242,8 +242,8 @@
   {
     "name": "CARDBANK-claim-silent",
     "file": "src/net/card/cardStakes.js",
-    "old": "{ wallet(k.reg).bank(g); say?.(cardBankedText(g)); }",
-    "new": "{ wallet(k.reg).bank(g); }",
+    "old": "                    say?.(cardBankedText(g));\n                  }",
+    "new": "                  }",
     "tests": [
       "test/net/card/rpt1026_chestgold_cards.test.js"
     ],

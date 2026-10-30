@@ -66,8 +66,8 @@
   {
     "name": "CT-fold-out-of-turn-acts",
     "file": "src/net/card/cardLaw.js",
-    "old": "  next.seats[seat].folded = true;\n  // The seat to act",
-    "new": "  // The seat to act",
+    "old": "  next.seats[seat].folded = true;\n  // The seat to act still owes what it owed; a round that waited on nobody else may now be over.",
+    "new": "  // The seat to act still owes what it owed; a round that waited on nobody else may now be over.",
     "tests": [
       "test/systems/card/cards4_session.test.js"
     ]

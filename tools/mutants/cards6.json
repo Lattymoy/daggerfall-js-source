@@ -70,8 +70,8 @@
   {
     "name": "C6-broke-with-chips",
     "file": "src/net/card/cardReceipt.js",
-    "old": "  if ((c.w === 'broke' || c.w === 'joined') && c.r !== 0) return false;   // out of chips is nothing back; a top-up's is its seat's\n",
-    "new": "",
+    "old": "  if ((c.w === 'broke' || c.w === 'joined') && c.r !== 0) return false; // out of chips is nothing back; a top-up's is its seat's\n  if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;",
+    "new": "  if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;",
     "tests": [
       "test/world/card/auditcards3_pins.test.js",
       "test/net/auditcards3_relay.test.js",
@@ -91,8 +91,8 @@
   {
     "name": "C6-why-any",
     "file": "src/net/card/cardReceipt.js",
-    "old": "  if (!CARD_RECEIPT_WHY.includes(c.w)) return false;\n",
-    "new": "",
+    "old": "  if (!CARD_RECEIPT_WHY.includes(c.w)) return false;\n  if ((c.w === 'broke' || c.w === 'joined') && c.r !== 0) return false; // out of chips is nothing back; a top-up's is its seat's",
+    "new": "  if ((c.w === 'broke' || c.w === 'joined') && c.r !== 0) return false; // out of chips is nothing back; a top-up's is its seat's",
     "tests": [
       "test/world/card/auditcards3_pins.test.js",
       "test/net/auditcards3_relay.test.js",
@@ -108,8 +108,8 @@
   {
     "name": "C6-receipt-forever",
     "file": "src/net/card/cardReceipt.js",
-    "old": "  if (!anyAge && nowS >= claims.e) return { ok: false, why: 'expired' };\n",
-    "new": "",
+    "old": "  if (!anyAge && nowS >= claims.e) return { ok: false, why: 'expired' };\n  if (claims.i > nowS + skewS) return { ok: false, why: 'future' };",
+    "new": "  if (claims.i > nowS + skewS) return { ok: false, why: 'future' };",
     "tests": [
       "test/world/card/auditcards3_pins.test.js",
       "test/net/auditcards3_relay.test.js",
@@ -537,8 +537,8 @@
   {
     "name": "C6-book-no-hold",
     "file": "src/net/card/cardStakes.js",
-    "old": "...(first ? { reserve: () => wallet(x.reg).pay(x.amount) } : { apply:",
-    "new": "...(first ? {} : { apply:",
+    "old": "        ? { reserve: () => wallet(x.reg).pay(x.amount) }",
+    "new": "        ? {}",
     "tests": [
       "test/world/card/auditcards3_pins.test.js",
       "test/net/auditcards3_relay.test.js",
@@ -558,8 +558,8 @@
   {
     "name": "C6-book-repeat-pays",
     "file": "src/net/card/cardStakes.js",
-    "old": "if (!a?.data?.repeat && Number.isSafeInteger(g) && g > 0)",
-    "new": "if (Number.isSafeInteger(g) && g > 0)",
+    "old": "                  if (!a?.data?.repeat && Number.isSafeInteger(g) && g > 0) {",
+    "new": "                  if (Number.isSafeInteger(g) && g > 0) {",
     "tests": [
       "test/world/card/auditcards3_pins.test.js",
       "test/net/auditcards3_relay.test.js",
@@ -575,8 +575,8 @@
   {
     "name": "C6-book-not-kept-first",
     "file": "src/net/card/cardStakes.js",
-    "old": "      write(CARD_STAKES_KEY, [...read(CARD_STAKES_KEY), { rid, room, table, bb, amount, c, reg, at: now(), ...(topup ? { topup: true } : {}), ...(place ? { place: String(place).slice(0, 80) } : {}) }]);\n",
-    "new": "",
+    "old": "      write(CARD_STAKES_KEY, [\n        ...read(CARD_STAKES_KEY),\n        {\n          rid,\n          room,\n          table,\n          bb,\n          amount,\n          c,\n          reg,\n          at: now(),\n          ...(topup ? { topup: true } : {}),\n          ...(place ? { place: String(place).slice(0, 80) } : {}),\n        },\n      ]);\n      if (!read(CARD_STAKES_KEY).some((x) => x.rid === rid)) return { ok: false, error: 'cards-kept-full' };",
+    "new": "      if (!read(CARD_STAKES_KEY).some((x) => x.rid === rid)) return { ok: false, error: 'cards-kept-full' };",
     "tests": [
       "test/world/card/auditcards3_pins.test.js",
       "test/net/auditcards3_relay.test.js",
@@ -596,8 +596,8 @@
   {
     "name": "C6-book-any-character",
     "file": "src/net/card/cardStakes.js",
-    "old": "(x.c == null || x.c === character()) && !tried.has(x.j)",
-    "new": "!tried.has(x.j)",
+    "old": "          for (\n            let next;\n            realm &&\n            wallet &&\n            (next = read(CARD_RECEIPTS_KEY).filter((x) => (x.c == null || x.c === character()) && !tried.has(x.j)))\n              .length;\n          ) {",
+    "new": "          for (let next; realm && wallet && (next = read(CARD_RECEIPTS_KEY).filter((x) => !tried.has(x.j))).length;) {",
     "tests": [
       "test/world/card/auditcards3_pins.test.js",
       "test/net/auditcards3_relay.test.js",
@@ -617,8 +617,8 @@
   {
     "name": "C6-book-void-at-once",
     "file": "src/net/card/cardStakes.js",
-    "old": "t - x.at >= CARD_VOID_AFTER_MS",
-    "new": "true",
+    "old": "        .filter(\n          (x) => x.room === room && x.order && !x.sat && t - x.at >= CARD_VOID_AFTER_MS && !(x.voided > t - 60_000),\n        )",
+    "new": "        .filter((x) => x.room === room && x.order && !x.sat && true && !(x.voided > t - 60_000))",
     "tests": [
       "test/world/card/auditcards3_pins.test.js",
       "test/net/auditcards3_relay.test.js",

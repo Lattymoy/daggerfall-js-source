@@ -2,8 +2,8 @@
   {
     "name": "AC6-A1-pack-uncounted",
     "file": "src/net/card/cardWorthLaw.js",
-    "old": ": isPackRecord(rec) ? CARD_PACK_WORTH * stackOf(rec) : 0);",
-    "new": ": 0);",
+    "old": "export const cardRecordWorth = (/** @type {any} */ rec) =>\n  isCardRecord(rec) ? cardWorth(rec.card) * stackOf(rec) : isPackRecord(rec) ? CARD_PACK_WORTH * stackOf(rec) : 0;",
+    "new": "export const cardRecordWorth = (/** @type {any} */ rec) => (isCardRecord(rec) ? cardWorth(rec.card) * stackOf(rec) : 0);",
     "tests": [
       "test/systems/auditcards6_a.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AC6-A2-decor-uncounted",
     "file": "src/net/card/cardWorthLaw.js",
-    "old": "  for (const { rec } of decorOwnOf(snap)) n += cardRecordWorth(rec);\n",
-    "new": "",
+    "old": "  for (const { rec } of decorOwnOf(snap)) n += cardRecordWorth(rec);\n  return n;",
+    "new": "  return n;",
     "tests": [
       "test/systems/auditcards6_a.test.js"
     ]

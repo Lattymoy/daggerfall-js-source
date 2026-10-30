@@ -22,6 +22,8 @@
 /src/formats/save/*/
 !/src/net/
 /src/net/*
+!/src/net/card/
+/src/net/card/*/
 !/src/net/delve/
 /src/net/delve/*/
 !/src/net/dragon/

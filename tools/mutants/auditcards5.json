@@ -1743,8 +1743,8 @@
   {
     "name": "AC5-E-S-C1-repeat-pays",
     "file": "src/net/card/cardStakes.js",
-    "old": "apply: (/** @type {any} */ a) => { if (!a?.data?.repeat) wallet(x.reg).pay(x.amount); }",
-    "new": "apply: (/** @type {any} */ a) => { wallet(x.reg).pay(x.amount); }",
+    "old": "              if (!a?.data?.repeat) wallet(x.reg).pay(x.amount);",
+    "new": "              wallet(x.reg).pay(x.amount);",
     "tests": [
       "test/world/card/auditcards3_host.test.js",
       "test/world/card/auditcards3_pins.test.js",
@@ -1766,8 +1766,8 @@
   {
     "name": "AC5-E-S-C1-no-apply",
     "file": "src/net/card/cardStakes.js",
-    "old": "...(first ? { reserve: () => wallet(x.reg).pay(x.amount) } : { apply: (/** @type {any} */ a) => { if (!a?.data?.repeat) wallet(x.reg).pay(x.amount); } }),",
-    "new": "...(first ? { reserve: () => wallet(x.reg).pay(x.amount) } : {}),",
+    "old": "      ...(first\n        ? { reserve: () => wallet(x.reg).pay(x.amount) }\n        : {\n            apply: (/** @type {any} */ a) => {\n              if (!a?.data?.repeat) wallet(x.reg).pay(x.amount);\n            },\n          }),",
+    "new": "      ...(first ? { reserve: () => wallet(x.reg).pay(x.amount) } : {}),",
     "tests": [
       "test/world/card/auditcards3_host.test.js",
       "test/world/card/auditcards3_pins.test.js",
@@ -1789,8 +1789,8 @@
   {
     "name": "AC5-E-S-C2-any-word",
     "file": "src/net/card/cardStakes.js",
-    "old": "if (r && !r.ok && cardStakeRefused(r.error))",
-    "new": "if (r && !r.ok && !r.unknown)",
+    "old": "        if (r && !r.ok && cardStakeRefused(r.error))",
+    "new": "        if (r && !r.ok && !r.unknown)",
     "tests": [
       "test/world/card/auditcards3_host.test.js",
       "test/world/card/auditcards3_pins.test.js",
@@ -1812,8 +1812,8 @@
   {
     "name": "AC5-E-S-C2-offline-refusal",
     "file": "src/net/card/cardStakes.js",
-    "old": "|| e === 'realm-gold');",
-    "new": "|| e === 'realm-gold' || e === 'lease');",
+    "old": "  typeof e === 'string' && (e.startsWith('cards-') || e.startsWith('bad-') || e === 'realm-gold');",
+    "new": "  typeof e === 'string' && (e.startsWith('cards-') || e.startsWith('bad-') || e === 'realm-gold' || e === 'lease');",
     "tests": [
       "test/world/card/auditcards3_host.test.js",
       "test/world/card/auditcards3_pins.test.js",
@@ -1835,8 +1835,8 @@
   {
     "name": "AC5-E-S-C3-ack-unkept",
     "file": "src/net/card/cardStakes.js",
-    "old": "      if (!read(CARD_RECEIPTS_KEY).some((x) => x.j === c.j)) return null;\n",
-    "new": "",
+    "old": "      if (!read(CARD_RECEIPTS_KEY).some((x) => x.j === c.j)) return null;\n      if (stake)",
+    "new": "      if (stake)",
     "tests": [
       "test/world/card/auditcards3_host.test.js",
       "test/world/card/auditcards3_pins.test.js",
@@ -1858,8 +1858,8 @@
   {
     "name": "AC5-E-S-C4-file-to-player",
     "file": "src/net/card/cardStakes.js",
-    "old": "c: stake?.c ?? null,",
-    "new": "c: stake?.c ?? character(),",
+    "old": "        write(CARD_RECEIPTS_KEY, [...kept, { j: c.j, receipt, c: stake?.c ?? null, reg: stake?.reg ?? region() }]);",
+    "new": "        write(CARD_RECEIPTS_KEY, [\n          ...kept,\n          { j: c.j, receipt, c: stake?.c ?? character(), reg: stake?.reg ?? region() },\n        ]);",
     "tests": [
       "test/world/card/auditcards3_host.test.js",
       "test/world/card/auditcards3_pins.test.js",
@@ -1881,8 +1881,8 @@
   {
     "name": "AC5-E-S-E2-latch",
     "file": "src/net/card/cardStakes.js",
-    "old": "claiming ??= (async () => {",
-    "new": "claiming = (async () => {",
+    "old": "      claiming ??= (async () => {",
+    "new": "      claiming = (async () => {",
     "tests": [
       "test/world/card/auditcards3_host.test.js",
       "test/world/card/auditcards3_pins.test.js",
@@ -1904,8 +1904,8 @@
   {
     "name": "AC5-E-S-C8-one-round",
     "file": "src/net/card/cardStakes.js",
-    "old": "&& !tried.has(x.j))).length;)",
-    "new": "&& !tried.size)).length;)",
+    "old": "            (next = read(CARD_RECEIPTS_KEY).filter((x) => (x.c == null || x.c === character()) && !tried.has(x.j)))\n              .length;",
+    "new": "            (next = read(CARD_RECEIPTS_KEY).filter((x) => (x.c == null || x.c === character()) && !tried.size)).length;",
     "tests": [
       "test/world/card/auditcards3_host.test.js",
       "test/world/card/auditcards3_pins.test.js",
@@ -1927,8 +1927,8 @@
   {
     "name": "AC5-E-S-A4-signature-dead",
     "file": "src/net/card/cardStakes.js",
-    "old": "'shape', 'version', 'unsigned',",
-    "new": "'shape', 'version', 'unsigned', 'signature',",
+    "old": "  'sig-shape',",
+    "new": "  'signature',\n  'sig-shape',",
     "tests": [
       "test/world/card/auditcards3_host.test.js",
       "test/world/card/auditcards3_pins.test.js",
@@ -1950,8 +1950,8 @@
   {
     "name": "AC5-E-S-A4-any-receipt-refusal",
     "file": "src/net/card/cardStakes.js",
-    "old": "(r?.error === 'cards-receipt' && CARD_RECEIPT_DEAD.includes(r?.why))",
-    "new": "(r?.error === 'cards-receipt')",
+    "old": "              if (\n                r?.ok ||\n                CARD_CLAIM_DONE.includes(r?.error) ||\n                (r?.error === 'cards-receipt' && CARD_RECEIPT_DEAD.includes(r?.why))\n              )",
+    "new": "              if (r?.ok || CARD_CLAIM_DONE.includes(r?.error) || r?.error === 'cards-receipt')",
     "tests": [
       "test/world/card/auditcards3_host.test.js",
       "test/world/card/auditcards3_pins.test.js",
@@ -1973,8 +1973,8 @@
   {
     "name": "AC5-E-S-claim-bank-repeat",
     "file": "src/net/card/cardStakes.js",
-    "old": "if (!a?.data?.repeat && Number.isSafeInteger(g) && g > 0) { wallet(k.reg).bank(g);",
-    "new": "if (Number.isSafeInteger(g) && g > 0) { wallet(k.reg).bank(g);",
+    "old": "                  if (!a?.data?.repeat && Number.isSafeInteger(g) && g > 0) {",
+    "new": "                  if (Number.isSafeInteger(g) && g > 0) {",
     "tests": [
       "test/world/card/auditcards3_host.test.js",
       "test/world/card/auditcards3_pins.test.js",
@@ -1996,8 +1996,8 @@
   {
     "name": "AC5-E-S-C6-fit-oldest",
     "file": "src/net/card/cardStakes.js",
-    "old": "const i = out.findIndex((x) => x.sat);",
-    "new": "const i = -1;",
+    "old": "      const i = out.findIndex((x) => x.sat);",
+    "new": "      const i = -1;",
     "tests": [
       "test/world/card/auditcards3_host.test.js",
       "test/world/card/auditcards3_pins.test.js",
@@ -2019,7 +2019,7 @@
   {
     "name": "AC5-E-S-C6-kept-full-off",
     "file": "src/net/card/cardStakes.js",
-    "old": "if (read(CARD_STAKES_KEY).filter((x) => !x.sat).length >= CARD_KEPT_MAX) return { ok: false, error: 'cards-kept-full' };",
+    "old": "      if (read(CARD_STAKES_KEY).filter((x) => !x.sat).length >= CARD_KEPT_MAX)\n        return { ok: false, error: 'cards-kept-full' };",
     "new": "",
     "tests": [
       "test/world/card/auditcards3_host.test.js",
@@ -2042,8 +2042,8 @@
   {
     "name": "AC5-E-S-void-at-once",
     "file": "src/net/card/cardStakes.js",
-    "old": "t - x.at >= CARD_VOID_AFTER_MS",
-    "new": "t - x.at >= 0",
+    "old": "        .filter(\n          (x) => x.room === room && x.order && !x.sat && t - x.at >= CARD_VOID_AFTER_MS && !(x.voided > t - 60_000),\n        )",
+    "new": "        .filter((x) => x.room === room && x.order && !x.sat && t - x.at >= 0 && !(x.voided > t - 60_000))",
     "tests": [
       "test/world/card/auditcards3_host.test.js",
       "test/world/card/auditcards3_pins.test.js",
@@ -2065,8 +2065,8 @@
   {
     "name": "AC5-E-S-void-sat",
     "file": "src/net/card/cardStakes.js",
-    "old": "x.room === room && x.order && !x.sat &&",
-    "new": "x.room === room && x.order &&",
+    "old": "        .filter(\n          (x) => x.room === room && x.order && !x.sat && t - x.at >= CARD_VOID_AFTER_MS && !(x.voided > t - 60_000),\n        )",
+    "new": "        .filter((x) => x.room === room && x.order && t - x.at >= CARD_VOID_AFTER_MS && !(x.voided > t - 60_000))",
     "tests": [
       "test/world/card/auditcards3_host.test.js",
       "test/world/card/auditcards3_pins.test.js",
@@ -2088,8 +2088,8 @@
   {
     "name": "AC5-E-S-prune-early",
     "file": "src/net/card/cardStakes.js",
-    "old": "!(t - x.at > CARD_STAKE_KEEP_MS)",
-    "new": "!(t - x.at > CARD_VOID_AFTER_MS)",
+    "old": "        left = kept.filter((x) => !(t - x.at > CARD_STAKE_KEEP_MS));",
+    "new": "        left = kept.filter((x) => !(t - x.at > CARD_VOID_AFTER_MS));",
     "tests": [
       "test/world/card/auditcards3_host.test.js",
       "test/world/card/auditcards3_pins.test.js",
@@ -2111,8 +2111,8 @@
   {
     "name": "AC5-E-S-elsewhere-here",
     "file": "src/net/card/cardStakes.js",
-    "old": "filter((x) => x.room !== room && x.c === character()",
-    "new": "filter((x) => x.c === character()",
+    "old": "        .filter((x) => x.room !== room && x.c === character() && (x.sat || x.order))",
+    "new": "        .filter((x) => x.c === character() && (x.sat || x.order))",
     "tests": [
       "test/world/card/auditcards3_host.test.js",
       "test/world/card/auditcards3_pins.test.js",
@@ -2134,8 +2134,8 @@
   {
     "name": "AC5-E-S-recover-other-char",
     "file": "src/net/card/cardStakes.js",
-    "old": "filter((y) => !y.order && y.c === character())",
-    "new": "filter((y) => !y.order)",
+    "old": "      for (const x of read(CARD_STAKES_KEY).filter((y) => !y.order && y.c === character())) {",
+    "new": "      for (const x of read(CARD_STAKES_KEY).filter((y) => !y.order)) {",
     "tests": [
       "test/world/card/auditcards3_host.test.js",
       "test/world/card/auditcards3_pins.test.js",
@@ -2157,8 +2157,8 @@
   {
     "name": "AC5-E-S-topup-flag-lost",
     "file": "src/net/card/cardStakes.js",
-    "old": "...(x.topup ? { topup: true } : {}) }),",
-    "new": "}),",
+    "old": "          ...(x.topup ? { topup: true } : {}),\n        }),",
+    "new": "        }),",
     "tests": [
       "test/world/card/auditcards3_host.test.js",
       "test/world/card/auditcards3_pins.test.js",
@@ -2180,8 +2180,8 @@
   {
     "name": "AC5-E-S-voiding-noop",
     "file": "src/net/card/cardStakes.js",
-    "old": "seated(id) { write(CARD_STAKES_KEY, read(CARD_STAKES_KEY).map((x) => (x.id === id ? { ...x, sat: true } : x))); },",
-    "new": "seated(id) { void id; },",
+    "old": "      write(\n        CARD_STAKES_KEY,\n        read(CARD_STAKES_KEY).map((x) => (x.id === id ? { ...x, sat: true } : x)),\n      );",
+    "new": "      void id;",
     "tests": [
       "test/world/card/auditcards3_host.test.js",
       "test/world/card/auditcards3_pins.test.js",
@@ -4045,8 +4045,8 @@
   {
     "name": "AC5-E-S-C4-region-now",
     "file": "src/net/card/cardStakes.js",
-    "old": "reg: stake?.reg ?? region() }",
-    "new": "reg: region() }",
+    "old": "        write(CARD_RECEIPTS_KEY, [...kept, { j: c.j, receipt, c: stake?.c ?? null, reg: stake?.reg ?? region() }]);",
+    "new": "        write(CARD_RECEIPTS_KEY, [...kept, { j: c.j, receipt, c: stake?.c ?? null, reg: region() }]);",
     "tests": [
       "test/net/auditcards5_gold.test.js"
     ]

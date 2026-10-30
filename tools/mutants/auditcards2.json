@@ -192,7 +192,7 @@
   {
     "name": "E-foldseat-no-reeval",
     "file": "src/net/card/cardLaw.js",
-    "old": "next.toAct = next.toAct >= 0 ? firstToAct(next, next.toAct) : -1;",
+    "old": "  next.toAct = next.toAct >= 0 ? firstToAct(next, next.toAct) : -1;",
     "new": "",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
