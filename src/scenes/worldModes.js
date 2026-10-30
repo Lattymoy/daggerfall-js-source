@@ -3968,7 +3968,8 @@ export function createWorldModes(host) {
       // mode IS the merchant's collection, so the goods are already on
       // the shelf by now and `remoteItems.Clear()` (:1051) only drops
       // the window's view of them. The port stages into the window and
-      // lands them here, which is what makes a sold item buyable back.
+      // lands them here - SOLD-POOF (2026-10-30): landSold shelves
+      // nothing, so a sold item is gone and cannot be stolen back.
       for (const it of staged) {
         const i = playerEntity.items.indexOf(it);
         if (i >= 0) playerEntity.items.splice(i, 1);

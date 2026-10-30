@@ -85,12 +85,13 @@ export function landedInKeeping(/** @type {Set<any>|null|undefined} */ keeping, 
   return true;
 }
 
-/** A SOLD PIECE'S LAST STOP. An honest piece lands on the shelf the counter sells from (Port-Ledger T2); a stolen one is
- *  the merchant's to be rid of, and goes nowhere. Answers whether it was shelved. */
+/** A SOLD PIECE'S LAST STOP. SOLD-POOF (mob 2026-10-30: "need to remove item sold to a shop so they r not stealable",
+ *  "just make them go poof"): A SOLD PIECE GOES NOWHERE - honest or stolen. Shelved (Port-Ledger T2), a piece sold at a
+ *  counter sat in the shop's shelf and could be stolen straight back and sold again. `shelfItems` is left untouched;
+ *  the shelf keeps its own stock. Answers whether it was shelved: never. */
 export function landSold(/** @type {any[]} */ shelfItems, /** @type {any} */ item) {
-  if (isStolen(item)) return false;
-  shelfItems.push(item);
-  return true;
+  void shelfItems; void item;
+  return false;
 }
 
 /** How many pieces a list holds - a stack counts its own. */
