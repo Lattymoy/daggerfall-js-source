@@ -11,7 +11,8 @@ import { skullSrc } from '../ui/pvpSkull.js';
 import { CONCEAL_MODE } from '../systems/combatVisuals.js';   // PVP-BAR
 import { isVillain } from '../systems/wild/villainLaw.js';   // PVP-VILLAIN
 import { wildHere, WILD_TEXT } from '../systems/wild/wildZone.js';   // PVP-FLAG-ZONE
-import { createPvpHud, pvpHitLine, pvpHitsAdd, pvpLockOverText, pvpSlewText, PVP_SAY_S } from '../ui/pvpHud.js';   // PVP-HUD
+import { setPvpFoeSight, pvpGearStruck } from '../combat/pvpGearPowers.js';   // PVP-GEAR: a foe's bar and my hits taken
+import { PVP_FLAG_SPOT, createPvpHud, pvpHitLine, pvpHitsAdd, pvpLockOverText, pvpSlewText, PVP_SAY_S } from '../ui/pvpHud.js';   // PVP-HUD
 
 /** PVP-BAR: a concealed player in a PvP fight - a faint body that keeps its skull and bar (the name is taken). */
 export const PVP_FIGHT_VEIL = Object.freeze({ mode: CONCEAL_MODE.reveal, alpha: 0.3, t: 0, phase: 0, named: true });
@@ -102,6 +103,7 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
     if (g?.k !== 'hp') return false;
     if (g.by === me() || g.to === me()) {
       fightAt = now(); wasLock = true;
+      if (g.to === me() && g.d > 0) pvpGearStruck(player);   // PVP-GEAR: Bedrock's stack, Hex's window
       foes.set(g.by === me() ? g.to : g.by, fightAt);
       hitLines = pvpHitsAdd(hitLines, pvpHitLine(g, me(), nameOf));   // PVP-HUD: the last hits panel
       paint();
@@ -116,10 +118,11 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
       noteCaps('game');
       if (here()) toggle();
     });
-    // PVP-FLAG-SPOT (the owner: "left center or right center"): the middle of the screen's right edge.
+    // PVP-FLAG-SPOT (the owner: "left center or right center"): the screen's right edge, just over its middle -
+    // clear of the Decorate button centred there (ui/decorPanel.js .dfdecor-open).
     button = doc.createElement('button');
     button.type = 'button';
-    Object.assign(button.style, { position: 'fixed', top: '50%', right: '8px', transform: 'translateY(-50%)', zIndex: '40', width: '36px', height: '36px', backgroundColor: '#2a241c', backgroundSize: '24px', backgroundRepeat: 'no-repeat', backgroundPosition: 'center', imageRendering: 'pixelated', border: '2px solid', cursor: 'pointer', display: 'none' });
+    Object.assign(button.style, { position: 'fixed', top: `calc(50% - ${PVP_FLAG_SPOT.lift}px)`, right: '8px', transform: 'none', zIndex: '40', width: '36px', height: '36px', backgroundColor: '#2a241c', backgroundSize: '24px', backgroundRepeat: 'no-repeat', backgroundPosition: 'center', imageRendering: 'pixelated', border: '2px solid', cursor: 'pointer', display: 'none' });
     button.addEventListener('click', () => toggle());
     doc.body?.appendChild(button);
     if (doc.body && typeof doc.createElementNS === 'function') hud = createPvpHud(doc, () => { beat(); paint(); });   // PVP-HUD: the ring, the banner, the last hits
@@ -164,12 +167,17 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
     /** PVP-BAR (the owner: "They always have some body just fiant"): a concealed peer in a PvP fight (its skull gold) is
      *  drawn faint, never nowhere - `look` is combatVisuals.js peerDraw's answer for its pose's `cv`. */
     look: (id, bits, look) => {
-      if (look?.kind === 'plain' || (bits & 7) === 7 || !['gold', 'red'].includes(skullOf(id) ?? '')) return look;   // 7: a staff member inside its event's boss
-      veiled.set(id, now());
-      return { kind: 'conceal', visual: PVP_FIGHT_VEIL };
+      const k = skullOf(id);
+      if (look?.kind === 'plain' || (bits & 7) === 7 || !k) return look;   // 7: a staff member inside its event's boss
+      veiled.set(id, now());   // PVP-SEEN (the owner: "concealded or incvis still have a health bar"): nameless, its skull and bar kept
+      if (k === 'gold' || k === 'red') return { kind: 'conceal', visual: PVP_FIGHT_VEIL };
+      return look.kind === 'conceal' ? { kind: 'conceal', visual: { ...look.visual, named: true } } : look;
     },
+    /** PVP-SEEN: an invisible flagged player keeps its tag (net/remotePlayers.js sync's `hidden` answers 'bar'). */
+    barKept: (id) => now() - (veiled.get(id) ?? -Infinity) < VEIL_FRAME_MS,
   };
   _current = api;
+  setPvpFoeSight((id) => ({ h: bars.get(id)?.h ?? null, fighting: foeOf(id) }));   // PVP-GEAR: the foe as my bars see it
   return api;
 }
 

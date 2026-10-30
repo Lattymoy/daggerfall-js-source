@@ -1,0 +1,47 @@
+[
+  {
+    "name": "PVP-SEEN-the-veil-unmarked",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "return look.kind === 'conceal' ? { kind: 'conceal', visual: { ...look.visual, named: true } } : look;",
+    "new": "return look;",
+    "tests": [
+      "test/net/pvpseen.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SEEN-bar-never-kept",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "barKept: (id) => now() - (veiled.get(id) ?? -Infinity) < VEIL_FRAME_MS,",
+    "new": "barKept: (id) => false,",
+    "tests": [
+      "test/net/pvpseen.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SEEN-the-point-dropped",
+    "file": "src/net/remotePlayers.js",
+    "old": "if (hid === 'bar') this._shown.push({ peer, height: bodyHeight(peer.id) || PEER_HEIGHT, hid: true });",
+    "new": "",
+    "tests": [
+      "test/net/pvpseen.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SEEN-the-name-kept",
+    "file": "src/net/remotePlayers.js",
+    "old": "if (e.hid) out.push({ ...out.pop(), name: '', title: null, glyphs: [], lv: null, gt: null, rb: null, house: null, hid: true });",
+    "new": "if (e.hid) out.push({ ...out.pop(), hid: true });",
+    "tests": [
+      "test/net/pvpseen.test.js"
+    ]
+  },
+  {
+    "name": "PVP-SEEN-a-bare-point-kept",
+    "file": "src/net/remotePlayers.js",
+    "old": "points = points.filter((p) => !p.hid || p.skull || p.bar);",
+    "new": "points = points.filter((p) => true);",
+    "tests": [
+      "test/net/pvpseen.test.js"
+    ]
+  }
+]

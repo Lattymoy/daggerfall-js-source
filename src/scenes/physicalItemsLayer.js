@@ -47,7 +47,6 @@ import { toColor32 } from '../formats/color32Order.js';
 import { takeOneItem, quickLootSpend, tookItemText, QUICK_LOOT_REFUSED } from '../systems/quickLoot.js';
 import { isMap, USE_TEXT } from '../systems/useItem.js';
 import { isSummoned, takeOneInto } from '../systems/inventory.js';
-import { racialSuppressInventory } from '../systems/lycanthropy.js';
 import { silverFindAt } from '../systems/silverFinds.js';
 import { CANNOT_REMOVE_ITEM_TEXT } from '../systems/createItem.js';
 
@@ -480,7 +479,7 @@ export function createPhysicalItems({
      * refused, a map read and spent (RecordLocationFromMap, then RemoveItem - through the host's `revealMap`; with none,
      * the map comes into the pack as it is), the quest click, the WHOLE stack or nothing (CanCarryWholeStack - AUDIT PI1
      * I2), gold into the purse - the pack's one-item door (systems/quickLoot.js takeOneItem, `wholeStack`). The port's
-     * own guards beside it: a transformed lycanthrope's paws take nothing (the pack's own refusal - AUDIT PI1 H7), an
+     * own guards beside it (WERE-LOOT, 2026-10-30: a transformed lycanthrope's paws take it too - the owner), an
      * armed quick-loot key is spent on this press (AUDIT PI1 H3 - WB9's own law for the spoils), a body's silver is
      * rolled at its first take (AUDIT PI1 H7 - SILVER-FINDS' door). Answers true when the press was this layer's.
      */
@@ -491,8 +490,6 @@ export function createPhysicalItems({
       const list = listOf(p);
       if (!Array.isArray(list) || !list.includes(p.item)) { retire(p); return true; }
       const say = (l) => { try { host.say?.(l); } catch { /* the line is not the take's */ } };
-      const beast = racialSuppressInventory(playerEntity);
-      if (beast) { say(beast.text); return true; }
       // the summoned refusal first, in the mod's order (TryPickup [IL_8494] - "cannotRemoveItem"): ahead of the map arm,
       // so a summoned map is refused aloud, never read nor silently left
       if (isSummoned(p.item)) { say(CANNOT_REMOVE_ITEM_TEXT); return true; }

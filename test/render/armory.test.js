@@ -456,7 +456,7 @@ test('ARMORY HOST-SPLIT: the world host wires the module and keeps none of it (m
   assert.ok(!/new ArmoryRenderer|armoryWearers\(/.test(w), 'the armory\'s pass is the module\'s alone');
   const h = rd('src/scenes/auraHost.js');
   assert.match(h, /const vw = renderer\._view, right = vw \? \[vw\[0\], vw\[4\], vw\[8\]\] : null;/, 'the view\'s right, the draw\'s (ArmoryRenderer.draw)');
-  assert.match(h, /selfPose\(selfKit\.pose, player\); armoryMotionStep\(selfKit, t, right\);/);
+  assert.match(h, /selfPose\(selfKit\.pose, player, selfLiftNow > 0\); armoryMotionStep\(selfKit, now, vw \? \[vw\[0\], vw\[4\], vw\[8\]\] : null\);/, 'FOLLOW-NOW (PIN MOVED): mine posed and stepped at the draw, where my body is drawn');
   assert.match(h, /peerPose\(d\.id, w, layers\); armoryMotionStep\(w, t, right\);/, 'a sprite\'s embers off its feet, mine and a peer\'s');   // CAPE-CARD (PIN MOVED): posed off the sprite layers' list
 });
 

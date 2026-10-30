@@ -126,6 +126,12 @@ city in the zone picks it, where ZONE-ZOOM had opened the zone map. Its open cou
 refused, in words that name the open ends ("In Cyrodiil you can teleport only to or from a city, town or village. Walk
 or ride its roads.").
 
+**PVP-PORTAL** (2026-10-30, the owner: "they need to work all over"; `PvP-Rework.md` PVP-PORTAL): the two paragraphs
+above are history for the stone. It asks none of the zone's law, flagged or not - door, pick and step, into, out of
+and inside the zone (`portalStoneHost.js:"const teleportRefused = (to) =>"`). In the zone it is held only by the combat
+lock and a monster alerted to me ("agro or flag time cool down"; the owner's pick "Only one attacking me"). The
+guild's teleport and Recall keep the zone's law.
+
 ### The use
 
 The pack's Use - either skin - or a hotbar press hands the stone to the host's `openPortal` door. Only the open world

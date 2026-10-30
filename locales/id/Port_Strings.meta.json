@@ -8839,6 +8839,11 @@
   "tr": "d47b007703a6",
   "by": "claude-in-session"
  },
+ "coll.how.aetherrider": {
+  "en": "f7563349e6a6",
+  "tr": "6bc24960ba5d",
+  "by": "claude-in-session"
+ },
  "coll.how.apostle": {
   "en": "ac3219b0f8b3",
   "tr": "25ceb60386c1",
@@ -8892,6 +8897,16 @@
  "coll.how.dungeonmaster": {
   "en": "8dcf67393a4b",
   "tr": "682c2c399a72",
+  "by": "claude-in-session"
+ },
+ "coll.how.firstaetherrider": {
+  "en": "6864f47f182d",
+  "tr": "1eae15650756",
+  "by": "claude-in-session"
+ },
+ "coll.how.firstwyrmrider": {
+  "en": "339cd150428c",
+  "tr": "2ef0a6196a69",
   "by": "claude-in-session"
  },
  "coll.how.formermaster": {
@@ -9077,6 +9092,11 @@
  "coll.how.wyrdSister": {
   "en": "7d58d7b53bed",
   "tr": "fae5d588f74f",
+  "by": "claude-in-session"
+ },
+ "coll.how.wyrmrider": {
+  "en": "253f170e3564",
+  "tr": "2a9291cdb7c1",
   "by": "claude-in-session"
  },
  "coll.kind.armory": {
@@ -9327,6 +9347,11 @@
  "coll.src.chapters": {
   "en": "b1777cd77f1e",
   "tr": "d6bd27571a26",
+  "by": "claude-in-session"
+ },
+ "coll.src.dragon": {
+  "en": "4d27e12d38a5",
+  "tr": "74967388f343",
   "by": "claude-in-session"
  },
  "coll.src.festival": {
@@ -16640,8 +16665,8 @@
   "by": "claude-in-session"
  },
  "inventory.cape.title": {
-  "en": "8cd2d555af57",
-  "tr": "5bbae515d6c9",
+  "en": "cd250f3b92e7",
+  "tr": "251b35c0c7e6",
   "by": "claude-in-session"
  },
  "inventory.quest.item": {
@@ -26864,6 +26889,26 @@
   "tr": "bd220a472958",
   "by": "claude-in-session"
  },
+ "net.update.appBanner": {
+  "en": "828450b15581",
+  "tr": "5714f52c6e28",
+  "by": "claude-in-session"
+ },
+ "net.update.appBody": {
+  "en": "e81e53388700",
+  "tr": "5ebedbf5ba32",
+  "by": "claude-in-session"
+ },
+ "net.update.appBuild": {
+  "en": "05017b1922f5",
+  "tr": "01808d8efc97",
+  "by": "claude-in-session"
+ },
+ "net.update.appHold": {
+  "en": "98aca0313218",
+  "tr": "ed89c85bf5d8",
+  "by": "claude-in-session"
+ },
  "net.update.banner": {
   "en": "134e714f0b6f",
   "tr": "f07307cd6d9d",
@@ -26897,6 +26942,16 @@
  "net.update.reloading": {
   "en": "ea3678c2b08b",
   "tr": "098f49d7fd06",
+  "by": "claude-in-session"
+ },
+ "net.update.restartButton": {
+  "en": "84c07ca92acc",
+  "tr": "f6f64e468530",
+  "by": "claude-in-session"
+ },
+ "net.update.restarting": {
+  "en": "f3d4bca3a858",
+  "tr": "072d948dab70",
   "by": "claude-in-session"
  },
  "net.update.saving": {
@@ -33259,6 +33314,11 @@
   "tr": "14cb9eeda612",
   "by": "claude-in-session"
  },
+ "pvp.evade": {
+  "en": "3ad2db0403c9",
+  "tr": "42f0878e2cf7",
+  "by": "claude-in-session"
+ },
  "pvp.flag.level": {
   "en": "64776e968136",
   "tr": "03b3fe9baf5f",
@@ -33369,11 +33429,6 @@
   "tr": "06cde76b08c5",
   "by": "claude-in-session"
  },
- "pvp.kit.cure": {
-  "en": "741ccd1eaaed",
-  "tr": "94603b522719",
-  "by": "claude-in-session"
- },
  "pvp.kit.damage": {
   "en": "7bf6d1d3a58a",
   "tr": "2c6a4b392565",
@@ -33452,6 +33507,11 @@
  "pvp.kit.reflect": {
   "en": "11a5b905dd43",
   "tr": "30f5460d1da3",
+  "by": "claude-in-session"
+ },
+ "pvp.kit.regen": {
+  "en": "b04c991e58e7",
+  "tr": "d763187dd3f4",
   "by": "claude-in-session"
  },
  "pvp.kit.resist": {
@@ -38579,9 +38639,9 @@
   "tr": "8cfb4639387d",
   "by": "claude-in-session"
  },
- "sea.wild.deathHold": {
-  "en": "ffab1c13da5b",
-  "tr": "b311e5ad84a7",
+ "sea.wild.deathRise": {
+  "en": "29d9b075a86b",
+  "tr": "a6f6ab00f613",
   "by": "claude-in-session"
  },
  "sea.wild.deeper": {

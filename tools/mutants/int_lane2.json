@@ -403,7 +403,7 @@
   {
     "name": "INT9-AUDIT-A-WORD-OFF-AND-ON-A-HEAL",
     "file": "src/net/wild/wildRef.js",
-    "old": "    if (now - x.outAt >= WILD_REF.riseMs && !x.down) { x.f.hp = x.f.max; x.struckAt = -Infinity; resetHealthShare(x.f, now); }",
+    "old": "    if (now - x.outAt >= WILD_REF.awayMs && !x.down) { x.f.hp = x.f.max; x.struckAt = -Infinity; resetHealthShare(x.f, now); }",
     "new": "    if (!x.down) { x.f.hp = x.f.max; x.struckAt = -Infinity; resetHealthShare(x.f, now); }",
     "tests": [
       "test/net/int9_wild_ref.test.js"
@@ -888,8 +888,8 @@
   {
     "name": "INT7-AUDIT-RELAY-THE-ZONES-ARMS-UNPASSED",
     "file": "server/src/index.js",
-    "old": "{ d: d.d, r, held, wa: a.wa ?? null, kin, rid, room: a.key, el: d.el ?? null }",
-    "new": "{ d: d.d, r, held, wa: null, kin, rid, room: a.key, el: d.el ?? null }",
+    "old": "{ d: d.d, r, held, wa: a.wa ?? null, kin, rid, room: a.key, el: d.el ?? null, c: d.c ?? null }",
+    "new": "{ d: d.d, r, held, wa: null, kin, rid, room: a.key, el: d.el ?? null, c: d.c ?? null }",
     "tests": [
       "test/net/arena/int7_arms.test.js",
       "test/net/int9_wild_ref.test.js"

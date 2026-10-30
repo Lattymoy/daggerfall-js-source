@@ -64,7 +64,10 @@ const hintText = (hint) => HINT_TEXT[hint]?.() ?? hint;
 export const ONLINE_RESPAWN_SECONDS = 60;
 /** DEATH-15 (the owner, 2026-10-29: "Change that to 15 second on death", "For both"): online, in the zone too, Enter
  *  rises after this many seconds; the rest of the minute is for a party member's Resurrect. */
-export const DEATH_RISE_MIN_S = 15;
+export const DEATH_RISE_MIN_S = 0;
+/** DEATH-10 (the owner, 2026-10-30: "give death a 10 second timer let them click respawn now but at 10 auto respawn them",
+ *  "for pve and pvp"): online, Enter rises at once and the screen rises on its own after this; the body still lies the minute. */
+export const DEATH_AUTO_RISE_S = 10;
 
 const DIM = [0.5, 0.5, 0.45, 1];
 
@@ -211,7 +214,7 @@ export class DeathScreen {
   get wild() { return this.online ? wildDeath() : null; }
   /** DEATH6 / WILD1: the online wait - the body's minute, or the zone's two. WILD-REJOIN: less what a death the referee
    *  told this page of had lain before it came back (systems/wild/wildZone.js `served`). */
-  get holdSeconds() { return this.wild ? WILD_DEATH_HOLD_S - (this.wild.served ?? 0) : ONLINE_RESPAWN_SECONDS; }
+  get holdSeconds() { return this.wild ? WILD_DEATH_HOLD_S - (this.wild.served ?? 0) : DEATH_AUTO_RISE_S; }
   /** DEATH-15: may Enter rise now? Offline always; online once the minimum has passed (a rejoin's served time counts). */
   get canRise() { return !this.online || this.clock + (this.wild?.served ?? 0) >= DEATH_RISE_MIN_S; }
   /** DEATH4: whole seconds left before an online respawn, or null offline. */

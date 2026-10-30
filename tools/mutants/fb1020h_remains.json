@@ -38,7 +38,7 @@
   {
     "name": "REMAINS-TAKE-the-take-not-counted-in-flight",
     "file": "src/net/wild/wildRemains.js",
-    "old": "      ask(`${rec.r}:${info.i}`, k);\n",
+    "old": "      ask(`${rec.r}:${info.i}`, k, pieceKg(obj, k));   // CARRY-CLAIMS: weighed until the room's word\n",
     "new": "",
     "tests": [
       "test/net/fb1020h_remains.test.js"

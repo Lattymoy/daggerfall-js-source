@@ -33,6 +33,7 @@ import { drawCrewBars, destroyNavalHud, tagAlpha, CREW_BAR_RANGE, CREW_FADE_FROM
 import { PARTY_GREEN_CSS } from '../../../src/net/social.js';
 import { crewTeamOf, CREW_TEAMS, GRAPPLE_S, HAND } from '../../../src/systems/naval/navalBoarding.js';
 import { sea } from '../../navalSea.mjs';
+import { _resetBowBloomForTests } from '../../../src/combat/bowBloom.js';
 
 const src = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const WORLD = src('src/scenes/world.js');
@@ -370,6 +371,7 @@ test('SHIPMATES THE SWING, through the pool that holds them: a shipmate in reach
 test('SHIPMATES THE SHAFT: the player\'s shaft flies through a shipmate to the pirate behind him; a crewman\'s own shaft loosed at a pirate spends itself on the player it meets and deals nothing (mutants: the spare unread)', () => {
   const f = new ArrowFlight({ getGpuMesh: () => null, collider: null });
   const pirate = { id: 'pirate', dead: false, ai: { height: 1.8 }, entity: { team: 'Criminals' } };
+  _resetBowBloomForTests();   // BOW-BLOOM: a rested bow's first shot flies true
   f.fire([0, 0.9, 0], [0, 0, 1], { fromPlayer: true, weapon: {} });
   const hits = [];
   const targets = [{ feet: [0, 0, 1.5], ref: mate() }, { feet: [0, 0, 4], ref: pirate }];

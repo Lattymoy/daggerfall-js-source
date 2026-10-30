@@ -95,7 +95,9 @@ test('RIDE-POV by source: one door into the head for the Morrowind lane, shared 
   assert.match(s, /function mwIntoHead\(\) \{\n\s*if \(!mwCamera\.thirdPerson\(\)\) return false;\n\s*mwCamera\.restore\(\{ firstPerson: true, baseDistance: mwCamera\.baseDistance\(\) \}\);\n\s*fpArm\.setViewMode\('first'\);\n\s*return true;\n\}/, 'the restore door, the rig moved, the distance kept');
   // PIN MOVED, COATS3D: the hold is the saddle of no 3D horse - astride one (`saddled`, the host's `horse` and the rig
   // up), the body has a saddle to show (test/formats/morrowind/coats3d_horse3d.test.js)
-  assert.match(s, /saddled = !!state\.riding && stepOwnHorse\(state\.horse, feet, yaw, state\.dt \?\? 0\);\n\s*mounted = !!state\.riding && !saddled;\n\s*if \(mounted\) \{ mwIntoHead\(\); pendingClicks = 0; \}\n\s*if \(pendingClicks\) \{/, 'the saddle rules before the flush, and drops it');
+  // PIN MOVED, DRAGON-POV (2026-10-30): nor on a dragon (the host's `dragon`) - the dragon is what its third person shows
+  // (test/player/dragonpov.test.js)
+  assert.match(s, /saddled = !!state\.riding && stepOwnHorse\(state\.horse, feet, yaw, state\.dt \?\? 0\);\n[^\n]*\n\s*mounted = !!state\.riding && !saddled && !onDragon;\n\s*if \(mounted\) \{ mwIntoHead\(\); pendingClicks = 0; \}\n\s*const wasThird = mwCamera\.thirdPerson\(\);\n\s*if \(pendingClicks\) \{/, 'the saddle rules before the flush, and drops it');
   assert.match(s, /clicks < 0 && \(!fpArm\.canThirdPerson\(\) \|\| mounted\)\) return false;/, 'the wheel reads the saddle');
   // GENERATIVE, as AUDIT-EOTB F3b: every host that rides the seam hands it `riding`
   const callers = [];
