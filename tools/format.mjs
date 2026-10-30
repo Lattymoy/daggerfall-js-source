@@ -1,0 +1,116 @@
+// THE FORMATTER (LEGIBLE 3, bible/01-Overview/Readability-Arc.md): Prettier at one pinned version and one
+// configuration (.prettierrc.json), over the folders tools/formatted.json lists. A folder joins in one change that
+// formats it with its pins carried: node tools/carryPins.mjs --transform tools/format.mjs src/poi/*.js --write.
+//   node tools/format.mjs --check     every listed file formatted (exit 1 names the rest)
+//   node tools/format.mjs --ignore    write .prettierignore: all but the listed folders, for an editor's format-on-save
+
+// `transform(source, file)` is the carrier's and must be synchronous; Prettier 3 is not, so it runs on a worker of its
+// own and the caller waits on a shared flag for the answer.
+import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { Worker, MessageChannel, receiveMessageOnPort, isMainThread, workerData } from 'node:worker_threads';
+import { isMain } from './lib/isMain.mjs';
+
+export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+export const FORMATTED = 'tools/formatted.json';
+export const IGNORE = '.prettierignore';
+
+/** The folders the formatter owns. */
+export const formattedFolders = (root = ROOT) => JSON.parse(readFileSync(join(root, FORMATTED), 'utf8'));
+
+/** Every .js/.mjs file under the listed folders, repo-relative and sorted. */
+export function formattedFiles(root = ROOT) {
+  return formattedFolders(root).flatMap((d) => readdirSync(join(root, d), { recursive: true })
+    .map((f) => `${d}/${String(f).split('\\').join('/')}`)
+    .filter((f) => /\.m?js$/.test(f))).sort();
+}
+
+/** .prettierignore's text: ignore everything, then un-ignore each listed folder and the parents on its way. */
+export function ignoreText(folders) {
+  const lines = ['# Written by node tools/format.mjs --ignore from tools/formatted.json - edit that, not this.', '/*'];
+  const opened = new Set();
+  for (const folder of [...folders].sort()) {
+    const parts = folder.split('/');
+    for (let i = 1; i <= parts.length; i++) {
+      const path = parts.slice(0, i).join('/');
+      if (opened.has(path)) continue;
+      opened.add(path);
+      lines.push(`!/${path}/`);
+      if (i < parts.length) lines.push(`/${path}/*`);
+    }
+  }
+  return `${lines.join('\n')}\n`;
+}
+
+let worker = null;
+let port = null;
+let signal = null;
+function startWorker() {
+  const channel = new MessageChannel();
+  signal = new Int32Array(new SharedArrayBuffer(4));
+  worker = new Worker(new URL(import.meta.url), {
+    workerData: { prettierPort: channel.port2, prettierSignal: signal },
+    transferList: [channel.port2],
+  });
+  worker.unref();
+  port = channel.port1;
+}
+
+/** The formatted text of `source`, as Prettier formats `file` with the repository's configuration. */
+export function transform(source, file = 'file.js') {
+  if (!worker) startWorker();
+  Atomics.store(signal, 0, 0);
+  worker.postMessage({ source, file: join(ROOT, file) });
+  Atomics.wait(signal, 0, 0);
+  const reply = receiveMessageOnPort(port).message;
+  if (reply.error) throw new Error(reply.error);
+  return reply.out;
+}
+
+if (!isMainThread && workerData?.prettierSignal) {
+  const prettier = await import('prettier');
+  const { prettierPort, prettierSignal } = workerData;
+  const { parentPort } = await import('node:worker_threads');
+  parentPort.on('message', async ({ source, file }) => {
+    let reply;
+    try {
+      const options = await prettier.resolveConfig(file);
+      reply = { out: await prettier.format(source, { ...options, filepath: file }) };
+    } catch (e) {
+      reply = { error: `${file}: ${e.message}` };
+    }
+    prettierPort.postMessage(reply);
+    Atomics.store(prettierSignal, 0, 1);
+    Atomics.notify(prettierSignal, 0);
+  });
+}
+
+/** The listed files Prettier would change, repo-relative. */
+export async function unformatted(root = ROOT) {
+  const prettier = await import('prettier');
+  const out = [];
+  for (const f of formattedFiles(root)) {
+    const path = join(root, f);
+    const options = await prettier.resolveConfig(path);
+    if (!(await prettier.check(readFileSync(path, 'utf8'), { ...options, filepath: path }))) out.push(f);
+  }
+  return out;
+}
+
+if (isMainThread && isMain(import.meta.url)) {
+  if (process.argv.includes('--ignore')) {
+    writeFileSync(join(ROOT, IGNORE), ignoreText(formattedFolders()));
+    console.log(`${IGNORE} written for ${formattedFolders().length} folder(s)`);
+  } else if (process.argv.includes('--check')) {
+    const missing = formattedFolders().filter((d) => !existsSync(join(ROOT, d)));
+    const bad = await unformatted();
+    for (const d of missing) console.log(`MISSING  ${d}`);
+    for (const f of bad) console.log(`UNFORMATTED  ${f}`);
+    if (!missing.length && !bad.length) console.log(`formatted: ${formattedFiles().length} files in ${formattedFolders().length} folder(s)`);
+    process.exitCode = missing.length || bad.length ? 1 : 0;
+  } else {
+    console.error('usage: node tools/format.mjs --check | --ignore');
+    process.exitCode = 2;
+  }
+}

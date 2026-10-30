@@ -1,0 +1,38 @@
+[
+  {
+    "name": "LEGIBLE3-the-wait-dropped",
+    "file": "tools/format.mjs",
+    "old": "  Atomics.wait(signal, 0, 0);\n",
+    "new": "",
+    "tests": [
+      "test/tooling/legible3_format.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE3-the-check-unread",
+    "file": "tools/format.mjs",
+    "old": "    if (!(await prettier.check(readFileSync(path, 'utf8'), { ...options, filepath: path }))) out.push(f);\n",
+    "new": "",
+    "tests": [
+      "test/tooling/legible3_format.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE3-a-parent-left-shut",
+    "file": "tools/format.mjs",
+    "old": "      if (i < parts.length) lines.push(`/${path}/*`);\n",
+    "new": "",
+    "tests": [
+      "test/tooling/legible3_format.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE3-the-configuration-unread",
+    "file": "tools/format.mjs",
+    "old": "      reply = { out: await prettier.format(source, { ...options, filepath: file }) };",
+    "new": "      reply = { out: await prettier.format(source, { filepath: file }) };",
+    "tests": [
+      "test/tooling/legible3_format.test.js"
+    ]
+  }
+]
