@@ -59,26 +59,33 @@ export const passAskSweep = (/** @type {any} */ db, /** @type {string} */ accoun
  * THE ACCOUNT'S PASS, for the window: the season shown (the running one, else the next, else the last), its stage, the
  * tracks it opened, the items it bought, the Aurum its finds earned today and the stage's challenges with their counts.
  * A guest's is refused. AUDIT PASS 2: `open` is the switch's word for this account alone. ADMIN-ALL: an admin's tracks
- * are both open and its items every one, derived here and never written, as titles.js holdsAll's are.
+ * are both open and its items every one, derived here and never written, as titles.js holdsAll's are. AUDIT-STOREFRONT
+ * III C13: `spent` each track's Aurum as the ledger's `panel` lines say it was spent - an admin's none.
  * @param {{ db: any, nowS: number }} ctx @param {any} player @param {any} env
  */
 export async function passOf({ db, nowS }, player, env) {
   if (!player?.handle) return { error: 'guest' };
   const season = passSeasonShown(nowS * 1000);
   if (!season) return { error: 'closed' };
-  const [row, day, counts, track] = await db.batch([
+  const [row, day, counts, track, panels] = await db.batch([
     db.prepare('SELECT pass_items FROM players WHERE id = ?1').bind(player.id),
     db.prepare('SELECT aurum FROM pass_days WHERE account = ?1 AND day = ?2').bind(player.id, utcDay(nowS)),
     db.prepare('SELECT challenge, n, paid FROM pass_counts WHERE account = ?1 AND season = ?2').bind(player.id, season.id),
     db.prepare("SELECT 1 AS x FROM aurum_ledger WHERE account = ?1 AND kind = 'track' AND ref = ?2").bind(player.id, trackRef(season.id)),
+    db.prepare("SELECT ref, amount FROM aurum_ledger WHERE account = ?1 AND kind = 'panel' AND ref LIKE ?2").bind(player.id, `${season.id}:%`),
   ]);
+  const spent = { free: 0, premium: 0 };
+  for (const l of panels?.results ?? []) {   // a line's ref is `<season>:<grant>`, its amount the price paid, less than nought
+    const at = passItemOf(season.id, String(l.ref).slice(season.id.length + 1));
+    if (at) spent[/** @type {'free'|'premium'} */ (at.track)] += Math.max(0, -int(l.amount));
+  }
   const got = new Map((counts?.results ?? []).map((/** @type {any} */ c) => [c.challenge, c]));
   const admin = holdsAll(player, env);
   return {
     season: season.id, open: passOpenFor(player, env), stage: passStageAt(season, nowS * 1000),
     tracks: { free: true, premium: admin || !!track?.results?.length },
     bought: (admin ? PASS_ALL_GRANTS : passItemsOf(row?.results?.[0]?.pass_items)).filter((g) => !!passItemOf(season.id, g)),
-    today: int(day?.results?.[0]?.aurum), dayMax: PASS_DAY_AURUM,
+    today: int(day?.results?.[0]?.aurum), dayMax: PASS_DAY_AURUM, spent,
     challenges: PASS_CHALLENGES.map((c) => { const g = /** @type {any} */ (got.get(c.key)); return { key: c.key, n: Math.min(int(g?.n), c.n), paid: int(g?.paid) > 0 }; }),
   };
 }

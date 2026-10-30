@@ -172,6 +172,8 @@ export function passCardOf(c) {
     tracks: { free: true, premium: c.tracks?.premium === true },
     bought: (Array.isArray(c.bought) ? c.bought : []).filter((/** @type {unknown} */ g, /** @type {number} */ i, /** @type {unknown[]} */ a) => !!passItemOf(season.id, g) && a.indexOf(g) === i),
     today: whole(c.today, PASS_DAY_AURUM), dayMax: PASS_DAY_AURUM,
+    // AUDIT-STOREFRONT III C13: each folio's Aurum spent, the service's ledger's word - none from an older service
+    spent: c.spent && typeof c.spent === 'object' ? { free: whole(c.spent.free, 1e9), premium: whole(c.spent.premium, 1e9) } : null,
     challenges: PASS_CHALLENGES.map((k) => { const g = rows.find((/** @type {any} */ x) => x?.key === k.key); return { key: k.key, n: Math.min(whole(g?.n, 1e6), k.n), paid: g?.paid === true }; }),
   };
 }

@@ -83,7 +83,7 @@
   {
     "name": "FOLIOS-a-locked-gilded-page-open",
     "file": "src/ui/enhanced/enhancedPass.js",
-    "old": "    if (track === 'premium' && !premium) return { locked: true, words: W.pageFolio(passFolioName(sid, track)) };\n",
+    "old": "    if (track === 'premium' && !premium) return { locked: true, words: W.pageFolio() };\n",
     "new": "",
     "tests": [
       "test/ui/folios_window.test.js"
@@ -101,7 +101,7 @@
   {
     "name": "FOLIOS-a-refusal-unsaid",
     "file": "src/ui/enhanced/enhancedPass.js",
-    "old": "asked.then((r) => { if (!r?.ok) said = { id, error: String(r?.error ?? '') }; }",
+    "old": "asked.then((r) => { if (!r?.ok) refused(String(r?.error ?? 'server')); }",
     "new": "asked.then(() => {}",
     "tests": [
       "test/ui/folios_window.test.js"

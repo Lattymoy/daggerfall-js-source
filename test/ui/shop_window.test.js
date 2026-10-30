@@ -157,7 +157,7 @@ test('SHOP: the window - a tab a section with its count, a panel a ware with its
   // Collector retired with them
   assert.deepEqual(all(w.root, 'sh-tab').map((t) => t.textContent), [`Folios${passItemsIn('s1').length}`, 'Kill Effects3', 'Portal Skins3', 'Mounts3', 'Name Visuals5', 'Auras1', 'Aura Armory6', 'Bundles3', 'Aurum4']);
   assert.equal(all(w.root, 'sh-tab')[0].attrs['aria-selected'], 'true');
-  assert.deepEqual(all(w.root, 'sh-price').map((p) => p.textContent), ['1,000'], 'the Folios sell for Aurum alone: the Gilded Folio\'s unlock');
+  assert.deepEqual(all(w.root, 'sh-price').map((p) => all(p, 'sh-pricen')[0]?.textContent), ['1,000'], 'the Folios sell for Aurum alone: the Gilded Folio\'s unlock (PIN MOVED, AUDIT-STOREFRONT III C9: its words for a screen reader beside it)');
   all(w.root, 'sh-tab')[4].click();
   assert.equal(keep.cat, 'names', 'the tab kept, for a face rebuilt around the window');
   assert.deepEqual(all(w.root, 'sh-price').map((p) => p.textContent), ['$5.00', '$2.00', '$3.99', '$6.99', '$9.99']);
@@ -245,9 +245,9 @@ test('SHOP: the pause face wires the gem at the end of the row of marks and its 
   const m = rd('src/ui/enhanced/enhancedMenu.js');
   assert.ok(m.includes("const gem = shopGem(home, [mark, envelope, laurel]);"), 'after the laurel');
   assert.ok(m.includes("shopAnchor = anchorSeason(gem, chain, home.querySelector?.('.px-profile'), home);"), 'placed off the chain it is handed, at the row\'s end');
-  assert.ok(m.includes("shopView = shopWindow(document, { flow: shopFlowOf, keep: shopKeep, onClose: closeShop, focus: shopFocusIn, wearer: shopBody });"), 'AUDIT-STOREFRONT (PIN MOVED): its stages wear the profile\'s body');
+  assert.ok(m.includes("shopView = shopWindow(document, { flow: shopFlowOf, keep: shopKeep, onClose: closeShop, focus: shopFocusIn, wearer: shopBody, now: shopNow });"), 'AUDIT-STOREFRONT (PIN MOVED): its stages wear the profile\'s body - PIN MOVED (AUDIT-STOREFRONT III B8): its clock the shared one');
   assert.ok(m.includes("for (const n of [stage, home.querySelector?.('.px-profile'), mark, envelope, laurel, gem]) n?.setAttribute?.('inert', '');"));
-  assert.ok(m.includes(': shopOpen && shopView ? () => closeShop()'), 'Escape');
+  assert.ok(m.includes(': shopOpen && shopView ? () => { if (!shopView.back()) closeShop(); }'), 'Escape - PIN MOVED (AUDIT-STOREFRONT III C8): an open folio back to its covers first');
   assert.equal(m.split('stopShop();').length - 1, 2, 'a rebuild and the unmount');
   assert.ok(m.includes("shopOpen = false; shopFocusBack = false; shopFlow = null; shopKeep = {};"), 'a visit\'s');
   assert.ok(m.includes('.px-seasonmark, .px-shopmark'), 'a tap on the gem is inside');

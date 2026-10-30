@@ -22,6 +22,8 @@ import { playPreviewSound } from '../effectPreviewSound.js';
 import { passSection, passItemsIn, passShownSeason, PASS_CSS } from './enhancedPass.js';   // PASS-PANELS: the Folios' section
 import { AURUM_DEEDS, aurumPriceOf, aurumBonusOf } from '../../net/aurumLaw.js';   // AURUM: the daily wares, the packs and the week's deeds
 import { aurumArtNode } from '../aurumArt.js';
+import { sharedClockOn, worldMinutes } from '../../systems/worldTick.js';   // AUDIT-STOREFRONT III B8: the shared clock's now
+import { wallMsForClassicMinutes } from '../../net/wire.js';
 
 /** Each section's tab, in the player's language. */
 export const SHOP_CATEGORY_TEXT = Object.freeze({
@@ -209,6 +211,10 @@ export function shopWhoText(/** @type {any} */ flow) {
   return t('shop.who.for', 'Purchases go to the account {name}, for every character on it.', { name: flow.account.handle });
 }
 
+/** AUDIT-STOREFRONT III B8: THE SHOP'S NOW - the shared clock's wall while one stands (the finds' clock,
+ *  scenes/aurumCacheHost.js), so every device says Buy or "opens on" at the same instant; the device's own offline. */
+export const shopNow = () => (sharedClockOn() ? wallMsForClassicMinutes(worldMinutes()) : Date.now());
+
 /** STOREFRONT: the carousel turns a panel this often (ms) - never for less motion, nor while pointed at, focused or paused. */
 export const CAROUSEL_TURN_MS = 8000;
 /** STOREFRONT: whether the carousel turns now - two slides or more, nobody holding it, its panel shown long enough. Pure. */
@@ -294,9 +300,10 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
   const phase = el('span', 'sh-phase', t('shop.phase', 'Pre-alpha'));
   // AURUM: the balance, a readout beside the title while Aurum is open to the account
   const balance = el('span', 'sh-balance');
-  const coin = aurumArtNode(doc, 0, 20, 'sh-coin'), balanceN = el('span', 'sh-balancen');
+  const coin = aurumArtNode(doc, 0, 20, 'sh-coin'), balanceN = el('span', 'sh-balancen'), balanceSay = el('span', 'sh-sr');
+  balanceN.setAttribute('aria-hidden', 'true');   // AUDIT-STOREFRONT III C9: a span's aria-label is dropped - its words are its own
   if (coin) balance.append(coin);
-  balance.append(balanceN);
+  balance.append(balanceN, balanceSay);
   const close = button('sh-close', t('shop.close', 'Close'), () => onClose());
   head.append(title, phase, balance, close);
   // THE DISCLAIMER, first and whole, before any ware - the owner's "strict disclaimer"
@@ -497,18 +504,18 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
     }
     const buyrow = el('div', 'sh-buyrow');
     const price = el('span', daily ? 'sh-price sh-aurumprice' : 'sh-price', '');
-    const priceN = daily ? el('span', 'sh-pricen') : price;
-    if (daily) { const c = aurumArtNode(doc, 0, 22, 'sh-coin'); if (c) price.append(c); price.append(priceN); }
+    const priceN = daily ? el('span', 'sh-pricen') : price, priceSay = daily ? el('span', 'sh-sr') : null;
+    if (daily) { const c = aurumArtNode(doc, 0, 22, 'sh-coin'); if (c) price.append(c); priceN.setAttribute('aria-hidden', 'true'); price.append(priceN, /** @type {any} */ (priceSay)); }   // AUDIT-STOREFRONT III C9: its currency said
     const was = el('s', 'sh-was', '');
     const state = el('span', 'sh-state');
     buyrow.append(was, price, state);
     info.append(buyrow);
     panel.append(stageOf(w, slide), info);
-    return { panel, parts: { daily, buyrow, state, price, priceN, was, contents, wintag, until, untilKey: '', act: /** @type {any} */ (null), actKey: '', contentsKey: '' } };
+    return { panel, parts: { daily, buyrow, state, price, priceN, priceSay, was, contents, wintag, until, untilKey: '', act: /** @type {any} */ (null), actKey: '', contentsKey: '' } };
   };
 
   // ── PASS-PANELS: THE FOLIOS' SECTION (enhancedPass.js), drawn in place as the flow moves ──
-  /** @type {{ nodes: any[], draw: (fl: any) => void }|null} */
+  /** @type {{ nodes: any[], draw: (fl: any) => void, back: () => boolean, says: (fl: any) => boolean }|null} */
   let passView = null;
   const passCtx = () => ({
     flow: f, now, el, button, num, dayText,
@@ -720,29 +727,39 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
   /** AURUM: A DAILY WARE'S PRESS. Spending is pressed twice - Buy arms it, saying the price again, and the second press
    *  buys; left alone it goes back to Buy. Short of the price, Get Aurum (while the packs are sold). Held, Wear. */
   let armed = /** @type {{ id: string, at: number }|null} */ (null);
+  let buying = /** @type {string|null} */ (null);   // AUDIT-STOREFRONT III C12: the ware whose buy is out, its press saying so
   const dailyActFor = (/** @type {any} */ w, /** @type {any} */ st) => {
     if (st.state === 'held') return actFor(w, st);
     if (st.state === 'afford') {
-      const on = armed?.id === w.id, n = st.price;
-      const b = button('sh-buy sh-aurumbuy', on ? t('shop.daily.confirm', 'Confirm: {n, number} Aurum', { n }) : t('shop.daily.buy', 'Buy for {n, number} Aurum', { n }), () => {
+      const on = armed?.id === w.id, n = st.price, going = buying === w.id;
+      const b = button('sh-buy sh-aurumbuy', going ? t('shop.pass.buying', 'Buying...') : on ? t('shop.daily.confirm', 'Confirm: {n, number} Aurum', { n }) : t('shop.daily.buy', 'Buy for {n, number} Aurum', { n }), () => {
         const fl = f();
-        if (!fl || fl.busy) return;
+        if (!fl || fl.busy || buying) return;
         if (armed?.id !== w.id) { armed = { id: w.id, at: now() }; draw(); return; }
         armed = null;
-        Promise.resolve(fl.buyDaily?.(w.id)).catch(() => {});
+        buying = w.id;
+        draw();
+        Promise.resolve(fl.buyDaily?.(w.id)).catch(() => {}).finally(() => { buying = null; draw(); });
       });
-      b.setAttribute('aria-label', on ? t('shop.daily.confirmLabel', 'Confirm: buy {name} for {n, number} Aurum', { name: shopWareName(w), n }) : t('shop.daily.buyLabel', 'Buy {name} for {n, number} Aurum', { name: shopWareName(w), n }));
-      if (on) b.setAttribute('data-armed', 'true');
+      if (!going) b.setAttribute('aria-label', on ? t('shop.daily.confirmLabel', 'Confirm: buy {name} for {n, number} Aurum', { name: shopWareName(w), n }) : t('shop.daily.buyLabel', 'Buy {name} for {n, number} Aurum', { name: shopWareName(w), n }));
+      if (on || going) b.setAttribute('data-armed', 'true');
       if (f()?.busy) b.setAttribute('aria-disabled', 'true');
       return b;
     }
     if (st.state === 'short' && shopSections(f()).includes('aurum')) return button('sh-getaurum', t('shop.daily.get', 'Get Aurum'), () => pick('aurum'));
     return null;
   };
+  /** A wear press's full words: what it does and to which item. */
+  const wearLabel = (/** @type {any} */ w, /** @type {boolean} */ worn) => {
+    const name = shopWareName(w);
+    if (w.kind === 'glyph') return worn ? t('shop.hideLabel', 'Hide {name}', { name }) : t('shop.showLabel', 'Show {name}', { name });
+    return worn ? t('shop.takeOffLabel', 'Take off {name}', { name }) : t('shop.wearLabel', 'Wear {name}', { name });
+  };
   const actFor = (/** @type {any} */ w, /** @type {any} */ st) => {
     if (st.state === 'held' && wearable(w)) {
       const words = w.kind === 'glyph' ? (st.worn ? t('shop.hide', 'Hide') : t('shop.show', 'Show')) : (st.worn ? t('shop.takeOff', 'Take off') : t('shop.wear', 'Wear'));
       const b = button('sh-wear', words, () => wear(w));
+      b.setAttribute('aria-label', wearLabel(w, st.worn));   // AUDIT-STOREFRONT III C9: which item it wears
       if (f()?.busy) b.setAttribute('aria-disabled', 'true');
       return b;
     }
@@ -829,8 +846,9 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
     d.buyrow.className = 'sh-buyrow sh-buyrow-' + st.state;
     const priceText = num(st.price);
     if (d.priceN.textContent !== priceText) d.priceN.textContent = priceText;
-    d.price.setAttribute?.('aria-label', t('shop.daily.priceLabel', '{n, number} Aurum', { n: st.price }));
-    const key = `${st.state}:${st.worn ? 1 : 0}:${armed?.id === w.id ? 1 : 0}:${fl?.busy ? 1 : 0}:${shopSections(fl).includes('aurum') ? 1 : 0}`;
+    const say = t('shop.daily.priceLabel', '{n, number} Aurum', { n: st.price });
+    if (d.priceSay && d.priceSay.textContent !== say) d.priceSay.textContent = say;
+    const key = `${st.state}:${st.worn ? 1 : 0}:${armed?.id === w.id ? 1 : 0}:${fl?.busy ? 1 : 0}:${shopSections(fl).includes('aurum') ? 1 : 0}:${buying === w.id ? 1 : 0}`;
     if (d.actKey !== key) {
       const had = d.act && doc.activeElement === d.act;
       d.act?.remove?.();
@@ -858,7 +876,8 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
     if (showBal) {
       const bt = num(a.balance);
       if (balanceN.textContent !== bt) balanceN.textContent = bt;
-      balance.setAttribute('aria-label', t('shop.aurum.balance', 'Your Aurum: {n, number}', { n: a.balance }));
+      const bs = t('shop.aurum.balance', 'Your Aurum: {n, number}', { n: a.balance });
+      if (balanceSay.textContent !== bs) balanceSay.textContent = bs;
       balance.classList.toggle('sh-owing', a.balance < 0);
     }
     for (const [c, tb] of tabOf) { tb.setAttribute('aria-selected', c === cat ? 'true' : 'false'); tb.tabIndex = c === cat ? 0 : -1; tb.classList.toggle('on', c === cat); }
@@ -866,7 +885,7 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
     for (const n of names) if (n.textContent !== shown) n.textContent = shown;
     const whoText = shopWhoText(fl);
     if (who.textContent !== whoText) who.textContent = whoText;
-    const line = fl?.error || fl?.note || '';
+    const line = passView?.says(fl) ? '' : fl?.error || fl?.note || '';   // AUDIT-STOREFRONT III C10/C11: said once, by the Folios
     if (say.textContent !== line) say.textContent = line;
     say.classList.toggle('bad', !!fl?.error);
   };
@@ -883,6 +902,7 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
     root: win,
     draw,
     close,
+    back: () => passView?.back() ?? false,   // AUDIT-STOREFRONT III C8: Escape asks this first - an open folio closes to its covers
     stop: () => { stopLive(); stopSlide(); stopClock(); sight?.disconnect?.(); view?.removeEventListener?.('focus', onFocus); },
   };
 }
@@ -941,6 +961,7 @@ export const SHOP_CSS = `
 /* THE WINDOW: one height for every section (a tab never moves its frame); the head, the disclaimer and the tabs stand,
    the featured wares and the section scroll under them */
 .px-win.px-shopwin { height: min(820px, 92dvh); width: min(840px, 95vw); }
+.px-home > .px-stage:has(~ .px-shopstage) { visibility: hidden; }   /* AUDIT-STOREFRONT III C14: the inert pause window under it, unseen */
 .px-win.px-shopwin .px-body { padding: 14px 18px 12px; display: flex; flex-direction: column; gap: 10px; overflow: hidden; min-height: 0; }
 .px-shopwin .sh-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; position: relative; display: flex; flex-direction: column; gap: 12px;
   padding: 2px 6px 4px 2px; margin-right: -6px; scrollbar-gutter: stable; overscroll-behavior: contain; }
@@ -963,7 +984,7 @@ export const SHOP_CSS = `
 .px-shopwin .sh-tab:hover, .px-shopwin .sh-tab:focus-visible { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); outline: none; }
 .px-shopwin .sh-tab.on { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
 .px-shopwin .sh-tab:focus-visible { outline: 2px solid #f3cf86; outline-offset: -2px; }
-.px-shopwin .sh-tabcount { font-variant-numeric: tabular-nums; font-size: 11px; opacity: 0.75; }
+.px-shopwin .sh-tabcount { font-variant-numeric: tabular-nums; font-size: 11px; }   /* AUDIT-STOREFRONT III C7: dimmed, it read 3.9:1 on Stone */
 /* A WARE'S PANEL: its stage beside its words */
 .px-shopwin .sh-panels { display: flex; flex-direction: column; gap: 12px; }
 .px-shopwin .sh-ware { display: grid; grid-template-columns: minmax(240px, 1.1fr) 1fr; gap: 16px; }
@@ -1011,7 +1032,7 @@ export const SHOP_CSS = `
 .px-shopwin .sh-price { font-size: 24px; color: #fff4e0; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
 .px-shopwin .sh-aurumprice { display: inline-flex; align-items: center; gap: 6px; color: #ffe29a; }
 .px-shopwin .sh-aurumprice .sh-coin { width: 22px; height: 22px; }
-.px-shopwin .sh-buyrow-held .sh-price { font-size: 15px; opacity: 0.6; }
+.px-shopwin .sh-buyrow-held .sh-price { font-size: 15px; opacity: 0.8; }
 .px-shopwin .sh-was { font-size: 15px; color: var(--dim); }
 .px-shopwin .sh-was:empty { display: none; }
 .px-shopwin .sh-state { font-size: 12.5px; color: var(--dim); }
@@ -1112,6 +1133,12 @@ ${PASS_CSS}
   .px-shopwin .sh-cmeter { grid-column: 1 / -1; grid-row: 2; }
   .px-shopwin .sh-tab { font-size: 12.5px; padding: 4px 7px; letter-spacing: 0.06em; }
 }
+/* AUDIT-STOREFRONT III C16: a phone's sections in one row that scrolls sideways - wrapped, they took half its height */
+@media (max-width: 640px), (max-height: 480px) {
+  .px-shopwin .sh-tabs { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; flex-shrink: 0; }
+  .px-shopwin .sh-tabs::-webkit-scrollbar { display: none; }
+  .px-shopwin .sh-tab { flex: none; }
+}
 /* SHORT (AUDIT-STOREFRONT II, lane E 6): the standing part tighter and the featured stage lower, so a section's tabs and
    its first panel are in sight at 600 px; on a phone on its side, the disclaimer on one line and the stages lower still */
 @media (max-height: 760px) {
@@ -1155,6 +1182,15 @@ ${PASS_CSS}
   .px-shopwin .sh-slidein { animation: none; }
 }
 :root[data-plus-theme="stone"] .px-shopwin { --dim: #e2dccd; text-shadow: 1px 1px 0 rgba(5,6,8,0.85); }
+:root[data-plus-theme="stone"] .px-shopwin :is(.sh-ppanelnum, .sh-subhead) { color: #e8c98a; }   /* AUDIT-STOREFRONT III C7: #d8b56a read 4.3:1 */
+/* AUDIT-STOREFRONT III C15: a finger's press is 44 pixels at the least */
+@media (pointer: coarse) {
+  .px-shopwin :is(.sh-close, .sh-tab, .sh-cprev, .sh-cnext, .sh-cpause, .sh-pageprev, .sh-pagenext, .sh-pagetab, .sh-fback) { min-height: 44px; }
+  .px-shopwin .sh-pitem :is(.sh-buy, .sh-wear, .sh-getaurum) { min-height: 44px; }
+  .px-shopwin .sh-cdot { width: 44px; height: 44px; min-width: 44px; min-height: 44px; }
+  .px-shopwin .sh-pagetab { min-width: 44px; justify-content: center; }
+  .px-shopwin .sh-terms { display: inline-flex; align-items: center; min-height: 44px; }
+}
 `;
 export const SHOP_STYLE_ID = 'dagger-shop-style';
 /** The sheet in the document, once (the Collections page's way). */

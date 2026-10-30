@@ -11,8 +11,10 @@ import {
 } from '../../net/battlePassLaw.js';
 import {
   PASS_SEASON_TEXT, PASS_SEASON_LOOK, PASS_STAGE_TEXT, PASS_PANEL_TEXT as W, passChallengeText, passGrantName, passGrantKind,
-  passPanelNumeral, passRefusalText, passFolioName,
+  passPanelNumeral, passFolioName,
 } from '../passText.js';
+import { accountRefusalText } from '../../net/accountClient.js';   // AUDIT-STOREFRONT III C10: a refusal in the account flow's own words, one table
+import { GRIMOIRE_DRESS } from '../grimoireDress.js';
 import { wareArtNode } from '../wareArt.js';
 import { aurumArtNode } from '../aurumArt.js';
 import { titleBadge, paintTitle } from '../playerBadge.js';
@@ -31,12 +33,13 @@ export const passLandingPage = (/** @type {string} */ season, /** @type {string}
 /** Each folio's emblem on its cover - an item it holds, drawn as every face draws it (ui/wareArt.js). */
 export const PASS_FOLIO_EMBLEM = Object.freeze({ s1: Object.freeze({ free: 'glyph:cog', premium: 'icon:gearheart' }) });
 
-/** WHY NOBODY CAN BUY HERE, or null: 'reading', 'out' (nobody signed in), 'guest', 'closed' (no pass card, or Aurum shut). Pure. */
+/** WHY NOBODY CAN BUY HERE, or null: 'reading', 'out' (nobody signed in), 'guest', 'closed' (no pass card, the Folios
+ *  shut or Aurum shut - AUDIT-STOREFRONT III B3: the service refuses a buy when either switch is off). Pure. */
 export function passCannot(/** @type {any} */ flow) {
   if (!flow || flow.stage === 'loading') return 'reading';
   if (flow.stage !== 'in') return 'out';
   if (!flow.account?.handle) return 'guest';
-  if (!flow.pass || !flow.aurum?.open) return 'closed';
+  if (!flow.pass?.open || !flow.aurum?.open) return 'closed';
   return null;
 }
 /** Afford or short of `price`, off the Aurum card's balance. */
@@ -124,9 +127,16 @@ export function passSection(doc, o) {
   const { el, keep } = o;
   const season = /** @type {NonNullable<ReturnType<typeof passSeasonById>>} */ (passShownSeason(o.flow(), o.now()));
   const sid = season.id;
-  let pending = false;
-  /** @type {{ id: string, error: string }|null} the last refusal, said on the press it answers */
+  /** @type {string|null} the spend whose answer is out */
+  let pending = null;
+  /** @type {{ id: string, error: string, text: string }|null} the last refusal, said on the press it answers */
   let said = null;
+  /** @type {{ error: string, note: string }|null} AUDIT-STOREFRONT III C10/C11: the flow's words a spend's answer left - the
+   *  section says them, so the window's own line does not say them again */
+  let heard = null;
+  const says = (/** @type {any} */ fl) => !!heard && !!(heard.error || heard.note) && (fl?.error || '') === heard.error && (fl?.note || '') === heard.note;
+  // AUDIT-STOREFRONT III C4: the Grimoire's face draws a capital I as a 1 - its pages are numbered 1, 2, 3
+  const numeral = (/** @type {number} */ p) => passPanelNumeral(p, doc.documentElement?.dataset?.plusDress === GRIMOIRE_DRESS);
 
   // ── THE HEAD: the story, the stages, how the folios work, the day's finds, who can buy ──
   const head = el('section', 'sh-pass');
@@ -144,6 +154,8 @@ export function passSection(doc, o) {
   const who = el('p', 'sh-passwho');
   const live = el('p', 'sh-sr');   // a refusal said to a screen reader as well as on its press
   live.setAttribute('role', 'status');
+  const note = el('p', 'sh-pnote');   // AUDIT-STOREFRONT III C11: a spend's answer, said beside the folio it was made in
+  note.setAttribute('role', 'status');
   head.append(name, el('p', 'sh-passlook', PASS_SEASON_LOOK[/** @type {keyof typeof PASS_SEASON_LOOK} */ (sid)]?.() ?? ''), stages, el('p', 'sh-passhow', W.how()), day, who, live);
 
   // ── A SPEND: armed by the first press, made by the second; its answer said on the press ──
@@ -153,55 +165,74 @@ export function passSection(doc, o) {
     said = null;
     live.textContent = '';
     if (!o.armed(id)) { o.arm(id); return; }
-    pending = true;
+    pending = id;
     o.arm(null);
     /** @type {Promise<any>} */ let asked;
     try { asked = Promise.resolve(go(fl)); } catch (e) { asked = Promise.reject(e); }
-    asked.then((r) => { if (!r?.ok) said = { id, error: String(r?.error ?? '') }; }, () => { said = { id, error: '' }; })
-      .finally(() => { pending = false; if (said) live.textContent = passRefusalText(said.error); o.redraw(); });
+    const refused = (/** @type {string} */ error) => { said = { id, error, text: accountRefusalText(error) }; };
+    asked.then((r) => { if (!r?.ok) refused(String(r?.error ?? 'server')); }, () => refused('offline'))
+      .finally(() => {
+        pending = null;
+        const after = o.flow();
+        heard = { error: after?.error || '', note: after?.note || '' };
+        if (said) live.textContent = said.text;
+        o.redraw();
+        if (!said && heard.note) note.scrollIntoView?.({ block: 'nearest' });   // AUDIT-STOREFRONT III C11: in sight without a scroll
+      });
   };
-  /** A press, swapped in when what it offers turns - the focus kept on it. */
-  const swap = (/** @type {any} */ d, /** @type {any} */ host, /** @type {string} */ key, /** @type {() => any} */ make) => {
+  /** A press, swapped in when what it offers turns - the focus kept on it, or (AUDIT-STOREFRONT III C1) given to `home`
+   *  when none takes its place. */
+  const swap = (/** @type {any} */ d, /** @type {any} */ host, /** @type {string} */ key, /** @type {() => any} */ make, /** @type {() => any} */ home = () => null) => {
     if (d.actKey === key) return;
     const had = d.act && doc.activeElement === d.act;
     d.act?.remove?.();
     d.act = make();
     d.actKey = key;
-    if (d.act) { host.append(d.act); if (had) d.act.focus?.({ preventScroll: true }); }
+    if (d.act) { host.append(d.act); if (had) d.act.focus?.({ preventScroll: true }); } else if (had) home()?.focus?.({ preventScroll: true });
   };
   const busyNow = (/** @type {any} */ fl) => !!fl?.busy || pending;
-  /** A spend's press: its words, armed or not, and its full words for a screen reader. */
-  const spendPress = (/** @type {string} */ cls, /** @type {string} */ id, /** @type {[string, string]} */ words, /** @type {[string, string]} */ labels, /** @type {(fl: any) => any} */ go, /** @type {any} */ fl) => {
-    const on = o.armed(id);
-    const b = o.button(`sh-buy sh-aurumbuy ${cls}`, on ? words[1] : words[0], () => spend(id, go));
-    b.setAttribute('aria-label', on ? labels[1] : labels[0]);
-    if (on) b.setAttribute('data-armed', 'true');
+  /** A spend's press: its words, armed or not, and its full words for a screen reader; AUDIT-STOREFRONT III C12: while its
+   *  answer is out, its third words (Buying..., Unlocking...) - never the first press's, which read as called off. */
+  const spendPress = (/** @type {string} */ cls, /** @type {string} */ id, /** @type {[string, string, string]} */ words, /** @type {[string, string]} */ labels, /** @type {(fl: any) => any} */ go, /** @type {any} */ fl) => {
+    const on = o.armed(id), going = pending === id;
+    const b = o.button(`sh-buy sh-aurumbuy ${cls}`, going ? words[2] : on ? words[1] : words[0], () => spend(id, go));
+    if (!going) b.setAttribute('aria-label', on ? labels[1] : labels[0]);
+    if (on || going) b.setAttribute('data-armed', 'true');
     if (busyNow(fl)) b.setAttribute('aria-disabled', 'true');
     return b;
   };
   const shortOf = (/** @type {string} */ id) => said?.id === id && said.error === 'pass-short';
+  /** A price's number as it is seen, and its words with the currency for a screen reader (AUDIT-STOREFRONT III C9: a
+   *  span's aria-label is dropped from the tree). */
+  const priceWords = (/** @type {number} */ n) => {
+    const seen = el('span', 'sh-pricen', o.num(n));
+    seen.setAttribute('aria-hidden', 'true');
+    return [seen, el('span', 'sh-sr', W.price(n))];
+  };
+  /** Why no press stands on an item or the unlock (AUDIT-STOREFRONT III C5), in the shop's short words, or ''. */
+  const reasonOf = (/** @type {string} */ state) => (state === 'soon' ? W.itemSoon(o.dayText(season.fromMs)) : state === 'closed' ? W.itemClosed()
+    : state === 'guest' ? W.itemGuest() : state === 'out' ? W.itemOut() : '');
   /** The Gilded Folio's unlock: its price, what more it needs, its press - on its cover and in its spread. */
   const unlockNode = () => {
     const row = el('div', 'sh-punlock'), cost = el('span', 'sh-price sh-aurumprice'), coin = aurumArtNode(doc, 0, 22, 'sh-coin');
     const n = /** @type {Record<string, number>} */ (PASS_PREMIUM_AURUM)[sid] ?? 0;
     if (coin) cost.append(coin);
-    cost.append(el('span', 'sh-pricen', o.num(n)));
-    cost.setAttribute('aria-label', W.price(n));
+    cost.append(...priceWords(n));
     const state = el('span', 'sh-state');
     row.append(cost, state);
     return { row, state, act: null, actKey: '' };
   };
-  const drawUnlock = (/** @type {any} */ u, /** @type {any} */ fl, /** @type {number} */ nowMs) => {
-    const st = /** @type {any} */ (passUnlockState(fl, sid, nowMs)), id = `unlock:${sid}`, bad = said?.id === id ? passRefusalText(said.error) : '';
+  const drawUnlock = (/** @type {any} */ u, /** @type {any} */ fl, /** @type {number} */ nowMs, /** @type {() => any} */ home) => {
+    const st = /** @type {any} */ (passUnlockState(fl, sid, nowMs)), id = `unlock:${sid}`, bad = said?.id === id ? said.text : '';
     u.row.hidden = st.state === 'held';
-    const words = bad || (st.state === 'short' ? W.short(st.need) : '');
+    const words = bad || (st.state === 'short' ? W.short(st.need) : reasonOf(st.state));
     if (u.state.textContent !== words) u.state.textContent = words;
     u.state.className = `sh-state sh-state-${bad ? 'bad' : st.state}`;
     const getA = (st.state === 'short' || shortOf(id)) && o.canGetAurum(), nm = passFolioName(sid, 'premium');
     swap(u, u.row, `${st.state}:${o.armed(id) ? 1 : 0}:${busyNow(fl) ? 1 : 0}:${getA ? 1 : 0}`, () => {
-      if (st.state === 'afford') return spendPress('sh-punlockb', id, [W.unlock(st.price), W.unlockConfirm(st.price)], [W.unlockLabel(nm, st.price), W.unlockConfirmLabel(nm, st.price)], (f) => f.passUnlock?.(sid), fl);
+      if (st.state === 'afford') return spendPress('sh-punlockb', id, [W.unlock(st.price), W.unlockConfirm(st.price), W.unlocking()], [W.unlockLabel(nm, st.price), W.unlockConfirmLabel(nm, st.price)], (f) => f.passUnlock?.(sid), fl);
       return getA ? o.button('sh-getaurum', W.getAurum(), () => o.toAurum()) : null;
-    });
+    }, home);   // AUDIT-STOREFRONT III C1: unlocked, its row goes - the focus to what stays
   };
 
   // ── THE FOLIOS: their covers, or one opened on its spread ──
@@ -225,8 +256,7 @@ export function passSection(doc, o) {
     if (kind === 'title') { paintTitle(word, titleBadge({ title: key }), false); word.style?.setProperty?.('--n', String(passGrantName(grant).length)); }   // on the tile's wood: its own paint
     const buy = el('div', 'sh-pitembuy'), cost = el('span', 'sh-price sh-aurumprice'), coin = aurumArtNode(doc, 0, 18, 'sh-coin');
     if (coin) cost.append(coin);
-    cost.append(el('span', 'sh-pricen', o.num(price)));
-    cost.setAttribute('aria-label', W.price(price));
+    cost.append(...priceWords(price));
     const state = el('span', 'sh-state');
     buy.append(cost, state);
     card.append(pic, word, el('span', 'sh-rewardkind', passGrantKind(grant)), buy);
@@ -258,7 +288,7 @@ export function passSection(doc, o) {
     items = new Map(); covers = {}; spread = null;
     const row = el('div', 'sh-fcovers');
     for (const track of PASS_TRACKS) row.append(coverNode(track));
-    body.append(row);
+    body.append(row, note);
     draw(o.flow());
     if (focusOn) covers[focusOn]?.face.focus?.({ preventScroll: true });
   };
@@ -289,14 +319,16 @@ export function passSection(doc, o) {
       tb.type = 'button';
       tb.id = `sh-page-${track}-${p}`;
       tb.setAttribute('role', 'tab');
-      tb.append(el('span', 'sh-pagetabword', W.page(passPanelNumeral(p))), lockNode(doc, 'sh-tablock'), el('span', 'sh-tabtick', '✓'));
+      const num = el('span', 'sh-pagetabnum', numeral(p));   // AUDIT-STOREFRONT III C16: a narrow screen shows the numeral alone (PASS_CSS)
+      num.setAttribute('aria-hidden', 'true');
+      tb.append(el('span', 'sh-pagetabword', W.page(numeral(p))), num, lockNode(doc, 'sh-tablock'), el('span', 'sh-tabtick', '✓'));
       tb.addEventListener('click', () => goPage(p, false));
       tabs.append(tb);
       return tb;
     });
     nav.append(prev, tabs, next);
     const host = el('div', 'sh-pagehost');
-    box.append(top, nav, host);
+    box.append(top, nav, note, host);
     // the arrow keys turn the pages, Home and End the first and last; a swipe on the page turns it
     box.addEventListener?.('keydown', (/** @type {KeyboardEvent} */ e) => {
       const to = e.key === 'ArrowRight' ? spread.page + 1 : e.key === 'ArrowLeft' ? spread.page - 1 : e.key === 'Home' ? 0 : e.key === 'End' ? pages.length - 1 : null;
@@ -327,7 +359,7 @@ export function passSection(doc, o) {
     page.setAttribute('role', 'tabpanel');
     page.setAttribute('aria-labelledby', s.tabList[p].id);
     s.pageState = el('span', 'sh-ppanelstate');
-    ph.append(el('span', 'sh-ppanelnum', W.page(passPanelNumeral(p))), s.pageState);
+    ph.append(el('span', 'sh-ppanelnum', W.page(numeral(p))), s.pageState);
     const grid = el('div', 'sh-pitems');
     for (const it of panel.items) grid.append(itemNode(it.grant));
     page.append(ph, grid);
@@ -360,8 +392,8 @@ export function passSection(doc, o) {
   const drawItem = (/** @type {string} */ grant, /** @type {any} */ d, /** @type {any} */ fl, /** @type {number} */ nowMs, /** @type {ReadonlyArray<string>} */ bought, /** @type {boolean} */ premium) => {
     const st = /** @type {any} */ (passItemState(fl, sid, grant, nowMs)), at = /** @type {NonNullable<ReturnType<typeof passItemOf>>} */ (passItemOf(sid, grant));
     const shut = st.state !== 'held' && ((at.track === 'premium' && !premium) || !passPanelOpen(sid, at.track, at.panel, bought));
-    const id = `item:${grant}`, bad = said?.id === id ? passRefusalText(said.error) : '';
-    const words = bad || (st.state === 'held' ? W.itemOwned() : st.state === 'short' ? W.short(st.need) : shut ? W.locked() : '');
+    const id = `item:${grant}`, bad = said?.id === id ? said.text : '';
+    const words = bad || (st.state === 'held' ? W.itemOwned() : st.state === 'short' ? W.short(st.need) : reasonOf(st.state) || (shut ? W.locked() : ''));
     if (d.state.textContent !== words) d.state.textContent = words;
     d.state.className = `sh-state sh-state-${bad ? 'bad' : st.state}`;
     const cls = `sh-pitem sh-pitem-${d.kind} fx-${d.kind}-${d.key} sh-pitem-${st.state}${shut ? ' sh-pitemlocked' : ''}`;
@@ -370,15 +402,16 @@ export function passSection(doc, o) {
     swap(d, d.buy, `${st.state}:${worn ? 1 : 0}:${o.armed(id) ? 1 : 0}:${busyNow(fl) ? 1 : 0}:${getA ? 1 : 0}`, () => {
       if (st.state === 'held') return o.wearPress({ kind: d.kind, key: d.key }, worn);
       const nm = passGrantName(grant);
-      if (st.state === 'afford') return spendPress('sh-pbuy', id, [W.buy(), W.confirm()], [W.buyLabel(nm, st.price), W.confirmLabel(nm, st.price)], (f) => f.passBuy?.(sid, grant), fl);
+      if (st.state === 'afford') return spendPress('sh-pbuy', id, [W.buy(), W.confirm(), W.buying()], [W.buyLabel(nm, st.price), W.confirmLabel(nm, st.price)], (f) => f.passBuy?.(sid, grant), fl);
       return getA ? o.button('sh-getaurum', W.getAurum(), () => o.toAurum()) : null;
     });
   };
   /** A page's words: what of it is owned, or what opens it. */
   const pageWords = (/** @type {string} */ track, /** @type {number} */ p, /** @type {ReadonlyArray<string>} */ bought, /** @type {boolean} */ premium, /** @type {boolean} */ card) => {
     const panel = passPanelsOf(sid, track)[p];
+    // AUDIT-STOREFRONT III C17: the folio's lock first - nothing is spent in a shut folio, so a page's Aurum is no way in
+    if (track === 'premium' && !premium) return { locked: true, words: W.pageFolio() };
     if (!passPanelOpen(sid, track, p, bought)) return { locked: true, words: W.pageLocked(panel.open - passSpentOn(sid, track, bought)) };
-    if (track === 'premium' && !premium) return { locked: true, words: W.pageFolio(passFolioName(sid, track)) };
     return { locked: false, words: card ? W.owned(panel.items.filter((it) => bought.includes(it.grant)).length, panel.items.length) : '' };
   };
   const drawStages = (/** @type {number} */ nowMs) => {
@@ -389,7 +422,7 @@ export function passSection(doc, o) {
     stages.textContent = '';
     season.stages.forEach((st, i) => {
       const li = el('li', `sh-stagechip sh-stage-${rows[i][0]}`);
-      li.append(el('span', 'sh-stagenum', passPanelNumeral(i)), el('span', 'sh-stagename', PASS_STAGE_TEXT[/** @type {keyof typeof PASS_STAGE_TEXT} */ (st.key)]?.() ?? st.key), el('span', 'sh-stagewhen', rows[i][1]));
+      li.append(el('span', 'sh-stagenum', numeral(i)), el('span', 'sh-stagename', PASS_STAGE_TEXT[/** @type {keyof typeof PASS_STAGE_TEXT} */ (st.key)]?.() ?? st.key), el('span', 'sh-stagewhen', rows[i][1]));
       stages.append(li);
     });
   };
@@ -433,36 +466,44 @@ export function passSection(doc, o) {
       if (c.state.textContent !== stateWord) c.state.textContent = stateWord;
       c.face.className = `sh-fcover sh-fcover-${track}${shut ? ' sh-fcover-locked' : ''}`;
       c.face.setAttribute('aria-label', W.coverLabel(passFolioName(sid, track), stateWord, has, c.n));
-      if (c.unlock) drawUnlock(c.unlock, fl, nowMs);
+      if (c.unlock) drawUnlock(c.unlock, fl, nowMs, () => c.face);
     }
     if (spread) {
       const s = spread, track = s.track;
-      const spentText = card && (track === 'free' || premium) ? W.spent(passSpentOn(sid, track, bought)) : '';
+      // AUDIT-STOREFRONT III C13: what the account spent here, off the service's ledger - never what its items are worth (an
+      // Admin holds every item and spent nothing); an older service's card says none, so its items' worth
+      const spentText = card && (track === 'free' || premium) ? W.spent(card.spent?.[track] ?? passSpentOn(sid, track, bought)) : '';
       if (s.spent.textContent !== spentText) s.spent.textContent = spentText;
       const lineText = track === 'free' ? W.freeLine() : premium ? W.premiumOpen() : W.premiumLine();
       if (s.line.textContent !== lineText) s.line.textContent = lineText;
-      if (s.unlock) drawUnlock(s.unlock, fl, nowMs);
+      if (s.unlock) drawUnlock(s.unlock, fl, nowMs, () => s.tabList[s.page]);
       s.tabList.forEach((/** @type {any} */ tb, /** @type {number} */ p) => {
         const pw = pageWords(track, p, bought, premium, !!card), on = p === s.page;
         const done = !pw.locked && passPanelsOf(sid, track)[p].items.every((it) => bought.includes(it.grant));
         tb.className = `sh-pagetab${on ? ' on' : ''}${pw.locked ? ' sh-pagetab-locked' : ''}${done ? ' sh-pagetab-done' : ''}`;
         tb.setAttribute('aria-selected', on ? 'true' : 'false');
         tb.tabIndex = on ? 0 : -1;
-        tb.setAttribute('aria-label', W.pageTab(passPanelNumeral(p), pw.locked ? W.locked() : pw.words || W.free()));
+        tb.setAttribute('aria-label', W.pageTab(numeral(p), pw.locked ? W.locked() : pw.words || W.free()));
       });
-      s.prev.disabled = s.page <= 0;
-      s.next.disabled = s.page >= s.tabList.length - 1;
+      // AUDIT-STOREFRONT III C2: an end's arrow says it cannot turn and keeps the focus a press on it left there
+      s.prev.setAttribute('aria-disabled', s.page <= 0 ? 'true' : 'false');
+      s.next.setAttribute('aria-disabled', s.page >= s.tabList.length - 1 ? 'true' : 'false');
       const pw = pageWords(track, s.page, bought, premium, !!card);
       if (s.pageState.textContent !== pw.words) s.pageState.textContent = pw.words;
       s.pageState.className = `sh-ppanelstate${pw.locked ? ' sh-ppanelstate-locked' : ''}`;
     }
     for (const [grant, d] of items) drawItem(grant, d, fl, nowMs, bought, premium);
     drawChallenges(card, nowMs);
+    const noteText = says(fl) && !said ? heard?.note ?? '' : '';
+    if (note.textContent !== noteText) note.textContent = noteText;
   };
   // a face rebuilt around the window opens where it was, without the turn
   if (keep.folio && PASS_TRACKS.includes(keep.folio)) showSpread(keep.folio, keep.page ?? 0, false);
   else showCovers();
-  return { nodes: [head, body, chal], draw };
+  // AUDIT-STOREFRONT III C8: `back` - Escape in an open folio goes back to its cover (true), never the window shut; C10/C11:
+  // `says` - whether the flow's line is the section's to say
+  const back = () => { if (!spread) return false; showCovers(spread.track); return true; };
+  return { nodes: [head, body, chal], draw, back, says };
 }
 
 /** THE SECTION'S SHEET: geometry and words alone - every surface's paint is the kit's, by its role (enhancedFrame.js
@@ -472,9 +513,10 @@ export const PASS_CSS = `
 .px-shopwin :is(.sh-folio, .sh-spread, .sh-pchal) { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border-width: 2px; border-style: solid; min-width: 0; }
 .px-shopwin .sh-pchal[hidden], .px-shopwin .sh-passday[hidden], .px-shopwin .sh-punlock[hidden] { display: none; }
 .px-shopwin .sh-passhow { margin: 0; font-size: 13.5px; line-height: 1.45; color: #fff4e0; }
-.px-shopwin .sh-passday { display: grid; grid-template-columns: max-content minmax(90px, 1fr); align-items: center; gap: 4px 12px; }
-.px-shopwin .sh-passday .sh-passline { grid-column: 1 / -1; }
-.px-shopwin .sh-daytext { font-size: 14px; color: #ffe29a; font-variant-numeric: tabular-nums; }
+.px-shopwin .sh-passday { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }   /* AUDIT-STOREFRONT III C3: never wider than its panel */
+.px-shopwin .sh-passday .sh-passline { flex-basis: 100%; }
+.px-shopwin .sh-daytext { flex: 0 1 auto; min-width: 0; font-size: 14px; color: #ffe29a; font-variant-numeric: tabular-nums; }
+.px-shopwin .sh-passday .sh-daybar { flex: 1 1 90px; }
 .px-shopwin .sh-daybar, .px-shopwin .sh-cmeter { height: 12px; box-sizing: border-box; border-width: 2px; border-style: solid; background-color: rgba(0,0,0,0.5); }
 .px-shopwin .sh-dayfill, .px-shopwin .sh-cfill { height: 100%; background: linear-gradient(90deg, #c89a4a, #f3cf86); }
 .px-shopwin .sh-passline { margin: 0; font-size: 12.5px; color: #e2dccd; }
@@ -516,9 +558,11 @@ export const PASS_CSS = `
 .px-shopwin .sh-punlock .sh-state:empty { display: none; }
 .px-shopwin .sh-pagenav { display: flex; align-items: center; gap: 6px; }
 .px-shopwin .sh-pageprev, .px-shopwin .sh-pagenext { min-width: 44px; min-height: 36px; padding: 0; font-size: 20px; }
+.px-shopwin :is(.sh-pageprev, .sh-pagenext)[aria-disabled="true"] { opacity: 0.55; cursor: default; }
 .px-shopwin .sh-pageprev::before, .px-shopwin .sh-pagenext::before { content: ''; display: inline-block; width: 10px; height: 10px; border-left: 3px solid currentColor; border-bottom: 3px solid currentColor; }
 .px-shopwin .sh-pageprev::before { transform: translateX(2px) rotate(45deg); } .px-shopwin .sh-pagenext::before { transform: translateX(-2px) rotate(-135deg); }   /* a drawn chevron, not a font's: a pixel font (the Grimoire's) draws its arrows too small to see */
-.px-shopwin .sh-pagetabs { display: flex; flex: 1; justify-content: center; flex-wrap: wrap; gap: 2px 6px; }
+.px-shopwin .sh-pagetabs { display: flex; flex: 1; justify-content: center; flex-wrap: nowrap; gap: 2px 6px; min-width: 0; }
+.px-shopwin .sh-pagetabnum { display: none; }
 .px-shopwin .sh-pagetab { font: inherit; display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 4px 12px; font-size: 13px; letter-spacing: 0.12em;
   text-transform: uppercase; color: #d8cfae; background: none; border: 0; cursor: pointer; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
 .px-shopwin .sh-pagetab:hover, .px-shopwin .sh-pagetab.on { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
@@ -527,6 +571,9 @@ export const PASS_CSS = `
 .px-shopwin .sh-tabtick { color: #9fe8b4; display: none; }
 .px-shopwin .sh-pagetab-locked .sh-tablock, .px-shopwin .sh-pagetab-done .sh-tabtick { display: inline; }
 .px-shopwin .sh-page { display: flex; flex-direction: column; gap: 8px; }
+.px-shopwin .sh-pnote { margin: 0; font-size: 13.5px; color: #9fe8b4; text-align: center; }
+.px-shopwin .sh-pnote:empty { display: none; }
+.px-shopwin .sh-folios > .sh-pnote { margin-top: 8px; }
 .px-shopwin .sh-pagehost { touch-action: pan-y; }
 .px-shopwin .sh-ppanelhead { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 2px 12px; }
 .px-shopwin .sh-ppanelnum { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: #d8b56a; }
@@ -546,13 +593,13 @@ export const PASS_CSS = `
 .px-shopwin .sh-plock { width: 16px; height: 16px; color: #f3cf86; }
 .px-shopwin .sh-ptick { font-size: 16px; line-height: 1; color: #9fe8b4; }
 .px-shopwin .sh-pitemlocked .sh-plock, .px-shopwin .sh-pitem-held .sh-ptick { display: block; }
-.px-shopwin .sh-pitem .sh-rewardname { font-size: 14px; line-height: 1.2; overflow-wrap: anywhere; }
+.px-shopwin .sh-pitem .sh-rewardname { font-size: 14px; line-height: 1.2; overflow-wrap: break-word; hyphens: auto; }
 .px-shopwin .sh-pitem-title .sh-rewardname { max-width: 100%; box-sizing: border-box; font-size: max(11px, min(14px, calc(90cqw / (var(--n, 10) * 0.62)))); padding: 1px 5px; white-space: nowrap; }
 .px-shopwin .sh-rewardkind { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); }
 .px-shopwin .sh-pitembuy { align-self: stretch; margin-top: auto; padding-top: 4px; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px 8px; }
 .px-shopwin .sh-pitem .sh-price { font-size: 17px; }
 .px-shopwin .sh-pitem .sh-aurumprice .sh-coin { width: 18px; height: 18px; }
-.px-shopwin .sh-pitem-held .sh-price { font-size: 13px; opacity: 0.6; }
+.px-shopwin .sh-pitem-held .sh-price { font-size: 13px; opacity: 0.8; }
 .px-shopwin .sh-pitem .sh-state { font-size: 12px; }
 .px-shopwin .sh-pitem .sh-state:empty { display: none; }
 .px-shopwin .sh-pitem :is(.sh-buy, .sh-wear, .sh-getaurum) { flex: 1 1 100%; min-height: 38px; padding: 0 10px; justify-content: center; }
@@ -574,6 +621,9 @@ export const PASS_CSS = `
   .px-shopwin .sh-fcover { grid-template-columns: 90px minmax(0, 1fr); gap: 12px; }
   .px-shopwin .sh-fcoverart { width: 90px; height: 120px; }
   .px-shopwin .sh-pitems { --card: 128px; gap: 6px; }
+  .px-shopwin .sh-pagetabword { display: none; }
+  .px-shopwin .sh-pagetabnum { display: inline; }
+  .px-shopwin .sh-pagetab { padding: 4px 10px; }
 }
 @media (max-height: 480px) {
   .px-shopwin .sh-fcover { grid-template-columns: 72px minmax(0, 1fr); gap: 12px; padding: 8px; }
