@@ -188,7 +188,8 @@ export function createInstanceDoor(deps) {
   async function choose(site) {
     const ok = can(site);
     const castle = ok ? await castleHere(site) : null;   // DOMAIN2: my guild's own castle, where it stands here
-    const rows = instanceOffer({ online: online(), instanceOk: ok, isHold: !!site.isHold, questHere: questHere(site), relaid: site.relaid === true, partners: ok ? await partnersAt(site) : [], castle });   // QUEST-FIRST: Public last where the quest's dungeon is laid smaller
+    const startLair = !!deps.startLair?.(site.mapId);   // START-INSTANCE: a province start's dungeon, its commission still in it
+    const rows = instanceOffer({ online: online(), instanceOk: ok, isHold: !!site.isHold, questHere: questHere(site), relaid: site.relaid === true, partners: ok ? await partnersAt(site) : [], castle, startLair });   // QUEST-FIRST: Public last where the quest's dungeon is laid smaller
     if (!rows) return entryFor(site);
     const row = await new Promise((resolve) => {
       let settled = false;
@@ -200,7 +201,7 @@ export function createInstanceDoor(deps) {
       // QUEST-ELSEWHERE (FIELD BUGS 2026-10-16c): a quest's place laid smaller in public says, before the choice, that its
       // things stand in the instance alone - the line said once inside (questElsewhere) came after Public was chosen; the
       // death quest's remains laid whole among them (HEIR-WHOLE)
-      const quest = !site.isHold && site.relaid === true && questHere(site);
+      const quest = !site.isHold && !startLair && site.relaid === true && questHere(site);   // START-INSTANCE: no Public row to warn of
       const castleOnly = !quest && rows.every((r) => r.kind === 'public' || r.kind === 'castle');   // DOMAIN2: a castle's door says what a castle is
       const win = new ChoiceWindow({ lines: [site.name ?? '', site.isHold ? INSTANCE_TEXT.holdLine() : castleOnly ? INSTANCE_TEXT.castleLine() : INSTANCE_TEXT.line(), quest ? INSTANCE_TEXT.questPublic() : ''].filter(Boolean), options });
       const dispose = typeof win.dispose === 'function' ? win.dispose.bind(win) : null;

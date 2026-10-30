@@ -43,5 +43,68 @@
     "tests": [
       "test/combat/wallshaft.test.js"
     ]
+  },
+  {
+    "name": "START-INSTANCE-public-offered",
+    "file": "src/systems/instancePlaces.js",
+    "old": "  const noPublic = isHold || (startLair && questHere);",
+    "new": "  const noPublic = isHold;",
+    "tests": [
+      "test/systems/quest/instances3_door.test.js"
+    ]
+  },
+  {
+    "name": "START-INSTANCE-any-start-lair",
+    "file": "src/systems/instancePlaces.js",
+    "old": "  const noPublic = isHold || (startLair && questHere);",
+    "new": "  const noPublic = isHold || startLair;",
+    "tests": [
+      "test/systems/quest/instances3_door.test.js"
+    ]
+  },
+  {
+    "name": "START-INSTANCE-door-unasked",
+    "file": "src/scenes/instanceDoor.js",
+    "old": "    const startLair = !!deps.startLair?.(site.mapId);",
+    "new": "    const startLair = false;",
+    "tests": [
+      "test/systems/quest/instances3_door.test.js"
+    ]
+  },
+  {
+    "name": "START-INSTANCE-public-warned",
+    "file": "src/scenes/instanceDoor.js",
+    "old": "      const quest = !site.isHold && !startLair && site.relaid === true && questHere(site);",
+    "new": "      const quest = !site.isHold && site.relaid === true && questHere(site);",
+    "tests": [
+      "test/systems/quest/instances3_door.test.js"
+    ]
+  },
+  {
+    "name": "START-INSTANCE-found-still-counted",
+    "file": "src/scenes/startsHost.js",
+    "old": "      if (sd && lairIs(sd) && !q.getTask?.(FOUND)?.getTriggerValue?.()) return true;",
+    "new": "      if (sd && lairIs(sd)) return true;",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "START-INSTANCE-any-map-id",
+    "file": "src/scenes/startsHost.js",
+    "old": "    return Number.isFinite(mapId) && commissionIn((sd) => (Number(sd.mapId) >>> 0) === (mapId >>> 0));",
+    "new": "    return Number.isFinite(mapId) && commissionIn(() => true);",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
+  },
+  {
+    "name": "START-INSTANCE-world-unwired",
+    "file": "src/scenes/world.js",
+    "old": "    startLair: (mapId) => starts.lairOpen(mapId),",
+    "new": "",
+    "tests": [
+      "test/systems/starts/auditstarts.test.js"
+    ]
   }
 ]
