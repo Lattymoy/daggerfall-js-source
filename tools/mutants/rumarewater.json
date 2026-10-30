@@ -349,8 +349,8 @@
   {
     "name": "RW-WAYS-the-port's-neighbours-unsaid",
     "file": "src/world/worldWide/worldPorts.js",
-    "old": "{ reach: CANAL_PORT_REACH_PX, neighbours: CANAL_PORT_NEIGHBOURS }",
-    "new": "{ reach: CANAL_PORT_REACH_PX }",
+    "old": "      ...(cap?.harbour ? { reach: CANAL_PORT_REACH_PX, neighbours: CANAL_PORT_NEIGHBOURS } : {}),",
+    "new": "      ...(cap?.harbour ? { reach: CANAL_PORT_REACH_PX } : {}),",
     "tests": [
       "test/world/rumarewater.test.js"
     ]

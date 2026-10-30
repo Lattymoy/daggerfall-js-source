@@ -20,8 +20,8 @@
   {
     "name": "WW1-theatre-bay-unasked",
     "file": "src/world/worldWide/worldGrid.js",
-    "old": "  if (inBay(px, py)) return BAY_THEATRE;\n",
-    "new": "",
+    "old": "  if (inBay(px, py)) return BAY_THEATRE;\n  const [x, y] = bayToPicture(px + 0.5, py + 0.5);",
+    "new": "  const [x, y] = bayToPicture(px + 0.5, py + 0.5);",
     "tests": [
       "test/world/worldWide/ww1_world.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WW1-theatre-numbering",
     "file": "src/world/worldWide/worldGrid.js",
-    "old": "(_, i) => PROVINCE_OF_ID[/** @type {1} */ (i + 1)])]);",
-    "new": "(_, i) => PROVINCE_OF_ID[/** @type {1} */ (9 - i)])]);",
+    "old": "  ...Array.from({ length: THEATRE_COUNT - 1 }, (_, i) => PROVINCE_OF_ID[/** @type {1} */ (i + 1)]),",
+    "new": "  ...Array.from({ length: THEATRE_COUNT - 1 }, (_, i) => PROVINCE_OF_ID[/** @type {1} */ (9 - i)]),",
     "tests": [
       "test/world/worldWide/ww1_world.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "WW1-district-side",
     "file": "src/world/worldWide/worldGrid.js",
-    "old": "export const districtOf = (px, py) => [Math.floor((px + WORLD_PIXEL_SPAN) / DISTRICT_PX), Math.floor((py + WORLD_PIXEL_SPAN) / DISTRICT_PX)];",
-    "new": "export const districtOf = (px, py) => [Math.floor((px + WORLD_PIXEL_SPAN) / 64), Math.floor((py + WORLD_PIXEL_SPAN) / 64)];",
+    "old": "  Math.floor((px + WORLD_PIXEL_SPAN) / DISTRICT_PX),\n  Math.floor((py + WORLD_PIXEL_SPAN) / DISTRICT_PX),",
+    "new": "  Math.floor((px + WORLD_PIXEL_SPAN) / 64),\n  Math.floor((py + WORLD_PIXEL_SPAN) / 64),",
     "tests": [
       "test/world/worldWide/ww1_world.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "WW1-registry-held-pixel",
     "file": "src/world/worldWide/worldPlaces.js",
-    "old": "        if (byKey.has(p.key) || byMapId.has(p.mapId)) { shadowed++; continue; }",
-    "new": "        if (byMapId.has(p.mapId)) { shadowed++; continue; }",
+    "old": "        if (byKey.has(p.key) || byMapId.has(p.mapId)) {",
+    "new": "        if (byMapId.has(p.mapId)) {",
     "tests": [
       "test/world/worldWide/ww1_world.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "WW1-registry-held-id",
     "file": "src/world/worldWide/worldPlaces.js",
-    "old": "        if (byKey.has(p.key) || byMapId.has(p.mapId)) { shadowed++; continue; }",
-    "new": "        if (byKey.has(p.key)) { shadowed++; continue; }",
+    "old": "        if (byKey.has(p.key) || byMapId.has(p.mapId)) {",
+    "new": "        if (byKey.has(p.key)) {",
     "tests": [
       "test/world/worldWide/ww1_world.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "WW1-registry-generation",
     "file": "src/world/worldWide/worldPlaces.js",
-    "old": "  const moved = () => { generation++; idx = null;",
-    "new": "  const moved = () => { idx = null;",
+    "old": "    generation++;\n    idx = null;",
+    "new": "    idx = null;",
     "tests": [
       "test/world/worldWide/ww1_world.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "WW1-registry-region-past-the-bay",
     "file": "src/world/worldWide/worldPlaces.js",
-    "old": "  const region = bay ? bayRegion : regionOfTheatre(theatre);",
-    "new": "  const region = bay ? bayRegion : Number.isInteger(row.region) ? row.region : regionOfTheatre(theatre);",
+    "old": "  const region = bay ? bayRegion : regionOfTheatre(theatre); // WW-R: past the Bay its province's region",
+    "new": "  const region = bay ? bayRegion : Number.isInteger(row.region) ? row.region : regionOfTheatre(theatre); // WW-R: past the Bay its province's region",
     "tests": [
       "test/world/worldWide/ww1_world.test.js"
     ],
@@ -147,8 +147,8 @@
   {
     "name": "WW1-pixel-walk-area",
     "file": "src/world/worldWide/worldPlaces.js",
-    "old": "        if (p && p.area === area) got.push(p);",
-    "new": "        if (p) got.push(p);",
+    "old": "          if (p && p.area === area) got.push(p);",
+    "new": "          if (p) got.push(p);",
     "tests": [
       "test/world/worldWide/ww1_world.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "WW1-pixel-walk-unkept",
     "file": "src/world/worldWide/worldPlaces.js",
-    "old": "      areaKept.set(area, got);\n",
-    "new": "",
+    "old": "      areaKept.set(area, got);\n      return got;",
+    "new": "      return got;",
     "tests": [
       "test/world/worldWide/ww1_world.test.js"
     ]

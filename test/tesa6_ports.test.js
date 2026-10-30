@@ -89,7 +89,7 @@ test('TESA6 the host: an Arena port past the Bay answers where the Bay\'s ports 
   assert.match(w, /d = Math\.min\(d, worldPorts\.nearestPx\(p\.x, p\.y\) \?\? Infinity\);/, 'the waters\' port distance');
   assert.match(w, /had\.arena\.id === place\.id && had\.arena\.port === !!place\.port\) return had;/);
   assert.match(w, /`\$\{place\.provinceIndex\}\|\$\{place\.id\}\|\$\{!!place\.port\}`/);
-  assert.match(read('src/world/worldWide/worldPorts.js'), /region: p\.region, area: p\.area, theatre: p\.theatre, crown: crownAt\(p\.px, p\.py\)/, 'a port past the Bay: its province\'s region, the nearest Bay crown\'s office');   // PIN MOVED (BAY-LEFT-SEA, the owner's call taken): a harbourmaster past the Bay keeps the nearest Bay crown's board
+  assert.match(read('src/world/worldWide/worldPorts.js'), /region: p\.region,\n\s*area: p\.area,\n\s*theatre: p\.theatre,\n\s*crown: crownAt\(p\.px, p\.py\)/, 'a port past the Bay: its province\'s region, the nearest Bay crown\'s office');   // PIN MOVED (BAY-LEFT-SEA, the owner's call taken): a harbourmaster past the Bay keeps the nearest Bay crown's board
 });
 
 const ARENA2 = process.env.ARENA2_PATH;

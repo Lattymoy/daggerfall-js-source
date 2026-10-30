@@ -231,8 +231,8 @@
   {
     "name": "WWR-a-place-the-providers-region",
     "file": "src/world/worldWide/worldPlaces.js",
-    "old": "  const region = bay ? bayRegion : regionOfTheatre(theatre);",
-    "new": "  const region = bayRegion;",
+    "old": "  const region = bay ? bayRegion : regionOfTheatre(theatre); // WW-R: past the Bay its province's region",
+    "new": "  const region = bayRegion; // WW-R: past the Bay its province's region",
     "tests": [
       "test/world/worldWide/wwr_regions.test.js"
     ]
@@ -240,8 +240,8 @@
   {
     "name": "WWR-an-area-a-provinces-region",
     "file": "src/world/worldWide/worldGrid.js",
-    "old": "export const BAY_AREA_COUNT = BAY_REGION_COUNT;",
-    "new": "export const BAY_AREA_COUNT = REGION_NAMES.length;",
+    "old": "export const BAY_AREA_COUNT = BAY_REGION_COUNT; // WW-R: the Bay's 62 - REGION_NAMES holds the provinces' regions after them, never an area",
+    "new": "export const BAY_AREA_COUNT = REGION_NAMES.length; // WW-R: the Bay's 62 - REGION_NAMES holds the provinces' regions after them, never an area",
     "tests": [
       "test/world/worldWide/wwr_regions.test.js"
     ]

@@ -11,8 +11,8 @@
   {
     "name": "SPAWN-WORLD-the-lane-read-without-its-flag",
     "file": "src/world/worldWide/worldLanes.js",
-    "old": "v > 0xffffffff || !(v & FLAG)) return -1;",
-    "new": "v > 0xffffffff) return -1;",
+    "old": "  if (!Number.isSafeInteger(v) || v < 0 || v > 0xffffffff || !(v & FLAG)) return -1;",
+    "new": "  if (!Number.isSafeInteger(v) || v < 0 || v > 0xffffffff) return -1;",
     "tests": [
       "test/world/spawnworld.test.js"
     ]
@@ -29,7 +29,7 @@
   {
     "name": "SPAWN-WORLD-the-pixel-read-back",
     "file": "src/world/worldWide/worldLanes.js",
-    "old": "  return worldPixelOfKey(((((v >>> 20) & 0xfff) - lane) * 0x80000) + (v & LOW));",
+    "old": "  return worldPixelOfKey((((v >>> 20) & 0xfff) - lane) * 0x80000 + (v & LOW));",
     "new": "  return worldPixelOfKey(v & LOW);",
     "tests": [
       "test/world/spawnworld.test.js"
@@ -240,8 +240,8 @@
   {
     "name": "SPAWN-WORLD-a-lane-that-is-none",
     "file": "src/world/worldWide/worldLanes.js",
-    "old": "  if (!LANES.includes(lane)) throw new RangeError(`lane ${lane}`);\n",
-    "new": "",
+    "old": "  if (!LANES.includes(lane)) throw new RangeError(`lane ${lane}`);\n  if (!inWorldGrid(px, py)) throw new RangeError(`pixel ${px},${py}`);",
+    "new": "  if (!inWorldGrid(px, py)) throw new RangeError(`pixel ${px},${py}`);",
     "tests": [
       "test/world/spawnworld.test.js"
     ],

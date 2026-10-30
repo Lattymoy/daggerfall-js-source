@@ -49,8 +49,8 @@
   {
     "name": "TESA6-a-crown-past-the-bay",
     "file": "src/world/worldWide/worldPorts.js",
-    "old": "theatre: p.theatre, crown: crownAt(p.px, p.py),",
-    "new": "theatre: p.theatre, crown: 'Wayrest',",
+    "old": "      crown: crownAt(p.px, p.py), // AUDIT TESA II P7: its province's region (WW-R); BAY-LEFT-SEA: the nearest Bay crown's office",
+    "new": "      crown: 'Wayrest', // AUDIT TESA II P7: its province's region (WW-R); BAY-LEFT-SEA: the nearest Bay crown's office",
     "tests": [
       "test/tesa6_ports.test.js",
       "test/world/worldWide/ww3_sea.test.js",

@@ -113,8 +113,8 @@
   {
     "name": "PORT-name-the-slice",
     "file": "src/world/worldWide/worldPorts.js",
-    "old": "name: cap?.name ?? p.name, px: p.px,",
-    "new": "name: p.name, px: p.px,",
+    "old": "      name: cap?.name ?? p.name,",
+    "new": "      name: p.name,",
     "tests": [
       "test/world/nibensea.test.js"
     ]
@@ -122,8 +122,8 @@
   {
     "name": "PORT-reach-unset",
     "file": "src/world/worldWide/worldPorts.js",
-    "old": "      ...(cap?.harbour ? { reach: CANAL_PORT_REACH_PX, neighbours: CANAL_PORT_NEIGHBOURS } : {}) });",
-    "new": "      ...({}) });",
+    "old": "      ...(cap?.harbour ? { reach: CANAL_PORT_REACH_PX, neighbours: CANAL_PORT_NEIGHBOURS } : {}),",
+    "new": "      ...{},",
     "tests": [
       "test/world/nibensea.test.js"
     ]

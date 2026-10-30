@@ -146,8 +146,8 @@
   {
     "name": "BLS-port-crown-never-asked",
     "file": "src/world/worldWide/worldPorts.js",
-    "old": "theatre: p.theatre, crown: crownAt(p.px, p.py),",
-    "new": "theatre: p.theatre, crown: null,",
+    "old": "      crown: crownAt(p.px, p.py), // AUDIT TESA II P7: its province's region (WW-R); BAY-LEFT-SEA: the nearest Bay crown's office",
+    "new": "      crown: null, // AUDIT TESA II P7: its province's region (WW-R); BAY-LEFT-SEA: the nearest Bay crown's office",
     "tests": [
       "test/world/worldWide/bayleftsea_harbour.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "BLS-port-crown-other-pixel",
     "file": "src/world/worldWide/worldPorts.js",
-    "old": "theatre: p.theatre, crown: crownAt(p.px, p.py),",
-    "new": "theatre: p.theatre, crown: crownAt(p.py, p.px),",
+    "old": "      crown: crownAt(p.px, p.py), // AUDIT TESA II P7: its province's region (WW-R); BAY-LEFT-SEA: the nearest Bay crown's office",
+    "new": "      crown: crownAt(p.py, p.px), // AUDIT TESA II P7: its province's region (WW-R); BAY-LEFT-SEA: the nearest Bay crown's office",
     "tests": [
       "test/world/worldWide/bayleftsea_harbour.test.js"
     ]

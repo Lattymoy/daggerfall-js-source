@@ -52,8 +52,8 @@
   {
     "name": "R2-6-neighbour-farthest",
     "file": "src/world/worldWide/worldCemetery.js",
-    "old": "        if (d < bestD || (d === bestD && p.mapId < best.mapId)) { best = p; bestD = d; }",
-    "new": "        if (!best || p.mapId > best.mapId) { best = p; bestD = d; }",
+    "old": "        if (d < bestD || (d === bestD && p.mapId < best.mapId)) {",
+    "new": "        if (!best || p.mapId > best.mapId) {",
     "tests": [
       "test/world/worldWide/auditrelease_r2_gaps.test.js"
     ],

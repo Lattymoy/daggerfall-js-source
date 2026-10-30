@@ -33,7 +33,7 @@ import { isPortTownType } from '../../systems/portPlaces.js';
 import { maskMapId } from '../../systems/travel/travelPorts.js';
 import { seaBears } from '../../net/fortLaw.js';
 import { longitudeLatitudeToMapPixel } from '../../formats/mapsFile.js';
-import { capitalOnPixel } from '../tamrielCapitals.js';   // NIBEN-SEA: a capital's harbour bears its capital's name
+import { capitalOnPixel } from '../tamrielCapitals.js'; // NIBEN-SEA: a capital's harbour bears its capital's name
 
 /** @typedef {{ id: number, mapId: number, key: string, name: string, px: number, py: number, region: number, area: number,
  *   theatre: number, crown: string|null, reach?: number, neighbours?: number }} WorldPort - a port past the Bay, in the shape the host's port lists hand the
@@ -50,7 +50,16 @@ export const CANAL_PORT_REACH_PX = 1200;
  *  water does not join has no way and sails nothing. */
 export const CANAL_PORT_NEIGHBOURS = 4;
 /** The compass's eight ways, east first, turning north (map y runs south). */
-export const COMPASS_WAYS = Object.freeze(['east', 'north-east', 'north', 'north-west', 'west', 'south-west', 'south', 'south-east']);
+export const COMPASS_WAYS = Object.freeze([
+  'east',
+  'north-east',
+  'north',
+  'north-west',
+  'west',
+  'south-west',
+  'south',
+  'south-east',
+]);
 
 /** Where the port ids past the Bay begin: past every masked map id (MapsFile's low 20 bits, travelPorts.js maskMapId). */
 export const PORT_ID_WORLD = 1 << 20;
@@ -82,8 +91,19 @@ export function beyondPorts(places, openSea, crownAt = () => null) {
   for (const p of places.all()) {
     if (!p.port || inBay(p.px, p.py) || !p.name || !isPortTownType(p.type) || !seaBears(p.px, p.py, openSea)) continue;
     const cap = capitalOnPixel(p.px, p.py)?.cap;
-    out.push({ id: portIdOf(p), mapId: p.mapId, key: `${p.px},${p.py}`, name: cap?.name ?? p.name, px: p.px, py: p.py, region: p.region, area: p.area, theatre: p.theatre, crown: crownAt(p.px, p.py),   // AUDIT TESA II P7: its province's region (WW-R); BAY-LEFT-SEA: the nearest Bay crown's office
-      ...(cap?.harbour ? { reach: CANAL_PORT_REACH_PX, neighbours: CANAL_PORT_NEIGHBOURS } : {}) });   // NIBEN-SEA: a harbour up its canal, its packets' own reach; RUMARE-WATER: and its lanes asked of more of its nearest
+    out.push({
+      id: portIdOf(p),
+      mapId: p.mapId,
+      key: `${p.px},${p.py}`,
+      name: cap?.name ?? p.name,
+      px: p.px,
+      py: p.py,
+      region: p.region,
+      area: p.area,
+      theatre: p.theatre,
+      crown: crownAt(p.px, p.py), // AUDIT TESA II P7: its province's region (WW-R); BAY-LEFT-SEA: the nearest Bay crown's office
+      ...(cap?.harbour ? { reach: CANAL_PORT_REACH_PX, neighbours: CANAL_PORT_NEIGHBOURS } : {}),
+    }); // NIBEN-SEA: a harbour up its canal, its packets' own reach; RUMARE-WATER: and its lanes asked of more of its nearest
   }
   return out;
 }
@@ -96,25 +116,40 @@ export function beyondPorts(places, openSea, crownAt = () => null) {
  *   regionAt?: (x: number, y: number) => number, crownAt?: (x: number, y: number) => (string|null) }} o
  */
 export function createWorldPorts({ places, openSea, land = () => 0, regionAt = () => -1, crownAt = () => null }) {
-  let gen = -1, ver = -1;
+  let gen = -1,
+    ver = -1;
   /** @type {WorldPort[]} */ let list = [];
   /** @type {{ bay: any[], list: WorldPort[], all: any[] }|null} */ let joined = null;
   /** @param {number} px @param {number} py @returns {WorldPort|null} */
   const nearest = (px, py) => {
-    let best = null, d = Infinity;
-    for (const q of list) { const e = Math.max(Math.abs(q.px - px), Math.abs(q.py - py)); if (e < d) { d = e; best = q; } }
+    let best = null,
+      d = Infinity;
+    for (const q of list) {
+      const e = Math.max(Math.abs(q.px - px), Math.abs(q.py - py));
+      if (e < d) {
+        d = e;
+        best = q;
+      }
+    }
     return best;
   };
   const fresh = () => {
     if (places.generation() === gen && land() === ver) return;
-    gen = places.generation(); ver = land();
+    gen = places.generation();
+    ver = land();
     list = beyondPorts(places, openSea, crownAt);
   };
   return {
     /** The ports of the sea past the Bay. */
-    list: () => { fresh(); return list; },
+    list: () => {
+      fresh();
+      return list;
+    },
     /** Moves whenever the list may have (a reader that keeps an answer off it keeps it by this). */
-    version: () => { fresh(); return `${gen}.${ver}`; },
+    version: () => {
+      fresh();
+      return `${gen}.${ver}`;
+    },
     /** The Bay's own list (`bay`, the host's - the same array every time it is asked) with the ports past the Bay after
      *  it: the one array while neither moves. @param {any[]} bay */
     withBay(bay) {
@@ -128,8 +163,16 @@ export function createWorldPorts({ places, openSea, land = () => 0, regionAt = (
      *  @param {{ x: number, y: number }} here @param {Array<{ name: string|null, px: number, py: number }>} bayPorts */
     nearestNamed(here, bayPorts) {
       fresh();
-      let best = null, bestD = Infinity;
-      for (const ps of [bayPorts, list]) for (const q of ps) { const d = Math.hypot(q.px - here.x, q.py - here.y); if (d < bestD) { bestD = d; best = q; } }
+      let best = null,
+        bestD = Infinity;
+      for (const ps of [bayPorts, list])
+        for (const q of ps) {
+          const d = Math.hypot(q.px - here.x, q.py - here.y);
+          if (d < bestD) {
+            bestD = d;
+            best = q;
+          }
+        }
       if (!best?.name) return null;
       const turn = Math.atan2(here.y - best.py, best.px - here.x) / (Math.PI / 4);
       return { name: best.name, way: COMPASS_WAYS[((Math.round(turn) % 8) + 8) % 8] };

@@ -218,7 +218,7 @@ test('LW6 the streaming host: the dungeons dived (the game\'s own rows of a laby
   const ix = rd('src/scenes/livingWorld/livingIndex.js');
   assert.match(ix, /export const LIVING_DIVE_TYPES = \/\*\* @type \{Set<number>\} \*\/ \(new Set\(\[LOCATION_TYPES\.DungeonLabyrinth, LOCATION_TYPES\.DungeonKeep, LOCATION_TYPES\.DungeonRuin, LOCATION_TYPES\.Graveyard\]\)\);/);
   assert.match(ix, /blocks: 1, dungeon: true, dungeonType: p\.dungeonType \};/);
-  assert.match(rd('src/world/worldWide/bayPlaces.js'), /dungeonType: md\.dungeonType \?\? 0, hasDungeon: !!loc\.hasDungeon,/);
+  assert.match(rd('src/world/worldWide/bayPlaces.js'), /dungeonType: md\.dungeonType \?\? 0,\n\s*hasDungeon: !!loc\.hasDungeon,/);
   assert.match(rd('src/scenes/livingWorld/livingTrips.js'), /dungeonsNear: index\.dungeonsNear,/);   // PIN MOVED (WW7-7): the trips' world scenes/livingWorld/livingTrips.js's
   // PIN MOVED (BAY-LEFT-GROUND): the host's trouble foes are scenes/livingWorld/troubleFoes.js's (the roads' harness's producer too)
   assert.match(w, /foesOf: troubleFoesOf\(\{ faunaAt: /);

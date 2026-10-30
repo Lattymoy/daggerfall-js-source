@@ -26,9 +26,19 @@
 //
 // Pure: plain records in, answers out. Not a DFU member: DFU has the Bay and nothing past it. Ledger A (WW1).
 // ═══════════════════════════════════════════════════════════════════
-import { worldPixelKey, inWorldGrid, theatreAt, theatreOfArea, districtOfArea, areaAt, BAY_THEATRE, DISTRICT_PX, WORLD_PIXEL_SPAN } from './worldGrid.js';
+import {
+  worldPixelKey,
+  inWorldGrid,
+  theatreAt,
+  theatreOfArea,
+  districtOfArea,
+  areaAt,
+  BAY_THEATRE,
+  DISTRICT_PX,
+  WORLD_PIXEL_SPAN,
+} from './worldGrid.js';
 import { inBay } from '../tamriel/tamrielFrame.js';
-import { regionOfTheatre } from '../../formats/mapsTables.js';   // WW-R: a province's region
+import { regionOfTheatre } from '../../formats/mapsTables.js'; // WW-R: a province's region
 
 /**
  * @typedef {{ mapId: number, name: string, px: number, py: number, type: number, region?: number, area?: number,
@@ -51,18 +61,34 @@ export const PIXEL_PLACES_KEPT = 65536;
  * @param {PlaceRow} row @param {string} source @returns {WorldPlace|null}
  */
 export function placeOfRow(row, source) {
-  const px = row?.px, py = row?.py;
+  const px = row?.px,
+    py = row?.py;
   if (!inWorldGrid(px, py) || !Number.isFinite(row?.mapId)) return null;
   const bay = inBay(px, py);
   const bayRegion = Number.isInteger(row.region) && bay ? /** @type {number} */ (row.region) : -1;
   const area = Number.isInteger(row.area) ? /** @type {number} */ (row.area) : areaAt(px, py, () => bayRegion);
   const theatre = bay ? BAY_THEATRE : area >= 0 ? theatreOfArea(area) : theatreAt(px, py);
-  const region = bay ? bayRegion : regionOfTheatre(theatre);   // WW-R: past the Bay its province's region
-  const w = Math.max(1, row.w ?? 1), h = Math.max(1, row.h ?? 1);
+  const region = bay ? bayRegion : regionOfTheatre(theatre); // WW-R: past the Bay its province's region
+  const w = Math.max(1, row.w ?? 1),
+    h = Math.max(1, row.h ?? 1);
   return Object.freeze({
-    key: worldPixelKey(px, py), mapId: row.mapId >>> 0, name: String(row.name ?? ''), px, py, type: row.type | 0, region, area, theatre,
-    w, h, blocks: w * h, port: !!row.port, dungeonType: row.dungeonType ?? 0, hasDungeon: !!row.hasDungeon, source,
-    location: Number.isSafeInteger(row.location) ? /** @type {number} */ (row.location) : null,   // WW7-5
+    key: worldPixelKey(px, py),
+    mapId: row.mapId >>> 0,
+    name: String(row.name ?? ''),
+    px,
+    py,
+    type: row.type | 0,
+    region,
+    area,
+    theatre,
+    w,
+    h,
+    blocks: w * h,
+    port: !!row.port,
+    dungeonType: row.dungeonType ?? 0,
+    hasDungeon: !!row.hasDungeon,
+    source,
+    location: Number.isSafeInteger(row.location) ? /** @type {number} */ (row.location) : null, // WW7-5
   });
 }
 
@@ -82,19 +108,29 @@ export function createWorldPlaces() {
   /** @type {Map<number, WorldPlace|null>} */ const pixelKept = new Map();
   /** @type {Map<number, WorldPlace>} */ const pixelById = new Map();
   /** @type {Map<number, WorldPlace[]>} */ const areaKept = new Map();
-  const moved = () => { generation++; idx = null; pixelKept.clear(); pixelById.clear(); areaKept.clear(); };
+  const moved = () => {
+    generation++;
+    idx = null;
+    pixelKept.clear();
+    pixelById.clear();
+    areaKept.clear();
+  };
   /** AUDIT TESA II P7: the LIVE lists - a list whose rows move with the world under them (TESA's places, made again when
    *  the trace, the fit or the land moves): asked their stamp at every read, made again (a register: the generation
    *  moves) the read after it moved. @type {Map<string, { stamp: () => readonly any[], rows: () => Iterable<PlaceRow>, seen: readonly any[]|null }>} */
   const live = new Map();
-  const sameStamp = (/** @type {readonly any[]|null} */ a, /** @type {readonly any[]} */ b) => !!a && a.length === b.length && a.every((v, i) => v === b[i]);
+  const sameStamp = (/** @type {readonly any[]|null} */ a, /** @type {readonly any[]} */ b) =>
+    !!a && a.length === b.length && a.every((v, i) => v === b[i]);
   const sync = () => {
     for (const [source, l] of live) {
       const s = l.stamp();
       if (sameStamp(l.seen, s)) continue;
       l.seen = s;
       /** @type {WorldPlace[]} */ const made = [];
-      for (const row of l.rows() ?? []) { const p = placeOfRow(row, source); if (p) made.push(p); }
+      for (const row of l.rows() ?? []) {
+        const p = placeOfRow(row, source);
+        if (p) made.push(p);
+      }
       lists.set(source, made);
       moved();
     }
@@ -102,13 +138,21 @@ export function createWorldPlaces() {
   const build = () => {
     if (live.size) sync();
     if (idx) return idx;
-    const byKey = new Map(), byMapId = new Map(), byArea = new Map(), byTheatre = new Map();
+    const byKey = new Map(),
+      byMapId = new Map(),
+      byArea = new Map(),
+      byTheatre = new Map();
     /** @type {WorldPlace[]} */ const list = [];
     let shadowed = 0;
     for (const rows of lists.values()) {
       for (const p of rows) {
-        if (byKey.has(p.key) || byMapId.has(p.mapId)) { shadowed++; continue; }
-        byKey.set(p.key, p); byMapId.set(p.mapId, p); list.push(p);
+        if (byKey.has(p.key) || byMapId.has(p.mapId)) {
+          shadowed++;
+          continue;
+        }
+        byKey.set(p.key, p);
+        byMapId.set(p.mapId, p);
+        list.push(p);
         if (!byArea.has(p.area)) byArea.set(p.area, []);
         byArea.get(p.area).push(p);
         if (!byTheatre.has(p.theatre)) byTheatre.set(p.theatre, []);
@@ -145,7 +189,10 @@ export function createWorldPlaces() {
      *  @param {string} source @param {Iterable<PlaceRow>} rows @returns {number} how many rows made a place */
     register(source, rows) {
       /** @type {WorldPlace[]} */ const made = [];
-      for (const row of rows ?? []) { const p = placeOfRow(row, source); if (p) made.push(p); }
+      for (const row of rows ?? []) {
+        const p = placeOfRow(row, source);
+        if (p) made.push(p);
+      }
       pixels.delete(source);
       pixelOfId.delete(source);
       live.delete(source);
@@ -162,7 +209,8 @@ export function createWorldPlaces() {
       lists.delete(source);
       live.delete(source);
       pixels.set(source, fn);
-      if (idPixel) pixelOfId.set(source, idPixel); else pixelOfId.delete(source);
+      if (idPixel) pixelOfId.set(source, idPixel);
+      else pixelOfId.delete(source);
       moved();
     },
     /** AUDIT TESA II P7: a LIVE list provider, by its name - `rows()` its rows as they stand now, `stamp()` a list of what
@@ -177,9 +225,18 @@ export function createWorldPlaces() {
       moved();
     },
     /** A provider's places gone. @param {string} source */
-    drop(source) { const a = lists.delete(source), b = pixels.delete(source), c = live.delete(source); pixelOfId.delete(source); if (a || b || c) moved(); },
+    drop(source) {
+      const a = lists.delete(source),
+        b = pixels.delete(source),
+        c = live.delete(source);
+      pixelOfId.delete(source);
+      if (a || b || c) moved();
+    },
     /** Moves on every register and drop - and, AUDIT TESA II P7, when a live list's stamp moved. */
-    generation: () => { if (live.size) sync(); return generation; },
+    generation: () => {
+      if (live.size) sync();
+      return generation;
+    },
     /** The providers, lists first, each in the order it registered. */
     sources: () => [...new Set([...lists.keys(), ...live.keys()]), ...pixels.keys()],
     /** Every LISTED place, the providers' order (a pixel provider's are found by place). */
@@ -188,10 +245,12 @@ export function createWorldPlaces() {
     at,
     /** The place of a map id - a list's, or a pixel provider's (found, or read back to its pixel) - or null. @param {number} mapId */
     byMapId(mapId) {
-      const id = mapId >>> 0, got = build().byMapId.get(id) ?? pixelById.get(id);
+      const id = mapId >>> 0,
+        got = build().byMapId.get(id) ?? pixelById.get(id);
       if (got) return got;
       for (const read of pixelOfId.values()) {
-        const px = read(id), p = px ? at(px.x, px.y) : null;
+        const px = read(id),
+          p = px ? at(px.x, px.y) : null;
         if (p?.mapId === id) return p;
       }
       return null;
@@ -205,12 +264,14 @@ export function createWorldPlaces() {
       let got = areaKept.get(area);
       if (got) return got;
       got = [...listed];
-      const x0 = d[0] * DISTRICT_PX - WORLD_PIXEL_SPAN, y0 = d[1] * DISTRICT_PX - WORLD_PIXEL_SPAN;
-      for (let y = y0; y < y0 + DISTRICT_PX; y++) for (let x = x0; x < x0 + DISTRICT_PX; x++) {
-        if (build().byKey.has(worldPixelKey(x, y))) continue;
-        const p = at(x, y);
-        if (p && p.area === area) got.push(p);
-      }
+      const x0 = d[0] * DISTRICT_PX - WORLD_PIXEL_SPAN,
+        y0 = d[1] * DISTRICT_PX - WORLD_PIXEL_SPAN;
+      for (let y = y0; y < y0 + DISTRICT_PX; y++)
+        for (let x = x0; x < x0 + DISTRICT_PX; x++) {
+          if (build().byKey.has(worldPixelKey(x, y))) continue;
+          const p = at(x, y);
+          if (p && p.area === area) got.push(p);
+        }
       areaKept.set(area, got);
       return got;
     },
@@ -224,10 +285,11 @@ export function createWorldPlaces() {
      *  @param {number} px @param {number} py @param {number} r @param {(p: WorldPlace) => boolean} [keep] */
     near(px, py, r, keep) {
       /** @type {WorldPlace[]} */ const got = [];
-      for (let y = py - r; y <= py + r; y++) for (let x = px - r; x <= px + r; x++) {
-        const p = at(x, y);
-        if (p && (!keep || keep(p))) got.push(p);
-      }
+      for (let y = py - r; y <= py + r; y++)
+        for (let x = px - r; x <= px + r; x++) {
+          const p = at(x, y);
+          if (p && (!keep || keep(p))) got.push(p);
+        }
       return got;
     },
     /** Rows a list handed in that stood on a held pixel (or a held map id) and stand nowhere. */

@@ -134,7 +134,7 @@ cold on the freeware where the cells made whole took 83 s (Quest-Arc QUEST-FABRI
 ### R2-6 - a vampire's crypt past the Bay (FIXED, the second pass)
 
 `src/scenes/vampireCrypt.js:"export function vampireCryptPixel(at, regionIndex, maps, places, roll = Math.random) {"`,
-`src/world/worldWide/worldCemetery.js:"export function cemeteryPastBay(places, px, py, roll = Math.random) {"`. The
+`src/world/worldWide/worldCemetery.js:"export function cemeteryPastBay"`. The
 transfer (`scenes/world.js` transferToCemeteryArm - VampirismInfection's GetRandomCemetery, then the respawn into its
 dungeon) read the current region's MAPS.BSA rows for a cemetery; past the Bay a province's region holds none, so it was
 skipped with its warning and the vampire woke where they turned. The owner, of the gaps the first pass left: *"Take care

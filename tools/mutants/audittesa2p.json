@@ -208,8 +208,8 @@
   {
     "name": "P7-live-stamp-one-item",
     "file": "src/world/worldWide/worldPlaces.js",
-    "old": "a.every((v, i) => v === b[i])",
-    "new": "a[0] === b[0]",
+    "old": "    !!a && a.length === b.length && a.every((v, i) => v === b[i]);",
+    "new": "    !!a && a.length === b.length && a[0] === b[0];",
     "tests": [
       "test/world/audittesa2p_world.test.js"
     ]
@@ -379,8 +379,8 @@
   {
     "name": "P7-port-region-unsaid",
     "file": "src/world/worldWide/worldPorts.js",
-    "old": "region: p.region, area: p.area, theatre: p.theatre, crown: crownAt(p.px, p.py),",
-    "new": "region: -1, area: p.area, theatre: p.theatre, crown: crownAt(p.px, p.py),",
+    "old": "      region: p.region,",
+    "new": "      region: -1,",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ],

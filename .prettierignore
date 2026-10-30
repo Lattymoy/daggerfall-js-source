@@ -242,6 +242,8 @@
 /src/world/water/*/
 !/src/world/worldOfDaggerfall/
 /src/world/worldOfDaggerfall/*/
+!/src/world/worldWide/
+/src/world/worldWide/*/
 !/tools/
 /tools/*
 !/tools/layered-armor/
