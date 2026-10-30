@@ -166,7 +166,7 @@
   {
     "name": "SHOP-buy-to-a-guest",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "  if (!flow.account?.handle) return { state: 'guest', buy: null, cents };\n",
+    "old": "  if (!flow.account?.handle) return { state: 'guest', buy: null, ...base };\n",
     "new": "",
     "tests": [
       "test/ui/shop_window.test.js"
@@ -175,7 +175,7 @@
   {
     "name": "SHOP-buy-off-sale",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "  if (row && !row.sale) return { state: 'gone', buy: null, cents };\n",
+    "old": "  if (row && !row.sale) return { state: 'gone', buy: null, ...base };\n",
     "new": "",
     "tests": [
       "test/ui/shop_window.test.js"

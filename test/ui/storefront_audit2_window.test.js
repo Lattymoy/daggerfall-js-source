@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { SHOP_WARES } from '../../src/net/shopLaw.js';
+import { aurumCardOf } from '../../src/net/aurumLaw.js';   // AURUM-ONLY: every ware bought with Aurum
 import { EFFECTS } from '../../src/net/effectLaw.js';
 import { passCardOf, passItemOf, passPanelsOf } from '../../src/net/battlePassLaw.js';
 import { passFolioName } from '../../src/ui/passText.js';
@@ -43,8 +44,11 @@ function fakeDoc({ grimoire = false, IO = null } = {}) {
 }
 const walk = (n, f) => { f(n); for (const c of n.children ?? []) walk(c, f); };
 const all = (root, cls) => { const out = []; walk(root, (n) => { if (String(n.className).split(' ').includes(cls)) out.push(n); }); return out; };
-const card = () => ({ on: true, wares: SHOP_WARES.filter((w) => w.alone && w.cash).map((w) => ({ id: w.id, sale: true, held: false, buy: `https://accounts.invalid/v1/shop/buy?t=${w.key}` })), featured: ['kill:ashen', 'kill:pyre', 'portal:runic'] });   // PIN MOVED (PASS-PANELS): no pass is a ware
-const flowIn = (extra = {}) => ({ stage: 'in', account: { handle: 'Aelwyn', kind: 'linked' }, wardrobe: { titles: [], glyphs: [], auras: [] }, shop: card(), busy: false, ...extra });
+// PIN MOVED (PASS-PANELS): no pass is a ware. PIN MOVED (AURUM-ONLY): the card as the service answers it - a pack its
+// money link, every other ware sold alone its Aurum price - with Aurum open to the account
+const card = () => ({ on: true, wares: SHOP_WARES.filter((w) => w.alone).map((w) => ({ id: w.id, sale: true, held: false, ...(w.cash ? { buy: `https://accounts.invalid/v1/shop/buy?t=${w.key}`, cents: w.cents } : { price: w.price }) })), featured: ['kill:ashen', 'kill:pyre', 'portal:runic'] });
+const AURUM = aurumCardOf({ open: true, balance: 5000, daily: { until: 1, wares: [] }, week: { until: 1, deeds: {} } });
+const flowIn = (extra = {}) => ({ stage: 'in', account: { handle: 'Aelwyn', kind: 'linked' }, wardrobe: { titles: [], glyphs: [], auras: [] }, shop: card(), aurum: AURUM, busy: false, ...extra });
 const open = (o = {}, doc = fakeDoc()) => shopWindow(doc, { flow: () => o.flow ?? flowIn(), onClose() {}, keep: o.keep ?? {}, focus: false, reduced: !!o.reduced, now: o.now, preview: o.preview ?? (async () => null), effectPreview: o.effectPreview ?? (async () => null) });
 
 /** The sheet's rules, each its selectors and its declarations (an @media's flattened in). */

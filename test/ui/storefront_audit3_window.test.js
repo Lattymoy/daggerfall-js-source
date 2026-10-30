@@ -50,10 +50,13 @@ const settle = () => new Promise((r) => setImmediate(r));
 const S1 = passSeasonById('s1');
 const NOW = Date.UTC(2026, 10, 14, 12), DAY = Math.floor(NOW / 86_400_000);
 const FREE_I = passPanelsOf('s1', 'free')[0].items.map((it) => it.grant);
-const shopCard = () => ({ on: true, wares: SHOP_WARES.filter((w) => w.alone && w.cash).map((w) => ({ id: w.id, sale: true, held: false, buy: 'https://accounts.invalid/x' })), featured: [] });
+/** PIN MOVED (AURUM-ONLY): the card as the service answers it - a pack its money link, every other ware sold alone its
+ *  Aurum price, a quarter off among `deals` (the day's) and marked so. */
+const shopCard = (deals = []) => ({ on: true, wares: SHOP_WARES.filter((w) => w.alone).map((w) => ({ id: w.id, sale: true, held: false,
+  ...(w.cash ? { buy: 'https://accounts.invalid/x', cents: w.cents } : { price: deals.includes(w.id) ? aurumPriceOf(w.id) : w.price, deal: deals.includes(w.id) }) })), featured: [] });
 const passOf = (o = {}) => passCardOf({ season: 's1', open: o.open ?? true, stage: 0, tracks: { premium: !!o.premium }, bought: o.bought ?? [], today: 0, challenges: [], ...(o.spent ? { spent: o.spent } : {}) });
 const flowIn = (o = {}) => ({
-  stage: 'in', account: { handle: 'Aelwyn', kind: 'linked' }, busy: false, shop: shopCard(), error: '', note: '',
+  stage: 'in', account: { handle: 'Aelwyn', kind: 'linked' }, busy: false, shop: shopCard((o.daily ?? []).map((/** @type {any} */ d) => d.id)), error: '', note: '',
   wardrobe: { titles: [], glyphs: ['cog'], glyphsOff: [], auras: [], icons: [], effectsHeld: { kill: [], portal: [], mount: [] } },
   aurum: aurumCardOf({ open: true, balance: o.balance ?? 2400, daily: { until: (DAY + 1) * 86_400_000, wares: o.daily ?? [] }, week: { until: NOW + 86_400_000, deeds: {} } }),
   pass: passOf(o),
@@ -266,7 +269,7 @@ test('AUDIT-STOREFRONT III C12: while a spend\'s answer is out its press says so
   assert.equal(press().textContent, 'Unlocking...');
   u.stop();
   let paid;
-  fl.buyDaily = () => new Promise((r) => { paid = r; });
+  fl.buyWare = () => new Promise((r) => { paid = r; });   // PIN MOVED (AURUM-ONLY): buyDaily, every ware's now
   const d = open(fl, { keep: { cat: 'daily' } });
   const db = () => all(all(d.root, 'sh-panel')[0], 'sh-buy')[0];
   db().click(); db().click();

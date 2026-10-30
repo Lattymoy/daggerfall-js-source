@@ -202,8 +202,8 @@
   {
     "name": "AUDIT-STOREFRONT-a-window-told-beside-no-sale",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "win = row?.until && row.sale ? row : null;",
-    "new": "win = row?.until ? row : null;",
+    "old": "win = row?.until && row.sale ? row : null, deal",
+    "new": "win = row?.until ? row : null, deal",
     "tests": [
       "test/ui/storefront_audit_window.test.js"
     ]
