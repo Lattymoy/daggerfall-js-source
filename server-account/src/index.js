@@ -966,10 +966,10 @@ const service = {
         const who = await patreonIdentity(outbound, ticket.k);
         if ('error' in who) return page(PATREON_PAGES.down, 502);
         if (who.user !== ticket.u) return page(PATREON_PAGES.expired, 400);   // the token answers for another Patreon account now
-        const r = await linkPatreon(ctx, { p: ticket.p, u: who.user, t: who.tiers.join(','), s: who.status });
+        const r = await linkPatreon(ctx, { p: ticket.p, u: who.user, t: who.tiers.join(','), s: who.status, c: who.cents });
         if ('error' in r) return page(PATREON_PAGES.account, 403);
         const row = await db.prepare('SELECT handle FROM players WHERE id = ?1').bind(ticket.p).first();
-        return patreonHtml(patreonLinkedPage({ handle: row?.handle ?? '', titles: pledgeTitles(who.tiers, who.status, env) }));
+        return patreonHtml(patreonLinkedPage({ handle: row?.handle ?? '', titles: pledgeTitles(who.tiers, who.status, env), aurum: r.aurum }));
       }
 
       // SHOP (shop.js): THE SHOP'S DOORS, no session - each proven by what it carries, answered before the JSON ladder as

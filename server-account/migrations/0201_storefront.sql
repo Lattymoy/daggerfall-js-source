@@ -91,7 +91,8 @@ ALTER TABLE shop_orders ADD COLUMN aurum INTEGER NOT NULL DEFAULT 0;
 
 -- THE LEDGER, once each (the key): `deed` the week's first of a witnessed kind (ref `<kind>:<week>`, the week from Monday,
 -- UTC), `find` a UTC day's finds (ref the day, its amount the day's sum), `challenge` a stage's challenge paid (ref
--- `<season>:<key>`), `cache` a cache found (ref its id), and spent as negative amounts: `buy` a daily ware (ref its id),
+-- `<season>:<key>`), `cache` a cache found (ref its id), `patreon` what a Patreon total adds (ref `<user>:<total>`,
+-- PATRON-AURUM), and spent as negative amounts: `buy` a daily ware (ref its id),
 -- `track` a premium track opened (ref `<season>:premium`), `panel` a pass item bought (ref `<season>:<grant>`).
 CREATE TABLE IF NOT EXISTS aurum_ledger (
   account TEXT NOT NULL,

@@ -18,7 +18,8 @@ bought with Aurum, and the pass no longer gives it (`Battle-Pass.md` section 3).
 AURUM-ONLY, the owner, 2026-10-30: *"So nothing should cost money money anymore. Aurem should now be the main way to buy
 all items. Aurem purchase itself should be the only thing."* Asked, the owner chose $1 = 100 Aurum and daily deals at a
 quarter off. So every ware in the shop is bought with Aurum, and money buys the packs alone (sections 4 and 5). With
-it: *"ensure the aurem caches are balanced"* (section 3a, Balance), then caches with no clock (CACHES-ONCE, section 3a).
+it: *"ensure the aurem caches are balanced"* (section 3a, Balance), then caches with no clock (CACHES-ONCE, section 3a),
+and patrons paid their Patreon total in Aurum (PATRON-AURUM, section 3b).
 
 ## 2. The currency
 
@@ -36,6 +37,7 @@ line is keyed by its account, kind and ref, so none is written twice:
 | `challenge` | `<season>:<challenge>` | the challenge's Aurum, once |
 | `deed` | `<deed>:<week>` | the week's deed, once |
 | `cache` | the cache's id | a cache's Aurum |
+| `patreon` | `<Patreon user>:<total>` | what that Patreon total adds |
 | `buy` | the ware bought | its price, negative |
 | `track` | `<season>:premium` | the premium track's price, negative |
 | `panel` | `<season>:<item>` | the item's price, negative |
@@ -115,6 +117,24 @@ arms of `worldModes.js`'s dungeon ladder and the standalone `dungeon.js` carry t
 which freed the context's three lines. `world.js` and
 `exterior.js` stand none: the streets' points of interest are the POI editor's placements (`POI-Editor-Arc.md`),
 another slice. Not a DFU member (Port-Ledger section A, AURUM-CACHES).
+
+## 3b. Paid on Patreon (PATRON-AURUM, 2026-10-30)
+
+The owner: *"All current patreons should be granted aurem amounts according to their purchase amount on patreon."*
+Asked, the owner chose the lifetime total read off Patreon. A cent paid is an Aurum, the packs' $1 = 100 Aurum.
+
+**Where the total comes from.** The link asks Patreon for the member's `campaign_lifetime_support_cents`, and Patreon's
+member webhook states it on each charge (`server-account/src/patreon.js`). A figure that is not a whole count of cents,
+or is past $10 million, is not read.
+
+**What is paid.** One statement writes a ledger line `patreon` `<user>:<total>` to the account linked to that Patreon
+user now, for what the total adds past every line that user was ever paid, on any account. So a total said twice or out
+of order pays nothing more, a link moved to a new account pays it only what Patreon adds after, and an unlink or a
+refund takes nothing back. The confirm page says a cent becomes an Aurum; the page after it says what Patreon has paid.
+
+**Who.** Every linked patron. A patron linked before PATRON-AURUM is paid at their next charge, or at once by pressing
+Link Patreon again. A patron granted a title by name is paid once they link. `test/server/patreon_link.test.js`;
+`tools/mutants/patron_aurum.json`.
 
 ## 4. Bought
 
