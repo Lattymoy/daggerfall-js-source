@@ -363,8 +363,8 @@
   {
     "name": "QLO-the-post-undrawn",
     "file": "src/ui/questlines/qlJournal.js",
-    "old": "  const posted = line.state === 'offered' ? linePostWords(line.post) : null;",
-    "new": "  const posted = null;",
+    "old": "  const posted = line.state === 'offered' ? linePostWords(line.post) : null; // QL-OFFERED",
+    "new": "  const posted = null; // QL-OFFERED",
     "tests": [
       "test/systems/questlines/qloffered.test.js"
     ],

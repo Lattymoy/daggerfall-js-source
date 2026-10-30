@@ -22,6 +22,8 @@
 /src/ui/*
 !/src/ui/ketch/
 /src/ui/ketch/*/
+!/src/ui/questlines/
+/src/ui/questlines/*/
 !/src/ui/wardrobe/
 /src/ui/wardrobe/*/
 !/tools/

@@ -67,8 +67,8 @@
   {
     "name": "AUDIT-QL-UI-6-one-line-for-both-skins",
     "file": "src/ui/questlines/qlJournal.js",
-    "old": "export const offerWaitingWords = (offer) => (isEnhanced()",
-    "new": "export const offerWaitingWords = (offer) => (true",
+    "old": "  isEnhanced()",
+    "new": "  true",
     "tests": [
       "test/ui/questlines/ql2_journal.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "AUDIT-QL-UI-10-take-key-dropped",
     "file": "src/ui/questlines/qlJournal.js",
-    "old": "    b.setAttribute('data-focus', `take:${offer.id}:${i}`);\n",
-    "new": "",
+    "old": "    b.setAttribute('data-focus', `take:${offer.id}:${i}`);\n    b.title = t('ql.journal.takeTitle', 'Take {name}: it is set at your feet and your pack opens over it', {",
+    "new": "    b.title = t('ql.journal.takeTitle', 'Take {name}: it is set at your feet and your pack opens over it', {",
     "tests": [
       "test/ui/questlines/ql2_journal.test.js",
       "test/ui/questlines/ql2_pause.test.js"
@@ -158,8 +158,8 @@
   {
     "name": "AUDIT-QL-UI-10-armed-words",
     "file": "src/ui/questlines/qlJournal.js",
-    "old": "i === armed ? t('ql.journal.takeArmed', 'Click again to take') : t('ql.journal.take', 'Take this')",
-    "new": "t('ql.journal.take', 'Take this')",
+    "old": "    const b = el(\n      doc,\n      'button',\n      'act',\n      i === armed ? t('ql.journal.takeArmed', 'Click again to take') : t('ql.journal.take', 'Take this'),\n    );",
+    "new": "    const b = el(doc, 'button', 'act', t('ql.journal.take', 'Take this'));",
     "tests": [
       "test/ui/questlines/ql2_journal.test.js",
       "test/ui/questlines/ql2_pause.test.js"
@@ -214,8 +214,8 @@
   {
     "name": "AUDIT-QL-UI-19-page-silent",
     "file": "src/ui/questlines/qlJournal.js",
-    "old": "    if (s.refused) list.append(el(doc, 'li', 'px-qline-said failed', accountRefusalText(s.refused)));\n",
-    "new": "",
+    "old": "    if (s.refused) list.append(el(doc, 'li', 'px-qline-said failed', accountRefusalText(s.refused)));\n  }",
+    "new": "  }",
     "tests": [
       "test/ui/questlines/ql2_journal.test.js"
     ]
