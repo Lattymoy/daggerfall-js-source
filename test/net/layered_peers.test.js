@@ -50,8 +50,8 @@ test('LAYERED-PEERS: a viewer in Layered Gearing sees EVERY other player on foot
   const w = createPeerWalkers({ art: rig(), layeredAll: () => true });
   assert.deepEqual(await drawn(w, others()), { set: LAYERED_ARCHIVE.male, none: LAYERED_ARCHIVE.female, chose: LAYERED_ARCHIVE.female });
   // in what their look says they wear: leather where nothing is worn, the chest plate where it is
-  assert.match(w.walkers.get('none').batch.record, /^lll_/, 'nothing worn: plain leather');
-  assert.match(w.walkers.get('chose').batch.record, /^lp[0-6]l_/, 'the plate cuirass their items carry, on the chest');
+  assert.match(w.walkers.get('none').batch.record, /^lll@0_/, 'nothing worn: plain leather (LAYERED-WEAPONS: empty-handed)');
+  assert.match(w.walkers.get('chose').batch.record, /^lp[0-6]l@0_/, 'the plate cuirass their items carry, on the chest');
 });
 
 test('LAYERED-PEERS: a Skins viewer sees what they always saw - a set as the set, a look with no set and no `lg` no walker, a chosen `lg` still in armor', async () => {

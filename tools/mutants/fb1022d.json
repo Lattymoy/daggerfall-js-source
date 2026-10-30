@@ -542,8 +542,8 @@
   {
     "name": "FB1022D-AUDIT-D4-cloak-plain-frames-released",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "(code === lk.outfit || code === plain)",
-    "new": "(code === lk.outfit)",
+    "old": "(worn === lk.outfit || worn === plain)",
+    "new": "(worn === lk.outfit)",
     "tests": [
       "test/net/peer/fb1022d_peerart.test.js"
     ]

@@ -822,6 +822,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     sheathed: playerWeapon.sheathed,
     spellcasting: spellArmed(),
     usingBow: !!playerWeapon.machine.isBow,
+    heldWeapon: playerWeapon.weapon ?? null,   // LAYERED-WEAPONS: the item the sprite's hands hold (player/eyeOfTheBeholder/layeredWeapon.js)
     transformed: !!entity && isTransformedLycanthrope(entity),
     lycanthropyType: (entity && liveLycanthropy(entity)?.infectionType) || 0,
     horseLook: entity ? riddenHorseLook(entity.items ?? []) : 0,   // COATS1: its code

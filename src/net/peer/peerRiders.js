@@ -42,6 +42,8 @@ import { quadHalfDiagonal } from '../../render/bounds.js';   // AUDIT FLICKER R1
 import { stepPeerPace } from './peerPace.js';   // HT-WAIST-BACK: the pace off the drawn pose, MWBODY1's law
 import { peerBodyYaw, peerMoving } from './peerClimb.js';   // CLIMB5: a walker on the wall faces it and takes no stride
 import { gatherActOf, peerGatherTool, peerGatherSwing } from './peerGather.js';   // PEER-ACTS: a walker at a gathering act
+import { peerWeaponOf } from './peerBodies.js';   // LAYERED-WEAPONS: the weapon in the hand the peer uses
+import { layeredWeaponOf } from '../../player/eyeOfTheBeholder/layeredWeapon.js';
 
 /** The table a riding pose shows: standing, walking, galloping (EOTB's three mounted tables). */
 export const rideTable = (mv) => (mv === 2 ? 'GallopHorse' : mv === 1 ? 'MoveHorse' : 'IdleHorse');
@@ -392,6 +394,10 @@ export const walkerHands = (pose) => (gatherActOf(pose)
   ? { sheathed: !peerGatherTool(pose), spellcasting: false, usingBow: false }
   : { sheathed: !pose.wd, spellcasting: !!pose.sr, usingBow: pose.wd === 2 });
 
+/** LAYERED-WEAPONS: the weapon a layered walker holds - the tool of its gathering act, else the one in the hand its pose
+ *  says it uses (the look carries both hands) - as a weapon code (layeredWeapon.js), or null for bare hands. Pure. */
+export const walkerWeapon = (look, pose) => layeredWeaponOf(gatherActOf(pose) ? peerGatherTool(pose) : peerWeaponOf(look, pose));
+
 /**
  * DISC23-B (2026-09-24, Gryphoth on Discord: "a way to change our sprite in general instead of it defaulting depending
  * on the class") - ANOTHER PLAYER ON FOOT, AS THE SPRITE THEY CHOSE.
@@ -510,7 +516,7 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
       // LAYERED-GEAR: such a walker wears what its look says it wears - the helmet, chest and legs pieces (and a cloak's
       // dye) its own client sent (net/wire.js look items) - in the body it chose (LAYERED-PEERS: or its own); leather
       // where it wears none
-      const worn = lgBody ? { wornArmour: true, outfit: outfitOfItems(peer.look?.items), gender: lgBody } : null;
+      const worn = lgBody ? { wornArmour: true, outfit: outfitOfItems(peer.look?.items), gender: lgBody, weapon: walkerWeapon(peer.look, pose) } : null;
       const s = spriteFor(flinch ? 'Death' : r.table, view, flinch ? 0 : r.frame, worn ? { onFoot: set ?? 0, ...worn } : { onFoot: set });
       if (!s) continue;
       faceDrawn(r, view, yaw, feet, eye);   // SPRITE-FACE: the way it is drawn facing, for an aura on it

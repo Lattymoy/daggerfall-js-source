@@ -84,6 +84,57 @@ outfit keeps the plain frames it shares). The renderer's cache is one for that s
 (`player/eyeOfTheBeholder/eotbBody.js`), so each asks it whether its texture still stands before trusting it, and uploads
 again what the other let go. `test/net/peer/fb1022d_peerart.test.js`.
 
+## The weapon in the hands (LAYERED-WEAPONS, 2026-10-30)
+
+The owner, 2026-10-30: *"Id like to implement proper weapon and animations depending on what youre using because
+currently the sprite only uses a hammer"*, then *"Do everything"*. The strips draw a warhammer into every walk, attack,
+hurt and idle frame of every outfit. The body now holds what the player holds: `player/eyeOfTheBeholder/layeredWeapon.js`.
+
+| The hands | Tables | Drawn |
+|---|---|---|
+| Sheathed, a spell readied, bare hands | Idle, Move, Death, IdleSpell, MoveSpell, any melee table with nothing held | nothing: the hammer is taken out |
+| A melee weapon | IdleMelee, MoveMelee, AttackMelee | the weapon, its shape and its metal |
+| A bow | IdleRanged, MoveRanged | the bow, upright in the hand |
+| The loose | AttackRanged | the strips' own bow (records 20-24), as before |
+| A cast | AttackSpell | the swing's wind-up and throw (records 5-9, frames 0-3), hands empty |
+
+The cast used to play the bow's loose; a caster drew a bow. An iron warhammer is the art's own hammer, under the key it
+always had; a warhammer of another metal is that hammer recoloured.
+
+**The rig.** `tools/layered-armor/build_weapon_rig.py` writes `vendor/layered-armor/weapon/`: for each hammer frame and
+chest family (a plate chest moves the hammer a pixel or two), the hammer's pixels, the grip, the head, the head's
+radius, the depth along the shaft (where the body hid it) and the fill for the hole. The pixels are the ones the
+family's nine outfits draw alike, on the line from the grip to the head; the 120 grips were read by eye and snapped to
+where the shaft meets the fist. A rebuild of one frame: name it (`male:0-0`), the rest are kept. The rig is cut from the
+strips' own hammer, so it ships in the third exception's folder; the weapons drawn in its place are the game's drawing.
+
+**Taking it out.** Each hammer pixel takes the side of the nearest pixel outside it: open air is cleared, a pixel the
+body was behind is filled. The fill copies the body from a shift that best continues it round the hole, over the
+family's outfits, else blends the body round it. The front views (`MIRROR`: the walk's 0-0, 0-1 and 0-3 and the idle's
+15-0) copy the body's other side, mirrored, its alpha too, so the hidden hand comes back whole. The female's front walk
+0-2 hid the whole forearm: empty-handed it is drawn as 0-0's mirror twin (`BARE_TWINS`).
+
+**Drawing one.** The weapon is drawn by the game, not stored: each template a shape in centimetres (the hammer's grip to
+head is 70), laid along the hammer's shaft from the grip, foreshortened as the shaft is, supersampled, shaded from the
+upper left and rimmed dark as the art's own weapons are. Where the hammer was behind the body the weapon is too. The
+metal is the strips' own (the armour's seven ramps); silver, elven and dwarven have ramps of their own. A bow or staff
+past steel wears its metal, as Daggerfall dyes it. Daggerfall Unity draws no third-person weapon for the player; the
+shapes follow the templates (`characters/weapons.js` WEAPONS), finer than `fpsWeapon.js` weaponTypeForItem's sets,
+which fold a tanto and a claymore into one long blade. The Hand Wraps are bare hands. A weapon wearing a look is drawn
+as the look.
+
+**Whose hands.** My body reads the item in the hand in use (`combat/weapon/weaponRig.js` eotbState `heldWeapon`,
+`eotbBody.js` lookNow). A walker holds the tool of its gathering act, else the weapon in the hand its pose says it uses
+(`net/peer/peerRiders.js` walkerWeapon, `peerBodies.js` peerWeaponOf): nothing new on the wire. The outfit code carries
+what the hands show (`p6cl~2@ls7`, `@0` empty), so the pictures of each are their own; my body lets the last weapon's
+go with its outfit's (`releaseOutfits`).
+
+**Known limits.** The body's motion is the hammer's in every case: a dagger chops overhead as the hammer does, and bare
+hands strike with both fists; new swings need new frames drawn in all 27 outfits. A few frames keep a pixel or two of
+the hammer's knob at the fist, and a fill can borrow a patch of another piece's colour. No weapon draws its enchanted
+glow. Verified by `test/player/eyeOfTheBeholder/layered_weapons.test.js` and `tools/mutants/layered_weapons.json` (18
+mutants, all dead); the peer-art pins moved to the new codes (`test/net/peer/fb1022d_peerart.test.js`).
+
 ## The art - the doctrine's third exception
 
 The strips are drawn from Daggerfall's own sprites (the caped class sprites 1540 and 1541, the enemy frames of
@@ -91,7 +142,8 @@ TEXTURE.475-490), so under `01-Overview/Port-Doctrine.md` they are a render of g
 them as a named exception (2026-10-19), as for Vanilla Enhanced and the desert's and winter's ground, credited to DFO
 (`src/ui/credits.js`, `Mod-Registry.md`). `test/tooling/doctrine.test.js` marks the folder `derived`.
 
-- `vendor/layered-armor/male|female/<combo>/`: the body strips; `cloak/<body>/`: the hood and cape layer;
+- `vendor/layered-armor/male|female/<combo>/`: the body strips; `weapon/<body>/<record>-<frame>.png` and
+  `weapon/manifest.json`: where the strips' hammer is (LAYERED-WEAPONS); `cloak/<body>/`: the hood and cape layer;
   `hoodfix/<body>/<combo>/<record>-<frame>.png`: the pixels a hooded frame needs beyond body plus cloak (a frame that
   needs none has no file). `decodeLayered` fetches a hood fix only when a cloak is worn, and draws without it if it
   cannot be had.

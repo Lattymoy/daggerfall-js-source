@@ -28,6 +28,7 @@
 import manifest from '../../../vendor/layered-armor/manifest.json' with { type: 'json' };
 import cloakManifest from '../../../vendor/layered-armor/cloak/manifest.json' with { type: 'json' };
 import { drawnPiece } from '../../net/appearanceLaw.js';   // APPEARANCES: a worn piece's look
+import { weaponShownFor, weaponRigOf, removeWeapon, drawWeapon, recolourHammer, maskTile, weaponLen, BARE_TWINS } from './layeredWeapon.js';   // LAYERED-WEAPONS: the weapon in the hands
 
 /** The texture archives the composed pictures are uploaded under - one per body, clear of every vendored archive. */
 export const LAYERED_ARCHIVE = Object.freeze({ male: 1700, female: 1701 });
@@ -83,12 +84,12 @@ export function outfitOfItems(items) {
   return outfitOfSlots(slots);
 }
 
-const PIECE = /^(l|c|p[0-6])(l|c|p[0-6])(l|c|p[0-6])(?:~([0-9]))?$/;
+const PIECE = /^(l|c|p[0-6])(l|c|p[0-6])(l|c|p[0-6])(?:~([0-9]))?(?:@(0|[a-z]{2}[0-9]))?$/;
 const FAMILY = { l: 'leather', c: 'chain', p: 'plate' };
 /** An outfit code split into its three pieces (and the cloak's dye, or null), or null. */
 export function outfitPieces(outfit) {
   const m = PIECE.exec(String(outfit ?? ''));
-  return m ? { head: m[1], top: m[2], legs: m[3], cloak: m[4] == null ? null : Number(m[4]) } : null;
+  return m ? { head: m[1], top: m[2], legs: m[3], cloak: m[4] == null ? null : Number(m[4]), weapon: m[5] ?? null } : null;
 }
 /** The art's folder for an outfit: '<head>_<top>_<legs>' families. */
 export const outfitCombo = (p) => `${FAMILY[p.head[0]]}_${FAMILY[p.top[0]]}_${FAMILY[p.legs[0]]}`;
@@ -112,7 +113,8 @@ function recordBase(table, hasRanged, hasHurt) {
   switch (table) {
     case 'Move': case 'MoveMelee': case 'MoveRanged': case 'MoveSpell': return 0;
     case 'AttackMelee': return 5;
-    case 'AttackRanged': case 'AttackSpell': return hasRanged ? 20 : 15;
+    case 'AttackRanged': return hasRanged ? 20 : 15;
+    case 'AttackSpell': return 5;   // LAYERED-WEAPONS: the swing's wind-up and throw, hands empty - the bow was no cast
     case 'Death': return hasHurt ? 10 : 15;
     case 'Idle': case 'IdleMelee': case 'IdleRanged': case 'IdleSpell': return 15;
     default: return null;
@@ -140,14 +142,21 @@ export function layeredSprite(table, offset, frame, tableFrames, look, mirror) {
   const record = base + offset;
   const n = frames.filter((k) => k.startsWith(`${record}-`)).length || 1;
   const t = Math.max(1, tableFrames | 0);
-  const f = Math.floor((Math.min(Math.max(frame | 0, 0), t - 1) * n) / t);
+  const fc = Math.min(Math.max(frame | 0, 0), t - 1);
+  const f = table === 'AttackSpell' ? Math.min(fc, n - 1) : Math.floor((fc * n) / t);   // the cast: the swing's first frames, one for one
   const cloakFrames = /** @type {string[]|undefined} */ (cloakManifest[body]?.frames);
   const cloak = pieces.cloak != null && cloakFrames?.includes(`${record}-${f}`) ? pieces.cloak : null;   // a frame with no cloak art draws without
-  const code = `${pieces.head}${pieces.top}${pieces.legs}${cloak == null ? '' : `~${cloak}`}`;
+  // LAYERED-WEAPONS: what the hands show - nothing, the weapon held, or the art as drawn (the loose's own bow; an iron
+  // warhammer, which is the art's own)
+  const shown = weaponRigOf(body, `${record}-${f}`) ? weaponShownFor(table, look?.weapon ?? null) : null;
+  const weapon = shown === 'wh0' ? null : shown;
+  const code = `${pieces.head}${pieces.top}${pieces.legs}${cloak == null ? '' : `~${cloak}`}${weapon == null ? '' : `@${weapon}`}`;
+  const twin = weapon === '0' ? BARE_TWINS[body]?.[`${record}-${f}`] : null;
+  const [rec, fr] = twin ? twin.split('-').map(Number) : [record, f], flip = twin ? !mirror : mirror;
   return {
-    archive: LAYERED_ARCHIVE[body], record, frame: f, mirror,
-    key: `LA:${body}:${combo}:${record}-${f}:${code}`,
-    rec: `${code}_${record}-${f}${mirror ? 'm' : ''}`,
+    archive: LAYERED_ARCHIVE[body], record: rec, frame: fr, mirror: flip,
+    key: `LA:${body}:${combo}:${rec}-${fr}:${code}`,
+    rec: `${code}_${rec}-${fr}${flip ? 'm' : ''}`,
   };
 }
 
@@ -155,7 +164,7 @@ export function layeredSprite(table, offset, frame, tableFrames, look, mirror) {
 export const isLayeredKey = (key) => typeof key === 'string' && key.startsWith('LA:');
 
 const IN_BROWSER = typeof window !== 'undefined';
-/** `<gender>/<combo>/<record>-<frame>` -> the built strip's URL (eager URL strings, lazy pixels - eotbSprite's law). */
+/** `<gender>/<combo>/<record>-<frame>` (and the weapon rig's `weapon/...`) -> the built strip's URL - eotbSprite's law. */
 const STRIPS = IN_BROWSER
   ? Object.fromEntries(Object.entries(import.meta.glob('../../../vendor/layered-armor/*/*/*.png', { eager: true, query: '?url', import: 'default' }))
     .map(([p, u]) => [p.split('/').slice(-3).join('/').replace(/\.png$/, ''), /** @type {string} */ (u)]))
@@ -315,14 +324,15 @@ export function applyCloak(out, cs, dye, over, head = 'l', noSlivers = false, to
 // cloth's green; 128: the colour as it is; 1: the px is cleared.
 /**
  * @param {{width:number,height:number,data:Uint8Array}} out  @param {{width:number,height:number,data:Uint8Array|Uint8ClampedArray}} fs
- * @param {{head:string,top:string,legs:string}} pieces  @param {number} dye
+ * @param {{head:string,top:string,legs:string}} pieces  @param {number} dye  @param {Uint8Array|null} [skip] the hammer taken out
  */
-export function applyHoodFix(out, fs, pieces, dye) {
+export function applyHoodFix(out, fs, pieces, dye, skip = null) {
   const w = out.width, h = out.height, d = out.data, sw = fs.width, f = fs.data;
   const tilesN = sw === w * 9 ? 9 : sw === w ? 1 : 0;
   if (!tilesN || fs.height !== h) return;   // not this canvas: leave the picture as it is
   const slotPiece = [pieces.head, pieces.top, pieces.legs];
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    if (skip?.[y * w + x]) continue;
     let q = (y * sw + x) * 4;
     if (tilesN === 9) {
       const s = (y * sw + w + x) * 4;
@@ -349,9 +359,9 @@ export function applyHoodFix(out, fs, pieces, dye) {
  * @param {string} code the outfit code ('p6cl', 'p6cl~2' with a cloak dyed Red)
  * @param {{strip:{width:number,height:number,data:Uint8Array|Uint8ClampedArray}, over:boolean, noSlivers?:boolean,
  *   fix?:{width:number,height:number,data:Uint8Array|Uint8ClampedArray}|null}|null} [cloak] the frame's cloak strip (and its hood fix)
- * @returns {{width:number,height:number,data:Uint8Array}}
+ * @param {{mask:Uint8Array, fr:any, len:number, view:number}|null} [weapon] LAYERED-WEAPONS: the frame's rig  @returns {{width:number,height:number,data:Uint8Array}}
  */
-export function composeStrip(strip, code, cloak = null) {
+export function composeStrip(strip, code, cloak = null, weapon = null) {
   const pieces = outfitPieces(code);
   const plate = pieces ? Object.entries({ head: pieces.head, top: pieces.top, legs: pieces.legs }).filter(([, p]) => p[0] === 'p') : [];
   const tilesN = manifest.tiles.length;
@@ -360,11 +370,16 @@ export function composeStrip(strip, code, cloak = null) {
   const out = new Uint8Array(w * h * 4);
   for (let y = 0; y < h; y++) out.set(src.subarray(y * sw * 4, (y * sw + w) * 4), y * w * 4);
   const res = { width: w, height: h, data: out };
+  const held = pieces?.weapon ?? null, hand = weapon && held && weapon.mask.length === w * h ? weapon : null;
+  const takeOut = held === '0' || (held && held.slice(0, 2) !== 'wh');   // the art's hammer goes
   const finish = () => {
+    if (hand && takeOut) removeWeapon(res, hand.mask, hand.fr.fill);
+    else if (hand) recolourHammer(res, hand.mask, hand.fr, Number(held.slice(2)) || 0);
     if (cloak && pieces?.cloak != null) {
       applyCloak(res, cloak.strip, pieces.cloak, cloak.over, pieces.head[0], cloak.noSlivers === true, pieces.top[0]);
-      if (cloak.fix) applyHoodFix(res, cloak.fix, pieces, pieces.cloak);
+      if (cloak.fix) applyHoodFix(res, cloak.fix, pieces, pieces.cloak, hand && takeOut ? hand.mask : null);
     }
+    if (hand && takeOut && held !== '0') drawWeapon(res, hand.fr, held, hand.len, hand.view);
     return res;
   };
   if (w === sw) return finish();
@@ -402,7 +417,7 @@ const cloakOver = (body, rf) => {
  * decodes one strip - this thread's fetch and `decodePng` unless one is handed in (eotbBody's decode worker).
  * @param {string} key  @param {(bytes:Uint8Array)=>Promise<{width:number,height:number,data:Uint8Array}>} decodePng
  */
-export async function decodeLayered(key, decodePng, { fetchUrl = (u) => fetch(u), urlOf = (k) => STRIPS[k], cloakUrlOf = (k) => CLOAK_STRIPS[k], hoodFixUrlOf = (k) => HOODFIX_STRIPS[k], picture = null } = {}) {
+export async function decodeLayered(key, decodePng, { fetchUrl = (u) => fetch(u), urlOf = (k) => STRIPS[k], cloakUrlOf = (k) => CLOAK_STRIPS[k], hoodFixUrlOf = (k) => HOODFIX_STRIPS[k], weaponUrlOf = (k) => STRIPS[k], picture = null } = {}) {
   const [, body, combo, rf, code] = key.split(':');
   const url = urlOf(`${body}/${combo}/${rf}`);
   if (!url) throw new Error(`${key}: no art`);
@@ -423,5 +438,12 @@ export async function decodeLayered(key, decodePng, { fetchUrl = (u) => fetch(u)
       try { cloak.fix = await pictureOf(fu); } catch { /* no fix */ }
     }
   }
-  return composeStrip(strip, code, cloak);
+  // LAYERED-WEAPONS: the frame's rig, for a code that changes what the hands hold; without it the art draws as it is
+  const pieces = outfitPieces(code), fr = pieces?.weapon ? weaponRigOf(body, rf, pieces.top[0]) : null;
+  let weapon = null;
+  if (fr) {
+    const wu = weaponUrlOf(`weapon/${body}/${rf}`);
+    try { if (wu) weapon = { mask: maskTile(await pictureOf(wu), pieces.top[0]), fr, len: weaponLen(body), view: Number(rf.split('-')[0]) % 5 }; } catch { weapon = null; }
+  }
+  return composeStrip(strip, code, cloak, weapon);
 }
