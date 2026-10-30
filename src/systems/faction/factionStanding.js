@@ -23,7 +23,7 @@ import { getLocalizedFactionName } from '../textManager.js';
 import { DIVINES, ORDERS } from '../guild/guildVariants.js';
 import { GUILDS } from '../guild/guilds.js';
 import { affiliations } from '../affiliations.js';
-import { RANDOM_RULER } from '../npcSession.js';   // FACTION.TXT's placeholder ruler a random noble quest stands in for - no kingdom
+import { RANDOM_RULER } from '../npcSession.js'; // FACTION.TXT's placeholder ruler a random noble quest stands in for - no kingdom
 
 /** @typedef {{ id: string, title: string, ids?: readonly number[], type?: number }} StandingGroup */
 /** The groups, in the page's order: a title and how its factions are found (fixed ids, or a FACTION.TXT type).
@@ -33,7 +33,7 @@ export const ORG_STANDING_GROUPS = Object.freeze([
   Object.freeze({ id: 'temples', title: 'Temples', ids: Object.freeze(Object.values(DIVINES)) }),
   Object.freeze({ id: 'orders', title: 'Knightly orders', ids: Object.freeze(Object.values(ORDERS)) }),
   Object.freeze({ id: 'kingdoms', title: 'Kingdoms', type: FACTION_TYPES.Province }),
-  Object.freeze({ id: 'covens', title: 'Witches\' covens', type: FACTION_TYPES.WitchesCoven }),
+  Object.freeze({ id: 'covens', title: "Witches' covens", type: FACTION_TYPES.WitchesCoven }),
   Object.freeze({ id: 'clans', title: 'Vampire clans', type: FACTION_TYPES.VampireClan }),
   Object.freeze({ id: 'daedra', title: 'Daedric Princes', type: FACTION_TYPES.Daedra }),
 ]);
@@ -53,12 +53,19 @@ export function standingGroups(entity) {
   for (const g of ORG_STANDING_GROUPS) {
     const ids = g.ids
       ? [...g.ids]
-      : [...dict.values()].filter((f) => f.type === g.type && f.id !== RANDOM_RULER).sort((a, b) => String(a.name).localeCompare(String(b.name))).map((f) => f.id);
+      : [...dict.values()]
+          .filter((f) => f.type === g.type && f.id !== RANDOM_RULER)
+          .sort((a, b) => String(a.name).localeCompare(String(b.name)))
+          .map((f) => f.id);
     const rows = [];
     for (const id of ids) {
       const f = dict.get(id);
       if (!f || member.has(id)) continue;
-      rows.push({ factionId: id, name: getLocalizedFactionName(id, String(f.name ?? id)), rep: getReputation(store, id) });   // PROVINCE-COURTS: shown as GetFactionData shows a name (L10N3e) - a province's kingdom in the player's language
+      rows.push({
+        factionId: id,
+        name: getLocalizedFactionName(id, String(f.name ?? id)),
+        rep: getReputation(store, id),
+      }); // PROVINCE-COURTS: shown as GetFactionData shows a name (L10N3e) - a province's kingdom in the player's language
     }
     if (rows.length) out.push({ id: g.id, title: g.title, rows });
   }

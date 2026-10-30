@@ -150,8 +150,8 @@
   {
     "name": "RR3-17-the-fresh-dictionary-lacks-them",
     "file": "src/systems/faction/factionRep.js",
-    "old": "  addCustomFactions(dict);   // Reset (:331): the custom factions ride every fresh dictionary\n",
-    "new": "",
+    "old": "  addCustomFactions(dict); // Reset (:331): the custom factions ride every fresh dictionary\n  return { dict };",
+    "new": "  return { dict };",
     "tests": [
       "test/systems/quest/rr3_questline.test.js"
     ]

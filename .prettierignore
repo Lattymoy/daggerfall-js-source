@@ -74,6 +74,8 @@
 /src/systems/dungeon/*/
 !/src/systems/dynamicSkies/
 /src/systems/dynamicSkies/*/
+!/src/systems/faction/
+/src/systems/faction/*/
 !/src/systems/festival/
 /src/systems/festival/*/
 !/src/systems/firstVisit/
