@@ -28,7 +28,10 @@ import { calculateCastCost } from '../../src/systems/spellcost.js';
 import { castRate } from '../../src/systems/castSpeed.js';
 import { buildCustomSpell } from '../../src/systems/spell/spellMaker.js';
 import { setPvpFight } from '../../src/combat/pvpPotions.js';
-import { pvpSpellCrit, pvpCritHarm } from '../../src/combat/pvpSpellCrit.js';
+import { whileShaftLands, bowFastDamage } from '../../src/combat/bowBloom.js';
+import { pvpSpellCrit, pvpCritHarm, pvpCastHold, PVP_CAST_PER_SKILL } from '../../src/combat/pvpSpellCrit.js';
+import { siegeSpellNumbers } from '../../src/combat/siegeCombat.js';
+import { kitSpell } from '../../src/systems/wild/pvpKit.js';
 import { SKILLS as SK } from '../../src/systems/skills.js';
 import { PVP_BUFF_ROUNDS, capPvpBuffs } from '../../src/combat/pvpBuffs.js';
 
@@ -151,6 +154,8 @@ test('PVP-TRIANGLE: an arrow at a player 1.28x, 1.67x from level 40; a harmful s
   assert.ok(a39 > 0 && m39 > 0);
   assert.equal(Math.floor(a40 / 1.67), Math.floor(a39 / 1.28), 'the same draw, its late number');
   assert.equal(m40, m39, 'a swing is not an arrow');
+  assert.equal(whileShaftLands({ fast: 4 }, () => strike(39, 'arrow')), bowFastDamage({ fast: 4 }, a39), 'BOW-FAST: the landing shaft\'s stacks on a player too');
+  assert.equal(whileShaftLands({ fast: 4 }, () => strike(39, 'melee')), m39, 'BOW-FAST: never a swing');
 });
 
 test('PVP-SHIELD: a live Shield on a player is reported (`sh`), and the referee takes 25% off a swing and 35% off a shaft; no Shield, nothing (mutants: the report unread; the shaft read as a swing)', () => {
@@ -271,4 +276,18 @@ test('PVP-SPELL-CRIT: a spell at a player crits as a blow does - Critical Strike
   assert.equal(pvpCritHarm(100, caster(100, 50), () => 0.25), 100, 'no crit');
   assert.equal(pvpCritHarm(0, caster(100, 50), () => 0), 0);
   assert.equal(pvpCritHarm(100, null, () => 0), 100);
+});
+
+test('PVP-CAST-SKILL: a harmful spell at a player lands at most 0.15 x the caster\'s live Destruction, no ceiling, then the crit and the triangle; the bar\'s Damage is that size (mutants: the hold off; the factor; the skill unread)', () => {
+  const caster = (destr) => ({ isPlayer: true, level: 30, stats: { ...body().stats }, skillOverrides: { [SK.Destruction]: destr, [SK.CriticalStrike]: 0 }, items: [] });   // the live value, gear in
+  assert.equal(PVP_CAST_PER_SKILL, 0.15);
+  assert.equal(pvpCastHold(caster(300)), 45);
+  assert.equal(pvpCastHold(caster(875)), 131.25, 'no ceiling');
+  const big = kitSpell({ id: 'damage', pick: 0 }, { skill: 2000, level: 30 });   // a 300 cast
+  assert.equal(siegeSpellNumbers(big, 30, duelStandIn(), caster(300), { rolls: () => 0.99 }).harm, Math.round(45 * pvpSpellScale(30)), 'held to the skill');
+  assert.equal(siegeSpellNumbers(big, 30, duelStandIn(), caster(875), { rolls: () => 0.99 }).harm, Math.round(131.25 * pvpSpellScale(30)));
+  const critter = { ...caster(300), skillOverrides: { [SK.Destruction]: 300, [SK.CriticalStrike]: 100 } };
+  assert.equal(siegeSpellNumbers(big, 30, duelStandIn(), critter, { rolls: () => 0 }).harm, Math.round(45 * 2 * pvpSpellScale(30)), 'the hold, then the crit');
+  const own = kitSpell({ id: 'damage', pick: 0 }, { skill: 875, level: 45 });
+  assert.equal(siegeSpellNumbers(own, 45, duelStandIn(), caster(875), { rolls: () => 0.99 }).harm, Math.round(131 * pvpSpellScale(45)), 'the bar\'s own Damage, whole');
 });

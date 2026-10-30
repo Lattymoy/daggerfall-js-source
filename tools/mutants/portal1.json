@@ -718,8 +718,8 @@
   {
     "name": "PORTAL1-arrival-forgets-the-team",
     "file": "src/scenes/portalStoneHost.js",
-    "old": "      hccRuntimeOn()?.handlePreFastTravel();\n      try { if (!(await teleportTo(g.dest, { zoneFree: !pvpFlagOn() }))) hudFade.clearFade(); }",
-    "new": "      try { if (!(await teleportTo(g.dest, { zoneFree: !pvpFlagOn() }))) hudFade.clearFade(); }",
+    "old": "      hccRuntimeOn()?.handlePreFastTravel();\n      try { if (!(await teleportTo(g.dest, { zoneFree: true }))) hudFade.clearFade(); }",
+    "new": "      try { if (!(await teleportTo(g.dest, { zoneFree: true }))) hudFade.clearFade(); }",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ],
@@ -1002,5 +1002,15 @@
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
+  },
+  {
+    "name": "PVP-PORTAL-the-zone-holds-on-any-foe-near",
+    "file": "src/scenes/portalStoneHost.js",
+    "old": "enemies: wildHere() ? exteriorFoes.foes.some(foeAlerted) :",
+    "new": "enemies: wildHere() ? areEnemiesNearby(exteriorFoes.foes) :",
+    "tests": [
+      "test/systems/portal1_stone.test.js"
+    ],
+    "note": "PVP-PORTAL (the owner's pick: \"Only one attacking me\"): in the zone a foe on me holds the stone, never one near"
   }
 ]

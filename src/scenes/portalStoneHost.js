@@ -2,7 +2,7 @@
 // The host constructs it where the code stood. What it reads of the host's scope comes through `host`: the
 // settled names by value at construction, every live one (a `let` someone writes, a `const` made below) read at its
 // use as `host.<name>` - as the code read them where it was.
-import { areEnemiesNearby } from '../systems/encounters.js';
+import { areEnemiesNearby, foeAlerted } from '../systems/encounters.js';
 import { hudFade } from '../ui/fadeLayer.js';
 import { isOnShip } from '../systems/ship.js';
 import { madeRuleHere } from '../systems/madeLevel.js';
@@ -10,7 +10,8 @@ import { playerEntity, surfacePlayer } from '../characters/playerEntity.js';
 import { PORTAL_HOLD_TEXT, PORTAL_TEXT, portalHold, portalStonePlace, spendPortalStone } from '../systems/portalStone.js';
 import { travelMapDoorReady } from '../ui/travel/travelMapDoor.js';
 import { teleportJourney } from '../systems/travel/pastBayTravel.js';   // PORTAL-BAY: the teleport's law past the Bay
-import { pvpFlagOn, pvpFightLeft, pvpLockSay } from './pvpFlagHost.js';   // PVP-FLAG: unflagged, a stone is free of the zone's law
+import { pvpFightLeft, pvpLockSay } from './pvpFlagHost.js';   // PVP-PORTAL: only the combat lock holds a stone in the zone
+import { wildHere } from '../systems/wild/wildZone.js';
 import { pvpPortalLockText, pvpLockSecs } from '../ui/pvpHud.js';   // PVP-HUD
 
 /** @param {any} host */
@@ -20,20 +21,20 @@ export function createPortalStoneHost(host) {
     hccRuntimeOn, navalHostileNear, player, playerTravelPixel, portalGates, teleportTo, townTalk, walkMode,
     worldMoveBusy
   } = host;
-  /** PORTAL-BAY (bible/06-Systems/Portal-Stone.md): THE TELEPORT'S GATE, asked where a refusal still costs nothing - the
-   *  pick (before a stone is spent) and the step (before the black): teleportTo's own three in its order (scenes/world.js
-   *  - the open zone's, the Veil's, and the zone's journey under the teleport's law past the Bay, pastBayTravel.js
-   *  teleportJourney), each said where it refuses. True when refused. */
-  // PVP-FLAG (the owner: "with no flagg we will allow player to use portal stone anywwere"): unflagged, the zone's law is not asked
-  const zoneRefused = (to = null) => pvpFlagOn() && host.wildTeleportRefused(to);
-  /** PVP-HUD (the mockup: "You are in combat. Wait {s} s to use a Portal Stone."): flagged, the combat lock holds the
-   *  stone - the seconds left said mid-screen. True when refused. */
+  /** PVP-HUD (the mockup: "You are in combat. Wait {s} s to use a Portal Stone."): the combat lock holds the stone -
+   *  the seconds left said mid-screen. True when refused. */
   const lockRefused = () => {
-    const s = pvpFlagOn() ? pvpLockSecs(pvpFightLeft()) : 0;
+    const s = pvpLockSecs(pvpFightLeft());
     if (s) pvpLockSay(pvpPortalLockText(s));
     return s > 0;
   };
-  const teleportRefused = (to) => zoneRefused(to) || host.veilRefused(to) || !host.wildTravelGate(to, 0, teleportJourney).ok;
+  /** PORTAL-BAY (bible/06-Systems/Portal-Stone.md): THE TELEPORT'S GATE, asked where a refusal still costs nothing - the
+   *  pick (before a stone is spent) and the step (before the black): the Veil's, and the journey under the teleport's
+   *  law past the Bay (pastBayTravel.js teleportJourney), each said where it refuses. True when refused. PVP-PORTAL
+   *  (2026-10-30, the owner: "they need to work all over", held only by "agro or flag time cool down"): the zone's
+   *  city-only law is not a stone's, flagged or not, and of its foes only one alerted to me holds it (the owner's pick: "Only
+   *  one attacking me") - with the combat lock (lockRefused). */
+  const teleportRefused = (to) => host.veilRefused(to) || !host.wildTravelGate(to, 0, teleportJourney).ok;
   /** PORTAL1 (systems/portalStone.js): THE HOLDS, here - portalHold's ladder over this host's own words: dead or a move
    *  under way, my duel (an arena bout's hold with it), a siege's room (its wards: Teleport, Recall and Levitate do
    *  nothing there), an enemy near (the travel map's own pool), a journey (Travel Options' or the Overworld's). The door,
@@ -41,7 +42,7 @@ export function createPortalStoneHost(host) {
   const portalHoldNow = () => portalHold({
     dead: !(playerEntity.health > 0), busy: worldMoveBusy() || host._teleporting,
     duel: duelEnemyNear(), siege: host.inSiegeRoom(),
-    enemies: areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes]) || navalHostileNear(),
+    enemies: wildHere() ? exteriorFoes.foes.some(foeAlerted) : areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes]) || navalHostileNear(),   // PVP-PORTAL: in the zone a foe on me, never one near
     journey: !!host.travelOptions?.isTravelActive || host.travelView.state !== 'off',
   });
   /** Why a portal may not open where I stand, or null: the open world's alone, the holds, the water, a boat's deck (a
@@ -64,7 +65,7 @@ export function createPortalStoneHost(host) {
     if (lockRefused()) return false;
     const why = portalDoorRefusal();
     if (why) return refuse(why);
-    if (zoneRefused() || host.veilRefused()) return false;   // AUDIT CAPTAIN'S SEA P6: past the Veil its map's every place is across it - AUDIT TESA II Z5: and a stone's portal is a teleport (PVPDUNGEONS: "of any kind"), never out of the open zone
+    if (host.veilRefused()) return false;   // AUDIT CAPTAIN'S SEA P6: past the Veil its map's every place is across it
     if (!travelMapDoorReady()) return refuse(PORTAL_TEXT.noMap);
     // the list it came from, read again at the pick - a load in between stands a new pack (AUDIT PRE-MERGE 0928 S2's
     // law); a companion's or a sworn revenant's own storage is its own list (AUDIT PORTAL1 I2)
@@ -114,7 +115,7 @@ export function createPortalStoneHost(host) {
     Promise.resolve().then(async () => {
       if (worldMoveBusy() || host._teleporting) { hudFade.clearFade(); return; }
       hccRuntimeOn()?.handlePreFastTravel();
-      try { if (!(await teleportTo(g.dest, { zoneFree: !pvpFlagOn() }))) hudFade.clearFade(); }   // AUDIT TAMRIEL-WIDE III F1: the zone asked above, by the flag - the stone already spent   // PORTAL-BAY: no arrival (the world moved on in between) lifts the black - never a black screen over a refusal
+      try { if (!(await teleportTo(g.dest, { zoneFree: true }))) hudFade.clearFade(); }   // PVP-PORTAL: the zone's law is not a stone's - the stone already spent   // PORTAL-BAY: no arrival (the world moved on in between) lifts the black - never a black screen over a refusal
       finally { hccRuntimeOn()?.handlePostFastTravel(); }
     }).catch((e) => { console.warn('[portal] the arrival failed:', e?.message ?? e); hudFade.clearFade(); });
   }

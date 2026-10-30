@@ -243,7 +243,7 @@ test('AUDIT PI1 I11/maps - a summoned item is refused aloud first; a map is read
   assert.deepEqual([said, body.items.length], [[CANNOT_REMOVE_ITEM_TEXT], 1]);
 });
 
-test('AUDIT PI1 H3/H7 - the press spends an armed quick-loot key, a transformed lycanthrope\'s paws take nothing, and a body\'s silver is rolled at its first take (mutants: the key left armed, the paws taking, no roll)', async () => {
+test('AUDIT PI1 H3/H7 - the press spends an armed quick-loot key, a transformed lycanthrope\'s paws take too (WERE-LOOT), and a body\'s silver is rolled at its first take (mutants: the key left armed, no roll)', async () => {
   setPref('quickLoot', true);
   _resetSilverFindsForTests();
   setSilverFinder(() => {});
@@ -255,14 +255,13 @@ test('AUDIT PI1 H3/H7 - the press spends an armed quick-loot key, a transformed 
     layer.frame(0.016); await tick(); layer.frame(0.02);
     const [k0, k1] = layer.targets().map((t) => t.key);
     const beast = { ...player(), race: 'Breton', activeEffects: [{ kind: 'racialOverride', racial: 'lycanthropy', isTransformed: true, infectionType: 1 }] };
-    assert.equal(layer.pick(k0, beast), true);
-    assert.equal(body.items.length, 2, 'the paws took nothing');
-    assert.equal(said.length, 1, 'and said why');
+    assert.equal(layer.pick(k1, beast), true);
+    assert.equal(body.items.length, 1, 'WERE-LOOT (the owner: "let them loot"): the paws took it');
     assert.equal(silverFindAt('corpse', 'silver:c:2', () => 0), true, 'an untouched body would roll');
     foldQuickLoot(resolveHover({ key: k0, distance: 2, reach: 3 }, { name: () => ({ title: 'Longsword' }), contents: () => [body.items[0]] }));
     assert.equal(quickLootArm('QuickLootAll'), true, 'armed over the item');
     layer.pick(k0, player());
-    assert.equal(body.items.length, 1);
+    assert.equal(body.items.length, 0);
     assert.equal(silverFindAt('corpse', 'silver:c:1', () => 0), false, 'this body\'s silver was rolled at the take');
     const pile = [{ name: 'Torch', weight: 0.5 }, { name: 'Apple', weight: 0.1 }];
     foldQuickLoot(resolveHover({ key: 'droppedLoot:7', distance: 2, reach: 3 }, { name: () => ({ title: 'Loot Pile' }), contents: () => pile }));

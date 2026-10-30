@@ -128,7 +128,7 @@
   {
     "name": "PVP-TRIANGLE-the-arrow-unscaled",
     "file": "src/combat/duelCombat.js",
-    "old": "  const n = d.by === 'arrow' ? Math.floor(scaled * pvpArrowScale(d.a?.pl)) : scaled;",
+    "old": "  const n = d.by === 'arrow' ? bowFastDamage(landingShaft(), Math.floor(scaled * pvpArrowScale(d.a?.pl))) : scaled;",
     "new": "  const n = scaled;",
     "tests": [
       "test/combat/pvp_guard.test.js"
@@ -146,10 +146,11 @@
   {
     "name": "PVP-TRIANGLE-the-spell-unscaled",
     "file": "src/combat/siegeCombat.js",
-    "old": "harm: Math.round(pvpCritHarm(harm, caster, rolls) * pvpSpellScale(level))",
-    "new": "harm: Math.round(pvpCritHarm(harm, caster, rolls))",
+    "old": "harm: Math.round(pvpCritHarm(caster ? Math.min(harm, pvpCastHold(caster)) : harm, caster, rolls) * pvpSpellScale(level))",
+    "new": "harm: Math.round(pvpCritHarm(caster ? Math.min(harm, pvpCastHold(caster)) : harm, caster, rolls))",
     "tests": [
-      "test/systems/auditcc_pvp.test.js"
+      "test/systems/auditcc_pvp.test.js",
+      "test/combat/pvp_guard.test.js"
     ]
   },
   {
@@ -407,11 +408,15 @@
   {
     "name": "PVP-SPELL-CRIT-uncalled",
     "file": "src/combat/siegeCombat.js",
-    "old": "harm: Math.round(pvpCritHarm(harm, caster, rolls) * pvpSpellScale(level))",
-    "new": "harm: Math.round(harm * pvpSpellScale(level))",
+    "old": "harm: Math.round(pvpCritHarm(caster ? Math.min(harm, pvpCastHold(caster)) : harm, caster, rolls) * pvpSpellScale(level))",
+    "new": "harm: Math.round((caster ? Math.min(harm, pvpCastHold(caster)) : harm) * pvpSpellScale(level))",
     "tests": [
-      "test/systems/auditcc_pvp.test.js"
+      "test/systems/auditcc_pvp.test.js",
+      "test/combat/pvp_guard.test.js"
     ],
     "why": "PVP-SPELL-CRIT: the hosts' count crits"
-  }
+  },
+  {"name": "PVP-CAST-SKILL-the-hold-off", "file": "src/combat/siegeCombat.js", "old": "pvpCritHarm(caster ? Math.min(harm, pvpCastHold(caster)) : harm, caster, rolls)", "new": "pvpCritHarm(harm, caster, rolls)", "tests": ["test/combat/pvp_guard.test.js"]},
+  {"name": "PVP-CAST-SKILL-the-factor", "file": "src/combat/pvpSpellCrit.js", "old": "export const PVP_CAST_PER_SKILL = 0.15;", "new": "export const PVP_CAST_PER_SKILL = 0.2;", "tests": ["test/combat/pvp_guard.test.js"]},
+  {"name": "PVP-CAST-SKILL-the-bar-on-level-dice", "file": "src/systems/wild/pvpKit.js", "old": "case 'damage': return [{ ...FIREBALL, ...kitMagnitude(PVP_CAST_PER_SKILL * skill, level) }];", "new": "case 'damage': return [{ ...FIREBALL }];", "tests": ["test/combat/pvp_guard.test.js", "test/systems/wild/pvpkit.test.js"]}
 ]

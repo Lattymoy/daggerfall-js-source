@@ -33399,11 +33399,6 @@
   "tr": "90442c2c185f",
   "by": "claude-in-session"
  },
- "pvp.kit.cure": {
-  "en": "741ccd1eaaed",
-  "tr": "c50acf71156d",
-  "by": "claude-in-session"
- },
  "pvp.kit.damage": {
   "en": "7bf6d1d3a58a",
   "tr": "2c5592f5efd3",
@@ -33482,6 +33477,11 @@
  "pvp.kit.reflect": {
   "en": "11a5b905dd43",
   "tr": "05ac57920a7e",
+  "by": "claude-in-session"
+ },
+ "pvp.kit.regen": {
+  "en": "b04c991e58e7",
+  "tr": "1250d4073154",
   "by": "claude-in-session"
  },
  "pvp.kit.resist": {
