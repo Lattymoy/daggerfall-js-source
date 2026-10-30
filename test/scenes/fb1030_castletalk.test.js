@@ -54,7 +54,7 @@ test('CASTLE-TALK a person whose flat carries a Dialogue action answers a press 
   assert.match(String(await pressAt(queen, false, t)), /^act:/, 'the relay boxed took the press (the report)');
 });
 
-test('CASTLE-TALK on the game\'s own court: Castle Daggerfall\'s Queen (S0000160) and a noble of Torval\'s copy of Sentinel\'s halls answer the press', { skip: skipReal }, async () => {
+test('CASTLE-TALK on the game\'s own court: Castle Daggerfall\'s Queen (S0000160) and a noble of Torval\'s copy of Sentinel\'s halls answer the press; a copy of Castle Daggerfall keeps the foyer guard who opens the way to its court (mutant: a chain\'s head dropped)', { skip: skipReal }, async () => {
   const g = game();
   const texOf = new Map();
   const tex = (a) => {
@@ -74,4 +74,11 @@ test('CASTLE-TALK on the game\'s own court: Castle Daggerfall\'s Queen (S0000160
   const noble = layout(hall, { name: castleBlockName(hall), index: CASTLE_BLOCK_INDEX }).flats.find((f) => f.npc && f.action?.actionFlag === ACTION_FLAGS.Dialogue);
   assert.ok(noble, `a person with a Dialogue action in Torval's copy of ${hall}`);
   assert.equal(await pressAt(noble, true, tex(noble.archive)), 'person:0', 'past the Bay too');
+  // AUDIT FB1030 D1: Alinor's, Falinesti's and Helstrom's halls are Castle Daggerfall's - its foyer guard (183.3, the
+  // terms of audience) opens the two foyer doors the court stands behind, so the copy keeps him and his chain
+  const throne = BAY_CASTLE_HALLS[CAPITAL_CASTLE_HALLS[3]].halls[0][0];
+  const copy = layout(throne, { name: castleBlockName(throne), index: CASTLE_BLOCK_INDEX });
+  const guard = copy.flats.find((f) => f.archive === 183 && f.record === 3 && f.action?.actionFlag === ACTION_FLAGS.ShowTextWithInput);
+  assert.ok(guard, 'the foyer guard stands in the copy');
+  assert.ok(copy.actionLinks.get(guard.position)?.nextKey > 0, 'and his chain to the doors with him');
 });

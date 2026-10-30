@@ -23,11 +23,13 @@ nothing (Dialogue has no delegate), and past it - the ray longer, aimed low or a
 is one float smaller, so he alone answered. DFU's PlayerActivate fires the action and talks to the person on one hit.
 
 MEASURED. The game's RDBs hold 85 person flats with actions: 79 Dialogue, 1 Activate, 5 that show text. No Dialogue or
-Activate relay chains on; the three that chain show text.
+Activate relay chains on; the three that chain show text. AUDIT FB1030 D2: DFU's Receive rang 28 of them as a sound
+(the faction id's high byte read as the action's sound index); the port does not.
 
 FIXED. A person's own relay takes no box unless the person shows text (`showsText`, the law `npcTargets` reads too), so
 the person takes the press. Departure in Port-Ledger A. The capitals' castles copy the Bay's halls with their court
-re-seated, so the same fix stands past the Bay. Pinned through the real pick
+re-seated, so the same fix stands past the Bay. AUDIT FB1030 D1: the three copies of Castle Daggerfall dropped its foyer
+guard, who opens the doors the court stands behind; the copy keeps a flat that starts a chain. Pinned through the real pick
 (`test/scenes/fb1030_castletalk.test.js`): the Queen from two metres, and a noble of Torval's copy of Sentinel's halls.
 
 ## 2. The yard against the wall and on the roof (WALL-TOUCH, YARD-DECK)
@@ -93,8 +95,9 @@ without it, or a reader outdoors, reads the height as before. Foes indoors are s
 ## 6. Torval's castle (TALL-DOOR, RECORDS-SAID)
 
 FOUND. The way out lands at the lowest dungeon door's centre less half a body (DFU's law). The Mane's palace door is
-9 m tall, so the feet stood 3.6 m over the plaza. ARCH3D's own dungeon doors reach 19.2 m (seven of them), so the Bay
-had it too. The palace's "records" are the Hall of Records' shelves; a new seat's book said only "Nothing is written
+9 m tall, so the feet stood 3.6 m over the plaza; the capitals' castle doors are 4.5 to 19.2 m tall (the White-Gold
+Tower's the tallest, 8.7 m up). On the Bay the tallest door a way out lands at is a crypt's, 3.2 m: 0.7 m up
+(AUDIT FB1030 D3: ARCH3D's 19.2 m doors stand only inside a dungeon, S0000003). The palace's "records" are the Hall of Records' shelves; a new seat's book said only "Nothing is written
 here yet."
 
 FIXED. TALL-DOOR: the feet never stand over the floor before the door (`enterExit.js` dungeonExitFeet, the footprint's

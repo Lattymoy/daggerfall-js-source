@@ -30,5 +30,6 @@
   {"name": "AUDIT-FB1030-N1-the-party-mark-drops-it", "file": "src/net/wire.js", "old": "...(finite(p.dd.fy) && Math.abs(p.dd.fy) <= POSE_Y_BOUND ? { fy: p.dd.fy } : {}), at:", "new": "at:", "tests": ["test/net/fb1030_indoorfloor.test.js"]},
   {"name": "AUDIT-FB1030-N1-the-host-marks-none", "file": "src/net/peer/indoorFloor.js", "old": "(Number.isFinite(pose?.fy) ? { ...o, fy: pose.fy } : o);", "new": "o;", "tests": ["test/net/fb1030_indoorfloor.test.js"]},
   {"name": "AUDIT-FB1030-N2-the-blow-point-drops-it", "file": "src/net/peer/peerFx.js", "old": "z: hp[2], fy: pose.fy })", "new": "z: hp[2] })", "tests": ["test/net/fb1030_indoorfloor.test.js"]},
-  {"name": "AUDIT-FB1030-N3-poseChanged-blind-to-it", "file": "src/net/wire.js", "old": "    || (a.fy ?? null) !== (b.fy ?? null)", "new": "    || false", "tests": ["test/net/fb1030_indoorfloor.test.js"]}
+  {"name": "AUDIT-FB1030-N3-poseChanged-blind-to-it", "file": "src/net/wire.js", "old": "    || (a.fy ?? null) !== (b.fy ?? null)", "new": "    || false", "tests": ["test/net/fb1030_indoorfloor.test.js"]},
+  {"name": "AUDIT-FB1030-D1-a-chains-head-dropped", "file": "src/world/capitalCastles.js", "old": "linked.has(o.position) || chainHead(o) || castleKeeps(o)", "new": "linked.has(o.position) || castleKeeps(o)", "tests": ["test/scenes/fb1030_castletalk.test.js"]}
 ]

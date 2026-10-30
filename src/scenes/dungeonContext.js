@@ -724,7 +724,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     } else {
       // CASTLE-TALK (FIELD BUGS 2026-10-30): a person's own Dialogue is no target of its own - its box was the person's,
       // and it won every tie within 3.2 m, so the court said nothing. DFU's ladder fires both on one hit; none of the
-      // game's 80 person relays chains on, so the press loses nothing.
+      // game's 80 person relays chains on - 28 rang a sound byte (their faction's high byte), lost (AUDIT FB1030 D2).
       actions.addRelay(ns, position, action, person ? null : aabb, [x, y, z]);
     }
   };

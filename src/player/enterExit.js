@@ -292,7 +292,7 @@ export function repositionFeetY(terrainY, centreY, height = CAPSULE_HEIGHT) {
 /** TALL-DOOR (FIELD BUGS 2026-10-30, Torval's castle: "on exiting the place it teleports you in the air"): THE FEET A
  *  DUNGEON'S WAY OUT LANDS ON - repositionFeetY's, never higher than the floor under the landing (floorLanding). DFU
  *  stands the body's centre at the door's; before a classic door that is a hand over the street, before a tall one (the
- *  capitals' castle doors to 9 m, ARCH3D's own dungeon doors to 19.2 m) metres in the air. A departure from
+ *  capitals' castle doors, 4.5 to 19.2 m) metres in the air; on the Bay a crypt's 3.2 m door dropped it 0.7 m. A departure from
  *  StreamingWorld.PositionPlayerToDungeonExit, Port-Ledger A. @param {any} collider @param {{ pos: number[] }} landing */
 export function dungeonExitFeet(collider, landing) {
   const [x, y, z] = landing.pos, terrain = collider.heightAt?.(x, z);
