@@ -391,7 +391,7 @@ the brew's unbruised count; the Stores page over a real carrying book) and `test
 Two reports from the Discord, read to their roots in `01-Overview/bugs/Field-Bugs-2026-10-20c.md`.
 
 **BAG-COOK** ("raw fish cant be cooked over fires"). A haul's Raw Fish is minted as C&C's own (template 535,
-`UselessItems2` - `profItems.js:"  if (key === 'food:fish') return fishTemplate(cc);"`), the food the fire cooks, and it
+`UselessItems2` - `profItems.js:"if (key === 'food:fish')"`), the food the fire cooks, and it
 goes into the bag first (section 3). The fire's Cook food read the pack alone, so a bag's owner was told "You have
 nothing to cook." with the fish in the bag; on the classic skin, which draws no bag, only Empty your bag into your pack
 reached them. Now the list is the pack's raw food, then the bag's, while the pack holds a bag

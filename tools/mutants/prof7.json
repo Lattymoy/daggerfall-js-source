@@ -956,8 +956,8 @@
   {
     "name": "PROF7-slowrot-unmarked",
     "file": "src/systems/professions/profItems.js",
-    "old": "    if (slowRot === true) item.slowRot = true;\n",
-    "new": "",
+    "old": "    if (slowRot === true) item.slowRot = true;\n    if (noRot === true && key.startsWith('food:')) item.noRot = true; // PROF9: a Provisioner's",
+    "new": "    if (noRot === true && key.startsWith('food:')) item.noRot = true; // PROF9: a Provisioner's",
     "tests": [
       "test/systems/prof7_client.test.js"
     ]
@@ -965,8 +965,8 @@
   {
     "name": "PROF7-knife-offline",
     "file": "src/systems/professions/profTemplates.js",
-    "old": "(group === PROF_ITEM_GROUP && isOnlinePage() ? [SKINNING_KNIFE.templateIndex] : [])",
-    "new": "(group === PROF_ITEM_GROUP ? [SKINNING_KNIFE.templateIndex] : [])",
+    "old": "export const knifeCustomItemsForGroup = (group) =>\n  group === PROF_ITEM_GROUP && isOnlinePage() ? [SKINNING_KNIFE.templateIndex] : [];",
+    "new": "export const knifeCustomItemsForGroup = (group) => (group === PROF_ITEM_GROUP ? [SKINNING_KNIFE.templateIndex] : []);",
     "tests": [
       "test/systems/prof7_client.test.js"
     ]
@@ -974,8 +974,8 @@
   {
     "name": "PROF7-silk-heavy",
     "file": "src/systems/professions/profTemplates.js",
-    "old": "m.key === 'hide:spider' || m.key === 'hide:harpy' ? 0.25",
-    "new": "m.key === 'hide:harpy' ? 0.25",
+    "old": "const hideWeight = (m) =>\n  m.key === 'hide:spider' || m.key === 'hide:harpy' ? 0.25 : m.key.startsWith('cloth:') ? 0.5 : 1;",
+    "new": "const hideWeight = (m) => (m.key === 'hide:harpy' ? 0.25 : m.key.startsWith('cloth:') ? 0.5 : 1);",
     "tests": [
       "test/systems/prof7_client.test.js"
     ]

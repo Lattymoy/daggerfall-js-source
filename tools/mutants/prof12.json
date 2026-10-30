@@ -1212,8 +1212,8 @@
   {
     "name": "PROF12-essence-row-picture",
     "file": "src/systems/professions/profTemplates.js",
-    "old": "  isOneHanded: false, isIngredient: false, worldTextureArchive: m.icon[0], worldTextureRecord: m.icon[1],\n  playerTextureArchive: 0, playerTextureRecord: 0, stackable: true,\n})));\nregisterCustomTemplates(ESSENCE_TEMPLATE_ROWS);",
-    "new": "  isOneHanded: false, isIngredient: false, worldTextureArchive: m.icon[0], worldTextureRecord: 0,\n  playerTextureArchive: 0, playerTextureRecord: 0, stackable: true,\n})));\nregisterCustomTemplates(ESSENCE_TEMPLATE_ROWS);",
+    "old": "      variants: 0,\n      drawOrderOrEffect: 0,\n      isBluntWeapon: false,\n      isLiquid: false,\n      isOneHanded: false,\n      isIngredient: false,\n      worldTextureArchive: m.icon[0],\n      worldTextureRecord: m.icon[1],\n      playerTextureArchive: 0,\n      playerTextureRecord: 0,\n      stackable: true,\n    }),\n  ),\n);\nregisterCustomTemplates(ESSENCE_TEMPLATE_ROWS);",
+    "new": "      variants: 0,\n      drawOrderOrEffect: 0,\n      isBluntWeapon: false,\n      isLiquid: false,\n      isOneHanded: false,\n      isIngredient: false,\n      worldTextureArchive: m.icon[0],\n      worldTextureRecord: 0,\n      playerTextureArchive: 0,\n      playerTextureRecord: 0,\n      stackable: true,\n    }),\n  ),\n);\nregisterCustomTemplates(ESSENCE_TEMPLATE_ROWS);",
     "tests": [
       "test/systems/prof12_client.test.js"
     ]
@@ -1221,8 +1221,8 @@
   {
     "name": "PROF12-plural-small-teeth",
     "file": "src/systems/professions/profItems.js",
-    "old": ", 'Small Tooth': 'Small Teeth' });",
-    "new": " });",
+    "old": "  'Small Tooth': 'Small Teeth',\n}); // PROF12: the Apothecaries' Small Tooth",
+    "new": "}); // PROF12: the Apothecaries' Small Tooth",
     "tests": [
       "test/systems/prof12_client.test.js"
     ]

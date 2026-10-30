@@ -42,8 +42,8 @@
   {
     "name": "PROF11-mortar-row-heavier",
     "file": "src/systems/professions/profTemplates.js",
-    "old": "baseWeight: 1, hitPoints: 50, capacityOrTarget: 0, basePrice: 2,",
-    "new": "baseWeight: 2, hitPoints: 50, capacityOrTarget: 0, basePrice: 2,",
+    "old": "      baseWeight: 1,",
+    "new": "      baseWeight: 2,",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -51,8 +51,8 @@
   {
     "name": "PROF11-mortar-row-dearer",
     "file": "src/systems/professions/profTemplates.js",
-    "old": "baseWeight: 1, hitPoints: 50, capacityOrTarget: 0, basePrice: 2,",
-    "new": "baseWeight: 1, hitPoints: 50, capacityOrTarget: 0, basePrice: 3,",
+    "old": "      basePrice: 2,",
+    "new": "      basePrice: 3,",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -60,7 +60,7 @@
   {
     "name": "PROF11-mortar-template-never-written",
     "file": "src/systems/professions/profTemplates.js",
-    "old": "registerCustomTemplates(MASONRY_TEMPLATE_ROWS);",
+    "old": "registerCustomTemplates(MASONRY_TEMPLATE_ROWS);\n",
     "new": "",
     "tests": [
       "test/systems/prof11_client.test.js"
@@ -69,8 +69,8 @@
   {
     "name": "PROF11-mortars",
     "file": "src/systems/professions/profItems.js",
-    "old": "  'Mortar',   // PROF11 (FOUND by its pin)",
-    "new": "  // PROF11 (FOUND by its pin)",
+    "old": "  'Mortar', // PROF11 (FOUND by its pin): the bench's mix is mass, as its stone - '10 Mortar', never 'Mortars'",
+    "new": "  // PROF11 (FOUND by its pin): the bench's mix is mass, as its stone - '10 Mortar', never 'Mortars'",
     "tests": [
       "test/systems/prof11_client.test.js"
     ],
@@ -517,8 +517,8 @@
   {
     "name": "PROF11-decor-rows-stack",
     "file": "src/systems/professions/profTemplates.js",
-    "old": "playerTextureArchive: 0, playerTextureRecord: 0, stackable: false,\n})));\nregisterCustomTemplates(STONE_DECOR_ROWS);",
-    "new": "playerTextureArchive: 0, playerTextureRecord: 0, stackable: true,\n})));\nregisterCustomTemplates(STONE_DECOR_ROWS);",
+    "old": "      playerTextureRecord: 0,\n      stackable: false,\n    }),",
+    "new": "      playerTextureRecord: 0,\n      stackable: true,\n    }),",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -526,8 +526,8 @@
   {
     "name": "PROF11-decor-rows-wood-hard",
     "file": "src/systems/professions/profTemplates.js",
-    "old": "baseWeight: d.weight, hitPoints: 200,",
-    "new": "baseWeight: d.weight, hitPoints: 100,",
+    "old": "      hitPoints: 200,",
+    "new": "      hitPoints: 100,",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -535,7 +535,7 @@
   {
     "name": "PROF11-decor-rows-never-written",
     "file": "src/systems/professions/profTemplates.js",
-    "old": "registerCustomTemplates(STONE_DECOR_ROWS);",
+    "old": "registerCustomTemplates(STONE_DECOR_ROWS);\n",
     "new": "",
     "tests": [
       "test/systems/prof11_client.test.js"

@@ -341,8 +341,8 @@
   {
     "name": "PROF2-38-iron-counted",
     "file": "src/systems/professions/profItems.js",
-    "old": "'Lead', 'Iron', 'Copper',",
-    "new": "'Lead', 'Copper',",
+    "old": "  'Iron',\n  'Copper',",
+    "new": "  'Copper',",
     "tests": [
       "test/net/prof2_client.test.js"
     ]

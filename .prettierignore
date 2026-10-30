@@ -128,6 +128,8 @@
 /src/systems/map/*/
 !/src/systems/party/
 /src/systems/party/*/
+!/src/systems/professions/
+/src/systems/professions/*/
 !/src/systems/region/
 /src/systems/region/*/
 !/src/systems/sea/
