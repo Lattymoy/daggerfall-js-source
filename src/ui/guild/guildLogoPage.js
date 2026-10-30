@@ -47,7 +47,10 @@ export function guildLogoNodes(k, g, v, may) {
     }
     return out;
   }
-  if (!may) { out.push(el('div', 'dfsocial-empty', t('guild.logo.master', 'The guildmaster sends a logo.'))); return out; }
+  if (!may) {   // AUDIT GUILD-RANKS C3: the logo given to more ranks than the guildmaster's
+    out.push(el('div', 'dfsocial-empty', JSON.stringify(v.powers?.logo ?? [0]) === '[0]' ? t('guild.logo.master', 'The guildmaster sends a logo.') : t('guild.logo.notRank', 'Your rank does not send a logo.')));
+    return out;
+  }
   out.push(el('div', 'dfsocial-note', t('guild.logo.rules', 'A square picture works best. It is cut to a square and made {side} pixels across.', { side: 128 })));
   const input = k.doc.createElement('input');
   input.type = 'file';

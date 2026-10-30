@@ -48,7 +48,8 @@ import { displayName, overRate } from './accounts.js';
 import { guildActorOf } from './guilds.js';
 import { prepareRealmRecord, realmActFirst, recordMovedOf, mustChange, dropObjects, dropIfUnnamed, REALM_ID_RE } from './realm.js';
 import { GUILD_OPS_MAX, GUILD_OPS_WINDOW_S, GUILD_RANK_MASTER, guildMay, GUILD_MEMBER_RE } from '../../src/net/guild/guildLaw.js';
-import { vaultStanding, vaultMayPut, vaultMayTake, vaultGrantOf, guildVaultSlots, GUILD_VAULT_LOG_SHOWN, GUILD_VAULT_SLOTS, GUILD_VAULT_HALL_SLOTS } from '../../src/net/guild/guildVaultLaw.js';
+import { guildPowerSql } from './guildPowerSql.js';   // AUDIT GUILD-RANKS A2
+import { vaultStanding, vaultMayPut, vaultMayTake, vaultGrantOf, vaultGrantWithin, guildVaultSlots, GUILD_VAULT_LOG_SHOWN, GUILD_VAULT_SLOTS, GUILD_VAULT_HALL_SLOTS } from '../../src/net/guild/guildVaultLaw.js';
 import { takeTradeGoods, giveTradeGoods, recordCount, REALM_TRADE_RECORD_MAX } from '../../src/net/realm/realmTradeLaw.js';
 import { wagonItemName } from '../../src/systems/wagon/wagonKinds.js';   // WAGONS2 (FINAL AUDIT): a marked wagon named by its kind (already in this graph, by itemLaw.js)
 import { lawfulItem } from '../../src/systems/item/itemLaw.js';   // INT1 (AUDIT INT): a piece put before the law read the vault, read as it is taken
@@ -255,11 +256,13 @@ export async function vaultGrant(ctx, player, { character, member, level = null,
   const t = await db.prepare('SELECT rowid AS rid, rank FROM guild_members WHERE rowid = ? AND guild_id = ?').bind(rid, a.me.guild_id).first();
   if (!t || Number(t.rank) === GUILD_RANK_MASTER) return { error: 'no-member' };
   if (Number(t.rank) <= Number(a.me.rank)) return { error: 'guild-rank' };   // GUILD-RANKS: a rank given the grant grants below its own
+  // AUDIT GUILD-RANKS A2: and no more of the vault than its own standing - an Officer of ten a day made a withdrawer of none
+  if (Number(a.me.rank) !== GUILD_RANK_MASTER && !vaultGrantWithin(standingOf(a.me), vaultStanding(Number(t.rank), grant.level == null ? null : grant))) return { error: 'vault-grant-over' };
   if (await spend(ctx, player)) return { error: 'guild-rate' };
   // AUDIT2 GUILD2 S5: while the granter still holds the rank it was read at - a guildmaster who handed the guild over
   // between the read and this write grants nothing
   const r = await db.prepare(`UPDATE guild_members SET vault_level = ?1, vault_limit = ?2 WHERE rowid = ?3 AND guild_id = ?4 AND rank <> ${GUILD_RANK_MASTER} AND rank > ?6
-      AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?5 AND guild_id = ?4 AND rank = ?6)`)
+      AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?5 AND guild_id = ?4 AND rank = ?6 AND ${guildPowerSql('vaultGrant', 'rank', '?4')})`)   // AUDIT GUILD-RANKS A2: the power, in the write
     .bind(grant.level, grant.limit, rid, a.me.guild_id, a.me.rid, Number(a.me.rank)).run();
   if (!r?.meta?.changes) {
     const still = await db.prepare('SELECT rank FROM guild_members WHERE rowid = ? AND guild_id = ?').bind(a.me.rid, a.me.guild_id).first();

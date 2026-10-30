@@ -1309,7 +1309,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
   const rankName = (g, r) => (Array.isArray(g.ranks) ? g.ranks[r] : null) ?? GUILD_RANK_NAMES[r] ?? String(r);
   /** GUILD-RANKS: how many ranks the guild keeps, and why a rank may not do `power` - the guildmaster's alone, or not this rank's. */
   const rankCount = (v) => (Array.isArray(v?.ranks) && v.ranks.length >= 4 ? v.ranks.length : 4);
-  const rankWhy = (v, power) => (JSON.stringify(v?.powers?.[power] ?? [0]) === '[0]' ? 'the guildmaster\'s alone' : t('social.guild.rankWhy', 'not your rank\'s'));
+  const rankWhy = (v, power) => (JSON.stringify(v?.powers?.[power] ?? [0]) === '[0]' ? t('social.guild.masterAlone', 'the guildmaster\'s alone') : t('social.guild.rankWhy', 'not your rank\'s'));
 
   /** No guild: the invitations standing for this account, and the founding form. */
   const guildJoinBody = (g) => {

@@ -4,7 +4,7 @@
 // what each may do as a grid, a power a row and a rank a column. The guildmaster edits both; every member reads them.
 // The service holds every rule (server-account/src/guilds.js renameGuildRanks, setGuildPowers). Drawn through the
 // window's own kit (ui/socialPanel.js).
-import { GUILD_RANKS_MIN, GUILD_RANKS_MAX, GUILD_RANK_NAMES, GUILD_RANK_NAME_MAX, GUILD_POWERS_EDITABLE, guildMay, guildRankNamesOf } from '../../net/guild/guildLaw.js';
+import { GUILD_RANKS_MIN, GUILD_RANKS_MAX, GUILD_RANK_NAMES, GUILD_RANK_NAME_MAX, GUILD_POWERS_EDITABLE, guildMay, guildRankNamesOf, guildPowersOf } from '../../net/guild/guildLaw.js';
 import { t } from '../../systems/textManager.js';
 
 /** An editable power's name on the grid. */
@@ -25,6 +25,19 @@ export function guildPowerName(/** @type {string} */ p) {
   }
 }
 
+/** AUDIT GUILD-RANKS A4/C1: the grid as the guild keeps it - only the powers that differ from the law's default for `n`
+ *  ranks, so one left at its default follows the guild as it grows (a deposit stays every rank's). */
+export function guildPowersChanged(/** @type {Record<string, number[]>} */ grid, /** @type {number} */ n) {
+  const def = guildPowersOf(null, n);
+  /** @type {Record<string, number[]>} */
+  const out = {};
+  for (const p of GUILD_POWERS_EDITABLE) {
+    const mine = (grid?.[p] ?? []).filter((r) => r > 0 && r < n);
+    if (JSON.stringify(mine) !== JSON.stringify(def[p].filter((r) => r > 0))) out[p] = mine;
+  }
+  return out;
+}
+
 /** The guild's rank names - its own, else the defaults. */
 const namesOf = (/** @type {any} */ v) => (Array.isArray(v?.ranks) && v.ranks.length >= GUILD_RANKS_MIN ? v.ranks : GUILD_RANK_NAMES);
 /** The ranks beside the guildmaster that hold `power` in the view's table. */
@@ -43,7 +56,7 @@ export function guildRanksNodes(k, g, v, me) {
 
 /** THE NAMES: each rank's, and how many stand at it; the guildmaster's to rename, add to and take from. */
 function namesNodes(/** @type {any} */ k, /** @type {any} */ g, /** @type {any} */ v, /** @type {string[]} */ names, /** @type {boolean} */ master) {
-  const { el, btn } = k;
+  const { el } = k;
   const out = [el('div', 'dfsocial-sec', t('guild.ranks.title', 'Ranks')),
     el('div', 'dfsocial-note', t('guild.ranks.about', 'A guild has {min} to {max} ranks. New members join at the lowest.', { min: GUILD_RANKS_MIN, max: GUILD_RANKS_MAX }))];
   const count = (/** @type {number} */ r) => (v.members ?? []).filter((/** @type {any} */ m) => m.rank === r).length;
@@ -57,19 +70,28 @@ function namesNodes(/** @type {any} */ k, /** @type {any} */ g, /** @type {any} 
   const from = `${v.id}|${JSON.stringify(names)}`;
   if (d.rankNamesFor !== from || !Array.isArray(d.rankNames)) { d.rankNamesFor = from; d.rankNames = [...names]; }
   const form = el('div', 'dfsocial-form');
-  d.rankNames.forEach((/** @type {string} */ name, /** @type {number} */ i) => k.field(form, t('guild.ranks.field', 'Rank {n}', { n: i + 1 }), name, GUILD_RANK_NAME_MAX, (/** @type {string} */ x) => { d.rankNames[i] = x; }));
-  out.push(form);
-  const len = d.rankNames.length;
-  const moving = (v.members ?? []).filter((/** @type {any} */ m) => m.rank >= len).length;
-  if (moving > 0) out.push(el('div', 'dfsocial-note', t('guild.ranks.moving', 'If you save, {count, plural, one {# member moves} other {# members move}} to {rank}.', { count: moving, rank: d.rankNames[len - 1] || t('guild.ranks.lowest', 'the lowest rank') })));
+  const note = el('div', 'dfsocial-note');
+  // AUDIT GUILD-RANKS C5: a rank added or taken redraws the fields in place, so the focus stays on the button pressed
+  const drawNames = () => {
+    form.replaceChildren();
+    d.rankNames.forEach((/** @type {string} */ name, /** @type {number} */ i) => k.field(form, t('guild.ranks.field', 'Rank {n}', { n: i + 1 }), name, GUILD_RANK_NAME_MAX,
+      (/** @type {string} */ x) => { if (Array.isArray(d.rankNames)) d.rankNames[i] = x; }));
+    const len = d.rankNames.length;
+    const moving = (v.members ?? []).filter((/** @type {any} */ m) => m.rank >= len).length;
+    note.textContent = moving > 0 ? t('guild.ranks.moving', 'If you save, {count, plural, one {# member moves} other {# members move}} to {rank}.', { count: moving, rank: d.rankNames[len - 1] || t('guild.ranks.lowest', 'the lowest rank') }) : '';
+    k.paint();
+  };
+  drawNames();
+  out.push(form, note);
+  const len = () => (Array.isArray(d.rankNames) ? d.rankNames.length : names.length);
   const shape = el('div', 'dfsocial-acts');
   shape.append(
-    btn(t('guild.ranks.add', 'Add a rank'), { enabled: len < GUILD_RANKS_MAX && !g.busy, why: len >= GUILD_RANKS_MAX ? t('guild.ranks.why.most', '{max} at most', { max: GUILD_RANKS_MAX }) : 'a moment',
-      run: () => { d.rankNames.push(t('guild.ranks.new', 'Rank {n}', { n: len + 1 })); k.redraw(); } }),
-    btn(t('guild.ranks.drop', 'Remove the lowest'), { enabled: len > GUILD_RANKS_MIN && !g.busy, why: len <= GUILD_RANKS_MIN ? t('guild.ranks.why.fewest', '{min} at least', { min: GUILD_RANKS_MIN }) : 'a moment',
-      run: () => { d.rankNames.pop(); k.redraw(); } }));
+    k.live(t('guild.ranks.add', 'Add a rank'), () => ({ enabled: len() < GUILD_RANKS_MAX && !g.busy, why: len() >= GUILD_RANKS_MAX ? t('guild.ranks.why.most', '{max} at most', { max: GUILD_RANKS_MAX }) : 'a moment' }),
+      { run: () => { if (!Array.isArray(d.rankNames)) return; d.rankNames.push(t('guild.ranks.new', 'Rank {n}', { n: len() + 1 })); drawNames(); } }),
+    k.live(t('guild.ranks.drop', 'Remove the lowest'), () => ({ enabled: len() > GUILD_RANKS_MIN && !g.busy, why: len() <= GUILD_RANKS_MIN ? t('guild.ranks.why.fewest', '{min} at least', { min: GUILD_RANKS_MIN }) : 'a moment' }),
+      { run: () => { if (!Array.isArray(d.rankNames)) return; d.rankNames.pop(); drawNames(); } }));
   out.push(shape);
-  const same = () => JSON.stringify(d.rankNames) === JSON.stringify(names);
+  const same = () => !Array.isArray(d.rankNames) || JSON.stringify(d.rankNames) === JSON.stringify(names);
   const acts = el('div', 'dfsocial-acts');
   acts.append(k.live(t('guild.ranks.save', 'Save ranks'), () => {
     const why = g.busy ? 'a moment' : !guildRankNamesOf(d.rankNames) ? t('guild.ranks.why.names', 'different names of 1 to {max} letters', { max: GUILD_RANK_NAME_MAX }) : same() ? t('guild.ranks.why.same', 'unchanged') : null;
@@ -113,7 +135,10 @@ function gridNodes(/** @type {any} */ k, /** @type {any} */ g, /** @type {any} *
           k.paint();
         });
         cell.append(box);
-      } else cell.textContent = has ? '✓' : '–';
+      } else {
+        cell.textContent = has ? '✓' : '–';
+        cell.setAttribute('aria-label', `${guildPowerName(p)}, ${names[r]}: ${has ? t('guild.ranks.yes', 'yes') : t('guild.ranks.no', 'no')}`);   // AUDIT GUILD-RANKS C5
+      }
       row.append(cell);
     }
     table.append(row);
@@ -121,12 +146,12 @@ function gridNodes(/** @type {any} */ k, /** @type {any} */ g, /** @type {any} *
   wrap.append(table);
   out.push(wrap);
   if (!master) return out;
-  const same = () => GUILD_POWERS_EDITABLE.every((p) => JSON.stringify(d.powers[p]) === JSON.stringify(holders(v, p, n)));
+  const same = () => !d.powers || GUILD_POWERS_EDITABLE.every((p) => JSON.stringify(d.powers[p]) === JSON.stringify(holders(v, p, n)));
   const acts = el('div', 'dfsocial-acts');
   acts.append(k.live(t('guild.ranks.powersSave', 'Save permissions'), () => {
     const why = g.busy ? 'a moment' : same() ? t('guild.ranks.why.same', 'unchanged') : null;
     return { enabled: !why, why };
-  }, { run: () => k.act(g.setPowers(d.powers), t('guild.ranks.powersSaved', 'The permissions are saved.'), () => { d.powers = null; }) }));
+  }, { run: () => k.act(g.setPowers(guildPowersChanged(d.powers, n)), t('guild.ranks.powersSaved', 'The permissions are saved.'), () => { d.powers = null; }) }));
   acts.append(k.armed('powers-reset')
     ? btn(t('guild.ranks.resetSure', 'Sure? Defaults'), { warn: true, enabled: !g.busy, why: 'a moment', run: () => k.act(g.setPowers({}), t('guild.ranks.reset.done', 'The permissions are back to the defaults.'), () => { d.powers = null; }) })
     : btn(t('guild.ranks.reset', 'Use the defaults'), { enabled: !g.busy, why: 'a moment', run: () => k.arm('powers-reset') }));

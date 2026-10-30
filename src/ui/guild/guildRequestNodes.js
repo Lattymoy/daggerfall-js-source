@@ -13,17 +13,20 @@ export const guildAskedText = (/** @type {number} */ atS, /** @type {number} */ 
 };
 
 /**
- * THE JOIN BODY'S PART: this character's requests standing, each with Withdraw, and the form that sends one. `k` the
+ * THE JOIN BODY'S PART: the account's requests standing, each with Withdraw, and the form that sends one. `k` the
  * window's kit (`el`, `btn`, `live`, `field`, `act`, `row`, `rowActs`, `draft`, `now`).
  * @param {any} k @param {any} g the guild book
  */
 export function guildAskNodes(k, g) {
   const { el, btn } = k;
   const out = [el('div', 'dfsocial-sec', t('guild.requests.ask', 'Ask to join'))];
-  const mine = g.myRequests?.() ?? [];
-  for (const q of mine) {
-    const r = k.row({ name: `${q.name} [${q.tag}]`, sub: guildAskedText(q.at, k.now()) });
-    k.rowActs(r).append(btn(t('guild.requests.withdraw', 'Withdraw'), { enabled: !g.busy, why: 'a moment', run: () => k.act(g.withdrawRequest(q.guild), t('guild.requests.withdrawn', 'Request withdrawn.')) }));
+  // AUDIT GUILD-RANKS C2: the account's every request - the cap is the account's - this character's first
+  const me = g.character?.() ?? null;
+  const all = [...(g.requests ?? [])].sort((a, b) => Number(b?.character === me) - Number(a?.character === me));
+  for (const q of all) {
+    const asked = guildAskedText(q.at, k.now());
+    const r = k.row({ name: `${q.name} [${q.tag}]`, sub: q.character === me ? asked : `${asked} - ${t('guild.requests.other', 'another character')}` });
+    k.rowActs(r).append(btn(t('guild.requests.withdraw', 'Withdraw'), { enabled: !g.busy, why: 'a moment', run: () => k.act(g.withdrawRequest(q.guild, q.character), t('guild.requests.withdrawn', 'Request withdrawn.')) }));
     out.push(r);
   }
   out.push(el('div', 'dfsocial-note', t('guild.requests.about', 'Type a guild\'s tag. Its officers see your request and answer it.')));
@@ -34,9 +37,9 @@ export function guildAskNodes(k, g) {
   const acts = el('div', 'dfsocial-acts');
   acts.append(k.live(t('guild.requests.send', 'Send request'), () => {
     const why = g.busy ? 'a moment' : !guildTagOf(d.askTag ?? '') ? t('guild.requests.why.tag', 'a tag of 2 to 4 letters or digits')
-      : mine.length >= GUILD_REQUESTS_MAX ? t('guild.requests.why.max', '{max} requests at most', { max: GUILD_REQUESTS_MAX }) : null;
+      : all.length >= GUILD_REQUESTS_MAX ? t('guild.requests.why.max', '{max} requests at most', { max: GUILD_REQUESTS_MAX }) : null;
     return { enabled: !why, why };
-  }, { run: () => { const tag = guildTagOf(d.askTag ?? ''); k.act(g.requestJoin(tag), t('guild.requests.sent', 'Request sent to [{tag}].', { tag })); d.askTag = ''; } }));
+  }, { run: () => { const tag = guildTagOf(d.askTag ?? ''); k.act(g.requestJoin(tag), t('guild.requests.sent', 'Request sent to [{tag}].', { tag }), () => { d.askTag = ''; }); } }));   // AUDIT GUILD-RANKS C6: kept on a refusal
   out.push(acts);
   return out;
 }

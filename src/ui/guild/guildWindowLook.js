@@ -91,10 +91,12 @@ export const GUILD_WINDOW_CSS = `
 .dfguild-gridwrap { overflow-x: auto; max-width: 100%; }
 .dfguild-grid { border-collapse: collapse; font-size: 12px; margin: 4px 0; }
 .dfguild-grid th, .dfguild-grid td { padding: 4px 8px; border-bottom: 1px solid rgba(255, 255, 255, .06); text-align: center; }
-.dfguild-grid tr > th:first-child { text-align: left; color: #cdbf9f; font-weight: normal; white-space: nowrap; }
-.dfguild-grid tr:first-child th { color: var(--brass, #c08a3e); font-size: 11px; font-weight: normal; max-width: 90px; overflow-wrap: anywhere; }
+.dfguild-grid tr > th:first-child { text-align: left; color: #cdbf9f; font-weight: normal; white-space: nowrap; position: sticky; left: 0; z-index: 1; background: #161b22; }
+.dfguild-grid tr:first-child th { color: var(--brass, #c08a3e); font-size: 11px; font-weight: normal; min-width: 56px; overflow-wrap: anywhere; }
 .dfguild-grid td { color: var(--dim, #9a9486); }
 .dfguild-grid input { width: 16px; height: 16px; accent-color: var(--brass, #c08a3e); cursor: pointer; }
+.dfsocial.touch .dfguild-grid input { width: 24px; height: 24px; }
+.dfsocial.touch .dfguild-grid th, .dfsocial.touch .dfguild-grid td { padding: 6px 8px; }
 .dfguild-ranklist { display: flex; flex-direction: column; gap: 2px; padding: 4px 0; font-size: 13px; color: var(--bone, #e9e4d9); }
 .dfguild-logo { padding: 6px 0; }
 .dfguild-logo > img { width: 96px; height: 96px; border-radius: 6px; border: 2px solid var(--brass, #c08a3e); background: #141a22; object-fit: contain; }

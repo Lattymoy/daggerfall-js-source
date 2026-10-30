@@ -90,6 +90,7 @@ import { vaultStanding, guildVaultSlots } from '../../src/net/guild/guildVaultLa
 import { checkName, normaliseName, standsAlone, IMPERSONATION, textCaught } from '../../src/net/nameFilter.js';   // GUILD2a: a guild's name and tag pass the name filter (Seats-Arc 18 said they did)
 import { seatWeekOf } from '../../src/net/townSeatLaw.js';   // GUILD2a: no new name in a week the guild fights for a seat
 import { POST_SENDER } from '../../src/net/postLaw.js';   // GUILD-REQUESTS: the asker's letter
+import { guildPowerSql } from './guildPowerSql.js';   // AUDIT GUILD-RANKS A1/A3: a power read in the write
 
 const charOk = (c) => typeof c === 'string' && CHAR_ID_RE.test(c);
 const memberIdOf = (m) => (typeof m === 'string' && GUILD_MEMBER_RE.test(m) ? Number(m.slice(1)) : null);
@@ -114,7 +115,9 @@ const lowestRankSql = (g) => `(SELECT CASE WHEN json_valid(ranks) AND json_array
  *  gone is let go - its character is in no guild, and may found or join one. Answers whether one went. */
 async function dropOrphan(db, row) {
   if (!row || row.gid != null) return false;
-  const r = await db.prepare('DELETE FROM guild_members WHERE rowid = ? AND NOT EXISTS (SELECT 1 FROM guilds WHERE id = ?)').bind(row.rid, row.guild_id).run();
+  // AUDIT GUILD-RANKS B5: the row it read, and no other that took its rowid since
+  const r = await db.prepare('DELETE FROM guild_members WHERE rowid = ?1 AND guild_id = ?2 AND player = ?3 AND char_id = ?4 AND NOT EXISTS (SELECT 1 FROM guilds WHERE id = ?2)')
+    .bind(row.rid, row.guild_id, row.player, row.char_id).run();
   return !!r?.meta?.changes;
 }
 
@@ -163,7 +166,10 @@ async function succeed(db, guildId) {
 export async function guildMemberDead(db, player, character) {
   const row = await db.prepare('SELECT rowid AS rid, guild_id FROM guild_members WHERE player = ? AND char_id = ?').bind(player, character).first();
   if (!row) return;
-  await db.prepare('DELETE FROM guild_members WHERE rowid = ?').bind(row.rid).run();
+  await db.batch([
+    db.prepare('DELETE FROM guild_members WHERE rowid = ?').bind(row.rid),
+    db.prepare('DELETE FROM guild_requests WHERE player = ? AND char_id = ?').bind(player, character),   // AUDIT GUILD-RANKS B3
+  ]);
   await succeed(db, row.guild_id);
   await db.prepare(`DELETE FROM guilds WHERE id = ?1 AND treasury = 0 AND NOT EXISTS (SELECT 1 FROM guild_members WHERE guild_id = ?1)
     AND NOT EXISTS (SELECT 1 FROM guild_marks WHERE guild_id = ?1 AND balance > 0) AND NOT ${guildKeepsSql('?1')}`).bind(row.guild_id).run();
@@ -228,7 +234,7 @@ async function viewOf(db, guildId, me, nowS, marksOpen = false, env = null) {
   let ranks = GUILD_RANK_NAMES;
   try { ranks = guildRankNamesOf(JSON.parse(g.ranks)) ?? GUILD_RANK_NAMES; } catch { /* the defaults */ }
   // GUILD-REQUESTS: the characters asking to join, to a rank that may answer them
-  const requests = asks ? await db.prepare('SELECT rowid AS rid, name, at FROM guild_requests WHERE guild_id = ? AND at > ? ORDER BY at').bind(guildId, nowS - GUILD_REQUEST_TTL_S).all() : null;
+  const requests = asks ? await db.prepare('SELECT id AS rid, name, at FROM guild_requests WHERE guild_id = ? AND at > ? ORDER BY at').bind(guildId, nowS - GUILD_REQUEST_TTL_S).all() : null;
   return {
     id: g.id, name: g.name, tag: g.tag, ranks: [...ranks], treasury: g.treasury, foundedAt: g.founded_at, rank: me.rank,
     // GUILD-RANKS: what each rank may do in this guild - every power's ranks (guildLaw.js guildPowersOf)
@@ -460,6 +466,7 @@ export async function foundGuild(ctx, player, { character, name, tag, realm = nu
         .bind(id, n, key, t, JSON.stringify(GUILD_RANK_NAMES), nowS),
       db.prepare(`INSERT INTO guild_members (player, char_id, guild_id, rank, name, joined_at) VALUES (?, ?, ?, ${GUILD_RANK_MASTER}, ?, ?)`)
         .bind(player.id, character, id, displayName(player), nowS),
+      db.prepare('DELETE FROM guild_requests WHERE player = ? AND char_id = ?').bind(player.id, character),   // AUDIT GUILD-RANKS B3: a founder asks no other guild
     ]);
   } catch {
     if (prep) await dropIfUnnamed(db, ctx.bucket, player.id, character, prep.key);   // AUDIT REALM2 S3: a batch that landed and lost its answer keeps its save
@@ -545,6 +552,8 @@ export async function answerInvite({ db, nowS, env }, player, { character, guild
       // spent by the join, and only by it
       db.prepare('DELETE FROM guild_invites WHERE guild_id = ?1 AND player = ?2 AND EXISTS (SELECT 1 FROM guild_members WHERE player = ?2 AND char_id = ?3 AND guild_id = ?1)')
         .bind(guild, player.id, character),
+      // AUDIT GUILD-RANKS B3: and the character's requests to join, with it
+      db.prepare('DELETE FROM guild_requests WHERE player = ?1 AND char_id = ?2 AND EXISTS (SELECT 1 FROM guild_members WHERE player = ?1 AND char_id = ?2)').bind(player.id, character),
     ]);
   } catch {
     return { error: 'guild-already' };   // the character joined a guild in the meantime
@@ -556,8 +565,9 @@ export async function answerInvite({ db, nowS, env }, player, { character, guild
 }
 
 /** GUILD-REQUESTS (2026-10-30, the owner: "Player guild join requests"): ASK TO JOIN a guild by its tag, with a character
- *  in none. A request stands GUILD_REQUEST_TTL_S; a character holds GUILD_REQUESTS_MAX at once and a guild hears
- *  GUILD_REQUESTS_GUILD_MAX, each asked inside the INSERT. Asked again, it stands anew. Where that guild's invitation
+ *  in none. A request stands GUILD_REQUEST_TTL_S; an ACCOUNT holds GUILD_REQUESTS_MAX at once, one a guild, and a guild
+ *  hears GUILD_REQUESTS_GUILD_MAX - each asked inside the INSERT (AUDIT GUILD-RANKS B1: counted by character, one account
+ *  filled a guild's list with made-up character ids). Asked again, it stands anew. Where that guild's invitation
  *  already stands for the account, that is answered instead (`guild-invited`). */
 export async function requestToJoin(ctx, player, { character, tag } = {}) {
   const { db, nowS } = ctx;
@@ -578,8 +588,9 @@ export async function requestToJoin(ctx, player, { character, tag } = {}) {
     db.prepare(`INSERT INTO guild_requests (guild_id, player, char_id, name, at) SELECT ?1, ?2, ?3, ?4, ?5
       WHERE (SELECT COUNT(*) FROM guild_members WHERE guild_id = ?1) < ?6
         AND NOT EXISTS (SELECT 1 FROM guild_members WHERE player = ?2 AND char_id = ?3)
-        AND (SELECT COUNT(*) FROM guild_requests WHERE player = ?2 AND char_id = ?3 AND guild_id <> ?1) < ?7
-        AND (SELECT COUNT(*) FROM guild_requests WHERE guild_id = ?1 AND NOT (player = ?2 AND char_id = ?3)) < ?8
+        AND NOT EXISTS (SELECT 1 FROM guild_requests WHERE guild_id = ?1 AND player = ?2 AND char_id <> ?3)
+        AND (SELECT COUNT(*) FROM guild_requests WHERE player = ?2 AND guild_id <> ?1) < ?7
+        AND (SELECT COUNT(*) FROM guild_requests WHERE guild_id = ?1 AND player <> ?2) < ?8
       ON CONFLICT (guild_id, player, char_id) DO UPDATE SET at = excluded.at, name = excluded.name`)
       .bind(g.id, player.id, character, displayName(player), nowS, GUILD_MEMBERS_MAX, GUILD_REQUESTS_MAX, GUILD_REQUESTS_GUILD_MAX),
   ]);
@@ -591,7 +602,8 @@ async function requestRefusal(db, guildId, playerId, character) {
   const n = await db.prepare('SELECT COUNT(*) AS n FROM guild_members WHERE guild_id = ?').bind(guildId).first();
   if (Number(n?.n ?? 0) >= GUILD_MEMBERS_MAX) return 'guild-full';
   if (await memberRow(db, playerId, character)) return 'guild-already';
-  const mine = await db.prepare('SELECT COUNT(*) AS n FROM guild_requests WHERE player = ? AND char_id = ?').bind(playerId, character).first();
+  if (await db.prepare('SELECT 1 FROM guild_requests WHERE guild_id = ? AND player = ? AND char_id <> ?').bind(guildId, playerId, character).first()) return 'guild-requested';
+  const mine = await db.prepare('SELECT COUNT(*) AS n FROM guild_requests WHERE player = ?').bind(playerId).first();
   return Number(mine?.n ?? 0) >= GUILD_REQUESTS_MAX ? 'guild-requests-max' : 'guild-requests-full';
 }
 
@@ -615,33 +627,38 @@ export async function answerJoinRequest(ctx, player, { character, request, accep
   if (rid == null) return { error: 'no-request' };
   if (await spend(ctx, player)) return { error: 'guild-rate' };
   const live = nowS - GUILD_REQUEST_TTL_S;
-  const q = await db.prepare('SELECT player, char_id, name FROM guild_requests WHERE rowid = ? AND guild_id = ? AND at > ?').bind(rid, a.me.guild_id, live).first();
+  const q = await db.prepare('SELECT player, char_id, name FROM guild_requests WHERE id = ? AND guild_id = ? AND at > ?').bind(rid, a.me.guild_id, live).first();
   if (!q) return { error: 'no-request' };
   const g = await db.prepare('SELECT name, tag FROM guilds WHERE id = ?').bind(a.me.guild_id).first();
   const letter = (yes) => db.prepare(`INSERT OR IGNORE INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at, ware)
     VALUES (lower(hex(randomblob(12))), ?1, ?2, ?3, ?4, ?5, NULL, ?6, NULL)`).bind(q.player, `guild-request-${a.me.guild_id}-${rid}-${nowS}`, POST_SENDER, ...requestLetter(yes, g), nowS);
   if (accept !== true) {
-    const [gone] = await db.batch([db.prepare('DELETE FROM guild_requests WHERE rowid = ? AND guild_id = ?').bind(rid, a.me.guild_id), letter(false)]);
-    return gone?.meta?.changes ? answered(ctx, player, character, a.me.guild_id) : { error: 'no-request' };
+    // AUDIT GUILD-RANKS B6: the letter only for a request this call ended - one accepted or withdrawn meanwhile gets none
+    const gone = await db.prepare('DELETE FROM guild_requests WHERE id = ? AND guild_id = ? RETURNING id').bind(rid, a.me.guild_id).first();
+    if (!gone) return { error: 'no-request' };
+    await letter(false).run();
+    return answered(ctx, player, character, a.me.guild_id);
   }
   let joined;
   try {
     [joined] = await db.batch([
       db.prepare(`INSERT INTO guild_members (player, char_id, guild_id, rank, name, joined_at)
         SELECT q.player, q.char_id, q.guild_id, ${lowestRankSql('q.guild_id')}, q.name, ?3 FROM guild_requests q
-        WHERE q.rowid = ?1 AND q.guild_id = ?2 AND q.at > ?4 AND (SELECT COUNT(*) FROM guild_members WHERE guild_id = ?2) < ?5`)
+        WHERE q.id = ?1 AND q.guild_id = ?2 AND q.at > ?4 AND (SELECT COUNT(*) FROM guild_members WHERE guild_id = ?2) < ?5`)
         .bind(rid, a.me.guild_id, nowS, live, GUILD_MEMBERS_MAX),
       // the character's every request goes with the join, and only with it
       db.prepare('DELETE FROM guild_requests WHERE player = ?1 AND char_id = ?2 AND EXISTS (SELECT 1 FROM guild_members WHERE player = ?1 AND char_id = ?2 AND guild_id = ?3)')
         .bind(q.player, q.char_id, a.me.guild_id),
     ]);
-  } catch {
-    // the character joined another guild meanwhile: the request is spent
-    await db.prepare('DELETE FROM guild_requests WHERE rowid = ? AND guild_id = ?').bind(rid, a.me.guild_id).run();
+  } catch (e) {
+    // the character joined another guild meanwhile: the request is spent - AUDIT GUILD-RANKS B7: only then; any other
+    // failure keeps it, to be answered again
+    if (!(await memberRow(db, q.player, q.char_id))) throw e;
+    await db.prepare('DELETE FROM guild_requests WHERE id = ? AND guild_id = ?').bind(rid, a.me.guild_id).run();
     return { error: 'guild-request-joined' };
   }
   if (!joined?.meta?.changes) {
-    const still = await db.prepare('SELECT 1 FROM guild_requests WHERE rowid = ? AND guild_id = ? AND at > ?').bind(rid, a.me.guild_id, live).first();
+    const still = await db.prepare('SELECT 1 FROM guild_requests WHERE id = ? AND guild_id = ? AND at > ?').bind(rid, a.me.guild_id, live).first();
     return { error: still ? 'guild-full' : 'no-request' };
   }
   await letter(true).run();
@@ -802,7 +819,10 @@ export async function rankGuildMember(ctx, player, { character, member, rank } =
   if (!t) return { error: 'no-member' };
   if (!guildMayMove(a.me.rank, t.rank, rank, a.powers, a.ranks)) return { error: 'guild-rank' };
   if (await spend(ctx, player)) return { error: 'guild-rate' };
-  const r = await db.prepare('UPDATE guild_members SET rank = ? WHERE rowid = ? AND guild_id = ? AND rank = ?').bind(rank, t.rid, a.me.guild_id, t.rank).run();
+  // AUDIT GUILD-RANKS A3: in the write, the rank is one the guild still has and the mover still holds the power
+  const r = await db.prepare(`UPDATE guild_members SET rank = ?1 WHERE rowid = ?2 AND guild_id = ?3 AND rank = ?4 AND ?1 <= ${lowestRankSql('?3')}
+    AND EXISTS (SELECT 1 FROM guild_members m WHERE m.rowid = ?5 AND m.guild_id = ?3 AND m.rank = ?6 AND ${guildPowerSql('promote', 'm.rank', '?3')})`)
+    .bind(rank, t.rid, a.me.guild_id, t.rank, a.me.rid, a.me.rank).run();
   return r?.meta?.changes ? { ok: true } : { error: 'no-member' };
 }
 
@@ -821,20 +841,39 @@ export async function renameGuildRanks(ctx, player, { character, ranks } = {}) {
   if (caught) return { error: 'guild-rank-word', word: caught };
   if (await spend(ctx, player)) return { error: 'guild-rate' };
   const n = names.length;
-  const set = powersWithin(a.me.g_powers, n);
-  const [, moved] = await db.batch([
-    db.prepare('UPDATE guilds SET ranks = ?, powers = ? WHERE id = ?').bind(JSON.stringify(names), set, a.me.guild_id),
-    db.prepare('UPDATE guild_members SET rank = ? WHERE guild_id = ? AND rank >= ?').bind(n - 1, a.me.guild_id, n),
-  ]);
+  const set = powersWithin(a.me.g_powers, n, a.ranks);
+  let moved;
+  try {
+    // AUDIT GUILD-RANKS A5: only over the ranks and powers it read, and while its actor is still the guildmaster
+    [, , moved] = await db.batch([
+      db.prepare(`UPDATE guilds SET ranks = ?1, powers = ?2 WHERE id = ?3 AND ranks IS ?4 AND powers IS ?5 AND ${masterSql('?6', '?3')}`)
+        .bind(JSON.stringify(names), set, a.me.guild_id, a.me.g_ranks ?? null, a.me.g_powers ?? null, a.me.rid),
+      mustChange(db),
+      db.prepare('UPDATE guild_members SET rank = ? WHERE guild_id = ? AND rank >= ?').bind(n - 1, a.me.guild_id, n),
+    ]);
+  } catch {
+    return { error: await rankEditRefusal(db, a.me) };
+  }
   return { ok: true, ranks: names, demoted: Number(moved?.meta?.changes ?? 0) };
 }
-/** GUILD-RANKS: a guild's powers as written, kept to its first `n` ranks (JSON, or null for none). */
-function powersWithin(raw, n) {
+/** AUDIT GUILD-RANKS A5: the actor (rowid `rid`) still the guildmaster of `g`, as SQL. */
+const masterSql = (rid, g) => `EXISTS (SELECT 1 FROM guild_members WHERE rowid = ${rid} AND guild_id = ${g} AND rank = ${GUILD_RANK_MASTER})`;
+/** AUDIT GUILD-RANKS A5: why a ranks or powers edit wrote nothing - its actor no longer the guildmaster, or the guild's
+ *  ranks or powers changed meanwhile (another tab's edit). */
+async function rankEditRefusal(db, me) {
+  const still = await db.prepare('SELECT rank FROM guild_members WHERE rowid = ? AND guild_id = ?').bind(me.rid, me.guild_id).first();
+  return still && Number(still.rank) === GUILD_RANK_MASTER ? 'guild-ranks-moved' : 'guild-rank';
+}
+/** GUILD-RANKS: a guild's powers as written, kept to its first `n` ranks (JSON, or null for none). AUDIT GUILD-RANKS A4:
+ *  grown from `was` ranks, a power its lowest rank held reaches the new ranks under it too - a deposit set before stays
+ *  every member's. */
+function powersWithin(raw, n, was = n) {
   let set = null;
   try { set = typeof raw === 'string' ? JSON.parse(raw) : null; } catch { set = null; }
   if (!set || typeof set !== 'object' || Array.isArray(set)) return null;
+  const added = n > was ? [...Array(n - was).keys()].map((i) => was + i) : [];
   const kept = guildPowersEditOf(Object.fromEntries(Object.entries(set).filter(([p, r]) => GUILD_POWERS_EDITABLE.includes(p) && Array.isArray(r))
-    .map(([p, r]) => [p, r.filter((x) => Number.isInteger(x) && x > 0 && x < n)])), n);
+    .map(([p, r]) => [p, [...r, ...(r.includes(was - 1) ? added : [])].filter((x) => Number.isInteger(x) && x > 0 && x < n)])), n);
   return kept && Object.keys(kept).length ? JSON.stringify(kept) : null;
 }
 
@@ -849,10 +888,17 @@ export async function setGuildPowers(ctx, player, { character, powers } = {}) {
   const set = guildPowersEditOf(powers, a.ranks);
   if (!set) return { error: 'bad-powers' };
   if (await spend(ctx, player)) return { error: 'guild-rate' };
-  await db.prepare('UPDATE guilds SET powers = ? WHERE id = ?').bind(Object.keys(set).length ? JSON.stringify(set) : null, a.me.guild_id).run();
+  // AUDIT GUILD-RANKS A5: while its actor is the guildmaster and the guild has the ranks the edit was checked against
+  const r = await db.prepare(`UPDATE guilds SET powers = ?1 WHERE id = ?2 AND ranks IS ?3 AND ${masterSql('?4', '?2')}`)
+    .bind(Object.keys(set).length ? JSON.stringify(set) : null, a.me.guild_id, a.me.g_ranks ?? null, a.me.rid).run();
+  if (!r?.meta?.changes) return { error: await rankEditRefusal(db, a.me) };
   const me = await memberRow(db, player.id, character);
   return { ok: true, guild: me ? await viewOf(db, a.me.guild_id, me, nowS, marksOpenFor(player, env), env) : null };
 }
+
+/** AUDIT GUILD-RANKS A1: a withdrawal's own check that its member (rowid `rid`, at rank `rank`) still holds the power -
+ *  given to more ranks than the guildmaster's, it can be taken away between the read and the write. */
+const withdrawerSql = (rid, rank) => `EXISTS (SELECT 1 FROM guild_members WHERE rowid = ${rid} AND guild_id = guilds.id AND rank = ${rank} AND ${guildPowerSql('withdraw', 'rank', 'guilds.id')})`;
 
 /** Move the treasury - in, never past its cap; out, never past what it holds - naming the mover for the ledger's line
  *  (the schema's trigger writes it with the move). Answers the balance, or null when it did not move. */
@@ -860,8 +906,9 @@ async function moveTreasury(db, me, who, kind, gold, nowS) {
   const row = kind === 'deposit'
     ? await db.prepare('UPDATE guilds SET treasury = treasury + ?1, moved_by = ?4, moved_at = ?5 WHERE id = ?2 AND treasury + ?1 <= ?3 RETURNING treasury')
       .bind(gold, me.guild_id, GUILD_TREASURY_MAX, who, nowS).first()
-    : await db.prepare('UPDATE guilds SET treasury = treasury - ?1, realm_gold = MIN(realm_gold, treasury - ?1), moved_by = ?3, moved_at = ?4 WHERE id = ?2 AND treasury >= ?1 RETURNING treasury')
-      .bind(gold, me.guild_id, who, nowS).first();   // AUDIT REALM L1-F3: what realm records paid in is never more than the treasury holds
+    : await db.prepare(`UPDATE guilds SET treasury = treasury - ?1, realm_gold = MIN(realm_gold, treasury - ?1), moved_by = ?3, moved_at = ?4 WHERE id = ?2 AND treasury >= ?1
+        AND ${withdrawerSql('?5', '?6')} RETURNING treasury`)
+      .bind(gold, me.guild_id, who, nowS, me.rid, me.rank).first();   // AUDIT REALM L1-F3: what realm records paid in is never more than the treasury holds
   return row ? row.treasury : null;
 }
 
@@ -881,7 +928,8 @@ async function realmTreasury(ctx, player, me, at, kind, gold, region, letter = f
   if (prep.error) return prep;
   const move = kind === 'deposit'
     ? db.prepare('UPDATE guilds SET treasury = treasury + ?1, realm_gold = realm_gold + ?1, moved_by = ?4, moved_at = ?5 WHERE id = ?2 AND treasury + ?1 <= ?3').bind(gold, me.guild_id, GUILD_TREASURY_MAX, displayName(player), nowS)
-    : db.prepare('UPDATE guilds SET treasury = treasury - ?1, realm_gold = realm_gold - ?1, moved_by = ?3, moved_at = ?4 WHERE id = ?2 AND treasury >= ?1 AND realm_gold >= ?1').bind(gold, me.guild_id, displayName(player), nowS);
+    : db.prepare(`UPDATE guilds SET treasury = treasury - ?1, realm_gold = realm_gold - ?1, moved_by = ?3, moved_at = ?4 WHERE id = ?2 AND treasury >= ?1 AND realm_gold >= ?1
+        AND ${withdrawerSql('?5', '?6')}`).bind(gold, me.guild_id, displayName(player), nowS, me.rid, me.rank);
   try {
     await db.batch([...prep.steps, move, mustChange(db)]);
   } catch {

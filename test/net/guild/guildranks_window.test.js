@@ -97,7 +97,7 @@ test('GUILD-RANKS the guildmaster\'s Ranks page: a field a rank, one added at th
   button(t.root, 'Save permissions').fire('click');
   await new Promise((r) => setImmediate(r));
   const sent = t.asked.find((a) => a[0] === 'powers')[1];
-  assert.deepEqual([sent.withdraw, sent.invite, sent.deposit], [[1], [1], [1, 2, 3]]);
+  assert.deepEqual(sent, { withdraw: [1] }, 'AUDIT GUILD-RANKS C1: only what differs from the defaults, so a default follows the guild as it grows');
   await t.go('ranks');
   button(t.root, 'Use the defaults').fire('click');
   t.panel.render();
@@ -136,7 +136,9 @@ test('GUILD-REQUESTS the Members page lists the requests to a rank that may invi
   const none = await rig(null, { requests: [{ guild: 'g0000000001', character: 'rabc', name: 'The Pale Hand', tag: 'PALE', at: 1_790_000_000 }, { guild: 'g0000000002', character: 'other', name: 'Not Mine', tag: 'NOT', at: 1 }] });
   await none.go();
   const all = texts(none.root);
-  assert.ok(all.includes('The Pale Hand [PALE]') && !all.includes('Not Mine [NOT]'), 'this character\'s own');
+  // AUDIT GUILD-RANKS C2: the account's every request, the cap being the account's; another character's said so
+  assert.ok(all.includes('The Pale Hand [PALE]') && all.includes('Not Mine [NOT]'));
+  assert.ok(all.some((x) => /another character$/.test(x)));
   assert.equal(button(none.root, 'Send request').disabled, true, 'no tag yet');
   const tag = field(none.root, 'Guild tag');
   tag.value = 'iron'; tag.fire('input');

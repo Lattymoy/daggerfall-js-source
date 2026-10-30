@@ -58,6 +58,14 @@ export function vaultStanding(rank, grant = null) {
   if (rank === GUILD_RANK_MASTER || !grant || !vaultLevelOk(grant.level)) return { level: def.level, limit: def.limit, granted: false };
   return { level: grant.level, limit: grant.level === 'withdraw' && vaultLimitOk(grant.limit) ? grant.limit : 0, granted: true };
 }
+/** AUDIT GUILD-RANKS A2: whether standing `next` is no more than `own` - a granter below the guildmaster gives no more
+ *  of the vault than it has: no higher level, and a withdrawer's limit no looser than its own (0 is none). */
+export function vaultGrantWithin(own, next) {
+  const at = (s) => VAULT_LEVELS.indexOf(s?.level ?? 'none');
+  if (at(next) > at(own)) return false;
+  if (next?.level !== 'withdraw') return true;
+  return own.limit === 0 || (next.limit !== 0 && next.limit <= own.limit);
+}
 /** Whether a standing may put a piece in. */
 export const vaultMayPut = (s) => s?.level === 'deposit' || s?.level === 'withdraw';
 /** Whether a standing may take one out, having taken `takenToday` today. */

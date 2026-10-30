@@ -524,6 +524,7 @@ const GUILD_STATUS = Object.freeze({
   // GUILD-RANKS: a powers table the law refuses; GUILD-REQUESTS: no such request, no guild of that tag, the guild's own
   // invitation standing, the character's or the guild's list full, the asker joined elsewhere meanwhile
   'bad-powers': 400, 'no-request': 404, 'no-guild-tag': 404, 'guild-invited': 409, 'guild-requests-max': 409, 'guild-requests-full': 409, 'guild-request-joined': 409,
+  'guild-requested': 409, 'guild-ranks-moved': 409, 'vault-grant-over': 403,   // AUDIT GUILD-RANKS B1, A5, A2
   // GUILD1d (Seats-Arc 8): the hall - a building somebody owns, the guild's one hall already held, none held, one moved
   // under its sale, a guild kept from going by it; and the heraldry - the same again, changed meanwhile, the Drakes short
   'home-taken': 409, 'guild-hall-have': 409, 'guild-hall-moved': 409, 'guild-hall': 409, 'guild-hall-none': 404, 'home-rate': 429,

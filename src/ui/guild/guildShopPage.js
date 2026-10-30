@@ -20,14 +20,15 @@ export const guildWareUseText = (/** @type {unknown} */ key) => {
   }
 };
 
-/** Why a ware cannot be bought now, or null. */
-export function guildWareWhy(/** @type {any} */ shop, /** @type {any} */ w) {
+/** Why a ware cannot be bought now, or null. AUDIT GUILD-RANKS C3: `v` the guild's view - a shop given to more ranks than
+ *  the guildmaster's says so. */
+export function guildWareWhy(/** @type {any} */ shop, /** @type {any} */ w, /** @type {any} */ v = null) {
   if (!shop?.open) return t('guild.shop.why.closed', 'silver is closed');
   if (w.payer === 'account') {
     if (w.held) return null;
     return Number(shop.marks) < w.price ? t('guild.shop.why.short', 'not enough silver') : null;
   }
-  if (!shop.buysForGuild) return t('guild.shop.why.master', 'the guildmaster buys these');
+  if (!shop.buysForGuild) return JSON.stringify(v?.powers?.shop ?? [0]) === '[0]' ? t('guild.shop.why.master', 'the guildmaster buys these') : t('social.guild.rankWhy', 'not your rank\'s');
   if (Number(w.owned) >= Number(w.max)) return t('guild.shop.why.max', 'the guild owns the most it may');
   return Number(shop.guildMarks) < w.price ? t('guild.shop.why.treasury', 'the silver treasury is short') : null;
 }
@@ -96,7 +97,7 @@ function wareRow(/** @type {any} */ k, /** @type {any} */ g, /** @type {any} */ 
   side.append(el('div', 'dfguild-wareprice', marksText(w.price)), el('div', 'dfguild-warepayer', guildWarePayerText(w.payer)));
   if (w.payer === 'account' && w.held) side.append(el('div', 'dfguild-wareheld', t('guild.shop.owned', 'Owned')));
   else {
-    const why = guildWareWhy(shop, w) ?? (g.busy ? 'a moment' : null);
+    const why = guildWareWhy(shop, w, v) ?? (g.busy ? 'a moment' : null);
     const key = `ware:${w.key}`;
     side.append(k.armed(key)
       ? btn(t('guild.shop.sure', 'Sure? {price}', { price: marksText(w.price) }), { enabled: !why, why, run: () => k.act(g.buyWare(w.key), `${t('guild.shop.bought', '{name} bought.', { name })} ${guildWareUseText(w.key)}`) })

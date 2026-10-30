@@ -57,6 +57,7 @@ import {
 import { dice } from './unitRoll.js';   // SILVER-FINDS: a loot find's amount is the service's dice
 import { readAll } from './service.js';   // GATHER-SPEED: a find's reads in one round trip
 import { guildMay } from '../../src/net/guild/guildLaw.js';
+import { guildPowerSql } from './guildPowerSql.js';   // AUDIT GUILD-RANKS A1
 import { medianOf, MARKET_REPORT_MEDIANS } from '../../src/net/marketLaw.js';   // PROF5: the report's medians
 import { WITNESS } from '../../src/net/nodeLaw.js';   // AUDIT 625 S1: the finds open at the witnesses' own age
 
@@ -484,7 +485,7 @@ async function moveGuildMarks(ctx, player, env, { character, marks, rid }, kind)
       SELECT 'guild', ?2, 'account', ?1, 'guild-withdraw', ?3, ?4, ?5, ?1, ?6, ?7
       WHERE COALESCE((SELECT balance FROM guild_marks WHERE guild_id = ?2), 0) >= ?3
         AND COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) + ?3 <= ?8
-        AND EXISTS (SELECT 1 FROM guild_members WHERE player = ?1 AND char_id = ?9 AND guild_id = ?2 AND rank = ?10)`)
+        AND EXISTS (SELECT 1 FROM guild_members WHERE player = ?1 AND char_id = ?9 AND guild_id = ?2 AND rank = ?10 AND ${guildPowerSql('withdraw', 'rank', '?2')})`)   // AUDIT GUILD-RANKS A1: the power, in the write
       .bind(player.id, a.me.guild_id, marks, day, nowS, who, rid, MARKS_MAX, character, a.me.rank));
   if (!made) {
     const again = await lineOf(db, player.id, rid);

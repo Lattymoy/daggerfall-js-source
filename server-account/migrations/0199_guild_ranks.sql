@@ -6,8 +6,10 @@
 -- power it does not name, is the law's default.
 ALTER TABLE guilds ADD COLUMN powers TEXT;
 
--- A character's request to join a guild, answered by a rank that may invite. One a guild and character.
+-- A character's request to join a guild, answered by a rank that may invite. One a guild and account. `id` is never
+-- reused (AUTOINCREMENT), so an officer's answer never lands on a later request.
 CREATE TABLE IF NOT EXISTS guild_requests (
+  id       INTEGER PRIMARY KEY AUTOINCREMENT,
   guild_id TEXT NOT NULL,
   player   TEXT NOT NULL,
   char_id  TEXT NOT NULL,

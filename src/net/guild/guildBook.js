@@ -376,10 +376,8 @@ export class GuildBook {
   setPowers(powers) { return this._act((c) => this.door.powers(c, powers)); }
   /** GUILD-REQUESTS: a request to join by a guild's tag, taken back, and answered (`id` a request's, `q...`). */
   requestJoin(tag) { return this._act((c) => this.door.request(c, tag)); }
-  withdrawRequest(guild) { return this._act((c) => this.door.requestWithdraw(c, guild)); }
+  withdrawRequest(guild, character = null) { return this._act((c) => this.door.requestWithdraw(character ?? c, guild)); }   // AUDIT GUILD-RANKS C2: another character's too
   answerRequest(id, accept) { return this._act((c) => this.door.requestAnswer(c, id, accept === true)); }
-  /** GUILD-REQUESTS: this character's own requests standing. */
-  myRequests() { const c = this.character?.() ?? null; return this.requests.filter((q) => q?.character === c); }
   handOver(member) { return this._act((c) => this.door.handOver(c, member)); }
   disband() { return this._act((c) => this.door.disband(c)); }
 
