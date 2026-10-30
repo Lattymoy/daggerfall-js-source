@@ -32,7 +32,20 @@
 // The streaming host is where towns are played and parked in, online and off.
 //
 // Not a DFU member. Ledger A (WARDEN1).
-import { wardenStamp, validWardenStamp, stampFits, wardenWordOf, offlineDue, footprintRoadShare, landingsOf, strayOf, horseThrownWith, WARDEN_ROAD_SHARE, WARDEN_SAME_NATIVES, WARDEN_TEXT } from '../../systems/wagon/wagonWarden.js';
+import {
+  wardenStamp,
+  validWardenStamp,
+  stampFits,
+  wardenWordOf,
+  offlineDue,
+  footprintRoadShare,
+  landingsOf,
+  strayOf,
+  horseThrownWith,
+  WARDEN_ROAD_SHARE,
+  WARDEN_SAME_NATIVES,
+  WARDEN_TEXT,
+} from '../../systems/wagon/wagonWarden.js';
 import { findTownPath, pathLine } from '../../systems/livingWorld/townPaths.js';
 import { NAV_CELL } from '../../world/city/cityNavigation.js';
 import { WAGON_MODE, HORSE_MODE } from '../../systems/horse/horseCartLaw.js';
@@ -61,9 +74,18 @@ export function wardenTownIn(built, translate, size, x, z) {
     ground = true;
     const nav = p.wardenTown != null && p.locOrigin ? p.population?.nav : null;
     if (!nav) continue;
-    const ox = t[0] + p.locOrigin[0], oz = t[2] + p.locOrigin[2], u = x - ox, v = z - oz;
+    const ox = t[0] + p.locOrigin[0],
+      oz = t[2] + p.locOrigin[2],
+      u = x - ox,
+      v = z - oz;
     if (u < 0 || v < 0 || u >= nav.width * NAV_CELL || v >= nav.height * NAV_CELL) continue;
-    return { town: p.wardenTown, nav, places: p.population?.places ?? null, local: [u, v], toScene: (/** @type {number} */ a, /** @type {number} */ b) => [a + ox, b + oz] };   // AUDIT WORLD-EVENTS L4-8: and its living town's places (a raid's square and way)
+    return {
+      town: p.wardenTown,
+      nav,
+      places: p.population?.places ?? null,
+      local: [u, v],
+      toScene: (/** @type {number} */ a, /** @type {number} */ b) => [a + ox, b + oz],
+    }; // AUDIT WORLD-EVENTS L4-8: and its living town's places (a raid's square and way)
   }
   return ground ? null : undefined;
 }
@@ -79,8 +101,16 @@ export function wardenTownOfPixel(built, translate, px, py) {
     if (p.px !== px || p.py !== py) continue;
     const nav = p.wardenTown != null && p.locOrigin ? p.population?.nav : null;
     if (!nav) return null;
-    const t = translate(p.px, p.py), ox = t[0] + p.locOrigin[0], oz = t[2] + p.locOrigin[2];
-    return { town: p.wardenTown, nav, places: p.population?.places ?? null, local: null, toScene: (/** @type {number} */ a, /** @type {number} */ b) => [a + ox, b + oz] };
+    const t = translate(p.px, p.py),
+      ox = t[0] + p.locOrigin[0],
+      oz = t[2] + p.locOrigin[2];
+    return {
+      town: p.wardenTown,
+      nav,
+      places: p.population?.places ?? null,
+      local: null,
+      toScene: (/** @type {number} */ a, /** @type {number} */ b) => [a + ox, b + oz],
+    };
   }
   return null;
 }
@@ -100,9 +130,20 @@ export function wardenTownOfPixel(built, translate, px, py) {
  *   it is worked out
  */
 export function createWagonWarden({
-  hcc, runtime, shows, online, toWire, toScene, townAt, townName = () => '', wallNow = () => Date.now(),
-  eye = () => null, street = () => true, notify = () => {}, myKey = () => null,
-  thrown = () => {},   // WAGONS4: my wagon was thrown - the host's upkeep wears it (systems/wagon/wagonUpkeep.js THROWN_WEAR)
+  hcc,
+  runtime,
+  shows,
+  online,
+  toWire,
+  toScene,
+  townAt,
+  townName = () => '',
+  wallNow = () => Date.now(),
+  eye = () => null,
+  street = () => true,
+  notify = () => {},
+  myKey = () => null,
+  thrown = () => {}, // WAGONS4: my wagon was thrown - the host's upkeep wears it (systems/wagon/wagonUpkeep.js THROWN_WEAR)
 }) {
   /** @type {any} */
   let stamp = null;
@@ -136,22 +177,39 @@ export function createWagonWarden({
     const box = hcc.parts?.box ?? null;
     if (!box) return undefined;
     const fl = Math.sqrt((st?.HeadingX ?? 0) ** 2 + (st?.HeadingZ ?? 1) ** 2) || 1;
-    const fx = (st?.HeadingX ?? 0) / fl, fz = (st?.HeadingZ ?? 1) / fl;
+    const fx = (st?.HeadingX ?? 0) / fl,
+      fz = (st?.HeadingZ ?? 1) / fl;
     // the box's middle: across along the right (fz, -fx), along the forward
-    const cx = (box[0] + box[3]) / 2, cz = (box[2] + box[5]) / 2;
+    const cx = (box[0] + box[3]) / 2,
+      cz = (box[2] + box[5]) / 2;
     const mid = [t.local[0] + cx * fz + cz * fx, t.local[1] - cx * fx + cz * fz];
     const nav = t.nav;
-    const share = footprintRoadShare((gx, gy) => nav.weightAt(gx, gy), nav.width, nav.height, NAV_CELL, mid, [fx, fz], [(box[3] - box[0]) / 2, (box[5] - box[2]) / 2]);
+    const share = footprintRoadShare(
+      (gx, gy) => nav.weightAt(gx, gy),
+      nav.width,
+      nav.height,
+      NAV_CELL,
+      mid,
+      [fx, fz],
+      [(box[3] - box[0]) / 2, (box[5] - box[2]) / 2],
+    );
     // AUDIT WARDEN1 R6: out through the nearest edge whose landing keeps the team in its own map pixel (a parked wagon
     // is drawn in its owner's pixel alone - systems/horse/horseCart.js), else in its own cell (a word from another cell's
     // ground drops the cell's record: the readers' team went as it landed), else the nearest
     const lands = landingsOf([0, 0, nav.width * NAV_CELL, nav.height * NAV_CELL], mid, strayOf(a)).map((l) => {
-      const sc = t.toScene(l[0], l[1]), w = toWire([sc[0], 0, sc[1]]);
+      const sc = t.toScene(l[0], l[1]),
+        w = toWire([sc[0], 0, sc[1]]);
       return [Math.round(w[0]), Math.round(w[2])];
     });
-    const px = mapPixelOfWire(a[0], a[1]), cell = cellRoomOfWire(a[0], a[1]);
-    const ly = lands.find((l) => { const q = mapPixelOfWire(l[0], l[1]); return q[0] === px[0] && q[1] === px[1]; })
-      ?? lands.find((l) => cellRoomOfWire(l[0], l[1]) === cell) ?? lands[0];
+    const px = mapPixelOfWire(a[0], a[1]),
+      cell = cellRoomOfWire(a[0], a[1]);
+    const ly =
+      lands.find((l) => {
+        const q = mapPixelOfWire(l[0], l[1]);
+        return q[0] === px[0] && q[1] === px[1];
+      }) ??
+      lands.find((l) => cellRoomOfWire(l[0], l[1]) === cell) ??
+      lands[0];
     return wardenStamp(a, now, t.town, share >= WARDEN_ROAD_SHARE, ly);
   }
 
@@ -163,15 +221,19 @@ export function createWagonWarden({
     const nav = t.nav;
     const walkable = (gx, gy) => gx >= 0 && gy >= 0 && gx < nav.width && gy < nav.height && nav.weightAt(gx, gy) > 0;
     const near = (gx, gy) => {
-      for (let r = 0; r <= WARDEN_CELL_SEARCH; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
-        if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
-        if (walkable(gx + dx, gy + dy)) return [gx + dx, gy + dy];
-      }
+      for (let r = 0; r <= WARDEN_CELL_SEARCH; r++)
+        for (let dy = -r; dy <= r; dy++)
+          for (let dx = -r; dx <= r; dx++) {
+            if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+            if (walkable(gx + dx, gy + dy)) return [gx + dx, gy + dy];
+          }
       return null;
     };
     const cellOf = (u, v) => [Math.floor(u / NAV_CELL), Math.floor(v / NAV_CELL)];
     const end = near(...cellOf(t.local[0], t.local[1]));
-    const start = near(...cellOf(t.local[0] - away[0] * WARDEN_APPROACH_FROM, t.local[1] - away[1] * WARDEN_APPROACH_FROM));
+    const start = near(
+      ...cellOf(t.local[0] - away[0] * WARDEN_APPROACH_FROM, t.local[1] - away[1] * WARDEN_APPROACH_FROM),
+    );
     if (!end || !start) return null;
     const cells = findTownPath(nav, start, end, { maxExpansions: 6000 });
     if (!cells || cells.length < 2) return null;
@@ -180,22 +242,38 @@ export function createWagonWarden({
     return pts;
   }
 
-  const near = (at) => { const e = eye(); return !!e && !!at && Math.sqrt((e[0] - at[0]) ** 2 + (e[2] - at[2]) ** 2) <= WARDEN_SHOW_REACH; };
+  const near = (at) => {
+    const e = eye();
+    return !!e && !!at && Math.sqrt((e[0] - at[0]) ** 2 + (e[2] - at[2]) ** 2) <= WARDEN_SHOW_REACH;
+  };
   /** Whether a snapshot's wagon (the scene's) stands on the spot `spot` ([x, z] natives) a throw names. */
-  const onSpot = (snap, spot) => { if (!snap || !spot) return false; const w = toWire(snap.at); return Math.abs(w[0] - spot[0]) <= WARDEN_SAME_NATIVES && Math.abs(w[2] - spot[1]) <= WARDEN_SAME_NATIVES; };
+  const onSpot = (snap, spot) => {
+    if (!snap || !spot) return false;
+    const w = toWire(snap.at);
+    return Math.abs(w[0] - spot[0]) <= WARDEN_SAME_NATIVES && Math.abs(w[2] - spot[1]) <= WARDEN_SAME_NATIVES;
+  };
   /** MY wagon thrown from `from` to `to` ([x, z] natives): played if drawn near, my save moved, and I am told. */
   function throwMine(from, to) {
     const rt = runtime();
     const was = anchorOf();
     const town = stampFits(stamp, was) && stamp.tw !== null ? townName(stamp.tw) : '';
-    const snap = street() && was ? hcc.teamSnapshot?.('', myHorseThrown(was)) ?? null : null;   // read before the save moves it
+    const snap = street() && was ? (hcc.teamSnapshot?.('', myHorseThrown(was)) ?? null) : null; // read before the save moves it
     if (!rt?.adoptYeet?.(from, to)) return false;
     const landed = anchorOf();
     // C7: played while the save still parks it where the throw put it
-    const alive = () => { const a = anchorOf(); return !!a && !!landed && Math.abs(a[0] - landed[0]) <= WARDEN_SAME_NATIVES && Math.abs(a[1] - landed[1]) <= WARDEN_SAME_NATIVES; };
-    if (snap && near(snap.at)) shows.start({ key: 'mine', owners: [''], snap, origin: toWire(snap.at), landing: to, approach, alive });
+    const alive = () => {
+      const a = anchorOf();
+      return (
+        !!a &&
+        !!landed &&
+        Math.abs(a[0] - landed[0]) <= WARDEN_SAME_NATIVES &&
+        Math.abs(a[1] - landed[1]) <= WARDEN_SAME_NATIVES
+      );
+    };
+    if (snap && near(snap.at))
+      shows.start({ key: 'mine', owners: [''], snap, origin: toWire(snap.at), landing: to, approach, alive });
     notify([WARDEN_TEXT.thrown(town), WARDEN_TEXT.fetch]);
-    thrown();   // WAGONS4: a wagon thrown is a wagon knocked about
+    thrown(); // WAGONS4: a wagon thrown is a wagon knocked about
     return true;
   }
 
@@ -203,17 +281,26 @@ export function createWagonWarden({
     /** One frame of the street (never under a load - the host's gate): my wagon's stamp kept, the cell's throws of my team
      *  taken, and offline, the watch's road clock. */
     tick() {
-      while (pending.length) { const y = pending.shift(); throwMine(y.from, y.to); }
+      while (pending.length) {
+        const y = pending.shift();
+        throwMine(y.from, y.to);
+      }
       const a = anchorOf();
       if (!a) return;
-      if (!stampFits(stamp, a)) { const s = stampAt(a, wallNow()); if (s) stamp = s; }
+      if (!stampFits(stamp, a)) {
+        const s = stampAt(a, wallNow());
+        if (s) stamp = s;
+      }
       if (!online() && offlineDue(stamp, a, wallNow())) throwMine(a, stamp.ly);
     },
     /** The park word's watch fields for my wagon parked at `anchor` (horseCartPool setWardenWord). */
     word: (/** @type {number[]} */ anchor) => wardenWordOf(stamp, anchor),
     /** The cell threw my team (online.js onParkYeet): kept for the next street frame - one of another character's team
      *  (`k` not mine) is not mine to take. Answers whether it was kept. */
-    onParkYeet(/** @type {string} */ room, /** @type {{at: number, from: number[], to: number[], k?: string|null}} */ y) {
+    onParkYeet(
+      /** @type {string} */ room,
+      /** @type {{at: number, from: number[], to: number[], k?: string|null}} */ y,
+    ) {
       if (!y) return false;
       const k = myKey();
       if (y.k && k && y.k !== k) return false;
@@ -225,21 +312,34 @@ export function createWagonWarden({
      *  from where their team is drawn - their live wagon where it stands on the spot thrown from, else the cell's kept one
      *  - and ends once the cell says it moved (its kept word thrown no more). */
     keptWord(/** @type {string} */ room, /** @type {any} */ e) {
-      if (!e || typeof e.k !== 'string' || !Number.isFinite(e.y) || !Array.isArray(e.r?.ly) || !Array.isArray(e.r?.w)) return false;
-      for (const x of hcc.kept?.values?.() ?? []) if (x.k === e.k && x.y === e.y) return false;   // said already
+      if (!e || typeof e.k !== 'string' || !Number.isFinite(e.y) || !Array.isArray(e.r?.ly) || !Array.isArray(e.r?.w))
+        return false;
+      for (const x of hcc.kept?.values?.() ?? []) if (x.k === e.k && x.y === e.y) return false; // said already
       const key = `kept:${e.k}`;
       if (shows.playing(key) || !street()) return false;
-      const spot = parkSpotOf(e.r), horse = Array.isArray(e.r.h) && horseThrownWith(spot, [e.r.h[0], e.r.h[2]]);
-      const live = typeof e.id === 'string' ? hcc.teamSnapshot?.(e.id, horse) ?? null : null;
+      const spot = parkSpotOf(e.r),
+        horse = Array.isArray(e.r.h) && horseThrownWith(spot, [e.r.h[0], e.r.h[2]]);
+      const live = typeof e.id === 'string' ? (hcc.teamSnapshot?.(e.id, horse) ?? null) : null;
       const kept = hcc.keptOwner(e.k);
-      const [snap, owners] = onSpot(live, spot) ? [live, [e.id, kept]] : [hcc.teamSnapshot?.(kept, horse) ?? null, [kept]];
+      const [snap, owners] = onSpot(live, spot)
+        ? [live, [e.id, kept]]
+        : [hcc.teamSnapshot?.(kept, horse) ?? null, [kept]];
       if (!snap || !near(snap.at)) return false;
-      const alive = () => { for (const x of hcc.kept?.values?.() ?? []) if (x.k === e.k && x.y === e.y) return true; return false; };
+      const alive = () => {
+        for (const x of hcc.kept?.values?.() ?? []) if (x.k === e.k && x.y === e.y) return true;
+        return false;
+      };
       return shows.start({ key, owners, snap, origin: toWire(snap.at), landing: e.r.ly, approach, alive });
     },
     /** The save's record: the stamp (systems/modSaveData.js). */
-    getSaveData: () => (stamp ? { a: [...stamp.a], at: stamp.at, tw: stamp.tw, rd: stamp.rd, ly: stamp.ly ? [...stamp.ly] : null } : null),
-    restoreSaveData(/** @type {any} */ rec) { stamp = validWardenStamp(rec); pending.length = 0; },
-    get stamp() { return stamp; },
+    getSaveData: () =>
+      stamp ? { a: [...stamp.a], at: stamp.at, tw: stamp.tw, rd: stamp.rd, ly: stamp.ly ? [...stamp.ly] : null } : null,
+    restoreSaveData(/** @type {any} */ rec) {
+      stamp = validWardenStamp(rec);
+      pending.length = 0;
+    },
+    get stamp() {
+      return stamp;
+    },
   };
 }

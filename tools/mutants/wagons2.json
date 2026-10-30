@@ -200,8 +200,8 @@
   {
     "name": "WAGONS2-no-grace",
     "file": "src/scenes/wagon/wagonRiders.js",
-    "old": "&& now - ride.lost >= RIDE_LOST_GRACE_MS) getDown(RIDE_TEXT.ownerGone); }",
-    "new": "&& now - ride.lost >= 0) getDown(RIDE_TEXT.ownerGone); }",
+    "old": "        if (!deps.traveling?.() && !((ride.wait ?? 0) > now) && now - ride.lost >= RIDE_LOST_GRACE_MS)\n          getDown(RIDE_TEXT.ownerGone);",
+    "new": "        if (!deps.traveling?.() && !((ride.wait ?? 0) > now) && now - ride.lost >= 0) getDown(RIDE_TEXT.ownerGone);",
     "tests": [
       "test/systems/wagon/wagons2.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "WAGONS2-my-body-drawn-at-its-capsule",
     "file": "src/scenes/wagon/wagonRiders.js",
-    "old": "    deps.drawAt?.(drawn && drawn.g > 1 ? drawn.feet : null, drawn?.g ?? 1);",
-    "new": "    deps.drawAt?.(null, drawn?.g ?? 1);",
+    "old": "    deps.drawAt?.(drawn && drawn.g > 1 ? drawn.feet : null, drawn?.g ?? 1); // WAGONS3: and at its grow - a rig is grown apart from its traveller",
+    "new": "    deps.drawAt?.(null, drawn?.g ?? 1); // WAGONS3: and at its grow - a rig is grown apart from its traveller",
     "tests": [
       "test/systems/wagon/wagons2.test.js"
     ]
@@ -309,8 +309,8 @@
   {
     "name": "WAGONS2-AUDIT-the-seats-fitted-on-the-road",
     "file": "src/scenes/wagon/wagonRiders.js",
-    "old": "if (deps.pool.mySeatsKnown?.() ?? true) book.fit(",
-    "new": "if (true) book.fit(",
+    "old": "    if (deps.pool.mySeatsKnown?.() ?? true) book.fit(deps.pool.mySeatCount());",
+    "new": "    if (true) book.fit(deps.pool.mySeatCount());",
     "tests": [
       "test/systems/wagon/wagons2.test.js"
     ]
@@ -318,8 +318,8 @@
   {
     "name": "WAGONS2-AUDIT-jump-unread-while-the-owner-is-unheard",
     "file": "src/scenes/wagon/wagonRiders.js",
-    "old": "    if (ride.seat != null && !deps.traveling?.() && deps.jumpPressed?.()) { getDown(); return; }",
-    "new": "    if (false) { getDown(); return; }",
+    "old": "    if (ride.seat != null && !deps.traveling?.() && deps.jumpPressed?.()) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/wagon/wagons2.test.js"
     ]
@@ -327,8 +327,8 @@
   {
     "name": "WAGONS2-AUDIT-the-refused-journey-ridden-on",
     "file": "src/scenes/wagon/wagonRiders.js",
-    "old": "if (!deps.canTravel?.()) { getDown(RIDE_TEXT.leftBehind(name(owner))); return; }",
-    "new": "if (false) { getDown(RIDE_TEXT.leftBehind(name(owner))); return; }",
+    "old": "      if (!deps.canTravel?.()) {",
+    "new": "      if (false) {",
     "tests": [
       "test/systems/wagon/wagons2.test.js"
     ]
@@ -336,8 +336,8 @@
   {
     "name": "WAGONS2-AUDIT-the-failed-journey-ridden-on",
     "file": "src/scenes/wagon/wagonRiders.js",
-    "old": "if (ok === false && ride?.owner === owner",
-    "new": "if (false && ride?.owner === owner",
+    "old": "          if (ok === false && ride?.owner === owner && ride.go === n) {",
+    "new": "          if (false && ride?.owner === owner && ride.go === n) {",
     "tests": [
       "test/systems/wagon/wagons2.test.js"
     ]
@@ -345,8 +345,8 @@
   {
     "name": "WAGONS2-AUDIT-the-far-body-stood-back",
     "file": "src/scenes/wagon/wagonRiders.js",
-    "old": "<= GET_DOWN_REACH);",
-    "new": "<= Infinity);",
+    "old": "      const near = at && (!body || Math.hypot(body[0] - at.feet[0], body[2] - at.feet[2]) <= GET_DOWN_REACH); // WAGONS2 (AUDIT): a body moved off the seat by something else stays where it is",
+    "new": "      const near = at && (!body || Math.hypot(body[0] - at.feet[0], body[2] - at.feet[2]) <= Infinity); // WAGONS2 (AUDIT): a body moved off the seat by something else stays where it is",
     "tests": [
       "test/systems/wagon/wagons2.test.js"
     ]
@@ -354,8 +354,8 @@
   {
     "name": "WAGONS2-AUDIT-a-seat-the-wagon-lacks",
     "file": "src/scenes/wagon/wagonRiders.js",
-    "old": "const mine = r.passengers.find((e) => e[0] === me() && e[1] < seats);",
-    "new": "const mine = r.passengers.find((e) => e[0] === me());",
+    "old": "    const mine = r.passengers.find((e) => e[0] === me() && e[1] < seats); // WAGONS2 (AUDIT): a seat the wagon has",
+    "new": "    const mine = r.passengers.find((e) => e[0] === me()); // WAGONS2 (AUDIT): a seat the wagon has",
     "tests": [
       "test/systems/wagon/wagons2.test.js"
     ]
@@ -363,8 +363,8 @@
   {
     "name": "WAGONS2-AUDIT-asking-from-a-seat-without-getting-down",
     "file": "src/scenes/wagon/wagonRiders.js",
-    "old": "    if (ride?.seat != null) getDown();   // WAGONS2 (AUDIT)",
-    "new": "    if (false) getDown();   // WAGONS2 (AUDIT)",
+    "old": "    if (ride?.seat != null) getDown(); // WAGONS2 (AUDIT): seated in one wagon and asking another - down from the first, over its side",
+    "new": "    if (false) getDown(); // WAGONS2 (AUDIT): seated in one wagon and asking another - down from the first, over its side",
     "tests": [
       "test/systems/wagon/wagons2.test.js"
     ]
@@ -426,8 +426,8 @@
   {
     "name": "WAGONS2-AUDIT-the-unheard-seat-drawn-stale",
     "file": "src/scenes/wagon/wagonRiders.js",
-    "old": "      deps.drawAt?.(null);   // WAGONS2 (AUDIT): no wagon heard",
-    "new": "      void 0;   // WAGONS2 (AUDIT): no wagon heard",
+    "old": "      deps.drawAt?.(null); // WAGONS2 (AUDIT): no wagon heard to draw me in - where my body stands",
+    "new": "      void 0; // WAGONS2 (AUDIT): no wagon heard to draw me in - where my body stands",
     "tests": [
       "test/systems/wagon/wagons2.test.js"
     ]
@@ -435,8 +435,8 @@
   {
     "name": "WAGONS2-AUDIT-the-journeys-seat-drawn-stale",
     "file": "src/scenes/wagon/wagonRiders.js",
-    "old": "      deps.drawAt?.(null);   // the journey re-stands",
-    "new": "      void 0;   // the journey re-stands",
+    "old": "      deps.drawAt?.(null); // the journey re-stands everything: no grown seat of this place drawn at the far end",
+    "new": "      void 0; // the journey re-stands everything: no grown seat of this place drawn at the far end",
     "tests": [
       "test/systems/wagon/wagons2.test.js"
     ]

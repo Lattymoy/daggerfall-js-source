@@ -897,7 +897,7 @@ that was a claim once and is a pointer at a stranger now.
 
 **Recorded by WARDEN1 (2026-10-10).**
 
-- **`src/scenes/wagon/wagonWardenHost.js:"FLAGGED: the single-town bench runs no town watch"`** - the `?exterior` bench's watch.
+- **`src/scenes/wagon/wagonWardenHost.js:"scenes/exterior.js -"`** - the `?exterior` bench's watch.
   *`06-Systems/Wagon-Warden.md`: a wagon parked too long on a town's road, or past its fourth, is thrown out of town in
   the streaming host; the single-town bench stamps no wagon and throws none. The day it runs the watch, the sentence
   goes.*

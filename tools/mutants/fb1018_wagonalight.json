@@ -62,8 +62,8 @@
   {
     "name": "WAGON-ALIGHT-player-own-copy",
     "file": "src/scenes/wagon/wagonRiders.js",
-    "old": "      deps.unpin?.(near ? getDownPoint(at) : null);",
-    "new": "      deps.unpin?.(near ? [at.feet[0] - Math.sin(at.yaw) * 1.6, at.feet[1], at.feet[2] - Math.cos(at.yaw) * 1.6] : null);",
+    "old": "      deps.unpin?.(near ? getDownPoint(at) : null); // over the side behind them (systems/wagon/wagonSeats.js getDownPoint - a companion's too)",
+    "new": "      deps.unpin?.(\n        near ? [at.feet[0] - Math.sin(at.yaw) * 1.6, at.feet[1], at.feet[2] - Math.cos(at.yaw) * 1.6] : null,\n      ); // over the side behind them (systems/wagon/wagonSeats.js getDownPoint - a companion's too)",
     "tests": [
       "test/scenes/fb1018_wagonalight.test.js"
     ],

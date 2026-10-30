@@ -677,8 +677,8 @@
   {
     "name": "AUDITCW-A2-riders-passengers-dropped",
     "file": "src/scenes/wagon/wagonRiders.js",
-    "old": "const out = book.passengers().map((e) => e[0]);",
-    "new": "const out = [];",
+    "old": "      const out = book.passengers().map((e) => e[0]);",
+    "new": "      const out = [];",
     "tests": [
       "test/scenes/wagons1_seats.test.js"
     ]
@@ -686,8 +686,8 @@
   {
     "name": "AUDITCW-A2-riders-owner-dropped",
     "file": "src/scenes/wagon/wagonRiders.js",
-    "old": "if (ride?.seat != null) { out.push(ride.owner); for",
-    "new": "if (ride?.seat != null) { for",
+    "old": "        out.push(ride.owner);\n        for (const [peer, w] of seatWords) if (w.seated === ride.owner) out.push(peer);",
+    "new": "        for (const [peer, w] of seatWords) if (w.seated === ride.owner) out.push(peer);",
     "tests": [
       "test/scenes/wagons1_seats.test.js"
     ]
@@ -695,8 +695,8 @@
   {
     "name": "AUDITCW-A2-riders-others-unread",
     "file": "src/scenes/wagon/wagonRiders.js",
-    "old": "for (const [peer, w] of seatWords) if (w.seated === ride.owner) out.push(peer); }",
-    "new": "}",
+    "old": "        for (const [peer, w] of seatWords) if (w.seated === ride.owner) out.push(peer);\n      }",
+    "new": "      }",
     "tests": [
       "test/scenes/wagons1_seats.test.js"
     ]
@@ -704,8 +704,8 @@
   {
     "name": "AUDITCW-A2-riders-third-wagon",
     "file": "src/scenes/wagon/wagonRiders.js",
-    "old": "for (const [peer, w] of seatWords) if (w.seated === ride.owner) out.push(peer); }",
-    "new": "for (const [peer] of seatWords) out.push(peer); }",
+    "old": "        for (const [peer, w] of seatWords) if (w.seated === ride.owner) out.push(peer);",
+    "new": "        for (const [peer] of seatWords) out.push(peer);",
     "tests": [
       "test/scenes/wagons1_seats.test.js"
     ]

@@ -416,8 +416,8 @@
   {
     "name": "WARDEN-show-never-lands",
     "file": "src/scenes/wagon/wagonWardenShow.js",
-    "old": "          if (s.held) { releaseTeam(s); sound('land',",
-    "new": "          if (false) { releaseTeam(s); sound('land',",
+    "old": "          if (s.held) {",
+    "new": "          if (false) {",
     "tests": [
       "test/systems/horse/warden1.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "WARDEN-show-guard-vanishes",
     "file": "src/scenes/wagon/wagonWardenShow.js",
-    "old": "gone: leave + Math.max(WARDEN_LEAVE_MIN, approach) };",
-    "new": "gone: leave + WARDEN_LEAVE_MIN };",
+    "old": "  return {\n    walkFrom: len - walk,\n    approach,\n    lift,\n    turn,\n    fly,\n    land,\n    leave,\n    gone: leave + Math.max(WARDEN_LEAVE_MIN, approach),\n  };",
+    "new": "  return { walkFrom: len - walk, approach, lift, turn, fly, land, leave, gone: leave + WARDEN_LEAVE_MIN };",
     "tests": [
       "test/systems/horse/warden1.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "WARDEN-show-guard-leaks",
     "file": "src/scenes/wagon/wagonWardenShow.js",
-    "old": "    if (s.guardBatch) renderer?.destroyBillboardBatch?.(s.guardBatch);\n    for (const h of s.horses) if (h.batch) renderer?.destroyBillboardBatch?.(h.batch);\n    if (s.held)",
-    "new": "    for (const h of s.horses) if (h.batch) renderer?.destroyBillboardBatch?.(h.batch);\n    if (s.held)",
+    "old": "    if (s.guardBatch) renderer?.destroyBillboardBatch?.(s.guardBatch);\n    for (const h of s.horses) if (h.batch) renderer?.destroyBillboardBatch?.(h.batch);",
+    "new": "    for (const h of s.horses) if (h.batch) renderer?.destroyBillboardBatch?.(h.batch);",
     "tests": [
       "test/systems/horse/warden1.test.js"
     ]
@@ -452,7 +452,7 @@
   {
     "name": "WARDEN-show-teardown-holds",
     "file": "src/scenes/wagon/wagonWardenShow.js",
-    "old": "    if (s.held) { for (const o of s.owners) hold(o, false); s.held = false; }\n    shows.delete(s.key);",
+    "old": "    if (s.held) {\n      for (const o of s.owners) hold(o, false);\n      s.held = false;\n    }\n    shows.delete(s.key);",
     "new": "    shows.delete(s.key);",
     "tests": [
       "test/systems/horse/warden1.test.js"
@@ -461,8 +461,8 @@
   {
     "name": "WARDEN-show-twice",
     "file": "src/scenes/wagon/wagonWardenShow.js",
-    "old": "      if (!key || shows.has(key) || !snap?.kind",
-    "new": "      if (!key || !snap?.kind",
+    "old": "      if (\n        !key ||\n        shows.has(key) ||\n        !snap?.kind ||\n        !Array.isArray(owners) ||\n        !Array.isArray(origin) ||\n        !Array.isArray(landing)\n      )",
+    "new": "      if (!key || !snap?.kind || !Array.isArray(owners) || !Array.isArray(origin) || !Array.isArray(landing))",
     "tests": [
       "test/systems/horse/warden1.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "WARDEN-reader-throw-twice",
     "file": "src/scenes/wagon/wagonWardenHost.js",
-    "old": "      for (const x of hcc.kept?.values?.() ?? []) if (x.k === e.k && x.y === e.y) return false;   // said already\n",
-    "new": "",
+    "old": "      for (const x of hcc.kept?.values?.() ?? []) if (x.k === e.k && x.y === e.y) return false; // said already\n      const key = `kept:${e.k}`;",
+    "new": "      const key = `kept:${e.k}`;",
     "tests": [
       "test/systems/horse/warden1.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "WARDEN-stamp-road-blind",
     "file": "src/scenes/wagon/wagonWardenHost.js",
-    "old": "share >= WARDEN_ROAD_SHARE,",
-    "new": "share > 1,",
+    "old": "    return wardenStamp(a, now, t.town, share >= WARDEN_ROAD_SHARE, ly);",
+    "new": "    return wardenStamp(a, now, t.town, share > 1, ly);",
     "tests": [
       "test/systems/horse/warden1.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "WARDEN-stamp-unbuilt",
     "file": "src/scenes/wagon/wagonWardenHost.js",
-    "old": "    if (t === undefined) return undefined;\n",
-    "new": "    if (t === undefined) return wardenStamp(a, now);\n",
+    "old": "    if (t === undefined) return undefined;",
+    "new": "    if (t === undefined) return wardenStamp(a, now);",
     "tests": [
       "test/systems/horse/warden1.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "WARDEN-owner-untold-client",
     "file": "src/scenes/wagon/wagonWardenHost.js",
-    "old": "    notify([WARDEN_TEXT.thrown(town), WARDEN_TEXT.fetch]);\n",
-    "new": "",
+    "old": "    notify([WARDEN_TEXT.thrown(town), WARDEN_TEXT.fetch]);\n    thrown(); // WAGONS4: a wagon thrown is a wagon knocked about",
+    "new": "    thrown(); // WAGONS4: a wagon thrown is a wagon knocked about",
     "tests": [
       "test/systems/horse/warden1.test.js"
     ]
@@ -542,8 +542,8 @@
   {
     "name": "WARDEN-reader-live-unheld",
     "file": "src/scenes/wagon/wagonWardenHost.js",
-    "old": "const [snap, owners] = onSpot(live, spot) ? [live, [e.id, kept]]",
-    "new": "const [snap, owners] = onSpot(live, spot) ? [live, [kept]]",
+    "old": "      const [snap, owners] = onSpot(live, spot)\n        ? [live, [e.id, kept]]\n        : [hcc.teamSnapshot?.(kept, horse) ?? null, [kept]];",
+    "new": "      const [snap, owners] = onSpot(live, spot) ? [live, [kept]] : [hcc.teamSnapshot?.(kept, horse) ?? null, [kept]];",
     "tests": [
       "test/systems/horse/warden1.test.js"
     ]

@@ -66,6 +66,10 @@
 /src/render/ketch/*/
 !/src/render/starfall/
 /src/render/starfall/*/
+!/src/scenes/
+/src/scenes/*
+!/src/scenes/wagon/
+/src/scenes/wagon/*/
 !/src/systems/
 /src/systems/*
 !/src/systems/deepWater/

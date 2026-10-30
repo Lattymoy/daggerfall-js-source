@@ -15,7 +15,12 @@
 // summon, a drive off, the cell's word that it moved) ends where it stands, its team the pool's again (AUDIT WARDEN1 C7).
 //
 // Not a DFU member. Ledger A (WARDEN1).
-import { GUARD_TEXTURE, PERSON_GUARD_IDLE_RECORD, MOVE_RECORDS, MOVE_FLIPS } from '../../characters/mobile/mobilePerson.js';
+import {
+  GUARD_TEXTURE,
+  PERSON_GUARD_IDLE_RECORD,
+  MOVE_RECORDS,
+  MOVE_FLIPS,
+} from '../../characters/mobile/mobilePerson.js';
 import { mobileOrientation } from '../../characters/mobile/mobileUnit.js';
 import { mobileBillboardSize } from '../../world/rmbFlats.js';
 import { quatAngleAxis, quatMultiply, quatRotate } from '../../world/quat.js';
@@ -48,14 +53,23 @@ export const SHOW_ART_WAIT = 1.5;
 export const flightSeconds = (/** @type {number} */ dist) => Math.min(4.5, Math.max(1.8, dist / 55));
 /** How high over the line a throw of `dist` metres rises at its middle, metres. Pure. */
 export const arcPeak = (/** @type {number} */ dist) => Math.min(90, Math.max(15, dist * 0.35));
-const ease = (/** @type {number} */ k) => { const t = Math.min(1, Math.max(0, k)); return t * t * (3 - 2 * t); };
-const wrapPi = (/** @type {number} */ a) => { let x = a % (2 * Math.PI); if (x > Math.PI) x -= 2 * Math.PI; if (x < -Math.PI) x += 2 * Math.PI; return x; };
+const ease = (/** @type {number} */ k) => {
+  const t = Math.min(1, Math.max(0, k));
+  return t * t * (3 - 2 * t);
+};
+const wrapPi = (/** @type {number} */ a) => {
+  let x = a % (2 * Math.PI);
+  if (x > Math.PI) x -= 2 * Math.PI;
+  if (x < -Math.PI) x += 2 * Math.PI;
+  return x;
+};
 
 /** A way's points [[x, z] ...] as a walked line (livingWorld/townPaths.js pathLine's shape - its pointOnLine walks it):
  *  its length and each point's distance along it. Pure. */
 export function lineOf(/** @type {number[][]} */ pts) {
   const cum = [0];
-  for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.sqrt((pts[i][0] - pts[i - 1][0]) ** 2 + (pts[i][1] - pts[i - 1][1]) ** 2));
+  for (let i = 1; i < pts.length; i++)
+    cum.push(cum[i - 1] + Math.sqrt((pts[i][0] - pts[i - 1][0]) ** 2 + (pts[i][1] - pts[i - 1][1]) ** 2));
   return { pts, len: cum[cum.length - 1] ?? 0, cum };
 }
 /**
@@ -64,15 +78,35 @@ export function lineOf(/** @type {number[][]} */ pts) {
  * horizontal reach, both metres. Pure.
  */
 export function showTimes(/** @type {number} */ pathLen, /** @type {number} */ flyDist) {
-  const len = Math.max(0, pathLen), walk = Math.min(len, WARDEN_APPROACH_MAX * WARDEN_GUARD_SPEED);
-  const approach = walk / WARDEN_GUARD_SPEED, lift = approach + WARDEN_LIFT_S, turn = lift + WARDEN_TURN_S;
-  const fly = flightSeconds(flyDist), land = turn + fly;
+  const len = Math.max(0, pathLen),
+    walk = Math.min(len, WARDEN_APPROACH_MAX * WARDEN_GUARD_SPEED);
+  const approach = walk / WARDEN_GUARD_SPEED,
+    lift = approach + WARDEN_LIFT_S,
+    turn = lift + WARDEN_TURN_S;
+  const fly = flightSeconds(flyDist),
+    land = turn + fly;
   const leave = land + WARDEN_PAUSE_S;
-  return { walkFrom: len - walk, approach, lift, turn, fly, land, leave, gone: leave + Math.max(WARDEN_LEAVE_MIN, approach) };
+  return {
+    walkFrom: len - walk,
+    approach,
+    lift,
+    turn,
+    fly,
+    land,
+    leave,
+    gone: leave + Math.max(WARDEN_LEAVE_MIN, approach),
+  };
 }
 /** A throw's point at `k` (0..1) from `from` to `to` ([x, y, z]), `peak` metres over the line at its middle. Pure. */
-export function arcPoint(/** @type {number[]} */ from, /** @type {number[]} */ to, /** @type {number} */ k, /** @type {number} */ peak, out = [0, 0, 0]) {
-  const t = Math.min(1, Math.max(0, k)), u = 1 - t;
+export function arcPoint(
+  /** @type {number[]} */ from,
+  /** @type {number[]} */ to,
+  /** @type {number} */ k,
+  /** @type {number} */ peak,
+  out = [0, 0, 0],
+) {
+  const t = Math.min(1, Math.max(0, k)),
+    u = 1 - t;
   out[0] = from[0] * u + to[0] * t;
   out[1] = from[1] * u + to[1] * t + Math.sin(Math.PI * t) * peak;
   out[2] = from[2] * u + to[2] * t;
@@ -97,21 +131,38 @@ const qInv = (/** @type {number[]} */ q) => [-q[0], -q[1], -q[2], q[3]];
  *   seconds
  */
 export function createWardenShows({
-  renderer = null, getTexture = null, uploadRecordFrame = null, toScene, groundAt, showWagon = null, wagonBox = null,
-  horseArt = null, hold = () => {}, sound = () => {}, now = () => performance.now() / 1000,
+  renderer = null,
+  getTexture = null,
+  uploadRecordFrame = null,
+  toScene,
+  groundAt,
+  showWagon = null,
+  wagonBox = null,
+  horseArt = null,
+  hold = () => {},
+  sound = () => {},
+  now = () => performance.now() / 1000,
 }) {
   /** @type {Map<string, any>} */
   const shows = new Map();
   /** @type {any} */
-  let guardTex = null;   // null: not asked; a promise: loading; { tex } or { failed }
+  let guardTex = null; // null: not asked; a promise: loading; { tex } or { failed }
   const _batches = [];
 
   function guardArt() {
     if (guardTex && !(guardTex instanceof Promise)) return guardTex.failed ? false : guardTex.tex;
     if (!guardTex && getTexture) {
-      guardTex = Promise.resolve().then(() => getTexture(GUARD_TEXTURE)).then(
-        (tex) => { guardTex = tex ? { tex } : { failed: true }; },
-        (e) => { guardTex = { failed: true }; console.warn('[warden] the guard\'s picture', e?.message ?? e); });
+      guardTex = Promise.resolve()
+        .then(() => getTexture(GUARD_TEXTURE))
+        .then(
+          (tex) => {
+            guardTex = tex ? { tex } : { failed: true };
+          },
+          (e) => {
+            guardTex = { failed: true };
+            console.warn("[warden] the guard's picture", e?.message ?? e);
+          },
+        );
     }
     if (!getTexture) return false;
     return null;
@@ -120,12 +171,22 @@ export function createWardenShows({
   function end(s) {
     if (s.guardBatch) renderer?.destroyBillboardBatch?.(s.guardBatch);
     for (const h of s.horses) if (h.batch) renderer?.destroyBillboardBatch?.(h.batch);
-    if (s.held) { for (const o of s.owners) hold(o, false); s.held = false; }
+    if (s.held) {
+      for (const o of s.owners) hold(o, false);
+      s.held = false;
+    }
     shows.delete(s.key);
   }
   function releaseTeam(s) {
-    if (s.held) { for (const o of s.owners) hold(o, false); s.held = false; }
-    for (const h of s.horses) if (h.batch) { renderer?.destroyBillboardBatch?.(h.batch); h.batch = null; }
+    if (s.held) {
+      for (const o of s.owners) hold(o, false);
+      s.held = false;
+    }
+    for (const h of s.horses)
+      if (h.batch) {
+        renderer?.destroyBillboardBatch?.(h.batch);
+        h.batch = null;
+      }
   }
 
   /** The guard's feet, the scene's, off a local point (its ground read when it moves). */
@@ -138,10 +199,13 @@ export function createWardenShows({
   function poseGuard(s, feet, yaw, walking, t, cam) {
     const tex = guardArt();
     if (!tex || !renderer?.createBillboardBatch) return;
-    let record, frame, flip = false;
+    let record,
+      frame,
+      flip = false;
     if (walking) {
       const o = cam ? mobileOrientation(yaw, feet, cam) : 0;
-      record = MOVE_RECORDS[o]; flip = MOVE_FLIPS[o];
+      record = MOVE_RECORDS[o];
+      flip = MOVE_FLIPS[o];
       const n = Math.max(1, tex.getFrameCount?.(record) ?? 1);
       frame = Math.floor(t * WARDEN_GUARD_FPS) % n;
     } else {
@@ -151,11 +215,17 @@ export function createWardenShows({
     const rkey = `${record}#${frame}`;
     if (!renderer.textures?.has?.(`${GUARD_TEXTURE}_${rkey}`)) uploadRecordFrame?.(GUARD_TEXTURE, record, frame);
     const sz = mobileBillboardSize(tex, record);
-    if (!walking && Number.isFinite(sz.h) && sz.h > 0.5 && sz.h < 4) s.head = sz.h;   // the wagon rides on the top of the standing picture
-    if (!s.guardBatch) { s.guardBatch = renderer.createBillboardBatch(GUARD_TEXTURE, rkey, { w: sz.w, h: sz.h }, [[0, 0, 0]]); s.guardBatch.origin = [0, 0, 0]; }
+    if (!walking && Number.isFinite(sz.h) && sz.h > 0.5 && sz.h < 4) s.head = sz.h; // the wagon rides on the top of the standing picture
+    if (!s.guardBatch) {
+      s.guardBatch = renderer.createBillboardBatch(GUARD_TEXTURE, rkey, { w: sz.w, h: sz.h }, [[0, 0, 0]]);
+      s.guardBatch.origin = [0, 0, 0];
+    }
     const b = s.guardBatch;
-    b.record = rkey; b.size = { w: flip ? -sz.w : sz.w, h: sz.h };
-    b.origin[0] = feet[0]; b.origin[1] = feet[1]; b.origin[2] = feet[2];
+    b.record = rkey;
+    b.size = { w: flip ? -sz.w : sz.w, h: sz.h };
+    b.origin[0] = feet[0];
+    b.origin[1] = feet[1];
+    b.origin[2] = feet[2];
   }
 
   /** The carried team this frame: the wagon's point and turn (`w`, local to the show's origin `O`), its horses' pictures
@@ -163,14 +233,28 @@ export function createWardenShows({
   function poseTeam(s, O, w, cam) {
     s.drawn = { at: vadd(O, w.at), rot: w.rot };
     if (!renderer?.createBillboardBatch || !horseArt?.()) return;
-    const look = s.horseLook && horseArt?.(s.horseLook) ? s.horseLook : 0;   // COATS1: the team's look once its pictures are up, the bay's until
+    const look = s.horseLook && horseArt?.(s.horseLook) ? s.horseLook : 0; // COATS1: the team's look once its pictures are up, the bay's until
     for (const h of s.horses) {
-      const pos = vadd(s.drawn.at, quatRotate(w.rot, h.off)), fwd = quatRotate(w.rot, h.fwd);
+      const pos = vadd(s.drawn.at, quatRotate(w.rot, h.off)),
+        fwd = quatRotate(w.rot, h.fwd);
       const view = horseViewFor(calculateHorseOrientation(cam ?? pos, pos, fwd));
-      if (!h.batch) { h.batch = renderer.createBillboardBatch(HORSE_ARCHIVE, horseStillRecord(0), { w: HORSE_BILLBOARD_WIDTH, h: HORSE_BILLBOARD_HEIGHT }, [[0, 0, 0]]); h.batch.origin = [0, 0, 0]; }
-      if (s.conceal) h.batch.conceal = s.conceal;   // AUDIT WARDEN1 C13: a concealed owner's horses stay concealed
-      if (view) { h.batch.record = horseStillRecord(view.view, look); h.batch.size = { w: view.flip ? -HORSE_BILLBOARD_WIDTH : HORSE_BILLBOARD_WIDTH, h: HORSE_BILLBOARD_HEIGHT }; }
-      h.batch.origin[0] = pos[0]; h.batch.origin[1] = pos[1]; h.batch.origin[2] = pos[2];
+      if (!h.batch) {
+        h.batch = renderer.createBillboardBatch(
+          HORSE_ARCHIVE,
+          horseStillRecord(0),
+          { w: HORSE_BILLBOARD_WIDTH, h: HORSE_BILLBOARD_HEIGHT },
+          [[0, 0, 0]],
+        );
+        h.batch.origin = [0, 0, 0];
+      }
+      if (s.conceal) h.batch.conceal = s.conceal; // AUDIT WARDEN1 C13: a concealed owner's horses stay concealed
+      if (view) {
+        h.batch.record = horseStillRecord(view.view, look);
+        h.batch.size = { w: view.flip ? -HORSE_BILLBOARD_WIDTH : HORSE_BILLBOARD_WIDTH, h: HORSE_BILLBOARD_HEIGHT };
+      }
+      h.batch.origin[0] = pos[0];
+      h.batch.origin[1] = pos[1];
+      h.batch.origin[2] = pos[2];
     }
   }
   /** Where the wagon's origin stands when its floor rests on the guard's head (`G` the guard's feet, `rot` its turn) -
@@ -182,15 +266,16 @@ export function createWardenShows({
     if (t < T.approach) return { at: [0, 0, 0], rot: s.rot0 };
     const carried = (/** @type {number[]} */ rot) => overHead(s, G, rot);
     if (t < T.lift) {
-      const k = ease((t - T.approach) / WARDEN_LIFT_S), c = carried(s.rot0);
-      const heave = Math.sin(k * Math.PI * 3) * 0.15 * (1 - k);   // the heave: up in three jerks
+      const k = ease((t - T.approach) / WARDEN_LIFT_S),
+        c = carried(s.rot0);
+      const heave = Math.sin(k * Math.PI * 3) * 0.15 * (1 - k); // the heave: up in three jerks
       return { at: [c[0] * k, c[1] * k + heave, c[2] * k], rot: s.rot0 };
     }
     if (t < T.turn) {
       const k = ease((t - T.lift) / WARDEN_TURN_S);
       const rot = quatMultiply(quatAngleAxis((s.dyaw * k * 180) / Math.PI, [0, 1, 0]), s.rot0);
       const c = carried(rot);
-      return { at: [c[0], c[1] - Math.sin(k * Math.PI) * 0.35, c[2]], rot };   // a dip to throw from
+      return { at: [c[0], c[1] - Math.sin(k * Math.PI) * 0.35, c[2]], rot }; // a dip to throw from
     }
     if (t < T.land) {
       const k = (t - T.turn) / T.fly;
@@ -215,7 +300,15 @@ export function createWardenShows({
      *   approach?: ((lift: number[], away: number[]) => (number[][]|null))|null, alive?: (() => boolean)|null }} o
      */
     start({ key, owners, snap, origin, landing, approach = null, alive = null }) {
-      if (!key || shows.has(key) || !snap?.kind || !Array.isArray(owners) || !Array.isArray(origin) || !Array.isArray(landing)) return false;
+      if (
+        !key ||
+        shows.has(key) ||
+        !snap?.kind ||
+        !Array.isArray(owners) ||
+        !Array.isArray(origin) ||
+        !Array.isArray(landing)
+      )
+        return false;
       const box = wagonBox?.(snap.kind) ?? [-1, 0, -2, 1, 2, 2];
       const O = toScene(origin);
       const rot0 = snap.rotation;
@@ -226,30 +319,67 @@ export function createWardenShows({
       const land2 = [L[0] - O[0], L[2] - O[2]];
       const away = [land2[0], land2[1]];
       const al = Math.sqrt(away[0] * away[0] + away[1] * away[1]) || 1;
-      away[0] /= al; away[1] /= al;
+      away[0] /= al;
+      away[1] /= al;
       // the guard lifts from the wagon's town side, a step clear of its box
       const reach = Math.sqrt(((box[3] - box[0]) / 2) ** 2 + ((box[5] - box[2]) / 2) ** 2) + WARDEN_SIDE_GAP;
       const cw = quatRotate(rot0, mid);
       const lift = [cw[0] - away[0] * reach, cw[2] - away[1] * reach];
       let pts = null;
-      try { pts = approach?.([O[0] + lift[0], O[2] + lift[1]], away) ?? null; } catch (e) { console.warn('[warden] the way', /** @type {any} */ (e)?.message ?? e); }
+      try {
+        pts = approach?.([O[0] + lift[0], O[2] + lift[1]], away) ?? null;
+      } catch (e) {
+        console.warn('[warden] the way', /** @type {any} */ (e)?.message ?? e);
+      }
       const local = Array.isArray(pts) && pts.length >= 2 ? pts.map((p) => [p[0] - O[0], p[1] - O[2]]) : null;
       const line = lineOf(local ?? [[lift[0] - away[0] * 16, lift[1] - away[1] * 16], lift]);
-      const yaw0 = Math.atan2(cw[0] - lift[0], cw[2] - lift[1]), yaw1 = Math.atan2(away[0], away[1]);
+      const yaw0 = Math.atan2(cw[0] - lift[0], cw[2] - lift[1]),
+        yaw1 = Math.atan2(away[0], away[1]);
       const dyaw = wrapPi(yaw1 - yaw0);
       const rotT = quatMultiply(quatAngleAxis((dyaw * 180) / Math.PI, [0, 1, 0]), rot0);
       const horses = (snap.horses ?? []).map((/** @type {any} */ h) => ({
-        off: quatRotate(qInv(rot0), vsub(h.at, snap.at)), fwd: quatRotate(qInv(rot0), h.forward), batch: null,
+        off: quatRotate(qInv(rot0), vsub(h.at, snap.at)),
+        fwd: quatRotate(qInv(rot0), h.forward),
+        batch: null,
       }));
       const s = {
-        key, owners: [...owners], kind: snap.kind, look: snap.look ?? null, tier: snap.tier ?? 0, turn: snap.turn ?? null, hitched: !!snap.hitched,
-        conceal: snap.conceal ?? null, horseLook: snap.horseLook ?? 0, lone: snap.lone !== false,   // COATS1: its horses' look (the pool's teamSnapshot)
-        alive: typeof alive === 'function' ? alive : null, head: WARDEN_HEAD,
-        origin: [origin[0], origin[1], origin[2]], landing: [landing[0], landing[1]],
-        rot0, rotT, floor, mid, line, lift, yaw0, yaw1, dyaw, horses, land2,
-        side: [away[1], 0, -away[0]], times: null, turns: 1, peak: 0, from: null, to: null,
-        t0: null, asked: now(), held: true, said: new Set(), guardBatch: null,
-        drawn: null,   // this frame's wagon: { at (scene), rot }
+        key,
+        owners: [...owners],
+        kind: snap.kind,
+        look: snap.look ?? null,
+        tier: snap.tier ?? 0,
+        turn: snap.turn ?? null,
+        hitched: !!snap.hitched,
+        conceal: snap.conceal ?? null,
+        horseLook: snap.horseLook ?? 0,
+        lone: snap.lone !== false, // COATS1: its horses' look (the pool's teamSnapshot)
+        alive: typeof alive === 'function' ? alive : null,
+        head: WARDEN_HEAD,
+        origin: [origin[0], origin[1], origin[2]],
+        landing: [landing[0], landing[1]],
+        rot0,
+        rotT,
+        floor,
+        mid,
+        line,
+        lift,
+        yaw0,
+        yaw1,
+        dyaw,
+        horses,
+        land2,
+        side: [away[1], 0, -away[0]],
+        times: null,
+        turns: 1,
+        peak: 0,
+        from: null,
+        to: null,
+        t0: null,
+        asked: now(),
+        held: true,
+        said: new Set(),
+        guardBatch: null,
+        drawn: null, // this frame's wagon: { at (scene), rot }
       };
       for (const o of s.owners) hold(o, true, s.lone);
       shows.set(key, s);
@@ -258,13 +388,20 @@ export function createWardenShows({
     },
     /** One frame: every show stepped on its clock, the guard and the team posed, the landed and the gone ended. */
     frame(/** @type {number[]|null} */ cam = null) {
-      if (!shows.size) return 0;   // AUDIT WARDEN1 C12: a frame with no throw makes nothing
+      if (!shows.size) return 0; // AUDIT WARDEN1 C12: a frame with no throw makes nothing
       const tn = now();
-      for (const s of shows.values()) {   // end() deletes the one it is on - a Map's walk goes on past it
-        if (s.held && s.alive && !s.alive()) { end(s); continue; }   // C7: no longer the team thrown
+      for (const s of shows.values()) {
+        // end() deletes the one it is on - a Map's walk goes on past it
+        if (s.held && s.alive && !s.alive()) {
+          end(s);
+          continue;
+        } // C7: no longer the team thrown
         const O = toScene(s.origin);
         if (s.t0 === null) {
-          if (guardArt() === null && tn - s.asked < SHOW_ART_WAIT) { poseTeam(s, O, { at: [0, 0, 0], rot: s.rot0 }, cam); continue; }   // the team stands as it stood while the guard's picture comes
+          if (guardArt() === null && tn - s.asked < SHOW_ART_WAIT) {
+            poseTeam(s, O, { at: [0, 0, 0], rot: s.rot0 }, cam);
+            continue;
+          } // the team stands as it stood while the guard's picture comes
           s.t0 = tn;
         }
         const t = tn - s.t0;
@@ -287,18 +424,44 @@ export function createWardenShows({
         }
         // the guard
         let feet, yaw, walking;
-        if (t < T.approach) { const p = pointOnLine(s.line, T.walkFrom + t * WARDEN_GUARD_SPEED); feet = guardFeet(O, p.x, p.z); yaw = p.yaw; walking = true; }
-        else if (t < T.turn) { feet = liftFeet; yaw = t < T.lift ? s.yaw0 : s.yaw0 + s.dyaw * ease((t - T.lift) / WARDEN_TURN_S); walking = false; }
-        else if (t < T.leave) { feet = liftFeet; yaw = s.yaw1; walking = false; }
-        else if (t < T.gone) { const p = pointOnLine(s.line, s.line.len - (t - T.leave) * WARDEN_GUARD_SPEED); feet = guardFeet(O, p.x, p.z); yaw = p.yaw + Math.PI; walking = true; }
-        else { end(s); continue; }
+        if (t < T.approach) {
+          const p = pointOnLine(s.line, T.walkFrom + t * WARDEN_GUARD_SPEED);
+          feet = guardFeet(O, p.x, p.z);
+          yaw = p.yaw;
+          walking = true;
+        } else if (t < T.turn) {
+          feet = liftFeet;
+          yaw = t < T.lift ? s.yaw0 : s.yaw0 + s.dyaw * ease((t - T.lift) / WARDEN_TURN_S);
+          walking = false;
+        } else if (t < T.leave) {
+          feet = liftFeet;
+          yaw = s.yaw1;
+          walking = false;
+        } else if (t < T.gone) {
+          const p = pointOnLine(s.line, s.line.len - (t - T.leave) * WARDEN_GUARD_SPEED);
+          feet = guardFeet(O, p.x, p.z);
+          yaw = p.yaw + Math.PI;
+          walking = true;
+        } else {
+          end(s);
+          continue;
+        }
         poseGuard(s, feet, yaw, walking, t, cam);
-        if (t >= T.approach && !s.said.has('heave')) { s.said.add('heave'); sound('heave', feet); }
-        if (t >= T.turn && !s.said.has('throw')) { s.said.add('throw'); sound('throw', feet); }
+        if (t >= T.approach && !s.said.has('heave')) {
+          s.said.add('heave');
+          sound('heave', feet);
+        }
+        if (t >= T.turn && !s.said.has('throw')) {
+          s.said.add('throw');
+          sound('throw', feet);
+        }
         // the team
         const w = s.held ? wagonPose(s, t, G) : null;
         if (!w) {
-          if (s.held) { releaseTeam(s); sound('land', vadd(O, s.to ?? [0, 0, 0])); }   // landed: the pool's again, where the throw put it
+          if (s.held) {
+            releaseTeam(s);
+            sound('land', vadd(O, s.to ?? [0, 0, 0]));
+          } // landed: the pool's again, where the throw put it
           s.drawn = null;
           continue;
         }
@@ -310,7 +473,9 @@ export function createWardenShows({
     draw(r = renderer) {
       let n = 0;
       if (!showWagon) return n;
-      for (const s of shows.values()) if (s.drawn && s.held && showWagon(r, null, s.drawn.at, s.drawn.rot, s.kind, s.look, s.tier, s.turn, s.hitched)) n++;
+      for (const s of shows.values())
+        if (s.drawn && s.held && showWagon(r, null, s.drawn.at, s.drawn.rot, s.kind, s.look, s.tier, s.turn, s.hitched))
+          n++;
       return n;
     },
     /** The guards and the carried horses, for the host's flats. */
@@ -325,10 +490,25 @@ export function createWardenShows({
     /** Whether a show of `key` is playing. */
     playing: (/** @type {string} */ key) => shows.has(key),
     /** For the tests and the probes. */
-    state: () => [...shows.values()].map((s) => ({ key: s.key, owners: s.owners, held: s.held, t: s.t0 === null ? null : now() - s.t0, times: s.times, guard: !!s.guardBatch, horses: s.horses.filter((h) => h.batch).length, at: s.drawn?.at ?? null })),
+    state: () =>
+      [...shows.values()].map((s) => ({
+        key: s.key,
+        owners: s.owners,
+        held: s.held,
+        t: s.t0 === null ? null : now() - s.t0,
+        times: s.times,
+        guard: !!s.guardBatch,
+        horses: s.horses.filter((h) => h.batch).length,
+        at: s.drawn?.at ?? null,
+      })),
     /** A transition, a load: every show ends - its team set down where the throw put it, its guard gone. */
-    destroyAll() { for (const s of [...shows.values()]) end(s); },
+    destroyAll() {
+      for (const s of [...shows.values()]) end(s);
+    },
     /** The scene ends (EVERY ALLOCATION HAS AN OWNER). */
-    dispose() { for (const s of [...shows.values()]) end(s); guardTex = null; },
+    dispose() {
+      for (const s of [...shows.values()]) end(s);
+      guardTex = null;
+    },
   };
 }
