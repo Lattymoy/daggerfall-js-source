@@ -4,7 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { factionsHolding, pveTableAt, grantTemplateKey, templateFoe, templateDiceRefusal, standTemplate } from '../../../src/systems/pve/pveGrant.js';
+import { factionsHolding, pveTableAt, grantTemplateKey, templateFoe, templateDiceRefusal, standTemplate, ELITE_RANK, templateMayBeElite, rankTemplateElite, revenantTemplate, templateBand } from '../../../src/systems/pve/pveGrant.js';
 import { ORSINIUM_REGION } from '../../../src/systems/pve/pveBestiary.js';
 import { TEMPLATE_BY_KEY, templateStats } from '../../../src/systems/pve/pveTemplates.js';
 import { grantDiceRefusal, createGrantHost } from '../../../src/scenes/grantHost.js';
@@ -113,7 +113,7 @@ test('STAGE 8: a template foe stands at its own level, health and blow - and lan
 
 test('STAGE 8: the open world\'s pool stands a granted template and lets no player scale it', () => {
   const src = readFileSync(new URL('../../../src/scenes/exteriorFoes.js', import.meta.url), 'utf8');
-  assert.match(src, /let tpl = puppet \? _net\?\.grants\?\.puppetTemplate\?\.\(puppet, seq\) \?\? null : null;/, 'a puppet\'s from its owner\'s judged grant');
+  assert.match(src, /let tpl = template \?\? revenantTemplate\(revenant\) \?\? \(puppet \? _net\?\.grants\?\.puppetTemplate\?\.\(puppet, seq\) \?\? null : null\);/, 'a puppet\'s from its owner\'s judged grant');
   assert.match(src, /mobileType = t; basics = ENEMY_BASICS\[t\]; tpl = _net\?\.grants\?\.templateOf\?\.\(a\.gr, a\.i\) \?\? null;/, 'my own from my grant');
   assert.match(src, /const builtLevel = tpl\?\.level \?\? level \?\? effectiveLevel\(playerEntity\);/);
   assert.match(src, /const entity = standTemplate\(makeEnemyEntity\([^\n]*\{ exactLevel: !!puppet \|\| !!tpl \}\), tpl\);/);
@@ -125,4 +125,38 @@ test('STAGE 8: the open world\'s pool stands a granted template and lets no play
   assert.match(host, /pups\.set\(`\$\{from\}\|\$\{r\.i\}`, \{ s: v\.gr\.s, i, k: v\.gr\.k, gr: v\.gr \}\);/, 'a judged grant kept whole for its puppet');
   const on = createGrantHost({ session: () => null, tableAt: () => orcs });
   assert.equal(on.puppetTemplate('someone', 1), null, 'a puppet not yet judged stands as it would');
+});
+
+test('STAGE 9: an elite template stands at a fixed rank - a leader never rolls one', () => {
+  const grunt = templateFoe('orc-grunt'), warlord = templateFoe('orc-warlord');
+  assert.equal(templateMayBeElite(grunt), true);
+  assert.equal(templateMayBeElite(warlord), false, 'a Strong leader is one already');
+  assert.equal(templateMayBeElite(null), true, 'no template: the old law');
+  const e = rankTemplateElite({ eliteFoe: true, level: 1, maxHealth: grunt.health * 5, health: 1, damageScale: 3 }, grunt);
+  assert.deepEqual([e.level, e.maxHealth, e.health, e.damageScale, e.healthMult], [grunt.level + ELITE_RANK.levels, Math.round(grunt.health * ELITE_RANK.health), Math.round(grunt.health * ELITE_RANK.health), ELITE_RANK.damage, ELITE_RANK.health]);
+  const plain = { eliteFoe: false, level: 3 };
+  assert.deepEqual(rankTemplateElite(plain, grunt), { eliteFoe: false, level: 3 }, 'not an elite: untouched');
+  assert.deepEqual(rankTemplateElite({ eliteFoe: true, level: 3 }, null), { eliteFoe: true, level: 3 }, 'no template: the street elite stands');
+});
+
+test('STAGE 9: a template revenant comes back as its template, a level a rank, with its own group about it', () => {
+  assert.equal(revenantTemplate({ rank: 2 }), null);
+  assert.equal(revenantTemplate(null), null);
+  const r = { tpl: 'orc-grunt', rank: 3 };
+  assert.deepEqual({ ...revenantTemplate(r) }, { ...templateFoe('orc-grunt'), level: templateFoe('orc-grunt').level + 3 });
+  assert.equal(revenantTemplate({ tpl: 'orc-grunt', rank: 0 }).level, templateFoe('orc-grunt').level + 1, 'rank floors at one');
+  const band = templateBand(r, 3);
+  assert.deepEqual(band.map((m) => m.template.key), ['orc-grunt', 'orc-defender', 'orc-shaman'], 'the warband, less itself');
+  for (const m of band) assert.deepEqual([m.mobileType, m.level], [m.template.mobile, m.template.level], 'at the template\'s own level');
+  assert.deepEqual(templateBand(r, 0), []);
+  assert.deepEqual(templateBand({ tpl: 'orc-grunt', rank: 5 }, 5).map((m) => m.template.key), ['orc-grunt', 'orc-defender', 'orc-shaman', 'orc-grunt', 'orc-grunt'], 'short of a group: itself again');
+  assert.equal(templateBand({ rank: 3 }, 3), null, 'not a template: the old band');
+  const src = readFileSync(new URL('../../../src/scenes/exteriorFoes.js', import.meta.url), 'utf8');
+  assert.match(src, /eliteFoe = grantElite\(gm\.gr, gm\.i\) && templateMayBeElite\(tpl\) &&/, 'a granted elite asks the template');
+  assert.match(src, /&& templateMayBeElite\(tpl\) && \(revenant \? revenant\.elite : rollOverworldElite\(Math\.random\)\)\) promoteEliteFoe\(entity\);/, 'and a rolled one');
+  assert.match(src, /rankTemplateElite\(entity, tpl\);/);
+  assert.match(src, /template: m\.template \?\? null, champion: null, eliteFoe: false, transient: true/, 'a band member stands its template');
+  const rev = readFileSync(new URL('../../../src/systems/revenant/revenant.js', import.meta.url), 'utf8');
+  assert.match(rev, /tpl: typeof entity\.pveTemplate === 'string' && entity\.pveTemplate \? entity\.pveTemplate : null,/, 'a revenant minted from a template keeps it');
+  assert.match(rev, /tpl: isStr\(r\.tpl\) && r\.tpl \? r\.tpl : null,/, 'and a load keeps it');
 });

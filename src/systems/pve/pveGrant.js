@@ -82,3 +82,40 @@ export function standTemplate(entity, foe) {
   return entity;
 }
 
+/** FIXED-PVE ELITES: a promoted template foe stands at this rank over its template - two levels, two and a half times
+ *  the health, half again the blow - in place of the street elite's x5 health and x3 blows. */
+export const ELITE_RANK = Object.freeze({ levels: 2, health: 2.5, damage: 1.5 });
+
+/** Whether template `foe` may roll elite: a plain foe may; a leader (Strong, Elite, Champion) already is one. No template, the old law. @param {ReturnType<typeof templateFoe>} foe */
+export const templateMayBeElite = (foe) => !foe || foe.category === 'normal';
+
+/** Stand an elite template foe at ELITE_RANK over `foe` (after promoteEliteFoe, whose multipliers it replaces). @param {any} entity @param {ReturnType<typeof templateFoe>} foe */
+export function rankTemplateElite(entity, foe) {
+  if (!entity?.eliteFoe || !foe) return entity;
+  entity.level = foe.level + ELITE_RANK.levels;
+  entity.maxHealth = Math.max(1, Math.round(foe.health * ELITE_RANK.health)); entity.health = entity.maxHealth;
+  entity.healthMult = ELITE_RANK.health;
+  entity.damageScale = ELITE_RANK.damage;
+  return entity;
+}
+
+/** FIXED-PVE REVENANTS: what revenant record `r` stands as when it was a template foe (its `tpl`): that template, a level
+ *  higher per rank; its rank's health and blows ride on it (revenant.js applyRevenant). Null for one that was not. @param {any} r */
+export function revenantTemplate(r) {
+  const f = typeof r?.tpl === 'string' ? templateFoe(r.tpl) : null;
+  return f ? Object.freeze({ ...f, level: f.level + Math.max(1, r.rank | 0) }) : null;
+}
+
+/** A template revenant's band: the rest of the first group its template fights in (else its own template again), at
+ *  the templates' own levels, `n` of them - never the player's level. Null for a revenant that was no template.
+ *  @param {any} r @param {number} n */
+export function templateBand(r, n) {
+  const own = typeof r?.tpl === 'string' ? templateFoe(r.tpl) : null;
+  if (!own) return null;
+  const g = GROUP_TEMPLATES.find((x) => x.members.some(([k]) => k === r.tpl));
+  const keys = g ? g.members.flatMap(([k, c]) => Array(c).fill(k)) : [];
+  const i = keys.indexOf(r.tpl);
+  if (i >= 0) keys.splice(i, 1);
+  while (keys.length < n) keys.push(r.tpl);
+  return keys.slice(0, Math.max(0, n)).map((k) => templateFoe(k)).filter((f) => f != null).map((f) => ({ mobileType: f.mobile, level: f.level, template: f }));
+}

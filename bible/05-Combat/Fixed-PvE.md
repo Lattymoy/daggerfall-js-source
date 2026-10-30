@@ -180,3 +180,15 @@ to Raider King (44), with a band of five for each tier from 12 up, so every prov
 foes and a group where outlaws hold the land (a test walks all of it). Beasts stand by their climates, the dead and the
 conjured in their dungeons, the Daedra at an incursion. Gaps left: harpy nests, giant strongholds and scorpion nests hold
 no hostile template, and above level 30 the wild is mostly outlaws. The names stand in English until the switch turns on.
+
+## 11. Stage 9: elites and revenants on templates (2026-10-30)
+
+An elite template stands at a fixed rank over its template (`pveGrant.js` ELITE_RANK): two levels, two and a half times
+the health, half again the blow, in place of the street elite's five and three (`systems/eliteFoes.js`
+promoteEliteFoe). A Strong, Elite or Champion template is a leader already and never rolls one (`templateMayBeElite`).
+A template shows its own name, and the outlaw leaders stand on the Knight body.
+
+A revenant minted from a template foe keeps the template's key (`revenant.js`, `tpl`). It comes back as that template a
+level higher per rank, its rank's health and blows on top (`revenantTemplate`), and its band is the rest of the group
+it fought in, at the templates' own levels (`templateBand`), never the player's level minus two. A revenant from before
+the switch stands as today. Daggerfall Unity has no elites or revenants. The tests: `pve_grant.test.js`.

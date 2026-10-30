@@ -230,7 +230,7 @@ export const REVENANT_EPITHETS = Object.freeze({
  *  `xp` its level's, earned at my side, and `stars` its sky (systems/revenant/revenantStars.js).
  *  @typedef {{ state: 'with'|'away'|'resting'|'errand', health: number|null, maxHealth: number|null, until: number|null, items: any[], loyalty: number, rested: boolean, sentDay: number|null, gear: Record<string, any>, errand: any, worn: boolean, paid: number[], xp: number, stars: string[], lossCarry: number }} RevenantCompanion */
 /** @typedef {{ id: string, rev: number, mobileType: number, gender: 'male'|'female', given: string, epithet: string,
- *   name: string, rank: number, kills: number, escapes: number, returns: number, trait: string|null, elite: boolean,
+ *   name: string, rank: number, kills: number, escapes: number, returns: number, trait: string|null, elite: boolean, tpl?: string|null,
  *   born: number, dueAt: number, out: boolean, outAt: number, defeated: boolean, defeatedAt: number|null,
  *   notice: string|null, history: RevenantDeed[], archive: number|null, personality: string, person: number, race?: string|null,
  *   fate: 'executed'|'sworn'|'released'|null, sworn: boolean, swornAt: number|null, companion: RevenantCompanion|null,
@@ -378,6 +378,7 @@ function sanitize(r) {
     given: r.given, epithet, name: epithet === r.epithet && isStr(r.name) && r.name ? r.name : joinName(r.given, epithet), rank,
     kills: isNum(r.kills) ? r.kills : 0, escapes: isNum(r.escapes) ? r.escapes : 0, returns: isNum(r.returns) ? r.returns : 0,
     trait: isStr(r.trait) && r.trait ? r.trait : null, elite: !!r.elite,
+    tpl: isStr(r.tpl) && r.tpl ? r.tpl : null,   // FIXED-PVE: the template it was, if any
     born: isNum(r.born) ? r.born : 0, dueAt: isNum(r.dueAt) ? r.dueAt : 0,
     out: false, outAt: 0,   // never out across a load: the foe that stood for it is not in a fresh world
     defeated: !!r.defeated, defeatedAt: isNum(r.defeatedAt) ? r.defeatedAt : null,
@@ -571,6 +572,7 @@ export function revenantDeed(player, entity, deedName, { mobileType = entity?.mo
       id, rev: 0, mobileType, gender: gender === 'female' ? 'female' : 'male', given,
       epithet: revenantEpithet(deedName, 1, pName, rolls, null, allyName(ally) ?? ''), name: '', rank: 1, kills: 0, escapes: 0, returns: 0,
       trait: typeof entity.champion === 'string' && entity.champion ? entity.champion : null, elite: !!entity.eliteFoe,
+      tpl: typeof entity.pveTemplate === 'string' && entity.pveTemplate ? entity.pveTemplate : null,   // FIXED-PVE: the template it was (pve/pveGrant.js revenantTemplate)
       born: now, dueAt: 0, out: false, outAt: 0, defeated: false, defeatedAt: null, notice: null, history: [],
       archive: Number.isInteger(archive) ? archive : null,   // REVENANT-CARD: the sprite it wore (a retextured kind's own), for its portrait
       personality: personalityFor(id, mobileType),   // REVENANT-VOICE: who it is - one per id
