@@ -6,6 +6,7 @@ import { HEAL_SPELL_POINTS_KEY } from '../systems/potionRecipes.js';
 import { isHealHealth } from '../systems/effects.js';
 import { t } from '../systems/textManager.js';
 import { declarePotion } from './pvpDeclare.js';   // PVP-VITALS: the referee hears of it
+import { setBowFight } from './bowBloom.js';   // BOW-PVP-ONLY: the bow's circle and stacks hold in a fight alone
 
 /** Real milliseconds a potion kind waits after one of its kind is drunk in a fight. */
 export const PVP_POTION_MS = 15_000;
@@ -19,7 +20,7 @@ let fight = false;
 const last = new Map();
 
 /** The health mirror's word each frame (net/siege/refereeHealthMirror.js): may a refereed fight hold the player? */
-export function setPvpFight(active) { fight = !!active; }
+export function setPvpFight(active) { fight = !!active; setBowFight(fight); }
 export const playerInPvpFight = () => fight;
 
 /** 'health', 'magicka' or 'other', by the first effect of the bottle's recipe; null for no recipe. Pure. */

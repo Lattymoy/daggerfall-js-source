@@ -35,8 +35,8 @@ import { hitSoundFor, ENEMY_HIT_VOLUME } from '../systems/soundClips.js';
 import { addItem, ARROW_TEMPLATE } from '../systems/inventory.js';
 import { noteShotRecoverable, shotTallyOpen } from '../systems/shotTally.js';   // ARENA-ARROWS: a recoverable shaft is no shot the healers pay; STUCK-ARROWS: nor one stuck on the sand
 import { RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS } from '../systems/loot/loot.js';   // STUCK-ARROWS: the stuck shaft's container picture (seedPile's icon)
-import { bowShotAim } from '../ui/bowBloomRing.js';   // BOW-BLOOM
-import { bowShotStamp, bowFastDamage, whileShaftLands } from './bowBloom.js';   // BOW-FAST, BOW-KINDS
+import { bowShotAim, bowShotStampNow } from '../ui/bowBloomRing.js';   // BOW-BLOOM; BOW-PVP-ONLY: the stamp in a fight alone
+import { bowFastDamage, whileShaftLands } from './bowBloom.js';   // BOW-FAST, BOW-KINDS
 import { orbArchiveFor, ORB_RECORD, noteOrbColour, ORB_SCALE } from '../characters/thunderlockIds.js';   // FIELD-GUN14: what this weapon's shot LOOKS like - the leaf, so no cycle   // FIELD-GUN17: ...and what colour it is, sampled the one moment the texture is in hand   // FIELD-GUN18: ...and how big it is drawn
 import { playerWeaponHitEntity } from '../systems/worldTick.js';   // DISC10-D H1: OnWeaponHitEntity's one dispatcher (worldTick never reaches this module - no cycle)
 import { sparedByPlayer } from './friendlyFire.js';   // SHIPMATES: the player's shaft passes their own crew by
@@ -234,7 +234,7 @@ export class ArrowFlight {
     // nothing and gets the verbatim arm, unchanged.
     // AUDIT FIELD-GUN-MW F2: the fork is playerShotOrigin's, once, for both spawn seams - a muzzle may now be a
     // WORLD point (the third-person Morrowind body's barrel, behind the camera).
-    if (meta.fromPlayer && !orb && !meta.technique) { dir = bowShotAim(dir, meta.weapon); meta = { ...meta, ...bowShotStamp(meta.weapon) }; }   // BOW-BLOOM, BOW-FAST, BOW-KINDS: a bow's own shot, never a gun's or a technique's
+    if (meta.fromPlayer && !orb && !meta.technique) { dir = bowShotAim(dir, meta.weapon); meta = { ...meta, ...bowShotStampNow(meta.weapon) }; }   // BOW-BLOOM, BOW-FAST, BOW-KINDS: a bow's own shot, never a gun's or a technique's
     const origin = meta.fromPlayer
       ? playerShotOrigin(from, dir, meta.muzzle)
       : [...from];
@@ -332,7 +332,7 @@ export class ArrowFlight {
           if (!t?.feet || t.ref === m.shooterFoe || t.ref?.dead) continue;
           if (m.fromPlayer && sparedByPlayer(t.ref)) continue;   // DISC19-F (AUDIT DISC19): the player's shaft flies through the town's defenders, as their spells do (hostMagic.js sparedFromPlayer) - SHIPMATES: and the player's own crew (combat/friendlyFire.js)
           if (m.technique && (playerBody(t.ref) || m.technique.struck?.includes(t.ref))) continue;   // TECH1: a technique's shaft passes a player's body by (TECH law 3), and a piercing shot a foe it has struck
-          if (missileHitsCapsule(m.pos, t.feet, t.ref?.ai?.height)) {   // ROAD-H tail: the target's own CAPSULE (REVIEW 2026-09-05 had its centre as a point)
+          if (missileHitsCapsule(m.pos, t.feet, t.ref?.ai?.height, undefined, m.fromPlayer ? from : null)) {   // SHAFT-SWEEP: a player's shaft along its whole step (spellcast.js sweptSphereOverlapsCapsule)   // ROAD-H tail: the target's own CAPSULE (REVIEW 2026-09-05 had its centre as a point)
             // ROAD-H tail (review): an ENEMY shaft damages only the foe
             // it was loosed at (:669); any other foe it meets stops it
             // and takes nothing. A PLAYER shaft (WeaponDamage through
