@@ -815,7 +815,7 @@
   {
     "name": "TL-felt-the-ground",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "  return (inBay(x, y) ? null : tamrielBiomeAt(x, y)?.air) ?? climate;",
+    "old": "  return (inBay(x, y) || landLayer().climateAt(x, y) !== undefined ? null : tamrielBiomeAt(x, y)?.air) ?? climate;   // AUDIT FOUNDATION II L4: a row's climate felt",
     "new": "  return climate;",
     "tests": [
       "test/systems/tesabiome_feltair.test.js"

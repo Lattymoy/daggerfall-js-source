@@ -604,6 +604,11 @@
   "tr": "a09e0393fbba",
   "by": "claude-in-session"
  },
+ "account.refusal.homeUnlisted": {
+  "en": "8845fe7a3a8a",
+  "tr": "2f5f01181e29",
+  "by": "claude-in-session"
+ },
  "account.refusal.lineageInUse": {
   "en": "b210f6197958",
   "tr": "c1cc9692aadc",
@@ -617,6 +622,11 @@
  "account.refusal.noEscrow": {
   "en": "e750eef2dab2",
   "tr": "7ec3fdc429ec",
+  "by": "claude-in-session"
+ },
+ "account.refusal.noLogo": {
+  "en": "ea92e7a4ca08",
+  "tr": "0269e9cfd8c8",
   "by": "claude-in-session"
  },
  "account.refusal.noThread": {

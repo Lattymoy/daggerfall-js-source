@@ -386,7 +386,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/ui/enhanced/` | The Enhanced skin's windows and HUD - its windows. |
 | `src/ui/gate/` | The Oblivion Gate on screen: the banner, the boss bar, the damage chart, the ground view, the marks and the title card. |
 | `src/ui/growth/` | The pause window's Growth tab (`10-UI/Growth.md`): its rail and landings, the specialisations' guide, and the stage that draws the Firmament, the captain's stars and the Ascension in its pane. |
-| `src/ui/guild/` | The guild window's own pages (`11-Multiplayer/Guild-Shop.md`): the Shop page with its words and pictures, a guild's crest and logo, the Ranks page, join requests and the window's look. |
+| `src/ui/guild/` | The guild window's pages (`11-Multiplayer/Guild-Shop.md`): its look and crest, the shop and its wares, the logo's pick and page, the ranks and the join requests. |
 | `src/ui/hud/` | The classic HUD: vitals, compass, crosshair, active spells - its windows. |
 | `src/ui/icons/` | The drawn icons' art, each drawn by `profileIcons.js` drawnIconNode: the profile icons' shared shapes and motions, Season One's and the daily wares' icons (none a figure, `06-Systems/Aurum.md` section 7) and the effect emblems (`06-Systems/Storefront.md` section 9). |
 | `src/ui/ink/` | The ink maps: town, dungeon, automap - its windows. |
@@ -423,6 +423,8 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | Folder | What lives there |
 |---|---|
 | `src/world/arena/` | The Arena's place: the city, the floor, the undercroft, the plaques and the model. |
+| `src/world/atlas/` | The world's places entity-major (`03-World/Foundation-Arc.md`, FOUNDATION): a place's bundle - its identity, grid, dungeon plan, buildings and doors - over a vocabulary of blocks, every name resolved as the layout serves it (`atlas.js`, `atlasServed.js`). |
+| `src/world/land/` | The land as data (`03-World/Foundation-Arc.md` F4): a shoreline or a hill fixed by a row of `landEdits.json`, written into the Bay's served files and asked by the ground past it (`landLayer.js`). |
 | `src/world/card/` | The card table in the world: the tables, the scene, the regulars, a hand and its motion. |
 | `src/world/city/` | A city's gates, lights and navigation - its models and assembly. |
 | `src/world/deepWater/` | Deep Waters in the world: the sea floor and its bathymetry, the surface, swimming, the look and the bake. |

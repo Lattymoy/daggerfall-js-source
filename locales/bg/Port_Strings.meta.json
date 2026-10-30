@@ -2249,6 +2249,11 @@
   "tr": "01d33688bbe3",
   "by": "claude-in-session"
  },
+ "account.refusal.homeUnlisted": {
+  "en": "8845fe7a3a8a",
+  "tr": "8dfa0e0e1616",
+  "by": "claude-in-session"
+ },
  "account.refusal.homeUpdate": {
   "en": "9f0916254709",
   "tr": "c53d5bcb7181",
@@ -2852,6 +2857,11 @@
  "account.refusal.noLineage": {
   "en": "1720f337da24",
   "tr": "44affb03a5b5",
+  "by": "claude-in-session"
+ },
+ "account.refusal.noLogo": {
+  "en": "ea92e7a4ca08",
+  "tr": "2c13918c456a",
   "by": "claude-in-session"
  },
  "account.refusal.noMember": {

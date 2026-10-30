@@ -439,7 +439,7 @@ export function titlesHeld(player, env) {
  *  Eternal Set gives what it holds). A registered account's alone: a guest cannot buy. */
 export const shopKeys = (/** @type {any} */ player, /** @type {string} */ kind) => (typeof player?.handle === 'string' && player.handle ? shopKeysOf(player, kind) : []);
 /** STOREFRONT, PASS-PANELS (bible/06-Systems/Battle-Pass.md): the keys of one kind the Battle Pass gave this row - the
- *  items it bought on the tracks (`pass_items`, migration 0200; battlePass.js buyPass). A registered account's alone. */
+ *  items it bought on the tracks (`pass_items`, migration 0201; battlePass.js buyPass). A registered account's alone. */
 export const passKeys = (/** @type {any} */ player, /** @type {string} */ kind) =>
   (typeof player?.handle === 'string' && player.handle ? passKeysOf(passItemsOf(player?.pass_items), kind) : []);
 /** WITCH1: the title an account's Hearth Offerings earn (net/identityToken.js TITLES's spelling). */

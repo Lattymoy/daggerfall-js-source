@@ -146,7 +146,7 @@
   },
   {
     "name": "AURUM-deed-rite-paid",
-    "file": "server-account/migrations/0200_storefront.sql",
+    "file": "server-account/migrations/0201_storefront.sql",
     "old": "AFTER INSERT ON gate_kills WHEN NEW.earned != 'rite'",
     "new": "AFTER INSERT ON gate_kills",
     "tests": [
@@ -155,7 +155,7 @@
   },
   {
     "name": "AURUM-deed-amount-drift",
-    "file": "server-account/migrations/0200_storefront.sql",
+    "file": "server-account/migrations/0201_storefront.sql",
     "old": "'deed', 'serpent:' || ((NEW.at / 86400 + 3) / 7), 25,",
     "new": "'deed', 'serpent:' || ((NEW.at / 86400 + 3) / 7), 30,",
     "tests": [
@@ -164,7 +164,7 @@
   },
   {
     "name": "AURUM-deed-twice-a-week",
-    "file": "server-account/migrations/0200_storefront.sql",
+    "file": "server-account/migrations/0201_storefront.sql",
     "old": "INSERT OR IGNORE INTO aurum_ledger (account, kind, ref, amount, day, at) VALUES (NEW.account, 'deed', 'gate:' || ((NEW.at / 86400 + 3) / 7), 30,",
     "new": "INSERT OR IGNORE INTO aurum_ledger (account, kind, ref, amount, day, at) VALUES (NEW.account, 'deed', 'gate:' || NEW.at, 30,",
     "tests": [

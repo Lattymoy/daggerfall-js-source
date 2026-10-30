@@ -586,8 +586,9 @@ test('SHADOW-CLOAK the hosts: the one gather every host draws through hands each
   const code = line.includes('   //') ? line.slice(0, line.indexOf('   //')) : line;
   assert.ok(!code.includes('//'), 'no comment inside the code half');
   assert.match(code, /for \(const w of auraDraw\) if \(auraLookOf\(w\.aura\)\.mesh\) \{ auraCapeStep\(w, w === self \? \{ feet: liftedFeet\(player\.bodyFeetAt\(\), selfLiftNow\), yaw: faced\?\.yaw \?\? player\.bodyYawFor\(deps\.camYaw\(\)\), turn: faced\?\.turn, bones: selfLiftNow > 0 \? null : mwViewBodyBones\(CLOAK_BONES\) \?\? auraSpriteBones\(mwViewSpriteFigure\(\)\), card: !!faced \} : deps\.bodies\(\)\?\.bonesOf\(w\.id, CLOAK_BONES\) \?\? auraSpritePosed\(w, spriteAnswer\(layers, 'figureOf', w\.id\), spriteAnswer\(layers, 'faceOf', w\.id, eye\)\), w === self \? player\.height \/ CAPSULE_HEIGHT : 1\); auraMotionStep\(w, now\); \}/, 'each cape hung on its body and swung where it is drawn');
-  codeMatch(h, /\n\s+pass\?\.draw\(auraDraw, proj, view, eye, now, fogNow\(\)\);/, 'THEN every aura drawn');
-  assert.ok(h.indexOf(line) < h.indexOf('pass?.draw(auraDraw, proj, view, eye, now, fogNow());'), 'after the capes are hung');
+  // AUDIT BACK-HOLSTER A2 (PIN MOVED): drawn in runs, farthest first, each sprite's back after its own (eotbHolster.js drawAurasThenBacks)
+  codeMatch(h, /\n\s+drawAurasThenBacks\(auraDraw, \(run\) => \{ pass\.draw\(run, proj, view, eye, now, fog\);/, 'THEN every aura drawn');
+  assert.ok(h.indexOf(line) < h.indexOf('pass.draw(run, proj, view, eye, now, fog);'), 'after the capes are hung');
   codeMatch(h, /layers = deps\.sprites\(\), faced = mwViewSpriteFacing\(\);\n/, 'the facing read once a draw');   // CAPE-CARD (PIN MOVED): the sprite layers one list
   codeMatch(w, /const drawVeiledPeerBodies = \(\) => \{ peerBodies\?\.drawVeiled\(\); auraHost\.draw\(\);/, 'drawn through the hook the street, the building and the dungeon all call - after the bodies');
   const a = rd('src/combat/fpArm.js');

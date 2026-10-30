@@ -20,7 +20,7 @@ const dayOf = (/** @type {number} */ s) => Math.floor(s / DAY_S) * DAY_S;
  * THE DEMAND over the last `days` UTC days to `nowS`: `{ asOf, from, days: [{ day, featured: [ids], daily: [ids], wares:
  * { [id]: { opened, paid, refunded, disputed, cents, bought, aurum } } }], totals: { [id]: same }, names, refundsOwed }` -
  * a day with no order still has its row, so a chart's axis has no gaps. `bought` and `aurum` a daily ware's buys and the
- * Aurum spent on them. Four reads, the first, second and fourth each on an index (migration 0200).
+ * Aurum spent on them. Four reads, the first, second and fourth each on an index (migration 0201).
  * @param {any} db @param {any} env @param {number} nowS @param {number} [days]
  */
 export async function shopDemand(db, env, nowS, days = DEMAND_DAYS_DEFAULT) {
