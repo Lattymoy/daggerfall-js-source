@@ -117,7 +117,7 @@ feet are the two leg runs nearest the body, a robe split at its quarters, a staf
 traced up from the neck. On a side view the near arm lies over the body with no edge to read, so its arm pieces keep
 the sets' rows, turned with the body.
 
-**The arm's band** (ARMORY-MIRROR, `01-Overview/bugs/Field-Bugs-2026-10-30c.md`). Each arm's band is read too: from a
+**The arm's band** (ARMORY-MIRROR, `01-Overview/bugs/Field-Bugs-2026-10-30e.md`). Each arm's band is read too: from a
 third of the way down, the first row where the arm stands clear of the body, and its width there; never clear, where
 its colour ends. Every arm piece is
 worn on it, as wide: the Insignia Armlet's patch, and the Ashbound Bracers' and the Eternal Armlets' line moved across
@@ -146,7 +146,7 @@ THE CARD LAW: on a sprite every point is lifted toward the eye (`ARMORY_LIFT_M`)
 side and what stands behind the body is hidden by the card's own depth. A chest piece weighs how squarely it faces the
 eye; the Eternal Sigil also burns on the back, clear of a rig's torso.
 
-**The card's right** (ARMORY-MIRROR, `01-Overview/bugs/Field-Bugs-2026-10-30c.md`). A sprite's points move across its
+**The card's right** (ARMORY-MIRROR, `01-Overview/bugs/Field-Bugs-2026-10-30e.md`). A sprite's points move across its
 card along the billboard's own right (`render/armoryPass.js` cardRightOf). Under the world's mirrored lens that is the
 view's first row turned round; under the stage's plain lens, the row itself. Read off the row in the world, every
 piece stood mirrored across the card.

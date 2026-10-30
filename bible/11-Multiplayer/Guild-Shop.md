@@ -52,7 +52,7 @@ in the guild's field and device colours. On its outer face stands the guild's cr
 approved logo - as a texture painted once a pair of arms (`src/ui/guild/guildCrestArt.js`), with a soft halo under it.
 `armletSide` keeps it on one side: the rig's left arm, and on a sprite the side that faces the eye.
 
-ARMORY-MIRROR (`01-Overview/bugs/Field-Bugs-2026-10-30c.md`). A sprite's side view
+ARMORY-MIRROR (`01-Overview/bugs/Field-Bugs-2026-10-30e.md`). A sprite's side view
 has no arms read off its picture, so its points are the body's own and the armlet takes its left arm, as a rig's.
 Seen from behind and to its right, or from its right side, that arm is behind the body and no armlet is drawn. On a
 sprite the patch stands where the picture paints that arm clear of the body, as wide as it is painted (`ARM_BAND`); a

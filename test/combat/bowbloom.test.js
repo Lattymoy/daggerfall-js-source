@@ -55,6 +55,7 @@ test('BOW-BLOOM THE LANE: a player\'s bow shot blooms; a foe\'s, a technique\'s 
   fl.fire([0, 0, 0], FWD, { fromPlayer: false, weapon: null });
   fl.fire([0, 0, 0], FWD, { fromPlayer: true, weapon: null, technique: { id: 'volley' } });
   assert.equal(bowBloomNow(), 0, 'a foe\'s shot and a technique\'s leave it');
+  _resetBowBloomForTests();
 });
 
 test('BOW-FAST THE LAW: 20% a stack, 4 at most, a shot within 1 s of the last (mutants: the cut moved; the cap off)', () => {

@@ -169,5 +169,14 @@
     "tests": [
       "test/combat/bowbloom.test.js"
     ]
+  },
+  {
+    "name": "SHAFT-SWEEP-the-end-alone",
+    "file": "src/systems/spellcast.js",
+    "old": "  return from ? sweptSphereOverlapsCapsule(from, pos,",
+    "new": "  return false ? sweptSphereOverlapsCapsule(from, pos,",
+    "tests": [
+      "test/systems/shaftsweep.test.js"
+    ]
   }
 ]

@@ -281,8 +281,8 @@
   {
     "name": "GLOW-B-the-list-kept-when-put-away",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "  const dropHolster = () => { dropSpriteHolster(holster, renderer); holsterDrawn = false; glowList.length = 0; };",
-    "new": "  const dropHolster = () => { dropSpriteHolster(holster, renderer); holsterDrawn = false; };",
+    "old": "holsterDrawn = false; glowList.length = 0; unlist(holster); };",
+    "new": "holsterDrawn = false; unlist(holster); };",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]

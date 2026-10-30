@@ -1,5 +1,5 @@
 // ARMORY-MIRROR (2026-10-30, the owner: "New guild arm band isnt correct on the sprite. Head aura doesnt allign on the
-// sprite", then "Only worry about the layered system"; bible/01-Overview/bugs/Field-Bugs-2026-10-30c.md) - THE AURA
+// sprite", then "Only worry about the layered system"; bible/01-Overview/bugs/Field-Bugs-2026-10-30e.md) - THE AURA
 // ARMORY ON LAYERED GEARING IN THE REAL RENDERER, under the game's own mirrored lens (world/mat4.js mirrorProjectionX),
 // from all eight views: each body composed as the world composes it (eotbSprite.js spriteFor, decodeSprite, flipRows),
 // drawn along the billboards' camRight, the pass after it. Each head piece must stand over the painted head, the Insignia

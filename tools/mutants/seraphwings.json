@@ -483,8 +483,8 @@
   {
     "name": "SERAPHWINGS-a-stale-figure",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "      face = faceNow && Number.isFinite(faceNow.yaw) ? faceNow : null;\n      figure = null; facingDrawn = null; holsterDrawn = false; glowList.length = 0;\n",
-    "new": "      face = faceNow && Number.isFinite(faceNow.yaw) ? faceNow : null;\n      facingDrawn = null; holsterDrawn = false; glowList.length = 0;\n",
+    "old": "      face = faceNow && Number.isFinite(faceNow.yaw) ? faceNow : null;\n      figure = null; facingDrawn = null; holsterDrawn = false; glowList.length = 0; backList.length = 0;\n",
+    "new": "      face = faceNow && Number.isFinite(faceNow.yaw) ? faceNow : null;\n      facingDrawn = null; holsterDrawn = false; glowList.length = 0; backList.length = 0;\n",
     "tests": [
       "test/net/seraphwings.test.js"
     ],

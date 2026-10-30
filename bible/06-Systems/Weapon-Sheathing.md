@@ -71,7 +71,8 @@ a separate slice).
    count is the weapon's ammunition in the pack (inventory.js
    `ammoCountFor`, the spend law's own module; a
    peer's build carries none and asks a full quiver when the wire's
-   ammo bit is up).
+   ammo bit is up). An Eye of the Beholder sprite's bow carries a quiver
+   by the same law, full or empty (`Eye-Of-The-Beholder.md` QUIVER).
 
 **Where it shows.** Third person only: the first-person skeleton has
 no addon (the mod ships none for `xbase_anim.1st`) and the reference
