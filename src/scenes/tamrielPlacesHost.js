@@ -26,6 +26,8 @@ import { nearestSafePlace } from '../systems/deathRespawn.js';   // AUDIT TESA I
 import { townClimateAt } from '../world/urban/townLook.js';   // URBANIZER U1: a town past the Bay in its province's own stone (the Imperial City aside)
 import { locationKeyOf } from '../world/locationKey.js';   // BAY-LEFT-B: a capital's MapTable key its own buildings'
 import { fabricSliceSites } from '../world/imperialFabricBuildings.js';   // BAY-LEFT-B: and the Imperial City's fabric's
+import { createAtlasHost } from './atlasHost.js';   // FOUNDATION F1: the world's places read whole
+import { worldDataDoorOpen } from '../formats/worldData/worldDataReplacement.js';   // FOUNDATION F1: a check when the door serves edits
 
 /** @param {any} host */
 export function createTamrielPlaces(host) {
@@ -472,5 +474,10 @@ export function createTamrielPlaces(host) {
     regionAt: (px, py) => maps.getRegionIndexAt(px, py),
     standAt, rowAt,   // BAY-LEFT-MAPS
   });
-  return { _tamrielRoads, arenaLocationAt, arenaWarm, capitalLocationAt, countryLocationAt, lairLocationAt, nearestTownOf, provinceQuestPlaces, registerTamrielPlaces, startLairAt, tamrielPlaceName };
+  /** FOUNDATION F1 (scenes/atlasHost.js): the world's places whole - a place's bundle off the location the host holds
+   *  for it (the Bay's in the index, a place past the Bay as the build stands it); checked once at idle where the door
+   *  serves edits. */
+  const worldAtlas = createAtlasHost({ places: worldPlaces, blocks, standing: (p) => locationIndex.get(`${p.px},${p.py}`) ?? null, stand: (p) => locationIndex.get(`${p.px},${p.py}`) ?? standAt(p.px, p.py) });
+  if (worldDataDoorOpen()) worldAtlas.check();
+  return { _tamrielRoads, arenaLocationAt, arenaWarm, capitalLocationAt, countryLocationAt, lairLocationAt, nearestTownOf, provinceQuestPlaces, registerTamrielPlaces, startLairAt, tamrielPlaceName, worldAtlas };
 }

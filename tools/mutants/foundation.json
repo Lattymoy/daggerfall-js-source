@@ -1,0 +1,262 @@
+[
+  {
+    "name": "F1-kinds-region-dropped",
+    "file": "src/world/atlas/atlas.js",
+    "old": "export const PART_KINDS = Object.freeze(['place', 'exterior', 'dungeon', 'building', 'door', 'rmb', 'rdb', 'region']);",
+    "new": "export const PART_KINDS = Object.freeze(['place', 'exterior', 'dungeon', 'building', 'door', 'rmb', 'rdb']);",
+    "tests": [
+      "test/world/atlas/f1_atlas.test.js"
+    ]
+  },
+  {
+    "name": "F1-kinds-unguarded",
+    "file": "src/world/atlas/atlas.js",
+    "old": "    if (!PART_KINDS.includes(kind)) throw new RangeError(`no part kind '${kind}' (atlas.js PART_KINDS)`);\n",
+    "new": "",
+    "tests": [
+      "test/world/atlas/f1_atlas.test.js"
+    ]
+  },
+  {
+    "name": "F1-add-not-kept",
+    "file": "src/world/atlas/atlas.js",
+    "old": "    const had = bundles.get(place.mapId);\n    if (had) return had;\n",
+    "new": "",
+    "tests": [
+      "test/world/atlas/f1_atlas.test.js"
+    ]
+  },
+  {
+    "name": "F1-alias-unrecorded",
+    "file": "src/world/atlas/atlas.js",
+    "old": "    if (canon !== n) problems.push({ place, part, name: n, why: 'aliased', as: canon });\n",
+    "new": "",
+    "tests": [
+      "test/world/atlas/f1_atlas.test.js"
+    ]
+  },
+  {
+    "name": "F1-resolve-skipped",
+    "file": "src/world/atlas/atlas.js",
+    "old": "    const canon = n ? resolve(n) : '';",
+    "new": "    const canon = n;",
+    "tests": [
+      "test/world/atlas/f1_atlas.test.js"
+    ]
+  },
+  {
+    "name": "F1-uses-uncounted",
+    "file": "src/world/atlas/atlas.js",
+    "old": "    words[id].uses++;\n",
+    "new": "",
+    "tests": [
+      "test/world/atlas/f1_atlas.test.js"
+    ]
+  },
+  {
+    "name": "F1-start-lost",
+    "file": "src/world/atlas/atlas.js",
+    "old": "        start: db.findIndex((/** @type {any} */ b) => b.isStartingBlock),",
+    "new": "        start: 0,",
+    "tests": [
+      "test/world/atlas/f1_atlas.test.js"
+    ]
+  },
+  {
+    "name": "F1-door-building-dropped",
+    "file": "src/world/atlas/atlas.js",
+    "old": "(/** @type {any} */ d) => d?.buildingDataIndex ?? 0);",
+    "new": "(/** @type {any} */ d) => 0);",
+    "tests": [
+      "test/world/atlas/f1_atlas.test.js",
+      "test/world/atlas/f1_atlas_corpus.test.js"
+    ]
+  },
+  {
+    "name": "F1-identity-copied",
+    "file": "src/world/atlas/atlas.js",
+    "old": "    const bundle = Object.freeze({ id, place, exterior, dungeon, buildings, doors });",
+    "new": "    const bundle = Object.freeze({ id, place: { ...place }, exterior, dungeon, buildings, doors });",
+    "tests": [
+      "test/world/atlas/f1_atlas.test.js"
+    ]
+  },
+  {
+    "name": "F1-region-by-area",
+    "file": "src/world/atlas/atlas.js",
+    "old": "    if (!byRegion.has(place.region)) byRegion.set(place.region, []);\n    /** @type {number[]} */ (byRegion.get(place.region)).push(id);",
+    "new": "    if (!byRegion.has(place.area)) byRegion.set(place.area, []);\n    /** @type {number[]} */ (byRegion.get(place.area)).push(id);",
+    "tests": [
+      "test/world/atlas/f1_atlas.test.js",
+      "test/world/atlas/f1_atlas_served.test.js"
+    ]
+  },
+  {
+    "name": "F1-counts-doors-dropped",
+    "file": "src/world/atlas/atlas.js",
+    "old": "buildings += b.buildings.type.length; doors += b.doors.length;",
+    "new": "buildings += b.buildings.type.length;",
+    "tests": [
+      "test/world/atlas/f1_atlas.test.js",
+      "test/world/atlas/f1_atlas_corpus.test.js"
+    ]
+  },
+  {
+    "name": "F1-dungeon-ungated",
+    "file": "src/world/atlas/atlas.js",
+    "old": "    const db = loc?.hasDungeon ? loc?.dungeon?.blocks : null;",
+    "new": "    const db = loc?.dungeon?.blocks;",
+    "tests": [
+      "test/world/atlas/f1_atlas.test.js",
+      "test/world/atlas/f1_atlas_corpus.test.js"
+    ]
+  },
+  {
+    "name": "F1-unused-by-kind",
+    "file": "src/world/atlas/atlas.js",
+    "old": "    unused: (names, kind) => [...names].filter((n) => blockKindOf(n) === kind && !wordId.has(n)),",
+    "new": "    unused: (names, kind) => [...names].filter((n) => !wordId.has(n)),",
+    "tests": [
+      "test/world/atlas/f1_atlas.test.js"
+    ]
+  },
+  {
+    "name": "F1-host-stand-every-time",
+    "file": "src/scenes/atlasHost.js",
+    "old": "    const had = a.place(p.mapId);\n    if (had) return had;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/atlashost.test.js"
+    ]
+  },
+  {
+    "name": "F1-host-generation-unread",
+    "file": "src/scenes/atlasHost.js",
+    "old": "    if (g !== generation) { generation = g; atlas = createAtlas({ resolveBlock }); }",
+    "new": "    if (false) { generation = g; atlas = createAtlas({ resolveBlock }); }",
+    "tests": [
+      "test/scenes/atlashost.test.js"
+    ]
+  },
+  {
+    "name": "F1-host-one-slice",
+    "file": "src/scenes/atlasHost.js",
+    "old": "        const r = fillAtlas(scratch, list.slice(i, i + ATLAS_SLICE), standing);",
+    "new": "        const r = fillAtlas(scratch, list.slice(i), standing);",
+    "tests": [
+      "test/scenes/atlashost.test.js"
+    ]
+  },
+  {
+    "name": "F1-host-warning-unsaid",
+    "file": "src/scenes/atlasHost.js",
+    "old": "        if (report.problems.length) {",
+    "new": "        if (false) {",
+    "tests": [
+      "test/scenes/atlashost.test.js"
+    ]
+  },
+  {
+    "name": "F1-host-check-keeps-bundles",
+    "file": "src/scenes/atlasHost.js",
+    "old": "    const scratch = createAtlas({ resolveBlock });",
+    "new": "    const scratch = current();",
+    "tests": [
+      "test/scenes/atlashost.test.js"
+    ]
+  },
+  {
+    "name": "F1-host-unlocated-told",
+    "file": "src/scenes/atlasHost.js",
+    "old": "        report = { checked: list.length, unlocated, problems: scratch.problems().filter((q) => q.why === 'unresolved') };",
+    "new": "        report = { checked: list.length, unlocated, problems: [...scratch.problems(), ...list.filter((p) => !standing(p)).map((p) => ({ place: p.mapId, part: 'exterior', name: '', why: 'unresolved' }))] };",
+    "tests": [
+      "test/scenes/atlashost.test.js"
+    ]
+  },
+  {
+    "name": "F1-host-unwired",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "  if (worldDataDoorOpen()) worldAtlas.check();\n",
+    "new": "",
+    "tests": [
+      "test/scenes/atlashost.test.js"
+    ]
+  },
+  {
+    "name": "F0-text-pin-blind",
+    "file": "tools/foundationMeasure.mjs",
+    "old": "const TEXT_PIN = /\\bassert\\.(?:match|doesNotMatch)\\s*\\(|\\bassert(?:\\.ok)?\\s*\\(\\s*!?\\s*\\w+(?:\\.\\w+)*\\.(?:includes|test|indexOf)\\s*\\(/g;",
+    "new": "const TEXT_PIN = /\\bassert\\.(?:match|doesNotMatch)\\s*\\(/g;",
+    "tests": [
+      "test/tooling/foundationmeasure.test.js"
+    ]
+  },
+  {
+    "name": "F0-reader-blind",
+    "file": "tools/foundationMeasure.mjs",
+    "old": "const READS_SOURCE = /\\b(?:readFileSync|read\\w*)\\s*\\([^)]*['\"`](?:\\.\\.\\/)*(?:src|server\\/src|server-account\\/src)\\//;",
+    "new": "const READS_SOURCE = /\\breadFileSync\\s*\\(\\s*['\"`]src\\//;",
+    "tests": [
+      "test/tooling/foundationmeasure.test.js"
+    ]
+  },
+  {
+    "name": "F0-presentation-page-blind",
+    "file": "tools/foundationMeasure.mjs",
+    "old": "    return PRESENTATION_IMPORT.test(src) || PAGE_GLOBAL.test(src);",
+    "new": "    return PRESENTATION_IMPORT.test(src);",
+    "tests": [
+      "test/tooling/foundationmeasure.test.js"
+    ]
+  },
+  {
+    "name": "F0-host-lines-logical",
+    "file": "tools/foundationMeasure.mjs",
+    "old": "    return { file, name, lines: host ? lines(host.fn) : 0, logical: host ? logicalLines(host.fn) : 0 };",
+    "new": "    return { file, name, lines: host ? logicalLines(host.fn) : 0, logical: host ? logicalLines(host.fn) : 0 };",
+    "tests": [
+      "test/tooling/foundationmeasure.test.js"
+    ]
+  },
+  {
+    "name": "F1-served-door-unasked",
+    "file": "src/world/atlas/atlasServed.js",
+    "old": "  return i >= 0 && (i < blocks.count || worldDataServesBlock(canon)) ? canon : '';",
+    "new": "  return i >= 0 ? canon : '';",
+    "tests": [
+      "test/world/atlas/f1_atlas.test.js",
+      "test/world/atlas/f1_atlas_layer.test.js"
+    ]
+  },
+  {
+    "name": "F1-served-past-the-file",
+    "file": "src/world/atlas/atlasServed.js",
+    "old": "  return i >= 0 && (i < blocks.count || worldDataServesBlock(canon)) ? canon : '';",
+    "new": "  return i >= 0 && worldDataServesBlock(canon) ? canon : '';",
+    "tests": [
+      "test/world/atlas/f1_atlas.test.js",
+      "test/world/atlas/f1_atlas_corpus.test.js"
+    ]
+  },
+  {
+    "name": "F1-door-port-blocks-unserved",
+    "file": "src/formats/worldData/worldDataReplacement.js",
+    "old": "export const worldDataServesBlock = (blockName) => _portBlocks.has(blockName) || familyIndex(blockName) >= 0 ||",
+    "new": "export const worldDataServesBlock = (blockName) => familyIndex(blockName) >= 0 ||",
+    "tests": [
+      "test/world/atlas/f1_atlas.test.js",
+      "test/world/atlas/f1_atlas_served.test.js"
+    ]
+  },
+  {
+    "name": "F1-door-mod-files-unserved",
+    "file": "src/formats/worldData/worldDataReplacement.js",
+    "old": "(worldDataOn() && !!liveAsset(blockReplacementFilename(blockName)));",
+    "new": "false;",
+    "tests": [
+      "test/world/atlas/f1_atlas_layer.test.js",
+      "test/world/atlas/f1_atlas_packs.test.js"
+    ]
+  }
+]
