@@ -12,6 +12,8 @@
 /src/formats/save/*/
 !/src/net/
 /src/net/*
+!/src/net/gambit/
+/src/net/gambit/*/
 !/src/net/safety/
 /src/net/safety/*/
 !/src/net/sea/

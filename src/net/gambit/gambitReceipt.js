@@ -27,7 +27,25 @@ export const GAMBIT_RECEIPT_TTL_S = 7 * 24 * 3600;
 /** The bound on a receipt's length on the wire. */
 export const GAMBIT_RECEIPT_MAX = 640;
 /** The fields another signed shape carries - none is admitted on a game's receipt. */
-const NOT_A_GAMES = Object.freeze(['a', 's', 'q', 'u', 'z', 'w', 'n', 'k', 't', 'g', 'o', 'd', 'b', 'c', 'x', 'y', 'l']);
+const NOT_A_GAMES = Object.freeze([
+  'a',
+  's',
+  'q',
+  'u',
+  'z',
+  'w',
+  'n',
+  'k',
+  't',
+  'g',
+  'o',
+  'd',
+  'b',
+  'c',
+  'x',
+  'y',
+  'l',
+]);
 
 const utf8 = new TextEncoder();
 const unutf8 = new TextDecoder();
@@ -38,7 +56,13 @@ export function gambitReceiptValid(c) {
   for (const k of NOT_A_GAMES) if (c[k] !== undefined) return false;
   if (typeof c.j !== 'string' || !GAMBIT_GAME_ID_RE.test(c.j)) return false;
   if (typeof c.h !== 'string' || !GAMBIT_HOW.includes(c.h)) return false;
-  if (!Array.isArray(c.f) || c.f.length !== 2 || !c.f.every((/** @type {any} */ s) => typeof s === 'string' && ID_RE.test(s)) || c.f[0] === c.f[1]) return false;
+  if (
+    !Array.isArray(c.f) ||
+    c.f.length !== 2 ||
+    !c.f.every((/** @type {any} */ s) => typeof s === 'string' && ID_RE.test(s)) ||
+    c.f[0] === c.f[1]
+  )
+    return false;
   if (c.r !== 0 && c.r !== 1) return false;
   if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
   if (c.e <= c.i || c.e - c.i > GAMBIT_RECEIPT_TTL_S) return false;
@@ -57,7 +81,9 @@ export async function mintGambitReceipt({ j, f, r, h }, privateKey, { subtle, no
   if (!gambitReceiptValid(claims)) throw new TypeError('mintGambitReceipt refused a claim set it could not verify');
   const body = _b64url.encode(utf8.encode(JSON.stringify(claims)));
   if (!privateKey) return `${GAMBIT_RECEIPT_V}.${body}.`;
-  const sig = new Uint8Array(await subtle.sign({ name: 'Ed25519' }, privateKey, utf8.encode(`${GAMBIT_RECEIPT_V}.${body}`)));
+  const sig = new Uint8Array(
+    await subtle.sign({ name: 'Ed25519' }, privateKey, utf8.encode(`${GAMBIT_RECEIPT_V}.${body}`)),
+  );
   return `${GAMBIT_RECEIPT_V}.${body}.${_b64url.encode(sig)}`;
 }
 
@@ -70,7 +96,11 @@ export function readGambitReceipt(r) {
   const raw = _b64url.decode(parts[1]);
   if (!raw) return null;
   let c;
-  try { c = JSON.parse(unutf8.decode(raw)); } catch { return null; }
+  try {
+    c = JSON.parse(unutf8.decode(raw));
+  } catch {
+    return null;
+  }
   return gambitReceiptValid(c) ? { ...c, signed: parts[2].length > 0 } : null;
 }
 
@@ -92,10 +122,18 @@ export async function verifyGambitReceipt(r, publicKey, { subtle, nowS, skewS = 
   const raw = _b64url.decode(body);
   if (!raw) return { ok: false, why: 'body-shape' };
   let good = false;
-  try { good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, utf8.encode(`${v}.${body}`)); } catch { return { ok: false, why: 'verify-threw' }; }
+  try {
+    good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, utf8.encode(`${v}.${body}`));
+  } catch {
+    return { ok: false, why: 'verify-threw' };
+  }
   if (!good) return { ok: false, why: 'signature' };
   let claims;
-  try { claims = JSON.parse(unutf8.decode(raw)); } catch { return { ok: false, why: 'json' }; }
+  try {
+    claims = JSON.parse(unutf8.decode(raw));
+  } catch {
+    return { ok: false, why: 'json' };
+  }
   if (!gambitReceiptValid(claims)) return { ok: false, why: 'claims' };
   if (!Number.isSafeInteger(nowS)) return { ok: false, why: 'clock' };
   if (nowS >= claims.e) return { ok: false, why: 'expired' };
