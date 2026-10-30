@@ -449,14 +449,10 @@ export function planTake(item, {
   // adds the basket to it); the coin term is the entity's and is
   // added here, so a purse of 400,000 pieces weighs its thousand
   // kilograms against the gate exactly as the old bag stack did.
-  // CARRY-CLAIMS: and the takes off shared piles still waiting on
-  // their grant (inventory.js claimedCarryKg) - lifted out of the pack
-  // until then, they were weightless to this gate, and a run of takes
-  // inside the wait all landed past the limit.
   const canCarry = entity
     ? canHoldAmount(stack, effectiveUnitWeightInKg(item),
       entityMaxEncumbrance(entity),
-      totalWeight(bag) + goldPiecesOf(entity) * GOLD_PIECE_WEIGHT_KG + claimedCarryKg(entity))
+      totalWeight(bag) + goldPiecesOf(entity) * GOLD_PIECE_WEIGHT_KG + claimedCarryKg(entity))   // CARRY-CLAIMS: a shared pile's takes awaiting their grant weigh too
     : stack;
   // The window's own gate went silent when it had no entity to read
   // and spoke when it did; there is one answer here, because the only
