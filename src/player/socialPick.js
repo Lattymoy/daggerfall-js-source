@@ -28,7 +28,7 @@
 //
 // Not a DFU member: Daggerfall Unity has no other players to stand in front of. Ledger A row (ONLINE).
 import { MOBILE_NPC_ACTIVATION_DISTANCE } from './activate.js';
-import { WHY_IN_PARTY } from '../net/social.js';   // AUDIT DROPS: the seat's reason, one home
+import { WHY_IN_PARTY } from '../net/social.js'; // AUDIT DROPS: the seat's reason, one home
 
 /** HOW NEAR "on their body" IS. PlayerActivate.cs:88 MobileNpcActivationDistance (256 * GlobalScale = 6.4) - the
  *  game's OWN reach for a person, the one scenes/townTalk.js refuses a conversation past ('You are too far away...').
@@ -80,11 +80,15 @@ export function openPeers(peers, isMate) {
  */
 export function pickPeerInFront(camPos, fwd, peers, reach, distanceOf) {
   if (!Array.isArray(peers) || typeof distanceOf !== 'function') return null;
-  let best = null, bestDist = Infinity;
+  let best = null,
+    bestDist = Infinity;
   for (const p of peers) {
-    if (!p || !Array.isArray(p.feet)) continue;   // a peer whose body is not standing yet has no feet to aim at
+    if (!p || !Array.isArray(p.feet)) continue; // a peer whose body is not standing yet has no feet to aim at
     const d = distanceOf(camPos, fwd, p.feet);
-    if (d < bestDist) { best = p; bestDist = d; }
+    if (d < bestDist) {
+      best = p;
+      bestDist = d;
+    }
   }
   if (!best || !(bestDist <= reach)) return null;
   return { peer: best, distance: bestDist };
@@ -108,7 +112,10 @@ export const PEER_KEY_PREFIX = 'peer:';
 
 /** The session id under a `peer:` key, or null for any other key (a namer is handed EVERY key the ray can win -
  *  AUDIT-WH2 L2-F5's guard, so a non-string never reaches `startsWith`). */
-export const peerIdOfKey = (key) => (typeof key === 'string' && key.startsWith(PEER_KEY_PREFIX) && key.length > PEER_KEY_PREFIX.length ? key.slice(PEER_KEY_PREFIX.length) : null);
+export const peerIdOfKey = (key) =>
+  typeof key === 'string' && key.startsWith(PEER_KEY_PREFIX) && key.length > PEER_KEY_PREFIX.length
+    ? key.slice(PEER_KEY_PREFIX.length)
+    : null;
 
 /**
  * `pickPeerInFront`'s answer as a RAY PICK the race reads - `{ key, distance, reach }`, `reach` the same SOCIAL_REACH

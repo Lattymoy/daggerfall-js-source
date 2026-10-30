@@ -110,8 +110,8 @@
   {
     "name": "PADWALK-run-does-not-let-go",
     "file": "src/player/walkMode.js",
-    "old": "    else if (acts.includes('Run') && _on) _on = false;\n",
-    "new": "",
+    "old": "    else if (acts.includes('Run') && _on) _on = false;\n  };",
+    "new": "  };",
     "tests": [
       "test/systems/padwalk.test.js"
     ]

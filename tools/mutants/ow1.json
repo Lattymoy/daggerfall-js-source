@@ -82,7 +82,7 @@
   {
     "name": "OW-BIG-never-grown",
     "file": "src/player/travelCamera.js",
-    "old": "export const tvOwnGrow = (dist) => Math.max(1, Math.min(TV_OWN_GROW_MAX, Math.round((Number.isFinite(dist) ? dist : 0) / TV_OWN_GROW_M)));",
+    "old": "export const tvOwnGrow = (dist) =>\n  Math.max(1, Math.min(TV_OWN_GROW_MAX, Math.round((Number.isFinite(dist) ? dist : 0) / TV_OWN_GROW_M)));",
     "new": "export const tvOwnGrow = (dist) => 1;",
     "tests": [
       "test/player/eyeOfTheBeholder/eotb_body.test.js"

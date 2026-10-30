@@ -29,8 +29,8 @@
   {
     "name": "OW-FACE-the-axes-unturned",
     "file": "src/player/travelCamera.js",
-    "old": "  const m = Math.hypot(forward, strafe), d = way - yaw;",
-    "new": "  const m = Math.hypot(forward, strafe), d = 0;",
+    "old": "    d = way - yaw;",
+    "new": "    d = 0;",
     "tests": [
       "test/net/peer/fb1001_overworld.test.js"
     ]

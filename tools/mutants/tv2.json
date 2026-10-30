@@ -2,8 +2,8 @@
   {
     "name": "TV2-bisection-backwards",
     "file": "src/player/travelPick.js",
-    "old": "for (let i = 0; i < refine; i++) { const m = (lo + hi) / 2; if (under(m)) hi = m; else lo = m; }",
-    "new": "for (let i = 0; i < refine; i++) { const m = (lo + hi) / 2; if (under(m)) lo = m; else hi = m; }",
+    "old": "        if (under(m)) hi = m;\n        else lo = m;",
+    "new": "        if (under(m)) lo = m;\n        else hi = m;",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "TV2-stride-steps-over-a-ridge",
     "file": "src/player/travelPick.js",
-    "old": "export function groundHit(eye, dir, heightAt, { maxDist = TV_PICK_MAX, stepMin = TV_PICK_STEP_MIN,",
-    "new": "export function groundHit(eye, dir, heightAt, { maxDist = TV_PICK_MAX, stepMin = 40,",
+    "old": "  { maxDist = TV_PICK_MAX, stepMin = TV_PICK_STEP_MIN, stepShare = TV_PICK_STEP_SHARE, refine = TV_PICK_REFINE } = {},",
+    "new": "  { maxDist = TV_PICK_MAX, stepMin = 40, stepShare = TV_PICK_STEP_SHARE, refine = TV_PICK_REFINE } = {},",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "TV2-unbuilt-not-said",
     "file": "src/player/travelPick.js",
-    "old": "    if (!Number.isFinite(h)) unbuilt = true;\n",
-    "new": "    if (!Number.isFinite(h)) { /* skipped */ }\n",
+    "old": "    if (!Number.isFinite(h)) unbuilt = true;\n    else if (p[1] <= h) {",
+    "new": "    if (!Number.isFinite(h)) {\n      /* skipped */\n    } else if (p[1] <= h) {",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],

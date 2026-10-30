@@ -500,7 +500,7 @@
   {
     "name": "WAGONS3-the-still-bag-walks",
     "file": "src/player/seatPose.js",
-    "old": "export const seatedMotion = (bag) => ({ ...bag, forward: 0, strafe: 0, running: false, speed: 0, standing: true, riding: false, jumping: false });",
+    "old": "export const seatedMotion = (bag) => ({\n  ...bag,\n  forward: 0,\n  strafe: 0,\n  running: false,\n  speed: 0,\n  standing: true,\n  riding: false,\n  jumping: false,\n});",
     "new": "export const seatedMotion = (bag) => ({ ...bag });",
     "tests": [
       "test/player/wagons3.test.js"

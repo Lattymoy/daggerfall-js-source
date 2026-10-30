@@ -16,9 +16,9 @@
 // FLAGGED (Tavern-Cards.md section 12, CARDS2c): the seat poses the Morrowind body alone - Eye Of The Beholder has no sitting art, so a sprite body (a peer's walker, their paperdoll) stands at its seat facing the table.
 //
 // Not a DFU member: Daggerfall Unity has no seat. Ledger A row (TAVERN CARDS).
-import { POSE_SEAT_TOP_MAX } from '../net/wire.js';   // the wire's bound - one home
-import { EYE_HEIGHT } from './motor.js';   // the standing eye the seated one is lowered from
-import { climbRequestToRig } from '../combat/climbRig.js';   // the climb rig's own mapping into the rig
+import { POSE_SEAT_TOP_MAX } from '../net/wire.js'; // the wire's bound - one home
+import { EYE_HEIGHT } from './motor.js'; // the standing eye the seated one is lowered from
+import { climbRequestToRig } from '../combat/climbRig.js'; // the climb rig's own mapping into the rig
 
 /** The wire's step for the table's top above the feet, metres. */
 export const SEAT_TOP_STEP = 0.05;
@@ -58,15 +58,27 @@ export const SEAT_HAND_OVER = 0.04;
 
 /** WAGONS3: a body seated on a moving seat (a wagon's bench) is still on it - the motor's bag (player/motor.js
  *  motionBagOf) with its stride taken out, so the third-person body poses the seat and plays no walk under it. */
-export const seatedMotion = (bag) => ({ ...bag, forward: 0, strafe: 0, running: false, speed: 0, standing: true, riding: false, jumping: false });
+export const seatedMotion = (bag) => ({
+  ...bag,
+  forward: 0,
+  strafe: 0,
+  running: false,
+  speed: 0,
+  standing: true,
+  riding: false,
+  jumping: false,
+});
 /** WAGONS3: a rig's camera snapshot as the body reads it - seated (`seat`, a wagon's bench or a table's chair; COATS3D: or `saddle`, astride), its
  *  motion bag still (combat/fpArm.js update: the hosts hand the motor's bag whole, WW2's one bag). */
-export const seatedCamera = (cam) => (cam && (cam.seat || cam.saddle) && cam.move ? { ...cam, move: seatedMotion(cam.move) } : cam);   // COATS3D: astride too - the horse walks, not the rider
+export const seatedCamera = (cam) =>
+  cam && (cam.seat || cam.saddle) && cam.move ? { ...cam, move: seatedMotion(cam.move) } : cam; // COATS3D: astride too - the horse walks, not the rider
 
 /** The table's top above the feet as the wire's byte. */
-export const seatTopByte = (top) => Math.min(POSE_SEAT_TOP_MAX, Math.max(1, Math.round((Number(top) || 0) / SEAT_TOP_STEP)));
+export const seatTopByte = (top) =>
+  Math.min(POSE_SEAT_TOP_MAX, Math.max(1, Math.round((Number(top) || 0) / SEAT_TOP_STEP)));
 /** ...and back. */
-export const seatTopOf = (st) => (Number.isInteger(st) && st >= 1 && st <= POSE_SEAT_TOP_MAX ? st * SEAT_TOP_STEP : SEAT_TOP_DEFAULT);
+export const seatTopOf = (st) =>
+  Number.isInteger(st) && st >= 1 && st <= POSE_SEAT_TOP_MAX ? st * SEAT_TOP_STEP : SEAT_TOP_DEFAULT;
 
 /**
  * The seated body's world request: `{ origin, yaw, req }` - `origin` the feet the body is drawn at (the seat, on the
@@ -79,13 +91,34 @@ export const seatTopOf = (st) => (Number.isInteger(st) && st >= 1 && st <= POSE_
  * @param {{weight?: number, height?: number}} [race]
  */
 export function seatRigInput(feet, yaw, top = SEAT_TOP_DEFAULT, race = {}) {
-  const h = race.height ?? 1, w = race.weight ?? 1;
+  const h = race.height ?? 1,
+    w = race.weight ?? 1;
   const f = [Math.sin(yaw), 0, Math.cos(yaw)];
-  const r = [Math.cos(yaw), 0, 0 - Math.sin(yaw)];   // `0 -`, never a bare `-`: due south's -0 is no way a request should carry
-  const at = (ahead, side, up) => [feet[0] + f[0] * ahead + r[0] * side, feet[1] + up, feet[2] + f[2] * ahead + r[2] * side];
-  const elbow = (side) => { const v = [r[0] * side + 0, -1, r[2] * side + 0]; const l = Math.hypot(v[0], v[1], v[2]); return [v[0] / l, v[1] / l, v[2] / l]; };
-  const hand = (side) => ({ at: at(SEAT_OUT + SEAT_HAND_ON, side * SEAT_HAND_SIDE * w, top + SEAT_HAND_OVER), fingers: f.slice(), palm: [0, -1, 0], pole: elbow(side), w: 1, curl: 0.3 });
-  const foot = (side) => ({ at: at(SEAT_FOOT_AHEAD * w, side * SEAT_FOOT_SIDE * w, SEAT_ANKLE * h), toe: f.slice(), pole: f.slice(), w: 1 });
+  const r = [Math.cos(yaw), 0, 0 - Math.sin(yaw)]; // `0 -`, never a bare `-`: due south's -0 is no way a request should carry
+  const at = (ahead, side, up) => [
+    feet[0] + f[0] * ahead + r[0] * side,
+    feet[1] + up,
+    feet[2] + f[2] * ahead + r[2] * side,
+  ];
+  const elbow = (side) => {
+    const v = [r[0] * side + 0, -1, r[2] * side + 0];
+    const l = Math.hypot(v[0], v[1], v[2]);
+    return [v[0] / l, v[1] / l, v[2] / l];
+  };
+  const hand = (side) => ({
+    at: at(SEAT_OUT + SEAT_HAND_ON, side * SEAT_HAND_SIDE * w, top + SEAT_HAND_OVER),
+    fingers: f.slice(),
+    palm: [0, -1, 0],
+    pole: elbow(side),
+    w: 1,
+    curl: 0.3,
+  });
+  const foot = (side) => ({
+    at: at(SEAT_FOOT_AHEAD * w, side * SEAT_FOOT_SIDE * w, SEAT_ANKLE * h),
+    toe: f.slice(),
+    pole: f.slice(),
+    w: 1,
+  });
   return {
     origin: [feet[0], feet[1], feet[2]],
     yaw,
@@ -145,17 +178,35 @@ export const SADDLE_LEAN_GALLOP = 0.28;
  * @param {{weight?: number, height?: number}} [race]
  */
 export function saddleRigInput(feet, saddle, race = {}) {
-  const h = race.height ?? 1, w = race.weight ?? 1;
+  const h = race.height ?? 1,
+    w = race.weight ?? 1;
   const yaw = saddle.yaw;
   const f = [Math.sin(yaw), 0, Math.cos(yaw)];
   const right = [Math.cos(yaw), 0, 0 - Math.sin(yaw)];
   const hips = saddle.seat;
-  const at = (ahead, side, up) => [hips[0] + f[0] * ahead + right[0] * side, hips[1] + up, hips[2] + f[2] * ahead + right[2] * side];
-  const unit = (v) => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l + 0, v[1] / l + 0, v[2] / l + 0]; };
-  const stirrup = (side) => ({ at: at(STIRRUP_AHEAD * h, side * STIRRUP_SIDE, -STIRRUP_DROP * h), toe: unit([f[0] + right[0] * side * 0.3, 0, f[2] + right[2] * side * 0.3]),
-    pole: unit([f[0] * 0.85 + right[0] * side * 0.5, 0, f[2] * 0.85 + right[2] * side * 0.5]), w: 1 });
-  const rein = (side) => ({ at: at(REIN_AHEAD * h, side * REIN_SIDE * w, REIN_UP * h), fingers: f.slice(), palm: unit([0, -1, 0]),
-    pole: unit([right[0] * side * 0.6 - f[0] * 0.3, -0.75, right[2] * side * 0.6 - f[2] * 0.3]), w: 1, curl: 1.2 });
+  const at = (ahead, side, up) => [
+    hips[0] + f[0] * ahead + right[0] * side,
+    hips[1] + up,
+    hips[2] + f[2] * ahead + right[2] * side,
+  ];
+  const unit = (v) => {
+    const l = Math.hypot(v[0], v[1], v[2]) || 1;
+    return [v[0] / l + 0, v[1] / l + 0, v[2] / l + 0];
+  };
+  const stirrup = (side) => ({
+    at: at(STIRRUP_AHEAD * h, side * STIRRUP_SIDE, -STIRRUP_DROP * h),
+    toe: unit([f[0] + right[0] * side * 0.3, 0, f[2] + right[2] * side * 0.3]),
+    pole: unit([f[0] * 0.85 + right[0] * side * 0.5, 0, f[2] * 0.85 + right[2] * side * 0.5]),
+    w: 1,
+  });
+  const rein = (side) => ({
+    at: at(REIN_AHEAD * h, side * REIN_SIDE * w, REIN_UP * h),
+    fingers: f.slice(),
+    palm: unit([0, -1, 0]),
+    pole: unit([right[0] * side * 0.6 - f[0] * 0.3, -0.75, right[2] * side * 0.6 - f[2] * 0.3]),
+    w: 1,
+    curl: 1.2,
+  });
   return {
     origin: [feet[0], feet[1], feet[2]],
     yaw,

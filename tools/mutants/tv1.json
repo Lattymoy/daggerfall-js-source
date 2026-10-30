@@ -422,8 +422,8 @@
   {
     "name": "AUDIT-DEEP-T1-1-no-mirror",
     "file": "src/player/tapRay.js",
-    "old": "  if (!front && !(behind && Number.isFinite(cw))) return",
-    "new": "  if (!front) return",
+    "old": "  if (!front && !(behind && Number.isFinite(cw))) return { x: 0, y: 0, depth: 0, front: false };",
+    "new": "  if (!front) return { x: 0, y: 0, depth: 0, front: false };",
     "tests": [
       "test/scenes/tv3_travellers.test.js"
     ],
@@ -512,8 +512,8 @@
   {
     "name": "AUDIT-DEEP-T1-3-lag-unheld",
     "file": "src/player/travelCamera.js",
-    "old": "  if (lag > TV_FOCUS_SNAP) { const s",
-    "new": "  if (false) { const s",
+    "old": "  if (lag > TV_FOCUS_SNAP) {",
+    "new": "  if (false) {",
     "tests": [
       "test/render/tv1_travel_view.test.js"
     ],
