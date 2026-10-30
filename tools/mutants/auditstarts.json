@@ -340,7 +340,7 @@
   {
     "name": "AUDIT-STARTS-V3-the-bay-letter-a-writ",
     "file": "src/systems/starts/starts.js",
-    "old": "export const carriesWrit = (questName) => isStartQuestName(questName) && String(questName).toUpperCase() !== BAY_START_QUEST.toUpperCase();",
+    "old": "export const carriesWrit = (questName) =>\n  isStartQuestName(questName) && String(questName).toUpperCase() !== BAY_START_QUEST.toUpperCase();",
     "new": "export const carriesWrit = (questName) => isStartQuestName(questName);",
     "tests": [
       "test/systems/starts/start2_provinces.test.js"

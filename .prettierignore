@@ -32,6 +32,8 @@
 /src/systems/snowfall/*/
 !/src/systems/soundscape/
 /src/systems/soundscape/*/
+!/src/systems/starts/
+/src/systems/starts/*/
 !/src/systems/studioArt/
 /src/systems/studioArt/*/
 !/src/ui/
