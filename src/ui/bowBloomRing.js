@@ -17,7 +17,7 @@ export function paintBowBloomRing(ring, deg, height, fov) {
 }
 
 function startRing() {
-  if (_ring || typeof document === 'undefined' || !document.body || typeof requestAnimationFrame === 'undefined') return;
+  if (_ring || typeof window === 'undefined' || typeof document === 'undefined' || !document.body || typeof requestAnimationFrame === 'undefined') return;
   const ring = document.createElement('div');
   Object.assign(ring.style, { position: 'fixed', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', borderRadius: '50%',
     border: '2px solid rgba(240, 230, 210, 0.75)', boxShadow: '0 0 2px rgba(0, 0, 0, 0.8)', pointerEvents: 'none', zIndex: '30', display: 'none' });

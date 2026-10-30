@@ -25,6 +25,7 @@ import { registerTemplateOverrides, templateByIndex } from '../../src/systems/it
 import { RRI_TEMPLATE_PATCHES } from '../../src/systems/roleplayRealismItems/rriItems.js';
 import { createForagingItem } from '../../src/systems/foraging/foragingInstall.js';
 import { FT } from '../../src/systems/foraging/foragingLaw.js';
+import { _resetBowBloomForTests } from '../../src/combat/bowBloom.js';
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const I = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
@@ -72,6 +73,7 @@ test('STUCK-ARROWS: a player shaft that meets a wall stays where it struck - one
 test('STUCK-ARROWS: a shaft into the bare ground sticks where its step crossed the ground (mutants: no ground arm; the step\'s end, not the crossing)', () => {
   const loot = pool();
   const a = new ArrowFlight({ getGpuMesh: () => null, collider: new Collider(() => 0), loot });
+  _resetBowBloomForTests();   // BOW-BLOOM: a rested bow's first shot flies true
   a.fire([0, 1, 0], [0, -0.6, 0.8], { fromPlayer: true, weapon: BOW, muzzle: { world: [0, 1, 0] } });
   flyOut(a);
   const [p] = liveStuckArrows(loot);
@@ -185,7 +187,7 @@ test('STUCK-ARROWS: THE FOUR HOSTS - the three flights pass their pool (the worl
     assert.ok(at > 0 && s.slice(at, s.indexOf('\n', at)).includes('summoned: shot.summoned'), `${name}: the shaft carries it`);
     assert.match(s, /\.\.\.\(o\?\.summoned \? \{ summoned: true \} : \{\}\) \}\),/, `${name}: the technique door carries it`);
   }
-  assert.match(dun, /if \(!spendAmmoFor\(playerEntity\.items, playerWeapon\.weapon, shot\)\) continue;\n\s*fireArrow\([^\n]*shot\.summoned \? \{ summoned: true \} : null\);/);
+  assert.match(dun, /if \(!spendAmmoFor\(playerEntity\.items, playerWeapon\.weapon, shot\)\) continue;\n\s*fireArrow\([^\n]*bowShotExtra\([^\n]*shot\.summoned\)\);/);   // PIN MOVED (BOW-BLOOM, BOW-FAST): the conjured round rides bowShotExtra
   assert.match(dun, /\.\.\.\(o\?\.summoned \? \{ summoned: true \} : \{\}\) \}\),/);
   assert.match(read('src/scenes/droppedLoot.js'), /p\.owner !== 'wild' && !p\.unsaved\)/);
 });
