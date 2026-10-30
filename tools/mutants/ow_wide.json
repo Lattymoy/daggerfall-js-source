@@ -1,0 +1,82 @@
+[
+  {
+    "name": "OW-SEAT-the-mark-kept-in-a-table-again",
+    "file": "src/scenes/floraSeat.js",
+    "old": "export const standsOnGround = (c) => { c[ON_GROUND] = true; };",
+    "new": "const MARKED = new WeakSet(); export const standsOnGround = (c) => { MARKED.add(c); };",
+    "tests": [
+      "test/scenes/ow_wide.test.js"
+    ],
+    "note": "The marks in a weak table again: the reader finds none, and the table's growth rehashes every plant standing."
+  },
+  {
+    "name": "OW-DEMOTE-demotions-inline",
+    "file": "src/scenes/world.js",
+    "old": "(terrainGen.threaded ? restrideOffThread : restrideTerrain)(p, want);",
+    "new": "restrideTerrain(p, want);",
+    "tests": [
+      "test/world/terrain/restrideworker.test.js"
+    ],
+    "note": "A crossing's demotions built on the main thread with the worker up - 30-60 ms a crossing past the Bay."
+  },
+  {
+    "name": "OW-DEMOTE-the-job-at-stride-1",
+    "file": "src/scenes/world.js",
+    "old": "    terrainGen.grid({ ...gridGround(p), stride, landform, bed: bedBytes }).then((grid) => {",
+    "new": "    terrainGen.grid({ ...gridGround(p), stride: 1, landform, bed: bedBytes }).then((grid) => {",
+    "tests": [
+      "test/world/terrain/restrideworker.test.js"
+    ],
+    "note": "A demotion asks the worker for the near ring's grid."
+  },
+  {
+    "name": "OW-DEMOTE-the-swap-at-stride-1",
+    "file": "src/scenes/world.js",
+    "old": "      restrideTerrain(p, stride, grid);",
+    "new": "      restrideTerrain(p, 1, grid);",
+    "tests": [
+      "test/world/terrain/restrideworker.test.js"
+    ],
+    "note": "A demotion's reply swapped in as a near ring's surface."
+  },
+  {
+    "name": "OW-RING-the-ring-built-at-each-art",
+    "file": "src/render/farRing.js",
+    "old": "    return now - s.at >= FLORA_SETTLE_MS || now - s.since >= FLORA_WAIT_MAX_MS;",
+    "new": "    return true;",
+    "tests": [
+      "test/render/farflora.test.js"
+    ],
+    "note": "Every art landed is a build of the ring at once - a zone's burst a build an art."
+  },
+  {
+    "name": "OW-RING-the-wait-never-begun-again",
+    "file": "src/render/farRing.js",
+    "old": "    else if (seen.v !== v) { seen.v = v; seen.at = now; }\n",
+    "new": "",
+    "tests": [
+      "test/render/farflora.test.js"
+    ],
+    "note": "A burst's later arts wait from its first: built while the book still moves."
+  },
+  {
+    "name": "OW-RING-the-burst-waits-forever",
+    "file": "src/render/farRing.js",
+    "old": "    return now - s.at >= FLORA_SETTLE_MS || now - s.since >= FLORA_WAIT_MAX_MS;",
+    "new": "    return now - s.at >= FLORA_SETTLE_MS;",
+    "tests": [
+      "test/render/farflora.test.js"
+    ],
+    "note": "A book that never stills never builds the ring with its arts."
+  },
+  {
+    "name": "OW-RING-the-wait-kept-past-a-build",
+    "file": "src/render/farRing.js",
+    "old": "    if (!this._floraStale({ floraVersion: this._floraVersion })) { this._floraSeen = null; return false; }",
+    "new": "    if (!this._floraStale({ floraVersion: this._floraVersion })) return false;",
+    "tests": [
+      "test/render/farflora.test.js"
+    ],
+    "note": "The next art after a build reads the last burst's first landing: built at once."
+  }
+]

@@ -26,6 +26,10 @@
 //                    north, metres out from its middle: `90,6600,270` the Arena District's avenue by the city wall, facing
 //                    the tower), the stream let go idle, the body stood on the point facing `yaw` (degrees clockwise from
 //                    north) - then the Overworld and W as ever, at the city's own pace (IC-PACE, x60)
+//   AT=<px>,<py>[,<yaw>]  the journey from a world pixel (TAMRIEL-WIDE: a province's, past the Bay) - after the boot the jump
+//                    there as a fast travel lands, the stream let go idle, the body turned to `yaw` (degrees clockwise from
+//                    north) - then the Overworld and W as ever
+//   FOES=1           the wild's foes sense the traveller (by default the player is unseen, so no band brings the view down)
 //   TURN=<s>         turn about every s real seconds (IC: back along the avenue, so the run stays in the city)
 //   PROFILE=<file>   Chrome's sampler over the journey (CDP, 1 ms between samples) written as a .cpuprofile - its long
 //                    frames' functions read with a summariser of self time
@@ -62,8 +66,12 @@ const errors = [];
 page.on('pageerror', (e) => errors.push(String(e.message ?? e)));
 page.on('crash', () => { console.error('the page crashed (a renderer killed - out of memory on a shared box?): no measurement'); process.exit(3); });
 page.on('console', (m) => { const t = m.text(); if (/^pixel -?\d+,-?\d+ failed:/.test(t)) errors.push(t.slice(0, 300)); });
-// LAND=<n>: the streamed radius (the Land View pref), for a shared machine's memory - both arms of an A/B the same
-if (process.env.LAND) await page.addInitScript((land) => { try { const k = 'dagger.ui.v1', p = JSON.parse(localStorage.getItem(k) ?? '{}'); localStorage.setItem(k, JSON.stringify({ ...p, landViewDistance: land })); } catch { /* the default */ } }, Number(process.env.LAND));
+// LAND=<n>: the streamed radius (the Land View pref), for a shared machine's memory - both arms of an A/B the same.
+// The tutorial popups off: a new character's pages open one after another, each pausing the game, and a pause brings the
+// Overworld down - the journey was walked on foot and measured nothing
+await page.addInitScript((land) => {
+  try { const k = 'dagger.ui.v1', p = JSON.parse(localStorage.getItem(k) ?? '{}'); localStorage.setItem(k, JSON.stringify({ ...p, tutorialPopups: false, ...(land ? { landViewDistance: land } : {}) })); } catch { /* the default */ }
+}, Number(process.env.LAND || 0));
 await page.addInitScript((stub) => {
   // the draws stubbed from the first frame (the boot's own frames are SwiftShader's raster otherwise: a quarter of an hour)
   if (stub && typeof WebGL2RenderingContext !== 'undefined') {
@@ -111,6 +119,20 @@ if (IC) {
   await frames(10);
   console.log(`the Imperial City: centre ${at.px},${at.py}, jumped to ${jump[0]},${jump[1]} in ${Math.round((Date.now() - tj) / 1000)} s, stood at ${b} degrees ${r} m facing ${yaw}`);
 }
+// foes calm (FOES=1 keeps them): `&nofoes` empties a dungeon, not the wild - a band that notices the traveller brings the
+// view down (its `danger`) and the journey was measured on foot. The player held unseen as a hidden staff member is
+// (STAFF-UNSEEN: no foe senses them, the Overworld stays up), pinned against the staff host's own write each frame
+if (process.env.FOES !== '1') await page.evaluate(() => { Object.defineProperty(window.__playerEntity, 'staffHidden', { get: () => true, set() {}, configurable: true }); });
+const AT = process.env.AT && !IC ? process.env.AT.split(',').map(Number) : null;
+if (AT) {
+  const tj = Date.now();
+  await page.evaluate(([x, y]) => { window.__tesaJump(x, y); }, AT);
+  await frames(2);
+  await page.waitForFunction(() => window.__streamIdle?.() === true, null, { timeout: 1800000, polling: 1000 });
+  await frames(10);
+  if (AT.length > 2) await page.evaluate((yaw) => window.__look((yaw * Math.PI) / 180, 0), AT[2]);
+  console.log(`jumped to ${await page.evaluate(() => window.__currentPixel())} in ${Math.round((Date.now() - tj) / 1000)} s`);
+}
 let view = null, rise = null;
 for (let i = 0; i < 20; i++) {
   await page.evaluate(() => window.__arenaCloseOverlays?.());
@@ -129,10 +151,12 @@ await page.evaluate(() => { window.__owLog.on = true; });
 await page.keyboard.down('KeyW');
 const samples = [];
 const TURN = Number(process.env.TURN || 0);
-let turnAt = TURN ? Date.now() + TURN * 1000 : Infinity, heading = IC ? IC[2] : 0;
+let turnAt = TURN ? Date.now() + TURN * 1000 : Infinity, heading = IC ? IC[2] : AT?.[2] ?? 0;
 for (const until = Date.now() + SECONDS * 1000; Date.now() < until;) {
   await frames(15);
   samples.push(await page.evaluate(() => ({ ...window.__journeyState(), heapMB: Math.round((performance.memory?.usedJSHeapSize ?? 0) / 1048576), t: performance.now() })));
+  // a band that noticed the traveller brings the view down (its `danger`): raised again once it allows, the samples counting the frames it was down
+  if (!WALK && samples.at(-1).view === 'off') await page.evaluate(() => window.__overworld());
   if (Date.now() >= turnAt) { turnAt += TURN * 1000; heading += 180; await page.evaluate((y) => window.__look((y * Math.PI) / 180, 0), heading); }
 }
 await page.keyboard.up('KeyW');
@@ -144,13 +168,13 @@ const row = {
   at: new Date().toISOString(), tree: ROOT, walk: WALK, draws: DRAWS, seconds: SECONDS, boot,
   moved: Math.max(Math.abs(after.pixel.x - before.pixel.x), Math.abs(after.pixel.y - before.pixel.y)),
   built: after.built, heapMB: Math.max(...samples.map((s) => s.heapMB)),
-  atX1: samples.filter((s) => s.scale === 1).length, samples: samples.length,
+  atX1: samples.filter((s) => s.scale === 1).length, down: samples.filter((s) => s.view !== 'up').length, samples: samples.length,
   cb: frameFigures(log.cb), gap: frameFigures(gaps), long: frameFigures(log.long.map((l) => l[1])),
   errors: errors.length,
 };
 const f = (x) => (Number.isFinite(x) ? x.toFixed(1) : '-');
 const line = (k, v) => `${k.padEnd(4)} ${String(v.frames).padStart(5)} frames  p50 ${f(v.p50).padStart(6)}  p95 ${f(v.p95).padStart(6)}  max ${f(v.max).padStart(7)} ms  >33 ms ${v.over33}  >100 ms ${v.over100}`;
-console.log(`${WALK ? 'walk' : 'overworld'}: ${row.moved} pixels on in ${SECONDS} s, ${row.built} built, heap ${row.heapMB} MB at most, boot ${boot} s, ${errors.length} error(s)`);
+console.log(`${WALK ? 'walk' : 'overworld'}: ${row.moved} pixels on in ${SECONDS} s, ${row.built} built, heap ${row.heapMB} MB at most, boot ${boot} s, ${row.atX1} of ${row.samples} samples at x1, ${WALK ? '' : `${row.down} with the view down, `}${errors.length} error(s)`);
 console.log(line('cb', row.cb));
 console.log(line('gap', row.gap));
 console.log(`long ${row.long.frames} task(s) over 50 ms, the worst ${f(row.long.max)} ms`);
@@ -158,4 +182,5 @@ if (process.env.OUT) appendFileSync(process.env.OUT, JSON.stringify({ ...row, li
 await browser.close();
 await server.close();
 if (errors.length) throw new Error(`owHitchProbe: ${errors.length} page error(s): ${errors.slice(0, 3).join(' | ')}`);
+if (!WALK && row.down > row.samples / 2) throw new Error(`owHitchProbe: the Overworld was down for ${row.down} of ${row.samples} samples - a window or a foe brought it down`);
 if (row.cb.frames < 30 || !(row.moved > 0)) throw new Error(`owHitchProbe: no journey measured (${row.cb.frames} frames, ${row.moved} pixels on)`);

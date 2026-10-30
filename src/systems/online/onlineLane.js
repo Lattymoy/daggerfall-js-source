@@ -147,6 +147,7 @@ export const ONLINE_PLAYERS_OWN_PREFS = [
   'hudBarsSplit',     // HUD-MOVE: whether this player's three bars move apart - the same screen's
   'hudSnap',          // HUD-SNAP: whether this player's pieces catch on each other while moved - the same screen's
   'shotDownload',     // LOAD1: whether THIS player's screenshot key also saves a file - their disk, nobody else's
+  'autoUpdates',      // AUTO-UPDATE: whether THIS player's game restarts itself onto a new version
   'skipStartVideo',   // UXB1-A: whether THIS player sits through the opening film - read at the front door, before any room
   'chatHidden',       // CHAT-R2: whether THIS player wants the chat on screen - the room does not get a say in what someone looks at
   'peerClassSprites', // 2026-09-17: how OTHER players are drawn on THIS machine (animated class sprite vs paperdoll) -
