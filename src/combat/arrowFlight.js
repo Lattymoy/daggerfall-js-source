@@ -275,7 +275,7 @@ export class ArrowFlight {
       const step = (m.orb ? MISSILE_SPEED : ARROW_FLIGHT_SPEED) * (m.speedScale ?? 1) * dt;   // TELL6d: an aimed shot flies x1.3 as fast; BAL-ARCHERY: a shaft, not a gun's orb
       const { unit, reach } = missileReach(m.dir, step);   // ROAD-H tail: displacement.magnitude + ColliderRadius along the NORMALISED direction (DaggerfallMissile.cs:333 builds the displacement, :337 casts it - an ARROW always takes that Raycast arm, never the :339 SphereCast) - a crouch-dipped shaft carries |dir| > 1
       // TACT1: a tree, a crate - cover stops a shaft; AUDIT TACT B5: by touch, the bodies before it tested first
-      const cs = c ? coverStep(coverDistance(c, m.pos, unit, reach), c.raycast(m.pos, unit, reach), reach, reach - step * Math.hypot(m.dir[0], m.dir[1], m.dir[2]), step * Math.hypot(m.dir[0], m.dir[1], m.dir[2])) : null;
+      const cs = c ? coverStep(coverDistance(c, m.pos, unit, reach), c.raycast(m.pos, unit, reach), reach, reach - step * Math.hypot(m.dir[0], m.dir[1], m.dir[2]), step * Math.hypot(m.dir[0], m.dir[1], m.dir[2]), !!m.fromPlayer) : null;   // WALL-SHAFT: a player's shaft is swept (SHAFT-SWEEP), so a wall is met by touch and a foe before it first
       if (cs && Number.isFinite(cs.stop)) { this._stick(m, [m.pos[0] + unit[0] * cs.stop, m.pos[1] + unit[1] * cs.stop, m.pos[2] + unit[2] * cs.stop], unit); m.dead = true; continue; }   // met geometry: the arrow is LOST (DFU); STUCK-ARROWS: the player's stays where it struck - the RAY's point (`unit`, the collider's units)
       const adv = cs ? step * cs.advance : step;
       const from = m.fromPlayer ? [m.pos[0], m.pos[1], m.pos[2]] : null;   // STUCK-ARROWS: the step's start, for the ground's crossing

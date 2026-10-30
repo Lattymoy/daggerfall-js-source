@@ -16,7 +16,7 @@ its own TerrainCollider - DFU's missiles meet the ground, so this is no departur
 
 THE CHANGE (as the audit left it):
 
-- The flight's stop is `flightStop` (`hostMagic.js:"export function flightStop(collider, pos, unit, reach, stepLen) {"`),
+- The flight's stop is `flightStop` (`hostMagic.js:"export function flightStop(collider, pos, unit, reach, stepLen, swept = false) {"`),
   the one law of both flights (this engine's and `dungeonContext.js`'s): the mesh ray at the step's whole reach, cover
   (TACT1) by touch, and the terrain by touch - `groundHit`, AUDIT TECH1's march (`player/groundRay.js`, a leaf since
   the audit: the techniques, the engine and a foe's shot ask the one march). It meets a rise as well as a fall, so a

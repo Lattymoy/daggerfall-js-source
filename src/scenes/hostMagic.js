@@ -138,9 +138,9 @@ export const GROUND_TOUCH_M = 0.02;
  * `reach` the step's reach along the unit ray, `stepLen` the step's length on it (so the radius is reach - stepLen).
  * @param {any} collider @param {number[]} pos @param {number[]} unit @param {number} reach @param {number} stepLen
  */
-export function flightStop(collider, pos, unit, reach, stepLen) {
+export function flightStop(collider, pos, unit, reach, stepLen, swept = false) {
   const radius = reach - stepLen;
-  const cs = coverStep(coverDistance(collider, pos, unit, reach), collider.raycast(pos, unit, reach), reach, radius, stepLen);
+  const cs = coverStep(coverDistance(collider, pos, unit, reach), collider.raycast(pos, unit, reach), reach, radius, stepLen, swept);   // WALL-SHAFT: `swept`, the bodies tested along the step - a wall met by touch too
   const g = groundHit(pos, unit, Math.min(reach, cs.stop), collider);
   if (!(g < cs.stop)) return cs;   // no ground in reach, or a wall or cover met first
   if (g <= radius + GROUND_TOUCH_M) return { stop: g, advance: 1 };
