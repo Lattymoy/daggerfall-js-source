@@ -92,7 +92,7 @@ const panel = (/** @type {number} */ open, /** @type {ReadonlyArray<any>} */ ite
 export const PASS_TRACKS = Object.freeze(['free', 'premium']);
 /** SEASON ONE'S TRACKS: the free track every registered account may buy from, and the premium track PASS_PREMIUM_AURUM
  *  opens. Each item once, in any order its open panels allow; the owner's "No overbundence of titles and profile icons"
- *  holds - one title free, two premium. */
+ *  holds - one title free, two premium. The Brass Crown came with the retired Seasonal Collector; it is the track's now. */
 export const PASS_PANELS = Object.freeze({
   s1: Object.freeze({
     free: Object.freeze([
@@ -102,7 +102,7 @@ export const PASS_PANELS = Object.freeze({
     ]),
     premium: Object.freeze([
       panel(0, [item('glyph:tonalfork', 200), item('icon:lexicon', 300), item('aura:aetherium', 1000)]),
-      panel(600, [item('icon:gearheart', 400), item('title:heartwaker', 600), item('aura:gildedcoil', 1200)]),
+      panel(600, [item('icon:gearheart', 400), item('glyph:gearcrown', 300), item('title:heartwaker', 600), item('aura:gildedcoil', 1200)]),
       panel(2000, [item('title:numidiumecho', 800), item('mount:automaton', 1600)]),
     ]),
   }),
