@@ -341,8 +341,8 @@
   {
     "name": "AUDIT-RED-MOUNTAIN-L1-the-ash's-zone",
     "file": "src/world/peaks/snowcap.js",
-    "old": "tamrielBiomeAt(x, y)?.key === 'morrowindRedMountain') n++;",
-    "new": "tamrielBiomeAt(x, y)?.key === 'morrowindAshlands') n++;",
+    "old": "    if (bayEdgeDistance(x, y) > SEAM_PX && tamrielBiomeAt(x, y)?.key === 'morrowindRedMountain') n++;",
+    "new": "    if (bayEdgeDistance(x, y) > SEAM_PX && tamrielBiomeAt(x, y)?.key === 'morrowindAshlands') n++;",
     "tests": [
       "test/world/audit_redmountain.test.js"
     ]
@@ -350,8 +350,8 @@
   {
     "name": "AUDIT-RED-MOUNTAIN-L1-the-lines-unlifted",
     "file": "src/world/peaks/snowcap.js",
-    "old": "  if (share > 0) for (let k = 0; k < 3; k++) line[k] += share * (bare - line[k]);\n",
-    "new": "",
+    "old": "  if (share > 0) for (let k = 0; k < 3; k++) line[k] += share * (bare - line[k]);\n  return line;",
+    "new": "  return line;",
     "tests": [
       "test/world/audit_redmountain.test.js"
     ]

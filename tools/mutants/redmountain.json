@@ -195,8 +195,8 @@
   {
     "name": "RED-MOUNTAIN-snow-on-its-ash",
     "file": "src/world/peaks/snowcap.js",
-    "old": "return line >= CAP_NONE ? line : line + redMountainLiftAt(px, py) * STREAMING_TERRAIN_SCALE;",
-    "new": "return line;",
+    "old": "    return line >= CAP_NONE ? line : line + redMountainLiftAt(px, py) * STREAMING_TERRAIN_SCALE;",
+    "new": "    return line;",
     "tests": [
       "test/world/redmountain.test.js"
     ]

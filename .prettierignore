@@ -44,6 +44,8 @@
 /src/world/*
 !/src/world/lands/
 /src/world/lands/*/
+!/src/world/peaks/
+/src/world/peaks/*/
 !/tools/
 /tools/*
 !/tools/layered-armor/

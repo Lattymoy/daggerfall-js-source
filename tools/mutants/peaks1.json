@@ -2,8 +2,8 @@
   {
     "name": "PEAKS1-a-climate-s-line",
     "file": "src/world/peaks/snowcap.js",
-    "old": "[C.Mountain]: 1350,",
-    "new": "[C.Mountain]: 1250,",
+    "old": "    [C.Mountain]: 1350,",
+    "new": "    [C.Mountain]: 1250,",
     "tests": [
       "test/world/peaks1_snowcap.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "PEAKS1-the-southward-rise",
     "file": "src/world/peaks/snowcap.js",
-    "old": "return base + rise * smoothstep(north, south, py);",
-    "new": "return base;",
+    "old": "  return base + rise * smoothstep(north, south, py);",
+    "new": "  return base;",
     "tests": [
       "test/world/peaks1_snowcap.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PEAKS1-the-corner-s-mean",
     "file": "src/world/peaks/snowcap.js",
-    "old": "+ capLineOfPixel(cx - 1, cy, climateAt) + capLineOfPixel(cx, cy, climateAt)) / 4;",
-    "new": "+ capLineOfPixel(cx - 1, cy, climateAt) + capLineOfPixel(cx + 1, cy, climateAt)) / 4;",
+    "old": "      capLineOfPixel(cx, cy, climateAt)) /",
+    "new": "      capLineOfPixel(cx + 1, cy, climateAt)) /",
     "tests": [
       "test/world/peaks1_snowcap.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PEAKS1-the-band",
     "file": "src/world/peaks/snowcap.js",
-    "old": "band: Object.freeze({ below: 140, above: 180 }),",
-    "new": "band: Object.freeze({ below: 120, above: 180 }),",
+    "old": "  band: Object.freeze({ below: 140, above: 180 }),",
+    "new": "  band: Object.freeze({ below: 120, above: 180 }),",
     "tests": [
       "test/world/peaks1_snowcap.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "PEAKS1-the-face-s-height-gate",
     "file": "src/world/peaks/snowcap.js",
-    "old": "return (1 - smoothstep(f.bare, f.held, ny)) * smoothstep(line - f.from, line - f.full, h);",
-    "new": "return (1 - smoothstep(f.bare, f.held, ny));",
+    "old": "  return (1 - smoothstep(f.bare, f.held, ny)) * smoothstep(line - f.from, line - f.full, h);",
+    "new": "  return 1 - smoothstep(f.bare, f.held, ny);",
     "tests": [
       "test/world/peaks1_snowcap.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "PEAKS1-the-merge-s-min",
     "file": "src/world/peaks/snowcap.js",
-    "old": "for (let k = 0; k < 3; k++) if (c[k] < pack[k]) pack[k] = c[k];",
-    "new": "for (let k = 0; k < 3; k++) if (c[k] > pack[k]) pack[k] = c[k];",
+    "old": "  for (let k = 0; k < 3; k++) if (c[k] < pack[k]) pack[k] = c[k];",
+    "new": "  for (let k = 0; k < 3; k++) if (c[k] > pack[k]) pack[k] = c[k];",
     "tests": [
       "test/world/peaks1_snowcap.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "PEAKS1-a-zone-s-line",
     "file": "src/world/peaks/snowcap.js",
-    "old": "skyrimPeaks: 1250,",
-    "new": "skyrimPeaks: 3000,",
+    "old": "    skyrimPeaks: 1250,",
+    "new": "    skyrimPeaks: 3000,",
     "tests": [
       "test/world/peaks1_snowcap.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "PEAKS1-the-zones-unread-past-the-bay",
     "file": "src/world/peaks/snowcap.js",
-    "old": "if (bayEdgeDistance(px, py) > SEAM_PX) {",
-    "new": "if (false) {",
+    "old": "  if (bayEdgeDistance(px, py) > SEAM_PX) {",
+    "new": "  if (false) {",
     "tests": [
       "test/world/peaks1_snowcap.test.js"
     ]
