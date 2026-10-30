@@ -77,8 +77,8 @@
   {
     "name": "ROAD-BEYOND-no-layer-still-searched",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  if (!beyond) return null;\n  const graph = roadGraph(",
-    "new": "  const graph = roadGraph(",
+    "old": "  if (!beyond) return null;\n  const graph = roadGraphFor(",
+    "new": "  const graph = roadGraphFor(",
     "tests": [
       "test/systems/travel/road_beyond.test.js"
     ]

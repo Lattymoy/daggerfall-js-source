@@ -38,7 +38,7 @@ const ell = () => {
 };
 const count = (kinds, k) => kinds.filter((q) => q === k).length;
 
-test('ROAD-BEYOND the dials: the ladder\'s whole spend past the table, the roads\' search\'s, the open ground about its ends and how far it looks for a road from the wilds - op counts, never a clock', () => {
+test('ROAD-BEYOND the dials: the ladder\'s whole spend past the table, the open ground about the ends and how far a plan looks for a road from the wilds - op counts, never a clock (ROAD-GRAPH: the roads\' search has no spend)', () => {
   assert.equal(BEYOND_MAX_EXPANSIONS, 100000);
   assert.equal(BEYOND_MARGIN, 240);
   // PIN MOVED (ROAD-GRAPH, Travel-View.md): BY_ROAD_MAX_EXPANSIONS is gone - the roads' search walks its network to the edge
@@ -97,7 +97,7 @@ test('ROAD-BEYOND the open ground about the ends: a town in the field beside the
   assert.ok(tally.n < 20000, `${tally.n} cells: the roads' search, not the ladder's`);
 });
 
-test('ROAD-BEYOND the roads\' search walks the open ground about its ends alone, within its spend, leaning on its goal: a road round three sides of a field is its way (the field\'s middle far from both ends), the plan the cheaper walk across it (TV2\'s law); a road broken far from its ends no way of its; the lean on the goal spends fewer cells (mutants: open ground everywhere, the cheaper kept, the greed)', () => {
+test('ROAD-BEYOND the roads\' search walks the open ground about its ends alone, leaning on its goal: a road round three sides of a field is its way (the field\'s middle far from both ends), the plan the cheaper walk across it (TV2\'s law); a road broken far from its ends no way of its; the lean on the goal spends fewer cells (mutant: the cheaper kept; open ground everywhere is ROAD-GRAPH\'s two ends\' legs, the greed the lattice\'s)', () => {
   // the road north 150, east 100, south 150 - 400 a road's price; straight across the field 100 at 3.5 (350)
   const u = [];
   for (let y = 300; y >= 150; y--) u.push([1100, y]);
@@ -137,7 +137,7 @@ test('ROAD-BEYOND the roads\' search walks the open ground about its ends alone,
 
 // GREEDY-BEYOND's mutants' sweep: ROAD-FOLLOW keeps the roads' search on its roads, so one long road costs it few cells
 // leaning or not (ROAD-BEYOND-no-greed lived), and no pin asked it without a layer (-no-layer-still-searched lived)
-test('ROAD-BEYOND the roads\' search leans on its goal over a lattice of roads - the same way, at the same price, in far fewer cells than the plain A* (ROAD-GRAPH: 101,030 measured, the chains walked counted); and with no layer past the Bay it searches nothing (mutants: the greed; the layer unasked)', () => {
+test('ROAD-BEYOND the roads\' search leans on its goal over a lattice of roads - the same way, at the same price, in far fewer cells than the plain A* (ROAD-GRAPH: 67,180 measured, its chains walked and the flood back counted); and with no layer past the Bay it searches nothing (mutants: the greed; the layer unasked)', () => {
   const lines = [];
   for (let y = 100; y <= 300; y += 4) { const p = []; for (let x = 1100; x <= 1500; x++) p.push([x, y]); lines.push(roadThrough(p)); }
   for (let x = 1100; x <= 1500; x += 4) { const p = []; for (let y = 100; y <= 300; y++) p.push([x, y]); lines.push(roadThrough(p)); }
@@ -146,7 +146,7 @@ test('ROAD-BEYOND the roads\' search leans on its goal over a lattice of roads -
   const r = searchByRoad({ x: 1100, y: 100 }, { x: 1500, y: 300 }, { ...bay(), beyond: lattice, tally });
   assert.equal(r.cost, 600, 'by the roads, as short as the lattice allows');
   assert.equal(count(r.kinds, 'road'), r.kinds.length);
-  assert.ok(tally.n < 60000, `${tally.n} cells`);   // PIN MOVED (ROAD-GRAPH): 47,803 - a junction every fourth pixel, each of its four chains walked
+  assert.ok(tally.n < 50000, `${tally.n} cells`);   // PIN MOVED (ROAD-GRAPH): 36,011 - a junction every fourth pixel, its chains walked, the flood back's quarter
   assert.equal(searchByRoad({ x: 1100, y: 100 }, { x: 1500, y: 300 }, { ...bay() }), null, 'no layer: no search');
   const net = bay();
   for (let x = 100; x <= 140; x++) net.roads[200 * MAP_W + x] = (x > 100 ? DIR.W : 0) | (x < 140 ? DIR.E : 0);
@@ -168,7 +168,7 @@ test('ROAD-BEYOND the ladder\'s rungs past the table are no wider than BEYOND_MA
 
 // PIN MOVED (GREEDY-BEYOND, bible/06-Systems/Travel-View.md): the walk across country that spends its count leans on its goal
 // once more (BEYOND_GREED), with its own count - a third BEYOND_MAX_EXPANSIONS
-test('ROAD-BEYOND the spend is counted: a goal past the Bay no way reaches costs at most the roads\' search, the ladder\'s whole spend, the walk\'s across country and its lean on the goal - never a rung of 200 000 four times over, twice (mutant: the ladder\'s spend)', () => {
+test('ROAD-BEYOND the spend is counted: a goal past the Bay no way reaches costs at most the ladder\'s whole spend, the walk\'s across country and its lean on the goal - never a rung of 200 000 four times over, twice (mutant: the ladder\'s spend)', () => {
   // the goal on an island of one pixel in a pond past the Bay; a road from the traveller that never reaches it
   const pond = (x, y) => Math.max(Math.abs(x - 1500), Math.abs(y - 500)) <= 6 && !(x === 1500 && y === 500);
   const pathsBeyond = roadThrough(ell());
