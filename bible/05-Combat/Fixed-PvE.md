@@ -224,3 +224,13 @@ Crit is never priced. A pool grows half a per cent for each point of the best ma
 magnitude, 5 rounds, 15%), and a spell does one damage each to health, fatigue and magicka. Neither rewrites a saved
 record. Gold stays the classic price, the same at every skill. The simulator pays spells from a pool when asked
 (`pveSim.js` simulate's `magicka`). The tests: `test/systems/pve/pve_castlevel.test.js`.
+
+## 14. A template foe's drop leans to its killer (SKILL-LEAN, 2026-10-30)
+
+The owner: "as they are higher tier area they have better leaning skill gear", "1 line leans in 1-20 then 2 line leans in
+the 10-25 area and the 20-35 area has 3", "to their highest skills", "for all weapons armor jewelry". A template foe's
+body and kit roll inside `withSkillLean` (`loot/lootSkillLean.js`) at the foe's own level: the first skill lines of each
+weapon, armour piece and ring take the roller's three best trained skills in order (`lootPowers.js` `bestSkills`). One
+line leans to level 20, two to 35, three in the top band (the owner: "23 to early"). The other
+lines, the values and garments roll as ever. With the switch off no foe carries a template, so nothing leans. Daggerfall
+Unity's items have no lines. The tests: `test/systems/loot/skilllean.test.js`.

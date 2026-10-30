@@ -58,6 +58,7 @@ import { registerSpellPowerMod, registerSpellPierceMod } from '../spell/spellPow
 import { hasSpecialAbility, SPECIAL_ABILITY, restIgnoresNoRegen } from '../rest/rest.js';   // BAL9c: a career that cannot regenerate magicka, rest's own gate
 import { registerPlayerBlowLanded, pendingPlayerBlow, REACH_RISE_M, registerSpireRedoubt, spireRoomNow } from '../sigil/sigilSetPowers.js';   // EG-ZH: the Spire's recovery - the breach the player stands in, and the Redoubt's door
 import { registerRollerLevel } from './lootLevelGate.js';   // LOOT-GATE
+import { registerLeanSkills } from './lootSkillLean.js';   // SKILL-LEAN
 import { lootGateLevel } from '../mentorMode.js';   // LOOT-GATE, MENTOR2: the real level - a mentor is no young character
 import { playerDoor, paidBack, oweFoe } from '../playerDoor.js';   // BAL5: a blow paid back never kills; OPEN-HAND: a follow-up owed to a relay's body
 import { showFollowUp } from '../../ui/hitNumbers.js';   // FIELD BUGS 2026-10-15e ROSE-SEEN: a follow-up's own number
@@ -77,7 +78,7 @@ import { isNight } from '../../world/worldClock.js';
 import { hudText } from '../notify.js';
 import { healMine, manaMine, _resetPlayerHealForTests } from '../playerHeal.js';   // SERPENT-SET: the one heal a power gives, below this file and the sets'
 import { weaponSkillUsed } from '../../characters/weapons.js';
-import { SKILLS } from '../skills.js';
+import { SKILLS, SKILL_COUNT, permanentSkillValue } from '../skills.js';
 import { friendlyProtected } from '../../combat/playerWeapon.js';
 import { KNIGHT_CITY_WATCH } from '../../characters/mobile/mobileTypes.js';
 import { healthShare } from '../../combat/healthShare.js';   // FIELD BUGS 2026-10-18f RELAY-SHARE: a body's share of its health, the one law
@@ -640,6 +641,9 @@ registerAbsorptionChance(LOOT_POWERS, lootAbsorbChance);
 registerMagicRoundHook(LOOT_POWERS, lootRound);
 registerLegendaryFind(LOOT_POWERS, lootFind);
 registerRollerLevel(() => { const me = playerDoor()?.player?.(); return me ? lootGateLevel(me) : null; });   // LOOT-GATE: the live player's level holds the top tiers back - none before a host publish; MENTOR2: the real one while mentoringes its door, so a bare roll (a test, a tool) rolls at its source alone
+/** SKILL-LEAN: an entity's three highest trained skills, best first (ties by id). */
+export const bestSkills = (e) => [...Array(SKILL_COUNT).keys()].map((id) => [id, permanentSkillValue(e, id) || 0]).sort((a, b) => b[1] - a[1] || a[0] - b[0]).slice(0, 3).map(([id]) => id);
+registerLeanSkills(() => { const me = playerDoor()?.player?.(); return me ? bestSkills(me) : null; });   // SKILL-LEAN: the live player's best three trained skills
 registerEntityFold(LOOT_POWERS, wardrobeFold);   // LOOT15
 registerSpireRedoubt(LOOT_POWERS, lootRedoubtTaken);   // EG-ZH: Divine Grace and the Vigil recover at a Redoubt in a breach
 

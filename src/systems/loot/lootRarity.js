@@ -81,6 +81,7 @@ import { familyOfNative, MATERIAL_FAMILY } from '../armorMaterials.js';   // ARM
 import { recipeById, MASTERWORK } from '../../net/recipeLaw.js';   // NAME-KEPT: a crafted piece's base - a jewel's recipe name, a Masterwork's mark (the Worker's law too; it imports no loot)
 import { STAT_KEYS_ORDER } from '../statMods.js';
 import { SKILL_NAMES, SKILL_COUNT, SKILLS, MAGIC_SKILLS } from '../skills.js';
+import { skillLean, withSkillLean, SKILL_LEAN_GROUPS } from './lootSkillLean.js';   // SKILL-LEAN
 import { weaponSkillUsed } from '../../characters/weapons.js';   // LOOT1: a weapon's skill affix leans to the skill that swings it
 import { ENCHANTMENT_TYPES } from '../../formats/magicDef.js';
 import { enchantmentName, enchantmentParamName } from '../enchantmentCatalogue.js';
@@ -882,9 +883,19 @@ export function rollAffixes(item, tier, rolls = Math.random, { byLines = true, l
   };
   const open = () => kinds.filter((id) => AFFIX_KINDS[id].params ? kindParams(id, item).some((p) => !taken.has(`${id}:${p}`)) : !taken.has(id));
   const own = item.group === 'Weapons' ? 'damage' : item.group === 'Armor' ? 'armor' : isGarment(item) ? 'standing' : null;   // LOOT14: a garment's own number is its standing
+  const sl = SKILL_LEAN_GROUPS.includes(item.group) ? skillLean() : null;   // SKILL-LEAN: a template foe's drop, its first skill lines the roller's best
+  let leaned = 0;
   for (let i = 0; i < count; i++) {
     let pool = open();
     if (!pool.length) break;
+    const best = sl && leaned < sl.lines && pool.includes('skill') ? sl.skills.find((p) => !taken.has(`skill:${p}`) && kindParams('skill', item).includes(p)) : undefined;
+    if (best != null) {
+      const [lo, hi] = AFFIX_RANGES.skill[tier];
+      taken.add(`skill:${best}`);
+      leaned++;
+      out.push({ id: 'skill', param: best, value: rangeInt(lo, hi, rolls) });
+      continue;
+    }
     if (!byLines && tier === 'rare' && i === count - 1) {
       // the record's old law: the last pick fills whichever slot the name still lacks
       const has = (slot) => out.some((a) => AFFIX_KINDS[a.id].slot === slot);
@@ -2288,7 +2299,8 @@ export function rollCorpseLoot(entity, basics, { rolls = Math.random, luck = 50,
   const carried = loot.length;
   const source = corpseSource(basics, entity.level, entity.mobileType);   // LOOT6: its family
   const champ = typeof entity.champion === 'string' && entity.champion !== '';   // LOOT7: a champion is a stronger source
-  rollLootRarity(loot, champ ? championSource(source, qualityMult) : { ...source, qualityMult, ...(weights ? { weights } : {}) }, { rolls, luck, find, level });   // CHAMP-LOOT: a champion's own source (half an elite's); FOE-CAP: a plain foe's ladder
+  const roll = () => rollLootRarity(loot, champ ? championSource(source, qualityMult) : { ...source, qualityMult, ...(weights ? { weights } : {}) }, { rolls, luck, find, level });   // CHAMP-LOOT: a champion's own source (half an elite's); FOE-CAP: a plain foe's ladder
+  if (entity.pveTemplate) withSkillLean(entity.level, roll); else roll();   // SKILL-LEAN: a template foe's drop leans to its killer
   if (loot.length > carried) (entity.items ??= []).push(...loot.slice(carried));   // LOOT7-CHECK CORPSE-FIND: the find onto the body
   return entity.items;
 }

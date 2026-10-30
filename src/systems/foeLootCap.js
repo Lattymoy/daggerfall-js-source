@@ -45,6 +45,7 @@ import { isPotion } from './useItem.js';   // CAP-SUPPLIES: a potion IS the glas
 import { ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';   // KIT-ROLL: the row every host hands its spawn
 import { renownLootQuarters, lootEased } from './renownLoot.js';
 import { isCardRecord } from '../net/card/cardWorthLaw.js';   // CARDS9: a foe's card   // RENOWN-LOOT: the plain ladder by the roller's Renown
+import { withSkillLean } from './loot/lootSkillLean.js';   // SKILL-LEAN
 
 /** CARDS9 (Tavern-Cards section 32): A FOE'S CARD IS KEPT AS A MAGIC PIECE - its one rare draw is never thrown away for a
  *  common blade (rank 2: past a supply's 1 and a Common piece's 0, level with a Magic piece's). */
@@ -263,7 +264,8 @@ export function capFoeLoot(entity) {
  *    their better ladders stay their carried loot's. A revenant never: its list holds a player's own pieces.
  */
 export function rollCorpseKit(entity, opts = {}) {
-  const kit = [...rollKitPieces(entity, opts), ...rollKitGarments(entity, opts)];   // LOOT14: the garments after every draw the kit made
+  const draw = () => [...rollKitPieces(entity, opts), ...rollKitGarments(entity, opts)];   // LOOT14: the garments after every draw the kit made
+  const kit = entity?.pveTemplate ? withSkillLean(entity.level, draw) : draw();   // SKILL-LEAN: a template foe's kit leans to its killer
   cursePass(kit, opts.rolls ?? Math.random);   // LOOT16: a body's own Rares and Legendaries, one in twelve cursed - after all of it
   socketPass(kit, opts.rolls ?? Math.random);   // LOOT20: and a socket, after the curse
   weaponSocketPass(kit, opts.rolls ?? Math.random);   // GEM1: and a weapon's own sockets, after that (law 9)

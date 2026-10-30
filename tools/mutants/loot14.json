@@ -283,8 +283,8 @@
   {
     "name": "LOOT14-the-kit-garments-never-roll",
     "file": "src/systems/foeLootCap.js",
-    "old": "  const kit = [...rollKitPieces(entity, opts), ...rollKitGarments(entity, opts)];",
-    "new": "  const kit = [...rollKitPieces(entity, opts)];",
+    "old": "  const draw = () => [...rollKitPieces(entity, opts), ...rollKitGarments(entity, opts)];",
+    "new": "  const draw = () => [...rollKitPieces(entity, opts)];",
     "tests": [
       "test/systems/loot14_wardrobe.test.js"
     ]
