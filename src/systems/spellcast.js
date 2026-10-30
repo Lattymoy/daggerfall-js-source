@@ -433,7 +433,7 @@ export function missileReach(dir, step) {
 
 /** The same test against a foe's controller (enemyAnchor's height). */
 export function missileHitsFoe(pos, foe, from = null) {   // SHAFT-SWEEP: `from`, the step's start - the whole step tested
-  return missileHitsCapsule(pos, foe?.ai?.feet, foe?.ai?.height, foe?.ai?.radius ?? BODY_CAPSULE_RADIUS, from);   // WB4b: a body's own radius, where it states one
+  return missileHitsCapsule(pos, foe?.ai?.feet, foe?.ai?.height, foe?.ai?.radius, from);   // WB4b: a body's own radius, where it states one
 }
 
 /** ROAD-H H1c: GetAimPosition's PLAYER ARROW offsets
