@@ -31,6 +31,15 @@ test('LEGIBLE 2 sameProgram: layout, comments, quote style, redundant parenthese
   assertSame('const big = 1e3;', 'const big = 1000;');
 });
 
+test('LEGIBLE 3 sameProgram: a chain of one logical operator is one chain however it is bracketed - a formatter drops the brackets - and a chain of two operators, or of other parts, is not (mutants: the chain uncompared; its length unread)', () => {
+  assertSame('if (a || b || (c || d)) f();', 'if (a || b || c || d) f();');
+  assertSame('const x = a && (b && c);', 'const x = (a && b) && c;');
+  assertSame('const y = p ?? (q ?? r);', 'const y = p ?? q ?? r;');
+  assertDiffers('const z = a || (b && c);', 'const z = (a || b) && c;', undefined, /LogicalExpression|operator/);
+  assertDiffers('const w = a || b || c;', 'const w = a || b;', undefined, /number of parts/);
+  assertDiffers('const v = a || b || c;', 'const v = a || d || c;', undefined, /d|global/);
+});
+
 test('LEGIBLE 2 sameProgram: a change to what the code does is not the same program, and it says where (mutants: a template\'s text uncompared)', () => {
   const result = assertDiffers('const t = 1 + 2;\nconst u = 3;', 'const t = 1 + 2;\nconst u = 4;', undefined, /3 became 4/);
   assert.deepEqual(result.before, { line: 2, column: 10 });

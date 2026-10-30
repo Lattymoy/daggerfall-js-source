@@ -78,16 +78,12 @@ export function handle(m, post) {
         post({ t: 'layers', id: m.id, images: null });
         return;
       }
-      const images = arr
-        .layers()
-        .map((img) => ({
-          width: img.width,
-          height: img.height,
-          data:
-            img.data.byteOffset === 0 && img.data.byteLength === img.data.buffer.byteLength
-              ? img.data
-              : img.data.slice(),
-        }));
+      const images = arr.layers().map((img) => ({
+        width: img.width,
+        height: img.height,
+        data:
+          img.data.byteOffset === 0 && img.data.byteLength === img.data.buffer.byteLength ? img.data : img.data.slice(),
+      }));
       post(
         { t: 'layers', id: m.id, images },
         images.map((i) => i.data.buffer),

@@ -1,0 +1,65 @@
+[
+  {
+    "name": "TEXTPINS-the-end-mapped-as-a-start",
+    "file": "tools/carryTextPins.mjs",
+    "old": "if (a[k].end === o) return matched[k] >= 0 ? b[matched[k]].end : null;",
+    "new": "if (a[k].end === o) return matched[k] >= 0 ? b[matched[k]].start : null;",
+    "tests": [
+      "test/tooling/legible3_textpins.test.js"
+    ]
+  },
+  {
+    "name": "TEXTPINS-a-tokens-own-offset-dropped",
+    "file": "tools/carryTextPins.mjs",
+    "old": "return a[k].start < o ? (same(k) ? b[matched[k]].start + (o - a[k].start) : null) : b[matched[k]].start;",
+    "new": "return b[matched[k]].start;",
+    "tests": [
+      "test/tooling/legible3_textpins.test.js"
+    ]
+  },
+  {
+    "name": "TEXTPINS-the-regex-unescaped",
+    "file": "tools/carryTextPins.mjs",
+    "old": "s.replace(/[\\\\^$.*+?()[\\]{}|/]/g, '\\\\$&').replace(",
+    "new": "s.replace(",
+    "tests": [
+      "test/tooling/legible3_textpins.test.js"
+    ]
+  },
+  {
+    "name": "TEXTPINS-the-quote-changed",
+    "file": "tools/carryTextPins.mjs",
+    "old": "quoteAs(raw[0], now)",
+    "new": "quoteAs('\"', now)",
+    "tests": [
+      "test/tooling/legible3_textpins.test.js"
+    ]
+  },
+  {
+    "name": "TEXTPINS-a-found-quote-rewritten",
+    "file": "tools/carryTextPins.mjs",
+    "old": "if (!before || sources.some((s) => hit(s.new))) continue;",
+    "new": "if (!before) continue;",
+    "tests": [
+      "test/tooling/legible3_textpins.test.js"
+    ]
+  },
+  {
+    "name": "TEXTPINS-a-named-regex-narrowed",
+    "file": "tools/carryTextPins.mjs",
+    "old": "named.has(lit) ?",
+    "new": "false ?",
+    "tests": [
+      "test/tooling/legible3_textpins.test.js"
+    ]
+  },
+  {
+    "name": "TEXTPINS-the-capture-rule-unread",
+    "file": "tools/carryTextPins.mjs",
+    "old": "if (regex && hasCapture(lit.regex.pattern) && !asserted.has(lit))",
+    "new": "if (false)",
+    "tests": [
+      "test/tooling/legible3_textpins.test.js"
+    ]
+  }
+]

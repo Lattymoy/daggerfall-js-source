@@ -195,6 +195,15 @@ export function sameProgram(beforeSrc, afterSrc, { renames = {} } = {}) {
       if ((a ?? null) !== (b ?? null)) differ('a part is present in one version and missing in the other', a ?? b, b ?? a);
       return;
     }
+    // `a || (b || c)` is `a || b || c`: a chain of one logical operator is associative in its value and in what it
+    // evaluates, so a formatter may drop the parentheses (LEGIBLE 3) - the two are compared as one chain
+    if (a.type === 'LogicalExpression' && b.type === 'LogicalExpression' && a.operator === b.operator) {
+      const chain = (n) => (n.type === 'LogicalExpression' && n.operator === a.operator ? [...chain(n.left), ...chain(n.right)] : [n]);
+      const ca = chain(a), cb = chain(b);
+      if (ca.length !== cb.length) differ(`a chain of \`${a.operator}\` has a different number of parts`, a, b);
+      for (let i = 0; i < ca.length; i++) compareNodes(ca[i], cb[i]);
+      return;
+    }
     if (a.type !== b.type) differ(`a ${a.type} became a ${b.type}`, a, b);
     if (a.type === 'Identifier' || a.type === 'PrivateIdentifier') {
       if (a.type === 'PrivateIdentifier') { if (a.name !== b.name) differ(`#${a.name} became #${b.name}`, a, b); return; }

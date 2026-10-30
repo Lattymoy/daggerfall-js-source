@@ -124,5 +124,23 @@
     "tests": [
       "test/tooling/legible2_carrypins.test.js"
     ]
+  },
+  {
+    "name": "LEGIBLE3-the-chain-uncompared",
+    "file": "tools/sameProgram.mjs",
+    "old": "    if (a.type === 'LogicalExpression' && b.type === 'LogicalExpression' && a.operator === b.operator) {\n",
+    "new": "    if (false) {\n",
+    "tests": [
+      "test/tooling/legible2_sameprogram.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE3-the-chain-length-unread",
+    "file": "tools/sameProgram.mjs",
+    "old": "      if (ca.length !== cb.length) differ(",
+    "new": "      if (false) differ(",
+    "tests": [
+      "test/tooling/legible2_sameprogram.test.js"
+    ]
   }
 ]
