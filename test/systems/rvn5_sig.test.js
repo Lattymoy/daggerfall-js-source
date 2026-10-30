@@ -472,5 +472,5 @@ test('RVN5 the page: from rank 2 its signature - its name and what it does, "uns
   assert.ok(signatureWords(r).endsWith('(with Enhanced AI).'), 'the switch read by default');
   setPref('enhancedAI', true);
   assert.ok(!signatureWords(r).includes('Enhanced AI'));
-  assert.match(read('src/ui/revenant/revenantPage.js'), /const sig = fallen \? '' : signatureWords\(r\);   \/\/ RVN5\n\s*if \(sig\) text\.append\(el\('span', 'rvn-will', sig\)\);/);
+  assert.match(read('src/ui/revenant/revenantPage.js'), /const sig = fallen \? '' : signatureWords\(r\); \/\/ RVN5\n\s*if \(sig\) text\.append\(el\('span', 'rvn-will', sig\)\);/);
 });

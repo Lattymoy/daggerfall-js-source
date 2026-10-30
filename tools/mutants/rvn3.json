@@ -483,8 +483,8 @@
   {
     "name": "RVN3-the-page-rule-at-rank-2",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "export const willWords = (r) => (willMatters(r?.rank) ?",
-    "new": "export const willWords = (r) => (true ?",
+    "old": "  willMatters(r?.rank)\n    ? 'Its will must be broken. Strike its weakness, stagger it, or evade its blow at the last moment.'\n    : ''; // FEUD BALANCE (Feud-Arc.md OPEN 22)",
+    "new": "  true ? 'Its will must be broken. Strike its weakness, stagger it, or evade its blow at the last moment.' : ''; // FEUD BALANCE (Feud-Arc.md OPEN 22)",
     "tests": [
       "test/systems/rvn3_weak.test.js"
     ]

@@ -92,8 +92,8 @@
   {
     "name": "AF-V1-page-long",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": ".map((it) => takenName(it)).filter(Boolean);",
-    "new": ".map((it) => `The ${takenName(it)}`).filter(Boolean);",
+    "old": "  const names = (r?.took ?? []).map((it) => takenName(it)).filter(Boolean); // RVN12b: the pieces it took, by the names the pack shows (AUDIT FEUD: their article gone after \"your\")",
+    "new": "  const names = (r?.took ?? []).map((it) => `The ${takenName(it)}`).filter(Boolean); // RVN12b: the pieces it took, by the names the pack shows (AUDIT FEUD: their article gone after \"your\")",
     "tests": [
       "test/systems/auditfeud.test.js"
     ]

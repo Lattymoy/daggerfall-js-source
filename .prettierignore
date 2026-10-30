@@ -156,6 +156,8 @@
 /src/ui/poi/*/
 !/src/ui/questlines/
 /src/ui/questlines/*/
+!/src/ui/revenant/
+/src/ui/revenant/*/
 !/src/ui/spell/
 /src/ui/spell/*/
 !/src/ui/starfall/

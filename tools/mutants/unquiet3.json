@@ -83,8 +83,8 @@
   {
     "name": "UNQUIET3-page-heal-now-unread",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "[craftLine(r), woundLine(r, now), ambitionLine(r), bloodLine(r), tearLine(r)]",
-    "new": "[craftLine(r), woundLine(r), ambitionLine(r), bloodLine(r), tearLine(r)]",
+    "old": "  for (const line of fallen ? [] : [craftLine(r), woundLine(r, now), ambitionLine(r), bloodLine(r), tearLine(r)])",
+    "new": "  for (const line of fallen ? [] : [craftLine(r), woundLine(r), ambitionLine(r), bloodLine(r), tearLine(r)])",
     "tests": [
       "test/systems/revenant/unquiet3_train.test.js",
       "test/systems/revenant/unquiet.test.js"

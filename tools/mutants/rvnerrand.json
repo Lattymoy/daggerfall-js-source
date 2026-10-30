@@ -542,8 +542,8 @@
   {
     "name": "RVN-ERRAND-card-edges-gone",
     "file": "src/ui/revenant/revenantCard.js",
-    "old": "body .rvncard.is-errand { border-left-color: #4f7fa8; }\n",
-    "new": "",
+    "old": "body .rvncard.is-errand { border-left-color: #4f7fa8; }\nbody .rvncard.is-errand .rvncard-kicker { color: #9fc2e8; }",
+    "new": "body .rvncard.is-errand .rvncard-kicker { color: #9fc2e8; }",
     "tests": [
       "test/systems/revenant/rvn12b_page.test.js"
     ]

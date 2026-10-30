@@ -1120,8 +1120,8 @@
   {
     "name": "UNQUIET-page-craft-any-rank",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "craftWords(revenantCraft(r?.mobileType, r?.rank))",
-    "new": "craftWords(revenantCraft(r?.mobileType, 5))",
+    "old": "  const c = craftWords(revenantCraft(r?.mobileType, r?.rank));",
+    "new": "  const c = craftWords(revenantCraft(r?.mobileType, 5));",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -1129,8 +1129,8 @@
   {
     "name": "UNQUIET-page-dread-ambition",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "  if (r?.dread) return '';\n  const a = ambitionWords",
-    "new": "  const a = ambitionWords",
+    "old": "  if (r?.dread) return '';\n  const a = ambitionWords(ambitionOf(r?.personality));",
+    "new": "  const a = ambitionWords(ambitionOf(r?.personality));",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -1138,8 +1138,8 @@
   {
     "name": "UNQUIET-page-blood-at-five",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "(r?.blood | 0) >= 1 && (r?.rank | 0) < REVENANT_MAX_RANK",
-    "new": "(r?.blood | 0) >= 1",
+    "old": "  (r?.blood | 0) >= 1 && (r?.rank | 0) < REVENANT_MAX_RANK",
+    "new": "  (r?.blood | 0) >= 1",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -1147,8 +1147,8 @@
   {
     "name": "UNQUIET-page-dread-will",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "const will = fallen || r.dread ? '' : willWords(r);",
-    "new": "const will = fallen ? '' : willWords(r);",
+    "old": "  const will = fallen || r.dread ? '' : willWords(r);",
+    "new": "  const will = fallen ? '' : willWords(r);",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -1156,8 +1156,8 @@
   {
     "name": "UNQUIET-page-dread-home",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "  if (r.dread && !held) return { tag: t('rvn.unq.page.dreadTag'",
-    "new": "  if (false) return { tag: t('rvn.unq.page.dreadTag'",
+    "old": "  if (r.dread && !held)",
+    "new": "  if (false)",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -1165,8 +1165,8 @@
   {
     "name": "UNQUIET-page-ascended-unworded",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "  ascended: 'became the Dread',",
-    "new": "",
+    "old": "  ascended: 'became the Dread', // UNQUIET (Revenants.md section 46)",
+    "new": "  // UNQUIET (Revenants.md section 46)",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -1174,8 +1174,8 @@
   {
     "name": "UNQUIET-page-lines-dropped",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "[craftLine(r), woundLine(r, now), ambitionLine(r), bloodLine(r), tearLine(r)]",
-    "new": "[craftLine(r), woundLine(r, now)]",
+    "old": "  for (const line of fallen ? [] : [craftLine(r), woundLine(r, now), ambitionLine(r), bloodLine(r), tearLine(r)])",
+    "new": "  for (const line of fallen ? [] : [craftLine(r), woundLine(r, now)])",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -1183,8 +1183,8 @@
   {
     "name": "UNQUIET-card-ascended-edge",
     "file": "src/ui/revenant/revenantCard.js",
-    "old": "body .rvncard.is-ascended { border-left-color: #2a0a12;",
-    "new": "body .rvncard.is-ascended { border-left-color: #2a0a13;",
+    "old": "body .rvncard.is-ascended { border-left-color: #2a0a12; box-shadow: inset 0 0 0 1px #7a1020; }",
+    "new": "body .rvncard.is-ascended { border-left-color: #2a0a13; box-shadow: inset 0 0 0 1px #7a1020; }",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]

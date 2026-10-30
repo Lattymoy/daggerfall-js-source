@@ -32,8 +32,8 @@ import { injectEnhancedStyle, injectEnhancedFonts } from '../enhanced/enhancedSt
 import { PIXEL_STACK, PIXEL_TEXT_SHADOW } from '../pixelifyFive.js';
 import { requestFittedIcon, fittedImg } from '../textureCanvas.js';
 import { armDrawWatchdog, disarmDraw } from '../drawWatchdog.js';
-import { sweepHudLayout } from '../hud/hudLayout.js';   // HUD-MOVE: a new stack stands where the player put the last
-import { noteFirstUse } from '../../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { sweepHudLayout } from '../hud/hudLayout.js'; // HUD-MOVE: a new stack stands where the player put the last
+import { noteFirstUse } from '../../systems/tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
 
 export const REVENANT_CARD_STYLE_ID = 'revenant-card-css';
 export const REVENANT_STACK_ID = 'revenant-cards';
@@ -177,7 +177,11 @@ body .rvncard .rvncard-sr {
 `;
 
 const reducedMotion = () => {
-  try { return !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches; } catch { return false; }
+  try {
+    return !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+  } catch {
+    return false;
+  }
 };
 const docOf = () => (typeof document === 'undefined' ? null : document);
 
@@ -189,12 +193,28 @@ let _stack = null;
 let _watchdog = null;
 let _faultSaid = false;
 /** The portrait's source (a test hands its own): `(portrait, onReady) => fitted picture | null`. */
-let _icon = (p, onReady) => requestFittedIcon(p.archive, p.record, { box: REVENANT_FACE_BOX, dpr: Number(globalThis.devicePixelRatio) || 1, cap: 8, onReady });
+let _icon = (p, onReady) =>
+  requestFittedIcon(p.archive, p.record, {
+    box: REVENANT_FACE_BOX,
+    dpr: Number(globalThis.devicePixelRatio) || 1,
+    cap: 8,
+    onReady,
+  });
 let _wd = {};
 /** Tests: the portrait source and the watchdog's timers. */
 export function _setRevenantCardForTests({ icon, schedule, cancel } = /** @type {any} */ ({})) {
-  if (icon !== undefined) _icon = icon ?? ((p, onReady) => requestFittedIcon(p.archive, p.record, { box: REVENANT_FACE_BOX, dpr: Number(globalThis.devicePixelRatio) || 1, cap: 8, onReady }));
-  if (schedule !== undefined || cancel !== undefined) _wd = { ...(schedule ? { schedule } : {}), ...(cancel ? { cancel } : {}) };
+  if (icon !== undefined)
+    _icon =
+      icon ??
+      ((p, onReady) =>
+        requestFittedIcon(p.archive, p.record, {
+          box: REVENANT_FACE_BOX,
+          dpr: Number(globalThis.devicePixelRatio) || 1,
+          cap: 8,
+          onReady,
+        }));
+  if (schedule !== undefined || cancel !== undefined)
+    _wd = { ...(schedule ? { schedule } : {}), ...(cancel ? { cancel } : {}) };
 }
 
 function ensureStyle(d) {
@@ -220,13 +240,24 @@ function ensure(d) {
     _stack.setAttribute('aria-live', 'polite');
     _stack.setAttribute('role', 'log');
     d.body.append(_stack);
-    try { sweepHudLayout(d); } catch { /* the sheet's own place */ }
+    try {
+      sweepHudLayout(d);
+    } catch {
+      /* the sheet's own place */
+    }
   }
   return _stack;
 }
 function takeDown() {
-  disarmDraw(_watchdog); _watchdog = null;
-  if (_stack) { try { _stack.remove(); } catch { /* gone */ } }
+  disarmDraw(_watchdog);
+  _watchdog = null;
+  if (_stack) {
+    try {
+      _stack.remove();
+    } catch {
+      /* gone */
+    }
+  }
   _stack = null;
 }
 
@@ -247,14 +278,36 @@ function build(d, ev) {
   }
   const text = d.createElement('div');
   text.className = 'rvncard-text';
-  const kicker = d.createElement('div'); kicker.className = 'rvncard-kicker'; kicker.textContent = ev.kicker; kicker.setAttribute('aria-hidden', 'true');
-  const name = d.createElement('div'); name.className = 'rvncard-name'; name.textContent = ev.name; name.setAttribute('aria-hidden', 'true');
-  const sub = d.createElement('div'); sub.className = 'rvncard-sub'; sub.textContent = [ev.rank > 0 ? `Rank ${numeral(ev.rank)}` : null, ev.sub || null].filter(Boolean).join(' · '); sub.setAttribute('aria-hidden', 'true');
-  if (ev.mood) { const mood = d.createElement('span'); mood.className = 'rvncard-mood'; mood.textContent = ev.mood; sub.insertBefore(mood, sub.firstChild); }   // REVENANT-VOICE
-  const say = d.createElement('div'); say.className = 'rvncard-say'; say.setAttribute('aria-hidden', 'true');
-  const body = d.createElement('div'); body.className = 'rvncard-body'; body.textContent = ev.body ?? ''; body.setAttribute('aria-hidden', 'true');
-  const sr = d.createElement('span'); sr.className = 'rvncard-sr';
-  sr.textContent = [ev.kicker, ev.name, ev.mood, ev.speech ? quoted(ev.speech) : null, ev.body].filter(Boolean).join('. ');
+  const kicker = d.createElement('div');
+  kicker.className = 'rvncard-kicker';
+  kicker.textContent = ev.kicker;
+  kicker.setAttribute('aria-hidden', 'true');
+  const name = d.createElement('div');
+  name.className = 'rvncard-name';
+  name.textContent = ev.name;
+  name.setAttribute('aria-hidden', 'true');
+  const sub = d.createElement('div');
+  sub.className = 'rvncard-sub';
+  sub.textContent = [ev.rank > 0 ? `Rank ${numeral(ev.rank)}` : null, ev.sub || null].filter(Boolean).join(' · ');
+  sub.setAttribute('aria-hidden', 'true');
+  if (ev.mood) {
+    const mood = d.createElement('span');
+    mood.className = 'rvncard-mood';
+    mood.textContent = ev.mood;
+    sub.insertBefore(mood, sub.firstChild);
+  } // REVENANT-VOICE
+  const say = d.createElement('div');
+  say.className = 'rvncard-say';
+  say.setAttribute('aria-hidden', 'true');
+  const body = d.createElement('div');
+  body.className = 'rvncard-body';
+  body.textContent = ev.body ?? '';
+  body.setAttribute('aria-hidden', 'true');
+  const sr = d.createElement('span');
+  sr.className = 'rvncard-sr';
+  sr.textContent = [ev.kicker, ev.name, ev.mood, ev.speech ? quoted(ev.speech) : null, ev.body]
+    .filter(Boolean)
+    .join('. ');
   text.append(kicker, name, sub, say, body, sr);
   el.append(face, text);
   setPortrait(face, ev);
@@ -276,7 +329,21 @@ function setPortrait(face, ev) {
   const ask = (onReady) => _icon(p, onReady);
   let shown = false;
   if (p && Number.isInteger(p.archive)) {
-    try { shown = put(ask(() => { if (face.isConnected !== false) { try { put(ask(null)); } catch { /* the glyph stands */ } } })); } catch { shown = false; }
+    try {
+      shown = put(
+        ask(() => {
+          if (face.isConnected !== false) {
+            try {
+              put(ask(null));
+            } catch {
+              /* the glyph stands */
+            }
+          }
+        }),
+      );
+    } catch {
+      shown = false;
+    }
   }
   if (!shown) {
     const g = face.ownerDocument?.createElement?.('span') ?? document.createElement('span');
@@ -291,7 +358,7 @@ function setPortrait(face, ev) {
 export function showRevenantCard(ev) {
   try {
     if (!ev || !isEnhanced()) return false;
-    noteFirstUse('revenants');   // TUT1
+    noteFirstUse('revenants'); // TUT1
     const d = docOf();
     if (!d?.body || !d.createElement) return false;
     const stack = ensure(d);
@@ -304,18 +371,33 @@ export function showRevenantCard(ev) {
     const full = quoted(ev.speech);
     const still = reducedMotion();
     /** @type {Card} */
-    const card = { seq: ++_seq, ev, el, sayEl: say, caret, typed: still ? full.length : 0, full, holdMs: revenantHoldMs(`${full} ${ev.body ?? ''}`), leftMs: 0, outMs: null, settled: false };   // outMs: null standing, else the slide's ms left
+    const card = {
+      seq: ++_seq,
+      ev,
+      el,
+      sayEl: say,
+      caret,
+      typed: still ? full.length : 0,
+      full,
+      holdMs: revenantHoldMs(`${full} ${ev.body ?? ''}`),
+      leftMs: 0,
+      outMs: null,
+      settled: false,
+    }; // outMs: null standing, else the slide's ms left
     card.leftMs = card.holdMs;
     paintWords(card);
     stack.insertBefore(el, stack.firstChild ?? null);
-    void el.offsetWidth;   // the slide starts from off the edge
+    void el.offsetWidth; // the slide starts from off the edge
     el.classList.add('rvncard-in');
     _cards.unshift(card);
     // past the cap, the oldest goes
     for (const c of _cards.slice(REVENANT_CARDS_MAX)) if (c.outMs == null) c.outMs = REVENANT_SLIDE_MS;
     return true;
   } catch (e) {
-    if (!_faultSaid) { _faultSaid = true; console.warn(`[revenant-card] the card could not be drawn; the line is said instead: ${e?.message ?? e}`); }
+    if (!_faultSaid) {
+      _faultSaid = true;
+      console.warn(`[revenant-card] the card could not be drawn; the line is said instead: ${e?.message ?? e}`);
+    }
     return false;
   }
 }
@@ -334,26 +416,49 @@ function paintWords(card) {
  * hidden and its clock still. Answers the cards standing.
  */
 export function drawRevenantCards({ hidden = false, dt = 0, doc = docOf() } = {}) {
-  if (!_cards.length) { if (_stack) takeDown(); return 0; }
+  if (!_cards.length) {
+    if (_stack) takeDown();
+    return 0;
+  }
   if (!doc?.body) return _cards.length;
   const stack = ensure(doc);
   stack.classList.toggle('rvncard-hidden', !!hidden);
   disarmDraw(_watchdog);
-  _watchdog = armDrawWatchdog(WATCHDOG_MS, () => { _watchdog = null; if (_stack) _stack.classList.add('rvncard-hidden'); }, _wd);
+  _watchdog = armDrawWatchdog(
+    WATCHDOG_MS,
+    () => {
+      _watchdog = null;
+      if (_stack) _stack.classList.add('rvncard-hidden');
+    },
+    _wd,
+  );
   if (hidden) return _cards.length;
   const ms = Math.max(0, Number(dt) || 0) * 1000;
   for (const c of _cards) {
     if (c.outMs != null) {
-      if (!c.el.classList.contains('rvncard-out')) { c.el.classList.remove('rvncard-in'); c.el.classList.add('rvncard-out'); }
+      if (!c.el.classList.contains('rvncard-out')) {
+        c.el.classList.remove('rvncard-in');
+        c.el.classList.add('rvncard-out');
+      }
       c.outMs -= ms;
       continue;
     }
-    if (c.typed < c.full.length) { c.typed = Math.min(c.full.length, c.typed + REVENANT_TYPE_CPS * (ms / 1000)); paintWords(c); continue; }
+    if (c.typed < c.full.length) {
+      c.typed = Math.min(c.full.length, c.typed + REVENANT_TYPE_CPS * (ms / 1000));
+      paintWords(c);
+      continue;
+    }
     c.leftMs -= ms;
     if (c.leftMs <= 0) c.outMs = REVENANT_SLIDE_MS;
   }
   const gone = _cards.filter((c) => c.outMs != null && c.outMs <= 0);
-  for (const c of gone) { try { c.el.remove(); } catch { /* already gone */ } }
+  for (const c of gone) {
+    try {
+      c.el.remove();
+    } catch {
+      /* already gone */
+    }
+  }
   _cards = _cards.filter((c) => !gone.includes(c));
   if (!_cards.length) takeDown();
   return _cards.length;
@@ -361,20 +466,48 @@ export function drawRevenantCards({ hidden = false, dt = 0, doc = docOf() } = {}
 
 /** Every card down at once (a load, a sweep, tests). */
 export function clearRevenantCards() {
-  for (const c of _cards) { try { c.el.remove(); } catch { /* gone */ } }
+  for (const c of _cards) {
+    try {
+      c.el.remove();
+    } catch {
+      /* gone */
+    }
+  }
   _cards = [];
   takeDown();
 }
 /** Tests: the cards standing, as the law reads them. */
-export const _revenantCards = () => _cards.map((c) => ({ kind: c.ev.kind, name: c.ev.name, typed: Math.floor(c.typed), full: c.full, out: c.outMs != null, leftMs: c.leftMs }));
-export function _resetRevenantCardsForTests() { clearRevenantCards(); _seq = 0; _faultSaid = false; }
+export const _revenantCards = () =>
+  _cards.map((c) => ({
+    kind: c.ev.kind,
+    name: c.ev.name,
+    typed: Math.floor(c.typed),
+    full: c.full,
+    out: c.outMs != null,
+    leftMs: c.leftMs,
+  }));
+export function _resetRevenantCardsForTests() {
+  clearRevenantCards();
+  _seq = 0;
+  _faultSaid = false;
+}
 
 /** HUD-MOVE's preview (ui/hud/hudLayout.js): a card standing where the real ones will, while the UI is unlocked. */
 export function buildRevenantPreview(doc) {
   ensureStyle(doc);
   const stack = doc.createElement('div');
   stack.className = 'rvncard-stack';
-  const { el, say } = build(doc, { kind: 'taunt', kicker: 'Revenant', name: 'Revenant taunts (preview)', rank: 2, sub: 'Orc Warlord', mood: 'Witty', speech: 'You should have finished me.', body: null, portrait: null });
+  const { el, say } = build(doc, {
+    kind: 'taunt',
+    kicker: 'Revenant',
+    name: 'Revenant taunts (preview)',
+    rank: 2,
+    sub: 'Orc Warlord',
+    mood: 'Witty',
+    speech: 'You should have finished me.',
+    body: null,
+    portrait: null,
+  });
   say.textContent = quoted('You should have finished me.');
   el.classList.add('rvncard-in');
   stack.append(el);

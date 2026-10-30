@@ -623,7 +623,7 @@ test('UNQUIET THE PAGE: how it gets away (its craft, from rank II), the wounds I
   assert.equal(PG.dreadStandLine({ dread: true, rank: 5 }), `Last stands: twice in a fight it rises again, at ${Math.round(F.lastStandHealth(5) * 100)}% and at 25% of its health.`);
   assert.equal(PG.comeWords({ dread: true, lair: { name: 'Tomb of Vaness' }, dueAt: 0 }, 0, false).tag, 'The Dread');
   const src = read('src/ui/revenant/revenantPage.js');
-  assert.match(src, /for \(const line of fallen \? \[\] : \[craftLine\(r\), woundLine\(r, now\), ambitionLine\(r\), bloodLine\(r\), tearLine\(r\)\]\) if \(line\)/);
+  assert.match(src, /for \(const line of fallen \? \[\] : \[craftLine\(r\), woundLine\(r, now\), ambitionLine\(r\), bloodLine\(r\), tearLine\(r\)\]\)\n\s*if \(line\)/);
   assert.match(src, /const will = fallen \|\| r\.dread \? '' : willWords\(r\);/);
   assert.match(src, /'An elite or champion marked Unquiet that escapes you, or kills you, will remember you and come back for you\.'/);
 });

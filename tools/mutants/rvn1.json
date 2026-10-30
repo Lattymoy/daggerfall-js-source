@@ -704,8 +704,8 @@
   {
     "name": "RVN1-scars-unshown",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "  if (scars) text.append(el('span', 'rvn-scars', scars));\n",
-    "new": "",
+    "old": "  if (scars) text.append(el('span', 'rvn-scars', scars));\n  const chips = fallen ? [] : learnedChips(r); // RVN2: and what it learned of them - RVN12b (24.1): as chips, each with its effect",
+    "new": "  const chips = fallen ? [] : learnedChips(r); // RVN2: and what it learned of them - RVN12b (24.1): as chips, each with its effect",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]

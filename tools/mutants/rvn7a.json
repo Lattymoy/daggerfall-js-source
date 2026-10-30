@@ -200,8 +200,8 @@
   {
     "name": "RVN7a-page-unknown-named",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "  return r.lairKnown ? `Lair: ${r.lair.name}, marked on your map.` : 'Lair: unknown. Nearby towns may have heard of it.';",
-    "new": "  return `Lair: ${r.lair.name}, marked on your map.`;",
+    "old": "  return r.lairKnown\n    ? `Lair: ${r.lair.name}, marked on your map.`\n    : 'Lair: unknown. Nearby towns may have heard of it.'; // RVN7c: and marked",
+    "new": "  return `Lair: ${r.lair.name}, marked on your map.`; // RVN7c: and marked",
     "tests": [
       "test/systems/revenant/rvn7a_lair.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "RVN7a-page-unwired",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "  if (!fallen) text.append(el('span', 'rvn-will', lairWords(r)));   // RVN7\n",
-    "new": "",
+    "old": "  if (!fallen) text.append(el('span', 'rvn-will', lairWords(r))); // RVN7\n  const took = fallen ? '' : tookWords(r); // RVN12b (24.1): RVN8's pieces",
+    "new": "  const took = fallen ? '' : tookWords(r); // RVN12b (24.1): RVN8's pieces",
     "tests": [
       "test/systems/revenant/rvn7a_lair.test.js"
     ]

@@ -770,8 +770,8 @@
   {
     "name": "RVN5-page-rank-1",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "  const sig = signatureStamp(r);\n  if (!sig?.name) return '';",
-    "new": "  const sig = signatureStamp({ ...r, rank: Math.max(2, r?.rank | 0) });\n  if (!sig?.name) return '';",
+    "old": "  const sig = signatureStamp(r);",
+    "new": "  const sig = signatureStamp({ ...r, rank: Math.max(2, r?.rank | 0) });",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -779,8 +779,8 @@
   {
     "name": "RVN5-page-switch-unread",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "${enhanced ? '' : ' (with Enhanced AI)'}.`;",
-    "new": ".`;",
+    "old": "  return `Signature: ${sig.name}${what ? ` - ${what}` : ''}${sig.iron ? ', unstoppable' : ''}${enhanced ? '' : ' (with Enhanced AI)'}.`;",
+    "new": "  return `Signature: ${sig.name}${what ? ` - ${what}` : ''}${sig.iron ? ', unstoppable' : ''}.`;",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -788,8 +788,8 @@
   {
     "name": "RVN5-page-iron-unsaid",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "${sig.iron ? ', unstoppable' : ''}",
-    "new": "",
+    "old": "  return `Signature: ${sig.name}${what ? ` - ${what}` : ''}${sig.iron ? ', unstoppable' : ''}${enhanced ? '' : ' (with Enhanced AI)'}.`;",
+    "new": "  return `Signature: ${sig.name}${what ? ` - ${what}` : ''}${enhanced ? '' : ' (with Enhanced AI)'}.`;",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -797,8 +797,8 @@
   {
     "name": "RVN5-page-shape-unsaid",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "${what ? ` - ${what}` : ''}",
-    "new": "",
+    "old": "  return `Signature: ${sig.name}${what ? ` - ${what}` : ''}${sig.iron ? ', unstoppable' : ''}${enhanced ? '' : ' (with Enhanced AI)'}.`;",
+    "new": "  return `Signature: ${sig.name}${sig.iron ? ', unstoppable' : ''}${enhanced ? '' : ' (with Enhanced AI)'}.`;",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -806,8 +806,8 @@
   {
     "name": "RVN5-page-row-unwired",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "  if (sig) text.append(el('span', 'rvn-will', sig));\n",
-    "new": "",
+    "old": "  if (sig) text.append(el('span', 'rvn-will', sig));\n  const art = fallen ? '' : artWords(r); // RVN-ARTS (Revenants.md section 41)",
+    "new": "  const art = fallen ? '' : artWords(r); // RVN-ARTS (Revenants.md section 41)",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]

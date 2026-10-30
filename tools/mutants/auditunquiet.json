@@ -140,8 +140,8 @@
   {
     "name": "AUQ-D4-tearline-unsaid",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "[craftLine(r), woundLine(r, now), ambitionLine(r), bloodLine(r), tearLine(r)]",
-    "new": "[craftLine(r), woundLine(r, now), ambitionLine(r), bloodLine(r)]",
+    "old": "  for (const line of fallen ? [] : [craftLine(r), woundLine(r, now), ambitionLine(r), bloodLine(r), tearLine(r)])",
+    "new": "  for (const line of fallen ? [] : [craftLine(r), woundLine(r, now), ambitionLine(r), bloodLine(r)])",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js",
       "test/systems/revenant/unquiet.test.js"
@@ -150,8 +150,8 @@
   {
     "name": "AUQ-D4-tearline-at-five",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "(r?.tears | 0) >= 1 && (r?.rank | 0) < REVENANT_MAX_RANK ?",
-    "new": "(r?.tears | 0) >= 1 ?",
+    "old": "  (r?.tears | 0) >= 1 && (r?.rank | 0) < REVENANT_MAX_RANK",
+    "new": "  (r?.tears | 0) >= 1",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js"
     ]
@@ -647,8 +647,8 @@
   {
     "name": "AUQ-A4-page-dread-heals",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "const heals = Number.isFinite(now) && !r?.dread && !r?.out && !held;",
-    "new": "const heals = Number.isFinite(now) && !r?.out && !held;",
+    "old": "  const heals = Number.isFinite(now) && !r?.dread && !r?.out && !held;",
+    "new": "  const heals = Number.isFinite(now) && !r?.out && !held;",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js"
     ]
@@ -656,8 +656,8 @@
   {
     "name": "AUQ-A4-page-out-heals",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "const heals = Number.isFinite(now) && !r?.dread && !r?.out && !held;",
-    "new": "const heals = Number.isFinite(now) && !r?.dread && !held;",
+    "old": "  const heals = Number.isFinite(now) && !r?.dread && !r?.out && !held;",
+    "new": "  const heals = Number.isFinite(now) && !r?.dread && !held;",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js"
     ]
@@ -665,8 +665,8 @@
   {
     "name": "AUQ-A4-page-held-heals",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "const heals = Number.isFinite(now) && !r?.dread && !r?.out && !held;",
-    "new": "const heals = Number.isFinite(now) && !r?.dread && !r?.out;",
+    "old": "  const heals = Number.isFinite(now) && !r?.dread && !r?.out && !held;",
+    "new": "  const heals = Number.isFinite(now) && !r?.dread && !r?.out;",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js"
     ]
@@ -674,8 +674,8 @@
   {
     "name": "AUQ-A4-held-dread-home",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "  if (r.dread && !held) return",
-    "new": "  if (r.dread) return",
+    "old": "  if (r.dread && !held)",
+    "new": "  if (r.dread)",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js"
     ]
@@ -683,8 +683,8 @@
   {
     "name": "AUQ-A4-page-count-dread",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "living.filter((r) => !r.dread).length",
-    "new": "living.length",
+    "old": "  detail.append(divider(`Revenants (${living.filter((r) => !r.dread).length} of ${REVENANT_MAX})`)); // AUDIT UNQUIET: the cap counts those that hunt - the Dread waits",
+    "new": "  detail.append(divider(`Revenants (${living.length} of ${REVENANT_MAX})`)); // AUDIT UNQUIET: the cap counts those that hunt - the Dread waits",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js"
     ]

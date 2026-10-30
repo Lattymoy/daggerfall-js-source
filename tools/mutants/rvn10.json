@@ -578,8 +578,8 @@
   {
     "name": "RVN10-page-name-dropped",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "(d?.deed === 'felled' && typeof d.ally === 'string' && d.ally ? `felled ${d.ally}` : d?.deed === 'fled'",
-    "new": "(d?.deed === 'fled'",
+    "old": "  d?.deed === 'felled' && typeof d.ally === 'string' && d.ally\n    ? `felled ${d.ally}`\n    : d?.deed === 'fled' && d.unbroken === true\n      ? 'escaped unbroken'\n      : (DEED_WORDS[d?.deed] ?? String(d?.deed ?? '')); // RVN12b (24.1): an escape unbroken",
+    "new": "  d?.deed === 'fled' && d.unbroken === true ? 'escaped unbroken' : (DEED_WORDS[d?.deed] ?? String(d?.deed ?? '')); // RVN12b (24.1): an escape unbroken",
     "tests": [
       "test/systems/rvn10_deeds.test.js"
     ]

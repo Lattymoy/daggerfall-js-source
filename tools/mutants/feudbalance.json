@@ -38,8 +38,8 @@
   {
     "name": "FB-page-old-words",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "'Its will must be broken. Strike its weakness, stagger it, or evade its blow at the last moment.'",
-    "new": "'Its will must be broken. Strike its weakness, or stagger it twice.'",
+    "old": "  willMatters(r?.rank)\n    ? 'Its will must be broken. Strike its weakness, stagger it, or evade its blow at the last moment.'\n    : ''; // FEUD BALANCE (Feud-Arc.md OPEN 22)",
+    "new": "  willMatters(r?.rank) ? 'Its will must be broken. Strike its weakness, or stagger it twice.' : ''; // FEUD BALANCE (Feud-Arc.md OPEN 22)",
     "tests": [
       "test/systems/revenant/feudbalance.test.js"
     ]

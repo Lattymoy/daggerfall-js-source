@@ -407,8 +407,8 @@
   {
     "name": "RVN6-page-plural-f",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": ": /f$/i.test(name) ? `${name.slice(0, -1)}ves`",
-    "new": ": /f$/i.test(name) ? `${name}s`",
+    "old": "      ? `${name.slice(0, -1)}ves`",
+    "new": "      ? `${name}s`",
     "tests": [
       "test/systems/rvn6_band.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "RVN6-page-plural-y",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": ": /[^aeiou]y$/i.test(name) ? `${name.slice(0, -1)}ies`",
-    "new": ": /[^aeiou]y$/i.test(name) ? `${name}s`",
+    "old": "        ? `${name.slice(0, -1)}ies`",
+    "new": "        ? `${name}s`",
     "tests": [
       "test/systems/rvn6_band.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "RVN6-page-plural-fish",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "const many = /fish$/i.test(name) ? name :",
-    "new": "const many =",
+    "old": "  const many = /fish$/i.test(name)\n    ? name\n    : /f$/i.test(name)\n      ? `${name.slice(0, -1)}ves`\n      : /[^aeiou]y$/i.test(name)\n        ? `${name.slice(0, -1)}ies`\n        : /(s|sh|ch|x)$/i.test(name)\n          ? `${name}es`\n          : `${name}s`;",
+    "new": "  const many = /f$/i.test(name)\n    ? `${name.slice(0, -1)}ves`\n    : /[^aeiou]y$/i.test(name)\n      ? `${name.slice(0, -1)}ies`\n      : /(s|sh|ch|x)$/i.test(name)\n        ? `${name}es`\n        : `${name}s`;",
     "tests": [
       "test/systems/rvn6_band.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "RVN6-page-article",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "if (n === 1) return `${/^[AEIOU]/i.test(name) ? 'an' : 'a'} ${name}`;",
-    "new": "if (n === 1) return `a ${name}`;",
+    "old": "  if (n === 1) return `${/^[AEIOU]/i.test(name) ? 'an' : 'a'} ${name}`;",
+    "new": "  if (n === 1) return `a ${name}`;",
     "tests": [
       "test/systems/rvn6_band.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "RVN6-page-row-unwired",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "  if (band) text.append(el('span', 'rvn-will', band));\n",
-    "new": "",
+    "old": "  if (band) text.append(el('span', 'rvn-will', band));\n  if (!fallen) text.append(el('span', 'rvn-will', lairWords(r))); // RVN7",
+    "new": "  if (!fallen) text.append(el('span', 'rvn-will', lairWords(r))); // RVN7",
     "tests": [
       "test/systems/rvn6_band.test.js"
     ]

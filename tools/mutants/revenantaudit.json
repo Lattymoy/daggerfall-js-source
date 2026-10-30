@@ -128,8 +128,8 @@
   {
     "name": "AUDIT-D1-enter-over-back",
     "file": "src/ui/revenant/revenantFateView.js",
-    "old": "if (k === 'enter' && picked && !e?.target?.closest?.('button'))",
-    "new": "if (k === 'enter' && picked)",
+    "old": "  if (k === 'enter' && picked && !e?.target?.closest?.('button')) {",
+    "new": "  if (k === 'enter' && picked) {",
     "tests": [
       "test/systems/revenant/revenant_audit.test.js"
     ]

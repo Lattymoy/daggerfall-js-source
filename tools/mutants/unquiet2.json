@@ -237,8 +237,8 @@
   {
     "name": "UNQUIET2-page-wounded-unsaid",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "  if (trailWarm(r, now)) return { tag:",
-    "new": "  if (false) return { tag:",
+    "old": "  if (trailWarm(r, now))",
+    "new": "  if (false)",
     "tests": [
       "test/systems/revenant/unquiet2_hunt.test.js"
     ]

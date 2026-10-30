@@ -440,8 +440,8 @@
   {
     "name": "RVN4-the-page-at-rank-2",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "((r?.rank | 0) >= LAST_STAND_RANK ?",
-    "new": "((r?.rank | 0) >= 2 ?",
+    "old": "  (r?.rank | 0) >= LAST_STAND_RANK",
+    "new": "  (r?.rank | 0) >= 2",
     "tests": [
       "test/systems/revenant/rvn4_stand.test.js"
     ]
