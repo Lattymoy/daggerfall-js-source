@@ -9509,16 +9509,6 @@
   "tr": "ac1baed4f40a",
   "by": "claude-in-session"
  },
- "credits.aquaticSprites.terms": {
-  "en": "25f24874f144",
-  "tr": "022b3908f18a",
-  "by": "claude-in-session"
- },
- "credits.aquaticSprites.what": {
-  "en": "ece4a3a65979",
-  "tr": "64b975eb988c",
-  "by": "claude-in-session"
- },
  "credits.author.andContributors": {
   "en": "5aeb443464d2",
   "tr": "92818face839",
@@ -9627,16 +9617,6 @@
  "credits.daggerfall.what": {
   "en": "76f60d40344d",
   "tr": "15e7bdc42669",
-  "by": "claude-in-session"
- },
- "credits.detailedShips.terms": {
-  "en": "d5fb971400e5",
-  "tr": "53b39603c41e",
-  "by": "claude-in-session"
- },
- "credits.detailedShips.what": {
-  "en": "612b38bc06a8",
-  "tr": "2c052f8050fc",
   "by": "claude-in-session"
  },
  "credits.dex.terms": {
@@ -16104,6 +16084,16 @@
   "tr": "82491695e46c",
   "by": "claude-in-session"
  },
+ "interior.setDown.buried": {
+  "en": "8159ee0fda03",
+  "tr": "8d1c429ebf67",
+  "by": "claude-in-session"
+ },
+ "interior.setDown.chest": {
+  "en": "1f204d2ccfb2",
+  "tr": "30796ade5f84",
+  "by": "claude-in-session"
+ },
  "inventory.batch.aetheric": {
   "en": "fa7822c465ea",
   "tr": "e195b0c4dc4c",
@@ -20575,8 +20565,8 @@
   "by": "claude-in-session"
  },
  "menu.online.groundNote": {
-  "en": "4cbea68e150c",
-  "tr": "a26138380d92",
+  "en": "3e3556cb0512",
+  "tr": "15e06ee57f73",
   "by": "claude-in-session"
  },
  "menu.online.lockNote": {
@@ -20600,8 +20590,8 @@
   "by": "claude-in-session"
  },
  "menu.online.modsNote": {
-  "en": "1195346cb9a8",
-  "tr": "6c0583e842bf",
+  "en": "c94c6f3265c3",
+  "tr": "88856f551055",
   "by": "claude-in-session"
  },
  "menu.online.needsAccount": {
@@ -22029,11 +22019,6 @@
   "tr": "aa0c42659cd3",
   "by": "claude-in-session"
  },
- "mods.aquaticSprites.Enabled.description": {
-  "en": "4d8dc0bd3968",
-  "tr": "956d4b70cff6",
-  "by": "claude-in-session"
- },
  "mods.betterAmbience.BetterFootsteps.armorVolume.description": {
   "en": "ea78623b8aa0",
   "tr": "da9fc71d62e2",
@@ -22412,11 +22397,6 @@
  "mods.daggerfallEnemyExpansion.title": {
   "en": "b7c44fa76f13",
   "tr": "b7c44fa76f13",
-  "by": "claude-in-session"
- },
- "mods.detailedShips.Enabled.description": {
-  "en": "a76a3c98fb54",
-  "tr": "7cae0730aba4",
   "by": "claude-in-session"
  },
  "mods.diverseWeapons.Enabled.description": {
@@ -32899,6 +32879,51 @@
   "tr": "34dc4f0a66be",
   "by": "claude-in-session"
  },
+ "pvp.hud.combat": {
+  "en": "7ce396856a34",
+  "tr": "f5a389dc88d1",
+  "by": "claude-in-session"
+ },
+ "pvp.hud.hitYou": {
+  "en": "973fa5230574",
+  "tr": "04205435e193",
+  "by": "claude-in-session"
+ },
+ "pvp.hud.hitYouAnon": {
+  "en": "d0f7fda33bcc",
+  "tr": "904f4922e513",
+  "by": "claude-in-session"
+ },
+ "pvp.hud.hits": {
+  "en": "3bab063067c5",
+  "tr": "827517d3fdc5",
+  "by": "claude-in-session"
+ },
+ "pvp.hud.secs": {
+  "en": "4a84fdfdafe6",
+  "tr": "ae1aa3171894",
+  "by": "claude-in-session"
+ },
+ "pvp.hud.youHit": {
+  "en": "2c6723f82a00",
+  "tr": "f6b6b46a0f17",
+  "by": "claude-in-session"
+ },
+ "pvp.hud.youHitAnon": {
+  "en": "bdc46419a474",
+  "tr": "27ae5986499f",
+  "by": "claude-in-session"
+ },
+ "pvp.kill.slew": {
+  "en": "bf078f118b7c",
+  "tr": "644f3cf63c2a",
+  "by": "claude-in-session"
+ },
+ "pvp.kill.slewAnon": {
+  "en": "efc7038115e6",
+  "tr": "54bd65301100",
+  "by": "claude-in-session"
+ },
  "pvp.kit.absorb": {
   "en": "ae56f146b0ea",
   "tr": "668c8aaafb36",
@@ -33049,14 +33074,39 @@
   "tr": "182667ebbee8",
   "by": "claude-in-session"
  },
+ "pvp.level30.go": {
+  "en": "1498207a9a7d",
+  "tr": "17135ff34c25",
+  "by": "claude-in-session"
+ },
  "pvp.level30.no": {
   "en": "8de95fd5b412",
   "tr": "81939e0e20a6",
   "by": "claude-in-session"
  },
+ "pvp.level30.owed": {
+  "en": "f8019869d872",
+  "tr": "779e4433e205",
+  "by": "claude-in-session"
+ },
  "pvp.level30.warn": {
   "en": "6c45d870e1ce",
   "tr": "84bd41352272",
+  "by": "claude-in-session"
+ },
+ "pvp.lock.over": {
+  "en": "cd159dde2417",
+  "tr": "7ad9311c8f31",
+  "by": "claude-in-session"
+ },
+ "pvp.lock.portal": {
+  "en": "4baeb4383361",
+  "tr": "27473ffc4f6c",
+  "by": "claude-in-session"
+ },
+ "pvp.lock.rest": {
+  "en": "6b832df48830",
+  "tr": "b71fd6c7b2d9",
   "by": "claude-in-session"
  },
  "pvp.potion.health": {
@@ -41147,6 +41197,16 @@
  "wild.death.shield": {
   "en": "a0bb6c5a792b",
   "tr": "a4d0403cb29f",
+  "by": "claude-in-session"
+ },
+ "wild.death.slain": {
+  "en": "269aea5f257c",
+  "tr": "25d9ee3f6a12",
+  "by": "claude-in-session"
+ },
+ "wild.death.slainAnon": {
+  "en": "391965b8cc34",
+  "tr": "0eeab9461f74",
   "by": "claude-in-session"
  },
  "wild.escrow.collectLate": {

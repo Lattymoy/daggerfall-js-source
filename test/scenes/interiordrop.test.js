@@ -161,7 +161,8 @@ test('ID1: the piles are picked up, drawn, cached, restored and freed', () => {
   assert.match(m, /const droppedPiles = interiorDropped\.snapshotScene\(\)\.map\(/, 'CacheScene builds them');   // TERRAIN-SCALE1: in the building's own frame
   assert.match(m, /return \{ lootContainers, actionDoors, droppedPiles, droppedTorches, decor, decorItems, decorOwn, hiddenBase, frame: 'building', terrainScale: STREAMING_TERRAIN_SCALE, guildShelves \};/,   // GUILD-SHELF: the day's guild shelves last
     'and RETURNS them - a built list the state does not carry is not cached at all');
-  assert.match(m, /interiorDropped\.restorePiles\(data\.droppedPiles \? data\.droppedPiles\.map\(\(p\) => \(\{ \.\.\.p, pos: place\(p\.pos\) \}\)\) : data\.droppedPiles\);/, 'RestoreCachedScene brings them back');   // TERRAIN-SCALE1: placed in this visit's frame; none is still a clear
+  // PIN MOVED (AUDIT SHIP-REFIT): a pile furniture now encloses is held for the arrival (scenes/arrivalSetDown.js)
+  assert.match(m, /interiorDropped\.restorePiles\(data\.droppedPiles \? arrivalSetDown\.unburied\(data\.droppedPiles\.map\(\(p\) => \(\{ \.\.\.p, pos: place\(p\.pos\) \}\)\), interiorCtx\.collider\) : data\.droppedPiles\);/, 'RestoreCachedScene brings them back');   // TERRAIN-SCALE1: placed in this visit's frame; none is still a clear
   // BOTH teardowns free them - the door exit and the quest-teleport /
   // load arm. One of the two is exactly the kind of site the port has
   // leaked batches from before.

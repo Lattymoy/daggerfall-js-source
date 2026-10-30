@@ -13,7 +13,7 @@ import { WILD_REF } from '../../src/net/wild/wildRef.js';
 import { PVP_LINGER, LINGER_AWAY, lingerUntil, lingerOver, lingerAwayWord } from '../../src/net/wild/wildLinger.js';
 import { validWildRefOut } from '../../src/net/wire.js';
 import { createWildRejoin } from '../../src/systems/wild/wildRejoin.js';
-import { setWildDeath, wildDeath, wildDeathLines } from '../../src/systems/wild/wildZone.js';
+import { setWildDeath, wildDeath, wildDeathLines, wildDeathSlain } from '../../src/systems/wild/wildZone.js';
 import { fakeRoom, fakeRooms } from '../fakeRoom.mjs';
 
 const { subtle } = globalThis.crypto;
@@ -192,6 +192,7 @@ test('PVP-LINGER-RISE THE WORD AND THE PAGE: the word lies out at least LINGER_A
   assert.equal(presented, 1, 'put down');
   assert.deepEqual([wildDeath().away, wildDeath().killer, wildDeath().kill], [true, 'Borin', true]);
   assert.equal(wildDeathLines()[0], 'Slain by Borin while you were away.');
+  assert.equal(wildDeathSlain(), '', 'away: PVP-HUD\'s "Slain by" head stands down, the away line says it once');
   setWildDeath(null);
 });
 

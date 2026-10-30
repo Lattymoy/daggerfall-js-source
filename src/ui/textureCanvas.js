@@ -372,7 +372,7 @@ export function showFitted(img, pic) {
  *  DECOR-MODFLATS (2026-09-27, Discord: "Above #49 decorations stopped working. Most sprites decorations are invisable
  *  above this number"): IT WAITS FOR THE PICTURE, landed or missed. It waited for the classic archive's read and four
  *  turns after it - time enough for a classic record, whose drawing is synchronous once the file is read, and for a
- *  replacement already decoded. A MOD's picture (Detailed Ships' 1210 and 1230, the port's DET stand-ins past 10000)
+ *  replacement already decoded. A MOD's picture (the town items of 1210 and 1230, the port's DET stand-ins past 10000)
  *  has no classic file, whose read fails at once, and decodes in its own time - so the answer was read before it
  *  landed, the decorate panel kept "none to be had" for it, and the catalogue's decorations past its classic ones
  *  stood without pictures. */

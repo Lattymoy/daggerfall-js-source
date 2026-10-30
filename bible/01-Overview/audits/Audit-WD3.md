@@ -122,5 +122,5 @@ Re-run at AUDIT PRE-MERGE 1003 on PR #545's head, without ARENA2: the same 35 de
   return to them asks for an NPC who no longer stands in that layout. The patch notes (the pull request's, REL6)
   say so since AUDIT PRE-MERGE 1003 D17.~~ Mended by FIELD BUGS 2026-10-03b (QUESTOR-MOVED, `Person.reseatMovedQuestor`).
 - **Unnumbered in the commits.** The first pass also corrected the record's counts, the windmills, the pieces shared
-  with Detailed Ships and the offline gate. The follow-up and `cbd307e98` shifted cites and re-aimed mutants and
+  with the ships and the offline gate. The follow-up and `cbd307e98` shifted cites and re-aimed mutants and
   source pins to lines the fixes had moved.
