@@ -7,6 +7,7 @@
 // and what was bought of them for Aurum (`aurum_ledger`'s buys). Writes nothing.
 import { SHOP_WARES, SHOP_WARE_NAME, shopFeaturedOf } from '../../src/net/shopLaw.js';
 import { dailyWaresAt } from './aurum.js';
+import { AURUM_DAILY_FROM } from '../../src/net/aurumLaw.js';
 
 /** The demand's longest reach in days, and its default. */
 export const DEMAND_DAYS_MAX = 90;
@@ -36,7 +37,7 @@ export async function shopDemand(db, env, nowS, days = DEMAND_DAYS_DEFAULT) {
   /** @type {any[]} */ const rows = [];
   for (let d = from; d <= dayOf(nowS); d += DAY_S) {
     const featured = schedule.filter((e) => e.fromMs < (d + DAY_S) * 1000 && e.toMs > d * 1000).map((e) => e.id);
-    rows.push({ day: d, featured: [...new Set(featured)], daily: dailyWaresAt(env, d), wares: {} });
+    rows.push({ day: d, featured: [...new Set(featured)], daily: d < AURUM_DAILY_FROM * DAY_S ? [] : dailyWaresAt(env, d), wares: {} });   // AUDIT-STOREFRONT III A7: no wares before the rotation ran
   }
   const cell = (/** @type {number} */ day, /** @type {string} */ ware) => {
     const r = rows.find((x) => x.day === day);

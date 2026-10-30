@@ -206,7 +206,7 @@
   {
     "name": "PASS-PANELS-client-a-find-answer-taken-for-the-card",
     "file": "src/systems/pass/passClient.js",
-    "old": "_state = told ? { ...(was ?? {}), ...(Number.isSafeInteger(d.today) ? { today: d.today } : {}) } : d;",
+    "old": "_state = told ? { ...(was ?? {}), ...(ofToday && Number.isSafeInteger(d.today) ? { today: d.today } : {}) } : d;",
     "new": "_state = told ? d : d;",
     "tests": [
       "test/systems/pass/passclient.test.js"

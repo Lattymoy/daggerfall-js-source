@@ -65,12 +65,12 @@ function hashOf(/** @type {number} */ day, /** @type {string} */ id) {
   return (h >>> 0) / 0x1_0000_0000;
 }
 /**
- * THE DAY'S WARES: for each slot, the wares longest unseen (never seen first), each nudged by the day's hash so the same
- * pairs do not come round together - by less in a small slot, so a ware never shows two days running while its slot holds
- * four days' worth. `eligible(id, day)` is the service's word (on sale, dropped, inside a limited window). Every day is
- * decided from AURUM_DAILY_FROM; `cache` (the caller's, one a sale) keeps the last day decided. Ids in slot order.
+ * THE DAY'S WARES: in each slot the wares longest unseen, nudged by the day's hash (less in a small slot, so none shows
+ * two days running while its slot holds four days' worth); a tie to the shorter run of days shown, then the hash
+ * (AUDIT-STOREFRONT III A2); a slot short of wares hands its count on. `eligible(id, day)` is the service's word. Every
+ * day is decided from AURUM_DAILY_FROM; `cache` (the caller's, one a sale) keeps the last day decided. Ids in slot order.
  * @param {number} day @param {(id: string, day: number) => boolean} eligible
- * @param {{ at?: number, seen?: Map<string, number>, days?: Map<number, string[]> }} [cache]
+ * @param {{ at?: number, seen?: Map<string, number>, run?: Map<string, number>, days?: Map<number, string[]> }} [cache]
  */
 export function aurumDailyOf(day, eligible, cache = {}) {
   if (!Number.isSafeInteger(day)) return [];
@@ -78,19 +78,23 @@ export function aurumDailyOf(day, eligible, cache = {}) {
   cache.days ??= new Map();
   const kept = cache.days.get(want);
   if (kept) return kept;
-  if (cache.at === undefined || cache.seen === undefined || want <= cache.at) { cache.at = AURUM_DAILY_FROM - 1; cache.seen = new Map(); }
-  const seen = cache.seen;
+  if (cache.at === undefined || cache.seen === undefined || cache.run === undefined || want <= cache.at) { cache.at = AURUM_DAILY_FROM - 1; cache.seen = new Map(); cache.run = new Map(); }
+  const seen = cache.seen, run = cache.run;   // run: the first day of a ware's days shown in a row
   /** @type {string[]} */ let picks = [];
   for (let d = cache.at + 1; d <= want; d++) {
     picks = [];
-    for (const [slot, n] of Object.entries(AURUM_DAILY_SLOTS)) {
+    let short = 0;
+    for (const [slot, own] of Object.entries(AURUM_DAILY_SLOTS)) {
+      const n = own + short;
       const pool = AURUM_DAILY.filter((x) => x.slot === slot && eligible(x.id, d));
       const nudge = Math.min(2.5, Math.max(0, pool.length / n - 1.5));
       const key = (/** @type {string} */ id) => (seen.get(id) ?? -1e9) + nudge * hashOf(d, id);
-      pool.sort((a, b) => key(a.id) - key(b.id) || (a.id < b.id ? -1 : 1));
-      for (const x of pool.slice(0, n)) picks.push(x.id);
+      pool.sort((a, b) => key(a.id) - key(b.id) || (run.get(b.id) ?? 0) - (run.get(a.id) ?? 0) || hashOf(d, a.id) - hashOf(d, b.id) || (a.id < b.id ? -1 : 1));
+      const take = pool.slice(0, n);
+      for (const x of take) picks.push(x.id);
+      short = n - take.length;
     }
-    for (const id of picks) seen.set(id, d);
+    for (const id of picks) { if (seen.get(id) !== d - 1) run.set(id, d); seen.set(id, d); }
     cache.days.set(d, picks);
   }
   cache.at = want;

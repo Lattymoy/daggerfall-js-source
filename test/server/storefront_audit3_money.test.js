@@ -9,6 +9,7 @@ import { createHmac } from 'node:crypto';
 import { standService } from '../accountDb.mjs';
 import { STRIPE_API, STRIPE_REFUND_API, shopDonePage, receiptUse } from '../../server-account/src/shop.js';
 import { dailySaleOf, dailyWaresAt } from '../../server-account/src/aurum.js';
+import { shopDemand } from '../../server-account/src/staffShop.js';
 import { SHOP_WARES, shopWareById, shopHeldIds } from '../../src/net/shopLaw.js';
 import { passSeasonById } from '../../src/net/battlePassLaw.js';
 import { utcDay } from '../../src/net/marksLaw.js';
@@ -163,4 +164,10 @@ test('AUDIT-STOREFRONT III B4: a find\'s answer names the UTC day its `today` co
   s.raw.prepare('INSERT INTO pass_asks (account, rid, day) VALUES (?, ?, ?)').run(me.id, 'fedcba9876543210', utcDay(at / 1000));
   const pending = await s.ask(me, '/v1/pass/find', { source: 'foe', rid: 'fedcba9876543210' });
   assert.deepEqual([pending.body.repeat, pending.body.day, pending.body.today], [true, utcDay(at / 1000), undefined]);
+});
+
+test('AUDIT-STOREFRONT III A7: the staff demand lists no daily wares for a day before the rotation ran (mutants: the first day\'s wares lent to the days before it)', async () => {
+  const s = await stand();
+  const d = await shopDemand(s.env.DB, s.env, Date.UTC(2026, 9, 2, 12) / 1000, 4);
+  assert.deepEqual(d.days.map((r) => r.daily.length), [0, 0, 5, 5], '29 and 30 September none; 1 and 2 October five');
 });

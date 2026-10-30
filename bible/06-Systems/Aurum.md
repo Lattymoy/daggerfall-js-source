@@ -115,8 +115,13 @@ little under its price at the smallest pack's rate, so no daily ware is dearer t
 **The rotation** (`aurumLaw.js` aurumDailyOf) is decided the same on every machine from 1 October 2026: in each slot,
 the wares longest unseen come first, each nudged by a hash of the day so the same pairs do not come round together. Over
 a year no ware shows two days running, and each is back within six days (a title within four). A ware comes round only
-while `SHOP_ON_SALE` names it, its drop has come (`SHOP_FEATURED`) and, where the schedule marks it limited, inside its
-window. The service alone decides the day; the account read carries it.
+while `SHOP_ON_SALE` names it, its drop has come (`SHOP_FEATURED`) and, where the schedule marks it limited, on a UTC day
+its window holds whole. The service alone decides the day; the account read carries it.
+
+**A short sale** (AUDIT-STOREFRONT III A2). Before every drop has come, a slot can hold fewer wares than it shows. A slot
+short of wares hands its count to the next, so a day still shows five (no title yet: a third icon). A slot with three
+wares for two places must show one twice running: a tie goes to the ware on the shorter run, so each shows two days and
+rests one, in turn. Before, one effect won every tie by its id and showed fourteen days running.
 
 **A buy** (`/v1/aurum/buy`, `server-account/src/aurum.js` buyDaily) is one D1 batch: the ledger's line written only
 while the balance - the packs and lines as they stand then - covers the price, and the ware put on

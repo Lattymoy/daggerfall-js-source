@@ -193,8 +193,8 @@
   {
     "name": "PASSAUDIT-11-the-queued-asks-past-a-refusal",
     "file": "src/systems/pass/passClient.js",
-    "old": "    if (!passLive()) return 0;   // a refusal ahead of it in the queue stood the page back\n",
-    "new": "",
+    "old": "  return queued(async () => {\n    if (!mine()) return held();\n",
+    "new": "  return queued(async () => {\n",
     "tests": [
       "test/systems/pass/passclient.test.js"
     ]

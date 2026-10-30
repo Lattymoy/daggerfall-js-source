@@ -33,8 +33,14 @@ const findRid = () => [...globalThis.crypto.getRandomValues(new Uint8Array(8))].
 const unreached = (/** @type {any} */ r) => !!r && (r.error === 'offline' || r.error === 'server' || (r.status ?? 0) >= 500);
 const NO_DOORS = Object.freeze({
   online: () => false, nowMs: () => Date.now(), onEvent: (/** @type {any} */ _e) => {},
-  wait: (/** @type {number} */ ms) => new Promise((r) => { setTimeout(r, ms); }), rid: findRid,
+  wait: (/** @type {number} */ ms) => new Promise((r) => { setTimeout(r, ms); }), rid: findRid, storage: /** @type {any} */ (null),
 });
+/** AUDIT-STOREFRONT III B6: THE FINDS ASKED AND NOT YET ANSWERED, kept on the device by account (`{ [account]: [{ rid,
+ *  source, at }] }`), so a page closed while the service could not be reached asks them again, with their own ids, when
+ *  it is next bound. Kept a day: the service forgets an id after PASS_ASK_KEEP_DAYS, and one asked past that could
+ *  count twice. */
+export const PASS_FINDS_STORE = 'dagger:passFinds';
+export const PASS_FIND_KEEP_MS = 86_400_000;
 /** @type {any} */ let _doors = NO_DOORS;
 /** @type {any} */ let _api = null;
 /** @type {any} */ let _state = null;
@@ -58,11 +64,37 @@ function queued(/** @type {() => Promise<any>} */ fn) {
  *  'challenge', key, aurum }`) or the day's Aurum found (`{ kind: 'full' }`) - and, for the tests, `wait(ms)` and `rid()`.
  *  Null unbinds. Answers the door to the service (or null). */
 export function bindPass(doors = null) {
-  _doors = doors ? { ...NO_DOORS, ...doors } : NO_DOORS;
+  _doors = doors ? { ...NO_DOORS, storage: doors.storage !== undefined ? doors.storage : appStorage(), ...doors } : NO_DOORS;
   _api = doors ? (doors.api ?? accountBattlePass({ fetch: (/** @type {any} */ u, /** @type {any} */ i) => globalThis.fetch(u, i), storage: appStorage() })) : null;
   _rest.reset();
-  if (doors) refreshPass().catch(() => {});
+  _resumed.clear();
+  if (doors) { refreshPass().catch(() => {}); resumeFinds(); }
   return _api;
+}
+
+/** The finds kept for every account, as the device has them. */
+function keptFinds() {
+  try { const v = JSON.parse(_doors.storage?.getItem?.(PASS_FINDS_STORE) ?? '{}'); return v && typeof v === 'object' ? v : {}; } catch { return {}; }
+}
+/** One account's kept finds changed by `fn`, every account's older than a day dropped. */
+function keepFinds(/** @type {string} */ who, /** @type {(l: any[]) => any[]} */ fn) {
+  try {
+    const all = keptFinds(), since = _doors.nowMs() - PASS_FIND_KEEP_MS;
+    for (const k of Object.keys(all)) all[k] = (Array.isArray(all[k]) ? all[k] : []).filter((x) => x?.at >= since);
+    all[who] = fn(all[who] ?? []);
+    if (!all[who].length) delete all[who];
+    _doors.storage?.setItem?.(PASS_FINDS_STORE, JSON.stringify(all));
+  } catch { /* a full or blocked store keeps nothing: the page's own retries still ask */ }
+}
+/** The accounts whose kept finds this binding has asked again. */
+const _resumed = new Set();
+/** Ask again, once a binding, the finds this device kept for the account signed in now. */
+function resumeFinds() {
+  const who = account();
+  if (!who || _resumed.has(who)) return;
+  _resumed.add(who);
+  const since = _doors.nowMs() - PASS_FIND_KEEP_MS;
+  for (const x of keptFinds()[who] ?? []) if (x?.at >= since && isPassSource(x.source) && typeof x.rid === 'string') askFind(x.source, x.rid, who).catch(() => 0);
 }
 /** A listener told whenever the account's season changes; answers its unregistering. */
 export function hearPass(/** @type {() => void} */ fn) { _hear.add(fn); return () => { _hear.delete(fn); }; }
@@ -82,12 +114,14 @@ export function passLive() {
 function learn(/** @type {any} */ d, /** @type {boolean} */ told) {
   if (!d || typeof d !== 'object') return;
   const was = passState();
-  _state = told ? { ...(was ?? {}), ...(Number.isSafeInteger(d.today) ? { today: d.today } : {}) } : d;
+  // AUDIT-STOREFRONT III B4: a find counted on another UTC day (asked again past midnight) says nothing of today's
+  const ofToday = !Number.isSafeInteger(d.day) || d.day === utcDay(Math.floor(_doors.nowMs() / 1000));
+  _state = told ? { ...(was ?? {}), ...(ofToday && Number.isSafeInteger(d.today) ? { today: d.today } : {}) } : d;
   _stateOf = account();
   if (told && Array.isArray(d.done)) {
     for (const key of d.done) { const c = passChallengeOf(key); if (c) _doors.onEvent({ kind: 'challenge', key, aurum: c.aurum }); }
   }
-  if (told && Number.isSafeInteger(d.today) && d.today >= PASS_DAY_AURUM) {
+  if (told && ofToday && Number.isSafeInteger(d.today) && d.today >= PASS_DAY_AURUM) {
     const k = `${account()}:${utcDay(Math.floor(_doors.nowMs() / 1000))}`;
     if (_fullSaid !== k) { _fullSaid = k; _doors.onEvent({ kind: 'full' }); }
   }
@@ -110,19 +144,37 @@ export const refreshPass = () => queued(readPass);
  *  with it while the service cannot be reached (AUDIT-STOREFRONT II, lane B 2). Answers the Aurum gained. */
 export function askPassFind(/** @type {string} */ source) {
   if (!isPassSource(source) || !passLive()) return Promise.resolve(0);
+  const who = /** @type {string} */ (account());
+  resumeFinds();
   const rid = _doors.rid();
+  keepFinds(who, (l) => [...l, { rid, source, at: _doors.nowMs() }]);
+  return askFind(source, rid, who);
+}
+/** A find asked, queued, for `who` - the account whose deed it was (AUDIT-STOREFRONT III B5: never paid to another one
+ *  signed in meanwhile); kept on the device until the service answers it (B6). */
+function askFind(/** @type {string} */ source, /** @type {string} */ rid, /** @type {string} */ who) {
+  const settle = (/** @type {number} */ n) => { keepFinds(who, (l) => l.filter((x) => x?.rid !== rid)); return n; };
+  // not askable now: let go under a refusal standing the page back; kept for its account's next bind otherwise (signed
+  // out, another account signed in, off line)
+  const held = () => (account() === who && _rest.resting() ? settle(0) : 0);
+  const mine = () => passLive() && account() === who;
   return queued(async () => {
-    if (!passLive()) return 0;   // a refusal ahead of it in the queue stood the page back
+    if (!mine()) return held();
     // the day's bound is told against the pass as read: read it first; and a pass said shut, again
     const due = _rest.due(passState()?.open);
     if ((due || !passState()) && !(await readPass()) && due) { _rest.unheard(); return 0; }
-    if (passState()?.open === false) return 0;
+    if (passState()?.open === false) return settle(0);
     for (let i = 0; ; i++) {
       const r = await _api.find(source, rid).catch(() => null);
-      if (r?.ok) { learn(r.data, true); return Number.isSafeInteger(r.data?.gained) ? r.data.gained : 0; }
-      if (!unreached(r)) { _rest.refused(r?.error); return 0; }   // the deeds after it ask nothing while it stands
+      if (r?.ok) {
+        learn(r.data, true);
+        // B4: a repeat counted on another day, or not yet answered, leaves today's to the card
+        if (r.data?.repeat && !(Number.isSafeInteger(r.data?.today) && r.data?.day === utcDay(Math.floor(_doors.nowMs() / 1000)))) await readPass();
+        return settle(Number.isSafeInteger(r.data?.gained) ? r.data.gained : 0);
+      }
+      if (!unreached(r)) { _rest.refused(r?.error); return settle(0); }   // the deeds after it ask nothing while it stands
       await _doors.wait(Math.min(PASS_FIND_RETRY_MAX_MS, PASS_FIND_RETRY_MS * 2 ** i));
-      if (!passLive()) return 0;   // unbound, signed out or off line meanwhile: let go
+      if (!mine()) return held();
     }
   });
 }
@@ -156,4 +208,4 @@ hearActs(PASS_FIND, (/** @type {string} */ kind) => {
 });
 
 /** For the tests: forget everything. */
-export function _resetPassClientForTests() { _doors = NO_DOORS; _api = null; _state = null; _stateOf = null; _fullSaid = ''; _chain = Promise.resolve(); _hear.clear(); _rest.reset(); }
+export function _resetPassClientForTests() { _doors = NO_DOORS; _api = null; _state = null; _stateOf = null; _fullSaid = ''; _chain = Promise.resolve(); _hear.clear(); _rest.reset(); _resumed.clear(); }

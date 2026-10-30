@@ -11,8 +11,8 @@
   {
     "name": "AURUM-rotation-seen-never-kept",
     "file": "src/net/aurumLaw.js",
-    "old": "for (const id of picks) seen.set(id, d);",
-    "new": "for (const id of picks) seen.get(id);",
+    "old": "run.set(id, d); seen.set(id, d); }",
+    "new": "run.set(id, d); seen.get(id); }",
     "tests": [
       "test/net/aurum_law.test.js"
     ]
@@ -345,7 +345,7 @@
   {
     "name": "AURUM-demand-day-wares-unsaid",
     "file": "server-account/src/staffShop.js",
-    "old": "daily: dailyWaresAt(env, d), wares: {} });",
+    "old": "daily: d < AURUM_DAILY_FROM * DAY_S ? [] : dailyWaresAt(env, d), wares: {} });",
     "new": "daily: [], wares: {} });",
     "tests": [
       "test/server/storefront_service.test.js"

@@ -74,8 +74,8 @@
   {
     "name": "AUDIT2-B2-never-asked-again",
     "file": "src/systems/pass/passClient.js",
-    "old": "      if (!unreached(r)) { _rest.refused(r?.error); return 0; }",
-    "new": "      if (r?.ok !== true) { _rest.refused(r?.error); return 0; }",
+    "old": "      if (!unreached(r)) { _rest.refused(r?.error); return settle(0); }",
+    "new": "      if (r?.ok !== true) { _rest.refused(r?.error); return settle(0); }",
     "tests": [
       "test/server/storefront_audit2_pass.test.js"
     ]
