@@ -4444,6 +4444,11 @@
   "tr": "efa75cd2e26f",
   "by": "claude-in-session"
  },
+ "armory.line.crystal": {
+  "en": "4d67d97c3e7a",
+  "tr": "9f9eafaa0d78",
+  "by": "claude-in-session"
+ },
  "armory.line.dagonfire": {
   "en": "03ba10ac34d0",
   "tr": "c9864eb42293",
@@ -4477,6 +4482,11 @@
  "armory.look.cinderstride": {
   "en": "861d9fd151e0",
   "tr": "bea8194109b8",
+  "by": "claude-in-session"
+ },
+ "armory.look.crystalspurs": {
+  "en": "c57b4f94df99",
+  "tr": "4b2d2e7c4ede",
   "by": "claude-in-session"
  },
  "armory.look.emberheart": {
@@ -4537,6 +4547,11 @@
  "armory.name.cinderstride": {
   "en": "a73731c381db",
   "tr": "e1a459efafd2",
+  "by": "claude-in-session"
+ },
+ "armory.name.crystalspurs": {
+  "en": "c4c1613cbd19",
+  "tr": "f68324d61c55",
   "by": "claude-in-session"
  },
  "armory.name.emberheart": {
@@ -9427,6 +9442,11 @@
  "coll.how.founder": {
   "en": "44bdfa526991",
   "tr": "1a9509993f24",
+  "by": "claude-in-session"
+ },
+ "coll.how.giftThanks": {
+  "en": "7f358b82279f",
+  "tr": "d82d470744bc",
   "by": "claude-in-session"
  },
  "coll.how.grandchampion": {
@@ -31992,6 +32012,11 @@
  "post.claimedAll": {
   "en": "fa91cde86929",
   "tr": "5d68ac22c903",
+  "by": "claude-in-session"
+ },
+ "post.giftAurum": {
+  "en": "63690dec55d3",
+  "tr": "63690dec55d3",
   "by": "claude-in-session"
  },
  "post.wareHeld": {

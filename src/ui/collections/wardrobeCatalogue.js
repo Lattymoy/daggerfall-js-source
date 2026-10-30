@@ -379,7 +379,9 @@ export const WARDROBE = Object.freeze({
     ? E('broker', 'open', broker(`armory:${p.key}`), { look: ARMORY_LOOK[/** @type {keyof typeof ARMORY_LOOK} */ (p.key)] })
     : p.source === 'guild'   // GUILD-SHOP: the Insignia Armlet, the guild shop's for silver
       ? E('guild', 'open', guildWare(p.key), { look: ARMORY_LOOK[/** @type {keyof typeof ARMORY_LOOK} */ (p.key)] })
-      : E('shop', 'shop', shopPiece(`armory:${p.key}`), { look: ARMORY_LOOK[/** @type {keyof typeof ARMORY_LOOK} */ (p.key)] })]))),
+      : p.source === 'gift'   // THANKS-POST: the Storefront update's gift, to every account standing then
+        ? E('account', 'retired', () => t('coll.how.giftThanks', 'A gift to every player who had an account when the Storefront update came out.'), { look: ARMORY_LOOK[/** @type {keyof typeof ARMORY_LOOK} */ (p.key)] })
+        : E('shop', 'shop', shopPiece(`armory:${p.key}`), { look: ARMORY_LOOK[/** @type {keyof typeof ARMORY_LOOK} */ (p.key)] })]))),
 });
 
 /** One entry, or null. */

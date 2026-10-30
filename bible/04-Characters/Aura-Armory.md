@@ -83,6 +83,14 @@ not of its slot (`no-piece`, 400); a kit with one such piece is refused whole. T
 lists each slot with the pieces held for it. The Collections page lists every piece by slot, held or not, and how it is
 had.
 
+**The Crystal Spurs** (THANKS-POST, 2026-10-30, the owner: "a free arm armoury aura. Small and varied crystallized arm
+spikes that rotate color gradient but not overbearing"). An arms piece of its own line, `crystal`, code `d`, never sold:
+the Storefront update's gift to every account standing then (`src/net/giftLaw.js`, `06-Systems/Aurum.md` section 3c). Five
+spurs an arm, both arms (`src/render/armoryPass.js` ARMORY_SPURS): small six-sided cones of crystal, each its own size and
+way round the arm, leaning toward the hand. A sprite shows the upper arm's three. Their colour turns slowly through
+amethyst, aqua and rose (PRISM_RGB, a turn in 20 seconds), each spur its own phase, the tip brightest, a glint running
+up the edges. Drawn at ARMORY_SPUR_GAIN, under the other pieces' full light. `test/server/thanks_post.test.js`.
+
 ## 5. Online
 
 **The token.** The service signs the kit worn as the claim `ak`, OMITTED when none is worn, so a token without one

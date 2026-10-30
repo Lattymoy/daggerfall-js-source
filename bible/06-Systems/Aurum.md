@@ -19,7 +19,7 @@ AURUM-ONLY, the owner, 2026-10-30: *"So nothing should cost money money anymore.
 all items. Aurem purchase itself should be the only thing."* Asked, the owner chose $1 = 100 Aurum and daily deals at a
 quarter off. So every ware in the shop is bought with Aurum, and money buys the packs alone (sections 4 and 5). With
 it: *"ensure the aurem caches are balanced"* (section 3a, Balance), then caches with no clock (CACHES-ONCE, section 3a),
-and patrons paid their Patreon total in Aurum (PATRON-AURUM, section 3b).
+and patrons paid their Patreon total in Aurum (PATRON-AURUM, section 3b), and the update's gift (THANKS-POST, section 3c).
 
 ## 2. The currency
 
@@ -38,6 +38,7 @@ line is keyed by its account, kind and ref, so none is written twice:
 | `deed` | `<deed>:<week>` | the week's deed, once |
 | `cache` | the cache's id | a cache's Aurum |
 | `patreon` | `<Patreon user>:<total>` | what that Patreon total adds |
+| `gift` | the gift's key | the gift's Aurum, once |
 | `buy` | the ware bought | its price, negative |
 | `track` | `<season>:premium` | the premium track's price, negative |
 | `panel` | `<season>:<item>` | the item's price, negative |
@@ -135,6 +136,16 @@ refund takes nothing back. The confirm page says a cent becomes an Aurum; the pa
 **Who.** Every linked patron. A patron linked before PATRON-AURUM is paid at their next charge, or at once by pressing
 Link Patreon again. A patron granted a title by name is paid once they link. `test/server/patreon_link.test.js`;
 `tools/mutants/patron_aurum.json`.
+
+## 3c. The update's gift (THANKS-POST, 2026-10-30)
+
+The owner: *"every current player should be grant 500 free aurem on the update to their inbox and a free arm armoury
+aura"*, with the letter's words to clean up. Migration 0202 runs once, with the deploy. Every registered account standing
+then holds the gift `thanks` (`src/net/giftLaw.js`): its key on `players.gifts`, a ledger line `gift` of 500 Aurum, and
+the Crystal Spurs to wear (`04-Characters/Aura-Armory.md`). A letter from The DFO Team in the post names both, "On your
+account", with nothing to claim. The letter's words are frozen in `tools/sendServerPost.mjs` (THANKS_POST, `--migration
+thanks`), which holds the migration's statement. Each write is once an account. A guest, or an account made after, holds
+none. `test/server/thanks_post.test.js`; `tools/mutants/thanks_post.json`.
 
 ## 4. Bought
 

@@ -244,6 +244,7 @@ on:
       - "src/net/battlePassLaw.js"
       - "src/net/aurumLaw.js"
       - "src/net/aurumCacheLaw.js"
+      - "src/net/giftLaw.js"
       - "src/net/lostLaw.js"
       - "src/systems/superDungeon/sdSpoils.js"
       - "src/systems/eliteGates/egSpoils.js"

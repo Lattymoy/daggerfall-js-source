@@ -113,6 +113,7 @@ import { ARMORY_PIECES, ARMORY_SLOTS, armoryPieceOf, armoryKitHeld } from '../..
 import { guildWaresHeld } from '../../src/net/guild/guildShopLaw.js';   // GUILD-SHOP: the guild shop's wares, their bits on the row   // ARMORY: the Aura Armory's pieces and the kit worn
 import { EFFECT_SLOTS, effectKeys, effectOf, effectKitHeld } from '../../src/net/effectLaw.js';   // STOREFRONT: the effects held and worn
 import { PASS_ALL_GRANTS, passItemsOf, passKeysOf } from '../../src/net/battlePassLaw.js';   // STOREFRONT, PASS-PANELS: the Battle Pass's items bought
+import { giftPiecesOf } from '../../src/net/giftLaw.js';   // THANKS-POST: the update's gift, its armory piece
 
 /** THE FOUNDER CUTOFF, and it is a date rather than a count because
  *  "all current players" is a statement about a MOMENT. Everyone who
@@ -534,7 +535,7 @@ export function effectRefusal(/** @type {unknown} */ slot, /** @type {unknown} *
 export function armoryHeld(/** @type {any} */ player, /** @type {any} */ env) {
   if (!(typeof player?.handle === 'string' && player.handle)) return [];
   if (holdsAll(player, env)) return ARMORY_PIECES.map((p) => p.key);   // ADMIN-ALL
-  const own = new Set([...insigniaKeys(player?.insignia, 'armory'), ...shopKeys(player, 'armory'), ...guildWaresHeld(Number(player?.guild_wares ?? 0))]);   // GUILD-SHOP: the Insignia Armlet
+  const own = new Set([...insigniaKeys(player?.insignia, 'armory'), ...shopKeys(player, 'armory'), ...guildWaresHeld(Number(player?.guild_wares ?? 0)), ...giftPiecesOf(player)]);   // GUILD-SHOP: the Insignia Armlet; THANKS-POST: a gift's pieces
   return ARMORY_PIECES.filter((p) => own.has(p.key)).map((p) => p.key);
 }
 /** AUDIT GUILD-SHOP S2: 1 where the account holds the Guild Sailcloth (its bit, or ADMIN-ALL), else undefined - the token's

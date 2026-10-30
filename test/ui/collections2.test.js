@@ -154,7 +154,7 @@ const CATALOGUE = {
   // PIN MOVED (AURUM-ONLY): the eight icons in the shop for good, each bought with Aurum - a deal on its day
   'icon:gatefire': 'shop store', 'icon:aurbis': 'shop store', 'icon:elderscroll': 'shop store', 'icon:azurastar': 'shop store',
   'icon:redmountain': 'shop store', 'icon:hourglass': 'shop store', 'icon:sanguinerose': 'shop store', 'icon:whitegold': 'shop store',
-  'armory:insigniaarmlet': 'guild open', 'icon:guildcrest': 'guild open',   // GUILD-SHOP (PIN MOVED): the guild shop's armlet and crest, any member's for silver
+  'armory:insigniaarmlet': 'guild open', 'icon:guildcrest': 'guild open', 'armory:crystalspurs': 'account retired' /* THANKS-POST (PIN MOVED): the update's gift */,   // GUILD-SHOP (PIN MOVED): the guild shop's armlet and crest, any member's for silver
 };
 
 // ── THE CATALOGUE ──────────────────────────────────────────────────────────────────────────────────────────────────────
