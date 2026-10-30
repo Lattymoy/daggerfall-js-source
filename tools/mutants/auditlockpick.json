@@ -29,8 +29,8 @@
   {
     "name": "AUDITLOCK-A2-jitter-narrowed",
     "file": "src/systems/lockpick/lockpickLaw.js",
-    "old": "riseJitter: 0.45,",
-    "new": "riseJitter: 0.3,",
+    "old": "  riseJitter: 0.45,",
+    "new": "  riseJitter: 0.3,",
     "tests": [
       "test/systems/lockpick/lockpick_audit.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDITLOCK-A2-hang-widened",
     "file": "src/systems/lockpick/lockpickLaw.js",
-    "old": "windowMinS: 0.08,",
-    "new": "windowMinS: 0.18,",
+    "old": "  windowMinS: 0.08,",
+    "new": "  windowMinS: 0.18,",
     "tests": [
       "test/systems/lockpick/lockpick_audit.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDITLOCK-A2-grace-widened",
     "file": "src/systems/lockpick/lockpickLaw.js",
-    "old": "graceS: 0.03,",
-    "new": "graceS: 0.05,",
+    "old": "  graceS: 0.03,",
+    "new": "  graceS: 0.05,",
     "tests": [
       "test/systems/lockpick/lockpick_audit.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "AUDITLOCK-B4-past-the-stack",
     "file": "src/systems/lockpick/lockpickItem.js",
-    "old": "stack.stackCount = Math.min(ENDLESS_LOCKPICK_STACK, was + took);",
-    "new": "stack.stackCount = was + took;",
+    "old": "  stack.stackCount = Math.min(ENDLESS_LOCKPICK_STACK, was + took);",
+    "new": "  stack.stackCount = was + took;",
     "tests": [
       "test/systems/lockpick/lockpick_audit.test.js"
     ]
@@ -365,8 +365,8 @@
   {
     "name": "AUDITLOCK-C13-classic-silent",
     "file": "src/systems/lockpick/lockpickSounds.js",
-    "old": " break: SOUND.Parry6, slip: SOUND.EquipShortBlade,",
-    "new": "",
+    "old": "  break: SOUND.Parry6,\n  slip: SOUND.EquipShortBlade,\n});",
+    "new": "});",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]

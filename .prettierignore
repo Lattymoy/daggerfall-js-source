@@ -24,6 +24,8 @@
 /src/systems/grammar/*/
 !/src/systems/hunt/
 /src/systems/hunt/*/
+!/src/systems/lockpick/
+/src/systems/lockpick/*/
 !/src/systems/snowfall/
 /src/systems/snowfall/*/
 !/src/ui/
