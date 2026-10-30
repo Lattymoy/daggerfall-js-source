@@ -79,7 +79,7 @@ test('CAPE-TOGGLE the look: hidden, my look leaves the cloak out and says `hc` 1
   }
 });
 
-test('CAPE-TOGGLE the auras: hidden, my own aura is not gathered (its token still says it, so it is not said again); a peer whose look says `hc` wears no aura here and keeps their Aura Armory pieces; a peer without it wears theirs (mutants: my aura drawn while hidden; a hidden peer\'s aura drawn; the pieces taken with it)', () => {
+test('CAPE-TOGGLE the auras (AURA-STAYS, 2026-10-30, mob: "it saposta help show the aura not tuen it off"): the switch never hides an aura - mine stays gathered while my cape is hidden, and a peer whose look says `hc` wears theirs and their Aura Armory pieces; the token still says mine, so nothing is said again (mutants: my aura dropped while hidden; a hidden peer\'s aura dropped)', () => {
   const was = globalThis.localStorage;
   const m = new Map(), st = { getItem: (/** @type {string} */ k) => m.get(k) ?? null, setItem: (/** @type {string} */ k, /** @type {string} */ v) => m.set(k, String(v)), removeItem: (/** @type {string} */ k) => m.delete(k) };
   keepSession(st, { id: 'u1', name: 'Me', kind: 'linked', sessionId: 's1', secret: 'x' });
@@ -101,10 +101,10 @@ test('CAPE-TOGGLE the auras: hidden, my own aura is not gathered (its token stil
     assert.equal(host.counts().auras, 3, 'shown: mine and both peers\'');
     looks.p2 = { hc: 1, items: [] };
     withCape(true, () => host.frame(seen));
-    assert.equal(host.counts().auras, 2, 'p2 hides theirs, whatever my switch says');
-    assert.deepEqual(host.armoryWearersNow().map((w) => w.id), ['p2'], 'and keeps their pieces - they are not a cape');
+    assert.equal(host.counts().auras, 3, 'p2 hides their cloak, never their aura');
+    assert.deepEqual(host.armoryWearersNow().map((w) => w.id), ['p2'], 'and keeps their pieces');
     withCape(false, () => host.frame(seen));
-    assert.equal(host.counts().auras, 1, 'mine hidden too: p3\'s alone');
+    assert.equal(host.counts().auras, 3, 'my cape hidden: my aura still on');
     assert.equal(rehellos, 0, 'the token says my aura still, as it is worn: nothing to say again');
   } finally {
     if (was === undefined) delete globalThis.localStorage; else globalThis.localStorage = was;
@@ -150,7 +150,7 @@ test('CAPE-TOGGLE the pack: the Cloaks panel\'s cell holds the switch - an eye, 
       assert.ok(sw(), 'the switch is drawn');
       assert.equal(sw().style.gridArea, panel.style.gridArea, 'in the Cloaks panel\'s own cell');
       assert.deepEqual([sw().getAttribute('aria-pressed'), sw().getAttribute('aria-label'), sw().querySelectorAll('path').length], ['true', 'Show cape', 1]);
-      assert.match(sw().title, /cloak and your aura/);
+      assert.match(sw().title, /Your aura stays on/);
       const cloakWorn = () => worn.at(-1).some((/** @type {any} */ p) => p.templateIndex === 154);
       assert.ok(cloakWorn(), 'the body wears the cloak');
       sw().onclick({});
