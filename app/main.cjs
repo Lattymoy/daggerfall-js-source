@@ -518,7 +518,7 @@ app.on('child-process-gone', (_e, details) => { if (details?.type === 'GPU') bac
 const { RELEASES_URL, latestDownloadUrl, releaseAssetUrl, manualDownloadFile } = require('./lib/downloads.cjs');
 const {
   CHECK_TIMEOUT_MS, RECHECK_MS, INSTALL_NOTICE_MS, INSTALL_GIVEUP_MS, DOWNLOAD_STALL_MS, DETECT_DEADLINE_MS, JUDGE_DEADLINE_MS, PICK_DEADLINE_MS,
-  initialState, reduce, nextStep, viewOf, newsFrom, cachedNews, notArena2Detail, installAttemptFor, directPlay,
+  initialState, reduce, nextStep, viewOf, newsFrom, cachedNews, notArena2Detail, installAttemptFor, directPlay, PLAY_SWITCH,
 } = require('./lib/launcherState.cjs');
 
 /** Which transport THIS copy updates by - lib/autoUpdate.cjs's table
@@ -785,6 +785,26 @@ async function restartToUpdate() {
     const { response } = await (parent ? dialog.showMessageBox(parent, opts) : dialog.showMessageBox(opts));
     if (goesAhead(response)) installNow(updateReady?.version);
   } finally { restartAsking = false; }
+}
+
+/** UPDATE-RESTART (2026-10-30, the owner: "we should close the desktop app instead of reload it does not update" /
+ *  "make sure it updates"): the game's update screen, at its end (app/preload.cjs restartForUpdate). The update this
+ *  copy holds is put in place by quitting and starting again - never a reload, which can leave the page on the copy it
+ *  had: a version the channel brought is played by the next launch (gameStore.startup activates it, and the GPU caches
+ *  turn for it before Chromium opens them), straight back into the game (`--play`); an installer's runs silently and
+ *  reopens the app (installNow). No box: the screen already saved and gave its minute. With nothing held, the page
+ *  reloads, as it would in a browser. */
+let restartingForUpdate = false;
+function restartForUpdate() {
+  if (restartingForUpdate || installStarted) return;
+  if (updateReady?.game) {
+    restartingForUpdate = true;
+    app.relaunch({ args: [...process.argv.slice(1).filter((a) => a !== PLAY_SWITCH), PLAY_SWITCH] });
+    app.quit();
+    return;
+  }
+  if (updateReady && currentUpdateTransport() === 'updater') { installNow(updateReady.version); return; }
+  reloadOntoUpdate();
 }
 
 /** A box over the window the player is looking at - never behind a
@@ -1370,7 +1390,7 @@ async function createWindow({ onShown = null } = {}) {
   // that did not could raise box after box, each freezing the main process.
   win.on('close', () => markLeaving(win.webContents));
   win.webContents.on('will-prevent-unload', (e) => {
-    if (leaveForUpdate) { e.preventDefault(); return; }
+    if (leaveForUpdate || restartingForUpdate) { e.preventDefault(); return; }
     if (!isLeaving(win.webContents)) return;
     const choice = dialog.showMessageBoxSync(win, { ...UNLOAD_ASK, buttons: [...UNLOAD_ASK.buttons] });
     if (leaves(choice)) e.preventDefault();
@@ -1896,6 +1916,10 @@ ipcMain.on('dagger:backend-webgl2', (e, report) => {
 // ESC-LOCK (2026-09-27, Mac: "when you hit esc to leave a menu, your cursor remains on the screen"): Escape is no user
 // activation, and after the player ends a pointer lock the next one needs one - so a menu closed on Escape could not
 // take the look back. The page asks (preload relockPointer) and its own fixed hook runs here as a user gesture.
+// UPDATE-RESTART: only the game's own window may restart the app onto its update
+ipcMain.on('dagger:restart-for-update', (e) => {
+  if (gameWindow && !gameWindow.isDestroyed() && e.sender === gameWindow.webContents) restartForUpdate();
+});
 ipcMain.on('dagger:relock', (e) => { e.sender.executeJavaScript('globalThis.__daggerRelock?.()', true).catch(() => {}); });
 
 app.whenReady().then(() => {

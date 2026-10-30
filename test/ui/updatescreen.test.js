@@ -5,10 +5,11 @@ import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  updatePhase, countdownOf, startForcedUpdate, resetForcedUpdate, forcedUpdateRunning,
+  updatePhase, countdownOf, startForcedUpdate, resetForcedUpdate, forcedUpdateRunning, updateAppNoticeText,
   UPDATE_WARN_MS, UPDATE_SCREEN_MS, UPDATE_HOLD_MAX_MS, UPDATE_SCREEN_ID, UPDATE_BANNER_ID,
 } from '../../src/ui/updateScreen.js';
 import { BUILD_UPDATE_TEXT, BUILD_POLL_MS } from '../../src/net/updateNotice.js';
+import { forceShellUpdates, resetShellUpdates, shellRestartsFor } from '../../src/systems/shellUpdates.js';
 import { armUnloadGuard, unloadGuardArmed, resetUnloadGuard } from '../../src/systems/unloadGuard.js';
 
 function fakeNode(tag) {
@@ -113,4 +114,60 @@ test('UPDATE-FORCE: Reload Now goes at once; a busy that throws counts as not bu
 test('UPDATE-FORCE: the host starts it where the build poll finds a new build, with the online save and the death and duel hold', () => {
   const w = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
   assert.match(w, /buildUpdateSeen\(tag, BUILD_TAG\) === 'changed' && startForcedUpdate\(\{ notice: chatNotice, save: onlineCheckpoint, busy: \(\) => !!duelMgr\?\.duel \|\| townTalk\.overlay instanceof DeathScreen \|\| !!modes\?\.deathUp\?\.\(\) \|\| successionOpen\(\) \}\)/);
+});
+
+// UPDATE-RESTART (2026-10-30, the owner: "we should close the desktop app instead of reload it does not update" / "make
+// sure it updates"): in the desktop app the countdown is the app's update's, and its end restarts the app onto it.
+test('UPDATE-RESTART: the app\'s run says the app restarts, and its end is the restart it is handed', () => {
+  const { doc, win, body } = fakePage();
+  let now = 0;
+  let restarts = 0;
+  const notices = [];
+  startForcedUpdate({ app: true, notice: (s) => notices.push(s), reload: () => { restarts++; }, doc, win, now: () => now });
+  assert.deepEqual(notices, [updateAppNoticeText()]);
+  assert.match(find(body, UPDATE_BANNER_ID).textContent, /The app restarts in 1:00/);
+  now = UPDATE_WARN_MS; win.ticks[0]();
+  const screen = find(body, UPDATE_SCREEN_ID);
+  const texts = all(screen).map((n) => n.textContent).join('|');
+  assert.match(texts, /Restarting the app/);
+  assert.match(texts, /closes, updates and opens again/);
+  assert.doesNotMatch(texts, /Reload/, 'nothing in the app says reload');
+  assert.equal(all(screen).find((n) => n.tag === 'button').textContent, 'Restart Now');
+  now += UPDATE_SCREEN_MS; win.ticks[0]();
+  assert.equal(restarts, 1);
+});
+
+test('UPDATE-RESTART: the app\'s update starts the run once it can be put in place - not a manual one, not in a browser, not in an old shell', () => {
+  resetShellUpdates();
+  assert.equal(forceShellUpdates(undefined, () => {}), false, 'a browser tab has no shell');
+  assert.equal(forceShellUpdates({ onUpdateReady() {} }, () => {}), false, 'a shell too old to restart');
+  let fire = null;
+  const shell = { onUpdateReady: (cb) => { fire = cb; }, restartForUpdate() {} };
+  const started = [];
+  assert.equal(forceShellUpdates(shell, (info) => started.push(['a', info.version])), true);
+  fire({ version: '0.1.9000', manual: true });
+  assert.deepEqual(started, [], 'a copy that updates by hand keeps its HUD line');
+  fire({ version: '0.1.9001', manual: false });
+  assert.deepEqual(started, [['a', '0.1.9001']]);
+  let subs = 0;
+  shell.onUpdateReady = () => { subs++; };
+  assert.equal(forceShellUpdates(shell, (info) => started.push(['b', info.version])), true);
+  assert.equal(subs, 0, 'one subscription');
+  assert.deepEqual(started.at(-1), ['b', '0.1.9001'], 'a host that comes later hears the update already here');
+  assert.equal(shellRestartsFor(shell, { version: '1.0.0' }), true);
+  assert.equal(shellRestartsFor({}, { version: '1.0.0' }), false);
+  resetShellUpdates();
+});
+
+test('UPDATE-RESTART: the host starts the app\'s run with the same save and hold, ended by the shell\'s restart; the shell quits and starts again', () => {
+  const w = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
+  assert.match(w, /forceShellUpdates\(globalThis\.daggerShell, \(\) => startForcedUpdate\(\{ app: true, notice: chatNotice, save: onlineCheckpoint, busy: \(\) => !!duelMgr\?\.duel \|\| townTalk\.overlay instanceof DeathScreen \|\| !!modes\?\.deathUp\?\.\(\) \|\| successionOpen\(\), reload: \(\) => globalThis\.daggerShell\.restartForUpdate\(\) \}\)\)/);
+  const pre = readFileSync(new URL('../../app/preload.cjs', import.meta.url), 'utf8');
+  assert.match(pre, /restartForUpdate: \(\) => ipcRenderer\.send\('dagger:restart-for-update'\)/);
+  const main = readFileSync(new URL('../../app/main.cjs', import.meta.url), 'utf8');
+  const fn = main.slice(main.indexOf('function restartForUpdate()'), main.indexOf('/** A box over the window the player is looking at'));
+  assert.match(fn, /if \(updateReady\?\.game\) \{[^}]*app\.relaunch\(\{ args: \[\.\.\.process\.argv\.slice\(1\)\.filter\(\(a\) => a !== PLAY_SWITCH\), PLAY_SWITCH\] \}\);\s*app\.quit\(\);/, 'a channel version: quit and start again, straight into the game');
+  assert.match(fn, /currentUpdateTransport\(\) === 'updater'\) \{ installNow\(updateReady\.version\); return; \}/, 'an installer: it runs and reopens the app');
+  assert.match(main, /ipcMain\.on\('dagger:restart-for-update', \(e\) => \{\s*if \(gameWindow && !gameWindow\.isDestroyed\(\) && e\.sender === gameWindow\.webContents\) restartForUpdate\(\);/, 'only the game\'s own window');
+  assert.match(main, /if \(leaveForUpdate \|\| restartingForUpdate\) \{ e\.preventDefault\(\); return; \}/, 'no Leave/Stay box in the way of the restart');
 });
