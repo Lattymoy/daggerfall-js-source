@@ -218,7 +218,7 @@ test('DW1 spellings: the worker is spelled the way the bundler reads, imports on
   assert.match(client, /new Worker\(new URL\('\.\/unityBundleWorker\.js', import\.meta\.url\), \{ type: 'module' \}\)/, 'the literal spelling Vite bundles');
   assert.equal((client.match(/new Worker\(new URL\('\.\//g) ?? []).length, 1, 'spelled once');
   // DFMOD2: bytes still cross as a copy with the buffer transferred; a Blob crosses as the handle it is (read by range)
-  assert.match(client, /const copy = bytes\.slice\(\); opened = await ask\(\{ t: 'open', bytes: copy, maxTextureSize, knownTextures \}, \[copy\.buffer\]\);/, 'a copy crosses, its buffer transferred');
+  assert.match(client, /const copy = bytes\.slice\(\);\n\s*opened = await ask\(\{ t: 'open', bytes: copy, maxTextureSize, knownTextures \}, \[copy\.buffer\]\);/, 'a copy crosses, its buffer transferred');
   assert.match(client, /if \(isBlob\) opened = await ask\(\{ t: 'open', blob: bytes, maxTextureSize, knownTextures \}\);/, 'a Blob crosses whole, never read here');
   const worker = rd('src/formats/unity/unityBundleWorker.js');
   const imports = [...worker.matchAll(/^import .* from '([^']+)';/gm)].map((m) => m[1]);

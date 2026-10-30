@@ -36,8 +36,11 @@ const utf8 = (b) => new TextDecoder('utf-8').decode(b);
 
 /** The escape hatch, read once per open (the ?terrainthread=off shape). */
 export function bundleThreadDisabled(search = globalThis.location?.search) {
-  try { return /[?&]bundlethread=off\b/.test(search ?? ''); }
-  catch { return false; }
+  try {
+    return /[?&]bundlethread=off\b/.test(search ?? '');
+  } catch {
+    return false;
+  }
 }
 
 /** The one place the worker URL is spelled. Split out so tests can
@@ -54,12 +57,26 @@ export function openBundleHere(bytes, { maxTextureSize = Infinity, knownTextures
   for (const t of bundle.textures) if (!byName.has(t.name)) byName.set(t.name, t);
   return {
     onThread: true,
-    textAssets: bundle.textAssets.map((t) => ({ name: t.name, bytes: t.bytes, get text() { return utf8(t.bytes); } })),
+    textAssets: bundle.textAssets.map((t) => ({
+      name: t.name,
+      bytes: t.bytes,
+      get text() {
+        return utf8(t.bytes);
+      },
+    })),
     textures: bundle.textures.map((t) => ({ name: t.name, width: t.width, height: t.height, format: t.format })),
-    rgba: async (name, opts) => { const tex = byName.get(name); return tex ? tex.rgba(opts) : null; },
-    arrays: (bundle.arrays ?? []).map((a) => ({ name: a.name, width: a.width, height: a.height, depth: a.depth })),   // GROUND1
-    layers: async (name) => { const a = bundle.arrays?.find((x) => x.name === name); return a ? a.layers() : null; },
-    close() { byName.clear(); },
+    rgba: async (name, opts) => {
+      const tex = byName.get(name);
+      return tex ? tex.rgba(opts) : null;
+    },
+    arrays: (bundle.arrays ?? []).map((a) => ({ name: a.name, width: a.width, height: a.height, depth: a.depth })), // GROUND1
+    layers: async (name) => {
+      const a = bundle.arrays?.find((x) => x.name === name);
+      return a ? a.layers() : null;
+    },
+    close() {
+      byName.clear();
+    },
   };
 }
 
@@ -73,32 +90,48 @@ export function openBundleHere(bytes, { maxTextureSize = Infinity, knownTextures
  * the bundle falls back to this thread. Only the reader's own error is
  * thrown, whichever thread ran it.
  */
-export async function openUnityBundle(bytes, { workerFactory = null, maxTextureSize = Infinity, knownTextures = null } = {}) {
-  const factory = workerFactory
-    ?? ((bundleThreadDisabled() || typeof Worker === 'undefined') ? null : defaultWorkerFactory);
+export async function openUnityBundle(
+  bytes,
+  { workerFactory = null, maxTextureSize = Infinity, knownTextures = null } = {},
+) {
+  const factory =
+    workerFactory ?? (bundleThreadDisabled() || typeof Worker === 'undefined' ? null : defaultWorkerFactory);
   // DFMOD2: A BLOB is read by range in the worker and never whole here. With no worker there is no sync range read
   // on this thread, so the fallback materialises it - which a multi-gigabyte one cannot survive, and says so.
   const isBlob = typeof Blob !== 'undefined' && bytes instanceof Blob;
-  const here = async () => openBundleHere(isBlob ? new Uint8Array(await bytes.arrayBuffer()) : bytes, { maxTextureSize, knownTextures });
+  const here = async () =>
+    openBundleHere(isBlob ? new Uint8Array(await bytes.arrayBuffer()) : bytes, { maxTextureSize, knownTextures });
   if (!factory) return here();
   let w = null;
   const pending = new Map();
   let nextId = 1;
   let dead = null;
   const down = (why) => {
-    if (dead) return;   // once: onerror and the catch below both reach here
+    if (dead) return; // once: onerror and the catch below both reach here
     dead = new Error(why);
     for (const p of pending.values()) p.reject(dead);
     pending.clear();
-    try { w?.terminate?.(); } catch { /* already gone */ }
+    try {
+      w?.terminate?.();
+    } catch {
+      /* already gone */
+    }
   };
-  const ask = (msg, transfer = []) => new Promise((resolve, reject) => {
-    if (dead) { reject(dead); return; }
-    const id = nextId++;
-    pending.set(id, { resolve, reject });
-    try { w.postMessage({ ...msg, id }, transfer); }
-    catch (e) { pending.delete(id); reject(e); }
-  });
+  const ask = (msg, transfer = []) =>
+    new Promise((resolve, reject) => {
+      if (dead) {
+        reject(dead);
+        return;
+      }
+      const id = nextId++;
+      pending.set(id, { resolve, reject });
+      try {
+        w.postMessage({ ...msg, id }, transfer);
+      } catch (e) {
+        pending.delete(id);
+        reject(e);
+      }
+    });
   try {
     w = factory();
     w.onerror = (e) => down(e?.message ?? 'unity bundle worker failed');
@@ -109,24 +142,41 @@ export async function openUnityBundle(bytes, { workerFactory = null, maxTextureS
       pending.delete(m.id);
       // AUDIT 68 S12-bundle-client-reader-error-reparse: the worker ANSWERED -
       // marked so the open's catch does not mistake it for a dead worker
-      if (m.t === 'error') p.reject(Object.assign(new Error(m.message), { readerError: true })); else p.resolve(m);
+      if (m.t === 'error') p.reject(Object.assign(new Error(m.message), { readerError: true }));
+      else p.resolve(m);
     };
     // a COPY: the caller's bytes are the fallback's if this never answers; DFMOD2: a Blob is a handle, not a copy
     let opened;
     if (isBlob) opened = await ask({ t: 'open', blob: bytes, maxTextureSize, knownTextures });
-    else { const copy = bytes.slice(); opened = await ask({ t: 'open', bytes: copy, maxTextureSize, knownTextures }, [copy.buffer]); }
+    else {
+      const copy = bytes.slice();
+      opened = await ask({ t: 'open', bytes: copy, maxTextureSize, knownTextures }, [copy.buffer]);
+    }
     return {
       onThread: false,
-      textAssets: opened.textAssets.map((t) => ({ name: t.name, bytes: t.bytes, get text() { return utf8(t.bytes); } })),
+      textAssets: opened.textAssets.map((t) => ({
+        name: t.name,
+        bytes: t.bytes,
+        get text() {
+          return utf8(t.bytes);
+        },
+      })),
       textures: opened.textures,
       rgba: async (name, opts) => (await ask({ t: 'rgba', name, maxSize: opts?.maxSize })).image ?? null,
-      arrays: opened.arrays ?? [],   // GROUND1
+      arrays: opened.arrays ?? [], // GROUND1
       layers: async (name) => (await ask({ t: 'layers', name })).images ?? null,
-      close() { try { w.postMessage({ t: 'close' }); } catch { /* gone */ } down('unity bundle worker closed'); },
+      close() {
+        try {
+          w.postMessage({ t: 'close' });
+        } catch {
+          /* gone */
+        }
+        down('unity bundle worker closed');
+      },
     };
   } catch (e) {
     down(e?.message ?? 'unity bundle worker failed');
-    if (e?.readerError) throw e;   // the same bytes, the same pure reader: no second parse here
+    if (e?.readerError) throw e; // the same bytes, the same pure reader: no second parse here
     console.warn('[unity bundle] worker unavailable; opening on the main thread', e?.message ?? e);
     return here();
   }

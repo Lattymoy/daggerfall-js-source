@@ -20,6 +20,8 @@
 /src/formats/*
 !/src/formats/save/
 /src/formats/save/*/
+!/src/formats/unity/
+/src/formats/unity/*/
 !/src/net/
 /src/net/*
 !/src/net/card/
