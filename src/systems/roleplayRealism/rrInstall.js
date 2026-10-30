@@ -202,7 +202,8 @@ function encumbranceOf(entity) {
     // x1.5 plus IncreasedWeightAllowance's share (DaggerfallEntity.cs:272, :501-507) - the pack's own ceiling, not the
     // bare formula: a player carrying 502 was penalised in full past 105
     maxEncumbrance: entityMaxEncumbrance(entity),
-    liveSpeed: liveStat(entity, 'speed'),
+    // Stop this mod from negative modifier feedback into itself while still applying other modifiers.
+    liveSpeed: liveStat(entity, 'speed', null, 'roleplay-realism-encumbrance'),
     permanentSpeed: entity.stats.speed ?? 50,
     currentFatigue: entity.fatigue ?? 0,
   });

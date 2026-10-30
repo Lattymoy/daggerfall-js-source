@@ -118,10 +118,13 @@ export function weaponBlowMods(weapon, damage, attacker, target, info = NO_BLOW_
 export function computeEntityMods(entity) {
   if (!entity) return EMPTY_MODS;
   const out = newMods();
-  for (const fn of _folds.values()) {
+  // Stop RR Encumbrance stat squish recursion.
+  out.statFolds = Object.create(null);
+  for (const [name, fn] of _folds) {
     let m;
     try { m = fn(entity); } catch (e) { console.warn('[entityMods] a fold threw', e); continue; }
     if (!m) continue;
+    out.statFolds[name] = Object.fromEntries(Object.entries(m.stats ?? {}).map(([k, v]) => [k, v | 0]));
     if (Array.isArray(m.armorParts)) for (let i = 0; i < NUMBER_BODY_PARTS; i++) out.armorParts[i] += m.armorParts[i] | 0;
     for (const [k, v] of Object.entries(m.stats ?? {})) out.stats[k] = (out.stats[k] ?? 0) + (v | 0);
     for (const [k, v] of Object.entries(m.statMax ?? {})) out.statMax[k] = (out.statMax[k] ?? 0) + (v | 0);   // FIRM-MAX

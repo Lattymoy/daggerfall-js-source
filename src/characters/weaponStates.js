@@ -210,12 +210,10 @@ export const THUNDERLOCK_NUM_FRAMES = Object.freeze({
   Idle: 1, StrikeDown: TL_N, StrikeDownLeft: TL_N, StrikeLeft: TL_N, StrikeRight: TL_N, StrikeDownRight: TL_N, StrikeUp: TL_N,
 });
 
-// FPSWeapon.cs:71 verbatim: the unarmed strike-to-the-LEFT plays its
-// own eight-tick frame list - up and back down again - instead of the
-// generic 5-frame increment. FPSWeapon.AnimateWeapon:500-511 takes
-// this arm FIRST, for WeaponTypes.Melee and Werecreature only, and
-// cannot end before the eighth tick.
-export const LEFT_UNARMED_ANIMS = Object.freeze([0, 1, 2, 3, 4, 2, 1, 0]);
+// Fix to keep unarmed attack speed consistent. 
+// Previous comment referenced this being for left arm, but this is only applying to left direction attack not dual wielding unarmed left arm attacks.
+// Probably worth removing entirely as to my knowledge it serves no purpose.
+export const LEFT_UNARMED_ANIMS = Object.freeze([1, 2, 3, 4, 0]);
 
 /** WeaponManager.cs:343 - Random.Range((int)UpRight, (int)DownRight + 1)
  *  over MouseDirections {None, UpLeft, Up, UpRight, Left, Right,
