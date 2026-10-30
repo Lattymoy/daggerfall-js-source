@@ -165,7 +165,7 @@ const HARDCODED = {
   'src/net/serpent/serpentLaw.js': 7,
   'src/net/serpent/serpentLink.js': 6,
   'src/net/serverPost.js': 5,
-  'src/net/shopLaw.js': 17,   // ARMORY: SHOP_KIND_NAME's 'Aura Armory' - the receipt's word for the ware's kind, the service's English (the shop's window says it through ui/enhanced/enhancedShop.js); STOREFRONT: +16, OWN_NAME - the new wares' names and the pass's kinds in the service's English (Stripe's line, the receipt); the window says them through ui/enhanced/enhancedShop.js shopWareName and the badges' own tables, pins holding them equal (test/ui/shop_window.test.js, storefront_badges.test.js)
+  'src/net/shopLaw.js': 8,   // ARMORY: SHOP_KIND_NAME's 'Aura Armory' - the receipt's word for the ware's kind, the service's English (the shop's window says it through ui/enhanced/enhancedShop.js); STOREFRONT: +16, OWN_NAME - the new wares' names and the pass's kinds in the service's English (Stripe's line, the receipt); the window says them through ui/enhanced/enhancedShop.js shopWareName and the badges' own tables, pins holding them equal (test/ui/shop_window.test.js, storefront_badges.test.js); PASS-PANELS: 9 fewer, the passes', boosters' and Seasonal Collector's names gone with them
   'src/net/siege/siegeLink.js': 27,
   'src/net/siege/siegeRef.js': 4,
   'src/net/siege/siegeSession.js': 19,
