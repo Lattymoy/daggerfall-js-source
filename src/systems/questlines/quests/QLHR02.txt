@@ -166,7 +166,7 @@ Message:  1045
 Message:  1050
 <ce>        Prior Anselm Vey waited at _temple_ to hear
 <ce>        what you saw in the Hour, then went back to
-<ce>           his Order. He will not ask you again.
+<ce>          his Order. He may send for you again.
 
 QBN:
 Item _letter_ letter used 1011
@@ -217,10 +217,6 @@ _broken_ task:
 	ql act hour-broken 1
 	log 1021 step 2
 	start timer _meet_
-
-_late_ task:
-	when _courier_ and _broken_
-	stop timer _wait_
 
 _qgclicked_ task:
 	clicked npc _prior_
@@ -277,9 +273,15 @@ _toldBlades_ task:
 	end quest
 
 _wait_ task:
+
+_meet_ task:
+
+_lapsed_ task:
+	when _wait_ and not _broken_
 	say 1003
 	end quest
 
-_meet_ task:
+_gone_ task:
+	when _wait_ and _meet_
 	say 1050
 	end quest

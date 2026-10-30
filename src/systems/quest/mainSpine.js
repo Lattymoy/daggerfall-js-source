@@ -26,8 +26,8 @@
 //
 // THE CURSE IS THE OPENER'S TRACE (AUDIT FB1026d II A1). A save from before the record whose opener has failed, ended and
 // been removed (some two months of played game time, Brisienna never met - a failed opener files nothing in the journal
-// - or met and its journal entry cleared) keeps no trace of the opener. It keeps the Curse: every game born in the port
-// starts S0000977 beside _BRISIEN (scenes/quest/questBridge.js GAME_START_QUESTS), nothing else starts it (the retired
+// - or met and its journal entry cleared) keeps no trace of the opener. It keeps the Curse: a game born before START1
+// began S0000977 beside _BRISIEN, one since beside its start (questBridge.js GAME_START_QUESTS), nothing else (the retired
 // _TUTOR__ did), and it stands until the curse is lifted, long past the courts' first quests (storyStarted then).
 //
 // THE EXCEPTIONS, named (AUDIT FB1026d A1/A2/A5/E2, II A2):
@@ -46,7 +46,7 @@ import { isStartQuestName, MAIN_QUEST_OPENER } from '../starts/starts.js';   // 
 /** The backbone, and the quest that starts it. */
 export const SPINE = 'S0000999';
 export const SPINE_OPENER = MAIN_QUEST_OPENER;
-/** The Curse of Daggerfall, started beside the opener in every game born in the port (AUDIT FB1026d II A1). */
+/** The Curse of Daggerfall, started at every birth in the port - beside the opener before START1, beside a start since. */
 export const SPINE_CURSE = 'S0000977';
 /** Quest ticks between the checks. */
 export const SPINE_CHECK_TICKS = 30;
@@ -69,17 +69,18 @@ const openerStartedSpine = (quest) => ranStartOf(quest, SPINE);
  *  the opener, or the Curse begun beside it (AUDIT FB1026d II A1). @param {any} saved @param {string[]} names */
 export function spineRecord(saved, names) {
   const has = (n) => names.some((x) => String(x ?? '').toUpperCase() === n);
-  const curse = has(SPINE_CURSE) && !names.some((x) => isStartQuestName(x));   // QUEST-AUDIT IV A1: beside a start, not the opener
-  return { opened: saved?.opened === true || has(SPINE_OPENER) || curse, ran: saved?.ran === true || has(SPINE) };
+  const handed = saved?.handed === true;   // AUDIT QA4 A3: a hand-off whose opener has not begun - no Curse is its trace
+  const curse = has(SPINE_CURSE) && !names.some((x) => isStartQuestName(x)) && !handed;   // QUEST-AUDIT IV A1: beside a start, not the opener
+  return { opened: saved?.opened === true || has(SPINE_OPENER) || curse, ran: saved?.ran === true || has(SPINE), ...(handed ? { handed } : {}) };
 }
 
 /**
  * Whether this machine's game is owed its backbone: its opener begun (on the table, it has run its start), no backbone
  * begun (one on the table, running or ended, began: the record has it) or scheduled, and no story step begun.
- * @param {{ quests: Map<any, any>, questsToInvoke: any[], storyStarted: Set<string>, spine: { opened: boolean, ran: boolean } }} m
+ * @param {{ quests: Map<any, any>, questsToInvoke: any[], storyStarted: Set<string>, spine: { opened: boolean, ran: boolean, handed?: boolean } }} m
  */
 export function spineOwed(m) {
-  if (m.spine.ran || m.storyStarted.size > 0) return false;
+  if (m.spine.ran || m.storyStarted.size > 0 || m.spine.handed) return false;
   if (m.questsToInvoke.some((q) => named(q, SPINE))) return false;
   for (const q of m.quests.values()) if (named(q, SPINE_OPENER)) return openerStartedSpine(q);
   for (const q of m.quests.values()) if (isStartQuestName(q?.questName)) return false;   // QUEST-AUDIT IV A1: the opener not begun yet
@@ -91,10 +92,39 @@ export function spineOwed(m) {
  * waits - the opener's parse failed (the world's faction records still away) and StartQuest swallowed it, as it did the
  * backbone's. The start ends in that tick and the opener begins nowhere else, so it is started again at each check. An
  * opener that began outlives the start's tombstone week (her letter alone is a week off), so its absence is the proof.
- * @param {{ quests: Map<any, any>, questsToInvoke: any[] }} m
+ * AUDIT QA4 A3: the hand-off is recorded (`spine.handed`, saved), so one whose opener fails a week long is owed still.
+ * @param {{ quests: Map<any, any>, questsToInvoke: any[], spine?: { handed?: boolean } }} m
  */
 export function openerOwed(m) {
   if ([...m.quests.values(), ...m.questsToInvoke].some((q) => named(q, SPINE_OPENER))) return false;
+  if (m.spine?.handed) return true;
   for (const q of m.quests.values()) if (isStartQuestName(q?.questName) && ranStartOf(q, SPINE_OPENER)) return true;
   return false;
+}
+
+const live = (q) => !!q && !q.questTombstoned && !q.questComplete;
+const startedAt = (q) => [Number(q?.questStartTime) || 0, Number(q?.uid) || 0];
+const later = (a, b) => { const [x, y] = startedAt(a), [u, v] = startedAt(b); return x !== u ? x > u : y > v; };
+
+/**
+ * AUDIT QA4 A1, A2: WHAT THE OLD LAWS LEFT IN A SAVE, mended at the first tick after a load. A1: a backbone a load began
+ * before the seal was broken (a live one beside a start not handed off, no opener, no story step) goes, its `ran` with
+ * it - the opener's own `start quest 999 999` starts it in order. A2: the old `restored()`'s second Curse goes, with any
+ * start begun beside it that has not handed off. A backbone or a start that has moved the story on stays.
+ * @param {{ quests: Map<any, any>, questsToInvoke: any[], storyStarted: Set<string> }} m
+ */
+export function storyMends(m) {
+  const quests = [...m.quests.values()].filter(live);
+  const remove = [];
+  const curses = quests.filter((q) => named(q, SPINE_CURSE)).sort((a, b) => (later(a, b) ? 1 : -1));
+  for (const extra of curses.slice(1)) {
+    remove.push(extra);
+    for (const q of quests) if (isStartQuestName(q.questName) && !ranStartOf(q, SPINE_OPENER) && !later(extra, q)) remove.push(q);
+  }
+  const opener = [...m.quests.values(), ...m.questsToInvoke].some((q) => named(q, SPINE_OPENER));
+  const waiting = quests.some((q) => isStartQuestName(q.questName) && !ranStartOf(q, SPINE_OPENER) && !remove.includes(q));
+  const before = !opener && waiting && m.storyStarted.size === 0;
+  const early = before ? quests.filter((q) => named(q, SPINE)) : [];
+  const scheduled = before && m.questsToInvoke.some((q) => named(q, SPINE));
+  return { remove: [...new Set([...remove, ...early])], unran: early.length > 0 || scheduled, unschedule: scheduled };
 }

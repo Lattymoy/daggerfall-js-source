@@ -193,7 +193,7 @@ export function createKetchClient(deps) {
   const shares = createKetchShares({ store: deps.store ?? null, pool: spoils, level: () => entity.level ?? 1, me, aboard: () => onShip(), say: (t) => mid(t), changed: () => deps.changed?.() });
   const claims = createKetchClaims({
     claim: (r, cid) => account.claim(r, cid), store: deps.store ? { get: (k) => deps.store.get(k), set: (k, v) => deps.store.set(k, v) } : null,
-    nowS: () => Math.floor(now() / 1000), say, me, paid: (c) => paid(c), who,   // QUEST-AUDIT IV C4: the act the fighter's
+    nowS: () => Math.floor(now() / 1000), say, me, paid: (c) => paid(c), who,   // QUEST-AUDIT IV C4: the act the character's the receipt came to
   });
   const fight = createKetchFight({
     renderer: deps.renderer, gl: deps.gl, getTexture: deps.getTexture, uploadRecordFrame: deps.uploadRecordFrame, audio: deps.audio, link, now,

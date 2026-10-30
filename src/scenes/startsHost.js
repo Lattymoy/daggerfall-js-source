@@ -171,8 +171,8 @@ export function createStartsHost(host) {
 
   /** AUDIT STARTS W5: a load restored the machine (world.js, its two load doors). A character saved before their story
    *  began - a save in the seconds a start waits on the land's trace and the world, or a page closed then - holds no
-   *  story at all: no start, no _BRISIEN, nothing of the main story ever begun (quest/machine.js storyStarted: a new
-   *  character's curse is among it from the first tick). Loaded, it is handed the commission (the curse beside it, as
+   *  story at all: no start, no _BRISIEN, nothing of the main story ever begun (storyBegun below: the story's record and
+   *  the traces it leaves out). Loaded, it is handed the commission (the curse beside it, as
    *  every new game's), never left without a way into the story. A save from before the story was kept says nothing of
    *  it (storyLegacy) and is left alone. Answers true: the game's start is the save's now (world.js _questStarted). */
   function restored() {

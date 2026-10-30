@@ -87,13 +87,6 @@ export function arenaLadderSnapshot(L) {
   return { v: ARENA_LADDER_VERSION, tier: s.tier, won: s.won, paid: s.paid, champs: [...s.champs], grand: s.grand, record: { ...s.record } };
 }
 
-/** QUEST-AUDIT IV C2: whether this account's climb online is over (the Grand Champion beaten), as the board last said -
- *  the Herald's Call waits on a bout the Herald still offers (systems/questlines/qlLineRunner.js NEED_CHECKS). */
-let _ladderDone = false;
-/** The board's climb (`board.me.ladder`) heard. @param {any} L */
-export const noteLadderDone = (L) => { _ladderDone = L != null && nextLadderBout(L) == null; };
-export const ladderDoneNow = () => _ladderDone;
-
 /** THE NEXT BOUT on the ladder: `{ tier, bout, champion, grand, opponents, free, beasts, purse, label, repeat }` - the bout
  *  index (0..2), or the champion once three are won; null when the Grand Champion has been beaten. AUDIT ARENA-LADDER 2:
  *  `repeat` a bout of the tier already won once and won again after a lost run (`paid`, the tier's bouts ever won) - it

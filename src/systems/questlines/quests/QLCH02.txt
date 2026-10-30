@@ -73,8 +73,8 @@ Message:  1020
 
 Message:  1050
 <ce>       Ysolde Marnhel waited at _hall_ for the
-<ce>      Weir Key, then gave up waiting. The Guild
-<ce>             has closed the matter.
+<ce>      Weir Key, then gave up waiting. She may
+<ce>               write to you again.
 
 -- Symbols used in the QRC file:
 --
@@ -118,7 +118,6 @@ _slain_ task:
 	killed 1 _lieutenant_ saying 1013
 
 _haskey_ task:
-	stop timer _wait_
 	start timer _meet_
 	say 1016
 	log 1011 step 1
@@ -130,9 +129,15 @@ _handed_ task:
 	end quest
 
 _wait_ task:
+
+_meet_ task:
+
+_lapsed_ task:
+	when _wait_ and not _haskey_
 	say 1003
 	end quest
 
-_meet_ task:
+_gone_ task:
+	when _wait_ and _meet_
 	say 1050
 	end quest

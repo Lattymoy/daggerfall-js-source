@@ -113,7 +113,6 @@ _courier_ task:
 
 _book_ task:
 	get item _guide_
-	make _guide_ permanent
 
 _boarded_ task:
 	ql act ketch-boarded 1
@@ -133,6 +132,7 @@ _notyet_ task:
 _paid_ task:
 	when _clicked_ and _boarded_
 	say 1013
+	make _guide_ permanent
 	give pc _gold_
 	end quest
 

@@ -210,8 +210,8 @@ export function createQuestProvinceSites({ worldPlaces, regionAt, standAt, lairs
   const sliceRow = (row) => !!row && sliceQuestName(row.px, row.py) != null;
   /** @type {Map<number, { key: string, region: any }>} */
   const tables = new Map();
-  /** the rows a name lookup found by a site's pixel, by region: name -> row (kept across tables) */
-  /** @type {Map<number, Map<string, any>>} */
+  /** the rows a name lookup found by a site's pixel, by region: map id -> row (kept across tables) */
+  /** @type {Map<number, Map<number, any>>} */
   const found = new Map();
   const keyOf = (/** @type {any} */ o) => `${worldPlaces?.generation?.() ?? 0}|${o ? `${o.x},${o.y}` : '-'}`;
   /** A row joined to a table: its index. @param {any} region @param {any} row */
@@ -265,23 +265,30 @@ export function createQuestProvinceSites({ worldPlaces, regionAt, standAt, lairs
     const loc = standAt(row.px, row.py);
     return loc && (loc.mapTableData?.mapId >>> 0) === row.mapId ? questView(loc) : null;   // R2-5b: a slice under its quest name
   }
-  /** The site a quest holds of this name in this region, carried by its pixel, joined to the table (and to every table
-   *  of the region made after); its index, or undefined. */
+  /** A held site's pixel that stood no place of its name, by table: not stood again for it (AUDIT QA4 A5). */
+  const unstood = new Set();
+  /** The sites quests hold of this name in this region, each carried by its pixel and joined to the table by its id (and
+   *  to every table of the region made after) - two lairs may share a name, and each holder reads its own by its map id
+   *  (quest/place.js siteRowIndex, AUDIT QA4 A5); the first one's index, or undefined. */
   function findBySite(/** @type {number} */ r, /** @type {string} */ name) {
+    let first;
     for (const sd of heldSites()) {
       const p = sd?.worldPixel;
       if (sd?.regionIndex !== r || sd.locationName !== name || !p) continue;
       const held = tables.get(r)?.region, had = held?.mapIdLookup.get(sd.mapId >>> 0);
-      if (had != null && held.mapTable[had]?.name === name) return had;   // QUEST-AUDIT IV A9: its own row, already joined
+      if (had != null && held.mapTable[had]?.name === name) { first ??= had; continue; }   // QUEST-AUDIT IV A9: its own row, already joined
+      const miss = `${keyOf(origin())}|${r}|${sd.mapId >>> 0}`;
+      if (unstood.has(miss)) continue;
       const loc = questView(standAt(p.x, p.y));
-      if (!loc || loc.name !== name || (loc.mapTableData?.mapId >>> 0) !== (sd.mapId >>> 0)) continue;
+      if (!loc || loc.name !== name || (loc.mapTableData?.mapId >>> 0) !== (sd.mapId >>> 0)) { unstood.add(miss); continue; }
       const row = provinceRow({ mapId: sd.mapId, name, px: p.x, py: p.y, type: loc.mapTableData?.locationType ?? 0, dungeonType: loc.mapTableData?.dungeonType ?? 0, tableKey: loc.mapTableData?.key });
       if (!found.has(r)) found.set(r, new Map());
-      /** @type {Map<string, any>} */ (found.get(r)).set(name, row);
+      /** @type {Map<number, any>} */ (found.get(r)).set(row.mapId, row);
       const table = tables.get(r)?.region;
-      return table ? join(table, row) : getRegion(r)?.mapNameLookup.get(name);
+      const i = table ? join(table, row) : getRegion(r)?.mapIdLookup.get(row.mapId);   // joined whether or not it answers
+      first ??= i;
     }
-    return undefined;
+    return first;
   }
   /** A province's region's place by name: the table's, else a held site's (the lookup's miss); its index, or -1. */
   const indexOfName = (/** @type {number} */ r, /** @type {string} */ name) => tableOf(r)?.mapNameLookup.get(name) ?? -1;

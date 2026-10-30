@@ -272,12 +272,14 @@ export function createQuestlines({ machine, questLists = null, ctx = {}, service
     },
 
     /** QL11: an act the player did - a fish caught, a breach closed - heard by every running stamped quest, counted in
-     *  its state (the `act` binding and `ql act` read it). A quest set aside or ending hears nothing. */
+     *  its state (the `act` binding and `ql act` read it). A quest set aside or ending hears nothing - but a line's step
+     *  the runner set aside out of season is taken back for an act it waits on (AUDIT QA4 B2). */
     act(kind, n = 1) {
       if (typeof kind !== 'string' || !kind || !(n > 0)) return 0;
       let heard = 0;
       for (const quest of machine.quests.values()) {
-        if (!isStamped(quest) || quest.questComplete || quest.questTombstoned || quest.shelvedAt != null) continue;
+        if (!isStamped(quest) || quest.questComplete || quest.questTombstoned) continue;
+        if (quest.shelvedAt != null && !runner.wakeAside(quest, kind)) continue;
         quest.ql.acts[kind] = (quest.ql.acts[kind] ?? 0) + Math.floor(n);
         heard++;
       }

@@ -65,8 +65,8 @@
   {
     "name": "R25-held-name-unchecked",
     "file": "src/scenes/quest/questProvinceSites.js",
-    "old": "      if (!loc || loc.name !== name || (loc.mapTableData?.mapId >>> 0) !== (sd.mapId >>> 0)) continue;",
-    "new": "      if (!loc || (loc.mapTableData?.mapId >>> 0) !== (sd.mapId >>> 0)) continue;",
+    "old": "      if (!loc || loc.name !== name || (loc.mapTableData?.mapId >>> 0) !== (sd.mapId >>> 0)) { unstood.add(miss); continue; }",
+    "new": "      if (!loc || (loc.mapTableData?.mapId >>> 0) !== (sd.mapId >>> 0)) { unstood.add(miss); continue; }",
     "tests": [
       "test/systems/quest/auditrelease_r25.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "R25-held-id-unchecked",
     "file": "src/scenes/quest/questProvinceSites.js",
-    "old": "      if (!loc || loc.name !== name || (loc.mapTableData?.mapId >>> 0) !== (sd.mapId >>> 0)) continue;",
-    "new": "      if (!loc || loc.name !== name) continue;",
+    "old": "      if (!loc || loc.name !== name || (loc.mapTableData?.mapId >>> 0) !== (sd.mapId >>> 0)) { unstood.add(miss); continue; }",
+    "new": "      if (!loc || loc.name !== name) { unstood.add(miss); continue; }",
     "tests": [
       "test/systems/quest/auditrelease_r25.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "R25-found-joins-nothing",
     "file": "src/scenes/quest/questProvinceSites.js",
-    "old": "      return table ? join(table, row) : getRegion(r)?.mapNameLookup.get(name);",
-    "new": "      return undefined;",
+    "old": "      const i = table ? join(table, row) : getRegion(r)?.mapIdLookup.get(row.mapId);   // joined whether or not it answers",
+    "new": "      const i = undefined;",
     "tests": [
       "test/systems/quest/auditrelease_r25.test.js"
     ]

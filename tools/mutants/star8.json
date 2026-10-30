@@ -65,8 +65,8 @@
  {
   "name": "STAR8-the-need-off-the-clock",
   "file": "src/systems/questlines/qlLineRunner.js",
-  "old": "  const need = (n) => { try { return !!NEED_CHECKS[n]?.(nowMs()); } catch { return false; } };",
-  "new": "  const need = (n) => { try { return !!NEED_CHECKS[n]?.(); } catch { return false; } };",
+  "old": "NEED_CHECKS[n]?.(nowMs(), { account: service?.account?.() ?? null })",
+  "new": "NEED_CHECKS[n]?.(undefined, { account: service?.account?.() ?? null })",
   "tests": [
    "test/systems/questlines/star8_frostfall.test.js"
   ]
@@ -222,8 +222,8 @@
  {
   "name": "STAR8-the-fallen-star-unnamed",
   "file": "src/ui/questlines/qlJournal.js",
-  "old": "the Abyss’s Shattered Hour, against the Sea Serpent, aboard the Sky-Ketch or at a fallen star.",
-  "new": "the Abyss’s Shattered Hour, against the Sea Serpent or aboard the Sky-Ketch.",
+  "old": "Others are the Sea Serpent, the Sky-Ketch and the fallen stars.",
+  "new": "Others are the Sea Serpent and the Sky-Ketch.",
   "tests": [
    "test/ui/questlines/ql2_journal.test.js"
   ]

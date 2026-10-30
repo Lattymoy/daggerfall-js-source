@@ -51,6 +51,14 @@ export const Scopes = Object.freeze({ None: 'none', Local: 'local', Remote: 'rem
 /** SiteTypes (DaggerfallUnityEnums.cs:611) - numeric for save parity. */
 export const SITE_TYPES = Object.freeze({ None: 0, Town: 1, Dungeon: 2, Building: 3 });
 
+/** AUDIT QA4 A5: a site's row in its region - DFRegion.MapNameLookup by its name, unless the row its map id keys bears
+ *  that name: past the Bay two lairs a province's table holds may share one, and each holder reads its own. */
+export function siteRowIndex(region, sd) {
+  const byName = region?.mapNameLookup?.get?.(sd?.locationName);
+  const byId = region?.mapIdLookup?.get?.((Number(sd?.mapId) || 0) >>> 0);
+  return byId != null && region.mapTable?.[byId]?.name === sd?.locationName ? byId : byName;
+}
+
 /** START3 (bible/06-Systems/Alternate-Starts-Arc.md section 12): A SITE PAST THE BAY KEEPS ITS OWN MAP PIXEL. Every face
  *  finds a Bay site's pixel the way DFU's CanFindPlace does - its region's name lookup in MAPS.BSA, the row's longitude
  *  and latitude - and MAPS.BSA holds no place off the Bay's table (TESA's Arena places, capitals, countryside and lairs,
@@ -450,7 +458,7 @@ export class Place extends QuestResource {
   fitSiteToBuild(world) {
     const sd = this.siteDetails;
     if (sd?.siteType !== SITE_TYPES.Dungeon) return false;
-    const index = world?.maps?.getRegion?.(sd.regionIndex)?.mapNameLookup?.get?.(sd.locationName);
+    const index = siteRowIndex(world?.maps?.getRegion?.(sd.regionIndex), sd);
     const location = index == null ? null : world.maps.getLocation(sd.regionIndex, index);
     if (!location?.dungeon?.blocks) return false;
     const { questSpawnMarkers, questItemMarkers } = this._enumerateDungeonQuestMarkers(world, location);
@@ -1084,7 +1092,7 @@ export class Place extends QuestResource {
    *  moved site (reseatMovedSite) and a moved questor's hall (person.js reseatMovedQuestor) are chosen again. */
   siteTown(world) {
     const sd = this.siteDetails;
-    const index = world?.maps?.getRegion?.(sd?.regionIndex)?.mapNameLookup?.get?.(sd?.locationName);
+    const index = siteRowIndex(world?.maps?.getRegion?.(sd?.regionIndex), sd);
     const location = index == null ? null : world.maps.getLocation(sd.regionIndex, index);
     return location?.exterior?.exteriorData ? location : null;
   }

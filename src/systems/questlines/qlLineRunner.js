@@ -40,8 +40,8 @@ import { KINGS_GAMBIT_KEY } from '../features.js';
 import { modSetting } from '../modSettings.js';
 import { revenantHeld } from '../revenant/revenant.js';
 import { starfallRuns, STAR_LIFE_MS, STAR_GRACE_MS } from '../../net/starfall/starfallLaw.js';   // STAR8: the Witches' Festival's stars falling
-import { Symbol as QuestSymbol } from '../quest/symbol.js';
-import { ladderDoneNow } from '../arena/arenaLadder.js';   // QUEST-AUDIT IV C2: a climb over has no bout to win   // QUEST-AUDIT IV C1: a step's deed, by the task the machine files
+import { Symbol as QuestSymbol } from '../quest/symbol.js';   // QUEST-AUDIT IV C1: a step's deed, by the task the machine files
+import { ladderDoneFor } from '../arena/arenaClimbSeen.js';   // QUEST-AUDIT IV C2: a climb over has no bout to win
 
 /** AUDIT QUESTLINES ACTS-2, LINES-3, LINES-6: WHAT A STEP'S DEED NEEDS, read where the game reads it - Loot rarity's own
  *  switch (a socket, a reforge refuse 'off' without it), The King's Gambit's (no table offers the game), the sea's
@@ -55,7 +55,7 @@ export const NEED_CHECKS = Object.freeze({
   kingsGambit: () => !!getPref(KINGS_GAMBIT_KEY),
   naval: () => getPref('naval') !== false && (() => { try { return modSetting('come-sail-away', 'Enabled') !== false; } catch { return false; } })(),
   renown: () => !revenantHeld(),
-  arenaLadder: () => !ladderDoneNow(),
+  arenaLadder: (/** @type {number} */ _ms, /** @type {any} */ o) => !ladderDoneFor(o?.account ?? null),
   starfall: (/** @type {number} */ nowMs) => starfallRuns(nowMs),
 });
 
@@ -129,7 +129,7 @@ export function createLineRunner({ machine, ctx = {}, service = null, nowMs = ()
   const now = () => ctx.nowSeconds?.() ?? 0;
   /** A registered account signed in: never a guest's (AUDIT QUESTLINES LINES-2). */
   const registered = () => !!service && !service.guest?.();
-  const need = (n) => { try { return !!NEED_CHECKS[n]?.(nowMs()); } catch { return false; } };
+  const need = (n) => { try { return !!NEED_CHECKS[n]?.(nowMs(), { account: service?.account?.() ?? null }); } catch { return false; } };   // AUDIT QA4 B1: the signed-in account's
   const probe = { level, online, registered, need, lineDone: (id) => !!lines[id]?.done };
 
   /** The step's quest on the machine (by name) - running, or scheduled for the next tick - or null. */
@@ -284,7 +284,7 @@ export function createLineRunner({ machine, ctx = {}, service = null, nowMs = ()
   const runner = {
     /** Each tick after the machine's: start each begun line's later step that is due, put back on offer a first step
      *  gone, ask the service what is owed. A line not begun is never begun here (QL-OFFERED: takeLine). The switch off,
-     *  no line moves (its quests would not be stamped). */
+     *  no step starts here - a running step's end still moves its line (AUDIT QA4 B3). */
     look() {
       if (!questlinesOn()) return;
       const s = now();
@@ -449,6 +449,7 @@ export function createLineRunner({ machine, ctx = {}, service = null, nowMs = ()
           opens: state === 'waiting' || state === 'retry' ? waitingWords(l, rec) : null,
           outcome: rec?.done ? last?.text ?? null : null,
           honour: lineServiceOf(l)?.title ?? null,
+          after: l.opens.after ? lineById(l.opens.after)?.title() ?? null : null,   // AUDIT QA4 B4: the line a held title waits on
           post: !rec && (l.post !== 'board' || online()) ? l.post ?? null : null,   // a first step set aside is the journal's to take back
         };
       });
@@ -471,6 +472,19 @@ export function createLineRunner({ machine, ctx = {}, service = null, nowMs = ()
      *  never delivered: its first step's courier letter still held (a save from before QL-OFFERED), its quest is let go
      *  (machine.js removeQuest - nothing filed, it had written nothing) and the line is on offer again. A first step
      *  whose letter came stays the player's; a first step with no quest at all goes back on offer at the next look. */
+    /** AUDIT QA4 B2: an act a step the runner set aside for its season waits on (`ql act <kind>`) - a star held as it
+     *  faded, its claim counted after - takes the step back so it is heard; the next look sets it aside again if its
+     *  season still holds it. A step the player set aside stays theirs. Answers whether it was taken back. */
+    wakeAside(quest, kind) {
+      const at = lineStepOf(quest?.questName);
+      const rec = at ? lines[at.line.id] : null;
+      if (!rec?.aside || rec.done || rec.step !== at.index || quest.shelvedAt == null) return false;
+      if (![...(quest.tasks?.values?.() ?? [])].some((t) => t.actions?.some((a) => a.constructor?.typeName === 'QlAct' && a.kind === kind))) return false;
+      if (!machine.reclaimQuest?.(quest.uid)?.ok) return false;
+      rec.aside = false;
+      return true;
+    },
+
     restore(data) {
       lines = {};
       pending = [];

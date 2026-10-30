@@ -32,7 +32,7 @@
 // for anything but the above, and nothing here writes them.
 //
 // Not a DFU member: DFU has no such pass (its quest debugger is a developer's console). Ledger A (QREPAIR).
-import { MARKER_PREFERENCE, SITE_TYPES } from './place.js';
+import { MARKER_PREFERENCE, SITE_TYPES, siteRowIndex } from './place.js';
 import { SMALLER_DUNGEONS_STATE, portSize } from '../../world/smallerDungeons.js';   // AUDIT DELVE E1 / INSTANCES: the size a quest's markers know online (the whole dungeon's); MEDIUM-DISTINCT: the two stamps whose builds are medium
 import { isOnlinePage } from '../online/onlineLane.js';   // MEDIUM-DISTINCT's audit: offline a dungeon no link holds is built by the settings
 import { isShelved } from './quest.js';   // QUEST-SHELF's audit: the repair mends no quest set aside
@@ -187,7 +187,7 @@ function relayDungeonPlaces(quest, { only = null } = {}) {
   for (const r of quest.resources?.values?.() ?? []) {
     const sd = r?.isPlace ? r.siteDetails : null;
     if (sd?.siteType !== SITE_TYPES.Dungeon) continue;
-    const index = world?.maps?.getRegion?.(sd.regionIndex)?.mapNameLookup?.get?.(sd.locationName);
+    const index = siteRowIndex(world?.maps?.getRegion?.(sd.regionIndex), sd);   // AUDIT QA4 A5: by its map id first
     const location = index == null ? null : world.maps.getLocation(sd.regionIndex, index);
     if (!location?.dungeon?.blocks) { unread = true; continue; }
     if (only && !only(sd, location)) continue;

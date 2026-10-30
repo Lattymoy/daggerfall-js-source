@@ -134,7 +134,7 @@ export const QL_LINES = Object.freeze([
     steps: [
       { quest: 'QLOC01', title: () => t('ql.step.QLOC01', 'The Sailors’ Tale') },
       { quest: 'QLOC02', title: () => t('ql.step.QLOC02', 'The Packet Lanes'), needs: ['naval'] },   // QUEST-AUDIT IV B1: a berth and the Serpent are the sea's
-      { quest: 'QLOC03', title: () => t('ql.step.QLOC03', 'The Shed Skin'), needs: ['naval'] },
+      { quest: 'QLOC03', title: () => t('ql.step.QLOC03', 'The Shed Skin'), needs: ['naval'], deed: '_slain_' },   // AUDIT QA4 C4: Hamid's tavern is no sea
     ],
   }),
   line({

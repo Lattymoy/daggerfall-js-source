@@ -2,8 +2,8 @@
   {
     "name": "QA4-A1-curse-beside-start",
     "file": "src/systems/quest/mainSpine.js",
-    "old": "const curse = has(SPINE_CURSE) && !names.some((x) => isStartQuestName(x));",
-    "new": "const curse = has(SPINE_CURSE);",
+    "old": "const curse = has(SPINE_CURSE) && !names.some((x) => isStartQuestName(x)) && !handed;",
+    "new": "const curse = has(SPINE_CURSE) && !handed;",
     "tests": [
       "test/systems/quest/questaudit4.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "QA4-B1-coil-sea",
     "file": "src/systems/questlines/qlLines.js",
-    "old": "{ quest: 'QLOC03', title: () => t('ql.step.QLOC03', 'The Shed Skin'), needs: ['naval'] },",
-    "new": "{ quest: 'QLOC03', title: () => t('ql.step.QLOC03', 'The Shed Skin') },",
+    "old": "{ quest: 'QLOC03', title: () => t('ql.step.QLOC03', 'The Shed Skin'), needs: ['naval'], deed: '_slain_' },",
+    "new": "{ quest: 'QLOC03', title: () => t('ql.step.QLOC03', 'The Shed Skin'), deed: '_slain_' },",
     "tests": [
       "test/systems/questlines/questaudit4_lines.test.js",
       "test/systems/questlines/ql12_lines.test.js"
@@ -156,8 +156,8 @@
   {
     "name": "QA4-B2-wait-stopped",
     "file": "src/systems/questlines/quests/QLOC03.txt",
-    "old": "_late_ task:\n\twhen _courier_ and _slain_\n\tstop timer _wait_\n",
-    "new": "_late_ task:\n\twhen _courier_ and _slain_\n",
+    "old": "_lapsed_ task:\n\twhen _wait_ and not _slain_\n",
+    "new": "_lapsed_ task:\n\twhen _wait_\n",
     "tests": [
       "test/systems/questlines/questaudit4_lines.test.js"
     ]
@@ -254,9 +254,9 @@
   },
   {
     "name": "QA4-C2-ladder-done",
-    "file": "src/systems/arena/arenaLadder.js",
-    "old": "export const noteLadderDone = (L) => { _ladderDone = L != null && nextLadderBout(L) == null; };",
-    "new": "export const noteLadderDone = (L) => { _ladderDone = false; };",
+    "file": "src/systems/arena/arenaClimbSeen.js",
+    "old": "  const done = L != null && nextLadderBout(L) == null;",
+    "new": "  const done = false;",
     "tests": [
       "test/systems/questlines/questaudit4_lines.test.js"
     ]
@@ -264,8 +264,8 @@
   {
     "name": "QA4-C3-guide-kept",
     "file": "src/systems/questlines/quests/QLSK01.txt",
-    "old": "\tget item _guide_\n\tmake _guide_ permanent\n",
-    "new": "\tget item _guide_\n",
+    "old": "\tsay 1013\n\tmake _guide_ permanent\n",
+    "new": "\tsay 1013\n",
     "tests": [
       "test/systems/questlines/questaudit4_lines.test.js"
     ]
@@ -273,7 +273,7 @@
   {
     "name": "QA4-C4-act-owed",
     "file": "src/net/ketch/ketchClaims.js",
-    "old": "const owe = (e) => { if (!e.ch || e.ch === who()) noteAct('warden-felled'); else keepOwed([...owed(), { ch: e.ch }].slice(-KT_ACTS_MAX)); };",
+    "old": "const owe = (e) => { if (!e.ch || e.ch === who()) noteAct('warden-felled'); else keepOwed([...owed(), { ch: e.ch, at: nowMs() }].slice(-KT_ACTS_MAX)); };",
     "new": "const owe = (e) => { noteAct('warden-felled'); };",
     "tests": [
       "test/systems/questlines/questaudit4_lines.test.js"
@@ -318,8 +318,8 @@
   {
     "name": "QA4-D3-ketch-said",
     "file": "src/ui/questlines/qlJournal.js",
-    "old": "against the Sea Serpent, aboard the Sky-Ketch or at a fallen star. The account service checks that place’s record",
-    "new": "against the Sea Serpent or at a fallen star. The account service checks that place’s record",
+    "old": "Others are the Sea Serpent, the Sky-Ketch and the fallen stars.",
+    "new": "Others are the Sea Serpent and the fallen stars.",
     "tests": [
       "test/systems/questlines/questaudit4_lines.test.js"
     ]

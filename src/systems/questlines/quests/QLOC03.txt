@@ -100,7 +100,7 @@ Message:  1034
 Message:  1050
 <ce>       Hamid al-Rasheen waited at _inn_ for word of
 <ce>        the serpent, then sailed with the season.
-<ce>          The lanes will tell him what you did.
+<ce>             He may send for you again.
 
 QBN:
 Item _letter_ letter used 1011
@@ -127,10 +127,6 @@ _slain_ task:
 	ql act serpent-slain 1
 	log 1015 step 1
 	start timer _meet_
-
-_late_ task:
-	when _courier_ and _slain_
-	stop timer _wait_
 
 _qgclicked_ task:
 	clicked npc _hamid_
@@ -163,9 +159,15 @@ _kept_ task:
 	end quest
 
 _wait_ task:
+
+_meet_ task:
+
+_lapsed_ task:
+	when _wait_ and not _slain_
 	say 1003
 	end quest
 
-_meet_ task:
+_gone_ task:
+	when _wait_ and _meet_
 	say 1050
 	end quest

@@ -292,7 +292,7 @@
 
 import { Parser } from './parser.js';
 import { globalVarsTable } from './tables.js';   // STORY-AGAIN (AUDIT QA3): a step's globals, by name
-import { spineOwed, spineRecord, openerOwed, SPINE, SPINE_OPENER, SPINE_CHECK_TICKS } from './mainSpine.js';   // MAIN-SPINE: the main quest's backbone kept
+import { spineOwed, spineRecord, openerOwed, storyMends, SPINE, SPINE_OPENER, SPINE_CHECK_TICKS } from './mainSpine.js';   // MAIN-SPINE: the main quest's backbone kept
 import { defaultActionTemplates, heldPromptPlaces } from './actions.js';   // AUDIT QA3 A1: a box up here, asked in the envelope
 import { receivedState, mergeSharedState, freshState, QL_STAMP } from '../questlines/qlState.js';   // QL1: a shared copy's questline state (decision 7); AUDIT QUESTLINES BRANCH-14: a restart's stamp
 import { QuestResourceBehaviour } from './resourceBehaviour.js';
@@ -821,7 +821,7 @@ export class QuestMachine {
     if (this.quests.has(quest.uid)) throw new Error('An item with the same key has already been added.');
     this.quests.set(quest.uid, quest);
     if (isMainStoryQuest(quest.questName)) { const n = quest.questName.toUpperCase(); this.storyStarted.add(n); this.storyEnded.delete(n); }   // STORY-AGAIN
-    if (questNameIn([SPINE], quest.questName)) this.spine.ran = true; else if (questNameIn([SPINE_OPENER], quest.questName)) this.spine.opened = true;   // MAIN-SPINE: the record the law reads
+    if (questNameIn([SPINE], quest.questName)) this.spine.ran = true; else if (questNameIn([SPINE_OPENER], quest.questName)) { this.spine.opened = true; delete this.spine.handed; }   // MAIN-SPINE: the record the law reads
     this.deps.onQuestStarted?.(quest);
     revealNearSites(quest);   // FIELD BUGS 2026-10-12g QUEST-TOWN: its town on the map, once the quest is the machine's
     if (this.lastNPCClicked != null) {
@@ -1243,6 +1243,7 @@ export class QuestMachine {
 
   restoreSaveData(data) {
     this.restores = (this.restores ?? 0) + 1;   // AUDIT STARTS Q5: a load landed - what a start still on its way reads (scenes/startsHost.js begin)
+    this.mendPending = true;   // AUDIT QA4 A1, A2: what the old laws left in the save, mended at the next tick
     this.siteLinks = (data.siteLinks ?? []).map((l) => structuredClone(l));
     // AUDIT 24: the globals ride the envelope now. A pre-AUDIT-24 save
     // carries none, which leaves whatever the fresh machine holds -
@@ -1808,6 +1809,7 @@ export class QuestMachine {
   /** One machine tick (QuestMachine.cs Tick). */
   tick() {
     this.beat++;   // AUDIT STAR8 S1 (questFoeStands)
+    if (this.mendPending) { this.mendPending = false; this.mendStory(); }   // AUDIT QA4 A1, A2: once the world and the pack stand
     if (this.beat % SPINE_CHECK_TICKS === 0) { this.keepOpener(); this.keepSpine(); }   // MAIN-SPINE: before the invoke loop, so a start lands this tick
     // Invoke scheduled quests (QuestMachine.cs StartQuest:719-725):
     // Start, then the talk-topic registration, then the live table.
@@ -1874,12 +1876,26 @@ export class QuestMachine {
     return !!quest;
   }
 
-  /** QUEST-AUDIT IV A4: a start's hand-off whose opener did not parse has the opener started again (mainSpine.js openerOwed). */
+  /** QUEST-AUDIT IV A4: a start's hand-off whose opener did not parse has the opener started again (mainSpine.js openerOwed),
+   *  the hand-off recorded until it does (AUDIT QA4 A3) and its failure said once (A4, keepSpine's law). */
   keepOpener() {
     if (!openerOwed(this)) return false;
-    const quest = this.scheduleQuestByName(SPINE_OPENER);
+    this.spine.handed = true;
+    const lines = this.deps.getQuestSourceLines?.(SPINE_OPENER);
+    let quest = null, why = 'no source';
+    if (lines) try { quest = this.scheduleQuest(lines); } catch (ex) { why = ex?.message ?? String(ex); }
     if (quest) console.warn(`[quest] ${SPINE_OPENER} (the main quest's opener) was owed after a start's hand-off - scheduled`);
+    else if (!this.openerSaid) { this.openerSaid = true; console.warn(`[quest] ${SPINE_OPENER} is owed after a start's hand-off and did not start (${why}) - asked again every ${SPINE_CHECK_TICKS} quest ticks`); }
     return !!quest;
+  }
+
+  /** AUDIT QA4 A1, A2: the quests the old laws left in a save removed (mainSpine.js storyMends), said once. */
+  mendStory() {
+    const { remove, unran, unschedule } = storyMends(this);
+    for (const q of remove) { console.warn(`[quest] ${q.questName} removed - left by an older save's law (AUDIT QA4)`); this.removeQuest(q); }
+    if (unschedule) this.questsToInvoke = this.questsToInvoke.filter((q) => !questNameIn([SPINE], q.questName));
+    if (unran) this.spine.ran = false;
+    return remove.length;
   }
 
   /** MAIN-SPINE: an opener the journal's archive files began in this game - a load's word, beside seedStory's. */
@@ -1890,7 +1906,7 @@ export class QuestMachine {
   /** MAIN-SPINE: the record as the save writes it - the machine's, and its table's word, as a load reads it (spineRecord). */
   _spineData() {
     const spine = spineRecord(this.spine, [...this.quests.values()].map((q) => q.questName));
-    return spine.opened || spine.ran ? { spine } : {};
+    return spine.opened || spine.ran || spine.handed ? { spine } : {};
   }
 
   /**

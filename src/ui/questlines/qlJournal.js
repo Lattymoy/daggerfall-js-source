@@ -265,7 +265,7 @@ export function qlLineDetail(doc, line, { titleText = (k) => k } = {}) {
   // AUDIT QUESTLINES VOICE-QL: the places by name, never "an endgame place" (Voice.md rule 3) - the witnesses of
   // net/questlineClaims.js QL_WITNESS_KINDS: a Dagon's Breach (its rite, its close), an Elite Breach's Redoubts (a
   // Valkynaz's among them), the Abyss Dungeon's Shattered Hour (the Brass Remnant), the Sea Serpent, a fallen star (STAR8)
-  if ((line.steps ?? []).some((s) => s.witnessed)) box.append(el(doc, 'p', 'px-qline-what', t('ql.journal.stepWitnessedTitle', 'Witnessed steps happen in a Dagon’s Breach, an Elite Breach’s Redoubts, the Abyss’s Shattered Hour, against the Sea Serpent, aboard the Sky-Ketch or at a fallen star. The account service checks that place’s record before it pays.')));   // STAR8: and a fallen star; QUEST-AUDIT IV D3: and the Sky-Ketch's Tonal Warden
+  if ((line.steps ?? []).some((s) => s.witnessed)) box.append(el(doc, 'p', 'px-qline-what', t('ql.journal.stepWitnessedTitle', 'Witnessed steps happen in a Dagon’s Breach, an Elite Breach’s Redoubts or an Abyss Dungeon’s Shattered Hour. Others are the Sea Serpent, the Sky-Ketch and the fallen stars. The account service checks the place’s record before it pays.')));   // STAR8: and a fallen star; QUEST-AUDIT IV D3: and the Sky-Ketch's Tonal Warden; AUDIT QA4 C7: an Abyss Dungeon's, in short sentences
   const unseen = (line.steps ?? []).some((s) => s.unseen);
   if (unseen) box.append(el(doc, 'p', 'px-qobj-reward', t('ql.journal.stepUnseenWhy', 'Not yet seen: the account service has no record of that deed since this questline began. Do it again and it will count.')));
   if (line.outcome) {
@@ -277,7 +277,8 @@ export function qlLineDetail(doc, line, { titleText = (k) => k } = {}) {
     // ACTS-1: a finished line's title is earned only once the service has seen its every witnessed deed
     box.append(el(doc, 'p', 'px-qobj-reward', line.state !== 'done'
       ? t('ql.journal.lineTitle', 'Finish it to earn the title {title}, held by your account.', { title: words })
-      : unseen || (line.steps ?? []).some((s) => s.waits) ? t('ql.journal.lineTitleWaits', 'The title {title} waits until the account service has seen every deed this questline asks.', { title: words })
+      : !unseen && line.after && (line.steps ?? []).some((s) => s.waits) ? t('ql.journal.lineTitleWaitsBefore', 'The title {title} waits until the account service has seen every deed of {line}.', { title: words, line: line.after })   // AUDIT QA4 B4
+      : unseen ? t('ql.journal.lineTitleWaits', 'The title {title} waits until the account service has seen every deed this questline asks.', { title: words })
         : t('ql.journal.lineTitleEarned', 'This questline earns the title {title}, held by your account.', { title: words })));
   }
   return box;

@@ -26,9 +26,11 @@ import { t } from '../../systems/textManager.js';
 /** The device's Ketch receipts not yet settled with the account service: `[{ r, cid, a?, ch? }]` - the receipt, its claim
  *  id, whether its act was said, and the character standing when it came. */
 export const KT_CLAIMS_KEY = 'kt.ketchClaims';
-/** QUEST-AUDIT IV C4: the Warden's acts owed characters not standing when their share was answered - `[{ ch }]`. */
+/** QUEST-AUDIT IV C4: the Warden's acts owed characters not standing when their share was answered - `[{ ch, at }]`,
+ *  each kept a week (AUDIT QA4 B5: a deleted character's never holds a place for good). */
 export const KT_ACTS_KEY = 'kt.ketchActs';
 const KT_ACTS_MAX = 16;
+const KT_ACT_KEEP_MS = 7 * 24 * 3600 * 1000;
 /** A claim id - sixteen hex digits, the service's KT_CID_RE. */
 export const KT_CID_RE = /^[0-9a-f]{16}$/;
 const mintCid = () => { const b = new Uint8Array(8); globalThis.crypto.getRandomValues(b); return [...b].map((x) => x.toString(16).padStart(2, '0')).join(''); };
@@ -81,15 +83,15 @@ export function createKetchClaims({ claim, store = null, nowS = () => Math.floor
     return (Array.isArray(v) ? v : v === undefined ? memory : []).filter((e) => entry(e));
   }
   const keep = (list) => { memory = list; try { store?.set(KT_CLAIMS_KEY, list); } catch { /* memory holds it */ } };
-  // QUEST-AUDIT IV C4: the act is the character's that fought - one switched to before the answer is owed it, as a star's is
+  // QUEST-AUDIT IV C4: the act is the character's this device stood when the receipt came - one switched away is owed it
   let owedMemory = [];
   function owed() {
     let v;
     try { v = store ? store.get(KT_ACTS_KEY) : undefined; } catch { v = undefined; }
-    return (Array.isArray(v) ? v : v === undefined ? owedMemory : []).filter((o) => o && typeof o.ch === 'string' && o.ch);
+    return (Array.isArray(v) ? v : v === undefined ? owedMemory : []).filter((o) => o && typeof o.ch === 'string' && o.ch && !(Number.isFinite(o.at) && nowMs() - o.at >= KT_ACT_KEEP_MS));
   }
   const keepOwed = (list) => { owedMemory = list; try { store?.set(KT_ACTS_KEY, list); } catch { /* memory holds it */ } };
-  const owe = (e) => { if (!e.ch || e.ch === who()) noteAct('warden-felled'); else keepOwed([...owed(), { ch: e.ch }].slice(-KT_ACTS_MAX)); };
+  const owe = (e) => { if (!e.ch || e.ch === who()) noteAct('warden-felled'); else keepOwed([...owed(), { ch: e.ch, at: nowMs() }].slice(-KT_ACTS_MAX)); };
   function payOwed() {
     const ch = who(), list = owed(), i = ch ? list.findIndex((o) => o.ch === ch) : -1;
     if (i < 0) return false;

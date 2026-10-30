@@ -8,7 +8,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { spineRecord, spineOwed, openerOwed, SPINE, SPINE_CURSE, SPINE_OPENER } from '../../../src/systems/quest/mainSpine.js';
+import { spineRecord, spineOwed, openerOwed, storyMends, SPINE, SPINE_CURSE, SPINE_OPENER } from '../../../src/systems/quest/mainSpine.js';
+import { siteRowIndex } from '../../../src/systems/quest/place.js';
 import { QuestListsManager, SELECT_TRIES } from '../../../src/systems/quest/questLists.js';
 import { createStartsHost } from '../../../src/scenes/startsHost.js';
 import { questTransferRefused } from '../../../src/systems/item/itemTransfer.js';
@@ -131,4 +132,79 @@ test('QUEST-AUDIT IV A9: a site a quest holds is found by its name before a near
   const again = p.getRegion(R);
   assert.equal(again.mapTable[again.mapNameLookup.get(held.name)].mapId, held.mapTableData.mapId);
   assert.equal(stood, was, 'found once, kept across tables');
+});
+
+// ═══ AUDIT QA4 (the cold audit of QUEST-AUDIT IV): what the old laws left in saves, the hand-off kept, a held name by id ═══
+
+/** A start as the pack parses it, its hand-off run or not. */
+const startOf = (handed, at = 100) => {
+  const q = parsedQuest(HAND_START_QUEST, packMachine()).quest;
+  for (const t of q.tasks.values()) for (const a of t.actions) if (a.constructor?.typeName === 'StartQuest') a.isComplete = handed;
+  q.questStartTime = at;
+  return q;
+};
+
+test('AUDIT QA4 A1, A2: a load mends what the old laws left - a backbone begun before the seal was broken goes (and its `ran`), a second Curse and its unopened commission go; a story that moved on keeps its own (mutants: the early backbone kept; the second Curse kept; its start kept; a court step ignored)', () => {
+  const curse = (at) => named(SPINE_CURSE, { questStartTime: at });
+  const backbone = named(SPINE, { questStartTime: 50 });
+  // A1: the Curse, a start not handed off, a backbone, no opener, no story step
+  let m = machineOf([curse(10), startOf(false), backbone]);
+  let mend = storyMends(m);
+  assert.deepEqual(mend.remove.map((q) => q.questName), [SPINE]);
+  assert.equal(mend.unran, true);
+  assert.deepEqual(storyMends(machineOf([curse(10), startOf(false), backbone], { storyStarted: new Set(['S0000004']) })).remove, [], 'a court step begun: the backbone is the story\'s');
+  assert.deepEqual(storyMends(machineOf([curse(10), startOf(true), backbone, named(SPINE_OPENER)])).remove, [], 'handed off, the opener standing: all in order');
+  m = machineOf([curse(10), startOf(false)]);
+  m.questsToInvoke.push(named(SPINE));
+  assert.deepEqual([storyMends(m).unschedule, storyMends(m).unran], [true, true], 'a backbone saved scheduled goes too');
+  // A2: a story that ran (its backbone, no court step yet), and the old restored()'s second Curse with an unopened commission
+  const extra = curse(900), handstart = startOf(false, 900);
+  mend = storyMends(machineOf([curse(10), backbone, extra, handstart]));
+  assert.deepEqual(mend.remove, [extra, handstart]);
+  assert.equal(mend.unran, false, 'the story\'s own backbone stays');
+  // the machine mends at the first tick after a load, once
+  const src = readFileSync(join(ROOT, 'src/systems/quest/machine.js'), 'utf8');
+  assert.match(src, /this\.mendPending = true;   \/\/ AUDIT QA4 A1, A2/);
+  assert.match(src, /if \(this\.mendPending\) \{ this\.mendPending = false; this\.mendStory\(\); \}/);
+});
+
+test('AUDIT QA4 A3, A4: a hand-off whose opener has not begun is recorded and saved - owed after the start is gone, and no Curse read as the opener\'s trace beside it - and its failure is said once (mutants: `handed` unread by openerOwed; the Curse read beside it; said every check)', () => {
+  assert.deepEqual(spineRecord({ handed: true }, [SPINE_CURSE]), { opened: false, ran: false, handed: true });
+  const m = machineOf([named(SPINE_CURSE)], { spine: { opened: false, ran: false, handed: true } });
+  assert.equal(openerOwed(m), true, 'the start\'s tombstone week over: still owed');
+  assert.equal(spineOwed(m), false, 'and no backbone before it');
+  const said = [];
+  const mm = packMachine({ getQuestSourceLines: () => ['x'] });
+  mm.spine.handed = true;
+  let ok = false;
+  mm.scheduleQuest = () => { if (!ok) throw new Error('Could not find faction data for FactionID 352'); return { questName: SPINE_OPENER }; };
+  const warn = console.warn;
+  console.warn = (s) => said.push(String(s));
+  try {
+    for (let i = 0; i < 3; i++) mm.keepOpener();
+    assert.equal(said.length, 1, 'failed three times, said once');
+    ok = true;
+    assert.equal(mm.keepOpener(), true);
+  } finally { console.warn = warn; }
+});
+
+test('AUDIT QA4 A5: a site is read by its map id where its name is shared - past the Bay two held lairs of one name are each joined, and each holder reads its own (mutants: the name first; one held site joined)', () => {
+  const region = { mapNameLookup: new Map([['N', 0]]), mapIdLookup: new Map([[11, 0], [22, 1]]), mapTable: [{ name: 'N', mapId: 11 }, { name: 'N', mapId: 22 }] };
+  assert.equal(siteRowIndex(region, { locationName: 'N', mapId: 22 }), 1);
+  assert.equal(siteRowIndex(region, { locationName: 'N', mapId: 11 }), 0);
+  assert.equal(siteRowIndex(region, { locationName: 'N', mapId: 33 }), 0, 'an id no row has: by its name');
+  const R = CYRODIIL_REGION;
+  const at = (px, py) => mapPixelToLongitudeLatitude(px, py);
+  const lair = (mapId, px, py) => ({ loaded: true, name: 'Twin Barrow', regionIndex: R, mapTableData: { mapId, locationType: LOCATION_TYPES.DungeonRuin, dungeonType: 9, longitude: at(px, py).x, latitude: at(px, py).y } });
+  const a = lair(0xa8000011, 2100, 640), b = lair(0xa8000022, 2110, 650);
+  const stand = new Map([['2100,640', a], ['2110,650', b]]);
+  const p = createQuestProvinceSites({
+    worldPlaces: { inTheatre: () => [], generation: () => 0 }, regionAt: () => R, standAt: (x, y) => stand.get(`${x},${y}`) ?? null,
+    origin: () => ({ x: 2000, y: 600 }),
+    heldSites: () => [a, b].map((l) => ({ regionIndex: R, locationName: l.name, mapId: l.mapTableData.mapId, worldPixel: { x: l === a ? 2100 : 2110, y: l === a ? 640 : 650 } })),
+  });
+  const reg = p.getRegion(R);
+  reg.mapNameLookup.get('Twin Barrow');
+  assert.equal(reg.mapTable[siteRowIndex(reg, { locationName: 'Twin Barrow', mapId: b.mapTableData.mapId })].mapId, b.mapTableData.mapId, 'the second holder reads its own');
+  assert.equal(reg.mapTable[siteRowIndex(reg, { locationName: 'Twin Barrow', mapId: a.mapTableData.mapId })].mapId, a.mapTableData.mapId);
 });
