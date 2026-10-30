@@ -62,7 +62,7 @@ import { lootGateLevel } from '../mentorMode.js';   // LOOT-GATE, MENTOR2: the r
 import { playerDoor, paidBack, oweFoe } from '../playerDoor.js';   // BAL5: a blow paid back never kills; OPEN-HAND: a follow-up owed to a relay's body
 import { showFollowUp } from '../../ui/hitNumbers.js';   // FIELD BUGS 2026-10-15e ROSE-SEEN: a follow-up's own number
 import { careerTolerance, EFFECT_FLAGS } from '../spellcast.js';
-import { lootRarityOn, validAffix, powerOf, registerLegendaryFind, readLines } from './lootRarity.js';   // GEM1: readLines, law 6's reading
+import { lootRarityOn, validAffix, powerOf, registerLegendaryFind, readLines, countedPieces } from './lootRarity.js';   // GEM1: readLines, law 6's reading
 import { equipTableOf } from '../equip.js';
 import { registerPlayerDamageMod, registerPlayerDeathSave, registerPlayerHurtListener, playerEntity } from '../../characters/playerEntity.js';
 import { registerPlayerKillListener } from '../playerKills.js';
@@ -114,7 +114,7 @@ export function linesOf(item, id) {
   return readLines(item).filter((a) => a?.id === id && validAffix(a));   // GEM1: a piece's gems as law 6 holds them (bible/06-Systems/Gem-Sockets.md)
 }
 /** What MY entity wears - the equip table's pieces. */
-export const wornPieces = (entity) => (entity ? equipTableOf(entity).filter(Boolean) : []);
+export const wornPieces = (entity) => (entity ? countedPieces(equipTableOf(entity).filter(Boolean)) : []);   // FOX-STACK: a Legendary's lines once
 /** A kind's lines summed over everything worn. */
 export const wornSum = (entity, id) => wornPieces(entity).reduce((n, it) => n + linesOf(it, id).reduce((m, a) => m + a.value, 0), 0);
 
