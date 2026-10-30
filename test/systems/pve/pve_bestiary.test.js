@@ -6,7 +6,7 @@ import { BESTIARY, BESTIARY_BY_SPECIES, DISTRIBUTION, PROVINCE_KEYS, ORSINIUM_RE
   regionalSpecies, regionalTemplates } from '../../../src/systems/pve/pveBestiary.js';
 import { CANDIDATE_SPECIES } from '../../../src/systems/pve/pveSpecies.js';
 import { MOB_TEMPLATES } from '../../../src/systems/pve/pveTemplates.js';
-import { CLIMATES } from '../../../src/formats/mapsTables.js';
+import { CLIMATES, REGION_NAMES } from '../../../src/formats/mapsTables.js';
 import { DUNGEON_TYPES } from '../../../src/formats/mapsFile.js';
 
 const at = (species, place) => speciesStandingAt(BESTIARY_BY_SPECIES.get(species), place);
@@ -20,6 +20,7 @@ test('STAGE 5: every record stands, every template\'s species has one, and the n
 
 test('STAGE 5: the spec\'s orcs - Wrothgar first, a stronghold in High Rock and Skyrim, elsewhere only through a clan, and never where no clan is', () => {
   const clan = { factions: ['orc-clans'], climate: CLIMATES.Mountain };
+  assert.equal(REGION_NAMES[ORSINIUM_REGION], 'Orsinium Area', 'FACTION.TXT counts regions from 1; the map from 0');
   assert.equal(at('orc', { province: 'HighRock', region: ORSINIUM_REGION, ...clan }), 'primary');
   assert.equal(at('orc', { province: 'HighRock', ...clan }), 'secondary');
   assert.equal(at('orc', { province: 'Skyrim', ...clan }), 'secondary');

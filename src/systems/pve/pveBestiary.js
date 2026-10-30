@@ -19,8 +19,9 @@ export const LORE = Object.freeze(['established', 'inferred', 'proposed', 'requi
 export const PROVINCE_KEYS = Object.freeze(PROVINCES.map((p) => p.key));
 /** Every province. */
 const ALL = '*';
-/** Daggerfall's Orsinium region (FACTION.TXT #358's region 27): the orcs' Wrothgar. */
-export const ORSINIUM_REGION = 27;
+/** Daggerfall's Orsinium Area, the orcs' Wrothgar: region index 26. FACTION.TXT counts regions from 1 (#358 says 27,
+ *  as Daggerfall's #201 says 18 for region 17). */
+export const ORSINIUM_REGION = 26;
 
 const C = CLIMATES, D = DUNGEON_TYPES;
 const WOODS = [C.Woodlands, C.MountainWoods, C.HauntedWoodlands, C.Rainforest, C.Subtropical];

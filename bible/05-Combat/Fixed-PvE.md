@@ -1,7 +1,7 @@
 # Fixed PvE - the world sets the foe (FIXED-PVE, 2026-10-28)
 
 The PvE overhaul replaces player-scaled foes with fixed ones: a foe's level, health and blow come from its own
-template, never from the player who meets it. This page holds Stages 2 to 6 of twelve: the data, the balance tools, how a creature meets a player, where it lives, and how a fight is built and paid. Nothing in the game
+template, never from the player who meets it. This page holds Stages 2 to 7 of twelve: the data, the balance tools, how a creature meets a player, where it lives, how a fight is built and paid, and the zones and populations. Nothing in the game
 reads it yet - `src/systems/pve/pveSwitch.js` `fixedPveOn` is off, and every foe stands as it does today. Daggerfall
 Unity has no templates: its monsters stand at their row and its class foes at the player's level
 (`EnemyEntity.SetEnemyCareer`). A departure: Ledger A (FIXED-PVE).
@@ -18,6 +18,7 @@ Unity has no templates: its monsters stand at their row and its class foes at th
 | Standing | `pveStanding.js` | Stage 4: the state a creature meets a player in, what a blow on it costs, the services it offers (section 6) |
 | Bestiary | `pveBestiary.js` | Stage 5: where each species lives, by province, region, climate, dungeon type, faction and need (section 7) |
 | Encounter | `pveThreat.js`, `pveContribution.js`, `pveEncounter.js` | Stage 6: whom a foe fights, who earns the kill, the encounter director and who joins a fight (section 8) |
+| Population | `pveZones.js`, `pveSpawnTable.js`, `pvePopulation.js` | Stage 7: the fixed-level zones, a place's spawn table and the manager that keeps a cell's count (section 9) |
 | Template | `pveTemplates.js` | One gameplay variant: species, level 1-45, category, 1-2 roles, abilities, disposition, faction, kit metal |
 
 ## 2. The numbers
@@ -100,7 +101,7 @@ The tests: `test/systems/pve/pve_standing.test.js`.
 nine provinces (`world/tamriel/tamrielGeography.js`) or a game region: primary 1, secondary 0.4, localized 0.6,
 conditional 0.3, exceptional 0.02 of a spawn table, or unavailable. Outdoors it lives only in its climates
 (`formats/mapsTables.js` CLIMATES); in a dungeon only in its dungeon types (`formats/mapsFile.js` DUNGEON_TYPES). A need
-(night, an incursion) or a faction's presence must be met. So the orcs are primary in Orsinium (region 27), secondary in
+(night, an incursion) or a faction's presence must be met. So the orcs are primary in the Orsinium Area (region 26), secondary in
 High Rock and Skyrim, conditional elsewhere, and absent where no clan holds the place; a werewolf walks only by night.
 
 The placements are a first pass from the spec's matrix and the climates each body suits. A record is established where
@@ -131,3 +132,23 @@ When a creature is struck its own group joins within 40 m; within 20 m its facti
 already hostile, its guards if the blow wronged the faction. A shared species alone brings nobody, at most 6 join, and a
 joiner calls no one. Party scaling (`systems/party/partyScale.js`) is for today's foes; a template foe's difficulty is its
 composition. Daggerfall Unity has one player and none of this. The tests: `test/systems/pve/pve_encounter.test.js`.
+
+## 9. Stage 7: zones, spawn tables and the population manager (2026-10-30)
+
+Still behind the switch. A zone (`pveZones.js` `pveZoneAt`) is one of six fixed bands, 1-8 up to 36-45, each
+overlapping the next. Its region (0..70: the Bay's 62 and the nine provinces) sets a base band, a first pass from the
+map: the Bay's cities low, its deserts, mountains and isles high, Black Marsh and Cyrodiil highest. Each 96-pixel
+district steps one band down or up from its key alone, so every province holds several bands. Four districts in a
+hundred are high-level enclaves, three bands up, with a warning; ten are farming grounds. A road keeps its region's
+band, a town is safe, a dungeon is one band deeper and the old and undead ones two. The recommended Combat Score is
+advice and changes no foe.
+
+A spawn table (`pveSpawnTable.js`) follows the spec's six steps: place, bestiary, hour and event and factions, band,
+then the populations - settlement (a community group), ambient, farming, encounter, group, road patrol and rare. A
+town holds no hostile population unless an event turns it. The table reads the place alone.
+
+The manager (`pvePopulation.js`) wakes a cell with fixed slots: each stands one foe at a time, so the count never
+grows with the crowd. A fallen slot waits its population's time (a minute on a farming ground, an hour for a rare
+foe), and its next foe is drawn from the slot's name and turn, the same on every machine. A cell unseen for five
+minutes sleeps; its waits and a lasting death outlive the sleep. Daggerfall Unity spawns round the one player and keeps
+no cell. The tests: `test/systems/pve/pve_population.test.js`.

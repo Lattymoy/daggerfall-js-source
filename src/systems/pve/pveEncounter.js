@@ -42,31 +42,49 @@ export function placeRng(key) {
   return () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; return ((s >>> 0) % 1e9) / 1e9; };
 }
 
-/** Whether `t` starts a fight with nobody's standing in play, or the place's event makes it hostile. */
-const startsHostile = (t, event) => event === 'hostile' || (!t.protected && (t.wildlife ? t.wildlife === 'predatory' : t.disposition === 'hostile'));
+/** Whether `t` starts a fight with nobody's standing in play, or the place's event makes it hostile. @param {any} t @param {string|null} [event] */
+export const meetsHostile = (t, event = null) => event === 'hostile' || (!t.protected && (t.wildlife ? t.wildlife === 'predatory' : t.disposition === 'hostile'));
+
+/**
+ * What lives at `place` inside `band`: each template that stands and reads, at its share (`pool`), and every template
+ * the place holds at all, in band or not (`lives`).
+ * @param {readonly number[]} band @param {Parameters<typeof regionalTemplates>[0]} place
+ */
+export function encounterPool(band, place) {
+  const lives = new Map(regionalTemplates(place).map((x) => [x.template, x.weight]));
+  const fit = (t) => t && t.level >= band[0] && t.level <= band[1] && !templateProblems(t).length && !readabilityProblems(t).length;
+  const pool = [...lives].map(([tk, w]) => ({ t: TEMPLATE_BY_KEY.get(tk), w })).filter((x) => fit(x.t));
+  return { pool, lives, fit };
+}
+
+/** The group templates whose every member lives at the place and fits the band - no community. @param {ReturnType<typeof encounterPool>} p */
+export const bandGroups = ({ lives, fit }) => GROUP_TEMPLATES.filter((g) => !g.community && g.members.every(([m]) => lives.has(m) && fit(TEMPLATE_BY_KEY.get(m))))
+  .map((g) => ({ key: g.key, w: Math.min(...g.members.map(([m]) => lives.get(m) ?? 0)) }));
+
+/** `count` keys drawn by share from `list` ({key, w}) with the seeded `rng`. @param {Array<{key: string, w: number}>} list @param {number} count @param {() => number} rng */
+export function drawByShare(list, count, rng) {
+  const total = list.reduce((s, x) => s + x.w, 0), picks = [];
+  for (let i = 0; i < count && total > 0; i++) {
+    let r = rng() * total;
+    picks.push((list.find((x) => (r -= x.w) < 0) ?? list[list.length - 1]).key);
+  }
+  return picks;
+}
 
 /**
  * A place's encounters of `kind`: its templates in the zone's band that stand and read, split into hostile and ambient,
  * and `count` picks drawn by share from the place's seed. Groups for a small group: every member living there, in band.
- * @param {{ band: [number, number], kind?: string, count?: number, key: string }} zone
+ * @param {{ band: readonly number[], kind?: string, count?: number, key: string }} zone
  * @param {Parameters<typeof regionalTemplates>[0] & { event?: string|null }} place
  */
 export function directEncounters({ band, kind = 'solo', count = 3, key }, place) {
   const k = ENCOUNTER_KINDS[kind];
-  const lives = new Map(regionalTemplates(place).map((x) => [x.template, x.weight]));
-  const fit = (t) => t && t.level >= band[0] && t.level <= band[1] && !templateProblems(t).length && !readabilityProblems(t).length;
-  const pool = [...lives].map(([tk, w]) => ({ t: TEMPLATE_BY_KEY.get(tk), w })).filter((x) => fit(x.t));
-  const ambient = pool.filter((x) => !startsHostile(x.t, place.event)).map((x) => x.t.key);
-  let hostile;
-  if (k?.group) hostile = GROUP_TEMPLATES.filter((g) => !g.community && g.members.every(([m]) => lives.has(m) && fit(TEMPLATE_BY_KEY.get(m))))
-    .map((g) => ({ key: g.key, w: Math.min(...g.members.map(([m]) => lives.get(m) ?? 0)) }));
-  else hostile = pool.filter((x) => startsHostile(x.t, place.event) && k?.categories?.includes(x.t.category)).map((x) => ({ key: x.t.key, w: x.w }));
+  const p = encounterPool(band, place);
+  const ambient = p.pool.filter((x) => !meetsHostile(x.t, place.event)).map((x) => x.t.key);
+  const hostile = k?.group ? bandGroups(p)
+    : p.pool.filter((x) => meetsHostile(x.t, place.event) && k?.categories?.includes(x.t.category)).map((x) => ({ key: x.t.key, w: x.w }));
   hostile.sort((a, b) => a.key.localeCompare(b.key));
-  const rng = placeRng(`${key}|${kind}`), total = hostile.reduce((s, x) => s + x.w, 0), picks = [];
-  for (let i = 0; i < count && total > 0; i++) {
-    let r = rng() * total;
-    picks.push((hostile.find((x) => (r -= x.w) < 0) ?? hostile[hostile.length - 1]).key);
-  }
+  const picks = drawByShare(hostile, count, placeRng(`${key}|${kind}`));
   return { hostile: hostile.map((x) => x.key), ambient: ambient.sort(), picks, party: k?.party ?? 1, personal: !!k?.personal };
 }
 
