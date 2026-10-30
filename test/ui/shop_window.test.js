@@ -342,7 +342,7 @@ test('SHOP: Collections says how each ware is had - from the Shop, at its price 
   for (const w of SHOP_WARES.filter((x) => x !== set && wardrobeKinds.has(x.kind))) {
     const e = wardrobeEntry(w.kind, w.key);
     assert.equal(e.src, 'shop', w.id);
-    if (w.kind === 'armory') assert.match(e.how(), /The Eternal Set for 2,000 Aurum\./, `${w.id}: the set beside it`);
+    if (w.kind === 'armory') assert.match(e.how(), /The Eternal Set gives it with the other four for 2,000 Aurum\./, `${w.id}: the set beside it`);   // PIN MOVED (PLAIN-TEXT): two sentences
     const sold = w.alone ? onSale.includes(w.id) : SHOP_WARES.some((b) => b.gives.includes(w.id) && onSale.includes(b.id));
     assert.equal(e.avail, sold ? (w.preAlpha ? 'shop' : 'store') : 'retired', `${w.id}: its availability follows the sale list`);
     if (w.alone) assert.ok(e.how().includes(`for ${w.price.toLocaleString('en-US')} Aurum`), `${w.id}: its price`);
