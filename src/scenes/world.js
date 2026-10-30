@@ -1026,10 +1026,9 @@ import { createDuelRecords, duelUncountedText } from '../net/duel/duelRecord.js'
 import { createDuelPrompt } from '../ui/duelPrompt.js';   // DUEL1: the challenge, as the challenged player sees it
 import { DuelWallRenderer } from '../render/duelWall.js';   // DUEL1: the ring's holographic wall
 import { BannerRenderer, BANNER_TEX_W, BANNERS_MAX } from '../render/bannerPass.js';   // GUILD1d: a guild's banners, the cloth
-import { createHallBanners } from './hallBanners.js';
+import { createHallBanners, paintHallBanner } from './hallBanners.js';   // GUILD-LOGO: a banner's cloth and its logo
 import { createSeatBanners } from './seatBanners.js';   // SEAT1a: a seat town's banners   // GUILD1d: ...hung beside its hall's door
 import { createFestivalStage } from './seatFestival.js';   // FESTIVAL-STAGE: a Festival's music, banners and lanterns
-import { drawBanner } from '../ui/heraldryArt.js';   // GUILD1d: ...its heraldry painted on it
 import { heraldryLookup } from '../ui/heraldrySwatch.js';   // HERALDRY-SHOWN: a guild's heraldry by its tag, off what this client holds
 import { createAuraHost } from './auraHost.js';   // WB9g, SHADOW-CLOAK, AURA-STALL, ARMORY: the auras at the feet and the Aura Armory's pieces on the body - a module of their own (HOST-SPLIT)
 import { insigniaRowOf, insigniaEquip } from './brokerInsignia.js';   // ARMORY: the Broker's rows and their wear, every kind's (the Dagonfire pieces')
@@ -2783,7 +2782,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const bannerPass = (() => {
     try {
       return new BannerRenderer(renderer.gl, {
-        paint: (h) => { const c = document.createElement('canvas'); c.width = BANNER_TEX_W; c.height = BANNER_TEX_W * 3; const g = c.getContext('2d'); if (!g) return null; drawBanner(g, h, BANNER_TEX_W); return c; },
+        paint: (h) => { const c = document.createElement('canvas'); c.width = BANNER_TEX_W; c.height = BANNER_TEX_W * 3; const g = c.getContext('2d'); if (!g) return null; paintHallBanner(g, h, BANNER_TEX_W); return c; },   // GUILD-LOGO: and its logo
       });
     } catch (e) { console.warn('[guild] the banners could not be built', e); return null; }
   })();

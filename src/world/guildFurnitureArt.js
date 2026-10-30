@@ -6,8 +6,7 @@
 import { YARD_ART_KIT } from './merchantYards/merchantYardArt.js';
 import { heraldryOf, heraldryColourOf, heraldryInk } from '../net/heraldryLaw.js';
 import { armsKey } from '../net/guild/guildArmsBook.js';
-import { drawBanner } from '../ui/heraldryArt.js';
-import { drawArms } from '../ui/guild/guildCrestArt.js';
+import { drawArms, drawBannerArms } from '../ui/guild/guildCrestArt.js';
 import { logoImage } from '../ui/guild/guildLogoImages.js';
 
 const { rng, noiseField, image, put, mix } = YARD_ART_KIT;
@@ -106,11 +105,11 @@ function plainArms(/** @type {any} */ arms, /** @type {number} */ w, /** @type {
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) put(img, x, y, Math.abs(y - h / 2) < h / 10 ? ink : field);
   return img;
 }
-/** THE HALL'S ARMS AS ITS TWO PICTURES - its banner (heraldryArt.js drawBanner, `GUILD_BANNER_W` by three of it) and its
- *  shield (guildCrestArt.js drawArms, its logo where it has one approved). Pure but for the canvas. */
+/** THE HALL'S ARMS AS ITS TWO PICTURES - its banner (`GUILD_BANNER_W` by three of it) and its shield (guildCrestArt.js
+ *  drawBannerArms and drawArms, its logo where it has one approved). Pure but for the canvas. */
 export function guildArmsArt(/** @type {any} */ arms) {
   const logo = logoImage(arms?.logo);
-  const banner = canvasArt(GUILD_BANNER_W, GUILD_BANNER_W * 3, (ctx) => { ctx.fillStyle = '#5a3e22'; ctx.fillRect(0, 0, GUILD_BANNER_W, GUILD_BANNER_W * 3); drawBanner(ctx, arms?.heraldry ?? null, GUILD_BANNER_W); if (logo) ctx.drawImage(logo, GUILD_BANNER_W * 0.15, GUILD_BANNER_W * 0.85, GUILD_BANNER_W * 0.7, GUILD_BANNER_W * 0.7); return true; })
+  const banner = canvasArt(GUILD_BANNER_W, GUILD_BANNER_W * 3, (ctx) => { ctx.fillStyle = '#5a3e22'; ctx.fillRect(0, 0, GUILD_BANNER_W, GUILD_BANNER_W * 3); drawBannerArms(ctx, arms?.heraldry ?? null, GUILD_BANNER_W, logo); return true; })
     ?? plainArms(arms, GUILD_BANNER_W, GUILD_BANNER_W * 3);
   const shield = canvasArt(GUILD_SHIELD_PX, GUILD_SHIELD_PX, (ctx) => { ctx.fillStyle = '#2a1a0c'; ctx.fillRect(0, 0, GUILD_SHIELD_PX, GUILD_SHIELD_PX); return drawArms(ctx, arms, 6, 2, GUILD_SHIELD_PX - 12, logo); })
     ?? plainArms(arms, GUILD_SHIELD_PX, GUILD_SHIELD_PX);

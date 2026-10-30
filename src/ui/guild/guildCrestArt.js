@@ -1,9 +1,9 @@
 // @ts-check
 // GUILD-SHOP and GUILD-LOGO (bible/11-Multiplayer/Guild-Shop.md): A GUILD'S ARMS AS A PICTURE, ITS LOGO WHERE IT HAS ONE -
 // the shield the Insignia Armlet wears (render/armoryPass.js), the Guild Crest portrait (ui/profileIcons.js) and the sail
-// (systems/naval/sailCloth.js) are painted here. Arms with an approved logo draw it on their field in place of the device;
+// (systems/naval/sailCloth.js), and a banner (the hall's street banners, its Heraldic Standard) are painted here. Arms with an approved logo draw it on their field in place of the device;
 // arms without one are heraldryArt.js's own shield. The port's own art, drawn in code.
-import { drawShield, SHIELD_CLOTH, SHIELD_BORDER_W, divisionPath } from '../heraldryArt.js';
+import { drawShield, drawBanner, SHIELD_CLOTH, SHIELD_BORDER_W, BANNER_DEVICE, divisionPath } from '../heraldryArt.js';
 import { heraldryOf, heraldryColourOf } from '../../net/heraldryLaw.js';
 
 /** The plain shield a wearer in no guild, or one with no arms yet, wears: Argent bordered Ash. */
@@ -43,6 +43,20 @@ export function drawArms(ctx, arms, x, y, size, logo = null) {
   ctx.stroke(shield);
   ctx.restore();
   return true;
+}
+
+/** THE ARMS AS A BANNER, `w` wide and three tall: heraldryArt.js drawBanner, and an approved logo (`logo`, a decoded
+ *  picture) over its device, on a square of its field. */
+export function drawBannerArms(/** @type {CanvasRenderingContext2D} */ ctx, /** @type {any} */ heraldry, /** @type {number} */ w, /** @type {any} */ logo = null) {
+  drawBanner(ctx, heraldry, w);
+  if (!logo) return;
+  const k = w / 100, side = 100 * BANNER_DEVICE.scale * k, x = BANNER_DEVICE.x * k, y = BANNER_DEVICE.y * k;
+  const h = heraldryOf(heraldry);
+  ctx.save();
+  ctx.fillStyle = (h && heraldryColourOf(h.field)?.hex) || PLAIN.field;
+  ctx.fillRect(x, y, side, side);
+  ctx.drawImage(logo, x, y, side, side);
+  ctx.restore();
 }
 
 /** The armlet's crest's side, pixels. */

@@ -48,7 +48,7 @@ a guild owns (`guild_furniture`), and a piece set down in any hall of the guild'
 
 An Aura Armory piece for the arms slot (code `c`, its own `guild` line, `src/net/armoryLaw.js`), drawn by
 `src/render/armoryPass.js`. A gilt band rings the **left** upper arm, a third of the way from shoulder to elbow, enamelled
-in the guild's field and border colours. On its outer face stands the guild's crest - its arms on beaten gold, or its
+in the guild's field and device colours. On its outer face stands the guild's crest - its arms on beaten gold, or its
 approved logo - as a texture painted once a pair of arms (`src/ui/guild/guildCrestArt.js`), with a soft halo under it.
 `armletSide` keeps it on one side: the rig's left arm, and on a sprite the side that faces the eye.
 
@@ -58,8 +58,8 @@ A peer's armlet shows their guild's arms, read by the tag their token carries (`
 ## 4. The hall's furniture and the Guild Banker
 
 Seven pieces of our own (`src/world/guildFurniture.js`, models 864300 to 864306), textured by
-`src/world/guildFurnitureArt.js` under pseudo-archive 38241. The standard, the plaque, the seat and the rack carry the
-hall's own arms, painted again when they change. The brazier is a light.
+`src/world/guildFurnitureArt.js` under pseudo-archive 38241. The banker, the standard, the plaque, the seat and the rack
+carry the hall's own arms, painted again when they change. The brazier is a light.
 
 A guild piece stands only in its guild's own hall, costs no gold where it is set down, holds nothing and is no station
 (`server-account/src/guildFurniture.js`). The count is asked inside the placement's own INSERT, so two keepers setting
@@ -97,7 +97,8 @@ the fee from the silver treasury in escrow (`server-account/src/guildLogos.js`).
 
 The safety minute posts a card to the moderators' channel with the picture and two buttons, Approve and Turn down
 (`glogo:ok:<id>`, `glogo:no:<id>`). Only a moderator's press decides; the card is redrawn with who decided. Approved,
-the fee is burnt and the logo takes the place of the device everywhere the arms are drawn. Turned down or withdrawn,
+the fee is burnt and the logo takes the place of the device on the guild window's crest, the Guild Crest portrait, the
+armlet, the sails, the hall's furniture and the hall's street banners (`src/scenes/hallBanners.js` paintHallBanner). Turned down or withdrawn,
 the fee comes home. The guildmaster gets a letter either way, and may take an approved logo down again.
 
 A logo is served at `/v1/guilds/logo/<id>` while it is under review or approved, and to nobody once it is not.
@@ -131,4 +132,4 @@ Account acct228, migration `0198_guild_shop.sql`. Relay world295. Pins: `test/se
 - **One left arm.** The ask says one side; the left keeps the right arm's weapon glow clear.
 - **A logo replaces the device, not the shield.** The field, the division and the border stay the guild's own.
 - **The sailcloth is the account's.** A guild's colours belong to whoever sails under them; the arms are read live.
-- **Patch notes** never name a price the shop does not show in game.
+- **A ship's flag stays heraldic.** Its shapes are cut from the arms' parts; the sail carries the logo.
