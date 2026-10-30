@@ -50,7 +50,7 @@ const wholeSeconds = (caller) => Math.floor(caller?.nowSeconds?.() ?? 0);
  *  (int-truncated). The no-place overload SUMS one-way times over
  *  every Place resource and applies the multiplier once. A place
  *  whose location cannot resolve logs and counts 0, as C#. */
-export function travelTimeSeconds(quest, place = null, returnTrip = true) {
+export function travelTimeSeconds(quest, place = null, returnTrip = true, { home = false } = {}) {
   const world = quest?.hooks?.world;
   if (!world) return null;
   if (place === null) {
@@ -61,16 +61,47 @@ export function travelTimeSeconds(quest, place = null, returnTrip = true) {
     }
     let total = 0;
     for (const p of places) total += travelTimeSeconds(quest, p, false) ?? 0;
+    if (home) for (const seat of questorSeats(quest, world)) total += tripSeconds(world, seat, false);   // TRIP-HOME
     if (returnTrip) total = Math.trunc(total * 2.5);
     return total;
   }
   const sd = place.siteDetails;
   const location = sd ? world.maps.getLocationByName(sd.regionName, sd.locationName) : null;
-  if (!location) {
+  if (!location && !sd?.worldPixel) {
     console.warn(`[quest] Could not find Quest Place ${sd?.regionName}/${sd?.locationName}`);
     return 0;
   }
-  const endPos = worldCoordToMapPixel(location.exterior.recordElement.header.x, location.exterior.recordElement.header.y);
+  // TRIP-PIXEL (FIELD BUGS 2026-10-30f): a site past the Bay stands on its own pixel (place.js siteWorldPixel); its
+  // row's world coords read a pixel in the Bay, so a manor near Solitude measured 149 days
+  const endPos = sd.worldPixel ?? worldCoordToMapPixel(location.exterior.recordElement.header.x, location.exterior.recordElement.header.y);
+  return tripSeconds(world, endPos, returnTrip);
+}
+
+/** TRIP-HOME (FIELD BUGS 2026-10-30f): the seats of the at-home individuals a quest makes its questors (`add X as
+ *  questor`), each the town named for its court's region, that the player is not standing in - for a deadline as it
+ *  starts. S0000006 offers Elysana's errand wherever level 6 finds the player and starts its clock there; the way back
+ *  to her in Wayrest counted nothing. A delay (S0000012's messenger) and a parse keep DFU's sum. A region with no town
+ *  of its name (Medora's Balfiera, every province past the Bay - no script names a court there) has no seat. */
+function questorSeats(quest, world) {
+  const here = world.playerPixel();
+  const seats = new Map();
+  for (const task of quest.tasks?.values?.() ?? []) {
+    for (const action of task.actions ?? []) {
+      if (action?.typeName !== 'AddAsQuestor') continue;
+      const person = quest.resources.get(action.target?.name);
+      if (!person?.isPerson || !person.isIndividualNPC || !person.isIndividualAtHome) continue;
+      const region = world.maps.getRegion?.(person.factionData?.region ?? -1)?.name;
+      const seat = region ? world.maps.getLocationByName(region, region) : null;
+      if (!seat?.exterior) continue;
+      const at = worldCoordToMapPixel(seat.exterior.recordElement.header.x, seat.exterior.recordElement.header.y);
+      if (at.x !== here?.x || at.y !== here?.y) seats.set(`${at.x},${at.y}`, at);
+    }
+  }
+  return [...seats.values()];
+}
+
+/** The one trip: cautious by cart from the player's pixel, 2.5 times for a return, never under a day. */
+function tripSeconds(world, endPos, returnTrip) {
   const { minutes } = calculateTravelTime(world.playerPixel(), endPos,
     { speedCautious: true, sleepModeInn: false, travelShip: false, hasHorse: false, hasCart: true },
     (x, y) => world.maps.getClimateIndex(x, y));
@@ -410,6 +441,7 @@ export class Clock extends QuestResource {
     this._closesOnSuccess = false;   // AUDIT TIMEFREE T1: a task started it, so a success makes it a closing
     this.declaredAtOnce = false;   // AUDIT TIMEFREE T3: `Clock _x_ 00:00`, no travel arm (setResource; saved - AUDIT REST-PARTY D3)
     this.startedAfterSuccess = false;   // AUDIT TIMEFREE T5: started once the quest was already a success (saved)
+    this.travelArm = false;   // TRIP-FROM-START: armed by its trip (travelArmed at the parse; saved)
     if (line !== null) this.setResource(line);
   }
 
@@ -454,6 +486,7 @@ export class Clock extends QuestResource {
     // flag&1 + maxRange>0 + zero-time HACK forces the same check.
     if (travelArmed(this.flag, this.maxRange, clockTimeInSeconds)) {
       this.declaredAtOnce = false;   // (a travel clock: 2.5 trips, not "at once")
+      this.travelArm = true;
       const travel = this.parentQuest?.travelSeconds?.();
       if (travel != null) clockTimeInSeconds = travel;
       else { this.travelTimePending = true; clockTimeInSeconds = 0; }
@@ -598,6 +631,20 @@ export class Clock extends QuestResource {
         }
       }
     }
+    // TRIP-FROM-START (FIELD BUGS 2026-10-30f): a travel clock measures its trip again as it starts, from where the
+    // player stands, and keeps the longer. Clock.cs arms it at the parse: S0000002 is parsed wherever level 4 finds the
+    // player, its manor drawn in that region, and Helseth starts the clock in Wayrest - 2.5 days for weeks of road.
+    if (this.travelArm && !this.clockFinished && this.remainingTimeInSeconds === this.startingTimeInSeconds) {
+      let travel = null;
+      // a world that cannot measure keeps the parse's number: a throw here would cut the starting task short
+      try { travel = this.parentQuest.travelSeconds?.({ home: this.isDeadline }); }   // TRIP-HOME: a deadline's way back too
+      catch (ex) { console.warn(`[quest] clock ${this.symbol?.name}: its trip could not be measured as it started (${ex?.message ?? ex})`); }
+      if (Number.isFinite(travel) && travel > this.startingTimeInSeconds) {
+        this.startingTimeInSeconds = travel;
+        this.remainingTimeInSeconds = travel;
+        this.travelTimePending = false;
+      }
+    }
     // AUDIT quest-P15: a flag&16 / hack clock whose travel time pends
     // Q3 would otherwise arm at 0s and fire on the FIRST tick - the
     // exact instant-end symptom the C# hack exists to prevent. HELD
@@ -639,6 +686,7 @@ export class Clock extends QuestResource {
       clockFinished: this.clockFinished,
       startedAfterSuccess: this.startedAfterSuccess,   // AUDIT TIMEFREE T5 (the port's; absent from a save before it - false)
       declaredAtOnce: this.declaredAtOnce,   // AUDIT REST-PARTY D3 (the port's; a restore has no declaration to read)
+      travelArm: this.travelArm,   // TRIP-FROM-START (the port's, for the same reason)
     };
   }
 
@@ -664,6 +712,8 @@ export class Clock extends QuestResource {
     // either way; only a two-value range drawn at zero (`00:00 01:00`) could differ, and no script declares one.
     this.declaredAtOnce = typeof dataIn.declaredAtOnce === 'boolean' ? dataIn.declaredAtOnce
       : this.startingTimeInSeconds === 0 && !travelArmed(this.flag, this.maxRange, 0);
+    // TRIP-FROM-START: a save from before the mark - flag 16 alone, which no declared time defeats (the bit-0 hack needs one)
+    this.travelArm = typeof dataIn.travelArm === 'boolean' ? dataIn.travelArm : (this.flag & 16) === 16;
     this.travelTimePending = false;
   }
 }
