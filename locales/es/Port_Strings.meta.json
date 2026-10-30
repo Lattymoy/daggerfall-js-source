@@ -1704,6 +1704,11 @@
   "tr": "d2ab7fbad729",
   "by": "claude-in-session"
  },
+ "account.refusal.guildLogo": {
+  "en": "d0d7886c7910",
+  "tr": "46eec4485403",
+  "by": "claude-in-session"
+ },
  "account.refusal.guildMarksFull": {
   "en": "495120cdebfd",
   "tr": "fa695a418e07",
@@ -1749,11 +1754,6 @@
   "tr": "9d1c1dd6c83c",
   "by": "claude-in-session"
  },
- "account.refusal.guildRenameGold": {
-  "en": "a91541390908",
-  "tr": "b1bda33534da",
-  "by": "claude-in-session"
- },
  "account.refusal.guildRenameMoved": {
   "en": "114d8b59f29d",
   "tr": "63e0b544606e",
@@ -1767,6 +1767,11 @@
  "account.refusal.guildRenameSiege": {
   "en": "bb50aa33024a",
   "tr": "16a68a85aa8b",
+  "by": "claude-in-session"
+ },
+ "account.refusal.guildRenameSilver": {
+  "en": "f928ddef20f7",
+  "tr": "d77d56745c0b",
   "by": "claude-in-session"
  },
  "account.refusal.guildRenameSoon": {
@@ -1857,6 +1862,26 @@
  "account.refusal.guildVaultRank": {
   "en": "f90c561af4e9",
   "tr": "872d0c6e07d3",
+  "by": "claude-in-session"
+ },
+ "account.refusal.guildWareHall": {
+  "en": "4b2fb994a8c5",
+  "tr": "6786edee09d4",
+  "by": "claude-in-session"
+ },
+ "account.refusal.guildWareHeld": {
+  "en": "4f78670b67ae",
+  "tr": "409a933465e7",
+  "by": "claude-in-session"
+ },
+ "account.refusal.guildWareMax": {
+  "en": "9f190d8d0b87",
+  "tr": "164bca6c5ec2",
+  "by": "claude-in-session"
+ },
+ "account.refusal.guildWareNone": {
+  "en": "dc2f055992b0",
+  "tr": "b83817603bf2",
   "by": "claude-in-session"
  },
  "account.refusal.guildWritEscrow": {
@@ -2137,6 +2162,36 @@
  "account.refusal.live": {
   "en": "cc82ff1983f0",
   "tr": "b25be721b838",
+  "by": "claude-in-session"
+ },
+ "account.refusal.logoBytes": {
+  "en": "7c7cd1b7dd6e",
+  "tr": "29372d1514dc",
+  "by": "claude-in-session"
+ },
+ "account.refusal.logoNone": {
+  "en": "e68cd804ff39",
+  "tr": "d106da99e825",
+  "by": "claude-in-session"
+ },
+ "account.refusal.logoPending": {
+  "en": "6653fae7e6d8",
+  "tr": "23b8e3cb6783",
+  "by": "claude-in-session"
+ },
+ "account.refusal.logoSide": {
+  "en": "7111d5c1615d",
+  "tr": "86a3f59b1313",
+  "by": "claude-in-session"
+ },
+ "account.refusal.logoSquare": {
+  "en": "c2b86db14ebf",
+  "tr": "b32923aa6c74",
+  "by": "claude-in-session"
+ },
+ "account.refusal.logoType": {
+  "en": "9c835f5c249b",
+  "tr": "162799cb1daf",
   "by": "claude-in-session"
  },
  "account.refusal.lostFull": {
@@ -2672,6 +2727,11 @@
  "account.refusal.noTitle": {
   "en": "242fc306f1d9",
   "tr": "633bf0248afb",
+  "by": "claude-in-session"
+ },
+ "account.refusal.noWare": {
+  "en": "11d81180ab39",
+  "tr": "85ce66d7ba3b",
   "by": "claude-in-session"
  },
  "account.refusal.noWrit": {
@@ -4024,6 +4084,11 @@
   "tr": "ff56338b54bd",
   "by": "claude-in-session"
  },
+ "armory.line.guild": {
+  "en": "54241a3d0070",
+  "tr": "c9f2c998318f",
+  "by": "claude-in-session"
+ },
  "armory.look.ashbound": {
   "en": "db72358e8d19",
   "tr": "d9e5e5e5f5a7",
@@ -4079,6 +4144,11 @@
   "tr": "4426369a3f21",
   "by": "claude-in-session"
  },
+ "armory.look.insigniaarmlet": {
+  "en": "ae19b88976d8",
+  "tr": "8d251702b510",
+  "by": "claude-in-session"
+ },
  "armory.name.ashbound": {
   "en": "25d488947d3c",
   "tr": "753ea3cc64c4",
@@ -4132,6 +4202,11 @@
  "armory.name.eternalsigil": {
   "en": "1299a1690a58",
   "tr": "c1ca5b63b680",
+  "by": "claude-in-session"
+ },
+ "armory.name.insigniaarmlet": {
+  "en": "38c55c0ecbf3",
+  "tr": "adb8d7b7951f",
   "by": "claude-in-session"
  },
  "armory.slot.arms": {
@@ -8929,6 +9004,11 @@
   "tr": "1adc345ad875",
   "by": "claude-in-session"
  },
+ "coll.how.guildShop": {
+  "en": "555bddc05ecc",
+  "tr": "f80617211b3e",
+  "by": "claude-in-session"
+ },
  "coll.how.hearthkeeper": {
   "en": "9aaba1a1fcbb",
   "tr": "242a8f5c5ffd",
@@ -9357,6 +9437,11 @@
  "coll.src.festival": {
   "en": "ea29496c0eb8",
   "tr": "477d60089e8e",
+  "by": "claude-in-session"
+ },
+ "coll.src.guild": {
+  "en": "3876bc4f4774",
+  "tr": "21898aea8b08",
   "by": "claude-in-session"
  },
  "coll.src.hunt": {
@@ -15639,6 +15724,116 @@
   "tr": "a6fd9a6d72c5",
   "by": "claude-in-session"
  },
+ "guild.banker.shut": {
+  "en": "36533b32d8d7",
+  "tr": "19bff5f888cc",
+  "by": "claude-in-session"
+ },
+ "guild.logo.about": {
+  "en": "82f0264846f5",
+  "tr": "56018dee162b",
+  "by": "claude-in-session"
+ },
+ "guild.logo.approved": {
+  "en": "41cac0a5c0a5",
+  "tr": "2669d3f21cc4",
+  "by": "claude-in-session"
+ },
+ "guild.logo.choose": {
+  "en": "d2a4ac8c2c7e",
+  "tr": "7a9e0be7c382",
+  "by": "claude-in-session"
+ },
+ "guild.logo.clear": {
+  "en": "b2f955b75f8c",
+  "tr": "7cbe8acf3c1b",
+  "by": "claude-in-session"
+ },
+ "guild.logo.clearSure": {
+  "en": "f8ad9739afdb",
+  "tr": "3fce2162e0f9",
+  "by": "claude-in-session"
+ },
+ "guild.logo.cleared": {
+  "en": "cd03c40eeb7b",
+  "tr": "e5ab36a0833b",
+  "by": "claude-in-session"
+ },
+ "guild.logo.current": {
+  "en": "cda1ac9581a5",
+  "tr": "a36471d766ab",
+  "by": "claude-in-session"
+ },
+ "guild.logo.master": {
+  "en": "b3e9fbd873e6",
+  "tr": "25af6722e5b2",
+  "by": "claude-in-session"
+ },
+ "guild.logo.preview": {
+  "en": "d888ed56f2f5",
+  "tr": "3c985321ebb8",
+  "by": "claude-in-session"
+ },
+ "guild.logo.review": {
+  "en": "d818d09fe105",
+  "tr": "3ae8b43110a0",
+  "by": "claude-in-session"
+ },
+ "guild.logo.rules": {
+  "en": "8fe6e60bc358",
+  "tr": "806788f0d993",
+  "by": "claude-in-session"
+ },
+ "guild.logo.send": {
+  "en": "83de9ab6bd3e",
+  "tr": "23d36e861394",
+  "by": "claude-in-session"
+ },
+ "guild.logo.sendSure": {
+  "en": "a7aff5d679db",
+  "tr": "741547a3f3ad",
+  "by": "claude-in-session"
+ },
+ "guild.logo.sent": {
+  "en": "5e2666aad980",
+  "tr": "742872227f5e",
+  "by": "claude-in-session"
+ },
+ "guild.logo.title": {
+  "en": "011e896a6373",
+  "tr": "728f82e3f73a",
+  "by": "claude-in-session"
+ },
+ "guild.logo.why.pick": {
+  "en": "f035b5e30c2e",
+  "tr": "b36f9b97300b",
+  "by": "claude-in-session"
+ },
+ "guild.logo.why.short": {
+  "en": "70cac62c21ac",
+  "tr": "bc8090de7bc7",
+  "by": "claude-in-session"
+ },
+ "guild.logo.withdraw": {
+  "en": "d2c2c926aa2a",
+  "tr": "e54f315b0c5e",
+  "by": "claude-in-session"
+ },
+ "guild.logo.withdrawn": {
+  "en": "ecf818eed289",
+  "tr": "20d708ee34d6",
+  "by": "claude-in-session"
+ },
+ "guild.power.logo": {
+  "en": "886f9b49dbab",
+  "tr": "892bcd4489bf",
+  "by": "claude-in-session"
+ },
+ "guild.power.shop": {
+  "en": "748a2e6f445d",
+  "tr": "58eb8fa5bfce",
+  "by": "claude-in-session"
+ },
  "guild.probation.comingRep": {
   "en": "eae43e35b6c7",
   "tr": "ca5a2f9cd458",
@@ -15732,6 +15927,281 @@
  "guild.seatService": {
   "en": "2fd21619fda0",
   "tr": "26d88d13e924",
+  "by": "claude-in-session"
+ },
+ "guild.shop.again": {
+  "en": "042c862e4467",
+  "tr": "adec7b4f2351",
+  "by": "claude-in-session"
+ },
+ "guild.shop.bought": {
+  "en": "9fec6cc4a59e",
+  "tr": "5777534817a6",
+  "by": "claude-in-session"
+ },
+ "guild.shop.buy": {
+  "en": "7ceca51fcafe",
+  "tr": "f8aad3ba6fc8",
+  "by": "claude-in-session"
+ },
+ "guild.shop.intro": {
+  "en": "48f5e4545846",
+  "tr": "9f23ba654783",
+  "by": "claude-in-session"
+ },
+ "guild.shop.kind.armory": {
+  "en": "b8314b7db1da",
+  "tr": "9be3a3e3f7bd",
+  "by": "claude-in-session"
+ },
+ "guild.shop.kind.furniture": {
+  "en": "b172e90fedfa",
+  "tr": "a25ee78895df",
+  "by": "claude-in-session"
+ },
+ "guild.shop.kind.icon": {
+  "en": "92b6b1bf71e0",
+  "tr": "67fb78ecf024",
+  "by": "claude-in-session"
+ },
+ "guild.shop.kind.sails": {
+  "en": "b8a54799be1f",
+  "tr": "02f84f4f668f",
+  "by": "claude-in-session"
+ },
+ "guild.shop.look.banker": {
+  "en": "15f4e9248a0e",
+  "tr": "4db72e630d21",
+  "by": "claude-in-session"
+ },
+ "guild.shop.look.brazier": {
+  "en": "3e448ba2b388",
+  "tr": "a33ba24b34d0",
+  "by": "claude-in-session"
+ },
+ "guild.shop.look.crestplaque": {
+  "en": "2558986bac72",
+  "tr": "c946667f72b7",
+  "by": "claude-in-session"
+ },
+ "guild.shop.look.guildcrest": {
+  "en": "78269ae415f9",
+  "tr": "c0fb01ef61c4",
+  "by": "claude-in-session"
+ },
+ "guild.shop.look.guildsails": {
+  "en": "2c285261b1a8",
+  "tr": "184370fc838c",
+  "by": "claude-in-session"
+ },
+ "guild.shop.look.insigniaarmlet": {
+  "en": "d489da6961da",
+  "tr": "b0cceccd2db5",
+  "by": "claude-in-session"
+ },
+ "guild.shop.look.standard": {
+  "en": "5f9dded68cef",
+  "tr": "554870ed63ec",
+  "by": "claude-in-session"
+ },
+ "guild.shop.look.throne": {
+  "en": "490d0c4fac11",
+  "tr": "8c1435f0f53d",
+  "by": "claude-in-session"
+ },
+ "guild.shop.look.wartable": {
+  "en": "204a10961073",
+  "tr": "99580cb352e2",
+  "by": "claude-in-session"
+ },
+ "guild.shop.look.weaponrack": {
+  "en": "914f3fca47df",
+  "tr": "fc99af8d3341",
+  "by": "claude-in-session"
+ },
+ "guild.shop.owned": {
+  "en": "b62ff5ccd122",
+  "tr": "c613dd568db3",
+  "by": "claude-in-session"
+ },
+ "guild.shop.payer.account": {
+  "en": "2733ad7197be",
+  "tr": "8b86ba65f5cd",
+  "by": "claude-in-session"
+ },
+ "guild.shop.payer.guild": {
+  "en": "b51b1c6d5db7",
+  "tr": "72fcfba042b3",
+  "by": "claude-in-session"
+ },
+ "guild.shop.purse.guild": {
+  "en": "cedc1696e5b9",
+  "tr": "a6c84a0f67a0",
+  "by": "claude-in-session"
+ },
+ "guild.shop.purse.mine": {
+  "en": "34399fed23d9",
+  "tr": "ad5ae7085c8a",
+  "by": "claude-in-session"
+ },
+ "guild.shop.reading": {
+  "en": "756e65b8a8ef",
+  "tr": "07ca819d4366",
+  "by": "claude-in-session"
+ },
+ "guild.shop.sec.account": {
+  "en": "7e13d94a5a6b",
+  "tr": "3d70f680c62d",
+  "by": "claude-in-session"
+ },
+ "guild.shop.sec.guild": {
+  "en": "0d5da60383fe",
+  "tr": "170af09f3853",
+  "by": "claude-in-session"
+ },
+ "guild.shop.state.account": {
+  "en": "6e0a4bf2dfdf",
+  "tr": "024162ae1fcf",
+  "by": "claude-in-session"
+ },
+ "guild.shop.state.guild": {
+  "en": "0ec94bcdf385",
+  "tr": "9ec1f31c1d99",
+  "by": "claude-in-session"
+ },
+ "guild.shop.state.held": {
+  "en": "1f7450b4d606",
+  "tr": "0c1ddc68a52b",
+  "by": "claude-in-session"
+ },
+ "guild.shop.stock.left": {
+  "en": "eff6e9509e8a",
+  "tr": "292d21d6aa7c",
+  "by": "claude-in-session"
+ },
+ "guild.shop.stock.none": {
+  "en": "14b0091c3b88",
+  "tr": "e0120ef06024",
+  "by": "claude-in-session"
+ },
+ "guild.shop.stock.unread": {
+  "en": "36d2dc9ab045",
+  "tr": "b0caa2ef90b0",
+  "by": "claude-in-session"
+ },
+ "guild.shop.sure": {
+  "en": "e3d82e43274a",
+  "tr": "bbac321479f8",
+  "by": "claude-in-session"
+ },
+ "guild.shop.title": {
+  "en": "7b8676ea33a3",
+  "tr": "1f126d78cc49",
+  "by": "claude-in-session"
+ },
+ "guild.shop.unread": {
+  "en": "96ad965803f3",
+  "tr": "f13efccce89f",
+  "by": "claude-in-session"
+ },
+ "guild.shop.use.furniture": {
+  "en": "529936f05651",
+  "tr": "41816d98ba90",
+  "by": "claude-in-session"
+ },
+ "guild.shop.use.guildcrest": {
+  "en": "fcc5a9f02d96",
+  "tr": "eda9ca6d14ff",
+  "by": "claude-in-session"
+ },
+ "guild.shop.use.guildsails": {
+  "en": "dd241206684e",
+  "tr": "cdae6ad2cbd5",
+  "by": "claude-in-session"
+ },
+ "guild.shop.use.insigniaarmlet": {
+  "en": "1d325d4863f5",
+  "tr": "b4e67ec67088",
+  "by": "claude-in-session"
+ },
+ "guild.shop.ware.banker": {
+  "en": "514809024182",
+  "tr": "8aaa1f2e3ce6",
+  "by": "claude-in-session"
+ },
+ "guild.shop.ware.brazier": {
+  "en": "cb6d1e877660",
+  "tr": "318f18ec98e9",
+  "by": "claude-in-session"
+ },
+ "guild.shop.ware.crestplaque": {
+  "en": "591f825f7262",
+  "tr": "156e76a550c1",
+  "by": "claude-in-session"
+ },
+ "guild.shop.ware.guildcrest": {
+  "en": "befbc8eb4cd8",
+  "tr": "fc8989ca27e8",
+  "by": "claude-in-session"
+ },
+ "guild.shop.ware.guildsails": {
+  "en": "8cf76c20cf0b",
+  "tr": "b70e3e65eee3",
+  "by": "claude-in-session"
+ },
+ "guild.shop.ware.insigniaarmlet": {
+  "en": "38c55c0ecbf3",
+  "tr": "adb8d7b7951f",
+  "by": "claude-in-session"
+ },
+ "guild.shop.ware.standard": {
+  "en": "a81dc7b56662",
+  "tr": "fa85c81919f9",
+  "by": "claude-in-session"
+ },
+ "guild.shop.ware.throne": {
+  "en": "35fa3f5e6bdc",
+  "tr": "9813d1e1c31f",
+  "by": "claude-in-session"
+ },
+ "guild.shop.ware.unknown": {
+  "en": "4fa880d62944",
+  "tr": "4860ed5b1711",
+  "by": "claude-in-session"
+ },
+ "guild.shop.ware.wartable": {
+  "en": "0455052d820c",
+  "tr": "57c26fc1b548",
+  "by": "claude-in-session"
+ },
+ "guild.shop.ware.weaponrack": {
+  "en": "bdce15a8056c",
+  "tr": "8e4013b3248a",
+  "by": "claude-in-session"
+ },
+ "guild.shop.why.closed": {
+  "en": "32123b39da5c",
+  "tr": "286be5068d7d",
+  "by": "claude-in-session"
+ },
+ "guild.shop.why.master": {
+  "en": "bb7ed3e89baf",
+  "tr": "2155e3d964f2",
+  "by": "claude-in-session"
+ },
+ "guild.shop.why.max": {
+  "en": "60fafe7fa2a8",
+  "tr": "de809c7ba625",
+  "by": "claude-in-session"
+ },
+ "guild.shop.why.short": {
+  "en": "9f055182f330",
+  "tr": "613ba32330db",
+  "by": "claude-in-session"
+ },
+ "guild.shop.why.treasury": {
+  "en": "70cac62c21ac",
+  "tr": "bc8090de7bc7",
   "by": "claude-in-session"
  },
  "guild.wayBack.drift": {
@@ -25099,6 +25569,81 @@
   "tr": "b8902522ec8d",
   "by": "claude-in-session"
  },
+ "naval.cloth.armsOff": {
+  "en": "58246bc56efa",
+  "tr": "2796153204de",
+  "by": "claude-in-session"
+ },
+ "naval.cloth.armsOn": {
+  "en": "1d6bf724c8ac",
+  "tr": "dd2a4b99d302",
+  "by": "claude-in-session"
+ },
+ "naval.cloth.p.bands": {
+  "en": "2bc0aa16b98b",
+  "tr": "820a9b0a7428",
+  "by": "claude-in-session"
+ },
+ "naval.cloth.p.border": {
+  "en": "5d10d3f42121",
+  "tr": "64adbe227739",
+  "by": "claude-in-session"
+ },
+ "naval.cloth.p.chevron": {
+  "en": "9861ce541c17",
+  "tr": "62694c3cacbd",
+  "by": "claude-in-session"
+ },
+ "naval.cloth.p.cross": {
+  "en": "dbfe7362b2b8",
+  "tr": "fa00359704a1",
+  "by": "claude-in-session"
+ },
+ "naval.cloth.p.plain": {
+  "en": "34118050b206",
+  "tr": "f8004f341d0c",
+  "by": "claude-in-session"
+ },
+ "naval.cloth.p.quartered": {
+  "en": "f3e0155f9bb5",
+  "tr": "064526d453e1",
+  "by": "claude-in-session"
+ },
+ "naval.cloth.p.saltire": {
+  "en": "aa30cc73048a",
+  "tr": "538cd57341fc",
+  "by": "claude-in-session"
+ },
+ "naval.cloth.p.stripes": {
+  "en": "5df166ad9c81",
+  "tr": "699f1a2d667b",
+  "by": "claude-in-session"
+ },
+ "naval.cloth.pattern": {
+  "en": "1fff6a31661b",
+  "tr": "dfe849d44028",
+  "by": "claude-in-session"
+ },
+ "naval.cloth.reading": {
+  "en": "c333f399656e",
+  "tr": "63ce64a4fd1f",
+  "by": "claude-in-session"
+ },
+ "naval.cloth.second": {
+  "en": "c19fb9b42098",
+  "tr": "70929a315fa4",
+  "by": "claude-in-session"
+ },
+ "naval.cloth.shut": {
+  "en": "b1869c1bf291",
+  "tr": "8dbca5e003e5",
+  "by": "claude-in-session"
+ },
+ "naval.cloth.title": {
+  "en": "8cf76c20cf0b",
+  "tr": "b70e3e65eee3",
+  "by": "claude-in-session"
+ },
  "naval.deck.bad": {
   "en": "120ff8546e22",
   "tr": "af2077b3f912",
@@ -33314,6 +33859,11 @@
   "tr": "e0a9fe9ded08",
   "by": "claude-in-session"
  },
+ "profile.icon.guildcrest": {
+  "en": "befbc8eb4cd8",
+  "tr": "fc8989ca27e8",
+  "by": "claude-in-session"
+ },
  "pvp.evade": {
   "en": "3ad2db0403c9",
   "tr": "c2b6833cfaee",
@@ -39584,6 +40134,26 @@
   "tr": "deb82f1da991",
   "by": "claude-in-session"
  },
+ "social.guild.founded": {
+  "en": "9ddc956fd46b",
+  "tr": "28c04052845b",
+  "by": "claude-in-session"
+ },
+ "social.guild.group.guild": {
+  "en": "54241a3d0070",
+  "tr": "c9f2c998318f",
+  "by": "claude-in-session"
+ },
+ "social.guild.group.look": {
+  "en": "7e5a975b6add",
+  "tr": "de8d10df65c7",
+  "by": "claude-in-session"
+ },
+ "social.guild.group.wealth": {
+  "en": "9205f45e8fa1",
+  "tr": "fe84fa367a81",
+  "by": "claude-in-session"
+ },
  "social.guild.name.arms": {
   "en": "047072f53ca8",
   "tr": "ba4d72daf203",
@@ -39602,6 +40172,11 @@
  "social.guild.name.settings": {
   "en": "c7f73bb54d92",
   "tr": "9751f876e9e7",
+  "by": "claude-in-session"
+ },
+ "social.guild.name.shop": {
+  "en": "55de88709232",
+  "tr": "754711c62a0c",
   "by": "claude-in-session"
  },
  "social.guild.name.stores": {
@@ -39625,8 +40200,8 @@
   "by": "claude-in-session"
  },
  "social.guild.page.arms": {
-  "en": "ee32ad4f309b",
-  "tr": "8735d3a77ce8",
+  "en": "9cb115e96474",
+  "tr": "5f49e059c2bc",
   "by": "claude-in-session"
  },
  "social.guild.page.members": {
@@ -39644,6 +40219,11 @@
   "tr": "3c2fcd08ae61",
   "by": "claude-in-session"
  },
+ "social.guild.page.shop": {
+  "en": "85bc6db5c690",
+  "tr": "36cb2c951dd3",
+  "by": "claude-in-session"
+ },
  "social.guild.page.stores": {
   "en": "987096e938d2",
   "tr": "b1b19d93a0b1",
@@ -39659,6 +40239,31 @@
   "tr": "b00b06a45268",
   "by": "claude-in-session"
  },
+ "social.guild.renameSilver": {
+  "en": "3ebfb58bc940",
+  "tr": "de5ab5c7ab72",
+  "by": "claude-in-session"
+ },
+ "social.guild.renameSilverShut": {
+  "en": "c457057ad3ed",
+  "tr": "a2ea0ac5826c",
+  "by": "claude-in-session"
+ },
+ "social.guild.renameSure": {
+  "en": "1f851a74dbd8",
+  "tr": "874c54b5795e",
+  "by": "claude-in-session"
+ },
+ "social.guild.shopNote": {
+  "en": "1ee4eee95801",
+  "tr": "bae6e72bdf3a",
+  "by": "claude-in-session"
+ },
+ "social.guild.shopOpen": {
+  "en": "d473263c91c2",
+  "tr": "fe6c73f32711",
+  "by": "claude-in-session"
+ },
  "social.guild.silver.castle": {
   "en": "bdf0bd457036",
   "tr": "538e424f086e",
@@ -39672,6 +40277,26 @@
  "social.guild.silver.castleSale": {
   "en": "9357c0c5a0f6",
   "tr": "7e8e7674b23e",
+  "by": "claude-in-session"
+ },
+ "social.guild.silver.logo": {
+  "en": "971562a9be09",
+  "tr": "dfb10e787ae7",
+  "by": "claude-in-session"
+ },
+ "social.guild.silver.logoReturn": {
+  "en": "ab9324051f5b",
+  "tr": "a41d055920c7",
+  "by": "claude-in-session"
+ },
+ "social.guild.silver.rename": {
+  "en": "702f4aa595ef",
+  "tr": "4cebca7cda76",
+  "by": "claude-in-session"
+ },
+ "social.guild.silver.shop": {
+  "en": "7f5514d792fa",
+  "tr": "19b076b74cbe",
   "by": "claude-in-session"
  },
  "social.guild.stat.bay": {
