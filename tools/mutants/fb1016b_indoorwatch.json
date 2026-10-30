@@ -613,7 +613,7 @@
   },
   {
     "name": "INDOOR-WATCH-MOVED-ai55-street-sees-switch",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "import { fishKind } from './fishHost.js';",
     "new": "import { fishKind } from './fishHost.js'; // interiorNav",
     "tests": [

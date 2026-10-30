@@ -41,6 +41,7 @@ import {
 } from '../../src/ui/professions/profPages.js';
 import { setPref } from '../../src/systems/uiPrefs.js';
 import { utcDay } from '../../src/net/marksLaw.js';
+import { hostText } from '../hostText.mjs';   // PIN MOVED (HOST-SPLIT PROFESSIONS): the world host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const noWait = () => Promise.resolve();
@@ -482,9 +483,9 @@ test('PROF10 wiring: the jeweller\'s bench a Pawn Shop\'s or a Gem Store\'s (ope
   assert.match(m, /if \(t === BUILDING_TYPES\.PawnShop \|\| t === BUILDING_TYPES\.GemStore\) return interiorBuilding\.insideOpenShop === false \? null : \{ kind: 'shop', fee: JEWEL_FEE \};/);
   assert.match(m, /if \(stationOwnerHere\(\) && interiorDecor\.list\(\)\.some\(\(p\) => p\?\.station === 'jeweller'\)\) return \{ kind: 'home', fee: 0 \};/);   // PIN MOVED (FB1018D HOME-BENCH, test/scenes/fb1018d_homebench.test.js): a home's stations serve its owner's account
   assert.match(m, /if \(hallMemberHere\(\) && interiorDecor\.list\(\)\.some\(\(p\) => p\?\.station === 'jeweller'\)\) return \{ kind: 'home', fee: 0 \};/);
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /: profession === 'jewelcrafting'[^\n]*\n\s*\? \{ here: \(\) => modes\?\.jewellerHere\?\.\(\) \?\? null, a: 'a jeweller\\'s bench', who: 'jeweller', noun: 'jeweller\\'s bench', kept: JEWEL_KEPT_TEXT, xp: professionName\('jewelcrafting'\) \}/);   // PIN MOVED (AUDIT PROF-541 R2-C2): no station's own busy word; PIN MOVED (CRAFT3): the XP word the craft's track's
-  assert.match(w, /jeweller: \(\) => modes\?\.jewellerHere\?\.\(\) \?\? null,/);
+  assert.match(w, /jeweller: \(\) => host\.modes\?\.jewellerHere\?\.\(\) \?\? null,/);
   assert.match(w, /facetBand: \(\) => facetBand\(\{ willpower: liveStat\(playerEntity, 'willpower'\), luck: liveStat\(playerEntity, 'luck'\) \}\),/);
   assert.match(w, /craft: async \(recipe, \{ clean, heartwood = false, dye = null, cracked = false, \.\.\.more \}\) => \{/);   // PIN MOVED (MASTER-ART): the door hands the page's other asks (a Master's work's lines) on
   assert.match(w, /const r = await profBook\.craft\(recipe, \{ clean, heartwood, dye, cracked, fee: /);
@@ -694,5 +695,5 @@ test('AUDIT PROF-541 R2-C6: the jeweller\'s bench\'s odds say the town Apothecar
       assert.ok(page.text().includes(`Quality chances: Crude 20% | Standard 60% | Fine 20%. They get better the further your rank (25) is above the recipe's (25). Stop every turn where the stone catches the light to raise the result one quality.${says}`), String(steps));   // PIN MOVED (PLAIN-ODDS): the odds said in plain words
     } finally { page.done(); setProfessionsPages(null); }
   }
-  assert.match(src('src/scenes/world.js'), /jewelSteps: \(\) => myHall\('jewelcrafting'\)\.steps,/);
+  assert.match(hostText('src/scenes/world.js'), /jewelSteps: \(\) => myHall\('jewelcrafting'\)\.steps,/);
 });

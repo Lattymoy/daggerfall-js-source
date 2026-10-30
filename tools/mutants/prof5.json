@@ -942,7 +942,7 @@
   },
   {
     "name": "PROF5-host-stock-untold",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "          toldBalance(r?.data?.balance);   // PROF5 (FOUND): the Bank's balance told too; AUDIT 32 B3: and the market's",
     "new": "",
     "tests": [

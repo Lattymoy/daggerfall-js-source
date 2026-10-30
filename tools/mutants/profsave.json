@@ -145,7 +145,7 @@
   },
   {
     "name": "PROF-SAVE-a-smelt-fee-unsaved",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "          if (f.fee > 0) { deductGold(playerEntity, f.fee); saveSoon.changed(); }",
     "new": "          if (f.fee > 0) { deductGold(playerEntity, f.fee); }",
     "tests": [

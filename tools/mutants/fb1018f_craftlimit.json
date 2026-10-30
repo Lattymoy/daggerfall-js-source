@@ -450,7 +450,7 @@
   },
   {
     "name": "CRAFT-LIMIT-SAID-host-word-unlimited",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "${craftXpText(rec, r.data, st.xp, profBook.limit(rec?.profession))}",
     "new": "${craftXpText(rec, r.data, st.xp)}",
     "tests": [

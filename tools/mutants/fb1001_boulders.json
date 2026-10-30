@@ -203,7 +203,7 @@
   },
   {
     "name": "SETTLE-STAND-the-block-forgotten",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "inLocationRect: isInLocationRect(wc.x, wc.z, locationWorldRect(loc, p.x, p.y)), inside: false }); },   // SETTLE-STAND",
     "new": "inLocationRect: (() => { const r = locationWorldRect(loc, p.x, p.y); return wc.x >= r.minX && wc.x <= r.maxX && wc.z >= r.minZ && wc.z <= r.maxZ; })(), inside: false }); },   // SETTLE-STAND",
     "tests": [
@@ -212,7 +212,7 @@
   },
   {
     "name": "SETTLE-STAND-every-location-a-settlement",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "isPlayerInTown(loc.mapTableData?.locationType, { mustBeInLocationRect: true, mustBeOutside: true, inLocationRect: isInLocationRect(wc.x, wc.z",
     "new": "isPlayerInTown(0, { mustBeInLocationRect: true, mustBeOutside: true, inLocationRect: isInLocationRect(wc.x, wc.z",
     "tests": [

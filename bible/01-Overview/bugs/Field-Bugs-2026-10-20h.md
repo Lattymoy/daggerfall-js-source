@@ -178,7 +178,7 @@ are 256-290 and its classes 384-398 (the 128 bit, DaggerfallEntity.cs:976-979), 
 own id - a DEX Wolf stood by the street's real pool (`exteriorFoes.js` spawnFoe) has `mobileType` 262. Every step a hide
 takes refused it:
 - THE KILL. `huntHost.js:"const hide = hideOfFoe(entity.mobileType);"` answered null, so the world host's kill listener
-  (`world.js:"registerPlayerKillListener('hunting', (entity) => { bodyStamps.stamp(entity); });"`) stamped no body, and a
+  (`professionsHost.js:"registerPlayerKillListener('hunting', (entity) => { bodyStamps.stamp(entity); });"`) stamped no body, and a
   body with no stamp is never a node (`huntHost.js:"if (!s) continue;"`): no "Skin the Wolf", E opened the loot and the
   knife's Use did nothing - in the street's pool, a building's and a dungeon's alike.
 - THE TRACKER. `huntHost.js:"!hideOfFoe(f.entity?.mobileType ?? f.mobileType)) continue;"` marked none of them.
@@ -590,7 +590,7 @@ ACCOUNT_VERSION acct166, one release with SOUL-LAW (whose migration is 0143, aft
 in 19 test files, 10 records in 9 mutant lists). The same deploy carries DEX-HIDES' law to the Worker.
 
 THE FOUR HOSTS: none changed. `world.js` wires the Stores page and the enchanting station's acts through the module
-(`world.js:"      setProfessionsPages({"`), and `worldModes.js` stands the station
+(`professionsHost.js:"      setProfessionsPages({"`), and `worldModes.js` stands the station
 (`worldModes.js:"    enchantHere() {"`); the change is the account service's, the book's mirror reads it as before, and the
 page draws it. `exterior.js` and `dungeonContext.js` stand no enchanting station and wire no Stores page
 (Professions-Arc 37, the four hosts).

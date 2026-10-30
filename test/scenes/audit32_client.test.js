@@ -23,6 +23,7 @@ import { registerPlayerKillListener, reportPlayerKill } from '../../src/systems/
 import { setForagingHost } from '../../src/systems/foraging/foragingInstall.js';
 import { CORPSE_ACTIVATION_DISTANCE } from '../../src/player/activate.js';
 import { MOBILE_TYPES } from '../../src/characters/mobile/mobileTypes.js';
+import { hostText } from '../hostText.mjs';   // PIN MOVED (HOST-SPLIT PROFESSIONS): the world host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const noWait = () => Promise.resolve();
@@ -305,19 +306,19 @@ test('AUDIT 32 wiring: a flyer\'s body where its corpse lies (H3); no click thro
   assert.match(d, /if \(!lootableBody\(f\) \|\| !f\.entity\?\.items\?\.length \|\| roomUnborn\(`corpse:\$\{i\}`\)\) return;[^\n]*\n\s*const p = corpseAt\(f\);/, 'H3: the loot\'s box where the body lies');   // PIN MOVED (PARTY-LOOT): and no box for a room body with no terms yet
   assert.match(d, /f\.corpse = false;[^\n]*\n\s*f\.corpsePos = null;/, 'a freed corpse forgets its place');
   assert.match(d, /corpseKeyOf: \(f\) => \{ const i = foes\.indexOf\(f\); return i >= 0 && lootableBody\(f\) && f\.entity\?\.items\?\.length \? `corpse:\$\{i\}` : null; \},/, 'H8');
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   // PIN MOVED (FIELD BUGS 2026-10-07 INDOOR-SKIN): the dungeon's pool handed whole - huntHost.js bodiesHere reads its
   // corpseAt (H3) and corpseKeyOf (H8)
-  assert.match(w, /bodiesHere\(modeNow\(\), \{ street: exteriorFoes, dungeon: modes\?\.dungeonCtx, interior: modes\?\.interiorFoes \}, bodyStamps\)/);
+  assert.match(w, /bodiesHere\(host\.modeNow\(\), \{ street: exteriorFoes, dungeon: host\.modes\?\.dungeonCtx, interior: host\.modes\?\.interiorFoes \}, bodyStamps\)/);
   assert.match(src('src/scenes/huntHost.js'), /return bodiesOf\(pool\.foes, stamps, \(f\) => pool\.corpseAt\?\.\(f\), \(f\) => pool\.corpseKeyOf\?\.\(f\)\);/);
   // PIN MOVED (AUDIT 2026-10-01 part four, CLICK-LIFT): and the click an act took, to its release - test/systems/fb1001_audit.test.js
   assert.match(w, /if \(\(\(_act\.activate && !gatherHost\?\.acting\(\) && !_actClick(?: && !nodeClicked)?\) \|\| \(useEdge && !nodeTook\)\) && !modes\.transitioning(?: && !_holdFire)?\) \{/, 'H5: the street');   // PROF-MENU: and a click a node's lit row took   // PIN MOVED (the merge with AUDIT NAV2 F31): the gate holds fire too
   assert.match(((m) => m.slice(m.indexOf('  function tryExitDungeon(')))(src('src/scenes/worldModes.js')), /if \(interact && !pressCast && host\.profPress\?\.\(\)\) return true;\n(?:\s*\/\/[^\n]*\n|\s*if \(!interact && !pressCast && !actClick && !host\.profActing\?\.\(\) && host\.profClick\?\.\(\)\) return true;\n)*\s*if \(!interact && \(actClick \|\| host\.profActing\?\.\(\)\)\) return true;/, 'H5: the dungeon');   // PROF-MENU: a node's lit row's click between
   assert.match(w, /enemiesNear: exterior \? \(duelEnemyNear\(\) \|\| areEnemiesNearby\(exteriorFoePool\(\), \{ resting: true \}\)\) : areEnemiesNearby\(modes\?\.insideFoes\?\.\(\) \?\? \[\], \{ resting: true \}\),/, 'H6');
-  assert.match(w, /active: \(\) => walkMode && modeNow\(\) === 'exterior' && !townTalk\.overlayActive && !modes\?\.deathUp\?\.\(\) && !modes\?\.transitioning && !travelView\?\.active,/, 'H10');
+  assert.match(w, /active: \(\) => walkMode && host\.modeNow\(\) === 'exterior' && !townTalk\.overlayActive && !host\.modes\?\.deathUp\?\.\(\) && !host\.modes\?\.transitioning && !host\.travelView\?\.active,/, 'H10');
   assert.match(w, /profDungeonEntered: \(ctx\) => \{\n\s*if \(!gatherHost\) return;\n\s*const id = ctx\?\.profIdentity\?\.\(\);\n\s*gatherHost\.enterDungeon\(\{\n\s*id: id\?\.id \?\? null, climate: id\?\.climate \?\? null, region: id\?\.region \?\? null,/, 'H2: every dungeon told');
   // PIN MOVED (FIELD BUGS 2026-10-07 INDOOR-SKIN): a building's body by the building's own door first
-  assert.match(w, /const openHuntLoot = \(key\) => \(modeNow\(\) === 'interior' \? modes\?\.openInteriorBody\?\.\(key\)\n\s*: key\.startsWith\('foeCorpse:'\) \? openBodyLoot\(key\) : modes\?\.dungeonCtx\?\.takeLoot\(key, getInteractionMode\(\)\)\);/, 'H8');
+  assert.match(w, /const openHuntLoot = \(key\) => \(host\.modeNow\(\) === 'interior' \? host\.modes\?\.openInteriorBody\?\.\(key\)\n\s*: key\.startsWith\('foeCorpse:'\) \? host\.openBodyLoot\(key\) : host\.modes\?\.dungeonCtx\?\.takeLoot\(key, getInteractionMode\(\)\)\);/, 'H8');
   // PIN MOVED (AUDIT PROF-541 R2-C2): B4's own busy words gone - one latch holds every craft and brew, so the book's word
   // names none (test/systems/prof12_client.test.js R2-C2)
   assert.match(w, /kept: BENCH_KEPT_TEXT, xp: professionName\('carpentry'\) \}/, 'B4');   // PIN MOVED (CRAFT3): the workbench's XP word is its discipline's craft's name (professionName - Building), no literal

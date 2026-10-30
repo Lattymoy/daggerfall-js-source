@@ -22,6 +22,7 @@ import { createProfHud } from '../../../src/ui/professions/profHud.js';
 import { accountRefusalText } from '../../../src/net/accountClient.js';
 import { WORLD_MAP_TILE_DIM } from '../../../src/world/terrain/terrainTiles.js';
 import { HEIGHTMAP_DIMENSION, TERRAIN_SIZE } from '../../../src/world/terrain/terrainSampler.js';
+import { hostText } from '../../hostText.mjs';   // PIN MOVED (HOST-SPLIT PROFESSIONS): the world host whole
 
 const src = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const WOODS = 231, OCEAN = 223;
@@ -86,7 +87,7 @@ test('PROF8 act: the tug - E (a new press) or attack inside 600 ms (an Angler\'s
   waitOut(b);
   b.tick(0.05, {});
   assert.deepEqual([b.state.phase, buzzed], ['tug', 1]);
-  assert.match(src('src/scenes/world.js'), /tug: \(\) => \{ if \(!getPref\('touchHaptics'\)\) return; try \{ navigator\.vibrate\?\.\(120\); \}/);
+  assert.match(hostText('src/scenes/world.js'), /tug: \(\) => \{ if \(!getPref\('touchHaptics'\)\) return; try \{ navigator\.vibrate\?\.\(120\); \}/);
   // a press of E: the level going down, not a key held since the wind
   const e = createFishAct({ rng: () => 0.5 });
   throwFor(e, 0.3);
@@ -351,7 +352,7 @@ test('PROF8 book, page, words and wiring: the book keeps the account\'s hauls (t
   const pp = src('src/ui/professions/profPages.js');
   assert.match(pp, /const PRACTISED = Object\.freeze\(\['herbalism', 'mining', 'hunting', 'fishing',/);
   assert.match(pp, /t\('prof\.page\.today\.hauls', 'Today: \{hauls, plural, one \{# haul\} other \{# hauls\}\} \(shared by all your characters\)', \{ hauls \}\)/);   // PIN MOVED (CAP-OFF, 2026-10-07 - Mac: "Remove the cap on life skills"): 'of forty'; PIN MOVED (L10N4): the line through t(), its plural ICU's
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /fishKind\(\{ book: profBook, host: \{/);
   assert.match(w, /storm: \(\) => currentWeather\(\) === 'thunder',/);
   assert.match(w, /const item = createFishItem\(species\);\n\s+if \(!item\) return false;\n\s+addItem\(\(playerEntity\.items \?\?= \[\]\), item\);/);

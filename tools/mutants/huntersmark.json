@@ -625,7 +625,7 @@
   },
   {
     "name": "HUNTERS-MARK-world-trophy-door-gone",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": ", trophy: trophyDoor(saveSoon) }),",
     "new": " }),",
     "tests": [

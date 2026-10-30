@@ -31,6 +31,7 @@ import { createGatherHost } from '../../src/scenes/gatherHost.js';
 import { setForagingHost } from '../../src/systems/foraging/foragingInstall.js';
 import { FEATURES } from '../../src/systems/features.js';
 import { dice, bus, sfxOf, tick, PX, rig, arrive, strikeOut, lands } from '../gatherRig.mjs';   // GATHER-FEEL II: the rig, shared
+import { hostText } from '../hostText.mjs';   // PIN MOVED (HOST-SPLIT PROFESSIONS): the world host whole
 
 const ROOT = join(fileURLToPath(new URL('..', import.meta.url)), '..');
 const src = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -613,7 +614,7 @@ test('GATHER-FEEL G17: a tree falls heard - its creak at half its chops, the fal
 });
 
 test('GATHER-FEEL G18: the hosts - the world hands the gathering host its bus (the street, a dungeon and a building are the one host\'s); the host feeds the ear the act every frame and the idle frame too; the Enhanced sounds row says the gathering (mutants: the bus unhanded, the idle frame unfed)', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /\n\s+audio,   \/\/ GATHER-FEEL: the bus the gathering's ear says the acts on/);
   const g = src('src/scenes/gatherHost.js');
   assert.match(g, /const ear = deps\.ear \?\? createGatherEar\(\{ audio: deps\.audio \?\? null \}\);/);

@@ -454,7 +454,7 @@
   },
   {
     "name": "AUDIT29-B3-the-fee-skipped-on-repeat",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "          if (f.fee > 0) { deductGold(playerEntity, f.fee); saveSoon.changed(); }\n          const out = smeltRecipe(",
     "new": "          if (f.fee > 0 && !r.data?.repeat) { deductGold(playerEntity, f.fee); saveSoon.changed(); }\n          const out = smeltRecipe(",
     "tests": [

@@ -319,7 +319,7 @@ export function renderMove(p) {
   ].filter((x) => x !== null).join('\n')}\n`;
 
   // the host: the group's span replaced by the construction
-  const getters = sortedLive.map((n) => `get ${n}() { return ${n}; },${writes.has(n) ? ` set ${n}(v) { ${n} = v; },` : ''}`);
+  const getters = sortedLive.map((n) => `get ${n}() { return ${n}; },${writes.has(n) ? ` set ${n}(value) { ${n} = value; },` : ''}`);
   const construction = [
     `  ${ret.length ? `const { ${ret.join(', ')} } = ` : ''}${ctor}({   // HOST-SPLIT: ${toFile}`,
     sortedValue.length ? `${wrap(sortedValue, '    ')},` : null,

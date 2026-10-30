@@ -21,6 +21,7 @@ import { masterOptionWords, masterNeeds, masterPicks, resetMasterBoxes, drawMast
 import { PROF_CSS } from '../../../src/ui/enhanced/enhancedPlusStyle.js';
 import { setPref } from '../../../src/systems/uiPrefs.js';
 import { utcDay } from '../../../src/net/marksLaw.js';
+import { hostText } from '../../hostText.mjs';   // PIN MOVED (HOST-SPLIT PROFESSIONS): the world host whole
 
 const noWait = () => Promise.resolve();
 const memStorage = () => { const m = new Map(); return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, String(v)) }; };
@@ -142,7 +143,7 @@ test('MASTER-ART NO BOX below Master, none for a piece no tier takes; a catalyst
 });
 
 test('MASTER-ART THE WIRING: world.js\'s craft door hands the page\'s other asks to the book (no logical line in bootWorld); the four stations that make a tier draw the box, each through its own craft door, the loom in its dye; Enhanced Plus gives its pickers and its press 40px (mutants: the door\'s asks dropped; a station\'s box unwired)', () => {
-  const w = readFileSync(new URL('../../../src/scenes/world.js', import.meta.url), 'utf8');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /craft: async \(recipe, \{ clean, heartwood = false, dye = null, cracked = false, \.\.\.more \}\) => \{/);
   assert.match(w, /const r = await profBook\.craft\(recipe, \{ clean, heartwood, dye, cracked, fee: f\.fee > 0 \? f\.fee : 0, name: [^\n]*, seat, \.\.\.more \}, profMintCraft\);/);
   const pages = readFileSync(new URL('../../../src/ui/professions/profPages.js', import.meta.url), 'utf8');

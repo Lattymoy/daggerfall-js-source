@@ -90,7 +90,7 @@
   },
   {
     "name": "FB1015C-host-old-word",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "${made} ${craftXpText(rec, r.data, st.xp, profBook.limit(rec?.profession))}${paid",
     "new": "${made} (+${r.data.xp} ${st.xp} XP)${paid",
     "tests": [

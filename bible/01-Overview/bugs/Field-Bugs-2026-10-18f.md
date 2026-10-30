@@ -398,7 +398,7 @@ house's word for a craft.
 DECIDED (Mac, 2026-10-19: "Stop with the decisions for me"): a craft is not let go back to 50 - 3.2's limit stands, and the tab says it before a second craft
 passes 50.
 
-THE FOUR HOSTS: `world.js` wired (`world.js:"profBook.limit(rec?.profession)"`, the line edited, bootWorld at its
+THE FOUR HOSTS: `world.js` wired (`professionsHost.js:"profBook.limit(rec?.profession)"`, the line edited, bootWorld at its
 ceiling). `worldModes.js`, `exterior.js` and `dungeonContext.js` build no station or craft word. Left: the brew's,
 temper's and disenchant's words ("(+0 ...)" - their stations say it first; they claim no bonus); the forge, which states
 no figure. Our own feature: no DFU member moves.

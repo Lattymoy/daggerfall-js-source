@@ -22,6 +22,7 @@ import { createHerbAct, BASKET_SPOTS } from '../../src/systems/herbAct.js';
 import { createTraceAct } from '../../src/systems/traceAct.js';
 import { createFishAct } from '../../src/systems/fishAct.js';
 import { MINE_ACT, TRACE_ACT } from '../../src/net/professionLaw.js';
+import { hostText } from '../hostText.mjs';   // PIN MOVED (HOST-SPLIT PROFESSIONS): the world host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 /** A roll that walks on - the glint's re-roll asks until it moves, so a constant roll would never end. */
@@ -282,7 +283,7 @@ test('PROF-RETICLE host: the marks stand round the crosshair\'s middle and read 
     const second = meter.querySelector('.prof-face').children[1];
     assert.ok(near(px(second.style.left), offsetOf(MINE_POINTS[1], { yaw: 0, pitch: 0 }, 640)[0]), 'the anchor\'s focal');
   } finally { hud.dispose(); }
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const hud = createProfHud\(\{ anchor: \(\) => reticleAnchor\(canvas, fieldOfView\(\)\) \}\);/);
   const g = src('src/scenes/gatherHost.js');
   assert.match(g, /else if \(act\.act\.state\.done\) \{ hud\.setMeter\(act\.act, act\.label \?\? '', \{ byUse: act\.heldByUse === true \}\); finish\(act\); \}/);

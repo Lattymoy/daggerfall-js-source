@@ -121,7 +121,7 @@
   },
   {
     "name": "DISENCHANT-SAID-the-host-drops-the-kept",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "        disenchantable: () => disenchantableOf(playerEntity.items, { kept: pieceKept, book: profBook }),\n",
     "new": "        disenchantable: () => disenchantableOf(playerEntity.items, { book: profBook }),\n",
     "tests": [

@@ -33,6 +33,7 @@ import { groundAt } from '../../src/world/terrain/terrainNature.js';
 import { HEIGHTMAP_DIMENSION, TERRAIN_SIZE } from '../../src/world/terrain/terrainSampler.js';
 import { worldCoordToMapPixel, isInLocationRect, locationWorldRect, mapPixelToWorldCoords, SCENE_MAP_RATIO, WORLD_MAP_RMB_DIM } from '../../src/world/streamingWorld.js';
 import { isPlayerInTown } from '../../src/systems/nearbyObjects.js';
+import { hostText } from '../hostText.mjs';   // PIN MOVED (HOST-SPLIT PROFESSIONS): the world host whole
 
 const WOODS = CLIMATES.Woodlands, GLENUMBRA = 59;
 const PX = 405, PY = 150;
@@ -173,7 +174,7 @@ test('SETTLE-STAND: the gathering host stands no node of the ground on a settlem
 });
 
 test('SETTLE-STAND the world\'s test: the very closure the streaming world hands the host, over the real location rect - a farm\'s or a temple\'s footprint and a city block round it is settled; past the block, a poor home, a dungeon\'s pixel or none is not (mutants: the block forgotten; every location a settlement)', () => {
-  const src = readFileSync(new URL('../../src/scenes/world.js', import.meta.url), 'utf8');
+  const src = hostText('src/scenes/world.js');
   const at = src.indexOf('settled: (pos) => {');
   assert.ok(at > 0, 'the world hands the host its settlement test');
   const end = src.indexOf('},   // SETTLE-STAND', at);

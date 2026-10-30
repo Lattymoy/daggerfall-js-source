@@ -849,7 +849,7 @@
   },
   {
     "name": "SILVER-FINDS-host-marks-unhanded",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "        marks: marksBook,   // SILVER-FINDS: a harvest's find said, its balance kept\n",
     "new": "",
     "why": "the gathering host never told",

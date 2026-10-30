@@ -381,7 +381,7 @@
   },
   {
     "name": "AUDITGF-R16-the-kick-written-into-the-camera",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "        view: () => ({ yaw: (cam.yaw * 180) / Math.PI, pitch: (cam.pitch * 180) / Math.PI }),",
     "new": "        view: () => ({ yaw: (cam.yaw * 180) / Math.PI, pitch: ((cam.pitch + techniqueView().pitch) * 180) / Math.PI }),",
     "tests": [

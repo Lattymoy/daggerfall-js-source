@@ -173,7 +173,7 @@
   },
   {
     "name": "CARP-YARD-a-call-site-still-the-modes",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "        workbench: () => workbenchHere(),   // CARP-YARD: and a joinery's in the street",
     "new": "        workbench: () => modes?.workbenchHere?.() ?? null,",
     "tests": [

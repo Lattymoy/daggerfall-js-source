@@ -51,7 +51,7 @@
   },
   {
     "name": "SHORECAST-host-draw-threshold",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "return c == null ? null : c >= SWIM_COVERAGE; },",
     "new": "return c == null ? null : c > 0; },",
     "tests": [

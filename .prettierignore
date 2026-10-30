@@ -3,3 +3,6 @@
 !/src/
 /src/*
 !/src/poi/
+/src/poi/*/
+!/src/poi/uv/
+/src/poi/uv/*/

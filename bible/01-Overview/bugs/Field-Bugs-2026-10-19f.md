@@ -1167,7 +1167,7 @@ listing every stew as "under one Essence" would bury it). HOST-SPLIT: the list i
 `disenchantableOf(items, { kept, book })` - the pack's crafted pieces (a provenance and a recipe) that may leave the pack
 (`tradeRefusal`, `isLocked`) and carry no market act (`kept`, the host's `pieceKept`), each its points, its Essence (a
 Disenchanter's twice, read off `book`'s Enchanting) and its recipe (AUDIT PROF12 E2). `world.js` keeps one line,
-`world.js:"disenchantable: () => disenchantableOf(playerEntity.items, { kept: pieceKept, book: profBook }),"`, and its
+`professionsHost.js:"disenchantable: () => disenchantableOf(playerEntity.items, { kept: pieceKept, book: profBook }),"`, and its
 alchemyLaw import went with the list: bootWorld 36,190 -> 36,182 logical lines, its ceiling 36,233 -> 36,225
 (`test/scenes/hostceiling.test.js`). The four hosts: the station's hooks are bootWorld's alone (worldModes' `enchantHere`
 says where the station stands and is untouched; exterior.js and dungeonContext.js draw no station) - none other wired.

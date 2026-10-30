@@ -20,6 +20,7 @@ import { createGatherHost } from '../../src/scenes/gatherHost.js';
 import { mineKind } from '../../src/scenes/mineHost.js';
 import { TERRAIN_SIZE, HEIGHTMAP_DIMENSION } from '../../src/world/terrain/terrainSampler.js';
 import { MINING_GROUND_LINE } from '../../src/ui/professions/profPages.js';
+import { hostText } from '../hostText.mjs';   // PIN MOVED (HOST-SPLIT PROFESSIONS): the world host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const GLENUMBRA = 59, SENTINEL = 20, ORSINIUM = 26, ALIKR = 0, BETONY = 19;
@@ -76,7 +77,7 @@ test('ORE-MAP: the card is the vein law\'s own - over every climate a vein stand
 });
 
 test('ORE-MAP: the world host hands the held map the card online, asks a pixel\'s witnessed state once and after the pointer rests, through the gathering host - which stands again a pixel of its own whose state the answer moved - and the Mining page says where to look (mutants: the card offline; asked every hover; the ask past the host; the stood pixel left on its old word)', async () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /      oreAt: profBook \? oreMapAt : null,/);
   assert.match(w, /if \(!fact && profBook\?\.state\?\.open === true && gatherHost && !_oreAsked\.has\(k\)\) \{\n\s+clearTimeout\(_oreAskTimer\);\n\s+_oreAskTimer = setTimeout\(\(\) => \{\n\s+if \(_oreAsked\.has\(k\)\) return;\n\s+_oreAsked\.add\(k\);\n\s+gatherHost\?\.askPixels\(\[\[px, py\]\]\)\.then\(\(\) => again\?\.\(\), \(\) => \{\}\);\n\s+\}, ORE_ASK_MS\);/);
   // PIN MOVED (MINE-PERKS, Professions-Arc 43): and whether the reader is a Surveyor, whose own word witnesses the ground

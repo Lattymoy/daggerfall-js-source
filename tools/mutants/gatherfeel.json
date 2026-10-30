@@ -452,7 +452,7 @@
   },
   {
     "name": "GATHER-FEEL-bus-unhanded",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "        audio,   // GATHER-FEEL: the bus the gathering's ear says the acts on",
     "new": "        // GATHER-FEEL: the bus the gathering's ear says the acts on",
     "tests": [

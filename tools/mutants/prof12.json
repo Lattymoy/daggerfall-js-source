@@ -1330,16 +1330,16 @@
   },
   {
     "name": "PROF12-world-alchemy-forge",
-    "file": "src/scenes/world.js",
-    "old": "          const f = (alch ? modes?.alchemyHere?.() : mason ?",
-    "new": "          const f = (alch ? modes?.forgeHere?.() : mason ?",
+    "file": "src/scenes/professionsHost.js",
+    "old": "          const f = (alch ? host.modes?.alchemyHere?.() : mason ?",
+    "new": "          const f = (alch ? host.modes?.forgeHere?.() : mason ?",
     "tests": [
       "test/systems/prof12_client.test.js"
     ]
   },
   {
     "name": "PROF12-world-brew-no-seat",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "const { seat } = alchemyHall();",
     "new": "const seat = null;",
     "tests": [
@@ -1358,7 +1358,7 @@
   },
   {
     "name": "PROF12-world-dis-kept-piece",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "if (at >= 0) out = { piece: playerEntity.items.splice(at, 1)[0], at };",
     "new": "if (at < 0) out = { piece: playerEntity.items.splice(at, 1)[0], at };",
     "tests": [
@@ -1769,7 +1769,7 @@
   },
   {
     "name": "PROF-541-B4-provider",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "alchemySteps: () => alchemyHall().steps,",
     "new": "alchemySteps: () => 0,",
     "tests": [
@@ -1887,7 +1887,7 @@
   },
   {
     "name": "PROF-541-B2-world-gone",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "r?.error === 'prof-no-piece' && r?.why === 'disenchanted' && takeOut()",
     "new": "r?.error === 'prof-no-piece' && r?.why === 'never' && takeOut()",
     "tests": [
@@ -1915,7 +1915,7 @@
   },
   {
     "name": "PROF-541-R2-C1-landed-unread",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "          if (!r.data) profBook.refresh({ force: true }).catch(() => {});\n",
     "new": "",
     "tests": [
@@ -1924,7 +1924,7 @@
   },
   {
     "name": "PROF-541-R2-C1-gone-unread",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "              profBook.refresh({ force: true }).catch(() => {});\n              saveSoon.changed();",
     "new": "              saveSoon.changed();",
     "tests": [
@@ -1933,7 +1933,7 @@
   },
   {
     "name": "PROF-541-R2-N1-gone-unpaid",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "if (owed > 0) deductGold(playerEntity, owed);",
     "new": "if (owed < 0) deductGold(playerEntity, owed);",
     "tests": [

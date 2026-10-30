@@ -35,7 +35,7 @@ import { endPlayerFights, playerHarmMark } from '../systems/harmMark.js';   // R
 import { DEVOTED } from '../systems/revenant/revenantFeud.js';   // RVN11 (Feud-Arc.md 22.1): a Devoted one's wait between warnings
 import { SKY_CLEAR } from '../render/renderer.js'; import { centreFromFeet } from '../characters/enemy/enemyAnchor.js';   // REVIEW 2026-09-05: one line, so the cites below it hold
 import { Arch3dFile } from '../formats/arch3dFile.js';
-import { requestLook, releaseLook, makeLookGate, bindCursorToggle, setCursorActive, cursorActive, holdCursor } from '../player/pointerLock.js';   // U45: bindCursorToggle is PlayerMouseLook.cursorActive; releaseLook: the chat's open (AUDIT CHAT C2); HERB-CURSOR: an act's free cursor
+import { requestLook, releaseLook, makeLookGate, bindCursorToggle, setCursorActive, cursorActive } from '../player/pointerLock.js';   // U45: bindCursorToggle is PlayerMouseLook.cursorActive; releaseLook: the chat's open (AUDIT CHAT C2); HERB-CURSOR: an act's free cursor
 import { attachTouch } from '../ui/touch/touch.js';
 import { attachGamepad, GLASS_PAD_ZOOM } from '../ui/gamepadInput.js';   // GP1: the pad speaks the same hooks - AUDIT CAPTAIN'S SEA S3: the glass's magnifying click
 import { BlocksFile } from '../formats/blocksFile.js';
@@ -276,11 +276,7 @@ import { createNoticeOverlay, closeNoticeDoor, noticeDoorOpen } from '../ui/noti
 import { createProfBook } from '../net/profBook.js';   // PROF1: this character's professions - its Stores, its day, its harvests kept until answered
 import { dayTurnMs } from '../net/dayTurn.js';   // DAY-TURN: this page's moment in the day's turn
 import { createMotherlodeBook } from '../net/motherlodeBook.js';   // PROF2b: the day's Motherlodes - read, warned of, their Watch receipts kept
-import { createProfHud } from '../ui/professions/profHud.js';   // PROF1: the prompt, the act's meter, the toasts, the day's chip, the rank's banner
-import { createGatherHost } from './gatherHost.js'; // PROF1/PROF2: the gathering professions in the streaming world - the nodes, the target, the act
-import { herbKind } from './herbHost.js';   // PROF1: Herbalism's patches, a kind in it
-import { mineKind } from './mineHost.js'; import { nodeCompassPoints } from '../ui/nodeMarks.js'; import { createNodeGlintPass } from '../render/nodeGlint.js';   // PROF2: Mining's veins and Quarrying's boulders, a kind in it; NODE-MARKS: every profession's nodes on the compass in its colour, and lit where they stand; NODE-GLINT: glinting on their own pictures
-import { treeKind } from './treeHost.js';   // PROF4: Logging's trees - the forest's own - a kind in it
+import { nodeCompassPoints } from '../ui/nodeMarks.js'; import { createNodeGlintPass } from '../render/nodeGlint.js';   // PROF2: Mining's veins and Quarrying's boulders, a kind in it; NODE-MARKS: every profession's nodes on the compass in its colour, and lit where they stand; NODE-GLINT: glinting on their own pictures
 import { seatFlora } from './floraSeat.js';   // FLORA-GROUND, THE RINGS: a pixel's plants drawn on the ground it draws, at every ring
 import { createTreesHost } from './treesHost.js';   // LPT1 / BANTHA1 (HOST-SPLIT): the near 3D trees - Low Poly Trees' door and the jungle's, and their frame
 import { createJungleHost } from './jungleHost.js';   // BANTHA1: Bantha's jungle - its field, its trees' door, its haze
@@ -313,19 +309,16 @@ import { etherTemplates, etherTemplateOf, synthesizeEtherLocation, etherPlaceIsl
 import { tamrielFrameInBay, inBay, inBay as onTheBay } from '../world/tamriel/tamrielFrame.js';   // TAMRIEL2: the frame the world streams over, and the Bay's own ground (WW3 reads it as inBay, TESA as onTheBay)
 import { createLandforms, landformSites, landformClimates } from '../world/landforms.js';   // LANDFORM1-3: the shaped ground, and what it lifts a point by; AUDIT LANDFORMS II I1: the lift's fade beside the sea
 import { ecotoneOwner } from '../world/ecotone.js'; import { MAP_W, MAP_H } from '../world/road/roadNetwork.js';   // ECOTONE1: a border point's owner, the pixel's lattice origin, the map's edges
-import { huntKind, createBodyStamps, bodiesHere, trackerMarks } from './huntHost.js';   // PROF7: Hunting's bodies - a kind in it, the kills that stamp them, a Tracker's marks; INDOOR-SKIN: the pool by the mode
+import { trackerMarks } from './huntHost.js';   // PROF7: Hunting's bodies - a kind in it, the kills that stamp them, a Tracker's marks; INDOOR-SKIN: the pool by the mode
 import { freePull } from '../systems/travel/freePull.js';   // OW-FREE-STRAIGHT, moved out (HOST-SPLIT)
 import { createGrantHost } from './grantHost.js';   // GRANT2-GRANT4: the spawn grants - my stands' and my reading of others' (bible/11-Multiplayer/Spawn-Grants.md)
 import { wireOwnerClock } from './ownerCatchUp.js';   // OWNER-CLOCK: my foes' steps on the clock their frames carry, and the street's kept to my frame's pace while anyone else is in my room
-import { fishKind } from './fishHost.js';   // PROF8: Fishing's casts and schools - a kind in it
 import { createBootStart } from './bootStartHost.js';   // HOST-SPLIT: the boot's start, moved out of bootWorld
 import { isProvinceRegion } from '../formats/mapsTables.js';   // BAY-LEFT-B: a province's region the quest layer's table (the talk's Regional rows)
 import { createCraftWritHost } from './craftWritHost.js';   // CRAFT-WRITS: the Work tab's crafting writs, handed over from the pack
 import { createSeasonBook } from './seasonBookHost.js';   // SEASON-BOOK: the laurel's boards, asked while its window is open
 import { rollNoticeDoors } from './rollNoticeHost.js';   // SEAT-WORDS / STANDING-WORDS: what the Roll's tracker says
-import { utcDayOfMs } from '../net/nodeLaw.js';   // PROF8: a haul's UTC day
-import { registerPlayerKillListener } from '../systems/playerKills.js';   // PROF7: the player's own kill stamps a body
-import { setProfessionsPages, forgeOffered, stationDoorAt, stationColdLine, disenchantableOf, BAG_PAGE_WORDS } from '../ui/professions/profPages.js';   // PROF1: the Professions and Stores pages on the character sheet's rail; CARP-YARD: the joinery's bench opens it
+import { forgeOffered, stationDoorAt, stationColdLine, BAG_PAGE_WORDS } from '../ui/professions/profPages.js';   // PROF1: the Professions and Stores pages on the character sheet's rail; CARP-YARD: the joinery's bench opens it
 import { materialPicture, itemPicture } from '../ui/menu/menuPicture.js';   // MENU-ORDER: a material's and a piece's picture for the menus' rows
 import { createSaddleHost } from './saddleHost.js';   // STEED-UI: the saddle panel - the horse and the wagon on screen (Enhanced Plus)
 import { setHoldingsProvider, stableProviderFor } from '../ui/holdingsPages.js';   // HOLDINGS: the Stable and the Fleet pages on the pause menu's Holdings tab
@@ -354,11 +347,8 @@ import { keptPortSitesOn } from '../world/portSitesKept.js';   // FIRST-VISIT: a
 import { SHIPYARD as SHIPYARD_LAYOUT } from '../world/shipyardModel.js';   // SHIPYARDS: the crew hall's table, for the talk directory's row
 import { withdrawIntoPack, materialLabel, materialCountLabel } from '../systems/professions/profItems.js';   // PROF1: a Stores material as DFU's own item
 import { oreMapTip } from '../ui/oreMapTip.js';   // ORE-MAP: the held map's word on a pixel's ore
-import { heldOf as bagHeldOf, heldKeysOf as bagHeldKeysOf, roomFor as bagRoomFor, mintCarried, takeCarried, giveCarried, bagTakesOf, bagWeight, hasBag, emptyBagIntoPack } from '../systems/materialsBag.js';   // BAG1: the Materials Bag and the pack, the book's hands; UNCOUNTED: every material they hold
-import { BAG_KG_LIMIT, madeWhere, movedFirstText } from '../net/bagLaw.js';   // AUDIT BAG1 B9: where a station's work went; AUDIT2 K8: what went in before a refusal
-import { smeltRecipe, stockOf, WEAVERS_STOCK, APOTHECARY_STOCK, professionName } from '../net/professionLaw.js';   // PROF2: a smelt's product, for its word; PROF4: a counter's; PROF5: the Weavers'
-import { refinedText, chainStopText } from '../net/chainLaw.js';   // CRAFT1: what a craft's chain refined first, said with it; AUDIT CRAFT1 F4: where it stopped
-import { craftXpText } from '../ui/craftXpWords.js';   // CRAFT-FIRST-SHOWN (FIELD BUGS 2026-10-15f): a craft's XP said with its first - and, for the Weavers' cloth, why its first paid none
+import { heldOf as bagHeldOf, roomFor as bagRoomFor, mintCarried, takeCarried, giveCarried, bagTakesOf } from '../systems/materialsBag.js';   // BAG1: the Materials Bag and the pack, the book's hands; UNCOUNTED: every material they hold
+import { stockOf, WEAVERS_STOCK, APOTHECARY_STOCK, professionName } from '../net/professionLaw.js';   // PROF2: a smelt's product, for its word; PROF4: a counter's; PROF5: the Weavers'
 import { createMarketBook } from '../net/marketBook.js';   // PROF5: the market's book
 import { createCardStakes } from '../net/card/cardStakes.js';   // CARDS6: a realm character's card stakes
 import { createIliacClaims } from '../net/iliac/iliacClaims.js';   // CARDS10: the ranked games' results carried to the service
@@ -531,7 +521,7 @@ import { markFoeStruck } from '../ui/hud/hudFoeTarget.js';   // DUEL1: my duel o
 import { lowerCondition, dfuBlowWear } from '../systems/equip.js';   // DUEL1: my weapon wears on a blow that landed on my opponent; BALANCE1: on the port's wear scale
 import { reportPlayerAttack, registerAttackResolutionListener } from '../combat/formulas.js';
 import { pvpEvadeHeard } from '../combat/pvpEvade.js';   // PVP-EVADE   // DUEL1: the defender's answer, on my HUD's damage numbers
-import { worldHoverFrame, hideWorldPlaque, destroyWorldPlaque, worldPlaqueOn, reticleAnchor } from '../ui/worldPlaque.js';   // WORLD-HOVER: the one seam each host calls, its hide door for the branches that return above it, and the teardown
+import { worldHoverFrame, hideWorldPlaque, destroyWorldPlaque, worldPlaqueOn } from '../ui/worldPlaque.js';   // WORLD-HOVER: the one seam each host calls, its hide door for the branches that return above it, and the teardown
 import { TV_DUNGEON_MODELS_MAX } from '../systems/travel/travelDungeonModels.js';   // OW-DUNGEONS: each dungeon's own model, grown under the Overworld; TV-BURST: started one a frame
 import { keysHeading, axesToward, tvOwnGrow } from '../player/travelCamera.js';   // OW-FACE: the body faces the keys' way under the Overworld; OW-PEERS: the others grown as the traveller is
 import { createTravelView, TV_MOVE_ACTIONS, TRAVEL_VIEW_TEXT, travelViewLine, travelTripLine, travelWalkRate, shipPassageRows } from './travelView.js';   // TV1: the travel view (bible/06-Systems/Travel-View.md) - the raised eye, its input and its ways out
@@ -567,7 +557,7 @@ import { enemyDisplayName } from '../characters/enemy/enemyBasics.js';   // TV7:
 import { groupCamps } from '../world/campShared.js';   // OW6: the camps on the Overworld
 import { travellerMarkOf, travellerDue, createTravellerBook, isShipMark } from '../systems/travellerMarks.js';   // TV3: the region's travellers; OWS1: at sea, a ship
 import { RainCurtainsRenderer, curtainsOf, CURTAIN_FOOT_MARGIN_M } from '../render/rainCurtains.js';   // TV4: the weather's curtains, stood in the world for the view
-import { quickLootWheel, quickLootTake, quickLootArm, plaqueActionFor, plaqueActionSelection, plaqueLightFirst, plaqueStep } from '../systems/quickLoot.js'; import { showPickups, showHaul } from '../ui/pickupFeed.js'; import { claimHauls } from '../ui/haulCards.js';   // QUICK-LOOT B4: the wheel, the take, and the two keys that arm what the next activate means; PICKUP-FEED: what a take moved, as cards (the take's `took`)
+import { quickLootWheel, quickLootTake, quickLootArm, plaqueActionFor, plaqueActionSelection, plaqueLightFirst } from '../systems/quickLoot.js'; import { showPickups, showHaul } from '../ui/pickupFeed.js'; import { claimHauls } from '../ui/haulCards.js';   // QUICK-LOOT B4: the wheel, the take, and the two keys that arm what the next activate means; PICKUP-FEED: what a take moved, as cards (the take's `took`)
 import { findHaul } from '../ui/haulCards.js'; import { setSilverFinder, silverFindAt } from '../systems/silverFinds.js';   // SILVER-FINDS: a loot find's card; the finder every host's loot door asks, and a headstone's find
 import { setWalletSilver } from '../systems/walletItem.js';   // WALLET1: the wallet counts the account's silver
 import { lootPile } from '../player/lootStack.js';   // LOOT-STACK: the pile under the reticle, as the loot window's tabs
@@ -655,26 +645,18 @@ import { createPeerRiders, createPeerWalkers, createEotbArt } from '../net/peer/
 import { createHorseCartRuntime } from '../systems/horse/horseCart.js';   // HCC: TrailingWagonRuntime over this host's seams
 import { setForagingHost } from '../systems/foraging/foragingInstall.js';   // FORAGE1: Foraging's reaches into the world, answered by this host
 import { registerContainerLootHandler } from '../systems/containerLoot.js';   // THE MERGE: CSA-H's shelf subscriber, by its mod's name, on PlayerActivate.OnLootSpawned's one home
-import { mintPieces, craftedText, storedText, CRAFT_KEPT_TEXT, BENCH_KEPT_TEXT, LOOM_KEPT_TEXT, MASON_KEPT_TEXT, isCraftedFurniture } from '../systems/smithItems.js';   // PROF3: a craft's pieces, minted into the pack; PROF4: furniture into the home's things; PROF11: the mason's word; SEAT2b part two: a siege work's
-import { heatBand, planeBand, stitchBand, chiselBand, recipeById } from '../net/recipeLaw.js';   // PROF3: the heat's attribute band; PROF4: the plane's, and a recipe's station; PROF7: the stitch's; PROF11: the chisel's
+import { mintPieces, craftedText, CRAFT_KEPT_TEXT, BENCH_KEPT_TEXT, LOOM_KEPT_TEXT, MASON_KEPT_TEXT, isCraftedFurniture } from '../systems/smithItems.js';   // PROF3: a craft's pieces, minted into the pack; PROF4: furniture into the home's things; PROF11: the mason's word; SEAT2b part two: a siege work's
 import { COOK_KEPT_TEXT } from '../systems/smithItems.js';   // PROF9: the fire's word, a dish whose answer did not come
 import { JEWEL_KEPT_TEXT } from '../systems/smithItems.js';   // PROF10: the jeweller's bench's word, a piece whose answer did not come
-import { temperItem, reforgeItem, essenceReforgeRefusal, TEMPER_MOVED_TEXT, TEMPER_LOST_TEXT, REFORGE_LOST_TEXT } from '../systems/smithItems.js';   // CRAFT4: the temper and the Reforge with Essence, on the piece
-import { temperRecipeOf, temperRefusal, pieceQuality, reforgeEssence } from '../net/temperLaw.js';   // CRAFT4: what a temper takes
-import { QUALITY_NAMES } from '../net/recipeLaw.js';   // CRAFT4: a temper's word
-import { reforgeableLines, affixLine, reforgeCount } from '../systems/loot/lootRarity.js';   // CRAFT4: the lines an Enchanter reforges; REFORGE-REPLACE: the reforges a piece has taken
-import { trackOf } from '../net/professionLaw.js';   // CRAFT4: the craft a piece's temper is
-import { brewItems, brewedText, BREW_KEPT_TEXT } from '../systems/alchemyItems.js';   // PROF12: a brew's potions, DFU's own, into the pack
-import { facetBand } from '../net/recipeLaw.js';   // PROF10: the facet's attribute band
-import { panBand, DISH_LEVEL } from '../net/recipeLaw.js';   // PROF9: the pan's attribute band; a feast's level at the table
+import { brewItems, brewedText } from '../systems/alchemyItems.js';   // PROF12: a brew's potions, DFU's own, into the pack
 import { COOK_FIRE } from '../net/professionLaw.js';   // PROF9: the fire Cooking is done at - any lit one, no fee
 import { SURVEYOR } from '../net/professionLaw.js';   // MINE-PERKS: Mining 100's Surveyor, whose own word witnesses the ground
 import { lodeMapMarks } from '../ui/lodeMapMark.js';   // MINE-PERKS: a Motherlode Sense's day's Motherlodes, on both maps and the Overworld
 import { seatEventBoard, eventNotice } from '../systems/eventNotices.js';   // EVENTS1: the event board's source, seated where it is made, and the one door an event's line goes through (never the chat)
 import { EVENT_SOON_MS } from '../systems/eventBoard.js';   // AUDIT EVENTS1 A4: the board's horizon, the raids' look ahead
 import { localWhenText, gateEventId as gateLineId } from '../systems/eventTimers.js';   // AUDIT MINE-PERKS: a Motherlode's hour as the timers say a moment - this machine's clock, its weekday where it is not today
-import { setFeastShare, takeFeastGift, shareFeastWith } from '../systems/cookItems.js';   // PROF9: a feast shared with the party at the table
-import { hasSkillet, packSavedFires, CAMP_TEXT } from '../systems/survival/camp.js';   // PROF9: C&C's Skillet widens the pan's window; AUDIT REST II H5: a dungeon save's fires carried out
+import { takeFeastGift } from '../systems/cookItems.js';   // PROF9: a feast shared with the party at the table
+import { packSavedFires, CAMP_TEXT } from '../systems/survival/camp.js';   // PROF9: C&C's Skillet widens the pan's window; AUDIT REST II H5: a dungeon save's fires carried out
 import { allyCastFrame } from '../systems/allyCast.js';   // PROF9: a feast reaches a party mate as ALLY-CAST's gift
 import { questActionsExtensionTemplates } from '../systems/quest/questActionsExtension.js';   // FORAGE1: QAE's four actions, which Foraging's quests say
 import { entityMaxEncumbrance } from '../combat/formulas.js';   // FORAGE1: PlayerEntity.MaxEncumbrance, for Foraging's last check
@@ -769,7 +751,6 @@ import { goldPiecesOf as legacyGold, addItem as legacyAddItem, letterOfCredit } 
 import { tabStorage } from '../systems/appStorage.js';   // LEGACY1: a birth crosses the reload in the tab's own store
 import { monthNames } from '../systems/gameDate.js';   // L10N3e: the month's name in the player's language, read when asked
 import { createBountyHost, bountyDungeonPixel } from './bountyHost.js';   // BOUNTY1: the town's bounty boards - the hunts, their packs, their purse
-import { trophyDoor } from '../systems/hunt/trophies.js';   // HUNTERS-MARK: a Trophy Hunter's trophy into the pack
 import { huntOnline } from './huntersMark.js';   // HUNTERS-MARK: the hunt's ledger, the bounty host's
 import { createWorldPartyPing } from './partyPingHost.js';   // PARTY-PING: a look's point for the party, and the floor route while one follows
 import { pingSubject, pingCrowd } from '../systems/party/partyPingCaption.js';   // PARTY-PING: the name under a look, a person and another player among them
@@ -824,7 +805,7 @@ import { climbRigInput } from '../player/climb/climbPose.js';   // CLIMB6: the b
 import { PlayerMotor, BLOW_PUSH_DECAY, startRestGroundedCheck, motionBagOf, climbPoseOf, MAX_FRAME_DT, CAPSULE_HEIGHT, CAPSULE_RADIUS, RIDE_EYE_HEIGHT, afloatMessageStep, CANNOT_FLOAT_HUD_SECONDS } from '../player/motor.js';   // SPELLFX1: a peer's eye when its body has not said its height
 import { travelDriveForward, travelLookaheadFor } from '../systems/travel/travelAutopilot.js';   // TO-FIELD / AUDIT-FIELD F8: the journey's ground gate, pure so the pins can drive it   // StartRestGroundedCheck's ONE home; WW2: the one motion bag
 import { createTravelSteer, createColliderProbe, steerDrive } from '../systems/travel/travelSteer.js';   // TRAVEL-NAV1: the journey goes round what is in its way, and stops short of what it cannot
-import { exteriorSurfaces, downProbe, rayDistanceFor, ON_EXTERIOR_WATER, exteriorSwimming, feetWaterCoverage, SWIM_COVERAGE } from '../player/exteriorSurface.js';   // ROAD-B (b3): PlayerMotor's three exterior surface methods; OT1: IsPlayerSwimming above ground
+import { exteriorSurfaces, downProbe, rayDistanceFor, ON_EXTERIOR_WATER, exteriorSwimming } from '../player/exteriorSurface.js';   // ROAD-B (b3): PlayerMotor's three exterior surface methods; OT1: IsPlayerSwimming above ground
 import { isOnFoot } from '../systems/transport.js';   // TransportManager.IsOnFoot - the raycast's reach and the mounted footstep gate
 import { lateSolidsOf } from '../player/lateSolid.js';   // ROCK-CLEAR: the world collider's late solids, withheld from the walking body until it is clear
 import { floorLanding, doorWorldPosition, dungeonEntranceLanding, repositionFeetY, openGroundNear, heldInSolid, safeGroundAt, safeGroundNear } from '../player/enterExit.js';   // FixStanding for the exterior arrivals (2026-08-27); SD2b: where a Hollow's mouth stands, to find it at
@@ -1202,7 +1183,7 @@ import { breathStep, setWaterBreathingRule } from '../systems/breath.js';   // D
 import { CLASSIC_UPDATE_INTERVAL } from '../characters/weaponStates.js';   // DW-D: PlayerEntity's classic cadence, the dungeon's import
 import { RACES } from '../systems/races.js';   // DW-D: ArgonianInfiniteBreath
 import { localizedStrings, localizedText, getLocalizedLocationName, getLocalizedRegionName, getLocalizedFactionName, t } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3e: and the names shown
-import { hallStepsFor, harbourPortFor, coastalAt } from '../net/fortLaw.js';   // SEAT2b part two: a seat's crafting halls, its members' Harbour, a coast
+import { harbourPortFor, coastalAt } from '../net/fortLaw.js';   // SEAT2b part two: a seat's crafting halls, its members' Harbour, a coast
 import { isWaterPixel } from '../ui/overworldModel.js';   // SEAT2b part two: a coast is the sea beside the town (the port's one water law)
 import { createSiegeNpcs } from './siegeNpcs.js';   // SEAT2b part two (c): the Barracks' guards and a revolt's rising, drawn
 import { createSiegeSession, isBattleLeaveCommand, BATTLE_NONE_TEXT } from '../net/siege/siegeSession.js';   // SEAT2a part four: a siege as this client fights it   // AUDIT-SEATS C1: the chat's `/leave`
@@ -1264,6 +1245,7 @@ import { createTravelFareDeps } from './travelFareHost.js';   // HOST-SPLIT
 import { createShipBoard } from './shipBoardHost.js';   // HOST-SPLIT
 import { createWorldShotHooks } from './worldShotHooks.js';   // HOST-SPLIT
 import { createWorldShotProbes } from './worldShotProbes.js';   // HOST-SPLIT
+import { createProfessionsHost } from './professionsHost.js';   // HOST-SPLIT
 
 /** Internal_Strings_en 654 / 655, the two guild map-reveal notes
  *  (ThievesGuild.cs:115, DarkBrotherhood.cs:108). %map is the
@@ -11140,340 +11122,34 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       sound: (clip, volume, pitch) => audio.playOneShot(clip, volume, pitch),   // TECH-FX: the technique's layer over the swing's own
     },
   });
-  // PROF1/PROF2 (bible/06-Systems/Professions-Arc.md 22, 23): THE GATHERING PROFESSIONS IN THE STREAMING WORLD - the day's
-  // herb patches, veins and boulders on every built wilderness pixel, the prompt, the act, the answer (scenes/gatherHost.js,
-  // its kinds scenes/herbHost.js and scenes/mineHost.js); the HUD's pieces its (ui/professions/profHud.js). Online only, and only once
-  // the account service has said the professions are this account's.
-  if (profBook) {
-    const hud = createProfHud({ anchor: () => reticleAnchor(canvas, fieldOfView()) });   // PROF-RETICLE: the act's marks round the crosshair, through the frame's own lens
-    if (hud) {
-      // PROF7 (bible/06-Systems/Professions-Arc.md 29): A BODY MY OWN BLOW FELLED - stamped at the kill (the street's, the
-      // dungeon's, a puppet's owner's word), a node where it lies while the pack holds a Skinning Knife
-      const bodyStamps = createBodyStamps({ nowMs: () => Date.now() + _sharedOffsetMs });
-      registerPlayerKillListener('hunting', (entity) => { bodyStamps.stamp(entity); });
-      // FIELD BUGS 2026-10-07 INDOOR-SKIN: and a building's - its own pool (a quest's rats in a house in town), where the
-      // street's was asked and the body was never found
-      huntBodies = () => bodiesHere(modeNow(), { street: exteriorFoes, dungeon: modes?.dungeonCtx, interior: modes?.interiorFoes }, bodyStamps);
-      // AUDIT 32 H8: a body's search opens its loot through its pool's own door, by its key - the street's body window, the
-      // dungeon's take; INDOOR-SKIN: a building's body window (its keys are the street's spelling, its pool its own)
-      const openHuntLoot = (key) => (modeNow() === 'interior' ? modes?.openInteriorBody?.(key)
-        : key.startsWith('foeCorpse:') ? openBodyLoot(key) : modes?.dungeonCtx?.takeLoot(key, getInteractionMode()));
-      const _fishSeaT = [0, 0, 0];   // HIGH-CAST: the sea's top's translation, the fish host's waterY
-      gatherHost = createGatherHost({
-        book: profBook, hud, kinds: [herbKind({ book: profBook }), mineKind({ book: profBook, lodes: motherlodeBook, marks: marksBook }),   // PROF2b: and the Motherlodes
-          treeKind({ book: profBook, renderer, flatBatchAabb, getTexture, billboardSize, uploadRecord }),   // PROF4: Logging's trees
-          huntKind({ book: profBook, bodies: () => huntBodies(), openLoot: openHuntLoot, trophy: trophyDoor(saveSoon) }),   // PROF7: Hunting's bodies; HUNTERS-MARK: a Trophy Hunter's trophy
-          // PROF8: Fishing's casts - the net in its water, the pixel and its ground the player stands in, the game clock's
-          // hour and a storm for the wait, a trophy into the pack (the species' own Deep Waters item)
-          fishKind({ book: profBook, host: {
-            pixel: () => playerTravelPixel(),
-            ground: () => { try { const px = playerTravelPixel(); return { climate: maps.getClimateIndex(px.x, px.y), region: maps.getRegionIndexAt(px.x, px.y) }; } catch { return null; } },
-            eye: () => ({ pos: cam.pos, dir: [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)] }),
-            feet: () => (walkMode ? player.pos : cam.pos),
-            hour: () => Math.floor((((skyMinutes() % 1440) + 1440) % 1440) / 60),   // TIME1: the sky's hour
-            storm: () => currentWeather() === 'thunder',
-            climateAt: (x, y) => { try { return maps.getClimateIndex(x, y); } catch { return null; } },
-            day: () => utcDayOfMs(Date.now() + _sharedOffsetMs),
-            busy: () => !!csaRuntime?.isSailing?.() || !!naval?.aiming || !!naval?.boarding,   // HELM-NET: no cast at the helm, over the laid guns or in a boarding
-            // FIELD BUGS 2026-10-05 SHORE-CAST: the cast's point over water the feet would swim in (MAC2's coverage law) -
-            // null off the built ground, which the kind reads as unknown
-            waterAt: (pos) => { const g = groundSampleAt(pos); const c = g ? feetWaterCoverage(g.tile, g.feet) : null; return c == null ? null : c >= SWIM_COVERAGE; },
-            // FIELD BUGS 2026-10-07 HIGH-CAST: the water's surface under the cast - the ground the water lies on (heightAt), or the
-            // sea's top over it (tvSeaY's composition: Deep Waters' sea over its carved seabed, else the ground's clamp at
-            // OceanElevation); null off the built ground, which the kind reads as unknown
-            waterY: (pos) => { const g = heightAt(pos[0], pos[2]); return Number.isFinite(g) ? Math.max(g, (deepWaters?.oceanLocalY ?? SCALED_OCEAN_ELEVATION * STREAMING_TERRAIN_SCALE) + state.pixelTranslation(state.current.x, state.current.y, _fishSeaT)[1]) : null; },
-            // the tug's buzz (5.2: "the pad and phone buzz") - the touch layer's own pulse, under its own pref (TI2)
-            tug: () => { if (!getPref('touchHaptics')) return; try { navigator.vibrate?.(120); } catch { /* a platform without it */ } },
-            trophy: (species) => {
-              const item = createFishItem(species);
-              if (!item) return false;
-              addItem((playerEntity.items ??= []), item);
-              saveSoon.changed();
-              return true;
-            },
-          } })],
-        renderer, getTexture, uploadRecord, billboardSize, flatBatchAabb,
-        built: () => built, pixelTranslation: (x, y, out) => state.pixelTranslation(x, y, out),
-        pixelInfo: (x, y) => { try { return { climate: maps.getClimateIndex(x, y), region: maps.getRegionIndexAt(x, y) }; } catch { return null; } }, settled: (pos) => { const wc = state.worldCoords(pos), p = worldCoordToMapPixel(wc.x, wc.z), loc = locationIndex.get(`${p.x},${p.y}`); return !!loc?.exterior?.exteriorData && isPlayerInTown(loc.mapTableData?.locationType, { mustBeInLocationRect: true, mustBeOutside: true, inLocationRect: isInLocationRect(wc.x, wc.z, locationWorldRect(loc, p.x, p.y)), inside: false }); },   // SETTLE-STAND: the acts' own settlement check (Foraging's 'town'), asked of a node's place
-        nowMs: () => Date.now() + _sharedOffsetMs, haul: (entries) => showHaul(entries),   // HAUL-CARDS: a harvest's goods and XP as one card (the enhanced skin's)
-        audio,   // GATHER-FEEL: the bus the gathering's ear says the acts on (systems/gatherSounds.js) - in the street, a dungeon and a building alike, the one host's
-        marks: marksBook,   // SILVER-FINDS: a harvest's find said, its balance kept
-        eye: () => ({ pos: cam.pos, dir: [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)] }),
-        // AUDIT 29 C1: a node seen - the eye's ray to it through the place's collider (the street's, or the dungeon's own)
-        clear: (from, to, underground, interior = false) => {
-          const c = underground ? modes?.dungeonCtx?.collider : interior ? modes?.interiorCollider : collider;   // INDOOR-SKIN: a building's own walls
-          if (!c?.raycast) return true;
-          const d = [to[0] - from[0], to[1] - from[1], to[2] - from[2]];
-          const l = Math.hypot(d[0], d[1], d[2]) || 1;
-          const room = l - 0.35;
-          return room <= 0 || !(c.raycast(from, [d[0] / l, d[1] / l, d[2] / l], room) < room);
-        },
-        view: () => ({ yaw: (cam.yaw * 180) / Math.PI, pitch: (cam.pitch * 180) / Math.PI }),
-        feet: () => (walkMode ? player.pos : cam.pos),
-        entity: () => playerEntity,
-        keyLabel: (a) => actKeyWord(a) ?? '?',   // TOUCH-HOLD: a pad in hand, its button
-        // ACT-CLICK (FIELD BUGS 2026-10-01, "minig is broken doesnt work"): the act's strike is the swing's button OR the
-        // activation's - mid-act a click was the act's and nothing else (AUDIT 32 H5), so a player who clicked struck nothing
-        input: () => ({ held: held(keys, 'Interact'), attack: pressed(latch.edge, keys, 'SwingWeapon') || pressed(latch.edge, keys, 'ActivateCenterObject'), choice: !csaRuntime?.isSailing() && pressed(latch.edge, keys, 'ActChoice') }),   // HELM-KEYS: a helm's hands are on the wheel - the up arrow there is More sail's (inputActions.js DEFAULT_SHARES); PROF-MENU: the key steps a node's list
-        // PROF-MENU (2026-10-01, Mac: "They should use the same menu the loot menu uses and not an interaction button"): the
-        // node is the loot plaque's list where the plaque stands - it names the node, so no prompt does - and the row it
-        // has lit is the one a press presses; where none stands (a phone, the classic skins) the node's acts are a list
-        plaque: () => worldPlaqueOn(),
-        lit: (key) => plaqueActionFor(key),
-        choose: (rows, pick) => profChoose(rows, pick),
-        step: (n) => plaqueStep(n),
-        active: () => walkMode && modeNow() === 'exterior' && !townTalk.overlayActive && !modes?.deathUp?.() && !modes?.transitioning && !travelView?.active,   // AUDIT 32 H10: never from under the travel view (its ray is the hidden head's - AUDIT OW5 V2's law for E)
-        activeDungeon: () => walkMode && modeNow() === 'dungeon' && !modes?.dungeonCtx?.uiOverlayActive && !modes?.deathUp?.() && !modes?.transitioning,   // PROF2: a dungeon's veins
-        activeInterior: () => walkMode && modeNow() === 'interior' && !modes?.overlayHeld && !townTalk.overlayActive && !modes?.deathUp?.() && !modes?.transitioning,   // INDOOR-SKIN: a building's bodies (its own pool's)
-        onSettle: () => { profBook.settle(profMint, profMintCraft).catch(() => {}); }, pointer: (want) => { const relock = () => { if (!cursorActive() && !gamePaused() && !pointerSurfaces.size && !(modes?.modalWindowUp?.() ?? false) && !overlayOpen() && !travelView?.active) requestLook(canvas); }; if (want === 'look') { if (cursorActive()) { setCursorActive(false); relock(); } return null; } if (controllerLook()) return null; const off = holdCursor(); return () => { if (!off()) return; if (backButtonHeld) escRelock = relock; else relock(); }; },   // HERB-CURSOR (FIELD BUGS 2026-10-02 part four): the Basket's glints are clicked with the cursor, held free while it plays and the look taken back after (never under a window, a surface, an overlay, the travel view or the player's own freed mouse); a vein's, a body's or the net's act is aimed by the look - a mouse the player freed is taken back, under the same gates (AUDIT A4). AUDIT A1: an Escape that ended the act asks on its keyup (escRelock) - a lock taken inside its keydown was the browser's to end on the keyup, and ESC-LOCK read that as a second Escape; C8: a pad in hand strikes with its trigger, and no hold shows the OS pointer
-      });
-      /** AUDIT PROF-541 B4: the town the alchemy station stands in, where my guild holds it - its Apothecary's steps, and
-       *  the seat a brew names (null where no step stands); AUDIT PROF-541 R2-H1: every station's by one law, by profession
-       *  (fortLaw.js hallStepsFor) */
-      const myHall = (profession) => hallStepsFor(seatHere(_musicLoc?.mapTableData?.mapId), guildBook?.guild?.id ?? null, profession);
-      const alchemyHall = () => myHall('alchemy');
-      setProfessionsPages({
-        book: profBook, name: (k) => materialLabel(k), withdraw: (k, n) => profBook.withdraw(k, n, profMint),
-        picture: (k, wake) => materialPicture(k, { onReady: wake }),   // MENU-ORDER: a material card's picture
-        settle: () => profBook.settle(profMint, profMintCraft),   // AUDIT 29 C4: a kept withdrawal asked again when the Stores page opens; PROF3: and a kept craft
-        // BAG1 (bible/06-Systems/Materials-Bag.md): THE STORES PAGE'S OTHER HALF - what is carried put in (the bag's first,
-        // then the pack's), in a town; the bag's load, and the room the bag and the pack have left
-        // FB1020c ONE-SAVE: the page's put-ins as one batch (profBook.js depositMany: one save for them all, each its own
-        // `order` - LOOT-LOOSE's `work` puts a looted unit in as loose), each answered in its own words
-        deposit: async (plan) => (await profBook.depositMany(plan)).map((r, i) => (r?.ok ? { ok: true, text: `${plan[i].qty} ${materialCountLabel(plan[i].material, plan[i].qty)} put in the Stores.` }
-          : { ok: false, kept: r?.kept === true, text: r?.kept ? BAG_DEPOSIT_KEPT_TEXT : accountRefusalText(r?.error) })),   // AUDIT BAG1: `kept` - Put everything in stops on it
-        inTown: () => _storesReached(),
-        room: (k) => bagRoomFor(playerEntity, k),
-        carriedHeld: (k) => bagHeldOf(playerEntity, k, { counter: false }),   // AUDIT TOWN-ECON 2 PRICE-2: the Stores page never puts a counter's piece in
-        heldKeys: () => bagHeldKeysOf(playerEntity),   // UNCOUNTED: what is held that the Stores will not take, named
-        bag: () => ({ has: hasBag(playerEntity.items), kg: bagWeight(playerEntity), max: BAG_KG_LIMIT, count: playerEntity.bagItems?.length ?? 0 }),
-        // AUDIT2 BAG1 H1/U2: the bag emptied into the pack, from the Stores page - anywhere, on either skin
-        emptyBag: () => { const r = emptyBagIntoPack(playerEntity); if (r.moved > 0) saveSoon.changed(); return r; },
-        // PROF2 (bible/06-Systems/Professions-Arc.md 23): THE FORGE - the one the player stands at (a Weaponsmith's or an
-        // Armorer's, its fee a smelt from the purse, paid on the service's answer; a home's forge), and a smelt through it
-        forge: () => modes?.forgeHere?.() ?? null,
-        // PROF3 (bible/06-Systems/Professions-Arc.md 24): THE ANVIL beside it - a craft through the book, its pieces into
-        // the pack (kept until minted), the smith's fee a craft on the service's answer, as a smelt's; the smith's stock;
-        // the heat's band, Smithing's attribute pair
-        craft: async (recipe, { clean, heartwood = false, dye = null, cracked = false, ...more }) => {   // MASTER-ART: `more` the page's other asks (a Master's work's lines), handed on
-          // PROF4: the station is the recipe's - the anvil for Smithing's, the workbench for Carpentry's; PROF7: the loom
-          // for Outfitting's
-          const st = craftStation(recipeById(recipe)?.profession);
-          const f = st.here();
-          if (!f) return { ok: false, text: `You are not at ${st.a}.` };
-          if (f.fee > 0 && totalGoldAmount(playerEntity) < f.fee) return { ok: false, text: `The ${f.who ?? st.who} asks ${f.fee} gold for the use of the ${st.noun}.` };   // CARP-YARD: the joinery's carpenter
-          // AUDIT 30 C4: the fee rides the kept craft and is paid as its pieces are minted (profMintCraft) - by this press's
-          // answer, or a settle's later; A4: the workbench's kept word its own
-          // SEAT2b part two (Seats-Arc 7.5): the town the station stands in, where my guild holds it and its crafting halls
-          // step this craft (fortLaw.js hallStepsFor) - the service asks the Charter again (professions.js seatStepsFor)
-          const { seat } = myHall(recipeById(recipe)?.profession);
-          const r = await profBook.craft(recipe, { clean, heartwood, dye, cracked, fee: f.fee > 0 ? f.fee : 0, name: typeof playerEntity?.name === 'string' ? playerEntity.name : null, seat, ...more }, profMintCraft);   // PROF10: a Lapidary's cracked gem
-          // CRAFT1 (bible/06-Systems/Professions-Arc.md 41): the chain's works the craft ran first - said, made or refused
-          // AUDIT CRAFT1 F3: a kept craft says it too; F4: and a refused one where the chain stopped
-          const chain = [refinedText(r?.refined, materialLabel, (prof) => profBook.track(prof)), r?.ok ? '' : chainStopText(r?.stopped, r?.material, materialLabel)].filter(Boolean).join(' ');
-          if (!r?.ok) return { ok: false, text: r?.kept ? `${st.kept}${chain ? ` ${chain}` : ''}` : `${accountRefusalText(r?.error)}${movedFirstText(r)}${chain ? ` ${chain}` : ''}` };
-          const paid = f.fee > 0 && !r.elsewhere;
-          const rec = recipeById(recipe);
-          const made = rec?.kind === 'siege' ? storedText(rec.name, Number(r.data.count) || 1) : craftedText(mintPieces(r.data));   // SEAT2b part two: a Ram Kit is the Stores'
-          return { ok: true, text: `${chain ? `${chain} ` : ''}${made} ${craftXpText(rec, r.data, st.xp, profBook.limit(rec?.profession))}${paid ? `, and paid the ${f.who ?? st.who} ${f.fee} gold` : ''}.` };   // CRAFT-LIMIT-SAID: and the crafter's limit, where it now holds the track
-        },
-        stock: async (material, qty, counter = stockOf(material)?.counter) => {
-          const r = await profBook.stock(material, qty);
-          toldBalance(r?.data?.balance);   // PROF5 (FOUND): the Bank's balance told too; AUDIT 32 B3: and the market's
-          const who = counter === 'furnisher' ? 'furnisher' : counter === 'weavers' ? 'Weavers' : counter === 'apothecaries' ? 'Apothecaries' : 'smith';   // PROF12: the Apothecaries' sixteen   // PROF4: the furnisher's Linen; PROF7: the Weavers' at the tailor's
-          return r?.ok ? { ok: true, text: `Bought ${r.data.qty} ${materialCountLabel(material, r.data.qty)} from the ${who} for ${r.data.marks} silver.` } : { ok: false, text: accountRefusalText(r?.error) };
-        },
-        heatBand: () => heatBand({ strength: liveStat(playerEntity, 'strength'), agility: liveStat(playerEntity, 'agility') }),
-        // PROF4 (bible/06-Systems/Professions-Arc.md 25): THE WORKBENCH the player stands at, and the plane's band
-        workbench: () => workbenchHere(),   // CARP-YARD: and a joinery's in the street
-        planeBand: () => planeBand({ agility: liveStat(playerEntity, 'agility'), willpower: liveStat(playerEntity, 'willpower') }),
-        purse: () => totalGoldAmount(playerEntity),   // AUDIT 30 U13: a station's fee the purse cannot meet is not offered
-        // PROF7 (bible/06-Systems/Professions-Arc.md 29): THE LOOM the player stands at, the stitch's band, and the clothing
-        // it shows first - the player's own, as DFU's Clothing Store shelves it
-        loom: () => modes?.loomHere?.() ?? null,
-        stitchBand: () => stitchBand({ agility: liveStat(playerEntity, 'agility'), speed: liveStat(playerEntity, 'speed') }),
-        // PROF11 (bible/06-Systems/Professions-Arc.md 9.3, 9.4): THE MASON'S BENCH the player stands at, and the chisel's band
-        mason: () => modes?.masonHere?.() ?? null,
-        chiselBand: () => chiselBand({ strength: liveStat(playerEntity, 'strength'), endurance: liveStat(playerEntity, 'endurance') }),
-        // PROF9 (bible/06-Systems/Professions-Arc.md 9.3, 9.4): THE FIRE the player stands at, the pan's band, and C&C's Skillet
-        fire: () => cookFireHere(),
-        panBand: () => panBand({ intelligence: liveStat(playerEntity, 'intelligence'), personality: liveStat(playerEntity, 'personality') }),
-        skillet: () => hasSkillet(playerEntity?.items),
-        // AUDIT PROF-541 K7: the town Apothecary's steps a dish's XP takes here - the seat the craft below sends (where my
-        // guild holds the town; professions.js seatStepsFor asks the Charter again), so the fire's line says the XP the service pays
-        cookSteps: () => myHall('cooking').steps,
-        // PROF10 (bible/06-Systems/Professions-Arc.md 9.3, 9.4): THE JEWELLER'S BENCH the player stands at, and the facet's band
-        jeweller: () => modes?.jewellerHere?.() ?? null,
-        // AUDIT PROF-541 R2-C6: and the town Apothecary's quality steps a piece takes there - the seat the craft sends, as cookSteps
-        jewelSteps: () => myHall('jewelcrafting').steps,
-        // PROF12 (bible/06-Systems/Professions-Arc.md 9.3, 37): THE ALCHEMY STATION the player stands at (an Alchemist's, its
-        // fee a brew; a home's), a brew through the book - its potions into the pack, kept until minted, the fee paid as they
-        // are - under the Apothecary's steps where my guild holds the town; the transmutations ride the smelt below
-        alchemy: () => modes?.alchemyHere?.() ?? null,
-        // AUDIT PROF-541 B4: the Apothecary's steps where my guild holds the town the station stands in - the station's
-        // Potent chance says them, as the service adds them (professions.js seatStepsFor)
-        alchemySteps: () => alchemyHall().steps,
-        brew: async (potion, keys) => {
-          const f = modes?.alchemyHere?.() ?? null;
-          if (!f) return { ok: false, text: 'You are not at an alchemy station.' };
-          if (f.fee > 0 && totalGoldAmount(playerEntity) < f.fee) return { ok: false, text: `The alchemist asks ${f.fee} gold for the use of the station.` };
-          const { seat } = alchemyHall();
-          const r = await profBook.brew(potion, keys, { fee: f.fee > 0 ? f.fee : 0, seat }, profMintCraft);
-          if (!r?.ok) return { ok: false, text: r?.kept ? BREW_KEPT_TEXT : r?.error === 'prof-busy' ? 'Your hands are busy with another craft.' : `${accountRefusalText(r?.error)}${movedFirstText(r)}` };
-          const paid = f.fee > 0 && !r.elsewhere;
-          return { ok: true, text: `${brewedText(r.data)} (+${r.data.xp} ${professionName('alchemy')} experience)${paid ? `, and paid the alchemist ${f.fee} gold` : ''}.` };
-        },
-        // PROF12: THE ENCHANTING STATION the player stands at (a Mages Guild hall, its fee a piece; a home's), the pack's crafted
-        // pieces it lists (DISENCHANT-SAID: made by the page's module - profPages.js disenchantableOf - a piece under one
-        // Essence among them, greyed with its reason) and a disenchant: the piece out of the pack on the service's answer,
-        // its Essence in the Stores
-        enchanter: () => modes?.enchantHere?.() ?? null,
-        disenchantable: () => disenchantableOf(playerEntity.items, { kept: pieceKept, book: profBook }),
-        disenchant: async (provenance) => {
-          const owner = characterIdOf(playerEntity), account = storedSession(appStorage())?.id;
-          const pack = playerEntity.items;
-          const here = () => owner === characterIdOf(playerEntity) && account === storedSession(appStorage())?.id && pack === playerEntity.items;
-          const f = modes?.enchantHere?.() ?? null;
-          if (!f) return { ok: false, text: 'You are not at an enchanting station.' };
-          if (f.fee > 0 && totalGoldAmount(playerEntity) < f.fee) return { ok: false, text: `The enchanter asks ${f.fee} gold to take a piece apart.` };
-          const it = (playerEntity.items ?? []).find((x) => x?.provenance === provenance) ?? null;
-          const name = it ? itemLongName(it) : 'the piece';
-          // the piece out of the pack - once (a `repeat` finds it gone already); `out` what this press took, and where
-          let out = null;
-          const takeOut = () => {
-            const at = (playerEntity.items ?? []).findIndex((x) => x?.provenance === provenance);
-            if (at >= 0) out = { piece: playerEntity.items.splice(at, 1)[0], at };
-            return at >= 0;
-          };
-          let r;
-          if (realmSession) {
-            // AUDIT PROF-541 B2: a realm character's piece leaves its RECORD in the disenchant's own batch - the save
-            // checkpointed first, the piece out of the pack inside the hold as the service is first asked (marketBook
-            // postGood's order), back on a refusal; silence ends the session and a join reads the record
-            let asked = false;
-            r = await realmGoldAct({
-              session: realmSession, checkpoint: () => { if (here()) onlineCheckpoint(); },
-              reserve: () => () => { if (out) { pack.splice(Math.min(out.at, pack.length), 0, out.piece); out = null; } },
-              call: (at) => { if (!here()) return Promise.resolve({ ok: false, error: 'elsewhere', elsewhere: true }); if (!asked) { asked = true; takeOut(); } return out ? profBook.disenchant(provenance, at) : Promise.resolve({ ok: false, error: 'prof-piece-gone' }); },
-            });
-          } else {
-            r = await profBook.disenchant(provenance);
-            if (r?.ok && here() && !r.elsewhere) takeOut();
-          }
-          if (!here() || r?.elsewhere) return { ok: false, text: 'Your character changed while disenchanting. Check its Stores when you return.' };
-          if (!r?.ok) {
-            // AUDIT PROF-541 B2: a disenchant of this account took the piece's record already (an answer lost, the save
-            // kept the piece) - the save's copy goes too, as the answer it missed would have taken it
-            // AUDIT PROF-541 R2-C1: the Stores and Enchanting's track read again (the answer that moved them was lost);
-            // R2-N1: and the enchanter paid the fee the lost press owed, as the answered one pays it
-            if (r?.error === 'prof-no-piece' && r?.why === 'disenchanted' && takeOut()) {
-              const owed = f.fee > 0 ? Math.min(f.fee, totalGoldAmount(playerEntity)) : 0;
-              if (owed > 0) deductGold(playerEntity, owed);
-              profBook.refresh({ force: true }).catch(() => {});
-              saveSoon.changed();
-              return { ok: false, text: `${name} was already disenchanted. Its Essence is in your Stores, and it leaves your pack${owed > 0 ? `; you paid the enchanter ${owed} gold` : ''}.` };
-            }
-            return { ok: false, text: accountRefusalText(r?.error) };
-          }
-          const paid = f.fee > 0 && out != null;
-          if (paid) deductGold(playerEntity, Math.min(f.fee, totalGoldAmount(playerEntity)));
-          // AUDIT PROF-541 R2-C1: a realm act that LANDED (its answer lost, the record one on) says no Stores and no track -
-          // the state read again, so the Essence and the XP show now, not at the next read
-          if (!r.data) profBook.refresh({ force: true }).catch(() => {});
-          saveSoon.changed();
-          const got = Number.isSafeInteger(r.data?.essence) ? `${r.data.essence} Arcane Essence (+${r.data.xp} Enchanting experience)` : 'Arcane Essence';   // a landed realm act says no more
-          return { ok: true, text: `${name} comes apart into ${got}${paid ? `, and paid the enchanter ${f.fee} gold` : ''}.` };
-        },
-        // CRAFT4 (bible/06-Systems/Professions-Arc.md 41.7): THE TEMPER at the anvil (the smith's pieces) and the loom (the
-        // tailor's) - the pack's pieces a temper takes (Rare or below, below Superior), not worn, no market act kept on them;
-        // the step laid on the piece on the service's answer (smithItems.js temperItem), the station's fee a temper
-        temperable: (where) => (playerEntity.items ?? []).filter((it) => it && !isEquipped(it) && !temperRefusal(it) && !(typeof it.provenance === 'string' && pieceKept(it.provenance)))
-          .map((it) => ({ it, r: temperRecipeOf(it) })).filter(({ r }) => trackOf(r.profession) === (where === 'loom' ? 'outfitting' : 'smithing'))
-          .map(({ it, r }) => ({ item: it, name: itemLongName(it), recipe: r.id, quality: pieceQuality(it), provenance: typeof it.provenance === 'string' ? it.provenance : null })),
-        temper: async (offer) => {
-          const r0 = recipeById(offer?.recipe);
-          const loom = trackOf(r0?.profession) === 'outfitting';
-          const f = (loom ? modes?.loomHere?.() : modes?.forgeHere?.()) ?? null;
-          if (!f) return { ok: false, text: loom ? 'You are not at a loom.' : 'You are not at an anvil.' };
-          const who = loom ? 'tailor' : 'smith';
-          if (f.fee > 0 && totalGoldAmount(playerEntity) < f.fee) return { ok: false, text: `The ${who} asks ${f.fee} gold for a temper.` };
-          const pack = playerEntity.items, it = offer.item;
-          if (!pack?.includes(it) || isEquipped(it) || temperRefusal(it) || pieceQuality(it) !== offer.quality) return { ok: false, text: TEMPER_MOVED_TEXT };
-          const name = itemLongName(it);
-          const r = await profBook.temper(offer.recipe, offer.quality, offer.provenance);
-          if (r?.elsewhere || pack !== playerEntity.items) return { ok: false, text: 'Your character changed while tempering. Check its Stores when you return.' };
-          if (!r?.ok) return { ok: false, text: `${accountRefusalText(r?.error)}${movedFirstText(r)}` };
-          // the fee for the temper this press made, on the first answer it hears - `repeat` or not (AUDIT 29 C3's law)
-          if (f.fee > 0) deductGold(playerEntity, Math.min(f.fee, totalGoldAmount(playerEntity)));
-          const took = pack.includes(it) && temperItem(it, r.data);
-          saveSoon.changed();
-          if (!took) return { ok: false, text: TEMPER_LOST_TEXT };
-          return { ok: true, text: `${name} is ${QUALITY_NAMES[r.data.quality]} now (+${r.data.xp} ${professionName(r0.profession)} experience)${f.fee > 0 ? `, and paid the ${who} ${f.fee} gold` : ''}.` };
-        },
-        // CRAFT4: THE REFORGE WITH ESSENCE at the enchanting station - the pack's known Magic and Rare pieces, not worn, each
-        // line the Loot arc's own Reforge may replace (REFORGE-REPLACE: any line another kind can take, the price doubling
-        // with the piece's reforges); the line replaced on the service's seed
-        reforgeable: () => (playerEntity.items ?? []).filter((it) => it && reforgeEssence(it.rarity) && !essenceReforgeRefusal(it, reforgeableLines(it)[0]))
-          .map((it) => ({ item: it, name: itemLongName(it), tier: it.rarity, lines: reforgeableLines(it).map((index) => ({ index, text: affixLine(it, index) })) })),
-        essenceReforge: async (offer, index) => {
-          const f = modes?.enchantHere?.() ?? null;
-          if (!f) return { ok: false, text: 'You are not at an enchanting station.' };
-          if (f.fee > 0 && totalGoldAmount(playerEntity) < f.fee) return { ok: false, text: `The enchanter asks ${f.fee} gold to reforge a piece.` };
-          const pack = playerEntity.items, it = offer.item;
-          if (!pack?.includes(it) || essenceReforgeRefusal(it, index) || it.rarity !== offer.tier) return { ok: false, text: TEMPER_MOVED_TEXT };
-          const r = await profBook.reforge(offer.tier, reforgeCount(it));   // REFORGE-REPLACE: the piece's count, its price
-          if (r?.elsewhere || pack !== playerEntity.items) return { ok: false, text: 'Your character changed while reforging. Check its Stores when you return.' };
-          if (!r?.ok) return { ok: false, text: accountRefusalText(r?.error) };
-          if (f.fee > 0) deductGold(playerEntity, Math.min(f.fee, totalGoldAmount(playerEntity)));
-          const line = pack.includes(it) && r.data?.tier === it.rarity ? reforgeItem(it, index, r.data.seed) : null;
-          saveSoon.changed();
-          if (!line) return { ok: false, text: REFORGE_LOST_TEXT };
-          return { ok: true, text: `Reforged: ${affixLine(it, index)}${f.fee > 0 ? `, and paid the enchanter ${f.fee} gold` : ''}.` };
-        },
-        facetBand: () => facetBand({ willpower: liveStat(playerEntity, 'willpower'), luck: liveStat(playerEntity, 'luck') }),
-        clothing: () => (playerEntity?.gender === 'female' ? 'WomensClothing' : 'MensClothing'),
-        marks: () => marksBook?.state?.balance ?? null,   // AUDIT 32 P6: a counter's purchase the Marks cannot meet, said first
-        marksOpen: () => marksBook?.state?.open !== false,
-        smelt: async (recipe, count, { clean = false } = {}) => {
-          // PROF4: the station is the work's - a smelt's and a burn's the forge, a saw's the workbench; PROF7: a cure's and
-          // a weave's the loom; PROF11: a cut's and a mix's the mason's bench, its chisel's report with it
-          const work = smeltRecipe(recipe);
-          const bench = work?.station === 'workbench', loom = work?.station === 'loom', mason = work?.station === 'mason';
-          const alch = work?.station === 'alchemy';   // PROF12: a Transmuter's transmutation, at the alchemy station
-          const f = (alch ? modes?.alchemyHere?.() : mason ? modes?.masonHere?.() : loom ? modes?.loomHere?.() : bench ? workbenchHere() : modes?.forgeHere?.()) ?? null;
-          if (!f) return { ok: false, text: alch ? 'You are not at an alchemy station.' : mason ? 'You are not at a mason\'s bench.' : loom ? 'You are not at a loom.' : bench ? 'You are not at a workbench.' : 'You are not at a forge.' };
-          const who = alch ? 'alchemist' : mason ? 'mason' : loom ? 'tailor' : bench ? (f.who ?? 'furnisher') : 'smith';   // CARP-YARD: the joinery's carpenter
-          if (f.fee > 0 && totalGoldAmount(playerEntity) < f.fee) return { ok: false, text: `The ${who} asks ${f.fee} gold for the use of the ${alch ? 'station' : mason ? 'mason\'s bench' : loom ? 'loom' : bench ? 'workbench' : 'forge'}.` };
-          const r = await profBook.smelt(recipe, count, { clean });
-          if (!r?.ok) return { ok: false, text: `${accountRefusalText(r?.error)}${movedFirstText(r)}` };
-          // the fee for the smelt this press made, on the first answer it hears - `repeat` or not (AUDIT 29 C3: a first
-          // answer lost, the same smelt asked again answers `repeat`, and the smith went unpaid); the page holds one press
-          // at a time, and the book one ask an id
-          if (f.fee > 0) { deductGold(playerEntity, f.fee); saveSoon.changed(); }
-          const out = smeltRecipe(r.data.recipe)?.out ?? recipe;
-          const made = (Number(r.data.own) || 0) + (Number(r.data.bought) || 0) + (Number(r.data.loose) || 0) || r.data.count;   // AUDIT BAG-CRAFT A1: its loose products too
-          const id = String(r.data.recipe);
-          const verb = bench ? 'Sawed' : id.startsWith('burn:') ? 'Burnt' : id.startsWith('cure:') ? 'Cured' : id.startsWith('weave:') ? 'Wove'
-            : id.startsWith('cut:') ? 'Cut' : id.startsWith('mix:') ? 'Mixed' : alch ? 'Transmuted into' : 'Smelted';   // PROF7: the loom's; PROF11: the mason's; PROF12: the Transmuter's
-          // PROF11 (FOUND): the XP said is the work's own profession's - Masonry's at the bench (it said Smithing's whatever
-          // the work); a clean chisel and a first work said with it
-          const xpWord = professionName(smeltRecipe(r.data.recipe)?.xp ?? 'smithing');
-          const how = [r.data.clean === true ? 'a clean chisel' : null, r.data.first === true ? 'your first' : null].filter(Boolean).join(', ');
-          const where = madeWhere(r.data.put);   // AUDIT BAG1 B9: where the work went - the bag, the pack, or the Stores' room
-          return { ok: true, text: `${verb} ${made} ${materialCountLabel(out, made)}${r.data.xp > 0 ? ` (+${r.data.xp} ${xpWord} experience${how ? `, ${how}` : ''})` : ''}${f.fee > 0 ? `, and paid the ${who} ${f.fee} gold` : ''}.${where ? ` ${where}` : ''}` };
-        },
-      });
-      // PROF9 (bible/06-Systems/Professions-Arc.md 9.3: "the whole party"): A FEAST SHARED - eaten, its spell record goes
-      // to every party mate in the room through ALLY-CAST's own frame (systems/allyCast.js allyCastFrame - a beneficial
-      // spell, at the dish's level, laid on by the mate's own client as a mate's gift); the names it went to, said
-      setFeastShare((spell) => {
-        if (!online || online.status !== 'open' || !social?.party) return [];
-        // AUDIT PROF-541 K5: the mates at the table - in sight, as a stranger's gift is (online.onCast), never the whole
-        // room and its halo; R2-H1: by cookItems.js shareFeastWith
-        return shareFeastWith(peersNear(), { isMate: (id) => social.isPartyPeer(id), send: (id) => online.sendCast?.(allyCastFrame(spell, DISH_LEVEL, id)), nameOf: (id) => peerName(id) });
-      });
-    }
-  }
+  createProfessionsHost({   // HOST-SPLIT: src/scenes/professionsHost.js
+    BAG_DEPOSIT_KEPT_TEXT, actKeyWord, built, cam, canvas, collider, cookFireHere, craftStation, csaRuntime,
+    deepWaters, exteriorFoes, gamePaused, getTexture, heightAt, locationIndex, maps, marksBook, motherlodeBook,
+    pieceKept, player, playerTravelPixel, profBook, profChoose, profMint, profMintCraft, realmSession, renderer,
+    saveSoon, seatHere, state, toldBalance, townTalk, uploadRecord, walkMode, workbenchHere,
+    get _musicLoc() { return _musicLoc; },
+    get _sharedOffsetMs() { return _sharedOffsetMs; },
+    get _storesReached() { return _storesReached; },
+    get backButtonHeld() { return backButtonHeld; },
+    get escRelock() { return escRelock; }, set escRelock(value) { escRelock = value; },
+    get gatherHost() { return gatherHost; }, set gatherHost(value) { gatherHost = value; },
+    get groundSampleAt() { return groundSampleAt; },
+    get guildBook() { return guildBook; },
+    get huntBodies() { return huntBodies; }, set huntBodies(value) { huntBodies = value; },
+    get keys() { return keys; },
+    get latch() { return latch; },
+    get modeNow() { return modeNow; },
+    get modes() { return modes; },
+    get naval() { return naval; },
+    get online() { return online; },
+    get onlineCheckpoint() { return onlineCheckpoint; },
+    get openBodyLoot() { return openBodyLoot; },
+    get peerName() { return peerName; },
+    get peersNear() { return peersNear; },
+    get pointerSurfaces() { return pointerSurfaces; },
+    get social() { return social; },
+    get travelView() { return travelView; },
+  });
   autoBuildArms(playerEntity);   // MWA1: a continuing session's arms, at boot (a new character's come after the wizard, a load's after the restore)
   // WEAPON-VIS1: a live read of exactly what shown() gates on, always
   // installed (not folded into installTownProbes below, which only

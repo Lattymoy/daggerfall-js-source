@@ -136,9 +136,9 @@
   },
   {
     "name": "HELMKEYS-the-choice-at-the-helm",
-    "file": "src/scenes/world.js",
-    "old": "choice: !csaRuntime?.isSailing() && pressed(latch.edge, keys, 'ActChoice')",
-    "new": "choice: pressed(latch.edge, keys, 'ActChoice')",
+    "file": "src/scenes/professionsHost.js",
+    "old": "choice: !csaRuntime?.isSailing() && pressed(host.latch.edge, host.keys, 'ActChoice')",
+    "new": "choice: pressed(host.latch.edge, host.keys, 'ActChoice')",
     "tests": [
       "test/systems/inputactions.test.js"
     ]

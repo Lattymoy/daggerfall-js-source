@@ -256,7 +256,7 @@
   },
   {
     "name": "REFORGE-REPLACE-the-host-asks-none",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "profBook.reforge(offer.tier, reforgeCount(it))",
     "new": "profBook.reforge(offer.tier)",
     "tests": [

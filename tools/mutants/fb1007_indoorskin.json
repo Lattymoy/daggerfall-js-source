@@ -65,17 +65,17 @@
   },
   {
     "name": "INDOORSKIN-world-street-bodies",
-    "file": "src/scenes/world.js",
-    "old": "interior: modes?.interiorFoes }, bodyStamps);",
+    "file": "src/scenes/professionsHost.js",
+    "old": "interior: host.modes?.interiorFoes }, bodyStamps);",
     "new": "interior: exteriorFoes }, bodyStamps);",
     "tests": ["test/systems/quest/fb1007_indoorskin.test.js"],
     "note": "world.js hands the street's pool as the building's"
   },
   {
     "name": "INDOORSKIN-world-host-off",
-    "file": "src/scenes/world.js",
-    "old": "        activeInterior: () => walkMode && modeNow() === 'interior' && !modes?.overlayHeld",
-    "new": "        activeInterior: () => walkMode && modeNow() === 'exterior' && !modes?.overlayHeld",
+    "file": "src/scenes/professionsHost.js",
+    "old": "        activeInterior: () => walkMode && host.modeNow() === 'interior' && !host.modes?.overlayHeld",
+    "new": "        activeInterior: () => walkMode && host.modeNow() === 'exterior' && !host.modes?.overlayHeld",
     "tests": ["test/systems/quest/fb1007_indoorskin.test.js"],
     "note": "the world's gathering host never live in a building"
   },

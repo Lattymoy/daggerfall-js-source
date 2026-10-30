@@ -544,18 +544,18 @@ test('PROF7 wiring: the street and the dungeon stamp and list their bodies for H
   assert.match(w, /registerPlayerKillListener\('hunting', \(entity\) => \{ bodyStamps\.stamp\(entity\); \}\);/);
   // PIN MOVED (FIELD BUGS 2026-10-07 INDOOR-SKIN): the pool by the mode, a building's too - huntHost.js bodiesHere
   // (test/systems/quest/fb1007_indoorskin.test.js drives it over the real pools)
-  assert.match(w, /huntBodies = \(\) => bodiesHere\(modeNow\(\), \{ street: exteriorFoes, dungeon: modes\?\.dungeonCtx, interior: modes\?\.interiorFoes \}, bodyStamps\);/);
+  assert.match(w, /huntBodies = \(\) => bodiesHere\(host\.modeNow\(\), \{ street: exteriorFoes, dungeon: host\.modes\?\.dungeonCtx, interior: host\.modes\?\.interiorFoes \}, bodyStamps\);/);
   assert.match(src('src/scenes/huntHost.js'), /return bodiesOf\(pool\.foes, stamps, \(f\) => pool\.corpseAt\?\.\(f\), \(f\) => pool\.corpseKeyOf\?\.\(f\)\);/);
   assert.match(src('src/scenes/exteriorFoes.js'), /corpseAt: corpseLens\.feetOf,/, 'where a body lies has one home (DT1)');
   assert.doesNotMatch(w, /held\(keys, 'SwingWeapon'\)/, 'the knife is drawn with E held - attack is the weapon\'s, and its swing modes hold the look');
   // PIN MOVED (2026-10-01 part four, TOUCH-HOLD): the key named unless the knife's Use holds it
   assert.match(src('src/scenes/huntHost.js'), /profession: 'hunting', label: used \? '' : keyLabel\('Interact'\),/);
-  assert.match(w, /loom: \(\) => modes\?\.loomHere\?\.\(\) \?\? null,/);
+  assert.match(w, /loom: \(\) => host\.modes\?\.loomHere\?\.\(\) \?\? null,/);
   assert.match(w, /stitchBand: \(\) => stitchBand\(\{ agility: liveStat\(playerEntity, 'agility'\), speed: liveStat\(playerEntity, 'speed'\) \}\),/);
   assert.match(w, /clothing: \(\) => \(playerEntity\?\.gender === 'female' \? 'WomensClothing' : 'MensClothing'\),/);
   assert.match(w, /: profession === 'outfitting'\n\s*\? \{ here: \(\) => modes\?\.loomHere\?\.\(\) \?\? null, a: 'a loom', who: 'tailor', noun: 'loom', kept: LOOM_KEPT_TEXT, xp: 'Outfitting' \}/);   // PIN MOVED (AUDIT PROF-541 R2-C2): no station's own busy word
   // PIN MOVED (PROF11): a work at the mason's bench asks it first
-  assert.match(w, /const f = \(alch \? modes\?\.alchemyHere\?\.\(\) : mason \? modes\?\.masonHere\?\.\(\) : loom \? modes\?\.loomHere\?\.\(\) : bench \? workbenchHere\(\) : modes\?\.forgeHere\?\.\(\)\) \?\? null;/);   // PIN MOVED (PROF12): the alchemy station's transmutations first; PIN MOVED (CARP-YARD): a saw at a joinery's bench too
+  assert.match(w, /const f = \(alch \? host\.modes\?\.alchemyHere\?\.\(\) : mason \? host\.modes\?\.masonHere\?\.\(\) : loom \? host\.modes\?\.loomHere\?\.\(\) : bench \? workbenchHere\(\) : host\.modes\?\.forgeHere\?\.\(\)\) \?\? null;/);   // PIN MOVED (PROF12): the alchemy station's transmutations first; PIN MOVED (CARP-YARD): a saw at a joinery's bench too
   assert.match(w, /const who = counter === 'furnisher' \? 'furnisher' : counter === 'weavers' \? 'Weavers' : counter === 'apothecaries' \? 'Apothecaries' : 'smith';/);   // PIN MOVED (PROF12): the Apothecaries'
   // PIN MOVED (BAG1): the rot's options are one function now, the pack's withdrawal's and the bag's mint's alike
   assert.match(w, /const carryOpts = \(key\) => \(\{ slowRot: key === 'food:meat' && profBook\?\.track\('hunting'\)\?\.specs\?\.\[100\] === 'butcher', noRot: /);   // PIN MOVED (PROF9): a Provisioner's provisions beside the Butcher's meat

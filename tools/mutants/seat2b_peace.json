@@ -537,7 +537,7 @@
   },
   {
     "name": "SEAT2b2-host-craft-no-town",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "name: typeof playerEntity?.name === 'string' ? playerEntity.name : null, seat, ...more }, profMintCraft);",
     "new": "name: typeof playerEntity?.name === 'string' ? playerEntity.name : null, ...more }, profMintCraft);",
     "tests": [
@@ -546,7 +546,7 @@
   },
   {
     "name": "SEAT2b2-host-ram-kit-made-nothing",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "const made = rec?.kind === 'siege' ? storedText(rec.name, Number(r.data.count) || 1) : craftedText(mintPieces(r.data));",
     "new": "const made = craftedText(mintPieces(r.data));",
     "tests": [

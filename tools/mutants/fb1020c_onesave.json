@@ -91,7 +91,7 @@
   },
   {
     "name": "FB1020c-ONE-SAVE-the-host-plan-not-the-batch",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "deposit: async (plan) => (await profBook.depositMany(plan)).map((r, i) => ",
     "new": "deposit: async (plan) => (await Promise.all(plan.map((d) => profBook.deposit(d.material, d.qty, d)))).map((r, i) => ",
     "tests": [

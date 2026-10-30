@@ -94,7 +94,7 @@ export default [
   },
   {
     // LEGIBLE 4: one statement a line in the folders the formatter owns (tools/formatted.json, LEGIBLE 3).
-    files: FORMATTED.map((folder) => `${folder}/**/*.{js,mjs}`),
+    files: FORMATTED.map((folder) => `${folder}/*.{js,mjs}`),
     rules: { 'max-statements-per-line': ['error', { max: 1 }] },
   },
   // generated and gitignored trees the lint paths above reach into

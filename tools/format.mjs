@@ -19,14 +19,15 @@ export const IGNORE = '.prettierignore';
 /** The folders the formatter owns. */
 export const formattedFolders = (root = ROOT) => JSON.parse(readFileSync(join(root, FORMATTED), 'utf8'));
 
-/** Every .js/.mjs file under the listed folders, repo-relative and sorted. */
+/** Every .js/.mjs file directly in a listed folder, repo-relative and sorted - a subfolder is listed on its own. */
 export function formattedFiles(root = ROOT) {
-  return formattedFolders(root).flatMap((d) => readdirSync(join(root, d), { recursive: true })
-    .map((f) => `${d}/${String(f).split('\\').join('/')}`)
-    .filter((f) => /\.m?js$/.test(f))).sort();
+  return formattedFolders(root).flatMap((d) => readdirSync(join(root, d), { withFileTypes: true })
+    .filter((e) => e.isFile() && /\.m?js$/.test(e.name))
+    .map((e) => `${d}/${e.name}`)).sort();
 }
 
-/** .prettierignore's text: ignore everything, then un-ignore each listed folder and the parents on its way. */
+/** .prettierignore's text: ignore everything, then open each listed folder's own files (its subfolders shut unless
+ *  listed) and the parents on its way (their own contents shut). */
 export function ignoreText(folders) {
   const lines = ['# Written by node tools/format.mjs --ignore from tools/formatted.json - edit that, not this.', '/*'];
   const opened = new Set();
@@ -37,7 +38,7 @@ export function ignoreText(folders) {
       if (opened.has(path)) continue;
       opened.add(path);
       lines.push(`!/${path}/`);
-      if (i < parts.length) lines.push(`/${path}/*`);
+      lines.push(folders.includes(path) ? `/${path}/*/` : `/${path}/*`);
     }
   }
   return `${lines.join('\n')}\n`;

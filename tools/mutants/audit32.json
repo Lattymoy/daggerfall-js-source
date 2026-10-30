@@ -288,8 +288,8 @@
   },
   {
     "name": "AUDIT32-H10-under-the-travel-view",
-    "file": "src/scenes/world.js",
-    "old": " && !modes?.transitioning && !travelView?.active,   // AUDIT 32 H10",
+    "file": "src/scenes/professionsHost.js",
+    "old": " && !host.modes?.transitioning && !host.travelView?.active,   // AUDIT 32 H10",
     "new": ",   // AUDIT 32 H10",
     "tests": [
       "test/scenes/audit32_client.test.js"
@@ -333,7 +333,7 @@
   },
   {
     "name": "AUDIT32-B4-anvil-busy-everywhere",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "text: r?.kept ? `${st.kept}${chain ? ` ${chain}` : ''}` : `${accountRefusalText(r?.error)}${movedFirstText(r)}${chain ? ` ${chain}` : ''}` };",
     "new": "text: r?.kept ? `${st.kept}${chain ? ` ${chain}` : ''}` : r?.error === 'prof-busy' ? 'The anvil is still ringing from your last work.' : `${accountRefusalText(r?.error)}${movedFirstText(r)}${chain ? ` ${chain}` : ''}` };",
     "tests": [

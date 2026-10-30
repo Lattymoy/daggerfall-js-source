@@ -80,7 +80,7 @@
   },
   {
     "name": "PROFRETICLE-world-lens",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "anchor: () => reticleAnchor(canvas, fieldOfView()) }",
     "new": "anchor: () => reticleAnchor(canvas, 1.13) }",
     "tests": [

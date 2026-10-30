@@ -23,6 +23,7 @@ import { templateByIndex, inventoryItemImage, itemUseHandler } from '../../src/s
 import { DYE_COLORS } from '../../src/characters/dyes.js';
 import { ITEM_FIELDS } from '../../src/systems/item/itemFields.js';
 import { lootRarityOn } from '../../src/systems/loot/lootRarity.js';
+import { hostText } from '../hostText.mjs';   // PIN MOVED (HOST-SPLIT PROFESSIONS): the world host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const noWait = () => Promise.resolve();
@@ -254,7 +255,7 @@ test('PROF3 anvil page: at a smith\'s forge - the families and metals, a recipe\
 });
 
 test('PROF3 wiring: the host mints a craft\'s pieces once each by provenance, pays the smith on the answer, asks the heat\'s band off STR and AGI; every host installs the kit\'s use; the Stores refuse to withdraw the stock', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const pieces = mintPieces\(data\)\.filter\(\(it\) => !it\.provenance \|\| !have\.has\(it\.provenance\)\);/);   // PROF4: arrows carry none
   assert.match(w, /settle: \(\) => profBook\.settle\(profMint, profMintCraft\),/);
   assert.match(w, /onSettle: \(\) => \{ profBook\.settle\(profMint, profMintCraft\)\.catch\(\(\) => \{\}\); \},/);

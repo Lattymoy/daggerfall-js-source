@@ -127,7 +127,7 @@
   },
   {
     "name": "HERB-CURSOR-seam-unpassed",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": " pointer: (want) => {",
     "new": " _pointer: (want) => {",
     "tests": [
@@ -136,8 +136,8 @@
   },
   {
     "name": "HERB-CURSOR-relock-under-travel-view",
-    "file": "src/scenes/world.js",
-    "old": "!overlayOpen() && !travelView?.active) requestLook(canvas); }; if (want === 'look')",
+    "file": "src/scenes/professionsHost.js",
+    "old": "!overlayOpen() && !host.travelView?.active) requestLook(canvas); }; if (want === 'look')",
     "new": "!overlayOpen()) requestLook(canvas); }; if (want === 'look')",
     "tests": [
       "test/systems/foraging/fb1002_herbcursor.test.js"

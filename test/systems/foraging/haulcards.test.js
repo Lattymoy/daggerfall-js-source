@@ -31,6 +31,7 @@ import { LOOT_RARITY_KEY } from '../../../src/systems/loot/lootRarity.js';
 import { setPref, PREF_DEFAULTS } from '../../../src/systems/uiPrefs.js';
 import { mintMaterialItem } from '../../../src/systems/professions/profItems.js';
 import { inventoryItemImage } from '../../../src/systems/item/itemTemplates.js';
+import { hostText } from '../../hostText.mjs';   // PIN MOVED (HOST-SPLIT PROFESSIONS): the world host whole
 
 const rd = (f) => readFileSync(new URL(`../../../${f}`, import.meta.url), 'utf8');
 const noWait = () => Promise.resolve();
@@ -357,9 +358,9 @@ test('HAUL-CARDS the kinds: Mining\'s Motherlode answer under its card keeps the
 });
 
 test('HAUL-CARDS the seams by source: the world host hands the gathering host the feed\'s door and shows a raid\'s and a gate\'s silver as cards beside the book\'s lines; the gathering host asks its kind\'s name and the act\'s words for the card, and tells the kind it was carded; a haul card\'s picture is fitted to its own box (mutants: each seam)', () => {
-  const w = rd('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /import \{ showPickups, showHaul \} from '\.\.\/ui\/pickupFeed\.js'; import \{ claimHauls \} from '\.\.\/ui\/haulCards\.js';/);
-  assert.match(w, /nowMs: \(\) => Date\.now\(\) \+ _sharedOffsetMs, haul: \(entries\) => showHaul\(entries\),/);
+  assert.match(w, /nowMs: \(\) => Date\.now\(\) \+ host\._sharedOffsetMs, haul: \(entries\) => showHaul\(entries\),/);
   assert.match(w, /onMarks: \(data\) => \{ showHaul\(claimHauls\(data, 'raid'\)\); return marksBook\?\.claimLines\(data, 'raid'\) \?\? null; \},/);
   assert.match(w, /onMarks: \(marks, data\) => \{ showHaul\(claimHauls\(data \?\? \{ marks \}, 'gate'\)\); return marksBook\?\.claimLines\(data \?\? \{ marks \}, 'gate'\) \?\? null; \},/);
   const g = rd('src/scenes/gatherHost.js');

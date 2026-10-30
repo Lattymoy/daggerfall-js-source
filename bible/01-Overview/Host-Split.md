@@ -897,3 +897,17 @@ the host's scope beside `__quickSave`, which left with the late probes, so their
 stands where the block stood (`onlineFrameProbe.mjs`, `realmSavesProbe.mjs`, in `if (shotMode)`); the clock census
 row for the exhibition's hour follows its line (`time1_census.json`); `hc1_horsecart.test.js` reads the ship's landing
 through `hostText`; and the board's cut comment keeps the measured sentence `tr4_ship.test.js` quotes.
+
+## PROFESSIONS - the professions' wiring out of bootWorld (CLEANUP, 2026-10-30)
+
+The `if (profBook) { ... }` block - the gathering host, its kinds, the bodies, the stations, the HUD's pieces - went out
+verbatim by `tools/hostMove.mjs` (`--group @11147`) to `scenes/professionsHost.js` `createProfessionsHost`: 35 names by
+value, 22 live (three written), nothing returned; the host drops 59 imports. `bootWorld` 34,356 -> 33,878 logical lines
+on the merged host, and the ceiling at it (`test/scenes/hostceiling.test.js`, its mutant re-aimed under it). The tool
+re-aimed 63 records and seven doc anchors, and now writes a setter's parameter as `value` (LEGIBLE 5).
+
+52 pins went red. 37 files read the host through `hostText` now; the regexes over the moved lines name the live reads
+as the module makes them (`host.modes`, `host.modeNow()`); the three that lift and run the code hand it a `host`
+(`fb1001_mining.test.js`, `fb1002_herbcursor_audit.test.js`, `auditdisenchant_host.test.js`); `nodemarks.test.js`
+reads the split import line in two; `l10n4_hardcoded.test.js` carries the 35 English lines with the code (world.js
+315 -> 280). All PIN MOVED (HOST-SPLIT PROFESSIONS).

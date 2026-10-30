@@ -81,7 +81,7 @@
   },
   {
     "name": "HIGHCAST-host-seafloor",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "return Number.isFinite(g) ? Math.max(g, (deepWaters?.oceanLocalY",
     "new": "return Number.isFinite(g) ? Math.min(g, (deepWaters?.oceanLocalY",
     "tests": [
@@ -91,7 +91,7 @@
   },
   {
     "name": "HIGHCAST-host-unknown-is-sea",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "+ state.pixelTranslation(state.current.x, state.current.y, _fishSeaT)[1]) : null; },",
     "new": "+ state.pixelTranslation(state.current.x, state.current.y, _fishSeaT)[1]) : 0; },",
     "tests": [

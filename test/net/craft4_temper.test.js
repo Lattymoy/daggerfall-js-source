@@ -27,6 +27,7 @@ import { weaponOfMaterial, armorOfMaterial } from '../../src/combat/enemyEquipme
 import { applyRarity, reforgeAffix, reforgeableLines, reforgeCount, REFORGES_MAX } from '../../src/systems/loot/lootRarity.js';
 import { seededRng } from '../../src/systems/wind/wind.js';
 import { unitWeightInKg } from '../../src/systems/inventory.js';
+import { hostText } from '../hostText.mjs';   // PIN MOVED (HOST-SPLIT PROFESSIONS): the world host whole
 
 const { subtle } = webcrypto;
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
@@ -351,7 +352,7 @@ test('CRAFT4 pages: the anvil\'s and the loom\'s Temper - each piece its step, i
 });
 
 test('CRAFT4 the host wires it (scenes/world.js): the anvil\'s and the loom\'s pieces not worn, no market act on them, the step on the answer and the fee paid; the Reforge with Essence the line rolled on the seed; the service routes both', () => {
-  const w = src('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /temperable: \(where\) => \(playerEntity\.items \?\? \[\]\)\.filter\(\(it\) => it && !isEquipped\(it\) && !temperRefusal\(it\) && !\(typeof it\.provenance === 'string' && pieceKept\(it\.provenance\)\)\)/);
   assert.match(w, /const took = pack\.includes\(it\) && temperItem\(it, r\.data\);/);
   assert.match(w, /const line = pack\.includes\(it\) && r\.data\?\.tier === it\.rarity \? reforgeItem\(it, index, r\.data\.seed\) : null;/);

@@ -43,7 +43,7 @@
   },
   {
     "name": "UNCOUNTED-the-host-unwired",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "        heldKeys: () => bagHeldKeysOf(playerEntity),",
     "new": "",
     "tests": ["test/systems/professions/fb1009c_uncounted.test.js"]
@@ -71,7 +71,7 @@
   },
   {
     "name": "LOOT-LOOSE-the-host-drops-the-order",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "deposit: async (plan) => (await profBook.depositMany(plan)).map((r, i) => ",
     "new": "deposit: async (plan) => (await profBook.depositMany(plan.map((d) => ({ ...d, order: 'all' })))).map((r, i) => ",
     "tests": ["test/systems/professions/fb1009c_uncounted.test.js"]

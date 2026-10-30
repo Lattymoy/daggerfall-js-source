@@ -643,7 +643,7 @@
   },
   {
     "name": "CRAFT4-host-worn-offered",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "filter((it) => it && !isEquipped(it) && !temperRefusal(it) && !(typeof it.provenance === 'string' && pieceKept(it.provenance)))",
     "new": "filter((it) => it && !temperRefusal(it) && !(typeof it.provenance === 'string' && pieceKept(it.provenance)))",
     "tests": [

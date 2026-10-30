@@ -276,7 +276,7 @@
   },
   {
     "name": "MASTER-ART-door-asks-dropped",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "seat, ...more }, profMintCraft);",
     "new": "seat }, profMintCraft);",
     "tests": ["test/ui/professions/masterart_ui.test.js"]

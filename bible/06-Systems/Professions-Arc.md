@@ -4573,7 +4573,7 @@ A4, `prof12_client` R2-C2, `prof3_client` wiring. Re-aimed by content, each stil
   its own, any line however often (the one-line lock gone; an old piece's mark one reforge counted), a line nothing
   else can take the place of not offered - and its price rose with it: `reforgeEssence(tier, count)`, the station's page
   pricing each piece at its next reforge (`profPages.js` drawEssenceReforge), the host asking with the piece's count
-  (`world.js:"const r = await profBook.reforge(offer.tier, reforgeCount(it));"`), the service spending it (acct187). Its
+  (`professionsHost.js:"const r = await profBook.reforge(offer.tier, reforgeCount(it));"`), the service spending it (acct187). Its
   words through t() (`prof.page.reforge.how`, `prof.page.reforge.rank`). AFFIX-LINES moved the craft's own roll the same
   day (`Loot-Rarity.md`): a record of mint version 2 draws its lines over the lines; one made before mints as it was.
   Pinned: `craft4_temper` (the count through the real Worker - 2, then 4; a count no piece holds refused with nothing
@@ -6670,7 +6670,7 @@ possible. No exceptions and no band aids." The decisions below are the record's,
 
 - The press is the station's own craft door with the lines: the fee, the chain of works, the kept act and its mint are a
   craft's. world.js's door hands the page's other asks to the book
-  (`world.js:"craft: async (recipe, { clean, heartwood = false, dye = null, cracked = false, ...more }) => {"`) - a
+  (`professionsHost.js:"craft: async (recipe, { clean, heartwood = false, dye = null, cracked = false, ...more }) => {"`) - a
   spread, no logical line in bootWorld (HOST-SPLIT). The book asks `/v1/prof/master` for a kept craft with lines
   (`profBook.js:"const lines = Array.isArray(master) ? master.filter((x) => typeof x === 'string') : null;"`), its
   catalysts put in from the counted bag first, and keeps the day and the card (`state.master`). AUDIT HORIZONTAL B5:

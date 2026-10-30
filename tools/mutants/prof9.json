@@ -1319,9 +1319,9 @@
   },
   {
     "name": "AUDIT-PROF-541-K5-whole-room",
-    "file": "src/scenes/world.js",
-    "old": "return shareFeastWith(peersNear(), {",
-    "new": "return shareFeastWith(online.peers.values(), {",
+    "file": "src/scenes/professionsHost.js",
+    "old": "return shareFeastWith(host.peersNear(), {",
+    "new": "return shareFeastWith(host.online.peers.values(), {",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -1357,7 +1357,7 @@
   },
   {
     "name": "AUDIT-PROF-541-K7-host-alchemy-steps",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "cookSteps: () => myHall('cooking').steps,",
     "new": "cookSteps: () => myHall('alchemy').steps,",
     "tests": [
@@ -1366,7 +1366,7 @@
   },
   {
     "name": "AUDIT-PROF-541-K8-brew-words",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "'Your hands are busy with another craft.'",
     "new": "'Your last brew is still in the cauldron.'",
     "tests": [
@@ -1510,7 +1510,7 @@
   },
   {
     "name": "AUDIT-PROF-541-R2-H1-host-craft-alchemy",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "const { seat } = myHall(recipeById(recipe)?.profession);",
     "new": "const { seat } = myHall('alchemy');",
     "tests": [

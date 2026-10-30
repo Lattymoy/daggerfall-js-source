@@ -1282,7 +1282,7 @@
   },
   {
     "name": "PROF10-world-band-no-luck",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "luck: liveStat(playerEntity, 'luck') }),",
     "new": "luck: liveStat(playerEntity, 'willpower') }),",
     "tests": [
@@ -1291,7 +1291,7 @@
   },
   {
     "name": "PROF10-world-cracked-dropped",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "{ clean, heartwood, dye, cracked, fee:",
     "new": "{ clean, heartwood, dye, fee:",
     "tests": [
@@ -1627,7 +1627,7 @@
   },
   {
     "name": "PROF-541-R2-C6-world-station",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "jewelSteps: () => myHall('jewelcrafting').steps,",
     "new": "jewelSteps: () => myHall('alchemy').steps,",
     "tests": [

@@ -516,7 +516,7 @@
   },
   {
     "name": "TOWNECON-AUDIT2-PRICE2-world-unwired",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "        carriedHeld: (k) => bagHeldOf(playerEntity, k, { counter: false }),",
     "new": "        carriedHeld: (k) => bagHeldOf(playerEntity, k),",
     "tests": [

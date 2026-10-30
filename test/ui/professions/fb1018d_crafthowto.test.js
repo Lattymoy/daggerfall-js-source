@@ -30,6 +30,7 @@ import {
 import { tutorialById, tutorialsIn, tutorialText } from '../../../src/systems/tutorials.js';
 import { tutorialsMatching } from '../../../src/ui/tutorialsPane.js';
 import { actionLabel } from '../../../src/systems/inputActions.js';
+import { hostText } from '../../hostText.mjs';   // PIN MOVED (HOST-SPLIT PROFESSIONS): the world host whole
 
 const src = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 
@@ -131,7 +132,7 @@ test('CRAFT-HOWTO THE WORDS ARE THE CODE\'S: each craft names the shops its stat
   assert.match(qs.enchantHere.body, /=== GUILD_GROUPS\.MagesGuild\) return \{ kind: 'shop'/);
   assert.match(ENCHANTING_HOW(0), /at an enchanting station, on the Crafting page\. Mages Guild halls and your home have one\./, 'PIN MOVED (PLAIN-TEXT): the station\'s places said plainly');
   // CARP-YARD: a joinery's bench is the street's workbench question (scenes/world.js)
-  assert.match(src('src/scenes/world.js'), /workbench: \(\) => workbenchHere\(\),\s+\/\/ CARP-YARD: and a joinery's in the street/);
+  assert.match(hostText('src/scenes/world.js'), /workbench: \(\) => workbenchHere\(\),\s+\/\/ CARP-YARD: and a joinery's in the street/);
   assert.match(CRAFT_HOW.building(), /^Carpentry needs a workbench: Furniture Stores, joineries and your home have one\./, 'PIN MOVED (PLAIN-TEXT)');
   // the fire is any lit one, and nobody's to charge for
   assert.deepEqual(COOK_FIRE, { kind: 'fire', fee: 0 });

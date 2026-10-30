@@ -23,6 +23,7 @@ import { weaponOfMaterial } from '../../src/combat/enemyEquipment.js';
 import { createMarketTab, medianLineNode, arrivalText, MARKET_VIEW_GROUPS } from '../../src/ui/marketTab.js';
 import { mountNoticeBoard } from '../../src/ui/noticeWindow.js';
 import { PROF_CSS } from '../../src/ui/enhanced/enhancedPlusStyle.js';
+import { hostText } from '../hostText.mjs';   // PIN MOVED (HOST-SPLIT PROFESSIONS): the world host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const noWait = () => Promise.resolve();
@@ -290,7 +291,7 @@ test('PROF5 window: the Market tab stands beside Notices while the market is thi
 // ─── THE WIRING ──────────────────────────────────────────────────────
 
 test('PROF5 wiring: the host builds the market book online, its answers told to the Marks book; the board hands the Market its own region, the hubs, the pieces and the mint; a piece minted once at its wear; the smith\'s stock tells the Marks book (FOUND); a kept craft settles alone (FOUND); the plane dressed (FOUND)', () => {
-  const w = src('src/scenes/world.js') + src('src/scenes/marketPiecesHost.js');   // PIN MOVED (BAY-LEFT-SEA): HOST-SPLIT - the market's pieces and hubs moved out of bootWorld to scenes/marketPiecesHost.js
+  const w = hostText('src/scenes/world.js') + src('src/scenes/marketPiecesHost.js');   // PIN MOVED (BAY-LEFT-SEA): HOST-SPLIT - the market's pieces and hubs moved out of bootWorld to scenes/marketPiecesHost.js
   assert.match(w, /const marketBook = params\.has\('online'\)\n\s*\? createMarketBook\(\{ door: accountMarket\(/);
   assert.match(w, /now: \(\) => Date\.now\(\) \+ _sharedOffsetMs, marks: marksBook,\n\s*stores: \{ apply: \(st\) => profBook\?\.applyStore\(st\) \},/);   // AUDIT 30 U1: the Stores told too (AUDIT 31: its holds after)
   assert.match(w, /const market = marketBook && profBook && profBook\.state\.open !== false && marksBook\?\.state\?\.open !== false && Number\.isInteger\(region\) \? \{/);   // AUDIT 30 U11; MARKET-AUDIT (PIN MOVED: `=== true` - the tab stands while the professions' read is unanswered)

@@ -127,7 +127,7 @@
   },
   {
     "name": "CRAFT1-host-unsaid",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "          const chain = [refinedText(r?.refined, materialLabel, (prof) => profBook.track(prof)), r?.ok ? '' : chainStopText(r?.stopped, r?.material, materialLabel)].filter(Boolean).join(' ');",
     "new": "          const chain = '';",
     "tests": [
@@ -235,7 +235,7 @@
   },
   {
     "name": "AUDIT-CRAFT1-F3-kept-unsaid",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "text: r?.kept ? `${st.kept}${chain ? ` ${chain}` : ''}` : `",
     "new": "text: r?.kept ? st.kept : `",
     "tests": [

@@ -20,8 +20,8 @@
   {
     "name": "LEGIBLE3-a-parent-left-shut",
     "file": "tools/format.mjs",
-    "old": "      if (i < parts.length) lines.push(`/${path}/*`);\n",
-    "new": "",
+    "old": "      lines.push(folders.includes(path) ? `/${path}/*/` : `/${path}/*`);\n",
+    "new": "      if (folders.includes(path)) lines.push(`/${path}/*/`);\n",
     "tests": [
       "test/tooling/legible3_format.test.js"
     ]
@@ -31,6 +31,24 @@
     "file": "tools/format.mjs",
     "old": "      reply = { out: await prettier.format(source, { ...options, filepath: file }) };",
     "new": "      reply = { out: await prettier.format(source, { filepath: file }) };",
+    "tests": [
+      "test/tooling/legible3_format.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE3-a-listed-folders-subfolders-opened",
+    "file": "tools/format.mjs",
+    "old": "folders.includes(path) ? `/${path}/*/` : `/${path}/*`",
+    "new": "folders.includes(path) ? `/${path}/x/` : `/${path}/*`",
+    "tests": [
+      "test/tooling/legible3_format.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE3-a-subfolder-walked",
+    "file": "tools/format.mjs",
+    "old": "readdirSync(join(root, d), { withFileTypes: true })\n    .filter((e) => e.isFile() && /\\.m?js$/.test(e.name))\n    .map((e) => `${d}/${e.name}`)",
+    "new": "readdirSync(join(root, d), { recursive: true })\n    .filter((e) => /\\.m?js$/.test(e))\n    .map((e) => `${d}/${String(e)}`)",
     "tests": [
       "test/tooling/legible3_format.test.js"
     ]

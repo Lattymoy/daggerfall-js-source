@@ -536,7 +536,7 @@
   },
   {
     "name": "PROF3-host-settle-crafts",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "        settle: () => profBook.settle(profMint, profMintCraft),",
     "new": "        settle: () => profBook.settle(profMint),",
     "tests": [

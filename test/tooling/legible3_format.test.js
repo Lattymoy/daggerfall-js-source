@@ -23,7 +23,7 @@ test('LEGIBLE 3 the transform is synchronous, formats by the repository\'s confi
   assert.equal(transform(once, 'src/poi/x.js'), once);
 });
 
-test('LEGIBLE 3 a listed file the formatter would change is named, and an unlisted one is not looked at (mutant: the check unread)', async () => {
+test('LEGIBLE 3 a listed file the formatter would change is named, and an unlisted one - another folder, or a subfolder of a listed one - is not looked at (mutants: the check unread; a subfolder walked)', async () => {
   const root = mkdtempSync(join(tmpdir(), 'legible3-'));
   try {
     mkdirSync(join(root, 'tools'));
@@ -33,14 +33,17 @@ test('LEGIBLE 3 a listed file the formatter would change is named, and an unlist
     writeFileSync(join(root, 'a/messy.js'), 'const x={a:1}\n');
     writeFileSync(join(root, 'a/tidy.js'), 'const y = 1;\n');
     writeFileSync(join(root, 'b/messy.js'), 'const z={a:1}\n');
+    mkdirSync(join(root, 'a/sub'));
+    writeFileSync(join(root, 'a/sub/messy.js'), 'const w={a:1}\n');
     assert.deepEqual(await unformatted(root), ['a/messy.js']);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
-test('LEGIBLE 3 .prettierignore leaves every unlisted path alone and opens each listed folder through its parents (mutant: a parent left shut)', () => {
-  assert.equal(ignoreText(['src/ui/ink', 'src/poi']), [
+test('LEGIBLE 3 .prettierignore leaves every unlisted path alone and opens each listed folder through its parents, its own subfolders shut unless listed (mutants: a parent left shut; a listed folder\'s subfolders opened)', () => {
+  assert.equal(ignoreText(['src/ui/ink', 'src/poi', 'src/poi/uv']), [
     '# Written by node tools/format.mjs --ignore from tools/formatted.json - edit that, not this.',
-    '/*', '!/src/', '/src/*', '!/src/poi/', '!/src/ui/', '/src/ui/*', '!/src/ui/ink/', '',
+    '/*', '!/src/', '/src/*', '!/src/poi/', '/src/poi/*/', '!/src/poi/uv/', '/src/poi/uv/*/', '!/src/ui/', '/src/ui/*',
+    '!/src/ui/ink/', '/src/ui/ink/*/', '',
   ].join('\n'));
   assert.equal(read(IGNORE), ignoreText(formattedFolders()), 'written from the list: node tools/format.mjs --ignore');
 });

@@ -1108,9 +1108,9 @@
   },
   {
     "name": "PROF7-world-dungeon-bodies-street",
-    "file": "src/scenes/world.js",
-    "old": "{ street: exteriorFoes, dungeon: modes?.dungeonCtx, interior: modes?.interiorFoes }, bodyStamps);",
-    "new": "{ street: exteriorFoes, dungeon: exteriorFoes, interior: modes?.interiorFoes }, bodyStamps);",
+    "file": "src/scenes/professionsHost.js",
+    "old": "{ street: exteriorFoes, dungeon: host.modes?.dungeonCtx, interior: host.modes?.interiorFoes }, bodyStamps);",
+    "new": "{ street: exteriorFoes, dungeon: exteriorFoes, interior: host.modes?.interiorFoes }, bodyStamps);",
     "tests": [
       "test/systems/prof7_client.test.js"
     ]

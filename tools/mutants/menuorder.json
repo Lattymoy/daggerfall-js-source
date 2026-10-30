@@ -397,7 +397,7 @@
   },
   {
     "name": "MENUORDER-host-stores-unpictured",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "        picture: (k, wake) => materialPicture(k, { onReady: wake }),   // MENU-ORDER: a material card's picture\n",
     "new": "",
     "tests": [
