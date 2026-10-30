@@ -1,8 +1,9 @@
-# FIELD BUGS 2026-10-30e - a shaft at a foe by a wall, the beast's pick, a start's commission (WALL-SHAFT, WERE-PICK, START-INSTANCE)
+# FIELD BUGS 2026-10-30e - a shaft by a wall, the beast's pick, a start's commission, a worn Chameleon (WALL-SHAFT, WERE-PICK, START-INSTANCE, WORN-CONCEAL)
 
 Four Discord #bug-reports threads, handed over in a session. Read on main's `a0c18be6a` with the freeware's data
 (`tools/fetch-data.sh`). The pins are `test/combat/wallshaft.test.js`, `test/systems/disc10_lycan.test.js`,
-`test/systems/quest/instances3_door.test.js` and `test/systems/starts/auditstarts.test.js` (START-INSTANCE). The mutants
+`test/systems/quest/instances3_door.test.js`, `test/systems/starts/auditstarts.test.js` (START-INSTANCE) and
+`test/systems/fb1030e_wornconceal.test.js`. The mutants
 are `tools/mutants/fb1030e_fieldbugs.json` and `tools/mutants/disc10.json` (WERE-PICK).
 
 | | Report | What it was | Done |
@@ -10,7 +11,7 @@ are `tools/mutants/fb1030e_fieldbugs.json` and `tools/mutants/disc10.json` (WERE
 | 1 | "Enemies standing very close to walls don't have a hitbox": arrows go through them | A wall within a step's whole reach took the shaft before the bodies on the step were tested | WALL-SHAFT |
 | 2 | "werewolf transformation loot menu loots all items" | WERE-LOOT sent every press of the beast to the take-all loop | WERE-PICK |
 | 3 | Summerset's start, "The Emperor's commission": the quest item is in none of its 3 places online | The door offered Public, a room laid smaller that stands no quest item | START-INSTANCE |
-| 4 | A worn Mark's Chameleon goes after a rest or a journey | Not found. A landed blow ends it until the 6-hour reroll | open |
+| 4 | A worn Mark's Chameleon goes after a rest or a journey | A landed blow ended it until the piece's 6-hour reroll | WORN-CONCEAL |
 
 ## 1. A shaft at a foe by a wall (WALL-SHAFT)
 
@@ -55,10 +56,15 @@ FIXED. While a province start's commission is still in its dungeon, the door off
 Hold's door offers none (HOLD-ONCE). With no party the door enters my instance with no popup. A party member's room is
 still offered. A player already in the public room leaves and comes back in.
 
-## 4. A worn Mark's Chameleon (open)
+## 4. A worn Mark's Chameleon (WORN-CONCEAL)
 
-A Mark of Skill with Cast When Held: Chameleon loses its Chameleon "after rest or travel", the Mark still worn. Not
-reproduced: 300 rests and journeys of the real equip, magic rounds and reroll kept it. The one way found is a landed
-blow (`concealment.js` breakNormalPowerConcealment, DFU's ChameleonNormal law). It ends a worn piece's Chameleon in
-place until the item's 6-hour reroll (`enchantments.js` enchantmentMagicRound), and a fight on a rest or a journey can
-land one. A Mark worn to 0 condition also drops it. Left for the owner's call.
+FOUND. A Mark of Skill with Cast When Held: Chameleon loses its Chameleon "after rest or travel", the Mark still worn.
+A rest or a journey alone did not do it: 300 of them, on the real equip, magic rounds and reroll, kept it. The one way
+found is a landed blow (`concealment.js` breakNormalPowerConcealment, DFU's ChameleonNormal law). It ended a worn
+piece's Chameleon in place until the piece's 6-hour reroll (EntityEffectManager.RerollItemEffects), up to 30 real
+minutes online. A fight on a rest or a journey lands one.
+
+FIXED. Asked to choose, the session's answer was "Whatever is best". A blow still ends a worn Chameleon, Invisibility or
+Shadow, so an attack from cover still shows the attacker. The piece casts it again 2 magic rounds later
+(`enchantments.js` WORN_CONCEAL_BACK_ROUNDS), with no condition spent. A worn Shield a blow busted still waits for its
+reroll. A departure, Port-Ledger A (WORN-CONCEAL).

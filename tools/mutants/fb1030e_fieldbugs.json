@@ -106,5 +106,41 @@
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
+  },
+  {
+    "name": "WORN-CONCEAL-the-six-hour-wait",
+    "file": "src/systems/enchantments.js",
+    "old": "      if ((hours < REROLL_MINIMUM_HOURS && !concealBack(entity, item)) || item.equipSlot == null) continue;",
+    "new": "      if (hours < REROLL_MINIMUM_HOURS || item.equipSlot == null) continue;",
+    "tests": [
+      "test/systems/fb1030e_wornconceal.test.js"
+    ]
+  },
+  {
+    "name": "WORN-CONCEAL-every-ended-pin",
+    "file": "src/systems/enchantments.js",
+    "old": "    if (a.heldItem !== item || !a.ended || !NORMAL_POWER_CONCEALMENTS.includes(a.kind)) continue;",
+    "new": "    if (a.heldItem !== item || !a.ended) continue;",
+    "tests": [
+      "test/systems/fb1030e_wornconceal.test.js"
+    ]
+  },
+  {
+    "name": "WORN-CONCEAL-a-round-later",
+    "file": "src/systems/enchantments.js",
+    "old": "export const WORN_CONCEAL_BACK_ROUNDS = 2;",
+    "new": "export const WORN_CONCEAL_BACK_ROUNDS = 3;",
+    "tests": [
+      "test/systems/fb1030e_wornconceal.test.js"
+    ]
+  },
+  {
+    "name": "WORN-CONCEAL-at-once",
+    "file": "src/systems/enchantments.js",
+    "old": "    if (a.endedRounds >= WORN_CONCEAL_BACK_ROUNDS) back = true;",
+    "new": "    back = true;",
+    "tests": [
+      "test/systems/fb1030e_wornconceal.test.js"
+    ]
   }
 ]
