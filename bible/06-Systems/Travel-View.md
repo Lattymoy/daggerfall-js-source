@@ -4015,27 +4015,38 @@ killed by the lean asked of an all-open plan alone); two old ones killed by new 
 step edge, AUDIT STARTS V4's pad). OPEN: road_follow's RF-the-ends-legs-everywhere hangs its tests on main too (an end's leg
 of Infinity loops), so it is no verdict; its record wants a finite mutant.
 
-## ZONE-ROADS - a road journey across Cyrodiil is planned to its end (2026-10-30, the owner)
+## ROAD-GRAPH - a road journey past the Bay searched a chain at a time, to its network's edge (2026-10-30, the owner)
 
 The owner: *"overworld travel in the pvp zone currently looks to be bugged ... not allowing you to traverse to different
-locations reliably"*.
+locations reliably"*, and of a first fix that only raised the spend: *"Yes a proper fix"*.
 
-**What stood.** Past the Bay a journey by the roads searches the roads alone (`searchByRoad`, ROAD-BEYOND) and gave up
-after 100,000 cells. Cyrodiil's roads wind (the Red Ring Road, the Niben's crossings, a track to every village), and a
-long trip there needs more. Measured on the freeware with the roads of Cyrodiil and its neighbours laid as the game lays
-them (24 regions): of 992 trips between the zone's 32 towns, 111 said "There is no way there by land" after some 316,000
-cells and up to two seconds. A flood over the same ground joins every one of them. Anvil, Kvatch and Chorrol to the
-towns of the south-east were among them.
+**What stood.** Past the Bay a journey by the roads searched them a pixel at a time (`searchByRoad`, ROAD-BEYOND) and
+gave up after 100,000 cells. Cyrodiil's roads wind, and a long trip there needs more. On the freeware, with the roads of
+Cyrodiil and its neighbours laid as the game lays them (24 regions), 111 of 992 trips between the zone's 32 towns said
+"There is no way there by land" after some 316,000 cells and up to two seconds. A flood over the same ground joins every
+one. A spend of 300,000 reached them all, but the cells grow with the network, not the trip, so a longer trip would meet
+it again.
 
-**What it is now.** The roads' search spends up to 300,000 cells
-(`travelRoute.js:"export const BY_ROAD_MAX_EXPANSIONS = 300000;"`). The longest of the 992 needs 255,449, and all 992 are
-ways now. From five of Cyrodiil's cities to 83 towns of the six provinces round it, the longest needs 271,420. A harder
-lean on the goal was measured and not taken: at 2 the longest still needs 177,148, and a way is up to 16 per cent dearer.
+**What it is now.** A road pixel with other than two steps out under the step law (`roadOuts`) is a junction. The pixels
+between two junctions are a chain (`travelRoute.js:"function* roadChain("`), walked once and kept for its network: the
+Bay's arrays, the layer past it by its install's version, and the water (`roadGraph`). The search moves junction to
+junction a chain at a time, at the same prices and the same lean (BY_ROAD_GREED). The ends' own legs, the gaps' crossings
+and the goal's neighbours are still searched a pixel at a time under ROAD-FOLLOW's law, and a chain that reaches one stops
+there. There is no spend: the search walks its network to the edge, so its "no way" is true. BY_ROAD_MAX_EXPANSIONS is
+gone.
 
-- The cost: the longest plans in 2.8 s in node, in slices (PLAN-SLICES) - about what the refusal took before.
-- Every province: the same law past the Bay; the Bay's own plans never ask the roads' search (ROAD-BEYOND).
-- OPEN: FREE mode's box stands (GREEDY-BEYOND's OPEN). A free plan with no way falls back to the roads (OW-PATH), which
-  reach now. Before a region's roads have landed (a first visit there), a trip still has only the walk across country.
-- The hosts: none changes; the planner is the Overworld's, the held map's journey and its own click alike.
-- Pins `test/systems/travel/zone_roads.test.js` (2: Cyrodiil and Skyrim); mutant `tools/mutants/zone_roads.json` (1, dead).
-  PIN MOVED: ROAD-BEYOND's dial (`road_beyond.test.js`).
+**Measured** (the same 992 trips, in node): all 992 are ways. With a spend of 300,000 a plan took 480 ms on average and up
+to 3.6 s. Now it takes 107 ms and up to 1.7 s the first time, and 103 ms and up to 0.38 s once its chains are kept. About
+60 ms of each is the ends' floods (`roadEndsSteps`), unchanged. From five of Cyrodiil's cities to 83 towns of the six
+provinces round it, 405 of 415 are ways. The 10 refused are two towns of Morrowind that no land joins.
+
+- Every province: the same law past the Bay. The Bay's own plans never ask the roads' search (ROAD-BEYOND).
+- OPEN: the first journey over a network walks its chains (the worst here 1.7 s, in slices - PLAN-SLICES), and the ends'
+  floods are as they were. FREE mode's box stands (GREEDY-BEYOND's OPEN); a free plan with no way falls back to the roads
+  (OW-PATH). Before a region's roads have landed (a first visit there), a trip has only the walk across country.
+- The hosts: none changes. The planner is the Overworld's, the held map's journey and its own click alike.
+- Pins `test/systems/travel/road_graph.test.js` (7, Cyrodiil and Skyrim among them); mutants `tools/mutants/road_graph.json`
+  (7, all dead). PIN MOVED in `road_beyond.test.js`: the dial and a spend's two pins (no spend is handed), the lattice's
+  count (47,803: each junction's four chains walked; 101,030 without the lean), and two bounds' one cell over a spend.
+  Its records: -the-search-unbounded retired with the spend, -no-layer-still-searched re-aimed, and
+  -the-ends-open-ground-everywhere killed again here (two ends' legs that meet in a field).

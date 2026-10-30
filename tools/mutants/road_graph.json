@@ -1,0 +1,66 @@
+[
+  {
+    "name": "ROAD-GRAPH-the-chains-not-kept",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "  node.chains[o >> 1] = chain;\n  return chain;",
+    "new": "  return chain;",
+    "tests": [
+      "test/systems/travel/road_graph.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-GRAPH-the-install-unread",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "const version = beyond === arenaRoadByte ? arenaRoadsVersion() : 0;",
+    "new": "const version = 0;",
+    "tests": [
+      "test/systems/travel/road_graph.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-GRAPH-the-ends-as-chains",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "    if (!local(cx, cy)) {",
+    "new": "    if (true) {",
+    "tests": [
+      "test/systems/travel/road_graph.test.js",
+      "test/systems/travel/road_beyond.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-GRAPH-a-chain-past-an-end",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "        if (touches(chain)) {",
+    "new": "        if (false) {",
+    "tests": [
+      "test/systems/travel/road_graph.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-GRAPH-a-fork-passed",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "if (roadOuts(g, x, y, _chainOuts) !== 4) break;",
+    "new": "if (roadOuts(g, x, y, _chainOuts) < 4) break;",
+    "tests": [
+      "test/systems/travel/road_graph.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-GRAPH-the-goals-neighbours-chained",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "const tr = Math.max(rt, 1);",
+    "new": "const tr = rt;",
+    "tests": [
+      "test/systems/travel/road_graph.test.js"
+    ]
+  },
+  {
+    "name": "ROAD-GRAPH-the-scan-unpriced",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "          cost = 0;\n",
+    "new": "",
+    "tests": [
+      "test/systems/travel/road_graph.test.js"
+    ]
+  }
+]
