@@ -1042,7 +1042,7 @@ service's gold acts (a card table's stake, a market's collect) and the open zone
 
 **A KILL AT SEA** is a fall the relay refereed in a room of the open sea at another player's hand. The relay already
 signs every such fall (`f1` - `06-Systems/Integrity-Arc.md` lane 2); it now signs WHERE - `m`, the room that refereed it
-(`server/src/index.js:"const res = wildBlow(st, a.sub, tb.sub, { d: d.d, r, held, wa: a.wa ?? null, kin, rid, room: a.key, el: d.el ?? null }, now);"`)
+(`server/src/index.js:"const res = wildBlow(st, a.sub, tb.sub, { d: d.d, r, held, wa: a.wa ?? null, kin, rid, room: a.key, el: d.el ?? null, c: d.c ?? null }, now);"`)
 - and WHOSE HAND by character - `kc`, the killer's realm character off its hello (`net/wild/wildRef.js` wildBlow, kept
 through a restart by `wildFallOf`). Both are optional in the receipt's law (`WILD_ROOM_RE`, `REALM_CHARACTER_RE`; a
 collect `g1` carries neither), so an older relay's receipt still verifies and simply names no kill at sea;

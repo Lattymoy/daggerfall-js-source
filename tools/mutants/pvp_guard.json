@@ -47,8 +47,8 @@
   {
     "name": "PVP-GUARD-the-change-unseen",
     "file": "src/net/siege/refereeHealthMirror.js",
-    "old": "        || `${guard()}|${ward()}|${shieldWord()}` !== lastSentGuard;",
-    "new": "        || false;",
+    "old": "        || `${guard()}|${ward()}|${shieldWord()}` !== lastSentGuard   // PVP-GUARD, PVP-WARD, PVP-SHIELD: armour, a resistance or a Shield on or off\n",
+    "new": "        || false\n",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]

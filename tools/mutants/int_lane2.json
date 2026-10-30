@@ -888,8 +888,8 @@
   {
     "name": "INT7-AUDIT-RELAY-THE-ZONES-ARMS-UNPASSED",
     "file": "server/src/index.js",
-    "old": "{ d: d.d, r, held, wa: a.wa ?? null, kin, rid, room: a.key, el: d.el ?? null }",
-    "new": "{ d: d.d, r, held, wa: null, kin, rid, room: a.key, el: d.el ?? null }",
+    "old": "{ d: d.d, r, held, wa: a.wa ?? null, kin, rid, room: a.key, el: d.el ?? null, c: d.c ?? null }",
+    "new": "{ d: d.d, r, held, wa: null, kin, rid, room: a.key, el: d.el ?? null, c: d.c ?? null }",
     "tests": [
       "test/net/arena/int7_arms.test.js",
       "test/net/int9_wild_ref.test.js"

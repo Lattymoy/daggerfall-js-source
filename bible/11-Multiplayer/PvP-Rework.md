@@ -434,3 +434,19 @@ My kill says "You slew" (`pvpHud.js:"export const pvpSlewText = "`); the fallen'
 law would hide it, nameless (`travelViewMarks.js:"const villainMark = (id, at, dropped) => {"`); one in no room of mine
 is unknown to this client. The owed level 29 reads "Level 29 · 1 level owed", its button "Go to 30"
 (`pvp30Ask.js:"export const pvp30Owed = "`). Tests: `test/ui/pvphud.test.js`. A departure: DFU has no PvP.
+
+## PVP-VITALS: the relay owns a flagged fighter's pools
+
+"we need to make sure players cant cheat health in pvp", "cheat health mana or fatigue": a game could freeze or set its
+own bars, and the relay believed its reports. While a fighter's flag is up in the open zone, its health rises by report
+only out of a credit the relay grants: a slow regen, a declared potion on the relay's own 15 s clock, or a heal it saw
+paid for (`refereeHealthShare.js:"const got = Math.min(fighter.max - fighter.hp, Math.round(target) - fighter.hp, healRoom(fighter, now), sourced"`).
+
+Magicka and fatigue are the relay's own ledgers, anchored at the game's word while the flag is down. Each refereed cast
+and swing pays the PvP bar's cheapest price, or lands nothing (`wildRef.js:"if (spell ? !castPaid(a.f, c, to, now)"`).
+A party member's gift is paid where the relay passes it (`server/src/index.js:"async _wildCastPaid(a, tb, data, now) {"`).
+A Shield counts only while a paid one runs. The health whole is held to the signed level's.
+
+The game declares its potions and self-cast bar spells in its report (`pvpDeclare.js:"export function declarePotion("`).
+A harmful cast carries its number, so one area cast is one price. Not yet the relay's: how many potions a pack holds,
+armour and resistances. Relay world293. Tests: `test/net/pvpvitals.test.js`. A departure: DFU has no PvP.

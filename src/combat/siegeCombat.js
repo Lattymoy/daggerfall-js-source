@@ -19,6 +19,7 @@
 //
 // Pure but for the one spell door (handed in for the pins), the stand-in and the rolls. Not a DFU member. Ledger A (EVERY
 // PALACE A SEAT's row).
+import { pvpCastNo } from './pvpDeclare.js';   // PVP-VITALS
 import { SIEGE_HIT } from '../net/siege/siegeRef.js';
 import { SIEGE_DMG_WIRE_MAX, PVP_ELEMENTS } from '../net/wire.js';
 import { duelSpellOf } from './duelCombat.js';
@@ -51,7 +52,7 @@ export const PVP_POISON_ELEMENT = 2;
 export const pvpSpellElement = (sp) => (Number.isInteger(sp?.element) && sp.element >= 0 && sp.element < PVP_ELEMENTS ? sp.element : PVP_ELEMENTS - 1);
 /** The one effect of `sp` that counts between players - its first, if it is a PvP family or a Heal Health - or null. */
 /** PVP-WARD: a harmful cast's frame to a duel's or the zone's referee - where I stood, its harm, its element. */
-export const pvpCastFrame = (p, harm, sp) => ({ p, d: siegeCastClamp(harm, false), el: pvpSpellElement(sp) });
+export const pvpCastFrame = (p, harm, sp) => ({ p, d: siegeCastClamp(harm, false), el: pvpSpellElement(sp), ...(pvpCastNo() > 0 ? { c: pvpCastNo() } : {}) });   // PVP-VITALS: the cast's number
 export function pvpFirstEffect(sp) {
   const e = Array.isArray(sp?.effects) ? sp.effects[0] : null;
   if (!e || !Number.isInteger(e.type)) return null;

@@ -1,0 +1,63 @@
+[
+  {
+    "name": "PVP-VITALS-the-cast-unpaid",
+    "file": "src/net/wild/wildRef.js",
+    "old": "  if (spell ? !castPaid(a.f, c, to, now) : !payFatigue(a.f, PVP_VITALS.swing, now)) return",
+    "new": "  if (false) return",
+    "tests": [
+      "test/net/pvpvitals.test.js"
+    ],
+    "note": "A frozen magicka bar would cast without end and a frozen fatigue bar swing without end."
+  },
+  {
+    "name": "PVP-VITALS-the-area-charged-each",
+    "file": "src/net/wild/pvpVitals.js",
+    "old": "  if (Number.isSafeInteger(c) && c === v.castC && now - v.castAt < PVP_VITALS.castMs && !v.castTo.includes(to)) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/net/pvpvitals.test.js"
+    ],
+    "note": "One area cast landing on two players would be charged twice, refusing an honest caster."
+  },
+  {
+    "name": "PVP-VITALS-the-flagged-word-anchors",
+    "file": "src/net/wild/pvpVitals.js",
+    "old": "  if (!flagged || !v.heard) {",
+    "new": "  if (true) {",
+    "tests": [
+      "test/net/pvpvitals.test.js"
+    ],
+    "note": "A flagged game's frozen full bar would refill the relay's ledgers on every report."
+  },
+  {
+    "name": "PVP-VITALS-the-rise-unsourced",
+    "file": "src/net/siege/refereeHealthShare.js",
+    "old": "healRoom(fighter, now), sourced ? Math.floor(healCredit(fighter, now)) : Infinity);",
+    "new": "healRoom(fighter, now), Infinity);",
+    "tests": [
+      "test/net/pvpvitals.test.js",
+      "test/net/int9_wild_ref.test.js"
+    ],
+    "note": "A frozen health bar's word would heal a flagged fighter with no potion or paid heal behind it."
+  },
+  {
+    "name": "PVP-VITALS-the-shield-believed",
+    "file": "src/net/siege/refereeHealthShare.js",
+    "old": "  if (sourced && !shieldPaid(fighter, now)) share.shield = 0;",
+    "new": "",
+    "tests": [
+      "test/net/pvpvitals.test.js"
+    ],
+    "note": "A game could claim the strongest Shield without casting one."
+  },
+  {
+    "name": "PVP-VITALS-the-potion-clock-unread",
+    "file": "src/net/wild/pvpVitals.js",
+    "old": "      if (now - (v.potion[u] ?? -Infinity) < PVP_VITALS.potionMs) continue;",
+    "new": "",
+    "tests": [
+      "test/net/pvpvitals.test.js"
+    ],
+    "note": "A game could declare a potion every report."
+  }
+]

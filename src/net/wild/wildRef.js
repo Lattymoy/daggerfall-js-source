@@ -36,8 +36,9 @@
 // Pure: no clock (every `now` an argument), no socket, no storage - the relay's room keeps the state in its memory
 // (DECIDED, the duel's: a room that restarts mid-fight forgets it; a fall already signed is the service's to settle).
 // ═════════════════════════════════════════════════════════════════════
-import { SIEGE_HIT, newFighter, refereeBlow, refereeCast, refereeStep } from '../siege/siegeRef.js';
+import { SIEGE_HIT, SIEGE_UNITS_PER_M, newFighter, refereeBlow, refereeCast, refereeStep } from '../siege/siegeRef.js';
 import { resetHealthShare } from '../siege/refereeHealthShare.js';
+import { castPaid, payFatigue, absorbLanded, runPaid, vitalsCarry, vitalsTake, PVP_VITALS } from './pvpVitals.js';   // PVP-VITALS: a flagged fighter's casts and swings paid for
 import { pvpFlagCanDrop, pvpAggroLeft, pvpYoung, PVP_FLAG } from '../../systems/wild/pvpFlag.js';   // PVP-FLAG
 import { isVillain, villainAfter, villainClamp, villainKillPoints, VILLAIN } from '../../systems/wild/villainLaw.js';   // PVP-VILLAIN
 
@@ -157,6 +158,7 @@ function takeCarry(x, carry, now) {
   if (carry.heard && x.f.share) x.f.share.heard = true;
   if (x.f.share) x.f.share.report = carry.rep;   // the last report this count took: the client's first word here keeps what its health did since
   if (x.f.share) x.f.share.playerBlowAt = carry.pvpAt;   // and its no-heal window: a step into another cell is no way out of a fight
+  vitalsTake(x.f, carry, now);   // PVP-VITALS: and its ledgers - a cell crossed fills nothing
 }
 
 /** INT9 (AUDIT): a hub's word on a fighter's carry, checked for the shape wildCarry writes - or null. AUDIT SEA VENTURES
@@ -167,7 +169,7 @@ export function wildCarryOf(v) {
   const sea = v.sea && typeof v.sea === 'object' && Number.isFinite(v.sea.h) && Number.isFinite(v.sea.at) ? { h: Math.max(0, Math.min(1, v.sea.h)), at: v.sea.at } : null;
   const grace = Number.isFinite(v.gr) ? { gr: v.gr } : {};   // ZONE-GRACE
   const pass = { ...(Number.isFinite(v.fa) ? { fa: v.fa } : {}), ...(v.in === 1 ? { in: 1 } : {}), ...(Number.isFinite(v.dd) ? { dd: v.dd } : {}), ...(typeof v.lr === 'string' && v.lr.length <= 96 ? { lr: v.lr } : {}), ...(Number.isSafeInteger(v.vi) && v.vi > 0 ? { vi: Math.min(VILLAIN.max, v.vi) } : {}) };   // AUDIT PVP-EASE L3-1 (`lr`, the last room: a foes frame's `rk` is a raid's, and the relay reads none - test/systems/raid2_raidsOnline.test.js)
-  return { hp: Math.max(0, Math.trunc(v.hp)), max: Math.max(1, Math.trunc(v.max)), down: v.down === true, downAt: Number.isFinite(v.downAt) ? v.downAt : 0, at: v.at, heard: v.heard === true, pvpAt: Number.isFinite(v.pvpAt) ? v.pvpAt : 0, rep: Number.isSafeInteger(v.rep) && v.rep >= 0 ? v.rep : 0, ...grace, ...pass, ...(sea ? { sea } : {}) };   // SHARED-HEALTH: `heard` - its count anchored to the player's health
+  return { hp: Math.max(0, Math.trunc(v.hp)), max: Math.max(1, Math.trunc(v.max)), down: v.down === true, downAt: Number.isFinite(v.downAt) ? v.downAt : 0, at: v.at, heard: v.heard === true, pvpAt: Number.isFinite(v.pvpAt) ? v.pvpAt : 0, rep: Number.isSafeInteger(v.rep) && v.rep >= 0 ? v.rep : 0, ...grace, ...pass, ...(sea ? { sea } : {}), ...(Number.isFinite(v.mp) && Number.isFinite(v.fp) ? { mp: v.mp, fp: v.fp } : {}) };   // PVP-VITALS   // SHARED-HEALTH: `heard` - its count anchored to the player's health
 }
 
 /** INT9 (AUDIT): A FALL WAITING ON ITS PICK is kept in the room's storage under this prefix (a relay object that restarts
@@ -198,7 +200,7 @@ export const wildCarry = (st, sub, now) => {
   if (!x) return null;
   const grace = x.graceUntil > now ? { gr: x.graceUntil } : {};
   const pass = { ...(Number.isFinite(x.fightAt) ? { fa: x.fightAt } : {}), ...(x.zone ? { in: 1 } : {}), ...(x.diedAt > -Infinity ? { dd: x.diedAt } : {}), ...(x.vi > 0 ? { vi: x.vi } : {}) };   // PVP-VILLAIN: `vi`
-  return { hp: Math.max(0, x.f.hp), max: x.f.max, down: x.down, downAt: Number.isFinite(x.downAt) ? x.downAt : 0, at: now, heard: x.f.share?.heard === true, pvpAt: x.f.share?.playerBlowAt ?? 0, rep: x.f.share?.report ?? 0, ...grace, ...pass };   // SHARED-HEALTH: its count's anchor, its no-heal window and its last report
+  return { hp: Math.max(0, x.f.hp), max: x.f.max, down: x.down, downAt: Number.isFinite(x.downAt) ? x.downAt : 0, at: now, heard: x.f.share?.heard === true, pvpAt: x.f.share?.playerBlowAt ?? 0, rep: x.f.share?.report ?? 0, ...grace, ...pass, ...(vitalsCarry(x.f) ?? {}) };   // SHARED-HEALTH: its count's anchor, its no-heal window and its last report; PVP-VITALS: its ledgers
 };
 /** AUDIT PVP-EASE L3-4 (the owner: "Any take ends passage"): a fighter that takes from a remains - its own or another's -
  *  loses its safe passage, as its own blow ends it. Answers whether one ended. */
@@ -218,6 +220,7 @@ export function wildPose(st, sub, p, now) {
   const x = st.fighters.get(sub);
   if (!x || !p || !Number.isFinite(p.x) || !Number.isFinite(p.z)) return false;
   if (x.pose && !refereeStep(x.pose, p, now - x.poseAt, x.f)) x.jumpAt = now;
+  else if (x.pose && x.flag && x.zone) runPaid(x.f, Math.hypot(p.x - x.pose.x, p.z - x.pose.z) / SIEGE_UNITS_PER_M, now - x.poseAt, now);   // PVP-VITALS: a run's fatigue
   x.pose = { x: p.x, y: Number.isFinite(p.y) ? p.y : 0, z: p.z }; x.poseAt = now;
   return true;
 }
@@ -239,10 +242,10 @@ const mendUnheard = (x, now) => {
  * signed into its receipt, `m`). ZONE-GRACE: a striker under safe passage loses it (`graceEnded`), and a struck one under it
  * takes nothing (`why` 'grace'). Answers `{ ok, dealt, fell, fall, why, graceEnded? }`.
  * @param {any} st @param {string} by @param {string} to
- * @param {{ d?: number, r?: number, held?: any, wa?: any, kin?: boolean, rid?: string, room?: string, el?: number|null }} o
+ * @param {{ d?: number, r?: number, held?: any, wa?: any, kin?: boolean, rid?: string, room?: string, el?: number|null, c?: number|null }} o
  * @param {number} now
  */
-export function wildBlow(st, by, to, { d = 0, r = SIEGE_HIT.Melee, held = null, wa = null, kin = false, rid = '', room = '', el = null } = {}, now) {
+export function wildBlow(st, by, to, { d = 0, r = SIEGE_HIT.Melee, held = null, wa = null, kin = false, rid = '', room = '', el = null, c = null } = {}, now) {
   const a = st.fighters.get(by), t = st.fighters.get(to);
   if (!a || !t || by === to) return { ok: false, dealt: 0, fell: false, fall: null, why: 'no-fighter' };
   if (!a.zone || !t.zone) return { ok: false, dealt: 0, fell: false, fall: null, why: 'zone' };
@@ -258,10 +261,14 @@ export function wildBlow(st, by, to, { d = 0, r = SIEGE_HIT.Melee, held = null, 
   if (graceEnded) a.graceUntil = -Infinity;
   if (t.graceUntil > now) return { ok: false, dealt: 0, fell: false, fall: null, why: 'grace', graceEnded };
   mendUnheard(a, now); mendUnheard(t, now);
+  // PVP-VITALS: a cast paid from the relay's magicka, a swing from its fatigue - one it cannot pay lands nothing
+  const spell = r === SIEGE_HIT.Spell;
+  if (spell ? !castPaid(a.f, c, to, now) : !payFatigue(a.f, PVP_VITALS.swing, now)) return { ok: false, dealt: 0, fell: false, fall: null, why: spell ? 'magicka' : 'tired', graceEnded };
   const res = r === SIEGE_HIT.Spell
     ? refereeCast(a.f, t.f, { from: a.pose, at: t.pose, d, el }, now)
     : refereeBlow(a.f, t.f, { from: a.pose, at: t.pose, held, d, r, wa }, now);
   if (!res.ok || !res.dealt) return { ok: res.ok, dealt: 0, fell: false, fall: null, why: res.why, graceEnded };
+  if (spell) absorbLanded(t.f, now);   // PVP-VITALS: a paid Absorb takes the cast's price back
   t.struckAt = now; a.fightAt = now; t.fightAt = now;   // ZONE-GRACE: a fight, for an entry's ask
   wildOpen(st, by, to, now);   // PVP-VILLAIN: who struck first
   t.by = { sub: by, at: now, room: typeof room === 'string' ? room : '' };   // AUDIT FOE-KEEPS E2: the last fair player's blow

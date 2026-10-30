@@ -845,13 +845,18 @@ test('SHARED-HEALTH THE RELAY, THE ZONE: a fighter\'s zone word asks for its hea
   // a foe's blow, reported against the word before the player's (the client fell from its anchored share to 40%): both land
   await r.raw(b, JSON.stringify({ t: 'vit', n: 2, s: 4000, seen: [[anchored.e, anchored.w]] }));
   assert.equal(vits(b, 'h').at(-1).h, Math.round(whole * 0.4) - fist, 'the share the client saw after the anchor, less the blow it had not');
-  // a potion mid-fight: refused, the count told back unmoved; once no player has struck for the window, taken whole
+  // PIN MOVED (PVP-VITALS): a flagged fighter's rise is paid for - a frozen bar's word heals only the regen it banked
+  const frozen = vits(b, 'h').at(-1);
+  await r.raw(b, JSON.stringify({ t: 'vit', n: 3, s: 10000, seen: [[frozen.e, frozen.w]] }));
+  assert.ok(vits(b, 'h').at(-1).h - frozen.h <= Math.ceil(whole * 0.05), 'PVP-VITALS: no potion, no heal past the regen bank');
+  // a potion mid-fight: held to the window; once no player has struck for the window, a potion is taken whole
   const before = vits(b, 'h').at(-1);
-  await r.raw(b, JSON.stringify({ t: 'vit', n: 3, s: 10000, seen: [[before.e, before.w]] }));
-  assert.equal(vits(b, 'h').at(-1).h, before.h + Math.floor(whole * 0.25), 'PVP-HEAL: a quarter of the whole mid-PvP');
+  await r.raw(b, JSON.stringify({ t: 'vit', n: 4, s: 10000, seen: [[before.e, before.w]], u: [1] }));
+  assert.ok(vits(b, 'h').at(-1).h <= frozen.h + Math.floor(whole * 0.25), 'PVP-HEAL: a quarter of the whole mid-PvP');
+  assert.ok(vits(b, 'h').at(-1).h > before.h, 'the potion heals');
   const capped = vits(b, 'h').at(-1);
   step(WILD_REF.mendMs);
-  await r.raw(b, JSON.stringify({ t: 'vit', n: 4, s: 10000, seen: [[capped.e, capped.w]] }));
+  await r.raw(b, JSON.stringify({ t: 'vit', n: 5, s: 10000, seen: [[capped.e, capped.w]], u: [1] }));
   assert.equal(vits(b, 'h').at(-1).h, whole, 'the fight over: healed whole');
   // a socket with no fighter here: nothing
   const c = await join('peer-0003', 30);

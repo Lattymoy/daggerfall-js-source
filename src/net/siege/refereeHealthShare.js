@@ -4,6 +4,7 @@
 // share and the last word it applied (`seen`); the count is that share of the referee's maximum plus every change the referee
 // made since (the word log), so a lost report or a word in flight costs nothing. A loss is taken at once, never below 1.
 // A pool no report has anchored is told to nobody. Pure: no clock, socket or storage (client half: refereeHealthMirror.js).
+import { healCredit, spendCredit, shieldPaid, healthCapAt } from '../wild/pvpVitals.js';   // PVP-VITALS: a flagged fighter's rise is paid for
 /** A share's whole, in parts: ten thousand, so a report rounds by a hundredth of a percent of the referee's count. */
 export const HEALTH_SHARE_WHOLE = 10_000;
 
@@ -68,7 +69,7 @@ export const HEALTH_SHARE_LOG_MAX = 32;
 
 /** @typedef {{ epoch: number, word: number, log: Array<[number, number]>, heard: boolean, report: number, playerBlowAt: number, heals: Array<[number, number]>, resto: number, guard: number[]|null, ward: number[]|null, shield: number }} HealthShare
  *  The referee's state on a fighter: the pool's identity (creation ms), its last change's number, `[word, change]` of recent changes, whether a report anchored it, the last report taken, when a player last struck it (ms, 0 never), `[at, healed]` in the heal window, and its reported Restoration. */
-/** @typedef {{ report: number, share: number, seen: Array<[number, number]>, max?: number, resto?: number, guard?: number[], ward?: number[], shield?: number }} HealthReport
+/** @typedef {{ report: number, share: number, seen: Array<[number, number]>, max?: number, resto?: number, guard?: number[], ward?: number[], shield?: number, mp?: number, fp?: number, use?: number[] }} HealthReport
  *  A client's report (net/wire.js validVitIn): its number, its health over its maximum in HEALTH_SHARE_WHOLE parts, `[epoch, word]` of the last word it applied from each pool, and (PVP-HEALTH) its real maximum and Restoration, and (PVP-GUARD, PVP-WARD) its armour's and resistances' shares, and (PVP-SHIELD) a Shield on it. */
 /** @typedef {{ health: number, max: number, epoch: number, word: number, report: number }} PoolWord
  *  The referee's word on a pool to its fighter (net/wire.js validVitOut, `k: 'h'`): the count, its whole, the pool's epoch and last change, the last report the count includes. */
@@ -103,12 +104,13 @@ export function noteRefereeChange(fighter, change, now, byPlayer = false) {
  * THE POOL STARTS AGAIN (a rise after a fall, a return after long away, a count set whole): every earlier change is
  * forgotten - the word numbers run on, so a report that saw a word from before counts every change after the reset -
  * and the pool waits for a report to anchor it.
- * @param {{ share?: HealthShare }} fighter @param {number} now
+ * @param {{ share?: HealthShare, vitals?: { heard: boolean } }} fighter @param {number} now
  */
 export function resetHealthShare(fighter, now) {
   const share = shareOf(fighter, now);
   share.log = [];
   share.heard = false;
+  if (fighter.vitals) fighter.vitals.heard = false;   // PVP-VITALS: the ledgers start again from the game's word too
 }
 
 /** Whether a fighter is in a fight: struck by a player inside PVP_HEAL_BLOCK_MS. @param {{ share?: HealthShare }} fighter @param {number} now */
@@ -153,16 +155,16 @@ function unseenChange(share, seen) {
 /**
  * A CLIENT'S REPORT TAKEN into a fighter's count (`hp`, `max`, `down` - the referee's fighter). A fallen fighter takes
  * none. `healsBlocked`: the caller's word that no heal by report lands for this whole fight (a siege: its heals are
- * spells). In a fight a heal is held to the window's room (healRoom). Answers whether the report was taken (the caller
- * then tells the count back - poolWord).
+ * spells). In a fight a heal is held to the window's room (healRoom). PVP-VITALS: `sourced` (flagged) - a rise to the
+ * relay's credit too, a Shield a paid one alone; `cl` the signed level, bounding the whole. Answers whether it was taken.
  * @param {{ hp: number, max: number, down: boolean, share?: HealthShare }} fighter
- * @param {HealthReport} report @param {number} now @param {{ healsBlocked?: boolean }} [o]
+ * @param {HealthReport} report @param {number} now @param {{ healsBlocked?: boolean, sourced?: boolean, cl?: number|null }} [o]
  */
-export function takeHealthReport(fighter, report, now, { healsBlocked = false } = {}) {
+export function takeHealthReport(fighter, report, now, { healsBlocked = false, sourced = false, cl = null } = {}) {
   if (!fighter || fighter.down) return false;
   const share = shareOf(fighter, now);
   if (Number.isFinite(report.resto)) share.resto = Math.max(0, Math.min(PVP_RESTORATION_MAX, Math.trunc(report.resto)));
-  if (Number.isFinite(report.max)) setPoolMax(fighter, report.max, now);   // PVP-HEALTH: the pool's whole is the real maximum
+  if (Number.isFinite(report.max)) setPoolMax(fighter, Math.min(report.max, healthCapAt(cl, PVP_HEALTH_MAX)), now);   // PVP-HEALTH: the pool's whole is the real maximum; PVP-VITALS: never past its signed level's
   if (Array.isArray(report.guard) && report.guard.length === PVP_GUARD_KINDS.length) {
     share.guard = report.guard.map((n) => Math.max(PVP_GUARD.min, Math.min(PVP_GUARD.max, Math.trunc(Number(n) || 0))));   // PVP-GUARD
   }
@@ -170,14 +172,16 @@ export function takeHealthReport(fighter, report, now, { healsBlocked = false } 
     share.ward = report.ward.map((n) => Math.max(PVP_WARD.min, Math.min(PVP_WARD.max, Math.trunc(Number(n) || 0))));   // PVP-WARD
   }
   if (typeof report.shield === 'number') share.shield = report.shield;   // PVP-SHIELD; PVP-KIT: its share, 0 none
+  if (sourced && !shieldPaid(fighter, now)) share.shield = 0;   // PVP-VITALS: a Shield nobody paid for is none
   const target = (report.share * fighter.max) / HEALTH_SHARE_WHOLE + unseenChange(share, report.seen);
   const difference = target - fighter.hp;
   if (difference <= -0.5) {
     fighter.hp = Math.max(1, Math.round(target));
   } else if (difference >= 0.5 && share.heard && !healsBlocked) {
     // An unheard pool starts whole, so nothing can rise in it. PVP-HEAL: in a fight, to the window's room.
-    const got = Math.min(fighter.max - fighter.hp, Math.round(target) - fighter.hp, healRoom(fighter, now));
-    if (got > 0) { fighter.hp += got; spendHeal(fighter, now, got); }
+    // PVP-VITALS: a flagged fighter's rise, to the credit the relay granted it (regen, a potion, a paid heal)
+    const got = Math.min(fighter.max - fighter.hp, Math.round(target) - fighter.hp, healRoom(fighter, now), sourced ? Math.floor(healCredit(fighter, now)) : Infinity);
+    if (got > 0) { fighter.hp += got; spendHeal(fighter, now, got); if (sourced) spendCredit(fighter, got, now); }
   }
   share.heard = true;
   share.report = Math.max(share.report, report.report);
