@@ -273,6 +273,7 @@ export const COIL_FOAM = Object.freeze([0.847, 0.976, 0.937, 1]);   // #d8f9ef
 export const WYRM_CREAM = Object.freeze([1, 0.906, 0.651, 1]);        // #ffe7a6
 export const WYRM_ICE = Object.freeze([0.788, 0.949, 1, 1]);          // #c9f2ff
 export const WYRM_GOLD = Object.freeze([1, 0.910, 0.627, 1]);         // #ffe8a0
+export const WYRM_FROST = Object.freeze([0.910, 0.984, 1, 1]);        // #e8fbff
 /** EG-E2 (2026-10-12, Mac: "I said I want everything"; bible/11-Multiplayer/Elite-Gates.md section 19, THE HONOURS): THE
  *  SPIRE'S COLOURS, named once - the three titles whose auras are drawn in them read them here, as the auras do
  *  (render/auraRing.js SPIRE_RGB): the beacon's flame and its white heart (Beacon-Lighter; Kynbane's Beaconlight, its
@@ -463,7 +464,7 @@ export const TITLE_RGBA = Object.freeze({
   wyrmrider: WYRM_CREAM,   // WYRM-RIDER: cream on its brass plate, #ffe7a6
   firstwyrmrider: WYRM_GOLD,   // WYRM-RIDER: its gold, #ffe8a0
   aetherrider: WYRM_ICE,   // WYRM-RIDER: ice on its aetherium plate, #c9f2ff
-  firstaetherrider: WYRM_ICE,
+  firstaetherrider: WYRM_FROST,   // WYRM-RIDER: frost on the First's, #e8fbff
   genesis: GENESIS_HEART,   // SHOP: the flame's heart - its letters over the plate, and the colour a face with no plate uses
 });
 
