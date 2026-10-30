@@ -33,9 +33,10 @@ const untilMode = async (want, ms = 600000) => {
 
 const t0 = Date.now();
 await page.goto(`http://localhost:${PORT}/play/?world&shot&play&region=Daggerfall&loc=Daggerfall&class=1&novideo&tod=13:00&weather=sunny`);
-for (;;) {
-  if (await ev(() => window.__shotReady === true).catch(() => false)) break;
+for (let i = 0; ; i++) {   // castleProbe.mjs's readiness: a mode and an idle stream (`&play` sets no __shotReady)
+  if (await ev(() => !!window.__mode?.() && window.__streamIdle?.() === true).catch(() => false)) break;
   if (Date.now() - t0 > Number(process.env.BOOT_MS ?? 3600000)) throw new Error('the boot never settled');
+  if (i % 60 === 0) await page.screenshot({ path: `${OUT}/boot-${i}.png` }).catch(() => null);
   await page.waitForTimeout(5000);   // before a frame exists to count
 }
 let at = null;
