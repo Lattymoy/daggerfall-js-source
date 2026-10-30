@@ -1,13 +1,12 @@
 // AUDIT-STOREFRONT (2026-10-29, bible/01-Overview/audits/Audit-Storefront.md): the shop window and the Collections page
 // say what the shop's card says - a drop to come is not told, a featured window only beside its sale and its days left
-// counted as they pass (S2, S9); a booster a stronger one makes worth nothing is not offered (S5); the Premium's rewards
-// counted, never written (S11); a giver held in part is said (S12); the carousel's dots big enough to press (S13).
+// counted as they pass (S2, S9); a giver held in part is said (S12); the carousel's dots big enough to press (S13).
+// PASS-PANELS: the boosters (S5) and the Premium Pass (S11) are retired, and their pins with them.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { SHOP_WARES } from '../../src/net/shopLaw.js';
-import { PASS_REWARDS } from '../../src/net/battlePassLaw.js';
-import { shopWareState, shopWindow, shopBundleRows, SHOP_CSS, SHOP_LOOK } from '../../src/ui/enhanced/enhancedShop.js';
+import { shopWindow, shopBundleRows, SHOP_CSS } from '../../src/ui/enhanced/enhancedShop.js';
 import { wardrobeAvail, wardrobeEntry, availLine } from '../../src/ui/collections/wardrobeCatalogue.js';
 import { wardrobeFilterPasses, drawWardrobePart, resetWardrobePart } from '../../src/ui/collections/wardrobePart.js';
 import { shopConfirmPage } from '../../server-account/src/shop.js';
@@ -87,18 +86,13 @@ test('AUDIT-STOREFRONT S9 a featured window\'s tag and its days left are told on
   w.stop();
 });
 
-test('AUDIT-STOREFRONT S5 a booster the card marks spent says a stronger one is held and offers no Buy (mutants: the Cog offered beside the Heart)', () => {
-  const flow = flowIn([row('boost:s1cog', { spent: true, buy: null })]);
-  assert.deepEqual(shopWareState(flow, SHOP_WARES.find((w) => w.id === 'boost:s1cog')), { state: 'spent', buy: null, cents: SHOP_WARES.find((w) => w.id === 'boost:s1cog').cents });   // PIN MOVED (AUDIT-STOREFRONT II): the law's price
-});
-
-test('AUDIT-STOREFRONT S11, S12, S13: the Premium\'s rewards counted off the track; a giver held in part said in a bundle\'s contents and on the confirm page; the carousel\'s dots a 24 px target each (mutants: "twenty" written; a Deluxe whose Premium is held said unowned; a 14 px dot)', () => {
-  const n = PASS_REWARDS.s1.filter((r) => r.track === 'premium').length;
-  assert.match(SHOP_LOOK['pass:s1premium'](), new RegExp(`: ${n} more rewards,`));
-  const coll = SHOP_WARES.find((w) => w.id === 'bundle:seasonalcollector');
-  const rows = shopBundleRows(flowIn([row('pass:s1premium', { held: true, buy: null })]), coll);
-  assert.deepEqual(rows.map((r) => [r.id, r.held, r.part]), [['pass:s1deluxe', false, true], ['boost:s1heart', false, false], ['glyph:gearcrown', false, false]]);
-  const page = shopConfirmPage({ handle: 'Aelwyn', ware: coll, ticket: 't', cents: 4062, holds: 0, part: true });
+test('AUDIT-STOREFRONT S12, S13: a giver held in part said in a bundle\'s contents and on the confirm page; the carousel\'s dots a 24 px target each (mutants: a set whose piece is held said unowned; a 14 px dot)', () => {
+  // PIN MOVED (PASS-PANELS): the Seasonal Collector and the Deluxe it gave are retired - a giver inside a giver is the
+  // Eternal Set, its Halo held
+  const rows = shopBundleRows(flowIn([row('armory:eternalhalo', { held: true, buy: null })]), { gives: ['armory:eternalset', 'kill:pyre'] });
+  assert.deepEqual(rows.map((r) => [r.id, r.held, r.part]), [['armory:eternalset', false, true], ['kill:pyre', false, false]]);
+  const champion = SHOP_WARES.find((w) => w.id === 'bundle:daedricchampion');
+  const page = shopConfirmPage({ handle: 'Aelwyn', ware: champion, ticket: 't', cents: 1628, holds: 0, part: true });
   assert.ok(page.lines.includes('Your account holds part of it already, so the price is less.'));
   assert.match(SHOP_CSS, /\.sh-cdot \{ width: 24px; height: 24px; min-width: 24px; min-height: 24px;/);
 });

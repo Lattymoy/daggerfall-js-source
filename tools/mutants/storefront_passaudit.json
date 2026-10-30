@@ -200,15 +200,6 @@
     ]
   },
   {
-    "name": "PASSAUDIT-12-the-booster-hides-the-held-levels",
-    "file": "src/ui/passText.js",
-    "old": "'And {n} levels at once. Levels past the open stage are kept for the next.'",
-    "new": "'And {n} levels at once.'",
-    "tests": [
-      "test/systems/pass/passclient.test.js"
-    ]
-  },
-  {
     "name": "PASSAUDIT-2-an-open-read-leaves-the-rest",
     "file": "src/net/askRest.js",
     "old": "      else if (open === true && shut) rest(0, false);",

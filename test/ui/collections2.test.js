@@ -147,7 +147,7 @@ const CATALOGUE = {
   'armory:eternalgreaves': 'shop shop', 'armory:eternaledge': 'shop shop',
   /* STOREFRONT (PIN MOVED): the shop's name visuals and its bundles' four, sold for good; Season One's on the Battle Pass */
   'title:dawnbringer': 'shop store', 'title:voidwalker': 'shop store', 'title:eternalchampion': 'shop store', 'aura:dominion': 'shop store',
-  'glyph:oblivion': 'shop store', 'glyph:gatesigil': 'shop store', 'glyph:gearcrown': 'shop store',
+  'glyph:oblivion': 'shop store', 'glyph:gatesigil': 'shop store', 'glyph:gearcrown': 'pass pass',   // PIN MOVED (PASS-PANELS): the Gilded Folio's, its bundle retired
   // PIN MOVED (AURUM): Season One's titles six to three and its portraits three, no figure among them; the daily wares' eight
   'title:tremorborn': 'pass pass', 'title:heartwaker': 'pass pass', 'title:numidiumecho': 'pass pass', 'aura:aetherium': 'pass pass', 'aura:gildedcoil': 'pass pass',
   'icon:aetherium': 'pass pass', 'icon:lexicon': 'pass pass', 'icon:gearheart': 'pass pass', 'glyph:tonalfork': 'pass pass', 'glyph:cog': 'pass pass',

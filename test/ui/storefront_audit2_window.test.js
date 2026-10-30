@@ -9,7 +9,8 @@ import { readFileSync } from 'node:fs';
 
 import { SHOP_WARES } from '../../src/net/shopLaw.js';
 import { EFFECTS } from '../../src/net/effectLaw.js';
-import { PASS_REWARDS, PASS_DELUXE, PASS_XP_PER_LEVEL } from '../../src/net/battlePassLaw.js';
+import { passCardOf, passItemOf, passPanelsOf } from '../../src/net/battlePassLaw.js';
+import { passFolioName } from '../../src/ui/passText.js';
 import { shopWindow, carouselTurns, SHOP_CSS } from '../../src/ui/enhanced/enhancedShop.js';
 import { FRAME_ROLES } from '../../src/ui/enhanced/enhancedFrame.js';
 import { wardrobeEntry } from '../../src/ui/collections/wardrobeCatalogue.js';
@@ -42,19 +43,22 @@ function fakeDoc({ grimoire = false, IO = null } = {}) {
 }
 const walk = (n, f) => { f(n); for (const c of n.children ?? []) walk(c, f); };
 const all = (root, cls) => { const out = []; walk(root, (n) => { if (String(n.className).split(' ').includes(cls)) out.push(n); }); return out; };
-const card = () => ({ on: true, wares: SHOP_WARES.filter((w) => w.alone && w.cash).map((w) => ({ id: w.id, sale: true, held: false, buy: `https://accounts.invalid/v1/shop/buy?t=${w.key}` })), featured: ['pass:s1deluxe', 'kill:pyre', 'mount:warhorse'] });
+const card = () => ({ on: true, wares: SHOP_WARES.filter((w) => w.alone && w.cash).map((w) => ({ id: w.id, sale: true, held: false, buy: `https://accounts.invalid/v1/shop/buy?t=${w.key}` })), featured: ['kill:ashen', 'kill:pyre', 'portal:runic'] });   // PIN MOVED (PASS-PANELS): no pass is a ware
 const flowIn = (extra = {}) => ({ stage: 'in', account: { handle: 'Aelwyn', kind: 'linked' }, wardrobe: { titles: [], glyphs: [], auras: [] }, shop: card(), busy: false, ...extra });
-const open = (o = {}, doc = fakeDoc()) => shopWindow(doc, { flow: () => o.flow ?? flowIn(), onClose() {}, keep: o.keep ?? {}, focus: false, reduced: !!o.reduced, preview: o.preview ?? (async () => null), effectPreview: o.effectPreview ?? (async () => null) });
+const open = (o = {}, doc = fakeDoc()) => shopWindow(doc, { flow: () => o.flow ?? flowIn(), onClose() {}, keep: o.keep ?? {}, focus: false, reduced: !!o.reduced, now: o.now, preview: o.preview ?? (async () => null), effectPreview: o.effectPreview ?? (async () => null) });
 
 /** The sheet's rules, each its selectors and its declarations (an @media's flattened in). */
 const rules = (css) => [...css.replace(/@media[^{]*\{/g, '').matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((m) => ({ sel: m[1].trim().split('\n').pop(), decl: m[2] }));
 
-test('AUDIT-STOREFRONT II E1: every surface the shop draws carries its kit role - its panels, presses, tabs, chips, wells, head and foot - and its own sheet never paints one: no colour on a role\'s border, no shadow, no ground but the stage\'s picture, the meter\'s trough, the track\'s labels and its reached wash (mutants: a panel\'s ground painted again; the tabs the kit\'s presses too)', () => {
+test('AUDIT-STOREFRONT II E1: every surface the shop draws carries its kit role - its panels, presses, tabs, chips, wells, head and foot, and PASS-PANELS the folios\' covers, spreads, pages\' tabs and items - and its own sheet never paints one: no colour on a role\'s border, no shadow, no ground but a picture\'s and the meters\' troughs (mutants: a panel\'s ground painted again; the tabs the kit\'s presses too; Get Aurum a bare word under the Grimoire)', () => {
   const shop = Object.entries(FRAME_ROLES).flatMap(([role, sels]) => sels.filter((s) => s.startsWith('.px-shopwin ')).map((s) => [role, s.slice('.px-shopwin '.length)]));
   const roles = new Map(shop.map(([role, s]) => [s.replace(/^\./, ''), role]));
-  for (const want of ['sh-panel', 'sh-carousel', 'sh-pass', 'sh-dailyhead', 'sh-aurumhead', 'sh-proceeds', 'act', 'sh-buy', 'sh-tab', 'sh-tag', 'sh-phase', 'sh-balance', 'sh-stagechip', 'sh-deed', 'sh-tracklabel', 'sh-stage', 'sh-xpbar', 'sh-cmeter', 'sh-trackcell', 'sh-xpfill', 'sh-cfill', 'sh-head', 'sh-subhead', 'sh-foot']) assert.ok(roles.has(want), `${want}: a kit role`);
-  const ALLOWED = { 'sh-stage': ['background-color', 'background-image'], 'sh-tierstage-premium': ['background-image'], 'sh-tierstage-exclusive': ['background-image'], 'sh-xpbar': ['background-color'], 'sh-cmeter': ['background-color'], 'sh-tracklabel': ['background-image'], 'sh-trackcell': ['background-image'], 'sh-tab': ['background', 'border'],
-    'sh-xpfill': ['background'], 'sh-cfill': ['background'] };   // a meter's fill is its own colour - the kit bands it (meterFill)
+  for (const want of ['sh-panel', 'sh-carousel', 'sh-pass', 'sh-dailyhead', 'sh-aurumhead', 'sh-proceeds', 'act', 'sh-buy', 'sh-tab', 'sh-tag', 'sh-phase', 'sh-balance', 'sh-stagechip', 'sh-deed', 'sh-stage', 'sh-cmeter', 'sh-cfill', 'sh-head', 'sh-subhead', 'sh-foot',
+    'sh-folio', 'sh-spread', 'sh-pchal', 'sh-fcover', 'sh-pitem', 'sh-pitempic', 'sh-pagetab', 'sh-spreadhead', 'sh-pspent', 'sh-daybar', 'sh-dayfill', 'sh-getaurum']) assert.ok(roles.has(want), `${want}: a kit role`);
+  assert.equal(FRAME_ROLES.primary.includes('.px-shopwin .sh-getaurum'), true, 'Get Aurum the way on when short: a framed press under every dress');
+  const ALLOWED = { 'sh-stage': ['background-color', 'background-image'], 'sh-tierstage-premium': ['background-image'], 'sh-tierstage-exclusive': ['background-image'], 'sh-cmeter': ['background-color'], 'sh-daybar': ['background-color'], 'sh-tab': ['background', 'border'],
+    'sh-pitempic': ['background-color', 'background-image'], 'sh-fcover': ['background-color'], 'sh-pagetab': ['background', 'border'],   // an item's picture its own ground; a cover's and a tab's button ground let go
+    'sh-dayfill': ['background'], 'sh-cfill': ['background'] };   // a meter's fill is its own colour - the kit bands it (meterFill)
   const PAINT = /(?:^|;)\s*(background(?:-color|-image)?|border(?:-(?:top|bottom|left|right))?(?:-color)?|box-shadow)\s*:\s*([^;]*)/g;
   for (const { sel, decl } of rules(SHOP_CSS)) {
     for (const one of sel.split(',').map((x) => x.trim())) {
@@ -127,16 +131,15 @@ test('AUDIT-STOREFRONT II E13, E14, E16: the first slide stands without sliding 
   assert.equal(carouselTurns({ ...held, hidden: true }, 9000), false);
 });
 
-test('AUDIT-STOREFRONT II E3, E5, E9, E12: a title\'s paint on a page is inked under the Grimoire, on a well\'s wood it stays; the challenge done and the payment line two classes; a held ware\'s price dimmed under its state (mutants: the deluxe\'s title never inked; a track title inked on the wood)', () => {
-  const pass = { season: 's1', open: true, stage: 0, xp: 700, level: 7, top: 17, tracks: { free: true, premium: false, deluxe: false }, mult: 1, today: 0, dayMax: 2000, challenges: [{ key: 'tremor-tavern', n: 3, paid: true }] };
-  const title = PASS_DELUXE.s1.grants.find((g) => g.startsWith('title:')).slice(6);
-  const plain = titlePaint(titleBadge({ title })).color;
-  const g = open({ flow: flowIn({ pass }) }, fakeDoc({ grimoire: true }));
-  const deluxe = all(all(g.root, 'sh-deluxe')[0], 'sh-reward-title')[0];
-  assert.notEqual(all(deluxe, 'sh-rewardname')[0].style.color, plain, 'on the page: inked');
-  const trackTitle = PASS_REWARDS.s1.find((r) => r.grant.startsWith('title:'));
-  const inWell = all(all(g.root, 'sh-track')[0], `fx-title-${trackTitle.grant.slice(6)}`)[0];
-  assert.equal(all(inWell, 'sh-rewardname')[0].style.color, titlePaint(titleBadge({ title: trackTitle.grant.slice(6) })).color, 'on the well\'s wood: its own paint');
+test('AUDIT-STOREFRONT II E3, E5, E12: a title on a folio\'s item keeps its own paint under the Grimoire - the item a tile, wood, never the page; the challenge done and the payment line two classes; a held ware\'s price dimmed under its state (mutants: the title inked on the wood; the done challenge the payment line\'s class)', () => {
+  // PIN MOVED (PASS-PANELS): the track and the Deluxe's own are gone - a title is sold on a folio's page, on its item's tile
+  const NOW = Date.UTC(2026, 10, 14, 12);
+  const at = passItemOf('s1', 'title:tremorborn');
+  const pass = passCardOf({ season: 's1', open: true, stage: 0, tracks: { premium: false }, bought: [], today: 0, challenges: [{ key: 'tremor-tavern', n: 3, paid: true }] });
+  const g = open({ flow: flowIn({ pass }), keep: { cat: 'pass', folio: at.track, page: at.panel }, now: () => NOW }, fakeDoc({ grimoire: true }));
+  const item = all(g.root, 'sh-pitem').find((c) => c.attrs['data-grant'] === 'title:tremorborn');
+  assert.ok(item && FRAME_ROLES.tile.includes('.px-shopwin .sh-pitem'), 'the item a tile - wood under the Grimoire');
+  assert.equal(all(item, 'sh-rewardname')[0].style.color, titlePaint(titleBadge({ title: 'tremorborn' })).color, 'on the wood: its own paint');
   assert.equal(all(g.root, 'sh-cdone').length, 1);
   assert.equal(all(g.root, 'sh-paid').length, 0, 'never the old shared class');
   g.stop();
@@ -145,18 +148,21 @@ test('AUDIT-STOREFRONT II E3, E5, E9, E12: a title\'s paint on a page is inked u
   const w = open({ flow: fl, keep: { cat: 'kills' } });
   const row = all(w.root, 'sh-panel').find((p) => p.attrs['data-ware'] === 'kill:pyre');
   assert.ok(String(all(row, 'sh-buyrow')[0].className).includes('sh-buyrow-held'));
-  assert.match(SHOP_CSS, /:is\(\.sh-buyrow-held, \.sh-buyrow-spent\) \.sh-price \{ font-size: 15px; opacity: 0\.6; \}/);
+  assert.match(SHOP_CSS, /\.px-shopwin \.sh-buyrow-held \.sh-price \{ font-size: 15px; opacity: 0\.6; \}/);
   w.stop();
 });
 
 test('AUDIT-STOREFRONT II E7, E8: the profile - on a narrow card the stage stands first and the picker right under it; a locked effect says how it is had, every one of them, off the wares and the season\'s law (mutants: an effect with no words of how; the picker after the slots)', () => {
   for (const e of EFFECTS) {
     const id = `${e.slot}:${e.key}`, how = wardrobeEntry(e.slot, e.key)?.how?.() ?? '';
-    const w = SHOP_WARES.find((x) => x.id === id), r = PASS_REWARDS.s1.find((x) => x.grant === id);
+    const w = SHOP_WARES.find((x) => x.id === id), at = passItemOf('s1', id);
     assert.ok(how.length > 20, `${id}: how it is had`);
     if (w) assert.match(how, /the gem on the pause screen/, id);
-    else if (r) assert.match(how, new RegExp(`Reach level ${r.level} of the Battle Pass`), id);
-    else assert.match(how, /Deluxe Pass/, id);
+    else {   // PIN MOVED (PASS-PANELS): a folio's - its page, its folio and its price in Aurum
+      assert.ok(at, `${id}: a ware or a folio's`);
+      assert.ok(how.startsWith(`On page ${['I', 'II', 'III'][at.panel]} of ${passFolioName('s1', at.track)}, for ${at.aurum.toLocaleString('en-US')} Aurum`), `${id}: ${how}`);
+      assert.equal(passPanelsOf('s1', at.track)[at.panel].items.some((it) => it.grant === id), true);
+    }
   }
   const css = readFileSync(new URL('../../src/ui/enhanced/enhancedStyle.js', import.meta.url), 'utf8');
   const narrow = css.slice(css.indexOf('@container (max-width: 480px) {\n  .card .acctslots'));
@@ -165,16 +171,4 @@ test('AUDIT-STOREFRONT II E7, E8: the profile - on a narrow card the stage stand
   // shown before the slots its markup puts first, the picker's words grown under a pointer must not move its row: the
   // window keeps no scroll anchor (one chosen in markup order sat under it, and the row ran from the pointer and back)
   assert.match(css, /\.px-win\.px-acctwin \.px-body \{[^}]*overflow-anchor: none;/);
-});
-
-test('AUDIT-STOREFRONT II B3: experience past a stage\'s top is said kept for the next stage - never at the last stage\'s, which has no next (mutants: "kept for the next" at level 50)', () => {
-  const line = (level, top, xp) => {
-    const pass = { season: 's1', open: true, stage: 2, xp, level, top, tracks: { free: true, premium: false, deluxe: false }, mult: 1, today: 0, dayMax: 2000, challenges: [] };
-    const w = open({ flow: flowIn({ pass }) });
-    const said = all(all(w.root, 'sh-passprog')[0], 'sh-passline')[0].textContent;
-    w.stop();
-    return said;
-  };
-  assert.match(line(17, 17, 18 * PASS_XP_PER_LEVEL + 500), /kept for the next/);
-  assert.doesNotMatch(line(50, 50, 51 * PASS_XP_PER_LEVEL + 500), /kept for the next/);
 });

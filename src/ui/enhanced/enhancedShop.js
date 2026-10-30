@@ -5,7 +5,7 @@
 // end of the pause face's row of marks opens a window in the pause window's frame: the proceeds' disclaimer first, then
 // STOREFRONT's carousel of the featured wares (2026-10-29, the owner: "a rotating panel carousel with limited featured
 // items"; bible/06-Systems/Storefront.md section 9), then a tab a section and in each a panel a ware - seen live - its
-// tier, the price it costs this account, and Buy, which opens Stripe's page in a browser.
+// tier, the price it costs this account, and Buy, which opens Stripe's page. PASS-PANELS: the Folios (enhancedPass.js).
 import { SHOP_WARES, SHOP_CATEGORIES, SHOP_TIERS, shopPriceText, shopWareById, shopWorth, shopClosure } from '../../net/shopLaw.js';
 import { TERMS_URL } from '../../net/legalLaw.js';
 import { titleBadge, paintTitle, glyphBadges, glyphSvgNode, TITLE_TEXT, AURA_TEXT, AURA_PAINT } from '../playerBadge.js';
@@ -19,15 +19,13 @@ import { profileIconNode, ICON_TEXT } from '../profileIcons.js';
 import { wareArtNode } from '../wareArt.js';   // AUDIT-STOREFRONT: a piece's, a reward's and a banner's picture
 import { mountPreview } from '../mountPreview.js';
 import { playPreviewSound } from '../effectPreviewSound.js';
-import { PASS_SEASONS, PASS_REWARDS, PASS_DELUXE, PASS_CHALLENGES, PASS_LEVELS, PASS_XP_PER_LEVEL, PASS_BOOSTS, PASS_WARES, passSeasonById } from '../../net/battlePassLaw.js';
-import { PASS_SEASON_TEXT, PASS_SEASON_LOOK, PASS_STAGE_TEXT, passChallengeText, passBoostText, passGrantName, passGrantKind } from '../passText.js';
+import { passSection, passItemsIn, passShownSeason, PASS_CSS } from './enhancedPass.js';   // PASS-PANELS: the Folios' section
 import { AURUM_DEEDS, aurumPriceOf, aurumBonusOf } from '../../net/aurumLaw.js';   // AURUM: the daily wares, the packs and the week's deeds
 import { aurumArtNode } from '../aurumArt.js';
-import { inkPaintedWord } from '../grimoireDress.js';   // AUDIT-STOREFRONT II (lane E 3): a painted word inked on the Grimoire's page
 
 /** Each section's tab, in the player's language. */
 export const SHOP_CATEGORY_TEXT = Object.freeze({
-  pass: () => t('shop.cat.pass', 'Battle Pass'),
+  pass: () => t('shop.cat.folios', 'Folios'),   // PASS-PANELS: the owner's "something more lore accurate"
   kills: () => t('shop.cat.kills', 'Kill Effects'),
   portals: () => t('shop.cat.portals', 'Portal Skins'),
   mounts: () => t('shop.cat.mounts', 'Mounts'),
@@ -35,7 +33,6 @@ export const SHOP_CATEGORY_TEXT = Object.freeze({
   auras: () => t('shop.cat.auras', 'Auras'),
   armory: () => t('shop.cat.armory', 'Aura Armory'),
   bundles: () => t('shop.cat.bundles', 'Bundles'),
-  boosts: () => t('shop.cat.boosts', 'Pass Boosters'),
   daily: () => t('shop.cat.daily', 'Daily Wares'),   // AURUM
   icons: () => t('shop.cat.icons', 'Profile Icons'),
   aurum: () => t('shop.cat.aurum', 'Aurum'),
@@ -50,7 +47,7 @@ export const SHOP_TIER_TEXT = Object.freeze({
 const KIND_TEXT = Object.freeze({
   title: () => t('shop.kind.title', 'Title'), glyph: () => t('shop.kind.glyph', 'Glyph'), aura: () => t('shop.kind.aura', 'Aura'), armory: () => t('shop.kind.armory', 'Aura Armory'),
   kill: () => effectSlotName('kill'), portal: () => t('shop.kind.portal', 'Portal skin'), mount: () => t('shop.kind.mount', 'Mount look'),
-  pass: () => t('shop.kind.pass', 'Battle Pass'), boost: () => t('shop.kind.boost', 'Pass Booster'), bundle: () => t('shop.kind.bundle', 'Bundle'),
+  bundle: () => t('shop.kind.bundle', 'Bundle'),
   icon: () => t('shop.kind.icon', 'Profile icon'), aurum: () => t('shop.kind.aurum', 'Aurum pack'),   // AURUM
 });
 /** ARMORY: the line a set ware gives whole, or null for any other ware. */
@@ -75,15 +72,10 @@ export const SHOP_LOOK = Object.freeze({
   'title:eternalchampion': () => t('shop.look.eternalchampion', 'A title on a plate of crimson fire under a gold edge, over your name.'),
   'glyph:oblivion': () => t('shop.look.oblivion', 'A Daedric sigil, its spokes burning crimson round a dark eye. It comes in the Daedric Champion bundle.'),
   'glyph:gatesigil': () => t('shop.look.gatesigil', 'A gate of runes, a spark burning between its pillars. It comes in the Portal Master bundle.'),
-  'glyph:gearcrown': () => t('shop.look.gearcrown', 'A crown of brass cogs, an aetherium stone at its brow. It comes in the Seasonal Collector bundle.'),
   'aura:dominion': () => t('shop.look.dominion', 'A ring of Daedric script burns black and crimson at your feet, embers rising off it. It comes in three bundles.'),
-  'pass:s1premium': () => t('shop.look.s1premium', "Opens the premium track of Dwemer's Breach: {n, plural, one {# more reward} other {# more rewards}}, given as you reach them and at once for levels behind you.", { n: PASS_REWARDS.s1.filter((r) => r.track === 'premium').length }),   // AUDIT-STOREFRONT S11: counted, never written
-  'pass:s1deluxe': () => t('shop.look.s1deluxe', 'The Premium Pass, five levels at once, and three rewards of its own now: the Gilded Coil, the Brass Automaton and Echo of Numidium.'),
   'bundle:daedricchampion': () => t('shop.look.daedricchampion', 'Daedric Dominion, the Daedric Pyre, Eternal Champion and the Oblivion Sigil, together.'),
   'bundle:portalmaster': () => t('shop.look.portalmaster', 'The Daedric Stone, Daedric Dominion and the Gate Sigil, together.'),
   'bundle:lordofoblivion': () => t('shop.look.lordofoblivion', 'The Daedric Warhorse, the Daedric Stone, Daedric Dominion and the Daedric Pyre, together.'),
-  'bundle:seasonalcollector': () => t('shop.look.seasonalcollector', 'The Deluxe Pass, the Heart Booster and the Brass Crown, together.'),
-  ...Object.fromEntries(Object.keys(PASS_BOOSTS).map((id) => [id, () => passBoostText(id)])),
   // AURUM (bible/06-Systems/Aurum.md): the daily wares' icons, and the packs
   'icon:gatefire': () => t('shop.look.gatefire', 'Dagon\'s Breach between black spires, its fire turning, embers rising. It moves.'),
   'icon:aurbis': () => t('shop.look.aurbis', 'The wheel of the heavens about Aetherius, its spheres turning in their orbits. It moves.'),
@@ -93,19 +85,13 @@ export const SHOP_LOOK = Object.freeze({
   'icon:hourglass': () => t('shop.look.hourglass', 'A gilded hourglass that turns over when its last grain falls. It moves.'),
   'icon:sanguinerose': () => t('shop.look.sanguinerose', 'A black-red rose in full bloom, dew on its petals, thorns along its stem.'),
   'icon:whitegold': () => t('shop.look.whitegold', 'The White-Gold Tower over the Imperial City and Lake Rumare at dusk.'),
-  ...Object.fromEntries(SHOP_WARES.filter((w) => w.kind === 'aurum').map((w) => [w.id, () => t('shop.look.aurum', 'Aurum for the daily wares. It has no cash value and cannot be traded.')])),
+  ...Object.fromEntries(SHOP_WARES.filter((w) => w.kind === 'aurum').map((w) => [w.id, () => t('shop.look.aurumFolios', 'Aurum for the daily wares and the Folios. It has no cash value and cannot be traded.')])),
 });
-/** STOREFRONT: the names of the wares no other face names - the passes', the bundles' and the boosters'. */
+/** STOREFRONT: the names of the wares no other face names - the bundles'. */
 const OWN_NAME = Object.freeze({
-  'pass:s1premium': () => t('shop.name.s1premium', "Dwemer's Breach Premium Pass"),
-  'pass:s1deluxe': () => t('shop.name.s1deluxe', "Dwemer's Breach Deluxe Pass"),
   'bundle:daedricchampion': () => t('shop.name.daedricchampion', 'Daedric Champion'),
   'bundle:portalmaster': () => t('shop.name.portalmaster', 'Portal Master'),
   'bundle:lordofoblivion': () => t('shop.name.lordofoblivion', 'Lord of Oblivion'),
-  'bundle:seasonalcollector': () => t('shop.name.seasonalcollector', 'Seasonal Collector'),
-  'boost:s1cog': () => t('shop.name.s1cog', 'Cog Booster'),
-  'boost:s1tonal': () => t('shop.name.s1tonal', 'Tonal Booster'),
-  'boost:s1heart': () => t('shop.name.s1heart', 'Heart Booster'),
 });
 /** A ware's name, as every face says it (the title's and the aura's English, the glyph's label, an effect's). */
 export const shopWareName = (/** @type {{ id?: string, kind: string, key: string }} */ w) => {
@@ -134,7 +120,7 @@ export function shopWareTag(/** @type {Document} */ doc, /** @type {unknown} */ 
     if (art) tag.append(art);
   } else if (w.kind === 'title' || w.kind === 'aura' || w.kind === 'armory') {
     paintTitle(word, titleBadge({ title: w.kind === 'title' ? w.key : AURA_PAINT[/** @type {keyof typeof AURA_PAINT} */ (w.kind === 'armory' ? armoryPieceOf(w.key)?.line ?? 'eternal' : w.key)] }), w.kind === 'title');   // ARMORY: a piece in its line's aura's paint
-  } else word.className = `sh-waretag-word fx-${w.kind}-${w.key}`;   // STOREFRONT: an effect, a pass, a bundle in its own colour
+  } else word.className = `sh-waretag-word fx-${w.kind}-${w.key}`;   // STOREFRONT: an effect, a bundle in its own colour
   tag.append(word);
   return tag;
 }
@@ -160,23 +146,19 @@ export function shopHeldAny(flow, id) {
   return false;
 }
 /**
- * WHAT A WARE'S PANEL SAYS AND OFFERS, from the flow as it stands. Pure. `state`: 'held', 'spent' (a booster a stronger one
- * held makes worth nothing), 'buy' (a link to follow), 'soon' (its season not begun), 'gone' (no longer sold), 'closed' (the shop takes no payments yet), 'guest', 'out' (nobody
- * signed in), 'reading'. `cents` what it costs this account (STOREFRONT: a bundle's or the Deluxe's, less what is held).
- * @param {any} flow @param {{ id: string, kind: string, key: string, cents: number, season?: string|null }} ware
- * @param {number} [nowMs]
+ * WHAT A WARE'S PANEL SAYS AND OFFERS, from the flow as it stands. Pure. `state`: 'held', 'buy' (a link to follow), 'gone'
+ * (no longer sold), 'closed' (the shop takes no payments yet), 'guest', 'out' (nobody signed in), 'reading'. `cents` what
+ * it costs this account (STOREFRONT: a bundle's, less what is held).
+ * @param {any} flow @param {{ id: string, kind: string, key: string, cents: number }} ware
  */
-export function shopWareState(flow, ware, nowMs = Date.now()) {
+export function shopWareState(flow, ware) {
   const row = rowOf(flow, ware.id);
   const cents = row?.cents ?? ware.cents;
   if (row?.held) return { state: 'held', worn: shopWorn(flow, ware), buy: null, cents };
-  if (row?.spent) return { state: 'spent', buy: null, cents };   // AUDIT-STOREFRONT S5: a stronger booster held
   if (!flow || flow.stage === 'loading') return { state: 'reading', buy: null, cents };
   if (flow.stage !== 'in') return { state: 'out', buy: null, cents };
   if (!flow.account?.handle) return { state: 'guest', buy: null, cents };
   if (!flow.shop) return { state: 'closed', buy: null, cents };
-  const season = ware.season ? passSeasonById(ware.season) : null;
-  if (row && !row.sale && season && nowMs < season.fromMs) return { state: 'soon', buy: null, cents, opens: season.fromMs };
   if (row && !row.sale) return { state: 'gone', buy: null, cents };
   if (!flow.shop.on || !row?.buy) return { state: 'closed', buy: null, cents };
   return { state: 'buy', buy: row.buy, cents };
@@ -191,8 +173,8 @@ export function shopWorn(/** @type {any} */ flow, /** @type {{ kind: string, key
   if (w.kind === 'title' || w.kind === 'aura' || w.kind === 'icon') return wd[w.kind] === w.key;   // AURUM: an icon in the portrait well
   return false;
 }
-/** Whether a ware is worn at all - a pass, a booster, a bundle and Aurum are held, never worn. Pure. */
-const wearable = (/** @type {{ kind: string }} */ w) => !['pass', 'boost', 'bundle', 'aurum'].includes(w.kind);
+/** Whether a ware is worn at all - a bundle and Aurum are held, never worn. Pure. */
+const wearable = (/** @type {{ kind: string }} */ w) => !['bundle', 'aurum'].includes(w.kind);
 /**
  * AURUM: WHAT A DAILY WARE'S PANEL SAYS AND OFFERS, from the flow's Aurum card. Pure. `state`: 'held', 'afford' (Buy, for
  * `price` Aurum), 'short' (`need` more), 'gone' (no longer among the day's), 'closed', 'guest', 'out', 'reading'.
@@ -232,20 +214,20 @@ export const CAROUSEL_TURN_MS = 8000;
 /** STOREFRONT: whether the carousel turns now - two slides or more, nobody holding it, its panel shown long enough. Pure. */
 export const carouselTurns = (/** @type {{ n: number, paused: boolean, reduced: boolean, hovered: boolean, focusedIn: boolean, since: number, hidden?: boolean }} */ c, /** @type {number} */ nowMs) =>
   c.n > 1 && !c.paused && !c.reduced && !c.hovered && !c.focusedIn && !c.hidden && nowMs - c.since >= CAROUSEL_TURN_MS;   // AUDIT-STOREFRONT II (lane E 16): never scrolled out of sight
-/** STOREFRONT: THE CAROUSEL'S PANELS - the card's featured wares in its order (the live season's passes first), each sold
- *  alone; none with no card. Pure. */
+/** STOREFRONT: THE CAROUSEL'S PANELS - the card's featured wares in its order, each sold alone; none with no card. Pure. */
 export const shopCarouselOf = (/** @type {any} */ flow) => (Array.isArray(flow?.shop?.featured) ? flow.shop.featured.map((/** @type {string} */ id) => shopWareById(id)).filter((/** @type {any} */ w) => !!w && w.alone) : []);
 /** STOREFRONT: A BUNDLE'S CONTENTS - each ware it gives with its name, kind, whether this account holds it, and (AUDIT-
- *  STOREFRONT S12) whether it holds part of it - a giver inside, the Premium of the Deluxe - which its price takes off. Pure. */
+ *  STOREFRONT S12) whether it holds part of it - a giver inside, a piece of a set - which its price takes off. Pure. */
 export const shopBundleRows = (/** @type {any} */ flow, /** @type {{ gives: ReadonlyArray<string> }} */ w) => w.gives.map((id) => {
   const g = shopWareById(id), held = shopHeldAny(flow, id);
   return { id, name: g ? shopWareName(g) : id, kind: g ? KIND_TEXT[/** @type {keyof typeof KIND_TEXT} */ (g.kind)]?.() ?? g.kind : '', held, part: !held && shopClosure(id).some((x) => x !== id && shopHeldAny(flow, x)) };
 });
 /** STOREFRONT: the sections the window shows - each with a ware the card lists (every one sold alone for money with no
- *  card); AURUM: the daily wares after the pass while Aurum is open to the account. Pure. */
+ *  card); PASS-PANELS: the Folios' always, sold for Aurum; AURUM: the daily wares after the Folios while
+ *  Aurum is open to the account. Pure. */
 export function shopSections(/** @type {any} */ flow) {
   const listed = (/** @type {any} */ w) => w.alone && w.cash && (!flow?.shop || !!rowOf(flow, w.id));
-  const out = SHOP_CATEGORIES.filter((c) => SHOP_WARES.some((w) => w.category === c && listed(w)));
+  const out = SHOP_CATEGORIES.filter((c) => c === 'pass' || SHOP_WARES.some((w) => w.category === c && listed(w)));
   if (flow?.aurum?.open && flow.aurum.daily?.wares?.length) out.splice(out[0] === 'pass' ? 1 : 0, 0, 'daily');
   return out;
 }
@@ -281,7 +263,7 @@ export function shopMark(/** @type {Document} */ doc, { onOpen, open = false }) 
 /** THE WINDOW. `flow()` the visit's account flow; `keep` the tab and the carousel's panel, so a face rebuilt reopens there.
  *  Answers { root, stop, draw, close }: `draw` updates it in place, `stop` lets the previews and the clock go.
  * @param {Document} doc
- * @param {{ flow: () => any, onClose: () => void, keep?: { cat?: string, slide?: number }, focus?: boolean, now?: () => number,
+ * @param {{ flow: () => any, onClose: () => void, keep?: { cat?: string, slide?: number, folio?: string|null, page?: number }, focus?: boolean, now?: () => number,
  *   preview?: (canvas: HTMLCanvasElement, aura: string|null, kit?: string|null, body?: (() => any)|null) => Promise<{ stop: () => void }|null>,
  *   effectPreview?: (canvas: HTMLCanvasElement, slot: string, key: string, cue: (slot: string, key: string|null) => void, body?: (() => any)|null) => Promise<{ stop: () => void }|null>,
  *   wearer?: (() => any)|null, reduced?: boolean }} o `wearer` the player's own body for the stages (the profile's, ui/profileBody.js) - asked once
@@ -426,7 +408,7 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
     }));
   };
   /** A ware's picture, live: the title on its plate over a name, the glyph large, the aura or the piece on its stage, an
-   *  effect playing on the stand-in, the horse in its look, a bundle's contents, the season's banner. */
+   *  effect playing on the stand-in, the horse in its look, a bundle's contents. */
   const stageOf = (/** @type {any} */ w, slide = false) => {
     const stage = el('div', `sh-stage sh-stage-${w.kind}${w.tier ? ` sh-tierstage-${w.tier}` : ''}`);
     const nameEl = () => { const n = el('div', 'sh-tagname', nameText()); names.push(n); return n; };
@@ -484,34 +466,14 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
         list.append(li);
       }
       stage.append(el('div', 'sh-bundlemark', KIND_TEXT.bundle()), list);
-    } else {   // a pass or a booster: the season's banner, AUDIT-STOREFRONT its own art at its heart
-      const season = passSeasonById(w.season), boost = PASS_BOOSTS[/** @type {keyof typeof PASS_BOOSTS} */ (w.id)];
-      const ban = el('div', `sh-seasonart sh-seasonart-${w.kind} sh-seasonart-${w.key}`);
-      const halo = el('div', 'sh-seasonhalo'), art = wareArtNode(doc, w.id, 112, 'sh-seasonpic');
-      if (art) halo.append(art);
-      ban.append(halo, el('div', 'sh-seasonname', shopWareName(w)));
-      if (boost) {
-        ban.append(el('div', 'sh-boostmult', `×${boost.mult}`));   // its levels the panel's own line says (passBoostText)
-      } else if (season) {
-        const own = PASS_DELUXE[/** @type {keyof typeof PASS_DELUXE} */ (season.id)];
-        if (w.id === PASS_WARES[/** @type {keyof typeof PASS_WARES} */ (season.id)]?.deluxe && own) {   // the Deluxe's own three, shown
-          const row = el('div', 'sh-seasonown');
-          for (const g of own.grants) row.append(rewardChip(g));
-          ban.append(row);
-        }
-        ban.append(el('div', 'sh-seasondays', `${dayText(season.fromMs)} - ${dayText(season.toMs - 1)}`));
-      }
-      if (season) ban.append(el('div', 'sh-seasoncap', PASS_SEASON_TEXT[/** @type {keyof typeof PASS_SEASON_TEXT} */ (season.id)]?.() ?? season.id));
-      stage.append(ban);
     }
     return stage;
   };
-  /** A ware's tags: its tier, the account line, a pre-alpha ware's mark, a season's, a featured window's. */
+  /** A ware's tags: its tier, the account line, a pre-alpha ware's mark, a featured window's. */
   const tagsOf = (/** @type {any} */ w) => {
     const tags = el('ul', 'sh-tags');
     if (w.tier && w.kind !== 'aurum') tags.append(el('li', `sh-tag sh-tier sh-tier-${w.tier}`, SHOP_TIER_TEXT[/** @type {keyof typeof SHOP_TIER_TEXT} */ (w.tier)]()));   // AURUM: a pack's size is its own mark
     if (w.preAlpha) tags.append(el('li', 'sh-tag sh-tag-pre', t('shop.tag.preAlpha', 'Pre-alpha only')));
-    if (w.season) tags.append(el('li', 'sh-tag sh-tag-season', t('shop.tag.season', 'Season One')));
     tags.append(el('li', 'sh-tag', t('shop.tag.account', 'Every character on your account')));
     return tags;   // a featured window's tag is drawPanel's, as the card moves
   };
@@ -545,126 +507,20 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
     return { panel, parts: { daily, buyrow, state, price, priceN, was, contents, wintag, until, untilKey: '', act: /** @type {any} */ (null), actKey: '', contentsKey: '' } };
   };
 
-  // ── THE BATTLE PASS'S SECTION ──
-  /** The season's banner, the account's progress, the track, the open stage's challenges - over the passes' panels. */
-  const passSection = () => {
-    const season = passSeasonById(f()?.pass?.season) ?? PASS_SEASONS.find((s) => now() < s.toMs) ?? PASS_SEASONS[PASS_SEASONS.length - 1];
-    const card = f()?.pass?.season === season.id ? f().pass : null, nowMs = now();
-    const box = el('section', 'sh-pass');
-    const hero = el('div', 'sh-passhero');
-    hero.append(el('h4', 'sh-passname', PASS_SEASON_TEXT[/** @type {keyof typeof PASS_SEASON_TEXT} */ (season.id)]?.() ?? season.id), el('p', 'sh-passlook', PASS_SEASON_LOOK[/** @type {keyof typeof PASS_SEASON_LOOK} */ (season.id)]?.() ?? ''));
-    const stages = el('ol', 'sh-stages');
-    season.stages.forEach((st, i) => {
-      const state = nowMs >= st.toMs ? 'done' : nowMs >= st.fromMs ? 'open' : 'soon';
-      const li = el('li', `sh-stagechip sh-stage-${state}`);
-      li.append(el('span', 'sh-stagenum', ['I', 'II', 'III'][i] ?? String(i + 1)), el('span', 'sh-stagename', PASS_STAGE_TEXT[/** @type {keyof typeof PASS_STAGE_TEXT} */ (st.key)]?.() ?? st.key),
-        el('span', 'sh-stagewhen', state === 'soon' ? t('shop.pass.opens', 'Opens {day}', { day: dayText(st.fromMs) }) : t('shop.pass.levels', 'Levels to {n}', { n: st.top })));
-      stages.append(li);
-    });
-    hero.append(stages);
-    box.append(hero);
-    if (card) {   // the account's level, its experience to the next, today's, its booster
-      const prog = el('div', 'sh-passprog');
-      const into = card.level >= PASS_LEVELS ? PASS_XP_PER_LEVEL : card.xp - card.level * PASS_XP_PER_LEVEL;
-      const banked = Math.floor(card.xp / PASS_XP_PER_LEVEL) > card.level && card.level >= card.top && card.top < PASS_LEVELS;   // AUDIT-STOREFRONT II (lane B 3): the last stage has no next
-      const bar = el('div', 'sh-xpbar');
-      const fill = el('div', 'sh-xpfill');
-      fill.style.width = `${Math.round(Math.max(0, Math.min(1, into / PASS_XP_PER_LEVEL)) * 100)}%`;
-      bar.append(fill);
-      bar.setAttribute('role', 'progressbar');
-      bar.setAttribute('aria-valuemin', '0'); bar.setAttribute('aria-valuemax', String(PASS_XP_PER_LEVEL)); bar.setAttribute('aria-valuenow', String(Math.min(PASS_XP_PER_LEVEL, into)));
-      bar.setAttribute('aria-label', t('shop.pass.toNext', 'Experience to the next level'));
-      prog.append(el('div', 'sh-passlevel', t('shop.pass.level', 'Level {n} of {max}', { n: card.level, max: PASS_LEVELS })), bar,
-        el('p', 'sh-passline', `${t('shop.pass.today', 'Today: {xp} of {max} experience.', { xp: card.today.toLocaleString(), max: card.dayMax.toLocaleString() })}${card.mult > 1 ? ` ${t('shop.pass.boosted', 'Your booster adds {pct}%.', { pct: Math.round((card.mult - 1) * 100) })}` : ''}${banked ? ` ${t('shop.pass.banked', 'Experience past this stage is kept for the next.')}` : ''}`));
-      box.append(prog);
-    } else box.append(el('p', 'sh-passline', t('shop.pass.signIn', 'Sign in with a username to play the pass. The free track is every account\'s.')));
-    // THE TRACK (AUDIT-STOREFRONT II, lane E 9): a column a level with a reward, the free row over the premium, the rows'
-    // names standing at the left as it scrolls; reached lit, the player's last reward reached marked and scrolled to, the
-    // premium locked without it - each cell said whole to a screen reader
-    const track = el('div', 'sh-track');
-    track.setAttribute('role', 'group');
-    track.setAttribute('aria-label', t('shop.pass.track', 'The track'));
-    const rewards = PASS_REWARDS[/** @type {keyof typeof PASS_REWARDS} */ (season.id)] ?? [];
-    const levels = [...new Set(rewards.map((r) => r.level))], premium = !!card?.tracks?.premium;
-    const here = card ? levels.filter((l) => l <= card.level).pop() ?? null : null;
-    const rowName = { free: t('shop.pass.free', 'Free'), premium: t('shop.pass.premium', 'Premium') };
-    for (const [k, word] of [['level', t('shop.pass.levelWord', 'Level')], ['free', rowName.free], ['premium', rowName.premium]]) {
-      const lab = el('div', `sh-tracklabel sh-tl-${k}`, word);
-      lab.setAttribute('aria-hidden', 'true');
-      track.append(lab);
-    }
-    /** @type {any} */ let hereEl = null;
-    for (const level of levels) {
-      const reached = !!card && card.level >= level;
-      const head = el('div', `sh-tracklevel${reached ? ' sh-reached' : ''}${level === here ? ' sh-here' : ''}`, String(level));
-      head.setAttribute('aria-hidden', 'true');
-      if (level === here) hereEl = head;
-      track.append(head);
-      for (const row of /** @type {const} */ (['free', 'premium'])) {
-        const locked = row === 'premium' && !premium;
-        const cell = el('div', `sh-trackcell sh-track-${row}${reached ? ' sh-reached' : ''}${locked ? ' sh-locked' : ''}`);
-        const said = locked ? t('shop.pass.cellLocked', 'Level {n}, {row}, locked:', { n: level, row: rowName[row] })
-          : reached ? t('shop.pass.cellReached', 'Level {n}, {row}, reached:', { n: level, row: rowName[row] }) : t('shop.pass.cell', 'Level {n}, {row}:', { n: level, row: rowName[row] });
-        cell.append(el('span', 'sh-sr', said));
-        if (locked) cell.append(lockNode());
-        for (const r of rewards.filter((x) => x.level === level && x.track === row)) cell.append(rewardChip(r.grant));
-        track.append(cell);
-      }
-    }
-    box.append(track);
-    if (hereEl) globalThis.requestAnimationFrame?.(() => {   // the player's place on the track, in sight
-      if (!track.isConnected) return;
-      const lab = /** @type {any} */ (track.firstChild);
-      track.scrollLeft = Math.max(0, hereEl.offsetLeft - (lab?.offsetWidth ?? 0) - 8);
-    });
-    const deluxe = PASS_DELUXE[/** @type {keyof typeof PASS_DELUXE} */ (season.id)];
-    if (deluxe) {
-      const d = el('div', 'sh-deluxe');
-      d.append(el('span', 'sh-deluxehead', t('shop.pass.deluxeOwn', 'The Deluxe Pass\'s own, given at once:')));
-      for (const g of deluxe.grants) d.append(rewardChip(g, true));
-      box.append(d);
-    }
-    // THE OPEN STAGE'S CHALLENGES: each its count, its experience, paid once
-    const st = card ? card.stage : season.stages.findIndex((s) => nowMs >= s.fromMs && nowMs < s.toMs);
-    if (st >= 0) {
-      const list = el('ul', 'sh-challenges');
-      list.setAttribute('aria-label', t('shop.pass.challenges', 'This stage\'s challenges'));
-      for (const c of PASS_CHALLENGES.filter((x) => x.stage === st)) {
-        const got = card?.challenges?.find((/** @type {any} */ x) => x.key === c.key);
-        const li = el('li', `sh-challenge${got?.paid ? ' sh-cdone' : ''}`);   // AUDIT-STOREFRONT II (lane E 5): never the foot's payment line's class
-        const meter = el('div', 'sh-cmeter');
-        const fill = el('div', 'sh-cfill');
-        fill.style.width = `${Math.round(Math.min(1, (got?.n ?? 0) / c.n) * 100)}%`;
-        meter.append(fill);
-        li.append(el('span', 'sh-cwhat', passChallengeText(c.key)), meter, el('span', 'sh-ccount', `${(got?.n ?? 0).toLocaleString()} / ${c.n.toLocaleString()}`), el('span', 'sh-cxp', t('shop.pass.xp', '+{xp} experience', { xp: c.xp.toLocaleString() })));
-        list.append(li);
-      }
-      box.append(el('h5', 'sh-subhead', t('shop.pass.challenges', 'This stage\'s challenges')), list);
-    }
-    const boosters = button('sh-toboosts', t('shop.pass.toBoosts', 'Pass Boosters'), () => pick('boosts'));
-    box.append(boosters);
-    return box;
-  };
-  /** A reward's chip: its picture where it has one (AUDIT-STOREFRONT: every kind but a title - wareArtNode), its name and
-   *  kind. `onPage` a chip on a panel's page, not a well's wood: a title's paint inked under the Grimoire. */
-  function rewardChip(/** @type {string} */ grant, onPage = false) {
-    const i = grant.indexOf(':'), kind = grant.slice(0, i), key = grant.slice(i + 1);
-    const chip = el('span', `sh-reward sh-reward-${kind} fx-${kind}-${key}`);
-    const art = wareArtNode(doc, grant, 28, 'sh-rewardart');
-    if (art) chip.append(art);
-    const word = el('span', 'sh-rewardname', passGrantName(grant));
-    if (kind === 'title') { paintTitle(word, titleBadge({ title: key }), false); if (onPage) inkPaintedWord(word, doc); }
-    chip.append(word, el('span', 'sh-rewardkind', passGrantKind(grant)));
-    return chip;
-  }
-  /** A padlock, on a track's cell the pass has not opened. */
-  function lockNode() {
-    const NS = 'http://www.w3.org/2000/svg', svg = doc.createElementNS(NS, 'svg'), p = doc.createElementNS(NS, 'path');
-    for (const [k, v] of Object.entries({ viewBox: '0 0 12 12', class: 'sh-lock', 'aria-hidden': 'true' })) svg.setAttribute(k, v);
-    for (const [k, v] of Object.entries({ d: 'M3 5.5V4a3 3 0 0 1 6 0v1.5h.5a.5.5 0 0 1 .5.5v5a.5.5 0 0 1-.5.5h-7A.5.5 0 0 1 2 11V6a.5.5 0 0 1 .5-.5Zm1.5 0h3V4a1.5 1.5 0 0 0-3 0Z', fill: 'currentColor', 'fill-rule': 'evenodd' })) p.setAttribute(k, v);
-    svg.append(p);
-    return svg;
-  }
+  // ── PASS-PANELS: THE FOLIOS' SECTION (enhancedPass.js), drawn in place as the flow moves ──
+  /** @type {{ nodes: any[], draw: (fl: any) => void }|null} */
+  let passView = null;
+  const passCtx = () => ({
+    flow: f, now, el, button, num, dayText,
+    armed: (/** @type {string} */ id) => armed?.id === id,
+    arm: (/** @type {string|null} */ id) => { armed = id ? { id, at: now() } : null; draw(); },
+    redraw: () => draw(),
+    canGetAurum: () => shopSections(f()).includes('aurum'),
+    toAurum: () => pick('aurum'),
+    wearPress: (/** @type {{ kind: string, key: string }} */ w, /** @type {boolean} */ worn) => actFor(w, { state: 'held', worn }),
+    worn: (/** @type {{ kind: string, key: string }} */ w) => shopWorn(f(), w),
+    keep, reduced,
+  });
 
   // ── AURUM: THE DAILY WARES' AND THE AURUM'S SECTIONS ──
   /** The day's wares' head: when they turn, and the week's deeds - each its Aurum, struck or still to do. */
@@ -695,17 +551,16 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
     if (art) box.append(art);
     const words = el('div', 'sh-aurumwords');
     words.append(el('h4', 'sh-secname', a ? t('shop.aurum.hold', 'Your balance: {n, number} Aurum', { n: a.balance }) : SHOP_CATEGORY_TEXT.aurum()),
-      el('p', 'sh-secline', t('shop.aurum.line', "Aurum buys the daily wares. Earn it on the Battle Pass and from the week's deeds, or buy it here.")),
+      el('p', 'sh-secline', t('shop.aurum.lineFolios', "Aurum buys the daily wares and the Folios' items. Your deeds find it, the week's deeds pay it, and you can buy it here.")),
       el('p', 'sh-secline', t('shop.aurum.rules', 'Aurum has no cash value. It cannot be traded, and it buys no power.')));
     box.append(words);
     return box;
   };
   /** The day's wares the card lists, in its order (each a daily ware once). */
   const dailyWares = (/** @type {any} */ fl) => (fl?.aurum?.daily?.wares ?? []).map((/** @type {any} */ r) => shopWareById(r.id)).filter(Boolean);
-  /** A section's head (the pass's, the day's wares', the Aurum's) and what it is drawn from - drawn again when the account
-   *  read brings another. */
+  /** A section's head (the day's wares', the Aurum's) and what it is drawn from - drawn again when the account read brings
+   *  another. */
   const HEADS = /** @type {Record<string, { build: () => HTMLElement, key: (fl: any) => string }>} */ ({
-    pass: { build: () => passSection(), key: (fl) => JSON.stringify(fl?.pass ?? null) },
     daily: { build: () => dailySection(), key: (fl) => JSON.stringify([fl?.aurum?.daily?.until, fl?.aurum?.week]) },
     aurum: { build: () => aurumSection(), key: (fl) => JSON.stringify([fl?.aurum?.balance]) },
   });
@@ -724,6 +579,8 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
     headKey = h ? h.key(fl) : '';
     dailyKey = dailyWares(fl).map((/** @type {any} */ w) => w.id).join(',');
     if (headNode) panels.append(headNode);
+    passView = cat === 'pass' ? passSection(doc, passCtx()) : null;
+    if (passView) panels.append(...passView.nodes);
     for (const w of waresOf(cat, fl)) {
       const { panel, parts } = panelOf(w, false, cat === 'daily');
       panels.append(panel);
@@ -734,7 +591,7 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
     tabs.textContent = '';
     tabOf.clear();
     for (const c of shopSections(f())) {
-      const n = waresOf(c, f()).length;
+      const n = c === 'pass' ? passItemsIn(passShownSeason(f(), now()).id).length : waresOf(c, f()).length;   // PASS-PANELS: its tracks' items
       const tb = /** @type {HTMLButtonElement} */ (el('button', 'sh-tab'));   // AUDIT-STOREFRONT II (lane E 1): a tab, never the kit's press too
       tb.type = 'button';
       tb.addEventListener('click', () => pick(c));
@@ -847,7 +704,8 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
   /** @type {any} */ (clock)?.unref?.();
   function stopClock() { if (clock != null) globalThis.clearInterval?.(clock); }
 
-  /** A held ware's press: wear it, or take it off (a glyph shown or hidden) - the flow's own, as the account card's. */
+  /** A held ware's press: wear it, or take it off (a glyph shown or hidden) - the flow's own, as the account card's.
+   *  PASS-PANELS: a track's item held is worn the same way. */
   const wear = (/** @type {any} */ w) => {
     const fl = f();
     if (!fl || fl.busy) return;
@@ -901,9 +759,7 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
   const ARM_MS = 6000;
   const STATE_TEXT = Object.freeze({
     held: () => t('shop.state.held', 'Owned'),
-    spent: () => t('shop.state.spent', 'A stronger booster is yours'),   // AUDIT-STOREFRONT S5
     gone: () => t('shop.state.gone', 'No longer sold'),
-    soon: () => t('shop.state.soon', 'On sale when the season opens'),
     closed: () => t('shop.state.closed', 'Not on sale yet'),
     guest: () => t('shop.state.guest', 'Needs a username'),
     out: () => t('shop.state.out', 'Sign in to buy'),
@@ -913,11 +769,11 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
   /** One panel brought up to date: its price (this account's, the list's struck through beside it), its state, its press,
    *  a bundle's contents. */
   const drawPanel = (/** @type {any} */ w, /** @type {any} */ d, /** @type {any} */ fl) => {
-    const st = shopWareState(fl, w, now());
-    const words = st.state === 'soon' && st.opens ? t('shop.state.opens', 'On sale from {day}', { day: dayText(st.opens) }) : STATE_TEXT[/** @type {keyof typeof STATE_TEXT} */ (st.state)]();
+    const st = shopWareState(fl, w);
+    const words = STATE_TEXT[/** @type {keyof typeof STATE_TEXT} */ (st.state)]();
     if (d.state.textContent !== words) d.state.textContent = words;
     d.state.className = 'sh-state sh-state-' + st.state;
-    d.buyrow.className = 'sh-buyrow sh-buyrow-' + st.state;   // AUDIT-STOREFRONT II (lane E 12): held or spent, its price dimmed under its state
+    d.buyrow.className = 'sh-buyrow sh-buyrow-' + st.state;   // AUDIT-STOREFRONT II (lane E 12): held, its price dimmed under its state
     const priceText = shopPriceText(st.cents, intlLocale()), wasText = st.cents < w.cents && st.state !== 'held' ? shopPriceText(w.cents, intlLocale()) : '';
     if (d.price.textContent !== priceText) d.price.textContent = priceText;
     if (d.was.textContent !== wasText) d.was.textContent = wasText;
@@ -942,7 +798,7 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
           if (tag) li.append(tag);
           li.append(el('span', 'sh-contentkind', r.kind));
           if (r.held) li.append(el('span', 'sh-contentheld', t('shop.bundle.held', 'Owned: its price is taken off')));
-          else if (r.part) li.append(el('span', 'sh-contentheld', t('shop.bundle.part', 'Partly owned: its price is less')));   // AUDIT-STOREFRONT S12: a Premium inside the Deluxe
+          else if (r.part) li.append(el('span', 'sh-contentheld', t('shop.bundle.part', 'Partly owned: its price is less')));   // AUDIT-STOREFRONT S12: a giver inside it held in part
           d.contents.append(li);
         }
         d.contentsKey = key;
@@ -994,6 +850,7 @@ export function shopWindow(doc, { flow, onClose, keep = {}, focus = true, previe
     if (sections.join(',') !== [...tabOf.keys()].join(',')) { buildTabs(); if (!sections.includes(cat)) { cat = sections[0] ?? cat; buildPanels(); } }
     if (cat === 'daily' && dailyWares(fl).map((/** @type {any} */ w) => w.id).join(',') !== dailyKey) buildPanels();   // AURUM: the day turned
     for (const [id, d] of drawn) { const w = shopWareById(id); if (w) (d.daily ? drawDaily : drawPanel)(w, d, fl); }
+    passView?.draw(fl);   // PASS-PANELS: the tracks in place - a press keeps its focus
     const h = HEADS[cat], hk = h ? h.key(fl) : '';
     if (headNode && h && hk !== headKey) { const next = h.build(); headNode.replaceWith?.(next); headNode = next; headKey = hk; }   // the card read again: the head on it
     const a = fl?.aurum, showBal = !!a?.open && fl?.stage === 'in';   // AURUM: the balance in the head
@@ -1144,7 +1001,6 @@ export const SHOP_CSS = `
 .px-shopwin .sh-tier-standard { color: #b8d8ff; }
 .px-shopwin .sh-tier-premium { color: #e0b8ff; }
 .px-shopwin .sh-tier-exclusive { color: #ffd27a; }
-.px-shopwin .sh-tag-season { color: #9fdcff; }
 .px-shopwin .sh-tag-featured { color: #ffd27a; }
 .px-shopwin .sh-tag-limited { color: #ffb08f; font-weight: bold; }
 .px-shopwin .sh-until { margin: 0; font-size: 12.5px; color: #ffd27a; }
@@ -1155,13 +1011,12 @@ export const SHOP_CSS = `
 .px-shopwin .sh-price { font-size: 24px; color: #fff4e0; font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
 .px-shopwin .sh-aurumprice { display: inline-flex; align-items: center; gap: 6px; color: #ffe29a; }
 .px-shopwin .sh-aurumprice .sh-coin { width: 22px; height: 22px; }
-.px-shopwin :is(.sh-buyrow-held, .sh-buyrow-spent) .sh-price { font-size: 15px; opacity: 0.6; }
+.px-shopwin .sh-buyrow-held .sh-price { font-size: 15px; opacity: 0.6; }
 .px-shopwin .sh-was { font-size: 15px; color: var(--dim); }
 .px-shopwin .sh-was:empty { display: none; }
 .px-shopwin .sh-state { font-size: 12.5px; color: var(--dim); }
 .px-shopwin .sh-state-held { color: #9fe8b4; font-size: 14px; }
 .px-shopwin .sh-state-short { color: #ffb08f; }
-.px-shopwin .sh-state-soon { color: #9fdcff; }
 .px-shopwin .sh-buy, .px-shopwin .sh-wear, .px-shopwin .sh-getaurum { min-height: 44px; display: inline-flex; align-items: center; padding: 0 18px; text-decoration: none; }
 .px-shopwin .sh-buy { color: #ffe9b8; border-width: 2px; border-style: solid; font-size: 15px; letter-spacing: 0.1em; text-transform: uppercase; }
 .px-shopwin .sh-buy:hover, .px-shopwin .sh-buy:focus-visible { color: #fff6dc; }
@@ -1212,34 +1067,7 @@ export const SHOP_CSS = `
 .px-shopwin .sh-contentkind { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); }
 .px-shopwin .sh-contentheld { font-size: 11.5px; color: #9fe8b4; }
 .px-shopwin .sh-worth { margin: 0; font-size: 12.5px; color: #e2dccd; }
-/* A PASS'S AND A BOOSTER'S STAGE: the season's banner, its own art at its heart */
-.px-shopwin .sh-stage-pass, .px-shopwin .sh-stage-boost { justify-content: stretch; }
-.px-shopwin .sh-seasonart { position: relative; flex: 1; align-self: stretch; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 18px 16px; box-sizing: border-box;
-  background: radial-gradient(circle at 50% 36%, rgba(90,190,255,0.32), rgba(10,9,16,0) 60%), linear-gradient(160deg, #3a2a12, #0d0a05); }
-.px-shopwin .sh-seasonart-s1premium { background: radial-gradient(circle at 50% 36%, rgba(90,190,255,0.34), rgba(10,9,16,0) 60%), linear-gradient(160deg, #1f3a4a, #0a1016); }
-.px-shopwin .sh-seasonart-s1deluxe { background: repeating-conic-gradient(from 0deg at 50% 36%, rgba(255,226,140,0.09) 0 6deg, rgba(0,0,0,0) 6deg 18deg),
-  radial-gradient(circle at 50% 36%, rgba(255,210,122,0.38), rgba(10,9,16,0) 60%), linear-gradient(160deg, #4a3612, #120d06); }
-.px-shopwin .sh-seasonhalo { position: relative; width: 132px; height: 132px; display: grid; place-items: center; }
-.px-shopwin .sh-seasonhalo::before { content: ''; position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle, rgba(90,190,255,0.32), rgba(90,190,255,0) 66%); }
-.px-shopwin .sh-seasonhalo::after { content: ''; position: absolute; inset: 2px; border-radius: 50%; border: 1px dashed rgba(243,215,138,0.5); animation: sh-cog 30s linear infinite; }
-.px-shopwin .sh-seasonart-s1deluxe .sh-seasonhalo::before { background: radial-gradient(circle, rgba(255,210,122,0.45), rgba(255,210,122,0) 66%); }
-.px-shopwin .sh-seasonpic { position: relative; width: 112px; height: 112px; filter: drop-shadow(0 6px 14px rgba(0,0,0,0.75)); }
-.px-shopwin .sh-seasonart-s1cog .sh-seasonpic { animation: sh-cog 16s linear infinite; }
-.px-shopwin .sh-seasonart-s1tonal .sh-seasonhalo::before { animation: sh-ring 2.6s ease-out infinite; }
-.px-shopwin .sh-seasonart-s1heart .sh-seasonpic { animation: sh-beat 1.7s ease-in-out infinite; }
-@keyframes sh-ring { 0% { transform: scale(0.7); opacity: 1; } 100% { transform: scale(1.18); opacity: 0; } }
-@keyframes sh-beat { 0%, 40%, 100% { transform: scale(1); } 15% { transform: scale(1.07); } 28% { transform: scale(1.03); } }
-@keyframes sh-cog { to { transform: rotate(360deg); } }
-.px-shopwin .sh-seasonown { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; width: 100%; max-width: 340px; margin: 4px 0; }
-.px-shopwin .sh-seasonown .sh-reward { align-items: center; text-align: center; gap: 3px; font-size: 11.5px; line-height: 1.15; }
-.px-shopwin .sh-seasonown .sh-rewardart { width: 36px; height: 36px; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.6)); }
-.px-shopwin .sh-seasonown .sh-reward-title .sh-rewardname { font-size: 10.5px; padding: 1px 4px; }
-.px-shopwin .sh-seasonown .sh-rewardkind { display: none; }
-.px-shopwin .sh-seasoncap { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: #c9a55a; }
-.px-shopwin .sh-seasonname { font-size: 22px; letter-spacing: 0.06em; color: #ffe2a8; text-shadow: 0 0 10px rgba(255,190,80,0.5); text-align: center; line-height: 1.15; }
-.px-shopwin .sh-seasondays { font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: #9fdcff; }
-.px-shopwin .sh-boostmult { font-size: 34px; color: #9fdcff; text-shadow: 0 0 12px rgba(90,190,255,0.7); font-variant-numeric: tabular-nums; }
-/* A SECTION'S HEAD: the Battle Pass's season, track and challenges; the day's wares' turn and the week's deeds; the Aurum */
+/* A SECTION'S HEAD: the Folios' season; the day's wares' turn and the week's deeds; the Aurum */
 .px-shopwin :is(.sh-pass, .sh-dailyhead, .sh-aurumhead) { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border-width: 2px; border-style: solid; }
 .px-shopwin .sh-passname, .px-shopwin .sh-secname { margin: 0; font-size: 22px; color: #ffe2a8; letter-spacing: 0.05em; }
 .px-shopwin .sh-passlook, .px-shopwin .sh-secline { margin: 0; font-size: 13.5px; line-height: 1.45; color: #e2dccd; }
@@ -1260,36 +1088,7 @@ export const SHOP_CSS = `
 .px-shopwin .sh-stagenum { font-size: 11px; letter-spacing: 0.18em; color: #d8b56a; }
 .px-shopwin .sh-stagename { font-size: 13.5px; color: #ffe2a8; }
 .px-shopwin .sh-stagewhen { color: var(--dim); }
-.px-shopwin .sh-passprog { display: flex; flex-direction: column; gap: 5px; }
-.px-shopwin .sh-passlevel { font-size: 16px; color: #fff4e0; }
-.px-shopwin .sh-xpbar, .px-shopwin .sh-cmeter { height: 12px; box-sizing: border-box; border-width: 2px; border-style: solid; background-color: rgba(0,0,0,0.5); }
-.px-shopwin .sh-xpfill, .px-shopwin .sh-cfill { height: 100%; background: linear-gradient(90deg, #c89a4a, #f3cf86); }
-.px-shopwin .sh-passline { margin: 0; font-size: 12.5px; color: #e2dccd; }
-/* THE TRACK (AUDIT-STOREFRONT II, lane E 9): a row a track, a column a level; the rows' names stand at the left */
-.px-shopwin .sh-track { position: relative; display: grid; grid-auto-flow: column; grid-template-rows: auto minmax(66px, auto) minmax(66px, auto);
-  grid-auto-columns: 124px; gap: 4px; overflow-x: auto; padding-bottom: 8px; scroll-snap-type: x proximity; overscroll-behavior-x: contain; }
-/* a row's name stands over the cells scrolled under it: the chip's frame on the theme's own ink, never see-through */
-.px-shopwin .sh-tracklabel { position: sticky; left: 0; z-index: 1; display: flex; align-items: center; justify-content: center; padding: 4px 6px;
-  border-width: 1px; border-style: solid; background-image: linear-gradient(var(--ink, #0a0c10), var(--ink, #0a0c10));
-  font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #e2dccd; }
-.px-shopwin .sh-tl-level { color: var(--dim); }
-.px-shopwin .sh-tl-premium { color: #ffd27a; }
-.px-shopwin .sh-tracklevel { text-align: center; font-size: 13px; color: var(--dim); padding: 2px 0 3px; border-bottom: 2px solid rgba(200,154,74,0.35); scroll-snap-align: start; font-variant-numeric: tabular-nums; }
-.px-shopwin .sh-tracklevel.sh-reached { color: #9fdcff; border-bottom-color: #9fdcff; }
-.px-shopwin .sh-tracklevel.sh-here { color: rgb(243,239,44); border-bottom-color: rgb(243,239,44); font-weight: bold; }
-.px-shopwin .sh-tracklevel.sh-here::after { content: ' \\25BE'; }
-.px-shopwin .sh-trackcell { position: relative; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 4px; padding: 5px 6px; border-width: 1px; border-style: solid; }
-.px-shopwin .sh-trackcell.sh-reached:not(.sh-locked) { background-image: linear-gradient(rgba(159,220,255,0.08), rgba(159,220,255,0.08)); }
-.px-shopwin .sh-track-premium .sh-rewardname { color: #ffe9b8; }
-.px-shopwin .sh-locked > .sh-reward { opacity: 0.5; }
-.px-shopwin .sh-lock { position: absolute; top: 4px; right: 4px; width: 12px; height: 12px; color: #c9a55a; }
-.px-shopwin .sh-reward { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; font-size: 12.5px; color: #f4ecd8; }
-.px-shopwin .sh-rewardart { width: 28px; height: 28px; }
-.px-shopwin .sh-rewardkind { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); }
 .px-shopwin .sh-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.px-shopwin .sh-deluxe { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; font-size: 12.5px; color: #ffd27a; }
-.px-shopwin .sh-deluxehead { flex-basis: 100%; }
-.px-shopwin .sh-deluxe .sh-reward { flex: 1 1 150px; flex-direction: row; align-items: center; gap: 8px; }
 .px-shopwin .sh-subhead { margin: 4px 0 0; padding-bottom: 3px; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: #d8b56a; border-bottom-width: 1px; border-bottom-style: solid; }
 /* THE OPEN STAGE'S CHALLENGES: one set of columns for every row (AUDIT-STOREFRONT II, lane E 10) */
 .px-shopwin .sh-challenges { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr) 120px max-content max-content; gap: 6px 10px; }
@@ -1297,8 +1096,7 @@ export const SHOP_CSS = `
 .px-shopwin .sh-cdone .sh-cwhat { color: #9fe8b4; }
 .px-shopwin .sh-cdone .sh-cwhat::before { content: '\\2713  '; }
 .px-shopwin .sh-ccount { font-variant-numeric: tabular-nums; color: var(--dim); text-align: right; }
-.px-shopwin .sh-cxp { font-size: 12px; color: #ffd27a; text-align: right; white-space: nowrap; }
-.px-shopwin .sh-toboosts { align-self: flex-start; min-height: 40px; padding: 0 14px; }
+${PASS_CSS}
 .sh-waretag { display: inline-flex; align-items: center; gap: .35em; }
 .sh-waretag-glyph { width: 1.2em; height: 1.2em; }
 /* NARROW: a panel's words under its stage; a challenge's meter on a row of its own */
@@ -1310,9 +1108,8 @@ export const SHOP_CSS = `
   .px-shopwin .sh-stage-aura, .px-shopwin .sh-stage-armory, .px-shopwin .sh-stage-kill, .px-shopwin .sh-stage-portal { min-height: 240px; }
   .px-shopwin .sh-bigtitle { font-size: min(30px, calc(88cqw / (var(--n, 10) * 0.7))); }
   .px-shopwin .sh-stages { grid-template-columns: 1fr; }
-  .px-shopwin .sh-challenges { grid-template-columns: minmax(0, 1fr) auto; }
+  .px-shopwin .sh-challenges { grid-template-columns: minmax(0, 1fr) auto auto; }
   .px-shopwin .sh-cmeter { grid-column: 1 / -1; grid-row: 2; }
-  .px-shopwin .sh-cxp { display: none; }
   .px-shopwin .sh-tab { font-size: 12.5px; padding: 4px 7px; letter-spacing: 0.06em; }
 }
 /* SHORT (AUDIT-STOREFRONT II, lane E 6): the standing part tighter and the featured stage lower, so a section's tabs and
@@ -1341,17 +1138,21 @@ export const SHOP_CSS = `
   .px-shopwin .sh-slide .sh-look { display: none; }
   .px-shopwin .sh-name { font-size: 18px; }
 }
-/* WIDE: a larger window, the wares two to a row - each its stage over its words - and a section's head across both */
+/* WIDE: a larger window, the wares two to a row - each its stage over its words - and a section's head across both;
+   PASS-PANELS: the folios across both */
 @media (min-width: 1440px) and (min-height: 820px) {
   .px-win.px-shopwin { width: min(1180px, 90vw); height: min(900px, 90dvh); }
   .px-shopwin .sh-panels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; }
-  .px-shopwin .sh-panels > :is(.sh-pass, .sh-dailyhead, .sh-aurumhead) { grid-column: 1 / -1; }
+  .px-shopwin .sh-panels > :is(.sh-pass, .sh-dailyhead, .sh-aurumhead, .sh-folios, .sh-pchal) { grid-column: 1 / -1; }
+  .px-shopwin .sh-pitems { --card: 164px; }
+  .px-shopwin .sh-pitempic { height: 104px; }
+  .px-shopwin .sh-pitemart { width: 76px; height: 76px; }
   .px-shopwin .sh-panels > .sh-panel { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
   .px-shopwin .sh-slide { grid-template-columns: minmax(360px, 1.3fr) 1fr; }
   .px-shopwin .sh-slide .sh-stage { min-height: 340px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .px-shopwin .sh-slidein, .px-shopwin .sh-seasonpic, .px-shopwin .sh-seasonhalo::before, .px-shopwin .sh-seasonhalo::after { animation: none; }
+  .px-shopwin .sh-slidein { animation: none; }
 }
 :root[data-plus-theme="stone"] .px-shopwin { --dim: #e2dccd; text-shadow: 1px 1px 0 rgba(5,6,8,0.85); }
 `;

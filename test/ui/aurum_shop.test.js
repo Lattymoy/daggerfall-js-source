@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import { SHOP_WARES, shopWareById } from '../../src/net/shopLaw.js';
 import { aurumCardOf, aurumDailyOf, aurumPriceOf, AURUM_DEEDS } from '../../src/net/aurumLaw.js';
 import { shopWindow, shopSections, shopDailyState, aurumTurnsText } from '../../src/ui/enhanced/enhancedShop.js';
+import { passItemsIn } from '../../src/ui/enhanced/enhancedPass.js';
 import { AccountFlow } from '../../src/ui/accountFlow.js';
 import { SESSION_KEY } from '../../src/net/accountClient.js';
 
@@ -47,11 +48,11 @@ const flowIn = (extra = {}) => ({ stage: 'in', account: { handle: 'Aelwyn', kind
 const win = (flow, keep = {}) => shopWindow(fakeDoc(), { flow: () => flow, onClose() {}, keep, focus: false, now: () => Date.now(), preview: async () => null, effectPreview: async () => null });
 
 test('AURUM the sections: the day\'s wares after the pass while Aurum is open, with none or closed not shown; the Aurum\'s packs last; the icons never a section of their own (mutants: daily shown closed; daily first)', () => {
-  assert.deepEqual(shopSections(flowIn()), ['pass', 'daily', 'kills', 'portals', 'mounts', 'names', 'auras', 'armory', 'bundles', 'boosts', 'aurum']);
+  assert.deepEqual(shopSections(flowIn()), ['pass', 'daily', 'kills', 'portals', 'mounts', 'names', 'auras', 'armory', 'bundles', 'aurum']);   // PIN MOVED (PASS-PANELS): no boosters
   assert.ok(!shopSections(flowIn({ aurum: aurumCardOf({ open: false, balance: 0, daily: { until: 1, wares: WARES.map((id) => ({ id })) } }) })).includes('daily'), 'closed: never, its wares or not');
   assert.ok(!shopSections(flowIn({ aurum: null })).includes('daily'));
   const w = win(flowIn());
-  assert.deepEqual(all(w.root, 'sh-tab').map((t) => t.textContent).slice(0, 2), ['Battle Pass2', 'Daily Wares5']);
+  assert.deepEqual(all(w.root, 'sh-tab').map((t) => t.textContent).slice(0, 2), [`Folios${passItemsIn('s1').length}`, 'Daily Wares5']);   // PIN MOVED (PASS-PANELS): the Folios
   w.stop();
 });
 

@@ -198,15 +198,6 @@
     ]
   },
   {
-    "name": "AUDIT-STOREFRONT-twenty-written",
-    "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "{ n: PASS_REWARDS.s1.filter((r) => r.track === 'premium').length }),   // AUDIT-STOREFRONT S11",
-    "new": "{ n: 20 }),   // AUDIT-STOREFRONT S11",
-    "tests": [
-      "test/ui/storefront_audit_window.test.js"
-    ]
-  },
-  {
     "name": "AUDIT-STOREFRONT-a-window-told-beside-no-sale",
     "file": "src/ui/enhanced/enhancedShop.js",
     "old": "win = row?.until && row.sale ? row : null;",
@@ -229,15 +220,6 @@
     "file": "src/ui/enhanced/enhancedShop.js",
     "old": "held, part: !held && shopClosure(id).some((x) => x !== id && shopHeldAny(flow, x)) };",
     "new": "held, part: false };",
-    "tests": [
-      "test/ui/storefront_audit_window.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-STOREFRONT-a-spent-booster-offered",
-    "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "  if (row?.spent) return { state: 'spent', buy: null, cents };   // AUDIT-STOREFRONT S5: a stronger booster held\n",
-    "new": "",
     "tests": [
       "test/ui/storefront_audit_window.test.js"
     ]

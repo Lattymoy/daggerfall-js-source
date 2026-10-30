@@ -28,8 +28,9 @@ import { professionName } from '../../net/professionLaw.js';
 import { SHOP_WARES, shopWareById, shopPriceText, shopClosure } from '../../net/shopLaw.js';   // SHOP: a ware's price, the shop's own
 import { ARMORY_KEYS, ARMORY_PIECES, armoryPieceOf, armoryKitPieces } from '../../net/armoryLaw.js';   // ARMORY: the Aura Armory's pieces and the kit worn
 import { ARMORY_LOOK, armoryPieceName } from '../armoryText.js';
-import { PASS_REWARDS, PASS_DELUXE, passSeasonById } from '../../net/battlePassLaw.js';   // STOREFRONT: a pass reward's level and track, and its season's days
+import { PASS_SEASONS, passItemOf, passSeasonById, passTracksOpen } from '../../net/battlePassLaw.js';   // PASS-PANELS: a pass item's track, panel and price, and when its tracks open
 import { aurumPriceOf } from '../../net/aurumLaw.js';   // AURUM: a daily ware's price in Aurum
+import { passPanelNumeral, passFolioName } from '../passText.js';
 import { EFFECT_SLOTS, EFFECTS } from '../../net/effectLaw.js';   // AUDIT-STOREFRONT II (lane E 8): the effects' words of how
 
 /** The kinds, in the Collections page's order, and the wardrobe's list that holds each (accountFlow.js wardrobe) - ARMORY:
@@ -50,7 +51,7 @@ export const WARDROBE_SOURCES = Object.freeze([
   wordPair('hunt', () => t('coll.src.hunt', 'The Hunt')),   // HUNTERS-MARK: the bounty boards' clears
   wordPair('mastery', () => t('coll.src.mastery', 'Marks of Mastery')),   // MARKS-OF-MASTERY: a profession's Master
   wordPair('festival', () => t('coll.src.festival', 'The Witches’ Festival')),
-  wordPair('pass', () => t('coll.src.pass', 'The Battle Pass')),   // STOREFRONT: a season's track
+  wordPair('pass', () => t('coll.src.folios', 'The Folios')),   // STOREFRONT: a season's track; PASS-PANELS: its folios
   wordPair('seats', () => t('coll.src.seats', 'The Seats')),
   wordPair('chapters', () => t('coll.src.chapters', 'The Guild Chapters')),
   wordPair('ranked', () => t('coll.src.ranked', 'The Arena and the Card Tables')),
@@ -97,7 +98,7 @@ export const AVAIL_TAG = Object.freeze({
   retired: () => t('coll.avail.retired', 'No longer obtainable'),
   shop: () => t('coll.avail.shop', 'In the shop'),
   store: () => t('coll.avail.shop', 'In the shop'),
-  pass: () => t('coll.avail.pass', 'Battle Pass'),
+  pass: () => t('coll.avail.folios', 'Folios'),
   daily: () => t('coll.avail.daily', 'Daily wares'),
 });
 /** Each availability in a sentence (the row opened whole). `date` the open festival's last day, in words. */
@@ -116,7 +117,7 @@ export const AVAIL_LINE = Object.freeze({
   retired: () => t('coll.availLine.retired', 'It can no longer be obtained. Those who hold it keep it.'),
   shop: () => t('coll.availLine.shop', 'Sold in the shop during the pre-alpha only. Those who buy it keep it.'),
   store: () => t('coll.availLine.store', 'Sold in the shop. Those who buy it keep it.'),
-  pass: () => t('coll.availLine.pass', 'Earned on the Battle Pass while its season runs. Those who earn it keep it.'),
+  pass: () => t('coll.availLine.folios', 'Bought with Aurum from the Folios. They never close, and those who buy it keep it.'),
   daily: () => t('coll.availLine.daily', 'Sold for Aurum in the shop’s daily wares when it comes round. Those who buy it keep it.'),
 });
 
@@ -143,16 +144,16 @@ const daily = (/** @type {string} */ id) => () => t('coll.how.daily', 'Buy it fo
 const shopOrDaily = (/** @type {string} */ id) => () => t('coll.how.shopOrDaily', 'Buy it from the shop, the gem on the pause screen, for {price}, or for {aurum, number} Aurum in the daily wares. All proceeds go to the costs of developing DFO Online.', { price: shopPriceText(shopWareById(id)?.cents ?? 0, intlLocale()), aurum: aurumPriceOf(id) });
 /** STOREFRONT: a ware the shop sells only inside its bundles (net/shopLaw.js `alone` false). */
 const bundled = () => t('coll.how.bundle', 'Comes only in a bundle from the shop, the gem on the pause screen. All proceeds go to the costs of developing DFO Online.');
-/** STOREFRONT: a Battle Pass reward's words of how - its level and its track, or the Deluxe Pass that gives it, read off
- *  the season's own law (net/battlePassLaw.js PASS_REWARDS, PASS_DELUXE). */
+/** PASS-PANELS: a folio's item's words of how - its folio, its page and its price in Aurum, read off the season's own
+ *  law (net/battlePassLaw.js PASS_PANELS). */
 const passReward = (/** @type {string} */ grant) => () => {
-  for (const rewards of Object.values(PASS_REWARDS)) {
-    const r = rewards.find((x) => x.grant === grant);
-    if (r) return r.track === 'free'
-      ? t('coll.how.passFree', 'Reach level {level} of the Battle Pass in its season. Its free track gives it to every registered account.', { level: r.level })
-      : t('coll.how.passPremium', 'Reach level {level} of the Battle Pass in its season, on the premium track that the Premium or the Deluxe Pass opens.', { level: r.level });
+  for (const { id } of PASS_SEASONS) {
+    const at = passItemOf(id, grant);
+    if (at) return at.track === 'free'
+      ? t('coll.how.folioFree', 'On page {page} of {folio}, for {aurum, number} Aurum. Open the Folios in the shop, the gem on the pause screen.', { page: passPanelNumeral(at.panel), folio: passFolioName(id, at.track), aurum: at.aurum })
+      : t('coll.how.folioGilded', 'On page {page} of {folio}, for {aurum, number} Aurum, once that folio is unlocked. Open the Folios in the shop, the gem on the pause screen.', { page: passPanelNumeral(at.panel), folio: passFolioName(id, at.track), aurum: at.aurum });
   }
-  return Object.values(PASS_DELUXE).some((d) => d.grants.includes(grant)) ? t('coll.how.passDeluxe', 'Comes with the Deluxe Pass, bought from the shop, the gem on the pause screen, while its season runs.') : '';
+  return '';
 };
 /** STOREFRONT: Season One's - its availability read against its days (wardrobeAvail). */
 const S1 = Object.freeze({ season: 's1' });
@@ -283,7 +284,7 @@ export const WARDROBE = Object.freeze({
     ...MASTERS,   // MARKS-OF-MASTERY: a profession's Master each
     serpenthunter: E('serpent', 'open', sea('serpenthunter')),   // MARKS-OF-MASTERY: sailing's, off the relay's serpent receipts
     deepbane: E('serpent', 'open', sea('deepbane')),
-    // STOREFRONT: the shop's three name visuals (AURUM: and the daily wares'), Season One's two and the Deluxe Pass's own
+    // STOREFRONT: the shop's three name visuals (AURUM: and the daily wares'), and Season One's three on its tracks
     dawnbringer: E('shop', 'store', shopOrDaily('title:dawnbringer')),
     voidwalker: E('shop', 'store', shopOrDaily('title:voidwalker')),
     eternalchampion: E('shop', 'store', shopOrDaily('title:eternalchampion')),
@@ -308,7 +309,7 @@ export const WARDROBE = Object.freeze({
     witchfire: E('festival', 'seasonal', wyrd('aura:witchfire'), { look: () => t('coll.look.witchfire', 'A coven’s green fire round your feet, tallow candles burning in its ring.') }),
     sagesmoke: E('bestowed', 'bestowed', bestowed, { with: ['title:nirnrootsage', 'glyph:nirnrootsage'], look: () => t('coll.look.sagesmoke', 'Smoke billowing about you, nirnroots circling your waist and small green runes glowing round your feet.') }),
     eternal: E('shop', 'shop', shop('aura:eternal'), { look: () => t('coll.look.eternal', 'A cape of blue-violet fire on your back, flowing as you move, wisps of flame trailing behind you.') }),   // SHOP
-    // STOREFRONT: the bundles' Dominion, and the Battle Pass's coil and its gilded twin
+    // STOREFRONT: the bundles' Dominion, and the Folios' coil and its gilded twin
     dominion: E('shop', 'store', bundled, { look: () => t('coll.look.dominion', 'A ring of Daedric script burning crimson on black at your feet, black thorns out from it and embers rising.') }),
     aetherium: E('pass', 'pass', passReward('aura:aetherium'), { ...S1, look: () => t('coll.look.aetherium', 'A coil of aetherium-blue light wound with brass, turning about you from your feet to over your head.') }),
     gildedcoil: E('pass', 'pass', passReward('aura:gildedcoil'), { ...S1, look: () => t('coll.look.gildedcoil', 'The Aetherium Coil gilded and brighter, gold motes rising through it.') }),
@@ -351,9 +352,9 @@ export const WARDROBE = Object.freeze({
     wikimaid: E('bestowed', 'bestowed', bestowed, { with: ['title:wikimaid', 'aura:lilacwarren'] }),
     nirnrootsage: E('bestowed', 'bestowed', bestowed, { with: ['title:nirnrootsage', 'aura:sagesmoke'] }),
     origin: E('shop', 'shop', shop('glyph:origin')),   // SHOP: the pre-alpha glyph, the ouroboros dragon
-    oblivion: E('shop', 'store', bundled),   // STOREFRONT: the bundles' three, and the Battle Pass's two
+    oblivion: E('shop', 'store', bundled),   // STOREFRONT: the bundles' two, and the Folios' three
     gatesigil: E('shop', 'store', bundled),
-    gearcrown: E('shop', 'store', bundled),
+    gearcrown: E('pass', 'pass', passReward('glyph:gearcrown'), S1),   // PASS-PANELS: the premium track's, its bundle retired
     tonalfork: E('pass', 'pass', passReward('glyph:tonalfork'), S1),
     cog: E('pass', 'pass', passReward('glyph:cog'), S1),
   }),
@@ -420,11 +421,11 @@ export function wardrobeCount(/** @type {string} */ kind, /** @type {any} */ war
 }
 
 /** THE AVAILABILITY NOW: a seasonal entry's resolved against the festival's dates (net/festivalLaw.js FESTIVALS), a pass
- *  reward's against its season's (net/battlePassLaw.js PASS_SEASONS). */
+ *  item's against its season's first day (net/battlePassLaw.js passTracksOpen - its tracks never close). */
 export function wardrobeAvail(/** @type {{ avail: string, season?: string, kind?: string, key?: string }} */ e, nowMs = Date.now(), /** @type {any} */ shop = null) {
-  if (e.avail === 'pass') {   // STOREFRONT: a season's - not yet before its days, gone after them
+  if (e.avail === 'pass') {   // PASS-PANELS: a season's - not yet before its first day, then for good
     const s = passSeasonById(e.season);
-    return !s || nowMs >= s.toMs ? 'retired' : nowMs < s.fromMs ? 'dormant' : 'pass';
+    return !s ? 'retired' : passTracksOpen(s, nowMs) ? 'pass' : 'dormant';
   }
   if (e.avail === 'store' && Array.isArray(shop?.wares)) return storeAvail(`${e.kind}:${e.key}`, shop.wares);
   if (e.avail !== 'seasonal') return e.avail;

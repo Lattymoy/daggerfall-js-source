@@ -20,7 +20,7 @@
   {
     "name": "AUDIT-STOREFRONT-II-E1-shop-role-dropped",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "'.px-shopwin .sh-deed', '.px-shopwin .sh-tracklabel'],",
+    "old": "'.px-shopwin .sh-deed', '.px-shopwin .sh-pspent'],",
     "new": "'.px-shopwin .sh-deed'],",
     "tests": [
       "test/ui/storefront_audit2_window.test.js"
@@ -82,28 +82,10 @@
     ]
   },
   {
-    "name": "AUDIT-STOREFRONT-II-E3-deluxe-title-never-inked",
-    "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "if (onPage) inkPaintedWord(word, doc);",
-    "new": "",
-    "tests": [
-      "test/ui/storefront_audit2_window.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-STOREFRONT-II-E3-track-title-inked-on-wood",
-    "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "for (const r of rewards.filter((x) => x.level === level && x.track === row)) cell.append(rewardChip(r.grant));",
-    "new": "for (const r of rewards.filter((x) => x.level === level && x.track === row)) cell.append(rewardChip(r.grant, true));",
-    "tests": [
-      "test/ui/storefront_audit2_window.test.js"
-    ]
-  },
-  {
     "name": "AUDIT-STOREFRONT-II-E5-challenge-paid-class",
-    "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "const li = el('li', `sh-challenge${got?.paid ? ' sh-cdone' : ''}`);",
-    "new": "const li = el('li', `sh-challenge${got?.paid ? ' sh-paid' : ''}`);",
+    "file": "src/ui/enhanced/enhancedPass.js",
+    "old": "const li = el('li', `sh-challenge${got?.paid ? ' sh-cdone' : ''}`)",
+    "new": "const li = el('li', `sh-challenge${got?.paid ? ' sh-paid' : ''}`)",
     "tests": [
       "test/ui/storefront_audit2_window.test.js",
       "test/ui/shop_window.test.js"
@@ -112,28 +94,10 @@
   {
     "name": "AUDIT-STOREFRONT-II-E12-held-price-full",
     "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "    d.buyrow.className = 'sh-buyrow sh-buyrow-' + st.state;   // AUDIT-STOREFRONT II (lane E 12): held or spent, its price dimmed under its state",
+    "old": "    d.buyrow.className = 'sh-buyrow sh-buyrow-' + st.state;   // AUDIT-STOREFRONT II (lane E 12): held, its price dimmed under its state",
     "new": "",
     "tests": [
       "test/ui/storefront_audit2_window.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-STOREFRONT-II-E9-here-unmarked",
-    "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "const here = card ? levels.filter((l) => l <= card.level).pop() ?? null : null;",
-    "new": "const here = null;",
-    "tests": [
-      "test/ui/shop_window.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-STOREFRONT-II-E9-locked-unsaid",
-    "file": "src/ui/enhanced/enhancedShop.js",
-    "old": "        if (locked) cell.append(lockNode());",
-    "new": "",
-    "tests": [
-      "test/ui/shop_window.test.js"
     ]
   },
   {
@@ -150,15 +114,6 @@
     "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "  .card .slots-picker { order: -1; margin: 8px 0 12px; }",
     "new": "  .card .slots-picker { margin: 8px 0 12px; }",
-    "tests": [
-      "test/ui/storefront_audit2_window.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-STOREFRONT-II-B3-banked-past-the-last-stage",
-    "file": "src/ui/enhanced/enhancedShop.js",
-    "old": " && card.level >= card.top && card.top < PASS_LEVELS;",
-    "new": " && card.level >= card.top;",
     "tests": [
       "test/ui/storefront_audit2_window.test.js"
     ]

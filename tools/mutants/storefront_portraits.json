@@ -63,15 +63,6 @@
     ]
   },
   {
-    "name": "AUDIT-STOREFRONT-the-season-art-unread",
-    "file": "src/ui/wareArt.js",
-    "old": "  const [kind, key] = season ?? [id.slice(0, i), id.slice(i + 1)];",
-    "new": "  const [kind, key] = [id.slice(0, i), id.slice(i + 1)];",
-    "tests": [
-      "test/ui/storefront_badges.test.js"
-    ]
-  },
-  {
     "name": "AUDIT-STOREFRONT-the-body-never-handed-on",
     "file": "src/ui/enhanced/enhancedShop.js",
     "old": "effectPreview(c, w.kind, w.key, cueOf(w.id), bodyOf)",

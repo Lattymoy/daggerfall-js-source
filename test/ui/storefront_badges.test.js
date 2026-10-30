@@ -14,11 +14,11 @@ import {
 import { flameSheetPixels, flameFramePixels, PLATE_PAINTERS } from '../../src/ui/titleFlame.js';
 import { ICON_TEXT, ICON_ART, ICON_MATERIALS, profileIconNode } from '../../src/ui/profileIcons.js';
 import { EMBLEM_ART, effectEmblemNode } from '../../src/ui/effectEmblems.js';   // AUDIT-STOREFRONT
-import { wareArtNode, SEASON_WARE_ART } from '../../src/ui/wareArt.js';
+import { wareArtNode } from '../../src/ui/wareArt.js';
 import { EFFECTS } from '../../src/net/effectLaw.js';
 import { effectName } from '../../src/ui/effectText.js';
 import { SHOP_WARES } from '../../src/net/shopLaw.js';
-import { PASS_REWARDS, PASS_DELUXE } from '../../src/net/battlePassLaw.js';
+import { PASS_ALL_GRANTS } from '../../src/net/battlePassLaw.js';
 import { GLYPH_LABEL } from '../../src/ui/enhanced/enhancedAccount.js';
 import {
   AURA_LOOK, AURA_FS, AURA_GROUND_R, auraPrograms, DOMINION_R, DOMINION_BAND_M, DOMINION_RUNES, DOMINION_SCRIPT, DOMINION_RGB, dominionRatesWhole,
@@ -141,7 +141,7 @@ test('STOREFRONT the plates: each sheet whole, its gutter clear, the same on eve
 test('STOREFRONT the glyphs: each a path in its 16-unit box, a classic mark of its own inside the font, its label on the card, a colour, filled or stroked as drawn, its details inside the box and drawn over it (mutants: a mark another glyph has; a detail lost; the sigil filled)', () => {
   assert.deepEqual(GLYPHS.slice(-5), NEW_GLYPHS);
   assert.deepEqual(NEW_GLYPHS.map((g) => GLYPH_LABEL[g]), ['Oblivion Sigil', 'Gate Sigil', 'Brass Crown', 'Tonal Fork', 'Dwemer Cog']);
-  for (const g of ['oblivion', 'gatesigil', 'gearcrown']) assert.equal(SHOP_WARE_NAME[`glyph:${g}`], GLYPH_LABEL[g], `${g}: the receipt's word is the card's`);
+  for (const g of ['oblivion', 'gatesigil']) assert.equal(SHOP_WARE_NAME[`glyph:${g}`], GLYPH_LABEL[g], `${g}: the receipt's word is the card's`);   // PIN MOVED (PASS-PANELS): the Brass Crown a folio's now, no receipt names it
   const marks = Object.values(GLYPH_MARK);
   for (const g of NEW_GLYPHS) {
     const m = GLYPH_MARK[g];
@@ -247,12 +247,12 @@ test('AUDIT-STOREFRONT the effects\' emblems and every ware\'s picture: an emble
   assert.equal(effectEmblemNode(doc, 'kill', 'nope'), null);
   assert.equal(effectEmblemNode({}, 'kill', 'pyre'), null);
   const pieces = [...new Set(SHOP_WARES.filter((w) => w.kind === 'bundle').flatMap((w) => w.gives))];
-  const rewards = [...new Set(Object.values(PASS_REWARDS).flat().map((r) => r.grant).concat(Object.values(PASS_DELUXE).flatMap((d) => d.grants)))];
-  for (const id of [...pieces, ...rewards, 'boost:s1cog', 'boost:s1tonal', 'boost:s1heart', 'pass:s1premium', 'pass:s1deluxe']) {
+  const rewards = PASS_ALL_GRANTS;   // PIN MOVED (PASS-PANELS): every item a folio holds - no booster or pass is sold any more
+  for (const id of [...pieces, ...rewards]) {
     const art = wareArtNode(doc, id, 48, 'x');
     assert.ok(art && art.tag === 'svg', `${id}: its picture`);
     assert.equal(art.attrs['aria-hidden'], 'true', `${id}: the name beside it says it`);
-    if (/^(glyph|aura|title):/.test(id) && !SEASON_WARE_ART[id]) assert.ok(art.children.length >= 6 && art.children[2].children.length === 2, `${id}: in its medallion - its mark over the field, in the gold bezel`);   // PIN MOVED (AUDIT-STOREFRONT II): the icons' bezel
+    if (/^(glyph|aura|title):/.test(id)) assert.ok(art.children.length >= 6 && art.children[2].children.length === 2, `${id}: in its medallion - its mark over the field, in the gold bezel`);   // PIN MOVED (AUDIT-STOREFRONT II): the icons' bezel
   }
   assert.equal(wareArtNode(doc, 'bundle:portalmaster'), null, 'a bundle is its pieces');
 });
