@@ -20,16 +20,15 @@ const world = () => {
   places.register('tesa', [{ mapId: 9000, name: 'Skyrim town', px: 1500, py: -400, type: 0, area: areaOfDistrict(3, cx, cy) }]);
   const stood = new Map(BAY.map((r) => [r.mapId, loc([r.mapId === 105 ? 'GONE01.RMB' : 'AAA.RMB'])]));
   const queue = [];
-  const warned = [];
   let stands = 0;
   const host = createAtlasHost({
     places, blocks: BLOCKS,
     standing: (p) => stood.get(p.mapId) ?? null,
     stand: (p) => { stands++; return stood.get(p.mapId) ?? (p.mapId === 9000 ? loc(['TESAOPEN.RMB']) : null); },
-    schedule: (fn) => queue.push(fn), log: { warn: (...a) => warned.push(a.join(' ')) },
+    schedule: (fn) => queue.push(fn),
   });
   const drain = () => { let n = 0; while (queue.length) { queue.shift()(); n++; } return n; };
-  return { places, host, drain, warned, stands: () => stands };
+  return { places, host, drain, stands: () => stands };
 };
 
 test('F1 host: a bundle is made when first asked, from the location the host would stand - the Bay\'s and a place past the Bay alike - and kept; one no location answers is null (mutants: the stand asked every time, the keep)', () => {
@@ -62,19 +61,25 @@ test('F1 host: a provider that moves starts a new atlas - a bundle is never answ
 });
 
 test(`F1 host: the check walks every listed place in slices of ${ATLAS_SLICE} at idle, keeps no bundle, and tells the console once of a block that serves nothing - a place not yet stood counted, not told (mutants: one slice, the warning unsaid, the unlocated told)`, async () => {
-  const { host, drain, warned } = world();
-  const done = host.check();
-  assert.equal(host.report(), null, 'nothing is checked before the idle');
-  assert.equal(drain(), Math.ceil(1201 / ATLAS_SLICE));
-  const report = await done;
+  const { host, drain } = world();
+  const warned = [];
+  const warn = console.warn;
+  console.warn = (...a) => warned.push(a.join(' '));
+  let report;
+  try {
+    const done = host.check();
+    assert.equal(host.report(), null, 'nothing is checked before the idle');
+    assert.equal(drain(), Math.ceil(1201 / ATLAS_SLICE));
+    report = await done;
+  } finally { console.warn = warn; }
   assert.deepEqual(report, { checked: 1201, unlocated: 1, problems: [{ place: 105, part: 'exterior', name: 'GONE01.RMB', why: 'unresolved' }] });
   assert.deepEqual(warned, ['[atlas] 1 block reference(s) serve nothing: GONE01.RMB (exterior of place 105)']);
   assert.equal(host.atlas().counts().places, 0, 'the check\'s bundles are its own');
   assert.ok(ATLAS_SAID >= 1);
 });
 
-test('F1 host: the streaming world wires it - the places host makes it over the registry, the blocks and the index, and checks when the world-data door serves edits (scenes/tamrielPlacesHost.js)', () => {
+test('F1 host: the streaming world wires it - the places host makes it over the registry (none without one), the blocks and the index, and checks when the world-data door serves edits (scenes/tamrielPlacesHost.js)', () => {
   const src = readFileSync(new URL('../../src/scenes/tamrielPlacesHost.js', import.meta.url), 'utf8');
-  assert.match(src, /const worldAtlas = createAtlasHost\(\{ places: worldPlaces, blocks, standing: /);
-  assert.match(src, /if \(worldDataDoorOpen\(\)\) worldAtlas\.check\(\);/);
+  assert.match(src, /const worldAtlas = worldPlaces \? createAtlasHost\(\{ places: worldPlaces, blocks, standing: /);
+  assert.match(src, /if \(worldAtlas && worldDataDoorOpen\(\)\) worldAtlas\.check\(\);/);
 });

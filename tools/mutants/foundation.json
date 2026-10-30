@@ -177,7 +177,7 @@
   {
     "name": "F1-host-unwired",
     "file": "src/scenes/tamrielPlacesHost.js",
-    "old": "  if (worldDataDoorOpen()) worldAtlas.check();\n",
+    "old": "  if (worldAtlas && worldDataDoorOpen()) worldAtlas.check();\n",
     "new": "",
     "tests": [
       "test/scenes/atlashost.test.js"

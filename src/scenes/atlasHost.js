@@ -17,11 +17,11 @@ const idle = (/** @type {() => void} */ fn) => (typeof globalThis.requestIdleCal
 
 /**
  * @param {{ places: any, blocks: { checkName: (n: string) => string, getBlockIndex: (n: string) => number, count: number }, standing: (p: any) => any, stand?: (p: any) => any,
- *   schedule?: (fn: () => void) => unknown, log?: { warn: (...a: any[]) => void } }} o - `places` the registry
+ *   schedule?: (fn: () => void) => unknown }} o - `places` the registry
  *   (world/worldWide/worldPlaces.js); `standing` the location the host already holds for a place (no side effect), `stand`
  *   the one it would stand on asking (a place past the Bay cloned and indexed) - `standing` when not given
  */
-export function createAtlasHost({ places, blocks, standing, stand = standing, schedule = idle, log = console }) {
+export function createAtlasHost({ places, blocks, standing, stand = standing, schedule = idle }) {
   const resolveBlock = servedBlockOf(blocks);
   let atlas = createAtlas({ resolveBlock });
   let generation = places.generation();
@@ -63,8 +63,7 @@ export function createAtlasHost({ places, blocks, standing, stand = standing, sc
         report = { checked: list.length, unlocated, problems: scratch.problems().filter((q) => q.why === 'unresolved') };
         checking = false;
         if (report.problems.length) {
-          const said = report.problems.slice(0, ATLAS_SAID).map((q) => `${q.name} (${q.part} of place ${q.place})`).join(', ');
-          log.warn(`[atlas] ${report.problems.length} block reference(s) serve nothing: ${said}`);
+          console.warn(`[atlas] ${report.problems.length} block reference(s) serve nothing: ${report.problems.slice(0, ATLAS_SAID).map((q) => `${q.name} (${q.part} of place ${q.place})`).join(', ')}`);
         }
         done(report);
       };

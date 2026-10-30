@@ -477,7 +477,7 @@ export function createTamrielPlaces(host) {
   /** FOUNDATION F1 (scenes/atlasHost.js): the world's places whole - a place's bundle off the location the host holds
    *  for it (the Bay's in the index, a place past the Bay as the build stands it); checked once at idle where the door
    *  serves edits. */
-  const worldAtlas = createAtlasHost({ places: worldPlaces, blocks, standing: (p) => locationIndex.get(`${p.px},${p.py}`) ?? null, stand: (p) => locationIndex.get(`${p.px},${p.py}`) ?? standAt(p.px, p.py) });
-  if (worldDataDoorOpen()) worldAtlas.check();
+  const worldAtlas = worldPlaces ? createAtlasHost({ places: worldPlaces, blocks, standing: (p) => locationIndex.get(`${p.px},${p.py}`) ?? null, stand: (p) => locationIndex.get(`${p.px},${p.py}`) ?? standAt(p.px, p.py) }) : null;
+  if (worldAtlas && worldDataDoorOpen()) worldAtlas.check();
   return { _tamrielRoads, arenaLocationAt, arenaWarm, capitalLocationAt, countryLocationAt, lairLocationAt, nearestTownOf, provinceQuestPlaces, registerTamrielPlaces, startLairAt, tamrielPlaceName, worldAtlas };
 }
