@@ -33,7 +33,8 @@ const REASON_LABELS = Object.freeze({
   other: () => t('net.safety.reasonOther', 'Something else'),
 });
 /** A reason in the player's language. @param {string} r */
-export const reportReasonLabel = (r) => (Object.hasOwn(REASON_LABELS, r) ? REASON_LABELS[/** @type {keyof typeof REASON_LABELS} */ (r)]() : r);
+export const reportReasonLabel = (r) =>
+  Object.hasOwn(REASON_LABELS, r) ? REASON_LABELS[/** @type {keyof typeof REASON_LABELS} */ (r)]() : r;
 /** The most lines one report carries: the reported player's and the lines around them. */
 export const REPORT_LINES_MAX = 16;
 /** How old a line may be when it is reported, ms - a session's chat, not last week's. */
@@ -74,16 +75,19 @@ export function reportShape(body, nowMs) {
   /** @type {{tab: string, sub: string, name: string, at: number, text: string, sg: string}[]} */
   const out = [];
   const seen = new Set();
-  let theirsOut = false;   // AUDIT SAFE CLIENT-5: a line of the reported account's left out for its age
+  let theirsOut = false; // AUDIT SAFE CLIENT-5: a line of the reported account's left out for its age
   for (const l of lines) {
     if (!stampableLine(l) || typeof l.sg !== 'string' || !STAMP_RE.test(l.sg)) return { error: 'report-shape' };
-    if (nowMs - l.at > REPORT_LINE_AGE_MS || l.at - nowMs > REPORT_LINE_AHEAD_MS) { if (l.sub === target) theirsOut = true; continue; }   // AUDIT SAFE CLIENT-5 / DOC-7 / DOC-17: dropped, never the whole report refused
+    if (nowMs - l.at > REPORT_LINE_AGE_MS || l.at - nowMs > REPORT_LINE_AHEAD_MS) {
+      if (l.sub === target) theirsOut = true;
+      continue;
+    } // AUDIT SAFE CLIENT-5 / DOC-7 / DOC-17: dropped, never the whole report refused
     const k = `${l.at}|${l.sub}`;
     if (seen.has(k)) continue;
     seen.add(k);
     out.push({ tab: l.tab, sub: l.sub, name: l.name, at: l.at, text: l.text, sg: l.sg });
   }
-  if (theirsOut && !out.some((l) => l.sub === target)) return { error: 'report-stale' };   // AUDIT SAFE CLIENT-5: theirs, and every one out of its day
+  if (theirsOut && !out.some((l) => l.sub === target)) return { error: 'report-stale' }; // AUDIT SAFE CLIENT-5: theirs, and every one out of its day
   if (!out.some((l) => l.sub === target)) return { error: 'report-no-line' };
   out.sort((a, b) => a.at - b.at);
   return { target, reason, note: note.trim(), lines: out };
@@ -102,7 +106,8 @@ export const LADDER_BAN_AT = LADDER_MIN.length;
 /** How long a strike counts, seconds: ninety days. */
 export const STRIKE_WINDOW_S = 90 * 24 * 3600;
 /** The mute the next strike earns, given the strikes standing. @param {number} strikes */
-export const ladderMinutes = (strikes) => LADDER_MIN[Math.max(0, Math.min(LADDER_MIN.length - 1, Math.trunc(Number(strikes) || 0)))];
+export const ladderMinutes = (strikes) =>
+  LADDER_MIN[Math.max(0, Math.min(LADDER_MIN.length - 1, Math.trunc(Number(strikes) || 0)))];
 /** The longest timed ban, days. Past it a ban is for good. */
 export const BAN_DAYS_MAX = 365;
 /** A ban with no length given, days. */
@@ -115,14 +120,21 @@ export const banUntil = (days, nowS) => (days === 0 ? BAN_FOREVER : nowS + days 
 export const banRangeText = () => t('net.safety.banRange', 'A ban is 1 to {max} days, or perm.', { max: BAN_DAYS_MAX });
 /** When a mute or a ban ends, as a player reads it: the date in the player's language (the text core's, not the
  *  browser's - AUDIT SAFE CLIENT-13), or "for good". @param {number} s epoch seconds */
-export const untilText = (s) => (s >= BAN_FOREVER ? t('net.safety.forGood', 'for good') : t('net.safety.until', 'until {when}', { when: new Date(s * 1000).toLocaleString(intlLocale()) }));
+export const untilText = (s) =>
+  s >= BAN_FOREVER
+    ? t('net.safety.forGood', 'for good')
+    : t('net.safety.until', 'until {when}', { when: new Date(s * 1000).toLocaleString(intlLocale()) });
 /** AUDIT SAFE CLIENT-2 (2026-10-17): A BAN, AS ITS PLAYER IS TOLD IT - banRangeText's way: one sentence with one home,
  *  said by the game when the relay says the account is banned (scenes/chatSafetyHost.js) and by the account card when
  *  the service refuses a sign-in or a recovery for it (accountClient REFUSALS 'banned' - the service's 403 carries the
  *  end and the moderator's reason). @param {number} until epoch seconds @param {unknown} [reason] */
 export const bannedText = (until, reason = null) => {
   const why = typeof reason === 'string' ? reason.trim() : '';
-  return why ? t('net.safety.bannedWhy', 'This account is banned {until}. Reason: {reason}', { until: untilText(until), reason: why })
+  return why
+    ? t('net.safety.bannedWhy', 'This account is banned {until}. Reason: {reason}', {
+        until: untilText(until),
+        reason: why,
+      })
     : t('net.safety.bannedAccount', 'This account is banned {until}.', { until: untilText(until) });
 };
 
@@ -133,18 +145,45 @@ export function orderKindOf(order) {
   const body = typeof order === 'string' ? order.split('.')[1] : null;
   const raw = body ? _b64url.decode(body) : null;
   if (!raw) return null;
-  try { const o = JSON.parse(new TextDecoder().decode(raw))?.o; return o === 'mute' || o === 'ban' || o === 'staffcut' ? o : null; } catch { return null; }
+  try {
+    const o = JSON.parse(new TextDecoder().decode(raw))?.o;
+    return o === 'mute' || o === 'ban' || o === 'staffcut' ? o : null;
+  } catch {
+    return null;
+  }
 }
 
 /* ═══ THE COMMANDS ═════════════════════════════════════════════════════ */
 
 /** The commands this file reads - the host asks before the chat parser (net/chatCommands.js HOST_COMMANDS). AUDIT SAFE
  *  DOC-4: and a moderator's look at the reports - /cases, /case <name>, /dismiss <name> - and their list, /modhelp. */
-export const SAFETY_COMMANDS = Object.freeze(['block', 'unblock', 'blocked', 'report', 'conduct', 'rules', 'ban', 'unban', 'strikes', 'cases', 'case', 'dismiss', 'modhelp']);
+export const SAFETY_COMMANDS = Object.freeze([
+  'block',
+  'unblock',
+  'blocked',
+  'report',
+  'conduct',
+  'rules',
+  'ban',
+  'unban',
+  'strikes',
+  'cases',
+  'case',
+  'dismiss',
+  'modhelp',
+]);
 const USAGE = Object.freeze({
-  block: () => t('net.safety.usageBlock', 'Usage: /block <name> - hides their messages. /unblock <name> undoes it; /blocked lists them.'),
+  block: () =>
+    t(
+      'net.safety.usageBlock',
+      'Usage: /block <name> - hides their messages. /unblock <name> undoes it; /blocked lists them.',
+    ),
   unblock: () => t('net.safety.usageUnblock', 'Usage: /unblock <name>.'),
-  report: () => t('net.safety.usageReport', 'Usage: /report <name> [harassment|hate|sexual|threat|spam][: note] - sends their recent lines, and your note, to the moderators.'),
+  report: () =>
+    t(
+      'net.safety.usageReport',
+      'Usage: /report <name> [harassment|hate|sexual|threat|spam][: note] - sends their recent lines, and your note, to the moderators.',
+    ),
   ban: () => t('net.safety.usageBan', 'Usage: /ban <name> [days|perm][: reason], or /unban <name>.'),
   unban: () => t('net.safety.usageUnban', 'Usage: /unban <name>.'),
   strikes: () => t('net.safety.usageStrikes', 'Usage: /strikes <name>.'),
@@ -155,13 +194,28 @@ const USAGE = Object.freeze({
  *  file's /ban, /unban and /strikes, and the reports' queue read in the game: the service answers each for a moderator
  *  alone (MODERATOR_HANDLES), so a player who asks reads what they could not do. */
 export const modHelpLines = () => [
-  t('net.safety.modHelpHead', 'Moderators\' commands:'),
-  t('net.safety.modHelpMute', '/mute <name> [minutes], /unmute <name> - stop a player chatting for a while, or allow it again'),
-  t('net.safety.modHelpBan', '/ban <name> [days|perm][: reason], /unban <name> - ban an account (the reason is shown to them), or lift it'),
-  t('net.safety.modHelpStrikes', '/strikes <name> - their strikes, the next penalty, any current mute or ban, and their recent history'),
+  t('net.safety.modHelpHead', "Moderators' commands:"),
+  t(
+    'net.safety.modHelpMute',
+    '/mute <name> [minutes], /unmute <name> - stop a player chatting for a while, or allow it again',
+  ),
+  t(
+    'net.safety.modHelpBan',
+    '/ban <name> [days|perm][: reason], /unban <name> - ban an account (the reason is shown to them), or lift it',
+  ),
+  t(
+    'net.safety.modHelpStrikes',
+    '/strikes <name> - their strikes, the next penalty, any current mute or ban, and their recent history',
+  ),
   t('net.safety.modHelpCases', '/cases - the open reports, the most credible first'),
-  t('net.safety.modHelpCase', '/case <name> - one case: its lines (theirs marked >), reasons, notes and the reviewer\'s verdict (its line marked !)'),
-  t('net.safety.modHelpDismiss', '/dismiss <name> - close a case with no action; an automatic mute it caused is lifted'),
+  t(
+    'net.safety.modHelpCase',
+    "/case <name> - one case: its lines (theirs marked >), reasons, notes and the reviewer's verdict (its line marked !)",
+  ),
+  t(
+    'net.safety.modHelpDismiss',
+    '/dismiss <name> - close a case with no action; an automatic mute it caused is lifted',
+  ),
 ];
 const COMMAND_RE = new RegExp(`^/(${SAFETY_COMMANDS.join('|')})(?:\\s+([\\s\\S]*))?$`, 'i');
 
@@ -181,18 +235,28 @@ export function parseSafetyCommand(text) {
   if (!m) return null;
   const op = m[1].toLowerCase();
   const whole = (m[2] ?? '').trim();
-  if (op === 'blocked' || op === 'conduct' || op === 'rules' || op === 'cases' || op === 'modhelp') return { op: op === 'rules' ? 'conduct' : op };
+  if (op === 'blocked' || op === 'conduct' || op === 'rules' || op === 'cases' || op === 'modhelp')
+    return { op: op === 'rules' ? 'conduct' : op };
   // AUDIT SAFE DOC-13 + SERVICE-10: the words after the first colon - a report's note, a ban's reason - never the name
   const colon = op === 'report' || op === 'ban' ? whole.indexOf(':') : -1;
   const rest = colon >= 0 ? whole.slice(0, colon).trim() : whole;
-  const words = colon >= 0 ? whole.slice(colon + 1).replace(/\s+/g, ' ').trim() : '';
+  const words =
+    colon >= 0
+      ? whole
+          .slice(colon + 1)
+          .replace(/\s+/g, ' ')
+          .trim()
+      : '';
   if (!rest) return { error: USAGE[/** @type {keyof typeof USAGE} */ (op)]() };
   if (op === 'report') {
-    if (words.length > REPORT_NOTE_MAX) return { error: t('net.safety.noteLong', 'A note is at most {max} characters.', { max: REPORT_NOTE_MAX }) };
+    if (words.length > REPORT_NOTE_MAX)
+      return { error: t('net.safety.noteLong', 'A note is at most {max} characters.', { max: REPORT_NOTE_MAX }) };
     const tail = /^(.*\S)\s+(\S+)$/.exec(rest);
     const said = tail?.[2].toLowerCase();
     const note = words ? { note: words } : {};
-    return tail && said && REPORT_REASONS.includes(said) ? { op, name: tail[1], reason: said, ...note } : { op, name: rest, reason: 'other', ...note };
+    return tail && said && REPORT_REASONS.includes(said)
+      ? { op, name: tail[1], reason: said, ...note }
+      : { op, name: rest, reason: 'other', ...note };
   }
   if (op === 'ban') {
     const tail = /^(.*\S)\s+(\d+|perm|forever)$/i.exec(rest);

@@ -192,8 +192,8 @@
   {
     "name": "SAFE-AUDIT-CLIENT-5-a-stale-line-refuses-the-whole-report",
     "file": "src/net/safety/safetyLaw.js",
-    "old": "{ if (l.sub === target) theirsOut = true; continue; }",
-    "new": "return { error: 'report-stale' };",
+    "old": "    if (nowMs - l.at > REPORT_LINE_AGE_MS || l.at - nowMs > REPORT_LINE_AHEAD_MS) {\n      if (l.sub === target) theirsOut = true;\n      continue;\n    } // AUDIT SAFE CLIENT-5 / DOC-7 / DOC-17: dropped, never the whole report refused",
+    "new": "    if (nowMs - l.at > REPORT_LINE_AGE_MS || l.at - nowMs > REPORT_LINE_AHEAD_MS) return { error: 'report-stale' }; // AUDIT SAFE CLIENT-5 / DOC-7 / DOC-17: dropped, never the whole report refused",
     "tests": [
       "test/net/safety/safe_law.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "SAFE-AUDIT-DOC-17-a-line-from-the-future-kept",
     "file": "src/net/safety/safetyLaw.js",
-    "old": " || l.at - nowMs > REPORT_LINE_AHEAD_MS)",
-    "new": ")",
+    "old": "    if (nowMs - l.at > REPORT_LINE_AGE_MS || l.at - nowMs > REPORT_LINE_AHEAD_MS) {",
+    "new": "    if (nowMs - l.at > REPORT_LINE_AGE_MS) {",
     "tests": [
       "test/net/safety/safe_law.test.js"
     ],
@@ -212,8 +212,8 @@
   {
     "name": "SAFE-AUDIT-CLIENT-5-stale-said-as-no-line",
     "file": "src/net/safety/safetyLaw.js",
-    "old": "  if (theirsOut && !out.some((l) => l.sub === target)) return { error: 'report-stale' };",
-    "new": "",
+    "old": "  if (theirsOut && !out.some((l) => l.sub === target)) return { error: 'report-stale' }; // AUDIT SAFE CLIENT-5: theirs, and every one out of its day",
+    "new": "  // AUDIT SAFE CLIENT-5: theirs, and every one out of its day",
     "tests": [
       "test/net/safety/safe_law.test.js"
     ],
@@ -452,8 +452,8 @@
   {
     "name": "SAFE-AUDIT-DOC-4-dismiss-unread",
     "file": "src/net/safety/safetyLaw.js",
-    "old": "'cases', 'case', 'dismiss', 'modhelp']);",
-    "new": "'cases', 'case', 'modhelp']);",
+    "old": "  'dismiss',\n  'modhelp',",
+    "new": "  'modhelp',",
     "tests": [
       "test/net/safety/safe_law.test.js"
     ],

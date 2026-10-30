@@ -833,8 +833,8 @@
   {
     "name": "STAFF-PANEL5-CUT-FIX-kind-unread",
     "file": "src/net/safety/safetyLaw.js",
-    "old": "return o === 'mute' || o === 'ban' || o === 'staffcut' ? o : null;",
-    "new": "return o === 'mute' || o === 'ban' ? o : null;",
+    "old": "    return o === 'mute' || o === 'ban' || o === 'staffcut' ? o : null;",
+    "new": "    return o === 'mute' || o === 'ban' ? o : null;",
     "why": "finding 27: the client carries no cut",
     "tests": [
       "test/net/safety/safe_client.test.js"

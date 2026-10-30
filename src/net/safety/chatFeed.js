@@ -74,7 +74,12 @@ export function feedValid(b) {
  */
 export async function sealFeed({ id, at, lines }, privateKey, { subtle }) {
   if (!privateKey) return null;
-  const batch = { v: FEED_V, id, at, lines: lines.map(({ tab, sub, name, at: t, text }) => ({ tab, sub, name, at: t, text })) };
+  const batch = {
+    v: FEED_V,
+    id,
+    at,
+    lines: lines.map(({ tab, sub, name, at: t, text }) => ({ tab, sub, name, at: t, text })),
+  };
   if (!feedValid(batch)) return null;
   const body = enc.encode(JSON.stringify(batch));
   if (body.length > FEED_MAX_BYTES) return null;
@@ -93,10 +98,18 @@ export async function openFeed(body, sig64, publicKey, { subtle, nowMs }) {
   const sig = typeof sig64 === 'string' ? _b64url.decode(sig64) : null;
   if (!sig || sig.length !== SIG_BYTES) return { error: 'feed-signature' };
   let good = false;
-  try { good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, signedBytes(body)); } catch { good = false; }
+  try {
+    good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, signedBytes(body));
+  } catch {
+    good = false;
+  }
   if (!good) return { error: 'feed-signature' };
   let batch;
-  try { batch = JSON.parse(new TextDecoder().decode(body)); } catch { return { error: 'feed-shape' }; }
+  try {
+    batch = JSON.parse(new TextDecoder().decode(body));
+  } catch {
+    return { error: 'feed-shape' };
+  }
   if (!feedValid(batch)) return { error: 'feed-shape' };
   if (Math.abs(nowMs - batch.at) > FEED_AGE_MAX_MS) return { error: 'feed-stale' };
   return { ok: true, batch };
