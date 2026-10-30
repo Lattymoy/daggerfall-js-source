@@ -88,8 +88,8 @@
   {
     "name": "DISC17-C-paintUnder-back-in-the-contract",
     "file": "src/ui/map/mapStrip.js",
-    "old": "  'context',       // (clientX, clientY) => boolean - the right click; true when the sheet took it (WAYPOINTS: the bay's menu)\n]);",
-    "new": "  'context',       // (clientX, clientY) => boolean - the right click; true when the sheet took it (WAYPOINTS: the bay's menu)\n  'paintUnder',\n]);",
+    "old": "  'context', // (clientX, clientY) => boolean - the right click; true when the sheet took it (WAYPOINTS: the bay's menu)\n]);",
+    "new": "  'context', // (clientX, clientY) => boolean - the right click; true when the sheet took it (WAYPOINTS: the bay's menu)\n  'paintUnder',\n]);",
     "tests": [
       "test/ui/disc17.test.js"
     ]

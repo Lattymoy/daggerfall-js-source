@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-TW-D3-the-title-past-the-core",
     "file": "src/ui/map/mapStrip.js",
-    "old": "continent ? t('map.sheet.tamriel', 'Tamriel') :",
-    "new": "continent ? 'Tamriel' :",
+    "old": "  return continent ? t('map.sheet.tamriel', 'Tamriel') : t('map.sheet.bay', 'The Bay');",
+    "new": "  return continent ? 'Tamriel' : t('map.sheet.bay', 'The Bay');",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_text.test.js"
     ],

@@ -14,7 +14,7 @@
 // window rather than getting a special case written for it.
 import { isEnhanced } from '../../systems/uiSkin.js';
 import { getPref } from '../../systems/uiPrefs.js';
-import { pageParam } from '../../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
+import { pageParam } from '../../systems/pageQuery.js'; // PERF-URL: the page's query, parsed once a search
 
 /** The player's own switch (features.js, `enhanced-map`). */
 export const enhancedMapOn = () => !!getPref('heldMap');
@@ -34,7 +34,11 @@ export const heldMapWorn = () => heldMapChosen() && typeof document !== 'undefin
  *  the player's switch (features.js `dungeon-map-3d`, prefs `dungeonMap3d`, on by default) chooses it, and off is
  *  EM3's flat plan. `?dungeonmap=flat` stays the kill door. Both are read where the sheet is built, at each open. */
 const dungeonMapUrlFlat = () => {
-  try { return pageParam('dungeonmap') === 'flat'; } catch { return false; }   // PERF-URL
+  try {
+    return pageParam('dungeonmap') === 'flat';
+  } catch {
+    return false;
+  } // PERF-URL
 };
 export const dungeonMap3dOn = () => getPref('dungeonMap3d') !== false && !dungeonMapUrlFlat();
 
@@ -43,7 +47,11 @@ export const dungeonMap3dOn = () => getPref('dungeonMap3d') !== false && !dungeo
  *  on by default). Read where the window is built, so a change takes the next map opened. `?tamriel=off` is the kill
  *  door. */
 const tamrielUrlOff = () => {
-  try { return pageParam('tamriel') === 'off'; } catch { return false; }
+  try {
+    return pageParam('tamriel') === 'off';
+  } catch {
+    return false;
+  }
 };
 export const tamrielMapOn = () => getPref('tamrielMap') !== false && !tamrielUrlOff();
 /** START3 (bible/06-Systems/Alternate-Starts-Arc.md section 12): does the map the player opens show the land past the
