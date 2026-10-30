@@ -2045,7 +2045,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         // arrow is loosed, so the arm's wind-up must stop holding at max
         // attack and run to its release key.
         const m = playerWeapon.machine;
-        if (!(m.isBow && m.state === 'StrikeUp')) fpArm.release();
+        if (!(m.isBow && m.state === 'StrikeUp')) fpArm.release(m.isBow ? playerWeapon.strikeSchedule(dt) : null);   // MW-DRAW-PACE: a held draw's loose on the classic clock
         fpArm.update(dt);
       }
       if (paralyzed) return [];
