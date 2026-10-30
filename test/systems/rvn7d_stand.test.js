@@ -110,7 +110,7 @@ test('RVN7d THE DUNGEON\'S BUILD: a revenant\'s record stands on the built body 
   assert.equal((D.match(/if \(e\.revenant && entity\.revenant\) grantRevenantLoot\(entity, effectiveLevel\(D\.playerEntity\), Math\.random, \{ goldMult: e\.lairStand \? LAIR_GOLD : 1 \}\);/g) ?? []).length, 2);
   for (const [a, b] of [...D.matchAll(/applyRevenant\(entity, e\.revenant\)/g)].map((m) => [m.index, D.indexOf('spawnEnemyLoot(entity', m.index)])) assert.ok(b > a, 'before its loot');
   assert.match(D, /\.\.\.\(revenant \? \{ revenant, lairStand: !!lairStand, \.\.\.\(turned \? \{ turned: true \} : \{\}\) \} : \{\}\) \};/);   // PIN MOVED (RVN11c)
-  assert.match(D, /async function spawnLooseFoe\(mobileType, position, \{[^}]*revenant = null, lairStand = false(?:, turned = false)? \} = \{\}\)/);   // PIN MOVED (RVN11c: and a betrayer's turning)
+  assert.match(D, /async function spawnLooseFoe\(mobileType, position, \{[^}]*revenant = null, lairStand = false(?:, turned = false)?(?:, delve = false)? \} = \{\}\)/);   // PIN MOVED (RVN11c: and a betrayer's turning; DELVE II DLV3: and an encounter's foe)
 });
 
 test('RVN7d THE STAND: asked once a visit, the first frame I stand there; this dungeon\'s pixel; at the layout marker farthest from the entrance; a loose foe of mine with its record\'s gender and level, found resting, its band about it; a stand that stood nobody frees the claim (mutants: never asked; asked every frame; the nearest marker; aware; no band; the claim kept)', () => {

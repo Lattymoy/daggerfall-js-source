@@ -307,7 +307,7 @@ test('QUEST-PARTY 3c by source: the blow on a party member\'s quest foe goes to 
   assert.match(D, /const _puppet = isPuppetFoe\(f, _fi\);/);   // AUDIT PRE-MERGE 0928 O6: the frame's test has one home, which the host asks too
   assert.match(D, /const isPuppetFoe = \(f, i = foes\.indexOf\(f\)\) => f != null && \(\(!_authority && isRoomFoe\(f, i\)\) \|\| f\._ownFrom != null\);/);
   assert.match(D, /f\._pupTarget = p\.target === '\.' \? \(f\._ownFrom \?\? _foesFrom\) : \(p\.target \|\| null\);/);
-  assert.match(D, /candidates: foeDeps \? \(streamed = false, rec = null\) => \[\.\.\.foes\.filter\(\(f\) => !f\.dead && f\.ai\), \.\.\.\(\(_authority && streamed\) \|\| ownLoose\(rec\) \? peerCandidates\(\) : \(ownQuestTag\(rec\) \? peerCandidates\(\)\.filter\(\(c\) => ownShare\(\)\?\.peerMayHit\?\.\(c\.id, rec\)\) : \[\]\)\)\] : null,/, 'the party alone');
+  assert.match(D, /candidates: foeDeps \? \(streamed = false, rec = null\) => \[\.\.\.foes\.filter\(\(f\) => !f\.dead && f\.ai\), \.\.\.\(\(_authority && streamed\) \|\| ownLoose\(rec\) \? peerCandidates\(\) : \(ownQuestTag\(rec\) \? peerCandidates\(\)\.filter\(\(c\) => ownShare\(\)\?\.peerMayHit\?\.\(c\.id, rec\)\) : \[\]\)\), \.\.\.delve\.wards\(\)\] : null,/, 'the party alone');
   assert.match(D, /foeDeps\.runTargetMachine\(rec, sn\.candidates\(streamed, rec\), pf, cdt, \{/);
   assert.match(D, /foes: foes\.filter\(\(f\) => f\._ownFrom == null && f\.companion == null\)\.map\(\(f\) => \(\{/, 'the save holds none of theirs (CREW-COMPANIONS: nor my companions, the party\'s)');
   assert.match(D, /if \(truncate\) clearOwnPuppets\(\);/, 'and a load takes them down first, so its indices are this pool\'s');

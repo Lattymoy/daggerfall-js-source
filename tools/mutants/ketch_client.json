@@ -82,7 +82,7 @@
   },
   {
     "name": "KTC-let-go-said-whether-it-went",
-    "file": "src/scenes/ketch/ketchClient.js",
+    "file": "src/player/carryStep.js",
     "old": "return sendDrop() ? { forced: false, letGoAt: t, say: 'letGo' } : { forced: true, sheathe: true };",
     "new": "return (sendDrop(), { forced: false, letGoAt: t, say: 'letGo' });",
     "tests": [

@@ -409,15 +409,16 @@ mutate its other side (`DRAGON5c-the-oil-kept-off-online`, `AUDIT-DRAGON-the-wai
 of its reference damage (`dpsRef`, 5 + level), but the gate's bucket lets it deal three times that, fifteen deep: one
 fighter at the cap took its share in about a minute, and more fighters only brought more shares. `DRAGON_TTK_S` is 720:
 twelve minutes at the reference, about four at the cap - over the Ketch Warden's 600 (KETCH-LONGER, the same finding),
-the rarest world boss the longest fight. Relay world292, world289, world290 then world291 on its branch until HAND-WRAPS, PVP-LINGER and GILDED-GLOW took them (`DRAGON_RIDE_RELAY_MIN` stays 288). PINS MOVED: the relay
+the rarest world boss the longest fight. Relay world293, world289, world290, world291 then world292 on its branch until HAND-WRAPS, PVP-LINGER, GILDED-GLOW and DELVE II took them (`DRAGON_RIDE_RELAY_MIN` stays 288). PINS MOVED: the relay
 version's (each note before the last), `dragon2_law`'s; `DRAGON2-the-share-the-gates` mutates 720 to 600.
 
 **DRAGON-HIDDEN (2026-10-29, the owner: "people are able to predict the dragon spawn by looking at source code").**
 Every roll was `gateHash(DRAGON_SALT, w, k)`, the salt in the client, so the source counted each dragon to come, its
 province and its pixel. The rolls take a watch's omen now (section 2): the relay's seed, told at its landing, never
-before; the site's number is the seed's, not the watch's. A modified client still learns a site at its landing - it must,
-to draw it - but never a watch ahead, and a forged site still stands a fight of its own (section 2). `DRAGON_BRAIN_MIN` 2: an old game is told to reload. The fight's gate is 292, past
-the ride's 288. Pinned by `test/net/dragon/dragonhidden.test.js` (5); `tools/mutants/dragonhidden.json`, 11 dead; eight
+before; the site's number is the seed's, not the watch's. A modified client still learns a site at its landing - it
+must, to draw it - but never a watch ahead, and a forged site still stands a fight of its own (section 2).
+`DRAGON_BRAIN_MIN` 2: an old game is told to reload. The fight's gate is 293 (292 until DELVE II took it), past the
+ride's 288. Pinned by `test/net/dragon/dragonhidden.test.js` (5); `tools/mutants/dragonhidden.json`, 11 dead; eight
 records re-aimed onto the omen, dead.
 
 **AUDIT DRAGON-HIDDEN (2026-10-30, the owner: "Audit this"; `01-Overview/audits/Audit-Dragon-Hidden.md`).** Three lanes
@@ -425,7 +426,7 @@ read DRAGON-HARDER and DRAGON-HIDDEN cold. The relay holds a forged site to a pi
 Bay's edge (`dragonSiteOk`), and a cell waking lets go of an unslain fight an older law made. An `ask` goes down whatever
 room the player stands in - a siege's battle and a tourney drew no dragon - and is answered each time, asked again after
 two seconds, so a lost answer or a clock ahead of the relay's costs no watch. The tests' omen names its look and theatre:
-a run's random key drew the Aetherbright one time in twenty and failed two pins. Relay world292, re-hashed in place.
+a run's random key drew the Aetherbright one time in twenty and failed two pins. Relay world293, re-hashed in place.
 
 Pinned by `test/net/dragon/dragonhiddenaudit.test.js` (8); `tools/mutants/dragonhiddenaudit.json`, 17 dead. PINS MOVED:
 `dragonhidden`'s answer (each time, not once a socket - `DRAGON-HIDDEN-told-twice` retired with the code) and its ask

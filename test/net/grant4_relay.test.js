@@ -34,7 +34,7 @@ async function world(t, env = {}) {
   return { kp, room, join };
 }
 
-test('GRANT4 A WORLD ROOM\'S OWN LANE: its welcome says the law; a stand of its own lane is granted there, naming no pixel; an open-country kind is refused `kind`; a grant is carried cell to cell alone - never into a room, never out of one (mutants: a room\'s grant read off a scene pose; an encounter granted indoors; a carry into a room)', async (t) => {
+test('GRANT4 A WORLD ROOM\'S OWN LANE: its welcome says the law; a stand of its own lane is granted there, naming no pixel; an open-country kind is refused `kind`, and a room\'s own (DLV3\'s `delve`) in the open country; a grant is carried cell to cell alone - never into a room, never out of one (mutants: a room\'s grant read off a scene pose; an encounter granted indoors; a dungeon\'s kind granted outdoors; a carry into a room)', async (t) => {
   const W = await world(t);
   const R = W.room(ROOM);
   const mac = await W.join(R, 'sock-mac-01', { x: 3, y: 1, z: 4, yaw: 0, pitch: 0 });
@@ -47,9 +47,13 @@ test('GRANT4 A WORLD ROOM\'S OWN LANE: its welcome says the law; a stand of its 
     await mac.ask({ k: 'mint', kind, n: 1 });
     assert.deepEqual([mac.last().k, mac.last().r], ['no', 'kind'], `${kind}: the open country's alone`);
   }
+  await mac.ask({ k: 'mint', kind: 'delve', n: 3 });
+  assert.equal(validGrantOut(mac.last())?.gr?.k, 'delve', 'DLV3: a dungeon encounter\'s foes, a room\'s own kind');
   // a carry: the room's grant into a cell refused there; a cell's grant into the room refused here
   const C = W.room(CELL);
   const ann = await W.join(C, 'sock-mac-01', P0);
+  await ann.ask({ k: 'mint', kind: 'delve', n: 1 });
+  assert.deepEqual([ann.last().k, ann.last().r], ['no', 'kind'], 'DLV3: and never the open country\'s');
   await ann.ask({ k: 'carry', grs: [g] });
   assert.deepEqual(validGrantOut(ann.last()).grs, [null], 'a room\'s grant stays its own');
   await ann.ask({ k: 'mint', kind: 'enc', n: 1 });

@@ -10,7 +10,7 @@ against the tree before it was fixed.
 
 Each fix is pinned in `test/net/dragon/dragonhiddenaudit.test.js` (8) or `dragonhidden.test.js` (5, two moved).
 Mutation-proven: `tools/mutants/dragonhiddenaudit.json`, 17, and `dragonhidden.json`, 12 (one retired with the code it
-cut, two written), all dead. Relay world292, re-hashed in place.
+cut, two written), all dead. Relay world293 (world292 until DELVE II took it at the merge of main), re-hashed in place.
 
 Severity is the lanes' own: **bug** a wrong thing a player sees; **risk** one under a condition; **doc** the record says
 what is not so; **test-gap** a pin that cannot fail; **nit** a word or a cost. A finding two lanes made is listed once.
