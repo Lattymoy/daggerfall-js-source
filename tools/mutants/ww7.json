@@ -165,8 +165,8 @@
  {
   "name": "WW7-4-a-chain-broken",
   "file": "src/world/capitalCastles.js",
-  "old": "g.rdbObjects.filter((o) => linked.has(o.position) || castleKeeps(o))",
-  "new": "g.rdbObjects.filter((o) => castleKeeps(o))",
+  "old": "g.rdbObjects.filter((o) => linked.has(o.position) || chainHead(o) || castleKeeps(o))",
+  "new": "g.rdbObjects.filter((o) => chainHead(o) || castleKeeps(o))",
   "tests": [
    "test/world/worldWide/ww7_castles.test.js"
   ]

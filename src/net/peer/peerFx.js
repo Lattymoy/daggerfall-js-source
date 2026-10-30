@@ -91,7 +91,7 @@ export function _resetPeerFxForTests() { mine.hk = 0; mine.hp = null; mine.hb = 
  * frame ({x,y,z}) to the scene. `update(id, pose, feet, dt)` once a frame for each peer I can see; `frame(dt)` plays
  * what is due; `splashed(pos)` is told of every splash drawn here (the dedupe).
  * @param {{play?: {blow?: (fx: any) => void, hurt?: (fx: any) => void, flinch?: (id: string) => void},
- *   toScene?: (p: {x: number, y: number, z: number}) => any, now?: () => number}} [opts]
+ *   toScene?: (p: {x: number, y: number, z: number, fy?: number}) => any, now?: () => number}} [opts]
  */
 export function createPeerFxPlayer({ play, toScene, now = () => performance.now() / 1000 } = {}) {
   const seen = new Map();   // id -> { hk, hu, tick, bt, ut }

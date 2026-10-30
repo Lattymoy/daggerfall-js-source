@@ -1,7 +1,7 @@
 // FIELD BUGS 2026-10-30 (bible/01-Overview/bugs/Field-Bugs-2026-10-30.md section 6) - TORVAL'S CASTLE, SEEN in the real
 // game: the world host boots, jumps to the capital's pixel (`__tesaJump`), walks in through the palace's dungeon door,
 // shoots the halls and reads the exits, then leaves by the first exit and reads where the way out landed (feet against
-// the ground). Frame-synced on the shot-mode `__frame` counter, never a sleep (bible/Home.md Process).
+// the ground). Frame-synced on the shot-mode `__frame` counter, but for one wait before the first frame exists.
 //
 // Usage: ARENA2_PATH=/home/claude/dfdata/arena2 OUT=<dir> node tools/torvalCastleProbe.mjs
 //   CAPITAL=5          the capital (world/tamrielCapitals.js CAPITALS: 5 Torval, 1 Solitude, ...)
@@ -57,11 +57,12 @@ await frames(3);
 console.log(`at the door: ${await ev(() => window.__standing())}`);
 await shot('1-door.png');
 console.log(`__enter -> ${await ev(() => window.__enter())}`);
-console.log(`in the castle: ${await untilMode('dungeon')}`);
+if (!(await untilMode('dungeon'))) throw new Error('the castle never opened');
 await frames(10);
 await shot('2-inside.png');
 const probe = JSON.parse(await ev(() => window.__dungeonProbe()));
 console.log(`inside: ${JSON.stringify({ feet: probe.feet, wall: probe.wall, exits: probe.exits, start: probe.startMarker, inCastle: probe.inCastle, key: probe.locationKey, hud: probe.hud })}`);
+if (!probe.exits?.length) throw new Error('no way out stands');
 for (const [i, ex] of probe.exits.entries()) {
   const st = [ex.pos[0] + ex.normal[0] * 0.8, ex.pos[1] - 0.5, ex.pos[2] + ex.normal[2] * 0.8];
   await ev(([p, y]) => window.__warpTo(p, y), [st, Math.atan2(-ex.normal[0], -ex.normal[2])]);
@@ -71,13 +72,16 @@ for (const [i, ex] of probe.exits.entries()) {
   console.log(`exit ${i}: pick ${before.pick?.key} feet ${JSON.stringify(before.feet)}`);
 }
 console.log(`__dungeonExit -> ${await ev(() => window.__dungeonExit())}`);
-console.log(`outside: ${await untilMode('exterior')}`);
+if (!(await untilMode('exterior'))) throw new Error('the way out never landed');
 await frames(1);
-console.log(`landed: ${await ev(() => window.__standing())} door ${JSON.stringify(d.pos)}`);
+const landed = JSON.parse(await ev(() => window.__standing()));
 await shot('4-out.png');
 await frames(30);
-console.log(`after a second: ${await ev(() => window.__standing())}`);
+const later = JSON.parse(await ev(() => window.__standing()));
 await shot('5-out-later.png');
-console.log(errors.length ? `page errors: ${errors.slice(0, 5).join(' | ')}` : 'zero page errors');
+console.log(`landed ${JSON.stringify(landed)}, a second later ${JSON.stringify(later)}, door ${JSON.stringify(d.pos)}`);
+if (landed.y - later.y > 0.5) throw new Error(`TALL-DOOR: the way out stood the feet ${(landed.y - later.y).toFixed(2)} m over the ground`);
+if (errors.length) throw new Error(`page errors: ${errors.slice(0, 5).join(' | ')}`);
+console.log('zero page errors');
 await browser.close();
 await server.close();

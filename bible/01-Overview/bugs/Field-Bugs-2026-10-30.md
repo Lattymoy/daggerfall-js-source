@@ -1,7 +1,8 @@
 # FIELD BUGS 2026-10-30 - the court, the yard, the zone's banks, the map's plates, the floor indoors, Torval, the cape
 
 Seven Discord reports and the owner's own, handed over in a session. Read on main's `b793e26e1` with the freeware's data
-(`tools/fetch-data.sh`). The owner chose three of the fixes when asked (sections 2, 3 and 5). The mutants are
+(`tools/fetch-data.sh`). The owner chose three of the fixes when asked (sections 2, 3 and 5). Then read cold and
+corrected (`../audits/Audit-FB1030.md`). The mutants are
 `tools/mutants/fb1030_fieldbugs.json` and `tools/mutants/capetoggle.json`. Relay world293 (`net/wire.js`).
 
 | | Report | What it was | Done |
@@ -16,11 +17,12 @@ Seven Discord reports and the owner's own, handed over in a session. Read on mai
 
 ## 1. The court that would not talk (CASTLE-TALK)
 
-FOUND. Castle Daggerfall is a dungeon (S0000160.RDB, `dungeonContext.js`). Every person there carries an action record,
-Dialogue (29). `registerFlatAction` gave its relay the person's own box, and the relay stands first in the target list:
-two boxes met at one distance, and the first wins the tie. So within the relay's 3.2 m a press named no one and did
-nothing (Dialogue has no delegate), and past it - the ray longer, aimed low or aslant - the person won. King Gothryd's box
-is one float smaller, so he alone answered. DFU's PlayerActivate fires the action and talks to the person on one hit.
+FOUND. Castle Daggerfall is a dungeon (S0000160.RDB, `dungeonContext.js`). Of its 21 people, 20 carry a Dialogue (29)
+action record and one (TEXTURE.183 record 3) shows text. `registerFlatAction` gave each relay the person's own box, and
+the relay stands first in the target list: two boxes met at one distance, and the first wins the tie. So within the
+relay's 3.2 m a press named no one and did nothing (Dialogue has no delegate). Where the boxes' floats differ by a hair
+the person won: 5 of the 20, King Gothryd among them (AUDIT FB1030, the record lane). DFU's PlayerActivate fires the
+action and talks to the person on one hit.
 
 MEASURED. The game's RDBs hold 85 person flats with actions: 79 Dialogue, 1 Activate, 5 that show text. No Dialogue or
 Activate relay chains on; the three that chain show text. AUDIT FB1030 D2: DFU's Receive rang 28 of them as a sound
@@ -42,17 +44,23 @@ Every roof inside the ground floor's walls was the house.
 
 The owner, asked which flat roofs are decks: "Every flat roof".
 
-FIXED. WALL-TOUCH: a flat's ground is half its width round it (`decorTool.js` footprintOf). The house test lets a piece's
-ground reach `YARD_WALL_PAD` (0.25 m: half a cell and the wall's clip) into the house's ground: a point is in the house
-only where a square of that half-side round it lies wholly on the house's rects, so a seam between two rects is still no
-gap. A turn is refused only for a reason the piece did not stand in already, so a lamp on a wall turns.
+FIXED. WALL-TOUCH: a flat's ground is the circle of half its width (`decorTool.js` footprintOf). Each model of a home
+keeps its ground floor's wall lines (`modelFootParts` `walls`, a frame's `grounds`). A point of a piece's ground is in
+the house only past those lines by more than the wall's clip; a cell past them is the yard's. Ground outside the walls
+(a step, a post with none, a joined lot's other house) is judged by its cells, 5 cm in, as before. A lot with no parts
+known (its box, an Imperial City door) is the house wherever met. A flat's turn is refused only for a reason it did not
+stand in already (its ground is the same turned), so a lamp on a wall turns; a model's whenever its turned box is.
 
-YARD-DECK: a level roof facing up inside the ground floor's walls is a deck (`modelFootParts`: `rects` as before,
-`decks` with their height, `solid` the rest), unless a storey stands on it (walls two metres tall whose foot is at its
-height; a parapet is no storey). A piece standing on a deck is the yard's; under it, the house's. The yard's 4 m height
-still holds, so a 6.45 m roof is refused as too high. Measured: 1,995 placements of residence models have a flat roof at
-3.22 m, and 145 a balcony beside sloped roofs. Pinned on synthetic houses and on ARCH3D 541 and 125
-(`test/world/fb1030_yarddeck.test.js`). Past the Bay the law reads a model's faces and no place.
+YARD-DECK: every level roof facing up inside the ground floor's walls is a deck (`decks`, the lowest in a cell). A piece
+whose foot stands on one is the yard's, unless walls standing a metre over the deck enclose it (`storeys`, whatever
+their foot - a storey's; a parapet is lower). Under it, the house's. A model's foot is its origin less its reach below
+(`foot.bottom`). A deck under 4 m² (a stair's tread or landing) is none. The yard's 4 m height still holds, so a 6.45 m
+roof is refused as too high.
+
+Measured over BLOCKS.BSA's town blocks: of 8,058 residences (a house for sale, House1 to House6), 1,114 stand a deck
+at 4 m or lower, 122 of them beside sloped roofs. Pinned on synthetic houses and on ARCH3D 541, 125, 606, 709 and 41902
+(`test/world/fb1030_yarddeck.test.js`). Past the Bay the law reads a model's faces and no place. AUDIT FB1030 Y1-Y8
+(`../audits/Audit-FB1030.md`) reworked both.
 
 ## 3. The banks of the zone (ZONE-BANK)
 

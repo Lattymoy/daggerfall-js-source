@@ -10232,7 +10232,7 @@ export function createWorldModes(host) {
   const returnLanding = () => (dungeonReturn.gate ? host.gateLanding?.(dungeonReturn.gate) ?? null : dungeonReturn.arena ? host.arenaLanding?.() ?? dungeonReturn.arenaFrom ?? null : dungeonEntranceLanding(dungeonReturn.sdHollow ? host.sdHollowDoors?.(dungeonReturn.sdHollow) ?? [] : dungeonReturn.candidates.map((e) => e.door)) ?? dungeonReturn.from ?? null);   // ARENA2: out of the floor, before the Herald (AUDIT PRE-MERGE 1003b C7: or back where it was entered)
   function exitDungeonNow() {
     unleveledLootPreTransition();   // UL1: OnPreTransition (TransitionDungeonExterior) - and NO OnTransitionExterior here, bug for bug
-    // Verbatim PositionPlayerToDungeonExit; the camera faces the normal.
+    // PositionPlayerToDungeonExit, but for its height (TALL-DOOR, player/enterExit.js dungeonExitFeet); the camera faces the normal.
     const landing = returnLanding();   // WB3b: before the gate, out of the court
     dungeonCtx.overlayWindow?.()?.dispose?.();   // AUDIT SD II (L1 F1): forceExitToExterior's OnPop - a Hollow's end casts out under any window (AUDIT SD III: above the packing)
     const carried = dungeonCtx.camps?.packOwnFires?.({ quiet: true }) ?? 0;   // AUDIT REST-PARTY B3: before the room's memory goes - AUDIT REST II H4: said outside, below

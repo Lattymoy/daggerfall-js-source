@@ -3208,7 +3208,7 @@ tutorials.wildZone.body1,"Cyrodiilissa ja avoimella {word}-valtamerellä pelaaja
 tutorials.wildZone.body2,"Jos toinen pelaaja tappaa sinut siellä, mitään ei putoa. Hän voi ottaa yhden vakuuttamattoman yllesi puetun esineen, muuten yhden vakuutuksen kullan, muuten kymmenesosan kolikoistasi ja kreditiiveistäsi. Muu kuolema maksaa tavallisen kymmenesosan."
 wagon.upkeep.boons.failing,"{name} on hajoamassa. Vaunupiha tai Vaunujen korjaussarja korjaa sen."
 wagon.upkeep.boons.rickety,"{name} on huojuva. Vaunupiha voi korjata sen."
-wild.bank.shut,"Avoimella vyöhykkeellä pankit palvelevat vain kaupungeissa, kylissä ja taajamissa."
+wild.bank.shut,"Avoimella vyöhykkeellä pankit palvelevat vain kaupungeissa, kauppaloissa ja kylissä."
 wild.death.away,"{name} surmasi sinut, kun olit poissa."
 wild.death.awayAnon,"Sinut surmattiin, kun olit poissa."
 wild.death.kept,"Mitään ei pudonnut. Maksat kuoleman tavallisen hinnan."

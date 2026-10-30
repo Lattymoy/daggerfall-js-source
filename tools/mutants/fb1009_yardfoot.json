@@ -2,8 +2,8 @@
   {
     "name": "FB1009-a-wall-covers-ground",
     "file": "src/scenes/homeYards.js",
-    "old": "    if (Math.abs(up) < 2e-3) {",
-    "new": "    if (Math.abs(up) < 0) {",
+    "old": "    if (Math.abs(up) < 2e-3) continue;   // a wall: no ground under it",
+    "new": "    if (Math.abs(up) < 0) continue;",
     "tests": [
       "test/world/fb1009_yardfoot.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "FB1009-the-house-asked-by-its-box",
     "file": "src/scenes/homeYards.js",
-    "old": "  if ((lot.walls ?? [lot.house]).some(meets) && yardInHouse(lot, pos, ground)) return YARD_IN_HOUSE;",
-    "new": "  if ([lot.house].some(meets) && yardInHouse({ ...lot, walls: [lot.house], solid: null }, pos, ground)) return YARD_IN_HOUSE;",
+    "old": "  if ((lot.walls ?? [lot.house]).some(meets) && yardInHouse(lot, pos, ground, pos[1] + (/** @type {any} */ (foot)?.bottom ?? 0))) return YARD_IN_HOUSE;",
+    "new": "  if ([lot.house].some(meets) && yardInHouse({ ...lot, walls: [lot.house], grounds: null }, pos, ground, 0)) return YARD_IN_HOUSE;",
     "tests": [
       "test/world/fb1009_yardfoot.test.js"
     ]
@@ -93,7 +93,7 @@
   {
     "name": "FB1009-the-host-records-no-ground",
     "file": "src/scenes/pixelBuild.js",
-    "old": "pixelHomeFrames.set(homeKey, { at, box: [...box], rects, solid, decks, type:",
+    "old": "pixelHomeFrames.set(homeKey, { at, box: [...box], rects, grounds: [ground], type:",
     "new": "pixelHomeFrames.set(homeKey, { at, box: [...box], type:",
     "tests": [
       "test/world/fb1009_yardfoot.test.js"
@@ -102,7 +102,7 @@
   {
     "name": "FB1009-a-second-models-ground-dropped",
     "file": "src/scenes/pixelBuild.js",
-    "old": " f.rects.push(...rects); f.solid?.push(...solid); f.decks?.push(...decks); f.parts?.push([cpu, local]); }",
+    "old": " f.rects.push(...rects); f.grounds?.push(ground); f.parts?.push([cpu, local]); }",
     "new": " f.parts?.push([cpu, local]); }",
     "tests": [
       "test/world/fb1009_yardfoot.test.js"
