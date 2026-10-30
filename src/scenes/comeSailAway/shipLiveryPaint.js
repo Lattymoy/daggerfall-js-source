@@ -165,6 +165,8 @@ export function createLiveryPaint({ renderer, pipeline, portArchiveOf, log = con
       n = armsSlots.size < 255 ? armsSlots.size + 1 : leastUsedSlot();
       for (const [old, m] of armsSlots) if (m === n) armsSlots.delete(old);
       for (const key of made.keys()) if (Math.floor(key / 0x1000000) % 256 === n) made.delete(key);
+      // AUDIT GUILD-SHOP D3: and its pictures let go - put's key is the same for the new arms, and the renderer keeps a key it has
+      for (const [key, rec] of records) if (Math.floor(Number(key.split('|')[1]) / 0x1000000) % 256 === n) { renderer.releaseTexture?.(LIVERY_ARCHIVE, rec); records.delete(key); }
       slotGen[n] = (slotGen[n] ?? 0) + 1;
       armsSlots.set(k, n);
     }

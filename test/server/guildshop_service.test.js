@@ -5,6 +5,7 @@
 // Driven through the real Worker over the real migrations (test/accountDb.mjs, test/realmSeat.mjs).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { logoCard } from '../../server-account/src/guildLogos.js';   // AUDIT GUILD-SHOP D2
 
 import worker from '../../server-account/src/index.js';
 import { standService, T0 } from '../accountDb.mjs';
@@ -222,7 +223,8 @@ test('GUILD-LOGO a review: the guildmaster sends a square picture, its fee held 
   assert.match((await press('222222222222222222', 'ok')).data.content, /Only the game's moderators/);
   const ok = await press(MOD_ID, 'ok');
   assert.equal(ok.type, 7, 'the card redrawn in place');
-  assert.equal(ok.data.components.length, 0, 'no buttons once decided');
+  // PIN MOVED (AUDIT GUILD-SHOP D2): decided, a worn logo's card keeps one button - Take down
+  assert.deepEqual(ok.data.components.flatMap((r) => r.components.map((b) => b.custom_id)), [`glogo:off:${id}`]);
   assert.match(ok.data.embeds[0].description, /^Approved by Mac /, 'who decided, on the card');
   assert.deepEqual([s.raw.prepare('SELECT logo FROM guilds WHERE id = ?').get(s.gid).logo, s.raw.prepare('SELECT state FROM guild_logos WHERE id = ?').get(id).state], [id, 'approved']);
   assert.equal(s.raw.prepare("SELECT amount FROM marks_ledger WHERE kind = 'logo-fee'").get().amount, GUILD_LOGO_FEE, 'the fee burnt out of its escrow');
@@ -237,6 +239,10 @@ test('GUILD-LOGO a review: the guildmaster sends a square picture, its fee held 
   assert.deepEqual((await s.call('/v1/guilds/logo/clear', { character: s.gm.character }, s.gm.secret)).body, { ok: true, cleared: id });
   assert.equal((await s.call('/v1/guilds/mine', { character: s.gm.character }, s.gm.secret)).body.guild.logo, null);
   assert.equal((await s.get(`/v1/guilds/logo/${id}`)).status, 404);
+  // AUDIT GUILD-SHOP D2: a moderator's take-down reads as such on its card (a guildmaster's clear does not)
+  const row = s.raw.prepare('SELECT * FROM guild_logos WHERE id = ?').get(id);
+  assert.match(logoCard({ ...row, decided_by: 'Mac (Discord)' }, { name: 'X', tag: 'XX' }).embeds[0].description, /^Taken down by Mac /);
+  assert.match(logoCard(row, { name: 'X', tag: 'XX' }).embeds[0].description, /^Withdrawn by the guild/);
   assert.deepEqual((await s.call('/v1/guilds/logo/clear', { character: s.gm.character }, s.gm.secret)).body, { error: 'logo-none' });
 });
 

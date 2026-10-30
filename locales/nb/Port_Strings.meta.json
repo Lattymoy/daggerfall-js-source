@@ -1759,6 +1759,11 @@
   "tr": "2058b72dabcf",
   "by": "claude-in-session"
  },
+ "account.refusal.guildRanksMoved": {
+  "en": "513081ef5906",
+  "tr": "6368c794568f",
+  "by": "claude-in-session"
+ },
  "account.refusal.guildRate": {
   "en": "9cb5f4c5dd15",
   "tr": "c62ace7deb88",
@@ -1799,14 +1804,19 @@
   "tr": "fd164bf5b8b0",
   "by": "claude-in-session"
  },
+ "account.refusal.guildRequested": {
+  "en": "b7f8bf7ef81c",
+  "tr": "d2d1e86b1196",
+  "by": "claude-in-session"
+ },
  "account.refusal.guildRequestsFull": {
   "en": "dc863d37a01d",
   "tr": "bcd98c77a928",
   "by": "claude-in-session"
  },
  "account.refusal.guildRequestsMax": {
-  "en": "4eddb99235ab",
-  "tr": "e6801cdc4a84",
+  "en": "c92160a51952",
+  "tr": "99e34b118ac5",
   "by": "claude-in-session"
  },
  "account.refusal.guildSeat": {
@@ -3907,6 +3917,11 @@
  "account.refusal.vaultGoods": {
   "en": "f5e2c2a8c79a",
   "tr": "faff457710ac",
+  "by": "claude-in-session"
+ },
+ "account.refusal.vaultGrantOver": {
+  "en": "5dee86fc43a4",
+  "tr": "2a3de9ee47f8",
   "by": "claude-in-session"
  },
  "account.refusal.voteOwn": {
@@ -15819,6 +15834,11 @@
   "tr": "c4bb1a6232e6",
   "by": "claude-in-session"
  },
+ "guild.logo.notRank": {
+  "en": "27a2017b9efb",
+  "tr": "cfac863c044e",
+  "by": "claude-in-session"
+ },
  "guild.logo.preview": {
   "en": "d888ed56f2f5",
   "tr": "28dc0ac5be16",
@@ -16014,6 +16034,11 @@
   "tr": "855997a23539",
   "by": "claude-in-session"
  },
+ "guild.ranks.no": {
+  "en": "fd1286353570",
+  "tr": "e2251c375bcb",
+  "by": "claude-in-session"
+ },
  "guild.ranks.power.decorate": {
   "en": "1dabd32d4025",
   "tr": "fab9875028e0",
@@ -16144,6 +16169,11 @@
   "tr": "f1f6802c8cb3",
   "by": "claude-in-session"
  },
+ "guild.ranks.yes": {
+  "en": "fb360f9c09ac",
+  "tr": "84572ef2253e",
+  "by": "claude-in-session"
+ },
  "guild.requests.about": {
   "en": "252f4702b7b7",
   "tr": "c36b3b28d4f1",
@@ -16182,6 +16212,11 @@
  "guild.requests.none": {
   "en": "6368a3a0315e",
   "tr": "68cddfd37dff",
+  "by": "claude-in-session"
+ },
+ "guild.requests.other": {
+  "en": "6df8aa2f303d",
+  "tr": "9f7e74e1b3cf",
   "by": "claude-in-session"
  },
  "guild.requests.send": {
@@ -40457,6 +40492,11 @@
  "social.guild.group.wealth": {
   "en": "9205f45e8fa1",
   "tr": "b645594283fd",
+  "by": "claude-in-session"
+ },
+ "social.guild.masterAlone": {
+  "en": "efeb811c4369",
+  "tr": "01012c4eb50f",
   "by": "claude-in-session"
  },
  "social.guild.name.arms": {

@@ -26,6 +26,16 @@ export function guildStockOwned(/** @type {unknown} */ ware) {
   if (!_owned) { ask(); return null; }
   return _owned.get(String(ware)) ?? 0;
 }
+/** GUILD-SHOP: how many more of guild piece `e` may stand in a room of `pieces` - the guild's stock less what stands there
+ *  (a guild holds one hall), or Infinity while unread (the service holds the count). AUDIT GUILD-SHOP D5: out of the decor
+ *  tool, a host held to its ceiling. */
+export function guildPieceLeft(/** @type {any} */ e, /** @type {any[] | null | undefined} */ pieces) {
+  const owned = guildStockOwned(e?.guild);
+  if (owned == null) return Infinity;
+  let n = 0;
+  for (const q of pieces ?? []) if (q?.model === e.model) n++;
+  return owned - n;
+}
 /** Whether the account holds `ware` (one of the account's: the Guild Sailcloth) - null while unread (and a read is asked). */
 export function guildWareHeld(/** @type {unknown} */ ware) {
   if (!_held) { ask(); return null; }

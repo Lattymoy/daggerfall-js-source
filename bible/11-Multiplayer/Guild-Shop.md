@@ -99,7 +99,9 @@ The safety minute posts a card to the moderators' channel with the picture and t
 (`glogo:ok:<id>`, `glogo:no:<id>`). Only a moderator's press decides; the card is redrawn with who decided. Approved,
 the fee is burnt and the logo takes the place of the device on the guild window's crest, the Guild Crest portrait, the
 armlet, the sails, the hall's furniture and the hall's street banners (`src/scenes/hallBanners.js` paintHallBanner). Turned down or withdrawn,
-the fee comes home. The guildmaster gets a letter either way, and may take an approved logo down again.
+the fee comes home. The guildmaster gets a letter either way, and may take an approved logo down again. A worn logo's
+card keeps one button, Take down (`glogo:off:<id>`): a moderator's press restores the guild's device and writes the
+guildmaster a letter.
 
 A logo is served at `/v1/guilds/logo/<id>` while it is under review or approved, and to nobody once it is not.
 Discord's commands are unchanged: the buttons ride the existing interactions endpoint.
@@ -169,4 +171,19 @@ invited the account, its invitation is answered instead.
 A rank that may invite sees the requests on the Members page and accepts or declines each. Accepted, the character joins
 at the lowest rank while the guild has room, and every other request it holds goes in the same batch. The asker gets a
 letter either way and may withdraw a request before it is answered.
+
+## 15. The second audit
+
+The owner, 2026-10-30: "Audit everything". Four read-only lanes; every finding below is fixed in place.
+
+- **Powers in the write.** A withdrawal (gold, silver, a patron's bid), a rank move and a vault grant read the guild's
+  powers inside their own statement. A rank move never lands past the lowest rank. A ranks or powers edit lands only
+  over what it read, by the guildmaster still.
+- **Grants.** A rank below the guildmaster grants no more of the vault than it has itself.
+- **Growth.** Ranks added under the lowest take the powers it held. The grid sends only what differs from the defaults.
+- **Requests.** One an account a guild, the cap the account's; ids never reused; gone with the character; a decline's
+  letter only for a request it ended.
+- **Sails.** Peers now see a Guild Sailcloth: the relay carries it as `gsc` (its own `sc` is a session secret), and
+  the Aura Armory's kit on every roster row. A reused arms slot lets its old pictures go.
+- **Logos.** Moderators may take down a worn logo. A rename's and a logo's request ids are one guild's.
 

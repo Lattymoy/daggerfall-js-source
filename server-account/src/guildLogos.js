@@ -24,7 +24,7 @@ export const logoObject = (/** @type {string} */ id) => `guild-logo/${id}`;
 /** The cards the minute posts at most. */
 const LOGO_POSTS_MAX = 5;
 /** A press's custom id: the act and the logo. */
-const LOGO_PRESS_RE = /^glogo:(ok|no):([0-9a-f]{32})$/;
+const LOGO_PRESS_RE = /^glogo:(ok|no|off):([0-9a-f]{32})$/;   // AUDIT GUILD-SHOP D2: `off`, an approved logo taken down
 
 /** A base64 body as bytes, or null. */
 function bytesOf(/** @type {unknown} */ b64) {
@@ -155,6 +155,7 @@ export async function endLogoReview(db, id, state, by, nowS, bucket = null) {
 export function logoLetter(/** @type {string} */ state, /** @type {any} */ row) {
   const fee = Number(row?.fee ?? 0).toLocaleString('en-US');
   if (state === 'approved') return ['Your guild\'s logo is approved', `The moderators approved your guild's logo. It now shows in place of the device on your arms.\n\n${fee} silver was paid for the review.\n\n- ${POST_SENDER}`];
+  if (state === 'taken-down') return ['Your guild\'s logo was taken down', `A moderator took down your guild's logo. Your guild shows its device again.\n\nYou can send another from the Arms page.\n\n- ${POST_SENDER}`];
   if (state === 'denied') return ['Your guild\'s logo was turned down', `The moderators turned down your guild's logo. The ${fee} silver review fee is back in the treasury.\n\nYou can send another from the Arms page.\n\n- ${POST_SENDER}`];
   return ['Your guild\'s logo review is withdrawn', `The review was withdrawn. The ${fee} silver review fee is back in the treasury.\n\n- ${POST_SENDER}`];
 }
@@ -188,6 +189,26 @@ export async function clearGuildLogo(ctx, player, { character } = {}) {
   return { ok: true, cleared: g.logo };
 }
 
+/** AUDIT GUILD-SHOP D2: AN APPROVED LOGO TAKEN DOWN by a moderator - approved by mistake, or found wrong since. One batch:
+ *  the row withdrawn (approved still), the guild's device back, a letter to its guildmaster; then its picture deleted. */
+export async function takeDownLogo(db, id, by, nowS, bucket = null) {
+  const row = await db.prepare("SELECT * FROM guild_logos WHERE id = ? AND state = 'approved'").bind(id).first();
+  if (!row) return false;
+  const master = await db.prepare(`SELECT player FROM guild_members WHERE guild_id = ? AND rank = ${GUILD_RANK_MASTER}`).bind(row.guild_id).first();
+  try {
+    await db.batch([
+      db.prepare(`UPDATE guild_logos SET state = 'withdrawn', decided_at = ?2, decided_by = ?3, discord_state = CASE WHEN discord_msg IS NULL THEN 'off' ELSE 'due' END
+        WHERE id = ?1 AND state = 'approved'`).bind(id, nowS, String(by ?? '').slice(0, 64)),
+      mustChange(db),
+      db.prepare('UPDATE guilds SET logo = NULL WHERE id = ? AND logo = ?').bind(row.guild_id, id),
+      ...(master ? [db.prepare(`INSERT OR IGNORE INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at, ware)
+        VALUES (lower(hex(randomblob(12))), ?1, ?2, ?3, ?4, ?5, NULL, ?6, NULL)`).bind(master.player, `guild-logo-off-${id}`, POST_SENDER, ...logoLetter('taken-down', row), nowS)] : []),
+    ]);
+  } catch { return false; }
+  await bucket?.delete?.(row.obj)?.catch?.(() => {});
+  return true;
+}
+
 /** A LOGO'S PICTURE, for anyone: the bytes and their type while it is under review or approved, else none. */
 export async function guildLogoBytes({ db, bucket }, id) {
   if (!GUILD_LOGO_ID_RE.test(String(id))) return { error: 'no-logo' };
@@ -201,10 +222,11 @@ export async function guildLogoBytes({ db, bucket }, id) {
   return { bytes: await obj.arrayBuffer(), type: String(row.type), approved: row.state === 'approved' };
 }
 
-/** A REVIEW'S CARD - pure: the guild, who sent it, the picture, and the two buttons while it is pending. */
+/** A REVIEW'S CARD - pure: the guild, who sent it, the picture, and the two buttons while it is pending (AUDIT GUILD-SHOP D2: Take down while it is worn). */
 export function logoCard(/** @type {any} */ row, /** @type {any} */ guild) {
   const open = row.state === 'pending';
-  const ended = { approved: 'Approved', denied: 'Turned down', withdrawn: 'Withdrawn by the guild' }[/** @type {'approved'} */ (row.state)];
+  const downed = row.state === 'withdrawn' && / \(Discord\)$/.test(String(row.decided_by ?? ''));   // AUDIT GUILD-SHOP D2: a moderator's take-down
+  const ended = downed ? 'Taken down' : { approved: 'Approved', denied: 'Turned down', withdrawn: 'Withdrawn by the guild' }[/** @type {'approved'} */ (row.state)];
   const embed = {
     title: `Guild logo: ${md(guild?.name ?? '?')} <${md(guild?.tag ?? '?')}>`,
     description: open ? 'A guild sent this logo to wear in place of its device on its banners, shields, sails and armlets.' : `${ended}${row.decided_by ? ` by ${md(row.decided_by)}` : ''}.`,
@@ -219,7 +241,7 @@ export function logoCard(/** @type {any} */ row, /** @type {any} */ guild) {
   const components = open ? [{ type: 1, components: [
     { type: 2, style: 3, label: 'Approve', custom_id: `glogo:ok:${row.id}` },
     { type: 2, style: 4, label: 'Turn down', custom_id: `glogo:no:${row.id}` },
-  ] }] : [];
+  ] }] : row.state === 'approved' ? [{ type: 1, components: [{ type: 2, style: 4, label: 'Take down', custom_id: `glogo:off:${row.id}` }] }] : [];   // AUDIT GUILD-SHOP D2
   return { embeds: [embed], components, allowed_mentions: { parse: [] } };
 }
 const cardFor = async (db, id) => {
@@ -254,7 +276,8 @@ export const isLogoPress = (/** @type {any} */ body) => LOGO_PRESS_RE.test(Strin
 export async function onLogoPress(ctx, body, actor) {
   const m = LOGO_PRESS_RE.exec(String(body?.data?.custom_id ?? ''));
   if (!m) return null;
-  await endLogoReview(ctx.db, m[2], m[1] === 'ok' ? 'approved' : 'denied', `${displayName(actor)} (Discord)`, ctx.nowS, ctx.bucket);
+  if (m[1] === 'off') await takeDownLogo(ctx.db, m[2], `${displayName(actor)} (Discord)`, ctx.nowS, ctx.bucket);   // AUDIT GUILD-SHOP D2
+  else await endLogoReview(ctx.db, m[2], m[1] === 'ok' ? 'approved' : 'denied', `${displayName(actor)} (Discord)`, ctx.nowS, ctx.bucket);
   await ctx.db.prepare("UPDATE guild_logos SET discord_state = 'posted' WHERE id = ?1 AND discord_msg IS NOT NULL").bind(m[2]).run();   // the redraw below is the post
   const card = await cardFor(ctx.db, m[2]);
   return card ? { type: 7, data: card } : { type: 4, data: { content: 'That logo is gone.', flags: 64 } };

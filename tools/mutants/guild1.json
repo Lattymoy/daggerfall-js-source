@@ -461,8 +461,8 @@
   {
     "name": "GUILD1-a-move-from-a-stale-rank",
     "file": "server-account/src/guilds.js",
-    "old": "'UPDATE guild_members SET rank = ? WHERE rowid = ? AND guild_id = ? AND rank = ?').bind(rank, t.rid, a.me.guild_id, t.rank)",
-    "new": "'UPDATE guild_members SET rank = ? WHERE rowid = ? AND guild_id = ? AND ? IS NOT NULL').bind(rank, t.rid, a.me.guild_id, t.rank)",
+    "old": "WHERE rowid = ?2 AND guild_id = ?3 AND rank = ?4 AND ?1 <=",
+    "new": "WHERE rowid = ?2 AND guild_id = ?3 AND ?4 IS NOT NULL AND ?1 <=",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "GUILD1-an-overdraft",
     "file": "server-account/src/guilds.js",
-    "old": "WHERE id = ?2 AND treasury >= ?1 RETURNING treasury')",
-    "new": "WHERE id = ?2 RETURNING treasury')",
+    "old": "WHERE id = ?2 AND treasury >= ?1\n        AND ${withdrawerSql('?5', '?6')} RETURNING treasury`)",
+    "new": "WHERE id = ?2\n        AND ${withdrawerSql('?5', '?6')} RETURNING treasury`)",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "GUILD1-the-moment-lost",
     "file": "server-account/src/guilds.js",
-    "old": ".bind(gold, me.guild_id, who, nowS).first();",
-    "new": ".bind(gold, me.guild_id, who, 0).first();",
+    "old": ".bind(gold, me.guild_id, who, nowS, me.rid, me.rank).first();",
+    "new": ".bind(gold, me.guild_id, who, 0, me.rid, me.rank).first();",
     "tests": [
       "test/server/guild1.test.js"
     ]

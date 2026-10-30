@@ -89,6 +89,10 @@ export function guildSeenText(m, nowMs) {
   return online === null ? '' : lastOnlineText(online, m.seenAt * 1000, nowMs);
 }
 
+/** AUDIT GUILD-SHOP D4: a picture's key - its length and an FNV-1a hash of every character (a PNG's first bytes are its
+ *  header, the same for every logo). */
+const pictureKey = (s) => { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 0x01000193) >>> 0; return `${s.length}:${h.toString(36)}`; };
+
 /** GUILD-SEEN: what a look compares to know whether the tab is painted again - the whole picture LESS each member's
  *  `seenAt`, which moves with every member's play beat and is read on the panel's live pass instead. A stamp moved
  *  alone repaints nothing, so a form being typed into on the Members page keeps its words and its focus. */
@@ -386,7 +390,7 @@ export class GuildBook {
   /** GUILD2a: A NEW NAME, TAG OR BOTH - the guildmaster's, paid from the treasury on the service (no purse moves). The new
    *  tag rides the answer's order to the rooms (GUILD1c), as a founding's does. */
   /** GUILD-SHOP: a new name, paid in silver - one request id while the same name and tag are asked. */
-  rename(name, tag) { return this._silver('rename', `${name ?? ''}|${tag ?? ''}`, (c, rid) => this.door.rename(c, name ?? null, tag ?? null, rid)); }
+  rename(name, tag) { return this._silver('rename', `${this.guild?.id ?? ''}|${name ?? ''}|${tag ?? ''}`, (c, rid) => this.door.rename(c, name ?? null, tag ?? null, rid)); }   // AUDIT GUILD-SHOP D4: one guild's
   /**
    * GUILD-SHOP: A SILVER ACT under ONE REQUEST ID while the same thing is asked (an answer lost and asked again is the
    * line it made, never a second burn); an answer, or a refusal the service gave, lets it go.
@@ -424,7 +428,7 @@ export class GuildBook {
     return r;
   }
   /** GUILD-LOGO: SEND A LOGO for review - `image` the square picture in base64; its fee held from the silver treasury. */
-  submitLogo(image) { return this._silver('logo', String(image).slice(0, 64) + String(image).length, (c, rid) => this.door.logo(c, image, rid)); }
+  submitLogo(image) { return this._silver('logo', `${this.guild?.id ?? ''}|${pictureKey(String(image))}`, (c, rid) => this.door.logo(c, image, rid)); }   // AUDIT GUILD-SHOP D4: the whole picture, one guild's
   /** GUILD-LOGO: the review under way withdrawn, its fee home. */
   withdrawLogo() { return this._act((c) => this.door.logoWithdraw(c)); }
   /** GUILD-LOGO: the approved logo taken down - the guild's own device again. */

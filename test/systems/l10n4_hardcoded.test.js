@@ -774,7 +774,7 @@ const HARDCODED = {
   'src/ui/sigilRune.js': 5,
   'src/ui/skinCard.js': 7,
   'src/ui/socialMenu.js': 4,
-  'src/ui/socialPanel.js': 230,   // GUILD-RANKS: -4, the rank names the Ranks page's (ui/guild/guildRanksPage.js, in t()). GUILD-WINDOW: -2, the header's two sentences are its tiles, their names in t()
+  'src/ui/socialPanel.js': 229,   // AUDIT GUILD-RANKS C3: -1, the guildmaster's-alone reason in t(). GUILD-RANKS: -4, the rank names the Ranks page's (ui/guild/guildRanksPage.js, in t()). GUILD-WINDOW: -2, the header's two sentences are its tiles, their names in t()
   'src/ui/socketWells.js': 4,
   'src/ui/spell/spellMakerWindow.js': 15,
   'src/ui/spellbookWindow.js': 4,

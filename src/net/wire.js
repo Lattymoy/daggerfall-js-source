@@ -3068,6 +3068,9 @@ export function badged(row, from) {
   if (typeof au === 'string' && AURAS.includes(au)) row.au = au;
   // ARMORY: AND THE AURA ARMORY'S KIT, by the aura's law - off the verified token alone, a kit of known pieces or nothing
   if (armoryKitOk(from?.ak)) row.ak = from.ak;
+  // AUDIT GUILD-SHOP D1: AND THE GUILD SAILCLOTH HELD (`gsc`) - the token's `sc` on a hello (a 1), the attachment's `gsc`;
+  // never the attachment's own `sc`, which is the session's secret
+  if (from?.sc === 1 || from?.gsc === 1) row.gsc = 1;
   // WITCH1: AND THE PROFILE ICON WORN, by the aura's law - off the verified token alone, one of the known or nothing
   const pi = from?.pi;
   if (typeof pi === 'string' && ICONS.includes(pi)) row.pi = pi;

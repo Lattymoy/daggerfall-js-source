@@ -80,7 +80,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { createDecorScan } from '../../systems/decor/decorScan.js';
-import { guildStockOwned } from '../../net/guild/guildStock.js';   // GUILD-SHOP: the guild's own hall pieces, its stock
+import { guildPieceLeft } from '../../net/guild/guildStock.js';   // GUILD-SHOP: the guild's own hall pieces, its stock
 import { guildStockText } from '../../ui/guild/guildShopText.js';
 import { decorModsLive, DECOR_MODS_LIVE_S } from '../../systems/decor/decorMods.js';   // AUDIT 05b A3: the mods' pieces offered while they stand
 import { createDecorRooms } from '../../systems/decor/decorRooms.js';   // DECOR-ROOMS: a house's rooms, found in its own walls
@@ -1067,9 +1067,6 @@ export function createDecorTool(deps) {
     return !!slot;
   }
 
-  /** GUILD-SHOP: how many more of a guild piece may stand here - its stock less what the room stands (a guild holds one
-   *  hall), or Infinity while unread (the service holds the count). */
-  const guildPieceLeft = (/** @type {any} */ e) => { const owned = guildStockOwned(e.guild); if (owned == null) return Infinity; let n = 0; for (const q of roomPieces() ?? []) if (q?.model === e.model) n++; return owned - n; };
   // ── THE FREE CAMERA ───────────────────────────────────────────────
   /** A new piece from the catalogue, or (DECOR1e) `editing`, a placed piece moved - its own id, turn, scale, light and
    *  storage; its size, when the scan has not read it yet, is what it was priced at. `pose` starts a new piece at a
@@ -2382,7 +2379,7 @@ export function createDecorTool(deps) {
     const price = p.door && p.piece ? p.piece.paid : p.placer ? p.placer.price() : null;   // HOME-DOORS: a door's price is its fit's
     const edit = p.editing && p.placer ? decorEditPrice(p.radius, p.editing, p.door && p.piece ? p.piece.scale : p.placer.state().scale) : null;
     bar?.show({
-      name: p.editing ? `Moving ${p.entry.name}` : p.entry.name, price, priceText: edit ? decorEditText(edit) : p.entry.guild != null ? guildStockText(p.entry, guildPieceLeft(p.entry)) : p.free ? 'free' : null,   // GUILD-SHOP: what is left of the guild's stock
+      name: p.editing ? `Moving ${p.entry.name}` : p.entry.name, price, priceText: edit ? decorEditText(edit) : p.entry.guild != null ? guildStockText(p.entry, guildPieceLeft(p.entry, roomPieces())) : p.free ? 'free' : null,   // GUILD-SHOP: what is left of the guild's stock
       count: pool.size(), cap: capHere(deps.room?.()),
       snap: !!p.placer?.state().snap, why: placingWhy(p, price),
       sized: decorEntrySized(p.entry), preview: !!p.lock,   // DECOR-FIGURE: no Smaller or Bigger for one of Daggerfall's people
@@ -2473,7 +2470,7 @@ export function createDecorTool(deps) {
       return !deps.touch && !deps.locked?.() ? 'Click to look around again.' : null;
     }
     if (p.free && p.entry.kind === 'own' && !deps.packHas?.(p.entry.own)) return p.entry.furnishing ? 'It is no longer among your things.' : 'It is no longer in your pack.';   // DECOR2a (DECOR2b: furniture)
-    if (p.entry.guild != null && guildPieceLeft(p.entry) <= 0) return guildStockText(p.entry, 0);   // GUILD-SHOP: the guild's stock spent here
+    if (p.entry.guild != null && guildPieceLeft(p.entry, roomPieces()) <= 0) return guildStockText(p.entry, 0);   // GUILD-SHOP: the guild's stock spent here
     const why = decorWhyNot({ price, ready: true, gold: deps.wallet?.().gold ?? 0, count: pool.size(), cap: capHere(deps.room?.()), yard: !!deps.room?.()?.yard, hall: !!deps.room?.()?.hall });
     if (why) return why;
     return !deps.touch && !deps.locked?.() ? 'Click to look around again.' : null;
