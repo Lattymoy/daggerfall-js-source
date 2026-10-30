@@ -303,7 +303,7 @@ export function characterSlots(doc, flow, { start = null, bodies = null, entryOf
       }
       box.append(row);
       // a line held whole: its every piece at once (the set's own door)
-      const whole = ARMORY_LINES.filter((line) => ARMORY_PIECES.filter((p) => p.line === line).every((p) => held.includes(p.key)));
+      const whole = ARMORY_LINES.filter((line) => { const of = ARMORY_PIECES.filter((p) => p.line === line); return of.length > 1 && of.every((p) => held.includes(p.key)); });   // GUILD-SHOP: a line of one piece is no set
       if (whole.length) {
         const sets = el('div', 'acctwearrow slots-sets');
         for (const line of whole) {

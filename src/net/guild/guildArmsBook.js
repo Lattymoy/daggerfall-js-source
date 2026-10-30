@@ -43,6 +43,12 @@ export function guildArmsOf(/** @type {unknown} */ tag) {
   if (!e || _now() - e.at > ARMS_FRESH_MS) { _wanted.add(tag); askSoon(); }
   return e ? { heraldry: e.heraldry, logo: e.logo } : null;
 }
+/** @type {string|null} the reader's own guild's tag, as its guild book last read it */
+let _own = null;
+/** The reader's own guild's tag (null for none) - its guild book's word at every look. */
+export function noteOwnGuild(/** @type {unknown} */ tag) { _own = typeof tag === 'string' && GUILD_TAG_RE.test(tag) ? tag : null; }
+/** The reader's own guild's arms - what my own Insignia Armlet and Guild Crest wear - or null in no guild. */
+export const ownGuildArms = () => (_own ? guildArmsOf(_own) : null);
 /** A logo's picture address, or null - the door's service under its id. */
 export const guildLogoSrc = (/** @type {unknown} */ id) => (typeof id === 'string' && _door?.logoUrl ? _door.logoUrl(id) : null);
 /** A pair of arms' one key - its heraldry's and its logo's - for a picture painted from them. */
@@ -63,4 +69,4 @@ function askSoon() {
 }
 
 /** For the tests: everything forgotten. */
-export function _resetArmsBook() { _arms.clear(); _wanted.clear(); _door = null; _asking = false; _askedAt = -Infinity; _version = 0; _now = () => Date.now(); }
+export function _resetArmsBook() { _own = null; _arms.clear(); _wanted.clear(); _door = null; _asking = false; _askedAt = -Infinity; _version = 0; _now = () => Date.now(); }

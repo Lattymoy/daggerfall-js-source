@@ -57,7 +57,7 @@ import { GUILD_FOUND_GOLD, guildGoldOk } from './guildLaw.js';
 import { guildHallEntryOk } from '../hallLaw.js';   // GUILD1d: who may walk into a hall
 import { heraldryOf } from '../heraldryLaw.js';   // GUILD1d: a heraldry chosen, in the law's shape
 import { mintMarksRid } from '../marksBook.js';   // GUILD1d: a heraldry changed burns Drakes - one request id a choice
-import { setArmsDoor, noteGuildArms } from './guildArmsBook.js';   // GUILD-SHOP: every guild's arms by its tag - the door it asks through, and this guild's told
+import { setArmsDoor, noteGuildArms, noteOwnGuild } from './guildArmsBook.js';   // GUILD-SHOP: every guild's arms by its tag - the door it asks through, and this guild's told
 import { walletReserve } from '../realm/realmGoldLaw.js';   // MARKET-AUDIT: a refusal gives back exactly what the payment took
 import { lastOnlineText } from '../social.js';   // GUILD-SEEN: a member's "last online" in the friends list's own words
 import { PLAY_GRACE_S } from '../playClock.js';   // GUILD-SEEN: and "Online" by the play beat's own sitting
@@ -218,6 +218,7 @@ export class GuildBook {
     const was = pictureOf(this.state, this.guild, this.invites);
     this.guild = mine.data?.guild ?? null;
     if (this.guild) noteGuildArms(this.guild.tag, this.guild.heraldry, this.guild.logo, this.guild.name);   // GUILD-SHOP: the faces that draw this guild's arms
+    noteOwnGuild(this.guild?.tag ?? null);
     this.invites = Array.isArray(inv.data?.invites) ? inv.data.invites : [];
     this.state = 'ready';
     this.error = null;

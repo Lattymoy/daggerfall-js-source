@@ -32,6 +32,7 @@ import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 import { duelRecordText } from '../net/duel/duelRecord.js';   // DUEL1: the duelling record's words, the account card's own
 import { renownText } from '../net/renown.js';   // RENOWN1: Renown, left of the name
 import { guildTagText } from '../net/guild/guildLaw.js';   // GUILD1c: the guild's tag, right of the name
+import { guildArmsOf } from '../net/guild/guildArmsBook.js';   // GUILD-SHOP: a Guild Crest's arms, by the peer's tag
 import { localizedStrings, t } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; STAR7: the stars' line through the core
 import { houseLine } from '../net/houseLaw.js';   // LEGACY7: the house, under the name
 
@@ -201,6 +202,7 @@ export function profileView({ name = null, peer = null, look = null, card = null
     house: houseLine(peer?.house),   // LEGACY7: the house the relay stamped - "☠ Ysolde II of House Hlaalu", or null
     title: titleBadge(peer),
     icon: readIcon(peer),   // WITCH1: the profile icon the relay stamped off their signed token - null for their face
+    iconArms: readIcon(peer) === 'guildcrest' ? guildArmsOf(peer?.gt) : undefined,   // GUILD-SHOP: their Guild Crest wears their guild's arms
     glyphs: glyphBadges(peer),
     line: [card ? `Level ${card.level}` : null, race, klass].filter(Boolean).join(' '),
     attrs: card ? STAT_KEYS_ORDER.map((key, i) => ({ key, short: ATTR_SHORT[i], label: ATTR_LABELS[i], value: card.attrs[i] })) : [],
@@ -326,7 +328,7 @@ export function createProfileWindow({ canOpen = () => true, onOpen = null, onClo
   const paint = (v) => {
     card.replaceChildren();
     const head = el('div', 'dfprofile-head');
-    const icon = v.icon ? profileIconNode(doc, v.icon, 'dfprofile-icon', 56) : null;   // WITCH1: the icon they wear, over the name
+    const icon = v.icon ? profileIconNode(doc, v.icon, 'dfprofile-icon', 56, { arms: v.iconArms }) : null;   // WITCH1: the icon they wear, over the name
     if (icon) head.append(icon);
     if (v.title) head.append(paintTitle(el('div', 'dfprofile-title', v.title.text), v.title));   // SHADOW-FANG: its colour, or its gradient
     const nm = el('div', 'dfprofile-name');
