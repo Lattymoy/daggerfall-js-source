@@ -104,7 +104,7 @@ WW7-9 and WW7-10 then took the trips and the packets across the edge, the land p
 
 ### E1-4 - the Deep Waters bake against TS2's ground (MED, FIXED for the Bay)
 
-`deepWatersBakeCache.js:"export function rectsLookup(rows) {"` built `{ xMin, xMax, yMin, yMax }` off rows of five numbers
+`deepWatersBakeCache.js:"export function rectsLookup"` built `{ xMin, xMax, yMin, yMax }` off rows of five numbers
 (`deepWatersClient.js` deepWatersLocationRects), so `deepWatersBake.js` pixelWaterSampler's blend - commented "a town's
 outline, as the streamed build flattens it" - was DFU's rect blend, which lifts the sea in the rect into land; TS2's
 streamed ground keeps that sea. Scenario: any coastal Bay town, Deep Waters on (the default). Probes: at 262 of the 339

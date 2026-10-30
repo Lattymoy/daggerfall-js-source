@@ -12,8 +12,8 @@
   {
     "name": "AEOW-C1-2-bay-adopt-unbounded",
     "file": "src/world/deepWater/deepWatersBake.js",
-    "old": "    if (last !== null) this._keep((last % this.frame.w) + this.frame.x0, Math.floor(last / this.frame.w) + this.frame.y0);",
-    "new": "",
+    "old": "    if (last !== null)\n      this._keep((last % this.frame.w) + this.frame.x0, Math.floor(last / this.frame.w) + this.frame.y0);\n  }",
+    "new": "  }",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "AEOW-C1-2-evict-frame-x0",
     "file": "src/world/deepWater/deepWatersBake.js",
-    "old": "        const x = (i % w) + x0, y = Math.floor(i / w) + y0;",
-    "new": "        const x = (i % w), y = Math.floor(i / w) + y0;",
+    "old": "        const x = (i % w) + x0,",
+    "new": "        const x = i % w,",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "AEOW-C1-2-evict-frame-y0",
     "file": "src/world/deepWater/deepWatersBake.js",
-    "old": "        const x = (i % w) + x0, y = Math.floor(i / w) + y0;",
-    "new": "        const x = (i % w) + x0, y = Math.floor(i / w);",
+    "old": "          y = Math.floor(i / w) + y0;",
+    "new": "          y = Math.floor(i / w);",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ],
@@ -413,8 +413,8 @@
   {
     "name": "AEOW-T-tile-global-x-edge",
     "file": "src/world/deepWater/deepWaterTileData.js",
-    "old": "    if (mapPixelX < f.x0) { mapPixelX = f.x0; fracX = 0; } else if (mapPixelX >= f.x0 + f.w) { mapPixelX = f.x0 + f.w - 1; fracX = 1; } else fracX = clamp01(fracX);",
-    "new": "    if (mapPixelX < f.x0) { mapPixelX = f.x0; fracX = 0; } else if (mapPixelX > f.x0 + f.w) { mapPixelX = f.x0 + f.w - 1; fracX = 1; } else fracX = clamp01(fracX);",
+    "old": "    } else if (mapPixelX >= f.x0 + f.w) {",
+    "new": "    } else if (mapPixelX > f.x0 + f.w) {",
     "tests": [
       "test/world/deepWater/ether_deep.test.js"
     ],

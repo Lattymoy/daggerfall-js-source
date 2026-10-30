@@ -320,7 +320,7 @@ test('ETHER-DEEP: the client builds the Eltheric\'s bake beside the Bay\'s on th
   assert.deepEqual(said.ether, { towns: [], havens: [], ruins: [] }, 'the worker\'s build carries the places\' rects');
   const worker = src('src/world/deepWater/deepWatersWorker.js');
   // PIN MOVED (TAMRIEL-DEEP): the build's word of the continent beside the sea's
-  assert.match(worker, /bake = worldBakes\(new DeepWatersBake\(\{ woods, global: g, locationRectAt, meetsAt \}\), \{ woods: m\.ether \? etherWoods\(woods\) : woods, ether: m\.ether \?\? null, continent: !!m\.continent \}\);/, 'the worker composes the sea over its own reader');   // PIN MOVED (FB1029 ACROSS-EDGE): the bake's meets read once, its build's and its pixels'
+  assert.match(worker, /bake = worldBakes\(new DeepWatersBake\(\{ woods, global: g, locationRectAt, meetsAt \}\), \{\n\s*woods: m\.ether \? etherWoods\(woods\) : woods,\n\s*ether: m\.ether \?\? null,\n\s*continent: !!m\.continent,\n\s*\}\);/, 'the worker composes the sea over its own reader');   // PIN MOVED (FB1029 ACROSS-EDGE): the bake's meets read once, its build's and its pixels'
 });
 
 test('ETHER-DEEP: the host carves the Eltheric by every arm, and holds the continent past the map (PIN MOVED from ETHER-HOLD: the box was held with the rest)', async () => {

@@ -156,7 +156,7 @@ test('TAMRIEL-DEEP the client: with the continent standing the bake has room for
   assert.ok(told && told.trace.land.length === 64000 && told.trace.land !== tamrielTrace().land && told.fit.ppu === 15.5, 'the worker told the trace (a copy) and the fit');
   const worker = src('src/world/deepWater/deepWatersWorker.js');
   assert.match(worker, /return bake\.setTamriel\?\.\(m\.trace \? new TamrielWatersBake\(\{ woods: groundWoods\(reader\), bay: bake\.bay \}\) : null\);/, 'the worker composes the continent over its own reader');
-  assert.match(worker, /if \(!bake\) \{ if \(!failed\) waiting\.push\(m\); return; \}/, 'and holds the word until its bake is in');
+  assert.match(worker, /if \(!bake\) \{\n\s*if \(!failed\) waiting\.push\(m\);\n\s*return;\n\s*\}/, 'and holds the word until its bake is in');
 });
 
 test('TAMRIEL-DEEP the host: with the land past the Bay streaming, the continent\'s trace handed to the client once it lands and once a picture, and a pixel past the map promoted then - held before (mutants: the trace unhanded; handed every promote; the continent\'s frame unasked)', async () => {

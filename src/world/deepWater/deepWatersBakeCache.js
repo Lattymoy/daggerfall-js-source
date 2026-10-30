@@ -27,16 +27,27 @@ import { fnv1a } from '../../formats/fnv1a.js';
  *  samples and keeps the land's order. 5 (FB1029 ACROSS-EDGE): the ground about a town rises to meet it (deepWatersBake.js bakeMeetsAt). */
 export const BAKE_GENERATOR_VERSION = 5;
 
-export { fnv1a };   // FIRST-VISIT: moved to formats/fnv1a.js, shared with the first visit's kept answers
+export { fnv1a }; // FIRST-VISIT: moved to formats/fnv1a.js, shared with the first visit's kept answers
 
 /** The rects' fingerprint: [pixelId, xMin, xMax, yMin, yMax] rows in pixel order - AUDIT TESA III E1-4: and a row's
  *  outline's bytes, where it carries one. */
 export function rectsFingerprint(rows) {
   let h = 0x811c9dc5;
   for (const r of [...rows].sort((a, b) => a[0] - b[0])) {
-    for (let k = 0; k < 5; k++) { const v = r[k]; h ^= v & 0xff; h = Math.imul(h, 0x01000193); h ^= (v >>> 8) & 0xff; h = Math.imul(h, 0x01000193); h ^= (v >>> 16) & 0xff; h = Math.imul(h, 0x01000193); }
+    for (let k = 0; k < 5; k++) {
+      const v = r[k];
+      h ^= v & 0xff;
+      h = Math.imul(h, 0x01000193);
+      h ^= (v >>> 8) & 0xff;
+      h = Math.imul(h, 0x01000193);
+      h ^= (v >>> 16) & 0xff;
+      h = Math.imul(h, 0x01000193);
+    }
     if (r[5]) h = fnv1a(r[5], h);
-    if (r[6]) { h ^= 0x6d; h = Math.imul(h, 0x01000193); }   // ACROSS-EDGE: a town the meets read
+    if (r[6]) {
+      h ^= 0x6d;
+      h = Math.imul(h, 0x01000193);
+    } // ACROSS-EDGE: a town the meets read
   }
   return h >>> 0;
 }
@@ -45,7 +56,15 @@ export function rectsFingerprint(rows) {
  *  where the row carries one, so the bake's blend (deepWatersBake.js pixelWaterSampler) is the streamed build's. */
 export function rectsLookup(rows) {
   const m = new Map();
-  for (const r of rows) m.set(r[0], { xMin: r[1], xMax: r[2], yMin: r[3], yMax: r[4], ...(r[5] ? { shape: r[5] } : {}), ...(r[6] ? { meets: true } : {}) });
+  for (const r of rows)
+    m.set(r[0], {
+      xMin: r[1],
+      xMax: r[2],
+      yMin: r[3],
+      yMax: r[4],
+      ...(r[5] ? { shape: r[5] } : {}),
+      ...(r[6] ? { meets: true } : {}),
+    });
   return (px, py) => m.get(py * 1000 + px) ?? null;
 }
 
@@ -54,7 +73,8 @@ export function bakeCacheKey({ woodsHash, rectsHash }) {
 }
 
 /** The default store: IndexedDB's, in its own database. */
-export const bakeStore = (indexedDBRef = globalThis.indexedDB) => idbStore(indexedDBRef, { db: 'daggerfall-deepwaters', store: 'bakes' });
+export const bakeStore = (indexedDBRef = globalThis.indexedDB) =>
+  idbStore(indexedDBRef, { db: 'daggerfall-deepwaters', store: 'bakes' });
 
 /**
  * Build-through: a hit returns the stored record; a miss builds, stores,
@@ -66,6 +86,13 @@ export async function cachedBake({ key, build, store = bakeStore() }) {
     if (hit && hit.state && hit.classes && hit.partialIndex && hit.partialBits) return { ...hit, cached: true };
   }
   const g = build();
-  if (g && store) await store.set(key, { state: g.state, classes: g.classes, partialIndex: g.partialIndex, partialBits: g.partialBits, stats: g.stats });
+  if (g && store)
+    await store.set(key, {
+      state: g.state,
+      classes: g.classes,
+      partialIndex: g.partialIndex,
+      partialBits: g.partialBits,
+      stats: g.stats,
+    });
   return g ? { ...g, cached: false } : null;
 }

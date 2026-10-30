@@ -2,8 +2,8 @@
   {
     "name": "DW-E1-light-work-while-not-playing",
     "file": "src/world/deepWater/deepWaterRuntime.js",
-    "old": "export function canRunLightRuntimeWork(playing) { return !!playing && !loadInProgress; }",
-    "new": "export function canRunLightRuntimeWork(playing) { return !loadInProgress; }",
+    "old": "  return !!playing && !loadInProgress;",
+    "new": "  return !loadInProgress;",
     "tests": [
       "test/world/deepWater/dwe_runtime.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "DW-E1-landed-load-leaves-no-refresh",
     "file": "src/world/deepWater/deepWaterRuntime.js",
-    "old": "export function loadFinished(realSeconds) { loadInProgress = false; resumeAt = realSeconds + LOAD_GRACE_SECONDS; refreshPending = true; }",
-    "new": "export function loadFinished(realSeconds) { loadInProgress = false; resumeAt = realSeconds + LOAD_GRACE_SECONDS; }",
+    "old": "  refreshPending = true;\n}",
+    "new": "}",
     "tests": [
       "test/world/deepWater/dwe_runtime.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "DW-E1-refresh-during-a-terrain-pass",
     "file": "src/world/deepWater/deepWaterRuntime.js",
-    "old": "export function canMutateTerrainData(realSeconds, playing) { return !loadGraceActive(realSeconds, playing) && !terrainUpdating; }",
-    "new": "export function canMutateTerrainData(realSeconds, playing) { return !loadGraceActive(realSeconds, playing); }",
+    "old": "  return !loadGraceActive(realSeconds, playing) && !terrainUpdating;",
+    "new": "  return !loadGraceActive(realSeconds, playing);",
     "tests": [
       "test/world/deepWater/dwe_runtime.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "DW-E1-reset-keeps-the-location-count",
     "file": "src/world/deepWater/deepWaterRuntime.js",
-    "old": "function resetTransition(at, pending) {\n  locationLoads = 0;\n",
-    "new": "function resetTransition(at, pending) {\n",
+    "old": "  locationLoads = 0;\n  resumeAt = at;",
+    "new": "  resumeAt = at;",
     "tests": [
       "test/world/deepWater/dwe_runtime.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "DW-E1-prune-counts-height",
     "file": "src/world/deepWater/deepWaterTransients.js",
-    "old": "      const dx = p[0] - playerPos[0], dz = p[2] - playerPos[2];\n      return dx * dx + dz * dz;",
-    "new": "      const dx = p[0] - playerPos[0], dz = p[2] - playerPos[2], dy = p[1] - playerPos[1];\n      return dx * dx + dz * dz + dy * dy;",
+    "old": "        dz = p[2] - playerPos[2];\n      return dx * dx + dz * dz;",
+    "new": "        dz = p[2] - playerPos[2],\n        dy = p[1] - playerPos[1];\n      return dx * dx + dz * dz + dy * dy;",
     "tests": [
       "test/world/deepWater/dwe_runtime.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "DW-E1-prune-cap-takes-the-nearest",
     "file": "src/world/deepWater/deepWaterTransients.js",
-    "old": "        if (d > farSq) { farSq = d; far = i; }",
-    "new": "        if (farSq < 0 || d < farSq) { farSq = d; far = i; }",
+    "old": "        if (d > farSq) {",
+    "new": "        if (farSq < 0 || d < farSq) {",
     "tests": [
       "test/world/deepWater/dwe_runtime.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "DW-E1-clear-destroys-the-dead-again",
     "file": "src/world/deepWater/deepWaterTransients.js",
-    "old": "      if (o && !o.destroyed()) o.destroy();\n    }\n    this.objects.length = 0;\n  }\n\n  /**\n   * Release",
-    "new": "      if (o) o.destroy();\n    }\n    this.objects.length = 0;\n  }\n\n  /**\n   * Release",
+    "old": "      const o = this.objects[i];\n      if (o && !o.destroyed()) o.destroy();",
+    "new": "      const o = this.objects[i];\n      if (o) o.destroy();",
     "tests": [
       "test/world/deepWater/dwe_runtime.test.js"
     ]

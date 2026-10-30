@@ -227,8 +227,8 @@
   {
     "name": "FAR-CLIP1-the-cap-writes-its-own-byte",
     "file": "src/world/deepWater/deepWaterCap.js",
-    "old": "import { CLIP_SENTINEL } from '../terrain/terrainSurface.js';   // FAR-CLIP1: the byte's one home, the TileMap format's module - the renderer reads it there too\n",
-    "new": "const CLIP_SENTINEL = 255;\n",
+    "old": "import { CLIP_SENTINEL } from '../terrain/terrainSurface.js'; // FAR-CLIP1: the byte's one home, the TileMap format's module - the renderer reads it there too",
+    "new": "const CLIP_SENTINEL = 255;",
     "tests": [
       "test/world/terrain/farclip1.test.js"
     ]

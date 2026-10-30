@@ -200,7 +200,7 @@
   {
     "name": "DW-D-load-grace-stuck-location-never-dropped",
     "file": "src/world/deepWater/deepWaterRuntime.js",
-    "old": "  if (realSeconds - lastLocationLoadAt > LOCATION_LOAD_STUCK_SECONDS) { locationLoads = 0; return false; }",
+    "old": "  if (realSeconds - lastLocationLoadAt > LOCATION_LOAD_STUCK_SECONDS) {\n    locationLoads = 0;\n    return false;\n  }",
     "new": "",
     "tests": [
       "test/scenes/dwd_swim.test.js"

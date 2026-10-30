@@ -546,7 +546,7 @@ query it asks clamps to it: an Eltheric pixel's tile data (`_global`, `_climateA
 Bay's corner pixel. ETHER-HOLD (below, and `01-Overview/bugs/Field-Bugs-2026-10-12.md`) had found that clamp the hard way -
 a floor carved against the corner and a swim that read no water over it - and held the carve off the box altogether.
 
-THE LAW. A bake answers a FRAME of pixels (`deepWatersBake.js:"export const BAY_FRAME = Object.freeze({ x0: 0, y0: 0, w: MAP_W, h: MAP_H });"`):
+THE LAW. A bake answers a FRAME of pixels (`deepWatersBake.js:"export const BAY_FRAME"`):
 its planes indexed and its cells counted from the frame's corner, its tile data clamped to it - the Bay's frame is the
 mod's map to the float (a pixel less 0 is the pixel; every DW pin and mutant stands). The Eltheric Ocean's box is a
 bake's own frame (`etherWatersBake.js:"export class EtherWatersBake extends DeepWatersBake {"`), built by the same rules

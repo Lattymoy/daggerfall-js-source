@@ -254,8 +254,8 @@
   {
     "name": "DW-FA-load-off-the-clock",
     "file": "src/world/deepWater/deepWaterRuntime.js",
-    "old": "export function canRunLightRuntimeWork(playing) { return !!playing && !loadInProgress; }",
-    "new": "export function canRunLightRuntimeWork(playing) { return !!playing && resumeAt !== Infinity; }",
+    "old": "  return !!playing && !loadInProgress;",
+    "new": "  return !!playing && resumeAt !== Infinity;",
     "tests": [
       "test/scenes/dwf_audit.test.js"
     ]

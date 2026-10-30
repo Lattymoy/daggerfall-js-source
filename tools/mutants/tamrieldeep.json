@@ -3,7 +3,7 @@
     "name": "TDEEP-flood-seeds-the-border",
     "file": "src/world/deepWater/deepWatersBake.js",
     "old": "      if (!seeded && (seedAt || (px !== 0 && py !== 0 && px !== FW - 1 && py !== FH - 1))) continue;",
-    "new": "      if (!seeded && ((px !== 0 && py !== 0 && px !== FW - 1 && py !== FH - 1))) continue;",
+    "new": "      if (!seeded && px !== 0 && py !== 0 && px !== FW - 1 && py !== FH - 1) continue;",
     "tests": [
       "test/world/deepWater/tamriel_deep.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "TDEEP-flood-seed-unreached",
     "file": "src/world/deepWater/deepWatersBake.js",
-    "old": "      if (seeded) { r.set(c); pushAround(px, py); continue; }",
-    "new": "      if (seeded) { pushAround(px, py); continue; }",
+    "old": "        r.set(c);\n        pushAround(px, py);",
+    "new": "        pushAround(px, py);",
     "tests": [
       "test/world/deepWater/tamriel_deep.test.js"
     ]
@@ -92,7 +92,7 @@
   {
     "name": "TDEEP-worker-untold",
     "file": "src/world/deepWater/deepWatersClient.js",
-    "old": "        try { worker.postMessage({ t: 'tamriel', trace: t, fit: fit ? { ox: fit.ox, oy: fit.oy, ppu: fit.ppu } : null }); } catch { /* the main thread's bake answers */ }",
+    "old": "        try {\n          worker.postMessage({ t: 'tamriel', trace: t, fit: fit ? { ox: fit.ox, oy: fit.oy, ppu: fit.ppu } : null });\n        } catch {\n          /* the main thread's bake answers */\n        }",
     "new": "        void t;",
     "tests": [
       "test/world/deepWater/tamriel_deep.test.js"
@@ -101,7 +101,7 @@
   {
     "name": "TDEEP-bake-unset",
     "file": "src/world/deepWater/deepWatersClient.js",
-    "old": "      void ready.then((b) => { if (b && !disposed) b.setTamriel?.(trace ? new TamrielWatersBake({ woods: woods.isTamrielGround ? woods : groundWoods(woods), bay: b.bay }) : null); });",
+    "old": "      void ready.then((b) => {\n        if (b && !disposed)\n          b.setTamriel?.(\n            trace\n              ? new TamrielWatersBake({ woods: woods.isTamrielGround ? woods : groundWoods(woods), bay: b.bay })\n              : null,\n          );\n      });",
     "new": "      void ready;",
     "tests": [
       "test/world/deepWater/tamriel_deep.test.js"

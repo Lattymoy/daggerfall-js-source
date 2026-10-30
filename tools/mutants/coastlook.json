@@ -371,8 +371,8 @@
   {
     "name": "COAST-LOOK-cull-ring-unread",
     "file": "src/world/deepWater/deepWaterCap.js",
-    "old": "const gone = ring ? wholeCut(bytes, dim) : null;",
-    "new": "const gone = null;",
+    "old": "  const gone = ring ? wholeCut(bytes, dim) : null;",
+    "new": "  const gone = null;",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "COAST-LOOK-cull-a-neighbour-unasked",
     "file": "src/world/deepWater/deepWaterCap.js",
-    "old": "for (let dx = -1; dx <= 1; dx++) if (bytes[r + Math.min(dim - 1, Math.max(0, x + dx))] !== CLIP_SENTINEL)",
-    "new": "for (let dx = 0; dx <= 1; dx++) if (bytes[r + Math.min(dim - 1, Math.max(0, x + dx))] !== CLIP_SENTINEL)",
+    "old": "        for (let dx = -1; dx <= 1; dx++)",
+    "new": "        for (let dx = 0; dx <= 1; dx++)",
     "tests": [
       "test/render/coastlook.test.js"
     ]

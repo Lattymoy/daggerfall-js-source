@@ -1367,7 +1367,7 @@ cell puts the sea against grass or stone. The hard edges are the drawing's:
   point draws the nearest kept tile's picture, mirrored about its own square: the beach runs out under the sea. A kept
   tile's seam reads at most 0.75 and a quadrant of clipped tiles 1, so the wander is carried at 0.12 either way and the
   line stays inside (0.75, 1): never into a kept tile, never along its seam, never a notch.
-- **The cull keeps the coast's ring for it.** `clippedTerrainIndices` (`deepWaterCap.js:"function wholeCut(bytes, dim) {"`) drops a clipped quad only when it and the eight tiles about it are clipped; the clip program cuts the rest
+- **The cull keeps the coast's ring for it.** `clippedTerrainIndices` (`deepWaterCap.js:"function wholeCut"`) drops a clipped quad only when it and the eight tiles about it are clipped; the clip program cuts the rest
   (`renderer.js:"if (uGroundEdge > 0.0 ? coastCut("`). The streaming host passes the renderer's switch, its one line.
 
 **What does not move.** The player swims and the town walks by DFU's corner table (`WATER_MASK_TABLE`). The shadow pass

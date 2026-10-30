@@ -22,7 +22,7 @@
 
 import { climateBaseDepth, climateBandSignal } from './deepBathymetry.js';
 import { mapDataHasWater, isLocalPointWater } from './deepWaterClassification.js';
-import { BAY_FRAME } from './deepWatersBake.js';   // ETHER-DEEP: the map a bake's frame
+import { BAY_FRAME } from './deepWatersBake.js'; // ETHER-DEEP: the map a bake's frame
 
 const TILE_WORLD_SIZE = 819.2;
 const OCEAN_CLIMATE = 223;
@@ -50,7 +50,7 @@ export class DeepWaterTileData {
     this.mapData = mapData;
     this.climateIndex = climateIndex;
     this.bake = bake ?? null;
-    this.frame = this.bake?.frameOf?.(mapPixelX, mapPixelY) ?? BAY_FRAME;   // ETHER-DEEP: the map this pixel's queries clamp to
+    this.frame = this.bake?.frameOf?.(mapPixelX, mapPixelY) ?? BAY_FRAME; // ETHER-DEEP: the map this pixel's queries clamp to
     this._climateAt = climateAt;
     this.usesLocalWaterFallback = false;
     this.biomeClimateIndex = this._resolveBiomeClimateIndex(climateIndex, mapPixelX, mapPixelY);
@@ -62,7 +62,9 @@ export class DeepWaterTileData {
   }
 
   /** HasDistanceField: initialized and the bake loaded. */
-  get hasDistanceField() { return !!(this.initialized && this.bake && this.bake.loaded); }
+  get hasDistanceField() {
+    return !!(this.initialized && this.bake && this.bake.loaded);
+  }
 
   /** GetDistanceToEdgeMeters. */
   getDistanceToEdgeMeters(lx, lz) {
@@ -101,16 +103,26 @@ export class DeepWaterTileData {
   }
 
   _isLocalWaterMissedByFineBake(mapPixelX, mapPixelY, fracX, fracZ) {
-    if (mapPixelX === this.mapPixelX && mapPixelY === this.mapPixelY && this.bake.hasFineWaterMask
-      && !this.bake.isCarvedWater(mapPixelX, mapPixelY, fracX, fracZ)) {
+    if (
+      mapPixelX === this.mapPixelX &&
+      mapPixelY === this.mapPixelY &&
+      this.bake.hasFineWaterMask &&
+      !this.bake.isCarvedWater(mapPixelX, mapPixelY, fracX, fracZ)
+    ) {
       return isLocalPointWater(this.mapData, fracX, fracZ);
     }
     return false;
   }
 
   _shouldUseLocalEdgeDistance(mapPixelX, mapPixelY, fracX, fracZ) {
-    if (mapPixelX === this.mapPixelX && mapPixelY === this.mapPixelY && this.bake.hasFineWaterMask && isLocalPointWater(this.mapData, fracX, fracZ)) {
-      if (this.bake.isWaterAt(mapPixelX, mapPixelY, fracX, fracZ)) return this._isLocalWaterMissedByFineBake(mapPixelX, mapPixelY, fracX, fracZ);
+    if (
+      mapPixelX === this.mapPixelX &&
+      mapPixelY === this.mapPixelY &&
+      this.bake.hasFineWaterMask &&
+      isLocalPointWater(this.mapData, fracX, fracZ)
+    ) {
+      if (this.bake.isWaterAt(mapPixelX, mapPixelY, fracX, fracZ))
+        return this._isLocalWaterMissedByFineBake(mapPixelX, mapPixelY, fracX, fracZ);
       return true;
     }
     return false;
@@ -135,7 +147,8 @@ export class DeepWaterTileData {
     const num8 = clampInt(num4 - (this.mapPixelY - 1), 0, 2);
     const num9 = Math.min(num7 + 1, 2);
     const num10 = Math.min(num8 + 1, 2);
-    const d = this._baseDepth, b = this._band;
+    const d = this._baseDepth,
+      b = this._band;
     const num11 = lerp(d[num8 * 3 + num7], d[num8 * 3 + num9], num5);
     const num12 = lerp(d[num10 * 3 + num7], d[num10 * 3 + num9], num5);
     const baseDepth = lerp(num11, num12, num6);
@@ -145,7 +158,9 @@ export class DeepWaterTileData {
   }
 
   /** GetBlendedClimateBaseDepth. */
-  getBlendedClimateBaseDepth(lx, lz) { return this.getBlendedClimate(lx, lz).baseDepth; }
+  getBlendedClimateBaseDepth(lx, lz) {
+    return this.getBlendedClimate(lx, lz).baseDepth;
+  }
 
   _cacheClimateNeighborhood() {
     for (let i = -1; i <= 1; i++) {
@@ -169,16 +184,21 @@ export class DeepWaterTileData {
   _resolveBiomeClimateIndex(climateIndex, mapX, mapY) {
     if (climateIndex !== OCEAN_CLIMATE) return climateIndex;
     // With no bake the C#'s MapPixelHasLandCells answers false and every distance is float.MaxValue: offshore.
-    if ((!this.bake || !this.bake.mapPixelHasLandCells(mapX, mapY)) && this._isFullyOffshore(mapX, mapY)) return climateIndex;
+    if ((!this.bake || !this.bake.mapPixelHasLandCells(mapX, mapY)) && this._isFullyOffshore(mapX, mapY))
+      return climateIndex;
     if (!this._climateAt) return climateIndex;
-    let result = climateIndex, best = 0;
+    let result = climateIndex,
+      best = 0;
     for (let i = -1; i <= 1; i++) {
       for (let j = -1; j <= 1; j++) {
         if (j === 0 && i === 0) continue;
         const c = this._climateSafe(mapX + j, mapY + i, climateIndex);
         if (c === OCEAN_CLIMATE) continue;
         const n = this._countNeighborClimate(mapX, mapY, c, climateIndex);
-        if (n > best) { result = c; best = n; }
+        if (n > best) {
+          result = c;
+          best = n;
+        }
       }
     }
     return result;
@@ -215,7 +235,8 @@ export class DeepWaterTileData {
 
   /** GetGlobalMapFractions, with NormalizeMapFractionX/Y. */
   _global(lx, lz) {
-    const fracX2 = lx / TILE_WORLD_SIZE, fracZ2 = lz / TILE_WORLD_SIZE;
+    const fracX2 = lx / TILE_WORLD_SIZE,
+      fracZ2 = lz / TILE_WORLD_SIZE;
     const num = this.mapPixelX + fracX2;
     const num2 = this.mapPixelY + (1 - fracZ2);
     let mapPixelX = Math.floor(num);
@@ -223,8 +244,20 @@ export class DeepWaterTileData {
     let fracX = num - mapPixelX;
     let fracZ = 1 - (num2 - mapPixelY);
     const f = this.frame;
-    if (mapPixelX < f.x0) { mapPixelX = f.x0; fracX = 0; } else if (mapPixelX >= f.x0 + f.w) { mapPixelX = f.x0 + f.w - 1; fracX = 1; } else fracX = clamp01(fracX);
-    if (mapPixelY < f.y0) { mapPixelY = f.y0; fracZ = 1; } else if (mapPixelY >= f.y0 + f.h) { mapPixelY = f.y0 + f.h - 1; fracZ = 0; } else fracZ = clamp01(fracZ);
+    if (mapPixelX < f.x0) {
+      mapPixelX = f.x0;
+      fracX = 0;
+    } else if (mapPixelX >= f.x0 + f.w) {
+      mapPixelX = f.x0 + f.w - 1;
+      fracX = 1;
+    } else fracX = clamp01(fracX);
+    if (mapPixelY < f.y0) {
+      mapPixelY = f.y0;
+      fracZ = 1;
+    } else if (mapPixelY >= f.y0 + f.h) {
+      mapPixelY = f.y0 + f.h - 1;
+      fracZ = 0;
+    } else fracZ = clamp01(fracZ);
     return { mapPixelX, mapPixelY, fracX, fracZ };
   }
 
