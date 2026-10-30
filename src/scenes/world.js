@@ -498,6 +498,7 @@ import '../systems/courtRulesDoor.js';   // AUDIT WORLD-EVENTS L1-10: and their 
 import { sendRaiseWord } from '../net/raiseWord.js';   // AUDIT WORLD-EVENTS L1-1, L1-4: a Resurrect said to the room that keeps the death
 import { gateRoomKey, isGateRoom, gateBossOf, gateTimes, gateAdmits, gateAt, gatePortentsOf, gateLaneOf, GATE_COLLAPSE_MS } from '../net/gate/gateLaw.js';   // WB3b: the court's room, and its day's end
 import { createGateCrowd, gateCrowdMax, crowdKept } from '../net/gate/gateCrowd.js';   // GATE-CROWD: the card's count draws the nearest of a crowd (CROWD-WIDE: everywhere a stranger cannot fight me)
+import { withIndoorFloor, indoorSceneY, keepIndoorFloor } from '../net/peer/indoorFloor.js';   // INDOOR-FLOOR: a pose indoors over its room's floor
 import { createPeerRange, peerRangeOf } from '../net/peer/peerRange.js';   // PEER-RANGE: the others drawn out to the distance on the Other players card
 import { gateLandingFor, courtRing, courtArena, courtArenaAt, courtToDungeon, courtBraziers, COURT_TEXT, COURT_FOG, LAVA_Y } from '../world/gate/gateArena.js';   // WB3b: the Burning Court's way home, its ring and its words   // WB2: the gate's countdown over the screen, near it
 import { isMainStoryDungeon } from '../world/dungeon/dungeonTextures.js';   // SPAWNED-DUNGEONS1: the main story's own dungeons are never cloned
@@ -997,7 +998,7 @@ import { createPlayerHealthMirror } from '../net/siege/refereeHealthMirror.js'; 
 import { wildHallPicks, wildHallAt, wildHallTemplateOk } from '../systems/wild/wildDungeons.js';   // PVPDUNGEONS: the day's halls, picked alike on every client   // PVPDUNGEONS
 import { setWildHere, wildHere, isWildRegion, WILD_REGION, wildInside, wildNear, setWildDeath, wildDeath, wildDeathAtHand, wildDeathKill, wildFallHeard, WILD_TEXT, WILD_DEATH_HOLD_S, WILD_NAME, ZONE_WATCH_SCALE } from '../systems/wild/wildZone.js';
 import { createPartyTruce } from '../systems/wild/wildZone.js';   // PARTY-TRUCE (FIELD BUGS 2026-10-09b)
-import { settledAt, zoneSafe, zoneSafeFrame, zonePortFree, teleportLanding, ZONE_SAFE_TEXT } from '../systems/wild/zoneSafe.js';   // ZONE-SAFE (the owner, 2026-10-25: "All cities should be considered safe zones"): a settlement's streets are peace
+import { settledAt, zoneSafe, zoneSafeFrame, zonePortFree, teleportLanding, zoneBankOpen, ZONE_SAFE_TEXT } from '../systems/wild/zoneSafe.js';   // ZONE-SAFE (the owner, 2026-10-25: "All cities should be considered safe zones"): a settlement's streets are peace
 import { zoneEdgeSee } from '../systems/wild/zoneEdge.js';   // PVP-EDGE: safe passage only for a walk in over the zone's edge
 import { GREATER_GIANT_CALL, GREATER_GIANT_CALL_AT, noteWildBlow } from '../systems/wild/wildZone.js';   // GREATER-GIANT; AUDIT PVP-EASE L2-1: the combat lock's blow
 import { wildRing, wildRingAt, wildRingName, wildRingBonus, wildZoneKind, zoneWord, zoneRingName, setWildMask, wildMask, WILD_RINGS, wildJourney, WILD_GIANT, WILD_GIANT_CHANCE, WILD_GIANT_MAX, WILD_STRANGER_M, WILD_STRANGER_SEE_M, WILD_STRANGER_SLOW_M, WILD_STRANGER_RGBA } from '../systems/wild/wildZone.js';   // WILD2: the four rings; WILD3: the journeys
@@ -27611,7 +27612,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       if (_wildGhost && _wildGhostEndAt != null && Date.now() >= _wildGhostEndAt && !_wildDeposits.length) wildGhostLeave();   // AUDIT INT9: a hall's or a building's ghost, its deposit gone
       if (online.room && !_wildGhost) {
         // PCORPSE1: the body is left where it fell - one last pose, flagged, before the leave below takes the living figure
-        _deadMark = online._pose ? { k: online.room, x: online._pose.x, y: online._pose.y, z: online._pose.z, at: Date.now() } : null;
+        _deadMark = online._pose ? keepIndoorFloor({ k: online.room, x: online._pose.x, y: online._pose.y, z: online._pose.z, at: Date.now() }, online._pose) : null;   // AUDIT FB1030 N1: the room's floor too
         _partyComposedAt = -Infinity;
         // PDEATH-FOES, AUDIT CONTRIB P1: my foes are the survivors' now (handOverFoes), named on my last frame BEFORE the
         // death pose; what nobody took stays mine
@@ -27670,12 +27671,12 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // shift too (AUDIT ONLINE D7), the dungeon's frame is its own
     const shedY = overworld || mode === 'interior';
     const nativeFrame = overworld || !!privateInteriorOf(key);
-    const pose = nativeFrame
+    const pose = withIndoorFloor(nativeFrame
       ? { x: wc.x, y: player.pos[1] - state.compensation[1], z: wc.z, yaw: cam.yaw, pitch: cam.pitch, mv: 0 }
-      : { x: player.pos[0], y: shedY ? player.pos[1] - state.compensation[1] : player.pos[1], z: player.pos[2], yaw: cam.yaw, pitch: cam.pitch, mv: 0 };
+      : { x: player.pos[0], y: shedY ? player.pos[1] - state.compensation[1] : player.pos[1], z: player.pos[2], yaw: cam.yaw, pitch: cam.pitch, mv: 0 }, mode === 'interior' && modes?.interiorCtx, state.compensation[1]);   // INDOOR-FLOOR (net/peer/indoorFloor.js): a pose indoors carries its room's floor
     onlineToScene = nativeFrame
-      ? (p) => { const l = state.localFromWorld(p.x, p.z); return [l[0], p.y + state.compensation[1], l[1]]; }
-      : (p) => [p.x, shedY ? p.y + state.compensation[1] : p.y, p.z];
+      ? (p) => { const l = state.localFromWorld(p.x, p.z); return [l[0], indoorSceneY(p, mode === 'interior' && modes?.interiorCtx, state.compensation[1]), l[1]]; }
+      : (p) => [p.x, shedY ? indoorSceneY(p, mode === 'interior' && modes?.interiorCtx, state.compensation[1]) : p.y, p.z];
     sceneToOnline = nativeFrame ? campToWire : (q) => [q[0], shedY ? q[1] - state.compensation[1] : q[1], q[2]];   // AUDIT MERGE-PLUS B1
     // CARDS2b: seated at a card table, the pose is the SEAT's - the feet and the facing the body is drawn at (the capsule
     // stands where it sat down from), in the room's frame like any point; `st` rides the arm below
@@ -28305,7 +28306,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     wildDungeonElite: () => wildDungeonIsOpenHere(),   // PVPDUNGEONS: every open hall is an elite dungeon
     wildHallRing: () => wildHallHere()?.ring ?? 0,   // PVPDUNGEONS: its tier
     wildHallEpoch: () => { const h = wildHallHere(); return h ? (_wdunEpoch.get(h.key) ?? 0) : 0; },   // PVPDUNGEONS: its reset's epoch
-    wildNoBank: () => { if (!wildHere()) return false; townTalk.say('There are no banks in the mountains.'); return true; },
+    wildNoBank: () => { if (zoneBankOpen(wildHere(), playerTravelPixel(), _locationToBuild)) return false; townTalk.say(ZONE_SAFE_TEXT.bank); return true; },   // ZONE-BANK (systems/wild/zoneSafe.js): a settlement's bank serves
     onDungeonLeave: () => { if (_wdunInside) wdunLeft(false); const n = handOverRoomFoes(); if (n) console.info(`[foes] handed ${n} quest foe(s) at the dungeon's door`); doorToken.leaving(); gatherHost?.leaveDungeon(); worldPublish(performance.now(), true); },   // WORLD1: the room's memory goes out while the dungeon still stands; QUEST-PARTY phase 3c: my shared quest's foes to the party who stay   // DOOR-TOKEN: the cell outside's token, if the walk to the door did not mint it
     // OH-D: the four DFU events There's a Hole in the Bottom of the Ocean subscribes to (its Install), raised by the doors
     onSetDungeon: (ctx) => ohAbyss?.onDungeonSet(ohDungeonOf(ctx)),   // DaggerfallDungeon.OnSetDungeon
@@ -30033,7 +30034,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     for (let y = at.y - r; y <= at.y + r; y++) {
       for (let x = at.x - r; x <= at.x + r; x++) {
         const summary = tvPlaceSummary(x, y);
-        if (!summary || summary.loc?.wildHall) continue;   // HALL-PLATE (the owner: "it also shows as town right now too in white fonts"): a hall wears the dungeons' plate alone (travelViewDungeons)
+        if (!summary || summary.loc?.wildHall || summary.loc?.spawned) continue;   // HALL-PLATE (the owner: "it also shows as town right now too in white fonts"): a hall wears the dungeons' plate alone (travelViewDungeons) - SPAWN-PLATE: a spawned dungeon too, as on the Bay
         const rect = tvPlaceRect(summary);
         list.push({ key: `place:${summary.mapId}`, summary, x: rect.cx, z: rect.cz });
       }

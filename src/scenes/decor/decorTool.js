@@ -755,7 +755,9 @@ export function createDecorTool(deps) {
     return m?.box ? free.filter((w) => decorDoorFit(w, m.box)?.fills) : free;
   }
   /** HOME-YARD (AUDIT): THE GROUND A PIECE COVERS, as offsets from where it stands in the room's frame - its model's box
-   *  turned and sized as it stands (a flat's width, square), so a lot is asked about all of it, not its middle alone. */
+   *  turned and sized as it stands (a flat's width, square), so a lot is asked about all of it, not its middle alone.
+   *  WALL-TOUCH: a flat turns to the eye, so its ground is the circle of half its width, as the placer stands it off a
+   *  wall - not half its picture's diagonal, which put every lamp hung on a house's wall into the house. */
   function footprintOf(p) {
     const piece = p?.piece;
     if (!piece) return [];
@@ -764,10 +766,11 @@ export function createDecorTool(deps) {
     if (m?.box) {
       const [x0, , z0, x1, , z1] = m.box;
       const yaw = ((piece.rot?.[0] ?? 0) * Math.PI) / 180, c = Math.cos(yaw), sn = Math.sin(yaw);
-      return [[x0, z0], [x1, z0], [x1, z1], [x0, z1]].map(([lx, lz]) => [(c * lx + sn * lz) * s, (-sn * lx + c * lz) * s]);   // mat4 trs: local x to (cos, -sin), z to (sin, cos)
+      const corners = [[x0, z0], [x1, z0], [x1, z1], [x0, z1]].map(([lx, lz]) => [(c * lx + sn * lz) * s, (-sn * lx + c * lz) * s]);   // mat4 trs: local x to (cos, -sin), z to (sin, cos)
+      return Object.assign(corners, { bottom: m.box[1] * s });   // AUDIT FB1030 Y5: its foot, under its origin by as much as it reaches
     }
-    const r = (p.radius ?? 0) * s;
-    return r > 0 ? [[-r, -r], [r, -r], [r, r], [-r, r]] : [];
+    const r = (p.flatSize?.w > 0 ? p.flatSize.w / 2 : p.radius ?? 0) * s;
+    return r > 0 ? Array.from({ length: 8 }, (_, i) => [r * Math.cos((i * Math.PI) / 4), r * Math.sin((i * Math.PI) / 4)]) : [];   // AUDIT FB1030 Y8: the ground it turns over, so a diagonal wall too
   }
   /** Where a placed piece stands, in this visit's frame. */
   const piecePoint = (piece) => { const o = deps.origin?.() ?? [0, 0, 0]; return [o[0] + piece.pos[0], o[1] + piece.pos[1], o[2] + piece.pos[2]]; };
@@ -2058,8 +2061,10 @@ export function createDecorTool(deps) {
     const by = cur.model == null && axis === 0 && !isNatureArchive(cur.flat?.[0]) ? Math.sign(deg) * 180 : deg;
     const next = decorPieceOf({ ...cur, rot: cur.rot.map((v, i) => (i === axis ? wrapTurn(Math.round((v + by) * 10) / 10) : v)) });
     if (!next) return false;
-    const why = whyNotHere({ piece: next, radius: ensureScan().radiusOf(entryOf(next)) ?? null });
-    if (why) { deps.say?.(why); return false; }
+    const radius = ensureScan().radiusOf(entryOf(next)) ?? null, why = whyNotHere({ piece: next, radius });
+    // WALL-TOUCH (AUDIT FB1030 M3): a flat's ground is a circle, the same turned - refused only for what it did not stand
+    // in already (a lamp on a wall flips); a model's turned box, whenever it is refused
+    if (why && (next.model != null || why !== whyNotHere({ piece: cur, radius }))) { deps.say?.(why); return false; }
     pool.put(next);
     if (r.kind !== 'home') return true;   // offline, the room's pool is its save
     const owed = turnsOwed.get(piece.id);

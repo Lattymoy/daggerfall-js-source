@@ -1113,6 +1113,7 @@ tutorials.wildZone.body1,"在 Cyrodiil 和开阔的 {word} 大洋上，玩家之
 tutorials.wildZone.body2,"如果你在那里被其他玩家杀死，什么也不会掉落。对方可以拿走你一件未投保的穿戴装备，没有就拿一份保单的金币，再没有就拿你金币与信用状的十分之一。其他死亡照常损失十分之一。"
 wagon.upkeep.boons.failing,"你的{name}快散架了。马车场或马车修理工具能修好它。"
 wagon.upkeep.boons.rickety,"你的{name}摇摇晃晃。马车场能修好它。"
+wild.bank.shut,"在开放区域，银行只在城市、城镇和村庄提供服务。"
 wild.death.away,"你离开时被{name}杀死了。"
 wild.death.awayAnon,"你离开时被杀死了。"
 wild.death.kept,"没有掉落任何东西。你照常承受死亡的代价。"

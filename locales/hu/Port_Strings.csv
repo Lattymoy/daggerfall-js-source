@@ -3020,6 +3020,7 @@ tutorials.wildZone.body1,"Cyrodiilban és a nyílt {word}-óceánon a játékoso
 tutorials.wildZone.body2,"Ha ott egy másik játékos megöl, semmi sem esik le. Elvehet egy biztosítatlan viselt tárgyat, különben egy kötvény aranyát, különben az érméid és hitelleveleid tizedét. Bármely más halál a szokásos egytizedbe kerül."
 wagon.upkeep.boons.failing,"A(z) {name} szétesik. Egy Szekérudvar vagy egy Szekérjavító készlet megjavítja."
 wagon.upkeep.boons.rickety,"A(z) {name} rozoga. Egy Szekérudvar megjavíthatja."
+wild.bank.shut,"A nyílt zónában a bankok csak városokban, mezővárosokban és falvakban szolgálnak ki."
 wild.death.away,"{name} megölt, amíg távol voltál."
 wild.death.awayAnon,"Megöltek, amíg távol voltál."
 wild.death.kept,"Semmi sem esett le. A halál szokásos árát fizeted."
