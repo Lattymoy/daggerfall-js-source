@@ -62,8 +62,8 @@
   {
     "name": "AUDIT-CC-A5-home-unseen",
     "file": "src/scenes/naval/navalCrew.js",
-    "old": "      if (w.away) for (const m of ship.life.members) { if (!m.gone && !ship.sprites.get(m)) ship.sprites.set(m, sprite(m)); }\n",
-    "new": "",
+    "old": "      if (w.away)\n        for (const m of ship.life.members) {\n          if (!m.gone && !ship.sprites.get(m)) ship.sprites.set(m, sprite(m));\n        }\n      if (w.hold && !ship.held) {",
+    "new": "      if (w.hold && !ship.held) {",
     "tests": [
       "test/systems/naval/auditcrew.test.js",
       "test/systems/naval/crewcompanions.test.js"

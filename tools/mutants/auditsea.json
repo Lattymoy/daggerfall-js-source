@@ -155,8 +155,8 @@
   {
     "name": "AUDIT-SEA-B3-wreck-shuts-nothing",
     "file": "src/scenes/naval/navalPvp.js",
-    "old": "    if (boat) shutSeaHold(boat.uid);\n",
-    "new": "",
+    "old": "    if (boat) shutSeaHold(boat.uid);\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -309,8 +309,8 @@
   {
     "name": "AUDIT-SEA-E6A-cabin-kin-a-captain",
     "file": "src/scenes/naval/navalPvp.js",
-    "old": "!!guns.open(p.id, null, true) && Math.hypot",
-    "new": "Math.hypot",
+    "old": "          (p) =>\n            Array.isArray(p.pos) &&\n            !!guns.open(p.id, null, true) &&\n            Math.hypot(p.pos[0] - h.pos[0], p.pos[2] - h.pos[2]) <= SEA_CAPTAIN_NEAR_M,",
+    "new": "          (p) => Array.isArray(p.pos) && Math.hypot(p.pos[0] - h.pos[0], p.pos[2] - h.pos[2]) <= SEA_CAPTAIN_NEAR_M,",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -383,8 +383,8 @@
   {
     "name": "AUDIT-SEA-E6B-wreck-said-left",
     "file": "src/scenes/naval/seaBroadsides.js",
-    "old": "const word = h ? { k: 'helm',",
-    "new": "const word = h && !h.wrecked ? { k: 'helm',",
+    "old": "    const word = h\n      ? {\n          k: 'helm',\n          hl: h.hl,\n          t: Math.max(100, Math.min(240, Math.round(h.t * 100))),\n          u: h.u,\n          h: h.wrecked ? 0 : Math.max(0, Math.min(1000, Math.round(h.h * 1000))),\n        }\n      : null;",
+    "new": "    const word =\n      h && !h.wrecked\n        ? {\n            k: 'helm',\n            hl: h.hl,\n            t: Math.max(100, Math.min(240, Math.round(h.t * 100))),\n            u: h.u,\n            h: h.wrecked ? 0 : Math.max(0, Math.min(1000, Math.round(h.h * 1000))),\n          }\n        : null;",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -410,8 +410,8 @@
   {
     "name": "AUDIT-SEA-E6C-no-budget",
     "file": "src/scenes/naval/seaBroadsides.js",
-    "old": "        if (words < 1) break;   // E6C: the rest kept for the next word\n",
-    "new": "",
+    "old": "        if (words < 1) break; // E6C: the rest kept for the next word\n        if (!deps.send?.({ k: 'shot', to, d, s, f: acc.f ? 1 : 0 })) continue; // the socket shut: kept",
+    "new": "        if (!deps.send?.({ k: 'shot', to, d, s, f: acc.f ? 1 : 0 })) continue; // the socket shut: kept",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -419,7 +419,7 @@
   {
     "name": "AUDIT-SEA-E6C-refused-dropped",
     "file": "src/scenes/naval/seaBroadsides.js",
-    "old": "        if (!deps.send?.({ k: 'shot', to, d, s, f: acc.f ? 1 : 0 })) continue;   // the socket shut: kept",
+    "old": "        if (!deps.send?.({ k: 'shot', to, d, s, f: acc.f ? 1 : 0 })) continue; // the socket shut: kept",
     "new": "        deps.send?.({ k: 'shot', to, d, s, f: acc.f ? 1 : 0 });",
     "tests": [
       "test/systems/sea/auditsea.test.js"
@@ -572,8 +572,8 @@
   {
     "name": "AUDIT-SEA-D1-piece-unpaid",
     "file": "src/scenes/naval/navalSeaSet.js",
-    "old": "  if (!(Number(paid) > 0)) return null;\n",
-    "new": "",
+    "old": "  if (!(Number(paid) > 0)) return null;\n  const piece = rollElthericPiece(",
+    "new": "  const piece = rollElthericPiece(",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -590,8 +590,8 @@
   {
     "name": "AUDIT-SEA-D2-piece-without-purse",
     "file": "src/scenes/naval/treasureFleet.js",
-    "old": "    if (!(Number(deps.fleetEnded(entry.fleet.n, act)) > 0)) return null;",
-    "new": "    deps.fleetEnded(entry.fleet.n, act);",
+    "old": "    if (!(Number(deps.fleetEnded(entry.fleet.n, act)) > 0)) return null; // AUDIT SEA VENTURES D2: no purse, no piece",
+    "new": "    deps.fleetEnded(entry.fleet.n, act); // AUDIT SEA VENTURES D2: no purse, no piece",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -653,8 +653,8 @@
   {
     "name": "AUDIT-SEA-D9-the-copys-band",
     "file": "src/scenes/naval/treasureFleet.js",
-    "old": "const band = fleetOf(entry.fleet.n)?.band ?? entry.ether ?? 'deep';",
-    "new": "const band = entry.ether ?? 'deep';",
+    "old": "    const band = fleetOf(entry.fleet.n)?.band ?? entry.ether ?? 'deep'; // D9: the sailing's own band",
+    "new": "    const band = entry.ether ?? 'deep'; // D9: the sailing's own band",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -662,8 +662,8 @@
   {
     "name": "AUDIT-SEA-D10-a-rowboats-water",
     "file": "src/scenes/naval/treasureFleet.js",
-    "old": "classById(s.classId)?.hull ?? 0)) continue;",
-    "new": "0)) continue;",
+    "old": "        if (!deps.isWater(s.pos[0], s.pos[2], classById(s.classId)?.hull ?? 0)) continue; // AUDIT SEA VENTURES D10: deep enough for her own hull",
+    "new": "        if (!deps.isWater(s.pos[0], s.pos[2], 0)) continue; // AUDIT SEA VENTURES D10: deep enough for her own hull",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]

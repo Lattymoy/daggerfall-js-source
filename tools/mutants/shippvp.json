@@ -1037,7 +1037,7 @@
   {
     "name": "SHIP-PVP-pvp-tough-due",
     "file": "src/scenes/naval/navalPvp.js",
-    "old": "    const t = deps.build(boat).hullHp / Math.max(1, hullBuild(boat.hull).hullHp) / Math.max(0.01, (deps.due?.() ?? captainsDue()).hull);",
+    "old": "    const t =\n      deps.build(boat).hullHp /\n      Math.max(1, hullBuild(boat.hull).hullHp) /\n      Math.max(0.01, (deps.due?.() ?? captainsDue()).hull);",
     "new": "    const t = deps.build(boat).hullHp / Math.max(1, hullBuild(boat.hull).hullHp);",
     "tests": [
       "test/systems/sea/shippvp.test.js"
@@ -1046,7 +1046,7 @@
   {
     "name": "SHIP-PVP-pvp-tough-flat",
     "file": "src/scenes/naval/navalPvp.js",
-    "old": "    const t = deps.build(boat).hullHp / Math.max(1, hullBuild(boat.hull).hullHp) / Math.max(0.01, (deps.due?.() ?? captainsDue()).hull);",
+    "old": "    const t =\n      deps.build(boat).hullHp /\n      Math.max(1, hullBuild(boat.hull).hullHp) /\n      Math.max(0.01, (deps.due?.() ?? captainsDue()).hull);",
     "new": "    const t = 1;",
     "tests": [
       "test/systems/sea/shippvp.test.js"
@@ -1082,8 +1082,8 @@
   {
     "name": "SHIP-PVP-pvp-canvas-whole",
     "file": "src/scenes/naval/navalPvp.js",
-    "old": "sail: Math.max(0, sail) * d.maxSail, crew: 0,",
-    "new": "sail: Math.max(0, sail), crew: 0,",
+    "old": "      { hull: Math.max(0, hull), sail: Math.max(0, sail) * d.maxSail, crew: 0, ...(fire ? { fire: 'hull' } : {}) },",
+    "new": "      { hull: Math.max(0, hull), sail: Math.max(0, sail), crew: 0, ...(fire ? { fire: 'hull' } : {}) },",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -1091,8 +1091,8 @@
   {
     "name": "SHIP-PVP-pvp-wreck-none",
     "file": "src/scenes/naval/navalPvp.js",
-    "old": "    if (st && st.damage.state !== SHIP_STATES.wrecked) st.damage.apply({ hull: st.damage.maxHull * 2, sail: 0, crew: 0 }, deps.clock());",
-    "new": "    if (st && st.damage.state !== SHIP_STATES.wrecked) st.damage.apply({ hull: st.damage.maxHull / 2, sail: 0, crew: 0 }, deps.clock());",
+    "old": "      st.damage.apply({ hull: st.damage.maxHull * 2, sail: 0, crew: 0 }, deps.clock());",
+    "new": "      st.damage.apply({ hull: st.damage.maxHull / 2, sail: 0, crew: 0 }, deps.clock());",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -1100,8 +1100,8 @@
   {
     "name": "SHIP-PVP-pvp-take-not-hold",
     "file": "src/scenes/naval/navalPvp.js",
-    "old": "[{ f: SEA_HOLD_F, items }]",
-    "new": "[{ f: 'cargo', items }]",
+    "old": "    return Array.isArray(items) ? wildTakeTook({}, took, null, undefined, [{ f: SEA_HOLD_F, items }]) : [];",
+    "new": "    return Array.isArray(items) ? wildTakeTook({}, took, null, undefined, [{ f: 'cargo', items }]) : [];",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -1109,8 +1109,8 @@
   {
     "name": "SHIP-PVP-pvp-take-any-boat",
     "file": "src/scenes/naval/navalPvp.js",
-    "old": ".find((b) => b.uid === uid)?.Cargo?.Items;\n    return Array.isArray(items)",
-    "new": ".find(() => true)?.Cargo?.Items;\n    return Array.isArray(items)",
+    "old": "    const items = (deps.boats?.() ?? []).find((b) => b.uid === uid)?.Cargo?.Items;",
+    "new": "    const items = (deps.boats?.() ?? []).find(() => true)?.Cargo?.Items;",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -1118,8 +1118,8 @@
   {
     "name": "SHIP-PVP-pvp-open-unattached",
     "file": "src/scenes/naval/navalPvp.js",
-    "old": "(/** @type {string} */ peer, /** @type {unknown} */ shooter, /** @type {boolean} */ byMe) => !!guns?.open(peer, shooter, byMe),",
-    "new": "(/** @type {string} */ peer, /** @type {unknown} */ shooter, /** @type {boolean} */ byMe) => guns ? !!guns.open(peer, shooter, byMe) : true,",
+    "old": "      !!guns?.open(peer, shooter, byMe),",
+    "new": "      guns ? !!guns.open(peer, shooter, byMe) : true,",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -1127,8 +1127,8 @@
   {
     "name": "SHIP-PVP-guns-kin",
     "file": "src/scenes/naval/seaBroadsides.js",
-    "old": "    if (byMe) { const h = helm(); return !!h && !h.wrecked && !!deps.stranger?.(peer); }",
-    "new": "    if (byMe) { const h = helm(); return !!h && !h.wrecked; }",
+    "old": "      return !!h && !h.wrecked && !!deps.stranger?.(peer);",
+    "new": "      return !!h && !h.wrecked;",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -1136,8 +1136,8 @@
   {
     "name": "SHIP-PVP-guns-wreck-fires",
     "file": "src/scenes/naval/seaBroadsides.js",
-    "old": "    if (byMe) { const h = helm(); return !!h && !h.wrecked && !!deps.stranger?.(peer); }",
-    "new": "    if (byMe) { const h = helm(); return !!h && !!deps.stranger?.(peer); }",
+    "old": "      return !!h && !h.wrecked && !!deps.stranger?.(peer);",
+    "new": "      return !!h && !!deps.stranger?.(peer);",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -1154,8 +1154,8 @@
   {
     "name": "SHIP-PVP-guns-shot-ms",
     "file": "src/scenes/naval/seaBroadsides.js",
-    "old": "export const SEA_SHOT_MS = 250;",
-    "new": "export const SEA_SHOT_MS = 100;",
+    "old": "export const SEA_SHOT_MS = 250; // a word a ship four times a second - two ships under my guns within the referee's SEA_REF.hz",
+    "new": "export const SEA_SHOT_MS = 100; // a word a ship four times a second - two ships under my guns within the referee's SEA_REF.hz",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -1199,8 +1199,8 @@
   {
     "name": "SHIP-PVP-guns-unflushed",
     "file": "src/scenes/naval/seaBroadsides.js",
-    "old": "        words -= 1; pending.delete(to);",
-    "new": "        words -= 1;",
+    "old": "        pending.delete(to);\n      }",
+    "new": "      }",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -1208,8 +1208,8 @@
   {
     "name": "SHIP-PVP-guns-left-unsaid",
     "file": "src/scenes/naval/seaBroadsides.js",
-    "old": "      if (was && helmKey !== 'off' && deps.send?.({ k: 'helm', hl: -1, t: 100, u: 0, h: 0 })) { helmKey = 'off'; helmAt = at; }\n",
-    "new": "",
+    "old": "      if (was && helmKey !== 'off' && deps.send?.({ k: 'helm', hl: -1, t: 100, u: 0, h: 0 })) {\n        helmKey = 'off';\n        helmAt = at;\n      }\n      return;",
+    "new": "      return;",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -1235,8 +1235,8 @@
   {
     "name": "SHIP-PVP-guns-struck-unlaid",
     "file": "src/scenes/naval/seaBroadsides.js",
-    "old": "        pvp()?.struck?.({ frac: g.d / 1000, sail: g.s / 1000, fire: g.f === 1, left: g.h / 1000 });\n",
-    "new": "",
+    "old": "        pvp()?.struck?.({ frac: g.d / 1000, sail: g.s / 1000, fire: g.f === 1, left: g.h / 1000 });\n        once(`on:${g.by}`, () =>",
+    "new": "        once(`on:${g.by}`, () =>",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -1244,8 +1244,8 @@
   {
     "name": "SHIP-PVP-guns-left-unread",
     "file": "src/scenes/naval/seaBroadsides.js",
-    "old": "left: g.h / 1000 });",
-    "new": "left: 1 });",
+    "old": "        pvp()?.struck?.({ frac: g.d / 1000, sail: g.s / 1000, fire: g.f === 1, left: g.h / 1000 });",
+    "new": "        pvp()?.struck?.({ frac: g.d / 1000, sail: g.s / 1000, fire: g.f === 1, left: 1 });",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -1253,8 +1253,8 @@
   {
     "name": "SHIP-PVP-guns-wreck-unlaid",
     "file": "src/scenes/naval/seaBroadsides.js",
-    "old": "      if (g.id === me) { pvp()?.wreck?.(); deps.mid",
-    "new": "      if (g.id === me) { deps.mid",
+    "old": "        pvp()?.wreck?.();\n        deps.mid?.(",
+    "new": "        deps.mid?.(",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -1262,8 +1262,8 @@
   {
     "name": "SHIP-PVP-guns-wreck-unboarded",
     "file": "src/scenes/naval/seaBroadsides.js",
-    "old": "      mine.set(g.r, { victim: g.id, at: now(), sentAt: 0, name, room, site, seen: site });\n",
-    "new": "",
+    "old": "      mine.set(g.r, { victim: g.id, at: now(), sentAt: 0, name, room, site, seen: site });\n      if (mine.size > 8) mine.delete(mine.keys().next().value);",
+    "new": "      if (mine.size > 8) mine.delete(mine.keys().next().value);",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -1271,8 +1271,8 @@
   {
     "name": "SHIP-PVP-guns-board-unseen",
     "file": "src/scenes/naval/seaBroadsides.js",
-    "old": "      if (her) w.seen = her;\n",
-    "new": "",
+    "old": "      if (her) w.seen = her;\n      if (!h?.pos || at - w.sentAt < SEA_BOARD_RETRY_MS || !(alongside(h, w.seen) || alongside(h, w.site))) continue;",
+    "new": "      if (!h?.pos || at - w.sentAt < SEA_BOARD_RETRY_MS || !(alongside(h, w.seen) || alongside(h, w.site))) continue;",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -1280,8 +1280,8 @@
   {
     "name": "SHIP-PVP-guns-board-no-lay",
     "file": "src/scenes/naval/seaBroadsides.js",
-    "old": "|| alongside(h, w.site))) continue;",
-    "new": "|| false)) continue;",
+    "old": "      if (!h?.pos || at - w.sentAt < SEA_BOARD_RETRY_MS || !(alongside(h, w.seen) || alongside(h, w.site))) continue;",
+    "new": "      if (!h?.pos || at - w.sentAt < SEA_BOARD_RETRY_MS || !(alongside(h, w.seen) || false)) continue;",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -1289,8 +1289,8 @@
   {
     "name": "SHIP-PVP-guns-lay-live",
     "file": "src/scenes/naval/seaBroadsides.js",
-    "old": "site = placeOf(pvp()?.peerAt?.(g.id));",
-    "new": "site = pvp()?.peerAt?.(g.id) ?? null;",
+    "old": "        site = placeOf(pvp()?.peerAt?.(g.id));",
+    "new": "        site = pvp()?.peerAt?.(g.id) ?? null;",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -1298,8 +1298,8 @@
   {
     "name": "SHIP-PVP-guns-board-room-lost",
     "file": "src/scenes/naval/seaBroadsides.js",
-    "old": "{ k: 'board', r }, { room: w.room }",
-    "new": "{ k: 'board', r }, { room: null }",
+    "old": "      if (deps.send?.({ k: 'board', r }, { room: w.room })) {",
+    "new": "      if (deps.send?.({ k: 'board', r }, { room: null })) {",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -1307,8 +1307,8 @@
   {
     "name": "SHIP-PVP-guns-carry-lost",
     "file": "src/scenes/naval/seaBroadsides.js",
-    "old": "    if (g.k === 'wc') { mine.delete(g.r); deps.receipt?.(g.rc); }",
-    "new": "    if (g.k === 'wc') { mine.delete(g.r); }",
+    "old": "      deps.receipt?.(g.rc);\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -1316,8 +1316,8 @@
   {
     "name": "SHIP-PVP-guns-said-always",
     "file": "src/scenes/naval/seaBroadsides.js",
-    "old": "if (now() - at < SEA_SAID_MS) return;",
-    "new": "if (false) return;",
+    "old": "    if (now() - at < SEA_SAID_MS) return;",
+    "new": "    if (false) return;",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]

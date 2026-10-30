@@ -481,8 +481,8 @@
   {
     "name": "NAV1G-a-miss-a-hit",
     "file": "src/scenes/naval/navalTally.js",
-    "old": "      } else if (e.type === 'splash' || e.type === 'land' || e.type === 'gone') t.ended++;",
-    "new": "      } else if (e.type === 'splash' || e.type === 'land' || e.type === 'gone') { t.ended++; t.hits++; }",
+    "old": "      } else if (e.type === 'splash' || e.type === 'land' || e.type === 'gone') t.ended++;\n      else return;",
+    "new": "      } else if (e.type === 'splash' || e.type === 'land' || e.type === 'gone') {\n        t.ended++;\n        t.hits++;\n      } else return;",
     "tests": [
       "test/systems/naval/navaudit_guns.test.js"
     ]

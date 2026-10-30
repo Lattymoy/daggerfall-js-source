@@ -173,8 +173,8 @@
   {
     "name": "HOST-flats-left-up",
     "file": "src/scenes/naval/navalCrew.js",
-    "old": "      for (const f of flats) { f.was = f.renderer.m_Enabled; f.renderer.m_Enabled = false; }",
-    "new": "      for (const f of flats) { f.was = f.renderer.m_Enabled; }",
+    "old": "          f.renderer.m_Enabled = false;\n        }",
+    "new": "        }",
     "tests": [
       "test/systems/naval/livingcrew.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "HOST-rowers-taken",
     "file": "src/scenes/naval/navalCrew.js",
-    "old": "peopleFlatsOf(w.boat).filter((f) => f.feet[1] >= main - DECK_STEP);",
-    "new": "peopleFlatsOf(w.boat);",
+    "old": "        const flats = peopleFlatsOf(w.boat).filter((f) => f.feet[1] >= main - DECK_STEP); // never the rowers below her deck",
+    "new": "        const flats = peopleFlatsOf(w.boat); // never the rowers below her deck",
     "tests": [
       "test/systems/naval/livingcrew.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "HOST-carry-by-the-root",
     "file": "src/scenes/naval/navalCrew.js",
-    "old": "      const m = ship.boat.MeshObject?.worldMatrix?.();\n      if (!m) continue;",
-    "new": "      const m = ship.boat.GameObject?.worldMatrix?.();\n      if (!m) continue;",
+    "old": "      const m = ship.boat.MeshObject?.worldMatrix?.();",
+    "new": "      const m = ship.boat.GameObject?.worldMatrix?.();",
     "tests": [
       "test/systems/naval/livingcrew.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "HOST-flats-never-back",
     "file": "src/scenes/naval/navalCrew.js",
-    "old": "    for (const f of ship.flats) f.renderer.m_Enabled = f.was;   // the mod's flats stand again\n",
-    "new": "",
+    "old": "    for (const f of ship.flats) f.renderer.m_Enabled = f.was; // the mod's flats stand again\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/naval/livingcrew.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "HOST-hold-unread",
     "file": "src/scenes/naval/navalCrew.js",
-    "old": "      if (w.hold && !ship.held) { ship.held = true; ship.life.take(Infinity); }",
-    "new": "      if (false) { ship.held = true; ship.life.take(Infinity); }",
+    "old": "      if (w.hold && !ship.held) {",
+    "new": "      if (false) {",
     "tests": [
       "test/systems/naval/livingcrew.test.js"
     ]
@@ -236,7 +236,7 @@
   {
     "name": "HOST-reset-unread",
     "file": "src/scenes/naval/navalCrew.js",
-    "old": "    reset(key) { const ship = ships.get(key); if (ship) { standDown(ship); ships.delete(key); } },",
+    "old": "    reset(key) {\n      const ship = ships.get(key);\n      if (ship) {\n        standDown(ship);\n        ships.delete(key);\n      }\n    },",
     "new": "    reset() {},",
     "tests": [
       "test/systems/naval/livingcrew.test.js"

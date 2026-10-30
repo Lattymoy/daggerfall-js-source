@@ -290,8 +290,8 @@
   {
     "name": "AUDIT-PVP-EASE-L2-1-the-gunfight-unnoted",
     "file": "src/scenes/naval/seaBroadsides.js",
-    "old": "      if (g.to === me || g.by === me) noteWildBlow(now());\n",
-    "new": "",
+    "old": "      if (g.to === me || g.by === me) noteWildBlow(now());\n      if (g.to === me) {",
+    "new": "      if (g.to === me) {",
     "tests": [
       "test/systems/wild/combatlock.test.js"
     ]

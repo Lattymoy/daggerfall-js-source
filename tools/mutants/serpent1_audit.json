@@ -942,8 +942,8 @@
   {
     "name": "AUDIT-SERPENT-L2-tally",
     "file": "src/scenes/naval/navalTally.js",
-    "old": "if (segmentOfTarget(e.target) != null) { t.hits++; t.ended++; }",
-    "new": "if (segmentOfTarget(e.target) != null) { t.ended++; }",
+    "old": "          t.hits++;\n          t.ended++;",
+    "new": "          t.ended++;",
     "tests": [
       "test/net/serpent/serpent1_auditclient.test.js"
     ]

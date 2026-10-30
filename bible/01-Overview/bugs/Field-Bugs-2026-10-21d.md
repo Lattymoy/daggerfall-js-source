@@ -253,9 +253,9 @@ passage puts its passenger there):
 
 THE LAW NOW.
 
-- PASSAGE-HANDS: while her boat carries a charter and the voyage is under way (`passageHelm.js:"export const mastersHelm = (boat, journey) =>"`,
+- PASSAGE-HANDS: while her boat carries a charter and the voyage is under way (`passageHelm.js:"export const mastersHelm"`,
   the journey's hand marked live by tvSeaFrame - AUDIT FB1021d PS-2: halted, her helm is the passenger's), the rudder,
-  the oars, the sails and the trim answer her master's hand alone, and her lantern stays as it was lit (`passageHelm.js:"export function passengerHelm(input, boat, journey) {"`, the host's seam wrapped -
+  the oars, the sails and the trim answer her master's hand alone, and her lantern stays as it was lit (`passageHelm.js:"export function passengerHelm"`, the host's seam wrapped -
   `world.js:"input: passengerHelm({"` - an expression, no line); the passenger keeps stepping from her helm (the mod's
   disembark key, Transport) and the time dial. The journey's hand presses with taps of its own (`createJourneyHand`), never
   the panel's or the pad's, spent with them; so F17's gate now stands every sail press down under the view - keys, panel

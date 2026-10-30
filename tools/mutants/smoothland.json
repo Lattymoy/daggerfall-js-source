@@ -351,8 +351,8 @@
   {
     "name": "SMOOTH-LAND-LANES-the-cells-sea-off-its-centre",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "landLabelAt(L, x + 0.5, y + 0.5) === 0 && !lakes[y * w + x]",
-    "new": "landLabelAt(L, x + 0.1, y + 0.5) === 0 && !lakes[y * w + x]",
+    "old": "    landLabelAt(L, x + 0.5, y + 0.5) === 0 &&",
+    "new": "    landLabelAt(L, x + 0.1, y + 0.5) === 0 &&",
     "tests": [
       "test/world/smoothland.test.js"
     ]
@@ -399,8 +399,8 @@
   {
     "name": "SMOOTH-LAND-LANES-a-moored-cells-centre-dropped",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "[...(ownA ? [] : [cells[0]]), ...cells.slice(1, -1)",
-    "new": "[...cells.slice(1, -1)",
+    "old": "    cells.length > 1\n      ? [...(ownA ? [] : [cells[0]]), ...cells.slice(1, -1), ...(ownB ? [] : [cells[cells.length - 1]])]\n      : ownA && ownB\n        ? []\n        : cells;",
+    "new": "    cells.length > 1 ? [...cells.slice(1, -1), ...(ownB ? [] : [cells[cells.length - 1]])] : ownA && ownB ? [] : cells;",
     "tests": [
       "test/world/smoothland.test.js"
     ],

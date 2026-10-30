@@ -23,14 +23,28 @@ import { charterRecord } from '../../systems/naval/passage.js';
 import { BOAT_ACTIONS } from '../../systems/comeSailAway/comeSailAwayActions.js';
 
 /** What a passenger at her helm keeps of its keys: stepping from it, and the time dial. */
-export const PASSENGER_KEYS = Object.freeze([BOAT_ACTIONS.disembark, 'Transport', BOAT_ACTIONS.timeScaleUp, BOAT_ACTIONS.timeScaleDown, BOAT_ACTIONS.timeScaleReset]);
+export const PASSENGER_KEYS = Object.freeze([
+  BOAT_ACTIONS.disembark,
+  'Transport',
+  BOAT_ACTIONS.timeScaleUp,
+  BOAT_ACTIONS.timeScaleDown,
+  BOAT_ACTIONS.timeScaleReset,
+]);
 
 /** OWS2: THE JOURNEY'S HAND ON THE HELM - the rudder keys an Overworld journey holds, the oars it pulls, and (PASSAGE-HANDS)
  *  the taps it makes (the sails at its word, the disembark at a landfall) - its own, never the helm panel's or the pad's,
  *  so a passenger's helm can tell her master's from theirs. The host spends the taps with the panel's, once the mod's
  *  step has read them. */
 export function createJourneyHand() {
-  return { held: new Set(), row: false, edges: new Set(), live: false, press(action) { if (typeof action === 'string') this.edges.add(action); } };
+  return {
+    held: new Set(),
+    row: false,
+    edges: new Set(),
+    live: false,
+    press(action) {
+      if (typeof action === 'string') this.edges.add(action);
+    },
+  };
 }
 
 /** The voyage booked on this boat, or null - she is her master's. @param {any} boat */
@@ -50,13 +64,27 @@ export function passengerHelm(input, boat, journey) {
   const seam = Object.create(input);
   Object.defineProperties(seam, {
     has: { value: (/** @type {string} */ action) => (passenger() ? journey.held.has(action) : input.has(action)) },
-    started: { value: (/** @type {string} */ action) => (passenger() && !PASSENGER_KEYS.includes(action) ? journey.edges.has(action) : input.started(action) || journey.edges.has(action)) },
+    started: {
+      value: (/** @type {string} */ action) =>
+        passenger() && !PASSENGER_KEYS.includes(action)
+          ? journey.edges.has(action)
+          : input.started(action) || journey.edges.has(action),
+    },
     horizontal: { value: () => (passenger() ? 0 : input.horizontal()) },
     vertical: { value: () => (passenger() ? 0 : input.vertical()) },
     // AUDIT FB1021d PS-4: a passenger's own autorun has no hand at her helm, and is let go as it is read - the mod lets
     // the latch go when the helm is left only if it reads it (comeSailAway.js stopSailingHead), and a passenger's read is
     // her master's oars: stepped off while she sailed, the player ran off down the deck
-    toggleAutorun: { get: () => { if (!passenger()) return input.toggleAutorun; if (input.toggleAutorun) input.toggleAutorun = false; return journey.row; }, set: (v) => { input.toggleAutorun = v; } },
+    toggleAutorun: {
+      get: () => {
+        if (!passenger()) return input.toggleAutorun;
+        if (input.toggleAutorun) input.toggleAutorun = false;
+        return journey.row;
+      },
+      set: (v) => {
+        input.toggleAutorun = v;
+      },
+    },
   });
   return seam;
 }
@@ -68,6 +96,17 @@ export function passengerHelm(input, boat, journey) {
 export function passengerCard(boat, journey, helm = null) {
   if (!mastersHelm(boat, journey)) return null;
   const c = /** @type {any} */ (charterOf(boat));
-  return { hull: boat.hull, passage: { ship: c.ship, port: c.to.name }, heavy: !!helm?.heavy,   // AUDIT FB1029d B5: her load said to the passenger too
-    dial: helm ? { timeDial: helm.timeDial, timeScale: helm.timeScale, timeScaleIndex: helm.timeScaleIndex, timeScaleMax: helm.timeScaleMax } : null };
+  return {
+    hull: boat.hull,
+    passage: { ship: c.ship, port: c.to.name },
+    heavy: !!helm?.heavy, // AUDIT FB1029d B5: her load said to the passenger too
+    dial: helm
+      ? {
+          timeDial: helm.timeDial,
+          timeScale: helm.timeScale,
+          timeScaleIndex: helm.timeScaleIndex,
+          timeScaleMax: helm.timeScaleMax,
+        }
+      : null,
+  };
 }

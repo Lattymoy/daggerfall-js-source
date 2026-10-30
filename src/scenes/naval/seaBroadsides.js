@@ -37,10 +37,10 @@
 import { SEA_SHOT_MAX } from '../../net/wire.js';
 import { SEA_REF } from '../../net/sea/seaRef.js';
 import { t } from '../../systems/textManager.js';
-import { noteWildBlow } from '../../systems/wild/wildZone.js';   // AUDIT PVP-EASE L2-1: a gunfight locks storing as a blow does
+import { noteWildBlow } from '../../systems/wild/wildZone.js'; // AUDIT PVP-EASE L2-1: a gunfight locks storing as a blow does
 
 /** A ship's shots are said this often, gathered (ms). */
-export const SEA_SHOT_MS = 250;   // a word a ship four times a second - two ships under my guns within the referee's SEA_REF.hz
+export const SEA_SHOT_MS = 250; // a word a ship four times a second - two ships under my guns within the referee's SEA_REF.hz
 /** My helm is said at least this often while I sail the open sea (ms) - within the referee's SEA_REF.helmMs. */
 export const SEA_HELM_SAY_MS = 5_000;
 /** ...and, changed, no sooner than this after the last (ms). */
@@ -58,15 +58,26 @@ export const SEA_SHOT_HZ = SEA_REF.hz - 2;
 /** @param {any} deps */
 export function createSeaBroadsides(deps) {
   const now = () => Number(deps.now?.()) || Date.now();
-  const pending = new Map();   // peer -> { d, s, f } gathered since the last word
-  const mine = new Map();      // r -> { victim, at, sentAt, name, room, site, seen } - my wrecks, to board
-  const saidTo = new Map();    // `${kind}:${peer}` -> when said
-  let shotAt = 0, helmAt = -Infinity, helmKey = 'off', open = false, words = SEA_SHOT_HZ, wordsAt = 0;
+  const pending = new Map(); // peer -> { d, s, f } gathered since the last word
+  const mine = new Map(); // r -> { victim, at, sentAt, name, room, site, seen } - my wrecks, to board
+  const saidTo = new Map(); // `${kind}:${peer}` -> when said
+  let shotAt = 0,
+    helmAt = -Infinity,
+    helmKey = 'off',
+    open = false,
+    words = SEA_SHOT_HZ,
+    wordsAt = 0;
   const pvp = () => deps.naval?.()?.pvp ?? null;
-  const once = (/** @type {string} */ key, /** @type {() => void} */ fn) => { const at = saidTo.get(key) ?? -Infinity; if (now() - at < SEA_SAID_MS) return; saidTo.set(key, now()); if (saidTo.size > 64) saidTo.delete(saidTo.keys().next().value); fn(); };
+  const once = (/** @type {string} */ key, /** @type {() => void} */ fn) => {
+    const at = saidTo.get(key) ?? -Infinity;
+    if (now() - at < SEA_SAID_MS) return;
+    saidTo.set(key, now());
+    if (saidTo.size > 64) saidTo.delete(saidTo.keys().next().value);
+    fn();
+  };
   const nameOf = (/** @type {string} */ id) => deps.name?.(id) || t('sea.pvp.someone', 'another captain');
   /** My ship as the referee is told of her - or null (no ship of mine at hand, or none whose uid it can sign). */
-  const helm = () => (open ? pvp()?.helm?.() ?? null : null);
+  const helm = () => (open ? (pvp()?.helm?.() ?? null) : null);
 
   /**
    * MAY THIS BALL MEET HER SHIP? - `peer` her captain, `shooter` the ball's, `byMe` whether it is mine: mine where the sea's
@@ -76,7 +87,10 @@ export function createSeaBroadsides(deps) {
    */
   function openOn(peer, shooter, byMe) {
     if (!open) return false;
-    if (byMe) { const h = helm(); return !!h && !h.wrecked && !!deps.stranger?.(peer); }
+    if (byMe) {
+      const h = helm();
+      return !!h && !h.wrecked && !!deps.stranger?.(peer);
+    }
     return typeof shooter === 'string' && shooter.startsWith('peer:') && shooter.slice(5) !== peer;
   }
   /** MY BALL STRUCK HER SHIP (navalHost.js landHit): its hull and canvas, and a fire, gathered for her word. */
@@ -91,15 +105,27 @@ export function createSeaBroadsides(deps) {
   /** My helm said: changed, at most each SEA_HELM_MIN_MS; unchanged, each SEA_HELM_SAY_MS. Wrecked, at none (E6B). */
   function sayHelm(/** @type {number} */ at) {
     const h = helm();
-    const word = h ? { k: 'helm', hl: h.hl, t: Math.max(100, Math.min(240, Math.round(h.t * 100))), u: h.u, h: h.wrecked ? 0 : Math.max(0, Math.min(1000, Math.round(h.h * 1000))) } : null;
+    const word = h
+      ? {
+          k: 'helm',
+          hl: h.hl,
+          t: Math.max(100, Math.min(240, Math.round(h.t * 100))),
+          u: h.u,
+          h: h.wrecked ? 0 : Math.max(0, Math.min(1000, Math.round(h.h * 1000))),
+        }
+      : null;
     const key = word ? `${word.hl},${word.u},${word.t},${word.h}` : 'off';
     if (key === helmKey ? at - helmAt < SEA_HELM_SAY_MS || key === 'off' : at - helmAt < SEA_HELM_MIN_MS) return;
-    if (deps.send?.(word ?? { k: 'helm', hl: -1, t: 100, u: 0, h: 0 })) { helmKey = key; helmAt = at; }
+    if (deps.send?.(word ?? { k: 'helm', hl: -1, t: 100, u: 0, h: 0 })) {
+      helmKey = key;
+      helmAt = at;
+    }
   }
   /** A peer boat's place, copied (her `pos` is the shown place, moved each frame - comeSailAwayPeers.js helmBoats) - or null. */
   const placeOf = (/** @type {unknown} */ p) => (Array.isArray(p) ? [Number(p[0]), Number(p[1]), Number(p[2])] : null);
   /** Within boarding reach of my ship `h` - `p` a place in my scene (or none). */
-  const alongside = (/** @type {any} */ h, /** @type {unknown} */ p) => Array.isArray(p) && Math.hypot(h.pos[0] - p[0], h.pos[2] - p[2]) <= SEA_BOARD_NEAR_M;
+  const alongside = (/** @type {any} */ h, /** @type {unknown} */ p) =>
+    Array.isArray(p) && Math.hypot(h.pos[0] - p[0], h.pos[2] - p[2]) <= SEA_BOARD_NEAR_M;
   /**
    * THE STEP, every online frame (the sea's host's `guns` - world.js wildFrame; AUDIT SEA VENTURES E6A: paused, a window
    * open or below, my helm is said all the same): the open sea's gate read; my helm said; my gathered shots said each
@@ -112,29 +138,45 @@ export function createSeaBroadsides(deps) {
     open = !!deps.live?.();
     if (!open) {
       pending.clear();
-      if (was && helmKey !== 'off' && deps.send?.({ k: 'helm', hl: -1, t: 100, u: 0, h: 0 })) { helmKey = 'off'; helmAt = at; }
+      if (was && helmKey !== 'off' && deps.send?.({ k: 'helm', hl: -1, t: 100, u: 0, h: 0 })) {
+        helmKey = 'off';
+        helmAt = at;
+      }
       return;
     }
     sayHelm(at);
     if (at - shotAt >= SEA_SHOT_MS && pending.size) {
       shotAt = at;
-      words = Math.min(SEA_SHOT_HZ, words + (Math.max(0, at - wordsAt) / 1000) * SEA_SHOT_HZ); wordsAt = at;
-      for (const [to, acc] of pending) {   // a ship said goes to the back of the list: the purse's words go round the ships
-        const d = Math.min(SEA_SHOT_MAX, Math.round(acc.d)), s = Math.min(SEA_SHOT_MAX, Math.round(acc.s));
-        if (!(d > 0 || s > 0 || acc.f)) continue;   // under a point yet: gathered on
-        if (words < 1) break;   // E6C: the rest kept for the next word
-        if (!deps.send?.({ k: 'shot', to, d, s, f: acc.f ? 1 : 0 })) continue;   // the socket shut: kept
-        words -= 1; pending.delete(to);
+      words = Math.min(SEA_SHOT_HZ, words + (Math.max(0, at - wordsAt) / 1000) * SEA_SHOT_HZ);
+      wordsAt = at;
+      for (const [to, acc] of pending) {
+        // a ship said goes to the back of the list: the purse's words go round the ships
+        const d = Math.min(SEA_SHOT_MAX, Math.round(acc.d)),
+          s = Math.min(SEA_SHOT_MAX, Math.round(acc.s));
+        if (!(d > 0 || s > 0 || acc.f)) continue; // under a point yet: gathered on
+        if (words < 1) break; // E6C: the rest kept for the next word
+        if (!deps.send?.({ k: 'shot', to, d, s, f: acc.f ? 1 : 0 })) continue; // the socket shut: kept
+        words -= 1;
+        pending.delete(to);
       }
     }
     const h = mine.size ? helm() : null;
     for (const [r, w] of mine) {
-      if (at - w.at > SEA_REF.boardMs) { mine.delete(r); continue; }
+      if (at - w.at > SEA_REF.boardMs) {
+        mine.delete(r);
+        continue;
+      }
       const her = placeOf(pvp()?.peerAt?.(w.victim));
       if (her) w.seen = her;
       if (!h?.pos || at - w.sentAt < SEA_BOARD_RETRY_MS || !(alongside(h, w.seen) || alongside(h, w.site))) continue;
       if (deps.send?.({ k: 'board', r }, { room: w.room })) {
-        if (!w.sentAt) deps.mid?.(t('sea.pvp.boarded', 'You come alongside {name}\'s wreck and board her. Her hold is open to you.', { name: w.name }), 5);
+        if (!w.sentAt)
+          deps.mid?.(
+            t('sea.pvp.boarded', "You come alongside {name}'s wreck and board her. Her hold is open to you.", {
+              name: w.name,
+            }),
+            5,
+          );
         w.sentAt = at;
       }
     }
@@ -148,20 +190,47 @@ export function createSeaBroadsides(deps) {
       if (g.to === me || g.by === me) noteWildBlow(now());
       if (g.to === me) {
         pvp()?.struck?.({ frac: g.d / 1000, sail: g.s / 1000, fire: g.f === 1, left: g.h / 1000 });
-        once(`on:${g.by}`, () => deps.say?.(t('sea.pvp.underFire', '{name}\'s guns are on you!', { name: nameOf(g.by) }), 4));
-      } else if (g.by === me) once(`by:${g.to}`, () => deps.say?.(t('sea.pvp.striking', 'Your broadside strikes {name}\'s ship.', { name: nameOf(g.to) }), 4));
+        once(`on:${g.by}`, () =>
+          deps.say?.(t('sea.pvp.underFire', "{name}'s guns are on you!", { name: nameOf(g.by) }), 4),
+        );
+      } else if (g.by === me)
+        once(`by:${g.to}`, () =>
+          deps.say?.(t('sea.pvp.striking', "Your broadside strikes {name}'s ship.", { name: nameOf(g.to) }), 4),
+        );
       return;
     }
     if (g.k === 'wreck') {
-      if (g.id === me) { pvp()?.wreck?.(); deps.mid?.(t('sea.pvp.wrecked', 'Your ship is wrecked by {name}\'s guns! She lies crippled.', { name: nameOf(g.by) }), 6); return; }
+      if (g.id === me) {
+        pvp()?.wreck?.();
+        deps.mid?.(
+          t('sea.pvp.wrecked', "Your ship is wrecked by {name}'s guns! She lies crippled.", { name: nameOf(g.by) }),
+          6,
+        );
+        return;
+      }
       if (g.by !== me) return;
-      const name = nameOf(g.id), site = placeOf(pvp()?.peerAt?.(g.id));
+      const name = nameOf(g.id),
+        site = placeOf(pvp()?.peerAt?.(g.id));
       mine.set(g.r, { victim: g.id, at: now(), sentAt: 0, name, room, site, seen: site });
       if (mine.size > 8) mine.delete(mine.keys().next().value);
-      deps.mid?.(t('sea.pvp.wreckedHer', '{name}\'s ship is wrecked! Come alongside and board her for her hold.', { name }), 6);
+      deps.mid?.(
+        t('sea.pvp.wreckedHer', "{name}'s ship is wrecked! Come alongside and board her for her hold.", { name }),
+        6,
+      );
       return;
     }
-    if (g.k === 'wc') { mine.delete(g.r); deps.receipt?.(g.rc); }
+    if (g.k === 'wc') {
+      mine.delete(g.r);
+      deps.receipt?.(g.rc);
+    }
   }
-  return { open: openOn, shot, step, hear, get live() { return open; } };
+  return {
+    open: openOn,
+    shot,
+    step,
+    hear,
+    get live() {
+      return open;
+    },
+  };
 }

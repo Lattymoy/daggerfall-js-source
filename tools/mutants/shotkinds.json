@@ -335,8 +335,8 @@
   {
     "name": "SHOT-loads-look-unread",
     "file": "src/scenes/naval/navalLoads.js",
-    "old": "    const group = look && gunSideOf(boat.hull, look) ? look : LOAD_GROUPS",
-    "new": "    const group = LOAD_GROUPS",
+    "old": "    const group =\n      look && gunSideOf(boat.hull, look) ? look : (LOAD_GROUPS.find((g) => gunSideOf(boat.hull, g)) ?? null);",
+    "new": "    const group = LOAD_GROUPS.find((g) => gunSideOf(boat.hull, g)) ?? null;",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "SHOT-loads-wheel-one-way",
     "file": "src/scenes/naval/navalLoads.js",
-    "old": "if (quiet) cycle(deltaY > 0 ? 1 : -1);",
-    "new": "if (quiet) cycle(1);",
+    "old": "      if (quiet) cycle(deltaY > 0 ? 1 : -1);",
+    "new": "      if (quiet) cycle(1);",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -371,7 +371,7 @@
   {
     "name": "SHOT-loads-unsaid",
     "file": "src/scenes/naval/navalLoads.js",
-    "old": "    deps.say?.(t('naval.shot.loading', '{guns}: {shot} - loading', { guns: groupName(at.group), shot: shotName(shot) }), 1.6);",
+    "old": "    deps.say?.(\n      t('naval.shot.loading', '{guns}: {shot} - loading', { guns: groupName(at.group), shot: shotName(shot) }),\n      1.6,\n    );",
     "new": "",
     "tests": [
       "test/systems/naval/shotkinds.test.js"

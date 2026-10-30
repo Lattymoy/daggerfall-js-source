@@ -101,8 +101,8 @@
   {
     "name": "APF-A3-the-crew's-home-dropped",
     "file": "src/scenes/naval/navalCrew.js",
-    "old": "seed: w.seed | 0, home: w.home ?? null };",
-    "new": "seed: w.seed | 0, home: null };",
+    "old": "          home: w.home ?? null,",
+    "new": "          home: null,",
     "tests": [
       "test/scenes/audit_provincefolk.test.js"
     ]

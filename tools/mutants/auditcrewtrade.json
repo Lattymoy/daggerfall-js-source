@@ -62,8 +62,8 @@
   {
     "name": "ACT-H1-tail-first",
     "file": "src/scenes/naval/crewDeal.js",
-    "old": "const going = signOffOrder(st.crew.hands, away())",
-    "new": "const going = [...st.crew.hands].reverse()",
+    "old": "      const going = signOffOrder(st.crew.hands, away()).slice(\n        0,\n        Math.max(0, st.crew.hands.length - playerCrewCount(boat.hull, was - n)),\n      );",
+    "new": "      const going = [...st.crew.hands]\n        .reverse()\n        .slice(0, Math.max(0, st.crew.hands.length - playerCrewCount(boat.hull, was - n)));",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "ACT-H3-joined-none",
     "file": "src/scenes/naval/crewDeal.js",
-    "old": "joined: named().filter((h) => !before.has(h.name))",
-    "new": "joined: []",
+    "old": "      return { n: d.crew - was, joined: named().filter((h) => !before.has(h.name)) };",
+    "new": "      return { n: d.crew - was, joined: [] };",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "ACT-E1-charter-unread",
     "file": "src/scenes/naval/crewDeal.js",
-    "old": "charter: !!charterRecord(boat?.charter),",
-    "new": "charter: false,",
+    "old": "      charter: !!charterRecord(boat?.charter),",
+    "new": "      charter: false,",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -362,8 +362,8 @@
   {
     "name": "ACT-P6-on-unsynced",
     "file": "src/scenes/naval/crewDeal.js",
-    "old": "      st.lastCrew = d.crew;\n      sync(boat);\n      return { n: d.crew - was,",
-    "new": "      st.lastCrew = d.crew;\n      return { n: d.crew - was,",
+    "old": "      sync(boat);\n      return { n: d.crew - was, joined: named().filter((h) => !before.has(h.name)) };",
+    "new": "      return { n: d.crew - was, joined: named().filter((h) => !before.has(h.name)) };",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -382,8 +382,8 @@
   {
     "name": "ACT-P8-muster-a-repair",
     "file": "src/scenes/naval/crewDeal.js",
-    "old": "d.muster(was + Math.max(0, Math.floor(Number(k) || 0)));",
-    "new": "d.repair({ hull: 0, sail: 0, crew: Math.max(0, Math.floor(Number(k) || 0)) });",
+    "old": "      d.muster(was + Math.max(0, Math.floor(Number(k) || 0)));",
+    "new": "      d.repair({ hull: 0, sail: 0, crew: Math.max(0, Math.floor(Number(k) || 0)) });",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"

@@ -686,8 +686,8 @@
   {
     "name": "BAY-A8-feed-region-unsaid",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "px: at.x, py: at.y, region: summary.regionIndex });",
-    "new": "px: at.x, py: at.y });",
+    "old": "      region: summary.regionIndex,\n    }); // AUDIT BAY A8: her names her home port's region's",
+    "new": "    }); // AUDIT BAY A8: her names her home port's region's",
     "tests": [
       "test/systems/naval/auditbay_lanes.test.js",
       "test/systems/naval/sealanes.test.js"
@@ -873,8 +873,8 @@
   {
     "name": "BAY-A19-lane-margin-dropped",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "return Math.min(da, db) <= LANE_PATH_PX / 2 + pad;",
-    "new": "return Math.min(da, db) <= LANE_PATH_PX / 2;",
+    "old": "      if (inBay(lane.a.px, lane.a.py)) return Math.min(da, db) <= LANE_PATH_PX / 2 + pad;",
+    "new": "      if (inBay(lane.a.px, lane.a.py)) return Math.min(da, db) <= LANE_PATH_PX / 2;",
     "tests": [
       "test/systems/naval/auditbay_lanes.test.js"
     ]
@@ -1109,8 +1109,8 @@
   {
     "name": "BAY-A14-flame-hidden-drawn",
     "file": "src/scenes/naval/navalFlames.js",
-    "old": "for (const f of live) if (f.batch && !f.hidden) out.push(f.batch);",
-    "new": "for (const f of live) if (f.batch) out.push(f.batch);",
+    "old": "      for (const f of live) if (f.batch && !f.hidden) out.push(f.batch);",
+    "new": "      for (const f of live) if (f.batch) out.push(f.batch);",
     "tests": [
       "test/scenes/naval/auditbay_render.test.js"
     ]
@@ -1118,8 +1118,8 @@
   {
     "name": "BAY-A14-flame-show-unread",
     "file": "src/scenes/naval/navalFlames.js",
-    "old": "        show(on) { f.hidden = !on; },",
-    "new": "        show(on) { f.hidden = false; },",
+    "old": "          f.hidden = !on;",
+    "new": "          f.hidden = false;",
     "tests": [
       "test/scenes/naval/auditbay_render.test.js"
     ]

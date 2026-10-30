@@ -2255,7 +2255,7 @@ her frames still and is made when it was. A list made over an older walk is not 
 drew nothing), nor one a draw made outside a frame. The departure, past 600 m only: a mesh still loading when she was
 walked (a part's first sight, `meshFor`; the pipeline's classic models) is drawn from her next life, up to three frames
 later; a part's renderer switched on or off while she is held likewise. Once she is built, only her crew's flats are
-switched in this tree - `navalCrew.js:"for (const f of flats) { f.was = f.renderer.m_Enabled; f.renderer.m_Enabled = false; }"`
+switched in this tree - `navalCrew.js:"for (const f of flats)"`
 as a crew stands in their places, and `standDown` puts each back - and the draw passes a flat by, switched or not:
 `syncFlats` reads a flat's `m_Enabled` every frame, held or walked.
 

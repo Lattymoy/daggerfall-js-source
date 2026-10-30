@@ -138,8 +138,8 @@
   {
     "name": "NAV-B-a-batch-a-move",
     "file": "src/scenes/naval/navalFlames.js",
-    "old": "        move(p) { f.pos[0] = p[0]; f.pos[1] = p[1]; f.pos[2] = p[2]; },",
-    "new": "        move(p) { f.pos = [...p]; },",
+    "old": "          f.pos[0] = p[0];\n          f.pos[1] = p[1];\n          f.pos[2] = p[2];",
+    "new": "          f.pos = [...p];",
     "tests": [
       "test/systems/naval/nav_b_picture.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "NAV-B-a-retired-flame-burning",
     "file": "src/scenes/naval/navalFlames.js",
-    "old": "        retire() { f.dead = true; unmount(f); live.delete(f); },",
-    "new": "        retire() { f.dead = true; live.delete(f); },",
+    "old": "          unmount(f);\n          live.delete(f);",
+    "new": "          live.delete(f);",
     "tests": [
       "test/systems/naval/nav_b_picture.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "NAV-B-the-flame-scale",
     "file": "src/scenes/naval/navalFlames.js",
-    "old": "      art = { count, size: { w: size.width * GLOBAL_SCALE * FLAME_SCALE, h: size.height * GLOBAL_SCALE * FLAME_SCALE } };",
-    "new": "      art = { count, size: { w: size.width * GLOBAL_SCALE, h: size.height * GLOBAL_SCALE } };",
+    "old": "        art = {\n          count,\n          size: { w: size.width * GLOBAL_SCALE * FLAME_SCALE, h: size.height * GLOBAL_SCALE * FLAME_SCALE },\n        };",
+    "new": "        art = { count, size: { w: size.width * GLOBAL_SCALE, h: size.height * GLOBAL_SCALE } };",
     "tests": [
       "test/systems/naval/nav_b_picture.test.js"
     ]

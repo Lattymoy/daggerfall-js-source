@@ -31,8 +31,13 @@ export const VEIL_PARTY_TEXT = Object.freeze({
 export function veilJourney(to, name, row) {
   return {
     pick: {
-      pixel: { x: to.x, y: to.y }, name, veil: true,
-      besideAt: () => { const r = row(); return r && memberPresent(r) ? besideTargetOf(r.p, to.x, to.y) : null; },
+      pixel: { x: to.x, y: to.y },
+      name,
+      veil: true,
+      besideAt: () => {
+        const r = row();
+        return r && memberPresent(r) ? besideTargetOf(r.p, to.x, to.y) : null;
+      },
       besideText: VEIL_PARTY_TEXT.landed(name),
     },
     opts: { speedCautious: false, travelShip: true, sleepModeInn: false },
@@ -52,7 +57,11 @@ export function createVeilParty(deps) {
   let rode = null;
   const across = deps.across ?? inEther;
   let following = false;
-  const rowOf = (acct) => deps.social?.()?.others?.().find((m) => m.acct === acct) ?? null;
+  const rowOf = (acct) =>
+    deps
+      .social?.()
+      ?.others?.()
+      .find((m) => m.acct === acct) ?? null;
 
   /** A rider aboard my ship is my party's: never holds the crossing back. */
   const kin = (id) => !!deps.social?.()?.isPartyPeer?.(id);
@@ -63,7 +72,7 @@ export function createVeilParty(deps) {
     if (following) return;
     const here = deps.here();
     const owner = deps.aboard?.()?.owner ?? null;
-    const acct = owner ? deps.social?.()?.accountOfPeer?.(owner) ?? null : null;
+    const acct = owner ? (deps.social?.()?.accountOfPeer?.(owner) ?? null) : null;
     if (acct && rowOf(acct)) rode = { acct, side: !!across(here.x, here.y), x: here.x, y: here.y, off: 0, tried: null };
     else if (rode) {
       rode.off += Math.max(0, Number(dt) || 0) * 1000;
@@ -73,20 +82,23 @@ export function createVeilParty(deps) {
     if (!rode) return;
     const row = rowOf(rode.acct);
     if (!row || !memberPresent(row) || !!across(row.p.px, row.p.py) === rode.side || !deps.ready()) return;
-    if (rode.tried && rode.tried.x === row.p.px && rode.tried.y === row.p.py) return;   // the landing that failed, not asked again
-    const left = rode, name = row.name || t('veil.party.captain', 'your captain');
+    if (rode.tried && rode.tried.x === row.p.px && rode.tried.y === row.p.py) return; // the landing that failed, not asked again
+    const left = rode,
+      name = row.name || t('veil.party.captain', 'your captain');
     const to = { x: row.p.px, y: row.p.py };
     following = true;
     rode = null;
     deps.say(VEIL_PARTY_TEXT.follow(name));
     const j = veilJourney(to, name, () => rowOf(left.acct));
-    Promise.resolve(deps.travel(j.pick, j.opts, j.computed)).catch(() => false).then((went) => {
-      following = false;
-      if (went) return;
-      deps.say(VEIL_PARTY_TEXT.missed(name));
-      // sent back where she left me: she may have sailed on from that pixel, so her next one is followed in the window
-      rode = { ...left, tried: to };
-    });
+    Promise.resolve(deps.travel(j.pick, j.opts, j.computed))
+      .catch(() => false)
+      .then((went) => {
+        following = false;
+        if (went) return;
+        deps.say(VEIL_PARTY_TEXT.missed(name));
+        // sent back where she left me: she may have sailed on from that pixel, so her next one is followed in the window
+        rode = { ...left, tried: to };
+      });
   }
 
   return { step, kin, following: () => following };

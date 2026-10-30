@@ -305,8 +305,8 @@
   {
     "name": "P7-reach-the-bays",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "beyondList = laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, true);",
-    "new": "beyondList = laneNetwork(ports.list(), worldOpen, undefined, true);",
+    "old": "      beyondList = laneNetwork(ports.list(), worldOpen, BEYOND_LANE_MAX_PX, true);",
+    "new": "      beyondList = laneNetwork(ports.list(), worldOpen, undefined, true);",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ]
@@ -314,8 +314,8 @@
   {
     "name": "P7-near-the-bays",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "      return da + db <= beyondPathPx(lane) + 2 * pad;",
-    "new": "      return Math.min(da, db) <= LANE_PATH_PX / 2 + pad;",
+    "old": "      return da + db <= beyondPathPx(lane) + 2 * pad; // NIBEN-SEA: a canal harbour's lane its own",
+    "new": "      return Math.min(da, db) <= LANE_PATH_PX / 2 + pad; // NIBEN-SEA: a canal harbour's lane its own",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ]
@@ -323,8 +323,8 @@
   {
     "name": "P7-near-no-margin",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "      return da + db <= beyondPathPx(lane) + 2 * pad;",
-    "new": "      return da + db <= beyondPathPx(lane);",
+    "old": "      return da + db <= beyondPathPx(lane) + 2 * pad; // NIBEN-SEA: a canal harbour's lane its own",
+    "new": "      return da + db <= beyondPathPx(lane); // NIBEN-SEA: a canal harbour's lane its own",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ]
@@ -332,8 +332,8 @@
   {
     "name": "P7-corner-cut",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "      if (!sea(nx, ny) || (dx && dy && (!sea(x + dx, y) || !sea(x, y + dy)))) continue;",
-    "new": "      if (!sea(nx, ny)) continue;",
+    "old": "        if (!sea(nx, ny) || (dx && dy && (!sea(x + dx, y) || !sea(x, y + dy)))) continue; // no corner cut past land",
+    "new": "        if (!sea(nx, ny)) continue; // no corner cut past land",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ]
@@ -350,8 +350,8 @@
   {
     "name": "P7-bay-rect-sailed",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "    && !(x + 1 > bay.x0 && x < bay.x1 && y + 1 > bay.y0 && y < bay.y1);",
-    "new": ";",
+    "old": "  return (x, y) =>\n    x >= 0 &&\n    y >= 0 &&\n    x < w &&\n    y < h &&\n    landLabelAt(L, x + 0.5, y + 0.5) === 0 &&\n    !lakes[y * w + x] &&\n    !(x + 1 > bay.x0 && x < bay.x1 && y + 1 > bay.y0 && y < bay.y1);",
+    "new": "  return (x, y) => x >= 0 && y >= 0 && x < w && y < h && landLabelAt(L, x + 0.5, y + 0.5) === 0 && !lakes[y * w + x];",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ]
@@ -359,8 +359,8 @@
   {
     "name": "P7-lakes-sailed",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "=== 0 && !lakes[y * w + x]",
-    "new": "=== 0",
+    "old": "    !lakes[y * w + x] &&\n    !(x + 1 > bay.x0 && x < bay.x1 && y + 1 > bay.y0 && y < bay.y1);",
+    "new": "    !(x + 1 > bay.x0 && x < bay.x1 && y + 1 > bay.y0 && y < bay.y1);",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ],
@@ -370,8 +370,8 @@
   {
     "name": "P7-no-picture-no-way",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "tamrielTrace() ? beyondLaneWay(lane, worldOpenNative) : laneWay(lane, worldOpen, worldOpenNative);",
-    "new": "beyondLaneWay(lane, worldOpenNative);",
+    "old": "        way = onBay\n          ? laneWay(lane, bayOpen, bayOpenNative)\n          : tamrielTrace()\n            ? beyondLaneWay(lane, worldOpenNative)\n            : laneWay(lane, worldOpen, worldOpenNative);",
+    "new": "        way = onBay ? laneWay(lane, bayOpen, bayOpenNative) : beyondLaneWay(lane, worldOpenNative);",
     "tests": [
       "test/world/worldWide/ww3_sea.test.js"
     ]

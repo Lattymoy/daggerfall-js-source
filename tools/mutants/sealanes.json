@@ -596,8 +596,8 @@
   {
     "name": "FEED-way-sounded-again",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "      if (way === undefined) { way = onBay ? laneWay(lane, bayOpen, bayOpenNative) : tamrielTrace() ? beyondLaneWay(lane, worldOpenNative) : laneWay(lane, worldOpen, worldOpenNative); ways.set(lane.key, way); }",
-    "new": "      way = onBay ? laneWay(lane, bayOpen, bayOpenNative) : tamrielTrace() ? beyondLaneWay(lane, worldOpenNative) : laneWay(lane, worldOpen, worldOpenNative); ways.set(lane.key, way);",
+    "old": "      if (way === undefined) {\n        way = onBay\n          ? laneWay(lane, bayOpen, bayOpenNative)\n          : tamrielTrace()\n            ? beyondLaneWay(lane, worldOpenNative)\n            : laneWay(lane, worldOpen, worldOpenNative);\n        ways.set(lane.key, way);\n      } // AUDIT TESA II P7: past the Bay at the picture's scale - with no picture (the authored shape), WW3's walk at the Bay's, within its LANE_PATH_PX",
+    "new": "      way = onBay\n        ? laneWay(lane, bayOpen, bayOpenNative)\n        : tamrielTrace()\n          ? beyondLaneWay(lane, worldOpenNative)\n          : laneWay(lane, worldOpen, worldOpenNative);\n      ways.set(lane.key, way); // AUDIT TESA II P7: past the Bay at the picture's scale - with no picture (the authored shape), WW3's walk at the Bay's, within its LANE_PATH_PX",
     "tests": [
       "test/systems/naval/sealanes.test.js"
     ],

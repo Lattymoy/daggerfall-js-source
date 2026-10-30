@@ -76,8 +76,8 @@
   {
     "name": "BM-the-sails-left-set",
     "file": "src/scenes/naval/navalHaul.js",
-    "old": "      if (csa()?.state?.sailPosition > 0) csa().LowerSails?.();\n",
-    "new": "",
+    "old": "      if (csa()?.state?.sailPosition > 0) csa().LowerSails?.();\n    },",
+    "new": "    },",
     "tests": [
       "test/systems/naval/boardmagnet.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "BM-the-brake-held-through-the-fight",
     "file": "src/scenes/naval/navalHaul.js",
-    "old": "const hauling = (b) => !!b && b.phase === 'grapple' && !!b.boat && b.boat === myBoat();",
-    "new": "const hauling = (b) => !!b && !!b.boat && b.boat === myBoat();",
+    "old": "  const hauling = (b) => !!b && b.phase === 'grapple' && !!b.boat && b.boat === myBoat();",
+    "new": "  const hauling = (b) => !!b && !!b.boat && b.boat === myBoat();",
     "tests": [
       "test/systems/naval/boardmagnet.test.js"
     ]

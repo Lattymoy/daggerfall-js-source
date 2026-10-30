@@ -299,8 +299,8 @@
   {
     "name": "CF-side-mirrored",
     "file": "src/scenes/naval/navalFeel.js",
-    "old": "  const beam = from[0] * f[1] - from[1] * f[0];",
-    "new": "  const beam = from[1] * f[0] - from[0] * f[1];",
+    "old": "  const beam = from[0] * f[1] - from[1] * f[0]; // starboard is fwd turned a quarter clockwise: (f.z, -f.x)",
+    "new": "  const beam = from[1] * f[0] - from[0] * f[1]; // starboard is fwd turned a quarter clockwise: (f.z, -f.x)",
     "tests": [
       "test/systems/naval/combatfeel.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "CF-smoke-whole",
     "file": "src/scenes/naval/navalFeel.js",
-    "old": "      if (k <= 0 || !m.fighting",
-    "new": "      if (!m.fighting",
+    "old": "      if (k <= 0 || !m.fighting || !m.pose || !m.build) continue;",
+    "new": "      if (!m.fighting || !m.pose || !m.build) continue;",
     "tests": [
       "test/systems/naval/combatfeel.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "CF-men-model",
     "file": "src/scenes/naval/navalTally.js",
-    "old": "rig: last.rig, men: Math.round(last.men) } : null;",
-    "new": "rig: last.rig } : null;",
+    "old": "        ? { balls: last.balls, hits: last.hits, holed: last.holed, rig: last.rig, men: Math.round(last.men) }",
+    "new": "        ? { balls: last.balls, hits: last.hits, holed: last.holed, rig: last.rig }",
     "tests": [
       "test/systems/naval/combatfeel.test.js"
     ]

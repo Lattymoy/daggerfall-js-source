@@ -353,8 +353,8 @@
   {
     "name": "SEA-EVENTS-ships-reach",
     "file": "src/scenes/naval/treasureFleet.js",
-    "old": "if (spent.has(s.seed) || dist2d(s.pos, me) > FLEET_STAND_M) continue;",
-    "new": "if (spent.has(s.seed) || dist2d(s.pos, me) > FLEET_DROP_M) continue;",
+    "old": "        if (spent.has(s.seed) || dist2d(s.pos, me) > FLEET_STAND_M) continue;",
+    "new": "        if (spent.has(s.seed) || dist2d(s.pos, me) > FLEET_DROP_M) continue;",
     "tests": [
       "test/systems/sea/seaevents.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "SEA-EVENTS-ships-respent",
     "file": "src/scenes/naval/treasureFleet.js",
-    "old": "if (spent.has(s.seed) || dist2d(s.pos, me) > FLEET_STAND_M) continue;",
-    "new": "if (dist2d(s.pos, me) > FLEET_STAND_M) continue;",
+    "old": "        if (spent.has(s.seed) || dist2d(s.pos, me) > FLEET_STAND_M) continue;",
+    "new": "        if (dist2d(s.pos, me) > FLEET_STAND_M) continue;",
     "tests": [
       "test/systems/sea/seaevents.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "SEA-EVENTS-ships-never-forgot",
     "file": "src/scenes/naval/treasureFleet.js",
-    "old": "    if (list?.n !== sailing) { sailing = list?.n ?? null; spent.clear(); }",
-    "new": "    if (list?.n !== sailing) { sailing = list?.n ?? null; }",
+    "old": "      spent.clear();\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/sea/seaevents.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "SEA-EVENTS-ships-untagged",
     "file": "src/scenes/naval/treasureFleet.js",
-    "old": "      e.fleet ??= tagOf(list, e.ship.seed);",
-    "new": "      void tagOf;",
+    "old": "      e.fleet ??= tagOf(list, e.ship.seed); // a peer's copy too: she is the sailing's by her seed",
+    "new": "      void tagOf; // a peer's copy too: she is the sailing's by her seed",
     "tests": [
       "test/systems/sea/seaevents.test.js"
     ]
@@ -389,7 +389,7 @@
   {
     "name": "SEA-EVENTS-ships-twice",
     "file": "src/scenes/naval/treasureFleet.js",
-    "old": "        if ([...deps.sea.values()].some((x) => x.ship.seed === s.seed && x.ship.damage.state !== SHIP_STATES.sunk)) continue;",
+    "old": "        if ([...deps.sea.values()].some((x) => x.ship.seed === s.seed && x.ship.damage.state !== SHIP_STATES.sunk))\n          continue;",
     "new": "        void 0;",
     "tests": [
       "test/systems/sea/seaevents.test.js"
@@ -416,8 +416,8 @@
   {
     "name": "SEA-EVENTS-ships-on-land",
     "file": "src/scenes/naval/treasureFleet.js",
-    "old": "        if (!deps.isWater(s.pos[0], s.pos[2], classById(s.classId)?.hull ?? 0)) continue;",
-    "new": "        void 0;",
+    "old": "        if (!deps.isWater(s.pos[0], s.pos[2], classById(s.classId)?.hull ?? 0)) continue; // AUDIT SEA VENTURES D10: deep enough for her own hull",
+    "new": "        void 0; // AUDIT SEA VENTURES D10: deep enough for her own hull",
     "tests": [
       "test/systems/sea/seaevents.test.js"
     ]
@@ -434,7 +434,7 @@
   {
     "name": "SEA-EVENTS-ships-gone-on-return",
     "file": "src/scenes/naval/treasureFleet.js",
-    "old": "      if (dist2d(e.ship.pos, me) <= FLEET_DROP_M) { e.retiring = false; continue; }",
+    "old": "      if (dist2d(e.ship.pos, me) <= FLEET_DROP_M) {\n        e.retiring = false;\n        continue;\n      }",
     "new": "      if (dist2d(e.ship.pos, me) <= FLEET_DROP_M) continue;",
     "tests": [
       "test/systems/sea/seaevents.test.js"
@@ -479,8 +479,8 @@
   {
     "name": "SEA-EVENTS-spoils-untold",
     "file": "src/scenes/naval/treasureFleet.js",
-    "old": "    if (!(Number(deps.fleetEnded(entry.fleet.n, act)) > 0)) return null;",
-    "new": "    void act;",
+    "old": "    if (!(Number(deps.fleetEnded(entry.fleet.n, act)) > 0)) return null; // AUDIT SEA VENTURES D2: no purse, no piece",
+    "new": "    void act; // AUDIT SEA VENTURES D2: no purse, no piece",
     "tests": [
       "test/systems/sea/seaevents.test.js"
     ]

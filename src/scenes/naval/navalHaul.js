@@ -23,9 +23,15 @@ import { CSA_BRAKE_MAX } from '../../systems/comeSailAway/comeSailAway.js';
  */
 export function createNavalHaul({ csa, myBoat, boatPose, yawOfRot }) {
   /** A boat as the haul reads it: where it lies, its heading, its hull. */
-  const anchorOf = (boat) => { const p = boatPose(boat); return { pos: p.position, yaw: yawOfRot(p.rotation), hull: boat.hull }; };
+  const anchorOf = (boat) => {
+    const p = boatPose(boat);
+    return { pos: p.position, yaw: yawOfRot(p.rotation), hull: boat.hull };
+  };
   /** Her berth beside `boat` as it lies now - `at` where she lies (her side and heading, unless `lie` keeps them). */
-  const berth = (boat, at, hull, lie = null) => { const a = anchorOf(boat); return berthPose(berthHull(a.pos, a.yaw, a.hull), berthHull(at.pos, at.yaw, hull), lie); };
+  const berth = (boat, at, hull, lie = null) => {
+    const a = anchorOf(boat);
+    return berthPose(berthHull(a.pos, a.yaw, a.hull), berthHull(at.pos, at.yaw, hull), lie);
+  };
   /** Whether boarding `b` hauls a ship alongside the boat at my helm. */
   const hauling = (b) => !!b && b.phase === 'grapple' && !!b.boat && b.boat === myBoat();
   return {
@@ -47,6 +53,6 @@ export function createNavalHaul({ csa, myBoat, boatPose, yawOfRot }) {
     },
     hauling,
     /** Come Sail Away's `brake` while `b` hauls beside my helm (0: her own rate). */
-    brake: (b) => (hauling(b) ? b.brake ?? 0 : 0),
+    brake: (b) => (hauling(b) ? (b.brake ?? 0) : 0),
   };
 }

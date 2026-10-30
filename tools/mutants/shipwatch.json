@@ -245,8 +245,8 @@
   {
     "name": "NC-sleepers-drawn",
     "file": "src/scenes/naval/navalCrew.js",
-    "old": "if (s?.batch && s.unit && !m.below) out.push(s.batch);",
-    "new": "if (s?.batch && s.unit) out.push(s.batch);",
+    "old": "    for (const ship of ships.values())\n      for (const [m, s] of ship.sprites) if (s?.batch && s.unit && !m.below) out.push(s.batch); // SHIP-WATCH: none below her deck",
+    "new": "    for (const ship of ships.values()) for (const [m, s] of ship.sprites) if (s?.batch && s.unit) out.push(s.batch); // SHIP-WATCH: none below her deck",
     "tests": [
       "test/systems/naval/shipwatch.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "NC-sleepers-posed",
     "file": "src/scenes/naval/navalCrew.js",
-    "old": "if (member.below || !s.unit || !s.batch) continue;",
-    "new": "if (!s.unit || !s.batch) continue;",
+    "old": "        if (member.below || !s.unit || !s.batch) continue; // SHIP-WATCH: turned in below her deck - kept, not drawn",
+    "new": "        if (!s.unit || !s.batch) continue; // SHIP-WATCH: turned in below her deck - kept, not drawn",
     "tests": [
       "test/systems/naval/shipwatch.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "NC-no-attack",
     "file": "src/scenes/naval/navalCrew.js",
-    "old": "_motion.striking = !!member.swing;",
-    "new": "_motion.striking = false;",
+    "old": "        _motion.striking = !!member.swing; // SHIP-WATCH: a swing at his work - his class's attack",
+    "new": "        _motion.striking = false; // SHIP-WATCH: a swing at his work - his class's attack",
     "tests": [
       "test/systems/naval/shipwatch.test.js"
     ]

@@ -222,8 +222,8 @@
   {
     "name": "START2-writ-fare-kept",
     "file": "src/scenes/naval/passageHost.js",
-    "old": "      .map((d) => (deps.writ?.(d.port) ? { ...d, fare: 0, writ: true } : d));",
-    "new": "      .map((d) => (deps.writ?.(d.port) ? { ...d, writ: true } : d));",
+    "old": "    }).map((d) => (deps.writ?.(d.port) ? { ...d, fare: 0, writ: true } : d));",
+    "new": "    }).map((d) => (deps.writ?.(d.port) ? { ...d, writ: true } : d));",
     "tests": [
       "test/systems/starts/start2_provinces.test.js"
     ]
@@ -231,8 +231,8 @@
   {
     "name": "START2-writ-unread",
     "file": "src/scenes/naval/passageHost.js",
-    "old": "      .map((d) => (deps.writ?.(d.port) ? { ...d, fare: 0, writ: true } : d));",
-    "new": "      .map((d) => d);",
+    "old": "    }).map((d) => (deps.writ?.(d.port) ? { ...d, fare: 0, writ: true } : d));",
+    "new": "    }).map((d) => d);",
     "tests": [
       "test/systems/starts/start2_provinces.test.js"
     ]

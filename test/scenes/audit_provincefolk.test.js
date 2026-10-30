@@ -129,8 +129,8 @@ test('AUDIT PROVINCE-FOLK A3 (B2, C3): a ship\'s crew are her waters\' people wh
       if (people) assert.ok(share(hands, 'DarkElf') > 0.72, `a Morrowind ship's hands at Daggerfall: ${share(hands, 'DarkElf')}`);
       else assert.ok(share(hands, 'DarkElf') < 0.15 && hands.every((r) => FOE_RACES.some(([x]) => x === r)), 'a Bay ship\'s at Mournhold: the Bay\'s');
     }
-    assert.match(rd('src/scenes/naval/navalCrew.js'), /seed: Math\.imul\(\(ship\.seed \| 0\) \+ i, 0x9e3779b1\) >>> 0, home: ship\.home \}\);/);
-    assert.match(rd('src/scenes/naval/navalCrew.js'), /seed: w\.seed \| 0, home: w\.home \?\? null \};/);
+    assert.match(rd('src/scenes/naval/navalCrew.js'), /seed: Math\.imul\(\(ship\.seed \| 0\) \+ i, 0x9e3779b1\) >>> 0,\n\s*home: ship\.home,\n\s*\}\);/);
+    assert.match(rd('src/scenes/naval/navalCrew.js'), /seed: w\.seed \| 0,\n\s*home: w\.home \?\? null,\n\s*\};/);
     assert.match(rd('src/scenes/naval/navalHost.js'), /seed: e\.ship\.seed, home: watersFolkKey\(e\), faction:/);
     assert.match(rd('src/scenes/naval/navalHost.js'), /const watersFolkKey = \(e\) => folkKeyOf\(Number\.isInteger\(e\.area\) && e\.area >= BAY_AREA_COUNT \? folkOfArea\(e\.area\) : folkOfRegion\(e\.region \?\? -1\)\);/);
     assert.match(hostText('src/scenes/world.js'), /seed: s\.seed, home: s\.home, faction: s\.faction,/);

@@ -313,8 +313,8 @@
   {
     "name": "RW-WAYS-the-lanes'-water-unread",
     "file": "src/scenes/naval/worldLanes.js",
-    "old": "=> (water(px, py) && climateAt(px, py) === CLIMATES.Ocean) || rumareSeaPixel(px, py);\n  const open = (/** @type {number} */ px, /** @type {number} */ py) => (inBay(px, py) ? bayOpen(px, py)\n    : beyond() && inWorldGrid(px, py) && !inEther(px, py) && (rumareSeaPixel(px, py) || squareCornersAll(sea, px, py)));",
-    "new": "=> (water(px, py) && climateAt(px, py) === CLIMATES.Ocean);\n  const open = (/** @type {number} */ px, /** @type {number} */ py) => (inBay(px, py) ? bayOpen(px, py)\n    : beyond() && inWorldGrid(px, py) && !inEther(px, py) && (squareCornersAll(sea, px, py)));",
+    "old": "    (water(px, py) && climateAt(px, py) === CLIMATES.Ocean) || rumareSeaPixel(px, py);\n  const open = (/** @type {number} */ px, /** @type {number} */ py) =>\n    inBay(px, py)\n      ? bayOpen(px, py)\n      : beyond() &&\n        inWorldGrid(px, py) &&\n        !inEther(px, py) &&\n        (rumareSeaPixel(px, py) || squareCornersAll(sea, px, py));",
+    "new": "    water(px, py) && climateAt(px, py) === CLIMATES.Ocean;\n  const open = (/** @type {number} */ px, /** @type {number} */ py) =>\n    inBay(px, py)\n      ? bayOpen(px, py)\n      : beyond() && inWorldGrid(px, py) && !inEther(px, py) && squareCornersAll(sea, px, py);",
     "tests": [
       "test/world/rumarewater.test.js"
     ]

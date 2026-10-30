@@ -292,8 +292,8 @@
   {
     "name": "NAV1H-the-camera-setting-unread",
     "file": "src/scenes/naval/aimCamera.js",
-    "old": "    const want = deps.setting('AimCamera', true) !== false && deps.aiming()",
-    "new": "    const want = deps.aiming()",
+    "old": "    const want =\n      deps.setting('AimCamera', true) !== false && deps.aiming() && boat && aim && aim.side && !deps.wrecked(boat)\n        ? aim.side\n        : null;",
+    "new": "    const want = deps.aiming() && boat && aim && aim.side && !deps.wrecked(boat) ? aim.side : null;",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js",
       "test/systems/naval/aimends_camera.test.js"
@@ -311,8 +311,8 @@
   {
     "name": "NAV1H-the-camera-unsmoothed",
     "file": "src/scenes/naval/aimCamera.js",
-    "old": "    const k = camK * camK * (3 - 2 * camK);   // eased in and out",
-    "new": "    const k = camK;   // eased in and out",
+    "old": "    const k = camK * camK * (3 - 2 * camK); // eased in and out",
+    "new": "    const k = camK; // eased in and out",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -320,8 +320,8 @@
   {
     "name": "NAV1H-the-camera-guard-dropped",
     "file": "src/scenes/naval/aimCamera.js",
-    "old": "    if (clear < 1) at = [c[0] + (at[0] - c[0]) * clear,",
-    "new": "    if (false) at = [c[0] + (at[0] - c[0]) * clear,",
+    "old": "    if (clear < 1) at = [c[0] + (at[0] - c[0]) * clear, c[1] + (at[1] - c[1]) * clear, c[2] + (at[2] - c[2]) * clear];",
+    "new": "    if (false) at = [c[0] + (at[0] - c[0]) * clear, c[1] + (at[1] - c[1]) * clear, c[2] + (at[2] - c[2]) * clear];",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -329,8 +329,8 @@
   {
     "name": "AIMENDS-the-ends-at-the-broadsides-place",
     "file": "src/scenes/naval/aimCamera.js",
-    "old": "    let at = isEnd(camSide)\n",
-    "new": "    let at = false\n",
+    "old": "    let at = isEnd(camSide)",
+    "new": "    let at = false",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js",
       "test/systems/naval/aimends_camera.test.js"
@@ -339,8 +339,8 @@
   {
     "name": "NAV1H-the-camera-crippled",
     "file": "src/scenes/naval/aimCamera.js",
-    "old": "\n      && !deps.wrecked(boat) ? aim.side : null;",
-    "new": " ? aim.side : null;",
+    "old": "      deps.setting('AimCamera', true) !== false && deps.aiming() && boat && aim && aim.side && !deps.wrecked(boat)\n        ? aim.side\n        : null;",
+    "new": "      deps.setting('AimCamera', true) !== false && deps.aiming() && boat && aim && aim.side ? aim.side : null;",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js",
       "test/systems/naval/aimends_camera.test.js"
@@ -349,8 +349,8 @@
   {
     "name": "NAV1H-the-camera-never-home",
     "file": "src/scenes/naval/aimCamera.js",
-    "old": "    if (!want && camK < 1e-3) { camK = 0; camSide = null; camLocal = null; }\n",
-    "new": "",
+    "old": "    if (!want && camK < 1e-3) {\n      camK = 0;\n      camSide = null;\n      camLocal = null;\n    }\n    if (!boat || !camSide || camK <= 0) return ownEye;",
+    "new": "    if (!boat || !camSide || camK <= 0) return ownEye;",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -1015,7 +1015,7 @@
   {
     "name": "AIMENDS-her-reach-unread",
     "file": "src/scenes/naval/aimCamera.js",
-    "old": "    const along = Math.max(dot(c, fwd) + AIM_CAM_AHEAD, ...own.filter(Boolean).map((b) => reachAlong(b, fwd) + AIM_CAM_CLEAR));",
+    "old": "    const along = Math.max(\n      dot(c, fwd) + AIM_CAM_AHEAD,\n      ...own.filter(Boolean).map((b) => reachAlong(b, fwd) + AIM_CAM_CLEAR),\n    );",
     "new": "    const along = dot(c, fwd) + AIM_CAM_AHEAD;",
     "tests": [
       "test/systems/naval/aimends_camera.test.js",
@@ -1025,8 +1025,8 @@
   {
     "name": "AIMENDS-the-ahead-turned-aft",
     "file": "src/scenes/naval/aimCamera.js",
-    "old": "    const along = Math.max(dot(c, fwd) + AIM_CAM_AHEAD, ...own",
-    "new": "    const along = Math.max(dot(c, fwd) - AIM_CAM_AHEAD, ...own",
+    "old": "      dot(c, fwd) + AIM_CAM_AHEAD,",
+    "new": "      dot(c, fwd) - AIM_CAM_AHEAD,",
     "tests": [
       "test/systems/naval/aimends_camera.test.js",
       "test/systems/naval/navaudit_helm.test.js"
@@ -1044,8 +1044,8 @@
   {
     "name": "AIMENDS-the-clearance-dropped",
     "file": "src/scenes/naval/aimCamera.js",
-    "old": "...own.filter(Boolean).map((b) => reachAlong(b, fwd) + AIM_CAM_CLEAR));",
-    "new": "...own.filter(Boolean).map((b) => reachAlong(b, fwd)));",
+    "old": "    const along = Math.max(\n      dot(c, fwd) + AIM_CAM_AHEAD,\n      ...own.filter(Boolean).map((b) => reachAlong(b, fwd) + AIM_CAM_CLEAR),\n    );",
+    "new": "    const along = Math.max(dot(c, fwd) + AIM_CAM_AHEAD, ...own.filter(Boolean).map((b) => reachAlong(b, fwd)));",
     "tests": [
       "test/systems/naval/aimends_camera.test.js",
       "test/systems/naval/navaudit_helm.test.js"
@@ -1054,8 +1054,8 @@
   {
     "name": "AIMENDS-the-wreck-unread",
     "file": "src/scenes/naval/aimCamera.js",
-    "old": "      && !deps.wrecked(boat) ? aim.side : null;",
-    "new": "      ? aim.side : null;",
+    "old": "      deps.setting('AimCamera', true) !== false && deps.aiming() && boat && aim && aim.side && !deps.wrecked(boat)\n        ? aim.side\n        : null;",
+    "new": "      deps.setting('AimCamera', true) !== false && deps.aiming() && boat && aim && aim.side ? aim.side : null;",
     "tests": [
       "test/systems/naval/aimends_camera.test.js"
     ]
@@ -1119,8 +1119,8 @@
   {
     "name": "AUDITAIM-A2-her-hull-unasked",
     "file": "src/scenes/naval/aimCamera.js",
-    "old": "      ? endEye(camSide, c, fwd, [deps.hull(boat), ...deps.rig(boat)])",
-    "new": "      ? endEye(camSide, c, fwd, [...deps.rig(boat)])",
+    "old": "      ? endEye(camSide, c, fwd, [deps.hull(boat), ...deps.rig(boat)]) // AIM-ENDS: clear of all of her there",
+    "new": "      ? endEye(camSide, c, fwd, [...deps.rig(boat)]) // AIM-ENDS: clear of all of her there",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]

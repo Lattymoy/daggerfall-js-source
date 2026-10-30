@@ -83,8 +83,8 @@
   {
     "name": "CREW-MUSTER-the-crew-host-drops-the-way",
     "file": "src/scenes/naval/navalCrew.js",
-    "old": "ship.way = ship.toward ? w.way ?? null : null;",
-    "new": "ship.way = null;",
+    "old": "      ship.way = ship.toward ? (w.way ?? null) : null; // CREW-MUSTER: her side of that boarding ('board' | 'repel') - the muster's words",
+    "new": "      ship.way = null; // CREW-MUSTER: her side of that boarding ('board' | 'repel') - the muster's words",
     "tests": [
       "test/systems/naval/fb1014_crewmuster.test.js"
     ]

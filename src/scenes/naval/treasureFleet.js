@@ -53,30 +53,46 @@ export function createTreasureFleet(deps) {
   const spent = new Set();
   let sailing = null;
   /** Her tag: the sailing, her seed and whether she is its flagship. */
-  const tagOf = (list, seed) => { const s = list?.ships.find((x) => x.seed === (seed >>> 0)); return s ? { n: list.n, seed: s.seed, flag: s.flag } : null; };
+  const tagOf = (list, seed) => {
+    const s = list?.ships.find((x) => x.seed === seed >>> 0);
+    return s ? { n: list.n, seed: s.seed, flag: s.flag } : null;
+  };
   /**
    * THE FLEET'S STEP: `list` the sailing under way about the captain - `{ n, band, ships: [{ seed, classId, flag, pos, yaw,
    * ahead }] }` in the scene - or null in port; `sunk` its flagship is down.
    */
   function step(list, { sunk = false } = {}) {
-    if (list?.n !== sailing) { sailing = list?.n ?? null; spent.clear(); }
+    if (list?.n !== sailing) {
+      sailing = list?.n ?? null;
+      spent.clear();
+    }
     const me = deps.feet();
     for (const e of deps.sea.values()) {
-      e.fleet ??= tagOf(list, e.ship.seed);   // a peer's copy too: she is the sailing's by her seed
+      e.fleet ??= tagOf(list, e.ship.seed); // a peer's copy too: she is the sailing's by her seed
       if (e.fleet && e.ship.damage.state !== SHIP_STATES.afloat) spent.add(e.fleet.seed);
     }
     // mine let go past FLEET_DROP_M - she sails on and fades - unless she fights
     for (const e of deps.sea.values()) {
       if (e.owner || !e.fleet) continue;
-      if (dist2d(e.ship.pos, me) <= FLEET_DROP_M) { e.retiring = false; continue; }
+      if (dist2d(e.ship.pos, me) <= FLEET_DROP_M) {
+        e.retiring = false;
+        continue;
+      }
       if (!deps.busy(e) && !e.retiring) deps.retire(e);
     }
     if (list && !sunk && deps.launches()) {
       for (const s of list.ships) {
         if (spent.has(s.seed) || dist2d(s.pos, me) > FLEET_STAND_M) continue;
-        if ([...deps.sea.values()].some((x) => x.ship.seed === s.seed && x.ship.damage.state !== SHIP_STATES.sunk)) continue;
-        if (!deps.isWater(s.pos[0], s.pos[2], classById(s.classId)?.hull ?? 0)) continue;   // AUDIT SEA VENTURES D10: deep enough for her own hull
-        const e = deps.launch({ seed: s.seed, classId: s.classId, pos: [s.pos[0], deps.seaY(), s.pos[2]], yaw: s.yaw, ether: list.band });
+        if ([...deps.sea.values()].some((x) => x.ship.seed === s.seed && x.ship.damage.state !== SHIP_STATES.sunk))
+          continue;
+        if (!deps.isWater(s.pos[0], s.pos[2], classById(s.classId)?.hull ?? 0)) continue; // AUDIT SEA VENTURES D10: deep enough for her own hull
+        const e = deps.launch({
+          seed: s.seed,
+          classId: s.classId,
+          pos: [s.pos[0], deps.seaY(), s.pos[2]],
+          yaw: s.yaw,
+          ether: list.band,
+        });
         if (e) e.fleet = { n: list.n, seed: s.seed, flag: s.flag };
       }
     }
@@ -93,12 +109,22 @@ export function createTreasureFleet(deps) {
   function ended(entry, act) {
     if (!entry?.fleet?.flag || (act !== 'sink' && act !== 'board')) return null;
     spent.add(entry.fleet.seed);
-    if (!(Number(deps.fleetEnded(entry.fleet.n, act)) > 0)) return null;   // AUDIT SEA VENTURES D2: no purse, no piece
-    const band = fleetOf(entry.fleet.n)?.band ?? entry.ether ?? 'deep';   // D9: the sailing's own band
-    const piece = rollElthericPiece(mulberry32(((entry.fleet.seed >>> 0) ^ TIDEMAIL_SALT) >>> 0), elthericChance('fleet', band));
+    if (!(Number(deps.fleetEnded(entry.fleet.n, act)) > 0)) return null; // AUDIT SEA VENTURES D2: no purse, no piece
+    const band = fleetOf(entry.fleet.n)?.band ?? entry.ether ?? 'deep'; // D9: the sailing's own band
+    const piece = rollElthericPiece(
+      mulberry32(((entry.fleet.seed >>> 0) ^ TIDEMAIL_SALT) >>> 0),
+      elthericChance('fleet', band),
+    );
     if (piece) {
       deps.give([piece]);
-      deps.say(t('sea.tidemail.fleet', 'From the treasure fleet\'s flagship {ship}: {piece}, a piece of {set}!', { ship: entry.ship.names?.name ?? '', piece: piece.name, set: setById('eltheric')?.name ?? '' }), 6);
+      deps.say(
+        t('sea.tidemail.fleet', "From the treasure fleet's flagship {ship}: {piece}, a piece of {set}!", {
+          ship: entry.ship.names?.name ?? '',
+          piece: piece.name,
+          set: setById('eltheric')?.name ?? '',
+        }),
+        6,
+      );
     }
     return piece;
   }

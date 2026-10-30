@@ -231,7 +231,7 @@ test('SEA-SET THE SEAMS by source: the naval host\'s every ball of mine over her
   assert.match(n, /const hurt = dueOnHull\(shotDamage\(gun, zone, \{ braced: st\.guns\.braced/);
   // PIN MOVED (AUDIT SEA VENTURES D1, D12): her piece out of the host (navalSeaSet.js), and only with her purse
   assert.match(n, /if \(legend\) legendTidemail\(legend, s\.seed, deps\.ether\?\.legendEnded\?\.\(legend\.id, act\), \{ give: \(items\) => deps\.board\?\.giveItems\?\.\(items, boatInPlay\(\) \?\? null, \{ force: true \}\), say: \(text, n\) => deps\.say\?\.\(text, n\) \}\);/);
-  assert.match(src('src/scenes/naval/navalSeaSet.js'), /if \(!\(Number\(paid\) > 0\)\) return null;\n  const piece = rollElthericPiece\(mulberry32\(\(\(seed >>> 0\) \^ TIDEMAIL_SALT\) >>> 0\), elthericChance\('legend', legend\.band\)\);\n  if \(!piece\) return null;\n  give\(\[piece\]\);/);
+  assert.match(src('src/scenes/naval/navalSeaSet.js'), /if \(!\(Number\(paid\) > 0\)\) return null;\n\s*const piece = rollElthericPiece\(\n\s*mulberry32\(\(\(seed >>> 0\) \^ TIDEMAIL_SALT\) >>> 0\),\n\s*elthericChance\('legend', legend\.band\),\n\s*\);\n\s*if \(!piece\) return null;\n\s*give\(\[piece\]\);/);
   const d = src('src/scenes/dungeonContext.js');
   assert.match(d, /if \(!onlineRoom\(\)\) seaPileMore\(items, dfLocation\);/);
   assert.match(d, /wildPileMore\(p\.items, rollPileItems, _wildRing\); seaPileMore\(p\.items, dfLocation\); settleLootFlat\(i\);/);

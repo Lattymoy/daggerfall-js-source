@@ -839,7 +839,7 @@ blow is whole only in the open sea and half anywhere else; its 6-piece the Capta
 harder and her hull tougher. A set for the sea, worn at sea.
 
 WHERE THE DEEP GIVES IT UP (`systems/aetheric.js` `ELTHERIC_CHANCE`): a LEGEND ended - the Deep Aether's two a quarter of
-the time, the Abyss's two every time, into the boat the captain sails (`navalSeaSet.js:"export function legendTidemail(legend, seed, paid, { give, say }) {"`,
+the time, the Abyss's two every time, into the boat the captain sails (`navalSeaSet.js:"export function legendTidemail"`,
 on her seed's own stream, WITH her purse - AUDIT SEA VENTURES D1: never for a legend her purse was not paid for, another's
 copy of her sunk again before the aether raised her; D12: out of createNavalHost - so the Abyss's legends, the sea's hardest fights, always pay one); a VAULT
 of the deep's pile (a quarter, half - SEA-VAULTS); an isle's RUIN's treasure pile in those bands (a twentieth, a tenth -
@@ -986,7 +986,7 @@ are the sailing's own.
   ether host's purse over the captain's ledger's `endFleet`, the newest `ETHER_FLEETS_KEEP` - four - sailings) - and WITH
   HER PURSE ALONE a piece of the Tidemail every time (`ELTHERIC_CHANCE.fleet`, on the SAILING's band - AUDIT SEA VENTURES
   D9: a peer's copy of her rolled the observer's), into the boat I sail and said
-  (`treasureFleet.js:"if (!(Number(deps.fleetEnded(entry.fleet.n, act)) > 0)) return null;"` - AUDIT SEA VENTURES D2:
+  (`treasureFleet.js:"if (!(Number(deps.fleetEnded(entry.fleet.n, act)) > 0))"` - AUDIT SEA VENTURES D2:
   nothing kept a sailing's strongroom and piece to one: a second end, another's copy of her going down, each paid them
   again); and the hub told (`fk`, online, at a relay that reads it) - TOLD UNTIL IT SAYS SO, again each `FLEET_TELL_MS`
   (thirty seconds) while the sailing is under way and the hub's word does not carry it (AUDIT SEA VENTURES D5: said

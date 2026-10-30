@@ -30,8 +30,10 @@ export function createBerthWatch(deps) {
   return {
     /** A sites step: `boat` the boat at my helm (null when none), `port` the board port whose waters I stand in (null). */
     step(/** @type {any} */ boat, /** @type {{ key: string } | null | undefined} */ port) {
-      if (boat && port && deps.lies(boat)) deps.event({ type: 'berth', port: port.key, boat: boat.uid ?? null, still: deps.ownWay(boat) <= BERTH_STILL });
-      else if (!boat && helm && port && deps.clear()) deps.event({ type: 'berth', port: port.key, boat: helm.uid ?? null, still: true });   // the helm let go here
+      if (boat && port && deps.lies(boat))
+        deps.event({ type: 'berth', port: port.key, boat: boat.uid ?? null, still: deps.ownWay(boat) <= BERTH_STILL });
+      else if (!boat && helm && port && deps.clear())
+        deps.event({ type: 'berth', port: port.key, boat: helm.uid ?? null, still: true }); // the helm let go here
       helm = boat ?? null;
     },
   };

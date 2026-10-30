@@ -23,11 +23,14 @@ import { batteryOf } from '../../systems/naval/navalShips.js';
 export const SHOT_WHEEL_S = 0.18;
 
 const SHOT_WORDS = Object.freeze({
-  round: () => t('naval.shot.round', 'Round shot'), grape: () => t('naval.shot.grape', 'Grapeshot'),
-  chain: () => t('naval.shot.chain', 'Chain shot'), heated: () => t('naval.shot.heated', 'Heated shot'),
+  round: () => t('naval.shot.round', 'Round shot'),
+  grape: () => t('naval.shot.grape', 'Grapeshot'),
+  chain: () => t('naval.shot.chain', 'Chain shot'),
+  heated: () => t('naval.shot.heated', 'Heated shot'),
 });
 const GROUP_WORDS = Object.freeze({
-  broadside: () => t('naval.shot.group.broadside', 'Broadsides'), bow: () => t('naval.shot.group.bow', 'Bow chasers'),
+  broadside: () => t('naval.shot.group.broadside', 'Broadsides'),
+  bow: () => t('naval.shot.group.bow', 'Bow chasers'),
   stern: () => t('naval.shot.group.stern', 'Stern guns'),
 });
 /** A load's name in the player's language. */
@@ -39,7 +42,12 @@ export const groupName = (group) => (GROUP_WORDS[group] ?? GROUP_WORDS.broadside
 const sidesOf = (group) => (group === 'broadside' ? ['starboard', 'port'] : [group]);
 /** A side of `group` with guns on `hull` (not barrels), or null. */
 export function gunSideOf(hull, group) {
-  return sidesOf(group).find((s) => { const b = batteryOf(hull, s); return !!b && b.gun !== 'barrel'; }) ?? null;
+  return (
+    sidesOf(group).find((s) => {
+      const b = batteryOf(hull, s);
+      return !!b && b.gun !== 'barrel';
+    }) ?? null
+  );
 }
 
 /**
@@ -53,7 +61,8 @@ export function createNavalLoads(deps) {
   /** The group the guns are laid with or the look bears on - else her first with guns; with its side. Null: no guns. */
   function groupAt(boat) {
     const look = loadGroupOf(deps.side(boat));
-    const group = look && gunSideOf(boat.hull, look) ? look : LOAD_GROUPS.find((g) => gunSideOf(boat.hull, g)) ?? null;
+    const group =
+      look && gunSideOf(boat.hull, look) ? look : (LOAD_GROUPS.find((g) => gunSideOf(boat.hull, g)) ?? null);
     return group ? { group, side: gunSideOf(boat.hull, group) } : null;
   }
   /** Step the load of the group at hand on (`dir` 1) or back (-1), and say it. False: no boat, or no guns to load. */
@@ -64,7 +73,10 @@ export function createNavalLoads(deps) {
     const deck = deps.deck(boat);
     const shot = nextShot(deck.load(at.side), dir);
     deck.setLoad(at.side, shot);
-    deps.say?.(t('naval.shot.loading', '{guns}: {shot} - loading', { guns: groupName(at.group), shot: shotName(shot) }), 1.6);
+    deps.say?.(
+      t('naval.shot.loading', '{guns}: {shot} - loading', { guns: groupName(at.group), shot: shotName(shot) }),
+      1.6,
+    );
     return true;
   }
   return {
@@ -75,7 +87,8 @@ export function createNavalLoads(deps) {
      *  of it, five loads in one swipe, each drawing the laid battery. */
     wheel(deltaY) {
       if (!deps.aiming() || !deltaY || !deps.boat()) return false;
-      const now = deps.now(), quiet = now - wheelAt >= SHOT_WHEEL_S;
+      const now = deps.now(),
+        quiet = now - wheelAt >= SHOT_WHEEL_S;
       wheelAt = now;
       if (quiet) cycle(deltaY > 0 ? 1 : -1);
       return true;
@@ -83,7 +96,12 @@ export function createNavalLoads(deps) {
     /** The helm button's label - "Broadsides: Grapeshot" - for the group at hand; null with no guns to load. */
     label(boat) {
       const at = boat ? groupAt(boat) : null;
-      return at ? t('naval.shot.button', '{guns}: {shot}', { guns: groupName(at.group), shot: shotName(deps.deck(boat).load(at.side)) }) : null;
+      return at
+        ? t('naval.shot.button', '{guns}: {shot}', {
+            guns: groupName(at.group),
+            shot: shotName(deps.deck(boat).load(at.side)),
+          })
+        : null;
     },
   };
 }

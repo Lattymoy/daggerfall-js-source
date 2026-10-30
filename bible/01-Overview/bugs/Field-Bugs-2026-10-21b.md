@@ -111,7 +111,7 @@ THE LAW NOW.
 - Her arrival is said however she comes in: a boat aground lies still
   (`navalHost.js:"const local = boat === r?.state?.CurrentBoat && sailing() && !r.IsBeached?.(boat) ? (r.state.velocityCurrent ?? [0, 0, 0]) : [0, 0, 0];"`
   - and logs no leagues while she lies), and the helm let go in a port's waters with no hostile near is a berth, still
-  (`navalBerth.js:"else if (!boat && helm && port && deps.clear()) deps.event({ type: 'berth', port: port.key, boat: helm.uid ?? null, still: true });"`).
+  (`navalBerth.js:"else if (!boat && helm && port && deps.clear())"`).
   A cargo delivered there is delivered as well (QLIS02's `cargo-delivered`, the same berth).
 - The departure is the log's own (`captainLedger.js` newLog `departed`, restored only where it lies within its log's way):
   a load keeps the voyage its save was on.

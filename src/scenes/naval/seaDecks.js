@@ -36,7 +36,10 @@ export const SEA_DECK_JUMP_M = 20;
 export const seaDeckKey = (e) => `~sea:${(e?.ship?.seed ?? 0) >>> 0}:${e?.ship?.cls?.id ?? ''}`;
 /** Whether a place aboard names a sea ship (a player's id never begins so). */
 export const isSeaDeckKey = (key) => typeof key === 'string' && key.startsWith('~sea:');
-const r2 = (v) => { const x = Math.round(v * 100) / 100; return x === 0 ? 0 : x; };
+const r2 = (v) => {
+  const x = Math.round(v * 100) / 100;
+  return x === 0 ? 0 : x;
+};
 const copyPose = (p) => ({ position: [...p.position], rotation: [...p.rotation] });
 
 /** @param {{ standsOn: (boat: any, feet: number[]) => boolean, feet: () => number[], swimming: () => boolean }} opts */
@@ -49,8 +52,13 @@ export function createSeaDecks({ standsOn, feet, swimming }) {
 
   const live = (e) => !!e?.boat?.GameObject?.activeSelf;
   /** On her this frame: the motor stands on her colliders, or on nothing with a floor of hers under the feet. */
-  const on = (boat, me) => { const g = me.ground(boat); return g === 'boat' || (g == null && standsOn(boat, feet())); };
-  function leave() { aboard = null; }
+  const on = (boat, me) => {
+    const g = me.ground(boat);
+    return g === 'boat' || (g == null && standsOn(boat, feet()));
+  };
+  function leave() {
+    aboard = null;
+  }
 
   function hold(entries) {
     held.clear();
@@ -59,23 +67,33 @@ export function createSeaDecks({ standsOn, feet, swimming }) {
 
   function frame(entries, me, frameRate = 1) {
     rate = Number.isFinite(frameRate) && frameRate > 0 ? frameRate : 1;
-    if (!me || !me.allowed()) { leave(); held.clear(); return null; }
-    const list = [...entries];   // the sea's entries once (an iterator is spent by one walk)
+    if (!me || !me.allowed()) {
+      leave();
+      held.clear();
+      return null;
+    }
+    const list = [...entries]; // the sea's entries once (an iterator is spent by one walk)
     // aboard her from the frame the motor stood on her (its ground is its last step's, on her deck as it stood before
     // this frame posed her) - so that frame's move carries the body too, never leaves it a frame of her way behind
     if (!aboard && !swimming()) {
-      for (const e of list) if (live(e) && held.has(e.boat) && on(e.boat, me)) { aboard = { boat: e.boat, key: seaDeckKey(e) }; break; }
+      for (const e of list)
+        if (live(e) && held.has(e.boat) && on(e.boat, me)) {
+          aboard = { boat: e.boat, key: seaDeckKey(e) };
+          break;
+        }
     }
     if (aboard) {
       const e = list.find((x) => x.boat === aboard.boat);
       const before = held.get(aboard.boat);
-      if (!live(e) || !before) leave();   // she is gone - sunk out of the world, faded, let go - or was not stood before
+      if (!live(e) || !before)
+        leave(); // she is gone - sunk out of the world, faded, let go - or was not stood before
       else {
         const after = deckPose(e.boat);
         const at = feet();
         const to = carriedPoint(poseMatrix(before), poseMatrix(after), at);
         const delta = [to[0] - at[0], to[1] - at[1], to[2] - at[2]];
-        if (Math.hypot(delta[0], delta[1], delta[2]) > SEA_DECK_JUMP_M) leave();   // a placement, never a carry
+        if (Math.hypot(delta[0], delta[1], delta[2]) > SEA_DECK_JUMP_M)
+          leave(); // a placement, never a carry
         else {
           const yaw = yawDelta(poseMatrix(before), poseMatrix(after));
           if (delta[0] || delta[1] || delta[2] || yaw) me.carry(delta, yaw);
@@ -100,11 +118,28 @@ export function createSeaDecks({ standsOn, feet, swimming }) {
     if (!isSeaDeckKey(key)) return null;
     for (const e of entries) {
       if (!live(e) || seaDeckKey(e) !== key) continue;
-      const go = e.boat.GameObject, way = (Number(e.ship?.speed) || 0) * Math.max(0, Number(dt) || 0) * rate, yaw = Number(e.ship?.yaw) || 0;
-      return deckPose(e.boat, { position: [go.position[0] + Math.sin(yaw) * way, go.position[1], go.position[2] + Math.cos(yaw) * way], rotation: go.rotation });
+      const go = e.boat.GameObject,
+        way = (Number(e.ship?.speed) || 0) * Math.max(0, Number(dt) || 0) * rate,
+        yaw = Number(e.ship?.yaw) || 0;
+      return deckPose(e.boat, {
+        position: [go.position[0] + Math.sin(yaw) * way, go.position[1], go.position[2] + Math.cos(yaw) * way],
+        rotation: go.rotation,
+      });
     }
     return null;
   }
 
-  return { hold, frame, word, ahead, leave, get boat() { return aboard?.boat ?? null; }, get key() { return aboard?.key ?? null; } };
+  return {
+    hold,
+    frame,
+    word,
+    ahead,
+    leave,
+    get boat() {
+      return aboard?.boat ?? null;
+    },
+    get key() {
+      return aboard?.key ?? null;
+    },
+  };
 }

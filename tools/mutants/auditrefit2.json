@@ -137,8 +137,8 @@
   {
     "name": "A2-tally-rounded-each",
     "file": "src/scenes/naval/navalTally.js",
-    "old": "      if (t) t.men += n;",
-    "new": "      if (t) t.men += Math.round(n);",
+    "old": "      if (t) t.men += n; // AUDIT 2: summed whole, rounded once as it is shown - a ball's share of a man is no man",
+    "new": "      if (t) t.men += Math.round(n); // AUDIT 2: summed whole, rounded once as it is shown - a ball's share of a man is no man",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "A2-tally-unrounded",
     "file": "src/scenes/naval/navalTally.js",
-    "old": "rig: last.rig, men: Math.round(last.men) } : null;",
-    "new": "rig: last.rig, men: last.men } : null;",
+    "old": "        ? { balls: last.balls, hits: last.hits, holed: last.holed, rig: last.rig, men: Math.round(last.men) }",
+    "new": "        ? { balls: last.balls, hits: last.hits, holed: last.holed, rig: last.rig, men: last.men }",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]
@@ -156,7 +156,7 @@
     "name": "A2-wheel-throttled",
     "file": "src/scenes/naval/navalLoads.js",
     "old": "      wheelAt = now;\n      if (quiet) cycle(deltaY > 0 ? 1 : -1);",
-    "new": "      if (quiet) { wheelAt = now; cycle(deltaY > 0 ? 1 : -1); }",
+    "new": "      if (quiet) {\n        wheelAt = now;\n        cycle(deltaY > 0 ? 1 : -1);\n      }",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "A2-jar-any-boat",
     "file": "src/scenes/naval/navalFeel.js",
-    "old": "    if (feet && boxGap(best.h.box, feet) <= DRENCH_FEET_M) deps.shake?.",
-    "new": "    deps.shake?.",
+    "old": "    if (feet && boxGap(best.h.box, feet) <= DRENCH_FEET_M) deps.shake?.(NEAR_SHAKE * (0.4 + 0.6 * k));",
+    "new": "    deps.shake?.(NEAR_SHAKE * (0.4 + 0.6 * k));",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]

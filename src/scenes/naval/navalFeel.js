@@ -43,17 +43,20 @@ export const MY_SMOKE_SPAN = 0.6;
 
 /** A seed's share in [0, 1) - a ship's own draw, the same on every machine that knows her seed. */
 export const seedShare = (seed, salt) => {
-  let h = (Math.imul((seed >>> 0) ^ salt, 0x9e3779b1) >>> 0);
-  h ^= h >>> 15; h = Math.imul(h, 0x85ebca6b) >>> 0; h ^= h >>> 13;
+  let h = Math.imul((seed >>> 0) ^ salt, 0x9e3779b1) >>> 0;
+  h ^= h >>> 15;
+  h = Math.imul(h, 0x85ebca6b) >>> 0;
+  h ^= h >>> 13;
   return (h >>> 0) / 4294967296;
 };
 /** HULL-BLOW: the side of a ship a ball travelling `dir` struck her from - 'bow', 'stern', 'port' or 'starboard' - her
  *  heading `fwd` (her +z in the world) and her starboard its turn clockwise from above (+x at heading 0). */
 export function blowSide(fwd, dir) {
-  const fl = Math.hypot(fwd[0], fwd[2]) || 1, f = [fwd[0] / fl, fwd[2] / fl];
-  const from = [-(dir[0] ?? 0), -(dir[2] ?? 0)];   // where it came from
+  const fl = Math.hypot(fwd[0], fwd[2]) || 1,
+    f = [fwd[0] / fl, fwd[2] / fl];
+  const from = [-(dir[0] ?? 0), -(dir[2] ?? 0)]; // where it came from
   const ahead = from[0] * f[0] + from[1] * f[1];
-  const beam = from[0] * f[1] - from[1] * f[0];   // starboard is fwd turned a quarter clockwise: (f.z, -f.x)
+  const beam = from[0] * f[1] - from[1] * f[0]; // starboard is fwd turned a quarter clockwise: (f.z, -f.x)
   if (Math.abs(ahead) >= Math.abs(beam)) return ahead >= 0 ? 'bow' : 'stern';
   return beam >= 0 ? 'starboard' : 'port';
 }
@@ -67,7 +70,8 @@ export function magazineOf(seed) {
  *  (`position`, `rotation`) and her build's (navalShips.js hullBuild: `deck`, `aftZ`, `bowZ`). */
 export function deckLine(pose, build) {
   const f = quatRotate(pose.rotation, [0, 0, 1]);
-  const fl = Math.hypot(f[0], f[2]) || 1, fw = [f[0] / fl, f[2] / fl];
+  const fl = Math.hypot(f[0], f[2]) || 1,
+    fw = [f[0] / fl, f[2] / fl];
   const y = pose.position[1] + build.deck + 0.5;
   const at = (z) => [pose.position[0] + fw[0] * z * MY_SMOKE_SPAN, y, pose.position[2] + fw[1] * z * MY_SMOKE_SPAN];
   return { a: at(build.aftZ), b: at(build.bowZ) };
@@ -147,5 +151,19 @@ export function createNavalFeel(deps) {
       deps.effects.smolder(deck.a, deck.b, dt, Math.min(1, k));
     }
   }
-  return { passed, splashed, struck, blow, sinking, frame, clear() { lastBlow = null; magazines.clear(); }, get clock() { return clock; } };
+  return {
+    passed,
+    splashed,
+    struck,
+    blow,
+    sinking,
+    frame,
+    clear() {
+      lastBlow = null;
+      magazines.clear();
+    },
+    get clock() {
+      return clock;
+    },
+  };
 }

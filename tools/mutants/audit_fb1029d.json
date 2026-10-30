@@ -202,8 +202,8 @@
   {
     "name": "B5-card-unweighed",
     "file": "src/scenes/naval/passageHelm.js",
-    "old": "heavy: !!helm?.heavy,",
-    "new": "heavy: false,",
+    "old": "    heavy: !!helm?.heavy, // AUDIT FB1029d B5: her load said to the passenger too",
+    "new": "    heavy: false, // AUDIT FB1029d B5: her load said to the passenger too",
     "tests": [
       "test/systems/comeSailAway/audit_fb1029d.test.js"
     ],
