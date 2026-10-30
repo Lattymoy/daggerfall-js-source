@@ -55,8 +55,7 @@ export class SaveImage extends BaseImageFile {
 
   /** The one bitmap (record/frame must be 0 and the file non-empty). */
   getDFBitmap(record = 0, frame = 0) {
-    if (record !== 0 || frame !== 0 || !this._loaded || this._bytes.length === 0)
-      return emptyBitmap();
+    if (record !== 0 || frame !== 0 || !this._loaded || this._bytes.length === 0) return emptyBitmap();
     return {
       width: SAVE_IMAGE_WIDTH,
       height: SAVE_IMAGE_HEIGHT,

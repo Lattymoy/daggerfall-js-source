@@ -2,6 +2,10 @@
 /*
 !/src/
 /src/*
+!/src/formats/
+/src/formats/*
+!/src/formats/save/
+/src/formats/save/*/
 !/src/poi/
 /src/poi/*/
 !/src/poi/uv/

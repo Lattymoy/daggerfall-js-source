@@ -46,7 +46,9 @@ export const LIGHT_DATA_LENGTH_MULTIPLIER = 39;
 
 /** SaveTree.Environments - player environment in the header. */
 export const ENVIRONMENTS = Object.freeze({
-  Outside: 1, Building: 2, Dungeon: 3,
+  Outside: 1,
+  Building: 2,
+  Dungeon: 3,
 });
 
 /** SaveTree.RecordTypes - the full classic object-type table ("classic
@@ -56,10 +58,10 @@ export const RECORD_TYPES = Object.freeze({
   World: 0x01,
   Item: 0x02,
   Character: 0x03,
-  CharacterPositionRecord: 0x04,      // determines player position on load, NOT the header triple
+  CharacterPositionRecord: 0x04, // determines player position on load, NOT the header triple
   CharacterCamera: 0x05,
   Interactable3dObject: 0x06,
-  Light: 0x07,                        // the x39 length record
+  Light: 0x07, // the x39 length record
   NPCFlat: 0x08,
   Spell: 0x09,
   GuildMembership: 0x0a,
@@ -79,8 +81,8 @@ export const RECORD_TYPES = Object.freeze({
   BankAccount: 0x19,
   UnusedBankInfo: 0x1a,
   UnusedSafetyBox: 0x1b,
-  OldClass: 0x1c,                     // player's class before vampire/werething transform
-  OldGuild: 0x1d,                     // guild affiliations before transform - parses as GuildMembership
+  OldClass: 0x1c, // player's class before vampire/werething transform
+  OldGuild: 0x1d, // guild affiliations before transform - parses as GuildMembership
   UnusedBless: 0x1e,
   Potion: 0x1f,
   Door: 0x20,
@@ -99,7 +101,7 @@ export const RECORD_TYPES = Object.freeze({
   NPC: 0x2d,
   GenericNPC: 0x2e,
   DungeonAutomapData: 0x33,
-  Container: 0x34,                    // 0 weapons&armor 1 magic 2 clothing&misc 3 ingredients 4 wagon 5 house 6 ship 7 tavern 8 repairer
+  Container: 0x34, // 0 weapons&armor 1 magic 2 clothing&misc 3 ingredients 4 wagon 5 house 6 ship 7 tavern 8 repairer
   NPCMobile: 0x35,
   ItemLeftForRepair: 0x36,
   TavernRoom: 0x40,
@@ -137,8 +139,7 @@ export function readPosition(view, offset) {
 export function readSaveTreeHeader(bytes) {
   const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const version = v.getInt32(0, true);
-  if (version !== SAVE_TREE_VERSION)
-    throw new Error('SaveTree file has an invalid version number, must be 0x126.');
+  if (version !== SAVE_TREE_VERSION) throw new Error('SaveTree file has an invalid version number, must be 0x126.');
   return {
     rawData: bytes.slice(0, SAVE_TREE_HEADER_LENGTH),
     version,
@@ -212,7 +213,7 @@ export function parseItemRecordData(recordData) {
     currentCondition: v.getUint16(44, true),
     maxCondition: v.getUint16(46, true),
     unknown2: recordData[48],
-    typeDependentData: recordData[49],     // arrow stack count; potion/recipe id
+    typeDependentData: recordData[49], // arrow stack count; potion/recipe id
     image1: v.getUint16(50, true),
     image2: v.getUint16(52, true),
     material: v.getUint16(54, true),
@@ -258,15 +259,29 @@ export function parseDiseaseOrPoisonRecordData(recordData) {
   const u16 = (o) => v.getUint16(o, true);
   return {
     id: recordData[0],
-    damagesSTR: u16(1), damagesINT: u16(3), damagesWIL: u16(5),
-    damagesAGI: u16(7), damagesEND: u16(9), damagesPER: u16(11),
-    damagesSPD: u16(13), damagesLUC: u16(15), damagesHEA: u16(17),
-    damagesFAT: u16(19), damagesSPL: u16(21),
-    minDamage: u16(23), maxDamage: u16(25),
-    daysOfSymptomsLeft: u16(27), incubationOver: u16(29),
-    totaldamageSTR: u16(31), totaldamageINT: u16(33), totaldamageWIL: u16(35),
-    totaldamageAGI: u16(37), totaldamageEND: u16(39), totaldamagePER: u16(41),
-    totaldamageSPD: u16(43), totaldamageLUC: u16(45),
+    damagesSTR: u16(1),
+    damagesINT: u16(3),
+    damagesWIL: u16(5),
+    damagesAGI: u16(7),
+    damagesEND: u16(9),
+    damagesPER: u16(11),
+    damagesSPD: u16(13),
+    damagesLUC: u16(15),
+    damagesHEA: u16(17),
+    damagesFAT: u16(19),
+    damagesSPL: u16(21),
+    minDamage: u16(23),
+    maxDamage: u16(25),
+    daysOfSymptomsLeft: u16(27),
+    incubationOver: u16(29),
+    totaldamageSTR: u16(31),
+    totaldamageINT: u16(33),
+    totaldamageWIL: u16(35),
+    totaldamageAGI: u16(37),
+    totaldamageEND: u16(39),
+    totaldamagePER: u16(41),
+    totaldamageSPD: u16(43),
+    totaldamageLUC: u16(45),
   };
 }
 
@@ -322,8 +337,7 @@ export function readSaveTreeRecord(bytes, offset, length) {
 
   // Peek record type and adjust for light size (Open).
   record.recordType = bytes[offset];
-  if (record.recordType === RECORD_TYPES.Light)
-    record.streamLength = length * LIGHT_DATA_LENGTH_MULTIPLIER;
+  if (record.recordType === RECORD_TYPES.Light) record.streamLength = length * LIGHT_DATA_LENGTH_MULTIPLIER;
 
   // ReadBytes at EOF returns what remains - a Light record's x39 length
   // can overrun the stream because ReadRecords' overflow guard checked
@@ -336,11 +350,22 @@ export function readSaveTreeRecord(bytes, offset, length) {
   if (record.streamData.length < RECORD_ROOT_LENGTH) {
     record.failedRecord = true;
     record.recordRoot = {
-      pitch: 0, yaw: 0, roll: 0,
+      pitch: 0,
+      yaw: 0,
+      roll: 0,
       position: { worldX: 0, worldY: 0, worldZ: 0 },
-      spriteIndex: 0, picture2: 0, recordId: 0, questId: 0,
-      parentRecordId: 0, time: 0, itemObject: 0, questObjectId: 0,
-      nextObject: 0, childObject: 0, sublistHead: 0, parentRecordType: 0,
+      spriteIndex: 0,
+      picture2: 0,
+      recordId: 0,
+      questId: 0,
+      parentRecordId: 0,
+      time: 0,
+      itemObject: 0,
+      questObjectId: 0,
+      nextObject: 0,
+      childObject: 0,
+      sublistHead: 0,
+      parentRecordType: 0,
     };
     return { record, nextOffset: offset + record.streamLength };
   }
@@ -397,9 +422,16 @@ export class SaveTree {
 
   _emptyRecord() {
     return {
-      streamPosition: 0, streamLength: 0, streamData: null,
-      recordType: RECORD_TYPES.Null, recordRoot: null, recordData: null,
-      parsedData: null, parent: null, children: [], failedRecord: false,
+      streamPosition: 0,
+      streamLength: 0,
+      streamData: null,
+      recordType: RECORD_TYPES.Null,
+      recordRoot: null,
+      recordData: null,
+      parsedData: null,
+      parent: null,
+      children: [],
+      failedRecord: false,
     };
   }
 
