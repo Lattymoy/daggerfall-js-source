@@ -202,7 +202,7 @@
   {
     "name": "PL-confirm-never-writes",
     "file": "server-account/src/index.js",
-    "old": "        const r = await linkPatreon(ctx, { p: ticket.p, u: who.user, t: who.tiers.join(','), s: who.status });",
+    "old": "        const r = await linkPatreon(ctx, { p: ticket.p, u: who.user, t: who.tiers.join(','), s: who.status, c: who.cents });",
     "new": "        const r = { ok: true };",
     "tests": [
       "test/server/patreon_link.test.js"
