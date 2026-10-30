@@ -10,6 +10,10 @@
 /src/render/*
 !/src/render/dragon/
 /src/render/dragon/*/
+!/src/ui/
+/src/ui/*
+!/src/ui/ketch/
+/src/ui/ketch/*/
 !/tools/
 /tools/*
 !/tools/layered-armor/
