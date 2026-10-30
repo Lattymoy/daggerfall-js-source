@@ -47,8 +47,8 @@
   {
     "name": "KTM-a-gap-past-the-envelope",
     "file": "src/net/ketch/ketchDeck.js",
-    "old": "const drift = [2.6, 2.8, 2.4, 3.0, 2.6, 2.8].map(",
-    "new": "const drift = [2.6, 2.8, 2.4, 3.4, 2.6, 2.8].map(",
+    "old": "  const drift = [2.6, 2.8, 2.4, 3.0, 2.6, 2.8].map((gap, k) =>",
+    "new": "  const drift = [2.6, 2.8, 2.4, 3.4, 2.6, 2.8].map((gap, k) =>",
     "tests": [
       "test/world/ketch_model.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "KTM-the-rigging-a-cliff",
     "file": "src/net/ketch/ketchDeck.js",
-    "old": "const crumble = [2.6, 2.4, 2.8, 2.6, 2.8, 2.6, 2.8].map(",
-    "new": "const crumble = [2.6, 2.4, 2.8].map(",
+    "old": "  const crumble = [2.6, 2.4, 2.8, 2.6, 2.8, 2.6, 2.8].map((gap) =>\n    Object.freeze({ kind: 'crumble', gap, size: sz(S.crumble) }),\n  );",
+    "new": "  const crumble = [2.6, 2.4, 2.8].map((gap) => Object.freeze({ kind: 'crumble', gap, size: sz(S.crumble) }));",
     "tests": [
       "test/world/ketch_model.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "KTM-a-lost-cell-said-let-go",
     "file": "src/net/ketch/ketchLink.js",
-    "old": "      : why === 'left' ? t('ketch.link.dropped.left',",
-    "new": "      : why === 'never' ? t('ketch.link.dropped.left',",
+    "old": "        : why === 'left'",
+    "new": "        : why === 'never'",
     "tests": [
       "test/world/ketch_model.test.js"
     ]

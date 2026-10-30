@@ -2,8 +2,8 @@
   {
     "name": "KTH-the-arrival-pinging",
     "file": "src/net/ketch/ketchHerald.js",
-    "old": "    family: 'ketch', moment: 'Arrived',\n",
-    "new": "    family: 'ketch', moment: 'Arrived', role: '123456789012345678',\n",
+    "old": "    title: `The Sky-Ketch is over ${city}`,",
+    "new": "    role: '123456789012345678',\n    title: `The Sky-Ketch is over ${city}`,",
     "tests": [
       "test/net/ketch/ketch_herald.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "KTH-a-passed-window-posted",
     "file": "src/net/ketch/ketchHerald.js",
-    "old": "    if (now >= until) continue;   // its window gone - let go",
-    "new": "    if (now >= until && until < 0) continue;   // its window gone - let go",
+    "old": "    if (now >= until) continue; // its window gone - let go",
+    "new": "    if (now >= until && until < 0) continue; // its window gone - let go",
     "tests": [
       "test/net/ketch/ketch_herald.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "KTH-a-posted-moment-owed-again",
     "file": "src/net/ketch/ketchHerald.js",
-    "old": "if (v.n < P.n || (v.n === P.n && k <= P.k)) continue;",
-    "new": "if (v.n < P.n || (v.n === P.n && k < P.k)) continue;",
+    "old": "    if (v.n < P.n || (v.n === P.n && k <= P.k)) continue; // posted, or before what was",
+    "new": "    if (v.n < P.n || (v.n === P.n && k < P.k)) continue; // posted, or before what was",
     "tests": [
       "test/net/ketch/ketch_herald.test.js"
     ]

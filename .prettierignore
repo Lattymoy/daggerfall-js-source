@@ -36,6 +36,8 @@
 /src/net/gambit/*/
 !/src/net/iliac/
 /src/net/iliac/*/
+!/src/net/ketch/
+/src/net/ketch/*/
 !/src/net/safety/
 /src/net/safety/*/
 !/src/net/sea/

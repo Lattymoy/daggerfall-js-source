@@ -37,41 +37,64 @@ export const ketchHeraldKey = (theatre = 0) => (theatre ? `ktherald:${theatre}` 
 
 /** THE SIGHTING'S POST: she is coming, where she will keep station and when - the role pinged. */
 export function ketchSightedPost({ n, role = null }) {
-  const v = ketchVoyageOf(n), city = cityOf(n);
+  const v = ketchVoyageOf(n),
+    city = cityOf(n);
   return heraldCard({
-    family: 'ketch', moment: 'Sighted', role,
+    family: 'ketch',
+    moment: 'Sighted',
+    role,
     title: 'The Sky-Ketch has been sighted',
     ping: `The Sky-Ketch arrives over ${city} ${heraldStamp(v.at, 'R')}.`,
     text: `The Sky-Ketch has been sighted east of ${city}. When it arrives, its anchor-lift comes down in the fields east of the city. Take your party up, ${KT_CREW_MAX} players at most.`,
-    fields: [['Arrives', heraldWhen(v.at)], ['Weighs anchor', heraldStamp(v.departAt, 'f')], ['Where', `Over the fields east of ${city}`]],
+    fields: [
+      ['Arrives', heraldWhen(v.at)],
+      ['Weighs anchor', heraldStamp(v.departAt, 'f')],
+      ['Where', `Over the fields east of ${city}`],
+    ],
   });
 }
 /** THE ARRIVAL'S POST: the anchor-lift down, and until when crews may board. Pings nobody. */
 export function ketchArrivedPost({ n }) {
-  const v = ketchVoyageOf(n), city = cityOf(n);
+  const v = ketchVoyageOf(n),
+    city = cityOf(n);
   return heraldCard({
-    family: 'ketch', moment: 'Arrived',
+    family: 'ketch',
+    moment: 'Arrived',
     title: `The Sky-Ketch is over ${city}`,
     text: `The Sky-Ketch has arrived over ${city}. Its anchor-lift is down in the fields east of the city.`,
-    fields: [['Boarding until', heraldWhen(v.departAt)], ['Crew', `Up to ${KT_CREW_MAX} a ship - your party`], ['Where', `The fields east of ${city}`]],
+    fields: [
+      ['Boarding until', heraldWhen(v.departAt)],
+      ['Crew', `Up to ${KT_CREW_MAX} a ship - your party`],
+      ['Where', `The fields east of ${city}`],
+    ],
   });
 }
 /** THE WEIGHING ANCHOR'S POST: the lift drawn up, the crews aboard's last minutes. Pings nobody. */
 export function ketchDepartingPost({ n }) {
   const v = ketchVoyageOf(n);
   return heraldCard({
-    family: 'ketch', moment: 'Weighing anchor',
+    family: 'ketch',
+    moment: 'Weighing anchor',
     title: 'The Sky-Ketch weighs anchor',
     text: 'The Sky-Ketch is weighing anchor. Boarding is closed. Crews already aboard can finish until it leaves.',
-    fields: [['Turns west', heraldWhen(v.endAt)], ['Next voyage', heraldStamp(ketchVoyageOf(n + 1).at, 'F')]],
+    fields: [
+      ['Turns west', heraldWhen(v.endAt)],
+      ['Next voyage', heraldStamp(ketchVoyageOf(n + 1).at, 'F')],
+    ],
   });
 }
 /** A moment's post. */
-export const ketchHeraldPost = (n, k, role = null) => (k === 'sighted' ? ketchSightedPost({ n, role }) : k === 'arrived' ? ketchArrivedPost({ n }) : ketchDepartingPost({ n }));
+export const ketchHeraldPost = (n, k, role = null) =>
+  k === 'sighted'
+    ? ketchSightedPost({ n, role })
+    : k === 'arrived'
+      ? ketchArrivedPost({ n })
+      : ketchDepartingPost({ n });
 
 /** A posted moment as the hub keeps it (`{ n, k }` - the voyage and the moment's index), read back: `{ n: -1, k: -1 }` for none. */
 export function readKetchHeraldState(v) {
-  const n = Number.isSafeInteger(v?.n) ? v.n : -1, k = Number.isSafeInteger(v?.k) && v.k >= 0 && v.k < KT_HERALD_MOMENTS.length ? v.k : -1;
+  const n = Number.isSafeInteger(v?.n) ? v.n : -1,
+    k = Number.isSafeInteger(v?.k) && v.k >= 0 && v.k < KT_HERALD_MOMENTS.length ? v.k : -1;
   return { n: n >= 0 && k >= 0 ? n : -1, k: n >= 0 ? k : -1 };
 }
 /**
@@ -85,11 +108,15 @@ export function ketchHeraldDue(now, posted, theatre = 0) {
   const v = ketchVoyageAt(now, theatre);
   const P = readKetchHeraldState(posted);
   /** @type {Array<[string, number, number]>} */
-  const moments = [['sighted', v.sightAt, v.at], ['arrived', v.at, v.departAt], ['departing', v.departAt, v.endAt]];
+  const moments = [
+    ['sighted', v.sightAt, v.at],
+    ['arrived', v.at, v.departAt],
+    ['departing', v.departAt, v.endAt],
+  ];
   for (let k = 0; k < moments.length; k++) {
     const [name, at, until] = moments[k];
-    if (v.n < P.n || (v.n === P.n && k <= P.k)) continue;   // posted, or before what was
-    if (now >= until) continue;   // its window gone - let go
+    if (v.n < P.n || (v.n === P.n && k <= P.k)) continue; // posted, or before what was
+    if (now >= until) continue; // its window gone - let go
     return { n: v.n, k: name, i: k, at: Math.max(now, at) };
   }
   // this voyage's all posted or gone: the next voyage's sighting

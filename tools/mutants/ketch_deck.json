@@ -11,8 +11,8 @@
   {
     "name": "KTD-the-cage-at-the-top-unfed",
     "file": "src/net/ketch/ketchDeck.js",
-    "old": "if (!on || !Number.isFinite(t)) return KT_LIFT.y0;",
-    "new": "if (!on || !Number.isFinite(t)) return KT_LIFT.y1;",
+    "old": "  if (!on || !Number.isFinite(t)) return KT_LIFT.y0;",
+    "new": "  if (!on || !Number.isFinite(t)) return KT_LIFT.y1;",
     "tests": [
       "test/net/ketch/ketch_deck.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "KTD-the-wait-at-the-top-skipped",
     "file": "src/net/ketch/ketchDeck.js",
-    "old": "  if (u < 2 * W + R) return KT_LIFT.y1;\n",
-    "new": "  if (u < W + R + 0.01) return KT_LIFT.y1;\n",
+    "old": "  if (u < 2 * W + R) return KT_LIFT.y1;",
+    "new": "  if (u < W + R + 0.01) return KT_LIFT.y1;",
     "tests": [
       "test/net/ketch/ketch_deck.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "KTD-the-yard-short-of-the-first-top",
     "file": "src/net/ketch/ketchDeck.js",
-    "old": "export const KT_YARD = Object.freeze({ x0: KT_LIFT.x + 6.2, x1: 21.4,",
-    "new": "export const KT_YARD = Object.freeze({ x0: KT_LIFT.x + 6.2, x1: 19.4,",
+    "old": "export const KT_YARD = Object.freeze({ x0: KT_LIFT.x + 6.2, x1: 21.4, z: KT_LIFT.z, halfW: 1.1, y: KT_LIFT.y1 });",
+    "new": "export const KT_YARD = Object.freeze({ x0: KT_LIFT.x + 6.2, x1: 19.4, z: KT_LIFT.z, halfW: 1.1, y: KT_LIFT.y1 });",
     "tests": [
       "test/net/ketch/ketch_deck.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "KTD-the-rigging-not-descending",
     "file": "src/net/ketch/ketchDeck.js",
-    "old": "Object.freeze({ pieces: Object.freeze(crumble), check: null, descend: true }),",
-    "new": "Object.freeze({ pieces: Object.freeze(crumble), check: null, descend: false }),",
+    "old": "      Object.freeze({ pieces: Object.freeze(crumble), check: null, descend: true }),",
+    "new": "      Object.freeze({ pieces: Object.freeze(crumble), check: null, descend: false }),",
     "tests": [
       "test/net/ketch/ketch_deck.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "KTD-a-resonator-on-a-seam",
     "file": "src/net/ketch/ketchDeck.js",
-    "old": "const a = Math.PI / 8 + (k * Math.PI) / 2; return Object.freeze([KT_BRIDGE.x + Math.sin(a) * 19",
-    "new": "const a = (k * Math.PI) / 2; return Object.freeze([KT_BRIDGE.x + Math.sin(a) * 19",
+    "old": "    const a = Math.PI / 8 + (k * Math.PI) / 2;",
+    "new": "    const a = (k * Math.PI) / 2;",
     "tests": [
       "test/net/ketch/ketch_deck.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "KTD-the-appetite-unbounded",
     "file": "src/net/ketch/ketchDeck.js",
-    "old": "export const engineNeeds = (n) => Math.min(7, 5 + Math.ceil(Math.max(1, Math.min(8, n | 0)) / 2));",
-    "new": "export const engineNeeds = (n) => 5 + Math.ceil(Math.max(1, n | 0) / 2);",
+    "old": "export const engineNeeds = (n) => Math.min(7, 5 + Math.ceil(Math.max(1, Math.min(8, n | 0)) / 2)); // KETCH-LONGER: 3 + half the crew before - six for one or two, seven (every socket) from three",
+    "new": "export const engineNeeds = (n) => 5 + Math.ceil(Math.max(1, n | 0) / 2); // KETCH-LONGER: 3 + half the crew before - six for one or two, seven (every socket) from three",
     "tests": [
       "test/net/ketch/ketch_deck.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "KTD-a-landing-counted-twice",
     "file": "src/net/ketch/ketchDeck.js",
-    "old": "for (let k = k0; k <= k1; k++) { const at = phase + k * cycle; if (at > t0 && at <= t1) fn(at); }",
-    "new": "for (let k = k0; k <= k1; k++) { const at = phase + k * cycle; if (at >= t0 && at <= t1) fn(at); }",
+    "old": "      if (at > t0 && at <= t1) fn(at);",
+    "new": "      if (at >= t0 && at <= t1) fn(at);",
     "tests": [
       "test/net/ketch/ketch_deck.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "KTD-the-gallery-hazards-in-the-hold",
     "file": "src/net/ketch/ketchDeck.js",
-    "old": "  if (hold) {\n    const A = KT_ARCS;",
-    "new": "  if (hold || gallery) {\n    const A = KT_ARCS;",
+    "old": "  if (hold) {",
+    "new": "  if (hold || gallery) {",
     "tests": [
       "test/net/ketch/ketch_deck.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "KTD-the-hold-read-as-the-gallery",
     "file": "src/net/ketch/ketchDeck.js",
-    "old": "if (near(y, KT_HOLD.y) && inBox(KT_HOLD, x, z)) return 'hold';",
-    "new": "if (near(y, KT_HOLD.y) && inBox(KT_HOLD, x, z)) return 'gallery';",
+    "old": "  if (near(y, KT_HOLD.y) && inBox(KT_HOLD, x, z)) return 'hold';",
+    "new": "  if (near(y, KT_HOLD.y) && inBox(KT_HOLD, x, z)) return 'gallery';",
     "tests": [
       "test/net/ketch/ketch_deck.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "KTD-the-shaft-read-as-the-waist",
     "file": "src/net/ketch/ketchDeck.js",
-    "old": "&& y > KT_LIFT.y0 - 1 && y < KT_LIFT.y1 - 1) return 'lift';",
-    "new": "&& y > KT_LIFT.y0 - 1 && y < KT_LIFT.y0 + 1) return 'lift';",
+    "old": "    y < KT_LIFT.y1 - 1",
+    "new": "    y < KT_LIFT.y0 + 1",
     "tests": [
       "test/net/ketch/ketch_deck.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "KTD-facing-the-bow",
     "file": "src/net/ketch/ketchDeck.js",
-    "old": "yaw: Math.atan2(dx, dz) });",
-    "new": "yaw: Math.PI });",
+    "old": "  return Object.freeze({\n    x: G.ax + (dx / d) * KT_LINE_LAND_M,\n    z: G.az + (dz / d) * KT_LINE_LAND_M,\n    yaw: Math.atan2(dx, dz),\n  });",
+    "new": "  return Object.freeze({ x: G.ax + (dx / d) * KT_LINE_LAND_M, z: G.az + (dz / d) * KT_LINE_LAND_M, yaw: Math.PI });",
     "tests": [
       "test/net/ketch/ketch_deck.test.js"
     ]

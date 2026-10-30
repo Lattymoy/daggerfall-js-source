@@ -23,7 +23,7 @@
 import { realmToDungeon, dungeonToRealm, SD_REALM_ORIGIN } from '../superDungeon/sdBrain.js';
 import { courseOf } from '../eliteGates/egSpanLaw.js';
 import { shDisc, shLane } from '../eliteGates/egShape.js';
-import { wrapAngle } from '../../world/mat4.js';   // ONCRASH1: the port's one angle wrap (net/wire.js imports it too)
+import { wrapAngle } from '../../world/mat4.js'; // ONCRASH1: the port's one angle wrap (net/wire.js imports it too)
 
 /** The deck's frame into the dungeon's: the Hour's own move (one home). */
 export const KT_ORIGIN = SD_REALM_ORIGIN;
@@ -39,8 +39,14 @@ export const KT_ANCHOR = box(-9, 9, 0, 14, 0);
 export const KT_BOW = Object.freeze({ tip: 4, beam: 8, at: 6 });
 /** The bow's half-beam at `z` (the Anchor Deck's from its aft end). Pure. AUDIT KETCH II L4-4: the Watch walked the box,
  *  and a Sentry backing off went 2.6 m past the bow's edge, out over its nets. */
-export const ketchBowHalf = (z) => (z <= 0 ? KT_BOW.tip : z <= KT_BOW.at ? KT_BOW.tip + ((KT_BOW.beam - KT_BOW.tip) * z) / KT_BOW.at
-  : z >= KT_ANCHOR.z1 ? KT_ANCHOR.x1 : KT_BOW.beam + ((KT_ANCHOR.x1 - KT_BOW.beam) * (z - KT_BOW.at)) / (KT_ANCHOR.z1 - KT_BOW.at));
+export const ketchBowHalf = (z) =>
+  z <= 0
+    ? KT_BOW.tip
+    : z <= KT_BOW.at
+      ? KT_BOW.tip + ((KT_BOW.beam - KT_BOW.tip) * z) / KT_BOW.at
+      : z >= KT_ANCHOR.z1
+        ? KT_ANCHOR.x1
+        : KT_BOW.beam + ((KT_ANCHOR.x1 - KT_BOW.beam) * (z - KT_BOW.at)) / (KT_ANCHOR.z1 - KT_BOW.at);
 export const KT_WAIST = box(-13, 13, 14, 62, 0);
 /** The gun deck: the Gallery's corridor and, aft, the Wardens' landing (wider). */
 export const KT_GALLERY = box(-6, 6, 52, 110, -6);
@@ -73,7 +79,10 @@ export const KT_MAIN_MAST = Object.freeze({ x: KT_LIFT.x, z: KT_LIFT.z - 6, r: 0
 /** The cage's top's height at shared second `t` (the deck's y): `on` false - the engine unfed - at its foot. */
 export function liftYAt(t, on = true) {
   if (!on || !Number.isFinite(t)) return KT_LIFT.y0;
-  const u = ((t % KT_LIFT_CYCLE) + KT_LIFT_CYCLE) % KT_LIFT_CYCLE, R = KT_LIFT.rise, W = KT_LIFT.wait, H = KT_LIFT.y1 - KT_LIFT.y0;
+  const u = ((t % KT_LIFT_CYCLE) + KT_LIFT_CYCLE) % KT_LIFT_CYCLE,
+    R = KT_LIFT.rise,
+    W = KT_LIFT.wait,
+    H = KT_LIFT.y1 - KT_LIFT.y0;
   const ease = (k) => k * k * (3 - 2 * k);
   if (u < W) return KT_LIFT.y0;
   if (u < W + R) return KT_LIFT.y0 + H * ease((u - W) / R);
@@ -91,7 +100,12 @@ export const KT_LINE = Object.freeze({ x: KT_LIFT.x, z: KT_LIFT.z + 4.8, r: 1.4 
 // ── THE SAILWALK: the Hour's course law, outboard to port ──────────────────────────────────────────────────────
 /** The Hour's step tops (world/superDungeon/sdSteps.js SD_DRIFT_SIZE, SD_BEAT_SIZE, SD_CRUMBLE_SIZE; SD_RISER_H) - one home
  *  there; restated as their numbers here only so the relay's bundle reads no world module. Pinned equal. */
-export const KT_STEP_SIZES = Object.freeze({ drift: Object.freeze({ w: 3.0, d: 2.4 }), beat: Object.freeze({ w: 3.0, d: 2.6 }), crumble: Object.freeze({ w: 2.6, d: 2.6 }), riser: 2.3 });
+export const KT_STEP_SIZES = Object.freeze({
+  drift: Object.freeze({ w: 3.0, d: 2.4 }),
+  beat: Object.freeze({ w: 3.0, d: 2.6 }),
+  crumble: Object.freeze({ w: 2.6, d: 2.6 }),
+  riser: 2.3,
+});
 /** The Beat's half cycle (s) - net/eliteGates/egSpanLaw.js EG_BEAT_HALF_MS's. */
 const BEAT_HALF = 1.8;
 /**
@@ -103,14 +117,41 @@ const BEAT_HALF = 1.8;
  * nets and cast back to the span's top, 15% of the body's health (the Steps' own law).
  */
 export const KT_COURSE_SPEC = (() => {
-  const S = KT_STEP_SIZES, sz = (q) => Object.freeze({ w: q.w, d: q.d });
-  const drift = [2.6, 2.8, 2.4, 3.0, 2.6, 2.8].map((gap, k) => Object.freeze({ kind: 'drift', gap, size: sz(S.drift), amp: [1.2, 1.6, 1.0, 1.8, 1.4, 2.0][k], period: [4, 5, 6, 4.5, 7, 5.5][k], phase: k * 0.9 }));
+  const S = KT_STEP_SIZES,
+    sz = (q) => Object.freeze({ w: q.w, d: q.d });
+  const drift = [2.6, 2.8, 2.4, 3.0, 2.6, 2.8].map((gap, k) =>
+    Object.freeze({
+      kind: 'drift',
+      gap,
+      size: sz(S.drift),
+      amp: [1.2, 1.6, 1.0, 1.8, 1.4, 2.0][k],
+      period: [4, 5, 6, 4.5, 7, 5.5][k],
+      phase: k * 0.9,
+    }),
+  );
   let b = 0;
-  const beats = [['beat', 2.6], ['beat', 2.8], ['riser', 0], ['beat', 2.6], ['beat', 2.8], ['beat', 2.6]]
-    .map(([kind, gap]) => Object.freeze(kind === 'riser' ? { kind, gap, size: sz(S.beat), rise: S.riser } : { kind, gap, size: sz(S.beat), beat: (b++ % 2) * BEAT_HALF }));
-  const crumble = [2.6, 2.4, 2.8, 2.6, 2.8, 2.6, 2.8].map((gap) => Object.freeze({ kind: 'crumble', gap, size: sz(S.crumble) }));
+  const beats = [
+    ['beat', 2.6],
+    ['beat', 2.8],
+    ['riser', 0],
+    ['beat', 2.6],
+    ['beat', 2.8],
+    ['beat', 2.6],
+  ].map(([kind, gap]) =>
+    Object.freeze(
+      kind === 'riser'
+        ? { kind, gap, size: sz(S.beat), rise: S.riser }
+        : { kind, gap, size: sz(S.beat), beat: (b++ % 2) * BEAT_HALF },
+    ),
+  );
+  const crumble = [2.6, 2.4, 2.8, 2.6, 2.8, 2.6, 2.8].map((gap) =>
+    Object.freeze({ kind: 'crumble', gap, size: sz(S.crumble) }),
+  );
   return Object.freeze({
-    x: 24, start: Object.freeze({ x: 24, y: KT_LIFT.y1, z: KT_LIFT.z, r: 3 }), checkR: 3, toEnd: 2.4,
+    x: 24,
+    start: Object.freeze({ x: 24, y: KT_LIFT.y1, z: KT_LIFT.z, r: 3 }),
+    checkR: 3,
+    toEnd: 2.4,
     sections: Object.freeze([
       Object.freeze({ pieces: Object.freeze(drift), check: 2.6 }),
       Object.freeze({ pieces: Object.freeze(beats), check: 2.6 }),
@@ -121,7 +162,11 @@ export const KT_COURSE_SPEC = (() => {
 /** The course laid (its steps, its three tops, its end at the bridge's deck). */
 export const KT_COURSE = (() => {
   const c = courseOf(/** @type {any} */ (KT_COURSE_SPEC));
-  return Object.freeze({ steps: Object.freeze(c.steps.map((s) => Object.freeze(s))), checkpoints: Object.freeze(c.checkpoints.map((q) => Object.freeze(q))), end: c.end });
+  return Object.freeze({
+    steps: Object.freeze(c.steps.map((s) => Object.freeze(s))),
+    checkpoints: Object.freeze(c.checkpoints.map((q) => Object.freeze(q))),
+    end: c.end,
+  });
 })();
 
 // ── THE BRIDGE ─────────────────────────────────────────────────────────────────────────────────────────────────
@@ -129,8 +174,13 @@ export const KT_COURSE = (() => {
 export const KT_BRIDGE = Object.freeze({ x: 0, z: 200, r: 24, core: 15, y: 0 });
 /** THE GANGWAY: the course's end to the bridge's rim, `w` wide. */
 export const KT_GANGWAY = (() => {
-  const ax = KT_COURSE_SPEC.x, az = KT_COURSE.end, dx = KT_BRIDGE.x - ax, dz = KT_BRIDGE.z - az, d = Math.hypot(dx, dz);
-  const bx = ax + (dx / d) * (d - KT_BRIDGE.r + 1.2), bz = az + (dz / d) * (d - KT_BRIDGE.r + 1.2);
+  const ax = KT_COURSE_SPEC.x,
+    az = KT_COURSE.end,
+    dx = KT_BRIDGE.x - ax,
+    dz = KT_BRIDGE.z - az,
+    d = Math.hypot(dx, dz);
+  const bx = ax + (dx / d) * (d - KT_BRIDGE.r + 1.2),
+    bz = az + (dz / d) * (d - KT_BRIDGE.r + 1.2);
   return Object.freeze({ ax, az: az - 1.2, bx, bz, w: 3, y: 0 });
 })();
 /** WHERE THE BOSUN'S LINE SETS ITS RIDER DOWN (AUDIT KETCH L3-7, L4-6 - it set them at the gangway's open head, facing the
@@ -139,19 +189,31 @@ export const KT_GANGWAY = (() => {
  *  bridge (`yaw`, the motor's own: forward [sin, cos]). */
 export const KT_LINE_LAND_M = 2.5;
 export const KT_LINE_LAND = (() => {
-  const G = KT_GANGWAY, dx = G.bx - G.ax, dz = G.bz - G.az, d = Math.hypot(dx, dz);
-  return Object.freeze({ x: G.ax + (dx / d) * KT_LINE_LAND_M, z: G.az + (dz / d) * KT_LINE_LAND_M, yaw: Math.atan2(dx, dz) });
+  const G = KT_GANGWAY,
+    dx = G.bx - G.ax,
+    dz = G.bz - G.az,
+    d = Math.hypot(dx, dz);
+  return Object.freeze({
+    x: G.ax + (dx / d) * KT_LINE_LAND_M,
+    z: G.az + (dz / d) * KT_LINE_LAND_M,
+    yaw: Math.atan2(dx, dz),
+  });
 })();
 /** The helm (the Warden's home, facing the way in - -z), and the console it keeps (a block the bodies walk round). */
 export const KT_HELM = Object.freeze({ x: 0, z: 214, yaw: Math.PI });
 /** Where the Tonal Warden stands at its helm - before the wheel, facing the way in, never in the pedestal (AUDIT KETCH
  *  L4-10: its home was the pedestal's centre); its pedestal (the wheel's column) a body walks round. */
 export const KT_HELM_PEDESTAL_R = 0.7;
-export const KT_WARDEN_HOME = Object.freeze({ x: KT_HELM.x, z: KT_HELM.z - 2.8, yaw: KT_HELM.yaw });   // its body (KW_BODY.r 2) clear of the pedestal
+export const KT_WARDEN_HOME = Object.freeze({ x: KT_HELM.x, z: KT_HELM.z - 2.8, yaw: KT_HELM.yaw }); // its body (KW_BODY.r 2) clear of the pedestal
 export const KT_CONSOLE = Object.freeze({ x0: -2, x1: 2, z0: 217, z1: 219.5, h: 1.6 });
 /** THE RESONATORS - four pylons on the outer ring at its quarters, each in the middle of its section (bearings 22.5 + 90k
  *  degrees from +z toward +x - sections 0, 2, 4 and 6: the ring's seams never run through one). */
-export const KT_RESONATORS = Object.freeze([0, 1, 2, 3].map((k) => { const a = Math.PI / 8 + (k * Math.PI) / 2; return Object.freeze([KT_BRIDGE.x + Math.sin(a) * 19, KT_BRIDGE.z + Math.cos(a) * 19]); }));
+export const KT_RESONATORS = Object.freeze(
+  [0, 1, 2, 3].map((k) => {
+    const a = Math.PI / 8 + (k * Math.PI) / 2;
+    return Object.freeze([KT_BRIDGE.x + Math.sin(a) * 19, KT_BRIDGE.z + Math.cos(a) * 19]);
+  }),
+);
 /** THE BRIDGE'S CRADLES - two, on the core by the forward rim (never on a section that falls): the Discord's cells. */
 export const KT_BRIDGE_CRADLES = Object.freeze([Object.freeze([-4, 189]), Object.freeze([4, 189])]);
 /** THE TUNING-FORKS rise on the core, in this ring. */
@@ -159,9 +221,11 @@ export const KT_FORK_RING = Object.freeze([6, 13]);
 /** THE OUTER RING'S EIGHT SECTIONS: section k spans the bearings [k, k+1) x 45 degrees from +z toward +x. */
 export const KT_SECTIONS = 8;
 export const sectionAt = (x, z) => {
-  const dx = x - KT_BRIDGE.x, dz = z - KT_BRIDGE.z, d = Math.hypot(dx, dz);
+  const dx = x - KT_BRIDGE.x,
+    dz = z - KT_BRIDGE.z,
+    d = Math.hypot(dx, dz);
   if (d < KT_BRIDGE.core || d > KT_BRIDGE.r + 0.5) return -1;
-  const a = Math.atan2(-dx, -dz) + Math.PI;   // the bearing from +z toward +x in (0, 2 pi] - the opposite ray's, turned back
+  const a = Math.atan2(-dx, -dz) + Math.PI; // the bearing from +z toward +x in (0, 2 pi] - the opposite ray's, turned back
   return Math.floor(a / (Math.PI / 4)) % KT_SECTIONS;
 };
 /** THE CABIN behind the helm, its door on the bridge's aft rim; the vault's chest; the stern lift down. */
@@ -177,8 +241,11 @@ export const KT_CABIN_DOOR = Object.freeze({ x0: -1.8, x1: 1.8, z: 224 });
  *  each with a body's room to spare. */
 export const KT_RAIL_R = KT_BRIDGE.r - 0.2;
 export const KT_RAIL_GAPS = (() => {
-  const B = KT_BRIDGE, G = KT_GANGWAY, half = (w) => Math.asin(Math.min(1, w / KT_RAIL_R));
-  const way = Math.atan2(G.bx - B.x, G.bz - B.z), door = Math.atan2((KT_CABIN_DOOR.x0 + KT_CABIN_DOOR.x1) / 2 - B.x, KT_CABIN_DOOR.z - B.z);
+  const B = KT_BRIDGE,
+    G = KT_GANGWAY,
+    half = (w) => Math.asin(Math.min(1, w / KT_RAIL_R));
+  const way = Math.atan2(G.bx - B.x, G.bz - B.z),
+    door = Math.atan2((KT_CABIN_DOOR.x0 + KT_CABIN_DOOR.x1) / 2 - B.x, KT_CABIN_DOOR.z - B.z);
   return Object.freeze([
     Object.freeze({ at: way, half: half(G.w / 2 + 0.3) }),
     Object.freeze({ at: door, half: half((KT_CABIN_DOOR.x1 - KT_CABIN_DOOR.x0) / 2 + 0.3) }),
@@ -187,12 +254,21 @@ export const KT_RAIL_GAPS = (() => {
 /** The runs of a section's rail from bearing a0 to a1 (an arc under half a turn) - the arc less the gaps ([from, to] each,
  *  from < to), each gap taken at its bearing nearest the arc's middle. Pure. */
 export function railRuns(a0, a1, gaps = KT_RAIL_GAPS) {
-  const mid = (a0 + a1) / 2, cut = [];
-  for (const g of gaps) { const c = mid + wrapAngle(g.at - mid), lo = c - g.half, hi = c + g.half; if (hi > a0 && lo < a1) cut.push([Math.max(a0, lo), Math.min(a1, hi)]); }
+  const mid = (a0 + a1) / 2,
+    cut = [];
+  for (const g of gaps) {
+    const c = mid + wrapAngle(g.at - mid),
+      lo = c - g.half,
+      hi = c + g.half;
+    if (hi > a0 && lo < a1) cut.push([Math.max(a0, lo), Math.min(a1, hi)]);
+  }
   cut.sort((p, q) => p[0] - q[0]);
   const out = [];
   let at = a0;
-  for (const [lo, hi] of cut) { if (lo > at + 1e-6) out.push([at, lo]); at = Math.max(at, hi); }
+  for (const [lo, hi] of cut) {
+    if (lo > at + 1e-6) out.push([at, lo]);
+    at = Math.max(at, hi);
+  }
   if (a1 > at + 1e-6) out.push([at, a1]);
   return out;
 }
@@ -202,14 +278,45 @@ export const KT_STERN_LIFT = Object.freeze({ x: -3.5, z: 230.5, r: 1.6 });
 // ── THE STAGES' SPOTS ──────────────────────────────────────────────────────────────────────────────────────────
 /** The Watch's: where spheres drop from the rigging, sentries take their posts, the Watch-Captain comes up. */
 export const KT_WATCH_SPOTS = Object.freeze({
-  sphere: Object.freeze([[-11, 20], [11, 20], [-11, 30], [11, 30], [-11, 40], [11, 40], [-11, 50], [11, 50], [-6, 56], [2.5, 56], [0, 30], [0, 42]].map((p) => Object.freeze(p))),   // AUDIT KETCH L4-10: (6, 56) stood inside the lift's tower, (0, 44) in the aft hatch cover
-  sentry: Object.freeze([[-10, 58], [10, 50], [-4, 58], [3, 58], [-7, 52], [4, 52]].map((p) => Object.freeze(p))),   // AUDIT KETCH L4-10: (4, 58) against the lift's tower; AUDIT KETCH II L1-7: six - the fourth wave's most (watchWave), two stood on one post
+  sphere: Object.freeze(
+    [
+      [-11, 20],
+      [11, 20],
+      [-11, 30],
+      [11, 30],
+      [-11, 40],
+      [11, 40],
+      [-11, 50],
+      [11, 50],
+      [-6, 56],
+      [2.5, 56],
+      [0, 30],
+      [0, 42],
+    ].map((p) => Object.freeze(p)),
+  ), // AUDIT KETCH L4-10: (6, 56) stood inside the lift's tower, (0, 44) in the aft hatch cover
+  sentry: Object.freeze(
+    [
+      [-10, 58],
+      [10, 50],
+      [-4, 58],
+      [3, 58],
+      [-7, 52],
+      [4, 52],
+    ].map((p) => Object.freeze(p)),
+  ), // AUDIT KETCH L4-10: (4, 58) against the lift's tower; AUDIT KETCH II L1-7: six - the fourth wave's most (watchWave), two stood on one post
   captain: Object.freeze([0, 54]),
 });
 /** The waist's cover: two capstans (discs) and three hatch covers (boxes `w` x `d`, `h` tall). */
 export const KT_WAIST_COVER = Object.freeze({
-  capstans: Object.freeze([Object.freeze({ x: -5.5, z: 38, r: 1.2, h: 1.3 }), Object.freeze({ x: 5.5, z: 38, r: 1.2, h: 1.3 })]),
-  covers: Object.freeze([Object.freeze({ x: -8, z: 26, w: 3, d: 2.2, h: 1.0 }), Object.freeze({ x: 8, z: 26, w: 3, d: 2.2, h: 1.0 }), Object.freeze({ x: 0, z: 46, w: 3.4, d: 2.4, h: 1.0 })]),
+  capstans: Object.freeze([
+    Object.freeze({ x: -5.5, z: 38, r: 1.2, h: 1.3 }),
+    Object.freeze({ x: 5.5, z: 38, r: 1.2, h: 1.3 }),
+  ]),
+  covers: Object.freeze([
+    Object.freeze({ x: -8, z: 26, w: 3, d: 2.2, h: 1.0 }),
+    Object.freeze({ x: 8, z: 26, w: 3, d: 2.2, h: 1.0 }),
+    Object.freeze({ x: 0, z: 46, w: 3.4, d: 2.4, h: 1.0 }),
+  ]),
 });
 /** The Hammer Wardens' posts on the landing, and how near a crew member's feet wake them. */
 export const KT_WARDEN_POSTS = Object.freeze([Object.freeze([-4, 118]), Object.freeze([4, 118])]);
@@ -218,26 +325,78 @@ export const KT_WARDEN_WAKE_Z = 98;
  *  the spiders' vents in the hold's walls. */
 export const KT_ENGINE = Object.freeze({ x: 0, z: 64, r: 3, h: 5 });
 export const KT_SOCKET_R = 4.6;
-export const KT_SOCKETS = Object.freeze([-120, -80, -40, 0, 40, 80, 120].map((deg) => { const a = (deg * Math.PI) / 180; return Object.freeze([KT_ENGINE.x + Math.sin(a) * KT_SOCKET_R, KT_ENGINE.z + Math.cos(a) * KT_SOCKET_R]); }));
-export const KT_CRADLES = Object.freeze([[-7, 112], [7, 112], [-7, 119], [7, 119], [-7, 126], [7, 126]].map((p) => Object.freeze(p)));
-export const KT_VENTS = Object.freeze([[-11.5, 76], [11.5, 76], [-11.5, 100], [11.5, 100]].map((p) => Object.freeze(p)));
+export const KT_SOCKETS = Object.freeze(
+  [-120, -80, -40, 0, 40, 80, 120].map((deg) => {
+    const a = (deg * Math.PI) / 180;
+    return Object.freeze([KT_ENGINE.x + Math.sin(a) * KT_SOCKET_R, KT_ENGINE.z + Math.cos(a) * KT_SOCKET_R]);
+  }),
+);
+export const KT_CRADLES = Object.freeze(
+  [
+    [-7, 112],
+    [7, 112],
+    [-7, 119],
+    [7, 119],
+    [-7, 126],
+    [7, 126],
+  ].map((p) => Object.freeze(p)),
+);
+export const KT_VENTS = Object.freeze(
+  [
+    [-11.5, 76],
+    [11.5, 76],
+    [-11.5, 100],
+    [11.5, 100],
+  ].map((p) => Object.freeze(p)),
+);
 /** The reach a hand takes a cell from a cradle at, sets one in a socket or a resonator at, or picks a dropped one up at. */
 export const KT_REACH = 2.6;
 /** How many cells the engine eats for a crew of `n`: five, and one for each two aboard, up to its seven sockets (six or seven). */
-export const engineNeeds = (n) => Math.min(7, 5 + Math.ceil(Math.max(1, Math.min(8, n | 0)) / 2));   // KETCH-LONGER: 3 + half the crew before - six for one or two, seven (every socket) from three
+export const engineNeeds = (n) => Math.min(7, 5 + Math.ceil(Math.max(1, Math.min(8, n | 0)) / 2)); // KETCH-LONGER: 3 + half the crew before - six for one or two, seven (every socket) from three
 
 // ── THE HAZARDS' CLOCKS (the shared clock's seconds - every screen and the relay alike) ─────────────────────────
 /** THE GALLERY'S HAMMERS: six rows across the corridor, three lanes a row; each hammer slams once a cycle, its row's
  *  lanes a second apart, so one lane of every row stands clear two seconds in three. Each a disc `r` at its spot, wound up
  *  `wu` ms before it lands (its head rising), down `sp` ms. */
-export const KT_HAMMER = Object.freeze({ rows: Object.freeze([68, 74, 80, 86, 92, 98]), lanes: Object.freeze([-4, 0, 4]), r: 1.9, cycle: 3.0, wu: 1000, sp: 450, p: 0.22, b: 8, nm: 'Gallery Hammer' });
+export const KT_HAMMER = Object.freeze({
+  rows: Object.freeze([68, 74, 80, 86, 92, 98]),
+  lanes: Object.freeze([-4, 0, 4]),
+  r: 1.9,
+  cycle: 3.0,
+  wu: 1000,
+  sp: 450,
+  p: 0.22,
+  b: 8,
+  nm: 'Gallery Hammer',
+});
 /** Hammer (row `ri`, lane `li`)'s phase in its cycle (s). */
 export const hammerPhase = (ri, li) => (ri * 0.5 + li * 1.0) % KT_HAMMER.cycle;
 /** THE STEAM LANES: two across the corridor before the landing - each bursts `sp` ms every cycle, half a cycle apart. */
-export const KT_STEAM = Object.freeze({ z: Object.freeze([103, 107]), w: 2.4, cycle: 4.0, wu: 900, sp: 1200, p: 0.14, b: 6, el: 'fire', nm: 'Steam' });
+export const KT_STEAM = Object.freeze({
+  z: Object.freeze([103, 107]),
+  w: 2.4,
+  cycle: 4.0,
+  wu: 900,
+  sp: 1200,
+  p: 0.14,
+  b: 6,
+  el: 'fire',
+  nm: 'Steam',
+});
 /** THE ARC-COILS in the hold: three pairs of posts across it, between the cradles and the engine - each arc live `sp`
  *  ms of every cycle, a third of a cycle apart. A carrier caught by one drops its cell. */
-export const KT_ARCS = Object.freeze({ z: Object.freeze([84, 95, 106]), w: 1.8, cycle: 5.0, wu: 800, sp: 1400, p: 0.12, b: 6, el: 'shock', nm: 'Arc-Coil', post: 11.6 });
+export const KT_ARCS = Object.freeze({
+  z: Object.freeze([84, 95, 106]),
+  w: 1.8,
+  cycle: 5.0,
+  wu: 800,
+  sp: 1400,
+  p: 0.12,
+  b: 6,
+  el: 'shock',
+  nm: 'Arc-Coil',
+  post: 11.6,
+});
 
 /**
  * The gallery's and the hold's hazard landings in (t0, t1] (shared seconds): each `{ k, i, s: [stamp], at (ms), wu, p, b,
@@ -249,18 +408,72 @@ export function hazardsBetween(t0, t1, { gallery = true, hold = true } = {}) {
   const out = [];
   if (!(t1 > t0)) return out;
   const each = (cycle, phase, fn) => {
-    const k0 = Math.ceil((t0 - phase) / cycle - 1e-9), k1 = Math.floor((t1 - phase) / cycle + 1e-9);
-    for (let k = k0; k <= k1; k++) { const at = phase + k * cycle; if (at > t0 && at <= t1) fn(at); }
+    const k0 = Math.ceil((t0 - phase) / cycle - 1e-9),
+      k1 = Math.floor((t1 - phase) / cycle + 1e-9);
+    for (let k = k0; k <= k1; k++) {
+      const at = phase + k * cycle;
+      if (at > t0 && at <= t1) fn(at);
+    }
   };
   if (gallery) {
     const H = KT_HAMMER;
-    H.rows.forEach((z, ri) => H.lanes.forEach((x, li) => each(H.cycle, hammerPhase(ri, li), (at) => out.push({ k: 'hammer', i: ri * 3 + li, s: [shDisc(x, z, H.r)], at: Math.round(at * 1000), wu: H.wu, p: H.p, b: H.b, el: null, nm: H.nm, sp: H.sp, y: KT_GALLERY.y }))));
+    H.rows.forEach((z, ri) =>
+      H.lanes.forEach((x, li) =>
+        each(H.cycle, hammerPhase(ri, li), (at) =>
+          out.push({
+            k: 'hammer',
+            i: ri * 3 + li,
+            s: [shDisc(x, z, H.r)],
+            at: Math.round(at * 1000),
+            wu: H.wu,
+            p: H.p,
+            b: H.b,
+            el: null,
+            nm: H.nm,
+            sp: H.sp,
+            y: KT_GALLERY.y,
+          }),
+        ),
+      ),
+    );
     const S = KT_STEAM;
-    S.z.forEach((z, j) => each(S.cycle, (j * S.cycle) / 2, (at) => out.push({ k: 'steam', i: 32 + j, s: [shLane(KT_GALLERY.x0, z, KT_GALLERY.x1, z, S.w)], at: Math.round(at * 1000), wu: S.wu, p: S.p, b: S.b, el: S.el, nm: S.nm, sp: S.sp, y: KT_GALLERY.y })));
+    S.z.forEach((z, j) =>
+      each(S.cycle, (j * S.cycle) / 2, (at) =>
+        out.push({
+          k: 'steam',
+          i: 32 + j,
+          s: [shLane(KT_GALLERY.x0, z, KT_GALLERY.x1, z, S.w)],
+          at: Math.round(at * 1000),
+          wu: S.wu,
+          p: S.p,
+          b: S.b,
+          el: S.el,
+          nm: S.nm,
+          sp: S.sp,
+          y: KT_GALLERY.y,
+        }),
+      ),
+    );
   }
   if (hold) {
     const A = KT_ARCS;
-    A.z.forEach((z, j) => each(A.cycle, (j * A.cycle) / 3, (at) => out.push({ k: 'arc', i: 64 + j, s: [shLane(-A.post, z, A.post, z, A.w)], at: Math.round(at * 1000), wu: A.wu, p: A.p, b: A.b, el: A.el, nm: A.nm, sp: A.sp, y: KT_HOLD.y })));
+    A.z.forEach((z, j) =>
+      each(A.cycle, (j * A.cycle) / 3, (at) =>
+        out.push({
+          k: 'arc',
+          i: 64 + j,
+          s: [shLane(-A.post, z, A.post, z, A.w)],
+          at: Math.round(at * 1000),
+          wu: A.wu,
+          p: A.p,
+          b: A.b,
+          el: A.el,
+          nm: A.nm,
+          sp: A.sp,
+          y: KT_HOLD.y,
+        }),
+      ),
+    );
   }
   return out.sort((a, b) => a.at - b.at || a.i - b.i);
 }
@@ -275,7 +488,13 @@ const near = (y, Y, band = 2.5) => Math.abs(y - Y) <= band;
  */
 export function deckZoneAt(x, y, z) {
   if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) return null;
-  if (Math.abs(x - KT_LIFT.x) <= KT_LIFT.half && Math.abs(z - KT_LIFT.z) <= KT_LIFT.half && y > KT_LIFT.y0 - 1 && y < KT_LIFT.y1 - 1) return 'lift';
+  if (
+    Math.abs(x - KT_LIFT.x) <= KT_LIFT.half &&
+    Math.abs(z - KT_LIFT.z) <= KT_LIFT.half &&
+    y > KT_LIFT.y0 - 1 &&
+    y < KT_LIFT.y1 - 1
+  )
+    return 'lift';
   if (near(y, 0)) {
     if (inBox(KT_ANCHOR, x, z)) return 'anchor';
     if (inBox(KT_WAIST, x, z)) return 'waist';
@@ -283,19 +502,42 @@ export function deckZoneAt(x, y, z) {
     if (inBox(KT_CABIN, x, z)) return 'cabin';
     if (gangwayHolds(x, z, 0.5)) return 'gangway';
   }
-  if (near(y, KT_GALLERY.y) && (inBox(KT_GALLERY, x, z) || inBox(KT_LANDING, x, z))) return inBox(KT_LANDING, x, z) ? 'landing' : 'gallery';
+  if (near(y, KT_GALLERY.y) && (inBox(KT_GALLERY, x, z) || inBox(KT_LANDING, x, z)))
+    return inBox(KT_LANDING, x, z) ? 'landing' : 'gallery';
   if (near(y, KT_HOLD.y) && inBox(KT_HOLD, x, z)) return 'hold';
-  if (near(y, KT_MAIN_TOP.y) && (Math.hypot(x - KT_MAIN_TOP.x, z - KT_MAIN_TOP.z) <= KT_MAIN_TOP.r + 0.5 || (x >= KT_YARD.x0 - 0.5 && x <= KT_YARD.x1 + 0.5 && Math.abs(z - KT_YARD.z) <= KT_YARD.halfW + 0.5))) return 'top';
-  if (Math.abs(x - KT_COURSE_SPEC.x) <= 6 && z >= KT_COURSE_SPEC.start.z - KT_COURSE_SPEC.start.r && z <= KT_COURSE.end + 1 && y > -4) return 'sailwalk';
+  if (
+    near(y, KT_MAIN_TOP.y) &&
+    (Math.hypot(x - KT_MAIN_TOP.x, z - KT_MAIN_TOP.z) <= KT_MAIN_TOP.r + 0.5 ||
+      (x >= KT_YARD.x0 - 0.5 && x <= KT_YARD.x1 + 0.5 && Math.abs(z - KT_YARD.z) <= KT_YARD.halfW + 0.5))
+  )
+    return 'top';
+  if (
+    Math.abs(x - KT_COURSE_SPEC.x) <= 6 &&
+    z >= KT_COURSE_SPEC.start.z - KT_COURSE_SPEC.start.r &&
+    z <= KT_COURSE.end + 1 &&
+    y > -4
+  )
+    return 'sailwalk';
   return null;
 }
 /** Does the gangway hold (x, z), `pad` m about? */
 export function gangwayHolds(x, z, pad = 0) {
-  const G = KT_GANGWAY, dx = G.bx - G.ax, dz = G.bz - G.az, L = dx * dx + dz * dz;
+  const G = KT_GANGWAY,
+    dx = G.bx - G.ax,
+    dz = G.bz - G.az,
+    L = dx * dx + dz * dz;
   const t = L > 0 ? Math.max(0, Math.min(1, ((x - G.ax) * dx + (z - G.az) * dz) / L)) : 0;
   return Math.hypot(x - (G.ax + dx * t), z - (G.az + dz * t)) <= G.w / 2 + pad;
 }
 /** Does the bridge hold (x, z) - its disc, `pad` m about? */
-export const onBridge = (x, z, pad = 0) => Number.isFinite(x) && Number.isFinite(z) && Math.hypot(x - KT_BRIDGE.x, z - KT_BRIDGE.z) <= KT_BRIDGE.r + pad;
+export const onBridge = (x, z, pad = 0) =>
+  Number.isFinite(x) && Number.isFinite(z) && Math.hypot(x - KT_BRIDGE.x, z - KT_BRIDGE.z) <= KT_BRIDGE.r + pad;
 /** The floor height of a zone (the deck's y). */
-export const zoneFloorY = (zone) => (zone === 'gallery' || zone === 'landing' ? KT_GALLERY.y : zone === 'hold' ? KT_HOLD.y : zone === 'top' ? KT_MAIN_TOP.y : 0);
+export const zoneFloorY = (zone) =>
+  zone === 'gallery' || zone === 'landing'
+    ? KT_GALLERY.y
+    : zone === 'hold'
+      ? KT_HOLD.y
+      : zone === 'top'
+        ? KT_MAIN_TOP.y
+        : 0;

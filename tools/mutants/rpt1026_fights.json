@@ -72,7 +72,7 @@
   {
     "name": "RETIRED-BLOW-ketch-warden-unseen",
     "file": "src/net/ketch/ketchWarden.js",
-    "old": "  sighted(f, p, now);   // RPT1026-FIGHTS (RETIRED-BLOW): its share in before its blow is judged",
+    "old": "  sighted(f, p, now); // RPT1026-FIGHTS (RETIRED-BLOW): its share in before its blow is judged",
     "new": "",
     "tests": [
       "test/net/superDungeon/rpt1026_fights.test.js"
@@ -82,7 +82,7 @@
   {
     "name": "RETIRED-BLOW-ketch-fork-unseen",
     "file": "src/net/ketch/ketchWarden.js",
-    "old": "  sighted(f, p, now);   // RPT1026-FIGHTS (RETIRED-BLOW): a fork's striker stands on the bridge too",
+    "old": "  sighted(f, p, now); // RPT1026-FIGHTS (RETIRED-BLOW): a fork's striker stands on the bridge too",
     "new": "",
     "tests": [
       "test/net/superDungeon/rpt1026_fights.test.js"

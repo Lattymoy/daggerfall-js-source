@@ -2,8 +2,8 @@
   {
     "name": "KETCH-OWED-paid-owed-again",
     "file": "src/net/ketch/ketchLink.js",
-    "old": "ktWholeBridge(b) && !paidKeys.has(paidKey(ws.fi, b.i)) && ",
-    "new": "ktWholeBridge(b) && ",
+    "old": "        if (ktWholeBridge(b) && !paidKeys.has(paidKey(ws.fi, b.i)) && !owed.some((o) => o.i === b.i && o.fi === ws.fi))\n          owed.push({ ...b, fi: ws.fi }); // RPT1026-EVENTS KETCH-OWED: never one already paid",
+    "new": "        if (ktWholeBridge(b) && !owed.some((o) => o.i === b.i && o.fi === ws.fi)) owed.push({ ...b, fi: ws.fi }); // RPT1026-EVENTS KETCH-OWED: never one already paid",
     "tests": [
       "test/net/ketch/rpt1026_events_ketch.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "KETCH-OWED-paid-not-remembered",
     "file": "src/net/ketch/ketchLink.js",
-    "old": "      for (const o of owed) if (o.i === i) paidKeys.add(paidKey(o.fi, i));",
-    "new": "      for (const o of owed) if (o.i === -1) paidKeys.add(paidKey(o.fi, i));",
+    "old": "      for (const o of owed) if (o.i === i) paidKeys.add(paidKey(o.fi, i)); // RPT1026-EVENTS KETCH-OWED: and remembered - the newest KT_OWED_MAX x 2",
+    "new": "      for (const o of owed) if (o.i === -1) paidKeys.add(paidKey(o.fi, i)); // RPT1026-EVENTS KETCH-OWED: and remembered - the newest KT_OWED_MAX x 2",
     "tests": [
       "test/net/ketch/rpt1026_events_ketch.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "KETCH-OWED-paid-kept-past-the-fight",
     "file": "src/net/ketch/ketchLink.js",
-    "old": "if (!ws || (was.ws && ws.fi !== was.ws.fi)) { owed = owed.filter((b) => ws && b.fi === ws.fi); paidKeys.clear(); }",
-    "new": "if (!ws || (was.ws && ws.fi !== was.ws.fi)) { owed = owed.filter((b) => ws && b.fi === ws.fi); }",
+    "old": "      paidKeys.clear();\n    }",
+    "new": "    }",
     "tests": [
       "test/net/ketch/rpt1026_events_ketch.test.js"
     ],

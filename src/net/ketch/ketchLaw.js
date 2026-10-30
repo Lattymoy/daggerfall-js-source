@@ -36,16 +36,16 @@
 //
 // Not a DFU member: Daggerfall has no other players and no airship. Ledger A (KETCH).
 import { INSTANCE_OWNER_HEX } from '../instanceRoom.js';
-import { kingdomSeatName } from '../kingdomLaw.js';   // KETCH-EVERYWHERE: a station's city its crown's seat
+import { kingdomSeatName } from '../kingdomLaw.js'; // KETCH-EVERYWHERE: a station's city its crown's seat
 
 /** KETCH-EVERY: her round - a voyage every ten hours, ms. */
 export const KT_EVERY_MS = 10 * 3600 * 1000;
 /** Voyage 0's arrival: 2026-10-25, 00:00 UTC - the first after she goes live (KETCH-EVERY). Every voyage after is a round on. */
 export const KT_EPOCH_MS = Date.UTC(2026, 9, 25);
 /** Sighted this long before it arrives; keeps station this long; the crews aboard have this long after it weighs anchor. */
-export const KT_SIGHT_MS = 1 * 3600 * 1000;   // KETCH-EVERY: an hour sighted, seven at station, forty-five minutes more - away an hour and a quarter of every ten
+export const KT_SIGHT_MS = 1 * 3600 * 1000; // KETCH-EVERY: an hour sighted, seven at station, forty-five minutes more - away an hour and a quarter of every ten
 export const KT_STATION_MS = 7 * 3600 * 1000;
-export const KT_LAST_MS = 45 * 60 * 1000;   // AUDIT KETCH II L5-1: twenty before - KETCH-LONGER made a voyage some twenty to twenty-five minutes, and a crew boarding at her last minute was shut out with the Warden standing and no receipt
+export const KT_LAST_MS = 45 * 60 * 1000; // AUDIT KETCH II L5-1: twenty before - KETCH-LONGER made a voyage some twenty to twenty-five minutes, and a crew boarding at her last minute was shut out with the Warden standing and no receipt
 /** The most accounts one ship's crew holds - the party's own bound (net/social PARTY_MAX, pinned equal). */
 export const KT_CREW_MAX = 8;
 /** The Boarding Watch's waves (KETCH-LONGER, 2026-10-25: three before) - the brain's and the HUD's one number. */
@@ -62,14 +62,25 @@ export const KT_PHASES = Object.freeze(['away', 'sighted', 'docked', 'departing'
  *  High Rock's crown capital, is where she always kept station), Hammerfell's (2 - Sentinel, its crown capital, the Bay's:
  *  WW7-3), Skyrim's, Morrowind's, Sumurset's, Valenwood's, Elsweyr's and Black Marsh's (3 to 8, each its own crown's).
  *  No station on lane 1 (High Rock past the Bay - High Rock's is Daggerfall's) nor 9 (Cyrodiil, the open zone). */
-export const KT_STATION_CROWNS = Object.freeze({ 0: 'daggerfall', 2: 'sentinel', 3: 'skyrim', 4: 'morrowind', 5: 'summerset', 6: 'valenwood', 7: 'elsweyr', 8: 'blackmarsh' });
+export const KT_STATION_CROWNS = Object.freeze({
+  0: 'daggerfall',
+  2: 'sentinel',
+  3: 'skyrim',
+  4: 'morrowind',
+  5: 'summerset',
+  6: 'valenwood',
+  7: 'elsweyr',
+  8: 'blackmarsh',
+});
 /** KETCH-EVERYWHERE: THE LANES A KETCH KEEPS STATION ON, ascending - KT_STATION_CROWNS' own. */
 export const KT_THEATRES = Object.freeze([0, 2, 3, 4, 5, 6, 7, 8]);
 /** KETCH-EVERYWHERE: THE CITY EACH STATION KEEPS OVER, by lane - its crown's seat (net/kingdomLaw.js kingdomSeatName: a
  *  province's capital, the Bay's crowns' their own city), her fields KT_STATION off its middle (world/ketch/ketchModel.js);
  *  null on a lane with no station. Each one's lift on its own province's dry land, clear of every place, on the freeware
  *  (test/net/ketch/ketch_everywhere.test.js). */
-export const KT_STATION_CITIES = Object.freeze(Array.from({ length: 9 }, (_, t) => (KT_STATION_CROWNS[t] ? kingdomSeatName(KT_STATION_CROWNS[t]) : null)));
+export const KT_STATION_CITIES = Object.freeze(
+  Array.from({ length: 9 }, (_, t) => (KT_STATION_CROWNS[t] ? kingdomSeatName(KT_STATION_CROWNS[t]) : null)),
+);
 /** KETCH-EVERYWHERE: a theatre's voyage numbers start this far past the last's - the gates' lane span (net/gate/gateLaw.js
  *  GATE_LANE_SPAN, pinned equal), a hundred million voyages of ten hours a theatre. */
 export const KT_THEATRE_SPAN = 100_000_000;
@@ -92,7 +103,9 @@ export const ketchStationOk = (theatre) => KT_THEATRES.includes(theatre);
  * @param {number} n
  */
 export function ketchVoyageOf(n) {
-  const m = Math.max(0, Math.floor(Number(n) || 0)), th = Math.floor(m / KT_THEATRE_SPAN), k = m - th * KT_THEATRE_SPAN;
+  const m = Math.max(0, Math.floor(Number(n) || 0)),
+    th = Math.floor(m / KT_THEATRE_SPAN),
+    k = m - th * KT_THEATRE_SPAN;
   const at = KT_EPOCH_MS + ketchStationSlot(th) * KT_THEATRE_STAGGER_MS + k * KT_EVERY_MS;
   return { n: m, sightAt: at - KT_SIGHT_MS, at, departAt: at + KT_STATION_MS, endAt: at + KT_STATION_MS + KT_LAST_MS };
 }
@@ -104,9 +117,12 @@ export function ketchVoyageOf(n) {
  * @returns {{ n: number, sightAt: number, at: number, departAt: number, endAt: number, phase: 'away'|'sighted'|'docked'|'departing' }}
  */
 export function ketchVoyageAt(now, theatre = 0) {
-  const t = Number(now), base = ketchVoyageNumber(0, theatre);
+  const t = Number(now),
+    base = ketchVoyageNumber(0, theatre);
   if (!Number.isFinite(t)) return { ...ketchVoyageOf(base), phase: 'away' };
-  const n = Math.floor((t - ketchStationSlot(theatre) * KT_THEATRE_STAGGER_MS - (KT_EPOCH_MS - KT_SIGHT_MS)) / KT_EVERY_MS);
+  const n = Math.floor(
+    (t - ketchStationSlot(theatre) * KT_THEATRE_STAGGER_MS - (KT_EPOCH_MS - KT_SIGHT_MS)) / KT_EVERY_MS,
+  );
   if (n < 0) return { ...ketchVoyageOf(base), phase: 'away' };
   const v = ketchVoyageOf(base + n);
   if (t >= v.endAt) return { ...ketchVoyageOf(base + n + 1), phase: 'away' };
@@ -114,16 +130,23 @@ export function ketchVoyageAt(now, theatre = 0) {
   return { ...v, phase };
 }
 /** May a crew board voyage `n` at `now` - its anchor-lift lowered? KETCH-EVERYWHERE: and its theatre keeps a station. */
-export const ketchBoards = (n, now) => { const v = ketchVoyageOf(n); return ketchStationOk(ketchTheatreOf(n)) && now >= v.at && now < v.departAt; };
+export const ketchBoards = (n, now) => {
+  const v = ketchVoyageOf(n);
+  return ketchStationOk(ketchTheatreOf(n)) && now >= v.at && now < v.departAt;
+};
 /** Does voyage `n`'s ship still hold its crews at `now` - arrived, and not yet gone? KETCH-EVERYWHERE: and its theatre
  *  keeps a station (the open zone's numbers name no ship). */
-export const ketchHolds = (n, now) => { const v = ketchVoyageOf(n); return ketchStationOk(ketchTheatreOf(n)) && now >= v.at && now < v.endAt; };
+export const ketchHolds = (n, now) => {
+  const v = ketchVoyageOf(n);
+  return ketchStationOk(ketchTheatreOf(n)) && now >= v.at && now < v.endAt;
+};
 
 const ROOM_RE = new RegExp(`^kt:([0-9a-f]{${KT_VOYAGE_HEX}})\\.([0-9a-f]{${KT_OWNER_HEX}})$`);
 const OWNER_RE = new RegExp(`^[0-9a-f]{${KT_OWNER_HEX}}$`);
 /** A crew's ship's room: `kt:<voyage, 8 hex>.<owner digest, 16 hex>` - or null for a voyage or owner that cannot be keyed. */
 export function ketchRoomKey(n, owner) {
-  if (!Number.isSafeInteger(n) || n < 0 || n > 0xffffffff || typeof owner !== 'string' || !OWNER_RE.test(owner)) return null;
+  if (!Number.isSafeInteger(n) || n < 0 || n > 0xffffffff || typeof owner !== 'string' || !OWNER_RE.test(owner))
+    return null;
   return `kt:${n.toString(16).padStart(KT_VOYAGE_HEX, '0')}.${owner}`;
 }
 /** A ship's room's parts - `{ n, owner }` - or null for any other key. */
@@ -134,7 +157,10 @@ export function ketchRoomOf(key) {
 /** Is this key a ship's room? */
 export const isKetchRoom = (key) => ketchRoomOf(key) != null;
 /** May the Worker mint `key`'s object at `now` - a ship's room whose voyage holds its crews? */
-export const ketchRoomHolds = (key, now) => { const r = ketchRoomOf(key); return !!r && ketchHolds(r.n, now); };
+export const ketchRoomHolds = (key, now) => {
+  const r = ketchRoomOf(key);
+  return !!r && ketchHolds(r.n, now);
+};
 
 /**
  * THE ROOM'S DOOR - may account `sub` come aboard ship `key` at `now`, as `right` ('owner', 'party', 'staff' - the
@@ -152,7 +178,7 @@ export function ketchAdmits(key, sub, right, crew, now) {
   if (crew.includes(sub)) return null;
   if (!right) return 'crew';
   if (!ketchBoards(r.n, now)) return 'closed';
-  if (crew.length >= KT_CREW_MAX) return 'full';   // staff too (AUDIT KETCH L1-4: a ninth broke every page's `st`) - a full ship is watched hidden (STAFF-PANEL5-HIDDEN, _ktHello)
+  if (crew.length >= KT_CREW_MAX) return 'full'; // staff too (AUDIT KETCH L1-4: a ninth broke every page's `st`) - a full ship is watched hidden (STAFF-PANEL5-HIDDEN, _ktHello)
   return null;
 }
 
@@ -167,7 +193,7 @@ export const KT_TEXT = Object.freeze({
   refuse: Object.freeze({
     closed: 'The anchor-lift is drawn up. The Ketch takes no crew while she weighs anchor.',
     gone: 'The Ketch is gone.',
-    crew: 'The anchor-lift answers only to its captain\'s crew.',
+    crew: "The anchor-lift answers only to its captain's crew.",
     full: 'The anchor-lift will not rise for nine.',
   }),
 });

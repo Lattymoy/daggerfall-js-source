@@ -11,8 +11,8 @@
   {
     "name": "KTE-a-city-not-its-crowns-seat",
     "file": "src/net/ketch/ketchLaw.js",
-    "old": "(KT_STATION_CROWNS[t] ? kingdomSeatName(KT_STATION_CROWNS[t]) : null)",
-    "new": "(KT_STATION_CROWNS[t] ? KT_STATION_CROWNS[t] : null)",
+    "old": "  Array.from({ length: 9 }, (_, t) => (KT_STATION_CROWNS[t] ? kingdomSeatName(KT_STATION_CROWNS[t]) : null)),",
+    "new": "  Array.from({ length: 9 }, (_, t) => (KT_STATION_CROWNS[t] ? KT_STATION_CROWNS[t] : null)),",
     "tests": [
       "test/net/ketch/ketch_everywhere.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "KTE-the-stagger-none",
     "file": "src/net/ketch/ketchLaw.js",
-    "old": "const at = KT_EPOCH_MS + ketchStationSlot(th) * KT_THEATRE_STAGGER_MS + k * KT_EVERY_MS;",
-    "new": "const at = KT_EPOCH_MS + k * KT_EVERY_MS;",
+    "old": "  const at = KT_EPOCH_MS + ketchStationSlot(th) * KT_THEATRE_STAGGER_MS + k * KT_EVERY_MS;",
+    "new": "  const at = KT_EPOCH_MS + k * KT_EVERY_MS;",
     "tests": [
       "test/net/ketch/ketch_everywhere.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "KTE-hammerfells-crown-wayrest",
     "file": "src/net/ketch/ketchLaw.js",
-    "old": "2: 'sentinel', 3: 'skyrim'",
-    "new": "2: 'wayrest', 3: 'skyrim'",
+    "old": "  2: 'sentinel',",
+    "new": "  2: 'wayrest',",
     "tests": [
       "test/net/ketch/ketch_everywhere.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "KTE-the-slot-the-lane",
     "file": "src/net/ketch/ketchLaw.js",
-    "old": "const at = KT_EPOCH_MS + ketchStationSlot(th) * KT_THEATRE_STAGGER_MS + k * KT_EVERY_MS;",
-    "new": "const at = KT_EPOCH_MS + th * KT_THEATRE_STAGGER_MS + k * KT_EVERY_MS;",
+    "old": "  const at = KT_EPOCH_MS + ketchStationSlot(th) * KT_THEATRE_STAGGER_MS + k * KT_EVERY_MS;",
+    "new": "  const at = KT_EPOCH_MS + th * KT_THEATRE_STAGGER_MS + k * KT_EVERY_MS;",
     "tests": [
       "test/net/ketch/ketch_everywhere.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "KTE-the-clocks-slot-the-lane",
     "file": "src/net/ketch/ketchLaw.js",
-    "old": "const n = Math.floor((t - ketchStationSlot(theatre) * KT_THEATRE_STAGGER_MS - (KT_EPOCH_MS - KT_SIGHT_MS)) / KT_EVERY_MS);",
-    "new": "const n = Math.floor((t - theatre * KT_THEATRE_STAGGER_MS - (KT_EPOCH_MS - KT_SIGHT_MS)) / KT_EVERY_MS);",
+    "old": "  const n = Math.floor(\n    (t - ketchStationSlot(theatre) * KT_THEATRE_STAGGER_MS - (KT_EPOCH_MS - KT_SIGHT_MS)) / KT_EVERY_MS,\n  );",
+    "new": "  const n = Math.floor((t - theatre * KT_THEATRE_STAGGER_MS - (KT_EPOCH_MS - KT_SIGHT_MS)) / KT_EVERY_MS);",
     "tests": [
       "test/net/ketch/ketch_everywhere.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "KTE-the-number-names-no-theatre",
     "file": "src/net/ketch/ketchLaw.js",
-    "old": "th = Math.floor(m / KT_THEATRE_SPAN), k = m - th * KT_THEATRE_SPAN;",
-    "new": "th = 0, k = m - th * KT_THEATRE_SPAN;",
+    "old": "    th = Math.floor(m / KT_THEATRE_SPAN),",
+    "new": "    th = 0,",
     "tests": [
       "test/net/ketch/ketch_everywhere.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "KTE-the-voyage-at-the-bays",
     "file": "src/net/ketch/ketchLaw.js",
-    "old": "const t = Number(now), base = ketchVoyageNumber(0, theatre);",
-    "new": "const t = Number(now), base = 0;",
+    "old": "    base = ketchVoyageNumber(0, theatre);",
+    "new": "    base = 0;",
     "tests": [
       "test/net/ketch/ketch_everywhere.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "KTE-the-open-zone-held",
     "file": "src/net/ketch/ketchLaw.js",
-    "old": "return ketchStationOk(ketchTheatreOf(n)) && now >= v.at && now < v.endAt; };",
-    "new": "return now >= v.at && now < v.endAt; };",
+    "old": "  return ketchStationOk(ketchTheatreOf(n)) && now >= v.at && now < v.endAt;",
+    "new": "  return now >= v.at && now < v.endAt;",
     "tests": [
       "test/net/ketch/ketch_everywhere.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "KTE-the-open-zone-boarded",
     "file": "src/net/ketch/ketchLaw.js",
-    "old": "return ketchStationOk(ketchTheatreOf(n)) && now >= v.at && now < v.departAt; };",
-    "new": "return now >= v.at && now < v.departAt; };",
+    "old": "  return ketchStationOk(ketchTheatreOf(n)) && now >= v.at && now < v.departAt;",
+    "new": "  return now >= v.at && now < v.departAt;",
     "tests": [
       "test/net/ketch/ketch_everywhere.test.js"
     ]

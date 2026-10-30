@@ -30,7 +30,8 @@ export const KT_HAZARD_SPAN_S = 2;
 const inBlow = (a, x, z) => (a.s ?? []).some((s) => egInShape(s, x, z));
 /** Is body `b` deep in blow `a` at its landing - before it and after it both, on its storey? */
 function deepAtLanding(a, b) {
-  const p0 = posAt(b, a.at), p1 = posAfter(b, a.at);
+  const p0 = posAt(b, a.at),
+    p1 = posAfter(b, a.at);
   if (!p0) return false;
   const y0 = posYAt(b, a.at);
   if (Number.isFinite(a.y) && Number.isFinite(y0) && Math.abs(y0 - a.y) > KT_STOREY_BAND) return false;
@@ -51,18 +52,21 @@ const sideOf = (s, x, z) => (s[3] - s[1]) * (z - s[2]) - (s[4] - s[2]) * (x - s[
 /** Does the walk from (x0, z0) to (x1, z1) cross lane stamp `s` - its two ends either side of the lane's line, where it
  *  crosses inside the lane? */
 function crossesLane(s, x0, z0, x1, z1) {
-  const d0 = sideOf(s, x0, z0), d1 = sideOf(s, x1, z1);
+  const d0 = sideOf(s, x0, z0),
+    d1 = sideOf(s, x1, z1);
   if (!(d0 * d1 < 0)) return false;
   const t = d0 / (d0 - d1);
   return egInShape(s, x0 + (x1 - x0) * t, z0 + (z1 - z0) * t);
 }
 /** Did body `b` cross a lane of blow `a` between two poses both sent in (from, until], on its storey? */
 function crossedWhile(a, b, from, until) {
-  const lanes = (a.s ?? []).filter((s) => s[0] === 'l'), tr = b.tr ?? [];
+  const lanes = (a.s ?? []).filter((s) => s[0] === 'l'),
+    tr = b.tr ?? [];
   if (!lanes.length) return false;
   const off = (e) => Number.isFinite(a.y) && Number.isFinite(e[3]) && Math.abs(e[3] - a.y) > KT_STOREY_BAND;
   for (let k = 1; k < tr.length; k++) {
-    const p = tr[k - 1], q = tr[k];
+    const p = tr[k - 1],
+      q = tr[k];
     if (p[0] <= from || q[0] > until || off(p) || off(q)) continue;
     if (lanes.some((s) => crossesLane(s, p[1], p[2], q[1], q[2]))) return true;
   }
@@ -72,10 +76,14 @@ function crossedWhile(a, b, from, until) {
 function judgeOne(a, live, now, hits, struck) {
   if (a.bj || now < a.at + BODY_AFTER_MS) return;
   a.bh ??= [];
-  const sp = Math.max(0, a.sp ?? 0), share = a.el == null && !a.jp ? Math.min(1, Math.max(0, a.p)) : 0;
+  const sp = Math.max(0, a.sp ?? 0),
+    share = a.el == null && !a.jp ? Math.min(1, Math.max(0, a.p)) : 0;
   for (const b of live) {
     if (a.bh.includes(b.sub)) continue;
-    const met = deepAtLanding(a, b) || (sp > 0 && (caughtWhile(a, b, a.at, Math.min(now, a.at + sp)) || crossedWhile(a, b, a.at, Math.min(now, a.at + sp))));
+    const met =
+      deepAtLanding(a, b) ||
+      (sp > 0 &&
+        (caughtWhile(a, b, a.at, Math.min(now, a.at + sp)) || crossedWhile(a, b, a.at, Math.min(now, a.at + sp))));
     if (!met) continue;
     a.bh.push(b.sub);
     if (!a.jp) struck.add(b.sub);
@@ -92,12 +100,15 @@ function judgeOne(a, live, now, hits, struck) {
  * @param {number} now relay ms
  */
 export function judgeVoyage(V, bodies, now) {
-  const hits = [], struck = new Set();
+  const hits = [],
+    struck = new Set();
   const live = bodies.filter((b) => !b.dead && V.players?.[b.sub]);
   for (const a of V.blows ?? []) judgeOne(a, live, now, hits, struck);
   const zones = new Set(live.map((b) => deckZoneAt(b.x, b.y ?? 0, b.z)));
-  const gallery = zones.has('gallery') || zones.has('landing'), hold = zones.has('hold');
-  const t1 = (now - BODY_AFTER_MS) / 1000, t0 = Math.max(Number.isFinite(V.hzAt) ? V.hzAt : t1 - 0.25, t1 - KT_HAZARD_SPAN_S);
+  const gallery = zones.has('gallery') || zones.has('landing'),
+    hold = zones.has('hold');
+  const t1 = (now - BODY_AFTER_MS) / 1000,
+    t0 = Math.max(Number.isFinite(V.hzAt) ? V.hzAt : t1 - 0.25, t1 - KT_HAZARD_SPAN_S);
   V.hzq ??= [];
   if ((gallery || hold) && t1 > t0) for (const hz of hazardsBetween(t0, t1, { gallery, hold })) V.hzq.push(hz);
   V.hzAt = t1;

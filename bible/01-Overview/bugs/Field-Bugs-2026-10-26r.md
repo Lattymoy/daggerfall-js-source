@@ -966,7 +966,7 @@ its tuning-forks had the same shape. The Elite Breach's lords did not: a blow th
 FIXED. A BLOW IS A SIGHTING. A blow that reaches the purse comes from a pose in the arena, so its striker is seen and
 its share brought back, at the fraction the boss stands at (a return never heals it), before what it lands is judged:
 `net/superDungeon/sdRemnant.js:"function sighted(f, p, now) {"` in applyRemnantHit, applyEchoHit (the Echoes rescaled
-with it) and applyHeartHit; `gateBrain.js` applyHit; `ketchWarden.js:"function sighted(f, p, now) { p.seenAt = now; restoreShare(f, p); }"`
+with it) and applyHeartHit; `gateBrain.js` applyHit; `ketchWarden.js:"function sighted"`
 in applyWardenHit and applyForkHit. Restored rather than refused: the same blow a beat later would find its share in,
 so a refusal only drops an honest blow struck between a return and the beat that sees it. And the relay judges a blow
 from a pose no older than the census's own law: `server/src/index.js:"const pose = a.pose && !a.pose.dd && now - (a.pAt ?? a.since ?? 0) <= SD_POSE_FRESH_MS"`

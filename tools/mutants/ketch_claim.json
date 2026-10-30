@@ -110,8 +110,8 @@
   {
     "name": "KTR-an-unsigned-one-kept",
     "file": "src/net/ketch/ketchClaims.js",
-    "old": "return c && c.signed && (t == null || c.e > t) ? c : null;",
-    "new": "return c && (t == null || c.e > t) ? c : null;",
+    "old": "    return c && c.signed && (t == null || c.e > t) ? c : null;",
+    "new": "    return c && (t == null || c.e > t) ? c : null;",
     "tests": [
       "test/server/ketch_claim.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "KTA-the-act-said-only-at-recorded",
     "file": "src/net/ketch/ketchClaims.js",
-    "old": "if (!kept().find((k) => k.r === r)?.a) { keep(kept().map((k) => (k.r === r ? { ...k, a: 1 } : k))); noteAct('warden-felled'); }",
-    "new": "if (d.recorded === true) noteAct('warden-felled');",
+    "old": "          if (!kept().find((k) => k.r === r)?.a) {\n            keep(kept().map((k) => (k.r === r ? { ...k, a: 1 } : k)));\n            noteAct('warden-felled');\n          } // the act once, kept before it is said",
+    "new": "          if (d.recorded === true) noteAct('warden-felled'); // the act once, kept before it is said",
     "tests": [
       "test/server/ketch_claim.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "KTA-the-act-said-at-every-share",
     "file": "src/net/ketch/ketchClaims.js",
-    "old": "if (!kept().find((k) => k.r === r)?.a) { keep(kept().map((k) => (k.r === r ? { ...k, a: 1 } : k))); noteAct('warden-felled'); }",
-    "new": "noteAct('warden-felled');",
+    "old": "          if (!kept().find((k) => k.r === r)?.a) {\n            keep(kept().map((k) => (k.r === r ? { ...k, a: 1 } : k)));\n            noteAct('warden-felled');\n          } // the act once, kept before it is said",
+    "new": "          noteAct('warden-felled'); // the act once, kept before it is said",
     "tests": [
       "test/server/ketch_claim.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "KTA-the-claim-id-minted-at-every-offer",
     "file": "src/net/ketch/ketchClaims.js",
-    "old": "try { answer = await claim(r, e.cid); }",
-    "new": "try { answer = await claim(r, cid()); }",
+    "old": "          answer = await claim(r, e.cid);",
+    "new": "          answer = await claim(r, cid());",
     "tests": [
       "test/server/ketch_claim.test.js"
     ]
