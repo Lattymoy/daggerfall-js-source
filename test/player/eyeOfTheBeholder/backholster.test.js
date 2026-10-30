@@ -374,8 +374,8 @@ test('BACK-HOLSTER over the aura: the holsters each owner drew this frame - mine
   const host = readFileSync(new URL('../../../src/scenes/auraHost.js', import.meta.url), 'utf8');
   const capes = host.indexOf('drawAurasThenBacks(auraDraw, (run) => { pass.draw(run, proj, view, eye, now, fog); if (pass.drawn) renderer.markForeignPass(); return pass.drawn; }, (w) => backs.has(w.id), (w) => backs.draw(w.id), auraRun);'), armory = host.indexOf('drawArmory(armoryOver');
   assert.ok(capes > 0 && armory > capes, 'scenes/auraHost.js: each wearer\'s after its own aura, before the armory drawn over them');
-  assert.match(host, /const backSources = \[eotbBody, null\]/, 'mine');
-  assert.match(host, /backSources\[1\] = deps\.walkers\(\); return backSources;/, 'and the walkers\'');
+  assert.match(host, /const backSources = \[eotbBody\]/, 'mine');
+  assert.match(host, /backSources\.length = 1; for \(const l of deps\.sprites\(\) \?\? \[\]\) backSources\.push\(l\); return backSources;/, 'and every sprite layer\'s - the walkers\' (CAPE-CARD\'s one list, PIN MOVED)');
   assert.match(host, /const self = \{ id: SELF_OWNER,/, 'my aura under the owner my back is listed under');
 });
 

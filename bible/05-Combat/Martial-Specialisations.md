@@ -236,6 +236,10 @@ AUDIT MARTIAL changed the table where the code and the words parted:
   own. The runner's English status lines name it in English (each form's `en` - AUDIT MARTIAL L4 N1); the chip names it
   in the player's language, kept a text revision (`textManager.js` textRevision - AUDIT MARTIAL L1 L6 / L2 F2: the
   name's getter built the path's six lines a frame).
+- **The second key (TECH-KEY2, 2026-10-30; Mac, forwarding #feature-feedback: "access to both your specialization
+  technique and your weapons technique").** **Martial technique** (`SignatureTechnique`, unbound) answers the held
+  path's form for the family in hand, whatever line the weapon carries (`techniques.js` handOfKey); the technique key
+  keeps the law above. Never the claws. `05-Combat/Weapon-Techniques.md`, THE FEEDBACK PASS.
 - **One cooldown a path.** The runner's cooldown slots grow one a path (`sig:<path>`), shared by its forms - a Ranger's
   shot and pounce are one clock, whichever weapon is in hand; no loot technique's clock moves.
 - **The rider.** A new listener on the two resolutions every host shares (`technique/techniqueBlow.js`

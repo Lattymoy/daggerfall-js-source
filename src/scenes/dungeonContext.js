@@ -420,6 +420,8 @@ const FOES_FRAME_SLACK = 64;
  *  maleTexture (ENEMY_BASICS[39] has 0), and without this the rebuild fell to the build-time flat fallback, never
  *  stood, and was retried on every frame of the stream. ONE HOME for the two readings. */
 const canStandFoe = (mobileType) => !!ENEMY_BASICS[mobileType]?.maleTexture;
+/** PlayerActivate.cs:745-751: a person whose flat shows text is that text's, never talked to (npcTargets). */
+const showsText = (pn) => pn?.action?.actionFlag === ACTION_FLAGS.ShowText || pn?.action?.actionFlag === ACTION_FLAGS.ShowTextWithInput;
 
 /** WATER-D1: the dungeon water plane's colour - the classic water tile
  *  (the climate ground archive's record 0, the 0xFF tilemap sentinel's
@@ -704,7 +706,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // the missiles above have flown since S5. `drawn` is false for an
   // acting MARKER (archive 199), which has no billboard in this port
   // at all - its chain and its state machine are the whole of it.
-  const registerFlatAction = async (ns, position, action, x, y, z, archive, record, drawn = true) => {
+  const registerFlatAction = async (ns, position, action, x, y, z, archive, record, drawn = true, person = false) => {
     let aabb = null;
     const t = await getTexture(archive);
     if (t && record < t.recordCount) {
@@ -721,7 +723,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const o = actions.addMoveFlat(ns, position, action, [x, y, z], aabb);
       moveFlats.push({ o, archive, record, drawn });
     } else {
-      actions.addRelay(ns, position, action, aabb, [x, y, z]);
+      // CASTLE-TALK (FIELD BUGS 2026-10-30b): a person's own Dialogue is no target of its own - its box was the person's,
+      // and it won every tie within 3.2 m, so the court said nothing. DFU's ladder fires both on one hit; none of the
+      // game's 80 person relays chains on - 28 rang a sound byte (their faction's high byte), lost (AUDIT FB1030 D2).
+      actions.addRelay(ns, position, action, person ? null : aabb, [x, y, z]);
     }
   };
 
@@ -966,7 +971,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       } else if (f.archive === ANIMALS_ARCHIVE && ANIMAL_SOUND_BY_RECORD[f.record] != null) {
         ambientAnimals.push({ pos: [f.x + b.originX, f.y, f.z + b.originZ], sound: ANIMAL_SOUND_BY_RECORD[f.record] });
       }
-      if (f.action) await registerFlatAction(bi, f.position, f.action, f.x + b.originX, f.y, f.z + b.originZ, f.archive, f.record);
+      if (f.action) await registerFlatAction(bi, f.position, f.action, f.x + b.originX, f.y, f.z + b.originZ, f.archive, f.record, true, !!pn && !showsText(pn));   // CASTLE-TALK
       // HEARTH1 (Mac: "Does this version of C&C not let you use braziers
       // as extra campfires to cook from?"): a dungeon's own fires. The
       // block frame, off the walk that was already reading every flat -
@@ -10452,9 +10457,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       return f._pupQuest ? (ownShare()?.behaviourFor?.(f._pupQuest) ?? null) : null;
     },
     npcTargets() {
-      return people.filter((pn) => pn.active !== false && pn.width
-        && !(pn.action && (pn.action.actionFlag === ACTION_FLAGS.ShowText
-          || pn.action.actionFlag === ACTION_FLAGS.ShowTextWithInput)));
+      return people.filter((pn) => pn.active !== false && pn.width && !showsText(pn));
     },
     /**
      * WORLD-HOVER: THE ONE CONSTRUCTION SEAM for this dungeon's

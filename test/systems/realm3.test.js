@@ -24,6 +24,7 @@ import { BOOT_DOOR_KEYS } from '../../src/systems/online/onlineLane.js';
 import { LETTER_OF_CREDIT_TEMPLATE, goldStack } from '../../src/systems/inventory.js';
 import { ACCEPTED } from '../../src/net/legalLaw.js';   // TERMS1: a request that makes an account carries the versions ticked
 import { hostText } from '../hostText.mjs';   // TESA's merge (HOST-SPLIT): the quest world and the quick save moved out of bootWorld - the host read whole
+import { freshSave } from '../realmSeat.mjs';   // BIRTH-SKILL (#1484): a first save the realm takes
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const MIGRATIONS = readdirSync(new URL('../../server-account/migrations', import.meta.url)).filter((f) => f.endsWith('.sql')).sort();
@@ -129,7 +130,7 @@ test('REALM P1.3: the boot\'s join reads the save from the service - the realm\'
   const never = (await realmCreate(io, 'Unsaved')).data;
   assert.deepEqual(await openRealmBoot({ io, id: never.id }), { ok: false, error: 'no-data' }, 'never saved');
   const made = (await realmCreate(io, 'Nystul')).data;
-  await realmPut(io, made.id, { lease: made.lease, seq: 1 }, JSON.stringify({ v: 1, name: 'Nystul', level: 1, characterId: 'c0ffee00-offline' }));   // AUDIT REALM2 S1: a new character's first save
+  await realmPut(io, made.id, { lease: made.lease, seq: 1 }, JSON.stringify(freshSave({ v: 1, name: 'Nystul', characterId: 'c0ffee00-offline' })));   // AUDIT REALM2 S1: a new character's first save; PIN MOVED (BIRTH-SKILL, #1484): a creation's skills
   const boot = await openRealmBoot({ io, id: made.id });
   assert.equal(boot.ok, true);
   assert.deepEqual([boot.snap.name, boot.snap.characterId, boot.seq], ['Nystul', made.id, 1], 'the realm\'s id on the save, whatever it named');

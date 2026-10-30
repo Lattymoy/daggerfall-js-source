@@ -705,8 +705,8 @@
   {
     "name": "PERF-EXT26-the-promotions-stay-on-the-main-thread-queue",
     "file": "src/scenes/world.js",
-    "old": "    if (terrainGen.threaded) {\n      for (const p of restridePending.values()) promoteOffThread(p);",
-    "new": "    if (false) {\n      for (const p of restridePending.values()) promoteOffThread(p);",
+    "old": "    if (terrainGen.threaded) {\n      for (const p of restridePending.values()) restrideOffThread(p);",
+    "new": "    if (false) {\n      for (const p of restridePending.values()) restrideOffThread(p);",
     "tests": [
       "test/world/terrain/restrideworker.test.js"
     ]
@@ -732,8 +732,8 @@
   {
     "name": "PERF-EXT26-a-reply-lands-on-a-pixel-that-walked-back-out",
     "file": "src/scenes/world.js",
-    "old": "      if (strideFor(p.px, p.py) !== 1 || p._stride === 1) return;   // walked back out, or promoted meanwhile",
-    "new": "      if (p._stride === 1) return;   // walked back out, or promoted meanwhile",
+    "old": "      if (strideFor(p.px, p.py) !== stride || p._stride === stride) return;   // walked back out, or restrided meanwhile",
+    "new": "      if (p._stride === stride) return;   // walked back out, or restrided meanwhile",
     "tests": [
       "test/world/terrain/restrideworker.test.js"
     ]
@@ -741,8 +741,8 @@
   {
     "name": "PERF-EXT26-the-reply-is-thrown-away-and-built-again-here",
     "file": "src/scenes/world.js",
-    "old": "      restrideTerrain(p, 1, grid);",
-    "new": "      restrideTerrain(p, 1);",
+    "old": "      restrideTerrain(p, stride, grid);",
+    "new": "      restrideTerrain(p, stride);",
     "tests": [
       "test/world/terrain/restrideworker.test.js"
     ]

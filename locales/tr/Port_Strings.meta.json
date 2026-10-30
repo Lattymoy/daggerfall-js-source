@@ -604,6 +604,11 @@
   "tr": "a09e0393fbba",
   "by": "claude-in-session"
  },
+ "account.refusal.homeUnlisted": {
+  "en": "8845fe7a3a8a",
+  "tr": "2f5f01181e29",
+  "by": "claude-in-session"
+ },
  "account.refusal.lineageInUse": {
   "en": "b210f6197958",
   "tr": "c1cc9692aadc",
@@ -617,6 +622,11 @@
  "account.refusal.noEscrow": {
   "en": "e750eef2dab2",
   "tr": "7ec3fdc429ec",
+  "by": "claude-in-session"
+ },
+ "account.refusal.noLogo": {
+  "en": "ea92e7a4ca08",
+  "tr": "0269e9cfd8c8",
   "by": "claude-in-session"
  },
  "account.refusal.noThread": {
@@ -3649,6 +3659,16 @@
   "tr": "adf7f22df987",
   "by": "claude-in-session"
  },
+ "menu.autoUpdates.name": {
+  "en": "1e138bf814eb",
+  "tr": "d9ade901a72d",
+  "by": "claude-in-session"
+ },
+ "menu.autoUpdates.note": {
+  "en": "4541de510f7f",
+  "tr": "75388c15037d",
+  "by": "claude-in-session"
+ },
  "menu.home.back": {
   "en": "b52b36b7269f",
   "tr": "4928cfc92f64",
@@ -4267,6 +4287,11 @@
  "net.update.build": {
   "en": "f1068141ad9f",
   "tr": "6509af4895cb",
+  "by": "claude-in-session"
+ },
+ "net.update.buildReady": {
+  "en": "b489ad1935f5",
+  "tr": "d7a2035ed44e",
   "by": "claude-in-session"
  },
  "net.update.button": {
@@ -5849,6 +5874,11 @@
   "tr": "5ad3927da567",
   "by": "claude-in-session"
  },
+ "technique.noSignature": {
+  "en": "512147f4746c",
+  "tr": "8b1f3b74968c",
+  "by": "claude-in-session"
+ },
  "town.econ.area.crownHeld": {
   "en": "d931fe766a2a",
   "tr": "66c2aef4a4d0",
@@ -5994,6 +6024,11 @@
   "tr": "3a98944b1bc0",
   "by": "claude-in-session"
  },
+ "town.home.trader": {
+  "en": "e4224318b32c",
+  "tr": "4ca00a42a2e6",
+  "by": "claude-in-session"
+ },
  "town.panel.new": {
   "en": "c06b33d8318f",
   "tr": "22f4dd6de583",
@@ -6077,6 +6112,11 @@
  "wagon.upkeep.boons.rickety": {
   "en": "8dcc1fe1e4b7",
   "tr": "5017eb92f070",
+  "by": "claude-in-session"
+ },
+ "wild.bank.shut": {
+  "en": "838ae35da1d4",
+  "tr": "5fc1948bfb54",
   "by": "claude-in-session"
  },
  "wild.death.away": {

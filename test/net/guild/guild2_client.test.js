@@ -6,7 +6,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { GUILD_RANK_NAMES, GUILD_POWERS, GUILD_RENAME_GOLD, GUILD_RENAME_COOLDOWN_S, guildRenameAt, guildRenameOpen } from '../../../src/net/guild/guildLaw.js';
+import { GUILD_RANK_NAMES, GUILD_POWERS, GUILD_RENAME_COOLDOWN_S, guildRenameAt, guildRenameOpen } from '../../../src/net/guild/guildLaw.js';
+import { GUILD_RENAME_SILVER } from '../../../src/net/guild/guildShopLaw.js';   // GUILD-SHOP: a new name is paid in silver
 import {
   GUILD_VAULT_SLOTS, guildVaultSlots, VAULT_RANK_DEFAULTS, VAULT_LIMIT_CHOICES, vaultStanding, vaultMayPut, vaultMayTake, vaultGrantOf,
   vaultStandingText,
@@ -29,8 +30,8 @@ const WOLF = { field: 'azure', border: 'gold', device: 'wolf' };
 
 // ─── THE LAW ────────────────────────────────────────────────────────
 
-test('GUILD2a the law of a new name: 25,000 gold of the realm\'s from the treasury, the guildmaster\'s alone, a fortnight between (mutants: the price; the cooldown; an officer renaming)', () => {
-  assert.equal(GUILD_RENAME_GOLD, 25_000);
+test('GUILD2a the law of a new name: PIN MOVED: GUILD-SHOP - 2,500 silver from the silver treasury (it was 25,000 of the realm\'s gold), the guildmaster\'s alone, a fortnight between (mutants: the price; the cooldown; an officer renaming)', () => {
+  assert.equal(GUILD_RENAME_SILVER, 2_500);
   assert.equal(GUILD_RENAME_COOLDOWN_S, 14 * 86_400);
   assert.deepEqual([...GUILD_POWERS.rename], [0]);
   assert.deepEqual([...GUILD_POWERS.vaultGrant], [0]);
@@ -39,7 +40,7 @@ test('GUILD2a the law of a new name: 25,000 gold of the realm\'s from the treasu
   assert.deepEqual([guildRenameOpen(null, 5), guildRenameOpen(1000, 1000 + GUILD_RENAME_COOLDOWN_S - 1), guildRenameOpen(1000, 1000 + GUILD_RENAME_COOLDOWN_S)], [true, false, true]);
   assert.equal(guildRenameSoonText(86_400 * 3 + 10, 10), 'The guild was renamed recently. It can be renamed again in 3 days.');
   assert.equal(guildRenameSoonText(100, 10), 'The guild was renamed recently. It can be renamed again in 1 day.');
-  assert.match(GUILD_RENAME_COST_TEXT, /25,000 gold/);
+  assert.match(GUILD_RENAME_COST_TEXT, /2,500 silver from the silver treasury/);
 });
 
 test('GUILD2b the vault\'s law: fifty slots and fifty more with a hall; officers take out ten a day, members and recruits put in; the guildmaster always takes out, unlimited - a grant on that row never read; a grant revoked is the rank\'s again (mutants: a recruit taking; the limit unread; the guildmaster limited)', () => {
@@ -156,7 +157,9 @@ test('GUILD2 the book: a rename through the door as the character playing; the v
   const r = guildRig(view(), { pack: [arrows] });
   await r.book.refresh();
   assert.equal((await r.book.rename('The Open Hand', 'OPH')).ok, true);
-  assert.deepEqual(r.calls.find((c) => c[0] === 'rename'), ['rename', 'rabc', 'The Open Hand', 'OPH']);
+  const asked = r.calls.find((c) => c[0] === 'rename');
+  assert.deepEqual(asked.slice(0, 4), ['rename', 'rabc', 'The Open Hand', 'OPH']);
+  assert.match(asked[4], /^[A-Za-z0-9_-]{8,40}$/, 'GUILD-SHOP: a silver act carries its request id');
   await r.book.readVault();
   assert.deepEqual(r.book.vaultView.items, []);
   r.answers.vaultPut = { ok: false, error: 'guild-vault-full' };
@@ -246,10 +249,10 @@ test('GUILD2 the client\'s door: the five routes and their bodies; every refusal
     ['/v1/guilds/vault/grant', { character: 'rabc', member: 'm2', level: null, limit: 0 }],
     ['/v1/guilds/vault/grant', { character: 'rabc', member: 'm3', level: 'withdraw', limit: null }],   // AUDIT2 S6: none named - the law's ten
   ]);
-  for (const w of ['guild-rename-same', 'guild-name-word', 'guild-rename-soon', 'guild-rename-siege', 'guild-rename-gold', 'guild-rename-moved',
+  for (const w of ['guild-rename-same', 'guild-name-word', 'guild-rename-soon', 'guild-rename-siege', 'guild-rename-silver', 'guild-rename-moved',
     'guild-vault-rank', 'guild-vault-limit', 'guild-vault-full', 'guild-vault-empty', 'guild-vault-moved', 'guild-vault', 'vault-goods',
     'bad-vault-item', 'bad-vault-count', 'bad-vault-slot', 'bad-vault-grant']) assert.equal(typeof REFUSALS[w], 'string', w);
-  assert.match(REFUSALS['guild-rename-gold'], /25,000 gold/);
+  assert.match(REFUSALS['guild-rename-silver'], /2,500 silver/);   // PIN MOVED: GUILD-SHOP - silver, no longer the realm's gold
   const svc = src('server-account/src/service.js'), idx = src('server-account/src/index.js');
   for (const r of ['/v1/guilds/rename', '/v1/guilds/vault', '/v1/guilds/vault/put', '/v1/guilds/vault/take', '/v1/guilds/vault/grant']) {
     assert.ok(svc.includes(`'${r}'`), r); assert.ok(idx.includes(`'${r}':`), r);
@@ -299,25 +302,27 @@ async function tab(guild, opts = {}, page = null) {
 test('GUILD2 the tab in pages: the guild\'s header over every page - its banner, name and tag, the reader\'s rank and the treasury - and a strip of pages, the guild Stores among them only where the professions are this account\'s; a page the guild does not show opens the Overview; the focus follows the page turned to (AUDIT2 U9) (mutants: the strip lost; the Stores page offline; the focus dropped)', async () => {
   const t = await tab(view());
   const strip = find(t.panel.root, 'dfsocial-subtab');
-  assert.deepEqual(strip.map((b) => b.dataset.page), ['overview', 'members', 'treasury', 'vault', 'arms', 'settings']);
-  assert.deepEqual(strip.map((b) => b.attrs['aria-selected']), ['true', 'false', 'false', 'false', 'false', 'false']);
+  // PIN MOVED: GUILD-SHOP (Guild-Shop.md) - the Shop page, where the book reads one, among the guild's wealth
+  // PIN MOVED: GUILD-RANKS (Guild-Shop.md 13) - the Ranks page, after the roster; the Treasury the fourth tab
+  assert.deepEqual(strip.map((b) => b.dataset.page), ['overview', 'members', 'ranks', 'treasury', 'vault', 'shop', 'arms', 'settings']);
+  assert.deepEqual(strip.map((b) => b.attrs['aria-selected']), ['true', 'false', 'false', 'false', 'false', 'false', 'false', 'false']);
   const all = texts(t.panel.root);
   assert.ok(all.includes('The Hand [HND]'));
   // PIN MOVED: GUILD-WINDOW (Guild-Overhaul.md) - GUILD1b's two lines are the window's tiles, each number under its name
   assert.deepEqual(find(t.panel.root, 'dfguild-stat').map((s) => s.children.map((c) => c.textContent)),
     [['Rank', 'Guildmaster'], ['Gold', '30,000'], ['Members', '1/75', '0 online'], ['Vault', '1/50'], ['Hall', 'None']]);
-  strip[2].fire('click');
+  strip[3].fire('click');
   t.panel.render();
-  assert.equal(find(t.panel.root, 'dfsocial-subtab')[2].attrs['aria-selected'], 'true');
+  assert.equal(find(t.panel.root, 'dfsocial-subtab')[3].attrs['aria-selected'], 'true');
   // AUDIT2 U9: the focus on the page turned to - never left on a button the strip drew over
-  assert.equal(t.doc.activeElement, find(t.panel.root, 'dfsocial-subtab')[2], 'the new Treasury tab holds the focus');
+  assert.equal(t.doc.activeElement, find(t.panel.root, 'dfsocial-subtab')[3], 'the new Treasury tab holds the focus');
   assert.ok(texts(t.panel.root).includes('Treasury'));
   await t.go('stores');
   assert.equal(find(t.panel.root, 'dfsocial-subtab')[0].attrs['aria-selected'], 'true', 'no Stores here: the Overview');
 });
 
-test('GUILD2a the Settings page: a new name is the guildmaster\'s, its price said; Rename arms and the second press pays; it waits on the realm\'s gold in the treasury and on the fortnight, each said; an Officer sees none (mutants: one press; the gold unread; the cooldown unread)', async () => {
-  const t = await tab(view(), {}, 'settings');
+test('GUILD2a the Settings page: a new name is the guildmaster\'s, its price said; Rename arms and the second press pays; PIN MOVED: GUILD-SHOP - it waits on the silver treasury (no longer the realm\'s gold) and on the fortnight, each said; an Officer sees none (mutants: one press; the silver unread; the cooldown unread)', async () => {
+  const t = await tab(view({ marks: 5_000 }), {}, 'settings');
   assert.ok(texts(t.panel.root).includes(GUILD_RENAME_COST_TEXT));
   const field = (label) => find(t.panel.root, 'dfsocial-field').find((f) => f.attrs['aria-label'] === label);
   assert.equal(field('Guild name').value, 'The Hand', 'the draft starts at the name that stands');
@@ -327,16 +332,16 @@ test('GUILD2a the Settings page: a new name is the guildmaster\'s, its price sai
   button(t.panel.root, 'Rename').fire('click');
   t.panel.render();
   assert.equal(t.calls.some((c) => c[0] === 'rename'), false, 'the first press arms');
-  button(t.panel.root, 'Sure? 25,000 gold').fire('click');
+  button(t.panel.root, 'Sure? 2,500 silver').fire('click');
   await settle(); await settle();
-  assert.deepEqual(t.calls.find((c) => c[0] === 'rename'), ['rename', 'rabc', 'The Open Hand', 'HND']);
-  const poor = await tab(view({ hallGold: 24_999 }), {}, 'settings');
+  assert.deepEqual(t.calls.find((c) => c[0] === 'rename').slice(0, 4), ['rename', 'rabc', 'The Open Hand', 'HND']);
+  const poor = await tab(view({ marks: 2_499, hallGold: 1_000_000 }), {}, 'settings');
   const pf = find(poor.panel.root, 'dfsocial-field').find((f) => f.attrs['aria-label'] === 'Tag');
   pf.value = 'OPH'; pf.fire('input');
   assert.equal(button(poor.panel.root, 'Rename').disabled, true);
-  assert.ok(texts(button(poor.panel.root, 'Rename')).includes('25,000 of the realm\'s gold in the treasury'));
+  assert.ok(texts(button(poor.panel.root, 'Rename')).includes('2,500 silver in the silver treasury'));
   const nowS = Math.floor(Date.now() / 1000);
-  const soon = await tab(view({ renamedAt: nowS - 86_400, renameAt: nowS + 13 * 86_400 }), {}, 'settings');
+  const soon = await tab(view({ marks: 5_000, renamedAt: nowS - 86_400, renameAt: nowS + 13 * 86_400 }), {}, 'settings');
   assert.ok(texts(soon.panel.root).includes(guildRenameSoonText(nowS + 13 * 86_400, nowS)));
   const sf = find(soon.panel.root, 'dfsocial-field').find((f) => f.attrs['aria-label'] === 'Tag');
   sf.value = 'OPH'; sf.fire('input');

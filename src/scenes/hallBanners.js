@@ -21,6 +21,9 @@
 // stand no street; exterior.js (the bench) not wired - it draws no online homes.
 // ═══════════════════════════════════════════════════════════════════
 import { heraldryKey } from '../net/heraldryLaw.js';   // GUILD2c: a banner's whole arms as its key
+import { guildArmsOf } from '../net/guild/guildArmsBook.js';   // GUILD-LOGO: the hall's guild's approved logo, by its tag
+import { logoImage, logoVersion } from '../ui/guild/guildLogoImages.js';
+import { drawBannerArms } from '../ui/guild/guildCrestArt.js';
 import { BANNER_W_M, BANNER_H_M, BANNERS_MAX } from '../render/bannerPass.js';
 import { doorFaceSign } from '../systems/siegeField.js';
 import { rayTriangle } from '../systems/automap/automapPick.js';   // AUDIT RPT1026 J2: a cloth's wall asked of the building's own faces
@@ -152,6 +155,9 @@ export function hallBannerAnchors(frame) {
 // GUILD2c: a divided or recoloured banner keys by its whole arms (heraldryLaw.js heraldryKey) - two banners sharing a field,
 // a border and a device but parted differently are two textures; a plain banner (and a seat's device-less cloth) keeps
 // GUILD1d's key, so every texture already cached keeps its name
+/** GUILD-LOGO (Guild-Shop.md section 7): a banner's cloth painted - render/bannerPass.js's `paint`: its heraldry, and an
+ *  approved logo (`h.logo`) once its picture is in; the banner's key carries the logo, so the cloth is painted again. */
+export const paintHallBanner = (/** @type {any} */ ctx, /** @type {any} */ h, /** @type {number} */ w) => drawBannerArms(ctx, h, w, h?.logo ? logoImage(h.logo) : null);
 export const bannerKeyOf = (h) => (h?.division || h?.charge ? heraldryKey(h) : `${h.field}|${h.border}|${h.device}`);
 
 /**
@@ -178,11 +184,16 @@ export function createHallBanners({ built, homes, translation, eye = () => null,
     for (const [, p] of built?.() ?? []) {
       if (!p?.homeTown || !p.homeFrames) continue;
       for (const [bk, frame] of p.homeFrames) {
-        const h = homes?.homeAt?.(p.homeTown, bk)?.hall?.heraldry ?? null;
-        if (!h) continue;
+        const hall = homes?.homeAt?.(p.homeTown, bk)?.hall ?? null;
+        const shown = hall?.heraldry ?? null;
+        if (!shown) continue;
         const anchors = hallBannerAnchors(frame);
         if (!anchors) continue;
-        anchors.forEach((a, i) => out.push({ px: p.px, py: p.py, a, key: bannerKeyOf(h), heraldry: h, phase: (bk % 13) * 0.7 + i * 1.9 }));
+        // GUILD-LOGO: its guild's approved logo over the device, once its picture is in
+        const logo = hall.tag ? guildArmsOf(hall.tag)?.logo ?? null : null;
+        const h = logo && logoImage(logo) ? { ...shown, logo } : shown;
+        const key = h === shown ? bannerKeyOf(shown) : `${bannerKeyOf(shown)}#${logo}`;
+        anchors.forEach((a, i) => out.push({ px: p.px, py: p.py, a, key, heraldry: h, phase: (bk % 13) * 0.7 + i * 1.9 }));
       }
     }
     held = out;
@@ -191,7 +202,8 @@ export function createHallBanners({ built, homes, translation, eye = () => null,
   return {
     list() {
       const v = homes?.version?.() ?? 0;
-      if (v !== seen || now() - at >= BANNER_REFRESH_MS) { read(); seen = v; at = now(); }
+      const lv = v * 4096 + logoVersion();   // GUILD-LOGO: and again when a logo's picture comes in
+      if (lv !== seen || now() - at >= BANNER_REFRESH_MS) { read(); seen = lv; at = now(); }
       if (!held.length) return outs;   // (empty)
       for (let i = 0; i < held.length; i++) {
         const b = held[i], t = translation(b.px, b.py), top = outs[i].top;

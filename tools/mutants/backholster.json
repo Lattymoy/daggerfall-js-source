@@ -227,8 +227,8 @@
   {
     "name": "BACK-HOLSTER-OVER-the-host-forgets-the-walkers",
     "file": "src/scenes/auraHost.js",
-    "old": "backSources[1] = deps.walkers(); return backSources;",
-    "new": "return backSources;",
+    "old": "for (const l of deps.sprites() ?? []) backSources.push(l); ",
+    "new": "",
     "tests": [
       "test/player/eyeOfTheBeholder/backholster.test.js"
     ]

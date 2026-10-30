@@ -109,6 +109,11 @@ export const RING_RADIUS = 48;
 /** Rebuild the vertex grid when the player drifts this far (pixels)
  *  from the ring base; until then only the hole re-punches. */
 export const RING_REBUILD_DRIFT = 12;
+/** OW-RING: a tree's art landed rebuilds the grid once the book has stood still FLORA_SETTLE_MS, or FLORA_WAIT_MAX_MS after
+ *  the first landed - a new zone's arts land in a burst, and each was a build of its own (13 of 20-150 ms in a minute's
+ *  journey past the Bay). */
+export const FLORA_SETTLE_MS = 1500;
+export const FLORA_WAIT_MAX_MS = 6000;
 /** The haze mix held through the middle distance - the last 15% is
  *  silhouette, and only the rim closes fully into the sky. */
 export const RING_HAZE_HOLD = 0.85;
@@ -604,6 +609,7 @@ export class FarRingRenderer {
     this._flora = opts.flora !== undefined ? opts.flora : (floraDisabled() ? null : createFloraArt({ lands: tamrielLandsOn() }));   // TESA-LANDS: a zone's own past the Bay, with the row
     this._floraRadius = 0;      // the streamed radius the woods were last judged by (punchHole's)
     this._floraVersion = -1;    // the book's version this ring's grid was built with
+    this._floraSeen = null;     // OW-RING: the book's version last seen moving, when, and since when the grid is owed it
     // the probes' read (tools/horizonProbe.mjs): which of the horizon's layers stand, and round which bases - let go by
     // the ring that set it (dispose)
     this._statsFn = () => this.horizonStats();
@@ -983,7 +989,18 @@ export class FarRingRenderer {
   needsRebuild(px, py) {
     return !this._built
       || Math.max(Math.abs(px - this.baseX), Math.abs(py - this.baseY)) > RING_REBUILD_DRIFT
-      || this._floraStale({ floraVersion: this._floraVersion });   // FAR-FLORA: a tree's art landed since the grid was built
+      || this._floraDue();   // FAR-FLORA: a tree's art landed since the grid was built
+  }
+
+  /** OW-RING: whether the art landed since the grid was built is owed a build now - the book still FLORA_SETTLE_MS, or the
+   *  grid owed it FLORA_WAIT_MAX_MS. */
+  _floraDue() {
+    if (!this._floraStale({ floraVersion: this._floraVersion })) { this._floraSeen = null; return false; }
+    const now = this._now(), v = /** @type {any} */ (this._flora).version, seen = this._floraSeen;
+    if (!seen) this._floraSeen = { v, at: now, since: now };
+    else if (seen.v !== v) { seen.v = v; seen.at = now; }
+    const s = /** @type {{ at: number, since: number }} */ (this._floraSeen);
+    return now - s.at >= FLORA_SETTLE_MS || now - s.since >= FLORA_WAIT_MAX_MS;
   }
 
   /**

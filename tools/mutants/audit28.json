@@ -177,7 +177,7 @@
   {
     "name": "AUDIT28-N4-a-note-recruits-for-a-guild-its-author-left",
     "file": "server-account/src/board.js",
-    "old": "const recruits = (n) => !!n.guild_name && n.author_rank != null && guildMay(Number(n.author_rank), 'invite');",
+    "old": "const recruits = (n) => !!n.guild_name && n.author_rank != null && guildMay(Number(n.author_rank), 'invite', guildPowersOfRow({ ranks: n.guild_ranks, powers: n.guild_powers }));",
     "new": "const recruits = (n) => !!n.guild_name;",
     "tests": [
       "test/net/audit28_notice.test.js"
