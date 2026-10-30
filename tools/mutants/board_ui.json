@@ -27,43 +27,6 @@
     ]
   },
   {
-    "name": "ONE-BOARD-REVERTED-the-press-on-the-bounty-boards-too",
-    "file": "src/scenes/world.js",
-    "old": "...(!bountyAt.has(i) && noticeTown ? { notice: noticeTown, named: noticeBook.open === true } : {}),",
-    "new": "...(noticeTown ? { notice: noticeTown, named: noticeBook.open === true } : {}),",
-    "tests": [
-      "test/ui/board_ui.test.js",
-      "test/net/notice1.test.js"
-    ]
-  },
-  {
-    "name": "ONE-BOARD-REVERTED-the-count-over-the-bounty-boards-too",
-    "file": "src/scenes/world.js",
-    "old": "        if (bountyAt.has(i)) return;",
-    "new": "        if (i === -1) return;",
-    "tests": [
-      "test/ui/board_ui.test.js"
-    ]
-  },
-  {
-    "name": "ONE-BOARD-REVERTED-the-town-underfoot-with-every-board-a-bounty-board",
-    "file": "src/scenes/world.js",
-    "old": "return bountyAt.size < p.boards.length ? noticeTownOf(",
-    "new": "return bountyAt.size <= p.boards.length ? noticeTownOf(",
-    "tests": [
-      "test/ui/board_ui.test.js"
-    ]
-  },
-  {
-    "name": "ONE-BOARD-the-hover-unnamed",
-    "file": "src/scenes/worldModes.js",
-    "old": "bd?.named ? NOTICE_BOARD_TEXT : BULLETIN_BOARD_TEXT",
-    "new": "false ? NOTICE_BOARD_TEXT : BULLETIN_BOARD_TEXT",
-    "tests": [
-      "test/systems/auditbounty1.test.js"
-    ]
-  },
-  {
     "name": "BOARD-UI-tab-counts-the-old-notes",
     "file": "src/ui/noticeWindow.js",
     "old": "if (id === 'notices') return noticeCards({ town: deps.town, board, seenAt: seenAtOpen }).filter((c) => c.isNew).length || null;",

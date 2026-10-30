@@ -2711,10 +2711,16 @@ in `src/firstVisitPins.js`, gitignored:
 `npm install` / `npm ci` write it (`postinstall`, `scripts/firstVisitPins.mjs`),
 so every checkout and CI job has it before lint, the types or a test; every Vite build writes it at its start and bundles
 the pins it computed then (`firstVisitPinsPlugin`, a `vite.config.js` plugin); and the dev server computes the pins for
-each page load (the store asks under a URL of the load's own), so a dev edit is a new key as a deployed update is. A cache
+each page load (each page's HTML drops the pins module it served), so a dev edit is a new key as a deployed update is. A cache
 reads its pin through `firstVisitStore.js firstVisitPin`, which throws when there is none - never a key on undefined. So
 an update that changes a computation refreshes that cache for every player on their next launch, and one that does not
 keeps it.
+
+WEBKIT-TLA (`01-Overview/bugs/Field-Bugs-2026-10-29g.md`): the store imports the pins and never awaits them. It read them
+with a top-level await, and WebKit before Safari 27 resolves a second `import()` of a graph that awaits before it has
+run (WebKit bug 242740): an iPhone before iOS 27 called `bootWorld` before the world chunk had made its classes.
+`test/tree/toplevelawait.test.js` refuses a top-level await in any source module another imports, and the build in any
+chunk another imports (`scripts/noTopLevelAwait.mjs`, AUDIT FB1029g TLA-1).
 
 Each key leads with its scope; writing an answer deletes every other key of its scope
 (`firstVisitStore.js staleKey`, `dataSource.js sweepDerived`), so the store holds one answer a scope and does not grow

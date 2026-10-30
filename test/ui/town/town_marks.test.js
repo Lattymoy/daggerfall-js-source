@@ -1,7 +1,7 @@
 // TOWN-MARKS (2026-09-29, Mac: "For the notice boards in town. Can we physically mark them on the town map, and also mark
-// owned player housing"; bible/10-UI/UI-Arc.md TOWN-MARKS): THE TOWN MAP'S NOTICE BOARDS AND PLAYER HOUSING. The data
-// (ui/town/townMapMarks.js: which boards, which houses, what each is called), the ink (ui/ink/inkTown.js paintBoardMark,
-// paintHomeMark - under the names, lifted above their place), the sheet (ui/town/townSheet.js: into sheet space by the
+// owned player housing"; bible/10-UI/UI-Arc.md TOWN-MARKS): THE TOWN MAP'S PLAYER HOUSING (NOTICE-PANEL, 2026-10-29: the
+// boards' marks went with the boards). The data (ui/town/townMapMarks.js: which houses, what each is called), the ink
+// (ui/ink/inkTown.js paintHomeMark - under the names, lifted above their place), the sheet (ui/town/townSheet.js: into sheet space by the
 // plates' and the party's own seams, answered under the pointer, a repaint when the homes answer), and the wiring
 // (ui/town/townMapDoor.js, scenes/world.js toggleExteriorAutomap).
 import { test } from 'node:test';
@@ -9,10 +9,10 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import {
-  readTownBoards, readTownHomes, townBoardRows, townHomeRows, boardMarkLabel, TOWN_BOARD_LABEL, TOWN_HOUSE_LABEL, TOWN_MARK_REACH,
+  readTownHomes, townHomeRows, TOWN_HOUSE_LABEL, TOWN_MARK_REACH,
 } from '../../../src/ui/town/townMapMarks.js';
 import { createTownSheet } from '../../../src/ui/town/townSheet.js';
-import { TOWN_PEN, TOWN_MARK_HALF, ANCHOR_R, sheetY, WORLD_PER_PX, paintBoardMark, paintHomeMark } from '../../../src/ui/ink/inkTown.js';
+import { TOWN_PEN, TOWN_MARK_HALF, ANCHOR_R, sheetY, paintHomeMark } from '../../../src/ui/ink/inkTown.js';
 import { toPaper, PEN, CARET_R } from '../../../src/ui/ink/inkMap.js';
 import { nameplateAnchor } from '../../../src/ui/nameplateLayout.js';
 import { hostText } from '../../hostText.mjs';
@@ -54,36 +54,14 @@ const VIEW = { ox: 0, oy: 0, scale: 3 };
 const ENV = { view: VIEW, paperW: 2000, paperH: 2000, dpr: 1, pulse: 0 };
 const house = (buildingKey, blockX, blockY, x, z, extra = {}) => ({ buildingKey, blockX, blockY, position: [x, 0, z], buildingType: 17, isResidence: true, name: '', ...extra });
 
-test('TOWN-MARKS the reading: a board with no place and a home with no building are dropped; a board with no name is a Notice Board (mutants: the reads keep a bad row)', () => {
-  assert.deepEqual(readTownBoards(null), []);
-  assert.deepEqual(readTownBoards(() => 'nope'), []);
-  assert.deepEqual(readTownBoards(() => { throw new Error('x'); }), []);
-  assert.deepEqual(readTownBoards(() => [{ feet: [1, 2, 3], label: 'Notice Board: 2 new' }, { feet: [NaN, 0, 0] }, { label: 'x' }, { feet: [4, 5, 6] }]), [
-    { feet: [1, 2, 3], label: 'Notice Board: 2 new' },
-    { feet: [4, 5, 6], label: TOWN_BOARD_LABEL },
-  ]);
+test('TOWN-MARKS the reading: a home with no building is dropped (mutants: the reads keep a bad row)', () => {
+  assert.deepEqual(readTownHomes(null), []);
+  assert.deepEqual(readTownHomes(() => { throw new Error('x'); }), []);
   assert.deepEqual(readTownHomes(() => [{ buildingKey: 7, own: true, label: 'Your home' }, { buildingKey: 0, label: 'x' }, { buildingKey: 1.5, label: 'x' },
     { buildingKey: 9, label: 3 }, { buildingKey: 8, own: 'yes', label: "Mac's home" }]), [
     { buildingKey: 7, own: true, label: 'Your home' },
     { buildingKey: 8, own: false, label: "Mac's home" },
   ]);
-  assert.equal(boardMarkLabel(0), 'Notice Board');
-  assert.equal(boardMarkLabel(3), 'Notice Board: 3 new', 'the town\'s unread count, as the board floats it (boardLaw unseenText)');
-});
-
-test('TOWN-MARKS the boards: every board of the town\'s but its bounty boards, at the middle and foot of its box, in the location\'s frame (mutants: a bounty board marked; the origin not taken off; the box\'s corner, not its middle)', () => {   // ONE-BOARD REVERTED (PIN MOVED)
-  const p = {
-    locOrigin: [100, 5, 200],
-    boards: [{ box: [110, 5, 210, 112, 9, 214] }, { box: [150, 6, 260, 154, 10, 262] }, { box: [300, 5, 300, 302, 9, 302] }],
-  };
-  assert.deepEqual(townBoardRows(p, new Set([1]), 2), [
-    { feet: [11, 0, 12], label: 'Notice Board: 2 new' },
-    { feet: [201, 0, 101], label: 'Notice Board: 2 new' },
-  ]);
-  assert.deepEqual(townBoardRows(p, new Set(), 0).map((r) => r.feet), [[11, 0, 12], [52, 1, 61], [201, 0, 101]]);
-  assert.deepEqual(townBoardRows({ boards: p.boards }, new Set()), [], 'no origin, no frame');
-  assert.deepEqual(townBoardRows({ locOrigin: [0, 0, 0] }, new Set()), []);
-  assert.deepEqual(townBoardRows({ locOrigin: [0, 0, 0], boards: [{ box: [1, 2] }, {}] }, new Set()), []);
 });
 
 test('TOWN-MARKS the housing: an online home, the player\'s and every other player\'s, named as its door names it; the bank\'s house only in its own town (mutants: another town\'s house of the same key marked; the home read as the player\'s; offline homes asked)', () => {
@@ -111,11 +89,11 @@ test('TOWN-MARKS the housing: an online home, the player\'s and every other play
   assert.deepEqual(townHomeRows({ buildings, mapId: 4000000000, regionIndex: 4, houses }), [], 'no house in this region');
 });
 
-test('TOWN-MARKS the sheet: a home stands ON its building\'s place (the plates\' anchor, +Z up) and a board on its foot (the party\'s two steps); both under the names, the player\'s own in the player\'s ink (mutants: a mark mirrored; the wrong building; drawn over the names; the own fill lost)', () => {
+test('TOWN-MARKS the sheet: a home stands ON its building\'s place (the plates\' anchor, +Z up), under the names, the player\'s own in the player\'s ink (mutants: a mark mirrored; the wrong building; drawn over the names; the own fill lost)', () => {
   const buildings = [house(1, 0, 0, 30, 30), house(2, 1, 0, 60, 10, { name: 'Oakhouse', isResidence: false, buildingType: 15 })];
   const s = createTownSheet({
     gridW: 2, gridH: 2, blocks: [], buildings: () => buildings, discovered: () => [{ buildingKey: 2, displayName: 'Oakhouse' }],
-    boards: () => [{ feet: [16, 0, 48], label: 'Notice Board' }],
+    boards: () => [{ feet: [16, 0, 48], label: 'Notice Board' }],   // NOTICE-PANEL: a host's boards are no mark now
     homes: () => [{ buildingKey: 1, own: true, label: 'Your home' }, { buildingKey: 2, own: false, label: "Gryphoth's home" }, { buildingKey: 99, label: 'gone' }],
   });
   const h = s.field.h;
@@ -123,12 +101,12 @@ test('TOWN-MARKS the sheet: a home stands ON its building\'s place (the plates\'
   const [bx, by] = nameplateAnchor(1, 0, [60, 0, 10]);
   assert.deepEqual(s.homes(), [{ x: ax, y: sheetY(h, ay), own: true, label: 'Your home' }, { x: bx, y: sheetY(h, by), own: false, label: "Gryphoth's home" }],
     'at the plates\' own anchors; a home whose building is not in this town is not drawn');
-  assert.deepEqual(s.boards(), [{ x: 16 / WORLD_PER_PX, y: sheetY(h, 48 / WORLD_PER_PX), label: 'Notice Board' }]);
+  assert.equal(s.boards, undefined, 'NOTICE-PANEL: the sheet marks no board');
   const ctx = recordingCtx();
   s.paintOverlay(ctx, ENV);
-  const want = [...s.homes(), ...s.boards()].map((m) => toPaper(VIEW, m.x, m.y));
+  const want = s.homes().map((m) => toPaper(VIEW, m.x, m.y));
   const got = glyphBoxes(ctx).map((g) => [g.cx, g.cy]);
-  assert.equal(got.length, 3);
+  assert.equal(got.length, 2);
   want.forEach((w, i) => assert.ok(near(got[i], w), `mark ${i} is centred on its place (Mac: "on top of the building itself"): ${got[i]} vs ${w}`));
   const fills = ctx.calls.filter((c) => c.fn === 'fill').map((c) => c.fillStyle);
   assert.equal(fills.filter((f) => f === TOWN_PEN.home).length, 1, 'ONE house filled in the player\'s ink - the player\'s own');
@@ -138,11 +116,11 @@ test('TOWN-MARKS the sheet: a home stands ON its building\'s place (the plates\'
   assert.ok(firstName > 0 && lastMark >= 0 && lastMark < firstName, 'the marks go down before the names - a name is never under a glyph');
   // a sheet with no marks is the sheet it was
   const plain = createTownSheet({ gridW: 1, gridH: 1, blocks: [], buildings: () => buildings, discovered: () => [] });
-  assert.deepEqual([plain.homes(), plain.boards()], [[], []]);
+  assert.deepEqual(plain.homes(), []);
 });
 
 test('TOWN-MARKS the glyphs: centred ON the place, no taller than 2 x TOWN_MARK_HALF, on no post, no bigger than the caret (Mac: "I kinda wish the icons were on top of the building itself, not on the side") (mutants: a glyph off its place; the half grown)', () => {
-  for (const paint of [(c) => paintBoardMark(c, 100, 200), (c) => paintHomeMark(c, 100, 200, false), (c) => paintHomeMark(c, 100, 200, true)]) {
+  for (const paint of [(c) => paintHomeMark(c, 100, 200, false), (c) => paintHomeMark(c, 100, 200, true)]) {
     const ctx = recordingCtx();
     paint(ctx);
     const [g] = glyphBoxes(ctx);
@@ -186,19 +164,16 @@ test('TOWN-MARKS the names: a building a home\'s glyph stands on is named UNDER 
   assert.equal(back.marked, undefined);
 });
 
-test('TOWN-MARKS the pointer: over a glyph the town map names it - the board with its town\'s unread count, a home as its door does; past its reach it is the street (mutants: the reach lost)', () => {
+test('TOWN-MARKS the pointer: over a glyph the town map names it - a home as its door does; past its reach it is the street (mutants: the reach lost)', () => {
   const s = createTownSheet({
     gridW: 1, gridH: 1, blocks: [], buildings: () => [house(1, 0, 0, 30, 30)], discovered: () => [], title: 'Daggerfall',
-    boards: () => [{ feet: [16, 0, 48], label: 'Notice Board: 3 new' }],
     homes: () => [{ buildingKey: 1, own: false, label: "Gryphoth's home" }],
   });
   s.paintOverlay(recordingCtx(), ENV);
-  const [bx, by] = toPaper(VIEW, s.boards()[0].x, s.boards()[0].y);
-  assert.equal(s.hoverLabel(bx, by).label, 'Notice Board: 3 new');
-  assert.equal(s.hoverLabel(bx + TOWN_MARK_REACH - 1, by).label, 'Notice Board: 3 new', 'within reach');
-  assert.equal(s.hoverLabel(bx + TOWN_MARK_REACH + 1, by).label, 'Daggerfall', 'past it');
   const [hx, hy] = toPaper(VIEW, s.homes()[0].x, s.homes()[0].y);
   assert.equal(s.hoverLabel(hx, hy + TOWN_MARK_HALF).label, "Gryphoth's home");
+  assert.equal(s.hoverLabel(hx + TOWN_MARK_REACH - 1, hy).label, "Gryphoth's home", 'within reach');
+  assert.equal(s.hoverLabel(hx + TOWN_MARK_REACH + 1, hy).label, 'Daggerfall', 'past it');
 });
 
 test('TOWN-MARKS the repaint: the homes answer after the map is open - the plan breathes until it has painted the version it has, and then rests (mutants: never repainted; breathing for ever)', () => {
@@ -215,13 +190,13 @@ test('TOWN-MARKS the repaint: the homes answer after the map is open - the plan 
   assert.equal(offline.breathes(), false, 'no registry: the plan it always was');
 });
 
-test('TOWN-MARKS the wiring: the door hands the marks to the enhanced town map; the host marks the open Notice Board\'s boards and the town\'s housing, and asks for the town\'s homes as the map opens (mutants: a key dropped at the door; the board marked while closed; the homes never asked)', () => {
+test('TOWN-MARKS the wiring: the door hands the marks to the enhanced town map; the host marks the town\'s housing (NOTICE-PANEL: no board), and asks for the town\'s homes as the map opens (mutants: a key dropped at the door; the board marked while closed; the homes never asked)', () => {
   const door = src('src/ui/town/townMapDoor.js');
-  assert.match(door, /boards: deps\.townBoards \?\? null,/);
+  assert.doesNotMatch(door, /boards: |townBoards/);
   assert.match(door, /homes: deps\.townHomes \?\? null,/);
   assert.match(door, /homesVersion: deps\.townHomesVersion \?\? null,/);
   const w = src('src/scenes/world.js');
-  assert.match(w, /townBoards: \(\) => host\.townBoardMarks\(b\),/);   // HOST-SPLIT 2: read live through the toggle's handle (scenes/exteriorAutomapToggle.js)
+  assert.doesNotMatch(w, /townBoards|townBoardMarks/);   // PIN MOVED (NOTICE-PANEL): no board stands to mark
   assert.match(w, /townHomes: \(\) => townHomeRows\(\{\n\s*buildings: summaries, mapId: dfLoc\.mapTableData\?\.mapId, regionIndex: dfLoc\.regionIndex, houses: playerEntity\.houses \?\? null,\n\s*homeAt: onlineHomes \? \(mapId, buildingKey\) => \{\n\s*const h = onlineHomes\.homeAt\(mapId, buildingKey\);\n[^\n]*\n\s*return h && isVendorWaypoint\(mapId, buildingKey\) \? \{ \.\.\.h, own: false, owner: vendorWaypointLabel\(h\.owner\) \} : h;\n\s*\} : null,\n\s*\}\),/);
   // PIN MOVED (FB1020c STREETS-TAB, at the merge of STAR0's move): the bag `townHere` builds for either key; the homes asked as the M key's window opens and as the travel
   // key's streets are handed over
@@ -229,8 +204,6 @@ test('TOWN-MARKS the wiring: the door hands the marks to the enhanced town map; 
   assert.match(w, /townTalk\.showOverlay\(createTownMapWindow\(here\.deps\)\);\n\s*onlineHomes\?\.ensure\(here\.mapId\);/, 'the M key asks');
   assert.match(w, /if \(!here\) return \{\};\n\s*onlineHomes\?\.ensure\(here\.mapId\);/, 'the travel key\'s streets ask too');
   assert.match(w, /return \{ mapId: dfLoc\.mapTableData\?\.mapId, deps: \{/, 'the town\'s MapId');
-  const marks = w.slice(w.indexOf('const townBoardMarks = (p) => {'));
-  assert.match(marks, /^const townBoardMarks = \(p\) => \{\n\s*if \(!noticeBook \|\| noticeBook\.open !== true \|\| !p\?\.boards\?\.length \|\| !p\.location\) return \[\];\n\s*const bountyAt = boardSplitOf\(p\);\n\s*const town = noticeTownOf\(p\.px, p\.py, bountyAt\.size > 0\);\n\s*return town \? townBoardRows\(p, bountyAt, noticeBook\.unseen\(town\.mapId\)\) : \[\];/);   // ONE-BOARD REVERTED (PIN MOVED)
   // the classic exterior automap is DFU's own window: it draws DFU's marks alone
-  assert.doesNotMatch(src('src/ui/exteriorAutomapWindow.js'), /townBoards|townHomes|paintBoardMark|paintHomeMark/);
+  assert.doesNotMatch(src('src/ui/exteriorAutomapWindow.js'), /townHomes|paintHomeMark/);
 });

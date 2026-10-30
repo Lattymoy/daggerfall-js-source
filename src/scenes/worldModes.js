@@ -203,7 +203,7 @@ import { lootPile } from '../player/lootStack.js';   // LOOT-STACK: the pile und
 import { silverFindAt } from '../systems/silverFinds.js';   // SILVER-FINDS (AUDIT 625 S2): an interior's treasure pile rolls its find too
 import { staticDoorName, npcHoverName, questResourceName, questStandItem, worldTooltipsOn, hideInteractTooltip,
   houseContainerName, houseContainerHover, actionObjectName, lootPileName, indoorDecorHover,
-  BOOKSHELF_TEXT, SHOP_SHELF_TEXT, LADDER_TEXT, BULLETIN_BOARD_TEXT, mobileEntityName, liveEntityName } from '../systems/worldTooltips.js'; import { questFoeSubs } from '../systems/quest/questFoeLine.js';   // WORLD-HOVER: the mod's ladder for the families THIS host stands; QUEST-FOE-LINE: a quest's foe says whose it is   // WORLD-HOVER: the mod's ladder for the families THIS host stands
+  BOOKSHELF_TEXT, SHOP_SHELF_TEXT, LADDER_TEXT, mobileEntityName, liveEntityName } from '../systems/worldTooltips.js'; import { questFoeSubs } from '../systems/quest/questFoeLine.js';   // WORLD-HOVER: the mod's ladder for the families THIS host stands; QUEST-FOE-LINE: a quest's foe says whose it is   // WORLD-HOVER: the mod's ladder for the families THIS host stands
 import { LOCATION_TYPES, REGION_NAMES, REGION_RACES } from '../formats/mapsFile.js';   // WORLD-HOVER: .cs:777-782 - a dungeon exit names its town, or the region   // WORLD-HOVER: the texture record is DERIVED at its one reader, off the stored model id
 import { isShop, stockShopShelf, stockHouseContainer, PRIVATE_PROPERTY_TEXT_ID, privatePropertyRows, calculateCost, calculateTradePrice, regionPriceAdjustment, SHOP_BUYS_GROUPS, shopBuysItem, stockSoulGems, stockGuildMagicItems, stockGuildPotions, dayShelf, createStockedDate, needsRestock, stockSearched, restockEndless, landSoldAt } from '../systems/shopStock.js';   // X6: the soul-gem shelf; G4: the two guild shelves; A2: the daily restock; ENDLESS-STOCK: the bag and the Campfire never sell out
 import { BAG_WORDS, isBagItem, holdsOtherBag } from '../net/bagLaw.js';   // ONE-BAG: one Materials Bag to a character, on the keyed shelf too
@@ -222,11 +222,9 @@ import { questTracker } from '../ui/quest/questTracker.js';   // GUIDE8: the que
 // U23: the static-NPC seam and the guild service popup.
 import { STATIC_NPC_ACTIVATION_DISTANCE, DEFAULT_ACTIVATION_DISTANCE, RAY_DISTANCE } from '../systems/talk/talk.js';
 // PlayerActivate.ActivateBulletinBoard (:706-739) - the town sign's arm
-import { BULLETIN_BOARD_ACTIVATION_DISTANCE, bulletinBoardRows } from '../systems/bulletinBoard.js';
 import { applyDeathPenalty, deathPenaltyText } from '../systems/deathPenalty.js';   // DEATH-PENALTY: the in-place respawn is an online death too
 import { revenantTakes } from '../systems/revenant/revenant.js';   // AUDIT FEUD (RVN8): the in-place respawn's theft, as the world host's
 import { endPlayerFights } from '../systems/harmMark.js';   // AUDIT FEUD (RVN10): ...and its fights ended
-import { tokenRows } from '../ui/messageBox.js';
 import { showsJoinButton, serviceAccess, onPushEffects, rankNeedsLines, wayBackLines, NO_POTION_INGREDIENTS, isServiceBox, SERVICE_LABEL, SERVICE_DESTINATION } from '../systems/guild/guildServiceFlow.js';
 import { USE_TEXT, expandItemMacro } from '../systems/useItem.js';   // AUDIT 63 F42: IsPotionRecipe (DaggerfallUnityItem.cs:344-347); RR1: the light's own "You douse the %it."
 import { canAccessService , getCustomMerchantService, getCustomMerchantServiceLabel } from '../systems/guild/guildServices.js';   // G4: does THIS guild also sell soul gems?
@@ -494,9 +492,6 @@ import { adoptLight } from '../render/lightId.js';   // LIGHT-ID: a tinted copy 
 import { createQuestClickFirst, clickHeardByQuest } from './quest/questClickFirst.js';   // QUEST-WORDS-FIRST: a quest's words and reward before the NPC's door
 import { ownerFoes } from './ownerCatchUp.js';   // HOST-CLOCK: a building's two pools through the page's one catch-up (OWNER-CLOCK's parity)
 import { windowHoldsDungeon } from './windowWorld.js';   // RPT1026-FIGHTS (WINDOW-ONLINE): online a window holds no dungeon while I live under it
-/** BOUNTY1: the plaque over a town's bounty board. */
-const BOUNTY_BOARD_TEXT = 'Bounty Board';
-const NOTICE_BOARD_TEXT = 'Notice Board';   // ONE-BOARD: a town's Notice Board, while it is open to this account
 let _charT0 = (typeof performance !== 'undefined' ? performance.now() : 0);
 let _charAnimMode = 'idle'; // in-engine character animation: idle | walk | off (window.__anim)
 
@@ -1537,7 +1532,7 @@ export function createWorldModes(host) {
   // The host destructure moves with it, because `say` closes over
   // `townTalk`. It reads only the function's own argument, so it is
   // safe anywhere inside the body.
-  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, doorGeneration = null, npcTargets = null, boardTargets = null, buildingTargets = null, bulletinBoardNews = null, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, townTalk = null, magic = null, spellsByIndex = null, questBridge = null, questSceneCtx = null, npcSession = null, talkSave = null, onQuestRestored = null, layoutPinsLoaded = null, discoveryLocationId = null, questBuildingSource = null, gps = null, buildingDirectory = null, openBountyBoard = null, openNoticeBoard = null } = host;   // AUDIT 63 F49: questBuildingSource = PlayerGPS.DiscoverBuilding's { currentMapID, isBuildingQuestResource } pair   // H1: the location's whole building list, for the houses-for-sale roll   // V5: gps = PlayerGPS's location reads, for CanRest   // R1: the discovery store's location key (the anti-grind record's namespace)   // B4: the quicksave composer's trio + the world host's _questStarted latch   // Q4-v: the quest bridge + the host's scene-context closure ({mapId, locationIndex})   // M2: the host's cast engine + SPELLS.STD getter ride in   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure; townTalk: U23's static-NPC seam
+  const { canvas, renderer, player, cam, keys, latch, blocks, pipeline, doorTargets, doorGeneration = null, npcTargets = null, buildingTargets = null, baseCollider, voxelfolk = false, piece = 0, paint = false, buildingDataForDoor = null, townTalk = null, magic = null, spellsByIndex = null, questBridge = null, questSceneCtx = null, npcSession = null, talkSave = null, onQuestRestored = null, layoutPinsLoaded = null, discoveryLocationId = null, questBuildingSource = null, gps = null, buildingDirectory = null } = host;   // AUDIT 63 F49: questBuildingSource = PlayerGPS.DiscoverBuilding's { currentMapID, isBuildingQuestResource } pair   // H1: the location's whole building list, for the houses-for-sale roll   // V5: gps = PlayerGPS's location reads, for CanRest   // R1: the discovery store's location key (the anti-grind record's namespace)   // B4: the quicksave composer's trio + the world host's _questStarted latch   // Q4-v: the quest bridge + the host's scene-context closure ({mapId, locationIndex})   // M2: the host's cast engine + SPELLS.STD getter ride in   // host.foes: C8 E1 rigged class enemies in dungeons; buildingDataForDoor: E2's shop identity closure; townTalk: U23's static-NPC seam
   // LOCKPICK (bible/06-Systems/Lockpicking.md): a building's front door picked in Steal mode plays the lock's tumblers
   // (scenes/lockpickHost.js) in the street's slot - a lockpick from the pack. A page's life: the modes are never torn down
   const lockHost = createLockpickHost({ talk: townTalk, mount: mountServiceWindow });   // AUDIT LOCKPICK A1: never `lockpick` - the steal ladder's own `lockpick` (the skill, DFU's name) shadowed it; A4: the mode's own slot
@@ -4288,46 +4283,6 @@ export function createWorldModes(host) {
    *  (:882 shelves, :907 the owned latch, :911 house containers), so
    *  it is spelled once here and not three times below. */
   const stockedToday = () => createStockedDate(gameDate());
-  /** ActivateBulletinBoard (PlayerActivate.cs:706-739), verbatim: the
-   *  reach gate first, then the mill's SIGN face, then the box.
-   *
-   *  The rumour comes back as TOKENS already macro-expanded by
-   *  GetNewsOrRumorsForBulletinBoard (:1378-1380), and DFU heads them
-   *  with the location's name - so the sign reads as a town notice
-   *  rather than a floating sentence. A town whose mill has nothing
-   *  fit for a sign STILL opens the box (:727 only guards the second
-   *  half): the name alone, which is the sign standing empty. */
-  function activateBulletinBoard(aabb, eye, dir) {
-    if (!aabb) return;
-    // :709-713 - `hit.distance > MobileNPCActivationDistance` speaks
-    // the mid-screen refusal and returns. The pick reached to
-    // RayDistance, so this is the board's own second test.
-    const d = rayAabb(eye, dir, aabb);
-    if (d === null || d > BULLETIN_BOARD_ACTIVATION_DISTANCE) {
-      // AUDIT 64 F34: PlayerActivate.cs:711 - SetMidScreenText.
-      setMidScreenText(tooFarAwayText());
-      return;
-    }
-    // PlayerGPS.CurrentLocalizedLocationName (:721). Standing in the
-    // wilderness there is no directory and no name - the head row is
-    // then empty, which is what C#'s own empty CurrentLocationName
-    // would give (no board stands out there to click regardless).
-    // L10N3e: the name as shown, by the location's MapId (PlayerGPS.cs:259).
-    const here = buildingDirectory?.() ?? null;
-    const locationName = here ? getLocalizedLocationName(here.mapId, here.locationName ?? '') : '';
-    // DaggerfallUI.MessageBox(tokens) (:738) - the composition, the
-    // token->row law and the starter-label drop all live in
-    // systems/bulletinBoard.js; this end owns only the window.
-    // BOUNTY1 (Mac, 2026-09-28): half of a town's boards are its BOUNTY boards (systems/bounty/bountyBoard.js
-    // questBoardIndices) - the box carries its town's pixel, and the host's bounty window stands instead of the notice
-    if (aabb.bounty && openBountyBoard?.(aabb.bounty)) return;
-    const rows = bulletinBoardRows(locationName, bulletinBoardNews?.() ?? null, tokenRows);
-    // NOTICE1 (PROF0 10.1): online, every other board of the town is its NOTICE BOARD - the same rumour pinned first on
-    // it (the name row is the window's own heading); offline, or while the service has not said it is open, the box
-    // below is DFU's, byte for byte (ROAD A9)
-    if (aabb.notice && openNoticeBoard?.(aabb.notice, rows.map((r) => r.text).filter((t, i) => !(i === 0 && t === locationName)))) return;
-    townTalk?.showOverlay?.(new ChoiceWindow({ lines: rows.map((r) => r.text) }));
-  }
 
 
   /** AUDIT 58 (talk lane) - ActivateStaticNPC's OWN switch
@@ -7177,7 +7132,7 @@ export function createWorldModes(host) {
     const gen = doorGeneration?.();
     if (gen !== undefined && _doorCache && _doorCache.gen === gen) return _doorCache;
     const entries = doorTargets();
-    // AUDIT 65 MC-2: the DOOR reaches for the RAY, as the boards below do - ActivateStaticDoor's own `hit.distance > DoorActivationDistance` refusal (:501-504) can only speak if the pick hands the door over.
+    // AUDIT 65 MC-2: the DOOR reaches for the RAY, as the graves below do - ActivateStaticDoor's own `hit.distance > DoorActivationDistance` refusal (:501-504) can only speak if the pick hands the door over.
     const targets = entries.map((entry, i) => ({ key: i, aabb: doorWorldAabb(entry.door), distance: RAY_DISTANCE, reach: DOOR_ACTIVATION_DISTANCE }));
     _doorCache = { gen, entries, targets };
     return _doorCache;
@@ -7186,12 +7141,12 @@ export function createWorldModes(host) {
   /** AUDIT-WH P1: ...and the WHOLE list, once a frame.
    *
    *  The doors are cached by generation above; the live families - the
-   *  street's static NPCs and the boards - are not, and must not be
+   *  street's static NPCs and the graves - are not, and must not be
    *  (a stale person is a plaque naming someone who has walked away).
    *  But this function is called up to FOUR times in one frame on the
    *  streaming host: the enemy arm's rival distance, the press's own
    *  pick, the plaque's pick and the plaque's namer. Each call copies
-   *  the ~300-row door array and re-walks the people and the boards,
+   *  the ~300-row door array and re-walks the people and the graves,
    *  and every one of those calls is asking about the same frame.
    *
    *  So the answer is memoised on the FRAME, not on a generation:
@@ -7225,25 +7180,7 @@ export function createWorldModes(host) {
       if (pn.textureArchive != null && !isNpcFlat(pn.textureArchive)) return;
       targets.push({ key: `person:${i}`, aabb: personAabb(pn), distance: STATIC_NPC_ACTIVATION_DISTANCE });
     });
-    // THE BULLETIN BOARDS, in the SAME ray as the doors and the street
-    // NPCs - PlayerActivate casts one ray and routes by what it hit
-    // (:314, :393-398), so a board and a door compete by distance.
-    // Their reach here is the RAY's, not the board's: DFU's hit test
-    // is the raycast (RayDistance), and the board's own
-    // MobileNPCActivationDistance is a SECOND test inside
-    // ActivateBulletinBoard (:709-713) whose failure speaks the
-    // refusal instead of falling through. A board the player can see
-    // but not reach therefore consumes the click, exactly as C# does.
-    const boards = boardTargets?.() ?? [];
-    // AUDIT-WH M1: ...and it carries that constant as its REACH. Every
-    // other family here does (MC-2's law: reach for the ray, carry the
-    // handler's own beside it) and the board was the one that did not,
-    // so `pickActivatableHit` fell to `reach ?? distance` and handed the
-    // plaque a board at the RAY's 76.8 - naming a notice board halfway
-    // down the street, where the mod's own band is 6.4 (.cs:315-318).
-    // The PRESS is unchanged: its board arm returns above the reach
-    // gate, because the refusal is spoken inside activateBulletinBoard.
-    boards.forEach((aabb, i) => targets.push({ key: `board:${i}`, aabb, distance: RAY_DISTANCE, reach: BULLETIN_BOARD_ACTIVATION_DISTANCE }));
+    // NOTICE-PANEL: no town board stands in the street - the town panel under the compass is its press (scenes/townPanelHost.js)
     // SEARCH1 (systems/searchables.js): a graveyard's headstones - the streaming host's (scenes/world.js graveTargets);
     // the bench host stands none. The ray's distance, half a door's reach carried beside it - GRAVE-PARTY (FIELD BUGS
     // 2026-10-16): measured from the BODY to the stone's box (searchReachFor), as the dungeon's searchables are.
@@ -7261,7 +7198,7 @@ export function createWorldModes(host) {
     for (const t of host.portTargets?.() ?? []) targets.push(t);
     // WITCH1 (scenes/witchesHost.js): the Hearth Offerings at the homes' doors - the streaming host's (the bench stands none)
     for (const t of host.witches?.targets() ?? []) targets.push(t);
-    _extList = { entries, npcs, boards, graves, targets };
+    _extList = { entries, npcs, graves, targets };
     _extMark = mark;
     return _extList;
   }
@@ -7544,8 +7481,7 @@ export function createWorldModes(host) {
       return _doorText;
     }
     if (typeof key !== 'string') return null;
-    if (key.startsWith('board:')) { const bd = _extList?.boards?.[Number(key.split(':')[1])]; return { title: bd?.bounty ? BOUNTY_BOARD_TEXT : bd?.named ? NOTICE_BOARD_TEXT : BULLETIN_BOARD_TEXT }; }
-    if (key.startsWith('grave:')) return { title: 'Grave' };   // SEARCH1   // .cs:315-318; BOUNTY1: a bounty board names itself
+    if (key.startsWith('grave:')) return { title: 'Grave' };   // SEARCH1
     if (key.startsWith('person:')) {                                       // .cs:325-393
       const pn = npcs[Number(key.split(':')[1])];
       if (!pn) return null;
@@ -7776,17 +7712,13 @@ export function createWorldModes(host) {
     // swallow every entry click.
     const bd = buildingUnderRay(eye, dir);
     if (bd) activateBuilding(bd, resolveBuildingUnlocked(bd));
-    const { entries, npcs, boards, graves, targets } = exteriorActivationTargets();
+    const { entries, npcs, graves, targets } = exteriorActivationTargets();
     const { key, distance: _hitDist, reach: _hitReach } = pickActivatableHit(eye, dir, targets, baseCollider()) ?? { key: null };
     if (key === null) return false;
     // ...and the NPC arm ENDS the activation, exactly as the interior
     // ray's does: an NPC under the ray is not a door.
     if (typeof key === 'string' && key.startsWith('person:')) {
       activateStaticNpc(npcs[Number(key.split(':')[1])]);
-      return true;
-    }
-    if (typeof key === 'string' && key.startsWith('board:')) {
-      activateBulletinBoard(boards[Number(key.split(':')[1])], eye, dir);
       return true;
     }
     if (typeof key === 'string' && key.startsWith('grave:')) {   // SEARCH1: a headstone - too far speaks the refusal
@@ -7809,7 +7741,7 @@ export function createWorldModes(host) {
       if (_hitDist > _hitReach) { setMidScreenText(tooFarAwayText()); return true; }
       return host.witches?.activate(key, getInteractionMode(), plaqueActionFor(key)) ?? true;
     }
-    if (_hitDist > _hitReach) { setMidScreenText(tooFarAwayText()); return true; }   // AUDIT 65 MC-2: ActivateStaticDoor's OWN first statement (:501-504), before the bash sound and the lock ladder; the board arm keeps its gate inside activateBulletinBoard (:709-712), as C# does
+    if (_hitDist > _hitReach) { setMidScreenText(tooFarAwayText()); return true; }   // AUDIT 65 MC-2: ActivateStaticDoor's OWN first statement (:501-504), before the bash sound and the lock ladder
     return activateStaticDoor(entries[key], entries, false, { verb: plaqueActionFor(key) });   // HOME2: the verb the door's plaque lit, if it listed any
   }
 
@@ -8362,7 +8294,7 @@ export function createWorldModes(host) {
    *  re-tested here; the click's own caller SPEAKS it (tryEnter, AUDIT 65 MC-2) and the swing keeps
    *  a NARROW pick (`distance: WEAPON_REACH`, no `reach`), because a swing at nothing is no refusal.
    *
-   *  Only DOORS are targets: the street's NPCs and bulletin boards are
+   *  Only DOORS are targets: the street's NPCs are
    *  in the activation ray, not the weapon's. The return is DFU's -
    *  `door.doorType != DoorTypes.DungeonExit`, i.e. the swing was
    *  consumed - which above ground is "a door was under it".

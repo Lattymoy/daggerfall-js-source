@@ -429,8 +429,8 @@
   {
     "name": "RAID1-host-raiders-saved",
     "file": "src/scenes/raidHost.js",
-    "old": "spawn: (mt, pos, o) => exteriorFoes.spawnFoe(mt, pos, { yaw: o.yawRad, loose: true, transient: true }),",
-    "new": "spawn: (mt, pos, o) => exteriorFoes.spawnFoe(mt, pos, { yaw: o.yawRad, loose: true }),",
+    "old": "spawn: (mt, pos, o) => exteriorFoes.spawnFoe(mt, pos, { yaw: o.yawRad, loose: true, transient: true, eventFoe: boss }),",
+    "new": "spawn: (mt, pos, o) => exteriorFoes.spawnFoe(mt, pos, { yaw: o.yawRad, loose: true, eventFoe: boss }),",
     "tests": ["test/systems/raid1_raidingParties.test.js"]
   },
   {

@@ -62,5 +62,5 @@ test('PERF7 pins: the world host keeps one breather for the stream, resets it at
   assert.match(w, /entry\._batched = true; \}[^\n]*\n\s+await breather\.breathe\(\);/, 'after each model, inside the placements loop');
   const loopAt = w.indexOf('for (const placed of b.layout.models) {');
   const breatheAt = w.indexOf('await breather.breathe();', loopAt);   // PIN MOVED (AUDIT PRECIP HOST-7): the flat groups' own loop (standFlatGroups, shared with the re-skin) breathes above the model loop - the breath this pins is the first after it
-  assert.ok(loopAt > 0 && breatheAt > loopAt && breatheAt - loopAt < 4500, 'the breath is inside the model loop');   // WD3 (the arena merge): a model's alias grew the loop past 3000 - a runaway guard, not a law; AUDIT TAMRIEL-WIDE A1: a terraced house's mark took it to 3,999 of 4,000
+  assert.ok(loopAt > 0 && breatheAt > loopAt && breatheAt - loopAt < 5000, 'the breath is inside the model loop');   // NOTICE-PANEL: 4,000 -> 4,542 measured, a town board's place kept and the board skipped before it is drawn - the guard 5000. WD3 (the arena merge): a model's alias grew the loop past 3000 - a runaway guard, not a law; AUDIT TAMRIEL-WIDE A1: a terraced house's mark took it to 3,999 of 4,000
 });

@@ -20,7 +20,7 @@ import { witnessedFact } from '../../src/net/nodeLaw.js';
 import { createTownSeatBook, parseSeatCommand, SEAT_USAGE, SEAT_LIST_CACHE_MS, SEAT_REPORTED_KEY } from '../../src/net/townSeatBook.js';
 import { buildInkMarks, markReach, paintSeatRing, SEAT_RING_PAD, SEAT_SECOND_PAD } from '../../src/ui/ink/inkMap.js';
 import { plainBannerOf } from '../../src/ui/heraldryArt.js';
-import { seatBannerAnchors, gateBannerAnchor, boardPennantAnchor, palaceKeysOf, townCentreOf, createSeatBanners, GATE_BANNER_DROP_M, BOARD_PENNANT_RISE_M } from '../../src/scenes/seatBanners.js';
+import { seatBannerAnchors, gateBannerAnchor, palaceKeysOf, townCentreOf, createSeatBanners, GATE_BANNER_DROP_M } from '../../src/scenes/seatBanners.js';
 import { countSeats } from '../../tools/seatCount.mjs';
 import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
@@ -225,7 +225,7 @@ test('SEAT1a the map: a seat\'s mark carries its ring, round any hub\'s circle, 
   assert.ok(w.indexOf('paintSeatRing(ctx, x, y, markReach(m), m.seatMark)') < w.indexOf('for (const [m, x, y] of inked) paintGlyph(ctx, m.kind, x, y, true);'), 'under the glyph and its halo');
 });
 
-test('SEAT1a the banners: the palace door\'s two, a gate\'s on its town side beside its post, a rumour board\'s pennant over it (never a bounty board\'s), eight at most; the palace\'s keys off its blocks\' own records; the kingdom\'s plain cloth hung while the seats are open, none in a Free Land (mutants: the town side; the bounty test; the cap; the palace type; the open gate)', () => {
+test('SEAT1a the banners: the palace door\'s two, a gate\'s on its town side beside its post, no board\'s pennant (NOTICE-PANEL: no board stands), eight at most; the palace\'s keys off its blocks\' own records; the kingdom\'s plain cloth hung while the seats are open, none in a Free Land (mutants: the town side; the bounty test; the cap; the palace type; the open gate)', () => {
   const blocks = [{ x: 1, y: 2, dfBlock: { rmbBlock: { fldHeader: { buildingDataList: [{ buildingType: 17 }, { buildingType: BUILDING_TYPES.Palace }, { buildingType: BUILDING_TYPES.Palace }] }, subRecords: [{}, {}] } } }];
   assert.deepEqual(palaceKeysOf(blocks, makeBuildingKey), [makeBuildingKey(1, 2, 1)], 'the palace record, inside the block\'s own count');
   const I = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
@@ -235,14 +235,11 @@ test('SEAT1a the banners: the palace door\'s two, a gate\'s on its town side bes
   assert.equal(g.top[1], 6 - GATE_BANNER_DROP_M);
   assert.ok(g.top[2] > 0.5, 'off the gate\'s face');
   assert.deepEqual(gateBannerAnchor(gate, [0, -20]).out, [0, 0, -1], 'the other side, never a signed zero');
-  const b = boardPennantAnchor({ local: I, box: [0, 0, 0, 1, 2, 0.2] });
-  assert.deepEqual(b.top, [0.5, 2 + BOARD_PENNANT_RISE_M, 0.1]);
   const frames = new Map([[makeBuildingKey(1, 2, 1), { at: [0, 0, 0], box: [-5, 0, -5, 5, 8, 5], door: { a: [-1, 0, 5], b: [1, 0, 5] } }]]);
   const boards = [{ local: I, box: [0, 0, 0, 1, 2, 0.2] }, { local: I, box: [3, 0, 0, 4, 2, 0.2] }];
-  const all = seatBannerAnchors({ frames, palaceKeys: [makeBuildingKey(1, 2, 1)], gates: [gate], boards, bounty: new Set([1]), centre: [0, 20] });   // ONE-BOARD REVERTED (PIN MOVED): a pennant over every rumour board
-  assert.equal(all.length, 4, 'the door\'s two, the gate\'s one, the rumour board\'s one - never the bounty board\'s');
-  assert.deepEqual(all[3], boardPennantAnchor(boards[0]), 'the pennant over the rumour board itself');
-  assert.equal(seatBannerAnchors({ boards, centre: [0, 20] }).length, 2, 'no bounty board: a pennant over each');
+  const all = seatBannerAnchors(/** @type {any} */ ({ frames, palaceKeys: [makeBuildingKey(1, 2, 1)], gates: [gate], boards, bounty: new Set([1]), centre: [0, 20] }));   // PIN MOVED (NOTICE-PANEL): no pennant over a board
+  assert.equal(all.length, 3, 'the door\'s two, the gate\'s one - a board\'s place hangs nothing');
+  assert.equal(seatBannerAnchors(/** @type {any} */ ({ boards, centre: [0, 20] })).length, 0, 'boards alone hang nothing');
   const many = seatBannerAnchors({ gates: Array(12).fill(gate), centre: [0, 20] });
   assert.equal(many.length, SEAT_BANNERS_MAX);
   assert.deepEqual(townCentreOf(new Map([[1, { at: [2, 0, 4] }], [2, { at: [4, 0, 8] }]])), [3, 6]);
@@ -273,9 +270,8 @@ test('SEAT1a the hosts by source: the boot pass derives the seats over the hubs\
   assert.match(w, /if \(seat\) \{ townTalk\.say\(seatArrivalLine\(seat\), 5\); seatBook\.witness\(seat\); \}\n\s*else if \(hub\) townTalk\.say\(hubArrivalLine\(hub\), 5\);/);
   assert.match(w, /seatAt: seatBook \? \(summary\) => seatHere\(summary\?\.mapID \?\? summary\?\.mapId\) : null,/);
   assert.match(w, /const seatAnchors = pixelBoardSplit \? seatBannerAnchors\(\{/);
-  assert.match(w, /gates: pixelGates\.map\(\(g\) => \(\{ local: g\.local, box: g\.entry\?\._box \}\)\), boards: pixelBoards, bounty: pixelBoardSplit,/);   // PIN MOVED (AUDIT SEATS-3 F5): the anchors' own, not the siege field's; ONE-BOARD REVERTED (PIN MOVED)
-  assert.match(w, /const pixelBoardSplit = dfLocation && locBlocks && seatAtMapId\(townSeats, dfLocation\.mapTableData\?\.mapId\) \? boardSplitOf\(\{ boards: pixelBoards \}\) : null;/, 'BOUNTY1\'s split through its one memo (AUDIT 28 H8)');
-  assert.match(w, /if \(isBulletinBoard\(placed\.modelIdNum\)\) pixelBoards\.push\(\{ box, local \}\);/);
+  assert.match(w, /gates: pixelGates\.map\(\(g\) => \(\{ local: g\.local, box: g\.entry\?\._box \}\)\), centre: townCentreOf\(pixelHomeFrames\),/);   // PIN MOVED (NOTICE-PANEL): the anchors take no board
+  assert.match(w, /const pixelBoardSplit = dfLocation && locBlocks && seatAtMapId\(townSeats, dfLocation\.mapTableData\?\.mapId\) \? questBoardIndices\(pixelBoards\) : null;/, 'BOUNTY1\'s split, once a build - the siege field\'s Market');
   // PIN MOVED (AUDIT SEATS-3): the halls' and the seats' merged into one kept list (C4: no spread a frame)
   assert.match(w, /for \(const b of hallBanners\?\.list\(\) \?\? \[\]\) all\.push\(b\);\n\s*for \(const b of seatBanners\?\.list\(\) \?\? \[\]\) all\.push\(b\);/);
   assert.match(w, /const hung = bannersHung\(\);/);

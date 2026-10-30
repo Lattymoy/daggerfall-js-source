@@ -10,7 +10,7 @@ import { createWorldPlaces } from '../../src/world/worldWide/worldPlaces.js';
 import { pastBayPlaceRows, PAST_BAY_SOURCE } from '../../src/world/pastBayRows.js';
 import { standArenaPixels, arenaPixels, pictureLakes, pastBayLakeAt, SHORE_DRY_REACH } from '../../src/world/arenaPlaces.js';
 import { arenaTemplates, arenaTemplateOf, arenaPlaceId } from '../../src/world/arenaLocations.js';
-import { CAPITALS, capitalPin, capitalSpan, capitalPlaceId, isCapitalPlaceId } from '../../src/world/tamrielCapitals.js';
+import { CAPITALS, capitalPin, capitalSpan, capitalDims, capitalPlaceId, isCapitalPlaceId } from '../../src/world/tamrielCapitals.js';
 import { setTamrielTrace, tamrielTrace } from '../../src/world/tamriel/tamrielLand.js';
 import { setTamrielFit, pictureToBay, bayToPicture, inBay } from '../../src/world/tamriel/tamrielFrame.js';
 import { theatreOfArea, THEATRE_KEYS, areaAt } from '../../src/world/worldWide/worldGrid.js';
@@ -87,9 +87,9 @@ test('AUDIT TESA II P7/P13 (ARENA2) THE ROWS PAST THE BAY on the freeware\'s tra
   const t = arenaTemplates(gameRows());
   const px = arenaPixels();
   const rows = pastBayPlaceRows({ pixels: px, templateOf: (p) => arenaTemplateOf(t, p), capitals: true });
-  const slices = CAPITALS.reduce((n, c) => n + capitalSpan(c) ** 2, 0);
+  const slices = CAPITALS.reduce((n, c) => { const D = capitalDims(c); return n + D.w * D.h; }, 0);   // PIN MOVED (AUDIT FB1029g P1): a span is w by h - its square read Alinor's and Torval's sea slices out
   const pinned = px.stood.filter((p) => p.pinned).length;
-  assert.deepEqual([rows.length, slices, pinned], [px.stood.length - pinned + slices, 631, 7], 'the slices, and the stood places but the pinned');   // PIN MOVED (TS5): the Imperial City seven pixels a side; PIN MOVED (IC-GRAND): twenty-five (625 and the other six capitals' six)
+  assert.deepEqual([rows.length, slices, pinned], [px.stood.length - pinned + slices, 633, 7], 'the slices, and the stood places but the pinned');   // PIN MOVED (TS5): the Imperial City seven pixels a side; PIN MOVED (IC-GRAND): twenty-five (625 and the other six capitals' six)
   const ic = CAPITALS.findIndex((c) => c.name === 'Imperial City'), at = capitalPin({ name: CAPITALS[ic].name, province: CAPITALS[ic].province });
   const icRows = rows.filter((r) => isCapitalPlaceId(r.mapId) && (r.mapId & 0x7ffff) % 16 === ic);   // capitalPlaceId: k + 16 a slice
   assert.equal(icRows.find((r) => r.px === at.px && r.py === at.py)?.mapId, capitalPlaceId(ic, 0), 'the centre its capital\'s own id');

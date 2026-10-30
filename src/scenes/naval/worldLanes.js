@@ -439,6 +439,9 @@ export function createWorldLanes({ mapDict, maps, portIds, ports, bayOpen, bayOp
      *  world/terrain/terrainGenClient.js), so `all()` is the one list every game standing that land holds? The serpent's
      *  site is rolled over them once they are (systems/serpent/serpentSite.js worldSerpentSite). */
     whole: () => !!bayPorts() && beyond() && !!tamrielTrace(),
+    /** SEA-ROWS: are the lanes this game will hold all made - the Bay's directory, and the picture where the land past
+     *  the Bay stands (the Bay's lanes alone with it off)? The crossing's waters are measured from them once they are. */
+    settled: () => !!bayPorts() && (!beyond() || !!tamrielTrace()),
     /** Every lane of the world: the Bay's, then the ones past it, then (WW7-10) the ones across its edge. */
     all() {
       const b = bayNet(), w = beyondNet(), c = crossNet();
@@ -462,13 +465,14 @@ export function createWorldLanes({ mapDict, maps, portIds, ports, bayOpen, bayOp
     /** SEA-LANES: whether a player at map pixel `here` may have a packet of `lane` in reach - asked before its way is:
      *  on the Bay every point of a way lies within half its longest (LANE_PATH_PX) of one of its ports; AUDIT TESA II P7:
      *  past it within the ellipse its two roadsteads bound for a way no longer than BEYOND_LANE_PATH_PX (NIBEN-SEA:
-     *  beyondPathPx); WW7-10: across the Bay's edge, the ellipse for one no longer than CROSS_LANE_PATH_PX.
+     *  beyondPathPx); WW7-10: across the Bay's edge, the ellipse for one no longer than CROSS_LANE_PATH_PX. SEA-ROWS: `pad`
+     *  the reach past its water (the crossing's, etherCrossing.js createCrossSea).
      *  @param {{ a: any, b: any, cross?: boolean }} lane @param {{ x: number, y: number }} here */
-    near(lane, here) {
+    near(lane, here, pad = LANE_NEAR_PX) {
       const da = Math.hypot(lane.a.road.x - here.x, lane.a.road.y - here.y), db = Math.hypot(lane.b.road.x - here.x, lane.b.road.y - here.y);
-      if (lane.cross) return da + db <= CROSS_LANE_PATH_PX + 2 * LANE_NEAR_PX;
-      if (inBay(lane.a.px, lane.a.py)) return Math.min(da, db) <= LANE_PATH_PX / 2 + LANE_NEAR_PX;
-      return da + db <= beyondPathPx(lane) + 2 * LANE_NEAR_PX;   // NIBEN-SEA: a canal harbour's lane its own
+      if (lane.cross) return da + db <= CROSS_LANE_PATH_PX + 2 * pad;
+      if (inBay(lane.a.px, lane.a.py)) return Math.min(da, db) <= LANE_PATH_PX / 2 + pad;
+      return da + db <= beyondPathPx(lane) + 2 * pad;   // NIBEN-SEA: a canal harbour's lane its own
     },
   };
 }

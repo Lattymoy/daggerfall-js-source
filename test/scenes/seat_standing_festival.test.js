@@ -112,18 +112,15 @@ const I = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 const tavern = (x) => ({ box: [x - 5, 0, -5, x + 5, 8, 5], door: { a: [x - 1, 0, 5], b: [x + 1, 0, 5] } });
 const board = (x) => ({ local: [...I.slice(0, 12), x, 0, 30, 1], box: [x - 1, 0, 29.5, x + 1, 2, 30.5] });
 
-test('FESTIVAL-STAGE the Festival\'s anchors: two beside each tavern\'s door, then a pennant over each board BOUNTY1 took - never a rumour board, which flies the seat\'s already - at most FESTIVAL_BANNERS_MAX; a lantern before each banner, below its top and out before its cloth; a Festival rules where the holder\'s Edict is one (mutants: the rumour boards for the bounty boards; the cap; the lantern raised; any Edict a Festival)', () => {
+test('FESTIVAL-STAGE the Festival\'s anchors: two beside each tavern\'s door, at most FESTIVAL_BANNERS_MAX - no board\'s pennant (NOTICE-PANEL: no board stands, PIN MOVED); a lantern before each banner, below its top and out before its cloth; a Festival rules where the holder\'s Edict is one (mutants: the cap; the lantern raised; any Edict a Festival)', () => {
   const frames = new Map([['t1', tavern(0)], ['t2', tavern(40)]]);
   const boards = [board(100), board(120), board(140)];
-  const got = festivalBannerAnchors({ frames, tavernKeys: ['t1', 't2', 'none'], boards, bounty: new Set([1]) });
-  assert.equal(got.length, 5, 'the two taverns\' four, the one bounty board\'s pennant');
+  const got = festivalBannerAnchors(/** @type {any} */ ({ frames, tavernKeys: ['t1', 't2', 'none'], boards, bounty: new Set([1]) }));
+  assert.equal(got.length, 4, 'the two taverns\' four - a board\'s place hangs nothing');
   assert.deepEqual(got.slice(0, 2), hallBannerAnchors(frames.get('t1')));
   assert.deepEqual(got.slice(2, 4), hallBannerAnchors(frames.get('t2')));
-  assert.ok(Math.abs(got[4].top[0] - 120) < 1e-9, `the bounty board's, not a rumour board's: ${got[4].top}`);
-  const many = festivalBannerAnchors({ frames, tavernKeys: ['t1', 't2', 't1', 't2'], boards, bounty: new Set([0, 1, 2]) });
-  assert.equal(many.length, FESTIVAL_BANNERS_MAX, 'four taverns: three\'s six - no room for the fourth\'s, nor a pennant');
-  assert.equal(festivalBannerAnchors({ boards, bounty: new Set([0, 1, 2]) }).length, 3);
-  assert.equal(festivalBannerAnchors({ boards: Array(9).fill(board(0)), bounty: new Set([0, 1, 2, 3, 4, 5, 6, 7, 8]) }).length, FESTIVAL_BANNERS_MAX);
+  const many = festivalBannerAnchors({ frames, tavernKeys: ['t1', 't2', 't1', 't2'] });
+  assert.equal(many.length, FESTIVAL_BANNERS_MAX, 'four taverns: three\'s six - no room for the fourth\'s');
   assert.deepEqual(festivalBannerAnchors(), []);
   const a = { top: [1, 5, 2], out: [0, 0, 1], right: [1, 0, 0] };
   assert.deepEqual(festivalLanternsOf([a]), [[1, 5 - FESTIVAL_LANTERN_DROP_M, 2 + FESTIVAL_LANTERN_OUT_M]]);
@@ -194,11 +191,11 @@ test('FESTIVAL-STAGE the music: a Festival town\'s streets hear the tavern\'s pl
   assert.equal(festivalEnvironment(MUSIC_ENV.City, 'yes'), MUSIC_ENV.City, 'only a Festival that rules');
 });
 
-test('FESTIVAL-STAGE wired in the streets\' host: the build measures the Festival\'s anchors at the taverns and the bounty boards and a lantern before every banner, kept on the pixel; the stage reads the dressed seat; the lantern pool takes its lanterns; the music its Festival (mutants: the temples for the taverns; the pool without them; the music without it)', () => {
+test('FESTIVAL-STAGE wired in the streets\' host: the build measures the Festival\'s anchors at the taverns and a lantern before every banner, kept on the pixel; the stage reads the dressed seat; the lantern pool takes its lanterns; the music its Festival (mutants: the temples for the taverns; the pool without them; the music without it)', () => {
   const w = hostText('src/scenes/world.js');
-  assert.match(w, /const festivalAnchors = pixelBoardSplit \? festivalBannerAnchors\(\{ frames: pixelHomeFrames, tavernKeys: buildingKeysOfType\(locBlocks, makeBuildingKey, TALK_BUILDING_TYPES\.Tavern\), boards: pixelBoards, bounty: pixelBoardSplit \}\) : null;/);
+  assert.match(w, /const festivalAnchors = pixelBoardSplit \? festivalBannerAnchors\(\{ frames: pixelHomeFrames, tavernKeys: buildingKeysOfType\(locBlocks, makeBuildingKey, TALK_BUILDING_TYPES\.Tavern\) \}\) : null;/);
   assert.match(w, /const festivalLanterns = festivalAnchors \? festivalLanternsOf\(\[\.\.\.\(seatAnchors \?\? \[\]\), \.\.\.festivalAnchors\]\) : null;/);
-  assert.match(w, /seatAnchors, _boardSplit: pixelBoardSplit, festivalAnchors, festivalLanterns,/);
+  assert.match(w, /seatAnchors, festivalAnchors, festivalLanterns,/);   // PIN MOVED (NOTICE-PANEL): no board split kept on the pixel
   assert.match(w, /const festivalStage = seatBook \? createFestivalStage\(\{ seatAt: \(mapId\) => seatHere\(mapId\), version: \(\) => \(seatBook\.open === true \? 1 : 0\) \}\) : null;/);
   assert.match(w, /worldLightAnimator\.ranges, festivalStage \? festivalStage\.lanterns : null\);/);
   assert.match(w, /arrested: Boolean\(playerEntity\.arrested\),\n\s*festival: festivalStage\?\.festive\(_musicLoc\?\.mapTableData\?\.mapId\) === true,/);

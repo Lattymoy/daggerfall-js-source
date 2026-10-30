@@ -56,8 +56,8 @@
   {
     "name": "PLAN-SLICES-a-flood-uncounted",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "      if (qh && (qh & (PLAN_YIELD_CELLS - 1)) === 0) yield;   // PLAN-SLICES\n      if (tally) tally.n++;",
-    "new": "      if (qh && (qh & (PLAN_YIELD_CELLS - 1)) === 0) yield;   // PLAN-SLICES",
+    "old": "        if (++popped % PLAN_YIELD_CELLS === 0) yield;   // PLAN-SLICES\n        if (tally) tally.n++;",
+    "new": "        if (++popped % PLAN_YIELD_CELLS === 0) yield;   // PLAN-SLICES",
     "tests": [
       "test/systems/travel/plan_slices.test.js"
     ]
