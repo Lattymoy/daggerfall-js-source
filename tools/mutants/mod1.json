@@ -142,8 +142,8 @@
   {
     "name": "MOD1-15-two-names-one-guess",
     "file": "src/net/moderation.js",
-    "old": "  if (found.size > 1) return { error: t('net.mod.ambiguous', '{count} players are called {name}. Nobody was muted.', { count: found.size, name }) };",
-    "new": "  if (found.size > 1) { const [[sub, shown]] = [...found]; return { sub, name: shown }; }",
+    "old": "  if (found.size > 1)\n    return {\n      error: t('net.mod.ambiguous', '{count} players are called {name}. Nobody was muted.', {\n        count: found.size,\n        name,\n      }),\n    };",
+    "new": "  if (found.size > 1) {\n    const [[sub, shown]] = [...found];\n    return { sub, name: shown };\n  }",
     "tests": [
       "test/net/mod1.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "MOD1-18-said-three-times",
     "file": "src/net/moderation.js",
-    "old": "    if (last && last.until === until && nowMs - last.at < windowMs) return false;",
-    "new": "",
+    "old": "    if (last && last.until === until && nowMs - last.at < windowMs) return false;\n    last = { until, at: nowMs };",
+    "new": "    last = { until, at: nowMs };",
     "tests": [
       "test/net/mod1.test.js"
     ],

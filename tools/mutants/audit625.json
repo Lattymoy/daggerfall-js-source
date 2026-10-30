@@ -282,8 +282,8 @@
   {
     "name": "AUDIT625-S1-young-asked-again",
     "file": "src/net/marksBook.js",
-    "old": "          findsMet = { account: me, day };   // AUDIT 625 S1",
-    "new": "          void 0;   // AUDIT 625 S1",
+    "old": "          findsMet = { account: me, day }; // AUDIT 625 S1: none of its finds struck today - none asked again until the day turns",
+    "new": "          void 0; // AUDIT 625 S1: none of its finds struck today - none asked again until the day turns",
     "why": "a young account asked again the same day",
     "tests": [
       "test/net/audit625_silver.test.js"
@@ -292,8 +292,8 @@
   {
     "name": "AUDIT625-S1-young-owed",
     "file": "src/net/marksBook.js",
-    "old": "          held = error;   // INT16: nor a character not seated here, nor one whose trade is held - none of these finds is owed\n        } else if (error === 'marks-need-account'",
-    "new": "          owe(f); held = error;   // INT16: nor a character not seated here, nor one whose trade is held - none of these finds is owed\n        } else if (error === 'marks-need-account'",
+    "old": "          held = error; // INT16: nor a character not seated here, nor one whose trade is held - none of these finds is owed",
+    "new": "          owe(f);\n          held = error; // INT16: nor a character not seated here, nor one whose trade is held - none of these finds is owed",
     "why": "a young account's find owed",
     "tests": [
       "test/net/audit625_silver.test.js"
@@ -302,8 +302,8 @@
   {
     "name": "AUDIT625-S3-closed-drops-the-rest",
     "file": "src/net/marksBook.js",
-    "old": "          owe(f); held = error;   // AUDIT 625 S3",
-    "new": "          keepOwed(); return out;   // AUDIT 625 S3",
+    "old": "          owe(f);\n          held = error; // AUDIT 625 S3: this find and the rest owed, asked when silver is this account's again",
+    "new": "          keepOwed();\n          return out; // AUDIT 625 S3: this find and the rest owed, asked when silver is this account's again",
     "why": "the switch shut drops the find and every owed behind it",
     "tests": [
       "test/net/audit625_silver.test.js"
@@ -332,8 +332,8 @@
   {
     "name": "AUDIT625-S3-the-store-believed",
     "file": "src/net/marksBook.js",
-    "old": "v.filter(owedFind).slice(-FINDS_OWED_MAX).map(",
-    "new": "v.map(",
+    "old": "    return Array.isArray(v)\n      ? v\n          .filter(owedFind)\n          .slice(-FINDS_OWED_MAX)\n          .map(({ rid: r, kind, account: a }) => ({ rid: r, kind, account: a }))\n      : [];",
+    "new": "    return Array.isArray(v) ? v.map(({ rid: r, kind, account: a }) => ({ rid: r, kind, account: a })) : [];",
     "why": "the store's list believed whole",
     "tests": [
       "test/net/audit625_silver.test.js"
@@ -342,8 +342,8 @@
   {
     "name": "AUDIT625-S3-the-rate-asks-the-rest",
     "file": "src/net/marksBook.js",
-    "old": "          held = error;   // its hour spent",
-    "new": "          void 0;   // its hour spent",
+    "old": "          held = error; // its hour spent (INT17: or the play that pays for it): this find let go (MARKS_FINAL's law), the rest wait owed",
+    "new": "          void 0; // its hour spent (INT17: or the play that pays for it): this find let go (MARKS_FINAL's law), the rest wait owed",
     "why": "the rest asked behind a spent hour",
     "tests": [
       "test/net/audit625_silver.test.js"
@@ -372,8 +372,8 @@
   {
     "name": "AUDIT625-S4-the-book-unhanded",
     "file": "src/net/marksBook.js",
-    "old": "door.find(f.kind, f.rid, f.account)",
-    "new": "door.find(f.kind, f.rid)",
+    "old": "        const r = await ask(() => door.find(f.kind, f.rid, f.account));",
+    "new": "        const r = await ask(() => door.find(f.kind, f.rid));",
     "why": "the book hands no account",
     "tests": [
       "test/net/audit625_silver.test.js"

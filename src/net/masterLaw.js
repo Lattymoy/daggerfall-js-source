@@ -20,7 +20,17 @@ export const MASTER_LINES = 3;
 export const MASTER_PROCS_MAX = 1;
 /** The recipes' kinds whose piece wears a tier (smithItems.js mintPiece): the smith's weapons and armour, the workbench's
  *  staves and bows, the loom's leather and garments, the jeweller's pieces. */
-export const MASTER_KINDS = Object.freeze(['weapon', 'staff', 'bow', 'plate', 'shield', 'chain', 'leather', 'garment', 'jewel']);
+export const MASTER_KINDS = Object.freeze([
+  'weapon',
+  'staff',
+  'bow',
+  'plate',
+  'shield',
+  'chain',
+  'leather',
+  'garment',
+  'jewel',
+]);
 
 /**
  * THE CATALYSTS, ONE TABLE: what a Master's work spends besides its recipe's goods, each from a pursuit of its own - the
@@ -38,8 +48,14 @@ export const MASTER_CATALYSTS = Object.freeze([
 export const masterDayOf = (nowS) => utcDay(nowS);
 
 /** The group a recipe's piece is minted in. @param {any} r */
-export const masterGroupOf = (r) => (r?.kind === 'weapon' || r?.kind === 'staff' || r?.kind === 'bow' ? 'Weapons'
-  : r?.kind === 'jewel' ? 'Jewellery' : r?.kind === 'garment' ? r.group : 'Armor');
+export const masterGroupOf = (r) =>
+  r?.kind === 'weapon' || r?.kind === 'staff' || r?.kind === 'bow'
+    ? 'Weapons'
+    : r?.kind === 'jewel'
+      ? 'Jewellery'
+      : r?.kind === 'garment'
+        ? r.group
+        : 'Armor';
 /** The piece as the law reads it: its group and template. @param {any} r */
 const shapeOf = (r) => ({ group: masterGroupOf(r), templateIndex: r.templateIndex });
 
@@ -76,7 +92,8 @@ export function masterOptions(r) {
   return frozen;
 }
 /** A chosen line's wire key read back, or null for one the piece may not carry. @param {any} r @param {unknown} key */
-export const masterLineOf = (r, key) => (typeof key === 'string' ? masterOptions(r).find((o) => o.key === key) ?? null : null);
+export const masterLineOf = (r, key) =>
+  typeof key === 'string' ? (masterOptions(r).find((o) => o.key === key) ?? null) : null;
 
 /**
  * WHY A CHOICE IS REFUSED, or null: 'recipe' (no Master's work makes its piece), 'count' (not MASTER_LINES lines),
@@ -119,7 +136,8 @@ export const masterKeyOf = (a) => (a.param === undefined ? a.id : `${a.id}:${a.p
 /** AUDIT HORIZONTAL B1: THE LINES AS THE RECORD SIGNS THEM (`l`) - the service's roll, each `[kind, value]` or `[kind,
  *  value, param]`. Every reader takes the values from here, never a roll of today's tables: a band moved, or a line gone
  *  from a group's pool, leaves a made piece the piece its record names. @param {{ id: string, param?: any, value: number }[]} lines */
-export const masterRecordLines = (lines) => lines.map((a) => (a.param === undefined ? [a.id, a.value] : [a.id, a.value, a.param]));
+export const masterRecordLines = (lines) =>
+  lines.map((a) => (a.param === undefined ? [a.id, a.value] : [a.id, a.value, a.param]));
 const LINE_WORD_RE = /^[a-z][A-Za-z]{0,23}$/;
 /** Whether a record's `l` is a Master's lines in shape: MASTER_LINES of them, each a kind's word, a whole value and a param
  *  (a word or a whole number) or none, no line twice. The shape alone - the law of the day it was made was the service's. @param {unknown} l */
@@ -127,8 +145,20 @@ export function masterRecordLinesValid(l) {
   if (!Array.isArray(l) || l.length !== MASTER_LINES) return false;
   const seen = new Set();
   for (const x of l) {
-    if (!Array.isArray(x) || x.length < 2 || x.length > 3 || typeof x[0] !== 'string' || !LINE_WORD_RE.test(x[0]) || !Number.isSafeInteger(x[1])) return false;
-    if (x.length === 3 && !(typeof x[2] === 'string' ? LINE_WORD_RE.test(x[2]) : Number.isSafeInteger(x[2]) && x[2] >= 0)) return false;
+    if (
+      !Array.isArray(x) ||
+      x.length < 2 ||
+      x.length > 3 ||
+      typeof x[0] !== 'string' ||
+      !LINE_WORD_RE.test(x[0]) ||
+      !Number.isSafeInteger(x[1])
+    )
+      return false;
+    if (
+      x.length === 3 &&
+      !(typeof x[2] === 'string' ? LINE_WORD_RE.test(x[2]) : Number.isSafeInteger(x[2]) && x[2] >= 0)
+    )
+      return false;
     seen.add(x.length === 3 ? `${x[0]}:${x[2]}` : x[0]);
   }
   return seen.size === l.length;
@@ -141,6 +171,8 @@ export function masterLinesOfRecord(l) {
 }
 
 /** Whether a piece is a Master's work: a Legendary of no record, made (its provenance the service's). @param {any} item */
-export const isMasterWork = (item) => item?.rarity === 'legendary' && !item.legendary && typeof item.provenance === 'string';
+export const isMasterWork = (item) =>
+  item?.rarity === 'legendary' && !item.legendary && typeof item.provenance === 'string';
 /** A Master's work's lines as one string - the judge holds a piece's to its record's. @param {any[]} lines */
-export const masterSignature = (lines) => (Array.isArray(lines) ? lines.map((a) => `${a?.id}:${a?.param ?? ''}:${a?.value}`).join('|') : '');
+export const masterSignature = (lines) =>
+  Array.isArray(lines) ? lines.map((a) => `${a?.id}:${a?.param ?? ''}:${a?.value}`).join('|') : '';

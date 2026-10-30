@@ -277,7 +277,7 @@
   {
     "name": "SCALE1-F-market-asks-into-the-minute",
     "file": "src/net/marketBook.js",
-    "old": "      if (r?.ok || !ASK_AGAIN_NOW.includes(r?.error)) return r;   // SCALE1: `rate` goes back kept, to the pump",
+    "old": "      if (r?.ok || !ASK_AGAIN_NOW.includes(r?.error)) return r; // SCALE1: `rate` goes back kept, to the pump",
     "new": "      if (r?.ok || !RETRY.includes(r?.error)) return r;",
     "tests": [
       "test/net/scale1.test.js"
@@ -286,8 +286,8 @@
   {
     "name": "SCALE1-F-market-unjittered",
     "file": "src/net/marketBook.js",
-    "old": "await sleep(jittered(MARKET_RETRY_MS[Math.min(i - 1, MARKET_RETRY_MS.length - 1)]));",
-    "new": "await sleep(MARKET_RETRY_MS[Math.min(i - 1, MARKET_RETRY_MS.length - 1)]);",
+    "old": "      if (i > 0) await sleep(jittered(MARKET_RETRY_MS[Math.min(i - 1, MARKET_RETRY_MS.length - 1)]));",
+    "new": "      if (i > 0) await sleep(MARKET_RETRY_MS[Math.min(i - 1, MARKET_RETRY_MS.length - 1)]);",
     "tests": [
       "test/net/scale1.test.js"
     ]
@@ -313,8 +313,8 @@
   {
     "name": "SCALE1-F-drakes-back-to-back",
     "file": "src/net/marksBook.js",
-    "old": "      if (i > 0) await sleep(jittered(MARKS_RETRY_MS[Math.min(i - 1, MARKS_RETRY_MS.length - 1)]));   // SCALE1\n",
-    "new": "",
+    "old": "      if (i > 0) await sleep(jittered(MARKS_RETRY_MS[Math.min(i - 1, MARKS_RETRY_MS.length - 1)])); // SCALE1\n      try {",
+    "new": "      try {",
     "tests": [
       "test/net/scale1.test.js"
     ]

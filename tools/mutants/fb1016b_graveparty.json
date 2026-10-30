@@ -102,8 +102,8 @@
   {
     "name": "GRAVE-PARTY-a-grave-re-taken",
     "file": "src/net/overworldLaw.js",
-    "old": "    if (led.gr[k]) continue;\n",
-    "new": "",
+    "old": "    if (led.gr[k]) continue;\n    led.gr[k] = g;",
+    "new": "    led.gr[k] = g;",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "GRAVE-PARTY-a-grave-kept-past-its-hours",
     "file": "src/net/overworldLaw.js",
-    "old": "nowMin - /** @type {number} */ (g[3]) < OW_GRAVE_KEEP_MIN;",
-    "new": "nowMin - /** @type {number} */ (g[3]) < OW_GRAVE_KEEP_MIN * 2;",
+    "old": "  Number.isFinite(nowMin) && nowMin - /** @type {number} */ (g[3]) < OW_GRAVE_KEEP_MIN;",
+    "new": "  Number.isFinite(nowMin) && nowMin - /** @type {number} */ (g[3]) < OW_GRAVE_KEEP_MIN * 2;",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],
@@ -143,8 +143,8 @@
   {
     "name": "GRAVE-PARTY-the-graves-unread",
     "file": "src/net/overworldLaw.js",
-    "old": "  for (const r of gsrc && typeof gsrc === 'object' ? Object.values(gsrc) : []) { const g = owGraveOut(r); if (g) led.gr[owGraveKey(g)] = g; }\n",
-    "new": "",
+    "old": "  for (const r of gsrc && typeof gsrc === 'object' ? Object.values(gsrc) : []) {\n    const g = owGraveOut(r);\n    if (g) led.gr[owGraveKey(g)] = g;\n  }\n  capGraves(led);",
+    "new": "  capGraves(led);",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],
@@ -153,8 +153,8 @@
   {
     "name": "GRAVE-PARTY-the-prune-keeps-them",
     "file": "src/net/overworldLaw.js",
-    "old": "  for (const [k, g] of Object.entries(led.gr)) if (!owGraveLive(g, nowMin)) { delete led.gr[k]; dropped = true; }",
-    "new": "",
+    "old": "  for (const [k, g] of Object.entries(led.gr))\n    if (!owGraveLive(g, nowMin)) {\n      delete led.gr[k];\n      dropped = true;\n    } // GRAVE-PARTY: a search past its hours",
+    "new": "  // GRAVE-PARTY: a search past its hours",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],
@@ -642,7 +642,7 @@
   {
     "name": "AUDIT-G3-the-oldest-in-the-cell-out",
     "file": "src/net/overworldLaw.js",
-    "old": "    for (const keys of by.values()) if (!most || keys.length > most.length || (keys.length === most.length && age(keys[0]) < age(most[0]))) most = keys;",
+    "old": "    for (const keys of by.values())\n      if (!most || keys.length > most.length || (keys.length === most.length && age(keys[0]) < age(most[0])))\n        most = keys;",
     "new": "    for (const keys of by.values()) if (!most || age(keys[0]) < age(most[0])) most = keys;",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
@@ -732,8 +732,8 @@
   {
     "name": "AUDIT-G5-the-fold-unnamed",
     "file": "src/net/overworldLaw.js",
-    "old": "    const g = [...w, nowMin, acct, who], k = owGraveKey(g);",
-    "new": "    const g = [...w, nowMin, acct, ''], k = owGraveKey(g);",
+    "old": "    const g = [...w, nowMin, acct, who],",
+    "new": "    const g = [...w, nowMin, acct, ''],",
     "tests": [
       "test/systems/fb1016b_graveparty.test.js"
     ],

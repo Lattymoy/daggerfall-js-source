@@ -35,13 +35,13 @@
 
 import { MARKET_RID_RE } from './marketLaw.js';
 import { ASK_AGAIN_NOW, jittered } from './backoff.js';
-import { walletReserve } from './realm/realmGoldLaw.js';   // MARKET-AUDIT: a refusal gives back exactly what the payment took   // SCALE1: asks again spread out, and never at once into a minute's refusal
+import { walletReserve } from './realm/realmGoldLaw.js'; // MARKET-AUDIT: a refusal gives back exactly what the payment took   // SCALE1: asks again spread out, and never at once into a minute's refusal
 
 export const MARKET_KEPT_KEY = 'prof5.kept';
 export const MARKET_CACHE_MS = 60_000;
 /** MEM-AUDIT (2026-10-23): how many reads the cache keeps - one a query (a page, a sort, a filter), each a whole view, and it
  *  was cleared only by an act; past their minute they are the stale answer to a failed read, so the oldest go, not the old. */
-export const MARKET_CACHE_KEPT = 256;   // AUDIT MEM-AUDIT U3: a long browse's views (64 dropped a view the player came back to after 70 pages)
+export const MARKET_CACHE_KEPT = 256; // AUDIT MEM-AUDIT U3: a long browse's views (64 dropped a view the player came back to after 70 pages)
 export const MARKET_TRIES = 3;
 export const MARKET_RETRY_MS = Object.freeze([400, 1500]);
 /** How long an order's, a fill's or a withdrawal's id is kept for a press asked again (the lost answer's re-ask). */
@@ -59,8 +59,15 @@ const SHUT = Object.freeze(['market-closed', 'prof-need-account']);
 /** AUDIT 30 U9: the answers that say the view a press was made from has moved - the minute's cache is let go. PROF5b: a
  *  bid another overtook; AUDIT 31 B8: a bid that leads already, a bid standing on one's own auction, a bid overtaken as
  *  it was decided - each says the view is older than the auction. */
-export const MARKET_MOVED = Object.freeze(['market-gone', 'market-short', 'market-price-moved', 'auction-low', 'auction-leading', 'auction-bid-standing',
-  'auction-moved']);
+export const MARKET_MOVED = Object.freeze([
+  'market-gone',
+  'market-short',
+  'market-price-moved',
+  'auction-low',
+  'auction-leading',
+  'auction-bid-standing',
+  'auction-moved',
+]);
 const MOVED = MARKET_MOVED;
 /** AUDIT 31 H1: the answers that say a piece taken out of the save is ELSEWHERE on the service - listed, on its way to
  *  the account, standing in a home. The save's piece was a copy (a save restored past the act that moved it): it is
@@ -88,17 +95,29 @@ export const PIECE_KEPT_ERROR = 'piece-kept';
  * @param {(at: any) => Promise<any>} send
  */
 export async function realmPieceAct(realm, piece, send) {
-  let taken = false, asked = false, gone = false;
+  let taken = false,
+    asked = false,
+    gone = false;
   return realm.act({
     reserve: () => () => {
       if (!taken || gone) return;
       taken = false;
-      try { piece.putBack(piece.item, piece.where); } catch (e) { console.warn('[market] put back', e); }
+      try {
+        piece.putBack(piece.item, piece.where);
+      } catch (e) {
+        console.warn('[market] put back', e);
+      }
     },
     call: (/** @type {any} */ at) => {
-      if (!asked) { asked = true; taken = !!piece?.take?.(); }
+      if (!asked) {
+        asked = true;
+        taken = !!piece?.take?.();
+      }
       if (!taken) return Promise.resolve({ ok: false, error: 'piece-held', status: 409 });
-      return Promise.resolve(send(at)).then((a) => { if (PIECE_GONE.includes(a?.error)) gone = true; return a; });
+      return Promise.resolve(send(at)).then((a) => {
+        if (PIECE_GONE.includes(a?.error)) gone = true;
+        return a;
+      });
     },
   });
 }
@@ -132,14 +151,31 @@ export function mintMarketRid() {
  *   (false: this game will not hold it - the session is abandoned, and a join reads the record); RPT1026-MARKET ARRIVE:
  *   `why` the road's word on it ('bought', 'returned') when a settle collected it, null for the press's own collect
  */
-export function createMarketBook({ door, storage = null, character, now = () => Date.now(), marks = null, stores = null, holds = null, sleep = wait, realm = null, wallet = null, goods = null }) {
+export function createMarketBook({
+  door,
+  storage = null,
+  character,
+  now = () => Date.now(),
+  marks = null,
+  stores = null,
+  holds = null,
+  sleep = wait,
+  realm = null,
+  wallet = null,
+  goods = null,
+}) {
   let _shut = /** @type {number|null} */ (null);
   const state = {
     /** null until the service has answered; false while the market is shut to this account - asked again after
      *  MARKET_CLOSED_RECHECK_MS (AUDIT 30 U11) */
     _open: /** @type {boolean|null} */ (null),
-    get open() { return this._open === false && _shut != null && now() - _shut >= MARKET_CLOSED_RECHECK_MS ? null : this._open; },
-    set open(v) { this._open = v; _shut = v === false ? now() : null; },
+    get open() {
+      return this._open === false && _shut != null && now() - _shut >= MARKET_CLOSED_RECHECK_MS ? null : this._open;
+    },
+    set open(v) {
+      this._open = v;
+      _shut = v === false ? now() : null;
+    },
     balance: /** @type {number|null} */ (null),
     /** what is on its way to this account (the service's `road`) */
     road: /** @type {any[]} */ ([]),
@@ -152,7 +188,13 @@ export function createMarketBook({ door, storage = null, character, now = () => 
     /** GOLD-MARKET: the gold this character's sales hold for it, to collect */
     goldHeld: 0,
   };
-  const account = () => { try { return door.account?.() ?? null; } catch { return null; } };
+  const account = () => {
+    try {
+      return door.account?.() ?? null;
+    } catch {
+      return null;
+    }
+  };
   const slot = () => `${account() ?? ''}|${character() ?? ''}`;
 
   // ─── THE KEPT ACTS ─────────────────────────────────────────────────
@@ -162,9 +204,18 @@ export function createMarketBook({ door, storage = null, character, now = () => 
     try {
       const v = JSON.parse(storage?.getItem?.(MARKET_KEPT_KEY) ?? 'null');
       return v && typeof v === 'object' && !Array.isArray(v) ? v : {};
-    } catch { return {}; }
+    } catch {
+      return {};
+    }
   };
-  const writeTable = (t) => { try { storage?.setItem?.(MARKET_KEPT_KEY, JSON.stringify(t)); _memory = null; } catch { _memory = t; } };
+  const writeTable = (t) => {
+    try {
+      storage?.setItem?.(MARKET_KEPT_KEY, JSON.stringify(t));
+      _memory = null;
+    } catch {
+      _memory = t;
+    }
+  };
   const KINDS = ['lists', 'buys', 'cancels', 'collects'];
   const keptOf = (key = slot()) => {
     const k = table()[key];
@@ -172,12 +223,17 @@ export function createMarketBook({ door, storage = null, character, now = () => 
   };
   const writeKept = (kept, key = slot()) => {
     const t = { ...table() };
-    if (KINDS.some((n) => kept[n].length)) t[key] = kept; else delete t[key];
+    if (KINDS.some((n) => kept[n].length)) t[key] = kept;
+    else delete t[key];
     writeTable(t);
   };
   /** AUDIT 31 B2: every kept act's slot is the one it was pressed in - read once, at the press, never again after an
    *  await (a quick-load between put a piece back into another character, and left the first one's kept to go again). */
-  const keep = (kind, entry, key = slot()) => { const k = keptOf(key); k[kind] = [...k[kind].filter((x) => x.rid !== entry.rid), entry]; writeKept(k, key); };
+  const keep = (kind, entry, key = slot()) => {
+    const k = keptOf(key);
+    k[kind] = [...k[kind].filter((x) => x.rid !== entry.rid), entry];
+    writeKept(k, key);
+  };
   /** Let a kept act go; whether it was kept here (a repeat answered elsewhere mints nothing). */
   const letGo = (kind, rid, key = slot()) => {
     const k = keptOf(key);
@@ -187,7 +243,12 @@ export function createMarketBook({ door, storage = null, character, now = () => 
     return had;
   };
   /** AUDIT 31 H1: the pieces this book keeps an act on (a kept listing or auction), this slot's. */
-  const keptPieces = () => new Set(keptOf().lists.map((l) => l.body?.provenance).filter(Boolean));
+  const keptPieces = () =>
+    new Set(
+      keptOf()
+        .lists.map((l) => l.body?.provenance)
+        .filter(Boolean),
+    );
   /** AUDIT 31 B1: a kept act needs an account to be kept under - pressed with none, it was kept under no one's slot and
    *  never asked again once one signed in (the piece lost). */
   const signedIn = () => !!account();
@@ -197,8 +258,12 @@ export function createMarketBook({ door, storage = null, character, now = () => 
     let r = null;
     for (let i = 0; i < MARKET_TRIES; i++) {
       if (i > 0) await sleep(jittered(MARKET_RETRY_MS[Math.min(i - 1, MARKET_RETRY_MS.length - 1)]));
-      try { r = await fn(); } catch { r = { ok: false, error: 'offline' }; }
-      if (r?.ok || !ASK_AGAIN_NOW.includes(r?.error)) return r;   // SCALE1: `rate` goes back kept, to the pump
+      try {
+        r = await fn();
+      } catch {
+        r = { ok: false, error: 'offline' };
+      }
+      if (r?.ok || !ASK_AGAIN_NOW.includes(r?.error)) return r; // SCALE1: `rate` goes back kept, to the pump
     }
     return r;
   }
@@ -210,14 +275,28 @@ export function createMarketBook({ door, storage = null, character, now = () => 
     const d = r?.ok ? r.data : null;
     if (!d) return r;
     state.open = true;
-    if (Number.isSafeInteger(d.balance)) { state.balance = d.balance; try { marks?.set?.(d.balance); } catch { /* the Marks book's own */ } }
+    if (Number.isSafeInteger(d.balance)) {
+      state.balance = d.balance;
+      try {
+        marks?.set?.(d.balance);
+      } catch {
+        /* the Marks book's own */
+      }
+    }
     if (Array.isArray(d.road)) state.road = d.road;
-    if (d.counts) state.counts = { listings: d.counts.listings | 0, orders: d.counts.orders | 0, bids: d.counts.bids | 0 };
-    if (Number.isSafeInteger(d.listingsMax) && d.listingsMax > 0) state.listingsMax = d.listingsMax;   // AUDIT SEATS-3 D2
+    if (d.counts)
+      state.counts = { listings: d.counts.listings | 0, orders: d.counts.orders | 0, bids: d.counts.bids | 0 };
+    if (Number.isSafeInteger(d.listingsMax) && d.listingsMax > 0) state.listingsMax = d.listingsMax; // AUDIT SEATS-3 D2
     if (Number.isSafeInteger(d.held)) state.held = d.held;
-    if (Number.isSafeInteger(d.goldHeld)) state.goldHeld = d.goldHeld;   // GOLD-MARKET
+    if (Number.isSafeInteger(d.goldHeld)) state.goldHeld = d.goldHeld; // GOLD-MARKET
     for (const st of [d.store, ...(Array.isArray(d.stores) ? d.stores : [])]) {
-      if (st && typeof st.material === 'string') { try { stores?.apply?.(st); } catch { /* the professions' book's own */ } }
+      if (st && typeof st.material === 'string') {
+        try {
+          stores?.apply?.(st);
+        } catch {
+          /* the professions' book's own */
+        }
+      }
     }
     return r;
   }
@@ -227,10 +306,32 @@ export function createMarketBook({ door, storage = null, character, now = () => 
   const cache = new Map();
   /** AUDIT MEM-AUDIT U3: an entry asked for is the newest - the views a player comes back to stay; the cap takes the
    *  ones long unasked. */
-  const touch = (key) => { const e = cache.get(key); if (e) { cache.delete(key); cache.set(key, e); } return e; };
+  const touch = (key) => {
+    const e = cache.get(key);
+    if (e) {
+      cache.delete(key);
+      cache.set(key, e);
+    }
+    return e;
+  };
   // MARKET-ANY: and the crafted pieces a "My listings" read names (the service says how each may list)
-  const keyOf = (view, q) => [slot(), view, q.region, q.family ?? '', q.tier ?? '', q.material ?? '', (q.materials ?? []).join(','), q.currency ?? 'marks', (q.pieces ?? []).join(','), (q.board ?? []).join(','),
-    q.page ?? 0, q.sort ?? '', q.recipes ? `r:${q.recipes.join(',')}` : '', q.quality ?? 0].join('|');   // AUDIT SEATS-3 D2: and the board (its cap); MARKET-AUDIT P2: and the account and character (another's My listings was served a minute); BOARD-SIFT: and the page, its order, a search's recipes (AUDIT BOARD-SIFT: one that names none is no read without one) and the least quality
+  const keyOf = (view, q) =>
+    [
+      slot(),
+      view,
+      q.region,
+      q.family ?? '',
+      q.tier ?? '',
+      q.material ?? '',
+      (q.materials ?? []).join(','),
+      q.currency ?? 'marks',
+      (q.pieces ?? []).join(','),
+      (q.board ?? []).join(','),
+      q.page ?? 0,
+      q.sort ?? '',
+      q.recipes ? `r:${q.recipes.join(',')}` : '',
+      q.quality ?? 0,
+    ].join('|'); // AUDIT SEATS-3 D2: and the board (its cap); MARKET-AUDIT P2: and the account and character (another's My listings was served a minute); BOARD-SIFT: and the page, its order, a search's recipes (AUDIT BOARD-SIFT: one that names none is no read without one) and the least quality
   const pending = new Map();
   /** AUDIT 30 C6: the acts answered so far - a read begun before an act's answer is overtaken by it, and asked again. */
   let gen = 0;
@@ -241,7 +342,8 @@ export function createMarketBook({ door, storage = null, character, now = () => 
     const hit = touch(key);
     if (!force && hit && now() - hit.at < MARKET_CACHE_MS) {
       // MARKET-AUDIT P3: the board's own listing cap with it - two boards a minute apart said the other's
-      if (Number.isSafeInteger(hit.data?.listingsMax) && hit.data.listingsMax > 0) state.listingsMax = hit.data.listingsMax;
+      if (Number.isSafeInteger(hit.data?.listingsMax) && hit.data.listingsMax > 0)
+        state.listingsMax = hit.data.listingsMax;
       return { ok: !hit.error, data: hit.data, error: hit.error, stale: hit.stale };
     }
     const g = gen;
@@ -253,26 +355,47 @@ export function createMarketBook({ door, storage = null, character, now = () => 
       const a = await ask(() => door.read({ character: character(), view, ...q }));
       if (g !== gen) return null;
       const r = heard(a);
-      const e = { at: now(), data: r?.ok ? r.data : hit?.data ?? null, error: r?.ok ? null : (r?.error ?? 'server'), stale: !r?.ok && !!hit?.data };
-      cache.delete(key); cache.set(key, e);   // MEM-AUDIT (2026-10-23): the newest last - a minute's reads past the cap go oldest first
+      const e = {
+        at: now(),
+        data: r?.ok ? r.data : (hit?.data ?? null),
+        error: r?.ok ? null : (r?.error ?? 'server'),
+        stale: !r?.ok && !!hit?.data,
+      };
+      cache.delete(key);
+      cache.set(key, e); // MEM-AUDIT (2026-10-23): the newest last - a minute's reads past the cap go oldest first
       if (cache.size > MARKET_CACHE_KEPT) cache.delete(cache.keys().next().value);
       return { ok: !!r?.ok, data: e.data, error: e.error, stale: e.stale };
     })();
     pending.set(pk, p);
     let out;
-    try { out = await p; } finally { pending.delete(pk); }
+    try {
+      out = await p;
+    } finally {
+      pending.delete(pk);
+    }
     return out ?? read(view, q, { force: true });
   }
-  function forget() { cache.clear(); gen++; }
+  function forget() {
+    cache.clear();
+    gen++;
+  }
 
   // ─── THE ACTS ──────────────────────────────────────────────────────
-  let _busy = null, _busyKey = null;
+  let _busy = null,
+    _busyKey = null;
   /** One act at a time: a press of the act under way is that act; AUDIT 30 C5: any other while one is under way (the
    *  opening settle's included) is refused `market-busy` - it was handed the other act's answer, and said done. */
   const once = (key, fn) => {
     if (_busy) return _busyKey === key ? _busy : Promise.resolve({ ok: false, error: 'market-busy' });
     _busyKey = key;
-    return (_busy = (async () => { try { return await fn(); } finally { _busy = null; _busyKey = null; } })());
+    return (_busy = (async () => {
+      try {
+        return await fn();
+      } finally {
+        _busy = null;
+        _busyKey = null;
+      }
+    })());
   };
   const ids = new Map();
   /** AUDIT 31 B4: an id is its slot's - another character's press of the same act is never answered as this one's. */
@@ -280,11 +403,14 @@ export function createMarketBook({ door, storage = null, character, now = () => 
     const k = `${slot()}|${key}`;
     let v = ids.get(k);
     if (v && now() - v.at > MARKET_ID_MS) v = null;
-    if (!v) ids.set(k, v = { id: mintMarketRid(), at: now() });
+    if (!v) ids.set(k, (v = { id: mintMarketRid(), at: now() }));
     return v.id;
   };
   const done = (key) => ids.delete(`${slot()}|${key}`);
-  const answered = (r) => { if (r?.ok) forget(); return r; };
+  const answered = (r) => {
+    if (r?.ok) forget();
+    return r;
+  };
 
   /** A kept act asked (or asked again): let go on the answer, the piece minted once after; kept on silence - and (AUDIT 31
    *  B2) kept while the save is another character's than the one it was pressed in: that one's settle mints it. */
@@ -294,7 +420,13 @@ export function createMarketBook({ door, storage = null, character, now = () => 
     if (r?.ok) {
       const had = letGo(kind, entry.rid, key);
       forget();
-      if (had && r.data?.piece) { try { mint?.(r.data.piece, kind); } catch (e) { console.warn('[market] mint', e); } }
+      if (had && r.data?.piece) {
+        try {
+          mint?.(r.data.piece, kind);
+        } catch (e) {
+          console.warn('[market] mint', e);
+        }
+      }
       return { ok: true, data: r.data };
     }
     if (kept(r)) return { ok: false, kept: true, error: r?.error, text: MARKET_KEPT_TEXT };
@@ -311,26 +443,41 @@ export function createMarketBook({ door, storage = null, character, now = () => 
     if (!realm || !wallet) return { ok: false, error: 'market-gold-realm' };
     const w = wallet(entry.body.region);
     const cost = entry.body.max;
-    const r = heard(await realm.act({
-      needsAnswer: true,
-      // MARKET-AUDIT: a refusal gives back exactly what the payment took (the purse's coins, a letter's value, the bank's) - the
-      // whole cost credited as coins turned a letter of credit and the bank's gold into a purse past carrying
-      ...(first ? { reserve: walletReserve(w, cost).reserve } : { apply: (/** @type {any} */ a) => { if (!a?.data?.repeat || a?.data?.realm) w.pay(cost); } }),
-      // VENDOR-LOST (FIELD BUGS 2026-10-25): `landed` - this tab reads a repeat with the record's sequence as its own sale,
-      // landed, so the service answers one (server-account/src/market.js marketBuy); without it a lost answer asked again
-      // was told `seq`, and the session ended
-      call: (/** @type {any} */ at) => door.buy({ ...entry.body, realm: at, landed: true }),
-    }));
+    const r = heard(
+      await realm.act({
+        needsAnswer: true,
+        // MARKET-AUDIT: a refusal gives back exactly what the payment took (the purse's coins, a letter's value, the bank's) - the
+        // whole cost credited as coins turned a letter of credit and the bank's gold into a purse past carrying
+        ...(first
+          ? { reserve: walletReserve(w, cost).reserve }
+          : {
+              apply: (/** @type {any} */ a) => {
+                if (!a?.data?.repeat || a?.data?.realm) w.pay(cost);
+              },
+            }),
+        // VENDOR-LOST (FIELD BUGS 2026-10-25): `landed` - this tab reads a repeat with the record's sequence as its own sale,
+        // landed, so the service answers one (server-account/src/market.js marketBuy); without it a lost answer asked again
+        // was told `seq`, and the session ended
+        call: (/** @type {any} */ at) => door.buy({ ...entry.body, realm: at, landed: true }),
+      }),
+    );
     if (slot() !== key) return { ok: false, kept: true, error: 'other-character', text: MARKET_KEPT_TEXT };
     if (r?.ok) {
       const had = letGo('buys', entry.rid, key);
       forget();
-      if (had && r.data?.piece) { try { mint?.(r.data.piece, 'buys'); } catch (e) { console.warn('[market] mint', e); } }
+      if (had && r.data?.piece) {
+        try {
+          mint?.(r.data.piece, 'buys');
+        } catch (e) {
+          console.warn('[market] mint', e);
+        }
+      }
       return { ok: true, data: r.data };
     }
     // kept until the SERVICE says no (an answer with its status): a session lost or busy, or an answer never come, is no
     // word on the sale - letting it go lost a piece a sale that landed paid for
-    if (r?.unknown || kept(r) || !Number.isSafeInteger(r?.status)) return { ok: false, kept: true, error: r?.error ?? 'offline', text: MARKET_KEPT_TEXT };
+    if (r?.unknown || kept(r) || !Number.isSafeInteger(r?.status))
+      return { ok: false, kept: true, error: r?.error ?? 'offline', text: MARKET_KEPT_TEXT };
     letGo('buys', entry.rid, key);
     return { ok: false, error: r?.error ?? 'server' };
   }
@@ -340,8 +487,9 @@ export function createMarketBook({ door, storage = null, character, now = () => 
    *  a tab from before INT19 is still asked again by the settle, below, with its own id. */
   async function postPiece(route, body, piece) {
     if (!signedIn()) return { ok: false, error: 'no-session' };
-    if (body.provenance && (keptPieces().has(body.provenance) || holds?.(body.provenance))) return { ok: false, error: PIECE_KEPT_ERROR };
-    if (!realm) return { ok: false, error: 'realm-needed' };   // INT19: a crafted piece is handed on out of a realm record alone
+    if (body.provenance && (keptPieces().has(body.provenance) || holds?.(body.provenance)))
+      return { ok: false, error: PIECE_KEPT_ERROR };
+    if (!realm) return { ok: false, error: 'realm-needed' }; // INT19: a crafted piece is handed on out of a realm record alone
     if (!piece) return { ok: false, error: 'piece-held' };
     const r = heard(await realmPieceAct(realm, piece, (at) => door[route]({ ...body, realm: at })));
     if (r?.ok) forget();
@@ -360,15 +508,25 @@ export function createMarketBook({ door, storage = null, character, now = () => 
   async function postGood(body, good) {
     if (!signedIn()) return { ok: false, error: 'no-session' };
     if (!realm) return { ok: false, error: 'market-gold-realm' };
-    let undo = null, asked = false;
-    const r = heard(await realm.act({
-      reserve: () => () => { const u = undo; undo = null; u?.(); },
-      call: (/** @type {any} */ at) => {
-        if (!asked) { asked = true; undo = good?.take?.() ?? null; }
-        if (!undo) return Promise.resolve({ ok: false, error: 'piece-held', status: 409 });
-        return door.list({ ...body, realm: at });
-      },
-    }));
+    let undo = null,
+      asked = false;
+    const r = heard(
+      await realm.act({
+        reserve: () => () => {
+          const u = undo;
+          undo = null;
+          u?.();
+        },
+        call: (/** @type {any} */ at) => {
+          if (!asked) {
+            asked = true;
+            undo = good?.take?.() ?? null;
+          }
+          if (!undo) return Promise.resolve({ ok: false, error: 'piece-held', status: 409 });
+          return door.list({ ...body, realm: at });
+        },
+      }),
+    );
     if (r?.ok) forget();
     return r ?? { ok: false, error: 'server' };
   }
@@ -385,24 +543,36 @@ export function createMarketBook({ door, storage = null, character, now = () => 
    *  collect says none. */
   async function collectGood(delivery, why = null) {
     if (!realm || !goods) return { ok: false, error: 'market-gold-realm' };
-    const me = character(), rid = mintMarketRid();
-    const r = heard(await realm.act({
-      needsAnswer: true,
-      apply: (/** @type {any} */ a) => {
-        const mine = !a?.data?.repeat || Number.isSafeInteger(a?.data?.realm?.seq);
-        let held = false;
-        try { held = mine && goods.receive(a?.data?.item ?? null, why) === true; } catch (e) { console.warn('[market] receive', e); }
-        if (!held) realm.abandon?.('unknown');
-      },
-      call: (/** @type {any} */ at) => door.collect(me, delivery, rid, at, { landed: true }),
-    }));
-    if (r?.ok) { forget(); offRoad(delivery); }
+    const me = character(),
+      rid = mintMarketRid();
+    const r = heard(
+      await realm.act({
+        needsAnswer: true,
+        apply: (/** @type {any} */ a) => {
+          const mine = !a?.data?.repeat || Number.isSafeInteger(a?.data?.realm?.seq);
+          let held = false;
+          try {
+            held = mine && goods.receive(a?.data?.item ?? null, why) === true;
+          } catch (e) {
+            console.warn('[market] receive', e);
+          }
+          if (!held) realm.abandon?.('unknown');
+        },
+        call: (/** @type {any} */ at) => door.collect(me, delivery, rid, at, { landed: true }),
+      }),
+    );
+    if (r?.ok) {
+      forget();
+      offRoad(delivery);
+    }
     return r ?? { ok: false, error: 'server' };
   }
   /** VENDOR-LOST: a delivery collected is off the road the last read named - a trader's stall settles with no read
    *  behind it (the Market tab reads again after its settle), so the next settle asked it again, `market-gone`, and said
    *  that refusal to a player who had the piece. */
-  function offRoad(delivery) { state.road = state.road.filter((x) => x.id !== delivery); }
+  function offRoad(delivery) {
+    state.road = state.road.filter((x) => x.id !== delivery);
+  }
 
   const book = {
     state,
@@ -410,14 +580,24 @@ export function createMarketBook({ door, storage = null, character, now = () => 
     cached: (view, q) => touch(keyOf(view, q))?.data ?? null,
     /** MARKET-SPEED: whether a read of this view would be answered by the minute's cache, nothing asked (`read`'s own test) -
      *  the tab draws such a view once, never a "Reading the market..." frame before it. */
-    fresh: (view, q) => { const hit = cache.get(keyOf(view, q)); return !!hit && now() - hit.at < MARKET_CACHE_MS; },
+    fresh: (view, q) => {
+      const hit = cache.get(keyOf(view, q));
+      return !!hit && now() - hit.at < MARKET_CACHE_MS;
+    },
     forget,
     /** AUDIT 30 U12: an act under way (the market's own, not the board window's). */
-    get busy() { return !!_busy; },
+    get busy() {
+      return !!_busy;
+    },
     /** AUDIT 30 U6: a balance another book heard (the Weavers' counter's purchase). */
-    told(balance) { if (Number.isSafeInteger(balance)) state.balance = balance; },
+    told(balance) {
+      if (Number.isSafeInteger(balance)) state.balance = balance;
+    },
     /** Kept acts waiting for an answer. */
-    get pending() { const k = keptOf(); return KINDS.reduce((n, kind) => n + k[kind].length, 0); },
+    get pending() {
+      const k = keptOf();
+      return KINDS.reduce((n, kind) => n + k[kind].length, 0);
+    },
 
     /**
      * LIST a material (`req.kind` 'material') or a piece: the piece taken out of the save first (`take`), kept with the
@@ -431,7 +611,7 @@ export function createMarketBook({ door, storage = null, character, now = () => 
         const rid = mintMarketRid();
         const body = { character: character(), ...req, rid };
         if (req.kind === 'piece') return postPiece('list', body, piece);
-        if (req.kind === 'item') return postGood(body, good);   // MARKET-ANY
+        if (req.kind === 'item') return postGood(body, good); // MARKET-ANY
         const k = `list|${JSON.stringify(req)}`;
         const r = answered(heard(await ask(() => door.list({ ...body, rid: idFor(k) }))));
         if (r?.ok || !kept(r)) done(k);
@@ -451,22 +631,31 @@ export function createMarketBook({ door, storage = null, character, now = () => 
         const key = slot();
         // MARKET-AUDIT: a press again of a buy kept unanswered is that buy asked again with its own id - a fresh id bought twice
         const was = keptOf(key).buys.find((b) => b.body?.listing === ask.listing);
-        if (was) return was.gold ? goldBuy(was, mint, key, false) : keptAct('buys', was, () => door.buy(was.body), mint, key);
+        if (was)
+          return was.gold ? goldBuy(was, mint, key, false) : keptAct('buys', was, () => door.buy(was.body), mint, key);
         const rid = mintMarketRid();
         const body = { character: character(), ...ask, rid };
         keep('buys', { rid, body, ...(gold ? { gold: true } : {}) }, key);
-        return gold ? goldBuy({ rid, body }, mint, key, true) : keptAct('buys', { rid }, () => door.buy(body), mint, key);
+        return gold
+          ? goldBuy({ rid, body }, mint, key, true)
+          : keptAct('buys', { rid }, () => door.buy(body), mint, key);
       });
     },
     /** HOME-VENDOR (net/vendorLaw.js): A HOME'S TRADER'S STOCK - `{ ok, data: { vendor, rows } }` - and THE REGION'S
      *  TRADERS - `{ ok, data: { region, rows } }`; read fresh each time (a visitor's look, the board's tab), never cached:
      *  a sale at a stall moves them. A trader's piece is listed through `list` and bought through `buy`, `vendor` in the
      *  request (`{ map, id }`). */
-    async vendorStock(vendor) { return heard(await ask(() => door.vendor(vendor))) ?? { ok: false, error: 'server' }; },
-    async vendors(region) { return heard(await ask(() => door.vendors(region, character()))) ?? { ok: false, error: 'server' }; },
+    async vendorStock(vendor) {
+      return heard(await ask(() => door.vendor(vendor))) ?? { ok: false, error: 'server' };
+    },
+    async vendors(region) {
+      return heard(await ask(() => door.vendors(region, character()))) ?? { ok: false, error: 'server' };
+    },
     /** HOME-VENDOR: A PIECE FROM A PACK COLLECTED AT ONCE - a trader's sale's delivery, or a piece taken back off a trader -
      *  into the record and the pack (collectGood), on the answer that named it, without waiting for a read of the road. */
-    collectGood(delivery) { return once(`good|${delivery}`, () => collectGood(delivery)); },
+    collectGood(delivery) {
+      return once(`good|${delivery}`, () => collectGood(delivery));
+    },
     /** RPT1026-MARKET ARRIVE: THE ROAD ALONE (server-account/src/market.js marketRoad) - the account's market settled on the
      *  service and what is on its way to it read into `state.road`, its balance and the Stores it moved told as every
      *  answer's are (`heard`). The arrivals' sweep reads it as a session stands (net/marketArrivals.js), so a delivery is
@@ -476,16 +665,26 @@ export function createMarketBook({ door, storage = null, character, now = () => 
       return heard(await ask(() => door.road(character()))) ?? { ok: false, error: 'server' };
     },
     /** HOME-VENDOR: the Vendor page's read - my traders, their stock, what they sold, the gold it holds. */
-    async myVendors() { return heard(await ask(() => door.myVendors(character()))) ?? { ok: false, error: 'server' }; },
+    async myVendors() {
+      return heard(await ask(() => door.myVendors(character()))) ?? { ok: false, error: 'server' };
+    },
     /** MARKET-AUDIT U7: the character the book acts for - a delivery to another of the account's waits for that one. */
     me: () => character(),
     /** GOLD-MARKET: whether this character trades in gold - a realm character's (its gold is its record's). */
-    get goldOk() { return !!(realm && wallet); },
+    get goldOk() {
+      return !!(realm && wallet);
+    },
     /** INT19: the realm act a crafted piece is handed on through - the writs' book's commission fill asks it too. */
     realm,
     /** GOLD-MARKET: the gold the save can pay at a board of `region` (the purse, its letters, that region's account), or
      *  null for a character that trades in none. */
-    purse(region) { try { return realm && wallet ? wallet(region).gold() : null; } catch { return null; } },
+    purse(region) {
+      try {
+        return realm && wallet ? wallet(region).gold() : null;
+      } catch {
+        return null;
+      }
+    },
     /** GOLD-MARKET: COLLECT the gold this character's sales hold, into the record's account at `region` (the board's) - the
      *  record's own act: the save's account credited with what the service answers it moved. */
     collectGold(region) {
@@ -493,12 +692,19 @@ export function createMarketBook({ door, storage = null, character, now = () => 
         if (!signedIn()) return { ok: false, error: 'no-session' };
         if (!realm || !wallet) return { ok: false, error: 'market-gold-realm' };
         const me = character();
-        const r = heard(await realm.act({
-          needsAnswer: true,
-          apply: (/** @type {any} */ a) => { if (Number.isSafeInteger(a?.data?.gold) && a.data.gold > 0) wallet(region).bank(a.data.gold); },
-          call: (/** @type {any} */ at) => door.gold({ character: me, realm: at, region }),
-        }));
-        if (r?.ok) { state.goldHeld = 0; forget(); }
+        const r = heard(
+          await realm.act({
+            needsAnswer: true,
+            apply: (/** @type {any} */ a) => {
+              if (Number.isSafeInteger(a?.data?.gold) && a.data.gold > 0) wallet(region).bank(a.data.gold);
+            },
+            call: (/** @type {any} */ at) => door.gold({ character: me, realm: at, region }),
+          }),
+        );
+        if (r?.ok) {
+          state.goldHeld = 0;
+          forget();
+        }
         return r;
       });
     },
@@ -507,7 +713,8 @@ export function createMarketBook({ door, storage = null, character, now = () => 
       return once(`cancel|${listing}`, async () => {
         if (!signedIn()) return { ok: false, error: 'no-session' };
         const rid = mintMarketRid();
-        const key = slot(), me = character();
+        const key = slot(),
+          me = character();
         keep('cancels', { rid, listing }, key);
         return keptAct('cancels', { rid }, () => door.cancel(me, listing, rid), mint, key);
       });
@@ -517,7 +724,8 @@ export function createMarketBook({ door, storage = null, character, now = () => 
       return once(`collect|${delivery}`, async () => {
         if (!signedIn()) return { ok: false, error: 'no-session' };
         const rid = mintMarketRid();
-        const key = slot(), me = character();
+        const key = slot(),
+          me = character();
         keep('collects', { rid, delivery }, key);
         return keptAct('collects', { rid }, () => door.collect(me, delivery, rid), mint, key);
       });
@@ -525,25 +733,43 @@ export function createMarketBook({ door, storage = null, character, now = () => 
     /** PROF5b: AN AUCTION of a Masterwork - `req` `{ region, provenance, wear, opening, hubs }` - posted as a listed
      *  piece is (out of the save first, kept, put back on a refusal). */
     auction(req, piece) {
-      return once(`auction|${JSON.stringify(req)}`, async () => postPiece('auction', { character: character(), ...req, rid: mintMarketRid() }, piece));
+      return once(`auction|${JSON.stringify(req)}`, async () =>
+        postPiece('auction', { character: character(), ...req, rid: mintMarketRid() }, piece),
+      );
     },
     /** PROF5b: A BID - `req` `{ region, auction, amount, hubs }` - its id kept for a press asked again (the lost answer's). */
     bid(req) {
       const k = `bid|${JSON.stringify(req)}`;
-      return once(k, async () => { const r = answered(heard(await ask(() => door.bid({ character: character(), ...req, rid: idFor(k) })))); if (!kept(r)) done(k); return r; });
+      return once(k, async () => {
+        const r = answered(heard(await ask(() => door.bid({ character: character(), ...req, rid: idFor(k) }))));
+        if (!kept(r)) done(k);
+        return r;
+      });
     },
     /** A buy ORDER posted, a FILL, an order WITHDRAWN - each with its id kept for a press asked again. */
     order(req) {
       const k = `order|${JSON.stringify(req)}`;
-      return once(k, async () => { const r = answered(heard(await ask(() => door.order({ character: character(), ...req, rid: idFor(k) })))); if (!kept(r)) done(k); return r; });
+      return once(k, async () => {
+        const r = answered(heard(await ask(() => door.order({ character: character(), ...req, rid: idFor(k) }))));
+        if (!kept(r)) done(k);
+        return r;
+      });
     },
     fill(req) {
       const k = `fill|${JSON.stringify(req)}`;
-      return once(k, async () => { const r = answered(heard(await ask(() => door.fill({ character: character(), ...req, rid: idFor(k) })))); if (!kept(r)) done(k); return r; });
+      return once(k, async () => {
+        const r = answered(heard(await ask(() => door.fill({ character: character(), ...req, rid: idFor(k) }))));
+        if (!kept(r)) done(k);
+        return r;
+      });
     },
     unorder(order) {
       const k = `unorder|${order}`;
-      return once(k, async () => { const r = answered(heard(await ask(() => door.unorder(order, idFor(k))))); if (!kept(r)) done(k); return r; });
+      return once(k, async () => {
+        const r = answered(heard(await ask(() => door.unorder(order, idFor(k)))));
+        if (!kept(r)) done(k);
+        return r;
+      });
     },
     report: (listing) => once(`report|${listing}`, async () => answered(heard(await ask(() => door.report(listing))))),
     remove: (listing) => once(`remove|${listing}`, async () => answered(heard(await ask(() => door.remove(listing))))),
@@ -556,72 +782,102 @@ export function createMarketBook({ door, storage = null, character, now = () => 
      *   answered here was taken out of a save that may not have been kept since (a crash, a seat handed over)
      */
     settle(mint, putBack, drop = null) {
-      const go = () => once('settle', async () => {
-        // AUDIT 31 B2: the slot the settle began in, and the character with it - a quick-load mid-settle stops it
-        const key = slot(), me = character();
-        const here = () => slot() === key;
-        const k = keptOf(key);
-        let settled = 0;
-        for (const l of k.lists) {
-          const r = heard(await ask(() => (l.route === 'auction' ? door.auction(l.body) : door.list(l.body))));   // PROF5b: an auction's own route
-          if (!here()) break;
-          if (r?.ok) { letGo('lists', l.rid, key); try { drop?.(l.item, l.where); } catch (e) { console.warn('[market] drop', e); } settled++; }
-          else if (!kept(r)) {
-            letGo('lists', l.rid, key);
-            // AUDIT 31 H1: a piece the service says is elsewhere was a copy in the save - out of it, never back in
-            if (PIECE_GONE.includes(r?.error)) { try { drop?.(l.item, l.where); } catch (e) { console.warn('[market] drop', e); } }
-            else { try { putBack(l.item, l.where); } catch (e) { console.warn('[market] put back', e); } }
-            settled++;
+      const go = () =>
+        once('settle', async () => {
+          // AUDIT 31 B2: the slot the settle began in, and the character with it - a quick-load mid-settle stops it
+          const key = slot(),
+            me = character();
+          const here = () => slot() === key;
+          const k = keptOf(key);
+          let settled = 0;
+          for (const l of k.lists) {
+            const r = heard(await ask(() => (l.route === 'auction' ? door.auction(l.body) : door.list(l.body)))); // PROF5b: an auction's own route
+            if (!here()) break;
+            if (r?.ok) {
+              letGo('lists', l.rid, key);
+              try {
+                drop?.(l.item, l.where);
+              } catch (e) {
+                console.warn('[market] drop', e);
+              }
+              settled++;
+            } else if (!kept(r)) {
+              letGo('lists', l.rid, key);
+              // AUDIT 31 H1: a piece the service says is elsewhere was a copy in the save - out of it, never back in
+              if (PIECE_GONE.includes(r?.error)) {
+                try {
+                  drop?.(l.item, l.where);
+                } catch (e) {
+                  console.warn('[market] drop', e);
+                }
+              } else {
+                try {
+                  putBack(l.item, l.where);
+                } catch (e) {
+                  console.warn('[market] put back', e);
+                }
+              }
+              settled++;
+            }
           }
-        }
-        // MARKET-AUDIT P5: a collect the service refused is said (`refused`, its words) - it was said nowhere
-        const refused = [];
-        // GOLD-MARKET: a kept gold buy asked again through the realm act (paid on the answer for a sale it made, never for
-        // one made before it). VENDOR-LOST (FIELD BUGS 2026-10-25): a piece from a pack bought here comes as a delivery,
-        // arrived at once, which the press collects on its own answer (scenes/vendorHost.js vendorBuy). A kept buy's answer comes here
-        // instead, so its delivery is collected here, on the answer that names it - nothing did, and the piece waited on
-        // the service for good (and, collected, it is off the road the loop below reads)
-        for (const b of k.buys) {
-          if (!here()) continue;
-          const r = await (b.gold ? goldBuy(b, mint, key, false) : keptAct('buys', b, () => door.buy(b.body), mint, key));
-          if (!r.ok) continue;
-          settled++;
-          const dn = r.data?.sale?.kind === 'item' && r.data.sale.here ? r.data.delivery?.id : null;
-          if (!dn || !here()) continue;
-          const c = await collectGood(dn, 'bought');   // RPT1026-MARKET ARRIVE: said as a purchase arrived
-          if (c.ok) settled++; else refused.push(c.error);
-        }
-        for (const c of k.cancels) {
-          if (!here()) continue;
-          const r = await keptAct('cancels', c, () => door.cancel(me, c.listing, c.rid), mint, key);
-          if (!r.ok) continue;
-          settled++;
-          // AUDIT RPT1026 D3: a piece from a pack taken back (a trader's, the Goods') comes back by a delivery arrived at
-          // once - a kept cancel's is collected here, on the answer that names it, as a kept buy's is. The road this
-          // settle reads was read before the cancel landed, so the piece left the stall and waited on the service until
-          // another settle; `market-gone`: another door collected it, and it is in the pack
-          const dn = r.data?.delivery?.id;
-          if (!dn || !here()) continue;
-          const g = await collectGood(dn, 'returned');
-          if (g.ok) settled++; else if (g.error !== 'market-gone') refused.push(g.error);
-        }
-        for (const c of k.collects) if (here() && (await keptAct('collects', c, () => door.collect(me, c.delivery, c.rid), mint, key)).ok) settled++;
-        for (const d of state.road.filter((x) => x.kind === 'piece' && x.ready && x.character === me)) {
-          if (!here() || keptOf(key).collects.some((c) => c.delivery === d.id)) continue;
-          const rid = mintMarketRid();
-          keep('collects', { rid, delivery: d.id }, key);
-          const r = await keptAct('collects', { rid }, () => door.collect(me, d.id, rid), mint, key);
-          if (r.ok) { settled++; offRoad(d.id); } else if (!r.kept) refused.push(r.error);
-        }
-        // MARKET-ANY: and every piece from a pack that has arrived for this character, into its record and its pack
-        for (const d of state.road.filter((x) => x.kind === 'item' && x.ready && x.character === me)) {
-          if (!here()) break;
-          const r = await collectGood(d.id, d.why === 'returned' ? 'returned' : 'bought');   // RPT1026-MARKET ARRIVE: the pack says what came
-          if (r.ok) settled++; else refused.push(r.error);
-        }
-        if (settled) forget();
-        return { ok: true, settled, refused };
-      });
+          // MARKET-AUDIT P5: a collect the service refused is said (`refused`, its words) - it was said nowhere
+          const refused = [];
+          // GOLD-MARKET: a kept gold buy asked again through the realm act (paid on the answer for a sale it made, never for
+          // one made before it). VENDOR-LOST (FIELD BUGS 2026-10-25): a piece from a pack bought here comes as a delivery,
+          // arrived at once, which the press collects on its own answer (scenes/vendorHost.js vendorBuy). A kept buy's answer comes here
+          // instead, so its delivery is collected here, on the answer that names it - nothing did, and the piece waited on
+          // the service for good (and, collected, it is off the road the loop below reads)
+          for (const b of k.buys) {
+            if (!here()) continue;
+            const r = await (b.gold
+              ? goldBuy(b, mint, key, false)
+              : keptAct('buys', b, () => door.buy(b.body), mint, key));
+            if (!r.ok) continue;
+            settled++;
+            const dn = r.data?.sale?.kind === 'item' && r.data.sale.here ? r.data.delivery?.id : null;
+            if (!dn || !here()) continue;
+            const c = await collectGood(dn, 'bought'); // RPT1026-MARKET ARRIVE: said as a purchase arrived
+            if (c.ok) settled++;
+            else refused.push(c.error);
+          }
+          for (const c of k.cancels) {
+            if (!here()) continue;
+            const r = await keptAct('cancels', c, () => door.cancel(me, c.listing, c.rid), mint, key);
+            if (!r.ok) continue;
+            settled++;
+            // AUDIT RPT1026 D3: a piece from a pack taken back (a trader's, the Goods') comes back by a delivery arrived at
+            // once - a kept cancel's is collected here, on the answer that names it, as a kept buy's is. The road this
+            // settle reads was read before the cancel landed, so the piece left the stall and waited on the service until
+            // another settle; `market-gone`: another door collected it, and it is in the pack
+            const dn = r.data?.delivery?.id;
+            if (!dn || !here()) continue;
+            const g = await collectGood(dn, 'returned');
+            if (g.ok) settled++;
+            else if (g.error !== 'market-gone') refused.push(g.error);
+          }
+          for (const c of k.collects)
+            if (here() && (await keptAct('collects', c, () => door.collect(me, c.delivery, c.rid), mint, key)).ok)
+              settled++;
+          for (const d of state.road.filter((x) => x.kind === 'piece' && x.ready && x.character === me)) {
+            if (!here() || keptOf(key).collects.some((c) => c.delivery === d.id)) continue;
+            const rid = mintMarketRid();
+            keep('collects', { rid, delivery: d.id }, key);
+            const r = await keptAct('collects', { rid }, () => door.collect(me, d.id, rid), mint, key);
+            if (r.ok) {
+              settled++;
+              offRoad(d.id);
+            } else if (!r.kept) refused.push(r.error);
+          }
+          // MARKET-ANY: and every piece from a pack that has arrived for this character, into its record and its pack
+          for (const d of state.road.filter((x) => x.kind === 'item' && x.ready && x.character === me)) {
+            if (!here()) break;
+            const r = await collectGood(d.id, d.why === 'returned' ? 'returned' : 'bought'); // RPT1026-MARKET ARRIVE: the pack says what came
+            if (r.ok) settled++;
+            else refused.push(r.error);
+          }
+          if (settled) forget();
+          return { ok: true, settled, refused };
+        });
       // AUDIT 31 B10: a settle asked while another act is under way waits for it, never refused and never asked again
       return _busy && _busyKey !== 'settle' ? _busy.then(go, go) : go();
     },

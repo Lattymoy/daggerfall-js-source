@@ -2,8 +2,8 @@
   {
     "name": "SILVER-the-old-name-back",
     "file": "src/net/marksLaw.js",
-    "old": "toLocaleString('en-US')} silver`;",
-    "new": "toLocaleString('en-US')} ${n === 1 ? 'Drake' : 'Drakes'}`;",
+    "old": "export const marksText = (n) => `${Number(n).toLocaleString('en-US')} silver`;",
+    "new": "export const marksText = (n) => `${Number(n).toLocaleString('en-US')} ${n === 1 ? 'Drake' : 'Drakes'}`;",
     "tests": [
       "test/net/silver.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SILVER-a-plural",
     "file": "src/net/marksLaw.js",
-    "old": "toLocaleString('en-US')} silver`;",
-    "new": "toLocaleString('en-US')} ${n === 1 ? 'silver' : 'silvers'}`;",
+    "old": "export const marksText = (n) => `${Number(n).toLocaleString('en-US')} silver`;",
+    "new": "export const marksText = (n) => `${Number(n).toLocaleString('en-US')} ${n === 1 ? 'silver' : 'silvers'}`;",
     "tests": [
       "test/net/silver.test.js"
     ]

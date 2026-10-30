@@ -488,8 +488,8 @@
   {
     "name": "FB1016B-SG-AUDIT-S6-the-patron-a-fence",
     "file": "src/net/patronLaw.js",
-    "old": "  && item[PATRON_COUNTER_MARK] !== true && item.stolen !== true;",
-    "new": "  && item[PATRON_COUNTER_MARK] !== true;",
+    "old": "  item[PATRON_COUNTER_MARK] !== true &&\n  item.stolen !== true;",
+    "new": "  item[PATRON_COUNTER_MARK] !== true;",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]

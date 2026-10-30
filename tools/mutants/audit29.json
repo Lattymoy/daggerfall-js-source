@@ -2,8 +2,8 @@
   {
     "name": "AUDIT29-A1-a-node-in-any-spelling",
     "file": "src/net/nodeLaw.js",
-    "old": "pixelOk(x, y) && nodeKey({ kind: m[1], x, y, day, slot }) === s ?",
-    "new": "pixelOk(x, y) ?",
+    "old": "  return pixelOk(x, y) && nodeKey({ kind: m[1], x, y, day, slot }) === s ? { kind: m[1], x, y, day, slot } : null;",
+    "new": "  return pixelOk(x, y) ? { kind: m[1], x, y, day, slot } : null;",
     "tests": [
       "test/net/audit29_laws.test.js",
       "test/net/audit29_service.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "AUDIT29-A1-a-dungeon-vein-in-any-spelling",
     "file": "src/net/nodeLaw.js",
-    "old": "dungeonOk(dungeon) && dveinKey({ dungeon, day, slot }) === s ?",
-    "new": "dungeonOk(dungeon) ?",
+    "old": "    return dungeonOk(dungeon) && dveinKey({ dungeon, day, slot }) === s ? { kind: 'dvein', dungeon, day, slot } : null;",
+    "new": "    return dungeonOk(dungeon) ? { kind: 'dvein', dungeon, day, slot } : null;",
     "tests": [
       "test/net/audit29_laws.test.js"
     ]
@@ -21,8 +21,8 @@
   {
     "name": "AUDIT29-A6-the-signature-in-a-vein-s-place",
     "file": "src/net/nodeLaw.js",
-    "old": "richCount('vein', climate, region, confirmed) + signatureOres(region, confirmed).length;",
-    "new": "richCount('vein', climate, region, confirmed);",
+    "old": "  if (kind === 'vein')\n    return !VEIN_TABLES[climate]\n      ? 0\n      : richCount('vein', climate, region, confirmed) + signatureOres(region, confirmed).length;",
+    "new": "  if (kind === 'vein') return !VEIN_TABLES[climate] ? 0 : richCount('vein', climate, region, confirmed);",
     "tests": [
       "test/net/audit29_laws.test.js",
       "test/net/audit29_service.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "AUDIT29-A8-the-unconfirmed-patch-unheld",
     "file": "src/net/nodeLaw.js",
-    "old": "drawTier(unit('herb', x, y, day, slot, 3), confirmed ? HERB_TIERS : 2);",
-    "new": "drawTier(unit('herb', x, y, day, slot, 3), HERB_TIERS);",
+    "old": "  const tier = drawTier(unit('herb', x, y, day, slot, 3), confirmed ? HERB_TIERS : 2);",
+    "new": "  const tier = drawTier(unit('herb', x, y, day, slot, 3), HERB_TIERS);",
     "tests": [
       "test/net/audit29_laws.test.js"
     ]
@@ -50,8 +50,8 @@
   {
     "name": "AUDIT29-A10-the-first-writ-the-lowest-high",
     "file": "src/net/nodeLaw.js",
-    "old": "tier = high.length ? high[high.length - 1] : tiers[tiers.length - 1];",
-    "new": "tier = high.length ? high[0] : tiers[tiers.length - 1];",
+    "old": "      tier = high.length ? high[high.length - 1] : tiers[tiers.length - 1]; // AUDIT 29 A10: the highest, as said",
+    "new": "      tier = high.length ? high[0] : tiers[tiers.length - 1]; // AUDIT 29 A10: the highest, as said",
     "tests": [
       "test/net/audit29_laws.test.js"
     ]

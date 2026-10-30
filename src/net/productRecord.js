@@ -33,8 +33,19 @@
 //
 // PURE; the account service mints, the client reads. Not a DFU member. Ledger A (the professions' row).
 import { _b64url, SIG_BYTES, ID_RE } from './identityToken.js';
-import { PROVENANCE_RE, MAKER_MAX, recipeById, MASTERWORK, rollsQuality, dyeOk, HAND_CHEF, HAND_PROVISIONER, dishOf, jewelHandOk } from './recipeLaw.js';
-import { masterRecordLinesValid } from './masterLaw.js';   // MASTER-ART: a Master's work's lines, as signed
+import {
+  PROVENANCE_RE,
+  MAKER_MAX,
+  recipeById,
+  MASTERWORK,
+  rollsQuality,
+  dyeOk,
+  HAND_CHEF,
+  HAND_PROVISIONER,
+  dishOf,
+  jewelHandOk,
+} from './recipeLaw.js';
+import { masterRecordLinesValid } from './masterLaw.js'; // MASTER-ART: a Master's work's lines, as signed
 
 /** The only version this file reads or writes. */
 export const PRODUCT_RECORD_V = 'p1';
@@ -75,7 +86,10 @@ export const MINT_VERSION = MINT_V_JEWEL_KIN;
  * name below it is no build's, and is stamped as a client that names none (a forged `mint: 1` had bought the law the
  * owner retired, a damage line on every blade). @param {unknown} asked
  */
-export const craftMintVersion = (asked) => (typeof asked === 'number' && Number.isSafeInteger(asked) && asked >= MINT_V_JEWEL_KIN ? Math.min(asked, MINT_VERSION) : MINT_V_LINES);
+export const craftMintVersion = (asked) =>
+  typeof asked === 'number' && Number.isSafeInteger(asked) && asked >= MINT_V_JEWEL_KIN
+    ? Math.min(asked, MINT_VERSION)
+    : MINT_V_LINES;
 /** MASTER-ART (Professions-Arc 57): the mint version a Master's work stamps (4 on its branch, renumbered past JEWEL-KIN's
  *  4 at the merge). Its record's `l` holds its three lines at the values the service rolled - `[kind, value]` or
  *  `[kind, value, param]` (net/masterLaw.js masterRecordLines; AUDIT HORIZONTAL B1: signed, never rolled again).
@@ -96,15 +110,20 @@ export function productRecordValid(c) {
   if (typeof c.h !== 'string' || !CHAR_RE.test(c.h)) return false;
   const r = recipeById(c.r);
   if (!r) return false;
-  if (!Number.isInteger(c.q) || (!rollsQuality(r) ? c.q !== -1 : (c.q < 0 || c.q > MASTERWORK) && !(r.kind === 'kit' && c.q === -1))) return false;   // PROF4: arrows take none; CRAFT5: a kit its quality - or none, one made before kits took one
+  if (
+    !Number.isInteger(c.q) ||
+    (!rollsQuality(r) ? c.q !== -1 : (c.q < 0 || c.q > MASTERWORK) && !(r.kind === 'kit' && c.q === -1))
+  )
+    return false; // PROF4: arrows take none; CRAFT5: a kit its quality - or none, one made before kits took one
   if (c.m !== null && (typeof c.m !== 'string' || !c.m.length || c.m.length > MAKER_MAX)) return false;
   if (!Number.isSafeInteger(c.c) || c.c < 0 || c.c > 0xffffffff) return false;
   if (!Number.isSafeInteger(c.i) || c.i < 0) return false;
-  if (c.a !== undefined && (c.a !== 1 || c.m === null || !(c.q === MASTERWORK || r.family === 'furniture'))) return false;
-  if (c.u !== undefined && (c.u === null || !dyeOk(r, c.u))) return false;   // PROF7: a garment's dye, of its ten
-  if (c.f !== undefined && !handOk(r, c.f)) return false;   // PROF9: a dish's cook's hand; PROF10: a jeweller's
-  if (c.v !== undefined && !(Number.isSafeInteger(c.v) && c.v >= MINT_V_LAST_PASS)) return false;   // CRAFT-PROCS: the mint's version
-  if (c.l !== undefined && !(c.q === MASTERWORK && c.v >= MINT_V_MASTER && masterRecordLinesValid(c.l))) return false;   // MASTER-ART: a Master's lines; AUDIT HORIZONTAL B1: their shape, never today's pool
+  if (c.a !== undefined && (c.a !== 1 || c.m === null || !(c.q === MASTERWORK || r.family === 'furniture')))
+    return false;
+  if (c.u !== undefined && (c.u === null || !dyeOk(r, c.u))) return false; // PROF7: a garment's dye, of its ten
+  if (c.f !== undefined && !handOk(r, c.f)) return false; // PROF9: a dish's cook's hand; PROF10: a jeweller's
+  if (c.v !== undefined && !(Number.isSafeInteger(c.v) && c.v >= MINT_V_LAST_PASS)) return false; // CRAFT-PROCS: the mint's version
+  if (c.l !== undefined && !(c.q === MASTERWORK && c.v >= MINT_V_MASTER && masterRecordLinesValid(c.l))) return false; // MASTER-ART: a Master's lines; AUDIT HORIZONTAL B1: their shape, never today's pool
   return true;
 }
 /** PROF9: whether `f` is a hand recipe `r`'s piece may carry - a Provisioner's on any dish, a Chef's on a feast alone.
@@ -122,12 +141,32 @@ function handOk(r, f) {
  * @param {{subtle: SubtleCrypto, nowS: number}} env
  * @returns {Promise<string>}
  */
-export async function mintProductRecord({ p, s, h, r, q, m, c, a = false, u = null, f = null, v = null, l = null }, privateKey, { subtle, nowS }) {
-  const claims = { p, s, h, r, q, m, c, i: nowS, ...(a ? { a: 1 } : {}), ...(u == null ? {} : { u }), ...(f == null ? {} : { f }), ...(v == null ? {} : { v }), ...(l == null ? {} : { l }) };   // PROF9: a dish's hand; CRAFT-PROCS: the mint's version; MASTER-ART: a Master's lines
+export async function mintProductRecord(
+  { p, s, h, r, q, m, c, a = false, u = null, f = null, v = null, l = null },
+  privateKey,
+  { subtle, nowS },
+) {
+  const claims = {
+    p,
+    s,
+    h,
+    r,
+    q,
+    m,
+    c,
+    i: nowS,
+    ...(a ? { a: 1 } : {}),
+    ...(u == null ? {} : { u }),
+    ...(f == null ? {} : { f }),
+    ...(v == null ? {} : { v }),
+    ...(l == null ? {} : { l }),
+  }; // PROF9: a dish's hand; CRAFT-PROCS: the mint's version; MASTER-ART: a Master's lines
   if (!productRecordValid(claims)) throw new TypeError('mintProductRecord refused a claim set it could not verify');
   const body = _b64url.encode(enc.encode(JSON.stringify(claims)));
   if (!privateKey) return `${PRODUCT_RECORD_V}.${body}.`;
-  const sig = new Uint8Array(await subtle.sign({ name: 'Ed25519' }, privateKey, enc.encode(`${PRODUCT_RECORD_V}.${body}`)));
+  const sig = new Uint8Array(
+    await subtle.sign({ name: 'Ed25519' }, privateKey, enc.encode(`${PRODUCT_RECORD_V}.${body}`)),
+  );
   const rec = `${PRODUCT_RECORD_V}.${body}.${_b64url.encode(sig)}`;
   // AUDIT 30 L3: never sign a record the law's own reader would refuse
   if (rec.length > PRODUCT_RECORD_MAX) throw new RangeError('mintProductRecord made a record past its own bound');
@@ -142,7 +181,11 @@ export function readProductRecord(rec) {
   const raw = _b64url.decode(parts[1]);
   if (!raw) return null;
   let c;
-  try { c = JSON.parse(dec.decode(raw)); } catch { return null; }
+  try {
+    c = JSON.parse(dec.decode(raw));
+  } catch {
+    return null;
+  }
   return productRecordValid(c) ? { ...c, signed: parts[2].length > 0 } : null;
 }
 /** CRAFT-PROCS: the mint version a record names (`v`) - 0 for one made before the stamp, or for anything not a record.
@@ -172,10 +215,18 @@ export async function verifyProductRecord(rec, publicKey, { subtle }) {
   const raw = _b64url.decode(body);
   if (!raw) return { ok: false, why: 'body-shape' };
   let good = false;
-  try { good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(`${v}.${body}`)); } catch { return { ok: false, why: 'verify-threw' }; }
+  try {
+    good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(`${v}.${body}`));
+  } catch {
+    return { ok: false, why: 'verify-threw' };
+  }
   if (!good) return { ok: false, why: 'signature' };
   let claims;
-  try { claims = JSON.parse(dec.decode(raw)); } catch { return { ok: false, why: 'json' }; }
+  try {
+    claims = JSON.parse(dec.decode(raw));
+  } catch {
+    return { ok: false, why: 'json' };
+  }
   if (!productRecordValid(claims)) return { ok: false, why: 'claims' };
   return { ok: true, claims };
 }

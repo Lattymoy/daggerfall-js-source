@@ -2,57 +2,73 @@
   {
     "name": "AUDIT-RPT1026-D1-the-poke-never-kept",
     "file": "src/net/marketArrivals.js",
-    "old": "    soon() { tries = 0; if (sweeping) poked = true; if (!shut) schedule(ARRIVALS_SOON_MS); },",
-    "new": "    soon() { tries = 0; if (!shut) schedule(ARRIVALS_SOON_MS); },",
-    "tests": ["test/net/audit_rpt1026_market.test.js"]
+    "old": "      if (sweeping) poked = true;\n      if (!shut) schedule(ARRIVALS_SOON_MS);",
+    "new": "      if (!shut) schedule(ARRIVALS_SOON_MS);",
+    "tests": [
+      "test/net/audit_rpt1026_market.test.js"
+    ]
   },
   {
     "name": "AUDIT-RPT1026-D1-the-kept-poke-never-swept-for",
     "file": "src/net/marketArrivals.js",
-    "old": "      if (poked && !shut) schedule(ARRIVALS_SOON_MS);   // AUDIT RPT1026 D1: the press's sweep, still owed",
+    "old": "      if (poked && !shut) schedule(ARRIVALS_SOON_MS); // AUDIT RPT1026 D1: the press's sweep, still owed",
     "new": "",
-    "tests": ["test/net/audit_rpt1026_market.test.js"]
+    "tests": [
+      "test/net/audit_rpt1026_market.test.js"
+    ]
   },
   {
     "name": "AUDIT-RPT1026-D1-a-shut-market-swept-for",
     "file": "src/net/marketArrivals.js",
-    "old": "      if (poked && !shut) schedule(ARRIVALS_SOON_MS);",
-    "new": "      if (poked) schedule(ARRIVALS_SOON_MS);",
-    "tests": ["test/net/audit_rpt1026_market.test.js"]
+    "old": "      if (poked && !shut) schedule(ARRIVALS_SOON_MS); // AUDIT RPT1026 D1: the press's sweep, still owed",
+    "new": "      if (poked) schedule(ARRIVALS_SOON_MS); // AUDIT RPT1026 D1: the press's sweep, still owed",
+    "tests": [
+      "test/net/audit_rpt1026_market.test.js"
+    ]
   },
   {
     "name": "AUDIT-RPT1026-D2-the-overdue-wait-the-slack-s",
     "file": "src/net/marketArrivals.js",
     "old": "      .map((ms) => (ms > 0 ? ms : ARRIVALS_AGAIN_MS));",
     "new": "      .map((ms) => ms);",
-    "tests": ["test/net/audit_rpt1026_market.test.js"]
+    "tests": [
+      "test/net/audit_rpt1026_market.test.js"
+    ]
   },
   {
     "name": "AUDIT-RPT1026-D2-the-slack-taken-for-a-clock-ahead",
     "file": "src/net/marketArrivals.js",
     "old": "      .map((ms) => (ms > 0 ? ms : ARRIVALS_AGAIN_MS));",
     "new": "      .map((ms) => (ms > ARRIVALS_LATE_MS ? ms : ARRIVALS_AGAIN_MS));",
-    "tests": ["test/net/audit_rpt1026_market.test.js"]
+    "tests": [
+      "test/net/audit_rpt1026_market.test.js"
+    ]
   },
   {
     "name": "AUDIT-RPT1026-D3-the-kept-cancel-s-delivery-uncollected",
     "file": "src/net/marketBook.js",
-    "old": "          const dn = r.data?.delivery?.id;\n          if (!dn || !here()) continue;\n          const g = await collectGood(dn, 'returned');",
-    "new": "          const dn = null;\n          if (!dn || !here()) continue;\n          const g = await collectGood(dn, 'returned');",
-    "tests": ["test/net/audit_rpt1026_market.test.js"]
+    "old": "            const dn = r.data?.delivery?.id;",
+    "new": "            const dn = null;",
+    "tests": [
+      "test/net/audit_rpt1026_market.test.js"
+    ]
   },
   {
     "name": "AUDIT-RPT1026-D3-said-as-a-purchase",
     "file": "src/net/marketBook.js",
-    "old": "          const g = await collectGood(dn, 'returned');",
-    "new": "          const g = await collectGood(dn, 'bought');",
-    "tests": ["test/net/audit_rpt1026_market.test.js"]
+    "old": "            const g = await collectGood(dn, 'returned');",
+    "new": "            const g = await collectGood(dn, 'bought');",
+    "tests": [
+      "test/net/audit_rpt1026_market.test.js"
+    ]
   },
   {
     "name": "AUDIT-RPT1026-D3-market-gone-said",
     "file": "src/net/marketBook.js",
-    "old": "          if (g.ok) settled++; else if (g.error !== 'market-gone') refused.push(g.error);",
-    "new": "          if (g.ok) settled++; else refused.push(g.error);",
-    "tests": ["test/net/audit_rpt1026_market.test.js"]
+    "old": "            else if (g.error !== 'market-gone') refused.push(g.error);",
+    "new": "            else refused.push(g.error);",
+    "tests": [
+      "test/net/audit_rpt1026_market.test.js"
+    ]
   }
 ]

@@ -589,8 +589,8 @@
   {
     "name": "PROF10-jewellery-unlisted",
     "file": "src/net/marketLaw.js",
-    "old": "  Object.freeze(['jewellery', 'Jewellery']),\n",
-    "new": "",
+    "old": "  Object.freeze(['jewellery', 'Jewellery']),\n]);",
+    "new": "]);",
     "tests": [
       "test/net/prof10_law.test.js",
       "test/net/prof10_service.test.js",
@@ -600,8 +600,8 @@
   {
     "name": "PROF10-record-no-jewel-hand",
     "file": "src/net/productRecord.js",
-    "old": "  if (r.kind === 'jewel') return jewelHandOk(r, f);\n",
-    "new": "",
+    "old": "  if (r.kind === 'jewel') return jewelHandOk(r, f);\n  if (r.kind !== 'dish') return false;",
+    "new": "  if (r.kind !== 'dish') return false;",
     "tests": [
       "test/net/prof10_law.test.js",
       "test/net/prof10_service.test.js"

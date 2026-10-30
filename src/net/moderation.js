@@ -27,7 +27,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { sanitizeName } from './wire.js';
-import { t } from '../systems/textManager.js';   // L10N4: the command's words in the moderator's language (the account Worker bundles the text core already)
+import { t } from '../systems/textManager.js'; // L10N4: the command's words in the moderator's language (the account Worker bundles the text core already)
 
 /** The longest one mute may run, in minutes: a week. Longer is a ban,
  *  which is a different decision and not one Mac has asked for. The
@@ -38,7 +38,8 @@ export const MUTE_MAX_MIN = 7 * 24 * 60;
 export const MUTE_DEFAULT_MIN = 30;
 /** The command's refusal and the service's (net/accountClient.js REFUSALS 'bad-minutes') in one sentence, from the bound.
  *  L10N4: a reader now (it was MUTE_RANGE_TEXT, read at module load) - in the player's language, read when it is said. */
-export const muteRangeText = () => t('net.mod.muteRange', 'A mute is 1 to {max} minutes (one week).', { max: MUTE_MAX_MIN });
+export const muteRangeText = () =>
+  t('net.mod.muteRange', 'A mute is 1 to {max} minutes (one week).', { max: MUTE_MAX_MIN });
 
 export const MUTE_USAGE = 'Usage: /mute <name> [minutes], or /unmute <name>.';
 /** L10N4: MUTE_USAGE as the player reads it. */
@@ -81,16 +82,28 @@ export function parseModCommand(text) {
  */
 export function resolveTarget(session, name) {
   const want = sanitizeName(name).toLowerCase();
-  const found = new Map();   // sub -> shown name: one account on two tabs is still one player
+  const found = new Map(); // sub -> shown name: one account on two tabs is still one player
   let unaccounted = false;
   for (const p of session?.peers?.values?.() ?? []) {
     if (sanitizeName(p?.name ?? '').toLowerCase() !== want) continue;
     if (typeof p.sub === 'string' && p.sub) found.set(p.sub, p.name);
     else unaccounted = true;
   }
-  if (found.size === 1) { const [[sub, shown]] = [...found]; return { sub, name: shown }; }
-  if (found.size > 1) return { error: t('net.mod.ambiguous', '{count} players are called {name}. Nobody was muted.', { count: found.size, name }) };
-  if (unaccounted) return { error: t('net.mod.unaccounted', '{name} cannot be muted from here yet. Try again in a moment.', { name }) };
+  if (found.size === 1) {
+    const [[sub, shown]] = [...found];
+    return { sub, name: shown };
+  }
+  if (found.size > 1)
+    return {
+      error: t('net.mod.ambiguous', '{count} players are called {name}. Nobody was muted.', {
+        count: found.size,
+        name,
+      }),
+    };
+  if (unaccounted)
+    return {
+      error: t('net.mod.unaccounted', '{name} cannot be muted from here yet. Try again in a moment.', { name }),
+    };
   return { error: t('net.mod.nobody', 'Nobody called {name} is online.', { name }) };
 }
 
@@ -127,8 +140,16 @@ export async function muteNamed(who, minutes, { links, mute, refusal }) {
   if (typeof order === 'string' && order) for (const link of links) if (link?.sendMuteOrder?.(order)) carried++;
   const shown = r.data?.name ?? who.name;
   if (!minutes) return t('net.mod.unmuted', '{name} can chat again.', { name: shown });
-  return carried ? t('net.mod.muted', '{name} is muted for {minutes, plural, one {# minute} other {# minutes}}.', { name: shown, minutes })
-    : t('net.mod.mutedLater', '{name} is muted for {minutes, plural, one {# minute} other {# minutes}}. It takes effect when they next connect.', { name: shown, minutes });
+  return carried
+    ? t('net.mod.muted', '{name} is muted for {minutes, plural, one {# minute} other {# minutes}}.', {
+        name: shown,
+        minutes,
+      })
+    : t(
+        'net.mod.mutedLater',
+        '{name} is muted for {minutes, plural, one {# minute} other {# minutes}}. It takes effect when they next connect.',
+        { name: shown, minutes },
+      );
 }
 
 /**
@@ -140,7 +161,9 @@ export async function muteNamed(who, minutes, { links, mute, refusal }) {
 export function mutedText(until, nowS) {
   if (!until || until <= nowS) return t('net.mod.chatAgain', 'You can chat again.');
   const left = Math.ceil((until - nowS) / 60);
-  return t('net.mod.mutedFor', 'You are muted for {left, plural, one {# more minute} other {# more minutes}}.', { left });
+  return t('net.mod.mutedFor', 'You are muted for {left, plural, one {# more minute} other {# more minutes}}.', {
+    left,
+  });
 }
 
 /**

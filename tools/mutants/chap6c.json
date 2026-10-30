@@ -2,8 +2,8 @@
   {
     "name": "CHAP6C-DOCTRINE-WORDS",
     "file": "src/net/npcChapterLaw.js",
-    "old": "(chapterDoctrineOk(d) ? DOCTRINE_WORDS[/** @type {'training' | 'shelf' | 'writs'} */ (d)] : null)",
-    "new": "(DOCTRINE_WORDS[/** @type {'training' | 'shelf' | 'writs'} */ (d)] ?? null)",
+    "old": "  chapterDoctrineOk(d) ? DOCTRINE_WORDS[/** @type {'training' | 'shelf' | 'writs'} */ (d)] : null;",
+    "new": "  DOCTRINE_WORDS[/** @type {'training' | 'shelf' | 'writs'} */ (d)] ?? null;",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "CHAP6C-OF-EVENT",
     "file": "src/net/npcChapterLaw.js",
-    "old": "const event = chapterEventOk(c?.event) ? String(c.event) : null;\n  return {",
-    "new": "const event = c?.event ?? null;\n  return {",
+    "old": "  const event = chapterEventOk(c?.event) ? String(c.event) : null;",
+    "new": "  const event = c?.event ?? null;",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "CHAP6C-OF-SEASON",
     "file": "src/net/npcChapterLaw.js",
-    "old": "season: Number.isSafeInteger(c?.season) && c.season >= 0 ? c.season : null,",
-    "new": "season: Number.isSafeInteger(c?.season) ? c.season : null,",
+    "old": "    season: Number.isSafeInteger(c?.season) && c.season >= 0 ? c.season : null,",
+    "new": "    season: Number.isSafeInteger(c?.season) ? c.season : null,",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "CHAP6C-OF-RIVAL-EVENT",
     "file": "src/net/npcChapterLaw.js",
-    "old": "rival: event === 'rivalry' && isRollFaction(c?.rival) ? c.rival : null,",
-    "new": "rival: isRollFaction(c?.rival) ? c.rival : null,",
+    "old": "    rival: event === 'rivalry' && isRollFaction(c?.rival) ? c.rival : null,",
+    "new": "    rival: isRollFaction(c?.rival) ? c.rival : null,",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "CHAP6C-OF-RIVAL-FACTION",
     "file": "src/net/npcChapterLaw.js",
-    "old": "rival: event === 'rivalry' && isRollFaction(c?.rival) ? c.rival : null,",
-    "new": "rival: event === 'rivalry' ? c.rival ?? null : null,",
+    "old": "    rival: event === 'rivalry' && isRollFaction(c?.rival) ? c.rival : null,",
+    "new": "    rival: event === 'rivalry' ? (c.rival ?? null) : null,",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "CHAP6C-OF-SHUT",
     "file": "src/net/npcChapterLaw.js",
-    "old": "    shut: c?.shut === true,\n    doctrine: chapterDoctrineOk(c?.doctrine)",
-    "new": "    shut: !!c?.shut,\n    doctrine: chapterDoctrineOk(c?.doctrine)",
+    "old": "    shut: c?.shut === true,",
+    "new": "    shut: !!c?.shut,",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "CHAP6C-OF-DOCTRINE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "doctrine: chapterDoctrineOk(c?.doctrine) ? String(c.doctrine) : null,",
-    "new": "doctrine: c?.doctrine ? String(c.doctrine) : null,",
+    "old": "    doctrine: chapterDoctrineOk(c?.doctrine) ? String(c.doctrine) : null,",
+    "new": "    doctrine: c?.doctrine ? String(c.doctrine) : null,",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "CHAP6C-OF-SIDES-EVENT",
     "file": "src/net/npcChapterLaw.js",
-    "old": "sides: event === 'schism' && Array.isArray(c?.sides)",
-    "new": "sides: Array.isArray(c?.sides)",
+    "old": "      event === 'schism' && Array.isArray(c?.sides) && c.sides.length === 2 && c.sides.every(chapterDoctrineOk)",
+    "new": "      Array.isArray(c?.sides) && c.sides.length === 2 && c.sides.every(chapterDoctrineOk)",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "CHAP6C-OF-SIDES-LEN",
     "file": "src/net/npcChapterLaw.js",
-    "old": "&& c.sides.length === 2 && c.sides.every(chapterDoctrineOk)",
-    "new": "&& c.sides.every(chapterDoctrineOk)",
+    "old": "      event === 'schism' && Array.isArray(c?.sides) && c.sides.length === 2 && c.sides.every(chapterDoctrineOk)",
+    "new": "      event === 'schism' && Array.isArray(c?.sides) && c.sides.every(chapterDoctrineOk)",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "CHAP6C-OF-SIDES-OK",
     "file": "src/net/npcChapterLaw.js",
-    "old": "&& c.sides.length === 2 && c.sides.every(chapterDoctrineOk)",
-    "new": "&& c.sides.length === 2",
+    "old": "      event === 'schism' && Array.isArray(c?.sides) && c.sides.length === 2 && c.sides.every(chapterDoctrineOk)",
+    "new": "      event === 'schism' && Array.isArray(c?.sides) && c.sides.length === 2",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "CHAP6C-OF-SIDES-COPY",
     "file": "src/net/npcChapterLaw.js",
-    "old": "? [String(c.sides[0]), String(c.sides[1])] : null,",
-    "new": "? c.sides : null,",
+    "old": "        ? [String(c.sides[0]), String(c.sides[1])]",
+    "new": "        ? c.sides",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "CHAP6C-OF-HEIR",
     "file": "src/net/npcChapterLaw.js",
-    "old": "heir: event === 'succession' && chapterBackOk('succession', c?.heir) ? c.heir : null,",
-    "new": "heir: chapterBackOk('succession', c?.heir) ? c.heir : null,",
+    "old": "    heir: event === 'succession' && chapterBackOk('succession', c?.heir) ? c.heir : null,",
+    "new": "    heir: chapterBackOk('succession', c?.heir) ? c.heir : null,",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "CHAP6C-OF-HEIR-OK",
     "file": "src/net/npcChapterLaw.js",
-    "old": "heir: event === 'succession' && chapterBackOk('succession', c?.heir) ? c.heir : null,",
-    "new": "heir: event === 'succession' ? c?.heir ?? null : null,",
+    "old": "    heir: event === 'succession' && chapterBackOk('succession', c?.heir) ? c.heir : null,",
+    "new": "    heir: event === 'succession' ? (c?.heir ?? null) : null,",
     "tests": [
       "test/systems/livingWorld/chap6c_words.test.js"
     ]

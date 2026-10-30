@@ -594,7 +594,7 @@ nothing here to gather."), and every ask after an isle pixel's witnesses was ref
 apart for as long as the captain stood there.
 
 THE LAW. The nodes' ground is the Bay's map and the Eltheric's box
-(`nodeLaw.js:"export const pixelOk = (x, y) => Number.isSafeInteger(x) && Number.isSafeInteger(y)"`; the ground's one
+(`nodeLaw.js:"export const pixelOk"`; the ground's one
 home is `world/ethericSea.js` `onBayOrEther` since ETHER-OW, where the Overworld's bands and raiders are born too), and a node's and a haul's ids are read in their one spelling with four digits and a sign. Nothing
 else moves: the day's counts by climate, the tiers, the witnessed world (an isle pixel is unconfirmed until three
 week-old accounts agree, worth its kind's least till then), the regions' materials (an isle's herbs are Betony's), a

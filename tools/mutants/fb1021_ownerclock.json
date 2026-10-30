@@ -2,8 +2,8 @@
   {
     "name": "OC-wrap-dropped",
     "file": "src/net/ownerClock.js",
-    "old": "    tm() { return at == null ? null : ((Math.round(at) % OWNER_TM_MOD) + OWNER_TM_MOD) % OWNER_TM_MOD; },",
-    "new": "    tm() { return at == null ? null : Math.round(at); },",
+    "old": "      return at == null ? null : ((Math.round(at) % OWNER_TM_MOD) + OWNER_TM_MOD) % OWNER_TM_MOD;",
+    "new": "      return at == null ? null : Math.round(at);",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "OC-cap-unread",
     "file": "src/net/ownerClock.js",
-    "old": "    if (s.length <= max) return s;\n  }",
-    "new": "    return s;\n  }",
+    "old": "    if (s.length <= max) return s;",
+    "new": "    return s;",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "OC-hand-kept",
     "file": "src/net/ownerClock.js",
-    "old": "  try { return apply(); } finally { _applying = was; }",
-    "new": "  try { return apply(); } finally { void was; }",
+    "old": "    _applying = was;",
+    "new": "    void was;",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -542,8 +542,8 @@
   {
     "name": "OC-stamp-skip-null",
     "file": "src/net/ownerClock.js",
-    "old": "  if (tm != null) {\n    const s = JSON.stringify({ t, data: { ...data, tm } });",
-    "new": "  {\n    const s = JSON.stringify({ t, data: { ...data, tm } });",
+    "old": "  if (tm != null) {",
+    "new": "  {",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]

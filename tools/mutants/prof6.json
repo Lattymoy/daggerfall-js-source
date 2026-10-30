@@ -128,8 +128,8 @@
   {
     "name": "PROF6-law-writ-pay-minted",
     "file": "src/net/marksLaw.js",
-    "old": "  'writ-pay': 'move',",
-    "new": "  'writ-pay': 'mint',",
+    "old": "  'writ-pay': 'move', // PROF6: a delivery's pay less its tax, out of the writ's escrow into the deliverer's balance",
+    "new": "  'writ-pay': 'mint', // PROF6: a delivery's pay less its tax, out of the writ's escrow into the deliverer's balance",
     "tests": [
       "test/net/prof6_law.test.js"
     ]

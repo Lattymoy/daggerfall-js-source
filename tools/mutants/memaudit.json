@@ -65,8 +65,8 @@
   {
     "name": "MA-the-market-cache-uncapped",
     "file": "src/net/marketBook.js",
-    "old": "      if (cache.size > MARKET_CACHE_KEPT) cache.delete(cache.keys().next().value);\n",
-    "new": "",
+    "old": "      if (cache.size > MARKET_CACHE_KEPT) cache.delete(cache.keys().next().value);\n      return { ok: !!r?.ok, data: e.data, error: e.error, stale: e.stale };",
+    "new": "      return { ok: !!r?.ok, data: e.data, error: e.error, stale: e.stale };",
     "tests": [
       "test/systems/memaudit.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "MA-P6-a-rewrite-left-where-it-stood",
     "file": "src/net/marketBook.js",
-    "old": "      cache.delete(key); cache.set(key, e);",
-    "new": "      cache.set(key, e);",
+    "old": "      cache.delete(key);\n      cache.set(key, e); // MEM-AUDIT (2026-10-23): the newest last - a minute's reads past the cap go oldest first",
+    "new": "      cache.set(key, e); // MEM-AUDIT (2026-10-23): the newest last - a minute's reads past the cap go oldest first",
     "tests": [
       "test/systems/memaudit.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "MA-P6-the-cap-not-256",
     "file": "src/net/marketBook.js",
-    "old": "export const MARKET_CACHE_KEPT = 256;",
-    "new": "export const MARKET_CACHE_KEPT = 257;",
+    "old": "export const MARKET_CACHE_KEPT = 256; // AUDIT MEM-AUDIT U3: a long browse's views (64 dropped a view the player came back to after 70 pages)",
+    "new": "export const MARKET_CACHE_KEPT = 257; // AUDIT MEM-AUDIT U3: a long browse's views (64 dropped a view the player came back to after 70 pages)",
     "tests": [
       "test/systems/memaudit.test.js"
     ]

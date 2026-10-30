@@ -84,8 +84,8 @@
   {
     "name": "LOST-SPOILS-a-place-unbounded",
     "file": "src/net/lostLaw.js",
-    "old": "i < 0 || i >= LOST_INDEX_MAX || seen.has(i)",
-    "new": "i < 0 || seen.has(i)",
+    "old": "    if (!Number.isSafeInteger(i) || i < 0 || i >= LOST_INDEX_MAX || seen.has(i)) return { error: 'lost-pieces' };",
+    "new": "    if (!Number.isSafeInteger(i) || i < 0 || seen.has(i)) return { error: 'lost-pieces' };",
     "tests": [
       "test/server/lostspoils_service.test.js"
     ],
@@ -94,8 +94,8 @@
   {
     "name": "LOST-SPOILS-a-place-twice",
     "file": "src/net/lostLaw.js",
-    "old": "i >= LOST_INDEX_MAX || seen.has(i)) return",
-    "new": "i >= LOST_INDEX_MAX) return",
+    "old": "    if (!Number.isSafeInteger(i) || i < 0 || i >= LOST_INDEX_MAX || seen.has(i)) return { error: 'lost-pieces' };",
+    "new": "    if (!Number.isSafeInteger(i) || i < 0 || i >= LOST_INDEX_MAX) return { error: 'lost-pieces' };",
     "tests": [
       "test/server/lostspoils_service.test.js"
     ],
@@ -104,8 +104,8 @@
   {
     "name": "LOST-SPOILS-provenance-taken",
     "file": "src/net/lostLaw.js",
-    "old": "Array.isArray(item) || item.provenance != null || !postItemHead(item)",
-    "new": "Array.isArray(item) || !postItemHead(item)",
+    "old": "    if (!item || typeof item !== 'object' || Array.isArray(item) || item.provenance != null || !postItemHead(item))",
+    "new": "    if (!item || typeof item !== 'object' || Array.isArray(item) || !postItemHead(item))",
     "tests": [
       "test/server/lostspoils_service.test.js"
     ],
@@ -135,8 +135,8 @@
   {
     "name": "LOST-SPOILS-a-final-refusal-asked-for-ever",
     "file": "src/net/lostSpoils.js",
-    "old": "(r?.ok ? 'ok' : LOST_FINAL.includes(r?.error) ? 'refused' : 'later')",
-    "new": "(r?.ok ? 'ok' : 'later')",
+    "old": "export const lostAnswerOf = (/** @type {any} */ r) =>\n  r?.ok ? 'ok' : LOST_FINAL.includes(r?.error) ? 'refused' : 'later';",
+    "new": "export const lostAnswerOf = (/** @type {any} */ r) => (r?.ok ? 'ok' : 'later');",
     "tests": [
       "test/net/lostspoils_client.test.js"
     ],

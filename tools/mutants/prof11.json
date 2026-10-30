@@ -544,8 +544,8 @@
   {
     "name": "PROF11-stonework-unlisted",
     "file": "src/net/marketLaw.js",
-    "old": "  Object.freeze(['stonework', 'Stonework']),\n",
-    "new": "",
+    "old": "  Object.freeze(['stonework', 'Stonework']),\n  // PROF9: the fire's - the four dishes (recipeLaw DISHES), a cook's hand carried with each",
+    "new": "  // PROF9: the fire's - the four dishes (recipeLaw DISHES), a cook's hand carried with each",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/net/prof5_law.test.js"

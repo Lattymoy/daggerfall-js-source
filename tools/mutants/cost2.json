@@ -257,8 +257,8 @@
   {
     "name": "COST2-square-unwidened",
     "file": "src/net/overworldLaw.js",
-    "old": "return b && { x0: b.x0 - OW_CELL_MARGIN_PX, y0: b.y0 - OW_CELL_MARGIN_PX, x1: b.x1 + OW_CELL_MARGIN_PX, y1: b.y1 + OW_CELL_MARGIN_PX };",
-    "new": "return b && { x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1 };",
+    "old": "    return (\n      b && {\n        x0: b.x0 - OW_CELL_MARGIN_PX,\n        y0: b.y0 - OW_CELL_MARGIN_PX,\n        x1: b.x1 + OW_CELL_MARGIN_PX,\n        y1: b.y1 + OW_CELL_MARGIN_PX,\n      }\n    );",
+    "new": "    return b && { x0: b.x0, y0: b.y0, x1: b.x1, y1: b.y1 };",
     "tests": [
       "test/net/cellcover.test.js"
     ]

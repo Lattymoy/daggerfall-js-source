@@ -48,8 +48,8 @@
   {
     "name": "AUDIT-STAR-W2-cap-english-handed",
     "file": "src/net/marksBook.js",
-    "old": "{ cap: MARKS_COMBAT.perDay }),   // STAR7",
-    "new": "{ cap: marksText(MARKS_COMBAT.perDay) }),   // STAR7",
+    "old": "      cap: MARKS_COMBAT.perDay,",
+    "new": "      cap: marksText(MARKS_COMBAT.perDay),",
     "tests": [
       "test/systems/starfall/auditstar.test.js",
       "test/net/silverways_client.test.js"

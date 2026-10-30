@@ -2,8 +2,8 @@
   {
     "name": "BOARD-SIFT-law-a-page-past-the-last-kept",
     "file": "src/net/marketLaw.js",
-    "old": "n >= 0 && n < MARKET_PAGES_MAX ? n : 0",
-    "new": "n >= 0 && n <= MARKET_PAGES_MAX ? n : 0",
+    "old": "export const marketPageOf = (n) => (Number.isSafeInteger(n) && n >= 0 && n < MARKET_PAGES_MAX ? n : 0);",
+    "new": "export const marketPageOf = (n) => (Number.isSafeInteger(n) && n >= 0 && n <= MARKET_PAGES_MAX ? n : 0);",
     "tests": [
       "test/net/boardsift_market.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "BOARD-SIFT-law-an-unknown-order-kept",
     "file": "src/net/marketLaw.js",
-    "old": "return sorts ? (sorts.includes(sort) ? sort : sorts[0]) : null;",
-    "new": "return sorts ? (sort ?? sorts[0]) : null;",
+    "old": "  return sorts ? (sorts.includes(sort) ? sort : sorts[0]) : null;",
+    "new": "  return sorts ? (sort ?? sorts[0]) : null;",
     "tests": [
       "test/net/boardsift_market.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "BOARD-SIFT-law-the-least-quality-past-masterwork",
     "file": "src/net/marketLaw.js",
-    "old": "n > 0 && n <= MASTERWORK ? n : 0",
-    "new": "n > 0 && n <= MASTERWORK + 1 ? n : 0",
+    "old": "export const marketQualityOf = (n) => (Number.isSafeInteger(n) && n > 0 && n <= MASTERWORK ? n : 0);",
+    "new": "export const marketQualityOf = (n) => (Number.isSafeInteger(n) && n > 0 && n <= MASTERWORK + 1 ? n : 0);",
     "tests": [
       "test/net/boardsift_market.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "BOARD-SIFT-law-one-word-enough",
     "file": "src/net/marketLaw.js",
-    "old": "return words.every((w) => hay.includes(w) || close.includes(tight(w)));",
-    "new": "return words.some((w) => hay.includes(w) || close.includes(tight(w)));",
+    "old": "  return words.every((w) => hay.includes(w) || close.includes(tight(w)));",
+    "new": "  return words.some((w) => hay.includes(w) || close.includes(tight(w)));",
     "tests": [
       "test/net/boardsift_market.test.js",
       "test/ui/boardsift.test.js"
@@ -57,8 +57,8 @@
   {
     "name": "BOARD-SIFT-law-the-close-reading-gone",
     "file": "src/net/marketLaw.js",
-    "old": "hay.includes(w) || close.includes(tight(w))",
-    "new": "hay.includes(w)",
+    "old": "  return words.every((w) => hay.includes(w) || close.includes(tight(w)));",
+    "new": "  return words.every((w) => hay.includes(w));",
     "tests": [
       "test/net/boardsift_market.test.js",
       "test/ui/boardsift.test.js"
@@ -67,8 +67,8 @@
   {
     "name": "BOARD-SIFT-law-the-families-ignored",
     "file": "src/net/marketLaw.js",
-    "old": "(!families || families.includes(r.family)) && wordsIn",
-    "new": "true && wordsIn",
+    "old": "  return RECIPES.filter(\n    (r) => (!families || families.includes(r.family)) && wordsIn(words, shown ? `${r.name} ${shown(r) ?? ''}` : r.name),\n  ).map((r) => r.id);",
+    "new": "  return RECIPES.filter((r) => true && wordsIn(words, shown ? `${r.name} ${shown(r) ?? ''}` : r.name)).map((r) => r.id);",
     "tests": [
       "test/net/boardsift_market.test.js"
     ]
@@ -76,8 +76,8 @@
   {
     "name": "BOARD-SIFT-law-the-shown-name-ignored",
     "file": "src/net/marketLaw.js",
-    "old": "wordsIn(words, shown ? `${r.name} ${shown(r) ?? ''}` : r.name)",
-    "new": "wordsIn(words, r.name)",
+    "old": "  return RECIPES.filter(\n    (r) => (!families || families.includes(r.family)) && wordsIn(words, shown ? `${r.name} ${shown(r) ?? ''}` : r.name),\n  ).map((r) => r.id);",
+    "new": "  return RECIPES.filter((r) => (!families || families.includes(r.family)) && wordsIn(words, r.name)).map((r) => r.id);",
     "tests": [
       "test/net/boardsift_market.test.js",
       "test/ui/boardsift.test.js"
@@ -86,8 +86,8 @@
   {
     "name": "BOARD-SIFT-law-an-unknown-recipe-kept",
     "file": "src/net/marketLaw.js",
-    "old": ".filter((id) => typeof id === 'string' && !!recipeById(id))",
-    "new": ".filter((id) => typeof id === 'string')",
+    "old": "  return [...new Set(list.slice(0, 2 * RECIPES.length).filter((id) => typeof id === 'string' && !!recipeById(id)))];",
+    "new": "  return [...new Set(list.slice(0, 2 * RECIPES.length).filter((id) => typeof id === 'string'))];",
     "tests": [
       "test/net/boardsift_market.test.js"
     ]
@@ -239,8 +239,8 @@
   {
     "name": "BOARD-SIFT-book-the-key-without-them",
     "file": "src/net/marketBook.js",
-    "old": "\n    q.page ?? 0, q.sort ?? '', q.recipes ? `r:${q.recipes.join(',')}` : '', q.quality ?? 0].join('|');",
-    "new": "].join('|');",
+    "old": "      q.page ?? 0,\n      q.sort ?? '',\n      q.recipes ? `r:${q.recipes.join(',')}` : '',\n      q.quality ?? 0,\n    ].join('|'); // AUDIT SEATS-3 D2: and the board (its cap); MARKET-AUDIT P2: and the account and character (another's My listings was served a minute); BOARD-SIFT: and the page, its order, a search's recipes (AUDIT BOARD-SIFT: one that names none is no read without one) and the least quality",
+    "new": "    ].join('|'); // AUDIT SEATS-3 D2: and the board (its cap); MARKET-AUDIT P2: and the account and character (another's My listings was served a minute); BOARD-SIFT: and the page, its order, a search's recipes (AUDIT BOARD-SIFT: one that names none is no read without one) and the least quality",
     "tests": [
       "test/net/boardsift_market.test.js"
     ]
@@ -248,8 +248,8 @@
   {
     "name": "BOARD-SIFT-book-the-empty-search-keyed-as-none",
     "file": "src/net/marketBook.js",
-    "old": "q.recipes ? `r:${q.recipes.join(',')}` : ''",
-    "new": "(q.recipes ?? []).join(',')",
+    "old": "      q.recipes ? `r:${q.recipes.join(',')}` : '',",
+    "new": "      (q.recipes ?? []).join(','),",
     "tests": [
       "test/net/boardsift_market.test.js"
     ]

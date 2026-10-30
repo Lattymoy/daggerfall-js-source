@@ -11,8 +11,8 @@
   {
     "name": "CHAP2B-KINDS-THIEVES",
     "file": "src/net/npcChapterLaw.js",
-    "old": "  if (faction === GUILD_FACTION_IDS.DarkBrotherhood) return ['gate', 'raid'];\n  if (/** @type {number[]} */ (Object.values(DIVINES)).includes(faction)) return ['gate'];",
-    "new": "  if (faction === GUILD_FACTION_IDS.DarkBrotherhood || faction === GUILD_FACTION_IDS.ThievesGuild) return ['gate', 'raid'];\n  if (/** @type {number[]} */ (Object.values(DIVINES)).includes(faction)) return ['gate'];",
+    "old": "  if (faction === GUILD_FACTION_IDS.DarkBrotherhood) return ['gate', 'raid'];",
+    "new": "  if (faction === GUILD_FACTION_IDS.DarkBrotherhood || faction === GUILD_FACTION_IDS.ThievesGuild)\n    return ['gate', 'raid'];",
     "tests": [
       "test/net/chap2b_receipts.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "CHAP2B-KINDS-TEMPLES",
     "file": "src/net/npcChapterLaw.js",
-    "old": "  if (/** @type {number[]} */ (Object.values(DIVINES)).includes(faction)) return ['gate'];\n  if (/** @type {number[]} */ (Object.values(ORDERS)).includes(faction)) return ['gate', 'raid'];\n  return [];",
-    "new": "  if (/** @type {number[]} */ (Object.values(DIVINES)).includes(faction)) return ['gate', 'raid'];\n  if (/** @type {number[]} */ (Object.values(ORDERS)).includes(faction)) return ['gate', 'raid'];\n  return [];",
+    "old": "  if (/** @type {number[]} */ (Object.values(DIVINES)).includes(faction)) return ['gate'];",
+    "new": "  if (/** @type {number[]} */ (Object.values(DIVINES)).includes(faction)) return ['gate', 'raid'];",
     "tests": [
       "test/net/chap2b_receipts.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "CHAP2B-HERE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "].filter((x) => isRollFaction(x) && here.has(x)).sort((a, b) => a - b)) {",
-    "new": "].filter((x) => isRollFaction(x)).sort((a, b) => a - b)) {",
+    "old": "  for (const f of [...new Set(members ?? [])].filter((x) => isRollFaction(x) && here.has(x)).sort((a, b) => a - b)) {",
+    "new": "  for (const f of [...new Set(members ?? [])].filter((x) => isRollFaction(x)).sort((a, b) => a - b)) {",
     "tests": [
       "test/net/chap2b_receipts.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "CHAP2B-ROLL-ONLY",
     "file": "src/net/npcChapterLaw.js",
-    "old": "].filter((x) => isRollFaction(x) && here.has(x)).sort((a, b) => a - b)) {",
-    "new": "].filter((x) => here.has(x)).sort((a, b) => a - b)) {",
+    "old": "  for (const f of [...new Set(members ?? [])].filter((x) => isRollFaction(x) && here.has(x)).sort((a, b) => a - b)) {",
+    "new": "  for (const f of [...new Set(members ?? [])].filter((x) => here.has(x)).sort((a, b) => a - b)) {",
     "tests": [
       "test/net/chap2b_receipts.test.js"
     ]
@@ -56,7 +56,7 @@
   {
     "name": "CHAP2B-WRIT-KIND",
     "file": "src/net/npcChapterLaw.js",
-    "old": "    if (hallReceiptKindsOf(f).includes(kind)) out.push({ faction: f, ref: receiptWritRef(kind, day), amount: HALL_WRIT_REP });",
+    "old": "    if (hallReceiptKindsOf(f).includes(kind))\n      out.push({ faction: f, ref: receiptWritRef(kind, day), amount: HALL_WRIT_REP });",
     "new": "    out.push({ faction: f, ref: receiptWritRef(kind, day), amount: HALL_WRIT_REP });",
     "tests": [
       "test/net/chap2b_receipts.test.js"
@@ -66,7 +66,7 @@
     "name": "CHAP2B-WRIT-DAY",
     "file": "src/net/npcChapterLaw.js",
     "old": "export const receiptWritRef = (/** @type {string} */ kind, /** @type {number} */ day) => `w${kind}:${day}`;",
-    "new": "export const receiptWritRef = (/** @type {string} */ kind, /** @type {number} */ day) => `w${kind}:${day}:${Math.random()}`;",
+    "new": "export const receiptWritRef = (/** @type {string} */ kind, /** @type {number} */ day) =>\n  `w${kind}:${day}:${Math.random()}`;",
     "tests": [
       "test/net/chap2b_receipts.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "CHAP2B-KIND-GUARD",
     "file": "src/net/npcChapterLaw.js",
-    "old": "  if (!RECEIPT_KINDS.includes(kind) || !Number.isSafeInteger(day)) return [];\n  const here",
-    "new": "  if (!Number.isSafeInteger(day)) return [];\n  const here",
+    "old": "  if (!RECEIPT_KINDS.includes(kind) || !Number.isSafeInteger(day)) return [];",
+    "new": "  if (!Number.isSafeInteger(day)) return [];",
     "tests": [
       "test/net/chap2b_receipts.test.js"
     ]
@@ -251,8 +251,8 @@
   {
     "name": "CHAP2B-CARD-STATE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "${member && mine.some((a) => a.kind === k && a.done === true) ? ' (done today)' : ''}",
-    "new": "${''}",
+    "old": "  const said = kinds.map(\n    (k) =>\n      `${DUTY_WORDS[/** @type {'gate' | 'raid'} */ (k)]}${member && mine.some((a) => a.kind === k && a.done === true) ? ' (done today)' : ''}`,\n  );",
+    "new": "  const said = kinds.map((k) => `${DUTY_WORDS[/** @type {'gate' | 'raid'} */ (k)]}${''}`);",
     "tests": [
       "test/net/chap2b_receipts.test.js"
     ]

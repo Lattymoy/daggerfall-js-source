@@ -11,8 +11,8 @@
   {
     "name": "MARKET-AUDIT-S2-last-unit-untaxed-not",
     "file": "src/net/marketLaw.js",
-    "old": "return last && total >= 1 && total - t < 1 ? total - 1 : t; };",
-    "new": "return t; };",
+    "old": "  return last && total >= 1 && total - t < 1 ? total - 1 : t;",
+    "new": "  return t;",
     "tests": [
       "test/net/marketaudit.test.js"
     ]
@@ -75,7 +75,7 @@
   {
     "name": "MARKET-AUDIT-B4-fresh-id-again",
     "file": "src/net/marketBook.js",
-    "old": "        if (was) return was.gold ? goldBuy(was, mint, key, false) : keptAct('buys', was, () => door.buy(was.body), mint, key);",
+    "old": "        if (was)\n          return was.gold ? goldBuy(was, mint, key, false) : keptAct('buys', was, () => door.buy(was.body), mint, key);",
     "new": "        if (was && false) return null;",
     "tests": [
       "test/net/marketaudit.test.js"

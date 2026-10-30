@@ -111,8 +111,8 @@
   {
     "name": "CRAFT-PROCS-the-record-takes-any-version",
     "file": "src/net/productRecord.js",
-    "old": "  if (c.v !== undefined && !(Number.isSafeInteger(c.v) && c.v >= MINT_V_LAST_PASS)) return false;   // CRAFT-PROCS: the mint's version\n",
-    "new": "",
+    "old": "  if (c.v !== undefined && !(Number.isSafeInteger(c.v) && c.v >= MINT_V_LAST_PASS)) return false; // CRAFT-PROCS: the mint's version\n  if (c.l !== undefined && !(c.q === MASTERWORK && c.v >= MINT_V_MASTER && masterRecordLinesValid(c.l))) return false; // MASTER-ART: a Master's lines; AUDIT HORIZONTAL B1: their shape, never today's pool",
+    "new": "  if (c.l !== undefined && !(c.q === MASTERWORK && c.v >= MINT_V_MASTER && masterRecordLinesValid(c.l))) return false; // MASTER-ART: a Master's lines; AUDIT HORIZONTAL B1: their shape, never today's pool",
     "tests": [
       "test/systems/fb1013e_craftprocs.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "CRAFT-PROCS-the-record-takes-version-0",
     "file": "src/net/productRecord.js",
-    "old": "Number.isSafeInteger(c.v) && c.v >= MINT_V_LAST_PASS",
-    "new": "Number.isSafeInteger(c.v) && c.v >= 0",
+    "old": "  if (c.v !== undefined && !(Number.isSafeInteger(c.v) && c.v >= MINT_V_LAST_PASS)) return false; // CRAFT-PROCS: the mint's version",
+    "new": "  if (c.v !== undefined && !(Number.isSafeInteger(c.v) && c.v >= 0)) return false; // CRAFT-PROCS: the mint's version",
     "tests": [
       "test/systems/fb1013e_craftprocs.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "CRAFT-PROCS-the-record-drops-its-version",
     "file": "src/net/productRecord.js",
-    "old": ", ...(v == null ? {} : { v }), ...(l == null ? {} : { l }) };",
-    "new": ", ...(l == null ? {} : { l }) };",
+    "old": "    ...(v == null ? {} : { v }),\n    ...(l == null ? {} : { l }),",
+    "new": "    ...(l == null ? {} : { l }),",
     "tests": [
       "test/systems/fb1013e_craftprocs.test.js"
     ]

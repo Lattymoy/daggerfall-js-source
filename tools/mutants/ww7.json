@@ -327,8 +327,8 @@
   {
     "name": "WW7-5-the-board-the-bay-s",
     "file": "src/net/marketLaw.js",
-    "old": "/^(-?\\d{1,4}),(-?\\d{1,4})$/.exec(s)",
-    "new": "/^(\\d{1,3}),(\\d{1,3})$/.exec(s)",
+    "old": "  const m = typeof s === 'string' ? /^(-?\\d{1,4}),(-?\\d{1,4})$/.exec(s) : null;",
+    "new": "  const m = typeof s === 'string' ? /^(\\d{1,3}),(\\d{1,3})$/.exec(s) : null;",
     "tests": [
       "test/server/ww7_books.test.js"
     ]

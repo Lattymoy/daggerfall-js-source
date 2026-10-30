@@ -292,7 +292,7 @@
   {
     "name": "LODE-MARK-the-warned-lode-unmarked",
     "file": "src/net/motherlodeBook.js",
-    "old": "        if (standing(l, t) || (said.has(`warn|${l.key}`) && t < l.opensAt && (l.struck ?? 0) < MOTHERLODE_STRIKERS)) out.push(l);",
+    "old": "        if (standing(l, t) || (said.has(`warn|${l.key}`) && t < l.opensAt && (l.struck ?? 0) < MOTHERLODE_STRIKERS))\n          out.push(l);",
     "new": "        if (standing(l, t)) out.push(l);",
     "tests": [
       "test/net/fb1012g_lodemark.test.js"
@@ -301,8 +301,8 @@
   {
     "name": "LODE-MARK-marked-before-its-warning",
     "file": "src/net/motherlodeBook.js",
-    "old": "(said.has(`warn|${l.key}`) && t < l.opensAt && (l.struck ?? 0) < MOTHERLODE_STRIKERS)",
-    "new": "(t < l.opensAt && (l.struck ?? 0) < MOTHERLODE_STRIKERS)",
+    "old": "        if (standing(l, t) || (said.has(`warn|${l.key}`) && t < l.opensAt && (l.struck ?? 0) < MOTHERLODE_STRIKERS))\n          out.push(l);",
+    "new": "        if (standing(l, t) || (t < l.opensAt && (l.struck ?? 0) < MOTHERLODE_STRIKERS)) out.push(l);",
     "tests": [
       "test/net/fb1012g_lodemark.test.js"
     ]
@@ -310,8 +310,8 @@
   {
     "name": "LODE-MARK-marked-once-spent",
     "file": "src/net/motherlodeBook.js",
-    "old": "(said.has(`warn|${l.key}`) && t < l.opensAt && (l.struck ?? 0) < MOTHERLODE_STRIKERS)",
-    "new": "(said.has(`warn|${l.key}`) && t < l.opensAt)",
+    "old": "        if (standing(l, t) || (said.has(`warn|${l.key}`) && t < l.opensAt && (l.struck ?? 0) < MOTHERLODE_STRIKERS))\n          out.push(l);",
+    "new": "        if (standing(l, t) || (said.has(`warn|${l.key}`) && t < l.opensAt)) out.push(l);",
     "tests": [
       "test/net/fb1012g_lodemark.test.js"
     ]
@@ -319,8 +319,8 @@
   {
     "name": "LODE-MARK-a-finder-told",
     "file": "src/net/motherlodeBook.js",
-    "old": "        if (state.found) break;\n",
-    "new": "",
+    "old": "        if (state.found) break;\n        if (t >= l.opensAt - ahead && t < l.opensAt && !said.has(`warn|${l.key}`)) {",
+    "new": "        if (t >= l.opensAt - ahead && t < l.opensAt && !said.has(`warn|${l.key}`)) {",
     "tests": [
       "test/net/fb1012g_lodemark.test.js"
     ]

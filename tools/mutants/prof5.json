@@ -81,8 +81,8 @@
   {
     "name": "PROF5-law-load-ten",
     "file": "src/net/marketLaw.js",
-    "old": "load: 20, pixelsAMark: 25, least: 2, baseS: 900, pixelsAMinute: 10",
-    "new": "load: 10, pixelsAMark: 25, least: 2, baseS: 900, pixelsAMinute: 10",
+    "old": "export const COURIER = Object.freeze({ load: 20, pixelsAMark: 25, least: 2, baseS: 900, pixelsAMinute: 10 });",
+    "new": "export const COURIER = Object.freeze({ load: 10, pixelsAMark: 25, least: 2, baseS: 900, pixelsAMinute: 10 });",
     "tests": [
       "test/net/prof5_law.test.js"
     ]
@@ -90,8 +90,8 @@
   {
     "name": "PROF5-law-road-cheaper",
     "file": "src/net/marketLaw.js",
-    "old": "load: 20, pixelsAMark: 25, least: 2, baseS: 900, pixelsAMinute: 10",
-    "new": "load: 20, pixelsAMark: 30, least: 2, baseS: 900, pixelsAMinute: 10",
+    "old": "export const COURIER = Object.freeze({ load: 20, pixelsAMark: 25, least: 2, baseS: 900, pixelsAMinute: 10 });",
+    "new": "export const COURIER = Object.freeze({ load: 20, pixelsAMark: 30, least: 2, baseS: 900, pixelsAMinute: 10 });",
     "tests": [
       "test/net/prof5_law.test.js"
     ]
@@ -99,8 +99,8 @@
   {
     "name": "PROF5-law-least-one",
     "file": "src/net/marketLaw.js",
-    "old": "load: 20, pixelsAMark: 25, least: 2, baseS: 900, pixelsAMinute: 10",
-    "new": "load: 20, pixelsAMark: 25, least: 1, baseS: 900, pixelsAMinute: 10",
+    "old": "export const COURIER = Object.freeze({ load: 20, pixelsAMark: 25, least: 2, baseS: 900, pixelsAMinute: 10 });",
+    "new": "export const COURIER = Object.freeze({ load: 20, pixelsAMark: 25, least: 1, baseS: 900, pixelsAMinute: 10 });",
     "tests": [
       "test/net/prof5_law.test.js"
     ]
@@ -108,8 +108,8 @@
   {
     "name": "PROF5-law-courier-quicker",
     "file": "src/net/marketLaw.js",
-    "old": "load: 20, pixelsAMark: 25, least: 2, baseS: 900, pixelsAMinute: 10",
-    "new": "load: 20, pixelsAMark: 25, least: 2, baseS: 600, pixelsAMinute: 10",
+    "old": "export const COURIER = Object.freeze({ load: 20, pixelsAMark: 25, least: 2, baseS: 900, pixelsAMinute: 10 });",
+    "new": "export const COURIER = Object.freeze({ load: 20, pixelsAMark: 25, least: 2, baseS: 600, pixelsAMinute: 10 });",
     "tests": [
       "test/net/prof5_law.test.js"
     ]
@@ -185,8 +185,8 @@
   {
     "name": "PROF5-law-hub-own-first",
     "file": "src/net/marketLaw.js",
-    "old": "  const f = witnessedFact(rows, parseHubReport);\n  if (f.state !== 'none'",
-    "new": "  const f = own ? { state: 'none' } : witnessedFact(rows, parseHubReport);\n  if (f.state !== 'none'",
+    "old": "  const f = witnessedFact(rows, parseHubReport);",
+    "new": "  const f = own ? { state: 'none' } : witnessedFact(rows, parseHubReport);",
     "tests": [
       "test/net/prof5_law.test.js"
     ]
@@ -275,8 +275,8 @@
   {
     "name": "PROF5-law-median-unsorted",
     "file": "src/net/marketLaw.js",
-    "old": ".filter((r) => r && r.units > 0 && r.price > 0).sort((a, b) => a.price - b.price);",
-    "new": ".filter((r) => r && r.units > 0 && r.price > 0);",
+    "old": "  const sorted = (rows ?? []).filter((r) => r && r.units > 0 && r.price > 0).sort((a, b) => a.price - b.price);",
+    "new": "  const sorted = (rows ?? []).filter((r) => r && r.units > 0 && r.price > 0);",
     "tests": [
       "test/net/prof5_law.test.js"
     ]
@@ -284,8 +284,8 @@
   {
     "name": "PROF5-law-line-shifted",
     "file": "src/net/marketLaw.js",
-    "old": "  for (let d = today - days + 1; d <= today; d++)",
-    "new": "  for (let d = today - days; d < today; d++)",
+    "old": "  for (let d = today - days + 1; d <= today; d++) out.push(medianOf((rows ?? []).filter((r) => r.day === d)));",
+    "new": "  for (let d = today - days; d < today; d++) out.push(medianOf((rows ?? []).filter((r) => r.day === d)));",
     "tests": [
       "test/net/prof5_law.test.js"
     ]
@@ -302,8 +302,8 @@
   {
     "name": "PROF5-law-catalogue-unlawed",
     "file": "src/net/marketLaw.js",
-    "old": "  const all = [...MINED_KEYS, ...FOOD_KEYS, ...herbs].filter((k) => !UNYIELDED.includes(k)).map((k) => material(k)).filter(Boolean);",
-    "new": "  const all = [...MINED_KEYS, ...FOOD_KEYS, ...herbs].filter((k) => !UNYIELDED.includes(k)).map((k) => material(k) ?? { key: k, family: 'herbs', tier: 1 });",
+    "old": "    .map((k) => material(k))\n    .filter(Boolean);",
+    "new": "    .map((k) => material(k) ?? { key: k, family: 'herbs', tier: 1 });",
     "tests": [
       "test/net/prof5_law.test.js"
     ],
@@ -313,8 +313,8 @@
   {
     "name": "PROF5-law-witness-reads-pixels",
     "file": "src/net/nodeLaw.js",
-    "old": "  const sorted = [...(rows ?? [])].filter((r) => parse(r?.report))",
-    "new": "  const sorted = [...(rows ?? [])].filter((r) => parseReport(r?.report))",
+    "old": "    .filter((r) => parse(r?.report))",
+    "new": "    .filter((r) => parseReport(r?.report))",
     "tests": [
       "test/net/prof5_law.test.js"
     ]
@@ -342,8 +342,8 @@
   {
     "name": "PROF5-law-market-mints",
     "file": "src/net/marksLaw.js",
-    "old": "  'market-sale': 'move',",
-    "new": "  'market-sale': 'mint',",
+    "old": "  'market-sale': 'move', // PROF5: a sale's proceeds, the buyer's balance into the seller's",
+    "new": "  'market-sale': 'mint', // PROF5: a sale's proceeds, the buyer's balance into the seller's",
     "tests": [
       "test/net/prof5_law.test.js"
     ]
@@ -760,8 +760,8 @@
   {
     "name": "PROF5-book-mint-twice",
     "file": "src/net/marketBook.js",
-    "old": "      if (had && r.data?.piece) { try { mint?.(r.data.piece, kind); }",
-    "new": "      if (r.data?.piece) { try { mint?.(r.data.piece, kind); }",
+    "old": "      const had = letGo(kind, entry.rid, key);\n      forget();\n      if (had && r.data?.piece) {\n        try {",
+    "new": "      const had = letGo(kind, entry.rid, key);\n      forget();\n      if (r.data?.piece) {\n        try {",
     "tests": [
       "test/net/prof5_client.test.js"
     ]
@@ -770,8 +770,8 @@
     "name": "PROF5-book-piece-lost",
     "file": "src/net/marketBook.js",
     "note": "INT19 (PIN MOVED): re-aimed by content - a refused piece is put back by the realm act's undo (realmPieceAct)",
-    "old": "      try { piece.putBack(piece.item, piece.where); } catch (e) { console.warn('[market] put back', e); }\n",
-    "new": "",
+    "old": "      try {\n        piece.putBack(piece.item, piece.where);\n      } catch (e) {\n        console.warn('[market] put back', e);\n      }\n    },",
+    "new": "    },",
     "tests": [
       "test/net/prof5_client.test.js"
     ]
@@ -779,8 +779,8 @@
   {
     "name": "PROF5-book-settle-keeps-refused",
     "file": "src/net/marketBook.js",
-    "old": "            else { try { putBack(l.item, l.where); } catch (e) { console.warn('[market] put back', e); } }",
-    "new": "            else { /* kept */ }",
+    "old": "                try {\n                  putBack(l.item, l.where);\n                } catch (e) {\n                  console.warn('[market] put back', e);\n                }",
+    "new": "                /* kept */",
     "tests": [
       "test/net/prof5_client.test.js"
     ]
@@ -788,8 +788,8 @@
   {
     "name": "PROF5-book-marks-untold",
     "file": "src/net/marketBook.js",
-    "old": "    if (Number.isSafeInteger(d.balance)) { state.balance = d.balance; try { marks?.set?.(d.balance); } catch { /* the Marks book's own */ } }",
-    "new": "    if (Number.isSafeInteger(d.balance)) { state.balance = d.balance; }",
+    "old": "      try {\n        marks?.set?.(d.balance);\n      } catch {\n        /* the Marks book's own */\n      }\n    }",
+    "new": "    }",
     "tests": [
       "test/net/prof5_client.test.js"
     ]
@@ -806,8 +806,8 @@
   {
     "name": "PROF5-book-never-stale",
     "file": "src/net/marketBook.js",
-    "old": "stale: !r?.ok && !!hit?.data };",
-    "new": "stale: false };",
+    "old": "        stale: !r?.ok && !!hit?.data,",
+    "new": "        stale: false,",
     "tests": [
       "test/net/prof5_client.test.js"
     ]
@@ -824,7 +824,7 @@
   {
     "name": "PROF5-book-two-at-once",
     "file": "src/net/marketBook.js",
-    "old": "  const once = (key, fn) => {\n    if (_busy) return _busyKey === key ? _busy : Promise.resolve({ ok: false, error: 'market-busy' });\n    _busyKey = key;\n    return (_busy = (async () => { try { return await fn(); } finally { _busy = null; _busyKey = null; } })());\n  };",
+    "old": "  const once = (key, fn) => {\n    if (_busy) return _busyKey === key ? _busy : Promise.resolve({ ok: false, error: 'market-busy' });\n    _busyKey = key;\n    return (_busy = (async () => {\n      try {\n        return await fn();\n      } finally {\n        _busy = null;\n        _busyKey = null;\n      }\n    })());\n  };",
     "new": "  const once = (key, fn) => fn();",
     "tests": [
       "test/net/prof5_client.test.js"
@@ -833,8 +833,8 @@
   {
     "name": "PROF5-book-arrivals-left",
     "file": "src/net/marketBook.js",
-    "old": "        for (const d of state.road.filter((x) => x.kind === 'piece' && x.ready && x.character === me)) {",
-    "new": "        for (const d of state.road.filter((x) => x.kind === 'piece' && x.ready && x.character === me && false)) {",
+    "old": "          for (const d of state.road.filter((x) => x.kind === 'piece' && x.ready && x.character === me)) {",
+    "new": "          for (const d of state.road.filter((x) => x.kind === 'piece' && x.ready && x.character === me && false)) {",
     "tests": [
       "test/net/prof5_client.test.js"
     ]

@@ -26,7 +26,7 @@ import { GUILD_FACTION_IDS } from '../systems/guild/guildFactions.js';
 import { guildGroupOfFaction } from '../systems/guild/guilds.js';
 import { createGuildForGroup } from '../systems/guild/guildVariants.js';
 import { isRollFaction, hallReportOf } from './npcChapterLaw.js';
-import { turnedDayOf } from './dayTurn.js';   // DAY-TURN
+import { turnedDayOf } from './dayTurn.js'; // DAY-TURN
 
 /** Where this device keeps the day it last reported each town: { [mapId]: UTC day } - HALL_DONE past the day for a town
  *  the service has counted or struck, which is never reported again (an account's first answer stands for ever). */
@@ -57,7 +57,10 @@ export function hallFactionsOf(buildings, factionDict) {
   const out = new Set();
   for (const b of buildings ?? []) {
     const id = b?.factionId;
-    if (HIDDEN.has(id)) { out.add(id); continue; }
+    if (HIDDEN.has(id)) {
+      out.add(id);
+      continue;
+    }
     if (!id || (b?.buildingType !== BUILDING_TYPES.GuildHall && b?.buildingType !== BUILDING_TYPES.Temple)) continue;
     const f = chapterFactionOf(id, factionDict);
     if (f != null) out.add(f);
@@ -91,16 +94,28 @@ export function createHallBook({ door, storage = null, nowMs = () => Date.now(),
     try {
       const v = JSON.parse(storage?.getItem?.(HALL_REPORTED_KEY) ?? 'null');
       if (v && typeof v === 'object' && !Array.isArray(v)) reported = v;
-    } catch { /* a bad key reads as none */ }
+    } catch {
+      /* a bad key reads as none */
+    }
     return /** @type {Record<string, number>} */ (reported);
   };
   const write = (/** @type {Record<string, number>} */ t) => {
-    reported = Object.fromEntries(Object.entries(t).sort((a, b) => b[1] - a[1]).slice(0, HALL_REPORTED_MAX));
-    try { storage?.setItem?.(HALL_REPORTED_KEY, JSON.stringify(reported)); } catch { /* this page keeps it */ }
+    reported = Object.fromEntries(
+      Object.entries(t)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, HALL_REPORTED_MAX),
+    );
+    try {
+      storage?.setItem?.(HALL_REPORTED_KEY, JSON.stringify(reported));
+    } catch {
+      /* this page keeps it */
+    }
   };
-  const dayNow = () => turnedDayOf(nowMs(), turnMs);   // DAY-TURN: once a day, the day turned at this page's moment
+  const dayNow = () => turnedDayOf(nowMs(), turnMs); // DAY-TURN: once a day, the day turned at this page's moment
   return {
-    get stopped() { return stopped; },
+    get stopped() {
+      return stopped;
+    },
     /** @param {any} report */
     async witness(report) {
       const h = hallReportOf(report);
@@ -111,11 +126,18 @@ export function createHallBook({ door, storage = null, nowMs = () => Date.now(),
       t[String(h.key)] = dayNow();
       write(t);
       let r = null;
-      try { r = await door.witness(h); } catch { /* the next day asks again */ }
+      try {
+        r = await door.witness(h);
+      } catch {
+        /* the next day asks again */
+      }
       if (HALL_STOPS.includes(r?.error) || (r?.ok && r.data?.why === 'young')) stopped = true;
       // AUDIT CHAP2 E9: a town counted (the account's answer stands for ever) or struck is never asked again - a counted
       // account re-reported every town every day, each report a rate row and the region's kept chapters thrown away
-      if ((r?.ok && r.data?.counted === true) || HALL_DONE_ERRORS.includes(r?.error)) { t[String(h.key)] = HALL_DONE + dayNow(); write(t); }
+      if ((r?.ok && r.data?.counted === true) || HALL_DONE_ERRORS.includes(r?.error)) {
+        t[String(h.key)] = HALL_DONE + dayNow();
+        write(t);
+      }
       return true;
     },
   };
@@ -125,7 +147,8 @@ export function createHallBook({ door, storage = null, nowMs = () => Date.now(),
  *  (the region the player stands in - the towns the audit names) or `/hall strike <map id>` - `{ op, key? }`, `{ error }`
  *  in words, or null when the line is not /hall. NEVER GUARDED HERE (RED1's law): whether this player may is the
  *  service's question (server-account/src/npcHalls.js listHalls, strikeHall). */
-export const HALL_USAGE = 'Usage: /hall audit - the towns of this region the audit names; /hall strike <map id> - a false town struck.';
+export const HALL_USAGE =
+  'Usage: /hall audit - the towns of this region the audit names; /hall strike <map id> - a false town struck.';
 export function parseHallCommand(/** @type {unknown} */ text) {
   const m = /^\/hall(?:\s+([\s\S]*))?$/i.exec(String(text ?? '').trim());
   if (!m) return null;
@@ -133,7 +156,8 @@ export function parseHallCommand(/** @type {unknown} */ text) {
   const o = String(op ?? '').toLowerCase();
   if (o === 'audit' && key == null) return { op: 'audit' };
   const k = Number(key);
-  if (o !== 'strike' || !/^\d+$/.test(key ?? '') || !Number.isSafeInteger(k) || k > 0xffffffff || more.length) return { error: HALL_USAGE };
+  if (o !== 'strike' || !/^\d+$/.test(key ?? '') || !Number.isSafeInteger(k) || k > 0xffffffff || more.length)
+    return { error: HALL_USAGE };
   return { op: 'strike', key: k };
 }
 
@@ -141,6 +165,10 @@ export function parseHallCommand(/** @type {unknown} */ text) {
  *  none is. `name(f)` a faction's name. */
 export function hallAuditLines(/** @type {any} */ data, /** @type {(f: number) => string} */ name) {
   const towns = (data?.towns ?? []).filter((/** @type {any} */ t) => t.audit);
-  if (!towns.length) return [`No town of this region is on the halls' audit list (${data?.ignored ?? 0} accounts ignored).`];
-  return towns.map((/** @type {any} */ t) => `Town ${t.key}: ${t.state}, ${t.witnesses} witnesses - ${(t.factions ?? []).map(name).join(', ') || 'no hall'}`);
+  if (!towns.length)
+    return [`No town of this region is on the halls' audit list (${data?.ignored ?? 0} accounts ignored).`];
+  return towns.map(
+    (/** @type {any} */ t) =>
+      `Town ${t.key}: ${t.state}, ${t.witnesses} witnesses - ${(t.factions ?? []).map(name).join(', ') || 'no hall'}`,
+  );
 }

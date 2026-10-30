@@ -47,8 +47,8 @@
   {
     "name": "RPT1026-MARKET-ARRIVE-the-gate-unread",
     "file": "src/net/marketArrivals.js",
-    "old": "    if (!go) { schedule(ARRIVALS_FIRST_MS); return; }",
-    "new": "    if (false) { schedule(ARRIVALS_FIRST_MS); return; }",
+    "old": "    if (!go) {",
+    "new": "    if (false) {",
     "tests": [
       "test/net/rpt1026_market_arrive.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "RPT1026-MARKET-ARRIVE-the-tries-unbounded",
     "file": "src/net/marketArrivals.js",
-    "old": "      if (++tries <= ARRIVALS_TRIES) { schedule(ARRIVALS_AGAIN_MS); return; }",
-    "new": "      if (++tries <= Infinity) { schedule(ARRIVALS_AGAIN_MS); return; }",
+    "old": "      if (++tries <= ARRIVALS_TRIES) {",
+    "new": "      if (++tries <= Infinity) {",
     "tests": [
       "test/net/rpt1026_market_arrive.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "RPT1026-MARKET-ARRIVE-the-courier-never-waited-for",
     "file": "src/net/marketArrivals.js",
-    "old": "    if (due.length && tries <= ARRIVALS_TRIES) schedule(",
-    "new": "    if (false && due.length && tries <= ARRIVALS_TRIES) schedule(",
+    "old": "    if (due.length && tries <= ARRIVALS_TRIES)",
+    "new": "    if (false && due.length && tries <= ARRIVALS_TRIES)",
     "tests": [
       "test/net/rpt1026_market_arrive.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "RPT1026-MARKET-ARRIVE-a-shut-market-asked-again",
     "file": "src/net/marketArrivals.js",
-    "old": "    if (words.some((w) => SHUT.includes(w))) { shut = true; return; }",
-    "new": "    if (words.some((w) => SHUT.includes(w))) { return; }",
+    "old": "      shut = true;\n      return;",
+    "new": "      return;",
     "tests": [
       "test/net/rpt1026_market_arrive.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "RPT1026-MARKET-ARRIVE-soon-left-uncounted",
     "file": "src/net/marketArrivals.js",
-    "old": "    soon() { tries = 0; if (sweeping) poked = true;",
-    "new": "    soon() { if (sweeping) poked = true;",
+    "old": "      tries = 0;\n      if (sweeping) poked = true;",
+    "new": "      if (sweeping) poked = true;",
     "tests": [
       "test/net/rpt1026_market_arrive.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "RPT1026-MARKET-ARRIVE-the-clock-an-earlier-sweep-s",
     "file": "src/net/marketArrivals.js",
-    "old": "  function after(/** @type {any} */ road, /** @type {any} */ s) {\n    cancel?.();\n    cancel = null;",
-    "new": "  function after(/** @type {any} */ road, /** @type {any} */ s) {",
+    "old": "    cancel?.();\n    cancel = null;\n    const words = [road?.ok ? null : road?.error, ...(Array.isArray(s?.refused) ? s.refused : [])];",
+    "new": "    const words = [road?.ok ? null : road?.error, ...(Array.isArray(s?.refused) ? s.refused : [])];",
     "tests": [
       "test/net/rpt1026_market_arrive.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "RPT1026-MARKET-ARRIVE-the-delivery-s-word-lost",
     "file": "src/net/marketBook.js",
-    "old": "          const r = await collectGood(d.id, d.why === 'returned' ? 'returned' : 'bought');",
-    "new": "          const r = await collectGood(d.id);",
+    "old": "            const r = await collectGood(d.id, d.why === 'returned' ? 'returned' : 'bought'); // RPT1026-MARKET ARRIVE: the pack says what came",
+    "new": "            const r = await collectGood(d.id); // RPT1026-MARKET ARRIVE: the pack says what came",
     "tests": [
       "test/net/rpt1026_market_arrive.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "RPT1026-MARKET-ARRIVE-the-returned-word-lost",
     "file": "src/net/marketBook.js",
-    "old": "collectGood(d.id, d.why === 'returned' ? 'returned' : 'bought');",
-    "new": "collectGood(d.id, 'bought');",
+    "old": "            const r = await collectGood(d.id, d.why === 'returned' ? 'returned' : 'bought'); // RPT1026-MARKET ARRIVE: the pack says what came",
+    "new": "            const r = await collectGood(d.id, 'bought'); // RPT1026-MARKET ARRIVE: the pack says what came",
     "tests": [
       "test/net/rpt1026_market_arrive.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "RPT1026-MARKET-COLLECT-LANDED-landed-never-sent",
     "file": "src/net/marketBook.js",
-    "old": "door.collect(me, delivery, rid, at, { landed: true }),",
-    "new": "door.collect(me, delivery, rid, at),",
+    "old": "        call: (/** @type {any} */ at) => door.collect(me, delivery, rid, at, { landed: true }),",
+    "new": "        call: (/** @type {any} */ at) => door.collect(me, delivery, rid, at),",
     "tests": [
       "test/net/rpt1026_market_arrive.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "RPT1026-MARKET-COLLECT-LANDED-a-landed-repeat-abandoned",
     "file": "src/net/marketBook.js",
-    "old": "        const mine = !a?.data?.repeat || Number.isSafeInteger(a?.data?.realm?.seq);",
-    "new": "        const mine = !a?.data?.repeat;",
+    "old": "          const mine = !a?.data?.repeat || Number.isSafeInteger(a?.data?.realm?.seq);",
+    "new": "          const mine = !a?.data?.repeat;",
     "tests": [
       "test/net/rpt1026_market_arrive.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "RPT1026-MARKET-COLLECT-LANDED-every-repeat-received",
     "file": "src/net/marketBook.js",
-    "old": "        const mine = !a?.data?.repeat || Number.isSafeInteger(a?.data?.realm?.seq);",
-    "new": "        const mine = true;",
+    "old": "          const mine = !a?.data?.repeat || Number.isSafeInteger(a?.data?.realm?.seq);",
+    "new": "          const mine = true;",
     "tests": [
       "test/net/rpt1026_market_arrive.test.js"
     ]

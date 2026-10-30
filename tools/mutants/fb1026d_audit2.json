@@ -143,8 +143,8 @@
   {
     "name": "JEWEL-KIN-II-old-law-asked",
     "file": "src/net/productRecord.js",
-    "old": "asked >= MINT_V_JEWEL_KIN ? Math.min(asked, MINT_VERSION) : MINT_V_LINES",
-    "new": "asked >= MINT_V_LAST_PASS ? Math.min(asked, MINT_VERSION) : MINT_V_LINES",
+    "old": "  typeof asked === 'number' && Number.isSafeInteger(asked) && asked >= MINT_V_JEWEL_KIN",
+    "new": "  typeof asked === 'number' && Number.isSafeInteger(asked) && asked >= MINT_V_LAST_PASS",
     "tests": [
       "test/systems/fb1026d_jewelkin.test.js"
     ],

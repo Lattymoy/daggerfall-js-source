@@ -351,8 +351,8 @@
   {
     "name": "NAMEAS-the-name-not-sent-beside-the-account",
     "file": "src/net/mail.js",
-    "old": "toAccount ? { to, toAccount, subject, body } : { to, subject, body }",
-    "new": "toAccount ? { toAccount, subject, body } : { to, subject, body }",
+    "old": "  call(io, '/v1/mail/send', toAccount ? { to, toAccount, subject, body } : { to, subject, body });",
+    "new": "  call(io, '/v1/mail/send', toAccount ? { toAccount, subject, body } : { to, subject, body });",
     "tests": [
       "test/net/nameas_client.test.js"
     ]

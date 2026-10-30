@@ -139,8 +139,8 @@
   {
     "name": "GUILD1e-book-no-cache",
     "file": "src/net/noticeBook.js",
-    "old": "if (!force && nowMs() - e.at < BOARD_CACHE_MS) return Promise.resolve({ data: e.data",
-    "new": "if (false && nowMs() - e.at < BOARD_CACHE_MS) return Promise.resolve({ data: e.data",
+    "old": "    guildBoards.set(character, e);\n    if (!force && nowMs() - e.at < BOARD_CACHE_MS)",
+    "new": "    guildBoards.set(character, e);\n    if (false && nowMs() - e.at < BOARD_CACHE_MS)",
     "tests": [
       "test/net/guild1e_client.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "GUILD1e-book-rid-per-try",
     "file": "src/net/noticeBook.js",
-    "old": "(id) => door.guildPin({ character, ...note }, id)",
-    "new": "() => door.guildPin({ character, ...note }, rid())",
+    "old": "        (id) => door.guildPin({ character, ...note }, id),",
+    "new": "        () => door.guildPin({ character, ...note }, rid()),",
     "tests": [
       "test/net/guild1e_client.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "GUILD1e-book-stale-after-pin",
     "file": "src/net/noticeBook.js",
-    "old": "      async () => { forgetGuild(character); await readGuild(character, { force: true }); }),",
-    "new": "      async () => {}),",
+    "old": "        async () => {\n          forgetGuild(character);\n          await readGuild(character, { force: true });\n        },",
+    "new": "        async () => {},",
     "tests": [
       "test/net/guild1e_client.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "GUILD1e-book-town-words",
     "file": "src/net/noticeBook.js",
-    "old": "text: after ? guildRefusal(r?.error) : accountRefusalText(r?.error)",
-    "new": "text: accountRefusalText(r?.error)",
+    "old": "      return {\n        ok: false,\n        error: r?.error ?? 'server',\n        text: after ? guildRefusal(r?.error) : accountRefusalText(r?.error),\n      };",
+    "new": "      return { ok: false, error: r?.error ?? 'server', text: accountRefusalText(r?.error) };",
     "tests": [
       "test/net/guild1e_client.test.js"
     ]

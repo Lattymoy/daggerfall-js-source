@@ -60,15 +60,22 @@
 // book's key and bound in npcHallBook.js) live with them.
 // ═══════════════════════════════════════════════════════════════════
 
-import { GUILD_FACTION_IDS, DIVINES, ORDERS, MIN_REPUTATION, MAX_REPUTATION, RANK_REQ_REPUTATION } from '../systems/guild/guildFactions.js';
-import { MARKS_RID_RE, utcDay } from './marksLaw.js';   // ROLL-PACE: the Roll's day, the claims' own
-import { gateHash } from './gate/gateLaw.js';   // CHAP2a: a hall writ's own dice
-import { courtWrits, material, regionOk } from './nodeLaw.js';   // CHAP2a: the Court's writ law, the material families, a region (WW7-5: any of the world's)
-import { REGION_NAMES } from '../formats/mapsTables.js';   // CHAP4b: a seat's region, named
-import { seatWeekOf, chronicleWhen, seatSeasonName } from './townSeatLaw.js';   // CHAP3a: Merit's week is the seats' (the Turning settles both); CHAP4d: the Chronicle's when; CHAP6a: a Season's name
-import { GUILD_ID_RE, GUILD_NAME_MAX, GUILD_TAG_RE } from './guild/guildLaw.js';   // CHAP7a: a patron is a player guild
-import { MARKS_MAX } from './marksLaw.js';   // CHAP7a: a bid held under the one cap every treasury keeps
-import { REALM_CHARACTER_RE } from './identityToken.js';   // CHAP3a: a member's own writ is drawn over its realm id
+import {
+  GUILD_FACTION_IDS,
+  DIVINES,
+  ORDERS,
+  MIN_REPUTATION,
+  MAX_REPUTATION,
+  RANK_REQ_REPUTATION,
+} from '../systems/guild/guildFactions.js';
+import { MARKS_RID_RE, utcDay } from './marksLaw.js'; // ROLL-PACE: the Roll's day, the claims' own
+import { gateHash } from './gate/gateLaw.js'; // CHAP2a: a hall writ's own dice
+import { courtWrits, material, regionOk } from './nodeLaw.js'; // CHAP2a: the Court's writ law, the material families, a region (WW7-5: any of the world's)
+import { REGION_NAMES } from '../formats/mapsTables.js'; // CHAP4b: a seat's region, named
+import { seatWeekOf, chronicleWhen, seatSeasonName } from './townSeatLaw.js'; // CHAP3a: Merit's week is the seats' (the Turning settles both); CHAP4d: the Chronicle's when; CHAP6a: a Season's name
+import { GUILD_ID_RE, GUILD_NAME_MAX, GUILD_TAG_RE } from './guild/guildLaw.js'; // CHAP7a: a patron is a player guild
+import { MARKS_MAX } from './marksLaw.js'; // CHAP7a: a bid held under the one cap every treasury keeps
+import { REALM_CHARACTER_RE } from './identityToken.js'; // CHAP3a: a member's own writ is drawn over its realm id
 
 /** The membership books a character holds (systems/guild/guilds.js: the mortal's and the vampire's), each one temple and one
  *  order at most. */
@@ -76,8 +83,9 @@ export const ROLL_BOOKS = 2;
 const DIVINE_SET = /** @type {Set<number>} */ (new Set(Object.values(DIVINES)));
 const ORDER_SET = /** @type {Set<number>} */ (new Set(Object.values(ORDERS)));
 /** The twenty-two guild factions the Roll keeps, by id, ascending. */
-export const ROLL_FACTIONS = Object.freeze([...Object.values(GUILD_FACTION_IDS), ...Object.values(DIVINES), ...Object.values(ORDERS)]
-  .sort((a, b) => a - b));
+export const ROLL_FACTIONS = Object.freeze(
+  [...Object.values(GUILD_FACTION_IDS), ...Object.values(DIVINES), ...Object.values(ORDERS)].sort((a, b) => a - b),
+);
 const ROLL_SET = /** @type {Set<number>} */ (new Set(ROLL_FACTIONS));
 /** One of the twenty-two. */
 export const isRollFaction = (/** @type {unknown} */ id) => typeof id === 'number' && ROLL_SET.has(id);
@@ -108,14 +116,17 @@ export const ROLL_KEPT_VENDOR = 'ChaptersRoll';
 
 /** The switch (`CHAPTERS_OPEN`): off, dev (the developers alone) or on - as every online arc ships. */
 export const CHAPTERS_SWITCH = Object.freeze(['off', 'dev', 'on']);
-export const chaptersSwitchOf = (/** @type {unknown} */ v) => (typeof v === 'string' && CHAPTERS_SWITCH.includes(v) ? v : 'off');
+export const chaptersSwitchOf = (/** @type {unknown} */ v) =>
+  typeof v === 'string' && CHAPTERS_SWITCH.includes(v) ? v : 'off';
 
 /** A claim's own id - the shape every act's request id takes (marksLaw.js MARKS_RID_RE) - or null. */
-export const rollRidOf = (/** @type {unknown} */ rid) => (typeof rid === 'string' && MARKS_RID_RE.test(rid) ? rid : null);
+export const rollRidOf = (/** @type {unknown} */ rid) =>
+  typeof rid === 'string' && MARKS_RID_RE.test(rid) ? rid : null;
 
 const whole = (/** @type {unknown} */ v) => (typeof v === 'number' && Number.isFinite(v) ? Math.trunc(v) : 0);
 /** A reputation as the Roll holds one: whole, inside DFU's bounds and under `cap`. */
-export const rollRep = (/** @type {unknown} */ v, cap = MAX_REPUTATION) => Math.max(MIN_REPUTATION, Math.min(cap, whole(v)));
+export const rollRep = (/** @type {unknown} */ v, cap = MAX_REPUTATION) =>
+  Math.max(MIN_REPUTATION, Math.min(cap, whole(v)));
 
 /** The highest rank whose need (RANK_REQ_REPUTATION) a reputation meets - the most a member's rank can be by the Roll's
  *  own number (DFU's rank law asks the skills too, which are the client's; this is the half the service holds). */
@@ -131,7 +142,9 @@ export function rollRankCapOf(/** @type {unknown} */ rep) {
 export function rollSeedCapOf(/** @type {{ origin?: unknown, createdAt?: unknown }} */ row) {
   const crossed = typeof row?.origin === 'string' && row.origin !== '';
   const at = row?.createdAt;
-  return crossed && !(typeof at === 'number' && Number.isSafeInteger(at) && at < ROLL_EPOCH_S) ? ROLL_CUSTOMS_CAP : MAX_REPUTATION;
+  return crossed && !(typeof at === 'number' && Number.isSafeInteger(at) && at < ROLL_EPOCH_S)
+    ? ROLL_CUSTOMS_CAP
+    : MAX_REPUTATION;
 }
 
 /** A map a claim or a seed may carry: a plain object, every key one of the twenty-two (as its decimal), every value a
@@ -149,9 +162,11 @@ function factionMapOk(/** @type {unknown} */ v, /** @type {(n: number) => boolea
   return true;
 }
 /** A seed's standing: any of the twenty-two, each inside DFU's bounds (a faction the save has none of is 0). */
-export const rollSeedOk = (/** @type {unknown} */ v) => factionMapOk(v, (x) => x >= MIN_REPUTATION && x <= MAX_REPUTATION);
+export const rollSeedOk = (/** @type {unknown} */ v) =>
+  factionMapOk(v, (x) => x >= MIN_REPUTATION && x <= MAX_REPUTATION);
 /** A claim's changes: one to twenty-two lines, none 0, none past the span. */
-export const rollDeltasOk = (/** @type {unknown} */ v) => factionMapOk(v, (x) => x !== 0 && Math.abs(x) <= ROLL_DELTA_MAX, 1);
+export const rollDeltasOk = (/** @type {unknown} */ v) =>
+  factionMapOk(v, (x) => x !== 0 && Math.abs(x) <= ROLL_DELTA_MAX, 1);
 
 /** THE SEAT'S LINE: the reputation rank 8 needs - CHAP4's seats begin here, and nothing the Roll takes on a client's word
  *  alone carries a member past the line below it (CALL 3). */
@@ -167,7 +182,11 @@ export function rollRankKeepOf(/** @type {unknown} */ rank) {
 }
 /** THE SEED: every one of the twenty-two, as the save held it, under `cap` - and a guild the character is a member of
  *  (`ranks`, faction -> rank) keeps what its rank keeps (rollRankKeepOf). */
-export function rollSeedOf(/** @type {Record<string, number>} */ values, cap = MAX_REPUTATION, /** @type {Map<number, number>} */ ranks = new Map()) {
+export function rollSeedOf(
+  /** @type {Record<string, number>} */ values,
+  cap = MAX_REPUTATION,
+  /** @type {Map<number, number>} */ ranks = new Map(),
+) {
   /** @type {Record<number, number>} */
   const out = {};
   for (const f of ROLL_FACTIONS) {
@@ -178,9 +197,11 @@ export function rollSeedOf(/** @type {Record<string, number>} */ values, cap = M
 }
 
 /** A Roll row's own day: the net change of `day` so far (0 on a new day), and what is owed (never negative). */
-const dayOf = (/** @type {{ gainedDay: number, gained: number }} */ row, /** @type {number} */ day) => (row.gainedDay === day ? whole(row.gained) : 0);
+const dayOf = (/** @type {{ gainedDay: number, gained: number }} */ row, /** @type {number} */ day) =>
+  row.gainedDay === day ? whole(row.gained) : 0;
 /** What may still be owed over a reputation: never negative, never past DFU's 100. */
-const owedUnder = (/** @type {number} */ rep, /** @type {number} */ owed) => (rep >= MAX_REPUTATION ? 0 : Math.max(0, Math.min(MAX_REPUTATION - rep, owed)));
+const owedUnder = (/** @type {number} */ rep, /** @type {number} */ owed) =>
+  rep >= MAX_REPUTATION ? 0 : Math.max(0, Math.min(MAX_REPUTATION - rep, owed));
 
 /**
  * ONE FACTION'S LINE OF A CLAIM, credited: `row` the Roll's `{ rep, gainedDay, gained, owed }` (the day's net change so
@@ -196,27 +217,51 @@ export function rollCredit(row, delta, day) {
   if (delta < 0) {
     const fromOwed = Math.min(owed, -delta);
     const rep = rollRep(before + delta + fromOwed);
-    return { rep, gainedDay: day, gained: today + (rep - before), owed: owedUnder(rep, owed - fromOwed), credited: rep - before };
+    return {
+      rep,
+      gainedDay: day,
+      gained: today + (rep - before),
+      owed: owedUnder(rep, owed - fromOwed),
+      credited: rep - before,
+    };
   }
   const take = Math.min(delta, Math.max(0, ROLL_GAIN_DAY_MAX - today));
   const rep = rollRep(before + take);
-  return { rep, gainedDay: day, gained: today + (rep - before), owed: owedUnder(rep, owed + (delta - take)), credited: rep - before };
+  return {
+    rep,
+    gainedDay: day,
+    gained: today + (rep - before),
+    owed: owedUnder(rep, owed + (delta - take)),
+    credited: rep - before,
+  };
 }
 
 /** WHAT IS OWED, PAID: as much of a row's owed as the day's room leaves, credited to its reputation. Answers the row
  *  after it and `credited`. */
-export function rollDrain(/** @type {{ rep: number, gainedDay: number, gained: number, owed?: number }} */ row, /** @type {number} */ day) {
+export function rollDrain(
+  /** @type {{ rep: number, gainedDay: number, gained: number, owed?: number }} */ row,
+  /** @type {number} */ day,
+) {
   const today = dayOf(row, day);
   const before = rollRep(row.rep);
   const owed = Math.max(0, whole(row.owed));
   const take = Math.min(owed, Math.max(0, ROLL_GAIN_DAY_MAX - today));
   const rep = rollRep(before + take);
-  return { rep, gainedDay: day, gained: today + (rep - before), owed: owedUnder(rep, owed - take), credited: rep - before };
+  return {
+    rep,
+    gainedDay: day,
+    gained: today + (rep - before),
+    owed: owedUnder(rep, owed - take),
+    credited: rep - before,
+  };
 }
 
 /** WHAT MOVED since the Roll's last word: `{ [faction]: change }`, the changed lines alone - and only for a faction both
  *  sides hold (AUDIT CHAP C5: a faction this client's FACTION.TXT has no row for is no loss of the Roll's number). */
-export function rollDeltasOf(/** @type {Record<string, number>} */ current, /** @type {Record<string, number>} */ base) {
+export function rollDeltasOf(
+  /** @type {Record<string, number>} */ current,
+  /** @type {Record<string, number>} */ base,
+) {
   /** @type {Record<number, number>} */
   const out = {};
   if (!current || !base) return out;
@@ -291,12 +336,18 @@ export function rollUnheardOf(/** @type {unknown} */ rec) {
  *  `paid` that payment; `now` the Roll's standing, `owed` what it still owes. Both where both moved. A faction either
  *  word lacks is not read. With no last word (a page's first) only what was paid is said - never a move an earlier page
  *  said. With no `paid` at all (a service before it) a standing that moved alone is taken as paid. */
-export function rollMovesOf(/** @type {Record<string, number> | null} */ last, /** @type {Record<string, number>} */ lastOwed,
-  /** @type {Record<string, number>} */ next, /** @type {Record<string, number>} */ nextOwed, /** @type {Record<string, number> | null} */ paid = null) {
+export function rollMovesOf(
+  /** @type {Record<string, number> | null} */ last,
+  /** @type {Record<string, number>} */ lastOwed,
+  /** @type {Record<string, number>} */ next,
+  /** @type {Record<string, number>} */ nextOwed,
+  /** @type {Record<string, number> | null} */ paid = null,
+) {
   const out = [];
   for (const f of ROLL_FACTIONS) {
     if (!Object.hasOwn(next ?? {}, f)) continue;
-    const now = rollRep(next[f]), owed = Math.max(0, whole(nextOwed?.[f]));
+    const now = rollRep(next[f]),
+      owed = Math.max(0, whole(nextOwed?.[f]));
     const p = paid ? Math.max(0, whole(paid[f])) : 0;
     if (!last) {
       if (p > 0) out.push({ f, paid: p, now, owed });
@@ -305,14 +356,15 @@ export function rollMovesOf(/** @type {Record<string, number> | null} */ last, /
     if (!Object.hasOwn(last, f)) continue;
     const was = rollRep(last[f]);
     const owedWas = Math.max(0, whole(lastOwed?.[f]));
-    const together = (now + owed) - (was + owedWas);
+    const together = now + owed - (was + owedWas);
     if (!paid) {
       if (together !== 0) out.push({ f, delta: together, now, owed });
       else if (now !== was) out.push({ f, paid: now - was, now, owed });
       continue;
     }
     const delta = together !== 0 ? together : now - was - p;
-    if (delta !== 0 || p > 0) out.push({ f, ...(delta !== 0 ? { delta } : {}), ...(p > 0 ? { paid: p } : {}), now, owed });
+    if (delta !== 0 || p > 0)
+      out.push({ f, ...(delta !== 0 ? { delta } : {}), ...(p > 0 ? { paid: p } : {}), now, owed });
   }
   return out;
 }
@@ -366,13 +418,14 @@ export function rollMembersOf(store, vampire = false) {
 export function rollMembersOk(/** @type {unknown} */ v) {
   if (!Array.isArray(v) || v.length > ROLL_FACTIONS.length) return false;
   const seen = new Set();
-  let temples = 0, orders = 0;
+  let temples = 0,
+    orders = 0;
   for (const m of v) {
     if (!m || typeof m !== 'object' || Array.isArray(m)) return false;
     const { f, rank, d } = /** @type {any} */ (m);
     if (!isRollFaction(f) || seen.has(f)) return false;
     if (typeof rank !== 'number' || !Number.isSafeInteger(rank) || rank < 0 || rank > ROLL_RANK_MAX) return false;
-    if (d !== undefined && d !== 1) return false;   // AUDIT CHAP4 D1: a dormant line's mark, and only that
+    if (d !== undefined && d !== 1) return false; // AUDIT CHAP4 D1: a dormant line's mark, and only that
     if (DIVINE_SET.has(f)) temples++;
     if (ORDER_SET.has(f)) orders++;
     seen.add(f);
@@ -383,7 +436,8 @@ export function rollMembersOk(/** @type {unknown} */ v) {
 }
 
 /** The memberships as one comparable word - a claim is due when it changes; null (no book) is never a change. */
-export const rollMembersKey = (/** @type {{ f: number, rank: number, d?: number }[] | null} */ list) => (list ? list.map((m) => `${m.f}:${m.rank}${m.d === 1 ? 'd' : ''}`).join(',') : null);   // AUDIT CHAP4 D1: a book's swap moves it
+export const rollMembersKey = (/** @type {{ f: number, rank: number, d?: number }[] | null} */ list) =>
+  list ? list.map((m) => `${m.f}:${m.rank}${m.d === 1 ? 'd' : ''}`).join(',') : null; // AUDIT CHAP4 D1: a book's swap moves it
 
 // THE PACE SAID (AUDIT CHAP D2) is the streaming host's module's now, in the player's language and with what is owed
 // (scenes/rollNoticeHost.js rollNoticeDoors' onCeiling and onFull - AUDIT GUILD-WORDS II B-3, C-4)
@@ -415,11 +469,17 @@ export const ROLL_CLAIMS_HOUR = 120;
 export const HALL_WRIT_REP = 2;
 /** A chapter's writs a UTC day: two, scaled by the server's active accounts as the Court's are (CHAP2a narrowed the
  *  record's `courtWritCount`: a region can hold a dozen chapters, and six each would bury the Court's six). */
-export const hallWritCount = (/** @type {unknown} */ active) => 2 * Math.max(1, Math.ceil(Math.max(0, Number(active) || 0) / 100));
+export const hallWritCount = (/** @type {unknown} */ active) =>
+  2 * Math.max(1, Math.ceil(Math.max(0, Number(active) || 0) / 100));
 /** A hall writ's own salt for gateHash - never the Court's (nodeLaw.js WRIT_SALT). */
 export const HALL_WRIT_SALT = 0x4a11;
 /** A hall writ's id: the day, the region, the guild faction and the slot. */
-export const hallWritId = (/** @type {number} */ day, /** @type {number} */ region, /** @type {number} */ faction, /** @type {number} */ slot) => `h:${day}:${region}:${faction}:${slot}`;
+export const hallWritId = (
+  /** @type {number} */ day,
+  /** @type {number} */ region,
+  /** @type {number} */ faction,
+  /** @type {number} */ slot,
+) => `h:${day}:${region}:${faction}:${slot}`;
 
 /** THE KINDS OF MATERIAL A GUILD ASKS FOR (nodeLaw.js material families) - the port's own choice (CHAP2a; AUDIT CHAP4 D5:
  *  DFU's guilds trade in none of it, and its Mages Guild and two temples sell no potions at all): the Fighters Guild and
@@ -441,7 +501,8 @@ export function hallFamiliesOf(/** @type {number} */ faction) {
 /** The hidden guilds' two factions - the Thieves Guild's and the Dark Brotherhood's (AUDIT CHAP4 S3: a query leaves them
  *  out before it counts, as `hallHidden` does after). */
 export const HIDDEN_HALL_FACTIONS = Object.freeze([GUILD_FACTION_IDS.ThievesGuild, GUILD_FACTION_IDS.DarkBrotherhood]);
-export const hallHidden = (/** @type {unknown} */ faction) => /** @type {readonly unknown[]} */ (HIDDEN_HALL_FACTIONS).includes(faction);
+export const hallHidden = (/** @type {unknown} */ faction) =>
+  /** @type {readonly unknown[]} */ (HIDDEN_HALL_FACTIONS).includes(faction);
 
 // ═══ CHAP2b - THE RECEIPTS' STANDING AND THE RECEIPT WRITS (Chapters-Arc 3.3, 4) ═══
 //
@@ -484,7 +545,8 @@ export function receiptCreditsOf({ kind, id, day, members, chapters }) {
   const out = [];
   for (const f of [...new Set(members ?? [])].filter((x) => isRollFaction(x) && here.has(x)).sort((a, b) => a - b)) {
     out.push({ faction: f, ref: receiptRef(kind, id), amount: RECEIPT_REP });
-    if (hallReceiptKindsOf(f).includes(kind)) out.push({ faction: f, ref: receiptWritRef(kind, day), amount: HALL_WRIT_REP });
+    if (hallReceiptKindsOf(f).includes(kind))
+      out.push({ faction: f, ref: receiptWritRef(kind, day), amount: HALL_WRIT_REP });
   }
   return out;
 }
@@ -508,16 +570,26 @@ export function chapterDutiesLine(faction, asks, merit = null) {
   if (!kinds.length) return null;
   const mine = (Array.isArray(asks) ? asks : []).filter((a) => a?.faction === faction);
   const member = mine.some((a) => a.member === true);
-  const said = kinds.map((k) => `${DUTY_WORDS[/** @type {'gate' | 'raid'} */ (k)]}${member && mine.some((a) => a.kind === k && a.done === true) ? ' (done today)' : ''}`);
+  const said = kinds.map(
+    (k) =>
+      `${DUTY_WORDS[/** @type {'gate' | 'raid'} */ (k)]}${member && mine.some((a) => a.kind === k && a.done === true) ? ' (done today)' : ''}`,
+  );
   const earned = `standing each time, more for the day's first of ${kinds.length > 1 ? 'each' : 'it'}`;
-  return `${member ? 'Duties here' : 'Its members\' duties here'}: ${said.join(', ')} - ${earned}${!member || meritEarnsOf(merit) ? ', and Merit' : ''}.`;
+  return `${member ? 'Duties here' : "Its members' duties here"}: ${said.join(', ')} - ${earned}${!member || meritEarnsOf(merit) ? ', and Merit' : ''}.`;
 }
 
 /** The orders as DFU captions their halls (Internal_Strings en id 63 - systems/topicTree.js REGIONAL_BUILDING_NAMES). */
 const ORDER_NAMES = Object.freeze({
-  Raven: 'Order of the Raven', Dragon: 'Knights of the Dragon', Owl: 'Knights of the Owl', Candle: 'Order of the Candle',
-  Flame: 'Knights of the Flame', Horn: 'Host of the Horn', Rose: 'Knights of the Rose', Wheel: 'Knights of the Wheel',
-  Scarab: 'Order of the Scarab', Hawk: 'Knights of the Hawk',
+  Raven: 'Order of the Raven',
+  Dragon: 'Knights of the Dragon',
+  Owl: 'Knights of the Owl',
+  Candle: 'Order of the Candle',
+  Flame: 'Knights of the Flame',
+  Horn: 'Host of the Horn',
+  Rose: 'Knights of the Rose',
+  Wheel: 'Knights of the Wheel',
+  Scarab: 'Order of the Scarab',
+  Hawk: 'Knights of the Hawk',
 });
 /** A CHAPTER'S NAME on its writs - the guilds and orders as DFU's Talk captions their halls ("Mages Guild", "Knights of
  *  the Dragon"); a temple is the port's own label, its divine's whole name ("Temple of Zenithar" - AUDIT CHAP2 D5: DFU's
@@ -538,10 +610,16 @@ export function hallPosterName(/** @type {number} */ faction) {
  *  or null where no guild is named. AUDIT CHAP3 C8: and the Merit its chapters counted it, where some - "..., 100 Merit
  *  to the chapters here." */
 export function hallRememberLine(/** @type {number[]} */ factions, merit = 0) {
-  const names = [...new Set(factions ?? [])].map(hallPosterName).filter(Boolean).map((n) => `the ${n}`);
+  const names = [...new Set(factions ?? [])]
+    .map(hallPosterName)
+    .filter(Boolean)
+    .map((n) => `the ${n}`);
   if (!names.length) return null;
   const said = names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
-  const m = Number.isSafeInteger(merit) && merit > 0 ? `, ${merit.toLocaleString('en-US')} Merit to ${names.length === 1 ? 'its chapter' : 'their chapters'} here` : '';
+  const m =
+    Number.isSafeInteger(merit) && merit > 0
+      ? `, ${merit.toLocaleString('en-US')} Merit to ${names.length === 1 ? 'its chapter' : 'their chapters'} here`
+      : '';
   return `${said.charAt(0).toUpperCase()}${said.slice(1)} will remember it${m}.`;
 }
 
@@ -561,7 +639,8 @@ export function hallWrits(day, region, faction, count, table, focus = null) {
   // AUDIT CHAP2 E5: the Court's law gives its slot 0 the table's top tier ("one a day of tier 5-6", PROF0 11) - a
   // chapter's two would have made every other hall writ that one, paying a quarter more than a Court writ. The day's top
   // writ stays the Court's: a chapter's writs are the Court's law's slots after it, renumbered from 0
-  const dice = (/** @type {number} */ slot, /** @type {number} */ k) => gateHash(HALL_WRIT_SALT, day, region, faction, slot, k) / 4294967296;
+  const dice = (/** @type {number} */ slot, /** @type {number} */ k) =>
+    gateHash(HALL_WRIT_SALT, day, region, faction, slot, k) / 4294967296;
   const drawn = courtWrits(day, region, count + 1, from, dice).slice(1);
   const focused = chapterFocusOk(faction, focus) ? table.filter((m) => material(m.material)?.family === focus) : [];
   const fw = focused.length ? courtWrits(day, region, count + 1, focused, dice).slice(1) : null;
@@ -581,12 +660,17 @@ export function hallReportOf(/** @type {any} */ raw) {
   return { key, region, factions: sorted };
 }
 /** A hall report's canonical bytes - one answer, one text, so witnesses agree byte for byte. */
-export const hallReportText = (/** @type {{ key: number, region: number, factions: number[] }} */ h) => JSON.stringify([h.key, h.region, h.factions]);
+export const hallReportText = (/** @type {{ key: number, region: number, factions: number[] }} */ h) =>
+  JSON.stringify([h.key, h.region, h.factions]);
 /** A witnessed hall report read back - its text canonical, or null (witnessedFact's `parse`). */
 export function parseHallReport(/** @type {unknown} */ text) {
   if (typeof text !== 'string') return null;
   let v;
-  try { v = JSON.parse(text); } catch { return null; }
+  try {
+    v = JSON.parse(text);
+  } catch {
+    return null;
+  }
   if (!Array.isArray(v) || v.length !== 3) return null;
   const h = hallReportOf({ key: v[0], region: v[1], factions: v[2] });
   return h && hallReportText(h) === text ? h : null;
@@ -597,8 +681,8 @@ export function parseHallReport(/** @type {unknown} */ text) {
  *  what the Roll owes it (AUDIT CHAP2 S7: an initiation's own reward the day's pace cut is the Roll's already). AUDIT
  *  CHAP2 D2: the Thieves Guild and the Dark Brotherhood join by their initiation quests at ANY standing
  *  (GuildManager.cs:53-66, no eligibility test - ThievesGuild.cs:180-187), so their joins are recorded as DFU makes them. */
-export const joinRecordable = (/** @type {unknown} */ rep, /** @type {unknown} */ faction = null) => hallHidden(faction) || rollRep(rep) >= RANK_REQ_REPUTATION[0];
-
+export const joinRecordable = (/** @type {unknown} */ rep, /** @type {unknown} */ faction = null) =>
+  hallHidden(faction) || rollRep(rep) >= RANK_REQ_REPUTATION[0];
 
 // ─── CHAP3a: MERIT (Chapters-Arc 5.1) ───────────────────────────────
 // What a member did for its chapter, a week's: witnessed acts alone - its own writ for the chapter filled with its own
@@ -612,7 +696,8 @@ export const MERIT_WRIT = 100;
 export const MERIT_RECEIPT = 50;
 /** AUDIT CHAP3 E4 (DECIDED): a receipt is one act - its MERIT_RECEIPT shared among the `n` chapters it reached
  *  (the character's guilds keeping one where it stood), rounded down, never MERIT_RECEIPT to each. */
-export const meritOfReceipt = (/** @type {unknown} */ n) => Math.floor(MERIT_RECEIPT / Math.max(1, Math.floor(Number(n)) || 1));
+export const meritOfReceipt = (/** @type {unknown} */ n) =>
+  Math.floor(MERIT_RECEIPT / Math.max(1, Math.floor(Number(n)) || 1));
 /** A member earns Merit after this long in the guild on the Roll (Seats-Arc 4.2's new member). */
 export const MERIT_TENURE_S = 7 * 86_400;
 /** The Merit an account earns a chapter a week, whatever number of its characters play. */
@@ -632,7 +717,12 @@ export function meritOfWrit(/** @type {unknown} */ qty, /** @type {unknown} */ o
 /** A member's own writ's dice salt - its own, never a hall writ's. */
 export const MEMBER_WRIT_SALT = 0x3e17;
 /** A member's own writ's id: `m:<day>:<region>:<faction>:<realm id>` - one a member a chapter a day. */
-export const memberWritId = (/** @type {number} */ day, /** @type {number} */ region, /** @type {number} */ faction, /** @type {string} */ character) => `m:${day}:${region}:${faction}:${character}`;
+export const memberWritId = (
+  /** @type {number} */ day,
+  /** @type {number} */ region,
+  /** @type {number} */ faction,
+  /** @type {string} */ character,
+) => `m:${day}:${region}:${faction}:${character}`;
 /**
  * A MEMBER'S OWN WRIT for the day (AUDIT CHAP2 E4: one a member a chapter a day, never the shared writs' race): the
  * chapter's law (hallWrits - the guild's own kinds, the Court's top slot left the Court's) drawn from the member's own
@@ -641,11 +731,18 @@ export const memberWritId = (/** @type {number} */ day, /** @type {number} */ re
  * @param {number} day @param {number} region @param {number} faction @param {unknown} character @param {any[]} table
  */
 export function memberWrit(day, region, faction, character, table) {
-  if (!isRollFaction(faction) || typeof character !== 'string' || !REALM_CHARACTER_RE.test(character) || !table?.length) return null;
+  if (!isRollFaction(faction) || typeof character !== 'string' || !REALM_CHARACTER_RE.test(character) || !table?.length)
+    return null;
   const families = hallFamiliesOf(faction);
   const own = table.filter((m) => families.includes(material(m.material)?.family));
   const id = [1, 8, 15].map((at) => parseInt(character.slice(at, at + 7), 16));
-  const w = courtWrits(day, region, 2, own.length ? own : table, (slot, k) => gateHash(MEMBER_WRIT_SALT, day, region, faction, ...id, slot, k) / 4294967296)[1];
+  const w = courtWrits(
+    day,
+    region,
+    2,
+    own.length ? own : table,
+    (slot, k) => gateHash(MEMBER_WRIT_SALT, day, region, faction, ...id, slot, k) / 4294967296,
+  )[1];
   return w ? { ...w, slot: 0 } : null;
 }
 /** A chapter's writ - a hall writ, or a member's own: paid as one, its guild's standing too. */
@@ -658,7 +755,8 @@ export const isChapterWrit = (/** @type {unknown} */ kind) => kind === 'hall' ||
 /** AUDIT CHAP3 C8 (AUDIT GUILD3 L2 moved it here, one rule for the writ card and the Duties line): whether an account's
  *  Merit row `m` here (the board's) earns Merit now - counted (`from` none: its week in the guild served), not at the
  *  week's cap, and not this week's Merit another chapter's. */
-export const meritEarnsOf = (/** @type {any} */ m) => !!m && m.from == null && !m.elsewhere && Number(m.merit) < Number(m.max);
+export const meritEarnsOf = (/** @type {any} */ m) =>
+  !!m && m.from == null && !m.elsewhere && Number(m.merit) < Number(m.max);
 export function meritLineOf(m, nowS) {
   const name = hallPosterName(m?.faction) ?? 'guild';
   if (m.from != null && m.from > nowS) {
@@ -691,7 +789,8 @@ export const STRENGTH_SHORT = 3;
 /** The Merit a point of Strength costs, for each hundred accounts active in the week (the hall writs' own scale). */
 export const STRENGTH_TARGET = 60;
 /** A week's target: STRENGTH_TARGET for each hundred active accounts, never under one hundred's. */
-export const strengthTarget = (/** @type {unknown} */ active) => STRENGTH_TARGET * Math.max(1, Math.ceil(Math.max(0, Number(active) || 0) / 100));
+export const strengthTarget = (/** @type {unknown} */ active) =>
+  STRENGTH_TARGET * Math.max(1, Math.ceil(Math.max(0, Number(active) || 0) / 100));
 /**
  * A CHAPTER'S STRENGTH AFTER A WEEK: `prev` its Strength, `merit` the week's Merit of all its members, `target` the
  * week's (strengthTarget) - `+ min(10, floor(merit / target))`, or `- 3` for a week with no Merit at all; inside 0-100.
@@ -702,11 +801,19 @@ export function strengthAfter(prev, merit, target) {
   const s = Number.isFinite(prev) ? Math.round(prev) : STRENGTH_START;
   const m = Number.isFinite(merit) ? Math.max(0, merit) : 0;
   const step = Math.min(STRENGTH_STEP_MAX, Math.floor(m / Math.max(1, target)));
-  const moved = m <= 0 ? s - STRENGTH_IDLE : step > 0 ? s + step : s > STRENGTH_START ? Math.max(STRENGTH_START, s - STRENGTH_SHORT) : s;
+  const moved =
+    m <= 0
+      ? s - STRENGTH_IDLE
+      : step > 0
+        ? s + step
+        : s > STRENGTH_START
+          ? Math.max(STRENGTH_START, s - STRENGTH_SHORT)
+          : s;
   return Math.max(STRENGTH_MIN, Math.min(STRENGTH_MAX, moved));
 }
 /** A Season's end (Seats-Arc 9.1's soft reset): halfway back toward 50, rounded toward 50. */
-export const strengthSeasonEnd = (/** @type {number} */ s) => STRENGTH_START + Math.trunc((Number(s) - STRENGTH_START) / 2);
+export const strengthSeasonEnd = (/** @type {number} */ s) =>
+  STRENGTH_START + Math.trunc((Number(s) - STRENGTH_START) / 2);
 /** THE BANDS (5.2's table), each from its floor: Failing 0-19, Steady 20-69, Thriving 70-89, Ascendant 90-100.
  *  GUILD3e (bible/11-Multiplayer/Guilds-Made-Plain.md): Ascendant is its own - a fifth off, where it stood at Thriving's
  *  tenth and the Season's Ascendancy event said the rest (the event folded into the band it repeated). */
@@ -724,12 +831,21 @@ export const CHAPTER_FAILING_FALL = 2;
 export const CHAPTER_FAILING_MEETS = 2;
 /** A FAILING WEEK: Strength `s` after the week's own step (strengthAfter), for a chapter that stood at `prev` as the week
  *  began - CHAPTER_FAILING_FALL more where `prev` is Failing, unless `merit` meets CHAPTER_FAILING_MEETS times `target`. */
-export function failingWeekAfter(/** @type {number} */ prev, /** @type {number} */ s, /** @type {number} */ merit, /** @type {number} */ target) {
+export function failingWeekAfter(
+  /** @type {number} */ prev,
+  /** @type {number} */ s,
+  /** @type {number} */ merit,
+  /** @type {number} */ target,
+) {
   if (chapterBandOf(prev).band !== 'failing') return s;
-  return Number(merit) >= CHAPTER_FAILING_MEETS * Math.max(1, Number(target) || 0) ? s : Math.max(STRENGTH_MIN, s - CHAPTER_FAILING_FALL);
+  return Number(merit) >= CHAPTER_FAILING_MEETS * Math.max(1, Number(target) || 0)
+    ? s
+    : Math.max(STRENGTH_MIN, s - CHAPTER_FAILING_FALL);
 }
 /** GUILD3e: the Strength a chapter stands Ascendant from - its Master is High Master while it does. */
-export const CHAPTER_ASCENDANT_FROM = /** @type {{ from: number }} */ (CHAPTER_BANDS.find((b) => b.band === 'ascendant')).from;
+export const CHAPTER_ASCENDANT_FROM = /** @type {{ from: number }} */ (
+  CHAPTER_BANDS.find((b) => b.band === 'ascendant')
+).from;
 /** A band's name ("Thriving") by its id. */
 const chapterBandNamed = (/** @type {string} */ id) => CHAPTER_BANDS.find((b) => b.band === id)?.name ?? id;
 /** A Strength's band (CHAPTER_BANDS' row) - Steady's for a number that is none. */
@@ -740,7 +856,8 @@ export function chapterBandOf(/** @type {unknown} */ strength) {
   return at;
 }
 /** A chapter's hall writs a day by its band: half (never none) Failing, half again Thriving and Ascendant. */
-export const hallWritCountIn = (/** @type {unknown} */ active, /** @type {unknown} */ strength) => Math.max(1, Math.round(hallWritCount(active) * chapterBandOf(strength).writs));
+export const hallWritCountIn = (/** @type {unknown} */ active, /** @type {unknown} */ strength) =>
+  Math.max(1, Math.round(hallWritCount(active) * chapterBandOf(strength).writs));
 /** The board's line for a chapter - "The chapter of the Fighters Guild here is Thriving (Strength 74)" (AUDIT CHAP4 C4:
  *  the chapter the subject - "The Knights of the Dragon here is" was no sentence). */
 export function chapterLineOf(/** @type {{ faction: number, strength: number }} */ c) {
@@ -749,7 +866,13 @@ export function chapterLineOf(/** @type {{ faction: number, strength: number }} 
 /** A price factor as a player reads it: "a fifth cheaper", "a quarter dearer" - the bands' own fractions, else a share. */
 const priceWords = (/** @type {number} */ f) => {
   const off = Math.round((1 - f) * 100);
-  const named = /** @type {Record<number, string>} */ ({ 10: 'a tenth cheaper', 20: 'a fifth cheaper', 25: 'a quarter cheaper', [-25]: 'a quarter dearer', [-10]: 'a tenth dearer' });
+  const named = /** @type {Record<number, string>} */ ({
+    10: 'a tenth cheaper',
+    20: 'a fifth cheaper',
+    25: 'a quarter cheaper',
+    [-25]: 'a quarter dearer',
+    [-10]: 'a tenth dearer',
+  });
   return named[off] ?? (off > 0 ? `${off}% cheaper` : `${-off}% dearer`);
 };
 /** GUILD3d (Guilds-Made-Plain.md): WHAT A BAND DOES to chapter `faction`'s halls, in one sentence the board puts under
@@ -758,28 +881,41 @@ const priceWords = (/** @type {number} */ f) => {
  *  guildNpcServices.js), so the words never drift from the law nor promise a service the hall has not: "Training and
  *  spells a tenth cheaper, a richer shelf, half again the writs." A hidden guild's halls are DFU's own on every sheet -
  *  its band moves its writs alone. An Ascendant chapter's Master is High Master (never a hidden guild's: no title). */
-export function chapterBandEffectsLine(/** @type {unknown} */ strength, /** @type {unknown} */ faction, { shut = false } = {}) {
+export function chapterBandEffectsLine(
+  /** @type {unknown} */ strength,
+  /** @type {unknown} */ faction,
+  { shut = false } = {},
+) {
   /** @type {{ band: string, price: number, shelf: number, writs: number }} */
   const b = chapterBandOf(strength);
   const sold = chapterDoctrinesFor(faction);
   const sells = sold.includes('training')
-    ? (faction === GUILD_FACTION_IDS.MagesGuild || faction === DIVINES.Kynareth ? 'training and spells' : 'training') : null;
+    ? faction === GUILD_FACTION_IDS.MagesGuild || faction === DIVINES.Kynareth
+      ? 'training and spells'
+      : 'training'
+    : null;
   // AUDIT GUILD3 R1: a Failing chapter's fall, said where it stands; L5/W8: the High Master a rule of the band - said
   // whether or not the chair is held this week (the roll says who holds it: chapterRollLines)
-  const fall = b.band === 'failing' ? `it loses ${CHAPTER_FAILING_FALL} Strength more each week its members' Merit lifts it by less than ${CHAPTER_FAILING_MEETS}` : null;
-  const high = b.band === 'ascendant' && isRollFaction(faction) && !hallHidden(faction) ? 'whoever holds its Master\'s chair is its High Master' : null;
+  const fall =
+    b.band === 'failing'
+      ? `it loses ${CHAPTER_FAILING_FALL} Strength more each week its members' Merit lifts it by less than ${CHAPTER_FAILING_MEETS}`
+      : null;
+  const high =
+    b.band === 'ascendant' && isRollFaction(faction) && !hallHidden(faction)
+      ? "whoever holds its Master's chair is its High Master"
+      : null;
   const cap = (/** @type {string} */ t) => `${t.charAt(0).toUpperCase()}${t.slice(1)}`;
   // AUDIT GUILD3 L3: halls shut this Season (a Crackdown's) sell nothing and post no writs - the band says none of them
   if (shut) return fall || high ? `${cap(/** @type {string} */ (fall ?? high))}.` : null;
   if (b.band === 'steady') {
     // AUDIT GUILD3 L4: the usual of what the hall HAS - never a shelf or prices it keeps none of
-    const kept = [sells ? 'prices' : null, sold.includes('shelf') ? 'shelf' : null, 'chapter writs'].filter(Boolean);   // W12: the chapter's writs - a Court's move by no band
+    const kept = [sells ? 'prices' : null, sold.includes('shelf') ? 'shelf' : null, 'chapter writs'].filter(Boolean); // W12: the chapter's writs - a Court's move by no band
     return `Its halls keep their usual ${kept.length > 1 ? `${kept.slice(0, -1).join(', ')} and ${kept[kept.length - 1]}` : kept[0]}.`;
   }
   const parts = [
     sells && b.price !== 1 ? `${sells} ${priceWords(b.price)}` : null,
     sold.includes('shelf') && b.shelf !== 0 ? (b.shelf > 0 ? 'a richer shelf' : 'a poorer shelf') : null,
-    b.writs > 1 ? 'half again the chapter writs' : b.writs < 1 ? 'half the chapter writs' : null,   // AUDIT GUILD3 W12
+    b.writs > 1 ? 'half again the chapter writs' : b.writs < 1 ? 'half the chapter writs' : null, // AUDIT GUILD3 W12
   ].filter(Boolean);
   const said = /** @type {string[]} */ (parts).join(', ');
   const and = fall ?? high;
@@ -800,13 +936,14 @@ export const HALL_QUALITY_MAX = 20;
 /** A hall's price factor by its chapter's Strength - 1 where none is known (chapterBandOf reads it as Steady). */
 export const chapterPriceFactor = (/** @type {unknown} */ strength) => chapterBandOf(strength).price;
 /** A price with a hall's factor laid over it, rounded - never under 1 for a price that was some; DFU's own at 1. */
-export const chapterPriced = (/** @type {number} */ price, /** @type {number} */ factor) => (factor === 1 || !(price > 0) ? price : Math.max(1, Math.round(price * factor)));
+export const chapterPriced = (/** @type {number} */ price, /** @type {number} */ factor) =>
+  factor === 1 || !(price > 0) ? price : Math.max(1, Math.round(price * factor));
 /** A hall's shelf's quality by its chapter's Strength: DFU's building quality moved by the band, inside 1-20; the hall's
  *  own where no Strength is known (chapterBandOf reads it as Steady, which moves nothing) or the hall has no quality.
  *  AUDIT CHAP3 D2: a band that moves nothing returns the quality untouched (offline is DFU's, whatever a world-data pack
  *  sets - DFU reads a building's quality raw), and a move never takes a hall above 20 below its own quality. */
 export function chapterShelfQuality(/** @type {number} */ quality, /** @type {unknown} */ strength, extra = 0) {
-  const step = chapterBandOf(strength).shelf + extra;   // CHAP6d: and a doctrine's `extra` qualities beside the band's
+  const step = chapterBandOf(strength).shelf + extra; // CHAP6d: and a doctrine's `extra` qualities beside the band's
   if (!(quality > 0) || step === 0) return quality;
   return Math.max(HALL_QUALITY_MIN, Math.min(Math.max(HALL_QUALITY_MAX, quality), quality + step));
 }
@@ -829,7 +966,8 @@ export const SEAT_RANK = Object.freeze({ master: 9, officer: 8 });
 /** The highest rank a membership's own book holds - 8 and 9 are the seats' (3.5). */
 export const ROLL_BOOK_RANK_MAX = 7;
 /** The rank the Roll records for a member: the book's, bounded by its own reputation (3.2), and never a seat's. */
-export const rollBookRankOf = (/** @type {unknown} */ reported, /** @type {unknown} */ rep) => Math.max(0, Math.min(whole(reported), rollRankCapOf(rep), ROLL_BOOK_RANK_MAX));
+export const rollBookRankOf = (/** @type {unknown} */ reported, /** @type {unknown} */ rep) =>
+  Math.max(0, Math.min(whole(reported), rollRankCapOf(rep), ROLL_BOOK_RANK_MAX));
 
 // ROLL-PACE (FIELD BUGS 2026-10-15f, a Discord report: "exploit where you do easy quests for a guild and then ask to join
 // it to farm 100 rep in 1 minute"; Mac, asked of four shapes: "Pace ranks from joining"). PROMO-NOW took DFU's 28 days
@@ -842,13 +980,17 @@ export const rollBookRankOf = (/** @type {unknown} */ reported, /** @type {unkno
 
 /** The Roll's days of a membership at `nowS`: its UTC day of beginning counted, and today. `sinceS` the Roll's own record
  *  of it (its view's `members[].since`); one the Roll has not yet seen begins today. */
-export const rollPaceDays = (/** @type {unknown} */ sinceS, /** @type {number} */ nowS) => (typeof sinceS === 'number' && Number.isFinite(sinceS) ? Math.max(0, utcDay(nowS) - utcDay(sinceS)) : 0) + 1;
+export const rollPaceDays = (/** @type {unknown} */ sinceS, /** @type {number} */ nowS) =>
+  (typeof sinceS === 'number' && Number.isFinite(sinceS) ? Math.max(0, utcDay(nowS) - utcDay(sinceS)) : 0) + 1;
 
 /** THE HIGHEST RANK A REVIEW MAY PROMOTE TO, online: what the Roll's own reputation allows (never the page's unclaimed
  *  number - AUDIT CHAP S5's bound, read on the page), no more than its pace has paid since the membership began, and
  *  never a seat's. `standing` the Roll's `{ rep, since }` for the guild's faction - null before its first word, when no
  *  review promotes. */
-export function rollPromoteCeiling(/** @type {{ rep: unknown, since: unknown } | null} */ standing, /** @type {number} */ nowS) {
+export function rollPromoteCeiling(
+  /** @type {{ rep: unknown, since: unknown } | null} */ standing,
+  /** @type {number} */ nowS,
+) {
   if (!standing) return 0;
   const paid = rollPaceDays(standing.since, nowS) * ROLL_GAIN_DAY_MAX;
   return Math.min(ROLL_BOOK_RANK_MAX, rollRankCapOf(Math.min(rollRep(standing.rep), paid)));
@@ -856,7 +998,11 @@ export function rollPromoteCeiling(/** @type {{ rep: unknown, since: unknown } |
 
 /** The UTC days until the Roll's pace pays `rank`'s line (0: it has), or null where the pace is not what holds it - no
  *  standing yet, a rank past the book's, or the Roll's own reputation short of the line (the hall says that one). */
-export function rollPaceWait(/** @type {{ rep: unknown, since: unknown } | null} */ standing, /** @type {number} */ nowS, /** @type {number} */ rank) {
+export function rollPaceWait(
+  /** @type {{ rep: unknown, since: unknown } | null} */ standing,
+  /** @type {number} */ nowS,
+  /** @type {number} */ rank,
+) {
   if (!standing || !(rank >= 0 && rank <= ROLL_BOOK_RANK_MAX)) return null;
   const need = RANK_REQ_REPUTATION[rank];
   if (rollRep(standing.rep) < need) return null;
@@ -870,11 +1016,20 @@ export const SEAT_MERIT_WEEKS = 4;
 
 /** ELIGIBLE at `atS`: a member of the guild on the Roll, its reputation there at the seat's line, its tenure fourteen days,
  *  its account seven days old. */
-export function seatEligibleAt(/** @type {{ member?: unknown, rep?: unknown, joinedAt?: unknown, registeredAt?: unknown }} */ row, /** @type {number} */ atS) {
+export function seatEligibleAt(
+  /** @type {{ member?: unknown, rep?: unknown, joinedAt?: unknown, registeredAt?: unknown }} */ row,
+  /** @type {number} */ atS,
+) {
   const at = (/** @type {unknown} */ v) => typeof v === 'number' && Number.isSafeInteger(v);
-  return !!row && (row.member === true || row.member === 1) && rollRep(row.rep) >= ROLL_SEAT_LINE
-    && at(row.joinedAt) && /** @type {number} */ (row.joinedAt) <= atS - SEAT_TENURE_S
-    && at(row.registeredAt) && /** @type {number} */ (row.registeredAt) <= atS - SEAT_ACCOUNT_AGE_S;
+  return (
+    !!row &&
+    (row.member === true || row.member === 1) &&
+    rollRep(row.rep) >= ROLL_SEAT_LINE &&
+    at(row.joinedAt) &&
+    /** @type {number} */ (row.joinedAt) <= atS - SEAT_TENURE_S &&
+    at(row.registeredAt) &&
+    /** @type {number} */ (row.registeredAt) <= atS - SEAT_ACCOUNT_AGE_S
+  );
 }
 
 /** A candidate's standing for a seat, in tenths of Merit. AUDIT CHAP4 E1 (decided): no carry - a sitting holder keeps an
@@ -896,31 +1051,58 @@ export function chapterSeatPlan(candidates, sitting = []) {
   const key = (/** @type {any} */ c) => `${c.faction}|${c.region}`;
   const sat = new Set([...sitting].map((s) => `${key(s)}|${s.char}`));
   const order = [...candidates]
-    .filter((c) => isRollFaction(c?.faction) && regionOk(c?.region) && typeof c?.char === 'string' && typeof c?.account === 'string' && whole(c?.merit) > 0)
+    .filter(
+      (c) =>
+        isRollFaction(c?.faction) &&
+        regionOk(c?.region) &&
+        typeof c?.char === 'string' &&
+        typeof c?.account === 'string' &&
+        whole(c?.merit) > 0,
+    )
     .map((c) => ({ ...c, score: seatScoreOf(c.merit), held: sat.has(`${key(c)}|${c.char}`) ? 1 : 0 }))
-    .sort((a, b) => b.score - a.score || b.held - a.held || whole(a.joinedAt) - whole(b.joinedAt) || (a.char < b.char ? -1 : a.char > b.char ? 1 : 0)
-      || a.faction - b.faction || a.region - b.region);
+    .sort(
+      (a, b) =>
+        b.score - a.score ||
+        b.held - a.held ||
+        whole(a.joinedAt) - whole(b.joinedAt) ||
+        (a.char < b.char ? -1 : a.char > b.char ? 1 : 0) ||
+        a.faction - b.faction ||
+        a.region - b.region,
+    );
   /** @type {Map<string, { master: any[], officer: any[] }>} */
   const seats = new Map();
-  const held = new Set();   // account|faction - one seat an account a guild
-  const masters = new Set();   // char - one Master's seat a character
+  const held = new Set(); // account|faction - one seat an account a guild
+  const masters = new Set(); // char - one Master's seat a character
   const place = (/** @type {any} */ c, /** @type {'master' | 'officer'} */ seat) => {
     if (!seats.has(key(c))) seats.set(key(c), { master: [], officer: [] });
-    /** @type {any} */ (seats.get(key(c)))[seat].push({ faction: c.faction, region: c.region, char: c.char, account: c.account, seat });
+    /** @type {any} */ (seats.get(key(c)))[seat].push({
+      faction: c.faction,
+      region: c.region,
+      char: c.char,
+      account: c.account,
+      seat,
+    });
     held.add(`${c.account}|${c.faction}`);
     if (seat === 'master') masters.add(c.char);
   };
   for (const seat of CHAPTER_SEAT_KINDS) {
     for (const c of order) {
-      if ((seats.get(key(c))?.[/** @type {'master' | 'officer'} */ (seat)].length ?? 0) >= CHAPTER_SEATS[/** @type {'master' | 'officer'} */ (seat)]) continue;
+      if (
+        (seats.get(key(c))?.[/** @type {'master' | 'officer'} */ (seat)].length ?? 0) >=
+        CHAPTER_SEATS[/** @type {'master' | 'officer'} */ (seat)]
+      )
+        continue;
       if (held.has(`${c.account}|${c.faction}`) || (seat === 'master' && masters.has(c.char))) continue;
       place(c, /** @type {'master' | 'officer'} */ (seat));
     }
   }
-  return [...seats.entries()].sort(([a], [b]) => {
-    const [fa, ra] = a.split('|').map(Number), [fb, rb] = b.split('|').map(Number);
-    return fa - fb || ra - rb;
-  }).flatMap(([, s]) => [...s.master, ...s.officer]);
+  return [...seats.entries()]
+    .sort(([a], [b]) => {
+      const [fa, ra] = a.split('|').map(Number),
+        [fb, rb] = b.split('|').map(Number);
+      return fa - fb || ra - rb;
+    })
+    .flatMap(([, s]) => [...s.master, ...s.officer]);
 }
 
 /** WHAT A TURNING CHANGED: each character whose seat at a chapter moved - `{ faction, region, char, from, to }`, `from`
@@ -935,7 +1117,8 @@ export function seatChangesOf(/** @type {Iterable<any>} */ before, /** @type {It
   };
   for (const s of before) at(s).from = s.seat;
   for (const s of after) at(s).to = s.seat;
-  return [...out.values()].filter((c) => c.from !== c.to)
+  return [...out.values()]
+    .filter((c) => c.from !== c.to)
     .sort((a, b) => a.faction - b.faction || a.region - b.region || (a.char < b.char ? -1 : a.char > b.char ? 1 : 0));
 }
 
@@ -948,11 +1131,16 @@ export function seatChangesOf(/** @type {Iterable<any>} */ before, /** @type {It
 /** A Roll answer's seats as the tab keeps them, `[{ f, region, seat }]` - each a guild's, a region's and a seat's. */
 export function rollSeatsOf(/** @type {unknown} */ list) {
   if (!Array.isArray(list)) return [];
-  return list.filter((s) => isRollFaction(s?.f) && regionOk(s?.region) && CHAPTER_SEAT_KINDS.includes(s?.seat))
+  return list
+    .filter((s) => isRollFaction(s?.f) && regionOk(s?.region) && CHAPTER_SEAT_KINDS.includes(s?.seat))
     .map((s) => ({ f: s.f, region: s.region, seat: s.seat }));
 }
 /** The rank a character's `seats` give it at a hall of `faction` in `region` - null where it holds none there. */
-export function seatRankAt(/** @type {unknown} */ seats, /** @type {unknown} */ faction, /** @type {unknown} */ region) {
+export function seatRankAt(
+  /** @type {unknown} */ seats,
+  /** @type {unknown} */ faction,
+  /** @type {unknown} */ region,
+) {
   const s = rollSeatsOf(seats).find((x) => x.f === faction && x.region === region);
   return s ? SEAT_RANK[/** @type {'master' | 'officer'} */ (s.seat)] : null;
 }
@@ -963,14 +1151,21 @@ export function seatRankAt(/** @type {unknown} */ seats, /** @type {unknown} */ 
  *  DFU's ranks 3 to 7 ask (a Mages' Teleport, its Summoning, its magic items); 8 and 9 are the seats' only past DFU's. */
 export function seatedBook(/** @type {any} */ book, /** @type {string} */ key, /** @type {unknown} */ rank) {
   const row = book?.[key];
-  if (!row || typeof row !== 'object' || whole(row.rank) !== ROLL_BOOK_RANK_MAX || !(typeof rank === 'number' && rank > whole(row.rank))) return book;
+  if (
+    !row ||
+    typeof row !== 'object' ||
+    whole(row.rank) !== ROLL_BOOK_RANK_MAX ||
+    !(typeof rank === 'number' && rank > whole(row.rank))
+  )
+    return book;
   return { ...book, [key]: new Proxy(row, { get: (t, k) => (k === 'rank' ? rank : t[k]) }) };
 }
 /** THE BOOK HELD AT 7: each row of a Roll guild in `store`'s books (the mortal's and the vampire's) above
  *  ROLL_BOOK_RANK_MAX set to it; answers the guild factions it held. Run at the Roll's adoption. */
 export function rollBookCap(/** @type {any} */ store) {
   if (!store || typeof store !== 'object') return [];
-  const books = Object.hasOwn(store, 'mortal') && Object.hasOwn(store, 'vampire') ? [store.mortal, store.vampire] : [store];
+  const books =
+    Object.hasOwn(store, 'mortal') && Object.hasOwn(store, 'vampire') ? [store.mortal, store.vampire] : [store];
   const held = new Set();
   for (const book of books) {
     if (!book || typeof book !== 'object') continue;
@@ -986,12 +1181,13 @@ export function rollBookCap(/** @type {any} */ store) {
 
 /** GUILD3a (Guilds-Made-Plain.md, ONE WORD, ONE THING): a chapter's rank 9 is its Master's CHAIR and its rank 8 a COUNCIL
  *  chair - "seat" is a town's Charter alone, "officer" a player guild's rank. The ids (`master`, `officer`) stand. */
-const SEAT_WORDS = Object.freeze({ master: 'the Master\'s chair', officer: 'a council chair' });
-const listed = (/** @type {string[]} */ names) => (names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`);
+const SEAT_WORDS = Object.freeze({ master: "the Master's chair", officer: 'a council chair' });
+const listed = (/** @type {string[]} */ names) =>
+  names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
 /** A seat said - "You hold the Master's chair of the Fighters Guild in Anticlere." - or, `held` false, no longer held.
  *  Worded without gender (Seats-Arc 7.4: nothing about a player is guessed). */
 export function seatLineOf(/** @type {{ f: number, region: number, seat: string }} */ s, held = true) {
-  const words = /** @type {Record<string, string>} */ (SEAT_WORDS)[s?.seat] ?? 'a chair';   // AUDIT GUILD3 W14: never the retired word
+  const words = /** @type {Record<string, string>} */ (SEAT_WORDS)[s?.seat] ?? 'a chair'; // AUDIT GUILD3 W14: never the retired word
   return `You ${held ? 'hold' : 'no longer hold'} ${words} of the ${hallPosterName(s?.f) ?? 'guild'} in ${REGION_NAMES[s?.region] ?? 'its region'}.`;
 }
 /** What the tab says of its seats: every seat held at the page's first word (`before` null); after it, each seat newly
@@ -1003,14 +1199,21 @@ export function seatLinesOf(/** @type {unknown} */ before, /** @type {unknown} *
   const k = (/** @type {{ f: number, region: number }} */ s) => `${s.f}|${s.region}`;
   const wasAt = new Map(was.map((s) => [k(s), s.seat]));
   const nowAt = new Set(now.map(k));
-  return [...now.filter((s) => wasAt.get(k(s)) !== s.seat).map((s) => seatLineOf(s)), ...was.filter((s) => !nowAt.has(k(s))).map((s) => seatLineOf(s, false))];
+  return [
+    ...now.filter((s) => wasAt.get(k(s)) !== s.seat).map((s) => seatLineOf(s)),
+    ...was.filter((s) => !nowAt.has(k(s))).map((s) => seatLineOf(s, false)),
+  ];
 }
 /** The book's cap said, once a hold: "The Fighters Guild keeps ranks 8 and 9 for its chapters' Masters and councils, won
  *  by Merit - your rank there is 7." Null for no guild. */
 export function bookCappedLine(/** @type {unknown} */ factions) {
-  const names = [...new Set(Array.isArray(factions) ? factions : [])].map(hallPosterName).filter(Boolean).map((n) => `the ${n}`);
+  const names = [...new Set(Array.isArray(factions) ? factions : [])]
+    .map(hallPosterName)
+    .filter(Boolean)
+    .map((n) => `the ${n}`);
   if (!names.length) return null;
-  const one = names.length === 1, said = listed(names);
+  const one = names.length === 1,
+    said = listed(names);
   return `${said.charAt(0).toUpperCase()}${said.slice(1)} ${one ? 'keeps' : 'keep'} ranks 8 and 9 for ${one ? 'its' : 'their'} chapters' Masters and councils, won by Merit. Your rank there is 7.`;
 }
 
@@ -1026,10 +1229,18 @@ export function bookCappedLine(/** @type {unknown} */ factions) {
 /** A chapter's key on a title's claim: its guild faction x 100 + its region (both whole, the region under 100). */
 export const chapterTitleKey = (/** @type {number} */ f, /** @type {number} */ region) => f * 100 + region;
 /** The chapter a title's key names, or null. */
-export const chapterOfTitleKey = (/** @type {unknown} */ k) => (typeof k === 'number' && Number.isSafeInteger(k) && k >= 0 ? { f: Math.floor(k / 100), region: k % 100 } : null);
-const CHAPTER_TITLE_WORDS = Object.freeze({ chaptermaster: 'Master', chapterofficer: 'Councillor', formermaster: 'Former Master', highmaster: 'High Master', seasonmaster: 'Master' });   // GUILD3a: rank 8 a Councillor
+export const chapterOfTitleKey = (/** @type {unknown} */ k) =>
+  typeof k === 'number' && Number.isSafeInteger(k) && k >= 0 ? { f: Math.floor(k / 100), region: k % 100 } : null;
+const CHAPTER_TITLE_WORDS = Object.freeze({
+  chaptermaster: 'Master',
+  chapterofficer: 'Councillor',
+  formermaster: 'Former Master',
+  highmaster: 'High Master',
+  seasonmaster: 'Master',
+}); // GUILD3a: rank 8 a Councillor
 /** CHAP6e: the Season a kept title names - a counted Season's, never Season 0's (which crowns no one), inside the claim's bound. */
-const keptSeasonOk = (/** @type {unknown} */ n) => Number.isSafeInteger(n) && /** @type {number} */ (n) >= 1 && /** @type {number} */ (n) <= 9999;
+const keptSeasonOk = (/** @type {unknown} */ n) =>
+  Number.isSafeInteger(n) && /** @type {number} */ (n) >= 1 && /** @type {number} */ (n) <= 9999;
 /** A chapter's title worded off its claim - "Master of the Fighters Guild, Anticlere"; CHAP6e "High Master of the
  *  Fighters Guild, Anticlere", "Master of the Fighters Guild, Anticlere, Season 3" - null for a claim that names no
  *  chapter (or a hidden guild's), or a kept title no Season. */
@@ -1037,7 +1248,10 @@ export function chapterTitleText(/** @type {unknown} */ title, /** @type {unknow
   const words = typeof title === 'string' ? /** @type {Record<string, string>} */ (CHAPTER_TITLE_WORDS)[title] : null;
   const c = Array.isArray(ts) ? chapterOfTitleKey(ts[0]) : null;
   if (!words || !c || !isRollFaction(c.f) || hallHidden(c.f) || !regionOk(c.region)) return null;
-  if (title === 'seasonmaster') return keptSeasonOk(/** @type {any[]} */ (ts)[1]) ? `${words} of the ${hallPosterName(c.f)}, ${REGION_NAMES[c.region]}, Season ${/** @type {any[]} */ (ts)[1]}` : null;
+  if (title === 'seasonmaster')
+    return keptSeasonOk(/** @type {any[]} */ (ts)[1])
+      ? `${words} of the ${hallPosterName(c.f)}, ${REGION_NAMES[c.region]}, Season ${/** @type {any[]} */ (ts)[1]}`
+      : null;
   return `${words} of the ${hallPosterName(c.f)}, ${REGION_NAMES[c.region]}`;
 }
 /**
@@ -1056,15 +1270,30 @@ export function chapterTitlesOf(seats, lost, season, kept = []) {
   const held = [...seats].filter(shown);
   const masterAt = new Set(held.filter((s) => s.seat === 'master').map((s) => `${s.f}|${s.region}`));
   const by = (/** @type {any} */ a, /** @type {any} */ b) => a.f - b.f || a.region - b.region;
-  const rows = (/** @type {any[]} */ list, /** @type {string} */ title) => list.sort(by).map((s) => ({ title, ts: [chapterTitleKey(s.f, s.region), season] }));
+  const rows = (/** @type {any[]} */ list, /** @type {string} */ title) =>
+    list.sort(by).map((s) => ({ title, ts: [chapterTitleKey(s.f, s.region), season] }));
   const former = [...lost].filter((s) => shown(s) && !masterAt.has(`${s.f}|${s.region}`));
   const once = new Map(former.map((s) => [`${s.f}|${s.region}`, s]));
   const masters = held.filter((s) => s.seat === 'master');
   const high = masters.filter((s) => s.high === true);
-  const seasons = new Map([...kept].filter((s) => shown(s) && keptSeasonOk(s.season)).map((s) => [`${s.f}|${s.region}|${s.season}`, s]));
-  return [...rows(high, 'chaptermaster').map((r) => ({ ...r, high: true })), ...rows(masters.filter((s) => s.high !== true), 'chaptermaster'),
-    ...rows(held.filter((s) => s.seat === 'officer'), 'chapterofficer'), ...rows([...once.values()], 'formermaster'),
-    ...[...seasons.values()].sort((a, b) => b.season - a.season || by(a, b)).map((s) => ({ title: 'seasonmaster', ts: [chapterTitleKey(s.f, s.region), s.season] }))];
+  const seasons = new Map(
+    [...kept].filter((s) => shown(s) && keptSeasonOk(s.season)).map((s) => [`${s.f}|${s.region}|${s.season}`, s]),
+  );
+  return [
+    ...rows(high, 'chaptermaster').map((r) => ({ ...r, high: true })),
+    ...rows(
+      masters.filter((s) => s.high !== true),
+      'chaptermaster',
+    ),
+    ...rows(
+      held.filter((s) => s.seat === 'officer'),
+      'chapterofficer',
+    ),
+    ...rows([...once.values()], 'formermaster'),
+    ...[...seasons.values()]
+      .sort((a, b) => b.season - a.season || by(a, b))
+      .map((s) => ({ title: 'seasonmaster', ts: [chapterTitleKey(s.f, s.region), s.season] })),
+  ];
 }
 
 // ─── CHAP4d: THE FOCUS AND THE CHRONICLE (Chapters-Arc 6) ───────────
@@ -1078,26 +1307,31 @@ export function chapterFocusesOf(/** @type {unknown} */ faction) {
   return f.length > 1 ? f : [];
 }
 /** Whether `focus` is a family `faction`'s Master may choose. */
-export const chapterFocusOk = (/** @type {unknown} */ faction, /** @type {unknown} */ focus) => typeof focus === 'string' && chapterFocusesOf(faction).includes(focus);
+export const chapterFocusOk = (/** @type {unknown} */ faction, /** @type {unknown} */ focus) =>
+  typeof focus === 'string' && chapterFocusesOf(faction).includes(focus);
 /** The board's line for a chapter's Focus: "The Fighters Guild's Master asks for metals this week." - null for none. */
 export function chapterFocusLineOf(/** @type {unknown} */ faction, /** @type {unknown} */ focus) {
   // AUDIT GUILD3 W7: the CHAPTER's Master - a temple's DFU titles call its rank 8 "Master" (guildVariants.js TEMPLE_RANK_TITLES)
-  return chapterFocusOk(faction, focus) ? `The ${hallPosterName(/** @type {number} */ (faction))} chapter's Master asks for ${focus} this week.` : null;
+  return chapterFocusOk(faction, focus)
+    ? `The ${hallPosterName(/** @type {number} */ (faction))} chapter's Master asks for ${focus} this week.`
+    : null;
 }
 /** A CHRONICLE ROW IN WORDS: `{ faction, week, kind, data: { from, to }, name }` - "In the third week of the Season of
  *  Morning Star, Alda took the Master's chair of the Fighters Guild." - null for a row it has no words for or a hidden
  *  guild's. A character gone since is "A member since gone". Worded without gender. `zero` the Season's (seasonOf). */
 export function chapterChronicleLine(/** @type {any} */ row, /** @type {number | null} */ zero = null) {
-  if (row?.kind === 'event' || row?.kind === 'season') return chapterSeasonLine(row);   // CHAP6a: a Season's own lines
-  if (row?.kind === 'patron') return chapterPatronLine(row);   // CHAP7a: a Season's patron
+  if (row?.kind === 'event' || row?.kind === 'season') return chapterSeasonLine(row); // CHAP6a: a Season's own lines
+  if (row?.kind === 'patron') return chapterPatronLine(row); // CHAP7a: a Season's patron
   if (row?.kind !== 'seat' || !isRollFaction(row?.faction) || hallHidden(row.faction)) return null;
   const guild = `the ${hallPosterName(row.faction)}`;
-  const from = row?.data?.from ?? null, to = row?.data?.to ?? null;
+  const from = row?.data?.from ?? null,
+    to = row?.data?.to ?? null;
   const words = (/** @type {string} */ s) => /** @type {Record<string, string>} */ (SEAT_WORDS)[s];
   let did = null;
   if (!from && words(to)) did = `took ${words(to)} of ${guild}`;
   else if (from === 'officer' && to === 'master') did = `rose to the Master's chair of ${guild}`;
-  else if (from === 'master' && to === 'officer') did = `gave the Master's chair of ${guild} up, and kept a council chair`;
+  else if (from === 'master' && to === 'officer')
+    did = `gave the Master's chair of ${guild} up, and kept a council chair`;
   else if (words(from) && !to) did = `lost ${words(from)} of ${guild}`;
   if (!did) return null;
   const who = typeof row?.name === 'string' && row.name ? row.name : 'A member since gone';
@@ -1114,16 +1348,21 @@ export const CHAPTER_ROLL_NAME_MAX = 32;
  *  with a name - never more than the chapter has seats; anything else dropped. */
 export function chapterRollSeatsOf(/** @type {unknown} */ seats) {
   if (!Array.isArray(seats)) return [];
-  const ok = seats.filter((s) => typeof s?.name === 'string' && s.name.trim())   // a seat of no known kind is neither list's
+  const ok = seats
+    .filter((s) => typeof s?.name === 'string' && s.name.trim()) // a seat of no known kind is neither list's
     .map((s) => ({ seat: String(s.seat), name: String(s.name).trim().slice(0, CHAPTER_ROLL_NAME_MAX) }));
-  return [...ok.filter((s) => s.seat === 'master').slice(0, CHAPTER_SEATS.master), ...ok.filter((s) => s.seat === 'officer').slice(0, CHAPTER_SEATS.officer)];
+  return [
+    ...ok.filter((s) => s.seat === 'master').slice(0, CHAPTER_SEATS.master),
+    ...ok.filter((s) => s.seat === 'officer').slice(0, CHAPTER_SEATS.officer),
+  ];
 }
 /** The roll's title: "The Roll of the Fighters Guild, Anticlere" - null for a hidden guild, no guild, no region. */
 export function chapterRollTitle(/** @type {unknown} */ faction, /** @type {unknown} */ region) {
   if (!isRollFaction(faction) || hallHidden(/** @type {number} */ (faction)) || !regionOk(region)) return null;
   return `The Roll of the ${hallPosterName(/** @type {number} */ (faction))}, ${REGION_NAMES[/** @type {number} */ (region)]}`;
 }
-const namesListed = (/** @type {string[]} */ n) => (n.length < 2 ? n.join('') : `${n.slice(0, -1).join(', ')} and ${n[n.length - 1]}`);
+const namesListed = (/** @type {string[]} */ n) =>
+  n.length < 2 ? n.join('') : `${n.slice(0, -1).join(', ')} and ${n[n.length - 1]}`;
 /** The roll's lines: the chapter's state (the board's chapterLineOf), its Master, its council - or the chairs empty.
  *  `chapter` `{ strength, seats }` as the sheet holds it. */
 export function chapterRollLines(/** @type {unknown} */ faction, /** @type {any} */ chapter) {
@@ -1131,10 +1370,14 @@ export function chapterRollLines(/** @type {unknown} */ faction, /** @type {any}
   const master = seats.find((s) => s.seat === 'master');
   const officers = seats.filter((s) => s.seat === 'officer').map((s) => s.name);
   return [
-    ...(Number.isFinite(chapter?.strength) ? [`${chapterLineOf({ faction: /** @type {number} */ (faction), strength: chapter.strength })}.`] : []),
+    ...(Number.isFinite(chapter?.strength)
+      ? [`${chapterLineOf({ faction: /** @type {number} */ (faction), strength: chapter.strength })}.`]
+      : []),
     // AUDIT GUILD3 W8: an Ascendant chapter's Master is its High Master - the roll says it as the band line does
-    master ? `${chapterBandOf(chapter?.strength).band === 'ascendant' ? 'High Master' : 'Master'} of the chapter: ${master.name}.` : 'The Master\'s chair stands empty.',
-    officers.length ? `Its council: ${namesListed(officers)}.` : 'No council chair is held.',   // GUILD3a: its council, never its "officers"
+    master
+      ? `${chapterBandOf(chapter?.strength).band === 'ascendant' ? 'High Master' : 'Master'} of the chapter: ${master.name}.`
+      : "The Master's chair stands empty.",
+    officers.length ? `Its council: ${namesListed(officers)}.` : 'No council chair is held.', // GUILD3a: its council, never its "officers"
   ];
 }
 
@@ -1161,21 +1404,27 @@ export const CHAPTER_EVENTS = Object.freeze([
 ]);
 const EVENT_IDS = CHAPTER_EVENTS.map((e) => e.id);
 /** Whether `v` names an event. */
-export const chapterEventOk = (/** @type {unknown} */ v) => typeof v === 'string' && /** @type {string[]} */ (EVENT_IDS).includes(v);
+export const chapterEventOk = (/** @type {unknown} */ v) =>
+  typeof v === 'string' && /** @type {string[]} */ (EVENT_IDS).includes(v);
 /** An event's name ("Schism"), or null. */
 export const chapterEventName = (/** @type {unknown} */ id) => CHAPTER_EVENTS.find((e) => e.id === id)?.name ?? null;
 /** THE EVENTS' NUMBERS (section 7, Appendix A). */
 export const CHAPTER_EVENT_EFFECTS = Object.freeze({
   /** Schism: +10 where the Master's seat changed hands twice last Season. */
-  schismMasters: 2, schismMoved: 10,
+  schismMasters: 2,
+  schismMoved: 10,
   /** Succession: +10 where the chapter ended its last Season Ascendant. */
   successionAscendant: 10,
   /** Crackdown: twice the weight for the underworld; +10 where a seat of the region has the Curfew; its members' own writs
    *  earn half again Merit (AUDIT CHAP5 E1 - never Marks: a hall writ any account fills, from units bought, paid half
    *  again was a faucet past PROF0's x1.2); under 30 Strength at the Season's end, the halls shut for the next. */
-  crackdownHidden: 2, crackdownCurfew: 10, crackdownMerit: 1.5, crackdownShut: 30,
+  crackdownHidden: 2,
+  crackdownCurfew: 10,
+  crackdownMerit: 1.5,
+  crackdownShut: 30,
   /** Rivalry: +10 where a rival chapter of the region is Thriving (or Ascendant); the winner takes 10 from the loser. */
-  rivalryThriving: 10, rivalrySwing: 10,
+  rivalryThriving: 10,
+  rivalrySwing: 10,
 });
 
 /** THE RIVALS (section 8, CALL 5 - the port's own table, never FACTION.TXT): each pair is a Rivalry's draw where both
@@ -1188,8 +1437,8 @@ export const CHAPTER_RIVAL_PAIRS = Object.freeze([
   Object.freeze([GUILD_FACTION_IDS.MagesGuild, DIVINES.Julianos]),
 ]);
 /** A guild faction's rivals, ascending - none for a chapter the table names no rival for. */
-export const chapterRivalsOf = (/** @type {unknown} */ faction) => CHAPTER_RIVAL_PAIRS
-  .flatMap(([a, b]) => (a === faction ? [b] : b === faction ? [a] : [])).sort((x, y) => x - y);
+export const chapterRivalsOf = (/** @type {unknown} */ faction) =>
+  CHAPTER_RIVAL_PAIRS.flatMap(([a, b]) => (a === faction ? [b] : b === faction ? [a] : [])).sort((x, y) => x - y);
 
 /**
  * A CHAPTER'S WEIGHTS for the Season it draws (section 7's table), in CHAPTER_EVENTS' order. `c`: the chapter's guild
@@ -1204,12 +1453,17 @@ export function chapterEventWeights({ faction, band = 'steady', masters = 0, riv
   /** @type {Record<string, number>} */
   const w = Object.fromEntries(CHAPTER_EVENTS.map((e) => [e.id, e.weight]));
   if (masters >= E.schismMasters) w.schism += E.schismMoved;
-  if (chapterDoctrinesFor(faction).length < 2) { w.calm += w.schism; w.schism = 0; }   // AUDIT CHAP5 D3: no two doctrines, no Schism
+  if (chapterDoctrinesFor(faction).length < 2) {
+    w.calm += w.schism;
+    w.schism = 0;
+  } // AUDIT CHAP5 D3: no two doctrines, no Schism
   if (band === 'ascendant') w.succession += E.successionAscendant;
   if (hallHidden(faction)) w.crackdown *= E.crackdownHidden;
   if (curfew) w.crackdown += E.crackdownCurfew;
-  if (rivalBand === null) { w.calm += w.rivalry; w.rivalry = 0; }
-  else if (rivalBand === 'thriving' || rivalBand === 'ascendant') w.rivalry += E.rivalryThriving;
+  if (rivalBand === null) {
+    w.calm += w.rivalry;
+    w.rivalry = 0;
+  } else if (rivalBand === 'thriving' || rivalBand === 'ascendant') w.rivalry += E.rivalryThriving;
   return CHAPTER_EVENTS.map((e) => w[e.id]);
 }
 
@@ -1219,10 +1473,15 @@ export function chapterEventWeights({ faction, band = 'steady', masters = 0, riv
 export const drawOf = (/** @type {number} */ h, /** @type {number} */ n) => Math.floor((h / 2 ** 32) * n);
 /** THE EVENT chapter `faction` of `region` draws for Season `season` over `weights` (chapterEventWeights') - an event's
  *  id; Calm for a Season that is none or weights that sum to none. */
-export function chapterEventOf(/** @type {number} */ season, /** @type {number} */ faction, /** @type {number} */ region, /** @type {number[]} */ weights) {
+export function chapterEventOf(
+  /** @type {number} */ season,
+  /** @type {number} */ faction,
+  /** @type {number} */ region,
+  /** @type {number[]} */ weights,
+) {
   const total = Array.isArray(weights) ? weights.reduce((a, b) => a + Math.max(0, whole(b)), 0) : 0;
   if (!Number.isSafeInteger(season) || season < 0 || total <= 0) return 'calm';
-  let r = drawOf(gateHash(CHAPTER_EVENT_SALT, season, chapterTitleKey(faction, region)), total);   // AUDIT CHAP5 E3
+  let r = drawOf(gateHash(CHAPTER_EVENT_SALT, season, chapterTitleKey(faction, region)), total); // AUDIT CHAP5 E3
   for (let i = 0; i < CHAPTER_EVENTS.length; i++) {
     const wt = Math.max(0, whole(weights[i]));
     if (r < wt) return CHAPTER_EVENTS[i].id;
@@ -1236,7 +1495,9 @@ export function chapterEventOf(/** @type {number} */ season, /** @type {number} 
 export function chapterRivalPick(/** @type {{ faction: number, strength: number }[]} */ rivals) {
   const list = Array.isArray(rivals) ? rivals.filter((r) => Number.isSafeInteger(r?.faction)) : [];
   if (!list.length) return null;
-  return list.reduce((a, b) => (b.strength > a.strength || (b.strength === a.strength && b.faction < a.faction) ? b : a)).faction;
+  return list.reduce((a, b) =>
+    b.strength > a.strength || (b.strength === a.strength && b.faction < a.faction) ? b : a,
+  ).faction;
 }
 
 /** A RIVALRY'S END: `[a, b]` the two chapters' Strengths, `[ma, mb]` their Season's Merit - the winner (more Merit)
@@ -1246,19 +1507,21 @@ export function rivalryEnd(/** @type {[number, number]} */ [a, b], /** @type {[n
   if (!(ma > mb) && !(mb > ma)) return { a, b, won: null };
   const E = CHAPTER_EVENT_EFFECTS;
   const [w, l] = ma > mb ? [a, b] : [b, a];
-  const lost = Math.min(E.rivalrySwing, l);   // the loser's sting is whole; the winner's gain stops at 100
+  const lost = Math.min(E.rivalrySwing, l); // the loser's sting is whole; the winner's gain stops at 100
   const won = Math.min(STRENGTH_MAX, w + lost);
   return ma > mb ? { a: won, b: l - lost, won: 'a' } : { a: l - lost, b: won, won: 'b' };
 }
 
 /** A CRACKDOWN'S MEMBER WRIT MERIT (AUDIT CHAP5 E1): half again, whole - the Marks every writ pays its own. */
-export const crackdownMerit = (/** @type {number} */ merit) => Math.round(Math.max(0, Number(merit) || 0) * CHAPTER_EVENT_EFFECTS.crackdownMerit);
+export const crackdownMerit = (/** @type {number} */ merit) =>
+  Math.round(Math.max(0, Number(merit) || 0) * CHAPTER_EVENT_EFFECTS.crackdownMerit);
 /** Whether a Crackdown's chapter at Strength `s` at its Season's end shuts its halls for the next. */
 export const crackdownShuts = (/** @type {number} */ s) => Number(s) < CHAPTER_EVENT_EFFECTS.crackdownShut;
 
 /** The guild a Season's line names: "the Thieves Guild" - or, for a hidden guild (a public line naming the underworld's
  *  chapter would say where it keeps its halls), "its rival in the shadows". */
-const rivalWords = (/** @type {unknown} */ f) => (isRollFaction(f) && !hallHidden(f) ? `the ${hallPosterName(/** @type {number} */ (f))}` : 'its rival in the shadows');
+const rivalWords = (/** @type {unknown} */ f) =>
+  isRollFaction(f) && !hallHidden(f) ? `the ${hallPosterName(/** @type {number} */ (f))}` : 'its rival in the shadows';
 /** CHAP6a: A SEASON'S LINE IN WORDS - an 'event' row `{ faction, data: { season, event, ... } }` ("At the end of the Season
  *  of Morning Star, the Fighters Guild won its rivalry with the Thieves Guild.") or a 'season' row, the Master who held the
  *  chair the whole Season ("Through the Season of Morning Star, Alda held the Master's chair of the Fighters Guild.") -
@@ -1275,14 +1538,30 @@ export function chapterSeasonLine(/** @type {any} */ row) {
     return `Through ${season}, ${who} held the Master's chair of ${guild}.`;
   }
   const d = row.data;
-  const did = d.event === 'decline' ? (d.fell > 0 ? `${guild}'s decline cost it ${d.fell} Strength` : `${guild} held against its decline`)
-    : d.event === 'crackdown' ? (d.shut ? `a crackdown shut the halls of ${guild} for the Season after` : `${guild} weathered a crackdown`)
-      : d.event === 'rivalry' ? (d.won === true ? `${guild} won its rivalry with ${rivalWords(d.rival)}` : d.won === false ? `${guild} lost its rivalry with ${rivalWords(d.rival)}`
-        : `${guild}'s rivalry with ${rivalWords(d.rival)} ended even`)
-        : d.event === 'ascendancy' ? `${guild} stood ascendant`
-          : d.event === 'schism' ? (chapterDoctrineOk(d.doctrine) ? `${guild}'s schism ended, and it holds to ${DOCTRINE_WORDS[d.doctrine]} for the Season after`
-            : `${guild}'s schism ended with neither side carried`)
-            : d.event === 'succession' && Number.isSafeInteger(d.heir) ? `${guild}'s hall took a new head` : null;   // CHAP6b
+  const did =
+    d.event === 'decline'
+      ? d.fell > 0
+        ? `${guild}'s decline cost it ${d.fell} Strength`
+        : `${guild} held against its decline`
+      : d.event === 'crackdown'
+        ? d.shut
+          ? `a crackdown shut the halls of ${guild} for the Season after`
+          : `${guild} weathered a crackdown`
+        : d.event === 'rivalry'
+          ? d.won === true
+            ? `${guild} won its rivalry with ${rivalWords(d.rival)}`
+            : d.won === false
+              ? `${guild} lost its rivalry with ${rivalWords(d.rival)}`
+              : `${guild}'s rivalry with ${rivalWords(d.rival)} ended even`
+          : d.event === 'ascendancy'
+            ? `${guild} stood ascendant`
+            : d.event === 'schism'
+              ? chapterDoctrineOk(d.doctrine)
+                ? `${guild}'s schism ended, and it holds to ${DOCTRINE_WORDS[d.doctrine]} for the Season after`
+                : `${guild}'s schism ended with neither side carried`
+              : d.event === 'succession' && Number.isSafeInteger(d.heir)
+                ? `${guild}'s hall took a new head`
+                : null; // CHAP6b
   return did ? `At the end of ${season}, ${did}.` : null;
 }
 
@@ -1297,7 +1576,8 @@ export function chapterSeasonLine(/** @type {any} */ row) {
 /** THE DOCTRINES a Schism stands for (section 7's "cheaper training, or a deeper shelf, or more writs"), in order. */
 export const CHAPTER_DOCTRINES = Object.freeze(['training', 'shelf', 'writs']);
 /** Whether `v` names a doctrine. */
-export const chapterDoctrineOk = (/** @type {unknown} */ v) => typeof v === 'string' && /** @type {string[]} */ (CHAPTER_DOCTRINES).includes(v);
+export const chapterDoctrineOk = (/** @type {unknown} */ v) =>
+  typeof v === 'string' && /** @type {string[]} */ (CHAPTER_DOCTRINES).includes(v);
 /** A doctrine in the Chronicle's words. */
 const DOCTRINE_WORDS = Object.freeze({ training: 'cheaper training', shelf: 'a deeper shelf', writs: 'more writs' });
 /** WHAT A DOCTRINE DOES for its Season: training a further tenth off the hall's training, two qualities deeper on its
@@ -1318,10 +1598,14 @@ export function chapterDoctrinesFor(/** @type {unknown} */ faction) {
 /** A SCHISM'S TWO DOCTRINES `[side 0's, side 1's]` for Season `season` at chapter `faction` of `region` - two of the
  *  three, the one the roll leaves out the third; the two in the doctrines' order. AUDIT CHAP5 D3: of its guild's own -
  *  a guild with two, those two; with one, none (it draws no Schism). */
-export function schismDoctrinesOf(/** @type {number} */ season, /** @type {number} */ faction, /** @type {number} */ region) {
+export function schismDoctrinesOf(
+  /** @type {number} */ season,
+  /** @type {number} */ faction,
+  /** @type {number} */ region,
+) {
   const own = chapterDoctrinesFor(faction);
   if (own.length < 3) return own.length === 2 ? own : [];
-  const out = drawOf(gateHash(CHAPTER_SCHISM_SALT, season, chapterTitleKey(faction, region)), own.length);   // AUDIT CHAP5 E3
+  const out = drawOf(gateHash(CHAPTER_SCHISM_SALT, season, chapterTitleKey(faction, region)), own.length); // AUDIT CHAP5 E3
   return own.filter((_, i) => i !== out);
 }
 /** A Succession's candidates, the hall's residents its roll names. */
@@ -1329,9 +1613,13 @@ export const SUCCESSION_CANDIDATES = 3;
 /** The Season's Turning a Succession is named at - its third (the Turning that closes the Season's third week). */
 export const SUCCESSION_TURNING = 3;
 /** The sides a member may back in `event`: a Schism's two, a Succession's three candidates - none in any other. */
-export const chapterSidesOf = (/** @type {unknown} */ event) => (event === 'schism' ? 2 : event === 'succession' ? SUCCESSION_CANDIDATES : 0);
+export const chapterSidesOf = (/** @type {unknown} */ event) =>
+  event === 'schism' ? 2 : event === 'succession' ? SUCCESSION_CANDIDATES : 0;
 /** Whether `side` is one a member may back in `event`. */
-export const chapterBackOk = (/** @type {unknown} */ event, /** @type {unknown} */ side) => Number.isSafeInteger(side) && /** @type {number} */ (side) >= 0 && /** @type {number} */ (side) < chapterSidesOf(event);
+export const chapterBackOk = (/** @type {unknown} */ event, /** @type {unknown} */ side) =>
+  Number.isSafeInteger(side) &&
+  /** @type {number} */ (side) >= 0 &&
+  /** @type {number} */ (side) < chapterSidesOf(event);
 /** A SCHISM'S END: `sums` each side's backers' Merit that Season, `master` the Master's side (or null) - the side with more,
  *  the Master's at a tie (its vote), none where neither is carried. */
 export function schismWinner(/** @type {[number, number]} */ sums, /** @type {number | null} */ master = null) {
@@ -1341,13 +1629,20 @@ export function schismWinner(/** @type {[number, number]} */ sums, /** @type {nu
   return master === 0 || master === 1 ? master : null;
 }
 /** A SUCCESSION'S HEIR: the Master's naming, else the most-Merit backer's, else the hall's own first. */
-export const successionHeir = (/** @type {number | null} */ master, /** @type {number | null} */ top) => (Number.isSafeInteger(master) ? /** @type {number} */ (master) : Number.isSafeInteger(top) ? /** @type {number} */ (top) : 0);
+export const successionHeir = (/** @type {number | null} */ master, /** @type {number | null} */ top) =>
+  Number.isSafeInteger(master)
+    ? /** @type {number} */ (master)
+    : Number.isSafeInteger(top)
+      ? /** @type {number} */ (top)
+      : 0;
 /** A hall writ's day count under a doctrine: one more for "more writs". */
-export const doctrineWritCount = (/** @type {number} */ count, /** @type {unknown} */ doctrine) => count + (doctrine === 'writs' ? CHAPTER_DOCTRINE_EFFECTS.writs : 0);
+export const doctrineWritCount = (/** @type {number} */ count, /** @type {unknown} */ doctrine) =>
+  count + (doctrine === 'writs' ? CHAPTER_DOCTRINE_EFFECTS.writs : 0);
 
 // ─── CHAP6c: A CHAPTER'S SEASON, AS THE CLIENT READS IT (Chapters-Arc 7, 9) ─
 /** A doctrine in words ("cheaper training"), or null. */
-export const chapterDoctrineWords = (/** @type {unknown} */ d) => (chapterDoctrineOk(d) ? DOCTRINE_WORDS[/** @type {'training' | 'shelf' | 'writs'} */ (d)] : null);
+export const chapterDoctrineWords = (/** @type {unknown} */ d) =>
+  chapterDoctrineOk(d) ? DOCTRINE_WORDS[/** @type {'training' | 'shelf' | 'writs'} */ (d)] : null;
 /**
  * A CHAPTER'S SEASON as the sheet or the board says it - `{ event, season, rival, shut, doctrine, sides, heir }`, each
  * checked and anything else none: the Season's event, the Season's number (its candidates' names are drawn on it), a
@@ -1363,7 +1658,10 @@ export function chapterSeasonOf(c) {
     rival: event === 'rivalry' && isRollFaction(c?.rival) ? c.rival : null,
     shut: c?.shut === true,
     doctrine: chapterDoctrineOk(c?.doctrine) ? String(c.doctrine) : null,
-    sides: event === 'schism' && Array.isArray(c?.sides) && c.sides.length === 2 && c.sides.every(chapterDoctrineOk) ? [String(c.sides[0]), String(c.sides[1])] : null,
+    sides:
+      event === 'schism' && Array.isArray(c?.sides) && c.sides.length === 2 && c.sides.every(chapterDoctrineOk)
+        ? [String(c.sides[0]), String(c.sides[1])]
+        : null,
     heir: event === 'succession' && chapterBackOk('succession', c?.heir) ? c.heir : null,
   };
 }
@@ -1382,7 +1680,11 @@ export const CHAPTER_HALL_SERVICES = Object.freeze(['training', 'spells']);
  *  tenth. CHAP7b: `guildId` the reader's player guild - its patron's members pay the Thriving band's price whatever the
  *  chapter's Strength (Chapters-Arc 8), the Season's tenth on it as on anyone's. GUILD3e: the BETTER of the two - an
  *  Ascendant chapter's fifth off is its patron's too, never a patron charged more than a stranger. */
-export function chapterHallFactor(/** @type {any} */ chapter, /** @type {string} */ service, /** @type {string | null} */ guildId = null) {
+export function chapterHallFactor(
+  /** @type {any} */ chapter,
+  /** @type {string} */ service,
+  /** @type {string | null} */ guildId = null,
+) {
   if (!chapter) return 1;
   const s = chapterSeasonOf(chapter);
   const own = chapterPriceFactor(chapter.strength);
@@ -1391,12 +1693,18 @@ export function chapterHallFactor(/** @type {any} */ chapter, /** @type {string}
 }
 /** A HALL'S SHELF QUALITY by its chapter as the sheet says it: its band's step and "a deeper shelf"'s two
  *  (chapterShelfQuality's bounds) - DFU's own quality with no chapter. */
-export const chapterHallShelf = (/** @type {number} */ quality, /** @type {any} */ chapter) => (chapter
-  ? chapterShelfQuality(quality, chapter.strength, chapterSeasonOf(chapter).doctrine === 'shelf' ? CHAPTER_DOCTRINE_EFFECTS.shelf : 0) : quality);
+export const chapterHallShelf = (/** @type {number} */ quality, /** @type {any} */ chapter) =>
+  chapter
+    ? chapterShelfQuality(
+        quality,
+        chapter.strength,
+        chapterSeasonOf(chapter).doctrine === 'shelf' ? CHAPTER_DOCTRINE_EFFECTS.shelf : 0,
+      )
+    : quality;
 /** Whether a hall's chapter's halls are shut this Season (a Crackdown's end) - its services refused. */
 export const chapterHallShut = (/** @type {any} */ chapter) => chapterSeasonOf(chapter).shut;
 /** What a shut hall says. */
-export const CHAPTER_HALL_SHUT_LINE = 'The hall is shut this Season, by the watch\'s order.';
+export const CHAPTER_HALL_SHUT_LINE = "The hall is shut this Season, by the watch's order.";
 
 // ─── CHAP7a: THE PATRONS (Chapters-Arc 8, CALL 6) ───────────────────
 // A player guild (GUILD1) may be a chapter's patron for a Season: its guildmaster bids silver from the guild's treasury
@@ -1409,24 +1717,42 @@ export const CHAPTER_HALL_SHUT_LINE = 'The hall is shut this Season, by the watc
 export const CHAPTER_PATRON_MIN = 1000;
 /** Whether `marks` is a guild's bid, `prev` its standing one for the same chapter and Season (0 for none): whole, at
  *  least the least, more than it stood at, never past the cap a treasury keeps. */
-export const patronBidOk = (/** @type {unknown} */ marks, prev = 0) => Number.isSafeInteger(marks) && /** @type {number} */ (marks) >= CHAPTER_PATRON_MIN
-  && /** @type {number} */ (marks) > prev && /** @type {number} */ (marks) <= MARKS_MAX;
+export const patronBidOk = (/** @type {unknown} */ marks, prev = 0) =>
+  Number.isSafeInteger(marks) &&
+  /** @type {number} */ (marks) >= CHAPTER_PATRON_MIN &&
+  /** @type {number} */ (marks) > prev &&
+  /** @type {number} */ (marks) <= MARKS_MAX;
 /** The ledger's escrow id for a guild's bid on a chapter's Season - `patron:<Season>:<chapter's key>:<guild>`. */
-export const patronEscrowId = (/** @type {number} */ season, /** @type {number} */ f, /** @type {number} */ region, /** @type {string} */ guild) => `patron:${season}:${chapterTitleKey(f, region)}:${guild}`;
+export const patronEscrowId = (
+  /** @type {number} */ season,
+  /** @type {number} */ f,
+  /** @type {number} */ region,
+  /** @type {string} */ guild,
+) => `patron:${season}:${chapterTitleKey(f, region)}:${guild}`;
 /** THE WINNING BID of `bids` `[{ guild, amount, at }]` - the highest; at a tie the one that stood at it first, then the
  *  lower guild id - or null for none. */
 export function patronWinnerOf(/** @type {Iterable<any>} */ bids) {
   let best = null;
   for (const b of bids) {
     if (!b || typeof b.guild !== 'string' || !Number.isSafeInteger(b.amount)) continue;
-    if (!best || b.amount > best.amount || (b.amount === best.amount && (b.at < best.at || (b.at === best.at && b.guild < best.guild)))) best = b;
+    if (
+      !best ||
+      b.amount > best.amount ||
+      (b.amount === best.amount && (b.at < best.at || (b.at === best.at && b.guild < best.guild)))
+    )
+      best = b;
   }
   return best;
 }
 /** A chapter's patron as the sheet or the board says it - `{ id, name, tag }`, each checked - or null. */
 export function chapterPatronOf(/** @type {any} */ p) {
-  if (!p || typeof p.id !== 'string' || !GUILD_ID_RE.test(p.id) || typeof p.name !== 'string' || !p.name.trim()) return null;
-  return { id: p.id, name: p.name.trim().slice(0, GUILD_NAME_MAX), tag: typeof p.tag === 'string' && GUILD_TAG_RE.test(p.tag) ? p.tag : '' };
+  if (!p || typeof p.id !== 'string' || !GUILD_ID_RE.test(p.id) || typeof p.name !== 'string' || !p.name.trim())
+    return null;
+  return {
+    id: p.id,
+    name: p.name.trim().slice(0, GUILD_NAME_MAX),
+    tag: typeof p.tag === 'string' && GUILD_TAG_RE.test(p.tag) ? p.tag : '',
+  };
 }
 /** THE CHRONICLE'S PATRON ROW in words: "For the Season of Morning Star, the Iron Wolves took the patronage of the
  *  Fighters Guild." - null for a row it has no words for or a hidden guild's. */
@@ -1445,9 +1771,12 @@ export function chapterPatronLine(/** @type {any} */ row) {
 /** The band whose prices a patron's members pay (CALL 6). */
 export const CHAPTER_PATRON_BAND = 'thriving';
 /** That band's price factor. */
-export const CHAPTER_PATRON_PRICE = /** @type {{ price: number }} */ (CHAPTER_BANDS.find((b) => b.band === CHAPTER_PATRON_BAND)).price;
+export const CHAPTER_PATRON_PRICE = /** @type {{ price: number }} */ (
+  CHAPTER_BANDS.find((b) => b.band === CHAPTER_PATRON_BAND)
+).price;
 /** Whether the reader's player guild (`guildId`) is the chapter's patron this Season. */
-export const chapterPatronMember = (/** @type {any} */ chapter, /** @type {unknown} */ guildId) => typeof guildId === 'string' && guildId !== '' && chapter?.patron?.id === guildId;
+export const chapterPatronMember = (/** @type {any} */ chapter, /** @type {unknown} */ guildId) =>
+  typeof guildId === 'string' && guildId !== '' && chapter?.patron?.id === guildId;
 /** What a guildmaster's board offers to bid: none standing, the least, twice it and five times it; else its standing bid
  *  raised by 500, 1,000 and 5,000 - each under the cap. */
 export const CHAPTER_PATRON_RAISES = Object.freeze([500, 1000, 5000]);
@@ -1471,11 +1800,17 @@ export function chapterPatronSheetLine(/** @type {any} */ patron, /** @type {unk
 export function chapterPatronBidLine(/** @type {any} */ bid) {
   const season = seatSeasonName(bid?.season);
   if (!season || !Number.isSafeInteger(bid?.marks) || bid.marks < 0) return null;
-  return bid.marks > 0 ? `Your guild bids ${silverOf(bid.marks)} for its patronage in ${season}.` : `Your guild has not bid for its patronage in ${season}.`;
+  return bid.marks > 0
+    ? `Your guild bids ${silverOf(bid.marks)} for its patronage in ${season}.`
+    : `Your guild has not bid for its patronage in ${season}.`;
 }
 /** What a bid made says: "Your guild bids 1,500 silver for the patronage of the Fighters Guild in the Season of First
  *  Seed." - null for a guild or a Season it cannot name. */
-export function chapterPatronBidSaid(/** @type {unknown} */ faction, /** @type {unknown} */ season, /** @type {number} */ marks) {
+export function chapterPatronBidSaid(
+  /** @type {unknown} */ faction,
+  /** @type {unknown} */ season,
+  /** @type {number} */ marks,
+) {
   const name = seatSeasonName(season);
   if (!isRollFaction(faction) || hallHidden(faction) || !name || !Number.isSafeInteger(marks)) return null;
   return `Your guild bids ${silverOf(marks)} for the patronage of the ${hallPosterName(/** @type {number} */ (faction))} in ${name}.`;

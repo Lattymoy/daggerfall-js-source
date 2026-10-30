@@ -48,10 +48,20 @@
 // Pure - the door, the store and the ids are handed in - so the pins drive
 // it without a network.
 // ═══════════════════════════════════════════════════════════════════
-import { t } from '../systems/textManager.js';   // STAR7: the held star's capped line
-import { MARKS_BANK, MARKS_COMBAT, MARKS_MOVE_MAX, marksAmountOk, marksText, exchangeGold, FIND_KINDS, utcDay, MARKS_RID_RE } from './marksLaw.js';
+import { t } from '../systems/textManager.js'; // STAR7: the held star's capped line
+import {
+  MARKS_BANK,
+  MARKS_COMBAT,
+  MARKS_MOVE_MAX,
+  marksAmountOk,
+  marksText,
+  exchangeGold,
+  FIND_KINDS,
+  utcDay,
+  MARKS_RID_RE,
+} from './marksLaw.js';
 import { accountRefusalText } from './accountClient.js';
-import { jittered } from './backoff.js';   // SCALE1: a press's asks spread out
+import { jittered } from './backoff.js'; // SCALE1: a press's asks spread out
 
 /** The sales whose answers did not come, kept to be asked again - { [account|character]: sale }. */
 export const MARKS_PENDING_KEY = 'marks1.pendingSale';
@@ -62,7 +72,14 @@ export const MARKS_PENDING_KEY = 'marks1.pendingSale';
 /** The refusals that strike no find today and owe none: an account not yet a week registered (AUDIT 625 S1), and
  *  INT16's - a character that is not the account's seat here, or one whose trade is held (Integrity-Arc section 7). */
 export const FIND_DROPS = Object.freeze(['marks-young', 'progress-seat', 'trade-held']);
-export const MARKS_FINAL = Object.freeze(['bad-marks', 'marks-short', 'marks-bank-cap', 'marks-rate', 'marks-rid', 'marks-closed']);
+export const MARKS_FINAL = Object.freeze([
+  'bad-marks',
+  'marks-short',
+  'marks-bank-cap',
+  'marks-rate',
+  'marks-rid',
+  'marks-closed',
+]);
 /** How many times one press asks before the sale is left to settle later. */
 export const MARKS_TRIES = 3;
 /** SCALE1: the waits between a press's asks (ms, jittered - net/backoff.js). They were asked back to back: a service
@@ -72,7 +89,12 @@ export const MARKS_RETRY_MS = Object.freeze([400, 1500]);
 const RETRY = Object.freeze(['offline', 'server']);
 /** SILVER-FINDS: where a find was found, as its line says it - a loot find's kind (marksLaw.js FIND_KINDS), or a
  *  harvest's (`gather`). */
-export const FIND_WORDS = Object.freeze({ corpse: 'on the body', pile: 'among the treasure', search: 'tucked in with the find', gather: 'while gathering' });
+export const FIND_WORDS = Object.freeze({
+  corpse: 'on the body',
+  pile: 'among the treasure',
+  search: 'tucked in with the find',
+  gather: 'while gathering',
+});
 /** SILVER-FINDS: the finds a book keeps owed at most - asks never answered, asked again by the next find; past it a
  *  find is let go (the service's day bounds what they could strike: marksLaw.js MARKS_FAUCETS.find). */
 export const FINDS_OWED_MAX = 20;
@@ -85,8 +107,14 @@ export const MARKS_OWED_KEY = 'marks1.owedFinds';
  *  and the rest wait owed unasked behind it. The switch shut and a guest (`marks-need-account`, `marks-closed`) keep
  *  theirs owed too, and read the book closed. */
 const FIND_KEPT = Object.freeze(['offline', 'server', 'no-session', 'auth']);
-const owedFind = (/** @type {any} */ f) => !!f && typeof f === 'object' && typeof f.rid === 'string' && MARKS_RID_RE.test(f.rid)
-  && FIND_KINDS.includes(f.kind) && typeof f.account === 'string' && f.account.length > 0;
+const owedFind = (/** @type {any} */ f) =>
+  !!f &&
+  typeof f === 'object' &&
+  typeof f.rid === 'string' &&
+  MARKS_RID_RE.test(f.rid) &&
+  FIND_KINDS.includes(f.kind) &&
+  typeof f.account === 'string' &&
+  f.account.length > 0;
 
 /** The words. */
 export const MARKS_TEXT = Object.freeze({
@@ -96,19 +124,26 @@ export const MARKS_TEXT = Object.freeze({
   capped: `No silver for this breach. You can earn at most ${marksText(MARKS_COMBAT.perDay)} a day from breaches, town defenses, serpents, Redoubts and fallen stars.`,
   cappedRaid: `No silver for this town. You can earn at most ${marksText(MARKS_COMBAT.perDay)} a day from breaches, town defenses, serpents, Redoubts and fallen stars.`,
   cappedSerpent: `No silver for this serpent. You can earn at most ${marksText(MARKS_COMBAT.perDay)} a day from breaches, town defenses, serpents, Redoubts and fallen stars.`,
-  cappedEg: `No silver for this Redoubt. You can earn at most ${marksText(MARKS_COMBAT.perDay)} a day from breaches, town defenses, serpents, Redoubts and fallen stars.`,   // EG-E1: a Redoubt of the Elite Breach
-  cappedStar: () => t('marks.capped.star', 'No silver for this star. You\'ve reached today\'s limit of {cap, number} silver.', { cap: MARKS_COMBAT.perDay }),   // STAR7: a held star, through the text core; AUDIT STAR (W2): the number handed in, the language's own words round it
+  cappedEg: `No silver for this Redoubt. You can earn at most ${marksText(MARKS_COMBAT.perDay)} a day from breaches, town defenses, serpents, Redoubts and fallen stars.`, // EG-E1: a Redoubt of the Elite Breach
+  cappedStar: () =>
+    t('marks.capped.star', "No silver for this star. You've reached today's limit of {cap, number} silver.", {
+      cap: MARKS_COMBAT.perDay,
+    }), // STAR7: a held star, through the text core; AUDIT STAR (W2): the number handed in, the language's own words round it
   /** SILVER-WAYS: a guild deed this claim completed - three of the guild's accounts on one raid or gate. */
-  deed: (n, guild) => `A deed for ${guild?.name ?? 'your guild'}: three of its members fought together. ${marksText(n)} added to its treasury.`,
+  deed: (n, guild) =>
+    `A deed for ${guild?.name ?? 'your guild'}: three of its members fought together. ${marksText(n)} added to its treasury.`,
   /** SILVER-WAYS: a guild contract's pay for a town defended. */
   contract: (pay, guild) => `${guild?.name ?? 'A guild'} pays you ${marksText(pay)} under its contract.`,
-  sold: (marks, gold) => `The Bank buys ${marksText(marks)} for ${gold.toLocaleString('en-US')} gold, paid into your account here.`,
+  sold: (marks, gold) =>
+    `The Bank buys ${marksText(marks)} for ${gold.toLocaleString('en-US')} gold, paid into your account here.`,
   kept: 'The Bank has your silver and will pay when the counting-house answers.',
-  settled: (marks, gold) => `The Bank has finished counting: ${marksText(marks)} bought for ${gold.toLocaleString('en-US')} gold, paid into your account.`,
+  settled: (marks, gold) =>
+    `The Bank has finished counting: ${marksText(marks)} bought for ${gold.toLocaleString('en-US')} gold, paid into your account.`,
   movedIn: (marks) => `${marksText(marks)} put in.`,
   movedOut: (marks) => `${marksText(marks)} taken out.`,
   /** SILVER-FINDS: a find struck - a loot find's or a harvest's (`kind`, FIND_WORDS) - and the balance after it. */
-  found: (n, balance, kind) => `You find ${marksText(n)} ${FIND_WORDS[kind] ?? FIND_WORDS.pile}.${Number.isSafeInteger(balance) ? ` You hold ${marksText(balance)}.` : ''}`,
+  found: (n, balance, kind) =>
+    `You find ${marksText(n)} ${FIND_WORDS[kind] ?? FIND_WORDS.pile}.${Number.isSafeInteger(balance) ? ` You hold ${marksText(balance)}.` : ''}`,
 });
 
 /** A request id: `m` and fifteen of base 36, from the handed-in randomness (crypto's by default). */
@@ -130,43 +165,87 @@ export function mintMarksRid(rand = (b) => globalThis.crypto.getRandomValues(b))
  *   press's asks (SCALE1 - the pins pass their own); `nowMs` the clock the day's finds are counted by (SILVER-FINDS -
  *   the host's shared one)
  */
-export function createMarksBook({ door, store = null, character = () => null, rid = () => mintMarksRid(), sleep = (ms) => new Promise((r) => setTimeout(r, ms)), nowMs = () => Date.now() }) {
-  const state = { balance: /** @type {number|null} */ (null), today: /** @type {any} */ (null), open: /** @type {boolean|null} */ (null) };
-  const account = () => { try { return door.account?.() ?? null; } catch { return null; } };
+export function createMarksBook({
+  door,
+  store = null,
+  character = () => null,
+  rid = () => mintMarksRid(),
+  sleep = (ms) => new Promise((r) => setTimeout(r, ms)),
+  nowMs = () => Date.now(),
+}) {
+  const state = {
+    balance: /** @type {number|null} */ (null),
+    today: /** @type {any} */ (null),
+    open: /** @type {boolean|null} */ (null),
+  };
+  const account = () => {
+    try {
+      return door.account?.() ?? null;
+    } catch {
+      return null;
+    }
+  };
   /** The table as the store holds it - a store that refused a write is read from memory, and only then (AUDIT 28 M1:
    *  a store that merely reads empty is another tab's settle, not a lost write). */
   let _memory = null;
   const table = () => {
     if (_memory) return _memory;
     let v = null;
-    try { v = store?.get(MARKS_PENDING_KEY) ?? null; } catch { v = null; }
+    try {
+      v = store?.get(MARKS_PENDING_KEY) ?? null;
+    } catch {
+      v = null;
+    }
     if (!v || typeof v !== 'object') return {};
-    if (typeof v.rid === 'string') return { [`${v.account ?? ''}|${v.character ?? ''}`]: v };   // one sale, as MARKS1 kept it
+    if (typeof v.rid === 'string') return { [`${v.account ?? ''}|${v.character ?? ''}`]: v }; // one sale, as MARKS1 kept it
     return v;
   };
   const writeTable = (t) => {
-    _peekAt = -Infinity;   // what the face shows follows every write at once
+    _peekAt = -Infinity; // what the face shows follows every write at once
     const out = Object.keys(t).length ? t : null;
-    try { store?.set(MARKS_PENDING_KEY, out); _memory = null; } catch { _memory = { ...t }; }
+    try {
+      store?.set(MARKS_PENDING_KEY, out);
+      _memory = null;
+    } catch {
+      _memory = { ...t };
+    }
   };
   const slot = () => `${account() ?? ''}|${character() ?? ''}`;
   const kept = () => table()[slot()] ?? null;
   /** AUDIT 28 H8: the Bank's face asks `pending` every frame - the store read (and parsed) at most once a second for it;
    *  a sale and a settle read it fresh. */
-  let _peek = null, _peekAt = -Infinity;
+  let _peek = null,
+    _peekAt = -Infinity;
   const keptSoon = () => {
     const now = Date.now();
-    if (now - _peekAt >= 1000) { _peek = kept(); _peekAt = now; }
+    if (now - _peekAt >= 1000) {
+      _peek = kept();
+      _peekAt = now;
+    }
     return _peek;
   };
-  const keep = (sale, key = slot()) => { const t = { ...table() }; if (sale) t[key] = sale; else delete t[key]; writeTable(t); };
+  const keep = (sale, key = slot()) => {
+    const t = { ...table() };
+    if (sale) t[key] = sale;
+    else delete t[key];
+    writeTable(t);
+  };
   /** The one ask in flight - a sale or a settle (AUDIT 28 M1). */
   let busy = null;
-  const once = (fn) => { if (busy) return null; busy = Promise.resolve().then(fn).finally(() => { busy = null; }); return busy; };
+  const once = (fn) => {
+    if (busy) return null;
+    busy = Promise.resolve()
+      .then(fn)
+      .finally(() => {
+        busy = null;
+      });
+    return busy;
+  };
 
   const noteAnswer = (data) => {
     if (Number.isSafeInteger(data?.balance)) state.balance = data.balance;
-    if (Number.isSafeInteger(data?.exchangedToday)) state.today = { ...(state.today ?? {}), exchanged: data.exchangedToday };   // AUDIT 28 M9
+    if (Number.isSafeInteger(data?.exchangedToday))
+      state.today = { ...(state.today ?? {}), exchanged: data.exchangedToday }; // AUDIT 28 M9
   };
   /** Guild moves whose answers did not come, by what they move - a press after a lost answer is the same move. */
   const moving = new Map();
@@ -176,12 +255,28 @@ export function createMarksBook({ door, store = null, character = () => null, ri
    *  written back as a find settles. A store that refuses a write leaves them owed in memory. */
   const owed = (() => {
     let v = null;
-    try { v = store?.get(MARKS_OWED_KEY) ?? null; } catch { v = null; }
-    return Array.isArray(v) ? v.filter(owedFind).slice(-FINDS_OWED_MAX).map(({ rid: r, kind, account: a }) => ({ rid: r, kind, account: a })) : [];
+    try {
+      v = store?.get(MARKS_OWED_KEY) ?? null;
+    } catch {
+      v = null;
+    }
+    return Array.isArray(v)
+      ? v
+          .filter(owedFind)
+          .slice(-FINDS_OWED_MAX)
+          .map(({ rid: r, kind, account: a }) => ({ rid: r, kind, account: a }))
+      : [];
   })();
   const keepOwed = () => {
     if (!store) return;
-    try { store.set(MARKS_OWED_KEY, owed.length ? owed.map(({ rid: r, kind, account: a }) => ({ rid: r, kind, account: a })) : null); } catch { /* refused: owed in memory */ }
+    try {
+      store.set(
+        MARKS_OWED_KEY,
+        owed.length ? owed.map(({ rid: r, kind, account: a }) => ({ rid: r, kind, account: a })) : null,
+      );
+    } catch {
+      /* refused: owed in memory */
+    }
   };
   /** SILVER-FINDS: the account and the UTC day (the book's clock) the service said that account's finds were met - none
    *  is asked again until the day turns (another account signed in asks its own). */
@@ -191,8 +286,12 @@ export function createMarksBook({ door, store = null, character = () => null, ri
   async function ask(fn) {
     let r = null;
     for (let i = 0; i < MARKS_TRIES; i++) {
-      if (i > 0) await sleep(jittered(MARKS_RETRY_MS[Math.min(i - 1, MARKS_RETRY_MS.length - 1)]));   // SCALE1
-      try { r = await fn(); } catch { r = { ok: false, error: 'offline' }; }
+      if (i > 0) await sleep(jittered(MARKS_RETRY_MS[Math.min(i - 1, MARKS_RETRY_MS.length - 1)])); // SCALE1
+      try {
+        r = await fn();
+      } catch {
+        r = { ok: false, error: 'offline' };
+      }
       if (r?.ok || !RETRY.includes(r?.error)) return r;
     }
     return r;
@@ -203,12 +302,23 @@ export function createMarksBook({ door, store = null, character = () => null, ri
     /** The balance and today's counts, from the service; a closed currency or a guest reads `open` false. */
     async refresh() {
       const r = await ask(() => door.balance());
-      if (r?.ok) { state.open = true; state.balance = r.data.balance; state.today = r.data.today ?? null; }
-      else if (r?.error === 'marks-closed' || r?.error === 'marks-need-account') { state.open = false; state.balance = null; }
+      if (r?.ok) {
+        state.open = true;
+        state.balance = r.data.balance;
+        state.today = r.data.today ?? null;
+      } else if (r?.error === 'marks-closed' || r?.error === 'marks-need-account') {
+        state.open = false;
+        state.balance = null;
+      }
       return r;
     },
     /** The balance a gate's strike or an account card answered. */
-    set(balance) { if (Number.isSafeInteger(balance)) { state.balance = balance; state.open = true; } },
+    set(balance) {
+      if (Number.isSafeInteger(balance)) {
+        state.balance = balance;
+        state.open = true;
+      }
+    },
     /** The line a gate claim's `marks` says, or null for none (a service from before it, or Marks not this account's).
      *  SILVER-WAYS: `kind` the claim's - a raid's capped line names the town; SERPENT-SET: a serpent's, the serpent; EG-E1: a
      *  Redoubt's (`eg`), the Redoubt. */
@@ -216,9 +326,20 @@ export function createMarksBook({ door, store = null, character = () => null, ri
       if (!marks || typeof marks !== 'object') return null;
       if (Number.isSafeInteger(marks.balance)) this.set(marks.balance);
       // SILVER-WAYS: the day's combat silver as the strike answered it - the Bank's card reads it
-      if (Number.isSafeInteger(marks.combat?.earned)) state.today = { ...(state.today ?? {}), combat: marks.combat.earned, combatMax: marks.combat.max };
+      if (Number.isSafeInteger(marks.combat?.earned))
+        state.today = { ...(state.today ?? {}), combat: marks.combat.earned, combatMax: marks.combat.max };
       if (marks.struck > 0) return MARKS_TEXT.struck(marks.struck, marks.balance);
-      return marks.why === 'cap' ? (kind === 'raid' ? MARKS_TEXT.cappedRaid : kind === 'serpent' ? MARKS_TEXT.cappedSerpent : kind === 'eg' ? MARKS_TEXT.cappedEg : kind === 'star' ? MARKS_TEXT.cappedStar() : MARKS_TEXT.capped) : null;
+      return marks.why === 'cap'
+        ? kind === 'raid'
+          ? MARKS_TEXT.cappedRaid
+          : kind === 'serpent'
+            ? MARKS_TEXT.cappedSerpent
+            : kind === 'eg'
+              ? MARKS_TEXT.cappedEg
+              : kind === 'star'
+                ? MARKS_TEXT.cappedStar()
+                : MARKS_TEXT.capped
+        : null;
     },
     /** SILVER-WAYS: every silver line a counted claim's answer says - its strike (strikeLine), the guild deed it
      *  completed, the contracts that paid it - in that order; none for a service from before them. */
@@ -227,7 +348,8 @@ export function createMarksBook({ door, store = null, character = () => null, ri
       const out = [];
       const strike = this.strikeLine(data.marks, kind);
       if (strike) out.push(strike);
-      if (data.deed && Number.isSafeInteger(data.deed.struck) && data.deed.struck > 0) out.push(MARKS_TEXT.deed(data.deed.struck, data.deed.guild));
+      if (data.deed && Number.isSafeInteger(data.deed.struck) && data.deed.struck > 0)
+        out.push(MARKS_TEXT.deed(data.deed.struck, data.deed.guild));
       for (const c of Array.isArray(data.contracts) ? data.contracts : []) {
         if (c && Number.isSafeInteger(c.pay) && c.pay > 0) out.push(MARKS_TEXT.contract(c.pay, c.guild));
       }
@@ -241,9 +363,14 @@ export function createMarksBook({ door, store = null, character = () => null, ri
       if (Number.isSafeInteger(found.balance)) this.set(found.balance);
       const day = found.today;
       if (Number.isSafeInteger(day?.found)) {
-        state.today = { ...(state.today ?? {}), ...(kind === 'gather' ? { gathered: day.found, gatherMax: day.max } : { found: day.found, findMax: day.max }) };
+        state.today = {
+          ...(state.today ?? {}),
+          ...(kind === 'gather' ? { gathered: day.found, gatherMax: day.max } : { found: day.found, findMax: day.max }),
+        };
       }
-      return Number.isSafeInteger(found.struck) && found.struck > 0 ? MARKS_TEXT.found(found.struck, found.balance, kind) : null;
+      return Number.isSafeInteger(found.struck) && found.struck > 0
+        ? MARKS_TEXT.found(found.struck, found.balance, kind)
+        : null;
     },
     /**
      * SILVER-FINDS: A LOOT FIND ASKED (systems/silverFinds.js rolled it) - the service strikes what its own dice say,
@@ -272,26 +399,35 @@ export function createMarksBook({ door, store = null, character = () => null, ri
       // why the rest wait owed, unasked: an ask nothing answered (the network, the session), the switch, its hour spent -
       // one find's tries, never twenty's; or `young`, and none of them is owed at all
       let held = null;
-      const owe = (/** @type {any} */ f) => { if (owed.length < FINDS_OWED_MAX) owed.push(f); };
+      const owe = (/** @type {any} */ f) => {
+        if (owed.length < FINDS_OWED_MAX) owed.push(f);
+      };
       for (const f of asks) {
-        if (held) { if (!FIND_DROPS.includes(held)) owe(f); continue; }
+        if (held) {
+          if (!FIND_DROPS.includes(held)) owe(f);
+          continue;
+        }
         const r = await ask(() => door.find(f.kind, f.rid, f.account));
         const error = r?.ok ? null : (r?.error ?? 'offline');
         if (!error) {
           const found = r.data ?? {};
-          if (Number.isSafeInteger(found.today?.found) && found.today.found >= found.today.max) findsMet = { account: me, day };
+          if (Number.isSafeInteger(found.today?.found) && found.today.found >= found.today.max)
+            findsMet = { account: me, day };
           out.push({ kind: f.kind, found, line: this.findLine(found, f.kind) });
         } else if (FIND_DROPS.includes(error)) {
-          findsMet = { account: me, day };   // AUDIT 625 S1: none of its finds struck today - none asked again until the day turns
-          held = error;   // INT16: nor a character not seated here, nor one whose trade is held - none of these finds is owed
+          findsMet = { account: me, day }; // AUDIT 625 S1: none of its finds struck today - none asked again until the day turns
+          held = error; // INT16: nor a character not seated here, nor one whose trade is held - none of these finds is owed
         } else if (error === 'marks-need-account' || error === 'marks-closed') {
-          state.open = false; state.balance = null;   // not this account's: refresh's own reading, and nothing asked again
-          owe(f); held = error;   // AUDIT 625 S3: this find and the rest owed, asked when silver is this account's again
+          state.open = false;
+          state.balance = null; // not this account's: refresh's own reading, and nothing asked again
+          owe(f);
+          held = error; // AUDIT 625 S3: this find and the rest owed, asked when silver is this account's again
         } else if (FIND_KEPT.includes(error)) {
-          owe(f); held = error;   // never answered: owed
+          owe(f);
+          held = error; // never answered: owed
         } else if (error === 'marks-rate' || error === 'progress-play') {
-          held = error;   // its hour spent (INT17: or the play that pays for it): this find let go (MARKS_FINAL's law), the rest wait owed
-        }   // an id the service cannot read, a kind of none, a word this build does not know: this find let go
+          held = error; // its hour spent (INT17: or the play that pays for it): this find let go (MARKS_FINAL's law), the rest wait owed
+        } // an id the service cannot read, a kind of none, a word this build does not know: this find let go
       }
       keepOwed();
       return out;
@@ -306,7 +442,7 @@ export function createMarksBook({ door, store = null, character = () => null, ri
       if (!marksAmountOk(marks, MARKS_BANK.perDay)) return { ok: false, text: accountRefusalText('bad-marks') };
       if (!account()) return { ok: false, text: accountRefusalText('no-session') };
       const run = once(async () => {
-        if (kept()) return { ok: false, text: MARKS_TEXT.kept };   // this account's and character's last sale must settle first
+        if (kept()) return { ok: false, text: MARKS_TEXT.kept }; // this account's and character's last sale must settle first
         const key = slot();
         const sale = { rid: rid(), marks, account: account(), character: character(), where };
         keep(sale, key);
@@ -318,11 +454,11 @@ export function createMarksBook({ door, store = null, character = () => null, ri
           credit(gold, where);
           return { ok: true, gold, text: MARKS_TEXT.sold(marks, gold) };
         }
-        if (!MARKS_FINAL.includes(r?.error)) return { ok: false, text: MARKS_TEXT.kept };   // the line may be there: kept
-        keep(null, key);   // the service looked and said no: nothing burnt, nothing owed
+        if (!MARKS_FINAL.includes(r?.error)) return { ok: false, text: MARKS_TEXT.kept }; // the line may be there: kept
+        keep(null, key); // the service looked and said no: nothing burnt, nothing owed
         return { ok: false, text: accountRefusalText(r?.error) };
       });
-      return run ?? { ok: false, text: MARKS_TEXT.kept };   // one ask at a time - the one in flight answers
+      return run ?? { ok: false, text: MARKS_TEXT.kept }; // one ask at a time - the one in flight answers
     },
     /** A kept sale, asked again - under the account that made it, and paid to `credit` only while the character that
      *  made it plays. Answers the line, or null. */
@@ -331,7 +467,10 @@ export function createMarksBook({ door, store = null, character = () => null, ri
         const key = slot();
         const sale = kept();
         if (!sale) return null;
-        if (typeof sale.rid !== 'string' || !Number.isSafeInteger(sale.marks)) { keep(null, key); return null; }
+        if (typeof sale.rid !== 'string' || !Number.isSafeInteger(sale.marks)) {
+          keep(null, key);
+          return null;
+        }
         // (another account's sale, or another character's, is never found here: the kept table is keyed by the account
         // signed in and the character playing - their gold waits for them)
         const r = await ask(() => door.exchange(sale.marks, sale.rid));
@@ -345,10 +484,12 @@ export function createMarksBook({ door, store = null, character = () => null, ri
         if (MARKS_FINAL.includes(r?.error)) keep(null, key);
         return null;
       });
-      return run ?? null;   // the ask in flight settles it
+      return run ?? null; // the ask in flight settles it
     },
     /** Whether a sale of this account's and character's waits to settle (or one is being asked). */
-    get pending() { return !!busy || !!keptSoon(); },
+    get pending() {
+      return !!busy || !!keptSoon();
+    },
 
     /** A guild's Marks treasury: in (any member) or out (the guildmaster's), from and to this account's balance. The
      *  request id is kept until an answer comes (AUDIT 28 M8). */
@@ -357,13 +498,22 @@ export function createMarksBook({ door, store = null, character = () => null, ri
       const key = `${account() ?? ''}|${characterId}|${out ? 'out' : 'in'}|${marks}`;
       let m = moving.get(key);
       if (m?.promise) return m.promise;
-      if (!m) moving.set(key, m = { id: rid(), promise: null });
+      if (!m) moving.set(key, (m = { id: rid(), promise: null }));
       const id = m.id;
       m.promise = (async () => {
-        const r = await ask(() => (out ? door.guildWithdraw(characterId, marks, id) : door.guildDeposit(characterId, marks, id)));
+        const r = await ask(() =>
+          out ? door.guildWithdraw(characterId, marks, id) : door.guildDeposit(characterId, marks, id),
+        );
         m.promise = null;
-        if (!RETRY.includes(r?.error)) moving.delete(key);   // answered - a lost answer keeps the id for the next press
-        if (r?.ok) { noteAnswer(r.data); return { ok: true, guildMarks: r.data.guildMarks, text: out ? MARKS_TEXT.movedOut(marks) : MARKS_TEXT.movedIn(marks) }; }
+        if (!RETRY.includes(r?.error)) moving.delete(key); // answered - a lost answer keeps the id for the next press
+        if (r?.ok) {
+          noteAnswer(r.data);
+          return {
+            ok: true,
+            guildMarks: r.data.guildMarks,
+            text: out ? MARKS_TEXT.movedOut(marks) : MARKS_TEXT.movedIn(marks),
+          };
+        }
         return { ok: false, error: r?.error ?? 'server', text: accountRefusalText(r?.error) };
       })();
       return m.promise;

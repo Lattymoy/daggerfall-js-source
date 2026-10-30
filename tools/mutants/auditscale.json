@@ -259,7 +259,7 @@
     "name": "AUDIT-SCALE-LANED-board-part-over-window-read",
     "file": "src/net/noticeBook.js",
     "old": "      return !e?.pending && (!e || t - e.at >= BOARD_CACHE_MS - early);",
-    "new": "      return (!e || t - e.at >= BOARD_CACHE_MS - early);",
+    "new": "      return !e || t - e.at >= BOARD_CACHE_MS - early;",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale4c.test.js",
@@ -469,8 +469,8 @@
   {
     "name": "AUDIT-SCALE-LANED-box-part-unstamped-signed-out",
     "file": "src/net/mail.js",
-    "old": "        this.at = this.now();   // MAIL1: stamped even when there is no session (`_refresh`'s own rule)\n        if (!this._io()) return undefined;   // signed out: the box says so, and nothing rides",
-    "new": "        if (!this._io()) return undefined;   // signed out: the box says so, and nothing rides\n        this.at = this.now();",
+    "old": "        this.at = this.now(); // MAIL1: stamped even when there is no session (`_refresh`'s own rule)\n        if (!this._io()) return undefined; // signed out: the box says so, and nothing rides",
+    "new": "        if (!this._io()) return undefined; // signed out: the box says so, and nothing rides\n        this.at = this.now();",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale4c.test.js",
@@ -481,8 +481,8 @@
   {
     "name": "AUDIT-SCALE-LANED-board-part-error-kept",
     "file": "src/net/noticeBook.js",
-    "old": "open = true; e.board = r.data; e.at = a.at; e.error = null;",
-    "new": "open = true; e.board = r.data; e.at = a.at;",
+    "old": "          e.error = null;\n          a.settle({ board: e.board, error: null, stale: false });",
+    "new": "          a.settle({ board: e.board, error: null, stale: false });",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale4c.test.js",
@@ -695,8 +695,8 @@
   {
     "name": "AUDIT-SCALE-B3-two-looks",
     "file": "src/net/mail.js",
-    "old": "        this._looking = new Promise((r) => { settle = r; });\n",
-    "new": "",
+    "old": "        this._looking = new Promise((r) => {\n          settle = r;\n        });\n        return true;",
+    "new": "        return true;",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale4c.test.js",
@@ -707,8 +707,8 @@
   {
     "name": "AUDIT-SCALE-B4-board-from-answer",
     "file": "src/net/noticeBook.js",
-    "old": "open = true; e.board = r.data; e.at = a.at; e.error = null;",
-    "new": "open = true; e.board = r.data; e.at = nowMs(); e.error = null;",
+    "old": "          e.at = a.at;",
+    "new": "          e.at = nowMs();",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale4c.test.js"

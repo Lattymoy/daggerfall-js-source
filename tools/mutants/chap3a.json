@@ -47,8 +47,8 @@
   {
     "name": "CHAP3A-WEEK",
     "file": "src/net/npcChapterLaw.js",
-    "old": "=> seatWeekOf(nowS * 1000);",
-    "new": "=> seatWeekOf(nowS * 1000 + 86_400_000);",
+    "old": "export const meritWeekOf = (/** @type {number} */ nowS) => seatWeekOf(nowS * 1000);",
+    "new": "export const meritWeekOf = (/** @type {number} */ nowS) => seatWeekOf(nowS * 1000 + 86_400_000);",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "CHAP3A-SHARE-CLAMP",
     "file": "src/net/npcChapterLaw.js",
-    "old": "Math.max(0, Math.min(q, /** @type {number} */ (own)))",
-    "new": "Math.max(0, /** @type {number} */ (own))",
+    "old": "  return Math.floor((MERIT_WRIT * Math.max(0, Math.min(q, /** @type {number} */ (own)))) / q);",
+    "new": "  return Math.floor((MERIT_WRIT * Math.max(0, /** @type {number} */ (own))) / q);",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "CHAP3A-SHARE-FLOOR0",
     "file": "src/net/npcChapterLaw.js",
-    "old": "Math.max(0, Math.min(q, /** @type {number} */ (own)))",
-    "new": "Math.min(q, /** @type {number} */ (own))",
+    "old": "  return Math.floor((MERIT_WRIT * Math.max(0, Math.min(q, /** @type {number} */ (own)))) / q);",
+    "new": "  return Math.floor((MERIT_WRIT * Math.min(q, /** @type {number} */ (own))) / q);",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "CHAP3A-SHARE-ROUND",
     "file": "src/net/npcChapterLaw.js",
-    "old": "return Math.floor((MERIT_WRIT * Math.max(0,",
-    "new": "return Math.round((MERIT_WRIT * Math.max(0,",
+    "old": "  return Math.floor((MERIT_WRIT * Math.max(0, Math.min(q, /** @type {number} */ (own)))) / q);",
+    "new": "  return Math.round((MERIT_WRIT * Math.max(0, Math.min(q, /** @type {number} */ (own)))) / q);",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "CHAP3A-SHARE-QTY",
     "file": "src/net/npcChapterLaw.js",
-    "old": "/** @type {number} */ (qty) < 1 ||",
-    "new": "/** @type {number} */ (qty) < 0 ||",
+    "old": "  if (!Number.isSafeInteger(qty) || /** @type {number} */ (qty) < 1 || !Number.isSafeInteger(own)) return 0;",
+    "new": "  if (!Number.isSafeInteger(qty) || /** @type {number} */ (qty) < 0 || !Number.isSafeInteger(own)) return 0;",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "CHAP3A-SHARE-OWNINT",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (!Number.isSafeInteger(qty) || /** @type {number} */ (qty) < 1 || !Number.isSafeInteger(own)) return 0;",
-    "new": "if (!Number.isSafeInteger(qty) || /** @type {number} */ (qty) < 1 || own == null) return 0;",
+    "old": "  if (!Number.isSafeInteger(qty) || /** @type {number} */ (qty) < 1 || !Number.isSafeInteger(own)) return 0;",
+    "new": "  if (!Number.isSafeInteger(qty) || /** @type {number} */ (qty) < 1 || own == null) return 0;",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "CHAP3A-ID",
     "file": "src/net/npcChapterLaw.js",
-    "old": "=> `m:${day}:${region}:${faction}:${character}`;",
-    "new": "=> `m:${day}:${faction}:${region}:${character}`;",
+    "old": ") => `m:${day}:${region}:${faction}:${character}`;",
+    "new": ") => `m:${day}:${faction}:${region}:${character}`;",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "CHAP3A-DICE-CHAR",
     "file": "src/net/npcChapterLaw.js",
-    "old": "gateHash(MEMBER_WRIT_SALT, day, region, faction, ...id, slot, k)",
-    "new": "gateHash(MEMBER_WRIT_SALT, day, region, faction, slot, k)",
+    "old": "    (slot, k) => gateHash(MEMBER_WRIT_SALT, day, region, faction, ...id, slot, k) / 4294967296,",
+    "new": "    (slot, k) => gateHash(MEMBER_WRIT_SALT, day, region, faction, slot, k) / 4294967296,",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "CHAP3A-KINDS",
     "file": "src/net/npcChapterLaw.js",
-    "old": "const w = courtWrits(day, region, 2, own.length ? own : table,",
-    "new": "const w = courtWrits(day, region, 2, table,",
+    "old": "    own.length ? own : table,",
+    "new": "    table,",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "CHAP3A-SLOT",
     "file": "src/net/npcChapterLaw.js",
-    "old": "/ 4294967296)[1];\n  return w ? { ...w, slot: 0 } : null;",
-    "new": "/ 4294967296)[0];\n  return w ? { ...w, slot: 0 } : null;",
+    "old": "  )[1];",
+    "new": "  )[0];",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "CHAP3A-REALM",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (!isRollFaction(faction) || typeof character !== 'string' || !REALM_CHARACTER_RE.test(character) || !table?.length) return null;",
-    "new": "if (!isRollFaction(faction) || typeof character !== 'string' || !table?.length) return null;",
+    "old": "  if (!isRollFaction(faction) || typeof character !== 'string' || !REALM_CHARACTER_RE.test(character) || !table?.length)\n    return null;",
+    "new": "  if (!isRollFaction(faction) || typeof character !== 'string' || !table?.length) return null;",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "CHAP3A-ISCHAPTER",
     "file": "src/net/npcChapterLaw.js",
-    "old": "=> kind === 'hall' || kind === 'member';",
-    "new": "=> kind === 'hall';",
+    "old": "export const isChapterWrit = (/** @type {unknown} */ kind) => kind === 'hall' || kind === 'member';",
+    "new": "export const isChapterWrit = (/** @type {unknown} */ kind) => kind === 'hall';",
     "tests": [
       "test/net/chap3a_merit.test.js",
       "test/net/chap2_halls.test.js",
@@ -166,8 +166,8 @@
   {
     "name": "CHAP3A-LINE-DAYS",
     "file": "src/net/npcChapterLaw.js",
-    "old": "const days = Math.ceil((m.from - nowS) / 86_400);",
-    "new": "const days = Math.floor((m.from - nowS) / 86_400);",
+    "old": "    const days = Math.ceil((m.from - nowS) / 86_400);",
+    "new": "    const days = Math.floor((m.from - nowS) / 86_400);",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "CHAP3A-LINE-ORDER",
     "file": "src/net/npcChapterLaw.js",
-    "old": "  if (m.from != null && m.from > nowS) {\n    const days",
-    "new": "  if (m.from != null && m.from > nowS && !m.elsewhere) {\n    const days",
+    "old": "  if (m.from != null && m.from > nowS) {",
+    "new": "  if (m.from != null && m.from > nowS && !m.elsewhere) {",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "CHAP3A-LINE-NOW",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (m.from != null && m.from > nowS) {",
-    "new": "if (m.from != null && m.from >= nowS) {",
+    "old": "  if (m.from != null && m.from > nowS) {",
+    "new": "  if (m.from != null && m.from >= nowS) {",
     "tests": [
       "test/net/chap3a_merit.test.js"
     ]

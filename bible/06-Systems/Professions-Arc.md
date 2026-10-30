@@ -2361,7 +2361,7 @@ As built:
   56,792 ruins; Old Aelara and the lair at (2393,-635) were both 573867), and so did two abysses: one witnessed fact
   and one day's slots for both. The law is `scenes/dungeonIdentity.js`, `discoveryKeyOf`'s (AUDIT TESA II P6): a Bay
   id keeps the mask byte for byte, a place the port made keys by its whole id. The service takes 0 to 0xffffffff
-  (`nodeLaw.js:"export const DUNGEON_ID_MAX = 0xffffffff;"`). The keys are TEXT: no migration, and the rows under the
+  (`nodeLaw.js:"export const DUNGEON_ID_MAX"`). The keys are TEXT: no migration, and the rows under the
   old keys are orphaned.
 - **An old tab** (AUDIT TAMRIEL-WIDE II A2): a tab built before the release still keys a dungeon past the Bay by its
   low 20 bits, which the service cannot tell from a Bay id. Until it reloads it shares the old vein, and one account can
@@ -6181,7 +6181,7 @@ The report (SaberGGaming, through the owner): no Daedric Ingot could be had, and
   - 26 weapons and armour pieces and the Daedric Repair Kit - none of them reachable.
 - **A dungeon nobody had witnessed drew Silver and nothing else.** Probed over 32,249 dungeon-days: Silver 100%, Dwarven
   Scrap 0. Its deep veins were held to `UNCONFIRMED_VEIN_TIER` (3 - section 23's "worth its least"), and a dungeon is
-  confirmed only once three accounts a week old have worked it (`nodeLaw.js:"export const WITNESS = Object.freeze({ ageS: 7 * 86_400, confirm: 3, dispute: 2 });"`), which almost never
+  confirmed only once three accounts a week old have worked it (`nodeLaw.js:"export const WITNESS"`), which almost never
   happens. Dwarven Scrap is found only in dungeons (4.1), so it was found nowhere.
 
 ### 53.2 The owner's decisions
@@ -6212,7 +6212,7 @@ The report (SaberGGaming, through the owner): no Daedric Ingot could be had, and
   for one and no listing (`bad-material`), no guild writ asking one, and no commission of a work that spends one. On its
   branch the heart had taken the ingot's place in `UNYIELDED`; at the merge with section 50 it joined the loose door's
   list instead, one home for the materials no door of the service counts, and `UNYIELDED` stands empty
-  (`marketLaw.js:"export const UNYIELDED = Object.freeze([]);"` - nothing waits on a yield; its guards kept for the next).
+  (`marketLaw.js:"export const UNYIELDED"` - nothing waits on a yield; its guards kept for the next).
 - **THE DEPARTURE, NAMED - the heart is a catalyst.** Section 7's law, `smeltOrigin` (PROF0 7, 23), makes an ingot's
   origin its inputs': a loose unit spent makes the product loose (AUDIT BAG-CRAFT A1). The heart's does not reach the
   ingot (`professionLaw.js:"  r.inputs.forEach((inp, i) => { if (!inp.catalyst) b = Math.max(b,"`; the service's decision skips it the same, `professions.js:"    if (inp.catalyst) return;"`) -
@@ -6246,13 +6246,13 @@ The report (SaberGGaming, through the owner): no Daedric Ingot could be had, and
 ### 53.4 DEEP-OPEN, as built
 
 - **THE DEPARTURE, NAMED - section 23's "a dungeon not confirmed is worth its least", AUDIT 29 A5's Silver.** A dungeon
-  nobody has witnessed draws over the deep veins' whole table at section 6's weights (`nodeLaw.js:"  const table = confirmed ? dungeonVeinTable(climate) : DUNGEON_VEINS;"`):
+  nobody has witnessed draws over the deep veins' whole table at section 6's weights (`nodeLaw.js:"const table = confirmed"`):
   Silver, Gold, Dwarven Scrap, Platinum, Adamantium at tiers 3-6, 15 : 10 : 6 : 4 - Dwarven Scrap one vein in seven, where
   it was none. The probe is a pin: 32,256 dungeon-days (`test/net/deepopen.test.js`).
 - **What the witnesses still gate in a dungeon (verified).** The climate's claim alone - its own deep ore, a Woodlands or
-  HauntedWoodlands dungeon's Moonstone (`nodeLaw.js:"export const deepClimateOres = (climate) =>"`); a confirmed dungeon still refuses another
+  HauntedWoodlands dungeon's Moonstone (`nodeLaw.js:"export const deepClimateOres"`); a confirmed dungeon still refuses another
   climate's claim (AUDIT 29 A4) and is no invented id, outside the four a day. The tier cap is lifted; the gem with it - a
-  dungeon's gem is the Diamond whatever its climate, no claim to witness (`nodeLaw.js:"  if (!confirmed && kind !== 'dvein') return null;"`); Deep Delver's
+  dungeon's gem is the Diamond whatever its climate, no claim to witness (`nodeLaw.js:"if (!confirmed && kind !== 'dvein')"`); Deep Delver's
   x2 and the yields never asked. A Surveyor's word changes nothing underground (MINE-PERKS): the draw is anyone's.
 - **THE TRADE THE OWNER ACCEPTED.** A dungeon's id is the client's word, so a modified client that invents ids mines four
   full-table deep veins a day - Adamantium, Dwarven Scrap and the Diamond's chance among them - and no more
@@ -6589,7 +6589,7 @@ possible. No exceptions and no band aids." The decisions below are the record's,
 
 - **The recipe's own goods**, as its craft spends them (a station's: loose units too), and the station's fee.
 
-- **Catalysts from three pursuits**, one table (`masterLaw.js:"export const MASTER_CATALYSTS = Object.freeze(["`): 2
+- **Catalysts from three pursuits**, one table (`masterLaw.js:"export const MASTER_CATALYSTS"`): 2
   Heartwood (Logging's rarest find, 2% a Clean Cut on witnessed ground), 3 Pearls (the sea's own - a net hauled at sea on
   witnessed ground; no river or lake gives one) and 10 Arcane Essence (Enchanting). Spent only from what the service
   counted - own or bought, never loose and never bought with gold - so a looted Pearl is no catalyst. A later material
@@ -6602,20 +6602,20 @@ possible. No exceptions and no band aids." The decisions below are the record's,
 - **The law** - `src/net/masterLaw.js`, pure: `masterRecipe`, `masterOptions` (the ladder's lines for the piece's
   group, numbers then effects, each param the kind names on the piece - a garment's attribute Personality alone; never a
   technique), `masterChoiceRefusal` (`recipe`, `count`, `line`, `twice`, `procs`), `rollMasterLines`
-  (`masterLaw.js:"export function rollMasterLines("`: lo to hi, the ladder's own draw, off the seed - the service's
+  (`masterLaw.js:"export function rollMasterLines"`: lo to hi, the ladder's own draw, off the seed - the service's
   alone, once), `isMasterWork`.
 
-- **The record** - `productRecord.js:"export const MINT_V_MASTER = 5;"`: a Master's record stamps mint version 5 (4 on its
+- **The record** - `productRecord.js:"export const MINT_V_MASTER"`: a Master's record stamps mint version 5 (4 on its
   branch, renumbered past JEWEL-KIN's 4 at the merge) and signs its lines at the values the service rolled
-  (`masterLaw.js:"export const masterRecordLines = (lines) =>"`: `[kind, value]` or `[kind, value, param]`), so the
+  (`masterLaw.js:"export const masterRecordLines"`: `[kind, value]` or `[kind, value, param]`), so the
   market and every client mint the piece the service made. The bound is
-  `productRecord.js:"export const PRODUCT_RECORD_MAX = 704;"` (it was 512): the widest record the law signs runs to 649.
+  `productRecord.js:"export const PRODUCT_RECORD_MAX"` (it was 512): the widest record the law signs runs to 649.
 
 - **AUDIT HORIZONTAL B1: the values are signed, never rolled again.** The record named the keys and seed, and every
   reader rolled the values from today's bands, so a band moved (even widened) made every honest Master's work a
   `provenance` finding. The service now rolls once and signs the values; `prof_masters.lines` keeps them, and the mint,
   the judge and a request asked again read them. The record's `l` is held to its shape
-  (`masterLaw.js:"export function masterRecordLinesValid(l) {"`), never to today's pool: the law of the day it was made
+  (`masterLaw.js:"export function masterRecordLinesValid"`), never to today's pool: the law of the day it was made
   was the service's. MINT_V_MASTER stays 4: no deployed service ever signed the old shape, so no record needs reading.
 
 - **The service** - `masterWork.js:"export async function masterWork("`, `/v1/prof/master`: one batch, as the anvil's -

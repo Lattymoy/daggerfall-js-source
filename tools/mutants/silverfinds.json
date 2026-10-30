@@ -2,8 +2,8 @@
   {
     "name": "SILVER-FINDS-gather-chance",
     "file": "src/net/marksLaw.js",
-    "old": "gather: Object.freeze({ chance: 0.1,",
-    "new": "gather: Object.freeze({ chance: 0.2,",
+    "old": "  gather: Object.freeze({ chance: 0.1, amount: Object.freeze([2, 5]), perDay: 30 }),",
+    "new": "  gather: Object.freeze({ chance: 0.2, amount: Object.freeze([2, 5]), perDay: 30 }),",
     "why": "a harvest finds twice as often",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "SILVER-FINDS-gather-range",
     "file": "src/net/marksLaw.js",
-    "old": "amount: Object.freeze([2, 5]), perDay: 30 }),",
-    "new": "amount: Object.freeze([2, 6]), perDay: 30 }),",
+    "old": "  gather: Object.freeze({ chance: 0.1, amount: Object.freeze([2, 5]), perDay: 30 }),",
+    "new": "  gather: Object.freeze({ chance: 0.1, amount: Object.freeze([2, 6]), perDay: 30 }),",
     "why": "a harvest finds up to 6",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "SILVER-FINDS-gather-day",
     "file": "src/net/marksLaw.js",
-    "old": "amount: Object.freeze([2, 5]), perDay: 30 }),",
-    "new": "amount: Object.freeze([2, 5]), perDay: 40 }),",
+    "old": "  gather: Object.freeze({ chance: 0.1, amount: Object.freeze([2, 5]), perDay: 30 }),",
+    "new": "  gather: Object.freeze({ chance: 0.1, amount: Object.freeze([2, 5]), perDay: 40 }),",
     "why": "forty a day of gathering",
     "tests": [
       "test/net/silverfinds_service.test.js",
@@ -33,8 +33,8 @@
   {
     "name": "SILVER-FINDS-find-body-chance",
     "file": "src/net/marksLaw.js",
-    "old": "chance: Object.freeze({ corpse: 0.05,",
-    "new": "chance: Object.freeze({ corpse: 0.1,",
+    "old": "    chance: Object.freeze({ corpse: 0.05, pile: 0.12, search: 0.15 }),",
+    "new": "    chance: Object.freeze({ corpse: 0.1, pile: 0.12, search: 0.15 }),",
     "why": "a body holds silver one in ten",
     "tests": [
       "test/net/silverfinds_service.test.js",
@@ -44,8 +44,8 @@
   {
     "name": "SILVER-FINDS-find-pile-chance",
     "file": "src/net/marksLaw.js",
-    "old": "pile: 0.12, search: 0.15 })",
-    "new": "pile: 0.15, search: 0.15 })",
+    "old": "    chance: Object.freeze({ corpse: 0.05, pile: 0.12, search: 0.15 }),",
+    "new": "    chance: Object.freeze({ corpse: 0.05, pile: 0.15, search: 0.15 }),",
     "why": "a treasure pile as a search's find",
     "tests": [
       "test/net/silverfinds_service.test.js",
@@ -55,8 +55,8 @@
   {
     "name": "SILVER-FINDS-find-search-chance",
     "file": "src/net/marksLaw.js",
-    "old": "pile: 0.12, search: 0.15 })",
-    "new": "pile: 0.12, search: 0.2 })",
+    "old": "    chance: Object.freeze({ corpse: 0.05, pile: 0.12, search: 0.15 }),",
+    "new": "    chance: Object.freeze({ corpse: 0.05, pile: 0.12, search: 0.2 }),",
     "why": "a search's find one in five",
     "tests": [
       "test/net/silverfinds_service.test.js",
@@ -66,8 +66,8 @@
   {
     "name": "SILVER-FINDS-find-range",
     "file": "src/net/marksLaw.js",
-    "old": "amount: Object.freeze([1, 4]), perDay: 20 }),",
-    "new": "amount: Object.freeze([1, 5]), perDay: 20 }),",
+    "old": "    amount: Object.freeze([1, 4]),",
+    "new": "    amount: Object.freeze([1, 5]),",
     "why": "a loot find up to 5",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -76,8 +76,8 @@
   {
     "name": "SILVER-FINDS-find-day",
     "file": "src/net/marksLaw.js",
-    "old": "amount: Object.freeze([1, 4]), perDay: 20 }),",
-    "new": "amount: Object.freeze([1, 4]), perDay: 25 }),",
+    "old": "    perDay: 20,",
+    "new": "    perDay: 25,",
     "why": "twenty-five a day of loot",
     "tests": [
       "test/net/silverfinds_service.test.js",
@@ -87,8 +87,8 @@
   {
     "name": "SILVER-FINDS-gather-not-a-mint",
     "file": "src/net/marksLaw.js",
-    "old": "  gather: 'mint',             // SILVER-FINDS",
-    "new": "  gather: 'move',             // SILVER-FINDS",
+    "old": "  gather: 'mint', // SILVER-FINDS: a harvest's find - the service's dice in a harvest it counted (bounded by the day)",
+    "new": "  gather: 'move', // SILVER-FINDS: a harvest's find - the service's dice in a harvest it counted (bounded by the day)",
     "why": "a harvest's find read as a move between accounts",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -97,8 +97,8 @@
   {
     "name": "SILVER-FINDS-find-not-a-mint",
     "file": "src/net/marksLaw.js",
-    "old": "  find: 'mint',               // SILVER-FINDS",
-    "new": "  find: 'move',               // SILVER-FINDS",
+    "old": "  find: 'mint', // SILVER-FINDS: a loot find - the service's dice, the day's count (bounded by the day)",
+    "new": "  find: 'move', // SILVER-FINDS: a loot find - the service's dice, the day's count (bounded by the day)",
     "why": "a loot find read as a move between accounts",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -107,8 +107,8 @@
   {
     "name": "SILVER-FINDS-range-short",
     "file": "src/net/marksLaw.js",
-    "old": "Math.floor(roll * (hi - lo + 1))",
-    "new": "Math.floor(roll * (hi - lo))",
+    "old": "  return lo + Math.max(0, Math.min(hi - lo, Math.floor(roll * (hi - lo + 1))));",
+    "new": "  return lo + Math.max(0, Math.min(hi - lo, Math.floor(roll * (hi - lo))));",
     "why": "the range's top never reached",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -117,8 +117,8 @@
   {
     "name": "SILVER-FINDS-gather-edge",
     "file": "src/net/marksLaw.js",
-    "old": "(chanceRoll < MARKS_FAUCETS.gather.chance ?",
-    "new": "(chanceRoll <= MARKS_FAUCETS.gather.chance ?",
+    "old": "  chanceRoll < MARKS_FAUCETS.gather.chance ? amountOf(MARKS_FAUCETS.gather.amount, amountRoll) : 0;",
+    "new": "  chanceRoll <= MARKS_FAUCETS.gather.chance ? amountOf(MARKS_FAUCETS.gather.amount, amountRoll) : 0;",
     "why": "the chance itself a find",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -496,8 +496,8 @@
   {
     "name": "SILVER-FINDS-book-closed-unread",
     "file": "src/net/marksBook.js",
-    "old": "if (!me || !FIND_KINDS.includes(kind) || state.open === false) return [];",
-    "new": "if (!me || !FIND_KINDS.includes(kind)) return [];",
+    "old": "      if (!me || !FIND_KINDS.includes(kind) || state.open === false) return [];",
+    "new": "      if (!me || !FIND_KINDS.includes(kind)) return [];",
     "why": "a closed account asked every find",
     "tests": [
       "test/net/silverfinds_client.test.js"
@@ -506,8 +506,8 @@
   {
     "name": "SILVER-FINDS-book-kind-unread",
     "file": "src/net/marksBook.js",
-    "old": "if (!me || !FIND_KINDS.includes(kind) || state.open === false) return [];",
-    "new": "if (!me || state.open === false) return [];",
+    "old": "      if (!me || !FIND_KINDS.includes(kind) || state.open === false) return [];",
+    "new": "      if (!me || state.open === false) return [];",
     "why": "a kind of none asked",
     "tests": [
       "test/net/silverfinds_client.test.js"
@@ -516,8 +516,8 @@
   {
     "name": "SILVER-FINDS-book-met-unread",
     "file": "src/net/marksBook.js",
-    "old": "      if (findsMet?.account === me && findsMet.day === day) return [];\n",
-    "new": "",
+    "old": "      if (findsMet?.account === me && findsMet.day === day) return [];\n      const asks = [];",
+    "new": "      const asks = [];",
     "why": "the day met, asked every find",
     "tests": [
       "test/net/silverfinds_client.test.js"
@@ -536,8 +536,8 @@
   {
     "name": "SILVER-FINDS-book-met-late",
     "file": "src/net/marksBook.js",
-    "old": "found.today.found >= found.today.max) findsMet = { account: me, day };",
-    "new": "found.today.found > found.today.max) findsMet = { account: me, day };",
+    "old": "          if (Number.isSafeInteger(found.today?.found) && found.today.found >= found.today.max)",
+    "new": "          if (Number.isSafeInteger(found.today?.found) && found.today.found > found.today.max)",
     "why": "the find that met the day not read as meeting it",
     "tests": [
       "test/net/silverfinds_client.test.js"
@@ -546,8 +546,8 @@
   {
     "name": "SILVER-FINDS-book-owed-any-account",
     "file": "src/net/marksBook.js",
-    "old": "if (owed[i].account === me) asks.unshift(...owed.splice(i, 1));",
-    "new": "asks.unshift(...owed.splice(i, 1));",
+    "old": "      for (let i = owed.length - 1; i >= 0; i--) if (owed[i].account === me) asks.unshift(...owed.splice(i, 1));",
+    "new": "      for (let i = owed.length - 1; i >= 0; i--) asks.unshift(...owed.splice(i, 1));",
     "why": "another account's owed asked under this one",
     "tests": [
       "test/net/silverfinds_client.test.js"
@@ -556,8 +556,8 @@
   {
     "name": "SILVER-FINDS-book-asked-while-down",
     "file": "src/net/marksBook.js",
-    "old": "        if (held) { if (!FIND_DROPS.includes(held)) owe(f); continue; }\n",
-    "new": "",
+    "old": "        if (held) {\n          if (!FIND_DROPS.includes(held)) owe(f);\n          continue;\n        }\n        const r = await ask(() => door.find(f.kind, f.rid, f.account));",
+    "new": "        const r = await ask(() => door.find(f.kind, f.rid, f.account));",
     "why": "every owed find asked its tries while the network is down",
     "tests": [
       "test/net/silverfinds_client.test.js"
@@ -567,8 +567,8 @@
   {
     "name": "SILVER-FINDS-book-owed-bound",
     "file": "src/net/marksBook.js",
-    "old": "if (owed.length < FINDS_OWED_MAX) owed.push(f);",
-    "new": "if (owed.length <= FINDS_OWED_MAX) owed.push(f);",
+    "old": "        if (owed.length < FINDS_OWED_MAX) owed.push(f);",
+    "new": "        if (owed.length <= FINDS_OWED_MAX) owed.push(f);",
     "why": "one past the bound",
     "tests": [
       "test/net/silverfinds_client.test.js"
@@ -577,8 +577,8 @@
   {
     "name": "SILVER-FINDS-book-never-owed",
     "file": "src/net/marksBook.js",
-    "old": "          owe(f); held = error;   // never answered: owed",
-    "new": "          held = error;   // never answered: owed",
+    "old": "          owe(f);\n          held = error; // never answered: owed",
+    "new": "          held = error; // never answered: owed",
     "why": "a find the network lost, lost",
     "tests": [
       "test/net/silverfinds_client.test.js"
@@ -588,8 +588,8 @@
   {
     "name": "SILVER-FINDS-book-refused-owed",
     "file": "src/net/marksBook.js",
-    "old": "        }   // an id the service cannot read, a kind of none, a word this build does not know: this find let go",
-    "new": "        } else { owe(f); held = error; }   // an id the service cannot read, a kind of none, a word this build does not know: this find let go",
+    "old": "        } // an id the service cannot read, a kind of none, a word this build does not know: this find let go",
+    "new": "        } else {\n          owe(f);\n          held = error;\n        } // an id the service cannot read, a kind of none, a word this build does not know: this find let go",
     "why": "a refused find owed and asked for ever",
     "tests": [
       "test/net/silverfinds_client.test.js"
@@ -610,8 +610,8 @@
   {
     "name": "SILVER-FINDS-book-new-id",
     "file": "src/net/marksBook.js",
-    "old": "const r = await ask(() => door.find(f.kind, f.rid, f.account));",
-    "new": "const r = await ask(() => door.find(f.kind, rid(), f.account));",
+    "old": "        const r = await ask(() => door.find(f.kind, f.rid, f.account));",
+    "new": "        const r = await ask(() => door.find(f.kind, rid(), f.account));",
     "why": "every try a new id - a lost answer a second line",
     "tests": [
       "test/net/silverfinds_client.test.js"
@@ -621,8 +621,8 @@
   {
     "name": "SILVER-FINDS-book-days-crossed",
     "file": "src/net/marksBook.js",
-    "old": "...(kind === 'gather' ? { gathered: day.found, gatherMax: day.max } : { found: day.found, findMax: day.max })",
-    "new": "...(kind === 'gather' ? { found: day.found, findMax: day.max } : { gathered: day.found, gatherMax: day.max })",
+    "old": "          ...(kind === 'gather' ? { gathered: day.found, gatherMax: day.max } : { found: day.found, findMax: day.max }),",
+    "new": "          ...(kind === 'gather' ? { found: day.found, findMax: day.max } : { gathered: day.found, gatherMax: day.max }),",
     "why": "a harvest's find counted as the loot's",
     "tests": [
       "test/net/silverfinds_client.test.js"
@@ -641,8 +641,8 @@
   {
     "name": "SILVER-FINDS-book-words",
     "file": "src/net/marksBook.js",
-    "old": "`You find ${marksText(n)} ${FIND_WORDS[kind] ?? FIND_WORDS.pile}.",
-    "new": "`You find ${marksText(n)} ${FIND_WORDS.pile}.",
+    "old": "    `You find ${marksText(n)} ${FIND_WORDS[kind] ?? FIND_WORDS.pile}.${Number.isSafeInteger(balance) ? ` You hold ${marksText(balance)}.` : ''}`,",
+    "new": "    `You find ${marksText(n)} ${FIND_WORDS.pile}.${Number.isSafeInteger(balance) ? ` You hold ${marksText(balance)}.` : ''}`,",
     "why": "every find among the treasure",
     "tests": [
       "test/net/silverfinds_client.test.js"

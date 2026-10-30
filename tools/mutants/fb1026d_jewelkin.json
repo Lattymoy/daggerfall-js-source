@@ -83,8 +83,8 @@
   {
     "name": "JEWEL-KIN-ask-unbounded",
     "file": "src/net/productRecord.js",
-    "old": "Math.min(asked, MINT_VERSION)",
-    "new": "asked",
+    "old": "  typeof asked === 'number' && Number.isSafeInteger(asked) && asked >= MINT_V_JEWEL_KIN\n    ? Math.min(asked, MINT_VERSION)\n    : MINT_V_LINES;",
+    "new": "  typeof asked === 'number' && Number.isSafeInteger(asked) && asked >= MINT_V_JEWEL_KIN ? asked : MINT_V_LINES;",
     "tests": [
       "test/systems/fb1026d_jewelkin.test.js"
     ],
@@ -93,8 +93,8 @@
   {
     "name": "JEWEL-KIN-silent-client-stamped-new",
     "file": "src/net/productRecord.js",
-    "old": "asked >= MINT_V_JEWEL_KIN ? Math.min(asked, MINT_VERSION) : MINT_V_LINES);",
-    "new": "asked >= MINT_V_JEWEL_KIN ? Math.min(asked, MINT_VERSION) : MINT_VERSION);",
+    "old": "    : MINT_V_LINES;",
+    "new": "    : MINT_VERSION;",
     "tests": [
       "test/systems/fb1026d_jewelkin.test.js"
     ],

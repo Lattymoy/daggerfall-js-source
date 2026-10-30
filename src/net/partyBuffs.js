@@ -21,13 +21,16 @@ import { PARTY_FX_MAX, PARTY_FX_NAME_MAX, PARTY_FX_ROUNDS_MAX, CAST_ICON_MAX } f
  *  row), then the debuffs (`d: 1`), each {i, r, n}; a held item's bundle is skipped, and the whole capped at
  *  PARTY_FX_MAX. Rounds are the bundle's MOST (a spell's icon belongs to the whole cast - GetMaxRoundsRemaining). */
 export function composePartyFx(entity) {
-  const buffs = [], debuffs = [];
+  const buffs = [],
+    debuffs = [];
   for (const b of liveBundles(entity)) {
     if (!b.showIcon || b.bundleType === 'HeldMagicItem') continue;
     const most = (b.entries ?? []).reduce((m, e) => Math.max(m, Number(e.roundsRemaining) || 0), 0);
     const r = Math.max(0, Math.min(PARTY_FX_ROUNDS_MAX, Math.round(most)));
     const i = Number.isInteger(b.icon) && b.icon >= 0 && b.icon <= CAST_ICON_MAX ? b.icon : 0;
-    const n = String(b.name ?? '').replace(/^!+/, '').slice(0, PARTY_FX_NAME_MAX);
+    const n = String(b.name ?? '')
+      .replace(/^!+/, '')
+      .slice(0, PARTY_FX_NAME_MAX);
     if (b.selfCast || b.ally) buffs.push({ i, r, n });
     else debuffs.push({ i, r, n, d: 1 });
   }
@@ -35,15 +38,22 @@ export function composePartyFx(entity) {
 }
 
 /** The one string a card compares to know whether its effects row must be rewritten. */
-export const partyFxKey = (fx) => (Array.isArray(fx) ? fx.map((e) => `${e.i}:${e.r}:${e.d ? 1 : 0}:${e.n}`).join('|') : '');
+export const partyFxKey = (fx) =>
+  Array.isArray(fx) ? fx.map((e) => `${e.i}:${e.r}:${e.d ? 1 : 0}:${e.n}`).join('|') : '';
 
 /** An effect's words on the card when its icon art is not in hand: the first letters of its name's words, at most
  *  three ("Regenerate" -> "Reg", "Fortify Strength" -> "FS"). */
 export function partyFxAbbrev(name) {
-  const words = String(name ?? '').trim().split(/\s+/).filter(Boolean);
+  const words = String(name ?? '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
   if (!words.length) return '?';
   if (words.length === 1) return words[0].slice(0, 3);
-  return words.slice(0, 3).map((w) => w[0].toUpperCase()).join('');
+  return words
+    .slice(0, 3)
+    .map((w) => w[0].toUpperCase())
+    .join('');
 }
 
 /** The heal a card floats: the health a member GAINED between two of their poses - not while they rest (a night's

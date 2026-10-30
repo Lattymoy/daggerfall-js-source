@@ -194,8 +194,8 @@
   {
     "name": "GOLDMARKET-book-reserves-nothing",
     "file": "src/net/marketBook.js",
-    "old": "reserve: walletReserve(w, cost).reserve",
-    "new": "reserve: () => () => {}",
+    "old": "          ? { reserve: walletReserve(w, cost).reserve }",
+    "new": "          ? { reserve: () => () => {} }",
     "tests": [
       "test/net/goldmarket_client.test.js"
     ]
@@ -203,8 +203,8 @@
   {
     "name": "GOLDMARKET-book-repeat-pays",
     "file": "src/net/marketBook.js",
-    "old": "if (!a?.data?.repeat || a?.data?.realm) w.pay(cost);",
-    "new": "w.pay(cost);",
+    "old": "                if (!a?.data?.repeat || a?.data?.realm) w.pay(cost);",
+    "new": "                w.pay(cost);",
     "tests": [
       "test/net/goldmarket_client.test.js"
     ]
@@ -212,8 +212,8 @@
   {
     "name": "GOLDMARKET-book-lost-lets-go",
     "file": "src/net/marketBook.js",
-    "old": "if (r?.unknown || kept(r) || !Number.isSafeInteger(r?.status)) return",
-    "new": "if (r?.unknown || kept(r)) return",
+    "old": "    if (r?.unknown || kept(r) || !Number.isSafeInteger(r?.status))\n      return { ok: false, kept: true, error: r?.error ?? 'offline', text: MARKET_KEPT_TEXT };",
+    "new": "    if (r?.unknown || kept(r)) return { ok: false, kept: true, error: r?.error ?? 'offline', text: MARKET_KEPT_TEXT };",
     "tests": [
       "test/net/goldmarket_client.test.js"
     ]
@@ -221,8 +221,8 @@
   {
     "name": "GOLDMARKET-book-collect-to-purse",
     "file": "src/net/marketBook.js",
-    "old": "wallet(region).bank(a.data.gold)",
-    "new": "wallet(region).credit(a.data.gold)",
+    "old": "              if (Number.isSafeInteger(a?.data?.gold) && a.data.gold > 0) wallet(region).bank(a.data.gold);",
+    "new": "              if (Number.isSafeInteger(a?.data?.gold) && a.data.gold > 0) wallet(region).credit(a.data.gold);",
     "tests": [
       "test/net/goldmarket_client.test.js"
     ]
@@ -230,8 +230,8 @@
   {
     "name": "GOLDMARKET-book-one-cache",
     "file": "src/net/marketBook.js",
-    "old": ", (q.materials ?? []).join(','), q.currency ?? 'marks', (q.pieces ?? []).join(','),",
-    "new": ", (q.materials ?? []).join(','), (q.pieces ?? []).join(','),",
+    "old": "      q.currency ?? 'marks',\n      (q.pieces ?? []).join(','),",
+    "new": "      (q.pieces ?? []).join(','),",
     "tests": [
       "test/net/goldmarket_client.test.js"
     ]
@@ -239,8 +239,8 @@
   {
     "name": "GOLDMARKET-book-short-asks",
     "file": "src/net/marketBook.js",
-    "old": "        if (gold && wallet(ask.region).gold() < ask.max) return { ok: false, error: 'realm-gold' };\n",
-    "new": "",
+    "old": "        if (gold && wallet(ask.region).gold() < ask.max) return { ok: false, error: 'realm-gold' };\n        const key = slot();",
+    "new": "        const key = slot();",
     "tests": [
       "test/net/goldmarket_client.test.js"
     ]

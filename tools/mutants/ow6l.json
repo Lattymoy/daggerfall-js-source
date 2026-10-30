@@ -11,8 +11,8 @@
   {
     "name": "OW6L-spent-forgotten-a-life-early",
     "file": "src/net/overworldLaw.js",
-    "old": "return kind ? (owIdLife(id) + 2) * owLifeMs(kind) : NaN;",
-    "new": "return kind ? (owIdLife(id) + 1) * owLifeMs(kind) : NaN;",
+    "old": "  return kind ? (owIdLife(id) + 2) * owLifeMs(kind) : NaN;",
+    "new": "  return kind ? (owIdLife(id) + 1) * owLifeMs(kind) : NaN;",
     "tests": [
       "test/net/ow6_ledger.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "OW6L-a-bands-rows-unflipped",
     "file": "src/net/overworldLaw.js",
-    "old": "{ x: cx * OW_BAND_CELL_PX, y: 499 - cy * OW_BAND_CELL_PX }",
-    "new": "{ x: cx * OW_BAND_CELL_PX, y: cy * OW_BAND_CELL_PX }",
+    "old": "    ? { x: cx * OW_BAND_CELL_PX, y: 499 - cy * OW_BAND_CELL_PX }",
+    "new": "    ? { x: cx * OW_BAND_CELL_PX, y: cy * OW_BAND_CELL_PX }",
     "tests": [
       "test/net/ow6_ledger.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "OW6L-a-raiders-rows-flipped",
     "file": "src/net/overworldLaw.js",
-    "old": "{ x: cx * OW_RAIDER_CELL_PX, y: cy * OW_RAIDER_CELL_PX }",
-    "new": "{ x: cx * OW_RAIDER_CELL_PX, y: 499 - cy * OW_RAIDER_CELL_PX }",
+    "old": "    : { x: cx * OW_RAIDER_CELL_PX, y: cy * OW_RAIDER_CELL_PX };",
+    "new": "    : { x: cx * OW_RAIDER_CELL_PX, y: 499 - cy * OW_RAIDER_CELL_PX };",
     "tests": [
       "test/net/ow6_ledger.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "OW6L-the-square-unwidened-to-the-east",
     "file": "src/net/overworldLaw.js",
-    "old": "x1: (c[0] + 1) * WORLD_CELL + OW_CELL_MARGIN_PX,",
-    "new": "x1: (c[0] + 1) * WORLD_CELL,",
+    "old": "    x1: (c[0] + 1) * WORLD_CELL + OW_CELL_MARGIN_PX,",
+    "new": "    x1: (c[0] + 1) * WORLD_CELL,",
     "tests": [
       "test/net/ow6_ledger.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "OW6L-an-unchanged-row-said-again",
     "file": "src/net/overworldLaw.js",
-    "old": "    if (had && seen === had[2] && cleared === hc) continue;   // nothing new: never raised, never re-said\n",
-    "new": "",
+    "old": "    if (had && seen === had[2] && cleared === hc) continue; // nothing new: never raised, never re-said\n    const row = cleared === null ? [w[0], w[1], seen] : [w[0], w[1], seen, cleared];",
+    "new": "    const row = cleared === null ? [w[0], w[1], seen] : [w[0], w[1], seen, cleared];",
     "tests": [
       "test/net/ow6_ledger.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "OW6L-the-spent-unbounded",
     "file": "src/net/overworldLaw.js",
-    "old": "  if (led.sp.length > OW_CELL_SPENT_MAX) led.sp.splice(0, led.sp.length - OW_CELL_SPENT_MAX);\n",
-    "new": "",
+    "old": "  if (led.sp.length > OW_CELL_SPENT_MAX) led.sp.splice(0, led.sp.length - OW_CELL_SPENT_MAX);\n  return added;",
+    "new": "  return added;",
     "tests": [
       "test/net/ow6_ledger.test.js"
     ]

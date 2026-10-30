@@ -20,8 +20,8 @@
   {
     "name": "CHAP6D-FACTOR-BAND",
     "file": "src/net/npcChapterLaw.js",
-    "old": "const band = chapterPatronMember(chapter, guildId) ? Math.min(own, CHAPTER_PATRON_PRICE) : own;",
-    "new": "const band = chapterPatronMember(chapter, guildId) ? Math.min(own, CHAPTER_PATRON_PRICE) : 1;",
+    "old": "  const band = chapterPatronMember(chapter, guildId) ? Math.min(own, CHAPTER_PATRON_PRICE) : own;",
+    "new": "  const band = chapterPatronMember(chapter, guildId) ? Math.min(own, CHAPTER_PATRON_PRICE) : 1;",
     "tests": [
       "test/systems/livingWorld/chap6d_halls.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "CHAP6D-FACTOR-DOCTRINE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "* (service === 'training' && s.doctrine === 'training' ? CHAPTER_DOCTRINE_EFFECTS.training : 1);",
-    "new": "* (s.doctrine === 'training' ? CHAPTER_DOCTRINE_EFFECTS.training : 1);",
+    "old": "  return band * (service === 'training' && s.doctrine === 'training' ? CHAPTER_DOCTRINE_EFFECTS.training : 1);",
+    "new": "  return band * (s.doctrine === 'training' ? CHAPTER_DOCTRINE_EFFECTS.training : 1);",
     "tests": [
       "test/systems/livingWorld/chap6d_halls.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "CHAP6D-FACTOR-DOCTRINE-NONE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "* (service === 'training' && s.doctrine === 'training' ? CHAPTER_DOCTRINE_EFFECTS.training : 1);",
-    "new": "* 1;",
+    "old": "  return band * (service === 'training' && s.doctrine === 'training' ? CHAPTER_DOCTRINE_EFFECTS.training : 1);",
+    "new": "  return band * 1;",
     "tests": [
       "test/systems/livingWorld/chap6d_halls.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "CHAP6D-SHELF-EXTRA",
     "file": "src/net/npcChapterLaw.js",
-    "old": "const step = chapterBandOf(strength).shelf + extra;",
-    "new": "const step = chapterBandOf(strength).shelf;",
+    "old": "  const step = chapterBandOf(strength).shelf + extra; // CHAP6d: and a doctrine's `extra` qualities beside the band's",
+    "new": "  const step = chapterBandOf(strength).shelf; // CHAP6d: and a doctrine's `extra` qualities beside the band's",
     "tests": [
       "test/systems/livingWorld/chap6d_halls.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "CHAP6D-SHELF-DOCTRINE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "chapterSeasonOf(chapter).doctrine === 'shelf' ? CHAPTER_DOCTRINE_EFFECTS.shelf : 0) : quality);",
-    "new": "0) : quality);",
+    "old": "  chapter\n    ? chapterShelfQuality(\n        quality,\n        chapter.strength,\n        chapterSeasonOf(chapter).doctrine === 'shelf' ? CHAPTER_DOCTRINE_EFFECTS.shelf : 0,\n      )\n    : quality;",
+    "new": "  chapter ? chapterShelfQuality(quality, chapter.strength, 0) : quality;",
     "tests": [
       "test/systems/livingWorld/chap6d_halls.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "CHAP6D-SHELF-NONE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "export const chapterHallShelf = (/** @type {number} */ quality, /** @type {any} */ chapter) => (chapter\n  ? chapterShelfQuality(",
-    "new": "export const chapterHallShelf = (/** @type {number} */ quality, /** @type {any} */ chapter) => (true\n  ? chapterShelfQuality(",
+    "old": "export const chapterHallShelf = (/** @type {number} */ quality, /** @type {any} */ chapter) =>\n  chapter",
+    "new": "export const chapterHallShelf = (/** @type {number} */ quality, /** @type {any} */ chapter) =>\n  true",
     "tests": [
       "test/systems/livingWorld/chap6d_halls.test.js"
     ]
@@ -83,7 +83,7 @@
   {
     "name": "CHAP6D-SHUT-LINE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "export const CHAPTER_HALL_SHUT_LINE = 'The hall is shut this Season, by the watch\\'s order.';",
+    "old": "export const CHAPTER_HALL_SHUT_LINE = \"The hall is shut this Season, by the watch's order.\";",
     "new": "export const CHAPTER_HALL_SHUT_LINE = 'The hall is shut.';",
     "tests": [
       "test/systems/livingWorld/chap6d_halls.test.js"

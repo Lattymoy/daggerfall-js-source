@@ -138,8 +138,8 @@
   {
     "name": "SEATS3-D2-bad-cap-kept",
     "file": "src/net/marketBook.js",
-    "old": "Number.isSafeInteger(d.listingsMax) && d.listingsMax > 0",
-    "new": "d.listingsMax != null",
+    "old": "    if (Number.isSafeInteger(d.listingsMax) && d.listingsMax > 0) state.listingsMax = d.listingsMax; // AUDIT SEATS-3 D2",
+    "new": "    if (d.listingsMax != null) state.listingsMax = d.listingsMax; // AUDIT SEATS-3 D2",
     "tests": [
       "test/net/audit_seats3_client.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "SEATS3-D2-boards-one-cache",
     "file": "src/net/marketBook.js",
-    "old": ", (q.pieces ?? []).join(','), (q.board ?? []).join(','),\n",
-    "new": ", (q.pieces ?? []).join(','),\n",
+    "old": "      (q.board ?? []).join(','),\n      q.page ?? 0,",
+    "new": "      q.page ?? 0,",
     "tests": [
       "test/net/audit_seats3_client.test.js"
     ]

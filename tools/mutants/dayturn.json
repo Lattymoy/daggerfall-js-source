@@ -92,8 +92,8 @@
   {
     "name": "DT-hall-unturned",
     "file": "src/net/npcHallBook.js",
-    "old": "  const dayNow = () => turnedDayOf(nowMs(), turnMs);",
-    "new": "  const dayNow = () => turnedDayOf(nowMs());",
+    "old": "  const dayNow = () => turnedDayOf(nowMs(), turnMs); // DAY-TURN: once a day, the day turned at this page's moment",
+    "new": "  const dayNow = () => turnedDayOf(nowMs()); // DAY-TURN: once a day, the day turned at this page's moment",
     "tests": [
       "test/net/dayturn.test.js"
     ]

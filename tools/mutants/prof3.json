@@ -213,8 +213,8 @@
   {
     "name": "PROF3-record-other-shapes",
     "file": "src/net/productRecord.js",
-    "old": "  for (const k of ['n', 'k', 't', 'o', 'd', 'b', 'w', 'y', 'e']) if (c[k] !== undefined) return false;\n",
-    "new": "",
+    "old": "  for (const k of ['n', 'k', 't', 'o', 'd', 'b', 'w', 'y', 'e']) if (c[k] !== undefined) return false;\n  if (typeof c.p !== 'string' || !PROVENANCE_RE.test(c.p)) return false;",
+    "new": "  if (typeof c.p !== 'string' || !PROVENANCE_RE.test(c.p)) return false;",
     "tests": [
       "test/net/prof3_law.test.js"
     ]
@@ -222,8 +222,8 @@
   {
     "name": "PROF3-record-kit-quality",
     "file": "src/net/productRecord.js",
-    "old": "(!rollsQuality(r) ? c.q !== -1 : (c.q < 0 || c.q > MASTERWORK) && !(r.kind === 'kit' && c.q === -1))",
-    "new": "(c.q < -1 || c.q > MASTERWORK)",
+    "old": "  if (\n    !Number.isInteger(c.q) ||\n    (!rollsQuality(r) ? c.q !== -1 : (c.q < 0 || c.q > MASTERWORK) && !(r.kind === 'kit' && c.q === -1))\n  )\n    return false; // PROF4: arrows take none; CRAFT5: a kit its quality - or none, one made before kits took one",
+    "new": "  if (!Number.isInteger(c.q) || c.q < -1 || c.q > MASTERWORK) return false; // PROF4: arrows take none; CRAFT5: a kit its quality - or none, one made before kits took one",
     "tests": [
       "test/net/prof3_law.test.js"
     ]
@@ -231,8 +231,8 @@
   {
     "name": "PROF3-record-no-sig-check",
     "file": "src/net/productRecord.js",
-    "old": "  if (!good) return { ok: false, why: 'signature' };\n",
-    "new": "",
+    "old": "  if (!good) return { ok: false, why: 'signature' };\n  let claims;",
+    "new": "  let claims;",
     "tests": [
       "test/net/prof3_law.test.js"
     ]

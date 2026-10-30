@@ -11,8 +11,8 @@
   {
     "name": "CHAP7B-MEMBER-TYPE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "export const chapterPatronMember = (/** @type {any} */ chapter, /** @type {unknown} */ guildId) => typeof guildId === 'string' && guildId !== '' &&",
-    "new": "export const chapterPatronMember = (/** @type {any} */ chapter, /** @type {unknown} */ guildId) => guildId !== '' &&",
+    "old": "  typeof guildId === 'string' && guildId !== '' && chapter?.patron?.id === guildId;",
+    "new": "  guildId !== '' && chapter?.patron?.id === guildId;",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "CHAP7B-MEMBER-EMPTY",
     "file": "src/net/npcChapterLaw.js",
-    "old": "typeof guildId === 'string' && guildId !== '' && chapter?.patron?.id === guildId;",
-    "new": "typeof guildId === 'string' && chapter?.patron?.id === guildId;",
+    "old": "  typeof guildId === 'string' && guildId !== '' && chapter?.patron?.id === guildId;",
+    "new": "  typeof guildId === 'string' && chapter?.patron?.id === guildId;",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "CHAP7B-MEMBER-ID",
     "file": "src/net/npcChapterLaw.js",
-    "old": "&& chapter?.patron?.id === guildId;",
-    "new": "&& chapter?.patron != null;",
+    "old": "  typeof guildId === 'string' && guildId !== '' && chapter?.patron?.id === guildId;",
+    "new": "  typeof guildId === 'string' && guildId !== '' && chapter?.patron != null;",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "CHAP7B-FACTOR",
     "file": "src/net/npcChapterLaw.js",
-    "old": "const band = chapterPatronMember(chapter, guildId) ? Math.min(own, CHAPTER_PATRON_PRICE) : own;",
-    "new": "const band = own;",
+    "old": "  const band = chapterPatronMember(chapter, guildId) ? Math.min(own, CHAPTER_PATRON_PRICE) : own;",
+    "new": "  const band = own;",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "CHAP7B-OFFERS-NOW",
     "file": "src/net/npcChapterLaw.js",
-    "old": "const now = Number.isSafeInteger(bid?.marks) && bid.marks > 0 ? bid.marks : 0;",
-    "new": "const now = 0;",
+    "old": "  const now = Number.isSafeInteger(bid?.marks) && bid.marks > 0 ? bid.marks : 0;",
+    "new": "  const now = 0;",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "CHAP7B-OFFERS-FIRST",
     "file": "src/net/npcChapterLaw.js",
-    "old": ": [1, 2, 5].map((k) => k * CHAPTER_PATRON_MIN);",
-    "new": ": CHAPTER_PATRON_RAISES.map((r) => CHAPTER_PATRON_MIN + r);",
+    "old": "  const offers = now ? CHAPTER_PATRON_RAISES.map((r) => now + r) : [1, 2, 5].map((k) => k * CHAPTER_PATRON_MIN);",
+    "new": "  const offers = now\n    ? CHAPTER_PATRON_RAISES.map((r) => now + r)\n    : CHAPTER_PATRON_RAISES.map((r) => CHAPTER_PATRON_MIN + r);",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "CHAP7B-OFFERS-CAP",
     "file": "src/net/npcChapterLaw.js",
-    "old": "  return offers.filter((m) => patronBidOk(m, now));\n",
-    "new": "  return offers;\n",
+    "old": "  return offers.filter((m) => patronBidOk(m, now));",
+    "new": "  return offers;",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "CHAP7B-SHEET-TAG",
     "file": "src/net/npcChapterLaw.js",
-    "old": "${p.tag ? ` <${p.tag}>` : ''}",
-    "new": "${` <${p.tag}>`}",
+    "old": "  return `Its patron this Season: ${p.name}${p.tag ? ` <${p.tag}>` : ''}${priced ? ` - its members pay ${chapterBandNamed(CHAPTER_PATRON_BAND)}'s prices here, or the band's where better` : ''}.`;",
+    "new": "  return `Its patron this Season: ${p.name}${` <${p.tag}>`}${priced ? ` - its members pay ${chapterBandNamed(CHAPTER_PATRON_BAND)}'s prices here, or the band's where better` : ''}.`;",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "CHAP7B-SHEET-NONE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "  const p = chapterPatronOf(patron);\n  if (!p) return null;",
-    "new": "  const p = patron;\n  if (!p) return null;",
+    "old": "  const p = chapterPatronOf(patron);",
+    "new": "  const p = patron;",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "CHAP7B-BID-WORDS",
     "file": "src/net/npcChapterLaw.js",
-    "old": "`Your guild has not bid for its patronage in ${season}.`",
-    "new": "`Your guild bids nothing for its patronage in ${season}.`",
+    "old": "    : `Your guild has not bid for its patronage in ${season}.`;",
+    "new": "    : `Your guild bids nothing for its patronage in ${season}.`;",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "CHAP7B-SAID-HIDDEN",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (!isRollFaction(faction) || hallHidden(faction) || !name || !Number.isSafeInteger(marks)) return null;\n  return `Your guild bids",
-    "new": "if (!isRollFaction(faction) || !name || !Number.isSafeInteger(marks)) return null;\n  return `Your guild bids",
+    "old": "  if (!isRollFaction(faction) || hallHidden(faction) || !name || !Number.isSafeInteger(marks)) return null;",
+    "new": "  if (!isRollFaction(faction) || !name || !Number.isSafeInteger(marks)) return null;",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "CHAP7B-SAID-MARKS",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (!isRollFaction(faction) || hallHidden(faction) || !name || !Number.isSafeInteger(marks)) return null;\n  return `Your guild bids",
-    "new": "if (!isRollFaction(faction) || hallHidden(faction) || !name) return null;\n  return `Your guild bids",
+    "old": "  if (!isRollFaction(faction) || hallHidden(faction) || !name || !Number.isSafeInteger(marks)) return null;",
+    "new": "  if (!isRollFaction(faction) || hallHidden(faction) || !name) return null;",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]

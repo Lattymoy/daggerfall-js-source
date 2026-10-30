@@ -2,8 +2,8 @@
   {
     "name": "AUDIT28-M1-two-settles-in-flight-both-pay",
     "file": "src/net/marksBook.js",
-    "old": "  const once = (fn) => { if (busy) return null; busy =",
-    "new": "  const once = (fn) => { busy =",
+    "old": "    if (busy) return null;\n    busy = Promise.resolve()",
+    "new": "    busy = Promise.resolve()",
     "tests": [
       "test/net/audit28_marks.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "AUDIT28-M1-a-read-empty-store-answered-from-memory",
     "file": "src/net/marksBook.js",
-    "old": "    try { store?.set(MARKS_PENDING_KEY, out); _memory = null; } catch { _memory = { ...t }; }",
-    "new": "    _memory = { ...t };\n    try { store?.set(MARKS_PENDING_KEY, out); } catch { /* memory */ }",
+    "old": "    try {\n      store?.set(MARKS_PENDING_KEY, out);\n      _memory = null;\n    } catch {\n      _memory = { ...t };",
+    "new": "    _memory = { ...t };\n    try {\n      store?.set(MARKS_PENDING_KEY, out);\n    } catch {\n      /* memory */",
     "tests": [
       "test/net/audit28_marks.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "AUDIT28-M8-a-guild-move-mints-an-id-a-press",
     "file": "src/net/marksBook.js",
-    "old": "        if (!RETRY.includes(r?.error)) moving.delete(key);",
-    "new": "        moving.delete(key);",
+    "old": "        if (!RETRY.includes(r?.error)) moving.delete(key); // answered - a lost answer keeps the id for the next press",
+    "new": "        moving.delete(key); // answered - a lost answer keeps the id for the next press",
     "tests": [
       "test/net/audit28_marks.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "AUDIT28-M9-sold-today-stands-still",
     "file": "src/net/marksBook.js",
-    "old": "    if (Number.isSafeInteger(data?.exchangedToday)) state.today",
-    "new": "    if (false) state.today",
+    "old": "    if (Number.isSafeInteger(data?.exchangedToday))\n      state.today = { ...(state.today ?? {}), exchanged: data.exchangedToday }; // AUDIT 28 M9",
+    "new": "    if (false) state.today = { ...(state.today ?? {}), exchanged: data.exchangedToday }; // AUDIT 28 M9",
     "tests": [
       "test/net/audit28_marks.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "AUDIT28-N1-a-guest-answered-with-a-letter",
     "file": "src/net/noticeBook.js",
-    "old": "  if (!letters || mail == null || mail === 'guest') return",
-    "new": "  if (!letters || mail == null) return",
+    "old": "  if (!letters || mail == null || mail === 'guest')\n    return { kind: 'refuse', text: accountRefusalText('mail-needs-account') };",
+    "new": "  if (!letters || mail == null) return { kind: 'refuse', text: accountRefusalText('mail-needs-account') };",
     "tests": [
       "test/net/audit28_notice.test.js"
     ]
@@ -186,8 +186,8 @@
   {
     "name": "AUDIT28-N5-the-tries-back-to-back",
     "file": "src/net/noticeBook.js",
-    "old": "      if (i > 0) await sleep(NOTICE_RETRY_MS[Math.min(i - 1, NOTICE_RETRY_MS.length - 1)]);\n",
-    "new": "",
+    "old": "      if (i > 0) await sleep(NOTICE_RETRY_MS[Math.min(i - 1, NOTICE_RETRY_MS.length - 1)]);\n      try {",
+    "new": "      try {",
     "tests": [
       "test/net/audit28_notice.test.js"
     ]
@@ -195,8 +195,8 @@
   {
     "name": "AUDIT28-N5-a-lost-pins-id-thrown-away",
     "file": "src/net/noticeBook.js",
-    "old": "      if (!RETRY.includes(r?.error) && kept.get(key) === entry) kept.delete(key);",
-    "new": "      if (kept.get(key) === entry) kept.delete(key);",
+    "old": "      if (!RETRY.includes(r?.error) && kept.get(key) === entry) kept.delete(key); // answered: the id is spent",
+    "new": "      if (kept.get(key) === entry) kept.delete(key); // answered: the id is spent",
     "tests": [
       "test/net/audit28_notice.test.js"
     ]
@@ -222,8 +222,8 @@
   {
     "name": "AUDIT28-N7-a-retried-take-down-says-no-such-note",
     "file": "src/net/noticeBook.js",
-    "old": "      if (lost && gone.includes(r?.error)) return { ok: true, data: null, gone: true };\n",
-    "new": "",
+    "old": "      if (lost && gone.includes(r?.error)) return { ok: true, data: null, gone: true };\n      if (!RETRY.includes(r?.error)) return r;",
+    "new": "      if (!RETRY.includes(r?.error)) return r;",
     "tests": [
       "test/net/audit28_notice.test.js"
     ]
@@ -267,8 +267,8 @@
   {
     "name": "AUDIT28-N12-the-seen-table-read-every-frame",
     "file": "src/net/noticeBook.js",
-    "old": "  const seenTable = () => {\n    if (_seen) return _seen;",
-    "new": "  const seenTable = () => {",
+    "old": "    if (_seen) return _seen;\n    _seen = {};",
+    "new": "    _seen = {};",
     "tests": [
       "test/net/audit28_notice.test.js"
     ]
@@ -534,8 +534,8 @@
   {
     "name": "AUDIT28-H8-the-bank-face-reads-the-store-every-frame",
     "file": "src/net/marksBook.js",
-    "old": "    if (now - _peekAt >= 1000) { _peek = kept(); _peekAt = now; }",
-    "new": "    _peek = kept(); _peekAt = now;",
+    "old": "    if (now - _peekAt >= 1000) {\n      _peek = kept();\n      _peekAt = now;\n    }",
+    "new": "    _peek = kept();\n    _peekAt = now;",
     "tests": [
       "test/net/audit28_marks.test.js"
     ]
@@ -543,8 +543,8 @@
   {
     "name": "AUDIT28-M2-a-kept-sale-cleared-under-the-character-playing-now",
     "file": "src/net/marksBook.js",
-    "old": "        keep(null, key);   // the service looked and said no: nothing burnt, nothing owed",
-    "new": "        keep(null);   // the service looked and said no: nothing burnt, nothing owed",
+    "old": "        keep(null, key); // the service looked and said no: nothing burnt, nothing owed",
+    "new": "        keep(null); // the service looked and said no: nothing burnt, nothing owed",
     "tests": [
       "test/net/audit28_marks.test.js"
     ]

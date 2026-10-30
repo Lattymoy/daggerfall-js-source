@@ -2,8 +2,8 @@
   {
     "name": "CHAP3C-PRICED-NOTHING",
     "file": "src/net/npcChapterLaw.js",
-    "old": "(factor === 1 || !(price > 0) ? price : Math.max(1, Math.round(price * factor)));",
-    "new": "(factor === 1 ? price : Math.max(1, Math.round(price * factor)));",
+    "old": "  factor === 1 || !(price > 0) ? price : Math.max(1, Math.round(price * factor));",
+    "new": "  factor === 1 ? price : Math.max(1, Math.round(price * factor));",
     "tests": [
       "test/systems/guild/chap3c_halls.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "CHAP3C-PRICED-ROUND",
     "file": "src/net/npcChapterLaw.js",
-    "old": "(factor === 1 || !(price > 0) ? price : Math.max(1, Math.round(price * factor)));",
-    "new": "(factor === 1 || !(price > 0) ? price : Math.max(1, Math.floor(price * factor)));",
+    "old": "  factor === 1 || !(price > 0) ? price : Math.max(1, Math.round(price * factor));",
+    "new": "  factor === 1 || !(price > 0) ? price : Math.max(1, Math.floor(price * factor));",
     "tests": [
       "test/systems/guild/chap3c_halls.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "CHAP3C-SHELF-MIN",
     "file": "src/net/npcChapterLaw.js",
-    "old": "return Math.max(HALL_QUALITY_MIN, Math.min(Math.max(HALL_QUALITY_MAX, quality), quality + step));",
-    "new": "return Math.min(Math.max(HALL_QUALITY_MAX, quality), quality + step);",
+    "old": "  return Math.max(HALL_QUALITY_MIN, Math.min(Math.max(HALL_QUALITY_MAX, quality), quality + step));",
+    "new": "  return Math.min(Math.max(HALL_QUALITY_MAX, quality), quality + step);",
     "tests": [
       "test/systems/guild/chap3c_halls.test.js",
       "test/net/audit_chap3.test.js"
@@ -30,8 +30,8 @@
   {
     "name": "CHAP3C-SHELF-MAX",
     "file": "src/net/npcChapterLaw.js",
-    "old": "return Math.max(HALL_QUALITY_MIN, Math.min(Math.max(HALL_QUALITY_MAX, quality), quality + step));",
-    "new": "return Math.max(HALL_QUALITY_MIN, quality + step);",
+    "old": "  return Math.max(HALL_QUALITY_MIN, Math.min(Math.max(HALL_QUALITY_MAX, quality), quality + step));",
+    "new": "  return Math.max(HALL_QUALITY_MIN, quality + step);",
     "tests": [
       "test/systems/guild/chap3c_halls.test.js",
       "test/net/audit_chap3.test.js"
@@ -50,8 +50,8 @@
   {
     "name": "CHAP3C-SHELF-FAILING",
     "file": "src/net/npcChapterLaw.js",
-    "old": "writs: 0.5, shelf: -4 }",
-    "new": "writs: 0.5, shelf: -3 }",
+    "old": "  Object.freeze({ band: 'failing', name: 'Failing', from: 0, price: 1.25, writs: 0.5, shelf: -4 }),",
+    "new": "  Object.freeze({ band: 'failing', name: 'Failing', from: 0, price: 1.25, writs: 0.5, shelf: -3 }),",
     "tests": [
       "test/systems/guild/chap3c_halls.test.js"
     ]
@@ -59,8 +59,8 @@
   {
     "name": "CHAP3C-SHELF-THRIVING",
     "file": "src/net/npcChapterLaw.js",
-    "old": "from: 70, price: 0.9, writs: 1.5, shelf: 4 }",
-    "new": "from: 70, price: 0.9, writs: 1.5, shelf: 5 }",
+    "old": "  Object.freeze({ band: 'thriving', name: 'Thriving', from: 70, price: 0.9, writs: 1.5, shelf: 4 }),",
+    "new": "  Object.freeze({ band: 'thriving', name: 'Thriving', from: 70, price: 0.9, writs: 1.5, shelf: 5 }),",
     "tests": [
       "test/systems/guild/chap3c_halls.test.js"
     ]
@@ -68,8 +68,8 @@
   {
     "name": "CHAP3C-SHELF-ASCENDANT",
     "file": "src/net/npcChapterLaw.js",
-    "old": "from: 90, price: 0.8, writs: 1.5, shelf: 4 }",
-    "new": "from: 90, price: 0.8, writs: 1.5, shelf: 3 }",
+    "old": "  Object.freeze({ band: 'ascendant', name: 'Ascendant', from: 90, price: 0.8, writs: 1.5, shelf: 4 }),",
+    "new": "  Object.freeze({ band: 'ascendant', name: 'Ascendant', from: 90, price: 0.8, writs: 1.5, shelf: 3 }),",
     "tests": [
       "test/systems/guild/chap3c_halls.test.js"
     ]

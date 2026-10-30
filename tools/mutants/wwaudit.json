@@ -442,8 +442,8 @@
   {
     "name": "WWAUDIT-B7-letter-glyphs-by-hand",
     "file": "src/net/mail.js",
-    "old": "slice(0, GLYPHS_MAX)",
-    "new": "slice(0, 8)",
+    "old": "const glyphList = (v) => (Array.isArray(v) ? v.filter((g) => typeof g === 'string').slice(0, GLYPHS_MAX) : []); // AUDIT B7: the token's own bound, not a copy of it (SHADOW-FANG's glyph made eight of eight)",
+    "new": "const glyphList = (v) => (Array.isArray(v) ? v.filter((g) => typeof g === 'string').slice(0, 8) : []); // AUDIT B7: the token's own bound, not a copy of it (SHADOW-FANG's glyph made eight of eight)",
     "tests": [
       "test/ui/shadowfang.test.js"
     ],

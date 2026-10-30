@@ -186,8 +186,8 @@
   {
     "name": "INT19-the-book-names-no-record",
     "file": "src/net/marketBook.js",
-    "old": "door[route]({ ...body, realm: at })",
-    "new": "door[route](body)",
+    "old": "    const r = heard(await realmPieceAct(realm, piece, (at) => door[route]({ ...body, realm: at })));",
+    "new": "    const r = heard(await realmPieceAct(realm, piece, (at) => door[route](body)));",
     "tests": [
       "test/server/int19_crafted_record.test.js"
     ]
@@ -204,8 +204,8 @@
   {
     "name": "INT19-the-piece-taken-before-the-hold",
     "file": "src/net/marketBook.js",
-    "old": "      if (!asked) { asked = true; taken = !!piece?.take?.(); }\n      if (!taken) return Promise.resolve({ ok: false, error: 'piece-held', status: 409 });",
-    "new": "      if (!asked) { asked = true; taken = true; }\n      if (!taken) return Promise.resolve({ ok: false, error: 'piece-held', status: 409 });",
+    "old": "        taken = !!piece?.take?.();",
+    "new": "        taken = true;",
     "tests": [
       "test/server/int19_crafted_record.test.js"
     ]

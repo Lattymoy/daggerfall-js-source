@@ -77,8 +77,8 @@
   {
     "name": "MINE-PERKS-surveyed-unread",
     "file": "src/net/nodeLaw.js",
-    "old": "4), confirmed || surveyed ? 7 : UNCONFIRMED_VEIN_TIER);",
-    "new": "4), confirmed ? 7 : UNCONFIRMED_VEIN_TIER);",
+    "old": "    confirmed || surveyed ? 7 : UNCONFIRMED_VEIN_TIER,",
+    "new": "    confirmed ? 7 : UNCONFIRMED_VEIN_TIER,",
     "tests": [
       "test/ui/mineperks.test.js"
     ]
@@ -86,8 +86,8 @@
   {
     "name": "MINE-PERKS-surveyed-signature",
     "file": "src/net/nodeLaw.js",
-    "old": "  if (!table || !Number.isSafeInteger(slot) || slot < 0 || slot >= veinSlots({ climate, region, confirmed })) return null;",
-    "new": "  if (!table || !Number.isSafeInteger(slot) || slot < 0 || slot >= veinSlots({ climate, region, confirmed: confirmed || surveyed })) return null;",
+    "old": "  if (!table || !Number.isSafeInteger(slot) || slot < 0 || slot >= veinSlots({ climate, region, confirmed }))",
+    "new": "  if (\n    !table ||\n    !Number.isSafeInteger(slot) ||\n    slot < 0 ||\n    slot >= veinSlots({ climate, region, confirmed: confirmed || surveyed })\n  )",
     "tests": [
       "test/ui/mineperks.test.js"
     ]
@@ -159,8 +159,8 @@
   {
     "name": "MINE-PERKS-sensed-gone-kept",
     "file": "src/net/motherlodeBook.js",
-    "old": "if (t < l.closesAt && (l.struck ?? 0) < MOTHERLODE_STRIKERS) out.push(l);",
-    "new": "if ((l.struck ?? 0) < MOTHERLODE_STRIKERS) out.push(l);",
+    "old": "      for (const l of state.lodes) if (t < l.closesAt && (l.struck ?? 0) < MOTHERLODE_STRIKERS) out.push(l);",
+    "new": "      for (const l of state.lodes) if ((l.struck ?? 0) < MOTHERLODE_STRIKERS) out.push(l);",
     "tests": [
       "test/ui/mineperks.test.js"
     ]
@@ -168,8 +168,8 @@
   {
     "name": "MINE-PERKS-sensed-spent-kept",
     "file": "src/net/motherlodeBook.js",
-    "old": "if (t < l.closesAt && (l.struck ?? 0) < MOTHERLODE_STRIKERS) out.push(l);",
-    "new": "if (t < l.closesAt) out.push(l);",
+    "old": "      for (const l of state.lodes) if (t < l.closesAt && (l.struck ?? 0) < MOTHERLODE_STRIKERS) out.push(l);",
+    "new": "      for (const l of state.lodes) if (t < l.closesAt) out.push(l);",
     "tests": [
       "test/ui/mineperks.test.js"
     ]

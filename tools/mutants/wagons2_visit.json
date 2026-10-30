@@ -174,8 +174,8 @@
   {
     "name": "WAGONS2-VISIT-a-caravans-room-in-the-scenes-frame",
     "file": "src/net/privateInterior.js",
-    "old": "if (cv) return { caravan: cv };",
-    "new": "if (cv) return null;",
+    "old": "  if (cv) return { caravan: cv }; // WAGONS2-VISIT: a caravan's room is one of the family - its poses MapsFile's (world.js nativeFrame, online.js nativePoseRoom)",
+    "new": "  if (cv) return null; // WAGONS2-VISIT: a caravan's room is one of the family - its poses MapsFile's (world.js nativeFrame, online.js nativePoseRoom)",
     "tests": [
       "test/systems/wagons2_visit.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "SILVER-WAYS-law-raid-31",
     "file": "src/net/marksLaw.js",
-    "old": "raid: Object.freeze({ amount: 30 }),",
-    "new": "raid: Object.freeze({ amount: 31 }),",
+    "old": "  raid: Object.freeze({ amount: 30 }),",
+    "new": "  raid: Object.freeze({ amount: 31 }),",
     "tests": [
       "test/net/silverways_service.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SILVER-WAYS-law-cap-151",
     "file": "src/net/marksLaw.js",
-    "old": "kinds: Object.freeze(['gate', 'raid', 'serpent', 'eg', 'star']), perDay: 150 }",
-    "new": "kinds: Object.freeze(['gate', 'raid', 'serpent', 'eg', 'star']), perDay: 151 }",
+    "old": "  perDay: 150,",
+    "new": "  perDay: 151,",
     "tests": [
       "test/net/silverways_service.test.js"
     ],
@@ -21,8 +21,8 @@
   {
     "name": "SILVER-WAYS-law-cap-gate-alone",
     "file": "src/net/marksLaw.js",
-    "old": "kinds: Object.freeze(['gate', 'raid', 'serpent', 'eg', 'star']), perDay: 150 }",
-    "new": "kinds: Object.freeze(['gate']), perDay: 150 }",
+    "old": "export const MARKS_COMBAT = Object.freeze({\n  kinds: Object.freeze(['gate', 'raid', 'serpent', 'eg', 'star']),\n  perDay: 150,\n});",
+    "new": "export const MARKS_COMBAT = Object.freeze({ kinds: Object.freeze(['gate']), perDay: 150 });",
     "tests": [
       "test/net/silverways_service.test.js"
     ],
@@ -31,8 +31,8 @@
   {
     "name": "SILVER-WAYS-law-strike-no-remainder",
     "file": "src/net/marksLaw.js",
-    "old": "Math.max(0, Math.min(amount, MARKS_COMBAT.perDay - Math.max(0, earned)))",
-    "new": "Math.max(0, amount)",
+    "old": "export const combatStrike = (amount, earned) =>\n  Math.max(0, Math.min(amount, MARKS_COMBAT.perDay - Math.max(0, earned)));",
+    "new": "export const combatStrike = (amount, earned) => Math.max(0, amount);",
     "tests": [
       "test/net/silverways_service.test.js"
     ]
@@ -40,8 +40,8 @@
   {
     "name": "SILVER-WAYS-law-deed-26",
     "file": "src/net/marksLaw.js",
-    "old": "deed: Object.freeze({ amount: 25,",
-    "new": "deed: Object.freeze({ amount: 26,",
+    "old": "  deed: Object.freeze({ amount: 25, perDay: 4, members: 3, tenureS: 7 * 86_400 }),",
+    "new": "  deed: Object.freeze({ amount: 26, perDay: 4, members: 3, tenureS: 7 * 86_400 }),",
     "tests": [
       "test/net/silverways_service.test.js"
     ]
@@ -49,8 +49,8 @@
   {
     "name": "SILVER-WAYS-law-deed-five-a-day",
     "file": "src/net/marksLaw.js",
-    "old": "amount: 25, perDay: 4, members: 3,",
-    "new": "amount: 25, perDay: 5, members: 3,",
+    "old": "  deed: Object.freeze({ amount: 25, perDay: 4, members: 3, tenureS: 7 * 86_400 }),",
+    "new": "  deed: Object.freeze({ amount: 25, perDay: 5, members: 3, tenureS: 7 * 86_400 }),",
     "tests": [
       "test/net/silverways_service.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "SILVER-WAYS-law-deed-two-members",
     "file": "src/net/marksLaw.js",
-    "old": "perDay: 4, members: 3, tenureS",
-    "new": "perDay: 4, members: 2, tenureS",
+    "old": "  deed: Object.freeze({ amount: 25, perDay: 4, members: 3, tenureS: 7 * 86_400 }),",
+    "new": "  deed: Object.freeze({ amount: 25, perDay: 4, members: 2, tenureS: 7 * 86_400 }),",
     "tests": [
       "test/net/silverways_service.test.js"
     ]
@@ -67,8 +67,8 @@
   {
     "name": "SILVER-WAYS-law-deed-six-days",
     "file": "src/net/marksLaw.js",
-    "old": "tenureS: 7 * 86_400 }",
-    "new": "tenureS: 6 * 86_400 }",
+    "old": "  deed: Object.freeze({ amount: 25, perDay: 4, members: 3, tenureS: 7 * 86_400 }),",
+    "new": "  deed: Object.freeze({ amount: 25, perDay: 4, members: 3, tenureS: 6 * 86_400 }),",
     "tests": [
       "test/net/silverways_service.test.js"
     ]
@@ -224,8 +224,8 @@
   {
     "name": "SILVER-WAYS-cli-deed-unsaid",
     "file": "src/net/marksBook.js",
-    "old": "      if (data.deed && Number.isSafeInteger(data.deed.struck) && data.deed.struck > 0) out.push(MARKS_TEXT.deed(data.deed.struck, data.deed.guild));\n",
-    "new": "",
+    "old": "      if (data.deed && Number.isSafeInteger(data.deed.struck) && data.deed.struck > 0)\n        out.push(MARKS_TEXT.deed(data.deed.struck, data.deed.guild));\n      for (const c of Array.isArray(data.contracts) ? data.contracts : []) {",
+    "new": "      for (const c of Array.isArray(data.contracts) ? data.contracts : []) {",
     "tests": [
       "test/net/silverways_client.test.js"
     ]
@@ -242,8 +242,8 @@
   {
     "name": "SILVER-WAYS-cli-raid-capped-the-breach",
     "file": "src/net/marksBook.js",
-    "old": "(kind === 'raid' ? MARKS_TEXT.cappedRaid : kind === 'serpent' ? MARKS_TEXT.cappedSerpent : kind === 'eg' ? MARKS_TEXT.cappedEg : kind === 'star' ? MARKS_TEXT.cappedStar() : MARKS_TEXT.capped)",
-    "new": "(kind === 'serpent' ? MARKS_TEXT.cappedSerpent : kind === 'eg' ? MARKS_TEXT.cappedEg : kind === 'star' ? MARKS_TEXT.cappedStar() : MARKS_TEXT.capped)",
+    "old": "        ? kind === 'raid'\n          ? MARKS_TEXT.cappedRaid\n          : kind === 'serpent'\n            ? MARKS_TEXT.cappedSerpent\n            : kind === 'eg'\n              ? MARKS_TEXT.cappedEg\n              : kind === 'star'\n                ? MARKS_TEXT.cappedStar()\n                : MARKS_TEXT.capped",
+    "new": "        ? kind === 'serpent'\n          ? MARKS_TEXT.cappedSerpent\n          : kind === 'eg'\n            ? MARKS_TEXT.cappedEg\n            : kind === 'star'\n              ? MARKS_TEXT.cappedStar()\n              : MARKS_TEXT.capped",
     "tests": [
       "test/net/silverways_client.test.js"
     ],

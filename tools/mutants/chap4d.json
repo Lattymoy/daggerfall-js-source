@@ -2,8 +2,8 @@
   {
     "name": "CHAP4D-FLOOR",
     "file": "src/net/npcChapterLaw.js",
-    "old": "return f.length > 1 ? f : [];",
-    "new": "return f.length > 0 ? f : [];",
+    "old": "  return f.length > 1 ? f : [];",
+    "new": "  return f.length > 0 ? f : [];",
     "tests": [
       "test/net/chap4d_focus.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "CHAP4D-GUARD",
     "file": "src/net/npcChapterLaw.js",
-    "old": "typeof focus === 'string' && chapterFocusesOf(faction).includes(focus);",
-    "new": "typeof focus === 'string';",
+    "old": "  typeof focus === 'string' && chapterFocusesOf(faction).includes(focus);",
+    "new": "  typeof focus === 'string';",
     "tests": [
       "test/net/chap4d_focus.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "CHAP4D-SHARE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "...(fw && i % 2 === 0 ? fw[i] : w), slot: i",
-    "new": "...(fw && i % 2 === 1 ? fw[i] : w), slot: i",
+    "old": "  return drawn.map((w, i) => ({ ...(fw && i % 2 === 0 ? fw[i] : w), slot: i }));",
+    "new": "  return drawn.map((w, i) => ({ ...(fw && i % 2 === 1 ? fw[i] : w), slot: i }));",
     "tests": [
       "test/net/chap4d_focus.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "CHAP4D-SHARE-ALL",
     "file": "src/net/npcChapterLaw.js",
-    "old": "...(fw && i % 2 === 0 ? fw[i] : w), slot: i",
-    "new": "...(fw ? fw[i] : w), slot: i",
+    "old": "  return drawn.map((w, i) => ({ ...(fw && i % 2 === 0 ? fw[i] : w), slot: i }));",
+    "new": "  return drawn.map((w, i) => ({ ...(fw ? fw[i] : w), slot: i }));",
     "tests": [
       "test/net/chap4d_focus.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "CHAP4D-DICE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "const fw = focused.length ? courtWrits(day, region, count + 1, focused, dice).slice(1) : null;",
-    "new": "const fw = focused.length ? courtWrits(day, region, count + 1, focused, (slot, k) => dice(slot + 1, k)).slice(1) : null;",
+    "old": "  const fw = focused.length ? courtWrits(day, region, count + 1, focused, dice).slice(1) : null;",
+    "new": "  const fw = focused.length\n    ? courtWrits(day, region, count + 1, focused, (slot, k) => dice(slot + 1, k)).slice(1)\n    : null;",
     "tests": [
       "test/net/chap4d_focus.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "CHAP4D-FOCUS-GUARD",
     "file": "src/net/npcChapterLaw.js",
-    "old": "const focused = chapterFocusOk(faction, focus) ? table",
-    "new": "const focused = typeof focus === 'string' ? table",
+    "old": "  const focused = chapterFocusOk(faction, focus) ? table.filter((m) => material(m.material)?.family === focus) : [];",
+    "new": "  const focused = typeof focus === 'string' ? table.filter((m) => material(m.material)?.family === focus) : [];",
     "tests": [
       "test/net/chap4d_focus.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "CHAP4D-FOCUS-EMPTY",
     "file": "src/net/npcChapterLaw.js",
-    "old": "const fw = focused.length ? courtWrits",
-    "new": "const fw = focused ? courtWrits",
+    "old": "  const fw = focused.length ? courtWrits(day, region, count + 1, focused, dice).slice(1) : null;",
+    "new": "  const fw = focused ? courtWrits(day, region, count + 1, focused, dice).slice(1) : null;",
     "tests": [
       "test/net/chap4d_focus.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "CHAP4D-LINE-OK",
     "file": "src/net/npcChapterLaw.js",
-    "old": "return chapterFocusOk(faction, focus) ? `The ${hallPosterName",
-    "new": "return focus ? `The ${hallPosterName",
+    "old": "  return chapterFocusOk(faction, focus)",
+    "new": "  return focus",
     "tests": [
       "test/net/chap4d_focus.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "CHAP4D-CHRON-TOOK",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (!from && words(to)) did = `took ${words(to)} of ${guild}`;",
-    "new": "if (!from && words(to)) did = `rose to ${words(to)} of ${guild}`;",
+    "old": "  if (!from && words(to)) did = `took ${words(to)} of ${guild}`;",
+    "new": "  if (!from && words(to)) did = `rose to ${words(to)} of ${guild}`;",
     "tests": [
       "test/net/chap4d_focus.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "CHAP4D-CHRON-ROSE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "else if (from === 'officer' && to === 'master') did",
-    "new": "else if (from === 'master' && to === 'master') did",
+    "old": "  else if (from === 'officer' && to === 'master') did = `rose to the Master's chair of ${guild}`;",
+    "new": "  else if (from === 'master' && to === 'master') did = `rose to the Master's chair of ${guild}`;",
     "tests": [
       "test/net/chap4d_focus.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "CHAP4D-CHRON-GAVE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "else if (from === 'master' && to === 'officer') did = `gave the Master's chair of ${guild} up, and kept a council chair`;",
-    "new": "else if (from === 'master' && to === 'officer') did = `lost the Master's chair of ${guild}`;",
+    "old": "  else if (from === 'master' && to === 'officer')\n    did = `gave the Master's chair of ${guild} up, and kept a council chair`;",
+    "new": "  else if (from === 'master' && to === 'officer') did = `lost the Master's chair of ${guild}`;",
     "tests": [
       "test/net/chap4d_focus.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "CHAP4D-CHRON-LOST",
     "file": "src/net/npcChapterLaw.js",
-    "old": "else if (words(from) && !to) did = `lost ${words(from)} of ${guild}`;",
-    "new": "else if (words(from)) did = `lost ${words(from)} of ${guild}`;",
+    "old": "  else if (words(from) && !to) did = `lost ${words(from)} of ${guild}`;",
+    "new": "  else if (words(from)) did = `lost ${words(from)} of ${guild}`;",
     "tests": [
       "test/net/chap4d_focus.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "CHAP4D-CHRON-NONE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "  if (!did) return null;\n  const who",
-    "new": "  if (!did) did = 'did something';\n  const who",
+    "old": "  if (!did) return null;",
+    "new": "  if (!did) did = 'did something';",
     "tests": [
       "test/net/chap4d_focus.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "CHAP4D-CHRON-HIDDEN",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (row?.kind !== 'seat' || !isRollFaction(row?.faction) || hallHidden(row.faction)) return null;",
-    "new": "if (row?.kind !== 'seat' || !isRollFaction(row?.faction)) return null;",
+    "old": "  if (row?.kind !== 'seat' || !isRollFaction(row?.faction) || hallHidden(row.faction)) return null;",
+    "new": "  if (row?.kind !== 'seat' || !isRollFaction(row?.faction)) return null;",
     "tests": [
       "test/net/chap4d_focus.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "CHAP4D-CHRON-KIND",
     "file": "src/net/npcChapterLaw.js",
-    "old": "if (row?.kind !== 'seat' || !isRollFaction",
-    "new": "if (!isRollFaction",
+    "old": "  if (row?.kind !== 'seat' || !isRollFaction(row?.faction) || hallHidden(row.faction)) return null;",
+    "new": "  if (!isRollFaction(row?.faction) || hallHidden(row.faction)) return null;",
     "tests": [
       "test/net/chap4d_focus.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "CHAP4D-CHRON-NAME",
     "file": "src/net/npcChapterLaw.js",
-    "old": "const who = typeof row?.name === 'string' && row.name ? row.name : 'A member since gone';\n  return `${",
-    "new": "const who = row?.name ?? 'A member';\n  return `${",
+    "old": "  if (!did) return null;\n  const who = typeof row?.name === 'string' && row.name ? row.name : 'A member since gone';",
+    "new": "  if (!did) return null;\n  const who = row?.name ?? 'A member';",
     "tests": [
       "test/net/chap4d_focus.test.js"
     ],
@@ -147,8 +147,8 @@
   {
     "name": "CHAP4D-CHRON-WHEN",
     "file": "src/net/npcChapterLaw.js",
-    "old": "return `${Number.isSafeInteger(row?.week) ? `${chronicleWhen(row.week, zero)}, ` : ''}${who} ${did}.`;",
-    "new": "return `${who} ${did}.`;",
+    "old": "  return `${Number.isSafeInteger(row?.week) ? `${chronicleWhen(row.week, zero)}, ` : ''}${who} ${did}.`;",
+    "new": "  return `${who} ${did}.`;",
     "tests": [
       "test/net/chap4d_focus.test.js"
     ]

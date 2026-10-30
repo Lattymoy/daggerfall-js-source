@@ -137,7 +137,7 @@
   {
     "name": "STANDING-WORDS-the-owed-uncounted",
     "file": "src/net/npcChapterLaw.js",
-    "old": "    const together = (now + owed) - (was + owedWas);",
+    "old": "    const together = now + owed - (was + owedWas);",
     "new": "    const together = now - was;",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
@@ -146,8 +146,8 @@
   {
     "name": "STANDING-WORDS-the-paid-unsaid",
     "file": "src/net/npcChapterLaw.js",
-    "old": "    else if (now !== was) out.push(",
-    "new": "    else if (false) out.push(",
+    "old": "      else if (now !== was) out.push({ f, paid: now - was, now, owed });",
+    "new": "      else if (false) out.push({ f, paid: now - was, now, owed });",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "STANDING-WORDS-the-last-word-unread",
     "file": "src/net/npcRollTracker.js",
-    "old": "    const changes = rollMovesOf(base, lastOwed,",
-    "new": "    const changes = rollMovesOf(null, lastOwed,",
+    "old": "    const changes = rollMovesOf(base, lastOwed, a.base, owed, paid && typeof paid === 'object' ? paid : null);",
+    "new": "    const changes = rollMovesOf(null, lastOwed, a.base, owed, paid && typeof paid === 'object' ? paid : null);",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "STANDING-WORDS-the-first-owed",
     "file": "src/net/npcRollTracker.js",
-    "old": "    setStandingOwed(owed);\n    base = a.base;",
-    "new": "    setStandingOwed(last ? owed : null);\n    base = a.base;",
+    "old": "    setStandingOwed(owed);",
+    "new": "    setStandingOwed(last ? owed : null);",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "STANDING-WORDS-the-stops-clear",
     "file": "src/net/npcRollTracker.js",
-    "old": "if (error !== 'lease') setStandingOwed(null); onStop(error);",
-    "new": "onStop(error);",
+    "old": "      if (error !== 'lease') setStandingOwed(null);\n      onStop(error);",
+    "new": "      onStop(error);",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "STANDING-WORDS-the-first-said-twice",
     "file": "src/net/npcRollTracker.js",
-    "old": "    onStanding(changes, !firstSaid);",
-    "new": "    onStanding(changes, !last);",
+    "old": "    onStanding(changes, !firstSaid); // AUDIT GUILD-WORDS L2-5: once a page - a reseed is no first word",
+    "new": "    onStanding(changes, !last); // AUDIT GUILD-WORDS L2-5: once a page - a reseed is no first word",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -766,8 +766,8 @@
   {
     "name": "LANE-E-TR-owed-zero-kept",
     "file": "src/net/npcRollTracker.js",
-    "old": "if (Number.isSafeInteger(v) && v > 0) owed[Number(k)] = v;",
-    "new": "if (Number.isSafeInteger(v) && v >= 0) owed[Number(k)] = v;",
+    "old": "    for (const [k, v] of Object.entries(roll.owed ?? {})) if (Number.isSafeInteger(v) && v > 0) owed[Number(k)] = v;",
+    "new": "    for (const [k, v] of Object.entries(roll.owed ?? {})) if (Number.isSafeInteger(v) && v >= 0) owed[Number(k)] = v;",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/fb1015g_guildwords.test.js"
@@ -778,8 +778,8 @@
   {
     "name": "LANE-E-TR-lastOwed-unkept",
     "file": "src/net/npcRollTracker.js",
-    "old": "    lastOwed = owed;\n",
-    "new": "",
+    "old": "    lastOwed = owed;\n    keep({ seq: roll.seq, factions: a.base });",
+    "new": "    keep({ seq: roll.seq, factions: a.base });",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/fb1015g_guildwords.test.js"
@@ -788,8 +788,8 @@
   {
     "name": "LANE-E-TR-firstSaid-unset",
     "file": "src/net/npcRollTracker.js",
-    "old": "    firstSaid = true;\n",
-    "new": "",
+    "old": "    firstSaid = true;\n  };",
+    "new": "  };",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/fb1015g_guildwords.test.js"
@@ -798,8 +798,8 @@
   {
     "name": "LANE-E-LAW-moves-paid-sign",
     "file": "src/net/npcChapterLaw.js",
-    "old": "paid: now - was, now, owed",
-    "new": "paid: was - now, now, owed",
+    "old": "      else if (now !== was) out.push({ f, paid: now - was, now, owed });",
+    "new": "      else if (now !== was) out.push({ f, paid: was - now, now, owed });",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/fb1015g_guildwords.test.js"
@@ -1065,8 +1065,8 @@
   {
     "name": "PAID-II-the-first-reads-unpaid",
     "file": "src/net/npcRollTracker.js",
-    "old": "    adopt(from, {}, roll, r.data.paid ?? null);",
-    "new": "    adopt(from, {}, roll, null);",
+    "old": "    adopt(from, {}, roll, r.data.paid ?? null); // AUDIT GUILD-WORDS II B-5: what this read paid, the service's word",
+    "new": "    adopt(from, {}, roll, null); // AUDIT GUILD-WORDS II B-5: what this read paid, the service's word",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -1083,8 +1083,8 @@
   {
     "name": "PAID-II-the-first-words-payment",
     "file": "src/net/npcChapterLaw.js",
-    "old": "      if (p > 0) out.push({ f, paid: p, now, owed });\n",
-    "new": "\n",
+    "old": "      if (p > 0) out.push({ f, paid: p, now, owed });\n      continue;",
+    "new": "      continue;",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -1092,8 +1092,8 @@
   {
     "name": "PAID-II-the-both-arm",
     "file": "src/net/npcChapterLaw.js",
-    "old": "...(p > 0 ? { paid: p } : {}), now, owed });",
-    "new": "now, owed });",
+    "old": "    if (delta !== 0 || p > 0)\n      out.push({ f, ...(delta !== 0 ? { delta } : {}), ...(p > 0 ? { paid: p } : {}), now, owed });",
+    "new": "    if (delta !== 0 || p > 0) out.push({ f, ...(delta !== 0 ? { delta } : {}), now, owed });",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -1155,8 +1155,8 @@
   {
     "name": "PACE-II-the-lost-unsaid",
     "file": "src/net/npcRollTracker.js",
-    "old": "    if (lost.length) onFull(lost);",
-    "new": "",
+    "old": "    if (lost.length) onFull(lost);\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -1164,8 +1164,8 @@
   {
     "name": "PACE-II-the-payment-unread",
     "file": "src/net/npcRollTracker.js",
-    "old": "- (paid ? Math.max(0, paid[f] ?? 0) : 0));",
-    "new": "- 0);",
+    "old": "    const grew = (/** @type {number} */ f) =>\n      (lastOwed[f] ?? 0) - Math.max(0, (owedBefore[f] ?? 0) - (paid ? Math.max(0, paid[f] ?? 0) : 0));",
+    "new": "    const grew = (/** @type {number} */ f) => (lastOwed[f] ?? 0) - Math.max(0, (owedBefore[f] ?? 0) - 0);",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -1173,8 +1173,8 @@
   {
     "name": "PACE-II-the-lease-clears",
     "file": "src/net/npcRollTracker.js",
-    "old": "if (error !== 'lease') setStandingOwed(null);",
-    "new": "setStandingOwed(null);",
+    "old": "      if (error !== 'lease') setStandingOwed(null);",
+    "new": "      setStandingOwed(null);",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]

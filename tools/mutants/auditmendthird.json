@@ -133,7 +133,7 @@
     "name": "AUDIT-MEND-THIRD-L1-4-patron-reads-no-mark",
     "file": "src/net/patronLaw.js",
     "old": "  return worth > 0 ? conditionCostBase(worth, foundSalePercentage(item)) : 0;",
-    "new": "  return worth > 0 ? conditionCostBase(worth, Math.trunc((100 * (item.currentCondition ?? 0)) / (item.maxCondition || 1))) : 0;",
+    "new": "  return worth > 0\n    ? conditionCostBase(worth, Math.trunc((100 * (item.currentCondition ?? 0)) / (item.maxCondition || 1)))\n    : 0;",
     "tests": [
       "test/systems/auditmendthird.test.js"
     ],

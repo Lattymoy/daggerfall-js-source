@@ -12,8 +12,8 @@
   {
     "name": "AUDIT31-law-kit-auctionable",
     "file": "src/net/marketLaw.js",
-    "old": "&& takesQuality(/** @type {any} */ (recipeById(recipeId)));",
-    "new": "&& !!recipeById(recipeId);",
+    "old": "  quality === MASTERWORK && pieceListable(recipeId) && takesQuality(/** @type {any} */ (recipeById(recipeId)));",
+    "new": "  quality === MASTERWORK && pieceListable(recipeId) && !!recipeById(recipeId);",
     "tests": [
       "test/net/audit31_law.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "AUDIT31-law-wear-rounds-whole",
     "file": "src/net/marketLaw.js",
-    "old": "  if (cur >= max) return WEAR_WHOLE;\n  return Math.max(1, Math.min(WEAR_WHOLE - 1,",
-    "new": "  return Math.max(1, Math.min(WEAR_WHOLE,",
+    "old": "  if (cur >= max) return WEAR_WHOLE;\n  return Math.max(1, Math.min(WEAR_WHOLE - 1, Math.round((cur * WEAR_WHOLE) / max)));",
+    "new": "  return Math.max(1, Math.min(WEAR_WHOLE, Math.round((cur * WEAR_WHOLE) / max)));",
     "tests": [
       "test/net/audit31_client.test.js"
     ]
@@ -336,8 +336,8 @@
   {
     "name": "AUDIT31-book-no-session-market",
     "file": "src/net/marketBook.js",
-    "old": "    if (!signedIn()) return { ok: false, error: 'no-session' };\n    if (body.provenance",
-    "new": "    if (body.provenance",
+    "old": "    if (!signedIn()) return { ok: false, error: 'no-session' };\n    if (body.provenance && (keptPieces().has(body.provenance) || holds?.(body.provenance)))",
+    "new": "    if (body.provenance && (keptPieces().has(body.provenance) || holds?.(body.provenance)))",
     "tests": [
       "test/net/audit31_client.test.js"
     ]
@@ -418,8 +418,8 @@
   {
     "name": "AUDIT31-book-moved-leading",
     "file": "src/net/marketBook.js",
-    "old": "'auction-low', 'auction-leading', 'auction-bid-standing',",
-    "new": "'auction-low', 'auction-bid-standing',",
+    "old": "  'auction-leading',\n  'auction-bid-standing',",
+    "new": "  'auction-bid-standing',",
     "tests": [
       "test/net/audit31_client.test.js"
     ]
@@ -445,8 +445,8 @@
   {
     "name": "AUDIT31-book-holds-market",
     "file": "src/net/marketBook.js",
-    "old": "    if (body.provenance && (keptPieces().has(body.provenance) || holds?.(body.provenance))) return",
-    "new": "    if (body.provenance && keptPieces().has(body.provenance)) return",
+    "old": "    if (body.provenance && (keptPieces().has(body.provenance) || holds?.(body.provenance)))\n      return { ok: false, error: PIECE_KEPT_ERROR };",
+    "new": "    if (body.provenance && keptPieces().has(body.provenance)) return { ok: false, error: PIECE_KEPT_ERROR };",
     "tests": [
       "test/net/audit31_client.test.js"
     ]
@@ -464,8 +464,8 @@
     "name": "AUDIT31-book-gone-put-back",
     "file": "src/net/marketBook.js",
     "note": "INT19 (PIN MOVED): re-aimed by content - a piece the service says is elsewhere is never put back by the realm act's undo (realmPieceAct)",
-    "old": "if (PIECE_GONE.includes(a?.error)) gone = true;",
-    "new": "if (false) gone = true;",
+    "old": "        if (PIECE_GONE.includes(a?.error)) gone = true;",
+    "new": "        if (false) gone = true;",
     "tests": [
       "test/net/audit31_client.test.js"
     ]
@@ -473,8 +473,8 @@
   {
     "name": "AUDIT31-book-gone-settle-market",
     "file": "src/net/marketBook.js",
-    "old": "            if (PIECE_GONE.includes(r?.error)) { try { drop?.(l.item, l.where); }",
-    "new": "            if (false) { try { drop?.(l.item, l.where); }",
+    "old": "              if (PIECE_GONE.includes(r?.error)) {",
+    "new": "              if (false) {",
     "tests": [
       "test/net/audit31_client.test.js"
     ]

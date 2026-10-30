@@ -150,7 +150,7 @@
     "name": "AUDIT-CHAP4-E1-CARRY-BACK",
     "file": "src/net/npcChapterLaw.js",
     "old": "export const seatScoreOf = (/** @type {number} */ merit) => Math.round(Math.max(0, whole(merit)) * 10);",
-    "new": "export const seatScoreOf = (/** @type {number} */ merit, sitting = false) => Math.round(Math.max(0, whole(merit)) * 10 * (sitting ? 1.2 : 1));",
+    "new": "export const seatScoreOf = (/** @type {number} */ merit, sitting = false) =>\n  Math.round(Math.max(0, whole(merit)) * 10 * (sitting ? 1.2 : 1));",
     "tests": [
       "test/net/audit_chap4.test.js"
     ]
@@ -158,8 +158,8 @@
   {
     "name": "AUDIT-CHAP4-E1-TIE",
     "file": "src/net/npcChapterLaw.js",
-    "old": ".sort((a, b) => b.score - a.score || b.held - a.held || whole(a.joinedAt)",
-    "new": ".sort((a, b) => b.score - a.score || whole(a.joinedAt)",
+    "old": "        b.held - a.held ||\n        whole(a.joinedAt) - whole(b.joinedAt) ||",
+    "new": "        whole(a.joinedAt) - whole(b.joinedAt) ||",
     "tests": [
       "test/net/audit_chap4.test.js"
     ]
@@ -185,8 +185,8 @@
   {
     "name": "AUDIT-CHAP4-D1-MARK",
     "file": "src/net/npcChapterLaw.js",
-    "old": "return [...ranks].sort((a, b) => a[0] - b[0]).map(([f, rank]) => (awake.has(f) ? { f, rank } : { f, rank, d: 1 }));",
-    "new": "return [...ranks].sort((a, b) => a[0] - b[0]).map(([f, rank]) => ({ f, rank }));",
+    "old": "  return [...ranks].sort((a, b) => a[0] - b[0]).map(([f, rank]) => (awake.has(f) ? { f, rank } : { f, rank, d: 1 }));",
+    "new": "  return [...ranks].sort((a, b) => a[0] - b[0]).map(([f, rank]) => ({ f, rank }));",
     "tests": [
       "test/net/audit_chap4.test.js"
     ]
@@ -194,8 +194,8 @@
   {
     "name": "AUDIT-CHAP4-D1-ACTIVE-BOOK",
     "file": "src/net/npcChapterLaw.js",
-    "old": "const active = both ? (vampire ? store.vampire : store.mortal) : store;",
-    "new": "const active = both ? store.mortal : store;",
+    "old": "  const active = both ? (vampire ? store.vampire : store.mortal) : store;",
+    "new": "  const active = both ? store.mortal : store;",
     "tests": [
       "test/net/audit_chap4.test.js"
     ]
@@ -203,8 +203,8 @@
   {
     "name": "AUDIT-CHAP4-D1-OK",
     "file": "src/net/npcChapterLaw.js",
-    "old": "    if (d !== undefined && d !== 1) return false;   // AUDIT CHAP4 D1: a dormant line's mark, and only that\n",
-    "new": "",
+    "old": "    if (d !== undefined && d !== 1) return false; // AUDIT CHAP4 D1: a dormant line's mark, and only that\n    if (DIVINE_SET.has(f)) temples++;",
+    "new": "    if (DIVINE_SET.has(f)) temples++;",
     "tests": [
       "test/net/audit_chap4.test.js"
     ]
@@ -212,8 +212,8 @@
   {
     "name": "AUDIT-CHAP4-D1-KEY",
     "file": "src/net/npcChapterLaw.js",
-    "old": "`${m.f}:${m.rank}${m.d === 1 ? 'd' : ''}`",
-    "new": "`${m.f}:${m.rank}`",
+    "old": "  list ? list.map((m) => `${m.f}:${m.rank}${m.d === 1 ? 'd' : ''}`).join(',') : null; // AUDIT CHAP4 D1: a book's swap moves it",
+    "new": "  list ? list.map((m) => `${m.f}:${m.rank}`).join(',') : null; // AUDIT CHAP4 D1: a book's swap moves it",
     "tests": [
       "test/net/audit_chap4.test.js"
     ]
@@ -293,8 +293,8 @@
   {
     "name": "AUDIT-CHAP4-D1-VAMPIRE",
     "file": "src/net/npcRollTracker.js",
-    "old": "&& !entity.racialOverride.ended && entity.racialOverride.racial === 'vampirism');",
-    "new": "&& entity.racialOverride.racial === 'vampirism');",
+    "old": "  !!(entity?.racialOverride && !entity.racialOverride.ended && entity.racialOverride.racial === 'vampirism');",
+    "new": "  !!(entity?.racialOverride && entity.racialOverride.racial === 'vampirism');",
     "tests": [
       "test/net/audit_chap4.test.js"
     ]
@@ -302,8 +302,8 @@
   {
     "name": "AUDIT-CHAP4-C1-BEAT",
     "file": "src/net/npcRollTracker.js",
-    "old": "&& (key === null || key === heldKey) && now() - heardAt < ROLL_SEATS_MS) return null;",
-    "new": "&& (key === null || key === heldKey)) return null;",
+    "old": "    if (!asked && !Object.keys(deltas).length && (key === null || key === heldKey) && now() - heardAt < ROLL_SEATS_MS)\n      return null;",
+    "new": "    if (!asked && !Object.keys(deltas).length && (key === null || key === heldKey)) return null;",
     "tests": [
       "test/net/audit_chap4.test.js"
     ]
@@ -338,8 +338,8 @@
   {
     "name": "AUDIT-CHAP4-C3-CEILING",
     "file": "src/net/npcRollTracker.js",
-    "old": "  if (!tracker || tracker.stopped) return null;\n  const standing",
-    "new": "  if (!tracker?.held || tracker.stopped) return null;\n  const standing",
+    "old": "  if (!tracker || tracker.stopped) return null;",
+    "new": "  if (!tracker?.held || tracker.stopped) return null;",
     "tests": [
       "test/net/audit_chap4.test.js",
       "test/systems/guild/fb1015f_rollpace.test.js"
@@ -366,8 +366,8 @@
   {
     "name": "AUDIT-CHAP4-C4-LINE",
     "file": "src/net/npcChapterLaw.js",
-    "old": "return `The chapter of the ${hallPosterName(c?.faction) ?? 'guild'} here is",
-    "new": "return `The ${hallPosterName(c?.faction) ?? 'guild'} here is",
+    "old": "  return `The chapter of the ${hallPosterName(c?.faction) ?? 'guild'} here is ${chapterBandOf(c?.strength).name} (Strength ${Number(c?.strength)})`;",
+    "new": "  return `The ${hallPosterName(c?.faction) ?? 'guild'} here is ${chapterBandOf(c?.strength).name} (Strength ${Number(c?.strength)})`;",
     "tests": [
       "test/net/audit_chap4.test.js"
     ]
@@ -520,8 +520,8 @@
   {
     "name": "AUDIT-CHAP4-T6-PLAN-KEY",
     "file": "src/net/npcChapterLaw.js",
-    "old": "|| (a.char < b.char ? -1 : a.char > b.char ? 1 : 0)\n      || a.faction - b.faction || a.region - b.region);",
-    "new": "|| (a.char < b.char ? -1 : a.char > b.char ? 1 : 0)\n      || b.faction - a.faction || b.region - a.region);",
+    "old": "        a.faction - b.faction ||\n        a.region - b.region,",
+    "new": "        b.faction - a.faction ||\n        b.region - a.region,",
     "tests": [
       "test/net/audit_chap4.test.js"
     ]
@@ -529,8 +529,8 @@
   {
     "name": "AUDIT-CHAP4-T8-CHANGES-CHAR",
     "file": "src/net/npcChapterLaw.js",
-    "old": ".sort((a, b) => a.faction - b.faction || a.region - b.region || (a.char < b.char ? -1 : a.char > b.char ? 1 : 0));\n}",
-    "new": ".sort((a, b) => a.faction - b.faction || a.region - b.region);\n}",
+    "old": "  return [...out.values()]\n    .filter((c) => c.from !== c.to)\n    .sort((a, b) => a.faction - b.faction || a.region - b.region || (a.char < b.char ? -1 : a.char > b.char ? 1 : 0));",
+    "new": "  return [...out.values()].filter((c) => c.from !== c.to).sort((a, b) => a.faction - b.faction || a.region - b.region);",
     "tests": [
       "test/net/audit_chap4.test.js"
     ]
@@ -547,8 +547,8 @@
   {
     "name": "AUDIT-CHAP4-T8-CAP-SORT",
     "file": "src/net/npcChapterLaw.js",
-    "old": "return [...held].sort((a, b) => a - b);",
-    "new": "return [...held];",
+    "old": "  return [...held].sort((a, b) => a - b);",
+    "new": "  return [...held];",
     "tests": [
       "test/net/audit_chap4.test.js"
     ]

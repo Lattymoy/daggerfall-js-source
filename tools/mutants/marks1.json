@@ -132,8 +132,8 @@
   {
     "name": "MARKS1-15-a-lost-sale-dropped",
     "file": "src/net/marksBook.js",
-    "old": "        if (!MARKS_FINAL.includes(r?.error)) return { ok: false, text: MARKS_TEXT.kept };   // the line may be there: kept\n        keep(null, key);",
-    "new": "        keep(null, key);",
+    "old": "        if (!MARKS_FINAL.includes(r?.error)) return { ok: false, text: MARKS_TEXT.kept }; // the line may be there: kept\n        keep(null, key); // the service looked and said no: nothing burnt, nothing owed",
+    "new": "        keep(null, key); // the service looked and said no: nothing burnt, nothing owed",
     "tests": [
       "test/net/marks1.test.js"
     ]

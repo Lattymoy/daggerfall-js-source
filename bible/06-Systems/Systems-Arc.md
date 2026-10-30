@@ -8388,7 +8388,7 @@ The owner: "Reduce the density of spawning dungeons by 25%." The band is unchang
 A second roll keeps three quarters of the pixels that band already chose
 (`world/spawnedDungeons.js:"export const SPAWN_KEEP = 0.75;"`), on its own hash lane, so a dungeon that remains is the
 same kind on the same pixel and one the keep drops is absent. The salt is not changed: changing it would move every
-dungeon. The relay's copy of the roll carries the same keep (`net/overworldLaw.js:"export const OW_SPAWN_KEEP = 0.75;"`).
+dungeon. The relay's copy of the roll carries the same keep (`net/overworldLaw.js:"export const OW_SPAWN_KEEP"`).
 A character standing in a dropped dungeon does not find it on the next load. Authored dungeons are not this roll.
 
 ### GROUND-AGREE - A SPAWN'S GROUND IS THE ROLL'S, ALIVE OR DEAD (2026-10-24)

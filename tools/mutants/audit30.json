@@ -203,8 +203,8 @@
   {
     "name": "AUDIT30-L3-a-record-past-its-bound",
     "file": "src/net/productRecord.js",
-    "old": "  if (rec.length > PRODUCT_RECORD_MAX) throw new RangeError",
-    "new": "  if (false) throw new RangeError",
+    "old": "  if (rec.length > PRODUCT_RECORD_MAX) throw new RangeError('mintProductRecord made a record past its own bound');",
+    "new": "  if (false) throw new RangeError('mintProductRecord made a record past its own bound');",
     "tests": [
       "test/net/audit30_laws.test.js"
     ]
@@ -212,8 +212,8 @@
   {
     "name": "AUDIT30-L4-any-piece-marked",
     "file": "src/net/productRecord.js",
-    "old": "c.m === null || !(c.q === MASTERWORK || r.family === 'furniture')",
-    "new": "c.m === null",
+    "old": "  if (c.a !== undefined && (c.a !== 1 || c.m === null || !(c.q === MASTERWORK || r.family === 'furniture')))\n    return false;",
+    "new": "  if (c.a !== undefined && (c.a !== 1 || c.m === null)) return false;",
     "tests": [
       "test/net/audit30_laws.test.js"
     ]
@@ -221,8 +221,8 @@
   {
     "name": "AUDIT30-L5-worn-to-100",
     "file": "src/net/marketLaw.js",
-    "old": "Math.min(99, Math.round(wear / 10))",
-    "new": "Math.round(wear / 10)",
+    "old": "export const wearText = (wear) =>\n  wear >= WEAR_WHOLE ? null : `worn to ${Math.max(1, Math.min(99, Math.round(wear / 10)))}%`; // AUDIT 30 L5: a worn piece never reads 100%",
+    "new": "export const wearText = (wear) => (wear >= WEAR_WHOLE ? null : `worn to ${Math.max(1, Math.round(wear / 10))}%`); // AUDIT 30 L5: a worn piece never reads 100%",
     "tests": [
       "test/net/audit30_laws.test.js"
     ]
@@ -240,8 +240,8 @@
   {
     "name": "AUDIT30-L7-the-catalogue-offers-the-unyielded",
     "file": "src/net/marketLaw.js",
-    "old": ".filter((k) => !UNYIELDED.includes(k)).map((k) => material(k))",
-    "new": ".map((k) => material(k))",
+    "old": "  const all = [...MINED_KEYS, ...FOOD_KEYS, ...herbs]\n    .filter((k) => !UNYIELDED.includes(k))\n    .map((k) => material(k))\n    .filter(Boolean);",
+    "new": "  const all = [...MINED_KEYS, ...FOOD_KEYS, ...herbs].map((k) => material(k)).filter(Boolean);",
     "tests": [
       "test/net/audit30_laws.test.js"
     ],
@@ -288,8 +288,8 @@
   {
     "name": "AUDIT30-C1-the-gate-s-words-let-go",
     "file": "src/net/marketBook.js",
-    "old": "const kept = (r) => RETRY.includes(r?.error) || WAIT.includes(r?.error);",
-    "new": "const kept = (r) => RETRY.includes(r?.error);",
+    "old": "  const kept = (r) => RETRY.includes(r?.error) || WAIT.includes(r?.error);",
+    "new": "  const kept = (r) => RETRY.includes(r?.error);",
     "tests": [
       "test/net/audit30_client.test.js"
     ]
@@ -306,8 +306,8 @@
   {
     "name": "AUDIT30-C3-a-settled-listing-left-in-the-save",
     "file": "src/net/marketBook.js",
-    "old": "try { drop?.(l.item, l.where); } catch (e) { console.warn('[market] drop', e); } settled++;",
-    "new": "settled++;",
+    "old": "              try {\n                drop?.(l.item, l.where);\n              } catch (e) {\n                console.warn('[market] drop', e);\n              }\n              settled++;",
+    "new": "              settled++;",
     "tests": [
       "test/net/audit30_client.test.js"
     ]
@@ -324,8 +324,8 @@
   {
     "name": "AUDIT30-C6-an-overtaken-read-told",
     "file": "src/net/marketBook.js",
-    "old": "      if (g !== gen) return null;\n",
-    "new": "",
+    "old": "      if (g !== gen) return null;\n      const r = heard(a);",
+    "new": "      const r = heard(a);",
     "tests": [
       "test/net/audit30_client.test.js"
     ]
@@ -333,8 +333,8 @@
   {
     "name": "AUDIT30-U1-the-stores-untold",
     "file": "src/net/marketBook.js",
-    "old": "if (st && typeof st.material === 'string') { try { stores?.apply?.(st); }",
-    "new": "if (false) { try { stores?.apply?.(st); }",
+    "old": "      if (st && typeof st.material === 'string') {",
+    "new": "      if (false) {",
     "tests": [
       "test/net/audit30_client.test.js"
     ]
@@ -342,8 +342,8 @@
   {
     "name": "AUDIT30-U9-a-moved-view-cached",
     "file": "src/net/marketBook.js",
-    "old": "    if (MOVED.includes(r?.error)) forget();\n",
-    "new": "",
+    "old": "    if (MOVED.includes(r?.error)) forget();\n    const d = r?.ok ? r.data : null;",
+    "new": "    const d = r?.ok ? r.data : null;",
     "tests": [
       "test/net/audit30_client.test.js"
     ]
@@ -351,8 +351,8 @@
   {
     "name": "AUDIT30-U11-a-shut-market-shut-for-good",
     "file": "src/net/marketBook.js",
-    "old": "now() - _shut >= MARKET_CLOSED_RECHECK_MS ? null : this._open",
-    "new": "false ? null : this._open",
+    "old": "      return this._open === false && _shut != null && now() - _shut >= MARKET_CLOSED_RECHECK_MS ? null : this._open;",
+    "new": "      return this._open === false && _shut != null && false ? null : this._open;",
     "tests": [
       "test/net/audit30_client.test.js"
     ]

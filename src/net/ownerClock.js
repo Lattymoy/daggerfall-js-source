@@ -33,9 +33,13 @@ export function createOwnerClock() {
   let at = null;
   return {
     /** The foes were stepped at `ms` - what a frame built from them now says of them. */
-    mark(ms) { if (Number.isFinite(ms)) at = ms; },
+    mark(ms) {
+      if (Number.isFinite(ms)) at = ms;
+    },
     /** The frame's `tm`: the last step's moment inside the wrap, or null when none was ever marked. */
-    tm() { return at == null ? null : ((Math.round(at) % OWNER_TM_MOD) + OWNER_TM_MOD) % OWNER_TM_MOD; },
+    tm() {
+      return at == null ? null : ((Math.round(at) % OWNER_TM_MOD) + OWNER_TM_MOD) % OWNER_TM_MOD;
+    },
   };
 }
 
@@ -69,7 +73,11 @@ let _applying = null;
 export function applyingOwnerTm(data, apply) {
   const was = _applying;
   _applying = ownerTmOf(data);
-  try { return apply(); } finally { _applying = was; }
+  try {
+    return apply();
+  } finally {
+    _applying = was;
+  }
 }
 /** The `tm` of the frame being applied now; null outside one - a build that lands after its frame stamps nothing. */
 export const appliedOwnerTm = () => _applying;

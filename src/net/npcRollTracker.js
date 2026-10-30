@@ -65,13 +65,27 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import {
-  ROLL_FACTIONS, ROLL_CLAIM_MS, ROLL_RETRY_MS, ROLL_RETRY_MAX_MS, rollDeltasOf, rollAdopt, rollMembersKey, rollMembersOf, rollRep, rollKeptOf,
-  rollBookCap, rollSeatsOf, ROLL_SEATS_MS, ROLL_BOOK_RANK_MAX, rollPromoteCeiling, rollPaceWait,   // ROLL-PACE
-  rollMovesOf,   // STANDING-WORDS
+  ROLL_FACTIONS,
+  ROLL_CLAIM_MS,
+  ROLL_RETRY_MS,
+  ROLL_RETRY_MAX_MS,
+  rollDeltasOf,
+  rollAdopt,
+  rollMembersKey,
+  rollMembersOf,
+  rollRep,
+  rollKeptOf,
+  rollBookCap,
+  rollSeatsOf,
+  ROLL_SEATS_MS,
+  ROLL_BOOK_RANK_MAX,
+  rollPromoteCeiling,
+  rollPaceWait, // ROLL-PACE
+  rollMovesOf, // STANDING-WORDS
 } from './npcChapterLaw.js';
 import { setReputation } from '../systems/faction/factionRep.js';
-import { setStandingOwed } from '../systems/standingOwed.js';   // STANDING-WORDS: the owed, kept for the windows
-import { carryInvitationOnly } from '../systems/guild/guilds.js';   // CURSE-CARRY: the underworld guilds read where the curse reads
+import { setStandingOwed } from '../systems/standingOwed.js'; // STANDING-WORDS: the owed, kept for the windows
+import { carryInvitationOnly } from '../systems/guild/guilds.js'; // CURSE-CARRY: the underworld guilds read where the curse reads
 import { accountRefusalText } from './accountClient.js';
 import { t } from '../systems/textManager.js';
 
@@ -84,10 +98,22 @@ import { t } from '../systems/textManager.js';
 
 /** The refusals that end the tracker for this page - the Roll shut, the character no longer this tab's, the account
  *  gone, or a shape the service will not take (a build to update). Every other is asked again. */
-export const ROLL_STOPS = Object.freeze(['chapters-closed', 'lease', 'no-realm-character', 'no-data', 'dead', 'auth', 'no-session', 'body', 'roll-seed', 'roll-claim']);
+export const ROLL_STOPS = Object.freeze([
+  'chapters-closed',
+  'lease',
+  'no-realm-character',
+  'no-data',
+  'dead',
+  'auth',
+  'no-session',
+  'body',
+  'roll-seed',
+  'roll-claim',
+]);
 
 /** Said when the Roll stops for a reason the player can do nothing about here, in English. */
-export const ROLL_STOPPED_TEXT = 'The realm is not hearing your guild standing in this session. What you earn now is kept in your save, and the realm takes it the next time you play this character online.';
+export const ROLL_STOPPED_TEXT =
+  'The realm is not hearing your guild standing in this session. What you earn now is kept in your save, and the realm takes it the next time you play this character online.';
 
 /**
  * What the player is told when the Roll stops for this page, or null: 'chapters-closed' keeps the standing as before
@@ -142,18 +168,20 @@ export function rollEntityDoors(/** @type {() => any} */ entityOf) {
     // AUDIT CHAP4 D1: the active book the curse reads (guilds.js activeMemberships' own test) - its lines awake, the other's dormant
     members: () => {
       const entity = entityOf();
-      carryInvitationOnly(entity?.guildMemberships, rollVampireOf(entity));   // CURSE-CARRY: before the read, not at the next activeMemberships
+      carryInvitationOnly(entity?.guildMemberships, rollVampireOf(entity)); // CURSE-CARRY: before the read, not at the next activeMemberships
       return rollMembersOf(entity?.guildMemberships, rollVampireOf(entity));
     },
-    cap: () => rollBookCap(entityOf()?.guildMemberships),   // CHAP4b: the book held at 7
+    cap: () => rollBookCap(entityOf()?.guildMemberships), // CHAP4b: the book held at 7
   };
 }
 
 /** A Roll's members as a claim carries them: `[{ f, rank, d? }]` (AUDIT CHAP4 D1: a dormant line's mark). */
-const membersOf = (/** @type {any} */ list) => (Array.isArray(list) ? list.map((m) => (m.d === 1 ? { f: m.f, rank: m.rank, d: 1 } : { f: m.f, rank: m.rank })) : []);
+const membersOf = (/** @type {any} */ list) =>
+  Array.isArray(list) ? list.map((m) => (m.d === 1 ? { f: m.f, rank: m.rank, d: 1 } : { f: m.f, rank: m.rank })) : [];
 /** AUDIT CHAP4 D1: whether the entity's ACTIVE book is the vampire's - guilds.js activeMemberships' own reading of the
  *  curse (DFU's GuildManager.Memberships: HasVampirism). */
-export const rollVampireOf = (/** @type {any} */ entity) => !!(entity?.racialOverride && !entity.racialOverride.ended && entity.racialOverride.racial === 'vampirism');
+export const rollVampireOf = (/** @type {any} */ entity) =>
+  !!(entity?.racialOverride && !entity.racialOverride.ended && entity.racialOverride.racial === 'vampirism');
 
 /**
  * The tracker. `io` is accountClient.js accountRoll's door (`read`, `claim`); `character()` and `lease()` the realm
@@ -175,8 +203,23 @@ export const rollVampireOf = (/** @type {any} */ entity) => !!(entity?.racialOve
  *   onStanding?: (changes: { f: number, delta?: number, paid?: number, now: number, owed: number }[], first: boolean) => void }} o
  */
 export function createRollTracker({
-  io, character, lease, read, write, members, kept = () => null, keep = () => {}, now = () => Date.now(), rid = () => rollRid(),
-  onCeiling = () => {}, onFull = () => {}, onStop = () => {}, cap = () => [], onCapped = () => {}, onSeats = () => {}, onStanding = () => {},
+  io,
+  character,
+  lease,
+  read,
+  write,
+  members,
+  kept = () => null,
+  keep = () => {},
+  now = () => Date.now(),
+  rid = () => rollRid(),
+  onCeiling = () => {},
+  onFull = () => {},
+  onStop = () => {},
+  cap = () => [],
+  onCapped = () => {},
+  onSeats = () => {},
+  onStanding = () => {},
 }) {
   /** @type {Record<number, number> | null} the Roll's last word, as adopted */
   let base = null;
@@ -186,12 +229,16 @@ export function createRollTracker({
   let pending = null;
   /** @type {string | null} */
   let stopped = null;
-  let busy = false, nextAt = 0, wait = ROLL_RETRY_MS, lastSentAt = -Infinity;
+  let busy = false,
+    nextAt = 0,
+    wait = ROLL_RETRY_MS,
+    lastSentAt = -Infinity;
   /** AUDIT CHAP4 C1: when the Roll's word (and its seats) was last heard - every adoption, the first read's too */
   let heardAt = -Infinity;
   // CHAP2a: a refresh asked (askGen) and answered (doneGen) - AUDIT CHAP2 C3: a claim sent before the refresh and
   // answered after it answers the older Roll, and leaves the refresh asked
-  let askGen = 0, doneGen = 0;
+  let askGen = 0,
+    doneGen = 0;
   /** @type {string | null} */
   let heldKey = null;
   /** @type {string | null} the lease a 'lease' refusal came under (AUDIT CHAP2 C4) */
@@ -219,13 +266,26 @@ export function createRollTracker({
   const fail = (/** @type {string} */ error, /** @type {string | null} */ ls = null) => {
     // STANDING-WORDS: stopped, nothing owed is said - AUDIT GUILD-WORDS II E-14: but a lease's stop is the page hiding,
     // and the next lease resumes the Roll as it stood, so what it owes is still said
-    if (ROLL_STOPS.includes(error)) { stopped = error; stoppedLease = ls; if (error !== 'lease') setStandingOwed(null); onStop(error); return; }
-    if (error === 'roll-unseeded') { base = null; pending = null; }   // no Roll after all: read (and seed) again
+    if (ROLL_STOPS.includes(error)) {
+      stopped = error;
+      stoppedLease = ls;
+      if (error !== 'lease') setStandingOwed(null);
+      onStop(error);
+      return;
+    }
+    if (error === 'roll-unseeded') {
+      base = null;
+      pending = null;
+    } // no Roll after all: read (and seed) again
     nextAt = now() + wait;
     wait = Math.min(ROLL_RETRY_MAX_MS, wait * 2);
   };
-  const adopt = (/** @type {Record<number, number>} */ from, /** @type {Record<number, number>} */ sent, /** @type {any} */ roll,
-    /** @type {Record<number, number> | null} */ paid = null) => {
+  const adopt = (
+    /** @type {Record<number, number>} */ from,
+    /** @type {Record<number, number>} */ sent,
+    /** @type {any} */ roll,
+    /** @type {Record<number, number> | null} */ paid = null,
+  ) => {
     const a = rollAdopt(read() ?? from, from, sent, roll.factions);
     write(a.local);
     // STANDING-WORDS: what the Roll's word moved since its last - a claim's credit, a hall writ's, the owed paid - and what
@@ -241,7 +301,11 @@ export function createRollTracker({
     lastOwed = owed;
     keep({ seq: roll.seq, factions: a.base });
     heldKey = rollMembersKey(membersOf(roll.members));
-    sinces = new Map((Array.isArray(roll.members) ? roll.members : []).filter((m) => Number.isFinite(m?.since)).map((m) => [m.f, m.since]));   // ROLL-PACE
+    sinces = new Map(
+      (Array.isArray(roll.members) ? roll.members : [])
+        .filter((m) => Number.isFinite(m?.since))
+        .map((m) => [m.f, m.since]),
+    ); // ROLL-PACE
     wait = ROLL_RETRY_MS;
     nextAt = now();
     // CHAP4b: the book held at 7, and the seats kept - each said
@@ -251,27 +315,38 @@ export function createRollTracker({
     seats = rollSeatsOf(roll.seats);
     heardAt = now();
     onSeats(seats, before);
-    onStanding(changes, !firstSaid);   // AUDIT GUILD-WORDS L2-5: once a page - a reseed is no first word
+    onStanding(changes, !firstSaid); // AUDIT GUILD-WORDS L2-5: once a page - a reseed is no first word
     firstSaid = true;
   };
 
-  async function first(/** @type {string} */ id, /** @type {string} */ ls, /** @type {Record<number, number>} */ values) {
+  async function first(
+    /** @type {string} */ id,
+    /** @type {string} */ ls,
+    /** @type {Record<number, number>} */ values,
+  ) {
     const r = await io.read(id, ls, { factions: values, members: members() });
     if (!r.ok) return fail(r.error, ls);
     const roll = r.data?.roll;
-    if (!roll) return fail('roll-seed');   // a seed went with it, so the Roll stands - or the service took none
+    if (!roll) return fail('roll-seed'); // a seed went with it, so the Roll stands - or the service took none
     // the base the answer is adopted over: the seed itself, when this read made the Roll; the kept adoption, when the Roll
     // still stands where the save last saw it (whatever the save holds past it was never claimed); the standing the
     // pages that never heard the Roll began from, when the save says so (what they moved was never claimed); else this
     // page's start
     const k = rollKeptOf(kept());
-    const unheard = r.data.seeded ? null : k?.unheard ?? null;
-    const from = r.data.seeded ? values : k && k.seq === r.data.from ? k.factions : unheard ? unheard.start : /** @type {Record<number, number>} */ (values0);
-    adopt(from, {}, roll, r.data.paid ?? null);   // AUDIT GUILD-WORDS II B-5: what this read paid, the service's word
+    const unheard = r.data.seeded ? null : (k?.unheard ?? null);
+    const from = r.data.seeded
+      ? values
+      : k && k.seq === r.data.from
+        ? k.factions
+        : unheard
+          ? unheard.start
+          : /** @type {Record<number, number>} */ (values0);
+    adopt(from, {}, roll, r.data.paid ?? null); // AUDIT GUILD-WORDS II B-5: what this read paid, the service's word
     // what the save holds past that base goes first, under the save's own claim id: a page that loads the same save
     // again (this one closed before its next save landed) sends the same claim, and the service answers it as a repeat
     const saved = unheard ? rollDeltasOf(/** @type {Record<number, number>} */ (values0), from) : {};
-    if (Object.keys(saved).length) pending = { rid: /** @type {{ rid: string }} */ (unheard).rid, deltas: saved, members: members() };
+    if (Object.keys(saved).length)
+      pending = { rid: /** @type {{ rid: string }} */ (unheard).rid, deltas: saved, members: members() };
   }
 
   /** The claim due now, or null: the one still out, or what moved since the Roll's last word. */
@@ -283,8 +358,9 @@ export function createRollTracker({
     const asked = askGen > doneGen;
     // AUDIT CHAP4 C1: nothing moved - asked again all the same once ROLL_SEATS_MS old, so a Turning's seats reach the page
     // (a seat lost kept its rank at the halls for as long as the page stood; a seat won waited for some claim)
-    if (!asked && !Object.keys(deltas).length && (key === null || key === heldKey) && now() - heardAt < ROLL_SEATS_MS) return null;
-    if (!asked && now() - lastSentAt < ROLL_CLAIM_MS) return null;   // CHAP2a: a refresh is asked at once (a writ's, three a day)
+    if (!asked && !Object.keys(deltas).length && (key === null || key === heldKey) && now() - heardAt < ROLL_SEATS_MS)
+      return null;
+    if (!asked && now() - lastSentAt < ROLL_CLAIM_MS) return null; // CHAP2a: a refresh is asked at once (a writ's, three a day)
     pending = { rid: rid(), deltas, members: list };
     return pending;
   };
@@ -296,7 +372,7 @@ export function createRollTracker({
     const g = askGen;
     lastSentAt = now();
     const r = await io.claim(id, ls, c.rid, c.deltas, c.members);
-    if (!r.ok) return fail(r.error, ls);   // kept: sent again as it was
+    if (!r.ok) return fail(r.error, ls); // kept: sent again as it was
     pending = null;
     doneGen = Math.max(doneGen, g);
     const owedBefore = lastOwed;
@@ -307,11 +383,14 @@ export function createRollTracker({
     // claimed again every minute for as long as the two differed
     if (c.members) heldKey = rollMembersKey(c.members);
     const credited = r.data.credited ?? {};
-    const cut = Object.keys(c.deltas).map(Number).filter((f) => c.deltas[f] > 0 && (credited[f] ?? c.deltas[f]) < c.deltas[f]);
+    const cut = Object.keys(c.deltas)
+      .map(Number)
+      .filter((f) => c.deltas[f] > 0 && (credited[f] ?? c.deltas[f]) < c.deltas[f]);
     // AUDIT GUILD-WORDS II B-3, C-4: what the day's room did not take is owed only under the most a standing holds
     // (npcChapterLaw.js owedUnder) - the pace's line where the owed grew by it (against the owed after this claim's own
     // payment), the lost line where some of it went nowhere; a service before `paid` is read as AUDIT CHAP's pace alone
-    const grew = (/** @type {number} */ f) => (lastOwed[f] ?? 0) - Math.max(0, (owedBefore[f] ?? 0) - (paid ? Math.max(0, paid[f] ?? 0) : 0));
+    const grew = (/** @type {number} */ f) =>
+      (lastOwed[f] ?? 0) - Math.max(0, (owedBefore[f] ?? 0) - (paid ? Math.max(0, paid[f] ?? 0) : 0));
     const paced = paid ? cut.filter((f) => grew(f) > 0) : cut;
     if (paced.length) onCeiling(paced);
     const lost = paid ? cut.filter((f) => c.deltas[f] - (credited[f] ?? c.deltas[f]) > Math.max(0, grew(f))) : [];
@@ -323,9 +402,13 @@ export function createRollTracker({
     tick() {
       // AUDIT CHAP2 C4: a 'lease' refusal ends the asking for that lease alone - the page gives its lease up as it hides
       // and takes a new one as it shows (scenes/world.js), and a claim caught between the two must not end the page's Roll
-      if (stopped === 'lease' && lease() && lease() !== stoppedLease) { stopped = null; nextAt = 0; }
+      if (stopped === 'lease' && lease() && lease() !== stoppedLease) {
+        stopped = null;
+        nextAt = 0;
+      }
       if (stopped || busy || now() < nextAt) return;
-      const id = character(), ls = lease();
+      const id = character(),
+        ls = lease();
       if (!id || !ls) return;
       const values = read();
       if (!values) return;
@@ -334,20 +417,30 @@ export function createRollTracker({
       busy = true;
       (base ? claim(id, ls, values) : first(id, ls, values))
         .catch(() => fail('server'))
-        .finally(() => { busy = false; });
+        .finally(() => {
+          busy = false;
+        });
     },
     /** CHAP2a: the Roll moved on the service (a hall writ's credit) - the next tick claims, and the answer is adopted. */
     refresh() {
-      if (stopped || !base) return;   // before the first read the read itself answers the Roll
-      askGen++;   // a failure's wait still holds: the claim goes when the service is asked again
+      if (stopped || !base) return; // before the first read the read itself answers the Roll
+      askGen++; // a failure's wait still holds: the claim goes when the service is asked again
     },
-    get held() { return base != null; },
-    get stopped() { return stopped; },
+    get held() {
+      return base != null;
+    },
+    get stopped() {
+      return stopped;
+    },
     /** CHAP4b: the character's seats, `[{ f, region, seat }]` - none before the Roll's first word. */
-    get seats() { return seats ?? []; },
+    get seats() {
+      return seats ?? [];
+    },
     /** ROLL-PACE: the Roll's own standing with faction `f` - its reputation as last adopted and when it saw the membership
      *  begin (null: not one it has seen) - or null before its first word. */
-    standing(/** @type {number} */ f) { return base ? { rep: base[f] ?? 0, since: sinces.get(f) ?? null } : null; },
+    standing(/** @type {number} */ f) {
+      return base ? { rep: base[f] ?? 0, since: sinces.get(f) ?? null } : null;
+    },
   };
 }
 
@@ -359,5 +452,9 @@ export function createRollTracker({
 export function rollPaceOf(tracker, f, nowS) {
   if (!tracker || tracker.stopped) return null;
   const standing = tracker.standing(f);
-  return { book: ROLL_BOOK_RANK_MAX, ceiling: rollPromoteCeiling(standing, nowS), wait: (/** @type {number} */ rank) => rollPaceWait(standing, nowS, rank) };
+  return {
+    book: ROLL_BOOK_RANK_MAX,
+    ceiling: rollPromoteCeiling(standing, nowS),
+    wait: (/** @type {number} */ rank) => rollPaceWait(standing, nowS, rank),
+  };
 }

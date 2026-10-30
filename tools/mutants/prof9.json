@@ -434,8 +434,8 @@
   {
     "name": "PROF9-record-drops-hand",
     "file": "src/net/productRecord.js",
-    "old": "...(f == null ? {} : { f })",
-    "new": "...{}",
+    "old": "    ...(f == null ? {} : { f }),",
+    "new": "    ...{},",
     "tests": [
       "test/net/prof9_law.test.js",
       "test/net/prof9_service.test.js"
@@ -444,8 +444,8 @@
   {
     "name": "PROF9-record-reads-any-hand",
     "file": "src/net/productRecord.js",
-    "old": "  if (c.f !== undefined && !handOk(r, c.f)) return false;   // PROF9: a dish's cook's hand; PROF10: a jeweller's\n",
-    "new": "",
+    "old": "  if (c.f !== undefined && !handOk(r, c.f)) return false; // PROF9: a dish's cook's hand; PROF10: a jeweller's\n  if (c.v !== undefined && !(Number.isSafeInteger(c.v) && c.v >= MINT_V_LAST_PASS)) return false; // CRAFT-PROCS: the mint's version",
+    "new": "  if (c.v !== undefined && !(Number.isSafeInteger(c.v) && c.v >= MINT_V_LAST_PASS)) return false; // CRAFT-PROCS: the mint's version",
     "tests": [
       "test/net/prof9_law.test.js"
     ]
@@ -453,8 +453,8 @@
   {
     "name": "PROF9-record-chef-any-dish",
     "file": "src/net/productRecord.js",
-    "old": "f === HAND_PROVISIONER || (f === HAND_CHEF && dishOf(r.id)?.effect.party === true)",
-    "new": "f === HAND_PROVISIONER || f === HAND_CHEF",
+    "old": "  return f === HAND_PROVISIONER || (f === HAND_CHEF && dishOf(r.id)?.effect.party === true);",
+    "new": "  return f === HAND_PROVISIONER || f === HAND_CHEF;",
     "tests": [
       "test/net/prof9_law.test.js"
     ]
@@ -462,8 +462,8 @@
   {
     "name": "PROF9-record-hand-on-a-sword",
     "file": "src/net/productRecord.js",
-    "old": "  if (r.kind !== 'dish') return false;\n",
-    "new": "",
+    "old": "  if (r.kind !== 'dish') return false;\n  return f === HAND_PROVISIONER || (f === HAND_CHEF && dishOf(r.id)?.effect.party === true);",
+    "new": "  return f === HAND_PROVISIONER || (f === HAND_CHEF && dishOf(r.id)?.effect.party === true);",
     "tests": [
       "test/net/prof9_law.test.js"
     ]
@@ -471,8 +471,8 @@
   {
     "name": "PROF9-market-no-dishes",
     "file": "src/net/marketLaw.js",
-    "old": "  Object.freeze(['dishes', 'Dishes']),\n",
-    "new": "",
+    "old": "  Object.freeze(['dishes', 'Dishes']),\n  // PROF10: the jeweller's bench's - DFU's eight pieces of jewellery (recipeLaw JEWEL_PIECES), a jeweller's hand with each",
+    "new": "  // PROF10: the jeweller's bench's - DFU's eight pieces of jewellery (recipeLaw JEWEL_PIECES), a jeweller's hand with each",
     "tests": [
       "test/net/prof9_law.test.js",
       "test/net/prof9_service.test.js"

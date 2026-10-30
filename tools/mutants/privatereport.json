@@ -182,8 +182,8 @@
   {
     "name": "PRIVREP-the-rid-minted-each-send",
     "file": "src/net/privateReport.js",
-    "old": "if (this._ridKey !== key) { this._rid = this.rid(); this._ridKey = key; }",
-    "new": "{ this._rid = this.rid(); this._ridKey = key; }",
+    "old": "    if (this._ridKey !== key) {",
+    "new": "    {",
     "tests": [
       "test/net/private_reports_client.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "PRIVREP-the-rid-kept-past-a-changed-draft",
     "file": "src/net/privateReport.js",
-    "old": "    const key = JSON.stringify(words);\n",
-    "new": "    const key = JSON.stringify([words.subject, words.body]);\n",
+    "old": "    const key = JSON.stringify(words);",
+    "new": "    const key = JSON.stringify([words.subject, words.body]);",
     "tests": [
       "test/net/private_reports_client.test.js"
     ],
@@ -202,7 +202,7 @@
   {
     "name": "PRIVREP-the-draft-kept-after-a-send",
     "file": "src/net/privateReport.js",
-    "old": "if (JSON.stringify(reportWordsOf(this.draft)) === key) this.draft = emptyDraft();",
+    "old": "      if (JSON.stringify(reportWordsOf(this.draft)) === key) this.draft = emptyDraft();",
     "new": "",
     "tests": [
       "test/net/private_reports_client.test.js"
@@ -262,8 +262,8 @@
   {
     "name": "PRIVREP-the-close-never-asked",
     "file": "src/net/privateReport.js",
-    "old": "    const r = await reportCloseCall(io, id, state);",
-    "new": "    const r = { ok: true };",
+    "old": "      const r = await reportCloseCall(io, id, state);",
+    "new": "      const r = { ok: true };",
     "tests": [
       "test/net/private_reports_client.test.js"
     ],
@@ -483,8 +483,8 @@
   {
     "name": "PRIVREP-the-rid-keyed-to-the-raw-text",
     "file": "src/net/privateReport.js",
-    "old": "    const key = JSON.stringify(words);\n",
-    "new": "    const key = JSON.stringify(this.draft);\n",
+    "old": "    const key = JSON.stringify(words);",
+    "new": "    const key = JSON.stringify(this.draft);",
     "tests": [
       "test/net/private_reports_client.test.js"
     ],
@@ -493,8 +493,8 @@
   {
     "name": "PRIVREP-the-draft-cleared-of-words-typed-mid-send",
     "file": "src/net/privateReport.js",
-    "old": "if (JSON.stringify(reportWordsOf(this.draft)) === key) this.draft = emptyDraft();",
-    "new": "this.draft = emptyDraft();",
+    "old": "      if (JSON.stringify(reportWordsOf(this.draft)) === key) this.draft = emptyDraft();",
+    "new": "      this.draft = emptyDraft();",
     "tests": [
       "test/net/private_reports_client.test.js"
     ],
@@ -503,8 +503,8 @@
   {
     "name": "PRIVREP-the-look-folded-into-the-one-out",
     "file": "src/net/privateReport.js",
-    "old": "if (this._mineLook) { this._mineAgain = true; return this._mineLook; }",
-    "new": "if (this._mineLook) return this._mineLook;",
+    "old": "    if (this._mineLook) {\n      this._mineAgain = true;\n      return this._mineLook;\n    }",
+    "new": "    if (this._mineLook) return this._mineLook;",
     "tests": [
       "test/net/private_reports_client.test.js"
     ],
@@ -513,8 +513,8 @@
   {
     "name": "PRIVREP-the-desk-kept-past-a-switch-by-itself",
     "file": "src/net/privateReport.js",
-    "old": "      if (had !== null) this.reset();\n",
-    "new": "",
+    "old": "      if (had !== null) this.reset();\n    }",
+    "new": "    }",
     "tests": [
       "test/net/private_reports_client.test.js"
     ],
@@ -523,8 +523,8 @@
   {
     "name": "PRIVREP-an-answer-for-a-session-gone-taken",
     "file": "src/net/privateReport.js",
-    "old": "return epoch !== this._epoch || (this.ioOf?.()?.secret ?? null) !== io?.secret; }",
-    "new": "return epoch !== this._epoch; }",
+    "old": "    return epoch !== this._epoch || (this.ioOf?.()?.secret ?? null) !== io?.secret;",
+    "new": "    return epoch !== this._epoch;",
     "tests": [
       "test/net/private_reports_client.test.js"
     ],
@@ -533,8 +533,8 @@
   {
     "name": "PRIVREP-the-newest-look-overwritten-by-an-older",
     "file": "src/net/privateReport.js",
-    "old": "if (this._stale(io, epoch) || seq !== this._inboxSeq[w]) return",
-    "new": "if (this._stale(io, epoch)) return",
+    "old": "    if (this._stale(io, epoch) || seq !== this._inboxSeq[w]) return { ok: false, error: 'stale' };",
+    "new": "    if (this._stale(io, epoch)) return { ok: false, error: 'stale' };",
     "tests": [
       "test/net/private_reports_client.test.js"
     ],
@@ -543,8 +543,8 @@
   {
     "name": "PRIVREP-the-inbox-kept-past-not-report-reader",
     "file": "src/net/privateReport.js",
-    "old": "if (error === 'not-report-reader') {",
-    "new": "if (false) {",
+    "old": "    if (error === 'not-report-reader') {",
+    "new": "    if (false) {",
     "tests": [
       "test/net/private_reports_client.test.js"
     ],
@@ -553,8 +553,8 @@
   {
     "name": "PRIVREP-the-next-page-in-place-of-the-first",
     "file": "src/net/privateReport.js",
-    "old": "this.inbox[w] = [...held, ...list.filter((p) => !seen.has(p.id))];",
-    "new": "this.inbox[w] = list;",
+    "old": "      this.inbox[w] = [...held, ...list.filter((p) => !seen.has(p.id))];",
+    "new": "      this.inbox[w] = list;",
     "tests": [
       "test/net/private_reports_client.test.js"
     ],
@@ -563,8 +563,8 @@
   {
     "name": "PRIVREP-a-second-close-while-one-is-out",
     "file": "src/net/privateReport.js",
-    "old": "if (this.closing.has(id)) return { ok: false, error: 'busy' };",
-    "new": "",
+    "old": "    if (this.closing.has(id)) return { ok: false, error: 'busy' };\n    const io = this._io();",
+    "new": "    const io = this._io();",
     "tests": [
       "test/net/private_reports_client.test.js"
     ],
@@ -803,8 +803,8 @@
   {
     "name": "PRIVREP-a-report-opened-still-counted",
     "file": "src/net/privateReport.js",
-    "old": "    if (head && !head.read) { head.read = true; this._takeCounts({ ...this.counts, unread: Math.max(0, this.counts.unread - 1) }); }\n",
-    "new": "",
+    "old": "    if (head && !head.read) {\n      head.read = true;\n      this._takeCounts({ ...this.counts, unread: Math.max(0, this.counts.unread - 1) });\n    }\n    this._changed();",
+    "new": "    this._changed();",
     "tests": [
       "test/net/private_reports_client.test.js"
     ],
@@ -813,8 +813,8 @@
   {
     "name": "PRIVREP-the-counts-never-taken-from-the-inbox",
     "file": "src/net/privateReport.js",
-    "old": "    if (c) this._takeCounts(c);\n",
-    "new": "",
+    "old": "    if (c) this._takeCounts(c);\n    this.inboxError = null;",
+    "new": "    this.inboxError = null;",
     "tests": [
       "test/net/private_reports_client.test.js"
     ],
@@ -823,8 +823,8 @@
   {
     "name": "PRIVREP-the-closed-list-never-looked-at-again",
     "file": "src/net/privateReport.js",
-    "old": "this.inbox.closed ? this.loadInbox('closed') : null",
-    "new": "null",
+    "old": "      await Promise.all([this.loadInbox('open'), this.inbox.closed ? this.loadInbox('closed') : null]);",
+    "new": "      await Promise.all([this.loadInbox('open'), null]);",
     "tests": [
       "test/net/private_reports_client.test.js"
     ],

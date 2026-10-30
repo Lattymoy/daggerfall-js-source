@@ -20,7 +20,8 @@
 /** The channel every tab of this origin shares. */
 export const SEAT_CHANNEL = 'dagger.online.seat';
 /** The line said in the chat when this tab gives the seat up. */
-export const SEAT_NOTICE = 'You went online in another tab, window or device, so this one is now offline. Click "Play online here" to play here instead.';
+export const SEAT_NOTICE =
+  'You went online in another tab, window or device, so this one is now offline. Click "Play online here" to play here instead.';
 /** The same, short, over the screen (ui/midScreenText.js) - what a player coming back to the tab reads first. */
 export const SEAT_MID_TEXT = 'Online in another tab or device. This one is offline.';
 /** The button under the chat while this tab is out: it takes the seat back. */
@@ -39,12 +40,30 @@ const mintNonce = () => Math.random().toString(36).slice(2, 10) + Date.now().toS
  *
  * @param {{ Channel?: any, name?: string, nonce?: string, onLost?: () => void, now?: () => number }} [o]
  */
-export function createSeatLock({ Channel = globalThis.BroadcastChannel, name = SEAT_CHANNEL, nonce = mintNonce(), onLost = () => {}, now = () => Date.now() } = {}) {
+export function createSeatLock({
+  Channel = globalThis.BroadcastChannel,
+  name = SEAT_CHANNEL,
+  nonce = mintNonce(),
+  onLost = () => {},
+  now = () => Date.now(),
+} = {}) {
   /** @type {any} */
   let ch = null;
-  try { ch = typeof Channel === 'function' ? new Channel(name) : null; } catch { ch = null; }
-  let held = false, at = 0, seen = 0;   // this tab's claim's stamp, and the newest stamp heard on the channel
-  const say = () => { try { ch?.postMessage({ t: 'seat', n: nonce, at }); } catch { /* a closed channel says nothing */ } };
+  try {
+    ch = typeof Channel === 'function' ? new Channel(name) : null;
+  } catch {
+    ch = null;
+  }
+  let held = false,
+    at = 0,
+    seen = 0; // this tab's claim's stamp, and the newest stamp heard on the channel
+  const say = () => {
+    try {
+      ch?.postMessage({ t: 'seat', n: nonce, at });
+    } catch {
+      /* a closed channel says nothing */
+    }
+  };
   if (ch) {
     ch.onmessage = (/** @type {any} */ ev) => {
       const m = ev?.data;
@@ -52,25 +71,40 @@ export function createSeatLock({ Channel = globalThis.BroadcastChannel, name = S
       if (!m || m.t !== 'seat' || m.n === nonce || !Number.isFinite(m.at)) return;
       if (m.at > seen) seen = m.at;
       if (!held) return;
-      if (m.at < at || (m.at === at && String(m.n) < nonce)) { say(); return; }   // the older claim gives way - the other tab's
+      if (m.at < at || (m.at === at && String(m.n) < nonce)) {
+        say();
+        return;
+      } // the older claim gives way - the other tab's
       held = false;
-      try { onLost(); } catch { /* the host's own */ }
+      try {
+        onLost();
+      } catch {
+        /* the host's own */
+      }
     };
   }
   return {
     /** This tab goes online: the seat is this tab's, and every other tab of the browser is told. */
     claim() {
       held = true;
-      at = seen = Math.max(now(), seen + 1);   // after every claim this tab has heard, whatever the clock says
+      at = seen = Math.max(now(), seen + 1); // after every claim this tab has heard, whatever the clock says
       say();
     },
     /** This tab is out (the hub took the seat, or it left): it holds nothing, so another tab's claim tells it nothing. */
-    release() { held = false; },
+    release() {
+      held = false;
+    },
     /** Whether this tab holds the seat as far as this browser knows. */
-    get held() { return held; },
+    get held() {
+      return held;
+    },
     close() {
       held = false;
-      try { ch?.close?.(); } catch { /* already closed */ }
+      try {
+        ch?.close?.();
+      } catch {
+        /* already closed */
+      }
       ch = null;
     },
   };
