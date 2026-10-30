@@ -667,8 +667,8 @@
   {
     "name": "APPEARANCES-a-groups-count-the-filters",
     "file": "src/ui/collections/appearancesPart.js",
-    "old": "LOOK_WORDS.group(kindName(g.kind), g.held, g.total)",
-    "new": "LOOK_WORDS.group(kindName(g.kind), rows.length, g.total)",
+    "old": "    detail.append(divider(LOOK_WORDS.group(kindName(g.kind), g.held, g.total)));",
+    "new": "    detail.append(divider(LOOK_WORDS.group(kindName(g.kind), rows.length, g.total)));",
     "tests": [
       "test/ui/appearances_part.test.js"
     ]
@@ -676,8 +676,8 @@
   {
     "name": "APPEARANCES-the-parts-fee-unsaid",
     "file": "src/ui/collections/appearancesPart.js",
-    "old": "LOOK_WORDS.wearAt(kindName(kind), wardrobeFee(look))",
-    "new": "LOOK_WORDS.wearAt(kindName(kind), 0)",
+    "old": "  text.append(\n    el('h5', null, LOOK_WORDS.wearHead()),\n    el('p', null, LOOK_WORDS.wearAt(kindName(kind), wardrobeFee(look))),\n  );",
+    "new": "  text.append(el('h5', null, LOOK_WORDS.wearHead()), el('p', null, LOOK_WORDS.wearAt(kindName(kind), 0)));",
     "tests": [
       "test/ui/appearances_part.test.js"
     ]
@@ -685,8 +685,8 @@
   {
     "name": "APPEARANCES-the-dimming-lost",
     "file": "src/ui/collections/appearancesPart.js",
-    "old": "`coll-row${held ? ' held' : ''}${open ? ' on' : ''}`",
-    "new": "`coll-row held${open ? ' on' : ''}`",
+    "old": "  const row = el('button', `coll-row${held ? ' held' : ''}${open ? ' on' : ''}`);",
+    "new": "  const row = el('button', `coll-row held${open ? ' on' : ''}`);",
     "tests": [
       "test/ui/appearances_part.test.js"
     ]
@@ -749,8 +749,8 @@
   {
     "name": "AUDIT-E4-a-shop-s-style-said-as-anyone-s",
     "file": "src/ui/collections/appearancesPart.js",
-    "old": "look.v === lookVariant(look.t, look.m, 0);",
-    "new": "look.v === look.v;",
+    "old": "export const everyMintMakes = (/** @type {{ t: number, m: number, v: number }} */ look) =>\n  look.v === lookVariant(look.t, look.m, 0);",
+    "new": "export const everyMintMakes = (/** @type {{ t: number, m: number, v: number }} */ look) => look.v === look.v;",
     "tests": [
       "test/systems/appearances_audit.test.js"
     ]
@@ -758,8 +758,8 @@
   {
     "name": "AUDIT-E4-the-first-style-said-as-a-shop-s",
     "file": "src/ui/collections/appearancesPart.js",
-    "old": "look.v === lookVariant(look.t, look.m, 0);",
-    "new": "look.v === lookVariant(look.t, look.m, 1);",
+    "old": "  look.v === lookVariant(look.t, look.m, 0);",
+    "new": "  look.v === lookVariant(look.t, look.m, 1);",
     "tests": [
       "test/systems/appearances_audit.test.js"
     ]

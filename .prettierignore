@@ -48,6 +48,8 @@
 /src/systems/studioArt/*/
 !/src/ui/
 /src/ui/*
+!/src/ui/collections/
+/src/ui/collections/*/
 !/src/ui/ketch/
 /src/ui/ketch/*/
 !/src/ui/questlines/

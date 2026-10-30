@@ -590,8 +590,8 @@
   {
     "name": "HUNTERS-MARK-annals-bits-shifted",
     "file": "src/ui/collections/gatheredPart.js",
-    "old": "(bits & (1 << p)) !== 0",
-    "new": "(bits & (1 << (p + 1))) !== 0",
+    "old": "  return EG_ANNALS.map((_, p) => p).filter((p) => p < 31 && (bits & (1 << p)) !== 0);",
+    "new": "  return EG_ANNALS.map((_, p) => p).filter((p) => p < 31 && (bits & (1 << (p + 1))) !== 0);",
     "tests": [
       "test/systems/huntersmark_trophies.test.js"
     ]

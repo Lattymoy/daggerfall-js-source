@@ -211,8 +211,8 @@
   {
     "name": "AUDIT-TW-D6-the-wardrobe",
     "file": "src/ui/collections/wardrobeCatalogue.js",
-    "old": "t('coll.src.world', 'Around Tamriel')",
-    "new": "t('coll.src.world', 'Around the Bay')",
+    "old": "  wordPair('world', () => t('coll.src.world', 'Around Tamriel')),",
+    "new": "  wordPair('world', () => t('coll.src.world', 'Around the Bay')),",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_text.test.js"
     ],
