@@ -10,8 +10,8 @@ import { masteryMarksOf, MASTERY_MARKS, DRAGON_TITLES } from '../../src/net/hunt
 import { withMasteryMarksAll } from '../../server-account/src/hunts.js';
 import { DRAGON_TAME_ONE_IN } from '../../server-account/src/dragons.js';
 import { DRAGON_TAME_ODDS, WARDROBE } from '../../src/ui/collections/wardrobeCatalogue.js';
-import { TITLE_TEXT, TITLE_PLATE, titleBadge, titlePaint } from '../../src/ui/playerBadge.js';
-import { plateCss, setTitleFlame, PLATE_CLASS, plateClassOf } from '../../src/ui/titleFlame.js';
+import { TITLE_TEXT, titleBadge, titlePaint } from '../../src/ui/playerBadge.js';
+import { plateCss, setTitleFlame, PLATE_CLASS, plateClassOf, TITLE_PLATE } from '../../src/ui/titleFlame.js';
 import { utcDay } from '../../src/net/marksLaw.js';
 
 const { subtle } = globalThis.crypto;

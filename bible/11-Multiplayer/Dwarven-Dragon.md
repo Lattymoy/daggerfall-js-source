@@ -185,7 +185,7 @@ Rider** or **First Aether Rider**. A developer's tame is never a First (the owne
 derived like the Marks of Mastery (`net/huntLaw.js` DRAGON_TITLES, `server-account/src/hunts.js` DRAGON_COUNTS_SQL),
 signed into the token (relay world294) and shown in the wardrobe under the Dwarven Dragon. Each is worn on a metal
 name plate (the owner: "naw just make the name plate"): brass, aetherium, and the Firsts' gold and ice
-(`ui/playerBadge.js` TITLE_PLATE, `ui/titleFlame.js` plateCss).
+(`ui/titleFlame.js` TITLE_PLATE and plateCss).
 
 ## 9. What a player sees and hears
 

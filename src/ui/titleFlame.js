@@ -4,7 +4,18 @@
 // noise, into a strip of frames (flameSheetPixels, pure, so a pin can read it), and every DOM face shows it as one CSS
 // background stepped a frame at a time - a background-position animation, no script a frame, however many names burn.
 // The frames loop whole: the noise is periodic round the strip and over the loop, so the plate tiles and never jumps.
-import { TITLE_FLAME, TITLE_PLATE } from './playerBadge.js';
+import { TITLE_FLAME } from './playerBadge.js';
+
+/** WYRM-RIDER (the owner: "naw just make the name plate", "perfect titles"): A TITLE ON A METAL PLATE (plateCss, below;
+ *  kept here, not in ui/playerBadge.js, so its sheet is built at this module's load) - a pointed plate, its `rim` and its
+ *  `face` (CSS colours, top to bottom, or left to right where `across`), a rivet each end, the letters' dark `ink` edge,
+ *  and a `glow` round it where it names one. */
+export const TITLE_PLATE = Object.freeze({
+  wyrmrider: Object.freeze({ rim: ['#f2d48a', '#8a5a1e'], face: ['#c8913a', '#7a4f18', '#5c3a10'], rivet: '#ffe7a6', ink: '#3a2208', glow: null }),
+  aetherrider: Object.freeze({ rim: ['#bfefff', '#2f7fd0'], face: ['#2a5f9e', '#1b3c78', '#3b2470'], rivet: '#c9a9ff', ink: '#0b1638', glow: '#7fd4ff' }),
+  firstwyrmrider: Object.freeze({ rim: ['#ffe8a0', '#d9a441', '#7fd4ff', '#9b6bff'], across: true, face: ['#6a4310', '#23305e', '#3b2470'], rivet: '#ffe8a0', ink: '#2a1a05', glow: '#ffe8a0' }),
+  firstaetherrider: Object.freeze({ rim: ['#e8fbff', '#7fd4ff', '#9b6bff', '#e8fbff'], across: true, face: ['#1b3c78', '#2a1f5e', '#1b3c78'], rivet: '#e8fbff', ink: '#0b1638', glow: '#9b6bff' }),
+});
 
 /** A seeded number in 0..1 for an integer pair - the lattice's own, so a sheet is the same on every machine. */
 const hash2 = (/** @type {number} */ x, /** @type {number} */ y, /** @type {number} */ seed) => {
@@ -168,13 +179,15 @@ ${cc} { filter: drop-shadow(0 0 .3em ${p.glow}a0); }` : ''}`);
   }
   return rules.join('\n');
 }
+/** The sheet itself, laid once (an export, so the sheets' walk reads its rules - test/sheetRules.mjs). */
+export const TITLE_PLATE_CSS = plateCss();
 export const PLATE_STYLE_ID = 'dagger-title-plates';
 /** The plates' sheet in the document, once - plain CSS, laid at the first face that wears one. */
 export function ensureTitlePlates(/** @type {any} */ doc = globalThis.document) {
   if (typeof doc?.head?.append !== 'function' || doc.getElementById?.(PLATE_STYLE_ID) || !doc.createElement) return;
   const st = doc.createElement('style');
   st.id = PLATE_STYLE_ID;
-  st.textContent = plateCss();
+  st.textContent = TITLE_PLATE_CSS;
   doc.head.append(st);
 }
 

@@ -52,7 +52,7 @@
 import { TITLES, GLYPHS, SEAT_TITLES, CHAPTER_TITLES } from '../net/identityToken.js';
 import { chapterTitleText } from '../net/npcChapterLaw.js';   // CHAP4c: a chapter's seat's title, worded off its claim
 import { seatTitleText } from '../net/townSeatLaw.js';   // SEAT1c: a seat title in words, off its claim
-import { setTitleFlame } from './titleFlame.js';   // SHOP: a flame title's plate, on the faces paintTitle paints
+import { setTitleFlame, TITLE_PLATE } from './titleFlame.js';   // SHOP: a flame title's plate, on the faces paintTitle paints
 
 /** SEAT1c: THE PLACE A SEAT TITLE NAMES - the client's own seat by key (`{ name, region }`), or null. The host sets it
  *  once its seats are derived (scenes/world.js); until then, and offline, a seat title reads its plain word. */
@@ -269,7 +269,7 @@ export const COIL_SEA = Object.freeze([0.165, 0.561, 0.651, 1]);    // #2a8fa6
 export const COIL_TIDE = Object.freeze([0.122, 0.682, 0.549, 1]);   // #1fae8c
 export const COIL_FOAM = Object.freeze([0.847, 0.976, 0.937, 1]);   // #d8f9ef
 /** WYRM-RIDER (2026-10-30, the owner: "we need a title thats basd ass for this DRAGON TAMER"): the dragon tamers' letters,
- *  on their plates (TITLE_PLATE) - cream on brass, ice on aetherium, gold on the First's. */
+ *  on their plates (ui/titleFlame.js TITLE_PLATE) - cream on brass, ice on aetherium, gold on the First's. */
 export const WYRM_CREAM = Object.freeze([1, 0.906, 0.651, 1]);        // #ffe7a6
 export const WYRM_ICE = Object.freeze([0.788, 0.949, 1, 1]);          // #c9f2ff
 export const WYRM_GOLD = Object.freeze([1, 0.910, 0.627, 1]);         // #ffe8a0
@@ -519,15 +519,6 @@ export const TITLE_FLAME = Object.freeze({
   }),
 });
 
-/** WYRM-RIDER (the owner: "naw just make the name plate", "perfect titles"): A TITLE ON A METAL PLATE (ui/titleFlame.js
- *  plateCss) - a pointed plate, its `rim` and its `face` (CSS colours, top to bottom, or left to right where `across`), a
- *  rivet each end, the letters' dark `ink` edge, and a `glow` round it where it names one. */
-export const TITLE_PLATE = Object.freeze({
-  wyrmrider: Object.freeze({ rim: ['#f2d48a', '#8a5a1e'], face: ['#c8913a', '#7a4f18', '#5c3a10'], rivet: '#ffe7a6', ink: '#3a2208', glow: null }),
-  aetherrider: Object.freeze({ rim: ['#bfefff', '#2f7fd0'], face: ['#2a5f9e', '#1b3c78', '#3b2470'], rivet: '#c9a9ff', ink: '#0b1638', glow: '#7fd4ff' }),
-  firstwyrmrider: Object.freeze({ rim: ['#ffe8a0', '#d9a441', '#7fd4ff', '#9b6bff'], across: true, face: ['#6a4310', '#23305e', '#3b2470'], rivet: '#ffe8a0', ink: '#2a1a05', glow: '#ffe8a0' }),
-  firstaetherrider: Object.freeze({ rim: ['#e8fbff', '#7fd4ff', '#9b6bff', '#e8fbff'], across: true, face: ['#1b3c78', '#2a1f5e', '#1b3c78'], rivet: '#e8fbff', ink: '#0b1638', glow: '#9b6bff' }),
-});
 
 /** A glyph's colour. The sprout is green because Mac said green; the
  *  dev glyph takes the Developer title's own red, read from it rather
