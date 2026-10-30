@@ -2,8 +2,8 @@
   {
     "name": "COST2B-seed-base",
     "file": "src/net/cellTree.js",
-    "old": "base: /** @type {number} */ (level), split: Object.freeze([])",
-    "new": "base: /** @type {number} */ (level) - 1, split: Object.freeze([])",
+    "old": "    : Object.freeze({ v: 1, base: /** @type {number} */ (level), split: Object.freeze([]), joined: Object.freeze([]) });",
+    "new": "    : Object.freeze({\n        v: 1,\n        base: /** @type {number} */ (level) - 1,\n        split: Object.freeze([]),\n        joined: Object.freeze([]),\n      });",
     "tests": [
       "test/net/celltreemoves.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "COST2B-L0-seeded-anew",
     "file": "src/net/cellTree.js",
-    "old": "return level === 0 ? L0_TREE : Object.freeze(",
-    "new": "return Object.freeze(",
+    "old": "  return level === 0\n    ? L0_TREE\n    : Object.freeze({ v: 1, base: /** @type {number} */ (level), split: Object.freeze([]), joined: Object.freeze([]) });",
+    "new": "  return Object.freeze({\n    v: 1,\n    base: /** @type {number} */ (level),\n    split: Object.freeze([]),\n    joined: Object.freeze([]),\n  });",
     "tests": [
       "test/net/celltreemoves.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "COST2B-seed-read-loose",
     "file": "src/net/cellTree.js",
-    "old": "/^[1-4]$/.test(String(value)) ? Number(value) : undefined",
-    "new": "/^[1-4]$/.test(String(value).trim()) ? Number(value) : undefined",
+    "old": "  value == null || value === '' || value === 'off' ? 0 : /^[1-4]$/.test(String(value)) ? Number(value) : undefined;",
+    "new": "  value == null || value === '' || value === 'off'\n    ? 0\n    : /^[1-4]$/.test(String(value).trim())\n      ? Number(value)\n      : undefined;",
     "tests": [
       "test/net/celltreemoves.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "COST2B-L0-joined-unread",
     "file": "src/net/cellTree.js",
-    "old": "tree.base === 0 && tree.joined.length === 0",
-    "new": "tree.base === 0",
+    "old": "export const isL0Tree = (tree) => tree.base === 0 && tree.joined.length === 0;",
+    "new": "export const isL0Tree = (tree) => tree.base === 0;",
     "tests": [
       "test/net/celltreemoves.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "COST2B-reached-past-a-whole",
     "file": "src/net/cellTree.js",
-    "old": "for (let ancestor = parentNode(key); ancestor; ancestor = parentNode(ancestor)) if (!isSplit(tree, ancestor)) return false;",
-    "new": "for (let ancestor = parentNode(key); ancestor; ancestor = parentNode(ancestor)) if (!isSplit(tree, ancestor)) break;",
+    "old": "  for (let ancestor = parentNode(key); ancestor; ancestor = parentNode(ancestor))\n    if (!isSplit(tree, ancestor)) return false;",
+    "new": "  for (let ancestor = parentNode(key); ancestor; ancestor = parentNode(ancestor)) if (!isSplit(tree, ancestor)) break;",
     "tests": [
       "test/net/celltreemoves.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "COST2B-split-children-left-split",
     "file": "src/net/cellTree.js",
-    "old": "return changed(tree, { cut: [key], whole: childNodes(key) });",
-    "new": "return changed(tree, { cut: [key] });",
+    "old": "  return changed(tree, { cut: [key], whole: childNodes(key) });",
+    "new": "  return changed(tree, { cut: [key] });",
     "tests": [
       "test/net/celltreemoves.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "COST2B-merge-children-left-listed",
     "file": "src/net/cellTree.js",
-    "old": "return changed(tree, { drop: children, whole: [parent] });",
-    "new": "return changed(tree, { whole: [parent] });",
+    "old": "  return changed(tree, { drop: children, whole: [parent] });",
+    "new": "  return changed(tree, { whole: [parent] });",
     "tests": [
       "test/net/celltreemoves.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "COST2B-merge-over-a-split-child",
     "file": "src/net/cellTree.js",
-    "old": "!children.every((key) => isLeaf(tree, key))) return null;",
-    "new": "!children.some((key) => isLeaf(tree, key))) return null;",
+    "old": "    !children.every((key) => isLeaf(tree, key))",
+    "new": "    !children.some((key) => isLeaf(tree, key))",
     "tests": [
       "test/net/celltreemoves.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "COST2B-non-leaf-split",
     "file": "src/net/cellTree.js",
-    "old": "if (!isLeaf(tree, key) || !nodeLevelOf(key)) return null;",
-    "new": "if (!isReached(tree, key) || !nodeLevelOf(key)) return null;",
+    "old": "  if (!isLeaf(tree, key) || !nodeLevelOf(key)) return null;",
+    "new": "  if (!isReached(tree, key) || !nodeLevelOf(key)) return null;",
     "tests": [
       "test/net/celltreemoves.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "COST2B-base-side",
     "file": "src/net/cellTree.js",
-    "old": "if (/** @type {number} */ (nodeLevelOf(key)) > tree.base) joined.add(key);",
-    "new": "if (/** @type {number} */ (nodeLevelOf(key)) >= tree.base) joined.add(key);",
+    "old": "    if (/** @type {number} */ (nodeLevelOf(key)) > tree.base) joined.add(key);",
+    "new": "    if (/** @type {number} */ (nodeLevelOf(key)) >= tree.base) joined.add(key);",
     "tests": [
       "test/net/celltreemoves.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "COST2B-dwell-unread",
     "file": "src/net/cellTree.js",
-    "old": "over[key] = dwell.over[key] ?? now;",
-    "new": "over[key] = now;",
+    "old": "    over[key] = dwell.over[key] ?? now;",
+    "new": "    over[key] = now;",
     "tests": [
       "test/net/celltreemoves.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "COST2B-at-the-line-taken",
     "file": "src/net/cellTree.js",
-    "old": "if (!(players > law.splitAt) ||",
-    "new": "if (!(players >= law.splitAt) ||",
+    "old": "    if (!(players > law.splitAt) || !nodeLevelOf(key) || !isLeaf(tree, key) || !movable(key)) continue;",
+    "new": "    if (!(players >= law.splitAt) || !nodeLevelOf(key) || !isLeaf(tree, key) || !movable(key)) continue;",
     "tests": [
       "test/net/celltreemoves.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "COST2B-merge-sum-per-child",
     "file": "src/net/cellTree.js",
-    "old": "if (!(children.reduce((sum, key) => sum + playersIn(key), 0) < law.mergeAt)) continue;",
-    "new": "if (!children.every((key) => playersIn(key) < law.mergeAt)) continue;",
+    "old": "    if (!(children.reduce((sum, key) => sum + playersIn(key), 0) < law.mergeAt)) continue;",
+    "new": "    if (!children.every((key) => playersIn(key) < law.mergeAt)) continue;",
     "tests": [
       "test/net/celltreemoves.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "COST2B-cooled-moved",
     "file": "src/net/cellTree.js",
-    "old": "|| !isLeaf(tree, key) || !movable(key)) continue;",
-    "new": "|| !isLeaf(tree, key)) continue;",
+    "old": "    if (!(players > law.splitAt) || !nodeLevelOf(key) || !isLeaf(tree, key) || !movable(key)) continue;",
+    "new": "    if (!(players > law.splitAt) || !nodeLevelOf(key) || !isLeaf(tree, key)) continue;",
     "tests": [
       "test/net/celltreemoves.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "COST2B-L0-split",
     "file": "src/net/cellTree.js",
-    "old": "if (!(players > law.splitAt) || !nodeLevelOf(key) || !isLeaf(tree, key)",
-    "new": "if (!(players > law.splitAt) || !isLeaf(tree, key)",
+    "old": "    if (!(players > law.splitAt) || !nodeLevelOf(key) || !isLeaf(tree, key) || !movable(key)) continue;",
+    "new": "    if (!(players > law.splitAt) || !isLeaf(tree, key) || !movable(key)) continue;",
     "tests": [
       "test/net/celltreemoves.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "COST2B-merge-before-split",
     "file": "src/net/cellTree.js",
-    "old": "const splitting = first(splits, over),\n    merging = splitting ? null : first(merges, under);",
-    "new": "const merging = first(merges, under),\n    splitting = merging ? null : first(splits, over);",
+    "old": "  const splitting = first(splits, over),\n    merging = splitting ? null : first(merges, under);",
+    "new": "  const merging = first(merges, under),\n    splitting = merging ? null : first(splits, over);",
     "tests": [
       "test/net/celltreemoves.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "COST2B-shortest-dwell-first",
     "file": "src/net/cellTree.js",
-    "old": "candidates.sort((left, right) => since[left] - since[right] ||",
-    "new": "candidates.sort((left, right) => since[right] - since[left] ||",
+    "old": "    candidates.sort((left, right) => since[left] - since[right] || (left < right ? -1 : 1))[0];",
+    "new": "    candidates.sort((left, right) => since[right] - since[left] || (left < right ? -1 : 1))[0];",
     "tests": [
       "test/net/celltreemoves.test.js"
     ]

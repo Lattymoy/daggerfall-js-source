@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-EG-V-c-L7-1-door-one-word",
     "file": "src/net/chatCommands.js",
-    "old": "const m = /^\\/breach(?:\\s+([\\s\\S]*))?$/i.exec(String(text ?? '').trim());",
-    "new": "const m = /^\\/breach(?:\\s+(\\w+))?$/i.exec(String(text ?? '').trim());",
+    "old": "  const m = /^\\/breach(?:\\s+([\\s\\S]*))?$/i.exec(String(text ?? '').trim());",
+    "new": "  const m = /^\\/breach(?:\\s+(\\w+))?$/i.exec(String(text ?? '').trim());",
     "tests": [
       "test/net/eliteGates/egaudit5_c.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-EG-V-c-L7-1-host-unknown",
     "file": "src/net/chatCommands.js",
-    "old": "'seasons', 'breach', 'block',",
-    "new": "'seasons', 'block',",
+    "old": "  'breach',\n  'block',",
+    "new": "  'block',",
     "tests": [
       "test/net/eliteGates/egaudit5_c.test.js"
     ]

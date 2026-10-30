@@ -85,15 +85,22 @@ export const placeGone = (/** @type {Digest} */ d, /** @type {number} */ p) => (
  * The owner's word of a body's takes - `{ g, l, x, c? }` - from its state: `generation`, the places there are (`length`),
  * the set gone (`taken`) and the stacks drawn down (`counts`, a place gone carries none).
  */
-export function digestWord(/** @type {number} */ generation, /** @type {number} */ length, /** @type {Set<number>} */ taken, /** @type {Map<number, number>} */ counts) {
+export function digestWord(
+  /** @type {number} */ generation,
+  /** @type {number} */ length,
+  /** @type {Set<number>} */ taken,
+  /** @type {Map<number, number>} */ counts,
+) {
   /** @type {[number, number][]} */
   const c = [...counts].filter(([p]) => !taken.has(p)).sort((a, b) => a[0] - b[0]);
   return { g: generation, l: length, x: hexOfPlaces(taken), ...(c.length ? { c } : {}) };
 }
 /** A digest word as the foes frame's entry: `[i, g, l, x, c?]`. */
-export const digestEntry = (/** @type {number} */ i, /** @type {DigestWord} */ d) => (d.c ? [i, d.g, d.l, d.x, d.c] : [i, d.g, d.l, d.x]);
+export const digestEntry = (/** @type {number} */ i, /** @type {DigestWord} */ d) =>
+  d.c ? [i, d.g, d.l, d.x, d.c] : [i, d.g, d.l, d.x];
 /** A digest word's text, for the foes frame's dedupe key: a take re-sends the record. */
-export const digestKey = (/** @type {DigestWord} */ d) => `${d.g}.${d.l}.${d.x}${d.c ? `.${d.c.map(([p, n]) => `${p}:${n}`).join(',')}` : ''}`;
+export const digestKey = (/** @type {DigestWord} */ d) =>
+  `${d.g}.${d.l}.${d.x}${d.c ? `.${d.c.map(([p, n]) => `${p}:${n}`).join(',')}` : ''}`;
 
 /**
  * A digest word off the wire, projected: `g` a whole number, `l` in [0, ROOM_BASE_MAX], `x` lowercase hex of at most
@@ -134,10 +141,22 @@ export function validDigestEntry(/** @type {any} */ e) {
  */
 export function mergeDigest(/** @type {Digest} */ into, /** @type {Digest} */ d) {
   let changed = false;
-  if (d.l > into.l) { into.l = d.l; changed = true; }
+  if (d.l > into.l) {
+    into.l = d.l;
+    changed = true;
+  }
   const x = into.x | d.x;
-  if (x !== into.x) { into.x = x; changed = true; }
-  for (const [p, n] of d.c) { const was = into.c.get(p); if (was === undefined || n < was) { into.c.set(p, n); changed = true; } }
+  if (x !== into.x) {
+    into.x = x;
+    changed = true;
+  }
+  for (const [p, n] of d.c) {
+    const was = into.c.get(p);
+    if (was === undefined || n < was) {
+      into.c.set(p, n);
+      changed = true;
+    }
+  }
   return changed;
 }
 
@@ -181,7 +200,8 @@ export function bodyStateOf(/** @type {Digest | null} */ digest, /** @type {any[
 export function placesLacking(/** @type {Digest} */ digest, /** @type {any[]} */ items, max = PEEK_PLACES_MAX) {
   /** @type {number[]} */
   const out = [];
-  for (let p = 0; p < digest.l && out.length < max; p++) if (!placeGone(digest, p) && items[p] === undefined) out.push(p);
+  for (let p = 0; p < digest.l && out.length < max; p++)
+    if (!placeGone(digest, p) && items[p] === undefined) out.push(p);
   return out;
 }
 
@@ -192,7 +212,8 @@ export function validPeek(/** @type {any} */ bp) {
   if (!Array.isArray(bp)) return null;
   /** @type {number[]} */
   const out = [];
-  for (const p of bp.slice(0, PEEK_PLACES_MAX)) if (Number.isInteger(p) && p >= 0 && p < ROOM_BASE_MAX && !out.includes(p)) out.push(p);
+  for (const p of bp.slice(0, PEEK_PLACES_MAX))
+    if (Number.isInteger(p) && p >= 0 && p < ROOM_BASE_MAX && !out.includes(p)) out.push(p);
   return out;
 }
 /** The claims of a frame sent by `from`: `{ id, p, n }`, the id naming its claimer (no peer claims in another's name), the place and the count in range, each id once, at most ROOM_CLAIMS_MAX. */
@@ -202,7 +223,15 @@ export function validClaims(/** @type {any} */ bq, /** @type {string} */ from) {
   const out = [];
   for (const c of bq.slice(0, ROOM_CLAIMS_MAX)) {
     if (!c || typeof c !== 'object' || !validRoomId(c.id) || !claimOf(c.id, from)) continue;
-    if (!Number.isInteger(c.p) || c.p < 0 || c.p >= ROOM_BASE_MAX || !Number.isInteger(c.n) || c.n < 1 || c.n > LOOT_STACK_MAX) continue;
+    if (
+      !Number.isInteger(c.p) ||
+      c.p < 0 ||
+      c.p >= ROOM_BASE_MAX ||
+      !Number.isInteger(c.n) ||
+      c.n < 1 ||
+      c.n > LOOT_STACK_MAX
+    )
+      continue;
     if (out.some((o) => o.id === c.id)) continue;
     out.push({ id: c.id, p: c.p, n: c.n });
   }
@@ -214,7 +243,15 @@ export function validVerdicts(/** @type {any} */ bv) {
   /** @type {{ id: string, g: number, withdrawn: boolean }[]} */
   const out = [];
   for (const v of bv.slice(0, ROOM_CLAIMS_MAX * 2)) {
-    if (!Array.isArray(v) || (v.length !== 2 && v.length !== 3) || !validRoomId(v[0]) || !Number.isInteger(v[1]) || v[1] < 0 || v[1] > LOOT_STACK_MAX) continue;
+    if (
+      !Array.isArray(v) ||
+      (v.length !== 2 && v.length !== 3) ||
+      !validRoomId(v[0]) ||
+      !Number.isInteger(v[1]) ||
+      v[1] < 0 ||
+      v[1] > LOOT_STACK_MAX
+    )
+      continue;
     out.push({ id: v[0], g: v[1], withdrawn: v[2] === 1 });
   }
   return out;
@@ -224,11 +261,25 @@ export function validRecords(/** @type {any} */ br) {
   if (!Array.isArray(br)) return null;
   /** @type {[number, any][]} */
   const out = [];
-  for (const e of br.slice(0, PEEK_PLACES_MAX)) if (Array.isArray(e) && e.length === 2 && Number.isInteger(e[0]) && e[0] >= 0 && e[0] < ROOM_BASE_MAX && e[1] && typeof e[1] === 'object') out.push([e[0], e[1]]);
+  for (const e of br.slice(0, PEEK_PLACES_MAX))
+    if (
+      Array.isArray(e) &&
+      e.length === 2 &&
+      Number.isInteger(e[0]) &&
+      e[0] >= 0 &&
+      e[0] < ROOM_BASE_MAX &&
+      e[1] &&
+      typeof e[1] === 'object'
+    )
+      out.push([e[0], e[1]]);
   return out;
 }
 /** As many of the asked places' records as fit one frame, in the asked order (a page: the reader asks for the rest). */
-export function pageOfRecords(/** @type {number[]} */ places, /** @type {readonly any[]} */ records, /** @type {number} */ room = GRANT_FRAME_MAX - 1024) {
+export function pageOfRecords(
+  /** @type {number[]} */ places,
+  /** @type {readonly any[]} */ records,
+  /** @type {number} */ room = GRANT_FRAME_MAX - 1024,
+) {
   /** @type {[number, any][]} */
   const out = [];
   let bytes = 2;
@@ -242,11 +293,34 @@ export function pageOfRecords(/** @type {number[]} */ places, /** @type {readonl
   }
   return out;
 }
-export const peekFrame = (/** @type {string} */ to, /** @type {string | null} */ k, /** @type {number} */ i, /** @type {number[]} */ places) => ({ to, k, i, bp: places });
+export const peekFrame = (
+  /** @type {string} */ to,
+  /** @type {string | null} */ k,
+  /** @type {number} */ i,
+  /** @type {number[]} */ places,
+) => ({ to, k, i, bp: places });
 /** A claim frame: `g` the generation of the body the claims were made on (the digest's own - S1-2), the entries `{ id, p, n }` as ever. */
-export const claimsFrame = (/** @type {string} */ to, /** @type {string | null} */ k, /** @type {number} */ i, /** @type {number} */ g, /** @type {{ id: string, p: number, n: number }[]} */ claims) => ({ to, k, i, g, bq: claims.map(({ id, p, n }) => ({ id, p, n })) });
-export const answerFrame = (/** @type {string} */ to, /** @type {string | null} */ k, /** @type {number} */ i, /** @type {DigestWord} */ digest, /** @type {[number, any][]} */ records) => ({ to, k, i, bw: digest, br: records });
-export const verdictFrame = (/** @type {string} */ to, /** @type {string | null} */ k, /** @type {number} */ i, /** @type {DigestWord | null} */ digest, /** @type {[string, number][]} */ verdicts) => ({ to, k, i, ...(digest ? { bw: digest } : {}), bv: verdicts });
+export const claimsFrame = (
+  /** @type {string} */ to,
+  /** @type {string | null} */ k,
+  /** @type {number} */ i,
+  /** @type {number} */ g,
+  /** @type {{ id: string, p: number, n: number }[]} */ claims,
+) => ({ to, k, i, g, bq: claims.map(({ id, p, n }) => ({ id, p, n })) });
+export const answerFrame = (
+  /** @type {string} */ to,
+  /** @type {string | null} */ k,
+  /** @type {number} */ i,
+  /** @type {DigestWord} */ digest,
+  /** @type {[number, any][]} */ records,
+) => ({ to, k, i, bw: digest, br: records });
+export const verdictFrame = (
+  /** @type {string} */ to,
+  /** @type {string | null} */ k,
+  /** @type {number} */ i,
+  /** @type {DigestWord | null} */ digest,
+  /** @type {[string, number][]} */ verdicts,
+) => ({ to, k, i, ...(digest ? { bw: digest } : {}), bv: verdicts });
 
 // ---- the owner's verdict ledger ---------------------------------------------------------------------------------------
 
@@ -265,15 +339,29 @@ export function makeVerdictLedger({ keepMs = VERDICT_KEEP_MS, max = VERDICTS_MAX
   function get(/** @type {string} */ id, /** @type {number} */ now) {
     const e = byId.get(id);
     if (!e) return null;
-    if (now - e.at > keepMs) { byId.delete(id); return null; }
+    if (now - e.at > keepMs) {
+      byId.delete(id);
+      return null;
+    }
     return e;
   }
-  function set(/** @type {string} */ id, /** @type {{ to: string, i: number, bg: number, p: number, g: number }} */ v, /** @type {number} */ now) {
+  function set(
+    /** @type {string} */ id,
+    /** @type {{ to: string, i: number, bg: number, p: number, g: number }} */ v,
+    /** @type {number} */ now,
+  ) {
     byId.delete(id);
     const e = { ...v, at: now, inFlight: 0, flightAt: 0 };
     byId.set(id, e);
     while (byId.size > max) byId.delete(/** @type {string} */ (byId.keys().next().value));
     return e;
   }
-  return { get, set, clear: () => byId.clear(), get size() { return byId.size; } };
+  return {
+    get,
+    set,
+    clear: () => byId.clear(),
+    get size() {
+      return byId.size;
+    },
+  };
 }

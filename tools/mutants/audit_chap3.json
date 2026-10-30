@@ -199,8 +199,8 @@
   {
     "name": "A3-C2-FORGET",
     "file": "src/net/chapterSheet.js",
-    "old": "        stopped = true;\n        strengths = new Map();",
-    "new": "        stopped = true;",
+    "old": "            strengths = new Map();\n          }",
+    "new": "          }",
     "tests": [
       "test/net/audit_chap3.test.js"
     ]

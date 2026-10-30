@@ -29,8 +29,8 @@
   {
     "name": "EG5D-L4-1-the-field-read-to-now",
     "file": "src/net/bossRef.js",
-    "old": "upto = Math.max(from, Math.min(now - EG_TS_LAG_MAX_MS, a.at + sp));",
-    "new": "upto = Math.max(from, Math.min(now, a.at + sp));",
+    "old": "          upto = Math.max(from, Math.min(now - EG_TS_LAG_MAX_MS, a.at + sp));",
+    "new": "          upto = Math.max(from, Math.min(now, a.at + sp));",
     "tests": [
       "test/net/eliteGates/egaudit5_d_relay.test.js"
     ]

@@ -363,8 +363,8 @@
   {
     "name": "TOWNECON-AUDIT2-LIV11-by-name",
     "file": "src/net/chapterSheet.js",
-    "old": ".sort((a, b) => b.n - a.n || (a.p.name < b.p.name ? -1 : a.p.name > b.p.name ? 1 : 0))",
-    "new": ".sort((a, b) => (a.p.name < b.p.name ? -1 : a.p.name > b.p.name ? 1 : 0))",
+    "old": "              [...g.values()]\n                .sort((a, b) => b.n - a.n || (a.p.name < b.p.name ? -1 : a.p.name > b.p.name ? 1 : 0))\n                .map((e) => e.p),",
+    "new": "              [...g.values()].sort((a, b) => (a.p.name < b.p.name ? -1 : a.p.name > b.p.name ? 1 : 0)).map((e) => e.p),",
     "tests": [
       "test/systems/livingWorld/townecon_living.test.js"
     ],
@@ -374,7 +374,7 @@
     "name": "TOWNECON-AUDIT2-CLI2-every-ask",
     "file": "src/net/chapterSheet.js",
     "old": "      return (patronIndex.by.get(/** @type {number} */ (region)) ?? []).map((p) => ({ ...p }));",
-    "new": "      return (patronIndex.by.get(/** @type {number} */ (region)) ?? []);",
+    "new": "      return patronIndex.by.get(/** @type {number} */ (region)) ?? [];",
     "tests": [
       "test/systems/livingWorld/townecon_living.test.js"
     ],

@@ -53,7 +53,17 @@
 //   works never spend a raw good a later input asks as it is.
 // ═══════════════════════════════════════════════════════════════════
 
-import { WORK_RECIPES, SMELT_MAX, STORES_MAX, workOpen, workPer, workSpecRank, materialOf, smeltRecipe, professionName } from './professionLaw.js';
+import {
+  WORK_RECIPES,
+  SMELT_MAX,
+  STORES_MAX,
+  workOpen,
+  workPer,
+  workSpecRank,
+  materialOf,
+  smeltRecipe,
+  professionName,
+} from './professionLaw.js';
 
 /** The deepest a chain plans. FACT: no product's works are more than two deep (the Iron Ingot and the Charcoal under the
  *  Steel), so the bound is a guard, never a limit a real recipe meets. */
@@ -66,7 +76,8 @@ const tierOf = (/** @type {string} */ key) => materialOf(key, () => null)?.tier 
 
 /** Whether a work never trades down: every input of a tier at most its product's (41.2) - and DAEDRIC-SMELT: spends no
  *  Deadlands Ember (the Daedric smelt's - the player's own press at the forge). */
-export const chainWorkOk = (/** @type {any} */ r) => !!r && !r.spec && !r.embers && r.inputs.every((/** @type {any} */ inp) => tierOf(inp.key) <= tierOf(r.out));
+export const chainWorkOk = (/** @type {any} */ r) =>
+  !!r && !r.spec && !r.embers && r.inputs.every((/** @type {any} */ inp) => tierOf(inp.key) <= tierOf(r.out));
 
 /** The works a chain may plan - WORK_RECIPES less the transmutations, the works that trade down and the ember's. */
 export const CHAIN_WORKS = Object.freeze(WORK_RECIPES.filter(chainWorkOk));
@@ -79,7 +90,8 @@ export const producersOf = (/** @type {string} */ key) => CHAIN_WORKS.filter((r)
  * raises its yield, at the rank it is made (workSpecRank - a Tanner's at 50), read from `track` (the book's).
  * @param {any} r @param {(profession: string) => TrackView|null|undefined} [track]
  */
-export const chainYield = (r, track = () => null) => workPer(r, r.more ? { [r.more.profession]: track(r.more.profession)?.specs?.[workSpecRank(r)] ?? null } : {});
+export const chainYield = (r, track = () => null) =>
+  workPer(r, r.more ? { [r.more.profession]: track(r.more.profession)?.specs?.[workSpecRank(r)] ?? null } : {});
 
 /**
  * @typedef {{ rank?: number, specs?: Record<number, string|null|undefined> }} TrackView
@@ -89,7 +101,10 @@ export const chainYield = (r, track = () => null) => workPer(r, r.more ? { [r.mo
  */
 
 /** A count a caller gave: a whole number of units, else none. */
-const units = (/** @type {unknown} */ v) => { const n = Number(v); return Number.isSafeInteger(n) && n > 0 ? n : 0; };
+const units = (/** @type {unknown} */ v) => {
+  const n = Number(v);
+  return Number.isSafeInteger(n) && n > 0 ? n : 0;
+};
 
 class Plan {
   /** @param {(key: string) => number} held @param {(key: string) => number} room */
@@ -98,7 +113,8 @@ class Plan {
     this.room = room;
     /** what is held and not yet taken @type {Map<string, number>} */ this.heldLeft = new Map();
     /** what the plan's works made and nothing has taken yet @type {Map<string, number>} */ this.pool = new Map();
-    /** every unit the plan's works make of a product - the Stores' room it asks @type {Map<string, number>} */ this.made = new Map();
+    /** every unit the plan's works make of a product - the Stores' room it asks @type {Map<string, number>} */ this.made =
+      new Map();
     /** @type {Map<string, number>} */ this.spent = new Map();
     /** @type {Map<string, number>} */ this.short = new Map();
     /** @type {Map<string, number>} */ this.full = new Map();
@@ -107,26 +123,43 @@ class Plan {
   /** @returns {Plan} */
   clone() {
     const p = new Plan(this.held, this.room);
-    for (const k of /** @type {const} */ (['heldLeft', 'pool', 'made', 'spent', 'short', 'full'])) p[k] = new Map(this[k]);
+    for (const k of /** @type {const} */ (['heldLeft', 'pool', 'made', 'spent', 'short', 'full']))
+      p[k] = new Map(this[k]);
     p.works = this.works.slice();
     return p;
   }
   /** @param {Plan} p */
-  take(p) { Object.assign(this, { heldLeft: p.heldLeft, pool: p.pool, made: p.made, spent: p.spent, short: p.short, full: p.full, works: p.works }); }
+  take(p) {
+    Object.assign(this, {
+      heldLeft: p.heldLeft,
+      pool: p.pool,
+      made: p.made,
+      spent: p.spent,
+      short: p.short,
+      full: p.full,
+      works: p.works,
+    });
+  }
   /** @param {string} key */
-  heldOf(key) { return this.heldLeft.has(key) ? /** @type {number} */ (this.heldLeft.get(key)) : units(this.held(key)); }
+  heldOf(key) {
+    return this.heldLeft.has(key) ? /** @type {number} */ (this.heldLeft.get(key)) : units(this.held(key));
+  }
   /** `n` of `key` taken toward a need - what the works made first, then what is held (only that counted `spent`, F3);
    *  the rest answered. @param {string} key @param {number} n */
   use(key, n) {
     const fromPool = Math.min(this.pool.get(key) ?? 0, n);
     if (fromPool) this.pool.set(key, /** @type {number} */ (this.pool.get(key)) - fromPool);
-    const have = this.heldOf(key), t = Math.min(have, n - fromPool);
+    const have = this.heldOf(key),
+      t = Math.min(have, n - fromPool);
     this.heldLeft.set(key, have - t);
     if (t > 0) this.spent.set(key, (this.spent.get(key) ?? 0) + t);
     return n - fromPool - t;
   }
   /** The Stores' room left for the products of `key` the plan has not yet made. @param {string} key */
-  roomFor(key) { const r = Number(this.room(key)); return Math.max(0, (Number.isFinite(r) ? Math.floor(r) : Number.MAX_SAFE_INTEGER) - (this.made.get(key) ?? 0)); }
+  roomFor(key) {
+    const r = Number(this.room(key));
+    return Math.max(0, (Number.isFinite(r) ? Math.floor(r) : Number.MAX_SAFE_INTEGER) - (this.made.get(key) ?? 0));
+  }
   /** `made` products of `key`, `want` of them asked now - the rest there for a later need. @param {string} key @param {number} made @param {number} want */
   produce(key, made, want) {
     this.made.set(key, (this.made.get(key) ?? 0) + made);
@@ -149,7 +182,7 @@ class Plan {
  * @returns {ChainPlan}
  */
 export function chainPlan(inputs, held, { track = () => null, room = () => Infinity } = {}) {
-  const rankOf = (/** @type {any} */ r) => (r.xp ? track(r.xp)?.rank ?? 0 : 0);
+  const rankOf = (/** @type {any} */ r) => (r.xp ? (track(r.xp)?.rank ?? 0) : 0);
   const perOf = (/** @type {any} */ r) => chainYield(r, track);
   /**
    * `n` of `key` covered into `p` - held first, then by its works. Strict: answers false and leaves `p` as it was where
@@ -165,11 +198,16 @@ export function chainPlan(inputs, held, { track = () => null, room = () => Infin
       const per = perOf(r);
       // the most units of this work the held can carry - a work that covers u units covers fewer, the bound searched -
       // and the Stores' room can take
-      let lo = 0, hi = Math.min(Math.ceil(left / per), Math.floor(p.roomFor(key) / per)), best = null;
+      let lo = 0,
+        hi = Math.min(Math.ceil(left / per), Math.floor(p.roomFor(key) / per)),
+        best = null;
       while (lo < hi) {
         const mid = Math.ceil((lo + hi) / 2);
         const t = p.clone();
-        if (r.inputs.every((/** @type {any} */ inp) => cover(t, inp.key, inp.n * mid, depth + 1, false))) { best = { t, mid }; lo = mid; } else hi = mid - 1;
+        if (r.inputs.every((/** @type {any} */ inp) => cover(t, inp.key, inp.n * mid, depth + 1, false))) {
+          best = { t, mid };
+          lo = mid;
+        } else hi = mid - 1;
       }
       if (best && best.mid > 0) {
         best.t.works.push({ id: r.id, count: best.mid });
@@ -184,7 +222,8 @@ export function chainPlan(inputs, held, { track = () => null, room = () => Infin
     // what nothing covers: through the cheapest open work to the bottom of the chain, else short here
     const r = works[0];
     if (r) {
-      const per = perOf(r), count = Math.ceil(left / per);
+      const per = perOf(r),
+        count = Math.ceil(left / per);
       if (count * per > p.roomFor(key)) p.full.set(key, (p.full.get(key) ?? 0) + count * per);
       for (const inp of r.inputs) cover(p, inp.key, inp.n * count, depth + 1, true);
       p.works.push({ id: r.id, count });
@@ -199,7 +238,13 @@ export function chainPlan(inputs, held, { track = () => null, room = () => Infin
   // lenient: each work covers all it can strictly first, so a coverable input is covered as a strict pass would
   for (const inp of rest) if (inp.n > 0) cover(p, inp.key, inp.n, 0, true);
   const list = (/** @type {Map<string, number>} */ m) => [...m].map(([key, n]) => ({ key, n }));
-  return { ok: p.short.size === 0 && p.full.size === 0, works: chainWorks(p.works), spent: list(p.spent), short: list(p.short), full: list(p.full) };
+  return {
+    ok: p.short.size === 0 && p.full.size === 0,
+    works: chainWorks(p.works),
+    spent: list(p.spent),
+    short: list(p.short),
+    full: list(p.full),
+  };
 }
 
 /** The works in their order, a work asked twice in a row asked once, and each request at most SMELT_MAX units. */
@@ -208,17 +253,27 @@ export function chainWorks(/** @type {ChainWork[]} */ works) {
   const joined = [];
   for (const w of works) {
     const last = joined[joined.length - 1];
-    if (last && last.id === w.id) last.count += w.count; else joined.push({ id: w.id, count: w.count });
+    if (last && last.id === w.id) last.count += w.count;
+    else joined.push({ id: w.id, count: w.count });
   }
-  return joined.flatMap((w) => Array.from({ length: Math.ceil(w.count / SMELT_MAX) }, (_, i) => ({ id: w.id, count: Math.min(SMELT_MAX, w.count - i * SMELT_MAX) })));
+  return joined.flatMap((w) =>
+    Array.from({ length: Math.ceil(w.count / SMELT_MAX) }, (_, i) => ({
+      id: w.id,
+      count: Math.min(SMELT_MAX, w.count - i * SMELT_MAX),
+    })),
+  );
 }
 
 /** The Stores' room for a material as a book's view holds it (`{ own, bought, gold }`) - STORES_MAX less every origin, as
  *  the service counts it (smeltAtForge's `stores-full`). */
-export const storesRoom = (/** @type {{ own?: number, bought?: number, gold?: number, loose?: number }|null|undefined} */ s) => Math.max(0, STORES_MAX - ((s?.own ?? 0) | 0) - ((s?.bought ?? 0) | 0) - ((s?.gold ?? 0) | 0) - ((s?.loose ?? 0) | 0));   // AUDIT BAG-CRAFT A1: every origin fills the 5,000
+export const storesRoom = (
+  /** @type {{ own?: number, bought?: number, gold?: number, loose?: number }|null|undefined} */ s,
+) =>
+  Math.max(0, STORES_MAX - ((s?.own ?? 0) | 0) - ((s?.bought ?? 0) | 0) - ((s?.gold ?? 0) | 0) - ((s?.loose ?? 0) | 0)); // AUDIT BAG-CRAFT A1: every origin fills the 5,000
 
 /** Whether a craft wants a chain at all: some input not held as it stands. */
-export const chainNeeded = (/** @type {Need[]} */ inputs, /** @type {(key: string) => number} */ held) => (inputs ?? []).some((inp) => (Number(held(inp.key)) || 0) < inp.n);
+export const chainNeeded = (/** @type {Need[]} */ inputs, /** @type {(key: string) => number} */ held) =>
+  (inputs ?? []).some((inp) => (Number(held(inp.key)) || 0) < inp.n);
 
 /**
  * What a chain refined, said after the craft it ran for (the station's answer): "Refined first: Iron Ingot x3, Charcoal x3,
@@ -231,12 +286,16 @@ export const chainNeeded = (/** @type {Need[]} */ inputs, /** @type {(key: strin
  */
 export function refinedText(refined, name, track = () => null) {
   if (!Array.isArray(refined) || !refined.length) return '';
-  const made = new Map(), xp = new Map();
+  const made = new Map(),
+    xp = new Map();
   for (const w of refined) {
     const r = smeltRecipe(w.id);
     if (!r) continue;
     // AUDIT CRAFT1 F4: what the service said it made (its own and bought), where the book kept it
-    const n = Number.isSafeInteger(w.made) && /** @type {number} */ (w.made) >= 0 ? /** @type {number} */ (w.made) : w.count * chainYield(r, track);
+    const n =
+      Number.isSafeInteger(w.made) && /** @type {number} */ (w.made) >= 0
+        ? /** @type {number} */ (w.made)
+        : w.count * chainYield(r, track);
     made.set(r.out, (made.get(r.out) ?? 0) + n);
     if (r.xp && Number(w.xp) > 0) xp.set(r.xp, (xp.get(r.xp) ?? 0) + Number(w.xp));
   }

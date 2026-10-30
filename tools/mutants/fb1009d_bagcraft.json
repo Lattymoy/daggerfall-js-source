@@ -38,8 +38,8 @@
   {
     "name": "BAGCRAFT-the-cut-skipped",
     "file": "src/net/bagLaw.js",
-    "old": "Math.max(0, held | 0) - clampCarried(c, held).gold);",
-    "new": "Math.max(0, held | 0) - (c?.gold | 0));",
+    "old": "export const carriedWorkable = (c, held) => Math.max(0, Math.max(0, held | 0) - clampCarried(c, held).gold);",
+    "new": "export const carriedWorkable = (c, held) => Math.max(0, Math.max(0, held | 0) - (c?.gold | 0));",
     "tests": [
       "test/systems/fb1009d_bagcraft.test.js"
     ]

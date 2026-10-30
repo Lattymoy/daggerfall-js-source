@@ -2,8 +2,8 @@
   {
     "name": "ARMORY-an-empty-kit-a-claim",
     "file": "src/net/armoryLaw.js",
-    "old": "    any = true;\n  }\n  return any;",
-    "new": "    any = true;\n  }\n  return true;",
+    "old": "  return any;",
+    "new": "  return true;",
     "tests": [
       "test/render/armory.test.js",
       "test/server/armory_service.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "ARMORY-a-kit-of-any-length",
     "file": "src/net/armoryLaw.js",
-    "old": "kit.length !== ARMORY_SLOTS.length) return false;",
-    "new": "kit.length < ARMORY_SLOTS.length) return false;",
+    "old": "  if (typeof kit !== 'string' || kit.length !== ARMORY_SLOTS.length) return false;",
+    "new": "  if (typeof kit !== 'string' || kit.length < ARMORY_SLOTS.length) return false;",
     "tests": [
       "test/render/armory.test.js",
       "test/server/armory_service.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "ARMORY-a-slot-changed-beside-the-one-asked",
     "file": "src/net/armoryLaw.js",
-    "old": "(p ? p.code : ARMORY_EMPTY) + base.slice(i + 1);",
-    "new": "(p ? p.code : ARMORY_EMPTY) + ARMORY_EMPTY.repeat(ARMORY_SLOTS.length - i - 1);",
+    "old": "  const next = base.slice(0, i) + (p ? p.code : ARMORY_EMPTY) + base.slice(i + 1);",
+    "new": "  const next = base.slice(0, i) + (p ? p.code : ARMORY_EMPTY) + ARMORY_EMPTY.repeat(ARMORY_SLOTS.length - i - 1);",
     "tests": [
       "test/render/armory.test.js",
       "test/server/armory_service.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "ARMORY-a-piece-no-longer-held-signed",
     "file": "src/net/armoryLaw.js",
-    "old": ".filter((k) => k && held.includes(k)));",
-    "new": ".filter((k) => k));",
+    "old": "  return armoryKitOf(Object.values(pieces).filter((k) => k && held.includes(k)));",
+    "new": "  return armoryKitOf(Object.values(pieces).filter((k) => k));",
     "tests": [
       "test/render/armory.test.js",
       "test/server/armory_service.test.js"
@@ -315,8 +315,8 @@
   {
     "name": "ARMORY-a-set-giving-one-piece",
     "file": "src/net/armoryLaw.js",
-    "old": "(ARMORY_SETS[/** @type {keyof typeof ARMORY_SETS} */ (key)]).map((p) => p.key)",
-    "new": "(ARMORY_SETS[/** @type {keyof typeof ARMORY_SETS} */ (key)]).slice(0, 1).map((p) => p.key)",
+    "old": "      ? armoryLinePieces(ARMORY_SETS[/** @type {keyof typeof ARMORY_SETS} */ (key)]).map((p) => p.key)",
+    "new": "      ? armoryLinePieces(ARMORY_SETS[/** @type {keyof typeof ARMORY_SETS} */ (key)])\n          .slice(0, 1)\n          .map((p) => p.key)",
     "tests": [
       "test/server/armory_service.test.js",
       "test/render/armory.test.js"

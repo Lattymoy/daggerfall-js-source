@@ -221,7 +221,7 @@ carries no part and cuts none. All three give Raw Meat (C&C gives every body of 
 were free in the registry and in 4.8's table and sit after Arcane Essence (680); they take the pictures the ten borrow
 (a pelt is Nymph Hair's lock, a chitin Fairy Dragon's Scales'). The cures now stand by tier
 (`professionLaw.js:"HIDES.filter((h) => h.cures).sort((a, b) => a.tier - b.tier"`), since a chain plans a leather's cures
-cheapest first (`chainLaw.js:"export const producersOf = "`, CRAFT1's order); the ten keep their order - but the Bear
+cheapest first (`chainLaw.js:"export const producersOf"`, CRAFT1's order); the ten keep their order - but the Bear
 Hide's last of its tier since AUDIT FB1021 L2-1 (`01-Overview/audits/Audit-Field-Bugs-2026-10-21.md`: it is the Ram Kit's
 too, and a chain spent every one before a Wolf Pelt). The profession page
 names the new hides at Hunting 0 and 10 and the two furs' skins at Outfitting 10. No departure from DFU: DFU has no
@@ -534,11 +534,11 @@ NOT CHANGED (for the owner, with the reporter's word):
 count), the English catalog and the thirteen complete languages' drafts.
 
 FOUND. The Stores keep four origins, not three: own, bought, gold, and since AUDIT BAG-CRAFT A1
-(`06-Systems/Materials-Bag.md` 15, migration 0097) `loose` (`bagLaw.js:"export const LOOSE_ORIGIN = 'loose';"`) - units a
+(`06-Systems/Materials-Bag.md` 15, migration 0097) `loose` (`bagLaw.js:"export const LOOSE_ORIGIN"`) - units a
 put-in brought from the pack that the service never handed out. Two doors make them: a station's own shortfall
 (`profBook.js` ensureInStores with `work`) and the Stores page's Put in of uncounted goods
 (`profPages.js:"LOOT-LOOSE: what the service counts by"`) - every looted, traded or counter-bought stack. A station spends
-them first (`bagLaw.js:"export const STATION_ORIGINS = "`), and one loose unit among a craft's inputs walls the whole
+them first (`bagLaw.js:"export const STATION_ORIGINS"`), and one loose unit among a craft's inputs walls the whole
 piece: A1 marked it `products.bought_with = 'gold'` (`professions.js:"const boughtWith = "`), so it lists for gold alone,
 as a pack's piece does; a temper with a loose input does the same. But migration 0041 wrote that column as "A PIECE'S
 LAST PURCHASE", and the disenchant read it so - its origin was `p.bought_with === 'gold' ? 'gold' : ...` (alchemy.js line

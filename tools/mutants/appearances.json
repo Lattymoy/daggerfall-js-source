@@ -2,8 +2,8 @@
   {
     "name": "APPEARANCES-short-blade-in-with-the-long",
     "file": "src/net/appearanceLaw.js",
-    "old": "113: 'dagger', 114: 'shortBlade',",
-    "new": "113: 'dagger', 114: 'longBlade',",
+    "old": "  114: 'shortBlade',",
+    "new": "  114: 'longBlade',",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "APPEARANCES-war-axe-with-the-battle-axe",
     "file": "src/net/appearanceLaw.js",
-    "old": "127: 'axe', 128: 'greatAxe',",
-    "new": "127: 'axe', 128: 'axe',",
+    "old": "  128: 'greatAxe',",
+    "new": "  128: 'axe',",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "APPEARANCES-flail-a-mace",
     "file": "src/net/appearanceLaw.js",
-    "old": "115: 'staff', 124: 'mace', 125: 'flail',",
-    "new": "115: 'staff', 124: 'mace', 125: 'mace',",
+    "old": "  125: 'flail',",
+    "new": "  125: 'mace',",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "APPEARANCES-pauldron-side-crossed",
     "file": "src/net/appearanceLaw.js",
-    "old": "105: 'leftArm', 106: 'rightArm', 107: 'head'",
-    "new": "105: 'rightArm', 106: 'rightArm', 107: 'head'",
+    "old": "  105: 'leftArm',",
+    "new": "  105: 'rightArm',",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "APPEARANCES-the-dagger-a-short-blade",
     "file": "src/net/appearanceLaw.js",
-    "old": "113: 'dagger', 114: 'shortBlade',",
-    "new": "113: 'shortBlade', 114: 'shortBlade',",
+    "old": "  113: 'dagger',",
+    "new": "  113: 'shortBlade',",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "APPEARANCES-a-shield-its-own-kind",
     "file": "src/net/appearanceLaw.js",
-    "old": "109: 'shield', 110: 'shield',",
-    "new": "109: 'buckler', 110: 'shield',",
+    "old": "  109: 'shield',",
+    "new": "  109: 'buckler',",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "APPEARANCES-chain2-its-own",
     "file": "src/net/appearanceLaw.js",
-    "old": "m === ARMOR_MATERIAL.Chain2 ? ARMOR_MATERIAL.Chain : m",
-    "new": "m === ARMOR_MATERIAL.Chain ? ARMOR_MATERIAL.Chain : m",
+    "old": "  groupOfTemplate(t) === 'Armor' && m === ARMOR_MATERIAL.Chain2 ? ARMOR_MATERIAL.Chain : m;",
+    "new": "  groupOfTemplate(t) === 'Armor' && m === ARMOR_MATERIAL.Chain ? ARMOR_MATERIAL.Chain : m;",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "APPEARANCES-the-clamp-unread",
     "file": "src/net/appearanceLaw.js",
-    "old": "Math.min(n - 1, clampArmorVariant(t, m, Number.isInteger(v) ? v : 0))",
-    "new": "Math.min(n - 1, Number.isInteger(v) ? v : 0)",
+    "old": "  return Math.max(0, Math.min(n - 1, clampArmorVariant(t, m, Number.isInteger(v) ? v : 0)));",
+    "new": "  return Math.max(0, Math.min(n - 1, Number.isInteger(v) ? v : 0));",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "APPEARANCES-a-style-past-the-count",
     "file": "src/net/appearanceLaw.js",
-    "old": "Math.max(0, Math.min(n - 1, clampArmorVariant",
-    "new": "Math.max(0, Math.min(n, clampArmorVariant",
+    "old": "  return Math.max(0, Math.min(n - 1, clampArmorVariant(t, m, Number.isInteger(v) ? v : 0)));",
+    "new": "  return Math.max(0, Math.min(n, clampArmorVariant(t, m, Number.isInteger(v) ? v : 0)));",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "APPEARANCES-a-mods-piece-a-look",
     "file": "src/net/appearanceLaw.js",
-    "old": ".filter((t) => t >= 102 && t <= 130));",
-    "new": ".filter((t) => t >= 102 && t <= 600));",
+    "old": "    .filter((t) => t >= 102 && t <= 130),",
+    "new": "    .filter((t) => t >= 102 && t <= 600),",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "APPEARANCES-a-weapon-in-one-metal-less",
     "file": "src/net/appearanceLaw.js",
-    "old": "export const WEAPON_LOOK_MATERIALS = Object.freeze(Array.from({ length: 10 }",
-    "new": "export const WEAPON_LOOK_MATERIALS = Object.freeze(Array.from({ length: 9 }",
+    "old": "export const WEAPON_LOOK_MATERIALS = Object.freeze(Array.from({ length: 10 }, (_, i) => i));",
+    "new": "export const WEAPON_LOOK_MATERIALS = Object.freeze(Array.from({ length: 9 }, (_, i) => i));",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "APPEARANCES-an-artifact-collected",
     "file": "src/net/appearanceLaw.js",
-    "old": "if (item.artifact === true || item.rarity === 'gilded') return null;",
-    "new": "if (item.rarity === 'gilded') return null;",
+    "old": "  if (item.artifact === true || item.rarity === 'gilded') return null;",
+    "new": "  if (item.rarity === 'gilded') return null;",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "APPEARANCES-a-gilded-piece-collected",
     "file": "src/net/appearanceLaw.js",
-    "old": "if (item.artifact === true || item.rarity === 'gilded') return null;",
-    "new": "if (item.artifact === true) return null;",
+    "old": "  if (item.artifact === true || item.rarity === 'gilded') return null;",
+    "new": "  if (item.artifact === true) return null;",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "APPEARANCES-the-group-unchecked",
     "file": "src/net/appearanceLaw.js",
-    "old": "if (!item || typeof item !== 'object' || !LOOK_TEMPLATES.includes(item.templateIndex) || groupOfTemplate(item.templateIndex) !== item.group) return null;",
-    "new": "if (!item || typeof item !== 'object' || !LOOK_TEMPLATES.includes(item.templateIndex)) return null;",
+    "old": "  if (\n    !item ||\n    typeof item !== 'object' ||\n    !LOOK_TEMPLATES.includes(item.templateIndex) ||\n    groupOfTemplate(item.templateIndex) !== item.group\n  )\n    return null;",
+    "new": "  if (!item || typeof item !== 'object' || !LOOK_TEMPLATES.includes(item.templateIndex)) return null;",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "APPEARANCES-the-kind-unchecked",
     "file": "src/net/appearanceLaw.js",
-    "old": "return kind && kind === look.kind ? look : null;",
-    "new": "return kind ? look : null;",
+    "old": "  return kind && kind === look.kind ? look : null;",
+    "new": "  return kind ? look : null;",
     "tests": [
       "test/systems/appearances.test.js",
       "test/net/appearances_wire.test.js"
@@ -138,8 +138,8 @@
   {
     "name": "APPEARANCES-the-memo-never-renewed",
     "file": "src/net/appearanceLaw.js",
-    "old": "if (memo && memo.look === look && sameWatch(memo.src, item)) return memo.drawn;",
-    "new": "if (memo && memo.look === look) return memo.drawn;",
+    "old": "  if (memo && memo.look === look && sameWatch(memo.src, item)) return memo.drawn;",
+    "new": "  if (memo && memo.look === look) return memo.drawn;",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "APPEARANCES-the-memo-never-kept",
     "file": "src/net/appearanceLaw.js",
-    "old": "_drawn.set(item, { look, src: DRAWN_WATCH.map((k) => item[k]), drawn });",
-    "new": "_drawn.set({}, { look, src: DRAWN_WATCH.map((k) => item[k]), drawn });",
+    "old": "  _drawn.set(item, { look, src: DRAWN_WATCH.map((k) => item[k]), drawn });",
+    "new": "  _drawn.set({}, { look, src: DRAWN_WATCH.map((k) => item[k]), drawn });",
     "tests": [
       "test/systems/appearances.test.js",
       "test/ui/appearances_render.test.js"
@@ -157,8 +157,8 @@
   {
     "name": "APPEARANCES-the-dye-kept",
     "file": "src/net/appearanceLaw.js",
-    "old": "['appearance', 'ap', 'dyeColor', 'artifact',",
-    "new": "['appearance', 'ap', 'artifact',",
+    "old": "  'dyeColor',\n  'artifact',",
+    "new": "  'artifact',",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "APPEARANCES-the-artifact-kept",
     "file": "src/net/appearanceLaw.js",
-    "old": "'dyeColor', 'artifact', 'playerTextureArchive',",
-    "new": "'dyeColor', 'playerTextureArchive',",
+    "old": "  'artifact',\n  'playerTextureArchive',",
+    "new": "  'playerTextureArchive',",
     "tests": [
       "test/systems/appearances.test.js",
       "test/ui/appearances_render.test.js"
@@ -185,8 +185,8 @@
   {
     "name": "APPEARANCES-the-field-a-stray-key",
     "file": "src/net/appearanceLaw.js",
-    "old": "Object.keys(a).every((k) => k === 't' || k === 'm' || k === 'v')",
-    "new": "Object.keys(a).every((k) => k === 't' || k === 'm' || k === 'v' || k === 'x')",
+    "old": "  !!a && Object.keys(a).every((k) => k === 't' || k === 'm' || k === 'v') && isLook(a);",
+    "new": "  !!a && Object.keys(a).every((k) => k === 't' || k === 'm' || k === 'v' || k === 'x') && isLook(a);",
     "tests": [
       "test/systems/appearances.test.js"
     ]
@@ -194,8 +194,8 @@
   {
     "name": "APPEARANCES-the-wire-any-length",
     "file": "src/net/appearanceLaw.js",
-    "old": "if (!Array.isArray(ap) || ap.length !== 3) return null;",
-    "new": "if (!Array.isArray(ap) || ap.length < 3) return null;",
+    "old": "  if (!Array.isArray(ap) || ap.length !== 3) return null;",
+    "new": "  if (!Array.isArray(ap) || ap.length < 3) return null;",
     "tests": [
       "test/net/appearances_wire.test.js"
     ]
@@ -739,8 +739,8 @@
   {
     "name": "AUDIT-E3-the-unmade-style-kept",
     "file": "src/net/appearanceLaw.js",
-    "old": "lookMaterial(t, m) === ARMOR_MATERIAL.Chain && v !== 1;",
-    "new": "lookMaterial(t, m) === ARMOR_MATERIAL.Chain && v > 9;",
+    "old": "  t === 108 && lookMaterial(t, m) === ARMOR_MATERIAL.Chain && v !== 1;",
+    "new": "  t === 108 && lookMaterial(t, m) === ARMOR_MATERIAL.Chain && v > 9;",
     "tests": [
       "test/systems/appearances_audit.test.js",
       "test/systems/appearances.test.js"

@@ -54,7 +54,7 @@ FOUND. A house held DECOR_CAP, 200 pieces, whatever its size. The freeware's hou
 996 m2; Sentinel's widest are 655 and 983.
 
 DECIDED. A room holds DECOR_CAP to 200 m2 of ground and as much more for each as much more, in tens, to DECOR_CAP_MAX
-(600): `net/decorLaw.js:"export function decorCapOf(groundM2) {"`. The ground is HOME-PRICE's measure, the one the
+(600): `net/decorLaw.js:"export function decorCapOf"`. The ground is HOME-PRICE's measure, the one the
 price is set from. The service measures nothing (it has no ARENA2), so a claim's ground is kept only where the price is
 the one that ground and the town's blocks set (`net/homeLaw.js` homeGroundOk). The price and the blocks are the
 client's word, as HOME-PRICE's price always was, so a forged client can name a wider ground (AUDIT FB1029f A2):

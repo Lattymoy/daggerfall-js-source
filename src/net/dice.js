@@ -27,20 +27,35 @@ export const ROLL_DEFAULT = Object.freeze({ n: 1, m: 20, k: 0 });
 export function validRollSpec(s) {
   if (!s || typeof s !== 'object') return false;
   const { n, m, k } = s;
-  return Number.isInteger(n) && n >= 1 && n <= ROLL_DICE_MAX
-    && Number.isInteger(m) && m >= 2 && m <= ROLL_SIDES_MAX
-    && Number.isInteger(k) && k >= -ROLL_MOD_MAX && k <= ROLL_MOD_MAX;
+  return (
+    Number.isInteger(n) &&
+    n >= 1 &&
+    n <= ROLL_DICE_MAX &&
+    Number.isInteger(m) &&
+    m >= 2 &&
+    m <= ROLL_SIDES_MAX &&
+    Number.isInteger(k) &&
+    k >= -ROLL_MOD_MAX &&
+    k <= ROLL_MOD_MAX
+  );
 }
 
 /** A typed spec to {n, m, k}, or null for one the grammar or the bounds refuse. Spaces are ignored; `d%` is a d100. */
 export function parseRollSpec(text) {
-  const t = String(text ?? '').replace(/\s+/g, '').toLowerCase();
+  const t = String(text ?? '')
+    .replace(/\s+/g, '')
+    .toLowerCase();
   if (!t) return { ...ROLL_DEFAULT };
   let spec = null;
   const bare = /^(\d{1,4})$/.exec(t);
   if (bare) spec = { n: 1, m: Number(bare[1]), k: 0 };
   const dice = /^(\d{0,2})d(\d{1,4}|%)([+-]\d{1,4})?$/.exec(t);
-  if (dice) spec = { n: dice[1] === '' ? 1 : Number(dice[1]), m: dice[2] === '%' ? 100 : Number(dice[2]), k: dice[3] ? Number(dice[3]) : 0 };
+  if (dice)
+    spec = {
+      n: dice[1] === '' ? 1 : Number(dice[1]),
+      m: dice[2] === '%' ? 100 : Number(dice[2]),
+      k: dice[3] ? Number(dice[3]) : 0,
+    };
   return spec && validRollSpec(spec) ? spec : null;
 }
 
@@ -58,7 +73,9 @@ export const rollSpecText = ({ n, m, k }) => `${n}d${m}${k > 0 ? `+${k}` : k < 0
 export function drawBelow(m, rand32) {
   const limit = 2 ** 32 - (2 ** 32 % m);
   let x;
-  do { x = rand32() >>> 0; } while (x >= limit);
+  do {
+    x = rand32() >>> 0;
+  } while (x >= limit);
   return x % m;
 }
 
@@ -89,5 +106,7 @@ export function validRoll(r) {
 export function rollText(r) {
   const dice = r.dice.join(' + ');
   const mod = r.k > 0 ? ` +${r.k}` : r.k < 0 ? ` ${r.k}` : '';
-  return r.n === 1 && !r.k ? `rolls ${rollSpecText(r)}: ${r.total}` : `rolls ${rollSpecText(r)}: ${dice}${mod} = ${r.total}`;
+  return r.n === 1 && !r.k
+    ? `rolls ${rollSpecText(r)}: ${r.total}`
+    : `rolls ${rollSpecText(r)}: ${dice}${mod} = ${r.total}`;
 }

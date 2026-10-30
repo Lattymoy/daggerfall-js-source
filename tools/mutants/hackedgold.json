@@ -38,8 +38,8 @@
   {
     "name": "HACKED-GOLD-the-owner-grants-its-letter",
     "file": "src/net/bodyLoot.js",
-    "old": "if (!piece || neverPeerHanded(piece)) return null;",
-    "new": "if (!piece) return null;",
+    "old": "  if (!piece || neverPeerHanded(piece)) return null;",
+    "new": "  if (!piece) return null;",
     "tests": [
       "test/systems/hackedgold.test.js"
     ]

@@ -574,6 +574,6 @@ test('AUDIT WARDEN1 hosts: world.js hands the host its switches - the eye, the s
   assert.equal(w.split("wardenShows?.frame(cam.pos)").length - 1, 1, 'once a frame');
   assert.match(rd('src/scenes/wagon/wagonRiders.js'), /if \(r\.held && ride\.seat != null\) \{\n\s*getDown\(RIDE_TEXT\.lifted\);\n\s*return;\n\s*\}/);
   const link = rd('src/net/caravanVisitLink.js');
-  assert.match(link, /link\.onParks = \(r, list\) => \{ if \(r === cell\) judge\(caravanRecordOf\(/, 'R9: the welcome\'s list judged where it landed');
-  assert.match(link, /link\.onPark = \(r, e\) => \{ if \(r === cell && e\?\.k === visit\?\.k\) judge\(caravanRecordOf\(e\)\); \};/, 'and every word after');
+  assert.match(link, /link\.onParks = \(r, list\) => \{\n\s*if \(r === cell\) judge\(caravanRecordOf\(/, 'R9: the welcome\'s list judged where it landed');
+  assert.match(link, /link\.onPark = \(r, e\) => \{\n\s*if \(r === cell && e\?\.k === visit\?\.k\) judge\(caravanRecordOf\(e\)\);\n\s*\};/, 'and every word after');
 });

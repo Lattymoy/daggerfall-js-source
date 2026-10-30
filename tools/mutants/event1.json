@@ -192,8 +192,8 @@
   {
     "name": "EVENT1-command-off-not-ending",
     "file": "src/net/chatCommands.js",
-    "old": "if (words.length === 1 && words[0] === 'off') return { kind: '' };",
-    "new": "if (false) return { kind: '' };",
+    "old": "  if (words.length === 1 && words[0] === 'off') return { kind: '' };",
+    "new": "  if (false) return { kind: '' };",
     "tests": [
       "test/render/event1_live_event.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "EVENT1-command-bad-switch-taken",
     "file": "src/net/chatCommands.js",
-    "old": "(sw !== 'on' && sw !== 'off')",
-    "new": "false",
+    "old": "  if (words.length > 2 || !LIVE_EVENTS.includes(name) || (sw !== 'on' && sw !== 'off'))",
+    "new": "  if (words.length > 2 || !LIVE_EVENTS.includes(name) || false)",
     "tests": [
       "test/render/event1_live_event.test.js"
     ]

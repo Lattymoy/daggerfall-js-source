@@ -439,8 +439,8 @@
   {
     "name": "GUILD1c-the-tab-shown-to-everyone",
     "file": "src/net/chat.js",
-    "old": "hint: 'Only your guild', hidden: true, peekAll: true }),",
-    "new": "hint: 'Only your guild', peekAll: true }),",
+    "old": "  Object.freeze({\n    id: 'guild',\n    label: 'Guild',\n    room: null,\n    link: false,\n    hint: 'Only your guild',\n    hidden: true,\n    peekAll: true,\n  }),",
+    "new": "  Object.freeze({ id: 'guild', label: 'Guild', room: null, link: false, hint: 'Only your guild', peekAll: true }),",
     "tests": [
       "test/net/guild1c.test.js"
     ]
@@ -448,8 +448,8 @@
   {
     "name": "GUILD1c-g-taken-from-the-world",
     "file": "src/net/chatCommands.js",
-    "old": "names: Object.freeze(['guild', 'gu'])",
-    "new": "names: Object.freeze(['guild', 'g'])",
+    "old": "    names: Object.freeze(['guild', 'gu']),",
+    "new": "    names: Object.freeze(['guild', 'g']),",
     "tests": [
       "test/net/guild1c.test.js"
     ]

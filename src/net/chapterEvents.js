@@ -15,7 +15,15 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { gateHash } from './gate/gateLaw.js';
-import { chapterTitleKey, chapterSeasonOf, chapterDoctrineWords, hallPosterName, hallHidden, isRollFaction, SUCCESSION_CANDIDATES } from './npcChapterLaw.js';
+import {
+  chapterTitleKey,
+  chapterSeasonOf,
+  chapterDoctrineWords,
+  hallPosterName,
+  hallHidden,
+  isRollFaction,
+  SUCCESSION_CANDIDATES,
+} from './npcChapterLaw.js';
 import { residentName } from '../systems/livingWorld/census.js';
 import { getNameBankOfRegion, GENDERS } from '../characters/nameHelper.js';
 
@@ -24,14 +32,25 @@ export const CHAPTER_CANDIDATE_SALT = 0xca7d;
 
 /** CANDIDATE `index` of chapter `faction` of `region` in Season `season` - a Schism's side (0, 1) or a Succession's
  *  candidate (0 to 2): a full name on the region's bank, the same for every reader. */
-export function chapterCandidateName(/** @type {number} */ season, /** @type {number} */ faction, /** @type {number} */ region, /** @type {number} */ index) {
+export function chapterCandidateName(
+  /** @type {number} */ season,
+  /** @type {number} */ faction,
+  /** @type {number} */ region,
+  /** @type {number} */ index,
+) {
   const h = gateHash(CHAPTER_CANDIDATE_SALT, season, chapterTitleKey(faction, region), index);
   return residentName(h, getNameBankOfRegion(region), (h >>> 16) & 1 ? GENDERS.Female : GENDERS.Male);
 }
 
 /** A rival named: "the Thieves Guild" - "a rival in the shadows" for a hidden guild, "a rival chapter" for none known. */
-const rivalOf = (/** @type {number | null} */ f) => (f === null ? 'a rival chapter' : isRollFaction(f) && !hallHidden(f) ? `the ${hallPosterName(f)}` : 'a rival in the shadows');
-const listed = (/** @type {string[]} */ n) => (n.length < 2 ? n.join('') : `${n.slice(0, -1).join(', ')} and ${n[n.length - 1]}`);
+const rivalOf = (/** @type {number | null} */ f) =>
+  f === null
+    ? 'a rival chapter'
+    : isRollFaction(f) && !hallHidden(f)
+      ? `the ${hallPosterName(f)}`
+      : 'a rival in the shadows';
+const listed = (/** @type {string[]} */ n) =>
+  n.length < 2 ? n.join('') : `${n.slice(0, -1).join(', ')} and ${n[n.length - 1]}`;
 
 /**
  * THE SEASON'S LINES of chapter `faction` of `region` as `c` says it (the sheet's chapter or the board's line): the
@@ -42,21 +61,31 @@ const listed = (/** @type {string[]} */ n) => (n.length < 2 ? n.join('') : `${n.
  */
 export function chapterSeasonLines(faction, region, c) {
   const s = chapterSeasonOf(c);
-  const name = (/** @type {number} */ i) => (s.season === null ? null : chapterCandidateName(s.season, faction, region, i));
+  const name = (/** @type {number} */ i) =>
+    s.season === null ? null : chapterCandidateName(s.season, faction, region, i);
   /** @type {string[]} */
   const out = [];
   if (s.event === 'schism') {
     const [a, b] = [name(0), name(1)];
-    out.push(s.sides && a && b ? `The chapter is split this Season: ${a} stands for ${chapterDoctrineWords(s.sides[0])}, ${b} for ${chapterDoctrineWords(s.sides[1])}.`
-      : 'The chapter is split this Season.');
+    out.push(
+      s.sides && a && b
+        ? `The chapter is split this Season: ${a} stands for ${chapterDoctrineWords(s.sides[0])}, ${b} for ${chapterDoctrineWords(s.sides[1])}.`
+        : 'The chapter is split this Season.',
+    );
   } else if (s.event === 'succession') {
     const names = Array.from({ length: SUCCESSION_CANDIDATES }, (_, i) => name(i));
     if (s.heir !== null && names[s.heir]) out.push(`${names[s.heir]} is the hall's new head.`);
-    else out.push(names.every(Boolean) ? `The hall's head steps down this Season: ${listed(/** @type {string[]} */ (names))} stand to follow.` : 'The hall\'s head steps down this Season.');
-  } else if (s.event === 'crackdown') out.push('The watch hunts the chapter this Season: its members\' own writs earn half again Merit.');   // AUDIT CHAP5 E1
+    else
+      out.push(
+        names.every(Boolean)
+          ? `The hall's head steps down this Season: ${listed(/** @type {string[]} */ (names))} stand to follow.`
+          : "The hall's head steps down this Season.",
+      );
+  } else if (s.event === 'crackdown')
+    out.push("The watch hunts the chapter this Season: its members' own writs earn half again Merit."); // AUDIT CHAP5 E1
   else if (s.event === 'rivalry') out.push(`The chapter races ${rivalOf(s.rival)} for Merit this Season.`);
   if (s.doctrine) out.push(`The chapter holds to ${chapterDoctrineWords(s.doctrine)} this Season.`);
-  if (s.shut) out.push('The chapter\'s halls are shut this Season, by the watch\'s order.');
+  if (s.shut) out.push("The chapter's halls are shut this Season, by the watch's order.");
   return out;
 }
 
@@ -69,8 +98,16 @@ export function chapterSeasonLines(faction, region, c) {
 export function chapterBackChoices(faction, region, c) {
   const s = chapterSeasonOf(c);
   if (s.season === null) return [];
-  if (s.event === 'schism' && s.sides) return s.sides.map((d, side) => ({ side, label: `${chapterCandidateName(/** @type {number} */ (s.season), faction, region, side)}, for ${chapterDoctrineWords(d)}` }));
-  if (s.event === 'succession' && s.heir === null) return Array.from({ length: SUCCESSION_CANDIDATES }, (_, side) => ({ side, label: chapterCandidateName(/** @type {number} */ (s.season), faction, region, side) }));
+  if (s.event === 'schism' && s.sides)
+    return s.sides.map((d, side) => ({
+      side,
+      label: `${chapterCandidateName(/** @type {number} */ (s.season), faction, region, side)}, for ${chapterDoctrineWords(d)}`,
+    }));
+  if (s.event === 'succession' && s.heir === null)
+    return Array.from({ length: SUCCESSION_CANDIDATES }, (_, side) => ({
+      side,
+      label: chapterCandidateName(/** @type {number} */ (s.season), faction, region, side),
+    }));
   return [];
 }
 
@@ -79,5 +116,7 @@ export function chapterBackChoices(faction, region, c) {
 export function chapterBackedLine(faction, region, c, side) {
   const choice = chapterBackChoices(faction, region, c).find((x) => x.side === side);
   if (!choice) return null;
-  return chapterSeasonOf(c).event === 'schism' ? `You back ${choice.label}.` : `You name ${choice.label} to follow as the hall's head.`;
+  return chapterSeasonOf(c).event === 'schism'
+    ? `You back ${choice.label}.`
+    : `You name ${choice.label} to follow as the hall's head.`;
 }

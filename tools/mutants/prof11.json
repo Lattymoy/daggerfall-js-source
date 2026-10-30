@@ -590,8 +590,8 @@
   {
     "name": "PROF11-no-mason-station",
     "file": "src/net/decorLaw.js",
-    "old": "'workbench', 'cooking', 'loom', 'mason', 'jeweller', 'vendor']);",
-    "new": "'workbench', 'cooking', 'loom', 'jeweller', 'vendor']);",
+    "old": "  'mason',\n  'jeweller',",
+    "new": "  'jeweller',",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/ui/homestations.test.js",
@@ -601,8 +601,8 @@
   {
     "name": "PROF11-mason-licence-cheap",
     "file": "src/net/decorLaw.js",
-    "old": "loom: 50_000, mason: 50_000, jeweller: 50_000, vendor: 25_000 });",
-    "new": "loom: 50_000, mason: 5_000, jeweller: 50_000, vendor: 25_000 });",
+    "old": "  mason: 50_000,",
+    "new": "  mason: 5_000,",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/ui/homestations.test.js"
@@ -611,8 +611,8 @@
   {
     "name": "PROF11-mason-station-unnamed",
     "file": "src/net/decorLaw.js",
-    "old": "mason: 'Mason\\'s bench', jeweller:",
-    "new": "mason: 'Bench', jeweller:",
+    "old": "  mason: \"Mason's bench\",",
+    "new": "  mason: 'Bench',",
     "tests": [
       "test/net/prof11_law.test.js"
     ]

@@ -399,8 +399,8 @@
   {
     "name": "PROF4-decor-mark-alone",
     "file": "src/net/decorLaw.js",
-    "old": "...(pv && mk ? { mk } : {}) };",
-    "new": "...(mk ? { mk } : {}) };",
+    "old": "  return { t, g, m, v, a, p, ...(pv ? { pv } : {}), ...(pv && mk ? { mk } : {}) };",
+    "new": "  return { t, g, m, v, a, p, ...(pv ? { pv } : {}), ...(mk ? { mk } : {}) };",
     "tests": [
       "test/net/prof4_law.test.js"
     ]
@@ -815,8 +815,8 @@
   {
     "name": "PROF4-no-workbench-station",
     "file": "src/net/decorLaw.js",
-    "old": "export const DECOR_STATIONS = Object.freeze(['alchemy', 'spells', 'enchant', 'forge', 'workbench', 'cooking', 'loom', 'mason', 'jeweller', 'vendor']);",
-    "new": "export const DECOR_STATIONS = Object.freeze(['alchemy', 'spells', 'enchant', 'forge', 'cooking', 'loom', 'mason', 'jeweller', 'vendor']);",
+    "old": "  'workbench',\n  'cooking',",
+    "new": "  'cooking',",
     "tests": [
       "test/ui/homestations.test.js",
       "test/net/prof2_client.test.js",

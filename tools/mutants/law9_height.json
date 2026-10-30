@@ -322,8 +322,8 @@
   {
     "name": "LAW9H-judge-field-storey-unasked",
     "file": "src/net/bossRef.js",
-    "old": "    if (!inStorey(spec, e, by)) continue;",
-    "new": "",
+    "old": "    if (!inStorey(spec, e, by)) continue; // THE ASCENT: the blow's own storey",
+    "new": "    // THE ASCENT: the blow's own storey",
     "tests": [
       "test/net/eliteGates/law9_height.test.js"
     ],
@@ -332,8 +332,8 @@
   {
     "name": "LAW9H-judge-blow-height-unread",
     "file": "src/net/bossRef.js",
-    "old": "    const by = egFeetY(spec, a.y), share",
-    "new": "    const by = NaN, share",
+    "old": "    const by = egFeetY(spec, a.y),",
+    "new": "    const by = NaN,",
     "tests": [
       "test/net/eliteGates/law9_height.test.js"
     ],

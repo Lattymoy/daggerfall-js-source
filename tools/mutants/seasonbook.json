@@ -1254,8 +1254,8 @@
   {
     "name": "SEASON-BOOK-season-said-to-the-room",
     "file": "src/net/chatCommands.js",
-    "old": "'bug', 'season', 'seasons', 'breach',",
-    "new": "'bug', 'breach',",
+    "old": "  'season',\n  'seasons',\n  'breach',",
+    "new": "  'breach',",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -1264,8 +1264,8 @@
   {
     "name": "SEASON-BOOK-seasons-unread",
     "file": "src/net/chatCommands.js",
-    "old": "/^\\/seasons?$/i",
-    "new": "/^\\/season$/i",
+    "old": "  return mailboxCommandOf(text) ?? (/^\\/seasons?$/i.test(String(text ?? '').trim()) ? 'season' : null);",
+    "new": "  return mailboxCommandOf(text) ?? (/^\\/season$/i.test(String(text ?? '').trim()) ? 'season' : null);",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -1274,8 +1274,8 @@
   {
     "name": "SEASON-BOOK-a-line-ending-in-seasons-swallowed",
     "file": "src/net/chatCommands.js",
-    "old": "/^\\/seasons?$/i",
-    "new": "/\\/seasons?$/i",
+    "old": "  return mailboxCommandOf(text) ?? (/^\\/seasons?$/i.test(String(text ?? '').trim()) ? 'season' : null);",
+    "new": "  return mailboxCommandOf(text) ?? (/\\/seasons?$/i.test(String(text ?? '').trim()) ? 'season' : null);",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -1284,8 +1284,8 @@
   {
     "name": "SEASON-BOOK-the-old-refusal",
     "file": "src/net/chatCommands.js",
-    "old": "t('net.chat.seasonRefused', 'The world\\'s clock hasn\\'t been heard yet. Try again in a moment.')",
-    "new": "t('net.chat.seasonRefused', 'Connect and sign in to see the season.')",
+    "old": "    ? t('net.chat.seasonRefused', \"The world's clock hasn't been heard yet. Try again in a moment.\")",
+    "new": "    ? t('net.chat.seasonRefused', 'Connect and sign in to see the season.')",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js",
       "test/systems/l10n1b.test.js"
@@ -1295,8 +1295,8 @@
   {
     "name": "SEASON-BOOK-the-mailbox-refusal-for-the-season",
     "file": "src/net/chatCommands.js",
-    "old": "(at === 'season'\n  ? t('net.chat.seasonRefused'",
-    "new": "(false\n  ? t('net.chat.seasonRefused'",
+    "old": "  at === 'season'",
+    "new": "  false",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],

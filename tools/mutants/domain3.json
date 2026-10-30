@@ -2,8 +2,8 @@
   {
     "name": "DOMAIN3-week-rule",
     "file": "src/net/domainLaw.js",
-    "old": "&& week >= domainsWeek;",
-    "new": "&& week > domainsWeek;",
+    "old": "  Number.isSafeInteger(domainsWeek) && Number.isSafeInteger(week) && week >= domainsWeek;",
+    "new": "  Number.isSafeInteger(domainsWeek) && Number.isSafeInteger(week) && week > domainsWeek;",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "DOMAIN3-report-region",
     "file": "src/net/domainLaw.js",
-    "old": "return seatRegionOk(region) && seatKeyOk(key) ? { region, key } : null;",
-    "new": "return seatKeyOk(key) ? { region, key } : null;",
+    "old": "  return seatRegionOk(region) && seatKeyOk(key) ? { region, key } : null;",
+    "new": "  return seatKeyOk(key) ? { region, key } : null;",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "DOMAIN3-canonical",
     "file": "src/net/domainLaw.js",
-    "old": "return domain && domainReportText(domain) === text ? { domain } : null;",
-    "new": "return domain ? { domain } : null;",
+    "old": "  return domain && domainReportText(domain) === text ? { domain } : null;",
+    "new": "  return domain ? { domain } : null;",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "DOMAIN3-crown",
     "file": "src/net/domainLaw.js",
-    "old": "    if (Object.prototype.hasOwnProperty.call(CROWN_SEAT_REGIONS, region) && s.tier !== 'crown') continue;\n",
-    "new": "",
+    "old": "    if (Object.prototype.hasOwnProperty.call(CROWN_SEAT_REGIONS, region) && s.tier !== 'crown') continue;\n    out.set(region, s);",
+    "new": "    out.set(region, s);",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "DOMAIN3-marks-power",
     "file": "src/net/domainLaw.js",
-    "old": "k === s.key ? { ...s, domain: true } : { ...s, charter: k };",
-    "new": "k === s.key ? s : { ...s, charter: k };",
+    "old": "    return k == null ? s : k === s.key ? { ...s, domain: true } : { ...s, charter: k };",
+    "new": "    return k == null ? s : k === s.key ? s : { ...s, charter: k };",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]

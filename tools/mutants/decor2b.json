@@ -2,8 +2,8 @@
   {
     "name": "DECOR2b-the-model-refused",
     "file": "src/net/decorLaw.js",
-    "old": "return own && own.g === DECOR_FURNITURE_GROUP ? { model, flat: null, item: own } : null;",
-    "new": "return null;",
+    "old": "    return own && own.g === DECOR_FURNITURE_GROUP ? { model, flat: null, item: own } : null;",
+    "new": "    return null;",
     "tests": [
       "test/systems/decor/decor2b.test.js",
       "test/server/decor1.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "DECOR2b-the-furnitures-numbers-dropped",
     "file": "src/net/decorLaw.js",
-    "old": "return own && own.g === DECOR_FURNITURE_GROUP ? { model, flat: null, item: own } : null;",
-    "new": "return own && own.g === DECOR_FURNITURE_GROUP ? { model, flat: null } : null;",
+    "old": "    return own && own.g === DECOR_FURNITURE_GROUP ? { model, flat: null, item: own } : null;",
+    "new": "    return own && own.g === DECOR_FURNITURE_GROUP ? { model, flat: null } : null;",
     "tests": [
       "test/systems/decor/decor2b.test.js"
     ]

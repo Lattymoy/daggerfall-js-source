@@ -132,8 +132,8 @@
   {
     "name": "E2-2-castle-city-the-kingdom-id",
     "file": "src/net/castleLaw.js",
-    "old": "(castleRegionOk(r) ? kingdomSeatName(CROWN_SEAT_REGIONS[r]) : null)",
-    "new": "(castleRegionOk(r) ? CROWN_SEAT_REGIONS[r] : null)",
+    "old": "export const castleCityOf = (r) => (castleRegionOk(r) ? kingdomSeatName(CROWN_SEAT_REGIONS[r]) : null);",
+    "new": "export const castleCityOf = (r) => (castleRegionOk(r) ? CROWN_SEAT_REGIONS[r] : null);",
     "tests": [
       "test/net/audittesa3e2_castles.test.js"
     ],

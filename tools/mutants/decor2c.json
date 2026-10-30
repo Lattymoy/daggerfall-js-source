@@ -2,8 +2,8 @@
   {
     "name": "DECOR2c-the-arrows-hung",
     "file": "src/net/decorLaw.js",
-    "old": "it.t !== DECOR_ARROW_TEMPLATE)",
-    "new": "true)",
+    "old": "  return (\n    (it.g === DECOR_WEAPONS_GROUP && it.t !== DECOR_ARROW_TEMPLATE) ||\n    it.g === DECOR_ARMOR_GROUP ||\n    it.t === TROPHY_TEMPLATE\n  );",
+    "new": "  return (it.g === DECOR_WEAPONS_GROUP && true) || it.g === DECOR_ARMOR_GROUP || it.t === TROPHY_TEMPLATE;",
     "tests": [
       "test/systems/decor/decor2c.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "DECOR2c-a-model-hung",
     "file": "src/net/decorLaw.js",
-    "old": "if (!it || piece.model != null || !Array.isArray(piece.flat)) return false;",
-    "new": "if (!it || !Array.isArray(piece.flat)) return false;",
+    "old": "  if (!it || piece.model != null || !Array.isArray(piece.flat)) return false;",
+    "new": "  if (!it || !Array.isArray(piece.flat)) return false;",
     "tests": [
       "test/systems/decor/decor2c.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "DECOR2c-no-flat-hung",
     "file": "src/net/decorLaw.js",
-    "old": "if (!it || piece.model != null || !Array.isArray(piece.flat)) return false;",
-    "new": "if (!it || piece.model != null) return false;",
+    "old": "  if (!it || piece.model != null || !Array.isArray(piece.flat)) return false;",
+    "new": "  if (!it || piece.model != null) return false;",
     "tests": [
       "test/systems/decor/decor2c.test.js"
     ]

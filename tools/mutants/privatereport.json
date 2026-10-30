@@ -272,8 +272,8 @@
   {
     "name": "PRIVREP-bug-read-as-the-mailbox",
     "file": "src/net/chatCommands.js",
-    "old": "m[1].toLowerCase() === 'bug' ? 'report' : 'mailbox'",
-    "new": "'mailbox'",
+    "old": "  return m ? (m[1].toLowerCase() === 'bug' ? 'report' : 'mailbox') : null;",
+    "new": "  return m ? 'mailbox' : null;",
     "tests": [
       "test/net/private_reports_client.test.js"
     ],

@@ -148,8 +148,8 @@
   {
     "name": "WB14f-the-judge-counts-it",
     "file": "src/net/bossRef.js",
-    "old": "  if (wardTakes(f.cp, f.atk)) f.atk.bj = true;   // WB14f: the Reckoning the Covenant's ward takes lands on no fighter\n",
-    "new": "",
+    "old": "  if (wardTakes(f.cp, f.atk)) f.atk.bj = true; // WB14f: the Reckoning the Covenant's ward takes lands on no fighter\n  bodyBlow(f.atk, live, profileOf(f), prev, now, out);",
+    "new": "  bodyBlow(f.atk, live, profileOf(f), prev, now, out);",
     "tests": [
       "test/net/gate/wb14f_captive.test.js"
     ]

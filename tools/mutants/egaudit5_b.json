@@ -311,8 +311,8 @@
   {
     "name": "AUDIT EG V L1-9: a named blow judged by its marks (the old census)",
     "file": "src/net/bossRef.js",
-    "old": "      if (a.on) {   // AUDIT EG V (lane1 #9)",
-    "new": "      if (false) {   // AUDIT EG V (lane1 #9)",
+    "old": "      if (a.on) {",
+    "new": "      if (false) {",
     "tests": [
       "test/net/eliteGates/egaudit5_b.test.js"
     ]
@@ -329,8 +329,8 @@
   {
     "name": "AUDIT EG V L1-9: a member it does not name judged by the marks",
     "file": "src/net/bossRef.js",
-    "old": "        if (!a.on.includes(b.sub)) { a.bh.push(b.sub); continue; }",
-    "new": "        if (!a.on.includes(b.sub)) { if (egTrailReady(b.tr, a.at, now)) { a.bh.push(b.sub); if (deepShared(test, b.tr, a.at, F.h, spec, ys, free)) out.push(hit); } continue; }",
+    "old": "        if (!a.on.includes(b.sub)) {\n          a.bh.push(b.sub);",
+    "new": "        if (!a.on.includes(b.sub)) {\n          if (egTrailReady(b.tr, a.at, now)) {\n            a.bh.push(b.sub);\n            if (deepShared(test, b.tr, a.at, F.h, spec, ys, free)) out.push(hit);\n          }",
     "tests": [
       "test/net/eliteGates/egaudit5_b.test.js"
     ]

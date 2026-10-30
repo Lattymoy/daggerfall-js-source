@@ -823,8 +823,8 @@
   {
     "name": "CREW-the-span",
     "file": "src/net/crewSignLaw.js",
-    "old": "Math.abs(day - crewDayAt(nowMs)) <= CREW_SIGN_DAY_SPAN;",
-    "new": "Math.abs(day - crewDayAt(nowMs)) < CREW_SIGN_DAY_SPAN;",
+    "old": "  Math.abs(day - crewDayAt(nowMs)) <= CREW_SIGN_DAY_SPAN;",
+    "new": "  Math.abs(day - crewDayAt(nowMs)) < CREW_SIGN_DAY_SPAN;",
     "tests": [
       "test/server/crewsigned.test.js"
     ]
@@ -841,8 +841,8 @@
   {
     "name": "CREW-the-shared-day",
     "file": "src/net/crewSignLaw.js",
-    "old": "Math.floor(sharedClassicMinutes(nowMs) / 1440);",
-    "new": "Math.floor(sharedClassicMinutes(nowMs) / 1441);",
+    "old": "export const crewDayAt = (/** @type {number} */ nowMs) => Math.floor(sharedClassicMinutes(nowMs) / 1440);",
+    "new": "export const crewDayAt = (/** @type {number} */ nowMs) => Math.floor(sharedClassicMinutes(nowMs) / 1441);",
     "tests": [
       "test/server/crewsigned.test.js"
     ]

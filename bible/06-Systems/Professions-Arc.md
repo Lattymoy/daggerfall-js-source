@@ -6206,7 +6206,7 @@ The report (SaberGGaming, through the owner): no Daedric Ingot could be had, and
   Dagon's Breach (`systems/riteChest.js` RITE_HEART, a reagent drawn a heart one time in twelve and a half - WB12d, its
   row the Stores' own since). Both are the very item the pack holds as the forge's input.
 - **Through the loose door, never the market.** No door of the service counts a heart, so it enters the Stores only by a
-  station's put-in (`bagLaw.js:"export const looseOrder = (o) => o === 'work';"` - the forge's shortfall, or the Stores page's
+  station's put-in (`bagLaw.js:"export const looseOrder"` - the forge's shortfall, or the Stores page's
   Put in, LOOT-LOOSE), as `loose`, a station's alone. It is the loose door's as section 50's graded gems are
   (`professionLaw.js:"export const LOOSE_ONLY_KEYS = Object.freeze([...GRADED_GEMS, DAEDRA_HEART].map((g) => g.key));"`): out of the catalogue, no buy order
   for one and no listing (`bad-material`), no guild writ asking one, and no commission of a work that spends one. On its
@@ -6233,7 +6233,7 @@ The report (SaberGGaming, through the owner): no Daedric Ingot could be had, and
   host hands the book its hands once the checkpoint stands (`world.js:"  carryHands.embers = emberHands(playerEntity, saveSoon.changed);"` - bootWorld's
   one line more, its reason beside its ceiling in `test/scenes/hostceiling.test.js`; at the merge with main it sits
   inside main's ceiling, which stood one over main's count).
-- **Never planned, never asked.** No chain plans the smelt (`chainLaw.js:"export const chainWorkOk = "` - the press is the
+- **Never planned, never asked.** No chain plans the smelt (`chainLaw.js:"export const chainWorkOk"` - the press is the
   player's own), and no crafting writ asks the Daedric kit (`professionLaw.js:"export const EMBER_MADE = "`; `craftWritLaw.js` WRIT_KITS:
   a writ pays its inputs' worth, and the ember is the account's purse, no Stores good).
 - **The Forge** lists the ember beside the row's inputs with the pack's count and bounds the smelt by it

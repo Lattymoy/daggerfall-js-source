@@ -664,8 +664,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-copy-on-player-line",
     "file": "src/net/chat.js",
-    "old": "const copied = sys && typeof copy === 'string' && copy ? { copy } : {};",
-    "new": "const copied = typeof copy === 'string' && copy ? { copy } : {};",
+    "old": "    const copied = sys && typeof copy === 'string' && copy ? { copy } : {};",
+    "new": "    const copied = typeof copy === 'string' && copy ? { copy } : {};",
     "why": "a player line offers words to copy",
     "tests": [
       "test/net/staffpanel5_freeze_client.test.js"

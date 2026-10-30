@@ -264,8 +264,8 @@
   {
     "name": "WAGONS2-VISIT-a-move-never-noticed",
     "file": "src/net/caravanVisitLink.js",
-    "old": "\n    && Math.abs(w.position[0] - at[0]) <= CARAVAN_STANDS_NATIVES && Math.abs(w.position[2] - at[2]) <= CARAVAN_STANDS_NATIVES;",
-    "new": ";",
+    "old": "  return (\n    !!w &&\n    w.kind === HCC_WIRE_KIND.Deployed &&\n    w.model === 'caravan' &&\n    Array.isArray(at) &&\n    Math.abs(w.position[0] - at[0]) <= CARAVAN_STANDS_NATIVES &&\n    Math.abs(w.position[2] - at[2]) <= CARAVAN_STANDS_NATIVES\n  );",
+    "new": "  return !!w && w.kind === HCC_WIRE_KIND.Deployed && w.model === 'caravan' && Array.isArray(at);",
     "tests": [
       "test/systems/wagons2_visit.test.js"
     ]
@@ -282,8 +282,8 @@
   {
     "name": "WAGONS2-VISIT-gone-said-in-the-callback",
     "file": "src/net/caravanVisitLink.js",
-    "old": "if (!caravanStands(raw, visit.at)) { gone = true; due = true; why = 'gone'; return; }",
-    "new": "if (!caravanStands(raw, visit.at)) { gone = true; onGone?.('gone'); return; }",
+    "old": "      due = true;\n      why = 'gone';",
+    "new": "      onGone?.('gone');",
     "tests": [
       "test/systems/wagons2_visit.test.js"
     ]
@@ -291,8 +291,8 @@
   {
     "name": "WAGONS2-VISIT-the-listener-standing-a-body",
     "file": "src/net/caravanVisitLink.js",
-    "old": "mintToken: main.mintToken, presence: false });",
-    "new": "mintToken: main.mintToken, presence: true });",
+    "old": "          presence: false,",
+    "new": "          presence: true,",
     "tests": [
       "test/systems/wagons2_visit.test.js"
     ]
@@ -300,8 +300,8 @@
   {
     "name": "WAGONS2-VISIT-the-hosts-no-forgotten",
     "file": "src/net/caravanVisitLink.js",
-    "old": "if (due) { due = false; if (onGone?.(why) === false) due = true; }",
-    "new": "if (due) { due = false; onGone?.(why); }",
+    "old": "        if (onGone?.(why) === false) due = true;",
+    "new": "        onGone?.(why);",
     "tests": [
       "test/systems/wagons2_visit.test.js"
     ]
@@ -309,8 +309,8 @@
   {
     "name": "WAGONS2-VISIT-the-handoff-unguarded",
     "file": "src/net/caravanVisitLink.js",
-    "old": "if (!room || main.room === room || main.inRoom?.(room)) { close(); return; }",
-    "new": "if (!room) { close(); return; }",
+    "old": "      if (!room || main.room === room || main.inRoom?.(room)) {",
+    "new": "      if (!room) {",
     "tests": [
       "test/systems/wagons2_visit.test.js"
     ]
@@ -573,8 +573,8 @@
   {
     "name": "WAGONS2-VISIT-AUDIT-the-poses-cell",
     "file": "src/net/caravanVisitLink.js",
-    "old": "(typeof v.cell === 'string' && v.cell) || cellRoomOfWire(v.at[0], v.at[2])",
-    "new": "cellRoomOfWire(v.at[0], v.at[2])",
+    "old": "      const room = (typeof v.cell === 'string' && v.cell) || cellRoomOfWire(v.at[0], v.at[2]); // WAGONS2-VISIT (AUDIT): the cell that keeps its record (where it was read), else the one its pose names",
+    "new": "      const room = cellRoomOfWire(v.at[0], v.at[2]); // WAGONS2-VISIT (AUDIT): the cell that keeps its record (where it was read), else the one its pose names",
     "tests": [
       "test/systems/wagons2_visit.test.js"
     ]
@@ -582,8 +582,8 @@
   {
     "name": "WAGONS2-VISIT-AUDIT-the-shut-door-unheard",
     "file": "src/net/caravanVisitLink.js",
-    "old": "if (may && w && !may(w, visit)) {",
-    "new": "if (false) {",
+    "old": "    if (may && w && !may(w, visit)) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/wagons2_visit.test.js"
     ]

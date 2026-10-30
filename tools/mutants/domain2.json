@@ -2,7 +2,7 @@
   {
     "name": "DOMAIN2-a-palace-castle",
     "file": "src/net/castleLaw.js",
-    "old": "export const castleRegionOk = (r) => Number.isSafeInteger(r) && Object.prototype.hasOwnProperty.call(CROWN_SEAT_REGIONS, r);",
+    "old": "export const castleRegionOk = (r) =>\n  Number.isSafeInteger(r) && Object.prototype.hasOwnProperty.call(CROWN_SEAT_REGIONS, r);",
     "new": "export const castleRegionOk = (r) => Number.isSafeInteger(r) && r >= 0 && r <= 61;",
     "tests": [
       "test/net/domain2_castles.test.js"
@@ -29,8 +29,8 @@
   {
     "name": "DOMAIN2-an-officer-buys",
     "file": "src/net/castleLaw.js",
-    "old": "export const CASTLE_POWERS = Object.freeze({ buy: Object.freeze([GUILD_RANK_MASTER]),",
-    "new": "export const CASTLE_POWERS = Object.freeze({ buy: Object.freeze([GUILD_RANK_MASTER, 1]),",
+    "old": "  buy: Object.freeze([GUILD_RANK_MASTER]),",
+    "new": "  buy: Object.freeze([GUILD_RANK_MASTER, 1]),",
     "tests": [
       "test/net/domain2_castles.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "DOMAIN2-a-kept-castle-offered",
     "file": "src/net/castleLaw.js",
-    "old": "castleRegionOk(h.region) && castleKeyOk(h.key) && !taken.has(h.region))",
-    "new": "castleRegionOk(h.region) && castleKeyOk(h.key))",
+    "old": "    .filter((h) => h?.tier === 'crown' && castleRegionOk(h.region) && castleKeyOk(h.key) && !taken.has(h.region)) // AUDIT DOMAINS R2: a castle the relay admits",
+    "new": "    .filter((h) => h?.tier === 'crown' && castleRegionOk(h.region) && castleKeyOk(h.key)) // AUDIT DOMAINS R2: a castle the relay admits",
     "tests": [
       "test/net/domain2_castles.test.js"
     ],

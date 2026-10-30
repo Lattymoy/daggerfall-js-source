@@ -632,8 +632,8 @@
   {
     "name": "AUDIT-WARDEN1-R9-visit-raw-record",
     "file": "src/net/caravanVisitLink.js",
-    "old": "=> (e?.r != null && Number.isFinite(e.y) ? thrownRecord(e.r) : e?.r ?? null);",
-    "new": "=> e?.r ?? null;",
+    "old": "export const caravanRecordOf = (/** @type {any} */ e) =>\n  e?.r != null && Number.isFinite(e.y) ? thrownRecord(e.r) : (e?.r ?? null);",
+    "new": "export const caravanRecordOf = (/** @type {any} */ e) => e?.r ?? null;",
     "tests": [
       "test/systems/wagon/warden1_audit.test.js"
     ]
@@ -641,8 +641,8 @@
   {
     "name": "AUDIT-WARDEN1-R9-visit-welcome-raw",
     "file": "src/net/caravanVisitLink.js",
-    "old": "judge(caravanRecordOf((Array.isArray(list) ? list : []).find((e) => e?.k === visit?.k)));",
-    "new": "judge((Array.isArray(list) ? list : []).find((e) => e?.k === visit?.k)?.r ?? null);",
+    "old": "          if (r === cell) judge(caravanRecordOf((Array.isArray(list) ? list : []).find((e) => e?.k === visit?.k)));",
+    "new": "          if (r === cell) judge((Array.isArray(list) ? list : []).find((e) => e?.k === visit?.k)?.r ?? null);",
     "tests": [
       "test/systems/wagon/warden1_audit.test.js"
     ]

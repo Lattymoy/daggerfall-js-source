@@ -29,8 +29,8 @@
   {
     "name": "PROF12-ladder-top",
     "file": "src/net/alchemyLaw.js",
-    "old": "return i < 0 ? POTION_PRICE_TIERS.length + 1 : i + 1; };",
-    "new": "return i < 0 ? POTION_PRICE_TIERS.length : i + 1; };",
+    "old": "  return i < 0 ? POTION_PRICE_TIERS.length + 1 : i + 1;",
+    "new": "  return i < 0 ? POTION_PRICE_TIERS.length : i + 1;",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PROF12-ladder-inclusive",
     "file": "src/net/alchemyLaw.js",
-    "old": "findIndex((p) => price <= p);",
-    "new": "findIndex((p) => price < p);",
+    "old": "  const i = POTION_PRICE_TIERS.findIndex((p) => price <= p);",
+    "new": "  const i = POTION_PRICE_TIERS.findIndex((p) => price < p);",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PROF12-potion-rank-tier",
     "file": "src/net/alchemyLaw.js",
-    "old": "rank: TIER_RANKS[tier - 1], key: potionRecipeKey(r.ingredients)",
-    "new": "rank: TIER_RANKS[tier], key: potionRecipeKey(r.ingredients)",
+    "old": "      rank: TIER_RANKS[tier - 1],",
+    "new": "      rank: TIER_RANKS[tier],",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -57,8 +57,8 @@
   {
     "name": "PROF12-potion-key-unsorted",
     "file": "src/net/alchemyLaw.js",
-    "old": "key: potionRecipeKey(r.ingredients), price: r.price",
-    "new": "key: potionRecipeKey([...r.ingredients].reverse()), price: r.price",
+    "old": "      key: potionRecipeKey(r.ingredients),",
+    "new": "      key: potionRecipeKey([...r.ingredients].reverse()),",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -105,8 +105,8 @@
   {
     "name": "PROF12-spends-unsorted",
     "file": "src/net/alchemyLaw.js",
-    "old": "if (potionKeyFromCauldron(/** @type {number[]} */ (templates)) !== potion.key) return null;",
-    "new": "if (potionRecipeKey(/** @type {number[]} */ (templates)) !== potion.key) return null;",
+    "old": "  if (potionKeyFromCauldron(/** @type {number[]} */ (templates)) !== potion.key) return null;",
+    "new": "  if (potionRecipeKey(/** @type {number[]} */ (templates)) !== potion.key) return null;",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -115,8 +115,8 @@
   {
     "name": "PROF12-spends-no-hash",
     "file": "src/net/alchemyLaw.js",
-    "old": "if (potionKeyFromCauldron(/** @type {number[]} */ (templates)) !== potion.key) return null;",
-    "new": "if (!potion.key) return null;",
+    "old": "  if (potionKeyFromCauldron(/** @type {number[]} */ (templates)) !== potion.key) return null;",
+    "new": "  if (!potion.key) return null;",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -127,8 +127,8 @@
   {
     "name": "PROF12-brewkeys-fewer",
     "file": "src/net/alchemyLaw.js",
-    "old": "return keys.reduce((best, k) => (held(k) > held(best) ? k : best), keys[0]);",
-    "new": "return keys[0];",
+    "old": "    return keys.reduce((best, k) => (held(k) > held(best) ? k : best), keys[0]);",
+    "new": "    return keys[0];",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/systems/prof12_client.test.js"
@@ -137,8 +137,8 @@
   {
     "name": "PROF12-brewkeys-tie-south",
     "file": "src/net/alchemyLaw.js",
-    "old": "return keys.reduce((best, k) => (held(k) > held(best) ? k : best), keys[0]);",
-    "new": "return keys.reduce((best, k) => (held(k) >= held(best) ? k : best), keys[0]);",
+    "old": "    return keys.reduce((best, k) => (held(k) > held(best) ? k : best), keys[0]);",
+    "new": "    return keys.reduce((best, k) => (held(k) >= held(best) ? k : best), keys[0]);",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "PROF12-count-master-two",
     "file": "src/net/alchemyLaw.js",
-    "old": "  if (rank >= PROF_RANK_MAX) return 3;\n",
-    "new": "  if (rank >= PROF_RANK_MAX) return 2;\n",
+    "old": "  if (rank >= PROF_RANK_MAX) return 3;",
+    "new": "  if (rank >= PROF_RANK_MAX) return 2;",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js",
@@ -167,8 +167,8 @@
   {
     "name": "PROF12-count-brewer-two",
     "file": "src/net/alchemyLaw.js",
-    "old": "return spec50 === BREWER ? 3 : 2;",
-    "new": "return spec50 === BREWER ? 2 : 2;",
+    "old": "  if (rank >= JOURNEYMAN_RANK) return spec50 === BREWER ? 3 : 2;",
+    "new": "  if (rank >= JOURNEYMAN_RANK) return spec50 === BREWER ? 2 : 2;",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -177,8 +177,8 @@
   {
     "name": "PROF12-count-novice-one",
     "file": "src/net/alchemyLaw.js",
-    "old": "return spec50 === BREWER ? 3 : 2;\n  return 2;",
-    "new": "return spec50 === BREWER ? 3 : 2;\n  return 1;",
+    "old": "  return 2;",
+    "new": "  return 1;",
     "note": "CRAFT-PAYS (2026-10-21, PIN MOVED): re-aimed by content - a Novice brews two now, and this mutant is the one it was.",
     "tests": [
       "test/systems/prof12_law.test.js",
@@ -189,8 +189,8 @@
   {
     "name": "CRAFT-PAYS-a-fourth-past-the-table",
     "file": "src/net/alchemyLaw.js",
-    "old": "  if (rank >= PROF_RANK_MAX) return 3;\n",
-    "new": "  if (rank >= PROF_RANK_MAX) return 4;\n",
+    "old": "  if (rank >= PROF_RANK_MAX) return 3;",
+    "new": "  if (rank >= PROF_RANK_MAX) return 4;",
     "tests": [
       "test/systems/prof12_law.test.js"
     ],
@@ -199,8 +199,8 @@
   {
     "name": "PROF12-potent-expert-15",
     "file": "src/net/alchemyLaw.js",
-    "old": "export const POTENT = Object.freeze({ expert: 10, master: 20,",
-    "new": "export const POTENT = Object.freeze({ expert: 15, master: 20,",
+    "old": "  expert: 10,",
+    "new": "  expert: 15,",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -209,8 +209,8 @@
   {
     "name": "PROF12-potent-master-25",
     "file": "src/net/alchemyLaw.js",
-    "old": "{ expert: 10, master: 20, expertRank: 75,",
-    "new": "{ expert: 10, master: 25, expertRank: 75,",
+    "old": "  master: 20,",
+    "new": "  master: 25,",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -219,8 +219,8 @@
   {
     "name": "PROF12-potent-expert-rank",
     "file": "src/net/alchemyLaw.js",
-    "old": "expertRank: 75, unbruised: 5,",
-    "new": "expertRank: 70, unbruised: 5,",
+    "old": "  expertRank: 75,",
+    "new": "  expertRank: 70,",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -229,8 +229,8 @@
   {
     "name": "PROF12-potent-unbruised-ten",
     "file": "src/net/alchemyLaw.js",
-    "old": "unbruised: 5, distiller: 10,",
-    "new": "unbruised: 10, distiller: 10,",
+    "old": "  unbruised: 5,",
+    "new": "  unbruised: 10,",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -239,8 +239,8 @@
   {
     "name": "PROF12-potent-distiller-five",
     "file": "src/net/alchemyLaw.js",
-    "old": "distiller: 10, apothecary: 10,",
-    "new": "distiller: 5, apothecary: 10,",
+    "old": "  distiller: 10,",
+    "new": "  distiller: 5,",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -249,8 +249,8 @@
   {
     "name": "PROF12-potent-apothecary-five",
     "file": "src/net/alchemyLaw.js",
-    "old": "apothecary: 10, pct: 25,",
-    "new": "apothecary: 5, pct: 25,",
+    "old": "  apothecary: 10,",
+    "new": "  apothecary: 5,",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_apothecary.test.js"
@@ -259,8 +259,8 @@
   {
     "name": "PROF12-potent-pct-twenty",
     "file": "src/net/alchemyLaw.js",
-    "old": "pct: 25, masterPct: 40 });",
-    "new": "pct: 20, masterPct: 40 });",
+    "old": "  pct: 25,",
+    "new": "  pct: 20,",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js",
@@ -270,8 +270,8 @@
   {
     "name": "PROF12-potent-master-pct",
     "file": "src/net/alchemyLaw.js",
-    "old": "pct: 25, masterPct: 40 });",
-    "new": "pct: 25, masterPct: 50 });",
+    "old": "  masterPct: 40,",
+    "new": "  masterPct: 50,",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js",
@@ -281,8 +281,8 @@
   {
     "name": "PROF12-potent-no-cap",
     "file": "src/net/alchemyLaw.js",
-    "old": "return Math.min(100, base + POTENT.unbruised * u",
-    "new": "return (base + POTENT.unbruised * u",
+    "old": "  return Math.min(100, base + POTENT.unbruised * u + (distiller ? POTENT.distiller : 0) + POTENT.apothecary * st);",
+    "new": "  return base + POTENT.unbruised * u + (distiller ? POTENT.distiller : 0) + POTENT.apothecary * st;",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "PROF12-potent-steps-none",
     "file": "src/net/alchemyLaw.js",
-    "old": "+ POTENT.apothecary * st);",
-    "new": "+ 0 * st);",
+    "old": "  return Math.min(100, base + POTENT.unbruised * u + (distiller ? POTENT.distiller : 0) + POTENT.apothecary * st);",
+    "new": "  return Math.min(100, base + POTENT.unbruised * u + (distiller ? POTENT.distiller : 0) + 0 * st);",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_apothecary.test.js"
@@ -300,8 +300,8 @@
   {
     "name": "PROF12-potent-distiller-unread",
     "file": "src/net/alchemyLaw.js",
-    "old": "(distiller ? POTENT.distiller : 0)",
-    "new": "(0)",
+    "old": "  return Math.min(100, base + POTENT.unbruised * u + (distiller ? POTENT.distiller : 0) + POTENT.apothecary * st);",
+    "new": "  return Math.min(100, base + POTENT.unbruised * u + 0 + POTENT.apothecary * st);",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js",
@@ -321,8 +321,8 @@
   {
     "name": "PROF12-potent-effect-floor",
     "file": "src/net/alchemyLaw.js",
-    "old": "if (Number.isFinite(out[f])) out[f] = Math.round((out[f] * (100 + pct)) / 100);",
-    "new": "if (Number.isFinite(out[f])) out[f] = Math.floor((out[f] * (100 + pct)) / 100);",
+    "old": "    for (const f of POTENT_FIELDS) if (Number.isFinite(out[f])) out[f] = Math.round((out[f] * (100 + pct)) / 100);",
+    "new": "    for (const f of POTENT_FIELDS) if (Number.isFinite(out[f])) out[f] = Math.floor((out[f] * (100 + pct)) / 100);",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -330,7 +330,7 @@
   {
     "name": "PROF12-potent-effect-base-only",
     "file": "src/net/alchemyLaw.js",
-    "old": "export const POTENT_FIELDS = Object.freeze(['magnitudeBaseLow', 'magnitudeBaseHigh', 'magnitudeLevelBase', 'magnitudeLevelHigh']);",
+    "old": "export const POTENT_FIELDS = Object.freeze([\n  'magnitudeBaseLow',\n  'magnitudeBaseHigh',\n  'magnitudeLevelBase',\n  'magnitudeLevelHigh',\n]);",
     "new": "export const POTENT_FIELDS = Object.freeze(['magnitudeBaseLow', 'magnitudeBaseHigh']);",
     "tests": [
       "test/systems/prof12_law.test.js"
@@ -339,8 +339,8 @@
   {
     "name": "PROF12-master-alchemist-name",
     "file": "src/net/alchemyLaw.js",
-    "old": "export const BREWER = 'brewer', DISTILLER = 'distiller', MASTER_ALCHEMIST = 'master-alchemist';",
-    "new": "export const BREWER = 'brewer', DISTILLER = 'distiller', MASTER_ALCHEMIST = 'master-alchemists';",
+    "old": "  MASTER_ALCHEMIST = 'master-alchemist';",
+    "new": "  MASTER_ALCHEMIST = 'master-alchemists';",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js",
@@ -359,8 +359,8 @@
   {
     "name": "PROF12-points-jewel-template",
     "file": "src/net/alchemyLaw.js",
-    "old": "return r.kind === 'jewel' ? jewelPoints(r, base, hand) : base;",
-    "new": "return base;",
+    "old": "  return r.kind === 'jewel' ? jewelPoints(r, base, hand) : base;",
+    "new": "  return base;",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -369,8 +369,8 @@
   {
     "name": "PROF12-points-jewel-no-hand",
     "file": "src/net/alchemyLaw.js",
-    "old": "return r.kind === 'jewel' ? jewelPoints(r, base, hand) : base;",
-    "new": "return r.kind === 'jewel' ? jewelPoints(r, base, null) : base;",
+    "old": "  return r.kind === 'jewel' ? jewelPoints(r, base, hand) : base;",
+    "new": "  return r.kind === 'jewel' ? jewelPoints(r, base, null) : base;",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "PROF12-essence-disenchanter-one",
     "file": "src/net/alchemyLaw.js",
-    "old": "* (disenchanter ? 2 : 1);",
-    "new": "* (disenchanter ? 1 : 1);",
+    "old": "  Math.floor(Math.max(0, Number(points) || 0) / ESSENCE_POINTS) * (disenchanter ? 2 : 1);",
+    "new": "  Math.floor(Math.max(0, Number(points) || 0) / ESSENCE_POINTS) * (disenchanter ? 1 : 1);",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -399,8 +399,8 @@
   {
     "name": "PROF12-essence-ceil",
     "file": "src/net/alchemyLaw.js",
-    "old": "export const essenceOf = (points, disenchanter = false) => Math.floor(",
-    "new": "export const essenceOf = (points, disenchanter = false) => Math.ceil(",
+    "old": "  Math.floor(Math.max(0, Number(points) || 0) / ESSENCE_POINTS) * (disenchanter ? 2 : 1);",
+    "new": "  Math.ceil(Math.max(0, Number(points) || 0) / ESSENCE_POINTS) * (disenchanter ? 2 : 1);",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -420,8 +420,8 @@
   {
     "name": "PROF12-disenchant-xp-flat",
     "file": "src/net/alchemyLaw.js",
-    "old": "  const xp = DISENCHANT_XP * tier * (",
-    "new": "  const xp = DISENCHANT_XP * 1 * (",
+    "old": "  const xp = DISENCHANT_XP * tier * (Number.isSafeInteger(essence) && essence > 0 ? essence : 0);",
+    "new": "  const xp = DISENCHANT_XP * 1 * (Number.isSafeInteger(essence) && essence > 0 ? essence : 0);",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -450,8 +450,8 @@
   {
     "name": "PROF12-discount-efficient-ten",
     "file": "src/net/alchemyLaw.js",
-    "old": "journeyman: 10, master: 20, efficient: 5 });",
-    "new": "journeyman: 10, master: 20, efficient: 10 });",
+    "old": "export const ENCHANT_DISCOUNT = Object.freeze({ journeyman: 10, master: 20, efficient: 5 });",
+    "new": "export const ENCHANT_DISCOUNT = Object.freeze({ journeyman: 10, master: 20, efficient: 10 });",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/systems/prof12_client.test.js"
@@ -460,8 +460,8 @@
   {
     "name": "PROF12-discount-efficient-novice",
     "file": "src/net/alchemyLaw.js",
-    "old": "return base + (r >= JOURNEYMAN_RANK && spec50 === EFFICIENT ? ENCHANT_DISCOUNT.efficient : 0);",
-    "new": "return base + (spec50 === EFFICIENT ? ENCHANT_DISCOUNT.efficient : 0);",
+    "old": "  return base + (r >= JOURNEYMAN_RANK && spec50 === EFFICIENT ? ENCHANT_DISCOUNT.efficient : 0);",
+    "new": "  return base + (spec50 === EFFICIENT ? ENCHANT_DISCOUNT.efficient : 0);",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -469,8 +469,8 @@
   {
     "name": "PROF12-discount-round-down",
     "file": "src/net/alchemyLaw.js",
-    "old": "(pct > 0 ? Math.ceil((Math.max(0, gold) * (100 - pct)) / 100) : gold)",
-    "new": "(pct > 0 ? Math.floor((Math.max(0, gold) * (100 - pct)) / 100) : gold)",
+    "old": "export const enchantGold = (gold, pct = 0) => (pct > 0 ? Math.ceil((Math.max(0, gold) * (100 - pct)) / 100) : gold);",
+    "new": "export const enchantGold = (gold, pct = 0) => (pct > 0 ? Math.floor((Math.max(0, gold) * (100 - pct)) / 100) : gold);",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/systems/prof12_client.test.js"
@@ -1577,8 +1577,8 @@
   {
     "name": "PROF12-A3-magnitude-always",
     "file": "src/net/alchemyLaw.js",
-    "old": "  if (!magnitudeDefault(out)) {\n",
-    "new": "  if (true) {\n",
+    "old": "  if (!magnitudeDefault(out)) {",
+    "new": "  if (true) {",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -1586,8 +1586,8 @@
   {
     "name": "PROF12-A3-lasts-always",
     "file": "src/net/alchemyLaw.js",
-    "old": "  if (!magnitudeDefault(out)) {\n",
-    "new": "  if (false) {\n",
+    "old": "  if (!magnitudeDefault(out)) {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -1595,8 +1595,8 @@
   {
     "name": "PROF12-A3-no-chance",
     "file": "src/net/alchemyLaw.js",
-    "old": "  if (chanceOwn(out)) out.chanceBase = raise(out.chanceBase, out.chanceMod, out.chancePerLevel, false);\n",
-    "new": "",
+    "old": "  if (chanceOwn(out)) out.chanceBase = raise(out.chanceBase, out.chanceMod, out.chancePerLevel, false);\n  return out;",
+    "new": "  return out;",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -1604,8 +1604,8 @@
   {
     "name": "PROF12-A3-chance-everywhere",
     "file": "src/net/alchemyLaw.js",
-    "old": "  if (chanceOwn(out)) out.chanceBase = raise(",
-    "new": "  out.chanceBase = raise(",
+    "old": "  if (chanceOwn(out)) out.chanceBase = raise(out.chanceBase, out.chanceMod, out.chancePerLevel, false);",
+    "new": "  out.chanceBase = raise(out.chanceBase, out.chanceMod, out.chancePerLevel, false);",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -1613,8 +1613,8 @@
   {
     "name": "PROF12-A3-no-duration-clamp",
     "file": "src/net/alchemyLaw.js",
-    "old": "    if (min1 && mult < 1) mult = 1;",
-    "new": "",
+    "old": "    if (min1 && mult < 1) mult = 1; // rollDuration's clamp (DFU SetDuration); chanceValue has none",
+    "new": "    // rollDuration's clamp (DFU SetDuration); chanceValue has none",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -1704,8 +1704,8 @@
   {
     "name": "PROF-541-B1-collision",
     "file": "src/net/alchemyLaw.js",
-    "old": "  if (sorted(/** @type {number[]} */ (templates)) !== sorted(potion.ingredients)) return null;",
-    "new": "  if (sorted(/** @type {number[]} */ (templates)) === 'never') return null;",
+    "old": "  if (sorted(/** @type {number[]} */ (templates)) !== sorted(potion.ingredients)) return null; // AUDIT PROF-541 B1: the recipe's own, never a collision",
+    "new": "  if (sorted(/** @type {number[]} */ (templates)) === 'never') return null; // AUDIT PROF-541 B1: the recipe's own, never a collision",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -1714,7 +1714,7 @@
   {
     "name": "PROF-541-B3-able",
     "file": "src/net/alchemyLaw.js",
-    "old": "  return !(/^3,/.test(String(r.effect)) && !(r.secondary?.length) && magnitudeDefault(r.settings ?? {}));",
+    "old": "  return !(/^3,/.test(String(r.effect)) && !r.secondary?.length && magnitudeDefault(r.settings ?? {}));",
     "new": "  return true;",
     "tests": [
       "test/systems/prof12_law.test.js",
@@ -1961,8 +1961,8 @@
   {
     "name": "PROF541-R2-S1-law-one",
     "file": "src/net/alchemyLaw.js",
-    "old": "  if (potion && !brewFirstPays(potion)) return 1;\n",
-    "new": "",
+    "old": "  if (potion && !brewFirstPays(potion)) return 1;\n  if (rank >= PROF_RANK_MAX) return 3;",
+    "new": "  if (rank >= PROF_RANK_MAX) return 3;",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js",

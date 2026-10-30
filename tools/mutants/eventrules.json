@@ -178,8 +178,8 @@
   {
     "name": "SD-REZ-every-body-rises",
     "file": "src/net/bossBody.js",
-    "old": "      if (!(typeof lives === 'function' ? lives(x.sub) : lives)) return",
-    "new": "      if (!(typeof lives === 'function' ? true : lives)) return",
+    "old": "      if (!(typeof lives === 'function' ? lives(x.sub) : lives)) return enforce ? { ...x, dead: true } : x;",
+    "new": "      if (!(typeof lives === 'function' ? true : lives)) return enforce ? { ...x, dead: true } : x;",
     "tests": [
       "test/net/int11_body.test.js"
     ]

@@ -31,7 +31,8 @@ import { seatKeyOk, seatRegionOk, CROWN_SEAT_REGIONS } from './townSeatLaw.js';
 /** The seat week the region law first rules, off the service's `DOMAINS_WEEK` (a whole week number), or null: not yet. */
 export const domainsWeekOf = (v) => (/^\d{1,7}$/.test(String(v ?? '').trim()) ? Number(String(v).trim()) : null);
 /** Does the region law rule seat week `week`? */
-export const domainsRule = (week, domainsWeek) => Number.isSafeInteger(domainsWeek) && Number.isSafeInteger(week) && week >= domainsWeek;
+export const domainsRule = (week, domainsWeek) =>
+  Number.isSafeInteger(domainsWeek) && Number.isSafeInteger(week) && week >= domainsWeek;
 
 /** A region's seat of power as a client reports it, checked and canonical - `{ region, key }` - or null. */
 export function domainReportOf(raw) {
@@ -44,7 +45,11 @@ export const domainReportText = (d) => JSON.stringify([d.region, d.key]);
 /** A report read back (witnessedFact's `parse`): `{ domain }`, or null for bytes that are no domain's. */
 export function parseDomainReport(text) {
   let a;
-  try { a = JSON.parse(text); } catch { return null; }
+  try {
+    a = JSON.parse(text);
+  } catch {
+    return null;
+  }
   if (!Array.isArray(a) || a.length !== 2) return null;
   const domain = domainReportOf({ region: a[0], key: a[1] });
   return domain && domainReportText(domain) === text ? { domain } : null;
@@ -86,7 +91,7 @@ export function charterSeats(seats, domains) {
 }
 /** THE CHARTER A SEAT IS HELD UNDER: its region's seat of power where the region law rules and has one (`domains`), else
  *  the seat itself - a holding's war, Watch and homes count there. */
-export const charterUnder = (seat, domains) => (seat ? domains?.get?.(seat.region) ?? seat : null);
+export const charterUnder = (seat, domains) => (seat ? (domains?.get?.(seat.region) ?? seat) : null);
 /**
  * THE SEATS' LIST UNDER THE REGION LAW: each seat of power marked `domain` and each holding marked with its Charter's key
  * (`charter`) - `powers` `[region, key]` pairs, the confirmed seats of power - every other seat as it was. The client

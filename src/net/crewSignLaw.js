@@ -28,10 +28,13 @@ export const crewDayAt = (/** @type {number} */ nowMs) => Math.floor(sharedClass
 export function crewSignOf(id) {
   const m = /^(\d{1,10}):(\d{1,9}):(\d)$/.exec(typeof id === 'string' ? id : '');
   if (!m) return null;
-  const town = Number(m[1]), day = Number(m[2]), slot = Number(m[3]);
+  const town = Number(m[1]),
+    day = Number(m[2]),
+    slot = Number(m[3]);
   if (town > 0xffffffff || slot >= CREW_SIGN_SLOTS) return null;
   return { town, day, slot };
 }
 
 /** Whether a sign's `day` stands near enough the shared day at `nowMs` to be asked. */
-export const crewDayOk = (/** @type {number} */ day, /** @type {number} */ nowMs) => Math.abs(day - crewDayAt(nowMs)) <= CREW_SIGN_DAY_SPAN;
+export const crewDayOk = (/** @type {number} */ day, /** @type {number} */ nowMs) =>
+  Math.abs(day - crewDayAt(nowMs)) <= CREW_SIGN_DAY_SPAN;

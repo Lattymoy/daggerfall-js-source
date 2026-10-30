@@ -40,7 +40,7 @@ letters of credit (650,000, 700,000 and 600,000) drew a letter on 583 of 1,000 i
 record and into the standing body.
 
 A letter taken that way was hard to get back. A slain body hands over what it carried, but only to its owner
-(`bodyLoot.js:"if (!piece || neverPeerHanded(piece)) return null;"` - a letter never rides a peer's word). A fallen
+(`bodyLoot.js:"if (!piece || neverPeerHanded(piece))"` - a letter never rides a peer's word). A fallen
 record whose body never carried it kept it for good, and one that escaped kept it.
 
 CHANGED:

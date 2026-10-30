@@ -583,7 +583,7 @@ opening - the first star counted for both steps, and the Starwarden was paid on 
 while an earlier witnessed step of its line is not done (`server-account/src/questlines.js:"export function qlInOrderSql(lineId, step) {"`):
 answered `witnessed: false`, and asked again by the runner as every unwitnessed end is.
 
-**THE STARWARDEN'S PURSE (T-B, AS BUILT).** The title's write lays 30 Soul Cakes (`net/festivalLaw.js:"export const QL_STARWARDEN_CAKES = 30;"`)
+**THE STARWARDEN'S PURSE (T-B, AS BUILT).** The title's write lays 30 Soul Cakes (`net/festivalLaw.js:"export const QL_STARWARDEN_CAKES"`)
 on the account's count in the same statement, under the title's own guard - once an account - while the festival is
 open for the account at the claim's clock, never to a guest; answered `purse` (`06-Systems/Witches-Festival.md`, "The
 Starwarden's purse").

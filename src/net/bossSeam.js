@@ -33,9 +33,29 @@
 //
 // Pure: a plug board, no state. Not a DFU member. Ledger A (ELITE-GATES).
 import { newFight, joinFight, applyHit, stepBrain, stateOf, earned } from './gate/gateBrain.js';
-import { newRemnantFight, joinRemnant, applyRemnantHit, stepRemnant, remnantStateOf } from './superDungeon/sdRemnant.js';
-import { newSerpentFight, joinSerpentFight, applySerpentHit, stepSerpentBrain, serpentStateOf, serpentEarned } from './serpent/serpentBrain.js';
-import { newDragonFight, joinDragonFight, applyDragonHit, stepDragonBrain, dragonStateOf, dragonEarned } from './dragon/dragonBrain.js';   // DRAGON2
+import {
+  newRemnantFight,
+  joinRemnant,
+  applyRemnantHit,
+  stepRemnant,
+  remnantStateOf,
+} from './superDungeon/sdRemnant.js';
+import {
+  newSerpentFight,
+  joinSerpentFight,
+  applySerpentHit,
+  stepSerpentBrain,
+  serpentStateOf,
+  serpentEarned,
+} from './serpent/serpentBrain.js';
+import {
+  newDragonFight,
+  joinDragonFight,
+  applyDragonHit,
+  stepDragonBrain,
+  dragonStateOf,
+  dragonEarned,
+} from './dragon/dragonBrain.js'; // DRAGON2
 import { judgeGate, judgeRemnant, judgeSerpent, judgeDragon } from './bossRef.js';
 
 /** The contract's members, in the page's order. */
@@ -60,22 +80,35 @@ export function bossSeam(name, members) {
 
 /** THE GATE'S WARDEN: born of `{ day, now, wrathAt, boss, md }`, joined while `o.admits`. */
 export const GATE_SEAM = bossSeam('gate', {
-  new: ({ day, now, wrathAt, boss, md = null, pt = null, ti = null }) => newFight(day, now, wrathAt, boss, md, pt, ti),   // WB14b: and the night's portents; WB14e: its Tithe-Imp's moment
+  new: ({ day, now, wrathAt, boss, md = null, pt = null, ti = null }) => newFight(day, now, wrathAt, boss, md, pt, ti), // WB14b: and the night's portents; WB14e: its Tithe-Imp's moment
   join: (f, sub, name, lv, now, present = null, o = {}) => joinFight(f, sub, name, lv, now, o.admits, present),
-  hit: applyHit, step: stepBrain, stateOf, judge: judgeGate, earned,
+  hit: applyHit,
+  step: stepBrain,
+  stateOf,
+  judge: judgeGate,
+  earned,
 });
 /** THE ABYSS DUNGEON'S BRASS REMNANT: born of `{ s, fi, now, mk }`; earned by the gate's own law. */
 export const SD_SEAM = bossSeam('sd', {
   new: ({ s, fi, now, mk = null }) => newRemnantFight(s, fi, now, mk),
-  join: joinRemnant, hit: applyRemnantHit, step: stepRemnant, stateOf: remnantStateOf, judge: judgeRemnant, earned,
+  join: joinRemnant,
+  hit: applyRemnantHit,
+  step: stepRemnant,
+  stateOf: remnantStateOf,
+  judge: judgeRemnant,
+  earned,
 });
 /** THE SEA SERPENT: born of `{ day, now, soundAt, boss, sx, sz, yaw }`, joined with `o.hl`, `o.admits` and `o.near`; a
  *  blow's zone `o.z`, a hand's own weapons the blow's kind 1 (SERPENT4). */
 export const SERPENT_SEAM = bossSeam('serpent', {
   new: ({ day, now, soundAt, boss, sx, sz, yaw = 0 }) => newSerpentFight(day, now, soundAt, boss, sx, sz, yaw),
-  join: (f, sub, name, lv, now, present = null, o = {}) => joinSerpentFight(f, sub, name, lv, o.hl, now, o.admits, present, o.near ?? true),
+  join: (f, sub, name, lv, now, present = null, o = {}) =>
+    joinSerpentFight(f, sub, name, lv, o.hl, now, o.admits, present, o.near ?? true),
   hit: (f, sub, d, r, pose, now, _seq = null, o = {}) => applySerpentHit(f, sub, d, o.z, pose, now, r === 1),
-  step: stepSerpentBrain, stateOf: serpentStateOf, judge: judgeSerpent, earned: serpentEarned,
+  step: stepSerpentBrain,
+  stateOf: serpentStateOf,
+  judge: judgeSerpent,
+  earned: serpentEarned,
 });
 /** DRAGON2 - THE DWARVEN DRAGON (bible/11-Multiplayer/Dwarven-Dragon.md section 4): born of `{ w, b, sx, sz, now, leaveAt,
  *  roost }`, joined while `o.admits`; a blow's kind the gate's (HIT_KINDS). */
@@ -83,5 +116,8 @@ export const DRAGON_SEAM = bossSeam('dragon', {
   new: (birth) => newDragonFight(birth),
   join: (f, sub, name, lv, now, present = null, o = {}) => joinDragonFight(f, sub, name, lv, now, !!o.admits, present),
   hit: (f, sub, d, r, pose, now) => applyDragonHit(f, sub, d, r, pose, now),
-  step: stepDragonBrain, stateOf: dragonStateOf, judge: judgeDragon, earned: dragonEarned,
+  step: stepDragonBrain,
+  stateOf: dragonStateOf,
+  judge: judgeDragon,
+  earned: dragonEarned,
 });

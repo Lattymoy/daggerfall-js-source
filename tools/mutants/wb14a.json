@@ -194,8 +194,8 @@
   {
     "name": "WB14a-the-gaze-counted-by-the-relay",
     "file": "src/net/bossRef.js",
-    "old": "  if (!A || !(share > 0) || screenJudged(A)) a.bj = true;",
-    "new": "  if (!A || !(share > 0)) a.bj = true;",
+    "old": "  if (!A || !(share > 0) || screenJudged(A))",
+    "new": "  if (!A || !(share > 0))",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ],
@@ -205,8 +205,8 @@
   {
     "name": "WB14a-the-relay-s-wheel-once-at-its-landing",
     "file": "src/net/bossRef.js",
-    "old": "  else if (A === ATTACKS.wheel) sweep(",
-    "new": "  else if (A === null) sweep(",
+    "old": "  else if (A === ATTACKS.wheel)",
+    "new": "  else if (A === null)",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ]

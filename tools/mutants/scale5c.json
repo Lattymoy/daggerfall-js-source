@@ -583,8 +583,8 @@
   {
     "name": "SCALE5c-find-unknown",
     "file": "src/net/chatCommands.js",
-    "old": "  if (name === 'find' || name === 'who') return rest ? { kind: 'find', q: rest } : { kind: 'empty', name };   // SCALE5c (Mac's decision 2)\n",
-    "new": "",
+    "old": "  if (name === 'find' || name === 'who') return rest ? { kind: 'find', q: rest } : { kind: 'empty', name }; // SCALE5c (Mac's decision 2)\n  if (Object.hasOwn(EMOTES, name)) return { kind: 'emote', text: emoteText(name, rest) };",
+    "new": "  if (Object.hasOwn(EMOTES, name)) return { kind: 'emote', text: emoteText(name, rest) };",
     "tests": [
       "test/net/scale5c.test.js"
     ],
@@ -593,8 +593,8 @@
   {
     "name": "SCALE5c-full-unsaid",
     "file": "src/net/chatCommands.js",
-    "old": "names.length >= HUB_FIND_MAX ?",
-    "new": "names.length > HUB_FIND_MAX ?",
+    "old": "  return `Online, by \"${q}\"${names.length >= HUB_FIND_MAX ? ` (the first ${HUB_FIND_MAX})` : ''}: ${names.join(', ')}.`;",
+    "new": "  return `Online, by \"${q}\"${names.length > HUB_FIND_MAX ? ` (the first ${HUB_FIND_MAX})` : ''}: ${names.join(', ')}.`;",
     "tests": [
       "test/net/scale5c.test.js"
     ],

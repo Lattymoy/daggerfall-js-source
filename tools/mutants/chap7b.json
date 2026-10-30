@@ -164,8 +164,8 @@
   {
     "name": "CHAP7B-SHEET-ARMS",
     "file": "src/net/chapterSheet.js",
-    "old": "return k ? { ...k, heraldry: heraldryOf(p?.heraldry) } : null; };",
-    "new": "return k ? { ...k, heraldry: p?.heraldry ?? null } : null; };",
+    "old": "  return k ? { ...k, heraldry: heraldryOf(p?.heraldry) } : null;",
+    "new": "  return k ? { ...k, heraldry: p?.heraldry ?? null } : null;",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "CHAP7B-SHEET-READ",
     "file": "src/net/chapterSheet.js",
-    "old": ", patron: sheetPatronOf(c.patron) });",
-    "new": ", patron: null });",
+    "old": "                  patron: sheetPatronOf(c.patron),",
+    "new": "                  patron: null,",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "CHAP7B-SHEET-COPY",
     "file": "src/net/chapterSheet.js",
-    "old": "        patron: s.patron ? { ...s.patron } : null };",
-    "new": "        patron: s.patron };",
+    "old": "            patron: s.patron ? { ...s.patron } : null,",
+    "new": "            patron: s.patron,",
     "tests": [
       "test/net/chap7b_patrons_client.test.js"
     ]

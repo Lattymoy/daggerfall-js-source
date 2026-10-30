@@ -53,7 +53,10 @@ export const BODY_DEFAULT = Object.freeze({
   hull: Object.freeze({ depth: 0.15, perS: 0.012 }),
 });
 
-const lineOk = (l) => !!l && typeof l === 'object' && [l.depth, l.perS].every((n) => typeof n === 'number' && Number.isFinite(n) && n >= 0 && n <= BODY_LINE_MAX);
+const lineOk = (l) =>
+  !!l &&
+  typeof l === 'object' &&
+  [l.depth, l.perS].every((n) => typeof n === 'number' && Number.isFinite(n) && n >= 0 && n <= BODY_LINE_MAX);
 /**
  * The relay's line from its BOSS_BODY var - JSON `{enforce, body: {depth, perS}, hull: {depth, perS}}`, each part
  * optional (the default's where absent). Anything else - not JSON, a wrong type, a number out of bounds - is the
@@ -64,7 +67,13 @@ const lineOk = (l) => !!l && typeof l === 'object' && [l.depth, l.perS].every((n
 export function bodyConfig(raw) {
   if (raw == null || raw === '') return BODY_DEFAULT;
   let c = raw;
-  if (typeof raw === 'string') { try { c = JSON.parse(raw); } catch { return BODY_DEFAULT; } }
+  if (typeof raw === 'string') {
+    try {
+      c = JSON.parse(raw);
+    } catch {
+      return BODY_DEFAULT;
+    }
+  }
   if (!c || typeof c !== 'object' || Array.isArray(c)) return BODY_DEFAULT;
   const o = /** @type {any} */ (c);
   if (o.enforce !== undefined && typeof o.enforce !== 'boolean') return BODY_DEFAULT;
@@ -83,13 +92,29 @@ export function bodyConfig(raw) {
  * across its lives.
  * @param {number} now @param {{depth: number}} line
  */
-export const newBody = (now, line) => ({ v: 1, m: line.depth, mAt: now, u: 0, dn: false, t: 0, h: 0, o: 0, w: 0, fs: null, fd: null, dd: null, sd: false });
+export const newBody = (now, line) => ({
+  v: 1,
+  m: line.depth,
+  mAt: now,
+  u: 0,
+  dn: false,
+  t: 0,
+  h: 0,
+  o: 0,
+  w: 0,
+  fs: null,
+  fd: null,
+  dd: null,
+  sd: false,
+});
 /** @param {any} p @param {number} now @param {{depth: number}} line */
 const bodyOf = (p, now, line) => (p.bd ??= newBody(now, line));
 /** The budget filled to `now`. */
 function fill(b, now, line) {
-  if (now > b.mAt) { b.m = Math.min(line.depth, b.m + (line.perS * (now - b.mAt)) / 1000); b.mAt = now; }
-  else if (b.m > line.depth) b.m = line.depth;   // a line lowered since
+  if (now > b.mAt) {
+    b.m = Math.min(line.depth, b.m + (line.perS * (now - b.mAt)) / 1000);
+    b.mAt = now;
+  } else if (b.m > line.depth) b.m = line.depth; // a line lowered since
 }
 /** Is the fighter fallen by the count (whether or not that is enforced)? */
 export const bodyDown = (p) => !!p?.bd?.dn;
@@ -131,7 +156,10 @@ export function bodyStruck(p, share, now, line) {
   if (b.v > 0) return false;
   b.dn = true;
   b.w++;
-  if (b.fs == null) { b.fs = p.stoodMs ?? 0; b.fd = p.dealt ?? 0; }
+  if (b.fs == null) {
+    b.fs = p.stoodMs ?? 0;
+    b.fd = p.dealt ?? 0;
+  }
   return true;
 }
 
@@ -147,13 +175,19 @@ export function bodyStruck(p, share, now, line) {
 export function bodySaid(p, c, now, line, { enforce = false, up = 0, hull = false } = {}) {
   if (!p || typeof c !== 'number' || !Number.isFinite(c)) return false;
   const b = bodyOf(p, now, line);
-  b.sd = true;   // its game says its body: its measure means something (bodyMeasure)
+  b.sd = true; // its game says its body: its measure means something (bodyMeasure)
   fill(b, now, line);
   if (b.dn && enforce && !hull) return false;
   const s = Math.min(1, Math.max(0, c)) - b.v;
-  if (!(s > 0)) { b.u = 0; return false; }
-  const g = Math.min(s, b.m), u = s - g;
-  b.m -= g; b.h += g; b.v += g;
+  if (!(s > 0)) {
+    b.u = 0;
+    return false;
+  }
+  const g = Math.min(s, b.m),
+    u = s - g;
+  b.m -= g;
+  b.h += g;
+  b.v += g;
   if (u > b.u) b.o += u - b.u;
   b.u = u;
   if (b.dn && b.v > up) b.dn = false;
@@ -178,9 +212,12 @@ export function bodyHealed(p, share, now, line, { enforce = false, up = 0 } = {}
   fill(b, now, line);
   if (b.dn && enforce) return 0;
   const k = Math.min(share, b.u);
-  b.u -= k; b.o = Math.max(0, b.o - k); b.v = Math.min(1, b.v + k);
+  b.u -= k;
+  b.o = Math.max(0, b.o - k);
+  b.v = Math.min(1, b.v + k);
   const back = Math.min(share - k, Math.max(0, line.depth - b.m), b.h);
-  b.m += back; b.h -= back;
+  b.m += back;
+  b.h -= back;
   b.v = Math.min(1, b.v + (share - k - back));
   if (b.dn && b.v > up) b.dn = false;
   return share;
@@ -207,7 +244,10 @@ export function bodyCensus(f, bodies, now, line, enforce, { lives = true } = {})
     const p = f.players?.[x.sub];
     if (!p) return x;
     const b = bodyOf(p, now, line);
-    if (x.dead) { if (b.dd == null) b.dd = now; return x; }
+    if (x.dead) {
+      if (b.dd == null) b.dd = now;
+      return x;
+    }
     if (b.dd != null) {
       if (!(typeof lives === 'function' ? lives(x.sub) : lives)) return enforce ? { ...x, dead: true } : x;
       if (enforce && now - b.dd < BODY_RISE_MS) return { ...x, dead: true };
@@ -228,20 +268,34 @@ export function bodyCensus(f, bodies, now, line, enforce, { lives = true } = {})
 export function bodyMeasure(p, kept) {
   const b = p?.bd;
   if (!b?.sd) return null;
-  const k = b.fs == null ? 1 : (kept({ ...p, stoodMs: b.fs, dealt: b.fd }) ? 1 : 0);
+  const k = b.fs == null ? 1 : kept({ ...p, stoodMs: b.fs, dealt: b.fd }) ? 1 : 0;
   const th = (x) => Math.max(0, Math.min(BODY_MEASURE_MAX, Math.round(x * 1000)));
-  return [th(b.t), th(b.h), th(b.o), Math.min(BODY_MEASURE_MAX, b.w), k, Math.min(BODY_MEASURE_MAX, Math.round((p.stoodMs ?? 0) / 1000))];
+  return [
+    th(b.t),
+    th(b.h),
+    th(b.o),
+    Math.min(BODY_MEASURE_MAX, b.w),
+    k,
+    Math.min(BODY_MEASURE_MAX, Math.round((p.stoodMs ?? 0) / 1000)),
+  ];
 }
 /** The most any number of a measure says (a receipt's bound, and the service's). */
 export const BODY_MEASURE_MAX = 999_999;
 /** Is `m` a measure a receipt may carry? Six whole numbers, each 0..BODY_MEASURE_MAX, the fifth 0 or 1. */
-export const bodyMeasureValid = (m) => Array.isArray(m) && m.length === 6 && m.every((n) => Number.isSafeInteger(n) && n >= 0 && n <= BODY_MEASURE_MAX) && m[4] <= 1;
+export const bodyMeasureValid = (m) =>
+  Array.isArray(m) &&
+  m.length === 6 &&
+  m.every((n) => Number.isSafeInteger(n) && n >= 0 && n <= BODY_MEASURE_MAX) &&
+  m[4] <= 1;
 
 /** THE MARGIN: is (x, z) inside `test` with every point BODY_MARGIN (or `m`) round it inside too - the struck player's
  *  favour, eight ways round. @param {(x: number, z: number) => boolean} test @param {number} x @param {number} z */
 export function deepIn(test, x, z, m = BODY_MARGIN) {
   if (!Number.isFinite(x) || !Number.isFinite(z) || !test(x, z)) return false;
-  for (let k = 0; k < 8; k++) { const a = (k * Math.PI) / 4; if (!test(x + Math.sin(a) * m, z + Math.cos(a) * m)) return false; }
+  for (let k = 0; k < 8; k++) {
+    const a = (k * Math.PI) / 4;
+    if (!test(x + Math.sin(a) * m, z + Math.cos(a) * m)) return false;
+  }
   return true;
 }
 
@@ -257,13 +311,15 @@ export const BODY_SAY_WHOLE = 1000;
  * @param {(v: number) => boolean} send
  */
 export function bodySayer(send) {
-  let lastV = -1, lastAt = -Infinity;
+  let lastV = -1,
+    lastAt = -Infinity;
   return (/** @type {number} */ share, /** @type {number} */ t) => {
     if (!Number.isFinite(share) || !Number.isFinite(t) || t - lastAt < BODY_SAY_MS) return false;
     const v = Math.max(0, Math.min(BODY_SAY_WHOLE, Math.round(share * BODY_SAY_WHOLE)));
     if (v === lastV && t - lastAt < BODY_SAY_KEEP_MS) return false;
     if (!send(v)) return false;
-    lastV = v; lastAt = t;
+    lastV = v;
+    lastAt = t;
     return true;
   };
 }

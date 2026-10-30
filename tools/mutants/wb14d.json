@@ -332,8 +332,8 @@
   {
     "name": "WB14d-the-flame-s-blow-never-judged",
     "file": "src/net/bossRef.js",
-    "old": "  if (f.sd) bodyBlow(f.sd.fl.atk, live, flameProfileOf(f), prev, now, out);",
-    "new": "  void flameProfileOf;",
+    "old": "  if (f.sd) bodyBlow(f.sd.fl.atk, live, flameProfileOf(f), prev, now, out); // WB14d: and his Flame's, by its own body",
+    "new": "  void flameProfileOf; // WB14d: and his Flame's, by its own body",
     "tests": [
       "test/net/gate/wb14d_sundering.test.js"
     ]

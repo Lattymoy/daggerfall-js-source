@@ -2,8 +2,8 @@
   {
     "name": "WITCH1-the-days-a-day-short",
     "file": "src/net/festivalLaw.js",
-    "old": "toMs: Date.UTC(2026, 10, 8), eveFromMs",
-    "new": "toMs: Date.UTC(2026, 10, 7), eveFromMs",
+    "old": "    toMs: Date.UTC(2026, 10, 8),",
+    "new": "    toMs: Date.UTC(2026, 10, 7),",
     "tests": [
       "test/systems/festival/witch1_law.test.js"
     ],
@@ -23,8 +23,8 @@
   {
     "name": "WITCH1-a-card-held-as-an-account-ware",
     "file": "src/net/festivalLaw.js",
-    "old": ".split(' ').filter((id) => accountWare(wareById(id))) : []);",
-    "new": ".split(' ').filter((id) => wareById(id)) : []);",
+    "old": "  typeof col === 'string' ? col.split(' ').filter((id) => accountWare(wareById(id))) : [];",
+    "new": "  typeof col === 'string' ? col.split(' ').filter((id) => wareById(id)) : [];",
     "tests": [
       "test/systems/festival/witch1_law.test.js"
     ],
@@ -464,8 +464,8 @@
   {
     "name": "WITCH1-AUDIT-eve-not-doubled",
     "file": "src/net/festivalLaw.js",
-    "old": "=> festivalNight(dayOfYear) || festivalEve(nowMs);",
-    "new": "=> festivalNight(dayOfYear);",
+    "old": "export const deadWalk = (/** @type {number} */ dayOfYear, /** @type {number} */ nowMs) =>\n  festivalNight(dayOfYear) || festivalEve(nowMs);",
+    "new": "export const deadWalk = (/** @type {number} */ dayOfYear, /** @type {number} */ nowMs) => festivalNight(dayOfYear);",
     "tests": [
       "test/systems/festival/witch1_law.test.js"
     ],

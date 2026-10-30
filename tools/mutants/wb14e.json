@@ -181,8 +181,8 @@
   {
     "name": "WB14e-the-seam-drops-its-moment",
     "file": "src/net/bossSeam.js",
-    "old": "newFight(day, now, wrathAt, boss, md, pt, ti)",
-    "new": "newFight(day, now, wrathAt, boss, md, pt)",
+    "old": "  new: ({ day, now, wrathAt, boss, md = null, pt = null, ti = null }) => newFight(day, now, wrathAt, boss, md, pt, ti), // WB14b: and the night's portents; WB14e: its Tithe-Imp's moment",
+    "new": "  new: ({ day, now, wrathAt, boss, md = null, pt = null, ti = null }) => newFight(day, now, wrathAt, boss, md, pt), // WB14b: and the night's portents; WB14e: its Tithe-Imp's moment",
     "tests": [
       "test/net/gate/wb14e_tithe.test.js"
     ]

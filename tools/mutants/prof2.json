@@ -350,8 +350,8 @@
   {
     "name": "PROF2-39-a-forge-for-nothing",
     "file": "src/net/decorLaw.js",
-    "old": "enchant: 200_000, forge: 50_000, workbench: 50_000, cooking: 50_000, loom: 50_000, mason: 50_000, jeweller: 50_000, vendor: 25_000 });",
-    "new": "enchant: 200_000, forge: 0, workbench: 50_000, cooking: 50_000, loom: 50_000, mason: 50_000, jeweller: 50_000, vendor: 25_000 });",
+    "old": "  forge: 50_000,",
+    "new": "  forge: 0,",
     "tests": [
       "test/net/prof2_client.test.js",
       "test/ui/homestations.test.js"
@@ -468,8 +468,8 @@
   {
     "name": "DAEDRIC-SMELT-a-chain-plans-it",
     "file": "src/net/chainLaw.js",
-    "old": "!!r && !r.spec && !r.embers && r.inputs.every(",
-    "new": "!!r && !r.spec && r.inputs.every(",
+    "old": "  !!r && !r.spec && !r.embers && r.inputs.every((/** @type {any} */ inp) => tierOf(inp.key) <= tierOf(r.out));",
+    "new": "  !!r && !r.spec && r.inputs.every((/** @type {any} */ inp) => tierOf(inp.key) <= tierOf(r.out));",
     "tests": [
       "test/net/daedricsmelt_law.test.js",
       "test/net/craft1_chain.test.js"
@@ -478,8 +478,8 @@
   {
     "name": "DAEDRIC-SMELT-a-writ-asks-its-kit",
     "file": "src/net/craftWritLaw.js",
-    "old": " || EMBER_MADE.includes(i.key))));",
-    "new": ")));",
+    "old": "  RECIPES.filter(\n    (r) => r.product === 'kit' && !r.inputs.some((i) => UNYIELDED.includes(i.key) || EMBER_MADE.includes(i.key)),\n  ),",
+    "new": "  RECIPES.filter((r) => r.product === 'kit' && !r.inputs.some((i) => UNYIELDED.includes(i.key))),",
     "tests": [
       "test/net/daedricsmelt_law.test.js",
       "test/net/craftwrits_law.test.js"

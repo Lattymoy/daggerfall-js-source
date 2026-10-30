@@ -572,8 +572,8 @@
   {
     "name": "AUDIT2-BAG1-K11-none-carried-said-as-the-bag",
     "file": "src/net/bagLaw.js",
-    "old": "  if (!(p.bag > 0) && !(p.pack > 0) && p.left > 0) return",
-    "new": "  if (false) return",
+    "old": "  if (!(p.bag > 0) && !(p.pack > 0) && p.left > 0) return `- all ${left}: no room in your bag or pack`;",
+    "new": "  if (false) return `- all ${left}: no room in your bag or pack`;",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]
@@ -581,8 +581,8 @@
   {
     "name": "AUDIT2-BAG1-K8-moved-unsaid",
     "file": "src/net/bagLaw.js",
-    "old": "  return n > 0 ? ` ${n} of the materials",
-    "new": "  return false ? ` ${n} of the materials",
+    "old": "  return n > 0 ? ` ${n} of the materials went into your Stores first. Your next try uses them from there.` : '';",
+    "new": "  return false ? ` ${n} of the materials went into your Stores first. Your next try uses them from there.` : '';",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]

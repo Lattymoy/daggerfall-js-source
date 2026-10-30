@@ -511,8 +511,8 @@
   {
     "name": "AUDIT-CHAP4-T5-SHEET-STAMP",
     "file": "src/net/chapterSheet.js",
-    "old": "    readAt = nowMs();\n    Promise.resolve().then(() => door.list())",
-    "new": "    Promise.resolve().then(() => door.list())",
+    "old": "    readAt = nowMs();\n    Promise.resolve()",
+    "new": "    Promise.resolve()",
     "tests": [
       "test/net/audit_chap4.test.js"
     ]

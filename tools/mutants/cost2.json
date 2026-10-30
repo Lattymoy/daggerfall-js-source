@@ -2,8 +2,8 @@
   {
     "name": "COST2-L0-keyed-anew",
     "file": "src/net/cellTree.js",
-    "old": "(level === 0 ? `world:${nx},${ny}` : `cell:${level}:${nx},${ny}`)",
-    "new": "`cell:${level}:${nx},${ny}`",
+    "old": "  level === 0 ? `world:${nx},${ny}` : `cell:${level}:${nx},${ny}`;",
+    "new": "  `cell:${level}:${nx},${ny}`;",
     "tests": [
       "test/net/celltree.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "COST2-floor-negatives",
     "file": "src/net/cellTree.js",
-    "old": "cellNodeKey(level, Math.floor(cx / 2 ** level), Math.floor(cy / 2 ** level))",
-    "new": "cellNodeKey(level, Math.trunc(cx / 2 ** level), Math.trunc(cy / 2 ** level))",
+    "old": "export const nodeAt = (level, cx, cy) => cellNodeKey(level, Math.floor(cx / 2 ** level), Math.floor(cy / 2 ** level));",
+    "new": "export const nodeAt = (level, cx, cy) => cellNodeKey(level, Math.trunc(cx / 2 ** level), Math.trunc(cy / 2 ** level));",
     "tests": [
       "test/net/celltree.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "COST2-child-out-of-place",
     "file": "src/net/cellTree.js",
-    "old": "[[0, 0], [1, 0], [0, 1], [1, 1]].map(",
-    "new": "[[0, 0], [0, 1], [1, 0], [1, 1]].map(",
+    "old": "    [1, 0],\n    [0, 1],",
+    "new": "    [0, 1],\n    [1, 0],",
     "tests": [
       "test/net/celltree.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "COST2-parent-rounding",
     "file": "src/net/cellTree.js",
-    "old": "cellNodeKey(parsed.L + 1, Math.floor(parsed.nx / 2), Math.floor(parsed.ny / 2))",
-    "new": "cellNodeKey(parsed.L + 1, Math.round(parsed.nx / 2), Math.round(parsed.ny / 2))",
+    "old": "    ? cellNodeKey(parsed.L + 1, Math.floor(parsed.nx / 2), Math.floor(parsed.ny / 2))",
+    "new": "    ? cellNodeKey(parsed.L + 1, Math.round(parsed.nx / 2), Math.round(parsed.ny / 2))",
     "tests": [
       "test/net/celltree.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "COST2-base-side",
     "file": "src/net/cellTree.js",
-    "old": "return level > tree.base ? !members.joined.has(key) : members.split.has(key);",
-    "new": "return level >= tree.base ? !members.joined.has(key) : members.split.has(key);",
+    "old": "  return level > tree.base ? !members.joined.has(key) : members.split.has(key);",
+    "new": "  return level >= tree.base ? !members.joined.has(key) : members.split.has(key);",
     "tests": [
       "test/net/celltree.test.js",
       "test/server/cellnodes.test.js"
@@ -57,8 +57,8 @@
   {
     "name": "COST2-walk-start",
     "file": "src/net/cellTree.js",
-    "old": "  let level = CELL_LEVEL_MAX;\n  let node = nodeAt(level, cell[0], cell[1]);",
-    "new": "  let level = CELL_LEVEL_MAX - 1;\n  let node = nodeAt(level, cell[0], cell[1]);",
+    "old": "  let level = CELL_LEVEL_MAX;",
+    "new": "  let level = CELL_LEVEL_MAX - 1;",
     "tests": [
       "test/net/celltree.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "COST2-joined-unread",
     "file": "src/net/cellTree.js",
-    "old": "? !members.joined.has(key) :",
-    "new": "? true :",
+    "old": "  return level > tree.base ? !members.joined.has(key) : members.split.has(key);",
+    "new": "  return level > tree.base ? true : members.split.has(key);",
     "tests": [
       "test/net/celltree.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "COST2-tree-read-loose",
     "file": "src/net/cellTree.js",
-    "old": "if (level == null || !side(level) || nodes.has(key)) return null;",
-    "new": "if (level == null || nodes.has(key)) return null;",
+    "old": "      if (level == null || !side(level) || nodes.has(key)) return null;",
+    "new": "      if (level == null || nodes.has(key)) return null;",
     "tests": [
       "test/net/celltree.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "COST2-tree-bound",
     "file": "src/net/cellTree.js",
-    "old": "if (!Array.isArray(listed) || listed.length > TREE_NODES_MAX) return null;",
-    "new": "if (!Array.isArray(listed)) return null;",
+    "old": "    if (!Array.isArray(listed) || listed.length > TREE_NODES_MAX) return null;",
+    "new": "    if (!Array.isArray(listed)) return null;",
     "tests": [
       "test/net/celltree.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "COST2-partition-first",
     "file": "src/net/cellTree.js",
-    "old": "const target = pixel ? targets.find((key) => nodeHolds(key, pixel[0], pixel[1])) : undefined;",
-    "new": "const target = pixel ? targets[0] : undefined;",
+    "old": "    const target = pixel ? targets.find((key) => nodeHolds(key, pixel[0], pixel[1])) : undefined;",
+    "new": "    const target = pixel ? targets[0] : undefined;",
     "tests": [
       "test/net/celltree.test.js",
       "test/server/cellhandover.test.js"
@@ -103,8 +103,8 @@
   {
     "name": "COST2-rest-dropped",
     "file": "src/net/cellTree.js",
-    "old": "    if (target) /** @type {T[]} */ (by.get(target)).push(row);\n    else rest.push(row);\n",
-    "new": "    if (target) /** @type {T[]} */ (by.get(target)).push(row);\n",
+    "old": "    else rest.push(row);\n  }",
+    "new": "  }",
     "tests": [
       "test/net/celltree.test.js"
     ]
@@ -239,8 +239,8 @@
   {
     "name": "COST2-cells-off-by-one",
     "file": "src/net/cellTree.js",
-    "old": "return [parsed.nx * size, parsed.ny * size, (parsed.nx + 1) * size, (parsed.ny + 1) * size];",
-    "new": "return [parsed.nx * size, parsed.ny * size, (parsed.nx + 1) * size - 1, (parsed.ny + 1) * size - 1];",
+    "old": "  return [parsed.nx * size, parsed.ny * size, (parsed.nx + 1) * size, (parsed.ny + 1) * size];",
+    "new": "  return [parsed.nx * size, parsed.ny * size, (parsed.nx + 1) * size - 1, (parsed.ny + 1) * size - 1];",
     "tests": [
       "test/net/cellcover.test.js"
     ]
@@ -248,8 +248,8 @@
   {
     "name": "COST2-cells-read-loose",
     "file": "src/net/cellTree.js",
-    "old": "if (y1 - y0 !== size || !Number.isInteger(level)",
-    "new": "if (!Number.isInteger(level)",
+    "old": "  if (\n    y1 - y0 !== size ||\n    !Number.isInteger(level) ||\n    level < 0 ||\n    level > CELL_LEVEL_MAX ||\n    x0 % size !== 0 ||\n    y0 % size !== 0\n  )",
+    "new": "  if (!Number.isInteger(level) || level < 0 || level > CELL_LEVEL_MAX || x0 % size !== 0 || y0 % size !== 0)",
     "tests": [
       "test/net/cellcover.test.js"
     ]
