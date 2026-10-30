@@ -92,8 +92,8 @@
   {
     "name": "STAFF-HIDE-TOGGLE-door-word-unread",
     "file": "src/net/staffHook.js",
-    "old": "else if (m.dfoStaff === 'relink' && relink && !relinkWait) {",
-    "new": "else if (false) {",
+    "old": "    else if (m.dfoStaff === 'relink' && relink && !relinkWait) {",
+    "new": "    else if (false) {",
     "why": "the panel's relink ignored: Hide me waits for the game's next connection again",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "STAFF-HIDE-TOGGLE-door-gap-unread",
     "file": "src/net/staffHook.js",
-    "old": "if (wait > 0) relinkWait = setTimer(relinkNow, wait); else relinkNow();",
-    "new": "relinkNow();",
+    "old": "      if (wait > 0) relinkWait = setTimer(relinkNow, wait);\n      else relinkNow();",
+    "new": "      relinkNow();",
     "why": "a relink storm from any page script",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "STAFF-HIDE-TOGGLE-door-two-waiting",
     "file": "src/net/staffHook.js",
-    "old": "&& relink && !relinkWait) {",
-    "new": "&& relink) {",
+    "old": "    else if (m.dfoStaff === 'relink' && relink && !relinkWait) {",
+    "new": "    else if (m.dfoStaff === 'relink' && relink) {",
     "why": "every relink asked inside the gap queued",
     "tests": [
       "test/net/staffpanel5hook.test.js"

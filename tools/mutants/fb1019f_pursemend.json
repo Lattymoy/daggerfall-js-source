@@ -2,8 +2,8 @@
   {
     "name": "PURSE-MEND-the-purse-kept",
     "file": "src/net/repairLaw.js",
-    "old": "  save.goldPieces = 0;\n",
-    "new": "",
+    "old": "  save.goldPieces = 0;\n  if (gold > 0) creditSave(save, gold, { letter: true });",
+    "new": "  if (gold > 0) creditSave(save, gold, { letter: true });",
     "tests": [
       "test/net/fb1019f_pursemend.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PURSE-MEND-the-purse-asked-not-below-nothing",
     "file": "src/net/repairLaw.js",
-    "old": "  if (!Number.isSafeInteger(purse) || purse >= 0) return 'mend-not-negative';\n",
-    "new": "",
+    "old": "  if (!Number.isSafeInteger(purse) || purse >= 0) return 'mend-not-negative';\n  if (purse !== was) return 'mend-moved';",
+    "new": "  if (purse !== was) return 'mend-moved';",
     "tests": [
       "test/net/fb1019f_pursemend.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PURSE-MEND-the-purse-asked-not-the-one",
     "file": "src/net/repairLaw.js",
-    "old": "  if (purse !== was) return 'mend-moved';\n",
-    "new": "",
+    "old": "  if (purse !== was) return 'mend-moved';\n  save.goldPieces = 0;",
+    "new": "  save.goldPieces = 0;",
     "tests": [
       "test/net/fb1019f_pursemend.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "AUDIT-FB1019f-A3-a-letter-of-nothing",
     "file": "src/net/repairLaw.js",
-    "old": "  save.goldPieces = 0;\n  if (gold > 0) creditSave",
-    "new": "  save.goldPieces = 0;\n  if (gold >= 0) creditSave",
+    "old": "  save.goldPieces = 0;\n  if (gold > 0) creditSave(save, gold, { letter: true });",
+    "new": "  save.goldPieces = 0;\n  if (gold >= 0) creditSave(save, gold, { letter: true });",
     "tests": [
       "test/net/fb1019f_pursemend.test.js"
     ]

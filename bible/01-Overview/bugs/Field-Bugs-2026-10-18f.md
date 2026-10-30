@@ -361,7 +361,7 @@ FOUND. Reproduced in Node on the real Worker, book and Stores page: Smithing at 
 Provisioning 55, the anvil's Silver Dagger box read word for word as the screenshot, and the Worker answered `xp: 0,
 first: true`.
 - **The crafter's limit** (`06-Systems/Professions-Arc.md` 3.2, DECIDED; Mac kept it at CAP-OFF): two crafts past
-  Journeyman, every other stopped at `professionLaw.js:"return past >= CRAFTS_ABOVE_JOURNEYMAN ? xpForRank(JOURNEYMAN_RANK + 1) - 1 : PROF_XP_MAX;"` -
+  Journeyman, every other stopped at `professionLaw.js:"return past >= CRAFTS_ABOVE_JOURNEYMAN"` -
   one XP short of 51, the report's "1xp off". The service credits each act through its own INSERT,
   `professions.js:"MAX(0, MIN(?10 + f * p * ?13, ${cap} - COALESCE("` (the smelt's, temper's, brew's and disenchant's
   alike), so at that ceiling every act pays none, its first's 500 too. With Provisioning at 50 the same craft paid 60

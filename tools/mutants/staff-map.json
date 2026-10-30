@@ -2,8 +2,8 @@
   {
     "name": "STAFF-MAP-shown-token-sent",
     "file": "src/net/staffMap.js",
-    "old": "if (tokenHidden(tok)) { why = null; heard(true); return tok; }",
-    "new": "if (tok) { why = null; heard(true); return tok; }",
+    "old": "    if (tokenHidden(tok)) {",
+    "new": "    if (tok) {",
     "why": "a staff game whose Hide me is off says hello in another region's channel as itself - its players see a staff member arrive",
     "tests": [
       "test/net/staffmap_e2e.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "STAFF-MAP-hide-off-unsaid",
     "file": "src/net/staffMap.js",
-    "old": "state: region == null ? 'off' : shown ? 'hide' : link?.status ?? 'off'",
-    "new": "state: region == null ? 'off' : link?.status ?? 'off'",
+    "old": "      state: region == null ? 'off' : shown ? 'hide' : (link?.status ?? 'off'),",
+    "new": "      state: region == null ? 'off' : (link?.status ?? 'off'),",
     "why": "a staff game whose Hide me is off shows an empty map with no word why",
     "tests": [
       "test/net/staffmap_e2e.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "STAFF-MAP-lastWhy-copied-once",
     "file": "src/net/staffMap.js",
-    "old": "return Object.defineProperties(mint, Object.getOwnPropertyDescriptors({   // descriptors: lastWhy read live, never copied once",
-    "new": "return Object.assign(mint, ({   // descriptors: lastWhy read live, never copied once",
+    "old": "  return Object.defineProperties(\n    mint,\n    Object.getOwnPropertyDescriptors({\n      // descriptors: lastWhy read live, never copied once\n      get lastWhy() {\n        return why;\n      },\n      coolMs: () => minter.coolMs?.() ?? 0,\n      holds: (/** @type {string|null} */ room) => !!minter.holds?.(room),\n      opened: (/** @type {string|null} */ room, /** @type {string} */ tok) => minter.opened?.(room, tok),\n      unopened: (/** @type {string|null} */ room, /** @type {string} */ tok) => minter.unopened?.(room, tok),\n    }),\n  );",
+    "new": "  return Object.assign(mint, {\n    // descriptors: lastWhy read live, never copied once\n    get lastWhy() {\n      return why;\n    },\n    coolMs: () => minter.coolMs?.() ?? 0,\n    holds: (/** @type {string|null} */ room) => !!minter.holds?.(room),\n    opened: (/** @type {string|null} */ room, /** @type {string} */ tok) => minter.opened?.(room, tok),\n    unopened: (/** @type {string|null} */ room, /** @type {string} */ tok) => minter.unopened?.(room, tok),\n  });",
     "why": "the map's refused shown token reads as no reason at all, so the session retries a link that can never open",
     "tests": [
       "test/net/staffmap_e2e.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "FOLLOW-GROUND-HINT-dropped",
     "file": "src/net/staffHook.js",
-    "old": "if (typeof r === 'string' && r.length > 0 && r.length <= ROOM_HINT_MAX && !isSocialRoom(r) && !isChatRoom(r)) {",
-    "new": "if (false) {",
+    "old": "        if (typeof r === 'string' && r.length > 0 && r.length <= ROOM_HINT_MAX && !isSocialRoom(r) && !isChatRoom(r)) {",
+    "new": "        if (false) {",
     "why": "a player picked off the staff member's own ground whose game has sent no where note is locked on and never drawn - the camera never moves (mob: \"panel open said locked never moved\")",
     "tests": [
       "test/net/staffpanel5drop_e2e.test.js"

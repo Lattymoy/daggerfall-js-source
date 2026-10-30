@@ -20,8 +20,8 @@
   {
     "name": "SHOP-kind-read-as-another",
     "file": "src/net/shopLaw.js",
-    "old": "const keys = SHOP_WARES.filter((w) => w.kind === kind && held.includes(w.id)).flatMap(",
-    "new": "const keys = SHOP_WARES.filter((w) => held.includes(w.id)).flatMap(",
+    "old": "  const keys = SHOP_WARES.filter((w) => w.kind === kind && held.includes(w.id)).flatMap((w) =>",
+    "new": "  const keys = SHOP_WARES.filter((w) => held.includes(w.id)).flatMap((w) =>",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SHOP-client-card-buy-held",
     "file": "src/net/shopLaw.js",
-    "old": "buy: card.on && r.sale === true && r.held !== true ? buy : null",
-    "new": "buy: card.on && r.sale === true ? buy : null",
+    "old": "      buy: card.on && r.sale === true && r.held !== true ? buy : null,",
+    "new": "      buy: card.on && r.sale === true ? buy : null,",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SHOP-client-card-http-kept",
     "file": "src/net/shopLaw.js",
-    "old": "r.buy.startsWith('https://')",
-    "new": "r.buy.startsWith('http')",
+    "old": "    const buy = typeof r.buy === 'string' && r.buy.startsWith('https://') && r.buy.length <= 2048 ? r.buy : null;",
+    "new": "    const buy = typeof r.buy === 'string' && r.buy.startsWith('http') && r.buy.length <= 2048 ? r.buy : null;",
     "tests": [
       "test/server/shop_service.test.js"
     ]

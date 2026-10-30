@@ -193,8 +193,8 @@
   {
     "name": "BAG1-full-read-off-the-stores",
     "file": "src/net/professionLaw.js",
-    "old": "  if (book.carrying?.() === true) return book.carryFull(material);\n",
-    "new": "",
+    "old": "  if (book.carrying?.() === true) return book.carryFull(material);\n  const s = book.store?.(material) ?? { own: book.held(material) };",
+    "new": "  const s = book.store?.(material) ?? { own: book.held(material) };",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]

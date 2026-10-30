@@ -234,7 +234,7 @@ first step into the zone. The hello's token body is 928 now: a house beside ever
 What lowers it. A raid's claim takes 500, once by its own row, none while red
 (`server-account/src/villainy.js:"export function villainRaidStep(db, playerId, character, raid, nonce) {"`). A monster at or above my level
 less 1 takes 1 and a quest done 200: the page adds them to its next Renown report as `vd`
-(`renownTracker.js:"const vd = Math.min(vdPend, xp);"`). The service takes no more than the XP that report credited, the
+(`renownTracker.js:"const vd = Math.min"`). The service takes no more than the XP that report credited, the
 hour's progress bound, and never below 0 (`server-account/src/villainy.js:"export function villainReportDown("`). The monster's level and the
 quest are the page's word, as the Renown they pay is. A departure: DFU has no PvP.
 

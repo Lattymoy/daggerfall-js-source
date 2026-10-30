@@ -136,8 +136,8 @@
   {
     "name": "SEAT2b2-ramkit-tier-worth",
     "file": "src/net/professionLaw.js",
-    "old": "'Ram Kit', ICON_IRON, null), value: 108 });",
-    "new": "'Ram Kit', ICON_IRON, null) });",
+    "old": "export const RAM_KIT = Object.freeze({ ...made('work:ram', 'siege', 5, 690, 'Ram Kit', ICON_IRON, null), value: 108 });",
+    "new": "export const RAM_KIT = Object.freeze({ ...made('work:ram', 'siege', 5, 690, 'Ram Kit', ICON_IRON, null) });",
     "tests": [
       "test/net/seat2b_peace_law.test.js",
       "test/net/seat2b_peace_service.test.js"
@@ -146,8 +146,8 @@
   {
     "name": "SEAT2b2-ramkit-to-the-pack",
     "file": "src/net/professionLaw.js",
-    "old": "export const NO_PACK_FORM = Object.freeze(['work:ram', 'essence:arcane']);",
-    "new": "export const NO_PACK_FORM = Object.freeze(['essence:arcane']);",
+    "old": "export const NO_PACK_FORM = Object.freeze(['work:ram', 'essence:arcane']); // SEAT2b part two: a siege work's road is the writ's (RAM_KIT); AUDIT PROF12 E1: Arcane Essence's the Stores'",
+    "new": "export const NO_PACK_FORM = Object.freeze(['essence:arcane']); // SEAT2b part two: a siege work's road is the writ's (RAM_KIT); AUDIT PROF12 E1: Arcane Essence's the Stores'",
     "tests": [
       "test/net/seat2b_peace_law.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "SEAT2b2-material-row-worth-unread",
     "file": "src/net/professionLaw.js",
-    "old": "value: r.value ?? TIER_VALUES[r.tier - 1],",
-    "new": "value: TIER_VALUES[r.tier - 1],",
+    "old": "      value: r.value ?? TIER_VALUES[r.tier - 1],",
+    "new": "      value: TIER_VALUES[r.tier - 1],",
     "tests": [
       "test/net/seat2b_peace_law.test.js",
       "test/net/seat2b_peace_service.test.js"

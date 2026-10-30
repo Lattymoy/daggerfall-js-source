@@ -110,8 +110,8 @@
   {
     "name": "RENOWN4-answer-total-dropped",
     "file": "src/net/renownTracker.js",
-    "old": "const xp = Number.isSafeInteger(data?.xp) && data.xp >= 0 ? data.xp : null;",
-    "new": "const xp = null;",
+    "old": "  const xp = Number.isSafeInteger(data?.xp) && data.xp >= 0 ? data.xp : null;",
+    "new": "  const xp = null;",
     "tests": [
       "test/server/renown4.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "RENOWN4-answer-negative-taken",
     "file": "src/net/renownTracker.js",
-    "old": "const xp = Number.isSafeInteger(data?.xp) && data.xp >= 0 ? data.xp : null;",
-    "new": "const xp = Number.isSafeInteger(data?.xp) ? data.xp : null;",
+    "old": "  const xp = Number.isSafeInteger(data?.xp) && data.xp >= 0 ? data.xp : null;",
+    "new": "  const xp = Number.isSafeInteger(data?.xp) ? data.xp : null;",
     "tests": [
       "test/server/renown4.test.js"
     ]

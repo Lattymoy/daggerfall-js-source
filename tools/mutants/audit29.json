@@ -68,8 +68,8 @@
   {
     "name": "AUDIT29-A17-motherlode-sense-chosen",
     "file": "src/net/professionLaw.js",
-    "old": "(s) => s.id === specId && !s.later)",
-    "new": "(s) => s.id === specId)",
+    "old": "  !!SPECIALISATIONS[trackOf(profession)]?.[rank]?.some((s) => s.id === specId && !s.later);",
+    "new": "  !!SPECIALISATIONS[trackOf(profession)]?.[rank]?.some((s) => s.id === specId);",
     "tests": [
       "test/net/audit29_laws.test.js",
       "test/net/audit29_service.test.js",

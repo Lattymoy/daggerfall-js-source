@@ -136,7 +136,7 @@
   {
     "name": "LEASE1-the-mac-unchecked",
     "file": "src/net/roomLease.js",
-    "old": "if (!ok) return null;",
+    "old": "  if (!ok) return null;",
     "new": "",
     "why": "a forged lease read",
     "tests": [
@@ -146,8 +146,8 @@
   {
     "name": "LEASE1-the-life-unchecked",
     "file": "src/net/roomLease.js",
-    "old": "|| c.u !== c.a + LEASE_LIFE_S ||",
-    "new": "||",
+    "old": "    c.u !== c.a + LEASE_LIFE_S ||\n    (c.p !== undefined && c.p !== 1)",
+    "new": "    (c.p !== undefined && c.p !== 1)",
     "why": "a lease with any life read",
     "tests": [
       "test/net/lease1.test.js"
@@ -157,8 +157,8 @@
   {
     "name": "LEASE1-the-lapse-unread",
     "file": "src/net/roomLease.js",
-    "old": "if (c.u <= nowS || c.a > nowS + 30) return null;",
-    "new": "if (c.a > nowS + 30) return null;",
+    "old": "  if (c.u <= nowS || c.a > nowS + 30) return null; // lapsed, or from a clock past the relay's own skew",
+    "new": "  if (c.a > nowS + 30) return null; // lapsed, or from a clock past the relay's own skew",
     "why": "a lapsed lease read",
     "tests": [
       "test/net/lease1.test.js"
@@ -167,8 +167,8 @@
   {
     "name": "LEASE1-the-skew-unread",
     "file": "src/net/roomLease.js",
-    "old": "if (c.u <= nowS || c.a > nowS + 30) return null;",
-    "new": "if (c.u <= nowS) return null;",
+    "old": "  if (c.u <= nowS || c.a > nowS + 30) return null; // lapsed, or from a clock past the relay's own skew",
+    "new": "  if (c.u <= nowS) return null; // lapsed, or from a clock past the relay's own skew",
     "why": "a lease from the future read",
     "tests": [
       "test/net/lease1.test.js"
@@ -582,8 +582,8 @@
   {
     "name": "LEASE1-the-cabin-lane-unleased",
     "file": "src/net/sailingCabinLink.js",
-    "old": "      link.leaseFrom?.(main);   // LEASE1: the page's lease rides this lane's frames too (net/roomLease.js)\n",
-    "new": "",
+    "old": "      link.leaseFrom?.(main); // LEASE1: the page's lease rides this lane's frames too (net/roomLease.js)\n      const pose = { x: cabin.origin[0], y: cabin.origin[1], z: cabin.origin[2], yaw: cabin.yaw, pitch: 0, mv: 0 };",
+    "new": "      const pose = { x: cabin.origin[0], y: cabin.origin[1], z: cabin.origin[2], yaw: cabin.yaw, pitch: 0, mv: 0 };",
     "why": "the sailing cabin lane hands on no lease: with the door on its boat goes unheard",
     "tests": [
       "test/net/lease1.test.js"

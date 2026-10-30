@@ -260,8 +260,8 @@
   {
     "name": "RPT1026-PROGRESS-goldsmith-old-words",
     "file": "src/net/professionLaw.js",
-    "old": "spec('goldsmith', 'Goldsmith', 'Silver jewelry you make has the enchantment points and worth of Gold.')",
-    "new": "spec('goldsmith', 'Goldsmith', 'Silver counts as Gold.')",
+    "old": "      spec('goldsmith', 'Goldsmith', 'Silver jewelry you make has the enchantment points and worth of Gold.'),",
+    "new": "      spec('goldsmith', 'Goldsmith', 'Silver counts as Gold.'),",
     "tests": [
       "test/systems/rpt1026_progress.test.js"
     ],

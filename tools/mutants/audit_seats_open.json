@@ -249,8 +249,8 @@
   {
     "name": "ASO-gem-mined",
     "file": "src/net/professionLaw.js",
-    "old": "...STONES, ...GEMS, SIEGE_GEM, PEARL,",
-    "new": "...STONES, ...GEMS, PEARL,",
+    "old": "    SIEGE_GEM,\n    PEARL,",
+    "new": "    PEARL,",
     "tests": [
       "test/net/audit30_service.test.js"
     ]

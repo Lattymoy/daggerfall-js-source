@@ -318,8 +318,8 @@
   {
     "name": "C20-own-tab-a-stranger",
     "file": "src/net/social.js",
-    "old": "if (this.acct && this.peers.includes(id)) return this.acct;",
-    "new": "if (false) return this.acct;",
+    "old": "    if (this.acct && this.peers.includes(id)) return this.acct; // AUDIT SOC C20: my own other tab - `relation` says 'me'",
+    "new": "    if (false) return this.acct; // AUDIT SOC C20: my own other tab - `relation` says 'me'",
     "tests": [
       "test/net/auditsoc.test.js"
     ]
@@ -327,8 +327,8 @@
   {
     "name": "C23-memo-never-dropped",
     "file": "src/net/social.js",
-    "old": "_changed(kind) { this.version++; this._colors = null; this.onChange?.(kind); }",
-    "new": "_changed(kind) { this.version++; this.onChange?.(kind); }",
+    "old": "    this._colors = null;\n    this.onChange?.(kind);",
+    "new": "    this.onChange?.(kind);",
     "tests": [
       "test/net/auditsoc.test.js"
     ]
@@ -336,8 +336,8 @@
   {
     "name": "B10-an-unkept-account-minted",
     "file": "src/net/social.js",
-    "old": "return back === v ? v : null;",
-    "new": "return v;",
+    "old": "  return back === v ? v : null;",
+    "new": "  return v;",
     "tests": [
       "test/net/soc2_session.test.js"
     ]

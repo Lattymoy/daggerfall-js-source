@@ -270,7 +270,7 @@
   {
     "name": "WOVEN-PAYS-law-cloth-another-key",
     "file": "src/net/recipeLaw.js",
-    "old": "export const JUDGED_CLOTH = Object.freeze([...new Set(RECIPES.filter(counterMade).flatMap((r) => r.inputs.map((i) => i.key)))]);",
+    "old": "export const JUDGED_CLOTH = Object.freeze([\n  ...new Set(RECIPES.filter(counterMade).flatMap((r) => r.inputs.map((i) => i.key))),\n]);",
     "new": "export const JUDGED_CLOTH = Object.freeze(['cloth:linen']);",
     "tests": [
       "test/net/fb1026b_wovenpays.test.js"

@@ -2,8 +2,8 @@
   {
     "name": "PROF9-stew-tier-two",
     "file": "src/net/recipeLaw.js",
-    "old": "templateIndex: 685, tier: 1, herb: 13",
-    "new": "templateIndex: 685, tier: 2, herb: 13",
+    "old": "    templateIndex: 685,\n    tier: 1,",
+    "new": "    templateIndex: 685,\n    tier: 2,",
     "tests": [
       "test/net/prof9_law.test.js",
       "test/net/prof9_service.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "PROF9-feast-tier-five",
     "file": "src/net/recipeLaw.js",
-    "old": "templateIndex: 688, tier: 6, herb: null",
-    "new": "templateIndex: 688, tier: 5, herb: null",
+    "old": "    tier: 6,",
+    "new": "    tier: 5,",
     "tests": [
       "test/net/prof9_law.test.js",
       "test/net/prof9_service.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "PROF9-stew-template-elsewhere",
     "file": "src/net/recipeLaw.js",
-    "old": "name: 'Hunter\\'s Stew', templateIndex: 685,",
-    "new": "name: 'Hunter\\'s Stew', templateIndex: 684,",
+    "old": "    templateIndex: 685,",
+    "new": "    templateIndex: 684,",
     "tests": [
       "test/net/prof9_law.test.js",
       "test/systems/prof9_client.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "PROF9-stew-one-meat",
     "file": "src/net/recipeLaw.js",
-    "old": "inputs: Object.freeze([Object.freeze(['food:meat', 2]), Object.freeze(['food:mushroom', 1])]),",
-    "new": "inputs: Object.freeze([Object.freeze(['food:meat', 1]), Object.freeze(['food:mushroom', 1])]),",
+    "old": "    inputs: Object.freeze([Object.freeze(['food:meat', 2]), Object.freeze(['food:mushroom', 1])]),",
+    "new": "    inputs: Object.freeze([Object.freeze(['food:meat', 1]), Object.freeze(['food:mushroom', 1])]),",
     "tests": [
       "test/net/prof9_law.test.js",
       "test/net/prof9_service.test.js",
@@ -43,8 +43,8 @@
   {
     "name": "PROF9-supper-of-meat",
     "file": "src/net/recipeLaw.js",
-    "old": "Object.freeze(['food:fish', 2]), Object.freeze(['food:egg', 1])",
-    "new": "Object.freeze(['food:meat', 2]), Object.freeze(['food:egg', 1])",
+    "old": "    inputs: Object.freeze([Object.freeze(['food:fish', 2]), Object.freeze(['food:egg', 1])]),",
+    "new": "    inputs: Object.freeze([Object.freeze(['food:meat', 2]), Object.freeze(['food:egg', 1])]),",
     "tests": [
       "test/net/prof9_law.test.js"
     ]
@@ -52,8 +52,8 @@
   {
     "name": "PROF9-tart-of-oranges",
     "file": "src/net/recipeLaw.js",
-    "old": "Object.freeze(['food:apple', 2]), Object.freeze(['food:egg', 1])",
-    "new": "Object.freeze(['food:orange', 2]), Object.freeze(['food:egg', 1])",
+    "old": "    inputs: Object.freeze([Object.freeze(['food:apple', 2]), Object.freeze(['food:egg', 1])]),",
+    "new": "    inputs: Object.freeze([Object.freeze(['food:orange', 2]), Object.freeze(['food:egg', 1])]),",
     "tests": [
       "test/net/prof9_law.test.js"
     ]
@@ -61,8 +61,8 @@
   {
     "name": "PROF9-feast-one-egg",
     "file": "src/net/recipeLaw.js",
-    "old": "Object.freeze(['food:mushroom', 2]), Object.freeze(['food:egg', 2])]),",
-    "new": "Object.freeze(['food:mushroom', 2]), Object.freeze(['food:egg', 1])]),",
+    "old": "      Object.freeze(['food:egg', 2]),",
+    "new": "      Object.freeze(['food:egg', 1]),",
     "tests": [
       "test/net/prof9_law.test.js"
     ]
@@ -70,8 +70,8 @@
   {
     "name": "PROF9-stew-raises-strength",
     "file": "src/net/recipeLaw.js",
-    "old": "stats: Object.freeze({ endurance: 5 }), minutes: 120",
-    "new": "stats: Object.freeze({ strength: 5 }), minutes: 120",
+    "old": "    effect: Object.freeze({ stats: Object.freeze({ endurance: 5 }), minutes: 120 }),",
+    "new": "    effect: Object.freeze({ stats: Object.freeze({ strength: 5 }), minutes: 120 }),",
     "tests": [
       "test/net/prof9_law.test.js",
       "test/systems/prof9_client.test.js"
@@ -80,8 +80,8 @@
   {
     "name": "PROF9-supper-an-hour",
     "file": "src/net/recipeLaw.js",
-    "old": "stats: Object.freeze({ agility: 5 }), minutes: 120",
-    "new": "stats: Object.freeze({ agility: 5 }), minutes: 60",
+    "old": "    effect: Object.freeze({ stats: Object.freeze({ agility: 5 }), minutes: 120 }),",
+    "new": "    effect: Object.freeze({ stats: Object.freeze({ agility: 5 }), minutes: 60 }),",
     "tests": [
       "test/net/prof9_law.test.js"
     ]
@@ -89,8 +89,8 @@
   {
     "name": "PROF9-tart-two-hours",
     "file": "src/net/recipeLaw.js",
-    "old": "effect: Object.freeze({ stamina: 20, minutes: 240 })",
-    "new": "effect: Object.freeze({ stamina: 20, minutes: 120 })",
+    "old": "    effect: Object.freeze({ stamina: 20, minutes: 240 }),",
+    "new": "    effect: Object.freeze({ stamina: 20, minutes: 120 }),",
     "tests": [
       "test/net/prof9_law.test.js",
       "test/systems/prof9_client.test.js"
@@ -99,8 +99,8 @@
   {
     "name": "PROF9-feast-no-party",
     "file": "src/net/recipeLaw.js",
-    "old": "minutes: 1440, party: true })",
-    "new": "minutes: 1440, party: false })",
+    "old": "      party: true,",
+    "new": "      party: false,",
     "tests": [
       "test/net/prof9_law.test.js",
       "test/systems/prof9_client.test.js"
@@ -109,8 +109,8 @@
   {
     "name": "PROF9-feast-half-a-day",
     "file": "src/net/recipeLaw.js",
-    "old": "minutes: 1440, party: true })",
-    "new": "minutes: 720, party: true })",
+    "old": "      minutes: 1440,",
+    "new": "      minutes: 720,",
     "tests": [
       "test/net/prof9_law.test.js",
       "test/systems/prof9_client.test.js"
@@ -119,8 +119,8 @@
   {
     "name": "PROF9-northern-herb-southern",
     "file": "src/net/recipeLaw.js",
-    "old": "dishRecipe(d, 'north', `p1:${d.herb}`, 'northern')",
-    "new": "dishRecipe(d, 'north', `p2:${d.herb}`, 'northern')",
+    "old": "      : [dishRecipe(d, 'north', `p1:${d.herb}`, 'northern'), dishRecipe(d, 'south', `p2:${d.herb}`, 'southern')],",
+    "new": "      : [dishRecipe(d, 'north', `p2:${d.herb}`, 'northern'), dishRecipe(d, 'south', `p2:${d.herb}`, 'southern')],",
     "tests": [
       "test/net/prof9_law.test.js",
       "test/systems/prof9_client.test.js"
@@ -129,8 +129,8 @@
   {
     "name": "PROF9-dish-no-rank",
     "file": "src/net/recipeLaw.js",
-    "old": "tier: d.tier, rank: TIER_RANKS[d.tier - 1],",
-    "new": "tier: d.tier, rank: 0,",
+    "old": "    rank: TIER_RANKS[d.tier - 1],",
+    "new": "    rank: 0,",
     "tests": [
       "test/net/prof9_law.test.js",
       "test/net/prof9_service.test.js"
@@ -139,8 +139,8 @@
   {
     "name": "PROF9-dish-family-furniture",
     "file": "src/net/recipeLaw.js",
-    "old": "kind: 'dish', family: 'dishes',",
-    "new": "kind: 'dish', family: 'furniture',",
+    "old": "    family: 'dishes',",
+    "new": "    family: 'furniture',",
     "tests": [
       "test/net/prof9_law.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "PROF9-dish-a-garment",
     "file": "src/net/recipeLaw.js",
-    "old": "kind: 'dish', family: 'dishes',",
-    "new": "kind: 'garment', family: 'dishes',",
+    "old": "    kind: 'dish',",
+    "new": "    kind: 'garment',",
     "tests": [
       "test/net/prof9_law.test.js",
       "test/net/prof9_service.test.js",
@@ -159,8 +159,8 @@
   {
     "name": "PROF9-recipes-no-dishes",
     "file": "src/net/recipeLaw.js",
-    "old": "...MASONRY_RECIPES, ...COOKING_RECIPES, ...JEWELCRAFTING_RECIPES]",
-    "new": "...MASONRY_RECIPES, ...JEWELCRAFTING_RECIPES]",
+    "old": "  ...COOKING_RECIPES,\n  ...JEWELCRAFTING_RECIPES,",
+    "new": "  ...JEWELCRAFTING_RECIPES,",
     "tests": [
       "test/net/prof9_law.test.js",
       "test/net/prof9_service.test.js",
@@ -170,8 +170,8 @@
   {
     "name": "PROF9-dish-takes-quality",
     "file": "src/net/recipeLaw.js",
-    "old": "r.kind !== 'siege' && r.kind !== 'dish';",
-    "new": "r.kind !== 'siege';",
+    "old": "export const takesQuality = (r) => r.kind !== 'kit' && r.kind !== 'arrows' && r.kind !== 'siege' && r.kind !== 'dish'; // PROF9: nor a dish - it is eaten, and its worth is its effect",
+    "new": "export const takesQuality = (r) => r.kind !== 'kit' && r.kind !== 'arrows' && r.kind !== 'siege'; // PROF9: nor a dish - it is eaten, and its worth is its effect",
     "tests": [
       "test/net/prof9_law.test.js",
       "test/net/prof9_service.test.js",
@@ -181,8 +181,8 @@
   {
     "name": "PROF9-cook-no-second-serving",
     "file": "src/net/recipeLaw.js",
-    "old": "(r.kind === 'dish' && spec50 === COOK) ? 2 : 1",
-    "new": "(r.kind === 'dish' && spec50 === 'chef') ? 2 : 1",
+    "old": "  (r.kind === 'kit' && spec100 === 'quartermaster') || (r.kind === 'dish' && spec50 === COOK) ? 2 : 1;",
+    "new": "  (r.kind === 'kit' && spec100 === 'quartermaster') || (r.kind === 'dish' && spec50 === 'chef') ? 2 : 1;",
     "tests": [
       "test/net/prof9_law.test.js",
       "test/net/prof9_service.test.js"
@@ -191,8 +191,8 @@
   {
     "name": "PROF9-provisioner-a-chef",
     "file": "src/net/recipeLaw.js",
-    "old": "if (spec100 === PROVISIONER) return HAND_PROVISIONER;",
-    "new": "if (spec100 === PROVISIONER) return HAND_CHEF;",
+    "old": "  if (spec100 === PROVISIONER) return HAND_PROVISIONER;",
+    "new": "  if (spec100 === PROVISIONER) return HAND_CHEF;",
     "tests": [
       "test/net/prof9_law.test.js",
       "test/net/prof9_service.test.js"
@@ -201,8 +201,8 @@
   {
     "name": "PROF9-chef-every-dish",
     "file": "src/net/recipeLaw.js",
-    "old": "if (spec100 === CHEF && dishOf(r.id)?.effect.party === true) return HAND_CHEF;",
-    "new": "if (spec100 === CHEF) return HAND_CHEF;",
+    "old": "  if (spec100 === CHEF && dishOf(r.id)?.effect.party === true) return HAND_CHEF;",
+    "new": "  if (spec100 === CHEF) return HAND_CHEF;",
     "tests": [
       "test/net/prof9_law.test.js",
       "test/net/prof9_service.test.js"
@@ -221,8 +221,8 @@
   {
     "name": "PROF9-chef-hand-ignored",
     "file": "src/net/recipeLaw.js",
-    "old": "hand === HAND_CHEF ? Math.round(d.effect.minutes * CHEF_FEAST)",
-    "new": "hand === HAND_PROVISIONER ? Math.round(d.effect.minutes * CHEF_FEAST)",
+    "old": "  d?.effect.party === true && hand === HAND_CHEF ? Math.round(d.effect.minutes * CHEF_FEAST) : (d?.effect.minutes ?? 0);",
+    "new": "  d?.effect.party === true && hand === HAND_PROVISIONER\n    ? Math.round(d.effect.minutes * CHEF_FEAST)\n    : (d?.effect.minutes ?? 0);",
     "tests": [
       "test/net/prof9_law.test.js",
       "test/systems/prof9_client.test.js"
@@ -231,8 +231,8 @@
   {
     "name": "PROF9-endurance-subtype-wrong",
     "file": "src/net/recipeLaw.js",
-    "old": "agility: 3, endurance: 4, personality: 5",
-    "new": "agility: 3, endurance: 6, personality: 5",
+    "old": "  endurance: 4,",
+    "new": "  endurance: 6,",
     "tests": [
       "test/net/prof9_law.test.js",
       "test/systems/prof9_client.test.js"
@@ -251,8 +251,8 @@
   {
     "name": "PROF9-duration-wrong-level",
     "file": "src/net/recipeLaw.js",
-    "old": "durationMod: Math.round(minutes / DISH_LEVEL), durationPerLevel: 1,",
-    "new": "durationMod: Math.round(minutes / 20), durationPerLevel: 1,",
+    "old": "      durationMod: Math.round(minutes / DISH_LEVEL),",
+    "new": "      durationMod: Math.round(minutes / 20),",
     "tests": [
       "test/net/prof9_law.test.js",
       "test/systems/prof9_client.test.js"
@@ -261,8 +261,8 @@
   {
     "name": "PROF9-magnitude-rolls",
     "file": "src/net/recipeLaw.js",
-    "old": "magnitudeBaseLow: n, magnitudeBaseHigh: n,",
-    "new": "magnitudeBaseLow: n, magnitudeBaseHigh: n + 1,",
+    "old": "      magnitudeBaseHigh: n,",
+    "new": "      magnitudeBaseHigh: n + 1,",
     "tests": [
       "test/net/prof9_law.test.js"
     ]
@@ -270,8 +270,8 @@
   {
     "name": "PROF9-spell-not-magic",
     "file": "src/net/recipeLaw.js",
-    "old": "name: d.name, element: 4, rangeType: 0, icon: DISH_ICON,",
-    "new": "name: d.name, element: 0, rangeType: 0, icon: DISH_ICON,",
+    "old": "    element: 4,",
+    "new": "    element: 0,",
     "tests": [
       "test/net/prof9_law.test.js"
     ]
@@ -279,8 +279,8 @@
   {
     "name": "PROF9-feast-text-alone",
     "file": "src/net/recipeLaw.js",
-    "old": "${d.effect.party ? ', for the whole party at your table' : ''}",
-    "new": "",
+    "old": "  return `${list} +${Object.values(d.effect.stats)[0]} for ${span}${d.effect.party ? ', for the whole party at your table' : ''}`;",
+    "new": "  return `${list} +${Object.values(d.effect.stats)[0]} for ${span}`;",
     "tests": [
       "test/net/prof9_law.test.js",
       "test/systems/prof9_client.test.js"
@@ -289,8 +289,8 @@
   {
     "name": "PROF9-pan-four-pans",
     "file": "src/net/recipeLaw.js",
-    "old": "PAN_ACT = Object.freeze({ pans: 3,",
-    "new": "PAN_ACT = Object.freeze({ pans: 4,",
+    "old": "  pans: 3,",
+    "new": "  pans: 4,",
     "tests": [
       "test/net/prof9_law.test.js",
       "test/systems/prof9_client.test.js"
@@ -299,8 +299,8 @@
   {
     "name": "PROF9-pan-feast-three",
     "file": "src/net/recipeLaw.js",
-    "old": "feastPans: 5, burnS: 3.0, lo: 0.6, w: 0.12",
-    "new": "feastPans: 3, burnS: 3.0, lo: 0.6, w: 0.12",
+    "old": "  feastPans: 5,",
+    "new": "  feastPans: 3,",
     "tests": [
       "test/net/prof9_law.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "PROF9-pan-burns-slower",
     "file": "src/net/recipeLaw.js",
-    "old": "feastPans: 5, burnS: 3.0, lo: 0.6, w: 0.12",
-    "new": "feastPans: 5, burnS: 4.0, lo: 0.6, w: 0.12",
+    "old": "  burnS: 3.0,",
+    "new": "  burnS: 4.0,",
     "tests": [
       "test/net/prof9_law.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "PROF9-pan-window-lower",
     "file": "src/net/recipeLaw.js",
-    "old": "feastPans: 5, burnS: 3.0, lo: 0.6, w: 0.12",
-    "new": "feastPans: 5, burnS: 3.0, lo: 0.5, w: 0.12",
+    "old": "  lo: 0.6,",
+    "new": "  lo: 0.5,",
     "tests": [
       "test/net/prof9_law.test.js",
       "test/systems/prof9_client.test.js"
@@ -327,8 +327,8 @@
   {
     "name": "PROF9-pan-window-wider",
     "file": "src/net/recipeLaw.js",
-    "old": "feastPans: 5, burnS: 3.0, lo: 0.6, w: 0.12",
-    "new": "feastPans: 5, burnS: 3.0, lo: 0.6, w: 0.15",
+    "old": "  w: 0.12,",
+    "new": "  w: 0.15,",
     "tests": [
       "test/net/prof9_law.test.js",
       "test/systems/prof9_client.test.js"
@@ -337,8 +337,8 @@
   {
     "name": "PROF9-pan-master-no-wider",
     "file": "src/net/recipeLaw.js",
-    "old": "w: 0.12, masterWiden: 0.5, skillet: 1.5,",
-    "new": "w: 0.12, masterWiden: 0, skillet: 1.5,",
+    "old": "  w: 0.12,\n  masterWiden: 0.5,",
+    "new": "  w: 0.12,\n  masterWiden: 0,",
     "tests": [
       "test/net/prof9_law.test.js",
       "test/systems/prof9_client.test.js"
@@ -347,8 +347,8 @@
   {
     "name": "PROF9-pan-skillet-nothing",
     "file": "src/net/recipeLaw.js",
-    "old": "w: 0.12, masterWiden: 0.5, skillet: 1.5,",
-    "new": "w: 0.12, masterWiden: 0.5, skillet: 1,",
+    "old": "  skillet: 1.5,",
+    "new": "  skillet: 1,",
     "tests": [
       "test/net/prof9_law.test.js",
       "test/systems/prof9_client.test.js"
@@ -357,8 +357,8 @@
   {
     "name": "PROF9-pan-no-gap",
     "file": "src/net/recipeLaw.js",
-    "old": "paceLo: 0.85, paceHi: 1.2, gapS: 0.3 });",
-    "new": "paceLo: 0.85, paceHi: 1.2, gapS: 0 });",
+    "old": "  paceHi: 1.2,\n  gapS: 0.3,",
+    "new": "  paceHi: 1.2,\n  gapS: 0,",
     "tests": [
       "test/net/prof9_law.test.js"
     ]
@@ -366,8 +366,8 @@
   {
     "name": "PROF9-pan-band-intelligence-twice",
     "file": "src/net/recipeLaw.js",
-    "old": "actBand(Math.trunc((intelligence + personality) / 2));",
-    "new": "actBand(Math.trunc((intelligence + intelligence) / 2));",
+    "old": "export const panBand = ({ intelligence, personality }) => actBand(Math.trunc((intelligence + personality) / 2));",
+    "new": "export const panBand = ({ intelligence, personality }) => actBand(Math.trunc((intelligence + intelligence) / 2));",
     "tests": [
       "test/net/prof9_law.test.js"
     ]
@@ -375,8 +375,8 @@
   {
     "name": "PROF9-pan-feast-three-pans",
     "file": "src/net/recipeLaw.js",
-    "old": "=== true ? PAN_ACT.feastPans : PAN_ACT.pans);",
-    "new": "=== true ? PAN_ACT.pans : PAN_ACT.pans);",
+    "old": "export const panCount = (r) => (dishOf(r?.id ?? '')?.effect.party === true ? PAN_ACT.feastPans : PAN_ACT.pans);",
+    "new": "export const panCount = (r) => (dishOf(r?.id ?? '')?.effect.party === true ? PAN_ACT.pans : PAN_ACT.pans);",
     "tests": [
       "test/net/prof9_law.test.js"
     ]
@@ -384,8 +384,8 @@
   {
     "name": "PROF9-pan-done-at-burnt",
     "file": "src/net/recipeLaw.js",
-    "old": "return [PAN_ACT.lo, Math.min(0.95, PAN_ACT.lo + w)];",
-    "new": "return [PAN_ACT.lo, Math.min(1, PAN_ACT.lo + w)];",
+    "old": "  return [PAN_ACT.lo, Math.min(0.95, PAN_ACT.lo + w)];",
+    "new": "  return [PAN_ACT.lo, Math.min(1, PAN_ACT.lo + w)];",
     "tests": [
       "test/net/prof9_law.test.js"
     ]
@@ -393,8 +393,8 @@
   {
     "name": "PROF9-cook-xp-tier-one",
     "file": "src/net/recipeLaw.js",
-    "old": "const xp = CRAFT_XP_PER_TIER * topTierOf(rank);",
-    "new": "const xp = CRAFT_XP_PER_TIER * 1;",
+    "old": "  const xp = CRAFT_XP_PER_TIER * topTierOf(rank);",
+    "new": "  const xp = CRAFT_XP_PER_TIER * 1;",
     "tests": [
       "test/net/prof9_law.test.js",
       "test/net/prof9_service.test.js",
@@ -416,8 +416,8 @@
   {
     "name": "PROF9-lines-keep-unsaid",
     "file": "src/net/recipeLaw.js",
-    "old": "    if (item.noRot === true) out.push('Never spoils');\n",
-    "new": "",
+    "old": "    if (item.noRot === true) out.push('Never spoils');\n    if (typeof item.maker === 'string' && item.maker) out.push(`Cooked by ${item.maker}`);",
+    "new": "    if (typeof item.maker === 'string' && item.maker) out.push(`Cooked by ${item.maker}`);",
     "tests": [
       "test/net/prof9_law.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "PROF9-lines-chef-unsaid",
     "file": "src/net/recipeLaw.js",
-    "old": "dishEffectText(dishOf(item.recipe), item.chef === true ? HAND_CHEF : null)",
-    "new": "dishEffectText(dishOf(item.recipe), null)",
+    "old": "    const out = [dishEffectText(dishOf(item.recipe), item.chef === true ? HAND_CHEF : null)];",
+    "new": "    const out = [dishEffectText(dishOf(item.recipe), null)];",
     "tests": [
       "test/net/prof9_law.test.js"
     ]

@@ -74,8 +74,8 @@
   {
     "name": "SILVER-the-royal-hud-old",
     "file": "src/net/royalLink.js",
-    "old": "toLocaleString('en-US')} silver   ends in",
-    "new": "toLocaleString('en-US')} Drakes   ends in",
+    "old": "  const title = `THE ROYAL TOURNEY OF ${String(t.seat ?? '').toUpperCase()}   prize ${Number(t.prize ?? 0).toLocaleString('en-US')} silver   ends in ${daysHours((t.endsMs ?? now) - now)}`;",
+    "new": "  const title = `THE ROYAL TOURNEY OF ${String(t.seat ?? '').toUpperCase()}   prize ${Number(t.prize ?? 0).toLocaleString('en-US')} Drakes   ends in ${daysHours((t.endsMs ?? now) - now)}`;",
     "tests": [
       "test/net/silver.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "SILVER-the-metal-renamed",
     "file": "src/net/professionLaw.js",
-    "old": "made('ingot:silver', 'metals', 3, 622, 'Silver Ingot', ICON_IRON, 'Silver')",
-    "new": "made('ingot:silver', 'metals', 3, 622, 'silver Ingot', ICON_IRON, 'silver')",
+    "old": "  made('ingot:silver', 'metals', 3, 622, 'Silver Ingot', ICON_IRON, 'Silver'),",
+    "new": "  made('ingot:silver', 'metals', 3, 622, 'silver Ingot', ICON_IRON, 'silver'),",
     "tests": [
       "test/net/silver.test.js"
     ]

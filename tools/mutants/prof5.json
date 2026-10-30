@@ -322,8 +322,8 @@
   {
     "name": "PROF5-law-wool-four",
     "file": "src/net/professionLaw.js",
-    "old": "Object.freeze({ key: WOOL.key, marks: 3, counter: 'weavers' })",
-    "new": "Object.freeze({ key: WOOL.key, marks: 4, counter: 'weavers' })",
+    "old": "  Object.freeze({ key: WOOL.key, marks: 3, counter: 'weavers' }),",
+    "new": "  Object.freeze({ key: WOOL.key, marks: 4, counter: 'weavers' }),",
     "tests": [
       "test/net/prof5_law.test.js",
       "test/net/prof5_service.test.js"
@@ -332,8 +332,8 @@
   {
     "name": "PROF5-law-wool-held-back",
     "file": "src/net/professionLaw.js",
-    "old": "export const NO_PACK_FORM = Object.freeze(['work:ram', 'essence:arcane']);",
-    "new": "export const NO_PACK_FORM = Object.freeze(['work:ram', 'essence:arcane', 'cloth:wool']);",
+    "old": "export const NO_PACK_FORM = Object.freeze(['work:ram', 'essence:arcane']); // SEAT2b part two: a siege work's road is the writ's (RAM_KIT); AUDIT PROF12 E1: Arcane Essence's the Stores'",
+    "new": "export const NO_PACK_FORM = Object.freeze(['work:ram', 'essence:arcane', 'cloth:wool']); // SEAT2b part two: a siege work's road is the writ's (RAM_KIT); AUDIT PROF12 E1: Arcane Essence's the Stores'",
     "tests": [
       "test/net/prof5_law.test.js",
       "test/net/prof5_service.test.js"

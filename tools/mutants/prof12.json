@@ -67,8 +67,8 @@
   {
     "name": "PROF12-ingredient-one-group",
     "file": "src/net/professionLaw.js",
-    "old": "const herbs = ['p1', 'p2'].filter((g) =>",
-    "new": "const herbs = ['p1'].filter((g) =>",
+    "old": "  const herbs = ['p1', 'p2']",
+    "new": "  const herbs = ['p1']",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -96,8 +96,8 @@
   {
     "name": "PROF12-keytemplate-any-group",
     "file": "src/net/professionLaw.js",
-    "old": "if (m) return PLANT_GROUP_TEMPLATES[m[1]].includes(Number(m[2])) ? Number(m[2]) : null;",
-    "new": "if (m) return Number(m[2]);",
+    "old": "  if (m) return PLANT_GROUP_TEMPLATES[m[1]].includes(Number(m[2])) ? Number(m[2]) : null;",
+    "new": "  if (m) return Number(m[2]);",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "PROF12-first-pays-any",
     "file": "src/net/recipeLaw.js",
-    "old": "export const brewFirstPays = (potion) => !!potion && !potion.ingredients.every(",
-    "new": "export const brewFirstPays = (potion) => !!potion && !potion.ingredients.some(",
+    "old": "  !!potion && !potion.ingredients.every((t) => ingredientKeys(t).every((k) => COUNTER_ONLY.includes(k)));",
+    "new": "  !!potion && !potion.ingredients.some((t) => ingredientKeys(t).every((k) => COUNTER_ONLY.includes(k)));",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -506,8 +506,8 @@
   {
     "name": "PROF12-reagent-price-ichor",
     "file": "src/net/professionLaw.js",
-    "old": "reagent('reagent:ichor', 'MiscellaneousIngredients1', 64, 20, 4),",
-    "new": "reagent('reagent:ichor', 'MiscellaneousIngredients1', 64, 20, 5),",
+    "old": "  reagent('reagent:ichor', 'MiscellaneousIngredients1', 64, 20, 4),",
+    "new": "  reagent('reagent:ichor', 'MiscellaneousIngredients1', 64, 20, 5),",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js",
@@ -517,8 +517,8 @@
   {
     "name": "PROF12-reagent-horn-group",
     "file": "src/net/professionLaw.js",
-    "old": "reagent('reagent:unicorn-horn', 'CreatureIngredients3', 37, 200, 40),",
-    "new": "reagent('reagent:unicorn-horn', 'CreatureIngredients1', 37, 200, 40),",
+    "old": "  reagent('reagent:unicorn-horn', 'CreatureIngredients3', 37, 200, 40),",
+    "new": "  reagent('reagent:unicorn-horn', 'CreatureIngredients1', 37, 200, 40),",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -526,8 +526,8 @@
   {
     "name": "PROF12-reagent-tooth-key",
     "file": "src/net/professionLaw.js",
-    "old": "reagent('reagent:small-tooth', 'MiscellaneousIngredients1', 58, 2, 1),",
-    "new": "reagent('reagent:small-teeth', 'MiscellaneousIngredients1', 58, 2, 1),",
+    "old": "  reagent('reagent:small-tooth', 'MiscellaneousIngredients1', 58, 2, 1),",
+    "new": "  reagent('reagent:small-teeth', 'MiscellaneousIngredients1', 58, 2, 1),",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/systems/prof12_client.test.js"
@@ -536,8 +536,8 @@
   {
     "name": "PROF12-reagent-no-ivory",
     "file": "src/net/professionLaw.js",
-    "old": "  reagent('reagent:ivory', 'MiscellaneousIngredients2', 76, 13, 3),\n",
-    "new": "",
+    "old": "  reagent('reagent:ivory', 'MiscellaneousIngredients2', 76, 13, 3),\n]);",
+    "new": "]);",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -545,8 +545,8 @@
   {
     "name": "PROF12-reagent-family",
     "file": "src/net/professionLaw.js",
-    "old": "Object.freeze({ ...dfu(key, 'essences', gemTierOfPrice(price), group, templateIndex), value });",
-    "new": "Object.freeze({ ...dfu(key, 'herbs', gemTierOfPrice(price), group, templateIndex), value });",
+    "old": "  Object.freeze({ ...dfu(key, 'essences', gemTierOfPrice(price), group, templateIndex), value });",
+    "new": "  Object.freeze({ ...dfu(key, 'herbs', gemTierOfPrice(price), group, templateIndex), value });",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -554,8 +554,8 @@
   {
     "name": "PROF12-reagent-tier",
     "file": "src/net/professionLaw.js",
-    "old": "Object.freeze({ ...dfu(key, 'essences', gemTierOfPrice(price), group, templateIndex), value });",
-    "new": "Object.freeze({ ...dfu(key, 'essences', 1, group, templateIndex), value });",
+    "old": "  Object.freeze({ ...dfu(key, 'essences', gemTierOfPrice(price), group, templateIndex), value });",
+    "new": "  Object.freeze({ ...dfu(key, 'essences', 1, group, templateIndex), value });",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -563,8 +563,8 @@
   {
     "name": "PROF12-reagents-unstocked",
     "file": "src/net/professionLaw.js",
-    "old": "export const STOCKS = Object.freeze([...SMITH_STOCK, ...FURNISHER_STOCK, ...WEAVERS_STOCK, ...APOTHECARY_STOCK]);",
-    "new": "export const STOCKS = Object.freeze([...SMITH_STOCK, ...FURNISHER_STOCK, ...WEAVERS_STOCK]);",
+    "old": "export const STOCKS = Object.freeze([...SMITH_STOCK, ...FURNISHER_STOCK, ...WEAVERS_STOCK, ...APOTHECARY_STOCK]); // PROF12: the Apothecaries'",
+    "new": "export const STOCKS = Object.freeze([...SMITH_STOCK, ...FURNISHER_STOCK, ...WEAVERS_STOCK]); // PROF12: the Apothecaries'",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js",
@@ -574,8 +574,8 @@
   {
     "name": "PROF12-reagents-gathered",
     "file": "src/net/professionLaw.js",
-    "old": "export const COUNTER_ONLY = Object.freeze([LINEN.key, WOOL.key, ...REAGENTS.map((r) => r.key)]);",
-    "new": "export const COUNTER_ONLY = Object.freeze([LINEN.key, WOOL.key]);",
+    "old": "export const COUNTER_ONLY = Object.freeze([LINEN.key, WOOL.key, ...REAGENTS.map((r) => r.key)]); // PROF12: the Apothecaries' sixteen, never gathered",
+    "new": "export const COUNTER_ONLY = Object.freeze([LINEN.key, WOOL.key]); // PROF12: the Apothecaries' sixteen, never gathered",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -584,8 +584,8 @@
   {
     "name": "PROF12-reagents-unregistered",
     "file": "src/net/professionLaw.js",
-    "old": "RAM_KIT, ...REAGENTS, ARCANE_ESSENCE].map((m) => [m.key, m]));",
-    "new": "RAM_KIT, ARCANE_ESSENCE].map((m) => [m.key, m]));",
+    "old": "    ...REAGENTS,\n    ARCANE_ESSENCE,",
+    "new": "    ARCANE_ESSENCE,",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js",
@@ -595,8 +595,8 @@
   {
     "name": "PROF12-essence-unregistered",
     "file": "src/net/professionLaw.js",
-    "old": "RAM_KIT, ...REAGENTS, ARCANE_ESSENCE].map((m) => [m.key, m]));",
-    "new": "RAM_KIT, ...REAGENTS].map((m) => [m.key, m]));",
+    "old": "    ARCANE_ESSENCE,\n  ].map((m) => [m.key, m]),",
+    "new": "  ].map((m) => [m.key, m]),",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js",
@@ -606,8 +606,8 @@
   {
     "name": "PROF12-essence-tier",
     "file": "src/net/professionLaw.js",
-    "old": "export const ARCANE_ESSENCE = made('essence:arcane', 'essences', 3, 680,",
-    "new": "export const ARCANE_ESSENCE = made('essence:arcane', 'essences', 2, 680,",
+    "old": "export const ARCANE_ESSENCE = made('essence:arcane', 'essences', 3, 680, 'Arcane Essence', ICON_ECTOPLASM, null);",
+    "new": "export const ARCANE_ESSENCE = made('essence:arcane', 'essences', 2, 680, 'Arcane Essence', ICON_ECTOPLASM, null);",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]
@@ -625,8 +625,8 @@
   {
     "name": "PROF12-alchemy-fee",
     "file": "src/net/professionLaw.js",
-    "old": "export const ALCHEMY_FEE = 25;",
-    "new": "export const ALCHEMY_FEE = 50;",
+    "old": "export const ALCHEMY_FEE = 25; // CRAFT-PAYS (Professions-Arc.md section 48): 50 until 2026-10-21 - a brew is a bottle, not a blade; a forge's 50 on a 50-gold potion was the margin's whole",
+    "new": "export const ALCHEMY_FEE = 50; // CRAFT-PAYS (Professions-Arc.md section 48): 50 until 2026-10-21 - a brew is a bottle, not a blade; a forge's 50 on a 50-gold potion was the margin's whole",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/systems/prof12_client.test.js"
@@ -665,7 +665,7 @@
   {
     "name": "PROF12-transmute-ladder-skip",
     "file": "src/net/professionLaw.js",
-    "old": "export const TRANSMUTE_LADDER = Object.freeze(['metal:tin', 'metal:copper', 'metal:silver', 'metal:gold', 'metal:platinum']);",
+    "old": "export const TRANSMUTE_LADDER = Object.freeze([\n  'metal:tin',\n  'metal:copper',\n  'metal:silver',\n  'metal:gold',\n  'metal:platinum',\n]);",
     "new": "export const TRANSMUTE_LADDER = Object.freeze(['metal:tin', 'metal:copper', 'metal:gold', 'metal:platinum']);",
     "tests": [
       "test/systems/prof12_law.test.js"
@@ -674,8 +674,8 @@
   {
     "name": "PROF12-transmute-xp",
     "file": "src/net/professionLaw.js",
-    "old": "{ station: 'alchemy', xp: null }),\n  spec: TRANSMUTER,",
-    "new": "{ station: 'alchemy', xp: 'alchemy' }),\n  spec: TRANSMUTER,",
+    "old": "        { station: 'alchemy', xp: null },",
+    "new": "        { station: 'alchemy', xp: 'alchemy' },",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -684,8 +684,8 @@
   {
     "name": "PROF12-transmute-forge",
     "file": "src/net/professionLaw.js",
-    "old": "{ station: 'alchemy', xp: null }),\n  spec: TRANSMUTER,",
-    "new": "{ station: 'forge', xp: null }),\n  spec: TRANSMUTER,",
+    "old": "        { station: 'alchemy', xp: null },",
+    "new": "        { station: 'forge', xp: null },",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/systems/prof12_client.test.js"
@@ -714,8 +714,8 @@
   {
     "name": "PROF12-transmute-unlisted",
     "file": "src/net/professionLaw.js",
-    "old": "...WEAVE_RECIPES, ...SPIN_RECIPES, ...MASON_RECIPES, ...TRANSMUTE_RECIPES]",
-    "new": "...WEAVE_RECIPES, ...SPIN_RECIPES, ...MASON_RECIPES]",
+    "old": "  ...TRANSMUTE_RECIPES,\n]); // CLOTH-GEMS: the loom's Linen and Wool",
+    "new": "]); // CLOTH-GEMS: the loom's Linen and Wool",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js",
@@ -727,7 +727,7 @@
     "name": "PROF12-cook-steps-unread",
     "file": "src/net/recipeLaw.js",
     "old": "  const n = (clean ? 1 : 0) + (Number.isSafeInteger(steps) && steps > 0 ? steps : 0);",
-    "new": "  const n = (clean ? 1 : 0);",
+    "new": "  const n = clean ? 1 : 0;",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_apothecary.test.js"
@@ -1423,8 +1423,8 @@
   {
     "name": "PROF12-E1-essence-to-pack",
     "file": "src/net/professionLaw.js",
-    "old": "export const NO_PACK_FORM = Object.freeze(['work:ram', 'essence:arcane']);",
-    "new": "export const NO_PACK_FORM = Object.freeze(['work:ram']);",
+    "old": "export const NO_PACK_FORM = Object.freeze(['work:ram', 'essence:arcane']); // SEAT2b part two: a siege work's road is the writ's (RAM_KIT); AUDIT PROF12 E1: Arcane Essence's the Stores'",
+    "new": "export const NO_PACK_FORM = Object.freeze(['work:ram']); // SEAT2b part two: a siege work's road is the writ's (RAM_KIT); AUDIT PROF12 E1: Arcane Essence's the Stores'",
     "tests": [
       "test/systems/prof12_law.test.js",
       "test/net/prof12_service.test.js"
@@ -1686,8 +1686,8 @@
   {
     "name": "PROF12-E3-card-three",
     "file": "src/net/professionLaw.js",
-    "old": "spec('transmuter', 'Transmuter', 'Two of a metal and a Mercury make one of the next metal up.')",
-    "new": "spec('transmuter', 'Transmuter', 'Three of a metal make one of the next metal up.')",
+    "old": "      spec('transmuter', 'Transmuter', 'Two of a metal and a Mercury make one of the next metal up.'),",
+    "new": "      spec('transmuter', 'Transmuter', 'Three of a metal make one of the next metal up.'),",
     "tests": [
       "test/systems/prof12_law.test.js"
     ]

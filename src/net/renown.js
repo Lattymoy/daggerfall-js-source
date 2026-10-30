@@ -192,18 +192,24 @@ const clampInt = (v, lo, hi) => Math.max(lo, Math.min(hi, Math.round(Number(v) |
 
 /** RENOWN-ACCOUNT: THE RATE, TAKEN ONCE - a source's full-rate XP (a whole number) at RENOWN_RATE_PCT, FLOORED to a
  *  whole XP. The one rounding the rate makes, in the one place every source passes through, so every end agrees. */
-export const renownRate = (fullXp) => Math.floor((Math.max(0, Math.trunc(Number(fullXp) || 0)) * RENOWN_RATE_PCT) / 100);
+export const renownRate = (fullXp) =>
+  Math.floor((Math.max(0, Math.trunc(Number(fullXp) || 0)) * RENOWN_RATE_PCT) / 100);
 
 /** RENOWN3: the highest level a foe or a quest is read at for a character of Renown `renown` - RENOWN_OVER_MAX above it.
  *  A Renown not known yet (null) is Renown 1, the strictest: nothing is read higher than the service has said. */
 export const renownCeiling = (renown) => clampInt(renown ?? 1, 1, RENOWN_MAX) + RENOWN_OVER_MAX;
 
 /** A kill's XP, by the foe's level - read no higher than the Renown allows (RENOWN3), at the rate (RENOWN-ACCOUNT). */
-export const renownKillXp = (foeLevel, renown = null) => renownRate(RENOWN_KILL_XP_PER_LEVEL * Math.min(clampInt(foeLevel, 1, RENOWN_KILL_LEVEL_MAX), renownCeiling(renown)));
+export const renownKillXp = (foeLevel, renown = null) =>
+  renownRate(RENOWN_KILL_XP_PER_LEVEL * Math.min(clampInt(foeLevel, 1, RENOWN_KILL_LEVEL_MAX), renownCeiling(renown)));
 
 /** A quest's XP, by the character's Daggerfall level when it was done - read no higher than the Renown allows (RENOWN3),
  *  at the rate (RENOWN-ACCOUNT): 75 and 30 a level. */
-export const renownQuestXp = (characterLevel, renown = null) => renownRate(RENOWN_QUEST_XP_BASE + RENOWN_QUEST_XP_PER_LEVEL * Math.min(clampInt(characterLevel, 1, RENOWN_QUEST_LEVEL_MAX), renownCeiling(renown)));
+export const renownQuestXp = (characterLevel, renown = null) =>
+  renownRate(
+    RENOWN_QUEST_XP_BASE +
+      RENOWN_QUEST_XP_PER_LEVEL * Math.min(clampInt(characterLevel, 1, RENOWN_QUEST_LEVEL_MAX), renownCeiling(renown)),
+  );
 
 /** RAID4 (2026-09-28, Mac on World Events - Raiding Parties online: "3. We can also add renown and it's own atheric +
  *  armor sets"): A TOWN DEFENDED - a raid's cleanse the relay signed for this account (net/raid/raidReceipt.js) - is worth

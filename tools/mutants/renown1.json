@@ -47,8 +47,8 @@
   {
     "name": "RENOWN1-kill-level-unclamped",
     "file": "src/net/renown.js",
-    "old": "export const renownKillXp = (foeLevel, renown = null) => renownRate(RENOWN_KILL_XP_PER_LEVEL * Math.min(clampInt(foeLevel, 1, RENOWN_KILL_LEVEL_MAX), renownCeiling(renown)));",
-    "new": "export const renownKillXp = (foeLevel, renown = null) => renownRate(RENOWN_KILL_XP_PER_LEVEL * Math.min(clampInt(foeLevel, 0, 999), renownCeiling(renown)));",
+    "old": "  renownRate(RENOWN_KILL_XP_PER_LEVEL * Math.min(clampInt(foeLevel, 1, RENOWN_KILL_LEVEL_MAX), renownCeiling(renown)));",
+    "new": "  renownRate(RENOWN_KILL_XP_PER_LEVEL * Math.min(clampInt(foeLevel, 0, 999), renownCeiling(renown)));",
     "tests": [
       "test/net/renown1.test.js"
     ]
@@ -219,8 +219,8 @@
   {
     "name": "RENOWN1-kill-paid-twice",
     "file": "src/net/renownTracker.js",
-    "old": "  e.paid = true;\n",
-    "new": "  e.paid = false;\n",
+    "old": "  e.paid = true;",
+    "new": "  e.paid = false;",
     "tests": [
       "test/net/renown1.test.js"
     ]
@@ -237,8 +237,8 @@
   {
     "name": "RENOWN1-network-loss-drops-the-xp",
     "file": "src/net/renownTracker.js",
-    "old": "    else refused++;   // anything else (offline, a busy service, a rate, a service without the route yet) holds the report and waits",
-    "new": "    else { refused++; held = null; }",
+    "old": "    else refused++; // anything else (offline, a busy service, a rate, a service without the route yet) holds the report and waits",
+    "new": "    else {\n      refused++;\n      held = null;\n    }",
     "tests": [
       "test/net/renown1.test.js"
     ]
@@ -246,8 +246,8 @@
   {
     "name": "RENOWN1-refusal-retried-forever",
     "file": "src/net/renownTracker.js",
-    "old": "    if (PERMANENT.has(r?.error)) { stopped = true; held = null; pend.clear(); vdPend = 0; try { onStop(r.error); } catch { /* the stop stands */ } }",
-    "new": "    if (PERMANENT.has(r?.error)) { held = null; pend.clear(); vdPend = 0; try { onStop(r.error); } catch { /* the stop stands */ } }",
+    "old": "      stopped = true;\n      held = null;",
+    "new": "      held = null;",
     "tests": [
       "test/net/renown1.test.js"
     ],

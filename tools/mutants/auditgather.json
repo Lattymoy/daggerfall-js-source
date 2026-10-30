@@ -103,8 +103,8 @@
   {
     "name": "AUDITGATHER-F7-wet-law",
     "file": "src/net/professionLaw.js",
-    "old": "botanist: 1.5, wet: 0.8 });",
-    "new": "botanist: 1.5, wet: 1 });",
+    "old": "export const HERB_ACT = Object.freeze({\n  commonS: 0.8,\n  steadyS: 2.5,\n  steadyDeg: 3,\n  moveM: 0.25,\n  botanist: 1.5,\n  wet: 0.8,\n}); // AUDIT GATHER F7: `wet` - rain wets the herbs, the steady window -20% (5.3)",
+    "new": "export const HERB_ACT = Object.freeze({ commonS: 0.8, steadyS: 2.5, steadyDeg: 3, moveM: 0.25, botanist: 1.5, wet: 1 }); // AUDIT GATHER F7: `wet` - rain wets the herbs, the steady window -20% (5.3)",
     "tests": [
       "test/systems/auditgather.test.js"
     ]

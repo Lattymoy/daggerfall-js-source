@@ -83,8 +83,8 @@
   {
     "name": "ACC3c-10-my-own-roster-row-goes-unbadged",
     "file": "src/net/roster.js",
-    "old": "push(session?.id ?? null, session?.name ?? '', true, session);",
-    "new": "push(session?.id ?? null, session?.name ?? '', true);",
+    "old": "  if (session?.hidden !== true) push(session?.id ?? null, session?.name ?? '', true, session);",
+    "new": "  if (session?.hidden !== true) push(session?.id ?? null, session?.name ?? '', true);",
     "tests": [
       "test/ui/enhanced/acc3wear.test.js"
     ],
@@ -93,8 +93,8 @@
   {
     "name": "ACC3c-11-the-roster-trusts-the-relay",
     "file": "src/net/roster.js",
-    "old": "      const row = { id, name: sanitizeName(name), tag: tagOf(id), me, ...readBadge(from), gt: readGuildTag(from) };",
-    "new": "      const row = { id, name: sanitizeName(name), tag: tagOf(id), me, title: from?.title ?? null, glyphs: from?.glyphs ?? [], gt: readGuildTag(from) };",
+    "old": "      const row = { id, name: sanitizeName(name), tag: tagOf(id), me, ...readBadge(from), gt: readGuildTag(from) }; // GUILD1c: and the guild's tag, through the wire's own reader",
+    "new": "      const row = {\n        id,\n        name: sanitizeName(name),\n        tag: tagOf(id),\n        me,\n        title: from?.title ?? null,\n        glyphs: from?.glyphs ?? [],\n        gt: readGuildTag(from),\n      }; // GUILD1c: and the guild's tag, through the wire's own reader",
     "tests": [
       "test/ui/enhanced/acc3wear.test.js"
     ],

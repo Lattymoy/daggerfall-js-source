@@ -236,8 +236,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-pages-bound-gone",
     "file": "src/net/renownTracker.js",
-    "old": "    const vd = Math.min(vdPend, xp);",
-    "new": "    const vd = vdPend;",
+    "old": "    const vd = Math.min(vdPend, xp); // PVP-VILLAIN-KEEP: never more than the report's XP, as the service holds it",
+    "new": "    const vd = vdPend; // PVP-VILLAIN-KEEP: never more than the report's XP, as the service holds it",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-pages-word-unsent",
     "file": "src/net/renownTracker.js",
-    "old": "h.rid, h.region, h.vd); } catch { r = { ok: false, error: 'offline' }; }",
-    "new": "h.rid, h.region, 0); } catch { r = { ok: false, error: 'offline' }; }",
+    "old": "      r = await report(h.character, h.xp, name?.() ?? null, h.rid, h.region, h.vd);",
+    "new": "      r = await report(h.character, h.xp, name?.() ?? null, h.rid, h.region, 0);",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-pages-word-uncounted",
     "file": "src/net/renownTracker.js",
-    "old": "      if (Number.isFinite(vd) && vd > 0) vdPend += Math.trunc(vd);",
-    "new": "",
+    "old": "      if (Number.isFinite(vd) && vd > 0) vdPend += Math.trunc(vd);\n    }",
+    "new": "    }",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]

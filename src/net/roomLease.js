@@ -77,8 +77,16 @@ export async function leaseKeyOf(secret, { subtle }) {
   if (typeof secret !== 'string' || !secret) return null;
   try {
     const base = await subtle.importKey('raw', enc.encode(secret), 'HKDF', false, ['deriveKey']);
-    return await subtle.deriveKey({ name: 'HKDF', hash: 'SHA-256', salt: new Uint8Array(0), info: enc.encode(LEASE_INFO) }, base, { name: 'HMAC', hash: 'SHA-256', length: 256 }, false, ['sign', 'verify']);
-  } catch { return null; }
+    return await subtle.deriveKey(
+      { name: 'HKDF', hash: 'SHA-256', salt: new Uint8Array(0), info: enc.encode(LEASE_INFO) },
+      base,
+      { name: 'HMAC', hash: 'SHA-256', length: 256 },
+      false,
+      ['sign', 'verify'],
+    );
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -92,8 +100,18 @@ export async function leaseKeyOf(secret, { subtle }) {
  * @param {CryptoKey} key @param {{subtle: SubtleCrypto}} env
  */
 export async function mintLease({ s, mu = 0, fz = 0, at, p = 0 }, key, { subtle }) {
-  if (typeof s !== 'string' || !ID_RE.test(s) || until(mu) == null || until(fz) == null || !(until(at) > 0) || (p !== 0 && p !== 1)) return null;
-  const body = _b64url.encode(enc.encode(JSON.stringify({ s, m: mu, f: fz, a: at, u: at + LEASE_LIFE_S, ...(p ? { p } : {}) })));
+  if (
+    typeof s !== 'string' ||
+    !ID_RE.test(s) ||
+    until(mu) == null ||
+    until(fz) == null ||
+    !(until(at) > 0) ||
+    (p !== 0 && p !== 1)
+  )
+    return null;
+  const body = _b64url.encode(
+    enc.encode(JSON.stringify({ s, m: mu, f: fz, a: at, u: at + LEASE_LIFE_S, ...(p ? { p } : {}) })),
+  );
   const mac = new Uint8Array(await subtle.sign('HMAC', key, enc.encode(body)));
   const l = `${body}.${_b64url.encode(mac)}`;
   return l.length <= LEASE_WIRE_MAX ? l : null;
@@ -108,14 +126,33 @@ export async function readLease(l, key, { subtle, nowS }) {
   if (typeof l !== 'string' || l.length > LEASE_WIRE_MAX) return null;
   const dot = l.indexOf('.');
   if (dot < 1 || dot !== l.lastIndexOf('.')) return null;
-  const body = l.slice(0, dot), mac = _b64url.decode(l.slice(dot + 1));
+  const body = l.slice(0, dot),
+    mac = _b64url.decode(l.slice(dot + 1));
   if (!mac) return null;
   let ok = false;
-  try { ok = await subtle.verify('HMAC', key, mac, enc.encode(body)); } catch { return null; }
+  try {
+    ok = await subtle.verify('HMAC', key, mac, enc.encode(body));
+  } catch {
+    return null;
+  }
   if (!ok) return null;
   let c;
-  try { c = JSON.parse(dec.decode(_b64url.decode(body) ?? new Uint8Array(0))); } catch { return null; }
-  if (!c || typeof c.s !== 'string' || !ID_RE.test(c.s) || until(c.m) == null || until(c.f) == null || !(until(c.a) > 0) || c.u !== c.a + LEASE_LIFE_S || (c.p !== undefined && c.p !== 1)) return null;
-  if (c.u <= nowS || c.a > nowS + 30) return null;   // lapsed, or from a clock past the relay's own skew
+  try {
+    c = JSON.parse(dec.decode(_b64url.decode(body) ?? new Uint8Array(0)));
+  } catch {
+    return null;
+  }
+  if (
+    !c ||
+    typeof c.s !== 'string' ||
+    !ID_RE.test(c.s) ||
+    until(c.m) == null ||
+    until(c.f) == null ||
+    !(until(c.a) > 0) ||
+    c.u !== c.a + LEASE_LIFE_S ||
+    (c.p !== undefined && c.p !== 1)
+  )
+    return null;
+  if (c.u <= nowS || c.a > nowS + 30) return null; // lapsed, or from a clock past the relay's own skew
   return { s: c.s, mu: c.m, fz: c.f, at: c.a, u: c.u, ...(c.p ? { p: 1 } : {}) };
 }

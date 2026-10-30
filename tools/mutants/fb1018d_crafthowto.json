@@ -153,8 +153,8 @@
   {
     "name": "CRAFT-HOWTO-saw-pays",
     "file": "src/net/professionLaw.js",
-    "old": "spec: 'timberwright', per: 3 }), xp: null })));",
-    "new": "spec: 'timberwright', per: 3 }), xp: 'carpentry' })));",
+    "old": "      more: Object.freeze({ profession: 'logging', spec: 'timberwright', per: 3 }),\n      xp: null,",
+    "new": "      more: Object.freeze({ profession: 'logging', spec: 'timberwright', per: 3 }),\n      xp: 'carpentry',",
     "tests": [
       "test/ui/professions/fb1018d_crafthowto.test.js"
     ],
@@ -163,8 +163,8 @@
   {
     "name": "CRAFT-HOWTO-cure-pays",
     "file": "src/net/professionLaw.js",
-    "old": "spec: 'tanner', per: 2, rank: 50 }), xp: null })));",
-    "new": "spec: 'tanner', per: 2, rank: 50 }), xp: 'outfitting' })));",
+    "old": "        xp: null,",
+    "new": "        xp: 'outfitting',",
     "tests": [
       "test/ui/professions/fb1018d_crafthowto.test.js"
     ],

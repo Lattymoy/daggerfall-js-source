@@ -137,8 +137,8 @@
   {
     "name": "HERALD-CARDS-the-setting-floor-ignored",
     "file": "src/net/relayCfg.js",
-    "old": "Math.max(RELAY_CFG_RELAY_MIN, RELAY_CFG_KEY_MIN[k] ?? 0)",
-    "new": "RELAY_CFG_RELAY_MIN",
+    "old": "  Number(/^world(\\d+)$/.exec(String(v ?? ''))?.[1]) >= Math.max(RELAY_CFG_RELAY_MIN, RELAY_CFG_KEY_MIN[k] ?? 0);",
+    "new": "  Number(/^world(\\d+)$/.exec(String(v ?? ''))?.[1]) >= RELAY_CFG_RELAY_MIN;",
     "tests": [
       "test/net/herald/heraldcards.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "AUDIT-HERALD-CARDS-S1-the-floor-apart-from-its-row",
     "file": "src/net/relayCfg.js",
-    "old": "RELAY_CFG_KEY_MIN = Object.freeze({ gateThread: 250, serpentThread: 250, sdThread: 250, egThread: 250, ktRole: 255, ktThread: 255, cellSeed: 260, lootDoor: 273, sdCollapse: 275 });",
-    "new": "RELAY_CFG_KEY_MIN = Object.freeze({ gateThread: 251, serpentThread: 251, sdThread: 251, egThread: 251, ktRole: 255, ktThread: 255, cellSeed: 260, lootDoor: 273, sdCollapse: 275 });",
+    "old": "  gateThread: 250,\n  serpentThread: 250,\n  sdThread: 250,\n  egThread: 250,",
+    "new": "  gateThread: 251,\n  serpentThread: 251,\n  sdThread: 251,\n  egThread: 251,",
     "note": "AUDIT HORIZONTAL B7 (LOOT-DOOR, re-aimed by content): lootDoor's floor stands at the line's end. PIN MOVED: SD-PARTY world275, re-aimed by content.",
     "tests": [
       "test/net/herald/heraldcards.test.js"

@@ -305,8 +305,8 @@
   {
     "name": "ARMORY-the-set-priced-as-the-singles",
     "file": "src/net/shopLaw.js",
-    "old": "ware('armory', 'eternalset', 2000, 256)",
-    "new": "ware('armory', 'eternalset', 3000, 256)",
+    "old": "  ware('armory', 'eternalset', 2000, 256),",
+    "new": "  ware('armory', 'eternalset', 3000, 256),",
     "tests": [
       "test/server/armory_service.test.js",
       "test/render/armory.test.js"
@@ -325,8 +325,8 @@
   {
     "name": "ARMORY-the-set-holding-nothing",
     "file": "src/net/shopLaw.js",
-    "old": "(kind === 'armory' ? armoryWarePieces(w.key) : [w.key])",
-    "new": "[w.key]",
+    "old": "  const keys = SHOP_WARES.filter((w) => w.kind === kind && held.includes(w.id)).flatMap((w) =>\n    kind === 'armory' ? armoryWarePieces(w.key) : [w.key],\n  );",
+    "new": "  const keys = SHOP_WARES.filter((w) => w.kind === kind && held.includes(w.id)).flatMap((w) => [w.key]);",
     "tests": [
       "test/server/armory_service.test.js",
       "test/render/armory.test.js"
@@ -335,8 +335,8 @@
   {
     "name": "ARMORY-a-single-sold-over-the-set",
     "file": "src/net/shopLaw.js",
-    "old": "return gives.length > 0 && gives.every(",
-    "new": "return gives.length > 1 && gives.every(",
+    "old": "  return gives.length > 0 && gives.every((k) => shopKeysOf(bits, 'armory').includes(k));",
+    "new": "  return gives.length > 1 && gives.every((k) => shopKeysOf(bits, 'armory').includes(k));",
     "tests": [
       "test/server/armory_service.test.js",
       "test/render/armory.test.js"
@@ -345,8 +345,8 @@
   {
     "name": "ARMORY-four-singles-the-set",
     "file": "src/net/shopLaw.js",
-    "old": "gives.every((k) => shopKeysOf(bits, 'armory').includes(k))",
-    "new": "gives.some((k) => shopKeysOf(bits, 'armory').includes(k))",
+    "old": "  return gives.length > 0 && gives.every((k) => shopKeysOf(bits, 'armory').includes(k));",
+    "new": "  return gives.length > 0 && gives.some((k) => shopKeysOf(bits, 'armory').includes(k));",
     "tests": [
       "test/server/armory_service.test.js",
       "test/render/armory.test.js"

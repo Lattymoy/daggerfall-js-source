@@ -170,7 +170,7 @@ the hover pick throws nothing.
 (PELTS), `src/ui/professions/profPages.js` (the Hunting and Outfitting unlock lines, drafted in the fifteen machine-made
 languages).
 
-FOUND. A body is skinned by its foe's id and nothing else: `professionLaw.js:"export const hideOfFoe = (mobileType) =>"`
+FOUND. A body is skinned by its foe's id and nothing else: `professionLaw.js:"export const hideOfFoe"`
 finds the hide whose `foes` hold the id, and the ten hides held PROF0 4.4's classic foes by DFU's MobileTypes
 (DaggerfallUnityEnums.cs:142-211, "Monster IDs are 0-42"). Daggerfall Enemy Expansion (#1067) adds fifty rows past the
 classic table (BestiaryMod.cs:665 and 1343; `enemyBasics.js:"export function registerEnemyRows(rows) {"`): its monsters
@@ -220,7 +220,7 @@ carries no part and cuts none. All three give Raw Meat (C&C gives every body of 
 `survival/loot.js:"export const isAnimal = (entity) =>"`) and cure to Cured Leather (4.4, tiers 1-3). Templates 681-683
 were free in the registry and in 4.8's table and sit after Arcane Essence (680); they take the pictures the ten borrow
 (a pelt is Nymph Hair's lock, a chitin Fairy Dragon's Scales'). The cures now stand by tier
-(`professionLaw.js:"HIDES.filter((h) => h.cures).sort((a, b) => a.tier - b.tier"`), since a chain plans a leather's cures
+(`professionLaw.js:"HIDES.filter((h) => h.cures)"`), since a chain plans a leather's cures
 cheapest first (`chainLaw.js:"export const producersOf"`, CRAFT1's order); the ten keep their order - but the Bear
 Hide's last of its tier since AUDIT FB1021 L2-1 (`01-Overview/audits/Audit-Field-Bugs-2026-10-21.md`: it is the Ram Kit's
 too, and a chain spent every one before a Wolf Pelt). The profession page

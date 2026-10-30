@@ -336,8 +336,8 @@
   {
     "name": "LOST-SPOILS-two-claim-alls",
     "file": "src/net/serverPost.js",
-    "old": "    if (this.busy || this.claimingAll) return { ok: false, error: 'busy', items: [] };\n",
-    "new": "",
+    "old": "    if (this.busy || this.claimingAll) return { ok: false, error: 'busy', items: [] };\n    this.claimingAll = true;",
+    "new": "    this.claimingAll = true;",
     "tests": [
       "test/net/lostspoils_client.test.js"
     ],

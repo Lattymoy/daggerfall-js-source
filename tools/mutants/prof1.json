@@ -127,8 +127,8 @@
   {
     "name": "PROF1-14-respec-free",
     "file": "src/net/professionLaw.js",
-    "old": "    out[row.respec_rank] = row.respec_to;",
-    "new": "",
+    "old": "    out[row.respec_rank] = row.respec_to;\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/foraging/prof1_law.test.js",
       "test/net/prof1_service.test.js"

@@ -6,18 +6,30 @@
 // the row at every ask (server-account/src/titles.js), and the relay sees it only in the signed token.
 // Pure. Not a DFU member - Daggerfall Unity has no accounts. Ledger A (SHOP).
 import { TITLES, AURAS, GLYPHS } from './identityToken.js';
-import { ARMORY_PIECES, ARMORY_NAME, ARMORY_SETS, armoryWarePieces } from './armoryLaw.js';   // ARMORY: the Aura Armory's shop pieces and its set - armoryLaw.js imports nothing
+import { ARMORY_PIECES, ARMORY_NAME, ARMORY_SETS, armoryWarePieces } from './armoryLaw.js'; // ARMORY: the Aura Armory's shop pieces and its set - armoryLaw.js imports nothing
 
 /** The currency every price is charged in, as Stripe spells it. */
 export const SHOP_CURRENCY = 'usd';
 /** The shop's sections, in the window's order - one a kind of ware. */
-export const SHOP_CATEGORIES = Object.freeze(['titles', 'glyphs', 'auras', 'armory']);   // ARMORY: the Aura Armory's own section, last
+export const SHOP_CATEGORIES = Object.freeze(['titles', 'glyphs', 'auras', 'armory']); // ARMORY: the Aura Armory's own section, last
 /** The kind of ware each section holds. */
 export const SHOP_CATEGORY_KIND = Object.freeze({ titles: 'title', glyphs: 'glyph', auras: 'aura', armory: 'armory' });
 
-const ware = (/** @type {string} */ kind, /** @type {string} */ key, /** @type {number} */ cents, /** @type {number} */ bit) => Object.freeze({
-  id: `${kind}:${key}`, kind, key, category: kind === 'armory' ? 'armory' : `${kind}s`, cents, bit, preAlpha: true,
-});
+const ware = (
+  /** @type {string} */ kind,
+  /** @type {string} */ key,
+  /** @type {number} */ cents,
+  /** @type {number} */ bit,
+) =>
+  Object.freeze({
+    id: `${kind}:${key}`,
+    kind,
+    key,
+    category: kind === 'armory' ? 'armory' : `${kind}s`,
+    cents,
+    bit,
+    preAlpha: true,
+  });
 /** THE WARES, in the window's order: `cents` the price in US cents (the owner's: $5, $2, $20); `bit` the sale's bit on
  *  the row (`players.shop_wares`, migration 0189) - never renumbered, since a stored bit is a sale that happened. Every
  *  one is pre-alpha only: sold while SHOP_ON_SALE names it, and gone from sale when the owner takes it off. */
@@ -37,14 +49,29 @@ export const SHOP_WARES = Object.freeze([
 /** A ware's name and kind in English, for the service's pages, Stripe's line and the receipt (the client's own words
  *  are playerBadge.js TITLE_TEXT, AURA_TEXT and enhancedAccount.js GLYPH_LABEL - a pin holds the names equal). */
 export const SHOP_WARE_NAME = Object.freeze({
-  'title:genesis': 'Genesis', 'glyph:origin': 'Origin', 'aura:eternal': 'Eternal',
-  ...Object.fromEntries([...ARMORY_PIECES.filter((p) => p.source === 'shop').map((p) => p.key), ...Object.keys(ARMORY_SETS)].map((k) => [`armory:${k}`, ARMORY_NAME[/** @type {keyof typeof ARMORY_NAME} */ (k)]])),
+  'title:genesis': 'Genesis',
+  'glyph:origin': 'Origin',
+  'aura:eternal': 'Eternal',
+  ...Object.fromEntries(
+    [...ARMORY_PIECES.filter((p) => p.source === 'shop').map((p) => p.key), ...Object.keys(ARMORY_SETS)].map((k) => [
+      `armory:${k}`,
+      ARMORY_NAME[/** @type {keyof typeof ARMORY_NAME} */ (k)],
+    ]),
+  ),
 });
 export const SHOP_KIND_NAME = Object.freeze({ title: 'title', glyph: 'glyph', aura: 'aura', armory: 'Aura Armory' });
 /** A ware by its id (`kind:key`), or null. */
 export const shopWareById = (/** @type {unknown} */ id) => SHOP_WARES.find((w) => w.id === id) ?? null;
 /** Every ware's key is in the token's vocabulary - a ware no token could carry would be a sale nobody sees. */
-export const shopVocabularyOk = () => SHOP_WARES.every((w) => ({ title: TITLES, aura: AURAS, glyph: GLYPHS, armory: [...ARMORY_PIECES.filter((p) => p.source === 'shop').map((p) => p.key), ...Object.keys(ARMORY_SETS)] })[w.kind]?.includes(w.key));
+export const shopVocabularyOk = () =>
+  SHOP_WARES.every((w) =>
+    ({
+      title: TITLES,
+      aura: AURAS,
+      glyph: GLYPHS,
+      armory: [...ARMORY_PIECES.filter((p) => p.source === 'shop').map((p) => p.key), ...Object.keys(ARMORY_SETS)],
+    })[w.kind]?.includes(w.key),
+  );
 /** Every bit once, and the bits the column may hold together. */
 export const SHOP_BITS_ALL = SHOP_WARES.reduce((a, w) => a | w.bit, 0);
 
@@ -58,7 +85,9 @@ export function shopHeldOf(/** @type {unknown} */ bits) {
  *  every piece (ARMORY), each once. Pure. */
 export const shopKeysOf = (/** @type {unknown} */ bits, /** @type {string} */ kind) => {
   const held = shopHeldOf(bits);
-  const keys = SHOP_WARES.filter((w) => w.kind === kind && held.includes(w.id)).flatMap((w) => (kind === 'armory' ? armoryWarePieces(w.key) : [w.key]));
+  const keys = SHOP_WARES.filter((w) => w.kind === kind && held.includes(w.id)).flatMap((w) =>
+    kind === 'armory' ? armoryWarePieces(w.key) : [w.key],
+  );
   return [...new Set(keys)];
 };
 /** Whether a row's bits hold what a ware gives - its own bit, or (ARMORY) every piece it gives, through a set or the
@@ -75,7 +104,12 @@ export const shopOwns = (/** @type {unknown} */ bits, /** @type {string} */ id) 
  *  names, in the wares' order. A word that is no ware's id is not read. The owner ends a sale by taking its id off. */
 export function shopOnSaleOf(/** @type {unknown} */ raw) {
   if (typeof raw !== 'string' || !raw) return [];
-  const named = new Set(raw.split(',').map((s) => s.trim()).filter(Boolean));
+  const named = new Set(
+    raw
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean),
+  );
   return SHOP_WARES.filter((w) => named.has(w.id)).map((w) => w.id);
 }
 
@@ -94,7 +128,6 @@ export const SHOP_ORDER_ID_RE = /^[0-9a-f]{24}$/;
 /** The receipt letter's batch for an order - one letter an order (0093's one-a-batch index). */
 export const shopReceiptBatch = (/** @type {string} */ orderId) => `shop-${orderId}`;
 
-
 /**
  * THE SHOP'S CARD as the account read carries it (`/v1/account`'s `shop`), checked on the way in: `{ on, wares }` - `on`
  * whether the service takes payments, each ware `{ id, sale, held, buy }` (`buy` the service's own https link, or
@@ -109,7 +142,12 @@ export function shopCardOf(card) {
     const w = shopWareById(r?.id);
     if (!w || wares.some((x) => x.id === w.id)) continue;
     const buy = typeof r.buy === 'string' && r.buy.startsWith('https://') && r.buy.length <= 2048 ? r.buy : null;
-    wares.push({ id: w.id, sale: r.sale === true, held: r.held === true, buy: card.on && r.sale === true && r.held !== true ? buy : null });
+    wares.push({
+      id: w.id,
+      sale: r.sale === true,
+      held: r.held === true,
+      buy: card.on && r.sale === true && r.held !== true ? buy : null,
+    });
   }
   return { on: card.on, wares };
 }

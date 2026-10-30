@@ -92,8 +92,8 @@
   {
     "name": "STAR8-the-title-on-the-fate",
     "file": "src/net/questlineClaims.js",
-    "old": "title: 'starwarden', titleAt: 2 }),",
-    "new": "title: 'starwarden', titleAt: 3 }),",
+    "old": "    title: 'starwarden',\n    titleAt: 2,",
+    "new": "    title: 'starwarden',\n    titleAt: 3,",
     "tests": [
       "test/systems/questlines/star8_frostfall.test.js",
       "test/server/ql12_claim.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "STAR8-the-first-star-unwitnessed",
     "file": "src/net/questlineClaims.js",
-    "old": "witness: Object.freeze({ 0: 'star', 2: 'stars3' }), title: 'starwarden'",
-    "new": "witness: Object.freeze({ 2: 'stars3' }), title: 'starwarden'",
+    "old": "    witness: Object.freeze({ 0: 'star', 2: 'stars3' }),",
+    "new": "    witness: Object.freeze({ 2: 'stars3' }),",
     "tests": [
       "test/systems/questlines/star8_frostfall.test.js",
       "test/server/ql12_claim.test.js"

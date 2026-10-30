@@ -457,8 +457,8 @@
   {
     "name": "GUILD1c-another-guild-listed",
     "file": "src/net/roster.js",
-    "old": "if (tag) for (const [id, p] of hub?.peers ?? []) if (p?.gt === tag) peers.set(id, p);",
-    "new": "if (tag) for (const [id, p] of hub?.peers ?? []) if (p?.gt) peers.set(id, p);",
+    "old": "  if (tag) for (const [id, p] of hub?.peers ?? []) if (p?.gt === tag) peers.set(id, p);",
+    "new": "  if (tag) for (const [id, p] of hub?.peers ?? []) if (p?.gt) peers.set(id, p);",
     "tests": [
       "test/net/guild1c.test.js"
     ]
@@ -466,8 +466,8 @@
   {
     "name": "GUILD1c-a-row-without-its-tag",
     "file": "src/net/roster.js",
-    "old": "...readBadge(from), gt: readGuildTag(from) };",
-    "new": "...readBadge(from) };",
+    "old": "      const row = { id, name: sanitizeName(name), tag: tagOf(id), me, ...readBadge(from), gt: readGuildTag(from) }; // GUILD1c: and the guild's tag, through the wire's own reader",
+    "new": "      const row = { id, name: sanitizeName(name), tag: tagOf(id), me, ...readBadge(from) }; // GUILD1c: and the guild's tag, through the wire's own reader",
     "tests": [
       "test/net/guild1c.test.js"
     ],
@@ -476,8 +476,8 @@
   {
     "name": "GUILD1c-my-own-row-untagged",
     "file": "src/net/roster.js",
-    "old": "glyphs: hub?.glyphs ?? null, gt: hub?.gt ?? null, hidden: hub?.hidden === true, peers, label: 'Guild' };",
-    "new": "glyphs: hub?.glyphs ?? null, hidden: hub?.hidden === true, peers, label: 'Guild' };",
+    "old": "    title: hub?.title ?? null,\n    glyphs: hub?.glyphs ?? null,\n    gt: hub?.gt ?? null,\n    hidden: hub?.hidden === true,\n    peers,\n    label: 'Guild',",
+    "new": "    title: hub?.title ?? null,\n    glyphs: hub?.glyphs ?? null,\n    hidden: hub?.hidden === true,\n    peers,\n    label: 'Guild',",
     "tests": [
       "test/net/guild1c.test.js"
     ]

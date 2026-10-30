@@ -2,8 +2,8 @@
   {
     "name": "STAFF-SET-BANK-the-ticket-unread",
     "file": "src/net/repairLaw.js",
-    "old": "  const { ticket, was, gold } = v;\n  if (typeof ticket !== 'string' || !REPAIR_TICKET_RE.test(ticket)) return null;\n  if (typeof was !== 'number'",
-    "new": "  const { ticket, was, gold } = v;\n  if (typeof was !== 'number'",
+    "old": "  if (typeof ticket !== 'string' || !REPAIR_TICKET_RE.test(ticket)) return null;\n  if (typeof was !== 'number' || !Number.isFinite(was)) return null;",
+    "new": "  if (typeof was !== 'number' || !Number.isFinite(was)) return null;",
     "why": "a set's ticket is the ticket's shape, or no set: the once-a-ticket key would take any text",
     "tests": [
       "test/server/staffsetbank.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "STAFF-SET-BANK-the-total-unread",
     "file": "src/net/repairLaw.js",
-    "old": "  if (typeof was !== 'number' || !Number.isFinite(was)) return null;\n",
-    "new": "",
+    "old": "  if (typeof was !== 'number' || !Number.isFinite(was)) return null;\n  if (!(Number.isSafeInteger(gold) && gold >= 0 && gold <= GOLD_INT_MAX)) return null;",
+    "new": "  if (!(Number.isSafeInteger(gold) && gold >= 0 && gold <= GOLD_INT_MAX)) return null;",
     "why": "a set names the total staff read, or it is no set: a set unchecked against the record would move a bank played since",
     "tests": [
       "test/server/staffsetbank.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "STAFF-SET-BANK-the-gold-below-nothing",
     "file": "src/net/repairLaw.js",
-    "old": "Number.isSafeInteger(gold) && gold >= 0 && gold <= GOLD_INT_MAX",
-    "new": "Number.isSafeInteger(gold) && gold <= GOLD_INT_MAX",
+    "old": "  if (!(Number.isSafeInteger(gold) && gold >= 0 && gold <= GOLD_INT_MAX)) return null;",
+    "new": "  if (!(Number.isSafeInteger(gold) && gold <= GOLD_INT_MAX)) return null;",
     "why": "a bank set below nothing is a bank the judge holds on",
     "tests": [
       "test/server/staffsetbank.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "STAFF-SET-BANK-no-bound",
     "file": "src/net/repairLaw.js",
-    "old": "Number.isSafeInteger(gold) && gold >= 0 && gold <= GOLD_INT_MAX",
-    "new": "Number.isSafeInteger(gold) && gold >= 0",
+    "old": "  if (!(Number.isSafeInteger(gold) && gold >= 0 && gold <= GOLD_INT_MAX)) return null;",
+    "new": "  if (!(Number.isSafeInteger(gold) && gold >= 0)) return null;",
     "why": "one int's worth at most: DFU's int accountGold",
     "tests": [
       "test/server/staffsetbank.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "STAFF-SET-BANK-the-empire-account-unchecked",
     "file": "src/net/repairLaw.js",
-    "old": "  if (!empire || typeof empire !== 'object') return 'bank-none';\n",
-    "new": "",
+    "old": "  if (!empire || typeof empire !== 'object') return 'bank-none';\n  const total = bankTotalOf(save);",
+    "new": "  const total = bankTotalOf(save);",
     "why": "a record with no Empire account is refused, never a table invented (or a set that throws)",
     "tests": [
       "test/server/staffsetbank.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "STAFF-SET-BANK-the-total-unchecked",
     "file": "src/net/repairLaw.js",
-    "old": "  if (total !== was) return 'bank-moved';\n",
-    "new": "",
+    "old": "  if (total !== was) return 'bank-moved';\n  // the fold's moves, whose sum the set below takes the place of: every other branch at nothing - a count of no number too",
+    "new": "  // the fold's moves, whose sum the set below takes the place of: every other branch at nothing - a count of no number too",
     "why": "the bank set is the one staff read: played since, or the wrong character, is refused",
     "tests": [
       "test/server/staffsetbank.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "STAFF-SET-BANK-the-branches-kept",
     "file": "src/net/repairLaw.js",
-    "old": "a.accountGold != null && a.accountGold !== 0) a.accountGold = 0;",
-    "new": "a.accountGold != null && a.accountGold !== 0) a.accountGold = a.accountGold;",
+    "old": "      a.accountGold = 0;",
+    "new": "      a.accountGold = a.accountGold;",
     "why": "every other branch folded in: a branch left holding gold makes the bank more than the gold set",
     "tests": [
       "test/server/staffsetbank.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "STAFF-SET-BANK-a-count-of-no-number-kept",
     "file": "src/net/repairLaw.js",
-    "old": "a.accountGold != null && a.accountGold !== 0) a.accountGold = 0;",
-    "new": "Number.isFinite(a.accountGold) && a.accountGold !== 0) a.accountGold = 0;",
+    "old": "    if (i !== REALM_EMPIRE_ACCOUNT && a && typeof a === 'object' && a.accountGold != null && a.accountGold !== 0)",
+    "new": "    if (\n      i !== REALM_EMPIRE_ACCOUNT &&\n      a &&\n      typeof a === 'object' &&\n      Number.isFinite(a.accountGold) &&\n      a.accountGold !== 0\n    )",
     "why": "the fold's own rule alone leaves a count of no number beside the bank set, a law finding the set was to clear",
     "tests": [
       "test/server/staffsetbank.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "STAFF-SET-BANK-a-branch-loan-touched",
     "file": "src/net/repairLaw.js",
-    "old": "a.accountGold != null && a.accountGold !== 0) a.accountGold = 0;",
-    "new": "a.accountGold != null && a.accountGold !== 0) { a.accountGold = 0; a.loanTotal = 0; }",
+    "old": "    if (i !== REALM_EMPIRE_ACCOUNT && a && typeof a === 'object' && a.accountGold != null && a.accountGold !== 0)\n      a.accountGold = 0;",
+    "new": "    if (i !== REALM_EMPIRE_ACCOUNT && a && typeof a === 'object' && a.accountGold != null && a.accountGold !== 0) {\n      a.accountGold = 0;\n      a.loanTotal = 0;\n    }",
     "why": "a loan stays in the branch it was taken at, as the fold leaves it",
     "tests": [
       "test/server/staffsetbank.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "STAFF-SET-BANK-the-empire-loan-touched",
     "file": "src/net/repairLaw.js",
-    "old": "  empire.accountGold = gold;\n  return { was: total };",
-    "new": "  Object.assign(empire, { accountGold: gold, loanTotal: 0 });\n  return { was: total };",
+    "old": "  empire.accountGold = gold;",
+    "new": "  Object.assign(empire, { accountGold: gold, loanTotal: 0 });",
     "why": "a loan stays where it stands",
     "tests": [
       "test/server/staffsetbank.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "STAFF-SET-BANK-a-count-of-no-number-summed",
     "file": "src/net/repairLaw.js",
-    "old": "s + (typeof a?.accountGold === 'number' && Number.isFinite(a.accountGold) ? a.accountGold : 0)",
-    "new": "s + (Number(a?.accountGold) || 0)",
+    "old": "        (/** @type {number} */ s, /** @type {any} */ a) =>\n          s + (typeof a?.accountGold === 'number' && Number.isFinite(a.accountGold) ? a.accountGold : 0),",
+    "new": "        (/** @type {number} */ s, /** @type {any} */ a) => s + (Number(a?.accountGold) || 0),",
     "why": "the total is the profile's: a count of no number counts none",
     "tests": [
       "test/server/staffsetbank.test.js"
@@ -242,8 +242,8 @@
   {
     "name": "STAFF-SET-BANK-the-total-unbounded",
     "file": "src/net/repairLaw.js",
-    "old": "export const bankTotalOf = (save) => Math.min(Number.MAX_SAFE_INTEGER, Math.max(-Number.MAX_SAFE_INTEGER, (Array.isArray(save?.bankAccounts) ? save.bankAccounts : [])\n  .reduce((/** @type {number} */ s, /** @type {any} */ a) => s + (typeof a?.accountGold === 'number' && Number.isFinite(a.accountGold) ? a.accountGold : 0), 0)));",
-    "new": "export const bankTotalOf = (save) => (Array.isArray(save?.bankAccounts) ? save.bankAccounts : [])\n  .reduce((/** @type {number} */ s, /** @type {any} */ a) => s + (typeof a?.accountGold === 'number' && Number.isFinite(a.accountGold) ? a.accountGold : 0), 0);",
+    "old": "  Math.min(\n    Number.MAX_SAFE_INTEGER,\n    Math.max(\n      -Number.MAX_SAFE_INTEGER,\n      (Array.isArray(save?.bankAccounts) ? save.bankAccounts : []).reduce(\n        (/** @type {number} */ s, /** @type {any} */ a) =>\n          s + (typeof a?.accountGold === 'number' && Number.isFinite(a.accountGold) ? a.accountGold : 0),\n        0,\n      ),\n    ),",
+    "new": "  (Array.isArray(save?.bankAccounts) ? save.bankAccounts : []).reduce(\n    (/** @type {number} */ s, /** @type {any} */ a) =>\n      s + (typeof a?.accountGold === 'number' && Number.isFinite(a.accountGold) ? a.accountGold : 0),\n    0,",
     "why": "REVIEW: a bank past every safe integer is said at the bound - unbounded, the act's row held an int64 that reads back as no number (the set landed, answered 500 and wrote no audit row), and banks summed past every number were Infinity, null in JSON, a bank no body could set",
     "tests": [
       "test/server/staffsetbank.test.js"
@@ -252,8 +252,8 @@
   {
     "name": "STAFF-SET-BANK-the-total-unbounded-below",
     "file": "src/net/repairLaw.js",
-    "old": "Math.max(-Number.MAX_SAFE_INTEGER, (Array.isArray(save?.bankAccounts)",
-    "new": "((Array.isArray(save?.bankAccounts)",
+    "old": "    Math.max(\n      -Number.MAX_SAFE_INTEGER,\n      (Array.isArray(save?.bankAccounts) ? save.bankAccounts : []).reduce(\n        (/** @type {number} */ s, /** @type {any} */ a) =>\n          s + (typeof a?.accountGold === 'number' && Number.isFinite(a.accountGold) ? a.accountGold : 0),\n        0,\n      ),",
+    "new": "    (Array.isArray(save?.bankAccounts) ? save.bankAccounts : []).reduce(\n      (/** @type {number} */ s, /** @type {any} */ a) =>\n        s + (typeof a?.accountGold === 'number' && Number.isFinite(a.accountGold) ? a.accountGold : 0),\n      0,",
     "why": "REVIEW: the bound holds below nothing too - branches summed below every number are a bank no body could name",
     "tests": [
       "test/server/staffsetbank.test.js"

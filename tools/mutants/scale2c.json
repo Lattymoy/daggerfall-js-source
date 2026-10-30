@@ -42,8 +42,8 @@
   {
     "name": "SCALE2c-browser-unread",
     "file": "src/net/reconnectWave.js",
-    "old": "      if (!online()) return t;   // the browser lost its network - a blip, not the relay's wave\n",
-    "new": "",
+    "old": "      if (!online()) return t; // the browser lost its network - a blip, not the relay's wave\n      while (drops.length && t - drops[0] > WAVE_WINDOW_MS) drops.shift();",
+    "new": "      while (drops.length && t - drops[0] > WAVE_WINDOW_MS) drops.shift();",
     "tests": [
       "test/net/scale2c.test.js"
     ],
@@ -52,7 +52,7 @@
   {
     "name": "SCALE2c-offset-a-drop",
     "file": "src/net/reconnectWave.js",
-    "old": "      if (drops.length >= WAVE_DROPS && !(wave && t - wave.at <= WAVE_WINDOW_MS)) wave = { at: drops[0], offset: rand() * waveSpreadMs(count) };",
+    "old": "      if (drops.length >= WAVE_DROPS && !(wave && t - wave.at <= WAVE_WINDOW_MS))\n        wave = { at: drops[0], offset: rand() * waveSpreadMs(count) };",
     "new": "      if (drops.length >= WAVE_DROPS) wave = { at: drops[0], offset: rand() * waveSpreadMs(count) };",
     "tests": [
       "test/net/scale2c.test.js"

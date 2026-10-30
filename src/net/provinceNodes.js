@@ -32,14 +32,14 @@ const ground = (climate, rich, ore = null) => Object.freeze({ climate, rich: Obj
 /** Each province's ground but Cyrodiil's (theatres 1..8, by region): its climate (world/tamriel/tamrielGeography.js
  *  PROVINCES' - pinned), the kinds it is rich in and how many times its climate's count of each, and its own ore. */
 export const PROVINCE_GROUND = Object.freeze({
-  [regionOfTheatre(1)]: ground(CLIMATES.Woodlands, { tree: 3, herb: 2 }, 'ore:mithril'),        // High Rock: the Breton woods; Wayrest's Mithril
-  [regionOfTheatre(2)]: ground(CLIMATES.Desert, { vein: 3, boulder: 2 }, 'ore:dwarven'),         // Hammerfell: the Alik'r's ore, the Dwemer's ruins
-  [regionOfTheatre(3)]: ground(CLIMATES.Mountain, { vein: 3, boulder: 2 }, 'ore:orichalcum'),    // Skyrim: the mountains' mines
-  [regionOfTheatre(4)]: ground(CLIMATES.MountainWoods, { vein: 2, herb: 2 }, 'ore:ebony'),       // Morrowind: Red Mountain's Ebony
-  [regionOfTheatre(5)]: ground(CLIMATES.Subtropical, { herb: 3, tree: 2 }, 'ore:moonstone'),     // Sumurset Isle: the Altmer's Moonstone
-  [regionOfTheatre(6)]: ground(CLIMATES.Rainforest, { tree: 4 }),                                 // Valenwood: the forests - the jungle's forty-eight
-  [regionOfTheatre(7)]: ground(CLIMATES.Desert2, { herb: 3, vein: 2 }, 'metal:gold'),            // Elsweyr
-  [regionOfTheatre(8)]: ground(CLIMATES.Swamp, { herb: 4, tree: 2 }),                             // Black Marsh: the Hist's swamp
+  [regionOfTheatre(1)]: ground(CLIMATES.Woodlands, { tree: 3, herb: 2 }, 'ore:mithril'), // High Rock: the Breton woods; Wayrest's Mithril
+  [regionOfTheatre(2)]: ground(CLIMATES.Desert, { vein: 3, boulder: 2 }, 'ore:dwarven'), // Hammerfell: the Alik'r's ore, the Dwemer's ruins
+  [regionOfTheatre(3)]: ground(CLIMATES.Mountain, { vein: 3, boulder: 2 }, 'ore:orichalcum'), // Skyrim: the mountains' mines
+  [regionOfTheatre(4)]: ground(CLIMATES.MountainWoods, { vein: 2, herb: 2 }, 'ore:ebony'), // Morrowind: Red Mountain's Ebony
+  [regionOfTheatre(5)]: ground(CLIMATES.Subtropical, { herb: 3, tree: 2 }, 'ore:moonstone'), // Sumurset Isle: the Altmer's Moonstone
+  [regionOfTheatre(6)]: ground(CLIMATES.Rainforest, { tree: 4 }), // Valenwood: the forests - the jungle's forty-eight
+  [regionOfTheatre(7)]: ground(CLIMATES.Desert2, { herb: 3, vein: 2 }, 'metal:gold'), // Elsweyr
+  [regionOfTheatre(8)]: ground(CLIMATES.Swamp, { herb: 4, tree: 2 }), // Black Marsh: the Hist's swamp
 });
 const PROVINCES = Object.values(PROVINCE_GROUND);
 /** Cyrodiil's own climate (the Imperial Province's - tamrielGeography.js, pinned). */

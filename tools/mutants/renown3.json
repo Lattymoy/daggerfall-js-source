@@ -2,8 +2,8 @@
   {
     "name": "RENOWN3-ceiling-unread-for-a-kill",
     "file": "src/net/renown.js",
-    "old": "renownRate(RENOWN_KILL_XP_PER_LEVEL * Math.min(clampInt(foeLevel, 1, RENOWN_KILL_LEVEL_MAX), renownCeiling(renown)));",
-    "new": "renownRate(RENOWN_KILL_XP_PER_LEVEL * clampInt(foeLevel, 1, RENOWN_KILL_LEVEL_MAX));",
+    "old": "  renownRate(RENOWN_KILL_XP_PER_LEVEL * Math.min(clampInt(foeLevel, 1, RENOWN_KILL_LEVEL_MAX), renownCeiling(renown)));",
+    "new": "  renownRate(RENOWN_KILL_XP_PER_LEVEL * clampInt(foeLevel, 1, RENOWN_KILL_LEVEL_MAX));",
     "tests": [
       "test/net/renown3.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "RENOWN3-ceiling-unread-for-a-quest",
     "file": "src/net/renown.js",
-    "old": "RENOWN_QUEST_XP_PER_LEVEL * Math.min(clampInt(characterLevel, 1, RENOWN_QUEST_LEVEL_MAX), renownCeiling(renown)));",
-    "new": "RENOWN_QUEST_XP_PER_LEVEL * clampInt(characterLevel, 1, RENOWN_QUEST_LEVEL_MAX));",
+    "old": "  renownRate(\n    RENOWN_QUEST_XP_BASE +\n      RENOWN_QUEST_XP_PER_LEVEL * Math.min(clampInt(characterLevel, 1, RENOWN_QUEST_LEVEL_MAX), renownCeiling(renown)),\n  );",
+    "new": "  renownRate(RENOWN_QUEST_XP_BASE + RENOWN_QUEST_XP_PER_LEVEL * clampInt(characterLevel, 1, RENOWN_QUEST_LEVEL_MAX));",
     "tests": [
       "test/net/renown3.test.js"
     ]

@@ -29,8 +29,8 @@
   {
     "name": "SUMMON-REPAIR-the-bit-not-asked",
     "file": "src/net/repairLaw.js",
-    "old": "  if ((was & flag) === 0) return 'repair-not-set';\n",
-    "new": "",
+    "old": "  if ((was & flag) === 0) return 'repair-not-set';\n  store.flags[at] = was & ~flag;",
+    "new": "  store.flags[at] = was & ~flag;",
     "tests": [
       "test/net/fb1014_summonrepair.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SUMMON-REPAIR-the-flag-read-as-decimal",
     "file": "src/net/repairLaw.js",
-    "old": "/^0x[0-9a-f]+$/i.test(s) ? parseInt(s, 16)",
-    "new": "/^0x[0-9a-f]+$/i.test(s) ? parseInt(s, 10)",
+    "old": "  const n = /^0x[0-9a-f]+$/i.test(s) ? parseInt(s, 16) : /^[0-9]+$/.test(s) ? Number(s) : NaN;",
+    "new": "  const n = /^0x[0-9a-f]+$/i.test(s) ? parseInt(s, 10) : /^[0-9]+$/.test(s) ? Number(s) : NaN;",
     "tests": [
       "test/net/fb1014_summonrepair.test.js"
     ]

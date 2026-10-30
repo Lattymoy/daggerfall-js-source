@@ -182,8 +182,8 @@
   {
     "name": "INT16-renown-retried-forever",
     "file": "src/net/renownTracker.js",
-    "old": "'renown-full', 'progress-seat', 'trade-held']);",
-    "new": "'renown-full']);",
+    "old": "const PERMANENT = new Set(['renown-character', 'renown-xp', 'renown-full', 'progress-seat', 'trade-held']); // INT16: not the account's seat here, or a character whose trade is held",
+    "new": "const PERMANENT = new Set(['renown-character', 'renown-xp', 'renown-full']); // INT16: not the account's seat here, or a character whose trade is held",
     "why": "a tab that lost its seat reports every minute, doubling, for the rest of the page",
     "tests": [
       "test/server/int16_progress.test.js"

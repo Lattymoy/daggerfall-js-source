@@ -6174,7 +6174,7 @@ The report (SaberGGaming, through the owner): no Daedric Ingot could be had, and
 
 ### 53.1 What stood (MEASURED, 2026-10-25)
 
-- **The transmutation stops at Platinum, as intended** (`professionLaw.js:"export const TRANSMUTE_LADDER = Object.freeze(['metal:tin', 'metal:copper', 'metal:silver', 'metal:gold', 'metal:platinum']);"` - section 37): it was never the Daedric
+- **The transmutation stops at Platinum, as intended** (`professionLaw.js:"export const TRANSMUTE_LADDER"` - section 37): it was never the Daedric
   ingot's road.
 - **4.1's Daedric recipe was never built.** The forge's table ended at Orichalcum ("Daedric waits on its heart and its
   stone"), the ingot stood in `UNYIELDED` (no buy order, no commission, out of the catalogue), and 27 anvil works spent it
@@ -6188,19 +6188,19 @@ The report (SaberGGaming, through the owner): no Daedric Ingot could be had, and
 
 - **The heart: "the heart may come FROM LOOT OR THE GATE".**
 - **The veins: "FULL ORE TABLE"** - a dungeon nobody has witnessed draws over its whole table under the account's
-  existing four a day (`professionLaw.js:"export const DEEP_UNCONFIRMED_PER_DAY = 4;"`), and the witnesses remain for the climate's
+  existing four a day (`professionLaw.js:"export const DEEP_UNCONFIRMED_PER_DAY"`), and the witnesses remain for the climate's
   claim alone.
 
 ### 53.3 DAEDRIC-SMELT, as built
 
 - **The recipe** (4.1's, built): an Ebony Ingot, a Daedra's Heart and a Deadlands Ember a unit - the Sigil Stone's name
-  since WB12a (`professionLaw.js:"  ingot('ingot:daedric', [['ingot:ebony', 1], [DAEDRA_HEART.key, 1, true]], { embers: DAEDRIC_EMBERS }),"`), the
+  since WB12a (`professionLaw.js:"ingot('ingot:orichalcum', [['ore:orichalcum', 2]])".."'ingot:daedric',"`), the
   forge's last row, smelted only; Smithing's 10 XP a tier (70 a unit) and no first-make, as no smelt pays one (section
   52's `FIRST_MAKE_SHARE` is the crafts' and the mason's works'; `recipeLaw.js` workFirstXp), a Quartermaster's two
   ingots a unit for one ember a unit, as every ingot's (3.3). A recipe's input written `[key, n, true]` is a catalyst and `embers` what a unit spends
-  (`professionLaw.js:"export const workEmbers = (r, count) =>"`); every other work carries neither.
+  (`professionLaw.js:"export const workEmbers"`); every other work carries neither.
 - **The heart** is DFU's own Daedra's Heart (ItemTemplates 53, `CreatureIngredients1`, 500 gold), a Stores material at its
-  price's tier as a body's part is, 6 (`professionLaw.js:"export const DAEDRA_HEART = dfu('part:daedra-heart', 'hides', gemTierOfPrice(500), 'CreatureIngredients1', 53);"`),
+  price's tier as a body's part is, 6 (`professionLaw.js:"export const DAEDRA_HEART"`),
   registered with the loose door's materials beside section 50's graded gems. It comes **from loot** - a daedra's: DFU's ingredient themes give an Imp, a Daedra Seducer and a Daedra
   Lord theirs (`systems/loot/lootThemes.js` CREATURE_INGREDIENT_THEME) - **and from the Gate**: the faithful's chest beside
   Dagon's Breach (`systems/riteChest.js` RITE_HEART, a reagent drawn a heart one time in twelve and a half - WB12d, its
@@ -6208,14 +6208,14 @@ The report (SaberGGaming, through the owner): no Daedric Ingot could be had, and
 - **Through the loose door, never the market.** No door of the service counts a heart, so it enters the Stores only by a
   station's put-in (`bagLaw.js:"export const looseOrder"` - the forge's shortfall, or the Stores page's
   Put in, LOOT-LOOSE), as `loose`, a station's alone. It is the loose door's as section 50's graded gems are
-  (`professionLaw.js:"export const LOOSE_ONLY_KEYS = Object.freeze([...GRADED_GEMS, DAEDRA_HEART].map((g) => g.key));"`): out of the catalogue, no buy order
+  (`professionLaw.js:"export const LOOSE_ONLY_KEYS"`): out of the catalogue, no buy order
   for one and no listing (`bad-material`), no guild writ asking one, and no commission of a work that spends one. On its
   branch the heart had taken the ingot's place in `UNYIELDED`; at the merge with section 50 it joined the loose door's
   list instead, one home for the materials no door of the service counts, and `UNYIELDED` stands empty
   (`marketLaw.js:"export const UNYIELDED"` - nothing waits on a yield; its guards kept for the next).
 - **THE DEPARTURE, NAMED - the heart is a catalyst.** Section 7's law, `smeltOrigin` (PROF0 7, 23), makes an ingot's
   origin its inputs': a loose unit spent makes the product loose (AUDIT BAG-CRAFT A1). The heart's does not reach the
-  ingot (`professionLaw.js:"  r.inputs.forEach((inp, i) => { if (!inp.catalyst) b = Math.max(b,"`; the service's decision skips it the same, `professions.js:"    if (inp.catalyst) return;"`) -
+  ingot (`professionLaw.js:"r.inputs.forEach"`; the service's decision skips it the same, `professions.js:"    if (inp.catalyst) return;"`) -
   an ingot is own, bought or loose as its Ebony Ingot was. Why: every heart is loot's word, so were its looseness the
   ingot's, no Daedric ingot could ever be listed, ordered or commissioned - the old `UNYIELDED` kept in all but name. The ingot's
   bound is the ember the service counts, one a unit, so the heart a modified client could claim buys nothing past it.
@@ -6234,7 +6234,7 @@ The report (SaberGGaming, through the owner): no Daedric Ingot could be had, and
   one line more, its reason beside its ceiling in `test/scenes/hostceiling.test.js`; at the merge with main it sits
   inside main's ceiling, which stood one over main's count).
 - **Never planned, never asked.** No chain plans the smelt (`chainLaw.js:"export const chainWorkOk"` - the press is the
-  player's own), and no crafting writ asks the Daedric kit (`professionLaw.js:"export const EMBER_MADE = "`; `craftWritLaw.js` WRIT_KITS:
+  player's own), and no crafting writ asks the Daedric kit (`professionLaw.js:"export const EMBER_MADE"`; `craftWritLaw.js` WRIT_KITS:
   a writ pays its inputs' worth, and the ember is the account's purse, no Stores good).
 - **The Forge** lists the ember beside the row's inputs with the pack's count and bounds the smelt by it
   (`profPages.js:"export function smeltable(r, held, embers = null) {"`), and while it cannot be smelted says what it takes and where a heart
@@ -6566,7 +6566,7 @@ possible. No exceptions and no band aids." The decisions below are the record's,
 
 ### 57.1 What stood
 
-- Crafting stopped at Rare: a Superior rolled Magic, a Masterwork Rare (`recipeLaw.js:"Object.freeze({ condition: 1.3, weight: 0.9, rarity: 'rare' }),"`).
+- Crafting stopped at Rare: a Superior rolled Magic, a Masterwork Rare (`recipeLaw.js:"Object.freeze({ condition: 1.3, weight: 0.9, rarity: 'rare' })"`).
   Tempering and the Reforge with Essence are shut for Legendary and above (`temperLaw.js:"export const TEMPER_SHUT = Object.freeze(['legendary', 'aetheric', 'artifact', 'gilded']);"`).
 
 - Law 7 (section 1) and 41.1 said it outright: a crafted piece is never the best a slot holds. The Legendary band came

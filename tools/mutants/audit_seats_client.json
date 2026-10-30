@@ -47,8 +47,8 @@
   {
     "name": "AUDITSEATS-C1-royal-away",
     "file": "src/net/royalSession.js",
-    "old": "      else if (now - s.awayAt >= BATTLE_AWAY_MS) { api.leave({ words: ROYAL_SESSION_TEXT.away(",
-    "new": "      else if (false) { api.leave({ words: ROYAL_SESSION_TEXT.away(",
+    "old": "      else if (now - s.awayAt >= BATTLE_AWAY_MS) {",
+    "new": "      else if (false) {",
     "tests": [
       "test/net/audit_seats_client.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDITSEATS-C1-royal-terminal",
     "file": "src/net/royalSession.js",
-    "old": "      if (online.terminal) { api.leave({ words: ROYAL_SESSION_TEXT.closed }); return; }",
-    "new": "      if (false) { api.leave({ words: ROYAL_SESSION_TEXT.closed }); return; }",
+    "old": "      if (online.terminal) {",
+    "new": "      if (false) {",
     "tests": [
       "test/net/audit_seats_client.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDITSEATS-C1-royal-hud-room",
     "file": "src/net/royalSession.js",
-    "old": "      if (online.room !== s.room) { s.sentIn = false; hud?.hide(); return; }",
-    "new": "      if (online.room !== s.room) { s.sentIn = false; return; }",
+    "old": "        hud?.hide();\n        return;",
+    "new": "        return;",
     "tests": [
       "test/net/audit_seats_client.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "AUDITSEATS-C2-royal-leave-own-mint",
     "file": "src/net/royalSession.js",
-    "old": "      if (mint && online.mintSiegePass === mint) online.mintSiegePass = null;",
-    "new": "      online.mintSiegePass = null;",
+    "old": "      if (mint && online.mintSiegePass === mint) online.mintSiegePass = null; // AUDIT-SEATS C2: another battle's mint is not this one's to clear",
+    "new": "      online.mintSiegePass = null; // AUDIT-SEATS C2: another battle's mint is not this one's to clear",
     "tests": [
       "test/net/audit_seats_client.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "AUDITSEATS-C2-royal-enter-old-mint",
     "file": "src/net/royalSession.js",
-    "old": "      if (s?.mint && online.mintSiegePass === s.mint) online.mintSiegePass = null;",
-    "new": "      void 0;",
+    "old": "      if (s?.mint && online.mintSiegePass === s.mint) online.mintSiegePass = null; // AUDIT-SEATS C2: entered afresh - the old pass's mint goes",
+    "new": "      void 0; // AUDIT-SEATS C2: entered afresh - the old pass's mint goes",
     "tests": [
       "test/net/audit_seats_client.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "AUDITSEATS-C3-royal-said-once",
     "file": "src/net/royalSession.js",
-    "old": "if (s.tries === 1) say(r.text); return; }",
-    "new": "say(r.text); return; }",
+    "old": "        if (s.tries === 1) say(r.text);",
+    "new": "        say(r.text);",
     "tests": [
       "test/net/audit_seats_client.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "AUDITSEATS-C3-royal-backoff",
     "file": "src/net/royalSession.js",
-    "old": "s.retryAt = nowMs() + passRetryMs(s.tries, ROYAL_PASS_RETRY_MS);",
-    "new": "s.retryAt = nowMs() + ROYAL_PASS_RETRY_MS;",
+    "old": "        s.retryAt = nowMs() + passRetryMs(s.tries, ROYAL_PASS_RETRY_MS);",
+    "new": "        s.retryAt = nowMs() + ROYAL_PASS_RETRY_MS;",
     "tests": [
       "test/net/audit_seats_client.test.js"
     ]

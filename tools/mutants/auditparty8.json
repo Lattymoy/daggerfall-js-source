@@ -38,8 +38,8 @@
   {
     "name": "AP-offline-pose-kept",
     "file": "src/net/social.js",
-    "old": "if (was?.p && !m.p && m.online !== false) m.p = was.p; }",
-    "new": "if (was?.p && !m.p) m.p = was.p; }",
+    "old": "            if (was?.p && !m.p && m.online !== false) m.p = was.p;",
+    "new": "            if (was?.p && !m.p) m.p = was.p;",
     "tests": [
       "test/net/auditparty8.test.js"
     ]
@@ -47,7 +47,7 @@
   {
     "name": "AP-pose-bumps-version",
     "file": "src/net/social.js",
-    "old": "    if (first) this._changed('pose');\n    else { this.poseVersion++; this.onChange?.('pose'); }",
+    "old": "    if (first) this._changed('pose');\n    else {\n      this.poseVersion++;\n      this.onChange?.('pose');\n    }",
     "new": "    this._changed('pose');",
     "tests": [
       "test/net/auditparty8.test.js"

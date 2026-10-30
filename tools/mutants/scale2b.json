@@ -452,8 +452,8 @@
   {
     "name": "SCALE2b-cabin-to-nobody",
     "file": "src/net/sailingCabinLink.js",
-    "old": "      if (link.othersHere === 0) { sentAt = -Infinity; welcome = -1; }",
-    "new": "      if (false) { sentAt = -Infinity; welcome = -1; }",
+    "old": "      if (link.othersHere === 0) {",
+    "new": "      if (false) {",
     "tests": [
       "test/net/scale2b.test.js"
     ],

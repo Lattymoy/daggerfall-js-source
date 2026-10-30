@@ -129,8 +129,8 @@
   {
     "name": "RAID4-ceiling-unread",
     "file": "src/net/renown.js",
-    "old": "RENOWN_RAID_QUESTS * renownQuestXp(RENOWN_QUEST_LEVEL_MAX, renown);",
-    "new": "RENOWN_RAID_QUESTS * renownQuestXp(RENOWN_QUEST_LEVEL_MAX, RENOWN_MAX);",
+    "old": "export const renownRaidXp = (renown = null) => RENOWN_RAID_QUESTS * renownQuestXp(RENOWN_QUEST_LEVEL_MAX, renown);",
+    "new": "export const renownRaidXp = (renown = null) => RENOWN_RAID_QUESTS * renownQuestXp(RENOWN_QUEST_LEVEL_MAX, RENOWN_MAX);",
     "tests": [
       "test/net/raid4_rewards.test.js"
     ]

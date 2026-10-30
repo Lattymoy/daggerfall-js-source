@@ -119,8 +119,8 @@
   {
     "name": "SCR-door-ask-to-any-origin",
     "file": "src/net/staffHook.js",
-    "old": "win.postMessage({ dfoStaff: 'hide', on: want }, origin);",
-    "new": "win.postMessage({ dfoStaff: 'hide', on: want }, '*');",
+    "old": "    win.postMessage({ dfoStaff: 'hide', on: want }, origin);",
+    "new": "    win.postMessage({ dfoStaff: 'hide', on: want }, '*');",
     "tests": [
       "test/ui/staffchatred.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SCR-door-another-sender",
     "file": "src/net/staffHook.js",
-    "old": "if (e?.source === win && e?.origin === origin && m?.dfoStaff === 'hide'",
-    "new": "if (e?.origin === origin && m?.dfoStaff === 'hide'",
+    "old": "      if (e?.source === win && e?.origin === origin && m?.dfoStaff === 'hide' && m.on === want && 'ok' in m)\n        done(m.ok === true);",
+    "new": "      if (e?.origin === origin && m?.dfoStaff === 'hide' && m.on === want && 'ok' in m) done(m.ok === true);",
     "tests": [
       "test/ui/staffchatred.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SCR-door-another-origin",
     "file": "src/net/staffHook.js",
-    "old": "if (e?.source === win && e?.origin === origin && m?.dfoStaff === 'hide'",
-    "new": "if (e?.source === win && m?.dfoStaff === 'hide'",
+    "old": "      if (e?.source === win && e?.origin === origin && m?.dfoStaff === 'hide' && m.on === want && 'ok' in m)\n        done(m.ok === true);",
+    "new": "      if (e?.source === win && m?.dfoStaff === 'hide' && m.on === want && 'ok' in m) done(m.ok === true);",
     "tests": [
       "test/ui/staffchatred.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "SCR-door-ask-its-own-answer",
     "file": "src/net/staffHook.js",
-    "old": "m?.dfoStaff === 'hide' && m.on === want && 'ok' in m) done(m.ok === true);",
-    "new": "m?.dfoStaff === 'hide' && m.on === want) done(m.ok === true);",
+    "old": "      if (e?.source === win && e?.origin === origin && m?.dfoStaff === 'hide' && m.on === want && 'ok' in m)\n        done(m.ok === true);",
+    "new": "      if (e?.source === win && e?.origin === origin && m?.dfoStaff === 'hide' && m.on === want) done(m.ok === true);",
     "tests": [
       "test/ui/staffchatred.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "SCR-door-no-timeout",
     "file": "src/net/staffHook.js",
-    "old": "const timer = setTimer(() => done(false), STAFF_TOKEN_WAIT_MS);",
-    "new": "const timer = 0;",
+    "old": "    const timer = setTimer(() => done(false), STAFF_TOKEN_WAIT_MS);",
+    "new": "    const timer = 0;",
     "tests": [
       "test/ui/staffchatred.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "SCR-door-listener-kept",
     "file": "src/net/staffHook.js",
-    "old": "clearTimer(timer); win.removeEventListener?.('message', heard); resolve(ok);",
-    "new": "clearTimer(timer); resolve(ok);",
+    "old": "      win.removeEventListener?.('message', heard);\n      resolve(ok);",
+    "new": "      resolve(ok);",
     "tests": [
       "test/ui/staffchatred.test.js"
     ]

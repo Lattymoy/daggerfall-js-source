@@ -38,8 +38,8 @@
   {
     "name": "KTH-the-floor-an-older-relay",
     "file": "src/net/relayCfg.js",
-    "old": "ktRole: 255, ktThread: 255, cellSeed: 260, lootDoor: 273, sdCollapse: 275 });",
-    "new": "ktRole: 255, ktThread: 254, cellSeed: 260, lootDoor: 273, sdCollapse: 275 });",
+    "old": "  ktThread: 255,",
+    "new": "  ktThread: 254,",
     "note": "AUDIT HORIZONTAL B7 (LOOT-DOOR, re-aimed by content): lootDoor's floor stands at the line's end. PIN MOVED: SD-PARTY world275, re-aimed by content.",
     "tests": [
       "test/net/ketch/ketch_herald.test.js"

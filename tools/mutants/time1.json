@@ -2,8 +2,8 @@
   {
     "name": "TIME1-the-sky-at-the-wires-rate",
     "file": "src/net/skyLaw.js",
-    "old": "fromMs: Date.UTC(2026, 9, 3, 17, 7, 30), minutesPerMs: 24 / 60 / 1000 }",
-    "new": "fromMs: Date.UTC(2026, 9, 3, 17, 7, 30), minutesPerMs: 12 / 60 / 1000 }",
+    "old": "  Object.freeze({ fromMs: Date.UTC(2026, 9, 3, 17, 7, 30), minutesPerMs: 24 / 60 / 1000 }),",
+    "new": "  Object.freeze({ fromMs: Date.UTC(2026, 9, 3, 17, 7, 30), minutesPerMs: 12 / 60 / 1000 }),",
     "tests": [
       "test/systems/time1_sky.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "TIME1-the-switch-off-its-aligned-instant",
     "file": "src/net/skyLaw.js",
-    "old": "Date.UTC(2026, 9, 3, 17, 7, 30)",
-    "new": "Date.UTC(2026, 9, 3, 17, 7, 0)",
+    "old": "  Object.freeze({ fromMs: Date.UTC(2026, 9, 3, 17, 7, 30), minutesPerMs: 24 / 60 / 1000 }),",
+    "new": "  Object.freeze({ fromMs: Date.UTC(2026, 9, 3, 17, 7, 0), minutesPerMs: 24 / 60 / 1000 }),",
     "tests": [
       "test/systems/time1_sky.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "TIME1-the-switch-jumps",
     "file": "src/net/skyLaw.js",
-    "old": "    out.push(i === 0 ? sharedClassicMinutes(s.fromMs) :",
-    "new": "    out.push(i === 0 ? sharedClassicMinutes(s.fromMs) + 1 :",
+    "old": "        ? sharedClassicMinutes(s.fromMs)",
+    "new": "        ? sharedClassicMinutes(s.fromMs) + 1",
     "tests": [
       "test/systems/time1_sky.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "TIME1-a-second-switch-starts-at-its-own-rate",
     "file": "src/net/skyLaw.js",
-    "old": "out[i - 1] + (s.fromMs - segments[i - 1].fromMs) * segments[i - 1].minutesPerMs",
-    "new": "out[i - 1] + (s.fromMs - segments[i - 1].fromMs) * s.minutesPerMs",
+    "old": "      i === 0\n        ? sharedClassicMinutes(s.fromMs)\n        : out[i - 1] + (s.fromMs - segments[i - 1].fromMs) * segments[i - 1].minutesPerMs,",
+    "new": "      i === 0 ? sharedClassicMinutes(s.fromMs) : out[i - 1] + (s.fromMs - segments[i - 1].fromMs) * s.minutesPerMs,",
     "tests": [
       "test/systems/time1_sky.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "TIME1-a-second-switch-forgets-the-first",
     "file": "src/net/skyLaw.js",
-    "old": "for (let i = segments.length - 1; i >= 0; i--) if (nowMs >= segments[i].fromMs) return i;",
-    "new": "for (let i = 0; i < segments.length; i++) if (nowMs >= segments[i].fromMs) return i;",
+    "old": "    for (let i = segments.length - 1; i >= 0; i--) if (nowMs >= segments[i].fromMs) return i;",
+    "new": "    for (let i = 0; i < segments.length; i++) if (nowMs >= segments[i].fromMs) return i;",
     "tests": [
       "test/systems/time1_sky.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "TIME1-the-sky-before-its-switch-is-not-the-event-clock",
     "file": "src/net/skyLaw.js",
-    "old": "    return i < 0 ? sharedClassicMinutes(nowMs) : starts[i]",
-    "new": "    return i < 0 ? starts[0] : starts[i]",
+    "old": "    return i < 0 ? sharedClassicMinutes(nowMs) : starts[i] + (nowMs - segments[i].fromMs) * segments[i].minutesPerMs;",
+    "new": "    return i < 0 ? starts[0] : starts[i] + (nowMs - segments[i].fromMs) * segments[i].minutesPerMs;",
     "tests": [
       "test/systems/time1_sky.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "TIME1-the-inverse-at-the-wrong-rate",
     "file": "src/net/skyLaw.js",
-    "old": "(classicMinutes - starts[i]) / segments[i].minutesPerMs",
-    "new": "(classicMinutes - starts[i]) / ONLINE_MINUTES_PER_MS",
+    "old": "      if (classicMinutes >= starts[i])\n        return segments[i].fromMs + (classicMinutes - starts[i]) / segments[i].minutesPerMs;",
+    "new": "      if (classicMinutes >= starts[i]) return segments[i].fromMs + (classicMinutes - starts[i]) / ONLINE_MINUTES_PER_MS;",
     "tests": [
       "test/systems/time1_sky.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "TIME1-a-switch-to-the-same-rate",
     "file": "src/net/skyLaw.js",
-    "old": "if (law.rateAt(t - 1) !== minutesPerMs && Math.abs(gap(t)) < 1e-6)",
-    "new": "if (Math.abs(gap(t)) < 1e-6)",
+    "old": "    if (law.rateAt(t - 1) !== minutesPerMs && Math.abs(gap(t)) < 1e-6) out.push(t);",
+    "new": "    if (Math.abs(gap(t)) < 1e-6) out.push(t);",
     "tests": [
       "test/systems/time1_sky.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "TIME1-aligned-anywhere",
     "file": "src/net/skyLaw.js",
-    "old": "Math.abs(gap(t)) < 1e-6) out.push(t);",
-    "new": "Math.abs(gap(t)) < 720) out.push(t);",
+    "old": "    if (law.rateAt(t - 1) !== minutesPerMs && Math.abs(gap(t)) < 1e-6) out.push(t);",
+    "new": "    if (law.rateAt(t - 1) !== minutesPerMs && Math.abs(gap(t)) < 720) out.push(t);",
     "tests": [
       "test/systems/time1_sky.test.js"
     ]

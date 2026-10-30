@@ -1259,7 +1259,7 @@ A purse already below nothing stays there. Every price is more than it, so every
 (`court.js:"const loc = items.find((it) => it.templateIndex === LETTER_OF_CREDIT_TEMPLATE);"`), and the judge finds it
 at every checkpoint (`judge.js:"if (!purseWord(save?.goldPieces)) out.push({ code: 'gold' });"`): the trade held, and a
 death in the zone burnt (BURNT-SAID). 18b left such a character to "a staff repair (`review.js`)", and none could be
-made. The review's one repair took a faction's flag or nothing (`repairLaw.js:"if (!REPAIR_FLAGS.includes(flag)) return null;"`)
+made. The review's one repair took a faction's flag or nothing (`repairLaw.js:"if (!REPAIR_FLAGS.includes(flag))"`)
 and never reached the purse. `clear` lifts the hold but EXCUSES its signature (`review.js`'s `law_excused = law_sig` at d5a4c9c6a), so
 a later purse below nothing would hold nothing (RPT1026-LEDGERLAW, 2026-10-26, since: the excuse is of the purse staff
 read, `06-Systems/Integrity-Arc.md`). A rollback loses every hour played since the clean checkpoint. And staff
@@ -1267,7 +1267,7 @@ could not see the purse at all: the wealth counts a purse below nothing as none.
 
 THE FIX. The review's third act on one character, `realm-mend { id, ticket, was, gold, note? }`
 (`review.js:"async function mendAct(ctx, row, by, note, body) {"`; its law
-`repairLaw.js:"export function applyPurseMend(save, { was, gold }) {"`, the service's and the tool's). The record's
+`repairLaw.js:"export function applyPurseMend"`, the service's and the tool's). The record's
 purse, still the `was` staff reckoned from (`mend-moved` otherwise: played since, or the wrong character) and below
 nothing (`mend-not-negative` otherwise), is SET to nothing - never added to - and `gold`, what the character is owed (0
 to one int's worth), comes as ONE LETTER OF CREDIT at the front of the pack. That is what the trade window itself pays

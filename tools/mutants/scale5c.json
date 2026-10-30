@@ -573,8 +573,8 @@
   {
     "name": "SCALE5c-roster-unmerged",
     "file": "src/net/roster.js",
-    "old": "  if (tag) for (const [id, p] of hub?.guildOnline ?? []) if (!peers.has(id)) peers.set(id, p);   // SCALE5c: the guild on every shard\n",
-    "new": "",
+    "old": "  if (tag) for (const [id, p] of hub?.guildOnline ?? []) if (!peers.has(id)) peers.set(id, p); // SCALE5c: the guild on every shard\n  return {",
+    "new": "  return {",
     "tests": [
       "test/net/scale5c.test.js"
     ],
@@ -653,8 +653,8 @@
   {
     "name": "SCALE5c-who-unmerged",
     "file": "src/net/roster.js",
-    "old": "  for (const p of session?.hubOnline?.values?.() ?? []) push(",
-    "new": "  for (const p of [] ?? []) push(",
+    "old": "  for (const p of session?.hubOnline?.values?.() ?? []) push(p?.id ?? null, p?.name ?? '', false, p); // SCALE5c: and everyone on the hub's other shards, while it is small (a peer of my own shard is listed once, live)",
+    "new": "  for (const p of [] ?? []) push(p?.id ?? null, p?.name ?? '', false, p); // SCALE5c: and everyone on the hub's other shards, while it is small (a peer of my own shard is listed once, live)",
     "tests": [
       "test/net/scale5c.test.js"
     ],
@@ -833,8 +833,8 @@
   {
     "name": "SCALE5c-region-list-unmerged",
     "file": "src/net/roster.js",
-    "old": "hubOnline: link?.hubOnline ?? null, label: place }",
-    "new": "label: place }",
+    "old": "    hubOnline: link?.hubOnline ?? null,\n    label: place,",
+    "new": "    label: place,",
     "tests": [
       "test/net/scale5c.test.js"
     ],

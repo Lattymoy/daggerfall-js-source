@@ -460,8 +460,8 @@
   {
     "name": "RAID1-fix5-the-stamp-unread",
     "file": "src/net/renownTracker.js",
-    "old": "  return e ? e.at : null;\n",
-    "new": "  return null;\n",
+    "old": "  return e ? e.at : null;",
+    "new": "  return null;",
     "tests": [
       "test/systems/raid1_raidingParties.test.js"
     ]

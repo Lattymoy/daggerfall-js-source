@@ -49,14 +49,14 @@ export const CARD_ANSWER_ASKERS_MAX = 64;
 
 /** The answering law: `pass(askerId, now)` - true when this asker may be answered now (and it counts as answered). */
 export function createCardAnswerGate({ intervalMs = CARD_ANSWER_MS, max = CARD_ANSWER_ASKERS_MAX } = {}) {
-  const last = new Map();   // asker -> when they were last answered; insertion order is age order
+  const last = new Map(); // asker -> when they were last answered; insertion order is age order
   return {
     pass(askerId, now) {
       if (typeof askerId !== 'string' || !askerId || !Number.isFinite(now)) return false;
       const at = last.get(askerId);
       if (at != null && now - at < intervalMs) return false;
       last.delete(askerId);
-      if (last.size >= max) last.delete(last.keys().next().value);   // the stalest asker makes room
+      if (last.size >= max) last.delete(last.keys().next().value); // the stalest asker makes room
       last.set(askerId, now);
       return true;
     },

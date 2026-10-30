@@ -512,8 +512,8 @@
   {
     "name": "STAFF-PANEL5-MESSAGE-FIX-copy-not-shown",
     "file": "src/net/staffChat.js",
-    "old": "{ copied.add(log); log.setShown(STAFF_TAB, true); };",
-    "new": "{ copied.add(log); };",
+    "old": "  log.setShown(STAFF_TAB, true);\n};",
+    "new": "};",
     "why": "finding 8: a copy kept but its tab left off the bar",
     "tests": [
       "test/net/staffpanel5message_client.test.js"
@@ -522,8 +522,8 @@
   {
     "name": "STAFF-PANEL5-MESSAGE-FIX-chat-hides-copy",
     "file": "src/net/staffChat.js",
-    "old": "frozen() || open || copied.has(log));",
-    "new": "frozen() || open);",
+    "old": "  const shown = () => log.setShown(STAFF_TAB, frozen() || open || copied.has(log));",
+    "new": "  const shown = () => log.setShown(STAFF_TAB, frozen() || open);",
     "why": "finding 8: the staff chat's next read (or a freeze lifted) takes the copy's tab off the bar",
     "tests": [
       "test/net/staffpanel5message_client.test.js"

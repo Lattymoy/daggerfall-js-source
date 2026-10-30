@@ -137,8 +137,8 @@
   {
     "name": "POTION-DOOR-ingredient-keys-one-group",
     "file": "src/net/professionLaw.js",
-    "old": "...['p1', 'p2'].flatMap((g) => PLANT_GROUP_TEMPLATES",
-    "new": "...['p1'].flatMap((g) => PLANT_GROUP_TEMPLATES",
+    "old": "  ...['p1', 'p2'].flatMap((g) => PLANT_GROUP_TEMPLATES[/** @type {'p1'|'p2'} */ (g)].map((t) => `${g}:${t}`)),",
+    "new": "  ...['p1'].flatMap((g) => PLANT_GROUP_TEMPLATES[/** @type {'p1'|'p2'} */ (g)].map((t) => `${g}:${t}`)),",
     "tests": [
       "test/systems/potiondoor.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "POTION-DOOR-ingredient-keys-no-rows",
     "file": "src/net/professionLaw.js",
-    "old": "(g)].map((t) => `${g}:${t}`)), ...[...DFU_ROWS.values()].map((m) => m.key),",
-    "new": "(g)].map((t) => `${g}:${t}`)),",
+    "old": "  ...[...DFU_ROWS.values()].map((m) => m.key),\n]);",
+    "new": "]);",
     "tests": [
       "test/systems/potiondoor.test.js"
     ]

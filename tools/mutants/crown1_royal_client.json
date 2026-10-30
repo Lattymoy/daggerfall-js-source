@@ -11,8 +11,8 @@
   {
     "name": "CROWN1C-fold-hp",
     "file": "src/net/royalLink.js",
-    "old": "    case 'hp': return { ...s, roll: { ...s.roll, [g.id]: { hp: g.h, max: g.m, down: g.h <= 0 } }, heardAt: now };",
-    "new": "    case 'hp': return { ...s, roll: { ...s.roll, [g.id]: { hp: g.h, max: g.m, down: false } }, heardAt: now };",
+    "old": "      return { ...s, roll: { ...s.roll, [g.id]: { hp: g.h, max: g.m, down: g.h <= 0 } }, heardAt: now };",
+    "new": "      return { ...s, roll: { ...s.roll, [g.id]: { hp: g.h, max: g.m, down: false } }, heardAt: now };",
     "tests": [
       "test/net/crown1_royal_client.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "CROWN1C-fold-fell",
     "file": "src/net/royalLink.js",
-    "old": "return { ...s, roll: { ...s.roll, [g.id]: { hp: 0, max: was?.max ?? 0, down: true } }, heardAt: now }; }",
-    "new": "return { ...s, heardAt: now }; }",
+    "old": "      return { ...s, roll: { ...s.roll, [g.id]: { hp: 0, max: was?.max ?? 0, down: true } }, heardAt: now };",
+    "new": "      return { ...s, heardAt: now };",
     "tests": [
       "test/net/crown1_royal_client.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "CROWN1C-fold-spent",
     "file": "src/net/royalLink.js",
-    "old": "      delete asks[g.a]; delete asks[g.b];\n",
-    "new": "",
+    "old": "      delete asks[g.a];\n      delete asks[g.b];\n      return { ...s, bout: { a: g.a, b: g.b, n: g.n, s: g.s, e: g.e }, asks, heardAt: now };",
+    "new": "      return { ...s, bout: { a: g.a, b: g.b, n: g.n, s: g.s, e: g.e }, asks, heardAt: now };",
     "tests": [
       "test/net/crown1_royal_client.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "CROWN1C-fold-bend-n",
     "file": "src/net/royalLink.js",
-    "old": "bout: s.bout?.n === g.n ? null : s.bout,",
-    "new": "bout: null,",
+    "old": "      return {\n        ...s,\n        bout: s.bout?.n === g.n ? null : s.bout,\n        last: { n: g.n, w: g.w, l: g.l, c: g.c, at: now },\n        heardAt: now,\n      };",
+    "new": "      return { ...s, bout: null, last: { n: g.n, w: g.w, l: g.l, c: g.c, at: now }, heardAt: now };",
     "tests": [
       "test/net/crown1_royal_client.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "CROWN1C-fold-lad",
     "file": "src/net/royalLink.js",
-    "old": "    case 'lad': return { ...s, ladder: g.l.map((r) => r.slice()), heardAt: now };",
-    "new": "    case 'lad': return s;",
+    "old": "      return { ...s, ladder: g.l.map((r) => r.slice()), heardAt: now };",
+    "new": "      return s;",
     "tests": [
       "test/net/crown1_royal_client.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "CROWN1C-fold-ask",
     "file": "src/net/royalLink.js",
-    "old": "    case 'ask': return { ...s, asks: { ...s.asks, [g.id]: now }, heardAt: now };",
-    "new": "    case 'ask': return s;",
+    "old": "      return { ...s, asks: { ...s.asks, [g.id]: now }, heardAt: now };",
+    "new": "      return s;",
     "tests": [
       "test/net/crown1_royal_client.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "CROWN1C-fold-no",
     "file": "src/net/royalLink.js",
-    "old": "    case 'no': return { ...s, no: g.m, heardAt: now };",
-    "new": "    case 'no': return s;",
+    "old": "      return { ...s, no: g.m, heardAt: now };",
+    "new": "      return s;",
     "tests": [
       "test/net/crown1_royal_client.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "CROWN1C-hud-title",
     "file": "src/net/royalLink.js",
-    "old": "prize ${Number(t.prize ?? 0).toLocaleString('en-US')} silver",
-    "new": "prize ${t.prize} silver",
+    "old": "  const title = `THE ROYAL TOURNEY OF ${String(t.seat ?? '').toUpperCase()}   prize ${Number(t.prize ?? 0).toLocaleString('en-US')} silver   ends in ${daysHours((t.endsMs ?? now) - now)}`;",
+    "new": "  const title = `THE ROYAL TOURNEY OF ${String(t.seat ?? '').toUpperCase()}   prize ${t.prize} silver   ends in ${daysHours((t.endsMs ?? now) - now)}`;",
     "tests": [
       "test/net/crown1_royal_client.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "CROWN1C-hud-days",
     "file": "src/net/royalLink.js",
-    "old": "return h >= 24 ? `${Math.floor(h / 24)}d ${h % 24}h`",
-    "new": "return h >= 48 ? `${Math.floor(h / 24)}d ${h % 24}h`",
+    "old": "  return h >= 24 ? `${Math.floor(h / 24)}d ${h % 24}h` : `${h}h ${Math.max(0, Math.floor(ms / 60_000)) % 60}m`;",
+    "new": "  return h >= 48 ? `${Math.floor(h / 24)}d ${h % 24}h` : `${h}h ${Math.max(0, Math.floor(ms / 60_000)) % 60}m`;",
     "tests": [
       "test/net/crown1_royal_client.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "CROWN1C-hud-countdown",
     "file": "src/net/royalLink.js",
-    "old": "    : now < b.s ? `BOUT ${b.n}:",
-    "new": "    : false ? `BOUT ${b.n}:",
+    "old": "    : now < b.s",
+    "new": "    : false",
     "tests": [
       "test/net/crown1_royal_client.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "CROWN1C-hud-rows",
     "file": "src/net/royalLink.js",
-    "old": "  const ladder = s.ladder.slice(0, ROYAL_HUD_ROWS).map(",
-    "new": "  const ladder = s.ladder.map(",
+    "old": "  const ladder = s.ladder\n    .slice(0, ROYAL_HUD_ROWS)\n    .map((r, i) => `${i + 1}. ${r[0] ? who(r[0]) : 'someone gone'} ${r[1]}-${r[2]}`)\n    .join('   ');",
+    "new": "  const ladder = s.ladder.map((r, i) => `${i + 1}. ${r[0] ? who(r[0]) : 'someone gone'} ${r[1]}-${r[2]}`).join('   ');",
     "tests": [
       "test/net/crown1_royal_client.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "CROWN1C-hud-gone",
     "file": "src/net/royalLink.js",
-    "old": "${r[0] ? who(r[0]) : 'someone gone'}",
-    "new": "${who(r[0])}",
+    "old": "    .map((r, i) => `${i + 1}. ${r[0] ? who(r[0]) : 'someone gone'} ${r[1]}-${r[2]}`)",
+    "new": "    .map((r, i) => `${i + 1}. ${who(r[0])} ${r[1]}-${r[2]}`)",
     "tests": [
       "test/net/crown1_royal_client.test.js"
     ]
@@ -137,7 +137,7 @@
   {
     "name": "CROWN1C-hud-record",
     "file": "src/net/royalLink.js",
-    "old": "    self.push(mine ? `You: ${mine[1]} ${mine[1] === 1 ? 'win' : 'wins'}, ${mine[2]} ${mine[2] === 1 ? 'loss' : 'losses'}` : 'You have no bout won yet.');",
+    "old": "    self.push(\n      mine\n        ? `You: ${mine[1]} ${mine[1] === 1 ? 'win' : 'wins'}, ${mine[2]} ${mine[2] === 1 ? 'loss' : 'losses'}`\n        : 'You have no bout won yet.',\n    );",
     "new": "    self.push('You have no bout won yet.');",
     "tests": [
       "test/net/crown1_royal_client.test.js"
@@ -146,8 +146,8 @@
   {
     "name": "CROWN1C-hud-asks",
     "file": "src/net/royalLink.js",
-    "old": "    for (const id of Object.keys(s.asks)) if (royalAskStands(s, id, now)) self.push(",
-    "new": "    for (const id of Object.keys(s.asks)) if (true) self.push(",
+    "old": "      if (royalAskStands(s, id, now))\n        self.push(`${who(id)} challenges you. Challenge them back from their card to accept.`);",
+    "new": "      if (true) self.push(`${who(id)} challenges you. Challenge them back from their card to accept.`);",
     "tests": [
       "test/net/crown1_royal_client.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "CROWN1C-hud-last",
     "file": "src/net/royalLink.js",
-    "old": "now - s.last.at < ROYAL_LAST_SHOWN_MS) {",
-    "new": "true) {",
+    "old": "    if (s.last && (s.last.w === me || s.last.l === me) && now - s.last.at < ROYAL_LAST_SHOWN_MS) {",
+    "new": "    if (s.last && (s.last.w === me || s.last.l === me) && true) {",
     "tests": [
       "test/net/crown1_royal_client.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "CROWN1C-hud-counted",
     "file": "src/net/royalLink.js",
-    "old": "self.push(s.last.w === me ? (s.last.c ? 'You won the bout.' :",
-    "new": "self.push(s.last.w === me ? (true ? 'You won the bout.' :",
+    "old": "          ? s.last.c",
+    "new": "          ? true",
     "tests": [
       "test/net/crown1_royal_client.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "CROWN1C-sess-old",
     "file": "src/net/royalSession.js",
-    "old": "      if (!relayOk()) { say(ROYAL_SESSION_TEXT.old); return false; }",
-    "new": "",
+    "old": "      if (!relayOk()) {\n        say(ROYAL_SESSION_TEXT.old);\n        return false;\n      }\n      if (!field) {",
+    "new": "      if (!field) {",
     "tests": [
       "test/net/crown1_royal_client.test.js"
     ]
@@ -191,7 +191,7 @@
   {
     "name": "CROWN1C-sess-here",
     "file": "src/net/royalSession.js",
-    "old": "      if (!field) { say(ROYAL_SESSION_TEXT.notHere(seat?.name ?? 'the city')); return false; }",
+    "old": "      if (!field) {\n        say(ROYAL_SESSION_TEXT.notHere(seat?.name ?? 'the city'));\n        return false;\n      }",
     "new": "",
     "tests": [
       "test/net/crown1_royal_client.test.js"
@@ -200,7 +200,7 @@
   {
     "name": "CROWN1C-sess-retry",
     "file": "src/net/royalSession.js",
-    "old": "      if (r?.error === 'ring-unsettled') { s.tries++; s.retryAt = nowMs() + passRetryMs(s.tries, ROYAL_PASS_RETRY_MS); if (s.tries === 1) say(r.text); return; }",
+    "old": "      if (r?.error === 'ring-unsettled') {\n        s.tries++;\n        s.retryAt = nowMs() + passRetryMs(s.tries, ROYAL_PASS_RETRY_MS);\n        if (s.tries === 1) say(r.text);\n        return;\n      }",
     "new": "",
     "tests": [
       "test/net/crown1_royal_client.test.js"
@@ -209,8 +209,8 @@
   {
     "name": "CROWN1C-sess-wait",
     "file": "src/net/royalSession.js",
-    "old": "      if (!s.joined) { if (s.retryAt && now >= s.retryAt) { s.retryAt = 0; ask(); } return; }",
-    "new": "      if (!s.joined) { if (s.retryAt) { s.retryAt = 0; ask(); } return; }",
+    "old": "        if (s.retryAt && now >= s.retryAt) {",
+    "new": "        if (s.retryAt) {",
     "tests": [
       "test/net/crown1_royal_client.test.js"
     ]
@@ -245,7 +245,7 @@
   {
     "name": "CROWN1C-sess-ends",
     "file": "src/net/royalSession.js",
-    "old": "      if (s.ends && now >= s.ends) { api.leave(); return; }",
+    "old": "      if (s.ends && now >= s.ends) {\n        api.leave();\n        return;\n      }",
     "new": "",
     "tests": [
       "test/net/crown1_royal_client.test.js"
@@ -254,8 +254,8 @@
   {
     "name": "CROWN1C-sess-room-check",
     "file": "src/net/royalSession.js",
-    "old": "      if (!s || room !== s.room) return;\n      s.state = foldRoyal",
-    "new": "      if (!s) return;\n      s.state = foldRoyal",
+    "old": "      if (!s || room !== s.room) return;",
+    "new": "      if (!s) return;",
     "tests": [
       "test/net/crown1_royal_client.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "CROWN1C-sess-won",
     "file": "src/net/royalSession.js",
-    "old": "      if (g.k === 'won' && readRoyalReceipt(g.rc) && claims) { claims.keep(g.rc); claims.offer({ force: true }); }",
-    "new": "",
+    "old": "      if (g.k === 'won' && readRoyalReceipt(g.rc) && claims) {\n        claims.keep(g.rc);\n        claims.offer({ force: true });\n      }\n    },",
+    "new": "    },",
     "tests": [
       "test/net/crown1_royal_client.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "CROWN1C-sess-won-read",
     "file": "src/net/royalSession.js",
-    "old": "      if (g.k === 'won' && readRoyalReceipt(g.rc) && claims)",
-    "new": "      if (g.k === 'won' && claims)",
+    "old": "      if (g.k === 'won' && readRoyalReceipt(g.rc) && claims) {",
+    "new": "      if (g.k === 'won' && claims) {",
     "tests": [
       "test/net/crown1_royal_client.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "CROWN1C-sess-accept",
     "file": "src/net/royalSession.js",
-    "old": "      if (royalAskStands(s.state, peer, nowMs())) return online.sendSiege({ k: 'yes', to: peer });\n",
-    "new": "",
+    "old": "      if (royalAskStands(s.state, peer, nowMs())) return online.sendSiege({ k: 'yes', to: peer });\n      const sent = online.sendSiege({ k: 'ask', to: peer });",
+    "new": "      const sent = online.sendSiege({ k: 'ask', to: peer });",
     "tests": [
       "test/net/crown1_royal_client.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "CROWN1C-sess-blow",
     "file": "src/net/royalSession.js",
-    "old": "    blow(to, { w, m, d, r }) { return api.foes().includes(to) && online.sendSiege(",
-    "new": "    blow(to, { w, m, d, r }) { return online.sendSiege(",
+    "old": "      return api.foes().includes(to) && online.sendSiege({ k: 'blow', to, w, m, d, r });",
+    "new": "      return online.sendSiege({ k: 'blow', to, w, m, d, r });",
     "tests": [
       "test/net/crown1_royal_client.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "CROWN1C-sess-leave-mint",
     "file": "src/net/royalSession.js",
-    "old": "      if (mint && online.mintSiegePass === mint) online.mintSiegePass = null;",
-    "new": "      void 0;",
+    "old": "      if (mint && online.mintSiegePass === mint) online.mintSiegePass = null; // AUDIT-SEATS C2: another battle's mint is not this one's to clear",
+    "new": "      void 0; // AUDIT-SEATS C2: another battle's mint is not this one's to clear",
     "tests": [
       "test/net/crown1_royal_client.test.js"
     ]

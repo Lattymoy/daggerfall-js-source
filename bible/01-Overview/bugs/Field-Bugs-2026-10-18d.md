@@ -424,7 +424,7 @@ Knight bodies: 2280, 4560, 6840 gold in three visits. "Fixed itself after a few 
 
 FIXED, so the seat and the memory's writer are one. In a dungeon room the relay's host is the eldest socket that has
 said a frame - its hello, a pose, its foes, its own lane, its memory, never a ping - within FOES_STALE_MS of another
-being there to hear it (`seatLive.js:"export function seatOf("`); alone it owes nothing; the change is said to the room
+being there to hear it (`seatLive.js:"export function seatOf"`); alone it owes nothing; the change is said to the room
 as a leave's is. A socket back from silence is a joiner: stamped after the seat and told whose it is, its frozen memory
 refused until the relay names it. The page asks for the seat it runs (`_askSeat`: its pose every FOES_FULL_MS while
 the named host is unheard), and its own hidden spell spends none of the named seat's patience (`createSeatClock`), so

@@ -112,8 +112,8 @@
   {
     "name": "FOLLOW-BODIES-target-kept",
     "file": "src/net/staffHook.js",
-    "old": "others: () => (eye?.drawable?.() ?? []).filter((/** @type {any} */ p) => !(p?.sub === target || (pid && p?.id === pid))),",
-    "new": "others: () => (eye?.drawable?.() ?? []),",
+    "old": "    others: () =>\n      (eye?.drawable?.() ?? []).filter((/** @type {any} */ p) => !(p?.sub === target || (pid && p?.id === pid))),",
+    "new": "    others: () => eye?.drawable?.() ?? [],",
     "why": "the target's own body drawn round the camera at their eyes",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "FOLLOW-BODIES-socket-only",
     "file": "src/net/staffHook.js",
-    "old": "!(p?.sub === target || (pid && p?.id === pid))),",
-    "new": "!(pid && p?.id === pid)),",
+    "old": "    others: () =>\n      (eye?.drawable?.() ?? []).filter((/** @type {any} */ p) => !(p?.sub === target || (pid && p?.id === pid))),",
+    "new": "    others: () => (eye?.drawable?.() ?? []).filter((/** @type {any} */ p) => !(pid && p?.id === pid)),",
     "why": "the target known by account alone drawn over the camera",
     "tests": [
       "test/net/staffpanel5hook.test.js"

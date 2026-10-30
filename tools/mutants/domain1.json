@@ -2,8 +2,8 @@
   {
     "name": "DOMAIN1-the-ram-kit-to-a-stockpile",
     "file": "src/net/seatGiftLaw.js",
-    "old": "FORT_MATERIALS.includes(key) || (place === 'camp' && key === RAM_KIT_KEY)",
-    "new": "FORT_MATERIALS.includes(key) || key === RAM_KIT_KEY",
+    "old": "export const giftMaterialOk = (key, place) => FORT_MATERIALS.includes(key) || (place === 'camp' && key === RAM_KIT_KEY);",
+    "new": "export const giftMaterialOk = (key, place) => FORT_MATERIALS.includes(key) || key === RAM_KIT_KEY;",
     "tests": [
       "test/net/domain1_gifts.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "DOMAIN1-the-bound-short",
     "file": "src/net/seatGiftLaw.js",
-    "old": "n >= 1 && n <= GIFT_UNITS_MAX",
-    "new": "n >= 1 && n < GIFT_UNITS_MAX",
+    "old": "export const giftUnitsOk = (n) => Number.isSafeInteger(n) && n >= 1 && n <= GIFT_UNITS_MAX;",
+    "new": "export const giftUnitsOk = (n) => Number.isSafeInteger(n) && n >= 1 && n < GIFT_UNITS_MAX;",
     "tests": [
       "test/net/domain1_gifts.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "DOMAIN1-the-bag-not-summed",
     "file": "src/net/seatGiftLaw.js",
-    "old": "most: Math.min(GIFT_UNITS_MAX, s + b)",
-    "new": "most: Math.min(GIFT_UNITS_MAX, s)",
+    "old": "    if (s + b > 0) out.push({ key, stores: s, bag: b, most: Math.min(GIFT_UNITS_MAX, s + b) });",
+    "new": "    if (s + b > 0) out.push({ key, stores: s, bag: b, most: Math.min(GIFT_UNITS_MAX, s) });",
     "tests": [
       "test/net/domain1_gifts.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "DOMAIN1-the-ram-kit-first",
     "file": "src/net/seatGiftLaw.js",
-    "old": "(place === 'camp' ? [...FORT_MATERIALS, RAM_KIT_KEY] : [...FORT_MATERIALS])",
-    "new": "(place === 'camp' ? [RAM_KIT_KEY, ...FORT_MATERIALS] : [...FORT_MATERIALS])",
+    "old": "export const giftMaterials = (place) => (place === 'camp' ? [...FORT_MATERIALS, RAM_KIT_KEY] : [...FORT_MATERIALS]);",
+    "new": "export const giftMaterials = (place) => (place === 'camp' ? [RAM_KIT_KEY, ...FORT_MATERIALS] : [...FORT_MATERIALS]);",
     "tests": [
       "test/net/domain1_gifts.test.js"
     ]

@@ -52,7 +52,7 @@
   {
     "name": "PRIVREP-the-words-uncleaned",
     "file": "src/net/reportLaw.js",
-    "old": "const cleanBody = (/** @type {string} */ s) => s.split(LINE_BREAK).map((l) => visibleText(l.replace(/\\t/g, ' ')).trimEnd()).join('\\n').replace(/^\\n+|\\n+$/g, '').trim();",
+    "old": "const cleanBody = (/** @type {string} */ s) =>\n  s\n    .split(LINE_BREAK)\n    .map((l) => visibleText(l.replace(/\\t/g, ' ')).trimEnd())\n    .join('\\n')\n    .replace(/^\\n+|\\n+$/g, '')\n    .trim();",
     "new": "const cleanBody = (/** @type {string} */ s) => s.trim();",
     "tests": [
       "test/server/private_reports_service.test.js"
@@ -212,8 +212,8 @@
   {
     "name": "PRIVREP-the-envelope-blind-to-reports",
     "file": "src/net/serverPost.js",
-    "old": " + (this.reports?.unread ?? 0); }",
-    "new": "; }",
+    "old": "    return this.post.filter((p) => !p.read || (p.item && !p.claimed)).length + (this.reports?.unread ?? 0);",
+    "new": "    return this.post.filter((p) => !p.read || (p.item && !p.claimed)).length;",
     "tests": [
       "test/net/private_reports_client.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "PRIVREP-the-rise-never-said",
     "file": "src/net/serverPost.js",
-    "old": "    if (reportsRose) this.onPost?.({ kind: 'reports', unread: reports.unread });\n",
-    "new": "",
+    "old": "    if (reportsRose) this.onPost?.({ kind: 'reports', unread: reports.unread });\n    return { ok: true, fresh };",
+    "new": "    return { ok: true, fresh };",
     "tests": [
       "test/net/private_reports_client.test.js"
     ],
@@ -303,8 +303,8 @@
   {
     "name": "PRIVREP-the-words-cleaned-by-a-second-law",
     "file": "src/net/reportLaw.js",
-    "old": "const cleanSubject = (/** @type {string} */ s) => visibleText(s.split(LINE_BREAK).join(' ').replace(/\\t/g, ' '))",
-    "new": "const cleanSubject = (/** @type {string} */ s) => (s.split(LINE_BREAK).join(' ').replace(/\\t/g, ' ').replace(/[\\u0000-\\u001f\\u007f]/g, ''))",
+    "old": "  visibleText(s.split(LINE_BREAK).join(' ').replace(/\\t/g, ' ')).replace(/\\s+/g, ' ').trim();",
+    "new": "  s\n    .split(LINE_BREAK)\n    .join(' ')\n    .replace(/\\t/g, ' ')\n    .replace(/[\\u0000-\\u001f\\u007f]/g, '')\n    .replace(/\\s+/g, ' ')\n    .trim();",
     "tests": [
       "test/server/private_reports_service.test.js"
     ],
@@ -313,8 +313,8 @@
   {
     "name": "PRIVREP-a-tab-glued",
     "file": "src/net/reportLaw.js",
-    "old": "visibleText(l.replace(/\\t/g, ' '))",
-    "new": "visibleText(l)",
+    "old": "    .map((l) => visibleText(l.replace(/\\t/g, ' ')).trimEnd())",
+    "new": "    .map((l) => visibleText(l).trimEnd())",
     "tests": [
       "test/server/private_reports_service.test.js"
     ],
@@ -573,8 +573,8 @@
   {
     "name": "PRIVREP-the-desks-counts-never-the-envelopes",
     "file": "src/net/serverPost.js",
-    "old": "onCounts: (c) => this._deskCounts(c) });",
-    "new": "onCounts: null });",
+    "old": "    this.desk = new ReportDesk({ ioOf: () => this.ioOf?.() ?? null, onCounts: (c) => this._deskCounts(c) });",
+    "new": "    this.desk = new ReportDesk({ ioOf: () => this.ioOf?.() ?? null, onCounts: null });",
     "tests": [
       "test/net/private_reports_client.test.js"
     ],
@@ -583,8 +583,8 @@
   {
     "name": "PRIVREP-the-desk-kept-past-a-switch-by-the-box",
     "file": "src/net/serverPost.js",
-    "old": "this.error = null; this.at = 0; this.desk.reset(); this._changed();",
-    "new": "this.error = null; this.at = 0; this._changed();",
+    "old": "      this.desk.reset();\n      this._changed();",
+    "new": "      this._changed();",
     "tests": [
       "test/net/private_reports_client.test.js"
     ],
@@ -593,7 +593,7 @@
   {
     "name": "PRIVREP-the-boxs-answer-for-a-session-gone-taken",
     "file": "src/net/serverPost.js",
-    "old": "if (secret !== (this.ioOf?.()?.secret ?? null)) { this.at = 0; return { ok: false, error: 'stale' }; }",
+    "old": "    if (secret !== (this.ioOf?.()?.secret ?? null)) {\n      this.at = 0;\n      return { ok: false, error: 'stale' };\n    }",
     "new": "",
     "tests": [
       "test/net/private_reports_client.test.js"
@@ -603,8 +603,8 @@
   {
     "name": "PRIVREP-the-first-look-silent",
     "file": "src/net/serverPost.js",
-    "old": "(first ? true : reports.unread > (this.reports?.unread ?? 0))",
-    "new": "(first ? false : reports.unread > (this.reports?.unread ?? 0))",
+    "old": "    const reportsRose = reports && reports.unread > 0 && (first ? true : reports.unread > (this.reports?.unread ?? 0));",
+    "new": "    const reportsRose = reports && reports.unread > 0 && (first ? false : reports.unread > (this.reports?.unread ?? 0));",
     "tests": [
       "test/net/private_reports_client.test.js"
     ],
@@ -833,8 +833,8 @@
   {
     "name": "PRIVREP-a-fall-said",
     "file": "src/net/serverPost.js",
-    "old": "reports.unread > (this.reports?.unread ?? 0))",
-    "new": "reports.unread !== (this.reports?.unread ?? 0))",
+    "old": "    const reportsRose = reports && reports.unread > 0 && (first ? true : reports.unread > (this.reports?.unread ?? 0));",
+    "new": "    const reportsRose =\n      reports && reports.unread > 0 && (first ? true : reports.unread !== (this.reports?.unread ?? 0));",
     "tests": [
       "test/net/private_reports_client.test.js"
     ],

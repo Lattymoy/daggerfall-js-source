@@ -518,8 +518,8 @@
   {
     "name": "HUNTERS-MARK-trophy-hunter-unclean",
     "file": "src/net/professionLaw.js",
-    "old": "spec100 === TROPHY_HUNTER && clean === true && tier >= HIGH_HIDE_TIER;",
-    "new": "spec100 === TROPHY_HUNTER && tier >= HIGH_HIDE_TIER;",
+    "old": "export const trophyHunted = ({ spec100, tier, clean }) =>\n  spec100 === TROPHY_HUNTER && clean === true && tier >= HIGH_HIDE_TIER;",
+    "new": "export const trophyHunted = ({ spec100, tier, clean }) => spec100 === TROPHY_HUNTER && tier >= HIGH_HIDE_TIER;",
     "tests": [
       "test/systems/huntersmark_trophies.test.js"
     ]
@@ -527,8 +527,8 @@
   {
     "name": "HUNTERS-MARK-trophy-hunter-any-tier",
     "file": "src/net/professionLaw.js",
-    "old": "spec100 === TROPHY_HUNTER && clean === true && tier >= HIGH_HIDE_TIER;",
-    "new": "spec100 === TROPHY_HUNTER && clean === true && tier >= 1;",
+    "old": "export const trophyHunted = ({ spec100, tier, clean }) =>\n  spec100 === TROPHY_HUNTER && clean === true && tier >= HIGH_HIDE_TIER;",
+    "new": "export const trophyHunted = ({ spec100, tier, clean }) => spec100 === TROPHY_HUNTER && clean === true && tier >= 1;",
     "tests": [
       "test/systems/huntersmark_trophies.test.js"
     ]
@@ -536,8 +536,8 @@
   {
     "name": "HUNTERS-MARK-trophy-hunter-any-spec",
     "file": "src/net/professionLaw.js",
-    "old": "spec100 === TROPHY_HUNTER && clean === true && tier >= HIGH_HIDE_TIER;",
-    "new": "clean === true && tier >= HIGH_HIDE_TIER;",
+    "old": "export const trophyHunted = ({ spec100, tier, clean }) =>\n  spec100 === TROPHY_HUNTER && clean === true && tier >= HIGH_HIDE_TIER;",
+    "new": "export const trophyHunted = ({ spec100, tier, clean }) => clean === true && tier >= HIGH_HIDE_TIER;",
     "tests": [
       "test/systems/huntersmark_trophies.test.js"
     ]

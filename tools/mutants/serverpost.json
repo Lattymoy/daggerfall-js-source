@@ -83,8 +83,8 @@
   {
     "name": "SERVERPOST-the-first-look-said-new",
     "file": "src/net/serverPost.js",
-    "old": "    const fresh = first ? [] : post.filter(",
-    "new": "    const fresh = post.filter(",
+    "old": "    const fresh = first ? [] : post.filter((p) => !p.read && !this._known.has(p.id));",
+    "new": "    const fresh = post.filter((p) => !p.read && !this._known.has(p.id));",
     "tests": [
       "test/net/serverpost_client.test.js"
     ],
@@ -93,8 +93,8 @@
   {
     "name": "SERVERPOST-a-claimed-gift-still-counted",
     "file": "src/net/serverPost.js",
-    "old": "return this.post.filter((p) => !p.read || (p.item && !p.claimed)).length + (this.reports?.unread ?? 0);",
-    "new": "return this.post.filter((p) => !p.read || p.item).length + (this.reports?.unread ?? 0);",
+    "old": "    return this.post.filter((p) => !p.read || (p.item && !p.claimed)).length + (this.reports?.unread ?? 0);",
+    "new": "    return this.post.filter((p) => !p.read || p.item).length + (this.reports?.unread ?? 0);",
     "tests": [
       "test/net/serverpost_client.test.js"
     ],
@@ -263,8 +263,8 @@
   {
     "name": "SERVERPOST-a-lost-answer-said-as-the-connection",
     "file": "src/net/serverPost.js",
-    "old": "      if (r?.unknown) return { ok: false, error: 'unknown' };",
-    "new": "",
+    "old": "      if (r?.unknown) return { ok: false, error: 'unknown' }; // the realm never said - the session is given up, and a join reads the record",
+    "new": "      // the realm never said - the session is given up, and a join reads the record",
     "tests": [
       "test/net/serverpost_client.test.js"
     ],

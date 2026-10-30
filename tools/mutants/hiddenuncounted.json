@@ -20,8 +20,8 @@
   {
     "name": "HU-the-party-drops-the-mark",
     "file": "src/net/roster.js",
-    "old": "hidden: hub?.hidden === true, peers, label: 'Party' };",
-    "new": "peers, label: 'Party' };",
+    "old": "    gt: hub?.gt ?? null,\n    hidden: hub?.hidden === true,\n    peers,\n    label: 'Party',",
+    "new": "    gt: hub?.gt ?? null,\n    peers,\n    label: 'Party',",
     "tests": [
       "test/net/hiddenuncounted.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "HU-the-guild-drops-the-mark",
     "file": "src/net/roster.js",
-    "old": "hidden: hub?.hidden === true, peers, label: 'Guild' };",
-    "new": "peers, label: 'Guild' };",
+    "old": "    gt: hub?.gt ?? null,\n    hidden: hub?.hidden === true,\n    peers,\n    label: 'Guild',",
+    "new": "    gt: hub?.gt ?? null,\n    peers,\n    label: 'Guild',",
     "tests": [
       "test/net/hiddenuncounted.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "HU-nearby-drops-the-mark",
     "file": "src/net/roster.js",
-    "old": "hidden: session?.hidden === true, peers, label: 'Nearby' };",
-    "new": "peers, label: 'Nearby' };",
+    "old": "    hidden: session?.hidden === true,\n    peers,",
+    "new": "    peers,",
     "tests": [
       "test/net/hiddenuncounted.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "HU-a-placed-tab-drops-the-mark",
     "file": "src/net/roster.js",
-    "old": "gt: link?.gt ?? null, hidden: link?.hidden === true, peers:",
-    "new": "gt: link?.gt ?? null, peers:",
+    "old": "    hidden: link?.hidden === true,\n    peers: link?.peers ?? null,",
+    "new": "    peers: link?.peers ?? null,",
     "tests": [
       "test/net/hiddenuncounted.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "HU-a-placed-tab-drops-its-count",
     "file": "src/net/roster.js",
-    "old": "roomCount: link?.roomCount ?? null, hubOnline:",
-    "new": "hubOnline:",
+    "old": "    roomCount: link?.roomCount ?? null,\n    hubOnline: link?.hubOnline ?? null,",
+    "new": "    hubOnline: link?.hubOnline ?? null,",
     "tests": [
       "test/net/hiddenuncounted.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "HU-a-placed-tab-drops-the-hubs-shards",
     "file": "src/net/roster.js",
-    "old": "hubOnline: link?.hubOnline ?? null, label: place };",
-    "new": "label: place };",
+    "old": "    hubOnline: link?.hubOnline ?? null,\n    label: place,",
+    "new": "    label: place,",
     "tests": [
       "test/net/hiddenuncounted.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "HU-AUDIT-P4-a-placed-tab-drops-my-title",
     "file": "src/net/roster.js",
-    "old": "name: link?.name ?? '', title: link?.title ?? null,",
-    "new": "name: link?.name ?? '', title: null,",
+    "old": "    title: link?.title ?? null,",
+    "new": "    title: null,",
     "tests": [
       "test/net/hiddenuncounted.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "HU-AUDIT-P4-a-placed-tab-drops-my-tag",
     "file": "src/net/roster.js",
-    "old": "glyphs: link?.glyphs ?? null, gt: link?.gt ?? null, hidden: link?.hidden",
-    "new": "glyphs: link?.glyphs ?? null, gt: null, hidden: link?.hidden",
+    "old": "    gt: link?.gt ?? null,",
+    "new": "    gt: null,",
     "tests": [
       "test/net/hiddenuncounted.test.js"
     ]

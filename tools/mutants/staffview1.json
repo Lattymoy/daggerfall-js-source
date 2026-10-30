@@ -512,8 +512,8 @@
   {
     "name": "STAFF-VIEW1-tags-bad-sub",
     "file": "src/net/staffHook.js",
-    "old": "if (typeof r?.sub !== 'string' || !ID_RE.test(r.sub)) continue;",
-    "new": "if (typeof r?.sub !== 'string') continue;",
+    "old": "    if (typeof r?.sub !== 'string' || !ID_RE.test(r.sub)) continue;",
+    "new": "    if (typeof r?.sub !== 'string') continue;",
     "why": "a row whose account is no account id kept",
     "tests": [
       "test/scenes/staffview1.test.js",
@@ -523,8 +523,8 @@
   {
     "name": "STAFF-VIEW1-tags-oversize",
     "file": "src/net/staffHook.js",
-    "old": "for (const r of m.list.slice(0, TAGS_MAX)) {",
-    "new": "for (const r of m.list) {",
+    "old": "  for (const r of m.list.slice(0, TAGS_MAX)) {",
+    "new": "  for (const r of m.list) {",
     "why": "an oversize list read whole",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -533,8 +533,8 @@
   {
     "name": "STAFF-VIEW1-tags-level",
     "file": "src/net/staffHook.js",
-    "old": "const level = TAG_LEVELS.includes(r.level) ? r.level : null;",
-    "new": "const level = r.level ?? null;",
+    "old": "    const level = TAG_LEVELS.includes(r.level) ? r.level : null;",
+    "new": "    const level = r.level ?? null;",
     "why": "an unknown level kept",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -543,8 +543,8 @@
   {
     "name": "STAFF-VIEW1-tags-why-long",
     "file": "src/net/staffHook.js",
-    "old": "r.why.length <= TAG_WHY_MAX ? r.why : '';",
-    "new": "true ? r.why : '';",
+    "old": "    const why = level && typeof r.why === 'string' && r.why.length <= TAG_WHY_MAX ? r.why : '';",
+    "new": "    const why = level && typeof r.why === 'string' && true ? r.why : '';",
     "why": "words past TAG_WHY_MAX kept",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -553,8 +553,8 @@
   {
     "name": "STAFF-VIEW1-tags-watch-loose",
     "file": "src/net/staffHook.js",
-    "old": "const watch = r.watch === true;",
-    "new": "const watch = !!r.watch;",
+    "old": "    const watch = r.watch === true;",
+    "new": "    const watch = !!r.watch;",
     "why": "a watch read from anything truthy",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -563,8 +563,8 @@
   {
     "name": "STAFF-VIEW1-tags-dist",
     "file": "src/net/staffHook.js",
-    "old": "return { dist: NAMEPLATE_DISTS.includes(m.dist) ? m.dist : NAMEPLATE_DIST, esp:",
-    "new": "return { dist: Number(m.dist) || NAMEPLATE_DIST, esp:",
+    "old": "  return {\n    dist: NAMEPLATE_DISTS.includes(m.dist) ? m.dist : NAMEPLATE_DIST,\n    esp: m.esp !== false,\n    lines: m.lines !== false,\n    flags,\n  };",
+    "new": "  return { dist: Number(m.dist) || NAMEPLATE_DIST, esp: m.esp !== false, lines: m.lines !== false, flags };",
     "why": "a distance Your settings never offers kept",
     "tests": [
       "test/scenes/staffview1.test.js",
@@ -574,8 +574,8 @@
   {
     "name": "STAFF-VIEW1-tags-fold-last",
     "file": "src/net/staffHook.js",
-    "old": "if (rank(level) < rank(had.level)) { had.level = level; had.why = why; }",
-    "new": "{ had.level = level; had.why = why; }",
+    "old": "    if (rank(level) < rank(had.level)) {",
+    "new": "    {",
     "why": "the fold keeps the last row, not the most urgent",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -584,8 +584,8 @@
   {
     "name": "STAFF-VIEW1-tags-watch-lost",
     "file": "src/net/staffHook.js",
-    "old": "had.watch = had.watch || watch;",
-    "new": "",
+    "old": "    had.watch = had.watch || watch;\n  }",
+    "new": "  }",
     "why": "a watch on a later row lost in the fold",
     "tests": [
       "test/scenes/staffview1.test.js"
@@ -594,8 +594,8 @@
   {
     "name": "STAFF-VIEW1-tags-no-list-clears",
     "file": "src/net/staffHook.js",
-    "old": "tags = validTags(m) ?? tags;",
-    "new": "tags = validTags(m);",
+    "old": "      tags = validTags(m) ?? tags; // STAFF-VIEW1: an answer with no list keeps the last",
+    "new": "      tags = validTags(m); // STAFF-VIEW1: an answer with no list keeps the last",
     "why": "an answer with no list clears the last",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -604,8 +604,8 @@
   {
     "name": "STAFF-VIEW1-tags-foreign",
     "file": "src/net/staffHook.js",
-    "old": "if (e?.source !== win || e?.origin !== origin || !m || typeof m.dfoStaff !== 'string') return;",
-    "new": "if (!m || typeof m.dfoStaff !== 'string') return;",
+    "old": "    if (e?.source !== win || e?.origin !== origin || !m || typeof m.dfoStaff !== 'string') return;",
+    "new": "    if (!m || typeof m.dfoStaff !== 'string') return;",
     "why": "another window's or origin's tags answer kept",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -614,8 +614,8 @@
   {
     "name": "STAFF-VIEW1-tags-ask-star",
     "file": "src/net/staffHook.js",
-    "old": "askTags: () => post({ dfoStaff: 'tags?' })",
-    "new": "askTags: () => win.postMessage({ dfoStaff: 'tags?' }, '*')",
+    "old": "  return { askToken, panel: () => seen, tags: () => tags, askTags: () => post({ dfoStaff: 'tags?' }), post };",
+    "new": "  return {\n    askToken,\n    panel: () => seen,\n    tags: () => tags,\n    askTags: () => win.postMessage({ dfoStaff: 'tags?' }, '*'),\n    post,\n  };",
     "why": "the tags ask posted to any origin",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -624,8 +624,8 @@
   {
     "name": "STAFF-VIEW1-hook-peers-none",
     "file": "src/net/staffHook.js",
-    "old": "peers: () => eye?.drawable?.() ?? [],",
-    "new": "peers: () => [],",
+    "old": "    peers: () => eye?.drawable?.() ?? [],",
+    "new": "    peers: () => [],",
     "why": "the followed room's players never handed to the staff view",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -744,8 +744,8 @@
   {
     "name": "STAFF-VIEW-SWITCH-default-off",
     "file": "src/net/staffHook.js",
-    "old": "esp: m.esp !== false, lines: m.lines !== false, flags };",
-    "new": "esp: m.esp === true, lines: m.lines === true, flags };",
+    "old": "    esp: m.esp !== false,\n    lines: m.lines !== false,",
+    "new": "    esp: m.esp === true,\n    lines: m.lines === true,",
     "why": "an older panel's answer turns the staff view off",
     "tests": [
       "test/scenes/staffview1.test.js"

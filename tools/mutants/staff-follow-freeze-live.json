@@ -2,8 +2,8 @@
   {
     "name": "STAFF-FOLLOW-SHARD-hub-pulled-off-its-shard",
     "file": "src/net/staffHook.js",
-    "old": "if (!isSocialRoom(hub.room)) hub.join(SOCIAL_ROOM, null);",
-    "new": "if (hub.room !== SOCIAL_ROOM) hub.join(SOCIAL_ROOM, null);",
+    "old": "      if (!isSocialRoom(hub.room)) hub.join(SOCIAL_ROOM, null);",
+    "new": "      if (hub.room !== SOCIAL_ROOM) hub.join(SOCIAL_ROOM, null);",
     "why": "the hook's hub link is asked back to the bus each frame, hops for ever and is never told `on` (mob: \"follow does not work\")",
     "tests": [
       "test/net/staffpanel5live_e2e.test.js"

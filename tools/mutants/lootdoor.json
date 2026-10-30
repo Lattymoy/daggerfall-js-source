@@ -82,8 +82,8 @@
   {
     "name": "LOOT-DOOR-the-floor",
     "file": "src/net/relayCfg.js",
-    "old": "cellSeed: 260, lootDoor: 273,",
-    "new": "cellSeed: 260, lootDoor: 272,",
+    "old": "  lootDoor: 273,",
+    "new": "  lootDoor: 272,",
     "why": "the client says lootDoor to a relay that closes the hub link on it",
     "tests": [
       "test/net/lootdoor.test.js",
@@ -94,8 +94,8 @@
   {
     "name": "LOOT-DOOR-the-var",
     "file": "src/net/relayCfg.js",
-    "old": "  lootDoor: 'LOOT_DOOR',",
-    "new": "  lootDoor: 'LOOT_GATE',",
+    "old": "  lootDoor: 'LOOT_DOOR', // LOOT-DOOR (AUDIT HORIZONTAL B7, bible/06-Systems/Professions-Arc.md 57.8): 'on' - a loot room refuses a build whose hello reads less loot than the relay's law (net/wire.js LOOT_HELLO_LAW); off unset, and off until the site serves the build that says it, since the relay deploys first",
+    "new": "  lootDoor: 'LOOT_GATE', // LOOT-DOOR (AUDIT HORIZONTAL B7, bible/06-Systems/Professions-Arc.md 57.8): 'on' - a loot room refuses a build whose hello reads less loot than the relay's law (net/wire.js LOOT_HELLO_LAW); off unset, and off until the site serves the build that says it, since the relay deploys first",
     "why": "the setting stands over another var than the one the record names",
     "tests": [
       "test/net/lootdoor.test.js",

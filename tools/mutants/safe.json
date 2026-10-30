@@ -268,8 +268,8 @@
   {
     "name": "SAFE1-a-blocked-invite-landing",
     "file": "src/net/social.js",
-    "old": "        if (!this._hears(invite.from?.acct)) return null;   // SAFE1: nor one from an account I blocked - its sender is never told\n",
-    "new": "",
+    "old": "        if (!this._hears(invite.from?.acct)) return null; // SAFE1: nor one from an account I blocked - its sender is never told\n        // AUDIT SOC B1/B2: the door bounds a STATE frame's invites at PENDING_MAX; this arm is one invite at a time, so it",
+    "new": "        // AUDIT SOC B1/B2: the door bounds a STATE frame's invites at PENDING_MAX; this arm is one invite at a time, so it",
     "tests": [
       "test/net/safety/safe_client.test.js"
     ],

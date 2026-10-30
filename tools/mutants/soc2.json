@@ -102,7 +102,7 @@
   {
     "name": "C12-presence-for-a-stranger-kept",
     "file": "src/net/social.js",
-    "old": "if (!this.friends.has(row.acct)) return null;",
+    "old": "        if (!this.friends.has(row.acct)) return null;",
     "new": "",
     "tests": [
       "test/net/soc2_session.test.js"
@@ -111,7 +111,7 @@
   {
     "name": "C13-stale-invite-after-joining",
     "file": "src/net/social.js",
-    "old": "        const spent = !!f.party && this.invites.delete(f.party.id);   // seated: that invite is spent",
+    "old": "        const spent = !!f.party && this.invites.delete(f.party.id); // seated: that invite is spent",
     "new": "        const spent = !!f.party;",
     "tests": [
       "test/net/soc2_session.test.js"
@@ -120,8 +120,8 @@
   {
     "name": "C14-version-bumped-per-frame",
     "file": "src/net/social.js",
-    "old": "if (!this.friends.has(row.acct)) return null;\n        this.friends.set(row.acct, row);",
-    "new": "if (!this.friends.has(row.acct)) { this._changed('presence'); return null; }\n        this.friends.set(row.acct, row);",
+    "old": "        if (!this.friends.has(row.acct)) return null;",
+    "new": "        if (!this.friends.has(row.acct)) {\n          this._changed('presence');\n          return null;\n        }",
     "tests": [
       "test/net/soc2_session.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "C15-pose-lost-under-a-view",
     "file": "src/net/social.js",
-    "old": "for (const m of f.party.members) { const was = this.party.members.find((x) => x.acct === m.acct); if (was?.p && !m.p && m.online !== false) m.p = was.p; }",
-    "new": "",
+    "old": "          for (const m of f.party.members) {\n            const was = this.party.members.find((x) => x.acct === m.acct);\n            if (was?.p && !m.p && m.online !== false) m.p = was.p;\n          }\n        }",
+    "new": "        }",
     "tests": [
       "test/net/soc2_session.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "C16-own-tab-green",
     "file": "src/net/social.js",
-    "old": "isPartyPeer(id) { for (const m of this.others()) if (m.peers.includes(id)) return true; return false; }",
-    "new": "isPartyPeer(id) { if (this.party) for (const m of this.party.members) if (m.peers.includes(id)) return true; return false; }",
+    "old": "    for (const m of this.others()) if (m.peers.includes(id)) return true;",
+    "new": "    if (this.party) for (const m of this.party.members) if (m.peers.includes(id)) return true;",
     "tests": [
       "test/net/soc2_session.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "C17-friend-friended-twice",
     "file": "src/net/social.js",
-    "old": "else if (relation === 'friend') whyNotFriend = 'already friends';",
-    "new": "",
+    "old": "    } else if (relation === 'friend') whyNotFriend = 'already friends';\n    else if (relation === 'out') whyNotFriend = 'request sent';",
+    "new": "    } else if (relation === 'out') whyNotFriend = 'request sent';",
     "tests": [
       "test/net/soc2_session.test.js"
     ]
@@ -156,7 +156,7 @@
   {
     "name": "C18-fifth-invite-offered",
     "file": "src/net/social.js",
-    "old": "else if (this.party && this.seatsFree() === 0) whyNotInvite = 'the party is full';",
+    "old": "      else if (this.party && this.seatsFree() === 0) whyNotInvite = 'the party is full';",
     "new": "",
     "tests": [
       "test/net/soc2_session.test.js"
@@ -165,8 +165,8 @@
   {
     "name": "C19-you-said-as-a-name",
     "file": "src/net/social.js",
-    "old": "case 'party.leader': return mine ? 'You lead the party now' : `${who} leads the party now`;",
-    "new": "case 'party.leader': return `${who} leads the party now`;",
+    "old": "      return mine ? 'You lead the party now' : `${who} leads the party now`;",
+    "new": "      return `${who} leads the party now`;",
     "tests": [
       "test/net/soc2_session.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "C21-last-online-negative",
     "file": "src/net/social.js",
-    "old": "const ago = Math.max(0, ms);",
-    "new": "const ago = ms;",
+    "old": "  const ago = Math.max(0, ms);",
+    "new": "  const ago = ms;",
     "tests": [
       "test/net/soc2_session.test.js"
     ],

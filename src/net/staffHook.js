@@ -54,7 +54,7 @@ import { ID_RE, TOKEN_MAX_CHARS } from './identityToken.js';
 import { noteRoom } from './staffFollow.js';
 import { notePlace } from './staffTeleport.js';
 import { staffPlaces, staffHere } from './staffPlaces.js';
-import { t } from '../systems/textManager.js';   // STAFF-PULL: Bring to me's fallback line   // STAFF-EVENT: the Events page's place picker
+import { t } from '../systems/textManager.js'; // STAFF-PULL: Bring to me's fallback line   // STAFF-EVENT: the Events page's place picker
 
 /** The hook's version - the panel reads it and refuses a build it does not know. */
 export const STAFF_HOOK_VERSION = 1;
@@ -63,7 +63,7 @@ export const STAFF_HOOK_VERSION = 1;
 export const TAGS_MAX = 200;
 export const TAG_WHY_MAX = 80;
 export const TAG_LEVELS = Object.freeze(['high', 'medium', 'low']);
-export const NAMEPLATE_DISTS = Object.freeze([50, 100, 200, 350]);   // 350: mob 2026-10-24, "add esp for player to 350m", "its max"
+export const NAMEPLATE_DISTS = Object.freeze([50, 100, 200, 350]); // 350: mob 2026-10-24, "add esp for player to 350m", "its max"
 export const NAMEPLATE_DIST = 100;
 /** How long the hook waits for the panel's token before its link counts the room refused. */
 export const STAFF_TOKEN_WAIT_MS = 5000;
@@ -80,10 +80,14 @@ const ROOM_HINT_MAX = 128;
  *  layer rather than being walked to another, and a hello without its hidden token there is closed, never shown. Only
  *  the eye's: the reserve is HIDDEN_RESERVE seats a room however empty, and the hub holds every hidden staff game's link.
  *  @param {any} WS */
-export const hiddenSeat = (WS) => WS && class extends WS {
-  /** @param {string} url @param {any[]} more */
-  constructor(url, ...more) { super(`${url}${url.includes('?') ? '&' : '?'}hd=1`, ...more); }
-};
+export const hiddenSeat = (WS) =>
+  WS &&
+  class extends WS {
+    /** @param {string} url @param {any[]} more */
+    constructor(url, ...more) {
+      super(`${url}${url.includes('?') ? '&' : '?'}hd=1`, ...more);
+    }
+  };
 
 /** FOLLOW-OWN-ID (2026-10-24, mob: "need the follow dropping me to stop" - a follow put the staff member's own game
  *  offline, "online in another tab" on its room and its World tab): A FOLLOW'S LINKS ARE PEERS OF THEIR OWN. A session
@@ -99,16 +103,33 @@ const ownId = () => ({ id: peerId(null), secret: peerSecret(null) });
  *  @param {{ main: () => any, askToken: (sub: string, room: string) => Promise<string|null>, Session?: any, WS?: any }} deps */
 export function createStaffHook({ main, askToken, Session = OnlineSession, WS = globalThis.WebSocket }) {
   /** @type {string|null} */ let target = null;
-  let on = false, note = /** @type {any} */ (null), room = /** @type {string|null} */ (null), ly = 0, seen = /** @type {any} */ (null);
+  let on = false,
+    note = /** @type {any} */ (null),
+    room = /** @type {string|null} */ (null),
+    ly = 0,
+    seen = /** @type {any} */ (null);
   /** STAFF-PANEL5-FOLLOW-R2: the room `seen` was taken in - a pose is in its room's frame (an interior has its own, every
    *  cell shares the world's). @type {string|null} */
   let seenIn = null;
-  let hub = /** @type {any} */ (null), eye = /** @type {any} */ (null);
+  let hub = /** @type {any} */ (null),
+    eye = /** @type {any} */ (null);
   /** STAFF-PANEL5-FOLLOW-FIX (finding 1): the target's socket id, as a room said it (`in`) - a place room's roster names
    *  no account, so this is the one name its peers know them by. @type {string|null} */
   let pid = null;
-  const close = () => { hub?.leave(); eye?.leave(); hub = null; eye = null; on = false; note = null; room = null; ly = 0; seen = null; pid = null; };
-  const mint = (/** @type {string} */ sub) => (/** @type {string} */ r) => (sub === target ? askToken(sub, r) : Promise.resolve(null));
+  const close = () => {
+    hub?.leave();
+    eye?.leave();
+    hub = null;
+    eye = null;
+    on = false;
+    note = null;
+    room = null;
+    ly = 0;
+    seen = null;
+    pid = null;
+  };
+  const mint = (/** @type {string} */ sub) => (/** @type {string} */ r) =>
+    sub === target ? askToken(sub, r) : Promise.resolve(null);
   /** The hub's word (net/staffFollow.js validFollowOut), for this follow's target alone. @param {any} f */
   function heard(f) {
     if (!f || f.sub !== target) return;
@@ -119,15 +140,31 @@ export function createStaffHook({ main, askToken, Session = OnlineSession, WS = 
     // from the cell it just left, or a note sent before the crossing; dropping the pose on it sent the eye back while it
     // was on its way (a seam: two cells, every few frames, a token and a hello each). A note still wins once the eye's
     // new room has welcomed it and not shown them (gone back by a recall, say)
-    else if (f.k === 'note') { note = f.p; const r = noteRoom(f.p); if (r) { room = r.room; ly = r.ly; if (r.room !== seenIn || eye?.welcomed) seen = null; } }
-    else if (f.k === 'in') { room = f.room; ly = f.ly ?? 0; pid = f.id ?? pid; if (f.room !== seenIn) seen = null; }
-    else if (f.k === 'gone') { room = null; seen = null; pid = null; }   // offline: the follow stands, and waits for their next note
+    else if (f.k === 'note') {
+      note = f.p;
+      const r = noteRoom(f.p);
+      if (r) {
+        room = r.room;
+        ly = r.ly;
+        if (r.room !== seenIn || eye?.welcomed) seen = null;
+      }
+    } else if (f.k === 'in') {
+      room = f.room;
+      ly = f.ly ?? 0;
+      pid = f.id ?? pid;
+      if (f.room !== seenIn) seen = null;
+    } else if (f.k === 'gone') {
+      room = null;
+      seen = null;
+      pid = null;
+    } // offline: the follow stands, and waits for their next note
     // 'out': the room keeps its socket until the hub's next note says where they went
   }
   /** The target as the room I watch from shows them, or null. */
   function peer() {
     if (!eye) return null;
-    for (const p of eye.peers?.values?.() ?? []) if (p && (p.sub === target || (pid && p.id === pid))) return p.shown ?? p.pose ?? null;
+    for (const p of eye.peers?.values?.() ?? [])
+      if (p && (p.sub === target || (pid && p.id === pid))) return p.shown ?? p.pose ?? null;
     return null;
   }
   return {
@@ -141,10 +178,13 @@ export function createStaffHook({ main, askToken, Session = OnlineSession, WS = 
     follow(sub, hint = null) {
       if (typeof sub !== 'string' || !ID_RE.test(sub)) return false;
       if (sub !== target) {
-        close(); target = sub;
+        close();
+        target = sub;
         const r = hint?.room;
         if (typeof r === 'string' && r.length > 0 && r.length <= ROOM_HINT_MAX && !isSocialRoom(r) && !isChatRoom(r)) {
-          room = r; ly = Number.isInteger(hint?.ly) && /** @type {number} */ (hint?.ly) > 0 ? /** @type {number} */ (hint?.ly) : 0;
+          room = r;
+          ly =
+            Number.isInteger(hint?.ly) && /** @type {number} */ (hint?.ly) > 0 ? /** @type {number} */ (hint?.ly) : 0;
           pid = typeof hint?.id === 'string' && hint.id.length <= ROOM_HINT_MAX ? hint.id : null;
         }
       }
@@ -153,7 +193,10 @@ export function createStaffHook({ main, askToken, Session = OnlineSession, WS = 
     /** FOLLOW-GROUND-HINT: whether the follow knows where the target is yet (a room to watch from). */
     where: () => room,
     /** Let go. */
-    unlock() { close(); target = null; },
+    unlock() {
+      close();
+      target = null;
+    },
     /** Whether the camera is the target's: a follow the hub said `on` to. */
     locked: () => !!target && on,
     target: () => target,
@@ -170,17 +213,31 @@ export function createStaffHook({ main, askToken, Session = OnlineSession, WS = 
     peers: () => eye?.drawable?.() ?? [],
     /** FOLLOW-BODIES (mob, 2026-10-24: "cant see other players bodys"): the players around the target, for the scene to
      *  draw while the follow is locked - the room's draw less the target, whose eyes the camera is. */
-    others: () => (eye?.drawable?.() ?? []).filter((/** @type {any} */ p) => !(p?.sub === target || (pid && p?.id === pid))),
+    others: () =>
+      (eye?.drawable?.() ?? []).filter((/** @type {any} */ p) => !(p?.sub === target || (pid && p?.id === pid))),
     /** Every frame: the hub link held, and the room link where the hub says, standing on the target for range. */
     tick() {
       const m = main?.();
-      if (!target || !m?.url) { if (hub || eye) close(); return; }
+      if (!target || !m?.url) {
+        if (hub || eye) close();
+        return;
+      }
       if (!hub) {
-        const h = hub = new Session({ url: m.url, name: SPECTATOR, ...ownId(), presence: false, mintToken: mint(target), WebSocketImpl: WS });
+        const h = (hub = new Session({
+          url: m.url,
+          name: SPECTATOR,
+          ...ownId(),
+          presence: false,
+          mintToken: mint(target),
+          WebSocketImpl: WS,
+        }));
         h.onFollow = heard;
         // STAFF-PANEL5-FOLLOW-FIX (the relay review's finding 5): the hub's lease, kept on its link and handed to the eye
         // (as chatSafetyHost does for the game's own links) - with leaseDoor on, a lease room hears nothing else from it
-        h.onLease = (/** @type {string} */ l) => { h.sendLease(l); eye?.sendLease(l); };
+        h.onLease = (/** @type {string} */ l) => {
+          h.sendLease(l);
+          eye?.sendLease(l);
+        };
       }
       // STAFF-FOLLOW-SHARD (mob, 2026-10-23: "follow does not work"): the bus hops a hub link to its own shard
       // (net/hubShards.js), and a link on its shard is the hub's - asked back to the bus each frame, it hopped and came back
@@ -191,14 +248,30 @@ export function createStaffHook({ main, askToken, Session = OnlineSession, WS = 
       const v = peer();
       // STAFF-PANEL5-FOLLOW-R2: a pose leads only in the frame of the room the hub names (an interior's own pose names no
       // outdoor cell), and only while they stand in the room I saw them in - gone from it, the hub's word leads
-      if (v && (eye.room === room || (isCellRoom(eye.room) && isCellRoom(room)))) { seen = v; seenIn = eye.room; }
-      else if (!v && eye?.room === seenIn) seen = null;
+      if (v && (eye.room === room || (isCellRoom(eye.room) && isCellRoom(room)))) {
+        seen = v;
+        seenIn = eye.room;
+      } else if (!v && eye?.room === seenIn) seen = null;
       // outdoors the target's own pose names the next cell before their note does (a crossing is not a door)
-      const want = seen && room && isCellRoom(room) ? cellRoomOfWire(seen.x, seen.z) ?? room : room;
+      const want = seen && room && isCellRoom(room) ? (cellRoomOfWire(seen.x, seen.z) ?? room) : room;
       if (!want) return;
-      if (!eye) { eye = new Session({ url: m.url, name: SPECTATOR, ...ownId(), presence: true, mintToken: mint(target), WebSocketImpl: hiddenSeat(WS) }); eye.leaseFrom(hub); }
-      const at = seen ?? (Number.isFinite(note?.wx) ? { x: note.wx, y: note.wy, z: note.wz, yaw: 0, pitch: 0, mv: 0 } : null);
-      if (eye.room !== want) { eye.layerHint = ly; eye.join(want, at); } else if (at) eye.sendPose(at);
+      if (!eye) {
+        eye = new Session({
+          url: m.url,
+          name: SPECTATOR,
+          ...ownId(),
+          presence: true,
+          mintToken: mint(target),
+          WebSocketImpl: hiddenSeat(WS),
+        });
+        eye.leaseFrom(hub);
+      }
+      const at =
+        seen ?? (Number.isFinite(note?.wx) ? { x: note.wx, y: note.wy, z: note.wz, yaw: 0, pitch: 0, mv: 0 } : null);
+      if (eye.room !== want) {
+        eye.layerHint = ly;
+        eye.join(want, at);
+      } else if (at) eye.sendPose(at);
       eye.tick();
     },
   };
@@ -225,11 +298,22 @@ export function validTags(m) {
     if (!level && !watch) continue;
     const why = level && typeof r.why === 'string' && r.why.length <= TAG_WHY_MAX ? r.why : '';
     const had = flags.get(r.sub);
-    if (!had) { flags.set(r.sub, { level, why, watch }); continue; }
-    if (rank(level) < rank(had.level)) { had.level = level; had.why = why; }
+    if (!had) {
+      flags.set(r.sub, { level, why, watch });
+      continue;
+    }
+    if (rank(level) < rank(had.level)) {
+      had.level = level;
+      had.why = why;
+    }
     had.watch = had.watch || watch;
   }
-  return { dist: NAMEPLATE_DISTS.includes(m.dist) ? m.dist : NAMEPLATE_DIST, esp: m.esp !== false, lines: m.lines !== false, flags };
+  return {
+    dist: NAMEPLATE_DISTS.includes(m.dist) ? m.dist : NAMEPLATE_DIST,
+    esp: m.esp !== false,
+    lines: m.lines !== false,
+    flags,
+  };
 }
 
 /** THE PANEL'S DOOR on a window (above) - `hookOf()` the follow; answers the panel's `hook?`, takes its `follow`,
@@ -240,13 +324,31 @@ export function validTags(m) {
  *  STAFF-EVENT: and `places?` and `here?` for the Events page, off `placesOf()` - the game's maps and my map pixel.
  *  STAFF-PILOT: and `pilot`, handed to `pilot(m)` (scenes/staffFollowHost.js). STAFF-PULL: and `pull`, to `pull(sub)`.
  *  @param {any} win @param {() => any} hookOf @param {{ setTimer?: typeof setTimeout, clearTimer?: typeof clearTimeout, relink?: (() => void) | null, now?: () => number, mapOf?: () => any, placesOf?: () => any, pilot?: ((m: any) => void) | null, pull?: ((sub: string) => Promise<string>) | null }} [t] */
-export function staffHookDoor(win, hookOf, { setTimer = setTimeout, clearTimer = clearTimeout, relink = null, now = () => Date.now(), mapOf = () => null, placesOf = () => null, pilot = null, pull = null } = {}) {
+export function staffHookDoor(
+  win,
+  hookOf,
+  {
+    setTimer = setTimeout,
+    clearTimer = clearTimeout,
+    relink = null,
+    now = () => Date.now(),
+    mapOf = () => null,
+    placesOf = () => null,
+    pilot = null,
+    pull = null,
+  } = {},
+) {
   /** @type {Map<string, (tok: string|null) => void>} */
   const waiting = new Map();
   let seen = false;
   // STAFF-HIDE-TOGGLE: when the last relink ran, and the one waiting for the gap's end (one at most: it remakes every link)
-  let relinkAt = -Infinity, relinkWait = /** @type {any} */ (null);
-  const relinkNow = () => { relinkWait = null; relinkAt = now(); relink?.(); };
+  let relinkAt = -Infinity,
+    relinkWait = /** @type {any} */ (null);
+  const relinkNow = () => {
+    relinkWait = null;
+    relinkAt = now();
+    relink?.();
+  };
   /** STAFF-VIEW1: the panel's last tags answer (validTags), or null while it has given none. */
   let tags = /** @type {ReturnType<typeof validTags>} */ (null);
   const origin = win?.location?.origin;
@@ -255,35 +357,66 @@ export function staffHookDoor(win, hookOf, { setTimer = setTimeout, clearTimer =
     const m = e?.data;
     if (e?.source !== win || e?.origin !== origin || !m || typeof m.dfoStaff !== 'string') return;
     const hook = hookOf();
-    if (m.dfoStaff === 'hook?') { seen = true; post({ dfoStaff: 'hook', v: STAFF_HOOK_VERSION }); }
-    else if (m.dfoStaff === 'follow') { seen = true; hook?.follow(m.sub); }
-    else if (m.dfoStaff === 'unlock') hook?.unlock();
-    else if (m.dfoStaff === 'relink' && relink && !relinkWait) { const wait = relinkAt + STAFF_RELINK_GAP_MS - now(); if (wait > 0) relinkWait = setTimer(relinkNow, wait); else relinkNow(); }
-    else if (m.dfoStaff === 'token' && 'tok' in m) waiting.get(`${m.sub}|${m.room}`)?.(typeof m.tok === 'string' && m.tok.length <= TOKEN_MAX_CHARS ? m.tok : null);
-    else if (m.dfoStaff === 'tags') tags = validTags(m) ?? tags;   // STAFF-VIEW1: an answer with no list keeps the last
-    else if (m.dfoStaff === 'map?') { seen = true; mapOf()?.pick(m.region); }   // STAFF-MAP: a region to watch, or null
+    if (m.dfoStaff === 'hook?') {
+      seen = true;
+      post({ dfoStaff: 'hook', v: STAFF_HOOK_VERSION });
+    } else if (m.dfoStaff === 'follow') {
+      seen = true;
+      hook?.follow(m.sub);
+    } else if (m.dfoStaff === 'unlock') hook?.unlock();
+    else if (m.dfoStaff === 'relink' && relink && !relinkWait) {
+      const wait = relinkAt + STAFF_RELINK_GAP_MS - now();
+      if (wait > 0) relinkWait = setTimer(relinkNow, wait);
+      else relinkNow();
+    } else if (m.dfoStaff === 'token' && 'tok' in m)
+      waiting.get(`${m.sub}|${m.room}`)?.(typeof m.tok === 'string' && m.tok.length <= TOKEN_MAX_CHARS ? m.tok : null);
+    else if (m.dfoStaff === 'tags')
+      tags = validTags(m) ?? tags; // STAFF-VIEW1: an answer with no list keeps the last
+    else if (m.dfoStaff === 'map?') {
+      seen = true;
+      mapOf()?.pick(m.region);
+    } // STAFF-MAP: a region to watch, or null
     else if (m.dfoStaff === 'regions?') post({ dfoStaff: 'regions', names: mapOf()?.regions() ?? [] });
-    else if (m.dfoStaff === 'places?') post(staffPlaces(placesOf()?.maps, m.region));   // STAFF-EVENT: a region's places
-    else if (m.dfoStaff === 'here?') post(staffHere(placesOf()?.maps, placesOf()?.pixel ?? null));   // STAFF-EVENT: where I stand
-    else if (m.dfoStaff === 'pilot' && typeof m.on === 'boolean' && !('boss' in m) && !('why' in m) && pilot) { seen = true; pilot(m); }   // STAFF-PILOT: Play as boss / Leave boss - { on, ev } in; { on, ev, boss } or { on: false, ev, why } back (Staff-Events.md section 10). PILOT-ECHO: my own answer comes back on this window too - heard as an ask it started the steering again on every pass, the panel redrew and called a boss each time, and Leave boss lost to the next pass
+    else if (m.dfoStaff === 'places?')
+      post(staffPlaces(placesOf()?.maps, m.region)); // STAFF-EVENT: a region's places
+    else if (m.dfoStaff === 'here?')
+      post(staffHere(placesOf()?.maps, placesOf()?.pixel ?? null)); // STAFF-EVENT: where I stand
+    else if (m.dfoStaff === 'pilot' && typeof m.on === 'boolean' && !('boss' in m) && !('why' in m) && pilot) {
+      seen = true;
+      pilot(m);
+    } // STAFF-PILOT: Play as boss / Leave boss - { on, ev } in; { on, ev, boss } or { on: false, ev, why } back (Staff-Events.md section 10). PILOT-ECHO: my own answer comes back on this window too - heard as an ask it started the steering again on every pass, the panel redrew and called a boss each time, and Leave boss lost to the next pass
     else if (m.dfoStaff === 'pull' && pull && typeof m.sub === 'string' && ID_RE.test(m.sub)) {
       // STAFF-PULL (2026-10-28, the owner: "tpa player so tp them to us"; scenes/staffPullHost.js), no version bump:
       // { dfoStaff: 'pull', sub } -> { dfoStaff: 'pulled', sub, ok, line } - that account's player brought to me, `line`
       // what happened in words; a hook before it says nothing
       const sub = m.sub;
       seen = true;
-      pull(sub).then((line) => post({ dfoStaff: 'pulled', sub, ok: true, line }), (e) => post({ dfoStaff: 'pulled', sub, ok: false, line: String(e?.message ?? t('net.staffPull.failed', 'The player could not be brought.')) }));
+      pull(sub).then(
+        (line) => post({ dfoStaff: 'pulled', sub, ok: true, line }),
+        (e) =>
+          post({
+            dfoStaff: 'pulled',
+            sub,
+            ok: false,
+            line: String(e?.message ?? t('net.staffPull.failed', 'The player could not be brought.')),
+          }),
+      );
     }
   });
   /** @param {string} sub @param {string} room @returns {Promise<string|null>} */
-  const askToken = (sub, room) => new Promise((resolve) => {
-    const k = `${sub}|${room}`;
-    waiting.get(k)?.(null);
-    const done = (/** @type {string|null} */ tok) => { if (waiting.get(k) === done) waiting.delete(k); clearTimer(timer); resolve(tok); };
-    const timer = setTimer(() => done(null), STAFF_TOKEN_WAIT_MS);
-    waiting.set(k, done);
-    post({ dfoStaff: 'token', sub, room });
-  });
+  const askToken = (sub, room) =>
+    new Promise((resolve) => {
+      const k = `${sub}|${room}`;
+      waiting.get(k)?.(null);
+      const done = (/** @type {string|null} */ tok) => {
+        if (waiting.get(k) === done) waiting.delete(k);
+        clearTimer(timer);
+        resolve(tok);
+      };
+      const timer = setTimer(() => done(null), STAFF_TOKEN_WAIT_MS);
+      waiting.set(k, done);
+      post({ dfoStaff: 'token', sub, room });
+    });
   // STAFF-VIEW1: `tags()` the panel's last answer, `askTags()` the ask - to this page's own origin, as every word here
   return { askToken, panel: () => seen, tags: () => tags, askTags: () => post({ dfoStaff: 'tags?' }), post };
 }
@@ -295,7 +428,9 @@ export function staffHookDoor(win, hookOf, { setTimer = setTimeout, clearTimer =
  *  once the service has. Resolves the panel's ok - false when the service refused, or when no answer came in
  *  STAFF_TOKEN_WAIT_MS: no panel on this page, or one older than this ask, which ignores it.
  *  @param {any} [win] @param {{ setTimer?: typeof setTimeout, clearTimer?: typeof clearTimeout }} [t] @returns {Promise<boolean>} */
-export function staffShowMe(win = globalThis.window, t = {}) { return staffHide(false, win, t); }
+export function staffShowMe(win = globalThis.window, t = {}) {
+  return staffHide(false, win, t);
+}
 
 /** STAFF-HIDE-IN-GAME (2026-10-24, mob: "when i ment hide button for chat i ment for invisble", "and hide me and unlock
  *  button?"): Hide me ON or OFF asked from the game (its staff bar, ui/staffFollowBar.js), as staffShowMe asks it off -
@@ -303,14 +438,20 @@ export function staffShowMe(win = globalThis.window, t = {}) { return staffHide(
  *  Resolves the panel's ok. @param {boolean} on @param {any} [win] @param {{ setTimer?: typeof setTimeout, clearTimer?: typeof clearTimeout }} [t] @returns {Promise<boolean>} */
 export function staffHide(on, win = globalThis.window, { setTimer = setTimeout, clearTimer = clearTimeout } = {}) {
   const origin = win?.location?.origin;
-  if (typeof origin !== 'string' || !origin || origin === 'null' || typeof win.postMessage !== 'function') return Promise.resolve(false);
+  if (typeof origin !== 'string' || !origin || origin === 'null' || typeof win.postMessage !== 'function')
+    return Promise.resolve(false);
   const want = on === true;
   return new Promise((resolve) => {
     const heard = (/** @type {any} */ e) => {
       const m = e?.data;
-      if (e?.source === win && e?.origin === origin && m?.dfoStaff === 'hide' && m.on === want && 'ok' in m) done(m.ok === true);
+      if (e?.source === win && e?.origin === origin && m?.dfoStaff === 'hide' && m.on === want && 'ok' in m)
+        done(m.ok === true);
     };
-    const done = (/** @type {boolean} */ ok) => { clearTimer(timer); win.removeEventListener?.('message', heard); resolve(ok); };
+    const done = (/** @type {boolean} */ ok) => {
+      clearTimer(timer);
+      win.removeEventListener?.('message', heard);
+      resolve(ok);
+    };
     const timer = setTimer(() => done(false), STAFF_TOKEN_WAIT_MS);
     win.addEventListener?.('message', heard);
     win.postMessage({ dfoStaff: 'hide', on: want }, origin);

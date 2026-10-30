@@ -97,8 +97,8 @@
   {
     "name": "PROF8-wait-no-hours",
     "file": "src/net/professionLaw.js",
-    "old": "(hour === 7 || hour === 17 ? 0.5 : 1)",
-    "new": "1",
+    "old": "export const waitMult = (hour, storm = false) => (hour === 7 || hour === 17 ? 0.5 : 1) * (storm ? 2 : 1);",
+    "new": "export const waitMult = (hour, storm = false) => 1 * (storm ? 2 : 1);",
     "tests": [
       "test/net/prof8_law.test.js",
       "test/world/terrain/prof8_client.test.js"
@@ -107,8 +107,8 @@
   {
     "name": "PROF8-angler-plain",
     "file": "src/net/professionLaw.js",
-    "old": "FISH_ACT.tugS * (angler ? FISH_ACT.angler : 1)",
-    "new": "FISH_ACT.tugS",
+    "old": "export const tugWindow = (angler = false) => FISH_ACT.tugS * (angler ? FISH_ACT.angler : 1);",
+    "new": "export const tugWindow = (angler = false) => FISH_ACT.tugS;",
     "tests": [
       "test/net/prof8_law.test.js",
       "test/world/terrain/prof8_client.test.js"
