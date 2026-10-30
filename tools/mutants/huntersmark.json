@@ -157,8 +157,8 @@
   {
     "name": "MARKS-OF-MASTERY-board-batch-masters",
     "file": "server-account/src/hunts.js",
-    "old": "masters: ms.get(id) })]));",
-    "new": "masters: null })]));",
+    "old": "masters: ms.get(id), ...ds.get(id)",
+    "new": "masters: null, ...ds.get(id)",
     "tests": [
       "test/server/huntersmark_service.test.js"
     ]
@@ -716,7 +716,7 @@
   {
     "name": "AUDIT-F5-inbox-marks-unread",
     "file": "server-account/src/letters.js",
-    "old": "    for (const p of await withMasteryMarksAll({ db }, [...rows.values()])) rows.set(p.id, p);   // AUDIT HORIZONTAL F5: a worn Mark of Mastery (reads alone)\n",
+    "old": "    for (const p of await withMasteryMarksAll({ db }, [...rows.values()], env)) rows.set(p.id, p);   // AUDIT HORIZONTAL F5: a worn Mark of Mastery (reads alone)\n",
     "new": "",
     "tests": [
       "test/server/huntersmark_service.test.js"
@@ -725,8 +725,8 @@
   {
     "name": "AUDIT-F5-letter-marks-unread",
     "file": "server-account/src/letters.js",
-    "old": "badgeOf(await withMasteryMarks({ db }, await withGambitHonours(",
-    "new": "badgeOf(await ((_c, p) => p)({ db }, await withGambitHonours(",
+    "old": "badgeOf(await withMasteryMarks({ db, env }, await withGambitHonours(",
+    "new": "badgeOf(await ((_c, p) => p)({ db, env }, await withGambitHonours(",
     "tests": [
       "test/server/huntersmark_service.test.js"
     ]
@@ -734,7 +734,7 @@
   {
     "name": "AUDIT-F5-note-marks-unread",
     "file": "server-account/src/board.js",
-    "old": "    for (const p of await withMasteryMarksAll({ db }, [...rows.values()])) rows.set(p.id, p);   // AUDIT HORIZONTAL F5: a worn Mark of Mastery (reads alone)\n",
+    "old": "    for (const p of await withMasteryMarksAll({ db }, [...rows.values()], env)) rows.set(p.id, p);   // AUDIT HORIZONTAL F5: a worn Mark of Mastery (reads alone)\n",
     "new": "",
     "tests": [
       "test/server/huntersmark_service.test.js"

@@ -181,6 +181,15 @@ the row stands names the tame, so a lost answer is told again. The device keeps 
 Dwarven Dragon**, in the Transportation group - goes into the pack at the claim's answer, or at the character's next
 stand-up when another stood then (`scenes/dragonRewards.js` bind), once DRAGON_MOUNT_ONLINE is on (section 13, DRAGON5a).
 
+**The title** (WYRM-RIDER, 2026-10-30, the owner: "we need a title thats basd ass for this DRAGON TAMER"). An account
+that holds a tamed brass dragon (a `dragon_mounts` row, look 0) holds **Wyrm Rider**; one that holds an Aetherbright
+(look 1) holds **Aether Rider**. The earliest tame of each look (by its time, then its id) also holds **First Wyrm
+Rider** or **First Aether Rider**. A developer's tame is never a First (the owner: "DONT COUNT ADMINS"). They are
+derived like the Marks of Mastery (`net/huntLaw.js` DRAGON_TITLES, `server-account/src/hunts.js` DRAGON_COUNTS_SQL),
+signed into the token (relay world294) and shown in the wardrobe under the Dwarven Dragon. Each is worn on a metal
+name plate (the owner: "naw just make the name plate"): brass, aetherium, and the Firsts' gold and ice
+(`ui/titleFlame.js` TITLE_PLATE and plateCss).
+
 ## 9. What a player sees and hears
 
 - **The body** is the Dwarven Dragon's own sprite (`characters/dwarvenDragon.js`, archive 1800) at `DRAGON_SCALE`,

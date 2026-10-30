@@ -3699,6 +3699,26 @@
   "tr": "a7694911bc09",
   "by": "claude-in-session"
  },
+ "net.update.appBanner": {
+  "en": "828450b15581",
+  "tr": "00f85da12411",
+  "by": "claude-in-session"
+ },
+ "net.update.appBody": {
+  "en": "e81e53388700",
+  "tr": "7f00394c58d7",
+  "by": "claude-in-session"
+ },
+ "net.update.appBuild": {
+  "en": "05017b1922f5",
+  "tr": "6200c09297bf",
+  "by": "claude-in-session"
+ },
+ "net.update.appHold": {
+  "en": "98aca0313218",
+  "tr": "0eae931ec20f",
+  "by": "claude-in-session"
+ },
  "net.update.banner": {
   "en": "134e714f0b6f",
   "tr": "7f2e43e5cba6",
@@ -3727,6 +3747,16 @@
  "net.update.reloading": {
   "en": "ea3678c2b08b",
   "tr": "0ec564888b96",
+  "by": "claude-in-session"
+ },
+ "net.update.restartButton": {
+  "en": "84c07ca92acc",
+  "tr": "c4b0582a9b51",
+  "by": "claude-in-session"
+ },
+ "net.update.restarting": {
+  "en": "f3d4bca3a858",
+  "tr": "dd7d4f20b42f",
   "by": "claude-in-session"
  },
  "net.update.saving": {
@@ -3944,6 +3974,11 @@
   "tr": "1725fabe43de",
   "by": "claude-in-session"
  },
+ "pvp.evade": {
+  "en": "3ad2db0403c9",
+  "tr": "4d4adb196d14",
+  "by": "claude-in-session"
+ },
  "pvp.flag.level": {
   "en": "64776e968136",
   "tr": "bf2cbfe0fdd3",
@@ -4054,11 +4089,6 @@
   "tr": "6c14bd7f6f9e",
   "by": "claude-in-session"
  },
- "pvp.kit.cure": {
-  "en": "741ccd1eaaed",
-  "tr": "5fe1ca2df7fb",
-  "by": "claude-in-session"
- },
  "pvp.kit.damage": {
   "en": "7bf6d1d3a58a",
   "tr": "69ace645512d",
@@ -4137,6 +4167,11 @@
  "pvp.kit.reflect": {
   "en": "11a5b905dd43",
   "tr": "776127c53a6d",
+  "by": "claude-in-session"
+ },
+ "pvp.kit.regen": {
+  "en": "b04c991e58e7",
+  "tr": "66a340bcb20a",
   "by": "claude-in-session"
  },
  "pvp.kit.resist": {
@@ -4757,6 +4792,11 @@
  "sea.wild.chipTip": {
   "en": "88c4bc67ac34",
   "tr": "b967135c3d07",
+  "by": "claude-in-session"
+ },
+ "sea.wild.deathRise": {
+  "en": "29d9b075a86b",
+  "tr": "d49745dfcd4b",
   "by": "claude-in-session"
  },
  "sea.wild.dropLate": {

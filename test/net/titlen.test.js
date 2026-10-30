@@ -85,8 +85,8 @@ test('TITLE-N grants: the Dungeon Master is SquidKamer\'s alone and Disciple is 
   for (const h of ['LOSTMYLEG', 'tabby', 'RookieG', 'rookieg', 'ROOKIEG', 'roderic', 'Roderic', 'RODERIC']) {
     const dev = { handle: h, created_at: 1_800_000_000, registered_at: 1_900_000_000 };   // FOUNDER3: first played after the cutoff too, so no Founder
     const denv = { DEVELOPER_HANDLES: v('DEVELOPER_HANDLES') };
-    assert.deepEqual(titlesHeld(dev, denv), ['developer'], `${h}: the Developer title, case-folded`);
-    assert.deepEqual(glyphsOf(dev, denv, 1_900_000_000), ['dev'], `${h}: the dev glyph`);
+    assert.deepEqual(titlesHeld(dev, denv).slice(0, 1), ['developer'], `${h}: the Developer title, case-folded`);   // ADMIN-ALL (PIN MOVED): an Admin holds every cosmetic after these (test/server/admin_all.test.js) - the head is what is earned
+    assert.deepEqual(glyphsOf(dev, denv, 1_900_000_000).slice(0, 1), ['dev'], `${h}: the dev glyph`);   // ADMIN-ALL (PIN MOVED): an Admin holds every cosmetic after these (test/server/admin_all.test.js)
     assert.ok(aurasHeld(dev, denv).includes('seraphwings'), `${h}: the Seraph Wings`);
     assert.equal(canModerate(dev, denv), true, `${h}: /mute`);
   }
