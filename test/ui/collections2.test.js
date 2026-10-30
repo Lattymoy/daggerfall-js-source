@@ -149,7 +149,7 @@ const CATALOGUE = {
   'title:dawnbringer': 'shop store', 'title:voidwalker': 'shop store', 'title:eternalchampion': 'shop store', 'aura:dominion': 'shop store',
   'glyph:oblivion': 'shop store', 'glyph:gatesigil': 'shop store', 'glyph:gearcrown': 'pass pass',   // PIN MOVED (PASS-PANELS): the Gilded Folio's, its bundle retired
   // PIN MOVED (AURUM): Season One's titles six to three and its portraits three, no figure among them; the daily wares' eight
-  'title:tremorborn': 'pass pass', 'title:heartwaker': 'pass pass', 'title:numidiumecho': 'pass pass', 'aura:aetherium': 'pass pass', 'aura:gildedcoil': 'pass pass',
+  'title:tremorborn': 'pass pass', 'title:heartwaker': 'pass pass', 'title:numidiumecho': 'pass pass', 'aura:aetherium': 'pass pass', 'aura:aetherwings': 'pass pass', 'aura:gildedcoil': 'pass pass',
   'icon:aetherium': 'pass pass', 'icon:lexicon': 'pass pass', 'icon:gearheart': 'pass pass', 'glyph:tonalfork': 'pass pass', 'glyph:cog': 'pass pass',
   // PIN MOVED (AURUM-ONLY): the eight icons in the shop for good, each bought with Aurum - a deal on its day
   'icon:gatefire': 'shop store', 'icon:aurbis': 'shop store', 'icon:elderscroll': 'shop store', 'icon:azurastar': 'shop store',

@@ -55,8 +55,16 @@ Every item is the account's for good, on every character, read off the row at ev
 | Premium | I (0) | Tonal Fork, glyph (200); Dwemer Lexicon, profile icon (300); Aetherium Coil, aura (1,000) |
 | Premium | II (600) | Gearheart, profile icon (400); Brass Crown, glyph (300); Heart-Waker, title (600); Gilded Coil, aura (1,200) |
 | Premium | III (2,000) | Echo of Numidium, title (800); Brass Automaton, mount look (1,600) |
+| Premium | IV (6,400) | Aetherium Wings, aura (2,000) - the capstone |
 
-The free track costs 2,300 Aurum, the premium 1,000 to open and 6,400 more. The owner's "No overbundence of titles and
+**The capstone** (2026-10-30, the owner: *"for the final tiers we implement the developer wing aura has a light blue
+style"*; asked, a page of its own at 2,000 Aurum). Page IV of the Gilded Folio opens at 6,400 Aurum spent on it, what every
+item before it costs, so it opens only once all of them are bought. It holds the Aetherium Wings: the developers' Seraph
+Wings - their mesh, measures, motes and beat - in aetherium's pale blue, their pool and their light on the world blue too
+(`render/auraRing.js` AETHER_WING_RGB, kind 19). The developers keep the gold. A season's finds, challenges and the week's
+deeds with two caches a day reach it inside the season; the folios never close, so it waits for anyone slower.
+
+The free track costs 2,300 Aurum, the premium 1,000 to open and 8,400 more. The owner's "No overbundence of titles and
 profile icons" holds: one title free and two premium, three icons in all. The Brass Crown came with the retired Seasonal
 Collector; it is the premium track's now, and no shop ware.
 

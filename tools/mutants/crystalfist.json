@@ -92,8 +92,8 @@
   {
     "name": "CRYSTALFIST-the-resonances-button",
     "file": "src/ui/playerBadge.js",
-    "old": "seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho' });",
-    "new": "seraphwings: 'founder', resonance: 'aegis', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho' });",
+    "old": "seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho', aetherwings: 'heartwaker' });",
+    "new": "seraphwings: 'founder', resonance: 'aegis', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho', aetherwings: 'heartwaker' });",
     "tests": [
       "test/net/crystalfist.test.js"
     ],
@@ -163,8 +163,8 @@
   {
     "name": "CRYSTALFIST-the-vocabularys-aura",
     "file": "src/net/identityToken.js",
-    "old": "'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal', 'dominion', 'aetherium', 'gildedcoil']);",
-    "new": "'shadowcloak', 'seraphwings', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal', 'dominion', 'aetherium', 'gildedcoil']);",
+    "old": "'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal', 'dominion', 'aetherium', 'gildedcoil', 'aetherwings']);",
+    "new": "'shadowcloak', 'seraphwings', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal', 'dominion', 'aetherium', 'gildedcoil', 'aetherwings']);",
     "tests": [
       "test/net/crystalfist.test.js",
       "test/net/relayversion.test.js"

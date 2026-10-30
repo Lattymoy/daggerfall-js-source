@@ -272,7 +272,7 @@ const run = (aura, kind, vP, { t = 13.7, kindle = 1 } = {}) => {
 const polar = (r, a) => [Math.cos(a) * r, Math.sin(a) * r];
 
 test('STOREFRONT the auras: each its words and its title\'s paint, a look of its own kind - the Dominion premultiplied, its black covering; the coils added whole, the coil about the body to past the crown - every rate whole over the clock, each look\'s program its own (mutants: a kind shared; the Dominion added; a rate off the clock)', () => {
-  assert.deepEqual(AURAS.slice(-3), NEW_AURAS);
+  assert.deepEqual(AURAS.slice(-4, -1), NEW_AURAS);   // PIN MOVED (the capstone): the Aetherium Wings after them
   assert.deepEqual(NEW_AURAS.map((a) => AURA_TEXT[a]), ['Daedric Dominion', 'Aetherium Coil', 'Gilded Coil']);
   assert.equal(SHOP_WARE_NAME['aura:dominion'], AURA_TEXT.dominion);
   assert.deepEqual(NEW_AURAS.map((a) => AURA_PAINT[a]), ['eternalchampion', 'heartwaker', 'numidiumecho'], 'each in the paint of the title it comes beside');

@@ -13,7 +13,8 @@ import {
 import { TITLES, GLYPHS, ICONS, AURAS } from '../../src/net/identityToken.js';
 import { effectOf } from '../../src/net/effectLaw.js';
 import { shopWareById } from '../../src/net/shopLaw.js';
-import { AURUM_DAILY } from '../../src/net/aurumLaw.js';
+import { AURUM_DAILY, AURUM_DEEDS } from '../../src/net/aurumLaw.js';
+import { AURUM_CACHE_AURUM } from '../../src/net/aurumCacheLaw.js';
 
 const S1 = passSeasonById('s1');
 const DAY = 86_400_000;
@@ -24,7 +25,7 @@ test('PASS-PANELS the tracks: two a season, free and premium, three panels each 
   assert.deepEqual(PASS_TRACKS, ['free', 'premium']);
   for (const s of PASS_SEASONS) assert.deepEqual(Object.keys(PASS_PANELS[s.id]), ['free', 'premium'], `${s.id}: both tracks`);
   for (const panels of [free, premium]) {
-    assert.equal(panels.length, 3);
+    assert.equal(panels.length, panels === premium ? 4 : 3, 'PIN MOVED (the capstone): the Gilded Folio four pages');
     assert.equal(panels[0].open, 0, 'the first panel open from the start');
     for (let p = 1; p < panels.length; p++) {
       assert.ok(panels[p].open > panels[p - 1].open, 'each later panel dearer to open');
@@ -32,6 +33,13 @@ test('PASS-PANELS the tracks: two a season, free and premium, three panels each 
     }
     for (const p of panels) for (const it of p.items) assert.ok(Number.isSafeInteger(it.aurum) && it.aurum > 0 && it.aurum % 100 === 0, it.grant);
   }
+  // THE CAPSTONE (the owner: "the developer wing aura has a light blue style"): the Gilded Folio's last page, the
+  // Aetherium Wings alone, opening only once every item before it is bought
+  const cap = premium.at(-1);
+  assert.deepEqual(cap.items, [{ grant: 'aura:aetherwings', aurum: 2000 }]);
+  assert.equal(cap.open, sum(premium.slice(0, -1)), 'it opens at what every Gilded item before it costs');
+  assert.equal(passPanelOpen('s1', 'premium', premium.length - 1, premium.slice(0, -1).flatMap((p) => p.items.map((it) => it.grant)).slice(1)), false, 'one item short, shut');
+  assert.ok(AURAS.includes('aetherwings'));
   const grants = [...free, ...premium].flatMap((p) => p.items.map((it) => it.grant));
   assert.equal(new Set(grants).size, grants.length, 'every item once');
   assert.deepEqual([...PASS_ALL_GRANTS].sort(), [...grants].sort());
@@ -57,14 +65,16 @@ test('PASS-PANELS the items: each a cosmetic the wardrobe knows - a title, a gly
   assert.ok(count(free, 'icon') <= 1 && count(premium, 'icon') <= 2);
 });
 
-test('PASS-PANELS the prices: the free track costs 2,300 Aurum, the premium 1,000 to open and 6,400 more; a season\'s finds alone pay the free track inside a month and both tracks inside its sixty days with its challenges, so no item needs money (mutants: a price moved; the premium opened for nothing)', () => {
+test('PASS-PANELS the prices: the free track costs 2,300 Aurum, the premium 1,000 to open and 8,400 more (PIN MOVED, the capstone: 6,400); a season\'s finds alone pay the free track inside a month and both tracks inside its sixty days with its challenges, so no item needs money (mutants: a price moved; the premium opened for nothing)', () => {
   assert.equal(sum(free), 2300);
   assert.equal(PASS_PREMIUM_AURUM.s1, 1000);
-  assert.equal(sum(premium), 6400);
+  assert.equal(sum(premium), 8400);
   const days = (S1.toMs - S1.fromMs) / DAY, challenges = PASS_CHALLENGES.reduce((a, c) => a + c.aurum, 0);
   assert.equal(days, 60);
   assert.ok(30 * PASS_DAY_AURUM >= sum(free), 'the free track inside a month of finds');
-  assert.ok(days * PASS_DAY_AURUM + challenges >= sum(free) + PASS_PREMIUM_AURUM.s1 + sum(premium) - 2000, 'both tracks within reach of the season, a little short without the deeds and caches');
+  assert.ok(days * PASS_DAY_AURUM + challenges >= sum(free) + PASS_PREMIUM_AURUM.s1 + sum(premium.slice(0, -1)) - 2000, 'both tracks but the capstone within reach of the season, a little short without the deeds and caches');
+  const deeds = Object.values(AURUM_DEEDS).reduce((a, n) => a + n, 0) * (days / 7);
+  assert.ok(days * PASS_DAY_AURUM + challenges + deeds + days * 2 * AURUM_CACHE_AURUM >= sum(free) + PASS_PREMIUM_AURUM.s1 + sum(premium), 'the capstone too, with the week\'s deeds and two caches a day');
 });
 
 test('PASS-PANELS where an item stands, and why it cannot be bought: unknown, its season\'s tracks not open yet, held, the premium track shut, its panel shut - in that order; bought on an open panel once the track opens it; the tracks sell from the season\'s first instant for good (mutants: a premium item sold on a shut track; a shut panel sold; the tracks closed with the season)', () => {

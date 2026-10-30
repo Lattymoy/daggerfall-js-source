@@ -197,6 +197,7 @@ export const AURA_TEXT = Object.freeze({
   get dominion() { return t('account.aura.dominion', 'Daedric Dominion'); },
   get aetherium() { return t('account.aura.aetherium', 'Aetherium Coil'); },
   get gildedcoil() { return t('account.aura.gildedcoil', 'Gilded Coil'); },
+  get aetherwings() { return t('account.aura.aetherwings', 'Aetherium Wings'); },   // the Gilded Folio's capstone: the Seraph Wings in blue
 });
 
 /** SHADOW-FANG (2026-09-26, Mac): "SirMcMobdon gets a brand new
@@ -1026,7 +1027,7 @@ export const badgeClass = (kind, key) => `${kind}-${key}`;
  *  the Gatebreaker's, the Oblivion Ward the Aegis of Oblivion's, the Golden Radiance the Primarch's (PRIMARCH), the Holo
  *  Shadow Cloak the Shadow Fang's black and crimson (SHADOW-CLOAK), the Seraph Wings the Founder's gold - the wings' own, where
  *  the developer's paint is a red (SERAPH-WINGS), the Crystal Resonance the Crystal Fist's purple (CRYSTAL-FIST). A pin walks AURA_TEXT and requires an entry. */
-export const AURA_PAINT = Object.freeze({ dagonfire: 'gatebreaker', oblivionward: 'aegis', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho' });   // NIRNROOT-SAGE: Sage's Smoke in the Nirnroot Sage's leaf into glow into haze   // WITCH1: Witchfire in the Witchwarden's green   // WIKIMAID: the Lilac Warren in the WikiMaid's amethyst into blush; HOURS-FIRST: The First Hour in Hour's First's rose gold; SERPENT5: The Maelstrom in the Coilbreaker's sea; EG-E2: the Spire's three each in its title's paint
+export const AURA_PAINT = Object.freeze({ dagonfire: 'gatebreaker', oblivionward: 'aegis', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho', aetherwings: 'heartwaker' });   // NIRNROOT-SAGE: Sage's Smoke in the Nirnroot Sage's leaf into glow into haze   // WITCH1: Witchfire in the Witchwarden's green   // WIKIMAID: the Lilac Warren in the WikiMaid's amethyst into blush; HOURS-FIRST: The First Hour in Hour's First's rose gold; SERPENT5: The Maelstrom in the Coilbreaker's sea; EG-E2: the Spire's three each in its title's paint
 /** SHADOW-FANG: `titlePaint`'s properties as CSS declarations, the colour
  *  left to the button (its border is drawn in it) - so a gradient title's
  *  word on the card is the SAME paint as over a head, not a second one. */

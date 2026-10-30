@@ -14,6 +14,11 @@
   "tr": "c0165adb6575",
   "by": "claude-in-session"
  },
+ "account.aura.aetherwings": {
+  "en": "418d3bad83a1",
+  "tr": "418d3bad83a1",
+  "by": "claude-in-session"
+ },
  "account.aura.dominion": {
   "en": "5fd74e87eaff",
   "tr": "5fd74e87eaff",
@@ -9627,6 +9632,11 @@
  "coll.look.aetherium": {
   "en": "b05a11a9bf58",
   "tr": "e3a81c24e329",
+  "by": "claude-in-session"
+ },
+ "coll.look.aetherwings": {
+  "en": "c1ca03eba8b9",
+  "tr": "936a98c970c8",
   "by": "claude-in-session"
  },
  "coll.look.beaconlight": {

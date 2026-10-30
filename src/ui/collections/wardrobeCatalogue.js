@@ -323,6 +323,7 @@ export const WARDROBE = Object.freeze({
     // STOREFRONT: the bundles' Dominion, and the Folios' coil and its gilded twin
     dominion: E('shop', 'store', bundled, { look: () => t('coll.look.dominion', 'A ring of Daedric script burning crimson on black at your feet, black thorns out from it and embers rising.') }),
     aetherium: E('pass', 'pass', passReward('aura:aetherium'), { ...S1, look: () => t('coll.look.aetherium', 'A coil of aetherium-blue light wound with brass, turning about you from your feet to over your head.') }),
+    aetherwings: E('pass', 'pass', passReward('aura:aetherwings'), { ...S1, look: () => t('coll.look.aetherwings', 'Wings of flowing pale-blue light from your back, the developers\' Seraph Wings in aetherium\'s glow.') }),   // STOREFRONT: the Gilded Folio's capstone
     gildedcoil: E('pass', 'pass', passReward('aura:gildedcoil'), { ...S1, look: () => t('coll.look.gildedcoil', 'The Aetherium Coil gilded and brighter, gold motes rising through it.') }),
   }),
   icon: Object.freeze({

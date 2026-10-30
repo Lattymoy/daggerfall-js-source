@@ -72,8 +72,8 @@
   {
     "name": "NIRNROOT-SAGE-button-paint",
     "file": "src/ui/playerBadge.js",
-    "old": "sagesmoke: 'nirnrootsage', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho' });",
-    "new": "sagesmoke: 'witchwarden', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho' });",
+    "old": "sagesmoke: 'nirnrootsage', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho', aetherwings: 'heartwaker' });",
+    "new": "sagesmoke: 'witchwarden', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho', aetherwings: 'heartwaker' });",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "NIRNROOT-SAGE-aura-not-in-vocabulary",
     "file": "src/net/identityToken.js",
-    "old": "'witchfire', 'sagesmoke', 'eternal', 'dominion', 'aetherium', 'gildedcoil']);",
-    "new": "'witchfire', 'eternal', 'dominion', 'aetherium', 'gildedcoil']);",
+    "old": "'witchfire', 'sagesmoke', 'eternal', 'dominion', 'aetherium', 'gildedcoil', 'aetherwings']);",
+    "new": "'witchfire', 'eternal', 'dominion', 'aetherium', 'gildedcoil', 'aetherwings']);",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],

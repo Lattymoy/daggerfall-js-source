@@ -414,6 +414,10 @@ export const WING_HALO_NEAR = Object.freeze([0.9, 1.6]);
 export const WING_POOL_R = 1.0;   // WINGS-FIT: under the shorter wings (was 1.3)
 /** Its colours: white-hot at a strand's heart, gold through it, amber at its fraying edge. */
 export const WING_RGB = Object.freeze({ core: Object.freeze([1, 0.96, 0.84]), gold: Object.freeze([1, 0.76, 0.32]), amber: Object.freeze([0.95, 0.5, 0.14]) });
+/** STOREFRONT, the Gilded Folio's capstone (the owner: "the developer wing aura has a light blue style"): the Seraph
+ *  Wings' shape and motion in aetherium's pale blue - `core` white-blue, `gold` the strand's sky blue, `amber` the deeper
+ *  blue its frayed tips burn to. The developers keep the gold. Kind 19 (AURA_LOOK aetherwings). */
+export const AETHER_WING_RGB = Object.freeze({ core: Object.freeze([0.88, 0.97, 1]), gold: Object.freeze([0.48, 0.8, 1]), amber: Object.freeze([0.18, 0.5, 0.95]) });
 /** The strands a side and in all, the mesh's vertices, and the third draw's cards (the sparks and the backlight). */
 export const WING_PER_SIDE = (WING_PLUMES + WING_COVERTS) * WING_STRANDS;
 export const WING_STRAND_COUNT = 2 * WING_PER_SIDE;
@@ -1083,6 +1087,7 @@ export const AURA_LOOK = Object.freeze({
   dominion: Object.freeze({ kind: 16, ringR: DOMINION_R, flameH: DOMINION_H, glyphs: 0, shade: true }),   // STOREFRONT: the script's black band covers, its embers on the strip
   aetherium: Object.freeze({ kind: 17, ringR: HELIX_R, flameH: HELIX_H, glyphs: 0 }),   // STOREFRONT: the coil on the strip, added whole
   gildedcoil: Object.freeze({ kind: 18, ringR: HELIX_R, flameH: HELIX_H, glyphs: 0 }),
+  aetherwings: Object.freeze({ kind: 19, ringR: WING_POOL_R, flameH: WING_REACH[1], glyphs: WING_CARDS, mesh: 'wings' }),   // STOREFRONT: the Seraph Wings in aetherium blue (AETHER_WING_RGB), the Gilded Folio's capstone
 });
 /** The look a wearer's aura is drawn with - Dagon's Fire for one that names none (the fire was the only aura before). */
 export const auraLookOf = (aura) => (typeof aura === 'string' && Object.hasOwn(AURA_LOOK, aura) ? AURA_LOOK[aura] : AURA_LOOK.dagonfire);
@@ -2382,9 +2387,10 @@ vec4 wingMoteFlight(float k, float time, out vec3 dir) {
  *  fineness, a covert), the ground's pool, a spark (`p` across and along its streak) and the backlight. Added whole:
  *  what they answer is light. The beat flares them a moment. */
 const WING_FS_GLSL = `
-const vec3 WING_CORE = ${v3(WING_RGB.core)};
-const vec3 WING_GOLD = ${v3(WING_RGB.gold)};
-const vec3 WING_AMBER = ${v3(WING_RGB.amber)};
+// STOREFRONT: the Aetherium Wings (kind 19) wear the same light in aetherium's blue - one palette a program, uAura a constant
+vec3 wingCore() { return uAura == 19 ? ${v3(AETHER_WING_RGB.core)} : ${v3(WING_RGB.core)}; }
+vec3 wingGold() { return uAura == 19 ? ${v3(AETHER_WING_RGB.gold)} : ${v3(WING_RGB.gold)}; }
+vec3 wingAmber() { return uAura == 19 ? ${v3(AETHER_WING_RGB.amber)} : ${v3(WING_RGB.amber)}; }
 float wingBreath() { return 0.85 + 0.15 * sin(uTime * TAU ${hzGlsl(WING_HZ.breathe)}); }
 // nothing laid over an eye standing among them (the wearer's own first person)
 float wingNear() { return smoothstep(0.25, 0.9, distance(uCamPos, vWorld)); }
@@ -2403,14 +2409,14 @@ vec3 wingStrand(vec2 p, vec3 s) {
   float lit = (0.5 + 0.8 * n) * (0.7 + 0.3 * pulse) * along * edge * grown * wingBreath() * wingNear() * (1.0 + 0.25 * wingBeat(t, uTime));
   // WINGS-FIT: about half the light it had (0.22, 0.55, 0.6 + 0.6, 0.5; the beat's flare 0.4) - a pale gold thread with a
   // soft glow about it, not a white blaze
-  vec3 col = WING_GOLD * sheath * 0.1 + mix(WING_AMBER, WING_GOLD, smoothstep(0.1, 0.7, glow)) * glow * 0.32 + WING_CORE * core * (0.42 + 0.28 * pulse) * smoothstep(0.0, 0.3, t);
-  col += WING_AMBER * smoothstep(0.7, 0.95, t) * n2 * glow * 0.25;   // the tips burning as they fray
+  vec3 col = wingGold() * sheath * 0.1 + mix(wingAmber(), wingGold(), smoothstep(0.1, 0.7, glow)) * glow * 0.32 + wingCore() * core * (0.42 + 0.28 * pulse) * smoothstep(0.0, 0.3, t);
+  col += wingAmber() * smoothstep(0.7, 0.95, t) * n2 * glow * 0.25;   // the tips burning as they fray
   return col * lit * (fine > 0.5 ? 0.7 : 1.0) * (s.z > 0.5 ? 0.45 : 1.0);   // the coverts beneath the primaries, softer
 }
 vec3 wingsGround(vec2 p) {
   float r = length(p);
   if (r > ${g3(WING_POOL_R)}) discard;
-  return WING_GOLD * exp(-r * r / 0.45) * 0.07 * wingBreath() * uKindle * (1.0 - smoothstep(${g3(WING_POOL_R - 0.3)}, ${g3(WING_POOL_R)}, r));
+  return wingGold() * exp(-r * r / 0.45) * 0.07 * wingBreath() * uKindle * (1.0 - smoothstep(${g3(WING_POOL_R - 0.3)}, ${g3(WING_POOL_R)}, r));
 }
 vec3 wingMote(vec2 p, vec3 s) {
   vec2 q = p * 2.0 - 1.0;   // x across the streak, y along it - its head at +1
@@ -2418,7 +2424,7 @@ vec3 wingMote(vec2 p, vec3 s) {
   if (d > 1.0) discard;
   float life = smoothstep(0.0, 0.15, s.x) * (1.0 - smoothstep(0.6, 1.0, s.x));
   float streak = exp(-q.x * q.x * 20.0) * exp(-q.y * q.y * 1.6) * smoothstep(-1.0, 0.5, q.y);   // brightest at its head, a tail behind
-  return (WING_CORE * streak * 0.65 + WING_GOLD * exp(-d * d * 3.5) * 0.15) * life * smoothstep(0.75, 1.0, uKindle) * wingNear();   // none till the wings have unfurled
+  return (wingCore() * streak * 0.65 + wingGold() * exp(-d * d * 3.5) * 0.15) * life * smoothstep(0.75, 1.0, uKindle) * wingNear();   // none till the wings have unfurled
 }
 // THE BACKLIGHT: a radiance behind the upper back - a soft gold glow, white at its heart, rays turning slowly in it
 vec3 wingHalo(vec2 p, float away) {
@@ -2428,7 +2434,7 @@ vec3 wingHalo(vec2 p, float away) {
   float a = r > 1e-4 ? atan(q.y, q.x) : 0.0;
   float rays = pow(max(0.5 + 0.5 * cos(14.0 * a + uTime * TAU ${hzGlsl(WING_HZ.rays)}), 0.0), 6.0) * 0.6 + pow(max(0.5 + 0.5 * cos(9.0 * a - uTime * TAU ${hzGlsl(2 * WING_HZ.rays)} + 1.3), 0.0), 10.0) * 0.4;   // AUDIT 4: never a pow of a negative (a cos a hair under -1)
   float glow = exp(-r * r * 7.0) * 0.16 + exp(-r * r * 2.2) * 0.05;   // WINGS-FIT: faint (0.55, 0.16; its heart 0.25, its rays 0.32)
-  vec3 col = WING_CORE * exp(-r * r * 16.0) * 0.07 + WING_GOLD * (glow + rays * exp(-r * 2.6) * 0.1);
+  vec3 col = wingCore() * exp(-r * r * 16.0) * 0.07 + wingGold() * (glow + rays * exp(-r * 2.6) * 0.1);
   return col * (1.0 - smoothstep(0.55, 1.0, r)) * wingBreath() * (1.0 + 0.25 * wingBeat(0.0, uTime)) * smoothstep(0.5, 1.0, uKindle) * wingNear() * away;
 }
 `;
@@ -2929,7 +2935,7 @@ void main() {
     // SHOP: Eternal's cape, (u across its width, v up) on the cloak's mesh
     vP = aP;
     w = eternalPoint(aP, uTime);
-  } else if (uKind == 1 && uAura == 4) {
+  } else if (uKind == 1 && (uAura == 4 || uAura == 19)) {
     // SERAPH-WINGS: A STRAND, (its number * 2 + across 0..1, along 0..1) - laid along its curve, turned to the eye along
     // its length, its width growing out of the back and narrowing to the tip
     float k = floor(aP.x * 0.5), across = aP.x - k * 2.0, t = aP.y;
@@ -2992,7 +2998,7 @@ void main() {
     vec2 o = (vP - vec2(0.5, wisp ? 0.12 : 0.5)) * size * vec2(wisp ? 0.45 : 1.0, wisp ? 1.3 : 1.0);
     w = f.xyz + r * o.x + cross(e, r) * o.y;
     vS = vec3(f.w, wisp ? 0.0 : 1.0, k);
-  } else if (uAura == 4) {
+  } else if (uAura == 4 || uAura == 19) {
     // SERAPH-WINGS: A SPARK - a streak of light riding a strand out, its length along its way as the eye sees it; past
     // the sparks, THE BACKLIGHT - one card of radiance behind the upper back, square to the eye
     float k = floor(aP.x * 0.5);
@@ -3093,7 +3099,7 @@ export const AURA_FS = HEAD + `in vec2 vP;
 in vec3 vWorld;
 in vec3 vS;             // AEGIS: a floating symbol's age, rune and number
 uniform int uKind;
-uniform int uAura;      // AEGIS: 0 Dagon's Fire, 1 the Oblivion Ward, 2 the Golden Radiance (AURA_LOOK - PRIMARCH), 3 the Holo Shadow Cloak (SHADOW-CLOAK), 4 the Seraph Wings (SERAPH-WINGS), 5 the Crystal Resonance (CRYSTAL-FIST), 6 The Turning Hour (SD9c), 7 The First Hour (HOURS-FIRST), 8 The Maelstrom (SERPENT5), 9 Beaconlight, 10 The Burning Stair, 11 Firstlight (EG-E2), 12 the Lilac Warren (WIKIMAID), 13 Witchfire (WITCH1), 14 Sage's Smoke (NIRNROOT-SAGE), 15 Eternal (SHOP), 16 the Daedric Dominion, 17 the Aetherium Coil, 18 the Gilded Coil (STOREFRONT)
+uniform int uAura;      // AEGIS: 0 Dagon's Fire, 1 the Oblivion Ward, 2 the Golden Radiance (AURA_LOOK - PRIMARCH), 3 the Holo Shadow Cloak (SHADOW-CLOAK), 4 the Seraph Wings (SERAPH-WINGS), 5 the Crystal Resonance (CRYSTAL-FIST), 6 The Turning Hour (SD9c), 7 The First Hour (HOURS-FIRST), 8 The Maelstrom (SERPENT5), 9 Beaconlight, 10 The Burning Stair, 11 Firstlight (EG-E2), 12 the Lilac Warren (WIKIMAID), 13 Witchfire (WITCH1), 14 Sage's Smoke (NIRNROOT-SAGE), 15 Eternal (SHOP), 16 the Daedric Dominion, 17 the Aetherium Coil, 18 the Gilded Coil (STOREFRONT), 19 the Aetherium Wings (the Seraph Wings in blue)
 uniform vec3 uAt;       // PRIMARCH: the feet - the axis the radiance's column stands on
 uniform float uYaw;     // SHADOW-CLOAK: the wearer's facing - the cloak's opening is at their front
 uniform int uSide;      // SHADOW-CLOAK: which side of the cloth this draw lays - 0 its lining (front faces culled), 1 its outside (back faces culled)
@@ -3120,7 +3126,7 @@ void main() {
   if (uAura == 14) { vec4 c = uKind == 0 ? sageGround(vP) : uKind == 1 ? sageWall(vP) : sageCard(vP, vS); float f = fogFactorAt(vWorld); o = vec4(c.rgb * f, c.a * f); return; }   // NIRNROOT-SAGE: premultiplied (AURA_LOOK shade), fogged to nothing; kindled within (the shade and the runes fade in, the low smoke rises, the puffs and the nirnroots by node's law)
   if (uAura == 13) { vec3 c = uKind == 0 ? witchGround(vP) : witchWall(vP); o = vec4(c * fogFactorAt(vWorld), 1.0); return; }   // WITCH1: Witchfire, added whole, kindled within
   if (uAura == 12) { vec4 c = uKind == 0 ? warrenGround(vP) : uKind == 1 ? warrenWall(vP) : warrenBunny(vP, vS); float f = fogFactorAt(vWorld); o = vec4(c.rgb * f, c.a * f); return; }   // WIKIMAID: premultiplied (AURA_LOOK shade), fogged to nothing; kindled within (the ground fades in, the sparkles rise, the rabbits come up - node's law)
-  if (uAura == 4) { vec3 wl = uKind == 0 ? wingsGround(vP) : uKind == 1 ? wingStrand(vP, vS) : vS.y > 1.5 ? wingHalo(vP, vS.x) : wingMote(vP, vS); o = vec4(wl * fogFactorAt(vWorld), 1.0); return; }   // SERAPH-WINGS: added whole; kindled within (the strands unfurl)
+  if (uAura == 4 || uAura == 19) { vec3 wl = uKind == 0 ? wingsGround(vP) : uKind == 1 ? wingStrand(vP, vS) : vS.y > 1.5 ? wingHalo(vP, vS.x) : wingMote(vP, vS); o = vec4(wl * fogFactorAt(vWorld), 1.0); return; }   // SERAPH-WINGS: added whole; kindled within (the strands unfurl)
   if (uAura == 3) {   // SHADOW-CLOAK: premultiplied - the light it adds, and how much the shadow covers; both fogged
     vec4 c = uKind == 0 ? cloakGround(vP) : uKind == 1 ? cloakWall(vP) : vS.y > 0.5 ? cloakShred(vP, vS) : cloakEmblem(vP, vS);
     float f = fogFactorAt(vWorld) * uKindle;
@@ -3381,6 +3387,8 @@ export const auraSpritePosed = (w, fig, face = null) => (fig || face
  *  A carried light (no glare of its own, no shadow slot - the torch's law). Outdoors the city's light colour stands
  *  for every carried light (world.js); in a dungeon or a building it is gold. */
 export const WING_LIGHT = Object.freeze({ range: 4.5, rgb: Object.freeze([0.7, 0.53, 0.24]), lift: 0.15, back: 0.35, max: 3, reach: 40 });   // WINGS-FIT: 4.5 m and seven tenths (were 7 m, [1, 0.76, 0.34])
+/** STOREFRONT: the Aetherium Wings' light on the world - WING_LIGHT's, in their blue. */
+export const AETHER_WING_LIGHT_RGB = Object.freeze([0.3, 0.55, 0.78]);
 /** The wings' lights this frame, nearest first, written into `out` (one list, refilled) and answered. Pure but for
  *  `out`. @param {any[]} wearers @param {number[]|Float32Array|null} eye @param {any[]} out */
 export function auraWingLights(wearers, eye, out) {
@@ -3396,7 +3404,8 @@ export function auraWingLights(wearers, eye, out) {
     const x = w.at[0] + c * sh[0] + sn * (sh[2] - back), y = w.at[1] + sh[1] + L.lift, z = w.at[2] - sn * sh[0] + c * (sh[2] - back);
     const d = Math.hypot(x - eye[0], y - eye[1], z - eye[2]);
     if (!(d <= L.reach)) continue;
-    out.push({ x, y, z, range: L.range * (0.5 + 0.5 * k), color: [L.rgb[0] * k, L.rgb[1] * k, L.rgb[2] * k], carried: true, aura: true, _d: d });   // AUDIT 3: `aura` - the dungeon's flame tint passes it by (worldModes.js _dgTint)
+    const rgb = w.aura === 'aetherwings' ? AETHER_WING_LIGHT_RGB : L.rgb;   // STOREFRONT: the blue wings light the world blue
+    out.push({ x, y, z, range: L.range * (0.5 + 0.5 * k), color: [rgb[0] * k, rgb[1] * k, rgb[2] * k], carried: true, aura: true, _d: d });   // AUDIT 3: `aura` - the dungeon's flame tint passes it by (worldModes.js _dgTint)
   }
   out.sort((a, b) => a._d - b._d);
   if (out.length > L.max) out.length = L.max;

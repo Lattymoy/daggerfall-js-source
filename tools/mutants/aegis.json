@@ -82,8 +82,8 @@
   {
     "name": "AEGIS-the-wards-button-in-the-fire",
     "file": "src/ui/playerBadge.js",
-    "old": "oblivionward: 'aegis', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho' });",
-    "new": "oblivionward: 'gatebreaker', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho' });",
+    "old": "oblivionward: 'aegis', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho', aetherwings: 'heartwaker' });",
+    "new": "oblivionward: 'gatebreaker', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho', aetherwings: 'heartwaker' });",
     "tests": [
       "test/net/aegis.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "AEGIS-the-vocabulary-without-the-ward",
     "file": "src/net/identityToken.js",
-    "old": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal', 'dominion', 'aetherium', 'gildedcoil']);",
-    "new": "export const AURAS = Object.freeze(['dagonfire', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal', 'dominion', 'aetherium', 'gildedcoil']);",
+    "old": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal', 'dominion', 'aetherium', 'gildedcoil', 'aetherwings']);",
+    "new": "export const AURAS = Object.freeze(['dagonfire', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal', 'dominion', 'aetherium', 'gildedcoil', 'aetherwings']);",
     "tests": [
       "test/net/aegis.test.js"
     ],

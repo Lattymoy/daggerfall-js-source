@@ -104,6 +104,9 @@ export const PASS_PANELS = Object.freeze({
       panel(0, [item('glyph:tonalfork', 200), item('icon:lexicon', 300), item('aura:aetherium', 1000)]),
       panel(600, [item('icon:gearheart', 400), item('glyph:gearcrown', 300), item('title:heartwaker', 600), item('aura:gildedcoil', 1200)]),
       panel(2000, [item('title:numidiumecho', 800), item('mount:automaton', 1600)]),
+      // THE CAPSTONE (2026-10-30, the owner: "for the final tiers we implement the developer wing aura has a light blue
+      // style"; asked, a page of its own at 2,000): it opens at what every item before it costs, so only once all are bought
+      panel(6400, [item('aura:aetherwings', 2000)]),
     ]),
   }),
 });

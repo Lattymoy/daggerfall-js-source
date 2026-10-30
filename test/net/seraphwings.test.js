@@ -47,7 +47,7 @@ const DEVS = (v('DEVELOPER_HANDLES') ?? '').split(',').map((h) => h.trim()).filt
 // ── THE VOCABULARY, THE GRANT, THE WIRE ─────────────────────────────
 
 test('SERAPH-WINGS vocabulary: the wings join AURAS last, "Seraph Wings" in words, their button in the Founder\'s gold; a look of their own - the fifth kind, their own mesh and motes, added whole (no shade); gold, white-hot at the heart (mutants: the word, the paint, the kind)', () => {
-  assert.deepEqual([...AURAS], ['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal', 'dominion', 'aetherium', 'gildedcoil'] /* PIN MOVED (STOREFRONT): the Daedric Dominion and the two coils joined the list last */ /* PIN MOVED (SHOP): Eternal joined the list last */ /* PIN MOVED (NIRNROOT-SAGE): Sage's Smoke joined the list last */ /* PIN MOVED (WITCH1): Witchfire joined the list last */, 'the fire, the ward, the radiance, the cloak, then the wings - CRYSTAL-FIST\'s resonance after them (PIN MOVED) (PIN MOVED: SD9c\'s Turning Hour last) (PIN MOVED: EG-E2\'s three, the Spire\'s, after it)');   // PIN MOVED (WIKIMAID): the Lilac Warren joined the list last
+  assert.deepEqual([...AURAS], ['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal', 'dominion', 'aetherium', 'gildedcoil', 'aetherwings'] /* PIN MOVED (STOREFRONT): the Daedric Dominion and the two coils joined the list last */ /* PIN MOVED (SHOP): Eternal joined the list last */ /* PIN MOVED (NIRNROOT-SAGE): Sage's Smoke joined the list last */ /* PIN MOVED (WITCH1): Witchfire joined the list last */, 'the fire, the ward, the radiance, the cloak, then the wings - CRYSTAL-FIST\'s resonance after them (PIN MOVED) (PIN MOVED: SD9c\'s Turning Hour last) (PIN MOVED: EG-E2\'s three, the Spire\'s, after it)');   // PIN MOVED (WIKIMAID): the Lilac Warren joined the list last
   assert.equal(AURA_TEXT.seraphwings, 'Seraph Wings');
   assert.equal(AURA_PAINT.seraphwings, 'founder', 'the button in gold - the developer\'s own paint is a red');
   assert.ok(TITLES.includes(AURA_PAINT.seraphwings));
@@ -248,6 +248,36 @@ const fsW = (kind, vP, { s = [0, 0, 0], world = [0, 1.6, -0.6], eye = FAR, time 
   return f.globals.o;
 };
 const QUIET = 13.2;
+
+test('THE AETHERIUM WINGS (STOREFRONT, the Gilded Folio\'s capstone; the owner: "the developer wing aura has a light blue style"), RUN: the Seraph Wings\' own look - their kind\'s mesh, measures and motes - in blue where the developers\' is gold, lit and dark at the same places, its pool and its light on the world blue too; the developers keep the gold (mutants: the blue wings drawn gold; the blue wings lighting the world gold)', async () => {
+  const { AETHER_WING_RGB, AETHER_WING_LIGHT_RGB } = await import('../../src/render/auraRing.js');
+  assert.ok(AURAS.includes('aetherwings') && AURA_TEXT.aetherwings === 'Aetherium Wings');
+  const blue = AURA_LOOK.aetherwings, gold = AURA_LOOK.seraphwings;
+  assert.deepEqual({ ...blue, kind: 0 }, { ...gold, kind: 0 }, 'the wings\' own look');
+  assert.equal(blue.kind, 19);
+  assert.ok(AETHER_WING_RGB.gold[2] > AETHER_WING_RGB.gold[0] && AETHER_WING_RGB.amber[2] > AETHER_WING_RGB.amber[0], 'blue, its tips deeper');
+  const run = (aura, kind, vP, s) => {
+    const f = glslFunctions(AURA_FS, { ...BASE, uAura: aura, vP, vWorld: [0, 1.6, -0.6], vS: s, uKind: kind, uTime: QUIET, uYaw: 0, uKindle: 1, uCamPos: FAR, uAt: [0, 0, 0] });
+    try { f.main(); } catch (e) { if (e instanceof GlslDiscard) return 'discard'; throw e; }
+    return f.globals.o;
+  };
+  let lit = 0;
+  for (const [vP, s] of [[[0.5, 0.4], [3, 0, 0]], [[0.5, 0.55], [7, 0, 0]], [[0.62, 0.3], [11, 1, 0]], [[0.95, 0.5], [3, 0, 0]]]) {
+    const g = run(4, 1, vP, s), b = run(19, 1, vP, s);
+    assert.equal(b === 'discard', g === 'discard');
+    const sumG = g[0] + g[1] + g[2], sumB = b[0] + b[1] + b[2];
+    assert.equal(sumB > 1e-4, sumG > 1e-4, `${vP}: lit where the gold is lit, dark where it is dark`);
+    if (sumG > 1e-3) { lit++; assert.ok(g[0] > g[2] && b[2] > b[0], `${vP}: gold ${g.slice(0, 3)} - blue ${b.slice(0, 3)}`); }
+  }
+  assert.ok(lit >= 2, 'a strand lit to compare');
+  const pool = run(19, 0, [0.1, 0.1], [0, 0, 0]);
+  assert.ok(pool[2] > pool[0] && pool[2] > 0, 'the pool at the feet blue');
+  const out = [];
+  auraWingLights([{ aura: 'aetherwings', at: [0, 0, 0], yaw: 0, kindle: 1 }, { aura: 'seraphwings', at: [1, 0, 0], yaw: 0, kindle: 1 }], [0, 1.6, -3], out);
+  const byX = out.sort((p, q) => p.x - q.x);
+  assert.deepEqual(byX[0].color, [...AETHER_WING_LIGHT_RGB], 'the blue wings light the world blue');
+  assert.deepEqual(byX[1].color, [...WING_LIGHT.rgb], 'the gold, gold');
+});
 
 test('SERAPH-WINGS the light, RUN: gold - white-hot at a strand\'s heart, gold to amber toward its edge, gone past it; out of the back and frayed away at the tip; alive along it and over time, and the same at the wrap; unfurled from the root as it kindles; nothing laid over an eye among them; a fine strand fainter than the broad (mutants: the heart, the edge, the tip, the root, the kindle, the eye)', () => {
   const k = broad(1, 3), mid = (a, t, o = {}) => fsW(1, [a, t], { s: [k, 0, 0], ...o });
