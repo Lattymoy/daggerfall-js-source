@@ -5079,8 +5079,8 @@ export function validWildRefOut(m) {
   const idOk = (x) => typeof x === 'string' && ID_RE.test(x);
   if (m.k === 'hp') {
     const h = duelRefVitals(m.h);
-    if (!idOk(m.by) || !idOk(m.to) || !intIn(m.d, 0, CARD_VITAL_MAX) || !intIn(m.r, 0, 2) || !h) return null;
-    return { k: 'hp', by: m.by, to: m.to, d: m.d, r: m.r, h };
+    if (!idOk(m.by) || !idOk(m.to) || !intIn(m.d, 0, CARD_VITAL_MAX) || !intIn(m.r, 0, 2) || !h || (m.ev !== undefined && m.ev !== 1)) return null;
+    return { k: 'hp', by: m.by, to: m.to, d: m.d, r: m.r, h, ...(m.ev === 1 ? { ev: 1 } : {}) };   // PVP-EVADE: `ev` 1, a blow evaded (`d` 0)
   }
   if (m.k === 'hull') {
     // SHIP-PVP: a captain's shot landed - per mille of her bar (`d`) and her canvas (`s`), a fire (`f`), her bar left (`h`)
@@ -5134,6 +5134,8 @@ export const VIT_SHIELD_MIN = 10, VIT_SHIELD_MAX = 25;
 export const VIT_RESTORATION_MAX = 1000;
 /** PVP-GUARD: a report's armour shares, per cent, edged, blunt and unarmed (refereeHealthShare.js PVP_GUARD bounds them). */
 export const VIT_GUARD_MAX = 150;
+/** PVP-EVADE: a report's live Dodging (`dg`) and a gear power's evade, per cent (`pe`) (refereeHealthShare.js PVP_EVADE dodgeTop and max, pinned equal). */
+export const VIT_DODGE_MAX = 1000, VIT_EVADE_MAX = 40;
 /** PVP-WARD: DFU's five elements (fire 0, frost 1, poison 2, shock 3, magic 4) - a cast's `el`, a report's `w`. */
 export const PVP_ELEMENTS = 5;
 const WORD_MAX = 0x7fffffff;
@@ -5158,12 +5160,14 @@ export function validVitIn(m) {
   if (m.g !== undefined && !(Array.isArray(m.g) && m.g.length === 3 && m.g.every((n) => intIn(n, 0, VIT_GUARD_MAX)))) return null;   // PVP-GUARD
   if (m.w !== undefined && !(Array.isArray(m.w) && m.w.length === PVP_ELEMENTS && m.w.every((n) => intIn(n, 0, 100)))) return null;   // PVP-WARD
   if (m.sh !== undefined && m.sh !== 0 && m.sh !== 1 && !intIn(m.sh, VIT_SHIELD_MIN, VIT_SHIELD_MAX)) return null;   // PVP-SHIELD; PVP-KIT: its share
+  if (m.dg !== undefined && !intIn(m.dg, 0, VIT_DODGE_MAX)) return null;   // PVP-EVADE
+  if (m.pe !== undefined && !intIn(m.pe, 0, VIT_EVADE_MAX)) return null;
   // PVP-VITALS: my magicka's and fatigue's shares, and what I drank and cast on myself since the last report
   if (m.m !== undefined && !intIn(m.m, 0, HEALTH_SHARE_WHOLE)) return null;
   if (m.f !== undefined && !intIn(m.f, 0, HEALTH_SHARE_WHOLE)) return null;
   if (m.u !== undefined && !(Array.isArray(m.u) && m.u.length <= DECLARES_PER_REPORT && m.u.every((n) => intIn(n, 1, DECLARE_MAX)))) return null;
   const vitals = { ...(m.m !== undefined ? { mp: m.m } : {}), ...(m.f !== undefined ? { fp: m.f } : {}), ...(m.u !== undefined ? { use: [...m.u] } : {}) };
-  return { report: m.n, share: m.s, seen, ...vitals, ...(m.x !== undefined ? { max: m.x } : {}), ...(m.r !== undefined ? { resto: m.r } : {}), ...(m.g !== undefined ? { guard: [...m.g] } : {}), ...(m.w !== undefined ? { ward: [...m.w] } : {}), ...(m.sh !== undefined ? { shield: m.sh === 1 ? VIT_SHIELD_MAX : m.sh } : {}) };
+  return { report: m.n, share: m.s, seen, ...vitals, ...(m.x !== undefined ? { max: m.x } : {}), ...(m.r !== undefined ? { resto: m.r } : {}), ...(m.g !== undefined ? { guard: [...m.g] } : {}), ...(m.w !== undefined ? { ward: [...m.w] } : {}), ...(m.sh !== undefined ? { shield: m.sh === 1 ? VIT_SHIELD_MAX : m.sh } : {}), ...(m.dg !== undefined ? { dodge: m.dg } : {}), ...(m.pe !== undefined ? { evade: m.pe } : {}) };
 }
 
 /**

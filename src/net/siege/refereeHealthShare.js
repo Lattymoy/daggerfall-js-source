@@ -64,19 +64,34 @@ export function shieldedBlow(fighter, shaft, want) {
   return Math.max(1, Math.round((want * (100 - off)) / 100));
 }
 
+/** PVP-EVADE (the owner, 2026-10-30: "if ur above other in lvl you shoulfd b harder to hit", "dodge mneed to worjk as well
+ *  in pvp"): a player's swing or shaft that hit is still evaded whole - 0.05% for each point of live Dodging (gear
+ *  counted) to 25% at 500, 2% for each level the struck one stands over its striker to 20%, and a gear power's evade
+ *  (the Raven's), all three to 40%. Spells are never evaded. The client reports Dodging and the power, the relay rolls. */
+export const PVP_EVADE = Object.freeze({ perDodge: 0.05, dodgeMax: 25, perLevel: 2, levelMax: 20, max: 40, dodgeTop: 1000 });
+/** PVP-EVADE: the chance, per cent, that `fighter` (its reported Dodging and gear power) evades a blow from a striker of
+ *  signed level `byLevel`, itself at signed level `toLevel` - an unsigned level gives no level part. */
+export function pvpEvadeChance(fighter, byLevel, toLevel) {
+  const sh = fighter?.share;
+  const dodge = Math.min(PVP_EVADE.dodgeMax, PVP_EVADE.perDodge * Math.max(0, Number(sh?.dodge) || 0));
+  const over = Number.isSafeInteger(byLevel) && Number.isSafeInteger(toLevel) ? Math.max(0, toLevel - byLevel) : 0;
+  const level = Math.min(PVP_EVADE.levelMax, PVP_EVADE.perLevel * over);
+  return Math.min(PVP_EVADE.max, dodge + level + Math.max(0, Number(sh?.evade) || 0));
+}
+
 /** How many referee changes a pool remembers for reports that lag behind them. */
 export const HEALTH_SHARE_LOG_MAX = 32;
 
-/** @typedef {{ epoch: number, word: number, log: Array<[number, number]>, heard: boolean, report: number, playerBlowAt: number, heals: Array<[number, number]>, resto: number, guard: number[]|null, ward: number[]|null, shield: number }} HealthShare
+/** @typedef {{ epoch: number, word: number, log: Array<[number, number]>, heard: boolean, report: number, playerBlowAt: number, heals: Array<[number, number]>, resto: number, guard: number[]|null, ward: number[]|null, shield: number, dodge: number, evade: number }} HealthShare
  *  The referee's state on a fighter: the pool's identity (creation ms), its last change's number, `[word, change]` of recent changes, whether a report anchored it, the last report taken, when a player last struck it (ms, 0 never), `[at, healed]` in the heal window, and its reported Restoration. */
-/** @typedef {{ report: number, share: number, seen: Array<[number, number]>, max?: number, resto?: number, guard?: number[], ward?: number[], shield?: number, mp?: number, fp?: number, use?: number[] }} HealthReport
+/** @typedef {{ report: number, share: number, seen: Array<[number, number]>, max?: number, resto?: number, guard?: number[], ward?: number[], shield?: number, dodge?: number, evade?: number, mp?: number, fp?: number, use?: number[] }} HealthReport
  *  A client's report (net/wire.js validVitIn): its number, its health over its maximum in HEALTH_SHARE_WHOLE parts, `[epoch, word]` of the last word it applied from each pool, and (PVP-HEALTH) its real maximum and Restoration, and (PVP-GUARD, PVP-WARD) its armour's and resistances' shares, and (PVP-SHIELD) a Shield on it. */
 /** @typedef {{ health: number, max: number, epoch: number, word: number, report: number }} PoolWord
  *  The referee's word on a pool to its fighter (net/wire.js validVitOut, `k: 'h'`): the count, its whole, the pool's epoch and last change, the last report the count includes. */
 
 /** A fresh share state: unheard, never struck by a player. @param {number} now @returns {HealthShare} */
 export function newHealthShare(now) {
-  return { epoch: Math.trunc(now), word: 0, log: [], heard: false, report: 0, playerBlowAt: 0, heals: [], resto: 0, guard: null, ward: null, shield: 0 };
+  return { epoch: Math.trunc(now), word: 0, log: [], heard: false, report: 0, playerBlowAt: 0, heals: [], resto: 0, guard: null, ward: null, shield: 0, dodge: 0, evade: 0 };
 }
 
 /** A fighter's share state - made where a fighter kept from before this law (a siege's storage) has none. */
@@ -172,6 +187,8 @@ export function takeHealthReport(fighter, report, now, { healsBlocked = false, s
     share.ward = report.ward.map((n) => Math.max(PVP_WARD.min, Math.min(PVP_WARD.max, Math.trunc(Number(n) || 0))));   // PVP-WARD
   }
   if (typeof report.shield === 'number') share.shield = report.shield;   // PVP-SHIELD; PVP-KIT: its share, 0 none
+  if (Number.isFinite(report.dodge)) share.dodge = Math.max(0, Math.min(PVP_EVADE.dodgeTop, Math.trunc(report.dodge)));   // PVP-EVADE
+  if (Number.isFinite(report.evade)) share.evade = Math.max(0, Math.min(PVP_EVADE.max, Math.trunc(report.evade)));   // PVP-EVADE: a gear power's
   if (sourced && !shieldPaid(fighter, now)) share.shield = 0;   // PVP-VITALS: a Shield nobody paid for is none
   const target = (report.share * fighter.max) / HEALTH_SHARE_WHOLE + unseenChange(share, report.seen);
   const difference = target - fighter.hp;

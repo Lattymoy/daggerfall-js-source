@@ -37,7 +37,7 @@
 // (DECIDED, the duel's: a room that restarts mid-fight forgets it; a fall already signed is the service's to settle).
 // ═════════════════════════════════════════════════════════════════════
 import { SIEGE_HIT, SIEGE_UNITS_PER_M, newFighter, refereeBlow, refereeCast, refereeStep } from '../siege/siegeRef.js';
-import { resetHealthShare } from '../siege/refereeHealthShare.js';
+import { resetHealthShare, pvpEvadeChance } from '../siege/refereeHealthShare.js';   // PVP-EVADE
 import { castPaid, shaftPaid, swingPaid, bowFastCut, payFatigue, absorbLanded, runPaid, vitalsCarry, vitalsTake, PVP_VITALS } from './pvpVitals.js';   // PVP-VITALS: a flagged fighter's casts and swings paid for
 import { pvpFlagCanDrop, pvpAggroLeft, pvpYoung, PVP_FLAG } from '../../systems/wild/pvpFlag.js';   // PVP-FLAG
 import { isVillain, villainAfter, villainClamp, villainKillPoints, VILLAIN } from '../../systems/wild/villainLaw.js';   // PVP-VILLAIN
@@ -242,10 +242,10 @@ const mendUnheard = (x, now) => {
  * signed into its receipt, `m`). ZONE-GRACE: a striker under safe passage loses it (`graceEnded`), and a struck one under it
  * takes nothing (`why` 'grace'). Answers `{ ok, dealt, fell, fall, why, graceEnded? }`.
  * @param {any} st @param {string} by @param {string} to
- * @param {{ d?: number, r?: number, held?: any, wa?: any, kin?: boolean, rid?: string, room?: string, el?: number|null, c?: number|null }} o
+ * @param {{ d?: number, r?: number, held?: any, wa?: any, kin?: boolean, rid?: string, room?: string, el?: number|null, c?: number|null, roll?: () => number }} o
  * @param {number} now
  */
-export function wildBlow(st, by, to, { d = 0, r = SIEGE_HIT.Melee, held = null, wa = null, kin = false, rid = '', room = '', el = null, c = null } = {}, now) {
+export function wildBlow(st, by, to, { d = 0, r = SIEGE_HIT.Melee, held = null, wa = null, kin = false, rid = '', room = '', el = null, c = null, roll = Math.random } = {}, now) {
   const a = st.fighters.get(by), t = st.fighters.get(to);
   if (!a || !t || by === to) return { ok: false, dealt: 0, fell: false, fall: null, why: 'no-fighter' };
   if (!a.zone || !t.zone) return { ok: false, dealt: 0, fell: false, fall: null, why: 'zone' };
@@ -266,9 +266,11 @@ export function wildBlow(st, by, to, { d = 0, r = SIEGE_HIT.Melee, held = null, 
   if (r === SIEGE_HIT.Shaft ? !shaftPaid(a.f, now) : r === SIEGE_HIT.Melee && !swingPaid(a.f, to, now)) return { ok: false, dealt: 0, fell: false, fall: null, why: 'rate', graceEnded };   // BOW-RATE, SWING-RATE
   if (spell ? !castPaid(a.f, c, to, now) : !payFatigue(a.f, PVP_VITALS.swing, now)) return { ok: false, dealt: 0, fell: false, fall: null, why: spell ? 'magicka' : 'tired', graceEnded };
   if (r === SIEGE_HIT.Shaft) d = bowFastCut(a.f, d, now, held?.w ?? null);   // BOW-FAST: the game sends a shaft's claim uncut
+  const evaded = !spell && roll() * 100 < pvpEvadeChance(t.f, a.cl ?? null, t.cl ?? null);   // PVP-EVADE: after the striker's own hit roll, `why` 'evade'
   const res = r === SIEGE_HIT.Spell
     ? refereeCast(a.f, t.f, { from: a.pose, at: t.pose, d, el }, now)
-    : refereeBlow(a.f, t.f, { from: a.pose, at: t.pose, held, d, r, wa }, now);
+    : refereeBlow(a.f, t.f, { from: a.pose, at: t.pose, held, d: evaded ? 0 : d, r, wa }, now);
+  if (evaded && res.ok) { a.fightAt = now; t.fightAt = now; wildOpen(st, by, to, now); return { ok: true, dealt: 0, fell: false, fall: null, why: 'evade', graceEnded }; }   // the reach and the rate still judged
   if (!res.ok || !res.dealt) return { ok: res.ok, dealt: 0, fell: false, fall: null, why: res.why, graceEnded };
   if (spell) absorbLanded(t.f, now);   // PVP-VITALS: a paid Absorb takes the cast's price back
   t.struckAt = now; a.fightAt = now; t.fightAt = now;   // ZONE-GRACE: a fight, for an entry's ask

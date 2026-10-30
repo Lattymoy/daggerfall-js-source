@@ -11538,6 +11538,7 @@ export class Room {
     const res = wildBlow(st, a.sub, tb.sub, { d: d.d, r, held, wa: a.wa ?? null, kin, rid, room: a.key, el: d.el ?? null, c: d.c ?? null }, now);   // PVP-VITALS: the cast's number   // SEA-BOUNTY: the room it fell in
     if (res.evicted) await this._wildSign(res.evicted, now);   // INT9 (AUDIT): a full room's oldest fall, signed without its pick - never forgotten
     if (res.graceEnded || res.why === 'grace') this._wildGraceBlow(a, tb, st, res, now);   // ZONE-GRACE
+    if (res.why === 'evade') { this._wildEvadeSay(st, a, tb, target[0], r); return; }   // PVP-EVADE
     if (!res.ok || !res.dealt) return;
     this._wildAggroSay(st, [a.sub, tb.sub], now);   // PVP-SKULL: the striker's and the struck one's skulls gold
     const word = JSON.stringify({ t: 'wref', k: 'hp', by: a.id, to: tb.id, d: res.dealt, r, h: wildVitals(st, a.sub, tb.sub) });
@@ -11554,6 +11555,13 @@ export class Room {
     // INT9 (AUDIT): a building's or a dungeon's room searches no body (the worn offer is the open country's) - its fall is
     // signed at once, never a minute later with the fallen gone from it
     if (!isCellRoom(a.key)) { const f = wildSignNow(st, rid); if (f) await this._wildSign(f, now); }
+  }
+  /** PVP-EVADE (wildRef.js wildBlow): a swing or a shaft evaded, said to its striker and the struck one - `d` 0, `ev` 1. */
+  _wildEvadeSay(st, a, tb, ts, r) {
+    const word = JSON.stringify({ t: 'wref', k: 'hp', by: a.id, to: tb.id, d: 0, r, h: wildVitals(st, a.sub, tb.sub), ev: 1 });
+    if (ts) this._send(ts, word);   // PVP-LINGER: a body has no socket
+    const mine = this._siegeSocketOf(a.sub);
+    if (mine) this._send(mine[0], word);
   }
   /** ZONE-GRACE (2026-10-26, the owner chose "Entry/rise grace" - wildRef.js WILD_GRACE): A FIGHTER'S SAFE PASSAGE SAID TO
    *  THE ROOM (`wref` `grace`: its id and the ms it has left; 0, ended by its own blow). */
