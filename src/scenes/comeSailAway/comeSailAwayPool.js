@@ -199,7 +199,11 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
   };
   /** GUILD-SHOP: the arms her sailcloth flies, where it flies them - mine my guild's, a peer's its owner's guild's (the tag
    *  their token carries), a sea ship's none. */
-  const sailArmsOf = (boat, code) => ((code >> 16) & 128 ? (mineBoats.has(boat) ? ownGuildArms() : boat.guildTag ? guildArmsOf(boat.guildTag) : null) : null);
+  const sailArmsOf = (boat, code) => {
+    if (!((code >> 16) & 128)) return null;
+    const arms = mineBoats.has(boat) ? ownGuildArms() : boat.guildTag ? guildArmsOf(boat.guildTag) : null;
+    return arms && (arms.heraldry || arms.logo) ? arms : null;   // AUDIT GUILD-SHOP N5: a guild with no arms flies no blank shield
+  };
   // SHIP-PLAQUE (scenes/comeSailAway/shipPlaque.js): her name on her bows - laid on her planking (hullSurface, below),
   // lettered in FONT0003 once its bytes are in (the block letters where they are not to be had)
   /** @type {any} */ let plaqueLetters = plaqueFont ? null : BLOCK_LETTERS;

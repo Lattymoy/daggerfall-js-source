@@ -53,6 +53,8 @@ export const ownGuildArms = () => (_own ? guildArmsOf(_own) : null);
 let _hall = null;
 /** @type {((id: string) => unknown) | null} */
 let _peerTag = null;
+/** @type {((id: string) => unknown) | null} */
+let _peerCloth = null;
 /** GUILD-SHOP: a guild hall's arms, told with its pieces (server-account/src/decor.js decorOf's `arms`); null for none. */
 export function noteHallArms(/** @type {any} */ arms) {
   _hall = arms && typeof arms === 'object' ? { heraldry: heraldryOf(arms.heraldry), logo: typeof arms.logo === 'string' ? arms.logo : null } : null;
@@ -87,6 +89,10 @@ function askSoon() {
 /** GUILD-SHOP: a peer's guild tag by their id (online.js guildTagOf - their token's), as the host that holds the session
  *  wires it (scenes/auraHost.js); null for none or before it is wired. A boat's sailcloth flies its owner's arms by it. */
 export function setPeerTagReader(/** @type {((id: string) => unknown) | null} */ fn) { _peerTag = typeof fn === 'function' ? fn : null; }
+/** AUDIT GUILD-SHOP S2: whether a peer's token says the Guild Sailcloth is theirs (online.js sailclothOf), as the same host
+ *  wires it; false before it is wired. A peer's boat flies a sailcloth only on it. */
+export function setPeerClothReader(/** @type {((id: string) => unknown) | null} */ fn) { _peerCloth = typeof fn === 'function' ? fn : null; }
+export const peerHoldsCloth = (/** @type {string} */ id) => _peerCloth?.(id) === true;
 export const peerGuildTag = (/** @type {string} */ id) => { const t = _peerTag?.(id); return typeof t === 'string' && GUILD_TAG_RE.test(t) ? t : null; };
 /** For the tests: everything forgotten. */
-export function _resetArmsBook() { if (_timer) clearTimeout(_timer); _timer = null; _peerTag = null; _hall = null; _own = null; _arms.clear(); _wanted.clear(); _door = null; _asking = false; _askedAt = -Infinity; _version = 0; _now = () => Date.now(); }
+export function _resetArmsBook() { if (_timer) clearTimeout(_timer); _timer = null; _peerTag = null; _peerCloth = null; _hall = null; _own = null; _arms.clear(); _wanted.clear(); _door = null; _asking = false; _askedAt = -Infinity; _version = 0; _now = () => Date.now(); }

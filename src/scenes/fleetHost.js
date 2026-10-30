@@ -29,7 +29,7 @@ import {
 } from '../systems/fleet.js';
 import { captainRefit } from '../systems/naval/captainTree.js';   // CAPTAIN-TREE: her captain's stars over her refits
 import { flagSizeOf } from '../systems/naval/shipFlag.js';   // SHIP-COLOURS: the hulls that fly a flag
-import { liveryPartsOf, isPaint } from '../systems/naval/shipLivery.js';   // SHIP-LIVERY: the paints a hull takes
+import { liveryPartsOf, isPaint, clothHull } from '../systems/naval/shipLivery.js';   // SHIP-LIVERY: the paints a hull takes
 import { sailClothCode } from '../systems/naval/sailCloth.js';   // GUILD-SHOP: her sailcloth, the Guild Sailcloth's
 import { guildWareHeld } from '../net/guild/guildStock.js';
 import { SAILCLOTH_SHUT } from '../ui/sailClothPanel.js';
@@ -196,7 +196,7 @@ export function createFleetHost(deps) {
         hold: holdsCargo(rec.hull),   // CARGO-ANYWHERE: her Hold button - every hull but the Rowboat's
         flag: !!flagSizeOf(rec.hull), colours: rec.colours ?? null,   // SHIP-COLOURS: whether she flies a flag, and the one she flies
         paints: liveryPartsOf(rec.hull), livery: rec.livery ?? null,   // SHIP-LIVERY: the parts her paint takes, and her paint
-        cloth: liveryPartsOf(rec.hull).includes('sail') ? guildWareHeld('guildsails') : false,   // GUILD-SHOP: whether her sailcloth is to be had (null: unread)
+        clothable: clothHull(rec.hull), cloth: clothHull(rec.hull) ? guildWareHeld('guildsails') : false,   // GUILD-SHOP: whether her sail takes a sailcloth, and whether it is to be had (null: unread)
         cabin: cabinShipType(rec.hull) !== SHIP_TYPES.None ? rec.cabin ?? 0 : null,   // CABIN-LOOK: her cabin's stain (null: she has no cabin)
         fittings: rec.deck?.length ?? 0,   // DECK-PROPS: how many fittings stand on her deck
         plaque: !!rec.plaque, named: !!rec.name,   // SHIP-PLAQUE: her name on her bows, and whether she has one to show

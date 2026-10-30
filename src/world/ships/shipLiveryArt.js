@@ -52,11 +52,10 @@ export function warmLiveryArt() { for (const archive of Object.keys(LIVERY_ART))
  * A livery over one port ship's pictures: each record it changes, `{ record, picture, glow, night }` - its picture
  * repainted (before Daggerfall's look - world/dfLook.js - as its stand-in is built), and for a see-through record its
  * glass's glow and its night twin's record (null for one with none). [] for an archive no port ship's, or a livery that
- * paints none of hers. GUILD-SHOP: her canvas in her sailcloth (`livery.cloth`, systems/naval/sailCloth.js), `emblem`
- * the guild's arms (a square picture) where it flies them.
- * @param {number} archive @param {{ strake: number, accent: number, sail: number, cloth?: any } | null} livery @param {any} [emblem]
+ * paints none of hers. GUILD-SHOP: her canvas in her sailcloth, `emblem` its arms; `canvasOnly`, that canvas alone.
+ * @param {number} archive @param {{ strake: number, accent: number, sail: number, cloth?: any } | null} livery @param {any} [emblem] @param {{ canvasOnly?: boolean }} [o]
  */
-export function liveryArtOf(archive, livery, emblem = null) {
+export function liveryArtOf(archive, livery, emblem = null, { canvasOnly = false } = {}) {
   const a = LIVERY_ART[archive];
   if (!a || !livery) return [];
   const paint = (i) => SHIP_PAINTS[i]?.rgb ?? null;
@@ -73,7 +72,7 @@ export function liveryArtOf(archive, livery, emblem = null) {
       else if (sail) out.push({ record, picture: shadeCloth(pic, sail), glow: null, night: null });
       continue;
     }
-    if (!a.records.includes(record) || !families.some((f) => f.paint)) continue;
+    if (canvasOnly || !a.records.includes(record) || !families.some((f) => f.paint)) continue;
     const { picture, changed } = paintFamilies(pic, a.palette, families);
     if (!changed) continue;
     const night = a.night[record] ?? null;

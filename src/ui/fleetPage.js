@@ -329,7 +329,7 @@ function paintPanel(el, s, rerender, act, arms = null) {
   box.append(pic);
   for (const part of s.paints ?? []) box.append(paintSwatches(el, PART_WORDS[part](), d[part] ?? 0, (v) => set(part, v)));
   // GUILD-SHOP: her sailcloth, the Guild Sailcloth's - on a hull with a sail
-  if (s.paints?.includes('sail')) box.append(sailClothRows(el, d.cloth ?? null, (c) => set('cloth', c), { held: s.cloth ?? null, armed: !!heraldryOf(arms), swatches: paintSwatches, button }));
+  if (s.clothable) box.append(sailClothRows(el, d.cloth ?? null, (c) => set('cloth', c), { held: s.cloth ?? null, armed: !!heraldryOf(arms), swatches: paintSwatches, button }));
   // CABIN-LOOK: her cabin's wood, below decks - made at her next visit there
   if (s.cabin != null) {
     box.append(paintSwatches(el, t('naval.paint.p.cabin', 'Cabin wood'), d.cabin, (v) => set('cabin', v)));

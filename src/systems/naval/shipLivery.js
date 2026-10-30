@@ -58,6 +58,9 @@ export function liveryPartsOf(hull) {
   if (hull === 0) return ['stain'];
   return [];
 }
+/** GUILD-SHOP: whether a hull's sail takes a sailcloth - a port hull's, its canvas one picture over the whole sail. AUDIT
+ *  GUILD-SHOP N1: the galley's classic sail tiles its picture dozens of times, a pattern and the arms with it. */
+export const clothHull = (hull) => hull === 1 || hull === 2 || hull === 4;
 const paintIndex = (v) => (Number.isInteger(v) && v >= 0 && v <= PAINT_MAX ? v : null);
 /** Whether `v` is a paint's index (0 none - as built). */
 export const isPaint = (v) => paintIndex(v) != null;
@@ -77,7 +80,7 @@ export function liveryOf(raw, hull) {
   }
   // GUILD-SHOP: her sailcloth (systems/naval/sailCloth.js) - a pattern, a second paint and the guild's arms - on a sail she has
   const cloth = raw.cloth == null ? null : sailClothOf(raw.cloth);   // one that is none (or no cloth at all) is none
-  const sails = hull == null || liveryPartsOf(hull).includes('sail');
+  const sails = hull == null || clothHull(hull);
   if (hull != null) { const takes = liveryPartsOf(hull); for (const p of LIVERY_PARTS) if (!takes.includes(p)) out[p] = 0; }
   if (cloth && sails) /** @type {any} */ (out).cloth = cloth;
   return LIVERY_PARTS.some((p) => out[p]) || /** @type {any} */ (out).cloth ? out : null;

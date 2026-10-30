@@ -166,8 +166,8 @@
   {
     "name": "SLA-records-all",
     "file": "src/world/ships/shipLiveryArt.js",
-    "old": "    if (!a.records.includes(record) || !families.some((f) => f.paint)) continue;",
-    "new": "    if (!families.some((f) => f.paint)) continue;",
+    "old": "    if (canvasOnly || !a.records.includes(record) || !families.some((f) => f.paint)) continue;",
+    "new": "    if (canvasOnly || !families.some((f) => f.paint)) continue;",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ],
@@ -258,7 +258,7 @@
   {
     "name": "SLP-sail-never",
     "file": "src/scenes/comeSailAway/shipLiveryPaint.js",
-    "old": "    if (sail || lv.cloth) {\n      const pic = await classic(CLASSIC_SAIL[0], CLASSIC_SAIL[1]);",
+    "old": "    if (sail) {\n      const pic = await classic(CLASSIC_SAIL[0], CLASSIC_SAIL[1]);",
     "new": "    if (false) {\n      const pic = await classic(CLASSIC_SAIL[0], CLASSIC_SAIL[1]);",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
@@ -294,8 +294,8 @@
   {
     "name": "SLP-making-made",
     "file": "src/scenes/comeSailAway/shipLiveryPaint.js",
-    "old": "    if (made.has(key)) return made.get(key);",
-    "new": "    if (made.has(key)) return null;",
+    "old": "    const base = made.has(key) ? made.get(key) : (begin(key, () => paint(hull, code)), null);",
+    "new": "    const base = made.has(key) ? null : (begin(key, () => paint(hull, code)), null);",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -825,7 +825,7 @@
   {
     "name": "PEERS-livery-unread",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "      s.boat.livery = liveryCode(w.livery);   // SHIP-LIVERY",
+    "old": "      s.boat.livery = flownLivery(owner, w.livery);   // SHIP-LIVERY",
     "new": "      // SHIP-LIVERY",
     "tests": [
       "test/systems/naval/shiplivery.test.js"

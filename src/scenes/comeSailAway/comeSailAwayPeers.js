@@ -31,7 +31,9 @@
 // a locally occupied hull is retained stationary until its passenger steps off.
 import { validCsaRecord, CSA_WIRE_BOATS_MAX } from '../../systems/comeSailAway/comeSailAwayWire.js';
 import { liveryCode } from '../../systems/naval/shipLivery.js';   // SHIP-LIVERY: her paint, as the pool reads a peer's
-import { peerGuildTag } from '../../net/guild/guildArmsBook.js';   // GUILD-SHOP: her owner's guild, for her sailcloth's arms
+import { peerGuildTag, peerHoldsCloth } from '../../net/guild/guildArmsBook.js';   // GUILD-SHOP: her owner's guild, for her sailcloth's arms
+/** AUDIT GUILD-SHOP S2: a peer's livery as flown - its sailcloth only where their token says it is theirs. */
+export const flownLivery = (owner, raw) => { const code = liveryCode(raw); return peerHoldsCloth(owner) ? code : code & 0xffff; };
 import { Boat, boatAnimators, animatorOf, setLights } from '../../systems/comeSailAway/comeSailAwayBoat.js';
 import { stowSail } from '../../systems/comeSailAway/comeSailAway.js';
 import { easeToward } from '../../systems/horse/horseCartWire.js';
@@ -188,7 +190,7 @@ export function createComeSailAwayPeers({ pool, selfId = () => null, log = conso
       if (!s) continue;
       s.boat.uid = w.uid ?? 0;
       s.slot = i; s.wire = w.position;
-      s.boat.livery = liveryCode(w.livery);   // SHIP-LIVERY: her paint, her owner's word (the pool's paint shop draws it)
+      s.boat.livery = flownLivery(owner, w.livery);   // SHIP-LIVERY: her paint, her owner's word (the pool's paint shop draws it)
       s.boat.guildTag = peerGuildTag(owner);   // GUILD-SHOP: her owner's guild, whose arms her sailcloth flies
       s.boat.fittings = w.fittings ?? [];   // DECK-PROPS: and her fittings (the pool stands them in her tree)
       s.boat.plaqueName = w.plaque ? w.name ?? '' : '';   // SHIP-PLAQUE: and her name on her bows, where she shows it
@@ -210,7 +212,7 @@ export function createComeSailAwayPeers({ pool, selfId = () => null, log = conso
       const w = l.boats[i];
       try {
         const boat = pool.spawnPeerNow(new Boat(w.hull, w.variant));
-        if (boat) { boat.peerKey = `${owner}:${i}`; boat.uid = w.uid ?? 0; boat.livery = liveryCode(w.livery); boat.guildTag = peerGuildTag(owner); boat.fittings = w.fittings ?? []; boat.plaqueName = w.plaque ? w.name ?? '' : ''; }   // SHIP-LIVERY: and her paint; DECK-PROPS: her fittings   // LIVING CREW: whose, and which - her crew's seed (scenes/naval/navalCrew.js)
+        if (boat) { boat.peerKey = `${owner}:${i}`; boat.uid = w.uid ?? 0; boat.livery = flownLivery(owner, w.livery); boat.guildTag = peerGuildTag(owner); boat.fittings = w.fittings ?? []; boat.plaqueName = w.plaque ? w.name ?? '' : ''; }   // SHIP-LIVERY: and her paint; DECK-PROPS: her fittings   // LIVING CREW: whose, and which - her crew's seed (scenes/naval/navalCrew.js)
         if (boat) list[i] = { boat, hull: w.hull, variant: w.variant, wire: w.position, slot: i, shown: null, turn: null, helm: false, light: false };
       } catch (e) { fail(owner, e); }
       return;

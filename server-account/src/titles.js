@@ -505,6 +505,12 @@ export function armoryHeld(/** @type {any} */ player, /** @type {any} */ env) {
   const own = new Set([...insigniaKeys(player?.insignia, 'armory'), ...shopKeys(player, 'armory'), ...guildWaresHeld(Number(player?.guild_wares ?? 0))]);   // GUILD-SHOP: the Insignia Armlet
   return ARMORY_PIECES.filter((p) => own.has(p.key)).map((p) => p.key);
 }
+/** AUDIT GUILD-SHOP S2: 1 where the account holds the Guild Sailcloth (its bit, or ADMIN-ALL), else undefined - the token's
+ *  `sc`, by which a peer's client flies another's sailcloth at all. */
+export function sailclothHeld(/** @type {any} */ player, /** @type {any} */ env) {
+  if (!(typeof player?.handle === 'string' && player.handle)) return undefined;
+  return holdsAll(player, env) || guildWaresHeld(Number(player?.guild_wares ?? 0)).includes('guildsails') ? 1 : undefined;
+}
 /** ARMORY: the kit this player WEARS - the stored one, less any piece no longer held (a refund), or undefined for none
  *  (titleWorn's law). */
 export function armoryWorn(/** @type {any} */ player, /** @type {any} */ env) {

@@ -66,7 +66,8 @@ export function sailClothRows(el, cloth, choose, { held, armed, swatches, button
   for (const p of SAIL_PATTERNS) row.append(button(el, sailPatternName(p), null, () => put('pattern', p), p === c.pattern ? 'act primary' : 'act'));
   box.append(row);
   if (c.pattern !== 'plain') box.append(swatches(el, t('naval.cloth.second', 'Second color'), c.second, (/** @type {number} */ v) => put('second', v)));
-  box.append(button(el, c.arms && armed ? t('naval.cloth.armsOn', 'Your guild\'s arms on the sails') : t('naval.cloth.armsOff', 'Put my guild\'s arms on the sails'),
-    armed ? null : t('naval.flag.noArms', 'Your guild has no arms, or you\'re not in a guild.'), () => { if (armed) put('arms', !c.arms); }, c.arms && armed ? 'act primary' : 'act'));
+  // AUDIT GUILD-SHOP N5: arms set under a guild before can always be taken down; only putting them up needs arms
+  box.append(button(el, c.arms ? t('naval.cloth.armsOn', 'Your guild\'s arms on the sails') : t('naval.cloth.armsOff', 'Put my guild\'s arms on the sails'),
+    armed || c.arms ? null : t('naval.flag.noArms', 'Your guild has no arms, or you\'re not in a guild.'), () => { if (armed || c.arms) put('arms', !c.arms); }, c.arms ? 'act primary' : 'act'));
   return box;
 }

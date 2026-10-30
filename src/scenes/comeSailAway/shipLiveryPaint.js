@@ -14,8 +14,8 @@
 //     every plank record stained (systems/naval/shipLivery.js stainPicture);
 //   - classic sailcloth (TEXTURE.050 record 7, the mod's sails) - tinted (SAIL_TINT).
 import { LIVERY_ARCHIVE, SHIP_PAINTS, stainPicture, tintPicture, SAIL_TINT, liveryOfCode } from '../../systems/naval/shipLivery.js';
-import { clothPicture } from '../../systems/naval/sailCloth.js';   // GUILD-SHOP: her sailcloth
-import { sailEmblemOf, sailEmblemKey } from './sailEmblem.js';
+import { sailEmblemOf, sailEmblemKey } from './sailEmblem.js';   // GUILD-SHOP: her guild's arms on her canvas
+import { logoVersion } from '../../ui/guild/guildLogoImages.js';
 import { liveryArtOf } from '../../world/ships/shipLiveryArt.js';
 import { cutGlass } from '../../world/ships/galleonArt.js';
 import { dfLook, lookSeed } from '../../world/dfLook.js';
@@ -34,7 +34,11 @@ export const CLASSIC_SAIL = Object.freeze([50, 7]);
 export function createLiveryPaint({ renderer, pipeline, portArchiveOf, log = console }) {
   /** GUILD-SHOP: each pair of arms a sail has flown, its slot (1 up) - a paint's key carries it beside her code */
   const armsSlots = new Map();
-  let slotsGiven = 0;
+  /** @type {WeakMap<any, { n: number, lv: number }>} a pair of arms' slot, as last asked */
+  const slotOfArms = new WeakMap();
+  /** @type {number[]} each slot's generation, and when it was last drawn */
+  const slotGen = [], slotUsed = [];
+  let useTick = 0;
   /** `${archive}_${record}|${code}|${d|n}` -> the painted twin's record under LIVERY_ARCHIVE */
   const records = new Map();
   let next = 0;
@@ -56,16 +60,15 @@ export function createLiveryPaint({ renderer, pipeline, portArchiveOf, log = con
   }
   /** A classic record as a top-down picture, or null where the player's data has none (derivedTexture.js). */
   const classic = (archive, record) => classicPictureOf((a) => pipeline.getTexture(a), pipeline.palette, archive, record);
-  /** Every picture a livery repaints on a hull, painted and uploaded: `{ day, night }`. GUILD-SHOP: `arms` her guild's, on
-   *  a sailcloth that flies them; `code` the paint's own key, her arms' slot in it. */
-  async function paint(hull, code, arms = null) {
-    const lv = liveryOfCode(code % 0x1000000);
+  /** Every picture a livery repaints on a hull, painted and uploaded: `{ day, night }`. GUILD-SHOP: `code` is her livery's
+   *  own (three bytes); a sailcloth flying arms is paintArmed's. */
+  async function paint(hull, code) {
+    const lv = liveryOfCode(code);
     const day = new Map(), night = new Map();
     if (!lv) return { day, night };
-    const emblem = lv.cloth?.arms ? sailEmblemOf(arms) : null;
     const port = portArchiveOf(hull);
     if (port != null) {
-      for (const { record, picture, glow, night: twin } of liveryArtOf(port, lv, emblem)) {
+      for (const { record, picture, glow, night: twin } of liveryArtOf(port, lv)) {
         const looked = dfLook(picture, lookSeed(port, record));
         const src = `${port}_${record}`;
         if (twin != null && glow) {
@@ -88,32 +91,49 @@ export function createLiveryPaint({ renderer, pipeline, portArchiveOf, log = con
         day.set(`${PLANK_ARCHIVE}_${r}`, key); night.set(`${PLANK_ARCHIVE}_${r}`, key);
       }
     }
+    // AUDIT GUILD-SHOP N1: the classic sail is tinted alone - its cloth's picture is tiled dozens of times over a sail, so
+    // a sailcloth (a pattern, the arms) is a port hull's whole canvas only (shipLivery.js clothHull)
     const sail = SHIP_PAINTS[lv.sail]?.rgb;
-    if (sail || lv.cloth) {
+    if (sail) {
       const pic = await classic(CLASSIC_SAIL[0], CLASSIC_SAIL[1]);
       if (pic) {
-        // GUILD-SHOP: a sailcloth's pattern over the cloth's own light (its mean, the classic cloth having no base of the port's)
-        const tinted = sail ? tintPicture(pic, sail, SAIL_TINT) : pic, base = meanRgb(pic);
-        const cloth = lv.cloth ? clothPicture(pic, sail ?? base, SHIP_PAINTS[lv.cloth.second]?.rgb ?? base, lv.cloth, base, emblem) : tinted;
-        const key = put(CLASSIC_SAIL[0], CLASSIC_SAIL[1], code, 'd', dfLook(cloth, lookSeed(CLASSIC_SAIL[0], CLASSIC_SAIL[1])));
+        const key = put(CLASSIC_SAIL[0], CLASSIC_SAIL[1], code, 'd', dfLook(tintPicture(pic, sail, SAIL_TINT), lookSeed(CLASSIC_SAIL[0], CLASSIC_SAIL[1])));
         day.set(`${CLASSIC_SAIL[0]}_${CLASSIC_SAIL[1]}`, key); night.set(`${CLASSIC_SAIL[0]}_${CLASSIC_SAIL[1]}`, key);
       }
     }
     return { day, night };
   }
-  /** A hull's paint's maps once made - null while they are made (and the making begun), or where it failed. GUILD-SHOP:
-   *  a sailcloth flying arms is made a pair of arms at a time, its slot over the 24 bits of her code. */
-  function mapsOf(hull, code, arms = null) {
-    const flies = (code >> 16) & 128 && arms ? armsSlotOf(arms) : 0;
-    const own = code + flies * 0x1000000;
-    const key = hull * 0x100000000 + own;
-    if (made.has(key)) return made.get(key);
-    if (!making.has(key) && renderer?.uploadTexture && pipeline?.getTexture) {
-      making.add(key);
-      paint(hull, own, flies ? arms : null).then((m) => { made.set(key, m); }, (e) => { made.set(key, null); log?.warn?.('[livery] a ship\'s paint could not be made - she is drawn as built', e); })
-        .finally(() => making.delete(key));
+  /** GUILD-SHOP: her paint with her guild's arms on her canvas - her paint as made without them (`base`), its canvas alone
+   *  painted again with the emblem (AUDIT GUILD-SHOP N2: every other record is the same picture, never painted twice). */
+  function paintArmed(hull, code, own, base, arms) {
+    const lv = liveryOfCode(code), port = portArchiveOf(hull);
+    if (!lv || port == null) return base;
+    const day = new Map(base.day), night = new Map(base.night);
+    for (const { record, picture } of liveryArtOf(port, lv, sailEmblemOf(arms), { canvasOnly: true })) {
+      const key = put(port, record, own, 'd', dfLook(picture, lookSeed(port, record)));
+      day.set(`${port}_${record}`, key); night.set(`${port}_${record}`, key);
     }
-    return null;
+    return { day, night };
+  }
+  /** A hull's paint's maps once made - null while they are made (and the making begun), or where it failed. GUILD-SHOP:
+   *  a sailcloth flying arms is made a pair of arms at a time, its slot over the 24 bits of her code - and while it is
+   *  made, she wears her paint without them (AUDIT GUILD-SHOP N3: she drew as built a frame each time arms came in). */
+  function mapsOf(hull, code, arms = null) {
+    const key = hull * 0x100000000 + code;
+    const base = made.has(key) ? made.get(key) : (begin(key, () => paint(hull, code)), null);
+    if (!base || !((code >> 16) & 128) || !arms) return base;
+    const slot = armsSlotOf(arms), own = code + slot * 0x1000000, armed = hull * 0x100000000 + own;
+    if (made.has(armed)) return made.get(armed) ?? base;
+    const gen = slotGen[slot];
+    if (renderer?.uploadTexture) { made.set(armed, null); Promise.resolve().then(() => { if (slotGen[slot] === gen) made.set(armed, paintArmed(hull, code, own, base, arms)); else made.delete(armed); }).catch((e) => { log?.warn?.(e); }); }   // her paint without the arms stands
+    return base;
+  }
+  /** One making begun, once - its maps, or null where it failed. */
+  function begin(key, run) {
+    if (making.has(key) || !renderer?.uploadTexture || !pipeline?.getTexture) return;
+    making.add(key);
+    run().then((m) => { made.set(key, m); }, (e) => { made.set(key, null); log?.warn?.('[livery] a ship\'s paint could not be made - she is drawn as built', e); })
+      .finally(() => making.delete(key));
   }
   /**
    * The remap a boat of `hull` wearing livery `code` is drawn by over the host's `base` (the night's twins already in it
@@ -133,17 +153,26 @@ export function createLiveryPaint({ renderer, pipeline, portArchiveOf, log = con
     if (!j) { j = new Map([...base, ...own]); by.set(own, j); ownOf.set(j, own); }
     return j;
   }
-  /** GUILD-SHOP: a pair of arms' slot, 1 to 255. The 256th pair takes the first's slot, whose paints are made again. */
+  /** GUILD-SHOP: a pair of arms' slot, 1 to 255 - kept on the arms object for as long as no logo comes in (AUDIT GUILD-SHOP
+   *  N7: no string made a frame). Past 255, the slot least lately drawn is given again, its paints made again under a
+   *  new generation, so a making still out for the old arms lands as nothing (N6). */
   function armsSlotOf(arms) {
+    const lv = logoVersion(), held = slotOfArms.get(arms);
+    if (held && held.lv === lv) { slotUsed[held.n] = ++useTick; return held.n; }
     const k = sailEmblemKey(arms);
     let n = armsSlots.get(k);
-    if (n != null) return n;
-    n = (slotsGiven++ % 255) + 1;
-    for (const [old, m] of armsSlots) if (m === n) armsSlots.delete(old);
-    for (const key of made.keys()) if (Math.floor(key / 0x1000000) % 256 === n) made.delete(key);
-    armsSlots.set(k, n);
+    if (n == null) {
+      n = armsSlots.size < 255 ? armsSlots.size + 1 : leastUsedSlot();
+      for (const [old, m] of armsSlots) if (m === n) armsSlots.delete(old);
+      for (const key of made.keys()) if (Math.floor(key / 0x1000000) % 256 === n) made.delete(key);
+      slotGen[n] = (slotGen[n] ?? 0) + 1;
+      armsSlots.set(k, n);
+    }
+    slotOfArms.set(arms, { n, lv });
+    slotUsed[n] = ++useTick;
     return n;
   }
+  const leastUsedSlot = () => { let best = 1; for (let n = 2; n <= 255; n++) if ((slotUsed[n] ?? 0) < (slotUsed[best] ?? 0)) best = n; return best; };
   /** AUDIT 2: a joined remap -> the paint's own keys in it. */
   const ownOf = new WeakMap();
   /** AUDIT 2: mesh -> (own map -> whether any of its sub-meshes' pictures is one the paint repaints). */
@@ -166,10 +195,3 @@ export function createLiveryPaint({ renderer, pipeline, portArchiveOf, log = con
   return { remapOf, remapFor, mapsOf, _records: records };
 }
 
-/** GUILD-SHOP: a top-down picture's mean colour - the classic sailcloth's own, its pattern's base. */
-function meanRgb(/** @type {any} */ pic) {
-  const d = pic.data, out = [0, 0, 0];
-  let n = 0;
-  for (let i = 0; i < d.length; i += 4) { if (!d[i + 3]) continue; out[0] += d[i]; out[1] += d[i + 1]; out[2] += d[i + 2]; n++; }
-  return n ? out.map((v) => v / n) : [200, 190, 170];
-}

@@ -468,7 +468,7 @@ test('SHIP-LIVERY and DECK-PROPS on the boats\' word: `l` a number a boat and `d
   assert.notEqual(csaRecordKey(csaWireRecord([at({ livery: { strake: 5 } })])), csaRecordKey(csaWireRecord([at({ livery: { strake: 4 } })])));
   assert.notEqual(csaRecordKey(csaWireRecord([at({ fittings: [{ m: 41812, x: 1, z: 2, yaw: 4 }] })])), csaRecordKey(csaWireRecord([at({ fittings: [{ m: 41812, x: 1, z: 2, yaw: 3 }] })])));
   const peers = rd('src/scenes/comeSailAway/comeSailAwayPeers.js');
-  assert.match(peers, /s\.boat\.livery = liveryCode\(w\.livery\);/);
+  assert.match(peers, /s\.boat\.livery = flownLivery\(owner, w\.livery\);/);   // PIN MOVED (AUDIT GUILD-SHOP S2): her sailcloth flown only where her owner's token says it is theirs
   assert.match(peers, /s\.boat\.fittings = w\.fittings \?\? \[\];/);
   const world = rd('src/scenes/world.js');
   assert.match(world, /livery: b\.uid \? fleetShip\(b\.uid\)\?\.livery \?\? null : null, fittings: b\.uid \? fleetShip\(b\.uid\)\?\.deck \?\? \[\] : \[\],/);

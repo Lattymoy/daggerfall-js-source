@@ -91,25 +91,40 @@ function classicPipeline() {
   return { getTexture: async () => file, uploadRecord() {}, cpuModels: new Map(), palette: { getRed: (i) => i * 10, getGreen: (i) => i * 8, getBlue: (i) => i * 6 } };
 }
 
-test('GUILD-SHOP the paint shop: a sailcloth flying arms is made a pair of arms at a time - two guilds\' ships two paints, one guild\'s one; arms unread draw the pattern alone; a cloth on a classic sail painted, as built where the code has none (mutants: the slot, the key, the classic cloth)', async () => {
+test('GUILD-SHOP the paint shop: her paint is made once, and a sailcloth flying arms paints her canvas alone again a pair of arms at a time - two guilds\' ships two canvases, one guild\'s one, her strakes one picture for all; while the arms are painted she wears her paint without them; the classic sail is tinted alone, never patterned (AUDIT GUILD-SHOP N1-N3) (mutants: the slot, the base reused, the base meanwhile, the classic cloth)', async () => {
   const renderer = recordingRenderer();
   const shop = createLiveryPaint({ renderer, pipeline: classicPipeline(), portArchiveOf: (h) => (h === 2 ? GALLEON_ARCHIVE : null), log: { warn() {} } });
-  const code = liveryCode({ sail: 3, cloth: { pattern: 'cross', second: 7, arms: true } });
+  const code = liveryCode({ strake: 4, sail: 3, cloth: { pattern: 'cross', second: 7, arms: true } });
   const other = { heraldry: { field: 'azure', device: 'star', border: 'gold' }, logo: null };
-  for (const a of [ARMS, other, null]) shop.remapOf(2, code, false, null, a);
+  const sail = `${GALLEON_ARCHIVE}_${GTEX.canvas}`, hull = `${GALLEON_ARCHIVE}_${GTEX.hullSide0}`;
+  const at = (a, src = sail) => shop.remapOf(2, code, false, null, a)?.get(src);
+  for (const a of [ARMS, other, null]) at(a);
   await tick(); await tick();
-  const sail = `${GALLEON_ARCHIVE}_${GTEX.canvas}`;
-  const [mine, theirs, none] = [ARMS, other, null].map((a) => shop.remapOf(2, code, false, null, a)?.get(sail));
-  assert.ok(mine && theirs && none);
-  assert.notEqual(mine, theirs, 'two guilds\' arms, two paints');
-  assert.notEqual(mine, none, 'arms unread: the pattern alone, a paint of its own');
-  assert.equal(shop.remapOf(2, code, false, null, { ...ARMS }).get(sail), mine, 'one guild\'s arms one paint');
+  const none = at(null);
+  assert.ok(none, 'her paint made, the pattern alone');
+  assert.equal(at(ARMS), none, 'while her arms are painted, her paint without them - never as built');
+  at(other);
+  await tick(); await tick();
+  const [mine, theirs] = [ARMS, other].map((a) => at(a));
+  assert.ok(mine && theirs);
+  assert.notEqual(mine, theirs, 'two guilds\' arms, two canvases');
+  assert.notEqual(mine, none, 'the arms a canvas of their own');
+  assert.equal(at({ ...ARMS }), mine, 'one guild\'s arms one canvas');
+  assert.equal(at(ARMS, hull), at(null, hull), 'her strakes one picture, painted once');
   const noArms = liveryCode({ sail: 3, cloth: { pattern: 'cross', second: 7 } });
   shop.remapOf(2, noArms, false, null, ARMS); await tick(); await tick();
   assert.equal(shop.remapOf(2, noArms, false, null, ARMS).get(sail), shop.remapOf(2, noArms, false, null, null).get(sail), 'a cloth flying no arms is one paint whoever sails her');
-  const galley = liveryCode({ stain: 3, cloth: { pattern: 'bands', second: 2 } });
+  const galley = liveryCode({ stain: 3, sail: 5, cloth: { pattern: 'bands', second: 2 } });
   shop.remapOf(3, galley, false, null); await tick(); await tick(); await tick();
-  assert.ok(shop.remapOf(3, galley, false, null).has(`${CLASSIC_SAIL[0]}_${CLASSIC_SAIL[1]}`), 'her classic sail in its cloth');
+  const classicSail = shop.remapOf(3, galley, false, null).get(`${CLASSIC_SAIL[0]}_${CLASSIC_SAIL[1]}`);
+  assert.ok(classicSail, 'her classic sail in her sail\'s paint');
+  const plain = liveryCode({ stain: 3, sail: 5 });
+  shop.remapOf(3, plain, false, null); await tick(); await tick(); await tick();
+  const plainSail = shop.remapOf(3, plain, false, null).get(`${CLASSIC_SAIL[0]}_${CLASSIC_SAIL[1]}`);
+  const pixels = (key) => { const c = renderer.up.get(key); return [...(c?.colors ?? c?.data ?? c ?? [])].join(','); };
+  assert.ok(pixels(plainSail).length > 100, 'its picture read');
+  assert.equal(pixels(classicSail), pixels(plainSail), 'the same tint, no pattern on it');
+  assert.equal(liveryOf({ cloth: { pattern: 'bands', second: 2 } }, 3), null, 'the galley takes no sailcloth');
 });
 
 test('GUILD-SHOP the ware held, as the shop last read it: unread asks once a read is wanted; the account\'s wares from its rows, the guild\'s not among them; a read that found no guild holds none (mutants: the held set, the none)', () => {
@@ -175,8 +190,11 @@ test('GUILD-SHOP on the Fleet: her card says whether her sailcloth is to be had;
   buttons.find((b) => b.textContent === 'Bands').onclick();
   buttons.at(-1).onclick();
   assert.deepEqual(chosen, [{ pattern: 'bands', second: 4, arms: true }, { pattern: 'stripes', second: 4, arms: false }]);
-  const shut = sailClothRows(el, cloth, () => {}, { held: true, armed: false, swatches, button });
+  const shut = sailClothRows(el, { ...cloth, arms: false }, () => {}, { held: true, armed: false, swatches, button });
   assert.ok(shut.children.some((c) => c.tag === 'button' && c.why), 'the arms\' button says why where the guild has none');
+  const down = sailClothRows(el, cloth, (c) => chosen.push(c), { held: true, armed: false, swatches, button });
+  down.children.filter((c) => c.tag === 'button').at(-1).onclick();
+  assert.equal(chosen.at(-1).arms, false, 'arms flown under a guild before are taken down without one (AUDIT GUILD-SHOP N5)');
   // her picture
   assert.equal(clothSvg(null, '#fff', null), '');
   assert.match(clothSvg(cloth, '#123456', ARMS.heraldry), /fill="#123456"[\s\S]*<svg/);
@@ -184,4 +202,27 @@ test('GUILD-SHOP on the Fleet: her card says whether her sailcloth is to be had;
   assert.doesNotMatch(paintSvg(2, { sail: 3 }), /hld-cloth/);
   _resetGuildStock();
   _resetFleetForTests();
+});
+
+test('AUDIT GUILD-SHOP S2 the Guild Sailcloth is the token\'s word: `sc` 1 or absent, held by its bit or an Admin\'s holding all; a peer\'s ship flies her sailcloth only on it, her paint whole either way (mutants: the claim unchecked; the cloth flown unclaimed; the paint dropped with it)', async () => {
+  const { claimsValid } = await import('../../../src/net/identityToken.js');
+  const { sailclothHeld } = await import('../../../server-account/src/titles.js');
+  const { setPeerClothReader, peerHoldsCloth, _resetArmsBook } = await import('../../../src/net/guild/guildArmsBook.js');
+  const base = { s: 'acct-a', n: 'Aldric', k: 'linked', i: 1000, e: 1100 };
+  assert.equal(claimsValid({ ...base, sc: 1 }), true);
+  assert.equal(claimsValid({ ...base, sc: 2 }), false);
+  assert.equal(claimsValid(base), true);
+  assert.equal(sailclothHeld({ handle: 'Aldric', guild_wares: 4 }, {}), 1, 'its bit');
+  assert.equal(sailclothHeld({ handle: 'Aldric', guild_wares: 3 }, {}), undefined);
+  assert.equal(sailclothHeld({ handle: 'Mac', guild_wares: 0 }, { DEVELOPER_HANDLES: 'Mac' }), 1, 'an Admin holds all');
+  assert.equal(sailclothHeld({ guild_wares: 4 }, {}), undefined, 'a guest none');
+  // a peer's boat
+  const { flownLivery } = await import('../../../src/scenes/comeSailAway/comeSailAwayPeers.js');
+  _resetArmsBook();
+  const held = new Set(['p-buyer']);
+  setPeerClothReader((id) => held.has(id));
+  assert.deepEqual([peerHoldsCloth('p-buyer'), peerHoldsCloth('p-other')], [true, false]);
+  const livery = { strake: 4, sail: 3, cloth: { pattern: 'cross', second: 7, arms: true } };
+  assert.deepEqual([flownLivery('p-buyer', livery), flownLivery('p-other', livery)], [liveryCode(livery), liveryCode({ strake: 4, sail: 3 })], 'unclaimed: her paint whole, no cloth');
+  _resetArmsBook();
 });
