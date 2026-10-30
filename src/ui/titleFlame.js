@@ -171,7 +171,7 @@ ${cc} { filter: drop-shadow(0 0 .3em ${p.glow}a0); }` : ''}`);
 export const PLATE_STYLE_ID = 'dagger-title-plates';
 /** The plates' sheet in the document, once - plain CSS, laid at the first face that wears one. */
 export function ensureTitlePlates(/** @type {any} */ doc = globalThis.document) {
-  if (!doc?.head || doc.getElementById?.(PLATE_STYLE_ID) || !doc.createElement) return;
+  if (typeof doc?.head?.append !== 'function' || doc.getElementById?.(PLATE_STYLE_ID) || !doc.createElement) return;
   const st = doc.createElement('style');
   st.id = PLATE_STYLE_ID;
   st.textContent = plateCss();
