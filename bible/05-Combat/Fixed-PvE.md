@@ -240,6 +240,7 @@ Unity's items have no lines. The tests: `test/systems/loot/skilllean.test.js`.
 The owner: "material also need to follow a scale", "around 20-30 daedric need to be 7% drop like vanilla". A template
 foe's whole loot chain (`hostCombat.js` `spawnEnemyLoot`) runs inside `withFoeMaterialLevel` (`combat/enemyEquipment.js`)
 at the foe's fixed level. Every material roll under it reads Daggerfall Unity's own `RandomMaterial` and
-`RandomArmorMaterial` at that level, and Unleveled Loot is passed by, so the metal climbs with the zone. A weapon is
-Daedric in none under level 10, about 8% at 20, 16% at 30 and 28% at 45; a plate piece about a ninth of that. Other foes
-keep Unleveled Loot. The tests: `test/systems/loot/foemetal.test.js`.
+`RandomArmorMaterial` at that level, and Unleveled Loot is passed by, so the metal climbs with the zone. The curve's
+Daedric is set aside: "smaller weapon roll, more armor" - a weapon and an armour piece are each Daedric at 0.47% a level
+past 10 (`foeDaedricChance`): none to 10, about 4.7% at 20, 7% at 25, 9.3% at 30 and 16% at 45. Other foes keep
+Unleveled Loot. The tests: `test/systems/loot/foemetal.test.js`.

@@ -80,10 +80,20 @@ export function withFoeMaterialLevel(level, fn) {
   try { return fn(); } finally { _foeLevel = was; }
 }
 export const foeMaterialLevel = () => _foeLevel;
+/** FOE-METAL (the owner: "smaller weapon roll, more armor"): inside the scope a weapon and a piece of armour are each
+ *  Daedric at this chance a level past 10 - 7% at 25 - in place of the curve's own (16% of weapons at 30, 2% of plate). */
+export const FOE_DAEDRIC_PER_LEVEL = 0.07 / 15;
+export const foeDaedricChance = (level) => Math.max(0, (level - 10) * FOE_DAEDRIC_PER_LEVEL);
+const DAEDRIC = 9, EBONY = 7;
+let _vanilla = false;   // FOE-METAL's own curve roll: Unleveled Loot passed by
 
 export function randomMaterial(playerLevel, rolls = Math.random) {
-  if (_foeLevel != null) playerLevel = _foeLevel;   // FOE-METAL: the foe's level, DFU's curve
-  const o = _foeLevel != null ? undefined : formulaOverride('randomMaterial')?.(playerLevel, rolls);   // UL1: TryGetOverride("RandomMaterial")
+  if (_foeLevel != null) {   // FOE-METAL: the foe's level on DFU's curve, its Daedric at the foe's own chance
+    const lv = _foeLevel;
+    _foeLevel = null; _vanilla = true;
+    try { const m = randomMaterial(lv, rolls); return rolls() < foeDaedricChance(lv) ? DAEDRIC : m === DAEDRIC ? EBONY : m; } finally { _foeLevel = lv; _vanilla = false; }
+  }
+  const o = _vanilla ? undefined : formulaOverride('randomMaterial')?.(playerLevel, rolls);   // UL1: TryGetOverride("RandomMaterial")
   if (o !== undefined) return o;
   let levelModifier = playerLevel - 10;
   levelModifier *= levelModifier >= 0 ? 2 : 4;
@@ -99,8 +109,15 @@ export function randomMaterial(playerLevel, rolls = Math.random) {
 // ---- ArmorMaterialTypes + RandomArmorMaterial ----
 export const ARMOR_MATERIAL = Object.freeze({ Leather: 0x0000, Chain: 0x0100, PLATE_BASE: 0x0200 });
 export function randomArmorMaterial(playerLevel, rolls = Math.random) {
-  if (_foeLevel != null) playerLevel = _foeLevel;   // FOE-METAL
-  const o = _foeLevel != null ? undefined : formulaOverride('randomArmorMaterial')?.(playerLevel, rolls);   // UL1: TryGetOverride("RandomArmorMaterial")
+  if (_foeLevel != null) {   // FOE-METAL: as a weapon's - a Daedric piece is plate
+    const lv = _foeLevel;
+    _foeLevel = null; _vanilla = true;
+    try {
+      const a = randomArmorMaterial(lv, rolls);
+      return rolls() < foeDaedricChance(lv) ? ARMOR_MATERIAL.PLATE_BASE + DAEDRIC : a === ARMOR_MATERIAL.PLATE_BASE + DAEDRIC ? ARMOR_MATERIAL.PLATE_BASE + EBONY : a;
+    } finally { _foeLevel = lv; _vanilla = false; }
+  }
+  const o = _vanilla ? undefined : formulaOverride('randomArmorMaterial')?.(playerLevel, rolls);   // UL1: TryGetOverride("RandomArmorMaterial")
   if (o !== undefined) return o;
   const roll = 1 + Math.floor(rolls() * 100);                // Dice100.Roll
   if (roll >= 70) {
