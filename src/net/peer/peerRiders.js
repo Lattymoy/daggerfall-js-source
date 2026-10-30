@@ -74,7 +74,7 @@ export function spriteLookOf(s) {
   if (s?.horse) return s.horse;
   if (!isLayeredKey(s?.key)) return null;
   const p = /** @type {string} */ (s.key).split(':');
-  return p.length >= 5 ? `${p[0]}:${p[1]}:${p[2]}:${p.slice(4).join(':')}` : null;
+  return p.length >= 5 ? `${p[0]}:${p[1]}:${p[2]}:${p[4]}` : null;   // a flipped bow's picture (`:m`) is the same look
 }
 
 async function decodeUrl(url) {

@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import {
   layeredWeaponOf, weaponShownFor, weaponRigOf, WEAPON_SHAPES, BARE_TWINS, ARMED_TWINS, GUN_FIRE_FRAME, isGunCode, removeWeapon,
-  maskTile, fillFrom, weaponLen, WEAPON_SPAN, heldPicture, heldBow, heldImage,
+  maskTile, fillFrom, weaponLen, WEAPON_SPAN, heldPicture, heldBow, heldImage, drawWeapon,
 } from '../../../src/player/eyeOfTheBeholder/layeredWeapon.js';
 import { inventoryItemImage } from '../../../src/systems/item/itemTemplates.js';
 import { layeredSprite, outfitPieces, outfitCombo, decodeLayered } from '../../../src/player/eyeOfTheBeholder/layeredArmor.js';
@@ -425,16 +425,51 @@ test('a flail\'s chain hangs; a katana is held as its flat picture, not the pack
   assert.deepEqual(heldImage(ls, { gender: 'female' }), inventoryItemImage(ls, { gender: 'female' }));
 });
 
-test('the back-3/4 views: the walk\'s bow behind the body (the body may hide it); where the art hides the free hand - the idle, the female\'s 3-2 - none', { skip: !PNG && 'no pngjs' }, async () => {
+test('the bow is in the left hand: the free hand the art draws, or the near fist where it hides it; a flipped picture\'s left hand is the art\'s other - the hammer\'s fist, on the far side, behind the body', { skip: !PNG && 'no pngjs' }, async () => {
+  // unflipped: the back-3/4 walk's free hand is the near one, before the body; the idle and the female's 3-2 hold the hammer near
   for (const [body, frames] of [['male', ['3-0', '3-1', '3-2', '3-3']], ['female', ['3-0', '3-1', '3-3']]]) {
-    for (const rf of frames) assert.equal(weaponRigOf(body, rf).bow[2], 0, `${body} ${rf}: behind the body`);
+    for (const rf of frames) assert.equal(weaponRigOf(body, rf).bow[2], 1, `${body} ${rf}: the near hand, before the body`);
   }
   for (const [body, rf] of [['male', '18-0'], ['female', '18-0'], ['female', '3-2']]) {
-    assert.equal(weaponRigOf(body, rf).bow, undefined, `${body} ${rf}: no bow hand`);
-    const plain = `LA:${body}:leather_leather_leather:${rf}:lll`;
-    const bare = await decodeLayered(`${plain}@0`, decodePng, opts), armed = await decodeLayered(`${plain}@lb1`, decodePng, opts);
-    assert.deepEqual(armed.data, bare.data, `${body} ${rf}: the body hides the bow - none drawn, no hammer left`);
+    const fr = weaponRigOf(body, rf), [gx, gy] = fr.w ?? fr.q;
+    assert.ok(fr.bow[2] === 1 && Math.hypot(fr.bow[0] - gx, fr.bow[1] - gy) <= 2.5, `${body} ${rf}: the near fist`);
   }
+  // flipped (eotbBillboard.js MIRRORED: records 1-3 and their idles): the hammer's fist, behind the body, turned to its side
+  const flippable = Object.keys(rig.male.frames).filter((rf) => [1, 2, 3, 16, 17, 18].includes(Number(rf.split('-')[0])));
+  for (const body of ['male', 'female']) for (const rf of flippable) {
+    const fr = weaponRigOf(body, rf), [gx, gy] = fr.w ?? fr.q;
+    assert.ok(Array.isArray(fr.bowM) && fr.bowM[2] === 0 && fr.bowM[3] === -1 && Math.hypot(fr.bowM[0] - gx, fr.bowM[1] - gy) <= 2.5, `${body} ${rf}: the flipped bow at the hammer's fist ${JSON.stringify(fr.bowM)}`);
+  }
+  for (const rf of ['0-0', '4-0', '15-0', '19-0']) assert.equal(weaponRigOf('male', rf).bowM, undefined, `${rf}: never flipped`);
+  // the sprite asks for it: a flipped bow frame is its own picture (`:m`), a sword's flip is the same picture turned
+  const look = { outfit: 'lll', gender: 'male', weapon: 'lb3' };
+  const [plainS, flipS] = [false, true].map((m) => layeredSprite('MoveRanged', 3, 0, 2, look, m));
+  assert.ok(flipS.mirror && flipS.key === `${plainS.key}:m`, `flipped: ${flipS.key}`);
+  assert.ok(!layeredSprite('MoveMelee', 3, 0, 2, { ...look, weapon: 'ls3' }, true).key.endsWith(':m'), 'a sword is the same picture flipped');
+  // drawn: the flipped bow stands where the body hides it, on the hammer's side of the body - the far side once turned
+  for (const [body, rf] of [['male', '3-1'], ['female', '3-0'], ['male', '1-1'], ['male', '2-2']]) {
+    const plain = `LA:${body}:leather_leather_leather:${rf}:lll`, fr = weaponRigOf(body, rf);
+    const bare = await decodeLayered(`${plain}@0`, decodePng, opts);
+    const [near, far] = await Promise.all([decodeLayered(`${plain}@lb1`, decodePng, opts), decodeLayered(`${plain}@lb1:m`, decodePng, opts)]);
+    let over = 0, n = 0, sx = 0;
+    for (let i = 0; i < bare.width * bare.height; i++) {
+      if (![0, 1, 2, 3].some((c) => far.data[i * 4 + c] !== bare.data[i * 4 + c])) continue;
+      n++; sx += i % bare.width;
+      if (bare.data[i * 4 + 3]) over++;
+    }
+    assert.ok(n > 3 && over === 0, `${body} ${rf}: the far bow in open air only (${over} of ${n} over the body)`);
+    assert.ok(Math.abs(sx / n - fr.bowM[0]) < Math.abs(sx / n - fr.bow[0]) || fr.bow[0] === fr.bowM[0], `${body} ${rf}: at the hammer's fist, not the free hand`);
+    assert.notDeepEqual(near.data, far.data, `${body} ${rf}: the flipped picture is its own`);
+  }
+  // turned to its own hand's side: from behind-left the far hand's bow shows more of its edge than the near hand's
+  const width = (mirror) => {
+    const out = { width: 100, height: 100, data: new Uint8Array(100 * 100 * 4) };
+    drawWeapon(out, { bow: [50, 50, 1], bowM: [50, 50, 1, -1] }, 'lb1', 30, 3, { bow: 75, cm: 0.6, pic: heldBow(bow()), mirror });
+    let x0 = 100, x1 = -1;
+    for (let i = 0; i < 100 * 100; i++) if (out.data[i * 4 + 3]) { x0 = Math.min(x0, i % 100); x1 = Math.max(x1, i % 100); }
+    return x1 - x0;
+  };
+  assert.ok(width(true) < width(false) - 2, `the far hand's bow ${width(true)} px wide, the near's ${width(false)}`);
 });
 
 test('the doll\'s hand gap carries the handle where no fist of the art covers it - never over the body', { skip: !PNG && 'no pngjs' }, async () => {

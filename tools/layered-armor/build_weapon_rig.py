@@ -136,21 +136,23 @@ SHAFT = {
 BOW_HAND = {
     'male': {'0-0': (64.3, 65.3, 1), '0-1': (66.0, 60.0, 1), '0-2': (68.4, 62.9, 1), '0-3': (64.4, 61.7, 1),
              '1-0': (83.3, 65.4, 1), '1-1': (76.2, 59.9, 1), '1-2': (65.4, 62.1, 1), '1-3': (77.3, 60.8, 1),
-             '3-0': (13.9, 62.6, 0), '3-1': (8.9, 56.4, 0), '3-2': (9.4, 56.4, 0), '3-3': (13.8, 57.6, 0),
+             '3-0': (13.9, 62.6, 1), '3-1': (8.9, 56.4, 1), '3-2': (9.4, 56.4, 1), '3-3': (13.8, 57.6, 1),
              '4-0': (1.7, 58.7, 0), '4-1': (4.0, 53.0, 0), '4-2': (14.0, 61.2, 0), '4-3': (3.0, 55.5, 0),
              '15-0': (53.8, 61.0, 1), '16-0': (79.7, 60.6, 1),
              '19-0': (8.2, 59.5, 0)},
     'female': {'0-0': (89.2, 90.3, 1), '0-1': (91.8, 87.1, 1), '0-2': (88.4, 91.9, 1), '0-3': (92.2, 87.3, 1),
                '1-0': (90.5, 87.5, 1), '1-1': (99.0, 87.0, 1), '1-2': (102.0, 92.0, 1), '1-3': (99.5, 86.0, 1),
-               '3-0': (48.8, 88.4, 0), '3-1': (54.0, 87.6, 0), '3-3': (54.7, 87.8, 0),
+               '3-0': (48.8, 88.4, 1), '3-1': (54.0, 87.6, 1), '3-3': (54.7, 87.8, 1),
                '4-0': (44.0, 91.0, 0), '4-1': (39.8, 86.8, 0), '4-2': (43.4, 91.8, 0), '4-3': (39.2, 86.2, 0),
                '15-0': (88.7, 90.5, 1), '16-0': (98.1, 90.3, 1),
                '19-0': (40.0, 89.5, 0)},
 }
-# The side views hide the free hand behind the body: there, as Daggerfall's side views hold a weapon, the bow is in the
-# near hand, the one the hammer was in. The back-3/4 views draw the bow behind the body; where the art hides that hand
-# too (the idle, the female's 3-2) the body hides the bow, and none is drawn.
-BOW_NEAR = ('2-0', '2-1', '2-2', '2-3', '17-0')
+# The bow is in the left hand. Where the art hides the free hand and holds the hammer in the near one - the side views,
+# the back-3/4 idle, the female's 3-2 - the near hand is the left: the bow is there.
+BOW_NEAR = {(b, rf) for b in ('male', 'female') for rf in ('2-0', '2-1', '2-2', '2-3', '17-0', '18-0')} | {('female', '3-2')}
+# Records 1-3 and 16-18 are also drawn flipped (eotbBillboard.js MIRRORED), and the flip swaps the hands: there the left
+# hand is the art's other one, the hammer's fist, on the far side - the bow at that fist (`bowM`), behind the body, which
+# may hide it (the owner, 2026-10-30: "Its okay if the body hides it"), turned to that hand's side.
 # The body's own bow (the loose's art, records 20-24), tip to tip, px: the long bow; the short bow is three quarters.
 BOW_PX = {'male': 75, 'female': 78}
 # Front views whose hole is the body's other side, mirrored: the fill copies it, alpha and all.
@@ -488,11 +490,13 @@ def main(only=None):
                 p['d'] = d if blade is None else d[:-LO] + blade * (HI + 1)
         for rf, per in frames.items():   # the bow's hand, where a frame carries one
             for p in per:
-                p.pop('bow', None)
+                p.pop('bow', None); p.pop('bowM', None)
                 if rf in BOW_HAND[body]: p['bow'] = list(BOW_HAND[body][rf])
-                if rf in BOW_NEAR:   # the side views: the near fist, half its width back from the grip
-                    gx, gy, ex, ey = p.get('w') or (p['q'] + p['t']); D = math.hypot(ex - gx, ey - gy) or 1.0
-                    p['bow'] = [round(gx - 2 * (ex - gx) / D, 1), round(gy - 2 * (ey - gy) / D, 1), 1]
+                gx, gy, ex, ey = p.get('w') or (p['q'] + p['t']); D = math.hypot(ex - gx, ey - gy) or 1.0
+                fist = [round(gx - 2 * (ex - gx) / D, 1), round(gy - 2 * (ey - gy) / D, 1)]   # the fist, half its width back from the grip
+                if (body, rf) in BOW_NEAR: p['bow'] = fist + [1]
+                rec = int(rf.split('-')[0])
+                if rec in (1, 2, 3, 16, 17, 18) and 'bow' in p: p['bowM'] = fist + [0, -1]
         fig = np.nonzero(strip_base(body, 'leather_leather_leather', '15-0')[..., 3] > 0)[0]   # the idle's height is 1.8 m
         rig[body] = {'len': ln, 'bow': BOW_PX[body], 'cm': round(float(np.ptp(fig) + 1) / 180, 4), 'frames': frames}
     with open(f'{V}/weapon/manifest.json', 'w') as f: json.dump(rig, f, separators=(',', ':'))

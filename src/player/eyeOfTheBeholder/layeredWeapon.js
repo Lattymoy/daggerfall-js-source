@@ -468,15 +468,16 @@ const depthOf = (fr) => { let v = _depth.get(fr); if (!v) { v = settleDepth(fr.d
  * weapon stays behind it (drawn only into open air); the fist round the grip covers its handle.
  * @param {{width:number,height:number,data:Uint8Array}} out @param {any} fr the frame's rig (weaponRigOf)
  * @param {string} code the weapon code ('ls7') @param {number} len the body's hammer length, px @param {number} view 0..4
- * @param {{bow?:number, pic?:any, cm?:number, swing?:boolean}} [art] the body's own bow (tip to tip, px); the weapon's
- *   paper-doll picture held and the body's px a centimetre (`cm`) - else the drawn shape; `swing` an attack's frame
+ * @param {{bow?:number, pic?:any, cm?:number, swing?:boolean, mirror?:boolean}} [art] the body's own bow (tip to tip,
+ *   px); the paper-doll picture and the body's px a centimetre (`cm`); `swing` an attack's frame, `mirror` a flipped one
  */
 export function drawWeapon(out, fr, code, len, view = 2, art = {}) {
   const shape = code.slice(0, 2), metal = Number(code.slice(2)) || 0, pic = art.cm > 0 ? art.pic ?? null : null;
   if (shape === 'wh') return;   // the art's own
   if (BOWS.has(shape)) {
-    if (!Array.isArray(fr.bow)) return out;
-    return pic ? drawBowPicture(out, fr.bow, pic, view, (art.bow ?? 70) * (BOW_DIMS[shape] ?? BOW_DIMS.sb)[0]) : drawBow(out, fr.bow, shape, metal, view, art.bow ?? 70);
+    const bow = art.mirror ? fr.bowM : fr.bow;   // a flipped frame's left hand is the art's other one (the rig's bowM)
+    if (!Array.isArray(bow)) return out;
+    return pic ? drawBowPicture(out, bow, pic, view, (art.bow ?? 70) * (BOW_DIMS[shape] ?? BOW_DIMS.sb)[0]) : drawBow(out, bow, shape, metal, view, art.bow ?? 70);
   }
   const w = out.width, h = out.height, d = out.data;
   // the line the weapon is drawn on: the hammer's, or (`w`) where the hammer hides its shaft - pointed at the camera,
@@ -611,9 +612,9 @@ function drawChain(out, P, L, shown) {
 /** A held bow picture (heldBow) in the free hand, as drawBow lays the drawn one: its grip in the fist, the string along
  *  the bow's upright, its back turned BOW_TURN off the facing; `tips` px tip to tip, as the loose draws its bow. */
 function drawBowPicture(out, bow, P, view, tips) {
-  const [hx, hy, before] = bow, w = out.width, h = out.height, d = out.data, cm = tips / (2 * P.reach);
+  const [hx, hy, before, hand = 1] = bow, w = out.width, h = out.height, d = out.data, cm = tips / (2 * P.reach);
   const v = Math.max(0, Math.min(4, view | 0));
-  const bx = Math.cos(BOW_TURN) * FACING_X[v] + Math.sin(BOW_TURN) * BOW_SIDE_X[v];
+  const bx = Math.cos(BOW_TURN) * FACING_X[v] + Math.sin(BOW_TURN) * BOW_SIDE_X[v] * hand;
   const lean = Math.sin(BOW_LEAN) * FACING_X[v], up = Math.cos(BOW_LEAN);
   const reach = P.reach * cm, back = P.back * cm;
   const x0 = Math.max(0, Math.floor(hx - reach * Math.abs(lean) - back - 2)), x1 = Math.min(w - 1, Math.ceil(hx + reach * Math.abs(lean) + back + 2));
@@ -645,10 +646,10 @@ const bowHidden = (alpha, before, dx, dy) => alpha > 0 && (!before || dx * dx + 
  * @param {number} metal @param {number} view 0..4 @param {number} bowPx the body's own bow, tip to tip, px
  */
 function drawBow(out, bow, shape, metal, view, bowPx) {
-  const [hx, hy, before] = bow, w = out.width, h = out.height, d = out.data;
+  const [hx, hy, before, hand = 1] = bow, w = out.width, h = out.height, d = out.data;
   const [lr, br] = BOW_DIMS[shape] ?? BOW_DIMS.sb, half = (bowPx * lr) / 2, B = bowPx * br;
   const v = Math.max(0, Math.min(4, view | 0));
-  const bx = Math.cos(BOW_TURN) * FACING_X[v] + Math.sin(BOW_TURN) * BOW_SIDE_X[v];   // the bow's back, screen x
+  const bx = Math.cos(BOW_TURN) * FACING_X[v] + Math.sin(BOW_TURN) * BOW_SIDE_X[v] * hand;   // the bow's back, screen x
   const lean = Math.sin(BOW_LEAN) * FACING_X[v], up = Math.cos(BOW_LEAN);
   const string = Math.abs(bx) > 0.2;
   // at u (-1 the bottom tip .. 1 the top): the limb's centre, its slope dx/dy, and the string's

@@ -262,7 +262,7 @@
   {
     "name": "LAYERED-WEAPONS-bow-in-weapon-hand",
     "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
-    "old": "return pic ? drawBowPicture(out, fr.bow, pic, view, (art.bow ?? 70) * (BOW_DIMS[shape] ?? BOW_DIMS.sb)[0]) : drawBow(out, fr.bow, shape, metal, view, art.bow ?? 70);",
+    "old": "return pic ? drawBowPicture(out, bow, pic, view, (art.bow ?? 70) * (BOW_DIMS[shape] ?? BOW_DIMS.sb)[0]) : drawBow(out, bow, shape, metal, view, art.bow ?? 70);",
     "new": "return pic ? drawBowPicture(out, [...fr.q, 1], pic, view, (art.bow ?? 70) * (BOW_DIMS[shape] ?? BOW_DIMS.sb)[0]) : drawBow(out, [...fr.q, 1], shape, metal, view, art.bow ?? 70);",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
@@ -302,8 +302,8 @@
   {
     "name": "LAYERED-WEAPONS-bow-body-unread",
     "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
-    "old": "drawBow(out, fr.bow, shape, metal, view, art.bow ?? 70)",
-    "new": "drawBow(out, fr.bow, shape, metal, view, 70)",
+    "old": "drawBow(out, bow, shape, metal, view, art.bow ?? 70)",
+    "new": "drawBow(out, bow, shape, metal, view, 70)",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
@@ -658,5 +658,55 @@
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ],
     "why": "a walker's weapon pictures outlive its look"
+  },
+  {
+    "name": "LAYERED-WEAPONS-flip-same-hand",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "    const bow = art.mirror ? fr.bowM : fr.bow;",
+    "new": "    const bow = fr.bow;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a flipped picture holds the bow in the right hand, on the near side"
+  },
+  {
+    "name": "LAYERED-WEAPONS-flip-hand-side-ignored",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "  const bx = Math.cos(BOW_TURN) * FACING_X[v] + Math.sin(BOW_TURN) * BOW_SIDE_X[v] * hand;\n",
+    "new": "  const bx = Math.cos(BOW_TURN) * FACING_X[v] + Math.sin(BOW_TURN) * BOW_SIDE_X[v];\n",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the far hand's bow turned as the near hand's"
+  },
+  {
+    "name": "LAYERED-WEAPONS-flip-no-own-picture",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "  const hand = flip && isBowCode(weapon) ? ':m' : '';",
+    "new": "  const hand = '';",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a flipped bow frame drawn from the unflipped picture"
+  },
+  {
+    "name": "LAYERED-WEAPONS-flip-unread",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "mirror: hand === 'm' };",
+    "new": "mirror: false };",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the decode never told the picture is flipped"
+  },
+  {
+    "name": "LAYERED-WEAPONS-flip-own-look",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "`${p[0]}:${p[1]}:${p[2]}:${p[4]}`",
+    "new": "`${p[0]}:${p[1]}:${p[2]}:${p.slice(4).join(':')}`",
+    "tests": [
+      "test/net/peer/fb1022d_peerart.test.js"
+    ],
+    "why": "a flipped bow counted a look of its own"
   }
 ]

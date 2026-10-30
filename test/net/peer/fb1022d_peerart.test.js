@@ -47,6 +47,7 @@ test('PEER-ART a sprite\'s look: a horse\'s its coat; a worn-armour walker\'s it
   assert.equal(new Set(a.map(spriteLookOf)).size, 1, 'one outfit, one look');
   assert.notEqual(spriteLookOf(a[0]), spriteLookOf(b[0]));
   assert.match(spriteLookOf(a[0]), /^LA:/);
+  assert.equal(spriteLookOf({ key: `${a[0].key}:m` }), spriteLookOf(a[0]), 'a flipped bow\'s own picture is the same look');
   assert.equal(spriteLookOf({ key: 'FMRM_0-0', archive: 1, rec: 0 }), null, 'a class sprite every player shares stands');
 });
 

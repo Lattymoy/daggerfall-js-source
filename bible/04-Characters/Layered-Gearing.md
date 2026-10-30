@@ -161,17 +161,19 @@ in centimetres (the hammer's grip to head is 70), supersampled, shaded from the 
 strips' metal ramps (silver, elven and dwarven their own). Daggerfall Unity draws no third-person weapon for the
 player. The Hand Wraps are bare hands. A weapon wearing a look is drawn as the look.
 
-**The bow** is held in the free hand (`BOW_HAND`, the loose's own bow hand) at its middle, upright, leant 12 degrees
-forward, its back turned 22.5 degrees from the facing toward that hand's side so no view sees it edge on, the string
-toward the body. It is the paper doll's bow (`heldBow`): the string its axis (the thin line, not a short bow's thick
-limb), the gap in the limb its grip, drawn from its longer limb both ways, since the doll cuts the lower limb short. The
-fist closes over the grip. The side views hide that hand behind the body, so there the bow is in the near hand
-(`BOW_NEAR`), as Daggerfall's side views hold a weapon. Tip to tip it is the loose's own bow (`BOW_PX`, the short bow
-three quarters). Edge on, it is a line, not dashes.
+**The bow** is held in the left hand at its middle, upright, leant 12 degrees forward, its back turned 22.5 degrees
+from the facing toward that hand's side, the string toward the body. It is the paper doll's bow (`heldBow`): the string
+its axis (the thin line, not a short bow's thick limb), the gap in the limb its grip, drawn from its longer limb both
+ways, since the doll cuts the lower limb short. The fist closes over the grip. Tip to tip it is the loose's own bow
+(`BOW_PX`, the short bow three quarters). Edge on, it is a line, not dashes.
 
-**From behind and left** (the owner, 2026-10-30: "Bow is still wrong on the back facing left. Its okay if the body
-hides it"). The back-3/4 walk draws the bow behind the body, in open air only. Where the art hides the free hand too
-(the back-3/4 idle, 18-0, and the female's 3-2) the body hides the bow, and none is drawn.
+**Which hand.** The left is the art's free hand (`BOW_HAND`, the loose's own bow hand). Where the art hides it and
+holds the hammer in the near hand - the side views, the back-3/4 idle, the female's 3-2 - the near hand is the left,
+and the bow is there (`BOW_NEAR`), as Daggerfall's side views hold a weapon. Records 1-3 and their idles are also drawn
+flipped (`eotbBillboard.js` MIRRORED), and the flip swaps the hands (the owner, 2026-10-30: "Bow is still wrong on the
+back facing left. Its okay if the body hides it" - then "Youre not presenting the flipped version of the sprite"). A
+flipped frame is its own picture (the key's `:m`): the bow at the hammer's fist (`bowM`), the left hand once turned, on
+the far side, behind the body, which hides what it covers.
 
 **Whose hands.** My body reads the item in the hand in use (`combat/weapon/weaponRig.js` eotbState `heldWeapon`,
 `eotbBody.js` lookNow). A walker holds the tool of its gathering act, else the weapon in the hand its pose says it uses
@@ -187,7 +189,7 @@ shaft. The female's back-view flinch (14-0) keeps its raised hand two pixels off
 and with empty hands her back-3/4 swing (8-2) its hand, whose arm is behind the body. A weapon's glow stands round the
 weapon alone (LAYERED-GLOW, `05-Combat/Weapon-Glow.md` "Round the weapon"). Verified by
 `test/player/eyeOfTheBeholder/layered_weapons.test.js`, `spriteglow.test.js` and `tools/mutants/layered_weapons.json`
-(66 mutants, all dead); the peer-art pins moved to the new codes (`test/net/peer/fb1022d_peerart.test.js`).
+(71 mutants, all dead); the peer-art pins moved to the new codes (`test/net/peer/fb1022d_peerart.test.js`).
 
 ## The art - the doctrine's third exception
 

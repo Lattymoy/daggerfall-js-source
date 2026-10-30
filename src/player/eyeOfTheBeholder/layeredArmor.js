@@ -28,7 +28,7 @@
 import manifest from '../../../vendor/layered-armor/manifest.json' with { type: 'json' };
 import cloakManifest from '../../../vendor/layered-armor/cloak/manifest.json' with { type: 'json' };
 import { drawnPiece } from '../../net/appearanceLaw.js';   // APPEARANCES: a worn piece's look
-import { weaponShownFor, weaponRigOf, removeWeapon, drawWeapon, recolourHammer, maskTile, fillFrom, weaponLen, bowLen, weaponCm, heldPictureOf, loadHeldPicture, BARE_TWINS, ARMED_TWINS, GUN_FIRE_FRAME, isGunCode } from './layeredWeapon.js';   // LAYERED-WEAPONS: the weapon in the hands
+import { weaponShownFor, weaponRigOf, removeWeapon, drawWeapon, recolourHammer, maskTile, fillFrom, weaponLen, bowLen, weaponCm, heldPictureOf, loadHeldPicture, BARE_TWINS, ARMED_TWINS, GUN_FIRE_FRAME, isGunCode, isBowCode } from './layeredWeapon.js';   // LAYERED-WEAPONS: the weapon in the hands
 
 /** The texture archives the composed pictures are uploaded under - one per body, clear of every vendored archive. */
 export const LAYERED_ARCHIVE = Object.freeze({ male: 1700, female: 1701 });
@@ -156,9 +156,10 @@ export function layeredSprite(table, offset, frame, tableFrames, look, mirror) {
   const code = `${pieces.head}${pieces.top}${pieces.legs}${cloak == null ? '' : `~${cloak}`}${weapon == null ? '' : `@${weapon}`}`;
   const twin = (weapon === '0' ? BARE_TWINS : weapon ? ARMED_TWINS : {})[body]?.[`${record}-${f}`] ?? null;
   const [rec, fr] = twin ? twin.split('-').map(Number) : [record, f], flip = twin && weapon === '0' ? !mirror : mirror;
+  const hand = flip && isBowCode(weapon) ? ':m' : '';   // a flipped picture's bow is in the art's other hand: its own picture
   return {
     archive: LAYERED_ARCHIVE[body], record: rec, frame: fr, mirror: flip,
-    key: `LA:${body}:${combo}:${rec}-${fr}:${code}`,
+    key: `LA:${body}:${combo}:${rec}-${fr}:${code}${hand}`,
     rec: `${code}_${rec}-${fr}${flip ? 'm' : ''}`,
   };
 }
@@ -361,7 +362,7 @@ export function applyHoodFix(out, fs, pieces, dye, skip = null) {
  * @param {string} code the outfit code ('p6cl', 'p6cl~2' with a cloak dyed Red)
  * @param {{strip:{width:number,height:number,data:Uint8Array|Uint8ClampedArray}, over:boolean, noSlivers?:boolean,
  *   fix?:{width:number,height:number,data:Uint8Array|Uint8ClampedArray}|null}|null} [cloak] the frame's cloak strip (and its hood fix)
- * @param {{mask:Uint8Array, fr:any, len:number, view:number, bow?:number, pic?:any, cm?:number, swing?:boolean}|null} [weapon] LAYERED-WEAPONS: the frame's rig
+ * @param {{mask:Uint8Array, fr:any, len:number, view:number, bow?:number, pic?:any, cm?:number, swing?:boolean, mirror?:boolean}|null} [weapon] LAYERED-WEAPONS: the frame's rig
  * @returns {{width:number,height:number,data:Uint8Array,held?:Uint8Array}} `held` the weapon's own px (LAYERED-GLOW)
  */
 export function composeStrip(strip, code, cloak = null, weapon = null) {
@@ -437,7 +438,7 @@ const cloakOver = (body, rf) => {
  * @param {string} key  @param {(bytes:Uint8Array)=>Promise<{width:number,height:number,data:Uint8Array}>} decodePng
  */
 export async function decodeLayered(key, decodePng, { fetchUrl = (u) => fetch(u), urlOf = (k) => STRIPS[k], cloakUrlOf = (k) => CLOAK_STRIPS[k], hoodFixUrlOf = (k) => HOODFIX_STRIPS[k], weaponUrlOf = (k) => STRIPS[k], picture = null, heldArt = loadHeldPicture } = {}) {
-  const [, body, combo, rf, code] = key.split(':');
+  const [, body, combo, rf, code, hand] = key.split(':');
   const url = urlOf(`${body}/${combo}/${rf}`);
   if (!url) throw new Error(`${key}: no art`);
   const pictureOf = picture ?? (async (u) => {
@@ -464,7 +465,7 @@ export async function decodeLayered(key, decodePng, { fetchUrl = (u) => fetch(u)
     const wu = weaponUrlOf(`weapon/${body}/${rf}`);
     try {
       const pic = wu ? await pictureOf(wu) : null;
-      if (pic) weapon = { mask: maskTile(pic, pieces.top[0]), from: fillFrom(pic, pieces.top[0]), fr, len: weaponLen(body), bow: bowLen(body), cm: weaponCm(body), pic: null, view: Number(rf.split('-')[0]) % 5, swing: Math.floor(Number(rf.split('-')[0]) / 5) === 1 };
+      if (pic) weapon = { mask: maskTile(pic, pieces.top[0]), from: fillFrom(pic, pieces.top[0]), fr, len: weaponLen(body), bow: bowLen(body), cm: weaponCm(body), pic: null, view: Number(rf.split('-')[0]) % 5, swing: Math.floor(Number(rf.split('-')[0]) / 5) === 1, mirror: hand === 'm' };
     } catch { weapon = null; }
     // the weapon as its paper-doll picture, held; the drawn shape where it has none
     if (weapon && pieces.weapon !== '0') weapon.pic = await heldPictureOf(pieces.weapon, body, heldArt);
