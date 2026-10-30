@@ -139,7 +139,7 @@ test('INVIS-NET by source: the host packs my concealment onto every pose; on the
   assert.match(w, /peerRiders\.sync\(seen, onlineToScene,/);
   assert.match(w, /const afoot = seen\.filter\(/);
   assert.match(w, /peerWalkers\.sync\(seen, onlineToScene,/);
-  assert.match(w, /remotePlayers\.sync\(visiblePeers, onlineToScene, \{[^\n]*conceal: veilOf, hidden: \(id\) => _hiddenPeers\.has\(id\)(?:, grow: tvGrow)?(?:, room: drawable)? \}\);/, 'the sprite and the name pass - every peer HEARD, the hidden drawn nowhere (AUDIT pre-merge I-G)');   // PIN MOVED (AUDIT PEER-RANGE A L1/L6): and the room's whole list handed beside it
+  assert.match(w, /remotePlayers\.sync\(visiblePeers, onlineToScene, \{[^\n]*conceal: veilOf, hidden: \(id\) => _hiddenPeers\.has\(id\) && \(pvpFlag\.barKept\(id\) \? 'bar' : true\)(?:, grow: tvGrow)?(?:, room: drawable)? \}\);/, 'the sprite and the name pass - every peer HEARD, the hidden drawn nowhere (AUDIT pre-merge I-G)');   // PIN MOVED (AUDIT PEER-RANGE A L1/L6): and the room's whole list handed beside it; PIN MOVED (PVP-SEEN): a flagged one keeps its skull and bar
   assert.doesNotMatch(w, /(?:peerRiders|peerWalkers)\.sync\(drawable,/, 'nothing draws off the whole list any more (the sprite pass hears it, and skips the hidden itself)');
   // the merge with main's PEERLIGHT2: a Light spell's candle (a sprite and its light) hangs before a player DRAWN here -
   // off the whole list, the classic lane's invisible player walked behind a floating candle

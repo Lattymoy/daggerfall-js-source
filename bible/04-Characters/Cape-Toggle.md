@@ -45,10 +45,10 @@ Every drawer of the player's own body reads `drawnEquipTable`, never `equipTable
 
 ## 4. The aura
 
-Hidden, my own aura is not gathered (`scenes/auraHost.js`, `capeShown()` beside `mine && spawned`). The token still
-says it, as it is still worn, so nothing is said again (no rehello). A peer's aura is not drawn when their look says
-`hc` 1 (`lookCapesHidden(online.lookOf(id))`; `net/online.js` lookOf, a look by id - mine, a room's peer or an
-introduced one), whatever my own switch says.
+AURA-STAYS (2026-10-30, mob: *"aura turn off when u toggle cap"*, *"it saposta help show the aura not tuen it off"*):
+the switch hides the cloak alone. The aura stays on, mine and every peer's, whatever the switch or a look's `hc` says
+(`scenes/auraHost.js`): taking the cloak off is how a player shows their aura. The first build (2026-10-29) hid the aura
+with the cloak, per the table in section 1; that answer is superseded.
 
 Aura Armory pieces are not capes: they stay drawn (`04-Characters/Aura-Armory.md`). The profile's character stage
 (`render/characterStage.js`) is unchanged: it is the wardrobe's preview of what is worn and tried on, not the world.

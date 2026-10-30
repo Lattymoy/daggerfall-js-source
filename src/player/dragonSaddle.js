@@ -11,6 +11,13 @@ import { loadLogo } from '../ui/titleScreen.js';
 import { uiCanvas, onUiScreen } from '../ui/uiScreen.js';
 import { horseOffsetHeight } from '../ui/hud/hudLarge.js';
 
+/** DRAGON-POV (2026-10-30, mob: "saddle over lay is in alot of uis"): the host's word that something stands over the view the
+ *  saddle would be painted on - a chat, a friends panel, the F-menu (the surfaces that free the pointer without pausing the
+ *  game), a window that takes the HUD away, the travel view. The saddle is the view from its seat, so it goes with them. */
+let _covered = () => false;
+/** @param {(() => boolean) | null} fn */
+export function setDragonSaddleCovered(fn) { _covered = typeof fn === 'function' ? fn : () => false; }
+
 /** `load(url)` a picture's pixels (tests hand their own); `look()` the ridden dragon's look (1 the Aetherbright); `turn(url)`
  *  an Aetherbright picture's address (characters/dwarvenDragonShiny.js aetherbrightUrl).
  *  @param {{ renderer: any, load?: (url: string) => Promise<any>, look?: () => number, turn?: (url: string) => Promise<string | null> }} deps */
@@ -35,6 +42,7 @@ export function createDragonSaddle({ renderer, load = loadLogo, look = () => 0, 
     loaded: () => !!arts[lookNow()],
     /** The saddle along the bottom of my view - its firing picture when `firing`. @param {any} canvas @param {boolean} [firing] */
     draw(canvas, firing = false) {
+      if (_covered()) return;   // DRAGON-POV: nothing painted under a panel
       const k = lookNow();
       loadArt(k);
       const art = arts[k];

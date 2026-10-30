@@ -25,6 +25,7 @@ import {
   createWeaponMachine, machineAttack, machineStep, gestureDirection, strikeTicks, getMeleeWeaponAnimTime,
   MAX_GESTURE_SECONDS, BOW_DRAWN_HOLD_FRAME, machineCancelBowDraw, THUNDERLOCK_NUM_FRAMES, CLASSIC_UPDATE_INTERVAL,
   blowSchedule,   // MW-PACE1: the strike just begun, timed - what the Morrowind arm fits its blow into
+  shotSchedule,   // MW-SHOT-PACE: and a bow's shot, timed the same way
 } from '../characters/weaponStates.js';
 import { GUN_FEEL, GUN_TICK_SECONDS, thunderlockReloadSeconds, PISTOLET_FEEL } from './gun/gunFeel.js';   // FIELD-GUN7: the lab's cadence, from the one home
 import { DIRECTION_TO_STRIKE, ATTACKS_FP, sampleClip } from '../characters/anims.js';
@@ -451,7 +452,7 @@ export class PlayerWeapon {
     return hand === 'L' ? fistWrapsOf(L, R) : fistWrapsOf(R, L);
   }
   /** HAND-WRAPS: the wraps of the hand in use - what a fist's blow carries (combat/formulas.js `wraps`) and its glow. */
-  get wraps() { return this.weapon?.werecreatureClaws ? null : this.wrapsOf(this.activeHand); }
+  get wraps() { return this.wrapsOf(this.activeHand); }   // WERE-WRAPS: the claws strike in theirs too
   /** TWO-HANDS (AUDIT): the strike in flight is the OFF hand's - the blow a player-vs-player arm rolls carries the off
    *  hand's terms as resolveHit's does (combat/duelCombat.js resolveDuelStrike `off`). */
   get offStrike() { return !!(this.handsMode === HANDS_MODE.Dual && this.strike && this.machine.state !== 'Idle' && this.strike.off); }
@@ -999,10 +1000,10 @@ export class PlayerWeapon {
 
   /** MW-PACE1: THE STRIKE JUST BEGUN, TIMED - when its hit lands and when it is done, at this frame's `dt`
    *  (characters/weaponStates.js blowSchedule: the machine's own tick, read off the same live Speed and the same
-   *  GetMeleeWeaponAnimTime ask as update() above). Null for a ranged weapon or an idle machine. combat/weapon/weaponRig.js
-   *  fpAttack hands it to the Morrowind arm, which fits its blow into it. */
+   *  GetMeleeWeaponAnimTime ask as update() above). MW-SHOT-PACE: a bow's shot is timed too (shotSchedule); null for any
+   *  other ranged weapon or an idle machine. combat/weapon/weaponRig.js fpAttack hands it to the Morrowind arm, which fits its blow into it. */
   strikeSchedule(dt = 0) {
-    return blowSchedule(this.machine, this.liveSpeed, this.animCtx?.() ?? null, dt);
+    return blowSchedule(this.machine, this.liveSpeed, this.animCtx?.() ?? null, dt) ?? shotSchedule(this.machine, dt);
   }
 
   /** The FP viewmodel pose this frame: the fpMelee1H base with the

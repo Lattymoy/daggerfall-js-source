@@ -23,6 +23,7 @@ const HARDCODED = {
   'src/characters/daedra.js': 4,
   'src/systems/handWraps.js': 2,   // HAND-WRAPS: the template row's name, 'Hand Wraps', as the Pistolet's; its lore, an item's own record, as the guns' is
   'src/systems/staffDragon.js': 1,   // DRAGON-RIDE: /dragon's /staff line, the staff list's English as the rest of it (net/staffCommands.js)
+  'src/systems/staffGlow.js': 6,   // GLOW-SET: /glow's help, usage and answers - a staff member's words, as the other /staff lines, never a player's
   'src/scenes/delve/delveLab.js': 18,   // DELVE II DLV5-6: the curated blocks' lab panel (the bench's `?dungeon=lab`; a lab's module, moved from src/tools/ to stand with the bench a played page boots - AUDIT ANTICHEAT A2's premise) - a designer's tool, never the game's
   'src/scenes/staffDragonHost.js': 6,   // DRAGON-RIDE: /dragon's answers, said to the Admin alone, as the staff commands' own (world.js runStaffCommand); DRAGON-BLUE: and the look changed in the saddle
   'src/characters/dwarvenDragon.js': 2,   // DWARVEN-DRAGON: its career's English (the save's and the staff list's - a player reads t()'s) and its census miss, never shown
@@ -731,7 +732,7 @@ const HARDCODED = {
   'src/ui/pickupFeed.js': 1,
   'src/ui/pixelDial.js': 3,
   'src/ui/pixelifyFive.js': 2,
-  'src/ui/playerBadge.js': 51,   // HUNTERS-MARK: the hunt's and the Marks of Mastery's fourteen two-word titles in words, beside the other titles'; NIRNROOT-SAGE: the Nirnroot Sage's title in words, beside the other titles'; QL12: the questlines' five titles in words ("Witness of the Hour" the one two-word phrase); SERPENT5: The Maelstrom's word, beside the other auras'; EG-E2: the Spire's thirteen titles and three auras in words; WIKIMAID: the Lilac Warren's word, beside the other auras'
+  'src/ui/playerBadge.js': 55,   // WYRM-RIDER: the four dragon riders' titles in words, beside the other titles'; HUNTERS-MARK: the hunt's and the Marks of Mastery's fourteen two-word titles in words, beside the other titles'; NIRNROOT-SAGE: the Nirnroot Sage's title in words, beside the other titles'; QL12: the questlines' five titles in words ("Witness of the Hour" the one two-word phrase); SERPENT5: The Maelstrom's word, beside the other auras'; EG-E2: the Spire's thirteen titles and three auras in words; WIKIMAID: the Lilac Warren's word, beside the other auras'
   'src/ui/playerHistory.js': 1,
   'src/ui/plus/plusPad.js': 18,
   'src/ui/plus/plusPadBinds.js': 31,   // TECH-KEY2: +1, the signature key's bind row, beside the technique's

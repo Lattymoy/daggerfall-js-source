@@ -3675,6 +3675,7 @@ export function createFpArm() {
   let castReleased = false;      // MW-CAST1: the cast crossed its "<type> release" - consumed by takeCastRelease
   let castRate = 1;              // CAST-SPEED: the rate this cast's spellcast group plays at (systems/castSpeed.js)
   let castPaced = false;         // RPT1026-MISC CAST-PACE: this cast's section was paced to bring its release to `releaseIn`
+  let castPlan = null;           // MW-SHOT-PACE: a paced cast's own clock and when the classic hands come down ({ clock, endAt })
   // MW-D51: THE HELD TORCH. `torchLit` is the game's word (a lit
   // Daggerfall torch in PlayerEntity.LightSource, handed over per frame
   // by weaponRig's setTorch); the state/source/group triple is the
@@ -3716,7 +3717,7 @@ export function createFpArm() {
   // _drawWeaponGlows 'hands') while the fists are up: drawn, empty (AUDIT C4: a swap done, no sheet held up before the
   // first person), no spell in them, not on the stone
   let handGlowSpec = null;
-  const handGlowShown = () => (handGlowSpec && !climbHands && !sheathed && !spellStance() && wornWeaponKey === EMPTY_HAND_KEY && !(viewMode === 'first' && held) ? handGlowSpec : null);
+  const handGlowShown = () => (handGlowSpec && !climbHands && !(sheathed && viewMode === 'first') && !spellStance() && wornWeaponKey === EMPTY_HAND_KEY && !(viewMode === 'first' && held) ? handGlowSpec : null);   // WRAPS-AWAY (mob: "keep glow on wrap whern put away"): put away, the body's hands still glow
   let torchState = null;
   let torchSource = null;
   let torchGroup = null;
@@ -5004,7 +5005,12 @@ export function createFpArm() {
     // MW-CAST1: THE SPELL LEAVES HERE - "<type> release" in the spellcast group, where OpenMW casts it
     // (character.cpp handleTextKey: `groupname == "spellcast" && action == mAttackType + " release"`). Signalled, as
     // MW-D42 signals the bow's; Daggerfall's engine still resolves the spell (fpsSpellCasting holds its release for it).
-    else if (upper === UPPER_BODY.Casting && attackType && action === `${attackType} release`) castReleased = true;
+    else if (upper === UPPER_BODY.Casting && attackType && action === `${attackType} release`) {
+      castReleased = true;
+      // MW-SHOT-PACE: and the hands come down with the classic ones (castSpell's `endIn`), as a blow's follow-through
+      // ends with the machine's (beginFollow) - the record's tail held the hands up after the spell had gone
+      if (castPlan && actionState) castRate = blowRate(actionState.stopTime - time, castPlan.endAt - castPlan.clock);
+    }
   }
 
   /** PREPAREHIT's strength half (character.cpp:1250-1259), which is the
@@ -5094,11 +5100,11 @@ export function createFpArm() {
    * MW-PACE1: A BLOW'S PACE, said ahead. The machine has begun a strike and `blow` says when its hit lands and when
    * it is done; the wind-up runs at the rate that brings the playhead from "<type> start" through the release to its
    * "<type> hit" by `hitAt`, and each later section is re-fitted from where the arm stands when it begins (beginRelease,
-   * beginFollow). Null - the record's pace - for a shot (the bow's hit waits for the arm's own "shoot release",
-   * MW-D42), a held wind-up, or a schedule that says nothing.
+   * beginFollow). Null - the record's pace - for a held wind-up or a schedule that says nothing. MW-SHOT-PACE: a shot
+   * too (shotSchedule): its "shoot release" at the classic loose, not a long bow's 1.5 s draw.
    */
   function blowPace(blow, k) {
-    if (!blow || attackType === MW_SHOOT_ATTACK || holdWindUp) return null;
+    if (!blow || holdWindUp) return null;
     if (!(blow.hitAt > 0) || !(blow.seconds >= blow.hitAt) || !Number.isFinite(blow.seconds)) return null;
     const span = (a, b) => { const t0 = keyTime(a); const t1 = keyTime(b); return t0 >= 0 && t1 > t0 ? t1 - t0 : 0; };
     const toHit = (actionState ? actionState.stopTime - actionState.startTime : 0) + span(k.release.start, k.release.stop);
@@ -5164,6 +5170,7 @@ export function createFpArm() {
         if (resetIdleOnAttackEnd) { resetIdleOnAttackEnd = false; resetIdle(); }
         // MW-CAST1: the spell went while the hands still cast - the stance it left drops now, not mid-motion
         if (unreadyAfterCast) { unreadyAfterCast = false; spellReady = false; refreshWeaponGroup(); resetIdle(); resetMovement(); }
+        castPlan = null;   // MW-SHOT-PACE
         break;
       default:
         if (actionState) actionState = null;
@@ -6273,8 +6280,9 @@ export function createFpArm() {
      *  the section plays at the pace that brings its "<type> release" there - MW-PACE1's fit of a blow to the machine's
      *  hit (blowRate, its bounds), here a cast's to the classic clock. The cast's time is then the same whatever the
      *  hands look like; castPaced() says the fit was made. A group with no release key plays at `rate`, unpaced. */
-    castSpell(rangeType = 2, rate = 1, releaseIn = 0) {
+    castSpell(rangeType = 2, rate = 1, releaseIn = 0, endIn = 0) {   // MW-SHOT-PACE: `endIn`, the classic hands' end (castEndS)
       castPaced = false;   // RPT1026-MISC CAST-PACE: this cast's own word
+      castPlan = null;     // MW-SHOT-PACE: and its own clock
       if (dead) return false;   // MWNPC4: the dead cast nothing
       // MWNPC9: a non-biped casts in one of its attacks ("No 'release' text key to use, so cast immediately" -
       // character.cpp:1459-1464: its spellcast group is a random attack, played start to stop)
@@ -6318,7 +6326,10 @@ export function createFpArm() {
         return false;
       }
       const lead = releaseIn > 0 ? keyTime(`${type} release`) - actionState.startTime : 0;   // RPT1026-MISC CAST-PACE: start to release, file seconds (-1 with no key)
-      if (lead > 0) { castRate = blowRate(lead, releaseIn); castPaced = true; }
+      if (lead > 0) {
+        castRate = blowRate(lead, releaseIn); castPaced = true;
+        if (endIn > releaseIn) castPlan = { clock: 0, endAt: endIn };   // MW-SHOT-PACE
+      }
       return true;
     },
 
@@ -6437,6 +6448,7 @@ export function createFpArm() {
         const paced = attacking && blowPlan;
         if (paced) blowPlan.clock += dt;
         // CAST-SPEED: a cast plays at its own rate, where OpenMW plays the spellcast group at 1
+        if (castPlan && upper === UPPER_BODY.Casting) castPlan.clock += dt;   // MW-SHOT-PACE: the cast's own clock
         const speed = paced ? blowPlan.rate : upper === UPPER_BODY.Casting ? castRate : weapSpeed;
         advanceClip(actionState, (actionSource || rig()).keys, dt * speed, onActionKey);
         noteWeaponClock();   // MW-BOW1: before stepUpper ends the section - the group's state keeps its last time
@@ -7249,6 +7261,7 @@ export function createFpArm() {
         attackType,
         attackReversed: reversedNow(),   // MS1: the backhand in flight
         blow: blowPlan ? { ...blowPlan } : null,   // MW-PACE1: the machine's blow this one is paced to, and how far in
+        castPlan: castPlan ? { ...castPlan } : null,   // MW-SHOT-PACE: the paced cast's clock and its end
         sheathed,
         sneaking,
         sneakDelta: built && built.ok ? built.sneakDelta : null,

@@ -90,7 +90,8 @@ test('MOD1: the moderator shield is a handle in CONFIG - granted by listing it, 
   // A DEVELOPER MAY MODERATE WITHOUT THE SHIELD: the dev mark already says more.
   const dev = { handle: 'Lattymoy', created_at: 0 };
   assert.ok(canModerate(dev, { DEVELOPER_HANDLES: 'Lattymoy' }));
-  assert.deepEqual(glyphsOf(dev, { DEVELOPER_HANDLES: 'Lattymoy' }, T0), ['dev'], 'no shield for a developer who is not on the moderator list');
+  assert.ok(!glyphsOf(dev, { DEVELOPER_HANDLES: 'Lattymoy' }, T0).includes('mod'), 'no shield for a developer who is not on the moderator list');   // ADMIN-ALL (PIN MOVED): an Admin's paint glyphs beside the dev mark (titles.js holdsAll)
+  assert.equal(glyphsOf(dev, { DEVELOPER_HANDLES: 'Lattymoy' }, T0)[0], 'dev');
   assert.equal(canModerate({ handle: 'Bob' }, env), false);
   // and the face: every table the badge is drawn from names the shield, in blue
   assert.ok(GLYPHS.includes('mod'));
