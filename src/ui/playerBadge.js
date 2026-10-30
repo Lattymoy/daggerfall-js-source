@@ -158,6 +158,8 @@ export const TITLE_TEXT = Object.freeze({
   masterenchanting: 'Master Enchanter',
   serpenthunter: 'Serpent Hunter',
   deepbane: 'Bane of the Deep',
+  wyrmrider: 'Wyrm Rider',   // WYRM-RIDER (2026-10-30, the owner): a tamed Dwarven Dragon's
+  firstwyrmrider: 'First Wyrm Rider',   // WYRM-RIDER: the earliest tame of all
   genesis: 'Genesis',   // SHOP (2026-10-28): the shop's pre-alpha title, the owner's word for it
 });
 
@@ -264,6 +266,14 @@ export const HOUR_SUN = Object.freeze([1, 0.969, 0.918, 1]);         // #fff7ea
 export const COIL_SEA = Object.freeze([0.165, 0.561, 0.651, 1]);    // #2a8fa6
 export const COIL_TIDE = Object.freeze([0.122, 0.682, 0.549, 1]);   // #1fae8c
 export const COIL_FOAM = Object.freeze([0.847, 0.976, 0.937, 1]);   // #d8f9ef
+/** WYRM-RIDER (2026-10-30, the owner: "we need a title thats basd ass for this DRAGON TAMER"): the tamed Dwarven Dragon's
+ *  title - its bronze and brass into the Aetherbright's aetherium blue; the First's from gold into the Aetherbright's violet. */
+export const WYRM_BRONZE = Object.freeze([0.541, 0.353, 0.118, 1]);   // #8a5a1e
+export const WYRM_BRASS = Object.freeze([0.851, 0.643, 0.255, 1]);    // #d9a441
+export const WYRM_AETHER = Object.freeze([0.498, 0.831, 1, 1]);       // #7fd4ff
+export const WYRM_DEEP = Object.freeze([0.184, 0.498, 0.816, 1]);     // #2f7fd0
+export const WYRM_GOLD = Object.freeze([1, 0.910, 0.627, 1]);         // #ffe8a0
+export const WYRM_VIOLET = Object.freeze([0.608, 0.420, 1, 1]);       // #9b6bff
 /** EG-E2 (2026-10-12, Mac: "I said I want everything"; bible/11-Multiplayer/Elite-Gates.md section 19, THE HONOURS): THE
  *  SPIRE'S COLOURS, named once - the three titles whose auras are drawn in them read them here, as the auras do
  *  (render/auraRing.js SPIRE_RGB): the beacon's flame and its white heart (Beacon-Lighter; Kynbane's Beaconlight, its
@@ -451,6 +461,8 @@ export const TITLE_RGBA = Object.freeze({
   masterenchanting: Object.freeze([0.435, 0.459, 0.882, 1]),    // #6f75e1
   serpenthunter: Object.freeze([0.2, 0.835, 0.706, 1]),         // #33d5b4
   deepbane: Object.freeze([0.118, 0.353, 0.553, 1]),            // #1e5a8d
+  wyrmrider: WYRM_BRASS,   // WYRM-RIDER: the dragon's brass, #d9a441
+  firstwyrmrider: WYRM_GOLD,   // WYRM-RIDER: its gold, #ffe8a0
   genesis: GENESIS_HEART,   // SHOP: the flame's heart - its letters over the plate, and the colour a face with no plate uses
 });
 
@@ -467,6 +479,8 @@ export const TITLE_GRADIENT = Object.freeze({
   hoursfirst: Object.freeze([HOUR_DAWN, HOUR_PEARL, HOUR_SUN]),   // HOURS-FIRST: rose gold into pearl into the dawn's white
   aegis: Object.freeze([OBLIVION_VOID, OBLIVION_VIOLET, OBLIVION_LILAC]),   // AEGIS: out of the void into the ward's light
   coilbreaker: Object.freeze([COIL_SEA, COIL_TIDE, COIL_FOAM]),   // SERPENT5: the open sea into the tide into the foam
+  wyrmrider: Object.freeze([WYRM_BRONZE, WYRM_BRASS, WYRM_AETHER, WYRM_DEEP]),   // WYRM-RIDER: the brass dragon into the Aetherbright's blue
+  firstwyrmrider: Object.freeze([WYRM_GOLD, WYRM_BRASS, WYRM_AETHER, WYRM_VIOLET]),   // WYRM-RIDER: gold into the Aetherbright's blue and violet
   wikimaid: Object.freeze([WARREN_AMETHYST, WARREN_LILAC, WARREN_BLUSH]),   // WIKIMAID: "Wiki" in the warren's amethyst, "Maid" into a rabbit's blush
   witchwarden: Object.freeze([WITCH_MOSS, WITCH_FIRE, WITCH_GLOW]),   // WITCH1: the moor's moss into the coven's fire into its heart
   genesis: Object.freeze([GENESIS_BLUE, GENESIS_VIOLET, GENESIS_HEART]),   // SHOP: the classic face's letters, the fire's blue into its heart
@@ -486,6 +500,8 @@ export const TITLE_EDGE = Object.freeze({
   aegis: Object.freeze([0, 0, 0, 1]),   // AEGIS: its lilac end is bright - edged in black, as Penitent's and the Gatebreaker's
   hoursfirst: Object.freeze([0, 0, 0, 1]),   // HOURS-FIRST: its dawn end is near white - edged in black, as Penitent's
   coilbreaker: Object.freeze([0, 0, 0, 1]),   // SERPENT5: its foam end is near white - edged in black, as Penitent's
+  wyrmrider: Object.freeze([0, 0, 0, 1]),   // WYRM-RIDER: its blue end is bright - edged in black, as the Coilbreaker's
+  firstwyrmrider: Object.freeze([0, 0, 0, 1]),   // WYRM-RIDER: its gold end is near white
   wikimaid: Object.freeze([0, 0, 0, 1]),   // WIKIMAID: its blush end is pale - edged in black, as Penitent's and the Aegis's
   witchwarden: Object.freeze([0, 0, 0, 1]),   // WITCH1: its heart end is pale - edged in black, as the WikiMaid's
   nirnrootsage: Object.freeze([0, 0, 0, 1]),   // NIRNROOT-SAGE: its haze end is pale - edged in black, as the Witchwarden's

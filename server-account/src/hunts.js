@@ -110,6 +110,10 @@ export async function huntClear(ctx, player, env, body) {
 
 /** The most clears a hunt title asks (huntLaw.js HUNT_TITLES' last): a count stops there, as the titles do. */
 const CLEARS_READ = HUNT_TITLES[HUNT_TITLES.length - 1][1];
+/** WYRM-RIDER: an account's tamed dragons (dragon_mounts, dragons.js's draw) and whether it holds the earliest tame of all
+ *  (by its time, then its id) - `id` the account's column in the statement it is spliced into. */
+const DRAGON_COUNTS_SQL = (/** @type {string} */ id) => `(SELECT COUNT(*) FROM dragon_mounts WHERE account = ${id}) AS dragons,
+  ((SELECT account FROM dragon_mounts ORDER BY at, id LIMIT 1) = ${id}) AS firstTame`;
 /** An account's counts the titles are read off (`?1` the account, `?2` a Master's XP, `?3` CLEARS_READ): its board clears,
  *  the serpents it helped slay (serpents.js, the relay's receipts), and each profession a living realm character of it
  *  holds at Master. AUDIT HORIZONTAL (lane F): the clears read stops at the top title's count - a mint, a wardrobe and a
@@ -119,8 +123,10 @@ const MASTERY_SQL = `SELECT
   (SELECT COUNT(*) FROM (SELECT 1 FROM hunt_clears WHERE player = ?1 AND kind = 'board' LIMIT ?3)) AS clears,
   (SELECT COUNT(*) FROM serpent_kills WHERE account = ?1) AS serpents,
   (SELECT GROUP_CONCAT(profession, ' ') FROM prof_tracks t WHERE t.player = ?1 AND t.xp >= ?2
-    AND EXISTS (SELECT 1 FROM realm_characters r WHERE r.id = t.char_id AND r.player = ?1 AND r.dead_at IS NULL)) AS masters`;
-const countsOfRow = (/** @type {any} */ r) => ({ clears: int(r?.clears), serpents: int(r?.serpents), masters: String(r?.masters ?? '').split(' ').filter(Boolean) });
+    AND EXISTS (SELECT 1 FROM realm_characters r WHERE r.id = t.char_id AND r.player = ?1 AND r.dead_at IS NULL)) AS masters,
+  ${DRAGON_COUNTS_SQL('?1')}`;
+const countsOfRow = (/** @type {any} */ r) => ({ clears: int(r?.clears), serpents: int(r?.serpents), masters: String(r?.masters ?? '').split(' ').filter(Boolean),
+  dragons: int(r?.dragons), firstTame: int(r?.firstTame) === 1 });
 /** The counts an account's Marks of Mastery are read off - `{ clears, serpents, masters }`, one statement. */
 export async function masteryCountsRead(/** @type {any} */ db, /** @type {string} */ playerId) {
   return countsOfRow(await db.prepare(MASTERY_SQL).bind(playerId, PROF_XP_MAX, CLEARS_READ).first());
@@ -140,16 +146,18 @@ export async function withMasteryMarks(/** @type {any} */ ctx, /** @type {any} *
 export async function masteryCountsAll(/** @type {any} */ ctx, /** @type {string[]} */ ids) {
   if (!ids.length) return new Map();
   const list = (/** @type {number} */ from) => ids.map((_, k) => `?${k + from}`).join(', ');
-  const [h, s, m] = await ctx.db.batch([
+  const [h, s, m, d] = await ctx.db.batch([
     ctx.db.prepare(`WITH v(id) AS (VALUES ${ids.map((_, k) => `(?${k + 2})`).join(', ')}) SELECT v.id AS id,
       (SELECT COUNT(*) FROM (SELECT 1 FROM hunt_clears h WHERE h.player = v.id AND h.kind = 'board' LIMIT ?1)) AS n FROM v`).bind(CLEARS_READ, ...ids),
     ctx.db.prepare(`SELECT account AS id, COUNT(*) AS n FROM serpent_kills WHERE account IN (${list(1)}) GROUP BY account`).bind(...ids),
     ctx.db.prepare(`SELECT t.player AS id, GROUP_CONCAT(t.profession, ' ') AS p FROM prof_tracks t WHERE t.xp >= ?1 AND t.player IN (${list(2)})
       AND EXISTS (SELECT 1 FROM realm_characters r WHERE r.id = t.char_id AND r.player = t.player AND r.dead_at IS NULL) GROUP BY t.player`).bind(PROF_XP_MAX, ...ids),
+    ctx.db.prepare(`WITH v(id) AS (VALUES ${ids.map((_, k) => `(?${k + 1})`).join(', ')}) SELECT v.id AS id, ${DRAGON_COUNTS_SQL('v.id')} FROM v`).bind(...ids),   // WYRM-RIDER
   ]);
   const by = (/** @type {any} */ res, /** @type {string} */ col) => new Map((res?.results ?? []).map((/** @type {any} */ r) => [r.id, r[col]]));
   const [hs, ss, ms] = [by(h, 'n'), by(s, 'n'), by(m, 'p')];
-  return new Map(ids.map((id) => [id, countsOfRow({ clears: hs.get(id), serpents: ss.get(id), masters: ms.get(id) })]));
+  const ds = new Map((d?.results ?? []).map((/** @type {any} */ r) => [r.id, r]));
+  return new Map(ids.map((id) => [id, countsOfRow({ clears: hs.get(id), serpents: ss.get(id), masters: ms.get(id), dragons: ds.get(id)?.dragons, firstTame: ds.get(id)?.firstTame })]));
 }
 /** The same marks for a board's rows (boardNames.js) and a letter's or a note's senders (letters.js, board.js). */
 export async function withMasteryMarksAll(/** @type {any} */ ctx, /** @type {any[]} */ rows) {

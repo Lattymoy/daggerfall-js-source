@@ -157,8 +157,8 @@
   {
     "name": "MARKS-OF-MASTERY-board-batch-masters",
     "file": "server-account/src/hunts.js",
-    "old": "masters: ms.get(id) })]));",
-    "new": "masters: null })]));",
+    "old": "masters: ms.get(id), dragons:",
+    "new": "masters: null, dragons:",
     "tests": [
       "test/server/huntersmark_service.test.js"
     ]
