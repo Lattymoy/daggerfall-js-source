@@ -58,6 +58,16 @@ try {
       for (const n of ['hipL', 'hipR', 'knL', 'knR', 'ftL', 'ftR']) dot(n, '#2adfff');
       for (const n of ['head', 'neck', 'chest', 'pelvis']) dot(n, '#7dff5a');
       dot('crown', '#ffffff');
+      for (const S of ['L', 'R']) {   // ARMORY-MIRROR: each arm's band (spriteMarks' band), where the Insignia Armlet is worn
+        const bd = marks?.arms?.[S]?.band;
+        if (!bd) continue;
+        const x = (b.width / 2 + bd.c) * zoom, y = (b.height - bd.row * (b.art || 1)) * zoom, hw = (bd.wd / 2) * zoom;
+        g.strokeStyle = '#ffe14a'; g.lineWidth = Math.max(1, zoom * 0.5); g.strokeRect(x - hw, y - hw * 0.6, hw * 2, hw * 1.2);
+      }
+      if (marks?.flank) {   // a side view's: half an arm in from each edge of the body (the back's is worn)
+        const y = (b.height - marks.flank.row * (b.art || 1)) * zoom, hw = 3.5 * zoom;
+        for (const [c, col] of [[marks.flank.lo + 3.5, '#4af0ff'], [marks.flank.hi - 3.5, '#ffe14a']]) { g.strokeStyle = col; g.lineWidth = Math.max(1, zoom * 0.5); g.strokeRect((b.width / 2 + c) * zoom - hw, y - hw * 0.6, hw * 2, hw * 1.2); }
+      }
       const off = POINTS.filter((n) => { const [x, y] = px(n); return !(x >= 0 && x <= b.width * zoom && y >= 0 && y <= b.height * zoom); });
       g.fillStyle = '#ddd'; g.font = '11px monospace'; g.fillText(name.slice(0, Math.floor(c.width / 6.6)), 2, c.height - 4);
       cells.push(c);

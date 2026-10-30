@@ -10,7 +10,7 @@ import {
   CLOAK_BONES, AURA_KINDLE_S, AURA_FORGET_S,
 } from '../render/auraRing.js';
 import { auraClothOver, auraSpriteAcross, auraShiftAcross } from '../render/auraRing.js';   // ARMORY-SEEN: whether a body's cloth covers its pieces from the eye
-import { ArmoryRenderer, armoryWearers, armoryMotionStep, armoryEyeAtHead, armoryHeadTip, ARMORY_DETAIL_M } from '../render/armoryPass.js';
+import { ArmoryRenderer, armoryWearers, armoryMotionStep, armoryEyeAtHead, armoryHeadTip, cardRightOf, ARMORY_DETAIL_M } from '../render/armoryPass.js';
 import { ARMORY_BONES, newPose, poseFromBones, poseFromFigure, poseAtRest } from '../render/armoryPose.js';
 import { compiledPass } from '../render/glProgram.js';
 import { peerBodyYaw } from '../net/peer/peerClimb.js';
@@ -110,7 +110,7 @@ export function createAuraHost(deps) {
     if (selfKit.kit && armoryList.includes(selfKit)) {
       const f = liftedFeet(player.bodyFeetAt?.() ?? player.feetAt(), selfLiftNow), vw = renderer._view;
       selfKit.at[0] = f[0]; selfKit.at[1] = f[1]; selfKit.at[2] = f[2]; selfKit.yaw = yaw;
-      selfPose(selfKit.pose, player, selfLiftNow > 0); armoryMotionStep(selfKit, now, vw ? [vw[0], vw[4], vw[8]] : null);
+      selfPose(selfKit.pose, player, selfLiftNow > 0); armoryMotionStep(selfKit, now, vw ? cardRightOf(renderer._proj, vw) : null);
     }
   }
   /** The pose of my own body as drawn - the rig's bones, the sprite's figure, or the rest pose pressed to my height. */
@@ -150,7 +150,7 @@ export function createAuraHost(deps) {
       if (!online || deps.travelActive()) return;
       if (deps.quiet()) return;   // EG-E2 (Elite-Gates.md section 25.4, THE QUIET COMPANY): no cosmetic aura during a Spire's trial
       const t = performance.now() / 1000, player = deps.player(), layers = deps.sprites(), eye = renderer._camPos;   // CAPE-CARD: every sprite layer, and the eye their pictures face
-      const vw = renderer._view, right = vw ? [vw[0], vw[4], vw[8]] : null;   // the view's right, a sprite's feet off it (the draw's)
+      const vw = renderer._view, right = vw ? cardRightOf(renderer._proj, vw) : null;   // the card's right, a sprite's feet off it (the draw's; ARMORY-MIRROR)
       // the service's last word on my own - a mint's, a wear's from any door; AURA-LIVE: one the room's token did not say is
       // said again, so the room sees it now. ARMORY: and the kit the same
       const mine = ownAura(), kit = ownArmory();
