@@ -844,6 +844,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     hipLantern: !!entity && lanternAtWaist(entity.lightSource),   // HT-WAIST: the lit lantern hangs at the sprite's hip, and swings as it walks
     handItem: playerWeapon.handItem(playerWeapon.leadHand),   // BACK-HOLSTER: the weapon of the hand in use - on the sprite's back sheathed, its glow round the sprite drawn
     handWraps: playerWeapon.wrapsOf(playerWeapon.leadHand),   // BACK-HOLSTER GLOW: and a bare fist's Hand Wraps, as handGlowOf asks them
+    hasAmmo: hasAmmoFor(entity?.items, playerWeapon.handItem(playerWeapon.leadHand)),   // QUIVER: arrows in the quiver on the sprite's back (WS1's)
   });
   const bindBody = () => eotbBody.attach(renderer, eotbState);
   bindBody();
