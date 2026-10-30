@@ -56,8 +56,8 @@
   {
     "name": "KVAR-the-player-region",
     "file": "src/systems/quest/place.js",
-    "old": "    const site = this._remoteDungeonSite(world, sd.regionIndex, p2, { origin }) ?? this._remoteDungeonSite(world, sd.regionIndex, -1, { origin });",
-    "new": "    const site = this._remoteDungeonSite(world, sd.regionIndex + 1, p2, { origin }) ?? this._remoteDungeonSite(world, sd.regionIndex + 1, -1, { origin });",
+    "old": "    const site = this._remoteDungeonSite(world, sd.regionIndex, p2, { origin }) ?? this._beyondZoneSite(world, p2, origin)\n      ?? this._remoteDungeonSite(world, sd.regionIndex, -1, { origin }) ?? this._beyondZoneSite(world, -1, origin);",
+    "new": "    const site = this._remoteDungeonSite(world, sd.regionIndex + 1, p2, { origin }) ?? this._beyondZoneSite(world, p2, origin)\n      ?? this._remoteDungeonSite(world, sd.regionIndex + 1, -1, { origin }) ?? this._beyondZoneSite(world, -1, origin);",
     "tests": [
       "test/systems/quest/kvarhold.test.js"
     ]

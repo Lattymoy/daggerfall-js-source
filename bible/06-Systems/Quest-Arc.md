@@ -6950,6 +6950,11 @@ mutation-checked by `tools/mutants/rpt1026_quests.json` (29 - 25 here, two the a
   inside the cut (`place.js:"_zoneSeal(world) {"`, passed to KVAR-HOLD's own collector), and the load's re-seat draws a
   saved site there again by KVAR-HOLD's law; offline the zone is no law and DFU's draw stands. Port-Ledger A, KVAR-HOLD's
   row, widened.
+- **QUEST-ZONE BEYOND** (the owner, 2026-10-30) - since WW-C2 the zone is Cyrodiil whole, so its questors found no open
+  dungeon. Online, a questor inside the zone whose region gives none draws one near the land nearest outside the zone
+  (`questZoneBeyond.js:"export function nearestBeyondZone("`, `place.js:"_beyondZoneSite(world, dungeonTypeIndex, from"`), in
+  that land's region; a province's table is made around it. The re-seat does the same from the site it leaves.
+  `01-Overview/audits/Quest-Audit-IV.md`; Port-Ledger A.
 
 - **CATALOG-READ** - Azimuthal Vectors' catalogue is a step until it is READ. Two reports: after the scholar's
   teleport the catalogue's dungeon held nothing to find and no marker showed; on the dead end no payment came from the

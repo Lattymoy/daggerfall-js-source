@@ -46,10 +46,14 @@ DFU's own words wherever they are read, as AUDIT STARTS left them.
 | A8 | MINOR | **In the Imperial City the journal never said "(you are here)"** and the talk's same-building check never matched: the host handed the slice's own name, the quest sites carry its quest name (R2-5b). | The journal's, the HUD card's and the talk tree's place name is the quest view's (`world.js` `_questName`). The talk's "Where am I" keeps the slice's own name. |
 | A9 | MINOR | **Past the Bay a held dungeon was found by its name as a nearer lair of that name.** The province's table is the questor's nearest, and from another pixel the name was another lair's: a re-lay or a reveal read the wrong dungeon. | The name lookup asks the held sites first, and a held row joins a new table by its id (`questProvinceSites.js` HeldNames, getRegion). |
 
-Open, the owner's to decide (asked): whether a questor in Cyrodiil online may send the player into the zone's sealed
-dungeons. That needs the zone's gate to open a quest's dungeon and an instance there, where today a sealed dungeon's
-room is built smaller and the zone keeps no instance. Drawing outside the zone instead sends an Imperial City questor
-some 270 map pixels away. Until then a quest that needs a dungeon is set aside by A7's draw.
+Decided (the owner, 2026-10-30, of the two asked: "1", draw the dungeon outside the zone) - QUEST-ZONE BEYOND. Online,
+a questor inside the zone whose region gives no open dungeon draws one near the land nearest outside the zone
+(`systems/quest/questZoneBeyond.js`; `place.js` `_beyondZoneSite`), and the load's re-seat does the same from the site
+it leaves. A province's table is made around that land (`questProvinceSites.js` getRegion's `from`). Measured on the
+freeware: the Arcane University's Mages Guild gives work 12 times in 12 online, its lairs Elsweyr's, 297 map pixels
+from the city; Bruma and Chorrol send the player to Skyrim, Cheydinhal to Morrowind, Leyawiin to Elsweyr, Anvil to
+Valenwood. Pinned: `test/systems/quest/questzonebeyond.test.js`; mutants: `tools/mutants/questzonebeyond.json`, 10, all
+dead, and two older records re-aimed. Offline and outside the zone, DFU's draw stands.
 
 ## The questlines' scripts (B, C)
 

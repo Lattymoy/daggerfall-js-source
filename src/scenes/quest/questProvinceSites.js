@@ -230,11 +230,12 @@ export function createQuestProvinceSites({ worldPlaces, regionAt, standAt, lairs
     for (const row of rows) join(region, row);
     return region;
   };
-  /** The province's table for the questor where it stands now. @param {number} r */
-  function getRegion(r) {
+  /** The province's table for the questor where it stands now - QUEST-ZONE BEYOND: or around `from`, the pixel a draw
+   *  measures from (quest/place.js _beyondZoneSite's land outside the zone). @param {number} r @param {?{ x: number, y: number }} [from] */
+  function getRegion(r, from = null) {
     if (!isProvinceRegion(r) || !worldPlaces) return null;
     refresh();
-    const o = origin();
+    const o = from ?? origin();
     const key = keyOf(o);
     const had = tables.get(r);
     if (had?.key === key) return had.region;

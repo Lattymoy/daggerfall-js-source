@@ -119,8 +119,8 @@
   {
     "name": "R25-maps-province-arm-dropped",
     "file": "src/scenes/questWorld.js",
-    "old": "      getRegion: { value: (r) => (provinces && isProvinceRegion(r) ? provinces.getRegion(r) : maps.getRegion(r)) },",
-    "new": "      getRegion: { value: (r) => maps.getRegion(r) },",
+    "old": "      getRegion: { value: (r, from = null) => (provinces && isProvinceRegion(r) ? provinces.getRegion(r, from) : maps.getRegion(r)) },",
+    "new": "      getRegion: { value: (r, from = null) => maps.getRegion(r) },",
     "tests": [
       "test/systems/quest/auditrelease_r25.test.js"
     ]

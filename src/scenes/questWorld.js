@@ -87,7 +87,7 @@ export function createQuestWorld(host) {
     maps: Object.create(maps, {
       // AUDIT RELEASE R2-5: a province's region (62..70) the places past the Bay (scenes/quest/questProvinceSites.js) - no
       // MAPS.BSA record of its own (readClassicLocation: the town mods took nothing there)
-      getRegion: { value: (r) => (provinces && isProvinceRegion(r) ? provinces.getRegion(r) : maps.getRegion(r)) },
+      getRegion: { value: (r, from = null) => (provinces && isProvinceRegion(r) ? provinces.getRegion(r, from) : maps.getRegion(r)) },   // QUEST-ZONE BEYOND: `from` the pixel a draw measures from
       readClassicLocation: { value: (r, l) => (isProvinceRegion(r) ? null : maps.readClassicLocation(r, l)) },
       getLocation: { value: (r, l) => questSized(provinces && isProvinceRegion(r) ? provinces.getLocation(r, l) : maps.getLocation(r, l)) },   // INSTANCES: online a quest's markers are chosen on the dungeon whole - its instance's layout (bible/11-Multiplayer/Instances.md)   // AUDIT WORLD34 B2: online, the room's one layout (SD-ONLINE: the world's size for it)
       getLocationByName: { value: (rn, ln) => questSized(placeByName(rn, ln)) },   // AUDIT-TESA A2-1: the clock's travel time to a site past the Bay

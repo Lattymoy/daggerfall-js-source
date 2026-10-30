@@ -1,0 +1,92 @@
+[
+  {
+    "name": "QZB-draw-not-widened",
+    "file": "src/systems/quest/place.js",
+    "old": "    const site = this._remoteDungeonSite(world, world.currentRegionIndex(), dungeonTypeIndex) ?? this._beyondZoneSite(world, dungeonTypeIndex);   // QUEST-ZONE BEYOND",
+    "new": "    const site = this._remoteDungeonSite(world, world.currentRegionIndex(), dungeonTypeIndex);",
+    "tests": [
+      "test/systems/quest/questzonebeyond.test.js"
+    ]
+  },
+  {
+    "name": "QZB-reseat-not-widened",
+    "file": "src/systems/quest/place.js",
+    "old": "    const site = this._remoteDungeonSite(world, sd.regionIndex, p2, { origin }) ?? this._beyondZoneSite(world, p2, origin)\n      ?? this._remoteDungeonSite(world, sd.regionIndex, -1, { origin }) ?? this._beyondZoneSite(world, -1, origin);",
+    "new": "    const site = this._remoteDungeonSite(world, sd.regionIndex, p2, { origin }) ?? this._remoteDungeonSite(world, sd.regionIndex, -1, { origin });",
+    "tests": [
+      "test/systems/quest/questzonebeyond.test.js"
+    ]
+  },
+  {
+    "name": "QZB-table-no-origin",
+    "file": "src/systems/quest/place.js",
+    "old": "    const regionData = world.maps.getRegion(regionIndex, origin);",
+    "new": "    const regionData = world.maps.getRegion(regionIndex);",
+    "tests": [
+      "test/systems/quest/questzonebeyond.test.js"
+    ]
+  },
+  {
+    "name": "QZB-offline-widened",
+    "file": "src/systems/quest/place.js",
+    "old": "    if (!from || !this._zoneSeal(world)) return null;",
+    "new": "    if (!from || !wildMask()) return null;",
+    "tests": [
+      "test/systems/quest/questzonebeyond.test.js"
+    ]
+  },
+  {
+    "name": "QZB-province-from-unread",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "    const o = from ?? origin();",
+    "new": "    const o = origin();",
+    "tests": [
+      "test/systems/quest/questzonebeyond.test.js"
+    ]
+  },
+  {
+    "name": "QZB-world-from-dropped",
+    "file": "src/scenes/questWorld.js",
+    "old": "provinces.getRegion(r, from) : maps.getRegion(r)) },",
+    "new": "provinces.getRegion(r) : maps.getRegion(r)) },",
+    "tests": [
+      "test/systems/quest/questzonebeyond.test.js"
+    ]
+  },
+  {
+    "name": "QZB-first-of-ring",
+    "file": "src/systems/quest/questZoneBeyond.js",
+    "old": "        if (e < best && inWorldGrid(x, y)",
+    "new": "        if (!found && inWorldGrid(x, y)",
+    "tests": [
+      "test/systems/quest/questzonebeyond.test.js"
+    ]
+  },
+  {
+    "name": "QZB-sea-taken",
+    "file": "src/systems/quest/questZoneBeyond.js",
+    "old": "!wildInside(mask, x, y) && landAt(x, y)) { found",
+    "new": "!wildInside(mask, x, y)) { found",
+    "tests": [
+      "test/systems/quest/questzonebeyond.test.js"
+    ]
+  },
+  {
+    "name": "QZB-from-outside",
+    "file": "src/systems/quest/questZoneBeyond.js",
+    "old": "  if (!mask || !inWorldGrid(px, py) || !wildInside(mask, px, py)) return null;",
+    "new": "  if (!mask || !inWorldGrid(px, py)) return null;",
+    "tests": [
+      "test/systems/quest/questzonebeyond.test.js"
+    ]
+  },
+  {
+    "name": "QZB-bound-unread",
+    "file": "src/systems/quest/questZoneBeyond.js",
+    "old": "  for (let d = 1; d <= max && !found; d++) {",
+    "new": "  for (let d = 1; d <= 4096 && !found; d++) {",
+    "tests": [
+      "test/systems/quest/questzonebeyond.test.js"
+    ]
+  }
+]

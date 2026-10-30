@@ -39,6 +39,7 @@ import { getSeed, setSeed } from '../../formats/dfRandom.js';   // AUDIT QA2: a 
 import { seededFirst } from '../wind/wind.js';   // QUEST-AUDIT II SHARED-SEAT: the port's one seeded die (imports nothing)
 import { isMainStoryDungeon } from '../../world/dungeon/dungeonTextures.js';   // KVAR-HOLD: the main story's own dungeons are no random quest's
 import { wildMask, wildInside } from '../wild/wildZone.js';   // RPT1026-QUESTS QUEST-ZONE: the open zone's sealed dungeons are no quest's (WW-C2: the zone the host's, wildMask)
+import { nearestBeyondZone } from './questZoneBeyond.js';   // QUEST-ZONE BEYOND: a questor in the zone sends the player out of it
 import { boundWorldDataBlocks } from '../../formats/worldData/worldDataReplacement.js';   // AUDIT QA2: Daggerfall's own blocks (BLOCKS.BSA, past the door) - what the mods took away
 import { startOfSiteId } from '../starts/starts.js';   // START2: a start's own site, named by the world
 import '../starts/startPlaces.js';   // START2: ...and its row in Quests-Places, laid before any Place reads the table
@@ -434,7 +435,9 @@ export class Place extends QuestResource {
     if (!isMainStoryDungeon(sd.mapId) && !(row && this._zoneSeal(world)?.(row))) return false;
     const { p2 } = this.declaredSiteLaw();
     const origin = row ? mapTablePixel(row) : null;
-    const site = this._remoteDungeonSite(world, sd.regionIndex, p2, { origin }) ?? this._remoteDungeonSite(world, sd.regionIndex, -1, { origin });
+    // QUEST-ZONE BEYOND: in a region the zone covers whole, outside it, near the land nearest the site it leaves
+    const site = this._remoteDungeonSite(world, sd.regionIndex, p2, { origin }) ?? this._beyondZoneSite(world, p2, origin)
+      ?? this._remoteDungeonSite(world, sd.regionIndex, -1, { origin }) ?? this._beyondZoneSite(world, -1, origin);
     const next = site ? this._carryAssignments(sd, site) : null;
     if (!next) return false;
     this.siteDetails = { ...next, questUID: sd.questUID ?? next.questUID, magicNumberIndex: sd.magicNumberIndex ?? 0 };
@@ -904,20 +907,24 @@ export class Place extends QuestResource {
    *  (world.playerPixel, the quest clock's), else the player's location's pixel. */
   _questReach(world) {
     if (!questReachOn()) return null;
+    const origin = this._questorPixel(world);
+    return origin ? { origin, pixels: questReachPixels(this.parentQuest?.hooks?.playerLevel?.() ?? 1) } : null;
+  }
+  /** The questor's map pixel: the travel reckoning's, else the player's location's; null for none. */
+  _questorPixel(world) {
     let origin = world.playerPixel?.() ?? null;
     if (!origin) {
       const t = world.currentLocation?.()?.mapTableData;
       if (t) origin = longitudeLatitudeToMapPixel(t.longitude, t.latitude);
     }
-    if (!origin || !Number.isFinite(origin.x) || !Number.isFinite(origin.y)) return null;
-    return { origin, pixels: questReachPixels(this.parentQuest?.hooks?.playerLevel?.() ?? 1) };
+    return origin && Number.isFinite(origin.x) && Number.isFinite(origin.y) ? origin : null;
   }
 
   /** SelectRemoteDungeonSite (:880-935): types 0-16 only (17-18 carry
    *  no quest markers), the assigned-dungeon exclusion, and the
    *  marker requirement. */
   _selectRemoteDungeonSite(world, dungeonTypeIndex) {
-    const site = this._remoteDungeonSite(world, world.currentRegionIndex(), dungeonTypeIndex);
+    const site = this._remoteDungeonSite(world, world.currentRegionIndex(), dungeonTypeIndex) ?? this._beyondZoneSite(world, dungeonTypeIndex);   // QUEST-ZONE BEYOND
     if (!site) return false;
     this.siteDetails = site;
     return true;
@@ -925,7 +932,7 @@ export class Place extends QuestResource {
   /** SelectRemoteDungeonSite's draw in `regionIndex`: the site details, or null (KVAR-HOLD: the re-seat draws in the
    *  site's own region, not the player's). */
   _remoteDungeonSite(world, regionIndex, dungeonTypeIndex, { origin = null } = {}) {
-    const regionData = world.maps.getRegion(regionIndex);
+    const regionData = world.maps.getRegion(regionIndex, origin);   // QUEST-ZONE BEYOND: a province's table made around `origin`
     if (!regionData || regionData.locationCount === 0) return null;
 
     let foundIndices = this._collectDungeonIndicesOfType(regionData, dungeonTypeIndex, false, this._zoneSeal(world));   // QUEST-ZONE
@@ -1292,6 +1299,19 @@ export class Place extends QuestResource {
     const mask = wildMask();   // the host's zone (WW-C2 - main's wildMaskOf read the Wrothgarian zone off the Bay's maps, gone with it)
     if (!mask) return null;
     return (row) => { const p = mapTablePixel(row); return !!p && wildInside(mask, p.x, p.y); };
+  }
+
+  /**
+   * QUEST-ZONE BEYOND (questZoneBeyond.js; the owner, 2026-10-30): ONLINE, A QUESTOR IN THE OPEN ZONE DRAWS A DUNGEON
+   * OUTSIDE IT. Where the questor's region gives none the zone leaves open, the draw goes on in the region of the land
+   * nearest outside the zone (from the questor, or `from` - a re-seat's old site), among the dungeons nearest that land.
+   * Null offline, outside the zone, or where none stands. A departure (Port-Ledger A, beside QUEST-ZONE).
+   */
+  _beyondZoneSite(world, dungeonTypeIndex, from = this._questorPixel(world)) {
+    if (!from || !this._zoneSeal(world)) return null;
+    const edge = nearestBeyondZone(wildMask(), Math.floor(from.x), Math.floor(from.y));
+    const r = edge ? world.maps.getRegionIndexAt?.(edge.x, edge.y) : null;
+    return r == null ? null : this._remoteDungeonSite(world, r, dungeonTypeIndex, { origin: edge });
   }
 
   _isDungeonAssigned(activeQuestSites, parentQuestPlaces, mapId) {
