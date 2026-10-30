@@ -433,6 +433,16 @@ WIKIMAID_HANDLES = "SylviaBun"
 # glowing in a ring round the feet. A list that grants an aura (titles.js
 # TIER_AURA); taking the handle off takes all three on the next token.
 NIRNROOT_SAGE_HANDLES = "Blob-Marley"
+# BLOOD-OF-COLDHARBOUR (2026-10-30, for trakel, a $200 patron - the owner: "Travel
+# is a $200 patron but isnt listed. All $200 patrons ingame have custom stuff";
+# Trakel's own words: the title "Blood of Coldharbour", "violet and crimson",
+# a rose for the glyph, and "a haze like effect around the sprite, that has
+# blood like particles rising up like embers" that "drift off into daedric
+# runes"): Blood of Coldharbour - the title crimson into violet, the
+# coldharbour glyph (a rose in a ring of thorns, a drop of blood at its foot)
+# and the Vampiric Haze. A list that grants an aura (titles.js TIER_AURA);
+# taking the handle off takes all three on the next token.
+COLDHARBOUR_HANDLES = "trakel"
 # PATREON-LINK (2026-10-01, Mac: "With patron and having to manually hand
 # out titles. Im running into a workflow where its really hard to keep up
 # with it"; asked, "Patreon auto-link"): A PATRON'S TITLE FOLLOWS THEIR

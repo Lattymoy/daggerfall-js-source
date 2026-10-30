@@ -175,8 +175,8 @@
   {
     "name": "PENITENT-glyph-without-the-title",
     "file": "server-account/src/titles.js",
-    "old": "penitent: 'penitent', herald: 'herald', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage' });",
-    "new": "penitent: 'shadowfang', herald: 'herald', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage' });",
+    "old": "penitent: 'penitent', herald: 'herald', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage', coldharbour: 'coldharbour' });",
+    "new": "penitent: 'shadowfang', herald: 'herald', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage', coldharbour: 'coldharbour' });",
     "tests": [
       "test/net/penitent.test.js"
     ],

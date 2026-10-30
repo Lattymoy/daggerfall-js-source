@@ -283,6 +283,7 @@ export const WARDROBE = Object.freeze({
     witchwarden: E('festival', 'seasonal', wyrd('title:witchwarden')),
     hearthkeeper: E('festival', 'seasonal', () => t('coll.how.hearthkeeper', 'Set a Hearth Offering at your home’s door during the Witches’ Festival, and have other players take {n} Soul Cakes from it.', { n: HEARTHKEEPER_GIVEN })),   // AUDIT COLLECTIONS-II (lane 1): `fest_given` counts the cakes others take (festival.js takeFromOffering)
     nirnrootsage: E('bestowed', 'bestowed', bestowed, { with: ['aura:sagesmoke', 'glyph:nirnrootsage'] }),   // NIRNROOT-SAGE: Blob-Marley's own
+    coldharbour: E('bestowed', 'bestowed', bestowed, { with: ['aura:vampirichaze', 'glyph:coldharbour'] }),   // BLOOD-OF-COLDHARBOUR: Trakel's own
     genesis: E('shop', 'shop', shop('title:genesis')),   // SHOP: the pre-alpha title, on its plate of fire
     bloodhound: E('hunt', 'open', hunt('bloodhound')),   // HUNTERS-MARK
     beastbane: E('hunt', 'open', hunt('beastbane')),
@@ -319,6 +320,7 @@ export const WARDROBE = Object.freeze({
     lilacwarren: E('bestowed', 'bestowed', bestowed, { with: ['title:wikimaid', 'glyph:wikimaid'], look: () => t('coll.look.lilacwarren', 'Rabbits hopping round your feet on a ring of lilac light.') }),
     witchfire: E('festival', 'seasonal', wyrd('aura:witchfire'), { look: () => t('coll.look.witchfire', 'A coven’s green fire round your feet, tallow candles burning in its ring.') }),
     sagesmoke: E('bestowed', 'bestowed', bestowed, { with: ['title:nirnrootsage', 'glyph:nirnrootsage'], look: () => t('coll.look.sagesmoke', 'Smoke billowing about you, nirnroots circling your waist and small green runes glowing round your feet.') }),
+    vampirichaze: E('bestowed', 'bestowed', bestowed, { with: ['title:coldharbour', 'glyph:coldharbour'], look: () => t('coll.look.vampirichaze', 'A dark violet haze smouldering about you, drops of blood rising from the ground like embers and turning into Daedric runes.') }),   // BLOOD-OF-COLDHARBOUR
     eternal: E('shop', 'shop', shop('aura:eternal'), { look: () => t('coll.look.eternal', 'A cape of blue-violet fire on your back, flowing as you move, wisps of flame trailing behind you.') }),   // SHOP
     // STOREFRONT: the bundles' Dominion, and the Folios' coil and its gilded twin
     dominion: E('shop', 'store', bundled, { look: () => t('coll.look.dominion', 'A ring of Daedric script burning crimson on black at your feet, black thorns out from it and embers rising.') }),
@@ -364,6 +366,7 @@ export const WARDROBE = Object.freeze({
     crystalfist: E('bestowed', 'bestowed', bestowed, { with: ['title:crystalfist', 'aura:resonance'] }),
     wikimaid: E('bestowed', 'bestowed', bestowed, { with: ['title:wikimaid', 'aura:lilacwarren'] }),
     nirnrootsage: E('bestowed', 'bestowed', bestowed, { with: ['title:nirnrootsage', 'aura:sagesmoke'] }),
+    coldharbour: E('bestowed', 'bestowed', bestowed, { with: ['title:coldharbour', 'aura:vampirichaze'] }),
     origin: E('shop', 'shop', shop('glyph:origin')),   // SHOP: the pre-alpha glyph, the ouroboros dragon
     oblivion: E('shop', 'store', bundled),   // STOREFRONT: the bundles' two, and the Folios' three
     gatesigil: E('shop', 'store', bundled),

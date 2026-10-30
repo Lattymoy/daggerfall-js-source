@@ -172,6 +172,7 @@ export const TITLE_TEXT = Object.freeze({
   get tremorborn() { return t('account.title.tremorborn', 'Tremor-Born'); },
   get heartwaker() { return t('account.title.heartwaker', 'Heart-Waker'); },
   get numidiumecho() { return t('account.title.numidiumecho', 'Echo of Numidium'); },
+  get coldharbour() { return t('account.title.coldharbour', 'Blood of Coldharbour'); },   // BLOOD-OF-COLDHARBOUR (2026-10-30, for Trakel, a $200 patron): Trakel's own, their word for it
 });
 
 /** WB9g (2026-09-30, Mac: "an animated burning ground aura that circles the ground where your character stands"): AN
@@ -198,6 +199,7 @@ export const AURA_TEXT = Object.freeze({
   get aetherium() { return t('account.aura.aetherium', 'Aetherium Coil'); },
   get gildedcoil() { return t('account.aura.gildedcoil', 'Gilded Coil'); },
   get aetherwings() { return t('account.aura.aetherwings', 'Aetherium Wings'); },   // the Gilded Folio's capstone: the Seraph Wings in blue
+  get vampirichaze() { return t('account.aura.vampirichaze', 'Vampiric Haze'); },   // BLOOD-OF-COLDHARBOUR: a dark violet haze about the body, blood rising into Daedric runes, granted with the title
 });
 
 /** SHADOW-FANG (2026-09-26, Mac): "SirMcMobdon gets a brand new
@@ -338,6 +340,19 @@ export const NIRN_GLOW = Object.freeze([0.478, 1, 0.69, 1]);         // #7affb0
 export const NIRN_HAZE = Object.freeze([0.886, 0.941, 0.91, 1]);     // #e2f0e8
 export const NIRN_DEEP = Object.freeze([0.071, 0.224, 0.122, 1]);    // #12391f
 export const NIRN_SMOKE = Object.freeze([0.541, 0.604, 0.565, 1]);   // #8a9a90
+/** BLOOD-OF-COLDHARBOUR (2026-10-30, for Trakel, a $200 patron: "I really like violet and crimson as colors, especially
+ *  when blended together", with a rose glyph as the colour scheme's reference). The title, the rose and the Vampiric Haze
+ *  are one family: the ring's LAVENDER, the outer petals' VIOLET, the inner petals' and the drop's CRIMSON, the heart's
+ *  dark BLOOD, the spiral's pale ROSE, the haze's dark SMOKE and the MAGENTA the crimson and the violet meet in - the
+ *  title's one colour, 63 from the nearest title's (Shadow Fang's crimson) (render/auraRing.js HAZE_RGB reads them
+ *  here). "Blood of Coldharbour" is drawn crimson into magenta into lavender. */
+export const COLD_LAVENDER = Object.freeze([0.659, 0.455, 0.878, 1]);   // #a874e0
+export const COLD_VIOLET = Object.freeze([0.478, 0.18, 0.612, 1]);       // #7a2e9c
+export const COLD_CRIMSON = Object.freeze([0.82, 0.122, 0.227, 1]);      // #d11f3a
+export const COLD_BLOOD = Object.freeze([0.431, 0.039, 0.118, 1]);       // #6e0a1e
+export const COLD_ROSE = Object.freeze([1, 0.435, 0.557, 1]);            // #ff6f8e
+export const COLD_SMOKE = Object.freeze([0.227, 0.122, 0.31, 1]);        // #3a1f4f
+export const COLD_MAGENTA = Object.freeze([0.784, 0.071, 0.478, 1]);     // #c8127a
 /** SHOP (2026-10-28, the owner: Genesis's "blueish purple animated flame"; bible/06-Systems/Shop.md): THE GENESIS FIRE,
  *  the shop's three wares' one family - the title's flame plate, the Origin's dragon and Eternal's cape. Its DEEP, the
  *  indigo under the fire; its ROOT, the blue-white a flame burns at its base; its BLUE and VIOLET, the fire's body; its
@@ -519,6 +534,7 @@ export const TITLE_RGBA = Object.freeze({
   tremorborn: DWEMER_DUST,
   heartwaker: AETHERIUM_GLOW,
   numidiumecho: NUMIDIUM_GOLD,
+  coldharbour: COLD_MAGENTA,   // BLOOD-OF-COLDHARBOUR: the crimson and the violet blended - the colour a face that cannot draw a gradient uses
 });
 
 /** SHADOW-FANG: A TITLE DRAWN AS A GRADIENT - its stops, RGBA 0..1, left
@@ -545,6 +561,7 @@ export const TITLE_GRADIENT = Object.freeze({
   tremorborn: Object.freeze([DWEMER_DUST, DWEMER_BRASS, DWEMER_SHINE]),
   heartwaker: Object.freeze([DWEMER_BRASS, AETHERIUM_BLUE, AETHERIUM_GLOW]),
   numidiumecho: Object.freeze([DWEMER_BRASS, NUMIDIUM_GOLD, AETHERIUM_GLOW]),
+  coldharbour: Object.freeze([COLD_CRIMSON, COLD_MAGENTA, COLD_LAVENDER]),   // BLOOD-OF-COLDHARBOUR: "Blood" in the crimson, "Coldharbour" into the violet
 });
 
 /** PENITENT: THE EDGE A GRADIENT TITLE WEARS, where it is not the title's
@@ -563,6 +580,7 @@ export const TITLE_EDGE = Object.freeze({
   wikimaid: Object.freeze([0, 0, 0, 1]),   // WIKIMAID: its blush end is pale - edged in black, as Penitent's and the Aegis's
   witchwarden: Object.freeze([0, 0, 0, 1]),   // WITCH1: its heart end is pale - edged in black, as the WikiMaid's
   nirnrootsage: Object.freeze([0, 0, 0, 1]),   // NIRNROOT-SAGE: its haze end is pale - edged in black, as the Witchwarden's
+  coldharbour: Object.freeze([0, 0, 0, 1]),   // BLOOD-OF-COLDHARBOUR: its lavender end is light - edged in black, as the Nirnroot Sage's
   genesis: Object.freeze([0, 0, 0, 1]),   // SHOP: its heart end is pale - edged in black
   // STOREFRONT: each has a pale stop - edged in black
   ...Object.fromEntries(['dawnbringer', 'voidwalker', 'eternalchampion', 'tremorborn', 'heartwaker', 'numidiumecho'].map((k) => [k, Object.freeze([0, 0, 0, 1])])),
@@ -661,6 +679,7 @@ export const GLYPH_RGBA = Object.freeze({
   gearcrown: DWEMER_BRASS,
   tonalfork: AETHERIUM_TONE,
   cog: DWEMER_BRASS,
+  coldharbour: COLD_LAVENDER,   // BLOOD-OF-COLDHARBOUR: the ring and its thorns in the lavender - the petals, the heart and the drop are its details
 });
 
 /** SHADOW-FANG: A GLYPH FILLED WITH A GRADIENT - its title's two stops,
@@ -731,6 +750,16 @@ export const GLYPH_DETAIL = Object.freeze({
   ]),
   gearcrown: Object.freeze({ path: 'M8 12.25L9.1 13.3L8 14.35L6.9 13.3Z', rgba: AETHERIUM_BLUE }),
   cog: Object.freeze({ path: 'M8 6.7A1.3 1.3 0 1 1 8 9.3A1.3 1.3 0 1 1 8 6.7Z', rgba: AETHERIUM_BLUE }),
+  // BLOOD-OF-COLDHARBOUR: FIVE DETAILS, in order, after Trakel's rose: the outer petals in the violet, five round lobes;
+  // the inner petals in the crimson, five points turned between them; the heart in the blood; its spiral in the rose;
+  // and the drop hanging from the ring's foot in the crimson. Each one outline, inside the ring, crossing nothing.
+  coldharbour: Object.freeze([
+    Object.freeze({ path: 'M8 2.25L8.26 2.27L8.52 2.33L8.77 2.43L9 2.57L9.22 2.75L9.41 2.97L9.57 3.22L9.69 3.51L9.76 3.84L9.78 4.22L9.7 4.67L9.29 5.52L9.97 4.87L10.38 4.66L10.74 4.56L11.08 4.53L11.4 4.55L11.69 4.62L11.95 4.74L12.19 4.88L12.39 5.06L12.56 5.27L12.7 5.5L12.8 5.74L12.86 6L12.89 6.26L12.87 6.53L12.81 6.79L12.7 7.05L12.56 7.3L12.36 7.53L12.12 7.73L11.83 7.91L11.48 8.04L11.02 8.11L10.09 7.98L10.92 8.42L11.25 8.75L11.46 9.06L11.59 9.37L11.66 9.68L11.69 9.98L11.66 10.26L11.59 10.53L11.49 10.79L11.34 11.01L11.17 11.21L10.97 11.39L10.74 11.52L10.5 11.63L10.24 11.69L9.97 11.72L9.69 11.7L9.41 11.63L9.13 11.52L8.86 11.36L8.61 11.13L8.37 10.84L8.16 10.43L8 9.5L7.84 10.43L7.63 10.84L7.39 11.13L7.14 11.36L6.87 11.52L6.59 11.63L6.31 11.7L6.03 11.72L5.76 11.69L5.5 11.63L5.26 11.52L5.03 11.39L4.83 11.21L4.66 11.01L4.51 10.79L4.41 10.53L4.34 10.26L4.31 9.98L4.34 9.68L4.41 9.37L4.54 9.06L4.75 8.75L5.08 8.42L5.91 7.98L4.98 8.11L4.52 8.04L4.17 7.91L3.88 7.73L3.64 7.53L3.44 7.3L3.3 7.05L3.19 6.79L3.13 6.53L3.11 6.26L3.14 6L3.2 5.74L3.3 5.5L3.44 5.27L3.61 5.06L3.81 4.88L4.05 4.74L4.31 4.62L4.6 4.55L4.92 4.53L5.26 4.56L5.62 4.66L6.03 4.87L6.71 5.52L6.3 4.67L6.22 4.22L6.24 3.84L6.31 3.51L6.43 3.22L6.59 2.97L6.78 2.75L7 2.57L7.23 2.43L7.48 2.33L7.74 2.27Z', rgba: COLD_VIOLET }),
+    Object.freeze({ path: 'M8 5.8L8.09 5.65L8.19 5.45L8.33 5.24L8.48 5.03L8.66 4.84L8.85 4.67L9.06 4.54L9.27 4.44L9.48 4.39L9.68 4.38L9.87 4.42L10.03 4.51L10.16 4.64L10.25 4.8L10.31 4.99L10.33 5.21L10.3 5.44L10.24 5.68L10.14 5.91L10.01 6.14L9.86 6.35L9.7 6.54L9.54 6.71L9.43 6.84L9.6 6.87L9.82 6.91L10.06 6.97L10.31 7.06L10.55 7.17L10.76 7.3L10.96 7.45L11.11 7.63L11.23 7.81L11.29 8L11.31 8.19L11.28 8.37L11.2 8.53L11.08 8.67L10.91 8.78L10.71 8.86L10.48 8.91L10.24 8.92L9.98 8.9L9.72 8.85L9.48 8.78L9.24 8.68L9.04 8.58L8.88 8.51L8.9 8.69L8.93 8.91L8.95 9.16L8.94 9.42L8.91 9.68L8.85 9.93L8.77 10.16L8.65 10.36L8.51 10.53L8.35 10.65L8.18 10.72L8 10.75L7.82 10.72L7.65 10.65L7.49 10.53L7.35 10.36L7.23 10.16L7.15 9.93L7.09 9.68L7.06 9.42L7.05 9.16L7.07 8.91L7.1 8.69L7.12 8.51L6.96 8.58L6.76 8.68L6.52 8.78L6.28 8.85L6.02 8.9L5.76 8.92L5.52 8.91L5.29 8.86L5.09 8.78L4.92 8.67L4.8 8.53L4.72 8.37L4.69 8.19L4.71 8L4.77 7.81L4.89 7.63L5.04 7.45L5.24 7.3L5.45 7.17L5.69 7.06L5.94 6.97L6.18 6.91L6.4 6.87L6.57 6.84L6.46 6.71L6.3 6.54L6.14 6.35L5.99 6.14L5.86 5.91L5.76 5.68L5.7 5.44L5.67 5.21L5.69 4.99L5.75 4.8L5.84 4.64L5.97 4.51L6.13 4.42L6.32 4.38L6.52 4.39L6.73 4.44L6.94 4.54L7.15 4.67L7.34 4.84L7.52 5.03L7.67 5.24L7.81 5.45L7.91 5.65Z', rgba: COLD_CRIMSON }),
+    Object.freeze({ path: 'M8 6.05L8.24 6.07L8.48 6.15L8.69 6.26L8.88 6.42L9.04 6.61L9.15 6.82L9.23 7.06L9.25 7.3L9.23 7.54L9.15 7.78L9.04 7.99L8.88 8.18L8.69 8.34L8.48 8.45L8.24 8.53L8 8.55L7.76 8.53L7.52 8.45L7.31 8.34L7.12 8.18L6.96 7.99L6.85 7.78L6.77 7.54L6.75 7.3L6.77 7.06L6.85 6.82L6.96 6.61L7.12 6.42L7.31 6.26L7.52 6.15L7.76 6.07Z', rgba: COLD_BLOOD }),
+    Object.freeze({ path: 'M8 7.15L8.04 7.13L8.08 7.12L8.13 7.12L8.19 7.13L8.24 7.16L8.29 7.21L8.33 7.27L8.35 7.34L8.36 7.42L8.35 7.5L8.32 7.59L8.27 7.67L8.2 7.74L8.11 7.8L8 7.83L7.88 7.85L7.76 7.84L7.64 7.79L7.53 7.73L7.43 7.63L7.35 7.51L7.29 7.37L7.26 7.22L7.27 7.06L7.31 6.9L7.39 6.75L7.5 6.62L7.65 6.51L7.81 6.43L8 6.38L8.2 6.38L8.39 6.41L8.59 6.49L8.76 6.62L8.91 6.78L9.02 6.97L9.09 7.19L9.12 7.42L9.09 7.66L9.24 7.7L9.28 7.43L9.25 7.17L9.18 6.92L9.05 6.69L8.89 6.5L8.69 6.35L8.47 6.25L8.23 6.2L8 6.2L7.78 6.25L7.57 6.34L7.39 6.47L7.25 6.63L7.15 6.81L7.09 7L7.07 7.2L7.09 7.4L7.15 7.58L7.25 7.73L7.37 7.87L7.52 7.97L7.67 8.03L7.84 8.06L8 8.05L8.15 8.02L8.29 7.95L8.4 7.85L8.49 7.74L8.55 7.62L8.59 7.49L8.59 7.36L8.57 7.24L8.52 7.13L8.45 7.04L8.37 6.96L8.28 6.91L8.19 6.88L8.09 6.88L8 6.89Z', rgba: COLD_ROSE }),
+    Object.freeze({ path: 'M8 12.15L8.01 12.17L8.03 12.24L8.09 12.35L8.16 12.5L8.27 12.69L8.39 12.91L8.52 13.16L8.66 13.43L8.78 13.71L8.89 14L8.98 14.29L9.02 14.57L9.03 14.84L9 15.09L8.92 15.31L8.79 15.5L8.63 15.65L8.44 15.76L8.23 15.83L8 15.85L7.77 15.83L7.56 15.76L7.37 15.65L7.21 15.5L7.08 15.31L7 15.09L6.97 14.84L6.98 14.57L7.02 14.29L7.11 14L7.22 13.71L7.34 13.43L7.48 13.16L7.61 12.91L7.73 12.69L7.84 12.5L7.91 12.35L7.97 12.24L7.99 12.17Z', rgba: COLD_CRIMSON }),
+  ]),
 });
 /** WIKIMAID: A GLYPH'S DETAILS AS A LIST - one shape (the wolf's eye, the penitent's sword, the aegis's tendrils) or
  *  several in their order (the WikiMaid's ears, lace and face), so every face that draws a glyph walks one shape the same
@@ -791,6 +820,7 @@ export const GLYPH_MARK = Object.freeze({
   gearcrown: 'm',     // the crown's points
   tonalfork: 'y',     // the fork's two tines on its stem
   cog: '0',           // a ring with its hole
+  coldharbour: 'R',   // BLOOD-OF-COLDHARBOUR: the rose
 });
 
 /** The printable range the classic font covers. ACC1d-MARK's own bound,
@@ -894,12 +924,16 @@ export const GLYPH_PATH = Object.freeze({
   tonalfork: 'M5.4 1.2V7.2Q5.4 10.2 8 10.2Q10.6 10.2 10.6 7.2V1.2M8 10.2V15.2M2.6 3.4Q1.2 5.6 2.6 7.8M13.4 3.4Q14.8 5.6 13.4 7.8',
   // THE DWEMER COG - eight teeth round a hole, the hole wound the other way; filled, its hub a detail
   cog: 'M6.26 2.36L6.49 0.55L9.51 0.55L9.74 2.36L10.26 2.55L10.75 2.78L12.2 1.67L14.33 3.8L13.22 5.25L13.45 5.74L13.64 6.26L15.45 6.49L15.45 9.51L13.64 9.74L13.45 10.26L13.22 10.75L14.33 12.2L12.2 14.33L10.75 13.22L10.26 13.45L9.74 13.64L9.51 15.45L6.49 15.45L6.26 13.64L5.74 13.45L5.25 13.22L3.8 14.33L1.67 12.2L2.78 10.75L2.55 10.26L2.36 9.74L0.55 9.51L0.55 6.49L2.36 6.26L2.55 5.74L2.78 5.25L1.67 3.8L3.8 1.67L5.25 2.78L5.74 2.55ZM8 5.6A2.4 2.4 0 1 0 8 10.4A2.4 2.4 0 1 0 8 5.6Z',
+  // BLOOD-OF-COLDHARBOUR (2026-10-30, Trakel's rose for its reference): A RING OF THORNS - eight hooked thorns round it,
+  // a pair either side of its foot, where the drop hangs (GLYPH_DETAIL). Its inside wound the other way, so it is a ring
+  // filled either way; the petals inside it are its details.
+  coldharbour: 'M8 0.95L8.55 0.97L9.1 1.05L9.64 1.17L9.65 1.17L9.96 1.22L10.22 1.21L10.32 1.19L10.75 1.03L10.98 0.9L11.16 0.8L10.95 1.68L10.95 1.68L11.18 1.8L11.64 2.1L12.08 2.44L12.49 2.81L12.86 3.22L13.2 3.66L13.5 4.13L13.5 4.13L13.69 4.39L13.88 4.56L13.96 4.62L14.38 4.81L14.63 4.89L14.83 4.94L14.06 5.41L14.06 5.41L14.13 5.66L14.25 6.2L14.33 6.75L14.35 7.3L14.33 7.85L14.25 8.4L14.13 8.94L14.13 8.95L14.08 9.26L14.09 9.52L14.11 9.62L14.27 10.05L14.4 10.28L14.5 10.46L13.62 10.25L13.62 10.25L13.5 10.48L13.2 10.94L12.86 11.38L12.49 11.79L12.08 12.16L11.64 12.5L11.18 12.8L11.17 12.8L10.91 12.99L10.74 13.18L10.68 13.26L10.49 13.68L10.41 13.93L10.36 14.13L10.27 14.55L9.89 13.36L9.64 13.43L9.1 13.55L8.55 13.63L8 13.65L7.45 13.63L6.9 13.55L6.36 13.43L6.35 13.43L6.04 13.38L5.78 13.39L5.68 13.41L5.25 13.57L5.02 13.7L4.84 13.8L4.47 14.03L5.05 12.92L4.83 12.8L4.36 12.5L3.92 12.16L3.51 11.79L3.14 11.38L2.8 10.94L2.5 10.48L2.5 10.47L2.31 10.21L2.12 10.04L2.04 9.98L1.62 9.79L1.37 9.71L1.17 9.66L1.94 9.19L1.94 9.19L1.87 8.94L1.75 8.4L1.67 7.85L1.65 7.3L1.67 6.75L1.75 6.2L1.87 5.66L1.87 5.65L1.92 5.34L1.91 5.08L1.89 4.98L1.73 4.55L1.6 4.32L1.5 4.14L2.38 4.35L2.38 4.35L2.5 4.12L2.8 3.66L3.14 3.22L3.51 2.81L3.92 2.44L4.36 2.1L4.83 1.8L4.83 1.8L5.09 1.61L5.26 1.42L5.32 1.34L5.51 0.92L5.59 0.67L5.64 0.47L6.11 1.24L6.11 1.24L6.36 1.17L6.9 1.05L7.45 0.97ZM7.45 1.73L6.91 1.81L6.37 1.94L5.86 2.13L5.36 2.36L4.89 2.64L4.45 2.97L4.04 3.34L3.67 3.75L3.34 4.19L3.06 4.66L2.83 5.16L2.64 5.67L2.51 6.21L2.43 6.75L2.4 7.3L2.43 7.85L2.51 8.39L2.64 8.93L2.83 9.44L3.06 9.94L3.34 10.41L3.67 10.85L4.04 11.26L4.45 11.63L4.89 11.96L5.36 12.24L5.86 12.47L6.37 12.66L6.91 12.79L7.45 12.87L8 12.9L8.55 12.87L9.09 12.79L9.63 12.66L10.14 12.47L10.64 12.24L11.11 11.96L11.55 11.63L11.96 11.26L12.33 10.85L12.66 10.41L12.94 9.94L13.17 9.44L13.36 8.93L13.49 8.39L13.57 7.85L13.6 7.3L13.57 6.75L13.49 6.21L13.36 5.67L13.17 5.16L12.94 4.66L12.66 4.19L12.33 3.75L11.96 3.34L11.55 2.97L11.11 2.64L10.64 2.36L10.14 2.13L9.63 1.94L9.09 1.81L8.55 1.73L8 1.7Z',
 });
 
 /** Is this glyph DRAWN as an outline rather than filled? The sprout is
  *  a shape and the brackets are strokes; said here so the layer does
  *  not have to know which is which by name. */
-export const GLYPH_STROKE = Object.freeze({ sprout: true, dev: true, mod: true, dm: true, disciple: true, apostle: true, hierophant: true, shadowfang: false, penitent: true, herald: true, tower: false, crownDF: false, crownWR: false, crownSN: false, laurel: true, aegis: true, primarch: false, crystalfist: false, wikimaid: false, nirnrootsage: false, crownSK: false, crownMW: false, crownSU: false, crownVW: false, crownEW: false, crownBM: false, crownCY: false, origin: false, oblivion: true, gatesigil: false, gearcrown: false, tonalfork: true, cog: false });   // NIRNROOT-SAGE: the sprig filled; WIKIMAID: the rabbit filled; SEAT1c: the seats' four filled; ARENA4: the laurel's branches stroked; AEGIS: the pillars and the ring stroked; PRIMARCH: the cross filled; CRYSTAL-FIST: the slashes filled; WIKIMAID: the rabbit filled; SEAT1c: the seats' four filled; ARENA4: the laurel's branches stroked; AEGIS: the pillars and the ring stroked; PRIMARCH: the cross filled; CRYSTAL-FIST: the slashes filled
+export const GLYPH_STROKE = Object.freeze({ sprout: true, dev: true, mod: true, dm: true, disciple: true, apostle: true, hierophant: true, shadowfang: false, penitent: true, herald: true, tower: false, crownDF: false, crownWR: false, crownSN: false, laurel: true, aegis: true, primarch: false, crystalfist: false, wikimaid: false, nirnrootsage: false, crownSK: false, crownMW: false, crownSU: false, crownVW: false, crownEW: false, crownBM: false, crownCY: false, origin: false, oblivion: true, gatesigil: false, gearcrown: false, tonalfork: true, cog: false, coldharbour: false });   // NIRNROOT-SAGE: the sprig filled; WIKIMAID: the rabbit filled; SEAT1c: the seats' four filled; ARENA4: the laurel's branches stroked; AEGIS: the pillars and the ring stroked; PRIMARCH: the cross filled; CRYSTAL-FIST: the slashes filled; WIKIMAID: the rabbit filled; SEAT1c: the seats' four filled; ARENA4: the laurel's branches stroked; AEGIS: the pillars and the ring stroked; PRIMARCH: the cross filled; CRYSTAL-FIST: the slashes filled
 
 /**
  * The title a peer wears, ready to draw: `{ key, text, rgba }`, or
@@ -1027,7 +1061,7 @@ export const badgeClass = (kind, key) => `${kind}-${key}`;
  *  the Gatebreaker's, the Oblivion Ward the Aegis of Oblivion's, the Golden Radiance the Primarch's (PRIMARCH), the Holo
  *  Shadow Cloak the Shadow Fang's black and crimson (SHADOW-CLOAK), the Seraph Wings the Founder's gold - the wings' own, where
  *  the developer's paint is a red (SERAPH-WINGS), the Crystal Resonance the Crystal Fist's purple (CRYSTAL-FIST). A pin walks AURA_TEXT and requires an entry. */
-export const AURA_PAINT = Object.freeze({ dagonfire: 'gatebreaker', oblivionward: 'aegis', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho', aetherwings: 'heartwaker' });   // NIRNROOT-SAGE: Sage's Smoke in the Nirnroot Sage's leaf into glow into haze   // WITCH1: Witchfire in the Witchwarden's green   // WIKIMAID: the Lilac Warren in the WikiMaid's amethyst into blush; HOURS-FIRST: The First Hour in Hour's First's rose gold; SERPENT5: The Maelstrom in the Coilbreaker's sea; EG-E2: the Spire's three each in its title's paint
+export const AURA_PAINT = Object.freeze({ dagonfire: 'gatebreaker', oblivionward: 'aegis', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden', sagesmoke: 'nirnrootsage', eternal: 'genesis', dominion: 'eternalchampion', aetherium: 'heartwaker', gildedcoil: 'numidiumecho', aetherwings: 'heartwaker', vampirichaze: 'coldharbour' });   // BLOOD-OF-COLDHARBOUR: the Vampiric Haze in the title's crimson into violet   // NIRNROOT-SAGE: Sage's Smoke in the Nirnroot Sage's leaf into glow into haze   // WITCH1: Witchfire in the Witchwarden's green   // WIKIMAID: the Lilac Warren in the WikiMaid's amethyst into blush; HOURS-FIRST: The First Hour in Hour's First's rose gold; SERPENT5: The Maelstrom in the Coilbreaker's sea; EG-E2: the Spire's three each in its title's paint
 /** SHADOW-FANG: `titlePaint`'s properties as CSS declarations, the colour
  *  left to the button (its border is drawn in it) - so a gradient title's
  *  word on the card is the SAME paint as over a head, not a second one. */

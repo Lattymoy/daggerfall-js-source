@@ -277,13 +277,17 @@ export const TIER_LISTS = Object.freeze({
   // encircling feet"; the owner named the title Nirnroot Sage and its glyph a nirnroot sprig): a seventh title made for
   // one player, and a list that grants an aura with it (TIER_AURA, below).
   nirnrootsage: 'NIRNROOT_SAGE_HANDLES',
+  // BLOOD-OF-COLDHARBOUR (2026-10-30, for Trakel, a $200 patron - the owner: "All $200 patrons ingame have custom stuff";
+  // Trakel's own: the title "Blood of Coldharbour", violet and crimson, a rose glyph and a haze with blood rising into
+  // Daedric runes): an eighth title made for one player, and a list that grants an aura with it (TIER_AURA, below).
+  coldharbour: 'COLDHARBOUR_HANDLES',
 });
 /** The glyph each of those titles carries, in the vocabulary's words. */
-export const TIER_GLYPH = Object.freeze({ dungeonmaster: 'dm', disciple: 'disciple', apostle: 'apostle', hierophant: 'hierophant', shadowfang: 'shadowfang', penitent: 'penitent', herald: 'herald', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage' });
+export const TIER_GLYPH = Object.freeze({ dungeonmaster: 'dm', disciple: 'disciple', apostle: 'apostle', hierophant: 'hierophant', shadowfang: 'shadowfang', penitent: 'penitent', herald: 'herald', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage', coldharbour: 'coldharbour' });
 /** AEGIS: THE AURA A LIST'S TITLE CARRIES, where it carries one - held while the handle is listed, exactly as its glyph
  *  is, and gone on the next token once it is not. A grant like the glyph and unlike the Broker's: derived from the
  *  config at every ask, never a sale recorded on the row. */
-export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });   // NIRNROOT-SAGE: Sage's Smoke; WIKIMAID: the Lilac Warren; CRYSTAL-FIST: the Crystal Resonance; PRIMARCH: the Golden Radiance; SHADOW-CLOAK (2026-10-04, the owner, for SirMcMobdon: "I want to build a new unique AURA specifically for his account. A holo shadow cloak with red accents. Extremely detailed"): the Holo Shadow Cloak
+export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke', coldharbour: 'vampirichaze' });   // BLOOD-OF-COLDHARBOUR: the Vampiric Haze;   // NIRNROOT-SAGE: Sage's Smoke; WIKIMAID: the Lilac Warren; CRYSTAL-FIST: the Crystal Resonance; PRIMARCH: the Golden Radiance; SHADOW-CLOAK (2026-10-04, the owner, for SirMcMobdon: "I want to build a new unique AURA specifically for his account. A holo shadow cloak with red accents. Extremely detailed"): the Holo Shadow Cloak
 
 /** STAFF-PANEL2-FIX (design doc, Weak spots: "Cutting off a staff member misses most doors" - "A stored suspended flag is
  *  checked in every role path"): a staff member an owner cut off (`players.staff_suspended`, migration 0156, staff.js

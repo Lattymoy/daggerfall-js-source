@@ -29,6 +29,11 @@
   "tr": "a67c0a132050",
   "by": "claude-in-session"
  },
+ "account.aura.vampirichaze": {
+  "en": "8220492de5d3",
+  "tr": "8220492de5d3",
+  "by": "claude-in-session"
+ },
  "account.card.aCharacter": {
   "en": "47abbc419858",
   "tr": "0d49f60bf9e0",
@@ -542,6 +547,11 @@
  "account.glyph.cog": {
   "en": "503a3221d7b5",
   "tr": "c4999a68eb57",
+  "by": "claude-in-session"
+ },
+ "account.glyph.coldharbour": {
+  "en": "0f47bb3d8d26",
+  "tr": "0f47bb3d8d26",
   "by": "claude-in-session"
  },
  "account.glyph.crownBM": {
@@ -4362,6 +4372,11 @@
  "account.slots.weaponNote": {
   "en": "3617d33559e8",
   "tr": "a5cb0f800792",
+  "by": "claude-in-session"
+ },
+ "account.title.coldharbour": {
+  "en": "0f47bb3d8d26",
+  "tr": "0f47bb3d8d26",
   "by": "claude-in-session"
  },
  "account.title.dawnbringer": {
@@ -9722,6 +9737,11 @@
  "coll.look.turninghour": {
   "en": "4fe8603b6840",
   "tr": "e3472d522d74",
+  "by": "claude-in-session"
+ },
+ "coll.look.vampirichaze": {
+  "en": "67093cb87712",
+  "tr": "6e07b66d4411",
   "by": "claude-in-session"
  },
  "coll.look.witchfire": {

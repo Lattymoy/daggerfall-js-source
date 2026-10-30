@@ -202,7 +202,7 @@ import { DAEDRIC_COAL, DAEDRIC_CRIMSON, DAEDRIC_FIRE, DAEDRIC_GOLD, AETHERIUM_DE
 import { FOG_FACTOR_GLSL } from './labGrass.js';
 import { buildProgram, compiledPass } from './glProgram.js';
 import { wrapAngle } from '../world/mat4.js';
-import { GLYPH_PATH, GLYPH_DETAIL, CRYSTAL_PURPLE, HOUR_BRASS, HOUR_GOLD, HOUR_LIGHT, HOUR_DAWN, HOUR_PEARL, HOUR_SUN, COIL_SEA, COIL_TIDE, COIL_FOAM, SPIRE_BEACON, SPIRE_BEACON_WHITE, SPIRE_EMBER, SPIRE_COAL, SPIRE_DAWN, SPIRE_DAWN_GOLD, SPIRE_DAWN_ROSE, WARREN_AMETHYST, WARREN_LILAC, WARREN_BLUSH, WARREN_FRILL, WARREN_PLUM, WITCH_MOSS, WITCH_FIRE, WITCH_GLOW, WITCH_VIOLET, HEARTH_TALLOW, NIRN_LEAF, NIRN_GLOW, NIRN_HAZE, NIRN_DEEP, NIRN_SMOKE, GENESIS_DEEP, GENESIS_ROOT, GENESIS_BLUE, GENESIS_VIOLET, GENESIS_HEART, GENESIS_CORE } from '../ui/playerBadge.js';   // SHADOW-CLOAK: the wearer's own glyph, its emblem; CRYSTAL-FIST AUDIT: the Crystal Fist's purple, the resonance's one colour; WIKIMAID: the warren's five
+import { GLYPH_PATH, GLYPH_DETAIL, CRYSTAL_PURPLE, HOUR_BRASS, HOUR_GOLD, HOUR_LIGHT, HOUR_DAWN, HOUR_PEARL, HOUR_SUN, COIL_SEA, COIL_TIDE, COIL_FOAM, SPIRE_BEACON, SPIRE_BEACON_WHITE, SPIRE_EMBER, SPIRE_COAL, SPIRE_DAWN, SPIRE_DAWN_GOLD, SPIRE_DAWN_ROSE, WARREN_AMETHYST, WARREN_LILAC, WARREN_BLUSH, WARREN_FRILL, WARREN_PLUM, WITCH_MOSS, WITCH_FIRE, WITCH_GLOW, WITCH_VIOLET, HEARTH_TALLOW, NIRN_LEAF, NIRN_GLOW, NIRN_HAZE, NIRN_DEEP, NIRN_SMOKE, COLD_LAVENDER, COLD_VIOLET, COLD_CRIMSON, COLD_BLOOD, COLD_ROSE, COLD_SMOKE, COLD_MAGENTA, GENESIS_DEEP, GENESIS_ROOT, GENESIS_BLUE, GENESIS_VIOLET, GENESIS_HEART, GENESIS_CORE } from '../ui/playerBadge.js';   // SHADOW-CLOAK: the wearer's own glyph, its emblem; CRYSTAL-FIST AUDIT: the Crystal Fist's purple, the resonance's one colour; WIKIMAID: the warren's five
 
 /** The ring's radius about the feet (m), the ground quad's half-width, the flames' height, and the ground's lift. */
 export const AURA_RING_R = 0.85;
@@ -975,6 +975,99 @@ export function sageCardsInto(cards, looks, t, kindle, at, eye) {
   return cards;
 }
 
+// BLOOD-OF-COLDHARBOUR (2026-10-30, for Trakel, a $200 patron: "a dark violet, smokey haze that drifts around the sprite
+// with more pronounced particles of crimson like blood that bubble up from the ground and drift off into daedric runes"):
+// THE VAMPIRIC HAZE, Sage's Smoke's way in Coldharbour's colours (ui/playerBadge.js COLD_*), premultiplied - crimson runes
+// and pooling blood over a violet shade at the feet, low haze on the strip, and the third draw: wisps of the haze and
+// drops of blood rising like embers, each opening into a rune and fading. Its cards ride the Sage's uniforms. Its
+// measures: its ring of runes, its wall, its wisps (as the Sage's puffs) and its drops.
+export const HAZE_RUNE_R = 0.6;
+export const HAZE_RUNES = 10;
+export const HAZE_RUNE_SCALE = 0.65;
+export const HAZE_BAND_M = 0.1;
+export const HAZE_WALL_H = 0.55;
+/** The runes' script: the ward's alphabet (runeD's bits) in Coldharbour's words. */
+export const HAZE_SCRIPT = Object.freeze([45, 18, 53, 26, 39, 12, 61, 33, 50, 21]);
+export const HAZE_PUFFS = 11;
+export const HAZE_PUFF_LIFE = Object.freeze([4, 5, 6]);
+export const HAZE_PUFF_M = Object.freeze([0.35, 1.15]);
+export const HAZE_SMOKE_H = 2.0;
+export const HAZE_PUFF_R = Object.freeze([0.25, 0.55]);
+export const HAZE_PUFF_DRIFT = 0.4;
+export const HAZE_PUFF_CURL = 1.1;
+export const HAZE_PUFF_A = 0.6;
+export const HAZE_NEAR = Object.freeze([0.6, 1.6]);
+/** THE BLOOD: HAZE_EMBERS drops rising off the ground round the feet, each for its life and then off another place; how
+ *  far out they start, how high they climb (past the crown), their card a side (m), how far they sway, and the share of
+ *  the rise where a drop opens into a rune. */
+export const HAZE_EMBERS = 10;
+export const HAZE_EMBER_LIFE = Object.freeze([3, 4, 5]);
+export const HAZE_EMBER_R = Object.freeze([0.2, 0.5]);
+export const HAZE_EMBER_H = 2.2;
+export const HAZE_EMBER_M = 0.24;
+export const HAZE_EMBER_SWAY = 0.08;
+export const HAZE_RUNE_AT = 0.6;
+/** The third draw's cards: every wisp and every drop - in the Sage's uniforms, so never more than SAGE_CARDS. */
+export const HAZE_CARDS = HAZE_PUFFS + HAZE_EMBERS;
+/** Its rates: the runes' turn, the light passing round them, the glow's breath, a drop's sway; the haze's roll. */
+export const HAZE_HZ = Object.freeze({ runes: 1 / 40, pulse: 1 / 3, breath: 1 / 5, sway: 1 / 2 });
+export const HAZE_FLOW = Object.freeze({ ground: 0.25, rise: 0.5 });
+/** Every rate whole over the clock, and every wisp's and drop's life a whole number of times over it. Pure. */
+export const hazeRatesWhole = () => [...Object.values(HAZE_HZ), ...Object.values(HAZE_FLOW), ...HAZE_PUFF_LIFE.map((l) => 1 / l), ...HAZE_EMBER_LIFE.map((l) => 1 / l)]
+  .every((r) => r > 0 && Number.isInteger(Math.round(r * AURA_CLOCK_PERIOD * 1e6) / 1e6));
+/** Blood of Coldharbour's colours (ui/playerBadge.js COLD_*), RGB 0..1. */
+export const HAZE_RGB = Object.freeze({
+  lavender: Object.freeze(COLD_LAVENDER.slice(0, 3)), violet: Object.freeze(COLD_VIOLET.slice(0, 3)), crimson: Object.freeze(COLD_CRIMSON.slice(0, 3)),
+  blood: Object.freeze(COLD_BLOOD.slice(0, 3)), rose: Object.freeze(COLD_ROSE.slice(0, 3)), smoke: Object.freeze(COLD_SMOKE.slice(0, 3)),
+  magenta: Object.freeze(COLD_MAGENTA.slice(0, 3)),
+});
+/** BLOOD-OF-COLDHARBOUR: WISP m AT THE CLOCK `t` - sagePuff's law over the haze's measures, its hashes its own. Pure. */
+export function hazePuff(m, t) {
+  const life = HAZE_PUFF_LIFE[m % HAZE_PUFF_LIFE.length], flights = AURA_CLOCK_PERIOD / life;
+  const u = t / life + sageHash(m + 211, 0.5), n = Math.floor(u), age = u - n;
+  const flight = (n % flights + flights) % flights;
+  const a = sageHash(m + 223, flight + 1) * Math.PI * 2 + HAZE_PUFF_CURL * age * (sageHash(m + 227, flight) < 0.5 ? 1 : -1);
+  const r = HAZE_PUFF_R[0] + (HAZE_PUFF_R[1] - HAZE_PUFF_R[0]) * sageHash(m + 229, flight) + HAZE_PUFF_DRIFT * age;
+  const y = 0.05 + HAZE_SMOKE_H * age * (1.4 - 0.4 * age);
+  const size = HAZE_PUFF_M[0] + (HAZE_PUFF_M[1] - HAZE_PUFF_M[0]) * Math.pow(age, 0.7);
+  return { x: Math.cos(a) * r, y, z: Math.sin(a) * r, size, age, seed: sageHash(m + 233, flight) };
+}
+/** BLOOD-OF-COLDHARBOUR: DROP j AT THE CLOCK `t` - where it is about the feet (m), rising off the ground and swaying; its
+ *  size (m: none until the haze has kindled to it); its `age` (0 off the ground .. 1 gone, a rune past HAZE_RUNE_AT); and
+ *  its `rune`, which of the script it opens into (0..HAZE_RUNES-1). Each flight lasts its life, wrapping with the clock.
+ *  Pure. */
+export function hazeEmber(j, t, kindle = 1) {
+  const life = HAZE_EMBER_LIFE[j % HAZE_EMBER_LIFE.length], flights = AURA_CLOCK_PERIOD / life;
+  const u = t / life + sageHash(j + 307, 0.5), n = Math.floor(u), age = u - n;
+  const flight = (n % flights + flights) % flights;
+  const a = sageHash(j + 311, flight + 1) * Math.PI * 2;
+  const r = HAZE_EMBER_R[0] + (HAZE_EMBER_R[1] - HAZE_EMBER_R[0]) * sageHash(j + 313, flight);
+  const sway = HAZE_EMBER_SWAY * Math.sin(Math.PI * 2 * (HAZE_HZ.sway * t + sageHash(j + 317, flight)));
+  const up = Math.max(0, Math.min(1, kindle * 1.25 - j / HAZE_EMBERS * 0.25));
+  return {
+    x: Math.cos(a) * r - Math.sin(a) * sway, y: 0.04 + HAZE_EMBER_H * Math.pow(age, 0.85), z: Math.sin(a) * r + Math.cos(a) * sway,
+    size: HAZE_EMBER_M * up, age, rune: Math.min(HAZE_RUNES - 1, Math.floor(sageHash(j + 331, flight) * HAZE_RUNES)),
+  };
+}
+/** BLOOD-OF-COLDHARBOUR: EVERY CARD AT ONCE, FARTHEST FIRST from `eye` (sageCardsInto's law): a wisp (0, its age, its
+ *  cover, its seed) or a drop (2, its age, its cover, its rune's share of the script). Pure but for `cards` and `looks`. */
+export function hazeCardsInto(cards, looks, t, kindle, at, eye) {
+  const rows = [];
+  const k1 = Math.max(0, Math.min(1, kindle));
+  const nearOf = (d) => { const n = Math.max(0, Math.min(1, (d - HAZE_NEAR[0]) / (HAZE_NEAR[1] - HAZE_NEAR[0]))); return n * n * (3 - 2 * n); };
+  for (let m = 0; m < HAZE_PUFFS; m++) {
+    const p = hazePuff(m, t), d = Math.hypot(at[0] + p.x - eye[0], at[1] + p.y - eye[1], at[2] + p.z - eye[2]);
+    rows.push([d, p.x, p.y, p.z, p.size, 0, p.age, k1 * nearOf(d), p.seed]);
+  }
+  for (let j = 0; j < HAZE_EMBERS; j++) {
+    const e = hazeEmber(j, t, k1), d = Math.hypot(at[0] + e.x - eye[0], at[1] + e.y - eye[1], at[2] + e.z - eye[2]);
+    rows.push([d, e.x, e.y, e.z, e.size, 2, e.age, nearOf(d), (e.rune + 0.5) / HAZE_RUNES]);
+  }
+  rows.sort((a, b) => b[0] - a[0]);
+  rows.forEach((r, i) => { for (let j = 0; j < 4; j++) { cards[i * 4 + j] = r[1 + j]; looks[i * 4 + j] = r[5 + j]; } });
+  return cards;
+}
+
 /** SHOP (2026-10-28, the owner: "Eternal ... an extremely detailed flaming cape aura that attachs and flows on the back of
  *  your character"; bible/06-Systems/Shop.md): ETERNAL, the sixteenth look - A CAPE OF FIRE in the Genesis fire's colours
  *  (ui/playerBadge.js GENESIS_*). Its cloth is the Holo Shadow Cloak's (cloakPoint: hung from the posed shoulders, swung
@@ -1088,6 +1181,7 @@ export const AURA_LOOK = Object.freeze({
   aetherium: Object.freeze({ kind: 17, ringR: HELIX_R, flameH: HELIX_H, glyphs: 0 }),   // STOREFRONT: the coil on the strip, added whole
   gildedcoil: Object.freeze({ kind: 18, ringR: HELIX_R, flameH: HELIX_H, glyphs: 0 }),
   aetherwings: Object.freeze({ kind: 19, ringR: WING_POOL_R, flameH: WING_REACH[1], glyphs: WING_CARDS, mesh: 'wings' }),   // STOREFRONT: the Seraph Wings in aetherium blue (AETHER_WING_RGB), the Gilded Folio's capstone
+  vampirichaze: Object.freeze({ kind: 20, ringR: HAZE_RUNE_R, flameH: HAZE_WALL_H, glyphs: HAZE_CARDS, shade: true }),   // BLOOD-OF-COLDHARBOUR: the runes and the haze's shade at the feet, the low haze on the strip, the wisps and the blood the third draw
 });
 /** The look a wearer's aura is drawn with - Dagon's Fire for one that names none (the fire was the only aura before). */
 export const auraLookOf = (aura) => (typeof aura === 'string' && Object.hasOwn(AURA_LOOK, aura) ? AURA_LOOK[aura] : AURA_LOOK.dagonfire);
@@ -2641,6 +2735,112 @@ vec4 sageCard(vec2 uv, vec3 s) {
 }
 `;
 
+/** BLOOD-OF-COLDHARBOUR: THE VAMPIRIC HAZE - a ground, a wall and a card (a wisp of the haze or a drop of blood), each
+ *  PREMULTIPLIED as the Sage's: the haze covers, the blood's light and the runes' are added. */
+const HAZE_GLSL = `
+const vec3 HZ_LAVENDER = ${v3(HAZE_RGB.lavender)};
+const vec3 HZ_VIOLET = ${v3(HAZE_RGB.violet)};
+const vec3 HZ_CRIMSON = ${v3(HAZE_RGB.crimson)};
+const vec3 HZ_BLOOD = ${v3(HAZE_RGB.blood)};
+const vec3 HZ_ROSE = ${v3(HAZE_RGB.rose)};
+const vec3 HZ_SMOKE = ${v3(HAZE_RGB.smoke)};
+const vec3 HZ_MAGENTA = ${v3(HAZE_RGB.magenta)};
+const int HAZE_SCRIPT[${HAZE_RUNES}] = int[${HAZE_RUNES}](${HAZE_SCRIPT.join(', ')});
+float hazeBreath() { return 0.85 + 0.15 * sin(uTime * TAU ${hzGlsl(HAZE_HZ.breath)}); }
+// a rune's stroke lit in the blood: a rose heart, the crimson's body, a dark blood halo
+vec3 hazeInked(float d, float w) {
+  float heart = 1.0 - smoothstep(w * 0.35, w * 0.7, d);
+  float body = 1.0 - smoothstep(w * 0.5, w * 1.15, d);
+  float glow = exp(-d * d / (w * w * 9.0));
+  return HZ_ROSE * heart * 0.6 + HZ_CRIMSON * body * 1.1 + HZ_CRIMSON * glow * 0.5;
+}
+vec4 hazeGround(vec2 p) {
+  float r = length(p);
+  if (r > uGroundR) discard;
+  float breath = hazeBreath();
+  // THE SHADE the haze lays at the feet, covering - the smoke's violet, rolling, thinning out past the runes
+  float roll = fbmP(vec2(p.x * 3.0 + uTime * ${g3(HAZE_FLOW.ground)}, p.y * 3.0), vec2(${g1(HAZE_FLOW.ground * AURA_CLOCK_PERIOD)}, 64.0));
+  float shade = exp(-r * r / 0.35) * (0.35 + 0.65 * roll) * 0.55 * uKindle;
+  vec4 c = vec4(HZ_SMOKE * 0.7 * shade, shade);
+  // THE BLOOD pooling in it and bubbling up: dark crimson where the roll is deep, its bubbles' rims catching the light
+  float pool = smoothstep(0.55, 0.8, fbmP(vec2(p.x * 6.0, p.y * 6.0 - uTime ${hzGlsl(HAZE_FLOW.rise)}), vec2(64.0, ${g1(HAZE_FLOW.rise * AURA_CLOCK_PERIOD)}))) * exp(-r * r / 0.2) * uKindle;
+  vec3 light = HZ_CRIMSON * pool * 0.35 * breath;
+  // THE GLOW the runes throw on the ground about them, added
+  float dr = r - uRingR;
+  light += HZ_CRIMSON * exp(-dr * dr / 0.012) * 0.18 * breath;
+  if (r > 0.05) {
+    float a = atan(p.y, p.x), px = turnPixel();
+    float lines = max(turnBand(r, uRingR + ${g3(HAZE_BAND_M - 0.006)}, uRingR + ${g3(HAZE_BAND_M + 0.006)}, px), turnBand(r, uRingR - ${g3(HAZE_BAND_M + 0.006)}, uRingR - ${g3(HAZE_BAND_M - 0.006)}, px));
+    light += HZ_MAGENTA * lines * 0.55 * breath;
+    // THE RUNES: the ward's script in Coldharbour's words, round the feet and turning slowly, each lit in turn
+    float cu = (a - uTime * TAU ${hzGlsl(HAZE_HZ.runes)}) / TAU * ${g1(HAZE_RUNES)};
+    float k = mod(floor(cu), ${g1(HAZE_RUNES)});
+    vec2 q = vec2((fract(cu) - 0.5) * TAU / ${g1(HAZE_RUNES)} * r, r - uRingR);
+    float d = runeD(q / ${g3(HAZE_RUNE_SCALE)}, HAZE_SCRIPT[int(k)]) * ${g3(HAZE_RUNE_SCALE)};
+    float lit = 0.45 + 0.55 * pow(0.5 + 0.5 * cos(uTime * TAU ${hzGlsl(HAZE_HZ.pulse)} - k / ${g1(HAZE_RUNES)} * TAU), 3.0);
+    light += hazeInked(d, 0.009) * lit * breath;
+    light = light * wardDrawn(fract(a / TAU + 0.5));
+  }
+  c.rgb += light;
+  return c * (1.0 - smoothstep(uGroundR - 0.2, uGroundR, r));
+}
+vec4 hazeWall(vec2 q) {
+  float u = q.x, v = q.y;
+  float an = u * TAU;
+  vec2 e = uCamPos.xz - vWorld.xz;
+  float facing = dot(e, e) > 1e-8 ? abs(dot(vec2(cos(an), sin(an)), normalize(e))) : 1.0;
+  float rim = 0.3 + 0.7 * (1.0 - facing) * (1.0 - facing);
+  // THE LOW HAZE smouldering round the boots, covering - the blood's glow at its foot, the violet above, gone by the knee
+  float n = fbmP(vec2(u * 24.0, v * 2.0 - uTime * ${g3(HAZE_FLOW.rise)}), vec2(24.0, ${g1(HAZE_FLOW.rise * AURA_CLOCK_PERIOD)}));
+  float haze = smoothstep(0.3, 0.8, n + 0.35 * (1.0 - v)) * pow(1.0 - v, 1.5) * 0.42 * rim;
+  vec3 col = mix(HZ_CRIMSON * 0.5, HZ_VIOLET * 0.75, smoothstep(0.0, 0.45, v));
+  vec4 c = vec4(col * haze, haze);
+  c.rgb += HZ_CRIMSON * exp(-v * 7.0) * 0.18 * hazeBreath();
+  return c * clamp((1.25 * uKindle - v) / 0.15, 0.0, 1.0);
+}
+// A CARD (s: a wisp's seed's half, its age and its cover - or 2 and the rune's share for a drop of blood)
+vec4 hazeCard(vec2 uv, vec3 s) {
+  if (s.x < 1.5) {
+    // A WISP: a ragged billow of the dark violet, wispy at its edge, the lavender on its crown; young, the blood's glow
+    // smouldering on its belly; thinning away as it climbs
+    float seed = s.x * 2.0, age = s.y;
+    float d = length(uv - 0.5) * 2.0;
+    if (d >= 1.0) return vec4(0.0);
+    float n = fbmP(uv * 3.5 + vec2(seed * 17.0, seed * 29.0 - age * 1.5), vec2(64.0));
+    float wisp = fbmP(uv * 7.0 + vec2(seed * 5.0 + age, seed * 11.0), vec2(64.0));
+    float body = (1.0 - smoothstep(0.2, 1.0, d + (n - 0.5) * 0.9)) * (1.0 - smoothstep(0.7, 1.0, d));
+    float thin = smoothstep(0.0, 0.15, age) * pow(1.0 - age, 1.2);
+    float a = clamp(body * (0.35 + 0.9 * n * wisp), 0.0, 1.0) * thin * ${g3(HAZE_PUFF_A)} * s.z;
+    vec3 col = mix(HZ_VIOLET * 0.9, HZ_LAVENDER * 0.85, smoothstep(0.35, 1.0, uv.y + (n - 0.5) * 0.4));
+    col = mix(col, HZ_SMOKE, (1.0 - uv.y) * 0.35);
+    col = mix(col, HZ_CRIMSON * 0.75, (1.0 - age) * (1.0 - age) * (1.0 - uv.y) * 0.5);
+    // and smouldering: a little of the violet's light added, so the haze shows over the dark it drifts in
+    return vec4(col, 1.0) * a + vec4(HZ_VIOLET * a * 0.3, 0.0);
+  }
+  // A DROP OF BLOOD rising like an ember: a crimson bead, its heart the rose, its glow about it; past HAZE_RUNE_AT of its
+  // rise it opens into a rune of the script and fades
+  float age = s.y, cover = s.z;
+  int k = int(clamp(floor(fract(s.x) * ${g1(HAZE_RUNES)}), 0.0, ${g1(HAZE_RUNES - 1)}));
+  vec2 q = (vec2(uv.x, 1.0 - uv.y) - 0.5) * ${g3(HAZE_EMBER_M)};
+  float open = smoothstep(${g3(HAZE_RUNE_AT - 0.1)}, ${g3(HAZE_RUNE_AT + 0.1)}, age);
+  float fade = 1.0 - smoothstep(0.8, 1.0, age);
+  // the bead: round, drawn out below as it rises - a short tail of its own glow
+  vec2 b = vec2(q.x, q.y < 0.0 ? q.y * 0.45 : q.y);
+  float r2 = dot(b, b);
+  float bead = 1.0 - smoothstep(0.018, 0.028, sqrt(r2));
+  float heart = 1.0 - smoothstep(0.0, 0.012, length(q - vec2(-0.006, 0.007)));
+  float glow = exp(-r2 / 0.003);
+  vec3 drop = (HZ_CRIMSON * bead + HZ_ROSE * heart * 0.8) + HZ_CRIMSON * glow * 0.6;
+  float da = bead * 0.9;
+  // the rune it opens into, lit in the blood
+  float d = runeD(q / 0.6, HAZE_SCRIPT[k]) * 0.6;
+  vec3 rune = hazeInked(d, 0.008) + HZ_MAGENTA * exp(-r2 / 0.004) * 0.15;
+  vec3 col = mix(drop, rune, open) * fade * cover;
+  float a = da * (1.0 - open) * fade * cover;
+  return vec4(col, a);
+}
+`;
+
 const WARREN_GLSL = `
 const vec3 WR_AMETHYST = ${v3(WARREN_RGB.amethyst)};
 const vec3 WR_LILAC = ${v3(WARREN_RGB.lilac)};
@@ -3047,6 +3247,24 @@ void main() {
     float lean = ${g3(WARREN_LEAN)} * atan(max(uCamPos.y - c.y, 0.0), max(length(uCamPos.xz - c.xz), 1e-4));
     w = c + vec3(right.x, 0.0, right.y) * o.x + (vec3(0.0, cos(lean), 0.0) + vec3(toEye.x, 0.0, toEye.y) * sin(lean)) * o.y;
     vS = vec3(sign(b.w) * (dot(vec2(-sin(b.x), cos(b.x)), right) >= 0.0 ? 1.0 : -1.0), k, 0.0);
+  } else if (uAura == 20) {
+    // BLOOD-OF-COLDHARBOUR: A WISP of the haze or A DROP of blood - its card where node's law has it (uSage, farthest
+    // first), square to the eye about its middle; a wisp turned in its own plane as it billows, a drop upright
+    float k = floor(aP.x * 0.5);
+    vP = vec2(aP.x - k * 2.0, aP.y);
+    vec4 c = uSage[int(k)], l = uSageLook[int(k)];
+    vec3 at = uAt + c.xyz;
+    vec2 o = (vP - 0.5) * c.w;
+    vec3 e = uCamPos - at;
+    float el = length(e);
+    e = el > 1e-6 ? e / el : vec3(0.0, 0.0, 1.0);
+    vec3 r = cross(vec3(0.0, 1.0, 0.0), e);
+    float rl = length(r);
+    r = rl > 1e-6 ? r / rl : vec3(1.0, 0.0, 0.0);
+    float turn = l.x > 1.5 ? 0.0 : l.w * 6.283185307179586 + l.y * (l.w > 0.5 ? 1.2 : -1.2);
+    o = vec2(o.x * cos(turn) - o.y * sin(turn), o.x * sin(turn) + o.y * cos(turn));
+    w = at + r * o.x + cross(e, r) * o.y;
+    vS = l.x > 1.5 ? vec3(2.0 + l.w, l.y, l.z) : vec3(l.w * 0.5, l.y, l.z);
   } else if (uAura == 14) {
     // NIRNROOT-SAGE: A PUFF of the smoke or A NIRNROOT - its card where node's law has it (uSage, farthest first), about its
     // middle
@@ -3117,12 +3335,13 @@ uniform vec3 uCamPos;
 out vec4 o;
 ${FOG_FACTOR_GLSL}${AURA_NOISE_GLSL}
 const float TAU = 6.283185307179586;
-${WARD_GLSL}${RADIANCE_GLSL}${RESONANCE_GLSL}${TURNING_GLSL}${MAELSTROM_GLSL}${SPIRE_GLSL}${CLOAK_SHAPE_GLSL}${CLOAK_FS_GLSL}${ETERNAL_SHAPE_GLSL}${ETERNAL_FS_GLSL}${WING_SHARED_GLSL}${WING_FS_GLSL}${WARREN_GLSL}${WITCH_GLSL}${SAGE_GLSL}${DOMINION_GLSL}${HELIX_GLSL}
+${WARD_GLSL}${RADIANCE_GLSL}${RESONANCE_GLSL}${TURNING_GLSL}${MAELSTROM_GLSL}${SPIRE_GLSL}${CLOAK_SHAPE_GLSL}${CLOAK_FS_GLSL}${ETERNAL_SHAPE_GLSL}${ETERNAL_FS_GLSL}${WING_SHARED_GLSL}${WING_FS_GLSL}${WARREN_GLSL}${WITCH_GLSL}${SAGE_GLSL}${HAZE_GLSL}${DOMINION_GLSL}${HELIX_GLSL}
 void main() {
   if (uAura == 16) { vec4 c = uKind == 0 ? dominionGround(vP) : dominionWall(vP); float f = fogFactorAt(vWorld); o = vec4(c.rgb * f, c.a * f); return; }   // STOREFRONT: the Daedric Dominion, premultiplied (AURA_LOOK shade), kindled within
   if (uAura == 17) { vec3 c = uKind == 0 ? helixGround(vP) : helixWall(vP); o = vec4(c * fogFactorAt(vWorld), 1.0); return; }   // STOREFRONT: the Aetherium Coil, added whole, kindled within
   if (uAura == 18) { vec3 c = uKind == 0 ? gildedGround(vP) : gildedWall(vP); o = vec4(c * fogFactorAt(vWorld), 1.0); return; }   // STOREFRONT: the Gilded Coil, as the Aetherium Coil is drawn
   if (uAura == 15) { vec4 c = uKind == 0 ? eternalGround(vP) : uKind == 1 ? eternalWall(vP) : eternalCard(vP, vS); float f = fogFactorAt(vWorld); o = vec4(c.rgb * f, c.a * f); return; }   // SHOP: Eternal, premultiplied (AURA_LOOK shade), kindled within
+  if (uAura == 20) { vec4 c = uKind == 0 ? hazeGround(vP) : uKind == 1 ? hazeWall(vP) : hazeCard(vP, vS); float f = fogFactorAt(vWorld); o = vec4(c.rgb * f, c.a * f); return; }   // BLOOD-OF-COLDHARBOUR: premultiplied (AURA_LOOK shade), fogged
   if (uAura == 14) { vec4 c = uKind == 0 ? sageGround(vP) : uKind == 1 ? sageWall(vP) : sageCard(vP, vS); float f = fogFactorAt(vWorld); o = vec4(c.rgb * f, c.a * f); return; }   // NIRNROOT-SAGE: premultiplied (AURA_LOOK shade), fogged to nothing; kindled within (the shade and the runes fade in, the low smoke rises, the puffs and the nirnroots by node's law)
   if (uAura == 13) { vec3 c = uKind == 0 ? witchGround(vP) : witchWall(vP); o = vec4(c * fogFactorAt(vWorld), 1.0); return; }   // WITCH1: Witchfire, added whole, kindled within
   if (uAura == 12) { vec4 c = uKind == 0 ? warrenGround(vP) : uKind == 1 ? warrenWall(vP) : warrenBunny(vP, vS); float f = fogFactorAt(vWorld); o = vec4(c.rgb * f, c.a * f); return; }   // WIKIMAID: premultiplied (AURA_LOOK shade), fogged to nothing; kindled within (the ground fades in, the sparkles rise, the rabbits come up - node's law)
@@ -3699,6 +3918,11 @@ export class AuraRingRenderer {
         if (look === AURA_LOOK.sagesmoke) {
           sageCardsInto(this._sage, this._sageLook, sageClock(seconds, w.seed), Math.max(0, Math.min(1, Number.isFinite(w.kindle) ? w.kindle : 1)), w.at, camAt);
           gl.uniform4fv(U.uSage, this._sage); gl.uniform4fv(U.uSageLook, this._sageLook);
+        }
+        // BLOOD-OF-COLDHARBOUR: the haze's wisps and the blood, in the Sage's uniforms - farthest first
+        if (look === AURA_LOOK.vampirichaze) {
+          hazeCardsInto(this._sage, this._sageLook, sageClock(seconds, w.seed), Math.max(0, Math.min(1, Number.isFinite(w.kindle) ? w.kindle : 1)), w.at, camAt);
+          gl.uniform4fv(U.uSageLook, this._sageLook); gl.uniform4fv(U.uSage, this._sage);
         }
         // SHADOW-CLOAK: a look that SHADES is drawn premultiplied - its light added, what is behind it covered by its
         // alpha - and every other look as it always was, its light added whole
