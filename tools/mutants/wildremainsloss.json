@@ -65,8 +65,8 @@
   {
     "name": "WILD-REMAINS-LOSS-any-string-a-name",
     "file": "src/net/identityToken.js",
-    "old": "  if (c.wnm !== undefined && !(typeof c.wnm === 'string' && c.wnm === sanitizeName(c.wnm))) return false;",
-    "new": "  if (c.wnm !== undefined && !(typeof c.wnm === 'string')) return false;",
+    "old": "  if (c.wnm !== undefined && !(typeof c.wnm === 'string' && c.wnm === sanitizeName(c.wnm))) return false; // WILD-REMAINS-LOSS: a name as the wire keeps one",
+    "new": "  if (c.wnm !== undefined && !(typeof c.wnm === 'string')) return false; // WILD-REMAINS-LOSS: a name as the wire keeps one",
     "tests": [
       "test/net/wildremainsloss.test.js"
     ]

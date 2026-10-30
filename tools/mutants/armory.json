@@ -51,7 +51,7 @@
   {
     "name": "ARMORY-the-token-kit-unchecked",
     "file": "src/net/identityToken.js",
-    "old": "if (c.ak !== undefined && !armoryKitOk(c.ak)) return false;",
+    "old": "  if (c.ak !== undefined && !armoryKitOk(c.ak)) return false;",
     "new": "",
     "tests": [
       "test/net/identitytoken.test.js",
@@ -287,8 +287,8 @@
   {
     "name": "ARMORY-an-eternal-piece-at-the-broker",
     "file": "src/net/insignia.js",
-    "old": "...ARMORY_PIECES.filter((p) => p.source === 'broker').map(",
-    "new": "...ARMORY_PIECES.map(",
+    "old": "  ...ARMORY_PIECES.filter((p) => p.source === 'broker').map((p) =>",
+    "new": "  ...ARMORY_PIECES.map((p) =>",
     "tests": [
       "test/server/armory_service.test.js"
     ]

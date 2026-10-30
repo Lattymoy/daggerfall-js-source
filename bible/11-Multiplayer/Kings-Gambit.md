@@ -1388,7 +1388,7 @@ panel; the card panels' sheets and the chrome joined FONT3's floor (`test/ui/fon
   law's own word now (`armyRefusal`, `armyCost`).
 - THE WARNINGS' CLOCK (found by the mutation run): the panel said when the warnings turn - the information box's round
   and the next step's "at the end of this round" - with a formula true only while `KG_HAZARD_SPAWN_EVERY` is 2. The law
-  says it now (`kingsGambit.js:"export const warningsArmAt = (round) =>"`), pinned against a game played on.
+  says it now (`kingsGambit.js:"export const warningsArmAt"`), pinned against a game played on.
 - A STALE COUNT: `Tavern-Cards.md` section 40 said KG-SET's pins 4 and its mutants 12 - 5 and 13 since the no-break
   space was found.
 - THREE NAMES ALREADY TAKEN (found by the whole suite at the merge of main): `cursorStep` (the gamepad cursor's,
@@ -1446,7 +1446,7 @@ cards, as sections 5.3, 5.4, 10.1, 10.7, 14.3, 14.7 and 14.8 decided.
   vitals, its length the value (14.8).
 - THE MOTION (`world/gambitMotion.js`), every timing the mod's, read off its IL (2.10, `EffectOffset`, the attack's
   visuals): the walk along the path the move took at 3.5 cells a second - the law's own walk kept as a path
-  (`kingsGambit.js:"export function reachPath(board, p, col, row) {"`, on the board before the move: AUDIT KG C22); a
+  (`kingsGambit.js:"export function reachPath"`, on the board before the move: AUDIT KG C22); a
   blow's impact AttackTiming's default 0.2 s after the order, its lunge from 0.1 s before it for 0.28 s, 0.15 of a cell
   for a melee blow and 0.06 for a shot, a shot's bolt 0.3 s; the hit 0.45 s - EffectOffset's knock of 0.22 of a cell
   along the blow, dying away, and its jitter of 4 px on the mod's cell at a 1080-line screen ((1080 - 190) / 13 px: 0.058

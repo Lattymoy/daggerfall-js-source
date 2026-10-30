@@ -92,8 +92,8 @@
   {
     "name": "HERALD-the-vocabulary-without-it",
     "file": "src/net/identityToken.js",
-    "old": "'gatebreaker', 'herald', 'warden',",
-    "new": "'gatebreaker', 'warden',",
+    "old": "  'herald',\n  'warden',",
+    "new": "  'warden',",
     "tests": [
       "test/net/herald.test.js"
     ],

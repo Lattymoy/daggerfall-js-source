@@ -33,13 +33,25 @@ export const HIDDEN_SEEN_AGE_MAX_MS = 10 * 60_000;
 export const HIDDEN_SEEN_POST_MS = 8_000;
 
 const ID_HEX_RE = /^[0-9a-f]{16}$/;
-const ROOM_RE = /^owned:[A-Za-z0-9_.,:+-]{1,80}$/;   // a private room's key (net/wire.js roomOf's own characters)
+const ROOM_RE = /^owned:[A-Za-z0-9_.,:+-]{1,80}$/; // a private room's key (net/wire.js roomOf's own characters)
 
 /** Whether a parsed note is one. Pure. @param {any} b */
 export function hiddenSeenValid(b) {
-  return !!b && typeof b === 'object' && !Array.isArray(b) && b.v === HIDDEN_SEEN_V && typeof b.id === 'string' && ID_HEX_RE.test(b.id)
-    && Number.isSafeInteger(b.at) && b.at > 0 && typeof b.s === 'string' && ID_RE.test(b.s) && typeof b.r === 'string' && ROOM_RE.test(b.r)
-    && Object.keys(b).length === 5;
+  return (
+    !!b &&
+    typeof b === 'object' &&
+    !Array.isArray(b) &&
+    b.v === HIDDEN_SEEN_V &&
+    typeof b.id === 'string' &&
+    ID_HEX_RE.test(b.id) &&
+    Number.isSafeInteger(b.at) &&
+    b.at > 0 &&
+    typeof b.s === 'string' &&
+    ID_RE.test(b.s) &&
+    typeof b.r === 'string' &&
+    ROOM_RE.test(b.r) &&
+    Object.keys(b).length === 5
+  );
 }
 
 const enc = new TextEncoder();
@@ -71,14 +83,23 @@ export async function sealHiddenSeen(note, privateKey, { subtle }) {
  */
 export async function openHiddenSeen(body, sig64, publicKey, { subtle, nowMs }) {
   if (!publicKey) return { error: 'seen-closed' };
-  if (!(body instanceof Uint8Array) || !body.length || body.length > HIDDEN_SEEN_MAX_BYTES) return { error: 'seen-shape' };
+  if (!(body instanceof Uint8Array) || !body.length || body.length > HIDDEN_SEEN_MAX_BYTES)
+    return { error: 'seen-shape' };
   const sig = typeof sig64 === 'string' ? _b64url.decode(sig64) : null;
   if (!sig || sig.length !== SIG_BYTES) return { error: 'seen-signature' };
   let good = false;
-  try { good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, signedBytes(body)); } catch { good = false; }
+  try {
+    good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, signedBytes(body));
+  } catch {
+    good = false;
+  }
   if (!good) return { error: 'seen-signature' };
   let note;
-  try { note = JSON.parse(new TextDecoder().decode(body)); } catch { return { error: 'seen-shape' }; }
+  try {
+    note = JSON.parse(new TextDecoder().decode(body));
+  } catch {
+    return { error: 'seen-shape' };
+  }
   if (!hiddenSeenValid(note)) return { error: 'seen-shape' };
   if (Math.abs(nowMs - note.at) > HIDDEN_SEEN_AGE_MAX_MS) return { error: 'seen-stale' };
   return { ok: true, note };

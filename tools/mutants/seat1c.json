@@ -422,8 +422,8 @@
   {
     "name": "SEAT1c-token-claim-unbounded",
     "file": "src/net/identityToken.js",
-    "old": "  && Number.isSafeInteger(ts[1]) && ts[1] >= 0 && ts[1] <= 9999;",
-    "new": "  && Number.isSafeInteger(ts[1]) && ts[1] >= 0;",
+    "old": "  ts[1] >= 0 &&\n  ts[1] <= 9999;",
+    "new": "  ts[1] >= 0;",
     "tests": [
       "test/net/seat1c_titles.test.js"
     ]

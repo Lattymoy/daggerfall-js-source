@@ -67,15 +67,23 @@ export function homeTownFactor(blocks) {
  *  blocks. 0 for a building nobody can measure - it is not for sale. */
 export function homeOnlinePrice(footprintM2, townBlocks) {
   if (!(Number.isFinite(footprintM2) && footprintM2 > 0)) return 0;
-  const price = Math.round((footprintM2 * HOME_PRICE_PER_M2 * homeTownFactor(townBlocks)) / HOME_PRICE_STEP) * HOME_PRICE_STEP;
+  const price =
+    Math.round((footprintM2 * HOME_PRICE_PER_M2 * homeTownFactor(townBlocks)) / HOME_PRICE_STEP) * HOME_PRICE_STEP;
   return Math.min(HOME_PRICE_MAX, Math.max(HOME_PRICE_MIN, price));
 }
 /** DECOR-ROOMY: the widest ground a home may name, square metres (Daggerfall's widest house is under 1,000). */
 export const HOME_GROUND_MAX = 2000;
 /** DECOR-ROOMY: THE GROUND A HOME NAMES, held to its price - the service measures nothing (no ARENA2), so a claim's ground
  *  stands only where its price is the one homeOnlinePrice sets from it and the town's blocks (0: unknown, one block). */
-export const homeGroundOk = (ground, townBlocks, price) => typeof ground === 'number' && Number.isFinite(ground) && ground > 0 && ground <= HOME_GROUND_MAX
-  && Number.isSafeInteger(townBlocks) && townBlocks >= 0 && townBlocks <= HOME_TOWN_BLOCKS_MAX && homeOnlinePrice(ground, townBlocks) === price;
+export const homeGroundOk = (ground, townBlocks, price) =>
+  typeof ground === 'number' &&
+  Number.isFinite(ground) &&
+  ground > 0 &&
+  ground <= HOME_GROUND_MAX &&
+  Number.isSafeInteger(townBlocks) &&
+  townBlocks >= 0 &&
+  townBlocks <= HOME_TOWN_BLOCKS_MAX &&
+  homeOnlinePrice(ground, townBlocks) === price;
 /** DECOR-ROOMY: the ground as the service keeps it - to a tenth of a square metre. */
 export const homeGroundKept = (ground) => Math.round(ground * 10) / 10;
 /** Claims an account may make an hour - a cap stops a hoard, this stops a claim-and-release churn. */
@@ -102,13 +110,15 @@ export const homeRegionOk = (v) => Number.isSafeInteger(v) && v >= 0 && v <= HOM
  *  price. AUDIT HOME-PRICE L2: the hundreds are the law's (homeOnlinePrice rounds to HOME_PRICE_STEP), and a build from
  *  before it asks Daggerfall's radius x 1280, a whole hundred about one house in a hundred - the range alone let it buy
  *  any house whose old price fell inside it, at that price. */
-export const homePriceOk = (v) => Number.isSafeInteger(v) && v >= HOME_PRICE_MIN && v <= HOME_PRICE_MAX && v % HOME_PRICE_STEP === 0;
+export const homePriceOk = (v) =>
+  Number.isSafeInteger(v) && v >= HOME_PRICE_MIN && v <= HOME_PRICE_MAX && v % HOME_PRICE_STEP === 0;
 export const homeEntryOk = (v) => typeof v === 'string' && HOME_ENTRIES.includes(v);
 /** REALM P2.2b: the share of what a home cost that selling it pays back - Daggerfall's deed share (systems/banking.js
  *  DEED_SELL_MULT, pinned equal) - so the service credits a realm character's record the sum its client credits. */
 export const HOME_SALE_SHARE = 0.85;
 /** What selling a home bought for `price` pays back (systems/online/onlineHomes.js homeRefund, pinned equal). */
-export const homeSaleRefund = (price) => Math.trunc((Number.isSafeInteger(price) && price > 0 ? price : 0) * HOME_SALE_SHARE);
+export const homeSaleRefund = (price) =>
+  Math.trunc((Number.isSafeInteger(price) && price > 0 ? price : 0) * HOME_SALE_SHARE);
 
 /**
  * FIELD BUGS 2026-10-04d KNIGHT-HOUSE (the Discord: "Houses earned through Knightly Orders still possibly purchaseable?
@@ -122,7 +132,11 @@ export const homeSaleRefund = (price) => Math.trunc((Number.isSafeInteger(price)
 export function homeDeedOf(houses, region, mapId, buildingKey) {
   const id = Number(mapId) >>> 0;
   if (!homeRegionOk(region) || !homeBuildingKeyOk(buildingKey) || !homeMapIdOk(id)) return null;
-  return regionDeedsOf(houses, region).find((d) => !d.crossed && d.buildingKey === buildingKey && (Number(d.mapId) >>> 0) === id) ?? null;
+  return (
+    regionDeedsOf(houses, region).find(
+      (d) => !d.crossed && d.buildingKey === buildingKey && Number(d.mapId) >>> 0 === id,
+    ) ?? null
+  );
 }
 
 /**
@@ -134,12 +148,16 @@ export function homeDeedOf(houses, region, mapId, buildingKey) {
 export function regionDeedsOf(houses, region) {
   const slot = Array.isArray(houses) && Number.isSafeInteger(region) && region >= 0 ? houses[region] : null;
   if (!slot || typeof slot !== 'object') return [];
-  return [slot, ...(Array.isArray(slot.more) ? slot.more : [])].filter((d) => !!d && typeof d === 'object' && (Number(d.buildingKey) || 0) > 0);
+  return [slot, ...(Array.isArray(slot.more) ? slot.more : [])].filter(
+    (d) => !!d && typeof d === 'object' && (Number(d.buildingKey) || 0) > 0,
+  );
 }
 /** HOUSES-3: every deed of a save's `houses`, region by region (regionDeedsOf). @param {unknown} houses @returns {any[]} */
-export const deedsOfHouses = (houses) => (Array.isArray(houses) ? houses.flatMap((_, region) => regionDeedsOf(houses, region)) : []);
+export const deedsOfHouses = (houses) =>
+  Array.isArray(houses) ? houses.flatMap((_, region) => regionDeedsOf(houses, region)) : [];
 
-const sameName = (a, b) => typeof a === 'string' && typeof b === 'string' && a.length > 0 && a.toLowerCase() === b.toLowerCase();
+const sameName = (a, b) =>
+  typeof a === 'string' && typeof b === 'string' && a.length > 0 && a.toLowerCase() === b.toLowerCase();
 
 /**
  * WHETHER A PLAYER MAY WALK IN. `home` is a town answer's row ({owner, entry, mine}) or null for a building no player
@@ -155,10 +173,10 @@ export function homeMayEnter(home, { partyNames = [], nowS = Math.floor(Date.now
   // one, `member`), and anyone when its guild opened it; never by an account's other character, nor a party
   if (home.hall) return home.member === true || home.entry === 'public';
   if (home.mine) return true;
-  if (rentDaysLeft(home.tenant, nowS) > 0) return true;   // HOME-RENT: a room rented in it, still running - the tenant walks in whoever else may (AUDIT: until its end, not until the town is read again)
+  if (rentDaysLeft(home.tenant, nowS) > 0) return true; // HOME-RENT: a room rented in it, still running - the tenant walks in whoever else may (AUDIT: until its end, not until the town is read again)
   if (home.entry === 'public') return true;
   if (home.entry === 'party') return (partyNames ?? []).some((n) => sameName(n, home.owner));
-  if (home.entry === 'guild') return home.guildmate === true;   // GUILD1d: the playing character shares the owner's character's guild (the service's word)
+  if (home.entry === 'guild') return home.guildmate === true; // GUILD1d: the playing character shares the owner's character's guild (the service's word)
   return false;
 }
 
@@ -217,8 +235,17 @@ export function homeLayoutOk(v) {
 /** Whether two stamps are one layout - the same layout mods, whatever versions they name; null (or absent) is
  *  Daggerfall's own (systems/layoutPins.js layoutsMatch, the same law where the service can read it). */
 export function homeLayoutsMatch(a, b) {
-  const mods = (v) => new Set(typeof v === 'string' && v ? v.split('+').map((p) => p.split('@')[0]).filter((m) => HOME_LAYOUT_MODS.includes(m)) : []);
-  const x = mods(a), y = mods(b);
+  const mods = (v) =>
+    new Set(
+      typeof v === 'string' && v
+        ? v
+            .split('+')
+            .map((p) => p.split('@')[0])
+            .filter((m) => HOME_LAYOUT_MODS.includes(m))
+        : [],
+    );
+  const x = mods(a),
+    y = mods(b);
   return x.size === y.size && [...x].every((m) => y.has(m));
 }
 
@@ -241,8 +268,11 @@ export const HOME_ARENA_MAP_ID = 1291010263;
 export const HOME_ARENA_CELL = Object.freeze([4, 3]);
 /** Whether a building key of a town names a building of the arena's cell - read off the RAW key, as the tables keep it
  *  and as world/arena/arenaCity.js inArenaCell reads it (`key >> 16` the block's x, `(key >> 8) & 255` its y). */
-export const homeInArenaCell = (mapId, key) => mapId === HOME_ARENA_MAP_ID && homeBuildingKeyOk(key)
-  && (key >> 16) === HOME_ARENA_CELL[0] && ((key >> 8) & 0xff) === HOME_ARENA_CELL[1];
+export const homeInArenaCell = (mapId, key) =>
+  mapId === HOME_ARENA_MAP_ID &&
+  homeBuildingKeyOk(key) &&
+  key >> 16 === HOME_ARENA_CELL[0] &&
+  ((key >> 8) & 0xff) === HOME_ARENA_CELL[1];
 /** A ROOM'S POINT CARRIED BY THE MOVE: the anchor column's text for a running tenancy the move carried to the new house
  *  (JSON null - the column is NOT NULL). The old house's point names no room of the new one's walls, so the tenancy
  *  runs on unlisted and anchorless: its tenant still walks in and rests (the door and the bed read the tenancy -
@@ -310,7 +340,8 @@ export function rentUntil(nowS, until, days) {
   return end - nowS <= RENT_DAYS_MAX * RENT_DAY_S ? end : null;
 }
 /** Whole days (rounded up) a tenancy ending `until` has left at `nowS` - 0 once it ran out. */
-export const rentDaysLeft = (until, nowS) => (Number.isSafeInteger(until) && until > nowS ? Math.ceil((until - nowS) / RENT_DAY_S) : 0);
+export const rentDaysLeft = (until, nowS) =>
+  Number.isSafeInteger(until) && until > nowS ? Math.ceil((until - nowS) / RENT_DAY_S) : 0;
 
 // ═══ HOME-LOOK (2026-09-30) — AN ONLINE HOME'S OUTSIDE, AS ITS OWNER PAINTS IT ══
 //
@@ -340,10 +371,37 @@ export const HOME_LOOK_PARTS = Object.freeze(['walls', 'windows', 'roof', 'door'
 export const HOME_LOOK_CLIMATES = Object.freeze({ desert: 0, mountain: 100, temperate: 300, swamp: 400 });
 /** The building sets walls and windows may wear - Daggerfall's exterior building families, whose records share one
  *  order (record 3 is each one's window: ClimateSwaps.IsExteriorWindow). */
-export const HOME_LOOK_SETS = Object.freeze({ castle: 9, cityA: 12, cityB: 14, farm: 26, magesGuild: 35, manor: 38, merchant: 42, tavern: 58, temple: 61, village: 64 });
+export const HOME_LOOK_SETS = Object.freeze({
+  castle: 9,
+  cityA: 12,
+  cityB: 14,
+  farm: 26,
+  magesGuild: 35,
+  manor: 38,
+  merchant: 42,
+  tavern: 58,
+  temple: 61,
+  village: 64,
+});
 /** What each is called in the painter. */
-export const HOME_LOOK_SET_NAMES = Object.freeze({ castle: 'Castle', cityA: 'City stone', cityB: 'City plaster', farm: 'Farmhouse', magesGuild: 'Mages Guild', manor: 'Manor', merchant: 'Merchant', tavern: 'Tavern', temple: 'Temple', village: 'Village' });
-export const HOME_LOOK_CLIMATE_NAMES = Object.freeze({ desert: 'Desert', mountain: 'Mountain', temperate: 'Temperate', swamp: 'Swamp' });
+export const HOME_LOOK_SET_NAMES = Object.freeze({
+  castle: 'Castle',
+  cityA: 'City stone',
+  cityB: 'City plaster',
+  farm: 'Farmhouse',
+  magesGuild: 'Mages Guild',
+  manor: 'Manor',
+  merchant: 'Merchant',
+  tavern: 'Tavern',
+  temple: 'Temple',
+  village: 'Village',
+});
+export const HOME_LOOK_CLIMATE_NAMES = Object.freeze({
+  desert: 'Desert',
+  mountain: 'Mountain',
+  temperate: 'Temperate',
+  swamp: 'Swamp',
+});
 export const HOME_LOOK_PART_NAMES = Object.freeze({ walls: 'Walls', windows: 'Windows', roof: 'Roof', door: 'Door' });
 /** The most records a roof's or a door's family is chosen among (the archives hold fewer; the client prunes a record
  *  its archive lacks, and that part wears the town's own). */
@@ -353,7 +411,8 @@ export const HOME_LOOK_DOOR_KEPT = 3;
 
 const lookClimateOk = (v) => typeof v === 'string' && Object.hasOwn(HOME_LOOK_CLIMATES, v);
 const lookSetOk = (v) => typeof v === 'string' && Object.hasOwn(HOME_LOOK_SETS, v);
-const lookRecordOk = (v, part) => Number.isSafeInteger(v) && v >= 0 && v <= HOME_LOOK_RECORD_MAX && !(part === 'door' && v === HOME_LOOK_DOOR_KEPT);
+const lookRecordOk = (v, part) =>
+  Number.isSafeInteger(v) && v >= 0 && v <= HOME_LOOK_RECORD_MAX && !(part === 'door' && v === HOME_LOOK_DOOR_KEPT);
 
 /**
  * A LOOK, projected - `{ walls?: { set, climate }, windows?: { set, climate }, roof?: { climate, record },
@@ -362,7 +421,13 @@ const lookRecordOk = (v, part) => Number.isSafeInteger(v) && v >= 0 && v <= HOME
  */
 export function homeLookOf(raw) {
   let v = raw;
-  if (typeof v === 'string') { try { v = JSON.parse(v); } catch { return null; } }
+  if (typeof v === 'string') {
+    try {
+      v = JSON.parse(v);
+    } catch {
+      return null;
+    }
+  }
   if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
   const out = {};
   for (const [k, c] of Object.entries(v)) {

@@ -182,8 +182,8 @@
   {
     "name": "NIRNROOT-SAGE-title-not-in-vocabulary",
     "file": "src/net/identityToken.js",
-    "old": "'skyfarer', 'nirnrootsage', 'bloodhound'",
-    "new": "'skyfarer', 'bloodhound'",
+    "old": "  'nirnrootsage',\n  'bloodhound',",
+    "new": "  'bloodhound',",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "NIRNROOT-SAGE-glyph-not-in-vocabulary",
     "file": "src/net/identityToken.js",
-    "old": "'wikimaid', 'nirnrootsage', 'crownSK'",
-    "new": "'wikimaid', 'crownSK'",
+    "old": "  'nirnrootsage',\n  'crownSK',",
+    "new": "  'crownSK',",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "NIRNROOT-SAGE-aura-not-in-vocabulary",
     "file": "src/net/identityToken.js",
-    "old": "'witchfire', 'sagesmoke', 'eternal']);",
-    "new": "'witchfire', 'eternal']);",
+    "old": "  'sagesmoke',\n  'eternal',",
+    "new": "  'eternal',",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],

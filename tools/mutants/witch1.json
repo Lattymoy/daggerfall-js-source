@@ -123,8 +123,8 @@
   {
     "name": "WITCH1-the-token-believes-any-icon",
     "file": "src/net/identityToken.js",
-    "old": "  if (c.pi !== undefined && !ICONS.includes(c.pi)) return false;",
-    "new": "  if (c.pi !== undefined && typeof c.pi !== 'string') return false;",
+    "old": "  if (c.pi !== undefined && !ICONS.includes(c.pi)) return false; // WITCH1: the profile icon worn, the aura's law - absent for none (the face), one of the known or refused",
+    "new": "  if (c.pi !== undefined && typeof c.pi !== 'string') return false; // WITCH1: the profile icon worn, the aura's law - absent for none (the face), one of the known or refused",
     "tests": [
       "test/systems/festival/witch1_law.test.js"
     ],
@@ -444,8 +444,8 @@
   {
     "name": "WITCH1-AUDIT-pi-unsigned",
     "file": "src/net/identityToken.js",
-    "old": "  if (who?.pi !== undefined) claims.pi = who.pi;",
-    "new": "",
+    "old": "  if (who?.pi !== undefined) claims.pi = who.pi; // WITCH1: only while a profile icon is worn - a player wearing none mints the bytes they always did",
+    "new": "  // WITCH1: only while a profile icon is worn - a player wearing none mints the bytes they always did",
     "tests": [
       "test/server/witch1_festival.test.js"
     ],

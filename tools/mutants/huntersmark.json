@@ -2,8 +2,8 @@
   {
     "name": "HUNTERS-MARK-law-late-edge",
     "file": "src/net/huntLaw.js",
-    "old": "if (b.day < today - HUNT_CLEAR_LATE_DAYS) return { why: 'late' };",
-    "new": "if (b.day <= today - HUNT_CLEAR_LATE_DAYS) return { why: 'late' };",
+    "old": "    if (b.day < today - HUNT_CLEAR_LATE_DAYS) return { why: 'late' };",
+    "new": "    if (b.day <= today - HUNT_CLEAR_LATE_DAYS) return { why: 'late' };",
     "tests": [
       "test/server/huntersmark_service.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "HUNTERS-MARK-law-early-edge",
     "file": "src/net/huntLaw.js",
-    "old": "if (b.day > today + 1) return { why: 'early' };",
-    "new": "if (b.day > today) return { why: 'early' };",
+    "old": "    if (b.day > today + 1) return { why: 'early' };",
+    "new": "    if (b.day > today) return { why: 'early' };",
     "tests": [
       "test/server/huntersmark_service.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "HUNTERS-MARK-law-mark-week-late",
     "file": "src/net/huntLaw.js",
-    "old": "if (m.week < week - 1) return { why: 'late' };",
-    "new": "if (m.week < week) return { why: 'late' };",
+    "old": "  if (m.week < week - 1) return { why: 'late' };",
+    "new": "  if (m.week < week) return { why: 'late' };",
     "tests": [
       "test/server/huntersmark_service.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "HUNTERS-MARK-law-level-ahead",
     "file": "src/net/huntLaw.js",
-    "old": "return level <= seen + HUNT_LEVEL_AHEAD && bountyTierIndex(level)",
-    "new": "return level <= seen + HUNT_LEVEL_AHEAD + 1 && bountyTierIndex(level)",
+    "old": "  return level <= seen + HUNT_LEVEL_AHEAD && bountyTierIndex(level) >= bountyTierIndex(seen) - 1;",
+    "new": "  return level <= seen + HUNT_LEVEL_AHEAD + 1 && bountyTierIndex(level) >= bountyTierIndex(seen) - 1;",
     "tests": [
       "test/server/huntersmark_service.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "HUNTERS-MARK-law-tier-below",
     "file": "src/net/huntLaw.js",
-    "old": ">= bountyTierIndex(seen) - 1;",
-    "new": ">= bountyTierIndex(seen) - 2;",
+    "old": "  return level <= seen + HUNT_LEVEL_AHEAD && bountyTierIndex(level) >= bountyTierIndex(seen) - 1;",
+    "new": "  return level <= seen + HUNT_LEVEL_AHEAD && bountyTierIndex(level) >= bountyTierIndex(seen) - 2;",
     "tests": [
       "test/server/huntersmark_service.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "MARKS-OF-MASTERY-law-sea-title",
     "file": "src/net/huntLaw.js",
-    "old": "for (const [t, n] of SEA_TITLES) if (clearsOk(serpents) >= n) out.push(t);",
-    "new": "for (const [t, n] of SEA_TITLES) if (clearsOk(serpents) > n) out.push(t);",
+    "old": "  for (const [t, n] of SEA_TITLES) if (clearsOk(serpents) >= n) out.push(t);",
+    "new": "  for (const [t, n] of SEA_TITLES) if (clearsOk(serpents) > n) out.push(t);",
     "tests": [
       "test/server/huntersmark_service.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "HUNTERS-MARK-book-final-kept",
     "file": "src/net/huntBook.js",
-    "old": "if (!r?.ok && HUNT_KEEP.includes(r?.error)) break;",
-    "new": "if (!r?.ok) break;",
+    "old": "        if (!r?.ok && HUNT_KEEP.includes(r?.error)) break; // the service's to answer later - the rest wait with it",
+    "new": "        if (!r?.ok) break; // the service's to answer later - the rest wait with it",
     "tests": [
       "test/scenes/huntersmark_client.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "HUNTERS-MARK-book-late-kept",
     "file": "src/net/huntBook.js",
-    "old": "|| !character?.() || 'why' in huntClearOf(id, now())) return false;",
-    "new": "|| !character?.()) return false;",
+    "old": "      if (closed || !door || !character?.() || 'why' in huntClearOf(id, now())) return false;",
+    "new": "      if (closed || !door || !character?.()) return false;",
     "tests": [
       "test/scenes/huntersmark_client.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "HUNTERS-MARK-book-slot-character-alone",
     "file": "src/net/huntBook.js",
-    "old": "const slot = () => `${door?.account?.() ?? ''}:${character?.() ?? ''}`;",
-    "new": "const slot = () => `:${character?.() ?? ''}`;",
+    "old": "  const slot = () => `${door?.account?.() ?? ''}:${character?.() ?? ''}`;",
+    "new": "  const slot = () => `:${character?.() ?? ''}`;",
     "tests": [
       "test/scenes/huntersmark_client.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "HUNTERS-MARK-book-kept-never-cleared",
     "file": "src/net/huntBook.js",
-    "old": "setKept(keptOf().filter((x) => x.id !== k.id));",
-    "new": "void k;",
+    "old": "        setKept(keptOf().filter((x) => x.id !== k.id));",
+    "new": "        void k;",
     "tests": [
       "test/scenes/huntersmark_client.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "HUNTERS-MARK-book-state-unadopted",
     "file": "src/net/huntBook.js",
-    "old": "if (r?.ok) { adopt(r.data); closed = false; }",
-    "new": "if (r?.ok) { closed = false; }",
+    "old": "        adopt(r.data);\n        closed = false;",
+    "new": "        closed = false;",
     "tests": [
       "test/scenes/huntersmark_client.test.js"
     ]
@@ -743,8 +743,8 @@
   {
     "name": "AUDIT-F3-day-full-let-go",
     "file": "src/net/huntBook.js",
-    "old": "if (r?.ok && r.data?.why === 'day-full') {",
-    "new": "if (false) {",
+    "old": "        if (r?.ok && r.data?.why === 'day-full') {",
+    "new": "        if (false) {",
     "tests": [
       "test/scenes/huntersmark_client.test.js"
     ]
@@ -752,8 +752,8 @@
   {
     "name": "AUDIT-F3-held-asked-same-day",
     "file": "src/net/huntBook.js",
-    "old": "Number.isSafeInteger(k.full) && k.full >= today()",
-    "new": "Number.isSafeInteger(k.full) && k.full > today()",
+    "old": "  const waitsDay = (/** @type {any} */ k) => Number.isSafeInteger(k.full) && k.full >= today();",
+    "new": "  const waitsDay = (/** @type {any} */ k) => Number.isSafeInteger(k.full) && k.full > today();",
     "tests": [
       "test/scenes/huntersmark_client.test.js"
     ]
@@ -761,8 +761,8 @@
   {
     "name": "AUDIT-F3-new-report-asked-on-a-full-day",
     "file": "src/net/huntBook.js",
-    "old": "const full = list.find(waitsDay)?.full;",
-    "new": "const full = undefined;",
+    "old": "      const full = list.find(waitsDay)?.full; // a day already full: this one waits with the rest, unasked",
+    "new": "      const full = undefined; // a day already full: this one waits with the rest, unasked",
     "tests": [
       "test/scenes/huntersmark_client.test.js"
     ]
@@ -779,8 +779,8 @@
   {
     "name": "AUDIT-F4-guest-asked-each-beat",
     "file": "src/net/huntBook.js",
-    "old": "t - stateAt >= (closed ? HUNT_CLOSED_MS : HUNT_STATE_MS)",
-    "new": "t - stateAt >= HUNT_STATE_MS",
+    "old": "      if (!asking && t - stateAt >= (closed ? HUNT_CLOSED_MS : HUNT_STATE_MS)) void refresh();",
+    "new": "      if (!asking && t - stateAt >= HUNT_STATE_MS) void refresh();",
     "tests": [
       "test/scenes/huntersmark_client.test.js"
     ]
@@ -788,8 +788,8 @@
   {
     "name": "AUDIT-F4-closed-never-heard",
     "file": "src/net/huntBook.js",
-    "old": "if (r?.error === 'hunt-need-account') { closed = true; state = null; }",
-    "new": "",
+    "old": "      if (r?.error === 'hunt-need-account') {\n        closed = true;\n        state = null;\n      } // AUDIT HORIZONTAL F4: a final answer, not a wait",
+    "new": "      // AUDIT HORIZONTAL F4: a final answer, not a wait",
     "tests": [
       "test/scenes/huntersmark_client.test.js"
     ]
@@ -797,8 +797,8 @@
   {
     "name": "AUDIT-F4-guest-report-kept",
     "file": "src/net/huntBook.js",
-    "old": "if (closed || !door || !character?.()",
-    "new": "if (!door || !character?.()",
+    "old": "      if (closed || !door || !character?.() || 'why' in huntClearOf(id, now())) return false;",
+    "new": "      if (!door || !character?.() || 'why' in huntClearOf(id, now())) return false;",
     "tests": [
       "test/scenes/huntersmark_client.test.js"
     ]
@@ -842,8 +842,8 @@
   {
     "name": "AUDIT-F7-no-session-dropped",
     "file": "src/net/huntBook.js",
-    "old": "'trade-held', 'auth', 'not-found', 'frozen', 'no-session']",
-    "new": "'trade-held', 'auth', 'not-found', 'frozen']",
+    "old": "  'no-session',\n]);",
+    "new": "]);",
     "tests": [
       "test/scenes/huntersmark_client.test.js"
     ]

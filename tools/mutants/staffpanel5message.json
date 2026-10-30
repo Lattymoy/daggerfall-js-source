@@ -342,8 +342,8 @@
   {
     "name": "STAFF-PANEL5-MESSAGE-order-mi-elsewhere",
     "file": "src/net/identityToken.js",
-    "old": "  if (c.o !== 'smsg' && c.mi !== undefined) return false;\n",
-    "new": "",
+    "old": "  if (c.o !== 'smsg' && c.mi !== undefined) return false;\n  if (",
+    "new": "  if (",
     "why": "another kind carries a message id",
     "tests": [
       "test/net/staffpanel5message_client.test.js"
@@ -352,8 +352,8 @@
   {
     "name": "STAFF-PANEL5-MESSAGE-order-mi-unchecked",
     "file": "src/net/identityToken.js",
-    "old": "if (c.o === 'smsg' && (typeof c.mi !== 'string' || !ID_RE.test(c.mi) || c.mu !== undefined",
-    "new": "if (c.o === 'smsg' && (c.mu !== undefined",
+    "old": "    (typeof c.mi !== 'string' ||\n      !ID_RE.test(c.mi) ||\n      c.mu !== undefined ||",
+    "new": "    (c.mu !== undefined ||",
     "why": "a staff message's order names no message",
     "tests": [
       "test/net/staffpanel5message_client.test.js"
@@ -362,8 +362,8 @@
   {
     "name": "STAFF-PANEL5-MESSAGE-order-mute-field",
     "file": "src/net/identityToken.js",
-    "old": "!ID_RE.test(c.mi) || c.mu !== undefined || c.lv !== undefined || c.dh !== undefined || c.bn !== undefined ||",
-    "new": "!ID_RE.test(c.mi) || c.lv !== undefined || c.dh !== undefined || c.bn !== undefined ||",
+    "old": "      !ID_RE.test(c.mi) ||\n      c.mu !== undefined ||\n      c.lv !== undefined ||",
+    "new": "      !ID_RE.test(c.mi) ||\n      c.lv !== undefined ||",
     "why": "a staff message's order carries a mute",
     "tests": [
       "test/net/staffpanel5message_client.test.js"

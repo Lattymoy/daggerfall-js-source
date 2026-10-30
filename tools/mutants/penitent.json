@@ -194,8 +194,8 @@
   {
     "name": "PENITENT-title-not-in-the-vocabulary",
     "file": "src/net/identityToken.js",
-    "old": "'shadowfang', 'penitent', 'gatebreaker', 'herald', 'warden',",
-    "new": "'shadowfang', 'gatebreaker', 'herald', 'warden',",
+    "old": "  'penitent',\n  'gatebreaker',",
+    "new": "  'gatebreaker',",
     "tests": [
       "test/net/penitent.test.js"
     ],
@@ -204,8 +204,8 @@
   {
     "name": "PENITENT-glyph-not-in-the-vocabulary",
     "file": "src/net/identityToken.js",
-    "old": "'hierophant', 'shadowfang', 'penitent', 'herald', 'tower',",
-    "new": "'hierophant', 'shadowfang', 'herald', 'tower',",
+    "old": "  'penitent',\n  'herald',",
+    "new": "  'herald',",
     "tests": [
       "test/net/penitent.test.js"
     ],

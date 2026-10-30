@@ -107,8 +107,8 @@
   {
     "name": "MUDEX1-the-bound-without-MUDEX",
     "file": "src/net/foeBounds.js",
-    "old": "[37, [300, 16, 16]]",
-    "new": "[37, [245, 16, 16]]",
+    "old": "    [37, [300, 16, 16]],",
+    "new": "    [37, [245, 16, 16]],",
     "why": "the relay refuses MUDEX's Flesh Atronach at its own 300 health",
     "tests": [
       "test/net/foebounds_law.test.js"

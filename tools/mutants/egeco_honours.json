@@ -626,8 +626,8 @@
   {
     "name": "EGECO2-title-dropped",
     "file": "src/net/identityToken.js",
-    "old": "'masterwellhead', 'spirechampion', 'spirefirst', 'wikimaid', 'doorwarden',",
-    "new": "'masterwellhead', 'spirefirst', 'wikimaid', 'doorwarden',",
+    "old": "  'spirechampion',\n  'spirefirst',",
+    "new": "  'spirefirst',",
     "tests": [
       "test/net/eliteGates/egeco_honours.test.js"
     ],

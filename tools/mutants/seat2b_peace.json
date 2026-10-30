@@ -2,8 +2,8 @@
   {
     "name": "SEAT2b2-siegewright-no-day",
     "file": "src/net/fortLaw.js",
-    "old": "(siegewright ? SIEGEWRIGHT_DAYS : 0)",
-    "new": "(siegewright ? 0 : 0)",
+    "old": "    ? lastDeliveryS + (FORT_TIER_DAYS[t - 1] - (siegewright ? SIEGEWRIGHT_DAYS : 0)) * 86400",
+    "new": "    ? lastDeliveryS + (FORT_TIER_DAYS[t - 1] - (siegewright ? 0 : 0)) * 86400",
     "tests": [
       "test/net/seat2b_peace_law.test.js",
       "test/net/seat2b_peace_service.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "SEAT2b2-towers-past-not-at",
     "file": "src/net/fortLaw.js",
-    "old": "Number(s.influence) >= line",
-    "new": "Number(s.influence) > line",
+    "old": "    .filter((s) => s && s.guild !== holder && Number(s.influence) >= line)",
+    "new": "    .filter((s) => s && s.guild !== holder && Number(s.influence) > line)",
     "tests": [
       "test/net/seat2b_peace_law.test.js",
       "test/net/seat2b_peace_service.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "SEAT2b2-towers-see-the-holder",
     "file": "src/net/fortLaw.js",
-    "old": "filter((s) => s && s.guild !== holder && Number(s.influence) >= line)",
-    "new": "filter((s) => s && Number(s.influence) >= line)",
+    "old": "    .filter((s) => s && s.guild !== holder && Number(s.influence) >= line)",
+    "new": "    .filter((s) => s && Number(s.influence) >= line)",
     "tests": [
       "test/net/seat2b_peace_law.test.js",
       "test/net/seat2b_peace_service.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "SEAT2b2-towers-least-first",
     "file": "src/net/fortLaw.js",
-    "old": ".sort((a, b) => b.influence - a.influence ||",
-    "new": ".sort((a, b) => a.influence - b.influence ||",
+    "old": "    .sort((a, b) => b.influence - a.influence || (a.guild < b.guild ? -1 : 1));",
+    "new": "    .sort((a, b) => a.influence - b.influence || (a.guild < b.guild ? -1 : 1));",
     "tests": [
       "test/net/seat2b_peace_law.test.js",
       "test/net/seat2b_peace_service.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "SEAT2b2-towers-no-defence-everyone",
     "file": "src/net/fortLaw.js",
-    "old": "if (share == null || !(Number(defence) > 0)) return [];",
-    "new": "if (share == null) return [];",
+    "old": "  if (share == null || !(Number(defence) > 0)) return [];",
+    "new": "  if (share == null) return [];",
     "tests": [
       "test/net/seat2b_peace_law.test.js",
       "test/net/seat2b_peace_service.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "SEAT2b2-towers-quarter-is-half",
     "file": "src/net/fortLaw.js",
-    "old": "share <= 0.25 ? 'a quarter' : 'half'",
-    "new": "share < 0.25 ? 'a quarter' : 'half'",
+    "old": "  `The Watchtowers of ${seatName} see ${guildName} past ${share <= 0.25 ? 'a quarter' : 'half'} of our defense.`;",
+    "new": "  `The Watchtowers of ${seatName} see ${guildName} past ${share < 0.25 ? 'a quarter' : 'half'} of our defense.`;",
     "tests": [
       "test/net/seat2b_peace_law.test.js",
       "test/ui/seat2b_peace_client.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "SEAT2b2-coast-own-pixel-alone",
     "file": "src/net/fortLaw.js",
-    "old": "for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (isWater(px + dx, py + dy)) return true;",
-    "new": "if (isWater(px, py)) return true;",
+    "old": "  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (isWater(px + dx, py + dy)) return true;",
+    "new": "  if (isWater(px, py)) return true;",
     "tests": [
       "test/net/seat2b_peace_law.test.js"
     ]
@@ -81,8 +81,8 @@
   {
     "name": "SEAT2b2-coast-port-unasked",
     "file": "src/net/fortLaw.js",
-    "old": "  if (port) return true;\n  if (!Number.isFinite(px)",
-    "new": "  if (!Number.isFinite(px)",
+    "old": "  if (port) return true;\n  if (!Number.isFinite(px) || !Number.isFinite(py) || typeof isWater !== 'function') return false;",
+    "new": "  if (!Number.isFinite(px) || !Number.isFinite(py) || typeof isWater !== 'function') return false;",
     "tests": [
       "test/net/seat2b_peace_law.test.js"
     ]
@@ -90,8 +90,8 @@
   {
     "name": "SEAT2b2-harbour-any-guild",
     "file": "src/net/fortLaw.js",
-    "old": "!!guild && seat?.holder?.guild?.id === guild && harbourPort(",
-    "new": "!!guild && harbourPort(",
+    "old": "export const harbourPortFor = (seat, guild) =>\n  !!guild && seat?.holder?.guild?.id === guild && harbourPort(seat?.forts?.harbour ?? 0);",
+    "new": "export const harbourPortFor = (seat, guild) => !!guild && harbourPort(seat?.forts?.harbour ?? 0);",
     "tests": [
       "test/net/seat2b_peace_law.test.js"
     ]

@@ -166,8 +166,8 @@
   {
     "name": "HOME-RENT-the-days-rounded-down",
     "file": "src/net/homeLaw.js",
-    "old": "Math.ceil((until - nowS) / RENT_DAY_S) : 0);",
-    "new": "Math.floor((until - nowS) / RENT_DAY_S) : 0);",
+    "old": "  Number.isSafeInteger(until) && until > nowS ? Math.ceil((until - nowS) / RENT_DAY_S) : 0;",
+    "new": "  Number.isSafeInteger(until) && until > nowS ? Math.floor((until - nowS) / RENT_DAY_S) : 0;",
     "tests": [
       "test/server/homerent.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "HOME-RENT-the-tenant-shut-out",
     "file": "src/net/homeLaw.js",
-    "old": "  if (rentDaysLeft(home.tenant, nowS) > 0) return true;   // HOME-RENT",
-    "new": "  if (false) return true;   // HOME-RENT",
+    "old": "  if (rentDaysLeft(home.tenant, nowS) > 0) return true; // HOME-RENT: a room rented in it, still running - the tenant walks in whoever else may (AUDIT: until its end, not until the town is read again)",
+    "new": "  if (false) return true; // HOME-RENT: a room rented in it, still running - the tenant walks in whoever else may (AUDIT: until its end, not until the town is read again)",
     "tests": [
       "test/server/homerent.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "HOME-RENT-the-tenancy-past-its-end",
     "file": "src/net/homeLaw.js",
-    "old": "  if (rentDaysLeft(home.tenant, nowS) > 0) return true;",
-    "new": "  if (home.tenant) return true;",
+    "old": "  if (rentDaysLeft(home.tenant, nowS) > 0) return true; // HOME-RENT: a room rented in it, still running - the tenant walks in whoever else may (AUDIT: until its end, not until the town is read again)",
+    "new": "  if (home.tenant) return true; // HOME-RENT: a room rented in it, still running - the tenant walks in whoever else may (AUDIT: until its end, not until the town is read again)",
     "tests": [
       "test/server/homerent.test.js"
     ]

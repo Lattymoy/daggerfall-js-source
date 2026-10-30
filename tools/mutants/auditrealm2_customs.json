@@ -182,8 +182,8 @@
   {
     "name": "AUDIT-REALM2-T3-a-sold-slot-counted",
     "file": "src/net/homeLaw.js",
-    "old": ".filter((d) => !!d && typeof d === 'object' && (Number(d.buildingKey) || 0) > 0);",
-    "new": ".filter((d) => !!d && typeof d === 'object');",
+    "old": "  return [slot, ...(Array.isArray(slot.more) ? slot.more : [])].filter(\n    (d) => !!d && typeof d === 'object' && (Number(d.buildingKey) || 0) > 0,\n  );",
+    "new": "  return [slot, ...(Array.isArray(slot.more) ? slot.more : [])].filter((d) => !!d && typeof d === 'object');",
     "note": "Re-aimed by content (HOUSES-3): the region's three deeds.",
     "tests": [
       "test/systems/auditrealm2_customs.test.js"

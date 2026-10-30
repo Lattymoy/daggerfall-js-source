@@ -371,8 +371,8 @@
   {
     "name": "SEAT2b2c-pass-revolt-attack",
     "file": "src/net/identityToken.js",
-    "old": "  if (c.sn === 'revolt' && c.sd === 'attack') return false;   // SEAT2b part two (c): a revolt's rising is the relay's own\n",
-    "new": "",
+    "old": "  if (c.sn === 'revolt' && c.sd === 'attack') return false; // SEAT2b part two (c): a revolt's rising is the relay's own\n  if (",
+    "new": "  if (",
     "tests": [
       "test/net/seat2b_guards_law.test.js"
     ]

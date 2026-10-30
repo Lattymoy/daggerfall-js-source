@@ -2,7 +2,7 @@
   {
     "name": "CHAP4C-VOCAB-ID",
     "file": "src/net/identityToken.js",
-    "old": "export const CHAPTER_TITLES = Object.freeze(['chaptermaster', 'chapterofficer', 'formermaster', 'highmaster', 'seasonmaster']);",
+    "old": "export const CHAPTER_TITLES = Object.freeze([\n  'chaptermaster',\n  'chapterofficer',\n  'formermaster',\n  'highmaster',\n  'seasonmaster',\n]);",
     "new": "export const CHAPTER_TITLES = Object.freeze(['chaptermaster', 'chapterofficer', 'highmaster', 'seasonmaster']);",
     "tests": [
       "test/net/chap4c_titles.test.js"

@@ -184,8 +184,8 @@
   {
     "name": "WWR-the-shards-the-bays",
     "file": "src/net/hubShards.js",
-    "old": "export const REGION_CHANNELS = 71;",
-    "new": "export const REGION_CHANNELS = 62;",
+    "old": "export const REGION_CHANNELS = 71; // WW-R: the Bay's 62 and the provinces' nine (wire.js CHAT_REGION_COUNT)",
+    "new": "export const REGION_CHANNELS = 62; // WW-R: the Bay's 62 and the provinces' nine (wire.js CHAT_REGION_COUNT)",
     "tests": [
       "test/world/worldWide/wwr_regions.test.js"
     ]

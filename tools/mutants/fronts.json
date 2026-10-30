@@ -32,8 +32,8 @@
   {
     "name": "FRONTS-twice-a-cycle",
     "file": "src/net/frontLaw.js",
-    "old": "  for (let i = out.length - 1; i > 0; i--) {\n    const j = Math.floor(random() * (i + 1));",
-    "new": "  for (let i = out.length - 1; i > 0; i--) {\n    const j = Math.floor(random() * i) && i - 1;",
+    "old": "    const j = Math.floor(random() * (i + 1));",
+    "new": "    const j = Math.floor(random() * i) && i - 1;",
     "tests": [
       "test/net/fronts1_law.test.js"
     ],
@@ -43,7 +43,7 @@
     "name": "FRONTS-bay-inside",
     "file": "src/net/frontLaw.js",
     "old": "export const frontStands = (day, lane) => !FRONT_PROVINCES.includes(lane) || frontLanes(day).includes(lane);",
-    "new": "export const frontStands = (day, lane) => (lane !== 9 && lane !== 0 ? !FRONT_PROVINCES.includes(lane) : lane === 9) || frontLanes(day).includes(lane);",
+    "new": "export const frontStands = (day, lane) =>\n  (lane !== 9 && lane !== 0 ? !FRONT_PROVINCES.includes(lane) : lane === 9) || frontLanes(day).includes(lane);",
     "tests": [
       "test/net/fronts1_law.test.js"
     ],

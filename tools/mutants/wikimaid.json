@@ -235,8 +235,8 @@
   {
     "name": "WIKIMAID-title-not-in-vocabulary",
     "file": "src/net/identityToken.js",
-    "old": "'spirechampion', 'spirefirst', 'wikimaid', 'doorwarden',",
-    "new": "'spirechampion', 'spirefirst', 'doorwarden',",
+    "old": "  'wikimaid',\n  'doorwarden',",
+    "new": "  'doorwarden',",
     "tests": [
       "test/net/wikimaid.test.js"
     ],
@@ -245,8 +245,8 @@
   {
     "name": "WIKIMAID-aura-not-in-vocabulary",
     "file": "src/net/identityToken.js",
-    "old": "'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal']);",
-    "new": "'burningstair', 'firstlight', 'witchfire', 'sagesmoke', 'eternal']);",
+    "old": "  'lilacwarren',\n  'witchfire',",
+    "new": "  'witchfire',",
     "tests": [
       "test/net/wikimaid.test.js"
     ],

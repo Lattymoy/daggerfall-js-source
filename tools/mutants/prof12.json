@@ -1056,8 +1056,8 @@
   {
     "name": "PROF12-apothecary-no-jeweller",
     "file": "src/net/fortLaw.js",
-    "old": "apothecary: Object.freeze(['alchemy', 'cooking', 'jewelcrafting']),",
-    "new": "apothecary: Object.freeze(['alchemy', 'cooking']),",
+    "old": "  apothecary: Object.freeze(['alchemy', 'cooking', 'jewelcrafting']),",
+    "new": "  apothecary: Object.freeze(['alchemy', 'cooking']),",
     "tests": [
       "test/net/prof12_apothecary.test.js"
     ]
@@ -1065,8 +1065,8 @@
   {
     "name": "PROF12-apothecary-no-cook",
     "file": "src/net/fortLaw.js",
-    "old": "apothecary: Object.freeze(['alchemy', 'cooking', 'jewelcrafting']),",
-    "new": "apothecary: Object.freeze(['alchemy', 'jewelcrafting']),",
+    "old": "  apothecary: Object.freeze(['alchemy', 'cooking', 'jewelcrafting']),",
+    "new": "  apothecary: Object.freeze(['alchemy', 'jewelcrafting']),",
     "tests": [
       "test/net/prof12_apothecary.test.js"
     ]
@@ -1074,8 +1074,8 @@
   {
     "name": "PROF12-apothecary-no-alchemy",
     "file": "src/net/fortLaw.js",
-    "old": "apothecary: Object.freeze(['alchemy', 'cooking', 'jewelcrafting']),",
-    "new": "apothecary: Object.freeze(['cooking', 'jewelcrafting']),",
+    "old": "  apothecary: Object.freeze(['alchemy', 'cooking', 'jewelcrafting']),",
+    "new": "  apothecary: Object.freeze(['cooking', 'jewelcrafting']),",
     "tests": [
       "test/net/prof12_apothecary.test.js"
     ]

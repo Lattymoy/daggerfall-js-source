@@ -34,9 +34,14 @@ export function heraldryIndex(...sources) {
   const out = new Map();
   const put = (g) => {
     const h = heraldryOf(g?.heraldry);
-    if (h && typeof g.tag === 'string' && g.tag && !out.has(g.tag)) out.set(g.tag, { name: typeof g.name === 'string' ? g.name : null, heraldry: h });
+    if (h && typeof g.tag === 'string' && g.tag && !out.has(g.tag))
+      out.set(g.tag, { name: typeof g.name === 'string' ? g.name : null, heraldry: h });
   };
-  const seat = (s) => { put(s?.holder?.guild); put(s?.battle?.guild); put(s?.battle?.against); };
+  const seat = (s) => {
+    put(s?.holder?.guild);
+    put(s?.battle?.guild);
+    put(s?.battle?.against);
+  };
   for (const src of sources) {
     if (!src || typeof src !== 'object') continue;
     put(src);

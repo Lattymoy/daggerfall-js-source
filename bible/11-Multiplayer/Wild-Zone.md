@@ -609,7 +609,7 @@ renumbered past main's SUPER-DUNGEONS (world176) - its parts written on their br
   killer's tab then asks again past it, `wildSeizeHost.js:"a?.error === 'grace'"`), then the relay, then the site.
   PVP-LOOT (world205 - world201 on its branch, one bump past main's world201 and world202 at the merge, and world203 on the integration, renumbered past main's world203 and world204 at the merge of main): the room's take asks the friend law of the drop's records alone (section 5); a guildmate is kin
   at the referee (section 3); and the two-phase handoff (section 4) - the order's `we`
-  (`identityToken.js:"if (c.we !== undefined && c.we !== 1) return false;"`), the room's `cr` word to the killer
+  (`identityToken.js:"if (c.we !== undefined && c.we !== 1)"`), the room's `cr` word to the killer
   (`validWildOut`, the collect `g1`, `WILD_COLLECT_MAX`), `WILD_COLLECT_RELAY_MIN` (205; 201 on its branch and 203 on the integration, and main's world201 to world204 hand the record) for a tab to ask the escrow - an
   older client drops `cr`, so it never takes the room's copy of a piece in escrow. Deploy the relay first, then the
   account service (acct136: `wild_escrow`, migration 0118 - acct133 and 0113 on its branch, acct134 and 0115 on the integration; `/v1/wild/collect`, `/v1/wild/reclaim`, `/v1/wild/escrows`),

@@ -2,8 +2,8 @@
   {
     "name": "SEAT2b-gate-at-palace-any-walls",
     "file": "src/net/fortLaw.js",
-    "old": "(seat?.tier === 'palace' && Number(seat?.walls ?? 0) >= 3)",
-    "new": "(seat?.tier === 'palace' && Number(seat?.walls ?? 0) >= 2)",
+    "old": "  if (w.where === 'gate') return seat?.tier === 'crown' || (seat?.tier === 'palace' && Number(seat?.walls ?? 0) >= 3);",
+    "new": "  if (w.where === 'gate') return seat?.tier === 'crown' || (seat?.tier === 'palace' && Number(seat?.walls ?? 0) >= 2);",
     "tests": [
       "test/net/seat2b_law.test.js",
       "test/net/seat2b_client.test.js",
@@ -14,8 +14,8 @@
   {
     "name": "SEAT2b-gate-never-at-crown",
     "file": "src/net/fortLaw.js",
-    "old": "if (w.where === 'gate') return seat?.tier === 'crown' ||",
-    "new": "if (w.where === 'gate') return",
+    "old": "  if (w.where === 'gate') return seat?.tier === 'crown' || (seat?.tier === 'palace' && Number(seat?.walls ?? 0) >= 3);",
+    "new": "  if (w.where === 'gate') return seat?.tier === 'palace' && Number(seat?.walls ?? 0) >= 3;",
     "tests": [
       "test/net/seat2b_law.test.js",
       "test/net/seat2b_client.test.js",
@@ -26,8 +26,8 @@
   {
     "name": "SEAT2b-harbour-anywhere",
     "file": "src/net/fortLaw.js",
-    "old": "if (w.where === 'coast') return !!seat?.coastal;",
-    "new": "if (w.where === 'coast') return true;",
+    "old": "  if (w.where === 'coast') return !!seat?.coastal;",
+    "new": "  if (w.where === 'coast') return true;",
     "tests": [
       "test/net/seat2b_law.test.js",
       "test/net/seat2b_client.test.js",
@@ -39,8 +39,8 @@
   {
     "name": "SEAT2b-builder-cuts-everything",
     "file": "src/net/fortLaw.js",
-    "old": "needs: row.needs.map(([k, n]) => [k, isStone(k) ? fortificationStone(n, builder) : n])",
-    "new": "needs: row.needs.map(([k, n]) => [k, fortificationStone(n, builder)])",
+    "old": "  return { marks: row.marks, needs: row.needs.map(([k, n]) => [k, isStone(k) ? fortificationStone(n, builder) : n]) };",
+    "new": "  return { marks: row.marks, needs: row.needs.map(([k, n]) => [k, fortificationStone(n, builder)]) };",
     "tests": [
       "test/net/seat2b_law.test.js",
       "test/net/seat2b_client.test.js",
@@ -51,8 +51,8 @@
   {
     "name": "SEAT2b-stands-a-day-early",
     "file": "src/net/fortLaw.js",
-    "old": "lastDeliveryS + (FORT_TIER_DAYS[t - 1] - (siegewright",
-    "new": "lastDeliveryS + (FORT_TIER_DAYS[t - 1] - 1 - (siegewright",
+    "old": "    ? lastDeliveryS + (FORT_TIER_DAYS[t - 1] - (siegewright ? SIEGEWRIGHT_DAYS : 0)) * 86400",
+    "new": "    ? lastDeliveryS + (FORT_TIER_DAYS[t - 1] - 1 - (siegewright ? SIEGEWRIGHT_DAYS : 0)) * 86400",
     "tests": [
       "test/net/seat2b_law.test.js",
       "test/net/seat2b_client.test.js",
@@ -63,8 +63,8 @@
   {
     "name": "SEAT2b-wanting-ignores-held",
     "file": "src/net/fortLaw.js",
-    "old": "Math.max(0, n - Math.max(0, Number(held?.get?.(k) ?? held?.[k] ?? 0)))",
-    "new": "n",
+    "old": "export const fortWanting = (needs, held) =>\n  (needs ?? []).map(([k, n]) => [k, Math.max(0, n - Math.max(0, Number(held?.get?.(k) ?? held?.[k] ?? 0)))]);",
+    "new": "export const fortWanting = (needs, held) => (needs ?? []).map(([k, n]) => [k, n]);",
     "tests": [
       "test/net/seat2b_law.test.js",
       "test/net/seat2b_client.test.js",
@@ -75,8 +75,8 @@
   {
     "name": "SEAT2b-capture-keeps-everything",
     "file": "src/net/fortLaw.js",
-    "old": "id === 'walls' && fortifier ? Math.max(0, Number(t) || 0) : fortDropped(t)",
-    "new": "Math.max(0, Number(t) || 0)",
+    "old": "  for (const [id, t] of Object.entries(forts ?? {}))\n    out[id] = id === 'walls' && fortifier ? Math.max(0, Number(t) || 0) : fortDropped(t);",
+    "new": "  for (const [id, t] of Object.entries(forts ?? {})) out[id] = Math.max(0, Number(t) || 0);",
     "tests": [
       "test/net/seat2b_law.test.js",
       "test/net/seat2b_client.test.js",
@@ -86,8 +86,8 @@
   {
     "name": "SEAT2b-fortifier-saves-all",
     "file": "src/net/fortLaw.js",
-    "old": "id === 'walls' && fortifier ?",
-    "new": "fortifier ?",
+    "old": "  for (const [id, t] of Object.entries(forts ?? {}))\n    out[id] = id === 'walls' && fortifier ? Math.max(0, Number(t) || 0) : fortDropped(t);",
+    "new": "  for (const [id, t] of Object.entries(forts ?? {})) out[id] = fortifier ? Math.max(0, Number(t) || 0) : fortDropped(t);",
     "tests": [
       "test/net/seat2b_law.test.js",
       "test/net/seat2b_client.test.js",
@@ -97,8 +97,8 @@
   {
     "name": "SEAT2b-season-no-wear",
     "file": "src/net/fortLaw.js",
-    "old": "Object.fromEntries(Object.entries(forts ?? {}).map(([id, t]) => [id, fortDropped(t)]))",
-    "new": "Object.fromEntries(Object.entries(forts ?? {}).map(([id, t]) => [id, t]))",
+    "old": "export const fortsAfterSeason = (forts) =>\n  Object.fromEntries(Object.entries(forts ?? {}).map(([id, t]) => [id, fortDropped(t)]));",
+    "new": "export const fortsAfterSeason = (forts) => Object.fromEntries(Object.entries(forts ?? {}).map(([id, t]) => [id, t]));",
     "tests": [
       "test/net/seat2b_law.test.js",
       "test/net/seat2b_client.test.js",
@@ -120,8 +120,8 @@
   {
     "name": "SEAT2b-wave-no-floor",
     "file": "src/net/fortLaw.js",
-    "old": "Math.max(WALLS_WAVE_MIN_MS, baseMs - WALLS_WAVE_STEP_MS",
-    "new": "Math.max(0, baseMs - WALLS_WAVE_STEP_MS",
+    "old": "  Math.max(WALLS_WAVE_MIN_MS, baseMs - WALLS_WAVE_STEP_MS * Math.max(0, Math.min(3, Number(walls) || 0)));",
+    "new": "  Math.max(0, baseMs - WALLS_WAVE_STEP_MS * Math.max(0, Math.min(3, Number(walls) || 0)));",
     "tests": [
       "test/net/seat2b_law.test.js",
       "test/net/seat2b_client.test.js",
@@ -131,8 +131,8 @@
   {
     "name": "SEAT2b-gatehouse-flat",
     "file": "src/net/fortLaw.js",
-    "old": "Math.round(GATEHOUSE.vitality * (1 + GATEHOUSE.perTier * Math.max(0, Math.min(3, Number(t) || 0))))",
-    "new": "GATEHOUSE.vitality",
+    "old": "export const gatehouseVitality = (t) =>\n  Math.round(GATEHOUSE.vitality * (1 + GATEHOUSE.perTier * Math.max(0, Math.min(3, Number(t) || 0))));",
+    "new": "export const gatehouseVitality = (t) => GATEHOUSE.vitality;",
     "tests": [
       "test/net/seat2b_law.test.js",
       "test/net/seat2b_client.test.js",
@@ -143,8 +143,8 @@
   {
     "name": "SEAT2b-ram-no-siegewright",
     "file": "src/net/fortLaw.js",
-    "old": "RAM.vitality * (siegewright ? 1 + RAM.siegewright : 1)",
-    "new": "RAM.vitality",
+    "old": "export const ramVitality = (siegewright = false) => Math.round(RAM.vitality * (siegewright ? 1 + RAM.siegewright : 1));",
+    "new": "export const ramVitality = (siegewright = false) => Math.round(RAM.vitality);",
     "tests": [
       "test/net/seat2b_law.test.js",
       "test/net/seat2b_client.test.js",
@@ -154,8 +154,8 @@
   {
     "name": "SEAT2b-watchtower-swapped",
     "file": "src/net/fortLaw.js",
-    "old": "(t >= 2 ? 0.25 : t === 1 ? 0.5 : null)",
-    "new": "(t >= 2 ? 0.5 : t === 1 ? 0.25 : null)",
+    "old": "export const watchtowerShare = (t) => (t >= 2 ? 0.25 : t === 1 ? 0.5 : null);",
+    "new": "export const watchtowerShare = (t) => (t >= 2 ? 0.5 : t === 1 ? 0.25 : null);",
     "tests": [
       "test/net/seat2b_law.test.js",
       "test/net/seat2b_client.test.js",
@@ -165,8 +165,8 @@
   {
     "name": "SEAT2b-barracks-one-short",
     "file": "src/net/fortLaw.js",
-    "old": "[0, 2, 4, 6][Math.max(0, Math.min(3, Number(t) || 0))]",
-    "new": "[0, 2, 4, 5][Math.max(0, Math.min(3, Number(t) || 0))]",
+    "old": "export const barracksGuards = (t) => [0, 2, 4, 6][Math.max(0, Math.min(3, Number(t) || 0))];",
+    "new": "export const barracksGuards = (t) => [0, 2, 4, 5][Math.max(0, Math.min(3, Number(t) || 0))];",
     "tests": [
       "test/net/seat2b_law.test.js",
       "test/net/seat2b_client.test.js",
@@ -177,8 +177,8 @@
   {
     "name": "SEAT2b-market-listings-flat",
     "file": "src/net/fortLaw.js",
-    "old": "Math.floor(base * (1 + 0.25 * Math.max(0, Math.min(3, Number(t) || 0))) + 1e-9)",
-    "new": "base",
+    "old": "export const marketHallListings = (base, t) =>\n  Math.floor(base * (1 + 0.25 * Math.max(0, Math.min(3, Number(t) || 0))) + 1e-9);",
+    "new": "export const marketHallListings = (base, t) => base;",
     "tests": [
       "test/net/seat2b_law.test.js",
       "test/net/seat2b_client.test.js",
@@ -213,8 +213,8 @@
   {
     "name": "SEAT2b-station-one-step",
     "file": "src/net/fortLaw.js",
-    "old": "if (profs.includes(profession)) steps += Math.max(0, Number(forts?.[id] ?? 0) || 0);",
-    "new": "if (profs.includes(profession)) steps += Math.min(1, Number(forts?.[id] ?? 0) || 0);",
+    "old": "    if (profs.includes(profession)) steps += Math.max(0, Number(forts?.[id] ?? 0) || 0);",
+    "new": "    if (profs.includes(profession)) steps += Math.min(1, Number(forts?.[id] ?? 0) || 0);",
     "tests": [
       "test/net/seat2b_law.test.js",
       "test/net/seat2b_client.test.js",
@@ -235,8 +235,8 @@
   {
     "name": "SEAT2b-camp-rams-ungated",
     "file": "src/net/fortLaw.js",
-    "old": "if (k === RAM_KIT_KEY && won && gated) rams += u;",
-    "new": "if (k === RAM_KIT_KEY && won) rams += u;",
+    "old": "    if (k === RAM_KIT_KEY && won && gated) rams += u;",
+    "new": "    if (k === RAM_KIT_KEY && won) rams += u;",
     "tests": [
       "test/net/seat2b_law.test.js",
       "test/net/seat2b_client.test.js",
@@ -246,8 +246,8 @@
   {
     "name": "SEAT2b-camp-rams-unwon",
     "file": "src/net/fortLaw.js",
-    "old": "if (k === RAM_KIT_KEY && won && gated) rams += u;",
-    "new": "if (k === RAM_KIT_KEY && gated) rams += u;",
+    "old": "    if (k === RAM_KIT_KEY && won && gated) rams += u;",
+    "new": "    if (k === RAM_KIT_KEY && gated) rams += u;",
     "tests": [
       "test/net/seat2b_law.test.js",
       "test/net/seat2b_client.test.js",
@@ -268,7 +268,7 @@
   {
     "name": "SEAT2b-line-no-day",
     "file": "src/net/fortLaw.js",
-    "old": "if (w.standsAt != null) return `${head} Tier ${w.building} stands ${whenOf(Number(w.standsAt) * 1000)}.`;",
+    "old": "  if (w.standsAt != null) return `${head} Tier ${w.building} stands ${whenOf(Number(w.standsAt) * 1000)}.`;",
     "new": "",
     "tests": [
       "test/net/seat2b_client.test.js",

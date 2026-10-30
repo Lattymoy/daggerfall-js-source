@@ -292,8 +292,8 @@
   {
     "name": "SEAT2b2b-pass-works-unchecked",
     "file": "src/net/identityToken.js",
-    "old": "  if (c.sx !== undefined && (c.sn !== 'siege' || !worksOf(c.sx, c.st, c.sn))) return false;   // SEAT2b part two (b): a siege's works, well made\n",
-    "new": "",
+    "old": "  if (c.sx !== undefined && (c.sn !== 'siege' || !worksOf(c.sx, c.st, c.sn))) return false; // SEAT2b part two (b): a siege's works, well made\n  return siegeFieldValid(c.sf, c.st, c.sn);",
+    "new": "  return siegeFieldValid(c.sf, c.st, c.sn);",
     "tests": [
       "test/net/seat2b_battle_law.test.js"
     ]
@@ -301,8 +301,8 @@
   {
     "name": "SEAT2b2b-pass-works-dropped",
     "file": "src/net/identityToken.js",
-    "old": "...(sx === undefined || sx === null ? {} : { sx }),",
-    "new": "",
+    "old": "  const claims = {\n    o: 'siege',\n    s,\n    sk,\n    sw,\n    sd,\n    st,\n    sn,\n    sb,\n    se,\n    sf,\n    ...(sx === undefined || sx === null ? {} : { sx }),\n    i: nowS,\n    e: nowS + ttlS,\n  };",
+    "new": "  const claims = { o: 'siege', s, sk, sw, sd, st, sn, sb, se, sf, i: nowS, e: nowS + ttlS };",
     "tests": [
       "test/net/seat2b_battle_law.test.js",
       "test/net/seat2b_battle_service.test.js",

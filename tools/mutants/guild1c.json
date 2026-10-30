@@ -11,8 +11,8 @@
   {
     "name": "GUILD1c-tag-coerced",
     "file": "src/net/identityToken.js",
-    "old": "    && typeof c.gt === 'string' && GUILD_TAG_RE.test(c.gt)",
-    "new": "    && GUILD_TAG_RE.test(c.gt)",
+    "old": "    typeof c.gt === 'string' &&\n    GUILD_TAG_RE.test(c.gt) &&",
+    "new": "    GUILD_TAG_RE.test(c.gt) &&",
     "tests": [
       "test/net/guild1c.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "GUILD1c-claims-unguarded",
     "file": "src/net/identityToken.js",
-    "old": "  if (!guildClaimsValid(c)) return false;   // GUILD1c\n",
-    "new": "",
+    "old": "  if (!guildClaimsValid(c)) return false; // GUILD1c\n  // REALM-DOOR: the realm's word on the named character - exactly 0 or 1, never a truthy stand-in; absent from a service",
+    "new": "  // REALM-DOOR: the realm's word on the named character - exactly 0 or 1, never a truthy stand-in; absent from a service",
     "tests": [
       "test/net/guild1c.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "GUILD1c-mute-carries-a-guild",
     "file": "src/net/identityToken.js",
-    "old": "c.lv !== undefined || !noGuild)) return false;\n  if (c.o === 'renown'",
-    "new": "c.lv !== undefined)) return false;\n  if (c.o === 'renown'",
+    "old": "  if (c.o === 'mute' && (!Number.isSafeInteger(c.mu) || c.mu < 0 || c.lv !== undefined || !noGuild)) return false;",
+    "new": "  if (c.o === 'mute' && (!Number.isSafeInteger(c.mu) || c.mu < 0 || c.lv !== undefined)) return false;",
     "tests": [
       "test/net/guild1c.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "GUILD1c-guildout-with-a-tag",
     "file": "src/net/identityToken.js",
-    "old": "GUILD_ID_RE.test(c.gi) || c.gt !== undefined\n",
-    "new": "GUILD_ID_RE.test(c.gi)\n",
+    "old": "      c.gt !== undefined ||\n      (c.gm !== undefined && (typeof c.gm !== 'string' || !GUILD_MEMBER_RE.test(c.gm))) ||",
+    "new": "      (c.gm !== undefined && (typeof c.gm !== 'string' || !GUILD_MEMBER_RE.test(c.gm))) ||",
     "tests": [
       "test/net/guild1c.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "GUILD1c-guild-order-partial",
     "file": "src/net/identityToken.js",
-    "old": "  if (c.o === 'guild' && (!guildClaimsValid(c) || c.mu !== undefined",
-    "new": "  if (c.o === 'guild' && (c.mu !== undefined",
+    "old": "  if (c.o === 'guild' && (!guildClaimsValid(c) || c.mu !== undefined || c.lv !== undefined)) return false;",
+    "new": "  if (c.o === 'guild' && (c.mu !== undefined || c.lv !== undefined)) return false;",
     "tests": [
       "test/net/guild1c.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "GUILD1c-no-guildout-kind",
     "file": "src/net/identityToken.js",
-    "old": "export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'siege', 'stake', 'deck', 'remains', 'home', 'egopen', 'egadmit', 'ban', 'smsg', 'staffcut', 'hide', 'freeze', 'staffline', 'sevent', 'yard']);",
-    "new": "export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'siege', 'stake', 'deck', 'remains', 'home', 'egopen', 'egadmit', 'ban', 'smsg', 'staffcut', 'hide', 'freeze', 'staffline', 'sevent', 'yard']);",
+    "old": "  'guildout',\n  'siege',",
+    "new": "  'siege',",
     "tests": [
       "test/net/guild1c.test.js"
     ]

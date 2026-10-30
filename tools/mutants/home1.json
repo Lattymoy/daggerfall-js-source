@@ -117,8 +117,8 @@
   {
     "name": "HOME1-party-matched-on-nothing",
     "file": "src/net/homeLaw.js",
-    "old": ".some((n) => sameName(n, home.owner))",
-    "new": ".some(() => true)",
+    "old": "  if (home.entry === 'party') return (partyNames ?? []).some((n) => sameName(n, home.owner));",
+    "new": "  if (home.entry === 'party') return (partyNames ?? []).some(() => true);",
     "tests": [
       "test/server/home1.test.js"
     ]
@@ -135,8 +135,8 @@
   {
     "name": "HOME1-price-bound-off-by-one",
     "file": "src/net/homeLaw.js",
-    "old": "v >= HOME_PRICE_MIN && v <= HOME_PRICE_MAX && v % HOME_PRICE_STEP === 0;",
-    "new": "v >= HOME_PRICE_MIN && v < HOME_PRICE_MAX && v % HOME_PRICE_STEP === 0;",
+    "old": "  Number.isSafeInteger(v) && v >= HOME_PRICE_MIN && v <= HOME_PRICE_MAX && v % HOME_PRICE_STEP === 0;",
+    "new": "  Number.isSafeInteger(v) && v >= HOME_PRICE_MIN && v < HOME_PRICE_MAX && v % HOME_PRICE_STEP === 0;",
     "tests": [
       "test/server/home1.test.js"
     ],
@@ -200,8 +200,8 @@
   {
     "name": "HOME1-one-scene-for-both",
     "file": "src/net/homeScene.js",
-    "old": "`OnlineHome [MapID=${Number(mapId) >>> 0}, BuildingKey=${buildingKey}]`",
-    "new": "`DaggerfallInterior [MapID=${Number(mapId) >>> 0}, BuildingKey=${buildingKey}]`",
+    "old": "  `OnlineHome [MapID=${Number(mapId) >>> 0}, BuildingKey=${buildingKey}]`;",
+    "new": "  `DaggerfallInterior [MapID=${Number(mapId) >>> 0}, BuildingKey=${buildingKey}]`;",
     "tests": [
       "test/server/home1.test.js"
     ]

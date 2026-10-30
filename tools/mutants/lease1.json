@@ -126,8 +126,8 @@
   {
     "name": "LEASE1-the-shard-not-told",
     "file": "src/net/hubShards.js",
-    "old": "'rb', 'lv', 'fz', 'lt']",
-    "new": "'rb', 'lv']",
+    "old": "export const SHARD_LAW_KEYS = Object.freeze(['mu', 'gi', 'gt', 'gm', 'gio', 'rb', 'lv', 'fz', 'lt']);",
+    "new": "export const SHARD_LAW_KEYS = Object.freeze(['mu', 'gi', 'gt', 'gm', 'gio', 'rb', 'lv']);",
     "why": "a hub shard mints a lease from a stale freeze and law time",
     "tests": [
       "test/net/lease1.test.js"
@@ -722,8 +722,8 @@
   {
     "name": "HIBERNATE-halo-peer-heartbeat-dropped",
     "file": "src/net/loneSleep.js",
-    "old": "s.others === 0 && s.peers === 0 &&",
-    "new": "s.others === 0 &&",
+    "old": "  return !s.refereed && s.others === 0 && s.peers === 0 && (isCellRoom(s.room) || isWorldRoom(s.room));",
+    "new": "  return !s.refereed && s.others === 0 && (isCellRoom(s.room) || isWorldRoom(s.room));",
     "why": "alone in my cell beside a cell with a player, standing still sends no heartbeat and that player loses me (re-aimed by content at the merge with LONE-SLEEP: alone is net/loneSleep.js aloneNow)",
     "tests": [
       "test/net/halothin.test.js"

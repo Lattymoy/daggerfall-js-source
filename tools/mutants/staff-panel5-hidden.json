@@ -554,8 +554,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-claim-any",
     "file": "src/net/identityToken.js",
-    "old": "if (c.hd !== undefined && c.hd !== 1) return false;",
-    "new": "if (false) return false;",
+    "old": "  if (c.hd !== undefined && c.hd !== 1) return false;",
+    "new": "  if (false) return false;",
     "why": "any hd value signed",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -564,8 +564,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-mint-drops-mark",
     "file": "src/net/identityToken.js",
-    "old": "if (who?.hd !== undefined) claims.hd = who.hd;",
-    "new": "",
+    "old": "  if (who?.hd !== undefined) claims.hd = who.hd; // STAFF-PANEL5: a hidden staff spectator alone - a player mints the bytes they always did",
+    "new": "  // STAFF-PANEL5: a hidden staff spectator alone - a player mints the bytes they always did",
     "why": "the mark never minted",
     "tests": [
       "test/server/staffpanel5hidden.test.js",
@@ -575,8 +575,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-order-hd-elsewhere",
     "file": "src/net/identityToken.js",
-    "old": "if (c.o !== 'hide' && c.hd !== undefined) return false;",
-    "new": "if (false) return false;",
+    "old": "  if (c.o !== 'hide' && c.hd !== undefined) return false;",
+    "new": "  if (false) return false;",
     "why": "another order wears hd",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -585,8 +585,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-order-hd-value",
     "file": "src/net/identityToken.js",
-    "old": "if (c.o === 'hide' && (c.hd !== 0 || Object.keys(c)",
-    "new": "if (c.o === 'hide' && (Object.keys(c)",
+    "old": "  if (c.o === 'hide' && (c.hd !== 0 || Object.keys(c).some((k) => !HIDE_ORDER_KEYS.includes(k)))) return false;",
+    "new": "  if (c.o === 'hide' && Object.keys(c).some((k) => !HIDE_ORDER_KEYS.includes(k))) return false;",
     "why": "a hide order of any hd",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -595,8 +595,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-order-keys",
     "file": "src/net/identityToken.js",
-    "old": " || Object.keys(c).some((k) => !HIDE_ORDER_KEYS.includes(k)))) return false;",
-    "new": ")) return false;",
+    "old": "  if (c.o === 'hide' && (c.hd !== 0 || Object.keys(c).some((k) => !HIDE_ORDER_KEYS.includes(k)))) return false;",
+    "new": "  if (c.o === 'hide' && c.hd !== 0) return false;",
     "why": "a hide order carrying more",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -605,8 +605,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-order-kind",
     "file": "src/net/identityToken.js",
-    "old": "'staffcut', 'hide', 'freeze', 'staffline', 'sevent', 'yard']);",
-    "new": "'staffcut', 'freeze', 'staffline', 'sevent', 'yard']);",
+    "old": "  'hide',\n  'freeze',",
+    "new": "  'freeze',",
     "why": "no hide kind",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -615,8 +615,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-note-keys",
     "file": "src/net/hiddenSeen.js",
-    "old": "&& Object.keys(b).length === 5;",
-    "new": "&& true;",
+    "old": "    Object.keys(b).length === 5",
+    "new": "    true",
     "why": "a note with more",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -625,8 +625,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-note-room",
     "file": "src/net/hiddenSeen.js",
-    "old": "typeof b.r === 'string' && ROOM_RE.test(b.r)",
-    "new": "typeof b.r === 'string'",
+    "old": "    ROOM_RE.test(b.r) &&\n    Object.keys(b).length === 5",
+    "new": "    Object.keys(b).length === 5",
     "why": "a note for any room",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -635,7 +635,7 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-note-stale",
     "file": "src/net/hiddenSeen.js",
-    "old": "if (Math.abs(nowMs - note.at) > HIDDEN_SEEN_AGE_MAX_MS) return { error: 'seen-stale' };",
+    "old": "  if (Math.abs(nowMs - note.at) > HIDDEN_SEEN_AGE_MAX_MS) return { error: 'seen-stale' };",
     "new": "",
     "why": "a note of any age",
     "tests": [
@@ -645,8 +645,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-note-forged",
     "file": "src/net/hiddenSeen.js",
-    "old": "  if (!good) return { error: 'seen-signature' };\n",
-    "new": "",
+    "old": "  if (!good) return { error: 'seen-signature' };\n  let note;",
+    "new": "  let note;",
     "why": "a forged note believed",
     "tests": [
       "test/server/staffpanel5hidden.test.js"

@@ -19,9 +19,9 @@ export const FRONT_SALT = 0x46524f4e;
 
 /** mulberry32 (systems/wind/wind.js seededRng's), off a cycle's number and the salt. */
 function cycleRandom(c) {
-  let a = (Math.imul(c, 0x9E3779B1) ^ FRONT_SALT) >>> 0;
+  let a = (Math.imul(c, 0x9e3779b1) ^ FRONT_SALT) >>> 0;
   return () => {
-    a = (a + 0x6D2B79F5) >>> 0;
+    a = (a + 0x6d2b79f5) >>> 0;
     let t = a;
     t = Math.imul(t ^ (t >>> 15), t | 1);
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
@@ -30,7 +30,8 @@ function cycleRandom(c) {
 }
 /** A cycle's shuffle as drawn, before the turn law: Fisher-Yates over FRONT_PROVINCES. */
 function drawnOrder(c) {
-  const out = [...FRONT_PROVINCES], random = cycleRandom(c);
+  const out = [...FRONT_PROVINCES],
+    random = cycleRandom(c);
   for (let i = out.length - 1; i > 0; i--) {
     const j = Math.floor(random() * (i + 1));
     [out[i], out[j]] = [out[j], out[i]];
@@ -42,7 +43,8 @@ function drawnOrder(c) {
 function cycleOrder(c) {
   const out = drawnOrder(c);
   if (c <= 0) return out;
-  const prev = drawnOrder(c - 1), last = prev.slice(-FRONT_PER_DAY);
+  const prev = drawnOrder(c - 1),
+    last = prev.slice(-FRONT_PER_DAY);
   for (let p = 0; p < FRONT_PER_DAY; p++) {
     if (!last.includes(out[p])) continue;
     const q = out.findIndex((v, i) => i >= FRONT_PER_DAY && i < out.length - FRONT_PER_DAY && !last.includes(v));
@@ -68,7 +70,8 @@ function orderOf(c) {
  */
 export function frontLanes(day) {
   if (!Number.isSafeInteger(day) || day < 0) return Object.freeze([]);
-  const o = orderOf(Math.floor(day / FRONT_CYCLE_DAYS)), i = (day % FRONT_CYCLE_DAYS) * FRONT_PER_DAY;
+  const o = orderOf(Math.floor(day / FRONT_CYCLE_DAYS)),
+    i = (day % FRONT_CYCLE_DAYS) * FRONT_PER_DAY;
   return Object.freeze(o.slice(i, i + FRONT_PER_DAY).sort((a, b) => a - b));
 }
 /** Does lane `lane` stand its events on game day `day`? Every lane outside the fronts does; a province on its turn. */

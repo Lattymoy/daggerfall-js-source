@@ -200,8 +200,8 @@
   {
     "name": "QUEST-HOME-an-order-with-no-building",
     "file": "src/net/identityToken.js",
-    "old": "return all.length > 0 && all.length <= HOME_ORDER_KEYS_MAX",
-    "new": "return all.length >= 0 && all.length <= HOME_ORDER_KEYS_MAX",
+    "old": "    all.length > 0 &&",
+    "new": "    all.length >= 0 &&",
     "tests": [
       "test/net/fb1014_questhome.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "QUEST-HOME-a-mute-carrying-a-town",
     "file": "src/net/identityToken.js",
-    "old": "  if (c.o !== 'home' && !noHome) return false;\n",
-    "new": "",
+    "old": "  if (c.o !== 'home' && !noHome) return false;\n  if (",
+    "new": "  if (",
     "tests": [
       "test/net/fb1014_questhome.test.js"
     ]

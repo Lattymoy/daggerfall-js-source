@@ -2,8 +2,8 @@
   {
     "name": "WB9g-the-title-at-a-ware-price",
     "file": "src/net/insignia.js",
-    "old": "Object.freeze({ id: 'title:gatebreaker', kind: 'title', key: 'gatebreaker', price: 30 })",
-    "new": "Object.freeze({ id: 'title:gatebreaker', kind: 'title', key: 'gatebreaker', price: 3 })",
+    "old": "  Object.freeze({ id: 'title:gatebreaker', kind: 'title', key: 'gatebreaker', price: 30 }),",
+    "new": "  Object.freeze({ id: 'title:gatebreaker', kind: 'title', key: 'gatebreaker', price: 3 }),",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "WB9g-the-column-unbounded",
     "file": "src/net/insignia.js",
-    "old": " || column.length > INSIGNIA_COLUMN_MAX) return [];",
-    "new": ") return [];",
+    "old": "  if (typeof column !== 'string' || !column || column.length > INSIGNIA_COLUMN_MAX) return [];",
+    "new": "  if (typeof column !== 'string' || !column) return [];",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WB9g-an-owned-piece-offered-again",
     "file": "src/net/insignia.js",
-    "old": "  if (Array.isArray(held) && held.includes(offer.id)) return 'owned';\n",
-    "new": "",
+    "old": "  if (Array.isArray(held) && held.includes(offer.id)) return 'owned';\n  if (!online) return 'offline';",
+    "new": "  if (!online) return 'offline';",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WB9g-an-offline-sale",
     "file": "src/net/insignia.js",
-    "old": "  if (!online) return 'offline';\n",
-    "new": "",
+    "old": "  if (!online) return 'offline';\n  if (!(stones >= offer.price)) return 'stones';",
+    "new": "  if (!(stones >= offer.price)) return 'stones';",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WB9g-a-short-purse-served",
     "file": "src/net/insignia.js",
-    "old": "  if (!(stones >= offer.price)) return 'stones';\n",
-    "new": "",
+    "old": "  if (!(stones >= offer.price)) return 'stones';\n  return null;",
+    "new": "  return null;",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "WB9g-the-mint-drops-the-aura",
     "file": "src/net/identityToken.js",
-    "old": "  if (who?.au !== undefined) claims.au = who.au;",
-    "new": "",
+    "old": "  if (who?.au !== undefined) claims.au = who.au; // WB9g: only while an aura is worn - a player wearing none mints the bytes they always did",
+    "new": "  // WB9g: only while an aura is worn - a player wearing none mints the bytes they always did",
     "tests": [
       "test/net/wb9g_insignia.test.js",
       "test/net/identitytoken.test.js"
@@ -66,8 +66,8 @@
   {
     "name": "WB9g-an-unknown-aura-signed",
     "file": "src/net/identityToken.js",
-    "old": "  if (c.au !== undefined && !AURAS.includes(c.au)) return false;",
-    "new": "",
+    "old": "  if (c.au !== undefined && !AURAS.includes(c.au)) return false; // WB9g: the aura worn, the title's law - absent for none, one of the known or refused",
+    "new": "  // WB9g: the aura worn, the title's law - absent for none, one of the known or refused",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]

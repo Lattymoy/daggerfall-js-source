@@ -42,8 +42,8 @@
   {
     "name": "ARENA4B-TOK-VALID-ZERO",
     "file": "src/net/identityToken.js",
-    "old": "cl >= CHARACTER_LEVEL_MIN && cl <= CHARACTER_LEVEL_MAX",
-    "new": "cl >= 0 && cl <= CHARACTER_LEVEL_MAX",
+    "old": "export const characterLevelIssuable = (cl) =>\n  Number.isSafeInteger(cl) && cl >= CHARACTER_LEVEL_MIN && cl <= CHARACTER_LEVEL_MAX;",
+    "new": "export const characterLevelIssuable = (cl) => Number.isSafeInteger(cl) && cl >= 0 && cl <= CHARACTER_LEVEL_MAX;",
     "note": "The merge of ARENA4b's streams (re-aimed by content): the relay stream's characterLevelIssuable is the one validation.",
     "tests": [
       "test/server/arena4b_token.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "ARENA4B-TOK-VALID-FRACTION",
     "file": "src/net/identityToken.js",
-    "old": "Number.isSafeInteger(cl) && cl >= CHARACTER_LEVEL_MIN",
-    "new": "cl >= CHARACTER_LEVEL_MIN",
+    "old": "export const characterLevelIssuable = (cl) =>\n  Number.isSafeInteger(cl) && cl >= CHARACTER_LEVEL_MIN && cl <= CHARACTER_LEVEL_MAX;",
+    "new": "export const characterLevelIssuable = (cl) => cl >= CHARACTER_LEVEL_MIN && cl <= CHARACTER_LEVEL_MAX;",
     "note": "The merge of ARENA4b's streams (re-aimed by content): the relay stream's characterLevelIssuable is the one validation.",
     "tests": [
       "test/server/arena4b_token.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "ARENA4B-TOK-MINT-DROPPED",
     "file": "src/net/identityToken.js",
-    "old": "  if (who?.cl !== undefined) claims.cl = who.cl;",
-    "new": "  // cl",
+    "old": "  if (who?.cl !== undefined) claims.cl = who.cl; // ARENA4b: only when a character was named - a mint naming none, the bytes as before",
+    "new": "  // cl   // ARENA4b: only when a character was named - a mint naming none, the bytes as before",
     "tests": [
       "test/server/arena4b_token.test.js"
     ]

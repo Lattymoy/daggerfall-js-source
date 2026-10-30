@@ -2,8 +2,8 @@
   {
     "name": "LONE-SLEEP-never-lone",
     "file": "src/net/loneSleep.js",
-    "old": "  return !!s.alone && !!s.ok && !!s.presence && isCellRoom(s.room)",
-    "new": "  return false && !!s.alone && !!s.ok && !!s.presence && isCellRoom(s.room)",
+    "old": "  return !!s.alone && !!s.ok && !!s.presence && isCellRoom(s.room) && s.open && !s.zone && s.now >= s.holdUntil;",
+    "new": "  return (\n    false && !!s.alone && !!s.ok && !!s.presence && isCellRoom(s.room) && s.open && !s.zone && s.now >= s.holdUntil\n  );",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "LONE-SLEEP-gate-open",
     "file": "src/net/loneSleep.js",
-    "old": "?.[1] ?? 0) >= LONE_RELAY_MIN;",
-    "new": "?.[1] ?? 0) >= 0;",
+    "old": "export const loneSupported = (v) =>\n  Number(/^world(\\d+)$/.exec(typeof v === 'string' ? v : '')?.[1] ?? 0) >= LONE_RELAY_MIN;",
+    "new": "export const loneSupported = (v) => Number(/^world(\\d+)$/.exec(typeof v === 'string' ? v : '')?.[1] ?? 0) >= 0;",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "LONE-SLEEP-relay-unread",
     "file": "src/net/loneSleep.js",
-    "old": "  return !!s.alone && !!s.ok && !!s.presence &&",
-    "new": "  return !!s.alone && !!s.presence &&",
+    "old": "  return !!s.alone && !!s.ok && !!s.presence && isCellRoom(s.room) && s.open && !s.zone && s.now >= s.holdUntil;",
+    "new": "  return !!s.alone && !!s.presence && isCellRoom(s.room) && s.open && !s.zone && s.now >= s.holdUntil;",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "LONE-SLEEP-presence-unread",
     "file": "src/net/loneSleep.js",
-    "old": "!!s.ok && !!s.presence && isCellRoom",
-    "new": "!!s.ok && isCellRoom",
+    "old": "  return !!s.alone && !!s.ok && !!s.presence && isCellRoom(s.room) && s.open && !s.zone && s.now >= s.holdUntil;",
+    "new": "  return !!s.alone && !!s.ok && isCellRoom(s.room) && s.open && !s.zone && s.now >= s.holdUntil;",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "LONE-SLEEP-room-unread",
     "file": "src/net/loneSleep.js",
-    "old": "isCellRoom(s.room) && s.open",
-    "new": "s.open",
+    "old": "  return !!s.alone && !!s.ok && !!s.presence && isCellRoom(s.room) && s.open && !s.zone && s.now >= s.holdUntil;",
+    "new": "  return !!s.alone && !!s.ok && !!s.presence && s.open && !s.zone && s.now >= s.holdUntil;",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "LONE-SLEEP-open-unread",
     "file": "src/net/loneSleep.js",
-    "old": "&& s.open && !s.zone",
-    "new": "&& !s.zone",
+    "old": "  return !!s.alone && !!s.ok && !!s.presence && isCellRoom(s.room) && s.open && !s.zone && s.now >= s.holdUntil;",
+    "new": "  return !!s.alone && !!s.ok && !!s.presence && isCellRoom(s.room) && !s.zone && s.now >= s.holdUntil;",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "LONE-SLEEP-peers-unread",
     "file": "src/net/loneSleep.js",
-    "old": "!s.refereed && s.others === 0 && s.peers",
-    "new": "!s.refereed && s.peers",
+    "old": "  return !s.refereed && s.others === 0 && s.peers === 0 && (isCellRoom(s.room) || isWorldRoom(s.room));",
+    "new": "  return !s.refereed && s.peers === 0 && (isCellRoom(s.room) || isWorldRoom(s.room));",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "LONE-SLEEP-rf-unread",
     "file": "src/net/loneSleep.js",
-    "old": "  return !s.refereed && s.others === 0",
-    "new": "  return s.others === 0",
+    "old": "  return !s.refereed && s.others === 0 && s.peers === 0 && (isCellRoom(s.room) || isWorldRoom(s.room));",
+    "new": "  return s.others === 0 && s.peers === 0 && (isCellRoom(s.room) || isWorldRoom(s.room));",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "LONE-SLEEP-zone-unread",
     "file": "src/net/loneSleep.js",
-    "old": "&& !s.zone && s.now",
-    "new": "&& s.now",
+    "old": "  return !!s.alone && !!s.ok && !!s.presence && isCellRoom(s.room) && s.open && !s.zone && s.now >= s.holdUntil;",
+    "new": "  return !!s.alone && !!s.ok && !!s.presence && isCellRoom(s.room) && s.open && s.now >= s.holdUntil;",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "LONE-SLEEP-whole-unread",
     "file": "src/net/loneSleep.js",
-    "old": "  return !!s.alone && !!s.ok",
-    "new": "  return !!s.ok",
+    "old": "  return !!s.alone && !!s.ok && !!s.presence && isCellRoom(s.room) && s.open && !s.zone && s.now >= s.holdUntil;",
+    "new": "  return !!s.ok && !!s.presence && isCellRoom(s.room) && s.open && !s.zone && s.now >= s.holdUntil;",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "LONE-SLEEP-hold-unread",
     "file": "src/net/loneSleep.js",
-    "old": " && s.now >= s.holdUntil;",
-    "new": ";",
+    "old": "  return !!s.alone && !!s.ok && !!s.presence && isCellRoom(s.room) && s.open && !s.zone && s.now >= s.holdUntil;",
+    "new": "  return !!s.alone && !!s.ok && !!s.presence && isCellRoom(s.room) && s.open && !s.zone;",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "LONE-SLEEP-fight-never",
     "file": "src/net/loneSleep.js",
-    "old": "!!last && !!pose && LONE_FIGHT_KEYS.some(",
-    "new": "false && LONE_FIGHT_KEYS.some(",
+    "old": "export const fightMoved = (last, pose) =>\n  !!last && !!pose && LONE_FIGHT_KEYS.some((k) => (last[k] | 0) !== (pose[k] | 0));",
+    "new": "export const fightMoved = (last, pose) => false && LONE_FIGHT_KEYS.some((k) => (last[k] | 0) !== (pose[k] | 0));",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "LONE-SLEEP-fight-keys",
     "file": "src/net/loneSleep.js",
-    "old": "['wd', 'an', 'cn', 'ar', 'hk', 'hu']",
-    "new": "['an', 'cn', 'ar', 'hk', 'hu']",
+    "old": "export const LONE_FIGHT_KEYS = Object.freeze(['wd', 'an', 'cn', 'ar', 'hk', 'hu']);",
+    "new": "export const LONE_FIGHT_KEYS = Object.freeze(['an', 'cn', 'ar', 'hk', 'hu']);",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "LONE-SLEEP-session-peers",
     "file": "src/net/loneSleep.js",
-    "old": "peers: s.peers.size,",
-    "new": "peers: 0,",
+    "old": "  return aloneNow({ refereed, others: s.othersHere, peers: s.peers.size, room: s.room });",
+    "new": "  return aloneNow({ refereed, others: s.othersHere, peers: 0, room: s.room });",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "LONE-SLEEP-session-others",
     "file": "src/net/loneSleep.js",
-    "old": "others: s.othersHere,",
-    "new": "others: 0,",
+    "old": "  return aloneNow({ refereed, others: s.othersHere, peers: s.peers.size, room: s.room });",
+    "new": "  return aloneNow({ refereed, others: 0, peers: s.peers.size, room: s.room });",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
@@ -194,8 +194,8 @@
   {
     "name": "LONE-SLEEP-alone-any-room",
     "file": "src/net/loneSleep.js",
-    "old": "(isCellRoom(s.room) || isWorldRoom(s.room));",
-    "new": "true;",
+    "old": "  return !s.refereed && s.others === 0 && s.peers === 0 && (isCellRoom(s.room) || isWorldRoom(s.room));",
+    "new": "  return !s.refereed && s.others === 0 && s.peers === 0 && true;",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
@@ -204,8 +204,8 @@
   {
     "name": "LONE-SLEEP-session-halo-rf",
     "file": "src/net/loneSleep.js",
-    "old": "  if (!refereed) for (const h of s._halo.values()) if (h.ws && s._rfOn.get(h.ws)) { refereed = true; break; }\n",
-    "new": "",
+    "old": "  if (!refereed)\n    for (const h of s._halo.values())\n      if (h.ws && s._rfOn.get(h.ws)) {\n        refereed = true;\n        break;\n      }\n  return aloneNow({ refereed, others: s.othersHere, peers: s.peers.size, room: s.room });",
+    "new": "  return aloneNow({ refereed, others: s.othersHere, peers: s.peers.size, room: s.room });",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
@@ -214,8 +214,8 @@
   {
     "name": "LONE-SLEEP-session-own-rf",
     "file": "src/net/loneSleep.js",
-    "old": "!!s.haloWhole || !!(s._ws && s._rfOn.get(s._ws));",
-    "new": "!!s.haloWhole;",
+    "old": "  let refereed = !!s.haloWhole || !!(s._ws && s._rfOn.get(s._ws));",
+    "new": "  let refereed = !!s.haloWhole;",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
@@ -224,8 +224,8 @@
   {
     "name": "LONE-SLEEP-session-whole",
     "file": "src/net/loneSleep.js",
-    "old": "let refereed = !!s.haloWhole || !!(s._ws",
-    "new": "let refereed = !!(s._ws",
+    "old": "  let refereed = !!s.haloWhole || !!(s._ws && s._rfOn.get(s._ws));",
+    "new": "  let refereed = !!(s._ws && s._rfOn.get(s._ws));",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
@@ -234,8 +234,8 @@
   {
     "name": "LONE-SLEEP-session-zone",
     "file": "src/net/loneSleep.js",
-    "old": "zone: s._wildZone === 1,",
-    "new": "zone: false,",
+    "old": "    zone: s._wildZone === 1,",
+    "new": "    zone: false,",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
@@ -244,8 +244,8 @@
   {
     "name": "LONE-SLEEP-session-open",
     "file": "src/net/loneSleep.js",
-    "old": "open: s.status === 'open' && !!s._ws && s._welcomed.has(s._ws),",
-    "new": "open: true,",
+    "old": "    open: s.status === 'open' && !!s._ws && s._welcomed.has(s._ws),",
+    "new": "    open: true,",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
@@ -254,8 +254,8 @@
   {
     "name": "LONE-SLEEP-session-gate",
     "file": "src/net/loneSleep.js",
-    "old": "ok: !!s.loneOk,",
-    "new": "ok: true,",
+    "old": "    ok: !!s.loneOk,",
+    "new": "    ok: true,",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
@@ -264,8 +264,8 @@
   {
     "name": "LONE-SLEEP-step-no-fight-hold",
     "file": "src/net/loneSleep.js",
-    "old": "  if (fightMoved(s._pose, pose)) s._loneHold = now + LONE_HOLD_MS;\n",
-    "new": "",
+    "old": "  if (fightMoved(s._pose, pose)) s._loneHold = now + LONE_HOLD_MS;\n  const lone = loneOf(s, now);",
+    "new": "  const lone = loneOf(s, now);",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
@@ -274,8 +274,8 @@
   {
     "name": "LONE-SLEEP-step-say-swapped",
     "file": "src/net/loneSleep.js",
-    "old": "? LONE_SAY : LONE_HOLD;",
-    "new": "? LONE_HOLD : LONE_SAY;",
+    "old": "  return now - s._lastSentAt >= LONE_POSE_MS ? LONE_SAY : LONE_HOLD;",
+    "new": "  return now - s._lastSentAt >= LONE_POSE_MS ? LONE_HOLD : LONE_SAY;",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
@@ -284,8 +284,8 @@
   {
     "name": "LONE-SLEEP-no-wake",
     "file": "src/net/loneSleep.js",
-    "old": "if (s._loneWas && s._pose && !s._dead && !loneOf(s, s._now())) s.sendPose(s._pose);",
-    "new": "if (s._loneWas && s._pose && !s._dead && !loneOf(s, s._now())) return;",
+    "old": "  if (s._loneWas && s._pose && !s._dead && !loneOf(s, s._now())) s.sendPose(s._pose);",
+    "new": "  if (s._loneWas && s._pose && !s._dead && !loneOf(s, s._now())) return;",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
@@ -294,8 +294,8 @@
   {
     "name": "LONE-SLEEP-wake-the-dead",
     "file": "src/net/loneSleep.js",
-    "old": "if (s._loneWas && s._pose && !s._dead && !loneOf",
-    "new": "if (s._loneWas && s._pose && !loneOf",
+    "old": "  if (s._loneWas && s._pose && !s._dead && !loneOf(s, s._now())) s.sendPose(s._pose);",
+    "new": "  if (s._loneWas && s._pose && !loneOf(s, s._now())) s.sendPose(s._pose);",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
@@ -304,8 +304,8 @@
   {
     "name": "LONE-SLEEP-no-pose-ahead",
     "file": "src/net/loneSleep.js",
-    "old": "      if (s._loneWas && s._welcomed.has(ws)) poseAhead(s, ws, send);\n",
-    "new": "",
+    "old": "      if (s._loneWas && s._welcomed.has(ws)) poseAhead(s, ws, send);\n      if (LONE_MINT_RE.test(frame)) s._loneHold = s._now() + LONE_HOLD_MS;",
+    "new": "      if (LONE_MINT_RE.test(frame)) s._loneHold = s._now() + LONE_HOLD_MS;",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
@@ -324,8 +324,8 @@
   {
     "name": "LONE-SLEEP-no-mint-hold",
     "file": "src/net/loneSleep.js",
-    "old": "      if (LONE_MINT_RE.test(frame)) s._loneHold = s._now() + LONE_HOLD_MS;\n",
-    "new": "",
+    "old": "      if (LONE_MINT_RE.test(frame)) s._loneHold = s._now() + LONE_HOLD_MS;\n    }",
+    "new": "    }",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
@@ -334,8 +334,8 @@
   {
     "name": "LONE-SLEEP-ahead-every-time",
     "file": "src/net/loneSleep.js",
-    "old": "  if (last && last.x === pose.x && last.z === pose.z && (last.mv | 0) === (pose.mv | 0)) return;\n",
-    "new": "",
+    "old": "  if (last && last.x === pose.x && last.z === pose.z && (last.mv | 0) === (pose.mv | 0)) return;\n  const pl = s.poseRide?.() ?? null,",
+    "new": "  const pl = s.poseRide?.() ?? null,",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
@@ -344,8 +344,8 @@
   {
     "name": "LONE-SLEEP-ahead-clock-kept",
     "file": "src/net/loneSleep.js",
-    "old": "  if (mine) { s._lastSent = { ...pose }; s._lastSentAt = now; s.stats.poses++; }",
-    "new": "  if (mine) { s._lastSent = { ...pose }; s.stats.poses++; }",
+    "old": "    s._lastSentAt = now;\n    s.stats.poses++;",
+    "new": "    s.stats.poses++;",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
@@ -354,8 +354,8 @@
   {
     "name": "LONE-SLEEP-ping-not-quiet",
     "file": "src/net/loneSleep.js",
-    "old": "/^\\{\"t\":\"(?:ping|hello|pose|lease)\"/;",
-    "new": "/^\\{\"t\":\"(?:hello|pose|lease)\"/;",
+    "old": "export const LONE_QUIET_RE = /^\\{\"t\":\"(?:ping|hello|pose|lease)\"/;",
+    "new": "export const LONE_QUIET_RE = /^\\{\"t\":\"(?:hello|pose|lease)\"/;",
     "tests": [
       "test/net/lonesleep.test.js"
     ],
@@ -364,8 +364,8 @@
   {
     "name": "LONE-SLEEP-pose-not-quiet",
     "file": "src/net/loneSleep.js",
-    "old": "/^\\{\"t\":\"(?:ping|hello|pose|lease)\"/;",
-    "new": "/^\\{\"t\":\"(?:ping|hello|lease)\"/;",
+    "old": "export const LONE_QUIET_RE = /^\\{\"t\":\"(?:ping|hello|pose|lease)\"/;",
+    "new": "export const LONE_QUIET_RE = /^\\{\"t\":\"(?:ping|hello|lease)\"/;",
     "tests": [
       "test/net/lonesleep.test.js"
     ],

@@ -36,9 +36,9 @@
 // so a relay keeps its last good state); one it takes answers the next state and the events it made.
 //
 // Not a DFU member: Daggerfall Unity has no such game - the mod does. Ledger A row (THE KING'S GAMBIT).
-import { VANILLA_ENEMY_BASICS, enemyDisplayName } from '../characters/enemy/enemyBasics.js';   // DEX1: the vanilla rows by name - a mod that writes the live table's (Daggerfall Enemy Expansion's classic lines) never moves the roster, whenever this module is first read
+import { VANILLA_ENEMY_BASICS, enemyDisplayName } from '../characters/enemy/enemyBasics.js'; // DEX1: the vanilla rows by name - a mod that writes the live table's (Daggerfall Enemy Expansion's classic lines) never moves the roster, whenever this module is first read
 import { drawBelow } from './dice.js';
-import { roundToInt } from '../systems/mathf.js';   // Mathf.RoundToInt's one home
+import { roundToInt } from '../systems/mathf.js'; // Mathf.RoundToInt's one home
 
 // ── THE MOD'S NUMBERS ─────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -111,12 +111,27 @@ export const KG_RAND_DRAWS_MAX = 100_000;
  *  Open field, its thirtieth failure. A layout's name is a word a player reads, so it is the client's to say through the
  *  text core (L10N4) - the key is what the law keeps and sends. */
 export const KG_LAYOUTS = Object.freeze([
-  Object.freeze({ key: 'pillared-hall', floor: Object.freeze([Object.freeze([0.27, 0.27, 0.3]), Object.freeze([0.36, 0.36, 0.4])]) }),
-  Object.freeze({ key: 'guard-rooms', floor: Object.freeze([Object.freeze([0.3, 0.23, 0.17]), Object.freeze([0.4, 0.31, 0.22])]) }),
-  Object.freeze({ key: 'ruined-keep', floor: Object.freeze([Object.freeze([0.24, 0.29, 0.2]), Object.freeze([0.32, 0.38, 0.26])]) }),
-  Object.freeze({ key: 'moat-and-bridges', floor: Object.freeze([Object.freeze([0.4, 0.35, 0.24]), Object.freeze([0.49, 0.43, 0.3])]) }),
+  Object.freeze({
+    key: 'pillared-hall',
+    floor: Object.freeze([Object.freeze([0.27, 0.27, 0.3]), Object.freeze([0.36, 0.36, 0.4])]),
+  }),
+  Object.freeze({
+    key: 'guard-rooms',
+    floor: Object.freeze([Object.freeze([0.3, 0.23, 0.17]), Object.freeze([0.4, 0.31, 0.22])]),
+  }),
+  Object.freeze({
+    key: 'ruined-keep',
+    floor: Object.freeze([Object.freeze([0.24, 0.29, 0.2]), Object.freeze([0.32, 0.38, 0.26])]),
+  }),
+  Object.freeze({
+    key: 'moat-and-bridges',
+    floor: Object.freeze([Object.freeze([0.4, 0.35, 0.24]), Object.freeze([0.49, 0.43, 0.3])]),
+  }),
 ]);
-export const KG_OPEN_FIELD = Object.freeze({ key: 'open-field', floor: Object.freeze([Object.freeze([0.24, 0.29, 0.2]), Object.freeze([0.32, 0.38, 0.26])]) });
+export const KG_OPEN_FIELD = Object.freeze({
+  key: 'open-field',
+  floor: Object.freeze([Object.freeze([0.24, 0.29, 0.2]), Object.freeze([0.32, 0.38, 0.26])]),
+});
 
 /** The commands (GameCmdType, in the mod's order): a move, an attack, a potion, the turn ended. */
 export const KG_COMMANDS = Object.freeze(['move', 'attack', 'potion', 'end']);
@@ -142,12 +157,29 @@ export function makeUnit(mobileType, { king = false, ranged = false } = {}) {
   const row = Number.isInteger(mobileType) ? VANILLA_ENEMY_BASICS[String(mobileType)] : undefined;
   if (!row) return null;
   const calling = mobileType >= 128;
-  if (!king && !calling && !(Number.isInteger(row.level) && Number.isInteger(row.minHealth) && Number.isInteger(row.maxHealth))) return null;
+  if (
+    !king &&
+    !calling &&
+    !(Number.isInteger(row.level) && Number.isInteger(row.minHealth) && Number.isInteger(row.maxHealth))
+  )
+    return null;
   const level = king ? KG_KING_LEVEL : calling ? KG_CLASS_LEVEL : row.level;
   const hp = king ? KG_KING_HP : calling ? KG_CLASS_HP : Math.max(1, Math.trunc((row.minHealth + row.maxHealth) / 2));
-  const atk = Math.max(1, roundToInt(f32(f32(f32(level) * KG_DAMAGE_PER_LEVEL) * f32(ranged ? KG_RANGED_DAMAGE_FACTOR : 1))));
+  const atk = Math.max(
+    1,
+    roundToInt(f32(f32(f32(level) * KG_DAMAGE_PER_LEVEL) * f32(ranged ? KG_RANGED_DAMAGE_FACTOR : 1))),
+  );
   const worth = f32(f32(f32(Math.sqrt(f32(hp * atk))) * KG_COST_SCALE) * f32(ranged ? KG_RANGED_COST_FACTOR : 1));
-  return Object.freeze({ id: mobileType, name: enemyDisplayName(mobileType), level, hp, atk, cost: king ? 0 : Math.max(KG_MIN_COST, roundToInt(worth)), ranged, king });
+  return Object.freeze({
+    id: mobileType,
+    name: enemyDisplayName(mobileType),
+    level,
+    hp,
+    atk,
+    cost: king ? 0 : Math.max(KG_MIN_COST, roundToInt(worth)),
+    ranged,
+    king,
+  });
 }
 
 /** CompareOrdinal: the names' code units, as .NET's ordinal compare reads them. */
@@ -162,7 +194,8 @@ function buildRoster() {
   /** @type {GambitUnit[]} */
   const out = [];
   for (const key of Object.keys(VANILLA_ENEMY_BASICS)) {
-    const id = Number(key), row = VANILLA_ENEMY_BASICS[key];
+    const id = Number(key),
+      row = VANILLA_ENEMY_BASICS[key];
     if (!(row.maleTexture > 0)) continue;
     let ranged;
     if (id < 128) ranged = row.hasRangedAttack1 === true;
@@ -232,7 +265,10 @@ export function autoFill(army, budget, source) {
     for (let round = 0; out.length < KG_MAX_UNITS && round < KG_AUTOFILL_ROUNDS; round++) {
       let list = KG_ROSTER.filter((u) => u.cost <= money);
       if (!list.length) break;
-      if (out.filter((id) => rosterUnit(id)?.ranged).length < KG_AUTOFILL_RANGED && f32(nextDouble(rand32)) < f32(KG_AUTOFILL_LEAN)) {
+      if (
+        out.filter((id) => rosterUnit(id)?.ranged).length < KG_AUTOFILL_RANGED &&
+        f32(nextDouble(rand32)) < f32(KG_AUTOFILL_LEAN)
+      ) {
         const ranged = list.filter((u) => u.ranged);
         if (ranged.length) list = ranged;
       }
@@ -242,7 +278,9 @@ export function autoFill(army, budget, source) {
       out.push(u.id);
       money -= u.cost;
     }
-  } catch { return null; }
+  } catch {
+    return null;
+  }
   return out;
 }
 
@@ -255,22 +293,36 @@ export const nextDouble = (rand32) => (rand32() >>> 0) / 4294967296;
 
 /** A cell's index in a board's `tiles` (row-major), and whether a cell is on the board (InBounds). */
 export const cellIndex = (/** @type {number} */ c, /** @type {number} */ r) => r * KG_COLS + c;
-export const inBounds = (/** @type {number} */ c, /** @type {number} */ r) => c >= 0 && c < KG_COLS && r >= 0 && r < KG_ROWS;
+export const inBounds = (/** @type {number} */ c, /** @type {number} */ r) =>
+  c >= 0 && c < KG_COLS && r >= 0 && r < KG_ROWS;
 /** A cell's tile, or -1 off the board. @param {number[]} tiles @param {number} c @param {number} r */
 export const tileAt = (tiles, c, r) => (inBounds(c, r) ? tiles[cellIndex(c, r)] : -1);
 /** IsPassable: floor alone is walked. @param {number[]} tiles @param {number} c @param {number} r */
 export const isPassable = (tiles, c, r) => tileAt(tiles, c, r) === KG_TILE.floor;
 /** BlocksSight: a wall or a pillar (water does not). @param {number[]} tiles @param {number} c @param {number} r */
-export const blocksSight = (tiles, c, r) => { const t = tileAt(tiles, c, r); return t === KG_TILE.wall || t === KG_TILE.pillar; };
+export const blocksSight = (tiles, c, r) => {
+  const t = tileAt(tiles, c, r);
+  return t === KG_TILE.wall || t === KG_TILE.pillar;
+};
 
 /** The four steps breadth-first walks take, in the mod's order. */
-const STEPS = Object.freeze([Object.freeze([1, 0]), Object.freeze([-1, 0]), Object.freeze([0, 1]), Object.freeze([0, -1])]);
+const STEPS = Object.freeze([
+  Object.freeze([1, 0]),
+  Object.freeze([-1, 0]),
+  Object.freeze([0, 1]),
+  Object.freeze([0, -1]),
+]);
 
 /** Rand(a, b): a draw in [a, b). @param {() => number} rand32 @param {number} a @param {number} b */
 const rand = (rand32, a, b) => a + drawBelow(b - a, rand32);
 
 /** SetTile: a cell and its mirror through the centre, only within the zone's rows. */
-function setTile(/** @type {number[]} */ tiles, /** @type {number} */ c, /** @type {number} */ r, /** @type {number} */ t) {
+function setTile(
+  /** @type {number[]} */ tiles,
+  /** @type {number} */ c,
+  /** @type {number} */ r,
+  /** @type {number} */ t,
+) {
   if (c >= 0 && c < KG_COLS && r >= KG_ZONE_TOP && r <= KG_ZONE_BOTTOM) {
     tiles[cellIndex(c, r)] = t;
     tiles[cellIndex(KG_COLS - 1 - c, KG_ROWS - 1 - r)] = t;
@@ -278,17 +330,25 @@ function setTile(/** @type {number[]} */ tiles, /** @type {number} */ c, /** @ty
 }
 /** PlaceWallCell: a wall on floor, never on the board's first or last column, within the zone's rows. */
 function placeWallCell(/** @type {number[]} */ tiles, /** @type {number} */ c, /** @type {number} */ r) {
-  if (c >= 1 && c <= KG_COLS - 2 && r >= KG_ZONE_TOP && r <= KG_ZONE_BOTTOM && tiles[cellIndex(c, r)] === KG_TILE.floor) setTile(tiles, c, r, KG_TILE.wall);
+  if (c >= 1 && c <= KG_COLS - 2 && r >= KG_ZONE_TOP && r <= KG_ZONE_BOTTOM && tiles[cellIndex(c, r)] === KG_TILE.floor)
+    setTile(tiles, c, r, KG_TILE.wall);
 }
 /** RandomChunks: `count` small walls, each a cell and its shape's neighbours. */
 function randomChunks(/** @type {number[]} */ tiles, /** @type {number} */ count, /** @type {() => number} */ rand32) {
   for (let i = 0; i < count; i++) {
-    const c = rand(rand32, 1, 14), r = rand(rand32, 3, 7), shape = rand(rand32, 0, 5);
+    const c = rand(rand32, 1, 14),
+      r = rand(rand32, 3, 7),
+      shape = rand(rand32, 0, 5);
     placeWallCell(tiles, c, r);
     if (shape === 1) placeWallCell(tiles, c + 1, r);
     else if (shape === 2) placeWallCell(tiles, c, r + 1);
-    else if (shape === 3) { placeWallCell(tiles, c + 1, r); placeWallCell(tiles, c, r + 1); }
-    else if (shape === 4) { placeWallCell(tiles, c - 1, r); placeWallCell(tiles, c + 1, r); }
+    else if (shape === 3) {
+      placeWallCell(tiles, c + 1, r);
+      placeWallCell(tiles, c, r + 1);
+    } else if (shape === 4) {
+      placeWallCell(tiles, c - 1, r);
+      placeWallCell(tiles, c + 1, r);
+    }
   }
 }
 
@@ -305,7 +365,8 @@ export function pathMap(tiles, c, r) {
   for (let q = 0; q < queue.length; q++) {
     const [x, y] = queue[q];
     for (const [dx, dy] of STEPS) {
-      const nx = x + dx, ny = y + dy;
+      const nx = x + dx,
+        ny = y + dy;
       if (isPassable(tiles, nx, ny) && dist[cellIndex(nx, ny)] === KG_UNREACHABLE) {
         dist[cellIndex(nx, ny)] = dist[cellIndex(x, y)] + 1;
         queue.push([nx, ny]);
@@ -321,7 +382,8 @@ export function mapIsPlayable(tiles) {
   const [kc, kr] = KG_KING_CELL;
   const dist = pathMap(tiles, kc, kr);
   if (dist[cellIndex(kc, KG_ROWS - 1 - kr)] >= KG_UNREACHABLE) return false;
-  let floor = 0, reached = 0;
+  let floor = 0,
+    reached = 0;
   for (let i = 0; i < tiles.length; i++) {
     if (tiles[i] !== KG_TILE.floor) continue;
     floor++;
@@ -339,7 +401,8 @@ export const hazardAt = (board, c, r) => board.hazards.find((h) => h.col === c &
 /** KG3: the round at whose end the warnings standing in round `round` turn into hazards - HazardTick's clock as
  *  finishTurn keeps it (the round counts on after the guest's turn, and every KG_HAZARD_SPAWN_EVERY-th count arms them),
  *  so a client says it off the law and never off the constant's present value. @param {number} round */
-export const warningsArmAt = (round) => round + ((KG_HAZARD_SPAWN_EVERY - ((round + 1) % KG_HAZARD_SPAWN_EVERY)) % KG_HAZARD_SPAWN_EVERY);
+export const warningsArmAt = (round) =>
+  round + ((KG_HAZARD_SPAWN_EVERY - ((round + 1) % KG_HAZARD_SPAWN_EVERY)) % KG_HAZARD_SPAWN_EVERY);
 /** The piece on (c, r) (PieceAt), or null. @param {{pieces: GambitPiece[]}} board @param {number} c @param {number} r */
 export const pieceAt = (board, c, r) => board.pieces.find((p) => p.col === c && p.row === r) ?? null;
 /** The piece numbered `id` (PieceById), or null. @param {{pieces: GambitPiece[]}} board @param {number} id */
@@ -353,8 +416,10 @@ function freeForHazard(board, /** @type {number} */ c, /** @type {number} */ r) 
  *  the pair's kind drawn after its cells. Answers whether a pair was laid. @param {GambitBoard} board */
 function spawnHazardPair(board, /** @type {boolean} */ active, /** @type {() => number} */ rand32) {
   for (let i = 0; i < KG_HAZARD_TRIES; i++) {
-    const c = rand(rand32, 0, KG_COLS), r = rand(rand32, KG_ZONE_TOP, KG_ZONE_BOTTOM + 1);
-    const mc = KG_COLS - 1 - c, mr = KG_ROWS - 1 - r;
+    const c = rand(rand32, 0, KG_COLS),
+      r = rand(rand32, KG_ZONE_TOP, KG_ZONE_BOTTOM + 1);
+    const mc = KG_COLS - 1 - c,
+      mr = KG_ROWS - 1 - r;
     if ((c !== mc || r !== mr) && freeForHazard(board, c, r) && freeForHazard(board, mc, mr)) {
       const kind = KG_HAZARD_KINDS[rand(rand32, 0, KG_HAZARD_KINDS.length)];
       board.hazards.push({ col: c, row: r, kind, active }, { col: mc, row: mr, kind, active });
@@ -374,7 +439,8 @@ const clearTiles = () => new Array(KG_COLS * KG_ROWS).fill(KG_TILE.floor);
  */
 export function buildMap(rand32) {
   for (let i = 0; i < KG_MAP_TRIES; i++) {
-    const tiles = clearTiles(), board = { tiles, hazards: [], pieces: [] };
+    const tiles = clearTiles(),
+      board = { tiles, hazards: [], pieces: [] };
     const which = rand(rand32, 0, KG_LAYOUTS.length);
     if (which === 0) {
       for (let r = 3; r <= 9; r += 2) for (let c = 1; c < 14; c += 3) setTile(tiles, c, r, KG_TILE.pillar);
@@ -402,26 +468,51 @@ export function buildMap(rand32) {
 // ── THE DEPLOYMENT ────────────────────────────────────────────────────────────────────────────────────────────────
 
 /** CenterOut: the columns from the board's middle outward, the lower side first (7, 6, 8, 5, 9 ... 0, 14). */
-export const KG_CENTER_OUT = Object.freeze((() => {
-  const mid = KG_KING_CELL[0], out = [mid];
-  for (let i = 1; i < KG_COLS; i++) {
-    if (mid - i >= 0) out.push(mid - i);
-    if (mid + i < KG_COLS) out.push(mid + i);
-  }
-  return out;
-})());
+export const KG_CENTER_OUT = Object.freeze(
+  (() => {
+    const mid = KG_KING_CELL[0],
+      out = [mid];
+    for (let i = 1; i < KG_COLS; i++) {
+      if (mid - i >= 0) out.push(mid - i);
+      if (mid + i < KG_COLS) out.push(mid + i);
+    }
+    return out;
+  })(),
+);
 
 /** PlaceArmy, for side `side` (AddPiece mirrors the guest's): the king on its cell, then the units dearest first (a tie
  *  by id) - a melee unit into row 11, else 10, else 12; a ranged one into 12, else 10, else 11 - each row centre-out,
  *  row 12 without the king's column. Pieces are numbered from `next.n` in that order. */
-function placeArmy(/** @type {GambitPiece[]} */ pieces, /** @type {number[]} */ ids, /** @type {number} */ side, /** @type {{n: number}} */ next) {
+function placeArmy(
+  /** @type {GambitPiece[]} */ pieces,
+  /** @type {number[]} */ ids,
+  /** @type {number} */ side,
+  /** @type {{n: number}} */ next,
+) {
   const [kc, kr] = KG_KING_CELL;
   const add = (/** @type {GambitUnit} */ u, /** @type {number} */ col, /** @type {number} */ row) => {
-    if (side === 1) { col = KG_COLS - 1 - col; row = KG_ROWS - 1 - row; }
-    pieces.push({ id: next.n++, side, unit: u.id, king: u.king, ranged: u.ranged, col, row, level: u.level, hp: u.hp, maxHp: u.hp, atk: u.atk });
+    if (side === 1) {
+      col = KG_COLS - 1 - col;
+      row = KG_ROWS - 1 - row;
+    }
+    pieces.push({
+      id: next.n++,
+      side,
+      unit: u.id,
+      king: u.king,
+      ranged: u.ranged,
+      col,
+      row,
+      level: u.level,
+      hp: u.hp,
+      maxHp: u.hp,
+      atk: u.atk,
+    });
   };
   add(KG_KINGS[side], kc, kr);
-  /** @type {number[][]} */ const back = [], middle = [], front = [];
+  /** @type {number[][]} */ const back = [],
+    middle = [],
+    front = [];
   for (const c of KG_CENTER_OUT) {
     if (c !== kc) back.push([c, kr]);
     middle.push([c, kr - 1]);
@@ -429,7 +520,9 @@ function placeArmy(/** @type {GambitPiece[]} */ pieces, /** @type {number[]} */ 
   }
   const units = ids.map(rosterUnit).sort((a, b) => b.cost - a.cost || a.id - b.id);
   for (const u of units) {
-    const slot = u.ranged ? (back.shift() ?? front.shift() ?? middle.shift()) : (middle.shift() ?? front.shift() ?? back.shift());
+    const slot = u.ranged
+      ? (back.shift() ?? front.shift() ?? middle.shift())
+      : (middle.shift() ?? front.shift() ?? back.shift());
     if (slot) add(u, slot[0], slot[1]);
   }
 }
@@ -448,7 +541,7 @@ export function checkedRand32(source) {
   let draws = 0;
   return () => {
     const v = source();
-    if (!Number.isInteger(v) || v < 0 || v > 0xFFFFFFFF || ++draws > KG_RAND_DRAWS_MAX) throw new Error('rand32');
+    if (!Number.isInteger(v) || v < 0 || v > 0xffffffff || ++draws > KG_RAND_DRAWS_MAX) throw new Error('rand32');
     return v;
   };
 }
@@ -461,25 +554,60 @@ export function checkedRand32(source) {
  * @param {{armies: number[][], rand32: () => number, potions?: number[], budgets?: number[]}} p
  * @returns {GambitState|null}
  */
-export function newGambit({ armies, rand32: source, potions = [KG_POTIONS_PER_SIDE, KG_POTIONS_PER_SIDE], budgets = [KG_POINT_BUDGET, KG_POINT_BUDGET] }) {
+export function newGambit({
+  armies,
+  rand32: source,
+  potions = [KG_POTIONS_PER_SIDE, KG_POTIONS_PER_SIDE],
+  budgets = [KG_POINT_BUDGET, KG_POINT_BUDGET],
+}) {
   // each side read by its index, as armyRefusal reads a list: `every` and `some` step over a hole (AUDIT KG A3)
   if (!Array.isArray(armies) || armies.length !== 2 || typeof source !== 'function') return null;
-  if (!Array.isArray(budgets) || budgets.length !== 2 || !SIDES.every((s) => Number.isInteger(budgets[s]) && budgets[s] >= 0 && budgets[s] <= KG_BUDGET_MAX)) return null;
-  if (!Array.isArray(potions) || potions.length !== 2 || !SIDES.every((s) => Number.isInteger(potions[s]) && potions[s] >= 0 && potions[s] <= KG_POTIONS_MAX)) return null;
+  if (
+    !Array.isArray(budgets) ||
+    budgets.length !== 2 ||
+    !SIDES.every((s) => Number.isInteger(budgets[s]) && budgets[s] >= 0 && budgets[s] <= KG_BUDGET_MAX)
+  )
+    return null;
+  if (
+    !Array.isArray(potions) ||
+    potions.length !== 2 ||
+    !SIDES.every((s) => Number.isInteger(potions[s]) && potions[s] >= 0 && potions[s] <= KG_POTIONS_MAX)
+  )
+    return null;
   if (SIDES.some((s) => armyRefusal(armies[s], budgets[s]) !== null)) return null;
   let map;
-  try { map = buildMap(checkedRand32(source)); } catch { return null; }
+  try {
+    map = buildMap(checkedRand32(source));
+  } catch {
+    return null;
+  }
   /** @type {GambitPiece[]} */ const pieces = [];
   const next = { n: 0 };
   placeArmy(pieces, armies[0], 0, next);
   placeArmy(pieces, armies[1], 1, next);
-  return { layout: map.layout, tiles: map.tiles, hazards: map.hazards, pieces, turn: 0, actions: KG_ACTIONS_PER_TURN, round: 1, potions: potions.slice(), ending: false, over: null };
+  return {
+    layout: map.layout,
+    tiles: map.tiles,
+    hazards: map.hazards,
+    pieces,
+    turn: 0,
+    actions: KG_ACTIONS_PER_TURN,
+    round: 1,
+    potions: potions.slice(),
+    ending: false,
+    over: null,
+  };
 }
 
 // ── WHAT A PIECE MAY DO ───────────────────────────────────────────────────────────────────────────────────────────
 
 /** Manhattan distance (Distance). */
-export const distance = (/** @type {number} */ c1, /** @type {number} */ r1, /** @type {number} */ c2, /** @type {number} */ r2) => Math.abs(c1 - c2) + Math.abs(r1 - r2);
+export const distance = (
+  /** @type {number} */ c1,
+  /** @type {number} */ r1,
+  /** @type {number} */ c2,
+  /** @type {number} */ r2,
+) => Math.abs(c1 - c2) + Math.abs(r1 - r2);
 /** A piece's reach (RangeOf): KG_RANGED_RANGE ranged, 1 else. @param {{ranged: boolean}} p */
 export const rangeOf = (p) => (p.ranged ? KG_RANGED_RANGE : 1);
 /** RoundDiv: num / den rounded half away from zero, in integers (den > 0). */
@@ -493,9 +621,12 @@ export function roundDiv(/** @type {number} */ num, /** @type {number} */ den) {
  * @param {number[]} tiles @param {number} c1 @param {number} r1 @param {number} c2 @param {number} r2
  */
 export function hasLineOfSight(tiles, c1, r1, c2, r2) {
-  const dc = c2 - c1, dr = r2 - r1, n = Math.max(Math.abs(dc), Math.abs(dr)) * KG_SIGHT_SAMPLES;
+  const dc = c2 - c1,
+    dr = r2 - r1,
+    n = Math.max(Math.abs(dc), Math.abs(dr)) * KG_SIGHT_SAMPLES;
   for (let i = 1; i < n; i++) {
-    const c = c1 + roundDiv(dc * i, n), r = r1 + roundDiv(dr * i, n);
+    const c = c1 + roundDiv(dc * i, n),
+      r = r1 + roundDiv(dr * i, n);
     if ((c !== c1 || r !== r1) && (c !== c2 || r !== r2) && blocksSight(tiles, c, r)) return false;
   }
   return true;
@@ -511,7 +642,8 @@ export function targetInRange(board, p, col, row, target) {
   return !(p.ranged && d > 1 && !hasLineOfSight(board.tiles, col, row, target.col, target.row));
 }
 /** FoesInRange: the other side's pieces `p` reaches from where it stands, in the pieces' order. @param {GambitBoard} board @param {GambitPiece} p */
-export const foesInRange = (board, p) => board.pieces.filter((o) => o.side !== p.side && targetInRange(board, p, p.col, p.row, o));
+export const foesInRange = (board, p) =>
+  board.pieces.filter((o) => o.side !== p.side && targetInRange(board, p, p.col, p.row, o));
 /**
  * GetReachable's walk, the law's one: breadth-first from `p`'s cell over floor up to KG_MOVE_RANGE steps, through no piece
  * (its own side's included) - `{met, from}`: the cells in the order the walk meets them, and each met cell's index to the
@@ -521,12 +653,16 @@ export const foesInRange = (board, p) => board.pieces.filter((o) => o.side !== p
 function walkFrom(board, p) {
   /** @type {number[][]} */ const met = [];
   const start = cellIndex(p.col, p.row);
-  const steps = new Map([[start, 0]]), from = new Map([[start, -1]]), queue = [[p.col, p.row]];
+  const steps = new Map([[start, 0]]),
+    from = new Map([[start, -1]]),
+    queue = [[p.col, p.row]];
   for (let q = 0; q < queue.length; q++) {
-    const [x, y] = queue[q], d = steps.get(cellIndex(x, y));
+    const [x, y] = queue[q],
+      d = steps.get(cellIndex(x, y));
     if (d >= KG_MOVE_RANGE) continue;
     for (const [dx, dy] of STEPS) {
-      const nx = x + dx, ny = y + dy;
+      const nx = x + dx,
+        ny = y + dy;
       if (isPassable(board.tiles, nx, ny) && !steps.has(cellIndex(nx, ny)) && !pieceAt(board, nx, ny)) {
         steps.set(cellIndex(nx, ny), d + 1);
         from.set(cellIndex(nx, ny), cellIndex(x, y));
@@ -558,7 +694,8 @@ export function reachPath(board, p, col, row) {
   const end = inBounds(col, row) ? cellIndex(col, row) : -1;
   if (end === cellIndex(p.col, p.row) || !from.has(end)) return null;
   /** @type {number[][]} */ const path = [];
-  for (let i = end; i !== -1; i = /** @type {number} */ (from.get(i))) path.unshift([i % KG_COLS, Math.floor(i / KG_COLS)]);
+  for (let i = end; i !== -1; i = /** @type {number} */ (from.get(i)))
+    path.unshift([i % KG_COLS, Math.floor(i / KG_COLS)]);
   return path;
 }
 
@@ -607,7 +744,8 @@ export function gambitRefusal(state, side, cmd) {
  *  ending, says it. Answers whether the game is over. */
 function checkOver(/** @type {GambitState} */ st, /** @type {any[]} */ events) {
   if (st.over) return true;
-  const king = [false, false], any = [false, false];
+  const king = [false, false],
+    any = [false, false];
   for (const p of st.pieces) {
     any[p.side] = true;
     if (p.king) king[p.side] = true;
@@ -635,7 +773,11 @@ export function gambitAct(state, side, cmd, rand32) {
   /** @type {any[]} */ const events = [];
   let u = 0;
   if (cmd.type === 'attack') {
-    try { u = nextDouble(checkedRand32(rand32)); } catch { return { refused: 'rand' }; }
+    try {
+      u = nextDouble(checkedRand32(rand32));
+    } catch {
+      return { refused: 'rand' };
+    }
   }
   /** @type {GambitState} */ const st = structuredClone(state);
   if (cmd.type === 'end') {
@@ -655,7 +797,15 @@ export function gambitAct(state, side, cmd, rand32) {
     const damage = blowRoll(p.atk, u);
     t.hp -= damage;
     const killed = t.hp <= 0;
-    events.push({ t: 'attack', side, piece: p.id, target: t.id, damage, killed, shot: p.ranged && distance(p.col, p.row, t.col, t.row) > 1 });
+    events.push({
+      t: 'attack',
+      side,
+      piece: p.id,
+      target: t.id,
+      damage,
+      killed,
+      shot: p.ranged && distance(p.col, p.row, t.col, t.row) > 1,
+    });
     if (killed) st.pieces = st.pieces.filter((x) => x !== t);
     checkOver(st, events);
   } else {
@@ -706,10 +856,21 @@ export function finishTurn(state, rand32) {
       if (armed.length) events.push({ t: 'armed', cells: armed });
       if (st.hazards.length + 2 <= KG_MAX_HAZARDS) {
         let laid;
-        try { laid = spawnHazardPair(st, false, checkedRand32(rand32)); } catch { return { refused: 'rand' }; }
+        try {
+          laid = spawnHazardPair(st, false, checkedRand32(rand32));
+        } catch {
+          return { refused: 'rand' };
+        }
         if (laid) {
           const [a, b] = st.hazards.slice(-2);
-          events.push({ t: 'warning', kind: a.kind, cells: [[a.col, a.row], [b.col, b.row]] });
+          events.push({
+            t: 'warning',
+            kind: a.kind,
+            cells: [
+              [a.col, a.row],
+              [b.col, b.row],
+            ],
+          });
         }
       }
     }

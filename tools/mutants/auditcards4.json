@@ -380,8 +380,8 @@
   {
     "name": "AC4-T-topup-in-hand",
     "file": "src/net/holdemTable.js",
-    "old": "  if (t.hand && t.handSeats.includes(chair)) return 'in hand';\n",
-    "new": "",
+    "old": "  if (t.hand && t.handSeats.includes(chair)) return 'in hand';\n  if (!(stake.amount >= HOLDEM_TOPUP_MIN_BB * t.bb && seat.stack + stake.amount <= HOLDEM_STAKE_MAX_BB * t.bb))",
+    "new": "  if (!(stake.amount >= HOLDEM_TOPUP_MIN_BB * t.bb && seat.stack + stake.amount <= HOLDEM_STAKE_MAX_BB * t.bb))",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",
@@ -398,8 +398,8 @@
   {
     "name": "AC4-T-topup-past-most",
     "file": "src/net/holdemTable.js",
-    "old": "seat.stack + stake.amount <= HOLDEM_STAKE_MAX_BB * t.bb",
-    "new": "true",
+    "old": "  if (!(stake.amount >= HOLDEM_TOPUP_MIN_BB * t.bb && seat.stack + stake.amount <= HOLDEM_STAKE_MAX_BB * t.bb))\n    return 'bad stake';",
+    "new": "  if (!(stake.amount >= HOLDEM_TOPUP_MIN_BB * t.bb && true)) return 'bad stake';",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",
@@ -1012,8 +1012,8 @@
   {
     "name": "AC4-B-buy-in-low-edge",
     "file": "src/net/holdemTable.js",
-    "old": "stake && !(stake.amount >= HOLDEM_STAKE_MIN_BB * t.bb &&",
-    "new": "stake && !(stake.amount > HOLDEM_STAKE_MIN_BB * t.bb &&",
+    "old": "  if (stake && !(stake.amount >= HOLDEM_STAKE_MIN_BB * t.bb && stake.amount <= HOLDEM_STAKE_MAX_BB * t.bb))",
+    "new": "  if (stake && !(stake.amount > HOLDEM_STAKE_MIN_BB * t.bb && stake.amount <= HOLDEM_STAKE_MAX_BB * t.bb))",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",
@@ -1030,8 +1030,8 @@
   {
     "name": "AC4-B-buy-in-high-edge",
     "file": "src/net/holdemTable.js",
-    "old": "&& stake.amount <= HOLDEM_STAKE_MAX_BB * t.bb)) return 'bad stake';",
-    "new": "&& stake.amount < HOLDEM_STAKE_MAX_BB * t.bb)) return 'bad stake';",
+    "old": "  if (stake && !(stake.amount >= HOLDEM_STAKE_MIN_BB * t.bb && stake.amount <= HOLDEM_STAKE_MAX_BB * t.bb))",
+    "new": "  if (stake && !(stake.amount >= HOLDEM_STAKE_MIN_BB * t.bb && stake.amount < HOLDEM_STAKE_MAX_BB * t.bb))",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",
@@ -1066,8 +1066,8 @@
   {
     "name": "AC4-B-never-broke",
     "file": "src/net/holdemTable.js",
-    "old": "r: seat.stack, w: seat.stack > 0 ? 'stood' : 'broke' });",
-    "new": "r: seat.stack, w: 'stood' });",
+    "old": "  (t.cashouts ??= []).push({\n    to: seat.id,\n    j: seat.stake,\n    s: seat.sub,\n    r: seat.stack,\n    w: seat.stack > 0 ? 'stood' : 'broke',\n  });",
+    "new": "  (t.cashouts ??= []).push({ to: seat.id, j: seat.stake, s: seat.sub, r: seat.stack, w: 'stood' });",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",
@@ -1084,8 +1084,8 @@
   {
     "name": "AC4-B-folded-never-broke",
     "file": "src/net/holdemTable.js",
-    "old": "w: t.hand.seats[k].stack > 0 ? 'stood' : 'broke' });",
-    "new": "w: 'stood' });",
+    "old": "  (t.cashouts ??= []).push({\n    to: seat.id,\n    j: seat.stake,\n    s: seat.sub,\n    r: t.hand.seats[k].stack,\n    w: t.hand.seats[k].stack > 0 ? 'stood' : 'broke',\n  });",
+    "new": "  (t.cashouts ??= []).push({ to: seat.id, j: seat.stake, s: seat.sub, r: t.hand.seats[k].stack, w: 'stood' });",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",
@@ -1102,8 +1102,8 @@
   {
     "name": "AC4-B-folded-stand-later",
     "file": "src/net/holdemTable.js",
-    "old": "  if (t.hand.seats[k].folded) { cashOutFolded(t, chair, k); return [room(t, [])]; }",
-    "new": "  if (t.hand.seats[k].folded) { return [room(t, [])]; }",
+    "old": "    cashOutFolded(t, chair, k);\n    return [room(t, [])];",
+    "new": "    return [room(t, [])];",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",
@@ -2184,8 +2184,8 @@
   {
     "name": "AC4-D4-delta-by-reference",
     "file": "src/net/holdemTable.js",
-    "old": "if (JSON.stringify(prev[k]) !== JSON.stringify(state[k])) d[k] = state[k];",
-    "new": "if (prev[k] !== state[k]) d[k] = state[k];",
+    "old": "  for (const k of STATE_KEYS) if (JSON.stringify(prev[k]) !== JSON.stringify(state[k])) d[k] = state[k];",
+    "new": "  for (const k of STATE_KEYS) if (prev[k] !== state[k]) d[k] = state[k];",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2219,8 +2219,8 @@
   {
     "name": "AC4-D4-keys-no-last",
     "file": "src/net/holdemTable.js",
-    "old": "'hand', 'clockAt', 'last']);",
-    "new": "'hand', 'clockAt']);",
+    "old": "  'last',\n]);",
+    "new": "]);",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2254,8 +2254,8 @@
   {
     "name": "AC4-D4-keys-no-seed",
     "file": "src/net/holdemTable.js",
-    "old": "'handNo', 'button', 'seed', 'seats',",
-    "new": "'handNo', 'button', 'seats',",
+    "old": "  'seed',\n  'seats',",
+    "new": "  'seats',",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2289,8 +2289,8 @@
   {
     "name": "AC4-D4-keys-no-button",
     "file": "src/net/holdemTable.js",
-    "old": "'handNo', 'button', 'seed', 'seats',",
-    "new": "'handNo', 'seed', 'seats',",
+    "old": "  'button',\n  'seed',",
+    "new": "  'seed',",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2324,8 +2324,8 @@
   {
     "name": "AC4-D4-delta-chairs-unchecked",
     "file": "src/net/holdemTable.js",
-    "old": "    if (d.chairs !== undefined && !(Number.isInteger(d.chairs) && d.chairs >= HOLDEM_SEATS_MIN && d.chairs <= HOLDEM_SEATS_MAX)) return false;\n",
-    "new": "",
+    "old": "    if (\n      d.chairs !== undefined &&\n      !(Number.isInteger(d.chairs) && d.chairs >= HOLDEM_SEATS_MIN && d.chairs <= HOLDEM_SEATS_MAX)\n    )\n      return false;\n    if (d.bb !== undefined && !HOLDEM_BBS.includes(d.bb)) return false;",
+    "new": "    if (d.bb !== undefined && !HOLDEM_BBS.includes(d.bb)) return false;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2359,8 +2359,8 @@
   {
     "name": "AC4-D4-delta-seats-any-length",
     "file": "src/net/holdemTable.js",
-    "old": "d.seats.length <= HOLDEM_SEATS_MAX && d.seats.every(seatOk)",
-    "new": "d.seats.every(seatOk)",
+    "old": "    return (\n      d.seats === undefined || (Array.isArray(d.seats) && d.seats.length <= HOLDEM_SEATS_MAX && d.seats.every(seatOk))\n    );",
+    "new": "    return d.seats === undefined || (Array.isArray(d.seats) && d.seats.every(seatOk));",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2394,8 +2394,8 @@
   {
     "name": "AC4-D4-delta-array-ok",
     "file": "src/net/holdemTable.js",
-    "old": "|| !d || typeof d !== 'object' || Array.isArray(d) ||",
-    "new": "|| !d || typeof d !== 'object' ||",
+    "old": "    if (\n      m.state !== undefined ||\n      !d ||\n      typeof d !== 'object' ||\n      Array.isArray(d) ||\n      Object.keys(d).some((k) => !STATE_KEYS.includes(k))\n    )",
+    "new": "    if (m.state !== undefined || !d || typeof d !== 'object' || Object.keys(d).some((k) => !STATE_KEYS.includes(k)))",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2429,8 +2429,8 @@
   {
     "name": "AC4-D4-delta-and-state",
     "file": "src/net/holdemTable.js",
-    "old": "    if (m.state !== undefined || !d ||",
-    "new": "    if (!d ||",
+    "old": "    if (\n      m.state !== undefined ||\n      !d ||\n      typeof d !== 'object' ||\n      Array.isArray(d) ||\n      Object.keys(d).some((k) => !STATE_KEYS.includes(k))\n    )",
+    "new": "    if (!d || typeof d !== 'object' || Array.isArray(d) || Object.keys(d).some((k) => !STATE_KEYS.includes(k)))",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2744,8 +2744,8 @@
   {
     "name": "AC4-D4-c6-queue-unbounded",
     "file": "src/net/holdemTable.js",
-    "old": "  if (t.cashouts.length > HOLDEM_CASHOUTS_MAX) t.cashouts.splice(0, t.cashouts.length - HOLDEM_CASHOUTS_MAX);\n",
-    "new": "",
+    "old": "  if (t.cashouts.length > HOLDEM_CASHOUTS_MAX) t.cashouts.splice(0, t.cashouts.length - HOLDEM_CASHOUTS_MAX);\n}",
+    "new": "}",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2779,8 +2779,8 @@
   {
     "name": "AC4-D4-c6-folded-not-marked",
     "file": "src/net/holdemTable.js",
-    "old": "  seat.cashed = true;\n",
-    "new": "",
+    "old": "  seat.cashed = true;\n}",
+    "new": "}",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2814,8 +2814,8 @@
   {
     "name": "AC4-D4-c6-folded-any-chair",
     "file": "src/net/holdemTable.js",
-    "old": " || !t.hand || t.handSeats[k] !== chair) return;",
-    "new": " || !t.hand) return;",
+    "old": "  if (!seat?.stake || seat.cashed || !t.hand || t.handSeats[k] !== chair) return;",
+    "new": "  if (!seat?.stake || seat.cashed || !t.hand) return;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2851,8 +2851,8 @@
   {
     "name": "AC4-D4-c6-always-stood",
     "file": "src/net/holdemTable.js",
-    "old": "r: seat.stack, w: seat.stack > 0 ? 'stood' : 'broke' });",
-    "new": "r: seat.stack, w: 'stood' });",
+    "old": "  (t.cashouts ??= []).push({\n    to: seat.id,\n    j: seat.stake,\n    s: seat.sub,\n    r: seat.stack,\n    w: seat.stack > 0 ? 'stood' : 'broke',\n  });",
+    "new": "  (t.cashouts ??= []).push({ to: seat.id, j: seat.stake, s: seat.sub, r: seat.stack, w: 'stood' });",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2886,8 +2886,8 @@
   {
     "name": "AC4-D4-c6-view-not-gold",
     "file": "src/net/holdemTable.js",
-    "old": "sb: t.sb, gold: !!t.gold, handNo",
-    "new": "sb: t.sb, gold: false, handNo",
+    "old": "    gold: !!t.gold,",
+    "new": "    gold: false,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2921,8 +2921,8 @@
   {
     "name": "AC4-D4-c6-sit-stake-unchecked",
     "file": "src/net/holdemTable.js",
-    "old": "    if (m.stake !== undefined && !stakeWordOk(m.stake)) return null;\n",
-    "new": "",
+    "old": "    if (m.stake !== undefined && !stakeWordOk(m.stake)) return null;\n    return {",
+    "new": "    return {",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2956,8 +2956,8 @@
   {
     "name": "AC4-D4-c6-ack-any-id",
     "file": "src/net/holdemTable.js",
-    "old": "typeof m.j === 'string' && STAKE_ID_RE.test(m.j) ?",
-    "new": "typeof m.j === 'string' ?",
+    "old": "  if (m.op === 'ack')\n    return typeof m.j === 'string' && STAKE_ID_RE.test(m.j) ? { op: 'ack', table: m.table, j: m.j } : null; // CARDS6",
+    "new": "  if (m.op === 'ack') return typeof m.j === 'string' ? { op: 'ack', table: m.table, j: m.j } : null; // CARDS6",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2991,8 +2991,8 @@
   {
     "name": "AC4-D4-c6-cashout-any-length",
     "file": "src/net/holdemTable.js",
-    "old": "typeof m.cashout === 'string' && m.cashout.length <= HOLDEM_STAKE_MAX;",
-    "new": "typeof m.cashout === 'string';",
+    "old": "  if (m.cashout !== undefined) return typeof m.cashout === 'string' && m.cashout.length <= HOLDEM_STAKE_MAX; // CARDS6: a staked seat's receipt (net/card/cardReceipt.js reads it)",
+    "new": "  if (m.cashout !== undefined) return typeof m.cashout === 'string'; // CARDS6: a staked seat's receipt (net/card/cardReceipt.js reads it)",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",

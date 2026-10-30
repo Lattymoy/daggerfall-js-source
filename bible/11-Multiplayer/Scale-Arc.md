@@ -4472,7 +4472,7 @@ none at all - not even the heartbeat. A MOVING one said POSE_HZ (10) down its ow
 (HALO-THIN), so a lone mover held its cell and its ~0.9 halo cells awake the whole time it moved (R4-3: ~1.9 objects,
 ~$7.8 a month a lone concurrent player) - HIBERNATE leaves a mover as it was.
 
-**Alone is one notion** (the second merge with main; `src/net/loneSleep.js:"export function aloneNow(s) {"`, asked by
+**Alone is one notion** (the second merge with main; `src/net/loneSleep.js:"export function aloneNow"`, asked by
 the session through `aloneOf`): no referee (the host's `haloWhole`, a cell's `rf` on any socket I hold), nobody else in
 my own room (`othersHere`) or any I hold (`peers`), in a world cell, a building or an ordinary dungeon. HIBERNATE's
 `aloneQuiet` and LONE-SLEEP's `loneNow` both read it: alone and standing, nothing (HIBERNATE); alone and moving in a
@@ -4487,7 +4487,7 @@ world cell, on LONE-SLEEP's further conditions below, a pose each LONE_POSE_MS; 
   the second merge, where world260 is main's THE FOLD), not standing in the open zone (`_wildZone`, my own zone word),
   and outside a fight's hold.
 - **Lone**, `src/net/online.js:"const lone = loneStep(this, pose, now);"`: a MOVED pose goes down my own cell's socket
-  once each `src/net/loneSleep.js:"export const LONE_POSE_MS = 60_000;"` (an unmoved one never - HIBERNATE's), and
+  once each `src/net/loneSleep.js:"export const LONE_POSE_MS"` (an unmoved one never - HIBERNATE's), and
   **down no halo** - an empty halo
   hears no pose at all (its liveness is its ping, answered asleep). A crossing's promotion clears `_lastSentAt`, so the
   cell crossed into hears me at once; a new halo's and a new room's hello carries my pose.
@@ -4495,9 +4495,9 @@ world cell, on LONE-SLEEP's further conditions below, a pose each LONE_POSE_MS; 
   that ends the quiet says my pose at once - the notice's own turn, before the next frame - down my cell's socket and
   each halo it is due to (one quiet a heartbeat or more always is), and POSE_HZ from the next frame. Never from a body
   lying dead (the pose would stand it up).
-- **A fight**: `src/net/loneSleep.js:"export const LONE_HOLD_MS = 5_000;"` of POSE_HZ after a pose whose fight counters
+- **A fight**: `src/net/loneSleep.js:"export const LONE_HOLD_MS"` of POSE_HZ after a pose whose fight counters
   moved (`wd`, `an`, `cn`, `ar`, `hk`, `hu` - that pose goes at once) and after a grant's mint is asked.
-- **A word carries my pose** (`src/net/loneSleep.js:"export function loneAhead(s, ws, room) {"`, beside LEASE1's
+- **A word carries my pose** (`src/net/loneSleep.js:"export function loneAhead"`, beside LEASE1's
   `_leased`, the same shape; a halo's socket keeps COST-2's `?of=` and is wrapped the same): any frame but a ping, a hello, a pose or a lease said down a cell's socket while lone goes
   behind my current pose when that socket last heard me elsewhere, and restarts the minute. Chat, a door, a zone's word,
   a grant, a raid's, a rite's - each is judged where I stand.

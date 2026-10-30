@@ -66,8 +66,8 @@
   {
     "name": "SHADOWFANG-vocabulary-without-the-glyph",
     "file": "src/net/identityToken.js",
-    "old": "'apostle', 'hierophant', 'shadowfang', 'penitent', 'herald', 'tower',",
-    "new": "'apostle', 'hierophant', 'penitent', 'herald', 'tower',",
+    "old": "  'hierophant',\n  'shadowfang',\n  'penitent',\n  'herald',",
+    "new": "  'hierophant',\n  'penitent',\n  'herald',",
     "tests": [
       "test/ui/shadowfang.test.js"
     ],

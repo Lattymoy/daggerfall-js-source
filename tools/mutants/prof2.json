@@ -109,8 +109,8 @@
   {
     "name": "PROF2-12-wayrest-loses-its-seat",
     "file": "src/net/kingdomLaw.js",
-    "old": "regions: regions(23, 33, 34,",
-    "new": "regions: regions(33, 34,",
+    "old": "  wayrest: Object.freeze({\n    id: 'wayrest',\n    name: 'Wayrest',\n    regions: regions(23, 33, 34, 35, 36, 37, 5, 38, 39, 40, 57),\n  }),",
+    "new": "  wayrest: Object.freeze({ id: 'wayrest', name: 'Wayrest', regions: regions(33, 34, 35, 36, 37, 5, 38, 39, 40, 57) }),",
     "tests": [
       "test/net/prof2_law.test.js",
       "test/net/prof2_client.test.js"

@@ -181,8 +181,8 @@
   {
     "name": "AUDIT-SCALE-LANED-hb-path",
     "file": "src/net/heartbeat.js",
-    "old": "'/v1/heartbeat', body);",
-    "new": "'/v1/heart-beat', body);",
+    "old": "            '/v1/heartbeat',",
+    "new": "            '/v1/heart-beat',",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale4c.test.js"
@@ -192,8 +192,8 @@
   {
     "name": "AUDIT-SCALE-LANED-hb-base-production",
     "file": "src/net/heartbeat.js",
-    "old": "base: serviceBase(storage), secret",
-    "new": "base: undefined, secret",
+    "old": "          r = await call(\n            { fetch: waited, base: serviceBase(storage), secret: session.secret, keepalive },\n            '/v1/heartbeat',\n            body,\n          );",
+    "new": "          r = await call({ fetch: waited, base: undefined, secret: session.secret, keepalive }, '/v1/heartbeat', body);",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale4c.test.js"
@@ -203,8 +203,8 @@
   {
     "name": "AUDIT-SCALE-LANED-hb-retry-no-wait",
     "file": "src/net/heartbeat.js",
-    "old": "      if (i > 0) await sleep(NOTICE_RETRY_MS[Math.min(i - 1, NOTICE_RETRY_MS.length - 1)]);\n",
-    "new": "",
+    "old": "          if (i > 0) await sleep(NOTICE_RETRY_MS[Math.min(i - 1, NOTICE_RETRY_MS.length - 1)]);\n          const at = now();",
+    "new": "          const at = now();",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale4c.test.js"
@@ -214,8 +214,8 @@
   {
     "name": "AUDIT-SCALE-LANED-hb-take-throw-escapes",
     "file": "src/net/heartbeat.js",
-    "old": "      catch (e) { console.warn(`[heartbeat] the ${name} part's answer threw`, e); }",
-    "new": "      finally { /* nothing caught */ }",
+    "old": "      } catch (e) {\n        console.warn(`[heartbeat] the ${name} part's answer threw`, e);",
+    "new": "      } finally {\n        /* nothing caught */",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale4c.test.js"
@@ -225,8 +225,8 @@
   {
     "name": "AUDIT-SCALE-LANED-hb-equal-period-never-early",
     "file": "src/net/heartbeat.js",
-    "old": "((p.every ?? 0) >= pace && p.soon(t, pace - RIDE_EARLY_MS))",
-    "new": "((p.every ?? 0) > pace && p.soon(t, pace - RIDE_EARLY_MS))",
+    "old": "          ([name, p]) => going.some(([n]) => n === name) || ((p.every ?? 0) >= pace && p.soon(t, pace - RIDE_EARLY_MS)),",
+    "new": "          ([name, p]) => going.some(([n]) => n === name) || ((p.every ?? 0) > pace && p.soon(t, pace - RIDE_EARLY_MS)),",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale4c.test.js"
@@ -247,8 +247,8 @@
   {
     "name": "AUDIT-SCALE-LANED-partAnswer-primitive",
     "file": "src/net/heartbeat.js",
-    "old": "export const partAnswer = (/** @type {any} */ v) => (v && typeof v === 'object'",
-    "new": "export const partAnswer = (/** @type {any} */ v) => (v != null",
+    "old": "  v && typeof v === 'object'",
+    "new": "  v != null",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale4c.test.js"
@@ -447,8 +447,8 @@
   {
     "name": "AUDIT-SCALE-LANED-hb-secret-wrong",
     "file": "src/net/heartbeat.js",
-    "old": "secret: session.secret, keepalive }, '/v1/heartbeat'",
-    "new": "secret: session.id, keepalive }, '/v1/heartbeat'",
+    "old": "            { fetch: waited, base: serviceBase(storage), secret: session.secret, keepalive },",
+    "new": "            { fetch: waited, base: serviceBase(storage), secret: session.id, keepalive },",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale4c.test.js"
@@ -619,8 +619,8 @@
   {
     "name": "AUDIT-SCALE-B1-first-waits",
     "file": "src/net/heartbeat.js",
-    "old": "const waitLeft = (/** @type {number} */ t) => (creditedAt == null ? 0",
-    "new": "const waitLeft = (/** @type {number} */ t) => (creditedAt == null ? BEAT_RIDE_MS - (t - /** @type {number} */ (beatAt))",
+    "old": "      ? 0",
+    "new": "      ? BEAT_RIDE_MS - (t - /** @type {number} */ (beatAt))",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale4c.test.js"
@@ -630,8 +630,8 @@
   {
     "name": "AUDIT-SCALE-B1-grace-uncapped",
     "file": "src/net/heartbeat.js",
-    "old": "    : Math.min(BEAT_RIDE_MS - (t - /** @type {number} */ (beatAt)), creditedAt + PLAY_GRACE_S * 1000 - BEAT_GRACE_MARGIN_MS - t));",
-    "new": "    : BEAT_RIDE_MS - (t - /** @type {number} */ (beatAt)));",
+    "old": "    creditedAt == null\n      ? 0\n      : Math.min(\n          BEAT_RIDE_MS - (t - /** @type {number} */ (beatAt)),\n          creditedAt + PLAY_GRACE_S * 1000 - BEAT_GRACE_MARGIN_MS - t,\n        );",
+    "new": "    creditedAt == null ? 0 : BEAT_RIDE_MS - (t - /** @type {number} */ (beatAt));",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale4c.test.js"
@@ -652,7 +652,7 @@
   {
     "name": "AUDIT-SCALE-B1-hidden-held",
     "file": "src/net/heartbeat.js",
-    "old": "      if (beatAt == null) return null;\n      flying = send([], true, true).finally(() => { flying = null; });\n      return flying;",
+    "old": "      if (beatAt == null) return null;\n      flying = send([], true, true).finally(() => {\n        flying = null;\n      });\n      return flying;",
     "new": "      return null;",
     "tests": [
       "test/net/auditscale.test.js",
@@ -663,8 +663,8 @@
   {
     "name": "AUDIT-SCALE-B1-hidden-not-kept-alive",
     "file": "src/net/heartbeat.js",
-    "old": "      flying = send([], true, true).finally(() => { flying = null; });",
-    "new": "      flying = send([], true, false).finally(() => { flying = null; });",
+    "old": "      flying = send([], true, true).finally(() => {",
+    "new": "      flying = send([], true, false).finally(() => {",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale4c.test.js"
@@ -684,8 +684,8 @@
   {
     "name": "AUDIT-SCALE-B2-no-giveup",
     "file": "src/net/heartbeat.js",
-    "old": "r = await call({ fetch: waited, base: serviceBase(storage)",
-    "new": "r = await call({ fetch, base: serviceBase(storage)",
+    "old": "            { fetch: waited, base: serviceBase(storage), secret: session.secret, keepalive },",
+    "new": "            { fetch, base: serviceBase(storage), secret: session.secret, keepalive },",
     "tests": [
       "test/net/auditscale.test.js",
       "test/net/scale4c.test.js"
@@ -731,7 +731,7 @@
   {
     "name": "AUDIT-SCALE-B6-body-throws-escapes",
     "file": "src/net/heartbeat.js",
-    "old": "      try { b = p.body(); } catch (e) { console.warn(`[heartbeat] the ${name} part's body threw`, e); continue; }",
+    "old": "      try {\n        b = p.body();\n      } catch (e) {\n        console.warn(`[heartbeat] the ${name} part's body threw`, e);\n        continue;\n      }",
     "new": "      b = p.body();",
     "tests": [
       "test/net/auditscale.test.js",

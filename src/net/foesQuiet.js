@@ -29,9 +29,13 @@ export function quietFoesFrame(frame) {
  *  unsaid only when it is full, in a cell, says nothing, and the same room's last frame from this stream said the same -
  *  so "none" is always said once to each room, and anything else always goes. */
 export function quietFoesGate() {
-  let saidIn = null;   // the room whose last frame from this stream was a quiet full one
+  let saidIn = null; // the room whose last frame from this stream was a quiet full one
   return {
-    skip(frame, { full, cell, room }) { return !!(cell && full && room != null && saidIn === room && quietFoesFrame(frame)); },
-    sent(frame, { full, room }, ok = true) { saidIn = ok && full && room != null && quietFoesFrame(frame) ? room : null; },   // a world room's quiet frame is remembered too - `skip` alone asks for a cell
+    skip(frame, { full, cell, room }) {
+      return !!(cell && full && room != null && saidIn === room && quietFoesFrame(frame));
+    },
+    sent(frame, { full, room }, ok = true) {
+      saidIn = ok && full && room != null && quietFoesFrame(frame) ? room : null;
+    }, // a world room's quiet frame is remembered too - `skip` alone asks for a cell
   };
 }

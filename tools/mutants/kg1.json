@@ -20,8 +20,8 @@
   {
     "name": "KG1-fire-bite",
     "file": "src/net/kingsGambit.js",
-    "old": "Object.freeze({ fire: 8, spikes: 6, poison: 5 })",
-    "new": "Object.freeze({ fire: 9, spikes: 6, poison: 5 })",
+    "old": "export const KG_HAZARD_DAMAGE = Object.freeze({ fire: 8, spikes: 6, poison: 5 });",
+    "new": "export const KG_HAZARD_DAMAGE = Object.freeze({ fire: 9, spikes: 6, poison: 5 });",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "KG1-ranged-classes",
     "file": "src/net/kingsGambit.js",
-    "old": "Object.freeze([128, 131, 141, 142]);",
-    "new": "Object.freeze([128, 131, 141]);",
+    "old": "export const KG_RANGED_CLASSES = Object.freeze([128, 131, 141, 142]);",
+    "new": "export const KG_RANGED_CLASSES = Object.freeze([128, 131, 141]);",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "KG1-atk-half-up",
     "file": "src/net/kingsGambit.js",
-    "old": "const atk = Math.max(1, roundToInt(f32(",
-    "new": "const atk = Math.max(1, Math.round(f32(",
+    "old": "    roundToInt(f32(f32(f32(level) * KG_DAMAGE_PER_LEVEL) * f32(ranged ? KG_RANGED_DAMAGE_FACTOR : 1))),",
+    "new": "    Math.round(f32(f32(f32(level) * KG_DAMAGE_PER_LEVEL) * f32(ranged ? KG_RANGED_DAMAGE_FACTOR : 1))),",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "KG1-hp-rounded",
     "file": "src/net/kingsGambit.js",
-    "old": "Math.max(1, Math.trunc((row.minHealth + row.maxHealth) / 2))",
-    "new": "Math.max(1, Math.round((row.minHealth + row.maxHealth) / 2))",
+    "old": "  const hp = king ? KG_KING_HP : calling ? KG_CLASS_HP : Math.max(1, Math.trunc((row.minHealth + row.maxHealth) / 2));",
+    "new": "  const hp = king ? KG_KING_HP : calling ? KG_CLASS_HP : Math.max(1, Math.round((row.minHealth + row.maxHealth) / 2));",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "KG1-king-costs",
     "file": "src/net/kingsGambit.js",
-    "old": "cost: king ? 0 : Math.max(KG_MIN_COST, roundToInt(worth))",
-    "new": "cost: king ? 1 : Math.max(KG_MIN_COST, roundToInt(worth))",
+    "old": "    cost: king ? 0 : Math.max(KG_MIN_COST, roundToInt(worth)),",
+    "new": "    cost: king ? 1 : Math.max(KG_MIN_COST, roundToInt(worth)),",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "KG1-sort-no-name",
     "file": "src/net/kingsGambit.js",
-    "old": "a.cost - b.cost || ordinal(a.name, b.name) || a.id - b.id",
-    "new": "a.cost - b.cost || a.id - b.id",
+    "old": "  return out.sort((a, b) => a.cost - b.cost || ordinal(a.name, b.name) || a.id - b.id);",
+    "new": "  return out.sort((a, b) => a.cost - b.cost || a.id - b.id);",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "KG1-dragonlings-by-id",
     "file": "src/net/kingsGambit.js",
-    "old": "a.cost - b.cost || ordinal(a.name, b.name) || a.id - b.id",
-    "new": "a.cost - b.cost || ordinal(a.name, b.name) || b.id - a.id",
+    "old": "  return out.sort((a, b) => a.cost - b.cost || ordinal(a.name, b.name) || a.id - b.id);",
+    "new": "  return out.sort((a, b) => a.cost - b.cost || ordinal(a.name, b.name) || b.id - a.id);",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "KG1-autofill-tie",
     "file": "src/net/kingsGambit.js",
-    "old": "    if (v.cost > u.cost) u = v;",
-    "new": "    if (v.cost >= u.cost) u = v;",
+    "old": "      if (v.cost > u.cost) u = v;",
+    "new": "      if (v.cost >= u.cost) u = v;",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "KG1-autofill-lean-first",
     "file": "src/net/kingsGambit.js",
-    "old": "if (out.filter((id) => rosterUnit(id)?.ranged).length < KG_AUTOFILL_RANGED && f32(nextDouble(rand32)) < f32(KG_AUTOFILL_LEAN)) {",
-    "new": "if (f32(nextDouble(rand32)) < f32(KG_AUTOFILL_LEAN) && out.filter((id) => rosterUnit(id)?.ranged).length < KG_AUTOFILL_RANGED) {",
+    "old": "        out.filter((id) => rosterUnit(id)?.ranged).length < KG_AUTOFILL_RANGED &&\n        f32(nextDouble(rand32)) < f32(KG_AUTOFILL_LEAN)",
+    "new": "        f32(nextDouble(rand32)) < f32(KG_AUTOFILL_LEAN) &&\n        out.filter((id) => rosterUnit(id)?.ranged).length < KG_AUTOFILL_RANGED",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "KG1-autofill-unspent",
     "file": "src/net/kingsGambit.js",
-    "old": "    money -= u.cost;\n",
-    "new": "",
+    "old": "      money -= u.cost;\n    }",
+    "new": "    }",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "KG1-no-mirror",
     "file": "src/net/kingsGambit.js",
-    "old": "    tiles[cellIndex(KG_COLS - 1 - c, KG_ROWS - 1 - r)] = t;\n",
-    "new": "",
+    "old": "    tiles[cellIndex(KG_COLS - 1 - c, KG_ROWS - 1 - r)] = t;\n  }",
+    "new": "  }",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "KG1-wall-last-column",
     "file": "src/net/kingsGambit.js",
-    "old": "  if (c >= 1 && c <= KG_COLS - 2 && r >= KG_ZONE_TOP",
-    "new": "  if (c >= 1 && c <= KG_COLS - 1 && r >= KG_ZONE_TOP",
+    "old": "  if (c >= 1 && c <= KG_COLS - 2 && r >= KG_ZONE_TOP && r <= KG_ZONE_BOTTOM && tiles[cellIndex(c, r)] === KG_TILE.floor)",
+    "new": "  if (c >= 1 && c <= KG_COLS - 1 && r >= KG_ZONE_TOP && r <= KG_ZONE_BOTTOM && tiles[cellIndex(c, r)] === KG_TILE.floor)",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "KG1-wall-first-column",
     "file": "src/net/kingsGambit.js",
-    "old": "  if (c >= 1 && c <= KG_COLS - 2 && r >= KG_ZONE_TOP",
-    "new": "  if (c >= 0 && c <= KG_COLS - 2 && r >= KG_ZONE_TOP",
+    "old": "  if (c >= 1 && c <= KG_COLS - 2 && r >= KG_ZONE_TOP && r <= KG_ZONE_BOTTOM && tiles[cellIndex(c, r)] === KG_TILE.floor)",
+    "new": "  if (c >= 0 && c <= KG_COLS - 2 && r >= KG_ZONE_TOP && r <= KG_ZONE_BOTTOM && tiles[cellIndex(c, r)] === KG_TILE.floor)",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "KG1-wall-on-anything",
     "file": "src/net/kingsGambit.js",
-    "old": " && tiles[cellIndex(c, r)] === KG_TILE.floor) setTile(tiles, c, r, KG_TILE.wall);",
-    "new": ") setTile(tiles, c, r, KG_TILE.wall);",
+    "old": "  if (c >= 1 && c <= KG_COLS - 2 && r >= KG_ZONE_TOP && r <= KG_ZONE_BOTTOM && tiles[cellIndex(c, r)] === KG_TILE.floor)\n    setTile(tiles, c, r, KG_TILE.wall);",
+    "new": "  if (c >= 1 && c <= KG_COLS - 2 && r >= KG_ZONE_TOP && r <= KG_ZONE_BOTTOM) setTile(tiles, c, r, KG_TILE.wall);",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "KG1-chunk-shape-3",
     "file": "src/net/kingsGambit.js",
-    "old": "    else if (shape === 3) { placeWallCell(tiles, c + 1, r); placeWallCell(tiles, c, r + 1); }",
-    "new": "    else if (shape === 3) { placeWallCell(tiles, c + 1, r); }",
+    "old": "      placeWallCell(tiles, c, r + 1);\n    } else if (shape === 4) {",
+    "new": "    } else if (shape === 4) {",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "KG1-chunk-rows",
     "file": "src/net/kingsGambit.js",
-    "old": "const c = rand(rand32, 1, 14), r = rand(rand32, 3, 7), shape = rand(rand32, 0, 5);",
-    "new": "const c = rand(rand32, 1, 14), r = rand(rand32, 3, 8), shape = rand(rand32, 0, 5);",
+    "old": "      r = rand(rand32, 3, 7),",
+    "new": "      r = rand(rand32, 3, 8),",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "KG1-pillar-spacing",
     "file": "src/net/kingsGambit.js",
-    "old": "for (let c = 1; c < 14; c += 3) setTile(tiles, c, r, KG_TILE.pillar);",
-    "new": "for (let c = 1; c < 14; c += 4) setTile(tiles, c, r, KG_TILE.pillar);",
+    "old": "      for (let r = 3; r <= 9; r += 2) for (let c = 1; c < 14; c += 3) setTile(tiles, c, r, KG_TILE.pillar);",
+    "new": "      for (let r = 3; r <= 9; r += 2) for (let c = 1; c < 14; c += 4) setTile(tiles, c, r, KG_TILE.pillar);",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "KG1-head-unchecked",
     "file": "src/net/kingsGambit.js",
-    "old": "  if (dist[cellIndex(kc, KG_ROWS - 1 - kr)] >= KG_UNREACHABLE) return false;\n",
-    "new": "",
+    "old": "  if (dist[cellIndex(kc, KG_ROWS - 1 - kr)] >= KG_UNREACHABLE) return false;\n  let floor = 0,",
+    "new": "  let floor = 0,",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "KG1-melee-front-first",
     "file": "src/net/kingsGambit.js",
-    "old": "u.ranged ? (back.shift() ?? front.shift() ?? middle.shift()) : (middle.shift() ?? front.shift() ?? back.shift())",
-    "new": "u.ranged ? (back.shift() ?? front.shift() ?? middle.shift()) : (front.shift() ?? middle.shift() ?? back.shift())",
+    "old": "      : (middle.shift() ?? front.shift() ?? back.shift());",
+    "new": "      : (front.shift() ?? middle.shift() ?? back.shift());",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "KG1-ranged-middle-first",
     "file": "src/net/kingsGambit.js",
-    "old": "u.ranged ? (back.shift() ?? front.shift() ?? middle.shift()) : (middle.shift() ?? front.shift() ?? back.shift())",
-    "new": "u.ranged ? (middle.shift() ?? back.shift() ?? front.shift()) : (middle.shift() ?? front.shift() ?? back.shift())",
+    "old": "      ? (back.shift() ?? front.shift() ?? middle.shift())",
+    "new": "      ? (middle.shift() ?? back.shift() ?? front.shift())",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "KG1-cheapest-first",
     "file": "src/net/kingsGambit.js",
-    "old": "ids.map(rosterUnit).sort((a, b) => b.cost - a.cost || a.id - b.id)",
-    "new": "ids.map(rosterUnit).sort((a, b) => a.cost - b.cost || a.id - b.id)",
+    "old": "  const units = ids.map(rosterUnit).sort((a, b) => b.cost - a.cost || a.id - b.id);",
+    "new": "  const units = ids.map(rosterUnit).sort((a, b) => a.cost - b.cost || a.id - b.id);",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "KG1-guest-unmirrored-columns",
     "file": "src/net/kingsGambit.js",
-    "old": "    if (side === 1) { col = KG_COLS - 1 - col; row = KG_ROWS - 1 - row; }",
-    "new": "    if (side === 1) { row = KG_ROWS - 1 - row; }",
+    "old": "      col = KG_COLS - 1 - col;\n      row = KG_ROWS - 1 - row;",
+    "new": "      row = KG_ROWS - 1 - row;",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "KG1-centre-out-upper-first",
     "file": "src/net/kingsGambit.js",
-    "old": "    if (mid - i >= 0) out.push(mid - i);\n    if (mid + i < KG_COLS) out.push(mid + i);",
-    "new": "    if (mid + i < KG_COLS) out.push(mid + i);\n    if (mid - i >= 0) out.push(mid - i);",
+    "old": "      if (mid - i >= 0) out.push(mid - i);\n      if (mid + i < KG_COLS) out.push(mid + i);",
+    "new": "      if (mid + i < KG_COLS) out.push(mid + i);\n      if (mid - i >= 0) out.push(mid - i);",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "KG1-guest-first",
     "file": "src/net/kingsGambit.js",
-    "old": "pieces, turn: 0, actions: KG_ACTIONS_PER_TURN, round: 1,",
-    "new": "pieces, turn: 1, actions: KG_ACTIONS_PER_TURN, round: 1,",
+    "old": "    turn: 0,",
+    "new": "    turn: 1,",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "KG1-potions-fixed",
     "file": "src/net/kingsGambit.js",
-    "old": "potions: potions.slice(), ending: false, over: null };",
-    "new": "potions: [KG_POTIONS_PER_SIDE, KG_POTIONS_PER_SIDE], ending: false, over: null };",
+    "old": "    potions: potions.slice(),",
+    "new": "    potions: [KG_POTIONS_PER_SIDE, KG_POTIONS_PER_SIDE],",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "KG1-budget-bound",
     "file": "src/net/kingsGambit.js",
-    "old": "budgets[s] >= 0 && budgets[s] <= KG_BUDGET_MAX",
-    "new": "budgets[s] >= 0 && budgets[s] < KG_BUDGET_MAX",
+    "old": "    !SIDES.every((s) => Number.isInteger(budgets[s]) && budgets[s] >= 0 && budgets[s] <= KG_BUDGET_MAX)",
+    "new": "    !SIDES.every((s) => Number.isInteger(budgets[s]) && budgets[s] >= 0 && budgets[s] < KG_BUDGET_MAX)",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "KG1-potions-bound",
     "file": "src/net/kingsGambit.js",
-    "old": "potions[s] >= 0 && potions[s] <= KG_POTIONS_MAX",
-    "new": "potions[s] >= 0 && potions[s] < KG_POTIONS_MAX",
+    "old": "    !SIDES.every((s) => Number.isInteger(potions[s]) && potions[s] >= 0 && potions[s] <= KG_POTIONS_MAX)",
+    "new": "    !SIDES.every((s) => Number.isInteger(potions[s]) && potions[s] >= 0 && potions[s] < KG_POTIONS_MAX)",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "KG1-top-draw-refused",
     "file": "src/net/kingsGambit.js",
-    "old": "    if (!Number.isInteger(v) || v < 0 || v > 0xFFFFFFFF || ++draws",
-    "new": "    if (!Number.isInteger(v) || v < 0 || v >= 0xFFFFFFFF || ++draws",
+    "old": "    if (!Number.isInteger(v) || v < 0 || v > 0xffffffff || ++draws > KG_RAND_DRAWS_MAX) throw new Error('rand32');",
+    "new": "    if (!Number.isInteger(v) || v < 0 || v >= 0xffffffff || ++draws > KG_RAND_DRAWS_MAX) throw new Error('rand32');",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "KG1-out-of-turn",
     "file": "src/net/kingsGambit.js",
-    "old": "  if (side !== state.turn) return 'turn';\n",
-    "new": "",
+    "old": "  if (side !== state.turn) return 'turn';\n  if (cmd.type === 'end') return null;",
+    "new": "  if (cmd.type === 'end') return null;",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -569,8 +569,8 @@
   {
     "name": "KG1-water-blocks-sight",
     "file": "src/net/kingsGambit.js",
-    "old": "return t === KG_TILE.wall || t === KG_TILE.pillar; };",
-    "new": "return t === KG_TILE.wall || t === KG_TILE.pillar || t === KG_TILE.water; };",
+    "old": "  return t === KG_TILE.wall || t === KG_TILE.pillar;",
+    "new": "  return t === KG_TILE.wall || t === KG_TILE.pillar || t === KG_TILE.water;",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -596,8 +596,8 @@
   {
     "name": "KG1-walk-through-pieces",
     "file": "src/net/kingsGambit.js",
-    "old": " && !steps.has(cellIndex(nx, ny)) && !pieceAt(board, nx, ny)) {",
-    "new": " && !steps.has(cellIndex(nx, ny))) {",
+    "old": "      if (isPassable(board.tiles, nx, ny) && !steps.has(cellIndex(nx, ny)) && !pieceAt(board, nx, ny)) {",
+    "new": "      if (isPassable(board.tiles, nx, ny) && !steps.has(cellIndex(nx, ny))) {",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -605,8 +605,8 @@
   {
     "name": "KG1-steps-order",
     "file": "src/net/kingsGambit.js",
-    "old": "Object.freeze([Object.freeze([1, 0]), Object.freeze([-1, 0]), Object.freeze([0, 1]), Object.freeze([0, -1])]);",
-    "new": "Object.freeze([Object.freeze([-1, 0]), Object.freeze([1, 0]), Object.freeze([0, 1]), Object.freeze([0, -1])]);",
+    "old": "  Object.freeze([1, 0]),\n  Object.freeze([-1, 0]),",
+    "new": "  Object.freeze([-1, 0]),\n  Object.freeze([1, 0]),",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -677,8 +677,8 @@
   {
     "name": "KG1-round-after-host",
     "file": "src/net/kingsGambit.js",
-    "old": "  if (side === 1) {\n    st.round++;",
-    "new": "  if (side === 0) {\n    st.round++;",
+    "old": "  }\n  if (side === 1) {",
+    "new": "  }\n  if (side === 0) {",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -704,8 +704,8 @@
   {
     "name": "KG1-warnings-never-armed",
     "file": "src/net/kingsGambit.js",
-    "old": "      for (const h of st.hazards) h.active = true;\n",
-    "new": "",
+    "old": "      for (const h of st.hazards) h.active = true;\n      if (armed.length) events.push({ t: 'armed', cells: armed });",
+    "new": "      if (armed.length) events.push({ t: 'armed', cells: armed });",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -713,8 +713,8 @@
   {
     "name": "KG1-actions-not-renewed",
     "file": "src/net/kingsGambit.js",
-    "old": "  st.actions = KG_ACTIONS_PER_TURN;\n  events.push",
-    "new": "  events.push",
+    "old": "  st.actions = KG_ACTIONS_PER_TURN;\n  events.push({ t: 'turn', side: st.turn, round: st.round });",
+    "new": "  events.push({ t: 'turn', side: st.turn, round: st.round });",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -722,8 +722,8 @@
   {
     "name": "KG1-lean-f64",
     "file": "src/net/kingsGambit.js",
-    "old": "f32(nextDouble(rand32)) < f32(KG_AUTOFILL_LEAN)",
-    "new": "nextDouble(rand32) < KG_AUTOFILL_LEAN",
+    "old": "        f32(nextDouble(rand32)) < f32(KG_AUTOFILL_LEAN)",
+    "new": "        nextDouble(rand32) < KG_AUTOFILL_LEAN",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -731,8 +731,8 @@
   {
     "name": "KG1-autofill-unchecked",
     "file": "src/net/kingsGambit.js",
-    "old": "  const rand32 = checkedRand32(source);\n  let money",
-    "new": "  const rand32 = source;\n  let money",
+    "old": "  const rand32 = checkedRand32(source);",
+    "new": "  const rand32 = source;",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -740,8 +740,8 @@
   {
     "name": "KG1-army-holes",
     "file": "src/net/kingsGambit.js",
-    "old": "if (!Array.isArray(ids) || !Array.from(ids).every(Number.isInteger)) return 'shape';",
-    "new": "if (!Array.isArray(ids) || !ids.every(Number.isInteger)) return 'shape';",
+    "old": "  if (!Array.isArray(ids) || !Array.from(ids).every(Number.isInteger)) return 'shape';",
+    "new": "  if (!Array.isArray(ids) || !ids.every(Number.isInteger)) return 'shape';",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -749,8 +749,8 @@
   {
     "name": "KG1-armies-holes",
     "file": "src/net/kingsGambit.js",
-    "old": "if (SIDES.some((s) => armyRefusal(armies[s], budgets[s]) !== null)) return null;",
-    "new": "if (armies.some((a, s) => armyRefusal(a, budgets[s]) !== null)) return null;",
+    "old": "  if (SIDES.some((s) => armyRefusal(armies[s], budgets[s]) !== null)) return null;",
+    "new": "  if (armies.some((a, s) => armyRefusal(a, budgets[s]) !== null)) return null;",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -758,8 +758,8 @@
   {
     "name": "KG1-potions-holes",
     "file": "src/net/kingsGambit.js",
-    "old": "!SIDES.every((s) => Number.isInteger(potions[s]) && potions[s] >= 0 && potions[s] <= KG_POTIONS_MAX)",
-    "new": "!potions.every((n) => Number.isInteger(n) && n >= 0 && n <= KG_POTIONS_MAX)",
+    "old": "    !SIDES.every((s) => Number.isInteger(potions[s]) && potions[s] >= 0 && potions[s] <= KG_POTIONS_MAX)",
+    "new": "    !potions.every((n) => Number.isInteger(n) && n >= 0 && n <= KG_POTIONS_MAX)",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -767,8 +767,8 @@
   {
     "name": "KG1-budgets-holes",
     "file": "src/net/kingsGambit.js",
-    "old": "!SIDES.every((s) => Number.isInteger(budgets[s]) && budgets[s] >= 0 && budgets[s] <= KG_BUDGET_MAX)",
-    "new": "!budgets.every((b) => Number.isInteger(b) && b >= 0 && b <= KG_BUDGET_MAX)",
+    "old": "    !SIDES.every((s) => Number.isInteger(budgets[s]) && budgets[s] >= 0 && budgets[s] <= KG_BUDGET_MAX)",
+    "new": "    !budgets.every((b) => Number.isInteger(b) && b >= 0 && b <= KG_BUDGET_MAX)",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -776,8 +776,8 @@
   {
     "name": "KG1-shot-adjacent",
     "file": "src/net/kingsGambit.js",
-    "old": "shot: p.ranged && distance(p.col, p.row, t.col, t.row) > 1",
-    "new": "shot: p.ranged",
+    "old": "    events.push({\n      t: 'attack',\n      side,\n      piece: p.id,\n      target: t.id,\n      damage,\n      killed,\n      shot: p.ranged && distance(p.col, p.row, t.col, t.row) > 1,\n    });",
+    "new": "    events.push({ t: 'attack', side, piece: p.id, target: t.id, damage, killed, shot: p.ranged });",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -785,8 +785,8 @@
   {
     "name": "KG1-blow-f64",
     "file": "src/net/kingsGambit.js",
-    "old": "const m = f32(f32(KG_BLOW_LOW) + f32(f32(u) * f32(KG_BLOW_SPREAD)));",
-    "new": "const m = KG_BLOW_LOW + u * KG_BLOW_SPREAD;",
+    "old": "  const m = f32(f32(KG_BLOW_LOW) + f32(f32(u) * f32(KG_BLOW_SPREAD)));",
+    "new": "  const m = KG_BLOW_LOW + u * KG_BLOW_SPREAD;",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -794,8 +794,8 @@
   {
     "name": "KG1-blow-u-wide",
     "file": "src/net/kingsGambit.js",
-    "old": "f32(f32(u) * f32(KG_BLOW_SPREAD))",
-    "new": "f32(u * f32(KG_BLOW_SPREAD))",
+    "old": "  const m = f32(f32(KG_BLOW_LOW) + f32(f32(u) * f32(KG_BLOW_SPREAD)));",
+    "new": "  const m = f32(f32(KG_BLOW_LOW) + f32(u * f32(KG_BLOW_SPREAD)));",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -821,8 +821,8 @@
   {
     "name": "KG1-sight-past-2",
     "file": "src/net/kingsGambit.js",
-    "old": "return !(p.ranged && d > 1 && !hasLineOfSight(",
-    "new": "return !(p.ranged && d > 2 && !hasLineOfSight(",
+    "old": "  return !(p.ranged && d > 1 && !hasLineOfSight(board.tiles, col, row, target.col, target.row));",
+    "new": "  return !(p.ranged && d > 2 && !hasLineOfSight(board.tiles, col, row, target.col, target.row));",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -830,8 +830,8 @@
   {
     "name": "KG1-sight-past-3",
     "file": "src/net/kingsGambit.js",
-    "old": "return !(p.ranged && d > 1 && !hasLineOfSight(",
-    "new": "return !(p.ranged && d > 3 && !hasLineOfSight(",
+    "old": "  return !(p.ranged && d > 1 && !hasLineOfSight(board.tiles, col, row, target.col, target.row));",
+    "new": "  return !(p.ranged && d > 3 && !hasLineOfSight(board.tiles, col, row, target.col, target.row));",
     "tests": [
       "test/net/kg1_law.test.js"
     ]
@@ -875,8 +875,8 @@
   {
     "name": "KG1-rand-negative",
     "file": "src/net/kingsGambit.js",
-    "old": "    if (!Number.isInteger(v) || v < 0 || v > 0xFFFFFFFF || ++draws > KG_RAND_DRAWS_MAX)",
-    "new": "    if (!Number.isInteger(v) || v > 0xFFFFFFFF || ++draws > KG_RAND_DRAWS_MAX)",
+    "old": "    if (!Number.isInteger(v) || v < 0 || v > 0xffffffff || ++draws > KG_RAND_DRAWS_MAX) throw new Error('rand32');",
+    "new": "    if (!Number.isInteger(v) || v > 0xffffffff || ++draws > KG_RAND_DRAWS_MAX) throw new Error('rand32');",
     "tests": [
       "test/net/kg1_law.test.js"
     ]

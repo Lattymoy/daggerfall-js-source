@@ -12,8 +12,8 @@
   {
     "name": "HOUSES3-the-slot-alone",
     "file": "src/net/homeLaw.js",
-    "old": "return [slot, ...(Array.isArray(slot.more) ? slot.more : [])].filter(",
-    "new": "return [slot].filter(",
+    "old": "  return [slot, ...(Array.isArray(slot.more) ? slot.more : [])].filter(\n    (d) => !!d && typeof d === 'object' && (Number(d.buildingKey) || 0) > 0,\n  );",
+    "new": "  return [slot].filter((d) => !!d && typeof d === 'object' && (Number(d.buildingKey) || 0) > 0);",
     "tests": [
       "test/systems/houses.test.js",
       "test/systems/houses3.test.js"

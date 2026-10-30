@@ -110,8 +110,8 @@
   {
     "name": "AUDIT-DOMAINS-R2-any-room",
     "file": "src/net/instanceRoom.js",
-    "old": "guild != null && GUILD_ROOMS.has(r.base) && r.owner",
-    "new": "guild != null && r.owner",
+    "old": "  if (guild != null && GUILD_ROOMS.has(r.base) && r.owner === (await instanceGuildOwnerOf(guild))) return 'guild'; // a castle's, whole (AUDIT DOMAINS R2)",
+    "new": "  if (guild != null && r.owner === (await instanceGuildOwnerOf(guild))) return 'guild'; // a castle's, whole (AUDIT DOMAINS R2)",
     "tests": [
       "test/net/domain2_castles.test.js"
     ]

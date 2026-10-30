@@ -82,8 +82,8 @@
   {
     "name": "E2-1-idle-bucket-kept",
     "file": "src/net/grantLaw.js",
-    "old": "filter(([k, v]) => !grantBucketIdle(",
-    "new": "filter(([k, v]) => true || !grantBucketIdle(",
+    "old": "    .filter(([k, v]) => !grantBucketIdle(k.slice(k.lastIndexOf('|') + 1), v, nowMs))",
+    "new": "    .filter(([k, v]) => true || !grantBucketIdle(k.slice(k.lastIndexOf('|') + 1), v, nowMs))",
     "tests": [
       "test/net/audittesa3e2_grantgate.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "E2-1-expired-grant-kept",
     "file": "src/net/grantLaw.js",
-    "old": "filter(([, v]) => v.x > nowMs)",
-    "new": "filter(([, v]) => true)",
+    "old": "    .filter(([, v]) => v.x > nowMs)",
+    "new": "    .filter(([, v]) => true)",
     "tests": [
       "test/net/audittesa3e2_grantgate.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "E2-1-version-unread",
     "file": "src/net/grantLaw.js",
-    "old": "v.v !== GRANT_GATE_V || ",
-    "new": "",
+    "old": "  if (\n    !v ||\n    typeof v !== 'object' ||\n    v.v !== GRANT_GATE_V ||\n    !Number.isSafeInteger(v.n) ||\n    !Array.isArray(v.b) ||\n    !Array.isArray(v.l)\n  )",
+    "new": "  if (!v || typeof v !== 'object' || !Number.isSafeInteger(v.n) || !Array.isArray(v.b) || !Array.isArray(v.l))",
     "tests": [
       "test/net/audittesa3e2_grantgate.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "E2-1-expired-read-back",
     "file": "src/net/grantLaw.js",
-    "old": "!(Number.isFinite(e[2]) && e[2] > nowMs)",
-    "new": "!Number.isFinite(e[2])",
+    "old": "      !(Number.isFinite(e[2]) && e[2] > nowMs) ||",
+    "new": "      !Number.isFinite(e[2]) ||",
     "tests": [
       "test/net/audittesa3e2_grantgate.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "E2-4-gate-behind-its-row",
     "file": "src/net/instanceRoom.js",
-    "old": "export const GUILD_INSTANCE_RELAY_MIN = 276;",
-    "new": "export const GUILD_INSTANCE_RELAY_MIN = 275;",
+    "old": "export const GUILD_INSTANCE_RELAY_MIN = 276; // world276 (the eighth merge of main into #1184, 2026-10-28: past main's world275, SD-PARTY, already live); world275 (the seventh merge of main into #1184, 2026-10-28: past main's world274, LADDER-CUT); world274 (the fourth merge of main into #1184, 2026-10-27: past main's world272 and world273); world272 (the third merge of main into #1184, 2026-10-27: past MASTER-THREE's world271, main's); world271 (the second merge of main into #1184, 2026-10-27: past CHAT-POST's world270, main's); world270 (the merge of main into TESA, 2026-10-27: #1184's world269 folded into its world270 past BOW-TOPS's world269, main's): the merged release's (world256 on TESA's, renumbered past main's world256 to world259 at the merge, then world260 past main's world260 to world268 at the next)",
+    "new": "export const GUILD_INSTANCE_RELAY_MIN = 275; // world276 (the eighth merge of main into #1184, 2026-10-28: past main's world275, SD-PARTY, already live); world275 (the seventh merge of main into #1184, 2026-10-28: past main's world274, LADDER-CUT); world274 (the fourth merge of main into #1184, 2026-10-27: past main's world272 and world273); world272 (the third merge of main into #1184, 2026-10-27: past MASTER-THREE's world271, main's); world271 (the second merge of main into #1184, 2026-10-27: past CHAT-POST's world270, main's); world270 (the merge of main into TESA, 2026-10-27: #1184's world269 folded into its world270 past BOW-TOPS's world269, main's): the merged release's (world256 on TESA's, renumbered past main's world256 to world259 at the merge, then world260 past main's world260 to world268 at the next)",
     "tests": [
       "test/net/domain2_castles.test.js"
     ],

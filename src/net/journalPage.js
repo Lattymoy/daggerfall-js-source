@@ -55,10 +55,14 @@ const DRAWN_TOKENS = new Set([...LINE_TOKENS, 'newline']);
  * @returns {{ page: Page } | { error: string }}
  */
 export function pageOfNote(entry) {
-  const tokens = /** @type {NoteToken[]} */ (Array.isArray(entry) ? entry : []).filter((t) => DRAWN_TOKENS.has(t?.formatting));
+  const tokens = /** @type {NoteToken[]} */ (Array.isArray(entry) ? entry : []).filter((t) =>
+    DRAWN_TOKENS.has(t?.formatting),
+  );
   const headed = tokens[0]?.formatting === 'highlight';
   const head = headed ? String(tokens[0].text ?? '') : '';
-  const lines = (headed ? tokens.slice(1) : tokens).map((t) => (t.formatting === 'newline' ? '' : String(t.text ?? '')));
+  const lines = (headed ? tokens.slice(1) : tokens).map((t) =>
+    t.formatting === 'newline' ? '' : String(t.text ?? ''),
+  );
   return pageLaw({ head, lines });
 }
 
@@ -85,7 +89,11 @@ const noteTokensOf = (lines) => lines.map((l) => ({ formatting: 'text', text: l 
  */
 export function keptPageTokens(name, page) {
   const who = name || 'someone';
-  return noteTokensOf([page.head ? `From the journal of ${who} - ${page.head}` : `From the journal of ${who}:`, '', ...page.lines]);
+  return noteTokensOf([
+    page.head ? `From the journal of ${who} - ${page.head}` : `From the journal of ${who}:`,
+    '',
+    ...page.lines,
+  ]);
 }
 
 /**
@@ -94,7 +102,11 @@ export function keptPageTokens(name, page) {
  * @returns {NoteToken[]}
  */
 export function keptLetterTokens(letter) {
-  return noteTokensOf([`A letter from ${letter.from}: ${letter.subject}`, '', ...String(letter.body ?? '').split('\n')]);
+  return noteTokensOf([
+    `A letter from ${letter.from}: ${letter.subject}`,
+    '',
+    ...String(letter.body ?? '').split('\n'),
+  ]);
 }
 
 /** The subject a page sent as a letter carries - the page's own head is a date, longer than a subject may be. */
@@ -137,7 +149,7 @@ export class PageOffers {
     const t = this.now();
     const was = this.held.get(id);
     const say = !was || t - was.saidAt >= PAGE_NOTICE_MS;
-    this.held.delete(id);   // re-inserted, so the map's order is the writers' order of last holding one out
+    this.held.delete(id); // re-inserted, so the map's order is the writers' order of last holding one out
     this.held.set(id, { page, name: name || null, at: t, saidAt: say ? t : was.saidAt, kept: false });
     while (this.held.size > PAGE_OFFERS_MAX) this.held.delete(this.held.keys().next().value);
     return say;
@@ -147,13 +159,19 @@ export class PageOffers {
   get(id) {
     const o = this.held.get(id);
     if (!o) return null;
-    if (this.now() - o.at > PAGE_HOLD_MS) { this.held.delete(id); return null; }
+    if (this.now() - o.at > PAGE_HOLD_MS) {
+      this.held.delete(id);
+      return null;
+    }
     return { page: o.page, name: o.name, kept: o.kept };
   }
 
   /** `page`, which `id` held out, is in my journal now - so reading it again offers no second copy. Only THAT page: a
    *  newer one they held out while I was reading the last is not kept by keeping the last. */
-  markKept(id, page) { const o = this.held.get(id); if (o && o.page === page) o.kept = true; }
+  markKept(id, page) {
+    const o = this.held.get(id);
+    if (o && o.page === page) o.kept = true;
+  }
 
   /** The writers who are not in the room any more take their pages with them - `ids` anything that answers `has` (the
    *  session's own peer map), walked with no copy, since a frame asks it. */
@@ -161,7 +179,9 @@ export class PageOffers {
     for (const id of this.held.keys()) if (!ids.has(id)) this.held.delete(id);
   }
 
-  clear() { this.held.clear(); }
+  clear() {
+    this.held.clear();
+  }
 }
 
 /** The line that says a page is held out: whose, and how to read it (`how` - the host's word for turning to them: the

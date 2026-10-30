@@ -128,8 +128,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-claim-unchecked",
     "file": "src/net/identityToken.js",
-    "old": "  if (c.vl !== undefined && !(c.rc === 1 && villainyIssuable(c.vl))) return false;",
-    "new": "",
+    "old": "  if (c.vl !== undefined && !(c.rc === 1 && villainyIssuable(c.vl))) return false; // PVP-VILLAIN-KEEP: the meter, beside the realm's yes alone",
+    "new": "  // PVP-VILLAIN-KEEP: the meter, beside the realm's yes alone",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-realms-yes-unasked",
     "file": "src/net/identityToken.js",
-    "old": "!(c.rc === 1 && villainyIssuable(c.vl))",
-    "new": "!villainyIssuable(c.vl)",
+    "old": "  if (c.vl !== undefined && !(c.rc === 1 && villainyIssuable(c.vl))) return false; // PVP-VILLAIN-KEEP: the meter, beside the realm's yes alone",
+    "new": "  if (c.vl !== undefined && !villainyIssuable(c.vl)) return false; // PVP-VILLAIN-KEEP: the meter, beside the realm's yes alone",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-bounds-unread",
     "file": "src/net/identityToken.js",
-    "old": "Number.isSafeInteger(vl) && vl >= 1 && vl <= TOKEN_VILLAINY_MAX;",
-    "new": "Number.isFinite(vl);",
+    "old": "export const villainyIssuable = (vl) => Number.isSafeInteger(vl) && vl >= 1 && vl <= TOKEN_VILLAINY_MAX;",
+    "new": "export const villainyIssuable = (vl) => Number.isFinite(vl);",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-mint-drops-it",
     "file": "src/net/identityToken.js",
-    "old": "  if (who?.vl !== undefined) claims.vl = who.vl;",
-    "new": "",
+    "old": "  if (who?.vl !== undefined) claims.vl = who.vl; // PVP-VILLAIN-KEEP: only while the meter is above 0 - a meter at 0, the bytes as before",
+    "new": "  // PVP-VILLAIN-KEEP: only while the meter is above 0 - a meter at 0, the bytes as before",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]

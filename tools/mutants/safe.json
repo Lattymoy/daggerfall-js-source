@@ -87,8 +87,8 @@
   {
     "name": "SAFE4-a-mute-carrying-a-ban-field",
     "file": "src/net/identityToken.js",
-    "old": "  if (c.o !== 'ban' && c.bn !== undefined) return false;\n",
-    "new": "",
+    "old": "  if (c.o !== 'ban' && c.bn !== undefined) return false;\n  if (",
+    "new": "  if (",
     "tests": [
       "test/net/safety/safe_law.test.js"
     ],

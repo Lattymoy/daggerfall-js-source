@@ -174,8 +174,8 @@
   {
     "name": "SD9C-not-in-the-vocabulary",
     "file": "src/net/identityToken.js",
-    "old": "'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal']);",
-    "new": "'seraphwings', 'resonance', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire', 'sagesmoke', 'eternal']);",
+    "old": "  'turninghour',\n  'firsthour',",
+    "new": "  'firsthour',",
     "tests": [
       "test/server/sd9c_turning.test.js"
     ],

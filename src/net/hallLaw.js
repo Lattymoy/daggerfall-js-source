@@ -33,7 +33,7 @@ export const HALL_POWERS = Object.freeze({
   heraldry: Object.freeze([0]),
   hallEntry: Object.freeze([0, 1]),
   decorate: Object.freeze([0, 1]),
-  notes: Object.freeze([0, 1]),   // GUILD1e: another member's note taken down from the guild's board
+  notes: Object.freeze([0, 1]), // GUILD1e: another member's note taken down from the guild's board
 });
 /** Whether a rank may do a thing of the hall's. */
 export const hallMay = (rank, power) => (HALL_POWERS[power] ?? []).includes(rank);

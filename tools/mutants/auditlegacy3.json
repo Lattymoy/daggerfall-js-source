@@ -1348,8 +1348,8 @@
   {
     "name": "AUDIT-LEGACY-III-O1-the-token-takes-any-ci",
     "file": "src/net/identityToken.js",
-    "old": "  if (c.ci !== undefined && !(c.rc === 1 && typeof c.ci === 'string' && REALM_CHARACTER_RE.test(c.ci))) return false;\n",
-    "new": "",
+    "old": "  if (c.ci !== undefined && !(c.rc === 1 && typeof c.ci === 'string' && REALM_CHARACTER_RE.test(c.ci))) return false;\n  // ARENA4: the account's arena rating this season (net/arena/arenaLaw.js - the hall queues by it): absent from a service before",
+    "new": "  // ARENA4: the account's arena rating this season (net/arena/arenaLaw.js - the hall queues by it): absent from a service before",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
     ]
@@ -1357,8 +1357,8 @@
   {
     "name": "AUDIT-LEGACY-III-O1-the-token-drops-ci",
     "file": "src/net/identityToken.js",
-    "old": "  if (who?.ci !== undefined) claims.ci = who.ci;",
-    "new": "",
+    "old": "  if (who?.ci !== undefined) claims.ci = who.ci; // AUDIT LEGACY III O1: only with the realm's yes - a 0, or none named, the bytes as before",
+    "new": "  // AUDIT LEGACY III O1: only with the realm's yes - a 0, or none named, the bytes as before",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
     ]

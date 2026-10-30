@@ -762,8 +762,8 @@
   {
     "name": "HOME-VOTE-II-voted-up-says-down",
     "file": "src/net/homeVoteLaw.js",
-    "old": "`You voted this home up. Its votes",
-    "new": "`You voted this home down. Its votes",
+    "old": "    ? `You voted this home up. Its votes: ${homeScoreText(score)}.`",
+    "new": "    ? `You voted this home down. Its votes: ${homeScoreText(score)}.`",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -772,8 +772,8 @@
   {
     "name": "HOME-VOTE-II-voted-down-says-up",
     "file": "src/net/homeVoteLaw.js",
-    "old": "`You voted this home down. Its votes",
-    "new": "`You voted this home up. Its votes",
+    "old": "      ? `You voted this home down. Its votes: ${homeScoreText(score)}.`",
+    "new": "      ? `You voted this home up. Its votes: ${homeScoreText(score)}.`",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -792,8 +792,8 @@
   {
     "name": "HOME-VOTE-II-owner-told-hall",
     "file": "src/net/homeVoteLaw.js",
-    "old": "hall ? \"Your hall's\" : \"Your home's\"",
-    "new": "hall ? \"Your hall's\" : \"Your hall's\"",
+    "old": "  `Votes: ${homeScoreText(score)}. ${hall ? \"Your hall's\" : \"Your home's\"} decorations are hidden from other players.`;",
+    "new": "  `Votes: ${homeScoreText(score)}. ${hall ? \"Your hall's\" : \"Your hall's\"} decorations are hidden from other players.`;",
     "tests": [
       "test/net/homevote.test.js"
     ],

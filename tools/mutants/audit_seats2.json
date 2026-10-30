@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-SEATS2-L3-crown-gate",
     "file": "src/net/fortLaw.js",
-    "old": ": id === 'gatehouse' && seatTier === 'crown' ?",
-    "new": ": id === 'gatehouse' && seatTier === 'palace-never' ?",
+    "old": "      : id === 'gatehouse' && seatTier === 'crown'",
+    "new": "      : id === 'gatehouse' && seatTier === 'palace-never'",
     "tests": [
       "test/net/audit_seats2.test.js"
     ]

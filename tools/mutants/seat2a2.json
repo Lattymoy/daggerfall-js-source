@@ -382,8 +382,8 @@
   {
     "name": "SEAT2a2-pass-kind",
     "file": "src/net/identityToken.js",
-    "old": "export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'siege', 'stake', 'deck', 'remains', 'home', 'egopen', 'egadmit', 'ban', 'smsg', 'staffcut', 'hide', 'freeze', 'staffline', 'sevent', 'yard']);",
-    "new": "export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'stake', 'deck', 'remains', 'home', 'egopen', 'egadmit', 'ban', 'smsg', 'staffcut', 'hide', 'freeze', 'staffline', 'sevent', 'yard']);",
+    "old": "  'siege',\n  'stake',",
+    "new": "  'stake',",
     "tests": [
       "test/net/seat2a_battle.test.js",
       "test/net/siege/seat2a_relay.test.js"
@@ -412,7 +412,7 @@
   {
     "name": "SEAT2a2-pass-sk",
     "file": "src/net/identityToken.js",
-    "old": "  if (!Number.isSafeInteger(c.sk) || c.sk < 0 || c.sk > 0xffffffff || !Number.isSafeInteger(c.sw) || c.sw < 0) return false;",
+    "old": "  if (!Number.isSafeInteger(c.sk) || c.sk < 0 || c.sk > 0xffffffff || !Number.isSafeInteger(c.sw) || c.sw < 0)\n    return false;",
     "new": "  if (!Number.isSafeInteger(c.sk) || c.sk < 0 || !Number.isSafeInteger(c.sw) || c.sw < 0) return false;",
     "tests": [
       "test/net/seat2a_battle.test.js",
@@ -422,7 +422,7 @@
   {
     "name": "SEAT2a2-pass-sw",
     "file": "src/net/identityToken.js",
-    "old": "  if (!Number.isSafeInteger(c.sk) || c.sk < 0 || c.sk > 0xffffffff || !Number.isSafeInteger(c.sw) || c.sw < 0) return false;",
+    "old": "  if (!Number.isSafeInteger(c.sk) || c.sk < 0 || c.sk > 0xffffffff || !Number.isSafeInteger(c.sw) || c.sw < 0)\n    return false;",
     "new": "  if (!Number.isSafeInteger(c.sk) || c.sk < 0 || c.sk > 0xffffffff || !Number.isSafeInteger(c.sw)) return false;",
     "tests": [
       "test/net/seat2a_battle.test.js",
@@ -442,8 +442,8 @@
   {
     "name": "SEAT2a2-pass-tier",
     "file": "src/net/identityToken.js",
-    "old": "(c.st !== 'palace' && c.st !== 'crown')",
-    "new": "(c.st !== 'palace' && c.st !== 'crown' && c.st !== 'castle')",
+    "old": "    (c.st !== 'palace' && c.st !== 'crown') ||",
+    "new": "    (c.st !== 'palace' && c.st !== 'crown' && c.st !== 'castle') ||",
     "tests": [
       "test/net/seat2a_battle.test.js",
       "test/net/siege/seat2a_relay.test.js"
@@ -462,8 +462,8 @@
   {
     "name": "SEAT2a2-pass-se",
     "file": "src/net/identityToken.js",
-    "old": "c.se <= c.sb || c.se - c.sb > (royal ? ROYAL_PASS_SPAN_S : SIEGE_PASS_SPAN_S)",
-    "new": "c.se < c.sb || c.se - c.sb > (royal ? ROYAL_PASS_SPAN_S : SIEGE_PASS_SPAN_S)",
+    "old": "    c.se <= c.sb ||",
+    "new": "    c.se < c.sb ||",
     "tests": [
       "test/net/seat2a_battle.test.js",
       "test/net/siege/seat2a_relay.test.js"

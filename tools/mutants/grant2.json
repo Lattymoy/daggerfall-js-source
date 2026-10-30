@@ -93,8 +93,8 @@
   {
     "name": "GRANT2-unknown-setting-enforces",
     "file": "src/net/grantLaw.js",
-    "old": "(v === 'off' || v === 'enforce' ? v : 'measure')",
-    "new": "(v === 'off' || v === 'measure' ? v : 'enforce')",
+    "old": "export const grantModeOf = (v) => (v === 'off' || v === 'enforce' ? v : 'measure');",
+    "new": "export const grantModeOf = (v) => (v === 'off' || v === 'measure' ? v : 'enforce');",
     "why": "a setting nobody wrote enforces",
     "tests": [
       "test/net/grant2_relay.test.js"
@@ -103,8 +103,8 @@
   {
     "name": "GRANT2-ask-most-ignored",
     "file": "src/net/grantLaw.js",
-    "old": "  if (!intIn(m.n, 1, GRANT_KINDS[/** @type {keyof typeof GRANT_KINDS} */ (m.kind)].max)) return null;",
-    "new": "  if (!intIn(m.n, 1, 8)) return null;",
+    "old": "    if (!intIn(m.n, 1, GRANT_KINDS[/** @type {keyof typeof GRANT_KINDS} */ (m.kind)].max)) return null;",
+    "new": "    if (!intIn(m.n, 1, 8)) return null;",
     "why": "an encounter of five asked",
     "tests": [
       "test/net/grant2_relay.test.js"
@@ -123,8 +123,8 @@
   {
     "name": "GRANT2-members-unbounded",
     "file": "src/net/grantMeasure.js",
-    "old": "&& count(r.members) && r.members <= r.asks * GRANT_KINDS[/** @type {keyof typeof GRANT_KINDS} */ (r.k)].max",
-    "new": "&& count(r.members)",
+    "old": "        r.members <= r.asks * GRANT_KINDS[/** @type {keyof typeof GRANT_KINDS} */ (r.k)].max &&\n        count(r.bucket) &&",
+    "new": "        count(r.bucket) &&",
     "why": "a window claiming more members than its asks could",
     "tests": [
       "test/server/grant2_service.test.js"
@@ -133,8 +133,8 @@
   {
     "name": "GRANT2-signature-unchecked",
     "file": "src/net/grantMeasure.js",
-    "old": "  if (!good) return { error: 'grant-signature' };\n",
-    "new": "",
+    "old": "  if (!good) return { error: 'grant-signature' };\n  let batch;",
+    "new": "  let batch;",
     "why": "anyone feeds the measure",
     "tests": [
       "test/server/grant2_service.test.js"

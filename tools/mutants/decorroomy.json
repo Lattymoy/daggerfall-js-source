@@ -29,8 +29,8 @@
   {
     "name": "DECORROOMY-price-unheld",
     "file": "src/net/homeLaw.js",
-    "old": "&& homeOnlinePrice(ground, townBlocks) === price;",
-    "new": "&& price > 0;",
+    "old": "  homeOnlinePrice(ground, townBlocks) === price;",
+    "new": "  price > 0;",
     "tests": [
       "test/server/decorroomy_service.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "DECORROOMY-ground-unbounded",
     "file": "src/net/homeLaw.js",
-    "old": "ground > 0 && ground <= HOME_GROUND_MAX",
-    "new": "ground > 0",
+    "old": "  ground <= HOME_GROUND_MAX &&\n  Number.isSafeInteger(townBlocks) &&",
+    "new": "  Number.isSafeInteger(townBlocks) &&",
     "tests": [
       "test/server/decorroomy_service.test.js"
     ]

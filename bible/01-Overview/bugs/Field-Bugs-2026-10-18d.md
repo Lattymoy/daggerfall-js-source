@@ -115,7 +115,7 @@ host's own gates: character A of an account claims a home; the town read as the 
 B in, every station refuses, and the enchanting station says "This belongs to <the account's own handle>." Two owner
 questions disagreed (THE ONE CONSTRUCTION SEAM):
 - the door asks the ACCOUNT (`mine`: `homes.js:"      const mine = h.player === player.id;"` on the service,
-  `homeLaw.js:"  if (home.mine) return true;"`);
+  `homeLaw.js:"if (home.mine) return"`);
 - the stations asked THIS CHARACTER (`own`: `onlineHomes.js` homeAt's `row.mine && typeof me === 'string' && row.character === me` - since
   ACCOUNT-HOMES, `onlineHomes.js:"    const own = row.mine && !row.deed;"`, the account's too),
   through decorOwnerHere at the press and the seven station questions.

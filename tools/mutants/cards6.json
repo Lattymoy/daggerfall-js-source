@@ -2,8 +2,8 @@
   {
     "name": "C6-stake-fields-anywhere",
     "file": "src/net/identityToken.js",
-    "old": "  if (c.o !== 'stake' && !noStake) return false;\n",
-    "new": "",
+    "old": "  if (c.o !== 'stake' && !noStake) return false;\n  if (c.o === 'stake' && (!stakeOrderValid(c) || c.mu !== undefined || c.lv !== undefined || !noGuild || !noSiege))",
+    "new": "  if (c.o === 'stake' && (!stakeOrderValid(c) || c.mu !== undefined || c.lv !== undefined || !noGuild || !noSiege))",
     "tests": [
       "test/world/card/auditcards3_pins.test.js",
       "test/net/auditcards3_relay.test.js",
@@ -19,8 +19,8 @@
   {
     "name": "C6-stake-unchecked",
     "file": "src/net/identityToken.js",
-    "old": "if (c.o === 'stake' && (!stakeOrderValid(c) ||",
-    "new": "if (c.o === 'stake' && (false ||",
+    "old": "  if (c.o === 'stake' && (!stakeOrderValid(c) || c.mu !== undefined || c.lv !== undefined || !noGuild || !noSiege))\n    return false;",
+    "new": "  if (c.o === 'stake' && (false || c.mu !== undefined || c.lv !== undefined || !noGuild || !noSiege)) return false;",
     "tests": [
       "test/world/card/auditcards3_pins.test.js",
       "test/net/auditcards3_relay.test.js",
@@ -36,8 +36,8 @@
   {
     "name": "C6-stake-any-room",
     "file": "src/net/identityToken.js",
-    "old": "|| typeof c.cr !== 'string' || !STAKE_ROOM_RE.test(c.cr)) return false;",
-    "new": ") return false;",
+    "old": "  if (typeof c.cj !== 'string' || !STAKE_ID_RE.test(c.cj) || typeof c.cr !== 'string' || !STAKE_ROOM_RE.test(c.cr))\n    return false;",
+    "new": "  if (typeof c.cj !== 'string' || !STAKE_ID_RE.test(c.cj)) return false;",
     "tests": [
       "test/world/card/auditcards3_pins.test.js",
       "test/net/auditcards3_relay.test.js",
@@ -53,8 +53,8 @@
   {
     "name": "C6-void-any-kind",
     "file": "src/net/identityToken.js",
-    "old": "valid: (c) => orderValid(c) && c.o === 'stake' });",
-    "new": "valid: (c) => orderValid(c) });",
+    "old": "  return openSealed(token, publicKey, { subtle, nowS: i, skewS: 0, valid: (c) => orderValid(c) && c.o === 'stake' });",
+    "new": "  return openSealed(token, publicKey, { subtle, nowS: i, skewS: 0, valid: (c) => orderValid(c) });",
     "tests": [
       "test/world/card/auditcards3_pins.test.js",
       "test/net/auditcards3_relay.test.js",
@@ -129,7 +129,7 @@
   {
     "name": "C6-gold-or-not",
     "file": "src/net/holdemTable.js",
-    "old": "  if (!!t.gold !== !!stake) return t.gold ? 'gold table' : 'friendly table';   // CARDS6: every seat staked, or none",
+    "old": "  if (!!t.gold !== !!stake) return t.gold ? 'gold table' : 'friendly table'; // CARDS6: every seat staked, or none",
     "new": "  void stake;",
     "tests": [
       "test/world/card/auditcards3_pins.test.js",
@@ -146,7 +146,7 @@
   {
     "name": "C6-stake-any-size",
     "file": "src/net/holdemTable.js",
-    "old": "  if (stake && !(stake.amount >= HOLDEM_STAKE_MIN_BB * t.bb && stake.amount <= HOLDEM_STAKE_MAX_BB * t.bb)) return 'bad stake';",
+    "old": "  if (stake && !(stake.amount >= HOLDEM_STAKE_MIN_BB * t.bb && stake.amount <= HOLDEM_STAKE_MAX_BB * t.bb))\n    return 'bad stake';",
     "new": "  void HOLDEM_STAKE_MIN_BB;",
     "tests": [
       "test/world/card/auditcards3_pins.test.js",
@@ -163,7 +163,7 @@
   {
     "name": "C6-no-cashout",
     "file": "src/net/holdemTable.js",
-    "old": "  (t.cashouts ??= []).push({ to: seat.id, j: seat.stake, s: seat.sub, r: seat.stack, w: seat.stack > 0 ? 'stood' : 'broke' });",
+    "old": "  (t.cashouts ??= []).push({\n    to: seat.id,\n    j: seat.stake,\n    s: seat.sub,\n    r: seat.stack,\n    w: seat.stack > 0 ? 'stood' : 'broke',\n  });",
     "new": "  void seat;",
     "tests": [
       "test/world/card/auditcards3_pins.test.js",
@@ -197,8 +197,8 @@
   {
     "name": "C6-cashed-rejoins",
     "file": "src/net/holdemTable.js",
-    "old": "return t.seats[mine].cashed ? 'cashed out' : null;",
-    "new": "return null;",
+    "old": "  if (mine >= 0 && t.seats[mine].leaving) return t.seats[mine].cashed ? 'cashed out' : null; // CARDS6: his stack went home in a receipt - the chair is not his to play again",
+    "new": "  if (mine >= 0 && t.seats[mine].leaving) return null; // CARDS6: his stack went home in a receipt - the chair is not his to play again",
     "tests": [
       "test/world/card/auditcards3_pins.test.js",
       "test/net/auditcards3_relay.test.js",
@@ -214,8 +214,8 @@
   {
     "name": "C6-folded-paid-whole",
     "file": "src/net/holdemTable.js",
-    "old": "r: t.hand.seats[k].stack, w: t.hand.seats[k].stack > 0",
-    "new": "r: seat.stack, w: t.hand.seats[k].stack > 0",
+    "old": "    r: t.hand.seats[k].stack,",
+    "new": "    r: seat.stack,",
     "tests": [
       "test/world/card/auditcards3_pins.test.js",
       "test/net/auditcards3_relay.test.js",

@@ -41,7 +41,8 @@ import { isCellRoom, isWorldRoom, WORLD_WIDE_RELAY_MIN } from './wire.js';
  *  LONE-SLEEP; a merge's renumber moves it with the release's. */
 export const LONE_RELAY_MIN = WORLD_WIDE_RELAY_MIN;
 /** May a session go quiet to the relay at version `v`? @param {unknown} v */
-export const loneSupported = (v) => Number(/^world(\d+)$/.exec(typeof v === 'string' ? v : '')?.[1] ?? 0) >= LONE_RELAY_MIN;
+export const loneSupported = (v) =>
+  Number(/^world(\d+)$/.exec(typeof v === 'string' ? v : '')?.[1] ?? 0) >= LONE_RELAY_MIN;
 
 /** The longest a lone session goes without a pose down its own cell's socket, ms. What bounds it (Scale-Arc LONE-SLEEP):
  *  under PEER_TIMEOUT_MS (80 s - a hidden staff spectator holds the lone player as a peer, and its silence law hides one
@@ -65,7 +66,9 @@ export const LONE_FIGHT_KEYS = Object.freeze(['wd', 'an', 'cn', 'ar', 'hk', 'hu'
 
 /** What sendPose does with a pose (`loneStep`): HOLD it; say it down my cell's socket alone (SAY - the lone interval); or
  *  say it as ever (GO - POSE_HZ when it moved, the heartbeat when it did not, each halo when it is due). */
-export const LONE_HOLD = 'hold', LONE_SAY = 'lone', LONE_GO = 'go';
+export const LONE_HOLD = 'hold',
+  LONE_SAY = 'lone',
+  LONE_GO = 'go';
 
 /**
  * HIBERNATE and LONE-SLEEP: is a session ALONE? Pure - nobody else in its own room (`others`) or any it holds (`peers`:
@@ -80,7 +83,12 @@ export function aloneNow(s) {
  *  referee may stand in a halo (`haloWhole`) or a cell said `rf` on my own socket or any halo's. @param {any} s */
 export function aloneOf(s) {
   let refereed = !!s.haloWhole || !!(s._ws && s._rfOn.get(s._ws));
-  if (!refereed) for (const h of s._halo.values()) if (h.ws && s._rfOn.get(h.ws)) { refereed = true; break; }
+  if (!refereed)
+    for (const h of s._halo.values())
+      if (h.ws && s._rfOn.get(h.ws)) {
+        refereed = true;
+        break;
+      }
   return aloneNow({ refereed, others: s.othersHere, peers: s.peers.size, room: s.room });
 }
 
@@ -94,11 +102,21 @@ export function loneNow(s) {
 }
 
 /** Did a fight counter move between two poses (the last said to sendPose and this one)? @param {any} last @param {any} pose */
-export const fightMoved = (last, pose) => !!last && !!pose && LONE_FIGHT_KEYS.some((k) => (last[k] | 0) !== (pose[k] | 0));
+export const fightMoved = (last, pose) =>
+  !!last && !!pose && LONE_FIGHT_KEYS.some((k) => (last[k] | 0) !== (pose[k] | 0));
 
 /** The session's own `loneNow` (net/online.js OnlineSession - read, never written). @param {any} s @param {number} now */
 export function loneOf(s, now) {
-  return loneNow({ alone: aloneOf(s), ok: !!s.loneOk, presence: s.presence, room: s.room, open: s.status === 'open' && !!s._ws && s._welcomed.has(s._ws), zone: s._wildZone === 1, now, holdUntil: s._loneHold ?? -Infinity });
+  return loneNow({
+    alone: aloneOf(s),
+    ok: !!s.loneOk,
+    presence: s.presence,
+    room: s.room,
+    open: s.status === 'open' && !!s._ws && s._welcomed.has(s._ws),
+    zone: s._wildZone === 1,
+    now,
+    holdUntil: s._loneHold ?? -Infinity,
+  });
 }
 
 /**
@@ -147,11 +165,22 @@ export function loneAhead(s, ws, room) {
 function poseAhead(s, ws, send) {
   const pose = s._pose;
   if (!pose || s._dead) return;
-  const mine = ws === s._ws, last = mine ? s._lastSent : s._haloPosed.get(ws);
+  const mine = ws === s._ws,
+    last = mine ? s._lastSent : s._haloPosed.get(ws);
   if (last && last.x === pose.x && last.z === pose.z && (last.mv | 0) === (pose.mv | 0)) return;
-  const pl = s.poseRide?.() ?? null, ab = s.poseAboard?.() ?? null, now = s._now();
+  const pl = s.poseRide?.() ?? null,
+    ab = s.poseAboard?.() ?? null,
+    now = s._now();
   const out = { ...pose, ...(pl ? { pl } : {}), ...(ab ? { ab } : {}), ts: s._stampTs() };
-  try { send(JSON.stringify({ t: 'pose', p: out })); } catch { return; }
+  try {
+    send(JSON.stringify({ t: 'pose', p: out }));
+  } catch {
+    return;
+  }
   s.stats.sent++;
-  if (mine) { s._lastSent = { ...pose }; s._lastSentAt = now; s.stats.poses++; } else s._haloPosed.set(ws, { x: out.x, z: out.z, mv: out.mv | 0, at: now });
+  if (mine) {
+    s._lastSent = { ...pose };
+    s._lastSentAt = now;
+    s.stats.poses++;
+  } else s._haloPosed.set(ws, { x: out.x, z: out.z, mv: out.mv | 0, at: now });
 }

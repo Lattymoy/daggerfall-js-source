@@ -440,7 +440,7 @@
   {
     "name": "KG3-L-warnings-clock",
     "file": "src/net/kingsGambit.js",
-    "old": "export const warningsArmAt = (round) => round + ((KG_HAZARD_SPAWN_EVERY - ((round + 1) % KG_HAZARD_SPAWN_EVERY)) % KG_HAZARD_SPAWN_EVERY);",
+    "old": "export const warningsArmAt = (round) =>\n  round + ((KG_HAZARD_SPAWN_EVERY - ((round + 1) % KG_HAZARD_SPAWN_EVERY)) % KG_HAZARD_SPAWN_EVERY);",
     "new": "export const warningsArmAt = (round) => round + 1;",
     "tests": [
       "test/systems/kg3_panel.test.js"

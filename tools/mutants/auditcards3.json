@@ -2,8 +2,8 @@
   {
     "name": "D-sb-floor2",
     "file": "src/net/holdemTable.js",
-    "old": "sb: Math.max(1, Math.floor(bb / 2)),",
-    "new": "sb: Math.max(2, Math.floor(bb / 2)),",
+    "old": "    sb: Math.max(1, Math.floor(bb / 2)),",
+    "new": "    sb: Math.max(2, Math.floor(bb / 2)),",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -24,8 +24,8 @@
   {
     "name": "D-public-clock-always",
     "file": "src/net/holdemTable.js",
-    "old": "clockAt: t.hand && t.hand.toAct >= 0 ? t.clockAt : 0, last: t.last,",
-    "new": "clockAt: t.clockAt, last: t.last,",
+    "old": "    clockAt: t.hand && t.hand.toAct >= 0 ? t.clockAt : 0,",
+    "new": "    clockAt: t.clockAt,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -48,8 +48,8 @@
   {
     "name": "D-button-stuck",
     "file": "src/net/holdemTable.js",
-    "old": "const at = live.findIndex((i) => i > t.button);",
-    "new": "const at = live.findIndex((i) => i >= t.button);",
+    "old": "  const at = live.findIndex((i) => i > t.button);",
+    "new": "  const at = live.findIndex((i) => i >= t.button);",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -70,8 +70,8 @@
   {
     "name": "D-only-flop-said",
     "file": "src/net/holdemTable.js",
-    "old": "for (const len of [3, 4, 5]) if (from < len && h.board.length >= len) events.push",
-    "new": "for (const len of [3]) if (from < len && h.board.length >= len) events.push",
+    "old": "  for (const len of [3, 4, 5])",
+    "new": "  for (const len of [3])",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -92,8 +92,8 @@
   {
     "name": "D-last-forgotten",
     "file": "src/net/holdemTable.js",
-    "old": "  t.last = end;\n",
-    "new": "  t.last = null;\n",
+    "old": "  t.last = end;",
+    "new": "  t.last = null;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -114,8 +114,8 @@
   {
     "name": "D-deal-alone",
     "file": "src/net/holdemTable.js",
-    "old": "  if (live.length < HOLDEM_SEATS_MIN) return [];\n  const at =",
-    "new": "  if (live.length < 1) return [];\n  const at =",
+    "old": "  if (live.length < HOLDEM_SEATS_MIN) return [];",
+    "new": "  if (live.length < 1) return [];",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -136,8 +136,8 @@
   {
     "name": "D-stand-refold",
     "file": "src/net/holdemTable.js",
-    "old": "  if (t.hand.seats[k].folded) { cashOutFolded(t, chair, k); return [room(t, [])]; }\n",
-    "new": "\n",
+    "old": "  if (t.hand.seats[k].folded) {\n    cashOutFolded(t, chair, k);\n    return [room(t, [])];\n  }",
+    "new": "",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -158,8 +158,8 @@
   {
     "name": "D-allin-unsaid",
     "file": "src/net/holdemTable.js",
-    "old": "allIn: next.seats[k].allIn && !prev.seats[k].allIn, at: now",
-    "new": "allIn: false, at: now",
+    "old": "      allIn: next.seats[k].allIn && !prev.seats[k].allIn,",
+    "new": "      allIn: false,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -180,8 +180,8 @@
   {
     "name": "D-bet-unsaid",
     "file": "src/net/holdemTable.js",
-    "old": "bet: action.type === 'raise' && prev.currentBet === 0,",
-    "new": "bet: false,",
+    "old": "      bet: action.type === 'raise' && prev.currentBet === 0,",
+    "new": "      bet: false,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -202,8 +202,8 @@
   {
     "name": "D-look-no-turn",
     "file": "src/net/holdemTable.js",
-    "old": "    if (t.hand.toAct === k) out.push(...turnOf(t));\n",
-    "new": "\n",
+    "old": "    if (t.hand.toAct === k) out.push(...turnOf(t));\n  }",
+    "new": "  }",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -224,8 +224,8 @@
   {
     "name": "D-name-unbounded",
     "file": "src/net/holdemTable.js",
-    "old": "name: String(name ?? '').slice(0, HOLDEM_NAME_MAX)",
-    "new": "name: String(name ?? '')",
+    "old": "    name: String(name ?? '').slice(0, HOLDEM_NAME_MAX),",
+    "new": "    name: String(name ?? ''),",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -246,8 +246,8 @@
   {
     "name": "D-out-error-any",
     "file": "src/net/holdemTable.js",
-    "old": "if (typeof m.error === 'string') return m.error.length <= 40;",
-    "new": "if (typeof m.error === 'string') return true;",
+    "old": "  if (typeof m.error === 'string') return m.error.length <= 40; // the relay's refusal of a word (a chair taken, not your turn)",
+    "new": "  if (typeof m.error === 'string') return true; // the relay's refusal of a word (a chair taken, not your turn)",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -268,8 +268,8 @@
   {
     "name": "D-out-turn-clock",
     "file": "src/net/holdemTable.js",
-    "old": "&& typeof m.turn.legal === 'object' && Number.isFinite(m.turn.clockAt);",
-    "new": "&& typeof m.turn.legal === 'object';",
+    "old": "  if (m.turn)\n    return (\n      Number.isInteger(m.turn.handNo) &&\n      !!m.turn.legal &&\n      typeof m.turn.legal === 'object' &&\n      Number.isFinite(m.turn.clockAt)\n    );",
+    "new": "  if (m.turn) return Number.isInteger(m.turn.handNo) && !!m.turn.legal && typeof m.turn.legal === 'object';",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -290,8 +290,8 @@
   {
     "name": "D-out-events-cap",
     "file": "src/net/holdemTable.js",
-    "old": "m.events.length > 32 ||",
-    "new": "m.events.length > 32000 ||",
+    "old": "  if (!Array.isArray(m.events) || m.events.length > 32 || !m.events.every((e) => e && typeof e.t === 'string'))",
+    "new": "  if (!Array.isArray(m.events) || m.events.length > 32000 || !m.events.every((e) => e && typeof e.t === 'string'))",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -334,8 +334,8 @@
   {
     "name": "D-out-bb-any",
     "file": "src/net/holdemTable.js",
-    "old": "    && t.seats.every(seatOk) && HOLDEM_BBS.includes(t.bb) && handShapeOk(t);",
-    "new": "    && t.seats.every(seatOk) && handShapeOk(t);",
+    "old": "    HOLDEM_BBS.includes(t.bb) &&\n    handShapeOk(t)",
+    "new": "    handShapeOk(t)",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -360,8 +360,8 @@
   {
     "name": "D-in-chairs-min",
     "file": "src/net/holdemTable.js",
-    "old": "if (!Number.isInteger(m.chairs) || m.chairs < HOLDEM_SEATS_MIN || m.chairs > HOLDEM_SEATS_MAX",
-    "new": "if (!Number.isInteger(m.chairs) || m.chairs > HOLDEM_SEATS_MAX",
+    "old": "    if (\n      !Number.isInteger(m.chairs) ||\n      m.chairs < HOLDEM_SEATS_MIN ||\n      m.chairs > HOLDEM_SEATS_MAX ||\n      m.chair >= m.chairs\n    )\n      return null;",
+    "new": "    if (!Number.isInteger(m.chairs) || m.chairs > HOLDEM_SEATS_MAX || m.chair >= m.chairs) return null;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1226,8 +1226,8 @@
   {
     "name": "D2-street-twice",
     "file": "src/net/holdemTable.js",
-    "old": "if (from < len && h.board.length >= len) events.push",
-    "new": "if (from <= len && h.board.length >= len) events.push",
+    "old": "    if (from < len && h.board.length >= len)",
+    "new": "    if (from <= len && h.board.length >= len)",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1248,8 +1248,8 @@
   {
     "name": "D2-third-sitter-delays",
     "file": "src/net/holdemTable.js",
-    "old": "if (!t.hand && liveChairs(t).length === HOLDEM_SEATS_MIN) t.nextDealAt = Math.max(t.nextDealAt, now + HOLDEM_FIRST_MS);\n  return [room(t, [{ t: 'sit', seat: chair,",
-    "new": "if (!t.hand && liveChairs(t).length >= HOLDEM_SEATS_MIN) t.nextDealAt = Math.max(t.nextDealAt, now + HOLDEM_FIRST_MS);\n  return [room(t, [{ t: 'sit', seat: chair,",
+    "old": "  if (!t.hand && liveChairs(t).length === HOLDEM_SEATS_MIN)\n    t.nextDealAt = Math.max(t.nextDealAt, now + HOLDEM_FIRST_MS);",
+    "new": "  if (!t.hand && liveChairs(t).length >= HOLDEM_SEATS_MIN) t.nextDealAt = Math.max(t.nextDealAt, now + HOLDEM_FIRST_MS);",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1578,8 +1578,8 @@
   {
     "name": "C4-runout-unpaused",
     "file": "src/net/holdemTable.js",
-    "old": " + HOLDEM_RUNOUT_MS * events.filter((e) => e.t === 'street').length;",
-    "new": "",
+    "old": "  t.nextDealAt = now + HOLDEM_GAP_MS + HOLDEM_RUNOUT_MS * events.filter((e) => e.t === 'street').length; // AUDIT CARDS-3 C4: a run-out's streets are on the cloth first",
+    "new": "  t.nextDealAt = now + HOLDEM_GAP_MS; // AUDIT CARDS-3 C4: a run-out's streets are on the cloth first",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2673,8 +2673,8 @@
   {
     "name": "TIDY-delta-of-nothing",
     "file": "src/net/holdemTable.js",
-    "old": "  if (!prev) return null;\n  const d = {};",
-    "new": "  if (!prev) return {};\n  const d = {};",
+    "old": "  if (!prev) return null;",
+    "new": "  if (!prev) return {};",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2721,8 +2721,8 @@
   {
     "name": "TIDY-delta-any-key",
     "file": "src/net/holdemTable.js",
-    "old": "|| Object.keys(d).some((k) => !STATE_KEYS.includes(k))) return false;",
-    "new": ") return false;",
+    "old": "    if (\n      m.state !== undefined ||\n      !d ||\n      typeof d !== 'object' ||\n      Array.isArray(d) ||\n      Object.keys(d).some((k) => !STATE_KEYS.includes(k))\n    )\n      return false;",
+    "new": "    if (m.state !== undefined || !d || typeof d !== 'object' || Array.isArray(d)) return false;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",

@@ -130,8 +130,8 @@
   {
     "name": "GUILD1e-notes-power-a-members",
     "file": "src/net/hallLaw.js",
-    "old": "  notes: Object.freeze([0, 1]),",
-    "new": "  notes: Object.freeze([0, 1, 2]),",
+    "old": "  notes: Object.freeze([0, 1]), // GUILD1e: another member's note taken down from the guild's board",
+    "new": "  notes: Object.freeze([0, 1, 2]), // GUILD1e: another member's note taken down from the guild's board",
     "tests": [
       "test/net/guild1e_service.test.js"
     ]

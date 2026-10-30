@@ -232,8 +232,8 @@
   {
     "name": "QL12-vocabulary-order",
     "file": "src/net/identityToken.js",
-    "old": "'doorwarden', 'covenbane', 'weirwalker'",
-    "new": "'covenbane', 'doorwarden', 'weirwalker'",
+    "old": "  'doorwarden',\n  'covenbane',",
+    "new": "  'covenbane',\n  'doorwarden',",
     "tests": [
       "test/server/ql12_claim.test.js"
     ]

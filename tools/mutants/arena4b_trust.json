@@ -2,8 +2,8 @@
   {
     "name": "ARENA4b-TRUST-CL-UNCHECKED",
     "file": "src/net/identityToken.js",
-    "old": "  if (c.cl !== undefined && !characterLevelIssuable(c.cl)) return false;\n",
-    "new": "",
+    "old": "  if (c.cl !== undefined && !characterLevelIssuable(c.cl)) return false;\n  // INT7: the realm character's arms (every referee's clip): beside the realm's yes alone, of its shape or refused",
+    "new": "  // INT7: the realm character's arms (every referee's clip): beside the realm's yes alone, of its shape or refused",
     "tests": [
       "test/net/arena/arena4b_trust.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "ARENA4b-TRUST-CL-FRACTION",
     "file": "src/net/identityToken.js",
-    "old": "export const characterLevelIssuable = (cl) => Number.isSafeInteger(cl) &&",
-    "new": "export const characterLevelIssuable = (cl) => Number.isFinite(cl) &&",
+    "old": "  Number.isSafeInteger(cl) && cl >= CHARACTER_LEVEL_MIN && cl <= CHARACTER_LEVEL_MAX;",
+    "new": "  Number.isFinite(cl) && cl >= CHARACTER_LEVEL_MIN && cl <= CHARACTER_LEVEL_MAX;",
     "tests": [
       "test/net/arena/arena4b_trust.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "ARENA4b-TRUST-CL-UNMINTED",
     "file": "src/net/identityToken.js",
-    "old": "  if (who?.cl !== undefined) claims.cl = who.cl;",
-    "new": "  void who?.cl;",
+    "old": "  if (who?.cl !== undefined) claims.cl = who.cl; // ARENA4b: only when a character was named - a mint naming none, the bytes as before",
+    "new": "  void who?.cl; // ARENA4b: only when a character was named - a mint naming none, the bytes as before",
     "tests": [
       "test/net/arena/arena4b_trust.test.js"
     ]

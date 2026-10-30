@@ -1254,8 +1254,8 @@
   {
     "name": "AUDIT-PROF12-P1-apothecary-old-words",
     "file": "src/net/fortLaw.js",
-    "old": "`members' jewelry here ${t === 1 ? 'a quality step' : `${t} quality steps`} better, their dishes",
-    "new": "`members' alchemy, cooking and jewelcrafting here ${t === 1 ? 'a quality step' : `${t} quality steps`} better, their dishes",
+    "old": "    `members' jewelry here ${t === 1 ? 'a quality step' : `${t} quality steps`} better, their dishes ${t === 1 ? 'half again' : t === 2 ? 'twice' : `${(2 + t) / 2} times`} the XP, their brews +${10 * t}% Potent chance`,",
+    "new": "    `members' alchemy, cooking and jewelcrafting here ${t === 1 ? 'a quality step' : `${t} quality steps`} better, their dishes ${t === 1 ? 'half again' : t === 2 ? 'twice' : `${(2 + t) / 2} times`} the XP, their brews +${10 * t}% Potent chance`,",
     "tests": [
       "test/systems/prof12_client.test.js",
       "test/net/seat2b_client.test.js"
@@ -1264,8 +1264,8 @@
   {
     "name": "AUDIT-PROF12-P1-dish-xp-words",
     "file": "src/net/fortLaw.js",
-    "old": "t === 2 ? 'twice' :",
-    "new": "t === 2 ? 'half again' :",
+    "old": "    `members' jewelry here ${t === 1 ? 'a quality step' : `${t} quality steps`} better, their dishes ${t === 1 ? 'half again' : t === 2 ? 'twice' : `${(2 + t) / 2} times`} the XP, their brews +${10 * t}% Potent chance`,",
+    "new": "    `members' jewelry here ${t === 1 ? 'a quality step' : `${t} quality steps`} better, their dishes ${t === 1 ? 'half again' : t === 2 ? 'half again' : `${(2 + t) / 2} times`} the XP, their brews +${10 * t}% Potent chance`,",
     "tests": [
       "test/systems/prof12_client.test.js",
       "test/net/seat2b_client.test.js"
@@ -1274,8 +1274,8 @@
   {
     "name": "AUDIT-PROF12-P1-potent-words",
     "file": "src/net/fortLaw.js",
-    "old": "their brews +${10 * t}% Potent chance",
-    "new": "their brews +${5 * t}% Potent chance",
+    "old": "    `members' jewelry here ${t === 1 ? 'a quality step' : `${t} quality steps`} better, their dishes ${t === 1 ? 'half again' : t === 2 ? 'twice' : `${(2 + t) / 2} times`} the XP, their brews +${10 * t}% Potent chance`,",
+    "new": "    `members' jewelry here ${t === 1 ? 'a quality step' : `${t} quality steps`} better, their dishes ${t === 1 ? 'half again' : t === 2 ? 'twice' : `${(2 + t) / 2} times`} the XP, their brews +${5 * t}% Potent chance`,",
     "tests": [
       "test/systems/prof12_client.test.js",
       "test/net/seat2b_client.test.js"
@@ -1475,8 +1475,8 @@
   {
     "name": "AUDIT-PROF-541-R2-H1-any-guild",
     "file": "src/net/fortLaw.js",
-    "old": "const steps = !!guild && seat?.holder?.guild?.id === guild ? stationSteps(",
-    "new": "const steps = !!guild && !!seat ? stationSteps(",
+    "old": "  const steps = !!guild && seat?.holder?.guild?.id === guild ? stationSteps(profession, seat.forts ?? {}) : 0;",
+    "new": "  const steps = !!guild && !!seat ? stationSteps(profession, seat.forts ?? {}) : 0;",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -1484,8 +1484,8 @@
   {
     "name": "AUDIT-PROF-541-R2-H1-no-guild-of-mine",
     "file": "src/net/fortLaw.js",
-    "old": "const steps = !!guild && seat?.holder?.guild?.id === guild ? stationSteps(",
-    "new": "const steps = seat?.holder?.guild?.id === guild ? stationSteps(",
+    "old": "  const steps = !!guild && seat?.holder?.guild?.id === guild ? stationSteps(profession, seat.forts ?? {}) : 0;",
+    "new": "  const steps = seat?.holder?.guild?.id === guild ? stationSteps(profession, seat.forts ?? {}) : 0;",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -1493,8 +1493,8 @@
   {
     "name": "AUDIT-PROF-541-R2-H1-seat-without-steps",
     "file": "src/net/fortLaw.js",
-    "old": "return { steps, seat: steps > 0 ? seat.key ?? null : null };",
-    "new": "return { steps, seat: seat?.key ?? null };",
+    "old": "  return { steps, seat: steps > 0 ? (seat.key ?? null) : null };",
+    "new": "  return { steps, seat: seat?.key ?? null };",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -1502,8 +1502,8 @@
   {
     "name": "AUDIT-PROF-541-R2-H1-one-profession",
     "file": "src/net/fortLaw.js",
-    "old": "stationSteps(profession, seat.forts ?? {})",
-    "new": "stationSteps('cooking', seat.forts ?? {})",
+    "old": "  const steps = !!guild && seat?.holder?.guild?.id === guild ? stationSteps(profession, seat.forts ?? {}) : 0;",
+    "new": "  const steps = !!guild && seat?.holder?.guild?.id === guild ? stationSteps('cooking', seat.forts ?? {}) : 0;",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]

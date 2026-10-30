@@ -2,8 +2,8 @@
   {
     "name": "CHAP6E-VOCAB-HIGH",
     "file": "src/net/identityToken.js",
-    "old": "'formermaster', 'highmaster', 'seasonmaster']);\n/** Whether",
-    "new": "'formermaster', 'seasonmaster']);\n/** Whether",
+    "old": "export const CHAPTER_TITLES = Object.freeze([\n  'chaptermaster',\n  'chapterofficer',\n  'formermaster',\n  'highmaster',\n  'seasonmaster',\n]);",
+    "new": "export const CHAPTER_TITLES = Object.freeze(['chaptermaster', 'chapterofficer', 'formermaster', 'seasonmaster']);",
     "tests": [
       "test/net/chap6e_titles.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "CHAP6E-VOCAB-SEASON",
     "file": "src/net/identityToken.js",
-    "old": "'formermaster', 'highmaster', 'seasonmaster']);\n/** Whether",
-    "new": "'formermaster', 'highmaster']);\n/** Whether",
+    "old": "export const CHAPTER_TITLES = Object.freeze([\n  'chaptermaster',\n  'chapterofficer',\n  'formermaster',\n  'highmaster',\n  'seasonmaster',\n]);",
+    "new": "export const CHAPTER_TITLES = Object.freeze(['chaptermaster', 'chapterofficer', 'formermaster', 'highmaster']);",
     "tests": [
       "test/net/chap6e_titles.test.js"
     ]

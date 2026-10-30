@@ -2,7 +2,7 @@
   {
     "name": "INSTANCES-STRANGER-ADMITTED",
     "file": "src/net/instanceRoom.js",
-    "old": "  return typeof kin === 'function' && await kin(subject, r.owner) ? 'party' : null;",
+    "old": "  return typeof kin === 'function' && (await kin(subject, r.owner)) ? 'party' : null;",
     "new": "  return 'party';",
     "tests": [
       "test/net/instances1.test.js",
@@ -13,8 +13,8 @@
   {
     "name": "INSTANCES-STAFF-REFUSED",
     "file": "src/net/instanceRoom.js",
-    "old": "  if (staff) return 'staff';\n",
-    "new": "",
+    "old": "  if (staff) return 'staff';\n  if (r.owner === (await instanceOwnerOf(subject))) return 'owner';",
+    "new": "  if (r.owner === (await instanceOwnerOf(subject))) return 'owner';",
     "tests": [
       "test/net/instances1.test.js"
     ],
@@ -33,8 +33,8 @@
   {
     "name": "INSTANCES-PARTY-NOT-ASKERS",
     "file": "src/net/instanceRoom.js",
-    "old": "!Array.isArray(members) || !members.includes(subject) ||",
-    "new": "!Array.isArray(members) ||",
+    "old": "  if (!Array.isArray(members) || !members.includes(subject) || typeof owner !== 'string' || !OWNER_RE.test(owner))\n    return false;",
+    "new": "  if (!Array.isArray(members) || typeof owner !== 'string' || !OWNER_RE.test(owner)) return false;",
     "tests": [
       "test/net/instances1.test.js"
     ],

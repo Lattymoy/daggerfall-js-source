@@ -533,8 +533,8 @@
   {
     "name": "STAFF-PANEL5-FOLLOW-claims-fo-alone",
     "file": "src/net/identityToken.js",
-    "old": "!(c.hd === 1 && typeof c.fo === 'string'",
-    "new": "!(typeof c.fo === 'string'",
+    "old": "  if (c.fo !== undefined && !(c.hd === 1 && typeof c.fo === 'string' && ID_RE.test(c.fo) && c.fo !== c.s)) return false;",
+    "new": "  if (c.fo !== undefined && !(typeof c.fo === 'string' && ID_RE.test(c.fo) && c.fo !== c.s)) return false;",
     "why": "a player's token naming a follow",
     "tests": [
       "test/net/staffpanel5follow_client.test.js"
@@ -543,8 +543,8 @@
   {
     "name": "STAFF-PANEL5-FOLLOW-claims-fo-self",
     "file": "src/net/identityToken.js",
-    "old": "ID_RE.test(c.fo) && c.fo !== c.s))",
-    "new": "ID_RE.test(c.fo)))",
+    "old": "  if (c.fo !== undefined && !(c.hd === 1 && typeof c.fo === 'string' && ID_RE.test(c.fo) && c.fo !== c.s)) return false;",
+    "new": "  if (c.fo !== undefined && !(c.hd === 1 && typeof c.fo === 'string' && ID_RE.test(c.fo))) return false;",
     "why": "a follow of itself",
     "tests": [
       "test/net/staffpanel5follow_client.test.js"

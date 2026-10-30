@@ -503,8 +503,8 @@
   {
     "name": "STAFF-PANEL2-FIX-cut-order-any-fields",
     "file": "src/net/identityToken.js",
-    "old": "  if (c.o === 'staffcut' && (c.mu !== undefined ||",
-    "new": "  if (false && (c.mu !== undefined ||",
+    "old": "    c.o === 'staffcut' &&",
+    "new": "    false &&",
     "why": "a cut order carrying another kind's fields",
     "tests": [
       "test/net/safety/safe_staffcut.test.js"

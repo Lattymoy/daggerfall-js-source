@@ -191,8 +191,8 @@
   {
     "name": "HS-index-last-kept",
     "file": "src/net/heraldryIndex.js",
-    "old": " && !out.has(g.tag)) out.set(g.tag, {",
-    "new": ") out.set(g.tag, {",
+    "old": "    if (h && typeof g.tag === 'string' && g.tag && !out.has(g.tag))",
+    "new": "    if (h && typeof g.tag === 'string' && g.tag)",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "HS-index-no-seats",
     "file": "src/net/heraldryIndex.js",
-    "old": "    for (const s of Array.isArray(src.seats) ? src.seats : []) seat(s);\n",
-    "new": "",
+    "old": "    for (const s of Array.isArray(src.seats) ? src.seats : []) seat(s);\n    for (const r of Array.isArray(src.standings) ? src.standings : []) put(r?.guild);",
+    "new": "    for (const r of Array.isArray(src.standings) ? src.standings : []) put(r?.guild);",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "HS-index-no-standings",
     "file": "src/net/heraldryIndex.js",
-    "old": "    for (const r of Array.isArray(src.standings) ? src.standings : []) put(r?.guild);\n",
-    "new": "",
+    "old": "    for (const r of Array.isArray(src.standings) ? src.standings : []) put(r?.guild);\n  }",
+    "new": "  }",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "HS-index-no-against",
     "file": "src/net/heraldryIndex.js",
-    "old": " put(s?.battle?.against); };",
-    "new": " };",
+    "old": "    put(s?.battle?.against);\n  };",
+    "new": "  };",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "HS-index-no-battle-guild",
     "file": "src/net/heraldryIndex.js",
-    "old": " put(s?.battle?.guild); put(",
-    "new": " put(",
+    "old": "    put(s?.battle?.guild);\n    put(s?.battle?.against);",
+    "new": "    put(s?.battle?.against);",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "HS-index-no-guild",
     "file": "src/net/heraldryIndex.js",
-    "old": "    put(src);\n    seat(src);\n",
-    "new": "    seat(src);\n",
+    "old": "    put(src);\n    seat(src);",
+    "new": "    seat(src);",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "HS-index-refused-kept",
     "file": "src/net/heraldryIndex.js",
-    "old": "    const h = heraldryOf(g?.heraldry);\n    if (h && typeof g.tag",
-    "new": "    const h = g?.heraldry;\n    if (h && typeof g.tag",
+    "old": "    const h = heraldryOf(g?.heraldry);",
+    "new": "    const h = g?.heraldry;",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -555,8 +555,8 @@
   {
     "name": "H3-name-unkept",
     "file": "src/net/heraldryIndex.js",
-    "old": "{ name: typeof g.name === 'string' ? g.name : null, heraldry: h }",
-    "new": "{ name: null, heraldry: h }",
+    "old": "    if (h && typeof g.tag === 'string' && g.tag && !out.has(g.tag))\n      out.set(g.tag, { name: typeof g.name === 'string' ? g.name : null, heraldry: h });",
+    "new": "    if (h && typeof g.tag === 'string' && g.tag && !out.has(g.tag)) out.set(g.tag, { name: null, heraldry: h });",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ],
@@ -565,8 +565,8 @@
   {
     "name": "H3-name-unchecked",
     "file": "src/net/heraldryIndex.js",
-    "old": "return e && (name === undefined || e.name === name) ? e.heraldry : null;",
-    "new": "return e ? e.heraldry : null;",
+    "old": "  return e && (name === undefined || e.name === name) ? e.heraldry : null;",
+    "new": "  return e ? e.heraldry : null;",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ],
@@ -575,8 +575,8 @@
   {
     "name": "H3-tag-path-checked",
     "file": "src/net/heraldryIndex.js",
-    "old": "(name === undefined || e.name === name)",
-    "new": "(e.name === name)",
+    "old": "  return e && (name === undefined || e.name === name) ? e.heraldry : null;",
+    "new": "  return e && e.name === name ? e.heraldry : null;",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ],

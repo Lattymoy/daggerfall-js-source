@@ -11,8 +11,8 @@
   {
     "name": "GUILD1d-price-rounded-down",
     "file": "src/net/hallLaw.js",
-    "old": "price + Math.ceil(price / 2)",
-    "new": "price + Math.floor(price / 2)",
+    "old": "export const guildHallPrice = (price) => (Number.isSafeInteger(price) && price > 0 ? price + Math.ceil(price / 2) : 0);",
+    "new": "export const guildHallPrice = (price) => (Number.isSafeInteger(price) && price > 0 ? price + Math.floor(price / 2) : 0);",
     "tests": [
       "test/net/guild1d_client.test.js",
       "test/net/guild1d_service.test.js"
@@ -160,8 +160,8 @@
   {
     "name": "GUILD1d-ash-a-field",
     "file": "src/net/heraldryLaw.js",
-    "old": "if (field === HERALDRY_UNHELD || field === border) return null;",
-    "new": "if (field === border) return null;",
+    "old": "  if (field === HERALDRY_UNHELD || field === border) return null;",
+    "new": "  if (field === border) return null;",
     "tests": [
       "test/net/guild1d_client.test.js",
       "test/net/guild1d_service.test.js"
@@ -170,8 +170,8 @@
   {
     "name": "GUILD1d-hall-rule-gone",
     "file": "src/net/homeLaw.js",
-    "old": "  if (home.hall) return home.member === true || home.entry === 'public';\n",
-    "new": "",
+    "old": "  if (home.hall) return home.member === true || home.entry === 'public';\n  if (home.mine) return true;",
+    "new": "  if (home.mine) return true;",
     "tests": [
       "test/net/guild1d_client.test.js",
       "test/net/guild1d_service.test.js"
@@ -180,8 +180,8 @@
   {
     "name": "GUILD1d-guildmate-unread",
     "file": "src/net/homeLaw.js",
-    "old": "  if (home.entry === 'guild') return home.guildmate === true;",
-    "new": "  if (home.entry === 'guild') return false;",
+    "old": "  if (home.entry === 'guild') return home.guildmate === true; // GUILD1d: the playing character shares the owner's character's guild (the service's word)",
+    "new": "  if (home.entry === 'guild') return false; // GUILD1d: the playing character shares the owner's character's guild (the service's word)",
     "tests": [
       "test/net/guild1d_client.test.js",
       "test/net/guild1d_service.test.js"

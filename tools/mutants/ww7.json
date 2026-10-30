@@ -228,8 +228,8 @@
   {
     "name": "WW7-4-the-imperial-city-a-castle",
     "file": "src/net/instanceRoom.js",
-    "old": "Object.freeze([1, 2, 3, 4, 5, 6].map((k)",
-    "new": "Object.freeze([0, 1, 2, 3, 4, 5, 6].map((k)",
+    "old": "  [1, 2, 3, 4, 5, 6].map((k) => ((0x341 << 20) | 0x80000 | k) >>> 0),",
+    "new": "  [0, 1, 2, 3, 4, 5, 6].map((k) => ((0x341 << 20) | 0x80000 | k) >>> 0),",
     "tests": [
       "test/world/worldWide/ww7_castles.test.js"
     ]
@@ -237,8 +237,8 @@
   {
     "name": "WW7-4-a-province-s-none",
     "file": "src/net/instanceRoom.js",
-    "old": "Object.freeze([1, 2, 3, 4, 5, 6].map((k)",
-    "new": "Object.freeze([1, 2, 3, 4, 5].map((k)",
+    "old": "export const PROVINCE_CASTLE_MAP_IDS = Object.freeze(\n  [1, 2, 3, 4, 5, 6].map((k) => ((0x341 << 20) | 0x80000 | k) >>> 0),\n);",
+    "new": "export const PROVINCE_CASTLE_MAP_IDS = Object.freeze([1, 2, 3, 4, 5].map((k) => ((0x341 << 20) | 0x80000 | k) >>> 0));",
     "tests": [
       "test/world/worldWide/ww7_castles.test.js"
     ]

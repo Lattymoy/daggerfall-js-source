@@ -232,8 +232,8 @@
   {
     "name": "LAW-lines-collapsed",
     "file": "src/net/letterLaw.js",
-    "old": "  return foldBlankLines(String(text ?? '').split(LINE_BREAK).map(wordsLine)).join('\\n');",
-    "new": "  return foldBlankLines(String(text ?? '').split(LINE_BREAK).map(wordsLine)).join(' ');",
+    "old": "  ).join('\\n');",
+    "new": "  ).join(' ');",
     "tests": [
       "test/server/mail1.test.js"
     ],
@@ -305,7 +305,7 @@
   {
     "name": "LAW-subject-keeps-lines",
     "file": "src/net/letterLaw.js",
-    "old": "  return wordsLine(String(text ?? '').split(LINE_BREAK).join(' '));",
+    "old": "  return wordsLine(\n    String(text ?? '')\n      .split(LINE_BREAK)\n      .join(' '),\n  );",
     "new": "  return wordsLine(String(text ?? ''));",
     "tests": [
       "test/server/mail1.test.js"

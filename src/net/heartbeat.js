@@ -67,9 +67,12 @@ export const whileLive = (/** @type {HeartbeatPart} */ part, /** @type {() => bo
 });
 
 /** A part's answer, out of the heartbeat's: the route's own body, or its refusal word. */
-export const partAnswer = (/** @type {any} */ v) => (v && typeof v === 'object'
-  ? (typeof v.error === 'string' ? { ok: false, error: v.error } : { ok: true, data: v })
-  : { ok: false, error: 'server' });
+export const partAnswer = (/** @type {any} */ v) =>
+  v && typeof v === 'object'
+    ? typeof v.error === 'string'
+      ? { ok: false, error: v.error }
+      : { ok: true, data: v }
+    : { ok: false, error: 'server' };
 
 /**
  * THE HEARTBEAT: `add(name, part)` its clocks (`mail`, `board`), `beat()` the play clock's knock, and its own tick every
@@ -79,9 +82,14 @@ export const partAnswer = (/** @type {any} */ v) => (v && typeof v === 'object'
  *   sleep?: (ms: number) => Promise<void>, waitMs?: number }} io
  */
 export function createHeartbeat({
-  fetch, storage, now = () => Date.now(), visible = () => true,
-  setInterval = globalThis.setInterval, clearInterval = globalThis.clearInterval,
-  sleep = (ms) => new Promise((r) => setTimeout(r, ms)), waitMs = ACCOUNT_ACT_WAIT_MS,
+  fetch,
+  storage,
+  now = () => Date.now(),
+  visible = () => true,
+  setInterval = globalThis.setInterval,
+  clearInterval = globalThis.clearInterval,
+  sleep = (ms) => new Promise((r) => setTimeout(r, ms)),
+  waitMs = ACCOUNT_ACT_WAIT_MS,
 }) {
   /** @type {Map<string, HeartbeatPart>} */
   const parts = new Map();
@@ -94,21 +102,35 @@ export function createHeartbeat({
   /** when this page's last beat the service answered was sent - null before the first */
   let creditedAt = /** @type {number|null} */ (null);
   /** each try's fetch, given up after `waitMs` (accountClient.js waitedPost's own: an abort is `offline`) */
-  const waited = (/** @type {any} */ url, /** @type {any} */ init) => fetch(url, {
-    ...init, signal: typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function' ? AbortSignal.timeout(waitMs) : undefined,
-  });
+  const waited = (/** @type {any} */ url, /** @type {any} */ init) =>
+    fetch(url, {
+      ...init,
+      signal:
+        typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function'
+          ? AbortSignal.timeout(waitMs)
+          : undefined,
+    });
 
   /** How much longer the waiting knock may wait: BEAT_RIDE_MS from the knock, never past the grace since the last beat
    *  credited - and none for the page's first, which opens or carries on a sitting nothing here measured. */
-  const waitLeft = (/** @type {number} */ t) => (creditedAt == null ? 0
-    : Math.min(BEAT_RIDE_MS - (t - /** @type {number} */ (beatAt)), creditedAt + PLAY_GRACE_S * 1000 - BEAT_GRACE_MARGIN_MS - t));
+  const waitLeft = (/** @type {number} */ t) =>
+    creditedAt == null
+      ? 0
+      : Math.min(
+          BEAT_RIDE_MS - (t - /** @type {number} */ (beatAt)),
+          creditedAt + PLAY_GRACE_S * 1000 - BEAT_GRACE_MARGIN_MS - t,
+        );
   /** Will any clock be due before the knock's wait is out? Then the beat waits for it; else it goes now. */
   const rideComing = (/** @type {number} */ t) => {
     const left = waitLeft(t);
     return left > 0 && [...parts.values()].some((p) => p.soon(t, left));
   };
 
-  async function send(/** @type {Array<[string, HeartbeatPart]>} */ riding, /** @type {boolean} */ withBeat, keepalive = false) {
+  async function send(
+    /** @type {Array<[string, HeartbeatPart]>} */ riding,
+    /** @type {boolean} */ withBeat,
+    keepalive = false,
+  ) {
     /** @type {Record<string, any>} */
     const body = {};
     /** @type {Array<[string, HeartbeatPart]>} */
@@ -116,38 +138,59 @@ export function createHeartbeat({
     for (const [name, p] of riding) {
       let b;
       // AUDIT SCALE B6: a part whose body throws does not ride - and leaves the others theirs
-      try { b = p.body(); } catch (e) { console.warn(`[heartbeat] the ${name} part's body threw`, e); continue; }
+      try {
+        b = p.body();
+      } catch (e) {
+        console.warn(`[heartbeat] the ${name} part's body threw`, e);
+        continue;
+      }
       if (b === undefined) continue;
       body[name] = b;
       sent.push([name, p]);
     }
     const waiters = withBeat ? beatWaiters : [];
-    if (withBeat) { body.beat = true; beatAt = null; beatWaiters = []; }
-    const done = () => { for (const w of waiters) w(); };
+    if (withBeat) {
+      body.beat = true;
+      beatAt = null;
+      beatWaiters = [];
+    }
+    const done = () => {
+      for (const w of waiters) w();
+    };
     if (!sent.length && !withBeat) return null;
     /** @type {any} */
     let r = { ok: false, error: 'offline' };
     try {
       const session = storedSession(storage);
-      if (!session) r = { ok: false, error: 'no-session' };   // signed out: every part told so, the knock dropped (accountPlayBeat's own answer)
+      if (!session)
+        r = { ok: false, error: 'no-session' }; // signed out: every part told so, the knock dropped (accountPlayBeat's own answer)
       else {
         for (let i = 0; i < NOTICE_TRIES; i++) {
           if (i > 0) await sleep(NOTICE_RETRY_MS[Math.min(i - 1, NOTICE_RETRY_MS.length - 1)]);
           const at = now();
-          r = await call({ fetch: waited, base: serviceBase(storage), secret: session.secret, keepalive }, '/v1/heartbeat', body);
+          r = await call(
+            { fetch: waited, base: serviceBase(storage), secret: session.secret, keepalive },
+            '/v1/heartbeat',
+            body,
+          );
           if (r.ok && withBeat && partAnswer(r.data?.beat).ok) creditedAt = at;
           if (r.ok || !RETRY.includes(r.error)) break;
         }
       }
     } catch (e) {
-      console.warn('[heartbeat] the request threw', e);   // AUDIT SCALE B6: every part stamped still takes an answer
+      console.warn('[heartbeat] the request threw', e); // AUDIT SCALE B6: every part stamped still takes an answer
       r = { ok: false, error: 'offline' };
     }
     for (const [name, p] of sent) {
-      try { p.take(r.ok ? partAnswer(r.data?.[name]) : { ok: false, error: r.error, ...(r.status ? { status: r.status } : {}) }); }
-      catch (e) { console.warn(`[heartbeat] the ${name} part's answer threw`, e); }
+      try {
+        p.take(
+          r.ok ? partAnswer(r.data?.[name]) : { ok: false, error: r.error, ...(r.status ? { status: r.status } : {}) },
+        );
+      } catch (e) {
+        console.warn(`[heartbeat] the ${name} part's answer threw`, e);
+      }
     }
-    done();   // A BEAT THAT FAILS IS DROPPED (net/playClock.js): a counter never breaks the world it counts
+    done(); // A BEAT THAT FAILS IS DROPPED (net/playClock.js): a counter never breaks the world it counts
     return r.error === 'no-session' ? null : r;
   }
 
@@ -159,7 +202,9 @@ export function createHeartbeat({
     if (!visible()) {
       // AUDIT SCALE B1: a knock made while the page was seen goes as it hides - alone, kept alive past the page
       if (beatAt == null) return null;
-      flying = send([], true, true).finally(() => { flying = null; });
+      flying = send([], true, true).finally(() => {
+        flying = null;
+      });
       return flying;
     }
     const due = [...parts].filter(([, p]) => p.due(t));
@@ -171,30 +216,47 @@ export function createHeartbeat({
     // box rides the board's third minute, never its second.
     const pace = Math.min(...going.map(([, p]) => p.every ?? Infinity));
     const riding = Number.isFinite(pace)
-      ? [...parts].filter(([name, p]) => going.some(([n]) => n === name) || ((p.every ?? 0) >= pace && p.soon(t, pace - RIDE_EARLY_MS)))
+      ? [...parts].filter(
+          ([name, p]) => going.some(([n]) => n === name) || ((p.every ?? 0) >= pace && p.soon(t, pace - RIDE_EARLY_MS)),
+        )
       : going;
-    flying = send(riding, beatAt != null).finally(() => { flying = null; });
+    flying = send(riding, beatAt != null).finally(() => {
+      flying = null;
+    });
     return flying;
   }
 
-  const timer = setInterval(() => { tick(); }, HEARTBEAT_TICK_MS);
+  const timer = setInterval(() => {
+    tick();
+  }, HEARTBEAT_TICK_MS);
   return {
     /** A clock joins - its due, its soon, its body and its take (HeartbeatPart). */
-    add(/** @type {string} */ name, /** @type {HeartbeatPart} */ part) { parts.set(name, part); },
-    remove(/** @type {string} */ name) { parts.delete(name); },
+    add(/** @type {string} */ name, /** @type {HeartbeatPart} */ part) {
+      parts.set(name, part);
+    },
+    remove(/** @type {string} */ name) {
+      parts.delete(name);
+    },
     /** THE PLAY CLOCK'S KNOCK: carried by the next heartbeat, or alone once nothing will come to ride within its wait
      *  (waitLeft), or as the page hides. Resolves when it has gone (or been dropped). */
     beat() {
       if (beatAt == null) beatAt = now();
-      const p = new Promise((r) => { beatWaiters.push(() => r(undefined)); });
+      const p = new Promise((r) => {
+        beatWaiters.push(() => r(undefined));
+      });
       tick();
       return p;
     },
     tick,
-    stop() { clearInterval(timer); },
-    get flying() { return flying; },
+    stop() {
+      clearInterval(timer);
+    },
+    get flying() {
+      return flying;
+    },
   };
 }
 
 // The grace a late beat leans on must hold the wait: a knock carried BEAT_RIDE_MS late still credits its whole gap.
-if (BEAT_RIDE_MS > (PLAY_GRACE_S - PLAY_BEAT_S) * 1000) throw new Error('heartbeat.js: BEAT_RIDE_MS outruns the play clock\'s grace');
+if (BEAT_RIDE_MS > (PLAY_GRACE_S - PLAY_BEAT_S) * 1000)
+  throw new Error("heartbeat.js: BEAT_RIDE_MS outruns the play clock's grace");

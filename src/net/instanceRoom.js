@@ -38,9 +38,12 @@ export const INSTANCE_EPOCH_HEX = 8;
 export const INSTANCE_TAG_SOURCE = '\\.i[0-9a-f]{16}\\.[0-9a-f]{8}';
 /** DOMAIN2: the relay that admits a guild's own instance - a castle's (instanceAdmission's `guild` arm): an older one
  *  refuses every member but staff, so no page offers a castle's instance until its relay says this. */
-export const GUILD_INSTANCE_RELAY_MIN = 276;   // world276 (the eighth merge of main into #1184, 2026-10-28: past main's world275, SD-PARTY, already live); world275 (the seventh merge of main into #1184, 2026-10-28: past main's world274, LADDER-CUT); world274 (the fourth merge of main into #1184, 2026-10-27: past main's world272 and world273); world272 (the third merge of main into #1184, 2026-10-27: past MASTER-THREE's world271, main's); world271 (the second merge of main into #1184, 2026-10-27: past CHAT-POST's world270, main's); world270 (the merge of main into TESA, 2026-10-27: #1184's world269 folded into its world270 past BOW-TOPS's world269, main's): the merged release's (world256 on TESA's, renumbered past main's world256 to world259 at the merge, then world260 past main's world260 to world268 at the next)
+export const GUILD_INSTANCE_RELAY_MIN = 276; // world276 (the eighth merge of main into #1184, 2026-10-28: past main's world275, SD-PARTY, already live); world275 (the seventh merge of main into #1184, 2026-10-28: past main's world274, LADDER-CUT); world274 (the fourth merge of main into #1184, 2026-10-27: past main's world272 and world273); world272 (the third merge of main into #1184, 2026-10-27: past MASTER-THREE's world271, main's); world271 (the second merge of main into #1184, 2026-10-27: past CHAT-POST's world270, main's); world270 (the merge of main into TESA, 2026-10-27: #1184's world269 folded into its world270 past BOW-TOPS's world269, main's): the merged release's (world256 on TESA's, renumbered past main's world256 to world259 at the merge, then world260 past main's world260 to world268 at the next)
 /** Does the relay whose welcome said `v` admit a guild's instance? */
-export const relaySupportsGuildInstances = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= GUILD_INSTANCE_RELAY_MIN; };
+export const relaySupportsGuildInstances = (v) => {
+  const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : '');
+  return !!m && Number(m[1]) >= GUILD_INSTANCE_RELAY_MIN;
+};
 /** DOMAIN2 (AUDIT DOMAINS R2): THE ROOMS A GUILD MAY OWN - the castles', each a crown city's own dungeon whole (its key the
  *  crown seat's, the city's own location: Sentinel's, Wayrest's and Daggerfall's - world/dungeon/dungeonTextures.js
  *  MAIN_STORY_DUNGEON_IDS, measured on the freeware's MAPS.BSA). The `guild` arm admits these alone: it admitted any room
@@ -49,14 +52,19 @@ export const BAY_CASTLE_MAP_IDS = Object.freeze([6634853, 630439035, 1291010263]
 /** WW7-4 (bible/04-World/World-Wide.md WW7-4): AND EACH PROVINCE'S CAPITAL'S CASTLE but Cyrodiil's (Domains.md section 6: the
  *  Imperial City never - the White-Gold Tower's halls stand open to all) - its centre's map id, the crown seat's key
  *  (world/tamrielCapitals.js capitalPlaceId(k, 0): its lane 0x341, 0x80000, its ordinal k; Solitude 1 .. Helstrom 6). */
-export const PROVINCE_CASTLE_MAP_IDS = Object.freeze([1, 2, 3, 4, 5, 6].map((k) => ((0x341 << 20) | 0x80000 | k) >>> 0));
+export const PROVINCE_CASTLE_MAP_IDS = Object.freeze(
+  [1, 2, 3, 4, 5, 6].map((k) => ((0x341 << 20) | 0x80000 | k) >>> 0),
+);
 export const CASTLE_MAP_IDS = Object.freeze([...BAY_CASTLE_MAP_IDS, ...PROVINCE_CASTLE_MAP_IDS]);
 const GUILD_ROOMS = new Set(CASTLE_MAP_IDS.map((k) => `dungeon:m${k}`));
 /** The relay that admits an instance (net/wire.js RELAY_VERSION world208 - world206 then world207 on its branch, renumbered past SERPENT5's and ONE-BODY's at the merges): an older one keeps no memory for the key, gates
  *  nobody out of it, and drops the party pose's `ins` - so no page offers an instance until its relay says this. */
 export const INSTANCE_RELAY_MIN = 208;
 /** Does the relay whose welcome said `v` admit instances? */
-export const relaySupportsInstances = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= INSTANCE_RELAY_MIN; };
+export const relaySupportsInstances = (v) => {
+  const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : '');
+  return !!m && Number(m[1]) >= INSTANCE_RELAY_MIN;
+};
 
 /** The hub's internal door a place room asks whether an account's party holds an instance's owner (partyHoldsOwner). */
 export const INSTANCE_INTERNAL_KIN = '/internal/instance/kin';
@@ -70,7 +78,9 @@ export const INSTANCE_DOOR_WORD = 'private instance';
 
 /** The public rooms an instance may stand beside: a dungeon whole and a building - the two world rooms of a place. */
 const PUBLIC_ROOM = /^(?:dungeon:m[1-9]\d{0,9}|interior:m[1-9]\d{0,9}\.[1-9]\d{0,7})$/;
-const INSTANCE_ROOM = new RegExp(`^(dungeon:m[1-9]\\d{0,9}|interior:m[1-9]\\d{0,9}\\.[1-9]\\d{0,7})\\.i([0-9a-f]{${INSTANCE_OWNER_HEX}})\\.([0-9a-f]{${INSTANCE_EPOCH_HEX}})$`);
+const INSTANCE_ROOM = new RegExp(
+  `^(dungeon:m[1-9]\\d{0,9}|interior:m[1-9]\\d{0,9}\\.[1-9]\\d{0,7})\\.i([0-9a-f]{${INSTANCE_OWNER_HEX}})\\.([0-9a-f]{${INSTANCE_EPOCH_HEX}})$`,
+);
 const OWNER_RE = new RegExp(`^[0-9a-f]{${INSTANCE_OWNER_HEX}}$`);
 const EPOCH_RE = new RegExp(`^[0-9a-f]{${INSTANCE_EPOCH_HEX}}$`);
 /** An account's or a character's id, as the private rooms read one (net/privateInterior.js). */
@@ -98,7 +108,8 @@ export async function holdEpochOf(character) {
  *  (a re-laid dungeon's `.m` / `.s`, a cell, an owned room) or a malformed owner or epoch. */
 export function instanceRoomOf(publicKey, instance) {
   if (typeof publicKey !== 'string' || !PUBLIC_ROOM.test(publicKey)) return null;
-  const owner = instance?.owner, epoch = instance?.epoch;
+  const owner = instance?.owner,
+    epoch = instance?.epoch;
   if (typeof owner !== 'string' || !OWNER_RE.test(owner) || !isInstanceEpoch(epoch)) return null;
   return `${publicKey}.i${owner}.${epoch}`;
 }
@@ -111,7 +122,8 @@ export function instanceOf(key) {
 export const isInstanceRoom = (key) => instanceOf(key) != null;
 /** A party pose's word for the instance a member stands in (`ins`: its owner and epoch, 25 characters), or null. */
 export function instanceWord(instance) {
-  const owner = instance?.owner, epoch = instance?.epoch;
+  const owner = instance?.owner,
+    epoch = instance?.epoch;
   return typeof owner === 'string' && OWNER_RE.test(owner) && isInstanceEpoch(epoch) ? `${owner}.${epoch}` : null;
 }
 /** The instance a party pose's `ins` names, `{ owner, epoch }`, or null. */
@@ -130,9 +142,9 @@ export async function instanceAdmission(key, subject, { staff = false, kin = nul
   const r = instanceOf(key);
   if (!r || !identity(subject)) return null;
   if (staff) return 'staff';
-  if (r.owner === await instanceOwnerOf(subject)) return 'owner';
-  if (guild != null && GUILD_ROOMS.has(r.base) && r.owner === await instanceGuildOwnerOf(guild)) return 'guild';   // a castle's, whole (AUDIT DOMAINS R2)
-  return typeof kin === 'function' && await kin(subject, r.owner) ? 'party' : null;
+  if (r.owner === (await instanceOwnerOf(subject))) return 'owner';
+  if (guild != null && GUILD_ROOMS.has(r.base) && r.owner === (await instanceGuildOwnerOf(guild))) return 'guild'; // a castle's, whole (AUDIT DOMAINS R2)
+  return typeof kin === 'function' && (await kin(subject, r.owner)) ? 'party' : null;
 }
 /** May the account `subject` stand in the instance room `key`? (instanceAdmission's yes or no.) */
 export const instanceAdmits = async (key, subject, opts = {}) => (await instanceAdmission(key, subject, opts)) != null;
@@ -140,10 +152,11 @@ export const instanceAdmits = async (key, subject, opts = {}) => (await instance
 /** THE HUB'S ANSWER: does the party whose members are `members` (account ids) hold `subject` and another member whose
  *  digest is `owner`? */
 export async function partyHoldsOwner(members, subject, owner) {
-  if (!Array.isArray(members) || !members.includes(subject) || typeof owner !== 'string' || !OWNER_RE.test(owner)) return false;
+  if (!Array.isArray(members) || !members.includes(subject) || typeof owner !== 'string' || !OWNER_RE.test(owner))
+    return false;
   for (const m of members) {
     if (m === subject || !identity(m)) continue;
-    if (await instanceOwnerOf(m) === owner) return true;
+    if ((await instanceOwnerOf(m)) === owner) return true;
   }
   return false;
 }

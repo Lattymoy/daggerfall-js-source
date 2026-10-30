@@ -60,8 +60,8 @@
   {
     "name": "EGF-the-wager-on-a-rehearsal",
     "file": "src/net/identityToken.js",
-    "old": "c.o === 'egopen' && c.rh === undefined && Array.isArray(c.ewg)",
-    "new": "c.o === 'egopen' && Array.isArray(c.ewg)",
+    "old": "      c.rh === undefined &&\n      Array.isArray(c.ewg) &&",
+    "new": "      Array.isArray(c.ewg) &&",
     "tests": [
       "test/net/eliteGates/egarch_law.test.js"
     ]
@@ -69,8 +69,8 @@
   {
     "name": "EGF-the-wager-dropped-at-the-mint",
     "file": "src/net/identityToken.js",
-    "old": "...(Array.isArray(ewg) && ewg.length ? { ewg: [...ewg] } : {}), i: nowS",
-    "new": "i: nowS",
+    "old": "  const claims = {\n    o,\n    s,\n    eb,\n    ez,\n    ew,\n    ...(rh === 1 ? { rh } : {}),\n    ...(Array.isArray(ewg) && ewg.length ? { ewg: [...ewg] } : {}),\n    i: nowS,\n    e: nowS + ttlS,\n  }; // EG-F: and the open's Wager",
+    "new": "  const claims = { o, s, eb, ez, ew, ...(rh === 1 ? { rh } : {}), i: nowS, e: nowS + ttlS }; // EG-F: and the open's Wager",
     "tests": [
       "test/net/eliteGates/egarch_law.test.js",
       "test/net/eliteGates/egarch_service.test.js"

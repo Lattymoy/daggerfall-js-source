@@ -469,8 +469,8 @@
   {
     "name": "CROWN1R-pass-kind",
     "file": "src/net/identityToken.js",
-    "old": "(c.sn !== 'siege' && c.sn !== 'tourney' && c.sn !== 'revolt' && !royal)) return false;",
-    "new": "(c.sn !== 'siege' && c.sn !== 'tourney' && c.sn !== 'revolt')) return false;",
+    "old": "    (c.sn !== 'siege' && c.sn !== 'tourney' && c.sn !== 'revolt' && !royal)",
+    "new": "    (c.sn !== 'siege' && c.sn !== 'tourney' && c.sn !== 'revolt')",
     "tests": [
       "test/net/crown1_royal_law.test.js",
       "test/net/siege/crown1_royal_relay.test.js"
@@ -479,8 +479,8 @@
   {
     "name": "CROWN1R-pass-tier",
     "file": "src/net/identityToken.js",
-    "old": "  if (royal ? c.st !== 'crown' || (c.sd !== 'duel' && c.sd !== 'watch') : c.sd === 'duel') return false;",
-    "new": "  if (royal ? (c.sd !== 'duel' && c.sd !== 'watch') : c.sd === 'duel') return false;",
+    "old": "  if (royal ? c.st !== 'crown' || (c.sd !== 'duel' && c.sd !== 'watch') : c.sd === 'duel') return false; // a contender is a Royal Tourney's alone",
+    "new": "  if (royal ? c.sd !== 'duel' && c.sd !== 'watch' : c.sd === 'duel') return false; // a contender is a Royal Tourney's alone",
     "tests": [
       "test/net/crown1_royal_law.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "CROWN1R-pass-side",
     "file": "src/net/identityToken.js",
-    "old": "  if (royal ? c.st !== 'crown' || (c.sd !== 'duel' && c.sd !== 'watch') : c.sd === 'duel') return false;",
-    "new": "  if (royal ? c.st !== 'crown' : c.sd === 'duel') return false;",
+    "old": "  if (royal ? c.st !== 'crown' || (c.sd !== 'duel' && c.sd !== 'watch') : c.sd === 'duel') return false; // a contender is a Royal Tourney's alone",
+    "new": "  if (royal ? c.st !== 'crown' : c.sd === 'duel') return false; // a contender is a Royal Tourney's alone",
     "tests": [
       "test/net/crown1_royal_law.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "CROWN1R-pass-duel",
     "file": "src/net/identityToken.js",
-    "old": "  if (royal ? c.st !== 'crown' || (c.sd !== 'duel' && c.sd !== 'watch') : c.sd === 'duel') return false;",
-    "new": "  if (royal && (c.st !== 'crown' || (c.sd !== 'duel' && c.sd !== 'watch'))) return false;",
+    "old": "  if (royal ? c.st !== 'crown' || (c.sd !== 'duel' && c.sd !== 'watch') : c.sd === 'duel') return false; // a contender is a Royal Tourney's alone",
+    "new": "  if (royal && (c.st !== 'crown' || (c.sd !== 'duel' && c.sd !== 'watch'))) return false; // a contender is a Royal Tourney's alone",
     "tests": [
       "test/net/crown1_royal_law.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "CROWN1R-pass-span",
     "file": "src/net/identityToken.js",
-    "old": "c.se - c.sb > (royal ? ROYAL_PASS_SPAN_S : SIEGE_PASS_SPAN_S)) return false;",
-    "new": "c.se - c.sb > ROYAL_PASS_SPAN_S) return false;",
+    "old": "    c.se - c.sb > (royal ? ROYAL_PASS_SPAN_S : SIEGE_PASS_SPAN_S)",
+    "new": "    c.se - c.sb > ROYAL_PASS_SPAN_S",
     "tests": [
       "test/net/crown1_royal_law.test.js"
     ]
