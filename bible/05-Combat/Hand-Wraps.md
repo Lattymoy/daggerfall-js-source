@@ -54,7 +54,8 @@ Strikes' `durabilityLoss`), so a pair can break and is repaired. A line's number
 
 The wraps key as the empty hand (`combat/fpArm.js` `fpWeaponKey`), so nothing is held. The arm takes the wraps' glow
 through `setHandGlow` and lays it on its first- and third-person meshes as `handGlow` while the fists are up: drawn, no
-spell readied, not climbing, no sheet held up, and the empty hand's key worn (a swap from a blade has landed). Drawn
+spell readied, not climbing, no sheet held up, and the empty hand's key worn (a swap from a blade has landed). Put
+away, the third-person body keeps the glow (WRAPS-AWAY, 2026-10-30, mob: "keep glow on wrap whern put away"). Drawn
 fists put the torch away (`carriedLeftVisible`), so the glow never lights one. The renderer draws it as a weapon's glow
 over the hands' shown ranges (`render/renderer.js` `inGlowSlot` 'hands': the skin's `hand` row and a glove's `right
 hand (...)` and `left hand (...)` parts). A glove is one mesh to the elbow, so its cuff glows too.

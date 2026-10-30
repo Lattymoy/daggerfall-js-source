@@ -175,7 +175,7 @@ test('HAND-WRAPS the Morrowind hands: the wraps key as the empty hand; the fists
   rig.readySpell(false); rig.setSheathed(true); run();
   assert.equal(rig.handGlow(), null, 'put away');
   const rigText = read('src/combat/weapon/weaponRig.js');
-  assert.ok(rigText.includes('fpArm.setHandGlow?.(wrapsMeshGlow());'));
+  assert.ok(rigText.includes('fpArm.setHandGlow?.(wrapsMeshGlow() ?? (armItem ? null : fistGlow()));'));   // PIN MOVED (ARMORY-FISTS): bare fists wear the kit's weapon piece
   assert.ok(rigText.includes("const wrapsMeshGlow = () => { for (const h of ['R', 'L']) { const w = playerWeapon.wrapsOf(h); const g = w ? meshGlow(w) : null; if (g) return g; } return null; };"), 'either fist\'s pair, the first that glows');
   assert.ok(read('src/render/renderer.js').includes("if (mesh.handGlow) this._drawWeaponGlow(mesh, modelMatrix, skin, charge, 'hands', mesh.handGlow);"));
   on();
