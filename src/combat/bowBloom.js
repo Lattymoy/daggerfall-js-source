@@ -7,17 +7,19 @@
 /** Degrees a shot adds, the widest the circle grows, degrees a second it shrinks back. */
 export const BOW_BLOOM = Object.freeze({ step: 2, most: 8, settle: 3 });
 
-let _deg = 0, _at = 0;
+let _deg = 0, _at = 0, _settle = BOW_BLOOM.settle;
 const bloomClock = () => (typeof performance !== 'undefined' ? performance.now() : Date.now()) / 1000;
 
 /** The circle's radius now, degrees. */
-export const bowBloomNow = (now = bloomClock()) => Math.max(0, _deg - BOW_BLOOM.settle * Math.max(0, now - _at));
+export const bowBloomNow = (now = bloomClock()) => Math.max(0, _deg - _settle * Math.max(0, now - _at));
 
-/** A shot loosed along `dir` (a unit vector): where it flies inside the circle as it stands, and the circle widened. */
-export function bowBloomShot(dir, now = bloomClock(), rand = Math.random) {
+/** A shot loosed along `dir` (a unit vector): where it flies inside the circle as it stands, and the circle widened
+ *  (`kind` the bow's, BOW_KINDS). */
+export function bowBloomShot(dir, now = bloomClock(), rand = Math.random, kind = null) {
   const r = bowBloomNow(now);
   _deg = Math.min(BOW_BLOOM.most, r + BOW_BLOOM.step);
   _at = now;
+  _settle = kind?.settle ?? BOW_BLOOM.settle;
   if (!(r > 0)) return [dir[0], dir[1], dir[2]];
   const off = (r * Math.sqrt(rand()) * Math.PI) / 180, turn = rand() * 2 * Math.PI;   // a point spread evenly over the disc
   const up = Math.abs(dir[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0];
@@ -32,16 +34,33 @@ export function bowBloomShot(dir, now = bloomClock(), rand = Math.random) {
 export const BOW_FAST = Object.freeze({ cut: 20, most: 4, within: 1 });
 let _stacks = 0, _last = -Infinity, _landing = /** @type {any} */ (null);
 
-/** A shot loosed now: its stacks. */
-export function bowFastShot(now = bloomClock()) {
-  _stacks = now - _last < BOW_FAST.within ? Math.min(BOW_FAST.most, _stacks + 1) : 0;
+// BOW-KINDS (2026-10-30: "how do we balance short ad long bow"): the short bow is whole at 0.75 s and its circle closes
+// 4 a second; the long bow is whole at 1.25 s and lands x1.5 (`pull`). Paced, the two land about the same a second.
+// Any other bow keeps BOW_FAST's and BOW_BLOOM's own. By template (combat/enemyEquipment.js: Short Bow 129, Long Bow 130).
+export const BOW_KINDS = Object.freeze({
+  129: Object.freeze({ within: 0.75, settle: 4, pull: 1 }),
+  130: Object.freeze({ within: 1.25, settle: 3, pull: 1.5 }),
+});
+const BOW_PLAIN = Object.freeze({ within: BOW_FAST.within, settle: BOW_BLOOM.settle, pull: 1 });
+/** The kind of bow `weapon` is. */
+export const bowKindOf = (weapon) => BOW_KINDS[weapon?.templateIndex] ?? BOW_PLAIN;
+
+/** A shot loosed now from a bow of `kind`: its stacks. */
+export function bowFastShot(now = bloomClock(), kind = null) {
+  _stacks = now - _last < (kind?.within ?? BOW_FAST.within) ? Math.min(BOW_FAST.most, _stacks + 1) : 0;
   _last = now;
   return _stacks;
 }
-/** `dmg` after the stacks shaft `m` carries - at least 1 where it was over 0. */
+/** What a player's shot from `weapon` carries, loosed now: its stacks and its bow's pull. */
+export function bowShotStamp(weapon, now = bloomClock()) {
+  const kind = bowKindOf(weapon);
+  return { fast: bowFastShot(now, kind), pull: kind.pull };
+}
+/** `dmg` after the stacks and the pull shaft `m` carries - at least 1 where it was over 0. */
 export function bowFastDamage(m, dmg) {
   const k = Math.max(0, Math.min(BOW_FAST.most, Math.trunc(Number(m?.fast) || 0)));
-  return k > 0 && dmg > 0 ? Math.max(1, Math.round((dmg * (100 - BOW_FAST.cut * k)) / 100)) : dmg;
+  const pull = Number(m?.pull) > 0 ? Number(m.pull) : 1;
+  return (k > 0 || pull !== 1) && dmg > 0 ? Math.max(1, Math.round((dmg * pull * (100 - BOW_FAST.cut * k)) / 100)) : dmg;
 }
 /** Run `fn` while shaft `m` lands, so a door that rolls the blow itself (combat/duelCombat.js) reads its stacks. */
 export function whileShaftLands(m, fn) {
@@ -53,7 +72,7 @@ export function whileShaftLands(m, fn) {
 export const landingShaft = () => _landing;
 
 /** Tests: the circle closed, the stacks cleared. */
-export function _resetBowBloomForTests() { _deg = 0; _at = 0; _stacks = 0; _last = -Infinity; _landing = null; }
+export function _resetBowBloomForTests() { _deg = 0; _at = 0; _settle = BOW_BLOOM.settle; _stacks = 0; _last = -Infinity; _landing = null; }
 
 /** @param {number[]} a @param {number[]} b */
 const bloomCross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
