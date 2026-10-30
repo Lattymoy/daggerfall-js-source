@@ -31,6 +31,7 @@ import { dirname, relative, basename } from 'node:path';
 import { parse } from 'acorn';
 import { isMain } from './lib/isMain.mjs';
 import { parseModule, findHostFunction, scopeOf } from './hostScope.mjs';
+import { shortIn, carried } from './shortNames.mjs';
 
 /** The names a pattern binds. */
 function bound(p, out = []) {
@@ -464,6 +465,15 @@ export function retargetRecords({ hostFile, toFile, handle = 'host', write = fal
   return report;
 }
 
+/** LEGIBLE 5: the short names' baseline carried with the code (tools/shortNames.mjs carried). */
+function carryShortNames(hostFile, toFile) {
+  const path = 'tools/shortNamesBaseline.json';
+  if (!existsSync(path)) return;
+  const base = JSON.parse(readFileSync(path, 'utf8'));
+  const counts = Object.fromEntries([hostFile, toFile].map((f) => [f, shortIn(readFileSync(f, 'utf8')).length]));
+  writeFileSync(path, `${JSON.stringify(carried(base, hostFile, toFile, counts), null, 1)}\n`);
+}
+
 function main(args) {
   if (args[0] === '--records') {
     // the records of a move already written: node tools/hostMove.mjs --records <host> <module> [--write]
@@ -498,6 +508,7 @@ function main(args) {
     writeFileSync(toFile, r.moduleText);
     writeFileSync(hostFile, hostText);
     const rec = retargetRecords({ hostFile, toFile, handle: opt('--handle') ?? 'host', write: true });
+    carryShortNames(hostFile, toFile);
     console.log(`  written. Records retargeted: ${rec.records}; anchors: ${rec.anchors}${rec.unplaced.length ? `\n  UNPLACED - by hand:\n    ${rec.unplaced.join('\n    ')}` : ''}`);
   }
 }

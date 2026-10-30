@@ -105,7 +105,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | First-person weapon | `combat/weapon/` |
 | Foraging | `systems/foraging/` |
 | Grammar (translations) | `systems/grammar/` |
-| Guilds | `systems/guild/`, `net/guild/` |
+| Guilds | `systems/guild/`, `net/guild/`, `ui/guild/` |
 | Guns | `combat/gun/` |
 | Herald (the world events on Discord) | `net/herald/` - and each event's own: `net/gate/gateHerald.js`, `net/serpent/serpentHerald.js`, `net/superDungeon/sdHerald.js`, `net/eliteGates/egHerald.js` |
 | Home decorating | `systems/decor/`, `scenes/decor/` |
@@ -383,6 +383,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/ui/enhanced/` | The Enhanced skin's windows and HUD - its windows. |
 | `src/ui/gate/` | The Oblivion Gate on screen: the banner, the boss bar, the damage chart, the ground view, the marks and the title card. |
 | `src/ui/growth/` | The pause window's Growth tab (`10-UI/Growth.md`): its rail and landings, the specialisations' guide, and the stage that draws the Firmament, the captain's stars and the Ascension in its pane. |
+| `src/ui/guild/` | A guild on screen: its crest and logo art, the ranks, requests and shop pages, the window's look. |
 | `src/ui/hud/` | The classic HUD: vitals, compass, crosshair, active spells - its windows. |
 | `src/ui/ink/` | The ink maps: town, dungeon, automap - its windows. |
 | `src/ui/intro/` | The intro: its screen, cue, landscape and shaders, the city it draws (`introCity.js`) and the continent (`introTamriel.js`), built in its worker (`introBuildWorker.js`, `introBuild.js`); the Bay's authored shape (`introMap.js`) - its windows. |

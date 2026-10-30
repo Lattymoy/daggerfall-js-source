@@ -1,0 +1,128 @@
+[
+  {
+    "name": "LEGIBLE5-the-allowed-list-unread",
+    "file": "tools/shortNames.mjs",
+    "old": "allowed: new Set(listedIn(text, 'Short names code may use'))",
+    "new": "allowed: new Set()",
+    "tests": [
+      "test/tooling/legible5_shortnames.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE5-the-retired-list-unread",
+    "file": "tools/shortNames.mjs",
+    "old": "retired: new Set(listedIn(text, 'Abbreviations to retire'))",
+    "new": "retired: new Set()",
+    "tests": [
+      "test/tooling/legible5_shortnames.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE5-a-variable-unread",
+    "file": "tools/shortNames.mjs",
+    "old": "    if (node.type === 'VariableDeclarator') bound(node.id, out);",
+    "new": "    if (false) bound(node.id, out);",
+    "tests": [
+      "test/tooling/legible5_shortnames.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE5-a-parameter-unread",
+    "file": "tools/shortNames.mjs",
+    "old": "      for (const p of node.params) bound(p, out);\n",
+    "new": "",
+    "tests": [
+      "test/tooling/legible5_shortnames.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE5-a-function-name-unread",
+    "file": "tools/shortNames.mjs",
+    "old": "      if (node.id) out.push(node.id);\n",
+    "new": "",
+    "tests": [
+      "test/tooling/legible5_shortnames.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE5-a-class-unread",
+    "file": "tools/shortNames.mjs",
+    "old": "    } else if (node.type === 'ClassDeclaration' && node.id) out.push(node.id);\n    else if",
+    "new": "    } else if",
+    "tests": [
+      "test/tooling/legible5_shortnames.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE5-a-catch-unread",
+    "file": "tools/shortNames.mjs",
+    "old": "    else if (node.type === 'CatchClause') bound(node.param, out);\n",
+    "new": "",
+    "tests": [
+      "test/tooling/legible5_shortnames.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE5-a-destructured-name-unread",
+    "file": "tools/shortNames.mjs",
+    "old": "  else if (pattern.type === 'ObjectPattern') for (const p of pattern.properties) bound(p.type === 'RestElement' ? p.argument : p.value, out);\n",
+    "new": "",
+    "tests": [
+      "test/tooling/legible5_shortnames.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE5-a-longer-name-counted",
+    "file": "tools/shortNames.mjs",
+    "old": "|| retired.has(name));",
+    "new": "|| [...retired].some((r) => name.startsWith(r)));",
+    "tests": [
+      "test/tooling/legible5_shortnames.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE5-an-unlisted-file-let-through",
+    "file": "tools/shortNames.mjs",
+    "old": "n > (base[f] ?? 0)).map",
+    "new": "f in base && n > base[f]).map",
+    "tests": [
+      "test/tooling/legible5_shortnames.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE5-the-stale-side-unread",
+    "file": "tools/shortNames.mjs",
+    "old": "Object.entries(base).filter(([f, n]) => (now[f] ?? 0) < n)",
+    "new": "Object.entries(base).filter(() => false)",
+    "tests": [
+      "test/tooling/legible5_shortnames.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE5-a-lowered-entry-raised",
+    "file": "tools/shortNames.mjs",
+    "old": "out[f] = Math.min(n, now[f] ?? 0);",
+    "new": "out[f] = now[f] ?? 0;",
+    "tests": [
+      "test/tooling/legible5_shortnames.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE5-the-host-left-high",
+    "file": "tools/shortNames.mjs",
+    "old": "const out = { ...base, [hostFile]: counts[hostFile] ?? 0, [toFile]: counts[toFile] ?? 0 };",
+    "new": "const out = { ...base, [toFile]: counts[toFile] ?? 0 };",
+    "tests": [
+      "test/tooling/legible5_shortnames.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE5-a-grown-pair-admitted",
+    "file": "tools/shortNames.mjs",
+    "old": "  if ((counts[hostFile] ?? 0) + (counts[toFile] ?? 0) > before) return base;\n",
+    "new": "",
+    "tests": [
+      "test/tooling/legible5_shortnames.test.js"
+    ]
+  }
+]
