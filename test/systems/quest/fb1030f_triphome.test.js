@@ -1,10 +1,10 @@
-// FIELD BUGS 2026-10-30e (bible/01-Overview/bugs/Field-Bugs-2026-10-30e.md), the Discord, "Prince Helseth's Blackmail -
+// FIELD BUGS 2026-10-30f (bible/01-Overview/bugs/Field-Bugs-2026-10-30f.md), the Discord, "Prince Helseth's Blackmail -
 // Bugged quest": "If you fast travel to any location, or use overworld travel, you get the message below with the quest
 // ending." S0000002 is parsed wherever level 4 finds the player, and its `_1stparton_` (flag 17: 2.5 times the trip to
 // the quest's places) was measured there, beside a manor drawn in that region - then Helseth starts it in Wayrest.
 // TRIP-FROM-START: a travel clock measures its trip again as it starts, and keeps the longer. TRIP-PIXEL: a site past
 // the Bay is measured to its own pixel. The real S0000002 over the freeware where ARENA2_PATH is set (tools/fetch-data.sh).
-// Mutants: tools/mutants/fb1030e_triphome.json.
+// Mutants: tools/mutants/fb1030f_triphome.json.
 import '../../modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -178,7 +178,7 @@ function defaultRoundTrip(maps, a, b) {
   return (t - 9 * 60) * 60;
 }
 
-test('FIELD BUGS 2026-10-30e THE REPORT with ARENA2: levelled in Daggerfall, Helseth\'s manor is drawn in Daggerfall\'s region and the clock was the 2.5-day floor; handed over in Wayrest it is measured from Wayrest and outlasts the default trip there and back - and levelled in Wayrest nothing moves (mutants: the start unmeasured)', { skip: NO_DATA }, async () => {
+test('FIELD BUGS 2026-10-30f THE REPORT with ARENA2: levelled in Daggerfall, Helseth\'s manor is drawn in Daggerfall\'s region and the clock was the 2.5-day floor; handed over in Wayrest it is measured from Wayrest and outlasts the default trip there and back - and levelled in Wayrest nothing moves (mutants: the start unmeasured)', { skip: NO_DATA }, async () => {
   QUEST_REACH_TUNING.override = true;   // NEARBY-QUESTS, the game's default
   try {
     const { w } = await world();
@@ -198,7 +198,7 @@ test('FIELD BUGS 2026-10-30e THE REPORT with ARENA2: levelled in Daggerfall, Hel
   } finally { QUEST_REACH_TUNING.override = null; }
 });
 
-test('FIELD BUGS 2026-10-30e PAST THE BAY with ARENA2: levelled in Solitude, the manor is in Skyrim and measured to its own pixel - the 2.5-day floor, not 149 days to a pixel in the Bay - and handed over in Wayrest the clock outlasts the road to Skyrim and back (mutants: the row\'s coords read past the Bay)', { skip: NO_DATA }, async () => {
+test('FIELD BUGS 2026-10-30f PAST THE BAY with ARENA2: levelled in Solitude, the manor is in Skyrim and measured to its own pixel - the 2.5-day floor, not 149 days to a pixel in the Bay - and handed over in Wayrest the clock outlasts the road to Skyrim and back (mutants: the row\'s coords read past the Bay)', { skip: NO_DATA }, async () => {
   QUEST_REACH_TUNING.override = true;
   try {
     const { w } = await world();

@@ -71,19 +71,8 @@ export function whileShaftLands(m, fn) {
 /** The shaft landing now, or null. */
 export const landingShaft = () => _landing;
 
-// BOW-PVP-ONLY (mob, 2026-10-30, after #feature-feedback's "revert the archery changes": "arrows literally go through
-// the enemies", "barely nudging their hp bar"): the circle, the stacks and the pull were PvP's balance and reached every
-// monster too - a quick archer's shots flew up to 8 degrees wide and landed a fifth. They hold only while a refereed
-// fight may hold the player (combat/pvpPotions.js setPvpFight, the health mirror's word each frame); against monsters a
-// bow is yesterday's: true, whole, every shot.
-let _fight = false;
-/** The health mirror's word: may a refereed fight hold the player now. */
-export function setBowFight(active) { _fight = !!active; }
-/** Do the circle, the stacks and the pull hold on a shot loosed now. */
-export const bowPvpRules = () => _fight;
-
 /** Tests: the circle closed, the stacks cleared. */
-export function _resetBowBloomForTests() { _deg = 0; _at = 0; _settle = BOW_BLOOM.settle; _stacks = 0; _last = -Infinity; _landing = null; _fight = false; }
+export function _resetBowBloomForTests() { _deg = 0; _at = 0; _settle = BOW_BLOOM.settle; _stacks = 0; _last = -Infinity; _landing = null; }
 
 /** @param {number[]} a @param {number[]} b */
 const bloomCross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];

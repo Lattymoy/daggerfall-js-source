@@ -71,13 +71,13 @@ export function travelTimeSeconds(quest, place = null, returnTrip = true, { home
     console.warn(`[quest] Could not find Quest Place ${sd?.regionName}/${sd?.locationName}`);
     return 0;
   }
-  // TRIP-PIXEL (FIELD BUGS 2026-10-30e): a site past the Bay stands on its own pixel (place.js siteWorldPixel); its
+  // TRIP-PIXEL (FIELD BUGS 2026-10-30f): a site past the Bay stands on its own pixel (place.js siteWorldPixel); its
   // row's world coords read a pixel in the Bay, so a manor near Solitude measured 149 days
   const endPos = sd.worldPixel ?? worldCoordToMapPixel(location.exterior.recordElement.header.x, location.exterior.recordElement.header.y);
   return tripSeconds(world, endPos, returnTrip);
 }
 
-/** TRIP-HOME (FIELD BUGS 2026-10-30e): the seats of the at-home individuals a quest makes its questors (`add X as
+/** TRIP-HOME (FIELD BUGS 2026-10-30f): the seats of the at-home individuals a quest makes its questors (`add X as
  *  questor`), each the town named for its court's region, that the player is not standing in - for a deadline as it
  *  starts. S0000006 offers Elysana's errand wherever level 6 finds the player and starts its clock there; the way back
  *  to her in Wayrest counted nothing. A delay (S0000012's messenger) and a parse keep DFU's sum. A region with no town
@@ -631,7 +631,7 @@ export class Clock extends QuestResource {
         }
       }
     }
-    // TRIP-FROM-START (FIELD BUGS 2026-10-30e): a travel clock measures its trip again as it starts, from where the
+    // TRIP-FROM-START (FIELD BUGS 2026-10-30f): a travel clock measures its trip again as it starts, from where the
     // player stands, and keeps the longer. Clock.cs arms it at the parse: S0000002 is parsed wherever level 4 finds the
     // player, its manor drawn in that region, and Helseth starts the clock in Wayrest - 2.5 days for weeks of road.
     if (this.travelArm && !this.clockFinished && this.remainingTimeInSeconds === this.startingTimeInSeconds) {
