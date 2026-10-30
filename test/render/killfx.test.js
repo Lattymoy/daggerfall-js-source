@@ -67,6 +67,13 @@ test('STOREFRONT the recipes: a recipe a kill look, a portal skin\'s every burst
     assert.ok(b && b.parts.length > 0 && b.parts.length <= 260, `${r}: ${b?.parts.length} parts`);
     for (const p of b.parts) assert.ok(p.life > 0 && p.s0 >= 0 && p.p.every(Number.isFinite), `${r}: a whole part`);
   }
+  // THE VISUAL PASS: a kill look's ground rings grow by the body's width, no wider than the Pyre's (its floor's least,
+  // 2.4 m) - Tonal Shatter's fixed 4 to 5.6 m ran past a small foe's ground and off the shop's stage
+  for (const look of KILL_FX_LOOKS) for (const w of [0.4, 0.8]) {
+    fx.clear();
+    const rings = /** @type {any} */ (fx.start(look, [0, 0, 0], { h: 1.8, w })).parts.filter((/** @type {any} */ p) => p.shape === 6);
+    for (const p of rings) assert.ok(p.s1 <= Math.max(2.4, w * 3.75) + 1e-9, `${look} at width ${w}: a ring to ${p.s1} m`);
+  }
   fx.clear();
   for (const look of KILL_FX_LOOKS) for (let i = 0; i < 3; i++) fx.start(look, [i, 0, 0], { h: 1.8 });
   assert.ok(fx.build() > 0);
