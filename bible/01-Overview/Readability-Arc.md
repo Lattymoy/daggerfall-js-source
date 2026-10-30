@@ -269,8 +269,8 @@ regular expression are not carried; the pilot's 19 test files passed unchanged.
   tree held eight. Seven are now the statements they hid (`quickslots.js` twice, `dungeonContext.js` landOnRival,
   `townTalk.js` askWork, `world.js` bayScan, `tamrielTrace.js`, `pixelBuildSweep.mjs`); their five text pins and four
   mutant records were re-aimed, all dead. bayScan's two statements raised `bootWorld`'s ceiling by one, said beside it.
-  The eighth is `egFragLaw.js`, in the relay's bundle where a byte is a relay version: it is excepted in
-  `eslint.config.js` until the next relay change.
+  The eighth, `egFragLaw.js`, is in the relay's bundle: it rode the undeployed `world295`, re-hashed in place (the
+  live relay answered `world294`), so the rule has no exception.
 - **One statement a line** (`max-statements-per-line`, 1) in the folders the formatter owns. `eslint.config.js` reads
   `tools/formatted.json`, so a folder takes the rule in the change that formats it. The rest of the tree held 37,500
   crowded lines when this was written; they go folder by folder with LEGIBLE 3.

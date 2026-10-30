@@ -88,10 +88,8 @@ export default [
   },
   {
     // LEGIBLE 4 (bible/01-Overview/Readability-Arc.md): no comma sequence in shipped code - `(a(), b)` hides a
-    // statement inside an expression. egFragLaw.js is in the relay's bundle, where a byte is a relay version: its one
-    // goes with the next relay change.
+    // statement inside an expression.
     files: ['src/**/*.js', 'server/src/**/*.js', 'server-account/src/**/*.js', 'tools/**/*.{js,mjs}', 'scripts/**/*.{js,mjs}'],
-    ignores: ['src/net/eliteGates/egFragLaw.js'],
     rules: { 'no-sequences': 'error' },
   },
   {

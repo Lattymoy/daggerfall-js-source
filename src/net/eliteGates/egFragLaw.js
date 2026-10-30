@@ -455,7 +455,10 @@ export function egFragChamber(kit, r, R, o = {}) {
     // the channels surge across the floor in thirds every 20 s (lanes 4 m wide)
     for (let k = 0; k < 3; k++) hazards.push({ kind: 'surge', sh: [-R, Math.floor(((k - 1) * R * 2) / 3), R, Math.floor(((k - 1) * R * 2) / 3)], w: 400, y: 0, phase: k * 6000, period: 20000 });
   } else if (F.engine) engine = { kind: F.engine, x: 0, z: Math.floor(R / 2) };
-  else play = 'arch', arch = { z: 0, w: 600, h: 650 };
+  else {
+    play = 'arch';
+    arch = { z: 0, w: 600, h: 650 };
+  }
   // the kit's signature on its floor
   if (kit === 'caverns') hazards.push({ kind: 'basalt', spots: [[Math.floor(R / 3), Math.floor(R / 3)], [-Math.floor(R / 3), -Math.floor(R / 4)], [0, -Math.floor(R / 2)]], r: 250, y: 0, phase: between(r, 0, 69) * 100 });
   else if (kit === 'ossuary') hazards.push({ kind: 'wisp', path: [0, 0, R - 300, R - 300], y: 120, period: 14000, phase: between(r, 0, 139) * 100 });
