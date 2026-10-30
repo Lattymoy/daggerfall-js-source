@@ -723,7 +723,7 @@ export function bbVertexShader(ext = null) {
 
 import { createClusterSpace, buildLightClusters, CLUSTER_GRID_W, CLUSTER_GRID_H, CLUSTER_LIST_W, CLUSTER_LIST_ROWS, CLUSTER_X, CLUSTER_Y, CLUSTER_NEAR, CLUSTER_Z_SCALE, CLUSTER_GRID_UNIT, CLUSTER_LIST_UNIT, CLUSTER_BANDS } from './lightClusters.js';   // LC1: the lantern loop's grid
 import { ShadowPass, SHADOW_GLSL, SHADOW_VIEW_SCALE } from './shadowPass.js';   // EL7: the receiver block, for the water surface's lane program
-import { boundsOf, spherePlanes, batchVisible, batchSphere, ZERO_ORIGIN, placementGrid, quadHalfDiagonal } from './bounds.js';   // PERF-EXT1: and a batch's placement grid; the review: and the half-diagonal's one home
+import { boundsOf, spherePlanes, sphereInPlanes, batchVisible, batchSphere, ZERO_ORIGIN, placementGrid, quadHalfDiagonal } from './bounds.js';   // PERF-EXT1: and a batch's placement grid; the review: and the half-diagonal's one home
 import { billboardKey, sortByKey } from './billboardKey.js';   // AUDIT 68 S16-bbkey-stale-shadow-reach: the batch's texture key - one home with the two replays; LA-COST2: and the cutout pass's sort by it
 import { cullDisabled } from './frustum.js';   // PERF-CROWD2: the billboard pass culls for every host, so no host can forget to
 import { getPref } from '../systems/uiPrefs.js';   // GRAIN2: the ground-sharpness dial, read where the tile array is built
@@ -1601,7 +1601,8 @@ import { ecotoneGlsl, ECO_UNITS } from './ecotoneGlsl.js';   // ECOTONE1: the gr
 import { snowCoverGlsl, TWIN_LAYERS, SNOW_LINES_UNIT, SNOW_TILE_M } from './snowCoverGlsl.js';   // PRECIP4: the snow the ground keeps - the chunk, a twin set's summer half, the frame's lines' unit
 import { snowCapGlsl } from './snowCapGlsl.js';   // PEAKS1: a steep face over the cap's line is bare rock
 import { SNOW_VS, snowTerrainFs, SNOW_UNITS, SNOW_LAYER, snowSurfaceRise } from './snowfallGlsl.js';   // SNOWFALL1: the mod's snow surface, lit as the ground is
-import { GLOW_SPRITE_VS, GLOW_SPRITE_FS, GLOW_FIELD_VS, GLOW_FIELD_FS, GLOW_FIELDS_MAX, GLOW_REACH_MAX, glowFieldReach, GLOW_MESH_FS, GLOW_CLOCK_PERIOD, GLOW_CHARGE_PULL, GLOW_DRAWS_MAX, GLOW_DEPTH_FLOOR, glowUnit, glowMeshVs, glowRingDraws, GLOW_WORLD_VS, GLOW_WORLD_FIELDS_MAX } from './weaponGlowGlsl.js';   // WEAPON-GLOW1: a weapon's element, drawn
+import { GLOW_SPRITE_VS, GLOW_SPRITE_FS, GLOW_FIELD_VS, GLOW_FIELD_FS, GLOW_FIELDS_MAX, GLOW_REACH_MAX, glowFieldReach, GLOW_MESH_FS, GLOW_CLOCK_PERIOD, GLOW_CHARGE_PULL, GLOW_DRAWS_MAX, GLOW_DEPTH_FLOOR, glowUnit, glowMeshVs, glowRingDraws, GLOW_WORLD_VS, GLOW_WORLD_FIELDS_MAX, glowWorldFs } from './weaponGlowGlsl.js';   // WEAPON-GLOW1: a weapon's element, drawn
+const GLOW_WORLD_FS = glowWorldFs(GLOW_SPRITE_FS, FOG_GLSL);   // AUDIT BACK-HOLSTER A7: the world picture's outline, fogged
 const SNOW_UNIT_LIST = Object.entries(SNOW_UNITS);   // AUDIT ENVIRONS P1: the five pictures' units, listed once
 
 /** WEAPON-GLOW1: the glow's seconds, wrapped where every rate in it is whole (render/weaponGlowGlsl.js). A wall clock,
@@ -1901,6 +1902,7 @@ export class Renderer {
     this._reachSphere = new Float64Array(4);   // AUDIT 68 S16-batch-sphere-dup: shadowReachBatch's scratch
     this._bbPv = new Float32Array(16);
     this._glowVp = new Float32Array(16);   // BACK-HOLSTER GLOW: proj * view, for a world picture's glow (drawBillboardGlow)
+    this._glowPlanes = new Float32Array(24);   // AUDIT BACK-HOLSTER A8: and its frustum, the glow's quad culled on it
     this._bbCullOff = cullDisabled();   // the ?cull=off door, read once
     this._tFrameStamp = -1;
     // LA-COST1 (2026-09-27): the stamp each of the other three programs' frame blocks last went up under (drawBillboards,
@@ -3522,7 +3524,7 @@ export class Renderer {
       { start: () => this._startFoeTelegraph(), run: () => { this._loadFoeTelegraph(); }, need: () => !this._foeTelegraph },
       { start: () => startPrograms(this.gl, [[VIEW_BG_VS, VIEW_BG_FS]]), run: () => { this._rwBg ??= this._rwBgProgram(); }, need: () => !this._rwBg },
       { start: () => startPrograms(this.gl, [[glowMeshVs(CHAR_SKIN_VS), GLOW_MESH_FS]]), run: () => this._ensureWeaponGlowMeshProgram(), need: () => !this.weaponGlowMeshProgram },   // AUDIT WEAPON-GLOW MW-6: the glow's two, before the first glowing weapon
-      { start: () => startPrograms(this.gl, [[GLOW_SPRITE_VS, GLOW_SPRITE_FS], [GLOW_FIELD_VS, GLOW_FIELD_FS], [GLOW_WORLD_VS, GLOW_SPRITE_FS]]), run: () => this._ensureWeaponGlowQuadProgram(), need: () => !this.weaponGlowQuadProgram },   // BACK-HOLSTER GLOW: and the world picture's
+      { start: () => startPrograms(this.gl, [[GLOW_SPRITE_VS, GLOW_SPRITE_FS], [GLOW_FIELD_VS, GLOW_FIELD_FS], [GLOW_WORLD_VS, GLOW_WORLD_FS]]), run: () => this._ensureWeaponGlowQuadProgram(), need: () => !this.weaponGlowQuadProgram },   // BACK-HOLSTER GLOW: and the world picture's
     ];
   }
 
@@ -5239,8 +5241,9 @@ void main() {
     gl.uniform1i(fat('uTex'), 0);
     this.weaponGlowFieldProgram = f;
     // BACK-HOLSTER GLOW: the world picture's outline - the classic outline's fragment half on a billboard's quad
-    const w = this._buildProgram(GLOW_WORLD_VS, GLOW_SPRITE_FS);
+    const w = this._buildProgram(GLOW_WORLD_VS, GLOW_WORLD_FS);
     const wat = (n) => gl.getUniformLocation(w, n);
+    this._wgwFog = this._fogLocs(w);   // AUDIT BACK-HOLSTER A7: fogged as the world is
     this._wgw = {
       vp: wat('uVP'), origin: wat('uOrigin'), right: wat('uRight'), up: wat('uUp'), size: wat('uSize'), pad: wat('uPad'), art: wat('uArt'),
       pull: wat('uPull'), src: wat('uSrc'), fieldAt: wat('uFieldAt'), look: wat('uLook'), level: wat('uLevel'), time: wat('uTime'),
@@ -8706,13 +8709,18 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this._ensureWeaponGlowQuadProgram();
     const aw = Math.max(1, Math.round(q.art[0])), ah = Math.max(1, Math.round(q.art[1]));
     const [wx, up, down] = glow.win;
+    const vp = mat4Multiply(this._proj, this._view, this._glowVp);
+    // AUDIT BACK-HOLSTER A8: a quad off the view neither bakes its field nor draws - the sphere round it, pad and all
+    const mid = 0.5 * (1 + (down - up) / ah) * q.h, r = 0.5 * Math.hypot(q.w * (1 + 2 * wx / aw), q.h * (1 + (up + down) / ah));
+    if (!this._bbCullOff && !sphereInPlanes(spherePlanes(vp, this._glowPlanes), q.origin[0] + q.up[0] * mid, q.origin[1] + q.up[1] * mid, q.origin[2] + q.up[2] * mid, r)) return false;
     gl.disable(gl.CULL_FACE);
     this._bindVao(this._screenQuadVao);
     try {
       const field = this._glowField(tex, glow, aw, ah, false, false, true);
       this._use(this.weaponGlowWorldProgram);
+      this._uploadFog(this._wgwFog);
       const u = this._wgw;
-      gl.uniformMatrix4fv(u.vp, false, mat4Multiply(this._proj, this._view, this._glowVp));
+      gl.uniformMatrix4fv(u.vp, false, vp);
       gl.uniform3f(u.origin, q.origin[0], q.origin[1], q.origin[2]);
       gl.uniform3f(u.right, q.right[0], q.right[1], q.right[2]);
       gl.uniform3f(u.up, q.up[0], q.up[1], q.up[2]);

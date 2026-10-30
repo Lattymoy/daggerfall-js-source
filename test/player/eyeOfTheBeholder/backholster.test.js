@@ -8,7 +8,10 @@ import assert from 'node:assert/strict';
 import {
   HOLSTER_HAND_SLOT, BACK_HOLSTER, PAPERDOLL_MPP, holstersOnBack, holsterItemOfLook, uprightWeaponPicture, hangSpriteHolster,
   createSpriteHolster, createHolsterArt, HOLSTER_ART_KEPT, redrawHolstersOver, mintSpriteHolster, dropSpriteHolster,
+  HOLSTER_ART_HOLD_MS, HOLSTER_RETRY_MS, SELF_OWNER, drawAurasThenBacks,
 } from '../../../src/player/eyeOfTheBeholder/eotbHolster.js';
+import { createSpriteBacks, createSpriteGlow, setSpriteGlow } from '../../../src/player/eyeOfTheBeholder/eotbGlow.js';
+import { batchSphere } from '../../../src/render/bounds.js';
 import { readFileSync } from 'node:fs';
 import { EOTB_FIGURE, auraSpriteAcross, auraShiftAcross } from '../../../src/render/auraRing.js';
 import { spriteMarks } from '../../../src/render/armoryPose.js';
@@ -178,8 +181,8 @@ test('BACK-HOLSTER the painted body: spriteMarks reads the torso\'s half width (
   auraShiftAcross([wearer, still], [0, 0, 1], -1);
   assert.deepEqual(wearer.at, [1, 2, 3], 'and back');
   const host = readFileSync(new URL('../../../src/scenes/auraHost.js', import.meta.url), 'utf8');
-  const on = host.indexOf('auraShiftAcross(auraDraw, acrossRight, 1)'), pass = host.indexOf('pass?.draw(auraDraw'), off = host.indexOf('auraShiftAcross(auraDraw, acrossRight, -1)');
-  assert.ok(on > 0 && pass > on && off > pass, 'scenes/auraHost.js: moved for the pass, and back after it');
+  const on = host.indexOf('auraShiftAcross(auraDraw, acrossRight, 1)'), pass = host.indexOf('drawAurasThenBacks(auraDraw,'), off = host.indexOf('} finally { auraShiftAcross(auraDraw, acrossRight, -1); }');
+  assert.ok(on > 0 && pass > on && off > pass, 'scenes/auraHost.js: moved for the pass, and back after it - AUDIT A9: whatever the pass did');
   assert.match(host, /w\.across = auraLookOf\(w\.aura\)\.mesh \? auraSpriteAcross\(/, 'a cape or wings alone - a ring at the feet stays at the feet');
 });
 
@@ -216,10 +219,10 @@ const isHolster = (a) => typeof a === 'string' && a.startsWith('eotb-holster:');
 const PIC = uprightWeaponPicture(picture(40, 64, (x, y) => (Math.abs(x - 20) <= 1 && y <= 60) || (x >= 21 && x <= 34 && y >= 44 && y <= 58)));
 const LONGSWORD = { templateIndex: 120, group: 'Weapons', equipSlot: 19, material: 1 };
 
-test('BACK-HOLSTER picture store: asked once while it loads, uploaded as drawn and mirrored, kept to HOLSTER_ART_KEPT (the oldest let go from the renderer), uploaded again when the renderer let it go (mutants: asked every frame; no eviction)', async () => {
+test('BACK-HOLSTER picture store: asked once while it loads, uploaded as drawn and mirrored, uploaded again when the renderer let it go; AUDIT A1: a crowd of more weapons than it keeps grows it, and only a picture unasked HOLSTER_ART_HOLD_MS goes, down to HOLSTER_ART_KEPT (both faces); A3: one that did not come is asked again after HOLSTER_RETRY_MS (mutants: asked every frame; no eviction; a picture on screen let go; never asked again; asked again at once)', async () => {
   const r = renderer();
-  let asked = 0;
-  const store = createHolsterArt(() => r, async () => { asked++; return PIC; });
+  let asked = 0, now = 0;
+  const store = createHolsterArt(() => r, async () => { asked++; return PIC; }, () => now);
   for (let i = 0; i < 3; i++) assert.equal(store.ensure(LONGSWORD, null), null);   // no wearer named: the pack's default
   await settle();
   const a = store.ensure(LONGSWORD, null);
@@ -228,10 +231,31 @@ test('BACK-HOLSTER picture store: asked once while it loads, uploaded as drawn a
   r.evictTexture(`${a.archive}_0`);
   store.ensure(LONGSWORD, null);
   assert.ok(r.textures.has(`${a.archive}_0`), 'let go by the renderer: uploaded again from the kept pixels');
-  for (let m = 0; m < HOLSTER_ART_KEPT; m++) store.ensure({ ...LONGSWORD, material: 2 + m }, null);
-  await settle();
-  assert.equal(store.size, HOLSTER_ART_KEPT);
+  r.evicted.length = 0;
+  const crowd = [LONGSWORD, ...[115, 118, 119, 121, 122, 123, 124, 125, 126, 127, 128].map((t) => ({ ...LONGSWORD, templateIndex: t }))];   // twelve pictures
+  for (let f = 0; f < 3; f++) { for (const it of crowd) store.ensure(it, null); await settle(); now += HOLSTER_ART_HOLD_MS / 2; }
+  assert.equal(store.size, crowd.length, 'every one on screen kept');
+  assert.ok(crowd.every((it) => store.ensure(it, null)) && r.evicted.length === 0, 'and up - none taking its turn letting another go');
+  store.ensure({ ...LONGSWORD, material: 2 }, null);
+  assert.ok(store.size === crowd.length + 1 && r.evicted.length === 0, 'asked every frame, long past the hold since first asked: still kept');
+  now += HOLSTER_ART_HOLD_MS;
+  store.ensure({ ...LONGSWORD, material: 3 }, null);
+  assert.equal(store.size, HOLSTER_ART_KEPT, 'unasked past the hold: the oldest go, down to what it keeps');
   assert.ok(r.evicted.includes(`${a.archive}_0`) && r.evicted.includes(`${a.archive}_1`), 'the oldest picture let go, both faces');
+  // A3: none, too slow, or a throw - asked again after HOLSTER_RETRY_MS, never before
+  let answer = null, tries = 0;
+  const slow = createHolsterArt(() => r, async () => { tries++; if (tries === 2) throw new Error('decode'); return answer; }, () => now);
+  slow.ensure(LONGSWORD, null); await settle();
+  now += HOLSTER_RETRY_MS - 1;
+  assert.equal(slow.ensure(LONGSWORD, null), null); await settle();
+  assert.equal(tries, 1, 'not before');
+  now += 1;
+  slow.ensure(LONGSWORD, null); await settle();
+  assert.equal(tries, 2, 'asked again - and it threw');
+  answer = PIC;
+  now += HOLSTER_RETRY_MS;
+  slow.ensure(LONGSWORD, null); await settle();
+  assert.ok(tries === 3 && slow.ensure(LONGSWORD, null), 'asked again after the throw, and up');
 });
 
 async function liveBody(item = LONGSWORD) {
@@ -328,11 +352,11 @@ test('BACK-HOLSTER over the aura: the holsters each owner drew this frame - mine
   const a = createSpriteHolster(), b = createSpriteHolster(), gone = createSpriteHolster(), c = cameraFor(4, FEET);
   for (const l of [a, b, gone]) { hangSpriteHolster(l, FIG, 4, FEET, c.eye, c.right, ART); mintSpriteHolster(l, r); }
   dropSpriteHolster(gone, r);
-  assert.equal(redrawHolstersOver(r, [a], [b, gone]), 2, 'both owners\' - never a freed one');
+  assert.equal(redrawHolstersOver(r, null, [a], [b, gone]), 2, 'both owners\' - never a freed one');
   assert.deepEqual(r.draws.map((d) => [d.batch === a.batch || d.batch === b.batch, d.depth, d.noShadow]), [[true, 515, true], [true, 515, true]], 'at LEQUAL, casting nothing twice');
   assert.deepEqual(r.depth, [515, 513], 'and LESS, the baseline, given back');
   assert.equal(a.batch.noShadow, false, 'its own shadow kept for the next frame');
-  assert.equal(redrawHolstersOver(r, [], undefined), 0, 'none drawn: nothing touched');
+  assert.equal(redrawHolstersOver(r, null, [], undefined), 0, 'none drawn: nothing touched');
   assert.deepEqual(r.depth, [515, 513]);
   // my own body says what it drew this frame
   const { b: body, r: br } = await liveBody();
@@ -341,11 +365,62 @@ test('BACK-HOLSTER over the aura: the holsters each owner drew this frame - mine
   viewFrom(body, 4); await settle(); viewFrom(body, 4);
   assert.equal(body.holstersDrawn().length, 1, 'mine, drawn this frame');
   const n = br.draws.length;
-  assert.equal(redrawHolstersOver(br, body.holstersDrawn()), 1);
+  assert.equal(body.holstersDrawn()[0].owner, SELF_OWNER, 'listed as mine');
+  assert.equal(redrawHolstersOver(br, (o) => o === 'p1', body.holstersDrawn()), 0, 'an owner `keep` does not take: none');
+  assert.equal(redrawHolstersOver(br, (o) => o === SELF_OWNER, body.holstersDrawn()), 1);
   assert.ok(isHolster(br.draws[n].archive));
   viewFrom(body, 4, { sheathed: false, weaponReady: true });
   assert.equal(body.holstersDrawn().length, 0, 'drawn in the hand: none to draw again');
   const host = readFileSync(new URL('../../../src/scenes/auraHost.js', import.meta.url), 'utf8');
-  const capes = host.indexOf('pass?.draw(auraDraw'), over = host.indexOf('redrawHolstersOver(renderer, eotbBody.holstersDrawn(), deps.walkers()?.holstersDrawn?.())'), armory = host.indexOf('drawArmory(armoryOver');
-  assert.ok(capes > 0 && over > capes && armory > over, 'scenes/auraHost.js: mine and the walkers\', after the capes, before the armory drawn over them');
+  const capes = host.indexOf('drawAurasThenBacks(auraDraw, (run) => { pass.draw(run, proj, view, eye, now, fog); if (pass.drawn) renderer.markForeignPass(); return pass.drawn; }, (w) => backs.has(w.id), (w) => backs.draw(w.id), auraRun);'), armory = host.indexOf('drawArmory(armoryOver');
+  assert.ok(capes > 0 && armory > capes, 'scenes/auraHost.js: each wearer\'s after its own aura, before the armory drawn over them');
+  assert.match(host, /const backSources = \[eotbBody, null\]/, 'mine');
+  assert.match(host, /backSources\[1\] = deps\.walkers\(\); return backSources;/, 'and the walkers\'');
+  assert.match(host, /const self = \{ id: SELF_OWNER,/, 'my aura under the owner my back is listed under');
+});
+
+test('AUDIT BACK-HOLSTER A2: over its OWN aura, under a nearer one - the auras drawn farthest first in runs, each wearer\'s back straight after its own aura (its weapon drawn again, its glows); a body wearing none has its glows drawn before every aura (mutants: one pass for all, the backs after; a back before its aura; the runs\' order turned; a bare body\'s glow after the auras)', () => {
+  const near = { id: 'near' }, mid = { id: 'mid' }, far = { id: 'far' };
+  const log = [];
+  const n = drawAurasThenBacks([near, mid, far], (run) => { log.push(`auras ${run.map((w) => w.id).join(',')}`); return run.length; }, (w) => w !== mid, (w) => log.push(`back ${w.id}`), []);
+  assert.equal(n, 3);
+  assert.deepEqual(log, ['auras far', 'back far', 'auras near,mid', 'back near'], 'the pass draws a run farthest first: far, then mid and near, near\'s back last');
+  log.length = 0;
+  drawAurasThenBacks([near, mid], (run) => { log.push(run.map((w) => w.id).join(',')); return 0; }, () => false, () => log.push('back'), []);
+  assert.deepEqual(log, ['near,mid'], 'no backs: one run, as the pass always drew');
+  assert.equal(drawAurasThenBacks([], () => 1, () => true, () => {}, []), 0);
+  // the backs by wearer: a holster and glows listed under their owner
+  const drew = [], r = { gl: { LESS: 1, LEQUAL: 2, depthFunc() {} }, drawBillboards: (list) => drew.push(`holster ${list[0].owner}`), drawBillboardGlow: (key, glow, g) => { drew.push(`glow ${g.owner}`); return true; } };
+  const h = createSpriteHolster('p1');
+  h.batch = { owner: 'p1' }; h.list[0] = h.batch;
+  const spec = { look: 'shock', code: 3 };
+  const mine = setSpriteGlow(createSpriteGlow(SELF_OWNER), 'a', 0, spec, [0, 0, 0], [1, 0, 0], [0, 1, 0], 1, 1, 1, 1);
+  const theirs = setSpriteGlow(createSpriteGlow('p1'), 'b', 0, spec, [0, 0, 0], [1, 0, 0], [0, 1, 0], 1, 1, 1, 1);
+  const bare = setSpriteGlow(createSpriteGlow('p2'), 'c', 0, spec, [0, 0, 0], [1, 0, 0], [0, 1, 0], 1, 1, 1, 1);
+  const sources = [{ holstersDrawn: () => [], glowsDrawn: () => [mine] }, { holstersDrawn: () => [h], glowsDrawn: () => [theirs, bare] }];
+  const backs = createSpriteBacks(r, () => sources);
+  assert.deepEqual([backs.has(SELF_OWNER), backs.has('p1'), backs.has('p2'), backs.has('p3')], [true, true, true, false]);
+  backs.draw('p1');
+  assert.deepEqual(drew, ['holster p1', 'glow p1'], 'one wearer\'s, nobody else\'s');
+  drew.length = 0;
+  assert.equal(backs.drawBare(new Set([SELF_OWNER, 'p1'])), 1);
+  assert.deepEqual(drew, ['glow p2'], 'before the auras: the glows of a body wearing none');
+});
+
+test('AUDIT BACK-HOLSTER A4: the batch\'s cull sphere holds the weapon as it leans - from every view, every corner of its quad inside (mutants: the upright half-diagonal)', () => {
+  for (const o of EIGHT) {
+    const c = cameraFor(o, FEET, 0.05), l = createSpriteHolster();
+    hangSpriteHolster(l, FIG, o, FEET, c.eye, c.right, ART);
+    const b = mintSpriteHolster(l, { createBillboardBatch: (archive, record, size) => ({ archive, record, size: { ...size }, origin: [0, 0, 0], bounds: [0, 0, 0, 0] }) });
+    const sph = batchSphere(b, new Float64Array(4));
+    for (const [x, y] of [[-0.5, 0], [0.5, 0], [-0.5, 1], [0.5, 1]]) {
+      const p = [0, 1, 2].map((k) => l.origin[k] + l.right[k] * x * l.w + l.up[k] * y * l.h);
+      assert.ok(Math.hypot(p[0] - sph[0], p[1] - sph[1], p[2] - sph[2]) <= sph[3] + 1e-9, `view ${o}: corner ${x},${y} inside`);
+    }
+  }
+});
+
+test('AUDIT BACK-HOLSTER A6: a walker\'s holster is made only when it hangs - the draw path allocates nothing for a walker with no weapon on its back (mutants: made every frame)', () => {
+  const src = readFileSync(new URL('../../../src/net/peer/peerRiders.js', import.meta.url), 'utf8');
+  assert.match(src, /const l = fig \? r\.holster \?\? createSpriteHolster\(peer\.id\) : null;/);
 });

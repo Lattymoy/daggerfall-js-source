@@ -572,8 +572,8 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
     const item = pose && !pose.wd ? holsterItemOfLook(peer.look?.items, !!pose.lh) : null;
     const art = item && holstersOnBack(item) ? store.holster?.ensure(item, peer.look) : null;
     const fig = art && r.form === 'walker' ? layer.figureOf(peer.id) : null;
-    const l = r.holster ?? createSpriteHolster();
-    if (!fig || !hangSpriteHolster(l, fig, view, feet, eye, right, art)) {
+    const l = fig ? r.holster ?? createSpriteHolster(peer.id) : null;   // AUDIT BACK-HOLSTER A6: made only to hang
+    if (!l || !hangSpriteHolster(l, fig, view, feet, eye, right, art)) {
       if (r.holster) { dropSpriteHolster(r.holster, store.renderer); r.holster = null; }
       return;
     }
@@ -581,7 +581,7 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
     mintSpriteHolster(l, store.renderer).conceal = r.veil ?? null;
     slung.push(l);
     const look = r.veil ? null : peerWeaponGlow(item);   // BACK-HOLSTER GLOW: a concealed walker's glows for nobody
-    if (look) glows.push(setSpriteGlow(r.glowBack ??= createSpriteGlow(), `${l.archive}_${l.mirror ? 1 : 0}`, look, l.origin, l.right, l.up, l.w, l.h, l.cellW, l.cellH));
+    if (look) glows.push(setSpriteGlow(r.glowBack ??= createSpriteGlow(peer.id), l.archive, l.mirror ? 1 : 0, look, l.origin, l.right, l.up, l.w, l.h, l.cellW, l.cellH));
   }
 
   /** BACK-HOLSTER GLOW: a walker whose weapon is drawn (`wd`) wears its glow round the whole sprite - the hand in use's
@@ -591,7 +591,7 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
     const look = peerWeaponGlow(holsterItemOfLook(peer.look?.items, !!pose.lh), peer.ak ?? null);
     if (!look) return;
     const art = r.artScale > 0 ? r.artScale : 1;
-    glows.push(setSpriteGlow(r.glowHand ??= createSpriteGlow(), `${r.batch.archive}_${r.batch.record}`, look, r.batch.origin, right, UP, r.size.w, r.size.h, r.pxW / art, r.px / art));
+    glows.push(setSpriteGlow(r.glowHand ??= createSpriteGlow(peer.id), r.batch.archive, r.batch.record, look, r.batch.origin, right, UP, r.size.w, r.size.h, r.pxW / art, r.px / art));
   }
 
   /** HT-WAIST-BACK: draw this frame's lanterns, each on its own tilted basis - the hosts call it beside the bodies

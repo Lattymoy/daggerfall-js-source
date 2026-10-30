@@ -56,8 +56,8 @@
   {
     "name": "GLOW-a-lookless-entry-drawn",
     "file": "src/player/eyeOfTheBeholder/eotbGlow.js",
-    "old": "if (g?.glow && renderer.drawBillboardGlow(g.key, g.glow, g)) n++;",
-    "new": "if (renderer.drawBillboardGlow(g.key, g.glow, g)) n++;",
+    "old": "if (g?.glow && (!keep || keep(g.owner)) && renderer.drawBillboardGlow(g.key, g.glow, g)) n++;",
+    "new": "if ((!keep || keep(g.owner)) && renderer.drawBillboardGlow(g.key, g.glow, g)) n++;",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "GLOW-P-no-back-glow",
     "file": "src/net/peer/peerRiders.js",
-    "old": "    if (look) glows.push(setSpriteGlow(r.glowBack ??= createSpriteGlow(),",
-    "new": "    if (false) glows.push(setSpriteGlow(r.glowBack ??= createSpriteGlow(),",
+    "old": "    if (look) glows.push(setSpriteGlow(r.glowBack ??= createSpriteGlow(peer.id),",
+    "new": "    if (false) glows.push(setSpriteGlow(r.glowBack ??= createSpriteGlow(peer.id),",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
@@ -353,7 +353,7 @@
   {
     "name": "GLOW-A-the-host-never-draws",
     "file": "src/scenes/auraHost.js",
-    "old": "      if (proj && view) drawSpriteGlows(renderer, eotbBody.glowsDrawn(), deps.walkers()?.glowsDrawn?.());\n",
+    "old": "      if (proj && view) backs.drawBare(worn);\n",
     "new": "\n",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
@@ -364,6 +364,78 @@
     "file": "src/combat/weapon/weaponRig.js",
     "old": "    handItem: playerWeapon.handItem(playerWeapon.leadHand),",
     "new": "    handItem: playerWeapon.handItem('R'),",
+    "tests": [
+      "test/player/eyeOfTheBeholder/spriteglow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-A5-keyed-to-the-picture-asked",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "setSpriteGlow(handGlow, batch.archive, batch.record, look,",
+    "new": "setSpriteGlow(handGlow, s.archive, s.rec, look,",
+    "tests": [
+      "test/player/eyeOfTheBeholder/spriteglow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-A7-no-fog-sent",
+    "file": "src/render/renderer.js",
+    "old": "      this._uploadFog(this._wgwFog);\n",
+    "new": "\n",
+    "tests": [
+      "test/player/eyeOfTheBeholder/spriteglow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-A7-unfogged",
+    "file": "src/render/weaponGlowGlsl.js",
+    "old": "  outColor *= gwFog();\n",
+    "new": "\n",
+    "tests": [
+      "test/player/eyeOfTheBeholder/spriteglow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-A8-never-culled",
+    "file": "src/render/renderer.js",
+    "old": "if (!this._bbCullOff && !sphereInPlanes(",
+    "new": "if (false && !sphereInPlanes(",
+    "tests": [
+      "test/player/eyeOfTheBeholder/spriteglow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-A8-the-pad-left-out",
+    "file": "src/render/renderer.js",
+    "old": "r = 0.5 * Math.hypot(q.w * (1 + 2 * wx / aw), q.h * (1 + (up + down) / ah));",
+    "new": "r = 0.5 * Math.hypot(q.w, q.h);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/spriteglow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GLOW-the-key-never-written",
+    "file": "src/player/eyeOfTheBeholder/eotbGlow.js",
+    "old": "  if (g.archive !== archive || g.record !== record) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/player/eyeOfTheBeholder/spriteglow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-GLOW-the-owner-ignored",
+    "file": "src/player/eyeOfTheBeholder/eotbGlow.js",
+    "old": "if (g?.glow && (!keep || keep(g.owner)) && renderer",
+    "new": "if (g?.glow && renderer",
+    "tests": [
+      "test/player/eyeOfTheBeholder/spriteglow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-A2-a-wearer-never-counted",
+    "file": "src/scenes/auraHost.js",
+    "old": "      if (pass) for (const w of auraDraw) worn.add(w.id);\n",
+    "new": "\n",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]

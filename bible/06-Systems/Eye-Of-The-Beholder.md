@@ -1188,7 +1188,7 @@ nothing of ARENA2 ships. Each is drawn on its own slant, so `uprightWeaponPictur
 through the most pixels - a haft, a blade, a bowstring; a mean axis was pulled off an axe's haft by its head), turns it
 upright by a half turn where needed so its widest end is on top (a sword's guard, an axe's or a hammer's head), and
 resamples it at the sprites' pixel size: the paper doll's 0.01 m a pixel against the sets' 0.019. It is uploaded as
-drawn and mirrored; a store keeps eight.
+drawn and mirrored; a store keeps eight, more while more are asked, and asks again for one that did not come (AUDIT).
 
 **The hang.** A line in the body's frame from the right shoulder to the left hip, 35 degrees off the spine, a quarter
 of its height over the shoulder row (`EOTB_FIGURE.shoulder`), 0.16 m behind the body's middle, centred on the painted
@@ -1205,9 +1205,10 @@ behind the card, so not one pixel of it lies over the body.
 
 **Over the aura** (Mac, the same day: "if a cape aura is present, the holster should appear over the aura"). The auras
 draw after the bodies as added light that writes no depth, so the Shadow Cloak's cape glowed over the weapon from behind.
-After the aura pass, `scenes/auraHost.js` draws again the holsters each owner drew this frame (`eotbBody.holstersDrawn`,
-the walkers' `holstersDrawn`): `redrawHolstersOver` at LEQUAL, so each passes exactly where it stood and stays hidden where
-the body hid it, with no second shadow and LESS given back. A per-frame list in the module was tried first: the
+Straight after a wearer's own aura, `scenes/auraHost.js` draws again the holster that owner drew this frame
+(`eotbBody.holstersDrawn`, the walkers' `holstersDrawn`, each listed under its wearer's id): `redrawHolstersOver` at
+LEQUAL, so it passes exactly where it stood and stays hidden where the body hid it, with no second shadow and LESS given
+back. A nearer wearer's aura is drawn after it, over it (AUDIT A2). A per-frame list in the module was tried first: the
 renderer's `_frameStamp` is no frame count (LA-COST1 bumps it on every setter), and the probe caught the redraw doing
 nothing.
 
@@ -1218,24 +1219,24 @@ spell readied over a sheathed weapon keeps it there. A walker's `wd` 1 or 2 (a w
 then "Do this and yes to #2"). Sheathed, the weapon on the back wears the weapon glow's look - its element, a set
 glow, the Gilded crimson, the Aura Armory's piece or the arcane look - drawn round its picture by the third glow
 drawer (`05-Combat/Weapon-Glow.md` "The world picture"). Drawn, the glow stands round the whole sprite. It turns,
-mirrors and hides with the weapon, and the aura host draws it last, over the cape. The weapon on the back and its glow
+mirrors and hides with the weapon, and the aura host draws it over its own cape and under a nearer one. The weapon on the back and its glow
 are the rig's hand in use (`weaponRig.js` `eotbState` `handItem`), a walker's by its pose's `lh`. Full strength, as in
 the hand: one law.
 
 **Where.** `player/eyeOfTheBeholder/eotbHolster.js` (the law, the picture, the store, the hang, the batch);
 `eotbBody.js` draws mine after the body (`drawHolster`); `net/peer/peerRiders.js` hangs each walker's (`slingHolster`)
-and draws it in `drawLanterns`, beside the bodies; `scenes/auraHost.js` draws both again over the auras. No host
-function grew. **Known limits.** Layered Gearing's art holds its
+and draws it in `drawLanterns`, beside the bodies; `scenes/auraHost.js` draws each again over its own aura
+(`eotbHolster.js` `drawAurasThenBacks`, `eotbGlow.js` `createSpriteBacks`). No host function grew. **Known limits.** Layered Gearing's art holds its
 mace in every frame, so a sheathed layered body shows the mace in hand and the weapon on its back. A flail stands on
 its handle with its chain and ball off to the side. Not yet checked in the running game.
 
 **Pins.** `test/player/eyeOfTheBeholder/backholster.test.js` (which weapons; the picture stood up, end and side kept;
 the slant, length, face and depth in all eight views and three facings; the side past the painted back; glued to the
 picture; the store; my body's gates in the rig's own words; the walkers'; the redraw over the aura; `chestHalf`, the
-across law and the capes moved for the pass); `tools/mutants/backholster.json` (37, all killed); three records in
+across law and the capes moved for the pass; the audit's A1-A6); `tools/mutants/backholster.json`; three records in
 `htwaist.json` and `seraphwings.json` re-aimed by content. The glow: `test/player/eyeOfTheBeholder/spriteglow.test.js`
-(the law, the lists, the renderer's primitive call by call, the shaders' rows, the wiring) and
-`tools/mutants/spriteglow.json` (41, all killed).
+(the law, the lists, the renderer's primitive call by call, the shaders' rows, the wiring; A5, A7, A8) and
+`tools/mutants/spriteglow.json`.
 
 **The probe.** `tools/backHolsterProbe.mjs` draws it in the real renderer
 (the game's mirrored lens) on a skin and on Layered Gearing, five weapons from ARENA2, eight views each, and the
@@ -1244,3 +1245,26 @@ right shoulder from behind, hides in front, shows past the back from the side wi
 mass is behind the painted body from the side, and after the redraw no weapon pixel is tinted (up to 468 were). And
 the glow: a shock and the Brand on the back from behind, none over the body from the front, alive as its clock runs,
 over the cape, and round the whole sprite drawn from every side - 46 checks.
+
+## AUDIT BACK-HOLSTER (2026-10-30): the holster and its glow, read cold
+
+Mac: "Audit this." A reviewer who had not written it read the four commits; each finding was checked against the code
+before anything changed. Eight held, one did not:
+
+- **A1, the store thrashed.** Nine weapons on screen and a store of eight: each frame's miss let go the next one asked,
+  so none ever came up. Now only a picture unasked for two seconds goes (`HOLSTER_ART_HOLD_MS`).
+- **A2, another wearer's cape.** The weapons and glows were drawn after the whole aura pass, so a cape nearer the eye lay
+  under a weapon behind it. The auras now draw farthest first in runs, each wearer's back right after its own aura;
+  a body wearing none has its glows drawn before every aura.
+- **A3, a failed picture never came back.** `itemIconColor32` gives up after four seconds; the store kept that for the
+  session. It asks again after 30 seconds (`HOLSTER_RETRY_MS`), as the riders' art does.
+- **A4 (refuted as reported).** The cull's sphere follows the current size (`bounds.js` `batchReach`). But it stands
+  upright and the weapon leans 35 degrees, so its tip could pass out of it; the radius now takes the lean.
+- **A5, my glow on the wrong picture.** Keyed to the picture asked, not the one standing while the next uploads. Now
+  the standing batch's, in its pixels.
+- **A6, an allocation every frame** for every walker with no weapon on its back. Now made only to hang.
+- **A7, the glow unfogged.** `glowWorldFs` fogs it to nothing at its place, as the auras are.
+- **A8, no cull.** A glow off the view baked a field and drew; its padded quad is now culled first.
+- **A9, the cape's shift** was not given back if the pass threw; it is, in a `finally`.
+
+Pins: the A-numbered tests in the two files above, and a record a fix in `backholster.json` and `spriteglow.json`.

@@ -28,6 +28,13 @@ export const BACK_HOLSTER = Object.freeze({ tilt: 35 * Math.PI / 180, back: 0.16
 export const PAPERDOLL_MPP = 0.01;
 /** How many weapon pictures a store keeps uploaded - one a weapon seen; the least recently asked goes first. */
 export const HOLSTER_ART_KEPT = 8;
+/** AUDIT BACK-HOLSTER A1: past HOLSTER_ART_KEPT, only a picture unasked this long goes - a crowd of more weapons than
+ *  the store keeps grows it, never takes its turn evicting a picture still on screen. */
+export const HOLSTER_ART_HOLD_MS = 2000;
+/** AUDIT BACK-HOLSTER A3: a picture that did not come (none, too slow, a decode error) is asked again after this. */
+export const HOLSTER_RETRY_MS = 30000;
+/** The owner a holster or a glow of MY body is listed under - the aura host's own wearer's id (scenes/auraHost.js). */
+export const SELF_OWNER = 'self';
 
 const COS = Float64Array.from({ length: 180 }, (_, a) => Math.cos(a * Math.PI / 180));
 const SIN = Float64Array.from({ length: 180 }, (_, a) => Math.sin(a * Math.PI / 180));
@@ -134,15 +141,15 @@ export async function loadHolsterPicture(item, identity) {
 }
 
 /**
- * One layer's weapon pictures: `ensure(item, identity)` answers `{ archive, w, h }` once that weapon's picture is
- * uploaded, else null - asked once, in flight, or none to be had (never asked again). The picture's key is the pack's
- * (archive, record, dye), so two weapons that look alike share one upload. HOLSTER_ART_KEPT stay uploaded (EVERY
- * ALLOCATION HAS AN OWNER); one let go by the renderer under another store is uploaded again from the kept pixels.
- * @param {() => any} getRenderer
- * @param {(item: any, identity: any) => Promise<any>} [load]
+ * One layer's weapon pictures: `ensure(item, identity)` answers `{ archive, w, h }` once that weapon's picture is up,
+ * else null - in flight, or none to be had (asked again after HOLSTER_RETRY_MS). Keyed by the pack's (archive, record,
+ * dye): two weapons that look alike share one upload. HOLSTER_ART_KEPT stay uploaded, more while more are asked (EVERY
+ * ALLOCATION HAS AN OWNER); one the renderer let go under another store is uploaded again from the kept pixels.
+ * @param {() => any} getRenderer @param {(item: any, identity: any) => Promise<any>} [load] @param {() => number} [clock]
  */
-export function createHolsterArt(getRenderer, load = loadHolsterPicture) {
-  const art = new Map();   // icon key -> Promise in flight | { archive, w, h, pic } | null (none)
+export function createHolsterArt(getRenderer, load = loadHolsterPicture, clock = () => Date.now()) {
+  /** @type {Map<string, { at: number, v: any }>} icon key -> { at: last asked, v: Promise in flight | { archive, w, h, pic } | { failedAt } } */
+  const art = new Map();
   const keys = new WeakMap();   // item -> { identity, drawn, key }: a crowd's weapons are not resolved again every frame
   const keyOf = (item, identity) => {
     const drawn = drawnPiece(item), memo = keys.get(item);   // drawnPiece keeps one object while the look stands
@@ -156,11 +163,11 @@ export function createHolsterArt(getRenderer, load = loadHolsterPicture) {
     renderer.uploadTexture(a.archive, 0, { width: a.pic.width, height: a.pic.height, colors: a.pic.colors });
     renderer.uploadTexture(a.archive, 1, { width: a.pic.width, height: a.pic.height, colors: a.pic.mirror });
   };
-  function evict(renderer) {
-    while (art.size > HOLSTER_ART_KEPT) {
-      const [k, a] = /** @type {[string, any]} */ (art.entries().next().value);
+  function evict(renderer, now) {
+    for (const [k, slot] of art) {   // the least recently asked first
+      if (art.size <= HOLSTER_ART_KEPT || now - slot.at < HOLSTER_ART_HOLD_MS) return;
       art.delete(k);
-      if (a && !(a instanceof Promise)) for (const rec of [0, 1]) renderer?.evictTexture?.(`${a.archive}_${rec}`);
+      if (slot.v?.archive) for (const rec of [0, 1]) renderer?.evictTexture?.(`${slot.v.archive}_${rec}`);
     }
   }
   return {
@@ -168,23 +175,28 @@ export function createHolsterArt(getRenderer, load = loadHolsterPicture) {
       const renderer = getRenderer();
       const key = item && typeof item === 'object' && renderer ? keyOf(item, identity) : null;
       if (!key) return null;
-      const have = art.get(key);
-      if (have !== undefined) {
-        if (!have || have instanceof Promise) return null;
-        art.delete(key); art.set(key, have);   // the most recently asked, last
-        if (renderer.textures?.has && !renderer.textures.has(`${have.archive}_0`)) upload(renderer, have);
-        return have;
-      }
+      const now = clock();
+      let slot = art.get(key);
+      if (slot) {
+        art.delete(key); art.set(key, slot); slot.at = now;   // the most recently asked, last - in flight or failed too
+        const v = slot.v;
+        if (v instanceof Promise || now - v.failedAt < HOLSTER_RETRY_MS) return null;
+        if (v.archive) {
+          if (renderer.textures?.has && !renderer.textures.has(`${v.archive}_0`)) upload(renderer, v);
+          return v;
+        }
+      } else art.set(key, (slot = { at: now, v: null }));
+      const s = slot, failed = () => { if (art.get(key) === s && s.v === p) s.v = { failedAt: clock() }; };
       const p = Promise.resolve().then(() => load(item, identity)).then((pic) => {
-        if (art.get(key) !== p) return;
+        if (art.get(key) !== s || s.v !== p) return;   // let go while in flight - never uploaded
         const r = getRenderer();
-        if (!pic || !r) { art.set(key, null); return; }
+        if (!pic || !r) { failed(); return; }
         const a = { archive: holsterArtArchive(key), w: pic.w, h: pic.h, pic };
         upload(r, a);
-        art.set(key, a);
-      }, () => { if (art.get(key) === p) art.set(key, null); });
-      art.set(key, p);
-      evict(renderer);
+        s.v = a;
+      }, failed);
+      s.v = p;
+      evict(renderer, now);
       return null;
     },
     /** The pictures this store holds, uploaded or not (the pins). */
@@ -192,10 +204,11 @@ export function createHolsterArt(getRenderer, load = loadHolsterPicture) {
   };
 }
 
-/** One sprite's holster: its batch, the basis it is drawn on and the scratch its placement is written to. */
-export function createSpriteHolster() {
+/** One sprite's holster: its batch, the basis it is drawn on and the scratch its placement is written to; `owner` the
+ *  wearer's id its aura is drawn under (SELF_OWNER mine). */
+export function createSpriteHolster(owner = null) {
   return {
-    batch: null, list: [],            // the billboard, and the one-element list drawBillboards takes
+    owner, batch: null, list: [],            // the billboard, and the one-element list drawBillboards takes
     right: [1, 0, 0], up: [0, 1, 0], origin: [0, 0, 0], mid: [0, 0, 0],
     w: 0, h: 0, fullH: 0, mirror: false, archive: null, cellW: 0, cellH: 0,   // BACK-HOLSTER GLOW: its picture's pixels
   };
@@ -255,6 +268,9 @@ export function mintSpriteHolster(l, renderer) {
   b.archive = l.archive; b.record = rec;
   b.size.w = l.w; b.size.h = l.h;
   b.origin[0] = l.origin[0]; b.origin[1] = l.origin[1]; b.origin[2] = l.origin[2];
+  // AUDIT BACK-HOLSTER A4: the cull's sphere stands upright over the foot (render/bounds.js batchSphere); the weapon
+  // leans off it, its middle as far from the sphere's as the slant moves it
+  if (b.bounds) b.bounds[3] = Math.hypot(l.w, l.h) * 0.5 + 0.5 * l.h * Math.hypot(l.up[0], l.up[1] - 1, l.up[2]);
   return b;
 }
 
@@ -270,9 +286,9 @@ export function dropSpriteHolster(l, renderer) {
 // draw after the bodies, added light that writes no depth, so the Shadow Cloak's cape glowed over the weapon. The aura
 // pass (scenes/auraHost.js) draws the frame's holsters again after itself, each owner's list of what it drew this
 // frame: at LEQUAL each passes exactly where it stood and stays hidden where the body hid it.
-/** Draw again, over what was drawn since them, the holsters in `lists` (eotbBody and the walkers' holstersDrawn): the
- *  depth test LEQUAL, no second shadow, the baseline LESS given back. Answers how many. */
-export function redrawHolstersOver(renderer, ...lists) {
+/** Draw again, over what was drawn since them, the holsters in `lists` (eotbBody and the walkers' holstersDrawn) whose
+ *  owner `keep` takes (null: all): the depth test LEQUAL, no second shadow, the baseline LESS given back. Answers how many. */
+export function redrawHolstersOver(renderer, keep, ...lists) {
   const gl = renderer?.gl;
   if (!gl || !lists.some((l) => l?.length)) return 0;
   let n = 0;
@@ -281,7 +297,7 @@ export function redrawHolstersOver(renderer, ...lists) {
     for (const list of lists) {
       for (const l of list ?? []) {
         const b = l?.batch;
-        if (!b || b._dead) continue;
+        if (!b || b._dead || (keep && !keep(l.owner))) continue;
         b.noShadow = true;
         renderer.drawBillboards(l.list, l.right, l.up);
         b.noShadow = false;
@@ -290,4 +306,21 @@ export function redrawHolstersOver(renderer, ...lists) {
     }
   } finally { gl.depthFunc(gl.LESS); }
   return n;
+}
+
+/** AUDIT BACK-HOLSTER A2: OVER ITS OWN AURA, UNDER A NEARER ONE. The auras drawn farthest first, in runs, and each
+ *  sprite's back (its weapon drawn again, its glows) straight after its own: a nearer wearer's cape, which writes no
+ *  depth, lay under every weapon drawn after the whole pass. `wearers` nearest first (auraWearers' order);
+ *  `drawAuras(run)` draws a nearest-first run, answering how many; `hasBacks(w)` and `drawBacks(w)` a wearer's. */
+export function drawAurasThenBacks(wearers, drawAuras, hasBacks, drawBacks, run = []) {
+  let drawn = 0, hi = wearers.length - 1;
+  for (let i = hi; i >= 0; i--) {
+    if (i > 0 && !hasBacks(wearers[i])) continue;
+    run.length = 0;
+    for (let j = i; j <= hi; j++) run.push(wearers[j]);
+    drawn += drawAuras(run);
+    if (hasBacks(wearers[i])) drawBacks(wearers[i]);
+    hi = i - 1;
+  }
+  return drawn;
 }

@@ -42,19 +42,25 @@ test('BACK-HOLSTER GLOW the law: my weapon wears the weapon glow\'s own answer -
   assert.equal(holsterItemOfLook([SWORD, left], false), SWORD);
 });
 
-test('BACK-HOLSTER GLOW the entries: one glow is a key, a look and the quad as the billboard stands, written in place; drawSpriteGlows draws each owner\'s list through drawBillboardGlow and counts those that drew (mutants: a list skipped; a lookless entry drawn)', () => {
-  const g = createSpriteGlow(), o = [1, 2, 3];
-  assert.equal(setSpriteGlow(g, 'a_0', WG.glowSpec('fire', 1), o, [0, 0, 1], [0, 1, 0], 0.4, 1.4, 22, 74), g);
+test('BACK-HOLSTER GLOW the entries: one glow is a key (its archive and record), a look, its owner and the quad as the billboard stands, written in place; drawSpriteGlows draws each list through drawBillboardGlow - those whose owner `keep` takes - and counts those that drew (mutants: a list skipped; a lookless entry drawn; the owner ignored; the key never rewritten)', () => {
+  const g = createSpriteGlow('p1'), o = [1, 2, 3];
+  assert.equal(setSpriteGlow(g, 'a', 0, WG.glowSpec('fire', 1), o, [0, 0, 1], [0, 1, 0], 0.4, 1.4, 22, 74), g);
   o[0] = 9;
-  assert.deepEqual([g.key, g.origin, g.right, g.up, g.w, g.h, g.art], ['a_0', [1, 2, 3], [0, 0, 1], [0, 1, 0], 0.4, 1.4, [22, 74]], 'copied, never held');
+  assert.deepEqual([g.owner, g.key, g.origin, g.right, g.up, g.w, g.h, g.art], ['p1', 'a_0', [1, 2, 3], [0, 0, 1], [0, 1, 0], 0.4, 1.4, [22, 74]], 'copied, never held');
+  setSpriteGlow(g, 'a', 1, WG.glowSpec('fire', 1), o, [0, 0, 1], [0, 1, 0], 0.4, 1.4, 22, 74);
+  assert.equal(g.key, 'a_1', 'another record, another key');
+  setSpriteGlow(g, 'a', 0, WG.glowSpec('fire', 1), o, [0, 0, 1], [0, 1, 0], 0.4, 1.4, 22, 74);
   const drew = [];
-  const r = { drawBillboardGlow: (key, glow, q) => { drew.push([key, glow.look, q]); return key !== 'gone'; } };
-  const h = setSpriteGlow(createSpriteGlow(), 'gone', WG.glowSpec('shock', 2), o, [1, 0, 0], [0, 1, 0], 1, 2, 3, 4);
+  const r = { drawBillboardGlow: (key, glow, q) => { drew.push([key, glow.look, q]); return key !== 'gone_0'; } };
+  const h = setSpriteGlow(createSpriteGlow('p2'), 'gone', 0, WG.glowSpec('shock', 2), o, [1, 0, 0], [0, 1, 0], 1, 2, 3, 4);
   const none = createSpriteGlow();
-  assert.equal(drawSpriteGlows(r, [g], [h, none], undefined), 1, 'the one that drew');
-  assert.deepEqual(drew.map((d) => d.slice(0, 2)), [['a_0', 'fire'], ['gone', 'shock']], 'both owners\' lists, never an entry with no look');
+  assert.equal(drawSpriteGlows(r, null, [g], [h, none], undefined), 1, 'the one that drew');
+  assert.deepEqual(drew.map((d) => d.slice(0, 2)), [['a_0', 'fire'], ['gone_0', 'shock']], 'both owners\' lists, never an entry with no look');
   assert.equal(drew[0][2], g);
-  assert.equal(drawSpriteGlows(null, [g]), 0);
+  drew.length = 0;
+  assert.equal(drawSpriteGlows(r, (k) => k === 'p1', [g], [h, none]), 1);
+  assert.deepEqual(drew.map((d) => d[0]), ['a_0'], 'only the owner `keep` takes');
+  assert.equal(drawSpriteGlows(null, null, [g]), 0);
 });
 
 /** A WebGL2 stub that RECORDS (test/systems/weaponglow1.test.js's): every call's name and arguments, an enum its name. */
@@ -77,18 +83,26 @@ function loggingRenderer() {
   return { r: new Renderer(canvas), log };
 }
 const I = () => new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+const TENTH = () => new Float32Array([0.1, 0, 0, 0, 0, 0.1, 0, 0, 0, 0, 0.1, 0, 0, 0, 0, 1]);   // the world a tenth: the quads in the clip cube
 
 test('BACK-HOLSTER GLOW drawBillboardGlow: the world picture\'s outline - its field baked once, whole (a pad under its foot, nothing cut, its rows bottom-up), then one quad standing as the billboard stands; depth tested and written nowhere, culling off for its quad, everything handed back; never a smear for a picture with no cells (mutants: the bottom cut; the rows read top-down; depth written; LEQUAL kept; culling left off; the sheet\'s list taken)', () => {
   const { r, log } = loggingRenderer();
   const spec = WG.glowSpec('shock', 3), [wx, up, down] = GL.GLOW_SPRITE_WINDOW.shock;
   const q = { origin: [1, 2, 3], right: [0, 0, 1], up: [0, 1, 0], w: 0.4, h: 1.4, art: [22, 74] };
   assert.equal(r.drawBillboardGlow('k_0', spec, q), false, 'before a frame: no camera, nothing');
-  r.beginFrame(I(), I(), new Float32Array([0, 1, 0]));
+  r.beginFrame(I(), TENTH(), new Float32Array([0, 1, 0]));
   assert.equal(r.drawBillboardGlow('k_0', spec, q), false, 'no such texture: nothing');
   r.textures.set('k_0', { id: 'picture' });
   for (const bad of [{ ...q, art: [0, 74] }, { ...q, art: [22, 0] }, { ...q, w: 0 }, null]) assert.equal(r.drawBillboardGlow('k_0', spec, bad), false, 'no cells, no size: no smear');
   assert.equal(r.drawBillboardGlow('k_0', null, q), false);
   r._ensureScreenQuadProgram();
+  // AUDIT A8: off the view - nothing baked, nothing drawn; the switch that turns the billboards' cull off turns it off
+  log.length = 0;
+  const away = { ...q, origin: [40, 2, 3] };
+  assert.equal(r.drawBillboardGlow('k_0', spec, away), false, 'off the view: nothing');
+  assert.equal(log.filter((c) => c[0] === 'drawElements' || c[0] === 'texImage2D').length, 0, 'not even its field baked');
+  assert.equal(r.drawBillboardGlow('k_0', spec, { ...q, origin: [-10.9, 2, 3] }), true, 'its pad on the view: drawn');
+  r._glowWorldFieldList.length = 0; r._glowFields = new WeakMap();
   r._open2D(r._screenQuadVao);   // a 2D run left open - the glow must hand the world's state back before it draws
   log.length = 0;
   assert.equal(r.drawBillboardGlow('k_0', spec, q), true);
@@ -112,6 +126,7 @@ test('BACK-HOLSTER GLOW drawBillboardGlow: the world picture\'s outline - its fi
   assert.deepEqual(uniAt('uFieldAt', bake, draw).slice(2), [wx, down]);
   assert.deepEqual([uniAt('uLook', bake, draw)[2], uniAt('uLevel', bake, draw)[2], uniAt('uReachMax', bake, draw)[2]], [WG.GLOW_CODE.shock, 3, GL.GLOW_REACH_MAX.shock]);
   assert.ok(uniAt('uVP', bake, draw), 'the frame\'s camera');
+  assert.ok(uniAt('uFogMode', bake, draw)?.[1].program === r.weaponGlowWorldProgram, 'AUDIT A7: the frame\'s fog, on its own program');
   const before = log.slice(bake, draw);
   assert.ok(before.some((c) => c[0] === 'depthMask' && c[1] === false), 'written nowhere');
   assert.ok(before.some((c) => c[0] === 'depthFunc' && c[1] === 'LEQUAL'), 'passing on the picture\'s own card');
@@ -155,7 +170,14 @@ test('BACK-HOLSTER GLOW the shaders: the field and the outline read a world pict
   assert.match(GL.GLOW_SPRITE_FS, /ivec2 a = ivec2\(floor\(uv \* vec2\(uArt\)\)\);\n  if \(uFlipY == 1\) a\.y = uArt\.y - 1 - a\.y;/, 'the outline: its cell flipped, its texel read as the uv says');
   assert.match(GL.GLOW_WORLD_VS, /vec2 q = mix\(-uPad\.xy \/ art, 1\.0 \+ uPad\.zw \/ art, vec2\(p\.x, 1\.0 - p\.y\)\);/, 'top-down, grown by the pad');
   assert.match(GL.GLOW_WORLD_VS, /return uOrigin \+ uRight \* \(\(q\.x - 0\.5\) \* uSize\.x\) \+ uUp \* \(\(1\.0 - q\.y\) \* uSize\.y\);/, 'on the billboard\'s basis, its foot the origin');
-  assert.match(GL.GLOW_WORLD_VS, /gl_Position = uVP \* vec4\(gwWorld\(q\), 1\.0\);/);
+  assert.match(GL.GLOW_WORLD_VS, /vWorld = gwWorld\(q\);\n  gl_Position = uVP \* vec4\(vWorld, 1\.0\);/);
+  // AUDIT A7: fogged to nothing at its place in the world, as the auras are
+  const fs = GL.glowWorldFs(GL.GLOW_SPRITE_FS, 'FOG');
+  assert.match(fs, /out vec4 outColor;\nin vec3 vWorld;\nuniform int uFogMode;\nuniform float uFogDensity;\nuniform vec2 uFogRange;\nuniform vec3 uCamPos;\nFOG/);
+  assert.match(fs, /void gwPaint\(\) \{/);
+  assert.match(fs, /float gwFog\(\) \{ return fogFactorAt\(vWorld\); \}\nvoid main\(\) \{\n  gwPaint\(\);\n  outColor \*= gwFog\(\);\n\}$/);
+  assert.equal(fs.split('void main()').length, 2, 'one main');
+  assert.throws(() => GL.glowWorldFs('void main() {}', 'FOG'), /needs one/);
   assert.match(GL.GLOW_WORLD_VS, /gl_Position\.z \+= uPull \* gl_Position\.w;/);
   assert.equal(GL.GLOW_WORLD_FIELDS_MAX, 256);
 });
@@ -182,7 +204,7 @@ function cameraFor(o, feet, nudge = 0.05) {
   const yaw = Math.atan2(-tc[0], -tc[2]);
   return { eye: [feet[0] + 2 * tc[0], feet[1] + 1.5, feet[2] + 2 * tc[2]], yaw, right: [Math.cos(yaw), 0, -Math.sin(yaw)] };
 }
-async function liveBody(opts = {}) {
+async function liveBody(opts = {}, walk = true) {
   const r = recordingRenderer();
   const b = createEotbBody({
     count: () => 3035, urlFor: (k) => `/art/${k}.png`,
@@ -193,7 +215,7 @@ async function liveBody(opts = {}) {
   await settle();
   b.toggle(true, false);
   const behind = cameraFor(4, [0, 0, 0], 0);
-  for (let i = 0; i < 12; i++) b.tick(1 / 60, { motion: { forward: 1, standing: false, speed: 5, grounded: true, height: 1.8 }, feet: [0, 0, 0], yaw: behind.yaw, cameraPos: behind.eye });
+  for (let i = 0; walk && i < 12; i++) b.tick(1 / 60, { motion: { forward: 1, standing: false, speed: 5, grounded: true, height: 1.8 }, feet: [0, 0, 0], yaw: behind.yaw, cameraPos: behind.eye });
   return { b, r };
 }
 function viewFrom(b, o, extra = {}) {
@@ -247,6 +269,22 @@ test('BACK-HOLSTER GLOW (my sprite): sheathed, the weapon on its back glows - it
   assert.equal(viewFrom(off.b, 4, { handItem: SHOCK }).length, 0, 'the switch off');
 });
 
+test('AUDIT BACK-HOLSTER A5 (my sprite): the weapon drawn, its ready picture still uploading, the last picture stands - and the glow round it is keyed to it, in its pixels, never to the picture asked (mutants: keyed to the picture asked)', async () => {
+  const { b, r } = await liveBody({}, false);   // standing from the first: the idle picture
+  const bodies = () => r.batches.filter((x) => typeof x.archive === 'number');
+  const sheathed = { handItem: SHOCK, sheathed: true, weaponReady: false };
+  viewFrom(b, 4, sheathed); await settle(); viewFrom(b, 4, sheathed);
+  const standing = bodies().at(-1);
+  for (const k of [...r.textures.keys()]) if (k !== `${standing.archive}_${standing.record}`) r.textures.delete(k);   // let go by another store (PEER-ART): uploaded again
+  const drawn = { handItem: SHOCK, sheathed: false, weaponReady: true };
+  const g = viewFrom(b, 4, drawn);   // the ready stance asked, its picture not up
+  assert.equal(bodies().at(-1), standing, 'the last picture stands');
+  assert.equal(g[0]?.key, `${standing.archive}_${standing.record}`, 'and its glow is on it');
+  await settle();
+  const g2 = viewFrom(b, 4, drawn), now = bodies().at(-1);
+  assert.ok(now !== standing && g2[0]?.key === `${now.archive}_${now.record}`, `the ready picture up: its glow with it ${bodies().map((x) => x.record).join(' ')} ${g[0]?.key} ${g2[0]?.key}`);
+});
+
 test('BACK-HOLSTER GLOW (the others): a walker\'s weapon on its back glows by its look\'s word; its weapon drawn, round the whole walker - the hand in use (`lh`), a bare fist\'s kit piece; none at a gathering act, concealed, or by the word of a plain weapon (mutants: the walkers never list; the hand in use ignored; the kit ignored)', async () => {
   const rr = recordingRenderer();
   const art = createEotbArt({ renderer: rr, urlFor: (k) => `u:${k}`, decode: async () => ({ width: 50, height: 110, colors: new Uint32Array(50 * 110) }), loadHolster: async () => PIC });
@@ -283,12 +321,12 @@ test('BACK-HOLSTER GLOW (the others): a walker\'s weapon on its back glows by it
   assert.equal(veiled(walker()).length, 0, 'concealed, sheathed: none');
 });
 
-test('BACK-HOLSTER GLOW the wiring: the rig says the hand in use and its wraps; my body hands them on; the aura host draws every glow last, every frame, after the capes, the weapons redrawn over them and the armory over them (mutants: the host never draws them; drawn before the capes)', () => {
+test('BACK-HOLSTER GLOW the wiring: the rig says the hand in use and its wraps; my body hands them on; the aura host draws them every frame - a body wearing no aura before the auras, a wearer\'s after its own (AUDIT A2) - and the armory over them (mutants: the host never draws them; a bare body\'s after the auras)', () => {
   const rig = read('src/combat/weapon/weaponRig.js');
   assert.match(rig, /handItem: playerWeapon\.handItem\(playerWeapon\.leadHand\),/);
   assert.match(rig, /handWraps: playerWeapon\.wrapsOf\(playerWeapon\.leadHand\),/);
   const host = read('src/scenes/auraHost.js');
-  const capes = host.indexOf('pass?.draw(auraDraw'), redraw = host.indexOf('redrawHolstersOver(renderer,'), armory = host.indexOf('drawArmory(armoryOver'), glows = host.indexOf('drawSpriteGlows(renderer, eotbBody.glowsDrawn(), deps.walkers()?.glowsDrawn?.())');
-  assert.ok(capes > 0 && redraw > capes && armory > redraw && glows > armory, 'last of all');
-  assert.match(host, /if \(proj && view\) drawSpriteGlows\(/, 'outside the capes\' own branch - every frame');
+  const bare = host.indexOf('if (proj && view) backs.drawBare(worn);'), capes = host.indexOf('drawAurasThenBacks(auraDraw,'), armory = host.indexOf('drawArmory(armoryOver');
+  assert.ok(bare > 0 && capes > bare && armory > capes, 'the bare before the auras, the wearers\' with them, the armory after');
+  assert.match(host, /if \(pass\) for \(const w of auraDraw\) worn\.add\(w\.id\);/, 'a wearer is one whose aura draws');
 });

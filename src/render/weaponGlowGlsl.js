@@ -264,6 +264,7 @@ uniform vec4 uPad;
 uniform ivec2 uArt;
 uniform float uPull;
 out vec2 vQ;
+out vec3 vWorld;
 // a place on the picture (q: 0..1 across, 0..1 down from its top) in the world, on the billboard's own basis
 vec3 gwWorld(vec2 q) {
   return uOrigin + uRight * ((q.x - 0.5) * uSize.x) + uUp * ((1.0 - q.y) * uSize.y);
@@ -273,7 +274,8 @@ void main() {
   vec2 art = vec2(uArt);
   vec2 q = mix(-uPad.xy / art, 1.0 + uPad.zw / art, vec2(p.x, 1.0 - p.y));
   vQ = q;
-  gl_Position = uVP * vec4(gwWorld(q), 1.0);
+  vWorld = gwWorld(q);
+  gl_Position = uVP * vec4(vWorld, 1.0);
   gl_Position.z += uPull * gl_Position.w;
 }`;
 
@@ -385,6 +387,23 @@ void main() {
   if (s.a <= 0.0) discard;
   outColor = vec4(s.rgb * s.a, s.a);
 }`;
+
+/** AUDIT BACK-HOLSTER A7: THE WORLD PICTURE'S FRAGMENT SHADER - the classic outline's (`spriteFs`, GLOW_SPRITE_FS)
+ *  fogged to nothing as the auras are: its colour and its cover times `fogFactorAt` (`fogGlsl`, render/fogGlsl.js
+ *  FOG_GLSL, handed in - this file is a leaf) at its place in the world. Throws on a source without exactly one of each
+ *  needle (glowMeshVs' rule). */
+export function glowWorldFs(spriteFs, fogGlsl) {
+  const decl = 'out vec4 outColor;', main = /\bvoid main\(\) \{/g;
+  const decls = spriteFs.split(decl).length - 1, mains = spriteFs.match(main)?.length ?? 0;
+  if (decls !== 1 || mains !== 1) throw new Error(`BACK-HOLSTER GLOW: the outline's shader needs one "${decl}" and one main (has ${decls} and ${mains})`);
+  const fog = `${decl}\nin vec3 vWorld;\nuniform int uFogMode;\nuniform float uFogDensity;\nuniform vec2 uFogRange;\nuniform vec3 uCamPos;\n`;
+  return `${spriteFs.replace(decl, () => fog + fogGlsl).replace(main, (m) => m.replace('main', 'gwPaint'))}
+float gwFog() { return fogFactorAt(vWorld); }
+void main() {
+  gwPaint();
+  outColor *= gwFog();
+}`;
+}
 
 /** THE MORROWIND PASS'S VERTEX SHADER: the character program's skinned vertex shader (renderer.js CHAR_SKIN_VS) with
  *  the glow's after its own gl_Position - the SAME expression first, so an unshifted draw is the body's own position -

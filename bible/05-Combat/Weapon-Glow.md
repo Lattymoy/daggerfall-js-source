@@ -199,21 +199,21 @@ arcane outline for an enchantment, since Melee has no magic sheet; the Morrowind
 (`renderer.js` `inGlowSlot` 'hands').
 
 **The world picture** (BACK-HOLSTER GLOW, 2026-10-30; Mac: "if the weapon has an effect, like the shock effect or an
-equipped weapon aura, does it show?", then "Do this and yes to #2"). The third drawer, `Renderer.drawBillboardGlow`:
-the classic outline round a picture standing in the world - an Eye of the Beholder sprite, or the weapon on its back.
-Its fragment half is the sprite's (`GLOW_SPRITE_FS`); its quad (`GLOW_WORLD_VS`) stands on the billboard's basis, grown
-by the look's window. Its field is `_glowField`'s world arm: padded under the foot as over the head, nothing cut, its
-rows read bottom-up (`uFlipY` - color32). Those fields keep their own list (`GLOW_WORLD_FIELDS_MAX`, 256), so a crowd
-never pushes out the first-person sheet's. Depth tested, written nowhere, a hair toward the eye, so the body's card
-hides it where the card stands in front; culling off for its quad.
+equipped weapon aura, does it show?"). The third drawer, `Renderer.drawBillboardGlow`: the classic outline round a
+picture standing in the world - an Eye of the Beholder sprite, or the weapon on its back. Its fragment half is the
+sprite's, fogged as the auras are (`glowWorldFs`); its quad (`GLOW_WORLD_VS`) stands on the billboard's basis, grown by
+the look's window, culled off the view before its field is baked (AUDIT BACK-HOLSTER A7, A8). Its field is
+`_glowField`'s world arm: padded under the foot as over the head, nothing cut, its rows read bottom-up (`uFlipY`). Those
+fields keep their own list (`GLOW_WORLD_FIELDS_MAX`, 256), apart from the first-person sheet's. Depth tested, written
+nowhere, a hair toward the eye, so the body's card hides it where the card stands in front; culling off for its quad.
 
 **On a sprite** (`player/eyeOfTheBeholder/eotbGlow.js`). Sheathed, the weapon on the back wears its glow; drawn, the
 glow stands round the WHOLE sprite - its weapon is painted into the picture, with nothing to tell it from the hand,
 and the owner chose that over none. My sprite asks `meshGlow` (law 5's arcane included: a paper-doll picture has no
 enchanted sheet, as a Morrowind model has none) for the rig's hand in use, and a bare fist its Hand Wraps, else the
 kit's piece. A walker's is its look's `glow` word, a bare fist its kit's (`peer.ak`). None concealed, in the saddle, as
-a beast, at a gathering act or under the Overworld's grown body. Each owner lists its glows and `scenes/auraHost.js`
-draws them last, over the capes.
+a beast, at a gathering act or under the Overworld's grown body. Each owner lists its glows under its wearer's id;
+`scenes/auraHost.js` draws a wearer's over its own aura and under a nearer one, and a body wearing none before the auras.
 
 ## Online
 
@@ -260,7 +260,7 @@ deployed a peer's Gilded weapon draws bare.
   own, not the `weapon` slot, and the reference's glow on it is not ported either.
 - **A classic-lane peer** as its class's mobile sprite draws no glow; nor does a foe's weapon, nor the inventory's
   figure. One drawn as an Eye of the Beholder sprite does now (BACK-HOLSTER GLOW, above). The fixed-city bench
-  (`?exterior`) draws no sprite glow: it has no aura host to draw them last.
+  (`?exterior`) draws no sprite glow: it has no aura host to draw them.
 - **A Legendary's elemental power** (Venom's poison, Dragonfire) shows nothing of its own (law 1), and an **Aetheric
   weapon** with no element line is bare in the Morrowind hand - it carries no DFU enchantment for the arcane look to say
   (law 5; AUDIT LAW-2). A Gilded weapon is no longer bare: law 8.

@@ -18,9 +18,9 @@ import { CAPSULE_HEIGHT } from '../player/motor.js';
 import { mwViewBodyBones, mwViewSpriteFigure, mwViewSpriteFacing } from '../player/mwView.js';
 import { ownAura, ownArmory } from '../systems/ownGlyphs.js';
 import { getPref } from '../systems/uiPrefs.js';
-import { redrawHolstersOver } from '../player/eyeOfTheBeholder/eotbHolster.js';   // BACK-HOLSTER: a weapon on a sprite's back over its cape
+import { drawAurasThenBacks, SELF_OWNER } from '../player/eyeOfTheBeholder/eotbHolster.js';   // BACK-HOLSTER: a weapon on a sprite's back over its cape
 import { eotbBody } from '../player/eyeOfTheBeholder/eotbBody.js';
-import { drawSpriteGlows } from '../player/eyeOfTheBeholder/eotbGlow.js';   // BACK-HOLSTER GLOW: the sprites' weapon glows, over the capes
+import { createSpriteBacks } from '../player/eyeOfTheBeholder/eotbGlow.js';   // BACK-HOLSTER GLOW: the sprites' weapon glows, over the capes
 
 /** ARMORY: the "Others' armory" choice (systems/features.js 'armory-others') - every peer's pieces, those within this many
  *  metres, or none. One's own always draws. */
@@ -61,9 +61,12 @@ export function createAuraHost(deps) {
   let gathered = 0;
   let selfLiftNow = 0;   // AURA-ON-DRAGON: the frame's lift of my own (frame's), for the cape hung in draw   // PROFILE-SLOTS: the frames gathered - a name lifts only over a piece drawn in this one (nameTopOf)
   const acrossRight = [1, 0, 0];   // BACK-HOLSTER: the view's right the capes are moved along (auraShiftAcross)
+  // AUDIT BACK-HOLSTER A2: the sprites' backs by wearer (eotbGlow.js createSpriteBacks) - mine and the walkers'
+  const backSources = [eotbBody, null], worn = new Set(), auraRun = [];
+  const backs = createSpriteBacks(renderer, () => { backSources[1] = deps.walkers(); return backSources; });
   const auraList = [], auraDraw = [], auraPool = new Map(), auraLights = [], armoryList = [], armoryDraw = [], armoryPool = new Map();
   const armoryUnder = [], armoryOver = [];   // ARMORY-SEEN: this frame's pieces under the cloth on their back, and the rest
-  const self = { id: 'self', at: [0, 0, 0], aura: null, seed: 0.37, kindle: 1, since: 0, yaw: 0 };   // SHADOW-CLOAK: `yaw` the facing the cloak's opening faces
+  const self = { id: SELF_OWNER, at: [0, 0, 0], aura: null, seed: 0.37, kindle: 1, since: 0, yaw: 0 };   // SHADOW-CLOAK: `yaw` the facing the cloak's opening faces
   const selfKit = { id: 'self', at: [0, 0, 0], kit: null, seed: 0.37, kindle: 1, since: 0, yaw: 0, pose: newPose(), torn: -1 };
   // AURA-STALL (bible/07-Rendering/Performance-Priority.md): built at the first wearer in range, each look's program at its
   // own door; a throw costs the auras, never the game. The armory's pass the same.
@@ -209,19 +212,21 @@ export function createAuraHost(deps) {
       // the rest after. Drawn after every cape, the pieces under one burned through it
       armoryLayers(armoryDraw, auraDraw, eye, armoryUnder, armoryOver);
       drawArmory(armoryUnder, proj, view, eye, now);
-      if (auraDraw.length) {
-        const pass = auraPassOf();   // AURA-STALL: null while its program compiles - the capes still hang and swing above
-        const yaw = deps.camYaw();
+      // BACK-HOLSTER (AUDIT A2): a sprite's back - its weapon drawn again, its glows - over its OWN aura and under a nearer
+      // one: a body wearing none before the auras, every frame; each wearer's straight after its aura (drawAurasThenBacks)
+      const pass = auraDraw.length ? auraPassOf() : null;   // AURA-STALL: null while its program compiles - the capes still hang and swing above
+      worn.clear();
+      if (pass) for (const w of auraDraw) worn.add(w.id);
+      if (proj && view) backs.drawBare(worn);
+      if (pass) {
+        const yaw = deps.camYaw(), fog = fogNow();
         acrossRight[0] = Math.cos(yaw); acrossRight[2] = -Math.sin(yaw);   // the view's right, as the sprites' quads take it
         auraShiftAcross(auraDraw, acrossRight, 1);
-        pass?.draw(auraDraw, proj, view, eye, now, fogNow());
-        auraShiftAcross(auraDraw, acrossRight, -1);
-        if (pass?.drawn) { renderer.markForeignPass(); redrawHolstersOver(renderer, eotbBody.holstersDrawn(), deps.walkers()?.holstersDrawn?.()); }   // BACK-HOLSTER: the weapons on the backs over the capes
+        try {
+          drawAurasThenBacks(auraDraw, (run) => { pass.draw(run, proj, view, eye, now, fog); if (pass.drawn) renderer.markForeignPass(); return pass.drawn; }, (w) => backs.has(w.id), (w) => backs.draw(w.id), auraRun);
+        } finally { auraShiftAcross(auraDraw, acrossRight, -1); }   // AUDIT BACK-HOLSTER A9: the feet given back, whatever the pass did
       }
       drawArmory(armoryOver, proj, view, eye, now);
-      // BACK-HOLSTER GLOW: last of all, every frame, capes or none - a sprite's weapon glow on its back and in its hand,
-      // mine and the walkers', over the cape it wears
-      if (proj && view) drawSpriteGlows(renderer, eotbBody.glowsDrawn(), deps.walkers()?.glowsDrawn?.());
     },
     /** SERAPH-WINGS: the gold of the nearest wings, for every host's light list. */
     wingLights: (/** @type {number[]} */ eye) => auraWingLights(auraList, eye, auraLights),

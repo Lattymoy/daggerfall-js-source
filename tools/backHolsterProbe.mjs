@@ -121,7 +121,7 @@ const { out: shots, glowOut } = await page.evaluate(async ({ pics, W, H }) => {
             auras.draw([w], proj, view, new Float32Array(eye), 1, null);
             ar.auraShiftAcross([w], right, -1);
             r.markForeignPass();
-            if (cape === 2) Hs.redrawHolstersOver(r, l ? [l] : []);   // the aura host's redraw
+            if (cape === 2) Hs.redrawHolstersOver(r, null, l ? [l] : []);   // the aura host's redraw
           }
           const px = new Uint8Array(cv.width * cv.height * 4);
           gl.readPixels(0, 0, cv.width, cv.height, gl.RGBA, gl.UNSIGNED_BYTE, px);
@@ -171,23 +171,29 @@ const { out: shots, glowOut } = await page.evaluate(async ({ pics, W, H }) => {
       const x = (xml.x / xml.scale) * (mirror ? -1 : 1), base = xml.y / xml.scale;
       const fig = { base, mpp: size.h / pic.height, marks: ap.spriteMarks(new Uint32Array(pic.colors.buffer), pic.width, pic.height, { arms: o % 4 !== 2, art }), shift: x };
       const origin = [right[0] * x, base, right[2] * x];
-      const frame = ({ back = false, look = null, hand = null, cape = false } = {}) => {
+      const near = [eye[0] / 3, 0, eye[2] / 3];   // AUDIT A2: another wearer a third of the way to the eye
+      const frame = ({ back = false, look = null, hand = null, cape = false, other = false, fog = false } = {}) => {
+        r.setFog(fog ? 'linear' : 'off', 0, 0.2, 0.5, new Float32Array([0.5, 0.5, 0.5]));   // AUDIT A7: fog all the way, short of the sprite
         r.beginFrame(proj, view, new Float32Array([0.3, -0.9, 0.2]));
         const bodyBatch = r.createBillboardBatch('probe-body', key, size, [[0, 0, 0]]);
         bodyBatch.origin = origin.slice();
         r.drawBillboards([bodyBatch], right, [0, 1, 0]);
         let l = null;
         if (back) { l = Hs.hangSpriteHolster(Hs.createSpriteHolster(), fig, o, [0, 0, 0], eye, right, arts.claymore); Hs.mintSpriteHolster(l, r); r.drawBillboards(l.list, l.right, l.up); }
-        if (cape) {
-          const w = { at: [0, 0, 0], seed: 0.37, kindle: 1, aura: 'shadowcloak', torn: -1, yaw: 0 };
-          ar.auraCapeStep(w, { feet: [0, 0, 0], yaw: bb.portrayedYaw(o, [eye[0], 0, eye[2]]), bones: ar.auraSpriteBones(fig) });
-          ar.auraMotionStep(w, 1); w.across = ar.auraSpriteAcross(fig);
-          ar.auraShiftAcross([w], right, 1); auras.draw([w], proj, view, new Float32Array(eye), 1, null); ar.auraShiftAcross([w], right, -1);
-          r.markForeignPass();
-          if (l) Hs.redrawHolstersOver(r, [l]);
-        }
-        // the aura host's last: the glows (eotbGlow.js drawSpriteGlows' one call a glow)
-        if (look && l) r.drawBillboardGlow(`${l.archive}_${l.mirror ? 1 : 0}`, LOOKS[look], { origin: l.origin, right: l.right, up: l.up, w: l.w, h: l.h, art: [l.cellW, l.cellH] });
+        const backGlow = () => { if (look && l) r.drawBillboardGlow(`${l.archive}_${l.mirror ? 1 : 0}`, LOOKS[look], { origin: l.origin, right: l.right, up: l.up, w: l.w, h: l.h, art: [l.cellW, l.cellH] }); };
+        if (cape || other) {   // the aura host's order (AUDIT A2): farthest first, each wearer's back straight after its own aura
+          const wearer = (at) => {
+            const w = { at: at.slice(), seed: 0.37, kindle: 1, aura: 'shadowcloak', torn: -1, yaw: 0 };
+            ar.auraCapeStep(w, { feet: at, yaw: bb.portrayedYaw(o, [eye[0], 0, eye[2]]), bones: ar.auraSpriteBones(fig) });
+            ar.auraMotionStep(w, 1); w.across = ar.auraSpriteAcross(fig);
+            return w;
+          };
+          const me = cape ? wearer([0, 0, 0]) : null, list = [other ? wearer(near) : null, me].filter(Boolean);   // nearest first
+          ar.auraShiftAcross(list, right, 1);
+          Hs.drawAurasThenBacks(list, (run) => { auras.draw(run, proj, view, new Float32Array(eye), 1, null); r.markForeignPass(); return auras.drawn; },
+            (w) => w === me, () => { if (l) Hs.redrawHolstersOver(r, null, [l]); backGlow(); }, []);
+          ar.auraShiftAcross(list, right, -1);
+        } else backGlow();   // a body wearing none: the host draws its glows before every aura
         if (hand) r.drawBillboardGlow(`probe-body_${key}`, LOOKS[hand], { origin, right, up: [0, 1, 0], w: size.w, h: size.h, art: [pic.width / art, pic.height / art] });
         const px = new Uint8Array(cv.width * cv.height * 4);
         gl.readPixels(0, 0, cv.width, cv.height, gl.RGBA, gl.UNSIGNED_BYTE, px);
@@ -200,12 +206,24 @@ const { out: shots, glowOut } = await page.evaluate(async ({ pics, W, H }) => {
       const shock2 = frame({ back: true, look: 'shock' }), brand = frame({ back: true, look: 'brand' });
       const caped = frame({ back: true, cape: true }), capedGlow = frame({ back: true, cape: true, look: 'shock' });
       const handGlow = frame({ hand: 'shock' });
+      // AUDIT A2: a nearer wearer's cape over this one's weapon; A7: in full fog the glow is fogged to nothing; A8: culled
+      const otherOnly = frame({ other: true }), both = frame({ back: true, cape: true, other: true });
+      const wornFog = frame({ back: true, fog: true }), shockFog = frame({ back: true, look: 'shock', fog: true });
+      r.setFog('off', 0, 0, 1, null);
+      r.beginFrame(proj, view, new Float32Array([0.3, -0.9, 0.2]));
+      const behind = [3 * eye[0], 0, 3 * eye[2]];
+      const culled = !r.drawBillboardGlow(`probe-body_${key}`, LOOKS.shock, { origin: behind, right, up: [0, 1, 0], w: size.w, h: size.h, art: [pic.width / art, pic.height / art] })
+        && r.drawBillboardGlow(`probe-body_${key}`, LOOKS.shock, { origin, right, up: [0, 1, 0], w: size.w, h: size.h, art: [pic.width / art, pic.height / art] });
       const same = (p, q, i) => p[i * 4] === q[i * 4] && p[i * 4 + 1] === q[i * 4 + 1] && p[i * 4 + 2] === q[i * 4 + 2];
       const bg = [plain[0], plain[1], plain[2]];
       const isBg = (p, i) => p[i * 4] === bg[0] && p[i * 4 + 1] === bg[1] && p[i * 4 + 2] === bg[2];
       const n = cv.width * cv.height;
       let glow = 0, glowOnBodyHidden = 0, moved = 0, brandN = 0, overCape = 0, handBand = 0, handOnBody = 0;
+      let under = 0, untinted = 0, fogLeft = 0, fogged = 0;
       for (let i = 0; i < n; i++) {
+        if (!same(worn, plain, i) && !same(otherOnly, plain, i)) { under++; if (same(both, caped, i)) untinted++; }
+        if (!same(shockFog, wornFog, i)) fogLeft++;
+        if (!same(wornFog, worn, i)) fogged++;
         const weapon = !same(worn, plain, i), bodyPx = !isBg(plain, i);
         if (!same(shock, worn, i)) { glow++; if (bodyPx && !weapon) glowOnBodyHidden++; }
         if (!same(shock, shock2, i)) moved++;
@@ -213,7 +231,7 @@ const { out: shots, glowOut } = await page.evaluate(async ({ pics, W, H }) => {
         if (!same(capedGlow, caped, i)) overCape++;
         if (!same(handGlow, plain, i)) { if (bodyPx) handOnBody++; else handBand++; }
       }
-      glowOut.push({ body: bodyName, o, w: cv.width, h: cv.height, glow, glowOnBodyHidden, moved, brandN, overCape, handBand, handOnBody, shot: toB64(shock), hand: toB64(handGlow), cape: toB64(capedGlow) });
+      glowOut.push({ body: bodyName, o, w: cv.width, h: cv.height, glow, glowOnBodyHidden, moved, brandN, overCape, handBand, handOnBody, under, untinted, fogLeft, fogged, culled, shot: toB64(shock), hand: toB64(handGlow), cape: toB64(capedGlow), both: toB64(both) });
     }
   }
   return { out, glowOut };
@@ -282,9 +300,12 @@ for (const body of ['skin', 'layered']) {
   check(`${body}: the Aura Armory's Brand glows on the back too`, [3, 4, 5].every((o) => v[o].brandN > 100), `brand px ${list('brandN')}`);
   check(`${body}: over the Shadow Cloak, drawn after it`, [3, 4, 5].every((o) => v[o].overCape > 150), `over the cape ${list('overCape')}`);
   check(`${body}: drawn, the glow stands round the whole sprite from every side`, v.every((g) => g.handBand > 150), `band ${list('handBand')}; rim ${list('handOnBody')}`);
+  check(`${body}: AUDIT A2 - a nearer wearer's cape lies over this one's weapon, never under it`, [3, 4, 5].every((o) => v[o].under > 20 && v[o].untinted === 0), `under the nearer cape ${list('under')}; untouched by it ${list('untinted')}`);
+  check(`${body}: AUDIT A7 - in full fog the glow is fogged to nothing`, v.every((g) => g.fogged > 500 && g.fogLeft === 0), `fogged ${list('fogged')}; glow left ${list('fogLeft')}`);
+  check(`${body}: AUDIT A8 - a glow behind the eye is culled, one in view drawn`, v.every((g) => g.culled), list('culled'));
 }
 if (SHOTS) {
-  const cw = 150, ch = 230, rows = 6;
+  const cw = 150, ch = 230, rows = 8;
   const sheet = new PNG({ width: cw * 8, height: ch * rows });
   const lay = (row, g, b64) => {
     const px = Buffer.from(b64, 'base64'), x0 = Math.floor((g.w - cw) / 2), y0 = Math.floor((g.h - ch) / 2);
@@ -294,9 +315,9 @@ if (SHOTS) {
       sheet.data[di + 3] = 255;
     }
   };
-  for (const g of glowOut) { const b = g.body === 'skin' ? 0 : 3; lay(b, g, g.shot); lay(b + 1, g, g.cape); lay(b + 2, g, g.hand); }
+  for (const g of glowOut) { const b = g.body === 'skin' ? 0 : 3; lay(b, g, g.shot); lay(b + 1, g, g.cape); lay(b + 2, g, g.hand); lay(6 + (g.body === 'skin' ? 0 : 1), g, g.both); }
   writeFileSync(join(SHOTS, 'back-holster-glow.png'), PNG.sync.write(sheet));
-  console.log(`glow sheet: ${join(SHOTS, 'back-holster-glow.png')} (rows: skin shock on the back, under the cape, drawn; layered the same; views 0-7 across)`);
+  console.log(`glow sheet: ${join(SHOTS, 'back-holster-glow.png')} (rows: skin shock on the back, under the cape, drawn; layered the same; then a nearer cape over each; views 0-7 across)`);
 }
 const failed = results.filter((ok) => !ok).length;
 console.log(`${results.length - failed}/${results.length} ok`);
