@@ -317,8 +317,8 @@
   {
     "name": "TELL1-champion-unmarked",
     "file": "src/systems/champions.js",
-    "old": "  entity.healthMult = (entity.healthMult ?? 1) * hp;",
-    "new": "  entity.healthMult = 1;",
+    "old": "  entity.healthMult = (entity.healthMult ?? 1) * hp; // TELL1: what was stood on the kind's own health (ai/tells.js kindHealth - its poise)",
+    "new": "  entity.healthMult = 1; // TELL1: what was stood on the kind's own health (ai/tells.js kindHealth - its poise)",
     "tests": [
       "test/systems/tell1_poise.test.js"
     ]

@@ -57,14 +57,15 @@ export const CARAVAN_TEXT = Object.freeze({
   where: 'Your caravan',
   unavailable: 'Your caravan is unavailable here.',
   notHere: 'Your caravan is not here.',
-  outside: 'You stand outside the caravan.',   // FINAL AUDIT: a save or an anchor made in one whose room cannot come back
+  outside: 'You stand outside the caravan.', // FINAL AUDIT: a save or an anchor made in one whose room cannot come back
 });
 
 const vec = (v) => Array.isArray(v) && v.length === 3 && v.every((n) => Number.isFinite(n) && Math.abs(n) <= 1e9);
 const angle = (v) => Number.isFinite(v) && Math.abs(v) <= 1e9;
 /** A caravan room's descriptor, checked - or null. A WAGONS1 one (v 1) reads unturned. */
 export function readCaravanRoom(v) {
-  if (!v || (v.v !== 1 && v.v !== 2) || v.kind !== 'caravan' || !vec(v.origin) || !vec(v.step) || !angle(v.yaw)) return null;
+  if (!v || (v.v !== 1 && v.v !== 2) || v.kind !== 'caravan' || !vec(v.origin) || !vec(v.step) || !angle(v.yaw))
+    return null;
   const turn = v.v === 2 ? v.turn : 0;
   if (!angle(turn)) return null;
   return { v: 2, kind: 'caravan', origin: [...v.origin], turn, step: [...v.step], yaw: v.yaw };
@@ -84,28 +85,60 @@ const rmbPoint = ([x, y, z]) => ({ xPos: x / GLOBAL_SCALE, yPos: -y / GLOBAL_SCA
  */
 export function caravanRoomBlock(enter, lantern) {
   return {
-    name: CARAVAN_BLOCK, index: -1,
-    rmbBlock: { subRecords: [{ interior: {
-      header: { num3dObjectRecords: 1 },
-      block3dObjectRecords: [{ modelIdNum: CARAVAN_ROOM_MODEL_ID, objectType: 0, xPos: 0, yPos: 0, zPos: 0, xRotation: 0, yRotation: 0, zRotation: 0 }],
-      blockFlatObjectRecords: [
-        { textureArchive: EDITOR_FLATS_ARCHIVE, textureRecord: INTERIOR_MARKER.ENTER, ...rmbPoint(enter) },
-        { textureArchive: CARAVAN_LANTERN_FLAT[0], textureRecord: CARAVAN_LANTERN_FLAT[1], ...rmbPoint(lantern), hang: true },   // hung from the roof (world/interior/interiorLayout.js)
+    name: CARAVAN_BLOCK,
+    index: -1,
+    rmbBlock: {
+      subRecords: [
+        {
+          interior: {
+            header: { num3dObjectRecords: 1 },
+            block3dObjectRecords: [
+              {
+                modelIdNum: CARAVAN_ROOM_MODEL_ID,
+                objectType: 0,
+                xPos: 0,
+                yPos: 0,
+                zPos: 0,
+                xRotation: 0,
+                yRotation: 0,
+                zRotation: 0,
+              },
+            ],
+            blockFlatObjectRecords: [
+              { textureArchive: EDITOR_FLATS_ARCHIVE, textureRecord: INTERIOR_MARKER.ENTER, ...rmbPoint(enter) },
+              {
+                textureArchive: CARAVAN_LANTERN_FLAT[0],
+                textureRecord: CARAVAN_LANTERN_FLAT[1],
+                ...rmbPoint(lantern),
+                hang: true,
+              }, // hung from the roof (world/interior/interiorLayout.js)
+            ],
+            blockDoorRecords: [],
+            blockPeopleRecords: [],
+            blockSection3Records: [],
+          },
+        },
       ],
-      blockDoorRecords: [], blockPeopleRecords: [], blockSection3Records: [],
-    } }] },
+    },
   };
 }
 
 /** A room point (relative to its origin, this visit's frame - turned with the caravan) as the save keeps it, unturned. */
 export function roomToSaved(p, turn) {
-  const a = (-turn * Math.PI) / 180, c = Math.cos(a), s = Math.sin(a);
+  const a = (-turn * Math.PI) / 180,
+    c = Math.cos(a),
+    s = Math.sin(a);
   return [c * p[0] + s * p[2], p[1], -s * p[0] + c * p[2]];
 }
 /** A point the save keeps (unturned) as this visit's (turned with the caravan by `turn` degrees about up: Ry). */
-export function savedToRoom(p, turn) { return roomToSaved(p, -turn); }
+export function savedToRoom(p, turn) {
+  return roomToSaved(p, -turn);
+}
 
-const wrapYaw = (d) => { const w = ((d % 360) + 360) % 360; return w > 180 ? w - 360 : w; };
+const wrapYaw = (d) => {
+  const w = ((d % 360) + 360) % 360;
+  return w > 180 ? w - 360 : w;
+};
 /**
  * A caravan room's scene (scenes/worldModes.js currentSceneState's shape - its floor's piles, its torches, its placed
  * pieces, each measured from the room's origin) turned about up by `turn` degrees' inverse: this visit's frame (turned
@@ -120,6 +153,12 @@ export function turnCaravanScene(data, turn) {
     ...data,
     droppedPiles: list(data.droppedPiles, (d) => ({ ...d, pos: p3(d.pos) })),
     droppedTorches: list(data.droppedTorches, (d) => ({ ...d, position: p3(d.position) })),
-    decor: list(data.decor, (d) => ({ ...d, pos: p3(d.pos), ...(Array.isArray(d.rot) && Number.isFinite(d.rot[0]) ? { rot: [wrapYaw(d.rot[0] - turn), ...d.rot.slice(1)] } : {}) })),
+    decor: list(data.decor, (d) => ({
+      ...d,
+      pos: p3(d.pos),
+      ...(Array.isArray(d.rot) && Number.isFinite(d.rot[0])
+        ? { rot: [wrapYaw(d.rot[0] - turn), ...d.rot.slice(1)] }
+        : {}),
+    })),
   };
 }

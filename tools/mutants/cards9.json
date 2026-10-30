@@ -173,8 +173,8 @@
   {
     "name": "CARDS9-boss-chance",
     "file": "src/systems/bossCards.js",
-    "old": "  gate: 200, serpent: 250, abyss: 250,\n",
-    "new": "  gate: 200, serpent: 250, abyss: 0,\n",
+    "old": "  abyss: 250,",
+    "new": "  abyss: 0,",
     "tests": [
       "test/systems/cards9_sources.test.js"
     ]

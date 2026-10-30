@@ -2,8 +2,8 @@
   {
     "name": "INVISLOOK-invisible-hidden",
     "file": "src/systems/combatVisuals.js",
-    "old": "concealVisual({ blending: (b & 3) !== 0, shade: (b & 4) !== 0 }, { t, phase: peerPhase(id) })",
-    "new": "concealVisual({ blending: (b & 2) !== 0, shade: (b & 4) !== 0 }, { t, phase: peerPhase(id) })",
+    "old": "    visual: concealVisual({ blending: (b & 3) !== 0, shade: (b & 4) !== 0 }, { t, phase: peerPhase(id) }),",
+    "new": "    visual: concealVisual({ blending: (b & 2) !== 0, shade: (b & 4) !== 0 }, { t, phase: peerPhase(id) }),",
     "tests": [
       "test/net/invislook.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "INVISLOOK-classic-draws",
     "file": "src/systems/combatVisuals.js",
-    "old": "  if (!on || b === 7) return HIDDEN;",
-    "new": "  if (b === 7) return HIDDEN;",
+    "old": "  if (!on || b === 7) return HIDDEN; // STAFF-PILOT (systems/staffBossPilot.js PILOT_CONCEAL): all three at once - a staff member inside its event's boss, drawn nowhere",
+    "new": "  if (b === 7) return HIDDEN; // STAFF-PILOT (systems/staffBossPilot.js PILOT_CONCEAL): all three at once - a staff member inside its event's boss, drawn nowhere",
     "tests": [
       "test/net/invislook.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "INVISLOOK-shade-unread",
     "file": "src/systems/combatVisuals.js",
-    "old": "blending: (b & 3) !== 0, shade: (b & 4) !== 0 }",
-    "new": "blending: (b & 3) !== 0, shade: false }",
+    "old": "    visual: concealVisual({ blending: (b & 3) !== 0, shade: (b & 4) !== 0 }, { t, phase: peerPhase(id) }),",
+    "new": "    visual: concealVisual({ blending: (b & 3) !== 0, shade: false }, { t, phase: peerPhase(id) }),",
     "tests": [
       "test/net/invislook.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "INVISLOOK-one-phase-for-all",
     "file": "src/systems/combatVisuals.js",
-    "old": "{ t, phase: peerPhase(id) })",
-    "new": "{ t, phase: 0 })",
+    "old": "  return {\n    kind: 'conceal',\n    visual: concealVisual({ blending: (b & 3) !== 0, shade: (b & 4) !== 0 }, { t, phase: peerPhase(id) }),\n  };",
+    "new": "  return { kind: 'conceal', visual: concealVisual({ blending: (b & 3) !== 0, shade: (b & 4) !== 0 }, { t, phase: 0 }) };",
     "tests": [
       "test/net/invislook.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "INVISLOOK-phase-ignores-the-id",
     "file": "src/systems/combatVisuals.js",
-    "old": "h = (h * 31 + s.charCodeAt(i)) | 0;",
-    "new": "h = 0;",
+    "old": "  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;",
+    "new": "  for (let i = 0; i < s.length; i++) h = 0;",
     "tests": [
       "test/net/invislook.test.js"
     ]

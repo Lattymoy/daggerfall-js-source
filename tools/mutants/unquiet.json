@@ -101,8 +101,8 @@
   {
     "name": "UNQUIET-door-champion-unmarked",
     "file": "src/systems/champions.js",
-    "old": "  if (own) markUnquiet(entity);",
-    "new": "",
+    "old": "  if (own) markUnquiet(entity); // UNQUIET: the mark that lets it rise",
+    "new": "  // UNQUIET: the mark that lets it rise",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "UNQUIET-door-champion-puppet",
     "file": "src/systems/champions.js",
-    "old": "  if (own) markUnquiet(entity);",
-    "new": "  markUnquiet(entity);",
+    "old": "  if (own) markUnquiet(entity); // UNQUIET: the mark that lets it rise",
+    "new": "  markUnquiet(entity); // UNQUIET: the mark that lets it rise",
     "tests": [
       "test/systems/revenant/unquiet.test.js"
     ]

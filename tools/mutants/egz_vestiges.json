@@ -997,8 +997,8 @@
   {
     "name": "EGZR-accessor-unread",
     "file": "src/systems/chargen.js",
-    "old": "      return own + renownHpOf(this) + spireHpOf(this);",
-    "new": "      return own + renownHpOf(this);",
+    "old": "      return own + renownHpOf(this) + spireHpOf(this); // EG-ZR: and the Spire's Stoneskin, on the same terms",
+    "new": "      return own + renownHpOf(this); // EG-ZR: and the Spire's Stoneskin, on the same terms",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],

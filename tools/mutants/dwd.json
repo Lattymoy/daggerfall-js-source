@@ -182,7 +182,7 @@
   {
     "name": "DW-D-water-breathing-ignores-the-rule",
     "file": "src/systems/breath.js",
-    "old": "export const isWaterBreathing = (entity) => hasActiveEffect(entity, 'waterBreathing') || !!_waterBreathingRule?.(entity);",
+    "old": "export const isWaterBreathing = (entity) =>\n  hasActiveEffect(entity, 'waterBreathing') || !!_waterBreathingRule?.(entity);",
     "new": "export const isWaterBreathing = (entity) => hasActiveEffect(entity, 'waterBreathing');",
     "tests": [
       "test/scenes/dwd_swim.test.js"

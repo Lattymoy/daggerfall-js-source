@@ -57,8 +57,8 @@
   {
     "name": "BACKUP-NEWER-restore-keeps-the-older-twin",
     "file": "src/systems/cloudSaves.js",
-    "old": "  if (replaces != null) done.replaced = dropReplaced(storage, replaces, cloudCard, done.key);",
-    "new": "",
+    "old": "  if (replaces != null) done.replaced = dropReplaced(storage, replaces, cloudCard, done.key); // FIELD 2026-09-27: the backup is here - now the older copy goes",
+    "new": "  // FIELD 2026-09-27: the backup is here - now the older copy goes",
     "tests": [
       "test/server/cloudsaves.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "BACKUP-NEWER-older-copy-removed-before-the-download",
     "file": "src/systems/cloudSaves.js",
-    "old": "  const data = await ask(io, slotPath(characterId, saveName, 'data'));\n  if (!data.ok) return data;",
-    "new": "  if (replaces != null) dropReplaced(storage, replaces, cloudCard, 0);\n  const data = await ask(io, slotPath(characterId, saveName, 'data'));\n  if (!data.ok) return data;",
+    "old": "  const data = await ask(io, slotPath(characterId, saveName, 'data'));",
+    "new": "  if (replaces != null) dropReplaced(storage, replaces, cloudCard, 0);\n  const data = await ask(io, slotPath(characterId, saveName, 'data'));",
     "tests": [
       "test/server/cloudsaves.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "BACKUP-NEWER-removes-the-backups-own-save",
     "file": "src/systems/cloudSaves.js",
-    "old": "  if ((info.dateAndTime?.gameTime ?? -1) === (card?.gameTime ?? -1)) return false;\n",
-    "new": "",
+    "old": "  if ((info.dateAndTime?.gameTime ?? -1) === (card?.gameTime ?? -1)) return false;\n  if (info.dateAndTime?.gameTime !== replaces.gameTime || info.dateAndTime?.realTime !== replaces.realTime)",
+    "new": "  if (info.dateAndTime?.gameTime !== replaces.gameTime || info.dateAndTime?.realTime !== replaces.realTime)",
     "tests": [
       "test/server/cloudsaves.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "AUDIT0927B-B2-arrival-never-checked",
     "file": "src/systems/cloudSaves.js",
-    "old": "  if (replaces != null && Number.isFinite(cloudCard.gameTime) && minuteOf(data.text) !== cloudCard.gameTime) return { ok: false, error: 'stale' };\n",
-    "new": "",
+    "old": "  if (replaces != null && Number.isFinite(cloudCard.gameTime) && minuteOf(data.text) !== cloudCard.gameTime)\n    return { ok: false, error: 'stale' };\n  const shot = await ask(io, slotPath(characterId, saveName, 'shot'));",
+    "new": "  const shot = await ask(io, slotPath(characterId, saveName, 'shot'));",
     "tests": [
       "test/server/cloudsaves.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "AUDIT0927B-B3-drawn-stamp-ignored",
     "file": "src/systems/cloudSaves.js",
-    "old": "  if (info.dateAndTime?.gameTime !== replaces.gameTime || info.dateAndTime?.realTime !== replaces.realTime) return false;   // B3\n",
-    "new": "",
+    "old": "  if (info.dateAndTime?.gameTime !== replaces.gameTime || info.dateAndTime?.realTime !== replaces.realTime)\n    return false; // B3\n  if (landedKey == null && !holdsSave(storage, card, key)) return false; // B4",
+    "new": "  if (landedKey == null && !holdsSave(storage, card, key)) return false; // B4",
     "tests": [
       "test/server/cloudsaves.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "AUDIT0927B-B4-skip-trusted",
     "file": "src/systems/cloudSaves.js",
-    "old": "  if (landedKey == null && !holdsSave(storage, card, key)) return false;   // B4\n",
-    "new": "",
+    "old": "  if (landedKey == null && !holdsSave(storage, card, key)) return false; // B4\n  return deleteSave(key, storage);",
+    "new": "  return deleteSave(key, storage);",
     "tests": [
       "test/server/cloudsaves.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "AUDIT0927B-B4-namesake-counts",
     "file": "src/systems/cloudSaves.js",
-    "old": "  .some(([k, i]) => k !== except && slotKeyOf(i) === slotKeyOf(card) && i.dateAndTime?.gameTime === card?.gameTime);",
-    "new": "  .some(([k, i]) => k !== except && i.dateAndTime?.gameTime === card?.gameTime);",
+    "old": "    ([k, i]) => k !== except && slotKeyOf(i) === slotKeyOf(card) && i.dateAndTime?.gameTime === card?.gameTime,",
+    "new": "    ([k, i]) => k !== except && i.dateAndTime?.gameTime === card?.gameTime,",
     "tests": [
       "test/server/cloudsaves.test.js"
     ]
@@ -219,8 +219,8 @@
   {
     "name": "AUDIT0927B-full-store-removes-first",
     "file": "src/systems/cloudSaves.js",
-    "old": "  if (!done) return { ok: false, error: 'no-room' };\n  if (replaces != null) done.replaced = dropReplaced(storage, replaces, cloudCard, done.key);",
-    "new": "  const dropped = replaces != null && dropReplaced(storage, replaces, cloudCard, r.imported[0] ?? 0);\n  if (!done) return { ok: false, error: 'no-room' };\n  if (replaces != null) done.replaced = dropped;",
+    "old": "  if (!done) return { ok: false, error: 'no-room' };\n  if (replaces != null) done.replaced = dropReplaced(storage, replaces, cloudCard, done.key); // FIELD 2026-09-27: the backup is here - now the older copy goes",
+    "new": "  const dropped = replaces != null && dropReplaced(storage, replaces, cloudCard, r.imported[0] ?? 0);\n  if (!done) return { ok: false, error: 'no-room' };\n  if (replaces != null) done.replaced = dropped; // FIELD 2026-09-27: the backup is here - now the older copy goes",
     "tests": [
       "test/server/cloudsaves.test.js"
     ]

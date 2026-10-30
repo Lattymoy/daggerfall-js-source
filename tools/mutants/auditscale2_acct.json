@@ -102,8 +102,8 @@
   {
     "name": "AUDIT-SCALE-II-A2-cloud-after",
     "file": "src/systems/cloudSaves.js",
-    "old": "  }\n  if (writes) forgetD1Bookmark();\n  const type",
-    "new": "  }\n  const type",
+    "old": "  if (writes) forgetD1Bookmark();\n  const type = res.headers?.get?.('content-type') ?? '';",
+    "new": "  const type = res.headers?.get?.('content-type') ?? '';",
     "tests": [
       "test/server/auditscale2_acct.test.js"
     ],

@@ -158,7 +158,7 @@ export const ATTRIBUTE_BLURB = Object.freeze({
   get strength() {
     return t('levelup.blurb.strength', 'Raises the damage of every hit you land and how much you can carry.');
   },
-  // systems/chargen.js:"const maxMagicka = spellPoints" - spellPoints(intelligence, multiplier) is the whole magicka pool.
+  // systems/chargen.js:"const maxMagicka" - spellPoints(intelligence, multiplier) is the whole magicka pool.
   get intelligence() {
     return t('levelup.blurb.intelligence', "Sets your maximum magicka: Intelligence times your class's multiplier.");
   },

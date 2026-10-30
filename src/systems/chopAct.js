@@ -54,11 +54,21 @@ export const RING_PASS_S = (CHOP_ACT.ringS * (CHOP_ACT.ringFrom - CHOP_ACT.ringT
 export function createChopAct({ tier, rank = 0, band = 1, lumberjack = false, gentle = false }) {
   const need = chopsFor(tier, lumberjack);
   const st = {
-    kind: 'chop', need, points: 0, chops: 0, cuts: 0, done: false, cancelled: false, gentle,
+    kind: 'chop',
+    need,
+    points: 0,
+    chops: 0,
+    cuts: 0,
+    done: false,
+    cancelled: false,
+    gentle,
     /** the ring's pass so far, and the band a Clean Cut stands in (a share of the notch's radius) */
-    ring: 0, band: gentle ? 0 : ringBand(rank, band),
+    ring: 0,
+    band: gentle ? 0 : ringBand(rank, band),
     /** the swing under way, and the last chop - whether it was clean (the meter flashes it); the blows landed */
-    swing: 0, last: /** @type {null|'clean'|'plain'} */ (null), landed: 0,
+    swing: 0,
+    last: /** @type {null|'clean'|'plain'} */ (null),
+    landed: 0,
     /** the tree has creaked (half its chops) - the host plays it once */
     creaked: false,
   };
@@ -66,22 +76,35 @@ export function createChopAct({ tier, rank = 0, band = 1, lumberjack = false, ge
   return {
     state: st,
     /** How far the act has come, 0 to 1 - the chops' count against the tree's. */
-    get progress() { return Math.min(1, st.points / st.need); },
+    get progress() {
+      return Math.min(1, st.points / st.need);
+    },
     /** The ring's radius now, in the notch's radii. */
-    get ring() { return ringAt(st.ring); },
+    get ring() {
+      return ringAt(st.ring);
+    },
     /** Whether the ring stands in the band now - a chop now would be clean. */
-    get inBand() { return !gentle && Math.abs(ringAt(st.ring) - 1) <= st.band; },
+    get inBand() {
+      return !gentle && Math.abs(ringAt(st.ring) - 1) <= st.band;
+    },
     /** The swing's phase, 0 (none) to 1 (just struck) - the hand draws the chop's frames by it. */
-    get swing() { return st.swing > 0 ? st.swing / CHOP_ACT.swingS : 0; },
+    get swing() {
+      return st.swing > 0 ? st.swing / CHOP_ACT.swingS : 0;
+    },
     /** GATHER-FEEL: seconds until the swing under way lands its blow - 0 once it has, or with none under way. */
-    get landsIn() { return Math.max(0, st.swing - CHOP_REST_S); },
+    get landsIn() {
+      return Math.max(0, st.swing - CHOP_REST_S);
+    },
     /** One frame. `attack` - attack pressed this frame (an edge). @param {number} dt @param {{ attack?: boolean }} input */
     tick(dt, { attack = false } = {}) {
       const aloft = st.swing > CHOP_REST_S;
-      st.swing = Math.max(0, st.swing - dt);   // GATHER-FEEL: past the end too - the last swing runs out, its blow lands
-      if (aloft && !(st.swing > CHOP_REST_S)) st.landed++;   // AUDIT GATHER-FEEL LANDING: counted before a press can begin the next swing
+      st.swing = Math.max(0, st.swing - dt); // GATHER-FEEL: past the end too - the last swing runs out, its blow lands
+      if (aloft && !(st.swing > CHOP_REST_S)) st.landed++; // AUDIT GATHER-FEEL LANDING: counted before a press can begin the next swing
       if (st.done || st.cancelled) return;
-      if (Number.isFinite(dt) && dt > 0) { st.ring += dt; if (st.ring >= RING_PASS_S) st.ring -= RING_PASS_S; }
+      if (Number.isFinite(dt) && dt > 0) {
+        st.ring += dt;
+        if (st.ring >= RING_PASS_S) st.ring -= RING_PASS_S;
+      }
       if (!attack || st.swing > 0) return;
       st.swing = CHOP_ACT.swingS;
       const clean = this.inBand;
@@ -89,12 +112,14 @@ export function createChopAct({ tier, rank = 0, band = 1, lumberjack = false, ge
       st.points += clean ? 2 : 1;
       if (clean) st.cuts++;
       st.last = clean ? 'clean' : 'plain';
-      st.ring = 0;   // the ring starts again after a chop
+      st.ring = 0; // the ring starts again after a chop
       if (!st.creaked && st.points >= st.need * CHOP_ACT.creakAt) st.creaked = true;
       if (st.points >= st.need) st.done = true;
     },
     /** Esc: ended, nothing lost. */
-    cancel() { st.cancelled = true; },
+    cancel() {
+      st.cancelled = true;
+    },
     /** The act's report, once it is done: `{ chops, cuts, clean }` - clean when every chop was a Clean Cut. */
     report() {
       if (!st.done) return null;

@@ -193,7 +193,7 @@ test('AUDIT 64 F11: both exterior hosts stand the array, and the arm does NOT co
   assert.ok(bl.includes("'Guild is closed. Open from %d1:00 to %d2:00.'") && bl.includes("'Store is closed. Open from %d1:00 to %d2:00.'")
     && bl.includes(".replaceAll('%d1', String(OPEN_HOURS[buildingType])).replaceAll('%d2', String(CLOSE_HOURS[buildingType]))"),
   'Internal_Strings.csv:36-37, ":00" suffixes and all');
-  assert.ok(bl.includes("buildingType === BUILDING_TYPES.GuildHall ? localizedText('guildClosed',")
+  assert.ok(bl.includes("buildingType === BUILDING_TYPES.GuildHall\n        ? localizedText('guildClosed',")
     && bl.includes(": localizedText('storeClosed',"),
   'GuildHall gets guildClosed, everything else storeClosed');
   // And the host no longer reads the raw hour tables at all - if it did, it

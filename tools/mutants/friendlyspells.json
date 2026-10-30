@@ -155,8 +155,8 @@
   {
     "name": "HEAL1-left-caster-only",
     "file": "src/systems/chargen.js",
-    "old": "    rangeType: 1,                                   // ByTouch",
-    "new": "    rangeType: 0,                                   // ByTouch",
+    "old": "    rangeType: 1, // ByTouch: another player, or a foe, in arm's reach",
+    "new": "    rangeType: 0, // ByTouch: another player, or a foe, in arm's reach",
     "tests": [
       "test/systems/friendlyspells.test.js"
     ]

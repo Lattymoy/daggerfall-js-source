@@ -2,7 +2,7 @@
   {
     "name": "L10N3d2-systems-bookshelf-65-accessMembersOnly",
     "file": "src/systems/bookshelf.js",
-    "old": "      return { allowed: false, text: localizedText('accessMembersOnly', 'You need to be a member of sufficient rank to access this.') };",
+    "old": "      return {\n        allowed: false,\n        text: localizedText('accessMembersOnly', 'You need to be a member of sufficient rank to access this.'),\n      };",
     "new": "      return { allowed: false, text: 'You need to be a member of sufficient rank to access this.' };",
     "tests": [
       "test/systems/l10n3d_sites.test.js",

@@ -172,8 +172,8 @@
   {
     "name": "L10N3d2-systems-buildingLocks-138-guildClosed",
     "file": "src/systems/buildingLocks.js",
-    "old": "    : buildingType === BUILDING_TYPES.GuildHall ? localizedText('guildClosed', 'Guild is closed. Open from %d1:00 to %d2:00.')",
-    "new": "    : buildingType === BUILDING_TYPES.GuildHall ? 'Guild is closed. Open from %d1:00 to %d2:00.'",
+    "old": "        ? localizedText('guildClosed', 'Guild is closed. Open from %d1:00 to %d2:00.')",
+    "new": "        ? 'Guild is closed. Open from %d1:00 to %d2:00.'",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_effects.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "L10N3d2-systems-buildingLocks-139-storeClosed",
     "file": "src/systems/buildingLocks.js",
-    "old": "      : localizedText('storeClosed', 'Store is closed. Open from %d1:00 to %d2:00.');",
-    "new": "      : 'Store is closed. Open from %d1:00 to %d2:00.';",
+    "old": "        : localizedText('storeClosed', 'Store is closed. Open from %d1:00 to %d2:00.');",
+    "new": "        : 'Store is closed. Open from %d1:00 to %d2:00.';",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_effects.test.js"

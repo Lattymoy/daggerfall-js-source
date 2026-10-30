@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-WE-L2-5-any-wound-starting-the-wrath",
     "file": "src/systems/bossTraits.js",
-    "old": "  if (mine) { bossTraitsTick(entity, nowS);",
-    "new": "  if (true) { bossTraitsTick(entity, nowS);",
+    "old": "  if (mine) {",
+    "new": "  if (true) {",
     "tests": [
       "test/scenes/auditwe_traits.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-WE-L2-5-the-cool-ignored",
     "file": "src/systems/bossTraits.js",
-    "old": "  if (nowS - (entity.bossFoughtS ?? entity.bossWrathFrom) > WRATH_COOL_S) { entity.bossWrathFrom = null; return null; }\n",
-    "new": "",
+    "old": "  if (nowS - (entity.bossFoughtS ?? entity.bossWrathFrom) > WRATH_COOL_S) {\n    entity.bossWrathFrom = null;\n    return null;\n  }\n  return bossWrathDue(entity, nowS) ? 'wrath' : null;",
+    "new": "  return bossWrathDue(entity, nowS) ? 'wrath' : null;",
     "tests": [
       "test/scenes/auditwe_traits.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-WE-L2-5-the-pause-counted",
     "file": "src/systems/bossTraits.js",
-    "old": "  if (_clockAt != null && !paused) _clockS +=",
-    "new": "  if (_clockAt != null) _clockS +=",
+    "old": "  if (_clockAt != null && !paused) _clockS += Math.max(0, Math.min(1, (nowMs - _clockAt) / 1000));",
+    "new": "  if (_clockAt != null) _clockS += Math.max(0, Math.min(1, (nowMs - _clockAt) / 1000));",
     "tests": [
       "test/scenes/auditwe_traits.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "AUDIT-WE-L5-6-told-every-blow",
     "file": "src/systems/bossTraits.js",
-    "old": "    if (_taught.has(id)) continue;\n",
-    "new": "",
+    "old": "    if (_taught.has(id)) continue;\n    _taught.add(id);",
+    "new": "    _taught.add(id);",
     "tests": [
       "test/scenes/auditwe_traits.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "WAGONS2-VISIT-the-guild-opens-without-its-tag",
     "file": "src/systems/caravanVisit.js",
-    "old": "guildmate: !!tag && caravanGuildTag(t.guild) === tag }",
-    "new": "guildmate: true }",
+    "old": "  return homeMayEnter(\n    { owner: t.owner, entry: t.entry, guildmate: !!tag && caravanGuildTag(t.guild) === tag },\n    { partyNames },\n  );",
+    "new": "  return homeMayEnter({ owner: t.owner, entry: t.entry, guildmate: true }, { partyNames });",
     "tests": [
       "test/systems/wagons2_visit.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "WAGONS2-VISIT-a-nameless-caravan-opens",
     "file": "src/systems/caravanVisit.js",
-    "old": "if (!t || typeof t.owner !== 'string' || !t.owner) return false;",
-    "new": "if (!t) return false;",
+    "old": "  if (!t || typeof t.owner !== 'string' || !t.owner) return false;",
+    "new": "  if (!t) return false;",
     "tests": [
       "test/systems/wagons2_visit.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "WAGONS2-VISIT-the-owner-alone-kept-as-a-field",
     "file": "src/systems/caravanVisit.js",
-    "old": "items[items.indexOf(item)] = entry === HOME_ENTRY_DEFAULT ? rest : { ...rest, wagonEntry: entry };",
-    "new": "items[items.indexOf(item)] = { ...rest, wagonEntry: entry };",
+    "old": "  items[items.indexOf(item)] = entry === HOME_ENTRY_DEFAULT ? rest : { ...rest, wagonEntry: entry };",
+    "new": "  items[items.indexOf(item)] = { ...rest, wagonEntry: entry };",
     "tests": [
       "test/systems/wagons2_visit.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WAGONS2-VISIT-the-door-set-on-a-cart",
     "file": "src/systems/caravanVisit.js",
-    "old": "if (!item || !Array.isArray(items) || wagonKindOf(item) !== 'caravan' || !homeEntryOk(entry)) return null;",
-    "new": "if (!item || !Array.isArray(items) || !homeEntryOk(entry)) return null;",
+    "old": "  if (!item || !Array.isArray(items) || wagonKindOf(item) !== 'caravan' || !homeEntryOk(entry)) return null;",
+    "new": "  if (!item || !Array.isArray(items) || !homeEntryOk(entry)) return null;",
     "tests": [
       "test/systems/wagons2_visit.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WAGONS2-VISIT-a-bad-piece-published",
     "file": "src/systems/caravanVisit.js",
-    "old": "    const piece = decorPieceOf(raw);\n    if (!piece) continue;",
-    "new": "    const piece = raw;\n    if (!piece) continue;",
+    "old": "    const piece = decorPieceOf(raw);",
+    "new": "    const piece = raw;",
     "tests": [
       "test/systems/wagons2_visit.test.js"
     ]
@@ -691,8 +691,8 @@
   {
     "name": "WAGONS2-BASE-a-bad-key-published",
     "file": "src/systems/caravanVisit.js",
-    "old": "filter((k) => typeof k === 'string' && DECOR_BASE_KEY_RE.test(k))",
-    "new": "filter((k) => typeof k === 'string')",
+    "old": "  [...new Set((Array.isArray(raw) ? raw : []).filter((k) => typeof k === 'string' && DECOR_BASE_KEY_RE.test(k)))].slice(\n    0,\n    DECOR_HIDDEN_CAP,\n  );",
+    "new": "  [...new Set((Array.isArray(raw) ? raw : []).filter((k) => typeof k === 'string'))].slice(0, DECOR_HIDDEN_CAP);",
     "tests": [
       "test/systems/wagons2_visit.test.js"
     ]
@@ -700,8 +700,8 @@
   {
     "name": "WAGONS2-BASE-uncapped",
     "file": "src/systems/caravanVisit.js",
-    "old": "DECOR_BASE_KEY_RE.test(k)))].slice(0, DECOR_HIDDEN_CAP);",
-    "new": "DECOR_BASE_KEY_RE.test(k)))];",
+    "old": "const caravanHiddenOf = (raw) =>\n  [...new Set((Array.isArray(raw) ? raw : []).filter((k) => typeof k === 'string' && DECOR_BASE_KEY_RE.test(k)))].slice(\n    0,\n    DECOR_HIDDEN_CAP,\n  );",
+    "new": "const caravanHiddenOf = (raw) => [\n  ...new Set((Array.isArray(raw) ? raw : []).filter((k) => typeof k === 'string' && DECOR_BASE_KEY_RE.test(k))),\n];",
     "tests": [
       "test/systems/wagons2_visit.test.js"
     ]
@@ -709,8 +709,8 @@
   {
     "name": "WAGONS2-BASE-an-older-document-misread",
     "file": "src/systems/caravanVisit.js",
-    "old": "Array.isArray(doc) || doc.v !== CARAVAN_DECOR_V) return [];",
-    "new": "Array.isArray(doc)) return [];",
+    "old": "  if (!doc || typeof doc !== 'object' || Array.isArray(doc) || doc.v !== CARAVAN_DECOR_V) return [];",
+    "new": "  if (!doc || typeof doc !== 'object' || Array.isArray(doc)) return [];",
     "tests": [
       "test/systems/wagons2_visit.test.js"
     ]

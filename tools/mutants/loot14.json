@@ -201,8 +201,8 @@
   {
     "name": "LOOT14-the-gear-under-the-dress-cap",
     "file": "src/systems/clothingStanding.js",
-    "old": "groups.map((v, g) => clamp(v) + capGear(gear?.[g]))",
-    "new": "groups.map((v, g) => clamp(v + capGear(gear?.[g])))",
+    "old": "  return { groups: groups.map((v, g) => clamp(v) + capGear(gear?.[g])), temple: clamp(temple) };",
+    "new": "  return { groups: groups.map((v, g) => clamp(v + capGear(gear?.[g]))), temple: clamp(temple) };",
     "tests": [
       "test/systems/loot14_wardrobe.test.js"
     ]

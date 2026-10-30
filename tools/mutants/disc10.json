@@ -569,7 +569,7 @@
   {
     "name": "DISC10-E-L4-maxhealth-ignores-the-limiter",
     "file": "src/systems/chargen.js",
-    "old": "      const own = limiter >= 1 && limiter < stored ? limiter : stored;   // \"Limiter must be 1 or greater\"",
+    "old": "      const own = limiter >= 1 && limiter < stored ? limiter : stored; // \"Limiter must be 1 or greater\"",
     "new": "      const own = stored;",
     "tests": [
       "test/systems/disc10_lycan.test.js"
@@ -605,8 +605,8 @@
   {
     "name": "DISC10-E-L4-chargen-installs-no-accessor",
     "file": "src/systems/chargen.js",
-    "old": "  defineLiveMaxHealth(playerEntity);   // DISC10-E L4: DaggerfallEntity.MaxHealth, the limiter applied\n",
-    "new": "",
+    "old": "  defineLiveMaxHealth(playerEntity); // DISC10-E L4: DaggerfallEntity.MaxHealth, the limiter applied\n  return playerEntity;",
+    "new": "  return playerEntity;",
     "tests": [
       "test/systems/disc10_lycan.test.js"
     ]

@@ -182,7 +182,7 @@
   {
     "name": "L10N3a-questions-whole-token",
     "file": "src/systems/classQuestions.js",
-    "old": "      library.push(tokens.map((t) => { const split = t.text.split(/\\d+[.]/); return split.length > 1 ? split[1] : split[0]; }).join('\\n'));",
+    "old": "      library.push(\n        tokens\n          .map((t) => {\n            const split = t.text.split(/\\d+[.]/);\n            return split.length > 1 ? split[1] : split[0];\n          })\n          .join('\\n'),\n      );",
     "new": "      library.push(tokens.map((t) => t.text).join('\\n'));",
     "tests": [
       "test/systems/l10n3a.test.js"

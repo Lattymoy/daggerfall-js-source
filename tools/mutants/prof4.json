@@ -549,8 +549,8 @@
   {
     "name": "PROF4-chop-ring-kept",
     "file": "src/systems/chopAct.js",
-    "old": "      st.ring = 0;   // the ring starts again after a chop\n",
-    "new": "",
+    "old": "      st.ring = 0; // the ring starts again after a chop\n      if (!st.creaked && st.points >= st.need * CHOP_ACT.creakAt) st.creaked = true;",
+    "new": "      if (!st.creaked && st.points >= st.need * CHOP_ACT.creakAt) st.creaked = true;",
     "tests": [
       "test/systems/prof4_client.test.js"
     ]
@@ -558,8 +558,8 @@
   {
     "name": "PROF4-chop-clean-any-cut",
     "file": "src/systems/chopAct.js",
-    "old": "clean: !gentle && st.cuts === st.chops };",
-    "new": "clean: !gentle && st.cuts > 0 };",
+    "old": "      return { chops: st.chops, cuts: st.cuts, clean: !gentle && st.cuts === st.chops };",
+    "new": "      return { chops: st.chops, cuts: st.cuts, clean: !gentle && st.cuts > 0 };",
     "tests": [
       "test/systems/prof4_client.test.js"
     ]

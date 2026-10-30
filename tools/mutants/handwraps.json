@@ -404,8 +404,8 @@
   {
     "name": "HANDWRAPS-stoneskin",
     "file": "src/systems/bossTraits.js",
-    "old": "(!weapon || isHandWraps(weapon) || weaponSkillUsed",
-    "new": "(!weapon || weaponSkillUsed",
+    "old": "  kind === 'melee' && (!weapon || isHandWraps(weapon) || weaponSkillUsed(weapon.templateIndex) === SKILLS.BluntWeapon); // HAND-WRAPS (AUDIT B3): a fist in wraps is a fist",
+    "new": "  kind === 'melee' && (!weapon || weaponSkillUsed(weapon.templateIndex) === SKILLS.BluntWeapon); // HAND-WRAPS (AUDIT B3): a fist in wraps is a fist",
     "tests": [
       "test/combat/handwraps_audit.test.js"
     ],
@@ -414,8 +414,8 @@
   {
     "name": "HANDWRAPS-bladeturning",
     "file": "src/systems/bossTraits.js",
-    "old": "!!weapon && !isHandWraps(weapon) && weaponSkillUsed",
-    "new": "!!weapon && weaponSkillUsed",
+    "old": "  kind === 'arrow' ||\n  (kind === 'melee' &&\n    !!weapon &&\n    !isHandWraps(weapon) &&\n    weaponSkillUsed(weapon.templateIndex) !== SKILLS.BluntWeapon);",
+    "new": "  kind === 'arrow' || (kind === 'melee' && !!weapon && weaponSkillUsed(weapon.templateIndex) !== SKILLS.BluntWeapon);",
     "tests": [
       "test/combat/handwraps_audit.test.js"
     ],

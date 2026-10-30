@@ -178,8 +178,8 @@
   {
     "name": "AD28Q-D-stale-contract",
     "file": "src/systems/buildingLocks.js",
-    "old": " *   isActiveQuestBuilding(building) - PlayerActivate.IsActiveQuestBuilding\n",
-    "new": " *   isActiveQuestBuilding(building) - the siteLinks walk (:1315-1329)\n",
+    "old": " *   isActiveQuestBuilding(building) - PlayerActivate.IsActiveQuestBuilding",
+    "new": " *   isActiveQuestBuilding(building) - the siteLinks walk (:1315-1329)",
     "tests": [
       "test/systems/quest/auditdisc28_quests.test.js"
     ]

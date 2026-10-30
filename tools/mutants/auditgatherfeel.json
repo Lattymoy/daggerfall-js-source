@@ -54,8 +54,8 @@
   {
     "name": "AUDITGF-F3-the-chop-landing-uncounted",
     "file": "src/systems/chopAct.js",
-    "old": "      if (aloft && !(st.swing > CHOP_REST_S)) st.landed++;",
-    "new": "      if (aloft && !(st.swing > CHOP_REST_S)) st.landed += 0;",
+    "old": "      if (aloft && !(st.swing > CHOP_REST_S)) st.landed++; // AUDIT GATHER-FEEL LANDING: counted before a press can begin the next swing",
+    "new": "      if (aloft && !(st.swing > CHOP_REST_S)) st.landed += 0; // AUDIT GATHER-FEEL LANDING: counted before a press can begin the next swing",
     "tests": [
       "test/systems/audit_gatherfeel.test.js",
       "test/systems/gatherfeel.test.js",

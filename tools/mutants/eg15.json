@@ -262,8 +262,8 @@
   {
     "name": "EG15-fold-unread",
     "file": "src/systems/chargen.js",
-    "old": "+ renownMpOf(this) + foldMpOf(this);",
-    "new": "+ renownMpOf(this);",
+    "old": "      const effective = raw + (this.maxMagickaModifier ?? 0) + renownMpOf(this) + foldMpOf(this);",
+    "new": "      const effective = raw + (this.maxMagickaModifier ?? 0) + renownMpOf(this);",
     "why": "the live maximum never reads the Bearing",
     "tests": [
       "test/systems/eliteGates/eg15_panoply.test.js"

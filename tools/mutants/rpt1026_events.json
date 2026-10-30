@@ -334,8 +334,8 @@
   {
     "name": "CROWD-KIN-kin-drawn",
     "file": "src/systems/combatVisuals.js",
-    "old": "  if (crowdKinHidden(foe)) return HIDDEN;   // RPT1026-EVENTS CROWD-KIN: a cut player's own stand with them\n",
-    "new": "",
+    "old": "  if (crowdKinHidden(foe)) return HIDDEN; // RPT1026-EVENTS CROWD-KIN: a cut player's own stand with them\n  if (!isMagicallyConcealed(foe.entity)) return PLAIN;",
+    "new": "  if (!isMagicallyConcealed(foe.entity)) return PLAIN;",
     "tests": [
       "test/scenes/rpt1026_events_crowdkin.test.js"
     ],

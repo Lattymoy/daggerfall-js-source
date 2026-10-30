@@ -190,8 +190,8 @@ test('LOOT7-CHECK CHAMP-SAID: the first blow either way says a champion on the l
   assert.equal(heard.length, 4);
   assert.equal(CH.sayChampion(orc(), (l) => heard.push(l)), false, 'never a plain foe');
   const src = strip(read('src/systems/champions.js'));
-  assert.match(src, /registerPlayerStruckListener\(CHAMPIONS_SAID, \(attacker, target, damage\) => \{ if \(damage > 0 && target\?\.isPlayer && !target\.peer\) sayChampion\(attacker\); \}\);/);
-  assert.match(src, /registerPlayerStrikeListener\(CHAMPIONS_SAID, \(attacker, target, damage\) => \{ if \(damage > 0 && attacker\?\.isPlayer && !attacker\.peer\) sayChampion\(target\); \}\);/);
+  assert.match(src, /registerPlayerStruckListener\(CHAMPIONS_SAID, \(attacker, target, damage\) => \{\n\s*if \(damage > 0 && target\?\.isPlayer && !target\.peer\) sayChampion\(attacker\);\n\s*\}\);/);
+  assert.match(src, /registerPlayerStrikeListener\(CHAMPIONS_SAID, \(attacker, target, damage\) => \{\n\s*if \(damage > 0 && attacker\?\.isPlayer && !attacker\.peer\) sayChampion\(target\);\n\s*\}\);/);
   assert.match(src, /export function sayChampion\(entity, say = popupMessage\) \{/, 'the live host\'s line - DaggerfallUI.PopupMessage - unless a caller hands its own');
 });
 

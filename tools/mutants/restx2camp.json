@@ -86,8 +86,8 @@
   {
     "name": "CAMP1-the-timer-path-rolls-the-five-percent-after-all",
     "file": "src/systems/campEncounters.js",
-    "old": "  if (!campWindowOpen(ctx.gameMinutes)) return null;\n  // GUARANTEED: no chance check here any more - every open window (once\n  // per 15 real minutes) spawns a group. See the header note above.\n  return rollGroupComposition(ctx, rolls);",
-    "new": "  if (!campWindowOpen(ctx.gameMinutes)) return null;\n  if (!rollCampChance(rolls())) return null;\n  return rollGroupComposition(ctx, rolls);",
+    "old": "  // GUARANTEED: no chance check here any more - every open window (once\n  // per 15 real minutes) spawns a group. See the header note above.",
+    "new": "  if (!rollCampChance(rolls())) return null;",
     "tests": [
       "test/systems/camp1_groups.test.js"
     ]
@@ -104,8 +104,8 @@
   {
     "name": "CAMP1-the-ring-excludes-its-own-edge",
     "file": "src/systems/campEncounters.js",
-    "old": "  const near = (a, b) => { const dx = a[0] - b[0], dz = a[2] - b[2]; return dx * dx + dz * dz <= r2; };",
-    "new": "  const near = (a, b) => { const dx = a[0] - b[0], dz = a[2] - b[2]; return dx * dx + dz * dz < r2; };",
+    "old": "    return dx * dx + dz * dz <= r2;",
+    "new": "    return dx * dx + dz * dz < r2;",
     "tests": [
       "test/systems/camp1_groups.test.js"
     ]

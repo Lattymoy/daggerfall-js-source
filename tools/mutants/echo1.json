@@ -2,8 +2,8 @@
   {
     "name": "ECHO1-the-ways-turned",
     "file": "src/systems/compassWords.js",
-    "old": "export const sceneCompassWord = (dx, dz) => COMPASS_WORDS[((Math.round(Math.atan2(dx, dz)",
-    "new": "export const sceneCompassWord = (dx, dz) => COMPASS_WORDS[((Math.round(Math.atan2(dz, dx)",
+    "old": "  COMPASS_WORDS[((Math.round((Math.atan2(dx, dz) * 180) / Math.PI / 45) % 8) + 8) % 8];",
+    "new": "  COMPASS_WORDS[((Math.round((Math.atan2(dz, dx) * 180) / Math.PI / 45) % 8) + 8) % 8];",
     "tests": [
       "test/systems/echo1_dungeonecho.test.js"
     ]

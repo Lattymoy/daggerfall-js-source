@@ -83,8 +83,8 @@
   {
     "name": "EGECO-a-lords-card-rarer",
     "file": "src/systems/bossCards.js",
-    "old": "  dusk: 200, stalker: 200, seyth: 200, colossus: 200, wyrm: 200, garoth: 200,",
-    "new": "  dusk: 200, stalker: 100, seyth: 200, colossus: 200, wyrm: 200, garoth: 200,",
+    "old": "  stalker: 200,",
+    "new": "  stalker: 100,",
     "tests": [
       "test/systems/eliteGates/egeco_spoils.test.js"
     ]

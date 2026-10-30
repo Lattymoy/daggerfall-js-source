@@ -355,8 +355,8 @@
   {
     "name": "AUDIT-PSCALE1-chain-leaves-its-far-end",
     "file": "src/systems/campEncounters.js",
-    "old": "    if (!taken) rollers.push(p);",
-    "new": "    if (!taken) rollers.push(p); else return false;",
+    "old": "    if (!taken) rollers.push(p);\n  }",
+    "new": "    if (!taken) rollers.push(p);\n    else return false;\n  }",
     "tests": [
       "test/systems/party/pscale1.test.js",
       "test/systems/auditpscale1.test.js"

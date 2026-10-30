@@ -771,8 +771,8 @@
   {
     "name": "PROF11-act-one-move-a-frame",
     "file": "src/systems/chiselAct.js",
-    "old": "while (st.markLeft <= 0) {",
-    "new": "if (st.markLeft <= 0) {",
+    "old": "      while (st.markLeft <= 0) {",
+    "new": "      if (st.markLeft <= 0) {",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -780,8 +780,8 @@
   {
     "name": "PROF11-act-time-over-lost",
     "file": "src/systems/chiselAct.js",
-    "old": "st.markLeft = left + st.markS; }",
-    "new": "st.markLeft = st.markS; }",
+    "old": "        st.markLeft = left + st.markS;",
+    "new": "        st.markLeft = st.markS;",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -789,8 +789,8 @@
   {
     "name": "PROF11-act-lead-unbounded",
     "file": "src/systems/chiselAct.js",
-    "old": "const l = Math.max(0, Math.min(PRESS_LEAD_MAX_S, Number(lead) || 0));",
-    "new": "const l = Math.max(0, Number(lead) || 0);",
+    "old": "      const l = Math.max(0, Math.min(PRESS_LEAD_MAX_S, Number(lead) || 0));",
+    "new": "      const l = Math.max(0, Number(lead) || 0);",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -798,8 +798,8 @@
   {
     "name": "PROF11-act-judged-at-the-frame",
     "file": "src/systems/chiselAct.js",
-    "old": "const marked = l >= st.markLeft ? st.next : st.mark;",
-    "new": "const marked = st.mark;",
+    "old": "      const marked = l >= st.markLeft ? st.next : st.mark;",
+    "new": "      const marked = st.mark;",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -807,8 +807,8 @@
   {
     "name": "PROF11-act-no-mallet-fall",
     "file": "src/systems/chiselAct.js",
-    "old": "if (st.done || at - st.lastAt < CHISEL_ACT.gapS) return null;",
-    "new": "if (st.done) return null;",
+    "old": "      if (st.done || at - st.lastAt < CHISEL_ACT.gapS) return null;",
+    "new": "      if (st.done) return null;",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -816,8 +816,8 @@
   {
     "name": "PROF11-act-strikes-after-the-end",
     "file": "src/systems/chiselAct.js",
-    "old": "if (st.done || at - st.lastAt < CHISEL_ACT.gapS) return null;",
-    "new": "if (at - st.lastAt < CHISEL_ACT.gapS) return null;",
+    "old": "      if (st.done || at - st.lastAt < CHISEL_ACT.gapS) return null;",
+    "new": "      if (at - st.lastAt < CHISEL_ACT.gapS) return null;",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -834,8 +834,8 @@
   {
     "name": "PROF11-act-short-clean",
     "file": "src/systems/chiselAct.js",
-    "old": "clean: st.strikes.length >= st.need && hits === st.strikes.length",
-    "new": "clean: hits === st.strikes.length",
+    "old": "      return { strikes: st.strikes.length, hits, clean: st.strikes.length >= st.need && hits === st.strikes.length };",
+    "new": "      return { strikes: st.strikes.length, hits, clean: hits === st.strikes.length };",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -843,8 +843,8 @@
   {
     "name": "PROF11-act-set-down-moves",
     "file": "src/systems/chiselAct.js",
-    "old": "function aim(i) { if (!st.done && Number.isInteger(i))",
-    "new": "function aim(i) { if (Number.isInteger(i))",
+    "old": "    if (!st.done && Number.isInteger(i)) st.at = Math.max(0, Math.min(lines - 1, i));",
+    "new": "    if (Number.isInteger(i)) st.at = Math.max(0, Math.min(lines - 1, i));",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -852,8 +852,8 @@
   {
     "name": "PROF11-act-off-the-stone",
     "file": "src/systems/chiselAct.js",
-    "old": "st.at = Math.max(0, Math.min(lines - 1, i)); }",
-    "new": "st.at = Math.min(lines - 1, i); }",
+    "old": "    if (!st.done && Number.isInteger(i)) st.at = Math.max(0, Math.min(lines - 1, i));",
+    "new": "    if (!st.done && Number.isInteger(i)) st.at = Math.min(lines - 1, i);",
     "tests": [
       "test/net/prof11_law.test.js"
     ]
@@ -861,8 +861,8 @@
   {
     "name": "PROF11-act-chisel-at-the-edge",
     "file": "src/systems/chiselAct.js",
-    "old": "at: Math.floor(lines / 2),",
-    "new": "at: 0,",
+    "old": "    at: Math.floor(lines / 2),",
+    "new": "    at: 0,",
     "tests": [
       "test/net/prof11_law.test.js",
       "test/systems/prof11_client.test.js"
@@ -871,8 +871,8 @@
   {
     "name": "PROF11-act-any-tick",
     "file": "src/systems/chiselAct.js",
-    "old": "if (st.done || !Number.isFinite(dt) || dt <= 0) return;",
-    "new": "if (st.done) return;",
+    "old": "      if (st.done || !Number.isFinite(dt) || dt <= 0) return;",
+    "new": "      if (st.done) return;",
     "tests": [
       "test/net/prof11_law.test.js"
     ]

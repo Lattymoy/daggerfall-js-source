@@ -101,8 +101,8 @@
   {
     "name": "WB12c-the-library-s-classic",
     "file": "src/systems/bookshelf.js",
-    "old": "import { getShelfBookID, bookTitle } from './books.js';",
-    "new": "import { getRandomBookID as getShelfBookID, bookTitle } from './books.js';",
+    "old": "import { getShelfBookID, bookTitle } from './books.js'; // WB12c: the shelf's draw - the port's own books among the classic ones",
+    "new": "import { getRandomBookID as getShelfBookID, bookTitle } from './books.js'; // WB12c: the shelf's draw - the port's own books among the classic ones",
     "tests": [
       "test/systems/wb12c_burning_doors.test.js"
     ]
@@ -146,7 +146,7 @@
   {
     "name": "WB12c-the-record-not-kept",
     "file": "src/systems/breachBook.js",
-    "old": "  restoreSaveData: (r) => { _given = r?.given === true; },",
+    "old": "  restoreSaveData: (r) => {\n    _given = r?.given === true;\n  },",
     "new": "  restoreSaveData: () => {},",
     "tests": [
       "test/systems/wb12c_burning_doors.test.js"

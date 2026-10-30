@@ -132,7 +132,7 @@
   {
     "name": "DEX3-the-group-reads-no-table",
     "file": "src/systems/campEncounters.js",
-    "old": "  const rollCtx = { ...ctx, isDay, table: tableIdx != null ? (ctx.table ?? encounterTable(tableIdx, { ...ctx, isDay }, rolls)) : null };",
+    "old": "  const rollCtx = {\n    ...ctx,\n    isDay,\n    table: tableIdx != null ? (ctx.table ?? encounterTable(tableIdx, { ...ctx, isDay }, rolls)) : null,\n  };",
     "new": "  const rollCtx = { ...ctx, isDay };",
     "why": "a group's seed re-reads its table each try and its mates read none",
     "tests": [
@@ -142,8 +142,8 @@
   {
     "name": "DEX3-the-camp-not-the-players-reading",
     "file": "src/systems/campEncounters.js",
-    "old": "export function rollCampEncountersOnChunkLoad(ctx, rolls = Math.random, { groups = CAMP_GROUPS_ON_CHUNK_LOAD, fovDegrees = 60 } = {}) {\n  ctx = playerReading(ctx, chunkGps(ctx));   // DEX3: the player's own roll, where it stands\n",
-    "new": "export function rollCampEncountersOnChunkLoad(ctx, rolls = Math.random, { groups = CAMP_GROUPS_ON_CHUNK_LOAD, fovDegrees = 60 } = {}) {\n",
+    "old": "  { groups = CAMP_GROUPS_ON_CHUNK_LOAD, fovDegrees = 60 } = {},\n) {\n  ctx = playerReading(ctx, chunkGps(ctx)); // DEX3: the player's own roll, where it stands\n  if (!campGateOk(ctx)) return null;\n  if (!rollCampChanceOnChunkLoad(rolls())) return null;",
+    "new": "  { groups = CAMP_GROUPS_ON_CHUNK_LOAD, fovDegrees = 60 } = {},\n) {\n  if (!campGateOk(ctx)) return null;\n  if (!rollCampChanceOnChunkLoad(rolls())) return null;",
     "why": "the world's chunk-load camp roll (AUDIT DEX C5: the one world.js calls) raises no GPS event for the pixel just entered",
     "tests": [
       "test/systems/enemyExpansion/dex3_encounters.test.js"
@@ -152,8 +152,8 @@
   {
     "name": "AUDIT-DEX-C5-the-street-camp-not-the-players-reading",
     "file": "src/systems/campEncounters.js",
-    "old": "export function rollCampEncounter(ctx, rolls = Math.random) {\n  ctx = playerReading(ctx);   // DEX3: the player's own roll, where it stands\n",
-    "new": "export function rollCampEncounter(ctx, rolls = Math.random) {\n",
+    "old": "  ctx = playerReading(ctx); // DEX3: the player's own roll, where it stands\n  if (!campGateOk(ctx)) return null;",
+    "new": "  if (!campGateOk(ctx)) return null;",
     "why": "the street's minute camp roll (exterior.js's) raises no GPS event and reads DFU's tables, not the mod's writes",
     "tests": [
       "test/systems/enemyExpansion/dex3_encounters.test.js"

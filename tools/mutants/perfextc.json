@@ -487,8 +487,8 @@
   {
     "name": "PERF-EXT24-a-NaN-stalls-the-stream",
     "file": "src/systems/buildBreather.js",
-    "old": "  if (Number.isNaN(left)) return BUILD_SLICE_MS;",
-    "new": "  if (Number.isNaN(left)) return 0;",
+    "old": "  if (Number.isNaN(left)) return BUILD_SLICE_MS; // a NaN in is the old slice out, never a stall",
+    "new": "  if (Number.isNaN(left)) return 0; // a NaN in is the old slice out, never a stall",
     "tests": [
       "test/systems/buildslice.test.js"
     ]
@@ -496,8 +496,8 @@
   {
     "name": "PERF-EXT24-the-budget-is-asked-once-and-never-again",
     "file": "src/systems/buildBreather.js",
-    "old": "          sliceStart = now();\n          sliceFrame = resumedBy === TURNED ? null : framesNow();   // BOOT-HIDDEN: a turn's slice is not one a frame can vouch for\n          sliceBudget = budget ? budget() : sliceMs;",
-    "new": "          sliceStart = now();\n          sliceFrame = resumedBy === TURNED ? null : framesNow();   // BOOT-HIDDEN: a turn's slice is not one a frame can vouch for",
+    "old": "            sliceBudget = budget ? budget() : sliceMs;\n            resolve();",
+    "new": "            resolve();",
     "tests": [
       "test/systems/buildslice.test.js"
     ]
@@ -505,8 +505,8 @@
   {
     "name": "PERF-EXT24-no-slice-is-reported",
     "file": "src/systems/buildBreather.js",
-    "old": "if (sliceFrame !== null && sliceFrame === framesNow()) onSlice?.(spent);   // PERF-EXT24 (the review): a resumed slice no frame ran inside - heard once, by the slice's first waiter",
-    "new": "void spent;",
+    "old": "        if (sliceFrame !== null && sliceFrame === framesNow()) onSlice?.(spent); // PERF-EXT24 (the review): a resumed slice no frame ran inside - heard once, by the slice's first waiter",
+    "new": "        void spent;",
     "tests": [
       "test/systems/buildslice.test.js"
     ]
@@ -854,8 +854,8 @@
   {
     "name": "PERF-EXT24-review-a-slice-a-frame-ran-inside-is-lent-again",
     "file": "src/systems/buildBreather.js",
-    "old": "      if (sliceFrame !== null && sliceFrame === framesNow()) onSlice?.(spent);",
-    "new": "      if (sliceFrame !== null) onSlice?.(spent);",
+    "old": "        if (sliceFrame !== null && sliceFrame === framesNow()) onSlice?.(spent); // PERF-EXT24 (the review): a resumed slice no frame ran inside - heard once, by the slice's first waiter",
+    "new": "        if (sliceFrame !== null) onSlice?.(spent); // PERF-EXT24 (the review): a resumed slice no frame ran inside - heard once, by the slice's first waiter",
     "tests": [
       "test/systems/buildslice.test.js"
     ]
@@ -863,8 +863,8 @@
   {
     "name": "PERF-EXT24-review-every-slice-is-lent-again-the-reset-and-the-wait-too",
     "file": "src/systems/buildBreather.js",
-    "old": "      if (sliceFrame !== null && sliceFrame === framesNow()) onSlice?.(spent);",
-    "new": "      onSlice?.(spent);",
+    "old": "        if (sliceFrame !== null && sliceFrame === framesNow()) onSlice?.(spent); // PERF-EXT24 (the review): a resumed slice no frame ran inside - heard once, by the slice's first waiter",
+    "new": "        onSlice?.(spent); // PERF-EXT24 (the review): a resumed slice no frame ran inside - heard once, by the slice's first waiter",
     "tests": [
       "test/systems/buildslice.test.js"
     ]
@@ -872,8 +872,8 @@
   {
     "name": "PERF-EXT24-review-a-reset-slice-is-vouched-for",
     "file": "src/systems/buildBreather.js",
-    "old": "    reset() { sliceStart = now(); sliceFrame = null;",
-    "new": "    reset() { sliceStart = now(); sliceFrame = framesNow();",
+    "old": "      sliceFrame = null;",
+    "new": "      sliceFrame = framesNow();",
     "tests": [
       "test/systems/buildslice.test.js"
     ]
@@ -881,8 +881,8 @@
   {
     "name": "PERF-EXT24-review-the-birth-slice-is-vouched-for",
     "file": "src/systems/buildBreather.js",
-    "old": "  let sliceFrame = null;",
-    "new": "  let sliceFrame = framesNow();",
+    "old": "  let sliceFrame = null; // PERF-EXT24 (the review): the frame count at this slice's resume; null for a slice a reset (or the breather's birth) began",
+    "new": "  let sliceFrame = framesNow(); // PERF-EXT24 (the review): the frame count at this slice's resume; null for a slice a reset (or the breather's birth) began",
     "tests": [
       "test/systems/buildslice.test.js"
     ]
@@ -890,8 +890,8 @@
   {
     "name": "PERF-EXT24-review-the-resume-never-reads-the-count",
     "file": "src/systems/buildBreather.js",
-    "old": "          sliceFrame = resumedBy === TURNED ? null : framesNow();   // BOOT-HIDDEN: a turn's slice is not one a frame can vouch for",
-    "new": "          sliceFrame = resumedBy === TURNED ? null : -1;",
+    "old": "            sliceFrame = resumedBy === TURNED ? null : framesNow(); // BOOT-HIDDEN: a turn's slice is not one a frame can vouch for",
+    "new": "            sliceFrame = resumedBy === TURNED ? null : -1;",
     "tests": [
       "test/systems/buildslice.test.js"
     ]
