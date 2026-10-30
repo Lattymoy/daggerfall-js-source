@@ -2,8 +2,8 @@
   {
     "name": "AUDIT1003-B1-LAW-ON-THE-REAL-CLOCK",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "    const C = cur;\n    const t = clockOf(C);",
-    "new": "    const C = cur;\n    const t = now();",
+    "old": "    const t = clockOf(C);",
+    "new": "    const t = now();",
     "tests": [
       "test/systems/arena/audit1003_bouts.test.js"
     ],
@@ -32,7 +32,7 @@
   {
     "name": "AUDIT1003-B1-BLOW-ON-THE-REAL-CLOCK",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "    if (!C?.b) return;\n    const t = lawNow();   // AUDIT PRE-MERGE 1003 B1",
+    "old": "    if (!C?.b) return;\n    const t = lawNow(); // AUDIT PRE-MERGE 1003 B1",
     "new": "    if (!C?.b) return;\n    const t = now();",
     "tests": [
       "test/systems/arena/audit1003_bouts.test.js"
@@ -42,7 +42,7 @@
   {
     "name": "AUDIT1003-B1-FLOOR-ON-THE-REAL-CLOCK",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "    boutFell(C.b, fid, lawNow());   // AUDIT PRE-MERGE 1003 B1",
+    "old": "    boutFell(C.b, fid, lawNow()); // AUDIT PRE-MERGE 1003 B1",
     "new": "    boutFell(C.b, fid, now());",
     "tests": [
       "test/systems/arena/audit1003_bouts.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "AUDIT1003-B2-OUTSIDE-BLOW-KEPT",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "    if (fromPlayer && C && !C.ladder && foe?.entity) { foe.entity.health = Math.min(foe.entity.maxHealth ?? foe.entity.health, foe.entity.health + dmg); return; }\n",
-    "new": "",
+    "old": "    if (fromPlayer && C && !C.ladder && foe?.entity) {\n      foe.entity.health = Math.min(foe.entity.maxHealth ?? foe.entity.health, foe.entity.health + dmg);\n      return;\n    }\n    if (!C?.b) return;",
+    "new": "    if (!C?.b) return;",
     "tests": [
       "test/systems/arena/audit1003_bouts.test.js"
     ],
@@ -73,8 +73,8 @@
   {
     "name": "AUDIT1003-B3-LEFT-UNTOLD",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "    if (C.ex && !C.relay && C.b && !boutBefore(C.b) && !Number.isFinite(C.verdictAt)) deps.exhibitionVerdict?.(C.ex.hour, C.b.result ? C.b.result.side : BOUT_LEFT);\n",
-    "new": "",
+    "old": "    if (C.ex && !C.relay && C.b && !boutBefore(C.b) && !Number.isFinite(C.verdictAt))\n      deps.exhibitionVerdict?.(C.ex.hour, C.b.result ? C.b.result.side : BOUT_LEFT);\n    for (const foe of C.fighters.values()) C.stage?.remove?.(foe);",
+    "new": "    for (const foe of C.fighters.values()) C.stage?.remove?.(foe);",
     "tests": [
       "test/systems/arena/audit1003_bouts.test.js"
     ],
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT1003-B3-LEFT-A-DRAW",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "C.b.result ? C.b.result.side : BOUT_LEFT);",
-    "new": "C.b.result ? C.b.result.side : null);",
+    "old": "      deps.exhibitionVerdict?.(C.ex.hour, C.b.result ? C.b.result.side : BOUT_LEFT);",
+    "new": "      deps.exhibitionVerdict?.(C.ex.hour, C.b.result ? C.b.result.side : null);",
     "tests": [
       "test/systems/arena/audit1003_bouts.test.js"
     ],
@@ -93,8 +93,8 @@
   {
     "name": "AUDIT1003-B3-RESULT-UNREAD",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "C.b.result ? C.b.result.side : BOUT_LEFT);",
-    "new": "BOUT_LEFT);",
+    "old": "      deps.exhibitionVerdict?.(C.ex.hour, C.b.result ? C.b.result.side : BOUT_LEFT);",
+    "new": "      deps.exhibitionVerdict?.(C.ex.hour, BOUT_LEFT);",
     "tests": [
       "test/systems/arena/audit1003_bouts.test.js"
     ],
@@ -163,8 +163,8 @@
   {
     "name": "AUDIT1003-B3-WINDOW-WATCH-UNASKED",
     "file": "src/scenes/arena/arenaGate.js",
-    "old": "      if (seen) return { ok: false, text: seen };\n",
-    "new": "",
+    "old": "      if (seen) return { ok: false, text: seen };\n      const on = online();",
+    "new": "      const on = online();",
     "tests": [
       "test/systems/arena/audit1003_bouts.test.js"
     ],
@@ -323,7 +323,7 @@
   {
     "name": "AUDIT1003-B6-HALF-BUILT-CROWD-LEAKED",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "      if (cur !== C) { for (const x of batches) r.destroyBillboardBatch?.(x.batch); return; }",
+    "old": "      if (cur !== C) {\n        for (const x of batches) r.destroyBillboardBatch?.(x.batch);\n        return;\n      }",
     "new": "      if (cur !== C) return;",
     "tests": [
       "test/systems/arena/audit1003_bouts.test.js"

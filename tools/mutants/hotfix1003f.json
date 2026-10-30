@@ -75,8 +75,8 @@
   {
     "name": "HOTFIX1003f-CLIENT-SIGNED-OUT-LET-THROUGH",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "if (deps.signedIn?.() === false || deps.session",
-    "new": "if (deps.session",
+    "old": "      if (deps.signedIn?.() === false || deps.session?.()?.status !== 'open') return { ok: false, text: O.privSignIn };",
+    "new": "      if (deps.session?.()?.status !== 'open') return { ok: false, text: O.privSignIn };",
     "tests": [
       "test/net/arena/hotfix1003_stands.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "HOTFIX1003f-CLIENT-SOCKET-NOT-OPEN-LET-THROUGH",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "if (deps.signedIn?.() === false || deps.session?.()?.status !== 'open') return",
-    "new": "if (deps.signedIn?.() === false) return",
+    "old": "      if (deps.signedIn?.() === false || deps.session?.()?.status !== 'open') return { ok: false, text: O.privSignIn };",
+    "new": "      if (deps.signedIn?.() === false) return { ok: false, text: O.privSignIn };",
     "tests": [
       "test/net/arena/hotfix1003_stands.test.js"
     ]

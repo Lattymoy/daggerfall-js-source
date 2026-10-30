@@ -1965,7 +1965,7 @@ it, while the bout's receipt was still with the service, the board's climb was s
 entered the floor for that step, and only there did askTicket's guard ("Your last ladder bout is still being recorded")
 or the service's `order` ("That is not your next ladder bout") let it go - the player on an empty floor.
 
-FIXED. `arenaOnline.js:"if (claims.ladderKept?.()) { void claims.flush(); return { ok: false, text: O.stillRecording }; }"`
+FIXED. `arenaOnline.js:"once the flush moved".."if (claims.ladderKept?.()) {"`
 in fightLadder: the receipt holds the Fight at the Herald, is carried again by the refusal, and the next press asks the
 climb the service moved. Not a DFU member. `11-Multiplayer/Arena.md` RPT1026-QUESTS ARENA-ORDER.
 

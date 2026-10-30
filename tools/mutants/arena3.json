@@ -183,8 +183,8 @@
   {
     "name": "ARENA3-QUIT-UNASKED",
     "file": "src/scenes/arena/arenaGate.js",
-    "old": "        choice(quitAsk(banner), (b) => {\n          if (b !== 'quit') return;\n          const r = quitBanner(league(), gm());",
-    "new": "        ((cb) => cb('quit'))((b) => {\n          if (b !== 'quit') return;\n          const r = quitBanner(league(), gm());",
+    "old": "      } else if (a === 'quit') {\n        choice(quitAsk(banner), (b) => {",
+    "new": "      } else if (a === 'quit') {\n        ((cb) => cb('quit'))((b) => {",
     "tests": [
       "test/systems/arena/arena3_teams.test.js"
     ],
@@ -193,8 +193,8 @@
   {
     "name": "ARENA3-JOIN-NO-WINDOW",
     "file": "src/scenes/arena/arenaGate.js",
-    "old": "if (r.ok) { say(ARENA_TEXT.recruiter.joined(name)); openWindow?.('team'); }",
-    "new": "if (r.ok) { say(ARENA_TEXT.recruiter.joined(name)); }",
+    "old": "          openWindow?.('team');\n        }",
+    "new": "        }",
     "tests": [
       "test/systems/arena/arena3_teams.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "ARENA3-WAGER-UNPAID",
     "file": "src/scenes/arena/arenaGate.js",
-    "old": "    deductGold(P, r.cost);\n",
-    "new": "",
+    "old": "    deductGold(P, r.cost);\n    setBook(r.book);",
+    "new": "    setBook(r.book);",
     "tests": [
       "test/systems/arena/arena3_book.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "ARENA3-COLLECT-UNPAID",
     "file": "src/scenes/arena/arenaGate.js",
-    "old": "        if (r.gold > 0) { addGold(P, r.gold); say(B.paid(r.gold)); }",
-    "new": "        if (r.gold > 0) { say(B.paid(r.gold)); }",
+    "old": "          addGold(P, r.gold);\n          say(B.paid(r.gold));",
+    "new": "          say(B.paid(r.gold));",
     "tests": [
       "test/systems/arena/arena3_book.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "ARENA3-WINDOW-ANYWHERE",
     "file": "src/scenes/arena/arenaGate.js",
-    "old": "      if (!atGate) return { ok: false, text: ARENA_TEXT.window.whyGate };\n      const seen = kind === 'watch'",
-    "new": "      const seen = kind === 'watch'",
+    "old": "      if (!atGate) return { ok: false, text: ARENA_TEXT.window.whyGate };\n      const seen = kind === 'watch' ? watchRefusal(exhibitionFor(gm())?.hour) : null; // AUDIT PRE-MERGE 1003 B3: refused at the press",
+    "new": "      const seen = kind === 'watch' ? watchRefusal(exhibitionFor(gm())?.hour) : null; // AUDIT PRE-MERGE 1003 B3: refused at the press",
     "tests": [
       "test/systems/arena/arena3_window.test.js"
     ],
@@ -230,8 +230,8 @@
   {
     "name": "ARENA3-FIGHT-HURT",
     "file": "src/scenes/arena/arenaGate.js",
-    "old": "      if (kind === 'fight' && (P.health ?? 0) / Math.max(1, P.maxHealth ?? 1) < FIGHT_HEALTH_MIN) return { ok: false, text: ARENA_TEXT.window.whyHurt };\n",
-    "new": "",
+    "old": "      if (kind === 'fight' && (P.health ?? 0) / Math.max(1, P.maxHealth ?? 1) < FIGHT_HEALTH_MIN)\n        return { ok: false, text: ARENA_TEXT.window.whyHurt };\n      closeArenaDoor();",
+    "new": "      closeArenaDoor();",
     "tests": [
       "test/systems/arena/arena3_window.test.js"
     ],
@@ -475,8 +475,8 @@
   {
     "name": "ARENA3-DRIVER-NO-LAUREL",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "    laurelFavour(C);\n",
-    "new": "",
+    "old": "    laurelFavour(C);\n    if (!C.quiet) buildCrowd(C);",
+    "new": "    if (!C.quiet) buildCrowd(C);",
     "tests": [
       "test/systems/arena/arena3_teams.test.js"
     ]
@@ -484,8 +484,8 @@
   {
     "name": "ARENA3-DRIVER-NO-TEAMS",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "    if (ladder) { const R = realmNow(), team = R ? R.banner : leagueNow()?.team; if (team) out[YOU] = team; return out; }",
-    "new": "    if (ladder) return out;",
+    "old": "    if (ladder) {\n      const R = realmNow(),\n        team = R ? R.banner : leagueNow()?.team;\n      if (team) out[YOU] = team;\n      return out;\n    } // ARENA4b: online the account's",
+    "new": "    if (ladder) return out; // ARENA4b: online the account's",
     "tests": [
       "test/systems/arena/arena3_teams.test.js"
     ],
@@ -494,8 +494,8 @@
   {
     "name": "ARENA3-DRIVER-NO-RECORD",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "        P.arenaLeague = league;\n",
-    "new": "",
+    "old": "        P.arenaLeague = league;\n        const pts = league.bouts[0]?.points ?? 0;",
+    "new": "        const pts = league.bouts[0]?.points ?? 0;",
     "tests": [
       "test/systems/arena/arena3_teams.test.js"
     ]
@@ -503,8 +503,8 @@
   {
     "name": "ARENA3-DRIVER-VERDICT-UNTOLD",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "      deps.exhibitionVerdict?.(C.ex.hour, r.side);   // ARENA3: the bookmaker settles a wager on it by what was seen",
-    "new": "",
+    "old": "      deps.exhibitionVerdict?.(C.ex.hour, r.side); // ARENA3: the bookmaker settles a wager on it by what was seen\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/arena/arena3_book.test.js"
     ]
@@ -512,8 +512,8 @@
   {
     "name": "ARENA3-DRIVER-UNTITLED-CRY",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "epithet: ladderTitle(P?.arenaLadder) ?? '', mark: marks[0][0] });",
-    "new": "epithet: '', mark: marks[0][0] });",
+    "old": "        epithet: ladderTitle(P?.arenaLadder) ?? '',",
+    "new": "        epithet: '',",
     "tests": [
       "test/systems/arena/arena3_titles.test.js"
     ]

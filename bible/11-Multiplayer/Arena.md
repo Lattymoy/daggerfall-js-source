@@ -1132,7 +1132,7 @@ reads waits on a held purse `CLIMB_WAIT_MS` at most and a loss holds none, so pa
 still the one before the bout, the floor was entered for that step, and only there did askTicket's guard (the receipt
 still with the service) or the service's `order` (the flush had moved the climb under it) let the bout go - the
 player left standing on an empty floor. Now the receipt holds the Fight at the Herald
-(`arenaOnline.js:"if (claims.ladderKept?.()) { void claims.flush(); return { ok: false, text: O.stillRecording }; }"`):
+(`arenaOnline.js:"once the flush moved".."if (claims.ladderKept?.()) {"`):
 "Your last ladder bout is still being recorded. Try again in a moment.", the receipt carried again by the refusal, and
 the next press asks the climb the service's answer moved. Within the wait the line is the climb's own, as before;
 askTicket's guard stays for a receipt that arrives between the press and the floor. A Grand Champion's ladder done, a

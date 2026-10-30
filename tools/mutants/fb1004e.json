@@ -362,8 +362,8 @@
   {
     "name": "ARENAARROWS-the-tally-left-running",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "const shots = stopShotTally() ?? new Map();",
-    "new": "const shots = new Map();",
+    "old": "      const shots = stopShotTally() ?? new Map();",
+    "new": "      const shots = new Map();",
     "tests": [
       "test/systems/arena/fb1004e_arena.test.js"
     ],
@@ -372,8 +372,8 @@
   {
     "name": "ARENAARROWS-the-dismissed-quiver-dropped",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "if (quiver.C === C) quiver.shots = shots; else quiver = null;",
-    "new": "quiver = null;",
+    "old": "      if (quiver.C === C) quiver.shots = shots;\n      else quiver = null;",
+    "new": "      quiver = null;",
     "tests": [
       "test/systems/arena/fb1004e_arena.test.js"
     ],
@@ -382,8 +382,8 @@
   {
     "name": "ARENAARROWS-no-mark-at-the-bout",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "    if (ladder) { deps.setPlayerBout?.(cur.playerTag); markMine(cur); }",
-    "new": "    if (ladder) { deps.setPlayerBout?.(cur.playerTag); }",
+    "old": "      markMine(cur);\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/arena/fb1004e_arena.test.js"
     ],
@@ -392,8 +392,8 @@
   {
     "name": "ARENAARROWS-no-refund-at-the-heal",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "    if (C.ladder) { deps.heal?.(); deps.say?.(ARENA_TEXT.healed); refundMine(C); restoreSandHeld(P); C.lastHealth",
-    "new": "    if (C.ladder) { deps.heal?.(); deps.say?.(ARENA_TEXT.healed); restoreSandHeld(P); C.lastHealth",
+    "old": "      refundMine(C);\n      restoreSandHeld(P);",
+    "new": "      restoreSandHeld(P);",
     "tests": [
       "test/systems/arena/fb1004e_arena.test.js"
     ],

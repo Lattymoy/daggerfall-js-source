@@ -74,8 +74,8 @@
   {
     "name": "AUDIT-QL-ACTS-M5-arenaBouts-a-relay-bout-lost-counts",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "if (won && C.relay.kind === 'pve') noteAct('arena-won');",
-    "new": "if (mine && C.relay.kind === 'pve') noteAct('arena-won');",
+    "old": "    if (won && C.relay.kind === 'pve') noteAct('arena-won'); // QL11: a bout won in the Arena - the relay's verdict, my side (a watcher has none)",
+    "new": "    if (mine && C.relay.kind === 'pve') noteAct('arena-won'); // QL11: a bout won in the Arena - the relay's verdict, my side (a watcher has none)",
     "tests": [
       "test/systems/questlines/ql11_acts.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-QL-ACTS-ACTS-6-arenaBouts-a-players-bout-counts-the-old-gate",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "if (won && C.relay.kind === 'pve') noteAct('arena-won');",
-    "new": "if (won) noteAct('arena-won');",
+    "old": "    if (won && C.relay.kind === 'pve') noteAct('arena-won'); // QL11: a bout won in the Arena - the relay's verdict, my side (a watcher has none)",
+    "new": "    if (won) noteAct('arena-won'); // QL11: a bout won in the Arena - the relay's verdict, my side (a watcher has none)",
     "tests": [
       "test/systems/questlines/ql11_acts.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-QL-ACTS-A-w-arenaBouts-a-watcher-s-counted",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "if (won && C.relay.kind === 'pve') noteAct('arena-won');",
-    "new": "if ((won || (!mine && r.side === 0)) && C.relay.kind === 'pve') noteAct('arena-won');",
+    "old": "    if (won && C.relay.kind === 'pve') noteAct('arena-won'); // QL11: a bout won in the Arena - the relay's verdict, my side (a watcher has none)",
+    "new": "    if ((won || (!mine && r.side === 0)) && C.relay.kind === 'pve') noteAct('arena-won'); // QL11: a bout won in the Arena - the relay's verdict, my side (a watcher has none)",
     "tests": [
       "test/systems/questlines/ql11_acts.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "AUDIT-QL-ACTS-A-721a-arenaBouts-the-act-on-any-ladder-verdict",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "      if (won) noteAct('arena-won');   // QL11: a bout won in the Arena - a ladder bout of mine",
-    "new": "      noteAct('arena-won');   // QL11: a bout won in the Arena - a ladder bout of mine",
+    "old": "      if (won) noteAct('arena-won'); // QL11: a bout won in the Arena - a ladder bout of mine (the pit's practice is no bout of the Arena's)",
+    "new": "      noteAct('arena-won'); // QL11: a bout won in the Arena - a ladder bout of mine (the pit's practice is no bout of the Arena's)",
     "tests": [
       "test/systems/questlines/ql11_acts.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "AUDIT-QL-ACTS-A-721b-arenaBouts-the-pit-s-practice-counted",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "    if (C.practice) {\n",
-    "new": "    if (C.practice) {\n      if (r.side === 0) noteAct('arena-won');\n",
+    "old": "      // ARENA-FIX 4: the pit's bout - no purse, no step on the ladder, the Pit Master's word",
+    "new": "      if (r.side === 0) noteAct('arena-won');\n      // ARENA-FIX 4: the pit's bout - no purse, no step on the ladder, the Pit Master's word",
     "tests": [
       "test/systems/questlines/ql11_acts.test.js"
     ]

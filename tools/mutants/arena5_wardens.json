@@ -38,8 +38,8 @@
   {
     "name": "ARENA5-INTRUDE-NO-CRIME",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "    else { deps.say?.(ARENA_TEXT.herald.intrudeCrime); deps.crime?.(); }",
-    "new": "    else { deps.say?.(ARENA_TEXT.herald.intrudeCrime); }",
+    "old": "      deps.crime?.();\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/arena/arena5_wardens.test.js"
     ]

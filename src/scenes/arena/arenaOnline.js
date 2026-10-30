@@ -36,17 +36,30 @@
 //
 // Not a DFU member. Ledger A (ARENA).
 import { foldHall, HALL_EMPTY, verdictOfWord } from '../../net/arena/arenaLink.js';
-import { arenaBoutRoom, ARENA_HALL, ARENA_NO_TEXT, ARENA_HIT, arenaLadderOf, arenaExhibitionRoom, bannerClaim, ARENA_EX_BANNERS,
-  arenaPrivateRoom, arenaPrivateCode, arenaPrivateCodeOf, privateCodeTyped, ARENA_PRIVATE_CODE_RE } from '../../net/arena/arenaLaw.js';   // ARENA6: a private session
-import { exhibitionFor, exhibitionBoutId, EXHIBITION_KEPT_HOURS } from '../../net/arena/arenaExhibition.js';   // ARENA4b: the hour's exhibition, the relay's
+import {
+  arenaBoutRoom,
+  ARENA_HALL,
+  ARENA_NO_TEXT,
+  ARENA_HIT,
+  arenaLadderOf,
+  arenaExhibitionRoom,
+  bannerClaim,
+  ARENA_EX_BANNERS,
+  arenaPrivateRoom,
+  arenaPrivateCode,
+  arenaPrivateCodeOf,
+  privateCodeTyped,
+  ARENA_PRIVATE_CODE_RE,
+} from '../../net/arena/arenaLaw.js'; // ARENA6: a private session
+import { exhibitionFor, exhibitionBoutId, EXHIBITION_KEPT_HOURS } from '../../net/arena/arenaExhibition.js'; // ARENA4b: the hour's exhibition, the relay's
 import { arenaBoutSeed } from '../../net/arena/arenaBrain.js';
 import { createArenaClaims, arenaClaimVerdict } from '../../net/arena/arenaClaims.js';
 import { ARENA_TEXT } from '../../systems/arena/arenaText.js';
 import { nextLadderBout } from '../../systems/arena/arenaLadder.js';
 import { accountRefusalText } from '../../net/accountClient.js';
-import { readArenaReceipt } from '../../net/arena/arenaReceipt.js';   // ARENA4b: whose bout a claim's answer was, for its held purse
-import { BOUT_PHASES } from '../../systems/arena/arenaBout.js';   // AUDIT PRE-MERGE 1003 O3: an exhibition heard fought
-import { SEAT_NOTICE } from '../../net/oneSeat.js';   // ARENA-WAIT (AUDIT A4): a seat given up shuts the doors in ONE-SEAT's own words
+import { readArenaReceipt } from '../../net/arena/arenaReceipt.js'; // ARENA4b: whose bout a claim's answer was, for its held purse
+import { BOUT_PHASES } from '../../systems/arena/arenaBout.js'; // AUDIT PRE-MERGE 1003 O3: an exhibition heard fought
+import { SEAT_NOTICE } from '../../net/oneSeat.js'; // ARENA-WAIT (AUDIT A4): a seat given up shuts the doors in ONE-SEAT's own words
 
 /** The board is asked again when the window is up and it is this old, ms. */
 export const BOARD_STALE_MS = 20_000;
@@ -75,7 +88,8 @@ export function newBoutId(rand = (n) => globalThis.crypto.getRandomValues(new Ui
   return [...rand(8)].map((x) => x.toString(16).padStart(2, '0')).join('');
 }
 /** A blow's kind on the wire, from the dungeon's kind of hit ('melee', 'arrow', 'spell'). */
-export const hitKindOf = (kind) => (kind === 'arrow' ? ARENA_HIT.Shaft : kind === 'spell' ? ARENA_HIT.Spell : ARENA_HIT.Melee);
+export const hitKindOf = (kind) =>
+  kind === 'arrow' ? ARENA_HIT.Shaft : kind === 'spell' ? ARENA_HIT.Spell : ARENA_HIT.Melee;
 
 /**
  * @param {{
@@ -100,12 +114,16 @@ export function createArenaOnline(deps) {
   let hall = { ...HALL_EMPTY };
   let hallWantedAt = -Infinity;
   let liveAskedAt = -Infinity;
-  let board = null, boardAt = -Infinity, boardAsking = false, boardAgain = false;
+  let board = null,
+    boardAt = -Infinity,
+    boardAsking = false,
+    boardAgain = false;
   /** The bout this screen is going to or stands in: `{ o, room, kind: 'pvp'|'pve'|'watch', side, tier, bout, next, sent }`
    *  (ARENA4b: `room` the bout's room - `arena:b<o>`, or an exhibition's `arena:x<hour>` with its `ex`). */
   let bout = null;
   /** ARENA4b: the city's sand's spectator socket - `{ hour, o, room, link, sent, heard, started, at }` - or null. */
-  let city = null, cityRetryAt = -Infinity;
+  let city = null,
+    cityRetryAt = -Infinity;
   /** ARENA4b: a verdict asked of an exhibition's room for the book - `{ hour, room, link, sent, at }` - or null. */
   let asking = null;
   const askedAt = new Map();
@@ -118,11 +136,22 @@ export function createArenaOnline(deps) {
    *  (scenes/arena/arenaBouts.js relayVerdict `owe`), `won` the service's answer (true kept, false refused), paid once both are in. */
   const owed = new Map();
   const claims = createArenaClaims({
-    claim: async (r, c, n) => { const a = await deps.account.claim(r, c, n); answered(r, a); return a; }, store: deps.store ?? null, me: () => deps.account.me?.() ?? null,
-    onCounted: (d) => { counted(d); askBoard(true); },
+    claim: async (r, c, n) => {
+      const a = await deps.account.claim(r, c, n);
+      answered(r, a);
+      return a;
+    },
+    store: deps.store ?? null,
+    me: () => deps.account.me?.() ?? null,
+    onCounted: (d) => {
+      counted(d);
+      askBoard(true);
+    },
     onGuest: () => say(O.guest),
     // ARENA4b: the fighter a receipt is kept with (its bout's Renown is that character's), and the Renown an answer pays
-    character: () => deps.character?.() ?? null, name: () => deps.characterName?.() ?? null, onRenown: (d) => deps.onRenown?.(d),
+    character: () => deps.character?.() ?? null,
+    name: () => deps.characterName?.() ?? null,
+    onRenown: (d) => deps.onRenown?.(d),
   });
   /** ARENA4b: the realm's banners while online, for the bout driver (scenes/arena/arenaBouts.js setRealm): my account's banner
    *  and the laurel the realm's last season gave - null offline, where the save's league is the law. */
@@ -136,7 +165,10 @@ export function createArenaOnline(deps) {
    *  law - the house's seeded record settled an online wager, the Herald offered Fight off the save's ladder, the city's
    *  sand stood the local exhibition and the hour was never the relay's again. A door that needs a socket waits on that
    *  socket itself (the bout's `in` once its room is open, `hallWait` for the hall's). */
-  const live = () => { const s = deps.session?.(); return !!s && !!s.arenaOk && !s.superseded; };
+  const live = () => {
+    const s = deps.session?.();
+    return !!s && !!s.arenaOk && !s.superseded;
+  };
   /** FIELD BUGS 2026-10-16b ARENA-WAIT: ON THE ONLINE LANE (`deps.lane` - a realm character) BEFORE THE RELAY HAS SAID
    *  whether its arena is open: no session yet (the host starts it once the player stands in the world), or a session no
    *  primary welcome has answered (`arenaHeard`). O4 kept the last welcome's word across a reconnect; the FIRST word after a
@@ -161,7 +193,10 @@ export function createArenaOnline(deps) {
   const waiting = () => shut() != null;
   /** ARENA-WAIT (AUDIT): what a shut door says - the seat's ONE-SEAT words, the server's, or `line`, the wait's own (a
    *  climb's `climbWait`, a press's `hallWait`, a roll's `rollWait`). A door not shut says `line`. */
-  const shutText = (/** @type {string} */ line) => { const k = shut(); return k === 'seat' ? SEAT_NOTICE : k === 'gone' ? O.noServer : line; };
+  const shutText = (/** @type {string} */ line) => {
+    const k = shut();
+    return k === 'seat' ? SEAT_NOTICE : k === 'gone' ? O.noServer : line;
+  };
 
   // ── THE HALL ──
   function wantHall() {
@@ -177,17 +212,28 @@ export function createArenaOnline(deps) {
     // AUDIT PRE-MERGE 1003 O9: ONE-SEAT - a tab whose seat is another's is shown no offer and follows no call (the hall's
     // socket is let go with the seat - leaveAll - and a word already on its way is not this tab's to act on)
     if ((w.k === 'of' || w.k === 'go') && !live()) return;
-    if (w.k === 'live') w = { ...w, l: w.l.map(billExhibition) };   // ARENA4b: an exhibition named off its hour
+    if (w.k === 'live') w = { ...w, l: w.l.map(billExhibition) }; // ARENA4b: an exhibition named off its hour
     hall = foldHall(hall, w, now(), 0);
     if (w.k === 'qx' && w.m && w.m !== 'left') say(ARENA_NO_TEXT[w.m] ?? w.m);
     if (w.k === 'of') say(O.offerLine(w.vs.n, w.vs.r ?? '?'));
-    if (w.k === 'go') goTo({ o: w.o, kind: 'pvp', side: w.side, vs: w.vs, casual: w.u === 1 });   // ARENA4b: a casual bout's call
+    if (w.k === 'go') goTo({ o: w.o, kind: 'pvp', side: w.side, vs: w.vs, casual: w.u === 1 }); // ARENA4b: a casual bout's call
   }
-  const hallSend = (w) => { const l = wantHall(); return !!l && l.sendArena?.(w) === true; };
+  const hallSend = (w) => {
+    const l = wantHall();
+    return !!l && l.sendArena?.(w) === true;
+  };
   function closeHallIfIdle(t) {
     if (!hallLink) return;
     const seeking = hall.queue === 'queued' || hall.queue === 'offer';
-    if (!seeking && t - hallWantedAt > HALL_IDLE_MS) { try { hallLink.leave?.(); } catch { /* gone */ } hallLink = null; hall = { ...HALL_EMPTY }; }
+    if (!seeking && t - hallWantedAt > HALL_IDLE_MS) {
+      try {
+        hallLink.leave?.();
+      } catch {
+        /* gone */
+      }
+      hallLink = null;
+      hall = { ...HALL_EMPTY };
+    }
   }
   /** AUDIT PRE-MERGE 1003 O5: MY LAST QUEUE WORD (its `u` and banner with it) and whether the hall's socket standing now
    *  has heard it. The relay takes an account out of its queue as its hall socket closes (server/src/index.js
@@ -198,23 +244,46 @@ export function createArenaOnline(deps) {
   let hallQ = null;
   function hallRequeue() {
     if (!hallLink || !hallQ) return;
-    if (hallLink.status !== 'open') { hallQ.sent = false; return; }
+    if (hallLink.status !== 'open') {
+      hallQ.sent = false;
+      return;
+    }
     if (hallQ.sent || (hall.queue !== 'queued' && hall.queue !== 'offer')) return;
     hallQ.sent = hallLink.sendArena?.(hallQ.w) === true;
-    if (hallQ.sent && hall.queue === 'offer') hall = { ...hall, queue: 'queued', offer: null };   // the offer went with the old socket
+    if (hallQ.sent && hall.queue === 'offer') hall = { ...hall, queue: 'queued', offer: null }; // the offer went with the old socket
   }
 
   // ── THE BOARD ──
   /** The board asked of the service (`force` - now, else when stale). ARENA4b: a forced ask while one is out is asked
    *  again when it returns (the one out may have left before the write it must show), and `fetchBoard` waits for it. */
-  let boardWait = null, boardTriedAt = -Infinity;
+  let boardWait = null,
+    boardTriedAt = -Infinity;
   function askBoard(force = false) {
-    if (boardAsking) { if (force) boardAgain = true; return boardWait; }
-    if (!force && now() - Math.max(boardAt, boardTriedAt) < BOARD_STALE_MS) return null;   // ARENA4b: a failed ask waits too
+    if (boardAsking) {
+      if (force) boardAgain = true;
+      return boardWait;
+    }
+    if (!force && now() - Math.max(boardAt, boardTriedAt) < BOARD_STALE_MS) return null; // ARENA4b: a failed ask waits too
     boardAsking = true;
     boardTriedAt = now();
-    boardWait = Promise.resolve().then(() => deps.account.board()).then((r) => { if (r?.ok && r.data) { board = r.data; boardAt = now(); } }, () => {})
-      .finally(() => { boardAsking = false; if (boardAgain) { boardAgain = false; askBoard(true); } })
+    boardWait = Promise.resolve()
+      .then(() => deps.account.board())
+      .then(
+        (r) => {
+          if (r?.ok && r.data) {
+            board = r.data;
+            boardAt = now();
+          }
+        },
+        () => {},
+      )
+      .finally(() => {
+        boardAsking = false;
+        if (boardAgain) {
+          boardAgain = false;
+          askBoard(true);
+        }
+      })
       .then(() => board);
     return boardWait;
   }
@@ -235,10 +304,12 @@ export function createArenaOnline(deps) {
     const d = a?.ok ? a.data : null;
     if (d?.ladder && board?.me) board = { ...board, me: { ...board.me, ladder: d.ladder } };
     let won = null;
-    if (d?.recorded === true) won = d.won === true && d.repeat !== true;   // AUDIT ARENA-LADDER 2: a step won again pays no purse
-    else if (d?.why === 'claimed') won = c.r === 1;   // kept before: the receipt's own result (a ladder receipt's r 1 is a win)
-    else if (arenaClaimVerdict(a) === 'done' || d?.why === 'guest') won = false;   // out of the climb's order, a guest's, a receipt refused for good
-    if (d?.recorded === false && (d.why === 'order' || d.why === 'reused' || d.why === 'forfeit')) say(O[d.why]);   // AUDIT PRE-MERGE 1003 S4: a reused bout's own words - and, never `claimed`, no purse; AUDIT ARENA-LADDER: a forfeit's
+    if (d?.recorded === true)
+      won = d.won === true && d.repeat !== true; // AUDIT ARENA-LADDER 2: a step won again pays no purse
+    else if (d?.why === 'claimed')
+      won = c.r === 1; // kept before: the receipt's own result (a ladder receipt's r 1 is a win)
+    else if (arenaClaimVerdict(a) === 'done' || d?.why === 'guest') won = false; // out of the climb's order, a guest's, a receipt refused for good
+    if (d?.recorded === false && (d.why === 'order' || d.why === 'reused' || d.why === 'forfeit')) say(O[d.why]); // AUDIT PRE-MERGE 1003 S4: a reused bout's own words - and, never `claimed`, no purse; AUDIT ARENA-LADDER: a forfeit's
     if (won === null) return;
     const e = owed.get(c.j) ?? { gold: null, pay: null, won: null, at: now() };
     e.won = won;
@@ -248,7 +319,9 @@ export function createArenaOnline(deps) {
   /** ARENA4b: A LADDER WIN'S PURSE, held (relayVerdict's `owe`): paid when the service keeps the win. */
   function owe(o, gold, pay) {
     const e = owed.get(o) ?? { gold: null, pay: null, won: null, at: now() };
-    e.gold = gold; e.pay = pay; e.at = now();
+    e.gold = gold;
+    e.pay = pay;
+    e.at = now();
     owed.set(o, e);
     settleOwed(o);
   }
@@ -272,7 +345,10 @@ export function createArenaOnline(deps) {
    *  ladder win of mine still with the service. */
   function climb() {
     if (!live()) return null;
-    if (!board) { askBoard(true); return null; }
+    if (!board) {
+      askBoard(true);
+      return null;
+    }
     if (climbPending()) return null;
     return board.me?.ladder ?? arenaLadderOf([]);
   }
@@ -280,7 +356,14 @@ export function createArenaOnline(deps) {
   function counted(d) {
     if (d.kind === 'pvp') {
       if (!d.rated) say(O.unrated);
-      else say(d.result === 'won' ? O.pvpWon(d.delta, d.rating) : d.result === 'lost' ? O.pvpLost(-d.delta, d.rating) : O.pvpDraw(d.rating));
+      else
+        say(
+          d.result === 'won'
+            ? O.pvpWon(d.delta, d.rating)
+            : d.result === 'lost'
+              ? O.pvpLost(-d.delta, d.rating)
+              : O.pvpDraw(d.rating),
+        );
     } else if (d.kind === 'ladder') {
       if (d.grand) say(O.grand);
       if (d.points > 0 && d.banner) say(O.points(d.points, ARENA_TEXT.teams.the[d.banner]));
@@ -302,28 +385,60 @@ export function createArenaOnline(deps) {
       if (asking?.hour === b.ex.hour) closeAsk();
       // AUDIT PRE-MERGE 1003 O7: the stands' shout down the bout's room, as a watched bout's (ARENA4b item 5 - a watcher of
       // a relay's bout has two presses; the exhibition's stands drew them and had no door behind them)
-      deps.bouts.ask({ where: 'floor', relayEx: { o: b.o, ex: b.ex, names: deps.names ? deps.names(b.ex.seed) : undefined, send: { cheer: (c) => boutSend({ k: 'ch', c }) } } });
+      deps.bouts.ask({
+        where: 'floor',
+        relayEx: {
+          o: b.o,
+          ex: b.ex,
+          names: deps.names ? deps.names(b.ex.seed) : undefined,
+          send: { cheer: (c) => boutSend({ k: 'ch', c }) },
+        },
+      });
       const ok = await deps.enterFloor('watch', `x${b.ex.hour}`, 0);
-      if (!ok) { bout = null; deps.bouts.dismiss?.(); }
+      if (!ok) {
+        bout = null;
+        deps.bouts.dismiss?.();
+      }
       return ok;
     }
     // ARENA4b: each fighter's banner as the hall billed it - my rival's (its `go`), a watched bout's two (its live entry)
-    const banners = b.kind === 'pvp' ? { [`p${1 - (b.side ?? 0)}`]: b.vs?.b ?? null } : b.kind === 'watch' ? { ...(b.banners ?? {}) } : {};
+    const banners =
+      b.kind === 'pvp'
+        ? { [`p${1 - (b.side ?? 0)}`]: b.vs?.b ?? null }
+        : b.kind === 'watch'
+          ? { ...(b.banners ?? {}) }
+          : {};
     deps.bouts.ask({
-      where: 'floor', kind: 'relay',
+      where: 'floor',
+      kind: 'relay',
       relay: {
-        o: b.o, kind: b.kind === 'pvp' ? 'pvp' : b.kind === 'watch' ? (b.watchKind ?? 'pvp') : 'pve', me, next: b.next ?? null,
-        casual: !!b.casual,   // AUDIT PRE-MERGE 1003b S6: the Herald calls a casual bout as one
+        o: b.o,
+        kind: b.kind === 'pvp' ? 'pvp' : b.kind === 'watch' ? (b.watchKind ?? 'pvp') : 'pve',
+        me,
+        next: b.next ?? null,
+        casual: !!b.casual, // AUDIT PRE-MERGE 1003b S6: the Herald calls a casual bout as one
         names: deps.names ? deps.names(arenaBoutSeed(b.o)) : undefined,
-        send: { hit: (w) => boutSend({ ...w, k: 'hit' }), yield: () => boutSend({ k: 'yd' }), cheer: (c) => boutSend({ k: 'ch', c }) },   // ARENA4b: the stands' shout
-        struck: (d) => deps.struck?.(d), myHealth: (hp, max) => deps.myHealth?.(hp, max),
-        onEnd: () => { if (b.casual) say(O.casualEnd); askBoard(true); },   // ARENA4b: a casual bout owes no receipt - its end says so
-        banners, owe: (gold, pay) => owe(b.o, gold, pay),   // ARENA4b: a ladder win's purse waits on the service's word
+        send: {
+          hit: (w) => boutSend({ ...w, k: 'hit' }),
+          yield: () => boutSend({ k: 'yd' }),
+          cheer: (c) => boutSend({ k: 'ch', c }),
+        }, // ARENA4b: the stands' shout
+        struck: (d) => deps.struck?.(d),
+        myHealth: (hp, max) => deps.myHealth?.(hp, max),
+        onEnd: () => {
+          if (b.casual) say(O.casualEnd);
+          askBoard(true);
+        }, // ARENA4b: a casual bout owes no receipt - its end says so
+        banners,
+        owe: (gold, pay) => owe(b.o, gold, pay), // ARENA4b: a ladder win's purse waits on the service's word
       },
     });
     const kind = b.kind === 'watch' ? 'watch' : b.kind === 'pvp' && b.side === 1 ? 'rival' : 'ladder';
     const ok = await deps.enterFloor(kind, b.o, b.side ?? 0);
-    if (!ok) { bout = null; deps.bouts.dismiss?.(); }
+    if (!ok) {
+      bout = null;
+      deps.bouts.dismiss?.();
+    }
     return ok;
   }
   /** A word down the bout room's socket (the presence session's own room). */
@@ -341,28 +456,50 @@ export function createArenaOnline(deps) {
   }
   /** A word from the bout's room. */
   function word(w, room) {
-    if (sess && room === sess.room && sessionWord(w)) return true;   // ARENA6: the session's own words
+    if (sess && room === sess.room && sessionWord(w)) return true; // ARENA6: the session's own words
     if (!bout || room !== bout.room) return false;
-    if (w.k === 'rc') { claims.add(w.r); return true; }
+    if (w.k === 'rc') {
+      claims.add(w.r);
+      return true;
+    }
     // AUDIT PRE-MERGE 1003 O2: the relay has no more of this bout (`no bout` - done, or gone from its room; `void` - a
     // fighter never came): its line said and the bout let go. It was only said: the mirror stood in its last phase for
     // ever - a fighter held 14 m from the centre, the gate at 18.6, and every online door refusing "You are in a bout"
-    const over = w.k === 'no' && (w.m === 'no bout' || w.m === 'void' || w.m === 'no contest');   // AUDIT PRE-MERGE 1003b S9: both gone, no contest
+    const over = w.k === 'no' && (w.m === 'no bout' || w.m === 'void' || w.m === 'no contest'); // AUDIT PRE-MERGE 1003b S9: both gone, no contest
     if (bout.ex) {
       // ARENA4b: the hour's exhibition from the stands - its verdict kept for the book, its refusal said
       heardEx(bout.ex.hour, w);
-      if (w.k === 'no') { say(ARENA_NO_TEXT[w.m] ?? w.m); if (over) endBout(); return true; }
+      if (w.k === 'no') {
+        say(ARENA_NO_TEXT[w.m] ?? w.m);
+        if (over) endBout();
+        return true;
+      }
       return deps.bouts.exhibitionWord?.(w) ?? false;
     }
-    if (w.k === 'no') { say(w.m === 'early' ? ARENA_TEXT.refuse.yieldEarly : ARENA_NO_TEXT[w.m] ?? w.m); if (over) { if (bout.priv) letGoPriv(true); else endBout(); } return true; }   // AUDIT PRE-MERGE 1003b C1: a session's fighter back to the stands
+    if (w.k === 'no') {
+      say(w.m === 'early' ? ARENA_TEXT.refuse.yieldEarly : (ARENA_NO_TEXT[w.m] ?? w.m));
+      if (over) {
+        if (bout.priv) letGoPriv(true);
+        else endBout();
+      }
+      return true;
+    } // AUDIT PRE-MERGE 1003b C1: a session's fighter back to the stands
     if (w.k === 'st' && bout.kind === 'watch' && !bout.watchKind) bout.watchKind = w.kind;
     return deps.bouts.relayWord?.(w) ?? false;
   }
   /** A blow of mine on one of the relay's fighters (the dungeon's own lane, `onFoeHit` for its puppet - scenes/arena/arenaBouts.js
    *  ARENA_PUPPET_OWNER), or on my opponent's body (`i` its fighter id): the claim out to the referee. */
   function hit({ i, d, kind = 'melee', w = -1, m = 0, q = null }) {
-    if (bout?.kind === 'watch') return false;   // ARENA4b: the stands strike nobody - the relay would junk the word
-    return boutSend({ k: 'hit', i, d: Math.max(0, Math.round(Number(d) || 0)), r: hitKindOf(kind), ...(Number.isInteger(w) && w >= -1 ? { w } : {}), ...(Number.isInteger(m) && m >= 0 && m <= 15 ? { m } : {}), ...(Number.isInteger(q) ? { q } : {}) });
+    if (bout?.kind === 'watch') return false; // ARENA4b: the stands strike nobody - the relay would junk the word
+    return boutSend({
+      k: 'hit',
+      i,
+      d: Math.max(0, Math.round(Number(d) || 0)),
+      r: hitKindOf(kind),
+      ...(Number.isInteger(w) && w >= -1 ? { w } : {}),
+      ...(Number.isInteger(m) && m >= 0 && m <= 15 ? { m } : {}),
+      ...(Number.isInteger(q) ? { q } : {}),
+    });
   }
 
   // ── ARENA4b: THE HOUR'S EXHIBITION, THE RELAY'S ──
@@ -371,7 +508,13 @@ export function createArenaOnline(deps) {
    *  serves both, and an older relay (or none) leaves every host its own seeded exhibition. */
   const exhibitions = () => live();
   /** The bout the floor's instance watches the hour's exhibition by (goTo): its id, its room, the hour's exhibition. */
-  const exhibitionBout = (ex) => ({ o: exhibitionBoutId(ex.hour), room: arenaExhibitionRoom(ex.hour), kind: 'watch', watchKind: 'ex', ex });
+  const exhibitionBout = (ex) => ({
+    o: exhibitionBoutId(ex.hour),
+    room: arenaExhibitionRoom(ex.hour),
+    kind: 'watch',
+    watchKind: 'ex',
+    ex,
+  });
   /** An exhibition on the hall's list, named as every screen names it - off its hour (the relay knows no names): the
    *  Red's fighter against the Blue's, each under the banner the relay bills its side by (ARENA_EX_BANNERS before it).
    *  Any other entry as it came. */
@@ -379,17 +522,27 @@ export function createArenaOnline(deps) {
     if (e?.kind !== 'ex') return e;
     const ex = exhibitionFor(e.h * 60);
     const nm = ex && deps.names ? deps.names(ex.seed) : null;
-    const bill = (i, side) => ({ n: (ex && nm ? nm(i, ex.opponents[i].mobile)?.name : null) || ARENA_TEXT.window.fighter, b: side?.b ?? ARENA_EX_BANNERS[i] });
+    const bill = (i, side) => ({
+      n: (ex && nm ? nm(i, ex.opponents[i].mobile)?.name : null) || ARENA_TEXT.window.fighter,
+      b: side?.b ?? ARENA_EX_BANNERS[i],
+    });
     return { ...e, a: bill(0, e.a), b: bill(1, e.b) };
   }
   /** ARENA4b: MY BANNER as my queue and ladder words claim it - the account's (the board's `me`), none before the board
    *  is heard: a pennant on my bill for my rival and the stands, cosmetic (net/arena/arenaLaw.js bannerClaim). */
-  const myBanner = () => { const b = bannerClaim(board?.me?.banner); return b ? { b } : {}; };
+  const myBanner = () => {
+    const b = bannerClaim(board?.me?.banner);
+    return b ? { b } : {};
+  };
   /** What an exhibition's word says of its end, kept for the book: the relay's verdict, or that its room had no bout.
    *  AUDIT PRE-MERGE 1003 O3: and that its fight has begun - an `st` past the count, an `ev` from the fight on. */
   function heardEx(hour, w) {
-    if (w?.k === 'no' && w.m === 'no bout') { if (!exSeen.has(hour)) exSeen.set(hour, { none: true }); return; }
-    if ((w?.k === 'st' && FOUGHT.has(w.ph)) || (w?.k === 'ev' && (w.e ?? []).some((e) => FOUGHT.has(e.k)))) exBegun.add(hour);
+    if (w?.k === 'no' && w.m === 'no bout') {
+      if (!exSeen.has(hour)) exSeen.set(hour, { none: true });
+      return;
+    }
+    if ((w?.k === 'st' && FOUGHT.has(w.ph)) || (w?.k === 'ev' && (w.e ?? []).some((e) => FOUGHT.has(e.k))))
+      exBegun.add(hour);
     const v = verdictOfWord(w);
     if (v) exSeen.set(hour, v);
   }
@@ -413,13 +566,27 @@ export function createArenaOnline(deps) {
     const link = deps.makeHall?.() ?? null;
     if (!link) return false;
     const room = arenaExhibitionRoom(ex.hour);
-    const C = city = { hour: ex.hour, o: exhibitionBoutId(ex.hour), room, link, sent: false, heard: false, started: false, at: now() };
-    link.onArena = (w, r) => { if (city === C && r === room) cityWord(C, w); };
+    const C = (city = {
+      hour: ex.hour,
+      o: exhibitionBoutId(ex.hour),
+      room,
+      link,
+      sent: false,
+      heard: false,
+      started: false,
+      at: now(),
+    });
+    link.onArena = (w, r) => {
+      if (city === C && r === room) cityWord(C, w);
+    };
     link.join?.(room);
     // AUDIT PRE-MERGE 1003 O7: the stands' shout down this socket - once its `in` has taken my seat (the relay junks a
     // shout from a socket with none)
     const cheer = (c) => city === C && C.sent && C.link.sendArena?.({ k: 'ch', c }) === true;
-    deps.bouts.ask({ where: 'city', relayEx: { o: C.o, ex, names: deps.names ? deps.names(ex.seed) : undefined, send: { cheer } } });
+    deps.bouts.ask({
+      where: 'city',
+      relayEx: { o: C.o, ex, names: deps.names ? deps.names(ex.seed) : undefined, send: { cheer } },
+    });
     return true;
   }
   /** A word from the city's exhibition's room: its end kept, a refusal letting the sand go, the rest the bout's. */
@@ -437,12 +604,19 @@ export function createArenaOnline(deps) {
   }
   function closeCity() {
     if (!city) return;
-    try { city.link.leave?.(); } catch { /* gone */ }
+    try {
+      city.link.leave?.();
+    } catch {
+      /* gone */
+    }
     city = null;
   }
   /** THE HERALD'S WATCH ONLINE: the floor's instance as the hour's exhibition's room, the relay's bout from its stands. */
   function watchExhibition(ex) {
-    if (!live()) { if (waiting()) say(shutText(O.hallWait)); return false; }   // ARENA-WAIT: the relay's bout, waited for - never this screen's own
+    if (!live()) {
+      if (waiting()) say(shutText(O.hallWait));
+      return false;
+    } // ARENA-WAIT: the relay's bout, waited for - never this screen's own
     if (!ex || bout || deps.inBout?.()) return false;
     void goTo(exhibitionBout(ex));
     return true;
@@ -462,19 +636,36 @@ export function createArenaOnline(deps) {
   }
   function askVerdict(hour) {
     const t = now();
-    if (!live() || asking || city?.hour === hour || bout?.ex?.hour === hour || t - (askedAt.get(hour) ?? -Infinity) < EX_RETRY_MS) return;
+    if (
+      !live() ||
+      asking ||
+      city?.hour === hour ||
+      bout?.ex?.hour === hour ||
+      t - (askedAt.get(hour) ?? -Infinity) < EX_RETRY_MS
+    )
+      return;
     const link = deps.makeHall?.() ?? null;
     if (!link) return;
     askedAt.set(hour, t);
     const room = arenaExhibitionRoom(hour);
-    const A = asking = { hour, room, link, sent: false, at: t };
+    const A = (asking = { hour, room, link, sent: false, at: t });
     // its answer settles the book at once (the host's `verdictHeard` - scenes/arena/arenaGate.js settle), not at the next visit
-    link.onArena = (w, r) => { if (asking === A && r === room) { heardEx(hour, w); if (exSeen.has(hour) || w.k === 'no') closeAsk(); if (exSeen.has(hour)) deps.verdictHeard?.(); } };
+    link.onArena = (w, r) => {
+      if (asking === A && r === room) {
+        heardEx(hour, w);
+        if (exSeen.has(hour) || w.k === 'no') closeAsk();
+        if (exSeen.has(hour)) deps.verdictHeard?.();
+      }
+    };
     link.join?.(room);
   }
   function closeAsk() {
     if (!asking) return;
-    try { asking.link.leave?.(); } catch { /* gone */ }
+    try {
+      asking.link.leave?.();
+    } catch {
+      /* gone */
+    }
     asking = null;
   }
   /** The exhibitions' sockets, a frame: each says its `in` once it stands in its room; the city's goes with the bout it
@@ -488,12 +679,14 @@ export function createArenaOnline(deps) {
     for (const L of [city, asking]) {
       if (!L) continue;
       const l = L.link;
-      if (l.status === 'open' && l.room === L.room) { if (!L.sent) L.sent = l.sendArena?.({ k: 'in', r: 's' }) === true; }
-      else L.sent = false;
+      if (l.status === 'open' && l.room === L.room) {
+        if (!L.sent) L.sent = l.sendArena?.({ k: 'in', r: 's' }) === true;
+      } else L.sent = false;
     }
     if (city && !city.heard && t - city.at > EX_WAIT_MS) {
       const o = city.o;
-      closeCity(); cityRetryAt = t + EX_RETRY_MS;
+      closeCity();
+      cityRetryAt = t + EX_RETRY_MS;
       if (deps.bouts.relay?.()?.o === o) deps.bouts.dismiss?.();
     }
     if (asking && t - asking.at > EX_WAIT_MS) closeAsk();
@@ -511,9 +704,28 @@ export function createArenaOnline(deps) {
   /** The session words that end it here: its room's answer that there is none, or that I may not stay (AUDIT PRE-MERGE
    *  1003b C6/S5: a full session's, and a locked one's - a newcomer refused stood on in the floor, holding a session it
    *  was not in, its join never said again). */
-  const SESSION_ENDS = new Set(['closed', 'ended', 'removed', 'no session', 'taken', 'host guest', 'session full', 'locked']);
+  const SESSION_ENDS = new Set([
+    'closed',
+    'ended',
+    'removed',
+    'no session',
+    'taken',
+    'host guest',
+    'session full',
+    'locked',
+  ]);
   /** The session words that are only said: a host's press refused, a bout ended with no result. */
-  const SESSION_SAYS = new Set(['host only', 'not member', 'not here', 'guest fighter', 'same fighter', 'bout on', 'no picks', 'voided', 'has result']);
+  const SESSION_SAYS = new Set([
+    'host only',
+    'not member',
+    'not here',
+    'guest fighter',
+    'same fighter',
+    'bout on',
+    'no picks',
+    'voided',
+    'has result',
+  ]);
   /** AUDIT PRE-MERGE 1003b U3/U8/C8: THE SESSION'S LAST WORD, KEPT FOR THE WINDOW - every refusal and end went to the chat
    *  alone, under the window and out of a screen reader's hearing, the press itself answered as done; and a session left
    *  (a host who stepped out of the floor, a wrong code) left nothing on the card: `{ text, code, back }` - `back` a code
@@ -531,7 +743,11 @@ export function createArenaOnline(deps) {
     say(O.privEntering(code));
     const ok = await deps.enterFloor('watch', `p${code}`, 0);
     // the floor's door refused (indoors, or down - scenes/worldModes.js enterArenaFloor): said, never a silent press
-    if (!ok && sess?.code === code) { sess = null; say(O.privOutdoors); sessLast = { text: O.privOutdoors, code, back: false }; }
+    if (!ok && sess?.code === code) {
+      sess = null;
+      say(O.privOutdoors);
+      sessLast = { text: O.privOutdoors, code, back: false };
+    }
     return ok;
   }
   /** A session word down its room's socket (the presence session's own). */
@@ -543,7 +759,7 @@ export function createArenaOnline(deps) {
    *  removed, or I asked to go: its gates' way out, scenes/worldModes.js leaveArenaFloor). */
   function leaveSession(leave, text = '') {
     if (bout?.priv) letGoPriv(false);
-    if (sess) sessLast = { text, code: sess.code, back: !leave };   // AUDIT PRE-MERGE 1003b C8: a session stepped out of may be rejoined
+    if (sess) sessLast = { text, code: sess.code, back: !leave }; // AUDIT PRE-MERGE 1003b C8: a session stepped out of may be rejoined
     if (leave && sess) sessLeftRoom = sess.room;
     sess = null;
     if (leave) deps.leaveFloor?.();
@@ -558,7 +774,10 @@ export function createArenaOnline(deps) {
     endBout();
     if (!fought) return;
     deps.heal?.();
-    if (stay) { deps.standOnMark?.('watch'); say(O.privToStands); }
+    if (stay) {
+      deps.standOnMark?.('watch');
+      say(O.privToStands);
+    }
   }
   /**
    * THE SESSION'S WORD (`pss`): kept for the window, and the bout it names stood on this screen - mine to fight when my
@@ -568,43 +787,95 @@ export function createArenaOnline(deps) {
    */
   function sessionState(w) {
     sess.state = w;
-    if (!sess.said) { sess.said = true; say(w.h === 1 ? O.privHereHost(sess.code) : O.privHereJoined(sess.code, Math.max(0, (Array.isArray(w.m) ? w.m.length : 1) - 1))); } if (bout?.priv && bout.o !== w.o) letGoPriv(true);   // HOTFIX 1003e: the session's first word said - a joiner saw an empty arena (HOTFIX 1003f: its stands are drawn now)
+    if (!sess.said) {
+      sess.said = true;
+      say(
+        w.h === 1
+          ? O.privHereHost(sess.code)
+          : O.privHereJoined(sess.code, Math.max(0, (Array.isArray(w.m) ? w.m.length : 1) - 1)),
+      );
+    }
+    if (bout?.priv && bout.o !== w.o) letGoPriv(true); // HOTFIX 1003e: the session's first word said - a joiner saw an empty arena (HOTFIX 1003f: its stands are drawn now)
     if (!w.o || bout?.o === w.o || w.ph === 'done' || w.ph === 'void') return;
     const side = w.f.indexOf(w.me);
-    bout = { o: w.o, room: sess.room, kind: side >= 0 ? 'pvp' : 'watch', watchKind: 'pvp', side: side >= 0 ? side : null, casual: true, priv: true, sent: false, seen: true, at: now(), leftAt: null };
+    bout = {
+      o: w.o,
+      room: sess.room,
+      kind: side >= 0 ? 'pvp' : 'watch',
+      watchKind: 'pvp',
+      side: side >= 0 ? side : null,
+      casual: true,
+      priv: true,
+      sent: false,
+      seen: true,
+      at: now(),
+      leftAt: null,
+    };
     deps.bouts.ask({
-      where: 'floor', kind: 'relay',
+      where: 'floor',
+      kind: 'relay',
       relay: {
-        o: w.o, kind: 'pvp', me: side >= 0 ? `p${side}` : '', next: null,
+        o: w.o,
+        kind: 'pvp',
+        me: side >= 0 ? `p${side}` : '',
+        next: null,
         names: deps.names ? deps.names(arenaBoutSeed(w.o)) : undefined,
-        send: { hit: (x) => boutSend({ ...x, k: 'hit' }), yield: () => boutSend({ k: 'yd' }), cheer: (c) => boutSend({ k: 'ch', c }) },
-        struck: (d) => deps.struck?.(d), myHealth: (hp, max) => deps.myHealth?.(hp, max),
+        send: {
+          hit: (x) => boutSend({ ...x, k: 'hit' }),
+          yield: () => boutSend({ k: 'yd' }),
+          cheer: (c) => boutSend({ k: 'ch', c }),
+        },
+        struck: (d) => deps.struck?.(d),
+        myHealth: (hp, max) => deps.myHealth?.(hp, max),
         onEnd: () => say(O.casualEnd),
-        casual: true,   // AUDIT PRE-MERGE 1003b S6: called as the casual bout it is
-        banners: { p0: 'red', p1: 'blue' },   // the session's Red and Blue, under their colours on the sand
-        fixed: true,   // AUDIT PRE-MERGE 1003b C4: and only theirs - no realm banner, no realm laurel over a side
-        owe: () => {},   // a casual bout pays nothing
+        casual: true, // AUDIT PRE-MERGE 1003b S6: called as the casual bout it is
+        banners: { p0: 'red', p1: 'blue' }, // the session's Red and Blue, under their colours on the sand
+        fixed: true, // AUDIT PRE-MERGE 1003b C4: and only theirs - no realm banner, no realm laurel over a side
+        owe: () => {}, // a casual bout pays nothing
       },
     });
     // AUDIT PRE-MERGE 1003b C5/U2: a fighter called is out of the window first - the host who picked themselves pressed
     // Start inside it, and the window paused them under it through the call and the count
-    if (side >= 0) { deps.closeWindow?.(); deps.standOnMark?.(side === 1 ? 'rival' : 'ladder'); say(O.privToSand); }
+    if (side >= 0) {
+      deps.closeWindow?.();
+      deps.standOnMark?.(side === 1 ? 'rival' : 'ladder');
+      say(O.privToSand);
+    }
   }
   /** A word from the session's room that is the session's own (its `pss`, its refusals and its end) - true when taken. */
   function sessionWord(w) {
-    if (w.k === 'pss') { sessionState(w); return true; }
+    if (w.k === 'pss') {
+      sessionState(w);
+      return true;
+    }
     if (w.k !== 'no') return false;
     const text = ARENA_NO_TEXT[w.m] ?? w.m;
-    if (SESSION_ENDS.has(w.m)) { say(text); leaveSession(true, text); return true; }
+    if (SESSION_ENDS.has(w.m)) {
+      say(text);
+      leaveSession(true, text);
+      return true;
+    }
     // AUDIT PRE-MERGE 1003b U3: `no bout` with no bout here is the host's press answered (a bout's own `no bout` is its
     // end - the bout's path below); it was dropped without a word
-    if (SESSION_SAYS.has(w.m) || (w.m === 'no bout' && !bout)) { say(text); sess.word = text; return true; }
+    if (SESSION_SAYS.has(w.m) || (w.m === 'no bout' && !bout)) {
+      say(text);
+      sess.word = text;
+      return true;
+    }
     return false;
   }
   /** The session as the window draws it (systems/arena/arenaBoard.js sessionCard), or `{ in: false }` (AUDIT PRE-MERGE 1003b
    *  U3/U8/C8: with the last word said, and a code this screen may rejoin). */
-  const sessionView = () => (sess ? { in: true, code: sess.code, host: sess.state ? sess.state.h === 1 : !!sess.host, state: sess.state, word: sess.word ?? '' }
-    : { in: false, word: sessLast?.text ?? '', back: sessLast?.back ? sessLast.code : '' });
+  const sessionView = () =>
+    sess
+      ? {
+          in: true,
+          code: sess.code,
+          host: sess.state ? sess.state.h === 1 : !!sess.host,
+          state: sess.state,
+          word: sess.word ?? '',
+        }
+      : { in: false, word: sessLast?.text ?? '', back: sessLast?.back ? sessLast.code : '' };
   /** The session's presses (the window's `priv*`): host one or join one, and the host's own - pick, go, void, kick, close
    *  - and leaving it. Answers `{ ok, text }`. */
   function sessionAct(kind, data) {
@@ -614,10 +885,12 @@ export function createArenaOnline(deps) {
       if (deps.signedIn?.() === false || deps.session?.()?.status !== 'open') return { ok: false, text: O.privSignIn };
       if (sess) return { ok: false, text: O.privIn };
       if (bout || deps.inBout?.()) return { ok: false, text: O.whyBusy };
-      if (hall.queue === 'queued' || hall.queue === 'offer') return { ok: false, text: O.privQueued };   // AUDIT PRE-MERGE 1003b U7: said as what it is
+      if (hall.queue === 'queued' || hall.queue === 'offer') return { ok: false, text: O.privQueued }; // AUDIT PRE-MERGE 1003b U7: said as what it is
       if (kind === 'privHost') {
         if (deps.guest?.()) return { ok: false, text: ARENA_NO_TEXT['host guest'] };
-        const code = arenaPrivateCode((n) => (deps.rand ?? ((k) => globalThis.crypto.getRandomValues(new Uint8Array(k))))(n));
+        const code = arenaPrivateCode((n) =>
+          (deps.rand ?? ((k) => globalThis.crypto.getRandomValues(new Uint8Array(k))))(n),
+        );
         void enterSession(code, true);
         return { ok: true, text: '' };
       }
@@ -633,11 +906,26 @@ export function createArenaOnline(deps) {
       return { ok: true, text: '' };
     }
     if (sess.state?.h !== 1) return { ok: false, text: ARENA_NO_TEXT['host only'] };
-    sess.word = '';   // AUDIT PRE-MERGE 1003b U3: a new press, a new answer
-    const w = kind === 'privPick' ? { k: 'ps', a: 'pick', ...(typeof data.r === 'string' ? { r: data.r } : {}), ...(typeof data.b === 'string' ? { b: data.b } : {}) }
-      : kind === 'privKick' ? { k: 'ps', a: 'kick', m: String(data.m ?? '') }
-        : kind === 'privGo' ? { k: 'ps', a: 'go' } : kind === 'privVoid' ? { k: 'ps', a: 'void' } : kind === 'privClose' ? { k: 'ps', a: 'close' }
-          : kind === 'privLock' ? { k: 'ps', a: 'lock', l: data?.l === 0 ? 0 : 1 } : null;   // AUDIT PRE-MERGE 1003b S4: the host's lock
+    sess.word = ''; // AUDIT PRE-MERGE 1003b U3: a new press, a new answer
+    const w =
+      kind === 'privPick'
+        ? {
+            k: 'ps',
+            a: 'pick',
+            ...(typeof data.r === 'string' ? { r: data.r } : {}),
+            ...(typeof data.b === 'string' ? { b: data.b } : {}),
+          }
+        : kind === 'privKick'
+          ? { k: 'ps', a: 'kick', m: String(data.m ?? '') }
+          : kind === 'privGo'
+            ? { k: 'ps', a: 'go' }
+            : kind === 'privVoid'
+              ? { k: 'ps', a: 'void' }
+              : kind === 'privClose'
+                ? { k: 'ps', a: 'close' }
+                : kind === 'privLock'
+                  ? { k: 'ps', a: 'lock', l: data?.l === 0 ? 0 : 1 }
+                  : null; // AUDIT PRE-MERGE 1003b S4: the host's lock
     if (!w) return { ok: false, text: '' };
     return sessSend(w) ? { ok: true, text: '' } : { ok: false, text: O.hallWait };
   }
@@ -652,52 +940,91 @@ export function createArenaOnline(deps) {
     // this screen chose to leave, while it still stands in it on its way out
     if (s?.room !== sessLeftRoom) sessLeftRoom = null;
     if (!sess && s?.status === 'open' && s.room !== sessLeftRoom && arenaPrivateCodeOf(s.room)) {
-      sess = { code: /** @type {string} */ (arenaPrivateCodeOf(s.room)), room: s.room, host: false, sent: false, seen: true, at: t, leftAt: null, state: null };
+      sess = {
+        code: /** @type {string} */ (arenaPrivateCodeOf(s.room)),
+        room: s.room,
+        host: false,
+        sent: false,
+        seen: true,
+        at: t,
+        leftAt: null,
+        state: null,
+      };
     }
     if (!sess) return;
     const inRoom = !!s && s.room === sess.room;
     if (!inRoom || s.status !== 'open') sess.sent = false;
     else if (!sess.sent) {
       const bn = bannerClaim(board?.me?.banner);
-      sess.sent = s.sendArena?.({ k: 'ps', a: sess.host && !sess.state ? 'open' : 'join', ...(bn ? { bn } : {}) }) === true;
+      sess.sent =
+        s.sendArena?.({ k: 'ps', a: sess.host && !sess.state ? 'open' : 'join', ...(bn ? { bn } : {}) }) === true;
     }
-    if (inRoom) { sess.seen = true; sess.leftAt = null; }
-    else if (sess.seen) { if (sess.leftAt == null) sess.leftAt = t; else if (t - sess.leftAt > 5000) leaveSession(false); }
-    else if (t - sess.at > BOUT_ARRIVE_MS) sess = null;
+    if (inRoom) {
+      sess.seen = true;
+      sess.leftAt = null;
+    } else if (sess.seen) {
+      if (sess.leftAt == null) sess.leftAt = t;
+      else if (t - sess.leftAt > 5000) leaveSession(false);
+    } else if (t - sess.at > BOUT_ARRIVE_MS) sess = null;
   }
 
   /** ONE FRAME: the receipts offered when due, the hall kept or let go, my `in` said once I stand in the bout's room. */
   function tick() {
     const t = now();
     claims.tick();
-    sessionTick(t);   // ARENA6
+    sessionTick(t); // ARENA6
     // AUDIT PRE-MERGE 1003 O5: THE ARENA'S OWN SOCKETS ARE TICKED HERE - a presence-less link's retry and heartbeat are its
     // own tick (net/online.js; the chat's links are ticked by the host's chatFrame), and nothing ticked these: a hall
     // socket that dropped never came back, so neither did the queue
-    for (const l of [hallLink, city?.link, asking?.link]) { try { l?.tick?.(); } catch { /* its own trouble */ } }
+    for (const l of [hallLink, city?.link, asking?.link]) {
+      try {
+        l?.tick?.();
+      } catch {
+        /* its own trouble */
+      }
+    }
     hallRequeue();
     closeHallIfIdle(t);
-    if (hallLink && t - liveAskedAt >= LIVE_ASK_MS && t - hallWantedAt < 2000) { liveAskedAt = t; hallSend({ k: 'ls' }); }
+    if (hallLink && t - liveAskedAt >= LIVE_ASK_MS && t - hallWantedAt < 2000) {
+      liveAskedAt = t;
+      hallSend({ k: 'ls' });
+    }
     const s = deps.session?.();
     if (bout && s) {
       const here = s.room === bout.room && s.status === 'open';
       if (!here) bout.sent = false;
-      else if (!bout.sent && (bout.kind !== 'pve' || bout.ticket)) {   // AUDIT ARENA-LADDER: a ladder bout's `in` waits for its ticket
+      else if (!bout.sent && (bout.kind !== 'pve' || bout.ticket)) {
+        // AUDIT ARENA-LADDER: a ladder bout's `in` waits for its ticket
         // ARENA4b: a ladder bout's `in` names my level (believed only from a token before the signed one, held to the
         // tier's cap) and no health - the relay's vitality is the signed character level's (net/arena/arenaLaw.js ladderVitality)
-        const inWord = bout.kind === 'watch' ? { k: 'in', r: 's' }
-          : bout.kind === 'pve' ? { k: 'in', r: 'f', tier: bout.tier, bout: bout.bout, lv: Math.max(1, Math.floor(deps.level?.() ?? 1)), ...myBanner(), ...(bout.ticket ? { z: bout.ticket } : {}) }   // AUDIT ARENA-LADDER: the attempt's ticket
-            : { k: 'in', r: 'f' };
+        const inWord =
+          bout.kind === 'watch'
+            ? { k: 'in', r: 's' }
+            : bout.kind === 'pve'
+              ? {
+                  k: 'in',
+                  r: 'f',
+                  tier: bout.tier,
+                  bout: bout.bout,
+                  lv: Math.max(1, Math.floor(deps.level?.() ?? 1)),
+                  ...myBanner(),
+                  ...(bout.ticket ? { z: bout.ticket } : {}),
+                } // AUDIT ARENA-LADDER: the attempt's ticket
+              : { k: 'in', r: 'f' };
         bout.sent = s.sendArena?.(inWord) === true;
       }
     }
-    exTick(t);   // ARENA4b: the city's exhibition's socket and a verdict asked
+    exTick(t); // ARENA4b: the city's exhibition's socket and a verdict asked
     // the bout let go: left (its room no longer mine for a while after I stood in it), or never reached
     if (bout) {
       const here = !!s && s.room === bout.room;
-      if (here) { bout.seen = true; bout.leftAt = null; }
-      else if (bout.seen && !deps.inBout?.()) { if (bout.leftAt == null) bout.leftAt = t; else if (t - bout.leftAt > 5000) bout = null; }
-      else if (!bout.seen && t - bout.at > BOUT_ARRIVE_MS) bout = null;
+      if (here) {
+        bout.seen = true;
+        bout.leftAt = null;
+      } else if (bout.seen && !deps.inBout?.()) {
+        if (bout.leftAt == null) bout.leftAt = t;
+        else if (t - bout.leftAt > 5000) bout = null;
+      } else if (!bout.seen && t - bout.at > BOUT_ARRIVE_MS) bout = null;
     }
   }
 
@@ -707,12 +1034,20 @@ export function createArenaOnline(deps) {
    *  city's exhibition's and a verdict asked. All let go - the relay takes me out of its queue as the hall's closes - with
    *  the hall's picture, and the bout this screen stood in (its room was the presence session's, left with the seat). */
   function leaveAll() {
-    if (hallLink) { try { hallLink.leave?.(); } catch { /* gone */ } hallLink = null; }
+    if (hallLink) {
+      try {
+        hallLink.leave?.();
+      } catch {
+        /* gone */
+      }
+      hallLink = null;
+    }
     hall = { ...HALL_EMPTY };
     closeCity();
     closeAsk();
-    if (bout?.priv) letGoPriv(false); else endBout();   // AUDIT PRE-MERGE 1003b C2: a session's fighter healed as it goes
-    sess = null;   // ARENA6: its room was the presence session's, left with the seat
+    if (bout?.priv) letGoPriv(false);
+    else endBout(); // AUDIT PRE-MERGE 1003b C2: a session's fighter healed as it goes
+    sess = null; // ARENA6: its room was the presence session's, left with the seat
   }
 
   // ── THE WINDOW ──
@@ -720,30 +1055,62 @@ export function createArenaOnline(deps) {
   function model() {
     // ARENA-WAIT: the window's online half with no board and the hall shut - its pages wait (systems/arena/arenaBoard.js);
     // AUDIT A1/A4: `shutWhy` what its presses say while shut, `away` the seat's words or the server's, said on every page
-    if (!live()) return waiting() ? { board: null, hall: { ...HALL_EMPTY, status: 'off' }, guest: !!deps.guest?.(), busy: false, inSession: false, now: now(), nowS: nowS(), session: null, shutWhy: shutText(O.hallWait), away: shut() === 'wait' ? null : shutText('') } : null;
+    if (!live())
+      return waiting()
+        ? {
+            board: null,
+            hall: { ...HALL_EMPTY, status: 'off' },
+            guest: !!deps.guest?.(),
+            busy: false,
+            inSession: false,
+            now: now(),
+            nowS: nowS(),
+            session: null,
+            shutWhy: shutText(O.hallWait),
+            away: shut() === 'wait' ? null : shutText(''),
+          }
+        : null;
     wantHall();
     askBoard();
-    return { board, hall: { ...hall, status: hallLink?.status === 'open' ? 'open' : 'off' }, guest: !!deps.guest?.(), busy: !!bout || !!deps.inBout?.() || !!sess, inSession: !!sess, now: now(), nowS: nowS(), session: sessionView() };   // ARENA6: in a session the challenge waits (AUDIT PRE-MERGE 1003b U7: and says why)
+    return {
+      board,
+      hall: { ...hall, status: hallLink?.status === 'open' ? 'open' : 'off' },
+      guest: !!deps.guest?.(),
+      busy: !!bout || !!deps.inBout?.() || !!sess,
+      inSession: !!sess,
+      now: now(),
+      nowS: nowS(),
+      session: sessionView(),
+    }; // ARENA6: in a session the challenge waits (AUDIT PRE-MERGE 1003b U7: and says why)
   }
   /** A press in the window that is the arena online's. */
   function act(kind, data = {}) {
-    if (!live()) return { ok: false, text: waiting() ? shutText(O.hallWait) : O.whyOffline };   // ARENA-WAIT
-    if (typeof kind === 'string' && kind.startsWith('priv')) return sessionAct(kind, data);   // ARENA6: a private session's presses
+    if (!live()) return { ok: false, text: waiting() ? shutText(O.hallWait) : O.whyOffline }; // ARENA-WAIT
+    if (typeof kind === 'string' && kind.startsWith('priv')) return sessionAct(kind, data); // ARENA6: a private session's presses
     if (kind === 'queue' || kind === 'casual') {
-      if (sess) return { ok: false, text: O.privIn };   // ARENA6: one place at a time - the session's room is this screen's
+      if (sess) return { ok: false, text: O.privIn }; // ARENA6: one place at a time - the session's room is this screen's
       if (deps.guest?.()) return { ok: false, text: O.whyGuest };
       if (bout || deps.inBout?.()) return { ok: false, text: O.whyBusy };
       // ARENA4b: Casual bout - the same queue word with `u`, paired only with another casual seeker (net/arena/arenaLaw.js pairQueue)
       const casual = kind === 'casual';
-      const q = { k: 'q', lv: Math.max(1, Math.floor(deps.level?.() ?? 1)), ...myBanner(), ...(casual ? { u: 1 } : {}) };
+      const q = {
+        k: 'q',
+        lv: Math.max(1, Math.floor(deps.level?.() ?? 1)),
+        ...myBanner(),
+        ...(casual ? { u: 1 } : {}),
+      };
       // AUDIT PRE-MERGE 1003 O4: online with the hall's socket still opening, the press waits for it - said so, never
       // "Online only" (the window that sends it opened the socket a moment ago)
       if (!hallSend(q)) return { ok: false, text: O.hallWait };
-      hallQ = { w: q, sent: true };   // O5: said again on a hall socket come back while I seek
+      hallQ = { w: q, sent: true }; // O5: said again on a hall socket come back while I seek
       hall = { ...hall, casual };
-      return { ok: true, text: O.queueState.queued };   // ARENA4b: my banner billed to my rival
+      return { ok: true, text: O.queueState.queued }; // ARENA4b: my banner billed to my rival
     }
-    if (kind === 'unqueue') { hallSend({ k: 'x' }); hall = { ...hall, queue: 'idle', offer: null, casual: false }; return { ok: true, text: O.leaveQueue }; }
+    if (kind === 'unqueue') {
+      hallSend({ k: 'x' });
+      hall = { ...hall, queue: 'idle', offer: null, casual: false };
+      return { ok: true, text: O.leaveQueue };
+    }
     if (kind === 'accept' || kind === 'decline') {
       const o = hall.offer?.o;
       if (!o) return { ok: false, text: ARENA_NO_TEXT.lapsed };
@@ -756,8 +1123,18 @@ export function createArenaOnline(deps) {
       if (typeof data.o !== 'string') return { ok: false, text: O.boutOver };
       const entry = hall.live.find((x) => x.o === data.o);
       // ARENA4b: the hour's exhibition on the list is watched as the Herald's Watch watches it - its own room
-      if (entry?.kind === 'ex') { const ex = exhibitionFor(entry.h * 60); if (!ex) return { ok: false, text: O.boutOver }; void goTo(exhibitionBout(ex)); return { ok: true, text: '' }; }
-      void goTo({ o: data.o, kind: 'watch', watchKind: entry?.kind ?? null, banners: { p0: entry?.a?.b ?? null, p1: entry?.b?.b ?? null } });
+      if (entry?.kind === 'ex') {
+        const ex = exhibitionFor(entry.h * 60);
+        if (!ex) return { ok: false, text: O.boutOver };
+        void goTo(exhibitionBout(ex));
+        return { ok: true, text: '' };
+      }
+      void goTo({
+        o: data.o,
+        kind: 'watch',
+        watchKind: entry?.kind ?? null,
+        banners: { p0: entry?.a?.b ?? null, p1: entry?.b?.b ?? null },
+      });
       return { ok: true, text: '' };
     }
     return { ok: false, text: '' };
@@ -765,7 +1142,7 @@ export function createArenaOnline(deps) {
   /** THE LADDER ONLINE: the account's climb (the board's `me`), its next bout fought on the relay. Answers `{ ok, text }`.
    *  ARENA4b: refused with a line until the account's climb is known (`climb`) - never an empty climb's Pit. */
   function fightLadder() {
-    if (!live()) return { ok: false, text: waiting() ? shutText(O.climbWait) : O.whyOffline };   // ARENA-WAIT: never the save's climb
+    if (!live()) return { ok: false, text: waiting() ? shutText(O.climbWait) : O.whyOffline }; // ARENA-WAIT: never the save's climb
     if (bout || deps.inBout?.()) return { ok: false, text: O.whyBusy };
     const L = climb();
     if (!L) return { ok: false, text: O.climbWait };
@@ -774,15 +1151,21 @@ export function createArenaOnline(deps) {
     // floor. The climb waits on a held purse CLIMB_WAIT_MS at most (a loss holds none), and past it the board's climb was
     // still the one before that bout: the floor entered for a stale step, and only there did askTicket's own guard (or
     // the service's `order`, once the flush moved the climb) let the bout go - the player left on an empty floor
-    if (claims.ladderKept?.()) { void claims.flush(); return { ok: false, text: O.stillRecording }; }
+    if (claims.ladderKept?.()) {
+      void claims.flush();
+      return { ok: false, text: O.stillRecording };
+    }
     const next = nextLadderBout(L);
     if (!next) return { ok: false, text: ARENA_TEXT.herald.ladderDone };
-    if (deps.guest?.()) return { ok: false, text: O.guestLadder };   // AUDIT ARENA-LADDER 2: the ladder online takes a registered account
+    if (deps.guest?.()) return { ok: false, text: O.guestLadder }; // AUDIT ARENA-LADDER 2: the ladder online takes a registered account
     // AUDIT ARENA-LADDER 2: the ticket asked once the floor is entered and the bout still mine - an attempt is spent when it is
     // asked (the next forfeits it), so one asked for a bout the floor never held cost the tier's run unfought
     const go = goTo({ o: newBoutId(), kind: 'pve', tier: next.tier, bout: next.bout, next });
     const b = bout;
-    void Promise.resolve(go).then((ok) => { if (ok && bout === b) return askTicket(b); return null; });
+    void Promise.resolve(go).then((ok) => {
+      if (ok && bout === b) return askTicket(b);
+      return null;
+    });
     return { ok: true, text: '' };
   }
   /**
@@ -795,47 +1178,92 @@ export function createArenaOnline(deps) {
     if (!b || b.kind !== 'pve') return;
     // AUDIT ARENA-LADDER 2: every receipt carried and ANSWERED first (a flush already running is waited out), and none of
     // my ticketed ladder receipts still kept - the next attempt forfeits an attempt left open, a win among them too
-    try { await claims.flush(); await claims.idle?.(); } catch { /* carried again later */ }
+    try {
+      await claims.flush();
+      await claims.idle?.();
+    } catch {
+      /* carried again later */
+    }
     if (bout !== b) return;
-    if (claims.ladderKept?.()) { say(O.stillRecording); endBout(); return; }
+    if (claims.ladderKept?.()) {
+      say(O.stillRecording);
+      endBout();
+      return;
+    }
     const r = await Promise.resolve(deps.account.attempt?.(b.tier, b.bout, b.o)).catch(() => null);
     if (bout !== b) return;
     const tk = r?.ok ? r.data?.ticket : null;
-    if (typeof tk === 'string') { b.ticket = tk; return; }
+    if (typeof tk === 'string') {
+      b.ticket = tk;
+      return;
+    }
     // AUDIT ARENA-LADDER 2: a device behind the climb (the service's 409 carries no body here - net/accountClient.js call):
     // the board asked again, and the service's own words said
     if (r && !r.ok && r.error === 'order') askBoard(true);
-    say(r && !r.ok && (r.error === 'order' || r.error === 'ladder-needs-account') ? accountRefusalText(r.error) : O.ticketFail);
+    say(
+      r && !r.ok && (r.error === 'order' || r.error === 'ladder-needs-account')
+        ? accountRefusalText(r.error)
+        : O.ticketFail,
+    );
     endBout();
   }
   /** A banner joined (`'red'`/`'blue'`) or quit (null) on the account: the service's word said when it refuses. ARENA4b:
    *  a guest is told here (a banner takes a registered fighter); a join or quit the service took is the board's at once
    *  (the window opened on its Team page shows it), the board asked again for the rest. */
   async function team(banner) {
-    if (!live()) { if (waiting()) say(shutText(O.climbWait)); return null; }   // ARENA-WAIT: said, never a silent press
-    if (deps.guest?.()) { say(O.guestBanner); return { ok: false, error: 'guest' }; }
+    if (!live()) {
+      if (waiting()) say(shutText(O.climbWait));
+      return null;
+    } // ARENA-WAIT: said, never a silent press
+    if (deps.guest?.()) {
+      say(O.guestBanner);
+      return { ok: false, error: 'guest' };
+    }
     const r = await deps.account.team(banner).catch(() => null);
     if (r && !r.ok && r.error && r.error !== 'no-session') say(accountRefusalText(r.error));
     if (r?.ok && board?.me) {
-      const was = board.me.banner ?? null, worn = r.data?.banner === undefined ? banner : r.data.banner;
-      board = { ...board, me: { ...board.me, banner: worn ?? null, ...(worn === null && was ? { left: was, leftSeason: board.season } : {}) } };
+      const was = board.me.banner ?? null,
+        worn = r.data?.banner === undefined ? banner : r.data.banner;
+      board = {
+        ...board,
+        me: {
+          ...board.me,
+          banner: worn ?? null,
+          ...(worn === null && was ? { left: was, leftSeason: board.season } : {}),
+        },
+      };
     }
     askBoard(true);
     return r;
   }
 
   return {
-    live, model, act, fightLadder, team, word, hit, tick, claims,
-    waiting,   // FIELD BUGS 2026-10-16b ARENA-WAIT: the online lane before the relay's word - every door waits
-    shutText,   // ARENA-WAIT (AUDIT A3/A4): what a shut door says - the seat elsewhere, the server gone, or the wait's own line
-    climb, fetchBoard, realm,   // ARENA4b: the account's climb as Fight reads it, the board waited for, the realm's banners
+    live,
+    model,
+    act,
+    fightLadder,
+    team,
+    word,
+    hit,
+    tick,
+    claims,
+    waiting, // FIELD BUGS 2026-10-16b ARENA-WAIT: the online lane before the relay's word - every door waits
+    shutText, // ARENA-WAIT (AUDIT A3/A4): what a shut door says - the seat elsewhere, the server gone, or the wait's own line
+    climb,
+    fetchBoard,
+    realm, // ARENA4b: the account's climb as Fight reads it, the board waited for, the realm's banners
     /** ARENA4b: the board asked when it is stale (a door that reads it without a press - the pause window's). */
-    refresh: () => { if (live()) askBoard(); },
+    refresh: () => {
+      if (live()) askBoard();
+    },
     /** ARENA4b: is this a guest's session (a banner, a counted bout, need a registered account). */
     guest: () => !!deps.guest?.(),
-    exhibitions, watchCity, watchExhibition, exhibitionVerdict,   // ARENA4b: the hour's exhibition, the relay's
-    exhibitionBegun,   // AUDIT PRE-MERGE 1003 O3: the hour's fight heard begun here - its book shut
-    leaveAll,   // AUDIT PRE-MERGE 1003 O9: the seat given up - the arena's own rooms left
+    exhibitions,
+    watchCity,
+    watchExhibition,
+    exhibitionVerdict, // ARENA4b: the hour's exhibition, the relay's
+    exhibitionBegun, // AUDIT PRE-MERGE 1003 O3: the hour's fight heard begun here - its book shut
+    leaveAll, // AUDIT PRE-MERGE 1003 O9: the seat given up - the arena's own rooms left
     /** ARENA6: the private session this screen stands in (or is going to), or null; and whether there is one. */
     session: () => sess,
     inSession: () => !!sess,

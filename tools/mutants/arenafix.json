@@ -229,8 +229,8 @@
   {
     "name": "ARENAFIX-PRACTICE-LADDER",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "    if (C.practice) {\n      // ARENA-FIX 4",
-    "new": "    if (false) {\n      // ARENA-FIX 4",
+    "old": "    if (C.practice) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/arena/arena_fix.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "ARENAFIX-PRACTICE-LOUD",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "      practice, quiet: practice,",
-    "new": "      practice, quiet: false,",
+    "old": "      quiet: practice,",
+    "new": "      quiet: false,",
     "tests": [
       "test/systems/arena/arena_fix.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "ARENAFIX-PIT-AXIS",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "(ax ? [(x * ax[0] - z * ax[1]) * k, (x * ax[1] + z * ax[0]) * k] : [x * k, z * k])",
-    "new": "[x * k, z * k]",
+    "old": "    const marks = boutMarks(sides, perSide).map((side) =>\n      side.map(([x, z]) => (ax ? [(x * ax[0] - z * ax[1]) * k, (x * ax[1] + z * ax[0]) * k] : [x * k, z * k])),\n    );",
+    "new": "    const marks = boutMarks(sides, perSide).map((side) => side.map(([x, z]) => [x * k, z * k]));",
     "tests": [
       "test/systems/arena/arena_fix.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "ARENAFIX-WALK-NONE",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "        if (f?.ai && !C.relay) walkIn(C, f.id);   // ARENA-FIX 8",
-    "new": "        // ARENA-FIX 8",
+    "old": "        if (f?.ai && !C.relay) walkIn(C, f.id); // ARENA-FIX 8: named, they walk in from their gate (ARENA4: a relay's fighter walks by the relay's word)",
+    "new": "        // ARENA-FIX 8: named, they walk in from their gate (ARENA4: a relay's fighter walks by the relay's word)",
     "tests": [
       "test/systems/arena/arena_fix.test.js"
     ]
@@ -292,8 +292,8 @@
   {
     "name": "ARENAFIX-MISS-UNHEARD",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "    if (!(r.damage > 0)) boutMiss(C.b, { from, now: t });",
-    "new": "    if (!(r.damage > 0)) { /* no miss */ }",
+    "old": "    if (!(r.damage > 0)) boutMiss(C.b, { from, now: t });\n    else {",
+    "new": "    if (!(r.damage > 0)) {\n      /* no miss */\n    } else {",
     "tests": [
       "test/systems/arena/arena_fix.test.js"
     ]
@@ -319,8 +319,8 @@
   {
     "name": "ARENAFIX-CRIT-APPROX",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "    if (r && t - r.at <= RESOLUTION_MS) { C.lastBlow.delete(to); return r.critical; }",
-    "new": "    if (r && t - r.at <= RESOLUTION_MS) { C.lastBlow.delete(to); }",
+    "old": "      return r.critical;\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/arena/arena_fix.test.js"
     ]

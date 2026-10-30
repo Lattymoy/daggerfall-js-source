@@ -235,8 +235,8 @@
   {
     "name": "RPT1026-QUESTS-ARENA-ORDER-guard-dropped",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "    if (claims.ladderKept?.()) { void claims.flush(); return { ok: false, text: O.stillRecording }; }\n",
-    "new": "",
+    "old": "    if (claims.ladderKept?.()) {\n      void claims.flush();\n      return { ok: false, text: O.stillRecording };\n    }\n    const next = nextLadderBout(L);",
+    "new": "    const next = nextLadderBout(L);",
     "tests": [
       "test/systems/quest/rpt1026_quests.test.js"
     ],
@@ -245,8 +245,8 @@
   {
     "name": "RPT1026-QUESTS-ARENA-ORDER-no-flush",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "{ void claims.flush(); return { ok: false, text: O.stillRecording }; }",
-    "new": "{ return { ok: false, text: O.stillRecording }; }",
+    "old": "      void claims.flush();\n      return { ok: false, text: O.stillRecording };",
+    "new": "      return { ok: false, text: O.stillRecording };",
     "tests": [
       "test/systems/quest/rpt1026_quests.test.js"
     ],

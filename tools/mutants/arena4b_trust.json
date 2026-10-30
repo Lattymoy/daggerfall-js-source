@@ -147,8 +147,8 @@
   {
     "name": "ARENA4b-TRUST-IN-HEALTH",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "lv: Math.max(1, Math.floor(deps.level?.() ?? 1)), ...myBanner(), ...(bout.ticket",
-    "new": "lv: Math.max(1, Math.floor(deps.level?.() ?? 1)), mh: Math.max(1, Math.floor(deps.maxHealth?.() ?? 1)), ...myBanner(), ...(bout.ticket",
+    "old": "                  ...myBanner(),",
+    "new": "                  mh: Math.max(1, Math.floor(deps.maxHealth?.() ?? 1)),\n                  ...myBanner(),",
     "tests": [
       "test/net/arena/arena4b_trust.test.js"
     ]

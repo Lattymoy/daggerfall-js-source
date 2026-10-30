@@ -137,8 +137,8 @@
   {
     "name": "ARENA6-CLIENT-WORD-UNSAID",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "    else if (!sess.sent) {\n      const bn = bannerClaim",
-    "new": "    else if (false) {\n      const bn = bannerClaim",
+    "old": "    else if (!sess.sent) {",
+    "new": "    else if (false) {",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "ARENA6-CLIENT-STATE-UNKEPT",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "    sess.state = w;\n",
-    "new": "    void w;\n",
+    "old": "    sess.state = w;",
+    "new": "    void w;",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "ARENA6-CLIENT-FIGHTER-IN-STANDS",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "deps.closeWindow?.(); deps.standOnMark?.(side === 1 ? 'rival' : 'ladder'); say(O.privToSand); }",
-    "new": "deps.closeWindow?.(); }",
+    "old": "      deps.standOnMark?.(side === 1 ? 'rival' : 'ladder');\n      say(O.privToSand);\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "ARENA6-CLIENT-LEFT-ON-SAND",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "    if (stay) { deps.standOnMark?.('watch'); say(O.privToStands); }\n",
-    "new": "",
+    "old": "    if (stay) {\n      deps.standOnMark?.('watch');\n      say(O.privToStands);\n    }\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "ARENA6-CLIENT-END-STAYS",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "if (SESSION_ENDS.has(w.m)) { say(text); leaveSession(true, text); return true; }",
-    "new": "if (SESSION_ENDS.has(w.m)) { say(text); leaveSession(false, text); return true; }",
+    "old": "      leaveSession(true, text);",
+    "new": "      leaveSession(false, text);",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "ARENA6-CLIENT-GUEST-HOSTS",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "        if (deps.guest?.()) return { ok: false, text: ARENA_NO_TEXT['host guest'] };\n",
-    "new": "",
+    "old": "        if (deps.guest?.()) return { ok: false, text: ARENA_NO_TEXT['host guest'] };\n        const code = arenaPrivateCode((n) =>",
+    "new": "        const code = arenaPrivateCode((n) =>",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "ARENA6-CLIENT-QUEUE-IN-SESSION",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "      if (sess) return { ok: false, text: O.privIn };   // ARENA6: one place at a time",
-    "new": "      if (false) return { ok: false, text: O.privIn };   // ARENA6: one place at a time",
+    "old": "      if (sess) return { ok: false, text: O.privIn }; // ARENA6: one place at a time - the session's room is this screen's",
+    "new": "      if (false) return { ok: false, text: O.privIn }; // ARENA6: one place at a time - the session's room is this screen's",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "ARENA6-CLIENT-BAD-CODE-SENT",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "      if (!ARENA_PRIVATE_CODE_RE.test(code)) return { ok: false, text: O.privBadCode };\n",
-    "new": "",
+    "old": "      if (!ARENA_PRIVATE_CODE_RE.test(code)) return { ok: false, text: O.privBadCode };\n      void enterSession(code, false);",
+    "new": "      void enterSession(code, false);",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "ARENA6-GATE-NO-PRIV",
     "file": "src/scenes/arena/arenaGate.js",
-    "old": "    if (typeof kind === 'string' && kind.startsWith('priv')) return online()?.act(kind, data)",
-    "new": "    if (false) return online()?.act(kind, data)",
+    "old": "    if (typeof kind === 'string' && kind.startsWith('priv'))\n      return online()?.act(kind, data) ?? { ok: false, text: ARENA_TEXT.online.whyOffline };",
+    "new": "    if (false) return online()?.act(kind, data) ?? { ok: false, text: ARENA_TEXT.online.whyOffline };",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "ARENA6-CLIENT-OUTDOORS-UNSAID",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "{ sess = null; say(O.privOutdoors); sessLast",
-    "new": "{ sess = null; sessLast",
+    "old": "      say(O.privOutdoors);\n      sessLast = { text: O.privOutdoors, code, back: false };",
+    "new": "      sessLast = { text: O.privOutdoors, code, back: false };",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "ARENA6-CLIENT-OUTDOORS-HELD",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "{ sess = null; say(O.privOutdoors); sessLast",
-    "new": "{ say(O.privOutdoors); sessLast",
+    "old": "      sess = null;\n      say(O.privOutdoors);",
+    "new": "      say(O.privOutdoors);",
     "tests": [
       "test/systems/arena/arena6_private.test.js"
     ]

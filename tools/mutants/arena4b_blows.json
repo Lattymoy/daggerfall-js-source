@@ -110,8 +110,8 @@
   {
     "name": "ARENA4b-BLOW-CLAIM-NO-SEQ",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "...(Number.isInteger(q) ? { q } : {}) });",
-    "new": "...({}) });",
+    "old": "      ...(Number.isInteger(q) ? { q } : {}),",
+    "new": "      ...{},",
     "tests": [
       "test/net/arena/arena4b_blows.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "ARENA4b-BLOW-STANDS-STRIKE",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "    if (bout?.kind === 'watch') return false;   // ARENA4b: the stands strike nobody - the relay would junk the word\n",
-    "new": "",
+    "old": "    if (bout?.kind === 'watch') return false; // ARENA4b: the stands strike nobody - the relay would junk the word\n    return boutSend({",
+    "new": "    return boutSend({",
     "tests": [
       "test/net/arena/arena4b_blows.test.js"
     ]

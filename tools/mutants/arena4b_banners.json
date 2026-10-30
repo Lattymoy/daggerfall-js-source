@@ -110,8 +110,8 @@
   {
     "name": "ARENA4b-BAN-CLIENT-Q",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "lv: Math.max(1, Math.floor(deps.level?.() ?? 1)), ...myBanner(), ...(casual",
-    "new": "lv: Math.max(1, Math.floor(deps.level?.() ?? 1)), ...(casual",
+    "old": "      const q = {\n        k: 'q',\n        lv: Math.max(1, Math.floor(deps.level?.() ?? 1)),\n        ...myBanner(),\n        ...(casual ? { u: 1 } : {}),\n      };",
+    "new": "      const q = { k: 'q', lv: Math.max(1, Math.floor(deps.level?.() ?? 1)), ...(casual ? { u: 1 } : {}) };",
     "tests": [
       "test/net/arena/arena4b_banners.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "ARENA4b-BAN-CLIENT-IN",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "lv: Math.max(1, Math.floor(deps.level?.() ?? 1)), ...myBanner(), ...(bout.ticket",
-    "new": "lv: Math.max(1, Math.floor(deps.level?.() ?? 1)), ...(bout.ticket",
+    "old": "                  ...myBanner(),\n                  ...(bout.ticket ? { z: bout.ticket } : {}),",
+    "new": "                  ...(bout.ticket ? { z: bout.ticket } : {}),",
     "tests": [
       "test/net/arena/arena4b_banners.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "ARENA4b-BAN-CLIENT-ANY",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "const b = bannerClaim(board?.me?.banner);",
-    "new": "const b = board?.me?.banner;",
+    "old": "    const b = bannerClaim(board?.me?.banner);",
+    "new": "    const b = board?.me?.banner;",
     "tests": [
       "test/net/arena/arena4b_banners.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "ARENA4b-BAN-CLIENT-EX-IGNORED",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "b: side?.b ?? ARENA_EX_BANNERS[i] });",
-    "new": "b: ARENA_EX_BANNERS[i] });",
+    "old": "      b: side?.b ?? ARENA_EX_BANNERS[i],",
+    "new": "      b: ARENA_EX_BANNERS[i],",
     "tests": [
       "test/net/arena/arena4b_banners.test.js"
     ]

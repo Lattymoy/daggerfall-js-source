@@ -124,8 +124,8 @@
   {
     "name": "AUDIT1003-S4-reused-unsaid-on-the-client",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "if (d?.recorded === false && (d.why === 'order' || d.why === 'reused' || d.why === 'forfeit')) say(O[d.why]);",
-    "new": "if (d?.recorded === false && (d.why === 'order' || d.why === 'forfeit')) say(O[d.why]);",
+    "old": "    if (d?.recorded === false && (d.why === 'order' || d.why === 'reused' || d.why === 'forfeit')) say(O[d.why]); // AUDIT PRE-MERGE 1003 S4: a reused bout's own words - and, never `claimed`, no purse; AUDIT ARENA-LADDER: a forfeit's",
+    "new": "    if (d?.recorded === false && (d.why === 'order' || d.why === 'forfeit')) say(O[d.why]); // AUDIT PRE-MERGE 1003 S4: a reused bout's own words - and, never `claimed`, no purse; AUDIT ARENA-LADDER: a forfeit's",
     "tests": [
       "test/net/arena/audit1003_server.test.js"
     ]
@@ -133,8 +133,8 @@
   {
     "name": "AUDIT1003-S4-reused-paid-as-claimed-on-the-client",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "else if (d?.why === 'claimed') won = c.r === 1;",
-    "new": "else if (d?.why === 'claimed' || d?.why === 'reused') won = c.r === 1;",
+    "old": "    else if (d?.why === 'claimed')",
+    "new": "    else if (d?.why === 'claimed' || d?.why === 'reused')",
     "tests": [
       "test/net/arena/audit1003_server.test.js"
     ]

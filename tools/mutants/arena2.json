@@ -596,8 +596,8 @@
   {
     "name": "ARENA2-PREFIGHT-BLOW",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "      if (foe?.entity) foe.entity.health = Math.min(foe.entity.maxHealth ?? foe.entity.health, foe.entity.health + dmg);",
-    "new": "",
+    "old": "      // a blow before the word or after the verdict: the body is made whole again (the healers' law), nothing counts\n      if (foe?.entity) foe.entity.health = Math.min(foe.entity.maxHealth ?? foe.entity.health, foe.entity.health + dmg);",
+    "new": "      // a blow before the word or after the verdict: the body is made whole again (the healers' law), nothing counts\n",
     "tests": [
       "test/systems/arena/arena2_driver.test.js"
     ]
@@ -614,8 +614,8 @@
   {
     "name": "ARENA2-NO-LOOT",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "          if (foe.entity) { foe.entity.bout = tags.get(f.id); foe.entity.items = []; foe.entity.pacifyImmune = true; }",
-    "new": "          if (foe.entity) { foe.entity.bout = tags.get(f.id); foe.entity.pacifyImmune = true; }",
+    "old": "            foe.entity.items = [];\n            foe.entity.pacifyImmune = true;",
+    "new": "            foe.entity.pacifyImmune = true;",
     "tests": [
       "test/systems/arena/arena2_driver.test.js"
     ]
@@ -623,8 +623,8 @@
   {
     "name": "ARENA2-EX-HOSTILE",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "          if (foe.ai) { foe.ai.isHostile = !!C.ladder; foe.ai.target = null; foe.ai.yaw = yawTo(f.mark, [0, 0]); }",
-    "new": "          if (foe.ai) { foe.ai.isHostile = true; foe.ai.target = null; foe.ai.yaw = yawTo(f.mark, [0, 0]); }",
+    "old": "            foe.ai.isHostile = !!C.ladder;",
+    "new": "            foe.ai.isHostile = true;",
     "tests": [
       "test/systems/arena/arena2_driver.test.js"
     ]

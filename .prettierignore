@@ -76,6 +76,8 @@
 /src/render/superDungeon/*/
 !/src/scenes/
 /src/scenes/*
+!/src/scenes/arena/
+/src/scenes/arena/*/
 !/src/scenes/delve/
 /src/scenes/delve/*/
 !/src/scenes/starfall/

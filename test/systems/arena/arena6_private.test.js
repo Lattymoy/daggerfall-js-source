@@ -511,5 +511,5 @@ test('ARENA6 the hosts\' seams, by source: the online half is handed the instanc
   assert.match(modes, /function standOnArenaMark\(kind\) \{\n\s*if \(mode !== 'dungeon' \|\| !isArenaFloor\(dungeonLoc\)\) return false;/);
   assert.match(modes, /placeLoadedPlayer\(arenaFloorPoint\(a\.at\[0\], a\.at\[1\], a\.at\[2\] \+ 0\.4, arenaFloorCentre\(\)\)\);/);
   assert.match(modes, /function leaveArenaFloor\(\) \{\n\s*if \(mode !== 'dungeon' \|\| !isArenaFloor\(dungeonLoc\) \|\| host\.arenaHolds\?\.\(\)\) return false;/);
-  assert.match(gate, /if \(typeof kind === 'string' && kind\.startsWith\('priv'\)\) return online\(\)\?\.act\(kind, data\)/);
+  assert.match(gate, /if \(typeof kind === 'string' && kind\.startsWith\('priv'\)\)\n\s*return online\(\)\?\.act\(kind, data\)/);
 });

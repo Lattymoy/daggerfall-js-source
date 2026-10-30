@@ -23,30 +23,84 @@
 // Not a DFU member. Ledger A (ARENA).
 
 import {
-  newBout, boutTick, boutHit, boutMiss, boutFell, boutYield, boutPos, boutHealth, boutAtMarks, takeBoutEvents, boutLive, boutOver, boutFighter,
-  fighterShare, boutPurse, sideNames, otherNames, YIELD_SHARE,
-  boutBefore,   // AUDIT PRE-MERGE 1003 B3/B5: an exhibition left after its word; my spare from the word
+  newBout,
+  boutTick,
+  boutHit,
+  boutMiss,
+  boutFell,
+  boutYield,
+  boutPos,
+  boutHealth,
+  boutAtMarks,
+  takeBoutEvents,
+  boutLive,
+  boutOver,
+  boutFighter,
+  fighterShare,
+  boutPurse,
+  sideNames,
+  otherNames,
+  YIELD_SHARE,
+  boutBefore, // AUDIT PRE-MERGE 1003 B3/B5: an exhibition left after its word; my spare from the word
 } from '../../systems/arena/arenaBout.js';
-import { BOUT_LEFT } from '../../systems/arena/arenaBook.js';   // AUDIT PRE-MERGE 1003 B3: an exhibition walked away from after its word
-import { stripSandBarred, restoreSandHeld, SAND_CEILING_M } from '../../systems/arena/arenaKit.js';   // AUDIT ARENA-LADDER: the sand's kit law
-import { makeBlow, setLiveBlow, BLOW_COLOR, BLOW } from '../../ai/foeBlows.js'; import { tacticsNow } from '../../ai/tacticsClock.js';   // AUDIT ARENA-LADDER: a relay's telegraphed blow, drawn
-import { newCrowd, crowdHear, crowdTick, crowdBark, crowdCount, crowdFlipFps, crowdHop, verdictThrows, seatPeople, THROWN_FLOWERS, THROWN_REFUSE } from '../../systems/arena/arenaCrowd.js';
+import { BOUT_LEFT } from '../../systems/arena/arenaBook.js'; // AUDIT PRE-MERGE 1003 B3: an exhibition walked away from after its word
+import { stripSandBarred, restoreSandHeld, SAND_CEILING_M } from '../../systems/arena/arenaKit.js'; // AUDIT ARENA-LADDER: the sand's kit law
+import { makeBlow, setLiveBlow, BLOW_COLOR, BLOW } from '../../ai/foeBlows.js';
+import { tacticsNow } from '../../ai/tacticsClock.js'; // AUDIT ARENA-LADDER: a relay's telegraphed blow, drawn
+import {
+  newCrowd,
+  crowdHear,
+  crowdTick,
+  crowdBark,
+  crowdCount,
+  crowdFlipFps,
+  crowdHop,
+  verdictThrows,
+  seatPeople,
+  THROWN_FLOWERS,
+  THROWN_REFUSE,
+} from '../../systems/arena/arenaCrowd.js';
 import { fighterIdentity, boutMarks, boutGateOf } from '../../systems/arena/arenaFighters.js';
-import { EXHIBITION_PURSE, ladderAfter, arenaLadderRestore, arenaHash, seededRng, ladderTitle } from '../../systems/arena/arenaLadder.js';
+import {
+  EXHIBITION_PURSE,
+  ladderAfter,
+  arenaLadderRestore,
+  arenaHash,
+  seededRng,
+  ladderTitle,
+} from '../../systems/arena/arenaLadder.js';
 import { ARENA_TEXT } from '../../systems/arena/arenaText.js';
-import { markQuiver, refundQuiver } from '../../systems/arena/arenaQuiver.js';   // ARENA-ARROWS: the quiver comes back full from the sand
-import { startShotTally, stopShotTally } from '../../systems/shotTally.js';   // ARENA-ARROWS: ...with what the bout loosed, no more
+import { markQuiver, refundQuiver } from '../../systems/arena/arenaQuiver.js'; // ARENA-ARROWS: the quiver comes back full from the sand
+import { startShotTally, stopShotTally } from '../../systems/shotTally.js'; // ARENA-ARROWS: ...with what the bout loosed, no more
 import { arenaScoreFor } from '../../systems/arena/arenaScore.js';
 import { crowdSeats, pickSeats, RING_R } from '../../world/arena/arenaFloor.js';
 import { arenaHudModel } from '../../ui/arena/arenaHud.js';
-import { rollLeague, leagueAfterBout, laurelWorn, laurelBanner, LAUREL_FAVOUR } from '../../systems/arena/arenaLeague.js';   // ARENA3: the banners, the laurel, the Records page
+import {
+  rollLeague,
+  leagueAfterBout,
+  laurelWorn,
+  laurelBanner,
+  LAUREL_FAVOUR,
+} from '../../systems/arena/arenaLeague.js'; // ARENA3: the banners, the laurel, the Records page
 import { mirrorOf, mirrorEvents, mirrorHealth, walkAt, walkDone } from '../../net/arena/arenaLink.js';
-import { ARENA_PUPPET_OWNER, ARENA_CHEER_MS, ARENA_FLOOR_CENTRE } from '../../net/arena/arenaLaw.js';   // ARENA4: a bout the relay runs, mirrored here; ARENA4b: the stands' allowance, the relay's frame (the instance's)
-import { crowdShout } from '../../systems/arena/arenaCrowd.js';   // ARENA4: the stands' own cheers and boos, heard on every screen
-import { crowdHalves, crowdHalfOf, crowdWash } from '../../systems/arena/arenaCrowd.js';   // ARENA5: the crowd's half in a banner's colours
-import { drawnFlat } from '../../characters/nudeFlats.js';   // NUDE-HOSTS: Show Nudity off seats a nude figure's clothed stand-in
-import { newRecording, recordTick, recordStrike, recordEvent, finishRecording, keepReplay, replayOk, replayFeed, replayId, replayBoutId, playerMobileOf } from '../../systems/arena/arenaReplay.js';   // ARENA5: your ladder replay
-import { noteAct } from '../../systems/questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
+import { ARENA_PUPPET_OWNER, ARENA_CHEER_MS, ARENA_FLOOR_CENTRE } from '../../net/arena/arenaLaw.js'; // ARENA4: a bout the relay runs, mirrored here; ARENA4b: the stands' allowance, the relay's frame (the instance's)
+import { crowdShout } from '../../systems/arena/arenaCrowd.js'; // ARENA4: the stands' own cheers and boos, heard on every screen
+import { crowdHalves, crowdHalfOf, crowdWash } from '../../systems/arena/arenaCrowd.js'; // ARENA5: the crowd's half in a banner's colours
+import { drawnFlat } from '../../characters/nudeFlats.js'; // NUDE-HOSTS: Show Nudity off seats a nude figure's clothed stand-in
+import {
+  newRecording,
+  recordTick,
+  recordStrike,
+  recordEvent,
+  finishRecording,
+  keepReplay,
+  replayOk,
+  replayFeed,
+  replayId,
+  replayBoutId,
+  playerMobileOf,
+} from '../../systems/arena/arenaReplay.js'; // ARENA5: your ladder replay
+import { noteAct } from '../../systems/questlines/qlActs.js'; // QL11: the features' acts, heard by the running quests
 
 /** ARENA-FIX 10: A CRIT is the formula's own critical-strike roll (combat/formulas.js calculateAttackDamage's notes,
  *  told through `observeAttackResolution` and matched to the blow the damage door hears - `attackResolved` below).
@@ -110,7 +164,9 @@ export function createArenaBouts(deps) {
   // its purse and the ladder's step - the Grand Champion's 9,900 among them. Read by the law, its hooks and the
   // recording alike (`lawNow`, never backwards between frames). A relay's bout - a replay is one - keeps the real clock:
   // the relay's law runs on whatever this screen does (`clockOf`).
-  let heldMs = 0, lastReal = NaN, lastLaw = -Infinity;
+  let heldMs = 0,
+    lastReal = NaN,
+    lastLaw = -Infinity;
   const lawNow = () => (lastLaw = Math.max(lastLaw, now() - heldMs));
   /** The clock bout `C` is judged by: this screen's own, the law's; a relay's, the real one. */
   const clockOf = (C) => (C?.relay ? now() : lawNow());
@@ -122,7 +178,10 @@ export function createArenaBouts(deps) {
    *  pay that can still come - a session's let-go, which dismisses the bout and then heals (scenes/arena/arenaOnline.js
    *  letGoPriv) - until another bout is dismissed or marked. `{ C, mark, shots }`, `shots` null while the tally runs. */
   let quiver = null;
-  function markMine(C) { quiver = { C, mark: markQuiver(P?.items), shots: null }; startShotTally(P?.items); }
+  function markMine(C) {
+    quiver = { C, mark: markQuiver(P?.items), shots: null };
+    startShotTally(P?.items);
+  }
   /** Pay bout `C`'s quiver - none named: the bout dismissed last's (a session's let-go). */
   function refundMine(C) {
     const q = quiver;
@@ -142,7 +201,13 @@ export function createArenaBouts(deps) {
    *  my account fights under, the laurel the realm's last season gave), read at each bout's first bell; null offline,
    *  where the save's league is the law. */
   let realmOf = null;
-  const realmNow = () => { try { return realmOf?.() ?? null; } catch { return null; } };
+  const realmNow = () => {
+    try {
+      return realmOf?.() ?? null;
+    } catch {
+      return null;
+    }
+  };
 
   // ── THE STAGE ───────────────────────────────────────────────────────────────────────────────────────────
   /** The host's floor now (or null): a new stage takes no bout of the old one's - the old one is gone, unsaid. */
@@ -150,15 +215,28 @@ export function createArenaBouts(deps) {
     if (s === stage) return;
     if (cur && cur.stage !== s) dismiss();
     stage = s ?? null;
-    if (stage && pending && pending.where === stage.kind) { const p = pending; pending = null; begin(p); }
+    if (stage && pending && pending.where === stage.kind) {
+      const p = pending;
+      pending = null;
+      begin(p);
+    }
   }
   /** A bout asked for on a stage of `where` ('city' | 'floor'), started when it stands. */
-  function ask(p) { pending = p; if (stage && stage.kind === p.where) { pending = null; begin(p); } }
+  function ask(p) {
+    pending = p;
+    if (stage && stage.kind === p.where) {
+      pending = null;
+      begin(p);
+    }
+  }
   /** A bout asked for, begun: the relay's exhibition mirrored (ARENA4b), a relay's bout (ARENA4), or one of this screen's. */
   const begin = (p) => (p.relayEx ? startExhibitionRelay(p.relayEx) : p.relay ? startRelay(p.relay) : start(p));
 
   // ── A BOUT ──────────────────────────────────────────────────────────────────────────────────────────────
-  const floorFeet = (xz) => { const c = stage.centre(); return [c[0] + xz[0], c[1], c[2] + xz[1]]; };
+  const floorFeet = (xz) => {
+    const c = stage.centre();
+    return [c[0] + xz[0], c[1], c[2] + xz[1]];
+  };
   const yawTo = (from, to) => Math.atan2(to[0] - from[0], to[1] - from[1]);
 
   /**
@@ -169,7 +247,7 @@ export function createArenaBouts(deps) {
   function start(p) {
     if (!stage) return null;
     dismiss();
-    const t = lawNow();   // AUDIT PRE-MERGE 1003 B1: the law's clock
+    const t = lawNow(); // AUDIT PRE-MERGE 1003 B1: the law's clock
     // ARENA-FIX 4: the training pit's PRACTICE bout is a ladder bout's shape (the player on side 0) - no purse, no
     // step on the ladder, no crowd, no music (`quiet`)
     const ladder = p.kind === 'ladder' || p.kind === 'practice';
@@ -177,7 +255,11 @@ export function createArenaBouts(deps) {
     const seed = ladder ? arenaHash(Math.floor(t) & 0x7fffffff, 7) : p.ex.seed;
     const opps = ladder ? p.next.opponents : p.ex.opponents;
     const free = ladder && !!p.next.free;
-    const id = practice ? `practice:${seed}` : ladder ? `ladder:${p.next.tier}:${p.next.bout}:${seed}` : `ex:${p.ex.hour}`;
+    const id = practice
+      ? `practice:${seed}`
+      : ladder
+        ? `ladder:${p.next.tier}:${p.next.bout}:${seed}`
+        : `ex:${p.ex.hour}`;
     // the sides: an exhibition's two, a ladder bout's player against the rest (a Grand Melee every fighter its own)
     const specs = opps.map((o, i) => ({ ...o, i, side: free ? i + 1 : ladder ? 1 : i }));
     const sides = free ? specs.length + 1 : 2;
@@ -186,8 +268,11 @@ export function createArenaBouts(deps) {
     for (const s of specs) perSide[s.side]++;
     // the marks on the floor's long axis - or, on a stage with its own way (the undercroft's pit, a passage), along it
     // and `markScale` as far apart
-    const k = stage.markScale ?? 1, ax = stage.axis;
-    const marks = boutMarks(sides, perSide).map((side) => side.map(([x, z]) => (ax ? [(x * ax[0] - z * ax[1]) * k, (x * ax[1] + z * ax[0]) * k] : [x * k, z * k])));
+    const k = stage.markScale ?? 1,
+      ax = stage.axis;
+    const marks = boutMarks(sides, perSide).map((side) =>
+      side.map(([x, z]) => (ax ? [(x * ax[0] - z * ax[1]) * k, (x * ax[1] + z * ax[0]) * k] : [x * k, z * k])),
+    );
     const used = Array(sides).fill(0);
     if (ladder) used[0] = 1;
     const fighters = [];
@@ -202,19 +287,76 @@ export function createArenaBouts(deps) {
       const who = fighterIdentity(seed, s.i, s.mobile);
       const mark = marks[s.side][used[s.side]++];
       tags.set(fid, { id, side: s.side, out: false, hold: true, hooks: hooks(fid) });
-      fighters.push({ id: fid, name: who.name, side: s.side, maxHealth: 1, temper: who.temper, ai: true, home: who.home, epithet: who.epithet, spec: s, who, mark });
+      fighters.push({
+        id: fid,
+        name: who.name,
+        side: s.side,
+        maxHealth: 1,
+        temper: who.temper,
+        ai: true,
+        home: who.home,
+        epithet: who.epithet,
+        spec: s,
+        who,
+        mark,
+      });
     }
     // ARENA3: the Herald cries me by the title the ladder gave me ("Aldric, Grand Champion!") - my epithet on the sand
-    if (ladder) fighters.unshift({ id: YOU, name: P?.name || 'You', side: 0, maxHealth: Math.max(1, P?.maxHealth | 0), health: Math.max(1, P?.health | 0), temper: 0, ai: false, home: '', epithet: ladderTitle(P?.arenaLadder) ?? '', mark: marks[0][0] });
+    if (ladder)
+      fighters.unshift({
+        id: YOU,
+        name: P?.name || 'You',
+        side: 0,
+        maxHealth: Math.max(1, P?.maxHealth | 0),
+        health: Math.max(1, P?.health | 0),
+        temper: 0,
+        ai: false,
+        home: '',
+        epithet: ladderTitle(P?.arenaLadder) ?? '',
+        mark: marks[0][0],
+      });
     cur = {
-      kind: p.kind, id, seed, stage, ladder, next: ladder ? p.next : null, ex: ladder ? null : p.ex, fighters: new Map(), tags, marks,
-      roster: fighters, b: null, crowd: null, you: ladder ? YOU : null, playerTag: ladder ? { id, side: 0, out: false, hold: true, kit: true } : null,   // AUDIT ARENA-LADDER 2: `kit` - a ladder bout's law (systems/arena/arenaKit.js)
-      practice, quiet: practice, ring: stage.radius ?? RING_R, lastBlow: new Map(), walking: new Set(),
-      lastHealth: P?.health ?? 0, lastSheathed: null, verdictAt: NaN, doneAt: NaN, paid: false, said: false, crowdSeats: null,
-      crowdBatches: [], throws: [], spawning: 0, title: false, startedAt: t, bark: '', barkAt: -Infinity, ringed: null,
+      kind: p.kind,
+      id,
+      seed,
+      stage,
+      ladder,
+      next: ladder ? p.next : null,
+      ex: ladder ? null : p.ex,
+      fighters: new Map(),
+      tags,
+      marks,
+      roster: fighters,
+      b: null,
+      crowd: null,
+      you: ladder ? YOU : null,
+      playerTag: ladder ? { id, side: 0, out: false, hold: true, kit: true } : null, // AUDIT ARENA-LADDER 2: `kit` - a ladder bout's law (systems/arena/arenaKit.js)
+      practice,
+      quiet: practice,
+      ring: stage.radius ?? RING_R,
+      lastBlow: new Map(),
+      walking: new Set(),
+      lastHealth: P?.health ?? 0,
+      lastSheathed: null,
+      verdictAt: NaN,
+      doneAt: NaN,
+      paid: false,
+      said: false,
+      crowdSeats: null,
+      crowdBatches: [],
+      throws: [],
+      spawning: 0,
+      title: false,
+      startedAt: t,
+      bark: '',
+      barkAt: -Infinity,
+      ringed: null,
       teams: boutTeams(ladder, practice, fighters),
     };
-    if (ladder) { deps.setPlayerBout?.(cur.playerTag); markMine(cur); }
+    if (ladder) {
+      deps.setPlayerBout?.(cur.playerTag);
+      markMine(cur);
+    }
     // ARENA-FIX 8: THE ENTRANCE - each fighter stands at the mouth of its side's passage under the tiers (the floor's
     // two gates, systems/arena/arenaFighters.js boutGateOf; a pit has no gates - its fighter stands on the mark) facing in,
     // and walks to its mark when the Herald cries its name (`hear`, 'crier'); the law starts once every body stands
@@ -224,35 +366,85 @@ export function createArenaBouts(deps) {
       const from = stage.gates === false ? f.mark : boutGateOf(f.mark);
       const feet = floorFeet(from);
       C.spawning++;
-      Promise.resolve(stage.spawn(f.spec.mobile, feet, { level: f.spec.level, elite: !!f.spec.elite, gender: f.who.gender, yaw: yawTo(from, f.mark[0] === from[0] && f.mark[1] === from[1] ? [0, 0] : f.mark), bout: tags.get(f.id) }))
+      Promise.resolve(
+        stage.spawn(f.spec.mobile, feet, {
+          level: f.spec.level,
+          elite: !!f.spec.elite,
+          gender: f.who.gender,
+          yaw: yawTo(from, f.mark[0] === from[0] && f.mark[1] === from[1] ? [0, 0] : f.mark),
+          bout: tags.get(f.id),
+        }),
+      )
         .then((foe) => {
           C.spawning--;
-          if (cur !== C || !foe) { if (foe) (C.stage ?? stage)?.remove?.(foe); if (cur === C && !foe) dismiss(); return; }   // AUDIT ARENA-LADDER A4: off the stage it was stood on (C.stage) - the host's stage may be another by now, or none, and the body stood held and undying at the gate
+          if (cur !== C || !foe) {
+            if (foe) (C.stage ?? stage)?.remove?.(foe);
+            if (cur === C && !foe) dismiss();
+            return;
+          } // AUDIT ARENA-LADDER A4: off the stage it was stood on (C.stage) - the host's stage may be another by now, or none, and the body stood held and undying at the gate
           C.fighters.set(f.id, foe);
-          if (foe.entity) { foe.entity.bout = tags.get(f.id); foe.entity.items = []; foe.entity.pacifyImmune = true; }   // AUDIT ARENA-LADDER 2: no Calm, no Charm, no tongue sways a fighter (WB8a's door - every path, a weapon's spell too)
+          if (foe.entity) {
+            foe.entity.bout = tags.get(f.id);
+            foe.entity.items = [];
+            foe.entity.pacifyImmune = true;
+          } // AUDIT ARENA-LADDER 2: no Calm, no Charm, no tongue sways a fighter (WB8a's door - every path, a weapon's spell too)
           f.maxHealth = Math.max(1, foe.entity?.maxHealth ?? foe.entity?.health ?? 1);
           f.health = Math.max(1, foe.entity?.health ?? f.maxHealth);
-          if (foe.ai) { foe.ai.isHostile = !!C.ladder; foe.ai.target = null; foe.ai.yaw = yawTo(f.mark, [0, 0]); }
+          if (foe.ai) {
+            foe.ai.isHostile = !!C.ladder;
+            foe.ai.target = null;
+            foe.ai.yaw = yawTo(f.mark, [0, 0]);
+          }
           if (C.spawning === 0) beginLaw(C);
         })
-        .catch(() => { C.spawning--; if (cur === C) dismiss(); });
+        .catch(() => {
+          C.spawning--;
+          if (cur === C) dismiss();
+        });
     }
     return cur;
   }
 
   /** Every body stands: the law's bout, the crowd's, the seats. */
   function beginLaw(C) {
-    const t = lawNow();   // AUDIT PRE-MERGE 1003 B1
+    const t = lawNow(); // AUDIT PRE-MERGE 1003 B1
     const c = stage.centre();
     C.b = newBout({
-      id: C.id, kind: C.practice ? 'practice' : C.ladder ? (C.next.grand ? 'grand' : C.next.champion ? 'champion' : C.next.free ? 'melee' : 'ladder') : 'exhibition',
-      fighters: C.roster.map((f) => ({ id: f.id, name: f.name, side: f.side, maxHealth: f.maxHealth, health: f.health, temper: f.temper, ai: f.ai, home: f.home, epithet: f.epithet })),
-      ring: { centre: [c[0], c[2]], radius: C.ring }, now: t, tier: C.ladder ? C.next.tier : C.ex.tier, label: C.ladder ? C.next.label : '',
+      id: C.id,
+      kind: C.practice
+        ? 'practice'
+        : C.ladder
+          ? C.next.grand
+            ? 'grand'
+            : C.next.champion
+              ? 'champion'
+              : C.next.free
+                ? 'melee'
+                : 'ladder'
+          : 'exhibition',
+      fighters: C.roster.map((f) => ({
+        id: f.id,
+        name: f.name,
+        side: f.side,
+        maxHealth: f.maxHealth,
+        health: f.health,
+        temper: f.temper,
+        ai: f.ai,
+        home: f.home,
+        epithet: f.epithet,
+      })),
+      ring: { centre: [c[0], c[2]], radius: C.ring },
+      now: t,
+      tier: C.ladder ? C.next.tier : C.ex.tier,
+      label: C.ladder ? C.next.label : '',
     });
-    C.crowd = newCrowd({ fighters: C.roster.map((f) => ({ id: f.id, home: f.home, ai: f.ai })), beasts: C.ladder ? !!C.next.beasts : !!C.ex.beasts });
+    C.crowd = newCrowd({
+      fighters: C.roster.map((f) => ({ id: f.id, home: f.home, ai: f.ai })),
+      beasts: C.ladder ? !!C.next.beasts : !!C.ex.beasts,
+    });
     laurelFavour(C);
     if (!C.quiet) buildCrowd(C);
-    beginRecording(C, t);   // ARENA5: a ladder bout recorded for its replay
+    beginRecording(C, t); // ARENA5: a ladder bout recorded for its replay
   }
   // ── ARENA5: YOUR LADDER REPLAY (systems/arena/arenaReplay.js) ─────────────────────────────────────────────────────
   /** A LADDER BOUT RECORDED from its first bell (never the pit's, never a relay's): its fighters in the law's order - me
@@ -262,10 +454,23 @@ export function createArenaBouts(deps) {
     if (!C.ladder || C.practice || C.relay || !C.b) return;
     const sides = crowdHalves(C.b.fighters, C.teams);
     C.rec = newRecording({
-      t0: t, next: C.next, sides, at: deps.gameMinutes?.() ?? 0,
+      t0: t,
+      next: C.next,
+      sides,
+      at: deps.gameMinutes?.() ?? 0,
       fighters: C.b.fighters.map((f) => {
         const r = C.roster.find((x) => x.id === f.id);
-        return { id: f.id, name: f.name, side: f.side, mobile: f.ai ? r?.spec?.mobile : playerMobileOf(P), gender: f.ai ? r?.who?.gender : P?.gender, home: f.home, epithet: f.epithet, health: f.health, maxHealth: f.maxHealth };
+        return {
+          id: f.id,
+          name: f.name,
+          side: f.side,
+          mobile: f.ai ? r?.spec?.mobile : playerMobileOf(P),
+          gender: f.ai ? r?.who?.gender : P?.gender,
+          home: f.home,
+          epithet: f.epithet,
+          health: f.health,
+          maxHealth: f.maxHealth,
+        };
       }),
     });
   }
@@ -279,7 +484,15 @@ export function createArenaBouts(deps) {
       const foe = C.fighters.get(id);
       return foe?.ai?.feet ? [foe.ai.feet[0] - c[0], foe.ai.feet[2] - c[2], foe.ai.yaw ?? 0] : null;
     });
-    recordTick(C.rec, t, poses, C.rec.ids.map((id) => { const f = boutFighter(C.b, id); return f ? [f.health, f.maxHealth] : null; }));
+    recordTick(
+      C.rec,
+      t,
+      poses,
+      C.rec.ids.map((id) => {
+        const f = boutFighter(C.b, id);
+        return f ? [f.health, f.maxHealth] : null;
+      }),
+    );
   }
   /** THE BOUT DONE (the healers have been): its record kept on the save's arena record, the newest first, the oldest past
    *  REPLAY_KEEP let go - a bout left before its verdict keeps none. */
@@ -301,13 +514,22 @@ export function createArenaBouts(deps) {
   function askReplay(rec) {
     if (!replayOk(rec)) return false;
     const banners = {};
-    rec.f.forEach((f, i) => { const b = rec.sides[f.s]; if (b) banners[replayId(i)] = b; });
+    rec.f.forEach((f, i) => {
+      const b = rec.sides[f.s];
+      if (b) banners[replayId(i)] = b;
+    });
     ask({
       where: 'floor',
       relay: {
-        o: replayBoutId(rec), kind: 'pve', me: '', next: rec.next ? { ...rec.next, purse: 0 } : null, sides: rec.sides, banners,
-        names: (i) => (rec.f[i] ? { name: rec.f[i].n, home: rec.f[i].h, epithet: rec.f[i].e, gender: rec.f[i].g } : null),
-        send: { cheer: () => true },   // the stands' presses: my crowd hears me, nobody else is there
+        o: replayBoutId(rec),
+        kind: 'pve',
+        me: '',
+        next: rec.next ? { ...rec.next, purse: 0 } : null,
+        sides: rec.sides,
+        banners,
+        names: (i) =>
+          rec.f[i] ? { name: rec.f[i].n, home: rec.f[i].h, epithet: rec.f[i].e, gender: rec.f[i].g } : null,
+        send: { cheer: () => true }, // the stands' presses: my crowd hears me, nobody else is there
         replay: { rec, feed: null },
       },
     });
@@ -320,15 +542,28 @@ export function createArenaBouts(deps) {
     if (!R || !stage) return;
     if (!R.feed) {
       R.feed = replayFeed(R.rec, { t0: t, centre: stage.centre(), o: C.relay.o });
-      if (!R.feed) { dismiss(); return; }
+      if (!R.feed) {
+        dismiss();
+        return;
+      }
       for (const w of R.feed.first) relayWord(w);
       relayWord(R.feed.st);
     }
     for (const w of R.feed.due(t)) {
-      if (w.k !== 'call') { relayWord(w); continue; }
+      if (w.k !== 'call') {
+        relayWord(w);
+        continue;
+      }
       if (C.crowd) deps.sound?.cue(crowdHear(C.crowd, { k: 'call' }, { now: t }), 1);
       const nx = C.next;
-      deps.say?.(nx ? ARENA_TEXT.replay.call(nx.tierName, nx.grand ? ARENA_TEXT.grandLabel : nx.champion ? ARENA_TEXT.champLabel : nx.label) : ARENA_TEXT.replay.callBare);
+      deps.say?.(
+        nx
+          ? ARENA_TEXT.replay.call(
+              nx.tierName,
+              nx.grand ? ARENA_TEXT.grandLabel : nx.champion ? ARENA_TEXT.champLabel : nx.label,
+            )
+          : ARENA_TEXT.replay.callBare,
+      );
     }
     for (const [id, foe] of C.fighters) {
       const i = Number(String(id).slice(1));
@@ -343,21 +578,35 @@ export function createArenaBouts(deps) {
     /** @type {Record<string, string>} */
     const out = {};
     if (practice) return out;
-    if (ladder) { const R = realmNow(), team = R ? R.banner : leagueNow()?.team; if (team) out[YOU] = team; return out; }   // ARENA4b: online the account's
+    if (ladder) {
+      const R = realmNow(),
+        team = R ? R.banner : leagueNow()?.team;
+      if (team) out[YOU] = team;
+      return out;
+    } // ARENA4b: online the account's
     for (const f of fighters) out[f.id] = f.side === 0 ? 'red' : 'blue';
     return out;
   }
-  const leagueNow = () => { const gm = deps.gameMinutes?.(); return P && Number.isFinite(gm) ? rollLeague(P.arenaLeague, gm) : null; };
+  const leagueNow = () => {
+    const gm = deps.gameMinutes?.();
+    return P && Number.isFinite(gm) ? rollLeague(P.arenaLeague, gm) : null;
+  };
   /** THE LAUREL: the crowd favours the fighters of the banner that won last season from the first bell - me, when I
    *  wear it; an exhibition's fighter in its colours. ARENA4b: online the laurel is the realm's and my banner the
    *  account's (`realmNow`), never the save's - an exhibition on this screen's floor too. */
   function laurelFavour(C) {
     if (C.practice) return;
     const R = realmNow();
-    if (R) { laurelOf(C, R.laurel, C.ladder ? { [YOU]: R.banner } : C.teams); return; }
+    if (R) {
+      laurelOf(C, R.laurel, C.ladder ? { [YOU]: R.banner } : C.teams);
+      return;
+    }
     const gm = deps.gameMinutes?.();
     if (!P || !Number.isFinite(gm)) return;
-    if (C.ladder) { if (laurelWorn(P.arenaLeague, gm)) C.crowd.favour[YOU] = Math.min(1, (C.crowd.favour[YOU] ?? 0) + LAUREL_FAVOUR); return; }
+    if (C.ladder) {
+      if (laurelWorn(P.arenaLeague, gm)) C.crowd.favour[YOU] = Math.min(1, (C.crowd.favour[YOU] ?? 0) + LAUREL_FAVOUR);
+      return;
+    }
     laurelOf(C, laurelBanner(P.arenaLeague, gm), C.teams);
   }
   /**
@@ -381,19 +630,27 @@ export function createArenaBouts(deps) {
       const r = p.relay;
       if (Array.isArray(r.sides)) return { west: ok(r.sides[0]), east: ok(r.sides[1]) };
       const out = { west: null, east: null };
-      const put = (id, b) => { const m = /^p([01])$/.exec(String(id)); if (m && ok(b)) out[m[1] === '0' ? 'west' : 'east'] = ok(b); };
+      const put = (id, b) => {
+        const m = /^p([01])$/.exec(String(id));
+        if (m && ok(b)) out[m[1] === '0' ? 'west' : 'east'] = ok(b);
+      };
       for (const [id, b] of Object.entries(r.banners ?? {})) put(id, b);
       if (r.me) put(r.me, realmNow()?.banner);
       return out;
     }
     if (p.kind === 'exhibition') return { west: 'red', east: 'blue' };
-    if (p.kind === 'ladder') { const R = realmNow(); return { west: ok(R ? R.banner : leagueNow()?.team), east: null }; }
+    if (p.kind === 'ladder') {
+      const R = realmNow();
+      return { west: ok(R ? R.banner : leagueNow()?.team), east: null };
+    }
     return none;
   }
   /** The laurel's favour (+LAUREL_FAVOUR) to each fighter of `teams` in the laurel's banner `won`. */
   function laurelOf(C, won, teams) {
     if (won !== 'red' && won !== 'blue') return;
-    for (const [id, team] of Object.entries(teams)) if (team === won && C.b?.fighters.some((f) => f.id === id)) C.crowd.favour[id] = Math.min(1, (C.crowd.favour[id] ?? 0) + LAUREL_FAVOUR);
+    for (const [id, team] of Object.entries(teams))
+      if (team === won && C.b?.fighters.some((f) => f.id === id))
+        C.crowd.favour[id] = Math.min(1, (C.crowd.favour[id] ?? 0) + LAUREL_FAVOUR);
   }
 
   // ── THE BODIES' DOORS (the pools' bout hooks) ───────────────────────────────────────────────────────────
@@ -404,28 +661,47 @@ export function createArenaBouts(deps) {
     // the watch). The door (scenes/exteriorFoes.js damageFoe, scenes/dungeonContext.js's twin) has taken it off the body
     // and reads the floor after this hook: kept, the first blow - a warning, nothing more - for a fighter's whole health
     // felled it, and the verdict settled the book (the 10-to-1 long shot backed, the favourite struck down: 11,000 paid).
-    if (fromPlayer && C && !C.ladder && foe?.entity) { foe.entity.health = Math.min(foe.entity.maxHealth ?? foe.entity.health, foe.entity.health + dmg); return; }
+    if (fromPlayer && C && !C.ladder && foe?.entity) {
+      foe.entity.health = Math.min(foe.entity.maxHealth ?? foe.entity.health, foe.entity.health + dmg);
+      return;
+    }
     if (!C?.b) return;
-    const t = lawNow();   // AUDIT PRE-MERGE 1003 B1
+    const t = lawNow(); // AUDIT PRE-MERGE 1003 B1
     if (!boutLive(C.b)) {
       // a blow before the word or after the verdict: the body is made whole again (the healers' law), nothing counts
       if (foe?.entity) foe.entity.health = Math.min(foe.entity.maxHealth ?? foe.entity.health, foe.entity.health + dmg);
       return;
     }
     const from = fromPlayer ? (C.ladder ? YOU : null) : idOf(C, striker);
-    if (!from) { boutHealth(C.b, fid, foe?.entity?.health ?? 0); return; }
+    if (!from) {
+      boutHealth(C.b, fid, foe?.entity?.health ?? 0);
+      return;
+    }
     // AUDIT ARENA-LADDER A3: A FIGHTER OUT STRIKES NOTHING - my blow after my own yield or fall (a Grand Melee fought on)
     // is made good as a blow from outside is: boutHit refused it, and the floor the door reads after this hook felled a
     // fighter all the same, the melee's verdict mine to decide from the side
-    if (boutFighter(C.b, from)?.out) { if (foe?.entity) foe.entity.health = Math.min(foe.entity.maxHealth ?? foe.entity.health, foe.entity.health + dmg); return; }
+    if (boutFighter(C.b, from)?.out) {
+      if (foe?.entity) foe.entity.health = Math.min(foe.entity.maxHealth ?? foe.entity.health, foe.entity.health + dmg);
+      return;
+    }
     const f = boutFighter(C.b, fid);
-    boutHit(C.b, { from, to: fid, dmg, health: foe?.entity?.health, crit: critOf(C, fid, dmg, f?.maxHealth ?? 1, t), now: t });
+    boutHit(C.b, {
+      from,
+      to: fid,
+      dmg,
+      health: foe?.entity?.health,
+      crit: critOf(C, fid, dmg, f?.maxHealth ?? 1, t),
+      now: t,
+    });
   }
   /** ARENA-FIX 10: whether a blow on `to` was a critical strike - the formula's own roll when the resolution was told
    *  for it (`attackResolved`), else the CRIT_SHARE stand-in. */
   function critOf(C, to, dmg, maxHealth, t) {
     const r = C.lastBlow.get(to);
-    if (r && t - r.at <= RESOLUTION_MS) { C.lastBlow.delete(to); return r.critical; }
+    if (r && t - r.at <= RESOLUTION_MS) {
+      C.lastBlow.delete(to);
+      return r.critical;
+    }
     return dmg >= maxHealth * CRIT_SHARE;
   }
   /** The bout's id of an entity (a fighter's body, or the player in my own bout), or null. */
@@ -443,16 +719,21 @@ export function createArenaBouts(deps) {
    */
   function attackResolved(r) {
     const C = cur;
-    if (C?.relay) return;   // ARENA4: the relay's referee counts the misses of a bout it runs
+    if (C?.relay) return; // ARENA4: the relay's referee counts the misses of a bout it runs
     if (!C?.b || !boutLive(C.b) || !r) return;
-    const from = idOfEntity(C, r.attacker), to = idOfEntity(C, r.target);
+    const from = idOfEntity(C, r.attacker),
+      to = idOfEntity(C, r.target);
     if (!from || !to || from === to) return;
-    const a = boutFighter(C.b, from), b = boutFighter(C.b, to);
+    const a = boutFighter(C.b, from),
+      b = boutFighter(C.b, to);
     if (!a || !b || a.side === b.side) return;
-    const t = lawNow();   // AUDIT PRE-MERGE 1003 B1
-    if (from !== YOU) recordStrike(C.rec, t, from);   // ARENA5: a fighter's blow, its puppet's swing in the replay (mine is my swing's - playerSwing)
+    const t = lawNow(); // AUDIT PRE-MERGE 1003 B1
+    if (from !== YOU) recordStrike(C.rec, t, from); // ARENA5: a fighter's blow, its puppet's swing in the replay (mine is my swing's - playerSwing)
     if (!(r.damage > 0)) boutMiss(C.b, { from, now: t });
-    else { C.lastBlow.set(to, { critical: !!r.critical, at: t }); if (to === YOU) C.hitMe = { from, at: t }; }   // AUDIT ARENA-LADDER: whose blow on me it was (attackerOfMe)
+    else {
+      C.lastBlow.set(to, { critical: !!r.critical, at: t });
+      if (to === YOU) C.hitMe = { from, at: t };
+    } // AUDIT ARENA-LADDER: whose blow on me it was (attackerOfMe)
   }
   /** AUDIT ARENA-LADDER: A FIGHTER'S TELEGRAPHED BLOW DODGED (ai/foeBlows.js registerBlowDodgedListener - the hosts'
    *  resolution returns before DFU's damage roll on a dodge, so attackResolved never heard it): in my live bout, a miss
@@ -461,7 +742,11 @@ export function createArenaBouts(deps) {
     const C = cur;
     if (!ai || C?.relay || !C?.b || !boutLive(C.b)) return;
     let from = null;
-    for (const [fid, foe] of C.fighters) if (foe.ai === ai) { from = fid; break; }
+    for (const [fid, foe] of C.fighters)
+      if (foe.ai === ai) {
+        from = fid;
+        break;
+      }
     const a = from ? boutFighter(C.b, from) : null;
     if (!a || a.out) return;
     const t = lawNow();
@@ -480,16 +765,19 @@ export function createArenaBouts(deps) {
       if (me && !me.out && foe) C.relay.send?.hit?.({ k: 'hit', i: foe.id, d: 0, r: 0 });
       return;
     }
-    if (C?.ladder && C.b && boutLive(C.b)) recordStrike(C.rec, lawNow(), YOU);   // ARENA5: every swing of mine, my puppet's in the replay
+    if (C?.ladder && C.b && boutLive(C.b)) recordStrike(C.rec, lawNow(), YOU); // ARENA5: every swing of mine, my puppet's in the replay
     if (!C?.ladder || !C.b || !boutLive(C.b) || struck > 0) return;
     const you = boutFighter(C.b, YOU);
-    if (you && !you.out) boutMiss(C.b, { from: YOU, now: lawNow() });   // AUDIT PRE-MERGE 1003 B1: the law's clock
+    if (you && !you.out) boutMiss(C.b, { from: YOU, now: lawNow() }); // AUDIT PRE-MERGE 1003 B1: the law's clock
   }
   function floorFoe(fid, foe) {
     const C = cur;
     if (!C?.b) return;
-    if (!boutLive(C.b)) { if (foe?.entity) foe.entity.health = Math.max(foe.entity.health, 1); return; }
-    boutFell(C.b, fid, lawNow());   // AUDIT PRE-MERGE 1003 B1
+    if (!boutLive(C.b)) {
+      if (foe?.entity) foe.entity.health = Math.max(foe.entity.health, 1);
+      return;
+    }
+    boutFell(C.b, fid, lawNow()); // AUDIT PRE-MERGE 1003 B1
     standDown(foe);
   }
   /** A blow from outside the bout: before the word (the player's own opponent), a word from the Herald; an exhibition
@@ -497,18 +785,32 @@ export function createArenaBouts(deps) {
   function intrude(fid, foe) {
     const C = cur;
     if (!C) return;
-    if (C.ladder && C.b && !boutLive(C.b) && !boutOver(C.b)) { deps.say?.(ARENA_TEXT.herald.waitWord); return; }
+    if (C.ladder && C.b && !boutLive(C.b) && !boutOver(C.b)) {
+      deps.say?.(ARENA_TEXT.herald.waitWord);
+      return;
+    }
     if (C.ladder) return;
     intrusions++;
     if (intrusions === 1) deps.say?.(ARENA_TEXT.herald.intrude);
-    else { deps.say?.(ARENA_TEXT.herald.intrudeCrime); deps.crime?.(); }
+    else {
+      deps.say?.(ARENA_TEXT.herald.intrudeCrime);
+      deps.crime?.();
+    }
   }
-  const idOf = (C, foe) => { if (!foe) return null; for (const [id, f] of C.fighters) if (f === foe) return id; return null; };
+  const idOf = (C, foe) => {
+    if (!foe) return null;
+    for (const [id, f] of C.fighters) if (f === foe) return id;
+    return null;
+  };
   /** A fighter out of the bout stands down: no target, nobody's target (its tag is out), no hostility. */
   function standDown(foe) {
     if (!foe) return;
     if (foe.entity?.bout) foe.entity.bout.out = true;
-    if (foe.ai) { foe.ai.target = null; foe.ai.secondaryTarget = null; foe.ai.isHostile = false; }
+    if (foe.ai) {
+      foe.ai.target = null;
+      foe.ai.secondaryTarget = null;
+      foe.ai.isHostile = false;
+    }
   }
 
   // ── THE PLAYER'S DOORS ──────────────────────────────────────────────────────────────────────────────────
@@ -525,7 +827,13 @@ export function createArenaBouts(deps) {
     // `opts.playerSpare?.() ?? {}`) killed me on the sand: nobody dies there. The fall it says is the live bout's alone
     // (boutFell refuses a bout over and a fighter already out).
     if (!C?.ladder || !C.b || boutBefore(C.b) || C.b.phase === 'done') return null;
-    return { spare: () => { if (cur === C && C.b && boutLive(C.b)) { boutFell(C.b, YOU, lawNow()); } } };
+    return {
+      spare: () => {
+        if (cur === C && C.b && boutLive(C.b)) {
+          boutFell(C.b, YOU, lawNow());
+        }
+      },
+    };
   }
   /** My own bout stands (its call to its healers): the duel's law - no door, no rest, no travel. */
   const holds = () => !!cur?.ladder && !!cur.b && cur.b.phase !== 'done';
@@ -545,11 +853,22 @@ export function createArenaBouts(deps) {
     lastReal = real;
     const C = cur;
     const t = clockOf(C);
-    if (C?.relay?.replay) replayFrame(C, t);   // ARENA5: a replay's recorded words, fed to the mirror below
-    if (C?.relay) { relayFrame(C, dt, o, t); return; }   // ARENA4: a bout the relay runs, mirrored
-    if (!C || !C.b) { deps.drawHud?.(null, { hidden: true }); return; }
+    if (C?.relay?.replay) replayFrame(C, t); // ARENA5: a replay's recorded words, fed to the mirror below
+    if (C?.relay) {
+      relayFrame(C, dt, o, t);
+      return;
+    } // ARENA4: a bout the relay runs, mirrored
+    if (!C || !C.b) {
+      deps.drawHud?.(null, { hidden: true });
+      return;
+    }
     const c = stage?.centre?.() ?? null;
-    const near = c && o.playerFeet ? nearOf(Math.hypot(o.playerFeet[0] - c[0], o.playerFeet[2] - c[2])) : (C.stage?.kind === 'floor' ? 1 : 0);
+    const near =
+      c && o.playerFeet
+        ? nearOf(Math.hypot(o.playerFeet[0] - c[0], o.playerFeet[2] - c[2]))
+        : C.stage?.kind === 'floor'
+          ? 1
+          : 0;
     // the bodies into the law
     for (const [fid, foe] of C.fighters) {
       const tag = C.tags.get(fid);
@@ -558,7 +877,13 @@ export function createArenaBouts(deps) {
       // door that removes - a dispel, a Wabbajack, a sweep): my bout is void - healed, nothing won, nothing lost - where
       // it was a fall, its purse and its tier's title paid. An exhibition's keeps the fall the book settles by.
       if (foe.dead) {
-        if (boutLive(C.b) && !boutFighter(C.b, fid)?.out) { if (!C.ex && !boutFighter(C.b, YOU)?.out) { voidBout(C); return; } boutFell(C.b, fid, t); }   // AUDIT ARENA-LADDER 2: never once I am out - a vanished body voided my yield
+        if (boutLive(C.b) && !boutFighter(C.b, fid)?.out) {
+          if (!C.ex && !boutFighter(C.b, YOU)?.out) {
+            voidBout(C);
+            return;
+          }
+          boutFell(C.b, fid, t);
+        } // AUDIT ARENA-LADDER 2: never once I am out - a vanished body voided my yield
         continue;
       }
       if (foe.ai?.feet) boutPos(C.b, fid, [foe.ai.feet[0], foe.ai.feet[2]]);
@@ -566,18 +891,29 @@ export function createArenaBouts(deps) {
       // ARENA-FIX 8: a fighter on its walk in, at its mark: it turns to the middle, and the law hears it there
       if (C.walking.has(fid) && arrived(C, fid, foe)) {
         C.walking.delete(fid);
-        if (foe.ai) { foe.ai.walkGoal = null; foe.ai.yaw = yawTo(markOf(C, fid), [0, 0]); }
+        if (foe.ai) {
+          foe.ai.walkGoal = null;
+          foe.ai.yaw = yawTo(markOf(C, fid), [0, 0]);
+        }
         if (C.b.phase === 'walk') boutAtMarks(C.b, fid, t);
       }
     }
     if (C.playerTag) C.playerTag.hold = !boutLive(C.b);
     if (C.ladder && P) {
-      if (boutLive(C.b)) stripSandBarred(P);   // AUDIT ARENA-LADDER: the sand's kit law - no flight, no hiding, while the fight is live
+      if (boutLive(C.b)) stripSandBarred(P); // AUDIT ARENA-LADDER: the sand's kit law - no flight, no hiding, while the fight is live
       // my health: a fall in it is a blow at me from the opponent nearest me who has me as their target
       const h = P.health ?? 0;
       if (boutLive(C.b) && h < C.lastHealth) {
         const from = attackerOfMe(C, o.playerFeet);
-        if (from) boutHit(C.b, { from, to: YOU, dmg: C.lastHealth - h, health: h, crit: critOf(C, YOU, C.lastHealth - h, P.maxHealth || 1, t), now: t });
+        if (from)
+          boutHit(C.b, {
+            from,
+            to: YOU,
+            dmg: C.lastHealth - h,
+            health: h,
+            crit: critOf(C, YOU, C.lastHealth - h, P.maxHealth || 1, t),
+            now: t,
+          });
         else boutHealth(C.b, YOU, h);
       } else if (h !== C.lastHealth) boutHealth(C.b, YOU, h);
       C.lastHealth = h;
@@ -593,8 +929,11 @@ export function createArenaBouts(deps) {
       }
     }
     boutTick(C.b, t, rng);
-    for (const e of takeBoutEvents(C.b)) { recordEvent(C.rec, e); hear(C, e, t, near); }   // ARENA5: each kept for the replay
-    recordFrame(C, t, o);   // ARENA5: the fighters' feet, facing and health, ten a second
+    for (const e of takeBoutEvents(C.b)) {
+      recordEvent(C.rec, e);
+      hear(C, e, t, near);
+    } // ARENA5: each kept for the replay
+    recordFrame(C, t, o); // ARENA5: the fighters' feet, facing and health, ten a second
     // the word given (or the verdict said) this frame: the bout team's hold follows it now, not a frame late
     for (const tag of C.tags.values()) tag.hold = !boutLive(C.b);
     if (C.playerTag) C.playerTag.hold = !boutLive(C.b);
@@ -603,19 +942,39 @@ export function createArenaBouts(deps) {
     // the fighters out of the bout stand down; at the end everyone does
     for (const f of C.b.fighters) {
       const foe = C.fighters.get(f.id);
-      if (foe && (f.out || boutOver(C.b))) { standDown(foe); if (C.tags.get(f.id)) C.tags.get(f.id).out = !!f.out || boutOver(C.b); }
+      if (foe && (f.out || boutOver(C.b))) {
+        standDown(foe);
+        if (C.tags.get(f.id)) C.tags.get(f.id).out = !!f.out || boutOver(C.b);
+      }
     }
     if (C.playerTag && (boutOver(C.b) || boutFighter(C.b, YOU)?.out)) C.playerTag.out = true;
     // the healers, then off the sand
-    if (C.b.phase === 'done' && !Number.isFinite(C.doneAt)) { C.doneAt = t; keepRecording(C); }   // ARENA5: the replay kept
+    if (C.b.phase === 'done' && !Number.isFinite(C.doneAt)) {
+      C.doneAt = t;
+      keepRecording(C);
+    } // ARENA5: the replay kept
     if (Number.isFinite(C.doneAt) && t - C.doneAt >= LEAVE_AFTER_MS && C.fighters.size) {
-      for (const foe of C.fighters.values()) (C.stage ?? stage)?.remove?.(foe);   // AUDIT ARENA-LADDER A4: off the stage they stand on
+      for (const foe of C.fighters.values()) (C.stage ?? stage)?.remove?.(foe); // AUDIT ARENA-LADDER A4: off the stage they stand on
       C.fighters.clear();
       deps.setPlayerBout?.(null);
     }
-    if (Number.isFinite(C.doneAt) && t - C.doneAt >= CROWD_STAYS_MS && C.stage?.kind === 'city') { dismiss(); return; }
+    if (Number.isFinite(C.doneAt) && t - C.doneAt >= CROWD_STAYS_MS && C.stage?.kind === 'city') {
+      dismiss();
+      return;
+    }
     const bark = t - C.barkAt < BARK_SHOWN_MS ? C.bark : '';
-    deps.drawHud?.(near > 0 ? arenaHudModel(C.b, C.crowd, t, { you: C.you, stamina: o.stamina ?? null, bark, quiet: C.quiet, teams: C.teams }) : null, { hidden: !!o.hidden, touch: !!o.touch });
+    deps.drawHud?.(
+      near > 0
+        ? arenaHudModel(C.b, C.crowd, t, {
+            you: C.you,
+            stamina: o.stamina ?? null,
+            bark,
+            quiet: C.quiet,
+            teams: C.teams,
+          })
+        : null,
+      { hidden: !!o.hidden, touch: !!o.touch },
+    );
     crowdFrame(C, t);
   }
   const nearOf = (d) => (d <= NEAR_M ? 1 : d >= FAR_M ? 0 : 1 - (d - NEAR_M) / (FAR_M - NEAR_M));
@@ -644,58 +1003,114 @@ export function createArenaBouts(deps) {
     const told = C.hitMe;
     C.hitMe = null;
     if (told && lawNow() - told.at <= RESOLUTION_MS && !boutFighter(C.b, told.from)?.out) return told.from;
-    let best = null, bd = Infinity;
+    let best = null,
+      bd = Infinity;
     for (const [fid, foe] of C.fighters) {
       const f = boutFighter(C.b, fid);
       if (!f || f.out || f.side === 0 || !foe.ai?.feet) continue;
       const tgt = foe.ai.target;
       const d = feet ? Math.hypot(foe.ai.feet[0] - feet[0], foe.ai.feet[2] - feet[2]) : 0;
       const k = (tgt && tgt.isPlayer ? 0 : 50) + d;
-      if (k < bd) { bd = k; best = fid; }
+      if (k < bd) {
+        bd = k;
+        best = fid;
+      }
     }
     return best;
   }
 
   /** AN EVENT HEARD: the crowd moved and heard, a bark, the Herald's words, the verdict's purse and the healers. */
   function hear(C, e, t, near) {
-    const title = C.ladder && !!C.next?.champion && C.b.result?.side === (C.relay ? boutFighter(C.b, C.you)?.side : 0);   // ARENA4: a relay's bout has no ladder step for a player pair, and my side is the one I fight on
-    const cues = crowdHear(C.crowd, e, { share: (id) => { const f = boutFighter(C.b, id); return f ? fighterShare(f) : 1; }, title, now: t });
-    if (!C.quiet) {   // the training pit: no crowd to hear it, no music
+    const title = C.ladder && !!C.next?.champion && C.b.result?.side === (C.relay ? boutFighter(C.b, C.you)?.side : 0); // ARENA4: a relay's bout has no ladder step for a player pair, and my side is the one I fight on
+    const cues = crowdHear(C.crowd, e, {
+      share: (id) => {
+        const f = boutFighter(C.b, id);
+        return f ? fighterShare(f) : 1;
+      },
+      title,
+      now: t,
+    });
+    if (!C.quiet) {
+      // the training pit: no crowd to hear it, no music
       deps.sound?.cue(cues, near);
-      if (near > 0.3) { const line = crowdBark(C.crowd, e, t, rng); if (line) { C.bark = line; C.barkAt = t; deps.bark?.(line); } }
+      if (near > 0.3) {
+        const line = crowdBark(C.crowd, e, t, rng);
+        if (line) {
+          C.bark = line;
+          C.barkAt = t;
+          deps.bark?.(line);
+        }
+      }
     }
-    const say = (line) => { if (near > 0.3) deps.say?.(line); };
+    const say = (line) => {
+      if (near > 0.3) deps.say?.(line);
+    };
     switch (e.k) {
       case 'call':
-        if (C.relay && !C.next && !C.ex) { say(C.relay.casual ? ARENA_TEXT.call.casual : ARENA_TEXT.call.players); break; }   // ARENA4: a bout between players (ARENA4b: the relay's exhibition is called as one) - AUDIT PRE-MERGE 1003b S6: a casual one (the casual queue's, a private session's) never called "rated"
-        say(C.practice ? ARENA_TEXT.undercroft.practiceCall : C.ladder ? (C.next.grand ? ARENA_TEXT.call.grand : C.next.champion ? ARENA_TEXT.call.champion(C.next.tierName) : C.next.free ? ARENA_TEXT.call.melee : ARENA_TEXT.call.ladder(C.next.tierName, C.next.label)) : ARENA_TEXT.call.exhibition);
+        if (C.relay && !C.next && !C.ex) {
+          say(C.relay.casual ? ARENA_TEXT.call.casual : ARENA_TEXT.call.players);
+          break;
+        } // ARENA4: a bout between players (ARENA4b: the relay's exhibition is called as one) - AUDIT PRE-MERGE 1003b S6: a casual one (the casual queue's, a private session's) never called "rated"
+        say(
+          C.practice
+            ? ARENA_TEXT.undercroft.practiceCall
+            : C.ladder
+              ? C.next.grand
+                ? ARENA_TEXT.call.grand
+                : C.next.champion
+                  ? ARENA_TEXT.call.champion(C.next.tierName)
+                  : C.next.free
+                    ? ARENA_TEXT.call.melee
+                    : ARENA_TEXT.call.ladder(C.next.tierName, C.next.label)
+              : ARENA_TEXT.call.exhibition,
+        );
         break;
       case 'crier': {
         const f = boutFighter(C.b, e.a);
-        if (f) say(ARENA_TEXT.call.fighter(`${f.name}, ${f.epithet || ''}`.replace(/, $/, ''), f.ai ? f.home : ''));   // ARENA3: mine by my title
-        if (f?.ai && !C.relay) walkIn(C, f.id);   // ARENA-FIX 8: named, they walk in from their gate (ARENA4: a relay's fighter walks by the relay's word)
+        if (f) say(ARENA_TEXT.call.fighter(`${f.name}, ${f.epithet || ''}`.replace(/, $/, ''), f.ai ? f.home : '')); // ARENA3: mine by my title
+        if (f?.ai && !C.relay) walkIn(C, f.id); // ARENA-FIX 8: named, they walk in from their gate (ARENA4: a relay's fighter walks by the relay's word)
         break;
       }
       case 'walk':
         // to the marks: the player stands on theirs; a fighter already there (or with no body to walk) is at it
         say(ARENA_TEXT.call.marks);
-        if (C.relay) break;   // ARENA4: the relay stands its fighters on their marks
+        if (C.relay) break; // ARENA4: the relay stands its fighters on their marks
         for (const f of C.b.fighters) {
-          if (!f.ai) { boutAtMarks(C.b, f.id, t); continue; }
+          if (!f.ai) {
+            boutAtMarks(C.b, f.id, t);
+            continue;
+          }
           walkIn(C, f.id);
           const foe = C.fighters.get(f.id);
-          if (!foe || arrived(C, f.id, foe)) { C.walking.delete(f.id); boutAtMarks(C.b, f.id, t); }
+          if (!foe || arrived(C, f.id, foe)) {
+            C.walking.delete(f.id);
+            boutAtMarks(C.b, f.id, t);
+          }
         }
         break;
-      case 'count':   // the walk's limit came first: whoever is still walking stops where they are
-        for (const fid of C.walking) { const foe = C.fighters.get(fid); if (foe?.ai) { foe.ai.walkGoal = null; foe.ai.yaw = yawTo(markOf(C, fid), [0, 0]); } }
+      case 'count': // the walk's limit came first: whoever is still walking stops where they are
+        for (const fid of C.walking) {
+          const foe = C.fighters.get(fid);
+          if (foe?.ai) {
+            foe.ai.walkGoal = null;
+            foe.ai.yaw = yawTo(markOf(C, fid), [0, 0]);
+          }
+        }
         C.walking.clear();
         say(ARENA_TEXT.count[3 - (e.n ?? 3)]);
         break;
-      case 'fight': say(ARENA_TEXT.count[3]); break;
-      case 'verdict': if (C.relay) relayVerdict(C, t); else verdict(C, t); break;
-      case 'heal': heal(C); break;
-      default: break;
+      case 'fight':
+        say(ARENA_TEXT.count[3]);
+        break;
+      case 'verdict':
+        if (C.relay) relayVerdict(C, t);
+        else verdict(C, t);
+        break;
+      case 'heal':
+        heal(C);
+        break;
+      default:
+        break;
     }
   }
 
@@ -705,8 +1120,18 @@ export function createArenaBouts(deps) {
     C.verdictAt = t;
     if (!r) return;
     const V = ARENA_TEXT.verdict;
-    const w = r.side === null ? '' : sideNames(C.b, r.side), l = r.side === null ? '' : otherNames(C.b, r.side);
-    const line = r.side === null ? V.draw : r.how === 'judges' ? V.judges(w) : r.how === 'yield' ? V.yield(w, l) : r.how === 'ringout' ? V.ringout(w, l) : V.fall(w, l);
+    const w = r.side === null ? '' : sideNames(C.b, r.side),
+      l = r.side === null ? '' : otherNames(C.b, r.side);
+    const line =
+      r.side === null
+        ? V.draw
+        : r.how === 'judges'
+          ? V.judges(w)
+          : r.how === 'yield'
+            ? V.yield(w, l)
+            : r.how === 'ringout'
+              ? V.ringout(w, l)
+              : V.fall(w, l);
     deps.say?.(line);
     // the crowd's throw: flowers for a winner it liked, refuse for one it did not
     const throws = verdictThrows(C.crowd, r.winners, r.losers);
@@ -718,25 +1143,60 @@ export function createArenaBouts(deps) {
       deps.notice?.([line, r.side === null ? U.practiceDraw : r.side === 0 ? U.practiceWon : U.practiceLost]);
     } else if (C.ladder) {
       const won = r.side === 0;
-      if (won) noteAct('arena-won');   // QL11: a bout won in the Arena - a ladder bout of mine (the pit's practice is no bout of the Arena's)
+      if (won) noteAct('arena-won'); // QL11: a bout won in the Arena - a ladder bout of mine (the pit's practice is no bout of the Arena's)
       const purse = won ? boutPurse(C.next.purse, C.crowd.favour[YOU] ?? 0) : 0;
-      if (won && purse > 0 && !C.paid) { C.paid = true; deps.pay?.(purse); }
+      if (won && purse > 0 && !C.paid) {
+        C.paid = true;
+        deps.pay?.(purse);
+      }
       const fav = C.crowd.favour[YOU] ?? 0;
-      const pline = !won ? ARENA_TEXT.purse.lost : C.next.repeat ? ARENA_TEXT.purse.repeat : fav >= 0.25 ? ARENA_TEXT.purse.favoured(purse) : fav <= -0.25 ? ARENA_TEXT.purse.hated(purse) : ARENA_TEXT.purse.won(purse);
+      const pline = !won
+        ? ARENA_TEXT.purse.lost
+        : C.next.repeat
+          ? ARENA_TEXT.purse.repeat
+          : fav >= 0.25
+            ? ARENA_TEXT.purse.favoured(purse)
+            : fav <= -0.25
+              ? ARENA_TEXT.purse.hated(purse)
+              : ARENA_TEXT.purse.won(purse);
       const before = arenaLadderRestore(P?.arenaLadder);
-      const out = ladderAfter(before, { won, how: r.side === null ? 'draw' : (boutFighter(C.b, YOU)?.out ?? r.how), purse });
+      const out = ladderAfter(before, {
+        won,
+        how: r.side === null ? 'draw' : (boutFighter(C.b, YOU)?.out ?? r.how),
+        purse,
+      });
       if (P) P.arenaLadder = out.ladder;
       const lines = [line, pline];
       if (out.grand) lines.push(V.grand(P?.name || 'You'));
       else if (out.title) lines.push(V.tier(P?.name || 'You', ARENA_TEXT.tiers[C.next.tier]));
       if (out.tierUp) lines.push(ARENA_TEXT.ladder.tierUp(ARENA_TEXT.tiers[out.ladder.tier]));
-      else if (out.runLost) lines.push(ARENA_TEXT.ladder.runLost(ARENA_TEXT.tiers[out.ladder.tier]));   // AUDIT ARENA-LADDER: the run broken
-      else if (won && !C.next.champion) lines.push(out.ladder.won >= 3 ? ARENA_TEXT.ladder.champOpen(ARENA_TEXT.tiers[out.ladder.tier]) : ARENA_TEXT.ladder.boutWon(out.ladder.won));
+      else if (out.runLost)
+        lines.push(ARENA_TEXT.ladder.runLost(ARENA_TEXT.tiers[out.ladder.tier])); // AUDIT ARENA-LADDER: the run broken
+      else if (won && !C.next.champion)
+        lines.push(
+          out.ladder.won >= 3
+            ? ARENA_TEXT.ladder.champOpen(ARENA_TEXT.tiers[out.ladder.tier])
+            : ARENA_TEXT.ladder.boutWon(out.ladder.won),
+        );
       // ARENA3: the bout kept for the Records page, its points given to the banner worn
       const gm = deps.gameMinutes?.();
       if (P && Number.isFinite(gm)) {
-        const opp = C.roster.filter((f) => f.ai).map((f) => f.name).join(', ');
-        const league = leagueAfterBout(P.arenaLeague, { gameMinutes: gm, tier: C.next.tier, label: C.next.label, opp, won, how: r.side === null ? 'draw' : won ? r.how : (boutFighter(C.b, YOU)?.out ?? r.how), purse, repeat: !!C.next.repeat, champion: C.next.champion, grand: C.next.grand });
+        const opp = C.roster
+          .filter((f) => f.ai)
+          .map((f) => f.name)
+          .join(', ');
+        const league = leagueAfterBout(P.arenaLeague, {
+          gameMinutes: gm,
+          tier: C.next.tier,
+          label: C.next.label,
+          opp,
+          won,
+          how: r.side === null ? 'draw' : won ? r.how : (boutFighter(C.b, YOU)?.out ?? r.how),
+          purse,
+          repeat: !!C.next.repeat,
+          champion: C.next.champion,
+          grand: C.next.grand,
+        });
         P.arenaLeague = league;
         const pts = league.bouts[0]?.points ?? 0;
         if (pts > 0 && league.team) lines.push(ARENA_TEXT.ladder.points(pts, ARENA_TEXT.teams.the[league.team]));
@@ -744,24 +1204,47 @@ export function createArenaBouts(deps) {
       deps.ladderChanged?.(out.ladder, out);
       deps.notice?.(lines);
     } else {
-      if (r.side !== null) { C.bark = ARENA_TEXT.purse.won(EXHIBITION_PURSE); C.barkAt = t; }
-      deps.exhibitionVerdict?.(C.ex.hour, r.side);   // ARENA3: the bookmaker settles a wager on it by what was seen
+      if (r.side !== null) {
+        C.bark = ARENA_TEXT.purse.won(EXHIBITION_PURSE);
+        C.barkAt = t;
+      }
+      deps.exhibitionVerdict?.(C.ex.hour, r.side); // ARENA3: the bookmaker settles a wager on it by what was seen
     }
   }
   /** AUDIT ARENA-LADDER A2: a bout of mine VOID - said, healed, let go with nothing recorded (no purse, no step, no loss). */
   function voidBout(C) {
     deps.say?.(ARENA_TEXT.verdict.void);
-    if (C.ladder) { deps.heal?.(); refundMine(C); }
+    if (C.ladder) {
+      deps.heal?.();
+      refundMine(C);
+    }
     dismiss();
   }
   /** THE HEALERS: everyone whole (the duel's own heal, the host's), the fighters' bodies too. */
   /** AUDIT ARENA-LADDER 2: is this a bout the sand's kit law holds - a ladder or practice bout of mine, or the relay's
    *  ladder bout I fight (never a bout between players, nor one watched). */
-  function kitBout(C) { return C?.relay ? C.relay.kind === 'pve' && !!C.you : !!C?.ladder; }
+  function kitBout(C) {
+    return C?.relay ? C.relay.kind === 'pve' && !!C.you : !!C?.ladder;
+  }
   function heal(C) {
-    if (C.relay) { if (C.you) { deps.heal?.(); deps.say?.(ARENA_TEXT.healed); refundMine(C); restoreSandHeld(P); } return; }   // ARENA4: the relay's fighters heal on its word
-    if (C.ladder) { deps.heal?.(); deps.say?.(ARENA_TEXT.healed); refundMine(C); restoreSandHeld(P); C.lastHealth = P?.health ?? C.lastHealth; }   // AUDIT ARENA-LADDER 2: a held ring's effect back
-    for (const foe of C.fighters.values()) if (foe.entity) foe.entity.health = foe.entity.maxHealth ?? foe.entity.health;
+    if (C.relay) {
+      if (C.you) {
+        deps.heal?.();
+        deps.say?.(ARENA_TEXT.healed);
+        refundMine(C);
+        restoreSandHeld(P);
+      }
+      return;
+    } // ARENA4: the relay's fighters heal on its word
+    if (C.ladder) {
+      deps.heal?.();
+      deps.say?.(ARENA_TEXT.healed);
+      refundMine(C);
+      restoreSandHeld(P);
+      C.lastHealth = P?.health ?? C.lastHealth;
+    } // AUDIT ARENA-LADDER 2: a held ring's effect back
+    for (const foe of C.fighters.values())
+      if (foe.entity) foe.entity.health = foe.entity.maxHealth ?? foe.entity.health;
   }
 
   // ── THE CROWD, SEEN ─────────────────────────────────────────────────────────────────────────────────────
@@ -771,12 +1254,20 @@ export function createArenaBouts(deps) {
     const r = deps.renderer;
     if (!r?.createBillboardBatch || !deps.getTexture || !stage?.heightAt) return;
     const c = stage.centre();
-    const seats = crowdSeats((x, z) => { const h = stage.heightAt(c[0] + x, c[2] + z); return Number.isFinite(h) ? h - c[1] : null; });
+    const seats = crowdSeats((x, z) => {
+      const h = stage.heightAt(c[0] + x, c[2] + z);
+      return Number.isFinite(h) ? h - c[1] : null;
+    });
     // ARENA5: by the bout's ladder step where it has one (a ladder bout, a relay's ladder bout, a replay of one), else an
     // exhibition's house - a relay's bout between players, and one watched, have neither `next` nor `ex`, and read here
     // `C.next.tier` / `C.ex.tier` threw before the first await: the stands of a relay's bout stood empty
     const nx = C.next;
-    const n = crowdCount({ kind: nx ? 'ladder' : 'exhibition', tier: nx ? nx.tier : C.ex?.tier ?? 0, champion: !!nx?.champion, grand: !!nx?.grand });
+    const n = crowdCount({
+      kind: nx ? 'ladder' : 'exhibition',
+      tier: nx ? nx.tier : (C.ex?.tier ?? 0),
+      champion: !!nx?.champion,
+      grand: !!nx?.grand,
+    });
     const sat = seatPeople(pickSeats(seats, n, seededRng(arenaHash(C.seed, 3))), seededRng(arenaHash(C.seed, 4)));
     // ARENA5: THE CROWD'S HALF IN YOUR COLOUR (Arena.md 3) - each half of the tiers whose side fights under a banner
     // (systems/arena/arenaCrowd.js crowdHalves, over the banners this bout's own law gave its fighters - boutTeams, relayBanners)
@@ -790,27 +1281,62 @@ export function createArenaBouts(deps) {
       // commoners' 184.6), each its clothed stand-in while Show Nudity is off
       const [archive, record] = drawnFlat(s.archive, s.record);
       const k = `${archive}:${record}:${s.phase < 0.5 ? 0 : 1}:${side}`;
-      if (!groups.has(k)) groups.set(k, { archive, record, half: s.phase < 0.5 ? 0 : 1, tint: split ? crowdWash(halves[side]) : null, at: [] });
+      if (!groups.has(k))
+        groups.set(k, {
+          archive,
+          record,
+          half: s.phase < 0.5 ? 0 : 1,
+          tint: split ? crowdWash(halves[side]) : null,
+          at: [],
+        });
       groups.get(k).at.push([s.x, s.y, s.z]);
     }
     const batches = [];
     for (const g of groups.values()) {
       let tex;
-      try { tex = await deps.getTexture(g.archive); } catch { continue; }
+      try {
+        tex = await deps.getTexture(g.archive);
+      } catch {
+        continue;
+      }
       // AUDIT PRE-MERGE 1003 B6: the bout gone while a picture loaded - the batches already made go with it (they were
       // neither kept nor destroyed: GPU buffers lost to every dismissal mid-load)
-      if (cur !== C) { for (const x of batches) r.destroyBillboardBatch?.(x.batch); return; }
+      if (cur !== C) {
+        for (const x of batches) r.destroyBillboardBatch?.(x.batch);
+        return;
+      }
       const size = sizeOf(tex, g.record, CROWD_SCALE[g.archive]);
       const frames = Math.max(1, tex?.getFrameCount?.(g.record) ?? 1);
       const batch = r.createBillboardBatch(g.archive, g.record, size, g.at);
-      if (g.tint) batch.tint = g.tint;   // ARENA5: its half's wash (render/renderer.js uBatchTint)
-      batches.push({ batch, archive: g.archive, record: g.record, frames, half: g.half, origin: [0, 0, 0], size, uploaded: new Set() });
+      if (g.tint) batch.tint = g.tint; // ARENA5: its half's wash (render/renderer.js uBatchTint)
+      batches.push({
+        batch,
+        archive: g.archive,
+        record: g.record,
+        frames,
+        half: g.half,
+        origin: [0, 0, 0],
+        size,
+        uploaded: new Set(),
+      });
     }
-    if (cur !== C) { for (const x of batches) r.destroyBillboardBatch?.(x.batch); return; }
+    if (cur !== C) {
+      for (const x of batches) r.destroyBillboardBatch?.(x.batch);
+      return;
+    }
     C.crowdBatches = batches;
   }
   const sizeOf = (tex, record, scale = null) => {
-    try { const s = tex.getSize(record), k = scale == null ? tex.getScale(record) : { width: scale, height: scale }; return { w: (s.width + Math.trunc(s.width * (k.width / 256))) * 0.025, h: (s.height + Math.trunc(s.height * (k.height / 256))) * 0.025 }; } catch { return { w: 1.1, h: 1.95 }; }
+    try {
+      const s = tex.getSize(record),
+        k = scale == null ? tex.getScale(record) : { width: scale, height: scale };
+      return {
+        w: (s.width + Math.trunc(s.width * (k.width / 256))) * 0.025,
+        h: (s.height + Math.trunc(s.height * (k.height / 256))) * 0.025,
+      };
+    } catch {
+      return { w: 1.1, h: 1.95 };
+    }
   };
   function crowdFrame(C, t) {
     if (!C.crowdBatches.length || !stage) return;
@@ -818,18 +1344,25 @@ export function createArenaBouts(deps) {
     const fps = crowdFlipFps(C.crowd.mood);
     const hop = crowdHop(C.crowd, t);
     for (const x of C.crowdBatches) {
-      x.origin[0] = c[0]; x.origin[1] = c[1] + (x.half ? hop : hop * 0.6); x.origin[2] = c[2];
+      x.origin[0] = c[0];
+      x.origin[1] = c[1] + (x.half ? hop : hop * 0.6);
+      x.origin[2] = c[2];
       x.batch.origin = x.origin;
       if (x.frames > 1) {
         const f = Math.floor((t / 1000) * fps + x.half * 0.5 * x.frames) % x.frames;
-        if (!x.uploaded.has(f)) { x.uploaded.add(f); deps.uploadRecordFrame?.(x.archive, x.record, f); }
+        if (!x.uploaded.has(f)) {
+          x.uploaded.add(f);
+          deps.uploadRecordFrame?.(x.archive, x.record, f);
+        }
         x.batch.record = `${x.record}#${f}`;
       }
     }
     for (const th of C.throws) {
       const k = Math.min(1, (t - th.at) / THROW_MS);
       const y = th.from[1] + (th.to[1] - th.from[1]) * k + Math.sin(Math.PI * k) * 3;
-      th.origin[0] = c[0] + th.from[0] + (th.to[0] - th.from[0]) * k; th.origin[1] = c[1] + y; th.origin[2] = c[2] + th.from[2] + (th.to[2] - th.from[2]) * k;
+      th.origin[0] = c[0] + th.from[0] + (th.to[0] - th.from[0]) * k;
+      th.origin[1] = c[1] + y;
+      th.origin[2] = c[2] + th.from[2] + (th.to[2] - th.from[2]) * k;
       th.batch.origin = th.origin;
     }
   }
@@ -839,19 +1372,33 @@ export function createArenaBouts(deps) {
     if (!(count > 0) || !r?.createBillboardBatch || !deps.getTexture || !C.crowdBatches.length) return;
     const c = stage.centre();
     const dice = seededRng(arenaHash(C.seed, 9 + count));
-    const at = ids.map((id) => C.fighters.get(id)?.ai?.feet ?? null).filter(Boolean).map((f) => [f[0] - c[0], f[2] - c[2]]);
+    const at = ids
+      .map((id) => C.fighters.get(id)?.ai?.feet ?? null)
+      .filter(Boolean)
+      .map((f) => [f[0] - c[0], f[2] - c[2]]);
     for (let i = 0; i < count; i++) {
       const [archive, record] = kinds[Math.floor(dice() * kinds.length)];
       let tex;
-      try { tex = await deps.getTexture(archive); } catch { return; }
+      try {
+        tex = await deps.getTexture(archive);
+      } catch {
+        return;
+      }
       if (cur !== C) return;
       const size = sizeOf(tex, record);
       const small = { w: size.w * 0.6, h: size.h * 0.6 };
-      const a = dice() * Math.PI * 2, r0 = 22 + dice() * 6;
+      const a = dice() * Math.PI * 2,
+        r0 = 22 + dice() * 6;
       const target = at.length ? at[Math.floor(dice() * at.length)] : [0, 0];
       const to = [target[0] + (dice() - 0.5) * 5, 0, target[1] + (dice() - 0.5) * 5];
       const batch = r.createBillboardBatch(archive, record, small, [[0, 0, 0]]);
-      C.throws.push({ batch, from: [Math.cos(a) * r0, 8, Math.sin(a) * r0], to, at: clockOf(C) + dice() * 600, origin: [0, 0, 0] });
+      C.throws.push({
+        batch,
+        from: [Math.cos(a) * r0, 8, Math.sin(a) * r0],
+        to,
+        at: clockOf(C) + dice() * 600,
+        origin: [0, 0, 0],
+      });
     }
   }
   /** The crowd's and the throws' batches, for the host's billboard pass. */
@@ -877,16 +1424,56 @@ export function createArenaBouts(deps) {
    *   banners?: Record<string, string|null>, owe?: (gold: number, pay: (g: number) => void) => void }} p
    */
   function startRelay(p) {
-    if (!stage) { pending = { where: 'floor', relay: p }; return null; }
+    if (!stage) {
+      pending = { where: 'floor', relay: p };
+      return null;
+    }
     dismiss();
     const t = now();
     cur = {
-      kind: 'relay', relay: p, id: p.o, seed: 0, stage, ladder: !!p.me, next: p.next ?? null, ex: null, fighters: new Map(), tags: new Map(), marks: [],
-      roster: [], b: null, crowd: null, you: p.me || null, playerTag: null, practice: false, quiet: false, ring: stage.radius ?? RING_R,
-      lastBlow: new Map(), walking: new Set(), lastHealth: P?.health ?? 0, lastSheathed: null, verdictAt: NaN, doneAt: NaN, paid: false,
-      said: false, crowdSeats: null, crowdBatches: [], throws: [], spawning: 0, title: false, startedAt: t, bark: '', barkAt: -Infinity,
-      ringed: null, teams: {}, clock: { off: null }, mv: new Map(), M: null, spawned: false,
-      cheerAt: -Infinity, ownShout: null,   // ARENA4b: my last cheer from the stands, and its echo still to come
+      kind: 'relay',
+      relay: p,
+      id: p.o,
+      seed: 0,
+      stage,
+      ladder: !!p.me,
+      next: p.next ?? null,
+      ex: null,
+      fighters: new Map(),
+      tags: new Map(),
+      marks: [],
+      roster: [],
+      b: null,
+      crowd: null,
+      you: p.me || null,
+      playerTag: null,
+      practice: false,
+      quiet: false,
+      ring: stage.radius ?? RING_R,
+      lastBlow: new Map(),
+      walking: new Set(),
+      lastHealth: P?.health ?? 0,
+      lastSheathed: null,
+      verdictAt: NaN,
+      doneAt: NaN,
+      paid: false,
+      said: false,
+      crowdSeats: null,
+      crowdBatches: [],
+      throws: [],
+      spawning: 0,
+      title: false,
+      startedAt: t,
+      bark: '',
+      barkAt: -Infinity,
+      ringed: null,
+      teams: {},
+      clock: { off: null },
+      mv: new Map(),
+      M: null,
+      spawned: false,
+      cheerAt: -Infinity,
+      ownShout: null, // ARENA4b: my last cheer from the stands, and its echo still to come
     };
     return cur;
   }
@@ -905,7 +1492,7 @@ export function createArenaBouts(deps) {
     // banner over my side (Alva of the Blue Banner picked Red drew both sides blue on her own screen), nor the realm's laurel
     if (C.you && !C.relay.fixed && (R?.banner === 'red' || R?.banner === 'blue')) out[C.you] = R.banner;
     C.teams = out;
-    laurelOf(C, C.relay.fixed ? null : R?.laurel ?? null, out);
+    laurelOf(C, C.relay.fixed ? null : (R?.laurel ?? null), out);
   }
   /** ARENA4b: MY CHEER (`dir` 1) OR BOO (-1) from the stands of a relay's bout - one each CHEER_GAP_MS - sent through the
    *  bout's session (`send.cheer`, scenes/arena/arenaOnline.js) and heard by my own crowd at once, by the stands' own law
@@ -930,16 +1517,32 @@ export function createArenaBouts(deps) {
     const C = cur;
     if (!C?.relay || !w) return false;
     const t = now();
-    const near = C.near ?? 1;   // ARENA4b: the city's sand heard from the market by distance (relayFrame), the instance's whole
+    const near = C.near ?? 1; // ARENA4b: the city's sand heard from the market by distance (relayFrame), the instance's whole
     if (w.k === 'st') {
       if (w.o !== C.relay.o) return false;
       const first = !C.M;
       C.M = mirrorOf(w, t, { prev: C.M, off: C.clock.off ?? 0, names: C.relay.names ?? (() => null) });
-      C.b = C.M.b; C.seed = C.M.seed; C.you = C.M.me || null; C.ladder = !!C.you;
+      C.b = C.M.b;
+      C.seed = C.M.seed;
+      C.you = C.M.me || null;
+      C.ladder = !!C.you;
       if (first) {
-        C.crowd = newCrowd({ fighters: C.b.fighters.map((f) => ({ id: f.id, home: f.home, ai: f.ai })), beasts: !!C.next?.beasts });
-        relayBanners(C);   // ARENA4b: the realm's banners and its laurel, from the first bell
-        if (C.you) { C.playerTag = { id: C.relay.o, side: C.b.fighters.find((f) => f.id === C.you)?.side ?? 0, out: false, hold: true, ...(kitBout(C) ? { kit: true } : {}) }; deps.setPlayerBout?.(C.playerTag); markMine(C); }
+        C.crowd = newCrowd({
+          fighters: C.b.fighters.map((f) => ({ id: f.id, home: f.home, ai: f.ai })),
+          beasts: !!C.next?.beasts,
+        });
+        relayBanners(C); // ARENA4b: the realm's banners and its laurel, from the first bell
+        if (C.you) {
+          C.playerTag = {
+            id: C.relay.o,
+            side: C.b.fighters.find((f) => f.id === C.you)?.side ?? 0,
+            out: false,
+            hold: true,
+            ...(kitBout(C) ? { kit: true } : {}),
+          };
+          deps.setPlayerBout?.(C.playerTag);
+          markMine(C);
+        }
         buildCrowd(C);
         for (const a of C.M.ai) spawnPuppet(C, a);
       }
@@ -947,7 +1550,9 @@ export function createArenaBouts(deps) {
     }
     if (!C.b) return w.k === 'mv' ? (C.mv.set(w.i, w), true) : false;
     switch (w.k) {
-      case 'ev': for (const e of mirrorEvents(C.M, w.e, t, C.clock)) hear(C, e, t, near); break;
+      case 'ev':
+        for (const e of mirrorEvents(C.M, w.e, t, C.clock)) hear(C, e, t, near);
+        break;
       case 'hp': {
         const mine = mirrorHealth(C.M, w.h);
         if (mine && P) {
@@ -968,26 +1573,38 @@ export function createArenaBouts(deps) {
         }
         break;
       }
-      case 'mv': C.mv.set(w.i, w); break;
+      case 'mv':
+        C.mv.set(w.i, w);
+        break;
       case 'atk': {
         const foe = C.fighters.get(w.i);
         // AUDIT ARENA-LADDER 2: a telegraphed blow swings at its LANDING (relayFrame, `_swingAt`), as the brain's own does -
         // a swing at the word played the blow out before the ground's mark had filled
-        if (foe?._pup) { if (!w.s) foe._pup.strike = 'melee'; foe._pup.yaw = Math.atan2(w.x - (foe.ai?.feet?.[0] ?? w.x), w.z - (foe.ai?.feet?.[2] ?? w.z)); }
+        if (foe?._pup) {
+          if (!w.s) foe._pup.strike = 'melee';
+          foe._pup.yaw = Math.atan2(w.x - (foe.ai?.feet?.[0] ?? w.x), w.z - (foe.ai?.feet?.[2] ?? w.z));
+        }
         // AUDIT ARENA-LADDER: A TELEGRAPHED BLOW OF THE RELAY'S (net/arena/arenaBrain.js) - its shape drawn on this screen's
         // ground where it was wound up, as the brain's own are (ai/foeBlows.js, the ground's pass): the relay decides it -
         // AUDIT ARENA-LADDER 2: at its own moment (`w.at`, the relay's clock), so the mark flashes when the relay judges it
         if (w.s && foe?.ai?.feet) {
           const land = relayLandLocal(C, w, t);
           const p = relayToStage(C, w.ox, w.oz);
-          const blow = makeBlow(w.s, [p[0], foe.ai.feet[1], p[1]], w.yw, tacticsNow() + (land - t) / 1000 - BLOW[w.s].windup, BLOW_COLOR);
+          const blow = makeBlow(
+            w.s,
+            [p[0], foe.ai.feet[1], p[1]],
+            w.yw,
+            tacticsNow() + (land - t) / 1000 - BLOW[w.s].windup,
+            BLOW_COLOR,
+          );
           blow.sand = true;
           setLiveBlow(foe.ai, blow);
           foe._swingAt = land;
         }
         break;
       }
-      case 'blow': break;   // what it took is the next `hp`'s (the relay holds my health); its sound is the puppet's swing
+      case 'blow':
+        break; // what it took is the next `hp`'s (the relay holds my health); its sound is the puppet's swing
       case 'cr': {
         // ARENA4b: MY OWN SHOUT COME BACK (the first of its direction inside the relay's allowance): my crowd heard my
         // voice at the press, so only the others who shouted with me are heard now - as every other screen heard us all
@@ -997,7 +1614,8 @@ export function createArenaBouts(deps) {
         if (n > 0) deps.sound?.cue(crowdShout(C.crowd, w.c, n, t), near);
         break;
       }
-      default: return false;
+      default:
+        return false;
     }
     return true;
   }
@@ -1005,27 +1623,61 @@ export function createArenaBouts(deps) {
    *  owned by ARENA_PUPPET_OWNER - no senses, no swing of its own, its feet and its blows the relay's words. */
   function spawnPuppet(C, a) {
     const mv = C.mv.get(a.id);
-    const at = mv ? relayToStage(C, mv.x, mv.z) : null;   // ARENA4b: the relay's frame on this stage (the city's sand too)
+    const at = mv ? relayToStage(C, mv.x, mv.z) : null; // ARENA4b: the relay's frame on this stage (the city's sand too)
     const c = stage.centre();
     const feet = at ? [at[0], c[1], at[1]] : [c[0], c[1], c[2]];
     const who = C.b.fighters.find((f) => f.id === a.id);
     // ARENA4b: an exhibition's fighter struck from the stands answers as this screen's would (the Herald, then the watch)
-    const tag = { id: C.relay.o, side: who?.side ?? 1, out: false, hold: true, hooks: C.ex ? { intrude: (foe) => intrude(a.id, foe) } : {} };
+    const tag = {
+      id: C.relay.o,
+      side: who?.side ?? 1,
+      out: false,
+      hold: true,
+      hooks: C.ex ? { intrude: (foe) => intrude(a.id, foe) } : {},
+    };
     C.tags.set(a.id, tag);
     C.spawning++;
     // ARENA4b: `mirror` - a body every screen stands its own copy of (the city's pool streams it to nobody)
     // AUDIT ARENA-LADDER 2: a ladder champion's body stands as the elite the relay runs it as (its size and glow)
-    Promise.resolve(stage.spawn(a.mobile, feet, { level: null, elite: C.relay.kind === 'pve' && !!C.relay.next?.champion, gender: C.relay.names?.(a.i, a.mobile)?.gender, yaw: Math.atan2(c[0] - feet[0], c[2] - feet[2]), bout: tag, mirror: true }))
+    Promise.resolve(
+      stage.spawn(a.mobile, feet, {
+        level: null,
+        elite: C.relay.kind === 'pve' && !!C.relay.next?.champion,
+        gender: C.relay.names?.(a.i, a.mobile)?.gender,
+        yaw: Math.atan2(c[0] - feet[0], c[2] - feet[2]),
+        bout: tag,
+        mirror: true,
+      }),
+    )
       .then((foe) => {
         C.spawning--;
-        if (cur !== C || !foe) { if (foe) (C.stage ?? stage)?.remove?.(foe); return; }   // AUDIT ARENA-LADDER A4: off its own stage
-        foe._ownFrom = ARENA_PUPPET_OWNER; foe._ownI = a.i;
-        foe._pup = { feet: [...foe.ai.feet], yaw: foe.ai.yaw ?? 0, moving: false, strike: null, target: '', cast: null };
-        if (foe.entity) { foe.entity.bout = tag; foe.entity.items = []; }
-        if (foe.ai) { foe.ai.isHostile = false; foe.ai.target = null; }
+        if (cur !== C || !foe) {
+          if (foe) (C.stage ?? stage)?.remove?.(foe);
+          return;
+        } // AUDIT ARENA-LADDER A4: off its own stage
+        foe._ownFrom = ARENA_PUPPET_OWNER;
+        foe._ownI = a.i;
+        foe._pup = {
+          feet: [...foe.ai.feet],
+          yaw: foe.ai.yaw ?? 0,
+          moving: false,
+          strike: null,
+          target: '',
+          cast: null,
+        };
+        if (foe.entity) {
+          foe.entity.bout = tag;
+          foe.entity.items = [];
+        }
+        if (foe.ai) {
+          foe.ai.isHostile = false;
+          foe.ai.target = null;
+        }
         C.fighters.set(a.id, foe);
       })
-      .catch(() => { C.spawning--; });
+      .catch(() => {
+        C.spawning--;
+      });
   }
   /** AUDIT ARENA-LADDER 2: a relay word's moment (`w.at`, the relay's clock) on this screen's (`C.clock.off` - the relay's
    *  less mine), else the shape's wind-up from now. */
@@ -1035,32 +1687,47 @@ export function createArenaBouts(deps) {
   }
   /** One frame of a relay's bout: its puppets on their walks, my yield, the HUD, the crowd. */
   function relayFrame(C, dt, o, t) {
-    if (!C.b) { deps.drawHud?.(null, { hidden: true }); return; }
+    if (!C.b) {
+      deps.drawHud?.(null, { hidden: true });
+      return;
+    }
     // AUDIT ARENA-LADDER 2: a telegraphed blow's swing at its landing - the floor's puppet, the city's body
     for (const foe of C.fighters.values()) {
       if (foe._swingAt == null || t < foe._swingAt) continue;
       foe._swingAt = null;
       if (foe._pup) foe._pup.strike = 'melee';
-      else if (foe.attack) { foe.attack.firedRanged = false; foe.attack.swingSeq = (foe.attack.swingSeq | 0) + 1; }
+      else if (foe.attack) {
+        foe.attack.firedRanged = false;
+        foe.attack.swingSeq = (foe.attack.swingSeq | 0) + 1;
+      }
     }
-    if (C.you && P && kitBout(C) && boutLive(C.b)) stripSandBarred(P);   // AUDIT ARENA-LADDER: the kit law on a relay's ladder sand too (2: never a bout between players)
+    if (C.you && P && kitBout(C) && boutLive(C.b)) stripSandBarred(P); // AUDIT ARENA-LADDER: the kit law on a relay's ladder sand too (2: never a bout between players)
     const off = C.clock.off ?? 0;
     const c = stage?.centre?.() ?? null;
     // ARENA4b: the city's sand is heard and its HUD shown by the distance from it (an exhibition watched from the market)
-    const near = C.near = C.stage?.kind === 'city' ? (c && o.playerFeet ? nearOf(Math.hypot(o.playerFeet[0] - c[0], o.playerFeet[2] - c[2])) : 0) : 1;
-    if (C.stage?.kind === 'city') cityBodiesFrame(C, t, off);   // ARENA4b: the exterior's own bodies, walked by their motor
+    const near = (C.near =
+      C.stage?.kind === 'city'
+        ? c && o.playerFeet
+          ? nearOf(Math.hypot(o.playerFeet[0] - c[0], o.playerFeet[2] - c[2]))
+          : 0
+        : 1);
+    if (C.stage?.kind === 'city') cityBodiesFrame(C, t, off); // ARENA4b: the exterior's own bodies, walked by their motor
     for (const [id, foe] of C.fighters) {
       const mv = C.mv.get(id);
       if (!mv || !foe._pup || !c) continue;
       const w = walkAt(mv, t, off);
-      const p = w ? relayToStage(C, w[0], w[1]) : null;   // ARENA4b: on this stage's frame
+      const p = w ? relayToStage(C, w[0], w[1]) : null; // ARENA4b: on this stage's frame
       if (!p) continue;
-      foe._pup.feet[0] = p[0]; foe._pup.feet[2] = p[1];
+      foe._pup.feet[0] = p[0];
+      foe._pup.feet[2] = p[1];
       if (Number.isFinite(foe.ai?.feet?.[1])) foe._pup.feet[1] = foe.ai.feet[1];
       foe._pup.moving = !walkDone(mv, t, off);
       if (foe._pup.moving) foe._pup.yaw = Math.atan2(mv.tx - mv.x, mv.tz - mv.z);
       const f = boutFighter(C.b, id);
-      if (f?.out) { foe._pup.moving = false; standDown(foe); }
+      if (f?.out) {
+        foe._pup.moving = false;
+        standDown(foe);
+      }
     }
     // THE YIELD: the blade sheathed at the line, said to the relay (the law there refuses it above the line)
     const you = C.you ? boutFighter(C.b, C.you) : null;
@@ -1071,21 +1738,39 @@ export function createArenaBouts(deps) {
       }
       C.lastSheathed = !!o.sheathed;
     }
-    if (C.playerTag) { C.playerTag.hold = !boutLive(C.b); if (you?.out || boutOver(C.b)) C.playerTag.out = true; }
+    if (C.playerTag) {
+      C.playerTag.hold = !boutLive(C.b);
+      if (you?.out || boutOver(C.b)) C.playerTag.out = true;
+    }
     crowdTick(C.crowd, dt);
     deps.sound?.bed(C.crowd.mood, near);
     if (C.b.phase === 'done' && !Number.isFinite(C.doneAt)) C.doneAt = t;
     if (Number.isFinite(C.doneAt) && t - C.doneAt >= LEAVE_AFTER_MS && C.fighters.size) {
-      for (const foe of C.fighters.values()) (C.stage ?? stage)?.remove?.(foe);   // AUDIT ARENA-LADDER A4: off the stage they stand on
+      for (const foe of C.fighters.values()) (C.stage ?? stage)?.remove?.(foe); // AUDIT ARENA-LADDER A4: off the stage they stand on
       C.fighters.clear();
       deps.setPlayerBout?.(null);
     }
-    if (Number.isFinite(C.doneAt) && t - C.doneAt >= CROWD_STAYS_MS && C.stage?.kind === 'city') { dismiss(); return; }   // ARENA4b: the city's crowd goes home, as this screen's own bout's
+    if (Number.isFinite(C.doneAt) && t - C.doneAt >= CROWD_STAYS_MS && C.stage?.kind === 'city') {
+      dismiss();
+      return;
+    } // ARENA4b: the city's crowd goes home, as this screen's own bout's
     const bark = t - C.barkAt < BARK_SHOWN_MS ? C.bark : '';
     // ARENA4b: in the stands, the two presses (Cheer, Boo) under the plate - shut while the allowance runs. AUDIT PRE-MERGE
     // 1003 O7: and only with a door behind them (`send.cheer`) - never two presses that answer nothing
     const stands = C.you || typeof C.relay.send?.cheer !== 'function' ? null : { ready: t - C.cheerAt >= CHEER_GAP_MS };
-    deps.drawHud?.(near > 0 ? arenaHudModel(C.b, C.crowd, t, { you: C.you, stamina: o.stamina ?? null, bark, quiet: false, teams: C.teams, stands }) : null, { hidden: !!o.hidden, touch: !!o.touch, cheer: stands ? cheerDoor : null });
+    deps.drawHud?.(
+      near > 0
+        ? arenaHudModel(C.b, C.crowd, t, {
+            you: C.you,
+            stamina: o.stamina ?? null,
+            bark,
+            quiet: false,
+            teams: C.teams,
+            stands,
+          })
+        : null,
+      { hidden: !!o.hidden, touch: !!o.touch, cheer: stands ? cheerDoor : null },
+    );
     crowdFrame(C, t);
   }
   /** THE VERDICT of a relay's bout: the Herald's words; a ladder win's purse (the relay refereed it - the account's climb
@@ -1095,8 +1780,20 @@ export function createArenaBouts(deps) {
     C.verdictAt = t;
     if (!r) return;
     const V = ARENA_TEXT.verdict;
-    const w = r.side === null ? '' : sideNames(C.b, r.side), l = r.side === null ? '' : otherNames(C.b, r.side);
-    const line = r.side === null ? V.draw : r.how === 'judges' ? V.judges(w) : r.how === 'yield' ? V.yield(w, l) : r.how === 'ringout' ? V.ringout(w, l) : r.how === 'forfeit' ? V.forfeit(w, l) : V.fall(w, l);
+    const w = r.side === null ? '' : sideNames(C.b, r.side),
+      l = r.side === null ? '' : otherNames(C.b, r.side);
+    const line =
+      r.side === null
+        ? V.draw
+        : r.how === 'judges'
+          ? V.judges(w)
+          : r.how === 'yield'
+            ? V.yield(w, l)
+            : r.how === 'ringout'
+              ? V.ringout(w, l)
+              : r.how === 'forfeit'
+                ? V.forfeit(w, l)
+                : V.fall(w, l);
     deps.say?.(line);
     const throws = verdictThrows(C.crowd, r.winners, r.losers);
     throwAt(C, r.winners, throws.flowers, THROWN_FLOWERS);
@@ -1105,14 +1802,18 @@ export function createArenaBouts(deps) {
     const won = !!mine && r.side === mine.side;
     // AUDIT QUESTLINES ACTS-6: a LADDER bout (`pve` - the relay-run opponent, Arena.md's "The Ladder"), as this screen's own
     // is (`verdict`, C.ladder): a bout between players - rated, casual or a private session's - is no step of the ladder
-    if (won && C.relay.kind === 'pve') noteAct('arena-won');   // QL11: a bout won in the Arena - the relay's verdict, my side (a watcher has none)
+    if (won && C.relay.kind === 'pve') noteAct('arena-won'); // QL11: a bout won in the Arena - the relay's verdict, my side (a watcher has none)
     const lines = [line];
     if (C.relay.kind === 'pve' && mine) {
       const purse = won ? boutPurse(C.next?.purse ?? 0, C.crowd.favour[C.you] ?? 0) : 0;
       // ARENA4b: online the purse waits on the account service's word (`owe` - scenes/arena/arenaOnline.js): paid only for the
       // bout the account was owed, never for a win the realm refuses (out of the climb's order)
-      if (won && purse > 0 && !C.paid) { C.paid = true; if (C.relay.owe) C.relay.owe(purse, (g) => deps.pay?.(g)); else deps.pay?.(purse); }
-      lines.push(!won ? ARENA_TEXT.purse.lost : C.next?.repeat ? ARENA_TEXT.purse.repeat : ARENA_TEXT.purse.won(purse));   // AUDIT ARENA-LADDER 2: a step won again pays nothing
+      if (won && purse > 0 && !C.paid) {
+        C.paid = true;
+        if (C.relay.owe) C.relay.owe(purse, (g) => deps.pay?.(g));
+        else deps.pay?.(purse);
+      }
+      lines.push(!won ? ARENA_TEXT.purse.lost : C.next?.repeat ? ARENA_TEXT.purse.repeat : ARENA_TEXT.purse.won(purse)); // AUDIT ARENA-LADDER 2: a step won again pays nothing
       if (won && C.next?.grand) lines.push(V.grand(P?.name || 'You'));
       else if (won && C.next?.champion) lines.push(V.tier(P?.name || 'You', ARENA_TEXT.tiers[C.next.tier]));
     }
@@ -1135,17 +1836,26 @@ export function createArenaBouts(deps) {
     // AUDIT PRE-MERGE 1003 O7: the stands' shout is the one door back (`send.cheer`, the host's - the bout's room from the
     // floor, the city's socket on the sand); no blow and no yield from the stands. It was `{}`: the presses drawn, every
     // press refused
-    const C = startRelay(/** @type {any} */ ({
-      ...p, kind: 'ex', me: '', next: null, send: { cheer: p.send?.cheer },
-      onEnd: (r) => {
-        if (cur === C && r.side !== null) { C.bark = ARENA_TEXT.purse.won(EXHIBITION_PURSE); C.barkAt = now(); }
-        deps.exhibitionVerdict?.(ex.hour, r.side);   // the bookmaker settles by the relay's verdict
-        p.onEnd?.(r);
-      },
-    }));
+    const C = startRelay(
+      /** @type {any} */ ({
+        ...p,
+        kind: 'ex',
+        me: '',
+        next: null,
+        send: { cheer: p.send?.cheer },
+        onEnd: (r) => {
+          if (cur === C && r.side !== null) {
+            C.bark = ARENA_TEXT.purse.won(EXHIBITION_PURSE);
+            C.barkAt = now();
+          }
+          deps.exhibitionVerdict?.(ex.hour, r.side); // the bookmaker settles by the relay's verdict
+          p.onEnd?.(r);
+        },
+      }),
+    );
     if (!C) return null;
     C.ex = ex;
-    C.teams = { a0: 'red', a1: 'blue' };   // ARENA3's exhibition: the Red's fighter (side 0) against the Blue's
+    C.teams = { a0: 'red', a1: 'blue' }; // ARENA3's exhibition: the Red's fighter (side 0) against the Blue's
     return C;
   }
   /** A RELAY'S WORD on the exhibition standing here: the bout's own (relayWord), and what an exhibition adds - the beast
@@ -1157,8 +1867,9 @@ export function createArenaBouts(deps) {
     const first = w?.k === 'st' && !C.M && w.o === C.relay.o;
     const ok = relayWord(w);
     if (first && C.crowd) {
-      if (C.ex.beasts && !C.crowd.beasts) C.crowd = newCrowd({ fighters: C.b.fighters.map((f) => ({ id: f.id, home: f.home, ai: f.ai })), beasts: true });
-      laurelFavour(C);   // ARENA3's laurel: the crowd favours last season's winning banner's fighter from the first bell
+      if (C.ex.beasts && !C.crowd.beasts)
+        C.crowd = newCrowd({ fighters: C.b.fighters.map((f) => ({ id: f.id, home: f.home, ai: f.ai })), beasts: true });
+      laurelFavour(C); // ARENA3's laurel: the crowd favours last season's winning banner's fighter from the first bell
     }
     if (ok && w.k === 'atk' && C.stage?.kind === 'city') {
       const foe = C.fighters.get(w.i);
@@ -1166,8 +1877,12 @@ export function createArenaBouts(deps) {
         const [tx, tz] = relayToStage(C, w.x, w.z);
         foe.ai.walkGoal = null;
         foe.ai.yaw = Math.atan2(tx - foe.ai.feet[0], tz - foe.ai.feet[2]);
-        if (w.s) foe._swingAt = relayLandLocal(C, w, now());   // AUDIT ARENA-LADDER 2: a telegraph swings at its landing (relayFrame)
-        else { foe.attack.firedRanged = false; foe.attack.swingSeq = (foe.attack.swingSeq | 0) + 1; }
+        if (w.s)
+          foe._swingAt = relayLandLocal(C, w, now()); // AUDIT ARENA-LADDER 2: a telegraph swings at its landing (relayFrame)
+        else {
+          foe.attack.firedRanged = false;
+          foe.attack.swingSeq = (foe.attack.swingSeq | 0) + 1;
+        }
       }
     }
     return ok;
@@ -1184,18 +1899,30 @@ export function createArenaBouts(deps) {
    *  CITY_SNAP_M behind, stood down once out. Its bout tag holds it - it targets nobody, so no swing of it lands. */
   function cityBodiesFrame(C, t, off) {
     for (const [id, foe] of C.fighters) {
-      const ai = foe.ai, mv = C.mv.get(id);
+      const ai = foe.ai,
+        mv = C.mv.get(id);
       if (!ai?.feet || !mv) continue;
-      if (boutFighter(C.b, id)?.out) { ai.walkGoal = null; standDown(foe); continue; }
+      if (boutFighter(C.b, id)?.out) {
+        ai.walkGoal = null;
+        standDown(foe);
+        continue;
+      }
       const w = walkAt(mv, t, off);
       if (!w) continue;
       const [px, pz] = relayToStage(C, w[0], w[1]);
       const f = ai.feet;
-      if (Math.hypot(px - f[0], pz - f[2]) > CITY_SNAP_M) { f[0] = px; f[2] = pz; ai.walkGoal = null; continue; }
+      if (Math.hypot(px - f[0], pz - f[2]) > CITY_SNAP_M) {
+        f[0] = px;
+        f[2] = pz;
+        ai.walkGoal = null;
+        continue;
+      }
       if (!walkDone(mv, t, off)) {
         const [gx, gz] = relayToStage(C, mv.tx, mv.tz);
-        if (!ai.walkGoal || Math.hypot(ai.walkGoal[0] - gx, ai.walkGoal[2] - gz) > MARK_ARRIVE_M) ai.walkTo?.([gx, f[1], gz], { pace: 1 });
-      } else if (!ai.walkGoal && Math.hypot(px - f[0], pz - f[2]) > MARK_ARRIVE_M) ai.walkTo?.([px, f[1], pz], { pace: WALK_PACE });
+        if (!ai.walkGoal || Math.hypot(ai.walkGoal[0] - gx, ai.walkGoal[2] - gz) > MARK_ARRIVE_M)
+          ai.walkTo?.([gx, f[1], gz], { pace: 1 });
+      } else if (!ai.walkGoal && Math.hypot(px - f[0], pz - f[2]) > MARK_ARRIVE_M)
+        ai.walkTo?.([px, f[1], pz], { pace: WALK_PACE });
     }
   }
 
@@ -1211,46 +1938,71 @@ export function createArenaBouts(deps) {
     // stake the house's. Untold, the house's seeded record settled it at the hour's end, so a fighter seen losing was
     // walked away from for the house's coin (137.9 back for every 100 staked); the judges' card as it stood would be the
     // same option turned round - leave the moment the one I backed leads. A relay's verdict is the relay's (it runs on).
-    if (C.ex && !C.relay && C.b && !boutBefore(C.b) && !Number.isFinite(C.verdictAt)) deps.exhibitionVerdict?.(C.ex.hour, C.b.result ? C.b.result.side : BOUT_LEFT);
+    if (C.ex && !C.relay && C.b && !boutBefore(C.b) && !Number.isFinite(C.verdictAt))
+      deps.exhibitionVerdict?.(C.ex.hour, C.b.result ? C.b.result.side : BOUT_LEFT);
     for (const foe of C.fighters.values()) C.stage?.remove?.(foe);
     C.fighters.clear();
     for (const x of C.crowdBatches) deps.renderer?.destroyBillboardBatch?.(x.batch);
     for (const th of C.throws) deps.renderer?.destroyBillboardBatch?.(th.batch);
-    C.crowdBatches = []; C.throws = [];
+    C.crowdBatches = [];
+    C.throws = [];
     deps.setPlayerBout?.(null);
-    restoreSandHeld(P);   // AUDIT ARENA-LADDER 2: a bout let go before its healers gives a held ring's effect back too
+    restoreSandHeld(P); // AUDIT ARENA-LADDER 2: a bout let go before its healers gives a held ring's effect back too
     // ARENA-ARROWS: my quiver's tally stops with its bout (kept for a let-go's heal); another bout's is let go unpaid
-    if (quiver && !quiver.shots) { const shots = stopShotTally() ?? new Map(); if (quiver.C === C) quiver.shots = shots; else quiver = null; }
-    else if (quiver && quiver.C !== C) quiver = null;
+    if (quiver && !quiver.shots) {
+      const shots = stopShotTally() ?? new Map();
+      if (quiver.C === C) quiver.shots = shots;
+      else quiver = null;
+    } else if (quiver && quiver.C !== C) quiver = null;
     deps.sound?.stop();
     deps.drawHud?.(null, { hidden: true });
     intrusions = 0;
   }
 
   return {
-    refundQuiver: () => refundMine(null),   // ARENA-ARROWS: a session's bout let go before its healers (scenes/arena/arenaOnline.js letGoPriv) pays too
-    setStage, ask, start, dismiss, frame, batches, playerSpare, holds, attackResolved, playerSwing, blowDodged,   // AUDIT ARENA-LADDER: a dodged telegraph, a miss
-    startRelay, relayWord,   // ARENA4: a bout the relay runs
-    cheer,   // ARENA4b: my cheer or boo from the stands of a relay's bout
-    floorBanners,   // ARENA5: the banners the floor's instance hangs for the bout asked for it
-    askReplay,   // ARENA5: a recorded ladder bout watched from the stands
+    refundQuiver: () => refundMine(null), // ARENA-ARROWS: a session's bout let go before its healers (scenes/arena/arenaOnline.js letGoPriv) pays too
+    setStage,
+    ask,
+    start,
+    dismiss,
+    frame,
+    batches,
+    playerSpare,
+    holds,
+    attackResolved,
+    playerSwing,
+    blowDodged, // AUDIT ARENA-LADDER: a dodged telegraph, a miss
+    startRelay,
+    relayWord, // ARENA4: a bout the relay runs
+    cheer, // ARENA4b: my cheer or boo from the stands of a relay's bout
+    floorBanners, // ARENA5: the banners the floor's instance hangs for the bout asked for it
+    askReplay, // ARENA5: a recorded ladder bout watched from the stands
     /** ARENA5: whether the bout standing (or asked) is a replay. */
     replaying: () => !!(cur?.relay?.replay ?? pending?.relay?.replay),
     /** ARENA4b: the realm's banners' source while online (`() => ({ banner, laurel }) | null`), scenes/arena/arenaOnline.js's. */
-    setRealm: (fn) => { realmOf = typeof fn === 'function' ? fn : null; },
-    startExhibitionRelay, exhibitionWord,   // ARENA4b: the hour's exhibition, the relay's
+    setRealm: (fn) => {
+      realmOf = typeof fn === 'function' ? fn : null;
+    },
+    startExhibitionRelay,
+    exhibitionWord, // ARENA4b: the hour's exhibition, the relay's
     /** ARENA4: the relay's bout standing here - its id, my fighter id ('' in the stands), its kind - or null. */
     relay: () => (cur?.relay ? { o: cur.relay.o, me: cur.you ?? '', kind: cur.relay.kind } : null),
     /** The ring the motor keeps me in while my bout stands (player/motor.js `arena`), or null. */
     ring: () => {
       if (!holds() || !stage || cur.stage !== stage) return null;
       const c = stage.centre();
-      const r = (cur.ringed ??= { centre: [0, 0, 0], radius: cur.ring ?? RING_R, ...(kitBout(cur) ? { ceilAbove: SAND_CEILING_M } : {}) });   // AUDIT ARENA-LADDER: and the kit law's ceiling (2: a ladder bout's)
-      r.centre[0] = c[0]; r.centre[1] = c[1]; r.centre[2] = c[2];
+      const r = (cur.ringed ??= {
+        centre: [0, 0, 0],
+        radius: cur.ring ?? RING_R,
+        ...(kitBout(cur) ? { ceilAbove: SAND_CEILING_M } : {}),
+      }); // AUDIT ARENA-LADDER: and the kit law's ceiling (2: a ladder bout's)
+      r.centre[0] = c[0];
+      r.centre[1] = c[1];
+      r.centre[2] = c[2];
       return r;
     },
     /** What the floor plays now (systems/arena/arenaScore.js), or null (no bout heard here). */
-    scoreWant: (t = clockOf(cur)) => (cur?.b && !cur.quiet ? arenaScoreFor(cur.b.phase, cur.verdictAt, t) : null),   // the pit has no band
+    scoreWant: (t = clockOf(cur)) => (cur?.b && !cur.quiet ? arenaScoreFor(cur.b.phase, cur.verdictAt, t) : null), // the pit has no band
     /** The bout standing (its law's state), its crowd, its kind, its stage's kind. */
     bout: () => cur?.b ?? null,
     crowd: () => cur?.crowd ?? null,
@@ -1258,7 +2010,10 @@ export function createArenaBouts(deps) {
     stageKind: () => cur?.stage?.kind ?? null,
     pending: () => pending,
     /** The names on the sand now, for the Herald ("On the sand now: A against B"), or null. */
-    onSand: () => (cur?.b && !boutOver(cur.b) ? { a: sideNames(cur.b, cur.b.fighters[0].side), b: otherNames(cur.b, cur.b.fighters[0].side) } : null),
+    onSand: () =>
+      cur?.b && !boutOver(cur.b)
+        ? { a: sideNames(cur.b, cur.b.fighters[0].side), b: otherNames(cur.b, cur.b.fighters[0].side) }
+        : null,
     /** The hour whose exhibition stands here (the world host's schedule reads it). */
     hour: () => cur?.ex?.hour ?? null,
   };

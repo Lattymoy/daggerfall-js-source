@@ -110,7 +110,7 @@
   {
     "name": "ARENA5-GATE-PLAQUES-OFFLINE",
     "file": "src/scenes/arena/arenaGate.js",
-    "old": "    if (!on) return hallPlaques({ ladder: P.arenaLadder, league: P.arenaLeague, gameMinutes: gm(), name: P.name ?? '', max: PLAQUE_MAX });",
+    "old": "    if (!on)\n      return hallPlaques({\n        ladder: P.arenaLadder,\n        league: P.arenaLeague,\n        gameMinutes: gm(),\n        name: P.name ?? '',\n        max: PLAQUE_MAX,\n      });",
     "new": "    if (!on) return [];",
     "tests": [
       "test/systems/arena/arena5_plaques.test.js"
@@ -120,7 +120,7 @@
     "name": "ARENA5-GATE-PLAQUES-WAIT",
     "file": "src/scenes/arena/arenaGate.js",
     "old": "    return b ? hallPlaques({ board: b, max: PLAQUE_MAX }) : [];",
-    "new": "    return hallPlaques(b ? { board: b, max: PLAQUE_MAX } : { ladder: P.arenaLadder, league: P.arenaLeague, gameMinutes: gm(), name: P.name ?? '', max: PLAQUE_MAX });",
+    "new": "    return hallPlaques(\n      b\n        ? { board: b, max: PLAQUE_MAX }\n        : { ladder: P.arenaLadder, league: P.arenaLeague, gameMinutes: gm(), name: P.name ?? '', max: PLAQUE_MAX },\n    );",
     "tests": [
       "test/systems/arena/arena5_plaques.test.js"
     ]

@@ -21,27 +21,38 @@
 // Not a DFU member. Ledger A (ARENA).
 
 import { ChoiceWindow } from '../../ui/talkWindow.js';
-import { ActionTextBox } from '../../ui/actionText.js';   // ARENA4b: the Keeper's wall, read online
+import { ActionTextBox } from '../../ui/actionText.js'; // ARENA4b: the Keeper's wall, read online
 import { recruiterChoice, quitAsk, heraldChoice as heraldChoiceOf } from '../../systems/arena/arenaHerald.js';
 import { joinBanner, quitBanner, rollLeague } from '../../systems/arena/arenaLeague.js';
 import { ARENA_TEXT } from '../../systems/arena/arenaText.js';
-import { bookmakerChoice, stakeChoice, placeWager, settleBook, bookVerdict, collectWinnings, oddsText, exhibitionOdds, priceFor } from '../../systems/arena/arenaBook.js';
+import {
+  bookmakerChoice,
+  stakeChoice,
+  placeWager,
+  settleBook,
+  bookVerdict,
+  collectWinnings,
+  oddsText,
+  exhibitionOdds,
+  priceFor,
+} from '../../systems/arena/arenaBook.js';
 import { exhibitionFor } from '../../systems/arena/arenaLadder.js';
 import { fighterIdentity } from '../../systems/arena/arenaFighters.js';
 import { totalGoldAmount, deductGold, addGold } from '../../systems/court.js';
 import { arenaBoard, hallLinesOnline, hallPlaques } from '../../systems/arena/arenaBoard.js';
-import { PLAQUE_MAX } from '../../world/arena/arenaPlaques.js';   // ARENA5: the wall's cap
-import { arenaReplaysRestore } from '../../systems/arena/arenaReplay.js';   // ARENA5: your ladder replay
+import { PLAQUE_MAX } from '../../world/arena/arenaPlaques.js'; // ARENA5: the wall's cap
+import { arenaReplaysRestore } from '../../systems/arena/arenaReplay.js'; // ARENA5: your ladder replay
 import { nextLadderBout, arenaLadderRestore } from '../../systems/arena/arenaLadder.js';
 import { FIGHT_HEALTH_MIN } from '../../systems/arena/arenaHerald.js';
 import { createArenaOverlay, closeArenaDoor } from '../../ui/arena/arenaDoor.js';
-import { bookRestore, houseOutcome } from '../../systems/arena/arenaBook.js';   // ARENA4b: online the relay's verdict settles, the house's only for an hour it never ran
-import { bookSaw } from '../../systems/arena/arenaBook.js';   // AUDIT PRE-MERGE 1003 B3: an hour seen here is not fought again
+import { bookRestore, houseOutcome } from '../../systems/arena/arenaBook.js'; // ARENA4b: online the relay's verdict settles, the house's only for an hour it never ran
+import { bookSaw } from '../../systems/arena/arenaBook.js'; // AUDIT PRE-MERGE 1003 B3: an hour seen here is not fought again
 
 /** How near the Herald the Arena window's Watch, Fight and Wager may be pressed, metres (the gate and its plaza). */
 export const AT_GATE_M = 60;
 /** Whether feet stand at the gate: within AT_GATE_M of the Herald's place (`herald` null - no gate here). */
-export const nearArenaGate = (feet, herald) => !!feet && !!herald && Math.hypot(feet[0] - herald[0], feet[2] - herald[2]) <= AT_GATE_M;
+export const nearArenaGate = (feet, herald) =>
+  !!feet && !!herald && Math.hypot(feet[0] - herald[0], feet[2] - herald[2]) <= AT_GATE_M;
 
 /** The recruiters by their office (world/arena/arenaCity.js ARENA_GATE_PEOPLE `role`) and the banner each keeps. */
 export const RECRUITER_BANNER = Object.freeze({ redRecruiter: 'red', blueRecruiter: 'blue' });
@@ -56,23 +67,37 @@ export const RECRUITER_BANNER = Object.freeze({ redRecruiter: 'red', blueRecruit
  * @param {{ banner: 'red'|'blue', board: any, guest?: boolean, window?: boolean, wait?: string|null }} o
  */
 export function recruiterChoiceOnline({ banner, board, guest = false, window = true, wait = null }) {
-  const R = ARENA_TEXT.recruiter, T = ARENA_TEXT.teams, O = ARENA_TEXT.online;
+  const R = ARENA_TEXT.recruiter,
+    T = ARENA_TEXT.teams,
+    O = ARENA_TEXT.online;
   const other = banner === 'red' ? 'blue' : 'red';
   const lines = [...R.greet[banner], ''];
   let why = null;
-  if (!board) { lines.push(wait ?? O.rollWait); why = 'wait'; }   // ARENA-WAIT (AUDIT A4): `wait` a shut door's own words
+  if (!board) {
+    lines.push(wait ?? O.rollWait);
+    why = 'wait';
+  } // ARENA-WAIT (AUDIT A4): `wait` a shut door's own words
   else {
-    const me = board.me ?? {}, st = board.team?.standings ?? { red: 0, blue: 0 };
+    const me = board.me ?? {},
+      st = board.team?.standings ?? { red: 0, blue: 0 };
     lines.push(`${O.seasonLine(board.season, board.day)}.`);
     lines.push(T.standing(st.red ?? 0, st.blue ?? 0));
     if (me.banner === banner) {
       why = 'already';
       lines.push(R.yours(T.the[banner]), T.given(me.points ?? 0));
       if (board.team?.laurel === banner) lines.push(T.laurelYou);
-    } else if (me.banner) { why = 'other'; lines.push(R.theirs(T.the[me.banner])); }
-    else if (me.left && me.left !== banner && Number(me.leftSeason) >= board.season) { why = 'season'; lines.push(R.wait(T.the[other])); }
-    else if (guest) { why = 'guest'; lines.push(O.guestBanner); }
-    else { lines.push(R.pitch, R.rule); }
+    } else if (me.banner) {
+      why = 'other';
+      lines.push(R.theirs(T.the[me.banner]));
+    } else if (me.left && me.left !== banner && Number(me.leftSeason) >= board.season) {
+      why = 'season';
+      lines.push(R.wait(T.the[other]));
+    } else if (guest) {
+      why = 'guest';
+      lines.push(O.guestBanner);
+    } else {
+      lines.push(R.pitch, R.rule);
+    }
   }
   const options = [];
   if (!why) options.push({ code: 'KeyJ', label: R.join(T.the[banner]), act: 'join' });
@@ -100,18 +125,34 @@ export function recruiterChoiceOnline({ banner, board, guest = false, window = t
 export function createArenaGate(deps) {
   const P = deps.playerEntity;
   /** The window's door: the host's own, or the gate's (ui/arena/arenaDoor.js, shown in the host's slot). */
-  const openWindow = deps.openWindow === undefined ? (page) => { const ov = windowOverlay(page); if (ov) deps.showOverlay(ov); return !!ov; } : deps.openWindow;
+  const openWindow =
+    deps.openWindow === undefined
+      ? (page) => {
+          const ov = windowOverlay(page);
+          if (ov) deps.showOverlay(ov);
+          return !!ov;
+        }
+      : deps.openWindow;
   const gm = () => Math.floor(Number(deps.gameMinutes()) || 0);
   const say = (line) => deps.say?.(line);
   /** The league on today's season, written back so the save carries the roll. */
   const league = () => (P.arenaLeague = rollLeague(P.arenaLeague, gm()));
-  const choice = (ch, act) => deps.showOverlay(new ChoiceWindow({ lines: ch.lines, options: ch.options.map((o) => ({ code: o.code, label: o.label ?? undefined, action: () => act(o.act, o) })) }));
+  const choice = (ch, act) =>
+    deps.showOverlay(
+      new ChoiceWindow({
+        lines: ch.lines,
+        options: ch.options.map((o) => ({ code: o.code, label: o.label ?? undefined, action: () => act(o.act, o) })),
+      }),
+    );
   const liveHour = () => deps.liveHour?.() ?? null;
   /** ARENA4: the arena online while it is live, else null. FIELD BUGS 2026-10-16b ARENA-WAIT: and while the online lane
    *  waits for the relay's first word (scenes/arena/arenaOnline.js waiting) - its climb, board and verdicts not yet in, so every
    *  door here takes its online arm and waits, never the save's ladder, league or house. AUDIT (A3/A4): and while its doors
    *  are shut for a seat given up or a server gone - on the online lane the save's arena runs for a relay's no alone. */
-  const online = () => { const o = deps.online?.() ?? null; return o?.live?.() || o?.waiting?.() ? o : null; };
+  const online = () => {
+    const o = deps.online?.() ?? null;
+    return o?.live?.() || o?.waiting?.() ? o : null;
+  };
   /** Whether the hour's bout has had the word - the book on it shut. AUDIT PRE-MERGE 1003 O3: online, also once this
    *  screen has HEARD its fight begin or its verdict (scenes/arena/arenaOnline.js exhibitionBegun): the host's `begun` reads the
    *  mirror standing here, which goes home after the healers or as the player steps indoors - and the book, open 20 game
@@ -122,7 +163,9 @@ export function createArenaGate(deps) {
     return !!ex && !!online()?.exhibitionBegun?.(ex.hour);
   };
   /** The book written back into the league. */
-  const setBook = (book) => { P.arenaLeague = { ...league(), book }; };
+  const setBook = (book) => {
+    P.arenaLeague = { ...league(), book };
+  };
 
   /** A RECRUITER's choice (`role` 'redRecruiter' | 'blueRecruiter'). True: it is up. ARENA4b: online the account's. */
   function recruiter(role) {
@@ -131,12 +174,20 @@ export function createArenaGate(deps) {
     const on = online();
     if (on) return recruiterOnline(on, banner);
     const name = ARENA_TEXT.teams.the[banner];
-    const ch = recruiterChoice({ banner, league: league(), gameMinutes: gm(), window: typeof openWindow === 'function' });
+    const ch = recruiterChoice({
+      banner,
+      league: league(),
+      gameMinutes: gm(),
+      window: typeof openWindow === 'function',
+    });
     choice(ch, (a) => {
       if (a === 'join') {
         const r = joinBanner(league(), banner, gm());
         P.arenaLeague = r.league;
-        if (r.ok) { say(ARENA_TEXT.recruiter.joined(name)); openWindow?.('team'); }
+        if (r.ok) {
+          say(ARENA_TEXT.recruiter.joined(name));
+          openWindow?.('team');
+        }
       } else if (a === 'quit') {
         choice(quitAsk(banner), (b) => {
           if (b !== 'quit') return;
@@ -154,14 +205,28 @@ export function createArenaGate(deps) {
   function recruiterOnline(on, banner) {
     const name = ARENA_TEXT.teams.the[banner];
     const board = on.board?.() ?? null;
-    if (!board) on.climb?.();   // the roll asked now - the next word reads it
-    const ch = recruiterChoiceOnline({ banner, board, guest: !!on.guest?.(), window: typeof openWindow === 'function', wait: on.shutText?.(ARENA_TEXT.online.rollWait) ?? null });
+    if (!board) on.climb?.(); // the roll asked now - the next word reads it
+    const ch = recruiterChoiceOnline({
+      banner,
+      board,
+      guest: !!on.guest?.(),
+      window: typeof openWindow === 'function',
+      wait: on.shutText?.(ARENA_TEXT.online.rollWait) ?? null,
+    });
     choice(ch, (a) => {
-      if (a === 'join') void Promise.resolve(on.team(banner)).then((r) => { if (r?.ok) { say(ARENA_TEXT.recruiter.joined(name)); openWindow?.('team'); } });
+      if (a === 'join')
+        void Promise.resolve(on.team(banner)).then((r) => {
+          if (r?.ok) {
+            say(ARENA_TEXT.recruiter.joined(name));
+            openWindow?.('team');
+          }
+        });
       else if (a === 'quit') {
         choice(quitAsk(banner), (b) => {
           if (b !== 'quit') return;
-          void Promise.resolve(on.team(null)).then((r) => { if (r?.ok) say(ARENA_TEXT.recruiter.quitDone(name)); });
+          void Promise.resolve(on.team(null)).then((r) => {
+            if (r?.ok) say(ARENA_TEXT.recruiter.quitDone(name));
+          });
         });
       } else if (a === 'window') openWindow?.('team');
     });
@@ -174,22 +239,40 @@ export function createArenaGate(deps) {
    *  "the ladder done" is its) and its banner under the realm's laurel - and while the climb is not yet known, no Fight
    *  and his line says the realm's records are on their way. `cityBout` the names on the city's sand now; `healthShare`
    *  and `league` the host's (the player's share of health, the save's league - read offline only). */
-  function heraldChoice({ cityBout = null, healthShare = (P.health ?? 0) / Math.max(1, P.maxHealth ?? 1), league = P.arenaLeague } = {}) {
+  function heraldChoice({
+    cityBout = null,
+    healthShare = (P.health ?? 0) / Math.max(1, P.maxHealth ?? 1),
+    league = P.arenaLeague,
+  } = {}) {
     const on = online();
-    const fought = watchRefusal(exhibitionFor(gm())?.hour) != null;   // AUDIT PRE-MERGE 1003 B3: no Watch for an hour seen here
-    if (!on) return heraldChoiceOf({ gameMinutes: gm(), cityBout, ladder: arenaLadderRestore(P.arenaLadder), healthShare, league, replays: arenaReplaysRestore(P.arenaReplays).length, fought });   // ARENA5: the last bout kept, offered again
+    const fought = watchRefusal(exhibitionFor(gm())?.hour) != null; // AUDIT PRE-MERGE 1003 B3: no Watch for an hour seen here
+    if (!on)
+      return heraldChoiceOf({
+        gameMinutes: gm(),
+        cityBout,
+        ladder: arenaLadderRestore(P.arenaLadder),
+        healthShare,
+        league,
+        replays: arenaReplaysRestore(P.arenaReplays).length,
+        fought,
+      }); // ARENA5: the last bout kept, offered again
     const climb = on.climb?.() ?? null;
     const ch = heraldChoiceOf({ gameMinutes: gm(), cityBout, ladder: climb, healthShare, league: null, fought });
     if (!climb) {
       const H = ARENA_TEXT.herald;
       const next = ch.next ? H.ladderNext(ch.next.tierName, ch.next.label) : null;
-      const wait = on.shutText?.(ARENA_TEXT.online.climbWait) ?? ARENA_TEXT.online.climbWait;   // ARENA-WAIT (AUDIT A3/A4): the seat elsewhere, the server gone
+      const wait = on.shutText?.(ARENA_TEXT.online.climbWait) ?? ARENA_TEXT.online.climbWait; // ARENA-WAIT (AUDIT A3/A4): the seat elsewhere, the server gone
       ch.lines = ch.lines.map((l) => (l === next ? wait : l)).filter((l) => l !== H.noFight);
       ch.options = ch.options.filter((o) => o.act !== 'fight');
       ch.next = null;
     }
     const me = on.board?.()?.me;
-    if (me?.banner === 'red' || me?.banner === 'blue') ch.lines.push(on.board().team?.laurel === me.banner ? ARENA_TEXT.teams.laurelYou : ARENA_TEXT.teams.under(ARENA_TEXT.teams.the[me.banner]));
+    if (me?.banner === 'red' || me?.banner === 'blue')
+      ch.lines.push(
+        on.board().team?.laurel === me.banner
+          ? ARENA_TEXT.teams.laurelYou
+          : ARENA_TEXT.teams.under(ARENA_TEXT.teams.the[me.banner]),
+      );
     return ch;
   }
   /** THE KEEPER OF THE HALL online (scenes/worldModes.js, the undercroft's Keeper): the realm's wall (systems/arena/arenaBoard.js
@@ -198,7 +281,18 @@ export function createArenaGate(deps) {
   function hall() {
     const on = online();
     if (!on) return false;
-    const show = (b) => deps.showOverlay(new ActionTextBox(b ? hallLinesOnline(b, P.name ?? '') : [ARENA_TEXT.undercroft.hallTitle, '', on.shutText?.(ARENA_TEXT.online.rollWait) ?? ARENA_TEXT.online.rollWait]));
+    const show = (b) =>
+      deps.showOverlay(
+        new ActionTextBox(
+          b
+            ? hallLinesOnline(b, P.name ?? '')
+            : [
+                ARENA_TEXT.undercroft.hallTitle,
+                '',
+                on.shutText?.(ARENA_TEXT.online.rollWait) ?? ARENA_TEXT.online.rollWait,
+              ],
+        ),
+      );
     const b = on.board?.() ?? null;
     if (b) show(b);
     else void Promise.resolve(on.fetchBoard?.() ?? null).then(show, () => show(null));
@@ -210,7 +304,14 @@ export function createArenaGate(deps) {
    *  hallPlaques' `[{ name, banner, season }]`. */
   function plaques() {
     const on = online();
-    if (!on) return hallPlaques({ ladder: P.arenaLadder, league: P.arenaLeague, gameMinutes: gm(), name: P.name ?? '', max: PLAQUE_MAX });
+    if (!on)
+      return hallPlaques({
+        ladder: P.arenaLadder,
+        league: P.arenaLeague,
+        gameMinutes: gm(),
+        name: P.name ?? '',
+        max: PLAQUE_MAX,
+      });
     const b = on.board?.() ?? null;
     if (!b) on.refresh?.();
     return b ? hallPlaques({ board: b, max: PLAQUE_MAX }) : [];
@@ -230,8 +331,11 @@ export function createArenaGate(deps) {
   /** Every wager that can be settled now, settled (systems/arena/arenaBook.js settleBook) - its winnings owed at the stall. */
   function settle() {
     const on = online();
-    if (!on) { setBook(settleBook(league().book, gm(), { liveHour: liveHour() }).book); return; }
-    if (!on.exhibitions?.()) return;   // ARENA-WAIT: the relay's verdicts not yet askable - nothing settled by the house's record
+    if (!on) {
+      setBook(settleBook(league().book, gm(), { liveHour: liveHour() }).book);
+      return;
+    }
+    if (!on.exhibitions?.()) return; // ARENA-WAIT: the relay's verdicts not yet askable - nothing settled by the house's record
     // ARENA4b: ONLINE THE RELAY'S VERDICT SETTLES (Arena.md 2: the relay runs the exhibition, every client sees one bout).
     // A wager whose bout this screen saw to its verdict is settled by it (verdictSeen - the mirror's, the relay's); one
     // whose hour is out and whose verdict was not seen here is settled by the relay's, asked of its room
@@ -239,12 +343,21 @@ export function createArenaGate(deps) {
     // has long let go); an hour still unanswered waits. Never the house's by the clock alone: -Infinity is "no hour is
     // out" to settleBook, which then settles the verdicts kept and nothing else.
     let book = league().book;
-    const g = gm(), here = liveHour();
+    const g = gm(),
+      here = liveHour();
     for (const w of bookRestore(book).wagers) {
-      if (w.status !== 'open' || w.hour === here || g < (w.hour + 1) * 60 || bookRestore(book).seen.some((x) => x.hour === w.hour)) continue;
+      if (
+        w.status !== 'open' ||
+        w.hour === here ||
+        g < (w.hour + 1) * 60 ||
+        bookRestore(book).seen.some((x) => x.hour === w.hour)
+      )
+        continue;
       const v = on.exhibitionVerdict(w.hour, g);
-      if (v?.house) { const ex = exhibitionFor(w.hour * 60); book = bookVerdict(book, w.hour, ex ? houseOutcome(ex) : null); }
-      else if (v) book = bookVerdict(book, w.hour, v.side);
+      if (v?.house) {
+        const ex = exhibitionFor(w.hour * 60);
+        book = bookVerdict(book, w.hour, ex ? houseOutcome(ex) : null);
+      } else if (v) book = bookVerdict(book, w.hour, v.side);
     }
     setBook(settleBook(book, -Infinity).book);
   }
@@ -270,7 +383,11 @@ export function createArenaGate(deps) {
   function wager(hour, side, stake) {
     const ex = exhibitionFor(gm());
     if (!ex || ex.hour !== hour) return { ok: false, text: B.whyRefused.closed };
-    const r = placeWager(league().book, ex, side, stake, { gold: totalGoldAmount(P), begun: begun(), gameMinutes: gm() });
+    const r = placeWager(league().book, ex, side, stake, {
+      gold: totalGoldAmount(P),
+      begun: begun(),
+      gameMinutes: gm(),
+    });
     if (!r.ok) return { ok: false, text: B.whyRefused[r.reason ?? 'closed'] };
     deductGold(P, r.cost);
     setBook(r.book);
@@ -280,12 +397,21 @@ export function createArenaGate(deps) {
   /** THE BOOKMAKER'S CHOICE: collect, back a fighter (then the stake), the window, leave. True: it is up. */
   function bookmaker() {
     settle();
-    const ch = bookmakerChoice({ league: league(), gameMinutes: gm(), gold: totalGoldAmount(P), begun: begun(), window: typeof openWindow === 'function' });
+    const ch = bookmakerChoice({
+      league: league(),
+      gameMinutes: gm(),
+      gold: totalGoldAmount(P),
+      begun: begun(),
+      window: typeof openWindow === 'function',
+    });
     choice(ch, (a) => {
       if (a === 'collect') {
         const r = collectWinnings(league().book);
         setBook(r.book);
-        if (r.gold > 0) { addGold(P, r.gold); say(B.paid(r.gold)); }
+        if (r.gold > 0) {
+          addGold(P, r.gold);
+          say(B.paid(r.gold));
+        }
       } else if (a === 'back0' || a === 'back1') {
         const ex = ch.exhibition;
         if (!ex) return;
@@ -308,10 +434,18 @@ export function createArenaGate(deps) {
   function board() {
     settle();
     return arenaBoard({
-      ladder: P.arenaLadder, league: league(), gameMinutes: gm(), name: P.name ?? '', atGate: !!deps.atGate?.(), onSand: deps.onSand?.() ?? null,
-      healthShare: (P.health ?? 0) / Math.max(1, P.maxHealth ?? 1), gold: totalGoldAmount(P), liveHour: liveHour(), begun: begun(),
-      online: online()?.model() ?? null,   // ARENA4: the realm's boards and the hall, while online
-      replays: P.arenaReplays ?? [],   // ARENA5: the Records page's Watch the replay
+      ladder: P.arenaLadder,
+      league: league(),
+      gameMinutes: gm(),
+      name: P.name ?? '',
+      atGate: !!deps.atGate?.(),
+      onSand: deps.onSand?.() ?? null,
+      healthShare: (P.health ?? 0) / Math.max(1, P.maxHealth ?? 1),
+      gold: totalGoldAmount(P),
+      liveHour: liveHour(),
+      begun: begun(),
+      online: online()?.model() ?? null, // ARENA4: the realm's boards and the hall, while online
+      replays: P.arenaReplays ?? [], // ARENA5: the Records page's Watch the replay
     });
   }
   /** A PRESS IN THE WINDOW: Watch and Fight are the Herald's (the window goes, the floor's instance comes); Wager is the
@@ -323,9 +457,18 @@ export function createArenaGate(deps) {
       return wager(data.hour, data.side === 1 ? 1 : 0, Math.floor(Number(data.stake) || 0));
     }
     // ARENA4: the challenge and the stands - pressed anywhere the window stands (a match called sends me to the sand)
-    if (kind === 'queue' || kind === 'casual' || kind === 'unqueue' || kind === 'accept' || kind === 'decline' || kind === 'spectate') return online()?.act(kind, data) ?? { ok: false, text: ARENA_TEXT.online.whyOffline };
+    if (
+      kind === 'queue' ||
+      kind === 'casual' ||
+      kind === 'unqueue' ||
+      kind === 'accept' ||
+      kind === 'decline' ||
+      kind === 'spectate'
+    )
+      return online()?.act(kind, data) ?? { ok: false, text: ARENA_TEXT.online.whyOffline };
     // ARENA6: a private session's presses - taken wherever the window stands, as the challenge's are; Host and Join enter the floor's instance, whose door is the exterior's (pressed indoors they say so - scenes/arena/arenaOnline.js enterSession)
-    if (typeof kind === 'string' && kind.startsWith('priv')) return online()?.act(kind, data) ?? { ok: false, text: ARENA_TEXT.online.whyOffline };
+    if (typeof kind === 'string' && kind.startsWith('priv'))
+      return online()?.act(kind, data) ?? { ok: false, text: ARENA_TEXT.online.whyOffline };
     // ARENA5: a bout the records keep, watched again - at the gate, as Watch is; offline (the save's records)
     if (kind === 'replay') {
       if (online()) return { ok: false, text: ARENA_TEXT.replay.offline };
@@ -338,13 +481,15 @@ export function createArenaGate(deps) {
     }
     if (kind === 'watch' || kind === 'fight') {
       if (!atGate) return { ok: false, text: ARENA_TEXT.window.whyGate };
-      const seen = kind === 'watch' ? watchRefusal(exhibitionFor(gm())?.hour) : null;   // AUDIT PRE-MERGE 1003 B3: refused at the press
+      const seen = kind === 'watch' ? watchRefusal(exhibitionFor(gm())?.hour) : null; // AUDIT PRE-MERGE 1003 B3: refused at the press
       if (seen) return { ok: false, text: seen };
       const on = online();
-      const onLadder = on ? on.climb?.() ?? null : P.arenaLadder;   // ARENA4: online the climb is the account's
-      if (kind === 'fight' && on && !onLadder) return { ok: false, text: on.shutText?.(ARENA_TEXT.online.climbWait) ?? ARENA_TEXT.online.climbWait };   // ARENA4b: and waited for (ARENA-WAIT AUDIT: a shut door says why)
+      const onLadder = on ? (on.climb?.() ?? null) : P.arenaLadder; // ARENA4: online the climb is the account's
+      if (kind === 'fight' && on && !onLadder)
+        return { ok: false, text: on.shutText?.(ARENA_TEXT.online.climbWait) ?? ARENA_TEXT.online.climbWait }; // ARENA4b: and waited for (ARENA-WAIT AUDIT: a shut door says why)
       if (kind === 'fight' && !nextLadderBout(onLadder)) return { ok: false, text: ARENA_TEXT.herald.ladderDone };
-      if (kind === 'fight' && (P.health ?? 0) / Math.max(1, P.maxHealth ?? 1) < FIGHT_HEALTH_MIN) return { ok: false, text: ARENA_TEXT.window.whyHurt };
+      if (kind === 'fight' && (P.health ?? 0) / Math.max(1, P.maxHealth ?? 1) < FIGHT_HEALTH_MIN)
+        return { ok: false, text: ARENA_TEXT.window.whyHurt };
       closeArenaDoor();
       deps.heraldAct?.(kind);
       return { ok: true, text: '' };
@@ -356,8 +501,20 @@ export function createArenaGate(deps) {
     return createArenaOverlay({ page, board: () => board(), act: (k, d) => windowAct(k, d) });
   }
 
-  return { recruiter, bookmaker, wager, settle, verdictSeen, board, windowAct, windowOverlay, heraldChoice, hall, joined, openWindow: (page) => openWindow?.(page) ?? false,
-    watchRefusal,   // AUDIT PRE-MERGE 1003 B3: both hosts' Watch asks it first
-    plaques,   // ARENA5: the Hall of Champions' plaques
+  return {
+    recruiter,
+    bookmaker,
+    wager,
+    settle,
+    verdictSeen,
+    board,
+    windowAct,
+    windowOverlay,
+    heraldChoice,
+    hall,
+    joined,
+    openWindow: (page) => openWindow?.(page) ?? false,
+    watchRefusal, // AUDIT PRE-MERGE 1003 B3: both hosts' Watch asks it first
+    plaques, // ARENA5: the Hall of Champions' plaques
   };
 }

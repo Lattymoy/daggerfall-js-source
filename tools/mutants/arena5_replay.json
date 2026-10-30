@@ -83,8 +83,8 @@
   {
     "name": "ARENA5-REC-NOT-BEGUN",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "    beginRecording(C, t);   // ARENA5: a ladder bout recorded for its replay\n",
-    "new": "",
+    "old": "    beginRecording(C, t); // ARENA5: a ladder bout recorded for its replay\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/arena/arena5_replay.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "ARENA5-REC-EVENTS",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "{ recordEvent(C.rec, e); hear(C, e, t, near); }",
-    "new": "{ hear(C, e, t, near); }",
+    "old": "      recordEvent(C.rec, e);\n      hear(C, e, t, near);",
+    "new": "      hear(C, e, t, near);",
     "tests": [
       "test/systems/arena/arena5_replay.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "ARENA5-REC-SWING",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "    if (C?.ladder && C.b && boutLive(C.b)) recordStrike(C.rec, lawNow(), YOU);",
-    "new": "",
+    "old": "    if (C?.ladder && C.b && boutLive(C.b)) recordStrike(C.rec, lawNow(), YOU); // ARENA5: every swing of mine, my puppet's in the replay",
+    "new": "    // ARENA5: every swing of mine, my puppet's in the replay",
     "tests": [
       "test/systems/arena/arena5_replay.test.js"
     ],
@@ -129,8 +129,8 @@
   {
     "name": "ARENA5-REC-ROW-MINUTE",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "    if (rec && row && Number.isFinite(row.at) && row.tier === rec.next?.tier) rec.at = row.at;\n",
-    "new": "",
+    "old": "    if (rec && row && Number.isFinite(row.at) && row.tier === rec.next?.tier) rec.at = row.at;\n    if (rec && P) P.arenaReplays = keepReplay(P.arenaReplays, rec);",
+    "new": "    if (rec && P) P.arenaReplays = keepReplay(P.arenaReplays, rec);",
     "tests": [
       "test/systems/arena/arena5_replay.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "ARENA5-PLAY-NO-FEED",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "    if (C?.relay?.replay) replayFrame(C, t);",
-    "new": "",
+    "old": "    if (C?.relay?.replay) replayFrame(C, t); // ARENA5: a replay's recorded words, fed to the mirror below",
+    "new": "    // ARENA5: a replay's recorded words, fed to the mirror below",
     "tests": [
       "test/systems/arena/arena5_replay.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "ARENA5-PLAY-CALL",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "      deps.say?.(nx ? ARENA_TEXT.replay.call(nx.tierName, nx.grand ? ARENA_TEXT.grandLabel : nx.champion ? ARENA_TEXT.champLabel : nx.label) : ARENA_TEXT.replay.callBare);\n",
-    "new": "",
+    "old": "      deps.say?.(\n        nx\n          ? ARENA_TEXT.replay.call(\n              nx.tierName,\n              nx.grand ? ARENA_TEXT.grandLabel : nx.champion ? ARENA_TEXT.champLabel : nx.label,\n            )\n          : ARENA_TEXT.replay.callBare,\n      );\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/arena/arena5_replay.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "ARENA5-PLAY-FIRST-PLACES",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "      for (const w of R.feed.first) relayWord(w);\n",
-    "new": "",
+    "old": "      for (const w of R.feed.first) relayWord(w);\n      relayWord(R.feed.st);",
+    "new": "      relayWord(R.feed.st);",
     "tests": [
       "test/systems/arena/arena5_replay.test.js"
     ]
@@ -219,8 +219,8 @@
   {
     "name": "ARENA5-WINDOW-REPLAY-GATE",
     "file": "src/scenes/arena/arenaGate.js",
-    "old": "      if (online()) return { ok: false, text: ARENA_TEXT.replay.offline };\n      if (!atGate) return { ok: false, text: ARENA_TEXT.window.whyGate };\n",
-    "new": "      if (online()) return { ok: false, text: ARENA_TEXT.replay.offline };\n",
+    "old": "      if (!atGate) return { ok: false, text: ARENA_TEXT.window.whyGate };\n      const i = Math.floor(Number(data.i) || 0);",
+    "new": "      const i = Math.floor(Number(data.i) || 0);",
     "tests": [
       "test/systems/arena/arena5_replay.test.js"
     ]
