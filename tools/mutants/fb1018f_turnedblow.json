@@ -413,8 +413,8 @@
   {
     "name": "TURNED-BLOW-host-spell-number-blind",
     "file": "src/scenes/gate/standInSpell.js",
-    "old": "reportPlayerAttack({ hit: true, damage: Math.round(shown), target: body.entity });",
-    "new": "reportPlayerAttack({ hit: true, damage: Math.round(shown) });",
+    "old": "    reportPlayerAttack({ hit: true, damage: Math.round(shown), target: body.entity });",
+    "new": "    reportPlayerAttack({ hit: true, damage: Math.round(shown) });",
     "tests": [
       "test/net/eliteGates/fb1018f_turnedblow.test.js"
     ],

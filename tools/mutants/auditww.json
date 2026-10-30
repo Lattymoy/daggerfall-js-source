@@ -74,8 +74,8 @@
   {
     "name": "AUDITWW-F2-the-client-lanes-unbounded",
     "file": "src/scenes/gate/gateLanes.js",
-    "old": "[BAY_THEATRE, ...scans.theatres().filter(open)]",
-    "new": "[BAY_THEATRE, ...scans.theatres()]",
+    "old": "  const lanes = () => (scans && lanesOk() ? [BAY_THEATRE, ...scans.theatres().filter(open)] : [BAY_THEATRE]);",
+    "new": "  const lanes = () => (scans && lanesOk() ? [BAY_THEATRE, ...scans.theatres()] : [BAY_THEATRE]);",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]

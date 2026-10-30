@@ -542,8 +542,8 @@
   {
     "name": "P7-closed-lanes-scanned",
     "file": "src/scenes/gate/gateLanes.js",
-    "old": "t < GATE_LANES && open(t));",
-    "new": "t < GATE_LANES);",
+    "old": "  const wanted = () => places.theatres().filter((t) => t !== BAY_THEATRE && t < GATE_LANES && open(t));",
+    "new": "  const wanted = () => places.theatres().filter((t) => t !== BAY_THEATRE && t < GATE_LANES);",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ]

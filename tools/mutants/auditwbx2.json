@@ -132,8 +132,8 @@
   {
     "name": "AUDWBX2-M7-the-first-stand-only",
     "file": "src/scenes/gate/gatePool.js",
-    "old": "    const f = feet();\n    if (f && g && inGateRoot(place, f)) landBefore(g);",
-    "new": "    const f = standCollider.once ? null : feet();\n    standCollider.once = true;\n    if (f && g && inGateRoot(place, f)) landBefore(g);",
+    "old": "    const f = feet();",
+    "new": "    const f = standCollider.once ? null : feet();\n    standCollider.once = true;",
     "tests": [
       "test/net/gate/auditwbx2.test.js"
     ]

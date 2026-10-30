@@ -546,6 +546,16 @@
 !/src/scenes/foeTraitsHost.js
 !/src/scenes/foragingWait.js
 !/src/scenes/gambitTableGame.js
+!/src/scenes/gate/
+/src/scenes/gate/*
+!/src/scenes/gate/gateArsenal.js
+!/src/scenes/gate/gateFlame.js
+!/src/scenes/gate/gateLanes.js
+!/src/scenes/gate/gatePool.js
+!/src/scenes/gate/gateSeat.js
+!/src/scenes/gate/gateSpriteWarm.js
+!/src/scenes/gate/gateVanguard.js
+!/src/scenes/gate/standInSpell.js
 !/src/scenes/ghostfenceBuild.js
 !/src/scenes/grahtHost.js
 !/src/scenes/grantHost.js

@@ -395,8 +395,8 @@
   {
     "name": "WB14d-the-view-reads-his-place",
     "file": "src/scenes/gate/gateFlame.js",
-    "old": "v = Object.freeze({ ...s, x: F.x, z: F.z,",
-    "new": "v = Object.freeze({ ...s,",
+    "old": "      x: F.x,\n      z: F.z,\n      yaw: F.yaw,",
+    "new": "      yaw: F.yaw,",
     "tests": [
       "test/net/gate/wb14d_sundering.test.js"
     ]
@@ -413,8 +413,8 @@
   {
     "name": "WB14d-its-blow-judged-twice",
     "file": "src/scenes/gate/gateFlame.js",
-    "old": "      if (v !== 'wait') { setMark(judged, atk); if (v === 'hit') land(atk, P); }",
-    "new": "      if (v !== 'wait') { if (v === 'hit') land(atk, P); }",
+    "old": "        setMark(judged, atk);\n        if (v === 'hit') land(atk, P);",
+    "new": "        if (v === 'hit') land(atk, P);",
     "tests": [
       "test/net/gate/wb14d_sundering.test.js"
     ]
@@ -431,8 +431,8 @@
   {
     "name": "WB14d-the-flame-struck-through-its-ward",
     "file": "src/scenes/gate/gateFlame.js",
-    "old": "!Object.values(HIT_KINDS).includes(r) || now < F.shieldUntil || now < F.stunUntil",
-    "new": "!Object.values(HIT_KINDS).includes(r)",
+    "old": "      if (\n        !F ||\n        s.fell ||\n        s.wrath != null ||\n        !Object.values(HIT_KINDS).includes(r) ||\n        now < F.shieldUntil ||\n        now < F.stunUntil ||\n        !inItsCourt(F, now)\n      )\n        return false;",
+    "new": "      if (!F || s.fell || s.wrath != null || !Object.values(HIT_KINDS).includes(r) || !inItsCourt(F, now)) return false;",
     "tests": [
       "test/net/gate/wb14d_sundering.test.js"
     ]
@@ -449,8 +449,8 @@
   {
     "name": "WB14d-the-rejoining-unsaid",
     "file": "src/scenes/gate/gateFlame.js",
-    "old": "if (now - S.rj <= SUNDER_LATE_MS) say(SUNDER_TEXT.rejoin()); }",
-    "new": "}",
+    "old": "      if (now - S.rj <= SUNDER_LATE_MS) say(SUNDER_TEXT.rejoin());\n    }",
+    "new": "    }",
     "tests": [
       "test/net/gate/wb14d_sundering.test.js"
     ]
@@ -458,8 +458,8 @@
   {
     "name": "WB14d-the-flame-s-shapes-never-drawn",
     "file": "src/scenes/gate/gateFlame.js",
-    "old": "    shapes() { _shapes.length = 0; if (mark) _shapes.push(mark); if (shape) _shapes.push(shape); return _shapes; },",
-    "new": "    shapes() { _shapes.length = 0; return _shapes; },",
+    "old": "      if (mark) _shapes.push(mark);\n      if (shape) _shapes.push(shape);\n      return _shapes;",
+    "new": "      return _shapes;",
     "tests": [
       "test/net/gate/wb14d_sundering.test.js"
     ]

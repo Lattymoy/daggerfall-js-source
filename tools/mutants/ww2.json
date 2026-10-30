@@ -212,8 +212,8 @@
   {
     "name": "WW2-the-scans-generation",
     "file": "src/scenes/gate/gateLanes.js",
-    "old": "if (places.generation() !== gen || land() !== ver)",
-    "new": "if (land() !== ver)",
+    "old": "    if (places.generation() !== gen || land() !== ver) {",
+    "new": "    if (land() !== ver) {",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]
@@ -221,8 +221,8 @@
   {
     "name": "WW2-the-scans-picture",
     "file": "src/scenes/gate/gateLanes.js",
-    "old": "if (places.generation() !== gen || land() !== ver)",
-    "new": "if (places.generation() !== gen)",
+    "old": "    if (places.generation() !== gen || land() !== ver) {",
+    "new": "    if (places.generation() !== gen) {",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]
@@ -230,8 +230,8 @@
   {
     "name": "WW2-the-lanes-ungated",
     "file": "src/scenes/gate/gateLanes.js",
-    "old": "const lanes = () => (scans && lanesOk() ? [BAY_THEATRE, ...scans.theatres().filter(open)] : [BAY_THEATRE]);",
-    "new": "const lanes = () => (scans ? [BAY_THEATRE, ...scans.theatres().filter(open)] : [BAY_THEATRE]);",
+    "old": "  const lanes = () => (scans && lanesOk() ? [BAY_THEATRE, ...scans.theatres().filter(open)] : [BAY_THEATRE]);",
+    "new": "  const lanes = () => (scans ? [BAY_THEATRE, ...scans.theatres().filter(open)] : [BAY_THEATRE]);",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]
@@ -239,8 +239,8 @@
   {
     "name": "WW2-the-nearest-by-lane",
     "file": "src/scenes/gate/gateLanes.js",
-    "old": "if (d < bestD || !best) { best = v; bestD = d; }",
-    "new": "if (!best) { best = v; bestD = d; }",
+    "old": "      if (d < bestD || !best) {",
+    "new": "      if (!best) {",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]

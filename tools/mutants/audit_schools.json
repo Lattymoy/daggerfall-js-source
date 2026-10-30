@@ -562,7 +562,7 @@
   {
     "name": "AUDIT-SCHOOLS-L2-F4-a-stand-in-untold",
     "file": "src/scenes/gate/standInSpell.js",
-    "old": "    tellSpellLanded({ caster: player, target: entity, foe: null, spell: sp, r, self: false, took, cast: caster?.cast ?? null });",
+    "old": "    tellSpellLanded({\n      caster: player,\n      target: entity,\n      foe: null,\n      spell: sp,\n      r,\n      self: false,\n      took,\n      cast: caster?.cast ?? null,\n    });",
     "new": "    void tellSpellLanded;",
     "tests": [
       "test/systems/audit_schools.test.js"

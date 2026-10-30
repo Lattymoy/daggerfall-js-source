@@ -224,7 +224,7 @@
   {
     "name": "AUDWBX-W6-the-box-every-frame",
     "file": "src/scenes/gate/gatePool.js",
-    "old": "      if (!box || !boxAt || boxAt[0] !== o[0] || boxAt[1] !== o[1] || boxAt[2] !== o[2] || boxAt[3] !== place.yaw || boxAt[4] !== place.day) {",
+    "old": "      if (\n        !box ||\n        !boxAt ||\n        boxAt[0] !== o[0] ||\n        boxAt[1] !== o[1] ||\n        boxAt[2] !== o[2] ||\n        boxAt[3] !== place.yaw ||\n        boxAt[4] !== place.day\n      ) {",
     "new": "      if (true) {",
     "tests": [
       "test/net/gate/auditwbx.test.js"
@@ -233,7 +233,7 @@
   {
     "name": "AUDWBX-W6-the-box-left-where-it-stood",
     "file": "src/scenes/gate/gatePool.js",
-    "old": "      if (!box || !boxAt || boxAt[0] !== o[0] || boxAt[1] !== o[1] || boxAt[2] !== o[2] || boxAt[3] !== place.yaw || boxAt[4] !== place.day) {",
+    "old": "      if (\n        !box ||\n        !boxAt ||\n        boxAt[0] !== o[0] ||\n        boxAt[1] !== o[1] ||\n        boxAt[2] !== o[2] ||\n        boxAt[3] !== place.yaw ||\n        boxAt[4] !== place.day\n      ) {",
     "new": "      if (!box) {",
     "tests": [
       "test/net/gate/auditwbx.test.js"

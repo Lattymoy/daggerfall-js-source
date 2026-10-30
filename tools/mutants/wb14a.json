@@ -277,8 +277,8 @@
   {
     "name": "WB14a-judged-twice",
     "file": "src/scenes/gate/gateArsenal.js",
-    "old": "    setMark(judged, atk);\n",
-    "new": "\n",
+    "old": "    setMark(judged, atk);",
+    "new": "",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ],
@@ -296,8 +296,8 @@
   {
     "name": "WB14a-the-gaze-never-blinds",
     "file": "src/scenes/gate/gateArsenal.js",
-    "old": "{ land(atk, P, so); blindAt = now; }",
-    "new": "{ land(atk, P, so); }",
+    "old": "        blindAt = now;\n      }",
+    "new": "      }",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ]
@@ -350,8 +350,8 @@
   {
     "name": "AUDIT-WB14-RECORD-6-brand-self-at-the-burst-s-share",
     "file": "src/scenes/gate/gateArsenal.js",
-    "old": "if (b.self) land(atk, P, { ...so, pct: ATTACKS.brand.selfPct * P.dmgX, base: ATTACKS.brand.selfBase * P.dmgX });",
-    "new": "if (b.self) land(atk, P, so);",
+    "old": "      if (b.self) land(atk, P, { ...so, pct: ATTACKS.brand.selfPct * P.dmgX, base: ATTACKS.brand.selfBase * P.dmgX });",
+    "new": "      if (b.self) land(atk, P, so);",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ],
@@ -392,8 +392,8 @@
   {
     "name": "WB14a-the-seams-past-the-motor",
     "file": "src/scenes/gate/gateArsenal.js",
-    "old": "pull: (vx, vz) => motor.blowPush(vx, vz), pullDecay };",
-    "new": "pull: () => {}, pullDecay };",
+    "old": "  return { myId: () => online()?.id ?? null, pull: (vx, vz) => motor.blowPush(vx, vz), pullDecay };",
+    "new": "  return { myId: () => online()?.id ?? null, pull: () => {}, pullDecay };",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ]
@@ -401,8 +401,8 @@
   {
     "name": "WB14a-the-seams-read-once",
     "file": "src/scenes/gate/gateArsenal.js",
-    "old": "myId: () => online()?.id ?? null,",
-    "new": "myId: ((v) => () => v)(online()?.id ?? null),",
+    "old": "  return { myId: () => online()?.id ?? null, pull: (vx, vz) => motor.blowPush(vx, vz), pullDecay };",
+    "new": "  return {\n    myId: (\n      (v) => () =>\n        v\n    )(online()?.id ?? null),\n    pull: (vx, vz) => motor.blowPush(vx, vz),\n    pullDecay,\n  };",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ]

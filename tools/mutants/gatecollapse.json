@@ -52,8 +52,8 @@
   {
     "name": "GATE-COLLAPSE-the-banner-forgets-it-sealed",
     "file": "src/scenes/gate/gatePool.js",
-    "old": "`${GATE_TEXT.name} - ${cd.to === 'collapse' ? 'sealed, ' : ''}${countdownWords(cd)}`",
-    "new": "`${GATE_TEXT.name} - ${countdownWords(cd)}`",
+    "old": "        banner(cd ? `${GATE_TEXT.name} - ${cd.to === 'collapse' ? 'sealed, ' : ''}${countdownWords(cd)}` : null); // GATE-COLLAPSE: the sealed hours count down to the collapse",
+    "new": "        banner(cd ? `${GATE_TEXT.name} - ${countdownWords(cd)}` : null); // GATE-COLLAPSE: the sealed hours count down to the collapse",
     "tests": [
       "test/ui/wb1_gate_omen.test.js",
       "test/world/gate/wb2_gate.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "GATE-COLLAPSE-the-plaque-forgets-it-sealed",
     "file": "src/scenes/gate/gatePool.js",
-    "old": "...(cd.to === 'collapse' ? ['Sealed'] : [])",
-    "new": "...([])",
+    "old": "      return {\n        title: GATE_TEXT.name,\n        subs: words ? [...(cd.to === 'collapse' ? ['Sealed'] : []), words[0].toUpperCase() + words.slice(1)] : [],\n      }; // GATE-COLLAPSE: sealed, and when it goes",
+    "new": "      return { title: GATE_TEXT.name, subs: words ? [...[], words[0].toUpperCase() + words.slice(1)] : [] }; // GATE-COLLAPSE: sealed, and when it goes",
     "tests": [
       "test/ui/wb1_gate_omen.test.js",
       "test/world/gate/wb2_gate.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "GATE-COLLAPSE-the-press-says-sealed-alone",
     "file": "src/scenes/gate/gatePool.js",
-    "old": "cd?.to === 'collapse' ? GATE_TEXT.collapsesIn(countdownText(cd.ms)) : GATE_TEXT.sealed",
-    "new": "GATE_TEXT.sealed",
+    "old": "    refuse(\n      cd?.to === 'open'\n        ? GATE_TEXT.opensIn(countdownText(cd.ms))\n        : cd?.to === 'collapse'\n          ? GATE_TEXT.collapsesIn(countdownText(cd.ms))\n          : GATE_TEXT.sealed,\n    );",
+    "new": "    refuse(cd?.to === 'open' ? GATE_TEXT.opensIn(countdownText(cd.ms)) : GATE_TEXT.sealed);",
     "tests": [
       "test/ui/wb1_gate_omen.test.js",
       "test/world/gate/wb2_gate.test.js"

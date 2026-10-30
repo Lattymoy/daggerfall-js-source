@@ -2809,7 +2809,7 @@ the fix is the stand-in's, as a duel's was (`combat/duelCombat.js` DUEL_STAND_IN
   (`gateBoss.js:"e.maxHealth = e.health"`). A Disintegrate counts it whole, every wire carries it and
   the relay's own law weighs and clips it - his stun heavier, an Unyielding ward 15% lighter (975 of it still past the cap
   at the level cap), the bucket. The serpent's door already held its claim to 5,000; it carries the whole as it is.
-- **THE NUMBER** says what can land (`standInSpell.js:"const shown = standInShown(dealt, standInBlowCap(body.entity, player.level));"`):
+- **THE NUMBER** says what can land (`standInSpell.js:"const shown = standInShown"`):
   the claim, never past the most one blow of mine lands there (`gateBoss.js:"export function standInBlowCap"` -
   the relay's cap at my level, grown by the factor the stand-in's owner says my bucket grows by: an Elite Breach hands its
   stand-ins my Vestiges' declared factor, `egFight.js:"const myBlowX = ()"`, at most EG_BUCKET_X_MAX; on my opponent the
@@ -2817,7 +2817,7 @@ the fix is the stand-in's, as a duel's was (`combat/duelCombat.js` DUEL_STAND_IN
   goes out whole beside it - clipping it here would lose what the relay weighs before its cap.
 - **THE DOOR** is one: the court's four spell doors (him, his crystals, his host, my opponent - each its own copy in
   `buildDungeonContext`) left the host for `scenes/gate/standInSpell.js`
-  (`standInSpell.js:"export function createStandInSpell(host) {"`), which the context wires where they stood
+  (`standInSpell.js:"export function createStandInSpell"`), which the context wires where they stood
   (`dungeonContext.js:"} = createStandInSpell({"`;
   `01-Overview/Host-Split.md` STAND-IN-WHOLE).
 - **NOTHING LOCAL READS IT AS A BODY.** With the whole finite, every reader of a stand-in's health was read again: the
@@ -2857,11 +2857,11 @@ alone). So a Continuous Damage spell on any body a relay runs landed its cast's 
 through at even dice) dealt its first round alone, 8 of its 200, and the other 24 rounds went nowhere. Now its rounds are
 carried:
 
-- **What is carried** (`standInSpell.js:"export const carriedOnStandIn = (a) =>"`): Continuous Damage on health (1,0 - DFU's
+- **What is carried** (`standInSpell.js:"export const carriedOnStandIn"`): Continuous Damage on health (1,0 - DFU's
   ContinuousDamageHealth), a round still to run. Its siblings on fatigue and magicka (1,1 and 1,2) have nothing to fall on -
   a relay body is health alone - and the duel's other lasting families (Paralyze, Silence, Drain) are the relay brain's to
   know, never a claim: none of those is.
-- **Kept a body** (`standInSpell.js:"export function createStandInRounds({ now = Date.now, rolls = Math.random } = {}) {"`):
+- **Kept a body** (`standInSpell.js:"export function createStandInRounds"`):
   him, one of his host, a crystal (the Remnant, its Echoes and Hearts in the Hour; an Elite Breach's lords, legion and struck
   objects through the host seam). A cast on the body lays its running rounds on the stand-in first, as copies - the
   incumbent a recast RENEWS (STACK-CAP's renewRounds; a renewal fires no first round, as DFU's AddState does) - and keeps
@@ -2923,7 +2923,7 @@ distorts". The causes, landing in the same frames - his big landings, a wave ris
   three passes' compiles start together as I come in and each is built once its own is done; where it cannot, one a
   frame as here.
 
-- **The night's bodies made ready** (`gateSpriteWarm.js:"export function createSpriteWarm({ getTexture = null, uploadRecordFrame = null, has = () => false } = {}) {"`).
+- **The night's bodies made ready** (`gateSpriteWarm.js:"export function createSpriteWarm"`).
   His host's, his Flame's and his own sprites were fetched when their first body was drawn (a wave's first rising, the
   Sundering), and each frame decoded and uploaded the first time it showed (a new angle, a first swing, a first hurt).
   Now, as I stand in the court, it asks for the archive of every body the night can show (`nightMobiles`: him and the

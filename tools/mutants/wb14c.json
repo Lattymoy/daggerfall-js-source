@@ -256,8 +256,8 @@
   {
     "name": "WB14c-each-wave-said",
     "file": "src/scenes/gate/gateVanguard.js",
-    "old": "    case VG_WORD.wave: return w.s === 0 && w.w === 1 ? VANGUARD_TEXT.rises() : null;",
-    "new": "    case VG_WORD.wave: return VANGUARD_TEXT.rises();",
+    "old": "      return w.s === 0 && w.w === 1 ? VANGUARD_TEXT.rises() : null;",
+    "new": "      return VANGUARD_TEXT.rises();",
     "tests": [
       "test/net/gate/wb14c_vanguard.test.js"
     ]

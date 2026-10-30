@@ -132,8 +132,8 @@
   {
     "name": "STAND-IN-WHOLE-the-rival-at-the-gates-cap",
     "file": "src/scenes/gate/standInSpell.js",
-    "old": "standInShown(dealt, arenaBlowCap({ r: ARENA_HIT.Spell }))",
-    "new": "standInShown(dealt, standInBlowCap(rb.entity, player.level))",
+    "old": "    reportPlayerAttack({ hit: true, damage: Math.round(standInShown(dealt, arenaBlowCap({ r: ARENA_HIT.Spell }))) }); // HN1: the number pops as a blow's does",
+    "new": "    reportPlayerAttack({ hit: true, damage: Math.round(standInShown(dealt, standInBlowCap(rb.entity, player.level))) }); // HN1: the number pops as a blow's does",
     "tests": [
       "test/net/gate/fb1019f_standinwhole.test.js"
     ],
@@ -143,7 +143,7 @@
     "name": "STAND-IN-WHOLE-the-count-takes",
     "file": "src/scenes/gate/standInSpell.js",
     "old": "    r = applySpell(harm, level, entity, counting(got), rolls, { entity: caster });",
-    "new": "    r = applySpell(harm, level, entity, { ...counting(got), hurt: (n) => { got.n += Math.max(0, n); entity.health -= n; } }, rolls, { entity: caster });",
+    "new": "    r = applySpell(\n      harm,\n      level,\n      entity,\n      {\n        ...counting(got),\n        hurt: (n) => {\n          got.n += Math.max(0, n);\n          entity.health -= n;\n        },\n      },\n      rolls,\n      { entity: caster },\n    );",
     "tests": [
       "test/net/gate/fb1019f_standinwhole.test.js"
     ],

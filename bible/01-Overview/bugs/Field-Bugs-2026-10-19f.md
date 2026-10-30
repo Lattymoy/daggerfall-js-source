@@ -478,7 +478,7 @@ THE FIX - ONE WHOLE, ONE DOOR.
   ceiling nobody clamps (the bout's 10,000) with the rest of a spell's room beside it. A Disintegrate counts it whole, every
   wire carries it, and the relay weighs and clips it by its own law (a stun heavier; an Unyielding ward 15% lighter, 975 of
   it still past the cap at the level cap; the bucket). Pinned against the real constants and every validator.
-- **The number** says what can land (`standInSpell.js:"const shown = standInShown(dealt, standInBlowCap(body.entity, player.level));"`):
+- **The number** says what can land (`standInSpell.js:"const shown = standInShown"`):
   min(the claim, my one-blow cap at my level) - an Elite Breach's grown by my Vestiges' declared factor, which egFight hands its
   stand-ins (`egFight.js:"const myBlowX = ()"`, at most EG_BUCKET_X_MAX); on my opponent the referee's spell cap
   (ARENA_SPELL_MAX, 60). The paths' riders are told the same (`took` - what the foe could lose, AUDIT SCHOOLS L1 M6). The claim
@@ -539,11 +539,11 @@ said "continuous families are not his to carry", and WBX7 ("his stand-in forgets
 Trap alone. THE DECISION (the owner, 2026-10-19): "Carry DoTs".
 
 THE FIX - CARRIED, AS THE TRAP IS.
-- **What is carried** (`standInSpell.js:"export const carriedOnStandIn = (a) =>"`): Continuous Damage on health (1,0, DFU's
+- **What is carried** (`standInSpell.js:"export const carriedOnStandIn"`): Continuous Damage on health (1,0, DFU's
   ContinuousDamageHealth) with a round to run. Its fatigue and magicka siblings (1,1 and 1,2) have nothing to fall on - a
   relay body is health alone - and the duel's other lasting families (Paralyze, Silence, Drain) are the relay brain's to
   know, never a claim: not carried.
-- **Kept a body** (`standInSpell.js:"export function createStandInRounds({ now = Date.now, rolls = Math.random } = {}) {"`):
+- **Kept a body** (`standInSpell.js:"export function createStandInRounds"`):
   him `b`, one of his host `h<i>`, a crystal `c<n>` (the Hour's Remnant, Echoes and Hearts and an Elite Breach's bodies
   through the same seams). A cast lays the body's running rounds on its stand-in first, as copies - the incumbent a recast
   RENEWS (`renewRounds`, STACK-CAP; a renewal fires no first round, as DFU's AddState) - and keeps what the cast leaves only

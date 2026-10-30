@@ -595,8 +595,8 @@ test('AUDIT SCHOOLS L2 F4: MY SPELL ON THE RELAY\'S STAND-INS IS TOLD TO THE RID
   // (scenes/gate/standInSpell.js onBody) - each counted on its stand-in and told, and what the riders are told is what can
   // land there (the number the HUD says), never a claim no relay lands
   const sis = src('src/scenes/gate/standInSpell.js');
-  assert.match(sis, /function tellStandIn\(sp, entity, r, took, caster\) \{\n\s*tellSpellLanded\(\{ caster: player, target: entity, foe: null, spell: sp, r, self: false, took, cast: caster\?\.cast \?\? null \}\);/);
-  assert.match(sis, /const \{ dealt: counted, r, kept \} = countOnStandIn\(harm, body\.entity, player\.level, player, rolls, rounds\.carried\(key\)\);\n\s*const dealt = counted >= 1 \? bossStrike\(body\.entity, counted, \{ kind: 'spell', element: sp\.element \?\? null \}\)\.damage : counted;[^\n]*\n\s*if \(!\(dealt >= 1\)\) \{[^]*?\n\s*\}\n\s*const shown = standInShown\(dealt, standInBlowCap\(body\.entity, player\.level\)\);\n\s*tellStandIn\(sp, body\.entity, r, shown, caster\);/);
+  assert.match(sis, /function tellStandIn\(sp, entity, r, took, caster\) \{\n\s*tellSpellLanded\(\{\n\s*caster: player,\n\s*target: entity,\n\s*foe: null,\n\s*spell: sp,\n\s*r,\n\s*self: false,\n\s*took,\n\s*cast: caster\?\.cast \?\? null,\n\s*\}\);/);
+  assert.match(sis, /const \{\n\s*dealt: counted,\n\s*r,\n\s*kept,\n\s*\} = countOnStandIn\(harm, body\.entity, player\.level, player, rolls, rounds\.carried\(key\)\);\n\s*const dealt =\n\s*counted >= 1 \? bossStrike\(body\.entity, counted, \{ kind: 'spell', element: sp\.element \?\? null \}\)\.damage : counted; \/\/ BOSS-TRAITS: a relay boss's resistance to the spell's element \(systems\/bossTraits\.js\)\n\s*if \(!\(dealt >= 1\)\) \{\n\s*const laid = kept\.length > 0 && !turned\(body\);\n\s*if \(laid\) rounds\.keep\(key, kept\);\n\s*return laid;\n\s*\}\n\s*const shown = standInShown\(dealt, standInBlowCap\(body\.entity, player\.level\)\);\n\s*tellStandIn\(sp, body\.entity, r, shown, caster\);/);
   for (const [fn, who, land] of [['spellOnCrystal', 'cr', 'landOnCrystal'], ['spellOnHost', 'hb', 'landOnHost'], ['spellOnBoss', 'boss', 'landOnBoss']]) {
     assert.match(sis, new RegExp(`function ${fn}\\(sp, [^)]*caster = null\\) \\{[\\s\\S]*?return onBody\\(sp, ${who}, harm, caster, host\\.${land}, `), fn);   // PIN MOVED (FIELD BUGS 2026-10-19f BOSS-DOT): each its rounds' key
   }
@@ -605,8 +605,8 @@ test('AUDIT SCHOOLS L2 F4: MY SPELL ON THE RELAY\'S STAND-INS IS TOLD TO THE RID
   assert.match(dc, /castAtHost: opts\.gateHost \? \(sp, i, caster\) => spellOnHost\(sp, i, caster\) : null,/);
   const w = src('src/scenes/world.js');
   // PIN MOVED (FIELD BUGS 2026-10-19f BOSS-DOT): the serpent's door left bootWorld for scenes/gate/standInSpell.js createSerpentSpell, which tells the riders
-  assert.match(sis, /tellSpellLanded\(\{ caster: player, target: e, foe: null, spell: sp, r, self: false, took: standInShown\(dealt, cap\(\)\), cast: caster\?\.cast \?\? null \}\);/);   // PIN MOVED (DRAGON3): its cap the door's own (`cap`, the serpent's hand's purse by default)
-  assert.match(sis, /cap = \(\) => SERPENT_HIT_CAP_X \* SERPENT_HAND_REF \}\) \{/);
+  assert.match(sis, /tellSpellLanded\(\{\n\s*caster: player,\n\s*target: e,\n\s*foe: null,\n\s*spell: sp,\n\s*r,\n\s*self: false,\n\s*took: standInShown\(dealt, cap\(\)\),\n\s*cast: caster\?\.cast \?\? null,\n\s*\}\);/);   // PIN MOVED (DRAGON3): its cap the door's own (`cap`, the serpent's hand's purse by default)
+  assert.match(sis, /cap = \(\) => SERPENT_HIT_CAP_X \* SERPENT_HAND_REF,\n\s*\}\) \{/);
   assert.match(w, /castAtBox: \(sp, q, caster\) => dragonSky\?\.cast\(sp, q, caster\) \?\? serpentSpell\.cast\(sp, q, caster\),/);   // PIN MOVED (DRAGON3): the serpent's door for any mark not the dragon's
   const hm = src('src/scenes/hostMagic.js');
   assert.match(hm, /function giveToBoss\(mark, sp, caster = null\) \{/);

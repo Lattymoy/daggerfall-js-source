@@ -522,7 +522,7 @@ test('WB9c the seams, by source: the relay judges an `xhit` by applyCrystalHit a
   // PIN MOVED (FIELD BUGS 2026-10-19f STAND-IN-WHOLE, HOST-SPLIT): the crystal's spell door left the context for
   // scenes/gate/standInSpell.js, wired with the crystals and their door; its claim goes out as a spell
   assert.match(dc, /createStandInSpell\(\{[^]*?crystals: gateCrystalBodies,[^]*?landOnCrystal,/);
-  assert.match(read('src/scenes/gate/standInSpell.js'), /const cr = host\.crystals\(\)\.find\(\(q\) => q\.crystal === c\), harm = duelSpellOf\(sp\);\n\s*if \(!cr \|\| !harm\) return false;\n\s*return onBody\(sp, cr, harm, caster, host\.landOnCrystal, `c\$\{c\}`\);/);   // PIN MOVED (FIELD BUGS 2026-10-19f BOSS-DOT): its rounds' key
+  assert.match(read('src/scenes/gate/standInSpell.js'), /const cr = host\.crystals\(\)\.find\(\(q\) => q\.crystal === c\),\n\s*harm = duelSpellOf\(sp\);\n\s*if \(!cr \|\| !harm\) return false;\n\s*return onBody\(sp, cr, harm, caster, host\.landOnCrystal, `c\$\{c\}`\);/);   // PIN MOVED (FIELD BUGS 2026-10-19f BOSS-DOT): its rounds' key
   const hm = read('src/scenes/hostMagic.js');
   assert.match(hm, /if \(mark\?\.crystal != null\) \{ try \{ return !!castAtCrystal\?\.\(sp, mark\.crystal, caster\); \} catch \{ return false; \} \}/);   // PIN MOVED (AUDIT SCHOOLS L2 F4): and the cast's wrapper, for the paths' riders
   assert.match(hm, /if \(!crystalMarks \|\| !castAtCrystal \|\| !sp \|\| !duelSpellOf\(sp\)\) return \[\];/, 'a harmful spell alone');

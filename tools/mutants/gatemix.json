@@ -172,8 +172,8 @@
   {
     "name": "GATE-MIX-sprites-host-every-night",
     "file": "src/scenes/gate/gateSpriteWarm.js",
-    "old": "  if (P?.legion) for (const k of [HOST.harrier, HOST.sapper, HOST.bearer])",
-    "new": "  if (true) for (const k of [HOST.harrier, HOST.sapper, HOST.bearer])",
+    "old": "  if (P?.legion) for (const k of [HOST.harrier, HOST.sapper, HOST.bearer]) m.add(hostLookOf(k, a).mobile);",
+    "new": "  if (true) for (const k of [HOST.harrier, HOST.sapper, HOST.bearer]) m.add(hostLookOf(k, a).mobile);",
     "tests": [
       "test/net/gate/gatemix_sprites.test.js"
     ],

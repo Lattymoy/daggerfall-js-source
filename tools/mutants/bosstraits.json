@@ -233,8 +233,8 @@
   {
     "name": "BOSS-TRAITS-a-spell-on-a-stand-in-unresisted",
     "file": "src/scenes/gate/standInSpell.js",
-    "old": "    const dealt = counted >= 1 ? bossStrike(body.entity, counted, { kind: 'spell', element: sp.element ?? null }).damage : counted;",
-    "new": "    const dealt = counted;",
+    "old": "    const dealt =\n      counted >= 1 ? bossStrike(body.entity, counted, { kind: 'spell', element: sp.element ?? null }).damage : counted; // BOSS-TRAITS: a relay boss's resistance to the spell's element (systems/bossTraits.js)",
+    "new": "    const dealt = counted; // BOSS-TRAITS: a relay boss's resistance to the spell's element (systems/bossTraits.js)",
     "tests": [
       "test/scenes/bosstraits_hosts.test.js",
       "test/systems/audit_schools.test.js"

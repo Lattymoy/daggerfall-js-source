@@ -130,7 +130,7 @@ test('WB4b the seams, by source: the dungeon context meets him as a foe-shaped b
   // (one door for him, his crystals, his host and my opponent), wired with his body and his door
   assert.match(dc, /createStandInSpell\(\{[^]*?boss: gateBossBody,[^]*?landOnBoss, landOnCrystal, landOnHost, landOnRival, nextArenaQ,/);
   const sis = read('src/scenes/gate/standInSpell.js');
-  assert.match(sis, /try \{\n\s*r = applySpell\(harm, level, entity, counting\(got\), rolls, \{ entity: caster \}\);\n\s*kept = \(entity\.activeEffects \?\? \[\]\)\.filter\(carriedOnStandIn\);\n\s*\} finally \{ entity\.activeEffects = \[\]; \}/);   // PIN MOVED (AUDIT SCHOOLS L2 F4): its answer kept, for the paths' riders; PIN MOVED (FIELD BUGS 2026-10-19f BOSS-DOT): and his lasting harm lifted off before the wipe
+  assert.match(sis, /try \{\n\s*r = applySpell\(harm, level, entity, counting\(got\), rolls, \{ entity: caster \}\);\n\s*kept = \(entity\.activeEffects \?\? \[\]\)\.filter\(carriedOnStandIn\);\n\s*\} finally \{\n\s*entity\.activeEffects = \[\];\n\s*\}/);   // PIN MOVED (AUDIT SCHOOLS L2 F4): its answer kept, for the paths' riders; PIN MOVED (FIELD BUGS 2026-10-19f BOSS-DOT): and his lasting harm lifted off before the wipe
   assert.match(sis, /if \(!harm\) return laid \|\| sways;\n\s*return onBody\(sp, boss, harm, caster, host\.landOnBoss, 'b'\);/);   // PIN MOVED (FIELD BUGS 2026-10-19f BOSS-DOT): his rounds' key
   assert.match(sis, /const went = land\(body, dealt, HIT_KINDS\.Spell\);/);   // PIN MOVED (FIELD BUGS 2026-10-19f BOSS-DOT)
   assert.match(dc, /castAtBoss: opts\.gateBoss \? \(sp, caster\) => spellOnBoss\(sp, caster\) : null,/);   // PIN MOVED (AUDIT SCHOOLS L2 F4): and the cast's wrapper

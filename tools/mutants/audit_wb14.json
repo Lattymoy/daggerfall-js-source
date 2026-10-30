@@ -416,8 +416,8 @@
   {
     "name": "AUDIT-WB14-SCREEN-5-the-watcher-told-to-look-away",
     "file": "src/scenes/gate/gateArsenal.js",
-    "old": "s.fell || s.wrath != null || watching()) return null;",
-    "new": "s.fell || s.wrath != null) return null;",
+    "old": "    if (!A || !isMarkedBlow(A) || !mine || !Number.isFinite(atk.at) || s.fell || s.wrath != null || watching())\n      return null;",
+    "new": "    if (!A || !isMarkedBlow(A) || !mine || !Number.isFinite(atk.at) || s.fell || s.wrath != null) return null;",
     "tests": [
       "test/net/gate/audit_wb14_screen.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "AUDIT-WB14-SCREEN-9-the-number-alone",
     "file": "src/scenes/gate/gateArsenal.js",
-    "old": "if (!A || !isMarkedBlow(A) || marked(judged, atk)) return;",
-    "new": "if (!A || !isMarkedBlow(A) || judged.i === atk.i) return;",
+    "old": "    if (!A || !isMarkedBlow(A) || marked(judged, atk)) return;",
+    "new": "    if (!A || !isMarkedBlow(A) || judged.i === atk.i) return;",
     "tests": [
       "test/net/gate/audit_wb14_screen.test.js"
     ]

@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-WE-L2-2-the-rounds-unresisted",
     "file": "src/scenes/gate/standInSpell.js",
-    "old": "tickActiveEffects(e, counting(got, e), rolls);",
-    "new": "tickActiveEffects(e, counting(got), rolls);",
+    "old": "            tickActiveEffects(e, counting(got, e), rolls);",
+    "new": "            tickActiveEffects(e, counting(got), rolls);",
     "tests": [
       "test/scenes/auditwe_traits.test.js"
     ]

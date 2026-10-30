@@ -74,8 +74,8 @@
   {
     "name": "WB12a-the-banner-says-the-old-name",
     "file": "src/scenes/gate/gatePool.js",
-    "old": "  name: 'Dagon\\'s Breach',",
-    "new": "  name: 'Oblivion Gate',",
+    "old": "  name: \"Dagon's Breach\", // WB12a (Mac: \"Dagon's Breach\"): the event's name - the arch it wears is still \"the gate\"",
+    "new": "  name: 'Oblivion Gate', // WB12a (Mac: \"Dagon's Breach\"): the event's name - the arch it wears is still \"the gate\"",
     "tests": [
       "test/systems/gate/wb12a_breach_words.test.js"
     ]
