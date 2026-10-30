@@ -38,6 +38,7 @@ import { guildTagText } from '../../net/guild/guildLaw.js';
 import { ribbonColours, heraldryOf, heraldryColourOf, heraldryKey } from '../../net/heraldryLaw.js';   // AUDIT-SEATS: a Season's banner ribbon, under the name here too; AUDIT HERALDRY H4: the tag's frame
 import { drawShield } from '../heraldryArt.js';   // AUDIT HERALDRY H4: the guild's shield, in its tag's frame, on the canvas
 import { TV_FILTER_GROUPS, TV_FILTER_TEXT, travelViewFilters, toggleTravelViewFilter, onTravelViewFilters, markShown, countGroups } from '../../systems/travel/travelViewFilters.js';   // OW-FILTER
+import { TV_DUNGEON_TEXT, dungeonTierRows, dungeonSizeRows, travelViewDungeons, dungeonTypeShown, toggleDungeonTier, toggleDungeonSize, onTravelViewDungeons } from '../../systems/travel/travelViewDungeonFilters.js';   // OW-DUNGEON-TYPES
 import { TV_WHO_GROUPS, TV_WHO_TEXT, TV_KIN_COLORS, travelViewWho, toggleTravelViewWho, cycleTravelViewRenown, cycleTravelViewNodeKm } from '../../systems/travel/travelViewFilters.js';   // OW-WHO / OW-NODE-KM / OW-KIN
 import { wheelPath } from '../carriageWheel.js';   // OW-HUBS: a carriage town's wheel on its dot
 import { placeTip, readTip, tipKey, SEAT_TIP_TEXT_MAX, TOWN_TIP_LINES_MAX } from '../eventMapMarks.js';   // SEAT-TIP: the held map's card, at the pointer here too
@@ -334,6 +335,23 @@ function build(doc, hooks) {
   nodeBtn.title = TV_WHO_TEXT.nodeTip;
   nodeBtn.onclick = (e) => { e.preventDefault(); cycleTravelViewNodeKm(); };
   filters.append(renownBtn, nodeBtn);
+  // OW-DUNGEON-TYPES: under the Dungeons switch, shown only while it is on - the tiers (Regular, Elite, Abyss) and the sizes (Small,
+  // Medium, Large) a FOUND dungeon is drawn by; an unfound lair ("?") has neither and is the switch's alone
+  const dungeonBox = el('div', 'tview-dungeons');
+  dungeonBox.append(el('div', 'tview-label', TV_DUNGEON_TEXT.title));
+  const dungeonBtns = {};
+  for (const { title, rows, toggle, kind } of [{ title: TV_DUNGEON_TEXT.tier, rows: dungeonTierRows(), toggle: toggleDungeonTier, kind: 'tier' }, { title: TV_DUNGEON_TEXT.size, rows: dungeonSizeRows(), toggle: toggleDungeonSize, kind: 'size' }]) {
+    dungeonBox.append(el('div', 'tview-label tview-sublabel', title));
+    for (const [key, label] of rows) {
+      const b = el('button', 'tview-filter tview-cycle', label);
+      b.type = 'button';
+      b.dataset && (b.dataset.dtype = `${kind}:${key}`);
+      b.onclick = (e) => { e.preventDefault(); toggle(key); };
+      dungeonBtns[`${kind}:${key}`] = b;
+      dungeonBox.append(b);
+    }
+  }
+  filters.append(dungeonBox);
   // WAYPOINTS (2026-10-06, the player: "add the waypoints you want to mark (to follow) to the filter list on the overworld
   // map with a dropdown menu"): a switch per kind (Personal, Party, Guild - the held map's key reads the same ones), the
   // dropdown that follows one, and the followed list - each its flag's colour, its name, how far, Go and unfollow
@@ -385,7 +403,7 @@ function build(doc, hooks) {
   if (route) r.append(route);
   r.append(canvas, you, bar, side, said, tip);
   doc.body.append(r);
-  return { root: r, parts: { you, ring, chev, canvas, bar, where, trip, sky, hint, back, route, casing, line, said, modes, modeBtns, dock, idle, idleMap, filters, filterBtns, filterNums, whoBtns, renownBtn, nodeBtn, tip, pace, side, sideHead, sideFold, wpBtns, wpPick, wpPop, wpList } };
+  return { root: r, parts: { you, ring, chev, canvas, bar, where, trip, sky, hint, back, route, casing, line, said, modes, modeBtns, dock, idle, idleMap, filters, filterBtns, filterNums, whoBtns, renownBtn, nodeBtn, tip, pace, side, sideHead, sideFold, wpBtns, wpPick, wpPop, wpList, dungeonBox, dungeonBtns } };
 }
 
 /**
@@ -400,6 +418,8 @@ export function showTravelViewHud(hooks = {}, doc = globalThis.document) {
     resetMarks();   // PERF-TV: a new canvas holds nothing
     stopModes?.(); stopModes = onTravelPathMode(paintModes);
     stopFilters?.(); stopFilters = onTravelViewFilters((f) => { paintFilters(f); canvasSig = []; });
+    const stopSwitches = stopFilters, stopDungeons = onTravelViewDungeons(() => { paintFilters(travelViewFilters()); canvasSig = []; });   // OW-DUNGEON-TYPES
+    stopFilters = () => { stopSwitches(); stopDungeons(); };
     stopWaypoints?.(); stopWaypoints = onWaypoints(() => { paintWaypoints(); canvasSig = []; });   // WAYPOINTS
   }
   wpHooks = hooks;   // WAYPOINTS: the followed list's Go
@@ -524,6 +544,22 @@ function paintFilters(f) {
   }
   if (parts?.renownBtn) parts.renownBtn.textContent = TV_WHO_TEXT.renown(w.renown);
   if (parts?.nodeBtn) parts.nodeBtn.textContent = TV_WHO_TEXT.nodeKm(w.nodeKm);
+  paintDungeons(f);
+}
+
+/** OW-DUNGEON-TYPES: the dungeon tiers and sizes - the whole block only while Dungeons is on, each switch lit while it is shown. */
+function paintDungeons(f) {
+  if (!parts?.dungeonBox) return;
+  parts.dungeonBox.style.display = f.dungeons === false ? 'none' : '';
+  const s = travelViewDungeons();
+  for (const [kind, rows] of [['tier', dungeonTierRows()], ['size', dungeonSizeRows()]]) {
+    for (const [key, label] of rows) {
+      const b = parts.dungeonBtns[`${kind}:${key}`], on = kind === 'tier' ? dungeonTypeShown(key, null, s) : dungeonTypeShown(null, key, s);
+      b.className = on ? 'tview-filter tview-cycle on' : 'tview-filter tview-cycle';
+      b.setAttribute?.('aria-pressed', on ? 'true' : 'false');
+      b.title = TV_DUNGEON_TEXT.tip(label, on);
+    }
+  }
 }
 
 /** SIDE-CORNER: the HUD piece stepped aside for the filter block, put back as the view goes. */

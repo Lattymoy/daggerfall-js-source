@@ -74,12 +74,13 @@ export function createTravelViewMarks(host) {
     const marks = [];
     for (const p of travelViewPlaces()) {
       if (p.key === endKey) continue;
-      const tier = params.has('online') ? tierPhrase(dungeonTierLabel(p.summary.loc)) : '';   // TIER1: a dungeon's tier and size under its name, online
+      const dl = params.has('online') ? dungeonTierLabel(p.summary.loc) : null;   // OW-DUNGEON-TYPES: its tier and size, which the Dungeon types switches read
+      const tier = tierPhrase(dl);   // TIER1: a dungeon's tier and size under its name, online
       // OW-DUNGEON-DOT (2026-10-13, field: "some dungeons appear on the Overworld map as towns"): a found dungeon within the
       // grid wears TV2's plate (travelViewDungeons leaves it to this list), and every plate here was kind 'place' - a
       // town's brass dot, and the Towns switch's count. Its kind says so now: the dungeons' arch, the Dungeons switch.
       const isDungeon = TV_DUNGEON_TYPES.has(p.summary.loc?.mapTableData?.locationType);
-      marks.push({ key: p.key, at: tvSceneKept(p, p.x, p.z, TV_PLACE_LIFT), label: p.summary.name, ...(tier ? { sub: tier } : {}), kind: isDungeon ? 'place dungeon' : 'place', pick: true, hub: carriageTown(p.summary.mapId), tip: placeTip(townEcon.tipFnAt(p.summary.mapId), p.summary.name, p.x, p.z) });   // OW-HUBS: a carriage town's wheel; SEAT-TIP: a seat's card; TOWN-ECON: every town's (made only when its plate is asked)
+      marks.push({ key: p.key, at: tvSceneKept(p, p.x, p.z, TV_PLACE_LIFT), label: p.summary.name, ...(tier ? { sub: tier } : {}), kind: isDungeon ? 'place dungeon' : 'place', ...(isDungeon && dl ? { dtier: dl.tier, dsize: dl.size?.toLowerCase() ?? null } : {}), pick: true, hub: carriageTown(p.summary.mapId), tip: placeTip(townEcon.tipFnAt(p.summary.mapId), p.summary.name, p.x, p.z) });   // OW-HUBS: a carriage town's wheel; SEAT-TIP: a seat's card; TOWN-ECON: every town's (made only when its plate is asked)
     }
     // TV5: the far places, held at the edge with their distance (the journey's own end is the flag's)
     const farEnd = endKey ? `far:${tvTrip.plan.summary.mapId}` : null;
@@ -96,8 +97,9 @@ export function createTravelViewMarks(host) {
       if (g.found) {
         if (!g.spawn && `far:${g.row.mapID}` === farEnd) continue;
         const km = (Math.hypot(g.x - here.x, g.z - here.z) / 32768) * PIXEL_KM;
-        const tier = params.has('online') ? tierPhrase(dungeonTierLabel(g.loc)) : '';   // TIER1: the tier and size before the distance, online
-        marks.push({ key: g.key, at: tvSceneKept(g, g.x, g.z, TV_PLACE_LIFT), label: g.loc.name, sub: tier ? `${tier} - ${farDistanceText(km)}` : farDistanceText(km), kind: 'far dungeon', pick: true, edge: true });   // OW-FILTER: 'dungeon' - the look is the first word's, the filter's group the second's
+        const dl = params.has('online') ? dungeonTierLabel(g.loc) : null;   // OW-DUNGEON-TYPES: its tier and size, which the Dungeon types switches read
+        const tier = tierPhrase(dl);   // TIER1: the tier and size before the distance, online
+        marks.push({ key: g.key, at: tvSceneKept(g, g.x, g.z, TV_PLACE_LIFT), label: g.loc.name, sub: tier ? `${tier} - ${farDistanceText(km)}` : farDistanceText(km), kind: 'far dungeon', ...(dl ? { dtier: dl.tier, dsize: dl.size?.toLowerCase() ?? null } : {}), pick: true, edge: true });   // OW-FILTER: 'dungeon' - the look is the first word's, the filter's group the second's
       } else marks.push({ key: g.key, at: tvSceneKept(g, g.x, g.z, TV_PLACE_LIFT), label: '?', kind: 'lair' });
     }
     // LW3: THE ROAD'S PARTIES - a caravan, pilgrims, a pedlar, each where it is and where it is bound (scenes/livingWorld/livingRoads.js)

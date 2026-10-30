@@ -41259,6 +41259,61 @@
   "tr": "7a44bfd21746",
   "by": "claude-in-session"
  },
+ "travel.dungeons.abyss": {
+  "en": "030d9312f32b",
+  "tr": "8c2e7c945f96",
+  "by": "claude-in-session"
+ },
+ "travel.dungeons.elite": {
+  "en": "6f287ede9ec7",
+  "tr": "41c5d8ae5da6",
+  "by": "claude-in-session"
+ },
+ "travel.dungeons.hide": {
+  "en": "c8ce0a6d5640",
+  "tr": "2acecec48cf7",
+  "by": "claude-in-session"
+ },
+ "travel.dungeons.large": {
+  "en": "738fd1d2452f",
+  "tr": "0505e69d712b",
+  "by": "claude-in-session"
+ },
+ "travel.dungeons.medium": {
+  "en": "d404968ea90b",
+  "tr": "de03c108b781",
+  "by": "claude-in-session"
+ },
+ "travel.dungeons.regular": {
+  "en": "8d4e4ef3ea52",
+  "tr": "45e118d0563e",
+  "by": "claude-in-session"
+ },
+ "travel.dungeons.show": {
+  "en": "7413ef152cd1",
+  "tr": "ba4b0bdf468a",
+  "by": "claude-in-session"
+ },
+ "travel.dungeons.size": {
+  "en": "b7152342a267",
+  "tr": "2b90839d6bba",
+  "by": "claude-in-session"
+ },
+ "travel.dungeons.small": {
+  "en": "c74fd9714e38",
+  "tr": "08fdbc73d679",
+  "by": "claude-in-session"
+ },
+ "travel.dungeons.tier": {
+  "en": "5bd44ebe63cd",
+  "tr": "7564cb6e0ca2",
+  "by": "claude-in-session"
+ },
+ "travel.dungeons.title": {
+  "en": "c7cfb59205fd",
+  "tr": "cc8ffe822d61",
+  "by": "claude-in-session"
+ },
  "travel.held.foes": {
   "en": "8b441a492a74",
   "tr": "1767a4a66262",

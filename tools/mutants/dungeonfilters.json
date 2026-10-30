@@ -1,0 +1,74 @@
+[
+  {
+    "name": "OW-DUNGEON-TYPES-tier-not-judged",
+    "file": "src/systems/travel/travelViewDungeonFilters.js",
+    "old": "if (typeof tier === 'string' && s.tiers.includes(tier)) return false;",
+    "new": "",
+    "tests": [
+      "test/systems/travel/travelviewdungeonfilters.test.js"
+    ]
+  },
+  {
+    "name": "OW-DUNGEON-TYPES-size-not-judged",
+    "file": "src/systems/travel/travelViewDungeonFilters.js",
+    "old": "if (typeof size === 'string' && s.sizes.includes(size)) return false;",
+    "new": "",
+    "tests": [
+      "test/systems/travel/travelviewdungeonfilters.test.js"
+    ]
+  },
+  {
+    "name": "OW-DUNGEON-TYPES-unknown-size-hidden",
+    "file": "src/systems/travel/travelViewDungeonFilters.js",
+    "old": "if (typeof size === 'string' && s.sizes.includes(size)) return false;",
+    "new": "if (s.sizes.includes(size) || (size == null && s.sizes.length)) return false;",
+    "tests": [
+      "test/systems/travel/travelviewdungeonfilters.test.js"
+    ]
+  },
+  {
+    "name": "OW-DUNGEON-TYPES-markShown-ignores-types",
+    "file": "src/systems/travel/travelViewFilters.js",
+    "old": "if (g === 'dungeons' && !dungeonTypeShown(m?.dtier, m?.dsize)) return false;",
+    "new": "",
+    "tests": [
+      "test/systems/travel/travelviewdungeonfilters.test.js"
+    ]
+  },
+  {
+    "name": "OW-DUNGEON-TYPES-view-copy-drops-tier",
+    "file": "src/scenes/travelView.js",
+    "old": "...(m.dtier ? { dtier: m.dtier } : {}), ",
+    "new": "",
+    "tests": [
+      "test/systems/travel/travelviewdungeonfilters.test.js"
+    ]
+  },
+  {
+    "name": "OW-DUNGEON-TYPES-far-dungeon-unjudged",
+    "file": "src/scenes/travelViewMarks.js",
+    "old": "kind: 'far dungeon', ...(dl ? { dtier: dl.tier,",
+    "new": "kind: 'far dungeon', ...(false ? { dtier: dl.tier,",
+    "tests": [
+      "test/systems/travel/travelviewdungeonfilters.test.js"
+    ]
+  },
+  {
+    "name": "OW-DUNGEON-TYPES-block-shown-with-dungeons-off",
+    "file": "src/ui/travel/travelViewHud.js",
+    "old": "parts.dungeonBox.style.display = f.dungeons === false ? 'none' : '';",
+    "new": "parts.dungeonBox.style.display = '';",
+    "tests": [
+      "test/systems/travel/travelviewdungeonfilters.test.js"
+    ]
+  },
+  {
+    "name": "OW-DUNGEON-TYPES-size-button-flips-tier",
+    "file": "src/ui/travel/travelViewHud.js",
+    "old": "toggle: toggleDungeonSize, kind: 'size'",
+    "new": "toggle: toggleDungeonTier, kind: 'size'",
+    "tests": [
+      "test/systems/travel/travelviewdungeonfilters.test.js"
+    ]
+  }
+]

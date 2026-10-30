@@ -4014,3 +4014,13 @@ killed by the lean asked of an all-open plan alone); two old ones killed by new 
 -no-layer-still-searched over the Bay's roads); four recorded equivalent with why (TV-BEYOND's two box records, ROAD-BEYOND's
 step edge, AUDIT STARTS V4's pad). OPEN: road_follow's RF-the-ends-legs-everywhere hangs its tests on main too (an end's leg
 of Infinity loops), so it is no verdict; its record wants a finite mutant.
+
+## OW-DUNGEON-TYPES: which found dungeons the Overworld draws
+
+A player asked to tell Regular dungeons from Elite ones on the map, and to show one or both. Under OW-FILTER's Dungeons switch, shown only while it is on, a "Dungeon types" block holds a Tier row (Regular, Elite, Abyss) and a Size row (Small, Medium, Large). Each is a switch, lit while shown. A found dungeon is drawn while its tier and its size are both on.
+
+`systems/travel/travelViewDungeonFilters.js` holds the tiers and sizes switched OFF, kept on the device under `dfjs.overworld.dungeons`, and `dungeonTypeShown(tier, size)`. `travelViewFilters.js` `markShown` asks it of every `dungeons` mark. The panel block is `.tview-dungeons` in `ui/travel/travelViewHud.js`. Its words are `travel.dungeons.*` in the catalog.
+
+A found dungeon's mark carries its tier (`dtier`: `regular`, `elite` or `super`, the Abyss; `systems/dungeon/dungeonTier.js`) and its size (`dsize`; `world/dungeon/dungeonLabel.js`, by block count). These are the words its label already says ("Regular Dungeon, Large - 0.1 km"). `scenes/travelViewMarks.js` sets them on the near dungeons (`place dungeon`) and the far ones (`far dungeon`), and `scenes/travelView.js` carries them in its own copy of the marks.
+
+An unfound lair ("?") carries neither field. It stays the Dungeons switch's alone, and a dungeon whose size is not known is never hidden by size. Offline every dungeon is DFU's and regular, as its label says. Pins: `test/systems/travel/travelviewdungeonfilters.test.js`. Mutants: `tools/mutants/dungeonfilters.json`.
