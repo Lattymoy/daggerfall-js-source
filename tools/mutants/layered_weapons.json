@@ -132,8 +132,8 @@
   {
     "name": "LAYERED-WEAPONS-weapon-undrawn",
     "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-    "old": "    if (hand && takeOut && held !== '0') drawWeapon(res, hand.fr, held, hand.len, hand.view, hand.bow);",
-    "new": "    if (false) drawWeapon(res, hand.fr, held, hand.len, hand.view, hand.bow);",
+    "old": "    if (hand && takeOut && held !== '0') drawWeapon(res, hand.fr, held, hand.len, hand.view, hand);",
+    "new": "    if (false) drawWeapon(res, hand.fr, held, hand.len, hand.view, hand);",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
@@ -262,8 +262,8 @@
   {
     "name": "LAYERED-WEAPONS-bow-in-weapon-hand",
     "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
-    "old": "return Array.isArray(fr.bow) ? drawBow(out, fr.bow, shape, metal, view, bowPx) : out;",
-    "new": "return drawBow(out, [...fr.q, 1], shape, metal, view, bowPx);",
+    "old": "return pic ? drawBowPicture(out, fr.bow, pic, view, /** @type {number} */ (art.cm)) : drawBow(out, fr.bow, shape, metal, view, art.bow ?? 70);",
+    "new": "return pic ? drawBowPicture(out, [...fr.q, 1], pic, view, /** @type {number} */ (art.cm)) : drawBow(out, [...fr.q, 1], shape, metal, view, art.bow ?? 70);",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
@@ -272,8 +272,8 @@
   {
     "name": "LAYERED-WEAPONS-bow-fist-open",
     "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
-    "old": "if (d[i + 3] && (!before || (x + 0.5 - hx) ** 2 + (y + 0.5 - hy) ** 2 <= 4.4)) continue;",
-    "new": "if (d[i + 3] && !before) continue;",
+    "old": "alpha > 0 && (!before || dx * dx + dy * dy <= 4.4)",
+    "new": "alpha > 0 && !before",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
@@ -282,8 +282,8 @@
   {
     "name": "LAYERED-WEAPONS-bow-behind-drawn-over",
     "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
-    "old": "if (d[i + 3] && (!before || (x + 0.5 - hx) ** 2 + (y + 0.5 - hy) ** 2 <= 4.4)) continue;",
-    "new": "if (d[i + 3] && (x + 0.5 - hx) ** 2 + (y + 0.5 - hy) ** 2 <= 4.4) continue;",
+    "old": "alpha > 0 && (!before || dx * dx + dy * dy <= 4.4)",
+    "new": "alpha > 0 && dx * dx + dy * dy <= 4.4",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
@@ -301,12 +301,82 @@
   },
   {
     "name": "LAYERED-WEAPONS-bow-body-unread",
-    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-    "old": "drawWeapon(res, hand.fr, held, hand.len, hand.view, hand.bow);",
-    "new": "drawWeapon(res, hand.fr, held, hand.len, hand.view);",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "drawBow(out, fr.bow, shape, metal, view, art.bow ?? 70)",
+    "new": "drawBow(out, fr.bow, shape, metal, view, 70)",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
     "why": "each body's bow not the size of its own loose's bow"
+  },
+  {
+    "name": "LAYERED-WEAPONS-picture-unread",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "pic = art.cm > 0 ? art.pic ?? null : null;",
+    "new": "pic = null;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the drawn shapes again, never the paper doll's own picture"
+  },
+  {
+    "name": "LAYERED-WEAPONS-picture-unloaded",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "    if (weapon && pieces.weapon !== '0') weapon.pic = await heldPictureOf(pieces.weapon, body, heldArt);\n",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the picture never asked for"
+  },
+  {
+    "name": "LAYERED-WEAPONS-grip-wrong-end",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "const up = n - gap[1] >= gap[0], sg",
+    "new": "const up = true, sg",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a picture whose blade lies the other way held by its blade"
+  },
+  {
+    "name": "LAYERED-WEAPONS-no-guard-grip",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "  if (!gap || gap[1] - gap[0] < 2) gap = guardEnd(img, ax, lx, ly, n);   // a handle the picture cuts off: at the guard\n",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a tanto, whose picture cuts its handle off, falls back to the drawn shape"
+  },
+  {
+    "name": "LAYERED-WEAPONS-bow-short-limb",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "sl = Math.abs(s) * P.long;",
+    "new": "sl = s;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the doll's bow, its lower limb cut short, held lopsided"
+  },
+  {
+    "name": "LAYERED-WEAPONS-flail-stands",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "const face = shape === 'fl' || shape === 'lf' ? (ny >= 0 ? 1 : -1) : side;",
+    "new": "const face = side;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a flail's chain standing up off its handle"
+  },
+  {
+    "name": "LAYERED-WEAPONS-katana-foreshortened",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "{ ...img, record: img.record - 1 }",
+    "new": "img",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the katana held as the doll's short right-hand picture"
   }
 ]

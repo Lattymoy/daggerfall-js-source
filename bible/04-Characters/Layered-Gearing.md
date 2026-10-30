@@ -133,14 +133,14 @@ its alpha too, so the hidden hand comes back whole; a copied piece that touches 
 is dropped. The front walk's 0-2 hid the whole forearm: empty-handed it is drawn as 0-0's mirror twin (`BARE_TWINS`),
 armed as 0-3 (`ARMED_TWINS`), so the weapon keeps its hand.
 
-**Drawing one.** The weapon is drawn by the game, not stored: each template a shape in centimetres (the hammer's grip to
-head is 70), laid along the hammer's shaft from the grip, foreshortened as the shaft is, supersampled, shaded from the
-upper left and rimmed dark as the art's own weapons are. Where the hammer was behind the body the weapon is too. The
-metal is the strips' own (the armour's seven ramps); silver, elven and dwarven have ramps of their own. A bow or staff
-past steel wears its metal, as Daggerfall dyes it. Daggerfall Unity draws no third-person weapon for the player; the
-shapes follow the templates (`characters/weapons.js` WEAPONS), finer than `fpsWeapon.js` weaponTypeForItem's sets,
-which fold a tanto and a claymore into one long blade. The Hand Wraps are bare hands. A weapon wearing a look is drawn
-as the look.
+**Drawing one** (the owner, 2026-10-30: *"use the actual paperdoll icon sprites. Same as we use for the
+holstering"*). The weapon is its paper-doll picture: the pack's own (`ui/item/itemIconColor32.js`, TEXTURE.234 for the
+male, .233 for the female, dyed by its metal), the one BACK-HOLSTER hangs on the back. The doll's hand leaves a gap in
+the handle, and that gap is the grip (`heldPicture`): the long axis is BACK-HOLSTER's (`eotbHolster.js`
+weaponPictureAxis), the head the gap's longer side, the guard where a picture cuts its handle off (the tanto). It is
+laid along the frame's line from the fist, foreshortened as the line is, at the body's scale (the idle is 1.8 m tall,
+a picture pixel a centimetre: the rig's `cm`), its heavier side (an axe's blade) on the hammer face's side. A flail's
+chain hangs. A katana is its flat picture; the pack shows the doll's foreshortened right-hand one.
 
 **Held.** Daggerfall's walk holds the weapon before the body, pointed ahead and a little up: its Archer's sword
 (TEXTURE.482, .481, one render with the strips) lies along the hammer's shaft wherever both show. Where the hammer hides
@@ -150,12 +150,17 @@ of the fist. A back view's shows its first inches over the back. The grip is the
 hand its fill leaves); the head's place is half way to the sword's tip, the sword being twice the hammer. The fist
 closes over the handle. Nothing hangs from the hand: the third pass's carry, which hung it straight down, is gone.
 
+**Where no picture comes** (a gun, a page with no canvas: the pins), the game draws the weapon: each template a shape
+in centimetres (the hammer's grip to head is 70), supersampled, shaded from the upper left and rimmed dark, in the
+strips' metal ramps (silver, elven and dwarven their own). Daggerfall Unity draws no third-person weapon for the
+player. The Hand Wraps are bare hands. A weapon wearing a look is drawn as the look.
+
 **The bow** is held in the free hand (`BOW_HAND`, the loose's own bow hand) at its middle, upright and leant 12 degrees
 forward, its back turned 22.5 degrees from the facing toward that hand's side, so no view sees it edge on; the string
-is toward the body. Its size is the loose's own bow (`BOW_PX`, records 20-24): the long bow tip to tip, 75 px on the
-male and 78 on the female, the short bow three quarters of it, in that bow's browns, with a faint string. The fist
-closes over the grip; a hand behind the body (the side views) shows its bow only in open air. The loose plays the
-strips' own bow as drawn: it could not be cut out of the art cleanly, so it keeps its colour whatever bow is held.
+is toward the body. It is the paper doll's bow (`heldBow`): the string its axis, the gap in the limb its grip, drawn
+from its longer limb both ways, since the doll's picture cuts the lower limb short. The fist closes over the grip; a
+hand behind the body (the side views) shows its bow only in open air. Without a picture, a drawn bow the size of the
+loose's own (`BOW_PX`). The loose plays the strips' own bow as drawn, whatever bow is held.
 
 **Whose hands.** My body reads the item in the hand in use (`combat/weapon/weaponRig.js` eotbState `heldWeapon`,
 `eotbBody.js` lookNow). A walker holds the tool of its gathering act, else the weapon in the hand its pose says it uses
@@ -167,8 +172,9 @@ go with its outfit's (`releaseOutfits`).
 hands strike with both fists; new swings need new frames drawn in all 27 outfits. An attack frame whose hammer points
 at the camera draws the weapon short. Each outfit's helmet and legs draw the hammer's rim their own way, so a pixel or
 two of it can stay, and a fill can borrow a patch of another piece's colour. Male 5-1 keeps the thumb laid up the
-shaft. The female's back-view flinch (14-0) keeps its raised hand two pixels off the wrist. No weapon draws its enchanted glow. Verified by `test/player/eyeOfTheBeholder/layered_weapons.test.js` and
-`tools/mutants/layered_weapons.json` (31 mutants, all dead); the peer-art pins moved to the new codes
+shaft. The female's back-view flinch (14-0) keeps its raised hand two pixels off the wrist,
+and with empty hands her back-3/4 swing (8-2) its hand, whose arm is behind the body. No weapon draws its enchanted glow. Verified by `test/player/eyeOfTheBeholder/layered_weapons.test.js` and
+`tools/mutants/layered_weapons.json` (38 mutants, all dead); the peer-art pins moved to the new codes
 (`test/net/peer/fb1022d_peerart.test.js`).
 
 ## The art - the doctrine's third exception

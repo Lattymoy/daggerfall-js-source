@@ -9,6 +9,9 @@ import { WEAPONS } from '../../characters/weapons.js';
 import { THUNDERLOCK_TEMPLATE, PISTOLET_TEMPLATE } from '../../characters/thunderlockIds.js';
 import { customItemClass } from '../../systems/roleplayRealismItems/rriItems.js';
 import { drawnPiece } from '../../net/appearanceLaw.js';   // APPEARANCES: a weapon wearing a look is drawn as the look
+import { weaponPictureAxis } from './eotbHolster.js';   // the paper doll's picture, as BACK-HOLSTER stands it on the back
+import { itemIconColor32 } from '../../ui/item/itemIconColor32.js';
+import { inventoryItemImage } from '../../systems/item/itemTemplates.js';
 
 /** The shape each weapon template is drawn as - two letters, the weapon code's head. The Warhammer is the art's own. */
 export const WEAPON_SHAPES = Object.freeze({
@@ -146,6 +149,127 @@ function mirrorHole(d, w, h, mask, copy) {
   for (let i = 0; i < w * h; i++) if (mask[i] && !held[i]) d[i * 4 + 3] = 0;
 }
 
+// ── THE PAPER DOLL'S PICTURE ───────────────────────────────────────────────────────────────────────────────────────
+// A weapon is drawn as its own paper-doll picture - the pack's, dyed by its metal, the one BACK-HOLSTER hangs on the back
+// (eotbHolster.js) - laid along the frame's line. The doll's hand leaves a gap in the handle: that gap is the grip.
+const TEMPLATE_OF = Object.freeze(Object.fromEntries(Object.entries(WEAPON_SHAPES).map(([t, sh]) => [sh, Number(t)])));
+const PICTURED = (shape) => shape !== 'tl' && shape !== 'pt' && shape !== 'wh';   // the guns keep their drawn shape
+
+/** A weapon code's picture as the pack draws it for this body (color32, row 0 the bottom), or null: a gun, the art's own
+ *  hammer, no picture, not in a browser. */
+export async function loadHeldPicture(code, body) {
+  const shape = String(code ?? '').slice(0, 2), t = TEMPLATE_OF[shape];
+  if (!PICTURED(shape) || !Number.isInteger(t)) return null;
+  const item = { group: 'Weapons', templateIndex: t, material: Number(String(code).slice(2)) || 0 };
+  const identity = { gender: body === 'female' ? 'female' : 'male' }, image = heldImage(item, identity);
+  return image ? itemIconColor32(item, { identity, image }) : null;
+}
+/** The picture the hand holds: the pack's, but a katana's flat one (the pack takes the record after it, the doll's
+ *  right-hand picture, foreshortened - ItemHelper.cs:418-420). */
+export function heldImage(item, identity) {
+  const img = inventoryItemImage(item, identity);
+  return img && item.templateIndex === WEAPONS.Katana ? { ...img, record: img.record - 1 } : img;
+}
+
+const opaqueAt = (img, x, y) => {
+  const X = Math.round(x), Y = Math.round(y);
+  return X >= 0 && Y >= 0 && X < img.width && Y < img.height && img.colors[(Y * img.width + X) * 4 + 3] > 127;
+};
+/** The longest run of `on` that is off, with on before and after it: [first, past], or null. */
+function longestGap(on) {
+  let best = null;
+  for (let i = 0; i < on.length;) {
+    if (on[i]) { i++; continue; }
+    let j = i;
+    while (j < on.length && !on[j]) j++;
+    if (i > 0 && j < on.length && (!best || j - i > best[1] - best[0])) best = [i, j];
+    i = j;
+  }
+  return best;
+}
+
+/** A blade whose handle the picture cuts off (a tanto): the guard, the widest run across, as a gap of no length at its
+ *  outer side - the end of the picture it is nearer. [i, i] or null. */
+function guardEnd(img, ax, lx, ly, n) {
+  const wide = new Float64Array(n);
+  for (let y = 0; y < img.height; y++) for (let x = 0; x < img.width; x++) {
+    if (img.colors[(y * img.width + x) * 4 + 3] <= 127) continue;
+    const i = Math.round((x - lx) * ax.ux + (y - ly) * ax.uy - ax.s0);
+    if (i >= 0 && i < n) wide[i] = Math.max(wide[i], Math.abs((x - lx) * ax.rx + (y - ly) * ax.ry));
+  }
+  let top = 0;
+  for (let i = 1; i < n; i++) if (wide[i] > wide[top]) top = i;
+  if (!(wide[top] >= 2)) return null;
+  let a = top, b = top;
+  while (a > 0 && wide[a - 1] >= wide[top] * 0.6) a--;
+  while (b < n - 1 && wide[b + 1] >= wide[top] * 0.6) b++;
+  return top < n / 2 ? [a, a] : [b + 1, b + 1];
+}
+
+/**
+ * A weapon picture held: the grip `g` (the hand's gap's end toward the head, in picture px), the way to the head `u`
+ * (the gap's longer side - a blade, a haft's head), the across `r` turned so the head's heavier side (an axe's blade)
+ * is +r, and the picture's reach along (from..to) and across (half), in picture px (centimetres). Null without a gap
+ * of two px. Pure.
+ * @param {{width:number,height:number,colors:ArrayLike<number>}} img
+ */
+export function heldPicture(img) {
+  const ax = weaponPictureAxis(img);
+  if (!ax) return null;
+  const lx = ax.mx + ax.rho * ax.nx, ly = ax.my + ax.rho * ax.ny, n = Math.ceil(ax.s1 - ax.s0) + 1, on = new Uint8Array(n);
+  for (let i = 0; i < n; i++) {
+    const s = ax.s0 + i;
+    for (const r of [-1.5, -1, -0.5, 0, 0.5, 1, 1.5]) if (opaqueAt(img, lx + ax.ux * s + ax.rx * r, ly + ax.uy * s + ax.ry * r)) { on[i] = 1; break; }
+  }
+  let gap = longestGap(on);
+  if (!gap || gap[1] - gap[0] < 2) gap = guardEnd(img, ax, lx, ly, n);   // a handle the picture cuts off: at the guard
+  if (!gap) return null;
+  const up = n - gap[1] >= gap[0], sg = ax.s0 + (up ? gap[1] : gap[0]), dir = up ? 1 : -1;
+  const ux = ax.ux * dir, uy = ax.uy * dir, gx = lx + ax.ux * sg, gy = ly + ax.uy * sg;
+  let rx = ax.rx, ry = ax.ry, heavy = 0, half = 0, from = 0, to = 0;
+  for (let y = 0; y < img.height; y++) for (let x = 0; x < img.width; x++) {
+    if (img.colors[(y * img.width + x) * 4 + 3] <= 127) continue;
+    const s = (x - gx) * ux + (y - gy) * uy, r = (x - gx) * rx + (y - gy) * ry;
+    from = Math.min(from, s); to = Math.max(to, s); half = Math.max(half, Math.abs(r));
+    if (s > 0) heavy += r * s;   // the far end weighs most
+  }
+  if (heavy < 0) { rx = -rx; ry = -ry; }
+  return { img, gx, gy, ux, uy, rx, ry, from: from - 1, to: to + 1, half: half + 1 };
+}
+
+/**
+ * A bow picture held: the string is its long axis; the grip is the gap in the limb (the doll's hand), `g` on the limb,
+ * `u` along the string, `r` from the string toward the limb (the bow's back), the longer limb's way (`long`) and reach.
+ * Null without a limb gap. Pure.
+ * @param {{width:number,height:number,colors:ArrayLike<number>}} img
+ */
+export function heldBow(img) {
+  const ax = weaponPictureAxis(img);
+  if (!ax) return null;
+  const lx = ax.mx + ax.rho * ax.nx, ly = ax.my + ax.rho * ax.ny, n = Math.ceil(ax.s1 - ax.s0) + 1;
+  const limb = new Float64Array(n).fill(NaN);   // the limb's across at each step along, NaN where none
+  let side = 0;
+  for (let y = 0; y < img.height; y++) for (let x = 0; x < img.width; x++) {
+    if (img.colors[(y * img.width + x) * 4 + 3] <= 127) continue;
+    const r = (x - lx) * ax.rx + (y - ly) * ax.ry;
+    if (Math.abs(r) > 2.5) side += r;
+  }
+  const sgn = side < 0 ? -1 : 1;
+  for (let y = 0; y < img.height; y++) for (let x = 0; x < img.width; x++) {
+    if (img.colors[(y * img.width + x) * 4 + 3] <= 127) continue;
+    const s = (x - lx) * ax.ux + (y - ly) * ax.uy, r = ((x - lx) * ax.rx + (y - ly) * ax.ry) * sgn, i = Math.round(s - ax.s0);
+    if (r > 2.5 && i >= 0 && i < n && !(limb[i] >= r)) limb[i] = r;
+  }
+  const gap = longestGap(Array.from(limb, (v) => (Number.isNaN(v) ? 0 : 1)));
+  if (!gap) return null;
+  const sg = ax.s0 + (gap[0] + gap[1]) / 2, rg = (limb[gap[0] - 1] + limb[gap[1]]) / 2;
+  const rx = ax.rx * sgn, ry = ax.ry * sgn;
+  // the doll's picture cuts the lower limb short: the bow is drawn from its longer limb, both ways from the grip
+  const from = ax.s0 - sg - 1, to = ax.s1 - sg + 1;
+  return { img, gx: lx + ax.ux * sg + rx * rg, gy: ly + ax.uy * sg + ry * rg, ux: ax.ux, uy: ax.uy, rx, ry,
+    long: to >= -from ? 1 : -1, reach: Math.max(to, -from), back: rg + 1 };
+}
+
 // ── DRAWING ONE ────────────────────────────────────────────────────────────────────────────────────────────────────
 const ramp = (a, b) => Array.from({ length: 16 }, (_, i) => a.map((v, k) => Math.round(v + ((b[k] - v) * i) / 15)));
 /** WeaponMaterialTypes -> the metal's 16-step ramp: the armour's own seven (from the strips), and silver, elven and
@@ -276,12 +400,16 @@ const depthOf = (fr) => { let v = _depth.get(fr); if (!v) { v = settleDepth(fr.d
  * weapon stays behind it (drawn only into open air); the fist round the grip covers its handle.
  * @param {{width:number,height:number,data:Uint8Array}} out @param {any} fr the frame's rig (weaponRigOf)
  * @param {string} code the weapon code ('ls7') @param {number} len the body's hammer length, px @param {number} view 0..4
- * @param {number} [bowPx] the body's own bow, tip to tip, px
+ * @param {{bow?:number, pic?:any, cm?:number}} [art] the body's own bow (tip to tip, px); the weapon's paper-doll picture
+ *   held (heldPicture, heldBow) and the body's px a centimetre (`cm`) it is drawn at - else the drawn shape
  */
-export function drawWeapon(out, fr, code, len, view = 2, bowPx = 70) {
-  const shape = code.slice(0, 2), metal = Number(code.slice(2)) || 0;
+export function drawWeapon(out, fr, code, len, view = 2, art = {}) {
+  const shape = code.slice(0, 2), metal = Number(code.slice(2)) || 0, pic = art.cm > 0 ? art.pic ?? null : null;
   if (shape === 'wh') return;   // the art's own
-  if (BOWS.has(shape)) return Array.isArray(fr.bow) ? drawBow(out, fr.bow, shape, metal, view, bowPx) : out;
+  if (BOWS.has(shape)) {
+    if (!Array.isArray(fr.bow)) return out;
+    return pic ? drawBowPicture(out, fr.bow, pic, view, /** @type {number} */ (art.cm)) : drawBow(out, fr.bow, shape, metal, view, art.bow ?? 70);
+  }
   const w = out.width, h = out.height, d = out.data;
   // the line the weapon is drawn on: the hammer's, or (`w`) where the hammer hides its shaft - pointed at the camera,
   // or behind the body - Daggerfall's own sword's (bible/04-Characters/Layered-Gearing.md, "Held")
@@ -294,6 +422,9 @@ export function drawWeapon(out, fr, code, len, view = 2, bowPx = 70) {
   const front = (proj) => depth[Math.max(0, Math.min(depth.length - 1, Math.round(proj) - lo))] === 'f';
   const px = { ux, uy, nx, ny, minS: 1.1 / (k * f) };
   const side = fr.side || 1;
+  // a flail's chain hangs: its heavier side down the picture, whatever the hammer's face
+  const face = shape === 'fl' || shape === 'lf' ? (ny >= 0 ? 1 : -1) : side;
+  if (pic) return drawPicture(out, pic, { qx, qy, ux, uy, nx, ny, along: /** @type {number} */ (art.cm) * f, across: /** @type {number} */ (art.cm), side: face }, front);
   const parts = SHAPES[shape];
   if (!parts) return;
   const sMin = Math.min(...parts.map((p) => p.from)), sMax = Math.max(...parts.map((p) => p.to));
@@ -334,6 +465,76 @@ export function drawWeapon(out, fr, code, len, view = 2, bowPx = 70) {
   }
 }
 
+/** Sample a held picture over one px: the mean colour of its opaque samples where a third of them are, else null.
+ *  `at(x, y)` answers the picture's point for a sample of the composed picture. */
+function samplePicture(img, x, y, n, at) {
+  let k = 0, R = 0, G = 0, B = 0;
+  for (let sy = 0; sy < n; sy++) for (let sx = 0; sx < n; sx++) {
+    const [px, py] = at(x + (sx + 0.5) / n, y + (sy + 0.5) / n), X = Math.round(px), Y = Math.round(py);
+    if (X < 0 || Y < 0 || X >= img.width || Y >= img.height) continue;
+    const q = (Y * img.width + X) * 4;
+    if (img.colors[q + 3] <= 127) continue;
+    k++; R += img.colors[q]; G += img.colors[q + 1]; B += img.colors[q + 2];
+  }
+  return k * 3 >= n * n ? [R / k, G / k, B / k] : null;
+}
+
+/**
+ * Draw a held picture (heldPicture) along a frame's line, in place: its grip at the line's grip, its head along the
+ * line foreshortened as the shaft is (`along` px a picture px), its across unshortened (`across`), its heavier side on
+ * the hammer face's side. Where the hammer was behind the body, open air only.
+ * @param {{width:number,height:number,data:Uint8Array}} out @param {any} P
+ * @param {{qx:number,qy:number,ux:number,uy:number,nx:number,ny:number,along:number,across:number,side:number}} L
+ * @param {(proj:number) => boolean} front
+ */
+function drawPicture(out, P, L, front) {
+  const w = out.width, h = out.height, d = out.data, sg = L.side >= 0 ? 1 : -1;
+  const ends = [P.from, P.to].map((s) => [L.qx + L.ux * s * L.along, L.qy + L.uy * s * L.along]), wide = P.half * L.across + 1;
+  const x0 = Math.max(0, Math.floor(Math.min(ends[0][0], ends[1][0]) - wide)), x1 = Math.min(w - 1, Math.ceil(Math.max(ends[0][0], ends[1][0]) + wide));
+  const y0 = Math.max(0, Math.floor(Math.min(ends[0][1], ends[1][1]) - wide)), y1 = Math.min(h - 1, Math.ceil(Math.max(ends[0][1], ends[1][1]) + wide));
+  const n = Math.max(3, Math.min(12, Math.ceil(2 / Math.min(L.along, L.across))));   // half a picture px apart, or closer
+  const at = (x, y) => {
+    const ex = x - L.qx, ey = y - L.qy, s = (ex * L.ux + ey * L.uy) / L.along, v = ((ex * L.nx + ey * L.ny) / L.across) * sg;
+    return [P.gx + P.ux * s + P.rx * v, P.gy + P.uy * s + P.ry * v];
+  };
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+    const i = (y * w + x) * 4;
+    if (d[i + 3] && !front((x + 0.5 - L.qx) * L.ux + (y + 0.5 - L.qy) * L.uy)) continue;   // the body is in front here
+    const c = samplePicture(P.img, x, y, n, at);
+    if (!c) continue;
+    d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255;
+  }
+  return out;
+}
+
+/** A held bow picture (heldBow) in the free hand, as drawBow lays the drawn one: its grip in the fist, the string along
+ *  the bow's upright, its back turned BOW_TURN off the facing. `cm` the body's px a picture px. */
+function drawBowPicture(out, bow, P, view, cm) {
+  const [hx, hy, before] = bow, w = out.width, h = out.height, d = out.data;
+  const v = Math.max(0, Math.min(4, view | 0));
+  const bx = Math.cos(BOW_TURN) * FACING_X[v] + Math.sin(BOW_TURN) * BOW_SIDE_X[v];
+  const lean = Math.sin(BOW_LEAN) * FACING_X[v], up = Math.cos(BOW_LEAN);
+  const reach = P.reach * cm, back = P.back * cm;
+  const x0 = Math.max(0, Math.floor(hx - reach * Math.abs(lean) - back - 2)), x1 = Math.min(w - 1, Math.ceil(hx + reach * Math.abs(lean) + back + 2));
+  const y0 = Math.max(0, Math.floor(hy - reach * up - 1)), y1 = Math.min(h - 1, Math.ceil(hy + reach * up + 1));
+  const n = Math.max(3, Math.min(12, Math.ceil(2 / (cm * Math.abs(bx)))));
+  const at = (x, y) => {
+    const s = (hy - y) / (cm * up), r = (x - hx - s * cm * lean) / (cm * bx), sl = Math.abs(s) * P.long;   // the longer limb, both ways
+    return [P.gx + P.ux * sl + P.rx * r, P.gy + P.uy * sl + P.ry * r];
+  };
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+    const i = (y * w + x) * 4;
+    if (bowHidden(d[i + 3], before, x + 0.5 - hx, y + 0.5 - hy)) continue;
+    const c = samplePicture(P.img, x, y, n, at);
+    if (!c) continue;
+    d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255;
+  }
+  return out;
+}
+
+/** A bow px the body hides: any px over the body, for a hand behind it; else the fist's own, round the grip. */
+const bowHidden = (alpha, before, dx, dy) => alpha > 0 && (!before || dx * dx + dy * dy <= 4.4);
+
 /**
  * Draw a bow into a composed picture in the free hand, in place (the rig's `bow`: the fist, and 1 where it is before the
  * body): upright, its back turned BOW_TURN from the facing toward that hand's side and leant forward, the string on the
@@ -366,7 +567,7 @@ function drawBow(out, bow, shape, metal, view, bowPx) {
   const y0 = Math.max(0, Math.floor(hy - half * up - 1)), y1 = Math.min(h - 1, Math.ceil(hy + half * up + 1));
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
     const i = (y * w + x) * 4;
-    if (d[i + 3] && (!before || (x + 0.5 - hx) ** 2 + (y + 0.5 - hy) ** 2 <= 4.4)) continue;   // the body before it, or the fist round its grip
+    if (bowHidden(d[i + 3], before, x + 0.5 - hx, y + 0.5 - hy)) continue;
     let hits = 0, R = 0, G = 0, Bl = 0;
     for (let sy = 0; sy < 3; sy++) for (let sx = 0; sx < 3; sx++) {
       const hit = at(x + (sx + 0.5) / 3, y + (sy + 0.5) / 3);
@@ -422,3 +623,19 @@ export function fillFrom(strip, top = 'l') {
 export const weaponLen = (body) => rig[body]?.len ?? 30;
 /** The body's own bow (the loose's), tip to tip, px. */
 export const bowLen = (body) => rig[body]?.bow ?? 70;
+/** The body's px a centimetre, for a paper-doll picture (a picture px is a centimetre, eotbHolster PAPERDOLL_MPP). */
+export const weaponCm = (body) => rig[body]?.cm ?? 0.6;
+const _held = new WeakMap();   // the door -> `${body}:${code}` -> Promise of the held picture
+/** A weapon code's paper-doll picture held (heldPicture, a bow's heldBow), once a door, body and code - or null, asked
+ *  again next time. `load` the picture's door (loadHeldPicture). */
+export function heldPictureOf(code, body, load = loadHeldPicture) {
+  const key = `${body}:${code}`;
+  let byKey = _held.get(load);
+  if (!byKey) _held.set(load, (byKey = new Map()));
+  if (!byKey.has(key)) {
+    const p = Promise.resolve().then(() => load(code, body)).then((img) => (img ? (isBowCode(code) ? heldBow(img) : heldPicture(img)) : null), () => null);
+    byKey.set(key, p);
+    p.then((held) => { if (!held) byKey.delete(key); });
+  }
+  return /** @type {Promise<any>} */ (byKey.get(key));
+}

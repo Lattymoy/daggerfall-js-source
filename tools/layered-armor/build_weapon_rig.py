@@ -13,7 +13,7 @@ of a chest-armour family but moved a pixel or two between families. Per frame an
     sword), and in each walk and idle frame the free hand a bow is held in (`bow`).
 The PNG is three tiles (leather, chain, plate chest), alpha 255 where the hammer is. The manifest also carries each
 metal's colour ramp (16 steps by brightness, from the strips' own metal tiles) for the weapons drawn in its place,
-the hammer's length (`len`) and the body's own bow (`bow`).
+the hammer's length (`len`), the body's own bow (`bow`) and its px a centimetre (`cm`: the idle's height is 1.8 m).
 
 usage: python -I build_weapon_rig.py <repo>/vendor/layered-armor [male:0-0 ...]   (needs numpy, scipy, pillow; frames named
   are rebuilt alone, the rest kept)
@@ -105,7 +105,7 @@ HAND = {
     ('female', '4-3'): dict(q=(81.5, 88.5), t=(83, 93.5), lit=[(79, 82, 84, 90)], all=[(79, 90, 86, 97)]),
 }
 # Walk and idle frames whose hammer hides its shaft - a front view's points at the camera, a back view's is behind the
-# body with its butt out - draw the weapon on Daggerfall's own sword (TEXTURE.482, .481: the Archer, one render with
+# body with its butt out - and a swing's whose grip the trace missed draw the weapon on Daggerfall's own sword (TEXTURE.482, .481: the Archer, one render with
 # the strips) instead: (grip, the head's place at the hammer's length, and the blade's side of the body: f before it, b
 # behind it, None as the art's hammer is). The grip is the fist's blade side (a front view's: the hand its fill
 # leaves). The sword's own length is twice the hammer's, so the head's place is half way to its tip.
@@ -125,6 +125,7 @@ SHAFT = {
     ('female', '4-2'): (77.8, 87.8, 74.0, 79.2, None), ('female', '4-3'): (80.6, 85.6, 77.9, 76.6, None),
     ('female', '15-0'): (49, 85.5, 53, 78.3, 'f'), ('female', '16-0'): (54, 78, 47, 69.4, 'f'),
     ('female', '18-0'): (59.7, 77.7, 43.4, 69.8, None),
+    ('female', '8-2'): (63, 68, 87.4, 69.4, 'b'),   # a swing's: the fist is out at the left, the hammer behind the body
 }
 # The free (left) hand that carries a bow in the walk and the idle - the shot's own bow hand: (x, y, in front of the
 # body). Read from the bard sprites' gloves (TEXTURE.484, .483 - one render with the strips) and the hand's skin; where
@@ -480,7 +481,8 @@ def main(only=None):
             for p in per:
                 p.pop('bow', None)
                 if rf in BOW_HAND[body]: p['bow'] = list(BOW_HAND[body][rf])
-        rig[body] = {'len': ln, 'bow': BOW_PX[body], 'frames': frames}
+        fig = np.nonzero(strip_base(body, 'leather_leather_leather', '15-0')[..., 3] > 0)[0]   # the idle's height is 1.8 m
+        rig[body] = {'len': ln, 'bow': BOW_PX[body], 'cm': round(float(np.ptp(fig) + 1) / 180, 4), 'frames': frames}
     with open(f'{V}/weapon/manifest.json', 'w') as f: json.dump(rig, f, separators=(',', ':'))
     print('weapon rig written')
 
