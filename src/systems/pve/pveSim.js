@@ -52,12 +52,12 @@ const fire = (f, key, now) => { f.cd[key] = now + (ABILITIES[key].cooldown ?? 0)
 
 /**
  * One fight. `party` are builds (pveBuilds.js buildAt), `foes` templates; `log`, when given, takes every blow struck
- * as { s, by: 'player'|'foe', from, to }. Pure but for its seed.
- * @param {{ party: any[], foes: any[], seed?: number, focus?: 'healer'|'weakest', maxS?: number, log?: any[] }} o
+ * as { s, by: 'player'|'foe', from, to }. `magicka` pays each spell from the build's pool (SPELL-SKILL). Pure but for its seed.
+ * @param {{ party: any[], foes: any[], seed?: number, focus?: 'healer'|'weakest', maxS?: number, log?: any[], magicka?: boolean }} o
  */
-export function simulate({ party, foes, seed = 1, focus = 'healer', maxS = SIM_MAX_S, log }) {
+export function simulate({ party, foes, seed = 1, focus = 'healer', maxS = SIM_MAX_S, log, magicka = false }) {
   const rng = mulberry32(seed);
-  const P = party.map((b, id) => ({ id, b, max: b.health, hp: b.health, next: rng() * b.actionS, dealt: 0, vigilAt: -1e9, melee: new Set(), ranged: new Set() }));
+  const P = party.map((b, id) => ({ id, b, max: b.health, hp: b.health, mp: b.magicka ?? 0, next: rng() * b.actionS, dealt: 0, vigilAt: -1e9, melee: new Set(), ranged: new Set() }));
   const F = foes.map((t, i) => makeFoe(t, i, rng));
   let aura = { until: 0, value: 0 }, nextId = F.length;
   const controlSum = P.reduce((a, p) => a + p.b.control, 0);
@@ -109,7 +109,14 @@ export function simulate({ party, foes, seed = 1, focus = 'healer', maxS = SIM_M
       const live = alive(F); if (!live.length) break;
       const healer = focus === 'healer' && live.find((f) => f.healer);
       const f = healer || live.reduce((a, c) => (c.hp < a.hp ? c : a));
-      if (rng() < p.b.hit) { takeFoe(f, p.b.blow * roll(1 - PLAYER_SPREAD, 1 + PLAYER_SPREAD), p, now); log?.push({ s: now, by: 'player', from: p.id, to: f.id }); }
+      let blow = p.b.blow;
+      if (magicka && p.b.spellShare > 0) {   // SPELL-SKILL: a spell is paid for; a dry pool strikes with the weapon, or not at all
+        const cost = p.b.castCost * p.b.spellShare;
+        if (p.mp >= cost) p.mp -= cost; else blow = p.b.weaponBlow ?? 0;
+      }
+      const was = f.hp;
+      if (blow > 0 && rng() < p.b.hit) { takeFoe(f, blow * roll(1 - PLAYER_SPREAD, 1 + PLAYER_SPREAD), p, now); log?.push({ s: now, by: 'player', from: p.id, to: f.id }); }
+      if (magicka && was > 0 && f.hp <= 0) p.mp = Math.min(p.b.magicka ?? 0, p.mp + (p.b.wellspring ?? 0) * (p.b.magicka ?? 0));
     }
     for (const f of alive(F)) {
       if (now < f.next) continue;

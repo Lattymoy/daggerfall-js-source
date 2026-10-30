@@ -201,3 +201,18 @@ not seen the striker; once it fights, a backstab is half again (`systems/pve/pve
 most 40% of a leader's health (Strong, Elite, Champion). A player, a duel and every foe that is no template keep the
 triple. Daggerfall Unity triples every landed backstab (`FormulaHelper.CalculateAttackDamage`). The tests:
 `test/systems/pve/pve_backstab.test.js`.
+
+## 13. Spells read the school, not the level (SPELL-SKILL, 2026-10-30)
+
+Daggerfall Unity rolls every magnitude, duration and chance off the caster's level (`BaseEntityEffect`), so a level 45
+with a weak school casts like a master. Under fixed PvE my own spell reads each effect's school: cast level is its live
+skill / 2.2, so skill 100 is level 45 (`systems/spell/castLevel.js`). Past 100, damage keeps climbing under the PvE and
+PvP holds, heal and buff points climb at half speed, and durations and chances stop. Monsters, worn items, a turned-back
+spell and the PvP bar keep the caster's level. `systems/effects.js` applySpell reads the levels per effect.
+
+The Magicka cost follows that power (`systems/spellcost.js` skillPricedCost): half the classic price at skill 50, grown
+with the mean of the effect's components against skill 100, by its square root past 100, less up to 25% for skill.
+Crit is never priced. A pool grows half a per cent for each point of the best magic school (`spell/skillPool.js`). The spellmaker's budget holds a made effect's per-level growth to the fastest stock spell's (10
+magnitude, 5 rounds, 15%), and a spell does one damage each to health, fatigue and magicka. Neither rewrites a saved
+record. Gold stays the classic price, the same at every skill. The simulator pays spells from a pool when asked
+(`pveSim.js` simulate's `magicka`). The tests: `test/systems/pve/pve_castlevel.test.js`.

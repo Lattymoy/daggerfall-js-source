@@ -16,6 +16,11 @@ import { WEAPONS, weaponMinDamage, weaponMaxDamage } from '../../characters/weap
 import { WEAPON_GEAR_PER_POINT, WEAPON_GEAR_PCT_MOST, WEAPON_POTENCY_PER_POINT } from '../weaponMastery.js';
 import { POTENCY_CAP } from '../loot/lootPowers.js';
 import { PVE_CAST_PER_SKILL, PVE_CAST_X, pveCastStart } from '../spell/pveCast.js';
+import { castCostScale } from '../spell/castLevel.js';
+import { POOL_PER_SKILL } from '../spell/skillPool.js';
+import { effectCost, EFFECT_COST_TABLE, TARGET_COST_MULT } from '../spellcost.js';
+import { EXTRA_SPELL_PTS_MAX_INCREASE } from '../enchantments.js';
+import { FOCUS_CAP, WELLSPRING_CAP } from '../loot/lootPowers.js';
 
 /** Skill and gear by level, as the class would build it, gear always counted: health, every attribute, trained
  *  skill (its climb past 100 pays to 40), what gear adds to it and to Critical Strike, the weapon's metal (formulas.js
@@ -80,6 +85,20 @@ export function tierBlow(kind, tier) {
   return kind.spellShare ? blow + (spell - blow) * kind.spellShare : blow;
 }
 
+/** SPELL-SKILL's Magicka (spell/castLevel.js): the build's bolt, SPELLS.STD's Lightning (a ranged Damage Health, 1-25 and
+ *  1-5 a level), priced at the tier's live skill; a mage's pool, Intelligence x3 (the class maker's most) grown by the
+ *  school (spell/skillPool.js), and from level 30 Extra Spell Points; focus and wellspring climbing as potency does, to their caps. */
+export const BOLT = Object.freeze({ type: 4, subType: 0, durationBase: 1, durationMod: 1, durationPerLevel: 1, chanceBase: 1, chanceMod: 1,
+  chancePerLevel: 1, magnitudeBaseLow: 1, magnitudeBaseHigh: 25, magnitudeLevelBase: 1, magnitudeLevelHigh: 5, magnitudePerLevel: 1 });
+export const POOL_PER_INT = 3;
+/** A tier's Magicka: its pool, a bolt's cost, and the share of the pool a kill gives back. */
+export function tierMagicka(tier) {
+  const live = tier.skill + tier.gearSkill, share = tier.potency / POTENCY_CAP;
+  const cost = effectCost(BOLT, () => 50, { online: true }).sp * TARGET_COST_MULT[2] * castCostScale(BOLT, EFFECT_COST_TABLE['4,0'], live);
+  const pool = tier.stat * POOL_PER_INT;
+  return { magicka: pool * (1 + POOL_PER_SKILL * live) + (tier.vigil ? EXTRA_SPELL_PTS_MAX_INCREASE : 0), castCost: cost * (1 - (FOCUS_CAP * share) / 100), wellspring: (WELLSPRING_CAP * share) / 100 };
+}
+
 const clamp = (l) => Math.max(LEVEL_MIN, Math.min(LEVEL_MAX, Math.round(Number(l) || LEVEL_MIN)));
 const lerp = (a, b, t) => a + (b - a) * t;
 
@@ -106,6 +125,14 @@ export function actionSeconds(kind, speed, strength, pace, cast) {
   return kind.spellShare ? lerp(swingS, spellS, kind.spellShare) : swingS;
 }
 
+/** A build's Magicka between tiers, and its weapon's blow alone (what a battlemage strikes with when the pool is dry). */
+function magickaAt(kind, a, b, t) {
+  const ma = tierMagicka(a), mb = tierMagicka(b);
+  const weapon = kind.spellShare ? { ...kind, spellShare: 0 } : null;
+  return { magicka: lerp(ma.magicka, mb.magicka, t), castCost: lerp(ma.castCost, mb.castCost, t), wellspring: lerp(ma.wellspring, mb.wellspring, t),
+    weaponBlow: weapon ? tierBlow(weapon, a) * (tierBlow(weapon, b) / tierBlow(weapon, a)) ** t : null };
+}
+
 /**
  * A stated player of `kindKey` at `level`, every number between tiers on a line (the blow on a geometric one). Pure.
  * @param {string} kindKey @param {number} level
@@ -121,5 +148,6 @@ export function buildAt(kindKey, level) {
     blow: blowA * (blowB / blowA) ** t, hit: lerp(a.hit, b.hit, t), actionS: actionSeconds(kind, speed, strength, lerp(a.pace, b.pace, t), lerp(a.cast, b.cast, t)),
     health: lerp(a.health, b.health, t) * kind.health, taken, evade: lerp(a.evade, b.evade, t), block: kind.block ?? 0,
     regen: lerp(a.regen, b.regen, t), vigil: t < 0.5 ? a.vigil : b.vigil, hitCap: (t < 0.5 ? a.vigil : b.vigil) ? 0.25 : null,
-    control: kind.control, element: kind.element ?? null, blade: !!kind.blade, spellShare: kind.family === 'spell' ? 1 : (kind.spellShare ?? 0) });
+    control: kind.control, element: kind.element ?? null, blade: !!kind.blade, spellShare: kind.family === 'spell' ? 1 : (kind.spellShare ?? 0),
+    ...magickaAt(kind, a, b, t) });
 }

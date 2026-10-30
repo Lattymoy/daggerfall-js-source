@@ -10,9 +10,10 @@ import { isOnlinePage } from '../online/onlineLane.js';
 import { effectiveLevel } from '../mentorMode.js';
 import { liveStat } from '../statMods.js';
 import { ownSpellAt } from './spellPower.js';
+import { PVE_CAST_PER_SKILL } from './castLevel.js';
 
-/** A landing's hold: this much of the school's live skill. */
-export const PVE_CAST_PER_SKILL = 0.15;
+/** A landing's hold: this much of the school's live skill (spell/castLevel.js holds the number). */
+export { PVE_CAST_PER_SKILL };
 /** The start on the hold at level 1, and the level it is gone by. */
 export const PVE_CAST_START = 15;
 export const PVE_CAST_START_GONE = 30;
