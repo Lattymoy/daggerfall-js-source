@@ -101,8 +101,8 @@
   {
     "name": "GILDED2-a-blow-on-any-foe-bursts",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "case 'dragonfire': if (weapon && foeGroup(target) === p.group)",
-    "new": "case 'dragonfire': if (weapon)",
+    "old": "case 'dragonfire': if (held && foeGroup(target) === p.group)",
+    "new": "case 'dragonfire': if (held)",
     "tests": [
       "test/systems/gilded2_world.test.js"
     ]
@@ -155,7 +155,7 @@
   {
     "name": "GILDED2-the-law-unmoved",
     "file": "src/systems/item/itemLaw.js",
-    "old": "export const ITEM_LAW_VERSION = 15;",
+    "old": "export const ITEM_LAW_VERSION = 16;",
     "new": "export const ITEM_LAW_VERSION = 4;",
     "tests": [
       "test/systems/item/int1_itemlaw.test.js",
@@ -202,8 +202,8 @@
   {
     "name": "GILDED2-AUDIT-reach-past-3m",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "case 'dragonfire': if (weapon && foeGroup(target) === p.group) dragonfire(target, (damage * p.share) / 100, p.metres, p.group, p.name);",
-    "new": "case 'dragonfire': if (weapon && foeGroup(target) === p.group) dragonfire(target, (damage * p.share) / 100, p.metres * 1.13, p.group, p.name);",
+    "old": "case 'dragonfire': if (held && foeGroup(target) === p.group) dragonfire(target, (damage * p.share) / 100, p.metres, p.group, p.name);",
+    "new": "case 'dragonfire': if (held && foeGroup(target) === p.group) dragonfire(target, (damage * p.share) / 100, p.metres * 1.13, p.group, p.name);",
     "tests": [
       "test/systems/gilded2_world.test.js"
     ]

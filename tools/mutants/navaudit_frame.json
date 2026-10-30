@@ -74,8 +74,8 @@
   {
     "name": "NAVF-bounds-unturned",
     "file": "src/player/collider.js",
-    "old": "      if (R) {\n        const b = turnedBox(bucket, t, R, TURNED_BOX);\n        for (let k = 0; k < 3; k++)",
-    "new": "      if (false) {\n        const b = turnedBox(bucket, t, R, TURNED_BOX);\n        for (let k = 0; k < 3; k++)",
+    "old": "  if (R) return turnedBox(bucket, t, R, out);",
+    "new": "  if (false) return turnedBox(bucket, t, R, out);",
     "tests": [
       "test/world/navaudit_frame.test.js"
     ]

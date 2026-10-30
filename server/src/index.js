@@ -189,6 +189,7 @@ import { staffNetFrame, staffNetClosed, staffFoesSeen, staffFoesStripped, staffR
 import { hiddenMay, hiddenAsked, seatsTaken, hiddenSeats, hiddenHello, hiddenPose, hiddenLapse, hiddenEntered, isHidden } from './staffHidden.js';   // STAFF-PANEL5-HIDDEN: a hidden staff spectator, named by nobody
 import { takeStaffEventLaw, sayStaffBook, staffEventWord, staffBookInternal, staffTellInternal, staffCallInternal, SEV_INTERNAL_BOOK, SEV_INTERNAL_TELL, SEV_INTERNAL_CALL } from './staffEvents.js';   // STAFF-EVENT: a staff event's book (the hub) and meter (its place's cell)
 import { takeYardOrder } from './yardWords.js';
+import { delveFrame, forgetDelve } from './delveRoom.js';   // DELVE II (DLV3): a dungeon's encounters, kept by its room
 import { YARD_WELCOME_FIELD } from '../../src/net/yardWordLaw.js';   // YARD-CELL YC2: the hub's welcome says it hears yard orders   // YARD-CELL YC2: a yard that moved, said to every page online
 import { STAFF_ORDER_KINDS, takeStaffOrder, frozenHello, busFreeze, frozenFrame, staffLine, freezeMoved, seatBarred, frozenAt, busMissed } from './staffFreeze.js';   // STAFF-PANEL5-FREEZE: freeze player and the staff chat
 import { privateInteriorOf, privateInteriorAdmits, caravanKeyOf } from '../../src/net/privateInterior.js';   // WAGONS2-VISIT: and a caravan's own room
@@ -266,6 +267,7 @@ import { newDuelRef, duelNote, duelOpen, duelBoutOf, duelBlow, duelPose, duelEnd
 import { newWildRef, wildZone, wildTokenAtt, wildPose, wildBlow, wildKin, sameGuild, wildPick, wildSigned, wildStep, wildVitals, wildGone, wildCarry, wildCarryOf, wildSignNow, wildCredit, wildFallOf, wildDownWord, wildGraceLeft, wildGraceTaken, wildAggroWord, wildFlagWord, wildBarWord, wildBarWords, wildOpenedBy, wildVillainy, wildRed, WILD_GRACE, WILD_FALL_PREFIX, WILD_REF } from '../../src/net/wild/wildRef.js';   // INT9: the open zone refereed
 import { mintWildReceipt, mintWildCollect, mintSeaWreck, WILD_RECEIPT_TTL_S, SEA_WRECK_TTL_S } from '../../src/net/wild/wildReceipt.js';   // INT9: a fall, signed; MAC (2026-10-14): and a killer's collect; SHIP-PVP: and a wreck
 import { seaHelm, seaShot, seaBoard, seaStep, seaGone, seaCarry, seaWreckOf, SEA_WRECK_PREFIX, SEA_REF } from '../../src/net/sea/seaRef.js';
+import { lingerHold, lingerTarget, lingerStep, lingerHello, lingerZone, lingerSlain } from './pvpLinger.js';   // PVP-LINGER: a body left in its lock
 /** AUDIT SEA VENTURES A8: a signed word owed an account that is away (a fall's receipt, a wreck's) kept in the room's storage
  *  under this prefix as long as a receipt lives - a relay object that slept lost it from its memory, and a captain back
  *  in the zone was handed nothing. */
@@ -355,7 +357,7 @@ import { NEW_VOICE_GAP_MS, SAFE_LAW_PATH } from './relay.js';   // SAFE6: a new 
 import { mintStamp, stampTabOf, PUBLIC_TABS } from '../../src/net/safety/chatStamp.js';   // SAFE2: the relay's stamp on every line it relays
 import { sealFeed, FEED_SIG_HEADER, FEED_BATCH, FEED_WAIT_MS, FEED_POST_MS } from '../../src/net/safety/chatFeed.js';   // SAFE5: the reviewer's feed
 import { flushAtDrain } from './drainWindows.js';   // COST-1: a drained room leaves nothing armed
-import { grantGate, grantModeOf, GRANT_MODES, GRANT_CFG_TTL_MS, validGrantAsk, grantMintGate, grantMarksFor, signGrant, grantBucketIdle, GRANT_TTL_MS, GRANT_SKEW_MS, GRANT_TALLY_MS, grantRenewed, grantCarried, grantHanded, grantSignedHere, GRANT_OPEN_KINDS, grantKindRolled, grantMarksAllow, GRANT_GATE_KEY, grantGateKept, grantGateOf } from '../../src/net/grantLaw.js';   // GRANT2: the spawn grant's law (bible/11-Multiplayer/Spawn-Grants.md); AUDIT TESA III E2-1: its gate kept across a sleep; GRANT2: the spawn grant's law (bible/11-Multiplayer/Spawn-Grants.md)
+import { grantGate, grantModeOf, GRANT_MODES, GRANT_CFG_TTL_MS, validGrantAsk, grantMintGate, grantMarksFor, signGrant, grantBucketIdle, GRANT_TTL_MS, GRANT_SKEW_MS, GRANT_TALLY_MS, grantRenewed, grantCarried, grantHanded, grantSignedHere, GRANT_OPEN_KINDS, GRANT_ROOM_KINDS, grantKindRolled, grantMarksAllow, GRANT_GATE_KEY, grantGateKept, grantGateOf } from '../../src/net/grantLaw.js';   // GRANT2: the spawn grant's law (bible/11-Multiplayer/Spawn-Grants.md); AUDIT TESA III E2-1: its gate kept across a sleep; GRANT2: the spawn grant's law (bible/11-Multiplayer/Spawn-Grants.md)
 import { newGrantMeasure, foldGrantAsk, foldGrantTally, grantMeasureBatch, sealGrantMeasure, GRANT_MEASURE_SIG_HEADER, GRANT_MEASURE_POST_MS, GRANT_RELAY_READER, grantMeasureDue } from '../../src/net/grantMeasure.js';   // GRANT2: and its measure, to the service
 import { foeStatsRefusal } from '../../src/net/foeBounds.js';   // FOE-BOUNDS: the most health a streamed foe can legally have (GRANT9's strip reads it)
 import { seatOf, seatElder, seatStreams, seatTraffic, seatSilent, seatHeardAt, seatInAt, othersInOf } from '../../src/net/seatLive.js';   // FIELD BUGS 2026-10-18d SEAT-LIVE: a dungeon room's seat is a live socket's
@@ -3257,6 +3259,7 @@ export class Room {
     const dead = [...m.keys()];
     this._worldMemo = undefined;   // SCALE2b: the kept copy goes with the stored one
     for (let i = 0; i < dead.length; i += 128) await this.state.storage.delete(dead.slice(i, i + 128));
+    await forgetDelve(this);   // DELVE II (DLV3): its encounters with it
   }
   /** AUDIT SOC A3/A4: ONE PAGE of the hub's storage per firing - the accounts nobody's list names and nobody has seen
    *  for ACCOUNT_IDLE_MS are forgotten with their secrets (an account a list names is never touched: "a friend list
@@ -3863,7 +3866,7 @@ export class Room {
       const guild = who.gi ? { gi: who.gi, gt: who.gt, gm: who.gm } : {};   // GUILD1c: the guild the token carried, when it carried one
       const arena = isArenaRoom(a.key) ? { ar: arenaRatingOk(who.ar), lk: who.kind === 'linked' ? 1 : 0, ...(Number.isSafeInteger(who.cl) && who.cl >= ARENA_CL_MIN && who.cl <= ARENA_CL_MAX ? { cl: who.cl } : {}) } : {};   // ARENA4: the hall queues by the signed rating, and a guest is queued for no rated bout   // ARENA4b: and a ladder bout's vitality is the signed character level's (`cl` - absent from a service before it)
       const linked = (isRegionRoom(a.key) || realmRoom) && who.kind === 'linked' ? { lk: 1 } : {};   // SD3: a region's channel marks a registered account - the census counts those alone (a guest is one click); AUDIT SD II (L7 H2): and a realm's - its stones count every guest as one turner
-      const charLv = (isCellRoom(a.key) || realmRoom || ktRoom) && Number.isSafeInteger(who.cl) && who.cl >= 1 ? { cl: who.cl } : {};   // AUDIT SERPENT E4: a cell's serpent fighter's level is never above the token's own character level (`cl` - absent from a service before ARENA4b); AUDIT SD II (L7 M2): and a realm's fighter's level IS it
+      const charLv = (isCellRoom(a.key) || realmRoom || ktRoom || isWorldRoom(a.key)) && Number.isSafeInteger(who.cl) && who.cl >= 1 ? { cl: who.cl } : {};   // AUDIT SERPENT E4: a cell's serpent fighter's level is never above the token's own character level (`cl` - absent from a service before ARENA4b); AUDIT SD II (L7 M2): and a realm's fighter's level IS it
       if (egRoom && Number.isSafeInteger(who.cl) && who.cl >= 1) charLv.cl = who.cl;   // EG-PLAY: and a breach member's level is its token's character level
       // AUDIT PRE-MERGE 1003b R5: A FLOOR'S PLACE MOVES WITH ITS RECONNECT - a replaced socket loses its id before its close,
       // so its leave frees no seat, and the new socket's `in` took another: every blip a seat gone from the stands (a full
@@ -4499,6 +4502,7 @@ export class Room {
       return;
     }
     if (m.t === 'star') return this._starFrame(ws, a, m);   // STAR3: a word at a fallen star, to its cell - a method of its own
+    if (m.t === 'dv') return this._delveFrame(ws, a, m);   // DELVE II (DLV3): a word at a dungeon's encounter, to its room (server/src/delveRoom.js)
     if (m.t === 'kt') return this._ktFrameIn(ws, a, m);   // KETCH: a word aboard a crew's ship - a method of its own
     if (m.t === 'eg') {
       // EG-PLAY: AN ELITE BREACH - the open, to the hub alone (the service's signed order); a member's admission, door, way
@@ -5210,14 +5214,16 @@ export class Room {
     followLeft(this, ws, a);   // STAFF-PANEL5-FOLLOW: a spectator gone, or a followed account's last socket here
     // INT9 (AUDIT): a fighter whose last socket here went is out of the zone (a closed tab kept its `zone` for good, and a
     // room of them refused every newcomer)
-    if (a.sub && this._wildRef && ![...this._all()].some(([w, b]) => w !== ws && b.id && b.sub === a.sub)) { wildGone(this._wildRef, a.sub, Date.now()); seaGone(this._wildRef, a.sub, Date.now()); this._wildLeaveCarry(a, Date.now()); }   // SHIP-PVP: and her ship off the guns (AUDIT SEA VENTURES F1/A1: her bar kept)
+    const wildLast = !!a.sub && !!this._wildRef && ![...this._all()].some(([w, b]) => w !== ws && b.id && b.sub === a.sub);
+    const lingers = wildLast && !last && await this._lingerHold(a, Date.now());   // PVP-LINGER (pvpLinger.js): a body in its lock stays, its leave said when it goes
+    if (wildLast && !lingers) { wildGone(this._wildRef, a.sub, Date.now()); seaGone(this._wildRef, a.sub, Date.now()); this._wildLeaveCarry(a, Date.now()); }   // SHIP-PVP: and her ship off the guns (AUDIT SEA VENTURES F1/A1: her bar kept)
     this._looks.delete(a.id);
     if (!last) this._secrets.set(a.id, null);   // SCALE2b: the kept copy goes with the stored one (a drain's sweep clears both)
     this._raidTownsUp.delete(ws);   // SCALE2b: an upload its socket never finished goes with it
     if (!last && !isChatRoom(a.key)) { try { await this.state.storage.delete(lookKey(a.id)); } catch { /* the room forgets it on the next empty hello */ } }
     // ROSTER-G: a channel says its leaves now, as it says its joins - the roster beside the chat is everyone online
     const out = JSON.stringify({ t: 'leave', id: a.id, ...(isChatRoom(a.key) && !(isChannelShard(a.key) && this._hubTotal == null) ? { n: isChannelShard(a.key) ? this._hubN(this._namedCount()) : this._vsocks.size ? this._busCount() : this._namedCount() } : {}) });   // AUDIT SCALE II R2-4 (p4d): and a woken shard's leave none, as its join   // SCALE5c: a shard's, the hub's count   // AUDIT SCALE5a C1-C3: a channel's leave says the room's count, as its join does
-    if (a.hid) { /* STAFF-PANEL5-HIDDEN: a hidden socket's leave said to nobody */ } else if (isChatRoom(a.key)) this._fanRoster(ws, out); else this._fanBut(ws, out);   // SCALE5a: in place, as the join's; SCALE5b: a channel's, the second wire's batched
+    if (lingers) { /* PVP-LINGER: said when its body goes */ } else if (a.hid) { /* STAFF-PANEL5-HIDDEN: a hidden socket's leave said to nobody */ } else if (isChatRoom(a.key)) this._fanRoster(ws, out); else this._fanBut(ws, out);   // SCALE5a: in place, as the join's; SCALE5b: a channel's, the second wire's batched
     if ((isChannelShard(a.key) || (a.ly && isGateRoom(a.key))) && a.vid) { this._vidIdx.delete(a.vid); this._hubUpOwe(a.vid, 'x', 0); }   // SCALE5d part two: a court copy's too   // SCALE5c: and the bus told it went
     else if (isChannelBus(a.key)) this._busCountMoved();   // SCALE5c: the bus's - its shards told the hub's count
     this._travOwed.delete(a.id);   // AUDIT DEEP2 C2: the leave takes the mark out - an owed clear of it is said
@@ -11023,10 +11029,15 @@ export class Room {
     for (const e of kept) this._send(ws, JSON.stringify({ t: 'raid', k: 'rc', r: e.r }));
   }
 
+  /** DELVE II (DLV3): a `dv` frame, to the dungeon's room - its law in server/src/delveRoom.js. */
+  async _delveFrame(ws, a, m) {
+    try { await delveFrame(this, ws, a, m, Date.now()); } catch (e) { console.warn('[delve] word failed', e?.message ?? e); }
+  }
   // ───────────────────────────── STAR3: A FALLEN STAR ─────────────────────────────
   /** A WORD AT A FALLEN STAR (`{t:'star', n, k, px, py, lv, s, o, kn, wc, hb, mf}`, net/wire.js validStarIn - bible/11-
    *  Multiplayer/Starfall.md section 5): on its own bucket, deeper than the client's (the same strikes), in a cell alone
    *  (anywhere else junk: a correct client says none there), credited to the VERIFIED account. */
+
   async _starFrame(ws, a, m) {
     const now = Date.now();
     if (!this._spend(ws, now, starRelayGate, 'starBucket', 'starDrops', 'too many star frames')) return;
@@ -11307,6 +11318,7 @@ export class Room {
   }
   /** The live remains to a socket that just said hello. */
   async _wildHello(ws, now) {
+    await lingerHello(this, ws, now);   // PVP-LINGER: my own body taken back, the others shown to me
     const map = await this._wildRemains(now);
     for (const rec of [...map.values()]) {
       if (!remainsLive(rec, now)) { await this._wildDrop(map, rec.r); continue; }
@@ -11444,6 +11456,7 @@ export class Room {
     const flagWas = was?.flag;
     const x = wildZone(st, a.sub, { id: a.id, lv: a.lv, cl: a.cl ?? null, ci: a.ci ?? '', carry, died, fl, ed, vl: a.vl ?? 0, sf }, z === 1, a.pose, now);
     if (x) this._wildFlagSay(st, a, x, flagWas, wasIn, fl);   // PVP-FLAG
+    if (x && z === 1) await lingerZone(this, a.sub, x, now);   // PVP-LINGER: a body taken back hears its health; PVP-LINGER-RISE: one slain away, its death
     if (x && x.graceUntil > now && x.graceUntil !== graceWas) this._wildGraceSay(a, x.graceUntil - now);   // ZONE-GRACE: safe passage begun, or carried in
     if (x && (x.zone !== wasIn || died)) this._wildCarryPut(a.sub, this._zoneCarry(st, a.sub, now, a.key));   // AUDIT PVP-EASE L3-1: an entry, a leave and a death, at the hub
     if (x && carry?.sea) x.seaCarry = carry.sea;   // AUDIT SEA VENTURES F1/A1: her ship's bar too, for her next helm word (seaRef.js seaHelm)
@@ -11481,7 +11494,7 @@ export class Room {
   async _wildBlow(a, d, now) {
     if (!a.sub) return;
     const st = await this._wildSt();
-    const target = this._idFirst(d.to);   // SCALE5b: by the id index
+    const target = this._idFirst(d.to) ?? lingerTarget(this, d.to);   // SCALE5b: by the id index; PVP-LINGER: or a body left in its lock
     const tb = target?.[1];
     const fa = st.fighters.get(a.sub), ft = tb?.sub ? st.fighters.get(tb.sub) : null;
     // INT9 (AUDIT): what the referee refuses anyway is refused before the hub is asked (a blow a frame asked it)
@@ -11507,7 +11520,7 @@ export class Room {
     if (!res.ok || !res.dealt) return;
     this._wildAggroSay(st, [a.sub, tb.sub], now);   // PVP-SKULL: the striker's and the struck one's skulls gold
     const word = JSON.stringify({ t: 'wref', k: 'hp', by: a.id, to: tb.id, d: res.dealt, r, h: wildVitals(st, a.sub, tb.sub) });
-    this._send(target[0], word);
+    if (target[0]) this._send(target[0], word);   // PVP-LINGER: a body has no socket
     const mine = this._siegeSocketOf(a.sub);
     if (mine) this._send(mine[0], word);
     this._wildCarryPut(tb.sub, this._zoneCarry(st, tb.sub, now, a.key));   // INT9 (AUDIT): the bar it carries into the next room
@@ -11516,6 +11529,7 @@ export class Room {
     await this._wildVillainy(st, res.fall, now);   // PVP-VILLAIN: the kill's points on its killer
     try { await this.state.storage.put(`${WILD_FALL_PREFIX}${rid}`, res.fall); } catch (e) { console.warn('[wild] fall kept failed', e?.message ?? e); }
     this._wildFan({ t: 'wref', k: 'fell', id: tb.id, by: a.id, r: rid });
+    if (!target[0]) await lingerSlain(this, tb.sub, a, now);   // PVP-LINGER-RISE: a body slain while its player was away
     // INT9 (AUDIT): a building's or a dungeon's room searches no body (the worn offer is the open country's) - its fall is
     // signed at once, never a minute later with the fallen gone from it
     if (!isCellRoom(a.key)) { const f = wildSignNow(st, rid); if (f) await this._wildSign(f, now); }
@@ -11574,6 +11588,14 @@ export class Room {
     this._wildGraceSay(a, 0);
     this._wildCarryPut(a.sub, this._zoneCarry(st, a.sub, now, a.key));
   }
+  /** PVP-LINGER (pvpLinger.js lingerHold): a fighter's last socket gone - its body kept while its lock runs, with its look
+   *  for one who enters. Answers whether it stays. */
+  async _lingerHold(a, now) {
+    if (!this._wildRef?.fighters.get(a.sub)?.zone) return false;
+    let look = this._looks.get(a.id) ?? null;
+    if (!look) { try { look = (await this.state.storage.get(lookKey(a.id))) ?? null; } catch { look = null; } }
+    return lingerHold(this, a, look, now);
+  }
   /** AUDIT PVP-EASE L3-1: a fighter's socket gone from the room (wildGone) - its leave kept at the hub, so the next room it
    *  stands in reads a crossing, never an entry. */
   _wildLeaveCarry(a, now) {
@@ -11591,6 +11613,7 @@ export class Room {
    *  without a piece. */
   async _wildBeat(now) {
     const st = await this._wildSt();
+    await lingerStep(this, now);   // PVP-LINGER: each body taken back, gone, or said again
     for (const w of seaStep(st, now)) await this._seaSign(w, now);   // SHIP-PVP: a wreck its killer never boarded, signed unboarded
     this._wildBarSay(st, now);   // PVP-BAR
     if (!st.falls.size) return;
@@ -12199,7 +12222,7 @@ export class Room {
    */
   async _grantMintAsk(ws, a, ask, G, mode, now) {
     if (!this._grantHere(ws, a, ask.id)) return;
-    if (isWorldRoom(a.key) && GRANT_OPEN_KINDS.includes(ask.kind)) { this._send(ws, JSON.stringify({ t: 'grant', k: 'no', id: ask.id, r: 'kind' })); return; }   // GRANT4: the open country's kinds, never a room's
+    if (isWorldRoom(a.key) ? GRANT_OPEN_KINDS.includes(ask.kind) : GRANT_ROOM_KINDS.includes(ask.kind)) { this._send(ws, JSON.stringify({ t: 'grant', k: 'no', id: ask.id, r: 'kind' })); return; }   // GRANT4: the open country's kinds, never a room's; DLV3: and a room's, never the open country's
     const who = a.sub || a.id;   // the account's (a guest's token has its own - the same budget, Spawn-Grants section 10)
     const key = `${who}|${ask.kind}`;
     const gate = grantMintGate(ask.kind, ask.n, G.buckets.get(key), G.liveN, now);

@@ -96,7 +96,7 @@
   {
     "name": "GU-toll-forgets-its-weapon",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "_lastToll = { foe: target, at: now, weapon };",
+    "old": "_lastToll = { foe: target, at: now, weapon: held };",
     "new": "_lastToll = { foe: target, at: now };",
     "tests": [
       "test/systems/gilded1_gilded.test.js"

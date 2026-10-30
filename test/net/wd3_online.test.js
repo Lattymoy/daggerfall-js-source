@@ -46,7 +46,7 @@ test('WD3 online, the service: a claim keeps the layout its client\'s town stand
   const home = (extra) => ({ mapId: TOWN, buildingKey: 0x10203, region: 17, price: 42000, ...extra });
   const bad = await seatHome(aldric, home({ layout: 'classic' }));
   assert.deepEqual([bad.status, bad.body?.error], [400, 'bad-home'], 'classic is no field, never a stamp');
-  assert.deepEqual((await seatHome(aldric, home({ layout: 'detailed-ships@1.0.0' }))).body?.error, 'bad-home', 'a mod that moves no building');
+  assert.deepEqual((await seatHome(aldric, home({ layout: 'warm-ashes-ships@1.1' }))).body?.error, 'bad-home', 'a mod that moves no building');
   // AUDIT WD3 B2: a claim that names no layout at all is a build from before the town mods - asked to update, never seated
   const R0 = await seatRealm(env, aldric.secret, aldric.handle, { name: aldric.handle, level: 9, goldPieces: 1_000_000, items: [] });
   const old = await call('/v1/homes/claim', { ...home(), character: R0.id, realm: R0.at() }, aldric.secret);
@@ -155,8 +155,8 @@ test('WD3 online, the client: the homes\' towns asked at the boot, before the fi
   assert.match(src('server-account/src/index.js'), /if \(r\.error === 'home-layout'\) return json\(\{ error: 'home-layout', layout: r\.layout \?\? null \}, 409, origin\);/);
   assert.match(W, /_serverLayoutRecords = towns\.filter\(\(t\) => Array\.isArray\(t\)\)\.map\(\(\[mapId, layout\]\) => \(\{\n {6}locationKey: _layoutKeyOfMapId\.get\(Number\(mapId\) >>> 0\) \?\? null, stamp: typeof layout === 'string' \? layout : undefined, kind: 'house',/);
   assert.match(W, /const records = homeLayoutsOnline \? \(_serverLayoutRecords \?\? \[\]\) : layoutRecordsOf\(/);
-  assert.match(src('src/systems/online/onlineHomes.js'), /call: \(\/\*\* @type \{any\} \*\/ at\) => homes\.claim\(\{ mapId, buildingKey, region, price, realm: at, layout \}\),/);
-  assert.match(src('src/systems/online/onlineHomes.js'), /layout: layout \|\| null \}\);   \/\/ WD3 \(AUDIT WD3 B2\)/, 'always said, null for Daggerfall\'s own');
+  assert.match(src('src/systems/online/onlineHomes.js'), /call: \(\/\*\* @type \{any\} \*\/ at\) => homes\.claim\(\{ mapId, buildingKey, region, price, realm: at, layout, ground \}\),/);   // PIN MOVED (DECOR-ROOMY, FIELD BUGS 2026-10-29f): and the ground its price was set from
+  assert.match(src('src/systems/online/onlineHomes.js'), /layout: layout \|\| null, \.\.\.\(ground \? \{ ground: ground\[0\], townBlocks: ground\[1\] \} : \{\}\) \}\);   \/\/ DECOR-ROOMY   \/\/ WD3 \(AUDIT WD3 B2\)/, 'always said, null for Daggerfall\'s own');
 });
 
 test('WD3 online, the room: both switches are the room\'s (forced on - two players who disagreed would walk two towns, one through the other\'s houses), each a mod\'s one Enabled, on by default', () => {

@@ -194,6 +194,10 @@ export const NAME_CSS = `${PIXELIFY_FIVE_FACE}
 .dfname-bar.off { display: none; }
 .dfname-bar-s { height: .14em; background: #3d7be0; }
 .dfname-bar-h { height: .32em; background: #d42a1e; }
+/* PVP-HUD (the mockup): a flagged player's bar under 20% health flashes. */
+.dfname-bar.low { animation: dfname-low .5s steps(2) infinite; }
+@keyframes dfname-low { 50% { border-color: #ff9a8a; background: #7a1a12; } }
+@media (prefers-reduced-motion: reduce) { .dfname-bar.low { animation: none; border-color: #ff9a8a; } }
 /* ACC3 - THE GLYPHS, right of the name. Sized off the label's own em so
    they shrink with distance exactly as the name does, and drawn in
    currentColor so ui/playerBadge.js is the only place a colour is
@@ -217,9 +221,6 @@ export const NAME_CSS = `${PIXELIFY_FIVE_FACE}
    dark plate edged in the guild's border colour (written per peer), its shield (ui/heraldrySwatch.js) at the plate's left. */
 .dfname-guild.armed { padding: .06em .3em .04em 1.25em; border: 1px solid; border-radius: .12em;
   background: rgba(14, 16, 19, .78) no-repeat .22em 50% / .82em auto; }
-/* NOTICE1: a Notice Board's count - brass on a dark tab, never mistaken for a person's name */
-.dfname-board .dfname-tag { padding: 1px 6px; background: rgba(14,12,11,0.78); border: 1px solid #c08a3e; }
-.dfname-board .dfname-who { color: #f3cf86; letter-spacing: .06em; }
 /* RENOWN1 - THE RENOWN, LEFT OF THE NAME (Mac: "having their
    level appear on the left side of character name"). A small plate in
    the row the name and glyphs already are, so the whole run stays
@@ -255,6 +256,10 @@ export const NAME_CSS = `${PIXELIFY_FIVE_FACE}
   box-shadow: 0 1px 0 #000; }
 .dfname-ribbon.off { display: none; }
 `;
+
+/** PVP-HUD: a bar flashes under PVP_BAR_LOW per cent of health, never at 0 (fallen). */
+export const PVP_BAR_LOW = 20;
+export const pvpBarLow = (/** @type {{ h: number } | null | undefined} */ b) => !!b && b.h > 0 && b.h < PVP_BAR_LOW;
 
 /** The sheet, once (ui/partyPanel.js injectPartyStyle's own shape). */
 export function injectNameStyle(doc = document) {
@@ -298,7 +303,7 @@ export function createNameLayer({ doc = document, now = () => Date.now(), armsOf
   const put = (tag, slot, v, write) => { if (tag[slot] !== v) { tag[slot] = v; write(v); } };
   /** PVP-BAR: the bar shown at its health and Shield (per cent), or hidden where the point carries none. */
   const paintBar = (tag, b) => {
-    setCls(tag.bar, b ? 'dfname-bar' : 'dfname-bar off');
+    setCls(tag.bar, !b ? 'dfname-bar off' : pvpBarLow(b) ? 'dfname-bar low' : 'dfname-bar');
     if (!b) return;
     tag.barH.style.width = `${Math.max(0, Math.min(100, b.h))}%`;
     tag.barS.style.width = `${Math.max(0, Math.min(100, b.s ?? 0))}%`;
@@ -453,7 +458,7 @@ export function createNameLayer({ doc = document, now = () => Date.now(), armsOf
         live.add(p.id);
         let tag = tags.get(p.id);
         if (!tag) { tag = makeTag(); tags.set(p.id, tag); }
-        setCls(tag.node, p.kind === 'board' ? 'dfname dfname-board' : 'dfname');   // NOTICE1: a Notice Board's count, not a person
+        setCls(tag.node, 'dfname');
         // NAME_GAP_PX is taken HERE and not inside namePoints because it is a screen-pixel clearance and the point
         // is a projected head: the anchor stays the head for anything else that wants it, and the label's bottom
         // edge lands the gap above it. PERF-NAMES1: the anchor rides the TRANSFORM (the sheet's own lift after it) -

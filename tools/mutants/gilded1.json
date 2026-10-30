@@ -83,8 +83,9 @@
   {
     "name": "GILDED1-the-item-maker",
     "file": "src/systems/enchanting.js",
-    "old": "export const itemMakerRefuses = (item) => isAetheric(item) || isGilded(item);",
-    "new": "export const itemMakerRefuses = (item) => isAetheric(item) || (false && isGilded(item));",
+    "old": "export const itemMakerRefuses = (item) => isAetheric(item);",
+    "new": "export const itemMakerRefuses = (item) => isAetheric(item) || item?.rarity === 'gilded';",
+    "note": "Re-aimed by content (GILDED-MAKER): the item maker takes a Gilded piece now, so the mutant is the refusal put back.",
     "tests": [
       "test/systems/gilded1_gilded.test.js"
     ]
@@ -119,8 +120,8 @@
   {
     "name": "GILDED1-a-miss-counted",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "      case 'toll': if (tollDue(weapon, p)) pct += p.pct; break;",
-    "new": "      case 'toll': if (tollDue(weapon, p)) pct += p.pct; if (weapon) _tolls.set(weapon, ((_tolls.get(weapon) ?? 0) + 1) % p.every); break;",
+    "old": "      case 'toll': if (tollDue(held, p)) pct += p.pct; break;",
+    "new": "      case 'toll': if (tollDue(held, p)) pct += p.pct; if (held) _tolls.set(held, ((_tolls.get(held) ?? 0) + 1) % p.every); break;",
     "tests": [
       "test/systems/gilded1_gilded.test.js"
     ]
@@ -128,8 +129,8 @@
   {
     "name": "GILDED1-the-count-never-turns",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "_tolls.set(weapon, ((_tolls.get(weapon) ?? 0) + 1) % p.every); _lastToll",
-    "new": "_tolls.set(weapon, (_tolls.get(weapon) ?? 0) + 1); _lastToll",
+    "old": "_tolls.set(held, ((_tolls.get(held) ?? 0) + 1) % p.every); _lastToll",
+    "new": "_tolls.set(held, (_tolls.get(held) ?? 0) + 1); _lastToll",
     "tests": [
       "test/systems/gilded1_gilded.test.js"
     ]

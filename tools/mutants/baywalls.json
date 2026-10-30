@@ -210,7 +210,7 @@
  {
   "name": "TB-the-fallback-unlaid",
   "file": "src/world/townWalls.js",
-  "old": "const [da, db] = together ? [0, d] : nearestClear((a, b) => clear(it, a, b));",
+  "old": "const [da, db] = shift ?? nearestClear((a, b) => clear(it, a, b));",
   "new": "const [da, db] = [0, d];",
   "tests": [
    "test/world/baywalls.test.js"
@@ -246,7 +246,7 @@
  {
   "name": "TB-the-carrier-bare",
   "file": "src/world/townWalls.js",
-  "old": "open, wall ? gateFurniture(wall, classicOf, carriageRecordsOf, townBlockedCells(dfLocation, wall, rmbOf)) : null);",
+  "old": "open, wall ? gateFurniture(wall, classicOf, carriageRecordsOf, townBlockedCells(dfLocation, wall, rmbOf), townGateOutside(dfLocation, wall, townPaths(dfLocation), rmbOf)) : null);",
   "new": "open, null);",
   "tests": [
    "test/world/baywalls.test.js"

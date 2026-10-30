@@ -654,9 +654,10 @@ test('AUDIT GUIDE U8: the card\'s top clears the compass and the foe frame at th
     } finally { _resetQuestTrackerForTests(); globalThis.document = was; }
   }, { tracker: true });
   const css = ENHANCED_CSS.replace(/\s+/g, ' ');
-  assert.match(css, /--qt-clear: calc\(18px \+ 28px \* var\(--hud-scale, 1\) \+ 30px\);/, 'the compass\'s foot at the scale');
+  assert.match(css, /--qt-clear: calc\(18px \+ 28px \* var\(--hud-scale, 1\) \+ 30px \+ var\(--qt-town, 0px\)\);/, 'the compass\'s foot at the scale');   // PIN MOVED (AUDIT FB1029g P6): the town panel's height joins the sum
   assert.match(css, /\.qtrack\.touch \{ top: calc\(max\(76px, var\(--qt-clear\)\) \+ env\(safe-area-inset-top, 0px\)\); \}/, 'a touch screen');
-  assert.match(css, /body:has\(\.hud-foe\.on\) \.qtrack \{ --qt-clear: calc\(18px \+ 28px \* var\(--hud-scale, 1\) \+ 30px \+ 46px \* var\(--hud-scale, 1\)\); \}/, 'the foe bar on a narrow one');
+  assert.match(css, /body:has\(\.hud-foe\.on\) \.qtrack \{ --qt-clear: calc\(18px \+ 28px \* var\(--hud-scale, 1\) \+ 30px \+ 46px \* var\(--hud-scale, 1\) \+ var\(--qt-town, 0px\)\); \}/, 'the foe bar on a narrow one');
+  assert.match(css, /body:has\(\.hud \.dftown-panel\.on\) \.qtrack \{ --qt-town: var\(--dftown-h, 0px\); \}/, 'AUDIT FB1029g P6: the town panel on a narrow one, by its own height');
   assert.match(css, /\.qtrack, \.qtrack\.touch \{ top: calc\(max\(104px, var\(--qt-clear\)\) \+ env\(safe-area-inset-top, 0px\)\);/, 'a phone');
 });
 

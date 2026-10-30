@@ -697,10 +697,9 @@ housing". Neither was on any map: the town plan marked the player, a quest's res
 The bank's house showed only as its name ("<Name>'s residence", once discovered) and an online home (HOME1) not at
 all.
 
-- **A Notice Board** is a pinned card, where the board stands in the street. It is one of the town's
-  boards (model 41739) that is not a bounty board (`questBoardIndices`; ONE-BOARD REVERTED, `06-Systems/Professions-Arc.md`
-  10.11), while the Notice Board is open: online, `BOARD_OPEN` - the boards NOTICE1 floats a town's unread count over. Offline the boards are Daggerfall's rumour
-  boards and are not marked. Under the pointer: "Notice Board", or "Notice Board: 3 new".
+- ~~**A Notice Board**~~ was a pinned card where a rumour board stood in the street, while the Notice Board was open.
+  NOTICE-PANEL (2026-10-29) took the boards from the street and their mark with them: a town's Notice Board is its panel
+  under the compass now (`01-Overview/bugs/Field-Bugs-2026-10-29g.md`).
 - **A player's house** is a house on its building (its place: the plates' anchor). Every online home in the
   town is marked, as its door names it: "Your home" filled in the player's ink (the caret's), another player's
   ("Gryphoth's home") in parchment - the fill says whose, not the colour alone. The house the character bought at a
@@ -716,8 +715,8 @@ all.
 - **The classic exterior automap is untouched:** it is DFU's own window and draws DFU's marks alone, as DISC23-A left
   the party. The `?exterior` probe host hands none.
 
-Code: `ui/town/townMapMarks.js` (the rows and the reading), `ui/ink/inkTown.js` (`paintBoardMark`, `paintHomeMark`),
-`ui/town/townSheet.js`, `ui/town/townMapDoor.js`, `scenes/world.js` (`townBoardMarks`), `scenes/exteriorAutomapToggle.js` (`townHomes`). Pins:
+Code: `ui/town/townMapMarks.js` (the rows and the reading), `ui/ink/inkTown.js` (`paintHomeMark`),
+`ui/town/townSheet.js`, `ui/town/townMapDoor.js`, `scenes/exteriorAutomapToggle.js` (`townHomes`). Pins:
 `test/ui/town/town_marks.test.js` (9). Mutants: `tools/mutants/town_marks.json` (35, all dead); `disc23a.json`'s breathing
 record and `survtiers3.json`'s two cite records re-aimed.
 

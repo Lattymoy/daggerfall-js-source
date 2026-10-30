@@ -39,6 +39,7 @@ import { equipDelayFor } from '../systems/equip.js';               // a12: Toggl
 import { getBool, getFloat, getInt } from '../systems/settings/settings.js';   // AUDIT 28 W2b: MeleeAttackFriendlyProtection; W11: WeaponAttackThreshold, WeaponSwingMode
 import { blowReaches, blowMult, scaleBlowDamage, playerBody, tellTechniqueLanded } from './technique/techniqueBlow.js';   // TECH1: a technique's blow - its shape and its weight, a leaf; MARTIAL3: and its landing told
 import { HANDS_MODE, handsModeOf, strikeHandOf, twoHanded, offHandToHit, OFF_HAND_BLOW, offHandBurden, offHandHold, DUAL, gunHandOf, mixedStrike, otherHand, MIXED } from './twoHands/handsLaw.js';   // TWO-HANDS: which hand strikes, and what the off hand costs; MIXED-PAIR: a blade and a gun
+import { isHandWraps, fistWrapsOf } from '../characters/handWrapsIds.js';   // HAND-WRAPS: the wraps are no weapon; both fists wear them
 import { getItemHands } from '../systems/equip.js';   // TWO-HANDS: a hand's item as the law reads it (one-handed or not)
 import { readSwing } from './swingLaw.js';   // TWO-HANDS: the striking weapon's weight and the Strength, for the off hand's burden
 import { liveStat } from '../systems/statMods.js';   // TWO-HANDS: the off hand's sureness reads the live Agility
@@ -176,7 +177,7 @@ export const usingRightHandFromSaveVars = (saveVars) => !saveVars?.usingLeftHand
  * leaving it to be discovered: if a caller ever does pass null, the
  * pin says what changed and when.
  */
-export const weaponPoseOf = (w) => (w ? { weaponDrawn: !w.sheathed, usingRightHand: w.usingRightHand } : null);
+export const weaponPoseOf = (w) => (w ? { weaponDrawn: !w.sheathed, usingRightHand: w.usingRightHand, handKept: true } : null);   // AUDIT FB1029f D4: a hand chosen under HAND-FOLLOWS
 
 /** RR1: WeaponManager.Sheathed / ScreenWeapon.WeaponType, asked by a law
  *  that lives nowhere near the rig (Roleplay & Realism's climbing gate
@@ -207,7 +208,9 @@ export const currentWeaponPose = () => _poseProbe?.() ?? null;
 export function applyWeaponPose(w, pose) {
   if (!w || !pose) return false;
   if (pose.weaponDrawn != null) w.sheathed = !pose.weaponDrawn;
-  if (pose.usingRightHand != null) w.usingRightHand = !!pose.usingRightHand;
+  // HAND-FOLLOWS: the next UpdateHands keeps a hand chosen under it; AUDIT FB1029f D4: a pose from before it (`handKept`
+  // unsaid) follows once - a save made with a lone weapon left beside an empty hand in use loaded to fists
+  if (pose.usingRightHand != null) { w.usingRightHand = !!pose.usingRightHand; w.handRestored = pose.handKept === true; }
   return true;
 }
 
@@ -302,6 +305,7 @@ export class PlayerWeapon {
     this.holdingShield = false;
     this.currentRightHandWeapon = null;
     this.currentLeftHandWeapon = null;
+    this.handRestored = false;   // HAND-FOLLOWS: a pose just restored, kept through the next UpdateHands
     // TWO-HANDS (bible/05-Combat/Two-Hands.md): how the hands are held (combat/twoHands/handsLaw.js HANDS_MODE - DFU's one used
     // hand, both fists, or a pair), the strike in flight ({ hand, flurry, off } - strikeHandOf's answer as it began), and the
     // last strike's hand and the machine time it ended, which the next one alternates from. `usingRightHand` keeps
@@ -368,8 +372,15 @@ export class PlayerWeapon {
       this.holdingShield = true;
       left = null;
     }
+    // HAND-FOLLOWS (FIELD BUGS 2026-10-29f, "long sword bugged"): when what the hands hold changes, an empty hand in use
+    // gives way to a lone weapon in the other - a one-hander moved to the left hand swung fists and trained Hand-to-Hand.
+    // H still picks the bare hand after; a restored hand (applyWeaponPose) is kept. MW-HAND follows every frame.
+    const changed = (rightHandItem ?? null) !== this.currentRightHandWeapon || left !== this.currentLeftHandWeapon;
+    const restored = this.handRestored === true;
+    this.handRestored = false;
     this.currentRightHandWeapon = rightHandItem ?? null;
     this.currentLeftHandWeapon = left;
+    if (changed && !restored) this.followHeldHand();
   }
 
   /**
@@ -377,8 +388,8 @@ export class PlayerWeapon {
    * when in morrowind since its not visible"; asked, "Never on an empty hand"): THE MORROWIND LANE'S DEPARTURE. DFU
    * lets the hand in use be an empty one - H to a bare left hand is how a classic player fights with fists, and the
    * sprite shows which hand is up. The Morrowind arm draws one weapon and no second hand, so there a weapon in the
-   * hand not in use was a weapon that would not show, over fists. In that lane (the rig calls this only while the arm
-   * is built) the hand in use follows the weapons: an empty hand gives way to the other when it holds one.
+   * hand not in use was a weapon that would not show, over fists. In that lane every frame, and in both when the hands
+   * change (HAND-FOLLOWS), an empty hand in use gives way to the other when it holds one.
    * @returns true when the hand moved.
    */
   followHeldHand() {
@@ -428,8 +439,19 @@ export class PlayerWeapon {
     if (this.gunPair && this._shotHand && this.shotHeld() === true) return this._shotHand;
     return twoHanded(this.handsMode) && this.strike && this.machine.state !== 'Idle' ? this.strike.hand : this.leadHand;
   }
-  /** TWO-HANDS: a hand's item, as UpdateHands cached it (null for an empty hand or a shield). */
-  handItem(hand) { return (hand === 'L' ? this.currentLeftHandWeapon : this.currentRightHandWeapon) ?? null; }
+  /** TWO-HANDS: a hand's item, as UpdateHands cached it (null for an empty hand or a shield). HAND-WRAPS (AUDIT B): null
+   *  for the Hand Wraps too - a fist in them is a bare fist to every reader of the weapon; `wrapsOf` names them. */
+  handItem(hand) {
+    const own = (hand === 'L' ? this.currentLeftHandWeapon : this.currentRightHandWeapon) ?? null;
+    return isHandWraps(own) ? null : own;
+  }
+  /** HAND-WRAPS: the Hand Wraps a fist strikes with (characters/handWrapsIds.js fistWrapsOf), or null. */
+  wrapsOf(hand) {
+    const R = this.currentRightHandWeapon ?? null, L = this.currentLeftHandWeapon ?? null;
+    return hand === 'L' ? fistWrapsOf(L, R) : fistWrapsOf(R, L);
+  }
+  /** HAND-WRAPS: the wraps of the hand in use - what a fist's blow carries (combat/formulas.js `wraps`) and its glow. */
+  get wraps() { return this.weapon?.werecreatureClaws ? null : this.wrapsOf(this.activeHand); }
   /** TWO-HANDS (AUDIT): the strike in flight is the OFF hand's - the blow a player-vs-player arm rolls carries the off
    *  hand's terms as resolveHit's does (combat/duelCombat.js resolveDuelStrike `off`). */
   get offStrike() { return !!(this.handsMode === HANDS_MODE.Dual && this.strike && this.machine.state !== 'Idle' && this.strike.off); }
@@ -1029,6 +1051,7 @@ export class PlayerWeapon {
     const offToHit = off ? offHandToHit(playerCombat ? liveStat(playerCombat, 'agility') : 50) : 0;
     const strike = (foe) => {
       const opts = playerAttackOptions(this.strikingWeapon, this.machine.state, backstabOf(foe), rolls);
+      if (!opts.weapon) opts.wraps = this.wraps;   // HAND-WRAPS (AUDIT B): a fist's blow carries its wraps' lines
       if (off) { opts.toHitMod += offToHit; Object.assign(opts, OFF_HAND_BLOW); }   // TWO-HANDS (AUDIT): the share inside the formula, ahead of every report; AUDIT 2: and the blow's weight
       if (techOn(foe) && Number.isFinite(tb.toHit)) opts.toHitMod += tb.toHit;   // the technique's own term beside the swing's
       const rolled = calculateAttackDamage(playerCombat, foe.entity, {

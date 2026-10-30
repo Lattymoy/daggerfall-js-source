@@ -250,7 +250,6 @@ export const SHOP_SHELF_TEXT = 'Shop Shelf';
 export const LOOT_PILE_TEXT = 'Loot Pile';
 export const LADDER_TEXT = 'Ladder';
 export const BOOKSHELF_TEXT = 'Bookshelf';
-export const BULLETIN_BOARD_TEXT = 'Bulletin Board';
 
 /**
  * A dropped pile's or a random treasure's word (.cs:534-548). A pile

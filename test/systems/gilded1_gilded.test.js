@@ -7,7 +7,8 @@
 //     its gun era, lawful as minted.
 //   - THE MINT: whole, known and priced, a fresh item every call; the wire takes it exactly as minted.
 //   - A STATIC ROLL: one number off, a line short or long, a mark another door lays - the wire refuses it; and no door
-//     that alters a piece (the Reforge, the hone, the salvage, the item maker, the exalt, the curse, the heirloom) takes it.
+//     that alters a piece (the Reforge, the hone, the salvage, the exalt, the curse, the heirloom) takes it. GILDED-MAKER: the
+//     item maker takes it, its rows beside the record's lines (gildedmaker.test.js).
 //   - THE DROP: one draw, one in fifty (the Brass Remnant's spoils' last - sd9e_spoils.test.js pins the order).
 //   - THE HOUR TOLLS: the third shot that LANDS strikes for double, a foe it fells gives the shot back (GUNS-UNFOUND: the
 //     bow's arrow, the gun era's pellet) - its own shots
@@ -142,7 +143,7 @@ test('GILDED1 THE MINT: a DFU bow\'s own mint (GUNS-UNFOUND; the Thunderlock\'s 
 
 // ── a static roll ─────────────────────────────────────────────────────
 
-test('GILDED1 A STATIC ROLL: the wire holds it to its record EXACTLY - one number off, a param changed, a line dropped, added or moved, another record, another tier, template or make, any mark another door lays, any enchantment: refused; a piece of no Gilded record passes untouched (mutants: the band let in; a mark let in)', () => {
+test('GILDED1 A STATIC ROLL: the wire holds it to its record EXACTLY - one number off, a param changed, a line dropped, added or moved, another record, another tier, template or make, any mark another door lays, any enchantment no item maker laid: refused; a piece of no Gilded record passes untouched (mutants: the band let in; a mark let in)', () => {
   on();
   const forge = (f) => { const it = mintHourlock(); f(it); return wire(it); };
   assert.ok(forge(() => {}));
@@ -160,18 +161,18 @@ test('GILDED1 A STATIC ROLL: the wire holds it to its record EXACTLY - one numbe
   for (const [k, v] of [['sigil', { set: 'numidium', piece: 0 }], ['legendary', 'wyrmbane'], ['aetheric', 'x'], ['imprint', 'nightwhisper'], ['cursed', { type: 1, param: 0 }], ['socket', 'empty'], ['reforged', 0], ['honed', 1], ['exalted', true]]) {
     assert.equal(validGildedMarks({ ...mintHourlock(), [k]: v }), null, `${k}: a mark another door lays`);
   }
-  assert.equal(forge((it) => { it.enchantments = [{ type: 0, param: 5 }]; }), null, 'a DFU enchantment');
+  assert.equal(forge((it) => { it.enchantments = [{ type: 0, param: 5 }]; }), null, 'a DFU enchantment no maker laid (PIN MOVED, GILDED-MAKER: a maker\'s row is lawful - gildedmaker.test.js)');
   assert.equal(forge((it) => { it.customEnchantments = [{ type: 10, param: 1 }]; }), null, 'a made one');
   const plain = createWeapon(120, 1);
   assert.equal(validGildedMarks(plain), plain, 'a piece of no Gilded record passes untouched');
   assert.equal(validGildedMarks(null), null);
 });
 
-test('GILDED1 NO DOOR ALTERS IT: the salvage, the Reforge, the hone, the item maker, the exalt, the curse, the heirloom and the crafter\'s temper each refuse a Gilded piece - and the codex\'s imprint is never its (mutants: the salvage; the item maker; the heirloom)', () => {
+test('GILDED1 NO DOOR ALTERS IT: the salvage, the Reforge, the hone, the exalt, the curse, the heirloom and the crafter\'s temper each refuse a Gilded piece - and the codex\'s imprint is never its; PIN MOVED (GILDED-MAKER): the item maker takes it (mutants: the salvage; the item maker refusing it again; the heirloom)', () => {
   on();
   const h = mintHourlock();
   assert.equal(salvageRefusal(h), 'gilded', 'never broken down');
-  assert.equal(itemMakerRefuses(h), true, 'never enchanted');
+  assert.equal(itemMakerRefuses(h), false, 'PIN MOVED (GILDED-MAKER): the item maker\'s, as a Rare is - its rows beside its lines (gildedmaker.test.js)');
   assert.equal(itemMakerRefuses(createThunderlock()), false, 'a plain gun is the item maker\'s');
   assert.deepEqual(LR.reforgeableLines(h), [], 'no line the Reforge turns');
   assert.equal(reforgeRefusal(h, 0, { items: [] }), 'not');

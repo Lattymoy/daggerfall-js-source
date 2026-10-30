@@ -14,7 +14,7 @@ import { yardGround, yardSitesOn } from '../../src/world/merchantYards/merchantY
 import { portSitesOn, seaField } from '../../src/world/portSites.js';
 import { yardTownBlocks, PORT_MAP_TYPE, YARD_MAP_TYPE, YARD_MAP_BLOCK_M } from '../../src/world/merchantYards/merchantYardMap.js';
 import { BUILDING_TYPES } from '../../src/world/buildingNames.js';
-import { ROAD_WEIGHT } from '../../src/systems/gothwayBoards.js';
+import { ROAD_WEIGHT } from '../../src/world/city/cityNavigation.js';
 import { makeBuildingKey } from '../../src/systems/talk/talkTopics.js';
 import { TopicTree, LIST_ITEM_TYPE, QUESTION_TYPE, EN } from '../../src/systems/topicTree.js';
 import { AnswerPipeline } from '../../src/systems/answerPipeline.js';
@@ -177,7 +177,8 @@ test('SHIPYARDS THE HOSTS: world.js places the port\'s places in each port town\
   // PIN MOVED (IC-GRAND, test/world/icgrand_lod.test.js): no yard nor port stands a far slice of the Imperial City (farView)
   // PIN MOVED (IC-STUTTER): awaited, a step at a time through the build's breather
   assert.match(w, /const yardTown = !farView && isYardTown\(dfLocation\), portTown = !farView && isPortTown\(dfLocation, portOnSea\(dfLocation\)\);\n\s*const places = yardTown \|\| portTown \? await townPlacesFor\(dfLocation, lefaySpot, climate\?\.people, loc, yardShut, \(\) => breather\.breathe\(\)\) : null;[^\n]*\n\s*if \(yardTown\) yardSites = places\.yards;\n\s*if \(portTown\) portSites = places\.ports;/);   // PIN MOVED (FB1028): the yards' own shut
-  assert.match(w, /const bearing = seaBearing\(lp\.x, lp\.y, openSea\);[^\n]*\n\s*ports = keptPortSitesOn\(g, seaField\(g\.width, g\.height, townSeaOf\(yl, bearing\), bearing\)\);/, 'on what the yards left, off the sea');
+  // PIN MOVED (WESTHEAD-NORTH, AUDIT A1): and the town's row, in the layout it was measured in (test/world/westheadnorth.test.js)
+  assert.match(w, /const bearing = seaBearing\(lp\.x, lp\.y, openSea\);[^\n]*\n\s*ports = keptPortSitesOn\(g, seaField\(g\.width, g\.height, townSeaOf\(yl, bearing\), bearing\), portPlacesNear\(mapId, /, 'on what the yards left, off the sea');
   assert.match(w, /const portOnSea = \(dfLocation\) => portTownOnSea\(dfLocation, hasPort, openSea\);/, 'a port by its own data on the open sea (executed: test/systems/shipyards1_audit_port.test.js, test/systems/naval/fb1014_inlandports.test.js)');
   assert.match(w, /if \(portSites\?\.length\) carveYards\(nav, portSites\);/, 'the people walk round them');
   assert.match(w, /\n\s+portSites,   \/\/ SHIPYARDS/, 'on the pixel\'s record');

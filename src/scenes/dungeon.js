@@ -35,6 +35,7 @@ import { attachGamepad } from '../ui/gamepadInput.js';   // GP1: the pad speaks 
 import { isEnhanced } from '../systems/uiSkin.js';   // AUDIT 62 F10: the dial button's own skin gate
 import { BlocksFile } from '../formats/blocksFile.js';
 import { bindWorldDataBlocks } from '../formats/worldData/worldDataReplacement.js';   // RR3b
+import { benchLocation, labFoot, labStand, mountLabPanel } from './delve/delveBench.js';   // DELVE II (DLV5, DLV6): the bench's own places, its lab's spot and panel
 import { loadModWorldData } from './modWorldData.js';   // RR3b
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile } from '../formats/mapsFile.js';
@@ -128,7 +129,8 @@ export async function bootDungeon(canvas, renderer, params, status) {
   const maps = new MapsFile();
   maps.load(mapsBytes, climateBytes, politicBytes);
 
-  const dfLocation = maps.getLocationByName(regionName, dungeonName);
+  const bench = benchLocation(params, maps, undefined, blocks);   // DELVE II (DLV5): a spawned dungeon (`?spawn=`) or the lab's block (`?dungeon=lab`)
+  const dfLocation = bench?.location ?? maps.getLocationByName(regionName, dungeonName);
   if (!dfLocation) throw new Error(`location not found: ${regionName}/${dungeonName}`);
 
   status(`laying out ${dungeonName}`);
@@ -143,7 +145,14 @@ export async function bootDungeon(canvas, renderer, params, status) {
   const placeLoadedPlayer = (p) => { if (!_motorRef) return; _motorRef.spawn(p[0], p[1], p[2]); _motorRef.stopAutorun(); };
   const ctx = await buildDungeonContext(
     { ...pipeline, renderer, arch, palette }, dfLocation, blocks, dfLocation.climate.climateType, { activateHeld: () => held(keys, 'ActivateCenterObject') || _tapArmed > 0, actionDown: (action) => held(keys, action),   // KB1: registry actions
-      // HT1: the torch keys /* AUDIT 62 F8: the finger's press too - it was 'Mouse0' in the held set until the tap stopped speaking a literal code */ foes: !params.has('nofoes'), playerClass: params.has('class') ? Number(params.get('class')) : undefined, playerSpell: params.has('spell') ? Number(params.get('spell')) : undefined, playerWeapon: params.get('weapon') ?? undefined,
+      // HT1: the torch keys /* AUDIT 62 F8: the finger's press too - it was 'Mouse0' in the held set until the tap stopped speaking a literal code */
+      // DELVE II (DLV2, the probe): THESE OPTIONS WERE INSIDE THAT COMMENT - FOE1's bug class (scenes/worldModes.js
+      // "THIS LINE WAS INSIDE A COMMENT"), so the bench's ?class, ?nofoes, ?spell and ?weapon did nothing and every
+      // ?dungeon= boot opened the wizard. One option a line, as FOE1 left the world host's.
+      foes: !params.has('nofoes'),
+      playerClass: params.has('class') ? Number(params.get('class')) : undefined,
+      playerSpell: params.has('spell') ? Number(params.get('spell')) : undefined,
+      playerWeapon: params.get('weapon') ?? undefined,
       shakeCamera: (k) => betterAmbience.weaponKick(k),   // AUDIT TELL H6: the stagger's kick of my own blow (and an execution's), as the world host gives its dungeons
       // AUDIT 26 F222/F223: the dev scene's half of the pose. The cam
       // is created AFTER the context (from startSpawn), so the seam
@@ -191,7 +200,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   // This is the host the enter-marker preference was written for; DE1
   // found it applied to the door transition as well, which is the
   // other member and takes the start marker.
-  const spawn = loadedPos ?? ctx.startSpawn() ?? [0, 2, 0];   // U21: a loaded game resumes where it was saved
+  const spawn = labStand(bench, ctx.delve?.()) ?? loadedPos ?? ctx.startSpawn() ?? [0, 2, 0];   // U21: a loaded game resumes where it was saved; DLV6: the bench's lab stands me where its Rebuild left me, else by its first encounter, past its ward
   const cam = { pos: spawn, yaw: 0, pitch: 0 };
   const lookFilter = new LookFilter();   // AUDIT 28 W7: one filter per camera
   const moveAxes = new MoveAxes();   // AUDIT 28 W8: MovementAcceleration
@@ -227,6 +236,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
   const player = new PlayerMotor(ctx.collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), enhancedJumping: () => isEnhancedJumping(playerEntity), carriedWeight: () => carriedWeight(playerEntity), climbing: climbingDeps(playerEntity), parkour: parkourDeps(playerEntity, (l) => ctx.hudSay?.(l)) });   // AcrobatMotor skill jump (P14) + M3 climbing (no HUD seam in the standalone host); motorStats = the LIVE entity
   _motorRef = player;   // DC1: the motorState seam binds here
+  void mountLabPanel(bench, { feet: () => [...player.pos], delve: () => ctx.delve?.(), foot: labFoot(arch, pipeline.getTexture) });   // DELVE II (DLV5, DLV6): the lab's panel (delve.html), the bench's `?dungeon=lab` alone
     const _footsteps = new FootstepMachine();   // FS-slice
     immersiveFootsteps.onTransitionDungeonInterior();   // IF1: the standalone dungeon boot IS the dungeon transition (UpdateFootsteps_OnTransitionDungeonInterior)
     betterAmbience.onTransition({ dungeon: { regionName: dfLocation.regionName, name: dfLocation.name, inCastle: () => !!ctx.insideDungeonCastle?.(), exitPos: ctx.enterMarker ? [ctx.enterMarker.x, ctx.enterMarker.y, ctx.enterMarker.z] : null } });   // BA1: the boot is the dungeon transition here too
@@ -321,7 +331,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // read their name on the plaque and ate the press in silence. The
     // modal dungeon arm answers them; two hosts over one context must
     // not disagree about one key.
-    if (key !== null && (key.startsWith('loot:') || key.startsWith('corpse:') || key.startsWith('droppedLoot:') || key.startsWith('droppedTorch:') || key.startsWith('camp:') || key.startsWith('hearth:') || key.startsWith('search:'))) {   // SEARCH1: the modal host's arm, in step
+    if (key !== null && (key.startsWith('loot:') || key.startsWith('corpse:') || key.startsWith('droppedLoot:') || key.startsWith('droppedTorch:') || key.startsWith('camp:') || key.startsWith('hearth:') || key.startsWith('search:') || key.startsWith('delve:'))) {   // SEARCH1: the modal host's arm, in step
       ctx.takeLoot(key, getInteractionMode());   // HT1: a dropped torch takes the mode (Grab/Steal picks it up, Info/Talk names it)
       return key;
     }
@@ -676,7 +686,8 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // The fist repro (2026-08-18): the entity + the rig's two combat
     // entries, so a probe can strip the worn weapon and swing bare.
     window.__playerEntity = playerEntity;
-    window.__combat = { toggleSheath: ctx.toggleSheath, clickAttack: ctx.playerClickAttack, applySpellToPlayer: ctx.applySpellToPlayer };   // S24
+    window.__delve = () => ctx.delve?.() ?? null;   // DELVE II probe surface (tools/delveProbe.mjs): the encounters' host
+    window.__combat = { toggleSheath: ctx.toggleSheath, clickAttack: ctx.playerClickAttack, applySpellToPlayer: ctx.applySpellToPlayer, weapon: () => ctx.weaponRig?.()?.playerWeapon ?? null };   // S24; DELVE II (DLV4): the hand a probe's swing is in
     window.__foes = () => JSON.stringify(ctx.foes.map((f, i) => ({
       i, type: f.mobileType, dead: !!f.dead, health: f.entity?.health,
       // V1: the DESTROY-vs-KILL discriminator. damageFoe spawns a

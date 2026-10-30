@@ -31,7 +31,7 @@ function fakeDocument() {
   return doc;
 }
 
-test('PVP-CONE THE LAW (ui/nameCone.js): 20 degrees with a 6-degree band - full inside 17, none past 23; a board, a point with no angle, my party or my foe always whole; the step eases over 250 ms (mutants: the band unread; the near unread; the step unclamped)', () => {
+test('PVP-CONE THE LAW (ui/nameCone.js): 20 degrees with a 6-degree band - full inside 17, none past 23; a point with no angle, my party or my foe always whole (AUDIT FB1029g R4: no board rides the names\' pass); the step eases over 250 ms (mutants: the band unread; the near unread; the step unclamped)', () => {
   assert.deepEqual(NAME_CONE, { deg: 20, band: 6, fadeMs: 250 });
   assert.equal(nameConeTarget({ off: 0 }), 1);
   assert.equal(nameConeTarget({ off: 17 }), 1);
@@ -39,7 +39,7 @@ test('PVP-CONE THE LAW (ui/nameCone.js): 20 degrees with a 6-degree band - full 
   assert.equal(nameConeTarget({ off: 23 }), 0);
   assert.equal(nameConeTarget({ off: 90 }), 0);
   assert.equal(nameConeTarget({ off: 90, near: true }), 1, 'my party or my foe');
-  assert.equal(nameConeTarget({ off: 90, kind: 'board' }), 1, 'a Notice Board is no player');
+  assert.equal(nameConeTarget({ off: 90, kind: 'board' }), 0, 'PIN MOVED (AUDIT FB1029g R4): no kind stands outside the cone - the boards\' count went with the boards');
   assert.equal(nameConeTarget({}), 1, 'a host that says no angle: as it always was');
   assert.equal(nameConeStep(NaN, 0.4, 0), 0.4, 'a new tag starts where it stands');
   assert.equal(nameConeStep(1, 0, 125), 0.5, 'half the fade in half its time');
@@ -99,7 +99,7 @@ test('PVP-CONE THE NEAR (scenes/pvpFlagHost.js): my foe is a peer I struck or wa
   const mask = f.mask((p) => p, social);
   assert.deepEqual(mask({ id: 'peer-p', name: 'A' }), { id: 'peer-p', name: 'A', near: true });
   assert.deepEqual(mask({ id: 'peer-s', name: 'B' }), { id: 'peer-s', name: 'B' });
-  assert.deepEqual(mask({ id: 'peer-p', kind: 'board' }), { id: 'peer-p', kind: 'board' });
+  assert.deepEqual(mask({ id: 'peer-p', kind: 'board' }), { id: 'peer-p', kind: 'board', near: true }, 'PIN MOVED (AUDIT FB1029g R4): a point is a player\'s, whatever its kind');
   assert.ok(rd('src/scenes/world.js').includes('      mask: pvpFlag.mask(wildNameMask, social),'));
   assert.ok(rd('src/scenes/world.js').includes('      layer: nameLayer,'), 'the DOM face the players see wears it');
 });

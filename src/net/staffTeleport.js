@@ -185,9 +185,9 @@ export function notePlace(p) {
   const inst = instanceOf(rk);
   const word = inst ? instanceWord(inst) : null;
   if (p.in === 1) {
-    const m = /^dungeon:m([1-9]\d{0,9})(\.[ms])?/.exec(rk);
+    const m = /^dungeon:m([1-9]\d{0,9})(\.[ms])?(\.c[1-9]\d{0,2})?/.exec(rk);   // DELVE II: a curated block's room is no whole dungeon either
     if (!m || !integer(+m[1])) return null;
-    return { kind: 'dungeon', ...at, mapId: +m[1], ...(word ? { ins: word } : {}), whole: !!word || !m[2], pos: null };
+    return { kind: 'dungeon', ...at, mapId: +m[1], ...(word ? { ins: word } : {}), whole: !!word || (!m[2] && !m[3]), pos: null };
   }
   const bk = p.bk;
   // STAFF-PANEL5-FOLLOW-FIX (finding 2): a home is its building's door into its own private room; a boat's cabin or a

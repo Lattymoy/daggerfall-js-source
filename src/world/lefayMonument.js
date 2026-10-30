@@ -33,7 +33,7 @@
 import { REGION_NAMES } from '../formats/mapsTables.js';
 import { CityNavigation, NAV_CELL, HALF_CELL } from './city/cityNavigation.js';
 import { THROWN_FLOWERS } from '../systems/arena/arenaCrowd.js';
-import { ROAD_WEIGHT } from '../systems/gothwayBoards.js';
+import { ROAD_WEIGHT } from './city/cityNavigation.js';
 import { locationStartMarkers } from './locationEntrance.js';
 import { collectMiscFlats } from './rmbFlats.js';
 

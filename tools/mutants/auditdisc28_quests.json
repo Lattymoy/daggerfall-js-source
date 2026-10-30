@@ -30,8 +30,8 @@
   {
     "name": "AD28Q-S2-sync-gone-from-the-frame",
     "file": "src/scenes/world.js",
-    "old": "    questSyncTick();\n    // AUDIT 66 F11: the torch sweep runs HERE",
-    "new": "    // AUDIT 66 F11: the torch sweep runs HERE",
+    "old": "    questSyncTick();\n    townPanel.frame();",
+    "new": "    townPanel.frame();",
     "tests": [
       "test/systems/quest/auditdisc28_quests.test.js"
     ]

@@ -338,15 +338,6 @@
     ]
   },
   {
-    "name": "SEAT1a-bounty-board-pennant",
-    "file": "src/scenes/seatBanners.js",
-    "old": "boards.forEach((b, i) => { if (!bounty.has(i)) add(boardPennantAnchor(b)); });",
-    "new": "boards.forEach((b) => { add(boardPennantAnchor(b)); });",
-    "tests": [
-      "test/net/seat1a_client.test.js"
-    ]
-  },
-  {
     "name": "SEAT1a-banners-past-eight",
     "file": "src/scenes/seatBanners.js",
     "old": "if (a && out.length < SEAT_BANNERS_MAX) out.push(a);",

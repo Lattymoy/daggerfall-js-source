@@ -1,56 +1,18 @@
-// DS1 (2026-09-25): THE PIECES DETAILED SHIPS BORROWS, STOOD IN BY THE PORT.
+// DAGGERFALL EXPANDED TEXTURES' PIECES THE TOWN MODS PLACE, STOOD IN BY THE PORT (WD3, 2026-10-01).
 //
-// Detailed Ships 1.0.0 declares Ninelan's *Daggerfall Expanded Textures*
-// (DET) 1.2.0 a required peer dependency: its two ship records place ten
-// DET models and twenty-seven DET flat records, none of which Daggerfall
-// or Detailed Ships itself carries. DET is not part of this port, and Mac
-// chose (2026-09-25, asked outright) to "build your own": so every one of
-// those pieces is the PORT'S OWN stand-in, made for the place the author
-// put it - never a copy of DET, which the port has never seen.
+// Beautiful Villages and Beautiful Cities place Ninelan's *Daggerfall Expanded Textures* (DET) models some 75,000
+// times - the timbers of every interior's ceiling and fireplace, the chimneys on its roofs, the tapestries on its
+// walls - and its flats on tables, shelves and farms. DET is not part of this port. Mac's answer for a peer the port
+// lacks (2026-09-25, asked outright) was "build your own", so every piece here is the PORT'S OWN stand-in, never a copy
+// of DET, which the port has never seen. What each piece is was read off the RMB Resource Pack's DET catalogue (which
+// names each id - `Pillar - Wood`, `Chimney - Stackable Flue`, `Kynareth`, `Decorative`) and off the placements.
 //
-// What each piece is was read off its placements, in the port's own
-// renders of the two ships (bible `03-World/Detailed-Ships.md` keeps the
-// table): two rope-thin segments carry a flag above the small ship's
-// crow's nest, and the same piece scaled 13.8 along its length runs from
-// that masthead to the rail - so it is line, and laid on its side across
-// the stern it is the stern's rails of line; three thicker segments stand
-// one on another on the stern castle with a lantern at the top - a staff;
-// the large ship flies two pennants at its masthead and a third from a
-// staff at the stern; four pieces hang from the mess deck's ceiling beams
-// and one over the berths - lanterns; one stands on the captain's floor -
-// a sea chest; one in the armory - a weapon rack.
-// The flats: three far out on the water, at the waterline - dolphins (the
-// author's readme: "You may even spot a dolphin jumping out of the sea");
-// one on the small ship's floor - the ship's cat; the rest are the
-// stores, the galley and the captain's instruments, stood in by
-// Daggerfall's own sprites of the same things.
-//
-// The models are built here, in metres in Unity's frame (dfMeshToModel's
-// shape), and textured with CLASSIC textures - the very ones the classic
-// ship's own rigging, planking and sails wear (0_77, 67_x, 116_4) - so
-// they come out of the player's ARENA2 like every other model. The flats
-// are the player's own records (formats/derivedTexture.js), sized as the
-// record sizes itself, except the dolphins, which are the port's own
-// drawing (below), made in code.
-//
-// WD3 (2026-10-01): THE SAME PIECES, READ AGAIN, FOR TWO MODS. Beautiful
-// Villages and Beautiful Cities place DET's models some 75,000 times - the
-// timbers of every interior's ceiling and fireplace, the chimneys on its
-// roofs, the tapestries on its walls - and the RMB Resource Pack's own
-// DET catalogue names each id (`Pillar - Wood`, `Chimney - Stackable
-// Flue`, `Kynareth`, `Decorative`). Read against that catalogue and those
-// placements, four of the ten ship readings were the cloth DET says they
-// are, not lamps: 45145 is Kynareth's tapestry, 45161, 45162 and 45164
-// decorative tapestries - on the ships they hang from the mess deck's
-// beams, over the berths, from the stern staff's head and the mastheads,
-// where Daggerfall Unity with DET hangs exactly that cloth. 45081 and
-// 45110 are DET's wooden pillars: squared timbers (a mantel shelf over
-// every town fireplace, the rafters of a hall; on the ships the topmast,
-// the stern rail and the stays). Each id has ONE stand-in, the same in a
-// ship and in a town; it answers while ANY of the mods that place it is
-// loaded (`installDetStandIns` OR's the switches it is handed). The
-// pieces only the towns place are `DET_TOWN_MODELS`; the shared pictures
-// are world/townPictures.js.
+// The models are built here, in metres in Unity's frame (dfMeshToModel's shape), and textured with CLASSIC textures
+// (0_77, 67_x, 116_4 and the rest), so they come out of the player's ARENA2 like every other model. The flats are the
+// player's own records (formats/derivedTexture.js), sized as the record sizes itself, or the port's own drawings
+// (world/standInSprites.js). Each id has ONE stand-in; it answers while any switch it is handed is on
+// (`installDetStandIns` OR's them). The models are `DET_MODELS` and `DET_TOWN_MODELS`; the cloth they wear is
+// world/townPictures.js.
 
 import { registerCustomModel } from './customModels.js';
 import { addVendorTextures } from '../systems/textureReplacement.js';
@@ -161,23 +123,19 @@ export class MeshBuilder {
 }
 
 const U = 0.025;   // MeshReader.GlobalScale: one classic unit in metres
-/** The length of the rope and ladder pieces: the author stacks them 85 units apart up a mast. */
+/** The length of DET's wooden pillar: the towns stack its rafters and mantels 85 units apart. */
 export const DET_SEGMENT_UNITS = 85;
 
-/** The ten models, by the DET id the author names. Origins sit where the placements say:
+/** Ten models, by the DET id the towns name. Origins sit where the placements say:
  *  a column piece at its foot, a hanging piece at its hook, a floor piece on the floor. */
 export const DET_MODELS = Object.freeze({
-  // DET's 'Pillar - Wood', a segment long, standing on its foot: a squared timber six units thick. In a town it is the
-  // shelf of every fireplace's mantel (two, laid along it, the lower one half as deep); on the small ship the topmast
-  // over the crow's nest (two, the flag on top), the stern's rails laid on their side, and the two stays it is
-  // stretched 13.8 times along from the masthead to the rail. (DS1 read it as rope; WD3, the catalogue and 10,004 town
-  // placements, as timber - see the header.)
+  // DET's 'Pillar - Wood', a segment long, standing on its foot: a squared timber six units thick - the shelf of every
+  // town fireplace's mantel (two, laid along it, the lower one half as deep; 10,004 placements).
   45081: () => timber(TIMBER, 6, DET_SEGMENT_UNITS),
   // 'Pillar - Wood' again, eight units: the rafters and tie-beams of a beamed hall (29,249 in the towns, stretched along
-  // their length), and the staff the small ship's stern castle stacks three of, a banner at its head.
+  // their length).
   45110: () => timber(TIMBER, 8, DET_SEGMENT_UNITS),
-  // DET's 'Wind Wane - Dog', at the head of the mainmast's topmast (two timbers carry it above the crow's nest): a
-  // finial and a vane of cloth on a rod - the ship's masthead telltale; the towns stand four on high beams.
+  // DET's 'Wind Wane - Dog': a finial and a vane of cloth on a rod; the towns stand it on high beams.
   45121: () => {
     const m = new MeshBuilder();
     m.box(WOOD_DARK, [0, 0.04, 0], [0.07, 0.08, 0.07], 4);
@@ -185,17 +143,16 @@ export const DET_MODELS = Object.freeze({
     m.cylinderY(ROPE, [0, 0.08, 0], 0.012, 0.44, 4, 0.4, false);
     return m.build();
   },
-  // DET's decorative tapestries - 45164 on the small ship's stern staff (scale 1.4) hanging from its head as a banner,
-  // 45161 from the large ship's masthead (two, scale 2) and its stern staff; in the towns both hang on walls.
+  // DET's decorative tapestries, hung on town walls.
   45164: () => hanging(DET_PICTURES[45164], 0.8, 1.2),
   45161: () => hanging(DET_PICTURES[45161], 0.8, 1.2),
-  // The ensign staff at the stern, the pennant flying from its head.
+  // A staff, a cap at its head (451 placements in the towns).
   45082: () => { const m = new MeshBuilder(); m.cylinderY(WOOD, [0, 0, 0], 0.045, 2.1, 6, 0.6); m.box(WOOD_DARK, [0, 2.13, 0], [0.1, 0.07, 0.1], 4); return m.build(); },
-  // Another decorative tapestry: four hang from the large ship's mess-deck beams; seventy-two hang on town walls.
+  // Another decorative tapestry: seventy-two hang on town walls.
   45162: () => hanging(DET_PICTURES[45162], 0.8, 1.2),
-  // Kynareth's tapestry - the sailors' goddess over the large ship's berths, and in her temples ashore.
+  // Kynareth's tapestry, in her temples.
   45145: () => hanging(DET_PICTURES[45145], 1.0, 1.5),
-  // The captain's sea chest, lengthwise on its own X (the author turns it a quarter).
+  // A sea chest, lengthwise on its own X.
   45190: () => {
     const m = new MeshBuilder();
     m.box(WOOD, [0, 0.22, 0], [0.9, 0.44, 0.5], 2);
@@ -204,7 +161,7 @@ export const DET_MODELS = Object.freeze({
     m.box(IRON, [0, 0.4, 0.265], [0.08, 0.1, 0.02]);
     return m.build();
   },
-  // A weapon rack for the armory: two posts, two rails, the spears between.
+  // A weapon rack: two posts, two rails, the spears between.
   45191: () => {
     const m = new MeshBuilder();
     for (const x of [-0.55, 0.55]) { m.box(WOOD_DARK, [x, 0.65, 0], [0.08, 1.3, 0.08]); m.box(WOOD_DARK, [x, 0.03, 0], [0.12, 0.06, 0.4]); }
@@ -219,7 +176,7 @@ export const DET_MODELS = Object.freeze({
   },
 });
 
-// ---- WD3: the pieces only the towns place --------------------------------------------------------------------------
+// ---- WD3: the rest of the towns' pieces --------------------------------------------------------------------------
 
 /** A squared timber `side` units thick and `len` long, standing on its origin, the grain of `tex` along its length. */
 function timber(tex, side, len) {
@@ -330,11 +287,11 @@ export const DET_PICTURES = Object.freeze({
   ...Object.fromEntries(REGIONS.flatMap(([name, tapestry, flag]) => [[tapestry, PICTURE.regionTapestry(name)], [flag, PICTURE.regionBanner(name)]])),
   ...Object.fromEntries(DIVINE_TAPESTRIES.map((id, k) => [id, PICTURE.divineTapestry(DIVINES[k])])),
   ...Object.fromEntries(DIVINE_BANNERS.map((id, k) => [id, PICTURE.divineBanner(DIVINES[k])])),
-  ...Object.fromEntries(DECOR_ORDER.map((id) => [id, decor(id)])),   // 45161, 45162 and 45164 the ships' too
+  ...Object.fromEntries(DECOR_ORDER.map((id) => [id, decor(id)])),   // 45161, 45162 and 45164 built in DET_MODELS
   45192: PICTURE.rug(0), 45194: PICTURE.rug(1),
 });
 
-/** The DET models only the town mods place, by id, read off the catalogue's names and the placements
+/** The rest of the DET models the town mods place, by id, read off the catalogue's names and the placements
  *  (bible `03-World/Beautiful-Towns.md` keeps the table). */
 export const DET_TOWN_MODELS = Object.freeze({
   // the regions' tapestries and banners (on house fronts and in halls)
@@ -342,7 +299,7 @@ export const DET_TOWN_MODELS = Object.freeze({
     [tapestry, () => hanging(DET_PICTURES[tapestry], 0.9, 1.35)],
     [flag, () => hanging(DET_PICTURES[flag], 0.6, 1.6, { banner: true })],
   ])),
-  // the Eight's tapestries (45141-45148; Kynareth's, 45145, is one the ships hang too) and their second set (45150-45157)
+  // the Eight's tapestries (45141-45148; Kynareth's, 45145, is built in DET_MODELS) and their second set (45150-45157)
   ...Object.fromEntries(DIVINE_TAPESTRIES.filter((id) => id !== 45145).map((id) => [id, () => hanging(DET_PICTURES[id], 1.0, 1.5)])),
   ...Object.fromEntries(DIVINE_BANNERS.map((id) => [id, () => hanging(DET_PICTURES[id], 0.7, 1.8, { banner: true })])),
   // the decorative tapestries
@@ -373,30 +330,20 @@ export const DET_TOWN_MODELS = Object.freeze({
 
 // ---- the flats ---------------------------------------------------------------
 
-/** The DET flat records the author places, stood in by the player's own
- *  sprite of the same kind: [classic archive, record]. By place: the
- *  galley and stores (10021, 10027), the captain's instruments (10025),
- *  the ship's cat (10010).
- *
- *  WD3: a record the towns place too is the thing DET's catalogue names it
- *  (and the town placements bear out - a large sack on a storeroom floor
- *  138 times, a tiny globe on a high shelf 200 times): 10025_3 a large sack,
- *  10027_0 a tiny globe here; the rest of those are drawn
- *  (`DET_FLAT_DRAWINGS` - 10010_38 a brown rat, 10021_5 and _9 cheese
- *  wheels, _12 flour porridge, _16 a cabbage, 10025_0 broken bottles,
- *  10027_3 a rolling pin). A record only the ships place keeps its ship
- *  reading. */
+/** DET flat records stood in by the player's own sprite of the same kind: [classic archive, record] - the thing DET's
+ *  catalogue names it, as the town placements bear out (a large sack on a storeroom floor 138 times, a tiny globe on a
+ *  high shelf 200 times). 10021_22 and _27 and 10027_4 to _14 no town places: a removed mod's ships stood them
+ *  and the decorator offers them still (systems/decor/decorMods.js DECOR_MOD_KEPT). */
 export const DET_FLAT_STAND_INS = Object.freeze({
   10021: Object.freeze({ 13: [218, 0], 17: [213, 0], 22: [200, 1], 27: [205, 30] }),   // broth in its pot; an orange; a goblet; a bucket
-  10025: Object.freeze({ 3: [205, 17] }),   // a large sack (one stands on the large ship's deck)
+  10025: Object.freeze({ 3: [205, 17] }),   // a large sack
   10027: Object.freeze({
     0: [208, 0], 4: [205, 22], 5: [205, 23], 6: [205, 17], 7: [205, 18], 8: [205, 24], 9: [205, 25],
     10: [205, 0], 11: [200, 1], 12: [205, 30], 13: [218, 4], 14: [204, 7],
   }),
 });
 /** WD3: the DET records whose thing Daggerfall draws nothing like - the port's own sprite (world/standInSprites.js),
- *  by name, and the record scale it stands at (DFU grows a sprite by `1 + scale / 256`; a pixel is 2.5 cm at 0). The
- *  ships' and the towns' alike. */
+ *  by name, and the record scale it stands at (DFU grows a sprite by `1 + scale / 256`; a pixel is 2.5 cm at 0). */
 export const DET_FLAT_DRAWINGS = Object.freeze({
   10009: Object.freeze({ 14: ['monkey', 0] }),
   10010: Object.freeze({
@@ -418,7 +365,7 @@ export const DET_FLAT_DRAWINGS = Object.freeze({
   10025: Object.freeze({ 0: ['brokenBottles', -64] }),
   10027: Object.freeze({ 1: ['blockToy', -96], 3: ['rollingPin', -96] }),
 });
-/** WD3: the DET records only the towns place whose thing Daggerfall has a sprite of: [archive, record, size] - the
+/** WD3: more DET records whose thing Daggerfall has a sprite of: [archive, record, size] - the
  *  player's own sprite at `size` times the size it stands at itself (a calf is the grazing cow at three fifths). */
 export const DET_TOWN_FLATS = Object.freeze({
   10010: Object.freeze({
@@ -434,85 +381,12 @@ export const DET_TOWN_FLATS = Object.freeze({
  *  the editor's older catalogue): the same records stand in for them. */
 export const DET_OLD_ARCHIVES = Object.freeze({ 1010: 10010, 1021: 10021, 1025: 10025 });
 
-/** The dolphins, the port's own drawing: three poses of one leap (the
- *  author places 10009's records 29, 30 and 31 far out on the water - the
- *  small ship's at the waterline, the large ship's with their feet 1.4 m
- *  under it, so the picture is TALL and the animal rides its upper part:
- *  wherever the author set it, what shows above the sea is a dolphin
- *  breaking the surface). */
-export const DET_DOLPHIN_RECORDS = Object.freeze([29, 30, 31]);
-const DOLPHIN = { w: 40, h: 56, body: [96, 110, 128], back: [58, 70, 88], belly: [196, 206, 214], eye: [20, 22, 26] };
 
-/** A dolphin in pose `k` (0 rising, 1 at the top of its arc, 2 going back in), top-down RGBA:
- *  a silhouette round a bowed spine - thick behind the head, tapering to a beak and to the
- *  tail stock - shaded dark on the back and pale on the belly, with its dorsal fin, its
- *  flukes and a one-pixel outline. */
-export function drawDolphin(k) {
-  const { w, h } = DOLPHIN;
-  const data = new Uint8Array(w * h * 4);
-  const tilt = [-0.62, 0, 0.62][k];
-  const cx = w / 2, cy = 15, len = 30;
-  const cs = Math.cos(tilt), sn = Math.sin(tilt);
-  // body frame: u along the spine (0 tail .. 1 beak), v across it (negative = back)
-  const toBody = (x, y) => {
-    const dx = x - cx, dy = y - cy;
-    const bx = dx * cs + dy * sn, by = -dx * sn + dy * cs;
-    return [bx / len + 0.5, by + Math.sin(Math.min(1, Math.max(0, bx / len + 0.5)) * Math.PI) * 2.6];
-  };
-  const halfWidth = (u) => {
-    if (u < 0 || u > 1) return -1;
-    if (u > 0.9) return 1.2 + (1 - u) * 8;            // the beak
-    if (u > 0.78) return 4.2 - (u - 0.78) * 16;       // the melon falling to the beak
-    if (u < 0.2) return 0.9 + u * 16;                 // the tail stock
-    return 4.2;
-  };
-  const inside = (x, y) => {
-    const [u, v] = toBody(x, y);
-    const hw = halfWidth(u);
-    if (hw > 0 && Math.abs(v) <= hw) return v / hw;                                           // the body: v/hw in -1..1
-    if (u > 0.42 && u < 0.62 && v < 0 && -v < hw + (0.62 - u) * 30 - Math.abs(u - 0.5) * 20) return -1;   // the dorsal fin, back side
-    if (u > -0.1 && u < 0.04 && Math.abs(v) < 1 + (0.04 - u) * 45) return -0.6;               // the flukes
-    return null;
-  };
-  const set = (x, y, c) => { const i = (y * w + x) * 4; data[i] = c[0]; data[i + 1] = c[1]; data[i + 2] = c[2]; data[i + 3] = 255; };
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const q = inside(x + 0.5, y + 0.5);
-      if (q === null) continue;
-      const edge = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => inside(x + 0.5 + a, y + 0.5 + b) === null);
-      set(x, y, edge ? DOLPHIN.back.map((c) => c * 0.7) : q < -0.25 ? DOLPHIN.back : q > 0.4 ? DOLPHIN.belly : DOLPHIN.body);
-    }
-  }
-  // a pixel with one opaque neighbour or none is a sampling sliver of the silhouette's edge - cleared
-  const opaque = (x, y) => x >= 0 && y >= 0 && x < w && y < h && data[(y * w + x) * 4 + 3] !== 0;
-  const slivers = [];
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (opaque(x, y) && [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(([a, b]) => opaque(x + a, y + b)).length <= 1) slivers.push((y * w + x) * 4);
-  for (const i of slivers) data[i + 3] = 0;
-  // the eye, just behind the melon, above the line of the mouth
-  const eu = 0.8, ev = -1.2;
-  const bx = (eu - 0.5) * len, by = ev - Math.sin(eu * Math.PI) * 2.6;
-  const ex = Math.round(cx + bx * cs - by * sn), ey = Math.round(cy + bx * sn + by * cs);
-  if (ex >= 0 && ey >= 0 && ex < w && ey < h) set(ex, ey, DOLPHIN.eye);
-  return { width: w, height: h, data };
-}
-/** The dolphins' size: a bottlenose's two metres across the drawing's 32-pixel body (the record scale DFU grows a sprite by). */
-export const DOLPHIN_SCALE = Object.freeze({ width: 384, height: 384 });
-
-let _installed = false;
-const _gates = new Set();
-/** WD3: on while ANY mod that places DET's pieces is loaded - Detailed Ships, Beautiful Villages, Beautiful Cities. */
-export const detStandInsOn = () => { for (const g of _gates) if (g() === true) return true; return false; };
-/** The models on the model door and the flats and pictures on the texture door, once, all behind `detStandInsOn`;
- *  every call adds the switch it is handed to the ones that turn them on (Detailed Ships' own, the town mods'). */
-export function installDetStandIns(isOn) {
-  if (typeof isOn === 'function') _gates.add(isOn);
-  if (_installed) return 0;
-  _installed = true;
-  const gate = detStandInsOn;
-  for (const [id, build] of Object.entries({ ...DET_MODELS, ...DET_TOWN_MODELS })) registerCustomModel(Number(id), build, gate);
-  const entries = [];
-  const classic = (archive, record, from, size = 1) => ({
-    archive, record, fileName: `det-stand-in-${archive}_${record}`, standIn: true, gate,
+/** A stand-in flat that is the player's own classic record `from` ([archive, record]) at `size` times the size it
+ *  stands at itself - its record scale grown, as DFU grows a sprite by `1 + scale / 256`. */
+export function classicFlatEntry({ archive, record, from, size = 1, gate, fileName }) {
+  return {
+    archive, record, fileName, standIn: true, gate,
     build: async (ctx) => {
       const pic = await buildDerivedPicture({ from }, ctx.classicRgba);
       const own = (await ctx.classicScale?.(from[0], from[1])) ?? null;
@@ -520,7 +394,23 @@ export function installDetStandIns(isOn) {
       const grow = (s) => Math.round(256 * (size * (1 + (s ?? 0) / 256) - 1));
       return { ...pic, scale: { width: grow(own?.width), height: grow(own?.height) } };
     },
-  });
+  };
+}
+
+let _installed = false;
+const _gates = new Set();
+/** WD3: on while any switch the pieces were handed is on - the town mods' load. */
+export const detStandInsOn = () => { for (const g of _gates) if (g() === true) return true; return false; };
+/** The models on the model door and the flats and pictures on the texture door, once, all behind `detStandInsOn`;
+ *  every call adds the switch it is handed to the ones that turn them on. */
+export function installDetStandIns(isOn) {
+  if (typeof isOn === 'function') _gates.add(isOn);
+  if (_installed) return 0;
+  _installed = true;
+  const gate = detStandInsOn;
+  for (const [id, build] of Object.entries({ ...DET_MODELS, ...DET_TOWN_MODELS })) registerCustomModel(Number(id), build, gate);
+  const entries = [];
+  const classic = (archive, record, from, size = 1) => classicFlatEntry({ archive, record, from, size, gate, fileName: `det-stand-in-${archive}_${record}` });
   const drawn = (archive, record, [name, scale]) => ({
     archive, record, fileName: `det-stand-in-${archive}_${record}`, standIn: true, gate,
     build: async () => ({ ...STAND_IN_SPRITES[name](), scale: { width: scale, height: scale } }),
@@ -531,9 +421,6 @@ export function installDetStandIns(isOn) {
   each(DET_TOWN_FLATS, (a, r, [fa, fr, size]) => entries.push(classic(a, r, [fa, fr], size)));
   for (const [oldArchive, archive] of Object.entries(DET_OLD_ARCHIVES)) {
     for (const e of entries.filter((x) => x.archive === archive)) entries.push({ ...e, archive: Number(oldArchive), fileName: `det-stand-in-${oldArchive}_${e.record}` });
-  }
-  for (const [k, record] of DET_DOLPHIN_RECORDS.entries()) {
-    entries.push({ archive: 10009, record, fileName: `det-stand-in-10009_${record}`, standIn: true, gate, build: async () => ({ ...drawDolphin(k), scale: DOLPHIN_SCALE }) });
   }
   entries.push(...townPictureEntries(gate));   // WD3: the cloth the tapestries and banners wear, the rugs, the leaves
   return addVendorTextures(entries.map((e) => ({ ...e, yields: true })));   // AUDIT WD3 T2: a player's own DET (or other peer's) picture answers first

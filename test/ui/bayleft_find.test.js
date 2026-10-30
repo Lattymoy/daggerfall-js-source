@@ -217,7 +217,7 @@ test('BAY-LEFT-MAPS C9 x C11 on the player\'s data: every one of the registry\'s
   const ink = tamrielInkFor(null);
   const rows = tamrielFindRows(ink);
   const found = new Set(rows.map((r) => r.name)), names = new Set(registry.map((r) => r.name));
-  assert.equal(names.size, 296);
+  assert.equal(names.size, 298);   // PIN MOVED (AUDIT FB1029g P1): Alinor Harbour and Torval's docks, the capitals' sea slices the rows left out
   assert.deepEqual([...names].filter((n) => !found.has(n)), [], 'every name past the Bay found');
   // a city's port is the registry's word: an Arena place's own row (a lore capital that is none of the capitals that stand,
   // Hegathe's, its own too), a standing capital its harbour slice's

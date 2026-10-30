@@ -144,7 +144,7 @@ test('ROCK-CLEAR a yard\'s piece goes by the same gate: its pool names no body, 
   assert.equal(w.col._buckets.has('decor:y1'), true, 'solid once the body is clear');
 });
 
-test('ROCK-CLEAR by source: the pixel build files every solid through the world collider\'s gate, each with its bucket\'s provider - the mills, the town\'s models and gates, Gothway\'s boards, World of Daggerfall\'s pieces, the Hold\'s camp - and the hill patch (ground) alone directly; the world frame settles the gate after the motor\'s step with the walking body, none while a jump is under way; the collider forgets a removed bucket\'s held parts (mutants: each site past the gate; the settle gone; the jump\'s body named; the hook gone)', () => {
+test('ROCK-CLEAR by source: the pixel build files every solid through the world collider\'s gate, each with its bucket\'s provider - the mills, the town\'s models and gates, a town\'s fabric (NOTICE-PANEL: Gothway\'s boards gone with every town\'s), World of Daggerfall\'s pieces, the Hold\'s camp - and the hill patch (ground) alone directly; the world frame settles the gate after the motor\'s step with the walking body, none while a jump is under way; the collider forgets a removed bucket\'s held parts (mutants: each site past the gate; the settle gone; the jump\'s body named; the hook gone)', () => {
   const p = rd('src/scenes/pixelBuild.js');
   // PIN MOVED (the merge of main: PRECIP HOST-7's standFlatGroups stands between them): the one gate is the build's scope's,
   // made once above the build
@@ -153,7 +153,7 @@ test('ROCK-CLEAR by source: the pixel build files every solid through the world 
   const sites = [
     'late.add(key, BODY.positions, BODY.indices, local,\n              { translation: onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])) });',
     'late.add(gateKey, cpu.positions, cpu.indices, local,\n            { translation: onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])), sight: sightMarksOf(placed.modelIdNum, cpu) });',   // PIN MOVED (FIELD BUGS 2026-10-25i SIGN-PASS): a sign's hung triangles a ray's alone (world/signSolid.js sightMarksOf)
-    'late.add(key, cpuB.positions, cpuB.indices, local, { translation: onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])) });',
+    'late.add(key, cpuF.positions, cpuF.indices, local, { translation: onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])) });',   // PIN MOVED (NOTICE-PANEL): the fabric's, where Gothway's boards were
     'late.add(key, cpu.positions, cpu.indices, m.matrix, { translation: wodBucket });',
     'late.add(key, cpu.positions, cpu.indices, local, { translation: holdBucket });',
   ];

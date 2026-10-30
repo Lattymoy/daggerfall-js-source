@@ -481,15 +481,6 @@ const PUBLIC_ALLOWLIST = new Map([
   ['vendor/climates-calories/Textures/539_0-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - the waterskin"],
   ['vendor/climates-calories/Textures/50_7-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - the tent's canvas (SURV-TENT)"],
   ['vendor/climates-calories/Textures/67_10-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - the tent's pole (SURV-TENT)"],
-  // DS1 (2026-09-25): DETAILED SHIPS 1.0.0 (Cliffworms) - the four of its
-  // thirteen pictures that NO classic record is, measured against every
-  // record of every TEXTURE file at every offset (tools/detailedShipsAssets.mjs);
-  // the nine that are classic records ship as specs over the player's
-  // own (Textures/derived.json), never as pixels.
-  ['vendor/detailed-ships/Textures/1210_10-0.png', "THIRD-PARTY - Detailed Ships 1.0.0 (Cliffworms), carried under the author's readme ('may be distributed ... as long as I am credited'); the author's own 7x15 drawing - a green bottle"],
-  ['vendor/detailed-ships/Textures/1210_11-0.png', "THIRD-PARTY - Detailed Ships 1.0.0 (Cliffworms), carried under the author's readme ('may be distributed ... as long as I am credited'); the author's own 7x15 drawing - a blue bottle"],
-  ['vendor/detailed-ships/Textures/1210_12-0.png', "THIRD-PARTY - Detailed Ships 1.0.0 (Cliffworms), carried under the author's readme ('may be distributed ... as long as I am credited'); the author's own 7x15 drawing - an amber bottle"],
-  ['vendor/detailed-ships/Textures/1230_30-0.png', "THIRD-PARTY - Detailed Ships 1.0.0 (Cliffworms), carried under the author's readme; the Kynareth statue the readme credits to King of Worms and Zoran ('for the deity statues'), credited beside him"],
   // FOEBAR1 (2026-09-17): THE TARGET BAR'S BLADE FACE. Two pictures a
   // friend of Mac's drew for this port and sent through him to be its
   // alternate enemy health bar - a twin-bladed shape with a skull hub,
@@ -768,6 +759,10 @@ const PUBLIC_ALLOWLIST = new Map([
   ['src/assets/egfrags/source/egheroOssuary.fbx', 'OURS - the Ossuary\'s scene, written by tools/egHeroOssuaryScene.mjs from numbers alone; no ARENA2 data, no third-party art'],
   ['src/assets/egfrags/egheroOssuary.law.json', 'OURS - egheroOssuary.fbx\'s law half (its markers, section 11.5\'s record) baked by tools/bakeEgHeroOssuary.mjs; numbers only'],
   ['src/assets/egfrags/egheroOssuary.mesh.json', 'OURS - egheroOssuary.fbx\'s mesh half baked by tools/bakeEgHeroOssuary.mjs; geometry only, its pictures the band\'s painted dress, no ARENA2 data'],
+  // DELVE II (DLV6, bible/03-World/Delve-II.md section 8): the curated blocks' records - numbers and names alone (a base
+  // block's name, Daggerfall's model and flat ids, the places); each block is made of the player's own BLOCKS.BSA at the build
+  ...['crypt-hall', 'mine-gallery', 'desecrated-chapel', 'throne-hall'].map((id) => [`src/assets/delve/${id}.json`,
+    "OURS - a curated block's record (DELVE II DLV6): its base's name, the ids it drops and adds, its anchor; numbers only, no ARENA2 data"]),
   ['src/assets/egfrags/source/egheroMistStair.fbx', 'OURS - the Mist Stair\'s scene, written by tools/egHeroMistStairScene.mjs from numbers alone; no ARENA2 data, no third-party art'],
   ['src/assets/egfrags/egheroMistStair.law.json', 'OURS - egheroMistStair.fbx\'s law half (its markers, section 11.5\'s record) baked by tools/bakeEgHeroMistStair.mjs; numbers only'],
   ['src/assets/egfrags/egheroMistStair.mesh.json', 'OURS - egheroMistStair.fbx\'s mesh half baked by tools/bakeEgHeroMistStair.mjs; geometry only, its pictures the band\'s painted dress, no ARENA2 data'],

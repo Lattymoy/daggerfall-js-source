@@ -2711,10 +2711,16 @@ in `src/firstVisitPins.js`, gitignored:
 `npm install` / `npm ci` write it (`postinstall`, `scripts/firstVisitPins.mjs`),
 so every checkout and CI job has it before lint, the types or a test; every Vite build writes it at its start and bundles
 the pins it computed then (`firstVisitPinsPlugin`, a `vite.config.js` plugin); and the dev server computes the pins for
-each page load (the store asks under a URL of the load's own), so a dev edit is a new key as a deployed update is. A cache
+each page load (each page's HTML drops the pins module it served), so a dev edit is a new key as a deployed update is. A cache
 reads its pin through `firstVisitStore.js firstVisitPin`, which throws when there is none - never a key on undefined. So
 an update that changes a computation refreshes that cache for every player on their next launch, and one that does not
 keeps it.
+
+WEBKIT-TLA (`01-Overview/bugs/Field-Bugs-2026-10-29g.md`): the store imports the pins and never awaits them. It read them
+with a top-level await, and WebKit before Safari 27 resolves a second `import()` of a graph that awaits before it has
+run (WebKit bug 242740): an iPhone before iOS 27 called `bootWorld` before the world chunk had made its classes.
+`test/tree/toplevelawait.test.js` refuses a top-level await in any source module another imports, and the build in any
+chunk another imports (`scripts/noTopLevelAwait.mjs`, AUDIT FB1029g TLA-1).
 
 Each key leads with its scope; writing an answer deletes every other key of its scope
 (`firstVisitStore.js staleKey`, `dataSource.js sweepDerived`), so the store holds one answer a scope and does not grow
@@ -2727,7 +2733,7 @@ the ways' land pieces - answer with what they built without waiting for it (`tes
 |---|---|---|---|---|
 | walks' ground tiles | `world/terrain/groundTilesKept.js` | the pin (BlocksFile, the world-data door, packs, patches, the arena's block, the carriages' layer, and the mods' shipped WorldData, WorldDataPatches and packs); BLOCKS.BSA's stamp; what the door serves blocks by (each block file's mod, pack version, layers, in name order); each block by its name | a change to that code or shipped world data; another BLOCKS.BSA; a mod switched, a pack updated, a layer added | `fv-ground:` - one record |
 | land's pieces | `systems/travel/landPiecesKept.js` | the pin (`routeGround` and the step law); every byte the fold reads (climate, heights, roads, tracks) | a change to the fold; another ground or road network | `fv-pieces:` - one network's |
-| port sites | `world/portSitesKept.js` | the pin (`portSitesOn`, `closeSite` and what they reach); per town, the ground's cells and the sea field at every cell | a change to the placing; a town's ground or water changed | `fv-port-sites:` - one record |
+| port sites | `world/portSitesKept.js` | the pin (`portSitesOn`, `closeSite` and what they reach); per town, the ground's cells, the sea field at every cell and its `PORT_PLACES_NEAR` row's value | a change to the placing; a town's ground or water changed | `fv-port-sites:` - one record |
 | ship builds | `systems/comeSailAway/shipBuildsKept.js` | the pin (the three prefab builders and what they reach); the bake's sha256 and text, the mod prefabs read, the base | a change to a builder; a new bake or mod prefab | `fv-ship:<ship>:` - one a ship |
 | ships' pictures | `world/ships/standInsKept.js` | the pin (the three ships' art and the palette's look); the picture's name; the palette | a change to the painting; another palette | `fv-standin:<name>:` - one a picture |
 | Bay fit | `world/tamriel/bayFitKept.js` | the pin (`fitBayToPicture` and what it reaches); the trace's land and the Bay's land at every pixel | a change to the fit; another picture or another Bay | `fv-bayfit:` - one |

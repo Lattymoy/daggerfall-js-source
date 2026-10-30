@@ -10,8 +10,8 @@
   {
     "name": "CHAIN-SEEN-the-arcs-word-never-handed",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "case 'chain': if (ranged(weapon)) arc(target, (damage * p.share) / 100, p.metres, p.name); break;",
-    "new": "case 'chain': if (ranged(weapon)) arc(target, (damage * p.share) / 100, p.metres); break;",
+    "old": "case 'chain': if (ranged(held)) arc(target, (damage * p.share) / 100, p.metres, p.name); break;",
+    "new": "case 'chain': if (ranged(held)) arc(target, (damage * p.share) / 100, p.metres); break;",
     "tests": ["test/systems/fb1019f_chainseen.test.js"],
     "why": "the arc's number untagged: no word says which power it was"
   },

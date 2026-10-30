@@ -939,8 +939,8 @@
  {
   "name": "GF2-PEERACTS-the-sprite-never-kneels",
   "file": "src/net/remotePlayers.js",
-  "old": "const out = peerKneeling(shown) && !moving && !bundle.mobileUnit.isPlayingOneShot() ? bundle.mobileUnit.heldPose('hurt', -1, yaw, f, viewer) : stepped;",
-  "new": "const out = stepped;",
+  "old": "peerKneeling(shown) && !moving && !bundle.mobileUnit.isPlayingOneShot() ? bundle.mobileUnit.heldPose('hurt', -1, yaw, f, viewer) : stepped;",
+  "new": "stepped;",
   "tests": [
    "test/systems/gf2_peeracts.test.js"
   ]

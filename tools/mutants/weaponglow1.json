@@ -242,8 +242,8 @@
  {
   "name": "WEAPON-GLOW1-a-sheathed-weapon-glows",
   "file": "src/render/renderer.js",
-  "old": "if (r.slot !== slot || r.hidden) continue;",
-  "new": "if (r.slot !== slot) continue;",
+  "old": "if (!inGlowSlot(r, slot) || r.hidden) continue;",
+  "new": "if (!inGlowSlot(r, slot)) continue;",
   "tests": [
    "test/systems/weaponglow1.test.js"
   ]
@@ -269,8 +269,8 @@
  {
   "name": "WEAPON-GLOW1-the-world-pass-glows",
   "file": "src/render/renderer.js",
-  "old": "const glow = !!(mesh.weaponGlow || mesh.offWeaponGlow) && this._spriteDepth > 0 && this._studioDepth",
-  "new": "const glow = !!(mesh.weaponGlow || mesh.offWeaponGlow) && this._studioDepth",
+  "old": "const glow = !!(mesh.weaponGlow || mesh.offWeaponGlow || mesh.handGlow) && this._spriteDepth > 0 && this._studioDepth",
+  "new": "const glow = !!(mesh.weaponGlow || mesh.offWeaponGlow || mesh.handGlow) && this._studioDepth",
   "tests": [
    "test/systems/weaponglow1.test.js"
   ]
@@ -493,8 +493,9 @@
  {
   "name": "WEAPON-GLOW1-every-word-on-the-wire",
   "file": "src/net/wire.js",
-  "old": "export const LOOK_GLOW_RE = /^(?:(?:fire|frost|shock)[123]|arcane2|brand2|edge2)$/;",
-  "new": "export const LOOK_GLOW_RE = /^(fire|frost|shock|arcane|brand|edge)([123])$/;",
+  "old": "export const LOOK_GLOW_RE = /^(?:(?:fire|frost|shock)[123]|arcane2|brand2|edge2|gilded2)$/;",
+  "new": "export const LOOK_GLOW_RE = /^(fire|frost|shock|arcane|brand|edge|gilded)([123])$/;",
+  "note": "Re-aimed by content (GILDED-GLOW): the pattern takes gilded2 too.",
   "tests": [
    "test/systems/weaponglow1.test.js"
   ],

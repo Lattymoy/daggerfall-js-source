@@ -71,6 +71,7 @@ test('a12: ApplyWeapon binds the USED hand - the left hand can finally swing (:7
   // SetMelee (:743-746, :751-754): an empty used hand is bare hands,
   // which weaponTypeForItem already answers Melee for.
   pw.updateHands(KATANA, null);
+  pw.usingRightHand = false;   // PIN MOVED (HAND-FOLLOWS): the change follows the katana - H back to the bare left hand
   assert.equal(pw.applyWeapon(), null, 'an empty left hand is SetMelee');
   assert.equal(weaponTypeForItem(pw.weapon), WEAPON_TYPES.Melee);
 });

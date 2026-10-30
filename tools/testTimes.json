@@ -750,7 +750,6 @@
  "test/systems/dress_standing.test.js": 1033,
  "test/scenes/droppedloot.test.js": 899,
  "test/ui/enhanced/dropsaudit.test.js": 917,
- "test/world/ds1_detailedShips.test.js": 1238,
  "test/render/ds2_cloudsUnderMod.test.js": 405,
  "test/render/dsh1_horizon.test.js": 365,
  "test/combat/duel_combat.test.js": 848,

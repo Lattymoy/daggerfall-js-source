@@ -20,11 +20,12 @@
   {
     "name": "YARD-BLOCK-c-the-pools-drawing-merged-pieces",
     "file": "src/scenes/decor/decorRoom.js",
-    "old": "      if (e.quiet || !e.gpu || e.merged) continue;\n",
-    "new": "      if (e.quiet || !e.gpu) continue;\n",
+    "old": "      if (!e.gpu || e.merged) continue;\n",
+    "new": "      if (!e.gpu) continue;\n",
     "tests": [
       "test/scenes/yardblock.test.js"
-    ]
+    ],
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "YARD-BLOCK-d-the-merge-kept-after-its-piece-went",

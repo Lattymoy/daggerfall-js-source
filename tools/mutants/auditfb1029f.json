@@ -1,0 +1,308 @@
+[
+  {
+    "name": "AUDITFB1029F-A1-delete-keeps-rows",
+    "file": "server-account/src/realm.js",
+    "old": "    db.prepare(`DELETE FROM decor_access WHERE EXISTS (SELECT 1 FROM homes h WHERE h.map_id = decor_access.map_id\n      AND h.building_key = decor_access.building_key AND h.player = ? AND h.char_id = ?)`).bind(playerId, id),\n",
+    "new": "",
+    "tests": [
+      "test/server/restorphans.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFB1029F-A1-claim-keeps-orphans",
+    "file": "server-account/src/homes.js",
+    "old": "accessOrphansCleared(db, claim.mapId, claim.buildingKey), claimStatement(",
+    "new": "claimStatement(",
+    "tests": [
+      "test/server/restorphans.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFB1029F-A4-sale-keeps-rows",
+    "file": "server-account/src/homes.js",
+    "old": "      db.prepare('DELETE FROM decor_access WHERE map_id = ? AND building_key = ?').bind(home.map_id, home.building_key),\n",
+    "new": "",
+    "tests": [
+      "test/server/restorphans.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFB1029F-A1-move-drops-rest",
+    "file": "server-account/src/homes.js",
+    "old": "    db.prepare(\"UPDATE decor_access SET building_key = ? WHERE map_id = ? AND building_key = ? AND kind = 'rest'\").bind(to, mapId, from),\n",
+    "new": "",
+    "tests": [
+      "test/net/arena4b_homes.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFB1029F-A1-move-keeps-old",
+    "file": "server-account/src/homes.js",
+    "old": "    db.prepare('DELETE FROM decor_access WHERE map_id = ? AND building_key = ?').bind(mapId, from),\n",
+    "new": "",
+    "tests": [
+      "test/net/arena4b_homes.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFB1029F-A1-move-takes-orphan",
+    "file": "server-account/src/homes.js",
+    "old": "    accessOrphansCleared(db, mapId, to),   // AUDIT FB1029f A1: what an earlier home there left\n",
+    "new": "",
+    "tests": [
+      "test/net/arena4b_homes.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFB1029F-A5-rest-a-piece",
+    "file": "src/net/decorLaw.js",
+    "old": "!DECOR_ID_RE.test(raw.id) || raw.id === DECOR_REST_ID) return null;",
+    "new": "!DECOR_ID_RE.test(raw.id)) return null;",
+    "tests": [
+      "test/systems/decor/restguest.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFB1029F-A6-asked-again",
+    "file": "src/systems/decor/homeDecorCap.js",
+    "old": "    if (res?.ok === false) refused.add(key);\n",
+    "new": "",
+    "tests": [
+      "test/systems/decor/decorroomy.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFB1029F-D1-toggled",
+    "file": "src/systems/quickslots.js",
+    "old": "  if (hand && landed != null) { if (hand.useHand) hand.useHand(landed); else if (landed !== inUse) hand.switchHand?.(); }",
+    "new": "  if (hand && landed != null && landed !== inUse) hand.switchHand?.();",
+    "tests": [
+      "test/combat/quickslotfollow.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFB1029F-D2-bare-follows",
+    "file": "src/systems/quickslots.js",
+    "old": "    door?.keepHand?.();   // AUDIT FB1029f D2: bare hands asked are bare hands - the hand in use stays, never follows the other\n",
+    "new": "",
+    "tests": [
+      "test/combat/quickslotfollow.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFB1029F-D1-useHand-toggles",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "if (playerWeapon.usingRightHand !== (slot === EQUIP_SLOTS.RightHand)) this.switchHand(); },",
+    "new": "this.switchHand(); },",
+    "tests": [
+      "test/combat/quickslotfollow.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFB1029F-C5-ghost-casts",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "    r.drawMesh?.(e.gpu, e.matrix, texRemap, { noShadow: true });",
+    "new": "    r.drawMesh?.(e.gpu, e.matrix, texRemap);",
+    "tests": [
+      "test/scenes/decorghost.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFB1029F-C5-figure-unseen",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "    if (on && e.batch && decorIsFigure(e.piece)) e.batch.castOnly = false;",
+    "new": "",
+    "tests": [
+      "test/scenes/decorghost.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFB1029F-C2-one-plant-word",
+    "file": "src/systems/decor/decorCatalogue.js",
+    "old": "'Tree' : FLAT_BASE[c.as ?? c.flat[0]] ?? null));",
+    "new": "'Tree' : null));",
+    "tests": [
+      "test/systems/decor/decorkinds.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFB1029F-C3-mod-street-unfiled",
+    "file": "src/systems/decor/decorCatalogue.js",
+    "old": "    const what = plain && c.from !== 'mod' ? decorWhatKind(",
+    "new": "    const what = plain && !MOD_FROM.has(c.from) ? decorWhatKind(",
+    "tests": [
+      "test/systems/decor/decorkinds.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFB1029F-C4-records-unread",
+    "file": "src/systems/decor/decorCatalogue.js",
+    "old": "FLAT_ARCHIVE_KIND[what.flat[0]] ?? FLAT_RECORD_WHAT[what.flat[0]]?.[what.flat[1]] ?? FLAT_WHAT[what.flat[0]] ?? null;",
+    "new": "FLAT_ARCHIVE_KIND[what.flat[0]] ?? FLAT_WHAT[what.flat[0]] ?? null;",
+    "tests": [
+      "test/systems/decor/decorkinds.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFB1029F-C4-pots-tools",
+    "file": "src/systems/decor/decorCatalogue.js",
+    "old": "214: 'tools', 218: 'boxes',",
+    "new": "214: 'tools', 218: 'tools',",
+    "tests": [
+      "test/systems/decor/decorkinds.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFB1029F-C6-ctrl-unread",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "nudgePiece(NUDGE_WAYS[free], e.shiftKey || e.ctrlKey);",
+    "new": "nudgePiece(NUDGE_WAYS[free], e.shiftKey);",
+    "tests": [
+      "test/systems/decor/nudge.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFB1029F-C6-grid-unread",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "snapped ? DECOR_GRID : fine ? DECOR_NUDGE_FINE : DECOR_NUDGE_STEP);",
+    "new": "fine ? DECOR_NUDGE_FINE : DECOR_NUDGE_STEP);",
+    "tests": [
+      "test/systems/decor/nudge.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFB1029F-C7-any-room",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "      if (!here()) return !!res?.ok;\n",
+    "new": "",
+    "tests": [
+      "test/systems/decor/restguest.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFB1029F-C7-busy-held",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "      useBusy = false;   // as cycleUse: a press on a chest while the row is written is not dropped\n",
+    "new": "",
+    "tests": [
+      "test/systems/decor/restguest.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFB1029F-A3-doors-only-hidden",
+    "file": "src/systems/decor/decorInteriorDoors.js",
+    "old": "    for (const r of [...recs]) if (out.has(r.index) ? hide(r.index) : show(r.index)) n += 1;",
+    "new": "    for (const r of [...recs]) if (out.has(r.index) && hide(r.index)) n += 1;",
+    "tests": [
+      "test/scenes/doorkeptdevices.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFB1029F-A3-save-doors-applied",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (interiorHome || _seatHallVisit) _keptHidden = data.hiddenBase ?? []; else",
+    "new": "    if (interiorHome || _seatHallVisit) (_keptHidden = data.hiddenBase ?? [], interiorCtx.base?.roomDoors?.apply?.(data.hiddenBase)); else",
+    "tests": [
+      "test/scenes/doorkeptdevices.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFB1029F-D4-old-pose-kept",
+    "file": "src/combat/playerWeapon.js",
+    "old": "w.handRestored = pose.handKept === true; }",
+    "new": "w.handRestored = true; }",
+    "tests": [
+      "test/combat/handfollows.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFB1029F-D4-pose-unmarked",
+    "file": "src/combat/playerWeapon.js",
+    "old": "usingRightHand: w.usingRightHand, handKept: true } : null);",
+    "new": "usingRightHand: w.usingRightHand } : null);",
+    "tests": [
+      "test/combat/handfollows.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFB1029F-D5-refused-again",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  const at = mayHold(item, to) ? to : [EQUIP_SLOTS.RightHand, EQUIP_SLOTS.LeftHand].find((h) => mayHold(item, h));",
+    "new": "  const at = mayHold(item, to) ? to : null;",
+    "tests": [
+      "test/ui/enhanced/offhanddrop.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFB1029F-B1-every-pair",
+    "file": "src/scenes/homeYards.js",
+    "old": "        if (!(r[a] < o[a + 2] && o[a] < r[a + 2])) continue;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/yardborder.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFB1029F-B1-cuts-uncapped",
+    "file": "src/scenes/homeYards.js",
+    "old": "const all = mid.length <= YARD_BORDER_CUTS_MAX ? [...fixed, ...mid] : fixed;",
+    "new": "const all = [...fixed, ...mid];",
+    "tests": [
+      "test/scenes/yardborder.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFB1029F-B2-memo-unkept",
+    "file": "src/scenes/homeYards.js",
+    "old": "if (edgeMemo.of !== cur || edgeMemo.o !== at) edgeMemo = ",
+    "new": "if (true) edgeMemo = ",
+    "tests": [
+      "test/scenes/yardborder.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFB1029F-B5-near-short",
+    "file": "src/scenes/homeYards.js",
+    "old": "const near = (lines ?? []).filter((r) => reach(r, far));",
+    "new": "const near = (lines ?? []).filter((r) => reach(r, 2 * YARD_MARGIN));",
+    "tests": [
+      "test/scenes/yardborder.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFB1029F-B5-far-at-corners",
+    "file": "src/scenes/homeYards.js",
+    "old": "  const far = Math.sqrt(Math.min(...own.map((r) => Math.max(...corners.map(([x, z]) => gap2([r], x, z))))));",
+    "new": "  const far = Math.sqrt(Math.max(...corners.map(([x, z]) => gap2(own, x, z))));",
+    "tests": [
+      "test/scenes/yardborder.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFB1029F-B6-no-coarser-read",
+    "file": "src/scenes/homeYards.js",
+    "old": "  while (segs.length > DECOR_LOT_MARKS && tol < 4) { tol *= 2; segs = loops.flatMap((runs) => simplifyLoop(runs, tol)); }\n",
+    "new": "",
+    "tests": [
+      "test/scenes/yardborder.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFB1029F-B7-crossing-by-place",
+    "file": "src/scenes/homeYards.js",
+    "old": "if (ax + ((z - az) / (bz - az)) * (bx - ax) > x) crossed.add(line);",
+    "new": "if (ax + ((z - az) / (bz - az)) * (bx - ax) > x) crossed.add(Math.round((ax + ((z - az) / (bz - az)) * (bx - ax)) * 100));",
+    "tests": [
+      "test/world/eavefoot.test.js"
+    ]
+  },
+  {
+    "name": "AUDITFB1029F-B10-cuts-unsnapped",
+    "file": "src/scenes/homeYards.js",
+    "old": "  const snap = (v) => Math.round(v * 100) / 100;",
+    "new": "  const snap = (v) => v;",
+    "tests": [
+      "test/scenes/yardborder.test.js"
+    ]
+  }
+]

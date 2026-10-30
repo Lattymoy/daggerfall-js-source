@@ -26,7 +26,7 @@
 import { setLayoutPinOracle, worldDataVendorCarries, locationReplacementFilename, blockReplacementFilename } from '../formats/worldData/worldDataReplacement.js';
 
 /** The world-data mods that MOVE BUILDINGS in towns - the only ones a pin speaks for. A mod that adds scenery to a
- *  dungeon or a ship's deck (Aquatic Sprites, Detailed Ships) moves no building a save keeps by key. */
+ *  dungeon or a ship's deck moves no building a save keeps by key. */
 export const LAYOUT_MODS = Object.freeze(['beautiful-villages', 'beautiful-cities']);
 
 /**

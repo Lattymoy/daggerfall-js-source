@@ -42,7 +42,7 @@ test('DRAGON5 the item: a Transportation piece of its own template, bound to the
   assert.deepEqual(itemFindings({ ...it, dragonId: 'not-a-tame' }), ['dragon']);
   assert.deepEqual(itemFindings({ ...it, dragonLook: 2 }).includes('dragon') || itemFindings({ ...it, dragonLook: 2 }).includes('field'), true);
   assert.ok(itemFindings({ group: 'Weapons', templateIndex: 0, dragonId: ID }).includes('dragon'));
-  assert.equal(ITEM_LAW_VERSION, 15);
+  assert.equal(ITEM_LAW_VERSION, 16);   // PIN MOVED (GILDED-MAKER): law 16 - the item maker's rows on a Gilded piece lawful (15 on its branch, renumbered past DRAGON5's 15 at the merge)
   assert.equal(dragonMountWellFormed(it), true);
   assert.equal(hasDragon([{ templateIndex: 94 }, it]), true);
   assert.equal(dragonMountOf([it]), it);
@@ -176,7 +176,8 @@ test('DRAGON5 the saddle, one home: both pictures asked once, drawn as wide as t
   assert.equal(drawn.at(-1)?.[0], 'dragon:saddle-1');
   s.draw(canvas);
   assert.equal(drawn.at(-1)?.[0], 'dragon:saddle-0');
-  assert.match(src('src/scenes/staffDragonHost.js'), /const saddle = createDragonSaddle\(\{ renderer, load \}\);/);
+  // PIN MOVED (DRAGON-BLUE): the Admin's ride hands the saddle its look, the Aetherbright's colours (was: `{ renderer, load }`)
+  assert.match(src('src/scenes/staffDragonHost.js'), /const saddle = createDragonSaddle\(\{ renderer, load, look: dragonRideLook \}\);/);
   assert.match(src('src/player/mountRig.js'), /if \(player\.transportMode === TRANSPORT_MODES\.Dragon && !ridePaused\) saddle\.draw\(canvas\);/);
 });
 

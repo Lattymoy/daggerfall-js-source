@@ -32,7 +32,7 @@
   {
     "name": "SOUL-LAW-law-unmoved",
     "file": "src/systems/item/itemLaw.js",
-    "old": "export const ITEM_LAW_VERSION = 15;",
+    "old": "export const ITEM_LAW_VERSION = 16;",
     "new": "export const ITEM_LAW_VERSION = 8;",
     "tests": [
       "test/systems/item/int1_itemlaw.test.js",

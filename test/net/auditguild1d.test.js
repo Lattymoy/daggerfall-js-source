@@ -247,7 +247,7 @@ test('AUDIT GUILD1d A1-A9: members rest (the online bed its own permanence), use
   // home's bed (homeRent.js homeBedIsMine) rides the rest's bag as `homeBed`, its own permanence and its own ownership
   // (restSession.js interiorRestPlace) - and a hall's member is one of its sleepers
   assert.deepEqual([homeBedIsMine({ hall: { name: 'H' }, member: true }, 0), homeBedIsMine({ hall: { name: 'H' }, member: false }, 0), homeBedIsMine({ own: false }, 0)], [true, false, false], 'A1');
-  assert.match(wm, /homeBed: homeBedIsMine\(interiorHome, Math\.floor\(Date\.now\(\) \/ 1000\)\) \|\| !!interiorSeatHall\?\.member,/, 'A1: the host hands it');   // PIN MOVED (SEAT-HALL): and the palace holder's members rest there
+  assert.match(wm, /homeBed: homeBedIsMine\(interiorHome, Math\.floor\(Date\.now\(\) \/ 1000\)\) \|\| !!interiorSeatHall\?\.member(?:,| \|\| \(!!interiorHome && decorMayRest\()/, 'A1: the host hands it');   // PIN MOVED (SEAT-HALL): and the palace holder's members rest there; PIN MOVED (REST-GUEST): a guest its owner named after
   for (const s of ['forge', 'workbench', 'loom']) assert.match(wm, new RegExp(`if \\(hallMemberHere\\(\\) && interiorDecor\\.list\\(\\)\\.some\\(\\(p\\) => p\\?\\.station === '${s}'\\)\\) return \\{ kind: 'home', fee: 0 \\};`), `A2 ${s}`);
   assert.match(wm, /if \(t && hallMemberHere\(\)\) return decorTool\.flying\(\) && !decorTool\.ghost\(\) \? decorBuiltInPlaque\(HALL_CHEST_TITLE, c, true\) : \{ title: HALL_CHEST_TITLE \};/, 'A6');
   assert.equal(HALL_CHEST_TITLE, "The Guild's Chest");
