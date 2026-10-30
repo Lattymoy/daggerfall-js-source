@@ -438,7 +438,7 @@ test('TAMRIEL3 host: the world host traces the two files after the travel art, f
   const block = src.slice(i, src.indexOf('preloadTravelControlArt({', i));
   assert.match(block, /preloadTamrielTrace\(\{ fetchBytes, palette \}\)\.then\(async \(trace\) => \{/);
   assert.match(block, /if \(!trace\) \{ console\.warn\(/, 'a trace of nothing stands down');
-  assert.match(block, /const fit = await keptBayFit\(\{ bayLand: \(x, y\) => !isWaterPixel\(maps\.getClimateIndex\(x, y\), woods\.getHeightMapValue\(x, y\)\), trace \}\);/, 'the Bay\'s land by the one water law');
+  assert.match(block, /const fit = await keptBayFit\(\{ bayLand: \(x, y\) => !isWaterPixel\(filedClimate\(x, y, maps\.getClimateIndex\(x, y\)\), filedHeight\(x, y, woods\.getHeightMapValue\(x, y\)\)\), trace \}\);/, 'the Bay\'s land by the one water law');   // PIN MOVED (AUDIT FOUNDATION II L1): the files as they came
   assert.match(block, /const fitPx = fit \? \{ ox: fit\.ox \* fit\.ppu, oy: fit\.oy \* fit\.ppu, ppu: fit\.ppu \} : null;/, 'picture units to Tamriel pixels');
   assert.match(block, /terrainGen\.setTamriel\(\{ trace, fit: fitPx \}\);/);
   assert.match(block, /StreamingWorldState\.frame = tamrielLand \? tamrielFrameInBay\(\) : null;/, 'the stream\'s frame at the new fit');
