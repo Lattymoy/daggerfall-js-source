@@ -469,8 +469,10 @@ const RECIPES = Object.freeze({
     for (let i = 0, N = n(28); i < N; i++) {
       fx.part(b, { p: [...mid], v: outward(fx, fx.r(2, 6), fx.r(-1, 3)), life: fx.r(0.3, 0.6), s0: 0.014, s1: 0.004, shape: KFX_SHAPE.spark, c0: [0.85, 0.95, 1.0], c1: [0.4, 0.7, 1.0], a0: 1, a1: 0.3, drag: 2, g: 4, streak: 0.04, heat: 0.8 });
     }
-    for (let k = 0; k < 3; k++) {   // the tonal rings, one after another
-      fx.part(b, { p: [at[0], gy + 0.03 + k * 0.01, at[2]], age: -k * 0.18, life: 0.9, s0: w * 0.4, s1: 4 + k * 0.8, shape: KFX_SHAPE.ring, c0: [0.6, 0.9, 1.0], c1: [0.25, 0.55, 1.0], a0: (fx.reduced ? 0.35 : 0.85) * (1 - k * 0.2) });
+    // the tonal rings, one after another - by the body's width as every look's ring (THE VISUAL PASS: a fixed 4 to 5.6 m
+    // ran past a small foe's ground and off the shop's stage)
+    for (let k = 0; k < 3; k++) {
+      fx.part(b, { p: [at[0], gy + 0.03 + k * 0.01, at[2]], age: -k * 0.18, life: 0.9, s0: w * 0.4, s1: w * (2.8 + k * 0.4), shape: KFX_SHAPE.ring, c0: [0.6, 0.9, 1.0], c1: [0.25, 0.55, 1.0], a0: (fx.reduced ? 0.35 : 0.85) * (1 - k * 0.2) });
     }
   },
 

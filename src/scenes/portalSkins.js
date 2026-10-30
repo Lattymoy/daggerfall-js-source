@@ -66,6 +66,9 @@ function runic(/** @type {number} */ k, /** @type {number} */ n, /** @type {numb
     return [...c, 255];
   });
 }
+/** THE DAEDRIC IRON, its dark and its lit (THE VISUAL PASS): read on a dark ground as the Runic Stone's grey is - at the
+ *  near-black it was, its arch vanished at night and its runes showed as stray specks. */
+const IRON_DARK = [34, 22, 27], IRON_LIT = [98, 70, 78];
 /** DAEDRIC STONE: a crimson vortex with a black heart and jagged arms, inside a band of black iron whose runes crawl. */
 function daedric(/** @type {number} */ k, /** @type {number} */ n, /** @type {number} */ w, /** @type {number} */ h) {
   const ph = (k / n) * TAU;
@@ -77,7 +80,7 @@ function daedric(/** @type {number} */ k, /** @type {number} */ n, /** @type {nu
       const lit = runeBand(r, a, 0.87, 0.98, 10, -ph / 3, 5);   // the runes crawl round, a slot a frame
       if (lit) return [255, 96 + 60 * (0.5 + 0.5 * Math.sin(a * 3 + ph)), 30, 255];
       const g = 0.7 + 0.3 * hash(x >> 1, y >> 1, 11);
-      return [30 * g, 18 * g, 20 * g, 255];
+      return [...mixC(IRON_DARK, IRON_LIT, g - 0.4), 255];
     }
     const jag = Math.abs(((a * 3 + r * 8 - ph * 2) / TAU % 1 + 1) % 1 - 0.5) * 2;   // a sawtooth's arms - teeth, not curls
     const arms = clamp01(1 - jag * 1.6), core = clamp01(1 - r / 0.3), flick = 0.85 + 0.15 * Math.sin(a * 7 + ph * 3);
@@ -153,7 +156,7 @@ function arch(/** @type {number} */ k, /** @type {number} */ n, /** @type {numbe
     const g = 0.6 + 0.4 * hash(x >> 1, y >> 1, 17);
     if (vein) return [200 + 55 * pulse, 30 + 40 * pulse, 12, 255];
     const lit = 0.55 + 0.45 * clamp01(1 - dIn / (thick + spike));
-    return [26 * g * lit + 10, 18 * g * lit + 4, 22 * g * lit + 6, 255];
+    return [...mixC(IRON_DARK, IRON_LIT, g * lit), 255];
   });
 }
 /** An Aetheric crystal: an elongated faceted shard, violet and white, a shimmer running up it. */

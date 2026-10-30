@@ -1048,12 +1048,13 @@ export const HELIX_MOTES = 18;
 export const HELIX_HZ = Object.freeze({ turn: 1 / 6, run: 1 / 3, mote: 1 / 5 });
 export const helixRatesWhole = () => Object.values(HELIX_HZ).every((r) => r > 0 && Number.isInteger(Math.round(r * AURA_CLOCK_PERIOD * 1e6) / 1e6));
 /** The two palettes: the aetherium's deep, blue and glow and the brass and its shine (ui/playerBadge.js); the gilded's
- *  brass the polished shine and its shine the Echo of Numidium's gold, `bright` its light's share over the plain's. */
+ *  shine the Echo of Numidium's gold, `bright` its light's share over the plain's. The VISUAL PASS: its brass stays the
+ *  plain's - the pale shine as brass, brightened, summed past white and read less gold than the plain coil. */
 export const HELIX_RGB = Object.freeze({
   deep: Object.freeze(AETHERIUM_DEEP.slice(0, 3)), blue: Object.freeze(AETHERIUM_BLUE.slice(0, 3)), glow: Object.freeze(AETHERIUM_GLOW.slice(0, 3)),
   brass: Object.freeze(DWEMER_BRASS.slice(0, 3)), shine: Object.freeze(DWEMER_SHINE.slice(0, 3)), bright: 1,
 });
-export const GILDED_RGB = Object.freeze({ ...HELIX_RGB, brass: Object.freeze(DWEMER_SHINE.slice(0, 3)), shine: Object.freeze(NUMIDIUM_GOLD.slice(0, 3)), bright: 1.3 });
+export const GILDED_RGB = Object.freeze({ ...HELIX_RGB, shine: Object.freeze(NUMIDIUM_GOLD.slice(0, 3)), bright: 1.3 });
 /** The strand's place round the body at height share `v` and clock `t`, a share of a turn 0..1 - the shader's own
  *  (`fn`Wall); the brass is half a turn from it. Pure. */
 export const helixStrandAt = (v, t) => ((((v * HELIX_TURNS + HELIX_HZ.turn * t) % 1) + 1) % 1);

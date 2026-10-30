@@ -288,6 +288,9 @@ test('STOREFRONT the auras: each its words and its title\'s paint, a look of its
   assert.deepEqual([...DOMINION_RGB.crimson], [...DAEDRIC_CRIMSON.slice(0, 3)]);
   assert.deepEqual([...HELIX_RGB.blue], [...AETHERIUM_BLUE.slice(0, 3)]);
   assert.ok(GILDED_RGB.bright > HELIX_RGB.bright, 'the gilded the brighter');
+  // THE VISUAL PASS: the ribbon's middle as the shader sums it (helixLook) - the gilded's gold, never past white
+  const mid = (/** @type {any} */ p) => p.brass.map((/** @type {number} */ c, /** @type {number} */ i) => (c * 0.55 + p.shine[i] * 0.35) * p.bright);
+  assert.ok(mid(GILDED_RGB)[0] <= 1.05 && mid(GILDED_RGB)[2] < 0.5 * mid(GILDED_RGB)[0], 'the gilded ribbon gold at its middle, not cream');
   assert.equal(new Set(DOMINION_SCRIPT).size, DOMINION_RUNES, 'every letter its own');
   assert.ok(DOMINION_SCRIPT.every((c) => c & 1), 'every letter on its stem');
   for (const k of [16, 17, 18]) {

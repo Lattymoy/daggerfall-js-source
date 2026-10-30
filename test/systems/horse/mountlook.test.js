@@ -9,7 +9,7 @@ import { PNG } from 'pngjs';
 
 import {
   recolorHorse, recolorHorseTexels, horseLookCode, horseLookOfCode, withMountLook, wireHorseLook, HORSE_MOUNTS, HORSE_LOOK_CODE_MAX, HORSE_LOOK_WORN_MAX,
-  pictureHide, isCoatPixel, POINT_ABOVE, POINT_SAT, POINT_VAL, POINT_BELLY,
+  pictureHide, isCoatPixel, isSpeckPixel, POINT_ABOVE, POINT_SAT, POINT_VAL, POINT_BELLY,
 } from '../../../src/systems/horse/horseCoats.js';
 import { GHOST_LEGS, FIRE_LEGS, HEART_UP } from '../../../src/systems/horse/mountPaint.js';
 import { MOUNT_LOOKS } from '../../../src/net/effectLaw.js';
@@ -67,8 +67,16 @@ test('AUDIT-STOREFRONT the dye: each look its own ramp by the art\'s light and i
   for (const m of MOUNT_LOOKS) {
     for (const i of movedOff(img, hidden, looks[m], plain)) {
       const [h, s, v] = hsv(...src(img, i)), down = (i - (i % W)) / W - hide.r0;
-      assert.ok(s < POINT_SAT || (down > belly && isCoatPixel(...src(img, i), false)), `${m}: ${i} (h ${h.toFixed(0)}, s ${s.toFixed(2)}, v ${v.toFixed(2)}) is no point - the tack never moves`);
+      assert.ok(s < POINT_SAT || (down > belly && isCoatPixel(...src(img, i), false)) || isSpeckPixel(...src(img, i)), `${m}: ${i} (h ${h.toFixed(0)}, s ${s.toFixed(2)}, v ${v.toFixed(2)}) is no point - the tack never moves`);
     }
+  }
+  // THE VISUAL PASS: the art's rose sheen on the hooves and the poll is the look's in every look - none left the bay's pink
+  const rose = [];
+  for (let i = 0; i < W * img.height; i++) if (img.colors[i * 4 + 3] && !hidden.has(i) && isSpeckPixel(...src(img, i))) rose.push(i);
+  assert.ok(rose.length >= 12, `the side view's sheen (${rose.length})`);
+  for (const m of MOUNT_LOOKS) for (const i of rose) {
+    const c = looks[m].colors, o = i * 4, pink = isSpeckPixel(c[o], c[o + 1], c[o + 2]) && hsv(c[o], c[o + 1], c[o + 2])[2] > 0.4;   // the obsidian's dark is purple-grey
+    assert.ok(!c[o + 3] || !pink, `${m}: the sheen at ${i % W},${Math.floor(i / W)} left rose (${[...c.slice(o, o + 3)]})`);
   }
   const of = (m, at) => at.map((i) => hsv(...looks[m].colors.slice(i * 4, i * 4 + 3)));
   const mean = (a, k) => a.reduce((t, c) => t + c[k], 0) / a.length;

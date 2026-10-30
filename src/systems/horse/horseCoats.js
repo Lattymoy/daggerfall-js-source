@@ -515,8 +515,32 @@ function pointsOf(src, w, h, hide, tack, down, hideH, spare) {
     }
     for (const i of shine) { seen[i] = 1; out.push(i); }
   }
+  // THE VISUAL PASS: the art's rose sheen on the hooves and the poll is neither hide nor point, so a look left it the
+  // bay's own (pink under a ghost's dissolved hooves). Taken with the points, grown from the horse: a speck touching it
+  // with POINT_SPECK neighbours the horse's, sheen or the toe's grey. A grey itself stays the shine's rule's (a rider's
+  // steel beside a mane).
+  const sheen = new Uint8Array(n);   // 1 a speck of sheen, 2 a grey it may lean on
+  for (let i = 0; i < n; i++) {
+    const o = i * 4;
+    if (seen[i] || horse[i] === 2 || !src[o + 3] || spare?.[i]) continue;
+    if (isSpeckPixel(src[o], src[o + 1], src[o + 2])) sheen[i] = 1; else if (hsv(src[o], src[o + 1], src[o + 2])[1] < POINT_SAT) sheen[i] = 2;
+  }
+  for (let pass = 0; pass < 4; pass++) {
+    const specks = [];
+    for (let i = 0; i < n; i++) {
+      if (sheen[i] !== 1 || seen[i]) continue;
+      let k = 0, s = 0;
+      near(i, (q) => { if (seen[q] || horse[q] === 2) k++; else if (sheen[q]) s++; });
+      if (k >= 1 && k + s >= POINT_SPECK) specks.push(i);
+    }
+    for (const i of specks) { seen[i] = 1; out.push(i); }
+  }
   return out;
 }
+/** THE VISUAL PASS: how many of a speck's eight neighbours are the horse's or sheen for it to be taken with the points. */
+export const POINT_SPECK = 3;
+/** The rose sheen the art paints the horse's hooves and poll with: hue 290-345 degrees, coloured. */
+export const isSpeckPixel = (/** @type {number} */ r, /** @type {number} */ g, /** @type {number} */ b) => { const H = hsv(r, g, b); return H[0] >= 290 && H[0] < 345 && H[1] >= 0.2; };
 /** AUDIT-STOREFRONT: how many of a grey pixel's eight neighbours are points for it to be a strand's shine among them. */
 export const POINT_SHINE = 5;
 /** AUDIT-STOREFRONT: how many of a point's eight neighbours are the horse's - a mane's, a tail's or an outline's are most;

@@ -55,6 +55,22 @@ test('STOREFRONT the skins\' art: a skin each portal skin of the law, each frame
   assert.deepEqual(PORTAL_SKIN.daedric.dress.map((d) => d.place), ['arch']);
   assert.deepEqual(PORTAL_SKIN.aetheric.dress.map((d) => d.place), ['orbit']);
   assert.deepEqual(PORTAL_SKIN.brass.dress.map((d) => d.place), ['rim']);
+  // THE VISUAL PASS: the Daedric iron reads on a dark ground - its arch's and its rim's unlit pixels (not a vein's or a
+  // rune's fire) as light as the Runic Stone's darkest grey; near black, the arch vanished at night
+  const ironLight = (/** @type {any} */ f, /** @type {(i: number) => boolean} */ keep) => {
+    let sum = 0, n = 0;
+    for (let i = 0; i < f.width * f.height; i++) {
+      const o = i * 4, [r, g, b, a] = [f.colors[o], f.colors[o + 1], f.colors[o + 2], f.colors[o + 3]];
+      if (!a || r > 140 || !keep(i)) continue;   // the vein's and the runes' fire are bright red and orange
+      sum += Math.max(r, g, b); n++;
+    }
+    return sum / Math.max(1, n);
+  };
+  const arch = PORTAL_SKIN.daedric.dress[0], archF = arch.paint(0, arch.frames, arch.tex.w, arch.tex.h);
+  assert.ok(ironLight(archF, () => true) >= 45, `the arch's iron at ${ironLight(archF, () => true).toFixed(0)}`);
+  const { w: VW, h: VH } = PORTAL_SKIN.daedric.tex, vortex = PORTAL_SKIN.daedric.paint(0, PORTAL_SKIN.daedric.frames, VW, VH);
+  const rim = (/** @type {number} */ i) => Math.hypot(((i % VW) + 0.5) / VW * 2 - 1, (Math.floor(i / VW) + 0.5) / VH * 2 - 1) > 0.86;
+  assert.ok(ironLight(vortex, rim) >= 45, `the vortex's iron rim at ${ironLight(vortex, rim).toFixed(0)}`);
 });
 
 test('STOREFRONT where the pieces stand: the arch thrusts up out of the ground as the portal opens and sinks as it seals; the shards rise off the ground and gather into a ring about it; the cogs sit on its rim in its plane, each turning the other way from the last (mutants: the arch standing before it opens; the cogs all one way)', () => {
