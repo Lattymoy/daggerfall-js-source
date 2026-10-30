@@ -148,6 +148,22 @@ export async function withdrawGuildLogo(ctx, player, { character } = {}) {
   return (await endLogoReview(db, row.id, 'withdrawn', displayName(player), nowS)) ? { ok: true, withdrawn: row.id } : { error: 'logo-none' };
 }
 
+/** THE LOGO TAKEN DOWN: `{ character }` - the guildmaster's. The guild wears its own device again; the picture is
+ *  served no more. Its fee was spent when it was approved. */
+export async function clearGuildLogo(ctx, player, { character } = {}) {
+  const { db, nowS } = ctx;
+  const a = await guildActorOf(db, player, character);
+  if (a.error) return a;
+  if (!guildMay(Number(a.me.rank), 'logo')) return { error: 'guild-rank' };
+  const g = await db.prepare('SELECT logo FROM guilds WHERE id = ?').bind(a.me.guild_id).first();
+  if (!g?.logo) return { error: 'logo-none' };
+  await db.batch([
+    db.prepare("UPDATE guild_logos SET state = 'withdrawn', decided_at = ?, decided_by = ? WHERE id = ? AND guild_id = ? AND state = 'approved'").bind(nowS, displayName(player), g.logo, a.me.guild_id),
+    db.prepare('UPDATE guilds SET logo = NULL WHERE id = ? AND logo = ?').bind(a.me.guild_id, g.logo),
+  ]);
+  return { ok: true, cleared: g.logo };
+}
+
 /** A LOGO'S PICTURE, for anyone: the bytes and their type while it is under review or approved, else none. */
 export async function guildLogoBytes({ db, bucket }, id) {
   if (!GUILD_LOGO_ID_RE.test(String(id))) return { error: 'no-logo' };

@@ -405,6 +405,8 @@ export class GuildBook {
   submitLogo(image) { return this._silver('logo', String(image).slice(0, 64) + String(image).length, (c, rid) => this.door.logo(c, image, rid)); }
   /** GUILD-LOGO: the review under way withdrawn, its fee home. */
   withdrawLogo() { return this._act((c) => this.door.logoWithdraw(c)); }
+  /** GUILD-LOGO: the approved logo taken down - the guild's own device again. */
+  clearLogo() { return this._act((c) => this.door.logoClear(c)); }
 
   /** GUILD2b: THE VAULT READ - every slot's piece, the lines, this member's standing. Not an act: nothing moves. */
   async readVault() {

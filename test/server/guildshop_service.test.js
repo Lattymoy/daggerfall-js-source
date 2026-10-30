@@ -232,6 +232,12 @@ test('GUILD-LOGO a review: the guildmaster sends a square picture, its fee held 
   assert.equal(s.raw.prepare("SELECT COUNT(*) AS n FROM marks_ledger WHERE kind IN ('logo-fee', 'logo-return')").get().n, 1);
   assert.equal((await s.get(`/v1/guilds/logo/${id}`)).headers.get('cache-control'), 'public, max-age=86400', 'approved: kept a day');
   assert.equal((await s.call('/v1/guilds/mine', { character: s.gm.character }, s.gm.secret)).body.guild.logo, id);
+  // taken down: the guild's own device again, the picture served no more
+  assert.deepEqual((await s.call('/v1/guilds/logo/clear', { character: s.member.character }, s.member.secret)).body, { error: 'guild-rank' });
+  assert.deepEqual((await s.call('/v1/guilds/logo/clear', { character: s.gm.character }, s.gm.secret)).body, { ok: true, cleared: id });
+  assert.equal((await s.call('/v1/guilds/mine', { character: s.gm.character }, s.gm.secret)).body.guild.logo, null);
+  assert.equal((await s.get(`/v1/guilds/logo/${id}`)).status, 404);
+  assert.deepEqual((await s.call('/v1/guilds/logo/clear', { character: s.gm.character }, s.gm.secret)).body, { error: 'logo-none' });
 });
 
 test('GUILD-LOGO turned down or withdrawn: the fee home and the guild\'s arms unchanged; a review under way holds the guild from going (mutants: the return; the withdrawal\'s rank; the hold)', async () => {

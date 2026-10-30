@@ -2269,6 +2269,7 @@ export function accountGuilds({ fetch, storage }) {
     arms: (tags) => post('/v1/guilds/arms', { tags }),
     logo: (character, image, rid) => post('/v1/guilds/logo', { character, image, rid }),
     logoWithdraw: (character) => post('/v1/guilds/logo/withdraw', { character }),
+    logoClear: (character) => post('/v1/guilds/logo/clear', { character }),
     logoUrl: (id) => guildLogoUrl(serviceBase(storage), id),   // GUILD-LOGO: where a logo's picture is served
     vault: (character) => post('/v1/guilds/vault', { character }),
     vaultPut: ({ character, realm, pick, item, count }) => post('/v1/guilds/vault/put', { character, realm, pick, item, count }),

@@ -56,6 +56,9 @@ import {
 } from '../net/guild/guildLaw.js';   // GUILD1b: the Guild tab's rules are the service's
 import { GUILD_RENAME_SILVER } from '../net/guild/guildShopLaw.js';   // GUILD2a, GUILD-SHOP: a new name, for silver
 import { guildWareName } from './guild/guildShopText.js';   // GUILD-SHOP: a ware's name in a silver line
+import { guildShopNodes } from './guild/guildShopPage.js';   // GUILD-SHOP: the Shop page
+import { guildLogoNodes } from './guild/guildLogoPage.js';   // GUILD-LOGO: the Arms page's logo card
+import { GUILD_WINDOW_CSS, guildCrestNode, guildFieldHex, guildNavGroupAt, guildNavGroupName } from './guild/guildWindowLook.js';   // GUILD-SHOP: the window's look
 import { VAULT_RANK_DEFAULTS, VAULT_LIMIT_CHOICES, GUILD_VAULT_SLOTS, vaultStandingText, vaultMayTake, vaultMayPut } from '../net/guild/guildVaultLaw.js';   // GUILD2b: the vault
 import { tradeRefusal } from '../systems/tradePack.js';   // GUILD2b: what may leave a pack, for the vault as for a trade
 import { isLocked } from '../systems/item/itemLock.js';   // AUDIT2 GUILD2 U4: a locked piece stays in the pack
@@ -181,7 +184,8 @@ export const guildPageWords = () => ({
   treasury: t('social.guild.page.treasury', 'Gold and silver, and their ledgers'),
   vault: t('social.guild.page.vault', 'The pieces the guild keeps'),
   stores: t('social.guild.page.stores', 'Materials, and the writ budget'),
-  arms: t('social.guild.page.arms', 'The banner, the shield and the tag'),
+  shop: t('social.guild.page.shop', 'Guild wares and hall furniture, for silver'),
+  arms: t('social.guild.page.arms', 'The banner, the shield, the logo and the tag'),
   settings: t('social.guild.page.settings', 'A new name, the rank names, and leaving'),
 });
 /** GUILD-WINDOW: how many of a guild's members are online now, as the header's Members tile says it beneath its count -
@@ -199,7 +203,7 @@ export const GUILD_SMALL_QUERY = '(max-width: 760px), (max-height: 520px)';
 export const guildPageNames = () => ({
   overview: t('social.guild.name.overview', 'Overview'), members: t('social.guild.name.members', 'Members'),
   treasury: t('social.guild.name.treasury', 'Treasury'), vault: t('social.guild.name.vault', 'Vault'),
-  stores: t('social.guild.name.stores', 'Stores'), arms: t('social.guild.name.arms', 'Arms'),
+  stores: t('social.guild.name.stores', 'Stores'), shop: t('social.guild.name.shop', 'Shop'), arms: t('social.guild.name.arms', 'Arms'),
   settings: t('social.guild.name.settings', 'Settings'),
 });
 /** GUILD3c: the Settings page's list of what still holds a guild that would go - its heading. */
@@ -672,7 +676,7 @@ textarea.dfsocial-field { resize: vertical; min-height: 120px; line-height: 1.4;
   ${PIXEL_FONT_CSS} color: var(--bone, #e9e4d9); }
 .dfsocial-toast[data-up="1"] { display: flex; }
 .dfsocial-toast .dfsocial-btn { pointer-events: auto; }
-`;
+${GUILD_WINDOW_CSS}`;
 
 /** The sheet, once. */
 export function injectSocialStyle(doc = document) {
@@ -838,7 +842,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
   // AUDIT 31 H2: and the guild Stores read again at each look - they move while the tab is shut
   // AUDIT GUILD2 M2: and the vault read again at each look - read once a session, a piece another member took stood with
   // its Take until the panel was reloaded
-  const lookAtGuild = () => { guildUi.storesAsked = false; guildUi.vaultAsked = false; if (guild?.stale?.()) guild.refresh(); };
+  const lookAtGuild = () => { guildUi.storesAsked = false; guildUi.vaultAsked = false; guildUi.shopAsked = false; if (guild?.stale?.()) guild.refresh(); };
 
   /** One act out. A refusal that is the RATE GATE's (`send` answered false) is not the player's fault and not the
    *  row's: the button stays as it was and the note says so, because the act was right and the moment was not. */
@@ -1523,6 +1527,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
   const guildPagesOf = (g) => [
     ['overview', 'Overview'], ['members', 'Members'], ['treasury', 'Treasury'], ['vault', 'Vault'],
     ...(g.profStores?.writs && g.profStores.open?.() === true ? [['stores', 'Stores']] : []),
+    ...(g.readShop ? [['shop', 'Shop']] : []),   // GUILD-SHOP: where the book reads one
     ['arms', 'Arms'], ['settings', 'Settings'],
   ];
   /** Our own drawing as a picture - never markup (SOC3). */
@@ -1547,7 +1552,9 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
    *  again on the live pass, as each row's dot is), the vault, and the hall. */
   const guildHead = (g, v, me) => {
     const head = el('div', 'dfsocial-letterhead dfsocial-guildhead');
-    head.append(svgPicture(bannerSvg(v.heraldry, { width: 32 }), 32, 96, v.heraldry ? heraldryText(v.heraldry) : 'An undrawn banner'));
+    // GUILD-SHOP: the crest (its logo, or its shield on a ring) and the head washed in its field; the arms in words under the name
+    head.style?.setProperty?.('--dfguild-field', guildFieldHex(v.heraldry));
+    head.append(guildCrestNode(doc, svgPicture, v, v.heraldry ? heraldryText(v.heraldry) : 'An undrawn banner'));
     const who = el('div', 'dfsocial-who');
     const stats = el('div', 'dfguild-stats');
     const stat = (label, value, sub = null) => {
@@ -1562,7 +1569,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
     stat(t('social.guild.stat.members', 'Members'), `${v.members.length}/${GUILD_MEMBERS_MAX}`, () => guildOnlineText(g.guild?.members ?? v.members, g.now()));
     stat(t('social.guild.stat.vault', 'Vault'), `${v.vault?.used ?? 0}/${v.vault?.max ?? GUILD_VAULT_SLOTS}`);
     stat(t('social.guild.stat.hall', 'Hall'), v.hall ? REGION_NAMES[v.hall.region] ?? t('social.guild.stat.bay', 'Iliac Bay') : t('social.guild.stat.noHall', 'None'));
-    who.append(el('div', 'dfsocial-subject', `${v.name} [${v.tag}]`), stats);
+    who.append(el('div', 'dfsocial-subject', `${v.name} [${v.tag}]`), el('div', 'dfguild-motto', v.heraldry ? heraldryText(v.heraldry) : GUILD_HERALDRY_NONE_TEXT), stats);
     head.append(who);
     return head;
   };
@@ -1586,7 +1593,11 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
     const counts = { members: `${v.members.length}/${GUILD_MEMBERS_MAX}`, vault: `${v.vault?.used ?? 0}/${v.vault?.max ?? GUILD_VAULT_SLOTS}` };
     const words = guildPageWords();
     const names = guildPageNames();
+    const shown = guildPagesOf(g).map(([id]) => id);
     for (const [id, label] of guildPagesOf(g)) {
+      // GUILD-SHOP: each group's name over its first page (the column's alone - a row across shows none)
+      const group = guildNavGroupAt(id, shown);
+      if (group) { const n = el('div', 'dfguild-navgroup', guildNavGroupName(group)); n.setAttribute('role', 'presentation'); strip.append(n); }
       const b = el('button', `dfsocial-subtab${id === page ? ' active' : ''}`);
       const top = el('span', 'dfguild-navtop');
       top.append(el('span', 'dfguild-navlabel', names[id] ?? label), ...(counts[id] ? [el('span', 'dfguild-navcount', counts[id])] : []));
@@ -1599,6 +1610,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
         if (guildUi.page === id) return;
         guildUi.page = id; guildUi.arm = null;
         if (id === 'vault') guildUi.vaultAsked = false;   // AUDIT GUILD2 M2: the vault read again at each turn to its page
+        if (id === 'shop') guildUi.shopAsked = false;   // GUILD-SHOP: and the shop
         if (id === 'settings') guild?.refresh?.();   // AUDIT GUILD3 C8: what holds the guild read again at each turn to its page - a hold cleared elsewhere (a battle fought, a writ withdrawn by an Officer) no longer waits on the tab
         ui++; if (open) repaint();
         // AUDIT2 GUILD2 U9: the keyboard's focus on the page turned to - the strip is drawn again, and the focus fell to
@@ -1613,8 +1625,15 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
   /** OVERVIEW: the arms in words, the hall, and where the reader stands at the vault. */
   const guildOverviewNodes = (g, v, me) => {
     const out = [el('div', 'dfsocial-sec', 'The guild')];
-    out.push(el('div', 'dfsocial-note', v.heraldry ? heraldryText(v.heraldry) : GUILD_HERALDRY_NONE_TEXT));
+    // GUILD-SHOP: the arms in words stand in the head now; the guild's age, and the way to its Shop
+    if (Number(v.foundedAt) > 0) out.push(el('div', 'dfsocial-note', t('social.guild.founded', 'Founded {date}.', { date: new Date(Number(v.foundedAt) * 1000).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) })));
     if (v.vault?.me) out.push(el('div', 'dfsocial-note', `At the vault: ${vaultStandingText(v.vault.me)}.`));
+    if (g.readShop) {
+      out.push(el('div', 'dfsocial-note', t('social.guild.shopNote', 'Hall furniture, the Insignia Armlet, the Guild Crest and the Guild Sailcloth are for sale in the Shop, for silver.')));
+      const acts = el('div', 'dfsocial-acts');
+      acts.append(btn(t('social.guild.shopOpen', 'Open the Shop'), { run: () => stripBtns.get('shop')?.turn?.() }));
+      out.push(acts);
+    }
     out.push(...guildHallNodes(g, v, me));
     out.push(...guildCastleNodes(g, v, me));   // DOMAIN2: the region's castle, beside the hall
     out.push(el('div', 'dfsocial-sec', 'Elsewhere'), el('div', 'dfsocial-empty', GUILD_ELSEWHERE_TEXT));   // GUILD3c: where the rest is run
@@ -2117,6 +2136,11 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
     return out;
   };
 
+  /** GUILD-SHOP: the window's kit, for a page drawn in a module of its own (ui/guild/guildShopPage.js, guildLogoPage.js). */
+  const guildKit = () => ({
+    el, btn, doc, picture: svgPicture, act: guildDo, arm, armed, draft: guildUi.draft, state: guildUi,
+    word: (e) => guildWordText(e, null, Math.floor(social.now() / 1000)), redraw: () => { ui++; if (open) repaint(); },
+  });
   /** In a guild: its header, its page strip, and the page up. GUILD-WINDOW: the strip a column beside the page, and the
    *  page in cards in a column of its own that scrolls under the header. */
   const guildMemberBody = (g, v) => {
@@ -2128,7 +2152,8 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
     else if (page === 'treasury') out.push(...guildTreasuryNodes(g, v, me));
     else if (page === 'vault') out.push(...guildVaultNodes(g, v, me));
     else if (page === 'stores') out.push(...guildStoresNodes(g, g.profStores, me));   // PROF6 (Professions-Arc 7, 28)
-    else if (page === 'arms') out.push(...guildArmsNodes(g, v, me));
+    else if (page === 'shop') out.push(...guildShopNodes(guildKit(), g, v));   // GUILD-SHOP
+    else if (page === 'arms') out.push(...guildLogoNodes(guildKit(), g, v, guildMay(me, 'logo')), ...guildArmsNodes(g, v, me));   // GUILD-LOGO: its logo, then the arms drawn
     else if (page === 'settings') out.push(...guildSettingsNodes(g, v, me));
     else out.push(...guildOverviewNodes(g, v, me));
     const main = el('div', 'dfguild-main');

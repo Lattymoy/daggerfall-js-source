@@ -547,7 +547,7 @@ export const ROUTES = new Set([
   '/v1/guilds/rename', '/v1/guilds/vault', '/v1/guilds/vault/put', '/v1/guilds/vault/take', '/v1/guilds/vault/grant',
   // GUILD-SHOP (bible/11-Multiplayer/Guild-Shop.md): the guild shop read and a ware bought in silver (guildShop.js), every
   // guild's arms by its tag (any session's), and a guild's own logo sent for review and withdrawn (guildLogos.js)
-  '/v1/guilds/shop', '/v1/guilds/shop/buy', '/v1/guilds/arms', '/v1/guilds/logo', '/v1/guilds/logo/withdraw',
+  '/v1/guilds/shop', '/v1/guilds/shop/buy', '/v1/guilds/arms', '/v1/guilds/logo', '/v1/guilds/logo/withdraw', '/v1/guilds/logo/clear',
   // SEAT1a: the seats' witnessed registry (townSeats.js) - the confirmed seats, a seat witnessed, a developer's strike
   '/v1/seats/list', '/v1/seats/witness', '/v1/seats/strike',
   // TOWN-ECON TE2 (townEcon.js): the towns' players' shares, a town witnessed, the Watch's ticks walked in a town

@@ -372,7 +372,7 @@ import { hiddenToken, takeHiddenSeen } from './staffHidden.js';   // STAFF-PANEL
 import { HIDDEN_SEEN_PATH, HIDDEN_SEEN_MAX_BYTES, HIDDEN_SEEN_SIG_HEADER } from '../../src/net/hiddenSeen.js';
 import { discordSigned, discordInteraction, DISCORD_BODY_MAX } from './discord.js';
 import { guildShopOf, buyGuildWare, guildArmsOf } from './guildShop.js';   // GUILD-SHOP: the guild shop, in silver; every guild's arms by its tag
-import { submitGuildLogo, withdrawGuildLogo, guildLogoBytes } from './guildLogos.js';   // GUILD-LOGO: a guild's own logo, reviewed on Discord
+import { submitGuildLogo, withdrawGuildLogo, clearGuildLogo, guildLogoBytes } from './guildLogos.js';   // GUILD-LOGO: a guild's own logo, reviewed on Discord
 import { GUILD_LOGO_BODY_MAX, guildLogoPathOf } from '../../src/net/guild/guildLogoLaw.js';   // SAFE8: the moderators' queue in Discord
 import { FEED_MAX_BYTES, FEED_SIG_HEADER } from '../../src/net/safety/chatFeed.js';   // SAFE5: the relay's feed of public lines
 import { heartbeat } from './heartbeat.js';   // SCALE4c: one request for a tab's three clocks
@@ -2007,7 +2007,7 @@ const service = {
           // unsettled bought a crown that Turning was about to lapse, and lost half its price at once)
           '/v1/guilds/castle/buy': castleAct(buyCastle), '/v1/guilds/castle/sell': castleAct(sellCastle),
           // GUILD-SHOP (bible/11-Multiplayer/Guild-Shop.md): the shop and a ware bought in silver; a logo sent for review and withdrawn
-          '/v1/guilds/shop': guildShopOf, '/v1/guilds/shop/buy': buyGuildWare, '/v1/guilds/logo': submitGuildLogo, '/v1/guilds/logo/withdraw': withdrawGuildLogo,
+          '/v1/guilds/shop': guildShopOf, '/v1/guilds/shop/buy': buyGuildWare, '/v1/guilds/logo': submitGuildLogo, '/v1/guilds/logo/withdraw': withdrawGuildLogo, '/v1/guilds/logo/clear': clearGuildLogo,
         }[path];
         if (!act) return no('not-found', 404, origin);
         const r = await act({ ...ctx, env, bucket: env.SAVES, self: url.origin }, who.player, body);   // GUILD-LOGO: `self` the service's own origin, a logo's address; REALM P2.2: a realm character's record is in R2; AUDIT 28 M5: the switch says whether the Marks show

@@ -302,8 +302,9 @@ async function tab(guild, opts = {}, page = null) {
 test('GUILD2 the tab in pages: the guild\'s header over every page - its banner, name and tag, the reader\'s rank and the treasury - and a strip of pages, the guild Stores among them only where the professions are this account\'s; a page the guild does not show opens the Overview; the focus follows the page turned to (AUDIT2 U9) (mutants: the strip lost; the Stores page offline; the focus dropped)', async () => {
   const t = await tab(view());
   const strip = find(t.panel.root, 'dfsocial-subtab');
-  assert.deepEqual(strip.map((b) => b.dataset.page), ['overview', 'members', 'treasury', 'vault', 'arms', 'settings']);
-  assert.deepEqual(strip.map((b) => b.attrs['aria-selected']), ['true', 'false', 'false', 'false', 'false', 'false']);
+  // PIN MOVED: GUILD-SHOP (Guild-Shop.md) - the Shop page, where the book reads one, among the guild's wealth
+  assert.deepEqual(strip.map((b) => b.dataset.page), ['overview', 'members', 'treasury', 'vault', 'shop', 'arms', 'settings']);
+  assert.deepEqual(strip.map((b) => b.attrs['aria-selected']), ['true', 'false', 'false', 'false', 'false', 'false', 'false']);
   const all = texts(t.panel.root);
   assert.ok(all.includes('The Hand [HND]'));
   // PIN MOVED: GUILD-WINDOW (Guild-Overhaul.md) - GUILD1b's two lines are the window's tiles, each number under its name
