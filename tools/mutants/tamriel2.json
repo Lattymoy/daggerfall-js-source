@@ -115,8 +115,8 @@
   {
     "name": "TAMRIEL2-the-climate-read-ignores-the-bay",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "return (x, y) => (inBay(x, y) ? bayClimateIndex(x, y) : tamrielClimateAt(x, y));",
-    "new": "return (x, y) => tamrielClimateAt(x, y);",
+    "old": "return (x, y) => (inBay(x, y) ? bayClimateIndex(x, y) : landLayer().climateAt(x, y) ?? tamrielClimateAt(x, y));",
+    "new": "return (x, y) => landLayer().climateAt(x, y) ?? tamrielClimateAt(x, y);",
     "tests": [
       "test/world/tamriel2.test.js"
     ]

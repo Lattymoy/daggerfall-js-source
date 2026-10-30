@@ -7,7 +7,6 @@
 // ask them first (world/tamriel/tamrielGround.js). Ours: DFU has no land edits.
 import LAND from './landEdits.json' with { type: 'json' };
 import { worldPixelKey, inWorldGrid } from '../worldWide/worldGrid.js';
-import { worldPixelOk } from '../../net/wire.js';
 import { inBay } from '../tamriel/tamrielFrame.js';
 import { CLIMATES } from '../../formats/mapsTables.js';
 import { WoodsFile, MAP_WIDTH } from '../../formats/woodsFile.js';
@@ -28,7 +27,7 @@ export function landRowProblems(r) {
   if (!r || typeof r !== 'object') return ['not a row'];
   const out = [], w = r.w ?? 1, h = r.h ?? 1;
   const side = (v) => Number.isSafeInteger(v) && v >= 1 && v <= LAND_ROW_SIDE_MAX;
-  if (!worldPixelOk(r.x) || !worldPixelOk(r.y) || !inWorldGrid(r.x, r.y)) out.push('pixel');
+  if (!inWorldGrid(r.x, r.y)) out.push('pixel');   // whole pixels of the world's grid (the terrain worker reads this module: no net/ import)
   else if (!side(w) || !side(h) || !inWorldGrid(r.x + w - 1, r.y + h - 1)) out.push('size');
   if (r.height !== undefined && !(Number.isSafeInteger(r.height) && r.height >= 0 && r.height <= 255 && (r.height <= WATER_LINE || r.height >= LAND_LEAST))) out.push('height');
   if (r.climate !== undefined && !CLIMATE_BYTES.has(r.climate)) out.push('climate');
