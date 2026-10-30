@@ -44,7 +44,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { WILD_REMAINS_ITEMS_MAX } from '../wire.js';
 import { WILD_TEXT } from '../../systems/wild/wildZone.js';
-import { goldStack, isGoldPieces } from '../../systems/inventory.js';
+import { goldStack, isGoldPieces, addCarryClaims, pieceKg } from '../../systems/inventory.js';   // CARRY-CLAIMS: a take in flight weighs on the carry gate
 import { GOLD_INT_MAX } from '../../systems/item/itemLaw.js';
 
 /** The pile's icon: the treasure flat a dropped pile wears (archive 216's sack, randomTreasureIconIndices' first). */
@@ -91,9 +91,27 @@ export function createWildRemains({ send, pool, toScene, mine, pack, mint, addIt
   let poolNow = null;
   /** @type {Map<string, number[]>} */
   const asked = new Map();    // `${r}:${i}` -> the counts of my takes in flight, in the order asked (the room answers in order)
-  const ask = (/** @type {string} */ key, /** @type {number} */ n) => { const l = asked.get(key); if (l) l.push(n); else asked.set(key, [n]); };
+  /** @type {Map<string, number[]>} */
+  const askedKg = new Map();  // CARRY-CLAIMS: `${r}:${i}` -> what each take in flight weighs, in the same order
+  /** CARRY-CLAIMS (systems/inventory.js claimedCarryKg): what my takes in flight weigh - lifted out of my pack until the
+   *  room's `got` - or null once none is, and the gate lets this book go until its next take. */
+  const claimedKg = (/** @type {any} */ e) => {
+    if (!askedKg.size) return null;
+    if (e?.items !== pack()) return 0;
+    let kg = 0;
+    for (const l of askedKg.values()) for (const w of l) kg += w;
+    return kg;
+  };
+  const ask = (/** @type {string} */ key, /** @type {number} */ n, kg = 0) => {
+    const l = asked.get(key); if (l) l.push(n); else asked.set(key, [n]);
+    const w = askedKg.get(key); if (w) w.push(kg); else askedKg.set(key, [kg]);
+    addCarryClaims(claimedKg, claimedKg);
+  };
   /** One take answered (`got`, `no`, `cr`): the oldest in flight. */
-  const answered = (/** @type {string} */ key) => { const l = asked.get(key); if (!l) return; l.shift(); if (!l.length) asked.delete(key); };
+  const answered = (/** @type {string} */ key) => {
+    const l = asked.get(key); if (!l) return; l.shift(); if (!l.length) asked.delete(key);
+    const w = askedKg.get(key); if (w) { w.shift(); if (!w.length) askedKg.delete(key); }
+  };
   /** REMAINS-TAKE: how much of record `i` my takes in flight hold - the pile stands without it. */
   const inFlight = (/** @type {string} */ r, /** @type {number} */ i) => (asked.get(`${r}:${i}`) ?? []).reduce((a, n) => a + n, 0);
   const countOf = (/** @type {any} */ it) => Math.max(1, it?.stackCount ?? 1);
@@ -182,7 +200,7 @@ export function createWildRemains({ send, pool, toScene, mine, pack, mint, addIt
         if (!there) rec.pile.items.push(obj);
         continue;
       }
-      ask(`${rec.r}:${info.i}`, k);
+      ask(`${rec.r}:${info.i}`, k, pieceKg(obj, k));   // CARRY-CLAIMS: weighed until the room's word
       info.n = cur;
       if (!there) rec.seen.delete(obj);
     }
@@ -210,7 +228,7 @@ export function createWildRemains({ send, pool, toScene, mine, pack, mint, addIt
   const askMine = (/** @type {any} */ rec) => {
     const it = rec.wk && rec.wk === me() ? rec.items[rec.wi] : null;
     const key = `${rec.r}:${rec.wi}`;
-    if (it && !asked.has(key) && send({ k: 'take', r: rec.r, i: rec.wi, n: countOf(it) }, rec.room)) ask(key, countOf(it));   // HALO-REMAINS: to the room that keeps it
+    if (it && !asked.has(key) && send({ k: 'take', r: rec.r, i: rec.wi, n: countOf(it) }, rec.room)) ask(key, countOf(it), pieceKg(it, countOf(it)));   // HALO-REMAINS: to the room that keeps it
   };
 
   const book = {
@@ -233,7 +251,7 @@ export function createWildRemains({ send, pool, toScene, mine, pack, mint, addIt
       for (const rec of [...recs.values()]) {
         if (rooms.has(rec.room)) continue;
         unseed(rec); recs.delete(rec.r);
-        for (const k of [...asked.keys()]) if (k.startsWith(`${rec.r}:`)) asked.delete(k);
+        for (const k of [...asked.keys()]) if (k.startsWith(`${rec.r}:`)) { asked.delete(k); askedKg.delete(k); }
       }
     },
     /** The host I stand in changed under the same room (a recentre, a mode): the piles are stood again in its pool. */
@@ -307,7 +325,7 @@ export function createWildRemains({ send, pool, toScene, mine, pack, mint, addIt
       }
     },
     /** Every pile down (the host is going). */
-    clear() { for (const rec of recs.values()) unseed(rec); recs.clear(); asked.clear(); rooms = new Set(); },
+    clear() { for (const rec of recs.values()) unseed(rec); recs.clear(); asked.clear(); askedKg.clear(); rooms = new Set(); },
   };
   return book;
 }
