@@ -13,6 +13,7 @@ account.refusal.escrowWait,"Món đồ đó vẫn đang được giữ cho kẻ 
 account.refusal.fallenFrozen,"Người chơi đó đang bị đội ngũ giữ lại. Không thể lấy gì từ họ."
 account.refusal.foe,"Chết dưới tay kẻ thù trong vùng mở giờ không làm rơi gì cả. Có thể trò chơi cần được cập nhật."
 account.refusal.frozen,"Tài khoản của bạn đã bị đội ngũ đóng băng. Bạn vẫn có thể nói chuyện với đội ngũ ở thẻ Staff."
+account.refusal.homeUnlisted,"Ngôi nhà đó không được bán."
 account.refusal.lineageInUse,"Một nhân vật còn sống vẫn đang chơi gia tộc đó."
 account.refusal.marketSellerFrozen,"Hàng của người bán đó đang bị tạm giữ."
 account.refusal.noEscrow,"Món đồ đó không được giữ cho nhân vật này."

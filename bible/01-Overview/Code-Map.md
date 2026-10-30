@@ -421,6 +421,8 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | Folder | What lives there |
 |---|---|
 | `src/world/arena/` | The Arena's place: the city, the floor, the undercroft, the plaques and the model. |
+| `src/world/atlas/` | The world's places entity-major (`03-World/Foundation-Arc.md`, FOUNDATION): a place's bundle - its identity, grid, dungeon plan, buildings and doors - over a vocabulary of blocks, every name resolved as the layout serves it (`atlas.js`, `atlasServed.js`). |
+| `src/world/land/` | The land as data (`03-World/Foundation-Arc.md` F4): a shoreline or a hill fixed by a row of `landEdits.json`, written into the Bay's served files and asked by the ground past it (`landLayer.js`). |
 | `src/world/card/` | The card table in the world: the tables, the scene, the regulars, a hand and its motion. |
 | `src/world/city/` | A city's gates, lights and navigation - its models and assembly. |
 | `src/world/deepWater/` | Deep Waters in the world: the sea floor and its bathymetry, the surface, swimming, the look and the bake. |

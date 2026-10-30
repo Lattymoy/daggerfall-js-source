@@ -120,6 +120,7 @@ account.refusal.escrowWait,"O parça hâlâ katil için saklanıyor. Yakında sa
 account.refusal.fallenFrozen,"Bu oyuncu ekip tarafından tutuluyor. Ondan hiçbir şey alınamaz."
 account.refusal.foe,"Açık bölgede bir düşman tarafından öldürülmek artık hiçbir şey düşürmüyor. Oyunun güncellenmesi gerekebilir."
 account.refusal.frozen,"Hesabın ekip tarafından donduruldu. Staff sekmesinde ekiple konuşmaya devam edebilirsin."
+account.refusal.homeUnlisted,"Bu ev satılık değil."
 account.refusal.lineageInUse,"Yaşayan bir karakter bu aileyi hâlâ oynuyor."
 account.refusal.marketSellerFrozen,"Bu satıcının malları şimdilik beklemede."
 account.refusal.noEscrow,"O parça bu karakter için saklanmıyor."

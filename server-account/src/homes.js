@@ -59,6 +59,7 @@ import {
   homeDeedOf,   // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: the deed a record holds to a building, as the door reads it
   homeGroundOk, homeGroundKept,   // DECOR-ROOMY: the ground a claim names, held to its price
 } from '../../src/net/homeLaw.js';
+import { homeListedOff, homeListedPrice, homeGroundPrice } from '../../src/net/homeListingLaw.js';   // FOUNDATION F3: the listings' rows
 import { PATRON_HOUR_S } from '../../src/net/patronLaw.js';   // AUDIT LW-II P7: a door opened marks its trader's patrons' hours
 import { reckonPatrons } from './market.js';   // AUDIT LW-II-2 S4: a door leaving public reckons its town first
 import { GUILD_TREASURY_MAX, guildMay, guildPowersOf, guildRankCount } from '../../src/net/guild/guildLaw.js';   // GUILD-RANKS: a hall's keepers as the guild set them; ARENA4b: a hall's pieces paid back, into a treasury under its cap
@@ -158,6 +159,9 @@ export async function claimHome(ctx, player, body = {}) {
   // radius x 1280) - asked to update, never seated at it
   if (!homePriceOk(price)) return { error: 'home-update' };
   if (!homeLayoutOk(layout)) return { error: 'bad-home' };   // WD3: the layout the claimant's town stands in (null: Daggerfall's)
+  // FOUNDATION F3 (net/homeListingLaw.js): a building its row takes off the market, or a price not its row's
+  if (homeListedOff(mapId, buildingKey, undefined, layout)) return { error: 'home-unlisted' };
+  if (homeListedPrice(mapId, buildingKey, price, undefined, layout) !== price) return { error: 'home-update' };
   // ARENA4b: THE ARENA STANDS THERE. No building of Daggerfall's cell (4,3) has a key since ARENA1, but a build from
   // before the arena still stands GEMSAL03 and could buy one of its houses - a home keyed to nothing. Refused by the key,
   // with the shapes (no record moves for it, so no record is asked first)
@@ -184,7 +188,7 @@ export async function claimHome(ctx, player, body = {}) {
   if (witnessed && Number(witnessed.region) !== region) return { error: 'bad-home' };
   if (await overRate({ db, nowS }, `home:${player.id}`, HOME_CLAIMS_MAX, HOME_CLAIMS_WINDOW_S)) return { error: 'home-rate' };
   // DECOR-ROOMY: the ground its price was set from, where the claim names one that agrees (an older build names none)
-  const kept = homeGroundOk(ground, townBlocks, price) ? homeGroundKept(ground) : null;
+  const kept = homeGroundOk(ground, townBlocks, homeGroundPrice(mapId, buildingKey, price, ground, townBlocks, layout)) ? homeGroundKept(ground) : null;   // AUDIT FOUNDATION P2: a row's price, the law's ground
   return realmClaim(ctx, player, side.at, { mapId, buildingKey, region, character, price, layout: layout ?? null, ground: kept });   // a realm character's side is always its record
 }
 
@@ -686,6 +690,7 @@ export async function arenaMoveHome(ctx, player, { mapId, from, to, character, r
   const home = await db.prepare('SELECT * FROM homes WHERE map_id = ? AND building_key = ?').bind(mapId, from).first();
   const owns = home ? await db.prepare(`SELECT 1 AS one WHERE ${OWNS}`).bind(mapId, from, player.id, character).first() : null;
   if (!owns) return { error: 'no-home' };   // nobody's and somebody else's are one word (HOME1)
+  if (homeListedOff(mapId, to, undefined, home.layout ?? null)) return { error: 'home-unlisted' };   // AUDIT FOUNDATION P3: nor one its row takes off the market, in the town's layout
   if (await db.prepare('SELECT 1 AS one FROM homes WHERE map_id = ? AND building_key = ?').bind(mapId, to).first()) return { error: 'home-taken' };
   const gid = home.guild_id ?? null;
   // what the room held, as read - the batch's DELETE holds it to this, so a piece placed between is never lost unpaid

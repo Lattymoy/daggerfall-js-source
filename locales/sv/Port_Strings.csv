@@ -322,6 +322,7 @@ account.refusal.homeRentDue,"Hyra väntar på att hämtas i ditt hem. Hämta den
 account.refusal.homeTaken,"Någon annan äger det här hemmet nu."
 account.refusal.homeTenants,"Någon hyr ett rum i ditt hem. Det kan inte säljas eller raderas förrän deras dagar har gått ut."
 account.refusal.homeTowns,"Den här staden laddades inte så som andra spelare ser den. Ladda om spelet för att köpa ett hem."
+account.refusal.homeUnlisted,"Det huset är inte till salu."
 account.refusal.homeUpdate,"Det här spelet är inaktuellt. Ladda om det för att köpa ett hem."
 account.refusal.homesNeedAccount,"Att äga ett hem kräver ett användarnamn och ett lösenord. Ge det här kontot ett så kan du köpa ett."
 account.refusal.inboxFull,"Deras brevlåda är full tills de slänger några brev."

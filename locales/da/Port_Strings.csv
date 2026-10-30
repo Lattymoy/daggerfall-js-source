@@ -413,6 +413,7 @@ account.refusal.homeRentDue,"Der venter husleje på at blive hentet i dit hjem. 
 account.refusal.homeTaken,"En anden ejer dette hjem nu."
 account.refusal.homeTenants,"Nogen lejer et værelse i dit hjem. Det kan ikke sælges eller slettes, før deres dage er omme."
 account.refusal.homeTowns,"Denne by blev ikke indlæst, som andre spillere ser den. Genindlæs spillet for at købe et hjem."
+account.refusal.homeUnlisted,"Dette hus er ikke til salg."
 account.refusal.homeUpdate,"Dette spil er forældet. Genindlæs det for at købe et hjem."
 account.refusal.homesNeedAccount,"At eje et hjem kræver et brugernavn og en adgangskode. Giv denne konto et, så kan du købe et."
 account.refusal.huntCharacter,"Den karakter har ingen jægerrang."

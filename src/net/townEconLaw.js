@@ -26,6 +26,7 @@
 import { seatTipOf, seatShopFactor, kingdomName, CROWN_SEAT_REGIONS, seatRegionOk, SEAT_PIXEL_SPAN } from './townSeatLaw.js';   // TE0 decision 5: a seat town's card, its area's holder; AUDIT TOWN-ECON UI-4: Market Day on the card's price
 import { t } from '../systems/textManager.js';   // L10N4: the card's words in the player's language, each read when it is said
 import { CAPITAL_LANE } from '../world/capitalLane.js';   // BAY-LEFT-SEA: the staff audit's order - a capital's map id
+import { regionTermOf } from './regionClockLaw.js';   // FOUNDATION F2: the region's prosperity, a town's term
 
 /** The location types that are towns (mapsFile.js LOCATION_TYPES TownCity, TownHamlet, TownVillage). */
 export const TOWN_ECON_TYPES = Object.freeze([0, 1, 2]);
@@ -106,14 +107,15 @@ export function townSeatTerm(seat) {
 const held = (p) => Math.max(0, Math.min(TOWN_PROSPERITY_MAX, Math.round(Number.isFinite(p) ? p : TOWN_BASE)));
 /**
  * A TOWN'S PROSPERITY on a real day, 0 to 100.
- * @param {{ key: number, type: number, day: number, seat?: any, raided?: boolean, players?: number, lanes?: number }} t
+ * @param {{ key: number, type: number, day: number, seat?: any, raided?: boolean, players?: number, lanes?: number, regional?: number }} t
  *   `seat` the town's own seat, dressed (null for none); `raided` a raid running at its gates; `players` TE2's share;
- *   `lanes` SEA-TRADE: a port town's sea lanes (townSeaTerm)
+ *   `lanes` SEA-TRADE: a port town's sea lanes (townSeaTerm); `regional` FOUNDATION F2: its region's prosperity
+ *   (net/regionClockLaw.js), its term regionTermOf's
  */
-export function townProsperity({ key, type, day, seat = null, raided = false, players = 0, lanes = 0 }) {
+export function townProsperity({ key, type, day, seat = null, raided = false, players = 0, lanes = 0, regional = 0 }) {
   const n = Number(players);
   const share = Number.isNaN(n) ? 0 : Math.max(0, Math.min(TOWN_PLAYERS_MAX, n));   // AUDIT TOWN-ECON LAW-6: an infinite share is the most, never nothing
-  return held(TOWN_BASE + (TOWN_SIZE[/** @type {0|1|2} */ (type)] ?? 0) + townCycle(key, day) + townSeatTerm(seat) + (raided ? TOWN_RAID_TERM : 0) + share + townSeaTerm(lanes));
+  return held(TOWN_BASE + (TOWN_SIZE[/** @type {0|1|2} */ (type)] ?? 0) + townCycle(key, day) + townSeatTerm(seat) + (raided ? TOWN_RAID_TERM : 0) + share + townSeaTerm(lanes) + regionTermOf(regional));
 }
 /** A Prosperity's band. @param {number} p */
 export const townBandOf = (p) => (TOWN_BANDS.find(([, least]) => held(p) >= least) ?? TOWN_BANDS[TOWN_BANDS.length - 1])[0];

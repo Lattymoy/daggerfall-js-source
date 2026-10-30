@@ -413,6 +413,7 @@ account.refusal.homeRentDue,"C’è un affitto da riscuotere a casa tua. Riscuot
 account.refusal.homeTaken,"Ora questa casa appartiene a qualcun altro."
 account.refusal.homeTenants,"Qualcuno affitta una stanza in casa tua. Non si può vendere né eliminare finché i suoi giorni non sono finiti."
 account.refusal.homeTowns,"Questa città non si è caricata come la vedono gli altri giocatori. Ricarica il gioco per comprare una casa."
+account.refusal.homeUnlisted,"Quella casa non è in vendita."
 account.refusal.homeUpdate,"Questo gioco non è aggiornato. Ricaricalo per comprare una casa."
 account.refusal.homesNeedAccount,"Possedere una casa richiede un nome utente e una password. Dagliene uno a questo account e potrai comprarne una."
 account.refusal.huntCharacter,"Quel personaggio non ha un grado di cacciatore."

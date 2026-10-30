@@ -116,12 +116,13 @@ import { audio } from '../systems/audio.js';
 import { messageBox } from '../systems/notify.js';   // ENH-NOTICE3: the one door every DaggerfallUI.MessageBox goes through - the infection's popup names the KIND, never the host's window
 
 import { getBytes, forgetBytes, storedMusicNames, loadMusicFile, registerTextureStore, registerMorrowindData } from './dataSource.js';   // M-EXT/M-TEX: the player's own packs
+import { landServedBytes } from '../world/land/landLayer.js';   // FOUNDATION F4: the land as data
 
 
 /** The data seam every scene uses - delegates to the ARENA2 data
  *  source (memory -> IndexedDB -> network); signature unchanged. */
 export async function fetchBytes(name) {
-  return getBytes(name);
+  return landServedBytes(name, await getBytes(name));   // FOUNDATION F4: WOODS.WLD and CLIMATE.PAK with the land's rows on the Bay
 }
 
 /**

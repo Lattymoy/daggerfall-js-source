@@ -322,6 +322,7 @@ account.refusal.homeRentDue,"Az otthonodban beszedésre váró lakbér van. Elő
 account.refusal.homeTaken,"Ez az otthon már valaki másé."
 account.refusal.homeTenants,"Valaki szobát bérel az otthonodban. Amíg a napjai le nem telnek, nem adható el és nem törölhető."
 account.refusal.homeTowns,"Ez a város nem úgy töltődött be, ahogy a többi játékos látja. Otthon vásárlásához töltsd újra a játékot."
+account.refusal.homeUnlisted,"Ez a ház nem eladó."
 account.refusal.homeUpdate,"Ez a játék elavult. Otthonvásárláshoz töltsd újra."
 account.refusal.homesNeedAccount,"Otthon birtoklásához felhasználónév és jelszó kell. Adj meg egyet ennek a fióknak, és vehetsz egyet."
 account.refusal.inboxFull,"A postaládája tele van, amíg ki nem dob néhány levelet."

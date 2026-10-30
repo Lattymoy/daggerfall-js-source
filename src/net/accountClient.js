@@ -343,6 +343,7 @@ const REFUSAL_WORDS = {
   'home-rent-due': () => t('account.refusal.homeRentDue', 'Rent is waiting to be collected at your home. Collect it first.'),
   // ARENA4b: a home the arena displaced (homes.js arenaMoveHome), and a house of its block an old build would buy
   'home-arena': () => ARENA_TEXT.homeMove.arena,
+  'home-unlisted': () => t('account.refusal.homeUnlisted', 'That house is not for sale.'),   // FOUNDATION F3: off the market by its row (net/homeListingLaw.js)
   'home-unmoved': () => ARENA_TEXT.homeMove.unmoved,
   'home-changed': () => ARENA_TEXT.homeMove.changed,
   // HOME-VOTE: a town's word on a player's house (server-account/src/homeVotes.js) - met at its door
