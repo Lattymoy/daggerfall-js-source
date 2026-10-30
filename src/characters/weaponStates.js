@@ -282,7 +282,7 @@ export function machineAttack(m, strikeState) {
  *  attack's cooldown (a bow's reload with it), so the technique's strike starts now. True when there was one to cut. */
 export function machineCut(m) {
   if (m.state === 'Idle' && !(m.now < m.cooldownUntil)) return false;
-  m.state = 'Idle'; m.frame = 0; m.ticks = 0; m.acc = 0; m.hold = 0;
+  m.state = 'Idle'; m.frame = m.isBow && m.bowIdleDrawn ? BOW_DRAWN_HOLD_FRAME : 0; m.ticks = 0; m.acc = 0; m.hold = 0;   // AUDIT TECH-FEEDBACK F1: a bow rests drawn (ARROW2)
   m.animIndex = 0; m.damageDone = false;
   m.cooldownUntil = m.now;
   return true;

@@ -667,16 +667,22 @@ binding of its own to name).
   handOfKey). The technique key keeps its law: a line first, the signature when free. One runner, one aim and one act
   at a time, whichever key began it; each technique its own clock. A lined weapon in a held path's pair shows two HUD
   chips, each naming its key (`ui/techniqueKeyWord.js`, moved out of bootWorld). It is in the Controls pane's Combat
-  group, a touch corner's choice (**Path**), a d-pad's and a pad button's. Pressed with no path for the weapon, it says
+  group and a pad button's choice. Pressed with no path for the weapon, it says
   "You have no martial technique for this weapon."
 - **Not done, the owner's call (2026-10-30):** werewolf form keeps "The beast knows no technique" (QuietHydra's ask in
   the same thread). BAL6 balanced the claws without techniques.
 - **The four hosts.** All three ride the one rig (`combat/weapon/weaponRig.js`) and the shared resolution, so
   `exterior.js`, `world.js`, `worldModes.js` and `dungeonContext.js` are wired alike; none grew.
 
+**AUDIT TECH-FEEDBACK (2026-10-30, `01-Overview/Audit-Log.md`).** The cut is made inside `PlayerWeapon.techniqueStrike`
+and put back if the strike still cannot begin (a gun's reload, a pair's other hand); the rig cuts the Morrowind arm's blow
+whenever a technique's strike began. A bow resting drawn is cut to its drawn frame (ARROW2's rest). The touch corner and
+the d-pad offer no Martial technique: both press an action through its key, and it ships with none - a phone has no way
+to it yet; a pad binds it on the Controller bindings window.
+
 Pinned: `test/systems/tech1_runner.test.js` (TECH-BACKSTAB, TECH-CANCEL), `test/systems/martial_paths.test.js`
 (TECH-KEY2), `test/scenes/tech1_hosts.test.js` (the rig, the row, the word). Mutants: `tools/mutants/techfeedback.json`
-(16, all dead); fifteen records of `tech1`, `techcard1`, `techfx1`, `audit_martial` and `town_marks` re-aimed by
+(19, all dead); fifteen records of `tech1`, `techcard1`, `techfx1`, `audit_martial` and `town_marks` re-aimed by
 content, all dead.
 
 ## The Test Room

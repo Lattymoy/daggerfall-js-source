@@ -8233,6 +8233,7 @@ town.econ.reason.raid,"Набег пред портите вреди на тър
 town.econ.trend.falling,"Пазарът спада."
 town.econ.trend.flat,"Пазарът без промяна."
 town.econ.trend.rising,"Пазарът расте."
+town.home.trader,"{home} - търговец"
 town.panel.bounty,"Табло за награди"
 town.panel.new,"{n, plural, one {# нова} other {# нови}}"
 town.panel.notice,"Табло за обяви"

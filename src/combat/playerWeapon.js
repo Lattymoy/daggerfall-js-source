@@ -907,15 +907,15 @@ export class PlayerWeapon {
     return [this._gx, this._gy];
   }
 
-  /** TECH-CANCEL: the plain swing in flight cut for a technique, its attack cooldown waived (weaponStates.js
-   *  machineCut). True when there was one to cut - the rig cuts the Morrowind arm's blow with it. */
-  cutForTechnique() { return machineCut(this.machine); }
-
   /** TECH1 (bible/05-Combat/Weapon-Techniques.md): A TECHNIQUE'S STRIKE - the machine's own strike `strike` begun for a
    *  weapon's technique (combat/techniques.js), by the same machineAttack a click takes; a bow's loose writes its draw
-   *  time as the click's does (PCO1). True when it began - TECH-CANCEL: the rig cuts a swing in flight first. */
+   *  time as the click's does (PCO1). True when it began. TECH-CANCEL: a swing in flight and the attack's cooldown are
+   *  cut first (weaponStates.js machineCut) - and put back as they were if the strike still cannot begin (AUDIT
+   *  TECH-FEEDBACK F2: a gun's reload, a pair's other hand), so a refused technique costs the swing nothing. */
   techniqueStrike(strike) {
-    if (!this._attack(strike, { lead: true })) return false;   // TWO-HANDS: a technique is the lead hand's - its weapon's (techniques.js reads it), never a flurry's
+    const was = this.machine.state !== 'Idle' || this.machine.now < this.machine.cooldownUntil ? { ...this.machine } : null;
+    if (was) machineCut(this.machine);
+    if (!this._attack(strike, { lead: true })) { if (was) Object.assign(this.machine, was); return false; }   // TWO-HANDS: a technique is the lead hand's - its weapon's (techniques.js reads it), never a flurry's
     if (this.machine.isBow) this.lastDrawMs = this._bowAnimTimeMs();
     return true;
   }

@@ -52,14 +52,15 @@ test('TECH1 THE RIG: the one runner stepped AHEAD of the gesture on the swing\'s
   assert.match(rig, /tc\.blocked = !!technique\?\.blocked\?\.\(\);/, 'AUDIT TECH1: a window holds the key');
   assert.match(rig, /const strike = !paralyzed && c && canAttack && !armLoosing && !techniqueFlying\(\)\s*\? playerWeapon\.gesture\(/, 'AUDIT TECH1: no gesture while a leap or a dash is in the air');
   assert.match(rig, /if \(techniqueFlying\(\)\) return;[^\n]*\n\s*const strike = playerWeapon\.clickAttack\(\);/, 'AUDIT TECH1: nor the touch button\'s swing');
-  // PIN MOVED (TECH-CANCEL): a swing in flight is cut - the machine's and the Morrowind arm's - before the technique's strike
-  assert.match(rig, /startSwing: \(s\) => \{ if \(playerWeapon\.cutForTechnique\(\)\) fpArm\.cutAttack\?\.\(\); if \(!playerWeapon\.techniqueStrike\(s\)\) return false; fpAttack\(s, _techDt\); return true; \}/);   // PIN MOVED (AUDIT TECH-FX): the frame's dt through _techDt, the closure made once
+  // PIN MOVED (TECH-CANCEL, AUDIT TECH-FEEDBACK F2/F6): the Morrowind arm's blow cut once the strike began, whatever the machine was doing
+  assert.match(rig, /startSwing: \(s\) => \{ if \(!playerWeapon\.techniqueStrike\(s\)\) return false; fpArm\.cutAttack\?\.\(\); fpAttack\(s, _techDt\); return true; \}/);   // PIN MOVED (AUDIT TECH-FX): the frame's dt through _techDt, the closure made once
   assert.match(rig, /_techDt = dt;\s*_techCtx \?\?= \{/, 'AUDIT TECH-FX: the dt set before the context is read, the context made once');
   assert.match(rig, /return claimShot\(held\.evs, _techCtx\);/);
   assert.match(rig, /tc\.holding = !!_heldHit;/, 'a Morrowind arm\'s held hit is a loose still to come (MW-D42)');   // PIN MOVED (AUDIT TECH-FX)
   // PIN MOVED (TWO-HANDS, bible/05-Combat/Two-Hands.md): the machine's attack through _attack, which starts it the same
   // way and names the strike's hand - a technique's always the lead's, never a flurry's
-  assert.match(code('src/combat/playerWeapon.js'), /techniqueStrike\(strike\) \{\s*if \(!this\._attack\(strike, \{ lead: true \}\)\) return false;/);
+  // PIN MOVED (TECH-CANCEL): the swing in flight cut first, put back if the strike cannot begin
+  assert.match(code('src/combat/playerWeapon.js'), /techniqueStrike\(strike\) \{\s*const was = [^\n]*\n\s*if \(was\) machineCut\(this\.machine\);\s*if \(!this\._attack\(strike, \{ lead: true \}\)\) \{ if \(was\) Object\.assign\(this\.machine, was\); return false; \}/);
   // PIN MOVED (PISTOL-PORT, bible/05-Combat/Dwarven-Pistolet.md): the strike is `const` again - a Pistolet's pull is the
   // pistol lab's pair's (`_pistolShot`), so nothing re-names a strike between naming it and starting the machine - and a
   // technique's is still the lead's

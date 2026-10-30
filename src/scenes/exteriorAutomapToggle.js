@@ -125,11 +125,11 @@ export function createExteriorAutomapToggle(host) {
         homeAt: onlineHomes ? (mapId, buildingKey) => {
           const h = onlineHomes.homeAt(mapId, buildingKey);
           // HOME-VENDOR: the trader's waypoint names its house on the town map; VENDOR-HOUSES: a trader's house is inked blue
-          if (h && isVendorWaypoint(mapId, buildingKey)) return { ...h, own: false, vendor: true, owner: vendorWaypointLabel(h.owner) };
+          if (h && isVendorWaypoint(mapId, buildingKey)) return { ...h, own: false, vendor: true, waypoint: true, owner: vendorWaypointLabel(h.owner) };
           return h && !h.own && isVendorHouse(mapId, buildingKey) ? { ...h, vendor: true } : h;
         } : null,
       }),
-      townHomesVersion: () => `${onlineHomes?.version() ?? 0}:${vendorWaypointVersion()}:${vendorHousesVersion()}`,   // HOME-VENDOR: a waypoint moved repaints, and VENDOR-HOUSES a trader read
+      townHomesVersion: () => (onlineHomes?.version() ?? 0) + vendorWaypointVersion() * 100_000 + vendorHousesVersion() * 1e10,   // HOME-VENDOR: a waypoint moved repaints, and VENDOR-HOUSES a trader read (a number: asked a frame)
     } };
   };
   // A2: the exterior automap's own dispatch half (DaggerfallUI.cs

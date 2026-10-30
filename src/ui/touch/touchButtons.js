@@ -49,8 +49,6 @@ export const TOUCH_BUTTON_ACTIONS = Object.freeze([
   // SPYGLASS (bible/03-World/Captains-Sea.md): the captain's glass - a tap raises it aboard, the next lowers it (at a helm
   // the plate offers its own Glass press too, ui/naval/navalHud.js)
   { id: 'Spyglass', label: 'Spyglass (aboard)', glyph: 'Glass', kind: 'tap', w: 64 },
-  // TECH-KEY2: the held martial path's signature, whatever line the weapon carries - held to aim, as the technique's
-  { id: 'SignatureTechnique', label: 'Martial technique (hold to aim)', glyph: 'Path', kind: 'hold', w: 60 },
 ]);
 const BY_ID = new Map(TOUCH_BUTTON_ACTIONS.map((a) => [a.id, a]));
 

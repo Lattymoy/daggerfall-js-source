@@ -10,7 +10,7 @@ import * as T from '../../src/combat/techniques.js';
 import { blowReaches, blowMult, scaleBlowDamage, playerBody, TECH_BODY_RADIUS } from '../../src/combat/technique/techniqueBlow.js';
 import { TECHNIQUES, techniqueMult } from '../../src/combat/technique/techniqueRoster.js';
 import { PlayerWeapon } from '../../src/combat/playerWeapon.js';
-import { machineCut } from '../../src/characters/weaponStates.js';   // TECH-CANCEL
+import { machineCut, BOW_DRAWN_HOLD_FRAME } from '../../src/characters/weaponStates.js';   // TECH-CANCEL
 import { ArrowFlight, playerArrowHitFoe, techniquePierces } from '../../src/combat/arrowFlight.js';
 import { createWeapon } from '../../src/combat/enemyEquipment.js';
 import { mintCondition, setItemFields } from '../../src/systems/item/itemTemplates.js';
@@ -620,13 +620,12 @@ test('TECH-BACKSTAB ("Let them work with backstab"): a foe whose back was to me 
 test('TECH-CANCEL ("independent of your regular attack cooldown / animation cancel"): a press mid-swing cuts the swing and starts the technique\'s strike; a bow\'s reload no longer holds it; the cut is the machine\'s own (mutants: the machine gate kept; the cut leaves the cooldown; the cut at rest)', () => {
   reset();
   const pw = weaponOf(piece(() => createWeapon(120, 1), 'whirlwind', 10));
-  assert.equal(pw.cutForTechnique(), false, 'at rest: nothing to cut');
   assert.ok(pw.clickAttack(() => 0.5), 'a plain swing');
   pw.update(1 / 60);
   assert.notEqual(pw.machine.state, 'Idle');
   const log = { started: [] };
   const ctx = { rig: R1, entity: player(), pw, cam: { pos: [0, 1.7, 0], yaw: 0, pitch: -0.2, feet: [0, 0, 0] }, collider: flatGround(), held: true, ready: true, say: () => {},
-    startSwing: (st) => { pw.cutForTechnique(); if (!pw.techniqueStrike(st)) return false; log.started.push(st); return true; } };
+    startSwing: (st) => { if (!pw.techniqueStrike(st)) return false; log.started.push(st); return true; } };
   assert.equal(T.refusal(T.techniqueInHand(ctx.entity, pw), ctx), null, 'mid-swing is no refusal now');
   T.stepTechnique(1 / 60, ctx);
   assert.deepEqual(log.started, ['StrikeLeft'], 'the swing cut, the Whirlwind begun');
@@ -642,4 +641,20 @@ test('TECH-CANCEL ("independent of your regular attack cooldown / animation canc
   assert.deepEqual([busy.state, busy.frame, busy.ticks, busy.hold, busy.damageDone], ['Idle', 0, 0, 0, false]);
   // still silent when the hands' own gate holds (a spell, a climb): the rig's `ready`
   assert.equal(T.refusal(T.techniqueInHand(ctx.entity, pw), { ...ctx, ready: false }), true);
+  // AUDIT TECH-FEEDBACK F1: a bow that rests drawn (BowDrawback off) is cut to its drawn frame, so a technique's shot
+  // looses from it as the instant shot does
+  const bow = { isBow: true, bowIdleDrawn: true, state: 'Idle', now: 3, cooldownUntil: 4, frame: 0, ticks: 0, acc: 0, hold: 0, animIndex: 0, damageDone: false };
+  machineCut(bow);
+  assert.equal(bow.frame, BOW_DRAWN_HOLD_FRAME);
+  const drawing = { ...bow, bowIdleDrawn: false, cooldownUntil: 4 };
+  machineCut(drawing);
+  assert.equal(drawing.frame, 0, 'BowDrawback on: the bow rests at 0');
+  // AUDIT TECH-FEEDBACK F2: a strike that still cannot begin (a gun's reload, a pair's other hand) puts the swing back
+  const p2 = weaponOf(piece(() => createWeapon(120, 1), 'whirlwind', 10));
+  assert.ok(p2.clickAttack(() => 0.5));
+  p2.update(1 / 60);
+  const before = { ...p2.machine };
+  p2._attack = () => false;
+  assert.equal(p2.techniqueStrike('StrikeLeft'), false);
+  assert.deepEqual({ ...p2.machine }, before, 'the swing in flight, untouched');
 });

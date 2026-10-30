@@ -733,7 +733,7 @@ const HARDCODED = {
   'src/ui/pixelifyFive.js': 2,
   'src/ui/playerBadge.js': 51,   // HUNTERS-MARK: the hunt's and the Marks of Mastery's fourteen two-word titles in words, beside the other titles'; NIRNROOT-SAGE: the Nirnroot Sage's title in words, beside the other titles'; QL12: the questlines' five titles in words ("Witness of the Hour" the one two-word phrase); SERPENT5: The Maelstrom's word, beside the other auras'; EG-E2: the Spire's thirteen titles and three auras in words; WIKIMAID: the Lilac Warren's word, beside the other auras'
   'src/ui/playerHistory.js': 1,
-  'src/ui/plus/plusPad.js': 19,   // TECH-KEY2: +1, the signature key's d-pad choice, beside the technique's
+  'src/ui/plus/plusPad.js': 18,
   'src/ui/plus/plusPadBinds.js': 31,   // TECH-KEY2: +1, the signature key's bind row, beside the technique's
   'src/ui/prisonScreen.js': 1,
   'src/ui/professions/profPages.js': 29,   // FB1020c ONE-SAVE: the kept words, moved here from the world host; REFORGE-REPLACE: the Reforge with Essence's two words through t()
@@ -785,7 +785,7 @@ const HARDCODED = {
   'src/ui/techniqueGlyph.js': 2,
   'src/ui/temperatureCard.js': 8,
   'src/ui/textFont.js': 4,
-  'src/ui/touch/touchButtons.js': 11,   // TECH-KEY2: +1, the signature key's corner button, beside the technique's
+  'src/ui/touch/touchButtons.js': 10,
   'src/ui/town/townMapMarks.js': 1,   // NOTICE-PANEL: 2 -> 1, the board's mark and its label out
   'src/ui/travel/travelMapWindow.js': 14,
   'src/ui/travel/travelPopUp.js': 5,

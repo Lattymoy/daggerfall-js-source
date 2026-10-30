@@ -198,10 +198,11 @@ test('TOWN-MARKS the wiring: the door hands the marks to the enhanced town map; 
   const w = src('src/scenes/world.js');
   assert.doesNotMatch(w, /townBoards|townBoardMarks/);   // PIN MOVED (NOTICE-PANEL): no board stands to mark
   // PIN MOVED (VENDOR-HOUSES): the waypoint's house and every trader's house (never my own) carry `vendor`
-  assert.match(w, /townHomes: \(\) => townHomeRows\(\{\n\s*buildings: summaries, mapId: dfLoc\.mapTableData\?\.mapId, regionIndex: dfLoc\.regionIndex, houses: playerEntity\.houses \?\? null,\n\s*homeAt: onlineHomes \? \(mapId, buildingKey\) => \{\n\s*const h = onlineHomes\.homeAt\(mapId, buildingKey\);\n[^\n]*\n\s*if \(h && isVendorWaypoint\(mapId, buildingKey\)\) return \{ \.\.\.h, own: false, vendor: true, owner: vendorWaypointLabel\(h\.owner\) \};\n\s*return h && !h\.own && isVendorHouse\(mapId, buildingKey\) \? \{ \.\.\.h, vendor: true \} : h;\n\s*\} : null,\n\s*\}\),/);
+  assert.match(w, /townHomes: \(\) => townHomeRows\(\{\n\s*buildings: summaries, mapId: dfLoc\.mapTableData\?\.mapId, regionIndex: dfLoc\.regionIndex, houses: playerEntity\.houses \?\? null,\n\s*homeAt: onlineHomes \? \(mapId, buildingKey\) => \{\n\s*const h = onlineHomes\.homeAt\(mapId, buildingKey\);\n[^\n]*\n\s*if \(h && isVendorWaypoint\(mapId, buildingKey\)\) return \{ \.\.\.h, own: false, vendor: true, waypoint: true, owner: vendorWaypointLabel\(h\.owner\) \};\n\s*return h && !h\.own && isVendorHouse\(mapId, buildingKey\) \? \{ \.\.\.h, vendor: true \} : h;\n\s*\} : null,\n\s*\}\),/);
   // PIN MOVED (FB1020c STREETS-TAB, at the merge of STAR0's move): the bag `townHere` builds for either key; the homes asked as the M key's window opens and as the travel
   // key's streets are handed over
-  assert.match(w, /townHomesVersion: \(\) => `\$\{onlineHomes\?\.version\(\) \?\? 0\}:\$\{vendorWaypointVersion\(\)\}:\$\{vendorHousesVersion\(\)\}`,[^\n]*\n\s*\} \};/);   // PIN MOVED (VENDOR-HOUSES)
+  // PIN MOVED (VENDOR-HOUSES; AUDIT TECH-FEEDBACK F7: a number, the sheet asks it a frame)
+  assert.match(w, /townHomesVersion: \(\) => \(onlineHomes\?\.version\(\) \?\? 0\) \+ vendorWaypointVersion\(\) \* 100_000 \+ vendorHousesVersion\(\) \* 1e10,[^\n]*\n\s*\} \};/);
   assert.match(w, /townTalk\.showOverlay\(createTownMapWindow\(here\.deps\)\);\n\s*onlineHomes\?\.ensure\(here\.mapId\);[^\n]*\n\s*if \(onlineHomes\) ensureVendorHouses\(here\.region\);/, 'the M key asks, its traders too');
   assert.match(w, /if \(!here\) return \{\};\n\s*onlineHomes\?\.ensure\(here\.mapId\);[^\n]*\n\s*if \(onlineHomes\) ensureVendorHouses\(here\.region\);/, 'the travel key\'s streets ask too');
   assert.match(w, /return \{ mapId: dfLoc\.mapTableData\?\.mapId, region: dfLoc\.regionIndex, deps: \{/, 'the town\'s MapId and region');
@@ -211,7 +212,7 @@ test('TOWN-MARKS the wiring: the door hands the marks to the enhanced town map; 
 
 // ---- VENDOR-HOUSES (Mac, 2026-10-30, forwarding #feature-feedback "Player Vendors") ---------------------------------
 
-const { registerVendorHouseReader, ensureVendorHouses, isVendorHouse, vendorHousesVersion, VENDOR_HOUSES_READ_S, _resetVendorHousesForTests } = await import('../../../src/systems/vendorHouses.js');
+const { registerVendorHouseReader, ensureVendorHouses, isVendorHouse, vendorHousesVersion, VENDOR_HOUSES_READ_S, VENDOR_HOUSES_RETRY_S, VENDOR_HOUSES_HUNG_S, _resetVendorHousesForTests } = await import('../../../src/systems/vendorHouses.js');
 const settle = () => new Promise((r) => setTimeout(r, 0));
 
 test('VENDOR-HOUSES the read: a region\'s traders by town and house, read once a while, past the Bay as in it (mutants: the reread every open; the version never moved; a house of another town of the same key marked)', async () => {
@@ -254,9 +255,52 @@ test('VENDOR-HOUSES the read: a region\'s traders by town and house, read once a
   _resetVendorHousesForTests();
 });
 
+test('AUDIT TECH-FEEDBACK F4 VENDOR-HOUSES a read that failed: the market not open yet is asked again soon, a market shut marks nothing, a service error keeps what was read, a read never answered is let go (mutants: a failure waits the whole read; a shut market\'s houses kept; a hung read holds the region for good)', async () => {
+  _resetVendorHousesForTests();
+  let answer = null;
+  const asked = [];
+  registerVendorHouseReader((region) => { asked.push(region); return typeof answer === 'function' ? answer() : answer; });
+  ensureVendorHouses(17, 1000);   // the market not open: the reader answers none
+  await settle();
+  ensureVendorHouses(17, 1000 + VENDOR_HOUSES_RETRY_S - 1);
+  await settle();
+  assert.deepEqual(asked, [17], 'not asked again at once');
+  answer = { ok: true, data: { rows: [{ map: 77, buildingKey: 5 }] } };
+  ensureVendorHouses(17, 1000 + VENDOR_HOUSES_RETRY_S);
+  await settle();
+  assert.deepEqual(asked, [17, 17], 'asked again after VENDOR_HOUSES_RETRY_S, not VENDOR_HOUSES_READ_S');
+  assert.ok(VENDOR_HOUSES_RETRY_S < VENDOR_HOUSES_READ_S);
+  assert.ok(isVendorHouse(77, 5));
+  answer = { ok: false, error: 'server' };   // a service error: what was read stands
+  ensureVendorHouses(17, 2000);
+  await settle();
+  assert.ok(isVendorHouse(77, 5));
+  const v = vendorHousesVersion();
+  answer = null;   // the market shut: nothing of it is marked
+  ensureVendorHouses(17, 2000 + VENDOR_HOUSES_RETRY_S);
+  await settle();
+  assert.ok(!isVendorHouse(77, 5) && vendorHousesVersion() > v);
+  // a read never answered is let go after VENDOR_HOUSES_HUNG_S, and its late answer marks nothing
+  let late = null;
+  answer = () => new Promise((r) => { late = r; });
+  ensureVendorHouses(17, 3000);
+  ensureVendorHouses(17, 3000 + VENDOR_HOUSES_HUNG_S - 1);
+  assert.equal(asked.length, 5, 'held while it may still answer');
+  answer = { ok: true, data: { rows: [{ map: 77, buildingKey: 9 }] } };
+  ensureVendorHouses(17, 3000 + VENDOR_HOUSES_HUNG_S);
+  await settle();
+  assert.equal(asked.length, 6);
+  const v2 = vendorHousesVersion();
+  late({ ok: true, data: { rows: [{ map: 77, buildingKey: 1 }] } });
+  await settle();
+  assert.ok(isVendorHouse(77, 9) && !isVendorHouse(77, 1), 'the hung read\'s late answer is no one\'s');
+  assert.equal(vendorHousesVersion(), v2, 'and repaints nothing');
+  _resetVendorHousesForTests();
+});
+
 test('VENDOR-HOUSES the mark: a trader\'s house carries `vendor` through the rows and the sheet and is filled blue with a parchment door; my own stays red (mutants: the flag dropped at a read; the blue fill lost; a trader\'s house in my red)', () => {
   const buildings = [house(1, 0, 0, 30, 30), house(2, 1, 0, 60, 10), house(3, 1, 1, 10, 50)];
-  const reg = new Map([[1, { owner: 'Mac', own: true }], [2, { owner: 'Gryphoth', own: false, vendor: true }], [3, { owner: 'Trader waypoint - Eve', own: false, vendor: true }]]);
+  const reg = new Map([[1, { owner: 'Mac', own: true }], [2, { owner: 'Gryphoth', own: false, vendor: true }], [3, { owner: 'Trader waypoint - Eve', own: false, vendor: true, waypoint: true }]]);
   const rows = townHomeRows({ buildings, mapId: 4000000000, regionIndex: 66, homeAt: (m, k) => reg.get(k) ?? null });
   assert.deepEqual(rows, [
     { buildingKey: 1, own: true, label: 'Your home' },

@@ -5729,7 +5729,7 @@ export function createFpArm() {
     },
 
     /** TECH-CANCEL: a technique cuts the blow the arm is in - its wind-up, release or follow-through - so its own
-     *  strike's clip starts at once (the machine was cut the same frame: PlayerWeapon.cutForTechnique). */
+     *  strike's clip starts at once - asked whenever a technique's strike began (PlayerWeapon.techniqueStrike). */
     cutAttack() {
       if (upper === UPPER_BODY.AttackWindUp || upper === UPPER_BODY.AttackRelease || upper === UPPER_BODY.AttackEnd) endAttack();
     },

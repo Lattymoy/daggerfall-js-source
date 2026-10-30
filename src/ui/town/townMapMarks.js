@@ -12,11 +12,12 @@
 //   map id must be this town's too - isHouseOwned asks the region alone because its callers stand at the door).
 import { homeDoorTitle } from '../../systems/online/onlineHomes.js';
 import { regionDeedsOf } from '../../net/homeLaw.js';   // HOUSES-3: a region's three deeds
+import { t } from '../../systems/textManager.js';   // VENDOR-HOUSES: the trader's word in the player's language
 
 /** The name under the pointer of the house the character bought at a bank. */
 export const TOWN_HOUSE_LABEL = 'Your house';
 /** VENDOR-HOUSES: a trader's house says so under the pointer (the waypoint's own label already does). */
-const vendorTitle = (home) => (home.vendor === true && !/^Trader waypoint/.test(String(home.owner)) ? `${homeDoorTitle(home)} - trader` : homeDoorTitle(home));
+const vendorTitle = (home) => (home.vendor === true && home.waypoint !== true ? t('town.home.trader', '{home} - trader', { home: homeDoorTitle(home) }) : homeDoorTitle(home));
 /** How near a pointer must come to a mark, in paper pixels - the party's reach (townSheet PARTY_REACH). */
 export const TOWN_MARK_REACH = 12;
 

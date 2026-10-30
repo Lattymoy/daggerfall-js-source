@@ -6,10 +6,13 @@
 
 /** A region's traders are read again after this long (seconds): one read a town map's opening at most. */
 export const VENDOR_HOUSES_READ_S = 120;
+/** AUDIT TECH-FEEDBACK F4: a read that failed is asked again after this long, and one never answered is let go. */
+export const VENDOR_HOUSES_RETRY_S = 15;
+export const VENDOR_HOUSES_HUNG_S = 30;
 
 /** @type {((region: number) => any) | null} */
 let _read = null;
-/** @type {Map<number, { at: number, busy: boolean, keys: Set<string> }>} */
+/** @type {Map<number, { at: number, busy: boolean, failed: boolean, keys: Set<string> }>} */
 const _regions = new Map();
 let _version = 0;
 
@@ -23,13 +26,19 @@ export function registerVendorHouseReader(fn) { _read = typeof fn === 'function'
 export function ensureVendorHouses(region, nowS = Date.now() / 1000) {
   if (!_read || !Number.isInteger(region) || region < 0) return;
   const had = _regions.get(region);
-  if (had && (had.busy || nowS - had.at < VENDOR_HOUSES_READ_S)) return;
-  const entry = { at: nowS, busy: true, keys: had?.keys ?? new Set() };
+  if (had && ((had.busy && nowS - had.at < VENDOR_HOUSES_HUNG_S) || (!had.busy && nowS - had.at < (had.failed ? VENDOR_HOUSES_RETRY_S : VENDOR_HOUSES_READ_S)))) return;
+  const entry = { at: nowS, busy: true, failed: false, keys: had?.keys ?? new Set() };
   _regions.set(region, entry);
   let asked;
   try { asked = _read(region); } catch { asked = null; }
   Promise.resolve(asked).then((r) => {
-    if (!r?.ok) return;
+    if (_regions.get(region) !== entry) return;   // a newer read took the region over
+    if (!r?.ok) {
+      entry.failed = true;
+      // the market shut (the reader answers none): nothing of it is marked; a service error keeps what was read
+      if (r == null && entry.keys.size) { entry.keys = new Set(); _version++; }
+      return;
+    }
     const keys = new Set();
     for (const row of r.data?.rows ?? []) {
       if (Number.isSafeInteger(Number(row?.map)) && Number(row?.buildingKey) > 0) keys.add(keyOf(row.map, row.buildingKey));

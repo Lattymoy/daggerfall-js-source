@@ -8233,6 +8233,7 @@ town.econ.reason.raid,"성문 앞 습격이 교역에 해를 끼치고 있습니
 town.econ.trend.falling,"시장 하락."
 town.econ.trend.flat,"시장 보합."
 town.econ.trend.rising,"시장 상승."
+town.home.trader,"{home} - 상인"
 town.panel.bounty,"현상금 게시판"
 town.panel.new,"{n, plural, other {새 글 #}}"
 town.panel.notice,"게시판"

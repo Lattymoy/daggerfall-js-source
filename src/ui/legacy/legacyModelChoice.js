@@ -4,7 +4,7 @@
 // the chargen door after the leveling question (systems/chargenSession.js withLevelingChoice), on the leveling
 // question's own screen (ui/levelingChoice.js LevelingChoiceScreen: its cursor, its one answer, both faces). Like the
 // leveling system it is answered once and never changed: the permanence is the point of one and the safety of the
-// other. Enduring is first - the answer a player who presses Enter without reading gets is the one that cannot cost
+// other. The least costly answer is first (online, Casual - CASUAL-FIRST): Enter without reading never costs
 // them a character.
 //
 // LEGACY-CHOICE (2026-10-06, Mac: "I want to add a enhanced plus UI popup for online when creating a character. Perma

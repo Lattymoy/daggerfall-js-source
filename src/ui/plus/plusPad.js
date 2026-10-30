@@ -192,7 +192,6 @@ export const DPAD_CHOICES = Object.freeze([
   ['WeaponTechnique', 'Weapon technique'],
   // SPYGLASS: the captain's glass, raised and lowered aboard (bible/03-World/Captains-Sea.md)
   ['Spyglass', 'Spyglass (aboard)'],
-  ['SignatureTechnique', 'Martial technique'],   // TECH-KEY2: the held path's signature
 ]);
 export const dpadChoiceWord = (a) => DPAD_CHOICES.find(([v]) => v === (a ?? null))?.[1] ?? String(a);
 const DPAD_ACTION_OK = new Set(DPAD_CHOICES.map(([v]) => v));

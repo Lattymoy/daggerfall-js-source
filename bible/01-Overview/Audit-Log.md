@@ -8,6 +8,14 @@
 
 Newest first.
 
+**2026-10-30 - AUDIT TECH-FEEDBACK.** Mac: *"Audit this"*, of the same day's #feature-feedback pass. One review of the
+branch, each finding read against the code: eight reported, seven fixed, one refuted. Paid: a bow resting drawn was cut
+to frame 0 (F1); a cut made before the strike could begin lost the swing for nothing (F2), and the Morrowind arm was cut
+only with the machine (F6); the touch and d-pad Martial technique pressed nothing, its action having no key (F3 - taken
+out); a failed or hung vendor read held its region (F4); the homes' version was a string a frame (F7); the waypoint's
+house was told by its English words (F8). Refuted: F5 - the door leaves out only the town's defenders, the player's
+allies. 9 mutants, all dead. Record: `05-Combat/Weapon-Techniques.md`, `10-UI/Enhanced-Maps-Arc.md`.
+
 **2026-10-28 - AUDIT TAMRIEL-NODES.** The request: *"audit the main tamriel PR and just ensure the new gathering points
 show in the overworld across tamriel properly"*, of #1184's gathering past the Bay (WW-C1). The Overworld's groups, marks
 and filter read no ground of the Bay's, and every zone's herbs, veins and trees stood their law on the kernel's own

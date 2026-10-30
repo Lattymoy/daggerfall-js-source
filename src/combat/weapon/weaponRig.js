@@ -1931,7 +1931,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       _techDt = dt;
       _techCtx ??= {
         rig: _techRig, entity, pw: playerWeapon, cam: null, collider: null, held: false, held2: false, ready: false, cancel: false, paralyzed: false, blocked: false, holding: false,
-        startSwing: (s) => { if (playerWeapon.cutForTechnique()) fpArm.cutAttack?.(); if (!playerWeapon.techniqueStrike(s)) return false; fpAttack(s, _techDt); return true; },   // TECH-CANCEL: a swing in flight is cut
+        startSwing: (s) => { if (!playerWeapon.techniqueStrike(s)) return false; fpArm.cutAttack?.(); fpAttack(s, _techDt); return true; },   // TECH-CANCEL: the arm's blow cut once the strike began (AUDIT TECH-FEEDBACK F2, F6)
         door: technique, say, noteShot: noteShotHere,
       };
       const tc = _techCtx;

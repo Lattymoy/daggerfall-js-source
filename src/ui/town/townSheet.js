@@ -100,7 +100,7 @@ const EMPTY_SIZE = Object.freeze({ width: 1, height: 1 });
  *   player?: () => {x:number, y:number, yaw?:number}|null,
  *   party?: () => Array<{acct?: string|null, name?: string, feet?: number[], yaw?: number}>,
  *   homes?: () => Array<{buildingKey: number, own?: boolean, vendor?: boolean, label: string}>,
- *   homesVersion?: () => number|string,
+ *   homesVersion?: () => number,
  *   questBuildings?: () => Array<{buildingKey: number, followed?: boolean}>,
  *   title?: string,
  * }} deps

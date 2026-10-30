@@ -2,8 +2,8 @@
   {
     "name": "VENDOR-HOUSES-reread-every-open",
     "file": "src/systems/vendorHouses.js",
-    "old": "  if (had && (had.busy || nowS - had.at < VENDOR_HOUSES_READ_S)) return;",
-    "new": "  if (had && had.busy) return;",
+    "old": "(!had.busy && nowS - had.at < (had.failed ? VENDOR_HOUSES_RETRY_S : VENDOR_HOUSES_READ_S))",
+    "new": "(!had.busy && false)",
     "tests": [
       "test/ui/town/town_marks.test.js"
     ],
@@ -118,5 +118,55 @@
       "test/ui/town/town_marks.test.js"
     ],
     "note": "VENDOR-HOUSES: nothing reads the directory for the town map"
+  },
+  {
+    "name": "AUDIT-TECH-FEEDBACK-F4-failure-waits-whole-read",
+    "file": "src/systems/vendorHouses.js",
+    "old": "(had.failed ? VENDOR_HOUSES_RETRY_S : VENDOR_HOUSES_READ_S)",
+    "new": "VENDOR_HOUSES_READ_S",
+    "tests": [
+      "test/ui/town/town_marks.test.js"
+    ],
+    "note": "AUDIT TECH-FEEDBACK F4: a market not open yet is not asked again for two minutes"
+  },
+  {
+    "name": "AUDIT-TECH-FEEDBACK-F4-shut-market-kept",
+    "file": "src/systems/vendorHouses.js",
+    "old": "      if (r == null && entry.keys.size) { entry.keys = new Set(); _version++; }\n",
+    "new": "",
+    "tests": [
+      "test/ui/town/town_marks.test.js"
+    ],
+    "note": "AUDIT TECH-FEEDBACK F4: a shut market's traders stay blue"
+  },
+  {
+    "name": "AUDIT-TECH-FEEDBACK-F4-hung-read-holds",
+    "file": "src/systems/vendorHouses.js",
+    "old": "(had.busy && nowS - had.at < VENDOR_HOUSES_HUNG_S)",
+    "new": "had.busy",
+    "tests": [
+      "test/ui/town/town_marks.test.js"
+    ],
+    "note": "AUDIT TECH-FEEDBACK F4: a read never answered holds the region for good"
+  },
+  {
+    "name": "AUDIT-TECH-FEEDBACK-F4-late-answer-taken",
+    "file": "src/systems/vendorHouses.js",
+    "old": "    if (_regions.get(region) !== entry) return;   // a newer read took the region over\n",
+    "new": "",
+    "tests": [
+      "test/ui/town/town_marks.test.js"
+    ],
+    "note": "AUDIT TECH-FEEDBACK F4: a hung read's late answer overwrites the newer one"
+  },
+  {
+    "name": "AUDIT-TECH-FEEDBACK-F8-waypoint-twice",
+    "file": "src/ui/town/townMapMarks.js",
+    "old": "home.vendor === true && home.waypoint !== true ?",
+    "new": "home.vendor === true ?",
+    "tests": [
+      "test/ui/town/town_marks.test.js"
+    ],
+    "note": "AUDIT TECH-FEEDBACK F8: the waypoint's house says trader twice"
   }
 ]

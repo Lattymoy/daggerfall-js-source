@@ -90,14 +90,14 @@
     "note": "Mac, 2026-10-30 (#feature-feedback): a cut said at rest"
   },
   {
-    "name": "TECH-CANCEL-rig-uncut",
+    "name": "TECH-CANCEL-arm-uncut",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "startSwing: (s) => { if (playerWeapon.cutForTechnique()) fpArm.cutAttack?.(); if",
-    "new": "startSwing: (s) => { if",
+    "old": "if (!playerWeapon.techniqueStrike(s)) return false; fpArm.cutAttack?.(); fpAttack(s, _techDt);",
+    "new": "if (!playerWeapon.techniqueStrike(s)) return false; fpAttack(s, _techDt);",
     "tests": [
       "test/scenes/tech1_hosts.test.js"
     ],
-    "note": "Mac, 2026-10-30 (#feature-feedback): the rig never cuts the swing"
+    "note": "Mac, 2026-10-30 (#feature-feedback); AUDIT TECH-FEEDBACK F6: the Morrowind arm's blow never cut, so its clip refuses the technique's"
   },
   {
     "name": "TECH-KEY2-reads-line",
@@ -158,5 +158,36 @@
       "test/scenes/tech1_hosts.test.js"
     ],
     "note": "Mac, 2026-10-30 (#feature-feedback): the Controls pane draws no row for the key"
+  },
+  {
+    "name": "AUDIT-TECH-FEEDBACK-F1-bow-cut-undrawn",
+    "file": "src/characters/weaponStates.js",
+    "old": "m.frame = m.isBow && m.bowIdleDrawn ? BOW_DRAWN_HOLD_FRAME : 0; m.ticks = 0;",
+    "new": "m.frame = 0; m.ticks = 0;",
+    "tests": [
+      "test/systems/tech1_runner.test.js"
+    ],
+    "note": "AUDIT TECH-FEEDBACK F1: a bow resting drawn is cut to frame 0, and a technique's shot plays the whole draw"
+  },
+  {
+    "name": "AUDIT-TECH-FEEDBACK-F2-refused-strike-keeps-cut",
+    "file": "src/combat/playerWeapon.js",
+    "old": "{ if (was) Object.assign(this.machine, was); return false; }",
+    "new": "{ return false; }",
+    "tests": [
+      "test/systems/tech1_runner.test.js"
+    ],
+    "note": "AUDIT TECH-FEEDBACK F2: a strike that cannot begin still costs the swing in flight"
+  },
+  {
+    "name": "AUDIT-TECH-FEEDBACK-F2-cut-skipped",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    if (was) machineCut(this.machine);\n",
+    "new": "",
+    "tests": [
+      "test/systems/tech1_runner.test.js",
+      "test/scenes/tech1_hosts.test.js"
+    ],
+    "note": "AUDIT TECH-FEEDBACK F2: the cut never made - the swing in flight refuses the technique again"
   }
 ]
