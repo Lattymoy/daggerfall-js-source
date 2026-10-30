@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-STAR-W1-circle-pronoun",
     "file": "src/systems/starfall/starCoven.js",
-    "old": "'The Flesh Atronach calls its circle. Break it!'",
-    "new": "'The Flesh Atronach calls her circle. Break it!'",
+    "old": "    circle: () => t('starfall.master.flesh.circle', 'The Flesh Atronach calls its circle. Break it!'),",
+    "new": "    circle: () => t('starfall.master.flesh.circle', 'The Flesh Atronach calls her circle. Break it!'),",
     "tests": [
       "test/systems/starfall/auditstar.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-STAR-W1-circle-article",
     "file": "src/systems/starfall/starCoven.js",
-    "old": "'The Daedra Lord calls its circle. Break it!'",
-    "new": "'Daedra Lord calls its circle. Break it!'",
+    "old": "    circle: () => t('starfall.master.lord.circle', 'The Daedra Lord calls its circle. Break it!'),",
+    "new": "    circle: () => t('starfall.master.lord.circle', 'Daedra Lord calls its circle. Break it!'),",
     "tests": [
       "test/systems/starfall/auditstar.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "AUDIT-STAR-W4-wave4-old",
     "file": "src/systems/starfall/starWords.js",
-    "old": "t('starfall.wave.4', 'Mephala\\'s own join the fight.')",
-    "new": "t('starfall.wave.4', 'Mephala\\'s own come for the star.')",
+    "old": "  () => t('starfall.wave.4', \"Mephala's own join the fight.\"),",
+    "new": "  () => t('starfall.wave.4', \"Mephala's own come for the star.\"),",
     "tests": [
       "test/systems/starfall/auditstar.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "AUDIT-STAR-W4-seducer-old",
     "file": "src/systems/starfall/starCoven.js",
-    "old": "'Mephala sends a Daedra Seducer!'",
-    "new": "'A Daedra Seducer comes for the star!'",
+    "old": "    call: () => t('starfall.master.seducer.call', 'Mephala sends a Daedra Seducer!'),",
+    "new": "    call: () => t('starfall.master.seducer.call', 'A Daedra Seducer comes for the star!'),",
     "tests": [
       "test/systems/starfall/auditstar.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "AUDIT-STAR-W5-spoils-glass-alone",
     "file": "src/systems/starfall/starSpoils.js",
-    "old": "t('starfall.spoils.granted', 'The star\\'s spoils are in your pack.')",
-    "new": "t('starfall.spoils.granted', 'Starglass from the fallen star is in your pack.')",
+    "old": "  granted: () => t('starfall.spoils.granted', \"The star's spoils are in your pack.\"), // AUDIT STAR (W5): gold, Starfall Glass and a piece, never the glass alone",
+    "new": "  granted: () => t('starfall.spoils.granted', 'Starglass from the fallen star is in your pack.'), // AUDIT STAR (W5): gold, Starfall Glass and a piece, never the glass alone",
     "tests": [
       "test/systems/starfall/auditstar.test.js",
       "test/systems/starfall/star7_rewards.test.js"
@@ -206,8 +206,8 @@
   {
     "name": "AUDIT-STAR-I1-glass-name-shared",
     "file": "src/systems/starfall/starglass.js",
-    "old": "name: 'Starfall Glass', worldTextureArchive",
-    "new": "name: 'Starglass', worldTextureArchive",
+    "old": "  name: 'Starfall Glass',",
+    "new": "  name: 'Starglass',",
     "tests": [
       "test/systems/starfall/auditstar.test.js",
       "test/systems/starfall/star7_rewards.test.js"

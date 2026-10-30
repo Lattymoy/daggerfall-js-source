@@ -15,7 +15,7 @@ import { gameDayAt } from '../../net/gate/gateLaw.js';
 import { REGION_NAMES } from '../../formats/mapsFile.js';
 import { starCovenOf } from './starfallCovens.js';
 import { starSiteId } from '../../world/worldOfDaggerfall/wodShared.js';
-import { worldPixelOfKey } from '../../world/worldWide/worldGrid.js';   // WW5: a theatre's pixels are the world's keys
+import { worldPixelOfKey } from '../../world/worldWide/worldGrid.js'; // WW5: a theatre's pixels are the world's keys
 
 const W = 1000;
 /** How far apart a night's stars stand, and how far from the gate's site, map pixels (Chebyshev) - about four km. */
@@ -51,7 +51,8 @@ export function findStarSites(n, scan, { gateSiteOf = () => null } = {}) {
     const times = starTimes(n, k);
     const gate = gateSiteOf(gameDayAt(times.fallAt));
     const fits = (id, strict) => {
-      const px = id % W, py = Math.floor(id / W);
+      const px = id % W,
+        py = Math.floor(id / W);
       if (gate && !apart(gate, px, py)) return false;
       if (!out.every((s) => apart(s, px, py))) return false;
       return !strict || !towns.has(scan.townAt[id]);
@@ -68,7 +69,19 @@ export function findStarSites(n, scan, { gateSiteOf = () => null } = {}) {
     const town = scan.towns[scan.townAt[pick]] ?? null;
     towns.add(scan.townAt[pick]);
     const regionName = REGION_NAMES[coven.region] ?? '';
-    out.push({ n, k, region: coven.region, regionName, coven, px: pick % W, py: Math.floor(pick / W), town, near: town?.name || regionName, spot: starSpotLocal(n, k), times });
+    out.push({
+      n,
+      k,
+      region: coven.region,
+      regionName,
+      coven,
+      px: pick % W,
+      py: Math.floor(pick / W),
+      town,
+      near: town?.name || regionName,
+      spot: starSpotLocal(n, k),
+      times,
+    });
   }
   return out;
 }
@@ -134,7 +147,20 @@ export function findTheatreStarSites(n, lane, scan, { gateSiteOf = () => null } 
     towns.add(ti);
     const [px, py] = worldPixelOfKey(pick);
     const town = t ? { name: t.name, px: t.px, py: t.py, region: coven.region, area: t.area } : null;
-    out.push({ n, k, lane, region: coven.region, regionName, coven, px, py, town, near: town?.name || regionName, spot: starSpotLocal(n, k), times });
+    out.push({
+      n,
+      k,
+      lane,
+      region: coven.region,
+      regionName,
+      coven,
+      px,
+      py,
+      town,
+      near: town?.name || regionName,
+      spot: starSpotLocal(n, k),
+      times,
+    });
   }
   return out;
 }

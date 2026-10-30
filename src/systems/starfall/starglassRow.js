@@ -12,5 +12,10 @@ export const STARGLASS_TEMPLATE = 576;
  *  star's spoils are the holder's to sell or give); it stacks with its own kind alone. Miscellany (UselessItems2), never a
  *  gem: every Gems piece is a crystal a slot takes (systems/gate/gateSpoils.js PORTAL1's lesson). */
 export const STARGLASS_LAW_ROW = Object.freeze({
-  index: STARGLASS_TEMPLATE, baseWeight: 0.1, hitPoints: 1000, basePrice: 400, rarity: 20, stackable: true,
+  index: STARGLASS_TEMPLATE,
+  baseWeight: 0.1,
+  hitPoints: 1000,
+  basePrice: 400,
+  rarity: 20,
+  stackable: true,
 });

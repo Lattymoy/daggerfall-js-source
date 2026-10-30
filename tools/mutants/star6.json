@@ -2,8 +2,8 @@
   {
     "name": "STAR6-the-more-uncounted",
     "file": "src/systems/starfall/starWords.js",
-    "old": "const more = Math.max(0, (c | 0) - names.length);",
-    "new": "const more = c | 0;",
+    "old": "  const more = Math.max(0, (c | 0) - names.length);",
+    "new": "  const more = c | 0;",
     "tests": [
       "test/systems/starfall/star6_words.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "STAR6-one-name-listed",
     "file": "src/systems/starfall/starWords.js",
-    "old": "  if (names.length === 1) return names[0];\n",
-    "new": "",
+    "old": "  if (names.length === 1) return names[0];\n  return t('starfall.by.list', '{names} and {last}', {",
+    "new": "  return t('starfall.by.list', '{names} and {last}', {",
     "tests": [
       "test/systems/starfall/star6_words.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "STAR6-low-late",
     "file": "src/systems/starfall/starfallClient.js",
-    "old": "low: !over && lt <= STAR_LOW_LIGHT,",
-    "new": "low: !over && lt < STAR_LOW_LIGHT,",
+    "old": "    low: !over && lt <= STAR_LOW_LIGHT,",
+    "new": "    low: !over && lt < STAR_LOW_LIGHT,",
     "tests": [
       "test/systems/starfall/star6_words.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "STAR6-the-hub-unheard",
     "file": "src/systems/starfall/starfallClient.js",
-    "old": "const over = held || led?.p === P_HELD ? P_HELD",
-    "new": "const over = led?.p === P_HELD ? P_HELD",
+    "old": "  const over = held || led?.p === P_HELD ? P_HELD : led?.p === P_LOST ? P_LOST : null;",
+    "new": "  const over = led?.p === P_HELD ? P_HELD : led?.p === P_LOST ? P_LOST : null;",
     "tests": [
       "test/systems/starfall/star6_words.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "STAR6-dark-before-the-cell",
     "file": "src/systems/starfall/starfallClient.js",
-    "old": "const lt = led ? led.lt : STAR_LIGHT;",
-    "new": "const lt = led ? led.lt : 0;",
+    "old": "  const lt = led ? led.lt : STAR_LIGHT;",
+    "new": "  const lt = led ? led.lt : 0;",
     "tests": [
       "test/systems/starfall/star6_words.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "STAR6-no-omen-card",
     "file": "src/systems/starfall/starfallClient.js",
-    "old": "    if (phase === 'none' || phase === 'gone') continue;\n    const key = starHeldKey(s.n, s.k, s.px, s.py), h = held.get(key)",
-    "new": "    if (phase === 'none' || phase === 'omen' || phase === 'gone') continue;\n    const key = starHeldKey(s.n, s.k, s.px, s.py), h = held.get(key)",
+    "old": "    if (phase === 'none' || phase === 'gone') continue;",
+    "new": "    if (phase === 'none' || phase === 'omen' || phase === 'gone') continue;",
     "tests": [
       "test/systems/starfall/star6_words.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "STAR6-never-lost-on-the-map",
     "file": "src/systems/starfall/starfallClient.js",
-    "old": ": l?.p === P_LOST || phase === 'after' ? STAR_CARD_TEXT.lost()",
-    "new": ": l?.p === P_LOST ? STAR_CARD_TEXT.lost()",
+    "old": "      : l?.p === P_LOST || phase === 'after'",
+    "new": "      : l?.p === P_LOST",
     "tests": [
       "test/systems/starfall/star6_words.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "STAR6-decided-counted-on",
     "file": "src/systems/starfall/starfallClient.js",
-    "old": "if (T.fallAt <= t && t < T.endAt && !decided(starHeldKey(s.n, s.k, s.px, s.py))) {",
-    "new": "if (T.fallAt <= t && t < T.endAt) {",
+    "old": "    if (T.fallAt <= t && t < T.endAt && !decided(starHeldKey(s.n, s.k, s.px, s.py))) {",
+    "new": "    if (T.fallAt <= t && t < T.endAt) {",
     "tests": [
       "test/systems/starfall/star6_words.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "STAR6-the-town-before-its-omen",
     "file": "src/systems/starfall/starfallClient.js",
-    "old": "where: warned ? STAR_CARD_TEXT.near(s.near) : null",
-    "new": "where: STAR_CARD_TEXT.near(s.near)",
+    "old": "    where: warned ? STAR_CARD_TEXT.near(s.near) : null,",
+    "new": "    where: STAR_CARD_TEXT.near(s.near),",
     "tests": [
       "test/systems/starfall/star6_words.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "STAR6-not-the-soonest",
     "file": "src/systems/starfall/starfallClient.js",
-    "old": "if (!next || T.fallAt < next.at) next =",
-    "new": "if (!next) next =",
+    "old": "      if (!next || T.fallAt < next.at) next = { s, at: T.fallAt, warned: T.fallAt - STAR_WARN_MS <= t, heart };",
+    "new": "      if (!next) next = { s, at: T.fallAt, warned: T.fallAt - STAR_WARN_MS <= t, heart };",
     "tests": [
       "test/systems/starfall/star6_words.test.js"
     ]

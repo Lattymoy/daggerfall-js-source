@@ -8,7 +8,8 @@
 import { SOUND } from '../soundClips.js';
 import { SPEED_OF_SOUND } from '../distantStorms.js';
 
-const cue = (clip, pitch, volume, refDistance = 0, maxDistance = 0) => Object.freeze({ clip, pitch, volume, refDistance, maxDistance });
+const cue = (clip, pitch, volume, refDistance = 0, maxDistance = 0) =>
+  Object.freeze({ clip, pitch, volume, refDistance, maxDistance });
 
 /** The Starfall host's sound keys (scenes/starfall/starfallHost.js) and what each plays. */
 export const STAR_SOUNDS = Object.freeze({
@@ -35,7 +36,8 @@ export const STAR_SOUNDS = Object.freeze({
 /** AUDIT STARFALL R7: how long after the landing a cue made at the star reaches a player `d` metres off, ms - the
  *  storms' own speed of sound (systems/distantStorms.js thunderOf), so the stone's strike comes with its thunder and
  *  never with its flash. Pure. */
-export const starHeardAfterMs = (/** @type {number} */ d) => (Math.max(0, Number.isFinite(d) ? d : 0) / SPEED_OF_SOUND) * 1000;
+export const starHeardAfterMs = (/** @type {number} */ d) =>
+  (Math.max(0, Number.isFinite(d) ? d : 0) / SPEED_OF_SOUND) * 1000;
 
 /** Play cue `key` - at scene `pos` by its reach, or everywhere for a cue with none (or no `pos`) - `vol` times its own
  *  loudness. False for a key it has not, or an audio that would not. */
@@ -43,8 +45,19 @@ export function playStarSound(audio, key, pos = null, vol = 1) {
   const c = STAR_SOUNDS[/** @type {keyof typeof STAR_SOUNDS} */ (key)];
   if (!c || !audio) return false;
   try {
-    if (!c.maxDistance || !pos) { if (!audio.playOneShot) return false; audio.playOneShot(c.clip, c.volume * vol, c.pitch); }
-    else { if (!audio.play3d) return false; audio.play3d(c.clip, pos, c.volume * vol, { refDistance: c.refDistance, maxDistance: c.maxDistance, pitch: c.pitch }); }
-  } catch { return false; }
+    if (!c.maxDistance || !pos) {
+      if (!audio.playOneShot) return false;
+      audio.playOneShot(c.clip, c.volume * vol, c.pitch);
+    } else {
+      if (!audio.play3d) return false;
+      audio.play3d(c.clip, pos, c.volume * vol, {
+        refDistance: c.refDistance,
+        maxDistance: c.maxDistance,
+        pitch: c.pitch,
+      });
+    }
+  } catch {
+    return false;
+  }
   return true;
 }

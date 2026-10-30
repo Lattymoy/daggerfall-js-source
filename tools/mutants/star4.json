@@ -164,8 +164,8 @@
   {
     "name": "STAR4-the-omen-near",
     "file": "src/systems/starfall/starSounds.js",
-    "old": "omen: cue(SOUND.AmbientWindMoan, 1.7, 0.55),",
-    "new": "omen: cue(SOUND.AmbientWindMoan, 1.7, 0.55, 20, 400),",
+    "old": "  omen: cue(SOUND.AmbientWindMoan, 1.7, 0.55),",
+    "new": "  omen: cue(SOUND.AmbientWindMoan, 1.7, 0.55, 20, 400),",
     "tests": [
       "test/systems/starfall/star4_world.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "STAR4-a-reach-unplaced",
     "file": "src/systems/starfall/starSounds.js",
-    "old": "if (!c.maxDistance || !pos) {",
-    "new": "if (!c.maxDistance) {",
+    "old": "    if (!c.maxDistance || !pos) {",
+    "new": "    if (!c.maxDistance) {",
     "tests": [
       "test/systems/starfall/star4_world.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "AUDIT-STARFALL-R7-heard-at-once",
     "file": "src/systems/starfall/starSounds.js",
-    "old": "(Math.max(0, Number.isFinite(d) ? d : 0) / SPEED_OF_SOUND) * 1000;",
-    "new": "0 * SPEED_OF_SOUND;",
+    "old": "export const starHeardAfterMs = (/** @type {number} */ d) =>\n  (Math.max(0, Number.isFinite(d) ? d : 0) / SPEED_OF_SOUND) * 1000;",
+    "new": "export const starHeardAfterMs = (/** @type {number} */ d) => 0 * SPEED_OF_SOUND;",
     "tests": [
       "test/systems/starfall/star4_world.test.js"
     ]

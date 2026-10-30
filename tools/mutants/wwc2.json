@@ -299,8 +299,8 @@
   {
     "name": "WWC2-wroth-kept-apart",
     "file": "src/systems/starfall/starfallCovens.js",
-    "old": "  coven({ id: 'wroth', region: 16, location: 'Wroth_Coven', place: 'WrothCoven', factionId: 424, witches: 'The_Daughters_of_Wroth', member: () => t('starfall.member.wroth', 'Daughter of Wroth') }),\n",
-    "new": "",
+    "old": "    id: 'wroth',\n    region: 16,\n    location: 'Wroth_Coven',\n    place: 'WrothCoven',\n    factionId: 424,\n    witches: 'The_Daughters_of_Wroth',\n    member: () => t('starfall.member.wroth', 'Daughter of Wroth'),\n  }),\n  coven({\n    id: 'bluff',",
+    "new": "    id: 'bluff',",
     "tests": [
       "test/systems/starfall/star2_covens.test.js"
     ]

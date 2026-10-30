@@ -272,8 +272,8 @@
   {
     "name": "STAR7-glass-unstacked",
     "file": "src/systems/starfall/starglassRow.js",
-    "old": "basePrice: 400, rarity: 20, stackable: true,",
-    "new": "basePrice: 400, rarity: 20, stackable: false,",
+    "old": "  stackable: true,",
+    "new": "  stackable: false,",
     "tests": [
       "test/systems/starfall/star7_rewards.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "STAR7-glass-one",
     "file": "src/systems/starfall/starSpoils.js",
-    "old": "starglass((1 + Math.min(STARGLASS_MAX - 1, Math.floor(rolls() * STARGLASS_MAX))) * twice)",
-    "new": "starglass((1 + Math.min(STARGLASS_MAX - 1, Math.floor(rolls() * 1))) * twice)",
+    "old": "  const glass = starglass((1 + Math.min(STARGLASS_MAX - 1, Math.floor(rolls() * STARGLASS_MAX))) * twice);",
+    "new": "  const glass = starglass((1 + Math.min(STARGLASS_MAX - 1, Math.floor(rolls() * 1))) * twice);",
     "tests": [
       "test/systems/starfall/star7_rewards.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "STAR7-heart-plain",
     "file": "src/systems/starfall/starSpoils.js",
-    "old": "const twice = heartStar(n, k) ? 2 : 1;",
-    "new": "const twice = 1;",
+    "old": "  const twice = heartStar(n, k) ? 2 : 1;",
+    "new": "  const twice = 1;",
     "tests": [
       "test/systems/starfall/star7_rewards.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "STAR7-heart-no-set",
     "file": "src/systems/starfall/starSpoils.js",
-    "old": "const set = rollStarspunPiece(rolls, twice === 2);",
-    "new": "const set = rollStarspunPiece(rolls);",
+    "old": "  const set = rollStarspunPiece(rolls, twice === 2); // LAST: every spoils before it stays what it was for its seed",
+    "new": "  const set = rollStarspunPiece(rolls); // LAST: every spoils before it stays what it was for its seed",
     "tests": [
       "test/systems/starfall/star7_rewards.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "STAR7-list-order",
     "file": "src/systems/starfall/starSpoils.js",
-    "old": "{ kind: 'item', item: s.starglass, tier: 'common' }, { kind: 'gold', gold: s.gold, tier: 'common' }];",
-    "new": "{ kind: 'gold', gold: s.gold, tier: 'common' }, { kind: 'item', item: s.starglass, tier: 'common' }];",
+    "old": "    { kind: 'item', item: s.starglass, tier: 'common' },\n    { kind: 'gold', gold: s.gold, tier: 'common' },",
+    "new": "    { kind: 'gold', gold: s.gold, tier: 'common' },\n    { kind: 'item', item: s.starglass, tier: 'common' },",
     "tests": [
       "test/systems/starfall/star7_rewards.test.js"
     ]
