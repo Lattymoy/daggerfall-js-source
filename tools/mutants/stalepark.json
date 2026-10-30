@@ -2,8 +2,8 @@
   {
     "name": "STALE-PARK-not-ready-keeps-the-pose",
     "file": "src/systems/horse/horseCart.js",
-    "old": "    if (!ready()) { clearPendingTransportModeRefresh(); clearMovingPresentation(); trailingPose.forget(); destroyAllStationaryPresentations(); return; }",
-    "new": "    if (!ready()) { clearPendingTransportModeRefresh(); clearMovingPresentation(); destroyAllStationaryPresentations(); return; }",
+    "old": "      trailingPose.forget();\n      destroyAllStationaryPresentations();",
+    "new": "      destroyAllStationaryPresentations();",
     "tests": [
       "test/systems/horse/hcc_stale_park.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "STALE-PARK-hidden-wagon-keeps-the-pose",
     "file": "src/systems/horse/horseCart.js",
-    "old": "      if (!shouldShowMovingWagon()) { clearMovingPresentation(); if (tm().get() === TRANSPORT.Cart) trailingPose.forget(); }",
-    "new": "      if (!shouldShowMovingWagon()) { clearMovingPresentation(); }",
+    "old": "        if (tm().get() === TRANSPORT.Cart) trailingPose.forget();\n      } else updateMovingPresentation(weight, limit, dt);",
+    "new": "      } else updateMovingPresentation(weight, limit, dt);",
     "tests": [
       "test/systems/horse/hcc_stale_park.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "STALE-PARK-a-dismount-loses-its-pose",
     "file": "src/systems/horse/horseCart.js",
-    "old": "      if (!shouldShowMovingWagon()) { clearMovingPresentation(); if (tm().get() === TRANSPORT.Cart) trailingPose.forget(); }",
-    "new": "      if (!shouldShowMovingWagon()) { clearMovingPresentation(); trailingPose.forget(); }",
+    "old": "        if (tm().get() === TRANSPORT.Cart) trailingPose.forget();",
+    "new": "        trailingPose.forget();",
     "tests": [
       "test/systems/horse/hcc_stale_park.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "STALE-PARK-forget-forgets-nothing",
     "file": "src/systems/horse/trailingPoseCache.js",
-    "old": "  function forget() { hasMovingWorldPose = false; }",
-    "new": "  function forget() { }",
+    "old": "  function forget() {\n    hasMovingWorldPose = false;\n  }",
+    "new": "  function forget() {}",
     "tests": [
       "test/systems/horse/trailing_pose_cache.test.js",
       "test/systems/horse/hcc_stale_park.test.js"

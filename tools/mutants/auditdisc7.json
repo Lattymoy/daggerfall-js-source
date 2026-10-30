@@ -218,8 +218,8 @@
   {
     "name": "A10-hitched-wagon-hitched-again",
     "file": "src/systems/horse/horseCartLaw.js",
-    "old": "horseMode === HORSE_MODE.HitchedToWagon ? HCC_ACTION_TEXT.drive : HCC_ACTION_TEXT.hitch",
-    "new": "HCC_ACTION_TEXT.hitch",
+    "old": "      {\n        id: ACTIVATE_MODE.Grab,\n        label: horseMode === HORSE_MODE.HitchedToWagon ? HCC_ACTION_TEXT.drive : HCC_ACTION_TEXT.hitch,\n      },",
+    "new": "      { id: ACTIVATE_MODE.Grab, label: HCC_ACTION_TEXT.hitch },",
     "tests": [
       "test/systems/auditdisc7.test.js"
     ]

@@ -74,8 +74,8 @@
   {
     "name": "ACT-MENU-drive-called-a-ride",
     "file": "src/systems/horse/horseCartLaw.js",
-    "old": "label: ride === HORSE_ACTIVATION.MountHitchedTeam ? HCC_ACTION_TEXT.drive : HCC_ACTION_TEXT.ride });",
-    "new": "label: HCC_ACTION_TEXT.ride });",
+    "old": "  rows.push({\n    id: ACTIVATE_MODE.Grab,\n    label: ride === HORSE_ACTIVATION.MountHitchedTeam ? HCC_ACTION_TEXT.drive : HCC_ACTION_TEXT.ride,\n  });",
+    "new": "  rows.push({ id: ACTIVATE_MODE.Grab, label: HCC_ACTION_TEXT.ride });",
     "tests": [
       "test/systems/disc7.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "ACT-MENU-wait-called-follow",
     "file": "src/systems/horse/horseCartLaw.js",
-    "old": "      : cmd === HORSE_ACTIVATION.Wait ? HCC_ACTION_TEXT.wait : null;",
-    "new": "      : cmd === HORSE_ACTIVATION.Wait ? HCC_ACTION_TEXT.follow : null;",
+    "old": "          ? HCC_ACTION_TEXT.wait",
+    "new": "          ? HCC_ACTION_TEXT.follow",
     "tests": [
       "test/systems/disc7.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "ACT-MENU-wagon-pack-not-listed",
     "file": "src/systems/horse/horseCartLaw.js",
-    "old": ", { id: ACTIVATE_MODE.Steal, label: HCC_ACTION_TEXT.openWagon }];\n  if (target === 'followingWagon')",
-    "new": "];\n  if (target === 'followingWagon')",
+    "old": "      },\n      { id: ACTIVATE_MODE.Steal, label: HCC_ACTION_TEXT.openWagon },\n    ];",
+    "new": "      },\n    ];",
     "tests": [
       "test/systems/disc7.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "ACT-MENU-wagon-verb-ignored",
     "file": "src/systems/horse/horseCart.js",
-    "old": "    if ((mode ?? deps.activateMode()) === ACTIVATE_MODE.Steal) { openWagonInventoryFromPhysicalActivation(); return true; }\n    if (!tm().hasHorse())",
-    "new": "    if (deps.activateMode() === ACTIVATE_MODE.Steal) { openWagonInventoryFromPhysicalActivation(); return true; }\n    if (!tm().hasHorse())",
+    "old": "    if (pee().isPlayerInside()) return true;\n    if ((mode ?? deps.activateMode()) === ACTIVATE_MODE.Steal) {",
+    "new": "    if (pee().isPlayerInside()) return true;\n    if (deps.activateMode() === ACTIVATE_MODE.Steal) {",
     "tests": [
       "test/systems/disc7.test.js"
     ]

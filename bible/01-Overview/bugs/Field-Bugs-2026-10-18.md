@@ -38,7 +38,7 @@ get-down point clear of it for every seat. Two defects together:
 
 Every path that empties a seat reaches the same frame: the player getting down (Trailing to Deployed), a following
 team told to wait, a horse lost (through `commitDeployment`, or set Deployed directly where no following pose is
-live: `horseCart.js:"else { wagonState.Mode = WAGON_MODE.Deployed; wagonState.HorseMode = HORSE_MODE.None;"`), a
+live: `horseCart.js:"commitDeployment(wx, wz, live.heading, HORSE_MODE.None)".."} else {"`), a
 player given a companion's seat on the road (pinned by the audit, L1-4: the last companion gets down beside the wagon
 still moving), the wagon dismissed. A door, a fast travel or a load changes the place's key and lifts the bodies, so none of those
 leave one in a bed.

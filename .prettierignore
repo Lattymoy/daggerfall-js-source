@@ -120,6 +120,8 @@
 /src/systems/gambit/*/
 !/src/systems/grammar/
 /src/systems/grammar/*/
+!/src/systems/horse/
+/src/systems/horse/*/
 !/src/systems/hunt/
 /src/systems/hunt/*/
 !/src/systems/iliac/

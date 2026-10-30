@@ -173,8 +173,8 @@
   {
     "name": "WAGONS1-a-bad-passenger-list-seating-anyone",
     "file": "src/systems/horse/horseCartWire.js",
-    "old": "passengers: validPassengers(raw.ps) ?? [] };",
-    "new": "passengers: validPassengers(raw.ps) ?? raw.ps ?? [] };",
+    "old": "      passengers: validPassengers(raw.ps) ?? [],",
+    "new": "      passengers: validPassengers(raw.ps) ?? raw.ps ?? [],",
     "tests": [
       "test/systems/item/wagons1.test.js"
     ]

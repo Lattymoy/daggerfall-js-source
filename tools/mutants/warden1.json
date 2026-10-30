@@ -380,8 +380,8 @@
   {
     "name": "WARDEN-adopt-lands-at-the-spot",
     "file": "src/systems/horse/horseCart.js",
-    "old": "    const at = thrownTo([wagonState.WorldX, wagonState.WorldZ], from, to);\n    if (!at) return false;",
-    "new": "    const at = thrownTo([wagonState.WorldX, wagonState.WorldZ], from, from) && to;\n    if (!at) return false;",
+    "old": "    const at = thrownTo([wagonState.WorldX, wagonState.WorldZ], from, to);",
+    "new": "    const at = thrownTo([wagonState.WorldX, wagonState.WorldZ], from, from) && to;",
     "tests": [
       "test/systems/horse/warden1.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "WARDEN-adopt-unparked",
     "file": "src/systems/horse/horseCart.js",
-    "old": "    if (!physicalPersistenceEnabled || wagonState.Mode !== WAGON_MODE.Deployed) return false;\n    const at = thrownTo(",
-    "new": "    if (!physicalPersistenceEnabled) return false;\n    const at = thrownTo(",
+    "old": "    if (!physicalPersistenceEnabled || wagonState.Mode !== WAGON_MODE.Deployed) return false;",
+    "new": "    if (!physicalPersistenceEnabled) return false;",
     "tests": [
       "test/systems/horse/warden1.test.js"
     ]

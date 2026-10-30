@@ -159,8 +159,8 @@
   {
     "name": "AUDIT-WARDEN1-C1-adopt-every-horse",
     "file": "src/systems/horse/horseCart.js",
-    "old": "const loose = hm === HORSE_MODE.LooseStationary && horseThrownWith([wagonState.WorldX, wagonState.WorldZ], [wagonState.HorseWorldX, wagonState.HorseWorldZ]);",
-    "new": "const loose = hm === HORSE_MODE.LooseStationary;",
+    "old": "    const loose =\n      hm === HORSE_MODE.LooseStationary &&\n      horseThrownWith([wagonState.WorldX, wagonState.WorldZ], [wagonState.HorseWorldX, wagonState.HorseWorldZ]);",
+    "new": "    const loose = hm === HORSE_MODE.LooseStationary;",
     "tests": [
       "test/systems/wagon/warden1_audit.test.js"
     ]
@@ -168,8 +168,8 @@
   {
     "name": "AUDIT-WARDEN1-C3-reach-kept",
     "file": "src/systems/horse/horseCart.js",
-    "old": "    if (loose) setHorseLoose(castWorldCoordinate(hx), castWorldCoordinate(hz), hh);\n    clearInteriorAccess();\n",
-    "new": "    if (loose) setHorseLoose(castWorldCoordinate(hx), castWorldCoordinate(hz), hh);\n",
+    "old": "    if (loose) setHorseLoose(castWorldCoordinate(hx), castWorldCoordinate(hz), hh);\n    clearInteriorAccess();\n    destroyAllStationaryPresentations();",
+    "new": "    if (loose) setHorseLoose(castWorldCoordinate(hx), castWorldCoordinate(hz), hh);\n    destroyAllStationaryPresentations();",
     "tests": [
       "test/systems/wagon/warden1_audit.test.js"
     ]
@@ -177,8 +177,8 @@
   {
     "name": "AUDIT-WARDEN1-D11-adopt-unpersisted",
     "file": "src/systems/horse/horseCart.js",
-    "old": "    if (!physicalPersistenceEnabled || wagonState.Mode !== WAGON_MODE.Deployed) return false;\n    const at = thrownTo(",
-    "new": "    if (wagonState.Mode !== WAGON_MODE.Deployed) return false;\n    const at = thrownTo(",
+    "old": "    if (!physicalPersistenceEnabled || wagonState.Mode !== WAGON_MODE.Deployed) return false;",
+    "new": "    if (wagonState.Mode !== WAGON_MODE.Deployed) return false;",
     "tests": [
       "test/systems/wagon/warden1_audit.test.js"
     ]

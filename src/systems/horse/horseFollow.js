@@ -18,51 +18,120 @@
 //   { isInteractive, tryGetGroundedPose() -> { position, forward } | null, applyFollowingPose(pos, fwd, speed) }
 
 import {
-  MATHF_EPSILON, V_FORWARD, V_ZERO, horizontalDistance, vsub, vadd, vscale, vdot, vlerp, vdist, vsqr, vnorm,
-  pickGround, horizontalForward, WAGON_FOLLOW_DISTANCE, SAMPLE_DISTANCE, RETAINED_TRAIL_DISTANCE, TELEPORT_DISTANCE,
-  MAXIMUM_VISUAL_DISTANCE, GROUND_RAY_HEIGHT, GROUND_RAY_DISTANCE, NORMAL_GROUND_OFFSET, POSITION_SMOOTHING_RATE,
+  MATHF_EPSILON,
+  V_FORWARD,
+  V_ZERO,
+  horizontalDistance,
+  vsub,
+  vadd,
+  vscale,
+  vdot,
+  vlerp,
+  vdist,
+  vsqr,
+  vnorm,
+  pickGround,
+  horizontalForward,
+  WAGON_FOLLOW_DISTANCE,
+  SAMPLE_DISTANCE,
+  RETAINED_TRAIL_DISTANCE,
+  TELEPORT_DISTANCE,
+  MAXIMUM_VISUAL_DISTANCE,
+  GROUND_RAY_HEIGHT,
+  GROUND_RAY_DISTANCE,
+  NORMAL_GROUND_OFFSET,
+  POSITION_SMOOTHING_RATE,
   ROTATION_SMOOTHING_RATE,
 } from './horseCartLaw.js';
 import { quatLookRotation, quatSlerp, quatForward } from '../../world/quat.js';
 
 // ─── CONSTANTS (HorseFollowController's, from the metadata Constant table) ─────────────────────────────────────
-export const CATCH_UP_START_DISTANCE = 6.0, STRONG_CATCH_UP_DISTANCE = 12.0;
-export const THREAT_CLEARANCE = 15.0;           // compared squared: 225
-export const COMBAT_CLEAR_DELAY = 3.0, COMBAT_SCAN_INTERVAL = 0.25, COMBAT_TARGET_REFRESH = 0.4;
-export const STUCK_TIMEOUT = 4.5, RECOVERY_MIN_SEPARATION = 8.0, PROGRESS_DISTANCE = 0.5, RECOVERY_TRAIL_DISTANCE = 6.0;
+export const CATCH_UP_START_DISTANCE = 6.0,
+  STRONG_CATCH_UP_DISTANCE = 12.0;
+export const THREAT_CLEARANCE = 15.0; // compared squared: 225
+export const COMBAT_CLEAR_DELAY = 3.0,
+  COMBAT_SCAN_INTERVAL = 0.25,
+  COMBAT_TARGET_REFRESH = 0.4;
+export const STUCK_TIMEOUT = 4.5,
+  RECOVERY_MIN_SEPARATION = 8.0,
+  PROGRESS_DISTANCE = 0.5,
+  RECOVERY_TRAIL_DISTANCE = 6.0;
 export const STOP_TARGET_DISTANCE = 0.18;
-export const GENTLE_SPEED = 1.25, NORMAL_SPEED = 2.8, CATCH_UP_SPEED = 5.0, STRONG_CATCH_UP_SPEED = 7.0, EVASION_SPEED = 6.0;
-export const FOLLOW_GROUND_PROBE_HEIGHT = 8.0, FOLLOW_GROUND_PROBE_DISTANCE = 40.0;
-export const MAXIMUM_STEP_HEIGHT_CHANGE = 1.5, BODY_PROBE_HEIGHT = 0.9, BODY_PROBE_RADIUS = 0.35;
+export const GENTLE_SPEED = 1.25,
+  NORMAL_SPEED = 2.8,
+  CATCH_UP_SPEED = 5.0,
+  STRONG_CATCH_UP_SPEED = 7.0,
+  EVASION_SPEED = 6.0;
+export const FOLLOW_GROUND_PROBE_HEIGHT = 8.0,
+  FOLLOW_GROUND_PROBE_DISTANCE = 40.0;
+export const MAXIMUM_STEP_HEIGHT_CHANGE = 1.5,
+  BODY_PROBE_HEIGHT = 0.9,
+  BODY_PROBE_RADIUS = 0.35;
 export const EVADE_COMFORT_DISTANCE = 8.0;
-export const ACCEL_MIN_CATCH_UP = 2.0, ACCEL_MAX_CATCH_UP = 12.0, ACCEL_CATCH_UP_GAIN = 0.75, ACCEL_MAX_SUBSTEP = 1.25, ACCEL_MAX_SUBSTEPS = 16;
+export const ACCEL_MIN_CATCH_UP = 2.0,
+  ACCEL_MAX_CATCH_UP = 12.0,
+  ACCEL_CATCH_UP_GAIN = 0.75,
+  ACCEL_MAX_SUBSTEP = 1.25,
+  ACCEL_MAX_SUBSTEPS = 16;
 /** The seven detour angles [static float[7]] and the six evade rings [static float[6]] (FieldRVA blobs). */
 export const DETOUR_ANGLES = Object.freeze([0, 30, -30, 60, -60, 90, -90]);
 export const EVADE_RINGS = Object.freeze([6, 10, 15, 20, 25, 30]);
 /** HorseFollowPath's. */
-export const PATH_SAMPLE_DISTANCE = 0.08, PATH_RETAINED_DISTANCE = 45.0, PATH_DISCONTINUITY_DISTANCE = 20.0;
+export const PATH_SAMPLE_DISTANCE = 0.08,
+  PATH_RETAINED_DISTANCE = 45.0,
+  PATH_DISCONTINUITY_DISTANCE = 20.0;
 /** Seed's first point stands 4 m behind (an inline literal). */
 export const PATH_SEED_BEHIND = 4.0;
 
-const normalizeHorizontal = (v) => { const p = [v[0], 0, v[2]]; return vsqr(p) <= MATHF_EPSILON ? [...V_FORWARD] : vnorm(p); };
-const rotateY = (v, deg) => { const r = deg * Math.PI / 180, c = Math.cos(r), s = Math.sin(r); return [v[0] * c + v[2] * s, v[1], -v[0] * s + v[2] * c]; };   // Quaternion.AngleAxis(deg, up) * v
+const normalizeHorizontal = (v) => {
+  const p = [v[0], 0, v[2]];
+  return vsqr(p) <= MATHF_EPSILON ? [...V_FORWARD] : vnorm(p);
+};
+const rotateY = (v, deg) => {
+  const r = (deg * Math.PI) / 180,
+    c = Math.cos(r),
+    s = Math.sin(r);
+  return [v[0] * c + v[2] * s, v[1], -v[0] * s + v[2] * c];
+}; // Quaternion.AngleAxis(deg, up) * v
 
 // ─── HorseFollowPath ───────────────────────────────────────────────────────────────────────────────────────────
 
 export class HorseFollowPath {
-  constructor() { this.points = []; this.lastPlayerPosition = [...V_ZERO]; this.hasLastPlayerPosition = false; }
-  get count() { return this.points.length; }
+  constructor() {
+    this.points = [];
+    this.lastPlayerPosition = [...V_ZERO];
+    this.hasLastPlayerPosition = false;
+  }
+  get count() {
+    return this.points.length;
+  }
   /** The floating origin moved the scene (Unity's FloatingOrigin moves every transform; the port's hosts shift by hand). */
-  offset(d) { for (const p of this.points) { p[0] += d[0]; p[1] += d[1]; p[2] += d[2]; } if (this.hasLastPlayerPosition) { this.lastPlayerPosition[0] += d[0]; this.lastPlayerPosition[1] += d[1]; this.lastPlayerPosition[2] += d[2]; } }
+  offset(d) {
+    for (const p of this.points) {
+      p[0] += d[0];
+      p[1] += d[1];
+      p[2] += d[2];
+    }
+    if (this.hasLastPlayerPosition) {
+      this.lastPlayerPosition[0] += d[0];
+      this.lastPlayerPosition[1] += d[1];
+      this.lastPlayerPosition[2] += d[2];
+    }
+  }
   /** Clear [IL_2a47]. */
-  clear() { this.points.length = 0; this.hasLastPlayerPosition = false; this.lastPlayerPosition = [...V_ZERO]; }
+  clear() {
+    this.points.length = 0;
+    this.hasLastPlayerPosition = false;
+    this.lastPlayerPosition = [...V_ZERO];
+  }
   /** Seed(player, forward) [IL_2a74]: a point 4 m behind and the player. */
   seed(playerPosition, playerForward) {
     const f = normalizeHorizontal(playerForward);
     this.points.length = 0;
     this.points.push(vsub(playerPosition, vscale(f, PATH_SEED_BEHIND)));
     this.points.push([...playerPosition]);
-    this.lastPlayerPosition = [...playerPosition]; this.hasLastPlayerPosition = true;
+    this.lastPlayerPosition = [...playerPosition];
+    this.hasLastPlayerPosition = true;
   }
   /** Seed(leader, leaderForward, trailing) [IL_2abf]: the trailing point then the leader (the forward is normalised and unused). */
   seedBehind(leaderPosition, leaderForward, trailingPosition) {
@@ -70,13 +139,23 @@ export class HorseFollowPath {
     this.points.length = 0;
     this.points.push([...trailingPosition]);
     this.points.push([...leaderPosition]);
-    this.lastPlayerPosition = [...leaderPosition]; this.hasLastPlayerPosition = true;
+    this.lastPlayerPosition = [...leaderPosition];
+    this.hasLastPlayerPosition = true;
   }
   /** Record [IL_2b08]: a jump past 20 m re-seeds (false); a step under 0.08 m is not a sample (true). */
   record(playerPosition, playerForward) {
-    if (this.hasLastPlayerPosition && horizontalDistance(playerPosition, this.lastPlayerPosition) > PATH_DISCONTINUITY_DISTANCE) { this.seed(playerPosition, playerForward); return false; }
+    if (
+      this.hasLastPlayerPosition &&
+      horizontalDistance(playerPosition, this.lastPlayerPosition) > PATH_DISCONTINUITY_DISTANCE
+    ) {
+      this.seed(playerPosition, playerForward);
+      return false;
+    }
     this.lastPlayerPosition = [...playerPosition];
-    if (this.points.length === 0) { this.seed(playerPosition, playerForward); return false; }
+    if (this.points.length === 0) {
+      this.seed(playerPosition, playerForward);
+      return false;
+    }
     if (horizontalDistance(playerPosition, this.points[this.points.length - 1]) < PATH_SAMPLE_DISTANCE) return true;
     this.points.push([...playerPosition]);
     this.prune();
@@ -87,23 +166,29 @@ export class HorseFollowPath {
   tryGetPointBehind(currentPlayerPosition, desiredDistance) {
     if (this.points.length < 2) return null;
     if (desiredDistance < 0) return null;
-    let accumulated = 0, cursor = [...currentPlayerPosition];
+    let accumulated = 0,
+      cursor = [...currentPlayerPosition];
     for (let i = this.points.length; i > 0; i--) {
       const p = this.points[i - 1];
       const seg = [cursor[0] - p[0], 0, cursor[2] - p[2]];
       const len = Math.sqrt(vsqr(seg));
-      if (len <= MATHF_EPSILON) { cursor = p; continue; }
+      if (len <= MATHF_EPSILON) {
+        cursor = p;
+        continue;
+      }
       if (accumulated + len >= desiredDistance) {
         const remaining = desiredDistance - accumulated;
         return { target: vlerp(cursor, p, remaining / len), pathForward: vscale(seg, 1 / len) };
       }
-      accumulated += len; cursor = p;
+      accumulated += len;
+      cursor = p;
     }
     return { target: [...this.points[0]], pathForward: normalizeHorizontal(vsub(this.points[1], this.points[0])) };
   }
   /** Prune [IL_2c9c]: keep 45 m of path back from the newest point. */
   prune() {
-    let retained = 0, removeCount = this.points.length - 1;
+    let retained = 0,
+      removeCount = this.points.length - 1;
     for (let i = this.points.length - 1; i > 0; i--) {
       retained += horizontalDistance(this.points[i], this.points[i - 1]);
       removeCount = i - 1;
@@ -122,34 +207,48 @@ export function calculateFollowSpeed(targetDistance, playerDistance, evading, fo
   if (evading) return EVASION_SPEED;
   if (playerDistance >= STRONG_CATCH_UP_DISTANCE) return STRONG_CATCH_UP_SPEED;
   if (playerDistance >= CATCH_UP_START_DISTANCE) {
-    const t = Math.max(0, Math.min(1, (playerDistance - CATCH_UP_START_DISTANCE) / (STRONG_CATCH_UP_DISTANCE - CATCH_UP_START_DISTANCE)));
+    const t = Math.max(
+      0,
+      Math.min(1, (playerDistance - CATCH_UP_START_DISTANCE) / (STRONG_CATCH_UP_DISTANCE - CATCH_UP_START_DISTANCE)),
+    );
     return CATCH_UP_SPEED + (STRONG_CATCH_UP_SPEED - CATCH_UP_SPEED) * t;
   }
   const t = Math.max(0, Math.min(1, targetDistance / Math.max(0.01, followDistance)));
   return GENTLE_SPEED + (NORMAL_SPEED - GENTLE_SPEED) * t;
 }
 /** CalculateObservedPlayerSpeed [IL_2008]. */
-export const observedPlayerSpeed = (previous, current, dt, continuous) => (!continuous || dt <= MATHF_EPSILON ? 0 : horizontalDistance(previous, current) / dt);
+export const observedPlayerSpeed = (previous, current, dt, continuous) =>
+  !continuous || dt <= MATHF_EPSILON ? 0 : horizontalDistance(previous, current) / dt;
 /** CalculateAcceleratedFollowSpeed [IL_2030]: under Travel Options' accelerated journey the horse matches the
  *  player's speed plus a catch-up of 2 + 0.75 x the excess distance, 2..12. */
 export function acceleratedFollowSpeed(ordinarySpeed, playerSpeed, playerDistance, followDistance) {
   if (playerSpeed <= MATHF_EPSILON) return ordinarySpeed;
   const excess = Math.max(0, playerDistance - followDistance);
-  const catchUp = Math.max(ACCEL_MIN_CATCH_UP, Math.min(ACCEL_MAX_CATCH_UP, ACCEL_MIN_CATCH_UP + excess * ACCEL_CATCH_UP_GAIN));
+  const catchUp = Math.max(
+    ACCEL_MIN_CATCH_UP,
+    Math.min(ACCEL_MAX_CATCH_UP, ACCEL_MIN_CATCH_UP + excess * ACCEL_CATCH_UP_GAIN),
+  );
   return Math.max(ordinarySpeed, playerSpeed + catchUp);
 }
 /** ShouldEnterCombatEvasion [IL_2070] / IsQualifyingThreatState [IL_1fe0] (the host's foe pool answers the five). */
-export const shouldEnterCombatEvasion = (avoidanceEnabled, qualifyingThreatCount) => avoidanceEnabled && qualifyingThreatCount > 0;
-export const isQualifyingThreatState = (isEnemy, hostile, playerAlly, targetsPlayer, detected) => isEnemy && hostile && !playerAlly && targetsPlayer && detected;
+export const shouldEnterCombatEvasion = (avoidanceEnabled, qualifyingThreatCount) =>
+  avoidanceEnabled && qualifyingThreatCount > 0;
+export const isQualifyingThreatState = (isEnemy, hostile, playerAlly, targetsPlayer, detected) =>
+  isEnemy && hostile && !playerAlly && targetsPlayer && detected;
 
 /** TryFindGround [IL_2088]: from 8 m up, 40 m down, the surface nearest the requested height. */
 export function tryFindGround(phys, requested) {
-  const hits = phys.raycastAll(vadd(requested, [0, FOLLOW_GROUND_PROBE_HEIGHT, 0]), [0, -1, 0], FOLLOW_GROUND_PROBE_DISTANCE);
+  const hits = phys.raycastAll(
+    vadd(requested, [0, FOLLOW_GROUND_PROBE_HEIGHT, 0]),
+    [0, -1, 0],
+    FOLLOW_GROUND_PROBE_DISTANCE,
+  );
   const best = pickGround(hits, requested[1]);
   return best ? [...best.point] : null;
 }
 /** IsStepClear [IL_2778]: a 0.35 sphere from 0.9 up, swept `distance + 0.05` along the direction, meets nothing. */
-export const isStepClear = (phys, start, direction, distance) => phys.sphereCastClear(vadd(start, [0, BODY_PROBE_HEIGHT, 0]), BODY_PROBE_RADIUS, direction, distance + 0.05);
+export const isStepClear = (phys, start, direction, distance) =>
+  phys.sphereCastClear(vadd(start, [0, BODY_PROBE_HEIGHT, 0]), BODY_PROBE_RADIUS, direction, distance + 0.05);
 /** IsDirectPathClear [IL_27ec]. */
 export function isDirectPathClear(phys, start, end) {
   const d = [end[0] - start[0], 0, end[2] - start[2]];
@@ -175,46 +274,91 @@ export class HorseFollowController {
   constructor() {
     this.path = new HorseFollowPath();
     this.threats = [];
-    this.position = [...V_ZERO]; this.heading = [...V_FORWARD];
-    this.evadeTarget = [...V_ZERO]; this.progressReference = [...V_ZERO]; this.previousPlayerPosition = [...V_ZERO];
-    this.nextCombatScanTime = 0; this.nextEvadeTargetTime = 0; this.lastThreatTime = -Infinity; this.progressReferenceTime = 0;
-    this.initialized = false; this.combatEvading = false; this.hasEvadeTarget = false; this.hasPreviousPlayerPosition = false;
+    this.position = [...V_ZERO];
+    this.heading = [...V_FORWARD];
+    this.evadeTarget = [...V_ZERO];
+    this.progressReference = [...V_ZERO];
+    this.previousPlayerPosition = [...V_ZERO];
+    this.nextCombatScanTime = 0;
+    this.nextEvadeTargetTime = 0;
+    this.lastThreatTime = -Infinity;
+    this.progressReferenceTime = 0;
+    this.initialized = false;
+    this.combatEvading = false;
+    this.hasEvadeTarget = false;
+    this.hasPreviousPlayerPosition = false;
     this.actualHorizontalSpeed = 0;
   }
-  get isInitialized() { return this.initialized; }
-  get isCombatEvading() { return this.combatEvading; }
+  get isInitialized() {
+    return this.initialized;
+  }
+  get isCombatEvading() {
+    return this.combatEvading;
+  }
   /** Begin [IL_1b64]. */
   begin(phys, horsePosition, horseHeading, playerPosition, playerForward) {
-    this.position = [...horsePosition]; this.heading = normalizeHorizontal(horseHeading);
+    this.position = [...horsePosition];
+    this.heading = normalizeHorizontal(horseHeading);
     this.path.seed(playerPosition, playerForward);
     this.threats.length = 0;
-    this.combatEvading = false; this.hasEvadeTarget = false;
-    this.nextCombatScanTime = 0; this.nextEvadeTargetTime = 0; this.lastThreatTime = -Infinity;
-    this.progressReference = [...this.position]; this.progressReferenceTime = phys.now();
-    this.previousPlayerPosition = [...playerPosition]; this.hasPreviousPlayerPosition = true;
+    this.combatEvading = false;
+    this.hasEvadeTarget = false;
+    this.nextCombatScanTime = 0;
+    this.nextEvadeTargetTime = 0;
+    this.lastThreatTime = -Infinity;
+    this.progressReference = [...this.position];
+    this.progressReferenceTime = phys.now();
+    this.previousPlayerPosition = [...playerPosition];
+    this.hasPreviousPlayerPosition = true;
     this.actualHorizontalSpeed = 0;
     this.initialized = true;
   }
   /** ResetTransient [IL_1c04]: the position, heading, evade target and progress marks are NOT touched. */
   resetTransient() {
-    this.path.clear(); this.threats.length = 0; this.initialized = false; this.combatEvading = false; this.hasEvadeTarget = false;
-    this.actualHorizontalSpeed = 0; this.nextCombatScanTime = 0; this.nextEvadeTargetTime = 0; this.lastThreatTime = -Infinity;
-    this.previousPlayerPosition = [...V_ZERO]; this.hasPreviousPlayerPosition = false;
+    this.path.clear();
+    this.threats.length = 0;
+    this.initialized = false;
+    this.combatEvading = false;
+    this.hasEvadeTarget = false;
+    this.actualHorizontalSpeed = 0;
+    this.nextCombatScanTime = 0;
+    this.nextEvadeTargetTime = 0;
+    this.lastThreatTime = -Infinity;
+    this.previousPlayerPosition = [...V_ZERO];
+    this.hasPreviousPlayerPosition = false;
   }
   /** ClearCombatEvasion [IL_1c7c]: answers whether anything was active. */
   /** The floating origin moved the scene: every scene point this controller holds moves with it. */
   offset(d) {
-    for (const v of [this.position, this.evadeTarget, this.progressReference, this.previousPlayerPosition, ...this.threats]) { v[0] += d[0]; v[1] += d[1]; v[2] += d[2]; }
+    for (const v of [
+      this.position,
+      this.evadeTarget,
+      this.progressReference,
+      this.previousPlayerPosition,
+      ...this.threats,
+    ]) {
+      v[0] += d[0];
+      v[1] += d[1];
+      v[2] += d[2];
+    }
     this.path.offset(d);
   }
   clearCombatEvasion(phys) {
     const wasActive = this.combatEvading || this.hasEvadeTarget || this.threats.length > 0;
-    this.threats.length = 0; this.combatEvading = false; this.hasEvadeTarget = false; this.evadeTarget = [...V_ZERO];
-    this.nextCombatScanTime = 0; this.nextEvadeTargetTime = 0; this.lastThreatTime = -Infinity;
+    this.threats.length = 0;
+    this.combatEvading = false;
+    this.hasEvadeTarget = false;
+    this.evadeTarget = [...V_ZERO];
+    this.nextCombatScanTime = 0;
+    this.nextEvadeTargetTime = 0;
+    this.lastThreatTime = -Infinity;
     if (this.initialized) this.resetProgress(phys);
     return wasActive;
   }
-  resetProgress(phys) { this.progressReference = [...this.position]; this.progressReferenceTime = phys.now(); }
+  resetProgress(phys) {
+    this.progressReference = [...this.position];
+    this.progressReferenceTime = phys.now();
+  }
 
   /** Tick [IL_1d00]: one frame of following. `playerMovement` is `{ position, forward }` (DFU's smoothFollower,
    *  the player object itself when there is none); `visual` the stationary horse visual. Returns false when the
@@ -222,18 +366,29 @@ export class HorseFollowController {
    *  by the runtime; `recoveredFromStuck` is answered through `this.recoveredThisTick`. */
   tick(phys, playerMovement, visual, followDistance, avoidCombat, acceleratedTravel, dt) {
     this.recoveredThisTick = false;
-    if (!this.initialized || !playerMovement || !visual || !visual.isInteractive) { this.actualHorizontalSpeed = 0; return false; }
+    if (!this.initialized || !playerMovement || !visual || !visual.isInteractive) {
+      this.actualHorizontalSpeed = 0;
+      return false;
+    }
     const grounded = visual.tryGetGroundedPose();
-    if (grounded && horizontalDistance(grounded.position, this.position) > TELEPORT_DISTANCE) {   // [IL_1d3c-IL_1d81] the visual re-grounded far off
-      this.position = [...grounded.position]; this.heading = [...grounded.forward];
+    if (grounded && horizontalDistance(grounded.position, this.position) > TELEPORT_DISTANCE) {
+      // [IL_1d3c-IL_1d81] the visual re-grounded far off
+      this.position = [...grounded.position];
+      this.heading = [...grounded.forward];
       this.path.seed(playerMovement.position, playerMovement.forward);
       this.resetProgress(phys);
     }
     const recorded = this.path.record(playerMovement.position, playerMovement.forward);
     if (!recorded) this.resetProgress(phys);
     const step = Math.max(0, dt);
-    const playerSpeed = observedPlayerSpeed(this.previousPlayerPosition, playerMovement.position, step, recorded && this.hasPreviousPlayerPosition);
-    this.previousPlayerPosition = [...playerMovement.position]; this.hasPreviousPlayerPosition = true;
+    const playerSpeed = observedPlayerSpeed(
+      this.previousPlayerPosition,
+      playerMovement.position,
+      step,
+      recorded && this.hasPreviousPlayerPosition,
+    );
+    this.previousPlayerPosition = [...playerMovement.position];
+    this.hasPreviousPlayerPosition = true;
     if (avoidCombat && !acceleratedTravel) this.updateCombatState(phys, playerMovement);
     else this.clearCombatEvasion(phys);
     let target, targetForward;
@@ -242,14 +397,20 @@ export class HorseFollowController {
       targetForward = normalizeHorizontal(vsub(target, this.position));
     } else {
       const behind = this.path.tryGetPointBehind(playerMovement.position, followDistance);
-      if (!behind) { this.actualHorizontalSpeed = 0; visual.applyFollowingPose(this.position, this.heading, 0); return true; }
-      target = behind.target; targetForward = behind.pathForward;
+      if (!behind) {
+        this.actualHorizontalSpeed = 0;
+        visual.applyFollowingPose(this.position, this.heading, 0);
+        return true;
+      }
+      target = behind.target;
+      targetForward = behind.pathForward;
     }
     const startPosition = [...this.position];
     const targetDistance = horizontalDistance(this.position, target);
     const playerDistance = horizontalDistance(this.position, playerMovement.position);
     let speed = calculateFollowSpeed(targetDistance, playerDistance, this.combatEvading, followDistance);
-    if (acceleratedTravel && recorded && !this.combatEvading) speed = acceleratedFollowSpeed(speed, playerSpeed, playerDistance, followDistance);
+    if (acceleratedTravel && recorded && !this.combatEvading)
+      speed = acceleratedFollowSpeed(speed, playerSpeed, playerDistance, followDistance);
     if (speed > 0 && step > MATHF_EPSILON) {
       const stepDistance = Math.min(targetDistance, speed * step);
       if (acceleratedTravel) this.moveGroundedInSubsteps(phys, target, stepDistance);
@@ -264,7 +425,11 @@ export class HorseFollowController {
     this.actualHorizontalSpeed = step > MATHF_EPSILON ? horizontalDistance(startPosition, this.position) / step : 0;
     if (!this.combatEvading) {
       const recovered = this.updateStuckRecovery(phys, playerMovement, targetForward, speed);
-      if (recovered) { this.position = recovered; this.recoveredThisTick = true; this.actualHorizontalSpeed = 0; }
+      if (recovered) {
+        this.position = recovered;
+        this.recoveredThisTick = true;
+        this.actualHorizontalSpeed = 0;
+      }
     }
     visual.applyFollowingPose(this.position, this.heading, this.actualHorizontalSpeed);
     return true;
@@ -278,40 +443,61 @@ export class HorseFollowController {
     if (shouldEnterCombatEvasion(true, this.threats.length)) {
       this.lastThreatTime = now;
       if (this.combatEvading) return;
-      this.combatEvading = true; this.hasEvadeTarget = false; this.nextEvadeTargetTime = 0; this.resetProgress(phys);
+      this.combatEvading = true;
+      this.hasEvadeTarget = false;
+      this.nextEvadeTargetTime = 0;
+      this.resetProgress(phys);
       return;
     }
     if (this.combatEvading && now - this.lastThreatTime >= COMBAT_CLEAR_DELAY) {
-      this.combatEvading = false; this.hasEvadeTarget = false;
+      this.combatEvading = false;
+      this.hasEvadeTarget = false;
       this.path.seed(playerMovement.position, playerMovement.forward);
       this.resetProgress(phys);
     }
   }
   /** IsThreatSafe [IL_2518]: no threat within 15 m (horizontal). */
   isThreatSafe(candidate) {
-    for (const t of this.threats) { const dx = candidate[0] - t[0], dz = candidate[2] - t[2]; if (dx * dx + dz * dz < THREAT_CLEARANCE * THREAT_CLEARANCE) return false; }
+    for (const t of this.threats) {
+      const dx = candidate[0] - t[0],
+        dz = candidate[2] - t[2];
+      if (dx * dx + dz * dz < THREAT_CLEARANCE * THREAT_CLEARANCE) return false;
+    }
     return true;
   }
   /** SelectOrRetainEvadeTarget [IL_2334]: stay where safe within 8 m of the player; keep a fresh safe target;
    *  else the nearest grounded, safe, reachable point on the first ring that yields one; else away from the threats. */
   selectOrRetainEvadeTarget(phys, playerPosition) {
     const now = phys.now();
-    if (this.isThreatSafe(this.position) && horizontalDistance(this.position, playerPosition) <= EVADE_COMFORT_DISTANCE) { this.evadeTarget = [...this.position]; this.hasEvadeTarget = true; return this.evadeTarget; }
-    if (this.hasEvadeTarget && now < this.nextEvadeTargetTime && this.isThreatSafe(this.evadeTarget)) return this.evadeTarget;
+    if (
+      this.isThreatSafe(this.position) &&
+      horizontalDistance(this.position, playerPosition) <= EVADE_COMFORT_DISTANCE
+    ) {
+      this.evadeTarget = [...this.position];
+      this.hasEvadeTarget = true;
+      return this.evadeTarget;
+    }
+    if (this.hasEvadeTarget && now < this.nextEvadeTargetTime && this.isThreatSafe(this.evadeTarget))
+      return this.evadeTarget;
     this.nextEvadeTargetTime = now + COMBAT_TARGET_REFRESH;
-    let best = [...V_ZERO], found = false;
+    let best = [...V_ZERO],
+      found = false;
     for (let ring = 0; ring < EVADE_RINGS.length && !found; ring++) {
       const radius = EVADE_RINGS[ring];
       let bestDist = Infinity;
       for (let i = 0; i < 16; i++) {
-        const angle = i * Math.PI * 2 / 16;
+        const angle = (i * Math.PI * 2) / 16;
         const candidate = vadd(playerPosition, vscale([Math.cos(angle), 0, Math.sin(angle)], radius));
         const g = tryFindGround(phys, candidate);
         if (!g) continue;
         if (!this.isThreatSafe(g)) continue;
         if (!isDirectPathClear(phys, this.position, g)) continue;
         const d = horizontalDistance(this.position, g);
-        if (d < bestDist) { bestDist = d; best = g; found = true; }
+        if (d < bestDist) {
+          bestDist = d;
+          best = g;
+          found = true;
+        }
       }
     }
     if (!found) {
@@ -321,7 +507,8 @@ export class HorseFollowController {
       const g = tryFindGround(phys, vadd(this.position, vscale(away, EVADE_COMFORT_DISTANCE)));
       best = g ?? [...this.position];
     }
-    this.evadeTarget = best; this.hasEvadeTarget = true;
+    this.evadeTarget = best;
+    this.hasEvadeTarget = true;
     return this.evadeTarget;
   }
   /** UpdateStuckRecovery [IL_2570]: wanting to move, 8 m or more from the player, no progress of 0.5 m for 4.5 s -
@@ -329,13 +516,25 @@ export class HorseFollowController {
   updateStuckRecovery(phys, playerMovement, targetForward, desiredSpeed) {
     const now = phys.now();
     const playerDistance = horizontalDistance(this.position, playerMovement.position);
-    if (desiredSpeed <= 0 || playerDistance < RECOVERY_MIN_SEPARATION) { this.resetProgress(phys); return null; }
-    if (horizontalDistance(this.position, this.progressReference) >= PROGRESS_DISTANCE) { this.resetProgress(phys); return null; }
+    if (desiredSpeed <= 0 || playerDistance < RECOVERY_MIN_SEPARATION) {
+      this.resetProgress(phys);
+      return null;
+    }
+    if (horizontalDistance(this.position, this.progressReference) >= PROGRESS_DISTANCE) {
+      this.resetProgress(phys);
+      return null;
+    }
     if (now - this.progressReferenceTime < STUCK_TIMEOUT) return null;
     const behind = this.path.tryGetPointBehind(playerMovement.position, RECOVERY_TRAIL_DISTANCE);
-    if (!behind) { this.resetProgress(phys); return null; }
+    if (!behind) {
+      this.resetProgress(phys);
+      return null;
+    }
     const g = tryFindGround(phys, behind.target);
-    if (!g) { this.resetProgress(phys); return null; }
+    if (!g) {
+      this.resetProgress(phys);
+      return null;
+    }
     this.heading = normalizeHorizontal(targetForward);
     this.path.seed(playerMovement.position, playerMovement.forward);
     this.resetProgress(phys);
@@ -343,7 +542,8 @@ export class HorseFollowController {
   }
   /** MoveGroundedInSubsteps [IL_26d4]: the accelerated-travel move, 1.25 m at a time, at most 16, never past the target. */
   moveGroundedInSubsteps(phys, target, totalDistance) {
-    let remaining = totalDistance, substeps = 0;
+    let remaining = totalDistance,
+      substeps = 0;
     while (remaining > MATHF_EPSILON) {
       const distanceBefore = horizontalDistance(this.position, target);
       const step = Math.min(remaining, ACCEL_MAX_SUBSTEP);
@@ -366,9 +566,23 @@ export class HorseFollowController {
 /** SeedTrail / RecordPlayerMovement / PruneTrail / TryGetTrailingPoint / IsDiscontinuity [IL_5968-IL_5bcf, IL_5910]
  *  - 3-D distances, 0.08 m samples, 7 m kept, the point 2.5 m behind. */
 export class WagonTrail {
-  constructor() { this.points = []; this.lastObserved = null; }
+  constructor() {
+    this.points = [];
+    this.lastObserved = null;
+  }
   /** The floating origin moved the scene. */
-  offset(d) { for (const p of this.points) { p[0] += d[0]; p[1] += d[1]; p[2] += d[2]; } if (this.lastObserved) { this.lastObserved[0] += d[0]; this.lastObserved[1] += d[1]; this.lastObserved[2] += d[2]; } }
+  offset(d) {
+    for (const p of this.points) {
+      p[0] += d[0];
+      p[1] += d[1];
+      p[2] += d[2];
+    }
+    if (this.lastObserved) {
+      this.lastObserved[0] += d[0];
+      this.lastObserved[1] += d[1];
+      this.lastObserved[2] += d[2];
+    }
+  }
   /** SeedTrail: 7 m behind the player and the player. */
   seed(playerPosition, playerForward) {
     const f = horizontalForward(playerForward);
@@ -385,13 +599,17 @@ export class WagonTrail {
   /** RecordPlayerMovement. */
   record(playerPosition, playerForward) {
     this.lastObserved = [...playerPosition];
-    if (this.points.length === 0) { this.seed(playerPosition, playerForward); return; }
+    if (this.points.length === 0) {
+      this.seed(playerPosition, playerForward);
+      return;
+    }
     if (vdist(playerPosition, this.points[this.points.length - 1]) < SAMPLE_DISTANCE) return;
     this.points.push([...playerPosition]);
     this.prune();
   }
   prune() {
-    let retained = 0, removeCount = this.points.length - 1;
+    let retained = 0,
+      removeCount = this.points.length - 1;
     for (let i = this.points.length - 1; i > 0; i--) {
       retained += vdist(this.points[i], this.points[i - 1]);
       removeCount = i - 1;
@@ -403,23 +621,31 @@ export class WagonTrail {
    *  (null when that segment has no length). */
   trailingPoint(currentPlayerPosition) {
     if (this.points.length < 2) return null;
-    let accumulated = 0, cursor = [...currentPlayerPosition];
+    let accumulated = 0,
+      cursor = [...currentPlayerPosition];
     for (let i = this.points.length; i > 0; i--) {
       const p = this.points[i - 1];
       const seg = vsub(cursor, p);
       const len = Math.sqrt(vsqr(seg));
-      if (len <= MATHF_EPSILON) { cursor = p; continue; }
+      if (len <= MATHF_EPSILON) {
+        cursor = p;
+        continue;
+      }
       if (accumulated + len >= WAGON_FOLLOW_DISTANCE) {
         const remaining = WAGON_FOLLOW_DISTANCE - accumulated;
         return { target: vlerp(cursor, p, remaining / len), pathForward: vscale(seg, 1 / len) };
       }
-      accumulated += len; cursor = p;
+      accumulated += len;
+      cursor = p;
     }
     const pathForward = vnorm(vsub(this.points[1], this.points[0]));
     if (!(vsqr(pathForward) > MATHF_EPSILON)) return null;
     return { target: [...this.points[0]], pathForward };
   }
-  clear() { this.points.length = 0; this.lastObserved = null; }
+  clear() {
+    this.points.length = 0;
+    this.lastObserved = null;
+  }
 }
 
 /** ApplyGroundedPose [IL_5bdc], the arithmetic: from 8 m up, 40 m down at the path point, the surface nearest its
@@ -443,9 +669,18 @@ export function groundedPoseStep(phys, w, pathPosition, pathForward, dt) {
       next.hasLastValid = true;
     }
   }
-  if (!next.hasLastValid) { next.active = false; return next; }
-  if (!w.active) { next.position = [...next.lastValidPosition]; next.rotation = [...next.lastValidRotation]; next.active = true; return next; }
-  const posT = 1 - Math.exp(-POSITION_SMOOTHING_RATE * dt), rotT = 1 - Math.exp(-ROTATION_SMOOTHING_RATE * dt);
+  if (!next.hasLastValid) {
+    next.active = false;
+    return next;
+  }
+  if (!w.active) {
+    next.position = [...next.lastValidPosition];
+    next.rotation = [...next.lastValidRotation];
+    next.active = true;
+    return next;
+  }
+  const posT = 1 - Math.exp(-POSITION_SMOOTHING_RATE * dt),
+    rotT = 1 - Math.exp(-ROTATION_SMOOTHING_RATE * dt);
   next.position = vlerp(w.position, next.lastValidPosition, posT);
   next.rotation = quatSlerp(w.rotation, next.lastValidRotation, rotT);
   return next;
@@ -482,9 +717,17 @@ export const HITCH_JUMP_SPEED = 30;
 export const hitchJumpReach = (dt) => TELEPORT_DISTANCE + HITCH_JUMP_SPEED * Math.max(0, Number.isFinite(dt) ? dt : 0);
 
 export class WagonHitch {
-  constructor() { this.last = null; }
+  constructor() {
+    this.last = null;
+  }
   /** The floating origin moved the scene. */
-  offset(d) { if (this.last) { this.last[0] += d[0]; this.last[1] += d[1]; this.last[2] += d[2]; } }
+  offset(d) {
+    if (this.last) {
+      this.last[0] += d[0];
+      this.last[1] += d[1];
+      this.last[2] += d[2];
+    }
+  }
   /** Where the hitch stands this frame; answers whether it JUMPED there (no observation yet, or past `reach` in one
    *  step - hitchJumpReach of the step's game time: a door, a fast travel, a recentre the host did not shift, a stuck
    *  recovery). */
@@ -493,7 +736,9 @@ export class WagonHitch {
     this.last = [...hitch];
     return jumped;
   }
-  clear() { this.last = null; }
+  clear() {
+    this.last = null;
+  }
 }
 
 /** The shafts' one law: where the axle stands `length` from `hitch` on the line from `from` (the axle's own last place,
@@ -509,10 +754,13 @@ export function hitchAxle(from, hitch, length, fallbackForward) {
 
 /** WAGONS2 (2026-10-09, Mac: "Real wheel movement"): the signed turn (degrees, about +y, Unity's sense - +z toward +x)
  *  from horizontal direction `from` to `to`. `yawed(from, yawBetween(from, to))` points along `to`. Pure. */
-export const yawBetween = (from, to) => (Math.atan2(from[2] * to[0] - from[0] * to[2], from[0] * to[0] + from[2] * to[2]) * 180) / Math.PI;
+export const yawBetween = (from, to) =>
+  (Math.atan2(from[2] * to[0] - from[0] * to[2], from[0] * to[0] + from[2] * to[2]) * 180) / Math.PI;
 /** `v` turned `deg` degrees about +y (quatAngleAxis(deg, up)'s turn, written out). Pure. */
 export function yawed(v, deg) {
-  const a = (deg * Math.PI) / 180, c = Math.cos(a), s = Math.sin(a);
+  const a = (deg * Math.PI) / 180,
+    c = Math.cos(a),
+    s = Math.sin(a);
   return [v[0] * c + v[2] * s, v[1], -v[0] * s + v[2] * c];
 }
 /** A steer held to the bogie's lock (`limit` degrees either way). */
@@ -532,7 +780,8 @@ export const clampSteer = (steer, limit) => Math.max(-limit, Math.min(limit, ste
  * @param {{ wheelbase: number, steerLimit: number }} bogie @param {number[]} fallbackForward
  */
 export function bogieAxle(axleFrom, kingpinFrom, hitch, length, bogie, fallbackForward) {
-  const wb = bogie.wheelbase, pole = length - wb;
+  const wb = bogie.wheelbase,
+    pole = length - wb;
   if (!kingpinFrom) {
     const { axle, dir } = hitchAxle(axleFrom, hitch, length, fallbackForward);
     return { axle, kingpin: [hitch[0] - dir[0] * pole, hitch[1], hitch[2] - dir[2] * pole], dir, steer: 0 };
@@ -570,13 +819,25 @@ export function steerToward(axle, forward, hitch, bogie) {
  *  bar, as before, its `steer` 0. WAGONS2 (AUDIT): `seedForward` the way the seeded wagon's body faced (a parked one's)
  *  - its kingpin pulled from a wheelbase ahead along it, so the bogie is driven off at the steer it rested at, not
  *  snapped straight with the body swung. */
-export function hitchedPoseStep(phys, w, hitch, hitchForward, length, dt, seed = null, bogie = null, seedForward = null) {
+export function hitchedPoseStep(
+  phys,
+  w,
+  hitch,
+  hitchForward,
+  length,
+  dt,
+  seed = null,
+  bogie = null,
+  seedForward = null,
+) {
   const next = { ...w, hitch: [...hitch] };
   // AUDIT WAGON-HITCH A1: the shafts pull from where the WHEELS stood (`axle`), never from the drawn position - that
   // stands a metre up the ground's normal, which on a slope leans downhill, and fed back it swung the wagon round its
   // hitch frame by frame until it hung straight down the hill (a 3 degree side slope: 75 degrees in two seconds, the
   // rider standing still; and more the higher the frame rate)
-  const from = w.active ? (w.axle ?? w.position) : (seed ?? vsub(hitch, vscale(horizontalForward(hitchForward), length)));
+  const from = w.active
+    ? (w.axle ?? w.position)
+    : (seed ?? vsub(hitch, vscale(horizontalForward(hitchForward), length)));
   const two = bogie && length > bogie.wheelbase;
   // WAGONS2: the kingpin pulls from where it stood - a wheelbase ahead of the axle along the body (where the two bars
   // left it); an unplaced wagon is laid straight
@@ -585,7 +846,10 @@ export function hitchedPoseStep(phys, w, hitch, hitchForward, length, dt, seed =
   const turn = two ? bogieAxle(from, kingpinFrom, hitch, length, bogie, hitchForward) : null;
   const { axle, dir } = turn ?? hitchAxle(from, hitch, length, hitchForward);
   next.steer = turn?.steer ?? 0;
-  const best = pickGround(phys.raycastAll(vadd(axle, [0, GROUND_RAY_HEIGHT, 0]), [0, -1, 0], GROUND_RAY_DISTANCE), hitch[1]);
+  const best = pickGround(
+    phys.raycastAll(vadd(axle, [0, GROUND_RAY_HEIGHT, 0]), [0, -1, 0], GROUND_RAY_DISTANCE),
+    hitch[1],
+  );
   let ground = null;
   if (best) {
     const n = best.normal ?? [0, 1, 0];
@@ -597,13 +861,20 @@ export function hitchedPoseStep(phys, w, hitch, hitchForward, length, dt, seed =
     next.lastValidPosition = [axle[0], w.lastValidPosition[1], axle[2]];
     next.axle = [axle[0], w.axle?.[1] ?? w.lastValidPosition[1] - NORMAL_GROUND_OFFSET, axle[2]];
   } else next.axle = [...axle];
-  if (!next.hasLastValid) { next.active = false; return next; }
+  if (!next.hasLastValid) {
+    next.active = false;
+    return next;
+  }
   const wasUp = w.up ?? [0, 1, 0];
   const targetUp = ground ?? wasUp;
   let up, y;
-  if (!w.active) { up = targetUp; y = next.lastValidPosition[1]; next.active = true; }
-  else {
-    const posT = 1 - Math.exp(-POSITION_SMOOTHING_RATE * dt), rotT = 1 - Math.exp(-ROTATION_SMOOTHING_RATE * dt);
+  if (!w.active) {
+    up = targetUp;
+    y = next.lastValidPosition[1];
+    next.active = true;
+  } else {
+    const posT = 1 - Math.exp(-POSITION_SMOOTHING_RATE * dt),
+      rotT = 1 - Math.exp(-ROTATION_SMOOTHING_RATE * dt);
     const u = vlerp(wasUp, targetUp, rotT);
     up = vsqr(u) > MATHF_EPSILON ? vnorm(u) : targetUp;
     y = w.position[1] + (next.lastValidPosition[1] - w.position[1]) * posT;

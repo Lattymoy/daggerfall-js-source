@@ -442,8 +442,8 @@ test('WAGONS3 THE PARKED BOX NEVER HOLDS ME (Mac: "Spawning the wagon can trap y
   }
   // the classic wagon keeps the mod's own 2.5 m
   const src = rd('src/systems/horse/horseCart.js');
-  assert.match(src, /function deploySetback\(\) \{ const z = hitchZ\(\); return z > HITCHED_HORSE_LOCAL_Z \? z \+ DEPLOY_CLEARANCE : WAGON_FOLLOW_DISTANCE; \}/);
-  assert.match(src, /const \[wx, wz\] = toWorld\(vsub\(playerPosition\(\), vscale\(fwd, deploySetback\(\)\)\)\);   \/\/ WAGONS3: clear of the player/);
+  assert.match(src, /function deploySetback\(\) \{\n\s*const z = hitchZ\(\);\n\s*return z > HITCHED_HORSE_LOCAL_Z \? z \+ DEPLOY_CLEARANCE : WAGON_FOLLOW_DISTANCE;\n\s*\}/);
+  assert.match(src, /const \[wx, wz\] = toWorld\(vsub\(playerPosition\(\), vscale\(fwd, deploySetback\(\)\)\)\); \/\/ WAGONS3: clear of the player/);
   assert.match(src, /const \[wx, wz\] = toWorld\(vsub\(playerPosition\(\), vscale\(heading, deploySetback\(\)\)\)\);/);
   assert.match(src, /const wg = tryFindGround\(phys, vsub\(grounded, vscale\(fwd, hitchSetback\(\)\)\)\);/);
   const pool = rd('src/scenes/horseCartPool.js');

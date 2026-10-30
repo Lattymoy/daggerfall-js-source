@@ -135,7 +135,7 @@ test('AUDIT HCC H4: the live switch turned off suspends the machine (its transie
   pool.attach({ suspend: () => calls.push('suspend'), view: () => ({ state: { HorseName: '' } }), lateUpdate() {} });
   pool.setEnabled(false); pool.setEnabled(false);
   assert.deepEqual(calls.filter((c) => c === 'suspend'), ['suspend'], 'once, on the edge');
-  assert.match(rd('src/systems/horse/horseCart.js'), /function suspend\(\) \{ clearAllTransientState\(\); \}/);
+  assert.match(rd('src/systems/horse/horseCart.js'), /function suspend\(\) \{\n\s*clearAllTransientState\(\);\n\s*\}/);
 });
 
 test('AUDIT HCC U6: HorseNameTooltipController\'s label - the classic face is DFU\'s line at native y 112, centred; the pool answers my own horse within the mod\'s 3.2 and nothing else (mutants: a peer\'s horse named; the name from past the reach)', async () => {

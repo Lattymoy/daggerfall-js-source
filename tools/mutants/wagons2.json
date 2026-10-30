@@ -236,8 +236,8 @@
   {
     "name": "WAGONS2-the-stores-reach-from-the-axle",
     "file": "src/systems/horse/horseCart.js",
-    "old": "if (isWithinHorizontalDistance(playerPosition(), nearestOnWagon(pos, gp?.forward ?? w.heading, playerPosition()), WAGON_INVENTORY_DISTANCE)) return { ok: true, denial };",
-    "new": "if (isWithinHorizontalDistance(playerPosition(), pos, WAGON_INVENTORY_DISTANCE)) return { ok: true, denial };",
+    "old": "        if (\n          isWithinHorizontalDistance(\n            playerPosition(),\n            nearestOnWagon(pos, gp?.forward ?? w.heading, playerPosition()),\n            WAGON_INVENTORY_DISTANCE,\n          )\n        )\n          return { ok: true, denial }; // WAGONS2 (AUDIT): to the wagon's run",
+    "new": "        if (isWithinHorizontalDistance(playerPosition(), pos, WAGON_INVENTORY_DISTANCE)) return { ok: true, denial }; // WAGONS2 (AUDIT): to the wagon's run",
     "tests": [
       "test/systems/horse/wagons2_wheels.test.js"
     ]
@@ -408,8 +408,8 @@
   {
     "name": "WAGONS2-AUDIT-the-map-bound-loosened",
     "file": "src/systems/horse/horseCartWire.js",
-    "old": "raw.go[0] >= 0 && raw.go[0] < MAP_PIXELS_X && raw.go[1] >= 0 && raw.go[1] < MAP_PIXELS_Y",
-    "new": "raw.go[0] >= 0 && raw.go[0] < 4096 && raw.go[1] >= 0 && raw.go[1] < 4096",
+    "old": "    raw.go[0] < MAP_PIXELS_X &&\n    raw.go[1] >= 0 &&\n    raw.go[1] < MAP_PIXELS_Y &&",
+    "new": "    raw.go[0] < 4096 &&\n    raw.go[1] >= 0 &&\n    raw.go[1] < 4096 &&",
     "tests": [
       "test/systems/wagon/wagons2.test.js"
     ]

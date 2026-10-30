@@ -56,8 +56,8 @@
   {
     "name": "WAGONS2-VISIT-the-tag-on-every-entry",
     "file": "src/systems/horse/horseCartWire.js",
-    "old": "const wg = we === CARAVAN_GUILD_CODE ? caravanGuildTag(w.guild) : null;",
-    "new": "const wg = caravanGuildTag(w.guild);",
+    "old": "      const wg = we === CARAVAN_GUILD_CODE ? caravanGuildTag(w.guild) : null;",
+    "new": "      const wg = caravanGuildTag(w.guild);",
     "tests": [
       "test/systems/wagons2_visit.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "WAGONS2-VISIT-the-entry-unread",
     "file": "src/systems/horse/horseCartWire.js",
-    "old": "out.w.entry = caravanEntryOfCode(raw.we);",
-    "new": "out.w.entry = 'private';",
+    "old": "    out.w.entry = caravanEntryOfCode(raw.we);",
+    "new": "    out.w.entry = 'private';",
     "tests": [
       "test/systems/wagons2_visit.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "WAGONS2-VISIT-a-door-changed-with-no-word",
     "file": "src/systems/horse/horseCartWire.js",
-    "old": "rec.wl ?? 0, rec.we ?? 0, rec.wg ?? '', rec.hc ?? 0]",
-    "new": "rec.wl ?? 0, rec.hc ?? 0]",
+    "old": "    rec.we ?? 0,\n    rec.wg ?? '',\n    rec.hc ?? 0,",
+    "new": "    rec.hc ?? 0,",
     "tests": [
       "test/systems/wagons2_visit.test.js"
     ]

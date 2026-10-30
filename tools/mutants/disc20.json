@@ -227,8 +227,8 @@
   {
     "name": "DISC20-C-the-runtime-re-stand-leaves-the-wagon",
     "file": "src/systems/horse/horseCart.js",
-    "old": "if (deployedVisual?.isAlive && within(deployedVisual.position)) { deployedVisual.grounded = false; deployedVisual.nextGroundRetryTime = 0; }",
-    "new": "if (deployedVisual?.isAlive && within(deployedVisual.position)) { deployedVisual.nextGroundRetryTime = 0; }",
+    "old": "    if (deployedVisual?.isAlive && within(deployedVisual.position)) {\n      deployedVisual.grounded = false;\n      deployedVisual.nextGroundRetryTime = 0;",
+    "new": "    if (deployedVisual?.isAlive && within(deployedVisual.position)) {\n      deployedVisual.nextGroundRetryTime = 0;",
     "tests": [
       "test/systems/disc20.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "DISC20-C-the-runtime-re-stand-leaves-the-horse",
     "file": "src/systems/horse/horseCart.js",
-    "old": "stationaryHorseVisual.hasRequestedPose = false;\n  }",
-    "new": "stationaryHorseVisual.hasRequestedPose = true;\n  }",
+    "old": "      stationaryHorseVisual.hasRequestedPose = false;",
+    "new": "      stationaryHorseVisual.hasRequestedPose = true;",
     "tests": [
       "test/systems/disc20.test.js"
     ]

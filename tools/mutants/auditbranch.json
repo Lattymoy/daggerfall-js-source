@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-BRANCH-IL1-horse-mode-forced",
     "file": "src/systems/horse/horseCart.js",
-    "old": "      const hm = (entryMode === TRANSPORT.Cart && wagonState.HorseMode !== HORSE_MODE.None) ? HORSE_MODE.HitchedToWagon : wagonState.HorseMode;",
-    "new": "      const hm = (entryMode === TRANSPORT.Cart && wagonState.HorseMode === HORSE_MODE.None) ? HORSE_MODE.None : HORSE_MODE.HitchedToWagon;",
+    "old": "        entryMode === TRANSPORT.Cart && wagonState.HorseMode !== HORSE_MODE.None\n          ? HORSE_MODE.HitchedToWagon\n          : wagonState.HorseMode;",
+    "new": "        entryMode === TRANSPORT.Cart && wagonState.HorseMode === HORSE_MODE.None\n          ? HORSE_MODE.None\n          : HORSE_MODE.HitchedToWagon;",
     "tests": [
       "test/scenes/audit_hcc_branch.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-BRANCH-IL2-old-ground-kept",
     "file": "src/systems/horse/horseCart.js",
-    "old": "    if (wagonVisual) { wagonVisual.pose.active = false; wagonVisual.pose.hasLastValid = false; }",
-    "new": "    if (wagonVisual) { wagonVisual.pose.active = false; }",
+    "old": "      wagonVisual.pose.hasLastValid = false;\n    }",
+    "new": "    }",
     "tests": [
       "test/scenes/audit_hcc_branch.test.js"
     ]

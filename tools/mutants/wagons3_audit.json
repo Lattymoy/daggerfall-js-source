@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-WAGONS3-T3-the-short-team-a-cart",
     "file": "src/systems/horse/horseCart.js",
-    "old": "const drivableCart = () => tm().hasCart() && !teamShort();",
-    "new": "const drivableCart = () => tm().hasCart();",
+    "old": "  const drivableCart = () => tm().hasCart() && !teamShort();",
+    "new": "  const drivableCart = () => tm().hasCart();",
     "tests": [
       "test/player/wagons3.test.js"
     ]

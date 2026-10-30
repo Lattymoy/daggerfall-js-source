@@ -61,9 +61,21 @@ export const HORSE_LEGS_MAX = HORSE_LEGS.length - 1;
 export const HORSE_SEED_MAX = 65535;
 /** What each is called on the Stable card. */
 export const HORSE_LOOK_NAMES = Object.freeze({
-  bay: 'Bay', chestnut: 'Chestnut', black: 'Black', grey: 'Grey', dun: 'Dun', buckskin: 'Buckskin', palomino: 'Palomino',
-  solid: 'Solid', pinto: 'Pinto', appaloosa: 'Appaloosa', dapples: 'Dapples', roan: 'Roan',
-  plain: 'Plain', socks: 'Socks', stockings: 'Stockings',
+  bay: 'Bay',
+  chestnut: 'Chestnut',
+  black: 'Black',
+  grey: 'Grey',
+  dun: 'Dun',
+  buckskin: 'Buckskin',
+  palomino: 'Palomino',
+  solid: 'Solid',
+  pinto: 'Pinto',
+  appaloosa: 'Appaloosa',
+  dapples: 'Dapples',
+  roan: 'Roan',
+  plain: 'Plain',
+  socks: 'Socks',
+  stockings: 'Stockings',
 });
 /** The Stable's rows, in order: the part, the item's field, its list. */
 export const HORSE_LOOK_PARTS = Object.freeze([
@@ -123,24 +135,42 @@ const index = (v, max) => (Number.isInteger(v) && v >= 0 && v <= max ? v : 0);
 const pick = (weights, r) => {
   const total = weights.reduce((a, b) => a + b, 0);
   let x = r * total;
-  for (let i = 0; i < weights.length; i++) { if (x < weights[i]) return i; x -= weights[i]; }
+  for (let i = 0; i < weights.length; i++) {
+    if (x < weights[i]) return i;
+    x -= weights[i];
+  }
   return 0;
 };
 
 /** A look, checked: `{ coat, pattern, legs, seed }`, each a value the law knows, else 0. */
 export function readHorseLook(v) {
   const o = v && typeof v === 'object' ? v : {};
-  return { coat: index(o.coat, HORSE_COAT_MAX), pattern: index(o.pattern, HORSE_PATTERN_MAX), legs: index(o.legs, HORSE_LEGS_MAX), seed: index(o.seed, HORSE_SEED_MAX) };
+  return {
+    coat: index(o.coat, HORSE_COAT_MAX),
+    pattern: index(o.pattern, HORSE_PATTERN_MAX),
+    legs: index(o.legs, HORSE_LEGS_MAX),
+    seed: index(o.seed, HORSE_SEED_MAX),
+  };
 }
-const C = HORSE_COATS.length, P = HORSE_PATTERNS.length, L = HORSE_LEGS.length;
+const C = HORSE_COATS.length,
+  P = HORSE_PATTERNS.length,
+  L = HORSE_LEGS.length;
 /** The look as the wire says it: one number, 0 the bay as drawn. */
-export const horseLookCode = (look) => { const l = readHorseLook(look); return l.coat + C * (l.pattern + P * (l.legs + L * l.seed)); };
+export const horseLookCode = (look) => {
+  const l = readHorseLook(look);
+  return l.coat + C * (l.pattern + P * (l.legs + L * l.seed));
+};
 /** The highest code a look can be. */
 export const HORSE_LOOK_CODE_MAX = C * P * L * (HORSE_SEED_MAX + 1) - 1;
 /** The look a code names - the bay as drawn for anything the law does not know. */
 export function horseLookOfCode(code) {
   if (!Number.isInteger(code) || code < 0 || code > HORSE_LOOK_CODE_MAX) return readHorseLook(null);
-  return readHorseLook({ coat: code % C, pattern: Math.floor(code / C) % P, legs: Math.floor(code / (C * P)) % L, seed: Math.floor(code / (C * P * L)) });
+  return readHorseLook({
+    coat: code % C,
+    pattern: Math.floor(code / C) % P,
+    legs: Math.floor(code / (C * P)) % L,
+    seed: Math.floor(code / (C * P * L)),
+  });
 }
 /** A look or its code, as a look. */
 const lookOf = (v) => (typeof v === 'number' ? horseLookOfCode(v) : readHorseLook(v));
@@ -156,16 +186,23 @@ export function describeHorseLook(v) {
 /** Whether an item is a horse (DFU's one Transportation.Horse template). */
 export const isHorseItem = (item) => item?.templateIndex === TRANSPORT_HORSE;
 /** The horse a player rides: the first in the pack (inventorySession.js hasHorse's own find). */
-export const activeHorseItem = (items) => (Array.isArray(items) ? items.find(isHorseItem) ?? null : null);
+export const activeHorseItem = (items) => (Array.isArray(items) ? (items.find(isHorseItem) ?? null) : null);
 /** A horse item's look (its four fields, checked) - the bay as drawn for anything else. */
-export const horseLookOf = (item) => readHorseLook(isHorseItem(item) ? { coat: item.horseCoat, pattern: item.horsePattern, legs: item.horseLegs, seed: item.horseSeed } : null);
+export const horseLookOf = (item) =>
+  readHorseLook(
+    isHorseItem(item)
+      ? { coat: item.horseCoat, pattern: item.horsePattern, legs: item.horseLegs, seed: item.horseSeed }
+      : null,
+  );
 /** The look of the horse a player rides, as its code (0, the bay as drawn, with none). */
 export const riddenHorseLook = (items) => horseLookCode(horseLookOf(activeHorseItem(items)));
 
 /** A look rolled at a horse's birth (BIRTH_WEIGHTS; `rand` () => [0, 1)). */
 export function rollHorseLook(rand = Math.random) {
   return {
-    coat: pick(BIRTH_WEIGHTS.coat, rand()), pattern: pick(BIRTH_WEIGHTS.pattern, rand()), legs: pick(BIRTH_WEIGHTS.legs, rand()),
+    coat: pick(BIRTH_WEIGHTS.coat, rand()),
+    pattern: pick(BIRTH_WEIGHTS.pattern, rand()),
+    legs: pick(BIRTH_WEIGHTS.legs, rand()),
     seed: 1 + Math.min(HORSE_SEED_MAX - 1, Math.floor(rand() * HORSE_SEED_MAX)),
   };
 }
@@ -179,7 +216,10 @@ export function birthHorses(items, rand = Math.random) {
   for (const item of items) {
     if (!isHorseItem(item) || index(item.horseSeed, HORSE_SEED_MAX) > 0) continue;
     const l = rollHorseLook(rand);
-    for (const { part, field } of HORSE_LOOK_PARTS) { if (l[part]) item[field] = l[part]; else delete item[field]; }
+    for (const { part, field } of HORSE_LOOK_PARTS) {
+      if (l[part]) item[field] = l[part];
+      else delete item[field];
+    }
     item.horseSeed = l.seed;
     n++;
   }
@@ -216,14 +256,22 @@ export function horseLookRows(items) {
   const l = horseLookOf(item);
   return {
     desc: describeHorseLook(l),
-    rows: HORSE_LOOK_PARTS.map(({ part, list, name }) => ({ part, name, choices: list.map((k) => HORSE_LOOK_NAMES[k]), current: l[part] })),
+    rows: HORSE_LOOK_PARTS.map(({ part, list, name }) => ({
+      part,
+      name,
+      choices: list.map((k) => HORSE_LOOK_NAMES[k]),
+      current: l[part],
+    })),
   };
 }
 
 /** FNV-1a, 32-bit, of a string. */
 function fnv(k) {
   let h = 0x811c9dc5;
-  for (let i = 0; i < k.length; i++) { h ^= k.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  for (let i = 0; i < k.length; i++) {
+    h ^= k.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
   return h >>> 0;
 }
 /**
@@ -233,13 +281,25 @@ function fnv(k) {
  */
 export function strangerHorseLook(key) {
   let h = fnv(String(key ?? ''));
-  const next = () => { h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d) >>> 0; h = Math.imul(h ^ (h >>> 12), 0x297a2d39) >>> 0; return (h >>> 0) / 4294967296; };
-  const l = { coat: pick(BIRTH_WEIGHTS.coat, next()), pattern: pick(BIRTH_WEIGHTS.pattern, next()), legs: pick(BIRTH_WEIGHTS.legs, next()), seed: 1 + Math.floor(next() * STRANGER_SEEDS) };
+  const next = () => {
+    h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d) >>> 0;
+    h = Math.imul(h ^ (h >>> 12), 0x297a2d39) >>> 0;
+    return (h >>> 0) / 4294967296;
+  };
+  const l = {
+    coat: pick(BIRTH_WEIGHTS.coat, next()),
+    pattern: pick(BIRTH_WEIGHTS.pattern, next()),
+    legs: pick(BIRTH_WEIGHTS.legs, next()),
+    seed: 1 + Math.floor(next() * STRANGER_SEEDS),
+  };
   return horseLookCode(l);
 }
 
 /** The suffix a dyed picture's record wears on the renderer (`''` for the bay as drawn - the art's own record). */
-export const lookSuffix = (v) => { const c = typeof v === 'number' ? horseLookCode(horseLookOfCode(v)) : horseLookCode(v); return c ? `~${c}` : ''; };
+export const lookSuffix = (v) => {
+  const c = typeof v === 'number' ? horseLookCode(horseLookOfCode(v)) : horseLookCode(v);
+  return c ? `~${c}` : '';
+};
 
 // ── the dye ──────────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -248,11 +308,17 @@ export const lookSuffix = (v) => { const c = typeof v === 'number' ? horseLookCo
 // nine times a pixel): a picture's dye was thousands of allocations. Each now writes its answer into its own scratch
 // (doubles, so every value is the one the array held), read back by its caller before the next call; the arithmetic
 // is the same, step for step, so a dyed picture is byte for byte the one it was.
-const _hsv = new Float64Array(3), _rgb = new Float64Array(3), _warp = new Float64Array(2), _near = new Float64Array(3), _mark = new Float64Array(2);
+const _hsv = new Float64Array(3),
+  _rgb = new Float64Array(3),
+  _warp = new Float64Array(2),
+  _near = new Float64Array(3),
+  _mark = new Float64Array(2);
 
 /** RGB bytes -> [hue degrees, saturation, value], into `_hsv` (PERF-HIDE). */
 function hsv(r, g, b) {
-  const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+  const max = Math.max(r, g, b),
+    min = Math.min(r, g, b),
+    d = max - min;
   let h = 0;
   if (d > 0) {
     if (max === r) h = ((g - b) / d) % 6;
@@ -261,18 +327,48 @@ function hsv(r, g, b) {
     h *= 60;
     if (h < 0) h += 360;
   }
-  _hsv[0] = h; _hsv[1] = max > 0 ? d / max : 0; _hsv[2] = max / 255;
+  _hsv[0] = h;
+  _hsv[1] = max > 0 ? d / max : 0;
+  _hsv[2] = max / 255;
   return _hsv;
 }
 /** [hue degrees, saturation, value] -> RGB bytes, written into `out` at `o`. Any hue, turned into [0, 360) first
  *  (AUDIT COATS3D A9: a hue jittered under 0 - the bay's red, a seed's shade down - wrapped a channel to 255). */
 function rgbInto(out, o, hue, s, v) {
   const h = ((hue % 360) + 360) % 360;
-  const c = v * s, x = c * (1 - Math.abs(((h / 60) % 2) - 1)), m = v - c;
+  const c = v * s,
+    x = c * (1 - Math.abs(((h / 60) % 2) - 1)),
+    m = v - c;
   const k = Math.floor(h / 60) % 6;
   let r, g, b;
-  if (k === 0) { r = c; g = x; b = 0; } else if (k === 1) { r = x; g = c; b = 0; } else if (k === 2) { r = 0; g = c; b = x; } else if (k === 3) { r = 0; g = x; b = c; } else if (k === 4) { r = x; g = 0; b = c; } else { r = c; g = 0; b = x; }
-  out[o] = Math.round((r + m) * 255); out[o + 1] = Math.round((g + m) * 255); out[o + 2] = Math.round((b + m) * 255);
+  if (k === 0) {
+    r = c;
+    g = x;
+    b = 0;
+  } else if (k === 1) {
+    r = x;
+    g = c;
+    b = 0;
+  } else if (k === 2) {
+    r = 0;
+    g = c;
+    b = x;
+  } else if (k === 3) {
+    r = 0;
+    g = x;
+    b = c;
+  } else if (k === 4) {
+    r = x;
+    g = 0;
+    b = c;
+  } else {
+    r = c;
+    g = 0;
+    b = x;
+  }
+  out[o] = Math.round((r + m) * 255);
+  out[o + 1] = Math.round((g + m) * 255);
+  out[o + 2] = Math.round((b + m) * 255);
 }
 const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
 const fract = (v) => v - Math.floor(v);
@@ -285,9 +381,16 @@ function hash3(x, y, s) {
 }
 /** Smooth value noise at (x, y) - [0, 1). */
 function noise(x, y, s) {
-  const ix = Math.floor(x), iy = Math.floor(y), fx = x - ix, fy = y - iy;
-  const ux = fx * fx * (3 - 2 * fx), uy = fy * fy * (3 - 2 * fy);
-  const a = hash3(ix, iy, s), b = hash3(ix + 1, iy, s), c = hash3(ix, iy + 1, s), d = hash3(ix + 1, iy + 1, s);
+  const ix = Math.floor(x),
+    iy = Math.floor(y),
+    fx = x - ix,
+    fy = y - iy;
+  const ux = fx * fx * (3 - 2 * fx),
+    uy = fy * fy * (3 - 2 * fy);
+  const a = hash3(ix, iy, s),
+    b = hash3(ix + 1, iy, s),
+    c = hash3(ix, iy + 1, s),
+    d = hash3(ix + 1, iy + 1, s);
   return a + (b - a) * ux + (c - a) * uy + (a - b - c + d) * ux * uy;
 }
 /**
@@ -296,36 +399,58 @@ function noise(x, y, s) {
  * squashed, 0 none), so a spot or a dapple is an oval of its own bearing, never a circle.
  */
 function nearest2(x, y, s, stretch = 0) {
-  const ix = Math.floor(x), iy = Math.floor(y);
+  const ix = Math.floor(x),
+    iy = Math.floor(y);
   // PERF-HIDE: the nine points about one lattice cell are the cell's, not the pixel's - a run of pixels in one cell
   // asks the same nine, so they are kept for the last cell asked (`_cells`) and only the distances are the pixel's
   if (ix !== _cellAt[0] || iy !== _cellAt[1] || s !== _cellAt[2] || stretch !== _cellAt[3]) {
-    _cellAt[0] = ix; _cellAt[1] = iy; _cellAt[2] = s; _cellAt[3] = stretch;
-    for (let dy = -1, j = 0; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++, j += 6) {
-      const cx = ix + dx, cy = iy + dy;
-      _cells[j] = cx + 0.1 + 0.8 * hash3(cx, cy, s); _cells[j + 1] = cy + 0.1 + 0.8 * hash3(cy, cx, s + 1);
-      if (stretch) {
-        const a = hash3(cx, cy, s + 3) * Math.PI;
-        _cells[j + 2] = Math.cos(a); _cells[j + 3] = Math.sin(a); _cells[j + 4] = 1 + stretch * hash3(cx, cy, s + 4);
+    _cellAt[0] = ix;
+    _cellAt[1] = iy;
+    _cellAt[2] = s;
+    _cellAt[3] = stretch;
+    for (let dy = -1, j = 0; dy <= 1; dy++)
+      for (let dx = -1; dx <= 1; dx++, j += 6) {
+        const cx = ix + dx,
+          cy = iy + dy;
+        _cells[j] = cx + 0.1 + 0.8 * hash3(cx, cy, s);
+        _cells[j + 1] = cy + 0.1 + 0.8 * hash3(cy, cx, s + 1);
+        if (stretch) {
+          const a = hash3(cx, cy, s + 3) * Math.PI;
+          _cells[j + 2] = Math.cos(a);
+          _cells[j + 3] = Math.sin(a);
+          _cells[j + 4] = 1 + stretch * hash3(cx, cy, s + 4);
+        }
+        _cells[j + 5] = hash3(cx, cy, s + 2);
       }
-      _cells[j + 5] = hash3(cx, cy, s + 2);
-    }
   }
-  let f1 = 9, f2 = 9, bh = 0;
+  let f1 = 9,
+    f2 = 9,
+    bh = 0;
   for (let j = 0; j < 54; j += 6) {
-    let ex = x - _cells[j], ey = y - _cells[j + 1];
+    let ex = x - _cells[j],
+      ey = y - _cells[j + 1];
     if (stretch) {
-      const c = _cells[j + 2], sn = _cells[j + 3], k = _cells[j + 4];
+      const c = _cells[j + 2],
+        sn = _cells[j + 3],
+        k = _cells[j + 4];
       const tx = (ex * c + ey * sn) / k;
-      ey = (ey * c - ex * sn) * k; ex = tx;
+      ey = (ey * c - ex * sn) * k;
+      ex = tx;
     }
     const d = Math.hypot(ex, ey);
-    if (d < f1) { f2 = f1; f1 = d; bh = _cells[j + 5]; } else if (d < f2) f2 = d;
+    if (d < f1) {
+      f2 = f1;
+      f1 = d;
+      bh = _cells[j + 5];
+    } else if (d < f2) f2 = d;
   }
-  _near[0] = f1; _near[1] = f2; _near[2] = bh;
+  _near[0] = f1;
+  _near[1] = f2;
+  _near[2] = bh;
   return _near;
 }
-const _cellAt = new Float64Array([NaN, NaN, NaN, NaN]), _cells = new Float64Array(54);
+const _cellAt = new Float64Array([NaN, NaN, NaN, NaN]),
+  _cells = new Float64Array(54);
 /** PERF-HIDE: `nearest2`'s answer as a new array - its pins' door, so the kept cells are asked across seeds and
  *  stretches directly (inside one dye both are fixed). */
 export const latticeNearest = (x, y, s, stretch = 0) => Array.from(nearest2(x, y, s, stretch));
@@ -336,7 +461,10 @@ function warp(x, y, s, amp, freq = 1.3) {
   _warp[1] = y + amp * (noise(x * freq, y * freq + 7.7, s + 22) * 2 - 1);
   return _warp;
 }
-const smooth = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+const smooth = (a, b, x) => {
+  const t = Math.max(0, Math.min(1, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+};
 /** A seed's own [0, 1) for its `k`th question. */
 const seedRand = (seed, k) => hash3(seed, k, 0x5eed);
 
@@ -349,13 +477,22 @@ export function shadeOf(seed) {
 /** The pinto's field at (u, v): three octaves of the seed's noise over a domain the noise pushes about - and the
  *  threshold past which it is white (`pintoCut`). Apart, so the 3D dye can blend the field before it cuts it. */
 function pintoField(s, u, v) {
-  const ox = seedRand(s, 3) * 61, oy = seedRand(s, 4) * 47;
-  const W = warp(u * 2.4 + ox, v * 2.4 + oy, s, 0.45, 1.1), wu = W[0], wv = W[1];
-  return 0.62 * noise(wu, wv, s) + 0.28 * noise(wu * 2.3 + oy, wv * 2.3 + ox, s + 7) + 0.1 * noise(wu * 7, wv * 7, s + 8);
+  const ox = seedRand(s, 3) * 61,
+    oy = seedRand(s, 4) * 47;
+  const W = warp(u * 2.4 + ox, v * 2.4 + oy, s, 0.45, 1.1),
+    wu = W[0],
+    wv = W[1];
+  return (
+    0.62 * noise(wu, wv, s) + 0.28 * noise(wu * 2.3 + oy, wv * 2.3 + ox, s + 7) + 0.1 * noise(wu * 7, wv * 7, s + 8)
+  );
 }
-const pintoCut = (s, n) => { const t = 0.5 + (seedRand(s, 5) - 0.5) * 0.16; return smooth(t - 0.012, t + 0.012, n); };
+const pintoCut = (s, n) => {
+  const t = 0.5 + (seedRand(s, 5) - 0.5) * 0.16;
+  return smooth(t - 0.012, t + 0.012, n);
+};
 /** The roan's white hairs' share at (u, v): a quarter to a half of the hide, thicker in patches. */
-const roanDensity = (s, u, v) => 0.22 + seedRand(s, 9) * 0.12 + 0.2 * noise(u * 3 + seedRand(s, 3) * 61, v * 3 + seedRand(s, 4) * 47, s + 12);
+const roanDensity = (s, u, v) =>
+  0.22 + seedRand(s, 9) * 0.12 + 0.2 * noise(u * 3 + seedRand(s, 3) * 61, v * 3 + seedRand(s, 4) * 47, s + 12);
 /** ...and whether the hide's pixel or texel (`px`, `py`, its own grid) is one: white at 0.6, never a pure white. */
 const roanFleck = (s, px, py, density) => (hash3(px, py, s + 11) < density ? 0.6 : 0);
 
@@ -366,32 +503,47 @@ const roanFleck = (s, px, py, density) => (hash3(px, py, s + 11) < density ? 0.6
  * Into `_mark` (PERF-HIDE).
  */
 function markingAt(pattern, seed, u, v, px, py) {
-  const s = seed | 0, ox = seedRand(s, 3) * 61, oy = seedRand(s, 4) * 47;
+  const s = seed | 0,
+    ox = seedRand(s, 3) * 61,
+    oy = seedRand(s, 4) * 47;
   switch (HORSE_PATTERNS[pattern]) {
-    case 'pinto': return mark(pintoCut(s, pintoField(s, u, v)), 0);   // tobiano: broad white across the back and down the flanks, its edge wandering and ragged
-    case 'appaloosa': {   // half are leopards (white, the coat in spots), half snowflakes (the coat, flecked in white)
+    case 'pinto':
+      return mark(pintoCut(s, pintoField(s, u, v)), 0); // tobiano: broad white across the back and down the flanks, its edge wandering and ragged
+    case 'appaloosa': {
+      // half are leopards (white, the coat in spots), half snowflakes (the coat, flecked in white)
       const cell = 0.075 + seedRand(s, 6) * 0.03;
       const W = warp(u / cell + ox, v / cell + oy, s, 0.3);
-      const N = nearest2(W[0], W[1], s, 0.45), f1 = N[0], h = N[2];   // an oval of its own bearing: at the 3D horse's detail a spot stretched further read as a brush stroke
-      const r = (0.14 + 0.2 * h) * (0.75 + 0.5 * noise(u * 40 + ox, v * 40 + oy, s + 9));   // each spot its own size, its edge ragged
+      const N = nearest2(W[0], W[1], s, 0.45),
+        f1 = N[0],
+        h = N[2]; // an oval of its own bearing: at the 3D horse's detail a spot stretched further read as a brush stroke
+      const r = (0.14 + 0.2 * h) * (0.75 + 0.5 * noise(u * 40 + ox, v * 40 + oy, s + 9)); // each spot its own size, its edge ragged
       const spot = smooth(r - 0.04, r + 0.04, r * 2 - f1);
-      if (seedRand(s, 7) < 0.5) return mark(1 - spot, spot * 0.15);   // leopard
-      return mark(h < 0.7 ? spot : 0, 0);   // snowflake: most cells flecked
+      if (seedRand(s, 7) < 0.5) return mark(1 - spot, spot * 0.15); // leopard
+      return mark(h < 0.7 ? spot : 0, 0); // snowflake: most cells flecked
     }
-    case 'dapples': {   // soft lighter blots, each its own size and bearing, the coat a shade darker between them - no line drawn
+    case 'dapples': {
+      // soft lighter blots, each its own size and bearing, the coat a shade darker between them - no line drawn
       const cell = 0.08 + seedRand(s, 8) * 0.025;
       const W = warp(u / cell + ox, v / cell + oy, s, 0.4);
-      const N = nearest2(W[0], W[1], s, 0.7), f1 = N[0], h = N[2];
+      const N = nearest2(W[0], W[1], s, 0.7),
+        f1 = N[0],
+        h = N[2];
       const r = 0.3 + 0.16 * h;
       const blot = 1 - smooth(r * 0.45, r, f1 * (0.85 + 0.3 * noise(u * 30 + ox, v * 30 + oy, s + 9)));
-      const fade = 0.55 + 0.45 * smooth(0.25, 0.75, noise(u * 1.6 + oy, v * 1.6 + ox, s + 10));   // dapples come and go across the coat
+      const fade = 0.55 + 0.45 * smooth(0.25, 0.75, noise(u * 1.6 + oy, v * 1.6 + ox, s + 10)); // dapples come and go across the coat
       return mark(0.34 * blot * fade, (1 - blot) * 0.16 * fade);
     }
-    case 'roan': return mark(roanFleck(s, px, py, roanDensity(s, u, v)), 0);   // white hairs through the coat, thicker on the body in patches
-    default: return mark(0, 0);
+    case 'roan':
+      return mark(roanFleck(s, px, py, roanDensity(s, u, v)), 0); // white hairs through the coat, thicker on the body in patches
+    default:
+      return mark(0, 0);
   }
 }
-const mark = (white, dark) => { _mark[0] = white; _mark[1] = dark; return _mark; };
+const mark = (white, dark) => {
+  _mark[0] = white;
+  _mark[1] = dark;
+  return _mark;
+};
 
 /**
  * ONE DYE, EVERY HORSE (COATS3D's parity): a hide pixel `o` of `src` dyed into `out` - the coat's hue (the bay keeps
@@ -401,14 +553,21 @@ const mark = (white, dark) => { _mark[0] = white; _mark[1] = dark; return _mark;
  * whichever horse wears it.
  */
 function dyeInto(out, src, o, dye, hueJ, valJ, white, dark, whiteFloor = 0) {
-  const H = hsv(src[o], src[o + 1], src[o + 2]), h0 = H[0], s = H[1], v = H[2];
-  const mode = dye.sat[0], k = dye.sat[1], lift = dye.val[0], scale = dye.val[1];
+  const H = hsv(src[o], src[o + 1], src[o + 2]),
+    h0 = H[0],
+    s = H[1],
+    v = H[2];
+  const mode = dye.sat[0],
+    k = dye.sat[1],
+    lift = dye.val[0],
+    scale = dye.val[1];
   const hue = (dye.hue ?? h0) + hueJ;
   const ns = clamp01(mode === 'mul' ? s * k : k * Math.min(1, s / 0.6 + 0.3));
   let nv = clamp01((lift + scale * v) * valJ);
   if (dark) nv *= 1 - dark;
   rgbInto(out, o, hue, ns, nv);
-  if (white > 0) {   // the hide's own light, in white: a patch in shadow is a shadowed white
+  if (white > 0) {
+    // the hide's own light, in white: a patch in shadow is a shadowed white
     const tmp = _rgb;
     rgbInto(tmp, 0, hue, 0.04, clamp01(0.4 + 0.85 * Math.max(v, whiteFloor)));
     out[o] = Math.round(out[o] + (tmp[0] - out[o]) * white);
@@ -420,7 +579,10 @@ function dyeInto(out, src, o, dye, hueJ, valJ, white, dark, whiteFloor = 0) {
 /** Whether a pixel is the hide's (THE DYE's first two rules): warm, coloured, and - where a saddle is drawn (`tack`) -
  *  not the tack's leather. */
 export function isCoatPixel(r, g, b, tack = true) {
-  const H = hsv(r, g, b), h = H[0], s = H[1], v = H[2];
+  const H = hsv(r, g, b),
+    h = H[0],
+    s = H[1],
+    v = H[2];
   if (!((h <= 50 || h >= 345) && s >= 0.2)) return false;
   return !(tack && h >= 28 && h <= 48 && s >= 0.36 && s < 0.58 && v >= 0.24 && v < 0.5);
 }
@@ -447,20 +609,29 @@ export function recolorHorse(image, look, { bottomFirst = true, legs = true, tac
   const src = new Uint8Array(image.colors.buffer, image.colors.byteOffset, image.colors.byteLength);
   const n = w * h;
   if (src.length < n * 4) return image;
-  const out = new Uint8Array(src);   // a copy
+  const out = new Uint8Array(src); // a copy
   const hide = hideOf(image.colors, src, w, h, tack);
   if (hide.at.length) {
     const { at, x0, r0, r1 } = hide;
-    const hideW = Math.max(1, hide.x1 - x0 + 1), hideH = Math.max(1, r1 - r0 + 1), unit = Math.max(PATTERN_SCALE_PX, hideW);
+    const hideW = Math.max(1, hide.x1 - x0 + 1),
+      hideH = Math.max(1, r1 - r0 + 1),
+      unit = Math.max(PATTERN_SCALE_PX, hideW);
     const [hueJ, valJ] = shadeOf(l.seed);
     const band = legs ? LEG_BANDS[l.legs] * hideH : 0;
     for (let j = 0; j < at.length; j++) {
       const i = at[j];
-      const x = i % w, r = (i - x) / w;
-      const down = bottomFirst ? r1 - r : r - r0, up = bottomFirst ? r - r0 : r1 - r;
-      let white = 0, dark = 0;
-      if (l.pattern) { const M = markingAt(l.pattern, l.seed, (x - x0) / unit, down / unit, x - x0, down); white = M[0]; dark = M[1]; }
-      if (band > 0 && up < band * (0.8 + 0.4 * hash3(x - x0, 0, l.seed + 13))) white = 1;   // the legs' white, its top ragged
+      const x = i % w,
+        r = (i - x) / w;
+      const down = bottomFirst ? r1 - r : r - r0,
+        up = bottomFirst ? r - r0 : r1 - r;
+      let white = 0,
+        dark = 0;
+      if (l.pattern) {
+        const M = markingAt(l.pattern, l.seed, (x - x0) / unit, down / unit, x - x0, down);
+        white = M[0];
+        dark = M[1];
+      }
+      if (band > 0 && up < band * (0.8 + 0.4 * hash3(x - x0, 0, l.seed + 13))) white = 1; // the legs' white, its top ragged
       dyeInto(out, src, i * 4, dye, hueJ, valJ, white, dark);
     }
   }
@@ -489,7 +660,10 @@ const _hides = new WeakMap();
  */
 function hideOf(colors, src, w, h, tack) {
   let kept = _hides.get(colors);
-  if (!kept) { kept = [null, null]; _hides.set(colors, kept); }
+  if (!kept) {
+    kept = [null, null];
+    _hides.set(colors, kept);
+  }
   const k = tack ? 1 : 0;
   return kept[k] ?? (kept[k] = findHide(src, w, h, tack));
 }
@@ -499,7 +673,13 @@ function hideOf(colors, src, w, h, tack) {
  *  module's (test/systems/talk/audit24_onehome.test.js's ratchet).
  *  @param {{ width: number, height: number, colors: ArrayLike<number> & { buffer: ArrayBufferLike, byteOffset: number, byteLength: number } }} image */
 export function pictureHide(image, { tack = true } = {}) {
-  return hideOf(image.colors, new Uint8Array(image.colors.buffer, image.colors.byteOffset, image.colors.byteLength), image.width, image.height, tack);
+  return hideOf(
+    image.colors,
+    new Uint8Array(image.colors.buffer, image.colors.byteOffset, image.colors.byteLength),
+    image.width,
+    image.height,
+    tack,
+  );
 }
 
 /** THE DYE's hide of one picture - its regions, the horse's among them, and their frame (see hideOf). */
@@ -512,18 +692,22 @@ function findHide(src, w, h, tack) {
     if (src[o + 3] && isCoatPixel(src[o], src[o + 1], src[o + 2], tack)) coatMask[i] = 1;
   }
   const region = new Int32Array(n).fill(-1);
-  const sizes = [], light = [];
+  const sizes = [],
+    light = [];
   const stack = [];
   for (let i = 0; i < n; i++) {
     if (!coatMask[i] || region[i] >= 0) continue;
     const id = sizes.length;
-    let size = 0, sum = 0;
-    region[i] = id; stack.push(i);
+    let size = 0,
+      sum = 0;
+    region[i] = id;
+    stack.push(i);
     while (stack.length) {
       const p = /** @type {number} */ (stack.pop());
       size++;
       sum += Math.max(src[p * 4], src[p * 4 + 1], src[p * 4 + 2]) / 255;
-      const px = p % w, py = (p - px) / w;
+      const px = p % w,
+        py = (p - px) / w;
       for (let dy = -1; dy <= 1; dy++) {
         const y = py + dy;
         if (y < 0 || y >= h) continue;
@@ -531,30 +715,48 @@ function findHide(src, w, h, tack) {
           const x = px + dx;
           if (x < 0 || x >= w) continue;
           const q = y * w + x;
-          if (coatMask[q] && region[q] < 0) { region[q] = id; stack.push(q); }
+          if (coatMask[q] && region[q] < 0) {
+            region[q] = id;
+            stack.push(q);
+          }
         }
       }
     }
-    sizes.push(size); light.push(sum / size);
+    sizes.push(size);
+    light.push(sum / size);
   }
   if (!sizes.length) return { at: new Int32Array(0), x0: w, x1: -1, r0: h, r1: -1 };
   // the horse's regions: the large, then the small shadowed ones within COAT_SHADOW_REACH of a large one
   const floor = Math.max(...sizes) * COAT_REGION_SHARE;
   const dyed = sizes.map((z) => z >= floor);
-  const near = new Uint8Array(n), R = COAT_SHADOW_REACH;
+  const near = new Uint8Array(n),
+    R = COAT_SHADOW_REACH;
   for (let i = 0; i < n; i++) {
     if (region[i] < 0 || !dyed[region[i]]) continue;
-    const px = i % w, py = (i - px) / w;
-    for (let y = Math.max(0, py - R); y <= Math.min(h - 1, py + R); y++) for (let x = Math.max(0, px - R); x <= Math.min(w - 1, px + R); x++) near[y * w + x] = 1;
+    const px = i % w,
+      py = (i - px) / w;
+    for (let y = Math.max(0, py - R); y <= Math.min(h - 1, py + R); y++)
+      for (let x = Math.max(0, px - R); x <= Math.min(w - 1, px + R); x++) near[y * w + x] = 1;
   }
-  for (let i = 0; i < n; i++) { const id = region[i]; if (id >= 0 && !dyed[id] && near[i] && light[id] < COAT_SHADOW_VALUE) dyed[id] = true; }
+  for (let i = 0; i < n; i++) {
+    const id = region[i];
+    if (id >= 0 && !dyed[id] && near[i] && light[id] < COAT_SHADOW_VALUE) dyed[id] = true;
+  }
   // the hide's pixels in order, and its frame: its width from its left, its top and its hooves
-  let x0 = w, x1 = -1, r0 = h, r1 = -1, count = 0;
+  let x0 = w,
+    x1 = -1,
+    r0 = h,
+    r1 = -1,
+    count = 0;
   for (let i = 0; i < n; i++) {
     if (region[i] < 0 || !dyed[region[i]]) continue;
     count++;
-    const x = i % w, r = (i - x) / w;
-    if (x < x0) x0 = x; if (x > x1) x1 = x; if (r < r0) r0 = r; if (r > r1) r1 = r;
+    const x = i % w,
+      r = (i - x) / w;
+    if (x < x0) x0 = x;
+    if (x > x1) x1 = x;
+    if (r < r0) r0 = r;
+    if (r > r1) r1 = r;
   }
   const at = new Int32Array(count);
   for (let i = 0, j = 0; i < n; i++) if (region[i] >= 0 && dyed[region[i]]) at[j++] = i;
@@ -590,14 +792,26 @@ const PLANE_FLOOR = 0.01;
  */
 export function texelPlanes(p, n, hide, out = new Float32Array(9), o = 0) {
   const L = hide.length || 1;
-  const along = (hide.front - p[1]) / L, down = (hide.top - p[2]) / L, across = p[0] / L;
-  const wx = Math.abs(n[0]) ** PLANE_SHARPNESS, wy = Math.abs(n[1]) ** PLANE_SHARPNESS, wz = Math.abs(n[2]) ** PLANE_SHARPNESS;
+  const along = (hide.front - p[1]) / L,
+    down = (hide.top - p[2]) / L,
+    across = p[0] / L;
+  const wx = Math.abs(n[0]) ** PLANE_SHARPNESS,
+    wy = Math.abs(n[1]) ** PLANE_SHARPNESS,
+    wz = Math.abs(n[2]) ** PLANE_SHARPNESS;
   const sum = wx + wy + wz || 1;
   // each face its own place on the pattern: the flanks, the front and back, the top and belly - six, apart
-  const fx = n[0] < 0 ? 37.3 : 0, fy = n[1] < 0 ? 53.9 : 71.1, fz = n[2] < 0 ? 89.7 : 17.9;
-  out[o] = along + fx; out[o + 1] = down; out[o + 2] = wx / sum;
-  out[o + 3] = across + fy; out[o + 4] = down; out[o + 5] = wy / sum;
-  out[o + 6] = along + fz; out[o + 7] = across; out[o + 8] = wz / sum;
+  const fx = n[0] < 0 ? 37.3 : 0,
+    fy = n[1] < 0 ? 53.9 : 71.1,
+    fz = n[2] < 0 ? 89.7 : 17.9;
+  out[o] = along + fx;
+  out[o + 1] = down;
+  out[o + 2] = wx / sum;
+  out[o + 3] = across + fy;
+  out[o + 4] = down;
+  out[o + 5] = wy / sum;
+  out[o + 6] = along + fz;
+  out[o + 7] = across;
+  out[o + 8] = wz / sum;
   return out;
 }
 
@@ -648,26 +862,37 @@ export function dyeHorseTexelRows(src, out, width, look, map, r0, r1) {
   if (!horseLookCode(l)) return;
   const dye = COAT_DYES[HORSE_COATS[l.coat]];
   const [hueJ, valJ] = shadeOf(l.seed);
-  const s = l.seed | 0, P = map.planes;
+  const s = l.seed | 0,
+    P = map.planes;
   const band = LEG_BANDS[l.legs];
   const pattern = HORSE_PATTERNS[l.pattern];
   for (let i = r0 * width, end = r1 * width; i < end; i++) {
     const o = i * 4;
     if (!map.hide[i] || !src[o + 3] || !isCoatPixel(src[o], src[o + 1], src[o + 2], false)) continue;
-    const x = i % width, y = (i - x) / width, q = i * 9;
-    let white = 0, dark = 0, field = 0, rag = 0;
+    const x = i % width,
+      y = (i - x) / width,
+      q = i * 9;
+    let white = 0,
+      dark = 0,
+      field = 0,
+      rag = 0;
     for (let k = 0; k < 9; k += 3) {
       const pw = P[q + k + 2];
       if (pw < PLANE_FLOOR) continue;
-      const u = P[q + k], v = P[q + k + 1];
+      const u = P[q + k],
+        v = P[q + k + 1];
       if (band > 0) rag += pw * noise(u * 40, v * 40, s + 13);
       if (pattern === 'pinto') field += pw * pintoField(s, u, v);
       else if (pattern === 'roan') field += pw * roanDensity(s, u, v);
-      else if (l.pattern) { const M = markingAt(l.pattern, s, u, v, x, y); white += pw * M[0]; dark += pw * M[1]; }
+      else if (l.pattern) {
+        const M = markingAt(l.pattern, s, u, v, x, y);
+        white += pw * M[0];
+        dark += pw * M[1];
+      }
     }
     if (pattern === 'pinto') white = pintoCut(s, field);
     else if (pattern === 'roan') white = roanFleck(s, x, y, field);
-    if (band > 0 && map.up[i] < band * (0.8 + 0.4 * rag)) white = 1;   // the legs' white, its top ragged
+    if (band > 0 && map.up[i] < band * (0.8 + 0.4 * rag)) white = 1; // the legs' white, its top ragged
     dyeInto(out, src, o, dye, hueJ, valJ, white, dark, WHITE_FLOOR_3D);
   }
 }

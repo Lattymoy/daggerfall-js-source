@@ -374,8 +374,8 @@
   {
     "name": "WAGONS3-the-window-gate-dropped",
     "file": "src/systems/horse/horseCart.js",
-    "old": "    if (teamShort()) return deny(teamShort());   // WAGONS3: a pair's wagon takes its pair\n",
-    "new": "",
+    "old": "    if (teamShort()) return deny(teamShort()); // WAGONS3: a pair's wagon takes its pair\n    if (!physicalPersistenceEnabled) return allow();",
+    "new": "    if (!physicalPersistenceEnabled) return allow();",
     "tests": [
       "test/player/wagons3.test.js"
     ]
@@ -383,8 +383,8 @@
   {
     "name": "WAGONS3-the-press-gate-dropped",
     "file": "src/systems/horse/horseCart.js",
-    "old": "    if (teamShort()) return denyTransportAction(teamShort());   // WAGONS3\n",
-    "new": "",
+    "old": "    if (teamShort()) return denyTransportAction(teamShort()); // WAGONS3\n    if (!physicalPersistenceEnabled) {",
+    "new": "    if (!physicalPersistenceEnabled) {",
     "tests": [
       "test/player/wagons3.test.js"
     ]
@@ -392,8 +392,8 @@
   {
     "name": "WAGONS3-the-observed-cart-kept",
     "file": "src/systems/horse/horseCart.js",
-    "old": "    if (mode === TRANSPORT.Cart && teamShort()) { rejectTransportChange(prev, teamShort()); return; }   // WAGONS3\n",
-    "new": "",
+    "old": "    if (mode === TRANSPORT.Cart && teamShort()) {\n      rejectTransportChange(prev, teamShort());\n      return;\n    } // WAGONS3\n    if (mode === TRANSPORT.Cart && !tryPrepareCartMount()) {",
+    "new": "    if (mode === TRANSPORT.Cart && !tryPrepareCartMount()) {",
     "tests": [
       "test/player/wagons3.test.js"
     ]
@@ -401,8 +401,8 @@
   {
     "name": "WAGONS3-the-reconcile-dropped",
     "file": "src/systems/horse/horseCart.js",
-    "old": "reconcileHorseOwnership(ownsHorse); reconcileTeam();",
-    "new": "reconcileHorseOwnership(ownsHorse);",
+    "old": "    reconcileHorseOwnership(ownsHorse);\n    reconcileTeam(); // WAGONS3: and a team short of its horses",
+    "new": "    reconcileHorseOwnership(ownsHorse); // WAGONS3: and a team short of its horses",
     "tests": [
       "test/player/wagons3.test.js"
     ]
@@ -410,8 +410,8 @@
   {
     "name": "WAGONS3-the-hitch-refusal-dropped",
     "file": "src/systems/horse/horseCart.js",
-    "old": "  function hitchDeployedWagon() {\n    if (refuseShortTeam()) return;   // WAGONS3: a pair's wagon takes its pair\n",
-    "new": "  function hitchDeployedWagon() {\n",
+    "old": "    if (refuseShortTeam()) return; // WAGONS3: a pair's wagon takes its pair\n    // WAGON-HITCH: where the wagon stands as the team is mounted - the parked one's grounded pose, or the following",
+    "new": "    // WAGON-HITCH: where the wagon stands as the team is mounted - the parked one's grounded pose, or the following",
     "tests": [
       "test/player/wagons3.test.js"
     ]
@@ -419,8 +419,8 @@
   {
     "name": "WAGONS3-the-mods-setback-for-every-kind",
     "file": "src/systems/horse/horseCart.js",
-    "old": "function deploySetback() { const z = hitchZ(); return z > HITCHED_HORSE_LOCAL_Z ? z + DEPLOY_CLEARANCE : WAGON_FOLLOW_DISTANCE; }",
-    "new": "function deploySetback() { return WAGON_FOLLOW_DISTANCE; }",
+    "old": "    const z = hitchZ();\n    return z > HITCHED_HORSE_LOCAL_Z ? z + DEPLOY_CLEARANCE : WAGON_FOLLOW_DISTANCE;",
+    "new": "    return WAGON_FOLLOW_DISTANCE;",
     "tests": [
       "test/player/wagons3.test.js"
     ]
@@ -509,8 +509,8 @@
   {
     "name": "WAGONS3-a-fresh-cart-parked-not-refused",
     "file": "src/systems/horse/horseCart.js",
-    "old": "if (tm().get() === TRANSPORT.Cart && previousTransportMode === TRANSPORT.Cart && wagonState.Mode === WAGON_MODE.WithPlayer",
-    "new": "if (tm().get() === TRANSPORT.Cart && wagonState.Mode === WAGON_MODE.WithPlayer",
+    "old": "    if (\n      tm().get() === TRANSPORT.Cart &&\n      previousTransportMode === TRANSPORT.Cart &&\n      wagonState.Mode === WAGON_MODE.WithPlayer &&\n      !pee().isPlayerInside()\n    ) {",
+    "new": "    if (tm().get() === TRANSPORT.Cart && wagonState.Mode === WAGON_MODE.WithPlayer && !pee().isPlayerInside()) {",
     "tests": [
       "test/player/wagons3.test.js"
     ]

@@ -16,17 +16,25 @@ import { V_FORWARD, TELEPORT_DISTANCE } from './horseCartLaw.js';
  * @param {{ now: () => number, log: { warn?: (line: string) => void }, playerWorld: () => number[], ratio: () => number }} deps
  */
 export function createTrailingPoseCache({ now, log, playerWorld, ratio }) {
-  let movingWorldX = 0, movingWorldZ = 0, movingWorldHeading = [...V_FORWARD], hasMovingWorldPose = false;
-  let movingWorldPoseAt = 0;   // STALE-PARK: when the moving pose was cached (now()) - the far-park warning says its age
+  let movingWorldX = 0,
+    movingWorldZ = 0,
+    movingWorldHeading = [...V_FORWARD],
+    hasMovingWorldPose = false;
+  let movingWorldPoseAt = 0; // STALE-PARK: when the moving pose was cached (now()) - the far-park warning says its age
 
   /** CacheMovingWorldPose's write [IL_7748]: the trailing wagon's axle in natives, and its heading.
    *  @param {number[]} world @param {number[]} heading */
   function store([wx, wz], heading) {
-    movingWorldX = wx; movingWorldZ = wz;
-    movingWorldHeading = heading; hasMovingWorldPose = true; movingWorldPoseAt = now();
+    movingWorldX = wx;
+    movingWorldZ = wz;
+    movingWorldHeading = heading;
+    hasMovingWorldPose = true;
+    movingWorldPoseAt = now();
   }
   /** The cached pose no longer stands behind the player: the next park is laid behind them. */
-  function forget() { hasMovingWorldPose = false; }
+  function forget() {
+    hasMovingWorldPose = false;
+  }
   /** CaptureBestAvailableDeploymentPose [IL_7820]: the trailing wagon's last cached world pose, else `behindPlayer()`'s -
    *  2.5 m behind the player (WAGONS3: a wagon's own setback behind them, the runtime's deploySetback).
    *  @param {() => DeploymentPose} behindPlayer @returns {DeploymentPose} */
@@ -50,7 +58,10 @@ export function createTrailingPoseCache({ now, log, playerWorld, ratio }) {
     const [px, pz] = playerWorld();
     const metres = Math.hypot(p.wx - px, p.wz - pz) / ratio();
     if (!(metres > TELEPORT_DISTANCE)) return;
-    const from = cachedAt === null ? 'behind the player' : `at the trailing pose cached ${(now() - cachedAt).toFixed(1)} s earlier`;
+    const from =
+      cachedAt === null
+        ? 'behind the player'
+        : `at the trailing pose cached ${(now() - cachedAt).toFixed(1)} s earlier`;
     log.warn?.(`[TrailingWagon] A dismount parked the wagon ${metres.toFixed(1)} m from the player, ${from}.`);
   }
 

@@ -3,7 +3,7 @@
     "name": "WAGON-HITCH-horizontal-eased-again",
     "file": "src/systems/horse/horseFollow.js",
     "old": "  next.position = [next.lastValidPosition[0], y, next.lastValidPosition[2]];",
-    "new": "  next.position = w.active ? vlerp(w.position, [next.lastValidPosition[0], y, next.lastValidPosition[2]], 1 - Math.exp(-POSITION_SMOOTHING_RATE * dt)) : [next.lastValidPosition[0], y, next.lastValidPosition[2]];",
+    "new": "  next.position = w.active\n    ? vlerp(\n        w.position,\n        [next.lastValidPosition[0], y, next.lastValidPosition[2]],\n        1 - Math.exp(-POSITION_SMOOTHING_RATE * dt),\n      )\n    : [next.lastValidPosition[0], y, next.lastValidPosition[2]];",
     "tests": [
       "test/systems/horse/wagonhitch.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "WAGON-HITCH-the-mod-trail-length",
     "file": "src/systems/horse/horseCart.js",
-    "old": "    const next = hitchedPoseStep(phys, wagonVisual.pose, hitchPoint, forward, hitchZ(), dt, seed, wagonVisual.parts?.bogie ?? null, seedForward);",
-    "new": "    const next = hitchedPoseStep(phys, wagonVisual.pose, hitchPoint, forward, WAGON_FOLLOW_DISTANCE, dt, seed, wagonVisual.parts?.bogie ?? null, seedForward);",
+    "old": "      forward,\n      hitchZ(),",
+    "new": "      forward,\n      WAGON_FOLLOW_DISTANCE,",
     "tests": [
       "test/systems/horse/wagonhitch.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WAGON-HITCH-jump-not-relaid",
     "file": "src/systems/horse/horseCart.js",
-    "old": "    if (hitch.observe(m.position, hitchJumpReach(dt))) relayHitch();",
-    "new": "    hitch.observe(m.position, hitchJumpReach(dt));",
+    "old": "    if (hitch.observe(m.position, hitchJumpReach(dt))) relayHitch(); // AUDIT WAGON-HITCH A3: a jump is past what the step's game time could cover",
+    "new": "    hitch.observe(m.position, hitchJumpReach(dt)); // AUDIT WAGON-HITCH A3: a jump is past what the step's game time could cover",
     "tests": [
       "test/scenes/audit_hcc_branch.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-WAGON-HITCH-A1-pulled-from-the-drawn-position",
     "file": "src/systems/horse/horseFollow.js",
-    "old": "  const from = w.active ? (w.axle ?? w.position) :",
-    "new": "  const from = w.active ? w.position :",
+    "old": "  const from = w.active\n    ? (w.axle ?? w.position)\n    : (seed ?? vsub(hitch, vscale(horizontalForward(hitchForward), length)));",
+    "new": "  const from = w.active ? w.position : (seed ?? vsub(hitch, vscale(horizontalForward(hitchForward), length)));",
     "tests": [
       "test/systems/horse/wagonhitch.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "AUDIT-WAGON-HITCH-A3-the-flat-20m",
     "file": "src/systems/horse/horseCart.js",
-    "old": "    if (hitch.observe(m.position, hitchJumpReach(dt))) relayHitch();",
-    "new": "    if (hitch.observe(m.position)) relayHitch();",
+    "old": "    if (hitch.observe(m.position, hitchJumpReach(dt))) relayHitch(); // AUDIT WAGON-HITCH A3: a jump is past what the step's game time could cover",
+    "new": "    if (hitch.observe(m.position)) relayHitch(); // AUDIT WAGON-HITCH A3: a jump is past what the step's game time could cover",
     "tests": [
       "test/systems/horse/wagonhitch.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "AUDIT-WAGON-HITCH-H15-the-re-lay-kept-active",
     "file": "src/systems/horse/horseCart.js",
-    "old": "    if (wagonVisual) { wagonVisual.pose.active = false; wagonVisual.pose.hasLastValid = false; }",
-    "new": "    if (wagonVisual) { wagonVisual.pose.hasLastValid = false; }",
+    "old": "    if (wagonVisual) {\n      wagonVisual.pose.active = false;\n      wagonVisual.pose.hasLastValid = false;",
+    "new": "    if (wagonVisual) {\n      wagonVisual.pose.hasLastValid = false;",
     "tests": [
       "test/systems/horse/wagonhitch.test.js"
     ]
@@ -137,7 +137,7 @@
   {
     "name": "AUDIT-WAGON-HITCH-H4-the-following-arm-dropped",
     "file": "src/systems/horse/horseCart.js",
-    "old": "    const seed = gp ? [...gp.position] : (wagonVisual && wagonActive() ? [...wagonPosition()] : (tryGetRelevantDeployedScene()?.anchor ?? null));",
+    "old": "    const seed = gp\n      ? [...gp.position]\n      : wagonVisual && wagonActive()\n        ? [...wagonPosition()]\n        : (tryGetRelevantDeployedScene()?.anchor ?? null);",
     "new": "    const seed = gp ? [...gp.position] : (tryGetRelevantDeployedScene()?.anchor ?? null);",
     "tests": [
       "test/systems/horse/wagonhitch.test.js"
@@ -146,8 +146,8 @@
   {
     "name": "AUDIT-WAGON-HITCH-H11-the-pending-seed-not-rebased",
     "file": "src/systems/horse/horseCart.js",
-    "old": "    hitch.offset(d); if (hitchSeed) hitchSeed = vadd(hitchSeed, d); horseFollower.offset(d);",
-    "new": "    hitch.offset(d); horseFollower.offset(d);",
+    "old": "    if (hitchSeed) hitchSeed = vadd(hitchSeed, d);\n    horseFollower.offset(d); // WAGON-HITCH: the shafts' last hitch and a pending drive-off",
+    "new": "    horseFollower.offset(d); // WAGON-HITCH: the shafts' last hitch and a pending drive-off",
     "tests": [
       "test/systems/horse/wagonhitch.test.js"
     ]
@@ -255,7 +255,7 @@
     "name": "AUDIT-WAGON-HITCH-M1-the-jump-unread",
     "file": "src/systems/horse/horseCart.js",
     "old": "    if (!seed && (jumped || (!horseFollower.isCombatEvading && horseRecoveredThisFrame))) {",
-    "new": "    if (!seed && ((!horseFollower.isCombatEvading && horseRecoveredThisFrame))) {",
+    "new": "    if (!seed && !horseFollower.isCombatEvading && horseRecoveredThisFrame) {",
     "tests": [
       "test/scenes/audit_hcc_branch.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "AUDIT-WAGON-HITCH-M1-the-pose-kept-active",
     "file": "src/systems/horse/horseCart.js",
-    "old": "      wagonVisual.pose.active = false; wagonVisual.pose.hasLastValid = false; hasLastValidGroundState = false; resetWheelMotionState();",
-    "new": "      wagonVisual.pose.hasLastValid = false; hasLastValidGroundState = false; resetWheelMotionState();",
+    "old": "      seedForward = seed ? wagonForward() : null;\n      wagonVisual.pose.active = false;\n      wagonVisual.pose.hasLastValid = false;",
+    "new": "      seedForward = seed ? wagonForward() : null;\n      wagonVisual.pose.hasLastValid = false;",
     "tests": [
       "test/scenes/audit_hcc_branch.test.js"
     ]
@@ -273,7 +273,7 @@
     "name": "AUDIT-WAGON-HITCH-D-the-runtime-draws-by-the-trail-again",
     "file": "src/systems/horse/horseCart.js",
     "old": "import { HorseFollowController, WagonHitch, hitchedPoseStep, hitchJumpReach, tryFindGround } from './horseFollow.js';",
-    "new": "import { HorseFollowController, WagonHitch, hitchedPoseStep, hitchJumpReach, tryFindGround, groundedPoseStep } from './horseFollow.js';",
+    "new": "import {\n  HorseFollowController,\n  WagonHitch,\n  hitchedPoseStep,\n  hitchJumpReach,\n  tryFindGround,\n  groundedPoseStep,\n} from './horseFollow.js';",
     "tests": [
       "test/systems/horse/hcc_scope.test.js"
     ]

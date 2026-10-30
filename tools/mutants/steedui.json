@@ -164,8 +164,8 @@
   {
     "name": "STEEDUI-cargo-unguarded",
     "file": "src/systems/horse/horseCart.js",
-    "old": "    if (!a.allowed) { say(a.denialMessage); return false; }",
-    "new": "    if (false) { say(a.denialMessage); return false; }",
+    "old": "    if (!a.allowed) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/steedui_saddle.test.js"
     ]
