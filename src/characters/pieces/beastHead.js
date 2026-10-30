@@ -58,17 +58,7 @@ export function buildBeastHead(ramp = WOLF_RAMP, s = {}) {
   // level reads as a crocodile.
   const mw = skull * (0.42 + depth * 0.34);
   const my = cy - skull * 0.36;
-  box(
-    quad,
-    -mw,
-    my - skull * depth * 0.9,
-    skull * 0.5,
-    mw,
-    my + skull * 0.34,
-    skull * 0.5 + snout,
-    0.88,
-    0.6,
-  );
+  box(quad, -mw, my - skull * depth * 0.9, skull * 0.5, mw, my + skull * 0.34, skull * 0.5 + snout, 0.88, 0.6);
   // The nose, darker and blunter than the muzzle it ends.
   box(
     quad,
@@ -89,7 +79,17 @@ export function buildBeastHead(ramp = WOLF_RAMP, s = {}) {
     const eh = skull * 1.1 * ears;
     for (const side of [-1, 1]) {
       const x = side * skull * 0.6;
-      box(quad, x - ew, cy + skull * 0.7, -skull * 0.5, x + ew, cy + skull * 0.7 + eh, -skull * 0.5 + ew * 1.6, 0.9, 0.58);
+      box(
+        quad,
+        x - ew,
+        cy + skull * 0.7,
+        -skull * 0.5,
+        x + ew,
+        cy + skull * 0.7 + eh,
+        -skull * 0.5 + ew * 1.6,
+        0.9,
+        0.58,
+      );
     }
   }
 

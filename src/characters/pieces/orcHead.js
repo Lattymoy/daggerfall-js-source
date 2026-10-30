@@ -18,13 +18,25 @@ import { HSCALE, shadePiece, pushQuad } from './pieceLoft.js';
 
 // Ivory: warm bone, its own ramp - a tusk shaded off the hide ramp
 // reads as a green growth rather than a tooth.
-export const IVORY_RAMP = [[92, 84, 66], [124, 114, 92], [156, 146, 120], [188, 178, 150], [214, 206, 180], [236, 230, 210]];
+export const IVORY_RAMP = [
+  [92, 84, 66],
+  [124, 114, 92],
+  [156, 146, 120],
+  [188, 178, 150],
+  [214, 206, 180],
+  [236, 230, 210],
+];
 
 // Head landmarks, PRE-compress (mirroring neutralBody's head loft rows
 // so a change there is a one-line change here, not a hunt).
-const CHIN_Y = 1.70, JAW_Y = 1.74, CHEEK_Y = 1.79, TEMPLE_Y = 1.85;
-const JAW_RX = 0.082, JAW_RZ = 0.105;      // jaw row half-extents
-const CHEEK_RX = 0.102, CHEEK_RZ = 0.130;  // cheek row half-extents
+const CHIN_Y = 1.7,
+  JAW_Y = 1.74,
+  CHEEK_Y = 1.79,
+  TEMPLE_Y = 1.85;
+const JAW_RX = 0.082,
+  JAW_RZ = 0.105; // jaw row half-extents
+const CHEEK_RX = 0.102,
+  CHEEK_RZ = 0.13; // cheek row half-extents
 
 /** Tusks: a pair of lower canines rooted in the jaw and curving UP and
  *  slightly OUT past the upper lip. Tapered square prisms, not cones -
@@ -51,16 +63,18 @@ export function buildTusks(ramp = IVORY_RAMP, { jaw = 1, size = 1 } = {}) {
   for (const sgn of [-1, 1]) {
     // Four spine nodes, curving up/out/back - a curve, not a spike.
     const nodes = [
-      { x: sgn * rootX,               y: rootY,              z: rootZ,         r: 0.019 * size },
-      { x: sgn * rootX * 1.12,        y: rootY + len * 0.38, z: rootZ * 0.98,  r: 0.016 * size },
-      { x: sgn * rootX * 1.30,        y: rootY + len * 0.74, z: rootZ * 0.88,  r: 0.011 * size },
-      { x: sgn * rootX * 1.46,        y: rootY + len,        z: rootZ * 0.74,  r: 0.0025 * size },
+      { x: sgn * rootX, y: rootY, z: rootZ, r: 0.019 * size },
+      { x: sgn * rootX * 1.12, y: rootY + len * 0.38, z: rootZ * 0.98, r: 0.016 * size },
+      { x: sgn * rootX * 1.3, y: rootY + len * 0.74, z: rootZ * 0.88, r: 0.011 * size },
+      { x: sgn * rootX * 1.46, y: rootY + len, z: rootZ * 0.74, r: 0.0025 * size },
     ];
     // Square cross-section (4 sides) = faceted ivory that catches the
     // cel bands the way every other piece on this rig does.
     const ringOf = (n) => [
-      [n.x - n.r, n.y, n.z - n.r], [n.x + n.r, n.y, n.z - n.r],
-      [n.x + n.r, n.y, n.z + n.r], [n.x - n.r, n.y, n.z + n.r],
+      [n.x - n.r, n.y, n.z - n.r],
+      [n.x + n.r, n.y, n.z - n.r],
+      [n.x + n.r, n.y, n.z + n.r],
+      [n.x - n.r, n.y, n.z + n.r],
     ];
     const rings = nodes.map(ringOf);
     for (let i = 0; i + 1 < rings.length; i++) {
@@ -83,22 +97,24 @@ export function buildBrow(ramp, { skull = 1, jut = 1 } = {}) {
   const faces = [];
   const quad = (a, b, c, d) => pushQuad(faces, a, b, c, d, 'head');
 
-  const yLo = ((CHEEK_Y + TEMPLE_Y) / 2) * HSCALE;   // eye line
-  const yHi = (TEMPLE_Y + 0.020) * HSCALE;           // just under the crown curve
+  const yLo = ((CHEEK_Y + TEMPLE_Y) / 2) * HSCALE; // eye line
+  const yHi = (TEMPLE_Y + 0.02) * HSCALE; // just under the crown curve
   const halfW = CHEEK_RX * 0.94 * skull;
-  const zFace = CHEEK_RZ * 0.86 * skull;             // the face plane
-  const zOut = zFace + 0.030 * jut * skull;          // the shelf's leading edge
+  const zFace = CHEEK_RZ * 0.86 * skull; // the face plane
+  const zOut = zFace + 0.03 * jut * skull; // the shelf's leading edge
 
   // Five columns across the brow so it arcs with the skull instead of
   // sitting as one flat plank bolted to the front of the head.
   const COLS = 5;
-  const colX = (i) => -halfW + (2 * halfW) * (i / COLS);
+  const colX = (i) => -halfW + 2 * halfW * (i / COLS);
   // Arc: deepest at centre, receding at the temples.
   const arcZ = (x) => zOut - (Math.abs(x) / halfW) ** 2 * (zOut - zFace) * 0.55;
 
   for (let i = 0; i < COLS; i++) {
-    const x0 = colX(i), x1 = colX(i + 1);
-    const z0 = arcZ(x0), z1 = arcZ(x1);
+    const x0 = colX(i),
+      x1 = colX(i + 1);
+    const z0 = arcZ(x0),
+      z1 = arcZ(x1);
     // front face of the shelf
     quad([x0, yLo, z0], [x1, yLo, z1], [x1, yHi, z1], [x0, yHi, z0]);
     // underside (the overhang that shadows the eyes - the whole point)
@@ -108,7 +124,8 @@ export function buildBrow(ramp, { skull = 1, jut = 1 } = {}) {
   }
   // Cap each end so the shelf does not read as a floating slab.
   for (const sgn of [-1, 1]) {
-    const x = sgn * halfW, z = arcZ(x);
+    const x = sgn * halfW,
+      z = arcZ(x);
     quad([x, yLo, zFace], [x, yLo, z], [x, yHi, z], [x, yHi, zFace]);
   }
   return shadePiece(faces, ramp, 0.08, 0.18);

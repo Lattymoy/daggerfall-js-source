@@ -20,19 +20,21 @@ const GRIP_PITCH = -Math.PI / 2;
 // The NOCK: authoring-space + = the ARCHER side after the -pi/2 bake
 // (rest-above-grip -> behind the fist at aim). The bow's string and nock
 // station AND the nocked arrow's tail read this one value.
-const NOCK_CZ = 0.30;
+const NOCK_CZ = 0.3;
 
 function buildBow(ramp, half) {
   const faces = [];
   const G = { group: 'armL', cx: LEFT_FIST_X, seg: 8 };
-  const lo = GRIP_Y - half, hi = GRIP_Y + half;
+  const lo = GRIP_Y - half,
+    hi = GRIP_Y + half;
   // STAVE: recurve - riser bulges forward at the grip, limbs sweep
   // back to the tips (where the string meets them).
-  const limb = (t) => -0.05 + 0.082 * Math.sin(Math.PI * t);   // cz along the stave (t 0..1)
+  const limb = (t) => -0.05 + 0.082 * Math.sin(Math.PI * t); // cz along the stave (t 0..1)
   const rows = [];
   const N = 8;
   for (let k = 0; k <= N; k++) {
-    const t = k / N, y = lo + (hi - lo) * t;
+    const t = k / N,
+      y = lo + (hi - lo) * t;
     const taper = 0.009 + 0.016 * Math.sin(Math.PI * t);
     rows.push({ y, rx: taper, rz: taper + 0.004, cz: limb(t) });
   }
@@ -44,20 +46,32 @@ function buildBow(ramp, half) {
   // bow (the pose is aiming); the NOCK STATION ring sits at the pull
   // point and is what the draw hand targets - an undrawn string put
   // the station out by the bow, outside the draw arm's reach.
-  loftPiece(faces, [
-    { y: lo + 0.012, rx: 0.0035, rz: 0.0035, cz: -0.05 },
-    { y: GRIP_Y - 0.02, rx: 0.0035, rz: 0.0035, cz: NOCK_CZ - 0.012 },
-  ], { ...G, seg: 6, capTop: false, capBottom: false });
-  loftPiece(faces, [
-    { y: GRIP_Y + 0.02, rx: 0.0035, rz: 0.0035, cz: NOCK_CZ - 0.012 },
-    { y: hi - 0.012, rx: 0.0035, rz: 0.0035, cz: -0.05 },
-  ], { ...G, seg: 6, capTop: false, capBottom: false });
+  loftPiece(
+    faces,
+    [
+      { y: lo + 0.012, rx: 0.0035, rz: 0.0035, cz: -0.05 },
+      { y: GRIP_Y - 0.02, rx: 0.0035, rz: 0.0035, cz: NOCK_CZ - 0.012 },
+    ],
+    { ...G, seg: 6, capTop: false, capBottom: false },
+  );
+  loftPiece(
+    faces,
+    [
+      { y: GRIP_Y + 0.02, rx: 0.0035, rz: 0.0035, cz: NOCK_CZ - 0.012 },
+      { y: hi - 0.012, rx: 0.0035, rz: 0.0035, cz: -0.05 },
+    ],
+    { ...G, seg: 6, capTop: false, capBottom: false },
+  );
   // NOCK STATION: pre-bake (0.90, +0.30) -> post-bake above the grip
   // at rest, at the CHEEK LINE when the arm extends to aim.
-  loftPiece(faces, [
-    { y: GRIP_Y - 0.012, rx: 0.007, rz: 0.007, cz: NOCK_CZ },
-    { y: GRIP_Y + 0.012, rx: 0.007, rz: 0.007, cz: NOCK_CZ },
-  ], { ...G, seg: 8, capTop: true, capBottom: true });
+  loftPiece(
+    faces,
+    [
+      { y: GRIP_Y - 0.012, rx: 0.007, rz: 0.007, cz: NOCK_CZ },
+      { y: GRIP_Y + 0.012, rx: 0.007, rz: 0.007, cz: NOCK_CZ },
+    ],
+    { ...G, seg: 8, capTop: true, capBottom: true },
+  );
   return compress(shadePiece(pitchAbout(faces, GRIP_Y, GRIP_PITCH), ramp));
 }
 
@@ -73,18 +87,26 @@ export function buildNockedArrow(ramp) {
   // locally onto the cz (aim) axis about the grip line before the
   // shared bake carries everything. Y +0.29 (tail) .. -0.24 (head)
   // maps to cz +0.29 .. -0.24.
-  loftPiece(faces, [
-    { y: GRIP_Y - 0.24, rx: 0.002, rz: 0.002 },       // point
-    { y: GRIP_Y - 0.20, rx: 0.013, rz: 0.013 },       // head base
-    { y: GRIP_Y - 0.19, rx: 0.0045, rz: 0.0045 },     // shaft
-    { y: GRIP_Y + 0.19, rx: 0.0045, rz: 0.0045 },
-    { y: GRIP_Y + 0.20, rx: 0.012, rz: 0.012 },       // fletching
-    { y: GRIP_Y + 0.27, rx: 0.012, rz: 0.012 },
-    { y: GRIP_Y + NOCK_CZ - 0.01, rx: 0.004, rz: 0.004 }, // tail at the nock
-  ], { ...G, seg: 6 });
-  pitchAbout(faces, GRIP_Y, Math.PI / 2);   // +y -> +cz (sign probed at the module)
+  loftPiece(
+    faces,
+    [
+      { y: GRIP_Y - 0.24, rx: 0.002, rz: 0.002 }, // point
+      { y: GRIP_Y - 0.2, rx: 0.013, rz: 0.013 }, // head base
+      { y: GRIP_Y - 0.19, rx: 0.0045, rz: 0.0045 }, // shaft
+      { y: GRIP_Y + 0.19, rx: 0.0045, rz: 0.0045 },
+      { y: GRIP_Y + 0.2, rx: 0.012, rz: 0.012 }, // fletching
+      { y: GRIP_Y + 0.27, rx: 0.012, rz: 0.012 },
+      { y: GRIP_Y + NOCK_CZ - 0.01, rx: 0.004, rz: 0.004 }, // tail at the nock
+    ],
+    { ...G, seg: 6 },
+  );
+  pitchAbout(faces, GRIP_Y, Math.PI / 2); // +y -> +cz (sign probed at the module)
   return compress(shadePiece(pitchAbout(faces, GRIP_Y, GRIP_PITCH), ramp));
 }
 
-export function buildLongBow(ramp) { return buildBow(ramp, 0.62); }
-export function buildShortBow(ramp) { return buildBow(ramp, 0.44); }
+export function buildLongBow(ramp) {
+  return buildBow(ramp, 0.62);
+}
+export function buildShortBow(ramp) {
+  return buildBow(ramp, 0.44);
+}

@@ -43,10 +43,34 @@ function limb(quad, ax, ay, az, bx, by, bz, r, shade) {
   // its own run rather than across the world.
   const px = (-dz / L) * r,
     pz = (dx / L) * r;
-  quad([ax - px, ay + r, az - pz], [ax + px, ay + r, az + pz], [bx + px, by + r, bz + pz], [bx - px, by + r, bz - pz], shade);
-  quad([ax + px, ay - r, az + pz], [ax - px, ay - r, az - pz], [bx - px, by - r, bz - pz], [bx + px, by - r, bz + pz], shade * 0.4);
-  quad([ax + px, ay + r, az + pz], [ax + px, ay - r, az + pz], [bx + px, by - r, bz + pz], [bx + px, by + r, bz + pz], shade * 0.72);
-  quad([ax - px, ay - r, az - pz], [ax - px, ay + r, az - pz], [bx - px, by + r, bz - pz], [bx - px, by - r, bz - pz], shade * 0.72);
+  quad(
+    [ax - px, ay + r, az - pz],
+    [ax + px, ay + r, az + pz],
+    [bx + px, by + r, bz + pz],
+    [bx - px, by + r, bz - pz],
+    shade,
+  );
+  quad(
+    [ax + px, ay - r, az + pz],
+    [ax - px, ay - r, az - pz],
+    [bx - px, by - r, bz - pz],
+    [bx + px, by - r, bz + pz],
+    shade * 0.4,
+  );
+  quad(
+    [ax + px, ay + r, az + pz],
+    [ax + px, ay - r, az + pz],
+    [bx + px, by - r, bz + pz],
+    [bx + px, by + r, bz + pz],
+    shade * 0.72,
+  );
+  quad(
+    [ax - px, ay - r, az - pz],
+    [ax - px, ay + r, az - pz],
+    [bx - px, by + r, bz - pz],
+    [bx - px, by - r, bz - pz],
+    shade * 0.72,
+  );
 }
 
 /**
@@ -82,17 +106,7 @@ export function buildArachnid(ramp = CHITIN_RAMP, s = {}) {
   // Cephalothorax forward, abdomen behind and larger. One box would be
   // a beetle.
   box(quad, -thorax, y - thorax * 0.7, 0, thorax, y + thorax * 0.7, thorax * 1.7, 0.92, 0.62);
-  box(
-    quad,
-    -abdomen,
-    y - abdomen * 0.75,
-    -abdomen * 2.0,
-    abdomen,
-    y + abdomen * 0.8,
-    -abdomen * 0.1,
-    0.88,
-    0.58,
-  );
+  box(quad, -abdomen, y - abdomen * 0.75, -abdomen * 2.0, abdomen, y + abdomen * 0.8, -abdomen * 0.1, 0.88, 0.58);
 
   // ── EIGHT LEGS, RADIALLY ────────────────────────────────────────
   // Four a side, fanned from the thorax. Each is TWO segments with a
@@ -197,6 +211,12 @@ export function buildSting(ramp = CHITIN_RAMP, s = {}) {
   }
   // The barb.
   const br = legR * 1.4;
-  quad([px - br, py - br, pz], [px + br, py - br, pz], [px + br, py + br, pz + sting * 0.16], [px - br, py + br, pz + sting * 0.16], 1);
+  quad(
+    [px - br, py - br, pz],
+    [px + br, py - br, pz],
+    [px + br, py + br, pz + sting * 0.16],
+    [px - br, py + br, pz + sting * 0.16],
+    1,
+  );
   return faces;
 }
