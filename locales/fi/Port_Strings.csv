@@ -409,6 +409,7 @@ account.refusal.noInsignia,"Välittäjä ei enää myy sitä. Peli saattaa vaati
 account.refusal.noInvite,"Tuo kutsu ei ole enää voimassa."
 account.refusal.noLetter,"Tuo kirje ei ole enää postilaatikossasi."
 account.refusal.noLineage,"Valtakunnalla ei ole vielä tuota sukua. Tallenna kerran ja yritä sitten uudelleen."
+account.refusal.noLogo,"Tätä logoa ei näytetä nyt."
 account.refusal.noMember,"Tuo jäsen ei ole enää killassa."
 account.refusal.noNameAs,"Tilipalvelu ei tunne tuota nimivalintaa. Peli saattaa vaatia päivityksen."
 account.refusal.noNote,"Tuo lappu ei ole enää taululla."

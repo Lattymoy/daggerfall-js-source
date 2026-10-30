@@ -16,6 +16,7 @@ account.refusal.frozen,"你的账号已被管理员冻结。你仍可以在 Staf
 account.refusal.lineageInUse,"仍有在世的角色在玩这个家族。"
 account.refusal.marketSellerFrozen,"该卖家的商品目前暂被冻结。"
 account.refusal.noEscrow,"那件物品并非为这个角色保管。"
+account.refusal.noLogo,"该徽标目前不显示。"
 account.refusal.noThread,"你目前没有开启的管理员聊天。"
 account.refusal.profEmbers,"每块魔族锭需要一枚死亡之地余烬——余烬可通过关闭达贡裂隙、击杀大海蛇和攻下精英裂隙的堡垒获得。你的账号剩下的余烬不够花。"
 account.refusal.repairNoFaction,"该角色的记录中没有这个派系，因此未作任何修复。"

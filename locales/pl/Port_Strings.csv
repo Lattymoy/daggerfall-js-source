@@ -409,6 +409,7 @@ account.refusal.noInsignia,"Pośrednik już tego nie sprzedaje. Gra może wymaga
 account.refusal.noInvite,"To zaproszenie jest już nieaktualne."
 account.refusal.noLetter,"Tego listu nie ma już w twojej skrzynce."
 account.refusal.noLineage,"Królestwo nie ma jeszcze tego rodu. Zapisz grę raz i spróbuj ponownie."
+account.refusal.noLogo,"To logo nie jest teraz wyświetlane."
 account.refusal.noMember,"Tego członka nie ma już w gildii."
 account.refusal.noNameAs,"Serwer kont nie zna takiego wyboru imienia. Gra może wymagać aktualizacji."
 account.refusal.noNote,"Tej notatki nie ma już na tablicy."

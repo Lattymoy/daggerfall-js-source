@@ -534,6 +534,7 @@ account.refusal.noInvite,"Тази покана вече не е отворен�
 account.refusal.noItem,"Това не е в сандъка."
 account.refusal.noLetter,"Това писмо вече не е в пощенската ви кутия."
 account.refusal.noLineage,"Светът още не държи този род. Запазете веднъж и опитайте отново."
+account.refusal.noLogo,"Тази емблема не се показва сега."
 account.refusal.noMember,"Този член вече не е в гилдията."
 account.refusal.noNameAs,"Услугата за акаунти не познава този избор на име. Играта може би трябва да се обнови."
 account.refusal.noNote,"Тази бележка вече не е на таблото."

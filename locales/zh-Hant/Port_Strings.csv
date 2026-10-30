@@ -16,6 +16,7 @@ account.refusal.frozen,"你的帳號已被管理員凍結。你仍可以在 Staf
 account.refusal.lineageInUse,"仍有在世的角色在玩這個家族。"
 account.refusal.marketSellerFrozen,"該賣家的商品目前暫被凍結。"
 account.refusal.noEscrow,"那件物品並非為這個角色保管。"
+account.refusal.noLogo,"該徽標目前不顯示。"
 account.refusal.noThread,"你目前沒有開啟的管理員聊天。"
 account.refusal.profEmbers,"每塊魔族錠需要一枚死亡之地餘燼——餘燼可透過關閉達貢裂隙、擊殺大海蛇和攻下菁英裂隙的堡壘獲得。你的帳號剩下的餘燼不夠花。"
 account.refusal.repairNoFaction,"該角色的記錄中沒有這個派系，因此未作任何修復。"

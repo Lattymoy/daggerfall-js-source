@@ -123,6 +123,7 @@ account.refusal.frozen,"Hesabın ekip tarafından donduruldu. Staff sekmesinde e
 account.refusal.lineageInUse,"Yaşayan bir karakter bu aileyi hâlâ oynuyor."
 account.refusal.marketSellerFrozen,"Bu satıcının malları şimdilik beklemede."
 account.refusal.noEscrow,"O parça bu karakter için saklanmıyor."
+account.refusal.noLogo,"Bu logo şu anda gösterilmiyor."
 account.refusal.noThread,"Şu anda senin için açık bir ekip sohbeti yok."
 account.refusal.profEmbers,"Her Daedrik Külçe bir Deadlands Közü ister - közler Dagon Gediklerini kapatarak, Deniz Yılanlarını öldürerek ve Elit Gedik Tabyalarını alarak kazanılır. Hesabında harcayacak çok az kaldı."
 account.refusal.repairNoFaction,"Bu karakterin kaydında böyle bir grup yok, bu yüzden hiçbir şey onarılmadı."
