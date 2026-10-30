@@ -29,20 +29,41 @@
 // encounters.js passiveGuardSpawns) has no caller since REP1 (AUDIT REP F6).
 
 /** PlayerEntity.RegionDataFlags (:1588-1619), all thirty. */
-import { REGION_NAMES } from '../../formats/mapsTables.js';   // WW-R: the Bay's regions and the provinces'
+import { REGION_NAMES } from '../../formats/mapsTables.js'; // WW-R: the Bay's regions and the provinces'
 
 export const REGION_FLAGS = Object.freeze({
-  WarBeginning: 0, WarOngoing: 1, WarWon: 2, WarLost: 3,
-  PlagueBeginning: 4, PlagueOngoing: 5, PlagueEnding: 6,
-  FamineBeginning: 7, FamineOngoing: 8, FamineEnding: 9,
-  WitchBurnings: 10, CrimeWave: 11, NewRuler: 12, BadHarvest: 13,
-  TGMInJail: 14, TGMSetFree: 15, TGMExecuted: 16, NewTGM: 17,
-  PersecutedTemple: 18, PricesHigh: 19, PricesLow: 20,
-  HappyHoliday: 21, ScaryHoliday: 22, HolyHoliday: 23,
-  MadWizardNearby: 24, MadWizardDies: 25,
+  WarBeginning: 0,
+  WarOngoing: 1,
+  WarWon: 2,
+  WarLost: 3,
+  PlagueBeginning: 4,
+  PlagueOngoing: 5,
+  PlagueEnding: 6,
+  FamineBeginning: 7,
+  FamineOngoing: 8,
+  FamineEnding: 9,
+  WitchBurnings: 10,
+  CrimeWave: 11,
+  NewRuler: 12,
+  BadHarvest: 13,
+  TGMInJail: 14,
+  TGMSetFree: 15,
+  TGMExecuted: 16,
+  NewTGM: 17,
+  PersecutedTemple: 18,
+  PricesHigh: 19,
+  PricesLow: 20,
+  HappyHoliday: 21,
+  ScaryHoliday: 22,
+  HolyHoliday: 23,
+  MadWizardNearby: 24,
+  MadWizardDies: 25,
   // DFU's own comment marks 26-29 "Unused". They are in the enum and
   // nothing sets them - see THE THREE WIDTHS below for why that matters.
-  Condition26: 26, Condition27: 27, Condition28: 28, Condition29: 29,
+  Condition26: 26,
+  Condition27: 27,
+  Condition28: 28,
+  Condition29: 29,
 });
 
 /** PlayerEntity.flagsToFlags2Map (:1621), verbatim. A condition's GROUP:
@@ -74,12 +95,12 @@ export const FLAGS2_WIDTH = 14;
 /** TurnOnConditionFlag's per-flag duration roll (:2142-2143), verbatim.
  *  Twenty-six entries against the enum's thirty - see THE THREE WIDTHS. */
 export const CONDITION_VALUE_MIN = Object.freeze([
-  0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x01, 0x0A,
-  0x0A, 0x01, 0x01, 0x01, 0x01, 0x0A, 0x0A, 0x0A, 0x01, 0x01, 0x01, 0x05, 0x01,
+  0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x01, 0x0a, 0x0a, 0x01, 0x01, 0x01, 0x01, 0x0a,
+  0x0a, 0x0a, 0x01, 0x01, 0x01, 0x05, 0x01,
 ]);
 export const CONDITION_VALUE_MAX = Object.freeze([
-  0x0A, 0x0A, 0x0A, 0x0A, 0x1E, 0x1E, 0x1E, 0x1E, 0x1E, 0x1E, 0x0A, 0x0A, 0x64,
-  0x14, 0x14, 0x01, 0x01, 0x01, 0x64, 0x14, 0x14, 0x01, 0x01, 0x01, 0x1E, 0x01,
+  0x0a, 0x0a, 0x0a, 0x0a, 0x1e, 0x1e, 0x1e, 0x1e, 0x1e, 0x1e, 0x0a, 0x0a, 0x64, 0x14, 0x14, 0x01, 0x01, 0x01, 0x64,
+  0x14, 0x14, 0x01, 0x01, 0x01, 0x1e, 0x01,
 ]);
 
 /** PlayerEntity.regionData.Length (:99) - one record per region. WW-R (bible/03-World/World-Wide.md WW-R): and the
@@ -95,7 +116,7 @@ const blankRegion = () => ({
   precipitationOverride: 0,
   severePunishmentFlags: 0,
   idOfPersecutedTemple: 0,
-  banishedUntil: null,   // REP3: a banishment's term, on the world's calendar (systems/standing.js) - the port's own
+  banishedUntil: null, // REP3: a banishment's term, on the world's calendar (systems/standing.js) - the port's own
 });
 
 /** InitializeRegionData's array half (:2189-2218). The twelve bootstrap
@@ -191,15 +212,18 @@ export function snapshotRegionConditions(store) {
     v: [...r.values],
     f: r.flags.map((b) => (b ? 1 : 0)).join(''),
     g: r.flags2.map((b) => (b ? 1 : 0)).join(''),
-    p: r.precipitationOverride, s: r.severePunishmentFlags, t: r.idOfPersecutedTemple,
-    ...(Number.isFinite(r.banishedUntil) ? { b: r.banishedUntil } : {}),   // REP3: only a banishment standing carries one
+    p: r.precipitationOverride,
+    s: r.severePunishmentFlags,
+    t: r.idOfPersecutedTemple,
+    ...(Number.isFinite(r.banishedUntil) ? { b: r.banishedUntil } : {}), // REP3: only a banishment standing carries one
   }));
 }
 export function restoreRegionConditions(snap, regionCount = REGION_COUNT) {
   const store = createRegionConditions(regionCount);
-  if (!Array.isArray(snap)) return store;   // a pre-S42 save restores blank
+  if (!Array.isArray(snap)) return store; // a pre-S42 save restores blank
   for (let i = 0; i < Math.min(snap.length, store.length); i++) {
-    const s = snap[i]; if (!s) continue;
+    const s = snap[i];
+    if (!s) continue;
     const r = store[i];
     for (let j = 0; j < Math.min((s.v ?? []).length, VALUES_WIDTH); j++) r.values[j] = s.v[j];
     for (let j = 0; j < Math.min((s.f ?? '').length, FLAGS_WIDTH); j++) r.flags[j] = s.f[j] === '1';
@@ -207,7 +231,7 @@ export function restoreRegionConditions(snap, regionCount = REGION_COUNT) {
     r.precipitationOverride = s.p ?? 0;
     r.severePunishmentFlags = s.s ?? 0;
     r.idOfPersecutedTemple = s.t ?? 0;
-    r.banishedUntil = Number.isFinite(s.b) ? s.b : null;   // REP3: a pre-REP banishment has none - standing.js gives it its thirty days
+    r.banishedUntil = Number.isFinite(s.b) ? s.b : null; // REP3: a pre-REP banishment has none - standing.js gives it its thirty days
   }
   return store;
 }

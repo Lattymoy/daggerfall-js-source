@@ -38,8 +38,8 @@
   {
     "name": "REP3-the-term-dropped-on-save",
     "file": "src/systems/region/regionConditions.js",
-    "old": "    ...(Number.isFinite(r.banishedUntil) ? { b: r.banishedUntil } : {}),",
-    "new": "    ...({}),",
+    "old": "    ...(Number.isFinite(r.banishedUntil) ? { b: r.banishedUntil } : {}), // REP3: only a banishment standing carries one",
+    "new": "    ...{}, // REP3: only a banishment standing carries one",
     "tests": [
       "test/systems/rep3_banishment.test.js"
     ]

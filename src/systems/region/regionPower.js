@@ -22,17 +22,28 @@ import { dice100 } from '../../combat/formulas.js';
 import { changePower, getFlag, FACTION_FLAGS, THE_DARK_BROTHERHOOD, THE_THIEVES_GUILD } from '../faction/factionRep.js';
 import { FACTION_TYPES } from '../../formats/factionFile.js';
 import { REGION_TEMPLES } from '../../formats/mapsFile.js';
-import { MERCHANTS_FACTION_ID } from '../guild/guilds.js';               // FactionIDs.The_Merchants, one home
-import { findFactionByTypeAndRegion } from '../talk/talk.js';           // PersistentFactionData.FindFactionByTypeAndRegion
+import { MERCHANTS_FACTION_ID } from '../guild/guilds.js'; // FactionIDs.The_Merchants, one home
+import { findFactionByTypeAndRegion } from '../talk/talk.js'; // PersistentFactionData.FindFactionByTypeAndRegion
 import {
-  getNumberOfCommonAlliesAndEnemies, endFactionAllies, endFactionEnemies,
-  startFactionAllies, startFactionEnemies, isEnemyStatePermanentUntilWarOver,
-  isFaction2AnAllyOfFaction1, isFaction2AnEnemyOfFaction1, getFaction2RelationToFaction1,
-  isFaction2APotentialWarEnemyOfFaction1, setNewRulerData,
+  getNumberOfCommonAlliesAndEnemies,
+  endFactionAllies,
+  endFactionEnemies,
+  startFactionAllies,
+  startFactionEnemies,
+  isEnemyStatePermanentUntilWarOver,
+  isFaction2AnAllyOfFaction1,
+  isFaction2AnEnemyOfFaction1,
+  getFaction2RelationToFaction1,
+  isFaction2APotentialWarEnemyOfFaction1,
+  setNewRulerData,
 } from '../faction/factionRelations.js';
 import {
-  REGION_FLAGS, turnOnConditionFlag, turnOffConditionFlag, resetWarDataForRegion,
-  conditionFlag, conditionGroupFlag,
+  REGION_FLAGS,
+  turnOnConditionFlag,
+  turnOffConditionFlag,
+  resetWarDataForRegion,
+  conditionFlag,
+  conditionGroupFlag,
 } from './regionConditions.js';
 
 /** isFactionValidForRumorMill's thirteen exclusions (:2125-2137).
@@ -42,21 +53,23 @@ import {
  *  Septim Empire." So this list is DFU's addition over classic, and it
  *  is a DEVIATION FROM CLASSIC that the port inherits deliberately -
  *  the port is 1:1 with DFU, and DFU says why. */
-export const RUMOR_MILL_EXCLUDED = Object.freeze(new Set([
-  17,    // Oblivion
-  514,   // Children
-  844,   // Generic_Knightly_Order
-  845,   // Smiths
-  846,   // Questers
-  847,   // Healers
-  848,   // Seneschal
-  240,   // Temple_Missionaries
-  810,   // Temple_Treasurers
-  813,   // Temple_Healers
-  811,   // Temple_Blessers
-  852,   // Random_Ruler
-  350,   // The_Septim_Empire
-]));
+export const RUMOR_MILL_EXCLUDED = Object.freeze(
+  new Set([
+    17, // Oblivion
+    514, // Children
+    844, // Generic_Knightly_Order
+    845, // Smiths
+    846, // Questers
+    847, // Healers
+    848, // Seneschal
+    240, // Temple_Missionaries
+    810, // Temple_Treasurers
+    813, // Temple_Healers
+    811, // Temple_Blessers
+    852, // Random_Ruler
+    350, // The_Septim_Empire
+  ]),
+);
 
 /** isFactionValidForRumorMill (:2117-2138): a Province, Group or
  *  Subgroup that is not one of the thirteen. */
@@ -114,16 +127,22 @@ export function factionPowerStep(dict, faction, rolls = Math.random) {
   // IS SuccessRoll, so one roll is drawn either way.
   const store = { dict };
   let delta = 0;
-  if (!dice100(chance, rolls())) { changePower(store, faction.id, -1); delta -= 1; }
-  else { changePower(store, faction.id, 1); delta += 1; }
+  if (!dice100(chance, rolls())) {
+    changePower(store, faction.id, -1);
+    delta -= 1;
+  } else {
+    changePower(store, faction.id, 1);
+    delta += 1;
+  }
 
   // :1674-1685 - and this reads `power` AFTER the change above.
   if (faction.children) {
     for (const childID of faction.children) {
       const child = dict.get(childID);
       if (child && child.power > faction.power) {
-        changePower(store, faction.id, 1); delta += 1;
-        break;   // DFU's own break: ONE bonus point, however many children outrank it
+        changePower(store, faction.id, 1);
+        delta += 1;
+        break; // DFU's own break: ONE bonus point, however many children outrank it
       }
     }
   }
@@ -137,8 +156,18 @@ export function factionPowerStep(dict, faction, rolls = Math.random) {
  *  That is load-bearing: the `temple.id != 0` and `witches.id != 0`
  *  guards below exist precisely because the miss is silent. */
 const ZERO_FACTION = Object.freeze({
-  id: 0, power: 0, region: -1, type: FACTION_TYPES.None, parent: 0, rulerPowerBonus: 0,
-  ally1: 0, ally2: 0, ally3: 0, enemy1: 0, enemy2: 0, enemy3: 0,
+  id: 0,
+  power: 0,
+  region: -1,
+  type: FACTION_TYPES.None,
+  parent: 0,
+  rulerPowerBonus: 0,
+  ally1: 0,
+  ally2: 0,
+  ally3: 0,
+  enemy1: 0,
+  enemy2: 0,
+  enemy3: 0,
 });
 
 /** The seven rumors the update always re-seeds (:2112-2118). */
@@ -175,7 +204,7 @@ function pickPartnerFaction(dict, keys, rolls) {
     const randomKeyIndex = Math.floor(rolls() * count);
     const at = dict.get(keys2[randomKeyIndex]);
     random = (at ? dict.get(at.id) : null) ?? ZERO_FACTION;
-    const removeAt = keys2.indexOf(keys[randomKeyIndex]);   // List<int>.Remove(value)
+    const removeAt = keys2.indexOf(keys[randomKeyIndex]); // List<int>.Remove(value)
     if (removeAt >= 0) keys2.splice(removeAt, 1);
     count--;
   } while (!isFactionValidForRumorMill(random) && count > 0);
@@ -215,9 +244,13 @@ function pickPartnerFaction(dict, keys, rolls) {
  * @param {object} snapshot alliesEnemiesSnapshot's answer
  * @returns {boolean} false when there is no region store to write to
  */
-export function factionConditionsStep(dict, faction, keys, { allies, enemies, alliesPower }, {
-  regionConditions = null, rumorMill = null, rolls = Math.random,
-} = {}) {
+export function factionConditionsStep(
+  dict,
+  faction,
+  keys,
+  { allies, enemies, alliesPower },
+  { regionConditions = null, rumorMill = null, rolls = Math.random } = {},
+) {
   // DFU's regionData is a field of the same entity as factionData
   // (PlayerEntity.cs:99), so the two are never apart; the port's store
   // is minted at chargen (chargenSession.js) and restored by save.js. A
@@ -231,8 +264,16 @@ export function factionConditionsStep(dict, faction, keys, { allies, enemies, al
   // The three arms that roll on it all recompute the same sum inline.
   const powerSum = () => factionPowerMod + faction.rulerPowerBonus;
   const common = (id) => getNumberOfCommonAlliesAndEnemies(dict, faction.id, id);
-  const refreshAllies = () => { allies[0] = faction.ally1; allies[1] = faction.ally2; allies[2] = faction.ally3; };
-  const refreshEnemies = () => { enemies[0] = faction.enemy1; enemies[1] = faction.enemy2; enemies[2] = faction.enemy3; };
+  const refreshAllies = () => {
+    allies[0] = faction.ally1;
+    allies[1] = faction.ally2;
+    allies[2] = faction.ally3;
+  };
+  const refreshEnemies = () => {
+    enemies[0] = faction.enemy1;
+    enemies[1] = faction.enemy2;
+    enemies[2] = faction.enemy3;
+  };
 
   // :1697-1706 - chance to END an alliance, per filled slot. A FAILED
   // roll against a chance that starts at 70 ends it, so the odds are
@@ -241,11 +282,11 @@ export function factionConditionsStep(dict, faction, keys, { allies, enemies, al
     if (allies[i] !== 0) {
       if (!dice100(Math.trunc((powerSum() + common(allies[i]) * 3) / 5) + 70, rolls())) {
         endFactionAllies(dict, faction.id, allies[i]);
-        rumor(faction.id, allies[i], -1, 100, 1402);   // End faction allies
+        rumor(faction.id, allies[i], -1, 100, 1402); // End faction allies
       }
     }
   }
-  refreshAllies();   // :1708-1711
+  refreshAllies(); // :1708-1711
 
   // :1713-1727 - chance to END a rivalry, but never one held open by a
   // war between neighbours (IsEnemyStatePermanentUntilWarOver).
@@ -254,36 +295,40 @@ export function factionConditionsStep(dict, faction, keys, { allies, enemies, al
     if (enemy && !isEnemyStatePermanentUntilWarOver(faction, enemy)) {
       if (dice100(Math.trunc((powerSum() + common(enemies[i]) * 3) / 5), rolls())) {
         endFactionEnemies(dict, faction.id, enemies[i]);
-        rumor(faction.id, enemies[i], -1, 100, 1403);   // End faction enemies
+        rumor(faction.id, enemies[i], -1, 100, 1403); // End faction enemies
       }
     }
   }
-  refreshEnemies();   // :1729-1732
+  refreshEnemies(); // :1729-1732
 
   // :1734-1774 - chance to START one alliance, in the first empty slot.
   for (let i = 0; i < 3; i++) {
     if (allies[i] === 0) {
       const random = pickPartnerFaction(dict, keys, rolls);
-      if (!isFaction2AnAllyOfFaction1(dict, faction.id, random.id)
-        && !isFaction2AnEnemyOfFaction1(dict, faction.id, random.id)
-        && !isFaction2AnEnemyOfFaction1(dict, faction.ally1, random.id)
-        && !isFaction2AnEnemyOfFaction1(dict, faction.ally2, random.id)
-        && !isFaction2AnEnemyOfFaction1(dict, faction.ally3, random.id)
-        && !isFaction2AnAllyOfFaction1(dict, faction.enemy1, random.id)
-        && !isFaction2AnAllyOfFaction1(dict, faction.enemy2, random.id)
-        && !isFaction2AnAllyOfFaction1(dict, faction.enemy3, random.id)
-        && getFaction2RelationToFaction1(dict, faction.id, random.id) === -1) {
+      if (
+        !isFaction2AnAllyOfFaction1(dict, faction.id, random.id) &&
+        !isFaction2AnEnemyOfFaction1(dict, faction.id, random.id) &&
+        !isFaction2AnEnemyOfFaction1(dict, faction.ally1, random.id) &&
+        !isFaction2AnEnemyOfFaction1(dict, faction.ally2, random.id) &&
+        !isFaction2AnEnemyOfFaction1(dict, faction.ally3, random.id) &&
+        !isFaction2AnAllyOfFaction1(dict, faction.enemy1, random.id) &&
+        !isFaction2AnAllyOfFaction1(dict, faction.enemy2, random.id) &&
+        !isFaction2AnAllyOfFaction1(dict, faction.enemy3, random.id) &&
+        getFaction2RelationToFaction1(dict, faction.id, random.id) === -1
+      ) {
         if (dice100(Math.trunc((powerSum() + common(random.id) * 3) / 5), rolls())) {
-          if (faction.type === FACTION_TYPES.Province && faction.region !== -1) rumor(faction.id, random.id, faction.region, 26, 1481);
-          if (random.type === FACTION_TYPES.Province && random.region !== -1) rumor(random.id, faction.id, random.region, 26, 1481);
+          if (faction.type === FACTION_TYPES.Province && faction.region !== -1)
+            rumor(faction.id, random.id, faction.region, 26, 1481);
+          if (random.type === FACTION_TYPES.Province && random.region !== -1)
+            rumor(random.id, faction.id, random.region, 26, 1481);
           startFactionAllies(dict, faction.id, i, random.id);
-          rumor(faction.id, random.id, -1, 100, 1400);   // Factions start alliance
+          rumor(faction.id, random.id, -1, 100, 1400); // Factions start alliance
         }
       }
-      break;   // DFU's own break: the FIRST empty slot, and no more
+      break; // DFU's own break: the FIRST empty slot, and no more
     }
   }
-  refreshAllies();   // :1776-1779
+  refreshAllies(); // :1776-1779
 
   // :1781-1789 - the war enemy is the FIRST enemy slot that is a
   // bordering province; the else-ifs stop at the first hit.
@@ -306,8 +351,10 @@ export function factionConditionsStep(dict, faction, keys, { allies, enemies, al
       // A potential war enemy is a Province with a real region, so
       // `faction.region` indexes the store safely here (:1795).
       const region = faction.region;
-      if (conditionFlag(regionConditions, region, REGION_FLAGS.WarWon)
-        || conditionFlag(regionConditions, region, REGION_FLAGS.WarLost)) {
+      if (
+        conditionFlag(regionConditions, region, REGION_FLAGS.WarWon) ||
+        conditionFlag(regionConditions, region, REGION_FLAGS.WarLost)
+      ) {
         // :1797-1801 - the war is decided; clear both sides and part.
         resetWarDataForRegion(regionConditions, faction, FACTION_TYPES.Province);
         resetWarDataForRegion(regionConditions, warEnemy, FACTION_TYPES.Province);
@@ -339,21 +386,21 @@ export function factionConditionsStep(dict, faction, keys, { allies, enemies, al
           changePower(store, faction.id, powerLoss);
           changePower(store, warEnemy.id, enemyPowerLoss);
 
-          combinedPower = -powerLoss;              // DFU's `=`, not `-=`
+          combinedPower = -powerLoss; // DFU's `=`, not `-=`
           combinedEnemyPower -= enemyPowerLoss;
 
           if (combinedPower - combinedEnemyPower > combinedEnemyPower) {
-            rumor(faction.id, warEnemy.id, -1, 100, 1408);   // War over
-            changePower(store, faction.id, Math.trunc(warEnemyPowerAtCopy / 2));   // the :1791 copy, pre-battle
+            rumor(faction.id, warEnemy.id, -1, 100, 1408); // War over
+            changePower(store, faction.id, Math.trunc(warEnemyPowerAtCopy / 2)); // the :1791 copy, pre-battle
             turnOnConditionFlag(regionConditions, warEnemy.region, REGION_FLAGS.WarLost, rolls);
             turnOnConditionFlag(regionConditions, region, REGION_FLAGS.WarWon, rolls);
           } else if (combinedEnemyPower - combinedPower > combinedPower) {
-            rumor(warEnemy.id, faction.id, -1, 100, 1408);   // War over
+            rumor(warEnemy.id, faction.id, -1, 100, 1408); // War over
             changePower(store, warEnemy.id, Math.trunc(faction.power / 2));
             turnOnConditionFlag(regionConditions, warEnemy.region, REGION_FLAGS.WarWon, rolls);
             turnOnConditionFlag(regionConditions, region, REGION_FLAGS.WarLost, rolls);
           } else {
-            rumor(faction.id, warEnemy.id, -1, 100, 1407);   // War started/ongoing
+            rumor(faction.id, warEnemy.id, -1, 100, 1407); // War started/ongoing
           }
         } else {
           turnOffConditionFlag(regionConditions, region, REGION_FLAGS.WarOngoing);
@@ -362,36 +409,44 @@ export function factionConditionsStep(dict, faction, keys, { allies, enemies, al
       }
     }
   }
-  refreshEnemies();   // :1866-1869
+  refreshEnemies(); // :1866-1869
 
   // :1871-1935 - chance to START one rivalry, and between two bordering
   // provinces that rivalry IS a war beginning.
   for (let i = 0; i < 3; i++) {
     if (enemies[i] === 0) {
       const random = pickPartnerFaction(dict, keys, rolls);
-      if (!isFaction2AnAllyOfFaction1(dict, faction.id, random.id)
-        && !isFaction2AnEnemyOfFaction1(dict, faction.id, random.id)
-        && !isFaction2AnEnemyOfFaction1(dict, faction.ally1, random.id)
-        && !isFaction2AnEnemyOfFaction1(dict, faction.ally2, random.id)
-        && !isFaction2AnEnemyOfFaction1(dict, faction.ally3, random.id)
-        && !isFaction2AnAllyOfFaction1(dict, faction.enemy1, random.id)
-        && !isFaction2AnAllyOfFaction1(dict, faction.enemy2, random.id)
-        && !isFaction2AnAllyOfFaction1(dict, faction.enemy3, random.id)) {
+      if (
+        !isFaction2AnAllyOfFaction1(dict, faction.id, random.id) &&
+        !isFaction2AnEnemyOfFaction1(dict, faction.id, random.id) &&
+        !isFaction2AnEnemyOfFaction1(dict, faction.ally1, random.id) &&
+        !isFaction2AnEnemyOfFaction1(dict, faction.ally2, random.id) &&
+        !isFaction2AnEnemyOfFaction1(dict, faction.ally3, random.id) &&
+        !isFaction2AnAllyOfFaction1(dict, faction.enemy1, random.id) &&
+        !isFaction2AnAllyOfFaction1(dict, faction.enemy2, random.id) &&
+        !isFaction2AnAllyOfFaction1(dict, faction.enemy3, random.id)
+      ) {
         const relation = getFaction2RelationToFaction1(dict, faction.id, random.id);
         // Unrelated, or sharing an ancestor - and a shared ancestor is
         // TEN POINTS more likely to fall out (:1897-1899).
         if (relation === -1 || relation === 2) {
           const mod = relation === 2 ? 10 : 0;
           if (!dice100(mod + Math.trunc((powerSum() + common(random.id) * 3) / 5) + 70, rolls())) {
-            if (faction.region !== -1 && faction.type === FACTION_TYPES.Province) rumor(faction.id, random.id, faction.region, 27, 1482);
-            if (random.region !== -1 && random.type === FACTION_TYPES.Province) rumor(random.id, faction.id, random.region, 27, 1482);
+            if (faction.region !== -1 && faction.type === FACTION_TYPES.Province)
+              rumor(faction.id, random.id, faction.region, 27, 1482);
+            if (random.region !== -1 && random.type === FACTION_TYPES.Province)
+              rumor(random.id, faction.id, random.region, 27, 1482);
             startFactionEnemies(dict, faction.id, i, random.id);
-            rumor(faction.id, random.id, -1, 100, 1401);   // Faction rivalry started
-            if (faction.region !== -1 && faction.type === FACTION_TYPES.Province
-              && random.region !== -1 && random.type === FACTION_TYPES.Province
-              && isEnemyStatePermanentUntilWarOver(faction, random)) {
-              rumor(faction.id, random.id, -1, 100, 1407);                  // War started/ongoing
-              rumor(faction.id, random.id, faction.region, 28, 1479);       // War started sign message
+            rumor(faction.id, random.id, -1, 100, 1401); // Faction rivalry started
+            if (
+              faction.region !== -1 &&
+              faction.type === FACTION_TYPES.Province &&
+              random.region !== -1 &&
+              random.type === FACTION_TYPES.Province &&
+              isEnemyStatePermanentUntilWarOver(faction, random)
+            ) {
+              rumor(faction.id, random.id, -1, 100, 1407); // War started/ongoing
+              rumor(faction.id, random.id, faction.region, 28, 1479); // War started sign message
               rumor(random.id, faction.id, random.region, 28, 1479);
               turnOnConditionFlag(regionConditions, faction.region, REGION_FLAGS.WarBeginning, rolls);
               turnOnConditionFlag(regionConditions, random.region, REGION_FLAGS.WarBeginning, rolls);
@@ -399,7 +454,7 @@ export function factionConditionsStep(dict, faction, keys, { allies, enemies, al
           }
         }
       }
-      break;   // as above: the FIRST empty slot only
+      break; // as above: the FIRST empty slot only
     }
   }
 
@@ -409,7 +464,7 @@ export function factionConditionsStep(dict, faction, keys, { allies, enemies, al
   if (!getFlag(store, faction.id, FACTION_FLAGS.RulerImmune)) {
     const mod = Math.trunc(faction.rulerPowerBonus / 3);
     if (!dice100(mod + 70, rolls())) {
-      if (faction.region !== -1 && faction.type === FACTION_TYPES.Province) rumor(faction.id, 0, -1, 12, 1480);   // New ruler
+      if (faction.region !== -1 && faction.type === FACTION_TYPES.Province) rumor(faction.id, 0, -1, 12, 1480); // New ruler
       setNewRulerData(dict, faction.id);
     }
   }
@@ -433,7 +488,7 @@ export function factionConditionsStep(dict, faction, keys, { allies, enemies, al
     } else if (conditionFlag(regionConditions, region, REGION_FLAGS.FamineOngoing)) {
       if (dice100(Math.trunc(faction.rulerPowerBonus / 5) + alliesPowerMod + Math.trunc(faction.power / 5), rolls())) {
         turnOnConditionFlag(regionConditions, region, REGION_FLAGS.FamineEnding, rolls);
-        rumor(faction.id, 0, region, 7, 1477);   // Famine sign message
+        rumor(faction.id, 0, region, 7, 1477); // Famine sign message
       }
     } else if (conditionFlag(regionConditions, region, REGION_FLAGS.FamineBeginning)) {
       turnOnConditionFlag(regionConditions, region, REGION_FLAGS.FamineOngoing, rolls);
@@ -457,7 +512,7 @@ export function factionConditionsStep(dict, faction, keys, { allies, enemies, al
       changePower(store, faction.id, -1);
       if (dice100(Math.trunc(faction.power / 5) + Math.trunc(faction.rulerPowerBonus / 5) + alliesPowerMod, rolls())) {
         turnOnConditionFlag(regionConditions, region, REGION_FLAGS.PlagueEnding, rolls);
-        rumor(faction.id, 0, region, 4, 1478);   // Plague sign message
+        rumor(faction.id, 0, region, 4, 1478); // Plague sign message
       }
     } else if (conditionFlag(regionConditions, region, REGION_FLAGS.PlagueBeginning)) {
       if (temple.id !== 0) changePower(store, temple.id, -1);
@@ -481,10 +536,10 @@ export function factionConditionsStep(dict, faction, keys, { allies, enemies, al
       } else if (templePowerAtCopy >= 2 * faction.power) {
         turnOffConditionFlag(regionConditions, region, REGION_FLAGS.PersecutedTemple);
       } else {
-        regionConditions[region].idOfPersecutedTemple = temple.id & 0xFFFF;   // (ushort)
+        regionConditions[region].idOfPersecutedTemple = temple.id & 0xffff; // (ushort)
         turnOnConditionFlag(regionConditions, region, REGION_FLAGS.PersecutedTemple, rolls);
         changePower(store, temple.id, -1);
-        rumor(faction.id, 0, region, 18, 1476);   // Persecuted temple sign message
+        rumor(faction.id, 0, region, 18, 1476); // Persecuted temple sign message
       }
     }
 
@@ -494,12 +549,17 @@ export function factionConditionsStep(dict, faction, keys, { allies, enemies, al
     if (conditionFlag(regionConditions, region, REGION_FLAGS.CrimeWave)) changePower(store, faction.id, -1);
     const thievesGuild = dict.get(THE_THIEVES_GUILD) ?? ZERO_FACTION;
     const darkBrotherhood = dict.get(THE_DARK_BROTHERHOOD) ?? ZERO_FACTION;
-    if (!dice100(Math.trunc((Math.trunc((thievesGuild.power + darkBrotherhood.power) / 2) - faction.power + 5) / 5), rolls())) {
+    if (
+      !dice100(
+        Math.trunc((Math.trunc((thievesGuild.power + darkBrotherhood.power) / 2) - faction.power + 5) / 5),
+        rolls(),
+      )
+    ) {
       turnOffConditionFlag(regionConditions, region, REGION_FLAGS.CrimeWave);
     } else {
       turnOnConditionFlag(regionConditions, region, REGION_FLAGS.CrimeWave, rolls);
       changePower(store, faction.id, -1);
-      rumor(0, 0, region, 11, 1410);   // Crime wave
+      rumor(0, 0, region, 11, 1410); // Crime wave
     }
 
     // Witch burnings (:2056-2062). ChangePower is called on the coven
@@ -516,7 +576,7 @@ export function factionConditionsStep(dict, faction, keys, { allies, enemies, al
       } else {
         turnOnConditionFlag(regionConditions, region, REGION_FLAGS.WitchBurnings, rolls);
         changePower(store, witches.id, -1);
-        rumor(faction.id, 0, region, 10, 1475);   // Witch burnings sign message
+        rumor(faction.id, 0, region, 10, 1475); // Witch burnings sign message
       }
     }
   }
@@ -533,8 +593,8 @@ export function factionConditionsStep(dict, faction, keys, { allies, enemies, al
     if (conditionFlag(regionConditions, region, REGION_FLAGS.CrimeWave)) numberOfCrimeWaves++;
     if (conditionFlag(regionConditions, region, REGION_FLAGS.PricesHigh)) numberOfPricesHigh++;
     if (conditionFlag(regionConditions, region, REGION_FLAGS.PricesLow)) numberOfPricesLow++;
-    if (conditionGroupFlag(regionConditions, region, 2)) numberOfFamines++;   // the famine GROUP
-    if (conditionGroupFlag(regionConditions, region, 0)) numberOfWars++;      // the war GROUP
+    if (conditionGroupFlag(regionConditions, region, 2)) numberOfFamines++; // the famine GROUP
+    if (conditionGroupFlag(regionConditions, region, 0)) numberOfWars++; // the war GROUP
   }
   changePower(store, (dict.get(THE_THIEVES_GUILD) ?? ZERO_FACTION).id, numberOfCrimeWaves);
   changePower(store, (dict.get(THE_DARK_BROTHERHOOD) ?? ZERO_FACTION).id, numberOfCrimeWaves);
@@ -587,14 +647,16 @@ export function bootstrapRegionPower(store, { rumorMill = null, regionConditions
   }
 }
 
-export function regionPowerUpdate(store, {
-  rumorMill = null, rolls = Math.random, updateConditions = false, regionConditions = null,
-} = {}) {
+export function regionPowerUpdate(
+  store,
+  { rumorMill = null, rolls = Math.random, updateConditions = false, regionConditions = null } = {},
+) {
   const dict = store?.dict;
   if (!dict) return { walked: 0, changed: 0 };
   rumorMill?.refreshRumorMill?.();
   const keys = [...dict.keys()];
-  let walked = 0, changed = 0;
+  let walked = 0,
+    changed = 0;
   for (const key of keys) {
     const faction = dict.get(key);
     if (!isFactionValidForRumorMill(faction)) continue;

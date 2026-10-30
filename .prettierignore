@@ -82,6 +82,8 @@
 /src/systems/ketch/*/
 !/src/systems/lockpick/
 /src/systems/lockpick/*/
+!/src/systems/region/
+/src/systems/region/*/
 !/src/systems/sea/
 /src/systems/sea/*/
 !/src/systems/snowfall/

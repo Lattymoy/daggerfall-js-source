@@ -20,8 +20,8 @@
   {
     "name": "BLS-hub-only-provinces",
     "file": "src/systems/region/marketHubs.js",
-    "old": "  if (!PROVINCE_HUB_REGIONS.includes(region)) return null;",
-    "new": "",
+    "old": "  if (!PROVINCE_HUB_REGIONS.includes(region)) return null;\n  const key = seats?.powers?.get(region);",
+    "new": "  const key = seats?.powers?.get(region);",
     "tests": [
       "test/world/worldWide/bayleftsea_market.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "BLS-hub-region-unfiltered",
     "file": "src/systems/region/marketHubs.js",
-    "old": "    if (p.region !== region) continue;",
-    "new": "",
+    "old": "    if (p.region !== region) continue;\n    const kind = settlementRank(p.type);",
+    "new": "    const kind = settlementRank(p.type);",
     "tests": [
       "test/world/worldWide/bayleftsea_market.test.js"
     ]
@@ -57,7 +57,7 @@
     "name": "BLS-hub-tie-higher-id",
     "file": "src/systems/region/marketHubs.js",
     "old": "    const c = [kind, p.blocks, -(p.mapId >>> 0)];",
-    "new": "    const c = [kind, p.blocks, (p.mapId >>> 0)];",
+    "new": "    const c = [kind, p.blocks, p.mapId >>> 0];",
     "tests": [
       "test/world/worldWide/bayleftsea_market.test.js"
     ]
