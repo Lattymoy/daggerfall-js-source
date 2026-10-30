@@ -66,30 +66,78 @@ const G = 9.81;
  */
 export const GAIT_STYLES = Object.freeze({
   walk: Object.freeze({
-    strideMax: 2.0, duty: Object.freeze([0.62, 0.53]), frFull: 2.2,
-    height: 0.975, heightFast: 0.93, bob: 0.024, sway: 0.028,
-    lift: 0.085, liftFast: 0.12, land: 0.15,
-    heel: 16, toeOff: 34, swingToe: 10, flat: Object.freeze([0.16, 0.56]),
-    width: 0.82, hipYaw: 8, hipList: 5, hipTilt: 4, hipTiltWave: 1.5,
-    chestYaw: 9, chestRoll: 2.5, lean: 5,
+    strideMax: 2.0,
+    duty: Object.freeze([0.62, 0.53]),
+    frFull: 2.2,
+    height: 0.975,
+    heightFast: 0.93,
+    bob: 0.024,
+    sway: 0.028,
+    lift: 0.085,
+    liftFast: 0.12,
+    land: 0.15,
+    heel: 16,
+    toeOff: 34,
+    swingToe: 10,
+    flat: Object.freeze([0.16, 0.56]),
+    width: 0.82,
+    hipYaw: 8,
+    hipList: 5,
+    hipTilt: 4,
+    hipTiltWave: 1.5,
+    chestYaw: 9,
+    chestRoll: 2.5,
+    lean: 5,
     arm: Object.freeze({ swing: 27, bias: 4, elbow: Object.freeze([12, 36]), abduct: 8 }),
   }),
   run: Object.freeze({
-    strideMax: 4.1, duty: Object.freeze([0.42, 0.3]), frFull: 7,
-    height: 0.925, heightFast: 0.9, bob: 0.035, sway: 0.012,
-    lift: 0.18, liftFast: 0.29, land: 0.35,
-    heel: 4, toeOff: 50, swingToe: 14, flat: Object.freeze([0.1, 0.32]),
-    width: 0.42, hipYaw: 9.5, hipList: 5, hipTilt: 9, hipTiltWave: 2.5,
-    chestYaw: 14, chestRoll: 3, lean: 11,
+    strideMax: 4.1,
+    duty: Object.freeze([0.42, 0.3]),
+    frFull: 7,
+    height: 0.925,
+    heightFast: 0.9,
+    bob: 0.035,
+    sway: 0.012,
+    lift: 0.18,
+    liftFast: 0.29,
+    land: 0.35,
+    heel: 4,
+    toeOff: 50,
+    swingToe: 14,
+    flat: Object.freeze([0.1, 0.32]),
+    width: 0.42,
+    hipYaw: 9.5,
+    hipList: 5,
+    hipTilt: 9,
+    hipTiltWave: 2.5,
+    chestYaw: 14,
+    chestRoll: 3,
+    lean: 11,
     arm: Object.freeze({ swing: 42, bias: 7, elbow: Object.freeze([74, 96]), abduct: 18 }),
   }),
   sneak: Object.freeze({
-    strideMax: 1.3, duty: Object.freeze([0.72, 0.64]), frFull: 0.6,
-    height: 0.8, heightFast: 0.78, bob: 0.012, sway: 0.04,
-    lift: 0.09, liftFast: 0.1, land: 0.1,
-    heel: 8, toeOff: 20, swingToe: 6, flat: Object.freeze([0.22, 0.6]),
-    width: 1.05, hipYaw: 5, hipList: 3, hipTilt: 12, hipTiltWave: 1,
-    chestYaw: 5, chestRoll: 1.5, lean: 26,
+    strideMax: 1.3,
+    duty: Object.freeze([0.72, 0.64]),
+    frFull: 0.6,
+    height: 0.8,
+    heightFast: 0.78,
+    bob: 0.012,
+    sway: 0.04,
+    lift: 0.09,
+    liftFast: 0.1,
+    land: 0.1,
+    heel: 8,
+    toeOff: 20,
+    swingToe: 6,
+    flat: Object.freeze([0.22, 0.6]),
+    width: 1.05,
+    hipYaw: 5,
+    hipList: 3,
+    hipTilt: 12,
+    hipTiltWave: 1,
+    chestYaw: 5,
+    chestRoll: 1.5,
+    lean: 26,
     arm: Object.freeze({ swing: 12, bias: 14, elbow: Object.freeze([40, 58]), abduct: 16 }),
   }),
 });
@@ -102,8 +150,16 @@ export const GAIT_STYLES = Object.freeze({
  * upright between two crouched strides).
  */
 export const STAND = Object.freeze({
-  height: 0.982, width: 1.0, lead: 0.03, lean: 2, hipTilt: 4,
-  breath: 4.2, breathPitch: 0.9, shift: 7.5, shiftSway: 0.012, shiftList: 1.4,
+  height: 0.982,
+  width: 1.0,
+  lead: 0.03,
+  lean: 2,
+  hipTilt: 4,
+  breath: 4.2,
+  breathPitch: 0.9,
+  shift: 7.5,
+  shiftSway: 0.012,
+  shiftList: 1.4,
   sneak: Object.freeze({ height: 0.84, lean: 20, hipTilt: 10 }),
 });
 
@@ -115,7 +171,16 @@ export const STAND = Object.freeze({
  */
 export const BODY_STYLES = Object.freeze({
   male: Object.freeze({}),
-  female: Object.freeze({ width: 0.72, hipYaw: 1.3, hipList: 1.35, sway: 1.2, abduct: 0.8, swing: 0.92, chestYaw: 0.85, lean: 0.9 }),
+  female: Object.freeze({
+    width: 0.72,
+    hipYaw: 1.3,
+    hipList: 1.35,
+    sway: 1.2,
+    abduct: 0.8,
+    swing: 0.92,
+    chestYaw: 0.85,
+    lean: 0.9,
+  }),
   beast: Object.freeze({ bob: 1.25, lift: 1.15, lean: 1.2, height: 0.985, hipTilt: 1.25, footBias: -6 }),
 });
 
@@ -127,7 +192,18 @@ export const STEER = Object.freeze({ forward: 0.68, max: 60, back: 105, hyst: 12
  *  of travel, the backpedal's share of the arms' swing (AUDIT BODY-MOTION GAIT-12 - flipped in one frame, it threw the
  *  free arm 54 degrees), and the ground's slope; and (strides, not seconds) the body's clock catching up the feet's
  *  when a strike or a lift sets it (GAIT-22). */
-export const GAIT_EASE = Object.freeze({ moveIn: 0.09, moveOut: 0.16, style: 0.22, speed: 0.08, steer: 0.14, lean: 0.25, dir: 0.06, back: 0.12, slope: 0.25, phase: 0.25 });
+export const GAIT_EASE = Object.freeze({
+  moveIn: 0.09,
+  moveOut: 0.16,
+  style: 0.22,
+  speed: 0.08,
+  steer: 0.14,
+  lean: 0.25,
+  dir: 0.06,
+  back: 0.12,
+  slope: 0.25,
+  phase: 0.25,
+});
 
 /**
  * TURNING AND SETTLING IN PLACE: a standing foot twisted `step` degrees off the body - or standing `dist` legs off its
@@ -136,7 +212,17 @@ export const GAIT_EASE = Object.freeze({ moveIn: 0.09, moveOut: 0.16, style: 0.2
  * feet twisted to 177 degrees under a fast turn); a turn of more than `snap` degrees in one frame, or faster than `rate`
  * radians a second (a teleport, a cut, a flick), re-plants both at once. `quick`: a blow's lunge step's time.
  */
-export const TURN = Object.freeze({ step: 26, dist: 0.09, time: 0.26, minTime: 0.12, lift: 0.07, max: 70, snap: 90, rate: 9, quick: 0.16 });
+export const TURN = Object.freeze({
+  step: 26,
+  dist: 0.09,
+  time: 0.26,
+  minTime: 0.12,
+  lift: 0.07,
+  max: 70,
+  snap: 90,
+  rate: 9,
+  quick: 0.16,
+});
 
 /** The gait comes on past `on` m/s of ground crossed and goes off under `off` (a body pushing at a wall stands). A
  *  frame's ground past `placed` m/s is a placement (a teleport, an origin shift missed), never a stride. The slope is
@@ -165,16 +251,23 @@ export function dutyFactor(v, h, style) {
 }
 
 /** The swing's lift profile: 0 at both ends, 1 at its top (a third of the way in - the heel rises early). */
-const LIFT_A = 1, LIFT_B = 1.7;
+const LIFT_A = 1,
+  LIFT_B = 1.7;
 const LIFT_MAX = Math.pow(LIFT_A / (LIFT_A + LIFT_B), LIFT_A) * Math.pow(LIFT_B / (LIFT_A + LIFT_B), LIFT_B);
 export const liftProfile = (s) => (s <= 0 || s >= 1 ? 0 : (Math.pow(s, LIFT_A) * Math.pow(1 - s, LIFT_B)) / LIFT_MAX);
 
 /** The minimum-jerk path's share at `s` (0..1): still at both ends, unhurried at both - a step in place. */
-export const minJerk = (s) => { const x = clamp01(s); return x * x * x * (10 + x * (-15 + 6 * x)); };
+export const minJerk = (s) => {
+  const x = clamp01(s);
+  return x * x * x * (10 + x * (-15 + 6 * x));
+};
 /** A stride's flight path's share at `s`: still at both ends (it leaves the ground and lands at the ground's own speed)
  *  without the minimum-jerk path's dwell at the end - which brought the foot near its foothold early, so the body came
  *  over a foot reaching 0.09 of a leg past where it lands, and the hips had to drop to it. */
-export const flightPath = (s, m = 0) => { const x = clamp01(s); return x * x * (3 - m + (m - 2) * x); };
+export const flightPath = (s, m = 0) => {
+  const x = clamp01(s);
+  return x * x * (3 - m + (m - 2) * x);
+};
 /** How far past its foothold (strides) a flight path takes the foot ahead of the hips before it lands, for a flight
  *  `o` of the stride long (1 - the duty factor) landing with `land` of the ground's speed - the body coming over a
  *  foot that is nearly down (a fit of the path's own overshoot, within 4% of it over the styles' range). */
@@ -187,8 +280,10 @@ export const flightOvershoot = (o, land) => 0.09 * o * o * Math.pow(Math.max(0, 
  * the stride takes more flight, as a sprinter's does; a walk keeps its double support and dips to it instead.
  */
 export function strideShape(s, input, body, P) {
-  const L = body.leg, h = input.legM, U = input.unitsPerM || 1;
-  const grade = s.slope[0] * s.dir[0] + s.slope[1] * s.dir[1];   // along the travel (+ up it)
+  const L = body.leg,
+    h = input.legM,
+    U = input.unitsPerM || 1;
+  const grade = s.slope[0] * s.dir[0] + s.slope[1] * s.dir[1]; // along the travel (+ up it)
   const stride = Math.min(strideLength(s.speed, h, P) * U, P.strideMax * L) / (1 + SLOPE.shorten * Math.abs(grade));
   const fr = h > 0 ? (s.speed * s.speed) / (G * h) : 0;
   const frShare = clamp01(fr / P.frFull);
@@ -208,37 +303,82 @@ export function strideShape(s, input, body, P) {
 /** A fresh gait state. */
 export function createGaitState() {
   return {
-    phase: 0, move: 0, run: 0, sneak: 0, speed: 0, dir: [0, 1], th: 0, psi: 0, back: false, backShare: 0, along: 1,
-    lean: 0, bank: 0, lastSpeed: 0, yaw: null, yawRate: 0, t: 0, walking: false, air: false, lag: 0, shown: 0,
-    travel: null, carried: null, slope: [0, 0], stance: null, stepTime: null,
+    phase: 0,
+    move: 0,
+    run: 0,
+    sneak: 0,
+    speed: 0,
+    dir: [0, 1],
+    th: 0,
+    psi: 0,
+    back: false,
+    backShare: 0,
+    along: 1,
+    lean: 0,
+    bank: 0,
+    lastSpeed: 0,
+    yaw: null,
+    yawRate: 0,
+    t: 0,
+    walking: false,
+    air: false,
+    lag: 0,
+    shown: 0,
+    travel: null,
+    carried: null,
+    slope: [0, 0],
+    stance: null,
+    stepTime: null,
     feet: { L: null, R: null },
   };
 }
 
 /** The style row blended by the frame's shares, the family's multipliers laid on. */
 export function blendStyle(run, sneak, kind) {
-  const w = GAIT_STYLES.walk, r = GAIT_STYLES.run, k = GAIT_STYLES.sneak;
-  const ws = clamp01(sneak), wr = clamp01(run) * (1 - ws), ww = 1 - wr - ws;
+  const w = GAIT_STYLES.walk,
+    r = GAIT_STYLES.run,
+    k = GAIT_STYLES.sneak;
+  const ws = clamp01(sneak),
+    wr = clamp01(run) * (1 - ws),
+    ww = 1 - wr - ws;
   const mix = (f) => f(w) * ww + f(r) * wr + f(k) * ws;
   const fam = BODY_STYLES[kind] ?? BODY_STYLES.male;
   const m = (key) => fam[key] ?? 1;
   return {
-    strideMax: mix((s) => s.strideMax), duty: [mix((s) => s.duty[0]), mix((s) => s.duty[1])], frFull: mix((s) => s.frFull),
-    height: mix((s) => s.height) * m('height'), heightFast: mix((s) => s.heightFast) * m('height'), bob: mix((s) => s.bob) * m('bob'), sway: mix((s) => s.sway) * m('sway'),
-    lift: mix((s) => s.lift) * m('lift'), liftFast: mix((s) => s.liftFast) * m('lift'), land: mix((s) => s.land),
-    heel: mix((s) => s.heel), toeOff: mix((s) => s.toeOff), swingToe: mix((s) => s.swingToe),
+    strideMax: mix((s) => s.strideMax),
+    duty: [mix((s) => s.duty[0]), mix((s) => s.duty[1])],
+    frFull: mix((s) => s.frFull),
+    height: mix((s) => s.height) * m('height'),
+    heightFast: mix((s) => s.heightFast) * m('height'),
+    bob: mix((s) => s.bob) * m('bob'),
+    sway: mix((s) => s.sway) * m('sway'),
+    lift: mix((s) => s.lift) * m('lift'),
+    liftFast: mix((s) => s.liftFast) * m('lift'),
+    land: mix((s) => s.land),
+    heel: mix((s) => s.heel),
+    toeOff: mix((s) => s.toeOff),
+    swingToe: mix((s) => s.swingToe),
     flat: [mix((s) => s.flat[0]), mix((s) => s.flat[1])],
     width: mix((s) => s.width) * m('width'),
-    hipYaw: mix((s) => s.hipYaw) * m('hipYaw'), hipList: mix((s) => s.hipList) * m('hipList'),
-    hipTilt: mix((s) => s.hipTilt) * m('hipTilt'), hipTiltWave: mix((s) => s.hipTiltWave),
-    chestYaw: mix((s) => s.chestYaw) * m('chestYaw'), chestRoll: mix((s) => s.chestRoll), lean: mix((s) => s.lean) * m('lean'),
+    hipYaw: mix((s) => s.hipYaw) * m('hipYaw'),
+    hipList: mix((s) => s.hipList) * m('hipList'),
+    hipTilt: mix((s) => s.hipTilt) * m('hipTilt'),
+    hipTiltWave: mix((s) => s.hipTiltWave),
+    chestYaw: mix((s) => s.chestYaw) * m('chestYaw'),
+    chestRoll: mix((s) => s.chestRoll),
+    lean: mix((s) => s.lean) * m('lean'),
     arm: {
-      swing: mix((s) => s.arm.swing) * m('swing'), bias: mix((s) => s.arm.bias),
+      swing: mix((s) => s.arm.swing) * m('swing'),
+      bias: mix((s) => s.arm.bias),
       elbow: [mix((s) => s.arm.elbow[0]), mix((s) => s.arm.elbow[1])],
       abduct: mix((s) => s.arm.abduct) * m('abduct'),
     },
-    footBias: fam.footBias ?? 0, standHeight: m('height'), standLean: m('lean'), standTilt: m('hipTilt'),
-    run: wr, sneak: ws,
+    footBias: fam.footBias ?? 0,
+    standHeight: m('height'),
+    standLean: m('lean'),
+    standTilt: m('hipTilt'),
+    run: wr,
+    sneak: ws,
   };
 }
 
@@ -263,14 +403,16 @@ export function swingPitch(s, P) {
  */
 export function footPlace(flat, pitch, fwd, body) {
   const ankle = [flat[0], flat[1], body.ankle];
-  const c = Math.cos(pitch), s = Math.sin(pitch);
+  const c = Math.cos(pitch),
+    s = Math.sin(pitch);
   const toe = [fwd[0] * c, fwd[1] * c, s];
   const up = [-fwd[0] * s, -fwd[1] * s, c];
   if (pitch === 0) return { at: ankle, toe, up };
   const pivotLen = pitch > 0 ? -FOOT.heel * body.leg : FOOT.ball * body.leg;
   const pivot = [flat[0] + fwd[0] * pivotLen, flat[1] + fwd[1] * pivotLen, 0];
   // the ankle about the pivot: its offset (along the foot, and up) turned with the foot
-  const along = -pivotLen, upAmt = body.ankle;
+  const along = -pivotLen,
+    upAmt = body.ankle;
   return { at: add(pivot, add(scale(toe, along), scale(up, upAmt))), toe, up };
 }
 
@@ -282,17 +424,23 @@ export function footPlace(flat, pitch, fwd, body) {
  */
 export function footPlaceOn(flat, rocker, grade, fwd, body) {
   const P = rocker + Math.atan(grade);
-  const c = Math.cos(P), s = Math.sin(P);
+  const c = Math.cos(P),
+    s = Math.sin(P);
   const toe = [fwd[0] * c, fwd[1] * c, s];
   const up = [-fwd[0] * s, -fwd[1] * s, c];
   const pivotLen = rocker > 0 ? -FOOT.heel * body.leg : rocker < 0 ? FOOT.ball * body.leg : 0;
   // the heel and the ball lie along the ground's own line under the foot
-  const cg = 1 / Math.sqrt(1 + grade * grade), sg = grade * cg;
+  const cg = 1 / Math.sqrt(1 + grade * grade),
+    sg = grade * cg;
   const pivot = [flat[0] + fwd[0] * cg * pivotLen, flat[1] + fwd[1] * cg * pivotLen, flat[2] + sg * pivotLen];
   return { at: add(pivot, add(scale(toe, -pivotLen), scale(up, body.ankle))), toe, up };
 }
 
-const rotXY = (p, a) => { const c = Math.cos(a), s = Math.sin(a); return [p[0] * c - p[1] * s, p[0] * s + p[1] * c]; };
+const rotXY = (p, a) => {
+  const c = Math.cos(a),
+    s = Math.sin(a);
+  return [p[0] * c - p[1] * s, p[0] * s + p[1] * c];
+};
 const lerpV = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 const lerpAngle = (a, b, t) => a + wrapAngle(b - a) * t;
 const wrapHalf = (x) => x - Math.round(x);
@@ -327,7 +475,8 @@ function plantAt(s, p, yaw) {
  * `carry` the pitch and the lift the foot had when its flight changed kind (a step become a stride, a stride become a
  * step), eased out so nothing pops.
  */
-const flightProgress = (sw) => (sw.kind === 'gait' ? clamp01((sw.s - sw.s0) / Math.max(1e-3, 1 - sw.s0)) : clamp01(sw.t / Math.max(1e-3, sw.dur)));
+const flightProgress = (sw) =>
+  sw.kind === 'gait' ? clamp01((sw.s - sw.s0) / Math.max(1e-3, 1 - sw.s0)) : clamp01(sw.t / Math.max(1e-3, sw.dur));
 /** Where a flight is at its own progress: the print it left carried to the target by the minimum-jerk path - bowed
  *  out to the turn's outside by `bow`, the radians the body turns over what is left of it, so the foot swings round
  *  with the hips along their arc (AUDIT BODY-MOTION GAIT-21: on the straight chord between print and foothold, a running
@@ -338,7 +487,8 @@ function flightAt(sw, sp = flightProgress(sw)) {
   if (sw.bow) {
     // the circular arc's sagitta, a half-chord's tan of a quarter of the turn, laid on as a parabola over the chord
     const b = 2 * Math.tan(sw.bow / 4) * k * (1 - k);
-    p[0] -= (sw.to[1] - sw.from[1]) * b; p[1] += (sw.to[0] - sw.from[0]) * b;
+    p[0] -= (sw.to[1] - sw.from[1]) * b;
+    p[1] += (sw.to[0] - sw.from[0]) * b;
   }
   return { p, yaw: lerpAngle(sw.fromYaw, sw.toYaw, k) };
 }
@@ -348,11 +498,16 @@ function flightAt(sw, sp = flightProgress(sw)) {
  *  target, `stride` the stride's length now (a stride's flight only). */
 function rebase(sw, to = null, stride = 0) {
   const now = flightAt(sw);
-  sw.from = now.p; sw.fromYaw = now.yaw;
+  sw.from = now.p;
+  sw.fromYaw = now.yaw;
   if (sw.kind === 'gait') {
-    if (to && stride > 1e-6) sw.s = Math.min(sw.s, Math.max(0, 1 - Math.hypot(to[0] - now.p[0], to[1] - now.p[1]) / stride));
+    if (to && stride > 1e-6)
+      sw.s = Math.min(sw.s, Math.max(0, 1 - Math.hypot(to[0] - now.p[0], to[1] - now.p[1]) / stride));
     sw.s0 = sw.s;
-  } else { sw.dur = Math.max(TURN.minTime, sw.dur - sw.t); sw.t = 0; }
+  } else {
+    sw.dur = Math.max(TURN.minTime, sw.dur - sw.t);
+    sw.t = 0;
+  }
 }
 
 /**
@@ -366,7 +521,7 @@ function rebase(sw, to = null, stride = 0) {
  */
 export function stepGait(state, input, body, dt) {
   const s = state;
-  if (!finite(dt) || dt < 0) dt = 0;   // AUDIT BODY-MOTION GAIT-16: a NaN frame is no frame - it poisoned the state for good
+  if (!finite(dt) || dt < 0) dt = 0; // AUDIT BODY-MOTION GAIT-16: a NaN frame is no frame - it poisoned the state for good
   const L = body.leg;
   const uH = finite(input.unitsPerM) && input.unitsPerM > 0 ? input.unitsPerM : 1;
   const uV = finite(input.unitsPerMz) && input.unitsPerMz > 0 ? input.unitsPerMz : uH;
@@ -380,26 +535,40 @@ export function stepGait(state, input, body, dt) {
   const dYaw = fresh ? 0 : wrapAngle(wrapAngle(yaw - s.yaw) - (s.carried == null ? 0 : carried - s.carried));
   const snap = fresh || Math.abs(dYaw) > TURN.snap * RAD || (dt > 0 && Math.abs(dYaw) / dt > TURN.rate);
   // ---- THE GROUND CROSSED this frame, in the body's frame (rig units) ----
-  let dx = 0, dy = 0, dz = 0, dist = 0, placed = false;
+  let dx = 0,
+    dy = 0,
+    dz = 0,
+    dist = 0,
+    placed = false;
   const tr = input.travel;
   if (tr && finite(tr[0]) && finite(tr[1]) && finite(tr[2])) {
     if (s.travel) {
-      const wx = tr[0] - s.travel[0], wy = tr[1] - s.travel[1], wz = tr[2] - s.travel[2];
+      const wx = tr[0] - s.travel[0],
+        wy = tr[1] - s.travel[1],
+        wz = tr[2] - s.travel[2];
       const h = Math.hypot(wx, wz);
       if (!(h <= GAIT_LIMITS.placed * Math.max(dt, 1 / 240) + 0.05)) placed = true;
       else {
-        const y0 = s.yaw ?? yaw, c = Math.cos(y0), sn = Math.sin(y0);
-        dx = (wx * c - wz * sn) * uH; dy = (wx * sn + wz * c) * uH; dz = wy * uV; dist = h;
+        const y0 = s.yaw ?? yaw,
+          c = Math.cos(y0),
+          sn = Math.sin(y0);
+        dx = (wx * c - wz * sn) * uH;
+        dy = (wx * sn + wz * c) * uH;
+        dz = wy * uV;
+        dist = h;
       }
     }
     s.travel = [tr[0], tr[1], tr[2]];
   } else {
     s.travel = null;
-    const fwd = Number(input.forward) || 0, side = Number(input.strafe) || 0, v = Number(input.speed) || 0;
+    const fwd = Number(input.forward) || 0,
+      side = Number(input.strafe) || 0,
+      v = Number(input.speed) || 0;
     if (Math.hypot(fwd, side) > 1e-3 && v > 0.05 && grounded && finite(v)) {
       const d = norm([side, fwd, 0]);
       dist = Math.min(v, GAIT_LIMITS.placed) * dt;
-      dx = d[0] * dist * uH; dy = d[1] * dist * uH;
+      dx = d[0] * dist * uH;
+      dy = d[1] * dist * uH;
     }
   }
   // ---- THE PACE and the gait's coming on and going off (with hysteresis - a body pushing at a wall stands) ----
@@ -413,7 +582,10 @@ export function stepGait(state, input, body, dt) {
   if (dist > 1e-6 && (dx || dy)) {
     const thT = Math.atan2(dx, dy);
     const off = wrapAngle(thT - s.th);
-    s.th = !was || Math.abs(off) > GAIT_LIMITS.reverse * RAD ? thT : wrapAngle(s.th + off * (1 - Math.exp(-dt / GAIT_EASE.dir)));
+    s.th =
+      !was || Math.abs(off) > GAIT_LIMITS.reverse * RAD
+        ? thT
+        : wrapAngle(s.th + off * (1 - Math.exp(-dt / GAIT_EASE.dir)));
   }
   s.dir = [Math.sin(s.th), Math.cos(s.th)];
   s.move = ease(s.move, s.walking ? 1 : 0, s.walking ? GAIT_EASE.moveIn : GAIT_EASE.moveOut, dt);
@@ -422,16 +594,20 @@ export function stepGait(state, input, body, dt) {
   s.sneak = ease(s.sneak, input.sneaking ? 1 : 0, GAIT_EASE.style, dt);
   // ---- THE STRIDE and its clock: by the ground crossed, never by a clock of its own ----
   const P = blendStyle(s.run, s.sneak, input.kind);
-  const shape = strideShape(s, input, body, P);   // rig units - GAIT-3: what the rig's own leg reaches
+  const shape = strideShape(s, input, body, P); // rig units - GAIT-3: what the rig's own leg reaches
   const { stride, beta } = shape;
   s.dPhase = s.walking && stride > 1e-6 ? (dist * uH) / stride : 0;
   s.phase = frac(s.phase + s.dPhase);
   // ---- THE STEER: the hips toward the travel, the backpedal past its angle ----
   const offDeg = Math.abs(s.th) / RAD;
-  if (s.back) { if (offDeg < STEER.back - STEER.hyst) s.back = false; } else if (offDeg > STEER.back + STEER.hyst) s.back = true;
-  const psiWant = !s.walking ? 0 : s.back
-    ? -clamp(wrapAngle(s.th - Math.PI) * STEER.backShare, -STEER.backMax * RAD, STEER.backMax * RAD)
-    : -clamp(s.th * STEER.forward, -STEER.max * RAD, STEER.max * RAD);
+  if (s.back) {
+    if (offDeg < STEER.back - STEER.hyst) s.back = false;
+  } else if (offDeg > STEER.back + STEER.hyst) s.back = true;
+  const psiWant = !s.walking
+    ? 0
+    : s.back
+      ? -clamp(wrapAngle(s.th - Math.PI) * STEER.backShare, -STEER.backMax * RAD, STEER.backMax * RAD)
+      : -clamp(s.th * STEER.forward, -STEER.max * RAD, STEER.max * RAD);
   s.psi = ease(s.psi, psiWant, GAIT_EASE.steer, dt);
   s.backShare = ease(s.backShare, s.walking && s.back ? 1 : 0, GAIT_EASE.back, dt);
   // how much of the travel is along the hips' forward (- a backpedal's: its toe strike, its sway turned about) - eased, so
@@ -442,7 +618,8 @@ export function stepGait(state, input, body, dt) {
   // grows to the right, and a + roll drops the right side) ----
   const accel = dt > 0 ? (s.speed - s.lastSpeed) / dt : 0;
   s.lastSpeed = s.speed;
-  if (snap) s.yawRate = 0;   // AUDIT BODY-MOTION RIG-5: a snap is no turn - read as one, it banked a body 8 degrees
+  if (snap)
+    s.yawRate = 0; // AUDIT BODY-MOTION RIG-5: a snap is no turn - read as one, it banked a body 8 degrees
   else if (dt > 0) s.yawRate = ease(s.yawRate, dYaw / dt, 0.1, dt);
   s.lean = ease(s.lean, clamp(accel * 0.012, -0.12, 0.16) * s.move, GAIT_EASE.lean, dt);
   s.bank = ease(s.bank, clamp(s.yawRate * s.speed * 0.022, -0.2, 0.2) * s.move, GAIT_EASE.lean, dt);
@@ -454,7 +631,8 @@ export function stepGait(state, input, body, dt) {
     const run = Math.hypot(dx, dy);
     if (grounded && run > 1e-4) {
       const along = clamp(dz / run, -GAIT_LIMITS.slope, GAIT_LIMITS.slope);
-      const ux = dx / run, uy = dy / run;
+      const ux = dx / run,
+        uy = dy / run;
       const g = s.slope[0] * ux + s.slope[1] * uy;
       const k = 1 - Math.exp(-dt / GAIT_EASE.slope);
       const ng = g + (along - g) * k;
@@ -490,17 +668,29 @@ function stepFeet(s, input, body, P, shape, { dt, dx, dy, dz, dYaw, snap, was })
     for (const side of SIDES) s.feet[side] = plantAt(s, spots[side].p, spots[side].yaw);
   } else {
     // 1. the world under the body: what stands moves back by the body's own travel and turns by its own turn
-    const carry = (p) => { const q = rotXY([p[0] - dx, p[1] - dy], dYaw); return [q[0], q[1], p[2] - dz]; };
+    const carry = (p) => {
+      const q = rotXY([p[0] - dx, p[1] - dy], dYaw);
+      return [q[0], q[1], p[2] - dz];
+    };
     for (const side of SIDES) {
       const f = s.feet[side];
-      if (!f.swing) { f.p = carry(f.p); f.yaw += dYaw; continue; }
-      f.swing.from = carry(f.swing.from); f.swing.fromYaw += dYaw;
+      if (!f.swing) {
+        f.p = carry(f.p);
+        f.yaw += dYaw;
+        continue;
+      }
+      f.swing.from = carry(f.swing.from);
+      f.swing.fromYaw += dYaw;
       // a stride's foothold stands in the world too (where the body will be) - only a real change of it is a leap
-      if (f.swing.kind === 'gait') { f.swing.to = carry(f.swing.to); f.swing.toYaw += dYaw; }
+      if (f.swing.kind === 'gait') {
+        f.swing.to = carry(f.swing.to);
+        f.swing.toYaw += dYaw;
+      }
     }
   }
   const A = (stride * beta) / 2;
-  const hf = [-Math.sin(s.psi), Math.cos(s.psi)], hr = [Math.cos(s.psi), Math.sin(s.psi)];
+  const hf = [-Math.sin(s.psi), Math.cos(s.psi)],
+    hr = [Math.cos(s.psi), Math.sin(s.psi)];
   const d = s.dir;
   // the lane across the travel on each foot's own side: the hips' right with its share along the travel taken out (AUDIT
   // BODY-MOTION GAIT-7: measured across the hips' right, a strafe's lane moved the planted foot through its stance) - its
@@ -516,20 +706,30 @@ function stepFeet(s, input, body, P, shape, { dt, dx, dy, dz, dYaw, snap, was })
    *  stride on from where it left - where the body will be when it lands. */
   const gaitTarget = (side, sw, rate = 1) => {
     const n = [body.restHip[0] + perp[0] * LANE[side] * laneW, body.restHip[1] + perp[1] * LANE[side] * laneW];
-    const ahead = ((1 - sw) * (1 - beta) * stride) / rate;   // the ground the body crosses before it lands
+    const ahead = ((1 - sw) * (1 - beta) * stride) / rate; // the ground the body crosses before it lands
     // along the body's own arc when it turns (a turn's foothold where the turned body will stand over it - predicted
     // straight, a running turn's landing foot stood half a leg off its hip), the foot turned as the body will be
     const turn = s.speed > 0.05 ? -s.yawRate * (ahead / ((s.speed || 1) * (input.unitsPerM || 1))) : 0;
-    let ox = 0, oy = 0;
+    let ox = 0,
+      oy = 0;
     const N = Math.abs(turn) > 1e-3 ? 6 : 1;
-    for (let k = 0; k < N; k++) { const r = rotXY(d, (turn * (k + 0.5)) / N); ox += (r[0] * ahead) / N; oy += (r[1] * ahead) / N; }
-    const land = rotXY([n[0] + d[0] * (A + shift) - body.restHip[0], n[1] + d[1] * (A + shift) - body.restHip[1]], turn);
-    const x = body.restHip[0] + ox + land[0], y = body.restHip[1] + oy + land[1];
+    for (let k = 0; k < N; k++) {
+      const r = rotXY(d, (turn * (k + 0.5)) / N);
+      ox += (r[0] * ahead) / N;
+      oy += (r[1] * ahead) / N;
+    }
+    const land = rotXY(
+      [n[0] + d[0] * (A + shift) - body.restHip[0], n[1] + d[1] * (A + shift) - body.restHip[1]],
+      turn,
+    );
+    const x = body.restHip[0] + ox + land[0],
+      y = body.restHip[1] + oy + land[1];
     return { p: [x, y, groundAt(s, x, y)], yaw: s.psi + turn };
   };
   /** How far along the travel a print stands from its own lane's middle (+ ahead, - behind). */
   const alongOf = (side, p) => {
-    const nx = body.restHip[0] + perp[0] * LANE[side] * laneW, ny = body.restHip[1] + perp[1] * LANE[side] * laneW;
+    const nx = body.restHip[0] + perp[0] * LANE[side] * laneW,
+      ny = body.restHip[1] + perp[1] * LANE[side] * laneW;
     return (p[0] - nx) * d[0] + (p[1] - ny) * d[1];
   };
   // a planted foot behind its lane's middle may hold the hips a twentieth of a leg under the plan's lowest, no more: past
@@ -538,13 +738,18 @@ function stepFeet(s, input, body, P, shape, { dt, dx, dy, dz, dYaw, snap, was })
   // them go in three)
   const holdZ = hipPlan(s, body, P, shape).low - 0.06 * L - body.ankle;
   const outOfPlan = (side, p) => {
-    const r = (body.legs?.[side] ?? L) * 0.992, h = holdZ - p[2];
-    const jx = body.restHip[0] + hr[0] * LANE[side] * body.hipWidth * 0.5, jy = body.restHip[1] + hr[1] * LANE[side] * body.hipWidth * 0.5;
+    const r = (body.legs?.[side] ?? L) * 0.992,
+      h = holdZ - p[2];
+    const jx = body.restHip[0] + hr[0] * LANE[side] * body.hipWidth * 0.5,
+      jy = body.restHip[1] + hr[1] * LANE[side] * body.hipWidth * 0.5;
     return Math.hypot(p[0] - jx, p[1] - jy) > Math.sqrt(Math.max(0, r * r - h * h));
   };
   const reachMin = Math.min(body.legs?.L ?? L, body.legs?.R ?? L) * 0.992;
   const farReach = Math.sqrt(Math.max(0, reachMin * reachMin - (HIP_FLOOR * L) ** 2));
-  const standTarget = (side) => ({ p: [spots[side].p[0], spots[side].p[1], groundAt(s, spots[side].p[0], spots[side].p[1])], yaw: spots[side].yaw });
+  const standTarget = (side) => ({
+    p: [spots[side].p[0], spots[side].p[1], groundAt(s, spots[side].p[0], spots[side].p[1])],
+    yaw: spots[side].yaw,
+  });
   const stepTime = () => s.stepTime ?? clamp(TURN.time / (1 + Math.abs(s.yawRate) / 3), TURN.minTime, TURN.time);
   /** Begin a flight for `f` from where it is now, carrying its pitch and lift into the new one - a stance's too: a foot
    *  the ground lifts before its push (a reversal's, a new key's) leaves at the pitch it stood at (GAIT-23: it took the
@@ -553,22 +758,41 @@ function stepFeet(s, input, body, P, shape, { dt, dx, dy, dz, dYaw, snap, was })
     const prior = f.swing;
     const here = prior ? flightAt(prior) : { p: f.p, yaw: f.yaw };
     const carry = !f.cur ? null : { pitch: f.cur.pitch, lift: f.swing || kind === 'step' ? f.cur.lift : null, s: s0 };
-    f.swing = { kind, from: here.p, fromYaw: here.yaw, to: here.p, toYaw: here.yaw, s0, s: s0, t: 0, dur: dur || stepTime(), carry };
+    f.swing = {
+      kind,
+      from: here.p,
+      fromYaw: here.yaw,
+      to: here.p,
+      toYaw: here.yaw,
+      s0,
+      s: s0,
+      t: 0,
+      dur: dur || stepTime(),
+      carry,
+    };
     // where a stride's foot left the ground, kept with the body (never carried with the world): a leaving foot asks the
     // hips no more reach than it asked there (gaitPose)
     if (kind === 'gait') f.swing.held = prior?.held ?? [here.p[0], here.p[1]];
   };
   /** Set the feet's clock to `to` - the body's own clock (`lag`) left where it was, to catch up (GAIT_EASE.phase). */
-  const resync = (to) => { s.lag = wrapHalf(s.lag + s.phase - to); s.phase = to; };
+  const resync = (to) => {
+    s.lag = wrapHalf(s.lag + s.phase - to);
+    s.phase = to;
+  };
   // the walk begins from where the feet stand: the foot that trails flies (half its flight's way - its stride's mid-swing),
   // the other stands at mid-stance under the hips, where it is
   if (s.walking && !was) {
-    const back = (side) => { const f = s.feet[side], p = f.swing ? flightAt(f.swing).p : f.p; return (p[0] - body.restHip[0]) * d[0] + (p[1] - body.restHip[1]) * d[1]; };
+    const back = (side) => {
+      const f = s.feet[side],
+        p = f.swing ? flightAt(f.swing).p : f.p;
+      return (p[0] - body.restHip[0]) * d[0] + (p[1] - body.restHip[1]) * d[1];
+    };
     const lead = back('L') <= back('R') ? 'L' : 'R';
-    s.phase = frac(0.5 * beta + OFFSET[lead === 'L' ? 'R' : 'L']);   // from a stand: nothing of the clock showed
+    s.phase = frac(0.5 * beta + OFFSET[lead === 'L' ? 'R' : 'L']); // from a stand: nothing of the clock showed
     s.lag = 0;
   }
-  const swingTime = s.speed > 0.05 && stride > 0 ? ((1 - beta) * stride) / (s.speed * (input.unitsPerM || 1)) : TURN.time;
+  const swingTime =
+    s.speed > 0.05 && stride > 0 ? ((1 - beta) * stride) / (s.speed * (input.unitsPerM || 1)) : TURN.time;
   for (const side of SIDES) {
     const f = s.feet[side];
     // a standing foot keeps its own stance's clock - begun at its strike, run by the ground crossed - so the other's
@@ -593,7 +817,12 @@ function stepFeet(s, input, body, P, shape, { dt, dx, dy, dz, dYaw, snap, was })
       // its leg reaches with the hips at their lowest is lifted now, the clock set to it if the other foot stands (AUDIT
       // BODY-MOTION GAIT-1/GAIT-8 - kept by the clock alone, it stood on until the hips sank to it)
       const along = !f.swing && s.walking ? alongOf(side, f.p) : 0;
-      const behind = !f.swing && s.walking && (along < shift - (A + 0.1 * L) || (along < 0 && outOfPlan(side, f.p)) || Math.hypot(f.p[0] - body.restHip[0], f.p[1] - body.restHip[1]) > farReach);
+      const behind =
+        !f.swing &&
+        s.walking &&
+        (along < shift - (A + 0.1 * L) ||
+          (along < 0 && outOfPlan(side, f.p)) ||
+          Math.hypot(f.p[0] - body.restHip[0], f.p[1] - body.restHip[1]) > farReach);
       if (behind) {
         const other = s.feet[side === 'L' ? 'R' : 'L'];
         if (!other.swing) resync(frac(beta + OFFSET[side] + 1e-4));
@@ -619,8 +848,9 @@ function stepFeet(s, input, body, P, shape, { dt, dx, dy, dz, dYaw, snap, was })
         // apart, each strike set the clock to itself and the other foot landed off it, for good); by the ground crossed -
         // and by the clock at the least (its own pace then), so a foot in the air under a body that slows to a stop comes
         // down within a slow walk's swing (it hung there until the gait went off)
-        const byGround = s.dPhase / Math.max(1e-3, 1 - beta), byClock = dt / FLIGHT_MAX;
-        const gap = wrapHalf(u - (beta + (sw.s + (lifted ? 0 : byGround)) * (1 - beta)));   // this frame's clock against this frame's flight
+        const byGround = s.dPhase / Math.max(1e-3, 1 - beta),
+          byClock = dt / FLIGHT_MAX;
+        const gap = wrapHalf(u - (beta + (sw.s + (lifted ? 0 : byGround)) * (1 - beta))); // this frame's clock against this frame's flight
         sw.rate = byGround > byClock ? 1 + clamp(4 * gap, -0.25, 0.25) : 1;
         const inc = lifted ? 0 : Math.max(byGround * sw.rate, byClock);
         // its foothold read again before it may land, and a leap of it re-bases the flight from where the foot is: a
@@ -634,10 +864,17 @@ function stepFeet(s, input, body, P, shape, { dt, dx, dy, dz, dYaw, snap, was })
         const leapt = Math.hypot(t.p[0] - sw.to[0], t.p[1] - sw.to[1]) > leap && sw.s + inc > sw.s0;
         // re-based, its pitch and lift carried into the new path as a new flight's are (fly) - its stride progress set
         // back, the swing's own were read again from mid-swing, the foot thrown up 8 units and over 40 degrees in a frame
-        if (leapt) { rebase(sw, t.p, stride); if (f.cur) sw.carry = { pitch: f.cur.pitch, lift: f.cur.lift, s: sw.s }; }
+        if (leapt) {
+          rebase(sw, t.p, stride);
+          if (f.cur) sw.carry = { pitch: f.cur.pitch, lift: f.cur.lift, s: sw.s };
+        }
         const sRaw = sw.s + inc;
         sw.s = Math.min(1, sRaw);
-        if (leapt) { t = gaitTarget(side, sw.s, sw.rate); sw.to = t.p; sw.toYaw = t.yaw; }
+        if (leapt) {
+          t = gaitTarget(side, sw.s, sw.rate);
+          sw.to = t.p;
+          sw.toYaw = t.yaw;
+        }
         if (sw.s >= 1) {
           // the strike: set down on the foothold it flew to (it stands in the world - carried with it this frame) - and
           // a strike begins its stance, on the foot's own clock (GAIT-25), as far on as the frame ran past the strike (set
@@ -647,13 +884,17 @@ function stepFeet(s, input, body, P, shape, { dt, dx, dy, dz, dYaw, snap, was })
           // flights' lock to it brings them back half a stride apart; set to each strike, an early one jumped it, the
           // flight's pace with it, and its foothold a fifth of its way - re-based, a run's strafe reversed dropped the
           // hips 10 units in a frame)
-          const past = inc > 0 ? (clamp01((sRaw - 1) / inc) * s.dPhase) : 0;
+          const past = inc > 0 ? clamp01((sRaw - 1) / inc) * s.dPhase : 0;
           const n = plantAt(s, sw.to, sw.toYaw);
-          n.p = [sw.to[0], sw.to[1], sw.to[2]]; n.lastU = past; n.u = past;
+          n.p = [sw.to[0], sw.to[1], sw.to[2]];
+          n.lastU = past;
+          n.u = past;
           s.feet[side] = n;
           continue;
         }
-        sw.to = t.p; sw.toYaw = t.yaw; sw.m = m;
+        sw.to = t.p;
+        sw.toYaw = t.yaw;
+        sw.m = m;
         sw.bow = clamp(s.yawRate * Math.min(swingTime, FLIGHT_MAX) * (1 - sw.s0), -2.4, 2.4);
       }
     } else if (f.swing && f.swing.kind === 'gait') {
@@ -668,13 +909,18 @@ function stepFeet(s, input, body, P, shape, { dt, dx, dy, dz, dYaw, snap, was })
     if (!sw || sw.kind !== 'step') continue;
     const t = standTarget(side);
     if (Math.hypot(t.p[0] - sw.to[0], t.p[1] - sw.to[1]) > LEAP * L && sw.t > 0) rebase(sw);
-    sw.to = t.p; sw.toYaw = t.yaw;
+    sw.to = t.p;
+    sw.toYaw = t.yaw;
     sw.t += dt;
-    if (sw.t >= sw.dur) { const n = plantAt(s, t.p, t.yaw); n.p = t.p; s.feet[side] = n; }
+    if (sw.t >= sw.dur) {
+      const n = plantAt(s, t.p, t.yaw);
+      n.p = t.p;
+      s.feet[side] = n;
+    }
   }
   // what gaitPose reads: each foot's print and turn, its pitch (the rockers, the flight's) and its lift
   const hfv = [hf[0], hf[1], 0];
-  const c = clamp(s.along, -1, 1);   // how much of the travel is along the hips' forward (- a backpedal: a toe strike)
+  const c = clamp(s.along, -1, 1); // how much of the travel is along the hips' forward (- a backpedal: a toe strike)
   const bias = P.footBias * RAD;
   const gaitLift = (sg) => lerp(P.lift, P.liftFast, frShare) * L * Math.min(1, stride / (L * 0.6)) * liftProfile(sg);
   // a foot on a slope stands along it: toes up uphill (the ground's own grade along the foot) - but at the end of its
@@ -686,9 +932,12 @@ function stepFeet(s, input, body, P, shape, { dt, dx, dy, dz, dYaw, snap, was })
   // a toe strike as shallow as the walk's heel, a push 34 degrees toes-up, 50 at a run - and stood the ankle 45 degrees
   // up toward the shin): it lands on its toes as the walk leaves them, and leaves on its heel as the walk lands on it.
   // `qe`, `se` the shares the walk's own rockers are read at; the ends' shares at the push and at the strike
-  const back = c < 0, ac = Math.abs(c);
-  const toeEnd = (qe) => (qe > P.flat[1] ? smooth((qe - P.flat[1]) / (1 - P.flat[1])) : 0), heelEnd = (qe) => (qe < P.flat[0] ? 1 - smooth(qe / P.flat[0]) : 0);
-  const leaveEnd = (se) => (se < 0.45 ? 1 - smooth(se / 0.45) : 0), landEnd = (se) => (se >= 0.45 ? smooth((se - 0.45) / 0.55) : 0);
+  const back = c < 0,
+    ac = Math.abs(c);
+  const toeEnd = (qe) => (qe > P.flat[1] ? smooth((qe - P.flat[1]) / (1 - P.flat[1])) : 0),
+    heelEnd = (qe) => (qe < P.flat[0] ? 1 - smooth(qe / P.flat[0]) : 0);
+  const leaveEnd = (se) => (se < 0.45 ? 1 - smooth(se / 0.45) : 0),
+    landEnd = (se) => (se >= 0.45 ? smooth((se - 0.45) / 0.55) : 0);
   for (const side of SIDES) {
     const f = s.feet[side];
     const sw = f.swing;
@@ -698,7 +947,16 @@ function stepFeet(s, input, body, P, shape, { dt, dx, dy, dz, dYaw, snap, was })
       const g = gradeAlong(f.yaw);
       const qe = q == null ? 0 : back ? 1 - q : q;
       const ends = q == null ? 0 : back ? level(g, heelEnd(qe), toeEnd(qe)) : level(g, toeEnd(qe), heelEnd(qe));
-      f.cur = { p: f.p, yaw: f.yaw, planted: true, sp: 0, kind: null, pitch: (q != null ? stancePitch(qe, P) * ac * RAD + ends : 0) * s.move + bias, grade: g, lift: 0 };
+      f.cur = {
+        p: f.p,
+        yaw: f.yaw,
+        planted: true,
+        sp: 0,
+        kind: null,
+        pitch: (q != null ? stancePitch(qe, P) * ac * RAD + ends : 0) * s.move + bias,
+        grade: g,
+        lift: 0,
+      };
       continue;
     }
     const sp = flightProgress(sw);
@@ -708,7 +966,7 @@ function stepFeet(s, input, body, P, shape, { dt, dx, dy, dz, dYaw, snap, was })
     if (sw.kind === 'gait') {
       const se = back ? 1 - sw.s : sw.s;
       const ends = back ? level(g, landEnd(se), leaveEnd(se)) : level(g, leaveEnd(se), landEnd(se));
-      pitch = (swingPitch(se, P) * ac * RAD + ends) + bias;
+      pitch = swingPitch(se, P) * ac * RAD + ends + bias;
       lift = gaitLift(sw.s);
       if (sw.carry) {
         const k = smooth(clamp01(((sw.s - sw.carry.s) / Math.max(1e-3, 1 - sw.carry.s)) * 2));
@@ -755,8 +1013,10 @@ function settle(s, body, spots, fly) {
     const other = last === 'L' ? 'R' : last === 'R' ? 'L' : null;
     if (other && need(o[other], 0.5)) pick = other;
   }
-  if (pick) { fly(s.feet[pick], 'step'); s.lastStepped = pick; }
-  else if (!need(o.L, 0.5) && !need(o.R, 0.5)) s.lastStepped = null;
+  if (pick) {
+    fly(s.feet[pick], 'step');
+    s.lastStepped = pick;
+  } else if (!need(o.L, 0.5) && !need(o.R, 0.5)) s.lastStepped = null;
 }
 
 /**
@@ -781,13 +1041,16 @@ function hipPlan(s, body, P, shape) {
   // ground's own height there, its ankle where that end's rocker stands it (the strike's and the push's - a backpedal's
   // its own, gaitPose: AUDIT BODY-MOTION GAIT-23, read at the bare ankle over the print, a backpedal's push stood 4
   // units past the hips' plan at every stride): the hips reach the lower of the two
-  const ac = Math.min(1, Math.abs(s.along)) * s.move, way = s.along < 0 ? -1 : 1;
-  const strikeP = (way > 0 ? P.heel : -P.toeOff) * ac * RAD, pushP = (way > 0 ? -P.toeOff : P.heel) * ac * RAD;
+  const ac = Math.min(1, Math.abs(s.along)) * s.move,
+    way = s.along < 0 ? -1 : 1;
+  const strikeP = (way > 0 ? P.heel : -P.toeOff) * ac * RAD,
+    pushP = (way > 0 ? -P.toeOff : P.heel) * ac * RAD;
   const top = (x, z, pitch) => {
     const pl = footPlace([0, x * way], pitch, [0, 1], body);
     return z + pl.at[2] + Math.sqrt(Math.max(0, reach * reach - Math.min(reach * 0.98, Math.abs(pl.at[1])) ** 2));
   };
-  const ends = (half) => Math.min(top(half + shift, grade * (half + shift), strikeP), top(shift - half, grade * (shift - half), pushP));
+  const ends = (half) =>
+    Math.min(top(half + shift, grade * (half + shift), strikeP), top(shift - half, grade * (shift - half), pushP));
   const need = Math.max(0, hipH0 - ends(halfStance));
   const sink = P.bob * L * Math.min(1, frShare * 2 + 0.3);
   const dip = Math.max(sink, need * 1.04);
@@ -816,16 +1079,28 @@ export function gaitPose(state, input, body) {
   const hf = [-Math.sin(psi), Math.cos(psi), 0];
   const hr = [Math.cos(psi), Math.sin(psi), 0];
   const d = [s.dir[0], s.dir[1], 0];
-  const c = clamp(s.along, -1, 1);   // how much of the travel is along the hips' forward (- a backpedal)
+  const c = clamp(s.along, -1, 1); // how much of the travel is along the hips' forward (- a backpedal)
   const stance = s.stance;
   // ---- the feet (stepGait placed them: here the ankle over the print, turned and pitched) ----
   const feet = {};
   let twist = 0;
   for (const side of SIDES) {
     const cur = s.feet[side]?.cur;
-    if (!cur) { feet[side] = null; continue; }
+    if (!cur) {
+      feet[side] = null;
+      continue;
+    }
     const pl = footPlaceOn(cur.p, cur.pitch, cur.grade, [-Math.sin(cur.yaw), Math.cos(cur.yaw)], body);
-    feet[side] = { at: [pl.at[0], pl.at[1], pl.at[2] + cur.lift], toe: pl.toe, up: pl.up, stance: cur.planted, lift: cur.lift, sp: cur.sp, kind: cur.kind, held: cur.held ?? null };
+    feet[side] = {
+      at: [pl.at[0], pl.at[1], pl.at[2] + cur.lift],
+      toe: pl.toe,
+      up: pl.up,
+      stance: cur.planted,
+      lift: cur.lift,
+      sp: cur.sp,
+      kind: cur.kind,
+      held: cur.held ?? null,
+    };
     twist += cur.yaw - (stance?.toe?.[side] ?? 0) * RAD;
   }
   // ---- the hips ----
@@ -834,7 +1109,7 @@ export function gaitPose(state, input, body) {
   const midL = beta / 2;
   const swayWave = -Math.cos(2 * Math.PI * (phi - midL));
   const listWave = Math.cos(2 * Math.PI * (phi - midL));
-  const walkBob = (1 - Math.cos(4 * Math.PI * (phi - midL))) / 2;   // 0 at mid-stance, 1 between
+  const walkBob = (1 - Math.cos(4 * Math.PI * (phi - midL))) / 2; // 0 at mid-stance, 1 between
   const { hipH0, dip, sink, runH } = hipPlan(s, body, P, shape);
   const walkDip = dip * walkBob;
   let runZ = 0;
@@ -843,22 +1118,28 @@ export function gaitPose(state, input, body) {
     const standing = SIDES.find((side) => u(side) < beta);
     if (standing) runZ = -sink * Math.sin((Math.PI * u(standing)) / beta);
     else {
-      const flight = 0.5 - beta, tau = clamp01((frac(phi - beta) % 0.5) / flight);
+      const flight = 0.5 - beta,
+        tau = clamp01((frac(phi - beta) % 0.5) / flight);
       runZ = ((Math.PI * sink * flight) / (4 * beta)) * 4 * tau * (1 - tau);
     }
-  } else runZ = -sink * (1 + Math.cos(4 * Math.PI * (phi - midL))) / 2;
+  } else runZ = (-sink * (1 + Math.cos(4 * Math.PI * (phi - midL)))) / 2;
   const hipH = lerp(hipH0 - move * walkDip, lerp(hipH0, runH, move) + move * runZ, P.run);
-  const breathT = (2 * Math.PI * s.t) / STAND.breath, shiftT = (2 * Math.PI * s.t) / STAND.shift;
+  const breathT = (2 * Math.PI * s.t) / STAND.breath,
+    shiftT = (2 * Math.PI * s.t) / STAND.shift;
   const hipShift = stance?.hipShift ? [stance.hipShift[0] * L, stance.hipShift[1] * L] : [0, 0];
   const hipXY = [
     body.restHip[0] + hr[0] * sway * swayWave + idle * STAND.shiftSway * L * Math.sin(shiftT) + hipShift[0] * idle,
     body.restHip[1] + hr[1] * sway * swayWave + hipShift[1] * idle,
   ];
   // standing, the hips follow the feet a quarter of the way (the chest stays with the camera); a stance turns them its own way
-  const hipYaw = psi * move + (twist * 0.25 + (stance?.hipYaw ?? 0) * RAD) * idle - P.hipYaw * RAD * Math.cos(2 * Math.PI * phi) * move * c;
+  const hipYaw =
+    psi * move +
+    (twist * 0.25 + (stance?.hipYaw ?? 0) * RAD) * idle -
+    P.hipYaw * RAD * Math.cos(2 * Math.PI * phi) * move * c;
   const hipRoll = P.hipList * RAD * listWave * move + idle * STAND.shiftList * RAD * Math.sin(shiftT);
   const standTilt = lerp(STAND.hipTilt, STAND.sneak.hipTilt, s.sneak) * P.standTilt;
-  const hipPitch = lerp(standTilt, P.hipTilt, move) * RAD + P.hipTiltWave * RAD * Math.cos(4 * Math.PI * (phi - midL)) * move;
+  const hipPitch =
+    lerp(standTilt, P.hipTilt, move) * RAD + P.hipTiltWave * RAD * Math.cos(4 * Math.PI * (phi - midL)) * move;
   // the legs hold the hips up: never higher than a standing leg reaches - nor than the swinging one reaches the ground
   // under its own flight (AUDIT BODY-MOTION GAIT-3: left out until it stood, the landing leg dropped the hips 10 to 14
   // cm in the frame it struck; taken in all through its flight - from the print it leaves, where the standing leg's own
@@ -869,20 +1150,27 @@ export function gaitPose(state, input, body) {
     const f = feet[side];
     if (!f) continue;
     const sign = LANE[side];
-    const jx = hipXY[0] + Math.cos(hipYaw) * sign * body.hipWidth * 0.5, jy = hipXY[1] + Math.sin(hipYaw) * sign * body.hipWidth * 0.5;
-    const dz = -sign * Math.sin(hipRoll) * body.hipWidth * 0.5;   // the joint's height over the middle (the right drops with a + roll)
+    const jx = hipXY[0] + Math.cos(hipYaw) * sign * body.hipWidth * 0.5,
+      jy = hipXY[1] + Math.sin(hipYaw) * sign * body.hipWidth * 0.5;
+    const dz = -sign * Math.sin(hipRoll) * body.hipWidth * 0.5; // the joint's height over the middle (the right drops with a + roll)
     const reach = (body.legs?.[side] ?? L) * 0.992;
     const leaving = !f.stance && f.kind === 'gait' && f.sp < 0.35;
     // a foot leaving the ground asks no more reach of its leg than it did as it left (GAIT-23: its flight starts at rest
     // and the body draws away from it - after a new key's lift, half a leg in four frames - and its hold dragged the hips
     // down to their floor after a foot already in the air)
-    const dxy = Math.min(Math.hypot(f.at[0] - jx, f.at[1] - jy), leaving && f.held ? Math.hypot(f.held[0] - jx, f.held[1] - jy) : Infinity);
+    const dxy = Math.min(
+      Math.hypot(f.at[0] - jx, f.at[1] - jy),
+      leaving && f.held ? Math.hypot(f.held[0] - jx, f.held[1] - jy) : Infinity,
+    );
     // a foot in the air past what its leg reaches at the hips' lowest (a reversal's flight, flung ahead) holds the hips to
     // nothing: the leg reaches toward it and falls short a frame - let go over the last fifth of a leg before it, so a
     // flight that comes into reach takes the hips in by degrees (AUDIT BODY-MOTION GAIT-21: taken at once, a running
     // turn's landing foot dropped the hips 14 units in the frame it came within reach; RUN-STIFF: over a tenth, the
     // stiffer run's higher hips - less give in the leg - dropped 12 to 13.5 units in a back run turned fast into a strafe)
-    const inReach = f.stance || leaving ? 1 : smooth(clamp01((Math.sqrt(Math.max(0, reach * reach - (HIP_FLOOR * L) ** 2)) - dxy) / (0.2 * L)));
+    const inReach =
+      f.stance || leaving
+        ? 1
+        : smooth(clamp01((Math.sqrt(Math.max(0, reach * reach - (HIP_FLOOR * L) ** 2)) - dxy) / (0.2 * L)));
     // a leg asked past its reach asks the hips no lower than a deep knee's bend: the foot falls short instead - a crash to
     // the ground was the reach's answer to a foot it could not reach
     // a stride's foot in the air lets the hips go as it leaves the ground and holds them again as it comes down (a
@@ -890,8 +1178,15 @@ export function gaitPose(state, input, body) {
     // the leg reaches the foot itself, rising, and lets go by its own clock wherever it stood; coming down, the ground it
     // lands on (GAIT-20: the ground under a leaving foot ran on down a slope behind it, and took the hips 15 units down
     // with it in the frames after toe-off)
-    const top = Math.max(f.at[2] - (leaving ? 0 : f.lift) + Math.sqrt(Math.max(0, reach * reach - dxy * dxy)) - dz, body.ankle + HIP_FLOOR * L);
-    const holds = inReach * (f.stance || f.kind !== 'gait' ? 1 : Math.max(1 - smooth(clamp01(f.sp / 0.25)), smooth(clamp01((f.sp - 0.45) / 0.45))));
+    const top = Math.max(
+      f.at[2] - (leaving ? 0 : f.lift) + Math.sqrt(Math.max(0, reach * reach - dxy * dxy)) - dz,
+      body.ankle + HIP_FLOOR * L,
+    );
+    const holds =
+      inReach *
+      (f.stance || f.kind !== 'gait'
+        ? 1
+        : Math.max(1 - smooth(clamp01(f.sp / 0.25)), smooth(clamp01((f.sp - 0.45) / 0.45))));
     if (!(holds > 0)) continue;
     // held by as much as it holds: the hips go from where they would be to where it lets them, never in a frame
     limits[side] = top;
@@ -905,13 +1200,27 @@ export function gaitPose(state, input, body) {
   const standLean = lerp(STAND.lean, STAND.sneak.lean, s.sneak) * P.standLean;
   const chestPitch = lerp(standLean, P.lean, move) * RAD + s.lean - breath + (stance?.lean ?? 0) * RAD * idle;
   // ---- the free arms: a backpedal swings them the other way, eased over (GAIT-12) ----
-  const swing = (P.arm.swing * RAD * Math.cos(2 * Math.PI * phi)) * move * (1 - 2 * s.backShare);
+  const swing = P.arm.swing * RAD * Math.cos(2 * Math.PI * phi) * move * (1 - 2 * s.backShare);
   return {
-    move, phase: phi, duty: beta, stride, frShare, run: P.run, sneak: P.sneak, back: s.back, speed: s.speed,
+    move,
+    phase: phi,
+    duty: beta,
+    stride,
+    frShare,
+    run: P.run,
+    sneak: P.sneak,
+    back: s.back,
+    speed: s.speed,
     hip: { at: [hipXY[0], hipXY[1], hipZ], yaw: hipYaw, roll: hipRoll, pitch: hipPitch, limits },
     // `wave`: the stride's own share of the chest's turn - the counter-turn and the counter-drop the swinging arms ride
     // (a held weapon's arm takes them by its row's swing share alone - carry.js carryHands, HELD-STEADY)
-    chest: { yaw: chestYaw, roll: chestRoll, pitch: chestPitch, breath: Math.sin(breathT) * idle, wave: { yaw: chestYaw, roll: counterDrop } },
+    chest: {
+      yaw: chestYaw,
+      roll: chestRoll,
+      pitch: chestPitch,
+      breath: Math.sin(breathT) * idle,
+      wave: { yaw: chestYaw, roll: counterDrop },
+    },
     feet,
     arm: { swing, bias: P.arm.bias * RAD * move, elbow: P.arm.elbow, abduct: P.arm.abduct * RAD, phase: phi },
   };

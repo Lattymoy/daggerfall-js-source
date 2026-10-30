@@ -383,8 +383,8 @@
   {
     "name": "AUDITMS-L3-5-carry-blind-to-the-spell-hand",
     "file": "src/characters/bodyMotion/bodyMotion.js",
-    "old": "(input.torch || shieldArm || input.spellHand)",
-    "new": "(input.torch || shieldArm)",
+    "old": "        const want = hands && !(side === 'L' && (input.torch || shieldArm || input.spellHand)) ? 1 : 0; // AUDIT SPELL-HAND L3-5: and the spell hand's left arm, as a torch's",
+    "new": "        const want = hands && !(side === 'L' && (input.torch || shieldArm)) ? 1 : 0; // AUDIT SPELL-HAND L3-5: and the spell hand's left arm, as a torch's",
     "tests": [
       "test/characters/bodyMotion/bodymotion_audit.test.js"
     ]

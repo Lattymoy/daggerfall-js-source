@@ -2,7 +2,7 @@
   {
     "name": "BODY-MOTION-hip-bone-the-pelvis",
     "file": "src/characters/bodyMotion/bodyKit.js",
-    "old": "  const hipBone = thighParentL === thighParentR && skeleton.nodes.has(thighParentL) ? thighParentL : (bones.pelvis ?? bones.spine[0]);",
+    "old": "  const hipBone =\n    thighParentL === thighParentR && skeleton.nodes.has(thighParentL) ? thighParentL : (bones.pelvis ?? bones.spine[0]);",
     "new": "  const hipBone = bones.pelvis ?? bones.spine[0];",
     "tests": [
       "test/characters/bodyMotion/bodymotion_gait.test.js"
@@ -56,8 +56,8 @@
   {
     "name": "BODY-MOTION-stance-half-length",
     "file": "src/characters/bodyMotion/gait.js",
-    "old": "  const A = (stride * beta) / 2;\n  const hf = [",
-    "new": "  const A = (stride * beta) / 4;\n  const hf = [",
+    "old": "  }\n  const A = (stride * beta) / 2;\n  const hf = [-Math.sin(s.psi), Math.cos(s.psi)],",
+    "new": "  }\n  const A = (stride * beta) / 4;\n  const hf = [-Math.sin(s.psi), Math.cos(s.psi)],",
     "tests": [
       "test/characters/bodyMotion/bodymotion_gait.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "BODY-MOTION-stance-backward",
     "file": "src/characters/bodyMotion/gait.js",
-    "old": "    const land = rotXY([n[0] + d[0] * (A + shift) - body.restHip[0], n[1] + d[1] * (A + shift) - body.restHip[1]], turn);",
-    "new": "    const land = rotXY([n[0] - d[0] * (A + shift) - body.restHip[0], n[1] - d[1] * (A + shift) - body.restHip[1]], turn);",
+    "old": "      [n[0] + d[0] * (A + shift) - body.restHip[0], n[1] + d[1] * (A + shift) - body.restHip[1]],",
+    "new": "      [n[0] - d[0] * (A + shift) - body.restHip[0], n[1] - d[1] * (A + shift) - body.restHip[1]],",
     "tests": [
       "test/characters/bodyMotion/bodymotion_gait.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "BODY-MOTION-walk-bob-inverted",
     "file": "src/characters/bodyMotion/gait.js",
-    "old": "  const walkBob = (1 - Math.cos(4 * Math.PI * (phi - midL))) / 2;",
-    "new": "  const walkBob = (1 + Math.cos(4 * Math.PI * (phi - midL))) / 2;",
+    "old": "  const walkBob = (1 - Math.cos(4 * Math.PI * (phi - midL))) / 2; // 0 at mid-stance, 1 between",
+    "new": "  const walkBob = (1 + Math.cos(4 * Math.PI * (phi - midL))) / 2; // 0 at mid-stance, 1 between",
     "tests": [
       "test/characters/bodyMotion/bodymotion_gait.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "BODY-MOTION-steer-sign",
     "file": "src/characters/bodyMotion/gait.js",
-    "old": "    : -clamp(s.th * STEER.forward, -STEER.max * RAD, STEER.max * RAD);",
-    "new": "    : clamp(s.th * STEER.forward, -STEER.max * RAD, STEER.max * RAD);",
+    "old": "      : -clamp(s.th * STEER.forward, -STEER.max * RAD, STEER.max * RAD);",
+    "new": "      : clamp(s.th * STEER.forward, -STEER.max * RAD, STEER.max * RAD);",
     "tests": [
       "test/characters/bodyMotion/bodymotion_gait.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "BODY-MOTION-backpedal-never",
     "file": "src/characters/bodyMotion/gait.js",
-    "old": "} else if (offDeg > STEER.back + STEER.hyst) s.back = true;",
-    "new": "} else if (offDeg > 1e9) s.back = true;",
+    "old": "  } else if (offDeg > STEER.back + STEER.hyst) s.back = true;",
+    "new": "  } else if (offDeg > 1e9) s.back = true;",
     "tests": [
       "test/characters/bodyMotion/bodymotion_gait.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "BODY-MOTION-feet-turn-with-the-body",
     "file": "src/characters/bodyMotion/gait.js",
-    "old": "    const carry = (p) => { const q = rotXY([p[0] - dx, p[1] - dy], dYaw); return [q[0], q[1], p[2] - dz]; };",
-    "new": "    const carry = (p) => { const q = rotXY([p[0] - dx, p[1] - dy], 0); return [q[0], q[1], p[2] - dz]; };",
+    "old": "      const q = rotXY([p[0] - dx, p[1] - dy], dYaw);",
+    "new": "      const q = rotXY([p[0] - dx, p[1] - dy], 0);",
     "tests": [
       "test/characters/bodyMotion/bodymotion_gait.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "BODY-MOTION-female-track",
     "file": "src/characters/bodyMotion/gait.js",
-    "old": "  female: Object.freeze({ width: 0.72,",
-    "new": "  female: Object.freeze({ width: 1,",
+    "old": "    width: 0.72,",
+    "new": "    width: 1,",
     "tests": [
       "test/characters/bodyMotion/bodymotion_gait.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "BODY-MOTION-height-ignored",
     "file": "src/characters/bodyMotion/gait.js",
-    "old": "  const L = body.leg, h = input.legM, U = input.unitsPerM || 1;",
-    "new": "  const L = body.leg, h = 1, U = input.unitsPerM || 1;",
+    "old": "    h = input.legM,",
+    "new": "    h = 1,",
     "tests": [
       "test/characters/bodyMotion/bodymotion_gait.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "BODY-MOTION-axe-two-as-one",
     "file": "src/characters/bodyMotion/carry.js",
-    "old": "case MW_WEAPON_TYPE.BluntTwoClose: case MW_WEAPON_TYPE.AxeTwoHand: return 'two';",
-    "new": "case MW_WEAPON_TYPE.BluntTwoClose: return 'two';",
+    "old": "    case MW_WEAPON_TYPE.AxeTwoHand:\n      return 'two';",
+    "new": "      return 'two';",
     "tests": [
       "test/characters/bodyMotion/bodymotion_carry.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "BODY-MOTION-two-grip-spacing",
     "file": "src/characters/bodyMotion/carry.js",
-    "old": "export const TWO_HAND_GRIP = Object.freeze({ two: -0.4,",
-    "new": "export const TWO_HAND_GRIP = Object.freeze({ two: 0.2,",
+    "old": "export const TWO_HAND_GRIP = Object.freeze({ two: -0.4, wide: 0.5, spear: 0.55 }); // AUDIT BODY-MOTION CARRY-1: the two-hander's left a fifth of an arm down sat inside the right forearm",
+    "new": "export const TWO_HAND_GRIP = Object.freeze({ two: 0.2, wide: 0.5, spear: 0.55 }); // AUDIT BODY-MOTION CARRY-1: the two-hander's left a fifth of an arm down sat inside the right forearm",
     "tests": [
       "test/characters/bodyMotion/bodymotion_carry.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "BODY-MOTION-one-idle-blade",
     "file": "src/characters/bodyMotion/carry.js",
-    "old": "    idle: { R: row(5, 21, 8, -7, 0, { blade: dir(0.26, 0.74, -0.62),",
-    "new": "    idle: { R: row(5, 21, 8, -7, 0, { blade: dir(0.26, 0.74, 0.62),",
+    "old": "      R: row(5, 21, 8, -7, 0, { blade: dir(0.26, 0.74, -0.62), edge: dir(-0.26, -0.56, -0.78) }),",
+    "new": "      R: row(5, 21, 8, -7, 0, { blade: dir(0.26, 0.74, 0.62), edge: dir(-0.26, -0.56, -0.78) }),",
     "tests": [
       "test/characters/bodyMotion/bodymotion_carry.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "BODY-MOTION-one-run-blade",
     "file": "src/characters/bodyMotion/carry.js",
-    "old": "    run: { R: row(8, 21, 16, -4, 0.35, { blade: dir(0.2, 0.97, -0.14), edge: dir(-0.15, -0.11, -0.98) }),",
-    "new": "    run: { R: row(8, 21, 16, -4, 0.35, { blade: dir(0.2, -0.97, -0.14), edge: dir(-0.15, -0.11, -0.98) }),",
+    "old": "      R: row(8, 21, 16, -4, 0.35, { blade: dir(0.2, 0.97, -0.14), edge: dir(-0.15, -0.11, -0.98) }),",
+    "new": "      R: row(8, 21, 16, -4, 0.35, { blade: dir(0.2, -0.97, -0.14), edge: dir(-0.15, -0.11, -0.98) }),",
     "tests": [
       "test/characters/bodyMotion/bodymotion_carry.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "BODY-MOTION-haft-hand-unplaced",
     "file": "src/characters/bodyMotion/carry.js",
-    "old": "    const haf = hafHand(out.R, out.grip.R, out.R.frame,",
-    "new": "    const haf = null && hafHand(out.R, out.grip.R, out.R.frame,",
+    "old": "    const haf = hafHand(out.R, out.grip.R, out.R.frame, TWO_HAND_GRIP[cls], body.arm, {\n      shoulder: frames.shoulder.L,\n      reach: body.arms.L,\n      range: TWO_HAND_HAFT[cls],\n    });",
+    "new": "    const haf =\n      null &&\n      hafHand(out.R, out.grip.R, out.R.frame, TWO_HAND_GRIP[cls], body.arm, {\n        shoulder: frames.shoulder.L,\n        reach: body.arms.L,\n        range: TWO_HAND_HAFT[cls],\n      });",
     "tests": [
       "test/characters/bodyMotion/bodymotion_carry.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "BODY-MOTION-two-run-at-the-chest",
     "file": "src/characters/bodyMotion/carry.js",
-    "old": "    run: { R: row(43, 10, 0, -31, 0,",
-    "new": "    run: { R: row(43, 10, 95, -31, 0,",
+    "old": "      R: row(43, 10, 0, -31, 0, { blade: dir(0.8, -0.23, -0.55), edge: dir(-0.31, 0.62, -0.72) }),",
+    "new": "      R: row(43, 10, 95, -31, 0, { blade: dir(0.8, -0.23, -0.55), edge: dir(-0.31, 0.62, -0.72) }),",
     "tests": [
       "test/characters/bodyMotion/bodymotion_carry.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "BODY-MOTION-pair-run-forward",
     "file": "src/characters/bodyMotion/carry.js",
-    "old": "    run: { R: row(-42, 10, 8, -60, 0.4,",
-    "new": "    run: { R: row(42, 10, 8, -60, 0.4,",
+    "old": "      R: row(-42, 10, 8, -60, 0.4, { blade: dir(0.55, -0.8, 0.3), edge: dir(0.3, -0.14, -0.94), gaitElbow: 0.2 }),",
+    "new": "      R: row(42, 10, 8, -60, 0.4, { blade: dir(0.55, -0.8, 0.3), edge: dir(0.3, -0.14, -0.94), gaitElbow: 0.2 }),",
     "tests": [
       "test/characters/bodyMotion/bodymotion_carry.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "BODY-MOTION-torch-arm-taken",
     "file": "src/characters/bodyMotion/bodyMotion.js",
-    "old": "const want = hands && !(side === 'L' && (input.torch || shieldArm || input.spellHand)) ? 1 : 0;",
-    "new": "const want = hands && !(side === 'L' && (shieldArm || input.spellHand)) ? 1 : 0;",
+    "old": "        const want = hands && !(side === 'L' && (input.torch || shieldArm || input.spellHand)) ? 1 : 0; // AUDIT SPELL-HAND L3-5: and the spell hand's left arm, as a torch's",
+    "new": "        const want = hands && !(side === 'L' && (shieldArm || input.spellHand)) ? 1 : 0; // AUDIT SPELL-HAND L3-5: and the spell hand's left arm, as a torch's",
     "tests": [
       "test/characters/bodyMotion/bodymotion_carry.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "BODY-MOTION-slash-hit-behind",
     "file": "src/characters/bodyMotion/melee.js",
-    "old": "      k(0.5, { grip: [0.12, 0.66, -0.06], blade: [0.04, 1, -0.08],",
-    "new": "      k(0.5, { grip: [0.12, -0.2, -0.06], blade: [0.04, 1, -0.08],",
+    "old": "        grip: [0.12, 0.66, -0.06],",
+    "new": "        grip: [0.12, -0.2, -0.06],",
     "tests": [
       "test/characters/bodyMotion/bodymotion_carry.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "BODY-MOTION-slash-edge-trailing",
     "file": "src/characters/bodyMotion/melee.js",
-    "old": "edge: [-1, 0, 0], chest: [6, 2, 7]",
-    "new": "edge: [1, 0, 0], chest: [6, 2, 7]",
+    "old": "        blade: [0.04, 1, -0.08],\n        edge: [-1, 0, 0],",
+    "new": "        blade: [0.04, 1, -0.08],\n        edge: [1, 0, 0],",
     "tests": [
       "test/characters/bodyMotion/bodymotion_carry.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "BODY-MOTION-blow-chest-unturned",
     "file": "src/characters/bodyMotion/bodyMotion.js",
-    "old": "+ runTurn) * (1 - k) + (bp ? bp.chest[0] * RAD * wind : 0))),",
-    "new": "+ runTurn) * (1 - k))),",
+    "old": "            (gp.chest.yaw - gp.chest.wave.yaw * (1 - wave) + runTurn) * (1 - k) + (bp ? bp.chest[0] * RAD * wind : 0),",
+    "new": "            (gp.chest.yaw - gp.chest.wave.yaw * (1 - wave) + runTurn) * (1 - k),",
     "tests": [
       "test/characters/bodyMotion/bodymotion_carry.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "BODY-MOTION-chop-from-below",
     "file": "src/characters/bodyMotion/melee.js",
-    "old": "      k(0.3, { grip: [0.32, -0.05, 0.78],",
-    "new": "      k(0.3, { grip: [0.32, -0.05, -0.6],",
+    "old": "        grip: [0.32, -0.05, 0.78],",
+    "new": "        grip: [0.32, -0.05, -0.6],",
     "tests": [
       "test/characters/bodyMotion/bodymotion_carry.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "BODY-MOTION-thrust-short",
     "file": "src/characters/bodyMotion/melee.js",
-    "old": "      k(0.5, { grip: [0.14, 1.02, -0.04],",
-    "new": "      k(0.5, { grip: [0.14, 0.3, -0.04],",
+    "old": "        grip: [0.14, 1.02, -0.04],",
+    "new": "        grip: [0.14, 0.3, -0.04],",
     "tests": [
       "test/characters/bodyMotion/bodymotion_carry.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "BODY-MOTION-two-blow-haft-dropped",
     "file": "src/characters/bodyMotion/bodyMotion.js",
-    "old": "    if (haf) out.L = { ...haf, w: armW.L, pole: norm(add(scale(frames.right, -0.55), add(scale(frames.up, -0.75), scale(frames.fwd, 0.45)))) };",
-    "new": "    if (haf && false) out.L = { ...haf, w: armW.L, pole: norm(add(scale(frames.right, -0.55), add(scale(frames.up, -0.75), scale(frames.fwd, 0.45)))) };",
+    "old": "    if (haf)",
+    "new": "    if (haf && false)",
     "tests": [
       "test/characters/bodyMotion/bodymotion_carry.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "BODY-MOTION-on-in-first-person",
     "file": "src/characters/bodyMotion/bodyMotion.js",
-    "old": "  const on = !!third && !!kind && !!rig?.ok",
-    "new": "  const on = !!kind && !!rig?.ok",
+    "old": "  const on =\n    !!third && !!kind && !!rig?.ok && !built?.creature && !built?.werewolf && getPref('mwBodyMotion') !== false;",
+    "new": "  const on = !!kind && !!rig?.ok && !built?.creature && !built?.werewolf && getPref('mwBodyMotion') !== false;",
     "tests": [
       "test/characters/bodyMotion/bodymotion_carry.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "BODY-MOTION-creature-walked",
     "file": "src/characters/bodyMotion/bodyMotion.js",
-    "old": "&& !built?.creature && !built?.werewolf",
-    "new": "&& !built?.werewolf",
+    "old": "  const on =\n    !!third && !!kind && !!rig?.ok && !built?.creature && !built?.werewolf && getPref('mwBodyMotion') !== false;",
+    "new": "  const on = !!third && !!kind && !!rig?.ok && !built?.werewolf && getPref('mwBodyMotion') !== false;",
     "tests": [
       "test/characters/bodyMotion/bodymotion_carry.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "BODY-MOTION-switch-ignored",
     "file": "src/characters/bodyMotion/bodyMotion.js",
-    "old": "!built?.werewolf && getPref('mwBodyMotion') !== false;",
-    "new": "!built?.werewolf;",
+    "old": "  const on =\n    !!third && !!kind && !!rig?.ok && !built?.creature && !built?.werewolf && getPref('mwBodyMotion') !== false;",
+    "new": "  const on = !!third && !!kind && !!rig?.ok && !built?.creature && !built?.werewolf;",
     "tests": [
       "test/characters/bodyMotion/bodymotion_carry.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "BODY-MOTION-section-misnamed",
     "file": "src/characters/bodyMotion/bodyMotion.js",
-    "old": "AttackRelease: 'release', AttackEnd: 'follow' });",
-    "new": "AttackRelease: 'release', AttackEnd: 'release' });",
+    "old": "const SECTION_OF = Object.freeze({ AttackWindUp: 'windup', AttackRelease: 'release', AttackEnd: 'follow' });",
+    "new": "const SECTION_OF = Object.freeze({ AttackWindUp: 'windup', AttackRelease: 'release', AttackEnd: 'release' });",
     "tests": [
       "test/characters/bodyMotion/bodymotion_carry.test.js"
     ]

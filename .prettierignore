@@ -2,6 +2,10 @@
 /*
 !/src/
 /src/*
+!/src/characters/
+/src/characters/*
+!/src/characters/bodyMotion/
+/src/characters/bodyMotion/*/
 !/src/formats/
 /src/formats/*
 !/src/formats/save/

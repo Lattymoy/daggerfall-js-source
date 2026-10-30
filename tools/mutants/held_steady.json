@@ -56,8 +56,8 @@
   {
     "name": "HELD-STEADY-the-wave-never-split",
     "file": "src/characters/bodyMotion/bodyMotion.js",
-    "old": "      const chest = chestAt(ride), calm = chestAt(0);",
-    "new": "      const chest = chestAt(ride), calm = chestAt(ride);",
+    "old": "        calm = chestAt(0);",
+    "new": "        calm = chestAt(ride);",
     "tests": [
       "test/characters/bodyMotion/bodymotion_steady.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "HELD-STEADY-the-chest-rides-whole",
     "file": "src/characters/bodyMotion/bodyMotion.js",
-    "old": "      const chest = chestAt(ride), calm = chestAt(0);",
-    "new": "      const chest = chestAt(1), calm = chestAt(0);",
+    "old": "      const chest = chestAt(ride),",
+    "new": "      const chest = chestAt(1),",
     "tests": [
       "test/characters/bodyMotion/bodymotion_steady.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "HELD-STEADY-no-wave-from-the-gait",
     "file": "src/characters/bodyMotion/gait.js",
-    "old": "wave: { yaw: chestYaw, roll: counterDrop } },",
-    "new": "wave: { yaw: 0, roll: 0 } },",
+    "old": "      wave: { yaw: chestYaw, roll: counterDrop },",
+    "new": "      wave: { yaw: 0, roll: 0 },",
     "tests": [
       "test/characters/bodyMotion/bodymotion_steady.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "DUAL-RUN-the-old-row",
     "file": "src/characters/bodyMotion/carry.js",
-    "old": "    run: { R: row(-42, 10, 8, -60, 0.4, { blade: dir(0.55, -0.8, 0.3), edge: dir(0.3, -0.14, -0.94), gaitElbow: 0.2 }), L: row(-42, 10, 8, -60, 0.4, { blade: dir(0.55, -0.8, 0.3), edge: dir(0.3, -0.14, -0.94), gaitElbow: 0.2, mirror: true }) },",
-    "new": "    run: { R: row(-47, 21, 7, 0, 0.1, { blade: dir(0.3, -0.93, 0.21), edge: dir(0.28, -0.12, -0.95) }), L: row(-47, 21, 7, 0, 0.1, { blade: dir(0.3, -0.93, 0.21), edge: dir(0.28, -0.12, -0.95), mirror: true }) },",
+    "old": "      R: row(-42, 10, 8, -60, 0.4, { blade: dir(0.55, -0.8, 0.3), edge: dir(0.3, -0.14, -0.94), gaitElbow: 0.2 }),\n      L: row(-42, 10, 8, -60, 0.4, {\n        blade: dir(0.55, -0.8, 0.3),\n        edge: dir(0.3, -0.14, -0.94),\n        gaitElbow: 0.2,\n        mirror: true,\n      }),",
+    "new": "      R: row(-47, 21, 7, 0, 0.1, { blade: dir(0.3, -0.93, 0.21), edge: dir(0.28, -0.12, -0.95) }),\n      L: row(-47, 21, 7, 0, 0.1, { blade: dir(0.3, -0.93, 0.21), edge: dir(0.28, -0.12, -0.95), mirror: true }),",
     "tests": [
       "test/characters/bodyMotion/bodymotion_steady.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "DUAL-RUN-the-shoulder-square",
     "file": "src/characters/bodyMotion/carry.js",
-    "old": "    run: { R: row(-42, 10, 8, -60, 0.4,",
-    "new": "    run: { R: row(-42, 10, 8, 0, 0.4,",
+    "old": "      R: row(-42, 10, 8, -60, 0.4, { blade: dir(0.55, -0.8, 0.3), edge: dir(0.3, -0.14, -0.94), gaitElbow: 0.2 }),",
+    "new": "      R: row(-42, 10, 8, 0, 0.4, { blade: dir(0.55, -0.8, 0.3), edge: dir(0.3, -0.14, -0.94), gaitElbow: 0.2 }),",
     "tests": [
       "test/characters/bodyMotion/bodymotion_steady.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "DUAL-RUN-the-arms-held",
     "file": "src/characters/bodyMotion/carry.js",
-    "old": "    run: { R: row(-42, 10, 8, -60, 0.4,",
-    "new": "    run: { R: row(-42, 10, 8, -60, 0.1,",
+    "old": "      R: row(-42, 10, 8, -60, 0.4, { blade: dir(0.55, -0.8, 0.3), edge: dir(0.3, -0.14, -0.94), gaitElbow: 0.2 }),",
+    "new": "      R: row(-42, 10, 8, -60, 0.1, { blade: dir(0.55, -0.8, 0.3), edge: dir(0.3, -0.14, -0.94), gaitElbow: 0.2 }),",
     "tests": [
       "test/characters/bodyMotion/bodymotion_steady.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "DUAL-RUN-the-elbow-still",
     "file": "src/characters/bodyMotion/carry.js",
-    "old": "edge: dir(0.3, -0.14, -0.94), gaitElbow: 0.2 }), L:",
-    "new": "edge: dir(0.3, -0.14, -0.94) }), L:",
+    "old": "      R: row(-42, 10, 8, -60, 0.4, { blade: dir(0.55, -0.8, 0.3), edge: dir(0.3, -0.14, -0.94), gaitElbow: 0.2 }),",
+    "new": "      R: row(-42, 10, 8, -60, 0.4, { blade: dir(0.55, -0.8, 0.3), edge: dir(0.3, -0.14, -0.94) }),",
     "tests": [
       "test/characters/bodyMotion/bodymotion_steady.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "RUN-EASE-the-stiff-swing",
     "file": "src/characters/bodyMotion/gait.js",
-    "old": "    lift: 0.18, liftFast: 0.29, land: 0.35,",
-    "new": "    lift: 0.12, liftFast: 0.18, land: 0.35,",
+    "old": "    lift: 0.18,\n    liftFast: 0.29,",
+    "new": "    lift: 0.12,\n    liftFast: 0.18,",
     "tests": [
       "test/characters/bodyMotion/bodymotion_run.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "RUN-EASE-the-stiff-carriage",
     "file": "src/characters/bodyMotion/gait.js",
-    "old": "    height: 0.925, heightFast: 0.9, bob: 0.035, sway: 0.012,",
-    "new": "    height: 0.95, heightFast: 0.93, bob: 0.028, sway: 0.012,",
+    "old": "    height: 0.925,\n    heightFast: 0.9,\n    bob: 0.035,",
+    "new": "    height: 0.95,\n    heightFast: 0.93,\n    bob: 0.028,",
     "tests": [
       "test/characters/bodyMotion/bodymotion_run.test.js"
     ]
