@@ -242,7 +242,6 @@ export function updateAllVitals(rig, cur, dt) {
 let _detector = createVitalsDetector();
 let _rigs = { small: createVitalsRig(), large: createVitalsRig() };
 let _lastLarge = null;
-let _lastFrom = null;   // DUEL-BAR: which health the last frame read (hudHealth's `from`)
 // AUDIT 28 W2d: VitalsChangeDetector.HealthLost as this frame's field -
 // HUDFlickerController reads it off the same detector (:56-58).
 let _lastHealthLost = 0;
@@ -259,20 +258,14 @@ export const lastHealthLostPercent = () => _lastHealthLostPercent;
 export function resetVitalsDetector() { _detector.primed = false; }
 
 /**
- * DUEL-BAR (FIELD BUGS 2026-10-19f; the owner, 2026-10-19: "Bar shows duel vitality"). THE HEALTH THE HUD READS:
- * `bar` - the host's `{ health, maxHealth }`, a duel's referee's vitality (net/duel/duelBar.js duelVitality), handed in
- * while the duel is live - else the entity's own; `from` names which ('referee' | 'save'). Both skins read this one
- * pair (ui/hud/hud.js drawHud: the classic bars and the large HUD's off its snapshot, the enhanced HUD's as `health`),
- * and so does everything drawn off the HUD's health - its trails, the near-death tint, the blow's recoil and the lens.
- * DISPLAY ONLY: nothing here or there writes either. A departure from DFU, whose vitals read PlayerEntity alone
- * (HUDVitals.Update) - DFU has no other player to duel; the arena's bout writes the save's health as its referee's
- * share and heals it (scenes/arena/arenaBouts.js), so it reads the save as it always did.
+ * THE HEALTH THE HUD READS: the entity's own, one pair for both skins (ui/hud/hud.js drawHud: the classic bars and the
+ * large HUD's off its snapshot, the enhanced HUD's as `health`) and everything drawn off it - its trails, the near-death
+ * tint, the blow's recoil and the lens. A duel's count is the player's health (SHARED-HEALTH), so there is no other.
  * @param {any} entity
- * @param {{ health: number, maxHealth: number } | null} [bar]
- * @returns {{ health: number, maxHealth: number, from: 'referee'|'save' }}
+ * @returns {{ health: number, maxHealth: number }}
  */
-export function hudHealth(entity, bar = null) {
-  return bar ? { health: bar.health ?? 0, maxHealth: bar.maxHealth, from: 'referee' } : { health: entity?.health ?? 0, maxHealth: entity?.maxHealth, from: 'save' };
+export function hudHealth(entity) {
+  return { health: entity?.health ?? 0, maxHealth: entity?.maxHealth };
 }
 
 /** The tests' door, and what a fresh boot gets for free. */
@@ -280,7 +273,6 @@ export function _resetHudVitals() {
   _detector = createVitalsDetector();
   _rigs = { small: createVitalsRig(), large: createVitalsRig() };
   _lastLarge = null;
-  _lastFrom = null;
   _lastHealthLost = 0;
   _lastHealthLostPercent = 0;
 }
@@ -297,11 +289,6 @@ export function _resetHudVitals() {
 export function updateHudVitals(isLarge, cur, dt, paused = false) {
   if (_lastLarge !== null && _lastLarge !== isLarge) _detector.primed = false;
   _lastLarge = isLarge;
-  // DUEL-BAR: the health turning to another source (a duel's referee's vitality, the save's again at its end - hudHealth)
-  // is no blow and no heal: the detector primes afresh from it, the large-HUD toggle's ResetVitals (both rigs synchronize)
-  const from = cur.from ?? 'save';
-  if (_lastFrom !== null && _lastFrom !== from) _detector.primed = false;
-  _lastFrom = from;
   const indicators = vitalsIndicatorsEnabled();
   // VitalsChangeDetector.Update - skipped while paused (:68-69).
   _lastHealthLost = 0;

@@ -62,7 +62,7 @@ import { retroScreenRect } from '../../systems/retroMode.js';   // RETRO-UI: the
 import { stepGhost, chunkFrame, GHOST_HOLD } from '../barLoss.js';   // VB2 / FRAME1: a bar's loss (AUDIT NAV1: shared with the sea fight's card)
 import { mountHitNumbers, healNumberFor, showNumber } from '../hitNumbers.js';   // HN1; PARTY-BUFFS: the heal a frame shows
 import { maxRoundsRemaining } from '../hud/hudActiveSpells.js';
-import { hudHealth } from '../hud/hudVitals.js';   // DUEL-BAR: the health the bar reads, drawHud's or the entity's own
+import { hudHealth } from '../hud/hudVitals.js';   // the health the bar reads, drawHud's or the entity's own
 import { liveBundles, canEndBundle, endBundle, endedSpellText } from '../../systems/mysticism.js'; import { shownSpellName } from '../../systems/loot/loot.js';   // PX30: the ONE bundle walk the HUD already uses; BUFF-END: and which of them the player may end; L10N3e: a spell's name as the book shows it
 import { hudText } from '../../systems/notify.js';   // BUFF-END: the ended spell's one line
 import { cursorActive } from '../../player/pointerLock.js';   // BUFF-END: the freed mouse ends a spell
@@ -1248,15 +1248,8 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
   // and my branch returns BEFORE that snapshot is built, so it was
   // reading the raw entity while the classic read the law. The same
   // law, from the same module, is the fix.
-  // DUEL-BAR (FIELD BUGS 2026-10-19f; the owner: "Bar shows duel vitality"): the health is drawHud's (`opts.health`,
-  // ui/hud/hudVitals.js hudHealth) - a duel's referee's vitality while one is live, else the save's. Turned to the other
-  // source, the bar's held loss and its last reading start afresh: the turn is no wound to break off and no heal to float
-  // (the save's heal under a duel is the save's, never shown as the duel's).
+  // The health is drawHud's (`opts.health`, ui/hud/hudVitals.js hudHealth), the same pair the classic bars read.
   const hp = opts.health ?? hudHealth(vitals);
-  if (last.hpFrom !== hp.from) {
-    if (last.hpFrom !== undefined) { delete ghosts.health; for (const c of parts.health.chunks ?? []) stowChunk(c); last.hpSeen = null; }
-    last.hpFrom = hp.from;
-  }
   const rows = [
     ['magicka', parts.magicka, vitals.magicka ?? 0, vitals.maxMagicka || 1],
     ['health', parts.health, hp.health ?? 0, hp.maxHealth || 1],
@@ -1294,7 +1287,7 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
 
   // PARTY-BUFFS: a heal I took - mine, a potion's, a friend's - rises as "+N" off the reticle (hitNumbers.js); one
   // taken under a window is not measured (AUDIT B10: the hidden frame forgets - a rest's restoring is no heal)
-  const hpNow = Number(hp.health ?? 0);   // DUEL-BAR: the bar's own health
+  const hpNow = Number(hp.health ?? 0);   // the bar's own health
   const heal = healNumberFor(last.hpSeen, hpNow);
   if (heal) showNumber(heal);
   last.hpSeen = hpNow;

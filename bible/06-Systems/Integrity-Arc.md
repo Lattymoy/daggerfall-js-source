@@ -936,24 +936,11 @@ Mac, asked on a player's private report - in a duel, their own health bar did no
 bar read the save's health, which a duel never touches, and the referee's vitality stood in a line of its own under the
 battles' readout ("Your vitality: n / m"). **"Bar shows duel vitality."**
 
-RETIRED BY SHARED-HEALTH (2026-10-26, below): the duel's count is the player's health now, so the world host hands
-drawHud no referee's pair and the bar reads the health it always read; neither readout prints "Your vitality" any more.
-What stands of DUEL-BAR is its seam, with no caller: the leaf (duelBar.js:"export function duelVitality") and the HUD's
-one pair below.
-
-- **ONE PAIR, BOTH SKINS.** The HUD reads one health (hudVitals.js:"export function hudHealth"): drawHud's
-  `healthBar` where a host hands one (none does since SHARED-HEALTH), else the save's. The classic
-  bars and the large HUD's draw off its snapshot (hud.js:"const health = hudHealth"), the enhanced HUD's off the pair
-  drawHud hands on (enhancedHud.js:"const hp = opts.health"); and so does everything drawn off the HUD's health - the
-  trails, the near-death tint, the blow's recoil, the lens. The turn each way is no blow and no heal
-  (hudVitals.js:"if (_lastFrom !== null && _lastFrom !== from)"): the detector primes afresh, and the enhanced bar's
-  held loss and its heal reading start again.
-- **THE ARENA IS NOT THIS.** A bout between players on the arena's sand (ARENA4) writes its referee's share into the
-  save's health and its healers come at the end (arenaBouts.js:"MY HEALTH IS THE"), so its bar already fell; it keeps
-  its own law.
-
-Pinned: `test/ui/fb1019f_duelbar.test.js` (the seam read by the real drawHud on both skins, and the host handing it
-nothing); `tools/mutants/duel_bar.json`.
+RETIRED BY SHARED-HEALTH (2026-10-26, below): the duel's count is the player's health now, so the bar reads the health
+it always read and neither readout prints "Your vitality" any more. The seam it left with no caller (`duelVitality`,
+drawHud's `healthBar` and the detector's turn between two sources) was removed in the 2026-10-30 cleanup: the HUD
+reads one health, the entity's own (hudVitals.js:"export function hudHealth"). Its SHARED-HEALTH pin moved to
+`test/net/duel/sharedhealth_duel.test.js`.
 
 ### Decisions (2026-10-26, SHARED-HEALTH)
 
@@ -1001,7 +988,7 @@ healing too - only mid-PvP.
 
 A departure from DFU only in that DFU has no other player; its health is PlayerEntity's alone, which is what the bar
 reads again. Pinned: `test/net/siege/sharedhealth_law.test.js` (the law and the mirror through the races),
-`test/net/int9_wild_ref.test.js`, `test/ui/fb1019f_duelbar.test.js` and `test/net/siege/pvpref_relay.test.js` (each mode
+`test/net/int9_wild_ref.test.js`, `test/net/duel/sharedhealth_duel.test.js` and `test/net/siege/pvpref_relay.test.js` (each mode
 on the real relay); `tools/mutants/shared_health.json`.
 
 ### What lane 2 leaves open

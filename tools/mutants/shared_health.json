@@ -56,7 +56,7 @@
     "new": "Math.round(target) - fighter.hp, sourced",
     "tests": [
       "test/net/siege/sharedhealth_law.test.js",
-      "test/ui/fb1019f_duelbar.test.js"
+      "test/net/duel/sharedhealth_duel.test.js"
     ],
     "note": "A heal outside a fight between players would land as a single point."
   },
@@ -76,7 +76,7 @@
     "old": "healsBlocked: false, kept: async () => {} });   // PVP-HEAL",
     "new": "healsBlocked: true, kept: async () => {} });   // PVP-HEAL",
     "tests": [
-      "test/ui/fb1019f_duelbar.test.js"
+      "test/net/duel/sharedhealth_duel.test.js"
     ],
     "note": "The relay would let a duellist heal once the window passed."
   },
@@ -196,7 +196,7 @@
     "old": "      if (bout) this._duelSay(bout, { t: 'vit', k: 'ask' });",
     "new": "",
     "tests": [
-      "test/ui/fb1019f_duelbar.test.js"
+      "test/net/duel/sharedhealth_duel.test.js"
     ],
     "note": "A duel's counts would never anchor at the fighters' own health."
   },
@@ -206,7 +206,7 @@
     "old": "    this._vitSay(struck.sub, struck.f);   // SHARED-HEALTH: the blow on the struck player's own health",
     "new": "",
     "tests": [
-      "test/ui/fb1019f_duelbar.test.js"
+      "test/net/duel/sharedhealth_duel.test.js"
     ],
     "note": "A duel's blow would never reach the struck player's own health."
   },
