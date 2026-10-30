@@ -44,6 +44,8 @@
 /src/net/iliac/*/
 !/src/net/ketch/
 /src/net/ketch/*/
+!/src/net/raid/
+/src/net/raid/*/
 !/src/net/safety/
 /src/net/safety/*/
 !/src/net/sea/

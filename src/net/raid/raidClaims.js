@@ -39,7 +39,11 @@ export const RAID_SETTLED_KEY = 'raid4.raidSettled';
 export const RAID_SETTLED_MAX = 64;
 /** AUDIT RAID R4: a claim id - sixteen hex digits, the service's RAID_CID_RE. */
 export const RAID_CID_RE = /^[0-9a-f]{16}$/;
-const mintCid = () => { const b = new Uint8Array(8); globalThis.crypto.getRandomValues(b); return [...b].map((x) => x.toString(16).padStart(2, '0')).join(''); };
+const mintCid = () => {
+  const b = new Uint8Array(8);
+  globalThis.crypto.getRandomValues(b);
+  return [...b].map((x) => x.toString(16).padStart(2, '0')).join('');
+};
 /** A receipt's settled key - its raid and account. */
 const settledKeyOf = (c) => `${c.w}|${c.s}`;
 /** The most it keeps - a few days of raids; the oldest go first past this. */
@@ -51,8 +55,10 @@ export const RAID_ME_POLL_MS = 1000;
 
 /** The words. */
 export const RAID_CLAIM_TEXT = Object.freeze({
-  recorded: (n, xp) => `The town will remember you. Towns defended: ${n}.${xp > 0 ? ` +${xp} toward your Renown.` : ''}`,
-  guest: 'This town is not on your record yet: only registered accounts keep one. Add a username this week and it counts.',
+  recorded: (n, xp) =>
+    `The town will remember you. Towns defended: ${n}.${xp > 0 ? ` +${xp} toward your Renown.` : ''}`,
+  guest:
+    'This town is not on your record yet: only registered accounts keep one. Add a username this week and it counts.',
   dayFull: 'You have been counted for every raid one day allows.',
 });
 
@@ -61,8 +67,8 @@ export const RAID_CLAIM_MENDABLE = Object.freeze(['signature', 'verify-threw', '
 
 /** What the account service's answer does to a kept receipt: 'done' (let it go) or 'keep'. */
 export function raidClaimVerdict(answer) {
-  if (answer?.ok) return answer.data?.why === 'guest' ? 'keep' : 'done';   // counted, counted before, the day full
-  if (answer?.error === 'renown-character') return 'done';   // no character to pay - it never will be
+  if (answer?.ok) return answer.data?.why === 'guest' ? 'keep' : 'done'; // counted, counted before, the day full
+  if (answer?.error === 'renown-character') return 'done'; // no character to pay - it never will be
   return answer?.error === 'receipt' && !RAID_CLAIM_MENDABLE.includes(answer.why) ? 'done' : 'keep';
 }
 
@@ -86,41 +92,109 @@ export function raidRecordText(rec) {
  *   `onSpoils` (AUDIT RAID R4) each receipt whose town's thanks the service gave THIS claim; `onMarks` (SILVER-WAYS) the
  *   silver lines a counted claim's answer says (net/marksBook.js claimLines)
  */
-export function createRaidClaims({ claim, store = null, nowS = () => Math.floor(Date.now() / 1000), nowMs = () => Date.now(), say = () => {}, onRecorded = () => {}, onSpoils = () => {}, onMarks = () => null, me = () => null, cid = mintCid }) {
-  let busy = false, again = false, lastAt = -Infinity;
-  let lastMe, meAt = -Infinity;
-  const settled = new Set(), guestSaid = new Set();
+export function createRaidClaims({
+  claim,
+  store = null,
+  nowS = () => Math.floor(Date.now() / 1000),
+  nowMs = () => Date.now(),
+  say = () => {},
+  onRecorded = () => {},
+  onSpoils = () => {},
+  onMarks = () => null,
+  me = () => null,
+  cid = mintCid,
+}) {
+  let busy = false,
+    again = false,
+    lastAt = -Infinity;
+  let lastMe,
+    meAt = -Infinity;
+  const settled = new Set(),
+    guestSaid = new Set();
   let dayFullSaid = false;
-  const live = (r) => { const c = typeof r === 'string' ? readRaidReceipt(r) : null; const t = nowS(); return c && c.signed && (t == null || c.e > t) ? c : null; };   // AUDIT ONLINE2 F2: `nowS` the relay's clock, null unheard
-  const entry = (e) => (e && typeof e === 'object' && live(e.r) && typeof e.ch === 'string' && e.ch && typeof e.cid === 'string' && RAID_CID_RE.test(e.cid) ? e : null);
+  const live = (r) => {
+    const c = typeof r === 'string' ? readRaidReceipt(r) : null;
+    const t = nowS();
+    return c && c.signed && (t == null || c.e > t) ? c : null;
+  }; // AUDIT ONLINE2 F2: `nowS` the relay's clock, null unheard
+  const entry = (e) =>
+    e &&
+    typeof e === 'object' &&
+    live(e.r) &&
+    typeof e.ch === 'string' &&
+    e.ch &&
+    typeof e.cid === 'string' &&
+    RAID_CID_RE.test(e.cid)
+      ? e
+      : null;
   /** AUDIT RAID R4: the device's settled receipts, and one more */
-  const settledHere = () => { let v; try { v = store ? store.get(RAID_SETTLED_KEY) : undefined; } catch { v = undefined; } return Array.isArray(v) ? v.filter((k) => typeof k === 'string') : []; };
-  const markSettled = (c) => { if (!c) return; const list = settledHere().filter((k) => k !== settledKeyOf(c)); try { store?.set(RAID_SETTLED_KEY, [...list, settledKeyOf(c)].slice(-RAID_SETTLED_MAX)); } catch { /* the session's own set holds it */ } };
+  const settledHere = () => {
+    let v;
+    try {
+      v = store ? store.get(RAID_SETTLED_KEY) : undefined;
+    } catch {
+      v = undefined;
+    }
+    return Array.isArray(v) ? v.filter((k) => typeof k === 'string') : [];
+  };
+  const markSettled = (c) => {
+    if (!c) return;
+    const list = settledHere().filter((k) => k !== settledKeyOf(c));
+    try {
+      store?.set(RAID_SETTLED_KEY, [...list, settledKeyOf(c)].slice(-RAID_SETTLED_MAX));
+    } catch {
+      /* the session's own set holds it */
+    }
+  };
   /** R8e: a page's hook that throws is the page's - never the carrier's (it left the receipt unsettled, and the next
    *  offer was answered "claimed") */
-  const hear = (fn, ...args) => { try { fn(...args); } catch (e) { console.warn('[raid] claim hook', e?.message ?? e); } };
+  const hear = (fn, ...args) => {
+    try {
+      fn(...args);
+    } catch (e) {
+      console.warn('[raid] claim hook', e?.message ?? e);
+    }
+  };
   let memory = [];
   function kept() {
     let v;
-    try { v = store ? store.get(RAID_CLAIMS_KEY) : undefined; } catch { v = undefined; }
+    try {
+      v = store ? store.get(RAID_CLAIMS_KEY) : undefined;
+    } catch {
+      v = undefined;
+    }
     return (Array.isArray(v) ? v : v === undefined ? memory : []).filter((e) => entry(e));
   }
-  const keep = (list) => { memory = list; try { store?.set(RAID_CLAIMS_KEY, list); } catch { /* memory holds it */ } };
+  const keep = (list) => {
+    memory = list;
+    try {
+      store?.set(RAID_CLAIMS_KEY, list);
+    } catch {
+      /* memory holds it */
+    }
+  };
 
   async function flush() {
-    if (busy) { again = true; return 0; }
+    if (busy) {
+      again = true;
+      return 0;
+    }
     busy = true;
     lastAt = nowMs();
     let recorded = 0;
     try {
       const list = kept();
-      keep(list);   // the expired go unasked
+      keep(list); // the expired go unasked
       const mine = me();
       for (const e of list) {
-        if (!mine || live(e.r)?.s !== mine) continue;   // another account's waits for its own sign-in
+        if (!mine || live(e.r)?.s !== mine) continue; // another account's waits for its own sign-in
         let answer;
-        try { answer = await claim(e.r, e.ch, e.nm ?? null, e.cid); } catch { answer = { ok: false, error: 'offline' }; }
-        if (answer?.ok && answer.data?.spoils === true) hear(onSpoils, e, answer.data);   // AUDIT RAID R4: the thanks, this claim's
+        try {
+          answer = await claim(e.r, e.ch, e.nm ?? null, e.cid);
+        } catch {
+          answer = { ok: false, error: 'offline' };
+        }
+        if (answer?.ok && answer.data?.spoils === true) hear(onSpoils, e, answer.data); // AUDIT RAID R4: the thanks, this claim's
         if (answer?.ok && answer.data?.recorded === true) {
           recorded++;
           const n = Number.isSafeInteger(answer.data.defended) ? answer.data.defended : null;
@@ -128,7 +202,11 @@ export function createRaidClaims({ claim, store = null, nowS = () => Math.floor(
           if (n != null) say(RAID_CLAIM_TEXT.recorded(n, xp));
           // SILVER-WAYS: the town's silver, the guild's deed and the contracts that paid - the host's lines for them
           let lines = null;
-          try { lines = onMarks(answer.data); } catch (err) { console.warn('[raid] silver lines', err?.message ?? err); }
+          try {
+            lines = onMarks(answer.data);
+          } catch (err) {
+            console.warn('[raid] silver lines', err?.message ?? err);
+          }
           for (const line of Array.isArray(lines) ? lines : [lines]) if (typeof line === 'string' && line) say(line);
           hear(onRecorded, answer.data, e);
         } else if (answer?.ok && answer.data?.why === 'guest' && !guestSaid.has(e.r)) {
@@ -138,10 +216,19 @@ export function createRaidClaims({ claim, store = null, nowS = () => Math.floor(
           dayFullSaid = true;
           say(RAID_CLAIM_TEXT.dayFull);
         }
-        if (raidClaimVerdict(answer) === 'done') { settled.add(e.r); markSettled(live(e.r)); keep(kept().filter((k) => k.r !== e.r)); }
+        if (raidClaimVerdict(answer) === 'done') {
+          settled.add(e.r);
+          markSettled(live(e.r));
+          keep(kept().filter((k) => k.r !== e.r));
+        }
       }
-    } finally { busy = false; }
-    if (again) { again = false; void flush(); }
+    } finally {
+      busy = false;
+    }
+    if (again) {
+      again = false;
+      void flush();
+    }
     return recorded;
   }
 
@@ -151,11 +238,28 @@ export function createRaidClaims({ claim, store = null, nowS = () => Math.floor(
      *  Answers whether it is kept. */
     add(r, character, name = null, level = 1, held = false) {
       const c = live(r);
-      if (!c || settled.has(r) || settledHere().includes(settledKeyOf(c)) || typeof character !== 'string' || !character) return false;
+      if (
+        !c ||
+        settled.has(r) ||
+        settledHere().includes(settledKeyOf(c)) ||
+        typeof character !== 'string' ||
+        !character
+      )
+        return false;
       const list = kept();
-      if (!list.some((k) => { const o = readRaidReceipt(k.r); return k.r === r || (o?.w === c.w && o?.s === c.s); })) {
+      if (
+        !list.some((k) => {
+          const o = readRaidReceipt(k.r);
+          return k.r === r || (o?.w === c.w && o?.s === c.s);
+        })
+      ) {
         const lv = Math.max(1, Math.floor(Number(level) || 1));
-        keep([...list, { r, ch: character, nm: typeof name === 'string' ? name : null, lv, cid: cid(), hd: held === true }].slice(-RAID_CLAIMS_MAX));   // AUDIT WORLD-EVENTS L3-14: `hd` the town held, as the receipt came (RAID5 - its thanks the richer)
+        keep(
+          [
+            ...list,
+            { r, ch: character, nm: typeof name === 'string' ? name : null, lv, cid: cid(), hd: held === true },
+          ].slice(-RAID_CLAIMS_MAX),
+        ); // AUDIT WORLD-EVENTS L3-14: `hd` the town held, as the receipt came (RAID5 - its thanks the richer)
       }
       void flush();
       return true;
@@ -164,13 +268,18 @@ export function createRaidClaims({ claim, store = null, nowS = () => Math.floor(
      *  of a session at once, and the first after another account signs in. */
     tick() {
       if (busy) return false;
-      const t = nowMs(), due = t - lastAt >= RAID_CLAIM_RETRY_MS;
+      const t = nowMs(),
+        due = t - lastAt >= RAID_CLAIM_RETRY_MS;
       if (!due && t - meAt < RAID_ME_POLL_MS) return false;
       meAt = t;
-      const mine = me(), signedIn = mine !== lastMe;
+      const mine = me(),
+        signedIn = mine !== lastMe;
       lastMe = mine;
       if (!signedIn && !due) return false;
-      if (!kept().some((e) => mine && live(e.r)?.s === mine)) { lastAt = nowMs(); return false; }
+      if (!kept().some((e) => mine && live(e.r)?.s === mine)) {
+        lastAt = nowMs();
+        return false;
+      }
       void flush();
       return true;
     },

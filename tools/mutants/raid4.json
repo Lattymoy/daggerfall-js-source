@@ -138,8 +138,8 @@
   {
     "name": "RAID4-carrier-character-dropped",
     "file": "src/net/raid/raidClaims.js",
-    "old": "{ r, ch: character, nm: typeof name",
-    "new": "{ r, ch: String(character).slice(1), nm: typeof name",
+    "old": "            { r, ch: character, nm: typeof name === 'string' ? name : null, lv, cid: cid(), hd: held === true },",
+    "new": "            {\n              r,\n              ch: String(character).slice(1),\n              nm: typeof name === 'string' ? name : null,\n              lv,\n              cid: cid(),\n              hd: held === true,\n            },",
     "tests": [
       "test/net/raid4_rewards.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "RAID4-carrier-unsigned-kept",
     "file": "src/net/raid/raidClaims.js",
-    "old": "return c && c.signed && (t == null || c.e > t) ? c : null;",
-    "new": "return c && (t == null || c.e > t) ? c : null;",
+    "old": "    return c && c.signed && (t == null || c.e > t) ? c : null;",
+    "new": "    return c && (t == null || c.e > t) ? c : null;",
     "tests": [
       "test/net/raid4_rewards.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "RAID4-carrier-guest-let-go",
     "file": "src/net/raid/raidClaims.js",
-    "old": "  if (answer?.ok) return answer.data?.why === 'guest' ? 'keep' : 'done';",
-    "new": "  if (answer?.ok) return 'done';",
+    "old": "  if (answer?.ok) return answer.data?.why === 'guest' ? 'keep' : 'done'; // counted, counted before, the day full",
+    "new": "  if (answer?.ok) return 'done'; // counted, counted before, the day full",
     "tests": [
       "test/net/raid4_rewards.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "RAID4-carrier-retry-ignored",
     "file": "src/net/raid/raidClaims.js",
-    "old": "due = t - lastAt >= RAID_CLAIM_RETRY_MS;",
-    "new": "due = false && t - lastAt >= RAID_CLAIM_RETRY_MS;",
+    "old": "        due = t - lastAt >= RAID_CLAIM_RETRY_MS;",
+    "new": "        due = false && t - lastAt >= RAID_CLAIM_RETRY_MS;",
     "tests": [
       "test/net/raid4_rewards.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "RAID4-carrier-other-account",
     "file": "src/net/raid/raidClaims.js",
-    "old": "        if (!mine || live(e.r)?.s !== mine) continue;",
-    "new": "        if (!mine) continue;",
+    "old": "        if (!mine || live(e.r)?.s !== mine) continue; // another account's waits for its own sign-in",
+    "new": "        if (!mine) continue; // another account's waits for its own sign-in",
     "tests": [
       "test/net/raid4_rewards.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "RAID4-carrier-mendable",
     "file": "src/net/raid/raidClaims.js",
-    "old": "answer?.error === 'receipt' && !RAID_CLAIM_MENDABLE.includes(answer.why) ? 'done' : 'keep';",
-    "new": "answer?.error === 'receipt' ? 'done' : 'keep';",
+    "old": "  return answer?.error === 'receipt' && !RAID_CLAIM_MENDABLE.includes(answer.why) ? 'done' : 'keep';",
+    "new": "  return answer?.error === 'receipt' ? 'done' : 'keep';",
     "tests": [
       "test/net/raid4_rewards.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "RAID4-carrier-unbounded",
     "file": "src/net/raid/raidClaims.js",
-    "old": ".slice(-RAID_CLAIMS_MAX));",
-    "new": ".slice(0));",
+    "old": "          ].slice(-RAID_CLAIMS_MAX),",
+    "new": "          ].slice(0),",
     "tests": [
       "test/net/raid4_rewards.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "RAID4-carrier-renown-unheard",
     "file": "src/net/raid/raidClaims.js",
-    "old": "          hear(onRecorded, answer.data, e);\n",
-    "new": "",
+    "old": "          hear(onRecorded, answer.data, e);\n        } else if (answer?.ok && answer.data?.why === 'guest' && !guestSaid.has(e.r)) {",
+    "new": "        } else if (answer?.ok && answer.data?.why === 'guest' && !guestSaid.has(e.r)) {",
     "tests": [
       "test/net/raid4_rewards.test.js"
     ]

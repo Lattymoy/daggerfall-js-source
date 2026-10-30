@@ -252,8 +252,8 @@
   {
     "name": "SILVER-WAYS-cli-raid-lines-unsaid",
     "file": "src/net/raid/raidClaims.js",
-    "old": "          for (const line of Array.isArray(lines) ? lines : [lines]) if (typeof line === 'string' && line) say(line);\n",
-    "new": "",
+    "old": "          for (const line of Array.isArray(lines) ? lines : [lines]) if (typeof line === 'string' && line) say(line);\n          hear(onRecorded, answer.data, e);",
+    "new": "          hear(onRecorded, answer.data, e);",
     "tests": [
       "test/net/silverways_client.test.js"
     ]

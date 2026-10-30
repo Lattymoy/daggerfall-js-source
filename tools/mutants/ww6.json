@@ -2,7 +2,7 @@
   {
     "name": "WW6-key-region-99",
     "file": "src/net/raid/raidLaw.js",
-    "old": "export const RAID_KEY_RE = /^(?:(?:0|[1-5]?\\d|6[01]):(?:0|[1-9]\\d{0,3})|(?:6[2-9]|70):-[1-9]\\d{0,7}):(?:0|[1-9]\\d{0,6})$/;",
+    "old": "export const RAID_KEY_RE =\n  /^(?:(?:0|[1-5]?\\d|6[01]):(?:0|[1-9]\\d{0,3})|(?:6[2-9]|70):-[1-9]\\d{0,7}):(?:0|[1-9]\\d{0,6})$/;",
     "new": "export const RAID_KEY_RE = /^(?:0|[1-9]\\d?):(?:0|[1-9]\\d{0,3}):(?:0|[1-9]\\d{0,6})$/;",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js",
@@ -12,8 +12,8 @@
   {
     "name": "WW6-key-province-bay-location",
     "file": "src/net/raid/raidLaw.js",
-    "old": "|(?:6[2-9]|70):-[1-9]\\d{0,7}):",
-    "new": "|(?:6[2-9]|70):-?[1-9]\\d{0,7}):",
+    "old": "  /^(?:(?:0|[1-5]?\\d|6[01]):(?:0|[1-9]\\d{0,3})|(?:6[2-9]|70):-[1-9]\\d{0,7}):(?:0|[1-9]\\d{0,6})$/;",
+    "new": "  /^(?:(?:0|[1-5]?\\d|6[01]):(?:0|[1-9]\\d{0,3})|(?:6[2-9]|70):-?[1-9]\\d{0,7}):(?:0|[1-9]\\d{0,6})$/;",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js",
       "test/server/townecon_service.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "WW6-key-bay-negative",
     "file": "src/net/raid/raidLaw.js",
-    "old": "(?:(?:0|[1-5]?\\d|6[01]):(?:0|[1-9]\\d{0,3})|",
-    "new": "(?:(?:0|[1-5]?\\d|6[01]):-?(?:0|[1-9]\\d{0,3})|",
+    "old": "  /^(?:(?:0|[1-5]?\\d|6[01]):(?:0|[1-9]\\d{0,3})|(?:6[2-9]|70):-[1-9]\\d{0,7}):(?:0|[1-9]\\d{0,6})$/;",
+    "new": "  /^(?:(?:0|[1-5]?\\d|6[01]):-?(?:0|[1-9]\\d{0,3})|(?:6[2-9]|70):-[1-9]\\d{0,7}):(?:0|[1-9]\\d{0,6})$/;",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js",
       "test/server/townecon_service.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "WW6-key-region-71",
     "file": "src/net/raid/raidLaw.js",
-    "old": "|(?:6[2-9]|70):-[1-9]",
-    "new": "|(?:6[2-9]|7[01]):-[1-9]",
+    "old": "  /^(?:(?:0|[1-5]?\\d|6[01]):(?:0|[1-9]\\d{0,3})|(?:6[2-9]|70):-[1-9]\\d{0,7}):(?:0|[1-9]\\d{0,6})$/;",
+    "new": "  /^(?:(?:0|[1-5]?\\d|6[01]):(?:0|[1-9]\\d{0,3})|(?:6[2-9]|7[01]):-[1-9]\\d{0,7}):(?:0|[1-9]\\d{0,6})$/;",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
     ]
@@ -41,8 +41,8 @@
   {
     "name": "WW6-sig-bay-pixel",
     "file": "src/net/raid/raidLaw.js",
-    "old": "export const RAID_SIG_RE = /^\\d{1,11}\\.\\d{1,2}\\.\\d\\.-?\\d{1,4}\\.-?\\d{1,4}$/;",
-    "new": "export const RAID_SIG_RE = /^\\d{1,11}\\.\\d{1,2}\\.\\d\\.\\d{1,3}\\.\\d{1,3}$/;",
+    "old": "export const RAID_SIG_RE = /^\\d{1,11}\\.\\d{1,2}\\.\\d\\.-?\\d{1,4}\\.-?\\d{1,4}$/; // the start reaches eleven digits at the key's last day; WW6: the town's pixel the world's (RAID_PIXEL_BOUND - four digits, either side of the Bay's corner)",
+    "new": "export const RAID_SIG_RE = /^\\d{1,11}\\.\\d{1,2}\\.\\d\\.\\d{1,3}\\.\\d{1,3}$/; // the start reaches eleven digits at the key's last day; WW6: the town's pixel the world's (RAID_PIXEL_BOUND - four digits, either side of the Bay's corner)",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
     ]
@@ -50,8 +50,8 @@
   {
     "name": "WW6-lane-off-by-one",
     "file": "src/net/raid/raidLaw.js",
-    "old": "n < RAID_BAY_REGIONS ? 0 : n - (RAID_BAY_REGIONS - 1);",
-    "new": "n < RAID_BAY_REGIONS ? 0 : n - RAID_BAY_REGIONS;",
+    "old": "  return n < 0 || n >= RAID_REGION_COUNT ? -1 : n < RAID_BAY_REGIONS ? 0 : n - (RAID_BAY_REGIONS - 1);",
+    "new": "  return n < 0 || n >= RAID_REGION_COUNT ? -1 : n < RAID_BAY_REGIONS ? 0 : n - RAID_BAY_REGIONS;",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
     ]
@@ -59,8 +59,8 @@
   {
     "name": "WW6-zone-open",
     "file": "src/net/raid/raidLaw.js",
-    "old": " && /** @type {number} */ (lane) < RAID_LANES && lane !== RAID_ZONE_LANE;",
-    "new": " && /** @type {number} */ (lane) < RAID_LANES;",
+    "old": "  Number.isInteger(lane) &&\n  /** @type {number} */ (lane) >= 0 &&\n  /** @type {number} */ (lane) < RAID_LANES &&\n  lane !== RAID_ZONE_LANE;",
+    "new": "  Number.isInteger(lane) && /** @type {number} */ (lane) >= 0 && /** @type {number} */ (lane) < RAID_LANES;",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
     ]
@@ -77,8 +77,8 @@
   {
     "name": "WW6-side-bay-any",
     "file": "src/net/raid/raidLaw.js",
-    "old": "  return lane === 0 ? onBayMap(w.px, w.py) :",
-    "new": "  return lane === 0 ? true :",
+    "old": "  return lane === 0 ? onBayMap(w.px, w.py) : worldPixel(w.px) && worldPixel(w.py) && !onBayMap(w.px, w.py);",
+    "new": "  return lane === 0 ? true : worldPixel(w.px) && worldPixel(w.py) && !onBayMap(w.px, w.py);",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
     ]
@@ -86,8 +86,8 @@
   {
     "name": "WW6-side-past-any",
     "file": "src/net/raid/raidLaw.js",
-    "old": ": worldPixel(w.px) && worldPixel(w.py) && !onBayMap(w.px, w.py);",
-    "new": ": worldPixel(w.px) && worldPixel(w.py);",
+    "old": "  return lane === 0 ? onBayMap(w.px, w.py) : worldPixel(w.px) && worldPixel(w.py) && !onBayMap(w.px, w.py);",
+    "new": "  return lane === 0 ? onBayMap(w.px, w.py) : worldPixel(w.px) && worldPixel(w.py);",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
     ]
@@ -95,8 +95,8 @@
   {
     "name": "WW6-lane-stirs-bay",
     "file": "src/net/raid/raidLaw.js",
-    "old": "^ Math.imul(lane | 0, RAID_LANE_SALT)) >>> 0;",
-    "new": "^ Math.imul((lane | 0) + 1, RAID_LANE_SALT)) >>> 0;",
+    "old": "    ((day * 7919) ^ RAID_DAY_SEED ^ Math.imul(RAID_DAY_SALT, 0x9e3779b1) ^ Math.imul(lane | 0, RAID_LANE_SALT)) >>> 0;",
+    "new": "    ((day * 7919) ^\n      RAID_DAY_SEED ^\n      Math.imul(RAID_DAY_SALT, 0x9e3779b1) ^\n      Math.imul((lane | 0) + 1, RAID_LANE_SALT)) >>>\n    0;",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
     ]
@@ -104,8 +104,8 @@
   {
     "name": "WW6-lanes-one-generator",
     "file": "src/net/raid/raidLaw.js",
-    "old": "^ Math.imul(lane | 0, RAID_LANE_SALT)) >>> 0;",
-    "new": ") >>> 0;",
+    "old": "  let a =\n    ((day * 7919) ^ RAID_DAY_SEED ^ Math.imul(RAID_DAY_SALT, 0x9e3779b1) ^ Math.imul(lane | 0, RAID_LANE_SALT)) >>> 0;",
+    "new": "  let a = ((day * 7919) ^ RAID_DAY_SEED ^ Math.imul(RAID_DAY_SALT, 0x9e3779b1)) >>> 0;",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
     ]
@@ -113,8 +113,8 @@
   {
     "name": "WW6-parties-black-marsh-orcs",
     "file": "src/net/raid/raidLaw.js",
-    "old": "[1, 2], [1], [1], []]",
-    "new": "[1, 2], [1], [1, 2], []]",
+    "old": "  [[0, 1, 2], [0, 1, 2], [1], [1], [0, 1], [0, 1], [1, 2], [1], [1], []].map((l) => Object.freeze(l)),",
+    "new": "  [[0, 1, 2], [0, 1, 2], [1], [1], [0, 1], [0, 1], [1, 2], [1], [1, 2], []].map((l) => Object.freeze(l)),",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
     ]
@@ -122,8 +122,8 @@
   {
     "name": "WW6-parties-bay-narrowed",
     "file": "src/net/raid/raidLaw.js",
-    "old": "Object.freeze([[0, 1, 2], [0, 1, 2],",
-    "new": "Object.freeze([[0, 1], [0, 1, 2],",
+    "old": "  [[0, 1, 2], [0, 1, 2], [1], [1], [0, 1], [0, 1], [1, 2], [1], [1], []].map((l) => Object.freeze(l)),",
+    "new": "  [[0, 1], [0, 1, 2], [1], [1], [0, 1], [0, 1], [1, 2], [1], [1], []].map((l) => Object.freeze(l)),",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
     ]
@@ -131,8 +131,8 @@
   {
     "name": "WW6-roll-parties-unread",
     "file": "src/net/raid/raidLaw.js",
-    "old": "    const ty = parties[rangeInt(0, parties.length, random)];   // WW6: the lane's parties",
-    "new": "    const ty = rangeInt(0, RAID_TYPES, random);   // WW6: the lane's parties",
+    "old": "    const ty = parties[rangeInt(0, parties.length, random)]; // WW6: the lane's parties - the Bay's three are rangeInt(0, RAID_TYPES)'s own draw",
+    "new": "    const ty = rangeInt(0, RAID_TYPES, random); // WW6: the lane's parties - the Bay's three are rangeInt(0, RAID_TYPES)'s own draw",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
     ]
@@ -140,8 +140,8 @@
   {
     "name": "WW6-slots-parties-unread",
     "file": "src/net/raid/raidLaw.js",
-    "old": "    const ty = parties[rangeInt(0, parties.length, random)];\n    const tg = rangeInt(RAID_TARGET_MIN, RAID_TARGET_MAX + 1, random);\n    out.add(",
-    "new": "    const ty = rangeInt(0, RAID_TYPES, random);\n    const tg = rangeInt(RAID_TARGET_MIN, RAID_TARGET_MAX + 1, random);\n    out.add(",
+    "old": "    const st = day * RAID_DAY_MINUTES + rangeInt(0, RAID_START_LAST + 1, random);\n    const ty = parties[rangeInt(0, parties.length, random)];\n    const tg = rangeInt(RAID_TARGET_MIN, RAID_TARGET_MAX + 1, random);",
+    "new": "    const st = day * RAID_DAY_MINUTES + rangeInt(0, RAID_START_LAST + 1, random);\n    const ty = rangeInt(0, RAID_TYPES, random);\n    const tg = rangeInt(RAID_TARGET_MIN, RAID_TARGET_MAX + 1, random);",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
     ]
@@ -149,8 +149,8 @@
   {
     "name": "WW6-slots-zone-drawn",
     "file": "src/net/raid/raidLaw.js",
-    "old": "  if (!raidLaneStands(day, lane) || !parties.length) return out;   // FRONTS: a province off its turn rolls no slot\n",
-    "new": "",
+    "old": "  if (!raidLaneStands(day, lane) || !parties.length) return out; // FRONTS: a province off its turn rolls no slot\n  for (let l = 0; l < RAID_SLOTS_MAX; l++) {",
+    "new": "  for (let l = 0; l < RAID_SLOTS_MAX; l++) {",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
     ]
@@ -158,8 +158,8 @@
   {
     "name": "WW6-slots-bay-generator",
     "file": "src/net/raid/raidLaw.js",
-    "old": "  const random = raidDayRandom(day, lane), parties = raidLaneParties(lane), out = new Set();",
-    "new": "  const random = raidDayRandom(day), parties = raidLaneParties(lane), out = new Set();",
+    "old": "  const random = raidDayRandom(day, lane),",
+    "new": "  const random = raidDayRandom(day),",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
     ]
@@ -176,7 +176,7 @@
   {
     "name": "WW6-area-dropped",
     "file": "src/net/raid/raidLaw.js",
-    "old": "    out.push(Number.isInteger(g.area) ? { region: g.region, area: g.area, town, st, ty, tg } : { region: g.region, town, st, ty, tg });",
+    "old": "    out.push(\n      Number.isInteger(g.area)\n        ? { region: g.region, area: g.area, town, st, ty, tg }\n        : { region: g.region, town, st, ty, tg },\n    );",
     "new": "    out.push({ region: g.region, town, st, ty, tg });",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
@@ -185,8 +185,8 @@
   {
     "name": "WW6-area-not-carried",
     "file": "src/net/raid/raidLaw.js",
-    "old": "({ region: g.region, area: g.area, towns: [...g.towns] })",
-    "new": "({ region: g.region, towns: [...g.towns] })",
+    "old": "  const lists = (regions ?? []).map((g) => ({ region: g.region, area: g.area, towns: [...g.towns] }));",
+    "new": "  const lists = (regions ?? []).map((g) => ({ region: g.region, towns: [...g.towns] }));",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
     ]
