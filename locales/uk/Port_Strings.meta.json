@@ -3114,6 +3114,16 @@
   "tr": "64e143018a99",
   "by": "claude-in-session"
  },
+ "menu.autoUpdates.name": {
+  "en": "1e138bf814eb",
+  "tr": "8570c1ed4aa6",
+  "by": "claude-in-session"
+ },
+ "menu.autoUpdates.note": {
+  "en": "4541de510f7f",
+  "tr": "edc2e4138be0",
+  "by": "claude-in-session"
+ },
  "menu.home.back": {
   "en": "b52b36b7269f",
   "tr": "f6dab074d7bb",
@@ -3732,6 +3742,11 @@
  "net.update.build": {
   "en": "f1068141ad9f",
   "tr": "2d13a48cb9c6",
+  "by": "claude-in-session"
+ },
+ "net.update.buildReady": {
+  "en": "b489ad1935f5",
+  "tr": "3dc17ef4410f",
   "by": "claude-in-session"
  },
  "net.update.button": {
@@ -5314,6 +5329,11 @@
   "tr": "6785836dc6db",
   "by": "claude-in-session"
  },
+ "technique.noSignature": {
+  "en": "512147f4746c",
+  "tr": "7914019b6510",
+  "by": "claude-in-session"
+ },
  "town.econ.area.crownHeld": {
   "en": "d931fe766a2a",
   "tr": "3141dd2e9506",
@@ -5457,6 +5477,11 @@
  "town.econ.trend.rising": {
   "en": "26b01983c6f4",
   "tr": "1d11bb1c236d",
+  "by": "claude-in-session"
+ },
+ "town.home.trader": {
+  "en": "e4224318b32c",
+  "tr": "df1c9425025c",
   "by": "claude-in-session"
  },
  "town.panel.new": {

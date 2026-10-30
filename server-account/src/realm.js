@@ -943,6 +943,7 @@ export async function deleteRealm({ db, bucket, nowS = Math.floor(Date.now() / 1
       AND h.building_key = decor_access.building_key AND h.player = ? AND h.char_id = ?)`).bind(playerId, id),
     db.prepare('DELETE FROM homes WHERE player = ? AND char_id = ?').bind(playerId, id),
     db.prepare('DELETE FROM guild_members WHERE player = ? AND char_id = ?').bind(playerId, id),
+    db.prepare('DELETE FROM guild_requests WHERE player = ? AND char_id = ?').bind(playerId, id),   // AUDIT GUILD-RANKS B3: its requests to join
     db.prepare('DELETE FROM renown_tracks WHERE player = ? AND char_id = ?').bind(playerId, id),
     db.prepare('DELETE FROM prof_stores WHERE player = ? AND char_id = ?').bind(playerId, id),   // PROF-DELETE
     db.prepare('DELETE FROM prof_tracks WHERE player = ? AND char_id = ?').bind(playerId, id),   // PROF-DELETE

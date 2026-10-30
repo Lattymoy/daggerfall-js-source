@@ -18,6 +18,12 @@ import { CAPSULE_HEIGHT } from '../player/motor.js';
 import { mwViewBodyBones, mwViewSpriteFigure, mwViewSpriteFacing } from '../player/mwView.js';
 import { ownAura, ownArmory } from '../systems/ownGlyphs.js';
 import { getPref } from '../systems/uiPrefs.js';
+import { armoryKitPieces } from '../net/armoryLaw.js';
+import { guildArmsOf, ownGuildArms, setPeerTagReader, setPeerClothReader } from '../net/guild/guildArmsBook.js';   // GUILD-SHOP: the Insignia Armlet wears its wearer's guild's arms
+
+/** GUILD-SHOP: the arms a kit's Insignia Armlet wears - its wearer's guild's (`tag`, the token's), or null for none; a kit
+ *  without the armlet reads none, so no guild is asked of for it. Pure but for the arms book's ask. */
+export const armletArmsOf = (/** @type {unknown} */ kit, /** @type {unknown} */ tag) => (armoryKitPieces(kit).arms === 'insigniaarmlet' ? guildArmsOf(tag) : null);
 
 /** ARMORY: the "Others' armory" choice (systems/features.js 'armory-others') - every peer's pieces, those within this many
  *  metres, or none. One's own always draws. */
@@ -36,6 +42,14 @@ export function armoryLayers(/** @type {any[]} */ kits, /** @type {any[]} */ aur
   return under;
 }
 
+/** CAPE-CARD (2026-10-30): what the first sprite layer that draws peer `id` answers to `ask` ('figureOf', 'faceOf') - each
+ *  layer draws a peer as a picture on a card (the Eye of the Beholder walkers and riders, the paperdolls and class
+ *  sprites), and a peer stands in one at most. `eye` the camera the answer is for. Pure. */
+export const spriteAnswer = (/** @type {any[]} */ layers, /** @type {string} */ ask, /** @type {string} */ id, /** @type {any} */ eye = null) => {
+  for (const l of layers) { const a = l?.[ask]?.(id, eye); if (a) return a; }
+  return null;
+};
+
 /** AURA-ON-DRAGON: feet `f` lifted `lift` metres. Pure but for `f`. */
 const liftedFeet = (/** @type {number[]} */ f, /** @type {number} */ lift) => { f[1] += lift; return f; };
 
@@ -47,7 +61,7 @@ export const auraSeedOf = (/** @type {string} */ id) => { let h = 2166136261; fo
  * @param {{
  *   renderer: any, online: () => any, travelActive: () => boolean, quiet: () => boolean, player: () => any, camYaw: () => number,
  *   spawned: () => boolean, beast: () => boolean, veiled: (id: string) => boolean, toScene: (shown: any) => number[],
- *   walkers: () => any, riders: () => any, bodies: () => any, selfLift?: () => number, peerLift?: (d: any) => number,
+ *   sprites: () => any[], bodies: () => any, selfLift?: () => number, peerLift?: (d: any) => number,
  * }} deps
  */
 export function createAuraHost(deps) {
@@ -64,6 +78,8 @@ export function createAuraHost(deps) {
   // AURA-STALL (bible/07-Rendering/Performance-Priority.md): built at the first wearer in range, each look's program at its
   // own door; a throw costs the auras, never the game. The armory's pass the same.
   const auraPassOf = compiledPass(renderer.gl, [], () => new AuraRingRenderer(renderer.gl), (/** @type {any} */ e) => console.warn('[online] the aura would not build', e?.message ?? e));
+  setPeerTagReader((id) => deps.online()?.guildTagOf?.(id) ?? null);   // GUILD-SHOP: a peer's guild, for their boats' sailcloth
+  setPeerClothReader((id) => deps.online()?.sailclothOf?.(id) === true);   // AUDIT GUILD-SHOP S2: and whether the sailcloth is theirs
   const armoryPassOf = compiledPass(renderer.gl, [], () => new ArmoryRenderer(renderer.gl), (/** @type {any} */ e) => console.warn('[online] the armory would not build', e?.message ?? e));
   const fogNow = () => ({ mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, camPos: renderer._camPos, focus: renderer._focus, haze: renderer._haze });
   /** ARMORY-SEEN: one layer of the frame's pieces (armoryLayers), under the frame's camera. */
@@ -99,13 +115,13 @@ export function createAuraHost(deps) {
   }
   /** A peer's pose as drawn - its Morrowind body's bones (peerBodies.bonesOf answers `{ feet, yaw, bones }`: the body stands
    *  the wearer where it is drawn, as the cape's auraCapeStep does), its sprite's figure, or the rest pose (a rider's saddled). */
-  function peerPose(/** @type {string} */ id, /** @type {any} */ w) {
+  function peerPose(/** @type {string} */ id, /** @type {any} */ w, /** @type {any[]} */ layers) {
     const body = deps.bodies()?.bonesOf?.(id, ARMORY_BONES);
     if (body && poseFromBones(body.bones, w.pose)) {
       if (body.feet && Number.isFinite(body.yaw)) { w.at[0] = body.feet[0]; w.at[1] = body.feet[1]; w.at[2] = body.feet[2]; w.yaw = body.yaw; }
       return;
     }
-    if (poseFromFigure(deps.walkers()?.figureOf?.(id) ?? deps.riders()?.figureOf?.(id), w.pose)) return;
+    if (poseFromFigure(spriteAnswer(layers, 'figureOf', id), w.pose)) return;
     poseAtRest(w.pose, 1, w.mounted);
   }
   /** Whether a peer's pieces are drawn at all, by the player's "Others' armory" choice. */
@@ -126,7 +142,7 @@ export function createAuraHost(deps) {
       const online = deps.online();
       if (!online || deps.travelActive()) return;
       if (deps.quiet()) return;   // EG-E2 (Elite-Gates.md section 25.4, THE QUIET COMPANY): no cosmetic aura during a Spire's trial
-      const t = performance.now() / 1000, player = deps.player(), walkers = deps.walkers(), riders = deps.riders();
+      const t = performance.now() / 1000, player = deps.player(), layers = deps.sprites(), eye = renderer._camPos;   // CAPE-CARD: every sprite layer, and the eye their pictures face
       const vw = renderer._view, right = vw ? [vw[0], vw[4], vw[8]] : null;   // the view's right, a sprite's feet off it (the draw's)
       // the service's last word on my own - a mint's, a wear's from any door; AURA-LIVE: one the room's token did not say is
       // said again, so the room sees it now. ARMORY: and the kit the same
@@ -149,6 +165,7 @@ export function createAuraHost(deps) {
         if (selfKit.kit !== kit) selfKit.since = t;
         selfKit.at[0] = f[0]; selfKit.at[1] = f[1]; selfKit.at[2] = f[2]; selfKit.kit = kit; selfKit.yaw = faced?.yaw ?? player.bodyYawFor(deps.camYaw());
         selfKit.kindle = Math.min(1, (t - selfKit.since) / AURA_KINDLE_S); /** @type {any} */ (selfKit).mounted = !!player.riding || lift > 0; selfKit.torn = deps.beast() ? 1 : -1;
+        /** @type {any} */ (selfKit).arms = armoryKitPieces(kit).arms === 'insigniaarmlet' ? ownGuildArms() : null;   // GUILD-SHOP
         armoryList.push(selfKit);   // FOLLOW-NOW: placed, posed and stepped at the draw (draw's placeSelf)
       } else selfKit.kit = null;
       for (const d of seen) {
@@ -157,8 +174,8 @@ export function createAuraHost(deps) {
         if (!au) auraPool.delete(d.id);
         if (!ak) armoryPool.delete(d.id);
         if (!au && !ak) continue;
-        const p = deps.toScene(d.shown), up = deps.peerLift?.(d) || 0;   // AURA-ON-DRAGON: a dragon's rider wears them in its seat
-        const face = (walkers?.faceOf?.(d.id) ?? riders?.faceOf?.(d.id))?.yaw ?? peerBodyYaw(d.shown) ?? 0;   // SPRITE-FACE: a sprite's as its picture is drawn this frame
+        const seenAs = spriteAnswer(layers, 'faceOf', d.id, eye), p = seenAs?.at ?? deps.toScene(d.shown), up = deps.peerLift?.(d) || 0;   // AURA-ON-DRAGON: a dragon's rider wears them in its seat; AUDIT CAPE-CARD A4: at its picture's own feet (a seated doll sinks)
+        const face = seenAs?.yaw ?? peerBodyYaw(d.shown) ?? 0;   // SPRITE-FACE: a sprite's as its picture is drawn this frame; CAPE-CARD: a paperdoll's and a class sprite's too
         if (au) {
           let w = auraPool.get(d.id);
           if (!w || w.aura !== au) { w = { id: d.id, at: [0, 0, 0], aura: au, seed: auraSeedOf(d.id), kindle: 0, since: t }; auraPool.set(d.id, w); }
@@ -171,7 +188,8 @@ export function createAuraHost(deps) {
           if (!w || w.kit !== ak) { w = { id: d.id, at: [0, 0, 0], kit: ak, seed: auraSeedOf(d.id), kindle: 0, since: t, pose: newPose(), torn: -1 }; armoryPool.set(d.id, w); }
           w.at[0] = p[0]; w.at[1] = p[1] + up; w.at[2] = p[2]; w.yaw = face; w.mounted = !!d.shown.rd; w.torn = d.shown.wb ? 1 : -1;
           w.kindle = Math.min(1, (t - w.since) / AURA_KINDLE_S); w.seen = t;
-          peerPose(d.id, w); armoryMotionStep(w, t, right);
+          w.arms = armletArmsOf(ak, online.guildTagOf?.(d.id));   // GUILD-SHOP: the arms their token's guild bears
+          peerPose(d.id, w, layers); armoryMotionStep(w, t, right);
           armoryList.push(w);
         }
       }
@@ -185,11 +203,12 @@ export function createAuraHost(deps) {
       placeSelf(now);
       if (!(proj && view && eye && auraList.length && auraWearers(auraList, eye, auraDraw).length)) auraDraw.length = 0;
       if (auraDraw.length) {
-        const player = deps.player(), walkers = deps.walkers(), riders = deps.riders(), faced = mwViewSpriteFacing();
+        const player = deps.player(), layers = deps.sprites(), faced = mwViewSpriteFacing();
         // SHADOW-CLOAK: each cape hung on its body as drawn this frame - its bones posed by now (mine, or a peer's), else at
         // rest, crouched with a crouch - and swung by how it moves where it is drawn; SPRITE-FACE: a sprite's faced as its
-        // PICTURE is, in the saddle too, and swung by the way the body turns (`turn`)
-        for (const w of auraDraw) if (auraLookOf(w.aura).mesh) { auraCapeStep(w, w === self ? { feet: liftedFeet(player.bodyFeetAt(), selfLiftNow), yaw: faced?.yaw ?? player.bodyYawFor(deps.camYaw()), turn: faced?.turn, bones: selfLiftNow > 0 ? null : mwViewBodyBones(CLOAK_BONES) ?? auraSpriteBones(mwViewSpriteFigure()) } : deps.bodies()?.bonesOf(w.id, CLOAK_BONES) ?? auraSpritePosed(w, walkers?.figureOf(w.id) ?? riders?.figureOf?.(w.id), walkers?.faceOf?.(w.id) ?? riders?.faceOf?.(w.id)), w === self ? player.height / CAPSULE_HEIGHT : 1); auraMotionStep(w, now); }
+        // PICTURE is, in the saddle too, and swung by the way the body turns (`turn`); AUDIT CAPE-CARD A3: my sprite's a card
+        // (`card`), so in the saddle, with no figure to read, what hangs on my back stands behind it as on a walker
+        for (const w of auraDraw) if (auraLookOf(w.aura).mesh) { auraCapeStep(w, w === self ? { feet: liftedFeet(player.bodyFeetAt(), selfLiftNow), yaw: faced?.yaw ?? player.bodyYawFor(deps.camYaw()), turn: faced?.turn, bones: selfLiftNow > 0 ? null : mwViewBodyBones(CLOAK_BONES) ?? auraSpriteBones(mwViewSpriteFigure()), card: !!faced } : deps.bodies()?.bonesOf(w.id, CLOAK_BONES) ?? auraSpritePosed(w, spriteAnswer(layers, 'figureOf', w.id), spriteAnswer(layers, 'faceOf', w.id, eye)), w === self ? player.height / CAPSULE_HEIGHT : 1); auraMotionStep(w, now); }
       }
       auraList.length = 0;   // this frame's, drawn once: a frame that gathers none (the seat left, death, offline) draws none
       armoryDraw.length = 0;

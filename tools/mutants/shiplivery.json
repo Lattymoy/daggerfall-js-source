@@ -56,7 +56,7 @@
   {
     "name": "SL-door-none-kept",
     "file": "src/systems/naval/shipLivery.js",
-    "old": "  return LIVERY_PARTS.some((p) => out[p]) ? out : null;",
+    "old": "  return LIVERY_PARTS.some((p) => out[p]) || /** @type {any} */ (out).cloth ? out : null;",
     "new": "  return out;",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
@@ -74,8 +74,8 @@
   {
     "name": "SL-code-zero",
     "file": "src/systems/naval/shipLivery.js",
-    "old": "if (!Number.isInteger(n) || n <= 0 || n >= 1 << 16) return null;",
-    "new": "if (!Number.isInteger(n) || n < 0 || n >= 1 << 16) return null;",
+    "old": "if (!Number.isInteger(n) || n <= 0 || n >= 1 << 24) return null;",
+    "new": "if (!Number.isInteger(n) || n < 0 || n >= 1 << 24) return null;",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ],
@@ -85,7 +85,7 @@
   {
     "name": "SL-code-wide",
     "file": "src/systems/naval/shipLivery.js",
-    "old": "if (!Number.isInteger(n) || n <= 0 || n >= 1 << 16) return null;",
+    "old": "if (!Number.isInteger(n) || n <= 0 || n >= 1 << 24) return null;",
     "new": "if (!Number.isInteger(n) || n <= 0) return null;",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
@@ -166,8 +166,8 @@
   {
     "name": "SLA-records-all",
     "file": "src/world/ships/shipLiveryArt.js",
-    "old": "    if (!a.records.includes(record) || !families.some((f) => f.paint)) continue;",
-    "new": "    if (!families.some((f) => f.paint)) continue;",
+    "old": "    if (canvasOnly || !a.records.includes(record) || !families.some((f) => f.paint)) continue;",
+    "new": "    if (canvasOnly || !families.some((f) => f.paint)) continue;",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ],
@@ -177,8 +177,8 @@
   {
     "name": "SLA-cloth-families",
     "file": "src/world/ships/shipLiveryArt.js",
-    "old": "      if (sail) out.push({ record, picture: shadeCloth(pic, sail), glow: null, night: null });",
-    "new": "      if (sail) out.push({ record, picture: paintFamilies(pic, a.palette, [{ members: CANVAS, base: C.canvas, paint: sail }]).picture, glow: null, night: null });",
+    "old": "      else if (sail) out.push({ record, picture: shadeCloth(pic, sail), glow: null, night: null });",
+    "new": "      else if (sail) out.push({ record, picture: paintFamilies(pic, a.palette, [{ members: CANVAS, base: C.canvas, paint: sail }]).picture, glow: null, night: null });",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -294,8 +294,8 @@
   {
     "name": "SLP-making-made",
     "file": "src/scenes/comeSailAway/shipLiveryPaint.js",
-    "old": "    if (made.has(key)) return made.get(key);",
-    "new": "    if (made.has(key)) return null;",
+    "old": "    const base = made.has(key) ? made.get(key) : (begin(key, () => paint(hull, code)), null);",
+    "new": "    const base = made.has(key) ? null : (begin(key, () => paint(hull, code)), null);",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -303,7 +303,7 @@
   {
     "name": "SLPOOL-unpainted",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "const paint = paints.remapOf(boat.hull, liveryCodeOf(boat), cityLights, drawRemap);",
+    "old": "const paint = paints.remapOf(boat.hull, code, cityLights, drawRemap, sailArmsOf(boat, code));",
     "new": "const paint = drawRemap;",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
@@ -807,8 +807,8 @@
   {
     "name": "WIRE-key-paint-blind",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "rec.f ?? null, rec.l ?? null, rec.d ?? null, rec.p ?? null]",
-    "new": "rec.f ?? null, rec.d ?? null, rec.p ?? null]",
+    "old": "rec.f ?? null, rec.l ?? null, rec.d ?? null, rec.p ?? null, rec.h ?? null]",
+    "new": "rec.f ?? null, rec.d ?? null, rec.p ?? null, rec.h ?? null]",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -816,8 +816,8 @@
   {
     "name": "WIRE-key-fittings-blind",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "rec.f ?? null, rec.l ?? null, rec.d ?? null, rec.p ?? null]",
-    "new": "rec.f ?? null, rec.l ?? null, rec.p ?? null]",
+    "old": "rec.f ?? null, rec.l ?? null, rec.d ?? null, rec.p ?? null, rec.h ?? null]",
+    "new": "rec.f ?? null, rec.l ?? null, rec.p ?? null, rec.h ?? null]",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -825,7 +825,7 @@
   {
     "name": "PEERS-livery-unread",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "      s.boat.livery = liveryCode(w.livery);   // SHIP-LIVERY",
+    "old": "      s.boat.livery = flownLivery(owner, w.livery);   // SHIP-LIVERY",
     "new": "      // SHIP-LIVERY",
     "tests": [
       "test/systems/naval/shiplivery.test.js"

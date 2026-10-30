@@ -179,6 +179,12 @@ Pins: `test/server/shoplocal.test.js`. Mutants: `tools/mutants/shoplocal.json`.
   `eternalPoint` moves its cloth back along the facing by the pose's `wingBack` (`uWingBack`: WING_SPRITE_BACK on a
   sprite, 0 on a rig), and its wisps and embers fly from the moved cloth. From the front round to either side none of it
   lies over the body. From behind it covers the back, as a cape does.
+- **CAPE-CARD** (2026-10-30, the owner, with a shot of the cape on a player's front: "Did we learn nothing from the
+  angel wings aura?"; `01-Overview/bugs/Field-Bugs-2026-10-30.md`). A peer drawn as a paperdoll or a class sprite now
+  says how its picture faces (`net/remotePlayers.js` faceOf), so the cape hangs on its back; both are cards, and the
+  cape stands behind them as on a sprite. AUDIT CAPE-CARD (`01-Overview/audits/Audit-Cape-Card.md`): every peer's
+  picture turns to the camera that draws it, and a doll's swing stays behind it. The straight cut (CAPE-FLAT) was
+  reverted at the owner's word: the cape keeps the shape above.
 
 ## 7. Seen
 
@@ -198,5 +204,6 @@ Wear and its sentence, Escape back to the gem - at 1280 and on a 390 phone, sign
 - The Collections page still draws an aura as a ring of its colours; `auraPreview.js` could show it in the round there.
 
 Pins: `test/server/shop_service.test.js` (the law, the service end to end), `test/ui/shop_window.test.js` (the
-window, the faces, the catalogue's entries, ETERNAL-FIT). Mutants: `tools/mutants/shop.json`,
-`tools/mutants/eternalfit.json`.
+window, the faces, the catalogue's entries, ETERNAL-FIT), `test/render/capecard.test.js` (CAPE-CARD),
+`test/render/auditcapecard.test.js` (AUDIT CAPE-CARD). Mutants: `tools/mutants/shop.json`, `tools/mutants/eternalfit.json`,
+`tools/mutants/capecard.json`, `tools/mutants/auditcapecard.json`.

@@ -236,6 +236,11 @@ finishChargen`, `test/systems/legacychoice.test.js`, `tools/mutants/legacychoice
   fit the classic face. `test/systems/legacy/casuallife.test.js`. CASUAL-WORDS (asked: "the no house need to go",
   "its misunderstanding"): its words say family line, never house, so no one reads it as no home. A home is bought as
   before.
+- CASUAL-FIRST (Mac, 2026-10-30, forwarding #feature-feedback "Make Bloodline/Permadeath not the default": new players
+  aged or died for good "without even realizing that opting out was a choice"): ONLINE CASUAL IS FIRST AND THE DEFAULT,
+  then Enduring, then Bloodline - keys 1, 2 and 3 in that order, the cursor and the Plus face's lit tile on Casual
+  (`legacyModelChoice.js legacyModelOptions`). The lead line names Casual first. Offline keeps its two, Enduring first.
+  `test/systems/legacychoice.test.js`, `tools/mutants/legacychoice.json` (CASUAL-FIRST-casual-last).
 - LEGACY-POINTER (FIELD 2026-10-06, Mac: "moving the mouse up and down switches between the options instead of letting
   you hover and select"): WHILE THE POPUP IS UP ITS TILES OWN THE POINTER. Every host hands the slot's occupant each
   mousemove from a listener on the WINDOW (world.js, exterior.js, worldModes.js, dungeon.js - the dungeon context's
@@ -765,6 +770,7 @@ world, locked to its own family.
 | FB1029 | UNION-CHILDREN: a child of two players' union on both trees - the other house sees them through the marriage, under the couple, never played there; each house rolls its own (section 9a; acct220) | built |
 | LEGACY-CHOICE | the popup online: Enduring, Bloodline or no lineage at chargen, kept on the character; online a house founded at a birth alone - a character loaded with no house plays without one (section 6) | built |
 | CASUAL-LIFE | online no lineage is Casual: no house and a death that costs nothing, the Wild's own law aside (section 6) | built |
+| CASUAL-FIRST | online Casual is the first answer and the default, then Enduring, then Bloodline (section 6) | built |
 | FAMILY-TAB | no house, no Family tab: the tab drawn while the game is played with Project Legacy (the mod on and a house for the game played); the key says why without one (section 6) | built |
 | AGELESS-CURSE | the cursed pay no toll: a vampire, a werewolf or a wereboar in an Enduring house rises from every death with no years taken, the span spent or not; cured, the toll again (section 6) | built |
 | LEGACY-HOME | the bloodline in the world: the family home, the seat's townsfolk, their day, Play as by talking (section 10b) | built |

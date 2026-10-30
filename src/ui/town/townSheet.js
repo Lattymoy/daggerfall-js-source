@@ -99,7 +99,7 @@ const EMPTY_SIZE = Object.freeze({ width: 1, height: 1 });
  *   revealAll?: () => boolean,
  *   player?: () => {x:number, y:number, yaw?:number}|null,
  *   party?: () => Array<{acct?: string|null, name?: string, feet?: number[], yaw?: number}>,
- *   homes?: () => Array<{buildingKey: number, own?: boolean, label: string}>,
+ *   homes?: () => Array<{buildingKey: number, own?: boolean, vendor?: boolean, label: string}>,
  *   homesVersion?: () => number,
  *   questBuildings?: () => Array<{buildingKey: number, followed?: boolean}>,
  *   title?: string,
@@ -227,7 +227,7 @@ export function createTownSheet(deps = {}) {
       const b = at.get(r.buildingKey);
       if (!b) continue;
       const [x, y] = nameplateAnchor(b.blockX ?? 0, b.blockY ?? 0, b.position ?? [0, 0, 0]);
-      out.push({ x, y: sheetY(h, y), own: r.own, label: r.label });
+      out.push({ x, y: sheetY(h, y), own: r.own, ...(r.vendor ? { vendor: true } : {}), label: r.label });   // VENDOR-HOUSES
     }
     return out;
   }

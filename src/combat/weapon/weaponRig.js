@@ -102,7 +102,8 @@ import { walkSpeed } from '../../player/motor.js';   // WW1: GetBaseSpeed's walk
 import { localizedText, t } from '../../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; TWO-HANDS: the lead's two lines, the port's own
 import { HANDS_MODE, twoHanded, runHandsWanted, runHandsKept, runPhaseOfBob, MIRROR_UV, otherHand, guardStep } from '../twoHands/handsLaw.js';   // TWO-HANDS: how the hands are held, and when they run
 import { spellHandOf, tellSpellHand, castPending, drawSpellHand, guardDrop } from '../twoHands/spellHand.js';   // SPELL-HAND: a spell in the free hand beside a one-handed weapon
-import { stepTechnique, claimShot, techniqueFlying, TECHNIQUE_ACTION } from '../techniques.js';   // TECH1: the technique key - every host's rig steps the one runner
+import { stepTechnique, claimShot, techniqueFlying, TECHNIQUE_ACTION, SIGNATURE_ACTION } from '../techniques.js';
+import { touchHeld } from '../../ui/touch/touchHeld.js';   // AUDIT TECH-FEEDBACK II F6: the Martial technique's touch button   // TECH1: the technique key - every host's rig steps the one runner
 import '../../systems/martialPowers.js';   // MARTIAL3/4 (bible/05-Combat/Martial-Specialisations.md): what the martial paths and the weapons past 100 DO - registered at import, so every host's rig (exterior.js, world.js, worldModes.js' interiors, dungeonContext.js' dungeons) has them
 import { techniqueHands } from '../technique/techniqueFx.js';   // TECH-FX: a technique's push of the first-person layer
 import { playerHarmedWithin } from '../../systems/harmMark.js';   // RIFLE-STANCE: a foe's harm on the player - the fight a long gun's aim reads
@@ -1930,14 +1931,16 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // loosing) and the camera this rig rides.
       _techDt = dt;
       _techCtx ??= {
-        rig: _techRig, entity, pw: playerWeapon, cam: null, collider: null, held: false, ready: false, cancel: false, paralyzed: false, blocked: false, holding: false,
-        startSwing: (s) => { if (!playerWeapon.techniqueStrike(s)) return false; fpAttack(s, _techDt); return true; },
+        rig: _techRig, entity, pw: playerWeapon, cam: null, collider: null, held: false, held2: false, ready: false, cancel: false, paralyzed: false, blocked: false, holding: false,
+        startSwing: (s) => { if (!playerWeapon.techniqueStrike(s)) return false; fpArm.cutAttack?.(); fpAttack(s, _techDt); return true; },   // TECH-CANCEL: the arm's blow cut once the strike began (AUDIT TECH-FEEDBACK F2, F6)
+        cutSwing: () => { if (playerWeapon.cutSwing()) fpArm.cutAttack?.(); },   // AUDIT TECH-FEEDBACK II F3: a flight's launch
         door: technique, say, noteShot: noteShotHere,
       };
       const tc = _techCtx;
       if (camNow?.pos && camNow?.feet) { _techCam.pos = camNow.pos; _techCam.yaw = camNow.yaw ?? 0; _techCam.pitch = camNow.pitch ?? 0; _techCam.feet = camNow.feet; tc.cam = _techCam; } else tc.cam = null;
       tc.collider = collider?.() ?? null;
       tc.held = !!actionDown?.(TECHNIQUE_ACTION);
+      tc.held2 = !!actionDown?.(SIGNATURE_ACTION) || touchHeld(SIGNATURE_ACTION);   // TECH-KEY2: the martial path's own key - or its touch button (AUDIT TECH-FEEDBACK II F6)
       tc.ready = !paralyzed && !!c && canAttack && !armLoosing && !_heldHit && !!camNow?.pos && !!camNow?.feet;   // AUDIT TECH1: and no plain shot's hit still held for the arm (MW-D42) - the click path's own gate
       tc.cancel = !!activateHeld();
       tc.paralyzed = !!paralyzed;   // AUDIT TECH1: a held body's machine is frozen - and so is its technique's clock

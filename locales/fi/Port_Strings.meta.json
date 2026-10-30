@@ -1369,11 +1369,6 @@
   "tr": "86b9ff6b71ba",
   "by": "claude-in-session"
  },
- "account.refusal.guildRenameGold": {
-  "en": "a91541390908",
-  "tr": "d8629d1ce104",
-  "by": "claude-in-session"
- },
  "account.refusal.guildRenameMoved": {
   "en": "114d8b59f29d",
   "tr": "146f486a5b3b",
@@ -7399,6 +7394,16 @@
   "tr": "606a08a89291",
   "by": "claude-in-session"
  },
+ "menu.autoUpdates.name": {
+  "en": "1e138bf814eb",
+  "tr": "cf1ba79e03fe",
+  "by": "claude-in-session"
+ },
+ "menu.autoUpdates.note": {
+  "en": "4541de510f7f",
+  "tr": "5428e2b80c5e",
+  "by": "claude-in-session"
+ },
  "menu.begin.blurb": {
   "en": "e4e4d4d671eb",
   "tr": "316b919f2192",
@@ -11522,6 +11527,11 @@
  "net.update.build": {
   "en": "f1068141ad9f",
   "tr": "c43f71835b7f",
+  "by": "claude-in-session"
+ },
+ "net.update.buildReady": {
+  "en": "b489ad1935f5",
+  "tr": "94a64ce7672d",
   "by": "claude-in-session"
  },
  "net.update.button": {
@@ -15844,6 +15854,11 @@
   "tr": "8a51eaa3644c",
   "by": "claude-in-session"
  },
+ "technique.noSignature": {
+  "en": "512147f4746c",
+  "tr": "0145053cf461",
+  "by": "claude-in-session"
+ },
  "town.econ.area.crownHeld": {
   "en": "d931fe766a2a",
   "tr": "a892313178da",
@@ -15987,6 +16002,11 @@
  "town.econ.trend.rising": {
   "en": "26b01983c6f4",
   "tr": "0d9185205ffb",
+  "by": "claude-in-session"
+ },
+ "town.home.trader": {
+  "en": "e4224318b32c",
+  "tr": "36ab4367cc9c",
   "by": "claude-in-session"
  },
  "town.panel.new": {
