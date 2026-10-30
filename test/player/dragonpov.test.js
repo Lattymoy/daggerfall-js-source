@@ -22,7 +22,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const rd = (p) => readFileSync(join(ROOT, p), 'utf8');
 
 const EYE = [1, 1.6, 2];
-const frame = (riding, dragon = false) => mwViewFrame({ fpEye: EYE, feet: [1, 0, 2], yaw: 0, pitch: 0, dt: 1 / 60, riding, dragon, seaReach: dragon ? DRAGON_VIEW_REACH_M : 0 });
+const frame = (riding, dragon = false) => mwViewFrame({ fpEye: EYE, feet: [1, 0, 2], yaw: 0, pitch: 0, dt: 1 / 60, riding, dragon: dragon ? DRAGON_VIEW_SEAT_M : 0 });
 
 /** The seam with a Morrowind third-person body the rig serves (stubbed, as ridepov.test.js does). */
 function arm() {
@@ -50,6 +50,8 @@ test('DRAGON-POV: on a ridden dragon the wheel leaves the head, at the foot\'s f
     assert.ok(mwCamera.baseDistance() > MAX_DISTANCE, 'and a notch out reaches past the foot\'s far end');
     for (let i = 0; i < 30; i++) { mwViewWheel(+100); frame(true, true); }
     assert.equal(mwCamera.baseDistance(), DRAGON_VIEW_REACH_M * MW_UNITS_PER_METER, 'as far as the dragon\'s reach');
+    out = frame(true, true);
+    assert.ok(out.focal[1] >= DRAGON_VIEW_SEAT_M - 1e-6, 'the camera turns about the rider\'s seat');
     for (let i = 0; i < 40 && mwCamera.thirdPerson(); i++) { mwViewWheel(-100); out = frame(true, true); }
     assert.equal(mwCamera.mode(), 'first', 'the wheel in comes back to the head');
     frame(true, false);
@@ -80,20 +82,15 @@ test('DRAGON-POV: the dragon ridden - a tamed one\'s look off its item, none on 
   assert.deepEqual(dragonRidden({ riding: true, transportMode: TRANSPORT_MODES.Dragon }, [{ templateIndex: DRAGON_MOUNT_TEMPLATE }]), { look: 0 }, 'on the brass');
 });
 
-test('DRAGON-POV: the host stands my dragon only out of the head, reaches and pivots only on a dragon', () => {
+test('DRAGON-POV: the host stands my dragon only out of the head, and says the seat only on a dragon', () => {
   let third = false;
   const made = [];
   const renderer = { createBillboardBatch: (a, r, size) => { const b = { record: r, size }; made.push(b); return b; }, destroyBillboardBatch: () => {}, textures: { has: () => true } };
   const host = createDragonViewHost(renderer, { getTexture: async () => null, uploadRecordFrame: () => {} }, () => third);
   const foot = { riding: false, transportMode: TRANSPORT_MODES.Foot };
   const mounted = { riding: true, transportMode: TRANSPORT_MODES.Dragon };
-  assert.equal(host.ride(foot, []), false);
-  assert.equal(host.reach(), 0, 'on foot no reach past the foot\'s');
-  assert.equal(host.pivotFloor(10, null), null, 'and no pivot');
-  assert.equal(host.ride(mounted, [{ templateIndex: DRAGON_MOUNT_TEMPLATE }]), true);
-  assert.equal(host.reach(), DRAGON_VIEW_REACH_M);
-  assert.equal(host.pivotFloor(10, null), 10 + DRAGON_VIEW_SEAT_M, 'the seat over my feet until the sprite is up');
-  assert.equal(host.pivotFloor(10, 3), 3, 'a bench\'s floor is its own');
+  assert.equal(host.ride(foot, []), 0, 'on foot no dragon');
+  assert.equal(host.ride(mounted, [{ templateIndex: DRAGON_MOUNT_TEMPLATE }]), DRAGON_VIEW_SEAT_M, 'the seat over my feet until the sprite is up');
   host.frame([0, 0, 0], 0, [0, 1, -5], 1 / 60);
   assert.equal(host.shown(), false, 'in the head nothing stands');
   assert.deepEqual(host.batches(), []);

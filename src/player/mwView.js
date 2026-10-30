@@ -262,6 +262,9 @@ let pendingClicks = 0;
  * @returns {{eye:number[], thirdPerson:boolean, distance:number, look?:number[]}}
  */
 export function mwViewFrame({ fpEye, feet, yaw, pitch, heightScale = null, raycast = null, spherecast = null, eyeOverride = null, seaReach = 0, pivotFloor = null, ...state }) {
+  // DRAGON-POV: on a dragon (`dragon` the rider's seat over my feet, m) the camera turns about the seat, and the wheel reaches
+  // out past the foot's far end - a helm's reach wins
+  if (state.dragon > 0) { pivotFloor ??= feet[1] + state.dragon; seaReach ||= DRAGON_VIEW_REACH_M; }
   standInEdge({ fpEye, feet, yaw, pitch });   // BEAST-SELF: the view carried across the arm's stand-aside
   benchSeated = !!state.seated;   // WAGONS3: the host's word that the player drives from a wagon's bench, either lane
   // FLAGGED: Eye Of The Beholder has no sitting art - on that lane the driver's sprite stands on the bench's footboard, still (bible/06-Systems/Wagons.md WAGONS3).
@@ -546,6 +549,8 @@ let mounted = false;
 /** DRAGON-POV: the frame's word that I sit a dragon (the host's `dragon`) - no saddle hold, and no body of mine drawn in
  *  third person: the dragon sprite with its rider is (scenes/dragonViewHost.js). */
 let onDragon = false;
+/** DRAGON-POV: how far the wheel reaches out on a dragon (m) - a few of its lengths. */
+export const DRAGON_VIEW_REACH_M = 40;
 
 // COATS3D (2026-10-11, the owner: "These are to be applied to horses for people using morrowind with the character
 // properly rigged when riding"; asked, "Yes, unlock it" for third person in the saddle, and "The 3D horse" for first

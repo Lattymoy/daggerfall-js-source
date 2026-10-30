@@ -12,10 +12,9 @@ import { POSE_RIDE } from '../net/wire.js';
 import { TRANSPORT_MODES } from '../systems/transport.js';
 import { ridingDragon, dragonRideLook } from '../systems/staffDragon.js';
 import { dragonMountOf, dragonLookOfItem } from '../systems/dragon/dragonMount.js';
-import { mwViewThirdPerson } from '../player/mwView.js';
+import { mwViewThirdPerson, DRAGON_VIEW_REACH_M } from '../player/mwView.js';
 
-/** How far the wheel reaches out on a dragon (m) - a few of its lengths. */
-export const DRAGON_VIEW_REACH_M = 40;
+export { DRAGON_VIEW_REACH_M };
 /** The rider's seat over the dragon's feet, as a share of the drawn sprite's height - the camera's pivot. */
 export const DRAGON_VIEW_SEAT = 0.75;
 /** The seat's height (m) until the sprite's pictures are up. */
@@ -42,14 +41,11 @@ export function createDragonViewHost(renderer, deps, third = mwViewThirdPerson) 
   let lastFeet = null;
   let height = 0;   // the sprite's drawn height (m), kept from the last frame it stood
   return {
-    /** The frame's ride, read before the camera (mwViewFrame's `dragon`). @param {any} player @param {any[]} items */
-    ride(player, items) { ride = dragonRidden(player, items); return !!ride; },
-    /** The wheel's reach on a dragon (m; 0 on none) - mwViewFrame's `seaReach` where no helm has one. */
-    reach: () => (ride ? DRAGON_VIEW_REACH_M : 0),
-    /** The camera's pivot floor over `feetY` on a dragon (the seat), else `floor`. @param {number} feetY @param {number | null} floor */
-    pivotFloor(feetY, floor) {
-      if (!ride || floor != null) return floor;
-      return feetY + (height > 0 ? height * DRAGON_VIEW_SEAT : DRAGON_VIEW_SEAT_M);
+    /** The frame's ride, read before the camera - mwViewFrame's `dragon`: the rider's seat over my feet (m), the camera's
+     *  pivot, or 0 on no dragon. @param {any} player @param {any[]} items */
+    ride(player, items) {
+      ride = dragonRidden(player, items);
+      return ride ? (height > 0 ? height * DRAGON_VIEW_SEAT : DRAGON_VIEW_SEAT_M) : 0;
     },
     /** Each frame after the camera: my dragon stood at my `feet`, facing `yaw`, when the camera is out of the head, seen
      *  from `eye`. @param {ArrayLike<number>} feet @param {number} yaw @param {ArrayLike<number>} eye @param {number} dt */

@@ -32451,16 +32451,16 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       dt, dragon: dragonView.ride(player, playerEntity.items), riding: !!player.riding && !_driverSeat && !(player.transportMode === TRANSPORT_MODES.Cart && hcc.benchKind()),   // AUDIT-EOTB F3/F4: the host's own clock, and the one state only it has; WAGONS3: the bench is no saddle (AUDIT WAGONS3 B2: on a frame with no seat either)
       horse: player.transportMode === TRANSPORT_MODES.Horse ? { look: riddenHorseLook(playerEntity.items ?? []), slow: player.slowRide } : null,   // COATS3D: on a horse (never the cart), the Morrowind body sits a 3D horse in this look; HORSE-WALK: held under the gallop on a slow ride
       ...(_driverSeat ? { seated: true, stopped: true, feet: _driverSeat.feet } : {}),   // WAGONS3: seated on it, still on it (the sprite plays no stride), the camera's feet the seat's (after `feet`: it wins)
-      pivotFloor: dragonView.pivotFloor(player.feetAt()[1], _driverSeat ? hcc.cameraFloor() : null),   // DRAGON-POV: on a dragon, about the rider's seat   // BENCH-CAM: the third-person camera turns about a pivot over my wagon's roof, never in my head
+      pivotFloor: _driverSeat ? hcc.cameraFloor() : null,   // BENCH-CAM: the third-person camera turns about a pivot over my wagon's roof, never in my head
       cart: player.transportMode === TRANSPORT_MODES.Cart, onExteriorPath: _surfPath,   // EOTB-IL: UpdateWagon's two host facts
       raycast: (o, d, m) => Math.min(collider.raycast(o, d, m, camFilter), hcc.cameraHit(o, d, m)),   // WAGONS3: my driven wagon's body a wall to the camera on its bench
       spherecast: (o, r, d, m) => { const h = Math.min(collider.sphereCast(o, r, d, m, camFilter).dist, hcc.cameraHit(o, d, m, r)); return Number.isFinite(h) ? h : null; },   // MAC-A: castSphere's seam beside the ray - the camera's two obstacle guards are sphere casts (camera.cpp:186, :200)
-      seaReach: csaHelm ? csaSeaReach(csaHelm) : dragonView.reach(),   // #3; DRAGON-POV: on a dragon, out past the foot's far end
+      seaReach: csaHelm ? csaSeaReach(csaHelm) : 0,   // #3
     });
-    dragonView.frame(player.feetAt(), cam.yaw, mwv0.eye, dt);   // DRAGON-POV: my dragon at my feet while the camera is out of the head
     if (yards?.flying()) { const c = { pos: mwv0.eye }; yards.cameraOverride(c); mwv0.eye = c.pos; }
     if (poiEditor?.active()) mwv0.eye = [cam.pos[0], cam.pos[1], cam.pos[2]];   // POI-3: the editor's eye is the frame's, never the body's   // HOME-YARD: the decorator's free eye, while a piece is placed outside (no travel view is up then)
     egWitnessEye(mwv0);   // EG-FULL: the witness's eye, behind a living companion
+    dragonView.frame(player.feetAt(), cam.yaw, mwv0.eye, dt);   // DRAGON-POV: my dragon at my feet while the camera is out of the head
     // TV1: THE TRAVEL VIEW'S EYE, when it is up - risen out of the body's own camera (`ownEye`, the one the frame would
     // draw) and blended back into it on the way down. Every reader below that asks where the picture is taken from
     // reads `mwv.eye`; the fog and the sun's cascades measure from the traveller's head (renderer.setFocus - a frame's:
