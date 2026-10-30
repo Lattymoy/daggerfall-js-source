@@ -177,8 +177,8 @@
   {
     "name": "PERF-READ1-stopCpu-closes-nothing",
     "file": "src/render/perfMeter.js",
-    "old": "  stopCpu() { if (this.cpu) this._cpuClose(); }",
-    "new": "  stopCpu() { }",
+    "old": "  stopCpu() {\n    if (this.cpu) this._cpuClose();\n  }",
+    "new": "  stopCpu() {}",
     "tests": [
       "test/formats/morrowind/perfrig1.test.js"
     ]

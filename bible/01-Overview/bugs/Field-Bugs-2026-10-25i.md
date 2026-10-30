@@ -189,7 +189,7 @@ glints were a herb's - six at most at a herb's reach: the light of their cores a
 near herb's at 30 m, 53 times at 12 m (the audit lane's probe, the real door's tree with the player's atlases).
 
 FIXED. The crown is as tall as the tree its run draws (`h = t.run.size[1] * row[4]`). A 3D crown's glints grow with its
-size on screen (`nodeGlint.js:"export const glintCrownGrowth = (rows, crownPx) =>"`): its side against the side a herb's
+size on screen (`nodeGlint.js:"export const glintCrownGrowth"`): its side against the side a herb's
 glint stops growing at, to the two thirds (their light, count times reach squared, as its area), up to twice as many
 reaching twice as far - twelve at 28 px at 1080 rows, the room round it its own. After: 1.4 and 7 times sparser than the
 herb at 30 and 12 m, the tree's hearts a frame 2.8 to 6.1 and 2.4 to 4.7. A herb, a vein, a boulder, a school and a far

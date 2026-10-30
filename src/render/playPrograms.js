@@ -28,7 +28,7 @@ import { GLOW_PROGRAMS } from './ghostfenceGlow.js';
 import { NODE_GLOW_PROGRAMS } from './nodeGlow.js';
 import { NAVAL_PROGRAMS } from './navalRender.js';
 import { AURORA_PROGRAMS } from './auroraPass.js';
-import { idleTurn } from './idleTurn.js';   // the queue's wait between turns
+import { idleTurn } from './idleTurn.js'; // the queue's wait between turns
 
 /** The programs started early: a gate's fire, the court's and the Spire's telegraphs, his blows' sparks, the crystals,
  *  the nodes' glint, the volcano's fire and the fence's glow (AUDIT RED-MOUNTAIN F5); SHADER-EASE QUEUE-ORDER
@@ -37,7 +37,21 @@ import { idleTurn } from './idleTurn.js';   // the queue's wait between turns
  *  it, so they no longer hold the queue ahead of the cheap ones a first build reads at once. A door that asks for a
  *  pair still brings it to the front (glProgram.js COMPILE-QUEUE `wanted`). SKYRIM-AURORA: the aurora's after all of
  *  them - met only under Skyrim's night sky, and its door never waits (a late one fades in). */
-export const playPrograms = () => [...GATE_PASS_PROGRAMS, ...telegraphPrograms(false), ...telegraphPrograms(true), ...GATE_FX_PROGRAMS, ...CRYSTAL_PROGRAMS, ...NODE_GLINT_PROGRAMS, ...FIRE_PROGRAMS, ...GLOW_PROGRAMS, ...NODE_GLOW_PROGRAMS, ...NAVAL_PROGRAMS, ...AURA_PROGRAMS, ...ARMORY_PROGRAMS, ...AURORA_PROGRAMS];
+export const playPrograms = () => [
+  ...GATE_PASS_PROGRAMS,
+  ...telegraphPrograms(false),
+  ...telegraphPrograms(true),
+  ...GATE_FX_PROGRAMS,
+  ...CRYSTAL_PROGRAMS,
+  ...NODE_GLINT_PROGRAMS,
+  ...FIRE_PROGRAMS,
+  ...GLOW_PROGRAMS,
+  ...NODE_GLOW_PROGRAMS,
+  ...NAVAL_PROGRAMS,
+  ...AURA_PROGRAMS,
+  ...ARMORY_PROGRAMS,
+  ...AURORA_PROGRAMS,
+];
 
 /** Start them on `gl` where its driver compiles beside the frames; answers whether it did. COMPILE-QUEUE (FIELD BUGS
  *  2026-10-27b, "hitch 13064 ms" on the desktop app after login): one at a time (glProgram.js startProgramsInTurn). All

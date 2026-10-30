@@ -39,4 +39,5 @@ export function samplerParams(gl, s, mips) {
 
 /** A sampler's suffix on a texture's cache key - `#s:<wrapS>,<wrapT>,<filter>` - so a picture uploaded under two
  *  samplers is two textures, never the first asker's. @param {{ wrapS?: string, wrapT?: string, filter?: string }} s */
-export const samplerKey = (s) => `#s:${SAMPLER_WRAPS.includes(s?.wrapS) ? s.wrapS : 'repeat'},${SAMPLER_WRAPS.includes(s?.wrapT) ? s.wrapT : 'repeat'},${SAMPLER_FILTERS.includes(s?.filter) ? s.filter : 'nearest'}`;
+export const samplerKey = (s) =>
+  `#s:${SAMPLER_WRAPS.includes(s?.wrapS) ? s.wrapS : 'repeat'},${SAMPLER_WRAPS.includes(s?.wrapT) ? s.wrapT : 'repeat'},${SAMPLER_FILTERS.includes(s?.filter) ? s.filter : 'nearest'}`;

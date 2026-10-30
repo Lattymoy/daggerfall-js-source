@@ -173,8 +173,8 @@
   {
     "name": "AUDIT-PRECIP-FALL-7-the-wind-swapped",
     "file": "src/render/precipitation.js",
-    "old": "        this._shift = MIX_SHIFT;",
-    "new": "        this._shift = MIX_SHIFT; this.windOff = Float32Array.from(this.windOff);",
+    "old": "        this.draw('snow', proj, view, camPos, camRight, timeSeconds);",
+    "new": "        this.windOff = Float32Array.from(this.windOff);\n        this.draw('snow', proj, view, camPos, camRight, timeSeconds);",
     "tests": [
       "test/systems/weather/precip1_air.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "AUDIT-PRECIP-FALL-8-the-cap-unsplit",
     "file": "src/render/precipitation.js",
-    "old": "const dropCap = cap == null ? null : Math.round(cap * (1 - share));",
-    "new": "const dropCap = cap;",
+    "old": "    const dropCap = cap == null ? null : Math.round(cap * (1 - share));",
+    "new": "    const dropCap = cap;",
     "tests": [
       "test/systems/weather/precip1_air.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "AS-left-out-of-the-boot",
     "file": "src/render/playPrograms.js",
-    "old": ", ...AURA_PROGRAMS, ...ARMORY_PROGRAMS",
-    "new": ", ...ARMORY_PROGRAMS",
+    "old": "  ...AURA_PROGRAMS,\n  ...ARMORY_PROGRAMS,",
+    "new": "  ...ARMORY_PROGRAMS,",
     "tests": [
       "test/render/shaderstall.test.js",
       "test/render/auditshaderstall.test.js"

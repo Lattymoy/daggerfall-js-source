@@ -61,7 +61,9 @@ export class PartyPingDraw {
    */
   draw(renderer, _marks, ribbons) {
     const gl = this.gl;
-    const proj = renderer._proj, view = renderer._view, eye = renderer._camPos;
+    const proj = renderer._proj,
+      view = renderer._view,
+      eye = renderer._camPos;
     if (!proj || !view || !eye) return;
     const lines = [];
     for (const r of ribbons ?? []) {

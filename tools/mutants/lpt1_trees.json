@@ -998,8 +998,8 @@
   {
     "name": "LPT1-gpu-scale-two-wide",
     "file": "src/render/lowPolyTreesRender.js",
-    "old": "gl.vertexAttribPointer(4, 1, gl.FLOAT, false, stride, at + 16);",
-    "new": "gl.vertexAttribPointer(4, 2, gl.FLOAT, false, stride, at + 16);",
+    "old": "    gl.vertexAttribPointer(4, 1, gl.FLOAT, false, stride, at + 16);",
+    "new": "    gl.vertexAttribPointer(4, 2, gl.FLOAT, false, stride, at + 16);",
     "tests": [
       "test/systems/lpt1_lowpolytrees.test.js"
     ]

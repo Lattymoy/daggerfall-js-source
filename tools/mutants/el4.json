@@ -193,8 +193,8 @@
   {
     "name": "rt-withtarget-canvas",
     "file": "src/render/renderTarget.js",
-    "old": "  gl.bindFramebuffer(gl.FRAMEBUFFER, _frameTarget);   // EL4: the frame, or the canvas\n  gl.viewport(restoreViewport[0]",
-    "new": "  gl.bindFramebuffer(gl.FRAMEBUFFER, null);\n  gl.viewport(restoreViewport[0]",
+    "old": "  gl.bindFramebuffer(gl.FRAMEBUFFER, _frameTarget); // EL4: the frame, or the canvas",
+    "new": "  gl.bindFramebuffer(gl.FRAMEBUFFER, null);",
     "tests": [
       "test/render/el4_frame.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "rt-finishvolume-canvas",
     "file": "src/render/renderTarget.js",
-    "old": "  gl.bindFramebuffer(gl.FRAMEBUFFER, _frameTarget);   // EL4\n  gl.viewport",
-    "new": "  gl.bindFramebuffer(gl.FRAMEBUFFER, null);\n  gl.viewport",
+    "old": "export function finishVolume(gl, volume, restoreViewport) {\n  gl.bindFramebuffer(gl.FRAMEBUFFER, _frameTarget); // EL4",
+    "new": "export function finishVolume(gl, volume, restoreViewport) {\n  gl.bindFramebuffer(gl.FRAMEBUFFER, null);",
     "tests": [
       "test/render/el4_frame.test.js"
     ]

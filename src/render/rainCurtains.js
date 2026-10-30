@@ -37,7 +37,7 @@
 import { FOG_FACTOR_GLSL } from './labGrass.js';
 import { buildProgram } from './glProgram.js';
 import { ringVertices } from './duelWall.js';
-import { shapeBound } from '../systems/weather/weatherMap.js';   // AUDIT DEEP2 D1: the most a storm's outline reaches
+import { shapeBound } from '../systems/weather/weatherMap.js'; // AUDIT DEEP2 D1: the most a storm's outline reaches
 import { CURTAIN_SHARE, CURTAIN_EXT, CURTAIN_STREAKS, CURTAIN_INTO, CELL_EDGE } from './volumetricClouds.js';
 
 /** Quads around a curtain. */
@@ -94,7 +94,10 @@ export const curtainClock = (s) => ((s % CURTAIN_CLOCK_PERIOD) + CURTAIN_CLOCK_P
  *   anything be seen (AUDIT DEEP R-6: a veil past it is wholly fogged - a slot and a fill for nothing), and `memo` a Map
  *   the host keeps and empties when its ground changes (PERF-TV)
  */
-export function curtainsOf(cells, { focus, eye, ground = null, groundAt = null, reach = CURTAIN_REACH_M, memo = null }) {
+export function curtainsOf(
+  cells,
+  { focus, eye, ground = null, groundAt = null, reach = CURTAIN_REACH_M, memo = null },
+) {
   const far = Math.min(CURTAIN_REACH_M, Number.isFinite(reach) && reach > 0 ? reach : CURTAIN_REACH_M);
   const g = ground ?? focus?.[1] ?? 0;
   const out = [];
@@ -108,8 +111,16 @@ export function curtainsOf(cells, { focus, eye, ground = null, groundAt = null, 
     const radius = c.r * CURTAIN_SHARE;
     if (!(radius > 1)) continue;
     const reachOut = radius * shapeBound(c.shape);
-    const clip = c.clip ? { x: c.clip[0], z: c.clip[1], r: c.clip[2], rim: Math.max(1, c.edge ?? c.r * CELL_EDGE), shape: packShape(c.clip[3]) } : null;
-    if (clip && Math.hypot(c.x - clip.x, c.z - clip.z) - reachOut > clip.r * shapeBound(c.clip[3])) continue;   // wholly outside its front: nothing falls
+    const clip = c.clip
+      ? {
+          x: c.clip[0],
+          z: c.clip[1],
+          r: c.clip[2],
+          rim: Math.max(1, c.edge ?? c.r * CELL_EDGE),
+          shape: packShape(c.clip[3]),
+        }
+      : null;
+    if (clip && Math.hypot(c.x - clip.x, c.z - clip.z) - reachOut > clip.r * shapeBound(c.clip[3])) continue; // wholly outside its front: nothing falls
     const d = Math.hypot(c.x - focus[0], c.z - focus[2]);
     if (d - reachOut > far) continue;
     const base = (c.base ?? 600) + ((c.top ?? c.base ?? 600) - (c.base ?? 600)) * CURTAIN_INTO;
@@ -120,7 +131,18 @@ export function curtainsOf(cells, { focus, eye, ground = null, groundAt = null, 
     const ramp = (dist) => Math.min(1, Math.max(0, (dist - radius * 0.85) / (radius * 0.3)));
     const alpha = ramp(Math.hypot(c.x - eye[0], c.z - eye[2])) * Math.max(CURTAIN_OWN_ALPHA, ramp(d));
     if (alpha <= 0.001) continue;
-    out.push({ centre: [c.x, 0, c.z], radius, height: base, depth: CURTAIN_EXT * c.fall, kind: c.fallKind ?? 0, tint: c.tint ?? null, alpha, d, shape, clip });   // PRECIP1: the snow share, 0..1; ASHFALL1: the cell's tint
+    out.push({
+      centre: [c.x, 0, c.z],
+      radius,
+      height: base,
+      depth: CURTAIN_EXT * c.fall,
+      kind: c.fallKind ?? 0,
+      tint: c.tint ?? null,
+      alpha,
+      d,
+      shape,
+      clip,
+    }); // PRECIP1: the snow share, 0..1; ASHFALL1: the cell's tint
   }
   out.sort((a, b) => a.d - b.d);
   const kept = [];
@@ -132,11 +154,16 @@ export function curtainsOf(cells, { focus, eye, ground = null, groundAt = null, 
     if (kept.length >= CURTAINS_MAX) break;
     // PERF-TV: `memo` (a Map the host empties when its ground changes) keeps a veil's lowest land while it drifts
     // within CURTAIN_MEMO_M - a storm moves with the wind, the land under it does not
-    const key = memo ? `${Math.round(k.centre[0] / CURTAIN_MEMO_M)},${Math.round(k.centre[2] / CURTAIN_MEMO_M)},${Math.round(k.radius / CURTAIN_MEMO_M)}` : null;
+    const key = memo
+      ? `${Math.round(k.centre[0] / CURTAIN_MEMO_M)},${Math.round(k.centre[2] / CURTAIN_MEMO_M)},${Math.round(k.radius / CURTAIN_MEMO_M)}`
+      : null;
     let lo = key !== null ? memo.get(key) : undefined;
     if (lo === undefined) {
       lo = lowestGround(groundAt, k.centre[0], k.centre[2], k.radius);
-      if (key !== null) { if (memo.size >= 256) memo.clear(); memo.set(key, lo); }
+      if (key !== null) {
+        if (memo.size >= 256) memo.clear();
+        memo.set(key, lo);
+      }
     }
     const foot = Number.isFinite(lo) ? lo - CURTAIN_FOOT_MARGIN_M : g - CURTAIN_BELOW_M;
     k.centre[1] = foot;
@@ -158,10 +185,15 @@ export function packShape(sh) {
 export function lowestGround(groundAt, x, z, radius) {
   if (typeof groundAt !== 'function') return Infinity;
   let lo = Infinity;
-  const at = (px, pz) => { const h = groundAt(px, pz); if (Number.isFinite(h) && h < lo) lo = h; };
+  const at = (px, pz) => {
+    const h = groundAt(px, pz);
+    if (Number.isFinite(h) && h < lo) lo = h;
+  };
   at(x, z);
   for (let i = 0; i < CURTAIN_FOOT_SAMPLES; i++) {
-    const a = (i / CURTAIN_FOOT_SAMPLES) * 2 * Math.PI, ca = Math.cos(a), sa = Math.sin(a);
+    const a = (i / CURTAIN_FOOT_SAMPLES) * 2 * Math.PI,
+      ca = Math.cos(a),
+      sa = Math.sin(a);
     at(x + ca * radius, z + sa * radius);
     at(x + ca * radius * 0.5, z + sa * radius * 0.5);
   }
@@ -180,7 +212,9 @@ float shapeF(vec4 a, vec4 b, vec2 u) {
 }
 float shapedDist(vec2 v, vec4 a, vec4 b) { float l = length(v); return l / shapeF(a, b, v / max(l, 1e-3)); }
 `;
-export const CURTAIN_VS = HEAD + `layout(location = 0) in vec2 aUV;   // x: around 0..1, y: up 0..1
+export const CURTAIN_VS =
+  HEAD +
+  `layout(location = 0) in vec2 aUV;   // x: around 0..1, y: up 0..1
 uniform mat4 uVP;
 uniform vec3 uCentre;
 uniform float uRadius;
@@ -203,7 +237,9 @@ void main() {
   vReach = r;
   gl_Position = uVP * vec4(p, 1.0);
 }`;
-export const CURTAIN_FS = HEAD + `in vec2 vUV;
+export const CURTAIN_FS =
+  HEAD +
+  `in vec2 vUV;
 in vec3 vWorld;
 in vec2 vNormal;
 in float vReach;
@@ -260,7 +296,7 @@ function mat4Multiply(out, a, b) {
 
 const NO_FOG_RANGE = new Float32Array([0, 1]);
 const NO_WATER_FOG = new Float32Array(20);
-const NO_HAZE = new Float32Array(8);   // BANTHA1: uJungleHaze off ([1].x 0)
+const NO_HAZE = new Float32Array(8); // BANTHA1: uJungleHaze off ([1].x 0)
 const NO_FOCUS = new Float32Array(4);
 const CIRCLE = packShape(null);
 
@@ -270,7 +306,31 @@ export class RainCurtainsRenderer {
     const prog = buildProgram(gl, CURTAIN_VS, CURTAIN_FS);
     this.program = prog;
     this.u = {};
-    for (const n of ['uVP', 'uCentre', 'uRadius', 'uHeight', 'uEye', 'uDepth', 'uAlpha', 'uTime', 'uColor', 'uLight', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uDwFog', 'uJungleHaze', 'uFocus', 'uShapeA', 'uShapeB', 'uClip', 'uClipA', 'uClipB']) this.u[n] = gl.getUniformLocation(prog, n);
+    for (const n of [
+      'uVP',
+      'uCentre',
+      'uRadius',
+      'uHeight',
+      'uEye',
+      'uDepth',
+      'uAlpha',
+      'uTime',
+      'uColor',
+      'uLight',
+      'uFogMode',
+      'uFogDensity',
+      'uFogRange',
+      'uCamPos',
+      'uDwFog',
+      'uJungleHaze',
+      'uFocus',
+      'uShapeA',
+      'uShapeB',
+      'uClip',
+      'uClipA',
+      'uClipB',
+    ])
+      this.u[n] = gl.getUniformLocation(prog, n);
     const verts = ringVertices(CURTAIN_SEGMENTS);
     this.count = verts.length / 2;
     const vao = gl.createVertexArray();
@@ -278,7 +338,8 @@ export class RainCurtainsRenderer {
     this.vbo = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
     gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
     gl.bindVertexArray(null);
     this.vao = vao;
     this._vp = new Float32Array(16);
@@ -294,9 +355,13 @@ export class RainCurtainsRenderer {
   draw(curtains, proj, view, eye, seconds, { light = 1, fog = null, fade = 1 } = {}) {
     this.drawn = 0;
     const k = Math.max(0, Math.min(1, fade));
-    const list = k > 0.001 ? (curtains ?? []).filter((c) => c && c.alpha > 0.001 && c.radius > 0 && c.height > 0).slice(0, CURTAINS_MAX) : [];
+    const list =
+      k > 0.001
+        ? (curtains ?? []).filter((c) => c && c.alpha > 0.001 && c.radius > 0 && c.height > 0).slice(0, CURTAINS_MAX)
+        : [];
     if (!list.length) return 0;
-    const gl = this.gl, U = this.u;
+    const gl = this.gl,
+      U = this.u;
     mat4Multiply(this._vp, proj, view);
     gl.useProgram(this.program);
     gl.uniformMatrix4fv(U.uVP, false, this._vp);
@@ -307,23 +372,31 @@ export class RainCurtainsRenderer {
     gl.uniform1f(U.uFogDensity, fog?.density ?? 0);
     gl.uniform2fv(U.uFogRange, fog?.range ?? NO_FOG_RANGE);
     gl.uniform3fv(U.uCamPos, fog?.camPos ?? eye);
-    if (U.uFocus) gl.uniform4fv(U.uFocus, fog?.focus ?? NO_FOCUS);   // TV1's focus: the fog is the traveller's
+    if (U.uFocus) gl.uniform4fv(U.uFocus, fog?.focus ?? NO_FOCUS); // TV1's focus: the fog is the traveller's
     if (U.uDwFog) gl.uniform4fv(U.uDwFog, fog?.dw ?? NO_WATER_FOG);
-    if (U.uJungleHaze) gl.uniform4fv(U.uJungleHaze, fog?.haze ?? NO_HAZE);   // BANTHA1: the jungle's haze (renderer.setJungleHaze); none handed, off
+    if (U.uJungleHaze) gl.uniform4fv(U.uJungleHaze, fog?.haze ?? NO_HAZE); // BANTHA1: the jungle's haze (renderer.setJungleHaze); none handed, off
     gl.bindVertexArray(this.vao);
-    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.depthMask(false);
-    gl.disable(gl.CULL_FACE);   // both faces reach the shader: a back face's chord is zero, so it adds nothing (no winding to trust under the mirrored lens)
+    gl.disable(gl.CULL_FACE); // both faces reach the shader: a back face's chord is zero, so it adds nothing (no winding to trust under the mirrored lens)
     for (const c of list) {
       gl.uniform3f(U.uCentre, c.centre[0], c.centre[1], c.centre[2]);
       gl.uniform1f(U.uRadius, c.radius);
       gl.uniform1f(U.uHeight, c.height);
-      const sh = c.shape ?? CIRCLE, cl = c.clip;   // AUDIT DEEP2 D1
-      gl.uniform4f(U.uShapeA, sh[0], sh[1], sh[2], sh[3]); gl.uniform4f(U.uShapeB, sh[4], sh[5], sh[6], sh[7]);
-      if (cl) { gl.uniform4f(U.uClip, cl.x, cl.z, cl.r, cl.rim); const ks = cl.shape ?? CIRCLE; gl.uniform4f(U.uClipA, ks[0], ks[1], ks[2], ks[3]); gl.uniform4f(U.uClipB, ks[4], ks[5], ks[6], ks[7]); } else gl.uniform4f(U.uClip, 0, 0, -1, 1);
+      const sh = c.shape ?? CIRCLE,
+        cl = c.clip; // AUDIT DEEP2 D1
+      gl.uniform4f(U.uShapeA, sh[0], sh[1], sh[2], sh[3]);
+      gl.uniform4f(U.uShapeB, sh[4], sh[5], sh[6], sh[7]);
+      if (cl) {
+        gl.uniform4f(U.uClip, cl.x, cl.z, cl.r, cl.rim);
+        const ks = cl.shape ?? CIRCLE;
+        gl.uniform4f(U.uClipA, ks[0], ks[1], ks[2], ks[3]);
+        gl.uniform4f(U.uClipB, ks[4], ks[5], ks[6], ks[7]);
+      } else gl.uniform4f(U.uClip, 0, 0, -1, 1);
       gl.uniform1f(U.uDepth, c.depth);
       gl.uniform1f(U.uAlpha, Math.min(1, c.alpha) * k);
-      gl.uniform3fv(U.uColor, mixColor(CURTAIN_RAIN_COLOR, CURTAIN_SNOW_COLOR, c.kind, c.tint));   // PRECIP1: a curtain over the snow line greys toward white; ASHFALL1: an ash veil its pall's
+      gl.uniform3fv(U.uColor, mixColor(CURTAIN_RAIN_COLOR, CURTAIN_SNOW_COLOR, c.kind, c.tint)); // PRECIP1: a curtain over the snow line greys toward white; ASHFALL1: an ash veil its pall's
       gl.drawArrays(gl.TRIANGLES, 0, this.count);
       this.drawn++;
     }

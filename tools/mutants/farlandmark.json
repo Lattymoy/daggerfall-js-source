@@ -214,8 +214,8 @@
   {
     "name": "FAR-LANDMARK-mid-range-whole-runs",
     "file": "src/render/midRing.js",
-    "old": "const s = Math.max(first, a), e = Math.min(first + count, b);",
-    "new": "const s = first, e = Math.min(first + count, b);",
+    "old": "      const s = Math.max(first, a),",
+    "new": "      const s = first,",
     "tests": [
       "test/render/farlandmark.test.js"
     ]

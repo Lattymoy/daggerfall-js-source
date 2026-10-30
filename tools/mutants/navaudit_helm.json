@@ -265,8 +265,8 @@
   {
     "name": "NAV1H-the-post-lying-flat",
     "file": "src/render/navalRender.js",
-    "old": "f, [0, AIM_POST_HALF_H, 0], tone.post, false, uv.u0, uv.u1, uv.v0, uv.v1);",
-    "new": "f, [0, 0, AIM_POST_HALF_H], tone.post, false, uv.u0, uv.u1, uv.v0, uv.v1);",
+    "old": "          [0, AIM_POST_HALF_H, 0],",
+    "new": "          [0, 0, AIM_POST_HALF_H],",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "NAV1H-the-grey-ignored",
     "file": "src/render/navalRender.js",
-    "old": "  if (aim?.ready === false) return AIM_TONES.idle;\n",
-    "new": "",
+    "old": "  if (aim?.ready === false) return AIM_TONES.idle;\n  return aim?.hot ? AIM_TONES.hot : AIM_TONES.laid;",
+    "new": "  return aim?.hot ? AIM_TONES.hot : AIM_TONES.laid;",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]

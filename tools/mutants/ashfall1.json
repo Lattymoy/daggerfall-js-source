@@ -227,8 +227,8 @@
   {
     "name": "ASH-the-travel-veil-untinted",
     "file": "src/render/rainCurtains.js",
-    "old": "tint: c.tint ?? null, alpha, d, shape, clip });",
-    "new": "tint: null, alpha, d, shape, clip });",
+    "old": "      tint: c.tint ?? null,",
+    "new": "      tint: null,",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "ASH-the-tint-ignored",
     "file": "src/render/rainCurtains.js",
-    "old": "  if (tint) {\n    const grey = 0.299 * _mix[0]",
-    "new": "  if (false) {\n    const grey = 0.299 * _mix[0]",
+    "old": "  if (tint) {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]

@@ -218,8 +218,8 @@
   {
     "name": "POI3-the-depth-test-left-off",
     "file": "src/render/poiGizmoPass.js",
-    "old": "    gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.disable(gl.BLEND); gl.enable(gl.CULL_FACE);",
-    "new": "    gl.depthMask(true); gl.disable(gl.BLEND); gl.enable(gl.CULL_FACE);",
+    "old": "    gl.enable(gl.DEPTH_TEST);\n    gl.depthMask(true);",
+    "new": "    gl.depthMask(true);",
     "tests": [
       "test/poi/poi3_edit.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "POI3-the-depth-mask-left-off",
     "file": "src/render/poiGizmoPass.js",
-    "old": "    gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.disable(gl.BLEND); gl.enable(gl.CULL_FACE);",
-    "new": "    gl.enable(gl.DEPTH_TEST); gl.disable(gl.BLEND); gl.enable(gl.CULL_FACE);",
+    "old": "    gl.depthMask(true);\n    gl.disable(gl.BLEND);",
+    "new": "    gl.disable(gl.BLEND);",
     "tests": [
       "test/poi/poi3_edit.test.js"
     ]

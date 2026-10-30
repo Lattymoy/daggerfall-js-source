@@ -263,8 +263,8 @@
   {
     "name": "perf-door",
     "file": "src/render/perfMeter.js",
-    "old": "  try { return /[?&]perf\\b/.test(search); } catch { return false; }",
-    "new": "  try { return /perf/.test(search); } catch { return false; }",
+    "old": "    return /[?&]perf\\b/.test(search);",
+    "new": "    return /perf/.test(search);",
     "tests": [
       "test/render/el8_contact.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "perf-every-frame",
     "file": "src/render/perfMeter.js",
-    "old": "    if (this.frames % PERF_EVERY !== 0) return null;\n",
-    "new": "",
+    "old": "    if (this.frames % PERF_EVERY !== 0) return null;\n    if (this.zones) {",
+    "new": "    if (this.zones) {",
     "tests": [
       "test/render/el8_contact.test.js"
     ]

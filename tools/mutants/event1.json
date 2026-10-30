@@ -336,8 +336,8 @@
   {
     "name": "EVENT1-bolts-groups-merged",
     "file": "src/render/lightningBolts.js",
-    "old": "const c = b.color ?? BOLT_COLOR;",
-    "new": "const c = BOLT_COLOR;",
+    "old": "    const c = b.color ?? BOLT_COLOR;",
+    "new": "    const c = BOLT_COLOR;",
     "tests": [
       "test/render/event1_live_event.test.js"
     ]

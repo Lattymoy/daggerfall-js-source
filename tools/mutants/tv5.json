@@ -213,8 +213,8 @@
   {
     "name": "PERF-TV-curtains-sample-every-cell",
     "file": "src/render/rainCurtains.js",
-    "old": "  const kept = [];\n",
-    "new": "  const kept = [];\n  for (const k of out) lowestGround(groundAt, k.centre[0], k.centre[2], k.radius);\n",
+    "old": "  // AUDIT DEEP R-4: the LOWEST LAND's rule wherever the host knows the land - the traveller's own (CURTAIN_BELOW_M under",
+    "new": "  for (const k of out) lowestGround(groundAt, k.centre[0], k.centre[2], k.radius);\n  // AUDIT DEEP R-4: the LOWEST LAND's rule wherever the host knows the land - the traveller's own (CURTAIN_BELOW_M under",
     "tests": [
       "test/ui/travel/tv5_far_places.test.js"
     ],

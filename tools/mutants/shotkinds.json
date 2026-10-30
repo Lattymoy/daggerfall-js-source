@@ -452,8 +452,8 @@
   {
     "name": "SHOT-draw-grape-ball",
     "file": "src/render/navalRender.js",
-    "old": "  if (b.shot === 'grape') {\n    const open",
-    "new": "  if (false) {\n    const open",
+    "old": "  if (b.shot === 'grape') {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "SHOT-draw-chain-ball",
     "file": "src/render/navalRender.js",
-    "old": "  if (b.shot === 'chain') {\n    const u = across",
-    "new": "  if (false) {\n    const u = across",
+    "old": "  if (b.shot === 'chain') {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "SHOT-draw-heated-untrailed",
     "file": "src/render/navalRender.js",
-    "old": "      ...[1, 2, 3].map((k) => glow(at(back, k * 0.7)",
-    "new": "      ...[].map((k) => glow(at(back, k * 0.7)",
+    "old": "      ...[1, 2, 3].map((k) => glow(at(back, k * 0.7), size * 2.6 * (1 - k * 0.2), [1, 0.38, 0.1, 0.5 / k])),",
+    "new": "      ...[].map((k) => glow(at(back, k * 0.7), size * 2.6 * (1 - k * 0.2), [1, 0.38, 0.1, 0.5 / k])),",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]

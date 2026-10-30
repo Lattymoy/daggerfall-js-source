@@ -137,8 +137,8 @@
   {
     "name": "FAR-FLORA-the-canopy-art",
     "file": "src/render/midRing.js",
-    "old": "canopy[o + 1 + c] = Math.round(art.rgb[c]);",
-    "new": "canopy[o + 1 + c] = Math.round(art.rgb[c] * 0.5);",
+    "old": "  for (let c = 0; c < 3; c++) canopy[o + 1 + c] = Math.round(art.rgb[c]);",
+    "new": "  for (let c = 0; c < 3; c++) canopy[o + 1 + c] = Math.round(art.rgb[c] * 0.5);",
     "tests": [
       "test/render/farflora.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "FAR-FLORA-the-lift",
     "file": "src/render/midRing.js",
-    "old": "return cover * art.h * FLORA.lift;",
-    "new": "return cover * art.h;",
+    "old": "  return cover * art.h * FLORA.lift;",
+    "new": "  return cover * art.h;",
     "tests": [
       "test/render/farflora.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "FAR-FLORA-the-cover-byte",
     "file": "src/render/midRing.js",
-    "old": "canopy[o] = Math.round(cover * 255);",
-    "new": "canopy[o] = 255;",
+    "old": "  canopy[o] = Math.round(cover * 255);",
+    "new": "  canopy[o] = 255;",
     "tests": [
       "test/render/farflora.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "FAR-FLORA-the-ground-mix",
     "file": "src/render/midRing.js",
-    "old": "ground.grass[c] * grass + ground.stone[c] * stone) / sum",
-    "new": "ground.grass[c] * grass + ground.stone[c] * stone)",
+    "old": "    colors[o + c] = Math.round((ground.dirt[c] * dirt + ground.grass[c] * grass + ground.stone[c] * stone) / sum);",
+    "new": "    colors[o + c] = Math.round(ground.dirt[c] * dirt + ground.grass[c] * grass + ground.stone[c] * stone);",
     "tests": [
       "test/render/farflora.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "FAR-FLORA-the-pixel",
     "file": "src/render/midRing.js",
-    "old": "const f = floraOfPixel(Math.min(n - 1, Math.floor(gx / sub)), Math.min(n - 1, Math.floor(gz / sub)));",
-    "new": "const f = floraOfPixel(Math.min(n - 1, Math.floor(gz / sub)), Math.min(n - 1, Math.floor(gx / sub)));",
+    "old": "        const f = floraOfPixel(Math.min(n - 1, Math.floor(gx / sub)), Math.min(n - 1, Math.floor(gz / sub)));",
+    "new": "        const f = floraOfPixel(Math.min(n - 1, Math.floor(gz / sub)), Math.min(n - 1, Math.floor(gx / sub)));",
     "tests": [
       "test/render/farflora.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "FAR-FLORA-the-lift-unnormalled",
     "file": "src/render/midRing.js",
-    "old": "midRingNormals(lifted, side, sub, normals, z0, Math.min(side, z0 + MID_ROWS_A_STEP));",
-    "new": "midRingNormals(heights, side, sub, normals, z0, Math.min(side, z0 + MID_ROWS_A_STEP));",
+    "old": "    midRingNormals(lifted, side, sub, normals, z0, Math.min(side, z0 + MID_ROWS_A_STEP)); // FAR-FLORA: the canopy's own",
+    "new": "    midRingNormals(heights, side, sub, normals, z0, Math.min(side, z0 + MID_ROWS_A_STEP)); // FAR-FLORA: the canopy's own",
     "tests": [
       "test/render/farflora.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "FAR-FLORA-the-ease",
     "file": "src/render/midRing.js",
-    "old": "* (1 - ease) + f.expected * ease;",
-    "new": "* 1 + f.expected * 0;",
+    "old": "          const trees = near * (1 - ease) + f.expected * ease;",
+    "new": "          const trees = near * 1 + f.expected * 0;",
     "tests": [
       "test/render/farflora.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "FAR-FLORA-the-ground-ease",
     "file": "src/render/midRing.js",
-    "old": "dirt + (g[1] - dirt) * ease, grass + (g[2] - grass) * ease",
-    "new": "dirt, grass",
+    "old": "          layGround(\n            colors,\n            o,\n            f.ground,\n            dirt + (g[1] - dirt) * ease,\n            grass + (g[2] - grass) * ease,\n            stone + (g[3] - stone) * ease,\n          );",
+    "new": "          layGround(colors, o, f.ground, dirt, grass, stone + (g[3] - stone) * ease);",
     "tests": [
       "test/render/farflora.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "FAR-FLORA-the-woods-step",
     "file": "src/render/midRing.js",
-    "old": "const rowsAStep = woods ? MID_ROWS_A_STEP / 2 : MID_ROWS_A_STEP;",
-    "new": "const rowsAStep = MID_ROWS_A_STEP;",
+    "old": "  const rowsAStep = woods ? MID_ROWS_A_STEP / 2 : MID_ROWS_A_STEP; // the woods' rows twice the work: half as many a step",
+    "new": "  const rowsAStep = MID_ROWS_A_STEP; // the woods' rows twice the work: half as many a step",
     "tests": [
       "test/render/farflora.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "FAR-FLORA-the-attribute",
     "file": "src/render/midRing.js",
-    "old": "if (v.flora) buf(v.flora, 5, gl.UNSIGNED_BYTE, true, 4);",
-    "new": "if (v.flora) buf(v.flora, 5, gl.UNSIGNED_BYTE, false, 4);",
+    "old": "    if (v.flora) buf(v.flora, 5, gl.UNSIGNED_BYTE, true, 4); // FAR-FLORA: the canopy's cover and colour (the program lays it); off, its constant (0, 0, 0, 1): none",
+    "new": "    if (v.flora) buf(v.flora, 5, gl.UNSIGNED_BYTE, false, 4); // FAR-FLORA: the canopy's cover and colour (the program lays it); off, its constant (0, 0, 0, 1): none",
     "tests": [
       "test/render/farflora.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "FAR-FLORA-the-mid-snow-canopy",
     "file": "src/render/midRing.js",
-    "old": "if (woods?.[v * 4]) whiten(woods, v * 4 + 1, share);",
-    "new": "if (woods?.[v * 4]) whiten(woods, v * 4 + 1, 0);",
+    "old": "        if (woods?.[v * 4]) whiten(woods, v * 4 + 1, share); // FAR-FLORA: the canopy under the same snow (whiten is a mix: the mix of the two whitened is the mix whitened)",
+    "new": "        if (woods?.[v * 4]) whiten(woods, v * 4 + 1, 0); // FAR-FLORA: the canopy under the same snow (whiten is a mix: the mix of the two whitened is the mix whitened)",
     "tests": [
       "test/render/farflora.test.js"
     ]

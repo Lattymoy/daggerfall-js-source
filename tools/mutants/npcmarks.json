@@ -185,8 +185,8 @@
   {
     "name": "NPC-MARKS-bob-still-moves",
     "file": "src/render/npcMarkPass.js",
-    "old": "  if (still) return 0;\n",
-    "new": "\n",
+    "old": "  if (still) return 0;\n  return MARK_BOB_M * Math.sin(2 * Math.PI * (MARK_BOB_HZ * duelClock(seconds) + phase));",
+    "new": "  return MARK_BOB_M * Math.sin(2 * Math.PI * (MARK_BOB_HZ * duelClock(seconds) + phase));",
     "tests": [
       "test/scenes/npcmarks.test.js"
     ]
@@ -194,8 +194,8 @@
   {
     "name": "NPC-MARKS-bob-unwrapped",
     "file": "src/render/npcMarkPass.js",
-    "old": "Math.sin(2 * Math.PI * (MARK_BOB_HZ * duelClock(seconds) + phase))",
-    "new": "Math.sin(2 * Math.PI * (MARK_BOB_HZ * seconds * 1.001 + phase))",
+    "old": "  return MARK_BOB_M * Math.sin(2 * Math.PI * (MARK_BOB_HZ * duelClock(seconds) + phase));",
+    "new": "  return MARK_BOB_M * Math.sin(2 * Math.PI * (MARK_BOB_HZ * seconds * 1.001 + phase));",
     "tests": [
       "test/scenes/npcmarks.test.js"
     ]
@@ -221,8 +221,8 @@
   {
     "name": "NPC-MARKS-quest-dot-joins",
     "file": "src/render/npcMarkPass.js",
-    "old": "box(p - vec2(0.0, -0.62), vec2(0.21, 0.2))",
-    "new": "box(p - vec2(0.0, -0.52), vec2(0.21, 0.2))",
+    "old": "    d = min(box(p - vec2(0.0, 0.3), vec2(0.21, 0.52)), box(p - vec2(0.0, -0.62), vec2(0.21, 0.2)));",
+    "new": "    d = min(box(p - vec2(0.0, 0.3), vec2(0.21, 0.52)), box(p - vec2(0.0, -0.52), vec2(0.21, 0.2)));",
     "tests": [
       "test/scenes/npcmarks.test.js"
     ]
@@ -239,8 +239,8 @@
   {
     "name": "NPC-MARKS-no-rim",
     "file": "src/render/npcMarkPass.js",
-    "old": "  float outline = 0.22;",
-    "new": "  float outline = 0.0;",
+    "old": "  float outline = 0.22;   // a dark pixel's rim round the shape, so it reads over a lit wall and a dark one alike",
+    "new": "  float outline = 0.0;   // a dark pixel's rim round the shape, so it reads over a lit wall and a dark one alike",
     "tests": [
       "test/scenes/npcmarks.test.js"
     ]
@@ -347,8 +347,8 @@
   {
     "name": "NPC-MARKS-right-unmirrored",
     "file": "src/render/npcMarkPass.js",
-    "old": "gl.uniform3f(U.uRight, -view[0], -view[4], -view[8]);",
-    "new": "gl.uniform3f(U.uRight, view[0], view[4], view[8]);",
+    "old": "    gl.uniform3f(U.uRight, -view[0], -view[4], -view[8]);",
+    "new": "    gl.uniform3f(U.uRight, view[0], view[4], view[8]);",
     "tests": [
       "test/scenes/npcmarks.test.js"
     ]
@@ -356,8 +356,8 @@
   {
     "name": "NPC-MARKS-centred-on-point",
     "file": "src/render/npcMarkPass.js",
-    "old": "vec3(0.0, (aP.y + 1.0) * h, 0.0)",
-    "new": "vec3(0.0, aP.y * h, 0.0)",
+    "old": "  vec3 p = uAt + uRight * (aP.x * h) + vec3(0.0, (aP.y + 1.0) * h, 0.0);",
+    "new": "  vec3 p = uAt + uRight * (aP.x * h) + vec3(0.0, aP.y * h, 0.0);",
     "tests": [
       "test/scenes/npcmarks.test.js"
     ]
@@ -392,8 +392,8 @@
   {
     "name": "NPC-MARKS-dispose-keeps-gl",
     "file": "src/render/npcMarkPass.js",
-    "old": "    gl.deleteProgram(this.program); gl.deleteVertexArray(this.vao); gl.deleteBuffer(this.vbo);",
-    "new": "    gl.deleteProgram(this.program);",
+    "old": "    gl.deleteVertexArray(this.vao);\n    gl.deleteBuffer(this.vbo);\n    this.program = null;",
+    "new": "    this.program = null;",
     "tests": [
       "test/scenes/npcmarks.test.js"
     ]

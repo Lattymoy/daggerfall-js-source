@@ -444,7 +444,7 @@
   {
     "name": "WAGONS2-FINAL-the-target-held-with-the-street-off",
     "file": "src/render/realWindows.js",
-    "old": "  if (!street) { if (state.drawn) { renderer.releaseOutsideView?.(); state.drawn = false; } return { rect, view: false }; }",
+    "old": "  if (!street) {\n    if (state.drawn) {\n      renderer.releaseOutsideView?.();\n      state.drawn = false;\n    }\n    return { rect, view: false };\n  }",
     "new": "  if (!street) return { rect, view: false };",
     "tests": [
       "test/render/windows1_view.test.js"

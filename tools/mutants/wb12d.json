@@ -566,8 +566,8 @@
   {
     "name": "WB12d-a-climb-that-wraps-mid-tile",
     "file": "src/render/riteSmoke.js",
-    "old": "(y - t * ${f1(SMOKE_CLIMB_HEIGHTS[0])}) * per.y)",
-    "new": "(y - t * 1.05) * per.y)",
+    "old": "  float n = 0.5 * mix(${f1(SMOKE_LOD_MEAN)}, tnoise(vec2(vUV.x * per.x, (y - t * ${f1(SMOKE_CLIMB_HEIGHTS[0])}) * per.y), per), smoothstep(1.0, 3.0, big))",
+    "new": "  float n = 0.5 * mix(${f1(SMOKE_LOD_MEAN)}, tnoise(vec2(vUV.x * per.x, (y - t * 1.05) * per.y), per), smoothstep(1.0, 3.0, big))",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -575,8 +575,8 @@
   {
     "name": "WB12d-drawn-faded",
     "file": "src/render/riteSmoke.js",
-    "old": " && s.fade > SMOKE_FADE_MIN).slice(0, SMOKE_MAX);",
-    "new": ").slice(0, SMOKE_MAX);",
+    "old": "      .filter(\n        (s) =>\n          s &&\n          Array.isArray(s.origin) &&\n          s.origin.length === 3 &&\n          s.origin.every(Number.isFinite) &&\n          s.fade > SMOKE_FADE_MIN,\n      )",
+    "new": "      .filter((s) => s && Array.isArray(s.origin) && s.origin.length === 3 && s.origin.every(Number.isFinite))",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -584,8 +584,8 @@
   {
     "name": "WB12d-not-premultiplied",
     "file": "src/render/riteSmoke.js",
-    "old": "gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);",
-    "new": "gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);",
+    "old": "    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);",
+    "new": "    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -593,8 +593,8 @@
   {
     "name": "WB12d-the-colour-unweighted",
     "file": "src/render/riteSmoke.js",
-    "old": "* max(uLight, ${f1(SMOKE_LIGHT_MIN)}) * a + glow, a);",
-    "new": "* max(uLight, ${f1(SMOKE_LIGHT_MIN)}) + glow, a);",
+    "old": "  o = vec4(${v3(SMOKE_COLOR)} * max(uLight, ${f1(SMOKE_LIGHT_MIN)}) * a + glow, a);",
+    "new": "  o = vec4(${v3(SMOKE_COLOR)} * max(uLight, ${f1(SMOKE_LIGHT_MIN)}) + glow, a);",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -1773,8 +1773,8 @@
   {
     "name": "AUDIT-WB12d-the-fade-over-metres",
     "file": "src/render/riteSmoke.js",
-    "old": "smoothstep(0.0, ${f1(SMOKE_FOOT_FADE_M / SMOKE_HEIGHT_M)}, h)",
-    "new": "smoothstep(0.0, 0.02, h)",
+    "old": "  float body = smoothstep(0.0, ${f1(SMOKE_FOOT_FADE_M / SMOKE_HEIGHT_M)}, h) * (1.0 - smoothstep(0.5, 1.0, h));",
+    "new": "  float body = smoothstep(0.0, 0.02, h) * (1.0 - smoothstep(0.5, 1.0, h));",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -1782,8 +1782,8 @@
   {
     "name": "AUDIT-WB12d-the-glow-everywhere",
     "file": "src/render/riteSmoke.js",
-    "old": "exp(-h * ${f1(SMOKE_HEIGHT_M / SMOKE_EMBER_M)})",
-    "new": "pow(1.0 - h, 18.0)",
+    "old": "  vec3 glow = ${v3(SMOKE_EMBER)} * (${f1(SMOKE_GLOW)} * exp(-h * ${f1(SMOKE_HEIGHT_M / SMOKE_EMBER_M)}) * puff * f * uFade);",
+    "new": "  vec3 glow = ${v3(SMOKE_EMBER)} * (${f1(SMOKE_GLOW)} * pow(1.0 - h, 18.0) * puff * f * uFade);",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -1791,8 +1791,8 @@
   {
     "name": "AUDIT-WB12d-the-glow-through-the-fog",
     "file": "src/render/riteSmoke.js",
-    "old": "* puff * f * uFade);",
-    "new": "* puff * uFade);",
+    "old": "  vec3 glow = ${v3(SMOKE_EMBER)} * (${f1(SMOKE_GLOW)} * exp(-h * ${f1(SMOKE_HEIGHT_M / SMOKE_EMBER_M)}) * puff * f * uFade);",
+    "new": "  vec3 glow = ${v3(SMOKE_EMBER)} * (${f1(SMOKE_GLOW)} * exp(-h * ${f1(SMOKE_HEIGHT_M / SMOKE_EMBER_M)}) * puff * uFade);",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -1800,8 +1800,8 @@
   {
     "name": "AUDIT-WB12d-the-glow-outlives-the-fade",
     "file": "src/render/riteSmoke.js",
-    "old": "* puff * f * uFade);",
-    "new": "* puff * f);",
+    "old": "  vec3 glow = ${v3(SMOKE_EMBER)} * (${f1(SMOKE_GLOW)} * exp(-h * ${f1(SMOKE_HEIGHT_M / SMOKE_EMBER_M)}) * puff * f * uFade);",
+    "new": "  vec3 glow = ${v3(SMOKE_EMBER)} * (${f1(SMOKE_GLOW)} * exp(-h * ${f1(SMOKE_HEIGHT_M / SMOKE_EMBER_M)}) * puff * f);",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -1809,8 +1809,8 @@
   {
     "name": "AUDIT-WB12d-unlit",
     "file": "src/render/riteSmoke.js",
-    "old": "max(uLight, ${f1(SMOKE_LIGHT_MIN)})",
-    "new": "1.0",
+    "old": "  o = vec4(${v3(SMOKE_COLOR)} * max(uLight, ${f1(SMOKE_LIGHT_MIN)}) * a + glow, a);",
+    "new": "  o = vec4(${v3(SMOKE_COLOR)} * 1.0 * a + glow, a);",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -1818,8 +1818,8 @@
   {
     "name": "AUDIT-WB12d-a-hole-in-the-night",
     "file": "src/render/riteSmoke.js",
-    "old": "max(uLight, ${f1(SMOKE_LIGHT_MIN)})",
-    "new": "uLight",
+    "old": "  o = vec4(${v3(SMOKE_COLOR)} * max(uLight, ${f1(SMOKE_LIGHT_MIN)}) * a + glow, a);",
+    "new": "  o = vec4(${v3(SMOKE_COLOR)} * uLight * a + glow, a);",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -1827,8 +1827,8 @@
   {
     "name": "AUDIT-WB12d-the-light-unhanded",
     "file": "src/render/riteSmoke.js",
-    "old": "gl.uniform1f(U.uLight, Number.isFinite(fog?.light) ? Math.max(0, Math.min(1, fog.light)) : 1);",
-    "new": "gl.uniform1f(U.uLight, 1);",
+    "old": "    gl.uniform1f(U.uLight, Number.isFinite(fog?.light) ? Math.max(0, Math.min(1, fog.light)) : 1);",
+    "new": "    gl.uniform1f(U.uLight, 1);",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -1836,8 +1836,8 @@
   {
     "name": "AUDIT-WB12d-the-light-unclamped",
     "file": "src/render/riteSmoke.js",
-    "old": "Math.max(0, Math.min(1, fog.light))",
-    "new": "fog.light",
+    "old": "    gl.uniform1f(U.uLight, Number.isFinite(fog?.light) ? Math.max(0, Math.min(1, fog.light)) : 1);",
+    "new": "    gl.uniform1f(U.uLight, Number.isFinite(fog?.light) ? fog.light : 1);",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -1845,8 +1845,8 @@
   {
     "name": "AUDIT-WB12d-the-floor-in-all-fog",
     "file": "src/render/riteSmoke.js",
-    "old": "(uFogMode == 1 ? max(f, ${f1(SMOKE_FOG_FLOOR)}) : f)",
-    "new": "max(f, ${f1(SMOKE_FOG_FLOOR)})",
+    "old": "  a *= (uFogMode == 1 ? max(f, ${f1(SMOKE_FOG_FLOOR)}) : f) * uFade;",
+    "new": "  a *= max(f, ${f1(SMOKE_FOG_FLOOR)}) * uFade;",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -2061,8 +2061,8 @@
   {
     "name": "AUDIT-WB12d-a-smooth-cone",
     "file": "src/render/riteSmoke.js",
-    "old": "(1.0 + ${f1(SMOKE_LUMP)} * (lump - 0.5))",
-    "new": "1.0",
+    "old": "  float r = mix(${f1(SMOKE_FOOT_R)}, ${f1(SMOKE_TOP_R)}, pow(heightOf(uv.y), ${f1(SMOKE_SWELL)})) * (1.0 + ${f1(SMOKE_LUMP)} * (lump - 0.5));",
+    "new": "  float r = mix(${f1(SMOKE_FOOT_R)}, ${f1(SMOKE_TOP_R)}, pow(heightOf(uv.y), ${f1(SMOKE_SWELL)})) * 1.0;",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -2070,8 +2070,8 @@
   {
     "name": "AUDIT-WB12d-lumps-of-their-own",
     "file": "src/render/riteSmoke.js",
-    "old": "uTime / ${f1(SMOKE_CLOCK_PERIOD)} * ${f1(SMOKE_CLIMB_HEIGHTS[0])})",
-    "new": "uTime / ${f1(SMOKE_CLOCK_PERIOD)} * ${f1(SMOKE_CLIMB_HEIGHTS[1])})",
+    "old": "  float lump = tnoise(vec2(uv.x * per.x, (clamp(uv.y, 0.0, 1.0) - uTime / ${f1(SMOKE_CLOCK_PERIOD)} * ${f1(SMOKE_CLIMB_HEIGHTS[0])}) * per.y), per);",
+    "new": "  float lump = tnoise(vec2(uv.x * per.x, (clamp(uv.y, 0.0, 1.0) - uTime / ${f1(SMOKE_CLOCK_PERIOD)} * ${f1(SMOKE_CLIMB_HEIGHTS[1])}) * per.y), per);",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -2079,8 +2079,8 @@
   {
     "name": "AUDIT-WB12d-lumps-off-the-billows",
     "file": "src/render/riteSmoke.js",
-    "old": "float lump = tnoise(vec2(uv.x * per.x, ",
-    "new": "float lump = tnoise(vec2(uv.x * per.x + 1.0, ",
+    "old": "  float lump = tnoise(vec2(uv.x * per.x, (clamp(uv.y, 0.0, 1.0) - uTime / ${f1(SMOKE_CLOCK_PERIOD)} * ${f1(SMOKE_CLIMB_HEIGHTS[0])}) * per.y), per);",
+    "new": "  float lump = tnoise(vec2(uv.x * per.x + 1.0, (clamp(uv.y, 0.0, 1.0) - uTime / ${f1(SMOKE_CLOCK_PERIOD)} * ${f1(SMOKE_CLIMB_HEIGHTS[0])}) * per.y), per);",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -2088,8 +2088,8 @@
   {
     "name": "AUDIT-WB12d-the-axis-s-line-for-its-normal",
     "file": "src/render/riteSmoke.js",
-    "old": "vNormal = cross(placeAt(aUV + vec2(0.0, e.y)) - placeAt(aUV - vec2(0.0, e.y)), placeAt(aUV + vec2(e.x, 0.0)) - placeAt(aUV - vec2(e.x, 0.0)));",
-    "new": "vNormal = p - axisAt(h);",
+    "old": "  vNormal = cross(placeAt(aUV + vec2(0.0, e.y)) - placeAt(aUV - vec2(0.0, e.y)), placeAt(aUV + vec2(e.x, 0.0)) - placeAt(aUV - vec2(e.x, 0.0)));",
+    "new": "  vNormal = p - axisAt(h);",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -2097,8 +2097,8 @@
   {
     "name": "AUDIT-WB12d-thick-edge-on",
     "file": "src/render/riteSmoke.js",
-    "old": "abs(dot(normalize(vNormal), normalize(uCamPos - vWorld)))",
-    "new": "1.0",
+    "old": "  float core = smoothstep(0.0, 0.55, abs(dot(normalize(vNormal), normalize(uCamPos - vWorld))));",
+    "new": "  float core = smoothstep(0.0, 0.55, 1.0);",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -2106,8 +2106,8 @@
   {
     "name": "AUDIT-WB12d-billows-one-size",
     "file": "src/render/riteSmoke.js",
-    "old": "float y = log(1.0 + ${f1(SMOKE_BILLOW)} * h) / ${f1(Math.log(1 + SMOKE_BILLOW))};",
-    "new": "float y = h;",
+    "old": "  float y = log(1.0 + ${f1(SMOKE_BILLOW)} * h) / ${f1(Math.log(1 + SMOKE_BILLOW))};",
+    "new": "  float y = h;",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -2124,8 +2124,8 @@
   {
     "name": "AUDIT-WB12d-shimmer-far-off",
     "file": "src/render/riteSmoke.js",
-    "old": "per), smoothstep(1.0, 3.0, big))",
-    "new": "per), 1.0)",
+    "old": "  float n = 0.5 * mix(${f1(SMOKE_LOD_MEAN)}, tnoise(vec2(vUV.x * per.x, (y - t * ${f1(SMOKE_CLIMB_HEIGHTS[0])}) * per.y), per), smoothstep(1.0, 3.0, big))",
+    "new": "  float n = 0.5 * mix(${f1(SMOKE_LOD_MEAN)}, tnoise(vec2(vUV.x * per.x, (y - t * ${f1(SMOKE_CLIMB_HEIGHTS[0])}) * per.y), per), 1.0)",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -2133,8 +2133,8 @@
   {
     "name": "AUDIT-WB12d-fine-shimmer-far-off",
     "file": "src/render/riteSmoke.js",
-    "old": "per * 4.0), smoothstep(4.0, 12.0, big))",
-    "new": "per * 4.0), 1.0)",
+    "old": "          + 0.2 * mix(${f1(SMOKE_LOD_MEAN)}, tnoise(vec2(vUV.x * per.x * 4.0, (y - t * ${f1(SMOKE_CLIMB_HEIGHTS[2])}) * per.y * 4.0), per * 4.0), smoothstep(4.0, 12.0, big));",
+    "new": "          + 0.2 * mix(${f1(SMOKE_LOD_MEAN)}, tnoise(vec2(vUV.x * per.x * 4.0, (y - t * ${f1(SMOKE_CLIMB_HEIGHTS[2])}) * per.y * 4.0), per * 4.0), 1.0);",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -2554,8 +2554,8 @@
   {
     "name": "AUDIT-WB12d-T-smoke-nan-origin-drawn",
     "file": "src/render/riteSmoke.js",
-    "old": "s.origin.length === 3 && s.origin.every(Number.isFinite) && s.fade > SMOKE_FADE_MIN",
-    "new": "s.origin.length === 3 && s.fade > SMOKE_FADE_MIN",
+    "old": "      .filter(\n        (s) =>\n          s &&\n          Array.isArray(s.origin) &&\n          s.origin.length === 3 &&\n          s.origin.every(Number.isFinite) &&\n          s.fade > SMOKE_FADE_MIN,\n      )",
+    "new": "      .filter((s) => s && Array.isArray(s.origin) && s.origin.length === 3 && s.fade > SMOKE_FADE_MIN)",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js",
       "test/net/gate/wb12d_rite_law.test.js",
@@ -3058,8 +3058,8 @@
   {
     "name": "AUDIT-WB12d-T-smoke-clock-unwrapped",
     "file": "src/render/riteSmoke.js",
-    "old": "gl.uniform1f(U.uTime, smokeClock(seconds));",
-    "new": "gl.uniform1f(U.uTime, seconds);",
+    "old": "    gl.uniform1f(U.uTime, smokeClock(seconds));",
+    "new": "    gl.uniform1f(U.uTime, seconds);",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js",
       "test/net/gate/wb12d_rite_law.test.js",

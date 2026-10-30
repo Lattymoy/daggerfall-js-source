@@ -725,8 +725,8 @@
   {
     "name": "AUDIT-BANTHA1-HAZE-3-a-glow-left-unhazed",
     "file": "src/render/nodeGlow.js",
-    "old": "    if (U.uJungleHaze) gl.uniform4fv(U.uJungleHaze, fog?.haze ?? NO_HAZE);",
-    "new": "    void NO_HAZE;",
+    "old": "    if (U.uJungleHaze) gl.uniform4fv(U.uJungleHaze, fog?.haze ?? NO_HAZE); // BANTHA1 (AUDIT BANTHA1 HAZE-3): the jungle's haze (renderer.setJungleHaze); none handed, off",
+    "new": "    void NO_HAZE; // BANTHA1 (AUDIT BANTHA1 HAZE-3): the jungle's haze (renderer.setJungleHaze); none handed, off",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]
@@ -779,8 +779,8 @@
   {
     "name": "AUDIT-BANTHA1-TREE-3-the-glow-ignores-the-marks-pull",
     "file": "src/render/nodeGlow.js",
-    "old": "g.pull = Number.isFinite(m.pull) ? m.pull : NODE_GLOW_PULL;",
-    "new": "g.pull = NODE_GLOW_PULL;",
+    "old": "      g.pull = Number.isFinite(m.pull) ? m.pull : NODE_GLOW_PULL; // AUDIT BANTHA1 TREE-3: a mark may stand its card further out (a jungle trunk's)",
+    "new": "      g.pull = NODE_GLOW_PULL; // AUDIT BANTHA1 TREE-3: a mark may stand its card further out (a jungle trunk's)",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]

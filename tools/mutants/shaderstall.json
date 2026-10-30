@@ -92,8 +92,8 @@
   {
     "name": "SS-the-outline-idle-while-compiling",
     "file": "src/render/nodeGlint.js",
-    "old": "      if (!asked && pictured.length && (ready ??= start(renderer.gl))()) { asked = true; idle(make); }",
-    "new": "      if (!asked && pictured.length) { ready ??= start(renderer.gl); asked = true; idle(make); }",
+    "old": "      if (!asked && pictured.length && (ready ??= start(renderer.gl))()) {",
+    "new": "      if (!asked && pictured.length) {\n        ready ??= start(renderer.gl);",
     "tests": [
       "test/render/shaderstall.test.js"
     ]

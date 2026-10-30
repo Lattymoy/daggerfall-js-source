@@ -29,13 +29,26 @@
 
 import { TERRAIN_SIZE } from '../world/terrain/terrainSampler.js';
 import { MID_RADIUS, MID_SUB, MID_REBUILD_DRIFT, midRingSide, midRingNormals } from '../world/terrain/midRingGrid.js';
-import { treesPerTile, landsTreesAt, canopyCover, expectedTrees, FLORA, FLORA_WOOD, FLORA_DIRT, FLORA_GRASS, FLORA_STONE } from '../world/terrain/floraCover.js';   // FAR-FLORA: the near law's woods
-import { capShare, whiten } from '../world/peaks/snowcap.js';   // PEAKS1: the summits' snow
+import {
+  treesPerTile,
+  landsTreesAt,
+  canopyCover,
+  expectedTrees,
+  FLORA,
+  FLORA_WOOD,
+  FLORA_DIRT,
+  FLORA_GRASS,
+  FLORA_STONE,
+} from '../world/terrain/floraCover.js'; // FAR-FLORA: the near law's woods
+import { capShare, whiten } from '../world/peaks/snowcap.js'; // PEAKS1: the summits' snow
 
 /** ?midring=off - the middle ring's kill door (the far ring stands as before), read once as the ring is made. */
 export function midRingDisabled(search = globalThis.location?.search) {
-  try { return /[?&]midring=off\b/.test(search ?? ''); }
-  catch { return false; }
+  try {
+    return /[?&]midring=off\b/.test(search ?? '');
+  } catch {
+    return false;
+  }
 }
 
 /** How near a vertex must stand to the sea's floor to be the sea (world units) - the kernel's ocean clamp, through a float. */
@@ -61,7 +74,8 @@ export const MID_FLORA_EASE = Object.freeze([MID_RADIUS - MID_REBUILD_DRIFT - 2,
  * stand there themselves. None without art. Answers the canopy's lift (world units). Pure.
  */
 export function plantCanopy(canopy, k, trees, art) {
-  const cover = art ? canopyCover(trees, art.w) : 0, o = k * 4;
+  const cover = art ? canopyCover(trees, art.w) : 0,
+    o = k * 4;
   canopy[o] = Math.round(cover * 255);
   if (!(cover > 0)) return 0;
   for (let c = 0; c < 3; c++) canopy[o + 1 + c] = Math.round(art.rgb[c]);
@@ -74,7 +88,8 @@ export function plantCanopy(canopy, k, trees, art) {
 export function layGround(colors, o, ground, dirt, grass, stone) {
   const sum = dirt + grass + stone;
   if (!ground || !(sum > 0)) return;
-  for (let c = 0; c < 3; c++) colors[o + c] = Math.round((ground.dirt[c] * dirt + ground.grass[c] * grass + ground.stone[c] * stone) / sum);
+  for (let c = 0; c < 3; c++)
+    colors[o + c] = Math.round((ground.dirt[c] * dirt + ground.grass[c] * grass + ground.stone[c] * stone) / sum);
 }
 
 /** A pixel's climate flora with the far ring's expectation of its trees worked out once (floraCover.js expectedTrees). */
@@ -83,7 +98,10 @@ const smooth01 = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
 
 /** A stepped build run whole: its generator's answer. */
 export function runHorizonSteps(it) {
-  for (;;) { const r = it.next(); if (r.done) return r.value; }
+  for (;;) {
+    const r = it.next();
+    if (r.done) return r.value;
+  }
 }
 
 /**
@@ -104,65 +122,126 @@ export function runHorizonSteps(it) {
 export const midRingVertices = (o) => runHorizonSteps(midRingVertexSteps(o));
 
 /** midRingVertices a step of rows at a time - its answer the generator's own. @param {Parameters<typeof midRingVertices>[0]} o */
-export function* midRingVertexSteps({ heights, baseX, baseY, radius = MID_RADIUS, sub = MID_SUB, tintAt, seaY, ringAt = null, wet = null, snowAt = null, flora = null, floraAt = null, cover = null }) {
-  const side = midRingSide(radius, sub), n = 2 * radius + 1, cell = TERRAIN_SIZE / sub;
+export function* midRingVertexSteps({
+  heights,
+  baseX,
+  baseY,
+  radius = MID_RADIUS,
+  sub = MID_SUB,
+  tintAt,
+  seaY,
+  ringAt = null,
+  wet = null,
+  snowAt = null,
+  flora = null,
+  floraAt = null,
+  cover = null,
+}) {
+  const side = midRingSide(radius, sub),
+    n = 2 * radius + 1,
+    cell = TERRAIN_SIZE / sub;
   const positions = new Float32Array(side * side * 3);
-  const coarse = new Float32Array(side * side);   // the far ring's surface under each vertex (its ease's ground)
+  const coarse = new Float32Array(side * side); // the far ring's surface under each vertex (its ease's ground)
   // the far ring's pixel-centre heights, one row of padding round the footprint (ringAt: a pixel's height on that ring)
-  const rw = n + 2, ring = new Float32Array(rw * rw);
-  for (let tj = 0; tj < rw; tj++) for (let ti = 0; ti < rw; ti++) ring[tj * rw + ti] = ringAt ? ringAt(baseX - radius - 1 + ti, baseY + radius + 1 - tj) : 0;
+  const rw = n + 2,
+    ring = new Float32Array(rw * rw);
+  for (let tj = 0; tj < rw; tj++)
+    for (let ti = 0; ti < rw; ti++)
+      ring[tj * rw + ti] = ringAt ? ringAt(baseX - radius - 1 + ti, baseY + radius + 1 - tj) : 0;
   const colors = new Uint8Array(side * side * 3);
   const sea = new Uint8Array(side * side);
   // the pixel centres' tints, one row of padding round the footprint (a vertex at its rim reads past it)
-  const tw = n + 2, tints = new Uint8Array(tw * tw * 3), caps = snowAt ? new Float32Array(tw * tw) : null;
+  const tw = n + 2,
+    tints = new Uint8Array(tw * tw * 3),
+    caps = snowAt ? new Float32Array(tw * tw) : null;
   for (let tj = 0; tj < tw; tj++) {
     if (tj) yield;
     for (let ti = 0; ti < tw; ti++) {
-      const t = tintAt(baseX - radius - 1 + ti, baseY + radius + 1 - tj), o = (tj * tw + ti) * 3;
-      tints[o] = t[0]; tints[o + 1] = t[1]; tints[o + 2] = t[2];
-      if (caps) caps[tj * tw + ti] = snowAt(baseX - radius - 1 + ti, baseY + radius + 1 - tj);   // PEAKS1
+      const t = tintAt(baseX - radius - 1 + ti, baseY + radius + 1 - tj),
+        o = (tj * tw + ti) * 3;
+      tints[o] = t[0];
+      tints[o + 1] = t[1];
+      tints[o + 2] = t[2];
+      if (caps) caps[tj * tw + ti] = snowAt(baseX - radius - 1 + ti, baseY + radius + 1 - tj); // PEAKS1
     }
   }
-  const capAt = caps ? new Float32Array(side * side) : null;   // PEAKS1: each vertex's cap line, the centres' bilinear
+  const capAt = caps ? new Float32Array(side * side) : null; // PEAKS1: each vertex's cap line, the centres' bilinear
   // FAR-FLORA: the canopy's cover a vertex (the shader's crowns), the ground under the canopy's lift (the normals' and the
   // positions' height), and each pixel's climate flora read once
-  const woods = flora && floraAt ? new Uint8Array(side * side * 4) : null, lifted = woods ? new Float32Array(heights) : heights;
+  const woods = flora && floraAt ? new Uint8Array(side * side * 4) : null,
+    lifted = woods ? new Float32Array(heights) : heights;
   const pixFlora = woods ? new Array(n * n) : null;
-  const floraOfPixel = (pi, pj) => (pixFlora[pj * n + pi] ??= withExpected(floraAt(baseX - radius + pi, baseY + radius - pj)));
-  const rowsAStep = woods ? MID_ROWS_A_STEP / 2 : MID_ROWS_A_STEP;   // the woods' rows twice the work: half as many a step
+  const floraOfPixel = (pi, pj) =>
+    (pixFlora[pj * n + pi] ??= withExpected(floraAt(baseX - radius + pi, baseY + radius - pj)));
+  const rowsAStep = woods ? MID_ROWS_A_STEP / 2 : MID_ROWS_A_STEP; // the woods' rows twice the work: half as many a step
   for (let gz = 0; gz < side; gz++) {
     if (gz && gz % rowsAStep === 0) yield;
     // the pixel centres' lattice: centre k (0 the padding's) at gz = (k - 1) * sub + sub / 2
-    const fz = (gz - sub / 2) / sub + 1, kz = Math.min(tw - 2, Math.max(0, Math.floor(fz))), wz = Math.min(1, Math.max(0, fz - kz));
+    const fz = (gz - sub / 2) / sub + 1,
+      kz = Math.min(tw - 2, Math.max(0, Math.floor(fz))),
+      wz = Math.min(1, Math.max(0, fz - kz));
     for (let gx = 0; gx < side; gx++) {
-      const v = gz * side + gx, o = v * 3;
+      const v = gz * side + gx,
+        o = v * 3;
       positions[o] = (gx - radius * sub) * cell;
       positions[o + 1] = heights[v];
       positions[o + 2] = (gz - radius * sub) * cell;
-      const fx = (gx - sub / 2) / sub + 1, kx = Math.min(tw - 2, Math.max(0, Math.floor(fx))), wx = Math.min(1, Math.max(0, fx - kx));
-      const a = (kz * tw + kx) * 3, b = a + 3, c = a + tw * 3, d = c + 3;
+      const fx = (gx - sub / 2) / sub + 1,
+        kx = Math.min(tw - 2, Math.max(0, Math.floor(fx))),
+        wx = Math.min(1, Math.max(0, fx - kx));
+      const a = (kz * tw + kx) * 3,
+        b = a + 3,
+        c = a + tw * 3,
+        d = c + 3;
       for (let k = 0; k < 3; k++) {
-        colors[o + k] = Math.round((tints[a + k] * (1 - wx) + tints[b + k] * wx) * (1 - wz) + (tints[c + k] * (1 - wx) + tints[d + k] * wx) * wz);
+        colors[o + k] = Math.round(
+          (tints[a + k] * (1 - wx) + tints[b + k] * wx) * (1 - wz) + (tints[c + k] * (1 - wx) + tints[d + k] * wx) * wz,
+        );
       }
-      if (capAt) capAt[v] = (caps[a / 3] * (1 - wx) + caps[b / 3] * wx) * (1 - wz) + (caps[c / 3] * (1 - wx) + caps[d / 3] * wx) * wz;
+      if (capAt)
+        capAt[v] =
+          (caps[a / 3] * (1 - wx) + caps[b / 3] * wx) * (1 - wz) + (caps[c / 3] * (1 - wx) + caps[d / 3] * wx) * wz;
       // the far ring's own triangles over the four centres (render/farRing.js writeRingCells: i0 i2 i3 and i0 i3 i1, its
       // rows running south - here u east and v south from the north-west centre)
       if (ringAt) {
-        const h00 = ring[(kz + 1) * rw + kx], h10 = ring[(kz + 1) * rw + kx + 1], h01 = ring[kz * rw + kx], h11 = ring[kz * rw + kx + 1];
-        const u = wx, w = 1 - wz;   // v south: the centre row kz is the south one
+        const h00 = ring[(kz + 1) * rw + kx],
+          h10 = ring[(kz + 1) * rw + kx + 1],
+          h01 = ring[kz * rw + kx],
+          h11 = ring[kz * rw + kx + 1];
+        const u = wx,
+          w = 1 - wz; // v south: the centre row kz is the south one
         coarse[v] = u >= w ? h00 + u * (h10 - h00) + w * (h11 - h10) : h00 + w * (h01 - h00) + u * (h11 - h01);
       } else coarse[v] = heights[v];
-      if (Math.abs(heights[v] - seaY) < MID_SEA_EPS || (wet && wet[v])) sea[v] = 255;   // MAP-WATERS: and stream G's rivers and lakes (the worker's flags)
-      else if (woods) {   // FAR-FLORA: the woods the near law grows here, in its climate's art
+      if (Math.abs(heights[v] - seaY) < MID_SEA_EPS || (wet && wet[v]))
+        sea[v] = 255; // MAP-WATERS: and stream G's rivers and lakes (the worker's flags)
+      else if (woods) {
+        // FAR-FLORA: the woods the near law grows here, in its climate's art
         const f = floraOfPixel(Math.min(n - 1, Math.floor(gx / sub)), Math.min(n - 1, Math.floor(gz / sub)));
         if (f) {
-          const p = flora[v], dirt = ((p >>> FLORA_DIRT) & 255) / 255, grass = ((p >>> FLORA_GRASS) & 255) / 255, stone = ((p >>> FLORA_STONE) & 255) / 255;
-          const ease = smooth01((Math.max(Math.abs(positions[o] / TERRAIN_SIZE - 0.5), Math.abs(positions[o + 2] / TERRAIN_SIZE - 0.5)) - MID_FLORA_EASE[0]) / (MID_FLORA_EASE[1] - MID_FLORA_EASE[0]));
+          const p = flora[v],
+            dirt = ((p >>> FLORA_DIRT) & 255) / 255,
+            grass = ((p >>> FLORA_GRASS) & 255) / 255,
+            stone = ((p >>> FLORA_STONE) & 255) / 255;
+          const ease = smooth01(
+            (Math.max(Math.abs(positions[o] / TERRAIN_SIZE - 0.5), Math.abs(positions[o + 2] / TERRAIN_SIZE - 0.5)) -
+              MID_FLORA_EASE[0]) /
+              (MID_FLORA_EASE[1] - MID_FLORA_EASE[0]),
+          );
           // TESA-LANDS (AUDIT): a zone's woods its own edge on the forest field's own value (floraCover.js midRingCoverPixel)
-          const near = cover && f.spec.lands ? landsTreesAt(f.spec, f.spec.lands.woodAt(cover[v]), dirt, grass, stone) : treesPerTile(((p >>> FLORA_WOOD) & 255) / 255, dirt, grass, stone, f.spec, f.byte);   // TESA-LANDS: `cover` the forest field's own value (floraCover.js midRingCoverPixel), a zone's woods its own edge
+          const near =
+            cover && f.spec.lands
+              ? landsTreesAt(f.spec, f.spec.lands.woodAt(cover[v]), dirt, grass, stone)
+              : treesPerTile(((p >>> FLORA_WOOD) & 255) / 255, dirt, grass, stone, f.spec, f.byte); // TESA-LANDS: `cover` the forest field's own value (floraCover.js midRingCoverPixel), a zone's woods its own edge
           const trees = near * (1 - ease) + f.expected * ease;
-          const g = FLORA.ground;   // the ground's shares eased toward the near law's mean as the woods are
-          layGround(colors, o, f.ground, dirt + (g[1] - dirt) * ease, grass + (g[2] - grass) * ease, stone + (g[3] - stone) * ease);
+          const g = FLORA.ground; // the ground's shares eased toward the near law's mean as the woods are
+          layGround(
+            colors,
+            o,
+            f.ground,
+            dirt + (g[1] - dirt) * ease,
+            grass + (g[2] - grass) * ease,
+            stone + (g[3] - stone) * ease,
+          );
           lifted[v] = heights[v] + plantCanopy(woods, v, trees, f.art);
           positions[o + 1] = lifted[v];
         }
@@ -172,13 +251,13 @@ export function* midRingVertexSteps({ heights, baseX, baseY, radius = MID_RADIUS
   const normals = new Float32Array(side * side * 3);
   for (let z0 = 0; z0 < side; z0 += MID_ROWS_A_STEP) {
     yield;
-    midRingNormals(lifted, side, sub, normals, z0, Math.min(side, z0 + MID_ROWS_A_STEP));   // FAR-FLORA: the canopy's own
+    midRingNormals(lifted, side, sub, normals, z0, Math.min(side, z0 + MID_ROWS_A_STEP)); // FAR-FLORA: the canopy's own
     if (capAt) {
       for (let v = z0 * side; v < Math.min(side, z0 + MID_ROWS_A_STEP) * side; v++) {
         if (sea[v]) continue;
         const share = capShare(heights[v] - seaY, normals[v * 3 + 1], capAt[v]);
-        whiten(colors, v * 3, share);   // PEAKS1
-        if (woods?.[v * 4]) whiten(woods, v * 4 + 1, share);   // FAR-FLORA: the canopy under the same snow (whiten is a mix: the mix of the two whitened is the mix whitened)
+        whiten(colors, v * 3, share); // PEAKS1
+        if (woods?.[v * 4]) whiten(woods, v * 4 + 1, share); // FAR-FLORA: the canopy under the same snow (whiten is a mix: the mix of the two whitened is the mix whitened)
       }
     }
   }
@@ -192,23 +271,28 @@ export function* midRingVertexSteps({ heights, baseX, baseY, radius = MID_RADIUS
  * @returns {{ indices: Uint16Array | Uint32Array, order: Array<{ px: number, py: number, key: string, at: number, d: number }> }}
  */
 export function midRingOrder({ baseX, baseY, curX, curY, radius = MID_RADIUS, sub = MID_SUB }) {
-  const n = 2 * radius + 1, side = midRingSide(radius, sub);
+  const n = 2 * radius + 1,
+    side = midRingSide(radius, sub);
   const pixels = [];
-  for (let pj = 0; pj < n; pj++) for (let pi = 0; pi < n; pi++) {
-    const px = baseX - radius + pi, py = baseY + radius - pj;
-    pixels.push({ px, py, pi, pj, d: Math.hypot(px - curX, py - curY) });
-  }
+  for (let pj = 0; pj < n; pj++)
+    for (let pi = 0; pi < n; pi++) {
+      const px = baseX - radius + pi,
+        py = baseY + radius - pj;
+      pixels.push({ px, py, pi, pj, d: Math.hypot(px - curX, py - curY) });
+    }
   pixels.sort((a, b) => b.d - a.d || a.pj - b.pj || a.pi - b.pi);
   const Idx = side * side <= 65536 ? Uint16Array : Uint32Array;
   const indices = new Idx(n * n * sub * sub * 6);
   const order = [];
-  const tpl = cellTemplates(side, sub), per = sub * sub * 6;
+  const tpl = cellTemplates(side, sub),
+    per = sub * sub * 6;
   let o = 0;
   for (const p of pixels) {
-    order.push({ px: p.px, py: p.py, key: `${p.px},${p.py}`, at: o, d: p.d });   // FAR-LANDMARK: its distance, a landmark's cut
+    order.push({ px: p.px, py: p.py, key: `${p.px},${p.py}`, at: o, d: p.d }); // FAR-LANDMARK: its distance, a landmark's cut
     // east of the traveller the east cells are the farther, west of them the west; north (pj up, py down) likewise -
     // a pixel's cells written off the template of its quarter, offsets from its south-west vertex
-    const t = tpl[(p.px > curX ? 1 : 0) + (p.py < curY ? 2 : 0)], first = p.pj * sub * side + p.pi * sub;
+    const t = tpl[(p.px > curX ? 1 : 0) + (p.py < curY ? 2 : 0)],
+      first = p.pj * sub * side + p.pi * sub;
     for (let k = 0; k < per; k++) indices[o + k] = first + t[k];
     o += per;
   }
@@ -230,9 +314,16 @@ function cellTemplates(side, sub) {
       const j = q & 2 ? sub - 1 - jj : jj;
       for (let ii = 0; ii < sub; ii++) {
         const i = q & 1 ? sub - 1 - ii : ii;
-        const i0 = j * side + i, i1 = i0 + 1, i2 = i0 + side, i3 = i2 + 1;
-        t[o++] = i0; t[o++] = i2; t[o++] = i3;
-        t[o++] = i0; t[o++] = i3; t[o++] = i1;
+        const i0 = j * side + i,
+          i1 = i0 + 1,
+          i2 = i0 + side,
+          i3 = i2 + 1;
+        t[o++] = i0;
+        t[o++] = i2;
+        t[o++] = i3;
+        t[o++] = i0;
+        t[o++] = i3;
+        t[o++] = i1;
       }
     }
     return t;
@@ -248,7 +339,13 @@ export function midRingRuns(order, total, solid) {
   let start = -1;
   for (let k = 0; k < order.length; k++) {
     const p = order[k];
-    if (solid(p.key)) { if (start >= 0) { runs.push([start, p.at - start]); start = -1; } continue; }
+    if (solid(p.key)) {
+      if (start >= 0) {
+        runs.push([start, p.at - start]);
+        start = -1;
+      }
+      continue;
+    }
     if (start < 0) start = p.at;
   }
   if (start >= 0) runs.push([start, total - start]);
@@ -274,8 +371,10 @@ export class MidRingMesh {
     this.vao = null;
     this.buffers = [];
     this.indexBuffer = null;
-    this.baseX = 0; this.baseY = 0;
-    this.radius = MID_RADIUS; this.sub = MID_SUB;
+    this.baseX = 0;
+    this.baseY = 0;
+    this.radius = MID_RADIUS;
+    this.sub = MID_SUB;
     this.order = [];
     this.total = 0;
     this.indexType = 0;
@@ -284,7 +383,9 @@ export class MidRingMesh {
     this._runsKey = '';
   }
 
-  get built() { return !!this.vao; }
+  get built() {
+    return !!this.vao;
+  }
 
   /** The vertex arrays (midRingVertices') round `baseX`, `baseY` uploaded, the order written for the traveller's pixel. */
   build(v, { baseX, baseY, radius = MID_RADIUS, sub = MID_SUB, curX, curY }) {
@@ -304,15 +405,15 @@ export class MidRingMesh {
     buf(v.normals, 1, gl.FLOAT, false);
     buf(v.colors, 2, gl.UNSIGNED_BYTE, true);
     buf(v.sea, 3, gl.UNSIGNED_BYTE, true, 1);
-    buf(v.coarse, 4, gl.FLOAT, false, 1);   // the far ring's surface under it (render/farRing.js VS: the ease)
-    if (v.flora) buf(v.flora, 5, gl.UNSIGNED_BYTE, true, 4);   // FAR-FLORA: the canopy's cover and colour (the program lays it); off, its constant (0, 0, 0, 1): none
+    buf(v.coarse, 4, gl.FLOAT, false, 1); // the far ring's surface under it (render/farRing.js VS: the ease)
+    if (v.flora) buf(v.flora, 5, gl.UNSIGNED_BYTE, true, 4); // FAR-FLORA: the canopy's cover and colour (the program lays it); off, its constant (0, 0, 0, 1): none
     this.indexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
     this.buffers.push(this.indexBuffer);
     gl.bindVertexArray(null);
     this.vao = vao;
     Object.assign(this, { baseX, baseY, radius, sub });
-    this.heights = groundHeights(v.positions);   // HORIZON-TREES: the drawn ground, for the band's skyline (render/farTrees.js)
+    this.heights = groundHeights(v.positions); // HORIZON-TREES: the drawn ground, for the band's skyline (render/farTrees.js)
     this._orderKey = '';
     this.reorder(curX, curY);
   }
@@ -322,7 +423,14 @@ export class MidRingMesh {
     const key = `${curX},${curY}`;
     if (!this.vao || key === this._orderKey) return;
     const gl = this.gl;
-    const { indices, order } = midRingOrder({ baseX: this.baseX, baseY: this.baseY, curX, curY, radius: this.radius, sub: this.sub });
+    const { indices, order } = midRingOrder({
+      baseX: this.baseX,
+      baseY: this.baseY,
+      curX,
+      curY,
+      radius: this.radius,
+      sub: this.sub,
+    });
     gl.bindVertexArray(this.vao);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
@@ -347,7 +455,8 @@ export class MidRingMesh {
    *  `origin` this ring's base in the scene. */
   draw(uOrigin, origin) {
     if (!this.vao || !this.runs.length) return;
-    const gl = this.gl, bytes = this.indexType === gl.UNSIGNED_SHORT ? 2 : 4;
+    const gl = this.gl,
+      bytes = this.indexType === gl.UNSIGNED_SHORT ? 2 : 4;
     gl.uniform3f(uOrigin, origin[0], origin[1], origin[2]);
     gl.bindVertexArray(this.vao);
     for (const [first, count] of this.runs) gl.drawElements(gl.TRIANGLES, count, this.indexType, first * bytes);
@@ -357,11 +466,13 @@ export class MidRingMesh {
   /** FAR-LANDMARK: the runs that fall in indices [a, b) - the ring drawn in two parts round a landmark between them. */
   drawRange(uOrigin, origin, a, b) {
     if (!this.vao || b <= a) return;
-    const gl = this.gl, bytes = this.indexType === gl.UNSIGNED_SHORT ? 2 : 4;
+    const gl = this.gl,
+      bytes = this.indexType === gl.UNSIGNED_SHORT ? 2 : 4;
     gl.uniform3f(uOrigin, origin[0], origin[1], origin[2]);
     gl.bindVertexArray(this.vao);
     for (const [first, count] of this.runs) {
-      const s = Math.max(first, a), e = Math.min(first + count, b);
+      const s = Math.max(first, a),
+        e = Math.min(first + count, b);
       if (e > s) gl.drawElements(gl.TRIANGLES, e - s, this.indexType, s * bytes);
     }
     gl.bindVertexArray(null);

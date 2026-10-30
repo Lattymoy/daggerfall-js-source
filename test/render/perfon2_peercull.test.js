@@ -149,7 +149,7 @@ test('PERF-CPU: `frame()` closes the frame whether or not `stop()` was called - 
 
 test('PERF-CPU: markCpu leaves the GPU arm exactly as it was', () => {
   const src = read('src/render/perfMeter.js');
-  assert.match(src, /markCpu\(name\) \{ if \(this\.cpu\) this\._cpuMark\(name\); \}/, 'it touches openZone and the query stack not at all');
+  assert.match(src, /markCpu\(name\) \{\n\s*if \(this\.cpu\) this\._cpuMark\(name\);\n\s*\}/, 'it touches openZone and the query stack not at all');
   assert.match(src, /if \(this\.cpu\) return;\n\s+if \(!this\.ext \|\| this\.active \|\| this\.zones\) return;/, 'and the GPU clock does not run under ?perf=cpu');
   // the host marks the phases a script-bound frame is actually spending in
   const w = hostText('src/scenes/world.js');

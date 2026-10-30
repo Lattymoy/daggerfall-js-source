@@ -236,8 +236,8 @@
   {
     "name": "PEAKS1-the-middle-ring-s-whiten",
     "file": "src/render/midRing.js",
-    "old": "        whiten(colors, v * 3, share);   // PEAKS1",
-    "new": "        whiten(colors, v * 3, 0);   // PEAKS1",
+    "old": "        whiten(colors, v * 3, share); // PEAKS1",
+    "new": "        whiten(colors, v * 3, 0); // PEAKS1",
     "tests": [
       "test/world/peaks1_snowcap.test.js"
     ]

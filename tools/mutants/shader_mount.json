@@ -123,8 +123,8 @@
   {
     "name": "SM-wisps-on-the-lighting-lane",
     "file": "src/render/mountPrograms.js",
-    "old": "  const sky = o.enhancedSky;",
-    "new": "  const sky = !!lane;",
+    "old": "  const sky = o.enhancedSky; // the sky controller's `enhanced`: the wisps, the sand, the haze, Windfall and the bolts ride it",
+    "new": "  const sky = !!lane; // the sky controller's `enhanced`: the wisps, the sand, the haze, Windfall and the bolts ride it",
     "tests": [
       "test/render/shadermount.test.js"
     ],
@@ -153,8 +153,8 @@
   {
     "name": "SM-built-bodies-listed-again",
     "file": "src/render/mountPrograms.js",
-    "old": "lane?.shadows && !renderer._shadowPass?._bodyBuilt ?",
-    "new": "lane?.shadows ?",
+    "old": "  const bodies = lane?.shadows && !renderer._shadowPass?._bodyBuilt ? shadowBodyPrograms(SHADOW_PASS_VS) : [];",
+    "new": "  const bodies = lane?.shadows ? shadowBodyPrograms(SHADOW_PASS_VS) : [];",
     "tests": [
       "test/render/shadermount.test.js"
     ],
@@ -163,8 +163,8 @@
   {
     "name": "SM-a-mount-pass-left-out",
     "file": "src/render/mountPrograms.js",
-    "old": "    ...(world ? [...DUEL_WALL_PROGRAMS, ...BANNER_PROGRAMS, ...FLAG_PROGRAMS] : []),",
-    "new": "    ...(world ? [...DUEL_WALL_PROGRAMS, ...FLAG_PROGRAMS] : []),",
+    "old": "    ...(world ? [...DUEL_WALL_PROGRAMS, ...BANNER_PROGRAMS, ...FLAG_PROGRAMS] : []), // every skin",
+    "new": "    ...(world ? [...DUEL_WALL_PROGRAMS, ...FLAG_PROGRAMS] : []), // every skin",
     "tests": [
       "test/render/shadermount.test.js"
     ],
@@ -193,8 +193,8 @@
   {
     "name": "QO-long-ones-first-again",
     "file": "src/render/playPrograms.js",
-    "old": "...NODE_GLINT_PROGRAMS, ...FIRE_PROGRAMS, ...GLOW_PROGRAMS, ...NODE_GLOW_PROGRAMS, ...NAVAL_PROGRAMS, ...AURA_PROGRAMS, ...ARMORY_PROGRAMS, ...AURORA_PROGRAMS];",
-    "new": "...NODE_GLINT_PROGRAMS, ...AURA_PROGRAMS, ...ARMORY_PROGRAMS, ...FIRE_PROGRAMS, ...GLOW_PROGRAMS, ...NODE_GLOW_PROGRAMS, ...NAVAL_PROGRAMS, ...AURORA_PROGRAMS];",
+    "old": "  ...FIRE_PROGRAMS,\n  ...GLOW_PROGRAMS,\n  ...NODE_GLOW_PROGRAMS,\n  ...NAVAL_PROGRAMS,\n  ...AURA_PROGRAMS,\n  ...ARMORY_PROGRAMS,",
+    "new": "  ...AURA_PROGRAMS,\n  ...ARMORY_PROGRAMS,\n  ...FIRE_PROGRAMS,\n  ...GLOW_PROGRAMS,\n  ...NODE_GLOW_PROGRAMS,\n  ...NAVAL_PROGRAMS,",
     "tests": [
       "test/render/auditshaderstall.test.js",
       "test/render/shadermount.test.js"
@@ -204,8 +204,8 @@
   {
     "name": "QO-node-glow-left-out",
     "file": "src/render/playPrograms.js",
-    "old": ", ...NODE_GLOW_PROGRAMS, ...NAVAL_PROGRAMS",
-    "new": ", ...NAVAL_PROGRAMS",
+    "old": "  ...NODE_GLOW_PROGRAMS,\n  ...NAVAL_PROGRAMS,",
+    "new": "  ...NAVAL_PROGRAMS,",
     "tests": [
       "test/render/auditshaderstall.test.js",
       "test/render/shadermount.test.js"
@@ -215,8 +215,8 @@
   {
     "name": "QO-naval-pair-drifts",
     "file": "src/render/navalRender.js",
-    "old": "([VS, NAVAL_FS])",
-    "new": "([VS, `${NAVAL_FS}\\n`])",
+    "old": "export const NAVAL_PROGRAMS = Object.freeze([Object.freeze(/** @type {const} */ ([VS, NAVAL_FS]))]);",
+    "new": "export const NAVAL_PROGRAMS = Object.freeze([Object.freeze(/** @type {const} */ ([VS, `${NAVAL_FS}\\n`]))]);",
     "tests": [
       "test/render/shadermount.test.js"
     ],

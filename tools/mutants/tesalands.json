@@ -770,8 +770,8 @@
   {
     "name": "TL-mid-field-unread",
     "file": "src/render/midRing.js",
-    "old": "const near = cover && f.spec.lands ? landsTreesAt(",
-    "new": "const near = false && f.spec.lands ? landsTreesAt(",
+    "old": "            cover && f.spec.lands",
+    "new": "            false && f.spec.lands",
     "tests": [
       "test/world/tesalands_flora.test.js"
     ]

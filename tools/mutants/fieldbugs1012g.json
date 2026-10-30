@@ -48,8 +48,8 @@
   {
     "name": "PANE-CLIP-the-compare-turned",
     "file": "src/render/realWindows.js",
-    "old": "gl_FragCoord.z <= texelFetch(uPaneDepth, ivec2(gl_FragCoord.xy), 0).r) discard;",
-    "new": "gl_FragCoord.z >= texelFetch(uPaneDepth, ivec2(gl_FragCoord.xy), 0).r) discard;",
+    "old": "  '  if (uPaneOn > 0.5 && gl_FragCoord.z <= texelFetch(uPaneDepth, ivec2(gl_FragCoord.xy), 0).r) discard;   // PANE-CLIP: the view out draws only what stands past the glass';",
+    "new": "  '  if (uPaneOn > 0.5 && gl_FragCoord.z >= texelFetch(uPaneDepth, ivec2(gl_FragCoord.xy), 0).r) discard;   // PANE-CLIP: the view out draws only what stands past the glass';",
     "tests": [
       "test/render/fb1012g_paneclip.test.js"
     ]

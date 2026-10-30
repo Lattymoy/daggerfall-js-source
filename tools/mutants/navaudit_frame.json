@@ -362,8 +362,8 @@
   {
     "name": "NAVF-sheet-row-for-col",
     "file": "src/render/navalRender.js",
-    "old": "  const x0 = col * SHEET_CELL + NAVAL_SHEET_GUTTER, y0 = row * SHEET_CELL + NAVAL_SHEET_GUTTER;\n  return {",
-    "new": "  const x0 = col * SHEET_CELL + NAVAL_SHEET_GUTTER, y0 = col * SHEET_CELL + NAVAL_SHEET_GUTTER;\n  return {",
+    "old": "  const x0 = col * SHEET_CELL + NAVAL_SHEET_GUTTER,\n    y0 = row * SHEET_CELL + NAVAL_SHEET_GUTTER;",
+    "new": "  const x0 = col * SHEET_CELL + NAVAL_SHEET_GUTTER,\n    y0 = col * SHEET_CELL + NAVAL_SHEET_GUTTER;",
     "tests": [
       "test/world/navaudit_frame.test.js"
     ]
@@ -380,7 +380,7 @@
   {
     "name": "NAVF-runs-unmerged",
     "file": "src/render/navalRender.js",
-    "old": "      if (last && last[0] === tex && last[2] === start) last[2] = v; else list.push([tex, start, v]);",
+    "old": "      if (last && last[0] === tex && last[2] === start) last[2] = v;\n      else list.push([tex, start, v]);",
     "new": "      list.push([tex, start, v]);",
     "tests": [
       "test/world/navaudit_frame.test.js"

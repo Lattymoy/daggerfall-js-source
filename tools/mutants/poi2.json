@@ -47,8 +47,8 @@
   {
     "name": "POI2-one-wrap-for-both-axes",
     "file": "src/render/meshAlpha.js",
-    "old": "wrapT: wrap(s?.wrapT)",
-    "new": "wrapT: wrap(s?.wrapS)",
+    "old": "  return { wrapS: wrap(s?.wrapS), wrapT: wrap(s?.wrapT), mag, min };",
+    "new": "  return { wrapS: wrap(s?.wrapS), wrapT: wrap(s?.wrapS), mag, min };",
     "tests": [
       "test/poi/poi2_runtime.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "POI2-the-alpha-always-one",
     "file": "src/render/meshAlpha.js",
-    "old": "return uMeshAlpha > 0.0 ? a * uMeshAlpha : 1.0;",
-    "new": "return 1.0;",
+    "old": "float meshAlphaOf(float a) { return uMeshAlpha > 0.0 ? a * uMeshAlpha : 1.0; }`;",
+    "new": "float meshAlphaOf(float a) { return 1.0; }`;",
     "tests": [
       "test/poi/poi2_runtime.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "POI2-the-share-unread",
     "file": "src/render/meshAlpha.js",
-    "old": "? a * uMeshAlpha : 1.0;",
-    "new": "? a : 1.0;",
+    "old": "float meshAlphaOf(float a) { return uMeshAlpha > 0.0 ? a * uMeshAlpha : 1.0; }`;",
+    "new": "float meshAlphaOf(float a) { return uMeshAlpha > 0.0 ? a : 1.0; }`;",
     "tests": [
       "test/poi/poi2_runtime.test.js"
     ]

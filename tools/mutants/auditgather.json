@@ -149,8 +149,8 @@
   {
     "name": "AUDITGATHER-F10-pow-again",
     "file": "src/render/nodeGlow.js",
-    "old": "float band = exp(-bq * bq) * across",
-    "new": "float band = exp(-pow(bq, 2.0)) * across",
+    "old": "  float band = exp(-bq * bq) * across * up * (1.0 - uStill);",
+    "new": "  float band = exp(-pow(bq, 2.0)) * across * up * (1.0 - uStill);",
     "tests": [
       "test/systems/auditgather.test.js"
     ]

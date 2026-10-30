@@ -116,10 +116,6 @@
       "test/ui/mapwaters.test.js"
     ]
   },
-  
-  
-  
-  
   {
     "name": "MAP-WATERS-client-wet-offset",
     "file": "src/world/terrain/terrainGenClient.js",
@@ -132,8 +128,8 @@
   {
     "name": "MAP-WATERS-ring-wet-ignored",
     "file": "src/render/midRing.js",
-    "old": "if (Math.abs(heights[v] - seaY) < MID_SEA_EPS || (wet && wet[v])) sea[v] = 255;",
-    "new": "if (Math.abs(heights[v] - seaY) < MID_SEA_EPS) sea[v] = 255;",
+    "old": "      if (Math.abs(heights[v] - seaY) < MID_SEA_EPS || (wet && wet[v]))",
+    "new": "      if (Math.abs(heights[v] - seaY) < MID_SEA_EPS)",
     "tests": [
       "test/ui/mapwaters.test.js"
     ]

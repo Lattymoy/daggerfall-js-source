@@ -454,8 +454,8 @@
   {
     "name": "WL1-view-out-reads-no-outside",
     "file": "src/render/realWindows.js",
-    "old": "  finally { opts.renderer.captureOutsideLight?.(opts.scene, opts.now, opts.mode); }",
-    "new": "  finally { /* nothing */ }",
+    "old": "    opts.renderer.captureOutsideLight?.(opts.scene, opts.now, opts.mode);",
+    "new": "    /* nothing */",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]

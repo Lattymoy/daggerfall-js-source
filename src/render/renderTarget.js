@@ -22,10 +22,15 @@
  *  depth. `filter` NEAREST or LINEAR; `wrap` (or `wrapS` / `wrapT`
  *  apart) REPEAT for an axis that tiles - the sky map's azimuth -
  *  CLAMP_TO_EDGE otherwise. */
-export function createRenderTarget(gl, width, height, { filter = 'LINEAR', wrap = 'CLAMP_TO_EDGE', wrapS = wrap, wrapT = wrap, data = null } = {}) {
+export function createRenderTarget(
+  gl,
+  width,
+  height,
+  { filter = 'LINEAR', wrap = 'CLAMP_TO_EDGE', wrapS = wrap, wrapT = wrap, data = null } = {},
+) {
   const tex = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, tex);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);   // `data`: the target's first texels (an upload), so nothing has to CLEAR it
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, data); // `data`: the target's first texels (an upload), so nothing has to CLEAR it
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl[filter]);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl[filter]);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl[wrapS]);
@@ -62,18 +67,25 @@ export function createVolume(gl, size) {
  *  that draws its own map mid-frame hands the world back to the frame it
  *  was drawing into, not to the canvas. */
 let _frameTarget = null;
-export function setFrameTarget(fbo) { _frameTarget = fbo ?? null; }
-export function frameTarget() { return _frameTarget; }
+export function setFrameTarget(fbo) {
+  _frameTarget = fbo ?? null;
+}
+export function frameTarget() {
+  return _frameTarget;
+}
 
 /** DRAW PATH. Bind the target, set its viewport, run `draw`, then
  *  restore the frame target and the viewport the caller names
  *  (the host's world viewport - the caller knows it, GL is not asked). */
 export function withTarget(gl, target, restoreViewport, draw) {
   gl.bindFramebuffer(gl.FRAMEBUFFER, target.fbo);
-  if (!target.attached) { gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, target.tex, 0); target.attached = true; }
+  if (!target.attached) {
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, target.tex, 0);
+    target.attached = true;
+  }
   gl.viewport(0, 0, target.width, target.height);
   draw();
-  gl.bindFramebuffer(gl.FRAMEBUFFER, _frameTarget);   // EL4: the frame, or the canvas
+  gl.bindFramebuffer(gl.FRAMEBUFFER, _frameTarget); // EL4: the frame, or the canvas
   gl.viewport(restoreViewport[0], restoreViewport[1], restoreViewport[2], restoreViewport[3]);
 }
 
@@ -90,7 +102,7 @@ export function withVolumeLayer(gl, volume, z, draw) {
 /** After the layers: the default framebuffer back, the caller's
  *  viewport back, the mip chain built. */
 export function finishVolume(gl, volume, restoreViewport) {
-  gl.bindFramebuffer(gl.FRAMEBUFFER, _frameTarget);   // EL4
+  gl.bindFramebuffer(gl.FRAMEBUFFER, _frameTarget); // EL4
   gl.viewport(restoreViewport[0], restoreViewport[1], restoreViewport[2], restoreViewport[3]);
   gl.bindTexture(gl.TEXTURE_3D, volume.tex);
   gl.generateMipmap(gl.TEXTURE_3D);

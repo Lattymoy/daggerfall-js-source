@@ -908,8 +908,8 @@
   {
     "name": "NAVP-arc-width-in-metres",
     "file": "src/render/navalRender.js",
-    "old": "v = writeRibbon(this.data, v, arc, eye, ARC_WIDTH_VH, tone.arc, { vh, period: ARC_DASH_M, offset });",
-    "new": "v = writeRibbon(this.data, v, arc, eye, 0.12, tone.arc, { period: ARC_DASH_M, offset });",
+    "old": "        v = writeRibbon(this.data, v, arc, eye, ARC_WIDTH_VH, tone.arc, { vh, period: ARC_DASH_M, offset });",
+    "new": "        v = writeRibbon(this.data, v, arc, eye, 0.12, tone.arc, { period: ARC_DASH_M, offset });",
     "tests": [
       "test/systems/naval/navaudit_presentation.test.js"
     ]
@@ -926,8 +926,8 @@
   {
     "name": "NAVP-arc-dash-per-segment",
     "file": "src/render/navalRender.js",
-    "old": "const u0 = period > 0 ? (run - offset) / period : 0, u1 = period > 0 ? (run + len - offset) / period : 1;",
-    "new": "const u0 = period > 0 ? -offset / period : 0, u1 = period > 0 ? (len - offset) / period : 1;",
+    "old": "    const u0 = period > 0 ? (run - offset) / period : 0,\n      u1 = period > 0 ? (run + len - offset) / period : 1;",
+    "new": "    const u0 = period > 0 ? -offset / period : 0,\n      u1 = period > 0 ? (len - offset) / period : 1;",
     "tests": [
       "test/systems/naval/navaudit_presentation.test.js",
       "test/systems/naval/nav_b_picture.test.js"
@@ -936,8 +936,8 @@
   {
     "name": "NAVP-arc-line-clamped",
     "file": "src/render/navalRender.js",
-    "old": "gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, pic.repeatS ? gl.REPEAT : gl.CLAMP_TO_EDGE);",
-    "new": "gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);",
+    "old": "      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, pic.repeatS ? gl.REPEAT : gl.CLAMP_TO_EDGE);",
+    "new": "      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);",
     "tests": [
       "test/systems/naval/navaudit_presentation.test.js"
     ]
@@ -945,8 +945,8 @@
   {
     "name": "NAVP-arc-clock-unread",
     "file": "src/render/navalRender.js",
-    "old": "const offset = (frame.time ?? 0) * ARC_DASH_SPEED;",
-    "new": "const offset = 0;",
+    "old": "      const offset = (frame.time ?? 0) * ARC_DASH_SPEED;",
+    "new": "      const offset = 0;",
     "tests": [
       "test/systems/naval/navaudit_presentation.test.js"
     ]
@@ -954,8 +954,8 @@
   {
     "name": "NAVP-arc-width-unscaled-by-distance",
     "file": "src/render/navalRender.js",
-    "old": "const w = vh > 0 ? width * vh * Math.hypot(e[0], e[1], e[2]) : width;",
-    "new": "const w = vh > 0 ? width * vh : width;",
+    "old": "    const w = vh > 0 ? width * vh * Math.hypot(e[0], e[1], e[2]) : width;",
+    "new": "    const w = vh > 0 ? width * vh : width;",
     "tests": [
       "test/systems/naval/navaudit_presentation.test.js",
       "test/systems/naval/nav_b_picture.test.js"
@@ -964,8 +964,8 @@
   {
     "name": "NAVP-line-edge-fringe",
     "file": "src/render/navalRender.js",
-    "old": "Math.max(0, Math.min(1, (0.97 - Math.abs(v)) / 0.3))",
-    "new": "Math.max(0, Math.min(1, (1.2 - Math.abs(v)) / 0.3))",
+    "old": "  ...picture((u, v) => Math.max(0, Math.min(1, (0.97 - Math.abs(v)) / 0.3)) * (u < 0 ? 1 : ARC_DASH_DIM)),",
+    "new": "  ...picture((u, v) => Math.max(0, Math.min(1, (1.2 - Math.abs(v)) / 0.3)) * (u < 0 ? 1 : ARC_DASH_DIM)),",
     "tests": [
       "test/systems/naval/nav_b_picture.test.js"
     ]
@@ -973,8 +973,8 @@
   {
     "name": "NAVP-line-undashed",
     "file": "src/render/navalRender.js",
-    "old": "* (u < 0 ? 1 : ARC_DASH_DIM)), repeatS: true });",
-    "new": "), repeatS: true });",
+    "old": "  ...picture((u, v) => Math.max(0, Math.min(1, (0.97 - Math.abs(v)) / 0.3)) * (u < 0 ? 1 : ARC_DASH_DIM)),",
+    "new": "  ...picture((u, v) => Math.max(0, Math.min(1, (0.97 - Math.abs(v)) / 0.3))),",
     "tests": [
       "test/systems/naval/nav_b_picture.test.js"
     ]
@@ -1388,8 +1388,8 @@
   {
     "name": "NAVP-plank-square-drawn",
     "file": "src/render/navalRender.js",
-    "old": "const hl = h * (p.aspect ?? 1);",
-    "new": "const hl = h;",
+    "old": "  const hl = h * (p.aspect ?? 1);",
+    "new": "  const hl = h;",
     "tests": [
       "test/systems/naval/nav_b_picture.test.js"
     ]

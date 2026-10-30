@@ -2242,7 +2242,7 @@ should stop casting (composed carried, they cost nothing and cast nothing) and c
 engine.
 
 **THE ONE CONSTRUCTION SEAM** (`render/lightId.js`). A light's identity is its producer's record's: minted on first ask
-(`src/render/lightId.js:"export function lightIdOf(l)"`) under a Symbol defined not enumerable - the record's fields,
+(`src/render/lightId.js:"export function lightIdOf"`) under a Symbol defined not enumerable - the record's fields,
 its deep-equal, a spread of it and its JSON are what they were - and a frozen record (the court's braziers) keeps one in
 a WeakMap. A copy is another record: the two that stand for their light each frame adopt it (worldModes.js's dungeon
 flame tint, `_dgTint`, and the abyss's candle, `abyssCandle`). Every list a frame hands the renderer

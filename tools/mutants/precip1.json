@@ -275,8 +275,8 @@
   {
     "name": "PRECIP2-the-shares-swapped",
     "file": "src/render/precipitation.js",
-    "old": "if (share < 1) { this.intensity = all * (1 - share);",
-    "new": "if (share < 1) { this.intensity = all * share;",
+    "old": "        this.intensity = all * (1 - share);",
+    "new": "        this.intensity = all * share;",
     "tests": [
       "test/systems/weather/precip1_air.test.js"
     ]
@@ -284,8 +284,8 @@
   {
     "name": "PRECIP2-the-shift-dropped",
     "file": "src/render/precipitation.js",
-    "old": "        this._shift = MIX_SHIFT;\n",
-    "new": "",
+    "old": "        this._shift = MIX_SHIFT;\n        this.draw('snow', proj, view, camPos, camRight, timeSeconds);",
+    "new": "        this.draw('snow', proj, view, camPos, camRight, timeSeconds);",
     "tests": [
       "test/systems/weather/precip1_air.test.js"
     ]
@@ -293,8 +293,8 @@
   {
     "name": "PRECIP2-the-intensity-kept",
     "file": "src/render/precipitation.js",
-    "old": "} finally { this.intensity = all; this.countCap = cap; this._shift = null; }",
-    "new": "} finally { this.countCap = cap; this._shift = null; }",
+    "old": "      this.intensity = all;\n      this.countCap = cap;",
+    "new": "      this.countCap = cap;",
     "tests": [
       "test/systems/weather/precip1_air.test.js"
     ]

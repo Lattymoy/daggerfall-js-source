@@ -551,8 +551,8 @@
   {
     "name": "PERF-EXT24-the-meter-drops-the-build-span",
     "file": "src/render/perfMeter.js",
-    "old": "  addCpu(name, ms) { if (this.cpu && ms > 0) this.cpuZones.set(name, (this.cpuZones.get(name) ?? 0) + ms); }",
-    "new": "  addCpu(name, ms) { void name; void ms; }",
+    "old": "    if (this.cpu && ms > 0) this.cpuZones.set(name, (this.cpuZones.get(name) ?? 0) + ms);",
+    "new": "    void name;\n    void ms;",
     "tests": [
       "test/systems/buildslice.test.js"
     ]

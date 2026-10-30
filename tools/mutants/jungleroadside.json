@@ -760,8 +760,8 @@
   {
     "name": "JUNGLE-ROADSIDE-the-glint-blind-to-several",
     "file": "src/render/nodeGlint.js",
-    "old": "frames.find((f) => f?.cut && lptCuts(f.cut, b.lptProto))",
-    "new": "frames.find((f) => f?.cut?.has(b.lptProto))",
+    "old": "          sendCut(b.lptProto ? (frames.find((f) => f?.cut && lptCuts(f.cut, b.lptProto)) ?? null) : null);",
+    "new": "          sendCut(b.lptProto ? (frames.find((f) => f?.cut?.has(b.lptProto)) ?? null) : null);",
     "tests": [
       "test/world/jungleroadside.test.js"
     ]

@@ -44,17 +44,18 @@ export function mountPrograms(renderer, search) {
   const ring = world && isEnhanced() && !ringDisabled(search);
   // farRing.js:"this._band = this._flora && opts.mid && !farTreesDisabled()"
   const trees = ring && !floraDisabled(search) && !farTreesDisabled(search);
-  const sky = o.enhancedSky;   // the sky controller's `enhanced`: the wisps, the sand, the haze, Windfall and the bolts ride it
+  const sky = o.enhancedSky; // the sky controller's `enhanced`: the wisps, the sand, the haze, Windfall and the bolts ride it
   const bodies = lane?.shadows && !renderer._shadowPass?._bodyBuilt ? shadowBodyPrograms(SHADOW_PASS_VS) : [];
   return [
     ...(ring ? farRingPrograms(lane) : []),
     ...(trees ? farTreesPrograms(lane) : []),
-    ...SKY_PROGRAMS,   // scenes/shared.js:"const sky = new SkyRenderer(gl);"
+    ...SKY_PROGRAMS, // scenes/shared.js:"const sky = new SkyRenderer(gl);"
     ...(sky && !o.dynamicSky ? ENHANCED_SKY_PROGRAMS : []),
     ...(sky ? [...WISP_PROGRAMS, ...HEAT_HAZE_PROGRAMS, ...WINDFALL_PARTICLE_PROGRAMS, ...BOLT_PROGRAMS] : []),
-    ...(world ? [...DUEL_WALL_PROGRAMS, ...BANNER_PROGRAMS, ...FLAG_PROGRAMS] : []),   // every skin
+    ...(world ? [...DUEL_WALL_PROGRAMS, ...BANNER_PROGRAMS, ...FLAG_PROGRAMS] : []), // every skin
     ...(world && isEnhanced() ? CURTAIN_PROGRAMS : []),
-    ...(world ? SPOILS_GLOW_PROGRAMS : []), ...NPC_MARK_PROGRAMS,   // the loot lines and the street's marks, every skin
+    ...(world ? SPOILS_GLOW_PROGRAMS : []),
+    ...NPC_MARK_PROGRAMS, // the loot lines and the street's marks, every skin
     ...bodies,
   ];
 }

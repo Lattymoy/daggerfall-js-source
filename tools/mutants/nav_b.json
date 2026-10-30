@@ -92,8 +92,8 @@
   {
     "name": "NAV-B-the-focus-unsent",
     "file": "src/render/navalRender.js",
-    "old": "    if (u.uFocus) gl.uniform4fv(u.uFocus, r._focus);\n    if (u.uJungleHaze && r._haze) gl.uniform4fv(u.uJungleHaze, r._haze);   // BANTHA1: the jungle's haze (render/hazeGlsl.js)\n  }",
-    "new": "    if (u.uJungleHaze && r._haze) gl.uniform4fv(u.uJungleHaze, r._haze);   // BANTHA1: the jungle's haze (render/hazeGlsl.js)\n  }",
+    "old": "    if (u.uFocus) gl.uniform4fv(u.uFocus, r._focus);\n    if (u.uJungleHaze && r._haze) gl.uniform4fv(u.uJungleHaze, r._haze); // BANTHA1: the jungle's haze (render/hazeGlsl.js)",
+    "new": "    if (u.uJungleHaze && r._haze) gl.uniform4fv(u.uJungleHaze, r._haze); // BANTHA1: the jungle's haze (render/hazeGlsl.js)",
     "tests": [
       "test/systems/naval/nav_b_picture.test.js",
       "test/render/tv4_weather_above.test.js"
@@ -111,8 +111,8 @@
   {
     "name": "NAV-B-the-uv-flipped",
     "file": "src/render/navalRender.js",
-    "old": "out[o + 4] = v0 + (v1 - v0) * (1 - sy) / 2;",
-    "new": "out[o + 4] = v0 + (v1 - v0) * (sy + 1) / 2;",
+    "old": "    out[o + 4] = v0 + ((v1 - v0) * (1 - sy)) / 2;",
+    "new": "    out[o + 4] = v0 + ((v1 - v0) * (sy + 1)) / 2;",
     "tests": [
       "test/systems/naval/nav_b_picture.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "NAV-B-a-picture-coloured",
     "file": "src/render/navalRender.js",
-    "old": "      data[i] = 255; data[i + 1] = 255; data[i + 2] = 255;",
-    "new": "      data[i] = 255; data[i + 1] = 200; data[i + 2] = 255;",
+    "old": "      data[i + 1] = 255;",
+    "new": "      data[i + 1] = 200;",
     "tests": [
       "test/systems/naval/nav_b_picture.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "NAV-B-aim-posts-uncounted",
     "file": "src/render/navalRender.js",
-    "old": "(aim.zone?.length ?? 0) * (aim.posts ? 2 : 1)",
-    "new": "(aim.zone?.length ?? 0)",
+    "old": "      ? (aim.zone?.length ?? 0) * (aim.posts ? 2 : 1) +",
+    "new": "      ? (aim.zone?.length ?? 0) +",
     "tests": [
       "test/systems/naval/nav_b_picture.test.js"
     ]

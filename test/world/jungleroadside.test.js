@@ -575,7 +575,7 @@ test('JUNGLE-ROADSIDE the build stands each pair whole, a tree\'s half at its ow
   const slots = [{ cut: new Set([c]) }, { cut: new Set([b]) }];
   const r = Object.assign(Object.create(Renderer.prototype), { _lptSlots: slots });
   assert.deepEqual([r._lptFrameOf([a, b]), r._lptFrameOf([a]), r._lptFrameOf(c)], [slots[1], null, slots[0]], 'the renderer finds the frame drawing any of them');
-  assert.match(text('src/render/nodeGlint.js'), /sendCut\(b\.lptProto \? frames\.find\(\(f\) => f\?\.cut && lptCuts\(f\.cut, b\.lptProto\)\) \?\? null : null\);/, 'and the glint');
+  assert.match(text('src/render/nodeGlint.js'), /sendCut\(b\.lptProto \? \(frames\.find\(\(f\) => f\?\.cut && lptCuts\(f\.cut, b\.lptProto\)\) \?\? null\) : null\);/, 'and the glint');
 
   const pb = text('src/scenes/pixelBuild.js');
   assert.match(pb, /const pairs = keptPairs\(roadside, \(x, z\) => !pointNearGate\(gateClear, px, py, x, z, WOD_FLAT_GATE_CLEAR_M\) && !insideRocks\(pixelRocks, x, z\)\);/, 'kept by the gate\'s clearing and the rocks, as every flat');

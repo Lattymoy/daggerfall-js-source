@@ -2,8 +2,8 @@
   {
     "name": "RAINLEAK-lab-uptime-through",
     "file": "src/render/precipitation.js",
-    "old": "gl.uniform1f(L.uTime, this.clock(timeSeconds));",
-    "new": "gl.uniform1f(L.uTime, timeSeconds);",
+    "old": "    gl.uniform1f(L.uTime, this.clock(timeSeconds)); // RAIN-CLOCK",
+    "new": "    gl.uniform1f(L.uTime, timeSeconds); // RAIN-CLOCK",
     "tests": [
       "test/systems/rainleak.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "RAINLEAK-classic-uptime-through",
     "file": "src/render/precipitation.js",
-    "old": "gl.uniform1f(this.uTime, this.clock(timeSeconds));",
-    "new": "gl.uniform1f(this.uTime, timeSeconds);",
+    "old": "    gl.uniform1f(this.uTime, this.clock(timeSeconds)); // RAIN-CLOCK",
+    "new": "    gl.uniform1f(this.uTime, timeSeconds); // RAIN-CLOCK",
     "tests": [
       "test/systems/rainleak.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "RAINLEAK-pixel-snow-uptime-through",
     "file": "src/render/precipitation.js",
-    "old": "gl.uniform1f(P.uTime, this.clock(timeSeconds));",
-    "new": "gl.uniform1f(P.uTime, timeSeconds);",
+    "old": "    gl.uniform1f(P.uTime, this.clock(timeSeconds)); // RAIN-CLOCK",
+    "new": "    gl.uniform1f(P.uTime, timeSeconds); // RAIN-CLOCK",
     "tests": [
       "test/systems/rainleak.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "RAINLEAK-no-rest",
     "file": "src/render/precipitation.js",
-    "old": "seconds - last > PRECIP_REST_S || ",
-    "new": "",
+    "old": "    if (t0 === null || seconds < last || seconds - last > PRECIP_REST_S || seconds - t0 >= PRECIP_CLOCK_MAX_S) {",
+    "new": "    if (t0 === null || seconds < last || seconds - t0 >= PRECIP_CLOCK_MAX_S) {",
     "tests": [
       "test/systems/rainleak.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "RAINLEAK-no-backwards",
     "file": "src/render/precipitation.js",
-    "old": "seconds < last || ",
-    "new": "",
+    "old": "    if (t0 === null || seconds < last || seconds - last > PRECIP_REST_S || seconds - t0 >= PRECIP_CLOCK_MAX_S) {",
+    "new": "    if (t0 === null || seconds - last > PRECIP_REST_S || seconds - t0 >= PRECIP_CLOCK_MAX_S) {",
     "tests": [
       "test/systems/rainleak.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "RAINLEAK-no-hour",
     "file": "src/render/precipitation.js",
-    "old": " || seconds - t0 >= PRECIP_CLOCK_MAX_S",
-    "new": "",
+    "old": "    if (t0 === null || seconds < last || seconds - last > PRECIP_REST_S || seconds - t0 >= PRECIP_CLOCK_MAX_S) {",
+    "new": "    if (t0 === null || seconds < last || seconds - last > PRECIP_REST_S) {",
     "tests": [
       "test/systems/rainleak.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "RAINLEAK-travel-kept",
     "file": "src/render/precipitation.js",
-    "old": "      this.windOff[0] = 0; this.windOff[1] = 0;\n",
-    "new": "",
+    "old": "      this.windOff[0] = 0;\n      this.windOff[1] = 0;\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/rainleak.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "RAINLEAK-clock-before-count",
     "file": "src/render/precipitation.js",
-    "old": "    if (count <= 0) return;\n    if (!this._vp) this._vp = new Float32Array(16);\n    mat4Multiply(this._vp, proj, view);\n    gl.useProgram(this.labProgram);",
-    "new": "    this.clock(timeSeconds);\n    if (count <= 0) return;\n    if (!this._vp) this._vp = new Float32Array(16);\n    mat4Multiply(this._vp, proj, view);\n    gl.useProgram(this.labProgram);",
+    "old": "    const full = Math.round((LAB_COUNTS[mode] ?? LAB_COUNTS.rain) * Math.min(1, Math.max(0, this.intensity)));\n    const count = this.countCap != null ? Math.min(full, this.countCap) : full;\n    if (count <= 0) return;\n    if (!this._vp) this._vp = new Float32Array(16);",
+    "new": "    const full = Math.round((LAB_COUNTS[mode] ?? LAB_COUNTS.rain) * Math.min(1, Math.max(0, this.intensity)));\n    const count = this.countCap != null ? Math.min(full, this.countCap) : full;\n    this.clock(timeSeconds);\n    if (count <= 0) return;\n    if (!this._vp) this._vp = new Float32Array(16);",
     "tests": [
       "test/systems/rainleak.test.js"
     ]

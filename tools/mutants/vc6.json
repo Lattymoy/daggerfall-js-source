@@ -327,8 +327,8 @@
   {
     "name": "VC6d-a-null-unregisters-the-live-meter",
     "file": "src/render/perfMeter.js",
-    "old": "export function setMeter(gl, meter) { if (meter) METERS.set(gl, meter); return meter; }",
-    "new": "export function setMeter(gl, meter) { METERS.set(gl, meter); return meter; }",
+    "old": "  if (meter) METERS.set(gl, meter);",
+    "new": "  METERS.set(gl, meter);",
     "tests": [
       "test/render/el8_contact.test.js"
     ]

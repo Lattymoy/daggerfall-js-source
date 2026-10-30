@@ -2,8 +2,8 @@
   {
     "name": "LIGHT-ID-seam-no-identity",
     "file": "src/render/lightId.js",
-    "old": "  if (out.ids) out.ids[i] = lightIdOf(l);\n",
-    "new": "",
+    "old": "  if (out.ids) out.ids[i] = lightIdOf(l);\n}",
+    "new": "}",
     "tests": [
       "test/render/lightid.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "LIGHT-ID-an-identity-minted-per-ask",
     "file": "src/render/lightId.js",
-    "old": "let id = l[LIGHT_ID] ?? _frozen.get(l);",
-    "new": "let id;",
+    "old": "  let id = l[LIGHT_ID] ?? _frozen.get(l);",
+    "new": "  let id;",
     "tests": [
       "test/render/lightid.test.js"
     ]

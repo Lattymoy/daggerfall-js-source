@@ -275,8 +275,8 @@
   {
     "name": "rt-frame-target-null",
     "file": "src/render/renderTarget.js",
-    "old": "export function frameTarget() { return _frameTarget; }",
-    "new": "export function frameTarget() { return null; }",
+    "old": "  return _frameTarget;",
+    "new": "  return null;",
     "tests": [
       "test/render/audit_el.test.js"
     ]
