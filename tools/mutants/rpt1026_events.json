@@ -163,8 +163,8 @@
   {
     "name": "GATE-WAY-stars-never-said",
     "file": "src/scenes/starfall/starfallHost.js",
-    "old": "for (const S of stars.values()) if (S.phase === 'streak' || S.phase === 'fallen') out.push(S.heart); return out; });",
-    "new": "for (const S of stars.values()) if (S.phase === 'none') out.push(S.heart); return out; });",
+    "old": "    for (const S of stars.values()) if (S.phase === 'streak' || S.phase === 'fallen') out.push(S.heart);",
+    "new": "    for (const S of stars.values()) if (S.phase === 'none') out.push(S.heart);",
     "tests": [
       "test/scenes/rpt1026_events_gateway.test.js"
     ],

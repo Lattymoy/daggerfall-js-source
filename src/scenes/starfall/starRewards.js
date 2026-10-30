@@ -28,7 +28,13 @@ import { renownAnswer } from '../../net/renownTracker.js';
 import { appStorage } from '../../systems/appStorage.js';
 import { characterIdOf } from '../../systems/characterId.js';
 import { onSlotSaved, onSlotLoaded, enumerateSaves } from '../../systems/save/saveSlots.js';
-import { starSpoilsList, starSpoilsDay, STAR_SPOILS_KEYS, STAR_SPOILS_TEXT, STAR_SPOILS_RECORDS_MAX } from '../../systems/starfall/starSpoils.js';
+import {
+  starSpoilsList,
+  starSpoilsDay,
+  STAR_SPOILS_KEYS,
+  STAR_SPOILS_TEXT,
+  STAR_SPOILS_RECORDS_MAX,
+} from '../../systems/starfall/starSpoils.js';
 import { playerEntity } from '../../characters/playerEntity.js';
 import { setMidScreenText } from '../../ui/midScreenText.js';
 import { showHaul } from '../../ui/pickupFeed.js';
@@ -46,58 +52,115 @@ export function createStarRewards(host) {
   const who = () => characterIdOf(playerEntity);
   /** THE SPOILS POOL, the star's own keys - the serpent's hoard's shape: no floor, no word to the hub. */
   const spoils = createSpoilsPool({
-    ray: () => null, now: () => Date.now() + (host._sharedOffsetMs ?? 0), take: (p) => host.takeSpoil?.(p), say: (text) => setMidScreenText(text),
-    store, who, keys: STAR_SPOILS_KEYS, recordsMax: STAR_SPOILS_RECORDS_MAX,
+    ray: () => null,
+    now: () => Date.now() + (host._sharedOffsetMs ?? 0),
+    take: (p) => host.takeSpoil?.(p),
+    say: (text) => setMidScreenText(text),
+    store,
+    who,
+    keys: STAR_SPOILS_KEYS,
+    recordsMax: STAR_SPOILS_RECORDS_MAX,
   });
-  onSlotSaved((characterId) => { try { spoils.saved(characterId); } catch (e) { console.warn('[star] spoils', e?.message ?? e); } });
+  onSlotSaved((characterId) => {
+    try {
+      spoils.saved(characterId);
+    } catch (e) {
+      console.warn('[star] spoils', e?.message ?? e);
+    }
+  });
   // AUDIT ONLINE2 F3's law: a load in the session is a stand-up - the pool lets go of what it held in the old pack
-  onSlotLoaded((characterId) => { try { spoils.loaded(characterId); } catch (e) { console.warn('[star] spoils', e?.message ?? e); } });
+  onSlotLoaded((characterId) => {
+    try {
+      spoils.loaded(characterId);
+    } catch (e) {
+      console.warn('[star] spoils', e?.message ?? e);
+    }
+  });
   /** A receipt's spoils into the pack, once (the pool's spent mark), at the level the hold admitted and never past the
    *  standing character's own (AUDIT SERPENT D2's law). Its promise is the carrier's: a grant that fails leaves the receipt
    *  unsettled, asked again. */
   function grant(entry) {
     const c = readStarReceipt(entry?.r);
     if (!c) return undefined;
-    const level = spoilsLevel(entry.ch === who() ? playerEntity.level ?? 1 : Number(entry.lv) || c.l || 1, c.l);
-    return spoilsLock(() => spoils.grant({
-      day: starSpoilsDay(c.night, c.star), acct: c.s, roll: () => starSpoilsList(c.c, level, c.night, c.star), text: STAR_SPOILS_TEXT.granted(),
-      owner: entry.ch, kept: STAR_SPOILS_TEXT.kept(entry.nm),
-    }));
+    const level = spoilsLevel(entry.ch === who() ? (playerEntity.level ?? 1) : Number(entry.lv) || c.l || 1, c.l);
+    return spoilsLock(() =>
+      spoils.grant({
+        day: starSpoilsDay(c.night, c.star),
+        acct: c.s,
+        roll: () => starSpoilsList(c.c, level, c.night, c.star),
+        text: STAR_SPOILS_TEXT.granted(),
+        owner: entry.ch,
+        kept: STAR_SPOILS_TEXT.kept(entry.nm),
+      }),
+    );
   }
   /** THE RENOWN, the character that held the star's alone (RENOWN-CHAR). */
   function adopt(data) {
     if (data?.renown?.character !== who()) return;
-    const a = renownAnswer({ ...data.renown, order: data.order ?? null }, data.renown.credited ?? 0, host.renownSaid ?? null);
+    const a = renownAnswer(
+      { ...data.renown, order: data.order ?? null },
+      data.renown.credited ?? 0,
+      host.renownSaid ?? null,
+    );
     if (a.xp !== null) host.renownXpAdopt?.(a.xp);
     if (a.level !== null) host.renownAdopt?.(a.level);
     if (a.order) host.online?.sendRenownOrder?.(a.order, a.level);
     if (a.announce !== null) host.renownRose?.(a.announce);
   }
   const claims = createStarClaims({
-    claim: account.claim, me: account.me, who,   // AUDIT STARFALL 7: a star's act belongs to the character that held it, noted while it stands
+    claim: account.claim,
+    me: account.me,
+    who, // AUDIT STARFALL 7: a star's act belongs to the character that held it, noted while it stands
     nowS: () => host.relayNowS?.() ?? null,
     store,
     say: (text) => host.chatNotice?.(text),
     onSpoils: (entry) => grant(entry),
-    onMarks: (data) => { showHaul(claimHauls(data, 'star')); return host.marksBook?.claimLines?.(data, 'star') ?? null; },
+    onMarks: (data) => {
+      showHaul(claimHauls(data, 'star'));
+      return host.marksBook?.claimLines?.(data, 'star') ?? null;
+    },
     onRecorded: (data) => adopt(data),
   });
   return {
     /** A receipt the relay handed this socket (the cell at the master's fall, the hub at a hello): kept with the character
      *  standing here and offered. */
-    receipt: (r) => claims.add(r, who(), typeof playerEntity?.name === 'string' ? playerEntity.name : null, playerEntity.level ?? 1),
+    receipt: (r) =>
+      claims.add(r, who(), typeof playerEntity?.name === 'string' ? playerEntity.name : null, playerEntity.level ?? 1),
     /** A frame: what is kept, offered again in its time. */
     tick: () => claims.tick(),
     /** A character's stand-up (the crash's door): its spoils no save holds handed back, said once. `inSave` the realm
      *  boot's records its pack already holds (systems/realmSaves.js openRealmBoot `held`). */
     recover(characterId, inSave = null) {
       try {
-        if (recoverSpoils(store, (p) => host.takeSpoil?.(p), { who: characterId, saves: enumerateSaves().info.values(), onHanded: (rec) => spoils.adopt(rec), key: STAR_SPOILS_KEYS.store, inSave })) setMidScreenText(STAR_SPOILS_TEXT.recovered());
-      } catch (e) { console.warn('[star] spoils', e?.message ?? e); }
+        if (
+          recoverSpoils(store, (p) => host.takeSpoil?.(p), {
+            who: characterId,
+            saves: enumerateSaves().info.values(),
+            onHanded: (rec) => spoils.adopt(rec),
+            key: STAR_SPOILS_KEYS.store,
+            inSave,
+          })
+        )
+          setMidScreenText(STAR_SPOILS_TEXT.recovered());
+      } catch (e) {
+        console.warn('[star] spoils', e?.message ?? e);
+      }
     },
     /** The realm save's hooks: the records whose pieces are in the pack, and those a landed checkpoint holds. */
-    held: (characterId) => { try { return spoils.heldIds?.(characterId) ?? []; } catch { return []; } },
-    saved(characterId, ids) { try { spoils.saved(characterId, ids); } catch (e) { console.warn('[star] spoils', e?.message ?? e); } },
+    held: (characterId) => {
+      try {
+        return spoils.heldIds?.(characterId) ?? [];
+      } catch {
+        return [];
+      }
+    },
+    saved(characterId, ids) {
+      try {
+        spoils.saved(characterId, ids);
+      } catch (e) {
+        console.warn('[star] spoils', e?.message ?? e);
+      }
+    },
     claims,
     spoils,
   };

@@ -416,8 +416,8 @@
   {
     "name": "STAR7-renown-anyone",
     "file": "src/scenes/starfall/starRewards.js",
-    "old": "    if (data?.renown?.character !== who()) return;\n",
-    "new": "",
+    "old": "    if (data?.renown?.character !== who()) return;\n    const a = renownAnswer(",
+    "new": "    const a = renownAnswer(",
     "tests": [
       "test/net/starfall/star7_claims.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "STAR7-recovery-keyless",
     "file": "src/scenes/starfall/starRewards.js",
-    "old": "onHanded: (rec) => spoils.adopt(rec), key: STAR_SPOILS_KEYS.store, inSave })",
-    "new": "onHanded: (rec) => spoils.adopt(rec), key: STAR_SPOILS_KEYS.day, inSave })",
+    "old": "            key: STAR_SPOILS_KEYS.store,",
+    "new": "            key: STAR_SPOILS_KEYS.day,",
     "tests": [
       "test/net/starfall/star7_claims.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "STAR7-silver-gate-kind",
     "file": "src/scenes/starfall/starRewards.js",
-    "old": "return host.marksBook?.claimLines?.(data, 'star') ?? null;",
-    "new": "return host.marksBook?.claimLines?.(data, 'raid') ?? null;",
+    "old": "      return host.marksBook?.claimLines?.(data, 'star') ?? null;",
+    "new": "      return host.marksBook?.claimLines?.(data, 'raid') ?? null;",
     "tests": [
       "test/net/starfall/star7_claims.test.js"
     ]
@@ -600,8 +600,8 @@
   {
     "name": "STAR7-who-unhanded",
     "file": "src/scenes/starfall/starRewards.js",
-    "old": "claim: account.claim, me: account.me, who,",
-    "new": "claim: account.claim, me: account.me,",
+    "old": "    me: account.me,\n    who, // AUDIT STARFALL 7: a star's act belongs to the character that held it, noted while it stands",
+    "new": "    me: account.me, // AUDIT STARFALL 7: a star's act belongs to the character that held it, noted while it stands",
     "tests": [
       "test/net/starfall/star7_claims.test.js"
     ],

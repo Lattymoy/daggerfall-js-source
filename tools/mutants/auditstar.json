@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-STAR-W1-host-shared-line",
     "file": "src/scenes/starfall/starfallHost.js",
-    "old": "sayAt(S, `circle${i}`, M.circle()); });",
-    "new": "sayAt(S, `circle${i}`, M.call()); });",
+    "old": "        if (me.health / me.maxHealth <= at) sayAt(S, `circle${i}`, M.circle());",
+    "new": "        if (me.health / me.maxHealth <= at) sayAt(S, `circle${i}`, M.call());",
     "tests": [
       "test/scenes/starfall/star5_host.test.js",
       "test/systems/starfall/auditstar.test.js"

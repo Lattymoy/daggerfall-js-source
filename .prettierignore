@@ -70,6 +70,8 @@
 /src/scenes/*
 !/src/scenes/delve/
 /src/scenes/delve/*/
+!/src/scenes/starfall/
+/src/scenes/starfall/*/
 !/src/scenes/wagon/
 /src/scenes/wagon/*/
 !/src/systems/

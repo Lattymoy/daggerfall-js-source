@@ -52,7 +52,7 @@
   {
     "name": "STAR-MASTER-FLED-restand",
     "file": "src/scenes/starfall/starfallHost.js",
-    "old": "if (L.p === P_MASTER && S.master?.dead && !S.master.corpse && !S.mf) S.master = null;",
+    "old": "    if (L.p === P_MASTER && S.master?.dead && !S.master.corpse && !S.mf) S.master = null;",
     "new": "",
     "tests": [
       "test/scenes/starfall/star5_host.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "STAR-MASTER-FLED-fall",
     "file": "src/scenes/starfall/starfallHost.js",
-    "old": "S.master?.dead && !S.master.corpse && !S.mf) S.master = null;",
-    "new": "S.master?.dead && !S.master.corpse) S.master = null;",
+    "old": "    if (L.p === P_MASTER && S.master?.dead && !S.master.corpse && !S.mf) S.master = null;",
+    "new": "    if (L.p === P_MASTER && S.master?.dead && !S.master.corpse) S.master = null;",
     "tests": [
       "test/scenes/starfall/star5_host.test.js"
     ],
