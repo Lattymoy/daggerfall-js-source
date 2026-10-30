@@ -101,8 +101,8 @@
   {
     "name": "SEA-RISE-first-not-nearest",
     "file": "src/systems/deathRespawn.js",
-    "old": "if (d2 < bestDist) { bestDist = d2; best = hit; }",
-    "new": "if (!best) { bestDist = d2; best = hit; }",
+    "old": "    if (d2 < bestDist) {",
+    "new": "    if (!best) {",
     "tests": [
       "test/player/searise.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "SEA-RISE-resident-dropped",
     "file": "src/systems/deathRespawn.js",
-    "old": "  if (before >= 0 && typeof maps?.loadRegion === 'function') maps.loadRegion(before);\n",
-    "new": "",
+    "old": "  if (before >= 0 && typeof maps?.loadRegion === 'function') maps.loadRegion(before);\n  return best;",
+    "new": "  return best;",
     "tests": [
       "test/player/searise.test.js"
     ]

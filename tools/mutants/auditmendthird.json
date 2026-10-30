@@ -112,8 +112,8 @@
   {
     "name": "AUDIT-MEND-THIRD-L3-6-dagger-unmarked",
     "file": "src/systems/conditionRepair.js",
-    "old": "    if (had === 0 && isQuestionsDagger(it)) markFound(it);",
-    "new": "",
+    "old": "    if (had === 0 && isQuestionsDagger(it)) markFound(it); // AUDIT MEND-THIRD L3-6: handed over worn at character creation - marked",
+    "new": "    // AUDIT MEND-THIRD L3-6: handed over worn at character creation - marked",
     "tests": [
       "test/systems/auditmendthird.test.js"
     ],

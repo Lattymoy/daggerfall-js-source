@@ -15,8 +15,8 @@
     "tests": [
       "test/systems/ve4_vanillaEnhancedShipped.test.js"
     ],
-    "old": "      if (shipped) return shipped.open();   // VE4: the port's own files - nothing stored to read\n",
-    "new": ""
+    "old": "        if (shipped) return shipped.open(); // VE4: the port's own files - nothing stored to read\n        if (_loadBlob) {",
+    "new": "        if (_loadBlob) {"
   },
   {
     "name": "VE4-clear-takes-the-shipped",
@@ -24,8 +24,8 @@
     "tests": [
       "test/systems/ve4_vanillaEnhancedShipped.test.js"
     ],
-    "old": "  _mods = dfmodLoadOrder(liveShipped());\n  install();\n}",
-    "new": "  _mods = [];\n  install();\n}"
+    "old": "  _mods = dfmodLoadOrder(liveShipped());",
+    "new": "  _mods = [];"
   },
   {
     "name": "VE4-shipped-outside-the-load-order",
@@ -34,7 +34,7 @@
       "test/systems/ve4_vanillaEnhancedShipped.test.js",
       "test/systems/ve1_vanillaEnhanced.test.js"
     ],
-    "old": "  _mods = dfmodLoadOrder([..._attached, ...liveShipped()]);   // VE1: AutoSortMods' order, not the listing's; VE4: the shipped among them",
+    "old": "  _mods = dfmodLoadOrder([..._attached, ...liveShipped()]); // VE1: AutoSortMods' order, not the listing's; VE4: the shipped among them",
     "new": "  _mods = [...dfmodLoadOrder(_attached), ...liveShipped()];"
   },
   {
@@ -44,8 +44,8 @@
       "test/systems/ve4_vanillaEnhancedShipped.test.js",
       "test/systems/ve1_vanillaEnhanced.test.js"
     ],
-    "old": "  _shipped = (list ?? []).filter((s) => typeof s?.key === 'string' && s.key.startsWith(DFMOD_PREFIX) && s.index && typeof s.open === 'function');\n  _mods = dfmodLoadOrder([..._attached, ...liveShipped()]);",
-    "new": "  _shipped = (list ?? []).filter((s) => typeof s?.key === 'string' && s.key.startsWith(DFMOD_PREFIX) && s.index && typeof s.open === 'function');\n  _mods = [..._attached, ...liveShipped()];"
+    "old": "  );\n  _mods = dfmodLoadOrder([..._attached, ...liveShipped()]);",
+    "new": "  );\n  _mods = [..._attached, ...liveShipped()];"
   },
   {
     "name": "VE4-same-list-installed-again",
@@ -54,8 +54,8 @@
       "test/systems/auditve.test.js",
       "test/systems/ve4_vanillaEnhancedShipped.test.js"
     ],
-    "old": "  if (list === _shippedSrc) return _registered;\n",
-    "new": ""
+    "old": "  if (list === _shippedSrc) return _registered;\n  _shippedSrc = list;",
+    "new": "  _shippedSrc = list;"
   },
   {
     "name": "VE4-detail-not-honoured",

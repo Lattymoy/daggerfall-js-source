@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-WE-L1-9-one-carry-for-every-body",
     "file": "src/systems/courtRules.js",
-    "old": "  if (!onPlayer) { carry = _bodyCarry.get(body) ?? new Map(); _bodyCarry.set(body, carry); }\n",
-    "new": "",
+    "old": "  if (!onPlayer) {\n    carry = _bodyCarry.get(body) ?? new Map();\n    _bodyCarry.set(body, carry);\n  }\n  const c = (carry.get(source) ?? 0) + n * REGEN_HELD_SHARE;",
+    "new": "  const c = (carry.get(source) ?? 0) + n * REGEN_HELD_SHARE;",
     "tests": [
       "test/systems/auditwe_rules.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-WE-L1-10-the-pause-ended-off",
     "file": "src/systems/courtRules.js",
-    "old": "  if (!_on) { _carry.clear(); _bodyCarry = new WeakMap(); }",
-    "new": "  if (!_on) { _hurtAt = -Infinity; _carry.clear(); _bodyCarry = new WeakMap(); }",
+    "old": "    _carry.clear();",
+    "new": "    _hurtAt = -Infinity;\n    _carry.clear();",
     "tests": [
       "test/systems/auditwe_rules.test.js"
     ]

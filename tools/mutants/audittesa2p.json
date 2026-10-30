@@ -152,8 +152,8 @@
   {
     "name": "P3-accept-ignored",
     "file": "src/systems/deathRespawn.js",
-    "old": "      if (accept && !accept(hit)) continue;\n      bestDist = d2; best = hit;",
-    "new": "      bestDist = d2; best = hit;",
+    "old": "      if (accept && !accept(hit)) continue;\n      bestDist = d2;",
+    "new": "      bestDist = d2;",
     "tests": [
       "test/systems/audittesa2p_laws.test.js",
       "test/audit_tesa.test.js"
@@ -162,8 +162,8 @@
   {
     "name": "P3-registry-type-unread",
     "file": "src/systems/deathRespawn.js",
-    "old": "const e = { locationType: p.type ?? p.locationType, dungeonType: p.dungeonType };",
-    "new": "const e = { locationType: p.locationType, dungeonType: p.dungeonType };",
+    "old": "      const e = { locationType: p.type ?? p.locationType, dungeonType: p.dungeonType };",
+    "new": "      const e = { locationType: p.locationType, dungeonType: p.dungeonType };",
     "tests": [
       "test/systems/audittesa2p_laws.test.js",
       "test/audit_tesa.test.js"
@@ -172,8 +172,8 @@
   {
     "name": "P6-mask-kept",
     "file": "src/systems/discovery.js",
-    "old": "return low < BAY_PIXEL_IDS ? low : mapId >>> 0;",
-    "new": "return low;",
+    "old": "  return low < BAY_PIXEL_IDS ? low : mapId >>> 0;",
+    "new": "  return low;",
     "tests": [
       "test/systems/audittesa2p_laws.test.js"
     ]
@@ -181,8 +181,8 @@
   {
     "name": "P6-bound-off-by-one",
     "file": "src/systems/discovery.js",
-    "old": "return low < BAY_PIXEL_IDS ? low : mapId >>> 0;",
-    "new": "return low <= BAY_PIXEL_IDS ? low : mapId >>> 0;",
+    "old": "  return low < BAY_PIXEL_IDS ? low : mapId >>> 0;",
+    "new": "  return low <= BAY_PIXEL_IDS ? low : mapId >>> 0;",
     "tests": [
       "test/systems/audittesa2p_laws.test.js"
     ]
@@ -190,8 +190,8 @@
   {
     "name": "P6-old-key-kept",
     "file": "src/systems/discovery.js",
-    "old": "    if (key >= BAY_PIXEL_IDS && key < 0x100000) continue;\n",
-    "new": "",
+    "old": "    if (key >= BAY_PIXEL_IDS && key < 0x100000) continue;\n    _locations.set(key, { ...r });",
+    "new": "    _locations.set(key, { ...r });",
     "tests": [
       "test/systems/audittesa2p_laws.test.js"
     ]

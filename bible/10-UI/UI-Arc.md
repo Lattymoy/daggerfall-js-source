@@ -18786,7 +18786,7 @@ What the ladder says, every arm driven by a pin:
   The press is unchanged: the private-property question, the storage
   window, and the stocking itself still happen on the click. DFU does
   not list a cupboard. The interior host builds the rung once
-  (`containerPreview.js:"export function createInteriorPeek("`, HOST-SPLIT:
+  (`containerPreview.js:"export function createInteriorPeek"`, HOST-SPLIT:
   the host wires it, it does not grow it); its getters read the room's own
   word only while the crosshair is on a cupboard or a placed chest. Pins `test/systems/containerpreview.test.js`, and the
   CONTAINER-PEEK cases in `test/systems/worldhover.test.js` and `test/systems/quickloot.test.js`.

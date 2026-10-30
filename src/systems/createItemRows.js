@@ -15,12 +15,22 @@ const WEAPON_STEEL = 0x0001;
 /** ItemGroups.Armor template indices (ARMOR_ENUM's values, named here
  *  so the table below reads like DFU's switch). */
 const A = Object.freeze({
-  Cuirass: 102, Gauntlets: 103, Greaves: 104, Left_Pauldron: 105,
-  Right_Pauldron: 106, Helm: 107, Boots: 108, Buckler: 109,
+  Cuirass: 102,
+  Gauntlets: 103,
+  Greaves: 104,
+  Left_Pauldron: 105,
+  Right_Pauldron: 106,
+  Helm: 107,
+  Boots: 108,
+  Buckler: 109,
 });
 /** ItemGroups.Weapons template indices. */
 const W = Object.freeze({
-  Dagger: 113, Staff: 115, Longsword: 120, Battle_Axe: 127, Short_Bow: 129,
+  Dagger: 113,
+  Staff: 115,
+  Longsword: 120,
+  Battle_Axe: 127,
+  Short_Bow: 129,
 });
 /** MensClothing.Plain_robes / WomensClothing.Plain_robes. */
 export const MENS_PLAIN_ROBES = 163;

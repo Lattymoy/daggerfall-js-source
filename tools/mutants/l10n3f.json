@@ -182,8 +182,8 @@
   {
     "name": "L10N3f-the-pack-s-DialogShortcuts",
     "file": "src/systems/dialogShortcuts.js",
-    "old": "const table = textDatabase(SHORTCUT_DATABASE);",
-    "new": "const table = null;",
+    "old": "  const table = textDatabase(SHORTCUT_DATABASE);",
+    "new": "  const table = null;",
     "tests": [
       "test/ui/l10n3f_databases.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "L10N3f-replaced-whole",
     "file": "src/systems/dialogShortcuts.js",
-    "old": "table ? (hasText(SHORTCUT_DATABASE, button) ? getText(SHORTCUT_DATABASE, button) : undefined) : SHORTCUT_TEXT[button]",
-    "new": "(table && hasText(SHORTCUT_DATABASE, button) ? getText(SHORTCUT_DATABASE, button) : SHORTCUT_TEXT[button])",
+    "old": "    const text = table\n      ? hasText(SHORTCUT_DATABASE, button)\n        ? getText(SHORTCUT_DATABASE, button)\n        : undefined\n      : SHORTCUT_TEXT[button];",
+    "new": "    const text =\n      table && hasText(SHORTCUT_DATABASE, button) ? getText(SHORTCUT_DATABASE, button) : SHORTCUT_TEXT[button];",
     "tests": [
       "test/ui/l10n3f_databases.test.js"
     ]

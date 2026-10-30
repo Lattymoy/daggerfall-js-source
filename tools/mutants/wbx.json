@@ -159,8 +159,8 @@
   {
     "name": "WBX6-the-switch-ignored",
     "file": "src/systems/courtRules.js",
-    "old": "  if (!_on || !(n > 0)) return n;\n  const onPlayer",
-    "new": "  if (true || !_on || !(n > 0)) return n;\n  const onPlayer",
+    "old": "  if (!_on || !(n > 0)) return n;",
+    "new": "  if (true || !_on || !(n > 0)) return n;",
     "tests": [
       "test/world/gate/wbx_gate_fixes.test.js"
     ]

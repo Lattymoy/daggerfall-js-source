@@ -432,8 +432,8 @@
   {
     "name": "OUTDOOR-LOOT-unlisted-cupboard-peek-paints-a-roll",
     "file": "src/systems/containerPreview.js",
-    "old": "if (shut || hall || unborn) return null;",
-    "new": "if (shut || hall) return null;",
+    "old": "  if (shut || hall || unborn) return null;",
+    "new": "  if (shut || hall) return null;",
     "tests": [
       "test/systems/containerpreview.test.js",
       "test/net/containerloot_protocol.test.js"

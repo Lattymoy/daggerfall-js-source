@@ -72,8 +72,8 @@
   {
     "name": "CURFEW-REFUND-refund-single",
     "file": "src/systems/court.js",
-    "old": "  const legal = loss * Math.max(1, Math.trunc(Number(factor) || 1));",
-    "new": "  const legal = loss;",
+    "old": "  const legal = loss * Math.max(1, Math.trunc(Number(factor) || 1)); // CURFEW-REFUND: the legal loss as it was charged",
+    "new": "  const legal = loss; // CURFEW-REFUND: the legal loss as it was charged",
     "tests": [
       "test/systems/fb1021d_sentencemends.test.js"
     ],
@@ -163,8 +163,8 @@
   {
     "name": "CURFEW-REFUND-every-charge-doubled",
     "file": "src/systems/court.js",
-    "old": "  const f = curfew ? Math.max(1, Math.trunc(Number(_crimeFactor()) || 1)) : 1;",
-    "new": "  const f = Math.max(1, Math.trunc(Number(_crimeFactor()) || 1));",
+    "old": "  const f = curfew ? Math.max(1, Math.trunc(Number(_crimeFactor()) || 1)) : 1; // SEAT1d: a Curfew's doubled cost - the legal loss alone, the People's half as DFU's",
+    "new": "  const f = Math.max(1, Math.trunc(Number(_crimeFactor()) || 1)); // SEAT1d: a Curfew's doubled cost - the legal loss alone, the People's half as DFU's",
     "tests": [
       "test/systems/seat1d_client.test.js"
     ],
@@ -184,7 +184,7 @@
     "name": "CURFEW-REFUND-court-reads-now",
     "file": "src/systems/court.js",
     "old": "  const refund = sentenceRefund(court.crime, { acquitted, factor: court.factor });",
-    "new": "  const refund = sentenceRefund(court.crime, { acquitted, factor: Math.max(1, Math.trunc(Number(_crimeFactor()) || 1)) });",
+    "new": "  const refund = sentenceRefund(court.crime, {\n    acquitted,\n    factor: Math.max(1, Math.trunc(Number(_crimeFactor()) || 1)),\n  });",
     "tests": [
       "test/systems/fb1021d_sentencemends.test.js"
     ],
@@ -193,8 +193,8 @@
   {
     "name": "CURFEW-REFUND-acquittal-unfactored",
     "file": "src/systems/court.js",
-    "old": "  const legal = loss * Math.max(1, Math.trunc(Number(factor) || 1));",
-    "new": "  const legal = acquitted ? loss : loss * Math.max(1, Math.trunc(Number(factor) || 1));",
+    "old": "  const legal = loss * Math.max(1, Math.trunc(Number(factor) || 1)); // CURFEW-REFUND: the legal loss as it was charged",
+    "new": "  const legal = acquitted ? loss : loss * Math.max(1, Math.trunc(Number(factor) || 1)); // CURFEW-REFUND: the legal loss as it was charged",
     "tests": [
       "test/systems/fb1021d_sentencemends.test.js"
     ],

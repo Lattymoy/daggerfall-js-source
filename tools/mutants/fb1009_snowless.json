@@ -11,8 +11,8 @@
   {
     "name": "SNOWLESS1-the-add-on-not-asked",
     "file": "src/systems/dfmodTextures.js",
-    "old": "return s?.kind === 'array' && dfmodFileName(s.key) === SNOWLESS_FILE_NAME;",
-    "new": "return s?.kind === 'array';",
+    "old": "  return s?.kind === 'array' && dfmodFileName(s.key) === SNOWLESS_FILE_NAME;",
+    "new": "  return s?.kind === 'array';",
     "tests": [
       "test/systems/fb1009_snowless.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SNOWLESS1-the-door-never-registered",
     "file": "src/systems/dfmodTextures.js",
-    "old": "setSnowlessGround(winterGroundSnowless);",
-    "new": "setSnowlessGround(null);",
+    "old": "setSnowlessGround(winterGroundSnowless); // SNOWLESS1: the weather's ground law and Snowfall read the door through climateSwaps",
+    "new": "setSnowlessGround(null); // SNOWLESS1: the weather's ground law and Snowfall read the door through climateSwaps",
     "tests": [
       "test/systems/fb1009_snowless.test.js"
     ]

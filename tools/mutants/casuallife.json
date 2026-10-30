@@ -2,8 +2,8 @@
   {
     "name": "CASUAL-LIFE-purse-taken",
     "file": "src/systems/deathPenalty.js",
-    "old": "  if (isCasual(player)) { _stated = null; return 0; }   // CASUAL-LIFE: spent all the same - the next death speaks for itself\n",
-    "new": "",
+    "old": "  if (isCasual(player)) {\n    _stated = null;\n    return 0;\n  } // CASUAL-LIFE: spent all the same - the next death speaks for itself\n  const purse = goldPiecesOf(player);",
+    "new": "  const purse = goldPiecesOf(player);",
     "tests": [
       "test/systems/legacy/casuallife.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "CASUAL-LIFE-stated-kept",
     "file": "src/systems/deathPenalty.js",
-    "old": "  if (isCasual(player)) { _stated = null; return 0; }",
-    "new": "  if (isCasual(player)) { return 0; }",
+    "old": "    _stated = null;\n    return 0;",
+    "new": "    return 0;",
     "tests": [
       "test/systems/legacy/casuallife.test.js"
     ],

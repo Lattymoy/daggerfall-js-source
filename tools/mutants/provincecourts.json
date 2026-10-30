@@ -308,8 +308,8 @@
   {
     "name": "PC-the-throne-unfound",
     "file": "src/systems/crownHall.js",
-    "old": "(isProvinceFactionId(rulerId) ? list.find((p) => p?.factionID === CASTLE_SEATS.ruler.faction) ?? null : null)",
-    "new": "null",
+    "old": "  return (\n    list.find((p) => p?.factionID === rulerId) ??\n    (isProvinceFactionId(rulerId) ? (list.find((p) => p?.factionID === CASTLE_SEATS.ruler.faction) ?? null) : null)\n  );",
+    "new": "  return list.find((p) => p?.factionID === rulerId) ?? null;",
     "tests": [
       "test/world/worldWide/provincecourts.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "PC-a-bay-throne-taken",
     "file": "src/systems/crownHall.js",
-    "old": "(isProvinceFactionId(rulerId) ? list.find(",
-    "new": "(true ? list.find(",
+    "old": "    (isProvinceFactionId(rulerId) ? (list.find((p) => p?.factionID === CASTLE_SEATS.ruler.faction) ?? null) : null)",
+    "new": "    (true ? (list.find((p) => p?.factionID === CASTLE_SEATS.ruler.faction) ?? null) : null)",
     "tests": [
       "test/world/worldWide/provincecourts.test.js"
     ]

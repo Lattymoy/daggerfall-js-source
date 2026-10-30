@@ -182,8 +182,8 @@
   {
     "name": "FB1016-STOLEN-GOODS-worn-left-in-its-slot",
     "file": "src/systems/court.js",
-    "old": "      if (isEquipped(it)) unequipItem(player, it);\n",
-    "new": "",
+    "old": "      if (isEquipped(it)) unequipItem(player, it);\n      if (player.lightSource === it) setLightSource(player, null);",
+    "new": "      if (player.lightSource === it) setLightSource(player, null);",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "FB1016-STOLEN-GOODS-torch-left-lit",
     "file": "src/systems/court.js",
-    "old": "      if (player.lightSource === it) setLightSource(player, null);\n",
-    "new": "",
+    "old": "      if (player.lightSource === it) setLightSource(player, null);\n      list.splice(i, 1);",
+    "new": "      list.splice(i, 1);",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]

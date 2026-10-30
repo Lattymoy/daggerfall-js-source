@@ -2,7 +2,7 @@
 //
 // DaggerfallHUD.Update polls five DaggerfallShortcut bindings every
 // frame (DaggerfallHUD.cs:295-326). The port had the whole binding
-// TABLE (systems/dialogShortcuts.js:"'Pause', 'LargeHUDToggle'," lists them, systems/dialogShortcuts.js:"Pause: 'Shift-Escape'," gives the
+// TABLE (systems/dialogShortcuts.js:"'Pause'," lists them, systems/dialogShortcuts.js:"Pause: 'Shift-Escape'," gives the
 // defaults F10 and Shift-F10) and no consumer for any of them, so both
 // keys were free and did nothing.
 //

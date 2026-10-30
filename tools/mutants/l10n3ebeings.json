@@ -68,7 +68,7 @@
   {
     "name": "L10N3e-systems-daedraSummoning-108-Faction",
     "file": "src/systems/daedraSummoning.js",
-    "old": "export const summonMacroValues = (daedra) => Object.freeze({ dae: daedra?.name != null ? getLocalizedFactionName(daedra.factionId, daedra.name) : null });",
+    "old": "export const summonMacroValues = (daedra) =>\n  Object.freeze({ dae: daedra?.name != null ? getLocalizedFactionName(daedra.factionId, daedra.name) : null });",
     "new": "export const summonMacroValues = (daedra) => Object.freeze({ dae: daedra?.name != null ? daedra.name : null });",
     "tests": [
       "test/systems/l10n3d_sites.test.js",

@@ -14,8 +14,8 @@
     "tests": [
       "test/systems/ve1_vanillaEnhanced.test.js"
     ],
-    "old": ".filter(([, , peer]) => !peer).map(([name]) => byName.get(String(name).toLowerCase()))",
-    "new": ".filter(() => true).map(([name]) => byName.get(String(name).toLowerCase()))"
+    "old": "      .filter(([, , peer]) => !peer)",
+    "new": "      .filter(() => true)"
   },
   {
     "name": "VE1-optional-dependency-skipped",
@@ -23,8 +23,8 @@
     "tests": [
       "test/systems/ve1_vanillaEnhanced.test.js"
     ],
-    "old": ".filter(([, , peer]) => !peer).map(([name]) => byName.get(String(name).toLowerCase()))",
-    "new": ".filter(([, optional, peer]) => !peer && !optional).map(([name]) => byName.get(String(name).toLowerCase()))"
+    "old": "      .filter(([, , peer]) => !peer)",
+    "new": "      .filter(([, optional, peer]) => !peer && !optional)"
   },
   {
     "name": "VE1-dependency-matched-by-case",
@@ -32,8 +32,8 @@
     "tests": [
       "test/systems/ve1_vanillaEnhanced.test.js"
     ],
-    "old": "byName.get(String(name).toLowerCase())",
-    "new": "byName.get(String(name))"
+    "old": "      .map(([name]) => byName.get(String(name).toLowerCase()))",
+    "new": "      .map(([name]) => byName.get(String(name)))"
   },
   {
     "name": "VE1-cycle-not-thrown",
@@ -59,8 +59,8 @@
     "tests": [
       "test/systems/ve1_vanillaEnhanced.test.js"
     ],
-    "old": "export const DFMOD_INDEX_VERSION = 3;",
-    "new": "export const DFMOD_INDEX_VERSION = 2;"
+    "old": "export const DFMOD_INDEX_VERSION = 3; // GROUND1: 2 carries the texture arrays; VE1: 3 the manifest's dependencies - an older index is rebuilt in the background",
+    "new": "export const DFMOD_INDEX_VERSION = 2; // GROUND1: 2 carries the texture arrays; VE1: 3 the manifest's dependencies - an older index is rebuilt in the background"
   },
   {
     "name": "VE1-peer-read-as-optional",
@@ -68,8 +68,8 @@
     "tests": [
       "test/systems/ve1_vanillaEnhanced.test.js"
     ],
-    "old": "[d.Name, d.IsOptional === true, d.IsPeer === true]",
-    "new": "[d.Name, d.IsOptional === true, d.IsOptional === true]"
+    "old": "    .map((d) => [d.Name, d.IsOptional === true, d.IsPeer === true]);",
+    "new": "    .map((d) => [d.Name, d.IsOptional === true, d.IsOptional === true]);"
   },
   {
     "name": "VE1-first-loaded-kept",
@@ -86,7 +86,7 @@
     "tests": [
       "test/systems/ve1_vanillaEnhanced.test.js"
     ],
-    "old": "  _mods = dfmodLoadOrder([..._attached, ...liveShipped()]);   // VE1: AutoSortMods' order, not the listing's; VE4: the shipped among them",
+    "old": "  _mods = dfmodLoadOrder([..._attached, ...liveShipped()]); // VE1: AutoSortMods' order, not the listing's; VE4: the shipped among them",
     "new": "  _mods = [..._attached, ...liveShipped()];"
   },
   {
@@ -95,8 +95,8 @@
     "tests": [
       "test/systems/ve1_vanillaEnhanced.test.js"
     ],
-    "old": "if (e && e.map === 'Albedo' && !e.dye) ((table[e.archive] ??= {})[e.record] ??= scale);",
-    "new": "if (e && e.map === 'Albedo' && !e.dye) ((table[e.archive] ??= {})[e.record] = scale);"
+    "old": "      if (e && e.map === 'Albedo' && !e.dye) (table[e.archive] ??= {})[e.record] ??= scale;",
+    "new": "      if (e && e.map === 'Albedo' && !e.dye) (table[e.archive] ??= {})[e.record] = scale;"
   },
   {
     "name": "VE3-off-mod-still-installed",
@@ -104,8 +104,8 @@
     "tests": [
       "test/systems/ve1_vanillaEnhanced.test.js"
     ],
-    "old": "    if (!dfmodEnabled(key)) continue;   // VE3: EnumerateEnabledModsReverse - a mod switched off answers nothing\n",
-    "new": ""
+    "old": "    if (!dfmodEnabled(key)) continue; // VE3: EnumerateEnabledModsReverse - a mod switched off answers nothing\n    walk.push(`${key}@${stamp ?? ''}`);",
+    "new": "    walk.push(`${key}@${stamp ?? ''}`);"
   },
   {
     "name": "VE3-switch-not-reinstalling",
@@ -122,8 +122,8 @@
     "tests": [
       "test/systems/ve1_vanillaEnhanced.test.js"
     ],
-    "old": "  if (off.some((k) => drop.has(k))) setPref(DFMOD_OFF_PREF, off.filter((k) => !drop.has(k)));",
-    "new": "  if (off.some((k) => drop.has(k)) && drop.size > 9) setPref(DFMOD_OFF_PREF, off.filter((k) => !drop.has(k)));"
+    "old": "  if (off.some((k) => drop.has(k)))",
+    "new": "  if (off.some((k) => drop.has(k)) && drop.size > 9)"
   },
   {
     "name": "VE3-warm-opens-an-off-mod",
@@ -131,8 +131,8 @@
     "tests": [
       "test/systems/ve1_vanillaEnhanced.test.js"
     ],
-    "old": "if (dfmodEnabled(key)) await bundleFor(key);",
-    "new": "await bundleFor(key);"
+    "old": "      if (dfmodEnabled(key)) await bundleFor(key);",
+    "new": "      await bundleFor(key);"
   },
   {
     "name": "VE3-attach-not-forgetting-off",
@@ -149,8 +149,8 @@
     "tests": [
       "test/systems/ve1_vanillaEnhanced.test.js"
     ],
-    "old": "    if (m.names.has(textureKey(a, 0, 0))) return { kind: 'records' };\n",
-    "new": ""
+    "old": "    if (m.names.has(textureKey(a, 0, 0))) return { kind: 'records' };\n  }",
+    "new": "  }"
   },
   {
     "name": "VE2-loose-tier-skipped",
@@ -158,8 +158,8 @@
     "tests": [
       "test/systems/ve1_vanillaEnhanced.test.js"
     ],
-    "old": "  if (looseTextureExists(a, 0, 0)) return { kind: 'records' };\n",
-    "new": ""
+    "old": "  if (looseTextureExists(a, 0, 0)) return { kind: 'records' };\n  for (const m of _prio) {",
+    "new": "  for (const m of _prio) {"
   },
   {
     "name": "VE2-deeper-array-cut-down",
@@ -176,8 +176,8 @@
     "tests": [
       "test/systems/ve1_vanillaEnhanced.test.js"
     ],
-    "old": "if (imgs?.length === n && first && imgs.every(",
-    "new": "if (imgs?.length >= n && first && imgs.every("
+    "old": "            imgs?.length === n &&",
+    "new": "            imgs?.length >= n &&"
   },
   {
     "name": "VE2-mismatched-picture-kept",
@@ -185,8 +185,8 @@
     "tests": [
       "test/systems/ve1_vanillaEnhanced.test.js"
     ],
-    "old": "(p && p.width === size.width && p.height === size.height ? p : classicAt(",
-    "new": "(p ? p : classicAt("
+    "old": "  return {\n    layers: pics.map((p, r) =>\n      p && p.width === size.width && p.height === size.height\n        ? p\n        : classicAt(classicLayer(tex, r), size.width, size.height),\n    ),\n    whole,\n  };",
+    "new": "  return { layers: pics.map((p, r) => (p ? p : classicAt(classicLayer(tex, r), size.width, size.height))), whole };"
   },
   {
     "name": "VE2-classic-size-never-taken",

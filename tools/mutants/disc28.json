@@ -137,8 +137,8 @@
   {
     "name": "DISC28-E-zero-test-again",
     "file": "src/systems/deathRespawn.js",
-    "old": "if (dead || force) entity.fatigue = Math.max(entity.fatigue > 0 ? entity.fatigue : 0, respawnHealth(maxFatigue(entity)));",
-    "new": "if ((dead || force) && !(entity.fatigue > 0)) entity.fatigue = respawnHealth(maxFatigue(entity));",
+    "old": "  if (dead || force)\n    entity.fatigue = Math.max(entity.fatigue > 0 ? entity.fatigue : 0, respawnHealth(maxFatigue(entity)));",
+    "new": "  if ((dead || force) && !(entity.fatigue > 0)) entity.fatigue = respawnHealth(maxFatigue(entity));",
     "tests": [
       "test/systems/disc28_fatigue.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "DISC28-E-dead-span-charged",
     "file": "src/systems/deathRespawn.js",
-    "old": "const skipped = (dead || force) && sharedClockOn() ? skipDeadMinutes(entity, worldMinutes()) : false;",
-    "new": "const skipped = false;",
+    "old": "  const skipped = (dead || force) && sharedClockOn() ? skipDeadMinutes(entity, worldMinutes()) : false;",
+    "new": "  const skipped = false;",
     "tests": [
       "test/systems/disc28_fatigue.test.js"
     ]
@@ -400,7 +400,7 @@
   {
     "name": "DISC28-K-early-return-again",
     "file": "src/systems/discovery.js",
-    "old": "  if (!renamed || renamed === rec.displayName) return false;   // HALL-STAMP: and a nameless Place names nothing",
+    "old": "  if (!renamed || renamed === rec.displayName) return false; // HALL-STAMP: and a nameless Place names nothing",
     "new": "  return false;",
     "tests": [
       "test/systems/disc28_names.test.js"
@@ -409,8 +409,8 @@
   {
     "name": "DISC28-K-restamp-same-name",
     "file": "src/systems/discovery.js",
-    "old": " || renamed === rec.displayName) return false;",
-    "new": ") return false;",
+    "old": "  if (!renamed || renamed === rec.displayName) return false; // HALL-STAMP: and a nameless Place names nothing",
+    "new": "  if (!renamed) return false; // HALL-STAMP: and a nameless Place names nothing",
     "tests": [
       "test/systems/disc28_names.test.js"
     ]
@@ -418,8 +418,8 @@
   {
     "name": "DISC28-K-unlearned-shown",
     "file": "src/systems/discovery.js",
-    "old": "return r?.isQuestResource && r.pcLearnedAboutExistence ? (",
-    "new": "return r?.isQuestResource ? (",
+    "old": "  return r?.isQuestResource && r.pcLearnedAboutExistence ? (r.overrideBuildingName ?? null) : null;",
+    "new": "  return r?.isQuestResource ? (r.overrideBuildingName ?? null) : null;",
     "tests": [
       "test/systems/disc28_names.test.js"
     ]

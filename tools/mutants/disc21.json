@@ -47,8 +47,8 @@
   {
     "name": "DISC21-A-the-repair-reminted-what-was-minted",
     "file": "src/systems/conditionRepair.js",
-    "old": "if (!it || typeof it !== 'object' || it.maxCondition != null || !WEARABLE.has(it.group)",
-    "new": "if (!it || typeof it !== 'object' || !WEARABLE.has(it.group)",
+    "old": "    if (!it || typeof it !== 'object' || it.maxCondition != null || !WEARABLE.has(it.group) || !Object.isExtensible(it))\n      continue;",
+    "new": "    if (!it || typeof it !== 'object' || !WEARABLE.has(it.group) || !Object.isExtensible(it)) continue;",
     "tests": [
       "test/systems/disc21.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "DISC21-A-the-repair-mints-what-is-not-worn",
     "file": "src/systems/conditionRepair.js",
-    "old": " || !WEARABLE.has(it.group) || !Object.isExtensible(it)) continue;",
-    "new": " || !Object.isExtensible(it)) continue;",
+    "old": "    if (!it || typeof it !== 'object' || it.maxCondition != null || !WEARABLE.has(it.group) || !Object.isExtensible(it))\n      continue;",
+    "new": "    if (!it || typeof it !== 'object' || it.maxCondition != null || !Object.isExtensible(it)) continue;",
     "tests": [
       "test/systems/disc21.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "DISC21-A-the-arrow-whole",
     "file": "src/systems/conditionRepair.js",
-    "old": "    if (it.group === 'Weapons' && it.templateIndex === ARROW_TEMPLATE) it.currentCondition = 0;\n    else if",
-    "new": "    if",
+    "old": "    if (it.group === 'Weapons' && it.templateIndex === ARROW_TEMPLATE) it.currentCondition = 0;\n    else if (had === 0 && isQuestionsDagger(it))\n      it.currentCondition = Math.trunc(it.maxCondition * QUESTIONS_DAGGER_WEAR);",
+    "new": "    if (had === 0 && isQuestionsDagger(it)) it.currentCondition = Math.trunc(it.maxCondition * QUESTIONS_DAGGER_WEAR);",
     "tests": [
       "test/systems/disc21.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "DISC21-A-the-dagger-whole",
     "file": "src/systems/conditionRepair.js",
-    "old": "    else if (had === 0 && isQuestionsDagger(it)) it.currentCondition = Math.trunc(it.maxCondition * QUESTIONS_DAGGER_WEAR);\n",
-    "new": "",
+    "old": "    else if (had === 0 && isQuestionsDagger(it))\n      it.currentCondition = Math.trunc(it.maxCondition * QUESTIONS_DAGGER_WEAR);\n    if (had === 0 && isQuestionsDagger(it)) markFound(it); // AUDIT MEND-THIRD L3-6: handed over worn at character creation - marked",
+    "new": "    if (had === 0 && isQuestionsDagger(it)) markFound(it); // AUDIT MEND-THIRD L3-6: handed over worn at character creation - marked",
     "tests": [
       "test/systems/disc21.test.js"
     ]

@@ -149,7 +149,7 @@ THE LAW NOW.
   LW9's `wanted` asks it (`world.js:"patrolHalts(playerEntity, trip.from.region,"`). An arrest on the road instead of a
   knight's sword stays LW-II's open item 6.
 - CURFEW-REFUND: the charge keeps the factor it was laid at (`arrestFlow.js:"playerEntity.chargedFactor = lowerRepForCrime("`,
-  the court's `factor`) and the refund gives back what was charged (`court.js:"const legal = loss * Math.max(1, Math.trunc(Number(factor) || 1));"`);
+  the court's `factor`) and the refund gives back what was charged (`court.js:"const legal = loss"`);
   a marked crime keeps half of what was charged; the People's half was never doubled.
 
 A save already under the line is mended by the next sentence it serves (or fine, or penance): nothing records what lowered

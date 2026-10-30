@@ -471,8 +471,8 @@
   {
     "name": "AUDIT-DISC19-S4-fatigue-left-at-zero",
     "file": "src/systems/deathRespawn.js",
-    "old": "  if (dead || force) entity.fatigue = Math.max(entity.fatigue > 0 ? entity.fatigue : 0, respawnHealth(maxFatigue(entity)));\n",
-    "new": "",
+    "old": "  if (dead || force)\n    entity.fatigue = Math.max(entity.fatigue > 0 ? entity.fatigue : 0, respawnHealth(maxFatigue(entity)));\n  // DISC28-E: ...and the minutes spent dead are not the BODY's to pay (worldTick.js skipDeadMinutes). Online the shared",
+    "new": "  // DISC28-E: ...and the minutes spent dead are not the BODY's to pay (worldTick.js skipDeadMinutes). Online the shared",
     "tests": [
       "test/systems/auditdisc19.test.js"
     ]
@@ -480,8 +480,8 @@
   {
     "name": "AUDIT-DISC19-S4-living-rested",
     "file": "src/systems/deathRespawn.js",
-    "old": "  if (dead || force) entity.fatigue = Math.max(",
-    "new": "  if (true) entity.fatigue = Math.max(",
+    "old": "  if (dead || force)\n    entity.fatigue = Math.max(entity.fatigue > 0 ? entity.fatigue : 0, respawnHealth(maxFatigue(entity)));",
+    "new": "  if (true) entity.fatigue = Math.max(entity.fatigue > 0 ? entity.fatigue : 0, respawnHealth(maxFatigue(entity)));",
     "tests": [
       "test/systems/auditdisc19.test.js"
     ]
@@ -489,8 +489,8 @@
   {
     "name": "AUDIT-DISC19-S4-respawn-not-rested",
     "file": "src/systems/deathRespawn.js",
-    "old": "  if (dead || force) entity.fatigue = Math.max(",
-    "new": "  if (dead) entity.fatigue = Math.max(",
+    "old": "  if (dead || force)\n    entity.fatigue = Math.max(entity.fatigue > 0 ? entity.fatigue : 0, respawnHealth(maxFatigue(entity)));",
+    "new": "  if (dead) entity.fatigue = Math.max(entity.fatigue > 0 ? entity.fatigue : 0, respawnHealth(maxFatigue(entity)));",
     "tests": [
       "test/systems/auditdisc19.test.js"
     ]
@@ -498,7 +498,7 @@
   {
     "name": "AUDIT-DISC19-S4-fatigue-overwritten",
     "file": "src/systems/deathRespawn.js",
-    "old": "  if (dead || force) entity.fatigue = Math.max(entity.fatigue > 0 ? entity.fatigue : 0, respawnHealth(maxFatigue(entity)));",
+    "old": "  if (dead || force)\n    entity.fatigue = Math.max(entity.fatigue > 0 ? entity.fatigue : 0, respawnHealth(maxFatigue(entity)));",
     "new": "  if (dead || force) entity.fatigue = respawnHealth(maxFatigue(entity));",
     "tests": [
       "test/systems/auditdisc19.test.js"

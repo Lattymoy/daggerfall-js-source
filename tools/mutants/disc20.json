@@ -254,8 +254,8 @@
   {
     "name": "DISC20-D-the-clip-gate-dropped",
     "file": "src/systems/distantStorms.js",
-    "old": "          if (!insideClip(s, px, pz)) continue;\n",
-    "new": "",
+    "old": "          if (!insideClip(s, px, pz)) continue;\n          if (ground && !strikesAt(ground, px, pz, minutes)) continue;",
+    "new": "          if (ground && !strikesAt(ground, px, pz, minutes)) continue;",
     "tests": [
       "test/systems/disc20.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "DISC20-D-the-strike-point-s-ground-unread",
     "file": "src/systems/distantStorms.js",
-    "old": "          if (ground && !strikesAt(ground, px, pz, minutes)) continue;\n",
-    "new": "",
+    "old": "          if (ground && !strikesAt(ground, px, pz, minutes)) continue;\n          bolt = { x: s.x, z: s.z, r: s.bands[0][0], strength: envAt(t), at: seconds, strike };",
+    "new": "          bolt = { x: s.x, z: s.z, r: s.bands[0][0], strength: envAt(t), at: seconds, strike };",
     "tests": [
       "test/systems/disc20.test.js"
     ]

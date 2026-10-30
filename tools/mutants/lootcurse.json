@@ -68,8 +68,8 @@
     "tests": [
       "test/systems/curse_persist.test.js"
     ],
-    "old": "  return VAMPIRE_CLANS.Anthotis;\n}",
-    "new": "  return VAMPIRE_CLANS.Lyrezi;\n}"
+    "old": "  return VAMPIRE_CLANS.Anthotis;",
+    "new": "  return VAMPIRE_CLANS.Lyrezi;"
   },
   {
     "name": "CR-pending-ignored",

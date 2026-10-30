@@ -155,7 +155,7 @@
   {
     "name": "FORAGE3-18-a-throw-stops-the-rest",
     "file": "src/systems/containerLoot.js",
-    "old": "    try { fn(args); } catch (e) { console.warn('[lootSpawned] a container handler threw', e); }",
+    "old": "    try {\n      fn(args);\n    } catch (e) {\n      console.warn('[lootSpawned] a container handler threw', e);\n    }",
     "new": "    fn(args);",
     "tests": [
       "test/systems/foraging/forage3_loot.test.js"
@@ -174,8 +174,8 @@
   {
     "name": "FORAGE3-20-rri-leaves-the-shelf",
     "file": "src/systems/containerLoot.js",
-    "old": "    onShopShelfStocked(a.items, /** @type {any} */ ({ buildingType: a.buildingType, quality: a.quality, containerType: a.containerType }), a.rolls ? { rolls: a.rolls } : {});",
-    "new": "",
+    "old": "const _handlers = new Map([\n  [\n    RRI_VENDOR,\n    (/** @type {ContainerLootArgs} */ a) => {\n      onShopShelfStocked(\n        a.items,\n        /** @type {any} */ ({ buildingType: a.buildingType, quality: a.quality, containerType: a.containerType }),\n        a.rolls ? { rolls: a.rolls } : {},\n      );\n    },\n  ],\n]);",
+    "new": "const _handlers = new Map([[RRI_VENDOR, (/** @type {ContainerLootArgs} */ a) => {}]]);",
     "tests": [
       "test/systems/rri2_realism.test.js"
     ]

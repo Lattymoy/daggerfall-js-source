@@ -455,8 +455,8 @@
   {
     "name": "D3-port-action-never-yields",
     "file": "src/systems/controlsConfig.js",
-    "old": "if (yielded.length) yieldDuplicates(u, yielded);",
-    "new": "if (false) yieldDuplicates(u, yielded);",
+    "old": "  if (yielded.length) yieldDuplicates(u, yielded);",
+    "new": "  if (false) yieldDuplicates(u, yielded);",
     "tests": [
       "test/ui/soc5_interact.test.js"
     ]

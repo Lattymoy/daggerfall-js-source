@@ -64,7 +64,10 @@ export function breakNormalPowerConcealment(entity) {
   const broken = list.filter((a) => NORMAL_POWER_CONCEALMENTS.includes(a.kind) && !a.ended);
   if (!broken.length) return false;
   for (const a of broken) {
-    if (a.heldItem) { a.roundsRemaining = 0; a.ended = true; }
+    if (a.heldItem) {
+      a.roundsRemaining = 0;
+      a.ended = true;
+    }
   }
   entity.activeEffects = list.filter((a) => a.heldItem || !broken.includes(a));
   return true;

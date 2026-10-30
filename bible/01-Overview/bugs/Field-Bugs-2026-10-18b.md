@@ -128,7 +128,7 @@ tab since PURSE-BACK, below.
 
 ## NO-NAN-PAY: a price that is no number takes nothing
 
-FOUND (the client sweep). deductGold (`court.js:"export function deductGold(player, amount) {"`, PlayerEntity.DeductGoldAmount)
+FOUND (the client sweep). deductGold (`court.js:"export function deductGold(player, amount)"`, PlayerEntity.DeductGoldAmount)
 given NaN or undefined: `amount <= purse` is false, so the letters pay - and NaN is never under a letter's value, so
 EVERY letter is spliced, `owed > 0` is false, and it answers 0, paid. All the letters gone, the coins untouched: the
 report's own shape. A negative amount added coin. The sweep traced every price producer it could find (trade, repair,

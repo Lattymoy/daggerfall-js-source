@@ -2,8 +2,8 @@
   {
     "name": "DEX4b-the-override-unasked",
     "file": "src/systems/diseases.js",
-    "old": "  if (o) { o(attacker, target, damage, deps); return; }",
-    "new": "  if (o) { o(attacker, target, damage, deps); }",
+    "old": "    return;\n  }",
+    "new": "  }",
     "why": "DFU's arm runs beside a mod's override, where TryGetOverride replaces the whole",
     "tests": [
       "test/systems/enemyExpansion/dex4b_combat.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "DEX4b-the-spider-readies-nothing",
     "file": "src/systems/diseases.js",
-    "old": "if (!target.activeEffects?.some((a) => a.kind === 'paralyze')) deps.readySpell?.(SPIDER_TOUCH_SPELL_INDEX);",
-    "new": "if (!target.activeEffects?.some((a) => a.kind === 'paralyze')) deps.readySpell?.(0);",
+    "old": "      if (!target.activeEffects?.some((a) => a.kind === 'paralyze')) deps.readySpell?.(SPIDER_TOUCH_SPELL_INDEX);",
+    "new": "      if (!target.activeEffects?.some((a) => a.kind === 'paralyze')) deps.readySpell?.(0);",
     "why": "the spider's touch readies another spell",
     "tests": [
       "test/systems/enemyExpansion/dex4b_combat.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "DEX4b-the-lamia-unarmed",
     "file": "src/systems/diseases.js",
-    "old": "[MOBILE_TYPES.Nymph]: 5, [MOBILE_TYPES.Lamia]: 5,",
-    "new": "[MOBILE_TYPES.Nymph]: 5,",
+    "old": "  [MOBILE_TYPES.Lamia]: 5,\n  [MOBILE_TYPES.Wereboar]: 6,",
+    "new": "  [MOBILE_TYPES.Wereboar]: 6,",
     "why": "the Lamia drains no fatigue (DFU's own case)",
     "tests": [
       "test/systems/enemyExpansion/dex4b_combat.test.js"

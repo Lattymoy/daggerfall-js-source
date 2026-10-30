@@ -593,8 +593,8 @@
   {
     "name": "AUDIT-DEEP2-B3-generation-still",
     "file": "src/systems/discovery.js",
-    "old": "  _locations.set(key, { regionName: info.regionName ?? '', locationName: info.locationName ?? '' });\n  _locationsGen += 1;",
-    "new": "  _locations.set(key, { regionName: info.regionName ?? '', locationName: info.locationName ?? '' });",
+    "old": "  _locationsGen += 1;\n  return true;",
+    "new": "  return true;",
     "tests": [
       "test/ui/travel/tv5_far_places.test.js"
     ],

@@ -146,8 +146,8 @@
   {
     "name": "SHIPYARDS-the-hall-the-same-every-day",
     "file": "src/systems/crewHall.js",
-    "old": "hash32(mapId >>> 0, Math.max(0, Math.floor(Number(day) || 0)) >>> 0, CREW_HALL_SALT)",
-    "new": "hash32(mapId >>> 0, 0, CREW_HALL_SALT)",
+    "old": "  const r = mulberry32(hash32(mapId >>> 0, Math.max(0, Math.floor(Number(day) || 0)) >>> 0, CREW_HALL_SALT));",
+    "new": "  const r = mulberry32(hash32(mapId >>> 0, 0, CREW_HALL_SALT));",
     "tests": [
       "test/systems/shipyards1.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "SHIPYARDS-the-deck-unread",
     "file": "src/systems/crewHall.js",
-    "old": "  if (playerCrewCount(hull, next) !== n + 1) return",
-    "new": "  if (false) return",
+    "old": "  if (playerCrewCount(hull, next) !== n + 1) return { ok: false, full: false, why: CREW_HALL_TEXT.noPlace };",
+    "new": "  if (false) return { ok: false, full: false, why: CREW_HALL_TEXT.noPlace };",
     "tests": [
       "test/systems/shipyards1.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "SHIPYARDS-paid-off-a-man",
     "file": "src/systems/crewHall.js",
-    "old": "{ ok: true, crew: crew - CREW_PER_HAND }",
-    "new": "{ ok: true, crew: crew - 1 }",
+    "old": "    ? { ok: true, crew: crew - CREW_PER_HAND }",
+    "new": "    ? { ok: true, crew: crew - 1 }",
     "tests": [
       "test/systems/shipyards1.test.js"
     ]

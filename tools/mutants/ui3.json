@@ -386,8 +386,8 @@
   {
     "name": "UI3-a-disease-s-name-out-of-its-place",
     "file": "src/systems/diseases.js",
-    "old": "  'Cholera', 'Leprosy',",
-    "new": "  'Leprosy', 'Cholera',",
+    "old": "  'Cholera',\n  'Leprosy',",
+    "new": "  'Leprosy',\n  'Cholera',",
     "tests": [
       "test/ui/enhanced/ui3_status.test.js"
     ]

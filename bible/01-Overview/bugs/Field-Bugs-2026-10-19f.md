@@ -1008,7 +1008,7 @@ EnemyAttack.cs:316-318, all at the formula's tail), the FromSource damage of a s
 DaggerfallEntityBehaviour.cs:196-201) and Silence's aggro; casting a spell breaks nothing, in DFU or here.
 `breakNormalPowerConcealment` ends every LIVE normal power (Invisibility, Chameleon, Shadow; the TRUE three never): a
 spell's entry is removed, as before - DFU's end, a round sooner - and a worn item's is ENDED in place and keeps its pin,
-`concealment.js:"if (a.heldItem) { a.roundsRemaining = 0; a.ended = true; }"`. `hasActiveEffect` reads an ended entry
+`concealment.js:"if (a.heldItem) {"`. `hasActiveEffect` reads an ended entry
 as absent (DFU's HasEnded skip), so IsInvisible, IsBlending and IsAShade, the senses' closures and the pose's
 concealment bits all read it broken; `mysticism.js` liveBundles already skipped an ended entry, so the HUD's icon goes
 with it. The reroll recasts it once the item's six hours since its last roll are out (REROLL_MINIMUM_HOURS, E2's
@@ -1256,7 +1256,7 @@ too (a 25-million lot at a quality-10 counter, Mercantile and Personality 40, pa
 `inventory.js:"export const GOLD_PIECE_WEIGHT_KG = 0.0025;"` times -8,000,000 is -20,000 kg, beside about 5 kg of
 pieces, and the purse's write is unclamped, as DFU's setter is (`inventory.js:"entity.goldPieces = goldPiecesOf(entity) + amount;"`).
 A purse already below nothing stays there. Every price is more than it, so every payment spends the letters first
-(`court.js:"const loc = items.find((it) => it.templateIndex === LETTER_OF_CREDIT_TEMPLATE);"`), and the judge finds it
+(`court.js:"const loc = items.find"`), and the judge finds it
 at every checkpoint (`judge.js:"if (!purseWord(save?.goldPieces)) out.push({ code: 'gold' });"`): the trade held, and a
 death in the zone burnt (BURNT-SAID). 18b left such a character to "a staff repair (`review.js`)", and none could be
 made. The review's one repair took a faction's flag or nothing (`repairLaw.js:"if (!REPAIR_FLAGS.includes(flag))"`)

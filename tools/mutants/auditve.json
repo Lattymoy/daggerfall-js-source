@@ -19,7 +19,7 @@
       "test/systems/ve4_vanillaEnhancedShipped.test.js",
       "test/systems/ve1_vanillaEnhanced.test.js"
     ],
-    "old": "  return typeof choice === 'boolean' ? choice : shipped.on === true;   // AUDIT VE: the shipped default",
+    "old": "  return typeof choice === 'boolean' ? choice : shipped.on === true; // AUDIT VE: the shipped default",
     "new": "  return typeof choice === 'boolean' ? choice : false;"
   },
   {
@@ -30,7 +30,7 @@
       "test/systems/ve4_vanillaEnhancedShipped.test.js",
       "test/systems/ve1_vanillaEnhanced.test.js"
     ],
-    "old": "  return typeof choice === 'boolean' ? choice : shipped.on === true;   // AUDIT VE: the shipped default",
+    "old": "  return typeof choice === 'boolean' ? choice : shipped.on === true; // AUDIT VE: the shipped default",
     "new": "  return shipped.on === true;"
   },
   {
@@ -40,8 +40,8 @@
       "test/systems/auditve.test.js",
       "test/systems/ve4_vanillaEnhancedShipped.test.js"
     ],
-    "old": "    if (shippedOf(k)) { shipped = true; choices[k] = !!on; }",
-    "new": "    if (shippedOf(k)) { shipped = true; if (on) choices[k] = true; else delete choices[k]; }"
+    "old": "      choices[k] = !!on;",
+    "new": "      if (on) choices[k] = true;\n      else delete choices[k];"
   },
   {
     "name": "AUDITVE-shipped-switch-on-the-attached-shelf",
@@ -51,8 +51,8 @@
       "test/systems/ve4_vanillaEnhancedShipped.test.js",
       "test/systems/ve1_vanillaEnhanced.test.js"
     ],
-    "old": "    if (shippedOf(k)) { shipped = true; choices[k] = !!on; }",
-    "new": "    if (false) { shipped = true; choices[k] = !!on; }"
+    "old": "    if (shippedOf(k)) {",
+    "new": "    if (false) {"
   },
   {
     "name": "AUDITVE-worker-never-asked",
@@ -124,8 +124,8 @@
     "tests": [
       "test/systems/auditve.test.js"
     ],
-    "old": "  while (_groundCache.size > GROUND_CACHE_SETS) _groundCache.delete(_groundCache.keys().next().value);   // AUDIT VE P2: the least recently asked goes\n",
-    "new": ""
+    "old": "  while (_groundCache.size > GROUND_CACHE_SETS) _groundCache.delete(_groundCache.keys().next().value); // AUDIT VE P2: the least recently asked goes\n  return _groundCache.get(id);",
+    "new": "  return _groundCache.get(id);"
   },
   {
     "name": "AUDITVE-ground-cache-oldest-not-least-recent",
@@ -133,7 +133,7 @@
     "tests": [
       "test/systems/auditve.test.js"
     ],
-    "old": "  _groundCache.delete(id);   // AUDIT VE P2: re-entered last - the Map's order is the cache's recency\n  if (hit) { _groundCache.set(id, hit); return hit; }",
+    "old": "  _groundCache.delete(id); // AUDIT VE P2: re-entered last - the Map's order is the cache's recency\n  if (hit) {\n    _groundCache.set(id, hit);\n    return hit;\n  }",
     "new": "  if (hit) return hit;"
   },
   {
@@ -178,8 +178,8 @@
     "tests": [
       "test/systems/auditve.test.js"
     ],
-    "old": "          src: `${key}@${stamp ?? ''}:${name}`,",
-    "new": "          src: `${key}:${name}`,"
+    "old": "          src: `${key}@${stamp ?? ''}:${name}`, // AUDIT VE R1: the mod, its content and the name - a decode is kept while this answers",
+    "new": "          src: `${key}:${name}`, // AUDIT VE R1: the mod, its content and the name - a decode is kept while this answers"
   },
   {
     "name": "AUDITVE-R1-walk-always-new",
@@ -187,8 +187,8 @@
     "tests": [
       "test/systems/auditve.test.js"
     ],
-    "old": "  if (sig !== _walkSig) {   // AUDIT VE R1",
-    "new": "  if (true) {   // AUDIT VE R1"
+    "old": "  if (sig !== _walkSig) {",
+    "new": "  if (true) {"
   },
   {
     "name": "AUDITVE-R8-late-picture-kept",
@@ -252,8 +252,8 @@
       "test/systems/ve4_vanillaEnhancedShipped.test.js",
       "test/systems/ve1_vanillaEnhanced.test.js"
     ],
-    "old": "  const shipped = shippedOf(k);\n  if (!shipped) return !offKeys().includes(k);",
-    "new": "  const shipped = _shippedLive.has(k) ? shippedOf(k) : null;\n  if (!shipped) return !offKeys().includes(k);"
+    "old": "  const shipped = shippedOf(k);",
+    "new": "  const shipped = _shippedLive.has(k) ? shippedOf(k) : null;"
   },
   {
     "name": "AUDITVE-R3-attach-not-switching-the-key",
@@ -290,7 +290,7 @@
     "tests": [
       "test/systems/auditve.test.js"
     ],
-    "old": "  const sig = [...stored.map((k) => `${k}=${noMods ? 'nomods' : parts.get(k) ?? 'missing'}`)].join('\\n');",
+    "old": "  const sig = [...stored.map((k) => `${k}=${noMods ? 'nomods' : (parts.get(k) ?? 'missing')}`)].join('\\n');",
     "new": "  const sig = stored.join('\\n');"
   },
   {
@@ -317,7 +317,7 @@
     "tests": [
       "test/systems/auditve.test.js"
     ],
-    "old": "export const unregisteredDfmods = () => [..._unregistered].map(([key, u]) => ({ key, fileName: dfmodFileName(key), state: u.state, error: u.error ?? null }));",
+    "old": "export const unregisteredDfmods = () =>\n  [..._unregistered].map(([key, u]) => ({ key, fileName: dfmodFileName(key), state: u.state, error: u.error ?? null }));",
     "new": "export const unregisteredDfmods = () => [];"
   },
   {
@@ -326,8 +326,8 @@
     "tests": [
       "test/systems/auditve.test.js"
     ],
-    "old": "        _unregistered.set(key, { state: 'error', error: openWords(why) });   // AUDIT VE R5: said, with a Remove\n",
-    "new": ""
+    "old": "        _unregistered.set(key, { state: 'error', error: openWords(why) }); // AUDIT VE R5: said, with a Remove\n      }",
+    "new": "      }"
   },
   {
     "name": "AUDITVE-R6-v2-refused",
@@ -336,8 +336,8 @@
       "test/systems/auditve.test.js",
       "test/systems/ve1_vanillaEnhanced.test.js"
     ],
-    "old": "    if (idx?.v === 2) return { index: { ...idx, deps: [] }, fp: fingerprint(text), stale: true };\n",
-    "new": ""
+    "old": "    if (idx?.v === 2) return { index: { ...idx, deps: [] }, fp: fingerprint(text), stale: true };\n    return null;",
+    "new": "    return null;"
   },
   {
     "name": "AUDITVE-R6-never-rebuilt",
@@ -355,8 +355,8 @@
     "tests": [
       "test/systems/auditve.test.js"
     ],
-    "old": "  // shipped one, under a key a copy now takes) stood cached for the new one; a removed copy's open cached its null.\n  forgetOpen();\n",
-    "new": "  // shipped one, under a key a copy now takes) stood cached for the new one; a removed copy's open cached its null.\n"
+    "old": "  forgetOpen();\n  _attached = reads.filter(([, r]) => r).map(([key, r]) => ({ key, index: r.index, stamp: `a:${r.fp}` }));",
+    "new": "  _attached = reads.filter(([, r]) => r).map(([key, r]) => ({ key, index: r.index, stamp: `a:${r.fp}` }));"
   },
   {
     "name": "AUDITVE-R10-classic-offered",
@@ -383,7 +383,7 @@
     "tests": [
       "test/systems/auditve.test.js"
     ],
-    "old": "  const noMods = noModsPage();   // AUDIT VE R11: the door's own rule",
+    "old": "  const noMods = noModsPage(); // AUDIT VE R11: the door's own rule",
     "new": "  const noMods = false;"
   },
   {
@@ -401,8 +401,8 @@
     "tests": [
       "test/systems/auditve.test.js"
     ],
-    "old": "    if (!whole && _groundCache.get(id) === answer) _groundCache.delete(id);\n",
-    "new": ""
+    "old": "      if (!whole && _groundCache.get(id) === answer) _groundCache.delete(id);\n      return layers;",
+    "new": "      return layers;"
   },
   {
     "name": "AUDITVE-R13-every-mod-counted",

@@ -42,8 +42,8 @@
 
 import { FACTION_FLAGS } from './faction/factionRep.js';
 import { FACTION_TYPES, GUILD_GROUPS } from '../formats/factionFile.js';
-import { getLocalizedFactionName, t } from './textManager.js';   // L10N3e: %dae, the prince's name in the player's language; SUMMON-OFFER: the summoner's word when no quest can be made
-import { noteFirstUse } from './tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { getLocalizedFactionName, t } from './textManager.js'; // L10N3e: %dae, the prince's name in the player's language; SUMMON-OFFER: the summoner's word when no quest can be made
+import { noteFirstUse } from './tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
 
 /** The sixteen princes, in DFU's own array order - the order is
  *  load-bearing twice: index 0 is Hircine (Glenmoril's, and excluded
@@ -80,7 +80,10 @@ export const WITCHES_GUILD_GROUP = GUILD_GROUPS.Witches;
 
 /** The four TEXT.RSC records the summoner speaks (:28-31). */
 export const SUMMON_TEXT = Object.freeze({
-  notToday: 480, areYouSure: 481, before: 482, failed: 484,
+  notToday: 480,
+  areYouSure: 481,
+  before: 482,
+  failed: 484,
 });
 
 /**
@@ -97,8 +100,8 @@ export const SUMMON_TEXT = Object.freeze({
  * coven keeps its own law - one prince a day, drawn (the event clock's day online, TIME1), Glenmoril's always Hircine -
  * and offline nothing moves.
  */
-export const summonsByName = ({ factionId = 0, factionType = null, online = false } = {}) => !!online
-  && factionId !== GLENMORIL_WITCHES && factionType !== WITCHES_COVEN_TYPE;
+export const summonsByName = ({ factionId = 0, factionType = null, online = false } = {}) =>
+  !!online && factionId !== GLENMORIL_WITCHES && factionType !== WITCHES_COVEN_TYPE;
 /** SUMMON-NAME: the sixteen as the online summoner lists them - by name, the way a player looks for one. */
 export const PRINCES_BY_NAME = Object.freeze([...DAEDRA].sort((a, b) => a.name.localeCompare(b.name)));
 /** SUMMON-NAME: the question online. Record 481 opens "Today is %dat, the day of summoning for %dae", which online
@@ -132,14 +135,21 @@ export function summonQuestionRows(record) {
  *  window is dispatched), wrapped into the flow's list; `ask(daedra)` is the question's rows about him, read and walked
  *  once for its box (the host's: record 481 cut by summonQuestionRows, then %dae and %pcn resolved). */
 export function summonByNameBoxes(summon, ask = () => SUMMON_BY_NAME_ROWS) {
-  return [{
-    picker: PRINCES_BY_NAME.map((d) => d.name),
-    onPick: (i) => [{
-      rows: ask(PRINCES_BY_NAME[i]),
-      buttons: 'YesNo',
-      onYes: () => { const next = summon(PRINCES_BY_NAME[i]); return next ? [next] : null; },
-    }],
-  }];
+  return [
+    {
+      picker: PRINCES_BY_NAME.map((d) => d.name),
+      onPick: (i) => [
+        {
+          rows: ask(PRINCES_BY_NAME[i]),
+          buttons: 'YesNo',
+          onYes: () => {
+            const next = summon(PRINCES_BY_NAME[i]);
+            return next ? [next] : null;
+          },
+        },
+      ],
+    },
+  ];
 }
 
 /** DAEDRA1 - THE SUMMONING'S OWN MACRO, and the reason it needs one.
@@ -165,17 +175,16 @@ export function summonByNameBoxes(summon, ask = () => SUMMON_BY_NAME_ROWS) {
  *  DaggerfallWitchesCovenPopupWindow.cs:266-267), whose name is a
  *  translation's for the faction id (PersistentFactionData.cs:176). The
  *  table's `name` is FACTION.TXT's for that id, and stays the key. */
-export const summonMacroValues = (daedra) => Object.freeze({ dae: daedra?.name != null ? getLocalizedFactionName(daedra.factionId, daedra.name) : null });
+export const summonMacroValues = (daedra) =>
+  Object.freeze({ dae: daedra?.name != null ? getLocalizedFactionName(daedra.factionId, daedra.name) : null });
 
 /** The five daedric foes a FAILED coven summoning spawns (:70-72) -
  *  Range(0, 5) over a five-entry array, so every one is reachable. */
-export const DAEDRIC_FOES = Object.freeze([
-  'DaedraLord', 'DaedraSeducer', 'Daedroth', 'FireDaedra', 'FrostDaedra',
-]);
+export const DAEDRIC_FOES = Object.freeze(['DaedraLord', 'DaedraSeducer', 'Daedroth', 'FireDaedra', 'FrostDaedra']);
 
 /** FormulaHelper.CalculateDaedraSummoningCost (:1958-1965): the
  *  SUMMONER's reputation, inverted. Two hundred thousand at rep 0. */
-export const summoningCost = (npcRep) => 200000 - (npcRep * 1000);
+export const summoningCost = (npcRep) => 200000 - npcRep * 1000;
 /** CalculateDaedraSummoningChance (:1967-1974): the PRINCE's own
  *  reputation with the player, plus the weather bonus, plus 30. */
 export const summoningChance = (daedraRep, bonus) => 30 + daedraRep + bonus;
@@ -192,7 +201,12 @@ export const summoningChance = (daedraRep, bonus) => 30 + daedraRep + bonus;
  * prince's own day is `dayOfYear`, the sky's calendar. Offline both are DFU's one clock (the default: the same day).
  */
 export function daedraForSummoner({
-  factionId, factionType = null, dayOfYear = 0, rerollDay = dayOfYear, state = null, rolls = Math.random,
+  factionId,
+  factionType = null,
+  dayOfYear = 0,
+  rerollDay = dayOfYear,
+  state = null,
+  rolls = Math.random,
 } = {}) {
   // Glenmoril is tested by ID before the type test, so its witches
   // never reach the coven's random draw.
@@ -261,26 +275,37 @@ export function weatherBonus(daedra, { raining = false, storming = false } = {})
  * nothing recorded.
  */
 export function attemptSummoning({
-  daedra, summonerRep = 0, summonerGuildGroup = null, gold = 0,
-  daedraRep = () => 0, hasSummoned = () => false, offerQuest = () => null,
-  raining = false, storming = false, rolls = Math.random,
+  daedra,
+  summonerRep = 0,
+  summonerGuildGroup = null,
+  gold = 0,
+  daedraRep = () => 0,
+  hasSummoned = () => false,
+  offerQuest = () => null,
+  raining = false,
+  storming = false,
+  rolls = Math.random,
 } = {}) {
   const cost = summoningCost(summonerRep);
   if (gold < cost) return { kind: 'poor', cost };
-  noteFirstUse('daedra-summoning');   // TUT1: a summoning the purse can pay for (AUDIT TUT1: not the purse's refusal)
+  noteFirstUse('daedra-summoning'); // TUT1: a summoning the purse can pay for (AUDIT TUT1: not the purse's refusal)
 
   // Sheogorath's 5% (15% storming) hijack, rolled BEFORE the summoning
   // chance - so the chance that follows is HIS, not the one you paid
   // for (:230-237).
   const sheoChance = storming ? 15 : 5;
-  const called = (Math.floor(rolls() * 100) + 1) <= sheoChance ? DAEDRA[SHEOGORATH_INDEX] : daedra;
+  const called = Math.floor(rolls() * 100) + 1 <= sheoChance ? DAEDRA[SHEOGORATH_INDEX] : daedra;
 
   const bonus = weatherBonus(called, { raining, storming });
   const chance = summoningChance(daedraRep(called.factionId), bonus);
-  const roll = Math.floor(rolls() * 100) + 1;   // Dice100.Roll(), 1..100
+  const roll = Math.floor(rolls() * 100) + 1; // Dice100.Roll(), 1..100
   if (roll > chance) {
     return {
-      kind: 'failed', cost, daedra: called, chance, roll,
+      kind: 'failed',
+      cost,
+      daedra: called,
+      chance,
+      roll,
       // Only a WITCHES COVEN sets daedra on you for wasting its time.
       spawnFoes: summonerGuildGroup === WITCHES_GUILD_GROUP,
     };
@@ -296,6 +321,9 @@ export function attemptSummoning({
 
 /** SUMMON-OFFER: the summoner's word when the prince who answered has no quest that can be made in this region - the
  *  prince as %dae shows him (L10N3e, PersistentFactionData.cs:176). The port's own: DFU says nothing here. */
-export const noQuestText = (daedra) => t('summon.noQuest',
-  '{prince} answers, but has no task for you in this region. You keep your gold. Try summoning in another region.',
-  { prince: getLocalizedFactionName(daedra.factionId, daedra.name) });
+export const noQuestText = (daedra) =>
+  t(
+    'summon.noQuest',
+    '{prince} answers, but has no task for you in this region. You keep your gold. Try summoning in another region.',
+    { prince: getLocalizedFactionName(daedra.factionId, daedra.name) },
+  );

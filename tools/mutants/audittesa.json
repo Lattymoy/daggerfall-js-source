@@ -237,8 +237,8 @@
   {
     "name": "AUDIT-TESA-A2-4-farthest",
     "file": "src/systems/deathRespawn.js",
-    "old": "      if (d2 >= bestDist) continue;\n      const hit = { kind: found.kind, locationIndex: -1,",
-    "new": "      if (bestDist !== Infinity && d2 <= bestDist) continue;\n      const hit = { kind: found.kind, locationIndex: -1,",
+    "old": "      if (d2 >= bestDist) continue;",
+    "new": "      if (bestDist !== Infinity && d2 <= bestDist) continue;",
     "tests": [
       "test/audit_tesa.test.js",
       "test/systems/audittesa2p_laws.test.js"
@@ -247,8 +247,8 @@
   {
     "name": "AUDIT-TESA-A2-4-a-dungeon-a-town",
     "file": "src/systems/deathRespawn.js",
-    "old": "      const found = SAFE_KINDS.find((t) => t.match(e));\n      if (!found) continue;\n      const dx = p.px - mapPixelXY.x",
-    "new": "      const found = SAFE_KINDS.find((t) => t.match(e)) ?? SAFE_KINDS[0];\n      if (!found) continue;\n      const dx = p.px - mapPixelXY.x",
+    "old": "      const found = SAFE_KINDS.find((t) => t.match(e));",
+    "new": "      const found = SAFE_KINDS.find((t) => t.match(e)) ?? SAFE_KINDS[0];",
     "tests": [
       "test/audit_tesa.test.js",
       "test/systems/audittesa2p_laws.test.js"

@@ -2,8 +2,8 @@
   {
     "name": "SUMMON-OFFER-no-step-is-still-a-quest",
     "file": "src/systems/daedraSummoning.js",
-    "old": "  if (!offered) return { kind: 'noQuest', daedra: called, cost, quest: called.quest };\n",
-    "new": "",
+    "old": "  if (!offered) return { kind: 'noQuest', daedra: called, cost, quest: called.quest };\n  return { kind: 'quest', daedra: called, cost, quest: called.quest, flag: FACTION_FLAGS.Summoned, offered };",
+    "new": "  return { kind: 'quest', daedra: called, cost, quest: called.quest, flag: FACTION_FLAGS.Summoned, offered };",
     "tests": [
       "test/systems/fb1014_summonoffer.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SUMMON-OFFER-a-quest-made-for-a-missed-roll",
     "file": "src/systems/daedraSummoning.js",
-    "old": "  if (roll > chance) {\n",
-    "new": "  offerQuest(called.quest);\n  if (roll > chance) {\n",
+    "old": "  if (roll > chance) {",
+    "new": "  offerQuest(called.quest);\n  if (roll > chance) {",
     "tests": [
       "test/systems/fb1014_summonoffer.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SUMMON-OFFER-the-word-says-the-gold-went",
     "file": "src/systems/daedraSummoning.js",
-    "old": "'{prince} answers, but has no task for you in this region. You keep your gold. Try summoning in another region.'",
-    "new": "'{prince} answers, but has no task for you in this region.'",
+    "old": "  t(\n    'summon.noQuest',\n    '{prince} answers, but has no task for you in this region. You keep your gold. Try summoning in another region.',\n    { prince: getLocalizedFactionName(daedra.factionId, daedra.name) },\n  );",
+    "new": "  t('summon.noQuest', '{prince} answers, but has no task for you in this region.', {\n    prince: getLocalizedFactionName(daedra.factionId, daedra.name),\n  });",
     "tests": [
       "test/systems/fb1014_summonoffer.test.js"
     ]

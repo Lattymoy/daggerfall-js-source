@@ -204,7 +204,7 @@
   {
     "name": "D-ONLINE1-any-graveyard-is-a-safe-landing",
     "file": "src/systems/deathRespawn.js",
-    "old": "  { kind: 'graveyard', match: (e) => e.locationType === LOCATION_TYPES.Graveyard && e.dungeonType === DUNGEON_TYPES.Cemetery },",
+    "old": "  {\n    kind: 'graveyard',\n    match: (e) => e.locationType === LOCATION_TYPES.Graveyard && e.dungeonType === DUNGEON_TYPES.Cemetery,\n  },",
     "new": "  { kind: 'graveyard', match: (e) => e.locationType === LOCATION_TYPES.Graveyard },",
     "tests": [
       "test/scenes/donline1_respawn.test.js"

@@ -11,8 +11,8 @@
   {
     "name": "REP3-the-rolls-drawn-for-all",
     "file": "src/systems/court.js",
-    "old": "(!BANISHABLE_CRIMES.has(crime) || Math.floor(rolls() * 100) >= threshold1)",
-    "new": "(Math.floor(rolls() * 100) >= threshold1 || !BANISHABLE_CRIMES.has(crime))",
+    "old": "  const punishmentType = failed2 && (!BANISHABLE_CRIMES.has(crime) || Math.floor(rolls() * 100) >= threshold1) ? 2 : 0;",
+    "new": "  const punishmentType = failed2 && (Math.floor(rolls() * 100) >= threshold1 || !BANISHABLE_CRIMES.has(crime)) ? 2 : 0;",
     "tests": [
       "test/systems/rep3_banishment.test.js"
     ]

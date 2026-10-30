@@ -25,7 +25,7 @@
 import { seededRng } from './wind/wind.js';
 import { AMBIENT_SOUNDS } from './ambientEffects.js';
 import { envelope, SYSTEM_TYPES, radialOf, insideClip } from './weather/weatherMap.js';
-import { strikeOf, flickerAt, BOLT_LIFE_S } from './lightning.js';   // BOLT: the strike's kind, its strokes and its channel
+import { strikeOf, flickerAt, BOLT_LIFE_S } from './lightning.js'; // BOLT: the strike's kind, its strokes and its channel
 
 /** Metres a second - thunder's pace through the air. */
 export const SPEED_OF_SOUND = 343;
@@ -50,14 +50,15 @@ export function strikeSeed(id, minute) {
 /** BOLT: where a strike lands - within STRIKE_SPREAD of its storm's core, uniform over that disc, from its seed. */
 export function strikePlace(seed, x, z, core) {
   const r = seededRng((seed ^ 0x68e31da4) >>> 0);
-  const a = r() * 2 * Math.PI, d = Math.sqrt(r()) * core * STRIKE_SPREAD;
+  const a = r() * 2 * Math.PI,
+    d = Math.sqrt(r()) * core * STRIKE_SPREAD;
   return [x + Math.cos(a) * d, z + Math.sin(a) * d];
 }
 /** Thunder due longer ago than this when a frame next runs was not heard. */
 export const THUNDER_LATE_SECONDS = 1;
 /** A jump in the game clock longer than this plays no backlog of strikes. */
 export const STRIKE_BACKLOG_MINUTES = 5;
-const [, CLIP_THUNDER, CLIP_ROLL] = AMBIENT_SOUNDS.storm;   // LightningThunder, ThunderRoll (SoundClips)
+const [, CLIP_THUNDER, CLIP_ROLL] = AMBIENT_SOUNDS.storm; // LightningThunder, ThunderRoll (SoundClips)
 
 /** A string's hash for the seed (the storm's id is its lattice address). */
 function hashId(id) {
@@ -106,7 +107,9 @@ export function thunderOf(distance) {
  *  distance is this). Pure. */
 export const THUNDER_SOURCE_M = 13;
 export function thunderSourceAt(cam, x, z) {
-  const dx = x - cam[0], dz = z - cam[2], l = Math.hypot(dx, dz) || 1;
+  const dx = x - cam[0],
+    dz = z - cam[2],
+    l = Math.hypot(dx, dz) || 1;
   return [cam[0] + (dx / l) * THUNDER_SOURCE_M, cam[1] + 6, cam[2] + (dz / l) * THUNDER_SOURCE_M];
 }
 
@@ -128,22 +131,24 @@ export function thunderSourceAt(cam, x, z) {
 /** Whether a storm strikes at field (x, z) under the map's ground law: the law's own answer where it gives one (weatherSim.js
  *  mapGround `strikes` - AUDIT PRECIP FALL-2: on the precipitation law's lane a storm is a storm whatever phase its fall
  *  takes), else whether the law leaves the word a storm there. */
-const strikesAt = (ground, x, z, minutes) => (ground.strikes ? ground.strikes(x, z, minutes) : ground('thunder', x, z, minutes) === 'thunder');
+const strikesAt = (ground, x, z, minutes) =>
+  ground.strikes ? ground.strikes(x, z, minutes) : ground('thunder', x, z, minutes) === 'thunder';
 export function createDistantStorms() {
   let last = null;
-  let bolt = null;       // { x, z, r, strength, at } - the latest strike's light
-  const heard = [];      // thunder on its way: { due, clip, volume, x, z }
+  let bolt = null; // { x, z, r, strength, at } - the latest strike's light
+  const heard = []; // thunder on its way: { due, clip, volume, x, z }
   return {
     tick({ systems = [], at, minutes, seconds, ground = null }) {
-      if (last === null || minutes < last || minutes - last > STRIKE_BACKLOG_MINUTES) last = minutes;   // a boot, a load, a rest: no backlog
+      if (last === null || minutes < last || minutes - last > STRIKE_BACKLOG_MINUTES) last = minutes; // a boot, a load, a rest: no backlog
       const fired = [];
       for (const s of systems) {
         if (s.type !== 'thunder') continue;
-        if (ground && !strikesAt(ground, s.x, s.z, minutes)) continue;   // AUDIT WEATHER3 R1: over a snow ground the storm is a snow squall (the sky's cell says so) - no lightning, no thunder
-        if (radialOf(s, at[0], at[1]) < s.bands[0][0] && insideClip(s, at[0], at[1])) continue;   // under its heart (its own shape, inside its front): DFU's own storm
-        const envAt = (m) => envelope(SYSTEM_TYPES.thunder, (m - s.bornAt) / s.life);   // weatherMap's own envelope, at the strike's minute
+        if (ground && !strikesAt(ground, s.x, s.z, minutes)) continue; // AUDIT WEATHER3 R1: over a snow ground the storm is a snow squall (the sky's cell says so) - no lightning, no thunder
+        if (radialOf(s, at[0], at[1]) < s.bands[0][0] && insideClip(s, at[0], at[1])) continue; // under its heart (its own shape, inside its front): DFU's own storm
+        const envAt = (m) => envelope(SYSTEM_TYPES.thunder, (m - s.bornAt) / s.life); // weatherMap's own envelope, at the strike's minute
         for (const t of strikesIn(s.id, last, minutes, envAt)) {
-          const seed = strikeSeed(s.id, t), strike = strikeOf(seed);
+          const seed = strikeSeed(s.id, t),
+            strike = strikeOf(seed);
           const [px, pz] = strikePlace(seed, s.x, s.z, s.bands[0][0]);
           // DISC20-D (2026-09-24, Mac: "Lightning can be seen even when its not storming"): a storm CELL paints - its
           // word, its cloud - only inside its front's core as it is now (`clip`, WEATHER3g), and a cell born out in the
@@ -156,7 +161,7 @@ export function createDistantStorms() {
           if (ground && !strikesAt(ground, px, pz, minutes)) continue;
           bolt = { x: s.x, z: s.z, r: s.bands[0][0], strength: envAt(t), at: seconds, strike };
           fired.push({ x: px, z: pz, seed, kind: strike.kind, strength: envAt(t) });
-          const th = thunderOf(Math.hypot(px - at[0], pz - at[1]));   // BOLT: heard from where it struck
+          const th = thunderOf(Math.hypot(px - at[0], pz - at[1])); // BOLT: heard from where it struck
           if (th) heard.push({ due: seconds + th.delay, clip: th.clip, volume: th.volume * envAt(t), x: px, z: pz });
         }
       }
@@ -171,13 +176,19 @@ export function createDistantStorms() {
       }
       sounds.reverse();
       const age = bolt ? seconds - bolt.at : Infinity;
-      const glow = age >= 0 && age < BOLT_SECONDS ? bolt.strength * flickerAt(bolt.strike, age) : 0;   // BOLT: the strokes' train, not a ramp
+      const glow = age >= 0 && age < BOLT_SECONDS ? bolt.strength * flickerAt(bolt.strike, age) : 0; // BOLT: the strokes' train, not a ramp
       const lit = glow > 0 ? { x: bolt.x, z: bolt.z, r: bolt.r, strength: glow } : null;
       return { bolt: lit, sounds: sounds.map(({ clip, volume, x, z }) => ({ clip, volume, x, z })), strikes: fired };
     },
     /** The thunder still on its way (tests, and a scene's teardown). */
-    pending() { return heard.length; },
+    pending() {
+      return heard.length;
+    },
     /** A jump (a load, a travel landing): the storms heard are the old place's. */
-    reset() { last = null; bolt = null; heard.length = 0; },
+    reset() {
+      last = null;
+      bolt = null;
+      heard.length = 0;
+    },
   };
 }

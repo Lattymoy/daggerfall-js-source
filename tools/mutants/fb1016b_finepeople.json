@@ -50,8 +50,8 @@
   {
     "name": "FINE-PEOPLE-not-spread",
     "file": "src/systems/court.js",
-    "old": "  changeReputation(store, people.id, pts, true);\n  return pts;",
-    "new": "  changeReputation(store, people.id, pts, false);\n  return pts;",
+    "old": "  changeReputation(store, people.id, pts, true);",
+    "new": "  changeReputation(store, people.id, pts, false);",
     "tests": [
       "test/systems/fb1016b_finepeople.test.js"
     ]
@@ -59,8 +59,8 @@
   {
     "name": "FINE-PEOPLE-a-liked-name-docked",
     "file": "src/systems/court.js",
-    "old": "  if (pts <= 0) return 0;\n",
-    "new": "",
+    "old": "  if (pts <= 0) return 0;\n  changeReputation(store, people.id, pts, true);",
+    "new": "  changeReputation(store, people.id, pts, true);",
     "tests": [
       "test/systems/fb1016b_finepeople.test.js"
     ]

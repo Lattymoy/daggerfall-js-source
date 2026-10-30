@@ -67,14 +67,12 @@ export class NoSuchCommandError extends Error {
 // .OrdinalIgnoreCase)` - the lookup is case-insensitive, and the KEY
 // the ordering reads is the one the first registration stored (C#'s
 // indexer replaces the value and keeps the key).
-const database = new Map();   // lowercased name -> { key, command }
+const database = new Map(); // lowercased name -> { key, command }
 
 /** RegisterCommand (:19-27). Both overloads: C# has one taking the
  *  callback second and one taking it last, and both land here. */
 export function registerCommand(name, a, b, c) {
-  const [description, usage, callback] = typeof a === 'function'
-    ? [b ?? '', c ?? '', a]
-    : [a ?? '', b ?? '', c];
+  const [description, usage, callback] = typeof a === 'function' ? [b ?? '', c ?? '', a] : [a ?? '', b ?? '', c];
   const key = String(name).toLowerCase();
   const existing = database.get(key);
   database.set(key, {
@@ -116,7 +114,9 @@ export function getConsoleCommand(name) {
 
 /** TryGetCommand (:44-55). */
 export function tryGetConsoleCommand(name) {
-  try { return getConsoleCommand(name); } catch (e) {
+  try {
+    return getConsoleCommand(name);
+  } catch (e) {
     if (e instanceof NoSuchCommandError) return null;
     throw e;
   }
@@ -128,7 +128,9 @@ export function tryGetConsoleCommand(name) {
  *  command's callback propagates, exactly as it does in C#. */
 export function executeConsoleCommand(name, args = []) {
   let command;
-  try { command = getConsoleCommand(name); } catch (e) {
+  try {
+    command = getConsoleCommand(name);
+  } catch (e) {
     if (e instanceof NoSuchCommandError) return e.message;
     throw e;
   }
@@ -138,7 +140,10 @@ export function executeConsoleCommand(name, args = []) {
 /** Console.Log (Console.cs:14-19): the log line goes to the engine log
  *  AND to every listener the console UI installs. */
 const logListeners = new Set();
-export function onConsoleLog(fn) { logListeners.add(fn); return () => logListeners.delete(fn); }
+export function onConsoleLog(fn) {
+  logListeners.add(fn);
+  return () => logListeners.delete(fn);
+}
 export function consoleLog(line) {
   console.log(line);
   for (const fn of logListeners) fn(line);
@@ -251,9 +256,10 @@ export function executeConsoleLine(input) {
  *  the seam answers the same way rather than running the command. */
 export function installConsoleProbe(target = globalThis) {
   if (!target) return null;
-  const door = (line) => (getBool('Enhancements', 'LypyL_GameConsole')
-    ? executeConsoleLine(line)
-    : 'the developer console is disabled (Enhancements/LypyL_GameConsole)');
+  const door = (line) =>
+    getBool('Enhancements', 'LypyL_GameConsole')
+      ? executeConsoleLine(line)
+      : 'the developer console is disabled (Enhancements/LypyL_GameConsole)';
   target.__console = door;
   return door;
 }

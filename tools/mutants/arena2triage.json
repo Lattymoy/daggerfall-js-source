@@ -79,8 +79,8 @@
   {
     "name": "ARENA2-TRIAGE-4-the-court-draws-both-dice",
     "file": "src/systems/court.js",
-    "old": "const punishmentType = failed2 && (!BANISHABLE_CRIMES.has(crime) || Math.floor(rolls() * 100) >= threshold1) ? 2 : 0;",
-    "new": "const punishmentType = (!BANISHABLE_CRIMES.has(crime) || Math.floor(rolls() * 100) >= threshold1) && failed2 ? 2 : 0;",
+    "old": "  const punishmentType = failed2 && (!BANISHABLE_CRIMES.has(crime) || Math.floor(rolls() * 100) >= threshold1) ? 2 : 0;",
+    "new": "  const punishmentType = (!BANISHABLE_CRIMES.has(crime) || Math.floor(rolls() * 100) >= threshold1) && failed2 ? 2 : 0;",
     "why": "killed by audit18 social F2 against the player's own data (ARENA2_PATH): the banishment's second roll is drawn and the defense reads the wrong number (AUDIT 21 F5's short-circuit)",
     "tests": [
       "test/systems/audit18_systems_social.test.js",

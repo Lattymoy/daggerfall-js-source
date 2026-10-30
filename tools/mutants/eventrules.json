@@ -11,8 +11,8 @@
   {
     "name": "EVENT-RULES-the-pause-unread",
     "file": "src/systems/courtRules.js",
-    "old": "  if (onPlayer && regenPausedMs() > 0) return 0;\n",
-    "new": "",
+    "old": "  if (onPlayer && regenPausedMs() > 0) return 0;\n  let carry = _carry;",
+    "new": "  let carry = _carry;",
     "tests": [
       "test/world/gate/wbx_gate_fixes.test.js",
       "test/ui/hud/eventrules_tile.test.js"
@@ -39,8 +39,8 @@
   {
     "name": "EVENT-RULES-the-hurt-unheard",
     "file": "src/systems/courtRules.js",
-    "old": "  if (_on && hurt && hurt.after < hurt.before) _hurtAt = _now;\n",
-    "new": "",
+    "old": "export function courtRulesHurt(hurt) {\n  if (_on && hurt && hurt.after < hurt.before) _hurtAt = _now;\n}",
+    "new": "export function courtRulesHurt(hurt) {}",
     "tests": [
       "test/world/gate/wbx_gate_fixes.test.js",
       "test/ui/hud/eventrules_tile.test.js"
@@ -49,8 +49,8 @@
   {
     "name": "EVENT-RULES-a-heal-read-as-a-hurt",
     "file": "src/systems/courtRules.js",
-    "old": "hurt.after < hurt.before) _hurtAt = _now;",
-    "new": "hurt.after !== hurt.before) _hurtAt = _now;",
+    "old": "  if (_on && hurt && hurt.after < hurt.before) _hurtAt = _now;",
+    "new": "  if (_on && hurt && hurt.after !== hurt.before) _hurtAt = _now;",
     "tests": [
       "test/world/gate/wbx_gate_fixes.test.js"
     ]

@@ -65,8 +65,8 @@
   {
     "name": "UXB1-H-the-exclusive-pairs-gate-is-skipped",
     "file": "src/systems/customClass.js",
-    "old": "        || cannotAdd(item, list, other)) { skipped.push(e); continue; }",
-    "new": "        ) { skipped.push(e); continue; }",
+    "old": "        (ONLY_ONE_KEYS.includes(primary) && list.some((x) => x.primary === primary)) ||\n        cannotAdd(item, list, other)",
+    "new": "        (ONLY_ONE_KEYS.includes(primary) && list.some((x) => x.primary === primary))",
     "tests": [
       "test/ui/enhanced/uxb1g_chargen.test.js"
     ]
@@ -266,8 +266,8 @@
   {
     "name": "UXB1-S-a-combo-clash-is-offered-as-a-share",
     "file": "src/systems/controlsConfig.js",
-    "old": "    && holders.every((h) => h.action !== action && (h.primary ? u.primary : u.secondary).get(h.action) === code);",
-    "new": "    && holders.every((h) => h.action !== action);",
+    "old": "  return (\n    code != null &&\n    holders.length > 0 &&\n    holders.every((h) => h.action !== action && (h.primary ? u.primary : u.secondary).get(h.action) === code)\n  );",
+    "new": "  return code != null && holders.length > 0 && holders.every((h) => h.action !== action);",
     "tests": [
       "test/ui/uxb1s_sharedkeys.test.js"
     ]
@@ -428,8 +428,8 @@
   {
     "name": "AUDIT-UXB1-F10-the-note-forgets-the-third-answer",
     "file": "src/systems/controlsConfig.js",
-    "old": "so this key already does both without ${SHARE_KEY_LABEL}. Answer No",
-    "new": "so this key already does both. Answer No",
+    "old": "  return `${f.name} already ${f.verb} while you swim or levitate, so this key already does both without ${SHARE_KEY_LABEL}. Answer No to keep it on ${f.name}${usingPrimary ? '' : ' (secondary)'}.`;",
+    "new": "  return `${f.name} already ${f.verb} while you swim or levitate, so this key already does both. Answer No to keep it on ${f.name}${usingPrimary ? '' : ' (secondary)'}.`;",
     "tests": [
       "test/ui/enhanced/enhancedControls.test.js"
     ]
@@ -437,8 +437,8 @@
   {
     "name": "AUDIT-UXB1-a-class-name-keeps-its-control-characters",
     "file": "src/systems/customClass.js",
-    "old": "doc.name.replace(/[\\p{Cc}\\p{Cf}]/gu, '').trim()",
-    "new": "doc.name.trim()",
+    "old": "  const name = typeof doc.name === 'string' ? doc.name.replace(/[\\p{Cc}\\p{Cf}]/gu, '').trim() : '';",
+    "new": "  const name = typeof doc.name === 'string' ? doc.name.trim() : '';",
     "tests": [
       "test/ui/enhanced/uxb1g_chargen.test.js"
     ]

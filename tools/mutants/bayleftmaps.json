@@ -767,8 +767,8 @@
   {
     "name": "BLM-C7-the-deed's-record-lost",
     "file": "src/systems/discovery.js",
-    "old": "  const deeds = (Array.isArray(houses) ? houses : []).filter(",
-    "new": "  const deeds = [].filter(",
+    "old": "  const deeds = (Array.isArray(houses) ? houses : []).filter(\n    (h) => h && (h.buildingKey | 0) > 0 && discoveryKeyOf(Number(h.mapId) || 0) >= BAY_PIXEL_IDS,\n  );",
+    "new": "  const deeds = [].filter((h) => h && (h.buildingKey | 0) > 0 && discoveryKeyOf(Number(h.mapId) || 0) >= BAY_PIXEL_IDS);",
     "tests": [
       "test/systems/bayleft_disckey.test.js"
     ],
@@ -795,8 +795,8 @@
   {
     "name": "BLM-C7-a-carried-one-dropped-by-its-book",
     "file": "src/systems/discovery.js",
-    "old": "    if (!old) { const had = _discovered.get(locId); if (had) for (const [k, r] of recs) had.set(k, r); else _discovered.set(locId, recs); continue; }",
-    "new": "    if (!old) { _discovered.set(locId, recs); continue; }",
+    "old": "      const had = _discovered.get(locId);\n      if (had) for (const [k, r] of recs) had.set(k, r);\n      else _discovered.set(locId, recs);",
+    "new": "      _discovered.set(locId, recs);",
     "tests": [
       "test/systems/bayleft_disckey.test.js"
     ]

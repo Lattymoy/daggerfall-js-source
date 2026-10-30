@@ -588,8 +588,8 @@
   {
     "name": "PROF9-mint-provisioner-spoils",
     "file": "src/systems/cookItems.js",
-    "old": "  if (hand === HAND_PROVISIONER) item.noRot = true;",
-    "new": "",
+    "old": "  if (hand === HAND_PROVISIONER) item.noRot = true; // 3.3: a Provisioner's dish never spoils",
+    "new": "  // 3.3: a Provisioner's dish never spoils",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -597,8 +597,8 @@
   {
     "name": "PROF9-mint-chef-any-dish",
     "file": "src/systems/cookItems.js",
-    "old": "  if (hand === HAND_CHEF && dishOf(r.id)?.effect.party === true) item.chef = true;",
-    "new": "  if (hand === HAND_CHEF) item.chef = true;",
+    "old": "  if (hand === HAND_CHEF && dishOf(r.id)?.effect.party === true) item.chef = true; // 3.3: a Chef's feast lasts half again",
+    "new": "  if (hand === HAND_CHEF) item.chef = true; // 3.3: a Chef's feast lasts half again",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -606,8 +606,8 @@
   {
     "name": "PROF9-mint-any-recipe",
     "file": "src/systems/cookItems.js",
-    "old": "if (!r || r.kind !== 'dish' || typeof provenance",
-    "new": "if (!r || typeof provenance",
+    "old": "  if (!r || r.kind !== 'dish' || typeof provenance !== 'string' || !PROVENANCE_RE.test(provenance)) return null;",
+    "new": "  if (!r || typeof provenance !== 'string' || !PROVENANCE_RE.test(provenance)) return null;",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -615,8 +615,8 @@
   {
     "name": "PROF9-effect-stacks",
     "file": "src/systems/cookItems.js",
-    "old": "  if (ids.size) entity.activeEffects = entity.activeEffects.filter((a) => !ids.has(a.bundleId));",
-    "new": "  if (false) entity.activeEffects = entity.activeEffects.filter((a) => !ids.has(a.bundleId));",
+    "old": "  if (ids.size) entity.activeEffects = entity.activeEffects.filter((a) => !ids.has(a.bundleId)); // every bundle of the dish's - renewed, never stacked",
+    "new": "  if (false) entity.activeEffects = entity.activeEffects.filter((a) => !ids.has(a.bundleId)); // every bundle of the dish's - renewed, never stacked",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -633,8 +633,8 @@
   {
     "name": "PROF9-effect-extra-entries-a-round-long",
     "file": "src/systems/cookItems.js",
-    "old": "roundsRemaining: rounds - 1, bundleId: first.bundleId,",
-    "new": "roundsRemaining: rounds, bundleId: first.bundleId,",
+    "old": "      roundsRemaining: rounds - 1,",
+    "new": "      roundsRemaining: rounds,",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -642,8 +642,8 @@
   {
     "name": "PROF9-effect-extra-entries-not-mine",
     "file": "src/systems/cookItems.js",
-    "old": "bundleIcon: DISH_ICON, bundleSelfCast: true };",
-    "new": "bundleIcon: DISH_ICON, bundleSelfCast: false };",
+    "old": "      bundleSelfCast: true,",
+    "new": "      bundleSelfCast: false,",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -651,8 +651,8 @@
   {
     "name": "PROF9-effect-second-stat-lost",
     "file": "src/systems/cookItems.js",
-    "old": "    (entity.activeEffects ??= []).push(e);\n",
-    "new": "",
+    "old": "    (entity.activeEffects ??= []).push(e);\n    out.push(e);",
+    "new": "    out.push(e);",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -669,8 +669,8 @@
   {
     "name": "PROF9-tart-never-runs-out",
     "file": "src/systems/cookItems.js",
-    "old": "&& !a.ended && a.roundsRemaining > 0)",
-    "new": "&& !a.ended)",
+    "old": "  (entity?.activeEffects ?? []).some((a) => a.kind === DISH_STAMINA_KIND && !a.ended && a.roundsRemaining > 0)\n    ? 1 / DISH_STAMINA_DIVISOR\n    : 1;",
+    "new": "  (entity?.activeEffects ?? []).some((a) => a.kind === DISH_STAMINA_KIND && !a.ended) ? 1 / DISH_STAMINA_DIVISOR : 1;",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -687,8 +687,8 @@
   {
     "name": "PROF9-eat-refusal-fed",
     "file": "src/systems/cookItems.js",
-    "old": "if (!out || out.kind !== 'ate') return out ?? { kind: 'none' };",
-    "new": "if (!out) return { kind: 'none' };",
+    "old": "    if (!out || out.kind !== 'ate') return out ?? { kind: 'none' };",
+    "new": "    if (!out) return { kind: 'none' };",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -714,8 +714,8 @@
   {
     "name": "PROF9-install-stew-uneaten",
     "file": "src/systems/cookItems.js",
-    "old": "for (const t of DISH_TEMPLATES) registerItemUseHandler(t, dishUse);",
-    "new": "for (const t of DISH_TEMPLATES.slice(1)) registerItemUseHandler(t, dishUse);",
+    "old": "  for (const t of DISH_TEMPLATES) registerItemUseHandler(t, dishUse);",
+    "new": "  for (const t of DISH_TEMPLATES.slice(1)) registerItemUseHandler(t, dishUse);",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -723,8 +723,8 @@
   {
     "name": "PROF9-dish-any-template-item",
     "file": "src/systems/cookItems.js",
-    "old": "DISH_TEMPLATES.includes(item.templateIndex) && recipeById(item.recipe)?.kind === 'dish'",
-    "new": "DISH_TEMPLATES.includes(item.templateIndex)",
+    "old": "export const isDish = (item) =>\n  !!item && DISH_TEMPLATES.includes(item.templateIndex) && recipeById(item.recipe)?.kind === 'dish';",
+    "new": "export const isDish = (item) => !!item && DISH_TEMPLATES.includes(item.templateIndex);",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -732,8 +732,8 @@
   {
     "name": "PROF9-shared-line-twice",
     "file": "src/systems/cookItems.js",
-    "old": "[...new Set((names ?? []).filter(Boolean))]",
-    "new": "(names ?? []).filter(Boolean)",
+    "old": "  const list = [...new Set((names ?? []).filter(Boolean))];",
+    "new": "  const list = (names ?? []).filter(Boolean);",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -1191,8 +1191,8 @@
   {
     "name": "PROF9-world-feast-to-strangers",
     "file": "src/systems/cookItems.js",
-    "old": "    if (!isMate(peer.id)) continue;\n",
-    "new": "",
+    "old": "    if (!isMate(peer.id)) continue;\n    if (send(peer.id)) out.push(nameOf(peer.id) ?? 'a party member');",
+    "new": "    if (send(peer.id)) out.push(nameOf(peer.id) ?? 'a party member');",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -1227,8 +1227,8 @@
   {
     "name": "AUDIT-PROF9-K2-any-dish-a-feast",
     "file": "src/systems/cookItems.js",
-    "old": "DISHES.some((d) => d.effect.party === true && d.name === name)",
-    "new": "DISHES.some((d) => d.name === name)",
+    "old": "export const isPartyDishSpell = (name) =>\n  typeof name === 'string' && DISHES.some((d) => d.effect.party === true && d.name === name);",
+    "new": "export const isPartyDishSpell = (name) => typeof name === 'string' && DISHES.some((d) => d.name === name);",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -1236,8 +1236,8 @@
   {
     "name": "AUDIT-PROF9-K2-feast-stacks",
     "file": "src/systems/cookItems.js",
-    "old": "  return renewDish(entity, spell.name, Math.max(0,",
-    "new": "  return true || renewDish(entity, spell.name, Math.max(0,",
+    "old": "  return renewDish(entity, spell.name, Math.max(0, ...(spell.effects ?? []).map((e) => rollDuration(e, level))));",
+    "new": "  return (\n    true || renewDish(entity, spell.name, Math.max(0, ...(spell.effects ?? []).map((e) => rollDuration(e, level))))\n  );",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -1245,8 +1245,8 @@
   {
     "name": "AUDIT-PROF-541-K3-stranger-feast",
     "file": "src/systems/cookItems.js",
-    "old": "  if (!mate) return false;\n",
-    "new": "",
+    "old": "  if (!mate) return false;\n  if (!isFeastRecord(spell)) return false; // AUDIT PROF-541 R2-K9: a feast by its record, never its name alone - a look-alike dropped",
+    "new": "  if (!isFeastRecord(spell)) return false; // AUDIT PROF-541 R2-K9: a feast by its record, never its name alone - a look-alike dropped",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -1293,8 +1293,8 @@
   {
     "name": "AUDIT-PROF-541-K4-shortens",
     "file": "src/systems/cookItems.js",
-    "old": "a.roundsRemaining >= rounds)) return false;",
-    "new": "a.roundsRemaining >= rounds && false)) return false;",
+    "old": "  if (mine.some((a) => a.roundsRemaining >= rounds)) return false;",
+    "new": "  if (mine.some((a) => a.roundsRemaining >= rounds && false)) return false;",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -1302,8 +1302,8 @@
   {
     "name": "AUDIT-PROF-541-K4-equal-renews",
     "file": "src/systems/cookItems.js",
-    "old": "a.roundsRemaining >= rounds)) return false;",
-    "new": "a.roundsRemaining > rounds)) return false;",
+    "old": "  if (mine.some((a) => a.roundsRemaining >= rounds)) return false;",
+    "new": "  if (mine.some((a) => a.roundsRemaining > rounds)) return false;",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -1311,8 +1311,8 @@
   {
     "name": "AUDIT-PROF-541-K4-eaten-shortens",
     "file": "src/systems/cookItems.js",
-    "old": "  if (!renewDish(entity, d.name, rounds)) return [];",
-    "new": "  if (!renewDish(entity, d.name, Infinity)) return [];",
+    "old": "  if (!renewDish(entity, d.name, rounds)) return []; // AUDIT PROF-541 K4: renewed, never stacked - and never shortened",
+    "new": "  if (!renewDish(entity, d.name, Infinity)) return []; // AUDIT PROF-541 K4: renewed, never stacked - and never shortened",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -1377,7 +1377,7 @@
     "name": "AUDIT-PROF-541-R2-K5-unsent-named",
     "file": "src/systems/cookItems.js",
     "old": "    if (send(peer.id)) out.push(nameOf(peer.id) ?? 'a party member');",
-    "new": "    send(peer.id); out.push(nameOf(peer.id) ?? 'a party member');",
+    "new": "    send(peer.id);\n    out.push(nameOf(peer.id) ?? 'a party member');",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -1385,8 +1385,8 @@
   {
     "name": "AUDIT-PROF-541-R2-K9-gift-by-its-name",
     "file": "src/systems/cookItems.js",
-    "old": "  if (!isFeastRecord(spell)) return false;",
-    "new": "  if (false) return false;",
+    "old": "  if (!isFeastRecord(spell)) return false; // AUDIT PROF-541 R2-K9: a feast by its record, never its name alone - a look-alike dropped",
+    "new": "  if (false) return false; // AUDIT PROF-541 R2-K9: a feast by its record, never its name alone - a look-alike dropped",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -1394,8 +1394,8 @@
   {
     "name": "AUDIT-PROF-541-R2-K9-record-by-its-name",
     "file": "src/systems/cookItems.js",
-    "old": "FEAST_FORMS.get(spell?.name)?.records.has(recordKey(spell)) === true;",
-    "new": "FEAST_FORMS.has(spell?.name);",
+    "old": "export const isFeastRecord = (spell) => FEAST_FORMS.get(spell?.name)?.records.has(recordKey(spell)) === true;",
+    "new": "export const isFeastRecord = (spell) => FEAST_FORMS.has(spell?.name);",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -1403,8 +1403,8 @@
   {
     "name": "AUDIT-PROF-541-R2-K9-no-chefs-record",
     "file": "src/systems/cookItems.js",
-    "old": "const recs = [null, HAND_CHEF].map((h) => dishSpell(d, h))",
-    "new": "const recs = [null].map((h) => dishSpell(d, h))",
+    "old": "    const recs = [null, HAND_CHEF].map((h) => dishSpell(d, h)).filter(Boolean);",
+    "new": "    const recs = [null].map((h) => dishSpell(d, h)).filter(Boolean);",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -1412,8 +1412,8 @@
   {
     "name": "AUDIT-PROF-541-R2-K9-every-bundle-of-the-name",
     "file": "src/systems/cookItems.js",
-    "old": "a.bundleName === name && dishEntry(a, name));",
-    "new": "a.bundleName === name);",
+    "old": "  const mine = (entity?.activeEffects ?? []).filter(\n    (a) => a.bundleId != null && !a.ended && a.bundleName === name && dishEntry(a, name),\n  );",
+    "new": "  const mine = (entity?.activeEffects ?? []).filter((a) => a.bundleId != null && !a.ended && a.bundleName === name);",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -1421,8 +1421,8 @@
   {
     "name": "AUDIT-PROF-541-R2-K9-look-alike-gift-stands",
     "file": "src/systems/cookItems.js",
-    "old": "return a.bundleAlly === true && FEAST_FORMS.get(name)?.entries.has(",
-    "new": "return a.bundleAlly === true || FEAST_FORMS.get(name)?.entries.has(",
+    "old": "  return a.bundleAlly === true && FEAST_FORMS.get(name)?.entries.has(`${a.stat}/${a.settingsKey}`) === true;",
+    "new": "  return a.bundleAlly === true || FEAST_FORMS.get(name)?.entries.has(`${a.stat}/${a.settingsKey}`) === true;",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -1430,8 +1430,8 @@
   {
     "name": "AUDIT-PROF-541-R2-K9-any-kind",
     "file": "src/systems/cookItems.js",
-    "old": "  if (a.kind !== 'fortifyAttribute' && a.kind !== DISH_STAMINA_KIND) return false;\n",
-    "new": "",
+    "old": "  if (a.kind !== 'fortifyAttribute' && a.kind !== DISH_STAMINA_KIND) return false;\n  if (a.settingsKey == null) return a.bundleAlly !== true;",
+    "new": "  if (a.settingsKey == null) return a.bundleAlly !== true;",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -1439,8 +1439,8 @@
   {
     "name": "AUDIT-PROF-541-R2-K10-nothing-said",
     "file": "src/systems/cookItems.js",
-    "old": "  if (entity && !laid.length) lines.push(dishStandsLine(d));",
-    "new": "  if (false) lines.push(dishStandsLine(d));",
+    "old": "  if (entity && !laid.length) lines.push(dishStandsLine(d)); // AUDIT PROF-541 R2-K10: eaten, and nothing laid on - said (the mates still get a feast)",
+    "new": "  if (false) lines.push(dishStandsLine(d)); // AUDIT PROF-541 R2-K10: eaten, and nothing laid on - said (the mates still get a feast)",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -1448,8 +1448,8 @@
   {
     "name": "AUDIT-PROF-541-R2-K10-said-unlaid",
     "file": "src/systems/cookItems.js",
-    "old": "  if (entity && !laid.length) lines.push(dishStandsLine(d));",
-    "new": "  if (!laid.length) lines.push(dishStandsLine(d));",
+    "old": "  if (entity && !laid.length) lines.push(dishStandsLine(d)); // AUDIT PROF-541 R2-K10: eaten, and nothing laid on - said (the mates still get a feast)",
+    "new": "  if (!laid.length) lines.push(dishStandsLine(d)); // AUDIT PROF-541 R2-K10: eaten, and nothing laid on - said (the mates still get a feast)",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -1457,8 +1457,8 @@
   {
     "name": "AUDIT-PROF-541-R2-K10-words",
     "file": "src/systems/cookItems.js",
-    "old": "'The feast you already enjoy lasts longer.'",
-    "new": "'You are already full.'",
+    "old": "  d?.effect?.party === true\n    ? 'The feast you already enjoy lasts longer.'\n    : `The ${d?.name ?? 'dish'} you already enjoy lasts longer.`;",
+    "new": "  d?.effect?.party === true ? 'You are already full.' : `The ${d?.name ?? 'dish'} you already enjoy lasts longer.`;",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -1466,8 +1466,8 @@
   {
     "name": "AUDIT-PROF-541-R2-K10-dish-words",
     "file": "src/systems/cookItems.js",
-    "old": "`The ${d?.name ?? 'dish'} you already enjoy lasts longer.`",
-    "new": "'The feast you already enjoy lasts longer.'",
+    "old": "  d?.effect?.party === true\n    ? 'The feast you already enjoy lasts longer.'\n    : `The ${d?.name ?? 'dish'} you already enjoy lasts longer.`;",
+    "new": "  d?.effect?.party === true ? 'The feast you already enjoy lasts longer.' : 'The feast you already enjoy lasts longer.';",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]

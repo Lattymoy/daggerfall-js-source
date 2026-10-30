@@ -420,8 +420,8 @@
   {
     "name": "SD11c-L6F4-the-Hours-words-unwritten",
     "file": "src/systems/deathRespawn.js",
-    "old": "  hour: [SD_REALM_TEXT.died],\n",
-    "new": "",
+    "old": "  hour: [SD_REALM_TEXT.died],\n});",
+    "new": "});",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]

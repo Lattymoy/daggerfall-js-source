@@ -40,7 +40,7 @@
     "name": "KB1-the-other-dict-is-not-asked",
     "file": "src/systems/controlsConfig.js",
     "old": "  for (const [a, c] of other) if (clashes(code, c)) out.push({ action: a, primary: !u.usingPrimary });",
-    "new": "  ",
+    "new": "",
     "tests": [
       "test/ui/kb1_keybinds.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "KB1-yes-leaves-the-holder-bound",
     "file": "src/systems/controlsConfig.js",
-    "old": "  for (const h of holders) (h.primary ? u.primary : u.secondary).set(h.action, null);",
-    "new": "  ",
+    "old": "  for (const h of holders) (h.primary ? u.primary : u.secondary).set(h.action, null);\n  currentDict(u).set(action, code);",
+    "new": "  currentDict(u).set(action, code);",
     "tests": [
       "test/ui/kb1_keybinds.test.js"
     ]

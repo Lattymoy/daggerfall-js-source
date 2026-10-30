@@ -2,8 +2,8 @@
   {
     "name": "OWBK-a-kind-more",
     "file": "src/systems/discovery.js",
-    "old": "LOCATION_TYPES.ReligionCult, LOCATION_TYPES.HomeYourShips,\n]));",
-    "new": "LOCATION_TYPES.ReligionCult, LOCATION_TYPES.HomeYourShips, LOCATION_TYPES.Graveyard,\n]));",
+    "old": "    LOCATION_TYPES.HomeYourShips,\n  ]),",
+    "new": "    LOCATION_TYPES.HomeYourShips,\n    LOCATION_TYPES.Graveyard,\n  ]),",
     "tests": [
       "test/systems/travel/owbeyondknown.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "OWBK-a-kind-less",
     "file": "src/systems/discovery.js",
-    "old": "LOCATION_TYPES.ReligionCult, LOCATION_TYPES.HomeYourShips,\n]));",
-    "new": "LOCATION_TYPES.ReligionCult,\n]));",
+    "old": "    LOCATION_TYPES.HomeYourShips,\n  ]),",
+    "new": "  ]),",
     "tests": [
       "test/systems/travel/owbeyondknown.test.js"
     ]

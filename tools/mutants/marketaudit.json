@@ -57,8 +57,8 @@
   {
     "name": "MARKET-AUDIT-B1-letter-not-back",
     "file": "src/systems/court.js",
-    "old": "      else { it.value = back; pack.push(it); }",
-    "new": "      else { it.value = back; }",
+    "old": "        pack.push(it);\n      }",
+    "new": "      }",
     "tests": [
       "test/net/marketaudit.test.js"
     ]

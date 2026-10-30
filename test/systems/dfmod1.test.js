@@ -219,7 +219,7 @@ test('DFMOD2 sources: a Uint8Array or a ranged source reads the same; a Blob is 
 test('DFMOD2 wiring: the boot never indexes on its way in, opens by range and warms, asks wait a bounded time, detail is the player\'s', () => {
   const door = src('systems/dfmodTextures.js');
   // PIN MOVED (AUDIT VE R6): what is indexed in the background is the missing AND the version before's rebuild
-  assert.match(door, /if \(todo\.length\) \{ if \(background\) indexMissing\(\); else await indexMissing\(\); \}/);
+  assert.match(door, /if \(todo\.length\) \{\n\s*if \(background\) indexMissing\(\);\n\s*else await indexMissing\(\);\n\s*\}/);
   assert.match(door, /if \(blob\?\.size\) return _opener\(blob, \{ maxTextureSize: maxSize\(\), knownTextures: knownOf\(key\) \}\);/);
   assert.match(door, /const b = await Promise\.race\(\[bundleFor\(key\), waited\]\);/);
   assert.match(src('scenes/dataSource.js'), /const index = await indexDfmodBytes\(f\);/, 'an attach reads the picked File by range, not whole');

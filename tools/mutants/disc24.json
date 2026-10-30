@@ -265,8 +265,8 @@
   {
     "name": "D24D-lift-cures-whole",
     "file": "src/systems/deathRespawn.js",
-    "old": "if (live >= target) { hold.set(-(live - target)); break; }",
-    "new": "if (live >= target) break;",
+    "old": "      if (live >= target) {\n        hold.set(-(live - target));\n        break;\n      } // give back all but the lift",
+    "new": "      if (live >= target) break; // give back all but the lift",
     "tests": [
       "test/systems/disc24d_stat_zero_loop.test.js",
       "test/scenes/deathloop1.test.js"
@@ -275,8 +275,8 @@
   {
     "name": "D24D-diseases-not-eased",
     "file": "src/systems/deathRespawn.js",
-    "old": "if (a?.kind === 'disease' && a.statMods) holds.push(",
-    "new": "if (false) holds.push(",
+    "old": "    if (a?.kind === 'disease' && a.statMods)",
+    "new": "    if (false)",
     "tests": [
       "test/systems/disc24d_stat_zero_loop.test.js",
       "test/scenes/deathloop1.test.js"
@@ -285,8 +285,8 @@
   {
     "name": "D24D-drains-not-eased",
     "file": "src/systems/deathRespawn.js",
-    "old": "if ((a?.kind === 'drainAttribute' || a?.kind === 'transferAttribute') && a.stat === stat) holds.push(",
-    "new": "if (false) holds.push(",
+    "old": "    if ((a?.kind === 'drainAttribute' || a?.kind === 'transferAttribute') && a.stat === stat)",
+    "new": "    if (false)",
     "tests": [
       "test/systems/disc24d_stat_zero_loop.test.js",
       "test/scenes/deathloop1.test.js"
@@ -295,8 +295,8 @@
   {
     "name": "D24D-lift-to-one",
     "file": "src/systems/deathRespawn.js",
-    "old": "    const target = respawnHealth(permanent);\n",
-    "new": "    const target = 1;\n",
+    "old": "    const target = respawnHealth(permanent);",
+    "new": "    const target = 1;",
     "tests": [
       "test/systems/disc24d_stat_zero_loop.test.js",
       "test/scenes/deathloop1.test.js"

@@ -689,8 +689,8 @@
   {
     "name": "STUDIO1-ground-ignores-the-studio",
     "file": "src/systems/dfmodTextures.js",
-    "old": "  const studio = n ? studioRecordsOf(archive).filter((r) => r < n) : [];",
-    "new": "  const studio = [];",
+    "old": "  const studio = n ? studioRecordsOf(archive).filter((r) => r < n) : []; // STUDIO1: the studio's records, worn with the gate shut too",
+    "new": "  const studio = []; // STUDIO1: the studio's records, worn with the gate shut too",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -707,8 +707,8 @@
   {
     "name": "STUDIO1-ground-at-its-own-size",
     "file": "src/systems/dfmodTextures.js",
-    "old": "  for (const p of pics) if (p && p.width * p.height > width * height) ({ width, height } = p);\n",
-    "new": "",
+    "old": "  for (const p of pics) if (p && p.width * p.height > width * height) ({ width, height } = p);\n  const out = base.map((l) => classicAt(l, width, height));",
+    "new": "  const out = base.map((l) => classicAt(l, width, height));",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -716,8 +716,8 @@
   {
     "name": "STUDIO1-ground-records-unlaid",
     "file": "src/systems/dfmodTextures.js",
-    "old": "  records.forEach((r, k) => { if (pics[k]) out[r] = classicAt(pics[k], width, height); });\n",
-    "new": "",
+    "old": "  records.forEach((r, k) => {\n    if (pics[k]) out[r] = classicAt(pics[k], width, height);\n  });\n  return { layers: out, whole: whole && pics.every(Boolean) };",
+    "new": "  return { layers: out, whole: whole && pics.every(Boolean) };",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]

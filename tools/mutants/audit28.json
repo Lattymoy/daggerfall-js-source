@@ -377,8 +377,8 @@
   {
     "name": "AUDIT28-B5-a-stated-loss-never-spent",
     "file": "src/systems/deathPenalty.js",
-    "old": "  _stated = null;   // spent: the next death speaks for itself\n",
-    "new": "",
+    "old": "  _stated = null; // spent: the next death speaks for itself\n  if (lost > 0) player.goldPieces = purse - lost;",
+    "new": "  if (lost > 0) player.goldPieces = purse - lost;",
     "tests": [
       "test/scenes/audit28_bounty.test.js"
     ]
