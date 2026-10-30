@@ -139,5 +139,5 @@ test('FT1: the settings pane never draws a moved key as a second switch (FT13: n
   assert.match(menu, /row = settingRow\(c\.key, \{ compact: true, home: true \}\);/, 'the home itself is the one caller that gets the real row');
   assert.match(menu, /if \(widgetFor\(c\.key\) === 'switch'\) \{\s*const \[sec, k\] = c\.key\.split\('\/'\);\s*main\.onclick = \(\) => write\(c\.key, stepValue\(c\.key, effective\(\)\[sec\]\?\.\[k\], 1\)\);/, 'the face toggles, as prefRow\'s does - the home has no help sheet to open');
   // the key stays in its settings category: the map is total and pinned
-  assert.match(read('src/ui/settings/settingsMap.js'), /"Experimental\/SmallerDungeons",/);
+  assert.match(read('src/ui/settings/settingsMap.js'), /'Experimental\/SmallerDungeons',/);
 });

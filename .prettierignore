@@ -170,6 +170,8 @@
 /src/ui/questlines/*/
 !/src/ui/revenant/
 /src/ui/revenant/*/
+!/src/ui/settings/
+/src/ui/settings/*/
 !/src/ui/spell/
 /src/ui/spell/*/
 !/src/ui/starfall/

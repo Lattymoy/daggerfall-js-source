@@ -101,8 +101,8 @@
   {
     "name": "PAD-SETTINGS-sensitivity-a-readout-again",
     "file": "src/ui/settings/settingsLaw.js",
-    "old": "  'Controls/JoystickLookSensitivity': { min: 0.1, max: 4,",
-    "new": "  'Controls/JoystickLookSensitivityX': { min: 0.1, max: 4,",
+    "old": "  'Controls/JoystickLookSensitivity': {",
+    "new": "  'Controls/JoystickLookSensitivityX': {",
     "tests": [
       "test/ui/settings/menupad.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "PAD-SETTINGS-deadzone-offers-dead-travel",
     "file": "src/ui/settings/settingsLaw.js",
-    "old": "  'Controls/JoystickDeadzone': { min: 0, max: 0.9,",
-    "new": "  'Controls/JoystickDeadzone': { min: 0, max: 2,",
+    "old": "  'Controls/JoystickDeadzone': {\n    min: 0,\n    max: 0.9,\n    step: 0.05,",
+    "new": "  'Controls/JoystickDeadzone': {\n    min: 0,\n    max: 2,\n    step: 0.05,",
     "tests": [
       "test/ui/settings/menupad.test.js"
     ]

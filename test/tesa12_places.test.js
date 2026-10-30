@@ -190,7 +190,7 @@ test('TESA12 no Arena: no reader, no card, no store read - the boot empties the 
   assert.match(w, /loc: ident\?\.kind === 'dungeon' \? \(ident\.name \?\? ''\) : \(loc\?\.name \?\? ''\),/, 'AUDIT-TESA A1-1\'s guard lifted: the name is every client\'s');
   const menu = read('src/ui/enhanced/enhancedMenu.js');
   for (const gone of ['arenaCard', 'ARENA_CARD_LINE', 'arenaDataAttached', 'card:arena']) assert.equal(menu.includes(gone), false, gone);
-  assert.match(read('src/ui/settings/settingsMap.js'), /"card:morrowind", "card:packs"\]\),/);
+  assert.match(read('src/ui/settings/settingsMap.js'), /'card:morrowind', 'card:packs'\]\),/);
   assert.deepEqual([arenaPlacesOn(''), arenaPlacesOn('?arenaplaces=off'), arenaPlacesOn('?arenaplaces=off&online=1')], [true, false, true], 'offline alone, as the countryside\'s door');
   const places = read('src/world/arenaPlaces.js');
   assert.doesNotMatch(places, /ARENA_CITYDATA_PRINTS|ARENA_COASTAL_PRINTS|setArenaCityData|setArenaCoastal|setArenaRoom|_online|arenaGlobalCityId/);

@@ -182,8 +182,8 @@
   {
     "name": "MO1-the-device-row-unmapped",
     "file": "src/ui/settings/settingsMap.js",
-    "old": "      \"Audio/AlternateMusic\", \"Audio/SoundFont\", \"port:midiOut\"]),",
-    "new": "      \"Audio/AlternateMusic\", \"Audio/SoundFont\"]),",
+    "old": "    sec('music', 'Music', ['Audio/AlternateMusic', 'Audio/SoundFont', 'port:midiOut']),",
+    "new": "    sec('music', 'Music', ['Audio/AlternateMusic', 'Audio/SoundFont']),",
     "tests": [
       "test/systems/midiout1.test.js"
     ],

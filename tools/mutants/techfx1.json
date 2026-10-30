@@ -432,8 +432,8 @@
   {
     "name": "TECHFX1-unmapped",
     "file": "src/ui/settings/settingsMap.js",
-    "old": "\"port:techniqueMotion\", ",
-    "new": "",
+    "old": "      'port:techniqueMotion',\n      'port:peerSpellShake',",
+    "new": "      'port:peerSpellShake',",
     "tests": [
       "test/systems/techfx1.test.js"
     ]

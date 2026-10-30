@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-A3-row-to-one",
     "file": "src/ui/settings/settingsLaw.js",
-    "old": "'Controls/JoystickDeadzone': { min: 0, max: 0.9,",
-    "new": "'Controls/JoystickDeadzone': { min: 0, max: 1,",
+    "old": "  'Controls/JoystickDeadzone': {\n    min: 0,\n    max: 0.9,\n    step: 0.05,",
+    "new": "  'Controls/JoystickDeadzone': {\n    min: 0,\n    max: 1,\n    step: 0.05,",
     "tests": [
       "test/ui/settings/menupad.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "AUDIT-A9-called-a-deadzone",
     "file": "src/ui/settings/settingsCopy.js",
-    "old": "\"Controls/JoystickMovementThreshold\": \"Gamepad Movement Threshold\",",
-    "new": "\"Controls/JoystickMovementThreshold\": \"Gamepad Movement Deadzone\",",
+    "old": "  'Controls/JoystickMovementThreshold': 'Gamepad Movement Threshold',",
+    "new": "  'Controls/JoystickMovementThreshold': 'Gamepad Movement Deadzone',",
     "tests": [
       "test/ui/settings/menupad.test.js"
     ]

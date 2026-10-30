@@ -106,7 +106,7 @@ test('MONSTER-QUIET and MONSTER-VOL: a foe calls 40% as often, a companion as be
   assert.equal(monsterVolume(), 0.35);
   _resetForTests();
   assert.match(src('src/scenes/hostCombat.js'), /out\.volume \* monsterVolume\(\)/);
-  assert.match(src('src/ui/settings/settingsMap.js'), /"Controls\/MusicVolume", "port:monsterVolume"/);
+  assert.match(src('src/ui/settings/settingsMap.js'), /'Controls\/MusicVolume',\n\s*'port:monsterVolume'/);
 });
 
 test('HOOD-GAP: a run of empty px under the hood\'s foot with the body under it takes the foot\'s colour; open air stays open', () => {

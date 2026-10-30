@@ -224,8 +224,8 @@
   {
     "name": "AUDITRETRO1-C7-the-black-shift-steppable",
     "file": "src/ui/settings/settingsLaw.js",
-    "old": "'Video/PalettizationLUTShift': { min: 0, max: 7,",
-    "new": "'Video/PalettizationLUTShift': { min: 0, max: 8,",
+    "old": "    max: 7,",
+    "new": "    max: 8,",
     "tests": [
       "test/render/auditretro1.test.js",
       "test/render/retro1.test.js"

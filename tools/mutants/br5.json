@@ -194,8 +194,8 @@
   {
     "name": "BR5-instead-the-game",
     "file": "src/ui/settings/settingsCopy.js",
-    "old": "\"You get the original game's climbing.\"",
-    "new": "\"You get Daggerfall's climbing.\"",
+    "old": "  'Enhancements/AdvancedClimbing': \"You get the original game's climbing.\",",
+    "new": "  'Enhancements/AdvancedClimbing': \"You get Daggerfall's climbing.\",",
     "tests": [
       "test/ui/brand.test.js"
     ],

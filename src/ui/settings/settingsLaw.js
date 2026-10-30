@@ -23,27 +23,79 @@
 // for the player who wants it.
 import { DEFAULTS, tierOf, UNAVAILABLE } from '../../systems/settings/settings.js';
 import { READOUT } from './settingsCopy.js';
-import { FRAME_CAP_FLOOR, FRAME_CAP_STOPS } from '../../systems/frameCap.js';   // FPS-CAP1: the cap's floor and the rates its row walks
-import { localizedText, localizedTextList, TextCollections } from '../../systems/textManager.js';   // L10N3d: DFU's words, read in the player's language
+import { FRAME_CAP_FLOOR, FRAME_CAP_STOPS } from '../../systems/frameCap.js'; // FPS-CAP1: the cap's floor and the rates its row walks
+import { localizedText, localizedTextList, TextCollections } from '../../systems/textManager.js'; // L10N3d: DFU's words, read in the player's language
 
 /** DFU's own value names, in DFU's order. `encode:'index'` means the
  *  store holds the position; `'token'` means it holds the word. */
 export const ENUM_LAW = Object.freeze({
-  'Video/RandomDungeonTextures': { values: ['Classic', 'Climate', 'Climate Only', 'Random', 'Random Only'], encode: 'index', cite: 'AdvancedSettings:244-252' },
-  'Controls/CameraRecoilStrength': { values: ['Off', 'Low', 'Medium', 'High', 'Very High'], encode: 'index', cite: 'AdvancedSettings:244-252' },
-  'Controls/WeaponSwingMode': { values: ['Gesture', 'Click', 'Click or Hold'], encode: 'index', cite: 'WeaponManager:306-323' },   // AUDIT 28 W11
-  'Controls/Handedness': { values: ['Right Hand', 'Left Hand'], encode: 'index', cite: 'SetupGameWizard:461-470 (a checkbox: 1 = left; 2 and 3 are in GetInt\'s range and do nothing)' },   // AUDIT 28 W13
-  'MeleeAttacks/MeleeAttackDetection': { values: ['Performance', 'Quality'], encode: 'index', cite: 'AdvancedSettings:277-282' },
-  'Video/QualityLevel': { values: ['Fastest', 'Fast', 'Simple', 'Good', 'Beautiful', 'Fantastic'], encode: 'index', cite: 'AdvancedSettings:360-379' },
-  'Video/MainFilterMode': { values: ['Point', 'Bilinear', 'Trilinear'], encode: 'index', cite: 'AdvancedSettings:360-379' },
-  'GUI/GUIFilterMode': { values: ['Point', 'Bilinear', 'Trilinear'], encode: 'index', cite: 'AdvancedSettings:360-379' },
-  'GUI/VideoFilterMode': { values: ['Point', 'Bilinear', 'Trilinear'], encode: 'index', cite: 'AdvancedSettings:360-379' },
-  'GUI/HelmAndShieldMaterialDisplay': { values: ['Off', 'No Leather Chain', 'No Leather', 'On'], encode: 'index', cite: 'AdvancedSettings:309-321' },
+  'Video/RandomDungeonTextures': {
+    values: ['Classic', 'Climate', 'Climate Only', 'Random', 'Random Only'],
+    encode: 'index',
+    cite: 'AdvancedSettings:244-252',
+  },
+  'Controls/CameraRecoilStrength': {
+    values: ['Off', 'Low', 'Medium', 'High', 'Very High'],
+    encode: 'index',
+    cite: 'AdvancedSettings:244-252',
+  },
+  'Controls/WeaponSwingMode': {
+    values: ['Gesture', 'Click', 'Click or Hold'],
+    encode: 'index',
+    cite: 'WeaponManager:306-323',
+  }, // AUDIT 28 W11
+  'Controls/Handedness': {
+    values: ['Right Hand', 'Left Hand'],
+    encode: 'index',
+    cite: "SetupGameWizard:461-470 (a checkbox: 1 = left; 2 and 3 are in GetInt's range and do nothing)",
+  }, // AUDIT 28 W13
+  'MeleeAttacks/MeleeAttackDetection': {
+    values: ['Performance', 'Quality'],
+    encode: 'index',
+    cite: 'AdvancedSettings:277-282',
+  },
+  'Video/QualityLevel': {
+    values: ['Fastest', 'Fast', 'Simple', 'Good', 'Beautiful', 'Fantastic'],
+    encode: 'index',
+    cite: 'AdvancedSettings:360-379',
+  },
+  'Video/MainFilterMode': {
+    values: ['Point', 'Bilinear', 'Trilinear'],
+    encode: 'index',
+    cite: 'AdvancedSettings:360-379',
+  },
+  'GUI/GUIFilterMode': {
+    values: ['Point', 'Bilinear', 'Trilinear'],
+    encode: 'index',
+    cite: 'AdvancedSettings:360-379',
+  },
+  'GUI/VideoFilterMode': {
+    values: ['Point', 'Bilinear', 'Trilinear'],
+    encode: 'index',
+    cite: 'AdvancedSettings:360-379',
+  },
+  'GUI/HelmAndShieldMaterialDisplay': {
+    values: ['Off', 'No Leather Chain', 'No Leather', 'On'],
+    encode: 'index',
+    cite: 'AdvancedSettings:309-321',
+  },
   // RETRO1: RetroModeConfigPage's three controls, in its own words (Internal_Strings retroMode*, posterization*,
   // palettization*, FourThree/SixteenTen - the CSV's "4:03" is a spreadsheet's reading of 4:3)
-  'Video/RetroRenderingMode': { values: ['Off', '320x200', '640x400'], encode: 'index', cite: 'RetroModeConfigPage:39-47' },
-  'Video/PostProcessingInRetroMode': { values: ['Off', 'Posterization (full)', 'Posterization (-sky)', 'Palettization (full)', 'Palettization (-sky)'], encode: 'index', cite: 'RetroModeConfigPage:51-62' },
-  'Video/RetroModeAspectCorrection': { values: ['Off', '4:3', '16:10'], encode: 'index', cite: 'RetroModeConfigPage:64-73 (RetroModeAspects)' },
+  'Video/RetroRenderingMode': {
+    values: ['Off', '320x200', '640x400'],
+    encode: 'index',
+    cite: 'RetroModeConfigPage:39-47',
+  },
+  'Video/PostProcessingInRetroMode': {
+    values: ['Off', 'Posterization (full)', 'Posterization (-sky)', 'Palettization (full)', 'Palettization (-sky)'],
+    encode: 'index',
+    cite: 'RetroModeConfigPage:51-62',
+  },
+  'Video/RetroModeAspectCorrection': {
+    values: ['Off', '4:3', '16:10'],
+    encode: 'index',
+    cite: 'RetroModeConfigPage:64-73 (RetroModeAspects)',
+  },
 });
 
 /** L10N3d: THE WORDS AN ENUM ROW SHOWS, in the player's language. The
@@ -61,19 +113,41 @@ export const ENUM_LAW = Object.freeze({
 export function enumWords(key) {
   switch (key) {
     case 'Video/RandomDungeonTextures':
-      return localizedTextList('dungeonTextureModes', ['Classic', 'Climate', 'Climate Only', 'Random', 'Random Only'], TextCollections.TextSettings);
+      return localizedTextList(
+        'dungeonTextureModes',
+        ['Classic', 'Climate', 'Climate Only', 'Random', 'Random Only'],
+        TextCollections.TextSettings,
+      );
     case 'Video/QualityLevel':
-      return localizedTextList('qualitySettings', ['Fastest', 'Fast', 'Simple', 'Good', 'Beautiful', 'Fantastic'], TextCollections.TextSettings);
-    case 'Video/MainFilterMode': case 'GUI/GUIFilterMode': case 'GUI/VideoFilterMode':
+      return localizedTextList(
+        'qualitySettings',
+        ['Fastest', 'Fast', 'Simple', 'Good', 'Beautiful', 'Fantastic'],
+        TextCollections.TextSettings,
+      );
+    case 'Video/MainFilterMode':
+    case 'GUI/GUIFilterMode':
+    case 'GUI/VideoFilterMode':
       return localizedTextList('filterModes', ['Point', 'Bilinear', 'Trilinear'], TextCollections.TextSettings);
     case 'GUI/HelmAndShieldMaterialDisplay':
-      return localizedTextList('helmAndShieldMaterialDisplay', ['Off', 'No Leather Chain', 'No Leather', 'On'], TextCollections.TextSettings);
+      return localizedTextList(
+        'helmAndShieldMaterialDisplay',
+        ['Off', 'No Leather Chain', 'No Leather', 'On'],
+        TextCollections.TextSettings,
+      );
     case 'Video/RetroRenderingMode':
-      return [localizedText('retroModeOff', 'Off'), localizedText('retroMode320x200', '320x200'), localizedText('retroMode640x400', '640x400')];
+      return [
+        localizedText('retroModeOff', 'Off'),
+        localizedText('retroMode320x200', '320x200'),
+        localizedText('retroMode640x400', '640x400'),
+      ];
     case 'Video/PostProcessingInRetroMode':
-      return [localizedText('off', 'Off'), localizedText('posterizationFull', 'Posterization (full)'),
-        localizedText('posterizationMinusSky', 'Posterization (-sky)'), localizedText('palettizationFull', 'Palettization (full)'),
-        localizedText('palettizationMinusSky', 'Palettization (-sky)')];
+      return [
+        localizedText('off', 'Off'),
+        localizedText('posterizationFull', 'Posterization (full)'),
+        localizedText('posterizationMinusSky', 'Posterization (-sky)'),
+        localizedText('palettizationFull', 'Palettization (full)'),
+        localizedText('palettizationMinusSky', 'Palettization (-sky)'),
+      ];
     case 'Video/RetroModeAspectCorrection':
       return [localizedText('off', 'Off'), localizedText('FourThree', '4:3'), localizedText('SixteenTen', '16:10')];
     default:
@@ -89,38 +163,151 @@ export const NUMBER_LAW = Object.freeze({
   // still showed a dead readout - a number with no stated range stays
   // text, and this one's range IS stated: GetInt(1, 100).
   'GUI/QuestRumorWeight': { min: 1, max: 100, step: 1, coarse: 10, source: 'DFU GetInt(1,100) (SettingsManager:512)' },
-  'GUI/ShopQualityHUDDelay': { min: 1, max: 10, step: 1, coarse: 2, format: 'sec', source: 'DFU GetInt(1,10) (SettingsManager:494)' },
-  'Controls/WeaponAttackThreshold': { min: 0.001, max: 1, step: 0.001, coarse: 0.01, format: 'raw', source: 'DFU GetFloat(0.001,1) (SettingsManager:534)' },   // AUDIT 28 W11
-  'Controls/SoundVolume': { min: 0, max: 1, step: 0.05, coarse: 0.2, format: 'pct', source: 'DFU DisplayUnits 100 (:268-271)' },
+  'GUI/ShopQualityHUDDelay': {
+    min: 1,
+    max: 10,
+    step: 1,
+    coarse: 2,
+    format: 'sec',
+    source: 'DFU GetInt(1,10) (SettingsManager:494)',
+  },
+  'Controls/WeaponAttackThreshold': {
+    min: 0.001,
+    max: 1,
+    step: 0.001,
+    coarse: 0.01,
+    format: 'raw',
+    source: 'DFU GetFloat(0.001,1) (SettingsManager:534)',
+  }, // AUDIT 28 W11
+  'Controls/SoundVolume': {
+    min: 0,
+    max: 1,
+    step: 0.05,
+    coarse: 0.2,
+    format: 'pct',
+    source: 'DFU DisplayUnits 100 (:268-271)',
+  },
   'Controls/MusicVolume': { min: 0, max: 1, step: 0.05, coarse: 0.2, format: 'pct', source: 'DFU (:272-274)' },
-  'Controls/MouseLookSensitivity': { min: 0.1, max: 16.0, step: 0.1, coarse: 1.0, format: 'mult', source: 'DFU GetFloat(0.1,16.0) (SettingsManager:524)' },   // ROAD-G G6: the range is DFU's now, not ours
-  'Controls/MouseLookSmoothingFactor': { min: 0, max: 0.9, step: 0.05, coarse: 0.2, format: 'pct', source: 'DFU GetFloat(0,0.9) + SmoothingMax 0.9 (SettingsManager:523, PlayerMouseLook:45)' },   // AUDIT 28 W7: the range is DFU's now, not ours
+  'Controls/MouseLookSensitivity': {
+    min: 0.1,
+    max: 16.0,
+    step: 0.1,
+    coarse: 1.0,
+    format: 'mult',
+    source: 'DFU GetFloat(0.1,16.0) (SettingsManager:524)',
+  }, // ROAD-G G6: the range is DFU's now, not ours
+  'Controls/MouseLookSmoothingFactor': {
+    min: 0,
+    max: 0.9,
+    step: 0.05,
+    coarse: 0.2,
+    format: 'pct',
+    source: 'DFU GetFloat(0,0.9) + SmoothingMax 0.9 (SettingsManager:523, PlayerMouseLook:45)',
+  }, // AUDIT 28 W7: the range is DFU's now, not ours
   // PAD-SETTINGS (2026-09-27, Discord - an AYN Thor: "doesnt seem to let me change controller sensitivity either, i
   // press the 1.0 to try and change it but it doesnt register"). The four gamepad keys went LIVE at GP1 and never
   // got a row here, so each fell through to widgetFor's readout: a bare "1.0" with nothing to press. The ranges are
   // the consumer's own clamps (systems/gamepad.js controllerSettings - the range-equals-clamp law, MENU T5), which are
   // DFU's JoystickControlsWindow sliders (:161-167) for the look speed, and within them for the other three.
-  'Controls/JoystickLookSensitivity': { min: 0.1, max: 4, step: 0.1, coarse: 0.5, format: 'mult', source: 'DFU JoystickControlsWindow slider 0.1..4.0 (:161-167); clamp systems/gamepad.js controllerSettings' },
-  'Controls/JoystickCursorSensitivity': { min: 0.1, max: 4, step: 0.1, coarse: 0.5, format: 'mult', source: 'clamp systems/gamepad.js controllerSettings (DFU\'s slider runs to 5.0, JoystickControlsWindow:161-167)' },
-  'Controls/JoystickMovementThreshold': { min: 0.05, max: 1, step: 0.05, coarse: 0.2, format: 'pct', source: 'clamp systems/gamepad.js controllerSettings (DFU\'s slider 0.0..1.0, JoystickControlsWindow:161-167)' },
-  'Controls/JoystickDeadzone': { min: 0, max: 0.9, step: 0.05, coarse: 0.2, format: 'pct', source: 'DFU JoystickControlsWindow slider 0.0..0.9 (:161-167) - AUDIT PAD-SETTINGS A3: at 1.0 both sticks were dead; clamp systems/gamepad.js controllerSettings' },
+  'Controls/JoystickLookSensitivity': {
+    min: 0.1,
+    max: 4,
+    step: 0.1,
+    coarse: 0.5,
+    format: 'mult',
+    source: 'DFU JoystickControlsWindow slider 0.1..4.0 (:161-167); clamp systems/gamepad.js controllerSettings',
+  },
+  'Controls/JoystickCursorSensitivity': {
+    min: 0.1,
+    max: 4,
+    step: 0.1,
+    coarse: 0.5,
+    format: 'mult',
+    source: "clamp systems/gamepad.js controllerSettings (DFU's slider runs to 5.0, JoystickControlsWindow:161-167)",
+  },
+  'Controls/JoystickMovementThreshold': {
+    min: 0.05,
+    max: 1,
+    step: 0.05,
+    coarse: 0.2,
+    format: 'pct',
+    source: "clamp systems/gamepad.js controllerSettings (DFU's slider 0.0..1.0, JoystickControlsWindow:161-167)",
+  },
+  'Controls/JoystickDeadzone': {
+    min: 0,
+    max: 0.9,
+    step: 0.05,
+    coarse: 0.2,
+    format: 'pct',
+    source:
+      'DFU JoystickControlsWindow slider 0.0..0.9 (:161-167) - AUDIT PAD-SETTINGS A3: at 1.0 both sticks were dead; clamp systems/gamepad.js controllerSettings',
+  },
   'Enhancements/LoiterLimitInHours': { min: 3, max: 12, step: 1, coarse: 3, format: 'hours', source: 'DFU (:342-354)' },
-  'Video/FieldOfView': { min: 60, max: 120, step: 5, coarse: 20, format: 'deg', source: 'DFU GetInt(60,120) (SettingsManager:418)' },
+  'Video/FieldOfView': {
+    min: 60,
+    max: 120,
+    step: 5,
+    coarse: 20,
+    format: 'deg',
+    source: 'DFU GetInt(60,120) (SettingsManager:418)',
+  },
   'GUI/ToolTipDelayInSeconds': { min: 0, max: 10, step: 0.5, coarse: 2, format: 'sec', source: 'DFU (:291-297)' },
-  'Enhancements/DungeonAmbientLightScale': { min: 0, max: 1, step: 0.05, coarse: 0.2, format: 'pct', source: 'DFU (:333-341)' },
-  'Enhancements/NightAmbientLightScale': { min: 0, max: 1, step: 0.05, coarse: 0.2, format: 'pct', source: 'DFU (:333-341)' },
-  'Enhancements/PlayerTorchLightScale': { min: 0, max: 1, step: 0.05, coarse: 0.2, format: 'pct', source: 'DFU (:333-341)' },
-  'Video/PalettizationLUTShift': { min: 0, max: 7, step: 1, coarse: 1, source: 'DFU GetInt, no range (SettingsManager:412) - RETRO1 clamps it; AUDIT RETRO1 C7: 0..7, since 8 is a one-texel LUT (256 >> 8) that paints the world black' },
+  'Enhancements/DungeonAmbientLightScale': {
+    min: 0,
+    max: 1,
+    step: 0.05,
+    coarse: 0.2,
+    format: 'pct',
+    source: 'DFU (:333-341)',
+  },
+  'Enhancements/NightAmbientLightScale': {
+    min: 0,
+    max: 1,
+    step: 0.05,
+    coarse: 0.2,
+    format: 'pct',
+    source: 'DFU (:333-341)',
+  },
+  'Enhancements/PlayerTorchLightScale': {
+    min: 0,
+    max: 1,
+    step: 0.05,
+    coarse: 0.2,
+    format: 'pct',
+    source: 'DFU (:333-341)',
+  },
+  'Video/PalettizationLUTShift': {
+    min: 0,
+    max: 7,
+    step: 1,
+    coarse: 1,
+    source:
+      'DFU GetInt, no range (SettingsManager:412) - RETRO1 clamps it; AUDIT RETRO1 C7: 0..7, since 8 is a one-texel LUT (256 >> 8) that paints the world black',
+  },
   // FPS-CAP1: GetInt(0, 300), and under 30 is off (StartGameBehaviour:246-247) - so the row walks Off and the rates a
   // screen runs at, and never offers 1-29, a cap DFU ignores.
-  'Video/TargetFrameRate': { min: 0, max: 300, step: 1, coarse: 3, stops: FRAME_CAP_STOPS, offBelow: FRAME_CAP_FLOOR, format: 'fps', source: 'DFU GetInt(0,300) (SettingsManager:414); under 30 is off (StartGameBehaviour:246-247)' },
+  'Video/TargetFrameRate': {
+    min: 0,
+    max: 300,
+    step: 1,
+    coarse: 3,
+    stops: FRAME_CAP_STOPS,
+    offBelow: FRAME_CAP_FLOOR,
+    format: 'fps',
+    source: 'DFU GetInt(0,300) (SettingsManager:414); under 30 is off (StartGameBehaviour:246-247)',
+  },
 });
 
 /** RRGGBBAA - the alpha is load-bearing (ToolTipBackgroundColor ships 404040D2). */
 export const COLOUR_KEYS = Object.freeze([
-  'GUI/ToolTipTextColor', 'GUI/ToolTipBackgroundColor',
-  'Map/AutomapTempleColor', 'Map/AutomapShopColor', 'Map/AutomapTavernColor', 'Map/AutomapHouseColor',
-  'Map/DunMicMapInnerColor', 'Map/DunMicMapBorderColor',
+  'GUI/ToolTipTextColor',
+  'GUI/ToolTipBackgroundColor',
+  'Map/AutomapTempleColor',
+  'Map/AutomapShopColor',
+  'Map/AutomapTavernColor',
+  'Map/AutomapHouseColor',
+  'Map/DunMicMapInnerColor',
+  'Map/DunMicMapBorderColor',
 ]);
 
 const isBoolDefault = (v) => v === 'True' || v === 'False';
@@ -148,8 +335,8 @@ export function blockedReason(key) {
 }
 
 const fmtNumber = (n, law) => {
-  if (law.offBelow !== undefined && n < law.offBelow) return 'Off';   // FPS-CAP1
-  if (law.format === 'raw') return String(+n.toFixed(4));   // AUDIT 28 W11: a thousandths ratio (0.005) must not round to "0.01"
+  if (law.offBelow !== undefined && n < law.offBelow) return 'Off'; // FPS-CAP1
+  if (law.format === 'raw') return String(+n.toFixed(4)); // AUDIT 28 W11: a thousandths ratio (0.005) must not round to "0.01"
   if (law.format === 'pct') return `${Math.round(n * 100)}%`;
   if (law.format === 'mult') return `x${n.toFixed(1)}`;
   const unit = law.format;
@@ -167,7 +354,9 @@ export function formatValue(key, raw) {
     const law = ENUM_LAW[key];
     if (law.encode === 'index') {
       const i = parseInt(raw, 10);
-      return Number.isInteger(i) && law.values[i] !== undefined ? (enumWords(key)[i] ?? law.values[i]) : String(raw ?? '');
+      return Number.isInteger(i) && law.values[i] !== undefined
+        ? (enumWords(key)[i] ?? law.values[i])
+        : String(raw ?? '');
     }
     return law.values.includes(raw) ? raw : String(raw ?? '');
   }
@@ -184,10 +373,10 @@ export function formatValue(key, raw) {
     const eff = Math.min(law.max, Math.max(law.min, n));
     return Number.isFinite(n) ? fmtNumber(eff, law) : String(raw ?? '');
   }
-  if (w === 'blocked') return READOUT[key] ?? 'not here';   // never the stored value: EnhancedCombatAI holds True while the port runs the classic path
+  if (w === 'blocked') return READOUT[key] ?? 'not here'; // never the stored value: EnhancedCombatAI holds True while the port runs the classic path
   if (w === 'colour') return String(raw ?? '').toUpperCase();
   const s = String(raw ?? '');
-  return s === '' ? 'default' : s;   // DFU's own substitution for an empty SoundFont (:264-267)
+  return s === '' ? 'default' : s; // DFU's own substitution for an empty SoundFont (:264-267)
 }
 
 /** FPS-CAP1: a stepped row's next value - the first stop past the value in that direction, then (coarse) more.
@@ -220,7 +409,7 @@ export function stepValue(key, raw, dir, coarse = false) {
   }
   if (w === 'number') {
     const law = NUMBER_LAW[key];
-    if (law.stops) return stepStops(law, raw, dir, coarse);   // FPS-CAP1
+    if (law.stops) return stepStops(law, raw, dir, coarse); // FPS-CAP1
     const stepBy = coarse ? law.coarse : law.step;
     const cur = Number.isFinite(Number(raw)) ? Number(raw) : law.min;
     let next = cur + dir * stepBy;
@@ -229,5 +418,5 @@ export function stepValue(key, raw, dir, coarse = false) {
     const dp = String(law.step).includes('.') ? String(law.step).split('.')[1].length : 0;
     return dp ? String(Number(next.toFixed(dp))) : String(Math.round(next));
   }
-  return null;   // colour and text are edited in a dialog, not stepped
+  return null; // colour and text are edited in a dialog, not stepped
 }

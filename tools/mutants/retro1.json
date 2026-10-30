@@ -471,8 +471,8 @@
   {
     "name": "RETRO1-aspect-word-mangled",
     "file": "src/ui/settings/settingsLaw.js",
-    "old": "values: ['Off', '4:3', '16:10']",
-    "new": "values: ['Off', '4:03', '16:10']",
+    "old": "    values: ['Off', '4:3', '16:10'],",
+    "new": "    values: ['Off', '4:03', '16:10'],",
     "tests": [
       "test/render/retro1.test.js"
     ]

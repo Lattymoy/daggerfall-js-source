@@ -47,8 +47,8 @@
   {
     "name": "MWA4-the-card-off-the-head-of-the-files-page",
     "file": "src/ui/settings/settingsMap.js",
-    "old": "      \"card:morrowind\", \"card:packs\"]),",
-    "new": "      \"card:packs\"]),",
+    "old": "    sec('files', 'Your files', ['card:morrowind', 'card:packs']),",
+    "new": "    sec('files', 'Your files', ['card:packs']),",
     "tests": [
       "test/systems/features.test.js"
     ]

@@ -557,5 +557,5 @@ test('DLV2 THE WIRING (HOST-SPLIT): the context builds it after its api and befo
   for (const h of ['src/scenes/worldModes.js', 'src/scenes/dungeon.js']) assert.match(rd(h), /key\.startsWith\('search:'\) \|\| key\.startsWith\('delve:'\)/, `${h}'s press arm`);
   assert.match(rd('src/systems/worldHover.js'), /'spoil:', 'delve:'\]\);/);
   assert.match(rd('src/systems/dungeon/dungeonSense.js'), /'srch:', 'delve:'\]\);/);
-  assert.match(rd('src/ui/settings/settingsMap.js'), /"feat:world-dungeon-sizes", "feat:dungeon-encounters"/);
+  assert.match(rd('src/ui/settings/settingsMap.js'), /'feat:world-dungeon-sizes',\n\s*'feat:dungeon-encounters'/);
 });

@@ -102,8 +102,8 @@
   {
     "name": "FPSCAP-the-row-walks-the-range",
     "file": "src/ui/settings/settingsLaw.js",
-    "old": "    if (law.stops) return stepStops(law, raw, dir, coarse);   // FPS-CAP1\n",
-    "new": "",
+    "old": "    if (law.stops) return stepStops(law, raw, dir, coarse); // FPS-CAP1\n    const stepBy = coarse ? law.coarse : law.step;",
+    "new": "    const stepBy = coarse ? law.coarse : law.step;",
     "tests": [
       "test/ui/settings/fpscap1.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "FPSCAP-zero-reads-as-a-number",
     "file": "src/ui/settings/settingsLaw.js",
-    "old": "  if (law.offBelow !== undefined && n < law.offBelow) return 'Off';   // FPS-CAP1\n",
-    "new": "",
+    "old": "  if (law.offBelow !== undefined && n < law.offBelow) return 'Off'; // FPS-CAP1\n  if (law.format === 'raw') return String(+n.toFixed(4)); // AUDIT 28 W11: a thousandths ratio (0.005) must not round to \"0.01\"",
+    "new": "  if (law.format === 'raw') return String(+n.toFixed(4)); // AUDIT 28 W11: a thousandths ratio (0.005) must not round to \"0.01\"",
     "tests": [
       "test/ui/settings/fpscap1.test.js"
     ]

@@ -239,5 +239,5 @@ test('AUDIT PAD-SETTINGS A3 + A9: the Stick Deadzone stops at DFU\'s 0.9 - at 1.
   assert.match(readFileSync(new URL('../../../src/systems/gamepad.js', import.meta.url), 'utf8'), /deadzone: getFloat\('Controls', 'JoystickDeadzone', 0, 0\.9\),/);
   assert.equal(stepValue('Controls/JoystickDeadzone', '0.85', +1, false), '0.9', 'the stepper stops there');
   assert.equal(stepValue('Controls/JoystickDeadzone', '0.9', +1, false), '0.9');
-  assert.match(readFileSync(new URL('../../../src/ui/settings/settingsCopy.js', import.meta.url), 'utf8'), /"Controls\/JoystickMovementThreshold": "Gamepad Movement Threshold",/, 'DFU\'s "Maximum Movement Threshold" - the lean at full speed, no deadzone');
+  assert.match(readFileSync(new URL('../../../src/ui/settings/settingsCopy.js', import.meta.url), 'utf8'), /'Controls\/JoystickMovementThreshold': 'Gamepad Movement Threshold',/, 'DFU\'s "Maximum Movement Threshold" - the lean at full speed, no deadzone');
 });

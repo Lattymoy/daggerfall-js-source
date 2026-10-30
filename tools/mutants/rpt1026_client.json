@@ -213,8 +213,8 @@
   {
     "name": "RPT1026-SHAKE-unmapped",
     "file": "src/ui/settings/settingsMap.js",
-    "old": "\"Controls/CameraRecoilStrength\", \"port:techniqueMotion\", \"port:peerSpellShake\",",
-    "new": "\"Controls/CameraRecoilStrength\", \"port:techniqueMotion\",",
+    "old": "      'port:peerSpellShake',\n      'port:reducedMotion',",
+    "new": "      'port:reducedMotion',",
     "tests": [
       "test/scenes/rpt1026_client_peershake.test.js"
     ],

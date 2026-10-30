@@ -718,8 +718,8 @@
   {
     "name": "FPS-VSYNC-restart-said-live",
     "file": "src/ui/settings/settingsCopy.js",
-    "old": "restart: 'Takes effect the next time the app starts.',",
-    "new": "restart: 'This works now.',",
+    "old": "  restart: 'Takes effect the next time the app starts.', // FPS-VSYNC: the desktop shell reads it at launch",
+    "new": "  restart: 'This works now.', // FPS-VSYNC: the desktop shell reads it at launch",
     "tests": [
       "test/ui/settings/disc28e_vsync.test.js"
     ]

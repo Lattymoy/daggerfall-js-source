@@ -190,7 +190,7 @@ test('HORSE-VOL, ANIMAL-VOL: the Audio tab\'s Volume section draws both rows aft
     }
     assert.deepEqual([horseVolume(), animalVolume()], [0.8, 0.8], 'each row wrote its own pref');
   } finally { resetPrefs(); delete globalThis.document; delete globalThis.window; }
-  assert.match(rd('src/ui/settings/settingsMap.js'), /"port:monsterVolume", "port:companionVolume", "port:horseVolume", "port:animalVolume"\]/);
+  assert.match(rd('src/ui/settings/settingsMap.js'), /'port:monsterVolume',\n\s*'port:companionVolume',\n\s*'port:horseVolume',\n\s*'port:animalVolume',\n\s*\]/);
 });
 
 test('SOUND-LIVE: writing Sound Volume re-levels the master at once over 50 ms, so a loop already playing hears the slider; a context with no automation takes the value outright (mutants: the setting unwatched; another key heard; no ramp)', () => {
