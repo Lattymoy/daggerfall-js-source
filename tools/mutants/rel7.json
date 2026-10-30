@@ -22,8 +22,8 @@
   {
     "name": "REL7-3-crlf-read-as-is",
     "file": "scripts/desktopRelease.mjs",
-    "old": "  const text = String(current ?? '').replace(/\\r\\n/g, '\\n');\n  const cut = text.search(GENERATED_LIST_RE);",
-    "new": "  const text = String(current ?? '');\n  const cut = text.search(GENERATED_LIST_RE);",
+    "old": "  const text = String(current ?? '').replace(/\\r\\n/g, '\\n');",
+    "new": "  const text = String(current ?? '');",
     "tests": [
       "test/tooling/rel7_renotes.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "REL7-6-a-failed-read-writes-anyway",
     "file": "scripts/desktopRelease.mjs",
-    "old": "      console.error(`the notes could not be read - the release is left as it is: ${String(e?.stderr || e?.message || e).trim()}`);\n      return 1;",
-    "new": "      console.error(`the notes could not be read - the release is left as it is: ${String(e?.stderr || e?.message || e).trim()}`);\n      notes = [];",
+    "old": "        `the notes could not be read - the release is left as it is: ${String(e?.stderr || e?.message || e).trim()}`,\n      );\n      return 1;\n    }",
+    "new": "        `the notes could not be read - the release is left as it is: ${String(e?.stderr || e?.message || e).trim()}`,\n      );\n      notes = [];\n    }",
     "tests": [
       "test/tooling/rel7_renotes.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "REL7-12-no-tag-writes-anyway",
     "file": "scripts/desktopRelease.mjs",
-    "old": "      try { git(['rev-parse', '--verify', '--quiet', `refs/tags/${a}^{commit}`]); } catch { throw new Error(`no tag ${a} in this checkout`); }\n",
-    "new": "",
+    "old": "      try {\n        git(['rev-parse', '--verify', '--quiet', `refs/tags/${a}^{commit}`]);\n      } catch {\n        throw new Error(`no tag ${a} in this checkout`);\n      }\n      notes = pullRequestNotesSince(previousReleaseTag(a, git, a), { to: a });",
+    "new": "      notes = pullRequestNotesSince(previousReleaseTag(a, git, a), { to: a });",
     "tests": [
       "test/tooling/rel7_renotes.test.js"
     ],

@@ -49,23 +49,113 @@ export const STE_PARAGRAPH_MAX = 6;
 /** Words that end in -ing and are no verb form: nouns, a preposition, base verbs. A word goes on with its reason.
  *  (A plural - "rings", "bindings" - is no verb form, and is never read.) */
 export const NOT_A_VERB = new Set([
-  'anything', 'everything', 'nothing', 'something', 'thing', // nouns
-  'king', 'ring', 'earring', 'string', 'spring', 'wing', 'sling', 'sting', 'ceiling', 'pudding', 'sibling', 'herring',
-  'morning', 'evening', 'lightning', 'clothing', 'building', 'setting', 'rigging', 'lodging',
+  'anything',
+  'everything',
+  'nothing',
+  'something',
+  'thing', // nouns
+  'king',
+  'ring',
+  'earring',
+  'string',
+  'spring',
+  'wing',
+  'sling',
+  'sting',
+  'ceiling',
+  'pudding',
+  'sibling',
+  'herring',
+  'morning',
+  'evening',
+  'lightning',
+  'clothing',
+  'building',
+  'setting',
+  'rigging',
+  'lodging',
   'during', // a preposition
-  'bring', 'cling', 'fling', 'sing', 'swing', 'wring', // base verbs
+  'bring',
+  'cling',
+  'fling',
+  'sing',
+  'swing',
+  'wring', // base verbs
 ]);
 
 /** Verbs an instruction starts with - an unambiguous few; a word that is also a common noun ("Set", "Update") is not one. */
 const COMMANDS = new Set([
-  'add', 'ask', 'buy', 'choose', 'click', 'close', 'craft', 'disable', 'do', 'download', 'drag', 'enable', 'enter',
-  'equip', 'find', 'follow', 'give', 'go', 'insure', 'install', 'keep', 'leave', 'let', 'make', 'open', 'press', 'put',
-  'read', 'remove', 'restart', 'right-click', 'scroll', 'see', 'select', 'sell', 'send', 'speak', 'swap', 'switch', 'take',
-  'talk', 'tap', 'toggle', 'try', 'use', 'visit', 'wait', 'wear',
+  'add',
+  'ask',
+  'buy',
+  'choose',
+  'click',
+  'close',
+  'craft',
+  'disable',
+  'do',
+  'download',
+  'drag',
+  'enable',
+  'enter',
+  'equip',
+  'find',
+  'follow',
+  'give',
+  'go',
+  'insure',
+  'install',
+  'keep',
+  'leave',
+  'let',
+  'make',
+  'open',
+  'press',
+  'put',
+  'read',
+  'remove',
+  'restart',
+  'right-click',
+  'scroll',
+  'see',
+  'select',
+  'sell',
+  'send',
+  'speak',
+  'swap',
+  'switch',
+  'take',
+  'talk',
+  'tap',
+  'toggle',
+  'try',
+  'use',
+  'visit',
+  'wait',
+  'wear',
 ]);
 
 /** A unit that counts as one word with the number before it. */
-const UNITS = new Set(['%', 's', 'ms', 'sec', 'min', 'h', 'm', 'cm', 'km', 'px', 'kg', 'g', 'kb', 'mb', 'gb', 'fps', 'hz', '°']);
+const UNITS = new Set([
+  '%',
+  's',
+  'ms',
+  'sec',
+  'min',
+  'h',
+  'm',
+  'cm',
+  'km',
+  'px',
+  'kg',
+  'g',
+  'kb',
+  'mb',
+  'gb',
+  'fps',
+  'hz',
+  '°',
+]);
 
 /** A stand-in for a name opens with this: it counts as one word and is never read for the word rules. */
 const NAME = '\u0001';
@@ -84,12 +174,18 @@ const FENCE_RE = /^ {0,3}(`{3,}|~{3,})/;
 const CONDITION_RE = /^(?:if|when|before|after|to|while|once|until)\b[^,]*,\s*/i;
 /** A full stop that is not the end of a sentence. */
 const NOT_AN_END_RE = /\b(?:e\.g|i\.e|cf|vs|approx|etc)\.$/i;
-const CONTRACTION_RE = /\b[a-z]+n['’]t\b|\b(?:i|you|we|they|he|she|it|that|there|here|what|who|where|let)['’](?:s|re|ll|ve|d|m)\b/gi;
+const CONTRACTION_RE =
+  /\b[a-z]+n['’]t\b|\b(?:i|you|we|they|he|she|it|that|there|here|what|who|where|let)['’](?:s|re|ll|ve|d|m)\b/gi;
 /** A past participle that is no adjective in the notes (not "hit" of hit points, not "hidden" of hidden doors). */
-const IRREGULAR = 'been|gone|done|made|taken|given|seen|come|become|got|gotten|found|left|kept|lost|won|held|brought|built|bought|sold|fought|caught|taught|thought|told|said|paid|put|shot|struck|known|shown|grown|thrown|drawn|chosen|spoken|stolen|written|ridden|risen|fallen|forgotten|beaten|eaten|begun|sunk|flown|meant|sent|spent|felt|dealt|swept|read|led|fled|met|slid|stuck|spun|hung|dug|swung';
+const IRREGULAR =
+  'been|gone|done|made|taken|given|seen|come|become|got|gotten|found|left|kept|lost|won|held|brought|built|bought|sold|fought|caught|taught|thought|told|said|paid|put|shot|struck|known|shown|grown|thrown|drawn|chosen|spoken|stolen|written|ridden|risen|fallen|forgotten|beaten|eaten|begun|sunk|flown|meant|sent|spent|felt|dealt|swept|read|led|fled|met|slid|stuck|spun|hung|dug|swung';
 /** An -ed word is a verb when no noun follows it: "have fixed a bug", "has changed." - not "have enchanted items". */
-const REGULAR = '(?!(?:speed|need|seed|feed|steed|deed|creed|greed|weed|bed|red|shed|sled|hundred|sacred|kindred|naked|wicked|rugged|ragged|jagged|crooked|beloved)\\b)[a-z]{2,}ed(?=\\s*$|\\s*[.,;:!?)]|\\s+(?:the|a|an|your|my|our|their|its|his|her|to|in|on|at|with|for|from|by|it|them|him|us|you|this|that|these|those|some|all|every|each|more|up|out|back|away|down|over|off|into|onto)\\b)';
-const HELPING_RE = new RegExp(`\\b(?:has|have|had)\\s+(?:(?:not|now|already|also|never|just|since|always|only|all)\\s+)*(?:(?:${IRREGULAR})(?![-\\w])|${REGULAR})`, 'gi');
+const REGULAR =
+  '(?!(?:speed|need|seed|feed|steed|deed|creed|greed|weed|bed|red|shed|sled|hundred|sacred|kindred|naked|wicked|rugged|ragged|jagged|crooked|beloved)\\b)[a-z]{2,}ed(?=\\s*$|\\s*[.,;:!?)]|\\s+(?:the|a|an|your|my|our|their|its|his|her|to|in|on|at|with|for|from|by|it|them|him|us|you|this|that|these|those|some|all|every|each|more|up|out|back|away|down|over|off|into|onto)\\b)';
+const HELPING_RE = new RegExp(
+  `\\b(?:has|have|had)\\s+(?:(?:not|now|already|also|never|just|since|always|only|all)\\s+)*(?:(?:${IRREGULAR})(?![-\\w])|${REGULAR})`,
+  'gi',
+);
 
 /** A line's text with its names stood in for (each kept in `names`), its links read as their text and its markup gone. */
 function plain(line, names) {
@@ -121,7 +217,8 @@ export function steSentences(text) {
   const parts = text.split(/(?<=[.!?]["'’”)\]]*)\s+/);
   const sentences = [];
   for (const p of parts) {
-    if (sentences.length && NOT_AN_END_RE.test(sentences[sentences.length - 1])) sentences[sentences.length - 1] += ` ${p}`;
+    if (sentences.length && NOT_AN_END_RE.test(sentences[sentences.length - 1]))
+      sentences[sentences.length - 1] += ` ${p}`;
     else sentences.push(p);
   }
   return sentences.map((s) => s.trim()).filter((s) => steWords(s).length > 0);
@@ -132,16 +229,25 @@ function paragraphsOf(notes) {
   const out = [];
   let open = null;
   let fence = null;
-  const close = () => { if (open) out.push(open); open = null; };
+  const close = () => {
+    if (open) out.push(open);
+    open = null;
+  };
   for (const line of notes.split('\n')) {
-    if (fence) { if (fence.test(line)) fence = null; continue; }
+    if (fence) {
+      if (fence.test(line)) fence = null;
+      continue;
+    }
     const opens = FENCE_RE.exec(line);
     if (opens) {
       close();
       fence = new RegExp(`^ {0,3}${opens[1][0] === '`' ? '`' : '~'}{${opens[1].length},}[ \\t]*$`);
       continue;
     }
-    if (!line.trim()) { close(); continue; }
+    if (!line.trim()) {
+      close();
+      continue;
+    }
     if (HEADING_RE.test(line)) {
       close();
       out.push({ heading: true, text: line.replace(/^ {0,3}#+\s*/, '').replace(/\s+#+\s*$/, '') });
@@ -150,7 +256,8 @@ function paragraphsOf(notes) {
     const body = line.replace(/^\s*>\s?/, '');
     if (/^\s*\|/.test(body)) {
       close();
-      for (const cell of body.split('|').map((c) => c.trim())) if (cell && !/^:?-+:?$/.test(cell)) out.push({ heading: false, text: cell });
+      for (const cell of body.split('|').map((c) => c.trim()))
+        if (cell && !/^:?-+:?$/.test(cell)) out.push({ heading: false, text: cell });
       continue;
     }
     const item = ITEM_RE.exec(body);
@@ -207,7 +314,10 @@ export function steFindings(description) {
     const q = (s) => quote(s, names);
     const sentences = para.heading ? [text] : steSentences(text);
     if (!para.heading && sentences.length > STE_PARAGRAPH_MAX) {
-      find('paragraph', `a paragraph of ${sentences.length} sentences - STE allows ${STE_PARAGRAPH_MAX}: ${q(sentences[0])}`);
+      find(
+        'paragraph',
+        `a paragraph of ${sentences.length} sentences - STE allows ${STE_PARAGRAPH_MAX}: ${q(sentences[0])}`,
+      );
     }
     for (const s of sentences) {
       if (!para.heading) {
@@ -215,16 +325,26 @@ export function steFindings(description) {
         const command = COMMANDS.has(steWords(s.replace(CONDITION_RE, ''))[0] ?? '');
         const max = command ? STE_INSTRUCTION_MAX : STE_SENTENCE_MAX;
         if (words.length > max) {
-          find('length', `${command ? 'an instruction' : 'a sentence'} of ${words.length} words - STE allows ${max}: ${q(s)}`);
+          find(
+            'length',
+            `${command ? 'an instruction' : 'a sentence'} of ${words.length} words - STE allows ${max}: ${q(s)}`,
+          );
         }
       }
       if (s.includes(';')) find('semicolon', `a semicolon - STE uses none, write two sentences: ${q(s)}`);
       for (const w of ingForms(s, para.heading)) {
-        find('ing', `"${w}" is an -ing form - STE uses none outside a technical name (mark a name **bold** or \`code\`): ${q(s)}`);
+        find(
+          'ing',
+          `"${w}" is an -ing form - STE uses none outside a technical name (mark a name **bold** or \`code\`): ${q(s)}`,
+        );
       }
-      for (const m of s.matchAll(CONTRACTION_RE)) find('contraction', `"${m[0]}" is a contraction - STE writes both words: ${q(s)}`);
+      for (const m of s.matchAll(CONTRACTION_RE))
+        find('contraction', `"${m[0]}" is a contraction - STE writes both words: ${q(s)}`);
       for (const m of s.matchAll(HELPING_RE)) {
-        find('helping-verb', `"${m[0]}" makes a complex verb - STE uses the simple present, the simple past or the future: ${q(s)}`);
+        find(
+          'helping-verb',
+          `"${m[0]}" makes a complex verb - STE uses the simple present, the simple past or the future: ${q(s)}`,
+        );
       }
     }
   }
@@ -244,10 +364,14 @@ function main(args) {
   }
   const findings = steFindings(description);
   if (!findings.length) {
-    console.log('the patch notes keep the STE rules this check reads (STE-NOTES) - the dictionary is the writer\'s and the reviewer\'s');
+    console.log(
+      "the patch notes keep the STE rules this check reads (STE-NOTES) - the dictionary is the writer's and the reviewer's",
+    );
     return 0;
   }
-  console.log(`the patch notes break STE in ${findings.length} place${findings.length === 1 ? '' : 's'} (STE-NOTES, bible/01-Overview/Desktop-App.md):`);
+  console.log(
+    `the patch notes break STE in ${findings.length} place${findings.length === 1 ? '' : 's'} (STE-NOTES, bible/01-Overview/Desktop-App.md):`,
+  );
   for (const f of findings) console.log(`- ${f.message}`);
   return 1;
 }

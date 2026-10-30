@@ -12,8 +12,8 @@
   {
     "name": "WEBKIT-TLA-dev-load",
     "file": "scripts/firstVisitPins.mjs",
-    "old": "?? []) graph.invalidateModule(mod);",
-    "new": "?? []) void mod;",
+    "old": "      for (const mod of graph?.getModulesByFile(resolve(root, PINS_PATH).split('\\\\').join('/')) ?? [])\n        graph.invalidateModule(mod);",
+    "new": "      for (const mod of graph?.getModulesByFile(resolve(root, PINS_PATH).split('\\\\').join('/')) ?? []) void mod;",
     "tests": [
       "test/systems/firstVisit/fv_versions.test.js"
     ],

@@ -62,8 +62,8 @@
   {
     "name": "DA13-7-a-file-depends-on-its-place",
     "file": "scripts/desktopRelease.mjs",
-    "old": "      const { encoding, data } = encodeFile(p, bytes);\n",
-    "new": "      const { encoding, data } = encodeFile(p, Buffer.concat([Buffer.from(String(offset)), bytes]));\n",
+    "old": "      const { encoding, data } = encodeFile(p, bytes);",
+    "new": "      const { encoding, data } = encodeFile(p, Buffer.concat([Buffer.from(String(offset)), bytes]));",
     "tests": [
       "test/tooling/da13_gamechannel.test.js"
     ],
@@ -423,7 +423,7 @@
   {
     "name": "DA13-43-the-release-without-its-game",
     "file": "scripts/desktopRelease.mjs",
-    "old": "  GAME_FILES.manifest, GAME_FILES.pack,\n]);",
+    "old": "  GAME_FILES.manifest,\n  GAME_FILES.pack,\n]);",
     "new": "]);",
     "tests": [
       "test/tooling/da13_gamechannel.test.js"
@@ -443,8 +443,8 @@
   {
     "name": "DA13-45-a-moved-id-passes",
     "file": "scripts/desktopRelease.mjs",
-    "old": "  if (!sameShell && shellChanged === false) problems.push(",
-    "new": "  if (false) problems.push(",
+    "old": "  if (!sameShell && shellChanged === false)\n    problems.push(\"the shell id moved with no shell file changed - every update would be the installer's\");",
+    "new": "  if (false) problems.push(\"the shell id moved with no shell file changed - every update would be the installer's\");",
     "tests": [
       "test/tooling/da13_gamechannel.test.js"
     ],
@@ -453,8 +453,8 @@
   {
     "name": "DA13-46-the-icon-not-the-shell",
     "file": "scripts/desktopRelease.mjs",
-    "old": "  if (typeof pkg.build?.icon === 'string') out.push(fromApp(pkg.build.icon));\n",
-    "new": "",
+    "old": "  if (typeof pkg.build?.icon === 'string') out.push(fromApp(pkg.build.icon));\n  for (const f of pkg.build?.files ?? []) {",
+    "new": "  for (const f of pkg.build?.files ?? []) {",
     "tests": [
       "test/tooling/da13_gamechannel.test.js"
     ],
@@ -463,8 +463,8 @@
   {
     "name": "DA13-47-the-game-in-the-shell-id",
     "file": "scripts/desktopRelease.mjs",
-    "old": " || f.from === '../dist') continue;",
-    "new": ") continue;",
+    "old": "    if (typeof f !== 'object' || !f.from?.startsWith('../') || f.from === '../dist') continue;",
+    "new": "    if (typeof f !== 'object' || !f.from?.startsWith('../')) continue;",
     "tests": [
       "test/tooling/da13_gamechannel.test.js"
     ],

@@ -164,8 +164,8 @@
   {
     "name": "PLUS-SITE-the-kit-not-injected",
     "file": "scripts/landingHtml.mjs",
-    "old": "      { tag: 'style', attrs: { id: 'plus-kit' }, children: SITE_KIT_CSS, injectTo: 'head' },\n",
-    "new": "",
+    "old": "      { tag: 'style', attrs: { id: 'plus-kit' }, children: SITE_KIT_CSS, injectTo: 'head' },\n      ...skinTags(tokens, fonts),",
+    "new": "      ...skinTags(tokens, fonts),",
     "tests": [
       "test/ui/enhanced/plus_menu_site.test.js"
     ]

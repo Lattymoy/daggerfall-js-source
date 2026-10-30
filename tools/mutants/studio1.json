@@ -140,8 +140,8 @@
   {
     "name": "STUDIO1-no-side-limit",
     "file": "scripts/studioArtIndex.mjs",
-    "old": "size.width > STUDIO_MAX_SIDE ||",
-    "new": "size.width > STUDIO_MAX_SIDE * 2 ||",
+    "old": "    if (!size.width || !size.height || size.width > STUDIO_MAX_SIDE || size.height > STUDIO_MAX_SIDE) {",
+    "new": "    if (!size.width || !size.height || size.width > STUDIO_MAX_SIDE * 2 || size.height > STUDIO_MAX_SIDE) {",
     "tests": [
       "test/systems/studioArt/studio1_folder.test.js"
     ]
@@ -158,8 +158,8 @@
   {
     "name": "STUDIO1-a-stray-file-unsaid",
     "file": "scripts/studioArtIndex.mjs",
-    "old": "      if (path !== STUDIO_ROSTER && path !== STUDIO_README) problems.push(",
-    "new": "      if (false) problems.push(",
+    "old": "      if (path !== STUDIO_ROSTER && path !== STUDIO_README)",
+    "new": "      if (false)",
     "tests": [
       "test/systems/studioArt/studio1_folder.test.js"
     ]
@@ -167,8 +167,8 @@
   {
     "name": "STUDIO1-the-listing-not-built",
     "file": "scripts/studioArtIndex.mjs",
-    "old": "      this.emitFile({ type: 'asset', fileName: `${STUDIO_DIR}/${STUDIO_INDEX}`, source: studioIndexJson(listing) });",
-    "new": "",
+    "old": "      this.emitFile({ type: 'asset', fileName: `${STUDIO_DIR}/${STUDIO_INDEX}`, source: studioIndexJson(listing) });\n    },",
+    "new": "    },",
     "tests": [
       "test/systems/studioArt/studio1_folder.test.js"
     ]
@@ -185,8 +185,8 @@
   {
     "name": "STUDIO1-an-artist-twice-by-case",
     "file": "scripts/studioArtIndex.mjs",
-    "old": "x.folder.toLowerCase() === a.folder.toLowerCase()",
-    "new": "x.folder === a.folder",
+    "old": "    if (artists.some((x) => x.folder.toLowerCase() === a.folder.toLowerCase())) {",
+    "new": "    if (artists.some((x) => x.folder === a.folder)) {",
     "tests": [
       "test/systems/studioArt/studio1_folder.test.js"
     ]
@@ -833,8 +833,8 @@
   {
     "name": "STUDIO1-roster-name-unread",
     "file": "scripts/studioArtIndex.mjs",
-    "old": " || typeof a.name !== 'string' || !a.name || typeof a.approved",
-    "new": " || typeof a.approved",
+    "old": "      typeof a.name !== 'string' ||\n      !a.name ||\n      typeof a.approved !== 'string' ||",
+    "new": "      typeof a.approved !== 'string' ||",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -842,8 +842,8 @@
   {
     "name": "STUDIO1-roster-approved-empty",
     "file": "scripts/studioArtIndex.mjs",
-    "old": "typeof a.approved !== 'string' || !a.approved) {",
-    "new": "typeof a.approved !== 'string') {",
+    "old": "      typeof a.approved !== 'string' ||\n      !a.approved",
+    "new": "      typeof a.approved !== 'string'",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -851,8 +851,8 @@
   {
     "name": "STUDIO1-roster-reserved-kept",
     "file": "scripts/studioArtIndex.mjs",
-    "old": "    if (!STUDIO_NAME.test(a?.folder ?? '') || STUDIO_RESERVED.test(a.folder) || typeof",
-    "new": "    if (!STUDIO_NAME.test(a?.folder ?? '') || typeof",
+    "old": "      STUDIO_RESERVED.test(a.folder) ||\n      typeof a.name !== 'string' ||",
+    "new": "      typeof a.name !== 'string' ||",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -896,8 +896,8 @@
   {
     "name": "STUDIO1-height-zero-ok",
     "file": "scripts/studioArtIndex.mjs",
-    "old": "    if (!size.width || !size.height || size.width",
-    "new": "    if (!size.width || size.width",
+    "old": "    if (!size.width || !size.height || size.width > STUDIO_MAX_SIDE || size.height > STUDIO_MAX_SIDE) {",
+    "new": "    if (!size.width || size.width > STUDIO_MAX_SIDE || size.height > STUDIO_MAX_SIDE) {",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -905,8 +905,8 @@
   {
     "name": "STUDIO1-height-unbounded",
     "file": "scripts/studioArtIndex.mjs",
-    "old": " || size.height > STUDIO_MAX_SIDE) {",
-    "new": ") {",
+    "old": "    if (!size.width || !size.height || size.width > STUDIO_MAX_SIDE || size.height > STUDIO_MAX_SIDE) {",
+    "new": "    if (!size.width || !size.height || size.width > STUDIO_MAX_SIDE) {",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -914,8 +914,8 @@
   {
     "name": "STUDIO1-png-short-21",
     "file": "scripts/studioArtIndex.mjs",
-    "old": "  if (b.length < 24 || sig.some",
-    "new": "  if (b.length < 21 || sig.some",
+    "old": "  if (b.length < 24 || sig.some((v, i) => b[i] !== v) || b.toString('latin1', 12, 16) !== 'IHDR') return null;",
+    "new": "  if (b.length < 21 || sig.some((v, i) => b[i] !== v) || b.toString('latin1', 12, 16) !== 'IHDR') return null;",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -923,8 +923,8 @@
   {
     "name": "STUDIO1-png-ihdr-unread",
     "file": "scripts/studioArtIndex.mjs",
-    "old": " || b.toString('latin1', 12, 16) !== 'IHDR') return null;",
-    "new": ") return null;",
+    "old": "  if (b.length < 24 || sig.some((v, i) => b[i] !== v) || b.toString('latin1', 12, 16) !== 'IHDR') return null;",
+    "new": "  if (b.length < 24 || sig.some((v, i) => b[i] !== v)) return null;",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]

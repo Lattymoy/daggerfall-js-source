@@ -45,7 +45,11 @@ export const STUDIO_LITTER = /^(\.DS_Store|Thumbs\.db|desktop\.ini|\._.*)$/;
 /** Every file under `dir`, as paths under it, sorted - each with whether it is a link (`link`). */
 function walk(dir, base = '') {
   let names;
-  try { names = readdirSync(join(dir, base), { withFileTypes: true }); } catch { return []; }
+  try {
+    names = readdirSync(join(dir, base), { withFileTypes: true });
+  } catch {
+    return [];
+  }
   const out = [];
   for (const d of names) {
     if (STUDIO_LITTER.test(d.name)) continue;
@@ -67,17 +71,31 @@ export function pngSize(bytes) {
 /** The roster, read; `problems` gets what is wrong with it. */
 export function readStudioRoster(root = process.cwd(), problems = []) {
   let doc;
-  try { doc = JSON.parse(readFileSync(join(root, STUDIO_TREE, STUDIO_ROSTER), 'utf8')); } catch (e) {
+  try {
+    doc = JSON.parse(readFileSync(join(root, STUDIO_TREE, STUDIO_ROSTER), 'utf8'));
+  } catch (e) {
     problems.push(`${STUDIO_ROSTER}: the roster will not read (${e?.message ?? e}) - no artist's pictures are worn`);
     return [];
   }
   const artists = [];
   for (const a of Array.isArray(doc?.artists) ? doc.artists : []) {
-    if (!STUDIO_NAME.test(a?.folder ?? '') || STUDIO_RESERVED.test(a.folder) || typeof a.name !== 'string' || !a.name || typeof a.approved !== 'string' || !a.approved) {
-      problems.push(`${STUDIO_ROSTER}: ${JSON.stringify(a)} - an artist needs a folder (letters, digits, _ . -), a name, and the word that approved them`);
+    if (
+      !STUDIO_NAME.test(a?.folder ?? '') ||
+      STUDIO_RESERVED.test(a.folder) ||
+      typeof a.name !== 'string' ||
+      !a.name ||
+      typeof a.approved !== 'string' ||
+      !a.approved
+    ) {
+      problems.push(
+        `${STUDIO_ROSTER}: ${JSON.stringify(a)} - an artist needs a folder (letters, digits, _ . -), a name, and the word that approved them`,
+      );
       continue;
     }
-    if (artists.some((x) => x.folder.toLowerCase() === a.folder.toLowerCase())) { problems.push(`${STUDIO_ROSTER}: "${a.folder}" twice`); continue; }
+    if (artists.some((x) => x.folder.toLowerCase() === a.folder.toLowerCase())) {
+      problems.push(`${STUDIO_ROSTER}: "${a.folder}" twice`);
+      continue;
+    }
     artists.push(a);
   }
   return artists;
@@ -86,7 +104,13 @@ export function readStudioRoster(root = process.cwd(), problems = []) {
 /** The first bytes of a file - enough for a PNG's header. */
 function head(file) {
   const fd = openSync(file, 'r');
-  try { const b = Buffer.alloc(24); const n = readSync(fd, b, 0, 24, 0); return b.subarray(0, n); } finally { closeSync(fd); }
+  try {
+    const b = Buffer.alloc(24);
+    const n = readSync(fd, b, 0, 24, 0);
+    return b.subarray(0, n);
+  } finally {
+    closeSync(fd);
+  }
 }
 
 /**
@@ -102,24 +126,72 @@ export function studioListing(root = process.cwd()) {
   const keys = new Map();
   for (const { path, link } of walk(dir)) {
     if (!path.includes('/')) {
-      if (path !== STUDIO_ROSTER && path !== STUDIO_README) problems.push(`${path}: the studio's own folder holds only ${STUDIO_README} and ${STUDIO_ROSTER} - a picture goes in its artist's folder`);
+      if (path !== STUDIO_ROSTER && path !== STUDIO_README)
+        problems.push(
+          `${path}: the studio's own folder holds only ${STUDIO_README} and ${STUDIO_ROSTER} - a picture goes in its artist's folder`,
+        );
       continue;
     }
     const artist = path.split('/')[0];
-    if (path.split('/').some((n) => !STUDIO_NAME.test(n) || STUDIO_RESERVED.test(n))) { problems.push(`${path}: a name here is letters, digits and _ . - only, a letter or digit at each end (no spaces, accents, # or ? - the game asks for the picture by its name over the web)`); continue; }
-    if (!folders.has(artist)) { problems.push(`${path}: "${artist}" is not on the roster (${STUDIO_ROSTER}) - an artist is added there before their folder is worn`); continue; }
-    if (!/\.png$/i.test(path)) { problems.push(`${path}: only PNG pictures go in the studio (keep working files - .psd, .aseprite, .kra - outside public/; everything here is published)`); continue; }
+    if (path.split('/').some((n) => !STUDIO_NAME.test(n) || STUDIO_RESERVED.test(n))) {
+      problems.push(
+        `${path}: a name here is letters, digits and _ . - only, a letter or digit at each end (no spaces, accents, # or ? - the game asks for the picture by its name over the web)`,
+      );
+      continue;
+    }
+    if (!folders.has(artist)) {
+      problems.push(
+        `${path}: "${artist}" is not on the roster (${STUDIO_ROSTER}) - an artist is added there before their folder is worn`,
+      );
+      continue;
+    }
+    if (!/\.png$/i.test(path)) {
+      problems.push(
+        `${path}: only PNG pictures go in the studio (keep working files - .psd, .aseprite, .kra - outside public/; everything here is published)`,
+      );
+      continue;
+    }
     const e = studioFile(path);
-    if (!e) { problems.push(`${path}: the name says nothing the game wears - name it <archive>_<record>-<frame>.png (a dye after it as the game asks it: _Iron, never _iron or _Silver), a label after "${STUDIO_LABEL}" if you like (38181_1-0${STUDIO_LABEL}cart-side.png)`); continue; }
-    if (link) { problems.push(`${path}: a link, not a picture - the picture itself goes here (what a link points at is not in the commit)`); continue; }
+    if (!e) {
+      problems.push(
+        `${path}: the name says nothing the game wears - name it <archive>_<record>-<frame>.png (a dye after it as the game asks it: _Iron, never _iron or _Silver), a label after "${STUDIO_LABEL}" if you like (38181_1-0${STUDIO_LABEL}cart-side.png)`,
+      );
+      continue;
+    }
+    if (link) {
+      problems.push(
+        `${path}: a link, not a picture - the picture itself goes here (what a link points at is not in the commit)`,
+      );
+      continue;
+    }
     const full = join(dir, path);
     let bytes, first;
-    try { bytes = statSync(full).size; first = head(full); } catch (err) { problems.push(`${path}: will not read (${err?.code ?? err?.message ?? err})`); continue; }
-    if (bytes > STUDIO_MAX_BYTES) { problems.push(`${path}: ${(bytes / 1048576).toFixed(1)} MB - a picture may be ${STUDIO_MAX_BYTES / 1048576} MB at most`); continue; }
+    try {
+      bytes = statSync(full).size;
+      first = head(full);
+    } catch (err) {
+      problems.push(`${path}: will not read (${err?.code ?? err?.message ?? err})`);
+      continue;
+    }
+    if (bytes > STUDIO_MAX_BYTES) {
+      problems.push(
+        `${path}: ${(bytes / 1048576).toFixed(1)} MB - a picture may be ${STUDIO_MAX_BYTES / 1048576} MB at most`,
+      );
+      continue;
+    }
     const size = pngSize(first);
-    if (!size) { problems.push(`${path}: not a PNG inside (re-export it as PNG)`); continue; }
-    if (!size.width || !size.height || size.width > STUDIO_MAX_SIDE || size.height > STUDIO_MAX_SIDE) { problems.push(`${path}: ${size.width} x ${size.height} - a side may be ${STUDIO_MAX_SIDE} at most`); continue; }
-    if (keys.has(e.key)) { problems.push(`${path}: ${keys.get(e.key)} already paints ${e.key} - one picture a slot`); continue; }
+    if (!size) {
+      problems.push(`${path}: not a PNG inside (re-export it as PNG)`);
+      continue;
+    }
+    if (!size.width || !size.height || size.width > STUDIO_MAX_SIDE || size.height > STUDIO_MAX_SIDE) {
+      problems.push(`${path}: ${size.width} x ${size.height} - a side may be ${STUDIO_MAX_SIDE} at most`);
+      continue;
+    }
+    if (keys.has(e.key)) {
+      problems.push(`${path}: ${keys.get(e.key)} already paints ${e.key} - one picture a slot`);
+      continue;
+    }
     keys.set(e.key, path);
     files.push(path);
   }
