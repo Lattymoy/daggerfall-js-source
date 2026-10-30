@@ -668,7 +668,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     const herald = heraldOn(), follow = followOn();
     // AUDIT GUIDE T3: the tracked quest is let go when it is gone - every tick, faces on or off, so no save carries
     // a uid a later quest could be minted under (the uid counter is re-derived from the loaded quests, Q4-iv)
-    if (questTracker.pinned != null) {
+    if (questTracker.pinned != null && machineRow(questTracker.pinned)) {   // QUEST-AUDIT IV JOURNAL-2: a host row's pin goes with its row (below)
       const q = machine.quests.get(Number(questTracker.pinned));
       if (!q || q.questComplete || isShelved(q)) questTracker.pinned = null;   // QUEST-SHELF: one set aside is let go too
     }
@@ -687,6 +687,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     try {
       const seen = lens.look(ctx.questWhere ?? {});
       if (follow) questTracker.hear(seen);
+      if (follow && questTracker.pinned != null && !machineRow(questTracker.pinned) && !seen.quests.some((v) => v.id === questTracker.pinned)) questTracker.pinned = null;
       if (herald) questHerald.hear(seen);
     } catch (err) { warnNewsOnce(err); }
   }
@@ -702,6 +703,12 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
   // the bridge, so no host builds a lens of its own - and a load resets
   // it (restore, below), so the loaded game's quests are its baseline.
   const lens = new QuestLens({ questLog: () => bridge.questLog({ windows: false }) });   // AUDIT QUESTLINES LAW-11: a look a tick reads no line or ladder
+  const hostRows = [];   // QUEST-AUDIT IV JOURNAL-2: the host's own rows on the walk (bridge.addQuestRows)
+  const machineRow = (id) => /^\d+$/.test(String(id));   // a machine quest's row is its uid; a host's is its own key (`bounty:`, `hunt:`)
+  /** AUDIT JOURNAL-CLEAN F3's prune: a hidden uid whose quest no longer runs goes, before a new quest can take it; a host
+   *  row's id goes once its row leaves the walk (`host`, the walk's host ids), and stays at a load, its rows unread. */
+  const pruneHidden = (host = null) => notebook.pruneHiddenQuests([...machine.quests.values()].filter((q) => !q.questComplete).map((q) => q.uid)
+    .concat(host ?? notebook.getHiddenQuests().filter((id) => !machineRow(id))));
 
   const bridge = {
     machine, questLists, offerFlow, notebook, lens, questlines, lineOffers,
@@ -807,8 +814,11 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
       // JOURNAL-CLEAN: `hidden` is the uids the player hid from the journal. The rows stay in `active` - the lens,
       // the tracker and the marks read this walk and a hidden quest still runs - and the journal's rail
       // (ui/quest/questRail.js) is what leaves them out.
-      // AUDIT JOURNAL-CLEAN F3: an id hidden for a quest no longer running is dropped - whatever ended it
-      notebook?.pruneHiddenQuests?.([...machine.quests.values()].filter((q) => !q.questComplete).map((q) => q.uid));
+      // AUDIT JOURNAL-CLEAN F3: an id hidden for a quest no longer running is dropped - whatever ended it. QUEST-AUDIT IV
+      // JOURNAL-2: the host's rows are the walk's too, laid after the machine's
+      const host = hostRows.flatMap((rows) => rows() ?? []);
+      active.push(...host);
+      pruneHidden(host.map((r) => r.id));
       return { active, finished: notebook?.getFinishedQuests() ?? [], ended, hidden: notebook?.getHiddenQuests?.() ?? [], shelved, unlogged, lines: windows && questlinesOn() ? questlines.lineRows() : [], ladders: windows && questlinesOn() ? ladderRows() : [] };   // QL12: the questlines and the guilds' ladders - none while they are off
     },
 
@@ -820,6 +830,11 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
      * filed entries (the classic logbook's right-click remove, ui/quest/questJournal.js removeEntry, is the same store);
      * hide/unhide only file a uid in the notebook's hidden list, which saves with the notebook.
      */
+    /** QUEST-AUDIT IV JOURNAL-2: a host lays rows of its own on the walk - world.js the bounties, the revenant hunts and
+     *  Legacy's death quests - through this one seam, so what the player tracks or hides among them lasts as they do
+     *  (a wrapper laid them past the bridge, which let a tracked one go each tick and unhid a hidden one at once). */
+    addQuestRows(rows) { hostRows.push(rows); },
+
     journalClean: {
       /** The archived entry at notebook index `i` (the rail's `f:<i>` key); answers whether one went. */
       removeFinished(i) {
@@ -1077,7 +1092,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
       machine.seedStory(notebook.getFinishedQuests().map((e) => e[0]?.render).filter((r) => r?.kind === 'quest'));
       machine.seedSpine(notebook.getFinishedQuests().map((e) => e[0]?.render));   // MAIN-SPINE: ...and an opener it files began in this game
       // AUDIT JOURNAL-CLEAN F3: ...and at the load, before any new quest can take a uid a stale id names
-      notebook?.pruneHiddenQuests?.([...machine.quests.values()].filter((q) => !q.questComplete).map((q) => q.uid));
+      pruneHidden();
       questLists.oneTimeQuestsAccepted = data.oneTimeQuestsAccepted ? [...data.oneTimeQuestsAccepted] : null;
       questlines.restore(data.questlines);   // QL3: an older envelope carries none - nothing waits
       lens.reset();   // GUIDE1: a loaded game is not news

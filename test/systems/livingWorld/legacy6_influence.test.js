@@ -26,6 +26,7 @@ import { PERSON_MOVE_SPEED } from '../../../src/characters/mobile/mobilePerson.j
 import { LOCATION_TYPES } from '../../../src/formats/mapsFile.js';
 import { synthTown } from '../../lwTown.mjs';
 import { hostText } from '../../hostText.mjs';   // HOST-SPLIT 2: the world host whole
+import { questRail } from '../../../src/ui/quest/questRail.js';   // QUEST-AUDIT IV JOURNAL-7: the journal's own reader
 
 const rd = (f) => readFileSync(new URL(`../../../${f}`, import.meta.url), 'utf8');
 const mem = () => { const m = new Map(); return { map: m, get length() { return m.size; }, key: (i) => [...m.keys()][i] ?? null, getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => { m.set(k, String(v)); }, removeItem: (k) => { m.delete(k); } }; };
@@ -227,7 +228,7 @@ test('LEGACY6 the host: the standing written as the member is saved; their fall 
   const fallen = personOf(w.host.family, founder.id);
   assert.equal(fallen.died.by, 'Grushnak the Butcher', 'the record names it');
   const q = w.host.questLogEntries()[0];
-  assert.ok(q.messages[0].includes('It was Grushnak the Butcher that struck them down.'), 'the death quest names it');
+  assert.ok(questRail({ active: [q] }).active[0].entries[0].includes('It was Grushnak the Butcher that struck them down.'), 'the death quest names it');   // QUEST-AUDIT IV JOURNAL-7: as the rail reads it
   assert.equal(loadFamily(w.storage, f.id).news.length, 2, 'the store holds the news');
 });
 

@@ -441,16 +441,22 @@ test('AUDIT STARTS W3 a load at a running province start\'s own dungeon, its com
   assert.match(W, /modes\?\.startInDungeon\?\.\(\{ locationKey: extras\.locationKey, fromLoad: true, recorded: starts\.resumesAt\(pixel\) \? undefined : extras\.dungeon \?\? \{\} \}\)/);
 });
 
-test('AUDIT STARTS W5 a save from before the story began - no start, no curse, no main quest - loads with the commission handed over and the curse beside it; a story begun, a start running, or a save from before the story was kept is left alone; both load doors ask (mutants: the healing, the begun story\'s check)', () => {
-  const machine = (o = {}) => ({ storyLegacy: false, storyStarted: new Set(), quests: new Map(), begun: [], startQuestByName(n) { this.begun.push(n); }, ...o });
-  let m = machine();
-  assert.equal(startsHost({ machine: m }).restored(), true);
-  assert.deepEqual(m.begun, ['S0000977', HAND_START_QUEST], 'the commission in hand, the curse beside it');
-  for (const o of [{ storyStarted: new Set(['S0000977']) }, { storyLegacy: true }, { quests: new Map([[1, { questName: '_STARTSK' }]]) }, { quests: new Map([[1, { questName: '_BRISIEN' }]]) }]) {
-    m = machine(o);
-    assert.equal(startsHost({ machine: m }).restored(), true);
-    assert.deepEqual(m.begun, [], `left alone: ${JSON.stringify(Object.keys(o))}`);
+test('AUDIT STARTS W5 a save from before the story began - no start, no curse, no main quest - loads with the commission handed over and the curse beside it; a story begun, a start running, the Curse or the backbone on the table is left alone; both load doors ask (QUEST-AUDIT IV START-2, PIN MOVED: on the real machine - the hand-built one held a Curse among the story\'s steps, which the machine never writes) (mutants: the healing, the begun story\'s check)', () => {
+  const names = (m) => [...m.quests.values()].map((q) => q.questName);
+  let p = played();
+  assert.equal(startsHost({ machine: p.m }).restored(), true);
+  assert.deepEqual(names(p.m), ['S0000977', HAND_START_QUEST], 'the commission in hand, the curse beside it');
+  for (const begun of [['S0000977'], ['S0000999'], [STARTS[1].quest], ['S0000977', 'S0000999']]) {
+    p = played();
+    for (const n of begun) p.m.startQuestByName(n);
+    assert.deepEqual(names(p.m), begun, `begun: ${begun}`);
+    assert.equal(startsHost({ machine: p.m }).restored(), true);
+    assert.deepEqual(names(p.m), begun, `left alone: ${begun}`);
   }
+  p = played();
+  p.m.storyStarted.add('S0000001');   // a step of the story begun and since removed (STORY-AGAIN's record)
+  startsHost({ machine: p.m }).restored();
+  assert.deepEqual(names(p.m), [], 'left alone: a story step begun');
   assert.equal(startsHost().restored(), true, 'no machine: nothing to heal');
   const W = rd('src/scenes/world.js');
   assert.equal([...W.matchAll(/_questStarted = starts\.restored\(\);/g)].length, 2, 'the two load doors');

@@ -1247,7 +1247,7 @@ export class QuestMachine {
     // serializer gives a missing member.
     if (data.globalVars) this.globalVars = new Map(data.globalVars);
     // MAIN-SPINE: the record as saved, and what the saved table says - a backbone that will not rebuild below ran all the same
-    this.spine = spineRecord(data.spine, (data.quests ?? []).map((q) => q?.questName));
+    this.spine = spineRecord(data.spine, data.quests ?? []);
     const clocks = this._questClocks();   // TIME3
     for (const questData of data.quests ?? []) {
       try {
@@ -1876,9 +1876,16 @@ export class QuestMachine {
     if ((entries ?? []).some((e) => e?.kind === 'quest' && questNameIn([SPINE_OPENER], String(e.quest ?? '')))) this.spine.opened = true;
   }
 
+  /** QUEST-AUDIT IV START-2: has this game's story begun - a quest of the world's own on the table (PROTECTED_QUESTS:
+   *  the Curse and the backbone stand long past the rest), or a step of the story? A character saved before any began
+   *  holds none (scenes/startsHost.js restored). The Curse is never a story step (storyStarted). */
+  storyBegun() {
+    return this.storyStarted.size > 0 || [...this.quests.values()].some(isProtectedQuest);
+  }
+
   /** MAIN-SPINE: the record as the save writes it - the machine's, and its table's word, as a load reads it (spineRecord). */
   _spineData() {
-    const spine = spineRecord(this.spine, [...this.quests.values()].map((q) => q.questName));
+    const spine = spineRecord(this.spine, [...this.quests.values()]);
     return spine.opened || spine.ran ? { spine } : {};
   }
 

@@ -899,7 +899,9 @@ export function createLegacyHost(deps) {
     store();
     return true;
   }
-  /** The death quests in the quest log - the Quest Guide's tracker and marks read them (GUIDE4, GUIDE5). */
+  /** The death quests in the quest log - the Quest Guide's tracker and marks read them (GUIDE4, GUIDE5). QUEST-AUDIT IV
+   *  JOURNAL-7: each line a text token, as the rail reads a host's entry (questRail.js journalLines) - plain strings drew none. */
+  const textToken = (text) => ({ formatting: 'text', text });
   function questLogEntries() {
     if (!family || !deps.on() || past) return [];
     return openRemains().map((r) => {
@@ -910,11 +912,11 @@ export function createLegacyHost(deps) {
           ...(r.items.some((it) => isHeirloom(it)) ? ['Something of theirs lies with them, a piece the house will want back.'] : []),
           'Find them, and carry them home.']
         : [`You carry the remains of ${r.name}.`, 'Lay them to rest at any temple, or at the family’s seat, and their blessing will stay with you.'];
-      return { id: `${LEGACY_QUEST_PREFIX}${r.id}`, name: `The Bones of ${r.name}`, questName: 'LEGACY', legacy: true, messages: [lines] };
+      return { id: `${LEGACY_QUEST_PREFIX}${r.id}`, name: `The Bones of ${r.name}`, questName: 'LEGACY', legacy: true, messages: [lines.map(textToken)] };
     }).concat(claimedByOthers().map((r) => {
       const by = personOf(family, r.by);
       return { id: `${LEGACY_QUEST_PREFIX}${r.id}`, name: `The Bones of ${r.name}`, questName: 'LEGACY', legacy: true,
-        messages: [[LEGACY_TEXT.claimed(r.name, by ? fullNameOf(by.given, by.surname) : 'Another of the house'), 'Play as them to carry it on.']] };
+        messages: [[LEGACY_TEXT.claimed(r.name, by ? fullNameOf(by.given, by.surname) : 'Another of the house'), 'Play as them to carry it on.'].map(textToken)] };
     }));
   }
   /** The remains still lying, ringed on the maps where the fallen fell - while the mod is on (AUDIT LEGACY B8). */
