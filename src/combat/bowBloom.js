@@ -5,7 +5,7 @@
 // for its own clock. A departure: DFU's arrows fly true.
 
 /** Degrees a shot adds, the widest the circle grows, degrees a second it shrinks back. */
-export const BOW_BLOOM = Object.freeze({ step: 2, most: 8, settle: 4 });
+export const BOW_BLOOM = Object.freeze({ step: 2, most: 8, settle: 3 });
 
 let _deg = 0, _at = 0;
 const bloomClock = () => (typeof performance !== 'undefined' ? performance.now() : Date.now()) / 1000;
@@ -29,7 +29,7 @@ export function bowBloomShot(dir, now = bloomClock(), rand = Math.random) {
 // BOW-FAST (2026-10-30: "stackable damage reduction if you shoot too fast"): a shot within `within` s of the last adds a
 // stack, at most `most`, each taking `cut` per cent off its damage; a shot after a longer rest has none. The stacks ride
 // the shaft from its loose (`fast`) and are read where it lands (bowFastDamage), PvE and PvP alike.
-export const BOW_FAST = Object.freeze({ cut: 20, most: 4, within: 0.5 });
+export const BOW_FAST = Object.freeze({ cut: 20, most: 4, within: 1 });
 let _stacks = 0, _last = -Infinity, _landing = /** @type {any} */ (null);
 
 /** A shot loosed now: its stacks. */
