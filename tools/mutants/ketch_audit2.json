@@ -152,8 +152,8 @@
   {
     "name": "KT2-the-belly-bilge-solid",
     "file": "src/world/ketch/ketchModel.js",
-    "old": "[out[0], -0.8, out[2]]);",
-    "new": "[out[0], -0.8, out[2]], null, hullRunSolid(a, b));",
+    "old": "      [out[0], -0.8, out[2]],\n    );",
+    "new": "      [out[0], -0.8, out[2]],\n      null,\n      hullRunSolid(a, b),\n    );",
     "note": "Her bilge to her keel solid: a body under a fallen section in her belly.",
     "tests": [
       "test/world/ketch_audit2_walk.test.js"
@@ -162,8 +162,8 @@
   {
     "name": "KT2-the-belly-bottom-solid",
     "file": "src/world/ketch/ketchModel.js",
-    "old": "KT_HULL.keel, [0, -1, 0]);   // AUDIT KETCH II L4-1",
-    "new": "KT_HULL.keel, [0, -1, 0], true);   // AUDIT KETCH II L4-1",
+    "old": "  K.fan(R.hull, keel.slice().reverse(), KT_HULL.keel, [0, -1, 0]); // AUDIT KETCH II L4-1: drawn only - a fall inside her goes on to the void's cast-back",
+    "new": "  K.fan(R.hull, keel.slice().reverse(), KT_HULL.keel, [0, -1, 0], true); // AUDIT KETCH II L4-1: drawn only - a fall inside her goes on to the void's cast-back",
     "note": "Her bottom solid: a body under a fallen section on it.",
     "tests": [
       "test/world/ketch_audit2_walk.test.js"
@@ -172,8 +172,8 @@
   {
     "name": "KT2-the-bulwark-gap",
     "file": "src/world/ketch/ketchModel.js",
-    "old": "const meet = KT_BRIDGE.z - Math.sqrt(KT_BRIDGE.r * KT_BRIDGE.r - KT_WAIST.x1 * KT_WAIST.x1);",
-    "new": "const meet = 179;",
+    "old": "  const meet = KT_BRIDGE.z - Math.sqrt(KT_BRIDGE.r * KT_BRIDGE.r - KT_WAIST.x1 * KT_WAIST.x1);",
+    "new": "  const meet = 179;",
     "note": "The bulwark short of the disc: a walk off her side.",
     "tests": [
       "test/world/ketch_audit2_walk.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "KT2-the-wheel-west",
     "file": "src/world/ketch/ketchModel.js",
-    "old": "const P = (a) => [E.x + Math.cos(a) * fr, fy + Math.sin(a) * fr, fz];",
-    "new": "const P = (a) => [E.x - E.r - 1.3, fy + Math.sin(a) * fr, E.z + Math.cos(a) * fr];",
+    "old": "      const P = (a) => [E.x + Math.cos(a) * fr, fy + Math.sin(a) * fr, fz];",
+    "new": "      const P = (a) => [E.x - E.r - 1.3, fy + Math.sin(a) * fr, E.z + Math.cos(a) * fr];",
     "note": "The flywheel's face through socket 1 again.",
     "tests": [
       "test/world/ketch_audit2_walk.test.js"
@@ -192,8 +192,8 @@
   {
     "name": "KT2-the-wheel-drawn-only",
     "file": "src/world/ketch/ketchModel.js",
-    "old": "uv(a1), [0, 0, -1], true);\n      K.tri(R.gear, [E.x, fy, fz], P(a0), P(a1), [0.5, 0.5], uv(a0), uv(a1), [0, 0, 1], true);",
-    "new": "uv(a1), [0, 0, -1]);\n      K.tri(R.gear, [E.x, fy, fz], P(a0), P(a1), [0.5, 0.5], uv(a0), uv(a1), [0, 0, 1]);",
+    "old": "      K.tri(R.gear, [E.x, fy, fz], P(a0), P(a1), [0.5, 0.5], uv(a0), uv(a1), [0, 0, -1], true);\n      K.tri(R.gear, [E.x, fy, fz], P(a0), P(a1), [0.5, 0.5], uv(a0), uv(a1), [0, 0, 1], true);",
+    "new": "      K.tri(R.gear, [E.x, fy, fz], P(a0), P(a1), [0.5, 0.5], uv(a0), uv(a1), [0, 0, -1]);\n      K.tri(R.gear, [E.x, fy, fz], P(a0), P(a1), [0.5, 0.5], uv(a0), uv(a1), [0, 0, 1]);",
     "note": "The flywheel walked through.",
     "tests": [
       "test/world/ketch_audit2_walk.test.js"

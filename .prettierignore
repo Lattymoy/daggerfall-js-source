@@ -84,6 +84,8 @@
 /src/ui/wild/*/
 !/src/world/
 /src/world/*
+!/src/world/ketch/
+/src/world/ketch/*/
 !/src/world/lands/
 /src/world/lands/*/
 !/src/world/peaks/

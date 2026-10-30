@@ -2,8 +2,8 @@
   {
     "name": "KTL3-awake-from-the-hello",
     "file": "src/world/ketch/ketchStates.js",
-    "old": "out.ship = singing ? KT_SHIP.singing : sg >= KT_STAGE.sailwalk ? KT_SHIP.awake : KT_SHIP.asleep;",
-    "new": "out.ship = singing ? KT_SHIP.singing : sg >= KT_STAGE.watch ? KT_SHIP.awake : KT_SHIP.asleep;",
+    "old": "  out.ship = singing ? KT_SHIP.singing : sg >= KT_STAGE.sailwalk ? KT_SHIP.awake : KT_SHIP.asleep;",
+    "new": "  out.ship = singing ? KT_SHIP.singing : sg >= KT_STAGE.watch ? KT_SHIP.awake : KT_SHIP.asleep;",
     "tests": [
       "test/world/ketch/ketch_states.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "KTL3-singing-after-the-fall",
     "file": "src/world/ketch/ketchStates.js",
-    "old": "now >= (ws.op ?? Infinity) && !ws.fell && !ws.lost;",
-    "new": "now >= (ws.op ?? Infinity) && !ws.lost;",
+    "old": "  const singing = !!ws && now >= (ws.op ?? Infinity) && !ws.fell && !ws.lost;",
+    "new": "  const singing = !!ws && now >= (ws.op ?? Infinity) && !ws.lost;",
     "tests": [
       "test/world/ketch/ketch_states.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "KTL3-the-appetite-of-the-need-alone",
     "file": "src/world/ketch/ketchStates.js",
-    "old": "clamp01(out.banked / out.need)",
-    "new": "clamp01(1 / out.need)",
+    "old": "  out.appetite = out.need > 0 ? clamp01(out.banked / out.need) : 0;",
+    "new": "  out.appetite = out.need > 0 ? clamp01(1 / out.need) : 0;",
     "tests": [
       "test/world/ketch/ketch_states.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "KTL3-a-taken-cradle-full",
     "file": "src/world/ketch/ketchStates.js",
-    "old": "const fill = (v, ms) => (v === 1 ? 1 : clamp01(1 - (v - now) / ms));",
-    "new": "const fill = (v, ms) => (v === 1 ? 1 : clamp01(1 + 0 * ms));",
+    "old": "  const fill = (v, ms) => (v === 1 ? 1 : clamp01(1 - (v - now) / ms));",
+    "new": "  const fill = (v, ms) => (v === 1 ? 1 : clamp01(1 + 0 * ms));",
     "tests": [
       "test/world/ketch/ketch_states.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "KTL3-the-forks-unread",
     "file": "src/world/ketch/ketchStates.js",
-    "old": "for (const q of ws?.fk?.c ?? []) {",
-    "new": "for (const q of []) {",
+    "old": "  for (const q of ws?.fk?.c ?? []) {",
+    "new": "  for (const q of []) {",
     "tests": [
       "test/world/ketch/ketch_states.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "KTL3-a-section-warned-while-gone",
     "file": "src/world/ketch/ketchStates.js",
-    "old": "else { out.secGone[k] = 1;",
-    "new": "else { out.secWarn[k] = 1; out.secGone[k] = 1;",
+    "old": "      out.secGone[k] = 1;",
+    "new": "      out.secWarn[k] = 1;\n      out.secGone[k] = 1;",
     "tests": [
       "test/world/ketch/ketch_states.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "KTL3-the-lifts-part-off-its-round",
     "file": "src/world/ketch/ketchStates.js",
-    "old": "L.phase < W + R ? KT_LIFT_PART.rising",
-    "new": "L.phase < W + R ? KT_LIFT_PART.top",
+    "old": "        ? KT_LIFT_PART.rising",
+    "new": "        ? KT_LIFT_PART.top",
     "tests": [
       "test/world/ketch/ketch_states.test.js"
     ]
@@ -66,7 +66,7 @@
     "name": "KTL3-the-record-made-anew",
     "file": "src/world/ketch/ketchStates.js",
     "old": "  for (let j = 0; j < out.sockets.length; j++) out.sockets[j] = cl?.sk?.[j] ? 1 : 0;",
-    "new": "  out.sockets = new Uint8Array(KT_SOCKETS.length); for (let j = 0; j < out.sockets.length; j++) out.sockets[j] = cl?.sk?.[j] ? 1 : 0;",
+    "new": "  out.sockets = new Uint8Array(KT_SOCKETS.length);\n  for (let j = 0; j < out.sockets.length; j++) out.sockets[j] = cl?.sk?.[j] ? 1 : 0;",
     "tests": [
       "test/world/ketch/ketch_states.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "KTL3-the-hatch-one-sided",
     "file": "src/world/ketch/ketchStates.js",
-    "old": "join: Object.freeze(['decks', 'below']), r: KT_PVS_HATCH_M }),",
-    "new": "join: Object.freeze(['decks']), r: KT_PVS_HATCH_M }),",
+    "old": "        join: Object.freeze(['decks', 'below']),",
+    "new": "        join: Object.freeze(['decks']),",
     "tests": [
       "test/world/ketch/ketch_states.test.js",
       "test/scenes/ketch_deck_host.test.js"
@@ -93,8 +93,8 @@
   {
     "name": "KTL3-the-door-rule-dropped",
     "file": "src/world/ketch/ketchStates.js",
-    "old": "p[2] - d.at[2]) <= (d.r ?? KT_PVS_DOOR_M))",
-    "new": "p[2] - d.at[2]) <= 0)",
+    "old": "    if (Math.hypot(p[0] - d.at[0], p[1] - d.at[1], p[2] - d.at[2]) <= (d.r ?? KT_PVS_DOOR_M))",
+    "new": "    if (Math.hypot(p[0] - d.at[0], p[1] - d.at[1], p[2] - d.at[2]) <= 0)",
     "tests": [
       "test/world/ketch/ketch_states.test.js",
       "test/scenes/ketch_deck_host.test.js"
@@ -337,8 +337,8 @@
   {
     "name": "KTSHIP-the-held-view-alone",
     "file": "src/world/ketch/ketchStates.js",
-    "old": "  if (here && here !== view) for (const g of KT_PVS[here]) out.add(g);",
-    "new": "",
+    "old": "  if (here && here !== view) for (const g of KT_PVS[here]) out.add(g); // AUDIT SHIP A2: a view held, the zone the eye stands in seen with it",
+    "new": "  // AUDIT SHIP A2: a view held, the zone the eye stands in seen with it",
     "tests": [
       "test/world/ketch/ketch_states.test.js"
     ],
