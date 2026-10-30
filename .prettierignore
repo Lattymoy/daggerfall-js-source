@@ -28,6 +28,8 @@
 /src/ui/ketch/*/
 !/src/ui/questlines/
 /src/ui/questlines/*/
+!/src/ui/starfall/
+/src/ui/starfall/*/
 !/src/ui/wardrobe/
 /src/ui/wardrobe/*/
 !/tools/

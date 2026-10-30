@@ -26,15 +26,30 @@ export function starBarModel(b, now) {
   const alpha = fell ? Math.max(0, Math.min(1, 1 - (since - STAR_BAR_FELL_HOLD_MS) / STAR_BAR_FELL_FADE_MS)) : 1;
   const circle = fell ? 0 : Math.max(0, b.circle | 0);
   return {
-    theme: 'star', ringCss: STAR_VIOLET_CSS,
-    name: b.name, title: STAR_CARD_TEXT.master(!!b.heart), epithet: '', epithetColor: null, marksView: null, trials: '',
-    frac, marks: [...STAR_CIRCLE_AT], spent: STAR_CIRCLE_AT.map((at) => frac < at),
-    warded: circle > 0, fallen: fell, callout: null,
-    wardedText: STAR_CARD_TEXT.warded(), fallenText: STAR_CARD_TEXT.felled(),   // AUDIT STAR U3: the bar's words in the player's language
-    wrath: null, wrathNear: false,
-    fighters: b.defenders | 0, fightersLine: STAR_CARD_TEXT.defenders(b.defenders | 0),
+    theme: 'star',
+    ringCss: STAR_VIOLET_CSS,
+    name: b.name,
+    title: STAR_CARD_TEXT.master(!!b.heart),
+    epithet: '',
+    epithetColor: null,
+    marksView: null,
+    trials: '',
+    frac,
+    marks: [...STAR_CIRCLE_AT],
+    spent: STAR_CIRCLE_AT.map((at) => frac < at),
+    warded: circle > 0,
+    fallen: fell,
+    callout: null,
+    wardedText: STAR_CARD_TEXT.warded(),
+    fallenText: STAR_CARD_TEXT.felled(), // AUDIT STAR U3: the bar's words in the player's language
+    wrath: null,
+    wrathNear: false,
+    fighters: b.defenders | 0,
+    fightersLine: STAR_CARD_TEXT.defenders(b.defenders | 0),
     host: circle > 0 ? STAR_CARD_TEXT.circle(circle, !!b.her) : null,
     reckonIn: null,
-    alpha: Math.round(alpha * 20) / 20, now, low: !fell && frac > 0 && frac < 0.2,
+    alpha: Math.round(alpha * 20) / 20,
+    now,
+    low: !fell && frac > 0 && frac < 0.2,
   };
 }
