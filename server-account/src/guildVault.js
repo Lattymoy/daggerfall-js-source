@@ -247,22 +247,23 @@ export async function vaultGrant(ctx, player, { character, member, level = null,
   const { db } = ctx;
   const a = await guildActorOf(db, player, character);
   if ('error' in a) return a;
-  if (!guildMay(a.me.rank, 'vaultGrant')) return { error: 'guild-rank' };
+  if (!guildMay(a.me.rank, 'vaultGrant', a.powers)) return { error: 'guild-rank' };
   const grant = vaultGrantOf({ level, limit });
   if (!grant) return { error: 'bad-vault-grant' };
   const rid = typeof member === 'string' && GUILD_MEMBER_RE.test(member) ? Number(member.slice(1)) : null;
   if (rid == null) return { error: 'no-member' };
   const t = await db.prepare('SELECT rowid AS rid, rank FROM guild_members WHERE rowid = ? AND guild_id = ?').bind(rid, a.me.guild_id).first();
   if (!t || Number(t.rank) === GUILD_RANK_MASTER) return { error: 'no-member' };
+  if (Number(t.rank) <= Number(a.me.rank)) return { error: 'guild-rank' };   // GUILD-RANKS: a rank given the grant grants below its own
   if (await spend(ctx, player)) return { error: 'guild-rate' };
   // AUDIT2 GUILD2 S5: while the granter still holds the rank it was read at - a guildmaster who handed the guild over
   // between the read and this write grants nothing
-  const r = await db.prepare(`UPDATE guild_members SET vault_level = ?1, vault_limit = ?2 WHERE rowid = ?3 AND guild_id = ?4 AND rank <> ${GUILD_RANK_MASTER}
+  const r = await db.prepare(`UPDATE guild_members SET vault_level = ?1, vault_limit = ?2 WHERE rowid = ?3 AND guild_id = ?4 AND rank <> ${GUILD_RANK_MASTER} AND rank > ?6
       AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?5 AND guild_id = ?4 AND rank = ?6)`)
     .bind(grant.level, grant.limit, rid, a.me.guild_id, a.me.rid, Number(a.me.rank)).run();
   if (!r?.meta?.changes) {
     const still = await db.prepare('SELECT rank FROM guild_members WHERE rowid = ? AND guild_id = ?').bind(a.me.rid, a.me.guild_id).first();
-    return { error: still && guildMay(Number(still.rank), 'vaultGrant') ? 'no-member' : 'guild-rank' };
+    return { error: still && guildMay(Number(still.rank), 'vaultGrant', a.powers) ? 'no-member' : 'guild-rank' };
   }
   return { ok: true, member, vault: vaultStanding(Number(t.rank), grant.level == null ? null : grant) };
 }

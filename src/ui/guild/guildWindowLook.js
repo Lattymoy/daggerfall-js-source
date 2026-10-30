@@ -11,7 +11,7 @@ import { t } from '../../systems/textManager.js';
 
 /** The pages in their groups, in the column's order - a page a guild does not show is passed over. */
 export const GUILD_NAV_GROUPS = Object.freeze([
-  Object.freeze({ id: 'guild', pages: Object.freeze(['overview', 'members']) }),
+  Object.freeze({ id: 'guild', pages: Object.freeze(['overview', 'members', 'ranks']) }),   // GUILD-RANKS
   Object.freeze({ id: 'wealth', pages: Object.freeze(['treasury', 'vault', 'stores', 'shop']) }),
   Object.freeze({ id: 'look', pages: Object.freeze(['arms', 'settings']) }),
 ]);
@@ -88,6 +88,14 @@ export const GUILD_WINDOW_CSS = `
 .dfguild-wareprice { font-size: 15px; color: #e8d39a; }
 .dfguild-warepayer { font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--dim, #9a9486); }
 .dfguild-wareheld { margin-top: 2px; padding: 3px 10px; font-size: 12px; color: #9fe08a; border: 1px solid rgba(120, 200, 100, .45); border-radius: 10px; }
+.dfguild-gridwrap { overflow-x: auto; max-width: 100%; }
+.dfguild-grid { border-collapse: collapse; font-size: 12px; margin: 4px 0; }
+.dfguild-grid th, .dfguild-grid td { padding: 4px 8px; border-bottom: 1px solid rgba(255, 255, 255, .06); text-align: center; }
+.dfguild-grid tr > th:first-child { text-align: left; color: #cdbf9f; font-weight: normal; white-space: nowrap; }
+.dfguild-grid tr:first-child th { color: var(--brass, #c08a3e); font-size: 11px; font-weight: normal; max-width: 90px; overflow-wrap: anywhere; }
+.dfguild-grid td { color: var(--dim, #9a9486); }
+.dfguild-grid input { width: 16px; height: 16px; accent-color: var(--brass, #c08a3e); cursor: pointer; }
+.dfguild-ranklist { display: flex; flex-direction: column; gap: 2px; padding: 4px 0; font-size: 13px; color: var(--bone, #e9e4d9); }
 .dfguild-logo { padding: 6px 0; }
 .dfguild-logo > img { width: 96px; height: 96px; border-radius: 6px; border: 2px solid var(--brass, #c08a3e); background: #141a22; object-fit: contain; }
 @media (max-width: 760px), (max-height: 520px) {

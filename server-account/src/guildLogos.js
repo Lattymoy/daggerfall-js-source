@@ -7,12 +7,13 @@
 // row moving from pending, so two moderators pressing at once decide it once. Discord is code: this file is the card.
 import { accountKind, displayName, overRate } from './accounts.js';
 import { marksOpenFor } from './marks.js';
-import { guildActorOf } from './guilds.js';
+import { guildActorOf, guildPowersOfRow } from './guilds.js';
 import { sendCard, discordOn, md } from './discord.js';
 import { mustChange } from './realm.js';
 import { POST_SENDER } from '../../src/net/postLaw.js';
 import { MARKS_RID_RE, MARKS_MAX, utcDay } from '../../src/net/marksLaw.js';
 import { GUILD_OPS_MAX, GUILD_OPS_WINDOW_S, GUILD_RANK_MASTER, guildMay } from '../../src/net/guild/guildLaw.js';
+import { guildPowerSql } from './guildPowerSql.js';   // GUILD-RANKS: the guild's powers, read in the statement
 import { GUILD_LOGO_FEE } from '../../src/net/guild/guildShopLaw.js';
 import { GUILD_LOGO_ID_RE, GUILD_LOGO_MAX_BYTES, GUILD_LOGO_GAP_S, guildLogoShapeOf, guildLogoUrl } from '../../src/net/guild/guildLogoLaw.js';
 import { poiImageMetaOf } from '../../src/poi/poiImage.js';
@@ -55,7 +56,7 @@ export async function submitGuildLogo(ctx, player, { character, image, rid } = {
   if (typeof rid !== 'string' || !MARKS_RID_RE.test(rid)) return { error: 'bad-rid' };
   const a = await guildActorOf(db, player, character);
   if (a.error) return a;
-  if (!guildMay(Number(a.me.rank), 'logo')) return { error: 'guild-rank' };
+  if (!guildMay(Number(a.me.rank), 'logo', a.powers)) return { error: 'guild-rank' };
   const g = a.me.guild_id;
   const had = await db.prepare('SELECT id FROM guild_logos WHERE by_player = ? AND rid = ?').bind(player.id, rid).first();
   if (had) return { ok: true, repeat: true, logo: had.id };
@@ -77,7 +78,7 @@ export async function submitGuildLogo(ctx, player, { character, image, rid } = {
       db.prepare(`INSERT INTO guild_logos (id, guild_id, state, obj, src, type, bytes, side, fee, by_player, by_name, rid, at, discord_state)
         SELECT ?1, ?2, 'pending', ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13
         WHERE COALESCE((SELECT balance FROM guild_marks WHERE guild_id = ?2), 0) >= ?8
-          AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?14 AND guild_id = ?2 AND player = ?9 AND rank = ${GUILD_RANK_MASTER})`)
+          AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?14 AND guild_id = ?2 AND player = ?9 AND ${guildPowerSql('logo', 'rank', '?2')})`)   // GUILD-RANKS
         .bind(id, g, obj, src, shape.type, bytes.byteLength, shape.side, GUILD_LOGO_FEE, player.id, displayName(player), rid, nowS, discordOn(env) ? 'due' : 'off', Number(a.me.rid)),
       db.prepare(`${INSERT_LINE} SELECT 'guild', guild_id, 'escrow', 'logo:' || id, 'logo-escrow', fee, ?2, at, by_player, by_name, rid || ':logo'
         FROM guild_logos WHERE id = ?1`).bind(id, utcDay(nowS)),
@@ -100,8 +101,8 @@ async function refusedLogo(db, player, rid, g, memberRid) {
   const twin = await db.prepare('SELECT id FROM guild_logos WHERE by_player = ? AND rid = ?').bind(player.id, rid).first();
   if (twin) return { ok: true, repeat: true, logo: twin.id };
   if (await db.prepare("SELECT 1 FROM guild_logos WHERE guild_id = ? AND state = 'pending'").bind(g).first()) return { error: 'logo-pending' };
-  const still = await db.prepare('SELECT rank FROM guild_members WHERE rowid = ? AND guild_id = ? AND player = ?').bind(memberRid, g, player.id).first();
-  if (!still || !guildMay(Number(still.rank), 'logo')) return { error: 'guild-rank' };
+  const still = await db.prepare('SELECT m.rank, g.ranks, g.powers FROM guild_members m JOIN guilds g ON g.id = m.guild_id WHERE m.rowid = ? AND m.guild_id = ? AND m.player = ?').bind(memberRid, g, player.id).first();
+  if (!still || !guildMay(Number(still.rank), 'logo', guildPowersOfRow(still))) return { error: 'guild-rank' };
   return { error: 'guild-marks-short' };
 }
 
@@ -163,7 +164,7 @@ export async function withdrawGuildLogo(ctx, player, { character } = {}) {
   const { db, nowS } = ctx;
   const a = await guildActorOf(db, player, character);
   if (a.error) return a;
-  if (!guildMay(Number(a.me.rank), 'logo')) return { error: 'guild-rank' };
+  if (!guildMay(Number(a.me.rank), 'logo', a.powers)) return { error: 'guild-rank' };
   const row = await db.prepare("SELECT id FROM guild_logos WHERE guild_id = ? AND state = 'pending'").bind(a.me.guild_id).first();
   if (!row) return { error: 'logo-none' };
   return (await endLogoReview(db, row.id, 'withdrawn', displayName(player), nowS, ctx.bucket)) ? { ok: true, withdrawn: row.id } : { error: 'logo-none' };
@@ -175,7 +176,7 @@ export async function clearGuildLogo(ctx, player, { character } = {}) {
   const { db, nowS } = ctx;
   const a = await guildActorOf(db, player, character);
   if (a.error) return a;
-  if (!guildMay(Number(a.me.rank), 'logo')) return { error: 'guild-rank' };
+  if (!guildMay(Number(a.me.rank), 'logo', a.powers)) return { error: 'guild-rank' };
   const g = await db.prepare('SELECT logo FROM guilds WHERE id = ?').bind(a.me.guild_id).first();
   if (!g?.logo) return { error: 'logo-none' };
   const obj = (await db.prepare('SELECT obj FROM guild_logos WHERE id = ?').bind(g.logo).first())?.obj ?? null;

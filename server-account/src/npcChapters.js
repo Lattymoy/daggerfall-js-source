@@ -287,7 +287,7 @@ export async function bidPatron(ctx, player, env, { character, faction, region, 
   if (hallHidden(faction) || !(await allChapters(db, nowS)).some((c) => c.faction === faction && c.region === region)) return { error: 'no-chapter' };
   const a = await guildActorOf(db, player, character);
   if (a.error) return a;
-  if (!guildMay(a.me.rank, 'withdraw')) return { error: 'guild-rank' };
+  if (!guildMay(a.me.rank, 'withdraw', a.powers)) return { error: 'guild-rank' };
   if (!marksOpenFor(player, env)) return { error: 'marks-closed' };
   const guild = String(a.me.guild_id);
   const prev = Number((await db.prepare('SELECT amount FROM npc_chapter_patron_bids WHERE faction = ?1 AND region = ?2 AND season = ?3 AND guild_id = ?4')

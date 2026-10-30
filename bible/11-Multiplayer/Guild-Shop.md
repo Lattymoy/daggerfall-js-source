@@ -122,9 +122,10 @@ The armlet is drawn by the aura host (`scenes/auraHost.js`) in every host that d
 
 ## 10. Versions, migration and pins
 
-Account acct228, migration `0198_guild_shop.sql`. Relay world295. Pins: `test/server/guildshop_service.test.js`,
-`test/render/insigniaarmlet.test.js`, `test/systems/guildfurniture.test.js`, `test/systems/naval/sailcloth.test.js`,
-`test/net/guild/guildshop_window.test.js`.
+Account acct228, migrations `0198_guild_shop.sql` and `0199_guild_ranks.sql`. Relay world295. Pins:
+`test/server/guildshop_service.test.js`, `test/render/insigniaarmlet.test.js`, `test/systems/guildfurniture.test.js`,
+`test/systems/naval/sailcloth.test.js`, `test/net/guild/guildshop_window.test.js`, `test/server/guildorphan.test.js`,
+`test/server/guildranks.test.js`, `test/net/guild/guildranks_window.test.js`.
 
 ## 11. Decided while building
 
@@ -133,3 +134,39 @@ Account acct228, migration `0198_guild_shop.sql`. Relay world295. Pins: `test/se
 - **A logo replaces the device, not the shield.** The field, the division and the border stay the guild's own.
 - **The sailcloth is the account's.** A guild's colours belong to whoever sails under them; the arms are read live.
 - **A ship's flag stays heraldic.** Its shapes are cut from the arms' parts; the sail carries the logo.
+
+## 12. A guild that is gone (GUILD-ORPHAN)
+
+The owner, 2026-10-30: "Ability to leave guild if it doesnt exist". A member row whose guild's row is gone held its
+character in a guild nobody could read: the window said no guild, and founding or joining said already in one. The
+service lets such a row go at the first look or act (`server-account/src/guilds.js` dropOrphan). A leave of it is a
+leave, with the hub's out order; the character may found or join again.
+
+## 13. More ranks, and what each may do (GUILD-RANKS)
+
+The owner, 2026-10-30: "More guild ranks plus rank permission edits". A guild keeps four to eight ranks
+(`GUILD_RANKS_MIN`, `GUILD_RANKS_MAX`), added or taken at the bottom on the window's **Ranks** page
+(`src/ui/guild/guildRanksPage.js`). A new member joins at the lowest. A rank taken moves its members to the new lowest,
+in the rename's own batch.
+
+The guildmaster sets which ranks hold each power it may give (`GUILD_POWERS_EDITABLE`): invite and answer requests,
+remove, promote, put in, take out, vault grants, the shop's furniture, the logo, the hall's door, its decor and the
+board's notes. The guild keeps its word in `guilds.powers`; a power it never set stands at the law's default. The
+guildmaster holds every power. Founding, handing on, disbanding, the name, the arms, the hall's sale and the ranks
+themselves stay the guildmaster's. Seats, castles, writs and contracts keep their own laws.
+
+Every check reads the guild's table: the read through `guildMay(rank, power, table)`, and each statement that guards a
+write through `guildPowerSql`, which reads `guilds.powers` inside the statement. A rank acts only on ranks under its own,
+the vault's grant too.
+
+## 14. Join requests (GUILD-REQUESTS)
+
+The owner, 2026-10-30: "Player guild join requests". A character in no guild asks a guild by its tag from the join page
+(`src/ui/guild/guildRequestNodes.js`). A request stands a week; a character holds three at once and a guild hears
+thirty (`server-account/src/guilds.js` requestToJoin, each bound asked inside the INSERT). Where the guild already
+invited the account, its invitation is answered instead.
+
+A rank that may invite sees the requests on the Members page and accepts or declines each. Accepted, the character joins
+at the lowest rank while the guild has room, and every other request it holds goes in the same batch. The asker gets a
+letter either way and may withdraw a request before it is answered.
+

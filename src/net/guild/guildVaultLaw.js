@@ -54,7 +54,7 @@ export const VAULT_RANK_DEFAULTS = Object.freeze({
  * @param {number} rank @param {{ level?: string|null, limit?: number|null }|null} [grant]
  */
 export function vaultStanding(rank, grant = null) {
-  const def = VAULT_RANK_DEFAULTS[guildRankOk(rank) ? rank : GUILD_RANK_RECRUIT];
+  const def = VAULT_RANK_DEFAULTS[guildRankOk(rank) ? rank : GUILD_RANK_RECRUIT] ?? VAULT_RANK_DEFAULTS[GUILD_RANK_RECRUIT];   // GUILD-RANKS: a rank under the Recruit stands as one
   if (rank === GUILD_RANK_MASTER || !grant || !vaultLevelOk(grant.level)) return { level: def.level, limit: def.limit, granted: false };
   return { level: grant.level, limit: grant.level === 'withdraw' && vaultLimitOk(grant.limit) ? grant.limit : 0, granted: true };
 }

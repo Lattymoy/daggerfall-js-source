@@ -295,6 +295,7 @@ import { homeTransfer } from './homeTransfer.js';   // a house offered to one ac
 import { roomsOf, offerRoom, withdrawRoom, rentRoom, collectRent } from './rent.js';   // HOME-RENT: a home's rooms, rented
 import {
   foundGuild, guildOf, invitesOf, inviteToGuild, answerInvite, leaveGuild, removeFromGuild, rankGuildMember, renameGuildRanks,
+  setGuildPowers, requestToJoin, withdrawJoinRequest, answerJoinRequest,   // GUILD-RANKS, GUILD-REQUESTS
   depositToGuild, withdrawFromGuild, handOverGuild, disbandGuild, guildBadgeOf, mintMemberOf,
   renameGuild,   // GUILD2a
 } from './guilds.js';   // GUILD1: the guilds' routes; GUILD1c: the guild a token carries
@@ -520,6 +521,9 @@ const GUILD_STATUS = Object.freeze({
   'guild-writ-escrow': 409,   // AUDIT 31 A15: a closed writ's escrow waiting on a full treasury
   'guild-contracts': 409,   // AUDIT SILVER-WAYS B3: a guild with a contract standing does not go (its siblings' conflict, never a bad request)
   'guild-rate': 429,
+  // GUILD-RANKS: a powers table the law refuses; GUILD-REQUESTS: no such request, no guild of that tag, the guild's own
+  // invitation standing, the character's or the guild's list full, the asker joined elsewhere meanwhile
+  'bad-powers': 400, 'no-request': 404, 'no-guild-tag': 404, 'guild-invited': 409, 'guild-requests-max': 409, 'guild-requests-full': 409, 'guild-request-joined': 409,
   // GUILD1d (Seats-Arc 8): the hall - a building somebody owns, the guild's one hall already held, none held, one moved
   // under its sale, a guild kept from going by it; and the heraldry - the same again, changed meanwhile, the Drakes short
   'home-taken': 409, 'guild-hall-have': 409, 'guild-hall-moved': 409, 'guild-hall': 409, 'guild-hall-none': 404, 'home-rate': 429,
@@ -1995,6 +1999,8 @@ const service = {
           '/v1/guilds/leave': leaveGuild, '/v1/guilds/remove': removeFromGuild, '/v1/guilds/rank': rankGuildMember,
           '/v1/guilds/ranks': renameGuildRanks, '/v1/guilds/deposit': depositToGuild, '/v1/guilds/withdraw': withdrawFromGuild,
           '/v1/guilds/handover': handOverGuild, '/v1/guilds/disband': disbandGuild,
+          // GUILD-RANKS: what each rank may do; GUILD-REQUESTS: a request to join sent, taken back and answered
+          '/v1/guilds/powers': setGuildPowers, '/v1/guilds/request': requestToJoin, '/v1/guilds/request/withdraw': withdrawJoinRequest, '/v1/guilds/request/answer': answerJoinRequest,
           // GUILD1d: the hall bought and sold from the treasury, who may walk in, and the heraldry (halls.js)
           '/v1/guilds/hall/buy': buyHall, '/v1/guilds/hall/sell': sellHall, '/v1/guilds/hall/entry': setHallEntry, '/v1/guilds/heraldry': setHeraldry,
           // GUILD1e: the guild's own board - its notes, its members' alone (guildBoard.js, the Notice Board's switch)

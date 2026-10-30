@@ -113,7 +113,7 @@ const HARDCODED = {
   'src/net/gate/gateMods.js': 31,
   'src/net/gate/gateRite.js': 1,
   'src/net/guild/guildBook.js': 1,
-  'src/net/guild/guildPowers.js': 34,
+  'src/net/guild/guildPowers.js': 33,   // GUILD-RANKS: the ranks act's words through t()
   'src/net/guild/guildVaultLaw.js': 4,
   'src/net/herald/heraldCard.js': 4,   // HERALD-CARDS: the families' names on their cards ('The Sea Serpent', ...) - the Discord channel's English, as every herald post is; KETCH: +1, the Sky-Ketch's family name ('The Sky-Ketch') - the Discord channel's English, as every herald post is
   'src/net/heraldryLaw.js': 8,
@@ -774,7 +774,7 @@ const HARDCODED = {
   'src/ui/sigilRune.js': 5,
   'src/ui/skinCard.js': 7,
   'src/ui/socialMenu.js': 4,
-  'src/ui/socialPanel.js': 234,   // GUILD-WINDOW: -2, the header's two sentences are its tiles, their names in t()
+  'src/ui/socialPanel.js': 230,   // GUILD-RANKS: -4, the rank names the Ranks page's (ui/guild/guildRanksPage.js, in t()). GUILD-WINDOW: -2, the header's two sentences are its tiles, their names in t()
   'src/ui/socketWells.js': 4,
   'src/ui/spell/spellMakerWindow.js': 15,
   'src/ui/spellbookWindow.js': 4,

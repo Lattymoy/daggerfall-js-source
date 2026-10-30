@@ -33,7 +33,8 @@ import { guildActorOf } from './guilds.js';
 import { boardOpenFor } from './board.js';
 import { heraldryOfRow } from './halls.js';
 import { maskText } from '../../src/net/nameFilter.js';   // TEXT-F1: a guild note kept before the filter, starred as it is read
-import { HALL_POWERS, hallMay } from '../../src/net/hallLaw.js';
+import { guildMay } from '../../src/net/guild/guildLaw.js';
+import { guildPowerSql } from './guildPowerSql.js';   // GUILD-RANKS: the hall's powers, as the guild set them, read in the statement
 import {
   GUILD_NOTES_LIVE_MAX, GUILD_NOTES_SHOWN, NOTE_DAY_S, NOTES_PINNED_MAX, BOARD_OPS_MAX, BOARD_WINDOW_S, NOTE_ID_RE,
   BOARD_RID_RE, guildNoteWords,
@@ -76,7 +77,7 @@ export async function sweepGuildNotes(db, nowS, limit = 200) {
 export async function readGuildBoard({ db, nowS }, player, env, { character } = {}) {
   const a = await memberOf(db, player, env, character);
   if ('error' in a) return a;
-  const { me } = a;
+  const { me, powers } = a;
   const g = await db.prepare('SELECT id, name, tag, heraldry FROM guilds WHERE id = ?').bind(me.guild_id).first();
   if (!g) return { error: 'no-guild' };
   const { results: notes = [] } = await db.prepare(`SELECT n.* FROM guild_notes n JOIN players p ON p.id = n.author
@@ -87,7 +88,7 @@ export async function readGuildBoard({ db, nowS }, player, env, { character } = 
     notes: notes.map((n) => noteView(n, me)),
     me: {
       canPin: !isMuted(player, nowS), live: await liveCount(db, me.guild_id, player.id, nowS), max: GUILD_NOTES_LIVE_MAX,
-      keeper: hallMay(me.rank, 'notes'),
+      keeper: guildMay(me.rank, 'notes', powers),   // GUILD-RANKS: as the guild set it
     },
   };
 }
@@ -144,7 +145,7 @@ export async function takeDownGuildNote({ db, nowS }, player, env, { character, 
   if (typeof id !== 'string' || !NOTE_ID_RE.test(id)) return { error: 'no-note' };
   if (await overRate({ db, nowS }, `board-ops:${player.id}`, BOARD_OPS_MAX, BOARD_WINDOW_S)) return { error: 'board-ops-rate' };
   const r = await db.prepare(`DELETE FROM guild_notes WHERE id = ?1 AND guild_id = ?2
-    AND (author = ?3 OR EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?4 AND guild_id = ?2 AND rank IN (${HALL_POWERS.notes.join(', ')})))`)
+    AND (author = ?3 OR EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?4 AND guild_id = ?2 AND ${guildPowerSql('notes', 'rank', '?2')}))`)   // GUILD-RANKS
     .bind(id, me.guild_id, player.id, me.rid).run();
   if (!r?.meta?.changes) return { error: 'no-note' };
   return { ok: true, id, live: await liveCount(db, me.guild_id, player.id, nowS) };

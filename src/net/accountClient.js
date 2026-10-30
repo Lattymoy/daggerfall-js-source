@@ -59,7 +59,7 @@ import {
   DEEP_UNCONFIRMED_PER_DAY, STORES_MAX, WITHDRAW_MAX, COURT_WRITS_PER_DAY, RESPEC, HIGH_HIDES_PER_DAY,
 } from './professionLaw.js';   // PROF1: the bounds its refusals name; PROF7: Hunting's rare hides (CAP-OFF: no day's cap)
 import {
-  GUILD_FOUND_RENOWN, GUILD_MEMBERS_MAX, GUILD_NAME_MIN, GUILD_NAME_MAX, GUILD_RANK_NAME_MAX, GUILD_MOVE_MAX,
+  GUILD_FOUND_RENOWN, GUILD_MEMBERS_MAX, GUILD_NAME_MIN, GUILD_NAME_MAX, GUILD_RANK_NAME_MAX, GUILD_MOVE_MAX, GUILD_REQUESTS_MAX,
 
 } from './guild/guildLaw.js';   // GUILD1: the bounds its refusals name; GUILD2a: a new name's price
 import { GUILD_VAULT_SLOTS, GUILD_VAULT_HALL_SLOTS } from './guild/guildVaultLaw.js';   // GUILD2b: the vault's shelf, in its refusal's own sentence
@@ -403,6 +403,14 @@ const REFUSAL_WORDS = {
   'realm-market-open': () => t('account.refusal.realmMarketOpen', 'This character still has business on the market: a listing, an auction, a bid, a buy order, a commission, goods on the way or waiting to be collected, or a trader\'s takings. Settle it first. Play it online once and goods waiting for it come to its pack on their own; takings are collected on the Vendor page.'),   // PROF-DELETE   // AUDIT 28 M3: the Marks go to the guildmaster with the guild
   'no-member': () => t('account.refusal.noMember', 'That member is no longer in the guild.'),
   'bad-ranks': () => t('account.refusal.badRanks', 'Each rank needs a name of its own, 1 to {max} letters, digits, spaces, apostrophes or hyphens.', { max: GUILD_RANK_NAME_MAX }),
+  // GUILD-RANKS, GUILD-REQUESTS
+  'bad-powers': () => t('account.refusal.badPowers', 'Those permissions name a rank the guild does not have.'),
+  'no-request': () => t('account.refusal.noRequest', 'That request is no longer open.'),
+  'no-guild-tag': () => t('account.refusal.noGuildTag', 'No guild has that tag.'),
+  'guild-invited': () => t('account.refusal.guildInvited', 'That guild already invited you. Answer its invitation instead.'),
+  'guild-requests-max': () => t('account.refusal.guildRequestsMax', 'You have {max} requests open. Withdraw one first.', { max: GUILD_REQUESTS_MAX }),
+  'guild-requests-full': () => t('account.refusal.guildRequestsFull', 'That guild has too many requests open. Try again later.'),
+  'guild-request-joined': () => t('account.refusal.guildRequestJoined', 'That character joined another guild.'),
   'bad-gold': () => t('account.refusal.badGold', 'Gold goes in or out 1 to {max} at a time.', { max: GUILD_MOVE_MAX }),
   'guild-treasury-full': () => t('account.refusal.guildTreasuryFull', 'The treasury can hold no more.'),
   'guild-treasury-short': () => t('account.refusal.guildTreasuryShort', 'The treasury does not hold that much.'),
@@ -2247,6 +2255,11 @@ export function accountGuilds({ fetch, storage }) {
     remove: (character, member) => post('/v1/guilds/remove', { character, member }),
     rank: (character, member, rank) => post('/v1/guilds/rank', { character, member, rank }),
     ranks: (character, ranks) => post('/v1/guilds/ranks', { character, ranks }),
+    powers: (character, powers) => post('/v1/guilds/powers', { character, powers }),   // GUILD-RANKS: what each rank may do
+    // GUILD-REQUESTS: a request to join by a guild's tag, taken back by its guild, answered by its request's id
+    request: (character, tag) => post('/v1/guilds/request', { character, tag }),
+    requestWithdraw: (character, guild) => post('/v1/guilds/request/withdraw', { character, guild }),
+    requestAnswer: (character, request, accept) => post('/v1/guilds/request/answer', { character, request, accept: accept === true }),
     deposit: (character, gold, realm = null, region = null) => post('/v1/guilds/deposit', { character, gold, ...(realm ? { realm, region } : {}) }),   // REALM P2.2
     // GUILD-LETTER (FIELD BUGS 2026-09-30): `letter`, the record takes it as a letter of credit - the pack cannot carry it
     withdraw: (character, gold, realm = null, letter = false) => post('/v1/guilds/withdraw', { character, gold, ...(realm ? { realm, letter: letter === true } : {}) }),

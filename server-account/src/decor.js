@@ -36,7 +36,7 @@ export { decorGoldMove, decorGoldDelta };
 import { prepareRealmRecord, realmSideOf, realmActFirst, recordMovedOf, mustChange, dropObjects, dropIfUnnamed, REALM_ID_RE } from './realm.js';   // REALM P2.2b; AUDIT REALM L1-F2: the record asked first; AUDIT REALM2 S2/S3
 import { payFromSave, creditSave } from '../../src/net/realm/realmGoldLaw.js';   // REALM P2.2b: the wallet's own order, over the record
 import { GUILD_TREASURY_MAX } from '../../src/net/guild/guildLaw.js';   // GUILD1d: a hall's treasury's cap
-import { HALL_POWERS } from '../../src/net/hallLaw.js';   // GUILD1d: a hall's keepers
+import { guildPowerSql } from './guildPowerSql.js';   // GUILD1d: a hall's keepers; GUILD-RANKS: as the guild set them
 import { SEAT_HALL_DECOR_CAP } from '../../src/net/townSeatLaw.js';   // SEAT-HALL: the Charter Room's pieces
 import { homeShownRead, homeShownOf } from './homeVotes.js';   // AUDIT HOME-VOTE A3: a shunned home's room, its insiders' alone; DECOR-BATCH: its read in the room's one request
 import { decorStaysShunned } from '../../src/net/homeVoteLaw.js';   // AUDIT HOME-VOTE B2: its hired trader stands
@@ -103,7 +103,7 @@ async function realmDecorWrite(ctx, player, at, { mapId, buildingKey, delta, wri
 export const OWNS = `EXISTS (SELECT 1 FROM (SELECT ? AS m, ? AS b, ? AS p, ? AS c) k JOIN homes h ON h.map_id = k.m AND h.building_key = k.b
   WHERE (h.guild_id IS NULL AND h.player = k.p AND (h.deed = 0 OR h.char_id = k.c))
     OR (h.guild_id IS NOT NULL AND EXISTS (SELECT 1 FROM guild_members g WHERE g.guild_id = h.guild_id AND g.player = k.p AND g.char_id = k.c
-      AND g.rank IN (${HALL_POWERS.decorate.join(', ')})
+      AND ${guildPowerSql('decorate', 'g.rank', 'g.guild_id')}
       AND EXISTS (SELECT 1 FROM realm_characters rc WHERE rc.id = g.char_id AND rc.player = k.p))))`;   // AUDIT GUILD1d S2: a realm character's - its moves and stations are paid on its record, never on a client's word
 /** GUILD1d: the guild whose hall a building is, or null (a home, or nobody's). */
 const hallGuildOf = async (db, mapId, buildingKey) => (await db.prepare('SELECT guild_id FROM homes WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey).first())?.guild_id ?? null;
@@ -121,7 +121,7 @@ const hallGuildOf = async (db, mapId, buildingKey) => (await db.prepare('SELECT 
  */
 const SEAT_OWNS = `EXISTS (SELECT 1 FROM (SELECT ? AS m, ? AS b, ? AS p, ? AS c) k JOIN town_seat_holds h ON h.key = k.m
   WHERE h.tier = 'palace' AND EXISTS (SELECT 1 FROM guild_members g WHERE g.guild_id = h.guild_id AND g.player = k.p AND g.char_id = k.c
-    AND g.rank IN (${HALL_POWERS.decorate.join(', ')})
+    AND ${guildPowerSql('decorate', 'g.rank', 'g.guild_id')}
     AND EXISTS (SELECT 1 FROM realm_characters rc WHERE rc.id = g.char_id AND rc.player = k.p)))`;
 /** The guild holding the palace seat at `mapId`, or null. */
 const seatHallGuildOf = async (db, mapId) => (await db.prepare("SELECT guild_id FROM town_seat_holds WHERE key = ? AND tier = 'palace'").bind(mapId).first())?.guild_id ?? null;

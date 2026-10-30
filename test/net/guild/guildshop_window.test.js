@@ -176,8 +176,8 @@ test('GUILD-LOGO the picker: the picture\'s middle square, drawn 128 across, wri
 
 test('GUILD-SHOP the window\'s look: the column\'s pages in three groups, a group named over its first page shown; the head\'s crest the guild\'s shield on a ring of its border, an undrawn guild a plain one; every ware drawn in the guild\'s field; the look\'s small screens the window\'s (mutants: the groups, the crest, the query)', async () => {
   assert.deepEqual(GUILD_NAV_GROUPS.map((g) => g.id), ['guild', 'wealth', 'look']);
-  const shown = ['overview', 'members', 'treasury', 'vault', 'shop', 'arms', 'settings'];
-  assert.deepEqual(shown.map((p) => guildNavGroupAt(p, shown)), ['guild', null, 'wealth', null, null, 'look', null]);
+  const shown = ['overview', 'members', 'ranks', 'treasury', 'vault', 'shop', 'arms', 'settings'];   // GUILD-RANKS: the Ranks page among the guild's
+  assert.deepEqual(shown.map((p) => guildNavGroupAt(p, shown)), ['guild', null, null, 'wealth', null, null, 'look', null]);
   assert.equal(guildNavGroupAt('vault', ['overview', 'vault']), 'wealth', 'the group\'s first shown');
   const t = await rig();
   await t.go();

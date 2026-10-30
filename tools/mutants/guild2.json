@@ -113,8 +113,8 @@
   {
     "name": "GUILD2b-grants-to-an-officer",
     "file": "src/ui/socialPanel.js",
-    "old": "    const mayGrant = guildMay(me, 'vaultGrant');",
-    "new": "    const mayGrant = guildMay(me, 'invite');",
+    "old": "    const mayGrant = guildMay(me, 'vaultGrant', v.powers);",
+    "new": "    const mayGrant = guildMay(me, 'invite', v.powers);",
     "tests": [
       "test/net/guild/guild2_client.test.js"
     ]

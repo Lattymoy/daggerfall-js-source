@@ -468,7 +468,7 @@ async function moveGuildMarks(ctx, player, env, { character, marks, rid }, kind)
   if (prior) return prior.kind === kind ? answer({ repeat: true, marks: prior.amount }) : { error: 'marks-rid' };   // AUDIT 28 M2: before the switch
   const closed = shut(player, env);
   if (closed) return closed;
-  if (!guildMay(a.me.rank, deposit ? 'deposit' : 'withdraw')) return { error: 'guild-rank' };
+  if (!guildMay(a.me.rank, deposit ? 'deposit' : 'withdraw', a.powers)) return { error: 'guild-rank' };
   if (!marksAmountOk(marks, MARKS_MOVE_MAX)) return { error: 'bad-marks' };
   if (await overRate(ctx, `marks:${player.id}`, MARKS_OPS_MAX, MARKS_OPS_WINDOW_S)) return { error: 'marks-rate' };
   const day = utcDay(nowS);

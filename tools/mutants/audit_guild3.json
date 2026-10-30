@@ -419,8 +419,8 @@
   {
     "name": "AG3-W3-the-rule-unread",
     "file": "src/net/guild/guildPowers.js",
-    "old": "return typeof may === 'function' ? RANKS.filter((r) => may(r)) : [];",
-    "new": "return typeof may === 'function' ? [...RANKS] : [];",
+    "old": "return typeof may === 'function' ? all.filter((r) => may(r)) : [];",
+    "new": "return typeof may === 'function' ? [...all] : [];",
     "tests": [
       "test/net/guild3_plain.test.js"
     ]

@@ -303,18 +303,19 @@ test('GUILD2 the tab in pages: the guild\'s header over every page - its banner,
   const t = await tab(view());
   const strip = find(t.panel.root, 'dfsocial-subtab');
   // PIN MOVED: GUILD-SHOP (Guild-Shop.md) - the Shop page, where the book reads one, among the guild's wealth
-  assert.deepEqual(strip.map((b) => b.dataset.page), ['overview', 'members', 'treasury', 'vault', 'shop', 'arms', 'settings']);
-  assert.deepEqual(strip.map((b) => b.attrs['aria-selected']), ['true', 'false', 'false', 'false', 'false', 'false', 'false']);
+  // PIN MOVED: GUILD-RANKS (Guild-Shop.md 13) - the Ranks page, after the roster; the Treasury the fourth tab
+  assert.deepEqual(strip.map((b) => b.dataset.page), ['overview', 'members', 'ranks', 'treasury', 'vault', 'shop', 'arms', 'settings']);
+  assert.deepEqual(strip.map((b) => b.attrs['aria-selected']), ['true', 'false', 'false', 'false', 'false', 'false', 'false', 'false']);
   const all = texts(t.panel.root);
   assert.ok(all.includes('The Hand [HND]'));
   // PIN MOVED: GUILD-WINDOW (Guild-Overhaul.md) - GUILD1b's two lines are the window's tiles, each number under its name
   assert.deepEqual(find(t.panel.root, 'dfguild-stat').map((s) => s.children.map((c) => c.textContent)),
     [['Rank', 'Guildmaster'], ['Gold', '30,000'], ['Members', '1/75', '0 online'], ['Vault', '1/50'], ['Hall', 'None']]);
-  strip[2].fire('click');
+  strip[3].fire('click');
   t.panel.render();
-  assert.equal(find(t.panel.root, 'dfsocial-subtab')[2].attrs['aria-selected'], 'true');
+  assert.equal(find(t.panel.root, 'dfsocial-subtab')[3].attrs['aria-selected'], 'true');
   // AUDIT2 U9: the focus on the page turned to - never left on a button the strip drew over
-  assert.equal(t.doc.activeElement, find(t.panel.root, 'dfsocial-subtab')[2], 'the new Treasury tab holds the focus');
+  assert.equal(t.doc.activeElement, find(t.panel.root, 'dfsocial-subtab')[3], 'the new Treasury tab holds the focus');
   assert.ok(texts(t.panel.root).includes('Treasury'));
   await t.go('stores');
   assert.equal(find(t.panel.root, 'dfsocial-subtab')[0].attrs['aria-selected'], 'true', 'no Stores here: the Overview');

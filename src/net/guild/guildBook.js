@@ -175,6 +175,7 @@ export class GuildBook {
     /** @type {string|null} */ this.error = null;
     /** @type {any} the guild as its member reads it (guilds.js viewOf), or null */ this.guild = null;
     /** @type {any[]} */ this.invites = [];
+    /** @type {any[]} GUILD-REQUESTS: the account's requests to join still standing, each its character's (guilds.js invitesOf) */ this.requests = [];
     this.version = 0;
     this.at = 0;
     this.busy = false;
@@ -200,8 +201,8 @@ export class GuildBook {
 
   /** A refusal the whole tab answers to: no session, or a guest. True when it was one of those. */
   _whole(error) {
-    if (error === 'no-session' || error === 'auth') { this.state = 'signed-out'; this.guild = null; this.invites = []; this.error = error; this._changed(); return true; }
-    if (error === 'guilds-need-account') { this.state = 'guest'; this.guild = null; this.invites = []; this.error = error; this._changed(); return true; }
+    if (error === 'no-session' || error === 'auth') { this.state = 'signed-out'; this.guild = null; this.invites = []; this.requests = []; this.error = error; this._changed(); return true; }
+    if (error === 'guilds-need-account') { this.state = 'guest'; this.guild = null; this.invites = []; this.requests = []; this.error = error; this._changed(); return true; }
     return false;
   }
 
@@ -227,7 +228,7 @@ export class GuildBook {
       this.state = 'error'; this.error = (!mine?.ok ? mine?.error : inv?.error) ?? 'server'; this._changed();
       return { ok: false, error: this.error };
     }
-    const was = pictureOf(this.state, this.guild, this.invites);
+    const was = pictureOf(this.state, this.guild, [this.invites, this.requests]);
     this.guild = mine.data?.guild ?? null;
     if (this.guild) noteGuildArms(this.guild.tag, this.guild.heraldry, this.guild.logo, this.guild.name);   // GUILD-SHOP: the faces that draw this guild's arms
     noteOwnGuild(this.guild?.tag ?? null);
@@ -235,9 +236,10 @@ export class GuildBook {
     // for the guild before all forgotten, and the purchases' request ids with them (C4)
     if (this._shopTag !== (this.guild?.id ?? null)) { this._shopTag = this.guild?.id ?? null; this.shopView = null; this.shopError = null; this._shopGen = (this._shopGen ?? 0) + 1; this._stockFailAt = -Infinity; noteGuildShop(null); }
     this.invites = Array.isArray(inv.data?.invites) ? inv.data.invites : [];
+    this.requests = Array.isArray(inv.data?.requests) ? inv.data.requests : [];   // GUILD-REQUESTS
     this.state = 'ready';
     this.error = null;
-    if (pictureOf(this.state, this.guild, this.invites) !== was) this._changed();
+    if (pictureOf(this.state, this.guild, [this.invites, this.requests]) !== was) this._changed();
     // GUILD1c: the membership as the service reads it now, to the rooms - when it moved since the last one handed on
     const key = guildBadgeKey(this.guild);
     if (key !== this._carried && typeof mine.data?.order === 'string') { this._carried = key; this._hand({ order: mine.data.order }); }
@@ -370,6 +372,14 @@ export class GuildBook {
   remove(member) { return this._act((c) => this.door.remove(c, member)); }
   rank(member, rank) { return this._act((c) => this.door.rank(c, member, rank)); }
   renameRanks(names) { return this._act((c) => this.door.ranks(c, names)); }
+  /** GUILD-RANKS: what each rank may do - `powers`, each power the guildmaster gives to the ranks beside its own. */
+  setPowers(powers) { return this._act((c) => this.door.powers(c, powers)); }
+  /** GUILD-REQUESTS: a request to join by a guild's tag, taken back, and answered (`id` a request's, `q...`). */
+  requestJoin(tag) { return this._act((c) => this.door.request(c, tag)); }
+  withdrawRequest(guild) { return this._act((c) => this.door.requestWithdraw(c, guild)); }
+  answerRequest(id, accept) { return this._act((c) => this.door.requestAnswer(c, id, accept === true)); }
+  /** GUILD-REQUESTS: this character's own requests standing. */
+  myRequests() { const c = this.character?.() ?? null; return this.requests.filter((q) => q?.character === c); }
   handOver(member) { return this._act((c) => this.door.handOver(c, member)); }
   disband() { return this._act((c) => this.door.disband(c)); }
 

@@ -6,11 +6,12 @@
 // row and never charged twice. What a ware is lives in src/net/guild/guildShopLaw.js. Not a DFU member.
 import { accountKind, displayName, overRate, mintId } from './accounts.js';
 import { marksOpenFor } from './marks.js';
-import { guildActorOf } from './guilds.js';
+import { guildActorOf, guildPowersOfRow } from './guilds.js';
 import { heraldryOfRow } from './halls.js';
 import { holdsAll } from './titles.js';   // AUDIT GUILD-SHOP S9: an Admin holds every ware
 import { MARKS_RID_RE, utcDay } from '../../src/net/marksLaw.js';
-import { GUILD_POWERS, GUILD_OPS_MAX, GUILD_OPS_WINDOW_S, GUILD_TAG_RE, guildMay } from '../../src/net/guild/guildLaw.js';
+import { GUILD_OPS_MAX, GUILD_OPS_WINDOW_S, GUILD_TAG_RE, guildMay } from '../../src/net/guild/guildLaw.js';
+import { guildPowerSql } from './guildPowerSql.js';   // GUILD-RANKS: the guild's powers, read in the statement
 import { GUILD_SHOP_WARES, GUILD_FURNITURE_MODELS, guildWareOf, guildWaresHeld } from '../../src/net/guild/guildShopLaw.js';
 
 const INSERT_LINE = 'INSERT INTO marks_ledger (src_kind, src_id, dst_kind, dst_id, kind, amount, day, at, actor, who, rid)';
@@ -40,7 +41,7 @@ async function shopViewOf(db, player, me, env) {
   const guildMarks = open ? Number((await db.prepare('SELECT balance FROM guild_marks WHERE guild_id = ?').bind(me.guild_id).first())?.balance ?? 0) : null;
   return {
     shop: {
-      open, marks, guildMarks, buysForGuild: guildMay(Number(me.rank), 'shop'),
+      open, marks, guildMarks, buysForGuild: guildMay(Number(me.rank), 'shop', guildPowersOfRow(me)),   // GUILD-RANKS: as the guild set it
       wares: GUILD_SHOP_WARES.map((w) => (w.payer === 'account'
         ? { key: w.key, kind: w.kind, payer: w.payer, price: w.price, held: held.has(w.key) }
         : { key: w.key, kind: w.kind, payer: w.payer, price: w.price, max: w.max, model: w.model, owned: owned.get(w.key) ?? 0, placed: placed.get(/** @type {number} */ (w.model)) ?? 0 })),
@@ -83,19 +84,19 @@ export async function buyGuildWare(ctx, player, { character, ware, rid } = {}) {
   const g = a.me.guild_id, acct = w.payer === 'account';
   const had = await db.prepare('SELECT ware FROM guild_shop_buys WHERE actor = ? AND rid = ?').bind(player.id, rid).first();
   if (had) return had.ware === w.key ? { ok: true, repeat: true, ware: w.key, ...(await shopViewOf(db, player, a.me, env)) } : { error: 'bad-rid' };
-  if (!acct && !guildMay(Number(a.me.rank), 'shop')) return { error: 'guild-rank' };
+  if (!acct && !guildMay(Number(a.me.rank), 'shop', a.powers)) return { error: 'guild-rank' };
   if (acct && holdsAll(player, env)) return { error: 'guild-ware-held' };   // AUDIT GUILD-SHOP S9: an Admin holds every one
   if (await overRate(ctx, `guild:${player.id}`, GUILD_OPS_MAX, GUILD_OPS_WINDOW_S)) return { error: 'guild-rate' };
   const n = mintId(rand);
   const pays = acct ? 'COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) >= ?6' : 'COALESCE((SELECT balance FROM guild_marks WHERE guild_id = ?5), 0) >= ?6';
   const room = acct ? `(SELECT guild_wares FROM players WHERE id = ?1) & ${w.bit} = 0`
     : `COALESCE((SELECT owned FROM guild_furniture WHERE guild_id = ?5 AND ware = ?3), 0) < ${w.max}`;
-  const ranks = acct ? '0, 1, 2, 3' : GUILD_POWERS.shop.join(', ');
+  const ranked = acct ? '' : ` AND ${guildPowerSql('shop', 'rank', '?5')}`;   // GUILD-RANKS: any member buys their own; the hall's, a rank the guild lets
   try {
     await db.batch([
       db.prepare(`INSERT OR IGNORE INTO guild_shop_buys (actor, rid, ware, payer, guild_id, price, at, n)
         SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8 WHERE ${pays} AND ${room}
-          AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?9 AND guild_id = ?5 AND player = ?1 AND rank IN (${ranks}))
+          AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?9 AND guild_id = ?5 AND player = ?1${ranked})
           AND NOT EXISTS (SELECT 1 FROM marks_ledger WHERE actor = ?1 AND rid = ?2 || ':shop')`)
         .bind(player.id, rid, w.key, w.payer, g, w.price, nowS, n, Number(a.me.rid)),
       // the silver, burnt off the row this request wrote - the ware named where a burn names nothing else
@@ -117,14 +118,14 @@ export async function buyGuildWare(ctx, player, { character, ware, rid } = {}) {
 
 /** Why a purchase landed nothing, read as it stands now. */
 async function refusalOf(db, player, me, w) {
-  const still = await db.prepare('SELECT rank FROM guild_members WHERE rowid = ? AND guild_id = ? AND player = ?').bind(Number(me.rid), me.guild_id, player.id).first();
+  const still = await db.prepare('SELECT m.rank, g.ranks, g.powers FROM guild_members m JOIN guilds g ON g.id = m.guild_id WHERE m.rowid = ? AND m.guild_id = ? AND m.player = ?').bind(Number(me.rid), me.guild_id, player.id).first();
   if (!still) return 'no-guild';
   if (w.payer === 'account') {
     const p = await db.prepare('SELECT guild_wares FROM players WHERE id = ?').bind(player.id).first();
     if ((Number(p?.guild_wares ?? 0) & w.bit) !== 0) return 'guild-ware-held';
     return 'marks-short';
   }
-  if (!guildMay(Number(still.rank), 'shop')) return 'guild-rank';
+  if (!guildMay(Number(still.rank), 'shop', guildPowersOfRow(still))) return 'guild-rank';
   const o = await db.prepare('SELECT owned FROM guild_furniture WHERE guild_id = ? AND ware = ?').bind(me.guild_id, w.key).first();
   if (Number(o?.owned ?? 0) >= w.max) return 'guild-ware-max';
   return 'guild-marks-short';

@@ -50,8 +50,8 @@ import { accountRefusalText, handleShapeOk, HANDLE_MAX_LEN } from '../net/accoun
 import { letterAgeText, replySubject } from '../net/mail.js';   // MAIL1: the box the Letters tab draws
 import { LETTER_SUBJECT_MAX, LETTER_BODY_MAX, LETTER_LINES_MAX, cleanBody } from '../net/letterLaw.js';
 import {
-  GUILD_FOUND_GOLD, GUILD_FOUND_RENOWN, GUILD_MEMBERS_MAX, GUILD_NAME_MAX, GUILD_RANK_NAME_MAX, GUILD_RANK_NAMES,
-  guildMay, guildMayMove, guildOutranks, guildNameOf, guildTagOf, guildRankNamesOf, GUILD_MOVE_MAX,
+  GUILD_FOUND_GOLD, GUILD_FOUND_RENOWN, GUILD_MEMBERS_MAX, GUILD_NAME_MAX, GUILD_RANK_NAMES,
+  guildMay, guildMayMove, guildOutranks, guildNameOf, guildTagOf, GUILD_MOVE_MAX,
   GUILD_RANK_MASTER, GUILD_RANK_OFFICER, GUILD_RANK_RECRUIT,
 } from '../net/guild/guildLaw.js';   // GUILD1b: the Guild tab's rules are the service's
 import { GUILD_RENAME_SILVER } from '../net/guild/guildShopLaw.js';   // GUILD2a, GUILD-SHOP: a new name, for silver
@@ -65,7 +65,9 @@ import { isLocked } from '../systems/item/itemLock.js';   // AUDIT2 GUILD2 U4: a
 import { GUILD_DEPOSIT_UNSURE, guildMemberOnline, guildSeenText } from '../net/guild/guildBook.js';   // GUILD-SEEN: a member's "last online"
 import { LETTER_OF_CREDIT_TEXT } from '../systems/tradeModes.js';   // GUILD-LETTER: the trade window's own line for a letter of credit
 import { writMay, guildMoveOk, writBudgetOk, GUILD_STORES_MAX, WRIT_BUDGET_MAX } from '../net/writLaw.js';   // PROF6: the guild Stores' and the writ budget's ranks and bounds
-import { guildRankLines, GUILD_RANK_ACTS_NOTE } from '../net/guild/guildPowers.js';   // GUILD3c: what each rank may do, in words
+import { guildRankLines, GUILD_RANK_ACTS_NOTE } from '../net/guild/guildPowers.js';
+import { guildRanksNodes } from './guild/guildRanksPage.js';   // GUILD-RANKS
+import { guildAskNodes, guildRequestsNodes } from './guild/guildRequestNodes.js';   // GUILD-REQUESTS   // GUILD3c: what each rank may do, in words
 import { STORES_MAX } from '../net/professionLaw.js';   // AUDIT 31 U8: a character's Stores' most of a material
 import { marksText, MARKS_FAUCETS, MARKS_MAX } from '../net/marksLaw.js';   // MARKS1: the Marks treasury's words   // MAIL1: the form's caps are the service's
 import { glyphBadges, glyphSvgNode, titleBadge } from './playerBadge.js';   // MAIL1: a sender's glyphs, in the one drawing every DOM face uses
@@ -181,12 +183,13 @@ export const GUILD_ELSEWHERE_TEXT = 'Seats and sieges are run from the Seat tab 
 export const guildPageWords = () => ({
   overview: t('social.guild.page.overview', 'The arms, the hall, and where the rest is run'),
   members: t('social.guild.page.members', 'The roster, its ranks, and invitations'),
+  ranks: t('social.guild.page.ranks', 'The rank names, and what each may do'),   // GUILD-RANKS
   treasury: t('social.guild.page.treasury', 'Gold and silver, and their ledgers'),
   vault: t('social.guild.page.vault', 'The pieces the guild keeps'),
   stores: t('social.guild.page.stores', 'Materials, and the writ budget'),
   shop: t('social.guild.page.shop', 'Guild wares and hall furniture, for silver'),
   arms: t('social.guild.page.arms', 'The banner, the shield, the logo and the tag'),
-  settings: t('social.guild.page.settings', 'A new name, the rank names, and leaving'),
+  settings: t('social.guild.page.settings', 'A new name, and leaving'),
 });
 /** GUILD-WINDOW: how many of a guild's members are online now, as the header's Members tile says it beneath its count -
  *  each member by guildBook.js's own reading (`guildMemberOnline`, the roster rows' dot), so the two never disagree. */
@@ -204,7 +207,7 @@ export const guildPageNames = () => ({
   overview: t('social.guild.name.overview', 'Overview'), members: t('social.guild.name.members', 'Members'),
   treasury: t('social.guild.name.treasury', 'Treasury'), vault: t('social.guild.name.vault', 'Vault'),
   stores: t('social.guild.name.stores', 'Stores'), shop: t('social.guild.name.shop', 'Shop'), arms: t('social.guild.name.arms', 'Arms'),
-  settings: t('social.guild.name.settings', 'Settings'),
+  settings: t('social.guild.name.settings', 'Settings'), ranks: t('social.guild.name.ranks', 'Ranks'),   // GUILD-RANKS
 });
 /** GUILD3c: the Settings page's list of what still holds a guild that would go - its heading. */
 export const GUILD_KEEPS_HEAD = 'Before the guild can be disbanded';   // AUDIT GUILD3 W13: the act the page names
@@ -1304,6 +1307,9 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
   const armed = (key) => guildUi.arm === key;
   const arm = (key) => { guildUi.arm = key; guildUi.armAt = social.now(); ui++; if (open) repaint(); };
   const rankName = (g, r) => (Array.isArray(g.ranks) ? g.ranks[r] : null) ?? GUILD_RANK_NAMES[r] ?? String(r);
+  /** GUILD-RANKS: how many ranks the guild keeps, and why a rank may not do `power` - the guildmaster's alone, or not this rank's. */
+  const rankCount = (v) => (Array.isArray(v?.ranks) && v.ranks.length >= 4 ? v.ranks.length : 4);
+  const rankWhy = (v, power) => (JSON.stringify(v?.powers?.[power] ?? [0]) === '[0]' ? 'the guildmaster\'s alone' : t('social.guild.rankWhy', 'not your rank\'s'));
 
   /** No guild: the invitations standing for this account, and the founding form. */
   const guildJoinBody = (g) => {
@@ -1330,6 +1336,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
     acts.append(liveBtn('Found', () => ({ enabled: !g.busy && !!guildNameOf(d.name) && !!guildTagOf(d.tag), why: g.busy ? 'a moment' : 'a name of 3 to 32 characters and a tag of 2 to 4 letters or digits' }),
       { run: () => guildDo(g.found(d.name, d.tag), 'Your guild is founded.', () => { d.name = ''; d.tag = ''; }) }));
     out.push(acts);
+    if (g.requestJoin) out.push(...guildAskNodes(guildKit(), g));   // GUILD-REQUESTS: or ask a guild by its tag
     return out;
   };
 
@@ -1476,7 +1483,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
     }
     out.push(personRow({ name: guildHallWhereText(hall), sub: `Who may enter: ${GUILD_HALL_ENTRY_WORDS[hall.entry] ?? GUILD_HALL_ENTRY_WORDS.guild} - bought for ${Number(hall.paid).toLocaleString('en-US')} gold` }));
     const acts = el('div', 'dfsocial-acts');
-    if (hallMay(me, 'hallEntry')) {
+    if (guildMay(me, 'hallEntry', v.powers)) {
       const next = GUILD_HALL_ENTRIES[(Math.max(0, GUILD_HALL_ENTRIES.indexOf(hall.entry)) + 1) % GUILD_HALL_ENTRIES.length];
       acts.append(btn(next === 'public' ? 'Open it to anyone' : 'Members only', { enabled: !g.busy, why: 'a moment', run: () => guildDo(g.setHallEntry(next), `Who may enter the hall: ${GUILD_HALL_ENTRY_WORDS[next]}.`) }));
     }
@@ -1525,7 +1532,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
 
   /** The pages the tab shows, in order - the guild Stores only where the professions are this account's. */
   const guildPagesOf = (g) => [
-    ['overview', 'Overview'], ['members', 'Members'], ['treasury', 'Treasury'], ['vault', 'Vault'],
+    ['overview', 'Overview'], ['members', 'Members'], ['ranks', 'Ranks'], ['treasury', 'Treasury'], ['vault', 'Vault'],   // GUILD-RANKS
     ...(g.profStores?.writs && g.profStores.open?.() === true ? [['stores', 'Stores']] : []),
     ...(g.readShop ? [['shop', 'Shop']] : []),   // GUILD-SHOP: where the book reads one
     ['arms', 'Arms'], ['settings', 'Settings'],
@@ -1648,7 +1655,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
     const d = guildUi.draft;
     d.grants ??= {};
     out.push(el('div', 'dfsocial-sec', `Members (${v.members.length}/${GUILD_MEMBERS_MAX})`));
-    const mayGrant = guildMay(me, 'vaultGrant');
+    const mayGrant = guildMay(me, 'vaultGrant', v.powers);
     for (const m of v.members) {
       const standing = m.vault ? ` - ${vaultStandingText(m.vault)}${m.vault.granted ? ' (granted)' : ''}` : '';
       // GUILD-SEEN: when they were last online, as a friend's row says it - the dot and the line read again on the live
@@ -1659,8 +1666,8 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
       const r = personRow({ name: m.you ? `${m.name} (you)` : m.name, sub: `${rankName(v, m.rank)}${standing}`, online, seen: guildSeenText(m, g.now()) });
       if (r.seenNode) liveSubs.push({ el: r.seenNode, of: () => guildSeenText(fresh(), g.now()) });
       if (r.dotNode) liveDots.push({ el: r.dotNode, of: () => guildMemberOnline(fresh(), g.now()) === true });
-      const mayMove = [guildMayMove(me, m.rank, m.rank - 1), guildMayMove(me, m.rank, m.rank + 1)];
-      const mayRemove = guildMay(me, 'remove') && guildOutranks(me, m.rank);
+      const mayMove = [guildMayMove(me, m.rank, m.rank - 1, v.powers, rankCount(v)), guildMayMove(me, m.rank, m.rank + 1, v.powers, rankCount(v))];   // GUILD-RANKS
+      const mayRemove = guildMay(me, 'remove', v.powers) && guildOutranks(me, m.rank);
       const mayHand = guildMay(me, 'handOver');
       if (!m.you && (mayMove[0] || mayMove[1] || mayRemove || mayHand)) {
         const racts = rowActs(r);   // GUILD-WRAP
@@ -1679,7 +1686,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
       }
       out.push(r);
       // GUILD2b: THE LEADER'S GRANT - a member's standing at the vault set, or revoked back to its rank's
-      if (mayGrant && m.rank !== GUILD_RANK_MASTER) {
+      if (mayGrant && m.rank !== GUILD_RANK_MASTER && m.rank > me) {   // GUILD-RANKS: a rank given the grant grants below its own
         const was = m.vault?.granted ? m.vault.level : '';
         // AUDIT2 GUILD2 U7: a draft is of the standing it was made from - a grant, a rank moved, or another officer's Set
         // since starts it again from what stands (a draft kept over it read as "unchanged" against the new, or set the old)
@@ -1725,7 +1732,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
     ranks.open = guildUi.ranksOpen === true;
     ranks.addEventListener?.('toggle', () => { guildUi.ranksOpen = !!ranks.open; });
     ranks.append(el('summary', null, 'What each rank may do'));
-    for (const line of guildRankLines(Array.isArray(v.ranks) ? v.ranks : GUILD_RANK_NAMES)) {
+    for (const line of guildRankLines(Array.isArray(v.ranks) ? v.ranks : GUILD_RANK_NAMES, v.powers)) {   // GUILD-RANKS: as the guild set them
       const p = el('p', null);
       p.append(el('b', null, `${line.name}: `), el('span', null, line.text));
       ranks.append(p);
@@ -1733,7 +1740,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
     ranks.append(el('p', null, GUILD_RANK_ACTS_NOTE));
     out.push(ranks);
     // INVITE
-    if (guildMay(me, 'invite')) {
+    if (guildMay(me, 'invite', v.powers)) {
       out.push(el('div', 'dfsocial-sec', 'Invite'));
       const form = el('div', 'dfsocial-form');
       guildField(form, 'Username', d.handle, HANDLE_MAX_LEN, (x) => { d.handle = x; });
@@ -1744,6 +1751,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
       out.push(acts);
       for (const inv of v.invites ?? []) out.push(personRow({ name: inv.name, sub: `invited by ${inv.by}` }));
     }
+    out.push(...guildRequestsNodes(guildKit(), g, v, me));   // GUILD-REQUESTS: the requests to join, to a rank that may answer
     return out;
   };
 
@@ -1764,9 +1772,9 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
     // HALL-GOLD: one move is at most GUILD_MOVE_MAX - said on the button, not refused by the service after the press
     const overCap = () => goldTyped() > GUILD_MOVE_MAX;
     const capWhy = `at most ${GUILD_MOVE_MAX.toLocaleString('en-US')} at a time`;
-    tacts.append(liveBtn('Deposit', () => ({ enabled: !g.busy && goldTyped() > 0 && !overCap(), why: g.busy ? 'a moment' : overCap() ? capWhy : 'an amount' }),
+    tacts.append(liveBtn('Deposit', () => ({ enabled: !g.busy && goldTyped() > 0 && !overCap() && guildMay(me, 'deposit', v.powers), why: !guildMay(me, 'deposit', v.powers) ? rankWhy(v, 'deposit') : g.busy ? 'a moment' : overCap() ? capWhy : 'an amount' }),
       { run: () => { const n = goldTyped(); if (n > 0) guildDo(g.deposit(n), `${n.toLocaleString('en-US')} gold put in.`, () => { d.gold = ''; }); } }));
-    tacts.append(liveBtn('Withdraw', () => ({ enabled: !g.busy && goldTyped() > 0 && !overCap() && guildMay(me, 'withdraw'), why: guildMay(me, 'withdraw') ? (g.busy ? 'a moment' : overCap() ? capWhy : 'an amount') : 'the guildmaster\'s alone' }),
+    tacts.append(liveBtn('Withdraw', () => ({ enabled: !g.busy && goldTyped() > 0 && !overCap() && guildMay(me, 'withdraw', v.powers), why: guildMay(me, 'withdraw', v.powers) ? (g.busy ? 'a moment' : overCap() ? capWhy : 'an amount') : rankWhy(v, 'withdraw') }),
       { run: () => { const n = goldTyped(); if (n > 0) guildDo(g.withdraw(n), `${n.toLocaleString('en-US')} gold taken out.`, () => { d.gold = ''; }); } }));
     out.push(tacts);
     for (const l of v.ledger ?? []) {
@@ -1783,9 +1791,9 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
       out.push(mform);
       const marksTyped = () => (/^\d{1,7}$/.test(String(d.marks ?? '').trim()) ? Number(String(d.marks).trim()) : 0);
       const macts = el('div', 'dfsocial-acts');
-      macts.append(liveBtn('Put in', () => ({ enabled: !g.busy && marksTyped() > 0, why: g.busy ? 'a moment' : 'an amount' }),
+      macts.append(liveBtn('Put in', () => ({ enabled: !g.busy && marksTyped() > 0 && guildMay(me, 'deposit', v.powers), why: !guildMay(me, 'deposit', v.powers) ? rankWhy(v, 'deposit') : g.busy ? 'a moment' : 'an amount' }),
         { run: () => { const n = marksTyped(); if (n > 0) guildDo(g.moveMarks(n, false), `${marksText(n)} put in.`, () => { d.marks = ''; }); } }));
-      macts.append(liveBtn('Take out', () => ({ enabled: !g.busy && marksTyped() > 0 && guildMay(me, 'withdraw'), why: guildMay(me, 'withdraw') ? (g.busy ? 'a moment' : 'an amount') : 'the guildmaster\'s alone' }),
+      macts.append(liveBtn('Take out', () => ({ enabled: !g.busy && marksTyped() > 0 && guildMay(me, 'withdraw', v.powers), why: guildMay(me, 'withdraw', v.powers) ? (g.busy ? 'a moment' : 'an amount') : rankWhy(v, 'withdraw') }),
         { run: () => { const n = marksTyped(); if (n > 0) guildDo(g.moveMarks(n, true), `${marksText(n)} taken out.`, () => { d.marks = ''; }); } }));
       out.push(macts);
       for (const l of v.marksLedger ?? []) out.push(personRow({ name: guildSilverLineText(l) }));   // GUILD3b: each line its own kind and way; AUDIT GUILD1d R5
@@ -2039,7 +2047,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
     return out;
   };
 
-  /** SETTINGS: a new name (the guildmaster's, for a price), the rank names, and leaving or disbanding. */
+  /** SETTINGS: a new name (the guildmaster's, for a price), and leaving or disbanding. */
   const guildSettingsNodes = (g, v, me) => {
     const out = [];
     const d = guildUi.draft;
@@ -2071,18 +2079,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
         : liveBtn('Rename', of, { run: () => arm('rename') }));
       out.push(acts);
     }
-    // THE RANK NAMES
-    if (guildMay(me, 'renameRanks')) {
-      out.push(el('div', 'dfsocial-sec', 'Rank names'));
-      if (!Array.isArray(d.ranks)) d.ranks = [...(v.ranks ?? GUILD_RANK_NAMES)];
-      const rform = el('div', 'dfsocial-form');
-      d.ranks.forEach((name, i) => guildField(rform, `Rank ${i + 1}`, name, GUILD_RANK_NAME_MAX, (x) => { d.ranks[i] = x; }));
-      out.push(rform);
-      const racts = el('div', 'dfsocial-acts');
-      racts.append(liveBtn('Rename ranks', () => ({ enabled: !g.busy && !!guildRankNamesOf(d.ranks), why: g.busy ? 'a moment' : 'four different names' }),
-        { run: () => guildDo(g.renameRanks(d.ranks), 'The ranks are renamed.', () => { d.ranks = null; }) }));
-      out.push(racts);
-    }
+    // GUILD-RANKS: the rank names are the Ranks page's (ui/guild/guildRanksPage.js)
     // LEAVING
     out.push(el('div', 'dfsocial-sec', 'Leaving'));
     // GUILD3c: EVERYTHING that still holds the guild, before the press - the view's list (the service's guildHolds), the
@@ -2140,6 +2137,7 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
   const guildKit = () => ({
     el, btn, doc, picture: svgPicture, act: guildDo, arm, armed, draft: guildUi.draft, state: guildUi,
     word: (e) => guildWordText(e, null, Math.floor(social.now() / 1000)), redraw: () => { ui++; if (open) repaint(); },
+    live: liveBtn, field: guildField, paint: paintLiveBtns, row: personRow, rowActs, now: () => social.now(),   // GUILD-RANKS, GUILD-REQUESTS
   });
   /** In a guild: its header, its page strip, and the page up. GUILD-WINDOW: the strip a column beside the page, and the
    *  page in cards in a column of its own that scrolls under the header. */
@@ -2153,8 +2151,9 @@ export function createSocialPanel({ social, send = null, mail = null, guild = nu
     else if (page === 'vault') out.push(...guildVaultNodes(g, v, me));
     else if (page === 'stores') out.push(...guildStoresNodes(g, g.profStores, me));   // PROF6 (Professions-Arc 7, 28)
     else if (page === 'shop') out.push(...guildShopNodes(guildKit(), g, v));   // GUILD-SHOP
-    else if (page === 'arms') out.push(...guildLogoNodes(guildKit(), g, v, guildMay(me, 'logo')), ...guildArmsNodes(g, v, me));   // GUILD-LOGO: its logo, then the arms drawn
+    else if (page === 'arms') out.push(...guildLogoNodes(guildKit(), g, v, guildMay(me, 'logo', v.powers)), ...guildArmsNodes(g, v, me));   // GUILD-LOGO: its logo, then the arms drawn
     else if (page === 'settings') out.push(...guildSettingsNodes(g, v, me));
+    else if (page === 'ranks') out.push(...guildRanksNodes(guildKit(), g, v, me));   // GUILD-RANKS
     else out.push(...guildOverviewNodes(g, v, me));
     const main = el('div', 'dfguild-main');
     main.dataset.page = page;
