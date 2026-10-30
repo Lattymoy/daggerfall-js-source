@@ -40,8 +40,8 @@
   {
     "name": "BENCH-CAM-the-sprites-head-unlifted",
     "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
-    "old": "const headLocal = [0, Math.max(fpEye[1], pivotFloor ?? -Infinity) - feet[1], 0];",
-    "new": "const headLocal = [0, fpEye[1] - feet[1], 0];",
+    "old": "      const headLocal = [0, Math.max(fpEye[1], pivotFloor ?? -Infinity) - feet[1], 0];",
+    "new": "      const headLocal = [0, fpEye[1] - feet[1], 0];",
     "tests": [
       "test/player/benchcam1.test.js"
     ]

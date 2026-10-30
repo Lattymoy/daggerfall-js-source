@@ -441,8 +441,8 @@
   {
     "name": "APPEARANCES-the-strip-reads-the-piece",
     "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-    "old": "  const m = drawnPiece(piece)?.material;",
-    "new": "  const m = piece?.material;",
+    "old": "  const m = drawnPiece(piece)?.material; // APPEARANCES (bible/04-Characters/Wardrobe.md): a piece wearing a look is drawn as the look - my body's and every peer walker's",
+    "new": "  const m = piece?.material; // APPEARANCES (bible/04-Characters/Wardrobe.md): a piece wearing a look is drawn as the look - my body's and every peer walker's",
     "tests": [
       "test/ui/appearances_render.test.js",
       "test/net/appearances_wire.test.js"

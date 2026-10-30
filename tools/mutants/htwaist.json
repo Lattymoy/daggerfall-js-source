@@ -431,8 +431,8 @@
   {
     "name": "HT-WAIST-the-sprite-lantern-never-regrown",
     "file": "src/player/eyeOfTheBeholder/eotbLantern.js",
-    "old": "  if (l.batch && l.batchH !== l.fullH) dropSpriteLantern(l, renderer);\n",
-    "new": "",
+    "old": "  if (l.batch && l.batchH !== l.fullH) dropSpriteLantern(l, renderer);\n  if (!l.batch) {",
+    "new": "  if (!l.batch) {",
     "tests": [
       "test/systems/htwaist_eotb.test.js"
     ]
@@ -469,8 +469,8 @@
   {
     "name": "HT-WAIST-BACK-the-rule-every-view",
     "file": "src/player/eyeOfTheBeholder/eotbLantern.js",
-    "old": "  if (!Number.isInteger(orientation)) return false;\n",
-    "new": "  return true;\n",
+    "old": "  if (!Number.isInteger(orientation)) return false;",
+    "new": "  return true;",
     "tests": [
       "test/player/eyeOfTheBeholder/htwaistback.test.js",
       "test/systems/htwaist_eotb.test.js"
@@ -608,8 +608,8 @@
   {
     "name": "HT-WAIST-BACK-the-art-asked-every-frame",
     "file": "src/player/eyeOfTheBeholder/eotbLantern.js",
-    "old": "      art = p;\n      return null;\n",
-    "new": "      return null;\n",
+    "old": "      art = p;\n      return null;",
+    "new": "      return null;",
     "tests": [
       "test/player/eyeOfTheBeholder/htwaistback.test.js"
     ]

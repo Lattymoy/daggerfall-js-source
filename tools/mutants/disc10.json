@@ -56,8 +56,8 @@
   {
     "name": "DISC10-the-cart-offers-no-turned-box",
     "file": "src/player/eyeOfTheBeholder/eotbWagon.js",
-    "old": "obb: localBox ? { m, box: localBox } : null, noSurface: true,",
-    "new": "noSurface: true,",
+    "old": "          obb: localBox ? { m, box: localBox } : null,\n          noSurface: true,",
+    "new": "          noSurface: true,",
     "tests": [
       "test/systems/disc10.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "DISC10-the-cart-names-the-ground-inside-it",
     "file": "src/player/eyeOfTheBeholder/eotbWagon.js",
-    "old": "obb: localBox ? { m, box: localBox } : null, noSurface: true,",
-    "new": "obb: localBox ? { m, box: localBox } : null,",
+    "old": "          noSurface: true,\n          distance: rayDistance,",
+    "new": "          distance: rayDistance,",
     "tests": [
       "test/systems/disc10.test.js"
     ]

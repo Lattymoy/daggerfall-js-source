@@ -137,8 +137,8 @@
   {
     "name": "FBSEA-3-the-mods-far-end-at-sea",
     "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
-    "old": "const far = seaReach > -MAX_Z && !(cfg.overrides.Boat.enabled && isSailing) ? -seaReach : MAX_Z;",
-    "new": "const far = MAX_Z;",
+    "old": "      const far = seaReach > -MAX_Z && !(cfg.overrides.Boat.enabled && isSailing) ? -seaReach : MAX_Z;",
+    "new": "      const far = MAX_Z;",
     "tests": [
       "test/player/fbsea_zoom.test.js"
     ]

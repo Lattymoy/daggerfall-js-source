@@ -356,6 +356,13 @@
 !/src/player/dragonSaddle.js
 !/src/player/enterExit.js
 !/src/player/exteriorSurface.js
+!/src/player/eyeOfTheBeholder/
+/src/player/eyeOfTheBeholder/*
+!/src/player/eyeOfTheBeholder/eotbBillboard.js
+!/src/player/eyeOfTheBeholder/eotbCamera.js
+!/src/player/eyeOfTheBeholder/eotbLantern.js
+!/src/player/eyeOfTheBeholder/eotbWagon.js
+!/src/player/eyeOfTheBeholder/layeredArmor.js
 !/src/player/groundRay.js
 !/src/player/headBobber.js
 !/src/player/interactionMode.js

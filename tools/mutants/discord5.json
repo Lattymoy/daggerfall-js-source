@@ -109,8 +109,8 @@
   {
     "name": "D5-TORCH-BIND-eotb-keys-uncurated",
     "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
-    "old": "    // KB1: the two keys the mod binds beside the wheel are the registry's ShoulderSwitch and AutoPerspective\n",
-    "new": "    switchShoulderKey: g('Camera.SwitchShoulder') ?? null,\n    // KB1: the two keys the mod binds beside the wheel are the registry's ShoulderSwitch and AutoPerspective\n",
+    "old": "    // KB1: the two keys the mod binds beside the wheel are the registry's ShoulderSwitch and AutoPerspective",
+    "new": "    switchShoulderKey: g('Camera.SwitchShoulder') ?? null,\n    // KB1: the two keys the mod binds beside the wheel are the registry's ShoulderSwitch and AutoPerspective",
     "tests": [
       "test/systems/discord5.test.js"
     ]

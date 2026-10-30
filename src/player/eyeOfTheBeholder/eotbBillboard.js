@@ -61,7 +61,7 @@ import { roundToInt } from '../../systems/mathf.js';
 export const RECORD_OFFSETS = Object.freeze([0, 1, 2, 3, 4, 3, 2, 1]);
 export const MIRRORED = Object.freeze([false, true, true, true, false, false, false, false]);
 export const ORIENTATIONS = 8;
-export const ANGLE_PER_ORIENTATION = 360 / ORIENTATIONS;   // 45
+export const ANGLE_PER_ORIENTATION = 360 / ORIENTATIONS; // 45
 
 /** The archives the bundle ships, and what indexes them.
  *  `Graphics.OnFoot` is 0..15, `Graphics.OnHorse` 0..4, and the
@@ -131,10 +131,27 @@ export const STATE_TABLES = Object.freeze({
  * idle asking for frames that are not there - the EOTB-IL finding.
  */
 export const TABLE_FRAMES = Object.freeze({
-  Idle: 1, Move: 4, Death: 2, IdleMelee: 1, MoveMelee: 2, AttackMelee: 6,
-  IdleRanged: 1, MoveRanged: 2, AttackRanged: 4, IdleSpell: 2, MoveSpell: 2, AttackSpell: 4,
-  IdleHorse: 1, MoveHorse: 8, GallopHorse: 8,
-  IdleLycan: 1, MoveLycan: 4, IdleMeleeLycan: 1, MoveMeleeLycan: 2, AttackMeleeLycan: 3, DeathLycan: 2,
+  Idle: 1,
+  Move: 4,
+  Death: 2,
+  IdleMelee: 1,
+  MoveMelee: 2,
+  AttackMelee: 6,
+  IdleRanged: 1,
+  MoveRanged: 2,
+  AttackRanged: 4,
+  IdleSpell: 2,
+  MoveSpell: 2,
+  AttackSpell: 4,
+  IdleHorse: 1,
+  MoveHorse: 8,
+  GallopHorse: 8,
+  IdleLycan: 1,
+  MoveLycan: 4,
+  IdleMeleeLycan: 1,
+  MoveMeleeLycan: 2,
+  AttackMeleeLycan: 3,
+  DeathLycan: 2,
 });
 export const frameCount = (table) => TABLE_FRAMES[table] ?? 1;
 
@@ -221,7 +238,7 @@ export function orientationFor(facing, toCamera) {
  */
 export function portrayedYaw(orientation, toCamera) {
   if (!Number.isInteger(orientation) || !toCamera || (!toCamera[0] && !toCamera[2])) return null;
-  const y = Math.atan2(toCamera[0], toCamera[2]) - orientation * ANGLE_PER_ORIENTATION * Math.PI / 180;
+  const y = Math.atan2(toCamera[0], toCamera[2]) - (orientation * ANGLE_PER_ORIENTATION * Math.PI) / 180;
   return Math.atan2(Math.sin(y), Math.cos(y));
 }
 
@@ -258,8 +275,20 @@ export const TURN_TO_VIEW = Object.freeze(['Never', 'OnlyWhenAnimating', 'WhenWe
  * looked when the weapon was up. The port had tracked the last MOVE
  * and fallen back to the live camera.
  */
-export function facingFor({ turnToView = 2, floating = false, animating = false, sheathed = true, spellcasting = false, stopped = true, boatForward = null } = {},
-  moveDir, lastMoveDirection, cameraForward) {
+export function facingFor(
+  {
+    turnToView = 2,
+    floating = false,
+    animating = false,
+    sheathed = true,
+    spellcasting = false,
+    stopped = true,
+    boatForward = null,
+  } = {},
+  moveDir,
+  lastMoveDirection,
+  cameraForward,
+) {
   const zero = (v) => !v || (!v[0] && !v[2]);
   let move = moveDir;
   if (zero(move)) move = zero(lastMoveDirection) ? cameraForward : lastMoveDirection;
@@ -277,14 +306,14 @@ export function facingFor({ turnToView = 2, floating = false, animating = false,
       facing = animating ? cameraForward : moving();
     } else facing = moving();
   }
-  if (boatForward) facing = boatForward;   // CSA-J: `Instance.isSailing` - the boat's heading, over every arm above
+  if (boatForward) facing = boatForward; // CSA-J: `Instance.isSailing` - the boat's heading, over every arm above
   return [facing[0], 0, facing[2]];
 }
 
 /** CSA-J: [IL] UpdateOrientation's Come Sail Away arm (IL_471c-IL_4765) off the camera's fields - sailing, the
  *  DrivePosition's forward, else the hull's; null ashore. */
 export const boatForwardOf = ({ isSailing = false, boatDriveObject = null, boatMeshObject = null } = {}) =>
-  (isSailing ? (boatDriveObject != null ? boatDriveObject.forward : boatMeshObject.forward) : null);
+  isSailing ? (boatDriveObject != null ? boatDriveObject.forward : boatMeshObject.forward) : null;
 
 /**
  * `get_frameTime`: seconds a frame.
@@ -352,11 +381,17 @@ export const GALLOP_SPEED = 10;
 /** |PlayerMotor.MoveDirection.xz| as the table reads it: the applied speed, times the diagonal's .7071 (PlayerMotor's
  *  limitDiagonalSpeed), zero at rest. One home for the rider's own sprite (eotbBody bodyState) and the gallop bit the
  *  others are sent (world.js's pose - AUDIT RIDE), so the two can never disagree about a gallop. */
-export const tableMoveSpeed = (forward, strafe, speed) => ((forward || strafe) ? (speed || 0) * ((forward && strafe) ? Math.SQRT1_2 : 1) : 0);
+export const tableMoveSpeed = (forward, strafe, speed) =>
+  forward || strafe ? (speed || 0) * (forward && strafe ? Math.SQRT1_2 : 1) : 0;
 export function chooseTable(s = {}) {
   const {
-    transformed = false, riding = false, stopped = true,
-    sheathed = true, spellcasting = false, usingBow = false, moveSpeed = 0,
+    transformed = false,
+    riding = false,
+    stopped = true,
+    sheathed = true,
+    spellcasting = false,
+    usingBow = false,
+    moveSpeed = 0,
     readyStance = 2,
   } = s;
   if (transformed) {
@@ -448,10 +483,22 @@ export const holdDrawFrames = (n) => Array.from({ length: Math.max(0, (n | 0) - 
  * mirrors back - not "the whole clip flipped", which is what
  * AUDIT-EOTB2 read off the label.
  */
-export const MIRROR_TABLES = Object.freeze(new Set([
-  'Idle', 'IdleLycan', 'Move', 'MoveMelee', 'MoveSpell', 'MoveLycan', 'IdleMelee', 'IdleSpell', 'IdleMeleeLycan',
-  'AttackMelee', 'AttackSpell', 'AttackMeleeLycan',
-]));
+export const MIRROR_TABLES = Object.freeze(
+  new Set([
+    'Idle',
+    'IdleLycan',
+    'Move',
+    'MoveMelee',
+    'MoveSpell',
+    'MoveLycan',
+    'IdleMelee',
+    'IdleSpell',
+    'IdleMeleeLycan',
+    'AttackMelee',
+    'AttackSpell',
+    'AttackMeleeLycan',
+  ]),
+);
 export function mirrorFlips(attackStrings, table, orientation, mirrorCount) {
   if (attackStrings !== STRING.Mirror && attackStrings !== STRING.Mixed) return false;
   if (!MIRROR_TABLES.has(table)) return false;
@@ -474,7 +521,13 @@ export const ORIENTATION_TIME = 0.1;
 
 /** AutoTogglePerspective's rows, in the settings' own order. */
 export const AUTO_TOGGLE_ROWS = Object.freeze([
-  'OnFoot', 'OnFootMelee', 'OnFootRanged', 'OnFootSpell', 'OnHorse', 'OnHorseReady', 'OnLycan',
+  'OnFoot',
+  'OnFootMelee',
+  'OnFootRanged',
+  'OnFootSpell',
+  'OnHorse',
+  'OnHorseReady',
+  'OnLycan',
 ]);
 /** Its option labels: 0 leaves the view, 1 takes first person, 2 third. */
 export const AUTO_TOGGLE = Object.freeze({ DontChange: 0, FirstPerson: 1, ThirdPerson: 2 });
@@ -504,12 +557,25 @@ export function autoToggleRows(now, prev, { forced = false } = {}) {
   const p = prev ?? { transformed: false, riding: false, spellcasting: false, sheathed: false, ranged: false };
   const rows = [];
   let changed = forced;
-  if (now.transformed) { if (p.transformed !== now.transformed) rows.push('OnLycan'); } else if (p.transformed !== now.transformed) changed = true;
-  if (now.riding) { if (p.riding !== now.riding) rows.push('OnHorse'); } else if (p.riding !== now.riding) changed = true;
-  if (now.spellcasting) { if (p.spellcasting !== now.spellcasting) rows.push('OnFootSpell'); } else if (p.spellcasting !== now.spellcasting) changed = true;
-  const fan = () => (!now.sheathed
-    ? (now.riding ? 'OnHorseReady' : now.ranged ? 'OnFootRanged' : 'OnFootMelee')
-    : (now.riding ? 'OnHorse' : 'OnFoot'));
+  if (now.transformed) {
+    if (p.transformed !== now.transformed) rows.push('OnLycan');
+  } else if (p.transformed !== now.transformed) changed = true;
+  if (now.riding) {
+    if (p.riding !== now.riding) rows.push('OnHorse');
+  } else if (p.riding !== now.riding) changed = true;
+  if (now.spellcasting) {
+    if (p.spellcasting !== now.spellcasting) rows.push('OnFootSpell');
+  } else if (p.spellcasting !== now.spellcasting) changed = true;
+  const fan = () =>
+    !now.sheathed
+      ? now.riding
+        ? 'OnHorseReady'
+        : now.ranged
+          ? 'OnFootRanged'
+          : 'OnFootMelee'
+      : now.riding
+        ? 'OnHorse'
+        : 'OnFoot';
   if (changed) rows.push(fan());
   else if (!now.sheathed) {
     if (p.sheathed !== now.sheathed || p.ranged !== now.ranged) rows.push(fan());

@@ -183,8 +183,8 @@
   {
     "name": "CSA-J-eotb-sailing-stuck",
     "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
-    "old": "    isSailing = !!sailing;\n",
-    "new": "    isSailing = true;\n",
+    "old": "    isSailing = !!sailing;",
+    "new": "    isSailing = true;",
     "tests": [
       "test/systems/comeSailAway/csa_close.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "CSA-J-eotb-stop-log",
     "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
-    "old": "log?.('EYE OF THE BEHOLDER - WE HAVE STOPPED SAILING!'); return;",
-    "new": "return;",
+    "old": "      log?.('EYE OF THE BEHOLDER - WE HAVE STOPPED SAILING!');\n      return;",
+    "new": "      return;",
     "tests": [
       "test/systems/comeSailAway/csa_close.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "CSA-J-eotb-start-log",
     "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
-    "old": "    log?.('EYE OF THE BEHOLDER - WE ARE NOW SAILING!');\n",
-    "new": "",
+    "old": "    log?.('EYE OF THE BEHOLDER - WE ARE NOW SAILING!');\n    boatFlagObject = null;",
+    "new": "    boatFlagObject = null;",
     "tests": [
       "test/systems/comeSailAway/csa_close.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "CSA-J-eotb-flag-kept",
     "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
-    "old": "    boatFlagObject = null;\n    boatDriveObject = null;\n    ComeSailAway.send(",
-    "new": "    ComeSailAway.send(",
+    "old": "    boatFlagObject = null;\n    boatDriveObject = null;\n    ComeSailAway.send('GetBoatMeshObject', null, (message, data) => {",
+    "new": "    ComeSailAway.send('GetBoatMeshObject', null, (message, data) => {",
     "tests": [
       "test/systems/comeSailAway/csa_close.test.js"
     ]
@@ -219,8 +219,8 @@
   {
     "name": "CSA-J-eotb-centre-world",
     "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
-    "old": "boatMeshObjectCenter = boatMeshObject.inverseTransformVector([bounds.center[0] - p[0], bounds.center[1] - p[1], bounds.center[2] - p[2]]);",
-    "new": "boatMeshObjectCenter = [bounds.center[0] - p[0], bounds.center[1] - p[1], bounds.center[2] - p[2]];",
+    "old": "    boatMeshObjectCenter = boatMeshObject.inverseTransformVector([\n      bounds.center[0] - p[0],\n      bounds.center[1] - p[1],\n      bounds.center[2] - p[2],\n    ]);",
+    "new": "    boatMeshObjectCenter = [bounds.center[0] - p[0], bounds.center[1] - p[1], bounds.center[2] - p[2]];",
     "tests": [
       "test/systems/comeSailAway/csa_close.test.js"
     ]
@@ -228,8 +228,8 @@
   {
     "name": "CSA-J-eotb-extent-signed",
     "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
-    "old": "boatMeshObjectExtent = Math.max(Math.max(Math.abs(e[0]), Math.abs(e[1])), Math.abs(e[2]));",
-    "new": "boatMeshObjectExtent = Math.max(Math.max(e[0], e[1]), e[2]);",
+    "old": "    boatMeshObjectExtent = Math.max(Math.max(Math.abs(e[0]), Math.abs(e[1])), Math.abs(e[2]));",
+    "new": "    boatMeshObjectExtent = Math.max(Math.max(e[0], e[1]), e[2]);",
     "tests": [
       "test/systems/comeSailAway/csa_close.test.js"
     ]
@@ -237,8 +237,8 @@
   {
     "name": "CSA-J-eotb-walk-no-break",
     "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
-    "old": "      if (boatFlagObject != null && boatDriveObject != null) break;\n",
-    "new": "",
+    "old": "      if (boatFlagObject != null && boatDriveObject != null) break;\n      const child = boatMeshObject.getChild(i);",
+    "new": "      const child = boatMeshObject.getChild(i);",
     "tests": [
       "test/systems/comeSailAway/csa_close.test.js"
     ]
@@ -246,8 +246,8 @@
   {
     "name": "CSA-J-eotb-no-flag-fallback",
     "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
-    "old": "    if (boatFlagObject == null) boatFlagObject = boatMeshObject;\n",
-    "new": "",
+    "old": "    if (boatFlagObject == null) boatFlagObject = boatMeshObject;\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/comeSailAway/csa_close.test.js"
     ]
@@ -255,8 +255,8 @@
   {
     "name": "CSA-J-eotb-offset-host-word",
     "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
-    "old": "if (o.Boat.enabled && isSailing) return",
-    "new": "if (o.Boat.enabled && state.sailing) return",
+    "old": "    if (o.Boat.enabled && isSailing) return [m * o.Boat.x, o.Boat.y, o.Boat.z - offsetScroll]; // CSA-J: the camera's own field, OnUpdateSailing's",
+    "new": "    if (o.Boat.enabled && state.sailing) return [m * o.Boat.x, o.Boat.y, o.Boat.z - offsetScroll]; // CSA-J: the camera's own field, OnUpdateSailing's",
     "tests": [
       "test/systems/eotb_camera.test.js",
       "test/systems/comeSailAway/csa_close.test.js"
@@ -265,8 +265,8 @@
   {
     "name": "CSA-J-eotb-target-swapped",
     "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
-    "old": "posTarget = cfg.boatTarget === 1 ? add(boatFlagObject.position, reach)",
-    "new": "posTarget = cfg.boatTarget === 0 ? add(boatFlagObject.position, reach)",
+    "old": "          cfg.boatTarget === 1",
+    "new": "          cfg.boatTarget === 0",
     "tests": [
       "test/systems/comeSailAway/csa_close.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "CSA-J-eotb-extent-unscaled",
     "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
-    "old": "const reach = eyeVector([off[0] * boatMeshObjectExtent, off[1] * boatMeshObjectExtent, off[2] * boatMeshObjectExtent], yaw, pitch);",
-    "new": "const reach = eyeVector(off, yaw, pitch);",
+    "old": "        const reach = eyeVector(\n          [off[0] * boatMeshObjectExtent, off[1] * boatMeshObjectExtent, off[2] * boatMeshObjectExtent],\n          yaw,\n          pitch,\n        );",
+    "new": "        const reach = eyeVector(off, yaw, pitch);",
     "tests": [
       "test/systems/comeSailAway/csa_close.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "CSA-J-eotb-no-centre",
     "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
-    "old": ": add(add(boatMeshObject.position, boatMeshObjectCenter), reach);",
-    "new": ": add(boatMeshObject.position, reach);",
+    "old": "        posTarget =\n          cfg.boatTarget === 1\n            ? add(boatFlagObject.position, reach)\n            : add(add(boatMeshObject.position, boatMeshObjectCenter), reach);",
+    "new": "        posTarget = cfg.boatTarget === 1 ? add(boatFlagObject.position, reach) : add(boatMeshObject.position, reach);",
     "tests": [
       "test/systems/comeSailAway/csa_close.test.js"
     ]
@@ -292,8 +292,8 @@
   {
     "name": "CSA-J-eotb-override-ignored",
     "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
-    "old": "if (isSailing && cfg.overrides.Boat.enabled) {",
-    "new": "if (isSailing) {",
+    "old": "      if (isSailing && cfg.overrides.Boat.enabled) {",
+    "new": "      if (isSailing) {",
     "tests": [
       "test/systems/comeSailAway/csa_close.test.js"
     ]
@@ -301,8 +301,8 @@
   {
     "name": "CSA-J-eotb-start-no-send",
     "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
-    "old": "      if (ComeSailAway) ComeSailAway.send('OnUpdateSailing', onUpdateSailing, null);   // CSA-J: ModCompatibilityChecking",
-    "new": "      // CSA-J: ModCompatibilityChecking",
+    "old": "      if (ComeSailAway) ComeSailAway.send('OnUpdateSailing', onUpdateSailing, null); // CSA-J: ModCompatibilityChecking (IL_053d), Start's first call",
+    "new": "      // CSA-J: ModCompatibilityChecking (IL_053d), Start's first call",
     "tests": [
       "test/systems/comeSailAway/csa_close.test.js"
     ]
@@ -319,8 +319,8 @@
   {
     "name": "CSA-J-eotb-reboot-no-send",
     "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
-    "old": "      if (started && ComeSailAway) ComeSailAway.send('OnUpdateSailing', onUpdateSailing, null);",
-    "new": "",
+    "old": "      if (started && ComeSailAway) ComeSailAway.send('OnUpdateSailing', onUpdateSailing, null);\n    },",
+    "new": "    },",
     "tests": [
       "test/systems/comeSailAway/csa_close.test.js"
     ]
@@ -328,8 +328,8 @@
   {
     "name": "CSA-J-bb-boat-ignored",
     "file": "src/player/eyeOfTheBeholder/eotbBillboard.js",
-    "old": "  if (boatForward) facing = boatForward;",
-    "new": "",
+    "old": "  if (boatForward) facing = boatForward; // CSA-J: `Instance.isSailing` - the boat's heading, over every arm above",
+    "new": "  // CSA-J: `Instance.isSailing` - the boat's heading, over every arm above",
     "tests": [
       "test/systems/comeSailAway/csa_close.test.js"
     ]
@@ -337,8 +337,8 @@
   {
     "name": "CSA-J-bb-helm-second",
     "file": "src/player/eyeOfTheBeholder/eotbBillboard.js",
-    "old": "(isSailing ? (boatDriveObject != null ? boatDriveObject.forward : boatMeshObject.forward) : null)",
-    "new": "(isSailing ? boatMeshObject.forward : null)",
+    "old": "  isSailing ? (boatDriveObject != null ? boatDriveObject.forward : boatMeshObject.forward) : null;",
+    "new": "  isSailing ? boatMeshObject.forward : null;",
     "tests": [
       "test/systems/comeSailAway/csa_close.test.js"
     ]

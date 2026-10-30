@@ -93,8 +93,8 @@
   {
     "name": "LAYERED-ON-body-own-unread",
     "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-    "old": "  : choice === LAYERED_OWN ? bodyOf(own) : null);",
-    "new": "  : null);",
+    "old": "export const layeredGenderOf = (choice, own = null) =>\n  choice === 1 ? 'female' : choice === 2 ? 'male' : choice === LAYERED_OWN ? bodyOf(own) : null;",
+    "new": "export const layeredGenderOf = (choice, own = null) => (choice === 1 ? 'female' : choice === 2 ? 'male' : null);",
     "tests": [
       "test/player/eyeOfTheBeholder/worn_armour.test.js"
     ],

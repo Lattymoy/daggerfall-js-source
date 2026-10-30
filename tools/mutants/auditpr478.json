@@ -185,8 +185,8 @@
   {
     "name": "AHZ-E3-ratio-below-base",
     "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
-    "old": "(clicks < 0 && -z >= baseDist - 1e-6)",
-    "new": "clicks < 0",
+    "old": "      if (far < MAX_Z && clicks && (-z > baseDist + 1e-6 || (clicks < 0 && -z >= baseDist - 1e-6))) {",
+    "new": "      if (far < MAX_Z && clicks && (-z > baseDist + 1e-6 || clicks < 0)) {",
     "tests": [
       "test/player/fbsea_zoom.test.js"
     ]

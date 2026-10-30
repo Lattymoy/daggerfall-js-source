@@ -119,8 +119,8 @@
   {
     "name": "PERF-WAGON-n-the-cart-box-unmade",
     "file": "src/player/eyeOfTheBeholder/eotbWagon.js",
-    "old": "cull && localBox ? transformedAabb(localBox, m) : null",
-    "new": "null",
+    "old": "      return drawSeen(renderer, cull, cull && localBox ? transformedAabb(localBox, m) : null, gpu, m, texRemap);",
+    "new": "      return drawSeen(renderer, cull, null, gpu, m, texRemap);",
     "tests": [
       "test/systems/livingWorld/perfwagon.test.js"
     ]
