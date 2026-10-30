@@ -560,6 +560,14 @@
 !/src/scenes/grahtHost.js
 !/src/scenes/grantHost.js
 !/src/scenes/groundFrameHost.js
+!/src/scenes/ketch/
+/src/scenes/ketch/*
+!/src/scenes/ketch/ketchClient.js
+!/src/scenes/ketch/ketchDeckHost.js
+!/src/scenes/ketch/ketchShares.js
+!/src/scenes/ketch/ketchSky.js
+!/src/scenes/ketch/ketchStanding.js
+!/src/scenes/ketch/ketchStations.js
 !/src/scenes/localeData.js
 !/src/scenes/lockpickHost.js
 !/src/scenes/lootLines.js

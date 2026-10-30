@@ -110,8 +110,8 @@
   {
     "name": "AUDIT-WE-L1-4-ketch-falls-at-once",
     "file": "src/scenes/ketch/ketchClient.js",
-    "old": "if (!lieDown('death')) fall('death'); return true; });",
-    "new": "fall('death'); return true; });",
+    "old": "    if (!lieDown('death')) fall('death');",
+    "new": "    fall('death');",
     "tests": [
       "test/net/eliteGates/auditwe_down.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "AUDIT-WE-L1-4-ketch-down-struck",
     "file": "src/scenes/ketch/ketchClient.js",
-    "old": "registerPlayerDamageMod('kt-down', (_e, d) => (down ? 0 : d));",
-    "new": "registerPlayerDamageMod('kt-down', (_e, d) => d);",
+    "old": "  registerPlayerDamageMod('kt-down', (_e, d) => (down ? 0 : d));",
+    "new": "  registerPlayerDamageMod('kt-down', (_e, d) => d);",
     "tests": [
       "test/net/eliteGates/auditwe_down.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "AUDIT-WE-L1-4-ketch-down-walks",
     "file": "src/scenes/ketch/ketchClient.js",
-    "old": "registerPlayerHold('kt-down', () => !!down);",
-    "new": "registerPlayerHold('kt-down', () => false);",
+    "old": "  registerPlayerHold('kt-down', () => !!down);",
+    "new": "  registerPlayerHold('kt-down', () => false);",
     "tests": [
       "test/net/eliteGates/auditwe_down.test.js"
     ]

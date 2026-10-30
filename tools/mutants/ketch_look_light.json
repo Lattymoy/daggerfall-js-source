@@ -112,8 +112,8 @@
   {
     "name": "KTL-the-key-from-no-moon",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "const m = moon && moon.scale > 0 ? Math.min(1, moon.scale / MOONLIGHT.masser) : 0, k0 = L.key.scale;",
-    "new": "const m = moon && moon.scale > 0 ? Math.min(1, moon.scale / MOONLIGHT.masser) : 1, k0 = L.key.scale;",
+    "old": "  const m = moon && moon.scale > 0 ? Math.min(1, moon.scale / MOONLIGHT.masser) : 0,",
+    "new": "  const m = moon && moon.scale > 0 ? Math.min(1, moon.scale / MOONLIGHT.masser) : 1,",
     "tests": [
       "test/scenes/ketch_deck_host.test.js"
     ]
@@ -121,7 +121,7 @@
   {
     "name": "KTL-the-key-off-the-moons-bearing",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "  if (m > 0) { L.key.dir[0] = moon.dir[0]; L.key.dir[1] = moon.dir[1]; L.key.dir[2] = moon.dir[2]; }",
+    "old": "  if (m > 0) {\n    L.key.dir[0] = moon.dir[0];\n    L.key.dir[1] = moon.dir[1];\n    L.key.dir[2] = moon.dir[2];\n  }",
     "new": "",
     "tests": [
       "test/scenes/ketch_deck_host.test.js"
@@ -130,8 +130,8 @@
   {
     "name": "KTL-the-gain-on-every-lamp",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "for (const l of lamps()) if (l.zone === zone) { const c = zone === 'deck' ? KT_LAMP.color : KT_LAMP.below;",
-    "new": "for (const l of lamps()) if (true) { const c = zone === 'deck' ? KT_LAMP.color : KT_LAMP.below;",
+    "old": "        if (l.zone === zone) {",
+    "new": "        if (true) {",
     "tests": [
       "test/scenes/ketch_deck_host.test.js"
     ]
@@ -231,8 +231,8 @@
   {
     "name": "KTL-the-moon-unclouded",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "_moon = moonlightTerm(skyState({ minuteOfDay: ((m % 1440) + 1440) % 1440, weather, classicMinutes: m, skyMinutes: m }));",
-    "new": "_moon = moonlightTerm(skyState({ minuteOfDay: ((m % 1440) + 1440) % 1440, weather: 'sunny', classicMinutes: m, skyMinutes: m }));",
+    "old": "      skyState({ minuteOfDay: ((m % 1440) + 1440) % 1440, weather, classicMinutes: m, skyMinutes: m }),",
+    "new": "      skyState({ minuteOfDay: ((m % 1440) + 1440) % 1440, weather: 'sunny', classicMinutes: m, skyMinutes: m }),",
     "tests": [
       "test/scenes/ketch_deck_host.test.js"
     ]

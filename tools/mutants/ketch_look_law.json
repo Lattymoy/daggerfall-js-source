@@ -103,8 +103,8 @@
   {
     "name": "KTL3-a-group-culled-in-its-own-zone",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "for (const d of _grouped) d.culled = _eyed && !_seen.has(d.group);",
-    "new": "for (const d of _grouped) d.culled = _eyed;",
+    "old": "      for (const d of _grouped) d.culled = _eyed && !_seen.has(d.group);",
+    "new": "      for (const d of _grouped) d.culled = _eyed;",
     "tests": [
       "test/scenes/ketch_deck_host.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "KTL3-an-ungrouped-draw-culled",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "    if (o.group) { d.group = o.group; d.culled = false; _grouped.push(d); }",
-    "new": "    { d.group = o.group ?? KT_GROUP.decks; d.culled = false; _grouped.push(d); }",
+    "old": "    if (o.group) {\n      d.group = o.group;",
+    "new": "    {\n      d.group = o.group ?? KT_GROUP.decks;",
     "tests": [
       "test/scenes/ketch_deck_host.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "KTL3-the-eye-never-the-bodys",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "pose(V, t, now, body = null, carried = NONE, eye = body?.pos ?? null) {",
-    "new": "pose(V, t, now, body = null, carried = NONE, eye = null) {",
+    "old": "    pose(V, t, now, body = null, carried = NONE, eye = body?.pos ?? null) {",
+    "new": "    pose(V, t, now, body = null, carried = NONE, eye = null) {",
     "tests": [
       "test/scenes/ketch_deck_host.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "KTL3-halos-on-the-lane",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "K()?.halos?.(renderer?.lightingLane ? NONE : ketchHalosInto(_halos, lamps));",
-    "new": "K()?.halos?.(ketchHalosInto(_halos, lamps));",
+    "old": "      K()?.halos?.(renderer?.lightingLane ? NONE : ketchHalosInto(_halos, lamps)); // KETCH-LOOK KL3: the classic set's bloom, with the late pass",
+    "new": "      K()?.halos?.(ketchHalosInto(_halos, lamps)); // KETCH-LOOK KL3: the classic set's bloom, with the late pass",
     "tests": [
       "test/scenes/ketch_deck_host.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "KTL3-a-lit-thing-at-a-lamps-size",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "glow = !!L.carried, k =",
-    "new": "glow = false, k =",
+    "old": "      glow = !!L.carried,",
+    "new": "      glow = false,",
     "tests": [
       "test/scenes/ketch_deck_host.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "KTL3-the-halo-slots-made-anew",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "h = out[n] ?? (out[n] = { at: [0, 0, 0], size: 0, color: [0, 0, 0] })",
-    "new": "h = (out[n] = { at: [0, 0, 0], size: 0, color: [0, 0, 0] })",
+    "old": "      h = out[n] ?? (out[n] = { at: [0, 0, 0], size: 0, color: [0, 0, 0] }),",
+    "new": "      h = (out[n] = { at: [0, 0, 0], size: 0, color: [0, 0, 0] }),",
     "tests": [
       "test/scenes/ketch_deck_host.test.js"
     ]
@@ -357,8 +357,8 @@
   {
     "name": "KTSHIP-her-fallback-art-held",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "    if (again) { renderer.releaseTexture?.(KT_ARCHIVE, rec); renderer.evictEmissionTexture?.(`${KT_ARCHIVE}_${rec}`); }\n",
-    "new": "",
+    "old": "    if (again) {\n      renderer.releaseTexture?.(KT_ARCHIVE, rec);\n      renderer.evictEmissionTexture?.(`${KT_ARCHIVE}_${rec}`);\n    }\n    renderer.uploadTexture(KT_ARCHIVE, rec, art.albedo, ...(KT_CUTOUT_RECS.includes(rec) ? [{ cutout: true }] : []));",
+    "new": "    renderer.uploadTexture(KT_ARCHIVE, rec, art.albedo, ...(KT_CUTOUT_RECS.includes(rec) ? [{ cutout: true }] : []));",
     "tests": [
       "test/scenes/ketch_deck_host.test.js"
     ],
@@ -367,8 +367,8 @@
   {
     "name": "KTSHIP-the-bounce-before-the-moon",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "  for (let i = 0; i < 3; i++) L.tri.ground[i] = Math.max(0, L.tri.ground[i] - L.key.color[i] * k0 * (1 - m) * KT_TRI.bounce);",
-    "new": "",
+    "old": "  for (let i = 0; i < 3; i++)\n    L.tri.ground[i] = Math.max(0, L.tri.ground[i] - L.key.color[i] * k0 * (1 - m) * KT_TRI.bounce); // AUDIT SHIP A6: the moons' bounce at their own light - none on a moonless night",
+    "new": "  // AUDIT SHIP A6: the moons' bounce at their own light - none on a moonless night",
     "tests": [
       "test/scenes/ketch_deck_host.test.js"
     ],
@@ -377,8 +377,8 @@
   {
     "name": "KTSHIP-the-halo-at-the-gain",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "(c ? Math.min(L.color[j], c[j]) : L.color[j]) * k",
-    "new": "L.color[j] * k",
+    "old": "    for (let j = 0; j < 3; j++) h.color[j] = (c ? Math.min(L.color[j], c[j]) : L.color[j]) * k;",
+    "new": "    for (let j = 0; j < 3; j++) h.color[j] = L.color[j] * k;",
     "tests": [
       "test/scenes/ketch_deck_host.test.js"
     ],
@@ -387,8 +387,8 @@
   {
     "name": "KTSHIP-her-lamps-dark-outside",
     "file": "src/scenes/ketch/ketchSky.js",
-    "old": "      if (lamps) r.drawMesh(lamps, M, null, { noShadow: true });\n",
-    "new": "",
+    "old": "      if (lamps) r.drawMesh(lamps, M, null, { noShadow: true });\n      if (place.pose.lift > 0.01 && lift && chain) {",
+    "new": "      if (place.pose.lift > 0.01 && lift && chain) {",
     "tests": [
       "test/scenes/ketch_sky.test.js"
     ],

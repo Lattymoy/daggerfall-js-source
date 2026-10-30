@@ -2,8 +2,8 @@
   {
     "name": "KT2-the-sky-aboard-alone",
     "file": "src/scenes/ketch/ketchClient.js",
-    "old": "      if (!aboard) {\n        down = null;\n        if ((modes()?.mode ?? 'exterior') === 'exterior') {",
-    "new": "      if (!aboard) down = null;\n      if (aboard) {\n        if ((modes()?.mode ?? 'exterior') === 'exterior') {",
+    "old": "      if (!aboard) {\n        down = null;",
+    "new": "      if (!aboard) down = null;\n      if (aboard) {",
     "note": "The sky, the lift's ride up and the fall's waking aboard alone: nobody boards.",
     "tests": [
       "test/scenes/ketch_audit2_page.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "KT2-the-body-said-in-the-fight-alone",
     "file": "src/scenes/ketch/ketchClient.js",
-    "old": "    if (entity.health > 0 && entity.maxHealth > 0) sayBody(",
-    "new": "    if (link.joined() && entity.health > 0 && entity.maxHealth > 0) sayBody(",
+    "old": "    if (entity.health > 0 && entity.maxHealth > 0) sayBody(entity.health / entity.maxHealth, performance.now());",
+    "new": "    if (link.joined() && entity.health > 0 && entity.maxHealth > 0)\n      sayBody(entity.health / entity.maxHealth, performance.now());",
     "note": "The page's health unsaid before the Warden's fight: the count heals nowhere.",
     "tests": [
       "test/scenes/ketch_audit2_page.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "KT2-the-cap-a-rooms-in-memory",
     "file": "src/scenes/ketch/ketchClient.js",
-    "old": "pelletDrops.given = kept?.n === sh.n && Number.isFinite(kept.given) ? kept.given : 0;",
-    "new": "pelletDrops.given = 0;",
+    "old": "      pelletDrops.given = kept?.n === sh.n && Number.isFinite(kept.given) ? kept.given : 0;",
+    "new": "      pelletDrops.given = 0;",
     "note": "A page stood again pays a fresh cap.",
     "tests": [
       "test/scenes/ketch_audit2_page.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "KT2-the-lid-landing-none",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": ": own ? ketchSkyLanding(safe, safeZone) : null;",
-    "new": ": null;",
+    "old": "    const at =\n      safe && safeZone !== 'sailwalk' && safeZone !== 'top' ? safe : own ? ketchSkyLanding(safe, safeZone) : null;",
+    "new": "    const at = safe && safeZone !== 'sailwalk' && safeZone !== 'top' ? safe : null;",
     "note": "Off the main top onto the lid: stood nowhere, a cast-back a frame.",
     "tests": [
       "test/world/ketch_audit2_walk.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "KT2-the-roof-stood-on",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "(ketchOnLid(p[0], p[1], p[2]) || ketchOnRoof(p[0], p[1], p[2]))",
-    "new": "ketchOnLid(p[0], p[1], p[2])",
+    "old": "        if (p && (ketchOnLid(p[0], p[1], p[2]) || ketchOnRoof(p[0], p[1], p[2]))) castBack(true);",
+    "new": "        if (p && ketchOnLid(p[0], p[1], p[2])) castBack(true);",
     "note": "The engine house's roof a road past the Sailwalk.",
     "tests": [
       "test/world/ketch_audit2_walk.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "KT2-the-sailwalk-landing-the-spar",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "(safe && zone === 'sailwalk' ? castBackTo(",
-    "new": "(false ? castBackTo(",
+    "old": "  safe && zone === 'sailwalk'",
+    "new": "  false",
     "note": "Off the Sailwalk the landing the spar it stood on.",
     "tests": [
       "test/world/ketch_audit2_walk.test.js"

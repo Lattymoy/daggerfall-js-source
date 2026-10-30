@@ -20,9 +20,9 @@
 import { KT_STATION_CITIES, ketchStationOk } from '../../net/ketch/ketchLaw.js';
 import { arenaPixels, arenaStanding } from '../../world/arenaPlaces.js';
 import { THEATRE_KEYS } from '../../world/worldWide/worldGrid.js';
-export { ketchStationsStanding, setKetchStationsStanding, ketchStationHere } from './ketchStanding.js';   // the light half, the Timers'
+export { ketchStationsStanding, setKetchStationsStanding, ketchStationHere } from './ketchStanding.js'; // the light half, the Timers'
 import { TERRAIN_SIZE } from '../../world/terrain/terrainSampler.js';
-import { ARENA_REGION, ARENA_LOCATION } from '../../world/arena/arenaCity.js';   // Daggerfall's own row (the arena's city)
+import { ARENA_REGION, ARENA_LOCATION } from '../../world/arena/arenaCity.js'; // Daggerfall's own row (the arena's city)
 
 /** How near a station's city (map pixels, either way) this screen frames her ship - as far as she flies from her station
  *  (scenes/ketch/ketchSky.js KT_SKY: `approach` in, `far` out, 12,500 m) and a pixel more: ceil(12500 / 819.2) + 1, pinned
@@ -34,8 +34,8 @@ export const KT_STATION_MIDDLE = TERRAIN_SIZE / 2;
  *  ARENA_REGION/ARENA_LOCATION for Daggerfall) and its map pixel (formats/mapsFile.js longitudeLatitudeToMapPixel of that
  *  row - pinned against MAPS.BSA, test/net/ketch/ketch_everywhere.test.js). */
 export const KT_BAY_STATION_ROWS = Object.freeze({
-  0: Object.freeze({ region: ARENA_REGION, location: ARENA_LOCATION, px: Object.freeze({ x: 207, y: 213 }) }),   // Daggerfall
-  2: Object.freeze({ region: 20, location: 6, px: Object.freeze({ x: 397, y: 343 }) }),   // Sentinel
+  0: Object.freeze({ region: ARENA_REGION, location: ARENA_LOCATION, px: Object.freeze({ x: 207, y: 213 }) }), // Daggerfall
+  2: Object.freeze({ region: 20, location: 6, px: Object.freeze({ x: 397, y: 343 }) }), // Sentinel
 });
 
 let _pixels = null;
@@ -52,7 +52,10 @@ export function ketchStationPixel(theatre) {
   if (row) return row.px;
   if (!arenaStanding()) return null;
   const ap = arenaPixels();
-  if (ap !== _pixels) { _pixels = ap; _at = new Map(); }
+  if (ap !== _pixels) {
+    _pixels = ap;
+    _at = new Map();
+  }
   if (!ap) return null;
   if (!_at.has(theatre)) {
     const p = ap.stood.find((q) => q.name === KT_STATION_CITIES[theatre] && q.province === THEATRE_KEYS[theatre]);
@@ -63,5 +66,10 @@ export function ketchStationPixel(theatre) {
 /** Is map pixel (px, py) within KT_STATION_REACH_PX of station `theatre`'s city. */
 export function ketchStationNear(theatre, px, py) {
   const s = ketchStationPixel(theatre);
-  return !!s && Number.isFinite(px) && Number.isFinite(py) && Math.max(Math.abs(s.x - px), Math.abs(s.y - py)) <= KT_STATION_REACH_PX;
+  return (
+    !!s &&
+    Number.isFinite(px) &&
+    Number.isFinite(py) &&
+    Math.max(Math.abs(s.x - px), Math.abs(s.y - py)) <= KT_STATION_REACH_PX
+  );
 }

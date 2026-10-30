@@ -72,8 +72,8 @@
   {
     "name": "KTP-the-shaft-cast-back",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "  if (Math.abs(x - KT_LIFT.x) <= KT_LIFT.half + 0.5 && Math.abs(z - KT_LIFT.z) <= KT_LIFT.half + 0.5) return false;\n  const W = KT_WAIST",
-    "new": "  const W = KT_WAIST",
+    "old": "  if (Math.abs(x - KT_LIFT.x) <= KT_LIFT.half + 0.5 && Math.abs(z - KT_LIFT.z) <= KT_LIFT.half + 0.5) return false;\n  const W = KT_WAIST,",
+    "new": "  const W = KT_WAIST,",
     "note": "A rider of the mast-lift cast back as its cage passes the lid's height.",
     "tests": [
       "test/world/ketch_panels.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "KTP-the-cabin-keep-dropped",
     "file": "src/scenes/ketch/ketchShares.js",
-    "old": "at, bearing, acct: e.s, keep: KT_SPOILS_KEEP, roll:",
-    "new": "at, bearing, acct: e.s, roll:",
+    "old": "        keep: KT_SPOILS_KEEP,\n        roll: () => ketchSpoilsList(e.c, lv(e)),",
+    "new": "        roll: () => ketchSpoilsList(e.c, lv(e)),",
     "note": "A throw out of the cabin's door and over the bridge's rail.",
     "tests": [
       "test/world/ketch_panels.test.js"

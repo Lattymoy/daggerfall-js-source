@@ -83,8 +83,8 @@
   {
     "name": "KTE-the-bays-crown-unread",
     "file": "src/scenes/ketch/ketchStanding.js",
-    "old": "lane = k != null ? BAY_CROWN_LANE[k] ?? null : null;",
-    "new": "lane = null;",
+    "old": "    lane = k != null ? (BAY_CROWN_LANE[k] ?? null) : null;",
+    "new": "    lane = null;",
     "tests": [
       "test/net/ketch/ketch_everywhere.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "KTE-wayrest-hammerfells",
     "file": "src/scenes/ketch/ketchStanding.js",
-    "old": "wayrest: LANE_OF_CROWN.get('daggerfall')",
-    "new": "wayrest: LANE_OF_CROWN.get('sentinel')",
+    "old": "  wayrest: LANE_OF_CROWN.get('daggerfall'),",
+    "new": "  wayrest: LANE_OF_CROWN.get('sentinel'),",
     "tests": [
       "test/net/ketch/ketch_everywhere.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "KTE-sentinels-row",
     "file": "src/scenes/ketch/ketchStations.js",
-    "old": "2: Object.freeze({ region: 20, location: 6,",
-    "new": "2: Object.freeze({ region: 20, location: 7,",
+    "old": "  2: Object.freeze({ region: 20, location: 6, px: Object.freeze({ x: 397, y: 343 }) }), // Sentinel",
+    "new": "  2: Object.freeze({ region: 20, location: 7, px: Object.freeze({ x: 397, y: 343 }) }), // Sentinel",
     "tests": [
       "test/net/ketch/ketch_everywhere.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "KTE-sentinels-pixel",
     "file": "src/scenes/ketch/ketchStations.js",
-    "old": "px: Object.freeze({ x: 397, y: 343 })",
-    "new": "px: Object.freeze({ x: 398, y: 343 })",
+    "old": "  2: Object.freeze({ region: 20, location: 6, px: Object.freeze({ x: 397, y: 343 }) }), // Sentinel",
+    "new": "  2: Object.freeze({ region: 20, location: 6, px: Object.freeze({ x: 398, y: 343 }) }), // Sentinel",
     "tests": [
       "test/net/ketch/ketch_everywhere.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "KTE-a-bay-station-looked-for-past-the-bay",
     "file": "src/scenes/ketch/ketchStations.js",
-    "old": "  if (row) return row.px;\n",
-    "new": "",
+    "old": "  if (row) return row.px;\n  if (!arenaStanding()) return null;",
+    "new": "  if (!arenaStanding()) return null;",
     "tests": [
       "test/net/ketch/ketch_everywhere.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "KTE-the-reader-unhanded",
     "file": "src/scenes/ketch/ketchClient.js",
-    "old": "setKetchStationsStanding(on, bayRegionAt);",
-    "new": "setKetchStationsStanding(on);",
+    "old": "      setKetchStationsStanding(on, bayRegionAt);",
+    "new": "      setKetchStationsStanding(on);",
     "tests": [
       "test/net/ketch/ketch_everywhere.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "KTE-the-politic-band-off-by-one",
     "file": "src/scenes/ketch/ketchClient.js",
-    "old": "return Number.isInteger(p) && p >= 128 ? p - 128 : -1;",
-    "new": "return Number.isInteger(p) && p >= 128 ? p - 127 : -1;",
+    "old": "      return Number.isInteger(p) && p >= 128 ? p - 128 : -1;",
+    "new": "      return Number.isInteger(p) && p >= 128 ? p - 127 : -1;",
     "tests": [
       "test/net/ketch/ketch_everywhere.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "KTE-the-lifts-default-the-bays",
     "file": "src/scenes/ketch/ketchClient.js",
-    "old": "return (provincesOn() && h && ketchStationHere(h.x, h.y, bayRegionAt)) || 0;",
-    "new": "return 0;",
+    "old": "      return (provincesOn() && h && ketchStationHere(h.x, h.y, bayRegionAt)) || 0;",
+    "new": "      return 0;",
     "tests": [
       "test/net/ketch/ketch_everywhere.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "KTE-the-lifts-default-on-an-older-relay",
     "file": "src/scenes/ketch/ketchClient.js",
-    "old": "return (provincesOn() && h && ketchStationHere(h.x, h.y, bayRegionAt)) || 0;",
-    "new": "return (h && ketchStationHere(h.x, h.y, bayRegionAt)) || 0;",
+    "old": "      return (provincesOn() && h && ketchStationHere(h.x, h.y, bayRegionAt)) || 0;",
+    "new": "      return (h && ketchStationHere(h.x, h.y, bayRegionAt)) || 0;",
     "tests": [
       "test/net/ketch/ketch_everywhere.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "KTE-the-frames-crown-unread",
     "file": "src/scenes/ketch/ketchClient.js",
-    "old": "here = on && h ? ketchStationHere(h.x, h.y, bayRegionAt) : null;",
-    "new": "here = on && h ? ketchStationHere(h.x, h.y, null) : null;",
+    "old": "        here = on && h ? ketchStationHere(h.x, h.y, bayRegionAt) : null;",
+    "new": "        here = on && h ? ketchStationHere(h.x, h.y, null) : null;",
     "tests": [
       "test/net/ketch/ketch_everywhere.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "KTE-the-ship-laid-in-daggerfall",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "(isProvinceRegion(site?.regionIndex) ? REGION_NAMES[site.regionIndex] : 'Daggerfall')",
-    "new": "'Daggerfall'",
+    "old": "  const regionName =\n    site?.regionName || (isProvinceRegion(site?.regionIndex) ? REGION_NAMES[site.regionIndex] : 'Daggerfall');",
+    "new": "  const regionName = site?.regionName || 'Daggerfall';",
     "tests": [
       "test/net/ketch/ketch_everywhere.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "KTE-the-sky-the-bays-voyage",
     "file": "src/scenes/ketch/ketchSky.js",
-    "old": "const v = ketchVoyageAt(now, theatre), S = KT_SKY;",
-    "new": "const v = ketchVoyageAt(now), S = KT_SKY;",
+    "old": "  const v = ketchVoyageAt(now, theatre),",
+    "new": "  const v = ketchVoyageAt(now),",
     "tests": [
       "test/net/ketch/ketch_everywhere.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "KTE-the-stations-pixel",
     "file": "src/scenes/ketch/ketchStations.js",
-    "old": "_at.set(theatre, p ? Object.freeze({ x: p.bx, y: p.by }) : null);",
-    "new": "_at.set(theatre, p ? Object.freeze({ x: p.bx + 1, y: p.by }) : null);",
+    "old": "    _at.set(theatre, p ? Object.freeze({ x: p.bx, y: p.by }) : null);",
+    "new": "    _at.set(theatre, p ? Object.freeze({ x: p.bx + 1, y: p.by }) : null);",
     "tests": [
       "test/net/ketch/ketch_everywhere.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "KTE-a-province-framed-anywhere",
     "file": "src/scenes/ketch/ketchClient.js",
-    "old": "if (on && h && ketchStationNear(st.theatre, h.x, h.y)) {",
-    "new": "if (on && h) {",
+    "old": "            if (on && h && ketchStationNear(st.theatre, h.x, h.y)) {",
+    "new": "            if (on && h) {",
     "tests": [
       "test/net/ketch/ketch_everywhere.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "KTE-the-provinces-words-unsaid",
     "file": "src/scenes/ketch/ketchClient.js",
-    "old": "      if (mine) voyageWords(t, mine);\n",
-    "new": "",
+    "old": "      if (mine) voyageWords(t, mine);\n      const aboard = onShip();",
+    "new": "      const aboard = onShip();",
     "tests": [
       "test/net/ketch/ketch_everywhere.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "KTE-the-rings-on-an-older-relay",
     "file": "src/scenes/ketch/ketchClient.js",
-    "old": "      if (!provincesOn()) return out;\n",
-    "new": "",
+    "old": "      if (!provincesOn()) return out;\n      const t = now();",
+    "new": "      const t = now();",
     "tests": [
       "test/net/ketch/ketch_everywhere.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "KTE-the-bays-voyage-boarded",
     "file": "src/scenes/ketch/ketchClient.js",
-    "old": "const o = online(), t = now(), v = ketchVoyageAt(t, th);",
-    "new": "const o = online(), t = now(), v = ketchVoyageAt(t);",
+    "old": "      v = ketchVoyageAt(t, th);",
+    "new": "      v = ketchVoyageAt(t);",
     "tests": [
       "test/net/ketch/ketch_everywhere.test.js"
     ]

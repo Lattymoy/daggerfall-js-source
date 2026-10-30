@@ -128,8 +128,8 @@
   {
     "name": "KTM2-the-header-read-as-colour",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "const h = pal.headerLength; return pal.paletteBuffer.slice(h, h + 768);",
-    "new": "return pal.paletteBuffer.slice(0, 768);",
+    "old": "      const h = pal.headerLength;\n      return pal.paletteBuffer.slice(h, h + 768);",
+    "new": "      return pal.paletteBuffer.slice(0, 768);",
     "tests": [
       "test/world/ketch/kt_look_palette.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "KTM2-the-vane-uncut",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "(Object.freeze([KT_REC.net, KT_REC.vane]));",
-    "new": "(Object.freeze([KT_REC.net]));",
+    "old": "export const KT_CUTOUT_RECS = /** @type {ReadonlyArray<number>} */ (Object.freeze([KT_REC.net, KT_REC.vane]));",
+    "new": "export const KT_CUTOUT_RECS = /** @type {ReadonlyArray<number>} */ (Object.freeze([KT_REC.net]));",
     "tests": [
       "test/scenes/ketch_deck_host.test.js"
     ]
@@ -146,7 +146,7 @@
   {
     "name": "KTM2-the-classic-unscaled",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "    for (let i = 0; i < 3; i++) { L.ambient[i] *= k; L.tri.sky[i] *= k; L.tri.equator[i] *= k; L.tri.ground[i] *= k; }",
+    "old": "    for (let i = 0; i < 3; i++) {\n      L.ambient[i] *= k;\n      L.tri.sky[i] *= k;\n      L.tri.equator[i] *= k;\n      L.tri.ground[i] *= k;\n    }",
     "new": "",
     "tests": [
       "test/scenes/ketch_deck_host.test.js"
@@ -155,8 +155,8 @@
   {
     "name": "KTM2-the-classic-lamps-unscaled",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "    L.sunScale *= k; L.key.scale *= k; L.lamps *= L.classic.lamps;",
-    "new": "    L.sunScale *= k; L.key.scale *= k;",
+    "old": "    L.lamps *= L.classic.lamps;\n  }",
+    "new": "  }",
     "tests": [
       "test/scenes/ketch_deck_host.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "KTM2-the-classic-on-the-lane",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "  if (!lane) {   // the classic set",
-    "new": "  if (true) {   // the classic set",
+    "old": "  if (!lane) {",
+    "new": "  if (true) {",
     "tests": [
       "test/scenes/ketch_deck_host.test.js"
     ]

@@ -128,8 +128,8 @@ test('AUDIT WORLD-EVENTS L1-4 THE PAGES, by source: the Spire\'s witness begins 
   assert.match(eg, /o\.poseDown = inSpire\(\) \? downPose : null;/);
   assert.match(eg, /if \(w\.k === 'fall' && w\.s === me\(\) && witness\?\.down\) \{ witness\.down = 0;/);
   const kt = read('src/scenes/ketch/ketchClient.js');
-  assert.match(kt, /registerPlayerDeathSave\('kt-fall', \(\) => \{ if \(!onShip\(\)\) return false; if \(!lieDown\('death'\)\) fall\('death'\); return true; \}\);/);
-  assert.match(kt, /if \(Date\.now\(\) >= down\.until\) \{ const why = down\.why; down = null; fall\(why\); return; \}/);
+  assert.match(kt, /registerPlayerDeathSave\('kt-fall', \(\) => \{\n\s*if \(!onShip\(\)\) return false;\n\s*if \(!lieDown\('death'\)\) fall\('death'\);\n\s*return true;\n\s*\}\);/);
+  assert.match(kt, /if \(Date\.now\(\) >= down\.until\) \{\n\s*const why = down\.why;\n\s*down = null;\n\s*fall\(why\);\n\s*return;\n\s*\}/);
   assert.match(kt, /registerPlayerDamageMod\('kt-down', \(_e, d\) => \(down \? 0 : d\)\);\n\s*registerPlayerHold\('kt-down', \(\) => !!down\);/);
   assert.match(read('src/scenes/worldModes.js'), /const paralyzed = staffFrozen\(\) \|\| playerHeld\(\) \|\|/);
   const on = read('src/net/online.js');
