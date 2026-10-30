@@ -2,8 +2,8 @@
   {
     "name": "WD3-ROW-SCALE-MASK",
     "file": "src/formats/worldData/worldDataPack.js",
-    "old": "if (row[8] & (1 << k)) o[SCALE_KEYS[k]] = row[at++];",
-    "new": "if (row[8] & (2 << k)) o[SCALE_KEYS[k]] = row[at++];",
+    "old": "    for (let k = 0; k < 3; k++) if (row[8] & (1 << k)) o[SCALE_KEYS[k]] = row[at++];",
+    "new": "    for (let k = 0; k < 3; k++) if (row[8] & (2 << k)) o[SCALE_KEYS[k]] = row[at++];",
     "tests": [
       "test/formats/worldData/wd3_pack.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "WD3-REF-EDITS-DROPPED",
     "file": "src/formats/worldData/worldDataPack.js",
-    "old": "return v.$o ? patchJson(node, expandOps(v.$o)) : node;",
-    "new": "return node;",
+    "old": "    return v.$o ? patchJson(node, expandOps(v.$o)) : node;",
+    "new": "    return node;",
     "tests": [
       "test/formats/worldData/wd3_pack.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WD3-RUN-ONE-CELL",
     "file": "src/formats/worldData/worldDataPack.js",
-    "old": "out.push(['s', [...path, runs[i] + n], vals[n]]);",
-    "new": "out.push(['s', [...path, runs[i]], vals[n]]);",
+    "old": "          for (let n = 0; n < vals.length; n++) out.push(['s', [...path, runs[i] + n], vals[n]]);",
+    "new": "          for (let n = 0; n < vals.length; n++) out.push(['s', [...path, runs[i]], vals[n]]);",
     "tests": [
       "test/formats/worldData/wd3_pack.test.js"
     ]
@@ -47,7 +47,7 @@
   {
     "name": "WD3-BLOCK-NAME-UNCHECKED",
     "file": "src/formats/worldData/worldDataPack.js",
-    "old": "      if (wantName && got !== wantName) throw new Error(`world-data pack: ${pack.vendor} wants ${wantName} at block ${index}, BLOCKS.BSA has ${got}`);",
+    "old": "      if (wantName && got !== wantName)\n        throw new Error(`world-data pack: ${pack.vendor} wants ${wantName} at block ${index}, BLOCKS.BSA has ${got}`);",
     "new": "",
     "tests": [
       "test/formats/worldData/wd3_pack.test.js"
@@ -56,8 +56,8 @@
   {
     "name": "WD3-ARRIVAL-ORDER",
     "file": "src/formats/worldData/worldDataReplacement.js",
-    "old": "let at = list.findIndex((e) => e.priority <= entry.priority);",
-    "new": "let at = list.findIndex((e) => e.priority >= entry.priority);",
+    "old": "  let at = list.findIndex((e) => e.priority <= entry.priority);",
+    "new": "  let at = list.findIndex((e) => e.priority >= entry.priority);",
     "tests": [
       "test/systems/wd3_door.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "WD3-PIN-IN-IGNORED",
     "file": "src/formats/worldData/worldDataReplacement.js",
-    "old": "  if (pin?.in?.has(a.vendor)) return true;",
-    "new": "",
+    "old": "  if (pin?.in?.has(a.vendor)) return true; // WD3: a town a save made in this mod's layout keeps it",
+    "new": "  // WD3: a town a save made in this mod's layout keeps it",
     "tests": [
       "test/systems/wd3_door.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "WD3-PIN-OUT-IGNORED",
     "file": "src/formats/worldData/worldDataReplacement.js",
-    "old": "  if (pin?.out?.has(a.vendor)) return false;",
-    "new": "",
+    "old": "  if (pin?.out?.has(a.vendor)) return false; // WD3: and one made without it stays without it",
+    "new": "  // WD3: and one made without it stays without it",
     "tests": [
       "test/systems/wd3_door.test.js"
     ]

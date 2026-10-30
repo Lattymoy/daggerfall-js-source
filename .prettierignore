@@ -28,6 +28,8 @@
 /src/formats/save/*/
 !/src/formats/unity/
 /src/formats/unity/*/
+!/src/formats/worldData/
+/src/formats/worldData/*/
 !/src/net/
 /src/net/*
 !/src/net/card/

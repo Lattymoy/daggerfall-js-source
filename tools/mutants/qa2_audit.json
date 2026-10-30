@@ -2,8 +2,8 @@
   {
     "name": "QA2A-door-name-cached",
     "file": "src/formats/worldData/worldDataReplacement.js",
-    "old": "  const dfBlock = blockFromJson(json, block, blockName);\n  if (blockName.endsWith('.RMB')) replaceRmbBlockBuildingData(blockName, block, dfBlock);   // :382-384",
-    "new": "  const dfBlock = blockFromJson(json, block);\n  if (blockName.endsWith('.RMB')) replaceRmbBlockBuildingData(blockName, block, dfBlock);   // :382-384",
+    "old": "  // AUDIT-RR2 G14 refusal of RDB/RDI files is lifted now that the converters below read both halves\n  const dfBlock = blockFromJson(json, block, blockName);",
+    "new": "  // AUDIT-RR2 G14 refusal of RDB/RDI files is lifted now that the converters below read both halves\n  const dfBlock = blockFromJson(json, block);",
     "tests": [
       "test/systems/qa2_summoners.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "QA2A-door-name-pinned",
     "file": "src/formats/worldData/worldDataReplacement.js",
-    "old": "    const dfBlock = blockFromJson(json, block, blockName);\n    if (blockName.endsWith('.RMB')) replaceRmbBlockBuildingData(blockName, block, dfBlock);\n    curateBlockPeople(",
-    "new": "    const dfBlock = blockFromJson(json, block);\n    if (blockName.endsWith('.RMB')) replaceRmbBlockBuildingData(blockName, block, dfBlock);\n    curateBlockPeople(",
+    "old": "    const dfBlock = blockFromJson(json, block, blockName);",
+    "new": "    const dfBlock = blockFromJson(json, block);",
     "tests": [
       "test/systems/qa2_summoners.test.js"
     ],
@@ -43,8 +43,8 @@
   {
     "name": "QA2A-pinned-curation",
     "file": "src/formats/worldData/worldDataReplacement.js",
-    "old": "    curateBlockPeople(dfBlock, liveAsset(blockReplacementFilename(blockName, variant))?.vendor);   // QUEST-AUDIT II TEMPLE-SUMMONER\n    curateBlockPlacements",
-    "new": "    curateBlockPlacements",
+    "old": "    curateBlockPeople(dfBlock, liveAsset(blockReplacementFilename(blockName, variant))?.vendor); // QUEST-AUDIT II TEMPLE-SUMMONER\n    curateBlockPlacements(dfBlock, liveAsset(blockReplacementFilename(blockName, variant))?.vendor); // HILL-HOUSE",
+    "new": "    curateBlockPlacements(dfBlock, liveAsset(blockReplacementFilename(blockName, variant))?.vendor); // HILL-HOUSE",
     "tests": [
       "test/systems/qa2_summoners.test.js"
     ],

@@ -644,7 +644,7 @@ through their ring.
   (`townWalls.js:"export function townWallPathsReader({ bay, landedIn = null, byte = arenaRoadByte, join = arenaJoinByte }) {"`,
   wired in `scenes/tamrielPlacesHost.js`): null while the pixel's roads are not known. While they are not, the wall is
   not made - its carrier block provisional (open ground, no model, no marker - the world-data door builds it again at
-  its next read: `worldDataReplacement.js:"if (!json?.Provisional) b.block = block;"`), the town's fabric plans no streets
+  its next read: `worldDataReplacement.js:"if (!json?.Provisional)"`), the town's fabric plans no streets
   (`townFabricStand.js:"if (dfLocation.outline?.walled && townWallWaits(dfLocation))"`), and once they land
   its pixel is built again (`tamrielSweepsHost.js:"|| townWallReadyAt(p.px, p.py);"`, TESA4's stale law).
 - **A capital's approaches** (`world/capitalApproaches.js`): each plan names its road gates (`gateAt`, the middle of each

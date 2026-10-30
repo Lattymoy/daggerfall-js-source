@@ -442,8 +442,8 @@
   {
     "name": "ICS-family-cache-unread",
     "file": "src/formats/worldData/worldDataReplacement.js",
-    "old": "_blockFamilies.some((f) => f.cache.has(name));",
-    "new": "_blockFamilies.some((f) => f.indexOf(name) >= 0);",
+    "old": "export const portBlockFamilyHas = (name) => _blockFamilies.some((f) => f.cache.has(name)); // a family's cache holds its own names alone",
+    "new": "export const portBlockFamilyHas = (name) => _blockFamilies.some((f) => f.indexOf(name) >= 0); // a family's cache holds its own names alone",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],

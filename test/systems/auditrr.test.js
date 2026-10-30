@@ -233,8 +233,8 @@ test('AUDIT-RR F32/F35: WorldDataVariants\' last key is THIS location\'s before 
 
 test('AUDIT-RR F33/F34/F36/F37/F38/F39: the locationnew resolver is wired at install, place.js seeds the merge with the location index, no phantom discovery record, a duplicate location throws, a stored replacement block is read again, a new game clears the variants', () => {
   assert.match(rd('src/formats/worldData/worldDataReplacement.js'), /export function installWorldDataReplacement\(\) \{[\s\S]{0,200}setNewLocationIndexResolver\(getNewDFLocationIndex\);/);
-  assert.match(rd('src/formats/worldData/worldDataReplacement.js'), /if \(dfRegion\.mapIdLookup\.has\(dfLocation\.mapTableData\.mapId\)\) throw new Error/);
-  assert.match(rd('src/formats/worldData/worldDataReplacement.js'), /if \(dfRegion\.mapNameLookup\.has\(dfLocation\.name\)\) throw new Error/);
+  assert.match(rd('src/formats/worldData/worldDataReplacement.js'), /if \(dfRegion\.mapIdLookup\.has\(dfLocation\.mapTableData\.mapId\)\)\n\s*throw new Error/);
+  assert.match(rd('src/formats/worldData/worldDataReplacement.js'), /if \(dfRegion\.mapNameLookup\.has\(dfLocation\.name\)\)\n\s*throw new Error/);
   assert.match(rd('src/systems/quest/place.js'), /mergeNamedBuildings\(location\.exterior\.buildings, blocks\.filter\(\(b\) => b\.dfBlock\), \{ locationIndex: location\.locationIndex \?\? 0 \}\)/);
   assert.match(hostText('src/scenes/world.js'), /const armRec = arm \? \(topicTree\.listBuildings \?\? \[\]\)\.find\(\(b\) => b\.buildingKey === arm\.buildingKey\) : null;\s+if \(arm && armRec\) discoverBuilding\(/);
   assert.match(rd('src/formats/blocksFile.js'), /if \(this\._blocks\[block\] !== null && this\._blocks\[block\]\.bytes !== null\) return true;\s+\/\/ AUDIT-RR F38/);

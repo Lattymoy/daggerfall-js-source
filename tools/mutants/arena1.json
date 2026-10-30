@@ -66,8 +66,8 @@
   {
     "name": "ARENA1-PORT-BLOCK-GATED",
     "file": "src/formats/worldData/worldDataReplacement.js",
-    "old": "  if (blockName && (_portBlocks.has(blockName) || familyIndex(blockName) >= 0)) return portBlock(blockName);   // ARENA1: the port's own, behind no door; IC-GRAND: a family's too\n",
-    "new": "",
+    "old": "  if (blockName && (_portBlocks.has(blockName) || familyIndex(blockName) >= 0)) return portBlock(blockName); // ARENA1: the port's own, behind no door; IC-GRAND: a family's too\n  if (!worldDataOn() || !blockName) return null;",
+    "new": "  if (!worldDataOn() || !blockName) return null;",
     "tests": [
       "test/world/arena/arena1_city.test.js"
     ],
@@ -76,8 +76,8 @@
   {
     "name": "ARENA1-PORT-INDEX",
     "file": "src/formats/worldData/worldDataReplacement.js",
-    "old": "export const getNewDFBlockIndex = (blockName) => _portBlocks.get(blockName)?.index ?? (familyIndex(blockName) >= 0 ? familyIndex(blockName) : null) ?? newBlockIndices.get(blockName) ?? -1;",
-    "new": "export const getNewDFBlockIndex = (blockName) => (familyIndex(blockName) >= 0 ? familyIndex(blockName) : null) ?? newBlockIndices.get(blockName) ?? -1;",
+    "old": "  _portBlocks.get(blockName)?.index ??\n  (familyIndex(blockName) >= 0 ? familyIndex(blockName) : null) ??\n  newBlockIndices.get(blockName) ??\n  -1; // ARENA1: a port block first; IC-GRAND: or a family's",
+    "new": "  (familyIndex(blockName) >= 0 ? familyIndex(blockName) : null) ?? newBlockIndices.get(blockName) ?? -1; // ARENA1: a port block first; IC-GRAND: or a family's",
     "tests": [
       "test/world/arena/arena1_city.test.js"
     ],

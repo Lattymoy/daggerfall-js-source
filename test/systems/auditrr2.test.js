@@ -75,7 +75,7 @@ test('AUDIT-RR2 G3: a duplicate mapId or name is refused BEFORE any write to the
   const throwAt = fn.indexOf('throw new Error');
   const writeAt = fn.indexOf('dfRegion.locationCount++');
   assert.ok(throwAt > 0 && writeAt > throwAt, 'both checks stand before locationCount++');
-  assert.match(s, /try \{\s+const dfLocation = locationFromJson\(json, regionIndex\);\s+locationAssignmentSuccess = addLocationToRegion\(regionIndex, dfRegion, dfLocation\) && locationAssignmentSuccess;\s+\} catch \(e\) \{ console\.error\(`\[worlddata\] \$\{name\}: \$\{e\?\.message \?\? e\}`\); locationAssignmentSuccess = false; \}/);
+  assert.match(s, /try \{\n\s*const dfLocation = locationFromJson\(json, regionIndex\);\n\s*locationAssignmentSuccess = addLocationToRegion\(regionIndex, dfRegion, dfLocation\) && locationAssignmentSuccess;\n\s*\} catch \(e\) \{\n\s*console\.error\(`\[worlddata\] \$\{name\}: \$\{e\?\.message \?\? e\}`\);\n\s*locationAssignmentSuccess = false;\n\s*\}/);
 });
 
 test('AUDIT-RR2 G4/G26: the docked HUD lift is `(int)` (EnhancedRiding.cs:257) and the pitch floor rests while paused (:122-131)', () => {
