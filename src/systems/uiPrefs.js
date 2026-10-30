@@ -223,7 +223,7 @@ export const PREF_DEFAULTS = Object.freeze({
   // LOAD1 (2026-10-05): the PrintScreen key's download - on, the PNG is saved as KB1 always saved it; off, the shot is
   // kept in the gallery alone (ui/screenshot.js). The Screenshots pane's own switch, so it is no Features row.
   shotDownload: true,
-  // CAPE-TOGGLE (2026-10-29): the inventory's Cape switch - my worn cloak and my aura drawn, for me and everyone
+  // CAPE-TOGGLE (2026-10-29): the inventory's Cape switch - my worn cloak drawn, for me and everyone
   // (systems/capeShown.js). The pack's own switch, so it is no Features row.
   capeShown: true,
   // NOTICE-PANEL (2026-10-29): the town panel under the compass folded to the town's name (ui/hud/townPanel.js) - its

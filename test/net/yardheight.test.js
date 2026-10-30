@@ -178,9 +178,9 @@ test('DECOR-TURN in a yard: a piece whose turned footprint would reach the house
     async move(a) { calls.push(a); return { ok: true, data: {} }; },
     async remove() { return { ok: true, data: {} }; },
   };
-  // the house's footprint stands from x = 0.55 east (0.6 past the edge's pad): the metre-wide chair at the origin clears
-  // it square (0.5), turned a step its corner reaches 0.61
-  const lot = { house: [0.55, -5, 5, 5], lot: [-6, -6, 6, 6], y: 0 };
+  // the house's footprint stands from x = 0.3 east: the metre-wide chair at the origin reaches 0.2 into it square, a touch
+  // (WALL-TOUCH's 0.25), turned a step its corner 0.31 (PIN MOVED: from x = 0.55, past the 0.05 the touch was)
+  const lot = { house: [0.3, -5, 5, 5], lot: [-6, -6, 6, 6], y: 0 };
   const clock = handClock();
   const rig = toolRig({ room: { kind: 'home', yard: true, where: 'Your yard', mapId: 77, buildingKey: 9 }, homeDecor: svc, gold: 1000, placeOk: (p, foot) => yardWhyNot(p.pos, lot, [], foot), later: clock.later });
   rig.standing.push({ id: 'c1', model: 41000, flat: null, pos: [0, 0, 0], rot: [0, 0, 0], scale: 1, light: null, storage: false, paid: 120 });

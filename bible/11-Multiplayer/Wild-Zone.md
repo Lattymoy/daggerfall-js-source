@@ -834,7 +834,7 @@ A hall is no row of the map files (it is spawned, by the day), so every door tha
   are"): a journey to the hall I stand at is no journey - "You are already there."
   (`world.js:"only when youre already"`).
 - HALL-PLATE (the owner: "it also shows as town right now too in white fonts"): on the Overworld a hall wears the
-  dungeons' plate alone, never a place's as well (`world.js:"if (!summary || summary.loc?.wildHall)"`).
+  dungeons' plate alone, never a place's as well (`world.js:"if (!summary || summary.loc?.wildHall || summary.loc?.spawned)"`; a spawn too since SPAWN-PLATE).
 
 ## 15. The Greater Giants (ZONE-GIANTS)
 
@@ -905,9 +905,12 @@ half health", "everyone in the zone should see the same ... that the big giant i
 
 ## 16. The zone's other laws (PVPDUNGEONS)
 
-- NO BANKS (the owner: "Players cant use banks in zone and cant buy houses"): the bank's door says "There are no banks
-  in the mountains." (`wildNoBank`, `world.js:"wildNoBank: () =>"`; `worldModes.js:"if (host.wildNoBank?.())"`). The
-  houses' half is retired: ZONE-HOMES (section 29) sells a house anywhere in the zone.
+- NO BANKS (the owner: "Players cant use banks in zone and cant buy houses"): the bank's door refuses in the zone
+  (`wildNoBank`, `world.js:"wildNoBank: () =>"`; `worldModes.js:"if (host.wildNoBank?.())"`). The houses' half is
+  retired: ZONE-HOMES (section 29) sells a house anywhere in the zone. ZONE-BANK (2026-10-30, the owner: banks "Work in
+  settlements"): a bank in a city, town or village of the zone serves, the Imperial City's among them; elsewhere the door
+  says "In the open zone, banks serve only cities, towns and villages." (`zoneSafe.js` zoneBankOpen), where it still
+  said the Wrothgarian Mountains' words (`01-Overview/bugs/Field-Bugs-2026-10-30.md` section 3).
 - NO WORLD EVENTS (the owner: "Do not spawn world events in the PVP zone!"): the Oblivion Gate never takes region 16
   (`gateRegions`, `gateSite.js:"export const gateRegions"`) and every client drops its towns from the day's raids
   alike (`raidingParties.js:"state.raids = raidsForDay"`) - the whole region, cut or not.

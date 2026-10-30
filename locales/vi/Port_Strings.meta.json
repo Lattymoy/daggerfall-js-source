@@ -1850,8 +1850,8 @@
   "by": "claude-in-session"
  },
  "inventory.cape.title": {
-  "en": "8cd2d555af57",
-  "tr": "d5bba5cf4b31",
+  "en": "838ab1aae12b",
+  "tr": "b41bb1197b10",
   "by": "claude-in-session"
  },
  "inventory.store.chestAct": {
@@ -5502,6 +5502,11 @@
  "wagon.upkeep.boons.rickety": {
   "en": "8dcc1fe1e4b7",
   "tr": "6463dafe4ea6",
+  "by": "claude-in-session"
+ },
+ "wild.bank.shut": {
+  "en": "838ae35da1d4",
+  "tr": "5c2417e8a70b",
   "by": "claude-in-session"
  },
  "wild.death.away": {

@@ -85,6 +85,7 @@ import { interiorLightColor } from '../render/enhancedLighting.js';   // CANDLE-
 import { fabricBackyardOf } from '../world/imperialBackyards.js';   // IC-BACKYARD: an Imperial City house's yard, the court behind it
 import { t } from '../systems/textManager.js';
 import { transformedAabb } from '../render/frustum.js';   // FB1009 HOME-FOOT: a model's ground where its placement stands it
+import { DECOR_WALL_CLIP } from '../systems/decor/decorPlacer.js';   // WALL-TOUCH: how far a piece set on a wall sits into it
 import { adoptLight } from '../render/lightId.js';   // LIGHT-ID: a row named by its lamp
 import { createBankAccounts, BANK_REGION_COUNT, goldRegion } from '../systems/banking.js';   // the yard's wallet (homeYardWallet)
 import { totalGoldAmount, payUndoable, addGold } from '../systems/court.js';
@@ -220,6 +221,12 @@ export const YARD_EDGE_PAD = 0.05;
 export const YARD_FOOT_CELL = 0.4;
 /** A face this high, and higher, is a roof. Ground under the part of it that hangs past the walls is still the yard. */
 export const YARD_ROOF_Y = 2;
+/** WALL-TOUCH (FIELD BUGS 2026-10-30): how far a piece may reach into its own house's measured ground and still stand
+ *  against its wall - half a cell (a cell whose middle is inside the walls is the house's whole) and the clip a piece set
+ *  on a wall sits into it. */
+export const YARD_WALL_PAD = YARD_FOOT_CELL / 2 + DECOR_WALL_CLIP;
+/** YARD-DECK: how far below a deck a piece's place may stand and still be on it, metres. */
+export const YARD_DECK_SLACK = 0.05;
 
 /** EAVE-FOOT: the plane an upright face stands in, seen from above as its line - its way (either end first) and its offset.
  *  @param {number[]} w [ax, az, bx, bz] */
@@ -245,24 +252,70 @@ function lineOf(w) {
  * and a plane is one crossing - an upper storey's wall in the ground wall's plane made the eave the house.
  */
 export function modelFootRects(positions, indices, cell = YARD_FOOT_CELL) {
+  return modelFootParts(positions, indices, cell).rects;
+}
+/** Runs of cells on a W x H grid merged into rects [x0, z0, x1, z1] - each row's runs, a run the row above shares one
+ *  rect. `keyOf(i)` is a cell's key, or null off it: a run holds one key, and a key that is a number rides its rect. */
+function cellRects(W, H, x0, z0, x1, z1, cell, keyOf) {
+  const out = [];
+  let open = new Map();
+  for (let r = 0; r < H; r++) {
+    const next = new Map();
+    for (let q = 0; q < W;) {
+      const key = keyOf(r * W + q);
+      if (key == null) { q++; continue; }
+      let e = q;
+      while (e < W && keyOf(r * W + e) === key) e++;
+      const k = `${q},${e},${key}`;
+      const rect = open.get(k) ?? [x0 + q * cell, z0 + r * cell, Math.min(x1, x0 + e * cell), 0];
+      if (!open.has(k)) { out.push(rect); if (typeof key === 'number') rect[4] = key; }
+      rect[3] = Math.min(z1, z0 + (r + 1) * cell);   // the run carried up a row
+      next.set(k, rect);
+      q = e;
+    }
+    open = next;
+  }
+  return out;
+}
+/** EAVE-FOOT: whether (x, z) stands inside upright faces `walls` - a ray's crossings, one a plane. */
+function insideWalls(walls, x, z) {
+  const crossed = new Set();   // EAVE-FOOT: a crossing once, however many faces stand in its plane
+  for (const [ax, az, bx, bz, line] of walls) {
+    if ((az > z) === (bz > z)) continue;
+    if (ax + ((z - az) / (bz - az)) * (bx - ax) > x) crossed.add(line);   // AUDIT FB1029f B7: by its plane - two walls meeting at a V's point are two
+  }
+  return crossed.size % 2 === 1;
+}
+const footParts = new WeakMap();
+/**
+ * modelFootRects' ground in parts: `rects` all of it, `decks` the part that is a DECK and `solid` the rest.
+ * YARD-DECK (FIELD BUGS 2026-10-30, "Please mark it as yard area so I can decorate here"): a deck is a level roof
+ * facing up inside the ground floor's walls - a balcony, a flat roof - and outside any storey that stands on it (walls
+ * a storey high whose foot is at its height). A deck rect carries its height, [x0, z0, x1, z1, y]. Measured once a model.
+ */
+export function modelFootParts(positions, indices, cell = YARD_FOOT_CELL) {
+  const kept = cell === YARD_FOOT_CELL ? footParts.get(positions) : null;
+  if (kept) return kept;
   let x0 = Infinity, z0 = Infinity, x1 = -Infinity, z1 = -Infinity;
   for (let i = 0; i < positions.length; i += 3) {
     x0 = Math.min(x0, positions[i]); x1 = Math.max(x1, positions[i]);
     z0 = Math.min(z0, positions[i + 2]); z1 = Math.max(z1, positions[i + 2]);
   }
-  if (!(x1 > x0) || !(z1 > z0)) return [];
+  if (!(x1 > x0) || !(z1 > z0)) return { rects: [], solid: [], decks: [] };
   const W = Math.ceil((x1 - x0) / cell), H = Math.ceil((z1 - z0) / cell);
   const hit = new Uint8Array(W * H);
   const roof = new Uint8Array(W * H);
-  const walls = [];
+  const deck = new Float64Array(W * H).fill(NaN);
+  const walls = [], storeys = [];
   const seen = new Set();
-  const mark = (grid, x, z) => { grid[Math.min(H - 1, Math.floor((z - z0) / cell)) * W + Math.min(W - 1, Math.floor((x - x0) / cell))] = 1; };
+  const at = (x, z) => Math.min(H - 1, Math.floor((z - z0) / cell)) * W + Math.min(W - 1, Math.floor((x - x0) / cell));
   for (let t = 0; t < indices.length; t += 3) {
     const a = indices[t] * 3, b = indices[t + 1] * 3, c = indices[t + 2] * 3;
     const ax = positions[a], ay = positions[a + 1], az = positions[a + 2];
     const bx = positions[b], by = positions[b + 1], bz = positions[b + 2];
     const cx = positions[c], cy = positions[c + 1], cz = positions[c + 2];
-    if (Math.abs((bx - ax) * (cz - az) - (cx - ax) * (bz - az)) < 2e-3) {
+    const up = (bz - az) * (cx - ax) - (bx - ax) * (cz - az);   // the face's normal's y, unscaled
+    if (Math.abs(up) < 2e-3) {
       const edges = [[ax, az, bx, bz], [bx, bz, cx, cz], [cx, cz, ax, az]];
       let best = edges[0], len = -1;
       for (const e of edges) {
@@ -273,58 +326,50 @@ export function modelFootRects(positions, indices, cell = YARD_FOOT_CELL) {
       const q = (v) => Math.round(v * 1000);
       const ka = `${q(best[0])},${q(best[1])}`, kb = `${q(best[2])},${q(best[3])}`;
       const key = ka < kb ? `${ka}|${kb}` : `${kb}|${ka}`;
-      if (Math.min(ay, by, cy) < YARD_ROOF_Y && !seen.has(key)) { seen.add(key); walls.push([...best, lineOf(best)]); }   // EAVE-FOOT: the ground floor's
+      const foot = Math.min(ay, by, cy), top = Math.max(ay, by, cy);
+      if (foot < YARD_ROOF_Y && !seen.has(key)) { seen.add(key); walls.push([...best, lineOf(best)]); }   // EAVE-FOOT: the ground floor's
+      else if (foot >= YARD_ROOF_Y && top - foot >= YARD_ROOF_Y) storeys.push([...best, lineOf(best), foot]);   // YARD-DECK: a storey's, never a parapet's
       continue;   // a wall: no ground under it
     }
     const high = ay >= YARD_ROOF_Y && by >= YARD_ROOF_Y && cy >= YARD_ROOF_Y;
+    const level = high && up > 0 && Math.max(ay, by, cy) - Math.min(ay, by, cy) < 0.01;   // YARD-DECK: level, facing up
     const grid = high ? roof : hit;
     const n = Math.max(1, Math.ceil(Math.max(Math.hypot(bx - ax, bz - az), Math.hypot(cx - ax, cz - az), Math.hypot(cx - bx, cz - bz)) / (cell / 2)));
     for (let i = 0; i < n; i++) {
       for (let j = 0; j < n - i; j++) {
         const u = (i + 1 / 3) / n, v = (j + 1 / 3) / n, w = 1 - u - v;   // inside the face, never on its edge
-        mark(grid, ax * w + bx * u + cx * v, az * w + bz * u + cz * v);
+        const k = at(ax * w + bx * u + cx * v, az * w + bz * u + cz * v);
+        grid[k] = 1;
+        if (level && !(deck[k] >= ay)) deck[k] = Math.round(ay * 100) / 100;
       }
     }
   }
-  const inside = (x, z) => {
-    const crossed = new Set();   // EAVE-FOOT: a crossing once, however many faces stand in its plane
-    for (const [ax, az, bx, bz, line] of walls) {
-      if ((az > z) === (bz > z)) continue;
-      if (ax + ((z - az) / (bz - az)) * (bx - ax) > x) crossed.add(line);   // AUDIT FB1029f B7: by its plane - two walls meeting at a V's point are two
-    }
-    return crossed.size % 2 === 1;
-  };
   for (let i = 0; i < roof.length; i++) {
     if (!roof[i] || hit[i]) continue;
     if (!walls.length) { hit[i] = 1; continue; }
     const q = i % W, r = (i / W) | 0;
-    if (inside(x0 + (q + 0.5) * cell, z0 + (r + 0.5) * cell)) hit[i] = 1;
+    if (insideWalls(walls, x0 + (q + 0.5) * cell, z0 + (r + 0.5) * cell)) hit[i] = 1;
   }
-  const out = [];
-  let open = new Map();
-  for (let r = 0; r < H; r++) {
-    const next = new Map();
-    for (let q = 0; q < W;) {
-      if (!hit[r * W + q]) { q++; continue; }
-      let e = q;
-      while (e < W && hit[r * W + e]) e++;
-      const k = q * 65536 + e;
-      const rect = open.get(k) ?? [x0 + q * cell, z0 + r * cell, Math.min(x1, x0 + e * cell), 0];
-      if (!open.has(k)) out.push(rect);
-      rect[3] = Math.min(z1, z0 + (r + 1) * cell);   // the run carried up a row
-      next.set(k, rect);
-      q = e;
-    }
-    open = next;
+  for (let i = 0; i < deck.length; i++) {
+    if (!hit[i] || !walls.length || Number.isNaN(deck[i])) { deck[i] = NaN; continue; }
+    const q = i % W, r = (i / W) | 0, y = deck[i];
+    const on = storeys.filter((w) => Math.abs(w[5] - y) < 0.25);   // a storey standing on it
+    if (on.length && insideWalls(on, x0 + (q + 0.5) * cell, z0 + (r + 0.5) * cell)) deck[i] = NaN;
   }
-  return out;
+  const parts = {
+    rects: cellRects(W, H, x0, z0, x1, z1, cell, (i) => (hit[i] ? true : null)),
+    solid: cellRects(W, H, x0, z0, x1, z1, cell, (i) => (hit[i] && Number.isNaN(deck[i]) ? true : null)),
+    decks: cellRects(W, H, x0, z0, x1, z1, cell, (i) => (Number.isNaN(deck[i]) ? null : deck[i])),
+  };
+  if (cell === YARD_FOOT_CELL) footParts.set(positions, parts);
+  return parts;
 }
 /** FB1009 HOME-FOOT: a model's ground (modelFootRects) where its placement `m` (column-major) stands it - each rect's box
  *  in m's frame, exact for a quarter turn (every Daggerfall building's), the box round it for any other. */
 export function footRectsAt(rects, m) {
-  return (rects ?? []).map(([rx0, rz0, rx1, rz1]) => {
-    const b = transformedAabb([rx0, 0, rz0, rx1, 0, rz1], m);
-    return [b[0], b[2], b[3], b[5]];
+  return (rects ?? []).map(([rx0, rz0, rx1, rz1, y]) => {
+    const b = transformedAabb([rx0, y ?? 0, rz0, rx1, y ?? 0, rz1], m);
+    return y == null ? [b[0], b[2], b[3], b[5]] : [b[0], b[2], b[3], b[5], b[1]];   // YARD-DECK: a deck keeps its height
   });
 }
 
@@ -335,12 +380,16 @@ export function footRectsAt(rects, m) {
  * `walls` the ground the house stands on - `rects` (its models' faces seen from above, world.js, in the box's frame)
  * relative to the origin, or its box where none are known.
  */
-export function yardLot(origin, box, margin = YARD_MARGIN, rects = null) {
+export function yardLot(origin, box, margin = YARD_MARGIN, rects = null, parts = null) {
   if (!Array.isArray(origin) || !Array.isArray(box) || box.length < 6) return null;
   const house = [box[0] - origin[0], box[2] - origin[2], box[3] - origin[0], box[5] - origin[2]];
   if (!(house[2] > house[0]) || !(house[3] > house[1])) return null;
-  const walls = Array.isArray(rects) && rects.length ? rects.map((r) => [r[0] - origin[0], r[1] - origin[2], r[2] - origin[0], r[3] - origin[2]]) : [house];
-  return { house, walls, lot: [house[0] - margin, house[1] - margin, house[2] + margin, house[3] + margin], y: box[1] - origin[1] };
+  const from = (r) => [r[0] - origin[0], r[1] - origin[2], r[2] - origin[0], r[3] - origin[2]];
+  const known = Array.isArray(rects) && rects.length > 0;
+  const walls = known ? rects.map(from) : [house];
+  // YARD-DECK: `parts` - modelFootParts' `solid` and `decks` in the box's frame - split the walls; a deck keeps its height
+  const decks = known && parts?.decks?.length ? parts.decks.map((r) => [...from(r), r[4] - origin[1]]) : null;
+  return { house, walls, ...(decks ? { solid: (parts?.solid ?? []).map(from), decks } : {}), lot: [house[0] - margin, house[1] - margin, house[2] + margin, house[3] + margin], y: box[1] - origin[1] };
 }
 /** AUDIT TAMRIEL-WIDE A1: A HOME'S LOT off its frame (pixelBuild.js homeFrames) - never grown round a terraced house: an
  *  Imperial City house's one model is its door, so a lot grown round it held its own rooms, the neighbours' and the street.
@@ -349,7 +398,7 @@ export function yardLot(origin, box, margin = YARD_MARGIN, rects = null) {
  *  AUDIT TAMRIEL-WIDE II W1: with no court of its own, the door's box, where nothing places - its owner, at the door, still
  *  takes back what was set down before. @param {any} frame */
 export function lotOfFrame(frame) {
-  if (!frame?.terraced) return yardLot(frame.at, frame.box, YARD_MARGIN, frame.rects);
+  if (!frame?.terraced) return yardLot(frame.at, frame.box, YARD_MARGIN, frame.rects, frame);
   const door = yardLot(frame.at, frame.box, 0), yard = door ? fabricBackyardOf(frame.block, frame.record) : null;
   return yard ? { ...door, lot: [...yard.lot], turn: yard.turn, alone: true, access: door.lot } : door;
 }
@@ -374,7 +423,8 @@ export function lotBox(lot) {
  */
 export function yardJoinLots(lot, mates = []) {
   if (!lot || lot.turn || lot.alone || !mates?.length) return lot;
-  return { ...lot, walls: [...(lot.walls ?? [lot.house]), ...mates.flatMap((m) => m.walls)] };
+  const theirs = mates.flatMap((m) => m.walls);
+  return { ...lot, walls: [...(lot.walls ?? [lot.house]), ...theirs], ...(lot.solid ? { solid: [...lot.solid, ...theirs] } : {}) };
 }
 /** HOME-LINE (FIELD BUGS 2026-10-11b): how far (x, z) stands from the nearest of these footprints [x0, z0, x1, z1] - 0 on
  *  one, Infinity for none. */
@@ -400,6 +450,60 @@ export function yardFootMeets(poly, r, pad = 0) {
     if (Math.max(...ps) < Math.min(...bs) || Math.min(...ps) > Math.max(...bs)) return false;
   }
   return true;
+}
+/** WALL-TOUCH: whether the square of half-side `pad` round (x, z) lies wholly on the rects `rs` - a point at least `pad`
+ *  inside their union, so a seam between two of them is no edge. Exact: the square less each rect, until none is left. */
+function deepIn(rs, x, z, pad) {
+  const h = pad + 1e-4;   // a reach of exactly `pad` is a touch
+  let left = [[x - h, z - h, x + h, z + h]];
+  const keep = (out, r) => { if (r[2] - r[0] > 1e-6 && r[3] - r[1] > 1e-6) out.push(r); };   // a float's sliver is no gap
+  for (const r of rs) {
+    const next = [];
+    for (const q of left) {
+      if (r[0] >= q[2] || r[2] <= q[0] || r[1] >= q[3] || r[3] <= q[1]) { next.push(q); continue; }
+      keep(next, [q[0], q[1], Math.min(q[2], r[0]), q[3]]);
+      keep(next, [Math.max(q[0], r[2]), q[1], q[2], q[3]]);
+      const x0 = Math.max(q[0], r[0]), x1 = Math.min(q[2], r[2]);
+      keep(next, [x0, q[1], x1, Math.min(q[3], r[1])]);
+      keep(next, [x0, Math.max(q[1], r[3]), x1, q[3]]);
+    }
+    left = next;
+    if (!left.length) return true;
+  }
+  return false;
+}
+/** WALL-TOUCH: points of the ground a piece covers - its middle, its corners, and a grid inside it (along it, for two
+ *  points) no coarser than a tenth of a metre, nor finer than 4,000 points. */
+function groundSamples(ground, x, z) {
+  const pts = [[x, z], ...ground];
+  if (ground.length < 2) return pts;
+  const xs = ground.map((p) => p[0]), zs = ground.map((p) => p[1]);
+  const bx0 = Math.min(...xs), bz0 = Math.min(...zs), bx1 = Math.max(...xs), bz1 = Math.max(...zs);
+  const step = Math.max(0.1, Math.sqrt(((bx1 - bx0) * (bz1 - bz0)) / 4000), Math.max(bx1 - bx0, bz1 - bz0) / 4000);
+  if (ground.length === 2) {
+    const [a, b] = ground, n = Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / step);
+    for (let i = 1; i < n; i++) pts.push([a[0] + ((b[0] - a[0]) * i) / n, a[1] + ((b[1] - a[1]) * i) / n]);
+    return pts;
+  }
+  const side = (a, b, p) => (b[0] - a[0]) * (p[1] - a[1]) - (b[1] - a[1]) * (p[0] - a[0]);
+  const inside = (p) => {
+    let pos = false, neg = false;
+    for (let i = 0; i < ground.length; i++) { const c = side(ground[i], ground[(i + 1) % ground.length], p); if (c > 1e-9) pos = true; else if (c < -1e-9) neg = true; }
+    return !(pos && neg);
+  };
+  for (let gx = bx0 + step / 2; gx < bx1; gx += step) for (let gz = bz0 + step / 2; gz < bz1; gz += step) if (inside([gx, gz])) pts.push([gx, gz]);
+  return pts;
+}
+/**
+ * WALL-TOUCH, YARD-DECK (FIELD BUGS 2026-10-30): whether a piece at `pos`, covering `ground`, is IN its house - some of
+ * that ground more than YARD_WALL_PAD inside the ground the house stands on (`solid`, or all its `walls`), and the decks
+ * above the piece. A lantern set on the outside wall touches the house and is the yard's; a piece on a deck stands on
+ * it. Asked only once the piece meets the house at all.
+ */
+function yardInHouse(lot, pos, ground) {
+  const over = (lot.decks ?? []).filter((d) => pos[1] < d[4] - YARD_DECK_SLACK);
+  const house = [...(lot.solid ?? lot.walls ?? [lot.house]), ...over];
+  return groundSamples(ground, pos[0], pos[2]).some(([px, pz]) => deepIn(house, px, pz, YARD_WALL_PAD));
 }
 /**
  * WHY A PIECE CANNOT STAND at `pos` (from the frame's origin), or null: off the lot, inside the house's footprint (a
@@ -430,7 +534,7 @@ export function yardWhyNot(pos, lot, others = [], foot = [], roads = [], lines =
   if (Math.abs(x) > DECOR_YARD_POS_MAX || Math.abs(z) > DECOR_YARD_POS_MAX) return YARD_OFF_LOT;   // the service's bound (net/decorLaw.js decorYardPlaceOf)
   const ground = corners.length ? corners : [[x, z]];
   const meets = (r) => inRect(x, z, r) || yardFootMeets(ground, r, YARD_EDGE_PAD);   // FB1009 HOME-FOOT: its middle, or its ground
-  if ((lot.walls ?? [lot.house]).some(meets)) return YARD_IN_HOUSE;
+  if ((lot.walls ?? [lot.house]).some(meets) && yardInHouse(lot, pos, ground)) return YARD_IN_HOUSE;   // WALL-TOUCH, YARD-DECK
   if ((others ?? []).some(meets)) return YARD_ON_OTHER;
   const own = lot.walls ?? [lot.house];
   if (!lot.alone && points.some(([px, pz]) => yardGapTo(lines, px, pz) < yardGapTo(own, px, pz))) return YARD_ON_OTHER;   // HOME-LINE; YARD-LINE: a lot's holder's; IC-BACKYARD: an `alone` lot's line is the fabric's

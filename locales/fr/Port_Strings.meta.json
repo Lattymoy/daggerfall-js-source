@@ -16640,8 +16640,8 @@
   "by": "claude-in-session"
  },
  "inventory.cape.title": {
-  "en": "8cd2d555af57",
-  "tr": "a4522d871615",
+  "en": "838ab1aae12b",
+  "tr": "0b3209893a9c",
   "by": "claude-in-session"
  },
  "inventory.quest.item": {
@@ -41597,6 +41597,11 @@
  "wardrobe.worn": {
   "en": "cafe5884febc",
   "tr": "f42a1d5df6ad",
+  "by": "claude-in-session"
+ },
+ "wild.bank.shut": {
+  "en": "838ae35da1d4",
+  "tr": "402b2e6b5112",
   "by": "claude-in-session"
  },
  "wild.death.away": {

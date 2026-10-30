@@ -18,7 +18,6 @@ import { CAPSULE_HEIGHT } from '../player/motor.js';
 import { mwViewBodyBones, mwViewSpriteFigure, mwViewSpriteFacing } from '../player/mwView.js';
 import { ownAura, ownArmory } from '../systems/ownGlyphs.js';
 import { getPref } from '../systems/uiPrefs.js';
-import { capeShown, lookCapesHidden } from '../systems/capeShown.js';   // CAPE-TOGGLE: capes hidden - mine by my switch, a peer's by their look
 
 /** ARMORY: the "Others' armory" choice (systems/features.js 'armory-others') - every peer's pieces, those within this many
  *  metres, or none. One's own always draws. */
@@ -113,7 +112,7 @@ export function createAuraHost(deps) {
       const mine = ownAura(), kit = ownArmory();
       if ((auraHeard !== undefined && mine !== auraHeard) || (armoryHeard !== undefined && kit !== armoryHeard)) { if (online.rehello?.()) { auraHeard = mine; armoryHeard = kit; } }
       const spawned = deps.spawned(), faced = mwViewSpriteFacing();
-      if (mine && spawned && capeShown()) {   // CAPE-TOGGLE: my aura hidden with my cloak, here and (the look's `hc`) on every screen
+      if (mine && spawned) {   // CAPE-AURA: the Cape switch leaves the aura drawn
         const f = player.feetAt();
         if (self.aura !== mine) self.since = t;
         self.at[0] = f[0]; self.at[1] = f[1]; self.at[2] = f[2]; self.aura = mine; self.yaw = faced?.yaw ?? player.bodyYawFor(deps.camYaw()); auraBeastStep(self, deps.beast(), t);   // SHADOW-CLOAK: the body's own facing, as its third person is drawn (SPRITE-FACE: a sprite's, as its picture faces); turned beast, the cloak torn
@@ -130,7 +129,7 @@ export function createAuraHost(deps) {
       } else selfKit.kit = null;
       for (const d of seen) {
         if (deps.veiled(d.id) || !d.shown) continue;   // a concealed peer's fire is concealed with them
-        const au = lookCapesHidden(online.lookOf?.(d.id)) ? null : online.auraOf?.(d.id) ?? null, ak = online.armoryOf?.(d.id) ?? null;   // CAPE-TOGGLE: a peer who hides their capes wears no aura here
+        const au = online.auraOf?.(d.id) ?? null, ak = online.armoryOf?.(d.id) ?? null;
         if (!au) auraPool.delete(d.id);
         if (!ak) armoryPool.delete(d.id);
         if (!au && !ak) continue;

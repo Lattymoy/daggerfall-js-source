@@ -1708,7 +1708,8 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
 // Integrated Arena spectator visibility with staff teleport, stable boat identity and private ownership; deploy relay before clients.
-export const RELAY_VERSION = 'world292';   // world292: DELVE II DLV3 (2026-10-29, NOT YET DEPLOYED; world284, world288 then world289 on its branch, renumbered past AUDIT TAMRIEL-WIDE's world284, CAPE-TOGGLE's world285, FB1029 GROUND's world286, FRONTS's world287, DRAGON's world288, HAND-WRAPS' world289, PVP-LINGER's world290 and GILDED-GLOW's world291 at the merges of main): a dungeon's room keeps its encounters (`dv`, DELVE_RELAY_MIN - server/src/delveRoom.js, net/delve/delveLaw.js joins the bundle), the `delve` grant kind (a world room's alone, GRANT_ROOM_KINDS) and the token's level stamped in a dungeon's room; a game-made dungeon's curated block names its room, `.c<n>` (AUDIT DLV5-6 M3). Deploy the relay first, then the site.
+export const RELAY_VERSION = 'world293';   // world293: FIELD BUGS 2026-10-30 (bible/01-Overview/bugs/Field-Bugs-2026-10-30.md; NOT YET DEPLOYED): validLook keeps no `hc` (CAPE-AURA - the aura stays drawn with the cape hidden), and validPose keeps a pose's `fy`, the sender's room floor indoors (INDOOR-FLOOR, net/peer/indoorFloor.js). Deploy the relay first, then the site.
+// world292: DELVE II DLV3 (2026-10-29, NOT YET DEPLOYED; world284, world288 then world289 on its branch, renumbered past AUDIT TAMRIEL-WIDE's world284, CAPE-TOGGLE's world285, FB1029 GROUND's world286, FRONTS's world287, DRAGON's world288, HAND-WRAPS' world289, PVP-LINGER's world290 and GILDED-GLOW's world291 at the merges of main): a dungeon's room keeps its encounters (`dv`, DELVE_RELAY_MIN - server/src/delveRoom.js, net/delve/delveLaw.js joins the bundle), the `delve` grant kind (a world room's alone, GRANT_ROOM_KINDS) and the token's level stamped in a dungeon's room; a game-made dungeon's curated block names its room, `.c<n>` (AUDIT DLV5-6 M3). Deploy the relay first, then the site.
 // world291: GILDED-GLOW and DECOR-ROOMY (world286, world287, world289 then world290 on its branch, renumbered past FB1029 GROUND's world286, FRONTS' world287, DRAGON's world288, HAND-WRAPS' world289 and PVP-LINGER's world290 at the merges of main; 2026-10-29, #feature-feedback: "gilded weapons should have a cool crimson glow"; bible/05-Combat/Weapon-Glow.md law 8; NOT YET DEPLOYED): a look's weapon may say `gilded2` (LOOK_GLOW_RE) - a Gilded weapon's crimson, which an older relay strips (its peers' Gilded weapon draws bare until it is deployed); and net/homeLaw.js's ground law (FIELD BUGS 2026-10-29f DECOR-ROOMY), which the relay bundles and never calls. Deploy the relay first, then the site.
 // world290: PVP-LINGER (world288, then world289, on its branch, renumbered past DRAGON's world288 and HAND-WRAPS' world289 at the merges of main; 2026-10-29, the owner: "keep their body in game if they login in the window of cooldown"; bible/11-Multiplayer/PvP-Rework.md PVP-LINGER; NOT YET DEPLOYED): a fighter whose last socket closes inside its PvP lock leaves its body in the zone - its pose said again, struck and killed by the referee's law, its fall signed for its killer to carry - until the lock runs out (net/wild/wildLinger.js, server/src/pvpLinger.js); its account's hello here, or its word from another room at the hub, takes the body back. PVP-LINGER-RISE: a body slain while away is kept in the room's storage, and its player's next zone word is a `down` word with `aw` 1 and its killer's name `n` (validWildDown) - a death, then the zone's rise in a town. The site may deploy first: an older page reads the word as WILD-REJOIN's.
 // world289: HAND-WRAPS (world286 on its branch, renumbered past FB1029 GROUND's world286, FRONTS' world287 and DRAGON's world288 at the merge of main; 2026-10-29, AUDIT HAND-WRAPS B2; bible/05-Combat/Hand-Wraps.md; NOT YET DEPLOYED): LOOT_HELLO_LAW 1 to 2 - a build that reads the Hand Wraps (template 563); while `lootDoor` is on, a loot room refuses an older one, which would drop a pair from a shared container. Deploy the relay first, then the site.
@@ -2029,7 +2030,7 @@ export const poseHandsOf = (usingRightHand, strikeHand) => ({ ...(usingRightHand
 /** A pose the room will relay, or null. */
 export function validPose(p) {
   if (!p || typeof p !== 'object') return null;
-  const { x, y, z, yaw, pitch, mv, wd, an, as, am, sr, cn, cr, ce, ar, fk, rd, rv, rc, hs, lh, ah, wb, dd, hl, lt, lc, hk, hp, hb, hq, hu, uq, cv, cl, cw, ck, cy, cd, st, ga, gb, gm, ts, pl, ab } = p;
+  const { x, y, z, yaw, pitch, mv, wd, an, as, am, sr, cn, cr, ce, ar, fk, rd, rv, rc, hs, lh, ah, wb, dd, hl, lt, lc, hk, hp, hb, hq, hu, uq, cv, cl, cw, ck, cy, cd, st, ga, gb, gm, ts, pl, ab, fy } = p;
   if (![x, y, z, yaw, pitch].every(finite)) return null;
   if (Math.abs(x) > POSE_BOUND || Math.abs(z) > POSE_BOUND || Math.abs(y) > POSE_Y_BOUND) return null;
   // ONCRASH1 (2026-09-15, Mac: "reports of player browser crashing when
@@ -2128,6 +2129,9 @@ export function validPose(p) {
     // SCALE2b: the send time - an integer inside POSE_TS_MOD, or nothing (never clamped: a clamped time would order
     // every later pose behind it). OMITTED when absent (validLook's `class` law).
     ...(Number.isInteger(ts) && ts >= 0 && ts < POSE_TS_MOD ? { ts } : {}),
+    // INDOOR-FLOOR (FIELD BUGS 2026-10-30; net/peer/indoorFloor.js): `fy` the sender's room origin indoors, bounded as y is,
+    // so a reader draws the peer over its own room's floor. OMITTED outdoors (validLook's `class` law).
+    ...(finite(fy) && Math.abs(fy) <= POSE_Y_BOUND ? { fy } : {}),
   };
 }
 /** PEER-ACTS (GATHER-FEEL II): how many acts the pose's `ga` can name - its code is the index + 1 into the client's
@@ -2291,10 +2295,8 @@ export function validLook(look) {
   // (net/peer/peerRiders.js createPeerWalkers). OMITTED when off, `class`'s law. A relay before this one drops it: the
   // player is then seen in their set or class, as before.
   const lg = uint(look.lg, 2);
-  // CAPE-TOGGLE (2026-10-29): `hc` 1 - the player hides their capes, so a peer draws no aura on them (their look already
-  // leaves the cloak out). OMITTED otherwise, `class`'s law. A relay before this one drops it: the aura is seen as before.
-  const hc = look.hc === 1;
-  return { race, gender, faceIndex, ...(klass ? { class: klass } : {}), ...(eo != null ? { eo } : {}), ...(lg ? { lg } : {}), ...(hc ? { hc: 1 } : {}), items };
+  // CAPE-AURA (2026-10-30): world285's `hc` (capes hidden, so no aura) is dropped - the aura stays drawn with the cape hidden.
+  return { race, gender, faceIndex, ...(klass ? { class: klass } : {}), ...(eo != null ? { eo } : {}), ...(lg ? { lg } : {}), items };
 }
 /** DISC23-B's `eo` bound, widened by SKIN2: every on-foot skin - Eye Of The Beholder's sixteen sets (archives
  *  112364-112379) and Daggerfall's twenty classes after them. A literal, because the relay imports this file and not the skin table (test/net/skin2_class_skins.test.js pins it equal to

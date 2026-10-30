@@ -1,4 +1,4 @@
-# Cape Toggle - a player's cloak and aura, shown or hidden (CAPE-TOGGLE, 2026-10-29)
+# Cape Toggle - a player's cloak, shown or hidden (CAPE-TOGGLE, 2026-10-29)
 
 > As built. Not a DFU member: Daggerfall Unity draws no body of the player in the world and has no such switch
 > (Port-Ledger section A, CAPE-TOGGLE). Where this page and the code disagree, the code's headers and pins run.
@@ -10,7 +10,7 @@ cape/helmet toggle option in the inventory for people."* Asked three questions:
 
 | Question | Answer |
 | --- | --- |
-| What does hiding the cape hide? | Worn cloaks plus any aura |
+| What does hiding the cape hide? | Worn cloaks plus any aura (the aura since left drawn - section 4) |
 | Who sees it hidden? | Everyone |
 | The helmet too? | Cape toggle only for now |
 
@@ -43,21 +43,20 @@ Every drawer of the player's own body reads `drawnEquipTable`, never `equipTable
 
 `test/ui/capetoggle.test.js` "one door" holds the four to it.
 
-## 4. The aura
+## 4. The aura - left drawn (CAPE-AURA, 2026-10-30)
 
-Hidden, my own aura is not gathered (`scenes/auraHost.js`, `capeShown()` beside `mine && spawned`). The token still
-says it, as it is still worn, so nothing is said again (no rehello). A peer's aura is not drawn when their look says
-`hc` 1 (`lookCapesHidden(online.lookOf(id))`; `net/online.js` lookOf, a look by id - mine, a room's peer or an
-introduced one), whatever my own switch says.
+The owner, 2026-10-30, reporting the switch as built: "the cape toggle in the inventory also toggles off your aura". So
+the switch hides the cloak alone. `scenes/auraHost.js` gathers my aura and every peer's as it did before CAPE-TOGGLE.
+The look no longer says `hc`, `net/wire.js` validLook drops it (relay world293), and `net/online.js` lookOf, its only
+reader's door, is gone. An older build's `hc` reaches no one, and is ignored if it does.
 
 Aura Armory pieces are not capes: they stay drawn (`04-Characters/Aura-Armory.md`). The profile's character stage
 (`render/characterStage.js`) is unchanged: it is the wardrobe's preview of what is worn and tried on, not the world.
 
 ## 5. The wire
 
-A look may say `hc` 1 (`net/wire.js` validLook keeps 1 and nothing else, omitted otherwise - `class`'s law), relay
-world285. A relay before world285 drops `hc`: peers then see my aura as before, but never my cloak, which the look no
-longer carries. Deploy the relay first, then the site.
+Relay world285 kept a look's `hc` 1; world293 drops it again (section 4). A hidden cloak needs nothing of the wire: the
+look leaves it out.
 
 ## 6. The switch
 
@@ -74,11 +73,11 @@ not the switch's. HOOD-SAID's raised-hood chip already touches the word CLOAKS o
 
 ## 7. Past the Bay
 
-The switch reads no place (TAMRIEL-WIDE, `01-Overview/Port-Doctrine.md`): the pref, the drawn table, the look and its
-`hc` are the same in every province, and a peer is drawn by the look they send wherever they stand. The look's pin
+The switch reads no place (TAMRIEL-WIDE, `01-Overview/Port-Doctrine.md`): the pref, the drawn table and the look are
+the same in every province, and a peer is drawn by the look they send wherever they stand. The look's pin
 joins a room on the Bay and one past it, Whiterun's cell.
 
 ## 8. Pins
 
 `test/ui/capetoggle.test.js` (5: the law, the look and the wire, the auras, the one door, the pack's switch);
-`tools/mutants/capetoggle.json` (24, all dead). Relay world285's LAW row: `test/net/relayversion.test.js`.
+`tools/mutants/capetoggle.json` (19, all dead). Relay world285's and world293's LAW rows: `test/net/relayversion.test.js`.

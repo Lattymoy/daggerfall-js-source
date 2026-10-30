@@ -34,7 +34,7 @@ import { ecoOrigin } from '../world/ecotone.js';
 import { festivalBannerAnchors, festivalLanternsOf } from './seatFestival.js';
 import { flatBatchAabb, localAabb, transformedAabb } from '../render/frustum.js';
 import { floraSwayOf } from '../systems/wind/windDrive.js';
-import { footRectsAt } from './homeYards.js';
+import { footRectsAt, modelFootParts } from './homeYards.js';
 import { FOREST_HIDDEN_LOCATION_TYPES, populatesWanderingNpcs, tamrielLandsOn } from './shared.js';
 import { landGroundSet } from '../world/tamriel/tamrielLands.js';   // TESA-LANDS: a zone's dress of its ground
 import { standLandProps, landFeetOff } from '../world/lands/landProps.js';   // TESA-LANDS: and its landmarks stood, its flats off their feet
@@ -612,9 +612,10 @@ export function createPixelBuild(host) {
             const at = Array.isArray(placed.recordAt) ? [locLocal[0] + b.originX + placed.recordAt[0], blockY + placed.recordAt[1], locLocal[2] + b.originZ + placed.recordAt[2]] : null;
             const bd = b.dfBlock?.rmbBlock?.fldHeader?.buildingDataList?.[placed.recordIndex] ?? null;   // YARD-LINE: whether it could hold a lot of its own
             const rects = footRectsAt(modelFeetOf(placed.modelIdNum, cpu), local);   // FB1009 HOME-FOOT: the ground its faces cover, never its box
+            const parts = modelFootParts(cpu.positions, cpu.indices), solid = footRectsAt(parts.solid, local), decks = footRectsAt(parts.decks, local);   // YARD-DECK: its flat roofs, apart
             const f = pixelHomeFrames.get(homeKey);
-            if (!f && at) pixelHomeFrames.set(homeKey, { at, box: [...box], rects, type: bd?.buildingType ?? null, faction: bd?.factionId ?? 0, parts: [[cpu, local]], terraced: isFabricDoorId(placed.modelIdNum), block: b.blockName, record: placed.recordIndex });   // AUDIT RPT1026 J2: its models (hallBanners.js wallBehind); IC-BACKYARD: its block and record, its yard's
-            else if (f) { for (let i = 0; i < 3; i++) { f.box[i] = Math.min(f.box[i], box[i]); f.box[i + 3] = Math.max(f.box[i + 3], box[i + 3]); } f.rects.push(...rects); f.parts?.push([cpu, local]); }
+            if (!f && at) pixelHomeFrames.set(homeKey, { at, box: [...box], rects, solid, decks, type: bd?.buildingType ?? null, faction: bd?.factionId ?? 0, parts: [[cpu, local]], terraced: isFabricDoorId(placed.modelIdNum), block: b.blockName, record: placed.recordIndex });   // AUDIT RPT1026 J2: its models (hallBanners.js wallBehind); IC-BACKYARD: its block and record, its yard's
+            else if (f) { for (let i = 0; i < 3; i++) { f.box[i] = Math.min(f.box[i], box[i]); f.box[i + 3] = Math.max(f.box[i + 3], box[i + 3]); } f.rects.push(...rects); f.solid?.push(...solid); f.decks?.push(...decks); f.parts?.push([cpu, local]); }
           }
           const homeRow = homeKey != null ? townHomes?.get(homeKey) ?? null : null;
           const homeLook = homeRow ? lookOfHome(homeTown, homeKey, homeRow) : null;

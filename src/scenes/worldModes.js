@@ -35,7 +35,7 @@ import { isOnlinePage } from '../systems/online/onlineLane.js';   // RESURRECT1:
 import { horseCareRules } from '../systems/upkeep/upkeepSwitch.js';   // STEED1: a Stable prices its horses by what they are while horses are cared for (HORSE-TIERS: any tier but Off, through the one accessor)
 import { bloodDecalDeps } from '../combat/blood/bloodSwitch.js';   // BLOOD1a
 import { createBloodMarks } from '../combat/blood/bloodMarks.js';   // BLOOD1a
-import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder, floorLanding, repositionFeetY, standsOnFloor, interiorVoidRescue, standFromVoid, NOTHING_OF_VALUE_TEXT, INTERIOR_VOID_TEXT, dungeonVoidText } from '../player/enterExit.js';   // FIELD BUGS 2026-10-04d VOID-ENTRY: the floor a landing stands on, the failsafe, and their two lines; FIELD BUGS 2026-10-19f VOID-DUNGEON: the dungeon's line
+import { doorWorldAabb, doorWorldPosition, doorWorldNormal, interiorLanding, exteriorLanding, dungeonEntranceLanding, climbLadder, floorLanding, repositionFeetY, dungeonExitFeet, standsOnFloor, interiorVoidRescue, standFromVoid, NOTHING_OF_VALUE_TEXT, INTERIOR_VOID_TEXT, dungeonVoidText } from '../player/enterExit.js';   // FIELD BUGS 2026-10-04d VOID-ENTRY: the floor a landing stands on, the failsafe, and their two lines; FIELD BUGS 2026-10-19f VOID-DUNGEON: the dungeon's line
 import { WORLD_FRAME } from '../render/renderer.js';   // AUDIT-EL F5
 import { STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE } from '../world/terrain/terrainSampler.js';   // TERRAIN-SCALE1: the interior cache's frame and the ground its legacy heights stood on
 import { climbRigInput } from '../player/climb/climbPose.js';   // CLIMB6: the body's limbs on the climb
@@ -5444,7 +5444,7 @@ export function createWorldModes(host) {
    *  they ride the save with everything else; the array is minted on
    *  first use at the map reader's region count. */
   function openBank() {
-    if (host.wildNoBank?.()) return false;   // PVPDUNGEONS: no banks in the zone
+    if (host.wildNoBank?.()) return false;   // PVPDUNGEONS: no banks in the zone - ZONE-BANK: but a settlement's
     if (!bankArtLoaded() || !_shopFont) return false;
     // MapFileReader.RegionCount (:237-246). The host has no map
     // reader in scope, so the count comes from the accounts already
@@ -10266,7 +10266,7 @@ export function createWorldModes(host) {
     if (landing) {
       // RepositionPlayer(DungeonEntrance): same law as the building
       // door - the door centre is the controller's centre, not the feet.
-      player.spawn(landing.pos[0], repositionFeetY(player.collider.heightAt(landing.pos[0], landing.pos[2]), landing.pos[1]), landing.pos[2]);
+      player.spawn(landing.pos[0], dungeonExitFeet(player.collider, landing), landing.pos[2]);   // TALL-DOOR: never over the floor before the door
       cam.yaw = Math.atan2(landing.normal[0], landing.normal[2]);
       // DE2: PositionPlayerToDungeonExit ends on
       // SetHorizontalFacing(foundDoorNormal) (StreamingWorld.cs
