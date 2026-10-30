@@ -5611,7 +5611,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // in the host, `?terrainthread=off`, one that died) the queue below is
     // what it always was.
     if (terrainGen.threaded) {
-      for (const p of restridePending.values()) promoteOffThread(p);
+      for (const p of restridePending.values()) restrideOffThread(p);
       restridePending.clear();
       return;
     }
@@ -5632,21 +5632,22 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
 
   /** PERF-EXT26: a promotion's grid, built on the terrain worker. The
    *  reply swaps the surface only if the pixel it was asked for still
-   *  stands and still wants stride 1 - an eviction, a rebuild or a walk
-   *  back out while it was away drops it, and a pixel already promoted
+   *  stands and still wants `stride` - an eviction, a rebuild or a walk
+   *  back out while it was away drops it, and a pixel already restrided
    *  keeps what it has. Nothing is made for a dropped reply, so nothing
-   *  is left to free. */
-  function promoteOffThread(p) {
+   *  is left to free. OW-DEMOTE: a demotion's too - past the Bay its
+   *  ghost rows read the continent's ground, 30-60 ms a crossing here. */
+  function restrideOffThread(p, stride = 1) {
     const key = `${p.px},${p.py}`;
     if (built.get(key) !== p) return;                  // evicted while it waited
     if (strideFor(p.px, p.py) === p._stride) return;   // walked back out of the near ring
     const bedBytes = waterOn ? bedBytesOf(p) : null;   // AUDIT WATER-NEXT P1: the bed carved on the worker with the grid
-    terrainGen.grid({ ...gridGround(p), stride: 1, landform, bed: bedBytes }).then((grid) => {   // LANDFORM1-3: the ghost rows the build took; ACROSS-EDGE: and its meets
+    terrainGen.grid({ ...gridGround(p), stride, landform, bed: bedBytes }).then((grid) => {   // LANDFORM1-3: the ghost rows the build took; ACROSS-EDGE: and its meets
       if (built.get(key) !== p) return;                              // evicted, or rebuilt, while the worker built it
-      if (strideFor(p.px, p.py) !== 1 || p._stride === 1) return;   // walked back out, or promoted meanwhile
-      if (waterOn && bedBytesOf(p) !== bedBytes) grid = { ...grid, bed: gridBed(grid, bedBytesOf(p), 1, grid.bed?.halo ?? null) };   // the cap's TileMap moved meanwhile: carved by the one that stands
-      restrideTerrain(p, 1, grid);
-    }).catch((e) => console.error(`[terrain] promotion of ${key} failed:`, e));
+      if (strideFor(p.px, p.py) !== stride || p._stride === stride) return;   // walked back out, or restrided meanwhile
+      if (waterOn && bedBytesOf(p) !== bedBytes) grid = { ...grid, bed: gridBed(grid, bedBytesOf(p), stride, grid.bed?.halo ?? null) };   // the cap's TileMap moved meanwhile: carved by the one that stands
+      restrideTerrain(p, stride, grid);
+    }).catch((e) => console.error(`[terrain] restride of ${key} failed:`, e));
   }
 
   function restrideTerrain(p, stride, grid = restrideGrid({ ...gridGround(p), woods, stride, landform, roads: terrainGen.roads(), sites: _landformSites, beyond: beyondSites.beyond(), climates: _landformClimates, bed: waterOn ? bedBytesOf(p) : null })) {   // PERF-EXT26: or the grid the worker built; LANDFORM1-3: the build's ghost rows; LANDFORM4/6: the same sites and climates; AUDIT WATER-NEXT P1: the bed with it
@@ -32352,8 +32353,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // - and a crossing promotes FIVE pixels at once, whatever the land
       // view distance is (the ring boundary is Chebyshev 3, not the
       // radius). Paying all five inline is 15.6 ms in a single frame, a
-      // dropped frame every 819 units walked. Demotions are 0.11 ms and
-      // stay inline; promotions go on a queue the frame loop spends a
+      // dropped frame every 819 units walked. Demotions were 0.11 ms, inline (OW-DEMOTE: past the Bay 30-60 ms, so
+      // the worker's where one is up); promotions go on a queue the frame loop spends a
       // budget of, nearest first, exactly as GR5 fills grass cells. A
       // pixel waiting its turn keeps the coarser surface it already had,
       // which is the same heightfield at a tessellation nobody can
@@ -32362,7 +32363,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         const want = strideFor(p.px, p.py);
         if (want === p._stride) continue;
         if (want === 1) restridePending.set(`${p.px},${p.py}`, p);   // the dear way round
-        else { restridePending.delete(`${p.px},${p.py}`); restrideTerrain(p, want); }
+        else { restridePending.delete(`${p.px},${p.py}`); (terrainGen.threaded ? restrideOffThread : restrideTerrain)(p, want); }   // OW-DEMOTE: the worker's too, where one is up
       }
       if (terrainGen.threaded) spendRestrides();   // PERF-EXT26: the promotions reach the worker on the crossing frame, ahead of the new pixels' jobs
       console.log(`stream: entered ${r.current.x},${r.current.y} (load ${r.load.length}, unload ${r.unload.length})`);
