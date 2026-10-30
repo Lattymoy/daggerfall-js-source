@@ -200,8 +200,8 @@
   {
     "name": "DRAGON5-the-look-the-horses",
     "file": "src/scenes/world.js",
-    "old": "      rc: riding ? (player.transportMode === TRANSPORT_MODES.Dragon ? dragonLookOfItem(dragonMountOf(playerEntity.items)) : riddenHorseLook(playerEntity.items ?? [])) || undefined : undefined,",
-    "new": "      rc: riding ? riddenHorseLook(playerEntity.items ?? []) || undefined : undefined,",
+    "old": "      rc: riding ? (player.transportMode === TRANSPORT_MODES.Dragon ? dragonLookOfItem(dragonMountOf(playerEntity.items)) : riddenHorseLook(playerEntity.items ?? [])) || undefined : dragonRideLook() || undefined,",
+    "new": "      rc: riding ? riddenHorseLook(playerEntity.items ?? []) || undefined : dragonRideLook() || undefined,",
     "tests": [
       "test/net/dragon/dragon5_mount.test.js"
     ]

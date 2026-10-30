@@ -282,8 +282,9 @@ test('DRAGON2 wire: the client says two things, `in` and `hit`, projected field 
   assert.ok('error' in parseClient(JSON.stringify({ t: 'dragon', k: 'hit', d: 9, r: 1 }), { hasHello: false }));
   assert.equal(relaySupportsDragon(RELAY_VERSION), true);
   assert.equal(relaySupportsDragon(`world${DRAGON_RELAY_MIN - 1}`), false);
-  assert.deepEqual([DRAGON_RELAY_MIN, DRAGON_RIDE_RELAY_MIN], [290, 288], 'PIN MOVED (DRAGON-HIDDEN): the fight past the ride - the first relay that answers `ask`');
+  assert.deepEqual([DRAGON_RELAY_MIN, DRAGON_RIDE_RELAY_MIN], [291, 288], 'PIN MOVED (DRAGON-HIDDEN): the fight past the ride - the first relay that answers `ask` (290 on its branch, renumbered past PVP-LINGER)');
   assert.equal(relaySupportsDragon('world289'), false, 'HAND-WRAPS\' relay closes the socket on `ask`');
+  assert.equal(relaySupportsDragon('world290'), false, 'and PVP-LINGER\'s');
   assert.deepEqual([DRAGON_BLOWS_WIRE_MAX, DRAGON_BLOW_KINDS], [B.DRAGON_BLOWS_KEPT, B.DRAGON_BLOWS.length]);
   const { f, words } = runFight({ ms: 4 * 60_000 });
   const site = { w: W, sx: 1e6, sz: 2e6 };

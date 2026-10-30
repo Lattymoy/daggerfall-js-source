@@ -1704,7 +1704,8 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
 // Integrated Arena spectator visibility with staff teleport, stable boat identity and private ownership; deploy relay before clients.
-export const RELAY_VERSION = 'world290';   // world290: DRAGON-HARDER (2026-10-29, the owner: "The dragon is way too easy to kill"; world289 on its branch, renumbered past HAND-WRAPS' world289 at the merge of main; bible/11-Multiplayer/Dwarven-Dragon.md DRAGON-HARDER; NOT YET DEPLOYED): net/dragon/dragonBrain.js DRAGON_TTK_S 200 to 720 - a fighter's share of the dragon's health, twelve minutes at reference damage; and DRAGON-HIDDEN (the owner: "people are able to predict the dragon spawn by looking at source code") - every dragon roll a watch's seed, HMAC of GATE_SIGNING_KEY (net/dragon/dragonSeed.js JOINS THE BUNDLE), told on `ask` once its landing is past, so DRAGON_RELAY_MIN is 290; the pose law unchanged, so DRAGON_RIDE_RELAY_MIN stays 288 (HAND-WRAPS' world289 keeps rd 3 too). Deploy the relay before clients.
+export const RELAY_VERSION = 'world291';   // world291: DRAGON-HARDER (2026-10-29, the owner: "The dragon is way too easy to kill"; world289 then world290 on its branch, renumbered past HAND-WRAPS' world289 and PVP-LINGER's world290 at the merges of main; bible/11-Multiplayer/Dwarven-Dragon.md DRAGON-HARDER; NOT YET DEPLOYED): net/dragon/dragonBrain.js DRAGON_TTK_S 200 to 720 - a fighter's share of the dragon's health, twelve minutes at reference damage; and DRAGON-HIDDEN (the owner: "people are able to predict the dragon spawn by looking at source code") - every dragon roll a watch's seed, HMAC of GATE_SIGNING_KEY (net/dragon/dragonSeed.js JOINS THE BUNDLE), told on `ask` once its landing is past, so DRAGON_RELAY_MIN is 291; the pose law unchanged, so DRAGON_RIDE_RELAY_MIN stays 288 (HAND-WRAPS' world289 and PVP-LINGER's world290 keep rd 3 too). Deploy the relay before clients.
+// world290: PVP-LINGER (world288, then world289, on its branch, renumbered past DRAGON's world288 and HAND-WRAPS' world289 at the merges of main; 2026-10-29, the owner: "keep their body in game if they login in the window of cooldown"; bible/11-Multiplayer/PvP-Rework.md PVP-LINGER; NOT YET DEPLOYED): a fighter whose last socket closes inside its PvP lock leaves its body in the zone - its pose said again, struck and killed by the referee's law, its fall signed for its killer to carry - until the lock runs out (net/wild/wildLinger.js, server/src/pvpLinger.js); its account's hello here, or its word from another room at the hub, takes the body back. PVP-LINGER-RISE: a body slain while away is kept in the room's storage, and its player's next zone word is a `down` word with `aw` 1 and its killer's name `n` (validWildDown) - a death, then the zone's rise in a town. The site may deploy first: an older page reads the word as WILD-REJOIN's.
 // world289: HAND-WRAPS (world286 on its branch, renumbered past FB1029 GROUND's world286, FRONTS' world287 and DRAGON's world288 at the merge of main; 2026-10-29, AUDIT HAND-WRAPS B2; bible/05-Combat/Hand-Wraps.md; NOT YET DEPLOYED): LOOT_HELLO_LAW 1 to 2 - a build that reads the Hand Wraps (template 563); while `lootDoor` is on, a loot room refuses an older one, which would drop a pair from a shared container. Deploy the relay first, then the site.
 // world288: DRAGON (2026-10-29, bible/11-Multiplayer/Dwarven-Dragon.md; NOT YET DEPLOYED; world281, world283, world284, world285, world286 then world287 on its branch, renumbered past the PvP rework's world281 and world282, PVP-SAFE-HIT's world283, AUDIT TAMRIEL-WIDE's world284, CAPE-TOGGLE's world285, FB1029 GROUND's world286 and FRONTS' world287 at the merges of main): the pose's `rd` keeps 3, a rider on the Dwarven Dragon (POSE_RIDE.Dragon, DRAGON_RIDE_RELAY_MIN), and the Dwarven Dragon's fight (server/src/dragonFights.js, its cell's words and its z1 receipts). Deploy the relay first.
 // world287: FRONTS (world286 on its branch, renumbered past FB1029 GROUND's world286 at the merge of main; 2026-10-29, the owner: "events are way overdone with their spawning"; bible/03-World/World-Wide.md FRONTS; NOT YET DEPLOYED): net/frontLaw.js JOINS THE BUNDLE - past the Bay two provinces stir a game day, and only they open a gate (gateLaw.js isGateDay), land a star (starfallLaw.js starInWindow), roll raid slots (raid/raidLaw.js raidDaySlots) or raise a Hollow, at most two of those standing (superDungeon/sdLaw.js sdDue, sdRise; the hub's _sdHeldPast). AUDIT FRONTS (re-hashed in place, undeployed): the hub beats the provinces that waited longest first (sdBeatOrder), arms a turn that ended mid-census, and its Hollow cards name the next's turn and a free place (sdRiseNotBefore). The Bay's lane unchanged. The site may deploy first: it sends nothing world287 alone reads (bible/03-World/World-Wide.md FRONTS, the deploy).
@@ -5089,12 +5090,14 @@ export function validWildRefOut(m) {
 /** WILD-REJOIN: a `down` word projected - its time left, and the body's remains' id and place together or neither. */
 function validWildDown(/** @type {any} */ m) {
   if (!intIn(m.ms, 1, WILD_DOWN_MS_MAX)) return null;
-  if (m.r === undefined && m.p === undefined) return { k: 'down', ms: m.ms };
+  // PVP-LINGER-RISE: `aw` 1, slain while away, and `n` its killer's name
+  const away = m.aw === 1 ? { aw: 1, ...(typeof m.n === 'string' && m.n.length > 0 && m.n.length <= NAME_MAX ? { n: m.n } : {}) } : {};
+  if (m.r === undefined && m.p === undefined) return { k: 'down', ms: m.ms, ...away };
   const r = typeof m.r === 'string' && WILD_ID_RE.test(m.r) ? m.r : null;
   if (!r) return null;
-  if (m.p === undefined) return { k: 'down', ms: m.ms, r };
+  if (m.p === undefined) return { k: 'down', ms: m.ms, r, ...away };
   const p = wildPoint(m.p);
-  return p ? { k: 'down', ms: m.ms, r, p } : null;
+  return p ? { k: 'down', ms: m.ms, r, p, ...away } : null;
 }
 // ─── SHARED-HEALTH (2026-10-26, net/siege/refereeHealthShare.js): ONE HEALTH POOL UNDER THE REFEREE ───
 // A client's report of its health (`{t:'vit', n, s, seen}`) to the referee that holds a fight of its - the open zone's, a
@@ -6493,7 +6496,7 @@ export const DRAGON_HZ_MAX = 8;
 export const dragonGate = (bucket, nowMs) => tokenGate(bucket, nowMs, DRAGON_HZ_MAX);
 /** The first relay that keeps a dragon's fight; an older one closes the socket on the frame, so a client says none to it.
  *  DRAGON-HIDDEN: the first that answers `ask`, past the ride's (the fight's rolls are the relay's secret since). */
-export const DRAGON_RELAY_MIN = 290;
+export const DRAGON_RELAY_MIN = 291;
 export const relaySupportsDragon = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= DRAGON_RELAY_MIN; };
 /** The door between a dragon's cell and the hub: the kill and its receipts. */
 export const DRAGON_INTERNAL_FELL = '/internal/dragon/fell';
