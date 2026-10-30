@@ -238,8 +238,8 @@
   {
     "name": "BOARD-UI-the-vendors-unnamed",
     "file": "src/ui/vendor/vendorTab.js",
-    "old": "      if (found.length) list.append(listHead(['Item', 'Condition', 'Price', 'Sold at']));\n",
-    "new": "",
+    "old": "      if (found.length) list.append(listHead(['Item', 'Condition', 'Price', 'Sold at']));\n      for (const r of found) list.append(...rowNodes(r, { where: true }));",
+    "new": "      for (const r of found) list.append(...rowNodes(r, { where: true }));",
     "tests": [
       "test/ui/board_ui.test.js"
     ]

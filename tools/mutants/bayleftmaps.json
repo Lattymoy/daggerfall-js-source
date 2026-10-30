@@ -122,8 +122,8 @@
   {
     "name": "BLM-C1-the-coin-box-west-the-bay's",
     "file": "src/ui/vendor/vendorMapMark.js",
-    "old": "px < box.x0 || py < box.y0 || px >= box.x0 + box.w",
-    "new": "px < 0 || py < box.y0 || px >= box.x0 + box.w",
+    "old": "    px < box.x0 ||",
+    "new": "    px < 0 ||",
     "tests": [
       "test/ui/bayleft_marks.test.js"
     ]

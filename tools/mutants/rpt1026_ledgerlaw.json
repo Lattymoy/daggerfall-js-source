@@ -202,8 +202,8 @@
   {
     "name": "RPT1026-LEDGERLAW-269-trader-row-untagged",
     "file": "src/ui/vendor/vendorTab.js",
-    "old": "    if (isStolen(row.item)) b.append(el('span', 'market-stolen', stolenTag()));",
-    "new": "",
+    "old": "    if (isStolen(row.item)) b.append(el('span', 'market-stolen', stolenTag())); // RPT1026-LEDGERLAW: the theft's mark rides the listing",
+    "new": "    // RPT1026-LEDGERLAW: the theft's mark rides the listing",
     "tests": [
       "test/ui/rpt1026_ledgerlaw_stolen.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "RPT1026-LEDGERLAW-269-look-undrawn",
     "file": "src/ui/vendor/vendorTab.js",
-    "old": "  if (stats.stolen) box.append(el('p', 'vendor-stolen', stats.stolen));",
-    "new": "",
+    "old": "  if (stats.stolen) box.append(el('p', 'vendor-stolen', stats.stolen)); // RPT1026-LEDGERLAW",
+    "new": "  // RPT1026-LEDGERLAW",
     "tests": [
       "test/ui/rpt1026_ledgerlaw_stolen.test.js"
     ],
@@ -232,8 +232,8 @@
   {
     "name": "RPT1026-LEDGERLAW-269-page-untagged",
     "file": "src/ui/vendor/vendorPage.js",
-    "old": "${isStolen(r.item) ? ` · ${stolenTag()}` : ''}",
-    "new": "",
+    "old": "        `${goldText(r.price)} · ${r.owner ?? 'someone'}'s house, ${townOf(r.map)}${r.mine ? ' · yours' : ''}${isStolen(r.item) ? ` · ${stolenTag()}` : ''}`,",
+    "new": "        `${goldText(r.price)} · ${r.owner ?? 'someone'}'s house, ${townOf(r.map)}${r.mine ? ' · yours' : ''}`,",
     "tests": [
       "test/ui/rpt1026_ledgerlaw_stolen.test.js"
     ],

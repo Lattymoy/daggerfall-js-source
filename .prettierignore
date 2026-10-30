@@ -60,6 +60,8 @@
 /src/ui/questlines/*/
 !/src/ui/starfall/
 /src/ui/starfall/*/
+!/src/ui/vendor/
+/src/ui/vendor/*/
 !/src/ui/wardrobe/
 /src/ui/wardrobe/*/
 !/src/world/

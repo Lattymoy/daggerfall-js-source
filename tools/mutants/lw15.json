@@ -536,8 +536,8 @@
   {
     "name": "LW15-page-merge",
     "file": "src/ui/vendor/vendorPage.js",
-    "old": "    const sold = [...(mine.sold ?? []), ...(mine.patronSold ?? [])]",
-    "new": "    const sold = [...(mine.sold ?? [])]",
+    "old": "    const sold = [...(mine.sold ?? []), ...(mine.patronSold ?? [])].sort(\n      (a, b) => (Number(b.at) || 0) - (Number(a.at) || 0),\n    );",
+    "new": "    const sold = [...(mine.sold ?? [])].sort((a, b) => (Number(b.at) || 0) - (Number(a.at) || 0));",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js"
     ]
@@ -545,8 +545,8 @@
   {
     "name": "LW15-page-who",
     "file": "src/ui/vendor/vendorPage.js",
-    "old": "const who = s.patron ? safe(() => p.patronName?.(s.patron), null) : null;",
-    "new": "const who = null;",
+    "old": "      const who = s.patron ? safe(() => p.patronName?.(s.patron), null) : null; // LW15: \"Sold to Ada Lark of Wayrest\"",
+    "new": "      const who = null; // LW15: \"Sold to Ada Lark of Wayrest\"",
     "tests": [
       "test/systems/livingWorld/lw15_patrons.test.js"
     ]

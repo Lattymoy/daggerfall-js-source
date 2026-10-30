@@ -112,8 +112,8 @@
   {
     "name": "VENDORLOST-the-stall-never-settling",
     "file": "src/ui/vendor/vendorTab.js",
-    "old": "return { body, open, load, state: st };",
-    "new": "return { body, open: load, load, state: st };",
+    "old": "  return { body, open, load, state: st };",
+    "new": "  return { body, open: load, load, state: st };",
     "tests": [
       "test/net/fb1025_vendorlost.test.js",
       "test/ui/homevendor_ui.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "VENDORLOST-the-board-settling-too",
     "file": "src/ui/vendor/vendorTab.js",
-    "old": "    if (stall && v.settle) {\n",
-    "new": "    if (v.settle) {\n",
+    "old": "    if (stall && v.settle) {",
+    "new": "    if (v.settle) {",
     "tests": [
       "test/net/fb1025_vendorlost.test.js"
     ]
@@ -131,8 +131,8 @@
   {
     "name": "VENDORLOST-a-refusal-unsaid",
     "file": "src/ui/vendor/vendorTab.js",
-    "old": "text: refused ? accountRefusalText(refused) : '' };",
-    "new": "text: '' };",
+    "old": "        return { ok: !!r?.ok && !refused, text: refused ? accountRefusalText(refused) : '' };",
+    "new": "        return { ok: !!r?.ok && !refused, text: '' };",
     "tests": [
       "test/net/fb1025_vendorlost.test.js"
     ]

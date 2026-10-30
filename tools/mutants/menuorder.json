@@ -299,8 +299,8 @@
   {
     "name": "MENUORDER-vendor-unpictured",
     "file": "src/ui/vendor/vendorTab.js",
-    "old": "const pic = pictureNode(v.picture?.(row.item, wake) ?? null, el, 'market-pic');",
-    "new": "const pic = null;",
+    "old": "    const pic = pictureNode(v.picture?.(row.item, wake) ?? null, el, 'market-pic');",
+    "new": "    const pic = null;",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "MENUORDER-vendorpage-unpictured",
     "file": "src/ui/vendor/vendorPage.js",
-    "old": "const pic = pictureNode(safe(() => p.picture?.(item, rerender), null), el, 'vendor-pic');",
-    "new": "const pic = null;",
+    "old": "    const pic = pictureNode(\n      safe(() => p.picture?.(item, rerender), null),\n      el,\n      'vendor-pic',\n    );",
+    "new": "    const pic = null;",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -1001,8 +1001,8 @@
   {
     "name": "AUDITMO-C5-closure-a-row",
     "file": "src/ui/vendor/vendorTab.js",
-    "old": "v.picture?.(row.item, wake)",
-    "new": "v.picture?.(row.item, () => ui.rerender())",
+    "old": "    const pic = pictureNode(v.picture?.(row.item, wake) ?? null, el, 'market-pic');",
+    "new": "    const pic = pictureNode(v.picture?.(row.item, () => ui.rerender()) ?? null, el, 'market-pic');",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
