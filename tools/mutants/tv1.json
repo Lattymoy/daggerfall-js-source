@@ -772,8 +772,8 @@
   {
     "name": "AUDIT-DEEP2-D6-riders-from-the-head",
     "file": "src/scenes/world.js",
-    "old": "    const peerEye = travelView?.eye ?? cam.pos, peerRight",
-    "new": "    const peerEye = cam.pos, peerRight",
+    "old": "    const peerEye = travelView?.eye ?? (renderer._view ? renderer._camPos : cam.pos), peerRight",
+    "new": "    const peerEye = (renderer._view ? renderer._camPos : cam.pos), peerRight",
     "tests": [
       "test/render/tv1_travel_view.test.js"
     ],
