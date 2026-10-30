@@ -169,7 +169,6 @@ import { ChoiceWindow } from '../ui/talkWindow.js';   // TP-slice: the anchor/te
 import { preloadSpellbookArt } from '../ui/spellbookWindow.js';   // U42: the classic art window (retires M2's keyed stand-in)
 import { createSpellbookWindow } from '../ui/spellbookDoor.js';   // PX23: the book's one door
 import { calculateCastCost } from '../systems/spellcost.js';   // M2   // T3b
-import { rangedDamageSpells } from '../systems/spellcast.js';   // U42: the flight probe's picker
 import { worldMinutes, skyMinutes, setWorldMinutes, setSharedClock, sharedClockOn, sharedWallMs, alignEntityClocks, CLASSIC_MINUTES_PER_SECOND, setWorldPriceTilt, empireJoin, ownMinutes, advanceOwnMinutes, worldNightfallText, hearSharedClock, ownWalkWaiting, trustedWorldMinutes, raisedMinutes } from '../systems/worldTick.js';   // ECON1 / AUDIT ALL E1: the world's tilt off the file's base powers   // AUDIT 23 (C2): the ONE clock
 import { setSyntheticTimeIncrease } from '../systems/effectBroker.js';   // AUDIT 63 F13: DaggerfallTravelPopUp_OnPostFastTravel (EntityEffectBroker.cs:846-847)
 import { tallySwingSkills, SWING_FATIGUE_COST, playerPainVoice, playPlayerVoice, makeEnemiesHostile, isBowWeapon, enemyHeavyPainVoice, playerClimbStrain, aimedBlowInfo, playerBlowFrame, setWindupAtMeListener } from './hostCombat.js';   // ROAD-B: GameManager.MakeEnemiesHostile
@@ -501,7 +500,7 @@ import { gateLandingFor, courtRing, courtArena, courtArenaAt, courtToDungeon, co
 import { isMainStoryDungeon } from '../world/dungeon/dungeonTextures.js';   // SPAWNED-DUNGEONS1: the main story's own dungeons are never cloned
 import { nearestSafeLocation, nearestSafeLocationAnywhere, respawnFlavorText, reviveForPlay, undergroundWakeSpot, undergroundWakeText } from '../systems/deathRespawn.js';   // D-ONLINE1: online, a death respawns instead of ending the run   // X-slice; the rest refusal raises the alert and asks the RESTING variant, the townsfolk idle the STRICT one; the catch-up loop's watch arm
 import { restorePlayer, resolvePendingSpells, restoreSessionState, dungeonPixelFor } from '../systems/save/save.js';   // P-slice: the above-ground quicksave; B4: the ONE quest+talk composer
-import { loadSlot, quickLoadSlot, mostRecentRestorable, QUICK_SAVE_NAME, saveKeysOfCharacter, saveInfoOf, capturePendingScreenshot, exitAutosaveNames, enumerateSaves, onSlotSaved, onSlotLoaded, slotLoaded } from '../systems/save/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave (SaveLoadManager.QuickSave/QuickLoad); SS1: the shot arms at save and lands at frame end   // ONLINE-AUTOSAVE1: saveKeysOfCharacter/saveInfoOf - every slot this character already has, kept in sync on an online exit too
+import { loadSlot, quickLoadSlot, mostRecentRestorable, QUICK_SAVE_NAME, capturePendingScreenshot, exitAutosaveNames, enumerateSaves, onSlotSaved, onSlotLoaded, slotLoaded } from '../systems/save/saveSlots.js';   // SAV4: the quicksave is a SLOT named QuickSave (SaveLoadManager.QuickSave/QuickLoad); SS1: the shot arms at save and lands at frame end   // ONLINE-AUTOSAVE1: saveKeysOfCharacter/saveInfoOf - every slot this character already has, kept in sync on an online exit too
 import { frameBegin, frameEnd, frameAbort } from '../systems/frameClock.js';   // PERF1: the frame's script time; AUDIT-WH2 L1-F4: and the door an early return takes
 import { frameCapSkip } from '../systems/frameCap.js';   // FPS-CAP1: DFU's TargetFrameRate - a held frame re-arms before the clock and the input frame
 import { frameInterval, lastBusy, lendFrame, framesBegun } from '../systems/frameClock.js';   // PERF-EXT24: the frame's period and its own script, and the stream's slices lent back - those no frame ran inside
@@ -1080,7 +1079,7 @@ const RACE_BY_NAME_BANK = Object.freeze(Object.fromEntries(
   Object.entries(BANK_TYPES).map(([race, bank]) => [bank, race])));
 import { startDisease, endDisease, diseaseCount } from '../systems/diseases.js';   // AUDIT 24: the quest bridge's MakePcDiseased / CurePcDisease seams; U41: the popup's diseased warning
 import { poisonCount } from '../systems/poisons.js';   // U41: the warning's other half
-import { discoverRandomLocation, discoverLocation, undiscoverBuilding, discoverBuilding, discoveredBuildings, hasDiscoveredLocationId, setDiscoveredBuildingCustomName, getDiscoveredBuilding, pruneDiscoveryLayouts, townBookOf, townBookId } from '../systems/discovery.js';   // G8 + TV: the guild map reveals + the entry writer; TK-ii: the quest-residence undiscover; AUDIT DISC28 QS-K2: the town map's re-stamp
+import { discoverRandomLocation, discoverLocation, undiscoverBuilding, discoverBuilding, discoveredBuildings, setDiscoveredBuildingCustomName, getDiscoveredBuilding, pruneDiscoveryLayouts, townBookOf, townBookId } from '../systems/discovery.js';   // G8 + TV: the guild map reveals + the entry writer; TK-ii: the quest-residence undiscover; AUDIT DISC28 QS-K2: the town map's re-stamp
 import { scryRows } from '../systems/loot/lootScry.js';   // LOOT19: the region a scrying reads
 import {
   WEATHER_TYPES, fogForWeather, scaleFogForDistance, skyOffsetForWeather, weatherSunlightScale,
@@ -1264,6 +1263,7 @@ import { createPoiEditorMount } from './poiEditorMount.js';   // HOST-SPLIT
 import { createTravelFareDeps } from './travelFareHost.js';   // HOST-SPLIT
 import { createShipBoard } from './shipBoardHost.js';   // HOST-SPLIT
 import { createWorldShotHooks } from './worldShotHooks.js';   // HOST-SPLIT
+import { createWorldShotProbes } from './worldShotProbes.js';   // HOST-SPLIT
 
 /** Internal_Strings_en 654 / 655, the two guild map-reveal notes
  *  (ThievesGuild.cs:115, DarkBrotherhood.cs:108). %map is the
@@ -28608,110 +28608,14 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // __addGold. LypyL_GameConsole ships True, and the door's verbs
   // mint (Come Sail Away's giveboat and placeboat, a deed each).
   if (!params.has('online')) installConsoleProbe();
-  if (shotMode) { modes.installShotProbes(); installTownProbes(); }
-  if (shotMode) {   // CASTLE1 probe surface (tools/castleProbe.mjs)
-    window.__quickSave = (name) => modes.quickSaveNow(name);   // the standing host's OWN composer (the dungeon's underground)
-    window.__quickLoad = () => worldQuickLoad();
-    window.__loadSave = (key) => worldQuickLoad({ key });
-    window.__saveKeys = () => JSON.stringify(saveKeysOfCharacter(playerEntity.name).map((key) => ({ key, name: saveInfoOf(key)?.saveName ?? null })));
-    window.__hudLines = () => JSON.stringify(townTalk._debug().hud ?? null);
-  }
-  if (shotMode) window.__magic = () => JSON.stringify({ mp: playerEntity.magicka, readied: magic.readied()?.name ?? null, armed: magic.spellArmed(), missiles: magic.missileCount(), mode: modes?.mode ?? 'exterior', book: (playerEntity.spells ?? []).map((sp) => ({ name: sp.name, range: sp.rangeType })) });   // M5 cast probe
-  if (shotMode) {
-    // F-slice probe surface: the travel state + the nearest real
-    // destination at least two pixels out (the live probe types its
-    // name into the real window).
-    window.__travelProbe = () => JSON.stringify({ pixel: playerTravelPixel(), minutes: Math.floor(playerTicker.ownMinutes), gold: goldAmount(playerEntity) });
-    // U42: the classic spellbook's live state. Its buttons are hit
-    // rects painted into SPBK00I0, so a probe cannot see what it is
-    // clicking - it reads the selection, the pushed box and the rows
-    // back through here instead of sleeping and hoping.
-    window.__spellbook = () => JSON.stringify(_spellbook && !_spellbook.done ? {
-      buyMode: _spellbook.buyMode, selected: _spellbook.selectedIndex,
-      scroll: _spellbook.scrollIndex, top: _spellbook.top,
-      name: _spellbook.selected?.name ?? null,
-      effects: [0, 1, 2].map((i) => _spellbook.effectLabels(i)),
-      rows: _spellbook._rows.map((r) => ({ text: r.text, dim: r.dim })),
-    } : null);
-    // U41: the art window's live state - which page is open, what the
-    // label reads, which box or sub-window is up, and the popup's
-    // numbers. The keyed stand-in could be driven blind; a click
-    // surface cannot.
-    // U61/MAP1: the enhanced held map carries its own probe surface
-    // (globalThis.__heldMap); this one reads the CLASSIC window's
-    // shape and answers null for the other skin rather than throwing
-    // on fields it does not have.
-    window.__travelMap = () => JSON.stringify(_travelMap && !_travelMap.done && _travelMap.regionLabelText ? {
-      regionSelected: _travelMap.regionSelected, region: _travelMap.selectedRegion,
-      label: _travelMap.regionLabelText(), top: _travelMap.top,
-      picker: _travelMap.picker ? _travelMap.picker.items.length : 0,
-      popUp: !!_travelMap.popUp, identifying: _travelMap.identifying,
-      locationSelected: _travelMap.locationSelected, find: _travelMap.findBox?.value ?? '',
-      days: _travelMap.popUp?.countdownValueTravelTimeDays ?? null,
-      cost: _travelMap.popUp?.trip?.totalCost ?? null,
-      // G5: the teleport arm's own state, which is deliberately NOT
-      // the popUp field - see the note on the window's telePopUp.
-      armed: _travelMap.teleportationTravel,
-      telePopUp: _travelMap.telePopUp
-        ? { name: _travelMap.telePopUp.destination.name, pixel: _travelMap.telePopUp.destination.pixel }
-        : null,
-      save: _travelMap.getTravelMapSaveData(),
-    } : null);
-    /** G5: open the travel map ARMED, the way the guild service does,
-     *  and drive its teleport box - the map is the same map, so the
-     *  probe reaches it through the host's own opener. */
-    window.__openTeleportMap = () => {
-      const win = openTeleportMap();
-      if (!win) return null;
-      _travelMap = win;
-      townTalk.showOverlay(win);
-      return window.__travelMap();
-    };
-    window.__teleportAnswer = (yes) => {
-      if (!_travelMap?.telePopUp) return null;
-      _travelMap.telePopUp.input(yes ? 'KeyY' : 'KeyN');
-      if (_travelMap.telePopUp?.done) _travelMap.telePopUp = null;
-      return window.__travelMap();
-    };
-    window.__encounters = () => JSON.stringify({ active: exteriorFoes.activeCount(), foes: exteriorFoes.foes.filter((f) => !f.dead).map((f) => ({ type: f.mobileType, dist: +f.ai._dist.toFixed(1), detected: f.ai.detected })) });
-    window.__spawnEncounter = (type, dist = 10) => {
-      const pf = walkMode && playerSpawned ? player.pos : cam.pos;
-      return exteriorFoes.spawnFoe(type, [pf[0] + dist, pf[1] + 1, pf[2]]).then((f) => (f ? f.mobileType : null));
-    };
-    // X2/X3 probe surface: the live exterior-combat state
-    window.__x23 = () => JSON.stringify({
-      hp: playerEntity.health,
-      enemyArrows: arrows.arrows.filter((a) => !a.dead && a.enemy).length,
-      missiles: magic.missileCount(),
-      foes: exteriorFoes.foes.filter((f) => !f.dead).map((f) => ({
-        type: f.mobileType, dist: +f.ai._dist.toFixed(1), detected: f.ai.detected,
-        bow: !!f.attack.rangedAttack, caster: !!f.caster, spells: f.entity.spells?.length ?? 0, mp: f.entity.magicka ?? 0,
-      })),
-    });
-    window.__travelNearest = () => {
-      const p0 = playerTravelPixel();
-      let best = null, bd = Infinity;
-      for (const summary of mapDict.values()) {
-        // G8 made HIDDEN dungeons unfindable on the map; the probe's
-        // nearest must honour the same gate or it names a place the
-        // search cannot list. W1: that gate is now the window's own
-        // checkLocationDiscovered - the baked flag OR the store.
-        if (!summary.discovered && !hasDiscoveredLocationId(summary.id)) continue;
-        const pixel = getPixelFromPixelID(summary.id);
-        const d = Math.max(Math.abs(pixel.x - p0.x), Math.abs(pixel.y - p0.y));
-        if (d >= 2 && d < bd) { bd = d; best = { summary, pixel }; }
-      }
-      if (!best) return JSON.stringify(null);
-      const region = maps.getRegion(best.summary.regionIndex);
-      return JSON.stringify({
-        name: region?.mapNames?.[best.summary.mapIndex] ?? '',
-        region: maps.getRegionName(best.summary.regionIndex),
-        pixel: best.pixel, type: best.summary.locationType,
-        mapId: best.summary.mapID, discovered: true,
-      });
-    };
-  }
-  if (shotMode) window.__readyRanged = () => { const sp = rangedDamageSpells(spellsByIndex).map((x) => [calculateCastCost(x, playerEntity).sp, x]).sort((a, b) => a[0] - b[0])[0]?.[1]; magic.setReadied(sp); return sp ? `${sp.name}:${calculateCastCost(sp, playerEntity).sp}` : null; };   // M5: no classic starting set carries a missile spell - ready the cheapest flier for the flight leg (tools/castProbe.mjs); AUDIT ANTICHEAT A2: behind the shot gate, as exterior.js's twin always was
+  createWorldShotProbes({   // HOST-SPLIT: src/scenes/worldShotProbes.js
+    arrows, cam, exteriorFoes, installTownProbes, magic, mapDict, maps, modes, openTeleportMap, player, playerTicker,
+    playerTravelPixel, shotMode, townTalk, walkMode, worldQuickLoad,
+    get _spellbook() { return _spellbook; },
+    get _travelMap() { return _travelMap; }, set _travelMap(v) { _travelMap = v; },
+    get playerSpawned() { return playerSpawned; },
+    get spellsByIndex() { return spellsByIndex; },
+  });
 
   const ambience = new AmbientEffects(EXTERIOR_AMBIENT_WAITS);   // A3
   // DS1: AmbientEffectsPlayer.OnPlayEffect -> Dynamic Skies'

@@ -115,5 +115,14 @@
     "tests": [
       "test/tooling/hostmove.test.js"
     ]
+  },
+  {
+    "name": "HOSTMOVE-the-two-on-a-line-unsaid",
+    "file": "tools/hostMove.mjs",
+    "old": "    if (at.length > 1) refuse.push(`${n}: ${at.length} statements start on that line - name one by what it declares`);\n",
+    "new": "",
+    "tests": [
+      "test/tooling/hostmove.test.js"
+    ]
   }
 ]

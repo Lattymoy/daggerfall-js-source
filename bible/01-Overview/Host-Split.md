@@ -885,3 +885,9 @@ pin it). The block went out verbatim to `scenes/worldShotHooks.js` `createWorldS
 ceiling at it (`test/scenes/hostceiling.test.js`, its mutant re-aimed under it). The tool re-aimed six records and one
 doc anchor; three pins read the probes through `hostText` and the live `host.` names (`fixc_firstStart.test.js`,
 `auditclimb1.test.js`, `terrainworker.test.js` - PIN MOVED).
+
+The late probes went the same way: five statements that start at the boot's end (`installShotProbes`, the castle's,
+`__magic`, the travel and spellbook surface, `__readyRanged`) to `scenes/worldShotProbes.js`
+`createWorldShotProbes`: sixteen names by value, four live (`_travelMap` written). `bootWorld` 34,479 -> 34,366
+logical lines, the ceiling at it. The tool now refuses a line two statements start on. Two cites in code comments
+(`ambientEffects.js`, `travelControlUI.js`) and `spellbookwindow.test.js` read the new module (PIN MOVED).

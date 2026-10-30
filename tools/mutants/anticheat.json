@@ -41,7 +41,7 @@
   },
   {
     "name": "ANTICHEAT-A2-readyRanged-ungated",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/worldShotProbes.js",
     "old": "  if (shotMode) window.__readyRanged = () =>",
     "new": "  window.__readyRanged = () =>",
     "why": "the cast probe's hook on every boot again",
@@ -57,7 +57,7 @@
   },
   {
     "name": "ANTICHEAT-A2-installers-ungated",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/worldShotProbes.js",
     "old": "  if (shotMode) { modes.installShotProbes(); installTownProbes(); }",
     "new": "  { modes.installShotProbes(); installTownProbes(); }",
     "why": "__addGold, __warpTo, __damageFoe and the rest of both installers on every boot, online too",

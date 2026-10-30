@@ -169,8 +169,16 @@ export function planMove({ hostFile, fn, names, toFile, ctor, handle = 'host' })
   const refuse = [];
 
   // THE GROUP: contiguous members, by a name they declare or, for a statement that declares none, by `@<its first line>`
-  const byLine = (n) => members.find((m) => m.stmt.loc.start.line === Number(n.slice(1)));
-  const group = [...new Set(names.map((n) => { const m = n.startsWith('@') ? byLine(n) : owner.get(n); if (!m) refuse.push(`${n} is not a member of ${host.name}`); return m; }).filter(Boolean))].sort((a, b) => a.i - b.i);
+  const byLine = (n) => {
+    const at = members.filter((m) => m.stmt.loc.start.line === Number(n.slice(1)));
+    if (at.length > 1) refuse.push(`${n}: ${at.length} statements start on that line - name one by what it declares`);
+    return at.length === 1 ? at[0] : null;
+  };
+  const group = [...new Set(names.map((n) => {
+    const m = n.startsWith('@') ? byLine(n) : owner.get(n);
+    if (!m && !refuse.some((r) => r.startsWith(`${n}:`))) refuse.push(`${n} is not a member of ${host.name}`);
+    return m;
+  }).filter(Boolean))].sort((a, b) => a.i - b.i);
   if (refuse.length) return { refuse };
   for (let k = 1; k < group.length; k++) if (group[k].i !== group[k - 1].i + 1) refuse.push(`the group is not contiguous: ${group[k - 1].names[0]} and ${group[k].names[0]} have members between them`);
   const first = group[0], last = group[group.length - 1];

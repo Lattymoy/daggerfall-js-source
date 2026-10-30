@@ -194,3 +194,14 @@ test('HOST-SPLIT 1 (AUDIT) THE TOOL TOUCHES ONLY WHAT MOVED: an import dropped f
     assert.equal(readFileSync(join(root, 'bible/page.md'), 'utf8'), doc, 'overworld.js left as it is');
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
+test('HOST-SPLIT SHOT-HOOKS A STATEMENT BY ITS LINE IS ONE STATEMENT: two that start on the line are refused, and a line no statement starts on is no member (mutant: the refusal unsaid)', () => {
+  const dir = scratch();
+  try {
+    const hostFile = join(dir, 'twice.js');
+    writeFileSync(hostFile, `export function host() {\n  let a = 1;\n  a = 2; a = 3;\n  return a;\n}\n`);
+    const plan = (names) => planMove({ hostFile, fn: 'host', names, toFile: join(dir, 'twice_mod.js'), ctor: 'createG' }).refuse;
+    assert.deepEqual(plan(['@3']), ['@3: 2 statements start on that line - name one by what it declares']);
+    assert.deepEqual(plan(['@9']), ['@9 is not a member of host']);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});

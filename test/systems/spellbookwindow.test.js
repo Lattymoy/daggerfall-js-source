@@ -1225,7 +1225,7 @@ test('U42: the live probe surface exists on both exterior hosts, and castProbe r
   // outside - tools/spellbookProbe.mjs reads its state back through
   // `__spellbook` instead of sleeping and hoping.
   for (const host of ['scenes/world.js', 'scenes/exterior.js']) {
-    const s = readFileSync(new URL(`../../src/${host}`, import.meta.url), 'utf8');
+    const s = hostText(`src/${host}`);   // PIN MOVED (HOST-SPLIT SHOT-HOOKS): world.js's probes are scenes/worldShotProbes.js
     assert.ok(s.includes('window.__spellbook = () =>'), `${host} carries the probe surface`);
     // PX23: the factory still HOLDS the live window; it just asks the
     // door for it. The probe reads the CLASSIC window's own fields
