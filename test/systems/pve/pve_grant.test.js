@@ -28,7 +28,7 @@ test('STAGE 7: who holds a place - outlaws the open land, the clans their Wrothg
 
 test('STAGE 7: the table at a grant\'s pixel - the Bay\'s region from the map, a province\'s from its theatre', () => {
   assert.equal(orcs.zone.name, 'Orsinium Area');
-  assert.deepEqual(orcs.lists.encounter.map((x) => x.key), ['orc-defender', 'orc-grunt']);
+  assert.deepEqual(orcs.lists.encounter.map((x) => x.key), ['marauder', 'marauder-bowman', 'marauder-knife', 'orc-defender', 'orc-grunt'], 'the clans and the outlaws both hold Wrothgar');
   const [sx, sy] = pictureToBay(...CITIES.find((c) => c.name === 'Solitude').at).map(Math.floor);
   const skyrim = pveTableAt(sx, sy, { ...mountain, regionAt: () => { throw new Error('past the Bay reads no map region'); } });
   assert.equal(skyrim.zone.region, BAY_REGION_COUNT + 2);
@@ -40,13 +40,14 @@ test('STAGE 7: the table at a grant\'s pixel - the Bay\'s region from the map, a
 test('STAGE 7: a grant\'s members are its seed\'s templates - the same on every machine, a camp its group member by member', () => {
   const keys = [0, 1, 2, 3].map((i) => grantTemplateKey(grant('encr', 77), i, orcs));
   assert.deepEqual([0, 1, 2, 3].map((i) => grantTemplateKey(grant('encr', 77), i, orcs)), keys);
-  for (const k of keys) assert.ok(['orc-defender', 'orc-grunt'].includes(k));
+  for (const k of keys) assert.ok(['marauder', 'marauder-bowman', 'marauder-knife', 'orc-defender', 'orc-grunt'].includes(k));
   const seen = new Set();
   for (let s = 0; s < 40; s++) seen.add(grantTemplateKey(grant('encr', s), 0, orcs));
-  assert.equal(seen.size, 2, 'the die reaches every plain foe');
+  assert.equal(seen.size, 5, 'the die reaches every plain foe');
   let differ = 0;
   for (let s = 0; s < 40; s++) if (grantTemplateKey(grant('encr', s), 0, orcs) !== grantTemplateKey(grant('encr', s), 1, orcs)) differ++;
   assert.ok(differ > 0, 'each member rolls its own die');
+  assert.deepEqual([0, 1, 2, 3, 4, 5].map((i) => grantTemplateKey(grant('camp', 2), i, orcs)), ['marauder', 'marauder', 'marauder-bowman', 'marauder-knife', 'marauder-warlord', null], 'another seed, the outlaws\' band');
   const camp = [0, 1, 2, 3, 4].map((i) => grantTemplateKey(grant('camp', 5), i, orcs));
   assert.deepEqual(camp, ['orc-grunt', 'orc-grunt', 'orc-defender', 'orc-shaman', null], 'the warband, then none');
   assert.equal(grantTemplateKey(grant('band', 5), 0, orcs), null, 'a band stands no template yet');

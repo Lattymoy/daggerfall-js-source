@@ -174,3 +174,9 @@ Before the switch turns on: the world passes `tableAt` (`scenes/world.js` builds
 its ceiling); a camp's members and a dungeon's foes stand templates; a template's spells take its range too; and a
 peer's foe that arrives before its grant is judged stands as it would today. Daggerfall Unity levels a class foe by the
 player (`EnemyEntity.SetEnemyCareer`). The tests: `test/systems/pve/pve_grant.test.js`.
+
+The roster (2026-10-30) fills the bands: 81 templates and 10 groups. Outlaws stand in six tiers from Footpad (level 3)
+to Raider King (44), with a band of five for each tier from 12 up, so every province, land climate and band holds plain
+foes and a group where outlaws hold the land (a test walks all of it). Beasts stand by their climates, the dead and the
+conjured in their dungeons, the Daedra at an incursion. Gaps left: harpy nests, giant strongholds and scorpion nests hold
+no hostile template, and above level 30 the wild is mostly outlaws. The names stand in English until the switch turns on.

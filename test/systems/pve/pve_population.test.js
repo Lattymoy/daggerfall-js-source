@@ -5,7 +5,9 @@ import assert from 'node:assert/strict';
 import { ZONE_BANDS, REGION_TIER, DISTRICT_STEP, ZONE_SHARE, DEEP_DUNGEONS, pveZoneAt, districtRoll, recommendedScore } from '../../../src/systems/pve/pveZones.js';
 import { spawnTable, POPULATIONS, POP_DENSITY, RESPAWN_S, RARE_CHANCE } from '../../../src/systems/pve/pveSpawnTable.js';
 import { populationLedger, wakeCell, slotFell, populationDue, sleepCells, CELL_IDLE_S } from '../../../src/systems/pve/pvePopulation.js';
-import { ORSINIUM_REGION } from '../../../src/systems/pve/pveBestiary.js';
+import { ORSINIUM_REGION, PROVINCE_KEYS } from '../../../src/systems/pve/pveBestiary.js';
+import { encounterPool, bandGroups, meetsHostile, readabilityProblems } from '../../../src/systems/pve/pveEncounter.js';
+import { MOB_TEMPLATES, GROUP_TEMPLATES, templateProblems, groupProblems } from '../../../src/systems/pve/pveTemplates.js';
 import { CLIMATES, REGION_NAMES, BAY_REGION_COUNT, CYRODIIL_REGION } from '../../../src/formats/mapsTables.js';
 import { DUNGEON_TYPES } from '../../../src/formats/mapsFile.js';
 
@@ -71,7 +73,7 @@ test('STAGE 7: a spawn table is the place\'s alone - settlement, ambient, encoun
   assert.deepEqual(keys('encounter'), ['orc-defender', 'orc-grunt']);
   assert.deepEqual(keys('group'), ['orc-warband']);
   assert.deepEqual([keys('farming'), keys('patrol')], [[], []], 'no farming ground, no road');
-  assert.deepEqual(keys('rare'), []);
+  assert.deepEqual(keys('rare'), ['harpy-matron', 'old-sabretooth'], 'the strong beasts of the band, rarely');
   assert.equal(spawnTable({ ...orsinium, region: 71 }), null);
   const dungeon = spawnTable({ ...orsinium, place: 'dungeon', dungeon: DUNGEON_TYPES.OrcStronghold });
   assert.deepEqual(dungeon.lists.settlement, [], 'a dungeon holds no settlement');
@@ -160,4 +162,17 @@ test('STAGE 7: a rare slot stands a foe on few of its turns', () => {
   let stood = 0;
   for (let i = 0; i < 400; i++) stood += wakeCell(L, `r:${i}`, table({ rare: [{ key: 'x', w: 1 }] }), 0).length;
   assert.ok(stood > 0 && stood < 400 * RARE_CHANCE * 3, `${stood} of 400`);
+});
+
+test('ROSTER: every province, every land climate and every band holds plain foes and a group where outlaws hold the land', () => {
+  const lands = [CLIMATES.Woodlands, CLIMATES.MountainWoods, CLIMATES.Mountain, CLIMATES.Desert, CLIMATES.Swamp, CLIMATES.Rainforest, CLIMATES.Subtropical];
+  const gaps = [];
+  for (const province of PROVINCE_KEYS) for (const climate of lands) ZONE_BANDS.forEach((band, tier) => {
+    const p = encounterPool(band, { province, climate, factions: ['bandits'] });
+    if (!p.pool.some((x) => meetsHostile(x.t) && x.t.category === 'normal')) gaps.push(`${province} ${climate} band ${tier}: no plain foe`);
+    if (!bandGroups(p).length) gaps.push(`${province} ${climate} band ${tier}: no group`);
+  });
+  assert.deepEqual(gaps, []);
+  for (const t of MOB_TEMPLATES) assert.deepEqual([...templateProblems(t), ...readabilityProblems(t)], [], t.key);
+  for (const g of GROUP_TEMPLATES) assert.deepEqual(groupProblems(g), [], g.key);
 });

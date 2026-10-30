@@ -77,7 +77,7 @@ export const BESTIARY = Object.freeze([
   ...['fire-atronach', 'iron-atronach', 'flesh-atronach', 'ice-atronach'].map((species) =>
     R({ species, provinces: { [ALL]: 'localized' }, dungeons: [D.Laboratory, D.DesecratedTemple], lore: 'inferred', note: 'a conjurer\'s' })),
   // people: by faction and settlement, never as wildlife (spec 11.1) - bandits on every road
-  ...['rogue', 'archer', 'healer', 'barbarian', 'thief', 'assassin', 'burglar', 'nightblade', 'warrior'].map((species) =>
+  ...['rogue', 'archer', 'healer', 'barbarian', 'thief', 'assassin', 'burglar', 'nightblade', 'warrior', 'ranger', 'knight'].map((species) =>
     R({ species, provinces: { [ALL]: 'secondary' }, climates: LAND, dungeons: [D.HumanStronghold, D.Prison, D.RuinedCastle, D.BarbarianStronghold], factions: ['bandits'], lore: 'inferred' })),
   ...['mage', 'sorcerer', 'battlemage', 'spellsword'].map((species) =>
     R({ species, provinces: { [ALL]: 'localized' }, dungeons: [D.Laboratory, D.Coven, D.Crypt], lore: 'inferred', note: 'necromancers and conjurers' })),
