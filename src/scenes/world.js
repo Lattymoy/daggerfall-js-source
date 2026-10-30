@@ -77,7 +77,7 @@ import { createRipples, createRippleStir, RIPPLE_SPAN, RIPPLE_CELLS, BOAT_STIR, 
 import { waterCorners, WATER_DRAW_MASK_TABLE } from '../world/water/waterCorners.js';   // GRASS-WET1: the one table that says which of a tile's corners stand in water - the DRAW's, because a blade in a puddle is a picture, not a physics
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { realWindowsMode, VIEW_RINGS, clockFogColor } from '../render/realWindows.js';   // RW1: the rooms behind the glass, and the street a building's glass looks out on
-import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, nearestLights, capFadeColors, capFadePairs, fillLanternPool, rangesFor } from '../world/city/cityLights.js';
+import { CITY_LIGHT_COLOR, nearestLights, capFadeColors, capFadePairs, fillLanternPool, rangesFor, streetLanternAnimator } from '../world/city/cityLights.js';
 import { adoptLight } from '../render/lightId.js';   // LIGHT-ID: a pooled light named by the light it stands for
 import { HEARTH_NEAR } from '../systems/survival/hearth.js';   // HEARTH1: which of those lanterns is a fire you could cook on, and how far one can matter
 import { withPlayerLights } from './magicCandle.js';   // X11/T1: the lights the PLAYER carries
@@ -810,7 +810,7 @@ import { setHudTechniqueChips } from '../ui/enhanced/enhancedHud.js';   // TECH1
 import { noteLocalPlayer, tacticsNow, tickTactics, offsetTactics } from '../ai/tactics.js';   // TACT2; TACT4: the brain's clock; AUDIT TACT: its tick, the recentre's shift
 import { drawableBlows, registerBlowDodgedListener } from '../ai/foeBlows.js';   // TACT4; AUDIT ARENA-LADDER: a dodge told
 import { landViewRead } from '../world/landView.js';   // LV1: the enhanced lane's own streamed radius; FT2: the read is the module's
-import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, hourOf, daylightScale, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime, viewOutLight } from '../world/worldClock.js';
+import { SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, hourOf, daylightScale, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime, viewOutLight } from '../world/worldClock.js';
 import { builtDungeonSize } from '../world/smallerDungeons.js';   // AUDIT 28 F-B2: the quest layer sees the sized dungeon; AUDIT FB1013d B1: the size a fallen's dungeon was built at
 import { audio, QuestAudioSource, plainSourceGain } from '../systems/audio.js';   // E6: the QuestMachine's own DaggerfallAudioSource (PlaySound's busy-skip)
 import { music } from '../systems/music.js';
@@ -2940,7 +2940,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
 
   const lightsOnAt = (minute) =>
     params.has('window') ? params.get('window') === 'night' : isCityLightsOn(minute);
-  const worldLightAnimator = new CityLightAnimator(4096, CITY_LIGHT_RANGE);
+  const worldLightAnimator = streetLanternAnimator(4096, lightingOn);   // LIGHT-REACH: the lane's lanterns reach farther
 
   // --- Shared caches (dataPipeline.js, extracted at P7) -----------------
   const pipeline = createDataPipeline({ renderer, arch, palette }); const holdPixel = (key) => ({ ...pipeline, ...pipeline.holdPlace('pixel', key) });   // FIELD BUGS 2026-10-04d PLACE-LRU: a streamed pixel's own view of the pipeline - every door a build asks through holds what it gets for that pixel (scenes/placeHolds.js); one line, so the cites below it hold

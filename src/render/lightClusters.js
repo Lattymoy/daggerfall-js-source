@@ -55,9 +55,10 @@ export const CLUSTER_LIST_CAP = CLUSTER_LIST_W * CLUSTER_LIST_ROWS;
 /** The grid texture: one texel per cell, laid out (x + y * CLUSTER_X, z) - CLUSTER_X * CLUSTER_Y wide, CLUSTER_Z tall. */
 export const CLUSTER_GRID_W = CLUSTER_X * CLUSTER_Y;
 export const CLUSTER_GRID_H = CLUSTER_Z;
-/** WL1: THE TEXTURES CARRY TWO BANDS - the lanterns' (rows 0 to CLUSTER_GRID_H - 1 of the grid, the list's first
- *  CLUSTER_LIST_ROWS rows) and the window lights' (render/windowLight.js) past them, one sampler each for both. */
-export const CLUSTER_BANDS = 2;
+/** WL1: THE TEXTURES CARRY BANDS - the lanterns' (rows 0 to CLUSTER_GRID_H - 1 of the grid, the list's first
+ *  CLUSTER_LIST_ROWS rows) and the window lights' (render/windowLight.js) past them, one sampler each for all; LIGHT-REACH:
+ *  a third for the windows' far rows, so neither tier's lists can crowd the other's out. */
+export const CLUSTER_BANDS = 3;
 /** The two texture units the world shaders read the grid and the list on - below the air's (11, 12), the shadow
  *  maps' (13, 14) and the cloud shadow's (15), above the material units. */
 // AUDIT LC1: units 9 and 10 are the grid's and the list's ALONE - both are bound as TEXTURE_2D, and a 2D array
@@ -116,20 +117,24 @@ export function createClusterSpace(maxLights = 64) {
  *  hull serves the slices beyond; a sphere that lies wholly inside the band is slice 0, every tile. Nothing that
  *  lights goes dark. */
 export function cellsOfSphere(vx, vy, vz, r, proj, box, at) {
-  const depth = -vz;
-  const dFar = depth + r;
+  return cellsOfViewBox(vx - r, vx + r, vy - r, vy + r, -vz - r, -vz + r, proj, box, at);
+}
+/** LIGHT-REACH: a view-space box's cells - x0..x1, y0..y1 and the view depths d0..d1 (d0 the nearer) - by the
+ *  sphere's own rules (cellsOfSphere is this for the sphere's box). A light lit in a narrow volume (a window's beam)
+ *  takes the box of that volume, not the box of its reach in every direction. */
+export function cellsOfViewBox(x0, x1, y0, y1, d0, dFar, proj, box, at) {
   if (dFar <= 0) return false;   // wholly behind the eye
-  const nearFull = depth - r < CLUSTER_NEAR;
+  const nearFull = d0 < CLUSTER_NEAR;
   box[at + 6] = nearFull ? 1 : 0;
   if (dFar < CLUSTER_NEAR) {   // wholly inside the near band: slice 0, every tile, and no hull to compute
     box[at] = 0; box[at + 1] = CLUSTER_X - 1; box[at + 2] = 0; box[at + 3] = CLUSTER_Y - 1; box[at + 4] = 0; box[at + 5] = 0;
     return true;
   }
-  const dNear = Math.max(depth - r, CLUSTER_NEAR);
+  const dNear = Math.max(d0, CLUSTER_NEAR);
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
   for (let c = 0; c < 8; c++) {
-    const x = c & 1 ? vx + r : vx - r;
-    const y = c & 2 ? vy + r : vy - r;
+    const x = c & 1 ? x1 : x0;
+    const y = c & 2 ? y1 : y0;
     const z = c & 4 ? -dFar : -dNear;
     const cw = proj[3] * x + proj[7] * y + proj[11] * z + proj[15];
     if (!(cw > 1e-6)) return false;   // a corner at or behind the eye's plane (w <= 0) is never divided through: this light is left out of the grid (unreachable for a perspective after the near clamp)
@@ -165,6 +170,40 @@ function tilesIn(box, at, cz, out) {
  * count, then write - so the lists are one flat array in cell order with no per-cell allocation.
  */
 export function buildLightClusters(lights, count, view, proj, space) {
+  return binLights(count, space, (i, box, at) => {
+    const r = lights[i * 4 + 3];
+    if (!(r > 0)) return false;
+    const x = lights[i * 4], y = lights[i * 4 + 1], z = lights[i * 4 + 2];
+    const vx = view[0] * x + view[4] * y + view[8] * z + view[12];
+    const vy = view[1] * x + view[5] * y + view[9] * z + view[13];
+    const vz = view[2] * x + view[6] * y + view[10] * z + view[14];
+    return cellsOfSphere(vx, vy, vz, r, proj, box, at);
+  });
+}
+/** LIGHT-REACH: THE BUILD for lights bounded by boxes: `boxes` holds LC_BOX floats a light - a world box's centre and
+ *  its three half-axes (each a vector: the axis times half its length, any orientation). The view-space box of each
+ *  is its centre in view and, on each view axis, the sum of the half-axes' lengths along it. */
+export function buildLightClusterBoxes(boxes, count, view, proj, space) {
+  return binLights(count, space, (i, box, at) => {
+    const o = i * LC_BOX, x = boxes[o], y = boxes[o + 1], z = boxes[o + 2];
+    const vx = view[0] * x + view[4] * y + view[8] * z + view[12];
+    const vy = view[1] * x + view[5] * y + view[9] * z + view[13];
+    const vz = view[2] * x + view[6] * y + view[10] * z + view[14];
+    let ex = 0, ey = 0, ez = 0;
+    for (let k = o + 3; k < o + LC_BOX; k += 3) {
+      const ax = boxes[k], ay = boxes[k + 1], az = boxes[k + 2];
+      ex += Math.abs(view[0] * ax + view[4] * ay + view[8] * az);
+      ey += Math.abs(view[1] * ax + view[5] * ay + view[9] * az);
+      ez += Math.abs(view[2] * ax + view[6] * ay + view[10] * az);
+    }
+    if (!(ex + ey + ez > 0)) return false;
+    return cellsOfViewBox(vx - ex, vx + ex, vy - ey, vy + ey, -vz - ez, -vz + ez, proj, box, at);
+  });
+}
+/** LIGHT-REACH: a box light's floats - its centre, then three half-axis vectors. */
+export const LC_BOX = 12;
+/** The two passes both builds share: `cells(i, box, at)` writes light i's cell range, or answers false for none. */
+function binLights(count, space, cells) {
   const counts = space.counts, grid = space.grid, list = space.list, box = space._box;
   counts.fill(0);
   space.total = 0; space.lights = 0; space.rows = 0; space.built = false;
@@ -172,15 +211,9 @@ export function buildLightClusters(lights, count, view, proj, space) {
   const t4 = space._tiles;
   let total = 0, touched = 0;
   for (let i = 0; i < n; i++) {
-    const r = lights[i * 4 + 3];
     const at = i * 7;
     box[at] = -1;
-    if (!(r > 0)) continue;
-    const x = lights[i * 4], y = lights[i * 4 + 1], z = lights[i * 4 + 2];
-    const vx = view[0] * x + view[4] * y + view[8] * z + view[12];
-    const vy = view[1] * x + view[5] * y + view[9] * z + view[13];
-    const vz = view[2] * x + view[6] * y + view[10] * z + view[14];
-    if (!cellsOfSphere(vx, vy, vz, r, proj, box, at)) { box[at] = -1; continue; }
+    if (!cells(i, box, at)) { box[at] = -1; continue; }
     touched++;
     const z0 = box[at + 4], z1 = box[at + 5];
     for (let cz = z0; cz <= z1; cz++) {

@@ -291,3 +291,17 @@ one meaning). The rest were pins whose quoted text WL1 moved, re-aimed as PIN MO
 **Pins.** `test/render/wl1_windowlight.test.js` (W1-W22; the corpus test gated on ARENA2_PATH); LA-COST3's window sun
 (`test/render/la_cost.test.js`); mutants `tools/mutants/wl1.json` (87: 86 dead, one equivalent as recorded); PROBE
 `tools/windowLightProbe.mjs`.
+
+## LIGHT-REACH (2026-10-29): the windows' light farther, for less
+
+The owner: "Increase distance for street and window lighting in overworld without killing performance", and "Both" -
+farther from each window and drawn farther from the player. The record is `Enhanced-Lighting-Arc.md` LIGHT-REACH.
+
+**What changed here.** A window's lamp reaches 12 m (`WL_LAMP_RANGE`, 8 above). A light is listed in LC1's grid by the
+box of its beam and its glow (`windowLightBox`), not of its reach's sphere: about a twentieth of the volume, which pays
+for the reach. Past the near tier's 128 tiles, a street's lit windows are gathered out to 160 m as far rows: each a
+storey's run of one wall's tiles, every tile lit by its own lamp through its own glass. The rows ride a second block
+(`WinFar`, binding 4) and a third band of the grid. A tile is the near tier's inside its cut and the row's past it, by
+the one fade. A row has no glow, and its curtains stand at their mean edges.
+
+**Pins.** `test/render/lightreach.test.js` (LR1-LR9); W6, W8, W18 and W20 above moved, each marked PIN MOVED.

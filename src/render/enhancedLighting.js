@@ -437,6 +437,9 @@ vec3 elPointLitWet(vec3 wp, vec3 n, float wet, out vec3 glint) {
     float d = length(L);
     if (d >= uPointLights[i].w) continue;   // EL5: outside the window the term is exactly zero - no shadow taps, no glint, no pow for it
     vec3 Ln = L / max(d, 1e-4);
+    // LIGHT-REACH: a surface turned from the light takes none of it - its diffuse is zero, and its glint (N.H at most
+    // 0.71 there, so the lobe is 2.4e-4) is under half a display step - so it pays for no shadow taps
+    if (dot(n, Ln) <= 0.0) continue;
     int k = uCasterOf[i];   // EL8: the light's caster slot in one lookup
     // EL2: the lantern's map; EL8: every other lantern a contact shadow off the previous frame's depth;
     // F3/MAC-T1: never for the light in the hand - by name, -2 in the caster table (LIGHT-NEAR1: and no longer by its distance to the camera, which dropped the lamp overhead too);

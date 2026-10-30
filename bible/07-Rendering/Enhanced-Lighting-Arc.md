@@ -2295,3 +2295,49 @@ theirs; seraphwings' record re-aimed, dead), and the three rigs that run the hos
 (audit0928_render's R2, audit0928_merge's M4, `test/yardLightRig.mjs`) hand it `adoptLight`. **Measured, kept:** the seam
 copies element by element and names a record through one shared descriptor, so the Hour's lines make nothing a frame
 (sd11a's, sd20c's and sd25's measures).
+
+## LIGHT-REACH - THE STREET'S LAMPS AND WINDOWS LIGHT FARTHER, FOR LESS (2026-10-29, the owner: "Increase distance for street and window lighting in overworld without killing performance"; asked which distance, "Both")
+
+**Measured first**, in the running game over a real ARENA2 (Daggerfall at 22:00, `?world` and the `?exterior` bench).
+The town's 155 lanterns (2.4 a block) already filled the lane's 48 slots out to 170-280 m, and the Imperial City's
+fabric lamps (8 a cell) to 140-175 m: no lantern was cut by its distance. Each reached DFU's 18 (the [City] prefab), a
+pool of about 9 m, with lanterns 70 to 130 m apart. The windows' light stopped 40 to 64 m out, where WL1's block of
+128 was full, and reached 8 m from the glass. The windows were also the cost: on SwiftShader they were 30 to 42 percent
+of a night street frame.
+
+**Why they cost so much.** LC1 lists a light in every cell its sphere's box touches. A window's light falls only in
+its beam - from the lamp through the glass to its reach - and in its glass's glow beside it. Measured over 500 lights
+of every turn and size, that volume is 4.9 percent of the sphere's box, and every fragment in the rest walked the light
+only to be turned away. `windowLightBox` (`src/render/windowLight.js:"export function windowLightBox(l, beam, out, at, spill = true) {"`)
+bounds the beam and the glow in the glass's own frame, and `buildLightClusterBoxes` lists a box by its three
+half-axes under the sphere's rules (`src/render/lightClusters.js:"export function cellsOfViewBox(x0, x1, y0, y1, d0, dFar, proj, box, at) {"`).
+
+**Farther from the source.** A window's lamp reaches 12 m (`WL_LAMP_RANGE`, WL1's 8). On the lane a town lantern
+reaches 27 (`src/world/city/cityLights.js:"export const STREET_LIGHT_REACH = 1.5;"`, half again the prefab's 18), its
+flicker's variance and step scaled with it, so it flickers by the same share of its range. The classic set keeps DFU's
+18 and DaggerfallLight's Animate exactly. A yard's lamp rides the town's flicker and reaches with it. The lane's lantern
+loop now leaves a surface turned from a light before that light's shadow taps: there its diffuse is zero and its
+glint is at most one display step on the darkest ground (N.H is at most 0.71, under a lobe of power 24).
+
+**Farther from the player.** Past the nearest 128 tiles, a street's lit windows are gathered out to 160 m
+(`WL_FAR_GATHER`) as rows (`src/render/windowLight.js:"export function cellRows(ap, first, t) {"`): a storey's run of
+one wall's tiles, up to 10. Each tile is lit by its own lamp through its own glass, as the near tier lights it, to float
+rounding. 127 rows ride a second uniform block (binding 4) and a third band of LC1's grid, so neither tier's lists can
+crowd the other's out. A tile is the near tier's inside its cut and the row's past it, by one fade, and the two sum to
+one. A row has no glow, and its curtains stand at their mean edges.
+
+**Measured after.** [[AB]]
+
+**The departures.** From DFU's [City] prefab range on the lane (ledger section A, LIGHT-REACH). The windows' light is
+WL1's own, not a DFU member.
+
+**THE FOUR HOSTS.** `src/scenes/exterior.js` and `src/scenes/world.js` - WIRED: their lanterns' flicker is
+`streetLanternAnimator` under the lane each installed, and their windows light through the renderer. `src/scenes/worldModes.js`
+- the interior arm's view out reads the street's window light, its rows with it; its dungeon arm has no street.
+`src/scenes/dungeonContext.js` - FLAGGED: none, no street lanterns and no windows to light.
+
+**Every province.** Nothing here reads a place. The lanterns are a block's light flats wherever a town stands - the
+Imperial City's fabric lamps among them, measured above - and the windows are any mesh's glass.
+
+**Pins.** `test/render/lightreach.test.js` (LR1-LR9); WL1's W6, W8, W18 and W20 and LC1's band count moved, each
+marked PIN MOVED. Mutants `tools/mutants/lightreach.json`. Probe `tools/lightReachProbe.mjs`, run on this tree and on a worktree of its base.
