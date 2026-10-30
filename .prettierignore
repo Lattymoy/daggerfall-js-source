@@ -10,6 +10,8 @@
 /src/characters/bodyMotion/*/
 !/src/characters/ownModels/
 /src/characters/ownModels/*/
+!/src/characters/paperdoll/
+/src/characters/paperdoll/*/
 !/src/combat/
 /src/combat/*
 !/src/combat/blood/

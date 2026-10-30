@@ -25,7 +25,15 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { buildNeutralBody, WRIST_JUNCTION_Y, ARM_X, NECK_PIVOT_Y } from '../neutralBody.js';
-import { ATTACKS_1H, ATTACKS_2H, ATTACKS_RANGED, ATTACKS_FP, REACTIONS, DIRECTION_TO_STRIKE, STRIKES } from '../anims.js';
+import {
+  ATTACKS_1H,
+  ATTACKS_2H,
+  ATTACKS_RANGED,
+  ATTACKS_FP,
+  REACTIONS,
+  DIRECTION_TO_STRIKE,
+  STRIKES,
+} from '../anims.js';
 import { STEEL_RAMP } from '../pieces/cuirass.js';
 import { CLOTH_RAMP } from '../pieces/pieceLoft.js';
 // AUDIT 39: `buildCuirass`, `buildGreaves`, `clothingZones` and
@@ -160,8 +168,24 @@ export function buildPaperdollPayload(pal, img, cif) {
   const haveData = !!(pal && img);
   if (!pal) pal = ourPalette();
   const { width: W, data } = haveData ? img.getDFBitmap() : { width: 0, data: [] };
-  const lum = (i) => { const c = pal.get(i); return 0.299*c.r + 0.587*c.g + 0.114*c.b; };
-  const rampOf = (r0, r1, keep) => { const m = new Map(); for (let y=r0;y<=r1;y++) for (let x=0;x<W;x++){ const i=data[y*W+x]; if(i&&(!keep||keep(x,y))) m.set(i,lum(i)); } return [...m.entries()].sort((a,b)=>a[1]-b[1]).map(e=>{const c=pal.get(e[0]);return [c.r,c.g,c.b];}); };
+  const lum = (i) => {
+    const c = pal.get(i);
+    return 0.299 * c.r + 0.587 * c.g + 0.114 * c.b;
+  };
+  const rampOf = (r0, r1, keep) => {
+    const m = new Map();
+    for (let y = r0; y <= r1; y++)
+      for (let x = 0; x < W; x++) {
+        const i = data[y * W + x];
+        if (i && (!keep || keep(x, y))) m.set(i, lum(i));
+      }
+    return [...m.entries()]
+      .sort((a, b) => a[1] - b[1])
+      .map((e) => {
+        const c = pal.get(e[0]);
+        return [c.r, c.g, c.b];
+      });
+  };
   const ramps = haveData
     ? { skin: rampOf(40, 60, (x) => Math.abs(x - 34) < 14), boot: rampOf(132, 144) }
     : { skin: PALETTES.human[1].ramp, boot: OUR_BOOT };
@@ -179,16 +203,22 @@ export function buildPaperdollPayload(pal, img, cif) {
   let faceSet = null;
   if (cif) {
     faceSet = [];
-    for (let r = 0; r < 10; r++) {           // FACES_PER_RACE records per CIF
+    for (let r = 0; r < 10; r++) {
+      // FACES_PER_RACE records per CIF
       try {
         const b = cif.getDFBitmap(r, 0);
         const rgb = [];
         for (let i2 = 0; i2 < b.data.length; i2++) {
           const idx = b.data[i2];
-          if (idx) { const c = pal.get(idx); rgb.push(c.r, c.g, c.b, 255); } else rgb.push(0, 0, 0, 0);
+          if (idx) {
+            const c = pal.get(idx);
+            rgb.push(c.r, c.g, c.b, 255);
+          } else rgb.push(0, 0, 0, 0);
         }
         faceSet.push({ w: b.width, h: b.height, rgba: rgb });
-      } catch { break; }
+      } catch {
+        break;
+      }
     }
     if (!faceSet.length) faceSet = null;
   }
@@ -217,7 +247,9 @@ export function buildPaperdollPayload(pal, img, cif) {
     if (!g) return null;
     const rows = [];
     for (let r = 0; r < g.rows; r++) {
-      let y = 0, rx = 0, rz = 0;
+      let y = 0,
+        rx = 0,
+        rz = 0;
       for (let c = 0; c < g.cols; c++) {
         const i = (r * g.cols + c) * 3;
         y = g.pos[i + 1];
@@ -281,16 +313,36 @@ export function buildPaperdollPayload(pal, img, cif) {
   };
 
   /** Attach the measured fit to a drape, or pass a missing one through. */
-  const withFit = (drape, bodyFaces) =>
-    drape ? { ...drape, fit: measureDrapeFit(bodyFaces, drape.name) } : null;
+  const withFit = (drape, bodyFaces) => (drape ? { ...drape, fit: measureDrapeFit(bodyFaces, drape.name) } : null);
 
-  let minY = 1e9, maxY = -1e9;
-  for (const f of faces) for (let i=0;i<4;i++){ const y=f.p[i*3+1]; if(y<minY)minY=y; if(y>maxY)maxY=y; }
-  const GI = { body:0, head:1, armL:2, armR:3, legL:4, legR:5 };
+  let minY = 1e9,
+    maxY = -1e9;
+  for (const f of faces)
+    for (let i = 0; i < 4; i++) {
+      const y = f.p[i * 3 + 1];
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
+  const GI = { body: 0, head: 1, armL: 2, armR: 3, legL: 4, legR: 5 };
   // Every mesh the viewer draws - the base body and each piece - packs
   // through this one encoder (AUDIT 68 S05-payload-housekeeping: the
   // base body had its own copy of it).
-  const packPiece = (pf) => { const pP=[], pN=[], pC=[], pG=[], pI=[]; for (const f of pf) { for (let i=0;i<4;i++) pP.push(Math.round(f.p[i*3]*1000), Math.round(f.p[i*3+1]*1000), Math.round(f.p[i*3+2]*1000)); pN.push(Math.round(f.n[0]*127), Math.round(f.n[1]*127), Math.round(f.n[2]*127)); pC.push(f.c[0], f.c[1], f.c[2]); pI.push(Math.round((f._i ?? 0.6) * 255)); pG.push(GI[f.g] ?? 0); } return { P: pP, N: pN, C: pC, G: pG, I: pI }; };
+  const packPiece = (pf) => {
+    const pP = [],
+      pN = [],
+      pC = [],
+      pG = [],
+      pI = [];
+    for (const f of pf) {
+      for (let i = 0; i < 4; i++)
+        pP.push(Math.round(f.p[i * 3] * 1000), Math.round(f.p[i * 3 + 1] * 1000), Math.round(f.p[i * 3 + 2] * 1000));
+      pN.push(Math.round(f.n[0] * 127), Math.round(f.n[1] * 127), Math.round(f.n[2] * 127));
+      pC.push(f.c[0], f.c[1], f.c[2]);
+      pI.push(Math.round((f._i ?? 0.6) * 255));
+      pG.push(GI[f.g] ?? 0);
+    }
+    return { P: pP, N: pN, C: pC, G: pG, I: pI };
+  };
   const { P, N, C, G, I: Ib } = packPiece(faces);
   // ── the VILLAGER DESIGNS (editor only - nothing here touches a game
   // host). A design's zones DISPLACE the body's own faces and recolour
@@ -303,7 +355,11 @@ export function buildPaperdollPayload(pal, img, cif) {
   const villagerPacks = VILLAGER_DESIGNS.map((d) => {
     const vf = buildNeutralBody(ramps, designOpts(d, pal));
     return {
-      archive: d.archive, race: d.race, gender: d.gender, name: d.name, build: d.build,
+      archive: d.archive,
+      race: d.race,
+      gender: d.gender,
+      name: d.name,
+      build: d.build,
       tone: RACE_TONE[d.race],
       // AUDIT 39: every design has named a hairstyle and a hair colour
       // since the designs landed, and the viewer's applyVillagerHair
@@ -348,8 +404,13 @@ export function buildPaperdollPayload(pal, img, cif) {
     const { ramps: oramps, opts, hide } = orcOpts(d, pal);
     const of = buildNeutralBody(oramps, opts);
     return {
-      id: d.id, name: d.name, level: d.level, damage: d.damage, weaponTier: d.weaponTier,
-      build: d.build, hide,
+      id: d.id,
+      name: d.name,
+      level: d.level,
+      damage: d.damage,
+      weaponTier: d.weaponTier,
+      build: d.build,
+      hide,
       tusks: packPiece(buildTusks(IVORY_RAMP, { jaw: d.build.jaw, size: d.tusk.size })),
       brow: packPiece(buildBrow(hide, { skull: d.build.skull, jut: d.brow.jut })),
       ...villagerDelta(faces, of),
@@ -393,8 +454,15 @@ export function buildPaperdollPayload(pal, img, cif) {
     // A design with a body of its own has no use for the rig's legs.
     if (d.collapse) uf = collapseGroups(uf, d.collapse, [0, 0.8, -0.2]);
     return {
-      id: d.id, name: d.name, level: d.level, damage: d.damage, weaponTier: d.weaponTier,
-      build: d.build, zones: d.zones, hide, spectral: d.spectral || null,
+      id: d.id,
+      name: d.name,
+      level: d.level,
+      damage: d.damage,
+      weaponTier: d.weaponTier,
+      build: d.build,
+      zones: d.zones,
+      hide,
+      spectral: d.spectral || null,
       // GEOMETRY OF ITS OWN, where a design has any. The zombie and the
       // mummy have none — they are the loft and nothing else — and the
       // skeleton is the first in this file that needs a piece to carry
@@ -423,8 +491,15 @@ export function buildPaperdollPayload(pal, img, cif) {
     const { ramps: cramps, opts, hide, drape } = classOpts(d, pal);
     const cf = buildNeutralBody(cramps, opts);
     return {
-      id: d.id, name: d.name, level: d.level, damage: d.damage, weaponTier: d.weaponTier,
-      build: d.build, zones: d.zones, hide, drape: withFit(drape, cf),
+      id: d.id,
+      name: d.name,
+      level: d.level,
+      damage: d.damage,
+      weaponTier: d.weaponTier,
+      build: d.build,
+      zones: d.zones,
+      hide,
+      drape: withFit(drape, cf),
       ...villagerDelta(faces, cf),
     };
   });
@@ -439,8 +514,15 @@ export function buildPaperdollPayload(pal, img, cif) {
     const { ramps: aramps, opts, hide } = atronachOpts(d, pal);
     const af = buildNeutralBody(aramps, opts);
     return {
-      id: d.id, name: d.name, level: d.level, damage: d.damage, weaponTier: d.weaponTier,
-      build: d.build, zones: d.zones, hide, spectral: d.spectral || null,
+      id: d.id,
+      name: d.name,
+      level: d.level,
+      damage: d.damage,
+      weaponTier: d.weaponTier,
+      build: d.build,
+      zones: d.zones,
+      hide,
+      spectral: d.spectral || null,
       ...villagerDelta(faces, af),
     };
   });
@@ -465,8 +547,14 @@ export function buildPaperdollPayload(pal, img, cif) {
     // between the two halves of this file.
     bf = collapseGroups(bf, d.collapse || ALL_GROUPS, [0, 1.5, 0]);
     return {
-      id: d.id, name: d.name, level: d.level, damage: d.damage, weaponTier: d.weaponTier,
-      build: d.build || {}, zones: d.zones || [], hide,
+      id: d.id,
+      name: d.name,
+      level: d.level,
+      damage: d.damage,
+      weaponTier: d.weaponTier,
+      build: d.build || {},
+      zones: d.zones || [],
+      hide,
       // HOW IT REACHES YOU, and WHEN. The kind is the design's; the
       // timing is the game's own primaryAttackAnimFrames, where -1 marks
       // the frame the blow lands on.
@@ -485,9 +573,7 @@ export function buildPaperdollPayload(pal, img, cif) {
       // and it is how the sprites this port replaces did it.
       sting:
         d.arachnid && d.arachnid.sting
-          ? [0, 0.25, 0.5, 0.75, 1].map((k) =>
-              packPiece(buildSting(pelt, { ...d.arachnid, strike: k })),
-            )
+          ? [0, 0.25, 0.5, 0.75, 1].map((k) => packPiece(buildSting(pelt, { ...d.arachnid, strike: k })))
           : null,
       // FLYING: the one behaviour that is neither foot nor fin. A wing
       // is a membrane on fingers, so it is panels rather than boxes —
@@ -525,8 +611,16 @@ export function buildPaperdollPayload(pal, img, cif) {
     let df = buildNeutralBody(dramps, opts);
     if (d.collapse) df = collapseGroups(df, d.collapse, [0, 1.5, 0]);
     return {
-      id: d.id, name: d.name, level: d.level, damage: d.damage, weaponTier: d.weaponTier,
-      build: d.build, zones: d.zones, hide, drape: withFit(drape, df), spectral: d.spectral || null,
+      id: d.id,
+      name: d.name,
+      level: d.level,
+      damage: d.damage,
+      weaponTier: d.weaponTier,
+      build: d.build,
+      zones: d.zones,
+      hide,
+      drape: withFit(drape, df),
+      spectral: d.spectral || null,
       beastHead: d.beastHead ? packPiece(buildBeastHead(hide, d.beastHead)) : null,
       beastTail: d.tail ? packPiece(buildBeastTail(hide, d.tail)) : null,
       horns: d.horns ? packPiece(buildHorns(hide, d.horns)) : null,
@@ -535,14 +629,41 @@ export function buildPaperdollPayload(pal, img, cif) {
   });
 
   // Per-race body colours: same geometry, re-shaded with the race hide/fur.
-  const colorsOf = (fs) => { const c=[]; for (const f of fs) c.push(f.c[0], f.c[1], f.c[2]); return c; };
+  const colorsOf = (fs) => {
+    const c = [];
+    for (const f of fs) c.push(f.c[0], f.c[1], f.c[2]);
+    return c;
+  };
   const Ck = colorsOf(buildNeutralBody({ skin: KHAJIIT_FUR, boot: ramps.boot }));
   const Ca = colorsOf(buildNeutralBody({ skin: ARGONIAN_HIDE, boot: ramps.boot }));
-  const drapeGridsOut = {}, drapedPacks = {};
-  for (const nm of DRAPED_NAMES) { const g = drapedGrid(nm);
+  const drapeGridsOut = {},
+    drapedPacks = {};
+  for (const nm of DRAPED_NAMES) {
+    const g = drapedGrid(nm);
     if (g) drapeGridsOut[nm] = { rows: g.rows, cols: g.cols, wrap: g.wrap, pos: Array.from(g.pos), faces: g.faces };
-    else drapedPacks[nm] = packPiece(drapedPiece(nm, CLOTH_RAMP)); }
-  const payload = ({ n: faces.length, Ck, Ca, Ib, PALETTES, draped: drapedPacks, drapeGrids: drapeGridsOut, drapeMaterials: DRAPE_MATERIAL, bodyCore: BODY_CORE, poses: POSES, wristY: WRIST_JUNCTION_Y * 0.9, armX: ARM_X, neckY: NECK_PIVOT_Y * 0.9, attacks: ATTACKS_1H, attacks2H: ATTACKS_2H, attacksRanged: ATTACKS_RANGED, attacksFP: ATTACKS_FP, reactions: REACTIONS, strikes: STRIKES, dirToStrike: DIRECTION_TO_STRIKE,
+    else drapedPacks[nm] = packPiece(drapedPiece(nm, CLOTH_RAMP));
+  }
+  const payload = {
+    n: faces.length,
+    Ck,
+    Ca,
+    Ib,
+    PALETTES,
+    draped: drapedPacks,
+    drapeGrids: drapeGridsOut,
+    drapeMaterials: DRAPE_MATERIAL,
+    bodyCore: BODY_CORE,
+    poses: POSES,
+    wristY: WRIST_JUNCTION_Y * 0.9,
+    armX: ARM_X,
+    neckY: NECK_PIVOT_Y * 0.9,
+    attacks: ATTACKS_1H,
+    attacks2H: ATTACKS_2H,
+    attacksRanged: ATTACKS_RANGED,
+    attacksFP: ATTACKS_FP,
+    reactions: REACTIONS,
+    strikes: STRIKES,
+    dirToStrike: DIRECTION_TO_STRIKE,
     // WEAPON REGISTRY: [{name, hands, pack, items}] - the viewer's
     // weapon list is data. Steel display mesh; per-material items.
     // TAILS RIDE THE RACE, NOT THE SPRITE. `ramps.skin` is sampled from
@@ -553,13 +674,19 @@ export function buildPaperdollPayload(pal, img, cif) {
     // another's colour, so the tails take the race hide/fur ramps - the
     // same ones raceCharacter.js:"faces.push(...buildTail(coat, 'khajiit'))" shades the in-engine bake with.
     faceSet,
-    hair: hairPacks, hairRamps: HAIR_RAMPS,
+    hair: hairPacks,
+    hairRamps: HAIR_RAMPS,
     tail: packPiece(buildTail(ARGONIAN_HIDE, 'argonian')),
     tailCat: packPiece(buildTail(KHAJIIT_FUR, 'khajiit')),
     arrow: packPiece(buildNockedArrow(weaponMaterialRamp(WEAPON_MATERIALS.Steel, (i) => pal.get(i)))),
     weaponPacks: (() => {
       const steel = weaponMaterialRamp(WEAPON_MATERIALS.Steel, (i) => pal.get(i));
-      const items = (id) => Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, buildWeapon(id, v)]));
+      const items = (id) =>
+        Object.fromEntries(
+          Object.entries(WEAPON_MATERIALS)
+            .filter(([, v]) => v >= 0)
+            .map(([n, v]) => [n, buildWeapon(id, v)]),
+        );
       const list = [
         { name: 'Longsword', hands: '1h', pack: packPiece(buildSword(steel)), items: items(WEAPONS.Longsword) },
         { name: 'Claymore', hands: '2h', pack: packPiece(buildClaymore(steel)), items: items(WEAPONS.Claymore) },
@@ -567,15 +694,54 @@ export function buildPaperdollPayload(pal, img, cif) {
         { name: 'Short Bow', hands: 'bow', pack: packPiece(buildShortBow(steel)), items: items(WEAPONS.Short_Bow) },
       ];
       for (const nm of Object.keys(BLADE_SPECS)) {
-        list.push({ name: nm.replace('_', '-'), hands: BLADE_SPECS[nm].twoHand ? '2h' : '1h', pack: packPiece(buildBladeWeapon(steel, nm)), items: items(WEAPONS[nm]) });
+        list.push({
+          name: nm.replace('_', '-'),
+          hands: BLADE_SPECS[nm].twoHand ? '2h' : '1h',
+          pack: packPiece(buildBladeWeapon(steel, nm)),
+          items: items(WEAPONS[nm]),
+        });
       }
       for (const nm of Object.keys(HAFTED_SPECS)) {
-        list.push({ name: nm.replace('_', ' '), hands: HAFTED_SPECS[nm].twoHand ? '2h' : '1h', pack: packPiece(buildHaftedWeapon(steel, nm)), items: items(WEAPONS[nm]) });
+        list.push({
+          name: nm.replace('_', ' '),
+          hands: HAFTED_SPECS[nm].twoHand ? '2h' : '1h',
+          pack: packPiece(buildHaftedWeapon(steel, nm)),
+          items: items(WEAPONS[nm]),
+        });
       }
       return list;
     })(),
-    swordRamps: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, weaponMaterialRamp(v, (i) => pal.get(i))])),
-    swordItems: Object.fromEntries(Object.entries(WEAPON_MATERIALS).filter(([, v]) => v >= 0).map(([n, v]) => [n, buildWeapon(WEAPONS.Longsword, v)])), cloth: CLOTH_RAMP, drapedNames: DRAPED_NAMES, villagers: villagerPacks, orcs: orcPacks, undead: undeadPacks, classes: classPacks, atronachs: atronachPacks, beasts: beastPacks, daedra: daedraPacks, cy:(minY+maxY)/2, h:maxY-minY, P, N, C, G, pauldrons: packPiece(buildPauldrons(STEEL_RAMP)), helm: packPiece(buildHelm(STEEL_RAMP)), bodyScales: packPiece(buildBodyScales(faces, ramps.skin)), bodyFurCoat: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'coat')), bodyFurBelly: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'belly')) });
+    swordRamps: Object.fromEntries(
+      Object.entries(WEAPON_MATERIALS)
+        .filter(([, v]) => v >= 0)
+        .map(([n, v]) => [n, weaponMaterialRamp(v, (i) => pal.get(i))]),
+    ),
+    swordItems: Object.fromEntries(
+      Object.entries(WEAPON_MATERIALS)
+        .filter(([, v]) => v >= 0)
+        .map(([n, v]) => [n, buildWeapon(WEAPONS.Longsword, v)]),
+    ),
+    cloth: CLOTH_RAMP,
+    drapedNames: DRAPED_NAMES,
+    villagers: villagerPacks,
+    orcs: orcPacks,
+    undead: undeadPacks,
+    classes: classPacks,
+    atronachs: atronachPacks,
+    beasts: beastPacks,
+    daedra: daedraPacks,
+    cy: (minY + maxY) / 2,
+    h: maxY - minY,
+    P,
+    N,
+    C,
+    G,
+    pauldrons: packPiece(buildPauldrons(STEEL_RAMP)),
+    helm: packPiece(buildHelm(STEEL_RAMP)),
+    bodyScales: packPiece(buildBodyScales(faces, ramps.skin)),
+    bodyFurCoat: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'coat')),
+    bodyFurBelly: packPiece(buildBodyFur(faces, KHAJIIT_FUR, KHAJIIT_BELLY, 'belly')),
+  };
 
   return payload;
 }

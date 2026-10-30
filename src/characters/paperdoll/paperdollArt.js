@@ -44,7 +44,7 @@ export { MATERIAL_FAMILY, armorVariant } from '../../systems/armorMaterials.js';
 export function morphologyOfRace(race) {
   const r = raceByKey(race);
   if (r) return r.morphologyIndex;
-  return BODY_MORPHOLOGY.Human;   // Vampire/Werewolf/Wereboar + anything unknown
+  return BODY_MORPHOLOGY.Human; // Vampire/Werewolf/Wereboar + anything unknown
 }
 
 /** ApplyArmorSettings' archive, keyed by RACE (the C6a signature). */

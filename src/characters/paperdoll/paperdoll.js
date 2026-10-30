@@ -10,16 +10,22 @@
 //     order (PaperDollRenderer.BlitItems).
 // Dye tables (C5b) and the GetEquipSlot assignment rules (C5c) follow.
 
-import { templateByIndex, ITEM_TEMPLATES } from '../../systems/item/itemTemplates.js';   // FIELD-GUN5: the custom rows too - see getTemplate
+import { templateByIndex, ITEM_TEMPLATES } from '../../systems/item/itemTemplates.js'; // FIELD-GUN5: the custom rows too - see getTemplate
 
 export const EQUIP_SLOTS = Object.freeze({
   None: -1,
-  Amulet0: 0, Amulet1: 1,
-  Bracelet0: 2, Bracelet1: 3,
-  Ring0: 4, Ring1: 5,
-  Bracer0: 6, Bracer1: 7,
-  Mark0: 8, Mark1: 9,
-  Crystal0: 10, Crystal1: 11,
+  Amulet0: 0,
+  Amulet1: 1,
+  Bracelet0: 2,
+  Bracelet1: 3,
+  Ring0: 4,
+  Ring1: 5,
+  Bracer0: 6,
+  Bracer1: 7,
+  Mark0: 8,
+  Mark1: 9,
+  Crystal0: 10,
+  Crystal1: 11,
   Head: 12,
   RightArm: 13,
   Cloak1: 14,
