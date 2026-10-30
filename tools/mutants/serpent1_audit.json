@@ -542,8 +542,8 @@
   {
     "name": "AUDIT-SERPENT-L5-tube-order",
     "file": "src/render/serpentRender.js",
-    "old": "ringPut(i, k); ringPut(i + 1, k); ringPut(i + 1, k2);",
-    "new": "ringPut(i, k); ringPut(i + 1, k2); ringPut(i + 1, k);",
+    "old": "      ringPut(i + 1, k);\n      ringPut(i + 1, k2);",
+    "new": "      ringPut(i + 1, k2);\n      ringPut(i + 1, k);",
     "tests": [
       "test/net/serpent/serpent1_auditclient.test.js"
     ]
@@ -551,8 +551,8 @@
   {
     "name": "AUDIT-SERPENT-L5-ring-side",
     "file": "src/render/serpentRender.js",
-    "old": "for (let j = 0; j < 3; j++) S[o + j] = g.p[j] + (g.n[j] * dh + g.b[j] * dw) * r;",
-    "new": "for (let j = 0; j < 3; j++) S[o + j] = g.p[j] + (g.n[j] * dw + g.b[j] * dh) * r;",
+    "old": "      for (let j = 0; j < 3; j++) S[o + j] = g.p[j] + (g.n[j] * dh + g.b[j] * dw) * r;",
+    "new": "      for (let j = 0; j < 3; j++) S[o + j] = g.p[j] + (g.n[j] * dw + g.b[j] * dh) * r;",
     "tests": [
       "test/net/serpent/serpent1_auditclient.test.js"
     ]

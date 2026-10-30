@@ -371,8 +371,8 @@
   {
     "name": "WINDFALL1-particle-cap-dropped",
     "file": "src/render/windfallParticles.js",
-    "old": "    if (this.count >= this.shape.maxParticles) return;\n",
-    "new": "",
+    "old": "    if (this.count >= this.shape.maxParticles) return;\n    const i = this.count++,",
+    "new": "    const i = this.count++,",
     "tests": [
       "test/systems/windfall1_presentation.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "WINDFALL1-box-twice-as-wide",
     "file": "src/render/windfallParticles.js",
-    "old": "this.pos[i * 3] = at[0] + (R() - 0.5) * BOX_X;",
-    "new": "this.pos[i * 3] = at[0] + (R() - 0.5) * BOX_X * 2;",
+    "old": "    this.pos[i * 3] = at[0] + (R() - 0.5) * BOX_X;",
+    "new": "    this.pos[i * 3] = at[0] + (R() - 0.5) * BOX_X * 2;",
     "tests": [
       "test/systems/windfall1_presentation.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "WINDFALL1-velocity-not-integrated",
     "file": "src/render/windfallParticles.js",
-    "old": "this.pos[w * 3] = x + (vx + nx * ns) * dt;",
-    "new": "this.pos[w * 3] = x + nx * ns * dt;",
+    "old": "      this.pos[w * 3] = x + (vx + nx * ns) * dt;",
+    "new": "      this.pos[w * 3] = x + nx * ns * dt;",
     "tests": [
       "test/systems/windfall1_presentation.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "WINDFALL1-particle-clear-ignored",
     "file": "src/render/windfallParticles.js",
-    "old": "if (flow.clear) { this.clear(); flow.clear = false; }",
-    "new": "if (flow.clear) { flow.clear = false; }",
+    "old": "      this.clear();\n      flow.clear = false;",
+    "new": "      flow.clear = false;",
     "tests": [
       "test/systems/windfall1_presentation.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "WINDFALL1-lateral-085-lost",
     "file": "src/render/windfallSway.js",
-    "old": "right * (dot(d, right) * 0.85)",
-    "new": "right * (dot(d, right) * 0.0)",
+    "old": "  return (d * 0.15 + right * (dot(d, right) * 0.85)) * (uWindfallSway.x * sway + uWindfallSway.y * shiver) * (shiv * 0.400000036 + 0.8);",
+    "new": "  return (d * 0.15 + right * (dot(d, right) * 0.0)) * (uWindfallSway.x * sway + uWindfallSway.y * shiver) * (shiv * 0.400000036 + 0.8);",
     "tests": [
       "test/systems/windfall1_presentation.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "WINDFALL1-spread-04",
     "file": "src/render/windfallSway.js",
-    "old": "(shiv * 0.400000036 + 0.8)",
-    "new": "(shiv * 0.8 + 0.8)",
+    "old": "  return (d * 0.15 + right * (dot(d, right) * 0.85)) * (uWindfallSway.x * sway + uWindfallSway.y * shiver) * (shiv * 0.400000036 + 0.8);",
+    "new": "  return (d * 0.15 + right * (dot(d, right) * 0.85)) * (uWindfallSway.x * sway + uWindfallSway.y * shiver) * (shiv * 0.8 + 0.8);",
     "tests": [
       "test/systems/windfall1_presentation.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "WINDFALL1-cell-6m",
     "file": "src/render/windfallSway.js",
-    "old": "mod(floor(w * 0.0833333358), 4096.0) * 12.0",
-    "new": "mod(floor(w * 0.166666672), 8192.0) * 6.0",
+    "old": "  float cell = fract(sin(dot(mod(floor(w * 0.0833333358), 4096.0) * 12.0, vec2(12.9898, 78.233))) * 43758.5469);",
+    "new": "  float cell = fract(sin(dot(mod(floor(w * 0.166666672), 8192.0) * 6.0, vec2(12.9898, 78.233))) * 43758.5469);",
     "tests": [
       "test/systems/windfall1_presentation.test.js"
     ]

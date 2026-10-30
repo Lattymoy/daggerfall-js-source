@@ -632,8 +632,8 @@
   {
     "name": "EGZ-vfx-fade-wrong-channel",
     "file": "src/render/vfxGpu.js",
-    "old": "    if (srcBlend === 0) { out[o] *= alpha;",
-    "new": "    if (srcBlend === 6) { out[o] *= alpha;",
+    "old": "    if (srcBlend === 0) {",
+    "new": "    if (srcBlend === 6) {",
     "tests": [
       "test/world/eliteGates/egz_telegraph.test.js"
     ]

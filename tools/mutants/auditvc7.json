@@ -471,8 +471,8 @@
   {
     "name": "AUDIT-VC7-wisp-clock-unwrapped",
     "file": "src/render/windWisps.js",
-    "old": "gl.uniform1f(U.uTime, wispClock(timeSeconds));",
-    "new": "gl.uniform1f(U.uTime, timeSeconds);",
+    "old": "    gl.uniform1f(U.uTime, wispClock(timeSeconds)); // AUDIT-VC7 (G6): wrapped here, in double precision",
+    "new": "    gl.uniform1f(U.uTime, timeSeconds); // AUDIT-VC7 (G6): wrapped here, in double precision",
     "tests": [
       "test/systems/wind3_windworld.test.js"
     ]
@@ -480,8 +480,8 @@
   {
     "name": "AUDIT-VC7-wisp-wobble-not-whole",
     "file": "src/render/windWisps.js",
-    "old": "WISP_WOBBLE_CYCLES = Object.freeze([57, 45, 38]);",
-    "new": "WISP_WOBBLE_CYCLES = Object.freeze([57.3, 45, 38]);",
+    "old": "export const WISP_WOBBLE_CYCLES = Object.freeze([57, 45, 38]);",
+    "new": "export const WISP_WOBBLE_CYCLES = Object.freeze([57.3, 45, 38]);",
     "tests": [
       "test/systems/wind3_windworld.test.js"
     ]
@@ -489,8 +489,8 @@
   {
     "name": "AUDIT-VC7-wisp-rate-unquantised",
     "file": "src/render/windWisps.js",
-    "old": "float rate = 0.35 + floor(fract(seed*5.3) * ${glslF(WISP_RATE_STEPS)}) * ${glslF(0.25 / WISP_RATE_STEPS)};",
-    "new": "float rate = 0.35 + fract(seed*5.3) * 0.25;",
+    "old": "  float rate = 0.35 + floor(fract(seed*5.3) * ${glslF(WISP_RATE_STEPS)}) * ${glslF(0.25 / WISP_RATE_STEPS)};   // AUDIT-VC7 (G6): in steps, each a whole number of lives over the clock's period",
+    "new": "  float rate = 0.35 + fract(seed*5.3) * 0.25;   // AUDIT-VC7 (G6): in steps, each a whole number of lives over the clock's period",
     "tests": [
       "test/systems/wind3_windworld.test.js"
     ]
@@ -498,8 +498,8 @@
   {
     "name": "AUDIT-VC7-ribbon-faces-seed",
     "file": "src/render/windWisps.js",
-    "old": "vec3 toEye = uEye - p;",
-    "new": "vec3 toEye = uEye - aSeed.xyz;",
+    "old": "  vec3 toEye = uEye - p;",
+    "new": "  vec3 toEye = uEye - aSeed.xyz;",
     "tests": [
       "test/render/wispsreturn.test.js"
     ]
@@ -507,8 +507,8 @@
   {
     "name": "AUDIT-VC7-count-max-not-blend",
     "file": "src/render/windWisps.js",
-    "old": "look.floor + (1 - look.floor) * ss",
-    "new": "Math.max(look.floor, ss)",
+    "old": "  return Math.round(look.count * (look.floor + (1 - look.floor) * ss));",
+    "new": "  return Math.round(look.count * Math.max(look.floor, ss));",
     "tests": [
       "test/systems/wind3_windworld.test.js"
     ]
@@ -516,8 +516,8 @@
   {
     "name": "AUDIT-VC7-count-ramp-late",
     "file": "src/render/windWisps.js",
-    "old": "(s - 0.05) / 0.85",
-    "new": "(s - 0.05) / 0.95",
+    "old": "  const u = Math.max(0, Math.min(1, (s - 0.05) / 0.85));",
+    "new": "  const u = Math.max(0, Math.min(1, (s - 0.05) / 0.95));",
     "tests": [
       "test/systems/wind3_windworld.test.js"
     ]
@@ -525,8 +525,8 @@
   {
     "name": "AUDIT-VC7-wind-components-swapped",
     "file": "src/render/windWisps.js",
-    "old": "gl.uniform2f(U.uWindV, wd.windV[0], wd.windV[1]);",
-    "new": "gl.uniform2f(U.uWindV, wd.windV[1], wd.windV[0]);",
+    "old": "    gl.uniform2f(U.uWindV, wd.windV[0], wd.windV[1]);",
+    "new": "    gl.uniform2f(U.uWindV, wd.windV[1], wd.windV[0]);",
     "tests": [
       "test/systems/wind3_windworld.test.js",
       "test/render/wispsreturn.test.js"

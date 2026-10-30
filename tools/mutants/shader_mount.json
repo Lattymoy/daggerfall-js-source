@@ -173,8 +173,8 @@
   {
     "name": "SM-wisps-pair-drifts",
     "file": "src/render/windWisps.js",
-    "old": "([WISP_VS, WISP_FS])",
-    "new": "([WISP_VS, `${WISP_FS}\\n`])",
+    "old": "export const WISP_PROGRAMS = Object.freeze([Object.freeze(/** @type {const} */ ([WISP_VS, WISP_FS]))]);",
+    "new": "export const WISP_PROGRAMS = Object.freeze([Object.freeze(/** @type {const} */ ([WISP_VS, `${WISP_FS}\\n`]))]);",
     "tests": [
       "test/render/shadermount.test.js"
     ],

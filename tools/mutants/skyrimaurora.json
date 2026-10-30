@@ -704,8 +704,8 @@
   {
     "name": "SKYRIM-AURORA-the-map-unforwarded",
     "file": "src/render/waterSurface.js",
-    "old": "    aurora: sky?.aurora?.tex ?? null,",
-    "new": "    aurora: null,",
+    "old": "    aurora: sky?.aurora?.tex ?? null, // SKYRIM-AURORA: the dome map's texture, or null",
+    "new": "    aurora: null, // SKYRIM-AURORA: the dome map's texture, or null",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -713,8 +713,8 @@
   {
     "name": "SKYRIM-AURORA-the-bare-fresnel",
     "file": "src/render/waterSurface.js",
-    "old": "* max(F, ${AURORA_MIRROR.toFixed(2)});",
-    "new": "* F;",
+    "old": "  if (uAuroraSkyOn == 1) auroraRefl = textureLod(uAuroraSky, auroraDomeUv(R), 0.0).rgb * step(0.0, R.y) * max(F, ${AURORA_MIRROR.toFixed(2)});",
+    "new": "  if (uAuroraSkyOn == 1) auroraRefl = textureLod(uAuroraSky, auroraDomeUv(R), 0.0).rgb * step(0.0, R.y) * F;",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -731,8 +731,8 @@
   {
     "name": "SKYRIM-AURORA-the-mirror-unadded",
     "file": "src/render/waterSurface.js",
-    "old": "  own += auroraRefl * (1.0 - foam);   // SKYRIM-AURORA: the curtains in the water, under no foam\n",
-    "new": "",
+    "old": "  own += auroraRefl * (1.0 - foam);   // SKYRIM-AURORA: the curtains in the water, under no foam\n  // the fogs over the water's own light at its share - the air's, then DW-C's sea fog - as a premultiplied colour takes",
+    "new": "  // the fogs over the water's own light at its share - the air's, then DW-C's sea fog - as a premultiplied colour takes",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]
@@ -902,8 +902,8 @@
   {
     "name": "SKYRIM-AURORA-the-zenith-unguarded",
     "file": "src/render/waterSurface.js",
-    "old": "(length(R.xz) > 1e-6 ? atan(R.x, R.z) : 0.0)",
-    "new": "atan(R.x, R.z)",
+    "old": "export const AURORA_DOME_UV_GLSL = `vec2 auroraDomeUv(vec3 R) { return vec2((length(R.xz) > 1e-6 ? atan(R.x, R.z) : 0.0) * 0.15915494 + 0.5, R.y); }`; // atan(0, 0) is undefined: straight up, any azimuth",
+    "new": "export const AURORA_DOME_UV_GLSL = `vec2 auroraDomeUv(vec3 R) { return vec2(atan(R.x, R.z) * 0.15915494 + 0.5, R.y); }`; // atan(0, 0) is undefined: straight up, any azimuth",
     "tests": [
       "test/world/skyrimaurora.test.js"
     ]

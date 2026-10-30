@@ -290,8 +290,8 @@
   {
     "name": "COAST-LOOK-sheet-wander-ungated",
     "file": "src/render/waterSurface.js",
-    "old": "(geEntry(data) != 0u ? geWander(unwrapped) : 0.0)",
-    "new": "geWander(unwrapped)",
+    "old": "    edge = smoothstep(0.5 - uShoreSoft, 0.5 + uShoreSoft, coverage(corners, f) - (geEntry(data) != 0u ? geWander(unwrapped) : 0.0));   // COAST-LOOK: a shore the ground blends on the ground's own line (the water the land's complement)",
+    "new": "    edge = smoothstep(0.5 - uShoreSoft, 0.5 + uShoreSoft, coverage(corners, f) - geWander(unwrapped));   // COAST-LOOK: a shore the ground blends on the ground's own line (the water the land's complement)",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "COAST-LOOK-sheet-wander-sign",
     "file": "src/render/waterSurface.js",
-    "old": "coverage(corners, f) - (geEntry(data)",
-    "new": "coverage(corners, f) + (geEntry(data)",
+    "old": "    edge = smoothstep(0.5 - uShoreSoft, 0.5 + uShoreSoft, coverage(corners, f) - (geEntry(data) != 0u ? geWander(unwrapped) : 0.0));   // COAST-LOOK: a shore the ground blends on the ground's own line (the water the land's complement)",
+    "new": "    edge = smoothstep(0.5 - uShoreSoft, 0.5 + uShoreSoft, coverage(corners, f) + (geEntry(data) != 0u ? geWander(unwrapped) : 0.0));   // COAST-LOOK: a shore the ground blends on the ground's own line (the water the land's complement)",
     "tests": [
       "test/render/coastlook.test.js"
     ]

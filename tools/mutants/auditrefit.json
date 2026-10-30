@@ -59,7 +59,7 @@
   {
     "name": "AR-flag-failure-forgotten",
     "file": "src/render/shipFlagPass.js",
-    "old": "    if (!canvas) { this.textures.set(key, { tex: null, seen: seconds, failed: seconds }); return null; }",
+    "old": "    if (!canvas) {\n      this.textures.set(key, { tex: null, seen: seconds, failed: seconds });\n      return null;\n    }",
     "new": "    if (!canvas) return null;",
     "tests": [
       "test/systems/naval/auditrefit.test.js"
@@ -68,8 +68,8 @@
   {
     "name": "AR-flag-never-repainted",
     "file": "src/render/shipFlagPass.js",
-    "old": "if (had.tex || seconds - had.failed < FLAG_REPAINT_S) return had.tex;",
-    "new": "return had.tex;",
+    "old": "      if (had.tex || seconds - had.failed < FLAG_REPAINT_S) return had.tex;",
+    "new": "      return had.tex;",
     "tests": [
       "test/systems/naval/auditrefit.test.js"
     ]
@@ -77,8 +77,8 @@
   {
     "name": "AR-flag-prune-a-failure",
     "file": "src/render/shipFlagPass.js",
-    "old": "{ if (t.tex) this.gl.deleteTexture(t.tex); this.textures.delete(key); }",
-    "new": "{ this.gl.deleteTexture(t.tex); this.textures.delete(key); }",
+    "old": "        if (t.tex) this.gl.deleteTexture(t.tex);",
+    "new": "        this.gl.deleteTexture(t.tex);",
     "tests": [
       "test/systems/naval/auditrefit.test.js"
     ]

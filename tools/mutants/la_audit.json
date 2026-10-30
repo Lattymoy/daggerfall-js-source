@@ -2,8 +2,8 @@
   {
     "name": "LA-AUDIT-A1-1-the-cells-never-built",
     "file": "src/render/staticBatch.js",
-    "old": "    if (this.shadowCell > 0) {   // LA-AUDIT A1",
-    "new": "    if (false) {   // LA-AUDIT A1",
+    "old": "    if (this.shadowCell > 0) {",
+    "new": "    if (false) {",
     "tests": [
       "test/render/la_audit.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "LA-AUDIT-A1-2-the-sort-unstable",
     "file": "src/render/staticBatch.js",
-    "old": "  for (let t = 0; t < tris; t++) {\n    const s = /** @type {number} */ (next.get(key[t]));",
-    "new": "  for (let t = tris - 1; t >= 0; t--) {\n    const s = /** @type {number} */ (next.get(key[t]));",
+    "old": "  const out = new Uint32Array(indices.length);\n  for (let t = 0; t < tris; t++) {",
+    "new": "  const out = new Uint32Array(indices.length);\n  for (let t = tris - 1; t >= 0; t--) {",
     "tests": [
       "test/render/la_audit.test.js"
     ]

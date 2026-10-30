@@ -119,8 +119,8 @@
   {
     "name": "AUDIT-WATER-NEXT-H2-swell-on-uncarved-ground",
     "file": "src/render/waterSurface.js",
-    "old": "(aDepth < 0.0 ? 0.0 : smoothstep(${SHELF_SHEET_DEPTH.toFixed(3)}, ${(SHELF_SHEET_DEPTH + SWELL_DEPTH).toFixed(3)}, aDepth));",
-    "new": "smoothstep(${SHELF_SHEET_DEPTH.toFixed(3)}, ${(SHELF_SHEET_DEPTH + SWELL_DEPTH).toFixed(3)}, abs(aDepth)));",
+    "old": "  float grow = uOpen == 1 ? 1.0 : (aDepth < 0.0 ? 0.0 : smoothstep(${SHELF_SHEET_DEPTH.toFixed(3)}, ${(SHELF_SHEET_DEPTH + SWELL_DEPTH).toFixed(3)}, aDepth));",
+    "new": "  float grow = uOpen == 1 ? 1.0 : smoothstep(${SHELF_SHEET_DEPTH.toFixed(3)}, ${(SHELF_SHEET_DEPTH + SWELL_DEPTH).toFixed(3)}, abs(aDepth)));",
     "tests": [
       "test/world/terrain/audit_waternext.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "AUDIT-WATER-NEXT-G1-the-copy-fogged-again",
     "file": "src/render/waterSurface.js",
-    "old": "vec4(under * trans + fogged, edge)",
-    "new": "vec4(mix(uFogColor, under * trans + fogged, fw), edge)",
+    "old": "  outColor = uSceneOn == 1 ? vec4(under * trans + fogged, edge) : vec4(fogged / max(cover, 1e-3), edge * cover);",
+    "new": "  outColor = uSceneOn == 1 ? vec4(mix(uFogColor, under * trans + fogged, fw), edge) : vec4(fogged / max(cover, 1e-3), edge * cover);",
     "tests": [
       "test/world/terrain/audit_waternext.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "AUDIT-WATER-NEXT-G3-the-blend-arm-not-divided",
     "file": "src/render/waterSurface.js",
-    "old": "vec4(fogged / max(cover, 1e-3), edge * cover)",
-    "new": "vec4(fogged, edge * cover)",
+    "old": "  outColor = uSceneOn == 1 ? vec4(under * trans + fogged, edge) : vec4(fogged / max(cover, 1e-3), edge * cover);",
+    "new": "  outColor = uSceneOn == 1 ? vec4(under * trans + fogged, edge) : vec4(fogged, edge * cover);",
     "tests": [
       "test/world/terrain/audit_waternext.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "AUDIT-WATER-NEXT-m6-a-dead-opacity-back",
     "file": "src/render/waterSurface.js",
-    "old": "    lift: WATER_LIFT,\n    tint: WATER_TINT,",
-    "new": "    lift: WATER_LIFT,\n    opacity: 0.94,\n    tint: WATER_TINT,",
+    "old": "    tint: WATER_TINT,",
+    "new": "    opacity: 0.94,\n    tint: WATER_TINT,",
     "tests": [
       "test/world/terrain/audit_waternext.test.js"
     ]

@@ -313,8 +313,8 @@
   {
     "name": "PERF-EXT23-the-merge-never-breathes-between-model-copies",
     "file": "src/render/staticBatch.js",
-    "old": "      v += c.positions.length / 3;\n      yield;",
-    "new": "      v += c.positions.length / 3;",
+    "old": "      yield;\n    }",
+    "new": "    }",
     "tests": [
       "test/render/publishtail.test.js"
     ]
@@ -322,8 +322,8 @@
   {
     "name": "PERF-EXT23-the-merge-never-breathes-between-groups",
     "file": "src/render/staticBatch.js",
-    "old": "      if (withBounds) { subs.push(boundsOf(positions, indices, start, at - start)); yield; }",
-    "new": "      if (withBounds) { subs.push(boundsOf(positions, indices, start, at - start)); }",
+    "old": "        yield;\n      }",
+    "new": "      }",
     "tests": [
       "test/render/publishtail.test.js"
     ]
@@ -331,8 +331,8 @@
   {
     "name": "PERF-EXT23-a-group-sphere-is-the-whole-meshs",
     "file": "src/render/staticBatch.js",
-    "old": "      if (withBounds) { subs.push(boundsOf(positions, indices, start, at - start)); yield; }",
-    "new": "      if (withBounds) { subs.push(boundsOf(positions)); yield; }",
+    "old": "        subs.push(boundsOf(positions, indices, start, at - start));",
+    "new": "        subs.push(boundsOf(positions));",
     "tests": [
       "test/render/publishtail.test.js"
     ]
@@ -349,8 +349,8 @@
   {
     "name": "PERF-EXT23-finishSliced-drains-without-a-breath",
     "file": "src/render/staticBatch.js",
-    "old": "      if (r.done) return r.value;\n      await breathe();",
-    "new": "      if (r.done) return r.value;",
+    "old": "      await breathe();\n    }",
+    "new": "    }",
     "tests": [
       "test/render/publishtail.test.js"
     ]

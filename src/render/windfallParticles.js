@@ -62,23 +62,35 @@ export const WINDFALL_PARTICLE_PROGRAMS = Object.freeze([Object.freeze(/** @type
 /** Floats an instance carries: x, y, z, size, rotation, tile. */
 const INSTANCE_FLOATS = 6;
 const TAU = Math.PI * 2;
-const [BOX_X, BOX_Y, BOX_Z] = WINDFALL_EMITTER.box;   // AUDIT ENVIRONS W7: the emitter's box, read once (not a destructure a particle)
+const [BOX_X, BOX_Y, BOX_Z] = WINDFALL_EMITTER.box; // AUDIT ENVIRONS W7: the emitter's box, read once (not a destructure a particle)
 
 /** One system's live particles, in flat arrays (EVERY ALLOCATION HAS AN OWNER: made once at its cap). */
 class ParticleSystemSim {
   /** @param {{ maxParticles: number, lifetime: number[], size: number[], spin: number[], sheet: number[]|null }} shape @param {() => number} random */
   constructor(shape, random) {
-    this.shape = shape; this.random = random;
+    this.shape = shape;
+    this.random = random;
     const n = shape.maxParticles;
-    this.pos = new Float32Array(n * 3); this.age = new Float32Array(n); this.life = new Float32Array(n);
-    this.size = new Float32Array(n); this.rot = new Float32Array(n); this.spin = new Float32Array(n); this.tile = new Float32Array(n);
-    this.count = 0; this.owed = 0;
+    this.pos = new Float32Array(n * 3);
+    this.age = new Float32Array(n);
+    this.life = new Float32Array(n);
+    this.size = new Float32Array(n);
+    this.rot = new Float32Array(n);
+    this.spin = new Float32Array(n);
+    this.tile = new Float32Array(n);
+    this.count = 0;
+    this.owed = 0;
   }
-  clear() { this.count = 0; this.owed = 0; }
+  clear() {
+    this.count = 0;
+    this.owed = 0;
+  }
   /** Emit one at an emitter (a box about `at`, the flow's place). */
   emitOne(at) {
     if (this.count >= this.shape.maxParticles) return;
-    const i = this.count++, R = this.random, s = this.shape;
+    const i = this.count++,
+      R = this.random,
+      s = this.shape;
     this.pos[i * 3] = at[0] + (R() - 0.5) * BOX_X;
     this.pos[i * 3 + 1] = at[1] + (R() - 0.5) * BOX_Y;
     this.pos[i * 3 + 2] = at[2] + (R() - 0.5) * BOX_Z;
@@ -92,42 +104,70 @@ class ParticleSystemSim {
   /** A frame: the clear or the burst owed, the rate's emission, every particle aged and moved by the flow's velocity
    *  and the noise. `t` the systems' clock (the noise's scroll). */
   step(flow, dt, t) {
-    if (flow.clear) { this.clear(); flow.clear = false; }
-    if (flow.emit > 0) {   // AUDIT ENVIRONS W5: a burst (Emit), where it was asked for
+    if (flow.clear) {
+      this.clear();
+      flow.clear = false;
+    }
+    if (flow.emit > 0) {
+      // AUDIT ENVIRONS W5: a burst (Emit), where it was asked for
       const at = flow.emitAt ?? flow.position;
       for (; flow.emit > 0; flow.emit--) this.emitOne(at);
       flow.emitAt = null;
     }
     this.owed += flow.rate * dt;
-    while (this.owed >= 1) { this.emitOne(flow.position); this.owed -= 1; }
+    while (this.owed >= 1) {
+      this.emitOne(flow.position);
+      this.owed -= 1;
+    }
     if (flow.rate <= 0) this.owed = 0;
-    const [vx, vy, vz] = flow.velocity, ns = flow.noiseStrength, f = WINDFALL_EMITTER.noiseFrequency, sc = t * WINDFALL_EMITTER.noiseScroll;
+    const [vx, vy, vz] = flow.velocity,
+      ns = flow.noiseStrength,
+      f = WINDFALL_EMITTER.noiseFrequency,
+      sc = t * WINDFALL_EMITTER.noiseScroll;
     let w = 0;
     for (let i = 0; i < this.count; i++) {
       const age = this.age[i] + dt;
-      if (age >= this.life[i]) continue;   // gone: the survivors close up behind it
-      const x = this.pos[i * 3], y = this.pos[i * 3 + 1], z = this.pos[i * 3 + 2];
-      const px = x * f, py = y * f, pz = z * f;
+      if (age >= this.life[i]) continue; // gone: the survivors close up behind it
+      const x = this.pos[i * 3],
+        y = this.pos[i * 3 + 1],
+        z = this.pos[i * 3 + 2];
+      const px = x * f,
+        py = y * f,
+        pz = z * f;
       const nx = Math.sin(py * 1.7 + pz * 2.3 + sc * TAU) * 0.6 + Math.sin(px * 0.9 - pz * 1.3 + sc * 3.1) * 0.4;
       const ny = Math.sin(pz * 1.9 + px * 1.1 + sc * 4.3) * 0.6 + Math.sin(py * 1.4 - px * 0.7 + sc * 2.2) * 0.4;
       const nz = Math.sin(px * 2.1 + py * 1.5 + sc * 3.7) * 0.6 + Math.sin(pz * 0.8 - py * 1.6 + sc * 2.9) * 0.4;
       this.pos[w * 3] = x + (vx + nx * ns) * dt;
       this.pos[w * 3 + 1] = y + (vy + ny * ns) * dt;
       this.pos[w * 3 + 2] = z + (vz + nz * ns) * dt;
-      this.age[w] = age; this.life[w] = this.life[i]; this.size[w] = this.size[i];
-      this.rot[w] = this.rot[i] + this.spin[i] * dt; this.spin[w] = this.spin[i]; this.tile[w] = this.tile[i];
+      this.age[w] = age;
+      this.life[w] = this.life[i];
+      this.size[w] = this.size[i];
+      this.rot[w] = this.rot[i] + this.spin[i] * dt;
+      this.spin[w] = this.spin[i];
+      this.tile[w] = this.tile[i];
       w++;
     }
     this.count = w;
   }
   /** Shift every particle with the floating origin. */
-  offset(o) { for (let i = 0; i < this.count; i++) { this.pos[i * 3] += o[0]; this.pos[i * 3 + 1] += o[1]; this.pos[i * 3 + 2] += o[2]; } }
+  offset(o) {
+    for (let i = 0; i < this.count; i++) {
+      this.pos[i * 3] += o[0];
+      this.pos[i * 3 + 1] += o[1];
+      this.pos[i * 3 + 2] += o[2];
+    }
+  }
   /** Write the live particles as instances at `at` in `out`; answers how many. */
   write(out, at) {
     for (let i = 0; i < this.count; i++) {
       const o = (at + i) * INSTANCE_FLOATS;
-      out[o] = this.pos[i * 3]; out[o + 1] = this.pos[i * 3 + 1]; out[o + 2] = this.pos[i * 3 + 2];
-      out[o + 3] = this.size[i]; out[o + 4] = this.rot[i]; out[o + 5] = this.tile[i];
+      out[o] = this.pos[i * 3];
+      out[o + 1] = this.pos[i * 3 + 1];
+      out[o + 2] = this.pos[i * 3 + 2];
+      out[o + 3] = this.size[i];
+      out[o + 4] = this.rot[i];
+      out[o + 5] = this.tile[i];
     }
     return this.count;
   }
@@ -147,14 +187,24 @@ export class WindfallParticles {
       snow: new ParticleSystemSim(WINDFALL_PARTICLE_SYSTEMS.snow, random),
     };
     this.clock = 0;
-    const cap = WINDFALL_PARTICLE_SYSTEMS.leaves.maxParticles + WINDFALL_PARTICLE_SYSTEMS.ambientLeaves.maxParticles + WINDFALL_PARTICLE_SYSTEMS.snow.maxParticles;
+    const cap =
+      WINDFALL_PARTICLE_SYSTEMS.leaves.maxParticles +
+      WINDFALL_PARTICLE_SYSTEMS.ambientLeaves.maxParticles +
+      WINDFALL_PARTICLE_SYSTEMS.snow.maxParticles;
     this.instances = new Float32Array(cap * INSTANCE_FLOATS);
     /** @type {Record<string, WebGLTexture|null>} */
     this.tex = { springSummer: null, fall: null, snow: null };
     if (!gl) return;
     this.prog = buildProgram(gl, VS, FS, 'windfall particles');
     const u = (n) => gl.getUniformLocation(this.prog, n);
-    this.loc = { proj: u('uProj'), view: u('uView'), right: u('uRight'), up: u('uUp'), tex: u('uTex'), light: u('uLight') };
+    this.loc = {
+      proj: u('uProj'),
+      view: u('uView'),
+      right: u('uRight'),
+      up: u('uUp'),
+      tex: u('uTex'),
+      light: u('uLight'),
+    };
     this.vao = gl.createVertexArray();
     gl.bindVertexArray(this.vao);
     this.quad = gl.createBuffer();
@@ -194,7 +244,7 @@ export class WindfallParticles {
 
   /** The frame's simulation, off the effects' flows (windfallEffects.js `flows`). */
   step(flows, dt) {
-    const d = Math.min(0.1, Math.max(0, dt));   // a hitch is not a tenth of a second of leaves at once
+    const d = Math.min(0.1, Math.max(0, dt)); // a hitch is not a tenth of a second of leaves at once
     this.clock += d;
     this.systems.leaves.step(flows.leaves, d, this.clock);
     this.systems.ambientLeaves.step(flows.ambientLeaves, d, this.clock);
@@ -202,13 +252,19 @@ export class WindfallParticles {
   }
 
   /** Every system, cleared (a new world, the mod switched off). */
-  clear() { for (const s of Object.values(this.systems)) s.clear(); }
+  clear() {
+    for (const s of Object.values(this.systems)) s.clear();
+  }
 
   /** The floating origin moved the scene by `offset`: the particles stand where they were on the land. */
-  offsetOrigin(offset) { for (const s of Object.values(this.systems)) s.offset(offset); }
+  offsetOrigin(offset) {
+    for (const s of Object.values(this.systems)) s.offset(offset);
+  }
 
   /** How many stand now. */
-  get live() { return this.systems.leaves.count + this.systems.ambientLeaves.count + this.systems.snow.count; }
+  get live() {
+    return this.systems.leaves.count + this.systems.ambientLeaves.count + this.systems.snow.count;
+  }
 
   /**
    * Draw: the two leaf systems in `sheet`'s picture ('springSummer' | 'fall'), then the snow. Depth-tested and written
@@ -218,7 +274,8 @@ export class WindfallParticles {
    */
   draw(sheet, proj, view, right, up, light) {
     const gl = this.gl;
-    const leafTex = this.tex[sheet], snowTex = this.tex.snow;
+    const leafTex = this.tex[sheet],
+      snowTex = this.tex.snow;
     const nLeaves = leafTex ? this.systems.leaves.write(this.instances, 0) : 0;
     const nAmbient = leafTex ? this.systems.ambientLeaves.write(this.instances, nLeaves) : 0;
     const leafCount = nLeaves + nAmbient;
@@ -264,7 +321,8 @@ export class WindfallParticles {
     const gl = this.gl;
     if (!gl) return;
     for (const t of Object.values(this.tex)) if (t) gl.deleteTexture(t);
-    gl.deleteBuffer(this.quad); gl.deleteBuffer(this.buf);
+    gl.deleteBuffer(this.quad);
+    gl.deleteBuffer(this.buf);
     gl.deleteVertexArray(this.vao);
     gl.deleteProgram(this.prog);
     this.tex = { springSummer: null, fall: null, snow: null };
@@ -274,4 +332,8 @@ export class WindfallParticles {
 // ---- the pictures ----------------------------------------------------------------------------------------------------
 /** The mod's three pictures by key, as their files are named (WindMod's asset names; vendor/windfall/Textures/ - served
  *  by scenes/windfallHost.js, which carries the bundler's glob this checked module cannot). */
-export const WINDFALL_PICTURES = Object.freeze({ springSummer: 'spring_summer_leaves', fall: 'fall_leaves', snow: 'snowflake' });
+export const WINDFALL_PICTURES = Object.freeze({
+  springSummer: 'spring_summer_leaves',
+  fall: 'fall_leaves',
+  snow: 'snowflake',
+});

@@ -47,8 +47,8 @@
   {
     "name": "BANKFLUSH-swell-on-the-shelf",
     "file": "src/render/waterSurface.js",
-    "old": "smoothstep(${SHELF_SHEET_DEPTH.toFixed(3)}, ${(SHELF_SHEET_DEPTH + SWELL_DEPTH).toFixed(3)}, aDepth));",
-    "new": "smoothstep(0.0, ${SWELL_DEPTH.toFixed(2)}, aDepth));",
+    "old": "  float grow = uOpen == 1 ? 1.0 : (aDepth < 0.0 ? 0.0 : smoothstep(${SHELF_SHEET_DEPTH.toFixed(3)}, ${(SHELF_SHEET_DEPTH + SWELL_DEPTH).toFixed(3)}, aDepth));",
+    "new": "  float grow = uOpen == 1 ? 1.0 : (aDepth < 0.0 ? 0.0 : smoothstep(0.0, ${SWELL_DEPTH.toFixed(2)}, aDepth));",
     "tests": [
       "test/world/water/bankflush.test.js"
     ]

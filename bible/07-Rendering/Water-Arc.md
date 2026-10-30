@@ -1359,7 +1359,7 @@ cell puts the sea against grass or stone. The hard edges are the drawing's:
   as its own), each kind takes ECOTONE1's neighbours by its own record and PRECIP4's winter twin by the same. Every
   other tile is drawn as before.
 - **The water's edge is the same line.** The sheet's shore is the coverage less the same wander where the ground blends
-  (`waterSurface.js:"coverage(corners, f) - (geEntry(data) != 0u ? geWander(unwrapped) : 0.0)"`); the sheet's water is
+  (`waterSurface.js:"edge = smoothstep"`); the sheet's water is
   the land's share's complement. The silt takes it too, and a blended tile's painted water is no fringe (SHORE-SILT): its
   art is not drawn. A record whose art reads as water (WATER-DRAW2's corners, the docks) keeps the art's line.
 - **Deep Waters' cut is a field** (`groundEdge.js:"export function coastCutAt(cutAt, x, y) {"`). A clipped tile's point

@@ -191,8 +191,8 @@
   {
     "name": "water-fs-no-shadow",
     "file": "src/render/waterSurface.js",
-    "old": "  float shadow = uSunScale > 0.0 ? cloudShadowAt(vWorldPos)${shadowGlsl ? ' * sunShadowAt(vWorldPos, n)' : ''} : 0.0;",
-    "new": "  float shadow = uSunScale > 0.0 ? cloudShadowAt(vWorldPos) : 0.0;",
+    "old": "  float shadow = uSunScale > 0.0 ? cloudShadowAt(vWorldPos)${shadowGlsl ? ' * sunShadowAt(vWorldPos, n)' : ''} : 0.0;   // EL7: a quay's shadow lies on the water under the lane",
+    "new": "  float shadow = uSunScale > 0.0 ? cloudShadowAt(vWorldPos) : 0.0;   // EL7: a quay's shadow lies on the water under the lane",
     "tests": [
       "test/render/el7_polish.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "water-block-before-campos",
     "file": "src/render/waterSurface.js",
-    "old": "uniform vec3 uCamPos;\n${shadowGlsl}\n",
-    "new": "${shadowGlsl}\nuniform vec3 uCamPos;\n",
+    "old": "uniform vec3 uCamPos;\n${shadowGlsl}",
+    "new": "${shadowGlsl}\nuniform vec3 uCamPos;",
     "tests": [
       "test/render/el7_polish.test.js"
     ]

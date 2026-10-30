@@ -56,7 +56,7 @@
   {
     "name": "WB5-the-pulse-on-every-tier",
     "file": "src/render/spoilsGlow.js",
-    "old": "      gl.uniform1f(U.uPulse, g.pulse != null ? (g.pulse ? 1 : 0) : RARITIES[tier].rank >= RARITIES.legendary.rank ? 1 : 0);",
+    "old": "      gl.uniform1f(\n        U.uPulse,\n        g.pulse != null ? (g.pulse ? 1 : 0) : RARITIES[tier].rank >= RARITIES.legendary.rank ? 1 : 0,\n      );",
     "new": "      gl.uniform1f(U.uPulse, g.pulse != null ? (g.pulse ? 1 : 0) : 1);",
     "tests": [
       "test/systems/item/wb5_gate_spoils.test.js"

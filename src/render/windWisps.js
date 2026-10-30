@@ -39,8 +39,8 @@
 
 import { isEnhanced } from '../systems/uiSkin.js';
 import { getPref } from '../systems/uiPrefs.js';
-import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
-import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
+import { buildProgram } from './glProgram.js'; // AUDIT 68 S17-gl-program-dup: the one compile and link
+import { pageParam } from '../systems/pageQuery.js'; // PERF-URL: the page's query, parsed once a search
 
 /** A JS number as a GLSL float literal (`${1}` is an int to the compiler): the clock's and the gust's derived
  *  literals below. */
@@ -65,7 +65,9 @@ const HEAD = `#version 300 es
 precision highp float;
 `;
 
-export const WISP_VS = HEAD + `layout(location=0) in vec2 aCorner;
+export const WISP_VS =
+  HEAD +
+  `layout(location=0) in vec2 aCorner;
 layout(location=1) in vec4 aSeed;      // x,y,z in the box + phase
 uniform mat4 uVP; uniform vec3 uEye;
 uniform float uTime, uBox, uStrength;
@@ -76,11 +78,11 @@ void main(){
   vec3 p = aSeed.xyz;
   // every wisp takes its own share of the wind, so the field is not one
   // rigid direction (the rain's per-drop gust, PROTO-9)
-  float gust = (${glslF(WISP_GUST_DIV * 4 / 5)} + floor(fract(seed*3.7) * ${glslF(WISP_GUST_DIV * 2 / 5 + 1)})) / ${glslF(WISP_GUST_DIV)};   // AUDIT 68 S17-wisp-wrap-gust: 0.8..1.2 in whole 1/WISP_GUST_DIV steps
+  float gust = (${glslF((WISP_GUST_DIV * 4) / 5)} + floor(fract(seed*3.7) * ${glslF((WISP_GUST_DIV * 2) / 5 + 1)})) / ${glslF(WISP_GUST_DIV)};   // AUDIT 68 S17-wisp-wrap-gust: 0.8..1.2 in whole 1/WISP_GUST_DIV steps
   p += vec3(uWindOff.x, 0.0, uWindOff.y) * gust;
   // a slow wobble across and along, phased per wisp
-  p.y += sin(uTime*${glslF(2 * Math.PI * WISP_WOBBLE_CYCLES[0] / WISP_CLOCK_PERIOD)} + seed*31.0) * 0.35;   // AUDIT-VC7 (G6): whole cycles over the clock's period
-  p.xz += vec2(cos(uTime*${glslF(2 * Math.PI * WISP_WOBBLE_CYCLES[1] / WISP_CLOCK_PERIOD)} + seed*17.0), sin(uTime*${glslF(2 * Math.PI * WISP_WOBBLE_CYCLES[2] / WISP_CLOCK_PERIOD)} + seed*23.0)) * 0.25;
+  p.y += sin(uTime*${glslF((2 * Math.PI * WISP_WOBBLE_CYCLES[0]) / WISP_CLOCK_PERIOD)} + seed*31.0) * 0.35;   // AUDIT-VC7 (G6): whole cycles over the clock's period
+  p.xz += vec2(cos(uTime*${glslF((2 * Math.PI * WISP_WOBBLE_CYCLES[1]) / WISP_CLOCK_PERIOD)} + seed*17.0), sin(uTime*${glslF((2 * Math.PI * WISP_WOBBLE_CYCLES[2]) / WISP_CLOCK_PERIOD)} + seed*23.0)) * 0.25;
   p = mod(p - uEye + uBox*0.5, uBox) + uEye - uBox*0.5;
   // born, brightest at half life, gone: a fade on the wisp's own clock
   float rate = 0.35 + floor(fract(seed*5.3) * ${glslF(WISP_RATE_STEPS)}) * ${glslF(0.25 / WISP_RATE_STEPS)};   // AUDIT-VC7 (G6): in steps, each a whole number of lives over the clock's period
@@ -99,7 +101,9 @@ void main(){
   vT = aCorner.y;
   gl_Position = uVP * vec4(p, 1.0);
 }`;
-export const WISP_FS = HEAD + `in float vT; in float vLife;
+export const WISP_FS =
+  HEAD +
+  `in float vT; in float vLife;
 uniform float uStrength;
 uniform vec3 uColor;   // WEATHER2d: the look's colour
 uniform vec2 uAlpha;   // WEATHER2d: the look's alpha (base, per strength)
@@ -142,8 +146,22 @@ export const WISP_FLOOR = 0.08;
 /** WEATHER2d: A LOOK - the program in a dress. The wisps' own, and the
  *  sandstorm's: tan, dense, short streaks in a lower box, no floor (no
  *  sand without a storm), the front's intensity its strength. */
-export const WISP_LOOK = Object.freeze({ color: Object.freeze([0.86, 0.89, 0.94]), alpha: Object.freeze([0.09, 0.11]), len: Object.freeze([1.2, 1.8]), count: WISP_MAX, floor: WISP_FLOOR, box: WISP_BOX });   // SWAY-SOFT (2026-10-21, Mac: "the wind effect more subtle and transparent"): the alpha under half DISC17-A's 0.20, 0.24 (a gale's streak peaks at 0.20 where it was 0.44, a calm's at 0.09 where it was 0.20) and the streak three quarters of WIND3's 1.6, 2.4
-export const SAND_LOOK = Object.freeze({ color: Object.freeze([0.80, 0.64, 0.40]), alpha: Object.freeze([0.28, 0.30]), len: Object.freeze([0.8, 1.2]), count: 7000, floor: 0, box: 70 });
+export const WISP_LOOK = Object.freeze({
+  color: Object.freeze([0.86, 0.89, 0.94]),
+  alpha: Object.freeze([0.09, 0.11]),
+  len: Object.freeze([1.2, 1.8]),
+  count: WISP_MAX,
+  floor: WISP_FLOOR,
+  box: WISP_BOX,
+}); // SWAY-SOFT (2026-10-21, Mac: "the wind effect more subtle and transparent"): the alpha under half DISC17-A's 0.20, 0.24 (a gale's streak peaks at 0.20 where it was 0.44, a calm's at 0.09 where it was 0.20) and the streak three quarters of WIND3's 1.6, 2.4
+export const SAND_LOOK = Object.freeze({
+  color: Object.freeze([0.8, 0.64, 0.4]),
+  alpha: Object.freeze([0.28, 0.3]),
+  len: Object.freeze([0.8, 1.2]),
+  count: 7000,
+  floor: 0,
+  box: 70,
+});
 
 /** How many wisps a wind of `strength01` draws: the floor plus the rest
  *  over a smoothstep of the strength. Pure.
@@ -158,7 +176,7 @@ export function wispCount(strength01, look = WISP_LOOK) {
 /** The wisps' switch: the enhanced skin, the `windWisps` pref, and
  *  `?wisps=off` the kill door. Read once a frame by the exterior hosts. */
 export function wispsOn(search = globalThis.location?.search ?? '') {
-  return isEnhanced() && !!getPref('windWisps') && pageParam('wisps', search) !== 'off';   // PERF-URL
+  return isEnhanced() && !!getPref('windWisps') && pageParam('wisps', search) !== 'off'; // PERF-URL
 }
 
 function mat4Multiply(out, a, b) {
@@ -180,25 +198,45 @@ export class WindWispsRenderer {
    *  @param {any} gl @param {WispLook} [look] - the wisps' own, or the sand's (ASHFALL1: render/dryFall.js builds it) */
   constructor(gl, look = WISP_LOOK) {
     this.gl = gl;
-    this.look = look;   // WEATHER2d
+    this.look = look; // WEATHER2d
     const prog = buildProgram(gl, WISP_VS, WISP_FS);
     this.program = prog;
     this.u = {};
-    for (const n of ['uVP', 'uEye', 'uTime', 'uBox', 'uStrength', 'uWindV', 'uWindOff', 'uLen', 'uColor', 'uAlpha']) this.u[n] = gl.getUniformLocation(prog, n);
+    for (const n of ['uVP', 'uEye', 'uTime', 'uBox', 'uStrength', 'uWindV', 'uWindOff', 'uLen', 'uColor', 'uAlpha'])
+      this.u[n] = gl.getUniformLocation(prog, n);
     // the instances: x,y,z in [0, BOX) + a phase, from one seeded
     // xorshift so the field is the same field every load
-    const n = look.count, box = look.box;
+    const n = look.count,
+      box = look.box;
     const inst = new Float32Array(n * 4);
     let s = 0x7a3d9f1b;
-    const rnd = () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; };
-    for (let i = 0; i < n; i++) { inst[i * 4] = rnd() * box; inst[i * 4 + 1] = rnd() * box; inst[i * 4 + 2] = rnd() * box; inst[i * 4 + 3] = rnd(); }
+    const rnd = () => {
+      s ^= s << 13;
+      s ^= s >>> 17;
+      s ^= s << 5;
+      s >>>= 0;
+      return s / 4294967296;
+    };
+    for (let i = 0; i < n; i++) {
+      inst[i * 4] = rnd() * box;
+      inst[i * 4 + 1] = rnd() * box;
+      inst[i * 4 + 2] = rnd() * box;
+      inst[i * 4 + 3] = rnd();
+    }
     const vao = gl.createVertexArray();
     gl.bindVertexArray(vao);
     const q = new Float32Array([0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1]);
-    const qb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, qb); gl.bufferData(gl.ARRAY_BUFFER, q, gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
-    const ib = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, ib); gl.bufferData(gl.ARRAY_BUFFER, inst, gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 16, 0); gl.vertexAttribDivisor(1, 1);
+    const qb = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, qb);
+    gl.bufferData(gl.ARRAY_BUFFER, q, gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    const ib = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, ib);
+    gl.bufferData(gl.ARRAY_BUFFER, inst, gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(1);
+    gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 16, 0);
+    gl.vertexAttribDivisor(1, 1);
     gl.bindVertexArray(null);
     this.vao = vao;
     /** the wind's travel so far, metres, integrated from windDrive's
@@ -215,7 +253,7 @@ export class WindWispsRenderer {
 
   /** Advance the travel by the frame's step and wrap it. */
   advance(step) {
-    const period = this.look.box * WISP_GUST_DIV;   // AUDIT 68 S17-wisp-wrap-gust: a common period of every wisp's travel
+    const period = this.look.box * WISP_GUST_DIV; // AUDIT 68 S17-wisp-wrap-gust: a common period of every wisp's travel
     for (let i = 0; i < 2; i++) {
       let v = this.windOff[i] + (step?.[i] ?? 0);
       v = ((v % period) + period) % period;
@@ -231,18 +269,23 @@ export class WindWispsRenderer {
     this.advance(wd.step);
     const count = wispCount(wd.strength01, this.look);
     if (count <= 0) return;
-    const gl = this.gl, U = this.u, look = this.look;
+    const gl = this.gl,
+      U = this.u,
+      look = this.look;
     mat4Multiply(this._vp, proj, view);
     gl.useProgram(this.program);
     gl.uniformMatrix4fv(U.uVP, false, this._vp);
     gl.uniform3fv(U.uEye, eye);
-    gl.uniform1f(U.uTime, wispClock(timeSeconds));   // AUDIT-VC7 (G6): wrapped here, in double precision
+    gl.uniform1f(U.uTime, wispClock(timeSeconds)); // AUDIT-VC7 (G6): wrapped here, in double precision
     gl.uniform1f(U.uBox, look.box);
     gl.uniform1f(U.uStrength, wd.strength01);
-    gl.uniform2f(U.uLen, look.len[0], look.len[1]); gl.uniform3fv(U.uColor, look.color); gl.uniform2f(U.uAlpha, look.alpha[0], look.alpha[1]);   // WEATHER2d: the look
+    gl.uniform2f(U.uLen, look.len[0], look.len[1]);
+    gl.uniform3fv(U.uColor, look.color);
+    gl.uniform2f(U.uAlpha, look.alpha[0], look.alpha[1]); // WEATHER2d: the look
     gl.uniform2f(U.uWindV, wd.windV[0], wd.windV[1]);
     gl.uniform2fv(U.uWindOff, this.windOff);
-    gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.depthMask(false);
     gl.disable(gl.CULL_FACE);
     gl.bindVertexArray(this.vao);

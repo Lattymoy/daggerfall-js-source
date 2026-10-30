@@ -54,12 +54,14 @@
  *  SHADER-STALL). A bare function runs as it always did.
  *  @param {ReadonlyArray<(() => void) | { start: () => () => boolean, run: () => void, need?: () => boolean }>} steps
  *  @param {{ idle?: (fn: (v?: any) => void) => any, alive?: () => boolean }} [opts] */
-export async function warmPrograms(steps, {
-  idle = (fn) => (globalThis.requestIdleCallback
-    ? globalThis.requestIdleCallback(fn, { timeout: 4000 })
-    : setTimeout(fn, 1500)),
-  alive = () => true,
-} = {}) {
+export async function warmPrograms(
+  steps,
+  {
+    idle = (fn) =>
+      globalThis.requestIdleCallback ? globalThis.requestIdleCallback(fn, { timeout: 4000 }) : setTimeout(fn, 1500),
+    alive = () => true,
+  } = {},
+) {
   let done = 0;
   for (const step of steps) {
     if (!alive()) break;
@@ -83,7 +85,9 @@ export async function warmPrograms(steps, {
       }
       (typeof step === 'function' ? step : step.run)();
       done++;
-    } catch { /* the draw path is still the one that reports */ }
+    } catch {
+      /* the draw path is still the one that reports */
+    }
   }
   return done;
 }

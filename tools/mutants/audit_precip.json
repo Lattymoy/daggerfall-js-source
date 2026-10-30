@@ -443,8 +443,8 @@
   {
     "name": "AUDIT-PRECIP-GROUND-3-a-patch-s-salt",
     "file": "src/render/snowCoverGlsl.js",
-    "old": "snowNoise(ltx, ltz, ox, oz, o.cell, (SNOW_GROUND.salt + k) >>> 0)",
-    "new": "snowNoise(ltx, ltz, ox, oz, o.cell, (SNOW_GROUND.salt + k + 1) >>> 0)",
+    "old": "    p += o.weight * snowNoise(ltx, ltz, ox, oz, o.cell, (SNOW_GROUND.salt + k) >>> 0);",
+    "new": "    p += o.weight * snowNoise(ltx, ltz, ox, oz, o.cell, (SNOW_GROUND.salt + k + 1) >>> 0);",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]
@@ -462,8 +462,8 @@
   {
     "name": "AUDIT-PRECIP-GROUND-5-the-sheet-s-summer-art",
     "file": "src/render/waterSurface.js",
-    "old": "      if (pc > 0.0) pa = mix(pa, textureGrad(uTileArr, vec3(puv, float(rec) + float(uSnowArr.x)), PUDDLE_ROT[turn] * wgx, PUDDLE_ROT[turn] * wgy).a, pc);\n",
-    "new": "",
+    "old": "      if (pc > 0.0) pa = mix(pa, textureGrad(uTileArr, vec3(puv, float(rec) + float(uSnowArr.x)), PUDDLE_ROT[turn] * wgx, PUDDLE_ROT[turn] * wgy).a, pc);\n      edge *= smoothstep(0.3, 0.7, pa);",
+    "new": "      edge *= smoothstep(0.3, 0.7, pa);",
     "tests": [
       "test/world/waterpuddle.test.js"
     ]
@@ -480,8 +480,8 @@
   {
     "name": "AUDIT-PRECIP-GROUND-8-the-footprint-unread",
     "file": "src/render/snowCoverGlsl.js",
-    "old": "float fw = max(length(gx), length(gy)), p = 0.0, keep = 0.0;",
-    "new": "float fw = 0.0, p = 0.0, keep = 0.0;",
+    "old": "  float fw = max(length(gx), length(gy)), p = 0.0, keep = 0.0;",
+    "new": "  float fw = 0.0, p = 0.0, keep = 0.0;",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]
@@ -489,8 +489,8 @@
   {
     "name": "AUDIT-PRECIP-GROUND-9-the-mod-s-snow-on-green",
     "file": "src/render/snowCoverGlsl.js",
-    "old": "return uSnowSet.y < 0.5 ? 1.0 : snowCover(local, y, gx, gy);",
-    "new": "return 1.0;",
+    "old": "  return uSnowSet.y < 0.5 ? 1.0 : snowCover(local, y, gx, gy);",
+    "new": "  return 1.0;",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]
@@ -498,8 +498,8 @@
   {
     "name": "AUDIT-PRECIP-GROUND-9-the-mod-off-the-lane-unlaid",
     "file": "src/render/snowCoverGlsl.js",
-    "old": "return uSnowSet.y < 0.5 ? 1.0 : snowCover(local, y, gx, gy);",
-    "new": "return snowCover(local, y, gx, gy);",
+    "old": "  return uSnowSet.y < 0.5 ? 1.0 : snowCover(local, y, gx, gy);",
+    "new": "  return snowCover(local, y, gx, gy);",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]
@@ -507,8 +507,8 @@
   {
     "name": "AUDIT-PRECIP-GROUND-9-the-depth-unlaid",
     "file": "src/render/snowfallGlsl.js",
-    "old": "  vDepth *= laid * laid;\n",
-    "new": "",
+    "old": "  vDepth *= laid * laid;\n  vec2 dynUV = (xz - uSnowDynMap.xy) * uSnowDynMap.z;",
+    "new": "  vec2 dynUV = (xz - uSnowDynMap.xy) * uSnowDynMap.z;",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]
@@ -516,8 +516,8 @@
   {
     "name": "AUDIT-PRECIP-GROUND-9-the-coverage-unlaid",
     "file": "src/render/snowfallGlsl.js",
-    "old": "  coverage *= snowLaid(snowAt, vWorldPos.y, snowGx, snowGy);   // AUDIT PRECIP GROUND-9: where the ground wears it\n",
-    "new": "",
+    "old": "  coverage *= snowLaid(snowAt, vWorldPos.y, snowGx, snowGy);   // AUDIT PRECIP GROUND-9: where the ground wears it\n  if (coverage - 0.005 < 0.0) discard;",
+    "new": "  if (coverage - 0.005 < 0.0) discard;",
     "tests": [
       "test/render/precip4_snowground.test.js"
     ]

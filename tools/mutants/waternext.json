@@ -173,8 +173,8 @@
   {
     "name": "LOOK-occluder-taken",
     "file": "src/render/waterSurface.js",
-    "old": "    if (pushedD < here) uv = uv0; else path = max(pushedD - here, bedPath);",
-    "new": "    path = max(pushedD - here, bedPath);",
+    "old": "    if (pushedD < here) uv = uv0; else path = max(pushedD - here, bedPath);   // never what stands in front of the water",
+    "new": "    path = max(pushedD - here, bedPath);   // never what stands in front of the water",
     "tests": [
       "test/render/waternext.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "LOOK-bed-floor-dropped",
     "file": "src/render/waterSurface.js",
-    "old": "    path = max(bedD - here, bedPath);   // the scene's measure",
-    "new": "    path = max(bedD - here, 0.0);   // the scene's measure",
+    "old": "    path = max(bedD - here, bedPath);   // the scene's measure, never less than the bed's (a sheet with no bed stands for one)",
+    "new": "    path = max(bedD - here, 0.0);   // the scene's measure, never less than the bed's (a sheet with no bed stands for one)",
     "tests": [
       "test/render/waternext.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "LOOK-int-precision",
     "file": "src/render/waterSurface.js",
-    "old": "precision highp int;   // WATER-NEXT 2",
-    "new": "// WATER-NEXT 2",
+    "old": "precision highp int;   // WATER-NEXT 2: uOpen is the vertex stage's too - an int's precision must agree across the two",
+    "new": "// WATER-NEXT 2: uOpen is the vertex stage's too - an int's precision must agree across the two",
     "tests": [
       "test/render/waternext.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "SHORE-crests-in-calm",
     "file": "src/render/waterSurface.js",
-    "old": "* smoothstep(0.55, 0.9, uWindStrength);",
-    "new": "* 1.0;",
+    "old": "  float crest = smoothstep(${CREST_SLOPE.toFixed(4)}, ${(CREST_SLOPE * 1.6).toFixed(4)}, length(sw.yz)) * smoothstep(0.55, 0.9, uWindStrength);",
+    "new": "  float crest = smoothstep(${CREST_SLOPE.toFixed(4)}, ${(CREST_SLOPE * 1.6).toFixed(4)}, length(sw.yz)) * 1.0;",
     "tests": [
       "test/render/waternext.test.js"
     ]

@@ -22,10 +22,14 @@
  *  under it to shed to: its summer grass is what showed, a green wall up a white mountain where the landforms stand
  *  their faces past 52 degrees (and DFU's TerrainNature refuses a tree past 50, so it stood bare of them too). */
 export const SNOW_GROUND = Object.freeze({
-  patch: Object.freeze([Object.freeze({ cell: 1, weight: 0.35 }), Object.freeze({ cell: 4, weight: 0.4 }), Object.freeze({ cell: 16, weight: 0.25 })]),
+  patch: Object.freeze([
+    Object.freeze({ cell: 1, weight: 0.35 }),
+    Object.freeze({ cell: 4, weight: 0.4 }),
+    Object.freeze({ cell: 16, weight: 0.25 }),
+  ]),
   edge: 0.07,
-  salt: 0x534e4f57,   // 'SNOW'
-  fade: Object.freeze([2, 2]),   // an octave's share kept: a - b x footprint / cell (whole to half a cell a pixel, gone at one)
+  salt: 0x534e4f57, // 'SNOW'
+  fade: Object.freeze([2, 2]), // an octave's share kept: a - b x footprint / cell (whole to half a cell a pixel, gone at one)
 });
 /** The layers a twin array holds before its winter half: a ground set's records (R9). */
 export const TWIN_LAYERS = 56;
@@ -51,7 +55,8 @@ const f = (v) => (Number.isInteger(v) ? `${v}.0` : `${v}`);
  * art's) both carry it.
  */
 export function snowCoreGlsl() {
-  const e = SNOW_GROUND.edge, P = SNOW_GROUND.patch;
+  const e = SNOW_GROUND.edge,
+    P = SNOW_GROUND.patch;
   return `// PRECIP4 (render/snowCoverGlsl.js; the law is systems/weather/snowpack.js)
 uniform highp sampler2D uSnowLines;   // the window's lattice of snowlines: texel (i, j) the point i east and j south of its first, rgb h10/h50/h90 (m above the sea)
 uniform vec4 uSnowSet;                // x: world y -> metres above the sea; y: 1 on; z: the lattice's spacing (world tiles)
@@ -152,16 +157,31 @@ const smooth = (a, b, v) => {
 /** snowHash, in 32-bit integers as the GLSL takes them. Pure. */
 export function snowHash(cx, cy, salt) {
   let h = (Math.imul(cx, 0x8da6b343) ^ Math.imul(cy, 0xd8163841) ^ Math.imul(salt >>> 0, 0xcb1ab31f)) >>> 0;
-  h ^= h >>> 16; h = Math.imul(h, 0x7feb352d) >>> 0; h ^= h >>> 15; h = Math.imul(h, 0x846ca68b) >>> 0; h ^= h >>> 16;
+  h ^= h >>> 16;
+  h = Math.imul(h, 0x7feb352d) >>> 0;
+  h ^= h >>> 15;
+  h = Math.imul(h, 0x846ca68b) >>> 0;
+  h ^= h >>> 16;
   return (h >>> 8) * (1 / 16777216);
 }
 /** snowNoise at pixel-local tiles `lt` of the pixel whose first world tile is (ox, oz) (the ecotone's ecoOrigin). Pure. */
 function snowNoise(ltx, ltz, ox, oz, cell, salt) {
-  const qx = ltx / cell, qz = ltz / cell, flx = Math.floor(qx), flz = Math.floor(qz);
-  const ix = Math.trunc(ox / cell) + flx, iz = Math.trunc(oz / cell) + flz;
-  const fx = qx - flx, fz = qz - flz, ux = fx * fx * (3 - 2 * fx), uz = fz * fz * (3 - 2 * fz);
-  const a = snowHash(ix, iz, salt), b = snowHash(ix + 1, iz, salt), c = snowHash(ix, iz + 1, salt), d = snowHash(ix + 1, iz + 1, salt);
-  const top = a + (b - a) * ux, bot = c + (d - c) * ux;
+  const qx = ltx / cell,
+    qz = ltz / cell,
+    flx = Math.floor(qx),
+    flz = Math.floor(qz);
+  const ix = Math.trunc(ox / cell) + flx,
+    iz = Math.trunc(oz / cell) + flz;
+  const fx = qx - flx,
+    fz = qz - flz,
+    ux = fx * fx * (3 - 2 * fx),
+    uz = fz * fz * (3 - 2 * fz);
+  const a = snowHash(ix, iz, salt),
+    b = snowHash(ix + 1, iz, salt),
+    c = snowHash(ix, iz + 1, salt),
+    d = snowHash(ix + 1, iz + 1, salt);
+  const top = a + (b - a) * ux,
+    bot = c + (d - c) * ux;
   return top + (bot - top) * uz;
 }
 /**
@@ -171,11 +191,15 @@ function snowNoise(ltx, ltz, ox, oz, cell, salt) {
  * (ecotone.js ecoOrigin: the patches' lattice). 0 bare, 1 white. Pure. SNOW-FACE: no slope, as the chunk's.
  */
 export function snowCoverAt(cover, lx, lz, ox, oz) {
-  const e = SNOW_GROUND.edge, c = cover;
+  const e = SNOW_GROUND.edge,
+    c = cover;
   if (c <= 0 || c >= 1) return Math.max(0, Math.min(1, c));
-  const ltx = lx / TILE_M, ltz = lz / TILE_M;
+  const ltx = lx / TILE_M,
+    ltz = lz / TILE_M;
   let p = 0;
-  SNOW_GROUND.patch.forEach((o, k) => { p += o.weight * snowNoise(ltx, ltz, ox, oz, o.cell, (SNOW_GROUND.salt + k) >>> 0); });
+  SNOW_GROUND.patch.forEach((o, k) => {
+    p += o.weight * snowNoise(ltx, ltz, ox, oz, o.cell, (SNOW_GROUND.salt + k) >>> 0);
+  });
   p = Math.min(1, Math.max(0, (p - 0.5) * 2.2 + 0.5));
   return smooth(-e, e, -e + (1 + 2 * e) * c - p);
 }

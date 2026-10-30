@@ -275,7 +275,7 @@
   {
     "name": "SNOWFALL1-glsl-albedo-undecoded",
     "file": "src/render/snowfallGlsl.js",
-    "old": "  const decode = fs.includes('elDecode(') ? (/** @type {string} */ t) => `elDecode(${t})` : (/** @type {string} */ t) => t;",
+    "old": "  const decode = fs.includes('elDecode(')\n    ? (/** @type {string} */ t) => `elDecode(${t})`\n    : (/** @type {string} */ t) => t;",
     "new": "  const decode = (/** @type {string} */ t) => t;",
     "tests": [
       "test/render/snowfall1_runtime.test.js"

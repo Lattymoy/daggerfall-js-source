@@ -341,8 +341,8 @@
   {
     "name": "TECHFX1-a-recipe-dropped",
     "file": "src/render/spellImpactFx.js",
-    "old": "      case 'chop':",
-    "new": "      case 'chop-gone':",
+    "old": "      case 'chop': // Headsman's Chop: the star, the spray and a small ring under it",
+    "new": "      case 'chop-gone': // Headsman's Chop: the star, the spray and a small ring under it",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -350,8 +350,8 @@
   {
     "name": "TECHFX1-the-rings-uncapped",
     "file": "src/render/spellImpactFx.js",
-    "old": "    if (this.decals.length > 160) return;\n",
-    "new": "",
+    "old": "    if (this.decals.length > 160) return;\n    this.decals.push({",
+    "new": "    this.decals.push({",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -359,8 +359,8 @@
   {
     "name": "TECHFX1-the-trail-guard",
     "file": "src/render/spellImpactFx.js",
-    "old": "        if (!(L > 0.3)) return false;\n",
-    "new": "",
+    "old": "        if (!(L > 0.3)) return false;\n        const n = Math.min(18, Math.max(4, Math.round(L / 0.35)));",
+    "new": "        const n = Math.min(18, Math.max(4, Math.round(L / 0.35)));",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -368,8 +368,8 @@
   {
     "name": "TECHFX1-the-sweep-unspun",
     "file": "src/render/spellImpactFx.js",
-    "old": "const sg = spin < 0 ? -1 : 1;",
-    "new": "const sg = 1;",
+    "old": "        const sg = spin < 0 ? -1 : 1;",
+    "new": "        const sg = 1;",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -377,8 +377,8 @@
   {
     "name": "TECHFX1-the-place-unguarded",
     "file": "src/render/spellImpactFx.js",
-    "old": "if (!vec3(at)) return false;\n    if (!Number.isFinite(yaw))",
-    "new": "if (!at) return false;\n    if (!Number.isFinite(yaw))",
+    "old": "    if (!vec3(at)) return false;",
+    "new": "    if (!at) return false;",
     "tests": [
       "test/systems/techfx1.test.js",
       "test/systems/techfx1_audit.test.js"
@@ -737,8 +737,8 @@
   {
     "name": "TECHFX1-AUDIT-the-yaw-unguarded",
     "file": "src/render/spellImpactFx.js",
-    "old": "    if (!Number.isFinite(yaw)) yaw = 0;",
-    "new": "    // the yaw unguarded",
+    "old": "    if (!Number.isFinite(yaw)) yaw = 0; // AUDIT TECH-FX: a lost facing faces +z rather than writing NaN instances",
+    "new": "    // the yaw unguarded   // AUDIT TECH-FX: a lost facing faces +z rather than writing NaN instances",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -746,8 +746,8 @@
   {
     "name": "TECHFX1-AUDIT-the-arc-not-its-own",
     "file": "src/render/spellImpactFx.js",
-    "old": "const hw = Number.isFinite(half) && half > 0 ? Math.min(half, Math.PI) : 80 * Math.PI / 180;",
-    "new": "const hw = 80 * Math.PI / 180;",
+    "old": "        const hw = Number.isFinite(half) && half > 0 ? Math.min(half, Math.PI) : (80 * Math.PI) / 180;",
+    "new": "        const hw = (80 * Math.PI) / 180;",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -755,8 +755,8 @@
   {
     "name": "TECHFX1-AUDIT-the-typed-point-refused",
     "file": "src/render/spellImpactFx.js",
-    "old": "const vec3 = (v) => v != null && v.length >= 3 &&",
-    "new": "const vec3 = (v) => Array.isArray(v) && v.length >= 3 &&",
+    "old": "  v != null && v.length >= 3 && Number.isFinite(v[0]) && Number.isFinite(v[1]) && Number.isFinite(v[2]);",
+    "new": "  Array.isArray(v) && v.length >= 3 && Number.isFinite(v[0]) && Number.isFinite(v[1]) && Number.isFinite(v[2]);",
     "tests": [
       "test/systems/techfx1.test.js"
     ]

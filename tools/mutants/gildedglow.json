@@ -94,8 +94,8 @@
   {
     "name": "GGLOW-the-window-lost",
     "file": "src/render/weaponGlowGlsl.js",
-    "old": "'brand', 'edge', 'gilded'].map((look) => {",
-    "new": "'brand', 'edge'].map((look) => {",
+    "old": "    ['fire', 'frost', 'shock', 'arcane', 'brand', 'edge', 'gilded'].map((look) => {",
+    "new": "    ['fire', 'frost', 'shock', 'arcane', 'brand', 'edge'].map((look) => {",
     "tests": [
       "test/systems/gildedglow.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "GGLOW-the-reach-max-wider",
     "file": "src/render/weaponGlowGlsl.js",
-    "old": "edge: 3.4, gilded: 3.2 })",
-    "new": "edge: 3.4, gilded: 3.6 })",
+    "old": "  gilded: 3.2,",
+    "new": "  gilded: 3.6,",
     "tests": [
       "test/systems/gildedglow.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "GGLOW-the-crest-wider",
     "file": "src/render/weaponGlowGlsl.js",
-    "old": "+ 0.6 * beat + 0.6 * crest;",
-    "new": "+ 0.6 * beat + 1.6 * crest;",
+    "old": "    return 1.2 + 0.4 * lv + 0.6 * beat + 0.6 * crest;",
+    "new": "    return 1.2 + 0.4 * lv + 0.6 * beat + 1.6 * crest;",
     "tests": [
       "test/systems/gildedglow.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "GGLOW-the-reach-branch-lost",
     "file": "src/render/weaponGlowGlsl.js",
-    "old": "  if (look == 7) {   // GILDED-GLOW: a slow regal pulse",
-    "new": "  if (look == 70) {   // GILDED-GLOW: a slow regal pulse",
+    "old": "  if (look == 7) {   // GILDED-GLOW: a slow regal pulse - the halo swells every 4 s, a crest of light walks round it every 6 s",
+    "new": "  if (look == 70) {   // GILDED-GLOW: a slow regal pulse - the halo swells every 4 s, a crest of light walks round it every 6 s",
     "tests": [
       "test/systems/gildedglow.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "GGLOW-the-band-a-step-cooler",
     "file": "src/render/weaponGlowGlsl.js",
-    "old": "if (look == 7) col = uRamp[int(clamp(floor(h * 4.0 + 0.5), 0.0, 3.0))];",
-    "new": "if (look == 7) col = uRamp[int(clamp(floor(h * 4.0 - 0.5), 0.0, 3.0))];",
+    "old": "  if (look == 7) col = uRamp[int(clamp(floor(h * 4.0 + 0.5), 0.0, 3.0))];   // GILDED-GLOW: a step hotter - crimson by the blade, its core at the swell",
+    "new": "  if (look == 7) col = uRamp[int(clamp(floor(h * 4.0 - 0.5), 0.0, 3.0))];   // GILDED-GLOW: a step hotter - crimson by the blade, its core at the swell",
     "tests": [
       "test/systems/gildedglow.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "GGLOW-the-glint-lost",
     "file": "src/render/weaponGlowGlsl.js",
-    "old": "  if (look == 7 && gwHash(floor(c) + floor(t * 4.0) * 2.71) > 0.988)",
-    "new": "  if (look == 70 && gwHash(floor(c) + floor(t * 4.0) * 2.71) > 0.988)",
+    "old": "  if (look == 7 && gwHash(floor(c) + floor(t * 4.0) * 2.71) > 0.988) { col = uRamp[3]; a = 1.0; }   // GILDED-GLOW: a jewel's glint, slower",
+    "new": "  if (look == 70 && gwHash(floor(c) + floor(t * 4.0) * 2.71) > 0.988) { col = uRamp[3]; a = 1.0; }   // GILDED-GLOW: a jewel's glint, slower",
     "tests": [
       "test/systems/gildedglow.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "GGLOW-the-rim-lost",
     "file": "src/render/weaponGlowGlsl.js",
-    "old": "  else if (look == 7) k = 0.3 + 0.25",
-    "new": "  else if (look == 70) k = 0.3 + 0.25",
+    "old": "  else if (look == 7) k = 0.3 + 0.25 * (0.5 + 0.5 * sin(t * 1.5707963));   // GILDED-GLOW: the edge breathes with the halo",
+    "new": "  else if (look == 70) k = 0.3 + 0.25 * (0.5 + 0.5 * sin(t * 1.5707963));   // GILDED-GLOW: the edge breathes with the halo",
     "tests": [
       "test/systems/gildedglow.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "GGLOW-the-sheen-lost",
     "file": "src/render/weaponGlowGlsl.js",
-    "old": "  if (look == 7) return max(0.35",
-    "new": "  if (look == 70) return max(0.35",
+    "old": "  if (look == 7) return max(0.35 * (0.5 + 0.5 * sin(t * 1.5707963)), pow(0.5 + 0.5 * sin(t * 1.0471976 - uv.y * 8.0), 8.0));   // GILDED-GLOW: a sheen walking the blade over the halo's beat",
+    "new": "  if (look == 70) return max(0.35 * (0.5 + 0.5 * sin(t * 1.5707963)), pow(0.5 + 0.5 * sin(t * 1.0471976 - uv.y * 8.0), 8.0));   // GILDED-GLOW: a sheen walking the blade over the halo's beat",
     "tests": [
       "test/systems/gildedglow.test.js"
     ]

@@ -250,8 +250,8 @@
   {
     "name": "ARMORY-the-band-under-the-blade",
     "file": "src/render/weaponPiecePreview.js",
-    "old": "    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);\n",
-    "new": "",
+    "old": "    gl.enable(gl.BLEND);\n    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);\n    gl.drawArrays(gl.TRIANGLES, 0, 6);",
+    "new": "    gl.drawArrays(gl.TRIANGLES, 0, 6);",
     "tests": [
       "test/render/armory.test.js"
     ]

@@ -173,8 +173,8 @@
   {
     "name": "WEAPON-GLOW1-the-arms-cut-a-silhouette",
     "file": "src/render/weaponGlowGlsl.js",
-    "old": "  if (uCut.z == 1 && a.y >= uArt.y) a.y = uArt.y - 1;\n",
-    "new": "",
+    "old": "  if (uCut.z == 1 && a.y >= uArt.y) a.y = uArt.y - 1;\n  if (a.x < 0 || a.y < 0 || a.x >= uArt.x || a.y >= uArt.y) return false;",
+    "new": "  if (a.x < 0 || a.y < 0 || a.x >= uArt.x || a.y >= uArt.y) return false;",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ],
@@ -193,8 +193,8 @@
   {
     "name": "WEAPON-GLOW1-a-cell-a-texel",
     "file": "src/render/weaponGlowGlsl.js",
-    "old": "return texelFetch(uTex, ivec2((vec2(a) + 0.5) * k), 0).a >= 0.5;",
-    "new": "return texelFetch(uTex, ivec2(vec2(a) + 0.5), 0).a >= 0.5;",
+    "old": "  return texelFetch(uTex, ivec2((vec2(a) + 0.5) * k), 0).a >= 0.5;",
+    "new": "  return texelFetch(uTex, ivec2(vec2(a) + 0.5), 0).a >= 0.5;",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ],
@@ -203,8 +203,8 @@
   {
     "name": "WEAPON-GLOW1-the-reach-past-the-window",
     "file": "src/render/weaponGlowGlsl.js",
-    "old": "float reach = min(gwReach(uLook, c, t, lv), uReachMax);",
-    "new": "float reach = gwReach(uLook, c, t, lv);",
+    "old": "  float reach = min(gwReach(uLook, c, t, lv), uReachMax);",
+    "new": "  float reach = gwReach(uLook, c, t, lv);",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ],
@@ -213,8 +213,8 @@
   {
     "name": "WEAPON-GLOW1-a-window-short-of-the-reach",
     "file": "src/render/weaponGlowGlsl.js",
-    "old": "[Math.floor(e), Math.floor(e), Math.floor(e)]",
-    "new": "[Math.floor(e) - 1, Math.floor(e), Math.floor(e)]",
+    "old": "            : [Math.floor(e), Math.floor(e), Math.floor(e)],",
+    "new": "            : [Math.floor(e) - 1, Math.floor(e), Math.floor(e)],",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ],
@@ -223,8 +223,8 @@
   {
     "name": "WEAPON-GLOW1-fire-looks-up",
     "file": "src/render/weaponGlowGlsl.js",
-    "old": "[Math.floor(e), Math.floor(r * GLOW_FIRE_DOWN), Math.floor(e * GLOW_FIRE_UP)]",
-    "new": "[Math.floor(e), Math.floor(e * GLOW_FIRE_UP), Math.floor(r * GLOW_FIRE_DOWN)]",
+    "old": "            ? [Math.floor(e), Math.floor(r * GLOW_FIRE_DOWN), Math.floor(e * GLOW_FIRE_UP)]",
+    "new": "            ? [Math.floor(e), Math.floor(e * GLOW_FIRE_UP), Math.floor(r * GLOW_FIRE_DOWN)]",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ],
@@ -287,7 +287,7 @@
   {
     "name": "WEAPON-GLOW1-fire-does-not-rise",
     "file": "src/render/weaponGlowGlsl.js",
-    "old": "if (look === 'fire') y *= y > 0 ? GLOW_FIRE_UP : GLOW_FIRE_DOWN;",
+    "old": "      if (look === 'fire') y *= y > 0 ? GLOW_FIRE_UP : GLOW_FIRE_DOWN;",
     "new": "",
     "tests": [
       "test/systems/weaponglow1.test.js"
@@ -296,8 +296,8 @@
   {
     "name": "WEAPON-GLOW1-a-scroll-not-whole",
     "file": "src/render/weaponGlowGlsl.js",
-    "old": "c.y * 0.3 - t * 2.0), 480.0)",
-    "new": "c.y * 0.3 - t * 2.5), 480.0)",
+    "old": "    float n1 = gwNoise(vec2(c.x * 0.45, c.y * 0.3 - t * 2.0), 480.0);",
+    "new": "    float n1 = gwNoise(vec2(c.x * 0.45, c.y * 0.3 - t * 2.5), 480.0);",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ]
@@ -305,8 +305,8 @@
   {
     "name": "WEAPON-GLOW1-a-pulse-not-whole",
     "file": "src/render/weaponGlowGlsl.js",
-    "old": "float breath = 0.5 + 0.5 * sin(t * 2.0943951);",
-    "new": "float breath = 0.5 + 0.5 * sin(t * 2.1);",
+    "old": "    float breath = 0.5 + 0.5 * sin(t * 2.0943951);",
+    "new": "    float breath = 0.5 + 0.5 * sin(t * 2.1);",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ]
@@ -334,8 +334,8 @@
   {
     "name": "WEAPON-GLOW1-the-swirl-not-whole",
     "file": "src/render/weaponGlowGlsl.js",
-    "old": "float a = t * 0.2617994;",
-    "new": "float a = t * 0.27;",
+    "old": "  float a = t * 0.2617994;",
+    "new": "  float a = t * 0.27;",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ],
@@ -344,8 +344,8 @@
   {
     "name": "WEAPON-GLOW1-the-unit-unclamped",
     "file": "src/render/weaponGlowGlsl.js",
-    "old": "Math.min(GLOW_UNIT_MAX, Math.max(GLOW_UNIT_MIN, rows / GLOW_UNIT_ROWS))",
-    "new": "rows / GLOW_UNIT_ROWS",
+    "old": "export const glowUnit = (rows) => Math.min(GLOW_UNIT_MAX, Math.max(GLOW_UNIT_MIN, rows / GLOW_UNIT_ROWS));",
+    "new": "export const glowUnit = (rows) => rows / GLOW_UNIT_ROWS;",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ],

@@ -29,8 +29,8 @@
   {
     "name": "ASS-the-warm-need-unread",
     "file": "src/render/warmPrograms.js",
-    "old": "          if (step.need?.() === false) break;\n",
-    "new": "",
+    "old": "          if (step.need?.() === false) break;\n        }",
+    "new": "        }",
     "tests": [
       "test/render/auditshaderstall.test.js"
     ]

@@ -183,8 +183,8 @@
   {
     "name": "the-batch-ignores-the-normal-matrix",
     "file": "src/render/staticBatch.js",
-    "old": "    const nm = normalMatrix ?? unevenScaleNormalMatrix(local) ?? local;",
-    "new": "    const nm = local;",
+    "old": "    const nm = normalMatrix ?? unevenScaleNormalMatrix(local) ?? local; // WD1: a scaled world-data model lights through its inverse transpose",
+    "new": "    const nm = local; // WD1: a scaled world-data model lights through its inverse transpose",
     "tests": [
       "test/world/terrain/wod2_loader.test.js"
     ]

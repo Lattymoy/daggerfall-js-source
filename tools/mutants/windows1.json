@@ -367,7 +367,7 @@
   {
     "name": "RW1-pieces-off",
     "file": "src/render/staticBatch.js",
-    "old": "      if (this.pieces) {   // RW1: one sphere a model that went into this sub-mesh",
+    "old": "      if (this.pieces) {\n        // RW1: one sphere a model that went into this sub-mesh",
     "new": "      if (false) {",
     "tests": [
       "test/render/windows1_view.test.js"

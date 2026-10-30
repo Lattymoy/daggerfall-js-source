@@ -245,8 +245,8 @@
   {
     "name": "A2-cloth-undissolved",
     "file": "src/render/shipFlagPass.js",
-    "old": "  dissolveCut();   // AUDIT 2",
-    "new": "  // AUDIT 2",
+    "old": "  dissolveCut();   // AUDIT 2: SHIP-FADE - a ship sailing into the world or out of it keeps her share of her cloth as of her hull",
+    "new": "  // AUDIT 2: SHIP-FADE - a ship sailing into the world or out of it keeps her share of her cloth as of her hull",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]
