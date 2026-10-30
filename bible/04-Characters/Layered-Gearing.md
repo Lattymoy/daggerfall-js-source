@@ -97,6 +97,8 @@ hurt and idle frame of every outfit. The body now holds what the player holds: `
 | A bow | IdleRanged, MoveRanged | the bow, upright in the hand |
 | The loose | AttackRanged | the strips' own bow (records 20-24), as before |
 | A cast | AttackSpell | the swing's wind-up and throw (records 5-9, frames 0-3), hands empty |
+| A gun (thunderlock, pistolet) | AttackMelee | the swing's frame 3, held for the shot, from the hip |
+| A walker's flinch | Death (the hurt frame) | what its hands held before it (`armedTable`) |
 
 The cast used to play the bow's loose; a caster drew a bow. An iron warhammer is the art's own hammer, under the key it
 always had; a warhammer of another metal is that hammer recoloured.
@@ -108,11 +110,19 @@ family's nine outfits draw alike, on the line from the grip to the head; the 120
 where the shaft meets the fist. A rebuild of one frame: name it (`male:0-0`), the rest are kept. The rig is cut from the
 strips' own hammer, so it ships in the third exception's folder; the weapons drawn in its place are the game's drawing.
 
+**Set by hand.** The back views (walk records 3 and 4) draw a glove as dark as the hammer's iron, and the trace took the
+fist with it. Their hammer is set by hand (`HAND`): the light pixels of the butt and the shaft, every pixel of the head,
+round a grip and head read by eye. So is male 8-4, whose head passes before a dark hood, and each body's 9-4, whose grip
+is at the shaft's foot. The boxes are read on the leather chest's picture; another family's move with its hammer (plate
+draws 8-4 and 9-4 three pixels lower). A light pixel in a walk is the hammer's only where the leather chest draws it
+too, so a chain or plate sleeve stays.
+
 **Taking it out.** Each hammer pixel takes the side of the nearest pixel outside it: open air is cleared, a pixel the
 body was behind is filled. The fill copies the body from a shift that best continues it round the hole, over the
 family's outfits, else blends the body round it. The front views (`MIRROR`: the walk's 0-0, 0-1 and 0-3 and the idle's
-15-0) copy the body's other side, mirrored, its alpha too, so the hidden hand comes back whole. The female's front walk
-0-2 hid the whole forearm: empty-handed it is drawn as 0-0's mirror twin (`BARE_TWINS`).
+15-0) copy the body's other side, mirrored, its alpha too, so the hidden hand comes back whole; a copied piece that
+touches no body (the other forearm, by the hip) is dropped. The front walk's 0-2 hid the whole forearm: empty-handed it
+is drawn as 0-0's mirror twin (`BARE_TWINS`), armed as 0-3 (`ARMED_TWINS`), so the weapon keeps its hand.
 
 **Drawing one.** The weapon is drawn by the game, not stored: each template a shape in centimetres (the hammer's grip to
 head is 70), laid along the hammer's shaft from the grip, foreshortened as the shaft is, supersampled, shaded from the
@@ -123,6 +133,11 @@ shapes follow the templates (`characters/weapons.js` WEAPONS), finer than `fpsWe
 which fold a tanto and a claymore into one long blade. The Hand Wraps are bare hands. A weapon wearing a look is drawn
 as the look.
 
+**Carried.** A walk or idle frame whose shaft pointed at the camera (shorter than 0.45 of the body's) drew a stub. It
+hangs the weapon from the fist instead (`carry`): down, 12 degrees out from the body, in front of it in the front,
+front-3/4 and side views and behind it in the back ones, the handle behind the fist. The front views and the front
+idles hang it from the hand their fill leaves (`HANG`), not the art's grip, which sat up the forearm.
+
 **Whose hands.** My body reads the item in the hand in use (`combat/weapon/weaponRig.js` eotbState `heldWeapon`,
 `eotbBody.js` lookNow). A walker holds the tool of its gathering act, else the weapon in the hand its pose says it uses
 (`net/peer/peerRiders.js` walkerWeapon, `peerBodies.js` peerWeaponOf): nothing new on the wire. The outfit code carries
@@ -130,10 +145,12 @@ what the hands show (`p6cl~2@ls7`, `@0` empty), so the pictures of each are thei
 go with its outfit's (`releaseOutfits`).
 
 **Known limits.** The body's motion is the hammer's in every case: a dagger chops overhead as the hammer does, and bare
-hands strike with both fists; new swings need new frames drawn in all 27 outfits. A few frames keep a pixel or two of
-the hammer's knob at the fist, and a fill can borrow a patch of another piece's colour. No weapon draws its enchanted
-glow. Verified by `test/player/eyeOfTheBeholder/layered_weapons.test.js` and `tools/mutants/layered_weapons.json` (18
-mutants, all dead); the peer-art pins moved to the new codes (`test/net/peer/fb1022d_peerart.test.js`).
+hands strike with both fists; new swings need new frames drawn in all 27 outfits. An attack frame whose hammer points
+at the camera draws the weapon short. Each outfit's helmet and legs draw the hammer's rim their own way, so a pixel or
+two of it can stay, and a fill can borrow a patch of another piece's colour. Male 5-1 keeps the thumb laid up the
+shaft. No weapon draws its enchanted glow. Verified by `test/player/eyeOfTheBeholder/layered_weapons.test.js` and
+`tools/mutants/layered_weapons.json` (25 mutants, all dead); the peer-art pins moved to the new codes
+(`test/net/peer/fb1022d_peerart.test.js`).
 
 ## The art - the doctrine's third exception
 

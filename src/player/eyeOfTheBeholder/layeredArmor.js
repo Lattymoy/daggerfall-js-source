@@ -28,7 +28,7 @@
 import manifest from '../../../vendor/layered-armor/manifest.json' with { type: 'json' };
 import cloakManifest from '../../../vendor/layered-armor/cloak/manifest.json' with { type: 'json' };
 import { drawnPiece } from '../../net/appearanceLaw.js';   // APPEARANCES: a worn piece's look
-import { weaponShownFor, weaponRigOf, removeWeapon, drawWeapon, recolourHammer, maskTile, weaponLen, BARE_TWINS } from './layeredWeapon.js';   // LAYERED-WEAPONS: the weapon in the hands
+import { weaponShownFor, weaponRigOf, removeWeapon, drawWeapon, recolourHammer, maskTile, weaponLen, BARE_TWINS, ARMED_TWINS, GUN_FIRE_FRAME, isGunCode } from './layeredWeapon.js';   // LAYERED-WEAPONS: the weapon in the hands
 
 /** The texture archives the composed pictures are uploaded under - one per body, clear of every vendored archive. */
 export const LAYERED_ARCHIVE = Object.freeze({ male: 1700, female: 1701 });
@@ -143,16 +143,19 @@ export function layeredSprite(table, offset, frame, tableFrames, look, mirror) {
   const n = frames.filter((k) => k.startsWith(`${record}-`)).length || 1;
   const t = Math.max(1, tableFrames | 0);
   const fc = Math.min(Math.max(frame | 0, 0), t - 1);
-  const f = table === 'AttackSpell' ? Math.min(fc, n - 1) : Math.floor((fc * n) / t);   // the cast: the swing's first frames, one for one
+  const gun = table === 'AttackMelee' && isGunCode(look?.weapon);
+  const f = gun ? Math.min(GUN_FIRE_FRAME, n - 1)   // LAYERED-WEAPONS: a shot, from the hip
+    : table === 'AttackSpell' ? Math.min(fc, n - 1) : Math.floor((fc * n) / t);   // the cast: the swing's first frames, one for one
   const cloakFrames = /** @type {string[]|undefined} */ (cloakManifest[body]?.frames);
   const cloak = pieces.cloak != null && cloakFrames?.includes(`${record}-${f}`) ? pieces.cloak : null;   // a frame with no cloak art draws without
   // LAYERED-WEAPONS: what the hands show - nothing, the weapon held, or the art as drawn (the loose's own bow; an iron
   // warhammer, which is the art's own)
-  const shown = weaponRigOf(body, `${record}-${f}`) ? weaponShownFor(table, look?.weapon ?? null) : null;
+  const hands = table === 'Death' && look?.armedTable ? look.armedTable : table;   // a flinch keeps what the hands held
+  const shown = weaponRigOf(body, `${record}-${f}`) ? weaponShownFor(hands, look?.weapon ?? null) : null;
   const weapon = shown === 'wh0' ? null : shown;
   const code = `${pieces.head}${pieces.top}${pieces.legs}${cloak == null ? '' : `~${cloak}`}${weapon == null ? '' : `@${weapon}`}`;
-  const twin = weapon === '0' ? BARE_TWINS[body]?.[`${record}-${f}`] : null;
-  const [rec, fr] = twin ? twin.split('-').map(Number) : [record, f], flip = twin ? !mirror : mirror;
+  const twin = (weapon === '0' ? BARE_TWINS : weapon ? ARMED_TWINS : {})[body]?.[`${record}-${f}`] ?? null;
+  const [rec, fr] = twin ? twin.split('-').map(Number) : [record, f], flip = twin && weapon === '0' ? !mirror : mirror;
   return {
     archive: LAYERED_ARCHIVE[body], record: rec, frame: fr, mirror: flip,
     key: `LA:${body}:${combo}:${rec}-${fr}:${code}`,

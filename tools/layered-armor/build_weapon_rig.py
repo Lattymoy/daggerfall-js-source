@@ -40,7 +40,7 @@ GRIPS = {
         '6-0': (54, 27), '6-1': (55, 31), '6-2': (41, 63), '6-3': (58, 83), '6-4': (104, 84), '6-5': (90, 29),
         '7-0': (74, 28), '7-1': (63, 30), '7-2': (42, 61), '7-3': (47, 81), '7-4': (70, 69), '7-5': (65, 22),
         '8-0': (76, 25), '8-1': (66, 28), '8-2': (78, 53), '8-3': (38, 84), '8-4': (46, 74), '8-5': (42, 26),
-        '9-0': (61, 27), '9-1': (74, 30), '9-2': (76, 72), '9-3': (32, 81), '9-4': (16, 64), '9-5': (29, 29),
+        '9-0': (61, 27), '9-1': (74, 30), '9-2': (76, 72), '9-3': (32, 81), '9-4': (16, 76), '9-5': (29, 29),
         '10-0': (18, 44), '11-0': (24, 50), '12-0': (55, 47), '13-0': (86, 40), '14-0': (84, 46),
         '15-0': (9, 58), '16-0': (29, 51), '17-0': (40, 51), '18-0': (27, 48), '19-0': (44, 49),
     },
@@ -54,7 +54,7 @@ GRIPS = {
         '6-0': (58, 28), '6-1': (47, 34), '6-2': (38, 68), '6-3': (57, 79), '6-4': (94, 74), '6-5': (73, 28),
         '7-0': (74, 31), '7-1': (72, 30), '7-2': (53, 63), '7-3': (48, 77), '7-4': (84, 70), '7-5': (66, 26),
         '8-0': (90, 31), '8-1': (87, 32), '8-2': (70, 74), '8-3': (48, 82), '8-4': (56, 70), '8-5': (52, 27),
-        '9-0': (65, 28), '9-1': (70, 39), '9-2': (67, 68), '9-3': (32, 64), '9-4': (21, 70), '9-5': (29, 35),
+        '9-0': (65, 28), '9-1': (70, 39), '9-2': (67, 68), '9-3': (32, 64), '9-4': (15, 80), '9-5': (29, 35),
         '10-0': (24, 48), '11-0': (42, 46), '12-0': (68, 44), '13-0': (94, 42), '14-0': (92, 46),
         '15-0': (51, 73), '16-0': (57, 77), '17-0': (60, 82), '18-0': (64, 79), '19-0': (73, 78),
     },
@@ -65,7 +65,37 @@ HEADS = {
     'female': {'6-0': (82, 16), '8-2': (65, 71), '15-0': (40, 88)},
 }
 EXTRA = {('male', '6-5'): [(89, 19, 74, 27, 2.0)], ('male', '16-0'): [(27, 57, 24, 66, 3.0), (27, 58, 34, 64, 2.5)],
-         ('male', '9-4'): [(15, 65, 17, 79, 1.5)], ('male', '0-0'): [(2, 64, 11, 73)], ('male', '15-0'): [(1, 61, 11, 70)]}
+         ('male', '7-5'): [(59, 19, 66, 22), (42, 25, 52, 34)], ('male', '0-0'): [(2, 64, 11, 73)], ('male', '15-0'): [(1, 61, 11, 70)]}
+# Back views, whose glove is as dark as the hammer's iron (and male 8-4, the head before a dark hood): the hammer is the
+# light px in the `lit` boxes, every px but skin in the `all` boxes (x0, y0, x1, y1 inclusive) and in the `seg` shaft
+# segments (x0, y0, x1, y1, half-width), round a grip and head read by eye.
+HAND = {
+    ('male', '3-0'): dict(q=(49, 61), t=(55.5, 64), lit=[(43, 59, 52, 69)], all=[(52, 60, 59, 68)]),
+    ('male', '3-1'): dict(q=(52.5, 59), t=(57.5, 61.5), lit=[(47, 56, 55, 60)], all=[(54, 58, 61, 65)]),
+    ('male', '3-2'): dict(q=(62.5, 64), t=(67, 65), lit=[], all=[(63, 63, 71, 68)]),
+    ('male', '3-3'): dict(q=(57.5, 60), t=(62, 62.5), lit=[], all=[(58, 59, 67, 66)]),
+    ('male', '4-0'): dict(q=(51.5, 59), t=(56.5, 64.5), lit=[(44, 53, 56, 62)], all=[(52, 62, 61, 68)]),
+    ('male', '4-1'): dict(q=(57.5, 56.5), t=(61, 61.5), lit=[(47, 38, 52, 44), (54, 47, 59, 57)], all=[(58, 57, 64, 66)]),
+    ('male', '4-2'): dict(q=(65, 59.5), t=(64.5, 64), lit=[(61, 42, 70, 49), (63, 55, 67, 61)], all=[(60, 61, 70, 68)]),
+    ('male', '4-3'): dict(q=(56.5, 57), t=(60, 61.5), lit=[(46, 39, 51, 45), (52, 48, 58, 57)], all=[(56, 57, 64, 66)]),
+    ('male', '9-4'): dict(q=(16, 76), t=(12, 57.5), lit=[], all=[(0, 48, 23, 66)], seg=[(14.5, 66, 16, 73.5, 1.3)]),
+    ('female', '9-4'): dict(q=(17, 80), t=(12.5, 62), lit=[], all=[(2, 53, 23, 70)], seg=[(14, 70, 16.5, 77.5, 1.3)]),
+    ('male', '8-4'): dict(q=(44.5, 74), t=(52, 52.5), lit=[(46, 44, 58, 61)], all=[], seg=[(45.5, 71, 50, 60, 1.2)]),
+    ('female', '3-0'): dict(q=(90, 94.5), t=(94, 96), lit=[(86, 93, 91, 97)], all=[(91, 93, 98, 100)]),
+    ('female', '3-1'): dict(q=(86.5, 90.5), t=(89.5, 93), lit=[], all=[(85, 89, 94, 97)]),
+    ('female', '3-3'): dict(q=(86, 90), t=(88.5, 93), lit=[], all=[(85, 88, 92, 97)]),
+    ('female', '4-0'): dict(q=(81.5, 91), t=(86, 86.5), lit=[(73, 93, 80, 97), (82, 88, 83, 93)],
+                            all=[(81, 80, 91, 87), (83, 87, 91, 93)]),
+    ('female', '4-1'): dict(q=(82, 88.5), t=(84, 92.5), lit=[], all=[(80, 89, 88, 96)]),
+    ('female', '4-2'): dict(q=(79, 90.5), t=(81, 95), lit=[(76, 88, 81, 92)], all=[(77, 92, 85, 99)]),
+    ('female', '4-3'): dict(q=(81.5, 88.5), t=(83, 93.5), lit=[(79, 82, 84, 90)], all=[(79, 90, 86, 97)]),
+}
+# Walk and idle frames whose shaft pointed at the camera hang the weapon from the fist instead: `carry`. HANG: frames
+# that carry whatever their shaft, from the hand their fill leaves (a front view's mirrored arm), not the art's grip.
+CARRY_BELOW, CARRY_TILT = 0.45, math.radians(12)
+HANG = {('male', '0-0'): (5, 68), ('male', '0-1'): (6, 63), ('male', '0-3'): (4.5, 63), ('male', '15-0'): (9, 60),
+        ('male', '16-0'): (27, 57), ('female', '0-1'): (51.5, 84), ('female', '0-3'): (48.5, 85.5),
+        ('female', '15-0'): (48, 87), ('female', '16-0'): (55, 80)}
 # Front views whose hole is the body's other side, mirrored: the fill copies it, alpha and all.
 MIRROR = {('male', '0-0'), ('male', '0-1'), ('male', '0-3'), ('male', '15-0')} | {('female', f'0-{i}') for i in (0, 1, 3)} | {('female', '15-0')}
 
@@ -178,6 +208,66 @@ def trace(body, rf, fam, cap=16):
     return dict(m=m, L=L, st=st, q=q, t=T, hr=hr, side=side)
 
 
+def hand(body, rf, fam):
+    """A HAND frame's hammer: its boxes over the family's reference picture."""
+    h = HAND[(body, rf)]
+    _, L, st = stable(body, rf, fam); H, W = L.shape[:2]; opq = L[..., 3] > 0; sk = skin(L); s, v = hsv(L)
+    yy, xx = np.mgrid[0:H, 0:W]
+    def boxes(bs, ox=0, oy=0):
+        b = np.zeros((H, W), bool)
+        for x0, y0, x1, y1 in bs: b |= (xx >= x0 + ox) & (xx <= x1 + ox) & (yy >= y0 + oy) & (yy <= y1 + oy)
+        return b
+    # the boxes are read on the leather chest's picture: another family's hammer can sit a px or two off it
+    R0 = strip_base(body, 'leather_leather_leather', rf); at = np.nonzero(boxes(h['all'] or h['lit']) & (R0[..., 3] > 0))
+    best = (float('inf'), 0, 0)
+    for dy in range(-3, 4):
+        for dx in range(-3, 4):
+            Y, X = np.clip(at[0] + dy, 0, H - 1), np.clip(at[1] + dx, 0, W - 1)
+            c = (np.abs(L[Y, X, :3].astype(np.int32) - R0[at][:, :3].astype(np.int32)).sum(-1) + 765 * (L[Y, X, 3] == 0)).mean()
+            c += 2 * (abs(dx) + abs(dy))
+            if c < best[0]: best = (c, dx, dy)
+    _, ox, oy = best
+    head = opq & ~sk & boxes(h['all'], ox, oy)
+    for x0, y0, x1, y1, hw in h.get('seg', []):
+        x0, y0, x1, y1 = x0 + ox, y0 + oy, x1 + ox, y1 + oy
+        vx, vy = x1 - x0, y1 - y0; ln = math.hypot(vx, vy); vx, vy = vx / ln, vy / ln
+        tt = (xx - x0) * vx + (yy - y0) * vy; head |= opq & ~sk & (tt >= 0) & (tt <= ln) & (np.abs((xx - x0) * -vy + (yy - y0) * vx) <= hw)
+    # in a walk, a lit px is the hammer's only where the leather chest draws it too (a px either way): a plate or chain
+    # sleeve is not (an attack's hammer passes before the helmet, which each outfit draws its own way)
+    same = np.ones((H, W), bool)
+    for f in FAMS[:1] if int(rf.split('-')[0]) <= 4 else ():
+        R = strip_base(body, f'leather_{f}_leather', rf); near = np.zeros((H, W), bool)
+        for dy in (-1, 0, 1):
+            for dx in (-1, 0, 1):
+                Rs = np.roll(R, (dy, dx), (0, 1))
+                near |= (np.abs(L[..., :3].astype(np.int32) - Rs[..., :3].astype(np.int32)).sum(-1) <= 45) & (Rs[..., 3] > 0)
+        same &= near
+    m = head | (opq & ~sk & same & boxes(h['lit'], ox, oy) & (s < 0.3) & (v >= 0.2))
+    lab, k = nd.label(opq & ~m, structure=K8)                    # a speck the hammer leaves floating is its own
+    if k > 1:
+        sizes = nd.sum(opq & ~m, lab, range(1, k + 1)); big = int(np.argmax(sizes)) + 1
+        for i in range(1, k + 1):
+            if i != big and sizes[i - 1] <= 6 and (nd.binary_dilation(m, K8, 1) & (lab == i)).any(): m |= lab == i
+    (qx, qy), T = (h['q'][0] + ox, h['q'][1] + oy), (h['t'][0] + ox, h['t'][1] + oy)
+    hy, hx = np.nonzero(m & ((xx - T[0]) ** 2 + (yy - T[1]) ** 2 <= 144)); hr = float(np.hypot(hx - T[0], hy - T[1]).max()) if len(hx) else 2.0
+    D = math.hypot(T[0] - qx, T[1] - qy) or 1.0; nx, ny = -(T[1] - qy) / D, (T[0] - qx) / D
+    vv = (hx - T[0]) * nx + (hy - T[1]) * ny
+    side = 1 if not len(vv) or abs(vv.min()) >= abs(vv.max()) else -1
+    if ox or oy: print(' ', body, rf, fam, 'offset', ox, oy)
+    return dict(m=m, L=L, st=st, q=(float(qx), float(qy)), t=(float(T[0]), float(T[1])), hr=hr, side=side)
+
+
+def carry(body, rf, p, ln):
+    """[ux, uy, front] for a walk or idle frame whose shaft was shorter than CARRY_BELOW of the body's: down, tilted
+    outward from the body's middle; in front of the body in the front, front-3/4 and side views."""
+    rec = int(rf.split('-')[0])
+    if rec > 4 and not 15 <= rec <= 19: return None
+    if (body, rf) not in HANG and math.hypot(p['t'][0] - p['q'][0], p['t'][1] - p['q'][1]) >= CARRY_BELOW * ln: return None
+    L = strip_base(body, 'leather_leather_leather', rf); cx = float(np.nonzero(L[..., 3] > 0)[1].mean())
+    out = 1 if p['q'][0] >= cx else -1
+    return [round(out * math.sin(CARRY_TILT), 3), round(math.cos(CARRY_TILT), 3), 1 if rec % 5 <= 2 else 0]
+
+
 def body_side(img, m):
     """Which mask px the body was behind (nearest outside px opaque) - the runtime's own rule (layeredWeapon.js)."""
     H, W = m.shape; src = -np.ones((H, W), np.int8); q = deque()
@@ -274,7 +364,7 @@ def main(only=None):
                 continue
             per = []; tiles = []
             for fam in FAMS:
-                g = trace(body, rf, fam)
+                g = hand(body, rf, fam) if (body, rf) in HAND else trace(body, rf, fam)
                 fam_imgs = [g['st'][i] for i in range(g['st'].shape[0])]
                 per.append({'q': [round(g['q'][0], 1), round(g['q'][1], 1)], 't': [round(g['t'][0], 1), round(g['t'][1], 1)],
                             'hr': round(g['hr'], 1), 'side': g['side'], 'd': depth(g), 'fill': exemplar(fam_imgs, g['m'], mirror=(body, rf) in MIRROR)})
@@ -283,7 +373,14 @@ def main(only=None):
             Image.fromarray(np.concatenate(tiles, axis=1)).save(f'{V}/weapon/{body}/{rf}.png', optimize=True)
             frames[rf] = per
             print(body, rf, [p['fill'] for p in per])
-        rig[body] = {'len': round(float(np.percentile(lengths, 95)), 1), 'frames': frames}
+        ln = round(float(np.percentile(lengths, 95)), 1)
+        for rf, per in frames.items():
+            c = carry(body, rf, per[0], ln)
+            for p in per:
+                p.pop('carry', None); p.pop('hang', None)
+                if c: p['carry'] = c
+                if c and (body, rf) in HANG: p['hang'] = list(HANG[(body, rf)])
+        rig[body] = {'len': ln, 'frames': frames}
     with open(f'{V}/weapon/manifest.json', 'w') as f: json.dump(rig, f, separators=(',', ':'))
     print('weapon rig written')
 

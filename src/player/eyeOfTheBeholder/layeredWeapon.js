@@ -46,9 +46,14 @@ export function weaponShownFor(table, held) {
   }
 }
 
-/** Empty-handed, a frame whose arm the hammer hid is its walk's mirror twin: the female's front walk 0-2 is 0-0 flipped
- *  (the other leg forward, the arm whole). */
-export const BARE_TWINS = Object.freeze({ female: Object.freeze({ '0-2': '0-0' }) });
+/** A frame whose arm the hammer hid is drawn as another of its walk: empty-handed, its mirror twin (the front walk's
+ *  0-2 is 0-0 flipped, the other leg forward); armed, the walk's next frame, so the weapon keeps its hand. */
+const TWIN = Object.freeze({ '0-2': '0-0' }), NEXT = Object.freeze({ '0-2': '0-3' });
+export const BARE_TWINS = Object.freeze({ male: TWIN, female: TWIN });
+export const ARMED_TWINS = Object.freeze({ male: NEXT, female: NEXT });
+/** A gun fires from the swing's arms-forward frame, held - never the hammer's overhead chop. */
+export const GUN_FIRE_FRAME = 3;
+export const isGunCode = (code) => typeof code === 'string' && (code.startsWith('tl') || code.startsWith('pt'));
 
 /** One frame's rig in the family the chest piece is ('l', 'c' or 'p'), or null where the art holds no hammer. */
 export function weaponRigOf(body, rf, top = 'l') {
@@ -122,7 +127,7 @@ function blend(d, w, h, mask, px) {
   }
 }
 /** A mirror fill (a front view) copies the body's other side into every hole px, its alpha too - its shape decides
- *  where the body is. */
+ *  where the body is. A copied piece that touches no body outside the hole (the other arm, where this one is not) goes. */
 function mirrorHole(d, w, h, mask, copy) {
   for (let i = 0; i < w * h; i++) {
     if (!mask[i]) continue;
@@ -130,6 +135,11 @@ function mirrorHole(d, w, h, mask, copy) {
     if (X < 0 || Y < 0 || X >= w || Y >= h || mask[j]) continue;
     for (let c = 0; c < 4; c++) d[i * 4 + c] = d[j * 4 + c];
   }
+  const held = new Uint8Array(w * h), queue = [];
+  const each = (i, fn) => { const x = i % w, y = (i / w) | 0; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const X = x + dx, Y = y + dy; if ((dx || dy) && X >= 0 && Y >= 0 && X < w && Y < h) fn(Y * w + X); } };
+  for (let i = 0; i < w * h; i++) if (mask[i] && d[i * 4 + 3]) each(i, (j) => { if (!held[i] && !mask[j] && d[j * 4 + 3]) { held[i] = 1; queue.push(i); } });
+  while (queue.length) each(queue.pop(), (j) => { if (mask[j] && d[j * 4 + 3] && !held[j]) { held[j] = 1; queue.push(j); } });
+  for (let i = 0; i < w * h; i++) if (mask[i] && !held[i]) d[i * 4 + 3] = 0;
 }
 
 // ── DRAWING ONE ────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -174,6 +184,8 @@ const SHAPES = Object.freeze({
 });
 /** The warhammer's grip-to-head length, in cm - the rig's `len` is the art's own, so one px is len/70 cm. */
 const HAMMER_CM = 70;
+/** A carried weapon's foreshortening: hung from the fist, a little toward or away from the camera. */
+const CARRY_F = 0.72;
 /** A bow, held at its middle: [length cm, bulge cm]. */
 const BOW_DIMS = Object.freeze({ sb: [86, 11], lb: [116, 14] });
 
@@ -229,8 +241,9 @@ function sample(parts, s, v, side, px) {
   return hit;
 }
 
-/** The depth along the shaft, '?' (open air) settled to its nearest known neighbour, 'f' where there is none. */
-function settleDepth(d) {
+/** The depth along the shaft, '?' (open air) settled to its nearest known neighbour, 'f' where there is none; the 4 px
+ *  out of the fist take the shaft's side past them, so a weapon never starts a hand's width from the hand. */
+function settleDepth(d, lo = WEAPON_SPAN[0]) {
   const s = String(d ?? ''), out = s.split('');
   for (let i = 0; i < out.length; i++) {
     if (out[i] !== '?') continue;
@@ -242,6 +255,7 @@ function settleDepth(d) {
     }
     if (out[i] === '?') out[i] = 'f';
   }
+  for (let t = 0; t <= 4; t++) if (out.slice(-lo + t + 1, -lo + t + 6).includes('f')) out[-lo + t] = 'f';
   return out.join('');
 }
 const _depth = new WeakMap();
@@ -257,12 +271,16 @@ export function drawWeapon(out, fr, code, len, view = 2) {
   const shape = code.slice(0, 2), metal = Number(code.slice(2)) || 0;
   if (shape === 'wh') return;   // the art's own
   const w = out.width, h = out.height, d = out.data;
-  const [qx, qy] = fr.q, [tx, ty] = fr.t;
-  const D = Math.hypot(tx - qx, ty - qy) || 1, ux = (tx - qx) / D, uy = (ty - qy) / D, nx = -uy, ny = ux;
+  const [qx, qy] = Array.isArray(fr.carry) && fr.hang ? fr.hang : fr.q, [tx, ty] = fr.t;
+  const D = Math.hypot(tx - qx, ty - qy) || 1;
+  // a walk or idle frame whose shaft pointed at the camera hangs the weapon from the fist instead (`carry`: its way
+  // down and its side of the body), where a stub would be drawn
+  const carry = Array.isArray(fr.carry) ? fr.carry : null;
+  const ux = carry ? carry[0] : (tx - qx) / D, uy = carry ? carry[1] : (ty - qy) / D, nx = -uy, ny = ux;
   const k = len / HAMMER_CM;   // px a cm
-  const f = Math.max(0.14, Math.min(1, D / len));   // the shaft's foreshortening in this frame
+  const f = carry ? CARRY_F : Math.max(0.14, Math.min(1, D / len));   // the shaft's foreshortening in this frame
   const depth = depthOf(fr), lo = WEAPON_SPAN[0];
-  const front = (proj) => depth[Math.max(0, Math.min(depth.length - 1, Math.round(proj) - lo))] === 'f';
+  const front = carry ? (proj) => carry[2] === 1 && proj > 0.5 : (proj) => depth[Math.max(0, Math.min(depth.length - 1, Math.round(proj) - lo))] === 'f';
   const px = { ux, uy, nx, ny };
   const side = fr.side || 1;
   let parts, toLocal;
@@ -270,7 +288,7 @@ export function drawWeapon(out, fr, code, len, view = 2) {
     // a bow hangs in the hand upright, its belly forward (away from where the hammer trailed), seen edge-on from the
     // front and the back
     const [L, B] = BOW_DIMS[shape];
-    const fwd = ux > 0 ? -1 : 1, amp = [0, 0.7, 1, 0.7, 0][view] ?? 1;
+    const fwd = tx - qx > 0 ? -1 : 1, amp = [0, 0.7, 1, 0.7, 0][view] ?? 1;   // the hammer trailed: the belly faces the other way
     const inFront = [1, 2, 3, 4, 5].filter((t) => front(t)).length >= 3;
     parts = null;
     toLocal = (x, y) => ({ s: (qy - y) / k, v: (x - qx) * fwd / k, inFront });

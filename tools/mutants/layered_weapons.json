@@ -92,8 +92,8 @@
   {
     "name": "LAYERED-WEAPONS-cast-frames-spread",
     "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-    "old": "  const f = table === 'AttackSpell' ? Math.min(fc, n - 1) : Math.floor((fc * n) / t);",
-    "new": "  const f = Math.floor((fc * n) / t);",
+    "old": "    : table === 'AttackSpell' ? Math.min(fc, n - 1) : Math.floor((fc * n) / t);",
+    "new": "    : Math.floor((fc * n) / t);",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "LAYERED-WEAPONS-twin-armed",
     "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-    "old": "  const twin = weapon === '0' ? BARE_TWINS[body]?.[`${record}-${f}`] : null;",
-    "new": "  const twin = BARE_TWINS[body]?.[`${record}-${f}`];",
+    "old": "  const twin = (weapon === '0' ? BARE_TWINS : weapon ? ARMED_TWINS : {})[body]?.[`${record}-${f}`] ?? null;",
+    "new": "  const twin = BARE_TWINS[body]?.[`${record}-${f}`] ?? null;",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
@@ -112,7 +112,7 @@
   {
     "name": "LAYERED-WEAPONS-twin-unflipped",
     "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-    "old": "flip = twin ? !mirror : mirror;",
+    "old": "flip = twin && weapon === '0' ? !mirror : mirror;",
     "new": "flip = mirror;",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
@@ -178,5 +178,75 @@
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
     "why": "my body never holds what I hold"
+  },
+  {
+    "name": "LAYERED-WEAPONS-armed-twin-flipped",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "flip = twin && weapon === '0' ? !mirror : mirror;",
+    "new": "flip = twin ? !mirror : mirror;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the armed twin drawn mirrored, the sword in the other hand"
+  },
+  {
+    "name": "LAYERED-WEAPONS-gun-swung",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "  const gun = table === 'AttackMelee' && isGunCode(look?.weapon);",
+    "new": "  const gun = false;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a thunderlock swung like a club through the whole swing"
+  },
+  {
+    "name": "LAYERED-WEAPONS-flinch-drops",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "  const hands = table === 'Death' && look?.armedTable ? look.armedTable : table;",
+    "new": "  const hands = table;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a struck walker's sword blinks out for the flinch"
+  },
+  {
+    "name": "LAYERED-WEAPONS-carry-unread",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "  const carry = Array.isArray(fr.carry) ? fr.carry : null;",
+    "new": "  const carry = null;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a back walk's sword drawn as a stub pointing at the camera"
+  },
+  {
+    "name": "LAYERED-WEAPONS-hang-unread",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "  const [qx, qy] = Array.isArray(fr.carry) && fr.hang ? fr.hang : fr.q, [tx, ty] = fr.t;",
+    "new": "  const [qx, qy] = fr.q, [tx, ty] = fr.t;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a front walk's sword hung from the forearm, not the hand"
+  },
+  {
+    "name": "LAYERED-WEAPONS-carry-handle-over",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "carry[2] === 1 && proj > 0.5",
+    "new": "carry[2] === 1",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a hung sword's handle drawn over the arm above the fist"
+  },
+  {
+    "name": "LAYERED-WEAPONS-mirror-islands-kept",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "  for (let i = 0; i < w * h; i++) if (mask[i] && !held[i]) d[i * 4 + 3] = 0;\n",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a front view's mirror fill leaves the other forearm floating by the hip"
   }
 ]

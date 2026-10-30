@@ -4,7 +4,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import {
-  layeredWeaponOf, weaponShownFor, weaponRigOf, WEAPON_SHAPES, BARE_TWINS, removeWeapon, maskTile, weaponLen, WEAPON_SPAN,
+  layeredWeaponOf, weaponShownFor, weaponRigOf, WEAPON_SHAPES, BARE_TWINS, ARMED_TWINS, GUN_FIRE_FRAME, isGunCode, removeWeapon,
+  maskTile, weaponLen, WEAPON_SPAN,
 } from '../../../src/player/eyeOfTheBeholder/layeredWeapon.js';
 import { layeredSprite, outfitPieces, outfitCombo, decodeLayered } from '../../../src/player/eyeOfTheBeholder/layeredArmor.js';
 import { ALL_LOOKS, APPEARANCE_KINDS } from '../../../src/net/appearanceLaw.js';
@@ -78,15 +79,30 @@ test('the sprite\'s key carries what the hands show; an iron warhammer is the ar
   assert.equal(outfitPieces('lll@ls'), null);
 });
 
-test('empty-handed, the female front walk\'s hidden-arm frame is its mirror twin; armed, it is itself', () => {
-  assert.deepEqual({ ...BARE_TWINS.female }, { '0-2': '0-0' });
-  const bare = layeredSprite('Move', 0, 2, 4, { outfit: 'lll', gender: 'female', weapon: null }, false);
-  assert.deepEqual([bare.record, bare.frame, bare.mirror], [0, 0, true]);
-  assert.match(bare.rec, /_0-0m$/);
-  const armed = layeredSprite('MoveMelee', 0, 1, 2, { outfit: 'lll', gender: 'female', weapon: 'ls1' }, false);
-  assert.deepEqual([armed.record, armed.frame, armed.mirror], [0, 2, false]);
-  const male = layeredSprite('Move', 0, 2, 4, { outfit: 'lll', gender: 'male', weapon: null }, false);
-  assert.deepEqual([male.record, male.frame, male.mirror], [0, 2, false]);
+test('the front walk\'s hidden-arm frame: empty-handed its mirror twin, armed the next frame, the art as drawn', () => {
+  for (const gender of ['male', 'female']) {
+    assert.deepEqual({ ...BARE_TWINS[gender] }, { '0-2': '0-0' });
+    assert.deepEqual({ ...ARMED_TWINS[gender] }, { '0-2': '0-3' });
+    const bare = layeredSprite('Move', 0, 2, 4, { outfit: 'lll', gender, weapon: null }, false);
+    assert.deepEqual([bare.record, bare.frame, bare.mirror], [0, 0, true]);
+    assert.match(bare.rec, /_0-0m$/);
+    const armed = layeredSprite('MoveMelee', 0, 1, 2, { outfit: 'lll', gender, weapon: 'ls1' }, false);
+    assert.deepEqual([armed.record, armed.frame, armed.mirror], [0, 3, false], 'the sword keeps its hand');
+    const art = layeredSprite('MoveMelee', 0, 1, 2, { outfit: 'lll', gender, weapon: 'wh0' }, false);
+    assert.deepEqual([art.record, art.frame, art.mirror], [0, 2, false]);
+  }
+});
+
+test('a gun fires from the hip in one frame; a flinch keeps what the hands held', () => {
+  const look = (w) => ({ outfit: 'lll', gender: 'male', weapon: w });
+  const shot = [0, 1, 2, 3, 4, 5].map((f) => layeredSprite('AttackMelee', 2, f, 6, look('tl0'), false));
+  assert.ok(shot.every((s) => s.frame === GUN_FIRE_FRAME && s.key.endsWith('@tl0')));
+  assert.ok(isGunCode('pt3') && !isGunCode('ls1') && !isGunCode(null));
+  assert.equal(layeredSprite('AttackMelee', 2, 5, 6, look('ls7'), false).frame, 5, 'a sword swings through');
+  assert.match(layeredSprite('Death', 2, 0, 1, { ...look('ls7'), armedTable: 'IdleMelee' }, false).key, /:12-0:lll@ls7$/);
+  assert.match(layeredSprite('Death', 2, 0, 1, look('ls7'), false).key, /:12-0:lll@0$/, 'the fall drops it');
+  const peerSrc = readFileSync(new URL('../../../src/net/peer/peerRiders.js', import.meta.url), 'utf8');
+  assert.match(peerSrc, /flinch \? \{ armedTable: r\.table \} : \{\}/);
 });
 
 test('the rig covers every frame that holds the hammer, in all three chest families', () => {
@@ -118,6 +134,18 @@ test('taking the hammer out: a hole in the body is filled from the body round it
   assert.deepEqual([...data.subarray((w + 4) * 4, (w + 4) * 4 + 4)], [0, 0, 0, 0], 'the px in the air is air');
 });
 
+test('a mirror fill keeps what joins the body and drops a copied piece that floats', () => {
+  // the body at columns 4-5, the other arm alone at 8; the hole at 0 (the arm's mirror) and 3 (the body's)
+  const w = 9, h = 3, data = new Uint8Array(w * h * 4), mask = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) for (const x of [4, 5, 8]) data.set([100, 50, 20, 255], (y * w + x) * 4);
+  for (let y = 0; y < h; y++) for (const x of [0, 3]) { data.set([20, 20, 20, 255], (y * w + x) * 4); mask[y * w + x] = 1; }
+  removeWeapon({ width: w, height: h, data }, mask, [1, 4, 0]);
+  for (let y = 0; y < h; y++) {
+    assert.equal(data[(y * w + 3) * 4 + 3], 255, 'the body\'s side copied in');
+    assert.equal(data[(y * w) * 4 + 3], 0, 'the other arm\'s copy, touching nothing, is air');
+  }
+});
+
 const { PNG } = await import('pngjs').catch(() => ({ PNG: null }));
 const decodePng = async (b) => { const p = PNG.sync.read(Buffer.from(b)); return { width: p.width, height: p.height, data: new Uint8Array(p.data) }; };
 const picture = async (path) => decodePng(readFileSync(new URL(`${path}.png`, V)));
@@ -144,6 +172,38 @@ test('composed: empty hands lose the hammer and nothing else; a weapon adds itse
   }
   const iron = layeredSprite('IdleMelee', 2, 0, 1, { outfit: 'lll', gender: 'male', weapon: 'wh0' }, false);
   assert.ok(!iron.key.includes('@'));
+});
+
+test('a walk whose hammer pointed at the camera hangs the weapon from the hand: down, the handle behind the fist', { skip: !PNG && 'no pngjs' }, async () => {
+  for (const [body, rf] of [['male', '4-1'], ['female', '4-2'], ['male', '0-0'], ['female', '0-3'], ['male', '15-0']]) {
+    const fr = weaponRigOf(body, rf);
+    assert.ok(Array.isArray(fr.carry) && fr.carry[1] > 0.9, `${body} ${rf}: hangs down`);
+    const [hx, hy] = fr.hang ?? fr.q, plain = `LA:${body}:leather_leather_leather:${rf}:lll`;
+    const bare = await decodeLayered(`${plain}@0`, decodePng, opts), armed = await decodeLayered(`${plain}@ls1`, decodePng, opts);
+    let n = 0, sy = 0, over = 0;
+    for (let i = 0; i < bare.width * bare.height; i++) {
+      if (![0, 1, 2, 3].some((c) => armed.data[i * 4 + c] !== bare.data[i * 4 + c])) continue;
+      const y = (i / bare.width) | 0; n++; sy += y;
+      if (y < hy - 1.5 && bare.data[i * 4 + 3]) over++;
+    }
+    assert.ok(n > 20 && sy / n > hy + 8, `${body} ${rf}: the sword hangs below the hand (${n} px, mean y ${(sy / n).toFixed(1)} vs ${hx}, ${hy})`);
+    assert.equal(over, 0, `${body} ${rf}: the handle drawn over the arm`);
+  }
+  assert.equal(weaponRigOf('male', '2-0').carry, undefined, 'a side walk whose hammer trailed keeps its line');
+});
+
+test('a back walk keeps the fist: the dark glove round the grip is not the hammer', { skip: !PNG && 'no pngjs' }, async () => {
+  // the shaft over the glove is the hammer's, so up to half the fist's box; female 4-0 holds the head up, by the fist
+  const FIST_TAKEN = 0.5, back = { male: ['3-0', '3-1', '3-2', '3-3', '4-0', '4-1', '4-2', '4-3'], female: ['3-0', '3-1', '3-3', '4-1', '4-2', '4-3'] };
+  for (const [body, frames] of Object.entries(back)) {
+    for (const rf of frames) {
+      const strip = await picture(`weapon/${body}/${rf}`), mask = maskTile(strip, 'l'), w = strip.width / 3;
+      const [qx, qy] = weaponRigOf(body, rf).q.map(Math.round);
+      let k = 0, n = 0;
+      for (let y = qy - 8; y <= qy - 2; y++) for (let x = qx - 3; x <= qx + 3; x++) { n++; k += mask[y * w + x]; }
+      assert.ok(k < n * FIST_TAKEN, `${body} ${rf}: ${k} of the fist's ${n} px taken`);
+    }
+  }
 });
 
 test('a walker holds the tool of its act, else the weapon in the hand its pose says it uses', () => {
