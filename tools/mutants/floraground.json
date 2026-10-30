@@ -324,8 +324,8 @@
   {
     "name": "FLORA-GROUND-RINGS-the-snow-off-the-bed",
     "file": "src/systems/snowfall/snowGroundLaw.js",
-    "old": "return drawnGroundAt(p.samples, lx, lz, p._stride ?? 1, p._bed?.depths ?? null);",
-    "new": "return drawnGroundAt(p.samples, lx, lz, p._stride ?? 1, null);",
+    "old": "  return drawnGroundAt(p.samples, lx, lz, p._stride ?? 1, p._bed?.depths ?? null); // WATER-NEXT 2: and the bed carved under a shore - FLORA-GROUND: the ground the pixel draws, the plants' (terrainSurface.js drawnGroundAt)",
+    "new": "  return drawnGroundAt(p.samples, lx, lz, p._stride ?? 1, null); // WATER-NEXT 2: and the bed carved under a shore - FLORA-GROUND: the ground the pixel draws, the plants' (terrainSurface.js drawnGroundAt)",
     "tests": [
       "test/world/terrain/floraground_rings.test.js"
     ]

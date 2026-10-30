@@ -10,7 +10,11 @@ import { SnowBuildKernel } from './snowBuildKernel.js';
 
 /** `?snowthread=verify`: the cross-check on, read once a host. */
 export function snowThreadVerify(search = globalThis.location?.search) {
-  try { return /[?&]snowthread=verify\b/.test(search ?? ''); } catch { return false; }
+  try {
+    return /[?&]snowthread=verify\b/.test(search ?? '');
+  } catch {
+    return false;
+  }
 }
 
 /** The events kept to say what came before a mismatch. */
@@ -25,7 +29,8 @@ const own = (a) => (ArrayBuffer.isView(a) ? a.slice() : a);
 
 function sameBytes(a, b) {
   if (!a || !b) return a === b;
-  const x = bytesOf(a), y = bytesOf(b);
+  const x = bytesOf(a),
+    y = bytesOf(b);
   if (x.length !== y.length) return false;
   for (let i = 0; i < x.length; i++) if (x[i] !== y[i]) return false;
   return true;
@@ -33,12 +38,29 @@ function sameBytes(a, b) {
 
 /** The ground record the worker is handed (snowBuildClient.js `_tile`'s shape), copied from a live snapshot. */
 function groundRecord(key, snap) {
-  const g = snap.ground, dw = g.deepWaters;
+  const g = snap.ground,
+    dw = g.deepWaters;
   return {
-    key, mapX: snap.mapX, mapY: snap.mapY, size: snap.size, tileMap: own(snap.tileMap), winterArchive: snap.winterArchive, bare: snap.bare,
+    key,
+    mapX: snap.mapX,
+    mapY: snap.mapY,
+    size: snap.size,
+    tileMap: own(snap.tileMap),
+    winterArchive: snap.winterArchive,
+    bare: snap.bare,
     ground: {
-      samples: own(g.samples), _stride: g._stride, groundNormals: own(g.groundNormals), _bed: g._bed ? { depths: own(g._bed.depths) } : null,
-      deepWaters: dw ? { holes: own(dw.holes), floor: dw.floor ? { vertexLocalY: own(dw.floor.vertexLocalY), floorQuadWater: own(dw.floor.floorQuadWater) } : null } : null,
+      samples: own(g.samples),
+      _stride: g._stride,
+      groundNormals: own(g.groundNormals),
+      _bed: g._bed ? { depths: own(g._bed.depths) } : null,
+      deepWaters: dw
+        ? {
+            holes: own(dw.holes),
+            floor: dw.floor
+              ? { vertexLocalY: own(dw.floor.vertexLocalY), floorQuadWater: own(dw.floor.floorQuadWater) }
+              : null,
+          }
+        : null,
       floors: g.floors,
     },
   };
@@ -47,7 +69,8 @@ function groundRecord(key, snap) {
 /** The fields of two ground records that differ, by name ([] when they are the same ground). */
 function groundDiff(held, live) {
   const out = [];
-  const a = held.ground, b = live.ground;
+  const a = held.ground,
+    b = live.ground;
   if (!sameBytes(held.tileMap, live.tileMap)) out.push('tileMap');
   if (held.winterArchive !== live.winterArchive) out.push('winterArchive');
   if (held.bare !== live.bare) out.push('bare');
@@ -96,7 +119,11 @@ export class SnowBuildVerifier {
     switch (m.t) {
       case 'init':
         this.maskCopies = m.masks.map((a) => a.slice());
-        this.shadow.handle({ t: 'init', masks: this.maskCopies.map((a) => a.slice()), settings: structuredClone(m.settings) });
+        this.shadow.handle({
+          t: 'init',
+          masks: this.maskCopies.map((a) => a.slice()),
+          settings: structuredClone(m.settings),
+        });
         return;
       case 'settings':
         this.event('settings');
@@ -111,14 +138,15 @@ export class SnowBuildVerifier {
         return;
       case 'drop':
         for (const k of m.tiles ?? []) this.held.delete(k);
-        if (m.tiles?.length || m.roads?.length) this.event('unusedDropped', { grounds: m.tiles?.length ?? 0, roads: m.roads?.length ?? 0 });
+        if (m.tiles?.length || m.roads?.length)
+          this.event('unusedDropped', { grounds: m.tiles?.length ?? 0, roads: m.roads?.length ?? 0 });
         return;
       case 'mid':
       case 'local':
         this._job(m, live);
         return;
       default:
-        return;   // roads cross as they are needed; recycled buffers change no bytes
+        return; // roads cross as they are needed; recycled buffers change no bytes
     }
   }
 
@@ -130,7 +158,9 @@ export class SnowBuildVerifier {
       this.counts.masksChanged++;
       this.event('masksChanged');
     }
-    const keys = new Map(), tiles = [], pixels = [];
+    const keys = new Map(),
+      tiles = [],
+      pixels = [];
     for (const [px, py, key, ox, oy, oz] of m.pixels) {
       const fresh = this.nextKey++;
       keys.set(fresh, key);
@@ -140,7 +170,18 @@ export class SnowBuildVerifier {
     const roads = m.context.roads.map((r, i) => {
       const data = live.roads[i];
       const id = this.nextKey++;
-      this.shadow.handle({ t: 'roads', id, roads: structuredClone({ mapX: data.mapX, mapY: data.mapY, tiles: data.tiles, kinds: data.kinds, roadTiles: data.roadTiles, pathTiles: data.pathTiles }) });
+      this.shadow.handle({
+        t: 'roads',
+        id,
+        roads: structuredClone({
+          mapX: data.mapX,
+          mapY: data.mapY,
+          tiles: data.tiles,
+          kinds: data.kinds,
+          roadTiles: data.roadTiles,
+          pathTiles: data.pathTiles,
+        }),
+      });
       return { ...r, id };
     });
     this.shadow.handle({ t: 'tiles', tiles });
@@ -161,7 +202,8 @@ export class SnowBuildVerifier {
     this.counts.mismatches++;
     const stale = [];
     for (const [px, py, key] of e.pixels) {
-      const held = this.held.get(key), t = e.tilesLive.get(key);
+      const held = this.held.get(key),
+        t = e.tilesLive.get(key);
       if (!held || !t) continue;
       const fields = groundDiff(held, groundRecord(key, t.snapshot()));
       if (fields.length) stale.push({ pixel: [px, py], fields });
@@ -210,7 +252,11 @@ export class SnowBuildVerifier {
   }
 
   report() {
-    return { ...this.counts, outstanding: this.expected.size, mismatchLog: this.mismatchLog.slice(), lastEvents: this.events.slice(-8) };
+    return {
+      ...this.counts,
+      outstanding: this.expected.size,
+      mismatchLog: this.mismatchLog.slice(),
+      lastEvents: this.events.slice(-8),
+    };
   }
 }
-

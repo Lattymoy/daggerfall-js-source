@@ -9,8 +9,15 @@
 
 import { SnowfallRuntime } from '../snowfallRuntime.js';
 import { SnowCoverage, BasicRoadsTerrain } from '../snowfall.js';
-import { snowGroundHeight, snowGroundNormal, snowGroundBare, snowPixelX, snowPixelY, snowGlobalOf } from './snowGroundLaw.js';
-import { worldPixelKey, inWorldGrid } from '../../world/worldWide/worldGrid.js';   // BAY-LEFT-GROUND: the main thread's pixel key (scenes/snowGround.js pixelOn)
+import {
+  snowGroundHeight,
+  snowGroundNormal,
+  snowGroundBare,
+  snowPixelX,
+  snowPixelY,
+  snowGlobalOf,
+} from './snowGroundLaw.js';
+import { worldPixelKey, inWorldGrid } from '../../world/worldWide/worldGrid.js'; // BAY-LEFT-GROUND: the main thread's pixel key (scenes/snowGround.js pixelOn)
 
 /** The runtime's builds alone: a commit is the build's own half - the tracks' half is the main thread's. */
 class SnowBuildRuntime extends SnowfallRuntime {
@@ -27,7 +34,19 @@ class SnowBuildRuntime extends SnowfallRuntime {
 }
 
 /** The arrays a finished build hands back, by the runtime's names. */
-export const MID_ARRAYS = Object.freeze(['pos', 'nrm', 'ctxA', 'ctxB', 'ctxC', 'heights', 'bnrm', 'statics', 'context', 'meshTile', 'statTile']);
+export const MID_ARRAYS = Object.freeze([
+  'pos',
+  'nrm',
+  'ctxA',
+  'ctxB',
+  'ctxC',
+  'heights',
+  'bnrm',
+  'statics',
+  'context',
+  'meshTile',
+  'statTile',
+]);
 export const LOCAL_ARRAYS = Object.freeze(['pos', 'nrm', 'statics', 'context']);
 /** The spent arrays kept a size, to copy the next answers into. */
 const POOL_PER_SIZE = 4;
@@ -36,7 +55,13 @@ const POOL_PER_SIZE = 4;
 function terrainOf(rec) {
   const g = rec.ground;
   const t = {
-    key: rec.key, mapX: rec.mapX, mapY: rec.mapY, size: rec.size, tileMap: rec.tileMap, winterArchive: rec.winterArchive, roads: null,
+    key: rec.key,
+    mapX: rec.mapX,
+    mapY: rec.mapY,
+    size: rec.size,
+    tileMap: rec.tileMap,
+    winterArchive: rec.winterArchive,
+    roads: null,
     _o: [0, 0, 0],
     origin: (out) => {
       out[0] = t._o[0];
@@ -71,7 +96,7 @@ export class SnowBuildKernel {
         const f = this.frame;
         const px = snowPixelX(f[0], f[2], f[4], x);
         const py = snowPixelY(f[1], f[3], f[4], z);
-        return inWorldGrid(px, py) ? this.pixels.get(worldPixelKey(px, py)) ?? null : null;
+        return inWorldGrid(px, py) ? (this.pixels.get(worldPixelKey(px, py)) ?? null) : null;
       },
       toGlobal: (x, z) => {
         const f = this.frame;
@@ -85,7 +110,12 @@ export class SnowBuildKernel {
   handle(m) {
     switch (m.t) {
       case 'init':
-        this.rt = new SnowBuildRuntime({ world: this.world, coverage: new SnowCoverage(m.masks), settings: m.settings, frameBudgetMs: Infinity });
+        this.rt = new SnowBuildRuntime({
+          world: this.world,
+          coverage: new SnowCoverage(m.masks),
+          settings: m.settings,
+          frameBudgetMs: Infinity,
+        });
         return null;
       case 'settings':
         this._settings(m.settings);
@@ -117,9 +147,14 @@ export class SnowBuildKernel {
 
   /** The settings the main thread runs: a window of another size is made again (the main thread's _rebuildGrid). */
   _settings(s) {
-    const rt = this.rt, was = rt.settings;
+    const rt = this.rt,
+      was = rt.settings;
     rt.settings = s;
-    if (s.snowRadius !== was.snowRadius || s.meshResolution !== was.meshResolution || s.maskResolution !== was.maskResolution) {
+    if (
+      s.snowRadius !== was.snowRadius ||
+      s.meshResolution !== was.meshResolution ||
+      s.maskResolution !== was.maskResolution
+    ) {
       rt._rebuildGrid();
       this.localDone = 0;
     }
@@ -159,7 +194,8 @@ export class SnowBuildKernel {
 
   /** The middle ring round `m.center` (_midStart, then _midProcess until it stands or a pixel is missing). */
   _mid(m) {
-    const rt = this.rt, M = rt.mid;
+    const rt = this.rt,
+      M = rt.mid;
     const missing = this._stand(m);
     if (missing || !this._context(M.context0, m.context)) return { reply: { t: 'mid', id: m.id, ok: false, missing } };
     M.buildCenter = [m.center[0], m.center[1]];
@@ -167,7 +203,7 @@ export class SnowBuildKernel {
     rt._midStart();
     const f = { now: 0 };
     while (M.building) rt._midProcess(M.buildCenter, f);
-    if (M.completed === before) return { reply: { t: 'mid', id: m.id, ok: false } };   // a pixel not loaded: _midFail's
+    if (M.completed === before) return { reply: { t: 'mid', id: m.id, ok: false } }; // a pixel not loaded: _midFail's
     const { arrays, transfer } = this._answer(M, MID_ARRAYS);
     return { reply: { t: 'mid', id: m.id, ok: true, arrays, tiles: M.tiles.map((t) => t.key) }, transfer };
   }
@@ -182,13 +218,15 @@ export class SnowBuildKernel {
       L = rt.local;
     }
     const missing = this._stand(m);
-    if (missing || !this._context(rt.context, m.context)) return { reply: { t: 'local', id: m.id, ok: false, missing } };
+    if (missing || !this._context(rt.context, m.context))
+      return { reply: { t: 'local', id: m.id, ok: false, missing } };
     if (m.arrays) {
       L.pos.set(m.arrays.pos);
       L.nrm.set(m.arrays.nrm);
       L.statics.set(m.arrays.statics);
       L.context.set(m.arrays.context);
-    } else if (!m.full && m.mirror !== this.localDone) return { reply: { t: 'local', id: m.id, ok: false, mirror: true } };
+    } else if (!m.full && m.mirror !== this.localDone)
+      return { reply: { t: 'local', id: m.id, ok: false, mirror: true } };
     L.center = [m.center[0], m.center[1]];
     L.nextCenter = [m.nextCenter[0], m.nextCenter[1]];
     L.nextDyn = [m.nextDyn[0], m.nextDyn[1]];
@@ -197,14 +235,15 @@ export class SnowBuildKernel {
     L.statDelta = [m.statDelta[0], m.statDelta[1]];
     L.fullRebuild = m.full;
     L.baseY = m.baseY;
-    L.outrun = true;   // no frame to stop for here
+    L.outrun = true; // no frame to stop for here
     L.meshCursor = 0;
     L.statCursor = 0;
     L.recentering = true;
     L.committed = false;
     const f = { now: 0 };
     while (L.recentering) rt._processRecenter(m.player[0], m.player[1], f);
-    if (!L.committed) {   // a pixel not loaded: _cancelForRetry's - the runtime's window is still the last one committed
+    if (!L.committed) {
+      // a pixel not loaded: _cancelForRetry's - the runtime's window is still the last one committed
       return { reply: { t: 'local', id: m.id, ok: false } };
     }
     this.localDone = m.id;
@@ -214,7 +253,8 @@ export class SnowBuildKernel {
 
   /** Copies of a build's committed arrays, into spent buffers where there are some - the runtime keeps its own. */
   _answer(o, names) {
-    const arrays = {}, transfer = [];
+    const arrays = {},
+      transfer = [];
     for (const k of names) {
       const a = o[k];
       const free = this.pool.get(a.byteLength);

@@ -16,6 +16,8 @@
 /src/systems/firstVisit/*/
 !/src/systems/grammar/
 /src/systems/grammar/*/
+!/src/systems/snowfall/
+/src/systems/snowfall/*/
 !/src/ui/
 /src/ui/*
 !/src/ui/ketch/

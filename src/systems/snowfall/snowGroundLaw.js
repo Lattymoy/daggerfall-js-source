@@ -9,17 +9,20 @@ import { carvedFloorLocalY } from '../../world/deepWater/deepWaterFloor.js';
 
 /** The drawn ground's y in a pixel's frame. */
 export function snowGroundHeight(p, floors, lx, lz) {
-  if (floors && p.deepWaters) {   // DW-B: the floor is drawn there
+  if (floors && p.deepWaters) {
+    // DW-B: the floor is drawn there
     const f = carvedFloorLocalY(p.deepWaters, lx, lz);
     if (f != null) return f;
   }
-  return drawnGroundAt(p.samples, lx, lz, p._stride ?? 1, p._bed?.depths ?? null);   // WATER-NEXT 2: and the bed carved under a shore - FLORA-GROUND: the ground the pixel draws, the plants' (terrainSurface.js drawnGroundAt)
+  return drawnGroundAt(p.samples, lx, lz, p._stride ?? 1, p._bed?.depths ?? null); // WATER-NEXT 2: and the bed carved under a shore - FLORA-GROUND: the ground the pixel draws, the plants' (terrainSurface.js drawnGroundAt)
 }
 
 /** The drawn ground's unit normal there, into `out`. */
 export function snowGroundNormal(p, lx, lz, out) {
   const stride = p._stride ?? 1;
-  return p.groundNormals && stride === 1 ? surfaceNormalAt(p.groundNormals, lx, lz, out) : surfaceNormalFromSamples(p.samples, lx, lz, stride, out);
+  return p.groundNormals && stride === 1
+    ? surfaceNormalAt(p.groundNormals, lx, lz, out)
+    : surfaceNormalFromSamples(p.samples, lx, lz, stride, out);
 }
 
 /** DW-B: the carved sea has no ground to lie on. */
@@ -38,16 +41,30 @@ export function snowGroundSnapshot(p, floors) {
   return {
     samples: p.samples,
     _stride: stride,
-    groundNormals: stride === 1 ? p.groundNormals ?? null : null,
+    groundNormals: stride === 1 ? (p.groundNormals ?? null) : null,
     _bed: p._bed?.depths ? { depths: p._bed.depths } : null,
-    deepWaters: dw ? { holes: dw.holes ?? null, floor: floor ? { vertexLocalY: floor.vertexLocalY ?? null, floorQuadWater: floor.floorQuadWater ?? null } : null } : null,
+    deepWaters: dw
+      ? {
+          holes: dw.holes ?? null,
+          floor: floor
+            ? { vertexLocalY: floor.vertexLocalY ?? null, floorQuadWater: floor.floorQuadWater ?? null }
+            : null,
+        }
+      : null,
     floors: !!floors,
   };
 }
 
 /** The arrays a snapshot was taken from - a pixel's ground is the same ground while every one of them is. */
 export function snowGroundSources(g) {
-  return [g.samples, g.groundNormals, g._bed?.depths ?? null, g.deepWaters?.holes ?? null, g.deepWaters?.floor?.vertexLocalY ?? null, g.deepWaters?.floor?.floorQuadWater ?? null];
+  return [
+    g.samples,
+    g.groundNormals,
+    g._bed?.depths ?? null,
+    g.deepWaters?.holes ?? null,
+    g.deepWaters?.floor?.vertexLocalY ?? null,
+    g.deepWaters?.floor?.floorQuadWater ?? null,
+  ];
 }
 
 // ---- the streaming world's frame: `mx`, `my` its map origin, `cx`, `cz` its compensation, `size` a pixel's side ----

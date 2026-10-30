@@ -14,7 +14,11 @@ import { pageHas } from '../pageQuery.js';
 
 /** `?snowthread=off`: every snow build on the main thread (the ?terrainthread=off shape), read once a host. */
 export function snowThreadDisabled(search = globalThis.location?.search) {
-  try { return /[?&]snowthread=off\b/.test(search ?? ''); } catch { return false; }
+  try {
+    return /[?&]snowthread=off\b/.test(search ?? '');
+  } catch {
+    return false;
+  }
 }
 
 /** The one place the worker's URL is spelled. */
@@ -42,7 +46,13 @@ export class SnowBuildClient {
    * @param {() => number} [o.clock] - milliseconds
    * @param {boolean} [o.verify] - the debug cross-check (snowBuildVerify.js), `?snowthread=verify` by default
    */
-  constructor({ masks, settings, workerFactory = null, clock = () => globalThis.performance?.now?.() ?? Date.now(), verify = snowThreadVerify() }) {
+  constructor({
+    masks,
+    settings,
+    workerFactory = null,
+    clock = () => globalThis.performance?.now?.() ?? Date.now(),
+    verify = snowThreadVerify(),
+  }) {
     this.clock = clock;
     this._worker = null;
     this._job = 0;
@@ -68,7 +78,8 @@ export class SnowBuildClient {
     this.taken = 0;
     /** @type {?SnowBuildVerifier} */
     this._verify = null;
-    const factory = workerFactory ?? ((snowThreadDisabled() || typeof Worker === 'undefined') ? null : defaultWorkerFactory);
+    const factory =
+      workerFactory ?? (snowThreadDisabled() || typeof Worker === 'undefined' ? null : defaultWorkerFactory);
     if (!factory) return;
     let w = null;
     try {
@@ -79,46 +90,70 @@ export class SnowBuildClient {
       if (verify) {
         this._verify = new SnowBuildVerifier({ masks, clock });
         this._verify.message({ t: 'init', masks: copies, settings });
-        if (pageHas('shot')) globalThis.__snowVerify = this._verify;   // the in-game driver reads its report (a probe seam: behind the shot gate)
+        if (pageHas('shot')) globalThis.__snowVerify = this._verify; // the in-game driver reads its report (a probe seam: behind the shot gate)
       }
-      w.postMessage({ t: 'init', masks: copies, settings }, copies.map((m) => m.buffer));
+      w.postMessage(
+        { t: 'init', masks: copies, settings },
+        copies.map((m) => m.buffer),
+      );
       this._worker = w;
     } catch (e) {
       console.warn('[snowfall] build worker unavailable; the snow builds on the main thread', e);
-      try { w?.terminate?.(); } catch { /* never spawned or already gone */ }
+      try {
+        w?.terminate?.();
+      } catch {
+        /* never spawned or already gone */
+      }
       this._worker = null;
     }
   }
 
-  get up() { return !!this._worker; }
+  get up() {
+    return !!this._worker;
+  }
 
   /** The ring the runtime has just begun (its buildCenter, its prepared context0) - the job's id, or 0 to build here. */
   postMid(rt) {
-    const M = rt.mid, c = M.buildCenter;
+    const M = rt.mid,
+      c = M.buildCenter;
     const job = this._world(rt, c[0], c[1], MID.radius + REACH_MARGIN, M.context0);
     if (!job) return 0;
     const id = ++this._job;
     this._forget(this._latest.mid);
-    this._latest.mid = id;   // before the post: an answer is taken for the newest build of its kind alone
+    this._latest.mid = id; // before the post: an answer is taken for the newest build of its kind alone
     this._midTiles = { id, tiles: job.tiles };
     return this._post({ t: 'mid', id, center: [c[0], c[1]], ...job.message }, [], job.live) ? id : 0;
   }
 
   /** The recentre the runtime has just begun (_beginRecenter's state, its prepared context) - the job's id, or 0. */
   postLocal(rt) {
-    const L = rt.local, c = L.nextCenter;
+    const L = rt.local,
+      c = L.nextCenter;
     const job = this._world(rt, c[0], c[1], rt.gridRadius + REACH_MARGIN, rt.context);
     if (!job) return 0;
     const id = ++this._job;
     const mirror = L.fromJob && L.fromJob === this._localPosted ? L.fromJob : 0;
     const p = rt.outerCenter ?? c;
     const m = {
-      t: 'local', id, ...job.message, player: [p[0], p[1]], res: L.res, sres: L.sres, mirror,
-      center: [...L.center], nextCenter: [...L.nextCenter], nextDyn: [...L.nextDyn], nextStat: [...L.nextStat],
-      meshDelta: [...L.meshDelta], statDelta: [...L.statDelta], full: L.fullRebuild, baseY: L.baseY,
+      t: 'local',
+      id,
+      ...job.message,
+      player: [p[0], p[1]],
+      res: L.res,
+      sres: L.sres,
+      mirror,
+      center: [...L.center],
+      nextCenter: [...L.nextCenter],
+      nextDyn: [...L.nextDyn],
+      nextStat: [...L.nextStat],
+      meshDelta: [...L.meshDelta],
+      statDelta: [...L.statDelta],
+      full: L.fullRebuild,
+      baseY: L.baseY,
     };
     const transfer = [];
-    if (!mirror && !L.fullRebuild) {   // the worker does not hold the window this recentre copies from
+    if (!mirror && !L.fullRebuild) {
+      // the worker does not hold the window this recentre copies from
       m.arrays = { pos: L.pos.slice(), nrm: L.nrm.slice(), statics: L.statics.slice(), context: L.context.slice() };
       for (const a of Object.values(m.arrays)) transfer.push(a.buffer);
     }
@@ -148,7 +183,7 @@ export class SnowBuildClient {
       this._midTiles = { id: 0, tiles: new Map() };
       if (r.tiles.some((t) => !t)) return { ok: false };
     }
-    if (r.mirror) return { down: true };   // never expected: the worker's window was not the one named - built here
+    if (r.mirror) return { down: true }; // never expected: the worker's window was not the one named - built here
     return r;
   }
 
@@ -161,14 +196,24 @@ export class SnowBuildClient {
   }
 
   /** The runtime's world reset (a door, a load, a fast travel) with these builds out: they are let go. */
-  reset(ids) { this._verify?.letGo(ids.filter(Boolean)); }
+  reset(ids) {
+    this._verify?.letGo(ids.filter(Boolean));
+  }
 
-  settings(s) { if (this._worker) this._post({ t: 'settings', settings: s }); }
+  settings(s) {
+    if (this._worker) this._post({ t: 'settings', settings: s });
+  }
 
-  offset(o) { if (this._worker) this._post({ t: 'offset', offset: [o[0], o[1], o[2]] }); }
+  offset(o) {
+    if (this._worker) this._post({ t: 'offset', offset: [o[0], o[1], o[2]] });
+  }
 
   dispose() {
-    try { this._worker?.terminate?.(); } catch { /* already gone */ }
+    try {
+      this._worker?.terminate?.();
+    } catch {
+      /* already gone */
+    }
     this._worker = null;
   }
 
@@ -182,9 +227,13 @@ export class SnowBuildClient {
     if (!frame) return null;
     const [mx, my, fx, fz, size] = frame;
     const now = this.clock();
-    const x0 = snowPixelX(mx, fx, size, cx - reach), x1 = snowPixelX(mx, fx, size, cx + reach);
-    const y0 = snowPixelY(my, fz, size, cz + reach), y1 = snowPixelY(my, fz, size, cz - reach);
-    const pixels = [], tiles = new Map(), out = [0, 0, 0];
+    const x0 = snowPixelX(mx, fx, size, cx - reach),
+      x1 = snowPixelX(mx, fx, size, cx + reach);
+    const y0 = snowPixelY(my, fz, size, cz + reach),
+      y1 = snowPixelY(my, fz, size, cz - reach);
+    const pixels = [],
+      tiles = new Map(),
+      out = [0, 0, 0];
     for (let py = y0; py <= y1; py++) {
       for (let px = x0; px <= x1; px++) {
         const t = world.terrainOn(px, py);
@@ -203,8 +252,14 @@ export class SnowBuildClient {
       roads.push({ id, x: r.x, z: r.z, tileMetres: r.tileMetres, archive: r.archive, mapX: r.mapX, mapY: r.mapY });
     }
     this._prune(now);
-    const ctx = { roads, settlements: context.settlements, locations: context.locations, settlementFeather: context.settlementFeather, locationFeather: context.locationFeather };
-    const live = this._verify ? { tiles, roads: context.roads.map((r) => r.data) } : null;   // the cross-check's alone
+    const ctx = {
+      roads,
+      settlements: context.settlements,
+      locations: context.locations,
+      settlementFeather: context.settlementFeather,
+      locationFeather: context.locationFeather,
+    };
+    const live = this._verify ? { tiles, roads: context.roads.map((r) => r.data) } : null; // the cross-check's alone
     return { tiles, live, message: { frame: [mx, my, fx, fz, size], pixels, context: ctx } };
   }
 
@@ -223,11 +278,30 @@ export class SnowBuildClient {
     if (!this._sent.has(rec.key)) {
       const dw = g.deepWaters;
       const ground = {
-        samples: own(g.samples), _stride: g._stride, groundNormals: own(g.groundNormals), _bed: g._bed ? { depths: own(g._bed.depths) } : null,
-        deepWaters: dw ? { holes: own(dw.holes), floor: dw.floor ? { vertexLocalY: own(dw.floor.vertexLocalY), floorQuadWater: own(dw.floor.floorQuadWater) } : null } : null,
+        samples: own(g.samples),
+        _stride: g._stride,
+        groundNormals: own(g.groundNormals),
+        _bed: g._bed ? { depths: own(g._bed.depths) } : null,
+        deepWaters: dw
+          ? {
+              holes: own(dw.holes),
+              floor: dw.floor
+                ? { vertexLocalY: own(dw.floor.vertexLocalY), floorQuadWater: own(dw.floor.floorQuadWater) }
+                : null,
+            }
+          : null,
         floors: g.floors,
       };
-      const tile = { key: rec.key, mapX: snap.mapX, mapY: snap.mapY, size: snap.size, tileMap: own(snap.tileMap), winterArchive: snap.winterArchive, bare: snap.bare, ground };
+      const tile = {
+        key: rec.key,
+        mapX: snap.mapX,
+        mapY: snap.mapY,
+        size: snap.size,
+        tileMap: own(snap.tileMap),
+        winterArchive: snap.winterArchive,
+        bare: snap.bare,
+        ground,
+      };
       if (!this._post({ t: 'tiles', tiles: [tile] })) return 0;
     }
     this._sent.set(rec.key, now);
@@ -242,7 +316,14 @@ export class SnowBuildClient {
       this._roadIds.set(data, id);
     }
     if (!this._roadsSent.has(id)) {
-      const roads = { mapX: data.mapX, mapY: data.mapY, tiles: own(data.tiles), kinds: own(data.kinds), roadTiles: data.roadTiles, pathTiles: data.pathTiles };
+      const roads = {
+        mapX: data.mapX,
+        mapY: data.mapY,
+        tiles: own(data.tiles),
+        kinds: own(data.kinds),
+        roadTiles: data.roadTiles,
+        pathTiles: data.pathTiles,
+      };
       if (!(roads.tiles instanceof Uint8Array) || !(roads.kinds instanceof Uint8Array)) return 0;
       if (!this._post({ t: 'roads', id, roads })) return 0;
     }
@@ -254,9 +335,18 @@ export class SnowBuildClient {
   _prune(now) {
     if (now < this._nextPrune) return;
     this._nextPrune = now + UNUSED_MS / 2;
-    const tiles = [], roads = [];
-    for (const [k, at] of this._sent) if (now - at > UNUSED_MS) { tiles.push(k); this._sent.delete(k); }
-    for (const [k, at] of this._roadsSent) if (now - at > UNUSED_MS) { roads.push(k); this._roadsSent.delete(k); }
+    const tiles = [],
+      roads = [];
+    for (const [k, at] of this._sent)
+      if (now - at > UNUSED_MS) {
+        tiles.push(k);
+        this._sent.delete(k);
+      }
+    for (const [k, at] of this._roadsSent)
+      if (now - at > UNUSED_MS) {
+        roads.push(k);
+        this._roadsSent.delete(k);
+      }
     if (tiles.length || roads.length) this._post({ t: 'drop', tiles, roads });
   }
 
@@ -294,12 +384,18 @@ export class SnowBuildClient {
   }
 
   _answer(m) {
-    if (m.t === 'error') { this._down(m.message); return; }
+    if (m.t === 'error') {
+      this._down(m.message);
+      return;
+    }
     this._verify?.answer(m);
-    this._postedAt.delete(m.id);   // answered: no deadline left to keep
+    this._postedAt.delete(m.id); // answered: no deadline left to keep
     this._heardAt = this.clock();
-    if (m.missing) { this._sent.delete(m.missing); }   // never expected: sent again with the next build
-    if (m.id !== this._latest[m.t]) {   // replaced by a newer build of its kind: never taken
+    if (m.missing) {
+      this._sent.delete(m.missing);
+    } // never expected: sent again with the next build
+    if (m.id !== this._latest[m.t]) {
+      // replaced by a newer build of its kind: never taken
       this._verify?.handedBack(m.id, 'late');
       if (m.arrays) this.recycle(Object.values(m.arrays));
       return;
