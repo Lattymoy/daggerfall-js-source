@@ -2292,9 +2292,8 @@ export function validLook(look) {
   // (net/peer/peerRiders.js createPeerWalkers). OMITTED when off, `class`'s law. A relay before this one drops it: the
   // player is then seen in their set or class, as before.
   const lg = uint(look.lg, 2);
-  // CAPE-TOGGLE (2026-10-29): `hc` 1 - the player hides their capes (their look already leaves the cloak out); since
-  // 2026-10-30 (mob: "it saposta help show the aura not tuen it off") no peer hides their aura for it. OMITTED otherwise,
-  // `class`'s law. A relay before this one drops it.
+  // CAPE-TOGGLE (2026-10-29): `hc` 1 - the player hides their capes, so a peer draws no aura on them (their look already
+  // leaves the cloak out). OMITTED otherwise, `class`'s law. A relay before this one drops it: the aura is seen as before.
   const hc = look.hc === 1;
   return { race, gender, faceIndex, ...(klass ? { class: klass } : {}), ...(eo != null ? { eo } : {}), ...(lg ? { lg } : {}), ...(hc ? { hc: 1 } : {}), items };
 }
