@@ -8,6 +8,13 @@
 
 Newest first.
 
+**2026-10-30 - AUDIT LIGHT-REACH.** The owner: *"Audit"*, of LIGHT-REACH (#1456), the street's lamps and windows lit farther.
+Five cold lanes on a frozen head (`d19e9f1a7`), each finding proven on the real code. Paid: a tile an overflowing near list
+trimmed lost up to 74% of its light every other frame; beside a long wall the far cut fell to 12 m; a yard's candle reached
+7.5 on the lane; the far tier and its shader walk could break with every pin green; the record's "no pixel changed" was
+false for the back-face skip (a leak closed, kept); the patch notes' 160 m was not a busy street's. Record:
+`audits/Audit-Light-Reach.md` (AUDIT LIGHT-REACH).
+
 **2026-10-28 - AUDIT TAMRIEL-NODES.** The request: *"audit the main tamriel PR and just ensure the new gathering points
 show in the overworld across tamriel properly"*, of #1184's gathering past the Bay (WW-C1). The Overworld's groups, marks
 and filter read no ground of the Bay's, and every zone's herbs, veins and trees stood their law on the kernel's own

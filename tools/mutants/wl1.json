@@ -227,7 +227,7 @@
   {
     "name": "WL1-no-fade",
     "file": "src/render/windowLight.js",
-    "old": "      const fade = c.d <= cut * WL_FADE_FROM ? 1 : (cut - c.d) / (cut * (1 - WL_FADE_FROM));",
+    "old": "      const fade = wlFade(c.d, cut);",
     "new": "      const fade = 1;",
     "tests": [
       "test/render/wl1_windowlight.test.js"
@@ -254,7 +254,7 @@
   {
     "name": "WL1-curtains-pass-nothing",
     "file": "src/render/windowLight.js",
-    "old": "    if (curtains && this._aperture(c, null, this._whole)) l.area += (this._whole.area - l.area) * WL_CURTAIN_PASS;",
+    "old": "    if (whole) l.area += (whole.area - l.area) * WL_CURTAIN_PASS;",
     "new": "    if (false) l.area += 0;",
     "tests": [
       "test/render/wl1_windowlight.test.js"
@@ -535,8 +535,8 @@
   {
     "name": "WL1-far-placement-gathered",
     "file": "src/render/windowLight.js",
-    "old": "      if (far(p.all, 0)) continue;\n      for (let ci = 0; ci < p.tiles.length; ci++) {\n        if (far(p.ball, ci * 4)) continue;\n        if (p.tiles[ci])",
-    "new": "      for (let ci = 0; ci < p.tiles.length; ci++) {\n        if (far(p.ball, ci * 4)) continue;\n        if (p.tiles[ci])",
+    "old": "      if (pastBall(p.all, 0, eye, reach)) continue;\n      for (let ci = 0; ci < p.tiles.length; ci++) {\n        if (pastBall(p.ball, ci * 4, eye, reach)) continue;\n        if (p.tiles[ci])",
+    "new": "      for (let ci = 0; ci < p.tiles.length; ci++) {\n        if (pastBall(p.ball, ci * 4, eye, reach)) continue;\n        if (p.tiles[ci])",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ],

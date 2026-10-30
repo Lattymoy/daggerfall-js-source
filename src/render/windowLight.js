@@ -60,6 +60,11 @@ export const WL_SKY_GAIN = 0.5;
 export const WL_GATHER = 72;
 export const WL_FADE_FROM = 0.8;
 export const WL_CUT_EASE = 3;
+/** AUDIT LIGHT-REACH W1: after a band's list overflowed, its cut eases out no farther than where it was cut for this
+ *  long (ms) - easing back each frame overflowed every other one, a 30 Hz beat on the windows at the edge. */
+export const WL_FIT_HOLD_MS = 1000;
+/** A light's share at distance `d` from the eye, its band's cut `cut`: whole to WL_FADE_FROM of it, none at it. */
+export const wlFade = (d, cut) => (d <= cut * WL_FADE_FROM ? 1 : Math.max(0, (cut - d) / (cut * (1 - WL_FADE_FROM))));
 /** A window drawn no longer than this ago still lights (a building turned from, a street behind the eye). A mesh drawn
  *  again within WL_MOVE_REACH of a placement not yet drawn this frame has moved there (a ship, a wagon); a mesh keeps
  *  at most WL_PLACEMENTS_MAX placements. */
@@ -158,6 +163,13 @@ export function writeWindowLight(out, at, l) {
   out[o + 24] = l.spill[0]; out[o + 25] = l.spill[1]; out[o + 26] = l.spill[2]; out[o + 27] = l.area;
 }
 
+/** AUDIT LIGHT-REACH W1: light `at`'s gobo and glow in `out` scaled by `k` - its fade taken in to a nearer cut. */
+export function scaleWindowLight(out, at, k) {
+  const o = at * WL_VEC4 * 4;
+  out[o + 20] *= k; out[o + 21] *= k; out[o + 22] *= k;
+  out[o + 24] *= k; out[o + 25] *= k; out[o + 26] *= k;
+}
+
 /** THE LAMP of a lit room behind an aperture whose centre is `c`, its normal `nf` (to the street) and its world span `V`
  *  upward: over the glass's middle by half the pane and WL_LAMP_LIFT, WL_LAMP_DEPTH behind it. */
 export function lampOf(c, nf, V, out = [0, 0, 0]) {
@@ -166,34 +178,39 @@ export function lampOf(c, nf, V, out = [0, 0, 0]) {
   return out;
 }
 
+/** The length of (x, y, z) - AUDIT LIGHT-REACH W5: Math.hypot's answer was a fresh heap number a call on the
+ *  gather's paths and the boxes' build, and the far tier's 160 m tripled its calls. */
+const len3 = (x, y, z) => Math.sqrt(x * x + y * y + z * z);
 /** LIGHT-REACH: THE VOLUME A WINDOW'S LIGHT CAN REACH, a box in the glass's own frame (LC_BOX floats into `out` at `at`,
  *  for lightClusters.js buildLightClusterBoxes): the glass's glow out to WL_SPILL_REACH on its side, and the beam - from
  *  the lamp (`l.src`) through the glass to its reach, or along the sun's rays (`l.src` toward the sun) into the room.
  *  `beam` false: the glow alone; `spill` false: the beam alone (a far row). The box of the reach's sphere was six to
  *  nine times this, and every fragment in it walked the light only to be turned away. */
 export function windowLightBox(l, beam, out, at, spill = true) {
-  const { c, U, V, nf } = l;
-  const un = U[0] * nf[0] + U[1] * nf[1] + U[2] * nf[2];
-  let u0 = U[0] - nf[0] * un, u1 = U[1] - nf[1] * un, u2 = U[2] - nf[2] * un;
-  const ul = Math.hypot(u0, u1, u2) || 1;
+  // AUDIT LIGHT-REACH W5: the frame's 128 boxes written out - no closures, no literals (a third of the pass's garbage)
+  const c = l.c, U = l.U, V = l.V, nf = l.nf, f0 = nf[0], f1 = nf[1], f2 = nf[2];
+  const un = U[0] * f0 + U[1] * f1 + U[2] * f2;
+  let u0 = U[0] - f0 * un, u1 = U[1] - f1 * un, u2 = U[2] - f2 * un;
+  const ul = len3(u0, u1, u2) || 1;
   u0 /= ul; u1 /= ul; u2 /= ul;
-  const v0 = nf[1] * u2 - nf[2] * u1, v1 = nf[2] * u0 - nf[0] * u2, v2 = nf[0] * u1 - nf[1] * u0;
-  const cu = (x, y, z) => x * u0 + y * u1 + z * u2, cv = (x, y, z) => x * v0 + y * v1 + z * v2, cn = (x, y, z) => x * nf[0] + y * nf[1] + z * nf[2];
+  const v0 = f1 * u2 - f2 * u1, v1 = f2 * u0 - f0 * u2, v2 = f0 * u1 - f1 * u0;
   // the glass's corners, widened by the soft edge's most (the lamp's footprint, or the sun's over its beam)
   const lamp = l.kind === WL_KIND.lamp, edge = lamp ? 2 * WL_LAMP_RADIUS : WL_SUN_ANGLE * (l.reach + l.halfDiag);
   let aLo = Infinity, aHi = -Infinity, bLo = Infinity, bHi = -Infinity;
-  for (const su of [-0.5, 0.5]) for (const sv of [-0.5, 0.5]) {
+  for (let k = 0; k < 4; k++) {
+    const su = k & 1 ? 0.5 : -0.5, sv = k & 2 ? 0.5 : -0.5;
     const x = U[0] * su + V[0] * sv, y = U[1] * su + V[1] * sv, z = U[2] * su + V[2] * sv;
-    const a = cu(x, y, z), b = cv(x, y, z);
+    const a = x * u0 + y * u1 + z * u2, b = x * v0 + y * v1 + z * v2;
     if (a < aLo) aLo = a; if (a > aHi) aHi = a; if (b < bLo) bLo = b; if (b > bHi) bHi = b;
   }
   aLo -= edge; aHi += edge; bLo -= edge; bHi += edge;
   const S = spill ? WL_SPILL_REACH : 0;
-  let xLo = Math.min(aLo, -S), xHi = Math.max(aHi, S), yLo = Math.min(bLo, -S), yHi = Math.max(bHi, S), nHi = S;
+  // nHi a float from the start (Math.max): begun as the export's whole number, every beam's depth was boxed to join it
+  let xLo = Math.min(aLo, -S), xHi = Math.max(aHi, S), yLo = Math.min(bLo, -S), yHi = Math.max(bHi, S), nHi = Math.max(0, S);
   if (beam && lamp) {
     // the frustum from the lamp (behind the glass, n < 0) through the glass, out to where the lamp's reach ends
     const sx = l.src[0] - c[0], sy = l.src[1] - c[1], sz = l.src[2] - c[2];
-    const pa = cu(sx, sy, sz), pb = cv(sx, sy, sz), pn = cn(sx, sy, sz), r = l.reach;
+    const pa = sx * u0 + sy * u1 + sz * u2, pb = sx * v0 + sy * v1 + sz * v2, pn = sx * f0 + sy * f1 + sz * f2, r = l.reach;
     const n1 = Math.min(r, r + pn);
     if (pn < 0 && n1 > 0) {
       const k = (n1 - pn) / -pn;
@@ -203,7 +220,8 @@ export function windowLightBox(l, beam, out, at, spill = true) {
     }
   } else if (beam) {
     // the sun's rays through the glass run away from the sun: the glass's rectangle carried that way, as far as the reach
-    const T = l.reach + l.halfDiag, ea = -cu(l.src[0], l.src[1], l.src[2]) * T, eb = -cv(l.src[0], l.src[1], l.src[2]) * T, en = -cn(l.src[0], l.src[1], l.src[2]) * T;
+    const T = l.reach + l.halfDiag, s0 = l.src[0], s1 = l.src[1], s2 = l.src[2];
+    const ea = -(s0 * u0 + s1 * u1 + s2 * u2) * T, eb = -(s0 * v0 + s1 * v1 + s2 * v2) * T, en = -(s0 * f0 + s1 * f1 + s2 * f2) * T;
     if (en > 0) {
       xLo = Math.min(xLo, aLo, aLo + ea); xHi = Math.max(xHi, aHi, aHi + ea);
       yLo = Math.min(yLo, bLo, bLo + eb); yHi = Math.max(yHi, bHi, bHi + eb);
@@ -214,7 +232,7 @@ export function windowLightBox(l, beam, out, at, spill = true) {
   out[at] = c[0] + u0 * ma + v0 * mb + nf[0] * mn; out[at + 1] = c[1] + u1 * ma + v1 * mb + nf[1] * mn; out[at + 2] = c[2] + u2 * ma + v2 * mb + nf[2] * mn;
   out[at + 3] = u0 * ha; out[at + 4] = u1 * ha; out[at + 5] = u2 * ha;
   out[at + 6] = v0 * hb; out[at + 7] = v1 * hb; out[at + 8] = v2 * hb;
-  out[at + 9] = nf[0] * hn; out[at + 10] = nf[1] * hn; out[at + 11] = nf[2] * hn;
+  out[at + 9] = f0 * hn; out[at + 10] = f1 * hn; out[at + 11] = f2 * hn;
 }
 
 /** The shader's own walk of one light for one point (the GLSL's twin, for the pins): what reaches `wp` (normal `n`)
@@ -422,7 +440,11 @@ const set3 = (o, x, y, z) => { o[0] = x; o[1] = y; o[2] = z; };
 const lightRec = () => ({ c: [0, 0, 0], U: [0, 0, 0], V: [0, 0, 0], nf: [0, 0, 0], uv: [0, 0, 0, 0], src: [0, 0, 0], gobo: [0, 0, 0], spill: [0, 0, 0], kind: 0, layer: 0, reach: 0, area: 0, halfDiag: 0, beam: false });
 
 const byDistance = (a, b) => a.d - b.d;
-const byNearest = (a, b) => a.dMin - b.dMin;
+/** Whether the ball at `i` in `b` (centre, radius) lies wholly past `reach` of the eye. */
+const pastBall = (b, i, eye, reach) => len3(b[i] - eye[0], b[i + 1] - eye[1], b[i + 2] - eye[2]) - b[i + 3] > reach;
+/** AUDIT LIGHT-REACH W5: a far row's sort key - its nearest tile in WL_FAR_KEY ths of a metre, then its index among
+ *  the frame's gathered (at most WL_FAR_KEY_N): 160 m and 65536 rows in 38 bits, a double's whole numbers. */
+const WL_FAR_KEY = 16384, WL_FAR_KEY_N = 65536;
 
 /** LIGHT-REACH: A CELL'S ROWS (the far tier's lights) - its wall tiles grouped by the picture's mapping on one plane (the
  *  line tile 0 of a storey stands on, the spans, the normal), their storey and their share of v; each group's
@@ -457,7 +479,29 @@ export function cellRows(ap, first, t) {
 function rowOf(js, t) {
   let states = js.length * WL_ROW_BASE, lit = false;
   js.forEach((j, i) => { if (t.street[j]) { states += (t.curtains[j] ? 2 : 1) * 3 ** i; lit = true; } });
-  return { js, states, lit, rec: null, box: null, mask: null, ok: false };
+  return { js, states, lit, rec: null, box: null, mask: null, ok: false, ha: 0, pu: 0 };
+}
+
+/** AUDIT LIGHT-REACH W6: A ROW'S BOX THIS FRAME - over its lit tiles the far tier weighs (past the near fade's start
+ *  `from`, inside the far cut `to`, by their coverage centres as the shader reads them), not the whole run: a row
+ *  beside the eye whose near tiles are the near tier's covered the screen, and beside a long wall the far band's list
+ *  overflowed and its cut fell to 12 m. Its whole box shrunk along u; false when no lit tile weighs. */
+function rowBox(row, eye, from, to, out, at) {
+  const rec = row.rec, b = row.box, n1 = row.js.length - 1, px = rec[20], py = rec[21], pz = rec[22];
+  const cx = rec[0] + rec[24] - eye[0], cy = rec[1] + rec[25] - eye[1], cz = rec[2] + rec[26] - eye[2];
+  let ja = -1, jb = -1;
+  for (let j = 0, p3 = 1; j <= n1; j++, p3 *= 3) {
+    if (Math.floor(row.states / p3) % 3 === 0) continue;   // a dark tile
+    const d = len3(cx + px * j, cy + py * j, cz + pz * j);
+    if (d > from && d < to) { if (ja < 0) ja = j; jb = j; }
+  }
+  if (ja < 0) return false;
+  if (!(row.ha > 0)) { ja = 0; jb = n1; }
+  const k = 0.5 * (ja + jb) - 0.5 * n1, g = row.ha > 0 ? (row.ha + 0.5 * (jb - ja) * row.pu) / (row.ha + 0.5 * n1 * row.pu) : 1;
+  out[at] = b[0] + px * k; out[at + 1] = b[1] + py * k; out[at + 2] = b[2] + pz * k;
+  out[at + 3] = b[3] * g; out[at + 4] = b[4] * g; out[at + 5] = b[5] * g;
+  for (let i = 6; i < LC_BOX; i++) out[at + i] = b[i];
+  return true;
 }
 
 export class WindowLightPass {
@@ -484,6 +528,9 @@ export class WindowLightPass {
     this._farPool = [];
     this._farUsed = 0;
     this._fd = new Float32Array(WL_FAR_MAX);   // each written row's nearest tile, for the far cut on an overflow
+    this._farKeys = new Float64Array(1024);   // AUDIT LIGHT-REACH W5: the gathered rows' sort keys (nearest tile, then index)
+    this._fitCut = { street: Infinity, inside: Infinity, far: Infinity };   // AUDIT LIGHT-REACH W1: each band's cut at its last overflow
+    this._fitAt = { street: -Infinity, inside: -Infinity, far: -Infinity };
     this._rt = lightRec();        // a row's first tile, as a light, while its record is made
     this.outside = null;          // { at, sunDir, sunColor, sunScale, moonDir, moonColor, moonScale, sky } - display colours
     this._cuts = { street: WL_GATHER, inside: WL_GATHER };   // each kind's own cut and clock: a building's frame
@@ -494,6 +541,7 @@ export class WindowLightPass {
     this._pending = [];           // cells near enough not yet built: { d, s, sub, p, ci }, reused
     this._pendN = 0;
     this._ld = new Float32Array(WL_MAX_LIGHTS);   // each written light's distance, for the cut on an overflow
+    this._lf = new Float32Array(WL_MAX_LIGHTS);   // AUDIT LIGHT-REACH W1: and its fade, so an overflow's cut refades it
     this._lt = lightRec();        // the light being written, and a curtained window's whole glass
     this._whole = lightRec();
     this._v = [0, 0, 0];
@@ -675,7 +723,6 @@ export class WindowLightPass {
     cand.length = 0;
     this._used = 0;
     this._pendN = 0;
-    this._farCand.length = 0;
     this._farUsed = 0;
     this.stats.walked = 0; this.stats.built = 0;
     let gathered = 0;
@@ -703,26 +750,48 @@ export class WindowLightPass {
     // the nearest WL_MAX_LIGHTS; the cut eases toward the frame's own so a pool at the edge fades
     cand.sort(byDistance);
     const n = Math.min(cand.length, WL_MAX_LIGHTS);
-    const want = n < cand.length ? cand[n - 1].d : WL_GATHER;
+    const want = Math.min(n < cand.length ? cand[n - 1].d : WL_GATHER, this._held(kind, now));
     const dt = this._at[kind] ? Math.max(0, Math.min(0.25, (now - this._at[kind]) / 1000)) : 0;
     this._at[kind] = now;
     this._cuts[kind] = dt > 0 ? this._cuts[kind] + (want - this._cuts[kind]) * (1 - Math.exp(-WL_CUT_EASE * dt)) : want;
-    const cut = Math.min(this._cuts[kind], WL_GATHER);
+    // AUDIT LIGHT-REACH W2: never past the first tile the block leaves out - one inside the cut and not written lost its
+    // fade's share whole, and its far row (which takes the rest) did not make it up
+    if (n < cand.length) this._cuts[kind] = Math.min(this._cuts[kind], cand[n].d);
+    let cut = Math.min(this._cuts[kind], WL_GATHER);
     let w = 0;
     this.stats.dropped = 0;
     for (let i = 0; i < n; i++) {
       const c = cand[i];
       if (c.d >= cut) break;
-      const fade = c.d <= cut * WL_FADE_FROM ? 1 : (cut - c.d) / (cut * (1 - WL_FADE_FROM));
+      const fade = wlFade(c.d, cut);
       if (!this._resident(c.mask, now)) continue;   // every layer read this frame already
       const l = kind === 'street' ? this._lampLight(c, lampC, fade) : this._sunLight(c, sunDir ?? moonDir, !!sunDir, keyC, skyC, shadows, fade);
       if (!l) continue;
       writeWindowLight(this.data, w, l);
       windowLightBox(l, l.beam, this.boxes, w * LC_BOX);
       this._ld[w] = c.d;
+      this._lf[w] = fade;
       w++;
     }
-    if (this._mipsDirty) {   // the layers put up this frame, their mips once
+    // more cells than the band's list holds: the nearest that fit (the lights stand nearest first), never none - and
+    // the cut comes in to the first left out. AUDIT LIGHT-REACH W1: THIS frame - the kept refaded to it, the far rows
+    // given it - or a tile left out lost its light while its row took only the old fade's rest
+    const fit = this._fitBand(this.boxes, w, view, proj, this.space, (f) => { this._cuts[kind] = Math.min(this._cuts[kind], this._ld[f]); });
+    if (fit < w) {
+      cut = this._ld[fit];
+      for (let i = 0; i < fit; i++) scaleWindowLight(this.data, i, wlFade(this._ld[i], cut) / this._lf[i]);
+      this._fitCut[kind] = cut; this._fitAt[kind] = now;
+    }
+    w = fit;
+    // LIGHT-REACH: the far rows past the near cut's fade, in a band of their own, fitted to it the same way - their cut
+    // a word of the far block, written again when the fit comes in
+    const asked = kind === 'street' && lampC ? this._farFrame(eye, cut, lampC, now, dt) : 0;
+    const wf = this._fitBand(this.farBoxes, asked, view, proj, this.farSpace, (f) => {
+      this._cutFar = Math.min(this._cutFar, this._fd[f]);
+      this.farData[WL_FAR_MAX * WL_VEC4 * 4 + 7] = this._cutFar;
+      this._fitCut.far = this._cutFar; this._fitAt.far = now;
+    });
+    if (this._mipsDirty) {   // the layers put up this frame, their mips once - AUDIT LIGHT-REACH W4: the far rows' too
       const gl = this.gl;
       this.deps.activeTexture(gl.TEXTURE0 + WL_MASK_UNIT);
       gl.bindTexture(gl.TEXTURE_2D_ARRAY, this.tex);
@@ -730,12 +799,6 @@ export class WindowLightPass {
       this.deps.activeTexture(gl.TEXTURE0);
       this._mipsDirty = false;
     }
-    // more cells than the band's list holds: the nearest that fit (the lights stand nearest first), never none - and
-    // the cut comes in to the first left out, so the edge fades from the next frame on
-    w = this._fitBand(this.boxes, w, view, proj, this.space, (fit) => { this._cuts[kind] = Math.min(this._cuts[kind], this._ld[fit]); });
-    // LIGHT-REACH: the far rows past the near cut's fade, in a band of their own, fitted to it the same way
-    const asked = kind === 'street' && lampC ? this._farFrame(eye, cut, lampC, now, dt) : 0;
-    const wf = this._fitBand(this.farBoxes, asked, view, proj, this.farSpace, (fit) => { this._cutFar = Math.min(this._cutFar, this._fd[fit]); });
     this.count = w;
     this.farCount = wf;
     this.stats.lights = w;
@@ -756,6 +819,10 @@ export class WindowLightPass {
     return w + wf;
   }
 
+  /** AUDIT LIGHT-REACH W1: how far a band's cut may ease out (`kind`: street, inside or far) - where its list last
+   *  overflowed, for WL_FIT_HOLD_MS. */
+  _held(kind, now) { return now - this._fitAt[kind] < WL_FIT_HOLD_MS ? this._fitCut[kind] : Infinity; }
+
   /** A band's lights into its grid: the nearest `n` that fit its list (`cut(fit)` told the first left out), an empty
    *  band's grid emptied so no cell lists last frame's lights. Answers how many stand. */
   _fitBand(boxes, n, view, proj, space, cut) {
@@ -770,25 +837,29 @@ export class WindowLightPass {
    *  WL_FADE_FROM), the nearest WL_FAR_MAX by their nearest tile, their cut easing as the near one's does - into the far
    *  block and their boxes, the frame's two words last. Answers the rows written. */
   _farFrame(eye, cut, lamp, now, dt) {
-    const fc = this._farCand, from = cut * WL_FADE_FROM;
+    const fc = this._farCand, pool = this._farPool, from = cut * WL_FADE_FROM;
+    // AUDIT LIGHT-REACH W5: ordered by keys in a typed array - nearest tile, then the pool's index - not a comparator's
+    // sort, whose copies were a fifth of the pass's garbage a frame
+    if (this._farKeys.length < this._farUsed) this._farKeys = new Float64Array(2 * this._farUsed);
+    const keys = this._farKeys;
     let n = 0;
-    for (let i = 0; i < fc.length; i++) if (fc[i].dMax > from) fc[n++] = fc[i];
-    fc.length = n;
+    for (let i = 0; i < this._farUsed; i++) if (pool[i].dMax > from) keys[n++] = Math.floor(pool[i].dMin * WL_FAR_KEY) * WL_FAR_KEY_N + i;
+    keys.subarray(0, n).sort();
+    for (let i = 0; i < n; i++) fc[i] = pool[keys[i] % WL_FAR_KEY_N];
     this.stats.rows = n;
-    fc.sort(byNearest);
     const keep = Math.min(n, WL_FAR_MAX);
-    const want = keep < n ? fc[keep - 1].dMin : WL_FAR_GATHER;
+    const want = Math.min(keep < n ? fc[keep - 1].dMin : WL_FAR_GATHER, this._held('far', now));
     this._cutFar = dt > 0 ? this._cutFar + (want - this._cutFar) * (1 - Math.exp(-WL_CUT_EASE * dt)) : want;
+    if (keep < n) this._cutFar = Math.min(this._cutFar, fc[keep].dMin);   // AUDIT LIGHT-REACH W2: as the near cut's
     const cutF = Math.min(this._cutFar, WL_FAR_GATHER);
     let w = 0;
     for (let i = 0; i < keep; i++) {
       const c = fc[i];
       if (c.dMin >= cutF) break;
-      if (!this._resident(c.mask, now) || !this._rowRecord(c)) continue;
+      if (!this._resident(c.mask, now) || !this._rowRecord(c) || !rowBox(c.row, eye, from, cutF, this.farBoxes, w * LC_BOX)) continue;
       const rec = c.row.rec;
       rec[23] = c.mask.layer + 256 * WL_KIND.row;
       this.farData.set(rec, w * WL_VEC4 * 4);
-      this.farBoxes.set(c.row.box, w * LC_BOX);
       this._fd[w] = c.dMin;
       w++;
     }
@@ -804,7 +875,6 @@ export class WindowLightPass {
   _gather(mesh, s, kind, eye, glass, cand) {
     let n = 0;
     const reach = kind === 'street' ? WL_FAR_GATHER : WL_GATHER;   // LIGHT-REACH: a street's rows reach past its tiles
-    const far = (b, i) => Math.hypot(b[i] - eye[0], b[i + 1] - eye[1], b[i + 2] - eye[2]) - b[i + 3] > reach;
     for (let si = 0; si < mesh.wl.length; si++) {
       const sub = mesh.wl[si];
       const key = s.remap && s.remap.has(sub.key) ? s.remap.get(sub.key) : sub.key;
@@ -813,9 +883,9 @@ export class WindowLightPass {
       const mask = this.masks.get(key);
       if (!mask) continue;
       const p = this._cellsOf(s, si, sub);
-      if (far(p.all, 0)) continue;
+      if (pastBall(p.all, 0, eye, reach)) continue;
       for (let ci = 0; ci < p.tiles.length; ci++) {
-        if (far(p.ball, ci * 4)) continue;
+        if (pastBall(p.ball, ci * 4, eye, reach)) continue;
         if (p.tiles[ci]) { n += this._gatherBuilt(s, sub, p, ci, mask, kind, eye, cand); continue; }
         const q = this._pending[this._pendN] ??= { d: 0, s: null, sub: null, p: null, ci: 0, mask: null };
         this._pendN++;
@@ -829,7 +899,7 @@ export class WindowLightPass {
   /** LIGHT-REACH: a built cell into the frame - its tiles as the near tier's candidates while the cell is within
    *  WL_GATHER, and on the street its rows as the far tier's. */
   _gatherBuilt(s, sub, p, ci, mask, kind, eye, cand) {
-    const b = p.ball, i = ci * 4, d = Math.hypot(b[i] - eye[0], b[i + 1] - eye[1], b[i + 2] - eye[2]) - b[i + 3];
+    const b = p.ball, i = ci * 4, d = len3(b[i] - eye[0], b[i + 1] - eye[1], b[i + 2] - eye[2]) - b[i + 3];
     const n = d > WL_GATHER ? 0 : this._gatherCell(s, sub, p.tiles[ci], ci, mask, kind, eye, cand);
     if (kind === 'street') this._gatherRows(s, sub, p.tiles[ci], ci, mask, eye);
     return n;
@@ -845,13 +915,12 @@ export class WindowLightPass {
       const ax = P[a] - eye[0], ay = P[a + 1] - eye[1], az = P[a + 2] - eye[2];
       const ex = P[b] - P[a], ey = P[b + 1] - P[a + 1], ez = P[b + 2] - P[a + 2];
       const L2 = ex * ex + ey * ey + ez * ez, k = L2 > 0 ? Math.max(0, Math.min(1, -(ax * ex + ay * ey + az * ez) / L2)) : 0;
-      const dMin = Math.hypot(ax + ex * k, ay + ey * k, az + ez * k);
-      if (dMin > WL_FAR_GATHER) continue;
+      const dMin = len3(ax + ex * k, ay + ey * k, az + ez * k);
+      if (dMin > WL_FAR_GATHER || this._farUsed >= WL_FAR_KEY_N) continue;
       const c = this._farPool[this._farUsed] ??= { row: null, dMin: 0, dMax: 0, mask: null, s: null, sub: null, ci: 0, t: null };
       this._farUsed++;
-      c.row = row; c.dMin = dMin; c.dMax = Math.max(Math.hypot(ax, ay, az), Math.hypot(ax + ex, ay + ey, az + ez));
+      c.row = row; c.dMin = dMin; c.dMax = Math.max(len3(ax, ay, az), len3(ax + ex, ay + ey, az + ez));
       c.mask = mask; c.s = s; c.sub = sub; c.ci = ci; c.t = t;
-      this._farCand.push(c);
     }
   }
 
@@ -975,6 +1044,7 @@ export class WindowLightPass {
     const ha = Math.hypot(b[3], b[4], b[5]), grow = 0.5 * n1 * Math.hypot(PU[0], PU[1], PU[2]);
     b[0] += PU[0] * 0.5 * n1; b[1] += PU[1] * 0.5 * n1; b[2] += PU[2] * 0.5 * n1;
     if (ha > 0) { const g = (ha + grow) / ha; b[3] *= g; b[4] *= g; b[5] *= g; }
+    row.ha = ha; row.pu = Math.hypot(PU[0], PU[1], PU[2]);   // AUDIT LIGHT-REACH W6: for the frame's own run (rowBox)
     row.ok = true;
     return true;
   }
@@ -1004,8 +1074,11 @@ export class WindowLightPass {
   _lampLight(c, lamp, fade) {
     const l = this._lt, curtains = c.t.curtains[c.j];
     if (!this._aperture(c, curtains, l)) return null;
-    if (curtains && this._aperture(c, null, this._whole)) l.area += (this._whole.area - l.area) * WL_CURTAIN_PASS;
-    lampOf(l.c, l.nf, l.V, l.src);
+    const whole = curtains && this._aperture(c, null, this._whole) ? this._whole : null;
+    if (whole) l.area += (whole.area - l.area) * WL_CURTAIN_PASS;
+    // AUDIT LIGHT-REACH W3: the room's lamp behind the whole glass - a curtain hides it, it does not move it (and the far
+    // row hangs it there: the gap's middle made the pool jump sideways at the hand-over)
+    lampOf(whole ? whole.c : l.c, l.nf, l.V, l.src);
     const kg = WL_LAMP_GOBO * fade, ks = WL_LAMP_SPILL * fade;
     set3(l.gobo, lamp[0] * kg, lamp[1] * kg, lamp[2] * kg);
     set3(l.spill, lamp[0] * ks, lamp[1] * ks, lamp[2] * ks);
@@ -1041,6 +1114,8 @@ export class WindowLightPass {
     if (this.ubo) gl.deleteBuffer(this.ubo);
     if (this.farUbo) gl.deleteBuffer(this.farUbo);
     this.tex = null; this.ubo = null; this.farUbo = null;
-    this.masks.clear(); this._layers = 0;
+    // AUDIT LIGHT-REACH W7: the free list and the holders go with the layers - kept, a freed layer was given out again
+    // beside the counter's own count of it (two masks on one layer)
+    this.masks.clear(); this._layers = 0; this._free.length = 0; this._holder.length = 0;
   }
 }

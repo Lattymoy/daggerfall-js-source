@@ -194,7 +194,7 @@ test('SHIPYARDS THE HOSTS: world.js places the port\'s places in each port town\
   assert.match(w, /\n {4}if \(portHost && lightsOnAt\(minute\)\) portLightsInto\(csaLit\);/);
   // PIN MOVED (AUDIT SHIPYARDS L4-2): the pool's own light records pushed as they are, the lanterns' colour set on them in
   // place - a night frame mints no object here (PERF-LIGHTS' law)
-  assert.match(w, /function portLightsInto\(out\) \{ if \(portHost\) for \(const l of portHost\.lights\(\)\) \{ l\.color = CITY_LIGHT_COLOR_F32; out\.push\(l\); \} \}/);
+  assert.match(w, /function portLightsInto\(out\) \{ if \(portHost\) for \(const l of portHost\.lights\(streetLightReach\(lightingOn\)\)\) \{ l\.color = CITY_LIGHT_COLOR_F32; out\.push\(l\); \} \}/);   // PIN MOVED (AUDIT LIGHT-REACH S5): at the lane's reach
   assert.match(w, /const glows = portHost\.glows\(cam\.pos\);\n\s*if \(glows\.length\) navalRender\.draw\(\{ particles: glows \}\);/);
   assert.ok(w.indexOf('\n    portGlows();') > w.indexOf("serpentRenderer()?.drawSea(_serpentDraw)"), 'over the sea\'s top, after the serpent\'s marks');
   // PERF-V8: the port's per-frame work is the host's own functions, never inline in the frame (test/scenes/perfv8.test.js)

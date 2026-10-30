@@ -102,7 +102,8 @@ export function createClusterSpace(maxLights = 64) {
     _tiles: new Int16Array(4),   // AUDIT LC1: a slice's tile range, scratch
     _box: new Int16Array(7 * maxLights),   // per light: x0 x1 y0 y1 z0 z1 nearFull (64 by default - the lane's cap is 48; WL1 asks for its own)
     _slices: new Int16Array(4 * CLUSTER_Z * maxLights),   // LIGHT-REACH: per light and slice its tiles x0 x1 y0 y1, x0 -1 for none
-    _sphere: new Float32Array(4 * maxLights),   // LIGHT-REACH: a sphere light's view centre and radius, for its slices
+    _sphere: new Float64Array(4 * maxLights),   // LIGHT-REACH: a sphere light's view centre and radius, for its slices
+    _vb: new Float64Array(6),   // AUDIT LIGHT-REACH A1: a light's view box, x0 x1 y0 y1 d0 dFar (viewBoxCells)
   };
 }
 
@@ -119,12 +120,29 @@ export function createClusterSpace(maxLights = 64) {
  *  hull serves the slices beyond; a sphere that lies wholly inside the band is slice 0, every tile. Nothing that
  *  lights goes dark. */
 export function cellsOfSphere(vx, vy, vz, r, proj, box, at) {
-  return cellsOfViewBox(vx - r, vx + r, vy - r, vy + r, -vz - r, -vz + r, proj, box, at);
+  _sph[0] = vx; _sph[1] = vy; _sph[2] = vz; _sph[3] = r;
+  return sphereCells(_sph, 0, proj, box, at, _vbScratch);
 }
+/** The sphere at `o` in `sph` (view centre, radius): its view box into `vb`, then its cells. */
+function sphereCells(sph, o, proj, box, at, vb) {
+  const vx = sph[o], vy = sph[o + 1], vz = sph[o + 2], r = sph[o + 3];
+  vb[0] = vx - r; vb[1] = vx + r; vb[2] = vy - r; vb[3] = vy + r; vb[4] = -vz - r; vb[5] = -vz + r;
+  return viewBoxCells(vb, proj, box, at);
+}
+const _sph = new Float64Array(4), _vbScratch = new Float64Array(6);
 /** LIGHT-REACH: a view-space box's cells - x0..x1, y0..y1 and the view depths d0..d1 (d0 the nearer) - by the
  *  sphere's own rules (cellsOfSphere is this for the sphere's box). A light lit in a narrow volume (a window's beam)
  *  takes the box of that volume, not the box of its reach in every direction. */
 export function cellsOfViewBox(x0, x1, y0, y1, d0, dFar, proj, box, at) {
+  const vb = _vbScratch;
+  vb[0] = x0; vb[1] = x1; vb[2] = y0; vb[3] = y1; vb[4] = d0; vb[5] = dFar;
+  return viewBoxCells(vb, proj, box, at);
+}
+/** AUDIT LIGHT-REACH A1: cellsOfViewBox off `vb` [x0, x1, y0, y1, d0, dFar]. A frame's builds pass a light's floats
+ *  through an array: a float handed to a call V8 does not inline is a heap number, and six of them a light tripled
+ *  the garbage a night street's frame made. */
+function viewBoxCells(vb, proj, box, at) {
+  const x0 = vb[0], x1 = vb[1], y0 = vb[2], y1 = vb[3], d0 = vb[4], dFar = vb[5];
   if (dFar <= 0) return false;   // wholly behind the eye
   const nearFull = d0 < CLUSTER_NEAR;
   box[at + 6] = nearFull ? 1 : 0;
@@ -151,12 +169,13 @@ export function cellsOfViewBox(x0, x1, y0, y1, d0, dFar, proj, box, at) {
     box[at] = 0; box[at + 1] = CLUSTER_X - 1; box[at + 2] = 0; box[at + 3] = CLUSTER_Y - 1; box[at + 4] = 0; box[at + 5] = 0;
     return true;
   }
-  const tile = (n, cells) => { const t = Math.floor((n + 1) * 0.5 * cells); return t < 0 ? 0 : t >= cells ? cells - 1 : t; };
   box[at] = tile(minX, CLUSTER_X); box[at + 1] = tile(maxX, CLUSTER_X);
   box[at + 2] = tile(minY, CLUSTER_Y); box[at + 3] = tile(maxY, CLUSTER_Y);
   box[at + 4] = sliceOf(dNear); box[at + 5] = sliceOf(dFar);
   return true;
 }
+/** A clip-space coordinate's tile, clamped to the grid. */
+function tile(n, cells) { const t = Math.floor((n + 1) * 0.5 * cells); return t < 0 ? 0 : t >= cells ? cells - 1 : t; }
 /** AUDIT LC1: the tile range of a light's box in slice `cz` - every tile in slice 0 for a light that reaches the
  *  near band, the hull otherwise. */
 function tilesIn(box, at, cz, out) {
@@ -172,26 +191,30 @@ function tilesIn(box, at, cz, out) {
  * count, then write - so the lists are one flat array in cell order with no per-cell allocation.
  */
 export function buildLightClusters(lights, count, view, proj, space) {
-  const sph = space._sphere;
-  return binLights(count, space, (i, box, at) => {
-    const r = lights[i * 4 + 3];
-    if (!(r > 0)) return false;
-    const x = lights[i * 4], y = lights[i * 4 + 1], z = lights[i * 4 + 2];
-    const vx = view[0] * x + view[4] * y + view[8] * z + view[12];
-    const vy = view[1] * x + view[5] * y + view[9] * z + view[13];
-    const vz = view[2] * x + view[6] * y + view[10] * z + view[14];
-    sph[i * 4] = vx; sph[i * 4 + 1] = vy; sph[i * 4 + 2] = vz; sph[i * 4 + 3] = r;
-    return cellsOfSphere(vx, vy, vz, r, proj, box, at);
-  }, (i, cz, out) => sphereSlice(sph[i * 4], sph[i * 4 + 1], sph[i * 4 + 2], sph[i * 4 + 3], cz, proj, out));
+  return binLights(false, lights, count, view, proj, space);
 }
-/** LIGHT-REACH: the depths slice k spans (the shader's sliceOf), widened by a thousandth for the GPU's rounding. */
-const sliceNear = (k) => (k <= 0 ? 0 : CLUSTER_NEAR * Math.exp(k / CLUSTER_Z_SCALE) * 0.999);
-const sliceFar = (k) => (k >= CLUSTER_Z - 1 ? Infinity : CLUSTER_NEAR * Math.exp((k + 1) / CLUSTER_Z_SCALE) * 1.001);
-/** LIGHT-REACH: a sphere's tiles in one slice, narrowed in `out` (its box's tiles) to those of its cross-section there:
- *  the box of the sphere within the slab is as wide as its widest circle in the slab. A light near the edge of its
- *  depth took every tile its whole box did. False when the slab holds none of it. */
-export function sphereSlice(vx, vy, vz, r, cz, proj, out) {
-  const dc = -vz, lo = sliceNear(cz), hi = sliceFar(cz);
+/** A sphere light's cells (`lights` the renderer's [x, y, z, range] a light): its view centre and radius kept in the
+ *  space's `_sphere` for its slices. */
+function sphereLightCells(lights, i, view, proj, space, box, at) {
+  const r = lights[i * 4 + 3], sph = space._sphere;
+  if (!(r > 0)) return false;
+  const x = lights[i * 4], y = lights[i * 4 + 1], z = lights[i * 4 + 2];
+  sph[i * 4] = view[0] * x + view[4] * y + view[8] * z + view[12];
+  sph[i * 4 + 1] = view[1] * x + view[5] * y + view[9] * z + view[13];
+  sph[i * 4 + 2] = view[2] * x + view[6] * y + view[10] * z + view[14];
+  sph[i * 4 + 3] = r;
+  return sphereCells(sph, i * 4, proj, box, at, space._vb);
+}
+/** LIGHT-REACH: the depths slice k spans (the shader's sliceOf), widened by a thousandth for the GPU's rounding - a
+ *  table (AUDIT LIGHT-REACH A2: two exp a slice a light were a tenth of the lanterns' build). */
+const SLICE_LO = Float64Array.from({ length: CLUSTER_Z }, (_, k) => (k <= 0 ? 0 : CLUSTER_NEAR * Math.exp(k / CLUSTER_Z_SCALE) * 0.999));
+const SLICE_HI = Float64Array.from({ length: CLUSTER_Z }, (_, k) => (k >= CLUSTER_Z - 1 ? Infinity : CLUSTER_NEAR * Math.exp((k + 1) / CLUSTER_Z_SCALE) * 1.001));
+/** LIGHT-REACH: the sphere at `o` in `sph` (view centre, radius) - its tiles in one slice, narrowed in `out` (its box's
+ *  tiles) to those of its cross-section there: the box of the sphere within the slab is as wide as its widest circle
+ *  in the slab. A light near the edge of its depth took every tile its whole box did. False when the slab holds none. */
+export function sphereSlice(sph, o, cz, proj, out) {
+  const vx = sph[o], vy = sph[o + 1], vz = sph[o + 2], r = sph[o + 3];
+  const dc = -vz, lo = SLICE_LO[cz], hi = SLICE_HI[cz];
   const dz = dc < lo ? lo - dc : dc > hi ? dc - hi : 0;
   if (dz >= r) return false;
   const rs = Math.sqrt(r * r - dz * dz), dA = Math.max(lo, dc - r, CLUSTER_NEAR), dB = Math.min(hi, dc + r);
@@ -206,7 +229,6 @@ export function sphereSlice(vx, vy, vz, r, cz, proj, out) {
     if (ny < minY) minY = ny; if (ny > maxY) maxY = ny;
   }
   if (minX > 1 || maxX < -1 || minY > 1 || maxY < -1) return false;
-  const tile = (n, cells) => { const t = Math.floor((n + 1) * 0.5 * cells); return t < 0 ? 0 : t >= cells ? cells - 1 : t; };
   out[0] = Math.max(out[0], tile(minX, CLUSTER_X)); out[1] = Math.min(out[1], tile(maxX, CLUSTER_X));
   out[2] = Math.max(out[2], tile(minY, CLUSTER_Y)); out[3] = Math.min(out[3], tile(maxY, CLUSTER_Y));
   return out[0] <= out[1] && out[2] <= out[3];
@@ -215,28 +237,31 @@ export function sphereSlice(vx, vy, vz, r, cz, proj, out) {
  *  its three half-axes (each a vector: the axis times half its length, any orientation). The view-space box of each
  *  is its centre in view and, on each view axis, the sum of the half-axes' lengths along it. */
 export function buildLightClusterBoxes(boxes, count, view, proj, space) {
-  return binLights(count, space, (i, box, at) => {
-    const o = i * LC_BOX, x = boxes[o], y = boxes[o + 1], z = boxes[o + 2];
-    const vx = view[0] * x + view[4] * y + view[8] * z + view[12];
-    const vy = view[1] * x + view[5] * y + view[9] * z + view[13];
-    const vz = view[2] * x + view[6] * y + view[10] * z + view[14];
-    let ex = 0, ey = 0, ez = 0;
-    for (let k = o + 3; k < o + LC_BOX; k += 3) {
-      const ax = boxes[k], ay = boxes[k + 1], az = boxes[k + 2];
-      ex += Math.abs(view[0] * ax + view[4] * ay + view[8] * az);
-      ey += Math.abs(view[1] * ax + view[5] * ay + view[9] * az);
-      ez += Math.abs(view[2] * ax + view[6] * ay + view[10] * az);
-    }
-    if (!(ex + ey + ez > 0)) return false;
-    return cellsOfViewBox(vx - ex, vx + ex, vy - ey, vy + ey, -vz - ez, -vz + ez, proj, box, at);
-  });
+  return binLights(true, boxes, count, view, proj, space);
+}
+/** A box light's cells (`boxes` LC_BOX floats a light). */
+function boxLightCells(boxes, i, view, proj, space, box, at) {
+  const vb = space._vb, o = i * LC_BOX, x = boxes[o], y = boxes[o + 1], z = boxes[o + 2];
+  const vx = view[0] * x + view[4] * y + view[8] * z + view[12];
+  const vy = view[1] * x + view[5] * y + view[9] * z + view[13];
+  const vz = view[2] * x + view[6] * y + view[10] * z + view[14];
+  let ex = 0, ey = 0, ez = 0;
+  for (let k = o + 3; k < o + LC_BOX; k += 3) {
+    const ax = boxes[k], ay = boxes[k + 1], az = boxes[k + 2];
+    ex += Math.abs(view[0] * ax + view[4] * ay + view[8] * az);
+    ey += Math.abs(view[1] * ax + view[5] * ay + view[9] * az);
+    ez += Math.abs(view[2] * ax + view[6] * ay + view[10] * az);
+  }
+  if (!(ex + ey + ez > 0)) return false;
+  vb[0] = vx - ex; vb[1] = vx + ex; vb[2] = vy - ey; vb[3] = vy + ey; vb[4] = -vz - ez; vb[5] = -vz + ez;
+  return viewBoxCells(vb, proj, box, at);
 }
 /** LIGHT-REACH: a box light's floats - its centre, then three half-axis vectors. */
 export const LC_BOX = 12;
-/** The two passes both builds share: `cells(i, box, at)` writes light i's cell range, or answers false for none;
- *  `slice(i, cz, out)`, given, narrows a slice's tiles (LIGHT-REACH: a sphere's cross-section) or answers false for none.
- *  The first pass keeps each slice's tiles, so the second writes the same cells it counted. */
-function binLights(count, space, cells, slice = null) {
+/** The two passes both builds share, over `src`'s lights - boxes (`boxes` true) or spheres, whose slices each narrow
+ *  to the sphere's cross-section there (LIGHT-REACH). The first pass keeps each slice's tiles, so the second writes the
+ *  same cells it counted. AUDIT LIGHT-REACH A1: no callback a build - two closures a frame were its last garbage. */
+function binLights(boxes, src, count, view, proj, space) {
   const counts = space.counts, grid = space.grid, list = space.list, box = space._box, st = space._slices;
   counts.fill(0);
   space.total = 0; space.lights = 0; space.rows = 0; space.built = false;
@@ -246,13 +271,13 @@ function binLights(count, space, cells, slice = null) {
   for (let i = 0; i < n; i++) {
     const at = i * 7;
     box[at] = -1;
-    if (!cells(i, box, at)) { box[at] = -1; continue; }
+    if (!(boxes ? boxLightCells(src, i, view, proj, space, box, at) : sphereLightCells(src, i, view, proj, space, box, at))) { box[at] = -1; continue; }
     touched++;
     const z0 = box[at + 4], z1 = box[at + 5];
     for (let cz = z0; cz <= z1; cz++) {
       const s = (i * CLUSTER_Z + cz) * 4;
       tilesIn(box, at, cz, t4);
-      if (slice && !(cz === 0 && box[at + 6]) && !slice(i, cz, t4)) { st[s] = -1; continue; }
+      if (!boxes && !(cz === 0 && box[at + 6]) && !sphereSlice(space._sphere, i * 4, cz, proj, t4)) { st[s] = -1; continue; }
       st[s] = t4[0]; st[s + 1] = t4[1]; st[s + 2] = t4[2]; st[s + 3] = t4[3];
       const x0 = t4[0], x1 = t4[1], y0 = t4[2], y1 = t4[3];
       total += (x1 - x0 + 1) * (y1 - y0 + 1);

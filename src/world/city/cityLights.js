@@ -29,8 +29,12 @@ export const CITY_LIGHT_RANGE = 18;
  *  lamps stand 70 to 130 m apart in Daggerfall, and DFU's reach lit a pool of about 9 m round each. A departure from
  *  the prefab's range; the classic set keeps DFU's. */
 export const STREET_LIGHT_REACH = 1.5;
+/** LIGHT-REACH: the share of its classic reach a lantern takes on the lane (`lane` true) - the town's, and (AUDIT
+ *  LIGHT-REACH S5) the harbour's lamps lit beside them in the same hours and colour, so each keeps its size to its
+ *  neighbours: the quays' lanterns, the shipyard's office lantern and the lighthouse's lamp. */
+export const streetLightReach = (lane) => (lane ? STREET_LIGHT_REACH : 1);
 /** LIGHT-REACH: a town lantern's range on the lane (`lane` true) or the classic set. */
-export const streetLightRange = (lane) => CITY_LIGHT_RANGE * (lane ? STREET_LIGHT_REACH : 1);
+export const streetLightRange = (lane) => CITY_LIGHT_RANGE * streetLightReach(lane);
 /** LIGHT-REACH: the town's lantern flicker (DaggerfallLight's Animate) for a host - its range, variance and step all
  *  scaled by the lane's reach, so a lantern flickers by the same share of its range on either set. */
 export function streetLanternAnimator(count, lane) {

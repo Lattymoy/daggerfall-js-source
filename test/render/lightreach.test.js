@@ -1,15 +1,10 @@
 // LIGHT-REACH (2026-10-29, the owner: "Increase distance for street and window lighting in overworld without killing
-// performance"; asked which distance: "Both" - farther from each source, and drawn farther from the player).
-//
-// Measured first, in the running game over the player's own ARENA2: Daggerfall's 155 lanterns already lit out to 170-280
-// m (all 48 lane slots), but each reached about 9 m from its post; the windows' light stopped at 40-64 m (the 128-light
-// block full) and reached 8 m from the glass. And the windows were the cost: a window light was binned into the cluster
-// grid by the box of its whole reach's sphere, though it lights only a beam through its glass and a glow beside it.
-//
-// Pinned here: the box builder against the sphere builder; a window light's box holds every point it lights (the
-// shader's twin) and is a fraction of the sphere's; a far row lights exactly what its tiles light; the near fade and
-// the row's weight sum to one; the pass's far tier on a long street; the shader's text; the lane's lantern reach and its
-// flicker; the lantern loop skipping a surface turned from the light.
+// performance"; which distance: "Both"). Measured first over ARENA2: lanterns lit to 170-280 m but each reached ~9 m;
+// window light stopped at 40-64 m (its block full), reached 8 m, and was binned by its reach's sphere, though it lights
+// a beam through its glass and a glow beside it. Pinned here: the box builder against the sphere's; a window's box holds
+// what it lights and is a fraction of the sphere's; a far row lights what its tiles do; the tiers sum to one; the far
+// tier on a long street; the shader's text; the lane's lantern reach and flicker; the loop's back-face skip. AUDIT
+// LIGHT-REACH's own pins are test/render/audit_lightreach.test.js.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -23,51 +18,17 @@ import {
 } from '../../src/render/windowLight.js';
 import { ROOM_CURTAIN_EDGE } from '../../src/world/windowRoomArt.js';
 import { elAttenuation, EL_MESH_FS, EL_TERRAIN_FS, EL_CHAR_FS, EL_DECAL_FS, EL_BB_FS, EL_SPEC_GLOSS, EL_SPEC_STRENGTH, EL_EXPOSURE, EL_LIGHT_GAIN } from '../../src/render/enhancedLighting.js';
-import { AIR_ADAPT_MAX } from '../../src/render/airPass.js';
 import { CITY_LIGHT_RANGE, STREET_LIGHT_REACH, streetLightRange, streetLanternAnimator } from '../../src/world/city/cityLights.js';
 import { CityLightAnimator } from '../../src/world/worldClock.js';
 import { perspective, mirrorProjectionX, lookAt, identity } from '../../src/world/mat4.js';
 import { hostText } from '../hostText.mjs';
+import { rng, norm, cross, inBox, boxVolume, fakeGl, glassAt, crossMask, highAt, front } from '../lightReachRig.mjs';
 
 const PROJ = mirrorProjectionX(perspective(Math.PI / 3, 16 / 9, 0.1, 400));
 const VIEW = lookAt([3, 1.7, 2], [-4, 1.2, -9], [0, 1, 0]);   // turned off every axis, so a box's half-axes mix in view
 const VP = [0, 0, 1920, 1080];
 const near = (a, b, e = 1e-4) => Math.abs(a - b) <= e;
 /** A seeded LCG, the same points every run. */
-function rng(seed) { let s = seed >>> 0 || 1; return () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296; }; }
-const norm = (v) => { const l = Math.hypot(v[0], v[1], v[2]); return [v[0] / l, v[1] / l, v[2] / l]; };
-const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
-/** Is `p` inside a box of LC_BOX floats at `at` (centre, three half-axes)? */
-function inBox(B, at, p) {
-  for (let h = at + 3; h < at + LC_BOX; h += 3) {
-    const L2 = B[h] ** 2 + B[h + 1] ** 2 + B[h + 2] ** 2;
-    if (Math.abs(((p[0] - B[at]) * B[h] + (p[1] - B[at + 1]) * B[h + 1] + (p[2] - B[at + 2]) * B[h + 2]) / L2) > 1 + 1e-5) return false;
-  }
-  return true;
-}
-const boxVolume = (B, at = 0) => 8 * [3, 6, 9].reduce((v, h) => v * Math.hypot(B[at + h], B[at + h + 1], B[at + h + 2]), 1);
-const fakeGl = (log = []) => new Proxy({}, { get: (o, k) => (typeof k === 'string' && k.toUpperCase() === k ? k : (...a) => { log.push([k, ...a]); return {}; }) });
-/** A window picture's mask: a cross of lead over four panes. */
-const glassAt = (u, v) => u > 0.1 && u < 0.9 && v > 0.1 && v < 0.9 && Math.abs(u - 0.5) > 0.06 && Math.abs(v - 0.5) > 0.06;
-function crossMask(W = 64, at = glassAt) {
-  const colors = new Uint8ClampedArray(W * W * 4);
-  for (let y = 0; y < W; y++) for (let x = 0; x < W; x++) if (at((x + 0.5) / W, (y + 0.5) / W)) colors.fill(255, (y * W + x) * 4, (y * W + x) * 4 + 4);
-  return { width: W, height: W, colors };
-}
-/** Glass high in its tile and off to one side, so the glass's centre is not the tile's. */
-const highAt = (u, v) => u > 0.2 && u < 0.95 && v > 0.45 && v < 0.95 && Math.abs(u - 0.6) > 0.05;
-/** A house front `tiles` x 2 tiles of `tw` m from x = `x0`, its glass facing +z at z = -10, turned by `yaw` about the origin. */
-function front(tiles = 8, yaw = 0, tw = 2.5, x0 = -0.5 * tw * tiles) {
-  const cs = Math.cos(yaw), sn = Math.sin(yaw), rot = (x, z) => [x * cs + z * sn, -x * sn + z * cs];
-  const P = [], N = [], UV = [];
-  for (const [a, b] of [[0, 0], [1, 0], [1, 1], [0, 1]]) {
-    const [x, z] = rot(x0 + tw * tiles * a, -10), [nx, nz] = rot(0, 1);
-    P.push(x, 5 * b, z); N.push(nx, 0, nz); UV.push(tiles * a, 2 * b);
-  }
-  const set = windowAperturesOf(new Float32Array(P), new Float32Array(N), new Float32Array(UV), new Uint32Array([0, 1, 2, 0, 2, 3]), 0, 6);
-  return { key: 'm', ap: set.recs, cells: set.cells, rot };
-}
-
 test('LIGHT-REACH LR1: THE BOX BUILDER - a sphere\'s view box takes the sphere\'s own cells, a light given as a box of three half-axes takes exactly the cells of the sphere it bounds when the axes are its radius, every point inside a turned box finds the light in its own cell, and a box of no size takes none (mutants: a half-axis summed without its size, a box\'s depth taken as its width)', () => {
   const R = rng(11), box = new Int16Array(7), box2 = new Int16Array(7);
   for (let k = 0; k < 400; k++) {
@@ -355,16 +316,19 @@ test('LIGHT-REACH LR7: THE STREET\'S LANTERNS REACH FARTHER ON THE LANE - half a
   assert.match(hostText('src/scenes/exterior.js'), /const lightAnimator = streetLanternAnimator\(cityLights\.length, lightingOn\);/);
 });
 
-test('LIGHT-REACH LR8: A SURFACE TURNED FROM THE LIGHT PAYS FOR NONE OF IT - the lane\'s lantern loop leaves a light whose direction faces away from the surface before its shadow taps, whose diffuse is zero there and whose glint is at most a display step on the darkest ground (N.H at most 0.71 there); and the windows\' reach is half again WL1\'s 8 (mutants: the skip after the shadow, the reach)', () => {
+test('LIGHT-REACH LR8 (AUDIT LIGHT-REACH S2): A SURFACE TURNED FROM THE LIGHT TAKES NONE OF IT - the lane\'s lantern loop leaves a light behind the surface before its shadow taps, its glint and its wet glint. Before, an eye grazing the surface from the far side of the lamp saw that lamp\'s glint through it (N.H near 1 there): a leak the skip closes, a change a player sees. And the windows\' reach is half again WL1\'s 8 (mutants: the skip after the shadow, the reach)', () => {
   for (const fs of [EL_MESH_FS, EL_TERRAIN_FS, EL_CHAR_FS, EL_DECAL_FS]) {
-    const loop = fs.slice(fs.indexOf('vec3 elPointLitWet('));
-    const skip = loop.indexOf('if (dot(n, Ln) <= 0.0) continue;'), range = loop.indexOf('if (d >= uPointLights[i].w) continue;'), taps = loop.indexOf('int k = uCasterOf[i];');
+    const loop = fs.slice(fs.indexOf('vec3 elPointLitWet('), fs.indexOf('vec3 elPointLit(vec3 wp, vec3 n) {'));
+    const at = (t) => loop.indexOf(t);
+    const skip = at('if (dot(n, Ln) <= 0.0) continue;'), range = at('if (d >= uPointLights[i].w) continue;'), taps = at('int k = uCasterOf[i];');
     assert.ok(range > 0 && skip > range && taps > skip, 'after the range test, before the caster');
+    assert.ok(at('float spec = elSpecLobe(') > skip && at('glint += att * g * wetFresnel(') > skip, 'before the glint and the wet glint');
   }
-  // the bound: the glint's lobe at N.H = 1/sqrt 2, the lane's near-field gain, the exposure and the eye opened all the way,
-  // a lamp twice white - under one display step at the darkest end (sRGB's linear toe)
-  const worst = Math.SQRT1_2 ** EL_SPEC_GLOSS * EL_SPEC_STRENGTH * EL_LIGHT_GAIN * EL_EXPOSURE * AIR_ADAPT_MAX * 2;
-  assert.ok(worst * 12.92 * 255 < 1, `${(worst * 12.92 * 255).toFixed(2)} of a step`);
+  // the leak: the lamp in the surface's plane (N.L = 0), the eye 5 degrees over it from the other side - the half
+  // vector all but the normal, the glint near its whole strength, at the lane's gain and exposure: a thousand steps
+  const th = 5 * Math.PI / 180, h = [1 - Math.cos(th), Math.sin(th)], ndoth = h[1] / Math.hypot(h[0], h[1]);
+  const leak = ndoth ** EL_SPEC_GLOSS * EL_SPEC_STRENGTH * EL_LIGHT_GAIN * EL_EXPOSURE;
+  assert.ok(ndoth > 0.99 && leak * 12.92 * 255 > 100, `N.H ${ndoth.toFixed(3)}, ${(leak * 12.92 * 255).toFixed(0)} display steps`);
   assert.equal(WL_LAMP_RANGE, 12);
 });
 
