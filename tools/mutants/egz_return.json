@@ -470,8 +470,8 @@
   {
     "name": "EGZ-feint-fill-runs-on",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "((bl.cut ? Math.min(t, bl.cut) : t) - from)",
-    "new": "(t - from)",
+    "old": "      sh.t = Math.max(0, Math.min(1, ((bl.cut ? Math.min(t, bl.cut) : t) - from) / Math.max(1, bl.wu)));",
+    "new": "      sh.t = Math.max(0, Math.min(1, (t - from) / Math.max(1, bl.wu)));",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "EGZ-feint-fade-slow",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "sh.alpha = bl.cut ? Math.max(0, 1 - (t - bl.cut) / EG_FEINT_FADE_MS)",
-    "new": "sh.alpha = bl.cut ? Math.max(0, 1 - (t - bl.cut) / 300)",
+    "old": "        ? Math.max(0, 1 - (t - bl.cut) / EG_FEINT_FADE_MS)",
+    "new": "        ? Math.max(0, 1 - (t - bl.cut) / 300)",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "EGZ-feint-not-dashed",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "      sh.cut = !!bl.cut;",
-    "new": "      sh.cut = false;",
+    "old": "      sh.cut = !!bl.cut; // EG-ZD (section 13.2): dashed as it fades",
+    "new": "      sh.cut = false; // EG-ZD (section 13.2): dashed as it fades",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "EGZ-every-blow-dashed",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "sh.look = bits | (sh.cut ? EG_LOOK_BIT.dash : 0);",
-    "new": "sh.look = bits | EG_LOOK_BIT.dash;",
+    "old": "      sh.look = bits | (sh.cut ? EG_LOOK_BIT.dash : 0); // EG-ZD: a cut feint dashed as it fades",
+    "new": "      sh.look = bits | EG_LOOK_BIT.dash; // EG-ZD: a cut feint dashed as it fades",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "EGZ-stale-dash-kept",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "{ sl.mine = false; sl.cut = false; sl.y = NaN;",
-    "new": "{ sl.mine = false; sl.y = NaN;",
+    "old": "        sl.cut = false;\n        sl.y = NaN;",
+    "new": "        sl.y = NaN;",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "EGZ-feint-lingers",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "!bl.cut || t - bl.cut < EG_FEINT_FADE_MS)",
-    "new": "!bl.cut || t - bl.cut < 1000)",
+    "old": "      for (const bl of F.blows) if (!bl.cut || t - bl.cut < EG_FEINT_FADE_MS) _orderIn.push(bl);",
+    "new": "      for (const bl of F.blows) if (!bl.cut || t - bl.cut < 1000) _orderIn.push(bl);",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]

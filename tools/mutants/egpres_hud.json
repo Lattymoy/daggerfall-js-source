@@ -434,8 +434,8 @@
   {
     "name": "EGPRES-a-fill-dimming-the-line",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "sh.edge = sh.mine ? brighter(pal.danger) : pal.danger;",
-    "new": "sh.edge = sh.mine ? brighter(pal.danger) : pal.danger.map((v) => v * fill);",
+    "old": "      sh.edge = sh.mine ? brighter(pal.danger) : pal.danger;",
+    "new": "      sh.edge = sh.mine ? brighter(pal.danger) : pal.danger.map((v) => v * fill);",
     "tests": [
       "test/net/eliteGates/egpres_hud.test.js",
       "test/world/eliteGates/eglook_lines.test.js"
@@ -444,8 +444,8 @@
   {
     "name": "EGPRES-the-gold-read-as-danger",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "if (sameRgb(sh.color, GOLD)) sh.color = pal.safety;",
-    "new": "if (sameRgb(sh.color, GOLD)) sh.color = pal.danger;",
+    "old": "      if (sameRgb(sh.color, GOLD)) sh.color = pal.safety;",
+    "new": "      if (sameRgb(sh.color, GOLD)) sh.color = pal.danger;",
     "tests": [
       "test/net/eliteGates/egpres_hud.test.js"
     ]
@@ -453,8 +453,8 @@
   {
     "name": "EGPRES-the-fill-never-dimmed",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "sh.fillK = fill * (",
-    "new": "sh.fillK = 1 * (",
+    "old": "      sh.fillK = fill * (sh.pool === TELEGRAPH_POOL.blow && !sh.mine ? quiet.aimedOther : 1);",
+    "new": "      sh.fillK = 1 * (sh.pool === TELEGRAPH_POOL.blow && !sh.mine ? quiet.aimedOther : 1);",
     "tests": [
       "test/net/eliteGates/egpres_hud.test.js",
       "test/world/eliteGates/eglook_lines.test.js"
@@ -610,8 +610,8 @@
   {
     "name": "EGPRES-the-pass-drawn-past-the-palette",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "egLookShapes(_shapes, egAccessNow(), stageNow);",
-    "new": ";",
+    "old": "      if (proj && view) sigilsFrame(multiply(proj, view, _vp));\n      egLookShapes(_shapes, egAccessNow(), stageNow); // EG-G1/EG-G2: each shape in the shelf's palette, fill and style bit",
+    "new": "      if (proj && view) sigilsFrame(multiply(proj, view, _vp)); // EG-G1/EG-G2: each shape in the shelf's palette, fill and style bit",
     "tests": [
       "test/net/eliteGates/egpres_hud.test.js"
     ]

@@ -235,7 +235,7 @@ test('EG-G2 THE MIX IN THE FIGHT (scenes/eliteGates/egFight.js): a lord\'s blow 
   assert.ok(fight.shapes().some((s) => s.mine === false && s.fogFloor), 'the look laid on at the draw');
   // the wind-up barks: collected while the bodies draw, then handed to the mix's cap - never played one by one
   const SRC = readFileSync(new URL('../../../src/scenes/eliteGates/egFight.js', import.meta.url), 'utf8');
-  assert.match(SRC, /_barks\.push\(\{ kind: look\.mobile, at: \[d\.at\[0\], d\.at\[1\], d\.at\[2\]\], cue: hostCue\('windup', look\.mobile\), critical: !!look\.lord \}\);/);
+  assert.match(SRC, /_barks\.push\(\{\n\s*kind: look\.mobile,\n\s*at: \[d\.at\[0\], d\.at\[1\], d\.at\[2\]\],\n\s*cue: hostCue\('windup', look\.mobile\),\n\s*critical: !!look\.lord,\n\s*\}\);/);
   assert.match(SRC, /mix\.barks\(_barks, cam\(\), \(b\) => play3\(b\.cue, b\.at\)\);/);
   assert.ok(!/play3\(hostCue\('windup'/.test(SRC), 'no wind-up played past the cap');
 });

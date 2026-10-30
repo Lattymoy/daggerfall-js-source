@@ -120,8 +120,8 @@
   {
     "name": "EGPERFECT-the-vent-on-its-first-frame",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "if (st.fire && !ventJudged.has(cycle) && standing && Math.abs(fy - s.y) < 1.5 && egInVentDisc(s, f[0], f[1])) {",
-    "new": "if (st.fire && !ventJudged.has(cycle) && (ventJudged.set(cycle, 1), standing && Math.abs(fy - s.y) < 1.5 && egInVentDisc(s, f[0], f[1]))) {",
+    "old": "        if (st.fire && !ventJudged.has(cycle) && standing && Math.abs(fy - s.y) < 1.5 && egInVentDisc(s, f[0], f[1])) {",
+    "new": "        if (\n          st.fire &&\n          !ventJudged.has(cycle) &&\n          (ventJudged.set(cycle, 1), standing && Math.abs(fy - s.y) < 1.5 && egInVentDisc(s, f[0], f[1]))\n        ) {",
     "tests": [
       "test/net/eliteGates/egperfect_vent.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "EGPERFECT-the-rampart-vent-on-its-first-frame",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "if (st.st === 'fire' && standing && ventJudged.get(`rb${i}`) !== st.at && egInVent(v, f[0], f[1]))",
-    "new": "if (st.st === 'fire' && ventJudged.get(`rb${i}`) !== st.at && (ventJudged.set(`rb${i}`, st.at), standing && egInVent(v, f[0], f[1])))",
+    "old": "        if (st.st === 'fire' && standing && ventJudged.get(`rb${i}`) !== st.at && egInVent(v, f[0], f[1])) {",
+    "new": "        if (\n          st.st === 'fire' &&\n          ventJudged.get(`rb${i}`) !== st.at &&\n          (ventJudged.set(`rb${i}`, st.at), standing && egInVent(v, f[0], f[1]))\n        ) {",
     "tests": [
       "test/net/eliteGates/egperfect_vent.test.js"
     ]

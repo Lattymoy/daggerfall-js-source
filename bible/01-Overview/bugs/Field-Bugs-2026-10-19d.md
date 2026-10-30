@@ -39,7 +39,7 @@ change is: the client is unchanged.
 
 NOT CHANGED, AND OPEN. The plates are still unmarked on the screen. With a kill now counting, the plate is the way
 round a Caster rather than the only way through, so marking it is a later slice's: a ground mark in
-`scenes/eliteGates/egFight.js` beside the Winch's (`egFight.js:"function winchPlates(F, t) {"`, FB1018D WINCH-PLATES),
+`scenes/eliteGates/egFight.js` beside the Winch's (`egFight.js:"function winchPlates"`, FB1018D WINCH-PLATES),
 while a pillar is not done.
 
 Pins: `test/net/eliteGates/fb1019d_gauntletslain.test.js` (2) - over the real relay (egBreachNew, egEnter, egStep,

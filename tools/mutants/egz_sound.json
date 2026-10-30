@@ -299,8 +299,8 @@
   {
     "name": "EGZ-tell-every-frame",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "if (!toldHeard.has(bl.i) && t >= Math.max(",
-    "new": "if (t >= Math.max(",
+    "old": "        if (\n          !toldHeard.has(bl.i) &&\n          t >= Math.max(bl.heard ?? -Infinity, bl.at - bl.wu - (bl.ol ?? 0) - (bl.sh ?? 0)) &&\n          t < bl.at\n        ) {",
+    "new": "        if (t >= Math.max(bl.heard ?? -Infinity, bl.at - bl.wu - (bl.ol ?? 0) - (bl.sh ?? 0)) && t < bl.at) {",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "EGZ-tell-before-heard",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "&& t >= Math.max(bl.heard ?? -Infinity, bl.at - bl.wu - (bl.ol ?? 0) - (bl.sh ?? 0)) && t < bl.at) { toldHeard.add",
-    "new": "&& t < bl.at) { toldHeard.add",
+    "old": "        if (\n          !toldHeard.has(bl.i) &&\n          t >= Math.max(bl.heard ?? -Infinity, bl.at - bl.wu - (bl.ol ?? 0) - (bl.sh ?? 0)) &&\n          t < bl.at\n        ) {",
+    "new": "        if (!toldHeard.has(bl.i) && t < bl.at) {",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "EGZ-tell-after-landing",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "(bl.sh ?? 0)) && t < bl.at) { toldHeard.add(bl.i);",
-    "new": "(bl.sh ?? 0))) { toldHeard.add(bl.i);",
+    "old": "        if (\n          !toldHeard.has(bl.i) &&\n          t >= Math.max(bl.heard ?? -Infinity, bl.at - bl.wu - (bl.ol ?? 0) - (bl.sh ?? 0)) &&\n          t < bl.at\n        ) {",
+    "new": "        if (!toldHeard.has(bl.i) && t >= Math.max(bl.heard ?? -Infinity, bl.at - bl.wu - (bl.ol ?? 0) - (bl.sh ?? 0))) {",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "EGZ-peers-never-down-in-fight",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "      mix.peers(true);   // EG-ZH (section 26)",
-    "new": "      mix.peers(false);   // EG-ZH (section 26)",
+    "old": "      mix.peers(true); // EG-ZH (section 26): every peer's sound 4 dB down while a hall's fight runs",
+    "new": "      mix.peers(false); // EG-ZH (section 26): every peer's sound 4 dB down while a hall's fight runs",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "EGZ-peers-never-let-go",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "dropFire(); toldHeard.clear(); mix.peers(false);",
-    "new": "dropFire(); toldHeard.clear();",
+    "old": "      toldHeard.clear();\n      mix.peers(false); // EG-ZH: the flames freed, the peers as they were",
+    "new": "      toldHeard.clear(); // EG-ZH: the flames freed, the peers as they were",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "EGZ-fight-fire-while-told",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "if (p.st === 'live' && hz.kind === 'fall') drawFireFall(hz, t);",
-    "new": "if (hz.kind === 'fall') drawFireFall(hz, t);",
+    "old": "        if (p.st === 'live' && hz.kind === 'fall') drawFireFall(hz, t); // EG-ZH: the fall burning in Daggerfall's own fire",
+    "new": "        if (hz.kind === 'fall') drawFireFall(hz, t); // EG-ZH: the fall burning in Daggerfall's own fire",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
@@ -551,8 +551,8 @@
   {
     "name": "EGZ-fight-frame-frozen",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "frame = Math.floor((t / 1000) * GENERAL_FPS) % n;",
-    "new": "frame = 0;",
+    "old": "      frame = Math.floor((t / 1000) * GENERAL_FPS) % n;",
+    "new": "      frame = 0;",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
@@ -560,8 +560,8 @@
   {
     "name": "EGZ-fight-fire-never-freed",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "function dropFire() { for (const b of fireBatches.values()) renderer?.destroyBillboardBatch?.(b); fireBatches.clear(); }",
-    "new": "function dropFire() { fireBatches.clear(); }",
+    "old": "    for (const b of fireBatches.values()) renderer?.destroyBillboardBatch?.(b);\n    fireBatches.clear();",
+    "new": "    fireBatches.clear();",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
@@ -569,8 +569,8 @@
   {
     "name": "EGZ-fight-upload-every-frame",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "if (!renderer.textures?.has?.(`${EG_FIRE_FALL.archive}_${rkey}`)) uploadRecordFrame",
-    "new": "if (true) uploadRecordFrame",
+    "old": "    if (!renderer.textures?.has?.(`${EG_FIRE_FALL.archive}_${rkey}`))\n      uploadRecordFrame?.(EG_FIRE_FALL.archive, EG_FIRE_FALL.record, frame);",
+    "new": "    if (true) uploadRecordFrame?.(EG_FIRE_FALL.archive, EG_FIRE_FALL.record, frame);",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
@@ -578,8 +578,8 @@
   {
     "name": "EGZ-fight-texture-every-frame",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "if (!fire && getTexture) fire = Promise",
-    "new": "if (getTexture) fire = Promise",
+    "old": "    if (!fire && getTexture)",
+    "new": "    if (getTexture)",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]

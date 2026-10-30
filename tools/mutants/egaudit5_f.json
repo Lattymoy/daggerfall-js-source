@@ -369,8 +369,8 @@
   {
     "name": "EGA5F-screen-any-void",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "&& egRimCastsBack(F.zones, f[0], f[1], t, egFeetY(spec, fy))) { voidAt = t; castBack(); }",
-    "new": ") { voidAt = t; castBack(); }",
+    "old": "        if (z.kind === 'void' && t - voidAt >= 1500 && egRimCastsBack(F.zones, f[0], f[1], t, egFeetY(spec, fy))) {",
+    "new": "        if (z.kind === 'void' && t - voidAt >= 1500) {",
     "tests": [
       "test/net/eliteGates/egaudit5_f_rim.test.js"
     ],

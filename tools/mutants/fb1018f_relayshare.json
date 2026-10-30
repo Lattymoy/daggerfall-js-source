@@ -142,8 +142,8 @@
   {
     "name": "RELAY-SHARE-the-breach-unread",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "hostStandIn({ mobile: look.mobile, name: look.name }, b.i, () => wordShare(d.target?.hp, d.target?.m), myBlowX)",
-    "new": "hostStandIn({ mobile: look.mobile, name: look.name }, b.i, null, myBlowX)",
+    "old": "        entity: hostStandIn(\n          { mobile: look.mobile, name: look.name },\n          b.i,\n          () => wordShare(d.target?.hp, d.target?.m),\n          myBlowX,\n        ),",
+    "new": "        entity: hostStandIn({ mobile: look.mobile, name: look.name }, b.i, null, myBlowX),",
     "tests": [
       "test/systems/loot/fb1018f_relayshare.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "RELAY-SHARE-the-breach-never-refilled",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": " d.target.m = b.max; d.target.hp = b.hp;",
-    "new": " d.target.m = b.max;",
+    "old": "      d.target.hp = b.hp;\n      turnStandIn(d.target, b); // FIELD BUGS 2026-10-18f TURNED-BLOW: a blow from where I stand, on it as it stands, that the relay will refuse is turned here too",
+    "new": "      turnStandIn(d.target, b); // FIELD BUGS 2026-10-18f TURNED-BLOW: a blow from where I stand, on it as it stands, that the relay will refuse is turned here too",
     "tests": [
       "test/systems/loot/fb1018f_relayshare.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "RELAY-SHARE-the-breach-objects-unread",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "crystalStandIn({ mobile: 31, scale: 1 }, b.i, () => c.hp, myBlowX)",
-    "new": "crystalStandIn({ mobile: 31, scale: 1 }, b.i, null, myBlowX)",
+    "old": "        entity: crystalStandIn({ mobile: 31, scale: 1 }, b.i, () => c.hp, myBlowX),",
+    "new": "        entity: crystalStandIn({ mobile: 31, scale: 1 }, b.i, null, myBlowX),",
     "tests": [
       "test/systems/loot/fb1018f_relayshare.test.js"
     ],
@@ -302,8 +302,8 @@
   {
     "name": "RELAY-SHARE-the-breach-object-reader-stale",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "() => c.hp, myBlowX)",
-    "new": "((s0) => () => s0)(b.max > 0 ? b.hp / b.max : 0), myBlowX)",
+    "old": "        entity: crystalStandIn({ mobile: 31, scale: 1 }, b.i, () => c.hp, myBlowX),",
+    "new": "        entity: crystalStandIn(\n          { mobile: 31, scale: 1 },\n          b.i,\n          (\n            (s0) => () =>\n              s0\n          )(b.max > 0 ? b.hp / b.max : 0),\n          myBlowX,\n        ),",
     "tests": [
       "test/systems/loot/fb1018f_relayshare.test.js"
     ],

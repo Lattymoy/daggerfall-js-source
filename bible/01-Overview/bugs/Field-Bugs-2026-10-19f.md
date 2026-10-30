@@ -480,7 +480,7 @@ THE FIX - ONE WHOLE, ONE DOOR.
   it still past the cap at the level cap; the bucket). Pinned against the real constants and every validator.
 - **The number** says what can land (`standInSpell.js:"const shown = standInShown(dealt, standInBlowCap(body.entity, player.level));"`):
   min(the claim, my one-blow cap at my level) - an Elite Breach's grown by my Vestiges' declared factor, which egFight hands its
-  stand-ins (`egFight.js:"const myBlowX = () =>"`, at most EG_BUCKET_X_MAX); on my opponent the referee's spell cap
+  stand-ins (`egFight.js:"const myBlowX = ()"`, at most EG_BUCKET_X_MAX); on my opponent the referee's spell cap
   (ARENA_SPELL_MAX, 60). The paths' riders are told the same (`took` - what the foe could lose, AUDIT SCHOOLS L1 M6). The claim
   still goes out whole: clipped here, it would lose what the relay weighs before its cap.
 - **The door is one** (HOST-SPLIT): `spellOnBoss`, `spellOnCrystal`, `spellOnHost` and `spellOnRival` were four copies in
@@ -633,7 +633,7 @@ times, and the door opened. So the law held, and everything that tells it pointe
 - The words: the objective was `gauntlet: 'Silence the casters.'` (`EG_OBJECTIVES`) and the line
   `` `Casters left: ${pg.left ?? 0}` `` (`egProgressText`). Neither named a plate, and "left" read as a body count.
 - The screen: nothing on the client read `spots.pillar[].plate`. WINCH-PLATES (2026-10-18d) marked the Winch's plates
-  (`egFight.js:"  function winchPlates(F, t) {"`) and recorded the Gauntlet's as left, "on sloped stairs where a flat quad
+  (`egFight.js:"function winchPlates"`) and recorded the Gauntlet's as left, "on sloped stairs where a flat quad
   would cut the slope". That was law 9's lay. From spec law 10 (THE BROKEN WAY) each plate stands on its pillar's flat top,
   beside its stair's head.
 
@@ -643,14 +643,14 @@ THE FIX.
   (`egBrain.js:"P.obj = 'gauntlet'; P.left = F.gauntlet.length; P.silenced = F.gauntlet.map((g) => g.done);"`) and at
   every beat (`egBrain.js:"      F.pg.silenced = F.gauntlet.map((g) => g.done);"`). The wire's `egProgress` already
   passes a short list of numbers (DUEL-RING's `ring` rides the same way), and `left` is unchanged.
-- THE SCREEN MARKS THEM. `egFight.js:"  function gauntletPlates(F, t) {"`, beside `winchPlates`, draws each plate in play
+- THE SCREEN MARKS THEM. `egFight.js:"function gauntletPlates"`, beside `winchPlates`, draws each plate in play
   as the Winch's are drawn through the trial: gold, `EG_TOUCH_M` about, on its own surface. Its height is its ground's,
-  `egFight.js:"export function egPlateY(spec, q) {"`: the pillar's top (2 m) from law 10, the stair's height under it at
+  `egFight.js:"export function egPlateY"`: the pillar's top (2 m) from law 10, the stair's height under it at
   laws 8 and 9, and the walkway's floor before them. A plate whose word says silenced dims to the unlit rune's 0.35
-  (`egFight.js:"sh.alpha = said?.[j] ? 0.35 : 0.85;"`), so a company sees which plates are still to hold. A pillar the
+  (`egFight.js:"sh.alpha = said?.[j]"`), so a company sees which plates are still to hold. A pillar the
   company was not given is not marked (the hall lays six, and a company of n is given `2 + ceil(n/2)`). A screen facing a
   relay before world232 gets no `silenced`, so it draws every plate the hall lays while `left` is above nought
-  (`egFight.js:"    if (!said && !(F.pg.left > 0)) return;"`).
+  (`egFight.js:"if (!said && !(F.pg.left > 0))"`).
 - THE WORDS NAME BOTH WAYS. The objective is *Silence each caster: stand on its plate, or slay it.* and the line is
   *Casters left: 3. Hold a plate 3 s or slay its caster*, its seconds `EG_SILENCE_MS`'s. Both are said in the player's language through the catalog
   (`eg.objective.gauntlet`, `eg.progress.gauntlet`). The objective goes through `egHud.js:"export const egObjectiveText"`,

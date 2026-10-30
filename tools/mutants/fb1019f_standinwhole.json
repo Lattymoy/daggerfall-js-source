@@ -162,8 +162,8 @@
   {
     "name": "STAND-IN-WHOLE-the-breach-reader-dropped",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "b.i, () => wordShare(d.target?.hp, d.target?.m), myBlowX)",
-    "new": "b.i, () => wordShare(d.target?.hp, d.target?.m))",
+    "old": "        entity: hostStandIn(\n          { mobile: look.mobile, name: look.name },\n          b.i,\n          () => wordShare(d.target?.hp, d.target?.m),\n          myBlowX,\n        ),",
+    "new": "        entity: hostStandIn({ mobile: look.mobile, name: look.name }, b.i, () => wordShare(d.target?.hp, d.target?.m)),",
     "tests": [
       "test/net/gate/fb1019f_standinwhole.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "STAND-IN-WHOLE-the-breach-objects-reader-dropped",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "crystalStandIn({ mobile: 31, scale: 1 }, b.i, () => c.hp, myBlowX)",
-    "new": "crystalStandIn({ mobile: 31, scale: 1 }, b.i, () => c.hp)",
+    "old": "        entity: crystalStandIn({ mobile: 31, scale: 1 }, b.i, () => c.hp, myBlowX),",
+    "new": "        entity: crystalStandIn({ mobile: 31, scale: 1 }, b.i, () => c.hp),",
     "tests": [
       "test/net/gate/fb1019f_standinwhole.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "STAND-IN-WHOLE-the-breach-reader-answers-one",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "return E?.ms ? egDeclaredX(egRunOfMember(E, me()).vs) : 1; };",
-    "new": "return 1; };",
+    "old": "    return E?.ms ? egDeclaredX(egRunOfMember(E, me()).vs) : 1;",
+    "new": "    return 1;",
     "tests": [
       "test/net/gate/fb1019f_standinwhole.test.js"
     ],

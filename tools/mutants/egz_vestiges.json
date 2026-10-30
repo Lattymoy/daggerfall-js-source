@@ -245,8 +245,8 @@
   {
     "name": "EGZR-share-of-cushion",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "raw = strikeDamage(pct * k, spireBodyMax(e), base * k)",
-    "new": "raw = strikeDamage(pct * k, e.maxHealth, base * k)",
+    "old": "      raw = strikeDamage(pct * k, spireBodyMax(e), base * k),",
+    "new": "      raw = strikeDamage(pct * k, e.maxHealth, base * k),",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],
@@ -255,8 +255,8 @@
   {
     "name": "EGZR-screen-hymn-unread",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "trail, peerFeet, ll, hymn);",
-    "new": "trail, peerFeet, ll);",
+    "old": "  const spared = (E, F, bl) => egShieldDr(E, F, spec, bl, me(), trail, peerFeet, ll, hymn);",
+    "new": "  const spared = (E, F, bl) => egShieldDr(E, F, spec, bl, me(), trail, peerFeet, ll);",
     "tests": [
       "test/net/eliteGates/egz_vestiges_hymn.test.js"
     ],
@@ -265,8 +265,8 @@
   {
     "name": "EGZR-breach-hy-dropped",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "return { h: E?.h ?? 0, mem, ...(hy ? { hy } : {}) };",
-    "new": "return { h: E?.h ?? 0, mem };",
+    "old": "  return { h: E?.h ?? 0, mem, ...(hy ? { hy } : {}) };",
+    "new": "  return { h: E?.h ?? 0, mem };",
     "tests": [
       "test/net/eliteGates/egz_vestiges_hymn.test.js"
     ],
@@ -275,8 +275,8 @@
   {
     "name": "EGZR-stacks-any-body",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "stacks: !tick && mom.i === i ? mom.n : 0,",
-    "new": "stacks: !tick && mom.n,",
+    "old": "        egHolderBlow(vs, d, r, {\n          stacks: !tick && mom.i === i ? mom.n : 0,\n          low: !!e && e.health < e.maxHealth * EG_BLOODIED_UNDER,\n        }),",
+    "new": "        egHolderBlow(vs, d, r, { stacks: !tick && mom.n, low: !!e && e.health < e.maxHealth * EG_BLOODIED_UNDER }),",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],
@@ -285,8 +285,8 @@
   {
     "name": "EGZR-bloodied-at-half",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "e.health < e.maxHealth * EG_BLOODIED_UNDER",
-    "new": "e.health <= e.maxHealth * EG_BLOODIED_UNDER",
+    "old": "          low: !!e && e.health < e.maxHealth * EG_BLOODIED_UNDER,",
+    "new": "          low: !!e && e.health <= e.maxHealth * EG_BLOODIED_UNDER,",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],
@@ -295,8 +295,8 @@
   {
     "name": "EGZR-bloodied-unread",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "low: !!e && e.health < e.maxHealth * EG_BLOODIED_UNDER",
-    "new": "low: false",
+    "old": "      const dmg = Math.round(\n        egHolderBlow(vs, d, r, {\n          stacks: !tick && mom.i === i ? mom.n : 0,\n          low: !!e && e.health < e.maxHealth * EG_BLOODIED_UNDER,\n        }),\n      );",
+    "new": "      const dmg = Math.round(egHolderBlow(vs, d, r, { stacks: !tick && mom.i === i ? mom.n : 0, low: false }));",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],
@@ -305,8 +305,8 @@
   {
     "name": "EGZR-holder-blow-unapplied",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "const dmg = Math.round(egHolderBlow(vs, d, r, {",
-    "new": "const dmg = Math.round(egHolderBlow([], d, r, {",
+    "old": "        egHolderBlow(vs, d, r, {",
+    "new": "        egHolderBlow([], d, r, {",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],
@@ -315,8 +315,8 @@
   {
     "name": "EGZR-stacks-per-body",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "if (q !== mom.q) mom = { i, n:",
-    "new": "mom = { i, n:",
+    "old": "      if (q !== mom.q) mom = { i, n: mom.i === i ? mom.n + 1 : 1, q }; // a blow builds one stack, on the first body it met",
+    "new": "      mom = { i, n: mom.i === i ? mom.n + 1 : 1, q }; // a blow builds one stack, on the first body it met",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],
@@ -325,8 +325,8 @@
   {
     "name": "EGZR-stacks-unbuilt",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "mom = { i, n: mom.i === i ? mom.n + 1 : 1, q };",
-    "new": "mom = { i, n: 1, q };",
+    "old": "      if (q !== mom.q) mom = { i, n: mom.i === i ? mom.n + 1 : 1, q }; // a blow builds one stack, on the first body it met",
+    "new": "      if (q !== mom.q) mom = { i, n: 1, q }; // a blow builds one stack, on the first body it met",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],
@@ -335,8 +335,8 @@
   {
     "name": "EGZR-stacks-never-reset",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "mom = { i, n: mom.i === i ? mom.n + 1 : 1, q };",
-    "new": "mom = { i, n: mom.n + 1, q };",
+    "old": "      if (q !== mom.q) mom = { i, n: mom.i === i ? mom.n + 1 : 1, q }; // a blow builds one stack, on the first body it met",
+    "new": "      if (q !== mom.q) mom = { i, n: mom.n + 1, q }; // a blow builds one stack, on the first body it met",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],
@@ -345,8 +345,8 @@
   {
     "name": "EGZR-stacks-unsent",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "if (!sendHit({ i, q, d: dmg, r })) return false;",
-    "new": "sendHit({ i, q, d: dmg, r });",
+    "old": "      if (!sendHit({ i, q, d: dmg, r })) return false;",
+    "new": "      sendHit({ i, q, d: dmg, r });",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],
@@ -355,8 +355,8 @@
   {
     "name": "EGZR-echo-on-every-kind",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "      if (r === HIT_KINDS.Spell) {\n        if (q !== echo.q)",
-    "new": "      if (true) {\n        if (q !== echo.q)",
+    "old": "      if (r === HIT_KINDS.Spell) {",
+    "new": "      if (true) {",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],
@@ -365,8 +365,8 @@
   {
     "name": "EGZR-echo-roll-each-body",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "if (q !== echo.q) { const v = egVOf(vs, 'echo');",
-    "new": "{ const v = egVOf(vs, 'echo');",
+    "old": "        if (q !== echo.q) {",
+    "new": "        {",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],
@@ -375,8 +375,8 @@
   {
     "name": "EGZR-echo-roll-boundary",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "on: v > 0 && rand() < v }",
-    "new": "on: v > 0 && rand() <= v }",
+    "old": "          echo = { q, on: v > 0 && rand() < v };",
+    "new": "          echo = { q, on: v > 0 && rand() <= v };",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],
@@ -385,8 +385,8 @@
   {
     "name": "EGZR-echo-full",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "sendHit({ i, q: q + EG_ECHO_Q, d: dmg, r });",
-    "new": "sendHit({ i, q: q + EG_ECHO_Q, d: Math.max(1, Math.round(dmg / 2)), r });",
+    "old": "        if (echo.on) sendHit({ i, q: q + EG_ECHO_Q, d: dmg, r });",
+    "new": "        if (echo.on) sendHit({ i, q: q + EG_ECHO_Q, d: Math.max(1, Math.round(dmg / 2)), r });",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],
@@ -395,8 +395,8 @@
   {
     "name": "EGZR-echo-same-number",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "sendHit({ i, q: q + EG_ECHO_Q, d:",
-    "new": "sendHit({ i, q, d:",
+    "old": "        if (echo.on) sendHit({ i, q: q + EG_ECHO_Q, d: dmg, r });",
+    "new": "        if (echo.on) sendHit({ i, q, d: dmg, r });",
     "tests": [
       "test/net/eliteGates/egz_vestiges.test.js"
     ],
@@ -415,8 +415,8 @@
   {
     "name": "EGZR-rally-fallen-counted",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "if (m?.in && m.alive && !m.home && p) ms.push(",
-    "new": "if (p) ms.push(",
+    "old": "      if (m?.in && m.alive && !m.home && p) ms.push({ sub: c[0], vs: egRunOfMember(E, c[0]).vs, x: p[0], z: p[1] });",
+    "new": "      if (p) ms.push({ sub: c[0], vs: egRunOfMember(E, c[0]).vs, x: p[0], z: p[1] });",
     "tests": [
       "test/net/eliteGates/egz_vestiges_hymn.test.js"
     ],
@@ -425,8 +425,8 @@
   {
     "name": "EGZR-rally-feet-y",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "p = c[0] === sub ? myFeet() : q && [q[0], q[2]];",
-    "new": "p = c[0] === sub ? myFeet() : q && [q[0], q[1]];",
+    "old": "        p = c[0] === sub ? myFeet() : q && [q[0], q[2]];",
+    "new": "        p = c[0] === sub ? myFeet() : q && [q[0], q[1]];",
     "tests": [
       "test/net/eliteGates/egz_vestiges_hymn.test.js"
     ],
@@ -435,8 +435,8 @@
   {
     "name": "EGZR-rally-empty-kept",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "if (hy.length) hymn = [at, at + EG_HYMN_MS, hy];",
-    "new": "hymn = [at, at + EG_HYMN_MS, hy];",
+    "old": "      if (hy.length) hymn = [at, at + EG_HYMN_MS, hy];",
+    "new": "      hymn = [at, at + EG_HYMN_MS, hy];",
     "tests": [
       "test/net/eliteGates/egz_vestiges_hymn.test.js"
     ],
@@ -445,8 +445,8 @@
   {
     "name": "EGZR-rally-window-long",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "if (hy.length) hymn = [at, at + EG_HYMN_MS, hy];",
-    "new": "if (hy.length) hymn = [at, at + 2 * EG_HYMN_MS, hy];",
+    "old": "      if (hy.length) hymn = [at, at + EG_HYMN_MS, hy];",
+    "new": "      if (hy.length) hymn = [at, at + 2 * EG_HYMN_MS, hy];",
     "tests": [
       "test/net/eliteGates/egz_vestiges_hymn.test.js"
     ],
@@ -455,8 +455,8 @@
   {
     "name": "EGZR-immovable-always",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "{ sub, at: now() }, [{ sub, tr: trail }]) > 0;",
-    "new": "{ sub, at: now() }, [{ sub, tr: trail }]) >= 0;",
+    "old": "        ]) > 0",
+    "new": "        ]) >= 0",
     "tests": [
       "test/net/eliteGates/egz_vestiges_hymn.test.js"
     ],
@@ -465,8 +465,8 @@
   {
     "name": "EGZR-immovable-mast-unread",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "      const mast = egRunOfMember(E, sub).mast;\n      if (mast !== IMMOVABLE_ID) return false;",
-    "new": "      const mast = 100;\n      if (mast !== IMMOVABLE_ID) return false;",
+    "old": "      const mast = egRunOfMember(E, sub).mast;",
+    "new": "      const mast = 100;",
     "tests": [
       "test/net/eliteGates/egz_vestiges_hymn.test.js"
     ],

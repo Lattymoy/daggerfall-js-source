@@ -2812,7 +2812,7 @@ the fix is the stand-in's, as a duel's was (`combat/duelCombat.js` DUEL_STAND_IN
 - **THE NUMBER** says what can land (`standInSpell.js:"const shown = standInShown(dealt, standInBlowCap(body.entity, player.level));"`):
   the claim, never past the most one blow of mine lands there (`gateBoss.js:"export function standInBlowCap"` -
   the relay's cap at my level, grown by the factor the stand-in's owner says my bucket grows by: an Elite Breach hands its
-  stand-ins my Vestiges' declared factor, `egFight.js:"const myBlowX = () =>"`, at most EG_BUCKET_X_MAX; on my opponent the
+  stand-ins my Vestiges' declared factor, `egFight.js:"const myBlowX = ()"`, at most EG_BUCKET_X_MAX; on my opponent the
   referee's spell cap, ARENA_SPELL_MAX). The paths' riders are told the same (`took`: what the foe could lose). The claim
   goes out whole beside it - clipping it here would lose what the relay weighs before its cap.
 - **THE DOOR** is one: the court's four spell doors (him, his crystals, his host, my opponent - each its own copy in

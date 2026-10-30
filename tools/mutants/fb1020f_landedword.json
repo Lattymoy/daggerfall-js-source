@@ -62,8 +62,8 @@
   {
     "name": "LANDED-standins-unmarked",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "e.landsByWord = landWord;",
-    "new": "e.landsByWord = false;",
+    "old": "    e.landsByWord = landWord; // LANDED-WORD (ui/hitNumbers.js numberFor): a hit's number waits for the room's word of what landed",
+    "new": "    e.landsByWord = false; // LANDED-WORD (ui/hitNumbers.js numberFor): a hit's number waits for the room's word of what landed",
     "tests": [
       "test/net/eliteGates/fb1020f_landedword.test.js"
     ],

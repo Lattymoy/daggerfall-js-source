@@ -695,7 +695,7 @@ Every in-game DOM button, read from every module that builds one, by where it st
 - AFFECTED by the walk only: each of these goes when it is pressed, so its focus falls back to the page.
   - the friends panel's invitation toast, Accept and Decline (`socialPanel.js:"const toastYes = el('button', 'dfsocial-btn', 'Accept'); toastYes.type = 'button';"`);
   - the duel prompt (`duelPrompt.js:"const yes = el('button', 'dfduel-btn', 'Accept'); yes.type = 'button';"`);
-  - the Elite Breach's call (`egCall.js:"const btn = el('button', 'dfegcall-btn', 'Answer');"`);
+  - the Elite Breach's call (`egCall.js:"const btn = el('button', 'dfegcall-btn', 'Answer')"`);
   - the Code of Conduct card;
   - the arena session's button (`arenaSessionButton.js:"members, Make Red"`);
   - the siege readout's Claim, Close and Leave;

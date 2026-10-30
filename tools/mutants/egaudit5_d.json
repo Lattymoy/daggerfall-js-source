@@ -314,8 +314,8 @@
   {
     "name": "EG5D-L8-1-my-blow-no-foes",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "spared(E, F, bl), part * egTouchedX(F, bl, me(), t), true);",
-    "new": "spared(E, F, bl), part * egTouchedX(F, bl, me(), t));",
+    "old": "              landShare(bl.p, bl.b, bl.el, bl.nm, spared(E, F, bl), part * egTouchedX(F, bl, me(), t), true);",
+    "new": "              landShare(bl.p, bl.b, bl.el, bl.nm, spared(E, F, bl), part * egTouchedX(F, bl, me(), t));",
     "tests": [
       "test/systems/eliteGates/egaudit5_d_client.test.js"
     ]
@@ -323,8 +323,8 @@
   {
     "name": "EG5D-L8-1-a-chained-mates-no-foes",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "landShare(bl.p, bl.b, bl.el, bl.nm, spared(E, F, bl), part, true); }",
-    "new": "landShare(bl.p, bl.b, bl.el, bl.nm, spared(E, F, bl), part); }",
+    "old": "              if (v === 'hit') landShare(bl.p, bl.b, bl.el, bl.nm, spared(E, F, bl), part, true);",
+    "new": "              if (v === 'hit') landShare(bl.p, bl.b, bl.el, bl.nm, spared(E, F, bl), part);",
     "tests": [
       "test/systems/eliteGates/egaudit5_d_client.test.js"
     ]

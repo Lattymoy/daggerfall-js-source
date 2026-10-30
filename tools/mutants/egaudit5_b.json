@@ -440,8 +440,8 @@
   {
     "name": "AUDIT EG V L1-12: no WIND from the glint",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "_barks.push({ kind: STALKER_MOBILE, at: toDungeon(b.x, 1, b.z), cue: hostCue('windup', STALKER_MOBILE), critical: true });",
-    "new": "void STALKER_MOBILE;",
+    "old": "        _barks.push({\n          kind: STALKER_MOBILE,\n          at: toDungeon(b.x, 1, b.z),\n          cue: hostCue('windup', STALKER_MOBILE),\n          critical: true,\n        });",
+    "new": "        void STALKER_MOBILE;",
     "tests": [
       "test/net/eliteGates/egaudit5_b_client.test.js"
     ]
@@ -449,8 +449,8 @@
   {
     "name": "AUDIT EG V L1-13: the place's dark undrawn",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "    if (darkNow > 0) {\n      const sh = (_slots[_shapes.length] ??= slot()), S = spec.lord === 'seyth'",
-    "new": "    if (false) {\n      const sh = (_slots[_shapes.length] ??= slot()), S = spec.lord === 'seyth'",
+    "old": "    if (darkNow > 0) {",
+    "new": "    if (false) {",
     "tests": [
       "test/net/eliteGates/egaudit5_b_client.test.js"
     ]
@@ -458,8 +458,8 @@
   {
     "name": "AUDIT EG V L1-13: the Long Night's shafts unkept",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "      if (S) for (const q of moonShafts(S, t)) sh.points.push([q[0], q[1]]);\n",
-    "new": "",
+    "old": "      if (S) for (const q of moonShafts(S, t)) sh.points.push([q[0], q[1]]);\n      sh.t = darkNow;",
+    "new": "      sh.t = darkNow;",
     "tests": [
       "test/net/eliteGates/egaudit5_b_client.test.js"
     ]
@@ -467,8 +467,8 @@
   {
     "name": "AUDIT EG V L1-13: the dark past its end",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "Math.min(1, (until - t) / EG_DARK_EASE_MS, (t - from) / EG_DARK_EASE_MS)",
-    "new": "Math.min(1, (t - from) / EG_DARK_EASE_MS)",
+    "old": "  EG_ECLIPSE_LOOK.deep * Math.max(0, Math.min(1, (until - t) / EG_DARK_EASE_MS, (t - from) / EG_DARK_EASE_MS));",
+    "new": "  EG_ECLIPSE_LOOK.deep * Math.max(0, Math.min(1, (t - from) / EG_DARK_EASE_MS));",
     "tests": [
       "test/net/eliteGates/egaudit5_b_client.test.js"
     ]
@@ -476,8 +476,8 @@
   {
     "name": "AUDIT EG V L1-13: the Rails undrawn",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "    const C = F.rail > t ? F.bodies.find(",
-    "new": "    const C = F.rail > t + 1e12 ? F.bodies.find(",
+    "old": "      F.rail > t",
+    "new": "      F.rail > t + 1e12",
     "tests": [
       "test/net/eliteGates/egaudit5_b_client.test.js"
     ]
@@ -485,8 +485,8 @@
   {
     "name": "AUDIT EG V L1-13: no rim in the dark",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "egRimOf(darkNow > 0 ? EG_SHADE_BAND : band, b.fl | 0, lord)",
-    "new": "egRimOf(band, b.fl | 0, lord)",
+    "old": "    setBatchGlint(d.batch, b.fellAt ? null : egRimOf(darkNow > 0 ? EG_SHADE_BAND : band, b.fl | 0, lord)); // EG-ZG (section 25.6): THE SHADE'S RIM LIGHT - AUDIT EG V (lane1 #13): every foe's in the place's dark; EG-PERFECT: a raised guard's glint",
+    "new": "    setBatchGlint(d.batch, b.fellAt ? null : egRimOf(band, b.fl | 0, lord)); // EG-ZG (section 25.6): THE SHADE'S RIM LIGHT - AUDIT EG V (lane1 #13): every foe's in the place's dark; EG-PERFECT: a raised guard's glint",
     "tests": [
       "test/world/eliteGates/egz_telegraph.test.js"
     ]
@@ -596,8 +596,8 @@
   {
     "name": "AUDIT EG V L1-18: the outline undrawn",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "    if (t < from - (bl.ol ?? 0) || t > bl.at + span + LINGER_MS) return;",
-    "new": "    if (t < from || t > bl.at + span + LINGER_MS) return;",
+    "old": "    if (t < from - (bl.ol ?? 0) || t > bl.at + span + LINGER_MS) return; // AUDIT EG V (lane1 #18): a chained shape's dim outline from the first's word",
+    "new": "    if (t < from || t > bl.at + span + LINGER_MS) return; // AUDIT EG V (lane1 #18): a chained shape's dim outline from the first's word",
     "tests": [
       "test/net/eliteGates/egaudit5_b_client.test.js"
     ]
@@ -605,8 +605,8 @@
   {
     "name": "AUDIT EG V L1-18: the outline drawn full",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": " : t < from ? EG_OUTLINE_DIM : aimedAtMe ? 1 : 0.85;",
-    "new": " : aimedAtMe ? 1 : 0.85;",
+    "old": "          : t < from\n            ? EG_OUTLINE_DIM\n            : aimedAtMe\n              ? 1\n              : 0.85;",
+    "new": "          : aimedAtMe\n            ? 1\n            : 0.85;",
     "tests": [
       "test/net/eliteGates/egaudit5_b_client.test.js"
     ]

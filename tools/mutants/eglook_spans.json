@@ -191,8 +191,8 @@
   {
     "name": "EGLOOK-SPANS-batch-every-copy-the-first-model",
     "file": "src/scenes/eliteGates/egPieceBatch.js",
-    "old": "const s = k.slots[i], M = s.object?.matrix, B = k.models[k.mi[i]];",
-    "new": "const s = k.slots[i], M = s.object?.matrix, B = k.models[0];",
+    "old": "              B = k.models[k.mi[i]];",
+    "new": "              B = k.models[0];",
     "tests": [
       "test/world/eliteGates/eglook_spans.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "EGLOOK-SPANS-batch-runs-the-first-models-length",
     "file": "src/scenes/eliteGates/egPieceBatch.js",
-    "old": "for (let i = 0; i < c; i++) vo[i + 1] = vo[i] + k.models[k.mi[i]].verts;",
-    "new": "for (let i = 0; i < c; i++) vo[i + 1] = vo[i] + k.models[0].verts;",
+    "old": "        for (let i = 0; i < c; i++) vo[i + 1] = vo[i] + k.models[k.mi[i]].verts;",
+    "new": "        for (let i = 0; i < c; i++) vo[i + 1] = vo[i] + k.models[0].verts;",
     "tests": [
       "test/world/eliteGates/eglook_spans.test.js"
     ]

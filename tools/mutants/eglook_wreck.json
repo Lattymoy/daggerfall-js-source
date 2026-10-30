@@ -155,8 +155,8 @@
   {
     "name": "EGLOOK-wreck-lay-turn-misread",
     "file": "src/scenes/eliteGates/egWreckLook.js",
-    "old": "M[o] = cy; M[o + 1] = sy * sx; M[o + 2] = sy * cx;",
-    "new": "M[o] = cy; M[o + 1] = sy * sx; M[o + 2] = sy * sx;",
+    "old": "    M[o + 2] = sy * cx;",
+    "new": "    M[o + 2] = sy * sx;",
     "tests": [
       "test/world/eliteGates/eglook_wreck.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "EGLOOK-wreck-lay-court-never",
     "file": "src/scenes/eliteGates/egWreckLook.js",
-    "old": "at = court ? W[w].court : W[w].at;",
-    "new": "at = W[w].at;",
+    "old": "      at = court ? W[w].court : W[w].at;",
+    "new": "      at = W[w].at;",
     "tests": [
       "test/world/eliteGates/eglook_wreck.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "EGLOOK-wreck-turn-never-relaid",
     "file": "src/scenes/eliteGates/egWreckLook.js",
-    "old": "if (tick !== held.tick || !!court !== B.court) {",
-    "new": "if (!!court !== B.court) {",
+    "old": "        if (tick !== held.tick || !!court !== B.court) {",
+    "new": "        if (!!court !== B.court) {",
     "tests": [
       "test/world/eliteGates/eglook_wreck.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "EGLOOK-wreck-underside-left-at-the-hall",
     "file": "src/scenes/eliteGates/egWreckLook.js",
-    "old": "moveTo(U.draw.object.matrix, eye[0] + U.at[0], eye[1] + U.at[1], eye[2] + U.at[2], U.scale);",
-    "new": "moveTo(U.draw.object.matrix, cx + U.at[0], cy + U.at[1], cz + U.at[2], U.scale);",
+    "old": "      if (U && eye) moveTo(U.draw.object.matrix, eye[0] + U.at[0], eye[1] + U.at[1], eye[2] + U.at[2], U.scale);",
+    "new": "      if (U && eye) moveTo(U.draw.object.matrix, cx + U.at[0], cy + U.at[1], cz + U.at[2], U.scale);",
     "tests": [
       "test/world/eliteGates/eglook_wreck.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "EGLOOK-wreck-underside-never-freed",
     "file": "src/scenes/eliteGates/egWreckLook.js",
-    "old": "      free(h?.wings?.gpu); free(h?.under?.gpu);",
-    "new": "      free(h?.wings?.gpu);",
+    "old": "      free(h?.under?.gpu);\n    },",
+    "new": "    },",
     "tests": [
       "test/world/eliteGates/eglook_wreck.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "EGLOOK-wreck-every-hall-a-trial",
     "file": "src/scenes/eliteGates/egGroundLook.js",
-    "old": "court: !!s.lord }));",
-    "new": "court: false }));",
+    "old": "      halls = egCircleSpecs(seed, c, geo).map((s) => ({ x0: s.x0, zc: (s.len ?? 80) / 2, court: !!s.lord }));",
+    "new": "      halls = egCircleSpecs(seed, c, geo).map((s) => ({ x0: s.x0, zc: (s.len ?? 80) / 2, court: false }));",
     "tests": [
       "test/world/eliteGates/eglook_wreck.test.js"
     ]

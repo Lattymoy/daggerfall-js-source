@@ -268,7 +268,7 @@ test('AUDIT WORLD-EVENTS L5-4: a Spire lord (its target\'s `lord`) carries its t
   assert.equal(lord.entity.bossTraits.length, 2);
   assert.equal(said.length, 1, 'said once');
   assert.equal(legion.entity.bossTraits, undefined);
-  assert.match(rd('src/scenes/eliteGates/egFight.js'), /name: look\.name, lord: !!look\.lord, m: b\.max, hp: b\.hp \};/);
+  assert.match(rd('src/scenes/eliteGates/egFight.js'), /name: look\.name,\n\s*lord: !!look\.lord,\n\s*m: b\.max,\n\s*hp: b\.hp,\n\s*\};/);
   assert.match(rd('src/scenes/dungeonContext.js'), /hostLordTraits\(q, \(l\) => hudText\.add\(l\)\);/);
 });
 

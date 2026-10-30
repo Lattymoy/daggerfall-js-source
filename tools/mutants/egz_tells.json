@@ -2,8 +2,8 @@
   {
     "name": "EGZL-batch-turn-ignored",
     "file": "src/scenes/eliteGates/egPieceBatch.js",
-    "old": "k.pos[o + q] = a0 * x + b0 * y + c0 * z + tx;",
-    "new": "k.pos[o + q] = x + tx;",
+    "old": "      k.pos[o + q] = a0 * x + b0 * y + c0 * z + tx;",
+    "new": "      k.pos[o + q] = x + tx;",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "EGZL-batch-normals-unturned",
     "file": "src/scenes/eliteGates/egPieceBatch.js",
-    "old": "k.nrm[o + q] = a0 * nx + b0 * ny + c0 * nz;",
-    "new": "k.nrm[o + q] = nx;",
+    "old": "      k.nrm[o + q] = a0 * nx + b0 * ny + c0 * nz;",
+    "new": "      k.nrm[o + q] = nx;",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "EGZL-batch-turn-alone-never-relaid",
     "file": "src/scenes/eliteGates/egPieceBatch.js",
-    "old": "for (let j = 0; j < A; j++) if (k.at[o12 + j] !== M[TURN_AT[j]]) { same = false; break; }",
-    "new": "for (let j = 9; j < A; j++) if (k.at[o12 + j] !== M[TURN_AT[j]]) { same = false; break; }",
+    "old": "      for (let j = 0; j < A; j++)",
+    "new": "      for (let j = 9; j < A; j++)",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "EGZL-batch-centre-unturned",
     "file": "src/scenes/eliteGates/egPieceBatch.js",
-    "old": "M[0] * c[0] + M[4] * c[1] + M[8] * c[2] + M[12],",
-    "new": "c[0] + M[12],",
+    "old": "        M[0] * c[0] + M[4] * c[1] + M[8] * c[2] + M[12],",
+    "new": "        c[0] + M[12],",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "EGZL-batch-turns-dropped",
     "file": "src/scenes/eliteGates/egPieceBatch.js",
-    "old": "turns: !!turns, remap: null",
-    "new": "turns: false, remap: null",
+    "old": "            turns: !!turns,",
+    "new": "            turns: false,",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "EGZL-batch-map-lost-after-build",
     "file": "src/scenes/eliteGates/egPieceBatch.js",
-    "old": "if (k.draw) k.draw.texRemap = k.remap;",
-    "new": "void 0;",
+    "old": "      if (k.draw) k.draw.texRemap = k.remap;",
+    "new": "      void 0;",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "EGZL-batch-map-lost-at-build",
     "file": "src/scenes/eliteGates/egPieceBatch.js",
-    "old": "k.draw.texRemap = k.remap; draws?.push?.(k.draw);",
-    "new": "draws?.push?.(k.draw);",
+    "old": "          k.draw.texRemap = k.remap;\n          draws?.push?.(k.draw);",
+    "new": "          draws?.push?.(k.draw);",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "EGZL-batch-hidden-turning-copy-drawn",
     "file": "src/scenes/eliteGates/egPieceBatch.js",
-    "old": "let show = !s.hidden && M != null && M[15] !== 0;",
-    "new": "let show = M != null;",
+    "old": "    let show = !s.hidden && M != null && M[15] !== 0; // a pose's zeros: no place",
+    "new": "    let show = M != null; // a pose's zeros: no place",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]

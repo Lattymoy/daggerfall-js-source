@@ -153,7 +153,7 @@
   {
     "name": "GATE-WAY-arches-never-said",
     "file": "src/scenes/eliteGates/egArch.js",
-    "old": "  setEventGround('arch', () => (arches.size ? [...arches.values()].filter((a) => a.place).map((a) => a.place.origin) : NO_LIST));",
+    "old": "  setEventGround('arch', () =>\n    arches.size ? [...arches.values()].filter((a) => a.place).map((a) => a.place.origin) : NO_LIST,\n  );",
     "new": "  setEventGround('arch', () => NO_LIST);",
     "tests": [
       "test/scenes/rpt1026_events_gateway.test.js"
@@ -213,8 +213,8 @@
   {
     "name": "GATE-WAY-call-portal-dropped",
     "file": "src/scenes/eliteGates/egCall.js",
-    "old": "eventGround: false",
-    "new": "eventGround: true",
+    "old": "    eventGround: false,",
+    "new": "    eventGround: true,",
     "tests": [
       "test/scenes/rpt1026_events_gateway.test.js"
     ],

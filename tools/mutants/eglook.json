@@ -212,8 +212,8 @@
   {
     "name": "EGLOOK-batch-gone-pieces-shown",
     "file": "src/scenes/eliteGates/egPieceBatch.js",
-    "old": "let show = !s.hidden && !!M && M[15] !== 0;",
-    "new": "let show = !s.hidden && !!M;",
+    "old": "            let show = !s.hidden && !!M && M[15] !== 0; // a pose's zeros (a gone piece) are no place",
+    "new": "            let show = !s.hidden && !!M; // a pose's zeros (a gone piece) are no place",
     "tests": [
       "test/net/eliteGates/eglook_pieces.test.js"
     ]
@@ -221,8 +221,8 @@
   {
     "name": "EGLOOK-batch-never-culls",
     "file": "src/scenes/eliteGates/egPieceBatch.js",
-    "old": "if (show && planes && !sphereInPlanes(planes, B.centre[0] + x,",
-    "new": "if (false && planes && !sphereInPlanes(planes, B.centre[0] + x,",
+    "old": "              show &&",
+    "new": "              false &&",
     "tests": [
       "test/net/eliteGates/eglook_pieces.test.js"
     ]
@@ -230,8 +230,8 @@
   {
     "name": "EGLOOK-batch-no-pad",
     "file": "src/scenes/eliteGates/egPieceBatch.js",
-    "old": "B.r + EG_BATCH_CULL_PAD)) { show = false; culled++; }",
-    "new": "B.r - EG_BATCH_CULL_PAD)) { show = false; culled++; }",
+    "old": "              !sphereInPlanes(planes, B.centre[0] + x, B.centre[1] + y, B.centre[2] + z, B.r + EG_BATCH_CULL_PAD)",
+    "new": "              !sphereInPlanes(planes, B.centre[0] + x, B.centre[1] + y, B.centre[2] + z, B.r - EG_BATCH_CULL_PAD)",
     "tests": [
       "test/net/eliteGates/eglook_pieces.test.js"
     ]
@@ -239,8 +239,8 @@
   {
     "name": "EGLOOK-batch-never-moves",
     "file": "src/scenes/eliteGates/egPieceBatch.js",
-    "old": "if (show === was && (!show || (k.at[i * 3] === x && k.at[i * 3 + 1] === y && k.at[i * 3 + 2] === z))) continue;",
-    "new": "if (show === was) continue;",
+    "old": "            if (show === was && (!show || (k.at[i * 3] === x && k.at[i * 3 + 1] === y && k.at[i * 3 + 2] === z)))\n              continue;",
+    "new": "            if (show === was) continue;",
     "tests": [
       "test/net/eliteGates/eglook_pieces.test.js"
     ]
@@ -248,8 +248,8 @@
   {
     "name": "EGLOOK-batch-uploads-every-frame",
     "file": "src/scenes/eliteGates/egPieceBatch.js",
-    "old": "if (dirty && k.gpu) { try { renderer?.updateMeshVertices?.(",
-    "new": "if (k.gpu) { try { renderer?.updateMeshVertices?.(",
+    "old": "        if (dirty && k.gpu) {",
+    "new": "        if (k.gpu) {",
     "tests": [
       "test/net/eliteGates/eglook_pieces.test.js"
     ]
@@ -257,8 +257,8 @@
   {
     "name": "EGLOOK-batch-empty-drawn",
     "file": "src/scenes/eliteGates/egPieceBatch.js",
-    "old": "if (k.draw) k.draw.hidden = !any;",
-    "new": "if (k.draw) k.draw.hidden = false;",
+    "old": "        if (k.draw) k.draw.hidden = !any;",
+    "new": "        if (k.draw) k.draw.hidden = false;",
     "tests": [
       "test/net/eliteGates/eglook_pieces.test.js"
     ]
@@ -266,8 +266,8 @@
   {
     "name": "EGLOOK-batch-copies-share-verts",
     "file": "src/scenes/eliteGates/egPieceBatch.js",
-    "old": "indices[at++] = m.indices[sm.startIndex + q] + vo[i];",
-    "new": "indices[at++] = m.indices[sm.startIndex + q];",
+    "old": "              for (let q = 0; q < sm.primitiveCount * 3; q++) indices[at++] = m.indices[sm.startIndex + q] + vo[i];",
+    "new": "              for (let q = 0; q < sm.primitiveCount * 3; q++) indices[at++] = m.indices[sm.startIndex + q];",
     "tests": [
       "test/net/eliteGates/eglook_pieces.test.js"
     ]
@@ -275,8 +275,8 @@
   {
     "name": "EGLOOK-batch-casts",
     "file": "src/scenes/eliteGates/egPieceBatch.js",
-    "old": "noShadow: true, texRemap: null, hidden: true }",
-    "new": "noShadow: false, texRemap: null, hidden: true }",
+    "old": "          k.draw = { gpu: k.gpu, object: { matrix: IDENTITY }, noShadow: true, texRemap: null, hidden: true };",
+    "new": "          k.draw = { gpu: k.gpu, object: { matrix: IDENTITY }, noShadow: false, texRemap: null, hidden: true };",
     "tests": [
       "test/net/eliteGates/eglook_pieces.test.js"
     ]
@@ -494,8 +494,8 @@
   {
     "name": "EGLOOK-fight-mine-not-brighter",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "sh.edge = sh.mine ? brighter(pal.danger) : pal.danger;",
-    "new": "sh.edge = pal.danger;",
+    "old": "      sh.edge = sh.mine ? brighter(pal.danger) : pal.danger;",
+    "new": "      sh.edge = pal.danger;",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js"
     ]
@@ -503,8 +503,8 @@
   {
     "name": "EGLOOK-fight-aimed-other-full",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "sh.fillK = fill * (sh.pool === TELEGRAPH_POOL.blow && !sh.mine ? quiet.aimedOther : 1);",
-    "new": "sh.fillK = fill;",
+    "old": "      sh.fillK = fill * (sh.pool === TELEGRAPH_POOL.blow && !sh.mine ? quiet.aimedOther : 1);",
+    "new": "      sh.fillK = fill;",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js"
     ]
@@ -512,8 +512,8 @@
   {
     "name": "EGLOOK-fight-haven-burns",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "sh.fillK = 1; sh.pool = TELEGRAPH_POOL_HAVEN;",
-    "new": "sh.fillK = 1;",
+    "old": "      sh.fillK = 1;\n      sh.pool = TELEGRAPH_POOL_HAVEN; // THE HAVEN GRAMMAR (section 25.5)",
+    "new": "      sh.fillK = 1; // THE HAVEN GRAMMAR (section 25.5)",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js"
     ]
@@ -521,8 +521,8 @@
   {
     "name": "EGLOOK-fight-hours-pass",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "new GateTelegraphRenderer(gl, { spire: true })",
-    "new": "new GateTelegraphRenderer(gl)",
+    "old": "      () => new GateTelegraphRenderer(gl, { spire: true }),",
+    "new": "      () => new GateTelegraphRenderer(gl),",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js",
       "test/systems/eliteGates/eglook_score.test.js"
@@ -531,8 +531,8 @@
   {
     "name": "EGLOOK-fight-stings-every-frame",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "if (mine && standing && !stung.has(bl.i) && t < bl.at) {",
-    "new": "if (mine && standing && t < bl.at) {",
+    "old": "        if (mine && standing && !stung.has(bl.i) && t < bl.at) {",
+    "new": "        if (mine && standing && t < bl.at) {",
     "tests": [
       "test/systems/eliteGates/eglook_score.test.js"
     ]
@@ -540,8 +540,8 @@
   {
     "name": "EGLOOK-fight-barks-uncapped",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "mix.barks(_barks, cam(), (b) => play3(b.cue, b.at));",
-    "new": "for (const b of _barks) play3(b.cue, b.at);",
+    "old": "      mix.barks(_barks, cam(), (b) => play3(b.cue, b.at)); // EG-G2: the legion's barks, four a kind, nearest first",
+    "new": "      for (const b of _barks) play3(b.cue, b.at); // EG-G2: the legion's barks, four a kind, nearest first",
     "tests": [
       "test/systems/eliteGates/eglook_score.test.js"
     ]

@@ -158,8 +158,8 @@
   {
     "name": "EGROAR-air-partial-between-turns",
     "file": "src/scenes/eliteGates/egAir.js",
-    "old": "const n = out.length, turns = Math.max(1, Math.round((hz * n) / rate)),",
-    "new": "const n = out.length, turns = Math.max(1, (hz * n) / rate),",
+    "old": "    turns = Math.max(1, Math.round((hz * n) / rate)),",
+    "new": "    turns = Math.max(1, (hz * n) / rate),",
     "tests": [
       "test/scenes/eliteGates/egroar_air.test.js"
     ]
@@ -167,7 +167,7 @@
   {
     "name": "EGROAR-air-void-seam-raw",
     "file": "src/scenes/eliteGates/egAir.js",
-    "old": "for (let i = 0; i < x; i++) { const t = (i / x) * (Math.PI / 2); out[i] = raw[i] * Math.sin(t) + raw[n + i] * Math.cos(t); }",
+    "old": "  for (let i = 0; i < x; i++) {\n    const t = (i / x) * (Math.PI / 2);\n    out[i] = raw[i] * Math.sin(t) + raw[n + i] * Math.cos(t);\n  }",
     "new": "",
     "tests": [
       "test/scenes/eliteGates/egroar_air.test.js"
@@ -176,8 +176,8 @@
   {
     "name": "EGROAR-air-every-band-the-galleries",
     "file": "src/scenes/eliteGates/egAir.js",
-    "old": "kinds = { ...EG_AIR_EVENTS.legion, ...EG_AIR_EVENTS.bands[b] };",
-    "new": "kinds = { ...EG_AIR_EVENTS.legion, ...EG_AIR_EVENTS.bands[0] };",
+    "old": "    kinds = { ...EG_AIR_EVENTS.legion, ...EG_AIR_EVENTS.bands[b] };",
+    "new": "    kinds = { ...EG_AIR_EVENTS.legion, ...EG_AIR_EVENTS.bands[0] };",
     "tests": [
       "test/scenes/eliteGates/egroar_air.test.js"
     ]
@@ -185,8 +185,8 @@
   {
     "name": "EGROAR-air-one-sky",
     "file": "src/scenes/eliteGates/egAir.js",
-    "old": "let salt = (seed >>> 0) % 100003;",
-    "new": "let salt = 0;",
+    "old": "  let salt = (seed >>> 0) % 100003;",
+    "new": "  let salt = 0;",
     "tests": [
       "test/scenes/eliteGates/egroar_air.test.js"
     ]
@@ -194,8 +194,8 @@
   {
     "name": "EGROAR-air-sleep-a-fight",
     "file": "src/scenes/eliteGates/egAir.js",
-    "old": "return place.kind === 'court' && place.asleep ? 'sleep' : 'trial';",
-    "new": "return 'trial';",
+    "old": "  if (place.sg === 'trial') return place.kind === 'court' && place.asleep ? 'sleep' : 'trial';",
+    "new": "  if (place.sg === 'trial') return 'trial';",
     "tests": [
       "test/scenes/eliteGates/egroar_air.test.js"
     ]
@@ -203,8 +203,8 @@
   {
     "name": "EGROAR-air-rest-a-fight",
     "file": "src/scenes/eliteGates/egAir.js",
-    "old": "  if (place.sg === 'rest') return 'rest';\n",
-    "new": "",
+    "old": "  if (place.sg === 'rest') return 'rest';\n  if (place.sg === 'trial') return place.kind === 'court' && place.asleep ? 'sleep' : 'trial';",
+    "new": "  if (place.sg === 'trial') return place.kind === 'court' && place.asleep ? 'sleep' : 'trial';",
     "tests": [
       "test/scenes/eliteGates/egroar_air.test.js"
     ]
@@ -212,8 +212,8 @@
   {
     "name": "EGROAR-air-fall-unheard",
     "file": "src/scenes/eliteGates/egAir.js",
-    "old": "if (place.end || (Number.isFinite(place.sinceFall) && place.sinceFall >= 0 && place.sinceFall < SPIRE_END_MS)) return 'end';",
-    "new": "if (place.end) return 'end';",
+    "old": "  if (place.end || (Number.isFinite(place.sinceFall) && place.sinceFall >= 0 && place.sinceFall < SPIRE_END_MS))\n    return 'end';",
+    "new": "  if (place.end) return 'end';",
     "tests": [
       "test/scenes/eliteGates/egroar_air.test.js"
     ]
@@ -221,8 +221,8 @@
   {
     "name": "EGROAR-air-all-built-at-once",
     "file": "src/scenes/eliteGates/egAir.js",
-    "old": "if (buildsLeft <= 0) return false; buildsLeft--;",
-    "new": "buildsLeft--;",
+    "old": "        if (buildsLeft <= 0) return false;\n        buildsLeft--;",
+    "new": "        buildsLeft--;",
     "tests": [
       "test/scenes/eliteGates/egroar_air.test.js"
     ]
@@ -230,8 +230,8 @@
   {
     "name": "EGROAR-air-mix-stepped",
     "file": "src/scenes/eliteGates/egAir.js",
-    "old": "else for (const k of Object.keys(target)) gains[k] += (target[k] - gains[k]) * Math.min(1, dt / EG_AIR_EASE_S);",
-    "new": "else for (const k of Object.keys(target)) gains[k] = target[k];",
+    "old": "      else for (const k of Object.keys(target)) gains[k] += (target[k] - gains[k]) * Math.min(1, dt / EG_AIR_EASE_S);",
+    "new": "      else for (const k of Object.keys(target)) gains[k] = target[k];",
     "tests": [
       "test/scenes/eliteGates/egroar_air.test.js"
     ]
@@ -239,8 +239,8 @@
   {
     "name": "EGROAR-air-breath-kept",
     "file": "src/scenes/eliteGates/egAir.js",
-    "old": "if (!breathing) engine.setBed(EG_AIR_BEDS.breath, null);",
-    "new": "if (!breathing) { /* kept */ }",
+    "old": "        if (!breathing) engine.setBed(EG_AIR_BEDS.breath, null);\n        else if (",
+    "new": "        if (!breathing) {\n          /* kept */\n        } else if (",
     "tests": [
       "test/scenes/eliteGates/egroar_air.test.js"
     ]
@@ -248,7 +248,7 @@
   {
     "name": "EGROAR-air-horn-before-it-stands",
     "file": "src/scenes/eliteGates/egAir.js",
-    "old": "if (typeof e.clip === 'string' && !made.has(e.clip)) continue;",
+    "old": "            if (typeof e.clip === 'string' && !made.has(e.clip)) continue;",
     "new": "",
     "tests": [
       "test/scenes/eliteGates/egroar_air.test.js"
@@ -257,8 +257,8 @@
   {
     "name": "EGROAR-air-beds-left-looping",
     "file": "src/scenes/eliteGates/egAir.js",
-    "old": "for (const name of Object.values(EG_AIR_BEDS)) engine.setBed(name, null);",
-    "new": "",
+    "old": "        for (const name of Object.values(EG_AIR_BEDS)) engine.setBed(name, null);\n        engine.fadeFar?.(EG_AIR_FAR); // and its events still sounding, with them",
+    "new": "        engine.fadeFar?.(EG_AIR_FAR); // and its events still sounding, with them",
     "tests": [
       "test/scenes/eliteGates/egroar_air.test.js"
     ]
@@ -266,8 +266,8 @@
   {
     "name": "EGROAR-air-far-left-ringing",
     "file": "src/scenes/eliteGates/egAir.js",
-    "old": "engine.fadeFar?.(EG_AIR_FAR);   // and its events still sounding, with them",
-    "new": "",
+    "old": "        engine.fadeFar?.(EG_AIR_FAR); // and its events still sounding, with them\n      } catch {",
+    "new": "      } catch {",
     "tests": [
       "test/scenes/eliteGates/egroar_air.test.js"
     ]

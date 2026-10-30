@@ -111,8 +111,8 @@
   {
     "name": "EGRUIN-ruin-pass-never-tried",
     "file": "src/scenes/eliteGates/egGroundLook.js",
-    "old": "        frame(f) { let n = circle.frame(f); for (const r of eyes()) n += r.occ.frame(f); return n; },",
-    "new": "        frame(f) { const n = circle.frame(f); return n; },",
+    "old": "          let n = circle.frame(f);\n          for (const r of eyes()) n += r.occ.frame(f);",
+    "new": "          const n = circle.frame(f);",
     "tests": [
       "test/world/eliteGates/eglook_ruin.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "EGRUIN-ruin-shadow-recorded",
     "file": "src/scenes/eliteGates/egGroundLook.js",
-    "old": "occ = createEgOccluders({ renderer, shadow: false });",
-    "new": "occ = createEgOccluders({ renderer, shadow: true });",
+    "old": "          occ = createEgOccluders({ renderer, shadow: false });",
+    "new": "          occ = createEgOccluders({ renderer, shadow: true });",
     "tests": [
       "test/world/eliteGates/eglook_ruin.test.js"
     ]

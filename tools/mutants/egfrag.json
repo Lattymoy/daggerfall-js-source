@@ -429,8 +429,8 @@
   {
     "name": "EGFRAG-a-wisp-that-never-lets-go",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "    if (d > L.brk || t - hold.from >= L.live) { hold.from = 0;",
-    "new": "    if (d > L.brk) { hold.from = 0;",
+    "old": "    if (d > L.brk || t - hold.from >= L.live) {",
+    "new": "    if (d > L.brk) {",
     "tests": [
       "test/net/eliteGates/egfrag_client.test.js"
     ]

@@ -160,7 +160,7 @@ draw plan: the ring reaches every screen as `pg.ring` (`egLords.js:"if (!open) {
 and the client read it only to hold the player's movement at the rim. Nothing drew it: the line was said, the frame
 had no shape at the ring.
 
-FIXED. `egFight.js:"  function duelRing(R, t) {"` draws a band of fire half a metre either side of the rim, burning
+FIXED. `egFight.js:"function duelRing"` draws a band of fire half a metre either side of the rim, burning
 ground on the floor. And a second false line: at n = 1 the record stands no ring and no braziers, yet the words said
 "The ring of fire rises." and "The ring falls." The relay's `challenge` and `challengeend` carry `t: 'open'`
 (`egLords.js:"export const EG_DUEL_OPEN = 'open';"`), and the screen says "A challenge in the open! Deal him a tenth
@@ -243,7 +243,7 @@ laid as plain discs off the fight floor (`egLaw.js:"if (variant === 'winch') for
 no body of the fight, so the stood-on errands' draw never marked them, and `GROUND_COLORS.plate` was unused: in three
 Winch halls the screen drew nothing at either plate.
 
-FIXED. `egFight.js:"  function winchPlates(F, t) {"` draws each plate gold, sized to EG_TOUCH_M (the 2.5 m reach the
+FIXED. `egFight.js:"function winchPlates"` draws each plate gold, sized to EG_TOUCH_M (the 2.5 m reach the
 relay counts), on its own surface during the trial. Left: the Gauntlet's plates are unmarked for the same reason, on
 sloped stairs where a flat quad would cut the slope; the Conquest's thirds (3.5 s) and Both Courts Burn (3.0 s) are
 counted ahead on the relay and drawn only as they start. AUDIT FB1018D L3-M3: none before the trial either - the
@@ -264,7 +264,7 @@ folded into the client's state:
 - On the relay, health alone makes a lord (`egLords.js:"export const egLordsOf = (F) => egBodiesOf(F, EG_ROLE.lord);"`),
   so it walked and threw blows - "he ressurected without timer ... he still could use skills and do damage".
 - On every screen, the fall's flag keeps `fellAt`, and a body with `fellAt` is no blow's target
-  (`egFight.js:"    if (!b.fellAt && b.hp > 0 && (b.fl & (EG_FL.friend | EG_FL.hidden)) === 0) {"`) - "intangible" -
+  (`egFight.js:"(!b.fellAt && b.hp > 0 && (b.fl & (EG_FL.friend | EG_FL.hidden)) === 0)"`) - "intangible" -
   while the lord bar reads health alone - "his lifebar was about 15%".
 - The pair's raise lifts only a mate at nought (`egLords.js:"  if (dead && !(dead.hp > 0)) {"`), so it never came; and
   killing Isk counted the fed corpse as the survivor, said "fell the other within fifteen seconds!" over an

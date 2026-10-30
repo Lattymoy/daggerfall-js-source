@@ -39,17 +39,21 @@ const HORN_VIBRATO = Object.freeze({ hz: 5.2, depth: 0.006 });
  * fading at the last; a slow vibrato on both. Deterministic and pure (no noise), so every screen sounds the same call.
  */
 export function buildEgHorn({ rate = EG_HORN_RATE, seconds = EG_HORN_SECONDS } = {}) {
-  const n = Math.round(rate * seconds), out = new Float32Array(n);
-  let cycles = 0;   // the horn's phase, in turns (ONCRASH1 C2: no angle here is stepped by a whole turn)
+  const n = Math.round(rate * seconds),
+    out = new Float32Array(n);
+  let cycles = 0; // the horn's phase, in turns (ONCRASH1 C2: no angle here is stepped by a whole turn)
   for (let i = 0; i < n; i++) {
     const t = i / rate;
-    const glide = Math.min(1, Math.max(0, (t - EG_HORN_STEP_S) / 0.06));   // the step up, a lip's slur rather than a cut
-    const f = (EG_HORN_NOTES[0] + (EG_HORN_NOTES[1] - EG_HORN_NOTES[0]) * glide) * (1 + HORN_VIBRATO.depth * Math.sin(2 * Math.PI * HORN_VIBRATO.hz * t));
+    const glide = Math.min(1, Math.max(0, (t - EG_HORN_STEP_S) / 0.06)); // the step up, a lip's slur rather than a cut
+    const f =
+      (EG_HORN_NOTES[0] + (EG_HORN_NOTES[1] - EG_HORN_NOTES[0]) * glide) *
+      (1 + HORN_VIBRATO.depth * Math.sin(2 * Math.PI * HORN_VIBRATO.hz * t));
     cycles += f / rate;
     let v = 0;
     const angle = cycles * 2 * Math.PI;
     for (let k = 0; k < HORN_PARTIALS.length; k++) v += HORN_PARTIALS[k] * Math.sin((k + 1) * angle);
-    const attack = Math.min(1, t / 0.12), release = Math.min(1, (seconds - t) / 0.5);
+    const attack = Math.min(1, t / 0.12),
+      release = Math.min(1, (seconds - t) / 0.5);
     const breath = t < EG_HORN_STEP_S ? 0.8 : 1;
     out[i] = v * attack * release * breath;
   }
@@ -60,10 +64,15 @@ const _hornMade = new WeakSet();
 export function soundEgHorn(audio) {
   try {
     if (!audio?.registerSamples || !audio?.playOneShot) return false;
-    if (!_hornMade.has(audio)) { if (!audio.registerSamples(EG_HORN_KEY, buildEgHorn(), EG_HORN_RATE)) return false; _hornMade.add(audio); }
+    if (!_hornMade.has(audio)) {
+      if (!audio.registerSamples(EG_HORN_KEY, buildEgHorn(), EG_HORN_RATE)) return false;
+      _hornMade.add(audio);
+    }
     audio.playOneShot(EG_HORN_KEY, 1);
     return true;
-  } catch { return false; }   // a horn that cannot sound never costs the call
+  } catch {
+    return false;
+  } // a horn that cannot sound never costs the call
 }
 
 // ── the prompt ───────────────────────────────────────────────────────────────────────────────────────────────────
@@ -74,13 +83,26 @@ export function soundEgHorn(audio) {
  * @param {{ call: any, me: string|null, now: number, inSpire?: boolean, answered?: boolean, exterior?: boolean, windowUp?: boolean, wk?: number }} o
  * @returns {{ text: string, answerable: boolean, left: number } | null}
  */
-export function egCallPromptModel({ call, me, now, inSpire = false, answered = false, exterior = true, windowUp = false, wk = 0 }) {
+export function egCallPromptModel({
+  call,
+  me,
+  now,
+  inSpire = false,
+  answered = false,
+  exterior = true,
+  windowUp = false,
+  wk = 0,
+}) {
   if (!call || !me || !call.co?.some?.((r) => r[0] === me) || inSpire || answered || windowUp) return null;
-  const T = egTimes({ openedAt: call.op }), phase = egPhase({ openedAt: call.op, wokeAt: wk }, now);
-  if (phase === 'rising' || phase === 'sealed') return { text: EG_TEXT.sealed(egCountText(T.openAt - now)), answerable: false, left: T.openAt - now };
+  const T = egTimes({ openedAt: call.op }),
+    phase = egPhase({ openedAt: call.op, wokeAt: wk }, now);
+  if (phase === 'rising' || phase === 'sealed')
+    return { text: EG_TEXT.sealed(egCountText(T.openAt - now)), answerable: false, left: T.openAt - now };
   if (phase !== 'open') return null;
   const left = T.admitUntil - now;
-  return exterior ? { text: EG_TEXT.answer(egCountText(left)), answerable: true, left } : { text: EG_TEXT.indoors, answerable: false, left };
+  return exterior
+    ? { text: EG_TEXT.answer(egCountText(left)), answerable: true, left }
+    : { text: EG_TEXT.indoors, answerable: false, left };
 }
 /** The keys that answer it: Enter, and the pad's A (ui/gamepadInput.js: a button is the Unity name's key). */
 export const EG_CALL_KEYS = Object.freeze(['Enter', 'NumpadEnter', 'JoystickButton0']);
@@ -113,16 +135,29 @@ export function createEgCallPrompt({ onAnswer, doc = globalThis.document, touch 
     st.textContent = EG_CALL_PROMPT_CSS;
     (doc.head ?? doc.body)?.append(st);
   }
-  const el = (tag, cls, text) => { const n = doc.createElement(tag); n.className = cls; if (text != null) n.textContent = text; return n; };
+  const el = (tag, cls, text) => {
+    const n = doc.createElement(tag);
+    n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  };
   const root = el('div', `dfegcall${touch ? ' touch' : ''}`);
   root.dataset.up = '0';
   const line = el('div', 'dfegcall-line');
-  const btn = el('button', 'dfegcall-btn', 'Answer'); /** @type {any} */ (btn).type = 'button';
+  const btn = el('button', 'dfegcall-btn', 'Answer');
+  /** @type {any} */ (btn).type = 'button';
   root.append(line, btn);
   doc.body?.append(root);
-  const swallow = (e) => e.stopPropagation();   // a press on the strip is the strip's - never a swing
-  for (const t of ['pointerdown', 'mousedown', 'click', 'touchstart', 'wheel', 'contextmenu']) root.addEventListener(t, swallow);
-  btn.addEventListener('click', () => { try { onAnswer(); } catch { /* the answer's own refusals are said */ } });
+  const swallow = (e) => e.stopPropagation(); // a press on the strip is the strip's - never a swing
+  for (const t of ['pointerdown', 'mousedown', 'click', 'touchstart', 'wheel', 'contextmenu'])
+    root.addEventListener(t, swallow);
+  btn.addEventListener('click', () => {
+    try {
+      onAnswer();
+    } catch {
+      /* the answer's own refusals are said */
+    }
+  });
   let alive = true;
   return {
     root,
@@ -138,7 +173,11 @@ export function createEgCallPrompt({ onAnswer, doc = globalThis.document, touch 
       const word = m.button ?? 'Answer';
       if (btn.textContent !== word) btn.textContent = word;
     },
-    destroy() { if (!alive) return; alive = false; root.remove?.(); },
+    destroy() {
+      if (!alive) return;
+      alive = false;
+      root.remove?.();
+    },
   };
 }
 
@@ -153,8 +192,28 @@ export const EG_CALL_DEST = Object.freeze({ pixel: Object.freeze({ x: 0, y: 0 })
  *   groundAt?: ((p: number[]) => number|null)|null, onEnter?: () => void, onRefused?: (hold: string) => void, hold?: () => (string|null) }} deps
  *   `hold` the host's portalHold word on a step (the Portal Stone's holds keep this portal shut too).
  */
-export function createEgCallPortal({ renderer = null, audio = null, now = () => performance.now(), toScene = (p) => p, toWire = (p) => p, groundAt = null, onEnter = () => {}, onRefused = () => {}, hold = () => null } = {}) {
-  const pool = createPortalGates({ renderer, audio, now, toScene, toWire, groundAt, onEnter: () => onEnter(), onRefused: (hold) => onRefused(hold), eventGround: false });   // RPT1026-EVENTS GATE-WAY: the call's portal is the way into the event - an arch's ground never closes it
+export function createEgCallPortal({
+  renderer = null,
+  audio = null,
+  now = () => performance.now(),
+  toScene = (p) => p,
+  toWire = (p) => p,
+  groundAt = null,
+  onEnter = () => {},
+  onRefused = () => {},
+  hold = () => null,
+} = {}) {
+  const pool = createPortalGates({
+    renderer,
+    audio,
+    now,
+    toScene,
+    toWire,
+    groundAt,
+    onEnter: () => onEnter(),
+    onRefused: (hold) => onRefused(hold),
+    eventGround: false,
+  }); // RPT1026-EVENTS GATE-WAY: the call's portal is the way into the event - an arch's ground never closes it
   return {
     /** A portal torn open ahead of `feet` facing `yaw` (the host's two probes - portalPlace's); answers its place, or
      *  `{ refused }` ('room' | 'ground'). */
@@ -172,7 +231,9 @@ export function createEgCallPortal({ renderer = null, audio = null, now = () => 
     /** The portal closed (the step taken, a window ended, the host away). */
     clear: () => pool.clear(),
     /** For the tests. */
-    get gates() { return pool.gates; },
+    get gates() {
+      return pool.gates;
+    },
     /** How long a call's portal stands (the Portal Stone's PORTAL_OPEN_MS). */
     life: PORTAL_OPEN_MS,
   };

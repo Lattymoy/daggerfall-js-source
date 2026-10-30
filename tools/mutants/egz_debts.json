@@ -2,8 +2,8 @@
   {
     "name": "EGZP-share-unapplied",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "const k = (1 - dr) * x, raw = strikeDamage(",
-    "new": "const k = x, raw = strikeDamage(",
+    "old": "    const k = (1 - dr) * x,",
+    "new": "    const k = x,",
     "tests": [
       "test/net/eliteGates/egz_debts.test.js"
     ]
@@ -12,8 +12,8 @@
     "name": "EGZP-share-unspared",
     "note": "EG-ZR (PIN MOVED): re-aimed by content - a blow's share is of the body without Stoneskin's cushion (spireBodyMax)",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "raw = strikeDamage(pct * k, spireBodyMax(e), base * k)",
-    "new": "raw = strikeDamage(pct, spireBodyMax(e), base * k)",
+    "old": "      raw = strikeDamage(pct * k, spireBodyMax(e), base * k),",
+    "new": "      raw = strikeDamage(pct, spireBodyMax(e), base * k),",
     "tests": [
       "test/net/eliteGates/egz_debts.test.js"
     ]
@@ -22,8 +22,8 @@
     "name": "EGZP-points-unspared",
     "note": "EG-ZR (PIN MOVED): re-aimed by content - a blow's share is of the body without Stoneskin's cushion (spireBodyMax)",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "raw = strikeDamage(pct * k, spireBodyMax(e), base * k)",
-    "new": "raw = strikeDamage(pct * k, spireBodyMax(e), base)",
+    "old": "      raw = strikeDamage(pct * k, spireBodyMax(e), base * k),",
+    "new": "      raw = strikeDamage(pct * k, spireBodyMax(e), base),",
     "tests": [
       "test/net/eliteGates/egz_debts.test.js"
     ]
@@ -31,8 +31,8 @@
   {
     "name": "EGZP-blow-unshielded",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "landShare(bl.p, bl.b, bl.el, bl.nm, spared(E, F, bl), part * egTouchedX(F, bl, me(), t), true);",
-    "new": "landShare(bl.p, bl.b, bl.el, bl.nm, 0, part * egTouchedX(F, bl, me(), t), true);",
+    "old": "              landShare(bl.p, bl.b, bl.el, bl.nm, spared(E, F, bl), part * egTouchedX(F, bl, me(), t), true);",
+    "new": "              landShare(bl.p, bl.b, bl.el, bl.nm, 0, part * egTouchedX(F, bl, me(), t), true);",
     "tests": [
       "test/net/eliteGates/egz_debts.test.js"
     ]
@@ -40,8 +40,8 @@
   {
     "name": "EGZP-trail-unkept",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "if (standing) { trail.push([t, f[0], fy, f[1], hall]);",
-    "new": "if (false) { trail.push([t, f[0], fy, f[1], hall]);",
+    "old": "        fy = d0f && centre ? d0f[1] - centre[1] : 0;\n      if (standing) {",
+    "new": "        fy = d0f && centre ? d0f[1] - centre[1] : 0;\n      if (false) {",
     "tests": [
       "test/net/eliteGates/egz_debts.test.js"
     ]
@@ -49,8 +49,8 @@
   {
     "name": "EGZP-trail-wrong-hall",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "trail.push([t, f[0], fy, f[1], hall]);",
-    "new": "trail.push([t, f[0], fy, f[1], 0]);",
+    "old": "        trail.push([t, f[0], fy, f[1], hall]);",
+    "new": "        trail.push([t, f[0], fy, f[1], 0]);",
     "tests": [
       "test/net/eliteGates/egz_debts.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "EGZP-trail-untrimmed",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": " while (trail.length > 1 && trail[1][0] <= t - EG_TRAIL_MS) trail.shift(); }",
-    "new": " }",
+    "old": "        while (trail.length > 1 && trail[1][0] <= t - EG_TRAIL_MS) trail.shift();\n      } // EG-ZP: my trail, the census's shape",
+    "new": "      } // EG-ZP: my trail, the census's shape",
     "tests": [
       "test/net/eliteGates/egz_debts.test.js"
     ]
@@ -67,8 +67,8 @@
   {
     "name": "EGZP-trail-short",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "trail[1][0] <= t - EG_TRAIL_MS) trail.shift();",
-    "new": "trail[1][0] <= t - 500) trail.shift();",
+    "old": "        while (trail.length > 1 && trail[1][0] <= t - EG_TRAIL_MS) trail.shift();",
+    "new": "        while (trail.length > 1 && trail[1][0] <= t - 500) trail.shift();",
     "tests": [
       "test/net/eliteGates/egz_debts.test.js"
     ]
@@ -76,8 +76,8 @@
   {
     "name": "EGZP-companion-unshifted",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "return p && centre ? [p[0] - centre[0], p[1] - PEER_EYE_M - centre[1], p[2] - centre[2]] : null;",
-    "new": "return p && centre ? [p[0], p[1] - PEER_EYE_M - centre[1], p[2] - centre[2]] : null;",
+    "old": "    return p && centre ? [p[0] - centre[0], p[1] - PEER_EYE_M - centre[1], p[2] - centre[2]] : null;",
+    "new": "    return p && centre ? [p[0], p[1] - PEER_EYE_M - centre[1], p[2] - centre[2]] : null;",
     "tests": [
       "test/net/eliteGates/egz_debts.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "EGZP-companion-stamp",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "tr: [[bl.at, p[0], p[1], p[2], B.h]] });",
-    "new": "tr: [[bl.at + 1, p[0], p[1], p[2], B.h]] });",
+    "old": "    if (p) bodies.push({ sub, tr: [[bl.at, p[0], p[1], p[2], B.h]] });",
+    "new": "    if (p) bodies.push({ sub, tr: [[bl.at + 1, p[0], p[1], p[2], B.h]] });",
     "tests": [
       "test/net/eliteGates/egz_debts.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "EGZP-companion-hall",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "tr: [[bl.at, p[0], p[1], p[2], B.h]] });",
-    "new": "tr: [[bl.at, p[0], p[1], p[2], 0]] });",
+    "old": "    if (p) bodies.push({ sub, tr: [[bl.at, p[0], p[1], p[2], B.h]] });",
+    "new": "    if (p) bodies.push({ sub, tr: [[bl.at, p[0], p[1], p[2], 0]] });",
     "tests": [
       "test/net/eliteGates/egz_debts.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "EGZP-mine-unread",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "bodies = [{ sub: me ?? '', tr }];",
-    "new": "bodies = [];",
+    "old": "    bodies = [{ sub: me ?? '', tr }]; // mine first: the census reads a member's first trail",
+    "new": "    bodies = []; // mine first: the census reads a member's first trail",
     "tests": [
       "test/net/eliteGates/egz_debts.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "EGZP-thrower-dropped",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "at: bl.at, o: bl.o ?? 0 }, bodies);",
-    "new": "at: bl.at, o: 0 }, bodies);",
+    "old": "  return egCensusDr(B, F, egFightView(spec), { sub: me ?? '', at: bl.at, o: bl.o ?? 0 }, bodies);",
+    "new": "  return egCensusDr(B, F, egFightView(spec), { sub: me ?? '', at: bl.at, o: 0 }, bodies);",
     "tests": [
       "test/net/eliteGates/egz_debts.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "EGZP-landing-dropped",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "{ sub: me ?? '', at: bl.at, o: bl.o ?? 0 }",
-    "new": "{ sub: me ?? '', at: 0, o: bl.o ?? 0 }",
+    "old": "  return egCensusDr(B, F, egFightView(spec), { sub: me ?? '', at: bl.at, o: bl.o ?? 0 }, bodies);",
+    "new": "  return egCensusDr(B, F, egFightView(spec), { sub: me ?? '', at: 0, o: bl.o ?? 0 }, bodies);",
     "tests": [
       "test/net/eliteGates/egz_debts.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "EGZP-row-in",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "mem[c[0]] = { in: m?.in, alive:",
-    "new": "mem[c[0]] = { in: true, alive:",
+    "old": "      in: m?.in,",
+    "new": "      in: true,",
     "tests": [
       "test/net/eliteGates/egz_debts.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "EGZP-row-alive",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "alive: m?.alive, home:",
-    "new": "alive: true, home:",
+    "old": "    mem[c[0]] = {\n      in: m?.in,\n      alive: m?.alive,\n      home: m?.home,\n      vs: run.vs,\n      mast: run.mast,\n      ...(c[0] === me ? { ll } : {}),\n    };",
+    "new": "    mem[c[0]] = { in: m?.in, alive: true, home: m?.home, vs: run.vs, mast: run.mast, ...(c[0] === me ? { ll } : {}) };",
     "tests": [
       "test/net/eliteGates/egz_debts.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "EGZP-row-home",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "home: m?.home, vs:",
-    "new": "home: false, vs:",
+    "old": "    mem[c[0]] = {\n      in: m?.in,\n      alive: m?.alive,\n      home: m?.home,\n      vs: run.vs,\n      mast: run.mast,\n      ...(c[0] === me ? { ll } : {}),\n    };",
+    "new": "    mem[c[0]] = { in: m?.in, alive: m?.alive, home: false, vs: run.vs, mast: run.mast, ...(c[0] === me ? { ll } : {}) };",
     "tests": [
       "test/net/eliteGates/egz_debts.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "EGZP-runs-unread",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "vs: run.vs, mast: run.mast,",
-    "new": "vs: [], mast: run.mast,",
+    "old": "    mem[c[0]] = {\n      in: m?.in,\n      alive: m?.alive,\n      home: m?.home,\n      vs: run.vs,\n      mast: run.mast,\n      ...(c[0] === me ? { ll } : {}),\n    };",
+    "new": "    mem[c[0]] = { in: m?.in, alive: m?.alive, home: m?.home, vs: [], mast: run.mast, ...(c[0] === me ? { ll } : {}) };",
     "tests": [
       "test/net/eliteGates/egz_debts.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "EGZP-mastery-unread",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "vs: run.vs, mast: run.mast,",
-    "new": "vs: run.vs, mast: -1,",
+    "old": "    mem[c[0]] = {\n      in: m?.in,\n      alive: m?.alive,\n      home: m?.home,\n      vs: run.vs,\n      mast: run.mast,\n      ...(c[0] === me ? { ll } : {}),\n    };",
+    "new": "    mem[c[0]] = { in: m?.in, alive: m?.alive, home: m?.home, vs: run.vs, mast: -1, ...(c[0] === me ? { ll } : {}) };",
     "tests": [
       "test/net/eliteGates/egz_debts.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "EGZP-windows-unread",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "...(c[0] === me ? { ll } : {}) };",
-    "new": "...{} };",
+    "old": "    mem[c[0]] = {\n      in: m?.in,\n      alive: m?.alive,\n      home: m?.home,\n      vs: run.vs,\n      mast: run.mast,\n      ...(c[0] === me ? { ll } : {}),\n    };",
+    "new": "    mem[c[0]] = { in: m?.in, alive: m?.alive, home: m?.home, vs: run.vs, mast: run.mast, ...{} };",
     "tests": [
       "test/net/eliteGates/egz_debts.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "EGZP-windows-everyone",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "...(c[0] === me ? { ll } : {}) };",
-    "new": "...{ ll } };",
+    "old": "    mem[c[0]] = {\n      in: m?.in,\n      alive: m?.alive,\n      home: m?.home,\n      vs: run.vs,\n      mast: run.mast,\n      ...(c[0] === me ? { ll } : {}),\n    };",
+    "new": "    mem[c[0]] = { in: m?.in, alive: m?.alive, home: m?.home, vs: run.vs, mast: run.mast, ...{ ll } };",
     "tests": [
       "test/net/eliteGates/egz_debts.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "EGZP-window-from",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "[at - EG_HEAL_WORD_MS, at + EG_LIFELINE_MS, v]",
-    "new": "[at, at + EG_LIFELINE_MS, v]",
+    "old": "  [...ll.filter((w) => w[1] >= at - EG_TRAIL_MS), [at - EG_HEAL_WORD_MS, at + EG_LIFELINE_MS, v]].slice(-4);",
+    "new": "  [...ll.filter((w) => w[1] >= at - EG_TRAIL_MS), [at, at + EG_LIFELINE_MS, v]].slice(-4);",
     "tests": [
       "test/net/eliteGates/egz_debts.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "EGZP-window-until",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "[at - EG_HEAL_WORD_MS, at + EG_LIFELINE_MS, v]",
-    "new": "[at - EG_HEAL_WORD_MS, at + EG_LIFELINE_MS + 1, v]",
+    "old": "  [...ll.filter((w) => w[1] >= at - EG_TRAIL_MS), [at - EG_HEAL_WORD_MS, at + EG_LIFELINE_MS, v]].slice(-4);",
+    "new": "  [...ll.filter((w) => w[1] >= at - EG_TRAIL_MS), [at - EG_HEAL_WORD_MS, at + EG_LIFELINE_MS + 1, v]].slice(-4);",
     "tests": [
       "test/net/eliteGates/egz_debts.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "EGZP-window-four",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "at + EG_LIFELINE_MS, v]].slice(-4);",
-    "new": "at + EG_LIFELINE_MS, v]].slice(-5);",
+    "old": "  [...ll.filter((w) => w[1] >= at - EG_TRAIL_MS), [at - EG_HEAL_WORD_MS, at + EG_LIFELINE_MS, v]].slice(-4);",
+    "new": "  [...ll.filter((w) => w[1] >= at - EG_TRAIL_MS), [at - EG_HEAL_WORD_MS, at + EG_LIFELINE_MS, v]].slice(-5);",
     "tests": [
       "test/net/eliteGates/egz_debts.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "EGZP-window-old-kept",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "[...ll.filter((w) => w[1] >= at - EG_TRAIL_MS), [at",
-    "new": "[...ll, [at",
+    "old": "export const egLifelineOpen = (ll, v, at) =>\n  [...ll.filter((w) => w[1] >= at - EG_TRAIL_MS), [at - EG_HEAL_WORD_MS, at + EG_LIFELINE_MS, v]].slice(-4);",
+    "new": "export const egLifelineOpen = (ll, v, at) => [...ll, [at - EG_HEAL_WORD_MS, at + EG_LIFELINE_MS, v]].slice(-4);",
     "tests": [
       "test/net/eliteGates/egz_debts.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "EGZP-window-nought",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "lifeline(v, at) { if (v > 0 && Number.isFinite(at))",
-    "new": "lifeline(v, at) { if (Number.isFinite(at))",
+    "old": "      if (v > 0 && Number.isFinite(at)) ll = egLifelineOpen(ll, v, at);",
+    "new": "      if (Number.isFinite(at)) ll = egLifelineOpen(ll, v, at);",
     "tests": [
       "test/net/eliteGates/egz_debts.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "EGZP-window-no-instant",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "lifeline(v, at) { if (v > 0 && Number.isFinite(at))",
-    "new": "lifeline(v, at) { if (v > 0)",
+    "old": "      if (v > 0 && Number.isFinite(at)) ll = egLifelineOpen(ll, v, at);",
+    "new": "      if (v > 0) ll = egLifelineOpen(ll, v, at);",
     "tests": [
       "test/net/eliteGates/egz_debts.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "EGZP-leave-keeps",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "      trail.length = 0; ll = [];   // EG-ZP\n",
-    "new": "",
+    "old": "      trail.length = 0;\n      ll = []; // EG-ZP\n      hymn = null;",
+    "new": "      hymn = null;",
     "tests": [
       "test/net/eliteGates/egz_debts.test.js"
     ]

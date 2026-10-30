@@ -235,7 +235,7 @@ Court lord asleep in its ring.
 FIXED. One law: the relay's strike rule is `egBodies.js:"export function egStruckOff(view, b, x, y, z) {"`, called by
 `egBrain.js:"if (egStruckOff(view, body, p.x, p.y, p.z)) return land(0);"`, and the screen asks the same rule plus the
 flags the relay takes nothing through and a lord asleep (`egBodies.js:"export function egStrikeTurned(view, b, x, y, z, now = 0, spec = null) {"`).
-Each frame `egFight.js:"function turnStandIn(t, b) {"` marks a target's stand-in `warded` when the relay would refuse a
+Each frame `egFight.js:"function turnStandIn"` marks a target's stand-in `warded` when the relay would refuse a
 blow from my feet; every heal and power already refuses a warded target, and Vampiric Effect now does too
 (VAMPIRIC-WARD). Nothing is sent, nothing bleeds, the swing and the shaft ring off as off the Warden's ward, and the hit
 number says "No footing" or "Warded". THE FOUR HOSTS: `dungeonContext.js` (the one door a blow on a Spire body leaves
@@ -299,7 +299,7 @@ Ward-Bearers - at its place, on its floor, at a size, in its own art, offered as
 vanish (a hidden lord throws no blow, and the full state every 2 s resets the flags), culling, a Morrowind body, missing
 art (all 96 looks have it). What can hide one body while its attack markers (their own pass) still draw: its art never
 loaded - the driver keeps a failed texture for the session, every body of that mobile stands undrawn and untargetable,
-and nothing said so; it now logs once (`egFight.js:"const failed = (why) =>"`), behaviour unchanged - or an animation
+and nothing said so; it now logs once (`egFight.js:"const failed = (why)"`), behaviour unchanged - or an animation
 frame never uploaded (a texture pack missing a record). What would prove it, from the player: could they hit it; did a
 companion see it; the console then; their texture or sprite mods; the hall, the foe's card, a screenshot with the AOE.
 Pins: `test/scenes/eliteGates/fb1018f_unseenkeeper.test.js` (2). Mutants: `tools/mutants/fb1018f_unseenkeeper.json` (2,

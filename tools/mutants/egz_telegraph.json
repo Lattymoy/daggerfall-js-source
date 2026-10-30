@@ -470,8 +470,8 @@
   {
     "name": "EGZ-fight-burn-orange-kept",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "if (z.kind === 'burn') { sh.color = egPoolRgb(band); sh.pool = TELEGRAPH_POOL_SPIRE.pool; }",
-    "new": "if (z.kind === 'none') { sh.color = egPoolRgb(band); sh.pool = TELEGRAPH_POOL_SPIRE.pool; }",
+    "old": "        if (z.kind === 'burn') {",
+    "new": "        if (z.kind === 'none') {",
     "tests": [
       "test/world/eliteGates/egz_telegraph.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "EGZ-fight-chain-as-pull",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "if (egTetherKind(tx) === 'pull') pullTether(",
-    "new": "if (egTetherKind(tx)) pullTether(",
+    "old": "        if (egTetherKind(tx) === 'pull') pullTether(a, b, egTetherBreak(tx), `${tx[0]}|${tx[1]}|${tx[2]}`, mineTx);",
+    "new": "        if (egTetherKind(tx)) pullTether(a, b, egTetherBreak(tx), `${tx[0]}|${tx[1]}|${tx[2]}`, mineTx);",
     "tests": [
       "test/world/eliteGates/egz_telegraph.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "EGZ-fight-chain-words-never",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "if (mineTx && (!chained || d > chained.d)) chained =",
-    "new": "if (false && mineTx && (!chained || d > chained.d)) chained =",
+    "old": "          if (mineTx && (!chained || d > chained.d))",
+    "new": "          if (false && mineTx && (!chained || d > chained.d))",
     "tests": [
       "test/world/eliteGates/egz_telegraph.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "EGZ-fight-feint-shakes",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "if (!bl.cut && standing) { const k = egHeavyShake(",
-    "new": "if (standing) { const k = egHeavyShake(",
+    "old": "          if (!bl.cut && standing) {",
+    "new": "          if (standing) {",
     "tests": [
       "test/world/eliteGates/egz_telegraph.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "EGZ-fight-motion-ignored",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "const motion = egShakeMotion(egReducedMotion(), getPref('techniqueMotion'));",
-    "new": "const motion = egShakeMotion(false, getPref('techniqueMotion'));",
+    "old": "      const motion = egShakeMotion(egReducedMotion(), getPref('techniqueMotion')); // EG-ZG (section 25.7): the shakes under reduced motion and Technique camera motion",
+    "new": "      const motion = egShakeMotion(false, getPref('techniqueMotion')); // EG-ZG (section 25.7): the shakes under reduced motion and Technique camera motion",
     "tests": [
       "test/world/eliteGates/egz_telegraph.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "EGZ-fight-fallen-aura",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "if (!m || !m.alive || m.home || !m.in || m.wit) continue;",
-    "new": "if (!m) continue;",
+    "old": "      if (!m || !m.alive || m.home || !m.in || m.wit) continue;",
+    "new": "      if (!m) continue;",
     "tests": [
       "test/world/eliteGates/egz_telegraph.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "EGZ-fight-aura-on-floors",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "      sh.y = p[1] - up - centre[1];\n",
-    "new": "",
+    "old": "      sh.y = p[1] - up - centre[1];\n      _shapes.push(sh);",
+    "new": "      _shapes.push(sh);",
     "tests": [
       "test/world/eliteGates/egz_telegraph.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "EGZ-fight-drop-hop",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "} else if (s && y - s.y >= EG_DROP_THUD.min && dropOn !== s) dropFrom = s;",
-    "new": "} else if (s && y - s.y >= EG_DROP_THUD.min) dropFrom = s;",
+    "old": "      } else if (s && y - s.y >= EG_DROP_THUD.min && dropOn !== s) dropFrom = s;",
+    "new": "      } else if (s && y - s.y >= EG_DROP_THUD.min) dropFrom = s;",
     "tests": [
       "test/world/eliteGates/egz_telegraph.test.js"
     ]
@@ -542,8 +542,8 @@
   {
     "name": "EGZ-fight-wind-every-frame",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "if (!e.live && e.secs <= EG_ECLIPSE_LOOK.wind && !eclipseHeard.has(wind)) {",
-    "new": "if (!e.live && e.secs <= EG_ECLIPSE_LOOK.wind) {",
+    "old": "    if (!e.live && e.secs <= EG_ECLIPSE_LOOK.wind && !eclipseHeard.has(wind)) {",
+    "new": "    if (!e.live && e.secs <= EG_ECLIPSE_LOOK.wind) {",
     "tests": [
       "test/world/eliteGates/egz_telegraph.test.js"
     ]
@@ -551,8 +551,8 @@
   {
     "name": "EGZ-fight-dark-early",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "    if (dark > 0) {\n",
-    "new": "    if (dark >= 0) {\n",
+    "old": "    if (dark > 0) {",
+    "new": "    if (dark >= 0) {",
     "tests": [
       "test/world/eliteGates/egz_telegraph.test.js"
     ]
@@ -560,8 +560,8 @@
   {
     "name": "EGZ-fight-check-order-never",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "if (g && peril.check && !peril.dir) g = { ...g, warn: EG_CHECK_ORDER };",
-    "new": "if (false) g = { ...g, warn: EG_CHECK_ORDER };",
+    "old": "      if (g && peril.check && !peril.dir) g = { ...g, warn: EG_CHECK_ORDER };",
+    "new": "      if (false) g = { ...g, warn: EG_CHECK_ORDER };",
     "tests": [
       "test/world/eliteGates/egz_telegraph.test.js"
     ]
@@ -569,8 +569,8 @@
   {
     "name": "EGZ-fight-sigils-on-head",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "egScreenAt(vp, [p[0], p[1] + EG_SIGIL_UP_M, p[2]])",
-    "new": "egScreenAt(vp, [p[0], p[1], p[2]])",
+    "old": "        const at = p ? egScreenAt(vp, [p[0], p[1] + EG_SIGIL_UP_M, p[2]]) : null;",
+    "new": "        const at = p ? egScreenAt(vp, [p[0], p[1], p[2]]) : null;",
     "tests": [
       "test/world/eliteGates/egz_telegraph.test.js"
     ]
@@ -578,8 +578,8 @@
   {
     "name": "EGZ-fight-mine-not-marked",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "b.hurtAt = b.mineAt = now();",
-    "new": "b.hurtAt = now();",
+    "old": "      b.hurtAt = b.mineAt = now(); // EG-ZG: mine - its flash full (an ally's is 0.4)",
+    "new": "      b.hurtAt = now(); // EG-ZG: mine - its flash full (an ally's is 0.4)",
     "tests": [
       "test/world/eliteGates/egz_telegraph.test.js"
     ]

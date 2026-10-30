@@ -530,6 +530,16 @@
 !/src/scenes/dragonViewHost.js
 !/src/scenes/dungeonDivers.js
 !/src/scenes/dungeonIdentity.js
+!/src/scenes/eliteGates/
+/src/scenes/eliteGates/*
+!/src/scenes/eliteGates/egAir.js
+!/src/scenes/eliteGates/egArch.js
+!/src/scenes/eliteGates/egCall.js
+!/src/scenes/eliteGates/egFight.js
+!/src/scenes/eliteGates/egGroundLook.js
+!/src/scenes/eliteGates/egLordFall.js
+!/src/scenes/eliteGates/egPieceBatch.js
+!/src/scenes/eliteGates/egWreckLook.js
 !/src/scenes/eventTheatres.js
 !/src/scenes/fishHost.js
 !/src/scenes/floraSeat.js

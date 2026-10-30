@@ -760,8 +760,8 @@
   {
     "name": "EGZJ-drawn-at-the-hall-s-height",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "const y = bodyY + (act.sink",
-    "new": "const y = 0 + (act.sink",
+    "old": "      bodyY +",
+    "new": "      0 +",
     "tests": [
       "test/net/eliteGates/egz_state.test.js"
     ]
@@ -769,8 +769,8 @@
   {
     "name": "EGZJ-crystal-at-the-hall-s-height",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "c.at[1] = centre[1] + bodyY + (key === 'pillar' ? 3 : 0);",
-    "new": "c.at[1] = centre[1] + (key === 'pillar' ? 3 : 0);",
+    "old": "    c.at[1] = centre[1] + bodyY + (key === 'pillar' ? 3 : 0);",
+    "new": "    c.at[1] = centre[1] + (key === 'pillar' ? 3 : 0);",
     "tests": [
       "test/net/eliteGates/egz_state.test.js"
     ]
@@ -787,8 +787,8 @@
   {
     "name": "EGZJ-roar-at-the-hall-s-height",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "play3(BOSS_CUES.roar, toDungeon(L0.x, (L0.y ?? 0) + 3, L0.z));",
-    "new": "play3(BOSS_CUES.roar, toDungeon(L0.x, 3, L0.z));",
+    "old": "      play3(BOSS_CUES.roar, toDungeon(L0.x, (L0.y ?? 0) + 3, L0.z));",
+    "new": "      play3(BOSS_CUES.roar, toDungeon(L0.x, 3, L0.z));",
     "tests": [
       "test/net/eliteGates/egz_state.test.js"
     ]
@@ -796,8 +796,8 @@
   {
     "name": "EGZJ-growl-at-the-hall-s-height",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "play3(BOSS_CUES.growl, at ? toDungeon(at.x, (at.y ?? 0) + 3, at.z) : null)",
-    "new": "play3(BOSS_CUES.growl, at ? toDungeon(at.x, 3, at.z) : null)",
+    "old": "      play3(BOSS_CUES.growl, at ? toDungeon(at.x, (at.y ?? 0) + 3, at.z) : null);",
+    "new": "      play3(BOSS_CUES.growl, at ? toDungeon(at.x, 3, at.z) : null);",
     "tests": [
       "test/net/eliteGates/egz_state.test.js"
     ]
@@ -805,8 +805,8 @@
   {
     "name": "EGZJ-crust-tell-on-the-floors",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "          sh.y = s.y;   // EG-ZJ (section 11.7): on the crust's own surface",
-    "new": "          sh.y = NaN;   // EG-ZJ (section 11.7): on the crust's own surface",
+    "old": "          sh.y = s.y; // EG-ZJ (section 11.7): on the crust's own surface - a step of the course, never a fight floor's",
+    "new": "          sh.y = NaN; // EG-ZJ (section 11.7): on the crust's own surface - a step of the course, never a fight floor's",
     "tests": [
       "test/net/eliteGates/egz_state.test.js"
     ]
@@ -814,8 +814,8 @@
   {
     "name": "EGZJ-spill-on-the-floors",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "          sh.y = egHazardSurface(hz);",
-    "new": "          sh.y = NaN;",
+    "old": "          sh.y = egHazardSurface(hz); // EG-ZG (section 11.7): a hazard of the traversal ground on its own surface; EG-ZJ: and the slag's spill, over its crust",
+    "new": "          sh.y = NaN; // EG-ZG (section 11.7): a hazard of the traversal ground on its own surface; EG-ZJ: and the slag's spill, over its crust",
     "tests": [
       "test/net/eliteGates/egz_state.test.js"
     ]

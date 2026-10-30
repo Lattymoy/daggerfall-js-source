@@ -481,8 +481,8 @@
   {
     "name": "EGINT-the-wind-at-the-start",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "t < blow.at && t >= blow.at - blow.wu + blow.wu * EG_FEINT_AT + egWindGraceMs(b.fl | 0)) {",
-    "new": "t < blow.at) {",
+    "old": "    if (\n      blow &&\n      !cued.has(blow.i) &&\n      !blow.cut &&\n      t < blow.at &&\n      t >= blow.at - blow.wu + blow.wu * EG_FEINT_AT + egWindGraceMs(b.fl | 0)\n    ) {",
+    "new": "    if (blow && !cued.has(blow.i) && !blow.cut && t < blow.at) {",
     "tests": [
       "test/net/eliteGates/egint_client.test.js"
     ]
@@ -490,8 +490,8 @@
   {
     "name": "EGINT-a-cut-blows-wind",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "    if (blow && !cued.has(blow.i) && !blow.cut && t < blow.at",
-    "new": "    if (blow && !cued.has(blow.i) && t < blow.at",
+    "old": "      !blow.cut &&\n      t < blow.at &&",
+    "new": "      t < blow.at &&",
     "tests": [
       "test/net/eliteGates/egint_client.test.js"
     ]
@@ -499,8 +499,8 @@
   {
     "name": "EGINT-the-told-never-drawn",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "        drawTold(bl, t);   // EG-H1: Watchfire's early outlines",
-    "new": "      void drawTold;",
+    "old": "        drawTold(bl, t); // EG-H1: Watchfire's early outlines",
+    "new": "        void drawTold;",
     "tests": [
       "test/net/eliteGates/egint_client.test.js"
     ]

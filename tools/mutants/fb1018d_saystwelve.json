@@ -2,8 +2,8 @@
   {
     "name": "SAYS-TWELVE-past-the-end",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "for (let k = lastSay ? F.says.indexOf(lastSay) + 1 : 0; k < F.says.length; k++)",
-    "new": "for (let k = lastSay ? F.says.length : 0; k < F.says.length; k++)",
+    "old": "    for (let k = lastSay ? F.says.indexOf(lastSay) + 1 : 0; k < F.says.length; k++) {",
+    "new": "    for (let k = lastSay ? F.says.length : 0; k < F.says.length; k++) {",
     "tests": [
       "test/scenes/eliteGates/fb1018d_saystwelve.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "SAYS-TWELVE-last-unkept",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "    lastSay = F.says.at(-1) ?? lastSay;\n",
-    "new": "",
+    "old": "    lastSay = F.says.at(-1) ?? lastSay;\n  }",
+    "new": "  }",
     "tests": [
       "test/scenes/eliteGates/fb1018d_saystwelve.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "SAYS-TWELVE-new-screen-says-all",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "    beat = null; beatNext = []; lastSay = E.fight.says.at(-1) ?? null;",
-    "new": "    beat = null; beatNext = []; lastSay = null;",
+    "old": "    lastSay = E.fight.says.at(-1) ?? null;",
+    "new": "    lastSay = null;",
     "tests": [
       "test/scenes/eliteGates/fb1018d_saystwelve.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "SAYS-TWELVE-dropped-last-says-none",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "for (let k = lastSay ? F.says.indexOf(lastSay) + 1 : 0; k < F.says.length; k++)",
-    "new": "for (let k = lastSay ? (F.says.indexOf(lastSay) + 1 || F.says.length) : 0; k < F.says.length; k++)",
+    "old": "    for (let k = lastSay ? F.says.indexOf(lastSay) + 1 : 0; k < F.says.length; k++) {",
+    "new": "    for (let k = lastSay ? F.says.indexOf(lastSay) + 1 || F.says.length : 0; k < F.says.length; k++) {",
     "tests": [
       "test/scenes/eliteGates/fb1018d_saystwelve.test.js"
     ],

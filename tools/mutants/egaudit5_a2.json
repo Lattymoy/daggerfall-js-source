@@ -376,8 +376,8 @@
   {
     "name": "EGA5A2-fight-given-unread",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "      else if (egHallOf(E.seed, E.h, E.geo ?? 0) !== spec) respec(E);",
-    "new": "",
+    "old": "      else if (egHallOf(E.seed, E.h, E.geo ?? 0) !== spec) respec(E); // AUDIT EG V (L3-7): the breach's own hall, given",
+    "new": "      // AUDIT EG V (L3-7): the breach's own hall, given",
     "tests": [
       "test/net/eliteGates/egaudit5_a2_client.test.js"
     ],

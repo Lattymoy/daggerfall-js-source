@@ -749,8 +749,8 @@
   {
     "name": "EGZS-screen-mates-none",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "accordMates(key, as = 'a') { return centre ? egAccordMates(companyHere(), me() ?? '', key, as) : []; },",
-    "new": "accordMates(key, as = 'a') { void key; void as; return []; },",
+    "old": "      return centre ? egAccordMates(companyHere(), me() ?? '', key, as) : [];",
+    "new": "      void key;\n      void as;\n      return [];",
     "tests": [
       "test/net/eliteGates/egz_mastery_accords.test.js"
     ],

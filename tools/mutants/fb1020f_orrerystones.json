@@ -82,8 +82,8 @@
   {
     "name": "ORRERY-STONES-words-across-the-sign",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "egGivenAt(b, centre, tg, centre[1] + egBodyHeight(b, tg) + EG_STONE_TOP_M)",
-    "new": "egGivenAt(b, centre, tg)",
+    "old": "          const at = egScreenAt(vp, egGivenAt(b, centre, tg, centre[1] + egBodyHeight(b, tg) + EG_STONE_TOP_M)); // ORRERY-STONES: over its crown gear, never across its sign",
+    "new": "          const at = egScreenAt(vp, egGivenAt(b, centre, tg)); // ORRERY-STONES: over its crown gear, never across its sign",
     "tests": [
       "test/scenes/eliteGates/fb1020f_orrerystones.test.js"
     ],

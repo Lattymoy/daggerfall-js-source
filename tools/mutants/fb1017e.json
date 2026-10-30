@@ -62,8 +62,8 @@
   {
     "name": "ORRERY-SIGHT-one-hour",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "spireStoneWords(b.pt, orr[b.pt])",
-    "new": "spireStoneWords(b.pt, orr[0])",
+    "old": "              marks: [{ sigil: 'stone', text: spireStoneWords(b.pt, orr[b.pt]) }],",
+    "new": "              marks: [{ sigil: 'stone', text: spireStoneWords(b.pt, orr[0]) }],",
     "tests": [
       "test/systems/eliteGates/fb1017e_orrerysight.test.js"
     ],

@@ -159,7 +159,7 @@ test('AUDIT EG V L6-4 THE FIGHT\'S FRAME KEEPS ITS LISTS (section 11.9; scenes/e
   try { for (let k = 0; k < 20; k++) S.frame(); } finally { globalThis.Map = RealMap; globalThis.Set = RealSet; Array.prototype.filter = realFilter; }   // eslint-disable-line no-extend-native
   assert.deepEqual(made, { Map: 0, Set: 0, filter: 0 }, 'the fight\'s frame keeps its collections');
   const src = rd('src/scenes/eliteGates/egFight.js');
-  assert.match(src, /const a = tetherEnd\(tx\[0\], F, t, f, meSub\), b = tetherEnd\(tx\[1\], F, t, f, meSub\);/, 'a tether\'s ends by one function, never a closure a tether');
+  assert.match(src, /const a = tetherEnd\(tx\[0\], F, t, f, meSub\),\n\s*b = tetherEnd\(tx\[1\], F, t, f, meSub\);/, 'a tether\'s ends by one function, never a closure a tether');
   const bytes = await sampledBytes(S.frame, 1500, ['scenes/eliteGates/egFight.js']);
   assert.ok(bytes < 11 * 1024, `the fight's frame allocates ${Math.round(bytes)} bytes a frame`);
 });

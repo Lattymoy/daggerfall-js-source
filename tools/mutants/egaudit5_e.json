@@ -139,7 +139,7 @@
   {
     "name": "EGA5E-fight-telegraph-pass-kept-at-leave",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "      try { p0?.destroy(); } catch { /* gone with its context */ }",
+    "old": "      try {\n        p0?.destroy();\n      } catch {\n        /* gone with its context */\n      }",
     "new": "",
     "tests": [
       "test/net/eliteGates/egaudit5_e.test.js"
@@ -148,7 +148,7 @@
   {
     "name": "EGA5E-fight-crystal-pass-kept-at-leave",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "      try { c0?.destroy(); } catch { /* gone with its context */ }",
+    "old": "      try {\n        c0?.destroy();\n      } catch {\n        /* gone with its context */\n      }",
     "new": "",
     "tests": [
       "test/net/eliteGates/egaudit5_e.test.js"
@@ -267,8 +267,8 @@
   {
     "name": "EGA5E-rampart-vent-in-fire",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "sh.t = st.st === 'warn' ? st.k : 1; sh.flash = st.st === 'fire' ? 1 : 0; sh.alpha = 1; sh.color = PEND_COLOR;",
-    "new": "sh.t = st.st === 'warn' ? st.k : 1; sh.flash = st.st === 'fire' ? 1 : 0; sh.alpha = 1; sh.color = [1.0, 0.45, 0.12];",
+    "old": "        sh.flash = st.st === 'fire' ? 1 : 0;\n        sh.alpha = 1;\n        sh.color = PEND_COLOR;\n        sh.edge = TELEGRAPH_EDGE_DAGON;",
+    "new": "        sh.flash = st.st === 'fire' ? 1 : 0;\n        sh.alpha = 1;\n        sh.color = [1.0, 0.45, 0.12];\n        sh.edge = TELEGRAPH_EDGE_DAGON;",
     "tests": [
       "test/net/eliteGates/egaudit5_e_look.test.js"
     ]
@@ -276,8 +276,8 @@
   {
     "name": "EGA5E-span-vent-in-fire",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "sh.t = st.fire ? 1 : st.tell; sh.flash = st.fire ? 1 : 0; sh.alpha = 1; sh.color = PEND_COLOR;",
-    "new": "sh.t = st.fire ? 1 : st.tell; sh.flash = st.fire ? 1 : 0; sh.alpha = 1; sh.color = st.fire ? [1.0, 0.45, 0.12] : PEND_COLOR;",
+    "old": "        sh.flash = st.fire ? 1 : 0;\n        sh.alpha = 1;\n        sh.color = PEND_COLOR;\n        sh.edge = TELEGRAPH_EDGE_DAGON;",
+    "new": "        sh.flash = st.fire ? 1 : 0;\n        sh.alpha = 1;\n        sh.color = st.fire ? [1.0, 0.45, 0.12] : PEND_COLOR;\n        sh.edge = TELEGRAPH_EDGE_DAGON;",
     "tests": [
       "test/net/eliteGates/egaudit5_e_look.test.js"
     ]
@@ -285,8 +285,8 @@
   {
     "name": "EGA5E-fragment-hazard-in-element",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "          sh.color = PEND_COLOR;   // AUDIT EG V (L5-3)",
-    "new": "          sh.color = p.st === 'tell' && hz.kind === 'fall' ? PEND_COLOR : p.el === 'fire' ? [1.0, 0.45, 0.12] : [1.0, 0.3, 0.2];   // AUDIT EG V (L5-3)",
+    "old": "          sh.color = PEND_COLOR; // AUDIT EG V (L5-3): the place's white, told and landing - the palette's hazard",
+    "new": "          sh.color =\n            p.st === 'tell' && hz.kind === 'fall' ? PEND_COLOR : p.el === 'fire' ? [1.0, 0.45, 0.12] : [1.0, 0.3, 0.2]; // AUDIT EG V (L5-3): the place's white, told and landing - the palette's hazard",
     "tests": [
       "test/net/eliteGates/egaudit5_e_look.test.js"
     ]
@@ -294,8 +294,8 @@
   {
     "name": "EGA5E-fragment-hazard-live-in-element",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "          sh.color = PEND_COLOR;   // AUDIT EG V (L5-3)",
-    "new": "          sh.color = p.st === 'live' ? [1.0, 0.45, 0.12] : PEND_COLOR;   // AUDIT EG V (L5-3)",
+    "old": "          sh.color = PEND_COLOR; // AUDIT EG V (L5-3): the place's white, told and landing - the palette's hazard",
+    "new": "          sh.color = p.st === 'live' ? [1.0, 0.45, 0.12] : PEND_COLOR; // AUDIT EG V (L5-3): the place's white, told and landing - the palette's hazard",
     "tests": [
       "test/net/eliteGates/egaudit5_e_look.test.js"
     ]
@@ -411,8 +411,8 @@
   {
     "name": "EGA5E-fight-plan-keep-unpassed",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "egFloorPlan(_shapes, floors, myFeet(), floorBuf, undefined, planKeep)",
-    "new": "egFloorPlan(_shapes, floors, myFeet(), floorBuf)",
+    "old": "      const plan = (lastPlan = egFloorPlan(_shapes, floors, myFeet(), floorBuf, undefined, planKeep)); // AUDIT EG V (L6-4): its slots kept",
+    "new": "      const plan = (lastPlan = egFloorPlan(_shapes, floors, myFeet(), floorBuf)); // AUDIT EG V (L6-4): its slots kept",
     "tests": [
       "test/net/eliteGates/egaudit5_e_alloc.test.js"
     ]
@@ -420,8 +420,8 @@
   {
     "name": "EGA5E-fight-company-every-ask",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "    if (companyMemo && t0 === companyAt && frameNo === companyFrame && E0 === companyState) return companyMemo;\n",
-    "new": "",
+    "old": "    if (companyMemo && t0 === companyAt && frameNo === companyFrame && E0 === companyState) return companyMemo;\n    companyAt = t0;",
+    "new": "    companyAt = t0;",
     "tests": [
       "test/net/eliteGates/egaudit5_e_alloc.test.js"
     ]
@@ -430,7 +430,7 @@
     "name": "EGA5E-fight-blowby-anew",
     "file": "src/scenes/eliteGates/egFight.js",
     "old": "      const blowBy = _blowBy;\n      blowBy.clear();",
-    "new": "      const blowBy = new Map(); _blowBy.clear();",
+    "new": "      const blowBy = new Map();\n      _blowBy.clear();",
     "tests": [
       "test/net/eliteGates/egaudit5_e_alloc.test.js"
     ]
@@ -439,7 +439,7 @@
     "name": "EGA5E-fight-live-anew",
     "file": "src/scenes/eliteGates/egFight.js",
     "old": "      const live = _live;\n      live.clear();",
-    "new": "      const live = new Set(); _live.clear();",
+    "new": "      const live = new Set();\n      _live.clear();",
     "tests": [
       "test/net/eliteGates/egaudit5_e_alloc.test.js"
     ]
@@ -448,7 +448,7 @@
     "name": "EGA5E-fight-lords-anew",
     "file": "src/scenes/eliteGates/egFight.js",
     "old": "      const lordIds = _lordIds;\n      lordIds.clear();",
-    "new": "      const lordIds = new Set(); _lordIds.clear();",
+    "new": "      const lordIds = new Set();\n      _lordIds.clear();",
     "tests": [
       "test/net/eliteGates/egaudit5_e_alloc.test.js"
     ]
@@ -465,8 +465,8 @@
   {
     "name": "EGA5E-fight-marks-filtered",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "      for (const m of F.mk) if (m[0] === meSub && m[2] > t) { if (m[1] === 6) challenged = true; if (m[1] === 5) caged = true; }",
-    "new": "      for (const m of F.mk.filter((q) => q[0] === meSub && q[2] > t)) { if (m[1] === 6) challenged = true; if (m[1] === 5) caged = true; }",
+    "old": "      for (const m of F.mk)\n        if (m[0] === meSub && m[2] > t) {\n          if (m[1] === 6) challenged = true;\n          if (m[1] === 5) caged = true;\n        }",
+    "new": "      for (const m of F.mk.filter((q) => q[0] === meSub && q[2] > t)) {\n        if (m[1] === 6) challenged = true;\n        if (m[1] === 5) caged = true;\n      }",
     "tests": [
       "test/net/eliteGates/egaudit5_e_alloc.test.js"
     ]
@@ -475,7 +475,7 @@
     "name": "EGA5E-fight-subs-anew",
     "file": "src/scenes/eliteGates/egFight.js",
     "old": "      const subs = _subs;\n      subs.clear();",
-    "new": "      const subs = new Set(); _subs.clear();",
+    "new": "      const subs = new Set();\n      _subs.clear();",
     "tests": [
       "test/net/eliteGates/egaudit5_e_alloc.test.js"
     ]
@@ -483,8 +483,8 @@
   {
     "name": "EGA5E-fight-given-anew",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "      const given = _given, tg = now();",
-    "new": "      const given = new Map(), tg = now();",
+    "old": "      const given = _given,",
+    "new": "      const given = new Map(),",
     "tests": [
       "test/net/eliteGates/egaudit5_e_alloc.test.js"
     ]
@@ -492,8 +492,8 @@
   {
     "name": "EGA5E-fight-tether-closure",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "        const a = tetherEnd(tx[0], F, t, f, meSub), b = tetherEnd(tx[1], F, t, f, meSub);",
-    "new": "        const endOf = (x) => tetherEnd(x, F, t, f, meSub), a = endOf(tx[0]), b = endOf(tx[1]);",
+    "old": "        const a = tetherEnd(tx[0], F, t, f, meSub),\n          b = tetherEnd(tx[1], F, t, f, meSub);",
+    "new": "        const endOf = (x) => tetherEnd(x, F, t, f, meSub),\n          a = endOf(tx[0]),\n          b = endOf(tx[1]);",
     "tests": [
       "test/net/eliteGates/egaudit5_e_alloc.test.js"
     ]
@@ -528,8 +528,8 @@
   {
     "name": "EGA5E-arch-empty-draws-anew",
     "file": "src/scenes/eliteGates/egArch.js",
-    "old": "egArchDraw(a.place, a.open, a.spin)) : NO_LIST),",
-    "new": "egArchDraw(a.place, a.open, a.spin)) : []),",
+    "old": "      arches.size\n        ? [...arches.values()].filter((a) => a.place).map((a) => egArchDraw(a.place, a.open, a.spin))\n        : NO_LIST, // AUDIT EG V (L6-4): none made with no arch",
+    "new": "      arches.size ? [...arches.values()].filter((a) => a.place).map((a) => egArchDraw(a.place, a.open, a.spin)) : [], // AUDIT EG V (L6-4): none made with no arch",
     "tests": [
       "test/net/eliteGates/egaudit5_e_alloc.test.js"
     ]
@@ -537,8 +537,8 @@
   {
     "name": "EGA5E-arch-empty-targets-anew",
     "file": "src/scenes/eliteGates/egArch.js",
-    "old": "      if (!arches.size) return NO_LIST;   // AUDIT EG V (L6-4)",
-    "new": "      if (!arches.size) return [];   // AUDIT EG V (L6-4)",
+    "old": "      if (!arches.size) return NO_LIST; // AUDIT EG V (L6-4)",
+    "new": "      if (!arches.size) return []; // AUDIT EG V (L6-4)",
     "tests": [
       "test/net/eliteGates/egaudit5_e_alloc.test.js"
     ]
@@ -546,8 +546,8 @@
   {
     "name": "EGA5E-arch-clears-anew",
     "file": "src/scenes/eliteGates/egArch.js",
-    "old": "      if (!arches.size) { if (clearsKey) { clearsKey = ''; clearsArr = NO_CLEARS; } return; }",
-    "new": "      if (!arches.size) { clearsArr = Object.freeze([]); return; }",
+    "old": "        if (clearsKey) {\n          clearsKey = '';\n          clearsArr = NO_CLEARS;\n        }",
+    "new": "        clearsArr = Object.freeze([]);",
     "tests": [
       "test/net/eliteGates/egaudit5_e_alloc.test.js"
     ]

@@ -110,8 +110,8 @@
   {
     "name": "EGSPAN-a-vent-every-frame",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "        if (st.fire && !ventJudged.has(cycle) && standing",
-    "new": "        if (st.fire && standing",
+    "old": "        if (st.fire && !ventJudged.has(cycle) && standing && Math.abs(fy - s.y) < 1.5 && egInVentDisc(s, f[0], f[1])) {",
+    "new": "        if (st.fire && standing && Math.abs(fy - s.y) < 1.5 && egInVentDisc(s, f[0], f[1])) {",
     "tests": [
       "test/net/eliteGates/egfull_span.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "EGSPAN-a-vent-everywhere",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "Math.abs(fy - s.y) < 1.5 && egInVentDisc(s, f[0], f[1])",
-    "new": "Math.abs(fy - s.y) < 1.5",
+    "old": "        if (st.fire && !ventJudged.has(cycle) && standing && Math.abs(fy - s.y) < 1.5 && egInVentDisc(s, f[0], f[1])) {",
+    "new": "        if (st.fire && !ventJudged.has(cycle) && standing && Math.abs(fy - s.y) < 1.5) {",
     "tests": [
       "test/net/eliteGates/egfull_span.test.js"
     ]

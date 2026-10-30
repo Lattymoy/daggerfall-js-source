@@ -117,8 +117,8 @@
   {
     "name": "EGF-a-hold-s-own-words-lost",
     "file": "src/scenes/eliteGates/egArch.js",
-    "old": "if (f.hold) return EG_TEXT.holds[f.hold] ?? EG_TEXT.holds.busy;",
-    "new": "if (f.hold) return EG_TEXT.holds.busy;",
+    "old": "  if (f.hold) return EG_TEXT.holds[f.hold] ?? EG_TEXT.holds.busy;",
+    "new": "  if (f.hold) return EG_TEXT.holds.busy;",
     "tests": [
       "test/net/eliteGates/egarch_law.test.js",
       "test/net/eliteGates/egarch_client.test.js"
@@ -136,8 +136,8 @@
   {
     "name": "EGF-the-arch-not-turned-to-the-opener",
     "file": "src/scenes/eliteGates/egArch.js",
-    "old": "archYaw = wrapYaw(yaw + Math.PI);",
-    "new": "archYaw = wrapYaw(yaw);",
+    "old": "    archYaw = wrapYaw(yaw + Math.PI); // its fire faces the opener",
+    "new": "    archYaw = wrapYaw(yaw); // its fire faces the opener",
     "tests": [
       "test/net/eliteGates/egarch_law.test.js"
     ]
@@ -145,8 +145,8 @@
   {
     "name": "EGF-the-clearing-unasked",
     "file": "src/scenes/eliteGates/egArch.js",
-    "old": "    if (Number.isFinite(hit)) return { refused: 'room' };",
-    "new": "    if (Number.isFinite(hit) && false) return { refused: 'room' };",
+    "old": "        if (Number.isFinite(hit)) return { refused: 'room' };",
+    "new": "        if (Number.isFinite(hit) && false) return { refused: 'room' };",
     "tests": [
       "test/net/eliteGates/egarch_law.test.js"
     ]
@@ -154,8 +154,8 @@
   {
     "name": "EGF-a-foot-over-a-drop",
     "file": "src/scenes/eliteGates/egArch.js",
-    "old": "(d) > PORTAL_GROUND_PROBE) return { refused: 'room' };",
-    "new": "(d) > PORTAL_GROUND_PROBE) return { at, yaw: archYaw };",
+    "old": "      if (!Number.isFinite(d) || /** @type {number} */ (d) > PORTAL_GROUND_PROBE) return { refused: 'room' };",
+    "new": "      if (!Number.isFinite(d) || /** @type {number} */ (d) > PORTAL_GROUND_PROBE) return { at, yaw: archYaw };",
     "tests": [
       "test/net/eliteGates/egarch_law.test.js"
     ]
@@ -163,8 +163,8 @@
   {
     "name": "EGF-the-wake-never-sinks-it",
     "file": "src/scenes/eliteGates/egArch.js",
-    "old": "const sinkAt = Math.min(a.wk > 0 ? /** @type {number} */ (a.wk) : Infinity,",
-    "new": "const sinkAt = Math.min(Infinity,",
+    "old": "  const sinkAt = Math.min(\n    a.wk > 0 ? /** @type {number} */ (a.wk) : Infinity,\n    a.end > 0 ? /** @type {number} */ (a.end) : Infinity,\n    T.admitUntil,\n  );",
+    "new": "  const sinkAt = Math.min(Infinity, a.end > 0 ? /** @type {number} */ (a.end) : Infinity, T.admitUntil);",
     "tests": [
       "test/net/eliteGates/egarch_law.test.js"
     ]
@@ -172,8 +172,8 @@
   {
     "name": "EGF-the-rise-at-the-sink-s-rate",
     "file": "src/scenes/eliteGates/egArch.js",
-    "old": "const up = Math.min(1, (now - a.op) / GATE_RISE_MS)",
-    "new": "const up = Math.min(1, (now - a.op) / GATE_COLLAPSE_MS)",
+    "old": "  const up = Math.min(1, (now - a.op) / GATE_RISE_MS),",
+    "new": "  const up = Math.min(1, (now - a.op) / GATE_COLLAPSE_MS),",
     "tests": [
       "test/net/eliteGates/egarch_law.test.js"
     ]
@@ -181,8 +181,8 @@
   {
     "name": "EGF-its-foot-never-sunk",
     "file": "src/scenes/eliteGates/egArch.js",
-    "old": "origin: [x, ground - (1 - eased) * sunk, z]",
-    "new": "origin: [x, ground, z]",
+    "old": "    origin: [x, ground - (1 - eased) * sunk, z],",
+    "new": "    origin: [x, ground, z],",
     "tests": [
       "test/net/eliteGates/egarch_law.test.js"
     ]
@@ -190,8 +190,8 @@
   {
     "name": "EGF-the-beacon-the-gate-s-height",
     "file": "src/scenes/eliteGates/egArch.js",
-    "old": "height: BEACON_BELOW_M + EG_ARCH_BEACON_UP_M,",
-    "new": "height: BEACON_BELOW_M + 800,",
+    "old": "  height: BEACON_BELOW_M + EG_ARCH_BEACON_UP_M,",
+    "new": "  height: BEACON_BELOW_M + 800,",
     "tests": [
       "test/net/eliteGates/egarch_law.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "EGF-an-unverified-arch-stood",
     "file": "src/scenes/eliteGates/egArch.js",
-    "old": "      verdicts.set(vk, ok);\n      if (!ok) return false;",
-    "new": "      verdicts.set(vk, ok);",
+    "old": "      if (!ok) return false;\n      if (arches.has(r.b) || strangers().length >= EG_ARCH_PER_CELL || strangers().some((a) => a.from === peer))",
+    "new": "      if (arches.has(r.b) || strangers().length >= EG_ARCH_PER_CELL || strangers().some((a) => a.from === peer))",
     "tests": [
       "test/net/eliteGates/egarch_client.test.js"
     ]
@@ -362,7 +362,7 @@
   {
     "name": "EGF-two-arches-an-opener",
     "file": "src/scenes/eliteGates/egArch.js",
-    "old": "      if (strangers().some((a) => a.from === peer)) return false;   // one an opener",
+    "old": "      if (strangers().some((a) => a.from === peer)) return false; // one an opener",
     "new": "      // any number an opener",
     "tests": [
       "test/net/eliteGates/egarch_client.test.js"
@@ -371,8 +371,8 @@
   {
     "name": "EGF-the-company-told-its-own-name",
     "file": "src/scenes/eliteGates/egArch.js",
-    "old": "...(ofCompany(a) ? [] : [EG_TEXT.company(a.o)])",
-    "new": "...[EG_TEXT.company(a.o)]",
+    "old": "      return {\n        title: EG_TEXT.name,\n        subs: [EG_TEXT.plaqueSub, ...(ofCompany(a) ? [] : [EG_TEXT.company(a.o)]), ...(words ? [words] : [])],\n      };",
+    "new": "      return { title: EG_TEXT.name, subs: [EG_TEXT.plaqueSub, ...[EG_TEXT.company(a.o)], ...(words ? [words] : [])] };",
     "tests": [
       "test/net/eliteGates/egarch_client.test.js"
     ]
@@ -380,7 +380,7 @@
   {
     "name": "EGF-a-stranger-let-through",
     "file": "src/scenes/eliteGates/egArch.js",
-    "old": "    if (!ofCompany(a)) { refuse(a, EG_TEXT.outside(a.o)); return false; }",
+    "old": "    if (!ofCompany(a)) {\n      refuse(a, EG_TEXT.outside(a.o));\n      return false;\n    }",
     "new": "    // anyone",
     "tests": [
       "test/net/eliteGates/egarch_client.test.js"
@@ -389,8 +389,8 @@
   {
     "name": "EGF-a-walk-through-the-sealed-ember",
     "file": "src/scenes/eliteGates/egArch.js",
-    "old": "if (f && !a.place.coarse && a.place.phase === 'open') {",
-    "new": "if (f && !a.place.coarse) {",
+    "old": "        if (f && !a.place.coarse && a.place.phase === 'open') {",
+    "new": "        if (f && !a.place.coarse) {",
     "tests": [
       "test/net/eliteGates/egarch_client.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "EGF-my-arch-said-from-afar",
     "file": "src/scenes/eliteGates/egArch.js",
-    "old": "      if (Math.hypot(near[0] - a.place.origin[0], near[2] - a.place.origin[2]) > EG_ARCH_SAY_M) continue;",
-    "new": "      // from anywhere",
+    "old": "        if (Math.hypot(near[0] - a.place.origin[0], near[2] - a.place.origin[2]) > EG_ARCH_SAY_M) continue;",
+    "new": "        // from anywhere",
     "tests": [
       "test/net/eliteGates/egarch_client.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "EGF-my-own-arch-sighted",
     "file": "src/scenes/eliteGates/egArch.js",
-    "old": "if (a.said || !a.place || a.os === me()) continue;",
-    "new": "if (a.said || !a.place) continue;",
+    "old": "        if (a.said || !a.place || a.os === me()) continue;",
+    "new": "        if (a.said || !a.place) continue;",
     "tests": [
       "test/net/eliteGates/egarch_client.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "EGF-a-forgotten-call-s-arch-never-sinks",
     "file": "src/scenes/eliteGates/egArch.js",
-    "old": "        if (c) drop(a); else if (!(a.end > 0)) a.end = t;",
-    "new": "        if (c) drop(a);",
+    "old": "        else if (!(a.end > 0)) a.end = t;\n      }",
+    "new": "      }",
     "tests": [
       "test/net/eliteGates/egarch_client.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "EGF-a-sink-begun-again",
     "file": "src/scenes/eliteGates/egArch.js",
-    "old": "        if (c) drop(a); else if (!(a.end > 0)) a.end = t;",
-    "new": "        if (c) drop(a); else a.end = t;",
+    "old": "        else if (!(a.end > 0)) a.end = t;",
+    "new": "        else a.end = t;",
     "tests": [
       "test/net/eliteGates/egarch_client.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "EGF-a-sunk-arch-stood-again",
     "file": "src/scenes/eliteGates/egArch.js",
-    "old": "if (sunk.has(c.b) || !egArchLife({ op: c.op, wk, end }, t)) return;",
-    "new": "if (!egArchLife({ op: c.op, wk, end }, t)) return;",
+    "old": "        if (sunk.has(c.b) || !egArchLife({ op: c.op, wk, end }, t)) return; // a call past its arch's life stands nothing again",
+    "new": "        if (!egArchLife({ op: c.op, wk, end }, t)) return; // a call past its arch's life stands nothing again",
     "tests": [
       "test/net/eliteGates/egarch_client.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "EGF-answerable-while-sealed",
     "file": "src/scenes/eliteGates/egCall.js",
-    "old": "return { text: EG_TEXT.sealed(egCountText(T.openAt - now)), answerable: false,",
-    "new": "return { text: EG_TEXT.sealed(egCountText(T.openAt - now)), answerable: true,",
+    "old": "    return { text: EG_TEXT.sealed(egCountText(T.openAt - now)), answerable: false, left: T.openAt - now };",
+    "new": "    return { text: EG_TEXT.sealed(egCountText(T.openAt - now)), answerable: true, left: T.openAt - now };",
     "tests": [
       "test/net/eliteGates/egarch_client.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "EGF-the-prompt-over-a-window",
     "file": "src/scenes/eliteGates/egCall.js",
-    "old": "inSpire || answered || windowUp) return null;",
-    "new": "inSpire || answered) return null;",
+    "old": "  if (!call || !me || !call.co?.some?.((r) => r[0] === me) || inSpire || answered || windowUp) return null;",
+    "new": "  if (!call || !me || !call.co?.some?.((r) => r[0] === me) || inSpire || answered) return null;",
     "tests": [
       "test/net/eliteGates/egarch_client.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "EGF-indoors-answerable",
     "file": "src/scenes/eliteGates/egCall.js",
-    "old": ": { text: EG_TEXT.indoors, answerable: false, left };",
-    "new": ": { text: EG_TEXT.indoors, answerable: true, left };",
+    "old": "    : { text: EG_TEXT.indoors, answerable: false, left };",
+    "new": "    : { text: EG_TEXT.indoors, answerable: true, left };",
     "tests": [
       "test/net/eliteGates/egarch_client.test.js"
     ]
@@ -542,8 +542,8 @@
   {
     "name": "EGF-the-horn-never-registered",
     "file": "src/scenes/eliteGates/egCall.js",
-    "old": "if (!_hornMade.has(audio)) { if (!audio.registerSamples(EG_HORN_KEY, buildEgHorn(), EG_HORN_RATE)) return false; _hornMade.add(audio); }",
-    "new": "_hornMade.add(audio);",
+    "old": "    if (!_hornMade.has(audio)) {\n      if (!audio.registerSamples(EG_HORN_KEY, buildEgHorn(), EG_HORN_RATE)) return false;\n      _hornMade.add(audio);\n    }",
+    "new": "    _hornMade.add(audio);",
     "tests": [
       "test/net/eliteGates/egarch_client.test.js"
     ]
