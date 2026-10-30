@@ -39,7 +39,8 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { HANDLE_RE } from './handleShape.js';
-import { GUILD_RENAME_SILVER } from './guild/guildShopLaw.js';   // GUILD-SHOP: a new name's price, in silver
+import { GUILD_RENAME_SILVER } from './guild/guildShopLaw.js';
+import { noteHallArms } from './guild/guildArmsBook.js';   // GUILD-SHOP: a hall's arms, read with its pieces   // GUILD-SHOP: a new name's price, in silver
 import { GUILD_LOGO_MAX_BYTES, GUILD_LOGO_SIDE_MIN, GUILD_LOGO_SIDE_MAX, guildLogoUrl } from './guild/guildLogoLaw.js';   // GUILD-LOGO: a logo's bounds, said
 import { carryYardOrder } from './yardPush.js';   // YARD-CELL YC2
 import { SESSION_PASS_HEADER } from './sessionPassLaw.js';   // SESSION-SIGN: the pass's one name on the wire
@@ -716,6 +717,8 @@ const REFUSAL_WORDS = {
   'no-ware': () => t('account.refusal.noWare', 'The guild shop does not sell that.'),
   'guild-ware-held': () => t('account.refusal.guildWareHeld', 'Your account already has that.'),
   'guild-ware-max': () => t('account.refusal.guildWareMax', 'The guild already owns as many of those as a guild can.'),
+  'guild-ware-hall': () => t('account.refusal.guildWareHall', 'Guild furniture stands only inside the guild\'s own hall.'),
+  'guild-ware-none': () => t('account.refusal.guildWareNone', 'Every piece of that kind the guild owns is already set down. Buy another on the guild\'s Shop page.'),
   // GUILD-LOGO: a guild's own logo (server-account/src/guildLogos.js)
   'guild-logo': () => t('account.refusal.guildLogo', 'Your guild\'s logo is under review. Withdraw it on the Arms page, or wait for the moderators.'),
   'logo-pending': () => t('account.refusal.logoPending', 'The moderators are still reviewing your guild\'s last logo.'),
@@ -2211,7 +2214,8 @@ export function accountDecor({ fetch, storage, listWaitMs = DECOR_LIST_WAIT_MS }
   const post = sessionPost({ fetch, storage });
   const waited = waitedPost({ fetch, storage }, listWaitMs);
   return {
-    list: (mapId, buildingKey, seat = false, yard = false) => waited('/v1/homes/decor', { mapId, buildingKey, ...(seat ? { seat: true } : {}), ...(yard && !seat ? { yard: true } : {}) }),   // SEAT-HALL: a palace's Charter Room; HOME-YARD: the street's pieces, for its Confirm
+    list: (mapId, buildingKey, seat = false, yard = false) => waited('/v1/homes/decor', { mapId, buildingKey, ...(seat ? { seat: true } : {}), ...(yard && !seat ? { yard: true } : {}) })
+      .then((r) => { if (r?.ok && !yard && !seat) noteHallArms(/** @type {any} */ (r).data?.arms ?? null); return r; }),   // SEAT-HALL: a palace's Charter Room; HOME-YARD: the street's pieces, for its Confirm; GUILD-SHOP: a hall's arms, its pieces' pictures
     rev: (mapId, buildingKey, seat = false, yard = false) => waited('/v1/homes/decor', { mapId, buildingKey, revOnly: true, ...(seat ? { seat: true } : {}), ...(yard && !seat ? { yard: true } : {}) }),   // the standing poll: one row, the pieces only once the revision moves
     place: ({ mapId, buildingKey, character, piece, realm = null, yard = false, seat = false }) => post('/v1/homes/decor/place', { mapId, buildingKey, character, piece, ...(realm ? { realm } : {}), ...(yard ? { yard: true } : {}), ...(seat ? { seat: true } : {}) }),   // REALM P2.2b: and its gold on the record; HOME-YARD: outside
     yardCells: (mapId, cells) => waited('/v1/homes/yards/cells', { mapId, cells }),   // YARD-CELL: a town's yard cells past the versions held

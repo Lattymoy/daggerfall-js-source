@@ -57,7 +57,8 @@ import { GUILD_FOUND_GOLD, guildGoldOk } from './guildLaw.js';
 import { guildHallEntryOk } from '../hallLaw.js';   // GUILD1d: who may walk into a hall
 import { heraldryOf } from '../heraldryLaw.js';   // GUILD1d: a heraldry chosen, in the law's shape
 import { mintMarksRid } from '../marksBook.js';   // GUILD1d: a heraldry changed burns Drakes - one request id a choice
-import { setArmsDoor, noteGuildArms, noteOwnGuild } from './guildArmsBook.js';   // GUILD-SHOP: every guild's arms by its tag - the door it asks through, and this guild's told
+import { setArmsDoor, noteGuildArms, noteOwnGuild } from './guildArmsBook.js';
+import { setGuildStockReader, noteGuildShop } from './guildStock.js';   // GUILD-SHOP: the hall pieces the guild owns, for the decor tool   // GUILD-SHOP: every guild's arms by its tag - the door it asks through, and this guild's told
 import { walletReserve } from '../realm/realmGoldLaw.js';   // MARKET-AUDIT: a refusal gives back exactly what the payment took
 import { lastOnlineText } from '../social.js';   // GUILD-SEEN: a member's "last online" in the friends list's own words
 import { PLAY_GRACE_S } from '../playClock.js';   // GUILD-SEEN: and "Online" by the play beat's own sitting
@@ -182,6 +183,7 @@ export class GuildBook {
     /** @type {any} GUILD-SHOP: the guild shop as the last read said it (guildShop.js guildShopOf), or null not yet read */ this.shopView = null;
     /** @type {string|null} GUILD-SHOP: the last shop read's refusal, or null */ this.shopError = null;
     setArmsDoor(door, now);
+    setGuildStockReader(() => { if (!this._stockAsked) { this._stockAsked = true; this.readShop().finally(() => { this._stockAsked = false; }); } });   // GUILD-SHOP: the decor tool's ask
   }
 
   _changed() { this.version++; }
@@ -387,14 +389,14 @@ export class GuildBook {
     const gen = (this._shopGen = (this._shopGen ?? 0) + 1);
     const r = await this.door.shop(character);
     if (gen !== this._shopGen) return r;
-    if (r?.ok) { this.shopView = r.data?.shop ?? null; this.shopError = null; } else { this.shopError = r?.error ?? 'server'; this._whole(r?.error); }
+    if (r?.ok) { this.shopView = r.data?.shop ?? null; this.shopError = null; noteGuildShop(this.shopView); } else { this.shopError = r?.error ?? 'server'; this._whole(r?.error); }
     this._changed();
     return r;
   }
   /** GUILD-SHOP: BUY A WARE in silver - the shop read again with the answer. */
   async buyWare(ware) {
     const r = await this._silver(`ware:${ware}`, ware, (c, rid) => this.door.shopBuy(c, ware, rid));
-    if (r?.ok && r.data?.shop) { this.shopView = r.data.shop; this._changed(); } else await this.readShop();
+    if (r?.ok && r.data?.shop) { this.shopView = r.data.shop; noteGuildShop(this.shopView); this._changed(); } else await this.readShop();
     return r;
   }
   /** GUILD-LOGO: SEND A LOGO for review - `image` the square picture in base64; its fee held from the silver treasury. */

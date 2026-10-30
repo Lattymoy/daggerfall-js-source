@@ -53,3 +53,9 @@ export function guildShopKindName(/** @type {unknown} */ kind) {
 export const guildWarePayerText = (/** @type {unknown} */ payer) => (payer === 'guild'
   ? t('guild.shop.payer.guild', 'From the silver treasury')
   : t('guild.shop.payer.account', 'From your own silver'));
+
+/** A guild piece's stock, as the decor tool says it beside the piece: how many more of it the guild owns to set down. */
+export const guildStockText = (/** @type {any} */ entry, /** @type {number} */ left) => (left === Infinity
+  ? t('guild.shop.stock.unread', 'From the guild\'s stock')
+  : left > 0 ? t('guild.shop.stock.left', 'From the guild\'s stock: {n} left', { n: left })
+    : t('guild.shop.stock.none', 'Every {name} the guild owns is set down. Buy another on the guild\'s Shop page.', { name: guildWareName(entry?.guild) }));

@@ -546,6 +546,7 @@ const GUILD_STATUS = Object.freeze({
   'seats-closed': 403, 'bad-rid': 400, 'castle-none': 404, 'castle-not-held': 409, 'castle-taken': 409, 'castle-not-yours': 404, 'guild-marks-short': 409,
   'seats-settling': 503,   // AUDIT DOMAINS S6: a castle act while another holds the Turning - asked again in a moment
   // GUILD-LOGO: a review already under way, none to withdraw, a picture of the wrong size, shape or kind
+  'guild-ware-hall': 409, 'guild-ware-none': 409,   // GUILD-SHOP: a guild's own furniture - its hall alone, its stock spent
   'logo-pending': 409, 'logo-none': 404, 'logo-bytes': 400, 'logo-type': 400, 'logo-square': 400, 'logo-side': 400,
 });
 /** MARKS1: each Marks refusal's status - not this account's (a guest, the switch, a rank, a developer's; AUDIT 625 S1:
@@ -1888,7 +1889,7 @@ const service = {
           if (!('error' in r)) return json(await yardOrderOf(r, settled, body?.mapId, who.player.id, env, subtle, nowS), 200, origin);   // YC2: a yard that moved, said to every page online
           const said = realmNo(r);
           if (said) return said;
-          const status = r.error === 'decor-cap' || r.error === 'yard-cap' || r.error === 'decor-taken' || r.error === 'guild-treasury-full' || r.error === 'vendor-stocked' || r.error === 'decor-rev' || r.error === 'decor-holds' || r.error === 'decor-shut' || r.error === 'decor-held' || r.error === 'decor-busy' || r.error === 'decor-lapsed' ? 409   // RPT1026-CHESTGOLD: a hold run out; GUILD1d: a hall piece's half back, into a full treasury; HOME-VENDOR: a stocked trader stays; DECOR-BATCH: a stale revision, or a chest that still holds goods; DECOR-ACCESS: shut, held, or open to someone else
+          const status = r.error === 'decor-cap' || r.error === 'yard-cap' || r.error === 'decor-taken' || r.error === 'guild-treasury-full' || r.error === 'vendor-stocked' || r.error === 'decor-rev' || r.error === 'decor-holds' || r.error === 'decor-shut' || r.error === 'decor-held' || r.error === 'decor-busy' || r.error === 'decor-lapsed' || r.error === 'guild-ware-hall' || r.error === 'guild-ware-none' ? 409   // GUILD-SHOP: a guild's own piece out of its hall, or its stock spent; RPT1026-CHESTGOLD: a hold run out; GUILD1d: a hall piece's half back, into a full treasury; HOME-VENDOR: a stocked trader stays; DECOR-BATCH: a stale revision, or a chest that still holds goods; DECOR-ACCESS: shut, held, or open to someone else
             : r.error === 'decor-rate' ? 429
               : r.error === 'no-home' || r.error === 'no-decor' ? 404
                 : r.error === 'no-storage' || r.error === 'server' ? 503 : 400;
