@@ -29,8 +29,8 @@
   {
     "name": "KTQ-she-comes-on-Loredas",
     "file": "src/systems/ketch/ketchWords.js",
-    "old": "'The Ketch has gone. It comes back every ten hours.'",
-    "new": "'The Ketch has gone. It comes back on Loredas.'",
+    "old": "    return t('ketch.departed', 'The Ketch has gone. It comes back every ten hours.');",
+    "new": "    return t('ketch.departed', 'The Ketch has gone. It comes back on Loredas.');",
     "tests": [
       "test/systems/questlines/ketch_lines.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "KTQ-the-nets-to-the-last-top",
     "file": "src/systems/ketch/ketchWords.js",
-    "old": "'The rigging nets catch you and pull you back aboard.'",
-    "new": "'The rigging nets catch you and pull you back to the last top.'",
+    "old": "    return t('ketch.castBack', 'The rigging nets catch you and pull you back aboard.');",
+    "new": "    return t('ketch.castBack', 'The rigging nets catch you and pull you back to the last top.');",
     "tests": [
       "test/systems/questlines/ketch_lines.test.js"
     ]

@@ -38,6 +38,8 @@
 /src/systems/grammar/*/
 !/src/systems/hunt/
 /src/systems/hunt/*/
+!/src/systems/ketch/
+/src/systems/ketch/*/
 !/src/systems/lockpick/
 /src/systems/lockpick/*/
 !/src/systems/sea/

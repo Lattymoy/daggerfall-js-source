@@ -32,8 +32,8 @@
   {
     "name": "KT2-the-bosses-capped",
     "file": "src/systems/ketch/ketchSpoils.js",
-    "old": "  if (KT_PELLETS_OWN.includes(kind)) return { n: r, given: g };\n",
-    "new": "",
+    "old": "  if (KT_PELLETS_OWN.includes(kind)) return { n: r, given: g };\n  const n = Math.min(r, Math.max(0, KT_CONSTRUCT_PELLETS_MAX - g));",
+    "new": "  const n = Math.min(r, Math.max(0, KT_CONSTRUCT_PELLETS_MAX - g));",
     "note": "The bosses' Pellets under the Watch's cap.",
     "tests": [
       "test/scenes/ketch_audit2_page.test.js"

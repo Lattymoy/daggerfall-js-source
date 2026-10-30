@@ -14,29 +14,78 @@ import { KT_TEXT, ketchVoyageAt, KT_STATION_CITIES } from '../../net/ketch/ketch
 
 /** THE VOYAGE'S AND THE SHIP'S LINES. */
 export const KT_WORDS = Object.freeze({
-  get name() { return t('ketch.name', 'The Sky-Ketch Mzunthar'); },
-  get sighted() { return t('ketch.sighted', 'The Sky-Ketch has been sighted east of Daggerfall.'); },
-  get arrived() { return t('ketch.arrived', 'The Sky-Ketch has arrived over Daggerfall. Its anchor-lift is down in the fields east of the city.'); },
-  get departing() { return t('ketch.departing', 'The Ketch is weighing anchor. No one else can board this voyage.'); },
-  get departed() { return t('ketch.departed', 'The Ketch has gone. It comes back every ten hours.'); },
-  get boarding() { return t('ketch.boarding', 'The anchor-lift rises.'); },
-  get lowered() { return t('ketch.lowered', 'The anchor-lift sets you down in the fields outside Daggerfall.'); },
-  get noRest() { return t('ketch.noRest', 'You cannot rest aboard the Ketch.'); },
-  get noSave() { return t('ketch.noSave', 'You cannot save aboard the Ketch.'); },
-  get noMap() { return t('ketch.noMap', 'There is no map of the Ketch.'); },
-  get noMark() { return t('ketch.noMark', 'You cannot set a Mark here.'); },
-  get noRecall() { return t('ketch.noRecall', 'Recall does not work aboard the Ketch.'); },
-  get noFlight() { return t('ketch.noFlight', 'The Sailwalk is walked, not flown.'); },
-  get noUnstuck() { return t('ketch.noUnstuck', 'Use the anchor-lift or the stern lift to leave the Ketch.'); },
-  get died() { return t('ketch.died', 'You fall from the Ketch and wake in the fields below.'); },
-  get castBack() { return t('ketch.castBack', 'The rigging nets catch you and pull you back aboard.'); },
-  get hatchOpen() { return t('ketch.hatchOpen', 'The Watch is broken. The hatch to the gun deck opens.'); },
-  get holdOpen() { return t('ketch.holdOpen', 'The Hammer Wardens are down. The way to the hold opens.'); },
-  get engineFed() { return t('ketch.engineFed', 'The engine wakes. The mast-lift is running.'); },
-  get bridgeBarred() { return t('ketch.bridgeBarred', 'The bridge is barred.'); },
-  get bridgeOpen() { return t('ketch.bridgeOpen', 'The bridge is open. The bosun\'s line runs from the main top.'); },
-  get lineTaken() { return t('ketch.lineTaken', 'You ride the bosun\'s line down to the bridge.'); },
-  get cabinOpen() { return t('ketch.cabinOpen', 'The Ketchmaster\'s cabin opens.'); },
+  get name() {
+    return t('ketch.name', 'The Sky-Ketch Mzunthar');
+  },
+  get sighted() {
+    return t('ketch.sighted', 'The Sky-Ketch has been sighted east of Daggerfall.');
+  },
+  get arrived() {
+    return t(
+      'ketch.arrived',
+      'The Sky-Ketch has arrived over Daggerfall. Its anchor-lift is down in the fields east of the city.',
+    );
+  },
+  get departing() {
+    return t('ketch.departing', 'The Ketch is weighing anchor. No one else can board this voyage.');
+  },
+  get departed() {
+    return t('ketch.departed', 'The Ketch has gone. It comes back every ten hours.');
+  },
+  get boarding() {
+    return t('ketch.boarding', 'The anchor-lift rises.');
+  },
+  get lowered() {
+    return t('ketch.lowered', 'The anchor-lift sets you down in the fields outside Daggerfall.');
+  },
+  get noRest() {
+    return t('ketch.noRest', 'You cannot rest aboard the Ketch.');
+  },
+  get noSave() {
+    return t('ketch.noSave', 'You cannot save aboard the Ketch.');
+  },
+  get noMap() {
+    return t('ketch.noMap', 'There is no map of the Ketch.');
+  },
+  get noMark() {
+    return t('ketch.noMark', 'You cannot set a Mark here.');
+  },
+  get noRecall() {
+    return t('ketch.noRecall', 'Recall does not work aboard the Ketch.');
+  },
+  get noFlight() {
+    return t('ketch.noFlight', 'The Sailwalk is walked, not flown.');
+  },
+  get noUnstuck() {
+    return t('ketch.noUnstuck', 'Use the anchor-lift or the stern lift to leave the Ketch.');
+  },
+  get died() {
+    return t('ketch.died', 'You fall from the Ketch and wake in the fields below.');
+  },
+  get castBack() {
+    return t('ketch.castBack', 'The rigging nets catch you and pull you back aboard.');
+  },
+  get hatchOpen() {
+    return t('ketch.hatchOpen', 'The Watch is broken. The hatch to the gun deck opens.');
+  },
+  get holdOpen() {
+    return t('ketch.holdOpen', 'The Hammer Wardens are down. The way to the hold opens.');
+  },
+  get engineFed() {
+    return t('ketch.engineFed', 'The engine wakes. The mast-lift is running.');
+  },
+  get bridgeBarred() {
+    return t('ketch.bridgeBarred', 'The bridge is barred.');
+  },
+  get bridgeOpen() {
+    return t('ketch.bridgeOpen', "The bridge is open. The bosun's line runs from the main top.");
+  },
+  get lineTaken() {
+    return t('ketch.lineTaken', "You ride the bosun's line down to the bridge.");
+  },
+  get cabinOpen() {
+    return t('ketch.cabinOpen', "The Ketchmaster's cabin opens.");
+  },
 });
 
 /** KETCH-EVERYWHERE (bible/11-Multiplayer/Sky-Ketch.md section 22): a station's city (net/ketch/ketchLaw.js
@@ -44,26 +93,61 @@ export const KT_WORDS = Object.freeze({
  *  they always were; a station past the Bay's the same words of its own city. */
 export const ketchCity = (theatre = 0) => KT_STATION_CITIES[theatre] ?? KT_STATION_CITIES[0];
 export const KT_STATION_WORDS = Object.freeze({
-  sighted: (theatre = 0) => (theatre ? t('ketch.sightedAt', 'The Sky-Ketch has been sighted east of {city}.', { city: ketchCity(theatre) }) : KT_WORDS.sighted),
-  arrived: (theatre = 0) => (theatre ? t('ketch.arrivedAt', 'The Sky-Ketch has arrived over {city}. Its anchor-lift is down in the fields east of the city.', { city: ketchCity(theatre) }) : KT_WORDS.arrived),
-  lowered: (theatre = 0) => (theatre ? t('ketch.loweredAt', 'The anchor-lift sets you down in the fields outside {city}.', { city: ketchCity(theatre) }) : KT_WORDS.lowered),
-  away: (theatre = 0) => (theatre ? t('ketch.refuse.awayAt', 'The Ketch is not over {city} right now. It comes every ten hours.', { city: ketchCity(theatre) }) : KT_REFUSE_WORDS.away),
+  sighted: (theatre = 0) =>
+    theatre
+      ? t('ketch.sightedAt', 'The Sky-Ketch has been sighted east of {city}.', { city: ketchCity(theatre) })
+      : KT_WORDS.sighted,
+  arrived: (theatre = 0) =>
+    theatre
+      ? t(
+          'ketch.arrivedAt',
+          'The Sky-Ketch has arrived over {city}. Its anchor-lift is down in the fields east of the city.',
+          { city: ketchCity(theatre) },
+        )
+      : KT_WORDS.arrived,
+  lowered: (theatre = 0) =>
+    theatre
+      ? t('ketch.loweredAt', 'The anchor-lift sets you down in the fields outside {city}.', {
+          city: ketchCity(theatre),
+        })
+      : KT_WORDS.lowered,
+  away: (theatre = 0) =>
+    theatre
+      ? t('ketch.refuse.awayAt', 'The Ketch is not over {city} right now. It comes every ten hours.', {
+          city: ketchCity(theatre),
+        })
+      : KT_REFUSE_WORDS.away,
 });
 
 /** THE DOOR'S REFUSALS in the player's language: the relay's four (net/ketch/ketchLaw.js KT_TEXT.refuse, key for key -
  *  closed, gone, crew, full) and the page's own three (busy, offline, away - said before any room is asked). */
 export const KT_REFUSE_WORDS = Object.freeze({
-  get closed() { return t('ketch.refuse.closed', 'The anchor-lift is up. No one can board while the Ketch weighs anchor.'); },
-  get gone() { return t('ketch.refuse.gone', 'The Ketch is gone.'); },
-  get crew() { return t('ketch.refuse.crew', 'This ship belongs to another party.'); },
-  get full() { return t('ketch.refuse.full', 'This crew is full.'); },
-  get busy() { return t('ketch.refuse.busy', 'The anchor-lift does not answer. Try again in a moment.'); },
-  get offline() { return t('ketch.refuse.offline', 'Only an online crew can board the Ketch.'); },
-  get away() { return t('ketch.refuse.away', 'The Ketch is not over Daggerfall right now. It comes every ten hours.'); },
+  get closed() {
+    return t('ketch.refuse.closed', 'The anchor-lift is up. No one can board while the Ketch weighs anchor.');
+  },
+  get gone() {
+    return t('ketch.refuse.gone', 'The Ketch is gone.');
+  },
+  get crew() {
+    return t('ketch.refuse.crew', 'This ship belongs to another party.');
+  },
+  get full() {
+    return t('ketch.refuse.full', 'This crew is full.');
+  },
+  get busy() {
+    return t('ketch.refuse.busy', 'The anchor-lift does not answer. Try again in a moment.');
+  },
+  get offline() {
+    return t('ketch.refuse.offline', 'Only an online crew can board the Ketch.');
+  },
+  get away() {
+    return t('ketch.refuse.away', 'The Ketch is not over Daggerfall right now. It comes every ten hours.');
+  },
 });
 /** A refusal the relay said (its English) in the player's language - any other word as it came. Pure. */
 export function ketchRefusal(err) {
-  for (const [k, en] of Object.entries(KT_TEXT.refuse)) if (en === err) return KT_REFUSE_WORDS[/** @type {keyof typeof KT_REFUSE_WORDS} */ (k)];
+  for (const [k, en] of Object.entries(KT_TEXT.refuse))
+    if (en === err) return KT_REFUSE_WORDS[/** @type {keyof typeof KT_REFUSE_WORDS} */ (k)];
   return err;
 }
 
@@ -74,7 +158,7 @@ const STAGE_NAMES = Object.freeze([
   () => t('ketch.stage.engine', 'The Starved Engine'),
   () => t('ketch.stage.sailwalk', 'The Sailwalk'),
   () => t('ketch.stage.bridge', 'The Tonal Warden'),
-  () => t('ketch.stage.vault', 'The Ketchmaster\'s Cabin'),
+  () => t('ketch.stage.vault', "The Ketchmaster's Cabin"),
 ]);
 /** A stage's name by its number, or ''. */
 export const ketchStageName = (k) => STAGE_NAMES[k]?.() ?? '';
@@ -95,7 +179,8 @@ const BLOW_NAMES = Object.freeze({
   song: () => t('ketch.blow.song', 'The Keel-Song'),
   west: () => t('ketch.blow.west', 'The Ketch Turns West'),
 });
-export const ketchBlowName = (key) => (Object.hasOwn(BLOW_NAMES, key) ? BLOW_NAMES[/** @type {keyof typeof BLOW_NAMES} */ (key)]() : '');
+export const ketchBlowName = (key) =>
+  Object.hasOwn(BLOW_NAMES, key) ? BLOW_NAMES[/** @type {keyof typeof BLOW_NAMES} */ (key)]() : '';
 /** THE CONSTRUCTS' NAMES (net/ketch/ketchConstructs.js KT_KINDS), by the kind's key, or ''. */
 const KIND_NAMES = Object.freeze({
   sphere: () => t('ketch.kind.sphere', 'Dwarven Sphere'),
@@ -105,25 +190,47 @@ const KIND_NAMES = Object.freeze({
   captain: () => t('ketch.kind.captain', 'Watch-Captain'),
   tonal: () => t('ketch.kind.tonal', 'The Tonal Warden'),
 });
-export const ketchKindName = (key) => (Object.hasOwn(KIND_NAMES, key) ? KIND_NAMES[/** @type {keyof typeof KIND_NAMES} */ (key)]() : '');
+export const ketchKindName = (key) =>
+  Object.hasOwn(KIND_NAMES, key) ? KIND_NAMES[/** @type {keyof typeof KIND_NAMES} */ (key)]() : '';
 
 /** How long until a voyage's next turn (`v` ketchVoyageAt's, at `now`), counted in days, hours or minutes - a minute begun
  *  counts. */
 export function ketchWhen(v, now) {
-  const ms = v.phase === 'away' ? v.sightAt - now : v.phase === 'sighted' ? v.at - now : v.phase === 'docked' ? v.departAt - now : v.endAt - now;
-  const m = Math.max(0, Math.ceil(ms / 60000)), h = Math.floor(m / 60), d = Math.floor(h / 24);
-  return d >= 1 ? t('ketch.when.days', '{d}d {h}h', { d, h: h % 24 }) : h >= 1 ? t('ketch.when.hours', '{h}h {m}m', { h, m: m % 60 }) : t('ketch.when.minutes', '{m}m', { m });
+  const ms =
+    v.phase === 'away'
+      ? v.sightAt - now
+      : v.phase === 'sighted'
+        ? v.at - now
+        : v.phase === 'docked'
+          ? v.departAt - now
+          : v.endAt - now;
+  const m = Math.max(0, Math.ceil(ms / 60000)),
+    h = Math.floor(m / 60),
+    d = Math.floor(h / 24);
+  return d >= 1
+    ? t('ketch.when.days', '{d}d {h}h', { d, h: h % 24 })
+    : h >= 1
+      ? t('ketch.when.hours', '{h}h {m}m', { h, m: m % 60 })
+      : t('ketch.when.minutes', '{m}m', { m });
 }
 /** What is left of her voyage's turn at `now` - sighted in, arrives in, over Daggerfall with what is left, weighing anchor -
  *  the map card's line under her phase. KETCH-EVERYWHERE: station `theatre`'s (the Bay's by default), over its own city. */
 export function ketchWhenLine(now, theatre = 0) {
-  const v = ketchVoyageAt(now, theatre), w = ketchWhen(v, now);
+  const v = ketchVoyageAt(now, theatre),
+    w = ketchWhen(v, now);
   if (v.phase === 'away') return t('ketch.left.away', 'sighted in {w}', { w });
   if (v.phase === 'sighted') return t('ketch.left.sighted', 'arrives in {w}', { w });
-  if (v.phase === 'docked') return theatre ? t('ketch.left.dockedAt', 'over {city}, {w} left', { city: ketchCity(theatre), w }) : t('ketch.left.docked', 'over Daggerfall, {w} left', { w });
+  if (v.phase === 'docked')
+    return theatre
+      ? t('ketch.left.dockedAt', 'over {city}, {w} left', { city: ketchCity(theatre), w })
+      : t('ketch.left.docked', 'over Daggerfall, {w} left', { w });
   return t('ketch.left.departing', 'weighing anchor, {w}', { w });
 }
 /** Her phase as the map's card says it. */
 export function ketchSkyPhase(phase) {
-  return phase === 'sighted' ? t('ketch.sky.sighted', 'Sighted in the east') : phase === 'docked' ? t('ketch.sky.docked', 'Keeping station over the fields') : t('ketch.sky.departing', 'Weighing anchor');
+  return phase === 'sighted'
+    ? t('ketch.sky.sighted', 'Sighted in the east')
+    : phase === 'docked'
+      ? t('ketch.sky.docked', 'Keeping station over the fields')
+      : t('ketch.sky.departing', 'Weighing anchor');
 }
