@@ -62,8 +62,8 @@
   {
     "name": "RELAY-SHARE-the-stand-in-keeps-no-reader",
     "file": "src/world/gate/gateBoss.js",
-    "old": "  e.relayShare = typeof share === 'function' ? share : null;",
-    "new": "  e.relayShare = null;",
+    "old": "  e.relayShare = typeof share === 'function' ? share : null; // FIELD BUGS 2026-10-18f RELAY-SHARE: the relay's word of it, its owner's reader",
+    "new": "  e.relayShare = null; // FIELD BUGS 2026-10-18f RELAY-SHARE: the relay's word of it, its owner's reader",
     "tests": [
       "test/systems/loot/fb1018f_relayshare.test.js"
     ],

@@ -2,8 +2,8 @@
   {
     "name": "WB2-a-spike-wound-inward",
     "file": "src/world/gate/gateModel.js",
-    "old": "    if (n[0] * mid[0] + n[1] * mid[1] + n[2] * mid[2] >= 0) f.tri(GATE_STONE_RECORD, a, c, tip,",
-    "new": "    if (n[0] * mid[0] + n[1] * mid[1] + n[2] * mid[2] < 0) f.tri(GATE_STONE_RECORD, a, c, tip,",
+    "old": "    if (n[0] * mid[0] + n[1] * mid[1] + n[2] * mid[2] >= 0)",
+    "new": "    if (n[0] * mid[0] + n[1] * mid[1] + n[2] * mid[2] < 0)",
     "tests": [
       "test/world/gate/wb2_gate.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "WB2-the-fire-over-the-stone",
     "file": "src/world/gate/gateModel.js",
-    "old": "out[k] = Number.isFinite(out[k]) ? Math.max(0, out[k] - margin) : 0;",
-    "new": "out[k] = Number.isFinite(out[k]) ? Math.max(0, out[k] + margin) : 0;",
+    "old": "  for (let k = 0; k < ARCH_PROFILE_N; k++) out[k] = Number.isFinite(out[k]) ? Math.max(0, out[k] - margin) : 0;",
+    "new": "  for (let k = 0; k < ARCH_PROFILE_N; k++) out[k] = Number.isFinite(out[k]) ? Math.max(0, out[k] + margin) : 0;",
     "tests": [
       "test/world/gate/wb2_gate.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WB2-the-veins-never-burn",
     "file": "src/world/gate/gateArt.js",
-    "old": "    if (heart[i]) { put(albedo, x, y, VEIN_HEART); put(emission, x, y, VEIN_HEART); }",
-    "new": "    if (heart[i]) { put(albedo, x, y, VEIN_HEART); put(emission, x, y, [0, 0, 0]); }",
+    "old": "        put(emission, x, y, VEIN_HEART);",
+    "new": "        put(emission, x, y, [0, 0, 0]);",
     "tests": [
       "test/world/gate/wb2_gate.test.js"
     ]

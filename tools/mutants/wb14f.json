@@ -283,8 +283,8 @@
   {
     "name": "WB14f-the-gaoler-named-a-Daedra",
     "file": "src/world/gate/gateBoss.js",
-    "old": "  if (k === HOST.gaoler) return { mobile, name: t('gate.host.gaoler', 'Gaoler'),",
-    "new": "  if (k === -1) return { mobile, name: t('gate.host.gaoler', 'Gaoler'),",
+    "old": "  if (k === HOST.gaoler)",
+    "new": "  if (k === -1)",
     "tests": [
       "test/net/gate/wb14f_captive.test.js"
     ]
@@ -292,8 +292,8 @@
   {
     "name": "WB14f-a-Dame-drawn-as-a-knight",
     "file": "src/world/gate/gateBoss.js",
-    "old": "archive: (dame ? ENEMY_BASICS[KNIGHT_MOBILE]?.femaleTexture : null) ?? ",
-    "new": "archive: ",
+    "old": "  Object.freeze({\n    mobile: KNIGHT_MOBILE,\n    archive:\n      (dame ? ENEMY_BASICS[KNIGHT_MOBILE]?.femaleTexture : null) ?? ENEMY_BASICS[KNIGHT_MOBILE]?.maleTexture ?? null,\n  });",
+    "new": "  Object.freeze({ mobile: KNIGHT_MOBILE, archive: ENEMY_BASICS[KNIGHT_MOBILE]?.maleTexture ?? null });",
     "tests": [
       "test/net/gate/wb14f_captive.test.js"
     ]

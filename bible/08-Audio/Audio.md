@@ -906,7 +906,7 @@ The owner: "in oblivion gates ... while performance is overall good, the game hi
 distorts". Nothing stood between the mix and the speakers: the listener's bus (DW-D) went straight to `ctx.destination`,
 and a sum past full scale was cut square by the browser. The Burning Court reaches it easily - the boss's own clips peak
 at full scale in DAGGER.SND (measured: his bark and attack, records 208 and 209, a body's fall, 15, the fire's cast, 84,
-all at 0 dBFS; the burning loop, 420, at -8.9), his cues play them at 1.3 to 2.2 (`gateBoss.js:"export const BOSS_CUES = Object.freeze({"`),
+all at 0 dBFS; the burning loop, 420, at -8.9), his cues play them at 1.3 to 2.2 (`gateBoss.js:"export const BOSS_CUES"`),
 a landing sounds two of them in one frame (the slam's land and the quake), and the court's score is pressed to a decibel
 under the clip (WB10a). At the default SoundVolume of 0.5 a single cue at 2.2 already passed 1; at a higher one, most of
 his heavy blows did. The per-target copies that made it worse, and the other players' sounds now 4 dB down in the

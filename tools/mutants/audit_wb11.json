@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-WB11-W1-a-host-stand-in-naming-nobody",
     "file": "src/world/gate/gateBoss.js",
-    "old": "  if (i !== null) e.hostI = i;\n",
-    "new": "",
+    "old": "  if (i !== null) e.hostI = i;\n  return e;",
+    "new": "  return e;",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-WB11-W1-a-crystal-stand-in-naming-nobody",
     "file": "src/world/gate/gateBoss.js",
-    "old": "  if (c !== null) e.crystalC = c;\n",
-    "new": "",
+    "old": "  if (c !== null) e.crystalC = c;\n  return e;",
+    "new": "  return e;",
     "tests": [
       "test/net/gate/audit_wb11.test.js",
       "test/net/gate/wb9c_gate_reckoning.test.js"
@@ -259,8 +259,8 @@
   {
     "name": "AUDIT-WB11-C1-the-imp-on-idle-records",
     "file": "src/world/gate/gateBoss.js",
-    "old": "stateAnims(state, look?.mobile, !!ENEMY_BASICS[look?.mobile]?.hasIdle,",
-    "new": "stateAnims(state, look?.mobile, true,",
+    "old": "  const tab = (state) =>\n    stateAnims(state, look?.mobile, !!ENEMY_BASICS[look?.mobile]?.hasIdle, false, false, true, false, winged);",
+    "new": "  const tab = (state) => stateAnims(state, look?.mobile, true, false, false, true, false, winged);",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
     ]
@@ -268,8 +268,8 @@
   {
     "name": "AUDIT-WB11-C7-the-seducer-at-a-walker-clock",
     "file": "src/world/gate/gateBoss.js",
-    "old": "const flyer = winged || (look?.hover ?? 0) > 0;",
-    "new": "const flyer = (look?.hover ?? 0) > 0;",
+    "old": "  const flyer = winged || (look?.hover ?? 0) > 0;",
+    "new": "  const flyer = (look?.hover ?? 0) > 0;",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
     ]
@@ -349,8 +349,8 @@
   {
     "name": "AUDIT-WB11-U2-the-novas-gold",
     "file": "src/world/gate/gateBoss.js",
-    "old": "?.nova ?? HOST_PULSE_FIRE;",
-    "new": "?.nova ?? ATTACK_COLORS.nova;",
+    "old": "export const hostPulseColor = (P) => ASPECT_COLORS[P?.aspect?.id]?.nova ?? HOST_PULSE_FIRE; // AUDIT WB11 U2: the Burning's Nova gold was the ward's own - the disc that hurts read as the tether beside it",
+    "new": "export const hostPulseColor = (P) => ASPECT_COLORS[P?.aspect?.id]?.nova ?? ATTACK_COLORS.nova; // AUDIT WB11 U2: the Burning's Nova gold was the ward's own - the disc that hurts read as the tether beside it",
     "tests": [
       "test/net/gate/audit_wb11.test.js"
     ]

@@ -132,8 +132,8 @@
   {
     "name": "GATE-MIX-sort-mutates",
     "file": "src/world/gate/gateBoss.js",
-    "old": "points.slice().sort(",
-    "new": "points.sort(",
+    "old": "  const order = Array.isArray(ear) ? points.slice().sort((p, q) => d2(p, ear) - d2(q, ear)) : points;",
+    "new": "  const order = Array.isArray(ear) ? points.sort((p, q) => d2(p, ear) - d2(q, ear)) : points;",
     "tests": [
       "test/net/gate/gatemix_targets.test.js"
     ],
@@ -283,8 +283,8 @@
   {
     "name": "GATE-MIX-lights-mask-unread",
     "file": "src/world/gate/gateArena.js",
-    "old": " if (l.carried) carried[n + i] = 1; });",
-    "new": " });",
+    "old": "    if (l.carried) carried[n + i] = 1;\n  }); // GATE-MIX: a flash's mask - no shadow caster",
+    "new": "  }); // GATE-MIX: a flash's mask - no shadow caster",
     "tests": [
       "test/world/gatemix_lights.test.js"
     ],
@@ -293,8 +293,8 @@
   {
     "name": "GATE-MIX-lights-all-masked",
     "file": "src/world/gate/gateArena.js",
-    "old": " if (l.carried) carried[n + i] = 1; });",
-    "new": " carried[n + i] = 1; });",
+    "old": "    if (l.carried) carried[n + i] = 1;",
+    "new": "    carried[n + i] = 1;",
     "tests": [
       "test/world/gatemix_lights.test.js"
     ],

@@ -2802,15 +2802,15 @@ Every relay refused the cast whole, and the spell door popped the claim. The rel
 the reference at the striker's level - section 5's bucket; an Elite Breach's grown by the Vestiges' declared factor), so
 the fix is the stand-in's, as a duel's was (`combat/duelCombat.js` DUEL_STAND_IN, whole at the wire's vital ceiling):
 
-- **THE WHOLE** (`gateBoss.js:"export const STAND_IN_WHOLE = HIT_CAP_X * dpsRef(LV_MAX) * EG_BUCKET_X_MAX;"`, 975) - the
+- **THE WHOLE** (`gateBoss.js:"export const STAND_IN_WHOLE"`, 975) - the
   most one blow lands at any relay: the gate's cap at LV_MAX (780) grown by the most a breach's bucket grows, over the
   serpent's (SERPENT_HIT_CAP_X of a galley's reference, 182) and a bout's (`arenaBlowCap`, 122 at most); and under the least
   ceiling nobody clamps (the bout's 10,000), with the rest of a spell's room beside it. Every stand-in stands at it
-  (`gateBoss.js:"e.maxHealth = e.health = STAND_IN_WHOLE;"`). A Disintegrate counts it whole, every wire carries it and
+  (`gateBoss.js:"e.maxHealth = e.health"`). A Disintegrate counts it whole, every wire carries it and
   the relay's own law weighs and clips it - his stun heavier, an Unyielding ward 15% lighter (975 of it still past the cap
   at the level cap), the bucket. The serpent's door already held its claim to 5,000; it carries the whole as it is.
 - **THE NUMBER** says what can land (`standInSpell.js:"const shown = standInShown(dealt, standInBlowCap(body.entity, player.level));"`):
-  the claim, never past the most one blow of mine lands there (`gateBoss.js:"export function standInBlowCap(e, lv) {"` -
+  the claim, never past the most one blow of mine lands there (`gateBoss.js:"export function standInBlowCap"` -
   the relay's cap at my level, grown by the factor the stand-in's owner says my bucket grows by: an Elite Breach hands its
   stand-ins my Vestiges' declared factor, `egFight.js:"const myBlowX = () =>"`, at most EG_BUCKET_X_MAX; on my opponent the
   referee's spell cap, ARENA_SPELL_MAX). The paths' riders are told the same (`took`: what the foe could lose). The claim
@@ -2904,7 +2904,7 @@ EGZR-stacks-any-body.
 The owner: "in oblivion gates ... while performance is overall good, the game hitches, audio becomes super loud and even
 distorts". The causes, landing in the same frames - his big landings, a wave rising, the Sundering:
 
-- **A cue at its targets, thinned** (`gateBoss.js:"export function cueTargetPlaces(points, ear) {"`). A cue `at: 'targets'`
+- **A cue at its targets, thinned** (`gateBoss.js:"export function cueTargetPlaces"`). A cue `at: 'targets'`
   (the Hellfire's release and landing, the Meteor's, the Brand's, the Torment's) played one copy at every target: a
   Hellfire on five players was five of the fire's full-scale cast in one frame, ten in his third phase (its second volley
   within 3 m of the first), and over a reach of 40 to 80 m with a linear fall every copy near a group came in at nearly
@@ -2937,7 +2937,7 @@ distorts". The causes, landing in the same frames - his big landings, a wave ris
   first: a real picture under the frame's plain key is held for the place asking, as an `uploadTexture` hit holds it,
   and nothing is decoded. A placeholder answers no (the real picture replaces it), and a spectral or self-lit frame
   still goes the whole way (each carries a second picture).
-- **A flash casts no shadow** (`gateArena.js:"export function withCourtLights(lit, lights) {"`). His landings' lights
+- **A flash casts no shadow** (`gateArena.js:"export function withCourtLights"`). His landings' lights
   (the Meteor's, the Hellfire's - one under each mark), his fall's white and the Wrath's light took a shadow caster's
   slot by nearness alone (`render/shadowPass.js` pickShadowCasters), each a new light that rebuilt a cube map under
   Enhanced Lighting's shadows, for half a second of light; the running Tithe-Imp's moved its cube every frame. Each now

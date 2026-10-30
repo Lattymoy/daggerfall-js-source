@@ -253,8 +253,8 @@
   {
     "name": "EGF-a-set-s-arch-unasked",
     "file": "src/world/gate/gateClearance.js",
-    "old": "return clear.list.some((c) => boxNearGate(c, px, py, x0, z0, x1, z1, margin));",
-    "new": "return boxNearGate(clear.list[0], px, py, x0, z0, x1, z1, margin);",
+    "old": "  if (Array.isArray(clear.list)) return clear.list.some((c) => boxNearGate(c, px, py, x0, z0, x1, z1, margin)); // EG-F: a set - any of its clearings",
+    "new": "  if (Array.isArray(clear.list)) return boxNearGate(clear.list[0], px, py, x0, z0, x1, z1, margin); // EG-F: a set - any of its clearings",
     "tests": [
       "test/net/eliteGates/egarch_law.test.js"
     ]
@@ -262,8 +262,8 @@
   {
     "name": "EGF-an-arch-s-reach-the-gate-s",
     "file": "src/world/gate/gateClearance.js",
-    "old": "  if (Number.isFinite(clear.r)) return boxNear(gx, gz, x0, z0, x1, z1, clear.r + margin);",
-    "new": "  // gone",
+    "old": "  if (Number.isFinite(clear.r)) return boxNear(gx, gz, x0, z0, x1, z1, clear.r + margin); // EG-F: an arch's, by its own reach",
+    "new": "  // gone   // EG-F: an arch's, by its own reach",
     "tests": [
       "test/net/eliteGates/egarch_law.test.js"
     ]
@@ -271,8 +271,8 @@
   {
     "name": "EGF-a-pixel-built-again-for-a-far-arch",
     "file": "src/world/gate/gateClearance.js",
-    "old": "|| come.some((c) => reachNearGate(p.wodReach, c, p.px, p.py))) again.push(p);",
-    "new": "|| come.length) again.push(p);",
+    "old": "        if ((gone && p.gateRefused) || come.some((c) => reachNearGate(p.wodReach, c, p.px, p.py))) again.push(p);",
+    "new": "        if ((gone && p.gateRefused) || come.length) again.push(p);",
     "tests": [
       "test/net/eliteGates/egarch_law.test.js"
     ]

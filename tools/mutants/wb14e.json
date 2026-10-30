@@ -307,8 +307,8 @@
   {
     "name": "WB14e-an-imp-s-size",
     "file": "src/world/gate/gateBoss.js",
-    "old": "winged: mobile === 29, scale: tithe ? TITHE_SCALE : 1 };",
-    "new": "winged: mobile === 29, scale: 1 };",
+    "old": "    scale: tithe ? TITHE_SCALE : 1,",
+    "new": "    scale: 1,",
     "tests": [
       "test/net/gate/wb14e_tithe.test.js"
     ]
@@ -316,8 +316,8 @@
   {
     "name": "WB14e-it-falls-where-it-fled",
     "file": "src/world/gate/gateBoss.js",
-    "old": "sink: g.w === 2 || g.w === 3 ?",
-    "new": "sink: g.w === 2 ?",
+    "old": "    sink: g.w === 2 || g.w === 3 ? HOST_KINDS[g.k].h * (since / HOST_FALL_MS) : 0,",
+    "new": "    sink: g.w === 2 ? HOST_KINDS[g.k].h * (since / HOST_FALL_MS) : 0,",
     "tests": [
       "test/net/gate/wb14e_tithe.test.js"
     ]

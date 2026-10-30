@@ -1527,8 +1527,8 @@
   {
     "name": "AUDIT-WB12d-the-circle-s-frame-turned",
     "file": "src/world/gate/gateClearance.js",
-    "old": "(py - clear.py) * PIXEL_M + clear.rz];",
-    "new": "(clear.py - py) * PIXEL_M + clear.rz];",
+    "old": "  (py - clear.py) * PIXEL_M + clear.rz,",
+    "new": "  (clear.py - py) * PIXEL_M + clear.rz,",
     "tests": [
       "test/world/gate/gateclear.test.js"
     ]
@@ -2007,8 +2007,8 @@
   {
     "name": "AUDIT-WB12d-a-square-tile",
     "file": "src/world/gate/gateArt.js",
-    "old": "put(albedo, x, y, CHAR, 0); put(emission, x, y, [0, 0, 0], 0); continue;",
-    "new": "put(albedo, x, y, CHAR); put(emission, x, y, [0, 0, 0]); continue;",
+    "old": "        put(albedo, x, y, CHAR, 0);\n        put(emission, x, y, [0, 0, 0], 0);",
+    "new": "        put(albedo, x, y, CHAR);\n        put(emission, x, y, [0, 0, 0]);",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -2016,8 +2016,8 @@
   {
     "name": "AUDIT-WB12d-a-smooth-rim",
     "file": "src/world/gate/gateArt.js",
-    "old": "if (d > 0.9 + 0.16 * (edge(x, y, S) - 0.5))",
-    "new": "if (d > 0.9)",
+    "old": "      if (d > 0.9 + 0.16 * (edge(x, y, S) - 0.5)) {",
+    "new": "      if (d > 0.9) {",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -2025,8 +2025,8 @@
   {
     "name": "AUDIT-WB12d-the-star-turned-from-the-gate",
     "file": "src/world/gate/gateArt.js",
-    "old": "const a = Math.PI / 2 + (i / 7) * 2 * Math.PI;",
-    "new": "const a = -Math.PI / 2 + (i / 7) * 2 * Math.PI;",
+    "old": "    const a = Math.PI / 2 + (i / 7) * 2 * Math.PI;",
+    "new": "    const a = -Math.PI / 2 + (i / 7) * 2 * Math.PI;",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -2034,8 +2034,8 @@
   {
     "name": "AUDIT-WB12d-the-cuts-cold",
     "file": "src/world/gate/gateArt.js",
-    "old": "put(albedo, px, py, BURNT); put(emission, px, py, glow(1));",
-    "new": "put(albedo, px, py, BURNT); put(emission, px, py, glow(0));",
+    "old": "          put(emission, px, py, glow(1));",
+    "new": "          put(emission, px, py, glow(0));",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]

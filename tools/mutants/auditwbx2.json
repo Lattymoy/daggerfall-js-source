@@ -104,8 +104,8 @@
   {
     "name": "AUDWBX2-M5-the-screen-its-own-flight",
     "file": "src/world/gate/gateBoss.js",
-    "old": "  const leap = atk ? leapAt(atk, now) : null;",
-    "new": "  const leap = atk && now >= atk.at ? leapAt(atk, now) : null;",
+    "old": "  const leap = atk ? leapAt(atk, now) : null; // WBX5: the brain's own flight - the relay settles a kill in the air there too",
+    "new": "  const leap = atk && now >= atk.at ? leapAt(atk, now) : null; // WBX5: the brain's own flight - the relay settles a kill in the air there too",
     "tests": [
       "test/net/gate/auditwbx2.test.js",
       "test/world/gate/wbx_gate_fixes.test.js"

@@ -2,8 +2,8 @@
   {
     "name": "STAR-CLEAR-the-stars-left-out-of-the-set",
     "file": "src/world/gate/gateClearance.js",
-    "old": ", ...membersFrom(stars, 's', 'star:', STAR_ROCK_M)];",
-    "new": "];",
+    "old": "  const list = [\n    ...(gate ? [gate] : []),\n    ...membersFrom(arches, 'b', 'eg:', EG_ARCH_ROCK_M),\n    ...membersFrom(stars, 's', 'star:', STAR_ROCK_M),\n  ];",
+    "new": "  const list = [...(gate ? [gate] : []), ...membersFrom(arches, 'b', 'eg:', EG_ARCH_ROCK_M)];",
     "tests": [
       "test/scenes/starfall/starclear.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "STAR-CLEAR-a-star's-reach-the-arch's",
     "file": "src/world/gate/gateClearance.js",
-    "old": "...membersFrom(stars, 's', 'star:', STAR_ROCK_M)];",
-    "new": "...membersFrom(stars, 's', 'star:', EG_ARCH_ROCK_M)];",
+    "old": "    ...membersFrom(stars, 's', 'star:', STAR_ROCK_M),",
+    "new": "    ...membersFrom(stars, 's', 'star:', EG_ARCH_ROCK_M),",
     "tests": [
       "test/scenes/starfall/starclear.test.js"
     ]

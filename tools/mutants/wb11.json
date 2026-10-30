@@ -282,8 +282,8 @@
   {
     "name": "WB11-the-rise-drawn-standing",
     "file": "src/world/gate/gateBoss.js",
-    "old": "  if (since < riseMs) return { act: 'rise',",
-    "new": "  if (false) return { act: 'rise',",
+    "old": "  if (since < riseMs)",
+    "new": "  if (false)",
     "tests": [
       "test/net/gate/wb11_gate_host.test.js"
     ]

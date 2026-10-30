@@ -74,8 +74,8 @@
   {
     "name": "LIGHT-ID-the-court-written-by-hand",
     "file": "src/world/gate/gateArena.js",
-    "old": "packLight(data, n + i, l);",
-    "new": "data.set([l.x, l.y, l.z, l.range], (n + i) * 4);",
+    "old": "    packLight(data, n + i, l);",
+    "new": "    data.set([l.x, l.y, l.z, l.range], (n + i) * 4);",
     "tests": [
       "test/render/lightid.test.js"
     ]

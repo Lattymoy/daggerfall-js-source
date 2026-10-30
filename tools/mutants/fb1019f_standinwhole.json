@@ -2,8 +2,8 @@
   {
     "name": "STAND-IN-WHOLE-1e9-back",
     "file": "src/world/gate/gateBoss.js",
-    "old": "  e.maxHealth = e.health = STAND_IN_WHOLE;",
-    "new": "  e.maxHealth = e.health = 1e9;",
+    "old": "  e.maxHealth = e.health = STAND_IN_WHOLE; // FIELD BUGS 2026-10-19f STAND-IN-WHOLE: a count the wire carries, never 1e9",
+    "new": "  e.maxHealth = e.health = 1e9; // FIELD BUGS 2026-10-19f STAND-IN-WHOLE: a count the wire carries, never 1e9",
     "tests": [
       "test/net/gate/fb1019f_standinwhole.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "STAND-IN-WHOLE-the-factor-unread",
     "file": "src/world/gate/gateBoss.js",
-    "old": "  try { bx = typeof e?.relayBlowX === 'function' ? Number(e.relayBlowX()) : 1; } catch { bx = 1; }",
-    "new": "  try { bx = 1; } catch { bx = 1; }",
+    "old": "    bx = typeof e?.relayBlowX === 'function' ? Number(e.relayBlowX()) : 1;",
+    "new": "    bx = 1;",
     "tests": [
       "test/net/gate/fb1019f_standinwhole.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "STAND-IN-WHOLE-the-factor-unclamped",
     "file": "src/world/gate/gateBoss.js",
-    "old": "(Number.isFinite(bx) ? Math.max(1, Math.min(EG_BUCKET_X_MAX, bx)) : 1)",
-    "new": "(Number.isFinite(bx) ? Math.max(1, bx) : 1)",
+    "old": "  return HIT_CAP_X * dpsRef(lv) * (Number.isFinite(bx) ? Math.max(1, Math.min(EG_BUCKET_X_MAX, bx)) : 1);",
+    "new": "  return HIT_CAP_X * dpsRef(lv) * (Number.isFinite(bx) ? Math.max(1, bx) : 1);",
     "tests": [
       "test/net/gate/fb1019f_standinwhole.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "STAND-IN-WHOLE-the-factor-unfloored",
     "file": "src/world/gate/gateBoss.js",
-    "old": "(Number.isFinite(bx) ? Math.max(1, Math.min(EG_BUCKET_X_MAX, bx)) : 1)",
-    "new": "(Number.isFinite(bx) ? Math.min(EG_BUCKET_X_MAX, bx) : 1)",
+    "old": "  return HIT_CAP_X * dpsRef(lv) * (Number.isFinite(bx) ? Math.max(1, Math.min(EG_BUCKET_X_MAX, bx)) : 1);",
+    "new": "  return HIT_CAP_X * dpsRef(lv) * (Number.isFinite(bx) ? Math.min(EG_BUCKET_X_MAX, bx) : 1);",
     "tests": [
       "test/net/gate/fb1019f_standinwhole.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "STAND-IN-WHOLE-the-reader-unkept",
     "file": "src/world/gate/gateBoss.js",
-    "old": "  e.relayBlowX = typeof blowX === 'function' ? blowX : null;",
-    "new": "  e.relayBlowX = null;",
+    "old": "  e.relayBlowX = typeof blowX === 'function' ? blowX : null; // FIELD BUGS 2026-10-19f STAND-IN-WHOLE: the factor its relay grows my bucket by, its owner's reader",
+    "new": "  e.relayBlowX = null; // FIELD BUGS 2026-10-19f STAND-IN-WHOLE: the factor its relay grows my bucket by, its owner's reader",
     "tests": [
       "test/net/gate/fb1019f_standinwhole.test.js"
     ],

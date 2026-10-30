@@ -232,8 +232,8 @@
   {
     "name": "WB8c-the-wrath-in-his-aspect-s-voice",
     "file": "src/world/gate/gateBoss.js",
-    "old": "  if (!cue || isDagons(A) || !P?.atk?.[A.key]?.el",
-    "new": "  if (!cue || !P?.atk?.[A.key]?.el",
+    "old": "  if (!cue || isDagons(A) || !P?.atk?.[A.key]?.el || !(aspect in ASPECT_CUE_IDS)) return cue; // Dagon's Wrath is Dagon's - WB9c: and his Reckoning",
+    "new": "  if (!cue || !P?.atk?.[A.key]?.el || !(aspect in ASPECT_CUE_IDS)) return cue; // Dagon's Wrath is Dagon's - WB9c: and his Reckoning",
     "tests": [
       "test/net/gate/wb8c_gate_detail.test.js"
     ]
@@ -241,8 +241,8 @@
   {
     "name": "WB8c-his-voice-unchanged",
     "file": "src/world/gate/gateBoss.js",
-    "old": "  if (kind === 'windup' || kind === 'release') return { id: ASPECT_CUE_IDS[aspect],",
-    "new": "  if (kind === 'windup' || kind === 'release') return { ...cue, id: cue.id,",
+    "old": "    return { id: ASPECT_CUE_IDS[aspect], pitch: cue.pitch, volume: cue.volume, reach: cue.reach, at: cue.at };",
+    "new": "    return { ...cue, id: cue.id, pitch: cue.pitch, volume: cue.volume, reach: cue.reach, at: cue.at };",
     "tests": [
       "test/net/gate/wb8c_gate_detail.test.js"
     ]

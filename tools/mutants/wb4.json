@@ -92,8 +92,8 @@
   {
     "name": "WB4-the-raise-held-from-the-word",
     "file": "src/world/gate/gateBoss.js",
-    "old": "frame: cast ? CAST_RAISE_FRAME : tel.t < 0.5 ? 0 : 1,",
-    "new": "frame: cast ? CAST_RAISE_FRAME : 1,",
+    "old": "        frame: cast ? CAST_RAISE_FRAME : tel.t < 0.5 ? 0 : 1,",
+    "new": "        frame: cast ? CAST_RAISE_FRAME : 1,",
     "tests": [
       "test/net/gate/wb4_gate_boss.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "WB4-the-flinch-over-a-windup",
     "file": "src/world/gate/gateBoss.js",
-    "old": "  if (A) {\n    const tel = telegraphAt(atk, s.phase, now);\n    // WBX5: the leap in the air",
-    "new": "  if (A && !(now - hurtAt >= 0 && now - hurtAt < FLINCH_MS)) {\n    const tel = telegraphAt(atk, s.phase, now);\n    // WBX5: the leap in the air",
+    "old": "  const atk = s.atk,\n    A = atk ? ATTACK_BY_ID[atk.a] : null;\n  if (A) {\n    const tel = telegraphAt(atk, s.phase, now);\n    // WBX5: the leap in the air - his legs under him, as the charge runs; WB9b: and the bound's long flight",
+    "new": "  const atk = s.atk,\n    A = atk ? ATTACK_BY_ID[atk.a] : null;\n  if (A && !(now - hurtAt >= 0 && now - hurtAt < FLINCH_MS)) {\n    const tel = telegraphAt(atk, s.phase, now);\n    // WBX5: the leap in the air - his legs under him, as the charge runs; WB9b: and the bound's long flight",
     "tests": [
       "test/net/gate/wb4_gate_boss.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "WB4-the-loop-not-wrapped",
     "file": "src/world/gate/gateBoss.js",
-    "old": "const frame = act.loop ? ((act.frame % n) + n) % n :",
-    "new": "const frame = act.loop ? act.frame :",
+    "old": "  const frame = act.loop ? ((act.frame % n) + n) % n : Math.max(0, Math.min(n - 1, act.frame));",
+    "new": "  const frame = act.loop ? act.frame : Math.max(0, Math.min(n - 1, act.frame));",
     "tests": [
       "test/net/gate/wb4_gate_boss.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "WB4-the-held-frame-past-the-record",
     "file": "src/world/gate/gateBoss.js",
-    "old": "Math.max(0, Math.min(n - 1, act.frame))",
-    "new": "Math.max(0, act.frame)",
+    "old": "  const frame = act.loop ? ((act.frame % n) + n) % n : Math.max(0, Math.min(n - 1, act.frame));",
+    "new": "  const frame = act.loop ? ((act.frame % n) + n) % n : Math.max(0, act.frame);",
     "tests": [
       "test/net/gate/wb4_gate_boss.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "WB4-the-glow-flat-through-the-windup",
     "file": "src/world/gate/gateBoss.js",
-    "old": "return lit(color, 0.35 + 1.25 * tel.t * tel.t, GLOW_RANGE.windup);",
-    "new": "return lit(color, 1, GLOW_RANGE.windup);",
+    "old": "      return lit(color, 0.35 + 1.25 * tel.t * tel.t, GLOW_RANGE.windup);",
+    "new": "      return lit(color, 1, GLOW_RANGE.windup);",
     "tests": [
       "test/net/gate/wb4_gate_boss.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "WB4-the-wards-gold-never-shown",
     "file": "src/world/gate/gateBoss.js",
-    "old": "  if (now < s.shieldUntil) return lit(WARD_COLOR,",
-    "new": "  if (false) return lit(WARD_COLOR,",
+    "old": "  if (now < s.shieldUntil) return lit(WARD_COLOR, 0.9 + 0.3 * Math.sin(now / 90), GLOW_RANGE.windup);",
+    "new": "  if (false) return lit(WARD_COLOR, 0.9 + 0.3 * Math.sin(now / 90), GLOW_RANGE.windup);",
     "tests": [
       "test/net/gate/wb4_gate_boss.test.js"
     ]

@@ -467,8 +467,8 @@
   {
     "name": "WB14d-one-flame-for-every-aspect",
     "file": "src/world/gate/gateBoss.js",
-    "old": "export const flameLookOf = (aspectId) => Object.freeze({ mobile: FLAME_LOOKS[aspectId] ?? FLAME_LOOKS.burning,",
-    "new": "export const flameLookOf = (aspectId) => Object.freeze({ mobile: FLAME_LOOKS.burning,",
+    "old": "export const flameLookOf = (aspectId) =>\n  Object.freeze({ mobile: FLAME_LOOKS[aspectId] ?? FLAME_LOOKS.burning, scale: BOSS_LOOKS.ruhn.scale });",
+    "new": "export const flameLookOf = (aspectId) => Object.freeze({ mobile: FLAME_LOOKS.burning, scale: BOSS_LOOKS.ruhn.scale });",
     "tests": [
       "test/net/gate/wb14d_sundering.test.js"
     ]
@@ -476,8 +476,8 @@
   {
     "name": "WB14d-one-flame-name-for-every-aspect",
     "file": "src/world/gate/gateBoss.js",
-    "old": "(b === HALF.flame ? HALF_NAMES[P?.aspect?.id] ?? HALF_NAMES.burning : HALF_NAMES.blade)",
-    "new": "(b === HALF.flame ? HALF_NAMES.burning : HALF_NAMES.blade)",
+    "old": "  return (b === HALF.flame ? (HALF_NAMES[P?.aspect?.id] ?? HALF_NAMES.burning) : HALF_NAMES.blade)(boss);",
+    "new": "  return (b === HALF.flame ? HALF_NAMES.burning : HALF_NAMES.blade)(boss);",
     "tests": [
       "test/net/gate/wb14d_sundering.test.js"
     ]
@@ -629,8 +629,8 @@
   {
     "name": "AUDIT-WB14-RECORD-6-the-flame-drawn-as-him",
     "file": "src/world/gate/gateBoss.js",
-    "old": "mobile: FLAME_LOOKS[aspectId] ?? FLAME_LOOKS.burning, scale: BOSS_LOOKS.ruhn.scale",
-    "new": "mobile: BOSS_LOOKS.ruhn.mobile, scale: BOSS_LOOKS.ruhn.scale",
+    "old": "  Object.freeze({ mobile: FLAME_LOOKS[aspectId] ?? FLAME_LOOKS.burning, scale: BOSS_LOOKS.ruhn.scale });",
+    "new": "  Object.freeze({ mobile: BOSS_LOOKS.ruhn.mobile, scale: BOSS_LOOKS.ruhn.scale });",
     "tests": [
       "test/net/gate/wb14d_sundering.test.js"
     ],

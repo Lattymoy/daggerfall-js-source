@@ -461,8 +461,8 @@
   {
     "name": "AUDIT-WB14-SCREEN-11-the-first-court-s-alone",
     "file": "src/world/gate/gateArena.js",
-    "old": "  if (k === 0 || k === plan.root) out.push(Math.PI / 2);",
-    "new": "  if (k === 0) out.push(Math.PI / 2);",
+    "old": "  if (k === 0 || k === plan.root) out.push(Math.PI / 2); // the bridge the players came by - AUDIT WB14 (SCREEN-11): and the night's arrival (the Vanguard's Bridgehead: no brazier behind its way in)",
+    "new": "  if (k === 0) out.push(Math.PI / 2); // the bridge the players came by - AUDIT WB14 (SCREEN-11): and the night's arrival (the Vanguard's Bridgehead: no brazier behind its way in)",
     "tests": [
       "test/net/gate/audit_wb14_screen.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "AUDIT-WB14-SCREEN-12-shaking-nothing",
     "file": "src/world/gate/gateBoss.js",
-    "old": "LAND_SHAKE[SHAKE_AS[A?.key] ?? A?.key]",
-    "new": "LAND_SHAKE[A?.key]",
+    "old": "  const w = LAND_SHAKE[SHAKE_AS[A?.key] ?? A?.key];",
+    "new": "  const w = LAND_SHAKE[A?.key];",
     "tests": [
       "test/net/gate/audit_wb14_screen.test.js"
     ]

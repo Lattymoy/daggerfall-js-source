@@ -50,7 +50,12 @@ export function spewLaunches(rolls, n, bearing) {
   // leftmost), each piece jittered inside its own slot and never within SPEW_SLOT_MARGIN of its edges; a lone piece
   // anywhere in the fan, as WB5 threw it
   const slots = Array.from({ length: n }, (_, i) => i);
-  for (let i = n - 1; i > 0; i--) { const j = Math.floor(rolls() * (i + 1)); const t = slots[i]; slots[i] = slots[j]; slots[j] = t; }
+  for (let i = n - 1; i > 0; i--) {
+    const j = Math.floor(rolls() * (i + 1));
+    const t = slots[i];
+    slots[i] = slots[j];
+    slots[j] = t;
+  }
   for (let i = 0; i < n; i++) {
     const u = n > 1 ? (slots[i] + SPEW_SLOT_MARGIN + rolls() * (1 - 2 * SPEW_SLOT_MARGIN)) / n : rolls();
     const a = bearing + (u * 2 - 1) * SPEW_SPREAD;
@@ -65,7 +70,17 @@ export function spewLaunches(rolls, n, bearing) {
 /** A piece in flight: where it is, the torch's own state (the throw's direction and speed, the gravity it has gathered),
  *  its clock, and whether it has come to rest. */
 export function spewPiece(from, launch) {
-  return { pos: [...from], dirStart: [...launch.dir], speedStart: launch.speed, speedCurrent: launch.speed, gravity: [0, 0, 0], t: 0, acc: 0, rest: false, bounces: 0 };
+  return {
+    pos: [...from],
+    dirStart: [...launch.dir],
+    speedStart: launch.speed,
+    speedCurrent: launch.speed,
+    gravity: [0, 0, 0],
+    t: 0,
+    acc: 0,
+    rest: false,
+    bounces: 0,
+  };
 }
 
 /**
@@ -77,7 +92,11 @@ export function spewPiece(from, launch) {
 export function stepSpew(p, ray) {
   if (p.rest) return 'rest';
   p.t += PROJECTILE_FIXED_DT;
-  p.gravity = [p.gravity[0], p.gravity[1] + PROJECTILE.gravityAccel * SPEW_GRAVITY_DRAG * PROJECTILE_FIXED_DT, p.gravity[2]];
+  p.gravity = [
+    p.gravity[0],
+    p.gravity[1] + PROJECTILE.gravityAccel * SPEW_GRAVITY_DRAG * PROJECTILE_FIXED_DT,
+    p.gravity[2],
+  ];
   const step = [0, 1, 2].map((k) => p.dirStart[k] * p.speedCurrent * PROJECTILE_FIXED_DT + p.gravity[k]);
   const len = Math.hypot(step[0], step[1], step[2]);
   if (!(len > 0)) return 'fly';
@@ -85,7 +104,11 @@ export function stepSpew(p, ray) {
   const hit = ray(p.pos, dir, len);
   if (hit && Number.isFinite(hit.dist)) {
     const point = [p.pos[0] + dir[0] * hit.dist, p.pos[1] + dir[1] * hit.dist, p.pos[2] + dir[2] * hit.dist];
-    if (p.speedCurrent < p.speedStart * PROJECTILE.restFraction) { p.pos = point; p.rest = true; return 'rest'; }
+    if (p.speedCurrent < p.speedStart * PROJECTILE.restFraction) {
+      p.pos = point;
+      p.rest = true;
+      return 'rest';
+    }
     const n = hit.normal ?? [0, 1, 0];
     const v = [p.dirStart[0], p.gravity[1], p.dirStart[2]];
     const vn = v[0] * n[0] + v[1] * n[1] + v[2] * n[2];
@@ -97,7 +120,10 @@ export function stepSpew(p, ray) {
     return 'bounce';
   }
   p.pos = [p.pos[0] + step[0], p.pos[1] + step[1], p.pos[2] + step[2]];
-  if (p.t >= SPEW_FLIGHT_MAX_S) { p.rest = true; return 'rest'; }
+  if (p.t >= SPEW_FLIGHT_MAX_S) {
+    p.rest = true;
+    return 'rest';
+  }
   return 'fly';
 }
 
@@ -125,7 +151,8 @@ export const floorRayAt = (y) => (from, dir, len) => {
 /** WB9f: where a launch from `from` comes to rest over a floor at height `floorY` - the torch's own flight, flown ahead
  *  (at most its flight's time). Pure. */
 export function restOf(from, launch, floorY) {
-  const p = spewPiece(from, launch), ray = floorRayAt(floorY);
+  const p = spewPiece(from, launch),
+    ray = floorRayAt(floorY);
   for (let k = 0; k <= Math.ceil(SPEW_FLIGHT_MAX_S / PROJECTILE_FIXED_DT) && !p.rest; k++) stepSpew(p, ray);
   return p.pos;
 }
@@ -142,7 +169,10 @@ export const SPEW_KEEP_EASE = 0.84;
  */
 export function keepLaunch(from, launch, keep) {
   if (!keep || !Array.isArray(keep.centre) || !(keep.r > 0) || !Number.isFinite(keep.floorY)) return launch;
-  const inside = (l) => { const p = restOf(from, l, keep.floorY); return Math.hypot(p[0] - keep.centre[0], p[2] - keep.centre[2]) <= keep.r; };
+  const inside = (l) => {
+    const p = restOf(from, l, keep.floorY);
+    return Math.hypot(p[0] - keep.centre[0], p[2] - keep.centre[2]) <= keep.r;
+  };
   if (inside(launch)) return launch;
   let speed = launch.speed;
   for (let k = 0; k < SPEW_KEEP_TRIES; k++) {
@@ -151,7 +181,10 @@ export function keepLaunch(from, launch, keep) {
     if (inside(l)) return l;
   }
   // still off the floor at the softest: toward the centre, as steeply as it left
-  const dx = keep.centre[0] - from[0], dz = keep.centre[2] - from[2], h = Math.hypot(dx, dz), run = Math.hypot(launch.dir[0], launch.dir[2]);
+  const dx = keep.centre[0] - from[0],
+    dz = keep.centre[2] - from[2],
+    h = Math.hypot(dx, dz),
+    run = Math.hypot(launch.dir[0], launch.dir[2]);
   if (!(h > 1e-6)) return { at: launch.at, dir: launch.dir, speed };
   return { at: launch.at, dir: [(dx / h) * run, launch.dir[1], (dz / h) * run], speed };
 }

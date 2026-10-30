@@ -11,8 +11,8 @@
   {
     "name": "WBX1-the-gate-on-sixteen-bits",
     "file": "src/world/gate/gateModel.js",
-    "old": "  const indices = new Uint32Array(count);",
-    "new": "  const indices = new Uint16Array(count);",
+    "old": "  const indices = new Uint32Array(count); // WBX1: the renderer's one index type (renderer.createMesh) - a Uint16Array under it drew nothing",
+    "new": "  const indices = new Uint16Array(count); // WBX1: the renderer's one index type (renderer.createMesh) - a Uint16Array under it drew nothing",
     "tests": [
       "test/world/gate/wbx_gate_fixes.test.js"
     ]
@@ -177,8 +177,8 @@
   {
     "name": "WBX6-the-stand-in-unflagged",
     "file": "src/world/gate/gateBoss.js",
-    "old": "  e.spareGear = true;",
-    "new": "  e.spareGear = false;",
+    "old": "  e.spareGear = true; // WBX6: a blow on him wears no weapon (combat/formulas.js damageEquipment)",
+    "new": "  e.spareGear = false; // WBX6: a blow on him wears no weapon (combat/formulas.js damageEquipment)",
     "tests": [
       "test/world/gate/wbx_gate_fixes.test.js"
     ]
