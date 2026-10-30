@@ -59,10 +59,18 @@ const smoothstep = (a, b, v) => {
  * @param {{ width: number, height: number, insideAt?: (x: number, y: number) => boolean,
  *   beyond?: ((x: number, y: number) => boolean)|null, reach?: number, beyondMax?: number }} o   `beyondMax` the far maps' cap (JUNGLE_BEYOND_MAX; the pins' seam)
  */
-export function jungleField({ width, height, insideAt = banthaAreaHas, beyond = null, reach = JUNGLE_FIELD_REACH, beyondMax = JUNGLE_BEYOND_MAX }) {
-  const side = new Uint8Array(width * height).fill(2);   // 2 not yet read, 1 the jungle's, 0 not
+export function jungleField({
+  width,
+  height,
+  insideAt = banthaAreaHas,
+  beyond = null,
+  reach = JUNGLE_FIELD_REACH,
+  beyondMax = JUNGLE_BEYOND_MAX,
+}) {
+  const side = new Uint8Array(width * height).fill(2); // 2 not yet read, 1 the jungle's, 0 not
   const dist = new Float32Array(width * height).fill(NaN);
-  const farSide = new Map(), farDist = new Map();   // TESA-BIOME: the pixels past the map `beyond` answers, kept
+  const farSide = new Map(),
+    farDist = new Map(); // TESA-BIOME: the pixels past the map `beyond` answers, kept
   const farKey = (x, y) => (x + 8192) * 32768 + (y + 8192);
   const far = reach + 0.5;
   const onMap = (x, y) => x >= 0 && y >= 0 && x < width && y < height;
@@ -73,7 +81,7 @@ export function jungleField({ width, height, insideAt = banthaAreaHas, beyond = 
       let v = farSide.get(k);
       if (v === undefined) {
         if (farSide.size >= beyondMax) farSide.clear();
-        farSide.set(k, v = beyond(x, y) ? 1 : 0);
+        farSide.set(k, (v = beyond(x, y) ? 1 : 0));
       }
       return v;
     }
@@ -87,7 +95,10 @@ export function jungleField({ width, height, insideAt = banthaAreaHas, beyond = 
     return Math.min(best, Math.hypot(Math.max(Math.abs(dx) - 0.5, 0), Math.max(Math.abs(dy) - 0.5, 0)));
   };
   return {
-    width, height, reach, beyond,
+    width,
+    height,
+    reach,
+    beyond,
     /** A pixel read as the jungle's (1) or not (0) - off the map, not (unless `beyond` says it is). */
     inside: sideAt,
     /** A pixel's signed distance from the jungle's edge (pixels). */
@@ -96,22 +107,29 @@ export function jungleField({ width, height, insideAt = banthaAreaHas, beyond = 
       if (off && !beyond) return -far;
       const i = off ? farKey(x, y) : y * width + x;
       const known = off ? farDist.get(i) : dist[i];
-      if (known === known && known !== undefined) return known;   // read before
+      if (known === known && known !== undefined) return known; // read before
       const me = sideAt(x, y);
       let best = far;
       // ring r's nearest square is r - 0.5 off: past the best found, no ring can beat it
       for (let r = 1; r <= reach && r - 0.5 < best; r++) {
-        for (let k = -r; k <= r; k++) { best = toOther(me, x, y, k, -r, best); best = toOther(me, x, y, k, r, best); }
-        for (let k = -r + 1; k <= r - 1; k++) { best = toOther(me, x, y, -r, k, best); best = toOther(me, x, y, r, k, best); }
+        for (let k = -r; k <= r; k++) {
+          best = toOther(me, x, y, k, -r, best);
+          best = toOther(me, x, y, k, r, best);
+        }
+        for (let k = -r + 1; k <= r - 1; k++) {
+          best = toOther(me, x, y, -r, k, best);
+          best = toOther(me, x, y, r, k, best);
+        }
       }
-      if (off) {   // TESA-BIOME: the same float32 the map's typed array keeps (LAY-8)
+      if (off) {
+        // TESA-BIOME: the same float32 the map's typed array keeps (LAY-8)
         if (farDist.size >= beyondMax) farDist.clear();
         const v = Math.fround(me ? best : -best);
         farDist.set(i, v);
         return v;
       }
       dist[i] = me ? best : -best;
-      return dist[i];   // AUDIT BANTHA1 LAY-8: the first read the float32 every later read is - never the float64 it came from
+      return dist[i]; // AUDIT BANTHA1 LAY-8: the first read the float32 every later read is - never the float64 it came from
     },
   };
 }
@@ -126,7 +144,10 @@ const _fields = new WeakMap();
  */
 export function jungleFieldOf(maps, width, height, insideAt = banthaAreaHas) {
   let f = _fields.get(maps);
-  if (!f) { f = jungleField({ width, height, insideAt }); _fields.set(maps, f); }
+  if (!f) {
+    f = jungleField({ width, height, insideAt });
+    _fields.set(maps, f);
+  }
   return f;
 }
 
@@ -157,10 +178,16 @@ export function jungleNine(field, px, py, out = new Array(9)) {
  * @param {ArrayLike<number>} nine jungleNine's @param {number} x @param {number} z
  */
 export function jungleSignedAt(nine, x, z) {
-  const u = x / PIXEL_M, v = z / PIXEL_M;
-  const i = u < 0.5 ? -1 : 0, j = v < 0.5 ? -1 : 0;
-  const fx = u - 0.5 - i, fz = v - 0.5 - j;
-  const a = nine[(j + 1) * 3 + i + 1], b = nine[(j + 1) * 3 + i + 2], c = nine[(j + 2) * 3 + i + 1], e = nine[(j + 2) * 3 + i + 2];
+  const u = x / PIXEL_M,
+    v = z / PIXEL_M;
+  const i = u < 0.5 ? -1 : 0,
+    j = v < 0.5 ? -1 : 0;
+  const fx = u - 0.5 - i,
+    fz = v - 0.5 - j;
+  const a = nine[(j + 1) * 3 + i + 1],
+    b = nine[(j + 1) * 3 + i + 2],
+    c = nine[(j + 2) * 3 + i + 1],
+    e = nine[(j + 2) * 3 + i + 2];
   return ((a * (1 - fx) + b * fx) * (1 - fz) + (c * (1 - fx) + e * fx) * fz) * PIXEL_M;
 }
 
@@ -170,9 +197,13 @@ export function jungleSignedAt(nine, x, z) {
  * @param {number} px @param {number} py @param {ArrayLike<number>} nine @param {number} x @param {number} z
  */
 export function jungleDepthAt(px, py, nine, x, z) {
-  const origin = ecoOrigin(px, py), tx = x / TILE_M, tz = z / TILE_M;
+  const origin = ecoOrigin(px, py),
+    tx = x / TILE_M,
+    tz = z / TILE_M;
   let w = 0;
-  JUNGLE_WANDER.octaves.forEach((o, k) => { w += o.amp * (2 * ecoNoise(origin, tx, tz, o.cell, JUNGLE_WANDER.salt + k) - 1); });
+  JUNGLE_WANDER.octaves.forEach((o, k) => {
+    w += o.amp * (2 * ecoNoise(origin, tx, tz, o.cell, JUNGLE_WANDER.salt + k) - 1);
+  });
   return jungleSignedAt(nine, x, z) + w;
 }
 
@@ -184,8 +215,12 @@ export const jungleShare = (depth) => smoothstep(-JUNGLE_EDGE.out, JUNGLE_EDGE.i
  *  stands where it is under the share and the meadow's grass where it is not (scenes/jungleFloorHost.js), so the two
  *  carpets trade places across the edge and never stand twice. Pure. */
 export function jungleFloorDraw(wx, wz) {
-  let h = (Math.imul(Math.round(wx * 8), 0x27d4eb2d) ^ Math.imul(Math.round(wz * 8), 0x165667b1) ^ 0x464c5252) >>> 0;   // 'FLRR'
-  h ^= h >>> 15; h = Math.imul(h, 0x2c1b3c6d) >>> 0; h ^= h >>> 12; h = Math.imul(h, 0x297a2d39) >>> 0; h ^= h >>> 15;
+  let h = (Math.imul(Math.round(wx * 8), 0x27d4eb2d) ^ Math.imul(Math.round(wz * 8), 0x165667b1) ^ 0x464c5252) >>> 0; // 'FLRR'
+  h ^= h >>> 15;
+  h = Math.imul(h, 0x2c1b3c6d) >>> 0;
+  h ^= h >>> 12;
+  h = Math.imul(h, 0x297a2d39) >>> 0;
+  h ^= h >>> 15;
   return (h >>> 8) / 16777216;
 }
 

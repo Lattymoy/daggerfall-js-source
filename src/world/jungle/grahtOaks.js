@@ -66,12 +66,18 @@ export const GRAHT_FIN_BODY_R = 1.6;
 /** A buttress's bodies in the tree's frame at scale 1 - [x, z, height] each: along the fin's cross-section at the ground
  *  (its line where the player walks), the fin's height at each the cross-section whose edge stands there. */
 function finBodies(t, f) {
-  const u0 = 3 / (f.rise + 3), g = finSection(t, f, u0);   // the cross-section at the ground (y 0)
-  const rad = [Math.cos(f.angle), Math.sin(f.angle)];   // its ground cross-section straight out along it (finSection's sweep nothing at the ground: rise 20 m and more)
+  const u0 = 3 / (f.rise + 3),
+    g = finSection(t, f, u0); // the cross-section at the ground (y 0)
+  const rad = [Math.cos(f.angle), Math.sin(f.angle)]; // its ground cross-section straight out along it (finSection's sweep nothing at the ground: rise 20 m and more)
   const out = [];
   for (let d = grahtTrunkRadius(t, 0) + GRAHT_FIN_STEP * 0.5; d < g.out - 1; d += GRAHT_FIN_STEP) {
-    let lo = u0, hi = 1;   // the cross-section whose edge stands at d (its edge comes in as it rises): its height
-    for (let k = 0; k < 24; k++) { const mid = (lo + hi) / 2; if (finSection(t, f, mid).out > d) lo = mid; else hi = mid; }
+    let lo = u0,
+      hi = 1; // the cross-section whose edge stands at d (its edge comes in as it rises): its height
+    for (let k = 0; k < 24; k++) {
+      const mid = (lo + hi) / 2;
+      if (finSection(t, f, mid).out > d) lo = mid;
+      else hi = mid;
+    }
     out.push(Object.freeze([rad[0] * d, rad[1] * d, finSection(t, f, lo).y]));
   }
   return Object.freeze(out);
@@ -82,14 +88,19 @@ function finBodies(t, f) {
 function measuresOf(sk) {
   const t = sk.trunk;
   return Object.freeze({
-    height: sk.height, crownR: sk.crownR, crownFrom: t.crownFrom,
-    trunk: grahtTrunkRadius(t, 1.5), ground: grahtTrunkRadius(t, 0),
+    height: sk.height,
+    crownR: sk.crownR,
+    crownFrom: t.crownFrom,
+    trunk: grahtTrunkRadius(t, 1.5),
+    ground: grahtTrunkRadius(t, 0),
     foot: Math.max(...sk.fins.map((f) => f.reach)),
     finBodies: Object.freeze(sk.fins.flatMap((f) => finBodies(t, f))),
   });
 }
 /** Every variant's measures (grahtSkeleton's, made once at load - a few hundred draws each). */
-export const GRAHT_MEASURES = Object.freeze(Array.from({ length: GRAHT_VARIANTS }, (_, v) => measuresOf(grahtSkeleton(v))));
+export const GRAHT_MEASURES = Object.freeze(
+  Array.from({ length: GRAHT_VARIANTS }, (_, v) => measuresOf(grahtSkeleton(v))),
+);
 /** The largest foot any tree stands (m) - the reach a site's tests and the storeys' mask look out to. */
 export const GRAHT_FOOT_MAX = Math.max(...GRAHT_MEASURES.map((m) => m.foot)) * GRAHT.scale[1];
 
@@ -100,7 +111,9 @@ export const GRAHT_FOOT_MAX = Math.max(...GRAHT_MEASURES.map((m) => m.foot)) * G
  * law); a buttress lies over the edge between two of them, where a foot held to them stood on 59% of the sites the
  * occupancy drew (the Bay's whole jungle, measured on the freeware: 34.2 a pixel of 57.6) and the canopy opened.
  */
-export const GRAHT_LAND_RECORDS = Object.freeze([...new Set(Array.from(createLookupTable().subarray(16), (v) => v & 0x3f))].sort((a, b) => a - b));
+export const GRAHT_LAND_RECORDS = Object.freeze(
+  [...new Set(Array.from(createLookupTable().subarray(16), (v) => v & 0x3f))].sort((a, b) => a - b),
+);
 
 /** A tree's LOD at `d` metres from the eye over its scale. */
 export const grahtLodOf = (d) => (d < GRAHT.lod[0] ? 0 : d < GRAHT.lod[1] ? 1 : 2);
@@ -117,12 +130,19 @@ export const grahtLodOf = (d) => (d < GRAHT.lod[0] ? 0 : d < GRAHT.lod[1] ? 1 : 
  * @returns {Float32Array}
  */
 export function grahtSites({ ox, oz, tiles, tileM, share, growsOn, steepAt, ground, trailOk, draw }) {
-  const C = GRAHT.cell, cells = tiles / C, out = [], [in0, in1] = GRAHT.inset, S = GRAHT.salt;
+  const C = GRAHT.cell,
+    cells = tiles / C,
+    out = [],
+    [in0, in1] = GRAHT.inset,
+    S = GRAHT.salt;
   for (let cy = 0; cy < cells; cy++) {
     for (let cx = 0; cx < cells; cx++) {
-      const wx = ox + cx * C, wz = oz + cy * C;
-      const tx = cx * C + C * (in0 + (in1 - in0) * draw(wx, wz, S)), tz = cy * C + C * (in0 + (in1 - in0) * draw(wx, wz, S + 1));
-      const mx = tx * tileM, mz = tz * tileM;
+      const wx = ox + cx * C,
+        wz = oz + cy * C;
+      const tx = cx * C + C * (in0 + (in1 - in0) * draw(wx, wz, S)),
+        tz = cy * C + C * (in0 + (in1 - in0) * draw(wx, wz, S + 1));
+      const mx = tx * tileM,
+        mz = tz * tileM;
       if (draw(wx, wz, S + 2) >= GRAHT.occupancy * share(mx, mz)) continue;
       const variant = Math.min(GRAHT_VARIANTS - 1, Math.floor(draw(wx, wz, S + 3) * GRAHT_VARIANTS));
       const scale = GRAHT.scale[0] + (GRAHT.scale[1] - GRAHT.scale[0]) * draw(wx, wz, S + 4);
@@ -130,13 +150,20 @@ export function grahtSites({ ox, oz, tiles, tileM, share, growsOn, steepAt, grou
       const ti0 = Math.floor(tz) * tiles + Math.floor(tx);
       if (steepAt(ti0)) continue;
       // the whole foot on land a foot may cover: every tile whose middle lies within the foot (and a half tile)
-      const reach = foot + tileM * 0.5, rt = Math.ceil(reach / tileM);
-      let ok = true, lo = Infinity, hi = -Infinity;
+      const reach = foot + tileM * 0.5,
+        rt = Math.ceil(reach / tileM);
+      let ok = true,
+        lo = Infinity,
+        hi = -Infinity;
       for (let y = Math.max(0, Math.floor(tz) - rt); y <= Math.min(tiles - 1, Math.floor(tz) + rt) && ok; y++) {
         for (let x = Math.max(0, Math.floor(tx) - rt); x <= Math.min(tiles - 1, Math.floor(tx) + rt); x++) {
-          const dx = (x + 0.5) * tileM - mx, dz = (y + 0.5) * tileM - mz;
+          const dx = (x + 0.5) * tileM - mx,
+            dz = (y + 0.5) * tileM - mz;
           if (dx * dx + dz * dz > reach * reach) continue;
-          if (!growsOn(y * tiles + x)) { ok = false; break; }
+          if (!growsOn(y * tiles + x)) {
+            ok = false;
+            break;
+          }
           const g = ground((x + 0.5) * tileM, (y + 0.5) * tileM);
           if (g < lo) lo = g;
           if (g > hi) hi = g;
@@ -159,12 +186,20 @@ export function grahtFootMask(trees, tiles, tileM) {
   if (!trees?.length) return null;
   const mask = new Uint8Array(tiles * tiles);
   for (let i = 0; i < trees.length; i += GRAHT_TREE_FLOATS) {
-    const mx = trees[i], mz = trees[i + 2], s = trees[i + 4], m = GRAHT_MEASURES[trees[i + 5]];
-    const foot = m.foot * s + tileM * 0.5, core = (m.ground + GRAHT.floorClear) * s + tileM * 0.5;   // a tile whose middle is within either (and half a tile: a plant stands anywhere in its tile)
-    const rt = Math.ceil(foot / tileM), cx = Math.floor(mx / tileM), cz = Math.floor(mz / tileM);
+    const mx = trees[i],
+      mz = trees[i + 2],
+      s = trees[i + 4],
+      m = GRAHT_MEASURES[trees[i + 5]];
+    const foot = m.foot * s + tileM * 0.5,
+      core = (m.ground + GRAHT.floorClear) * s + tileM * 0.5; // a tile whose middle is within either (and half a tile: a plant stands anywhere in its tile)
+    const rt = Math.ceil(foot / tileM),
+      cx = Math.floor(mx / tileM),
+      cz = Math.floor(mz / tileM);
     for (let y = Math.max(0, cz - rt); y <= Math.min(tiles - 1, cz + rt); y++) {
       for (let x = Math.max(0, cx - rt); x <= Math.min(tiles - 1, cx + rt); x++) {
-        const dx = (x + 0.5) * tileM - mx, dz = (y + 0.5) * tileM - mz, d2 = dx * dx + dz * dz;
+        const dx = (x + 0.5) * tileM - mx,
+          dz = (y + 0.5) * tileM - mz,
+          d2 = dx * dx + dz * dz;
         if (d2 <= core * core) mask[y * tiles + x] = 2;
         else if (d2 <= foot * foot && mask[y * tiles + x] === 0) mask[y * tiles + x] = 1;
       }
@@ -179,12 +214,25 @@ export function grahtFootMask(trees, tiles, tileM) {
  * @param {ArrayLike<number>} trees a set's floats @param {number} i the tree's first
  */
 export function grahtBodies(trees, i) {
-  const x = trees[i], y = trees[i + 1], z = trees[i + 2], yaw = trees[i + 3], s = trees[i + 4], m = GRAHT_MEASURES[trees[i + 5]];
+  const x = trees[i],
+    y = trees[i + 1],
+    z = trees[i + 2],
+    yaw = trees[i + 3],
+    s = trees[i + 4],
+    m = GRAHT_MEASURES[trees[i + 5]];
   const out = [{ c: [x, y, z], r: m.trunk * s, h: (m.crownFrom + 4) * s, lift: 0, body: true, _mark: 0 }];
-  const c = Math.cos(yaw), sn = Math.sin(yaw);
+  const c = Math.cos(yaw),
+    sn = Math.sin(yaw);
   for (const [bx, bz, bh] of m.finBodies) {
     // in the world, turned and scaled as the mesh is (BB_VS's mesh mode: x' = c x + s z, z' = -s x + c z)
-    out.push({ c: [x + (c * bx + sn * bz) * s, y, z + (-sn * bx + c * bz) * s], r: GRAHT_FIN_BODY_R * s, h: Math.max(2, bh * s + 1), lift: 0, body: true, _mark: 0 });
+    out.push({
+      c: [x + (c * bx + sn * bz) * s, y, z + (-sn * bx + c * bz) * s],
+      r: GRAHT_FIN_BODY_R * s,
+      h: Math.max(2, bh * s + 1),
+      lift: 0,
+      body: true,
+      _mark: 0,
+    });
   }
   return out;
 }

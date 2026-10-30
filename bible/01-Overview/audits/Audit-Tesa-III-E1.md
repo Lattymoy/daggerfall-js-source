@@ -141,7 +141,7 @@ measure), so a trail through a jungle town's margin past its rect wore dirt into
 canopy's stream (GRAHT1, `03-World/Graht-Oaks.md`) on the freeware, over every town of the Bay's jungle (1,407 in its
 reach): the rect's square had let trails run on over the cleared ground of 442 of them - 10,891 corners, 3,603 of them
 corners of a town's own outline tiles - and cut 35 short among the trees of their open ground. FIXED:
-`jungleTrails.js:"if (rect && cornerCleared(rect, x, y)) continue;   // the town's own ground and its clearing (E1-5: its outline's)"`
+`jungleTrails.js:"if (rect && cornerCleared(rect, x, y))"`
 - a corner of any tile `natureCleared` keeps (the outline and NATURE_CLEARANCE round it, as its trees keep) is the town's;
 a rect without an outline its rect, as before. After: 0 and 0. Pin: `test/world/jungletrails.test.js` "a town's clearing";
 mutants `tools/mutants/jungletrails.json` E1-5 (3, all dead).

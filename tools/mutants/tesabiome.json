@@ -275,8 +275,8 @@
   {
     "name": "TESA-BIOME-31-beyond-ignored",
     "file": "src/world/jungle/jungleRegion.js",
-    "old": "farSide.set(k, v = beyond(x, y) ? 1 : 0);",
-    "new": "farSide.set(k, v = 0);",
+    "old": "        farSide.set(k, (v = beyond(x, y) ? 1 : 0));",
+    "new": "        farSide.set(k, (v = 0));",
     "tests": [
       "test/world/tesabiome_biomes.test.js"
     ]
@@ -284,8 +284,8 @@
   {
     "name": "TESA-BIOME-32-far-dist-sign",
     "file": "src/world/jungle/jungleRegion.js",
-    "old": "const v = Math.fround(me ? best : -best);",
-    "new": "const v = Math.fround(me ? -best : best);",
+    "old": "        const v = Math.fround(me ? best : -best);",
+    "new": "        const v = Math.fround(me ? -best : best);",
     "tests": [
       "test/world/tesabiome_biomes.test.js"
     ]
@@ -293,8 +293,8 @@
   {
     "name": "TESA-BIOME-33-far-fround",
     "file": "src/world/jungle/jungleRegion.js",
-    "old": "const v = Math.fround(me ? best : -best);",
-    "new": "const v = me ? best : -best;",
+    "old": "        const v = Math.fround(me ? best : -best);",
+    "new": "        const v = me ? best : -best;",
     "tests": [
       "test/world/tesabiome_biomes.test.js"
     ]

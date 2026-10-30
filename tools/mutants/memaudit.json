@@ -209,8 +209,8 @@
   {
     "name": "MA-a-jungle-trunk-born-without-its-mark",
     "file": "src/world/jungle/jungleModels.js",
-    "old": "h: m.crownFrom * scale, lift: 0, _mark: 0 },",
-    "new": "h: m.crownFrom * scale, lift: 0 },",
+    "old": "    { c: base, r: m.trunk * scale, h: m.crownFrom * scale, lift: 0, _mark: 0 }, // MEM-AUDIT: born with the cover index's mark",
+    "new": "    { c: base, r: m.trunk * scale, h: m.crownFrom * scale, lift: 0 }, // MEM-AUDIT: born with the cover index's mark",
     "tests": [
       "test/systems/memaudit.test.js"
     ]

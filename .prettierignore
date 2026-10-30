@@ -114,6 +114,8 @@
 /src/ui/wild/*/
 !/src/world/
 /src/world/*
+!/src/world/jungle/
+/src/world/jungle/*/
 !/src/world/ketch/
 /src/world/ketch/*/
 !/src/world/lands/

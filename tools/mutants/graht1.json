@@ -2,8 +2,8 @@
   {
     "name": "G-1-normal-not-unit",
     "file": "src/world/jungle/grahtOakMesh.js",
-    "old": "nx /= l; ny /= l; nz /= l;",
-    "new": "nx /= l; ny /= l;",
+    "old": "    nz /= l;\n    const m = sub(s);",
+    "new": "    const m = sub(s);",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "G-2-faces-inward",
     "file": "src/world/jungle/grahtOakMesh.js",
-    "old": "if (dot(cross(sub3(b, a), sub3(c, a)), out) >= 0) quad(s, a, b, c, d, ua, ub, uc, ud);",
-    "new": "if (dot(cross(sub3(b, a), sub3(c, a)), out) < 0) quad(s, a, b, c, d, ua, ub, uc, ud);",
+    "old": "    if (dot(cross(sub3(b, a), sub3(c, a)), out) >= 0) quad(s, a, b, c, d, ua, ub, uc, ud);",
+    "new": "    if (dot(cross(sub3(b, a), sub3(c, a)), out) < 0) quad(s, a, b, c, d, ua, ub, uc, ud);",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "G-3-masses-inward",
     "file": "src/world/jungle/grahtOakMesh.js",
-    "old": "return dot(cr, A) >= 0 ? [a, b, c] : [a, c, b];",
-    "new": "return dot(cr, A) >= 0 ? [a, c, b] : [a, b, c];",
+    "old": "    return dot(cr, A) >= 0 ? [a, b, c] : [a, c, b];",
+    "new": "    return dot(cr, A) >= 0 ? [a, c, b] : [a, b, c];",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "G-4-no-flare",
     "file": "src/world/jungle/grahtOakMesh.js",
-    "old": "+ t.flare * Math.exp(-yy / t.flareH);",
-    "new": "+ t.flare * Math.exp(-yy / t.flareH) * 0;",
+    "old": "  return t.rCrown + (t.r0 - t.rCrown) * Math.pow(1 - yy / t.crownFrom, 1.4) + t.flare * Math.exp(-yy / t.flareH);",
+    "new": "  return t.rCrown + (t.r0 - t.rCrown) * Math.pow(1 - yy / t.crownFrom, 1.4) + t.flare * Math.exp(-yy / t.flareH) * 0;",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "G-5-fin-profile",
     "file": "src/world/jungle/grahtOakMesh.js",
-    "old": "const out = r0 + (f.reach - r0) * Math.pow(1 - u, 1.7);",
-    "new": "const out = r0 + (f.reach - r0) * Math.pow(1 - u, 1.2);",
+    "old": "  const out = r0 + (f.reach - r0) * Math.pow(1 - u, 1.7);",
+    "new": "  const out = r0 + (f.reach - r0) * Math.pow(1 - u, 1.2);",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "G-6-top-flattened",
     "file": "src/world/jungle/grahtOakMesh.js",
-    "old": "const y = d[1] < 0 ? d[1] * GRAHT_SHAPE.blob.under : d[1];",
-    "new": "const y = d[1] > 0 ? d[1] * GRAHT_SHAPE.blob.under : d[1];",
+    "old": "  const y = d[1] < 0 ? d[1] * GRAHT_SHAPE.blob.under : d[1];",
+    "new": "  const y = d[1] > 0 ? d[1] * GRAHT_SHAPE.blob.under : d[1];",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "G-7-far-forks",
     "file": "src/world/jungle/grahtOakMesh.js",
-    "old": "if (D.forks) for (const f of L.forks)",
-    "new": "if (true) for (const f of L.forks)",
+    "old": "    if (D.forks)\n      for (const f of L.forks) tube(m, BARK, f.path, f.r0, f.r1, D.limbSides, Math.max(1, D.limbSegments >> 1));",
+    "new": "    if (true) for (const f of L.forks) tube(m, BARK, f.path, f.r0, f.r1, D.limbSides, Math.max(1, D.limbSegments >> 1));",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "G-8-no-cards",
     "file": "src/world/jungle/grahtOakMesh.js",
-    "old": "if (D.cards) {",
-    "new": "if (false) {",
+    "old": "    if (D.cards) {",
+    "new": "    if (false) {",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "G-9-far-unmerged",
     "file": "src/world/jungle/grahtOakMesh.js",
-    "old": "const blobs = D.merged ? mergedBlobs(sk) : sk.blobs;",
-    "new": "const blobs = sk.blobs;",
+    "old": "  const blobs = D.merged ? mergedBlobs(sk) : sk.blobs;",
+    "new": "  const blobs = sk.blobs;",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "G-10-trunk-sides",
     "file": "src/world/jungle/grahtOakMesh.js",
-    "old": "trunkSides: 16, limbSides: 6",
-    "new": "trunkSides: 15, limbSides: 6",
+    "old": "    trunkSides: 16,",
+    "new": "    trunkSides: 15,",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "G-11-jitter",
     "file": "src/world/jungle/grahtOakMesh.js",
-    "old": "under: 0.62, jitter: 0.14 }",
-    "new": "under: 0.62, jitter: 0.4 }",
+    "old": "  blob: Object.freeze({ r: Object.freeze([16, 24]), squash: Object.freeze([0.42, 0.52]), under: 0.62, jitter: 0.14 }),",
+    "new": "  blob: Object.freeze({ r: Object.freeze([16, 24]), squash: Object.freeze([0.42, 0.52]), under: 0.62, jitter: 0.4 }),",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "G-12-fewer-limbs",
     "file": "src/world/jungle/grahtOakMesh.js",
-    "old": "count: Object.freeze([7, 8]), from",
-    "new": "count: Object.freeze([5, 6]), from",
+    "old": "    count: Object.freeze([7, 8]),",
+    "new": "    count: Object.freeze([5, 6]),",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "G-13-small-masses",
     "file": "src/world/jungle/grahtOakMesh.js",
-    "old": "r: Object.freeze([16, 24])",
-    "new": "r: Object.freeze([10, 15])",
+    "old": "  blob: Object.freeze({ r: Object.freeze([16, 24]), squash: Object.freeze([0.42, 0.52]), under: 0.62, jitter: 0.14 }),",
+    "new": "  blob: Object.freeze({ r: Object.freeze([10, 15]), squash: Object.freeze([0.42, 0.52]), under: 0.62, jitter: 0.14 }),",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "G-21-inset",
     "file": "src/world/jungle/grahtOaks.js",
-    "old": "inset: Object.freeze([0.3, 0.7]),",
-    "new": "inset: Object.freeze([0.2, 0.8]),",
+    "old": "  inset: Object.freeze([0.3, 0.7]),",
+    "new": "  inset: Object.freeze([0.2, 0.8]),",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "G-23-share-unread",
     "file": "src/world/jungle/grahtOaks.js",
-    "old": "if (draw(wx, wz, S + 2) >= GRAHT.occupancy * share(mx, mz)) continue;",
-    "new": "if (draw(wx, wz, S + 2) >= GRAHT.occupancy) continue;",
+    "old": "      if (draw(wx, wz, S + 2) >= GRAHT.occupancy * share(mx, mz)) continue;",
+    "new": "      if (draw(wx, wz, S + 2) >= GRAHT.occupancy) continue;",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "G-24-ground-unasked",
     "file": "src/world/jungle/grahtOaks.js",
-    "old": "if (!growsOn(y * tiles + x)) { ok = false; break; }",
-    "new": "if (false) { ok = false; break; }",
+    "old": "          if (!growsOn(y * tiles + x)) {",
+    "new": "          if (false) {",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "G-25-foot-halved",
     "file": "src/world/jungle/grahtOaks.js",
-    "old": "if (dx * dx + dz * dz > reach * reach) continue;",
-    "new": "if (dx * dx + dz * dz > reach * reach * 0.25) continue;",
+    "old": "          if (dx * dx + dz * dz > reach * reach) continue;",
+    "new": "          if (dx * dx + dz * dz > reach * reach * 0.25) continue;",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "G-26-bury-unasked",
     "file": "src/world/jungle/grahtOaks.js",
-    "old": "hi - lo > GRAHT.bury * scale",
-    "new": "hi - lo > GRAHT.bury * scale * 9",
+    "old": "      if (!ok || hi - lo > GRAHT.bury * scale || !trailOk(mx, mz, foot)) continue;",
+    "new": "      if (!ok || hi - lo > GRAHT.bury * scale * 9 || !trailOk(mx, mz, foot)) continue;",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "G-27-trails-unasked",
     "file": "src/world/jungle/grahtOaks.js",
-    "old": "|| !trailOk(mx, mz, foot)) continue;",
-    "new": ") continue;",
+    "old": "      if (!ok || hi - lo > GRAHT.bury * scale || !trailOk(mx, mz, foot)) continue;",
+    "new": "      if (!ok || hi - lo > GRAHT.bury * scale) continue;",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "G-28-raised",
     "file": "src/world/jungle/grahtOaks.js",
-    "old": "- GRAHT.sink, mz, draw(wx, wz, S + 5)",
-    "new": "+ GRAHT.sink, mz, draw(wx, wz, S + 5)",
+    "old": "      out.push(mx, Math.min(lo, ground(mx, mz)) - GRAHT.sink, mz, draw(wx, wz, S + 5) * Math.PI * 2, scale, variant);",
+    "new": "      out.push(mx, Math.min(lo, ground(mx, mz)) + GRAHT.sink, mz, draw(wx, wz, S + 5) * Math.PI * 2, scale, variant);",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "G-29-steep-unasked",
     "file": "src/world/jungle/grahtOaks.js",
-    "old": "if (steepAt(ti0)) continue;",
-    "new": "if (false) continue;",
+    "old": "      if (steepAt(ti0)) continue;",
+    "new": "      if (false) continue;",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "G-30-uphill",
     "file": "src/world/jungle/grahtOaks.js",
-    "old": "Math.min(lo, ground(mx, mz))",
-    "new": "ground(mx, mz)",
+    "old": "      out.push(mx, Math.min(lo, ground(mx, mz)) - GRAHT.sink, mz, draw(wx, wz, S + 5) * Math.PI * 2, scale, variant);",
+    "new": "      out.push(mx, ground(mx, mz) - GRAHT.sink, mz, draw(wx, wz, S + 5) * Math.PI * 2, scale, variant);",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "G-31-no-trunk-mask",
     "file": "src/world/jungle/grahtOaks.js",
-    "old": "if (d2 <= core * core) mask[y * tiles + x] = 2;",
-    "new": "if (d2 <= core * core) mask[y * tiles + x] = 1;",
+    "old": "        if (d2 <= core * core) mask[y * tiles + x] = 2;",
+    "new": "        if (d2 <= core * core) mask[y * tiles + x] = 1;",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "G-32-no-foot-mask",
     "file": "src/world/jungle/grahtOaks.js",
-    "old": "else if (d2 <= foot * foot && mask[y * tiles + x] === 0) mask[y * tiles + x] = 1;",
-    "new": "else if (false) mask[y * tiles + x] = 1;",
+    "old": "        else if (d2 <= foot * foot && mask[y * tiles + x] === 0) mask[y * tiles + x] = 1;",
+    "new": "        else if (false) mask[y * tiles + x] = 1;",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "G-33-foot-mask-halved",
     "file": "src/world/jungle/grahtOaks.js",
-    "old": "const foot = m.foot * s + tileM * 0.5, core",
-    "new": "const foot = m.foot * s * 0.5 + tileM * 0.5, core",
+    "old": "    const foot = m.foot * s + tileM * 0.5,",
+    "new": "    const foot = m.foot * s * 0.5 + tileM * 0.5,",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "G-34-trunk-body-flared",
     "file": "src/world/jungle/grahtOaks.js",
-    "old": "r: m.trunk * s, h: (m.crownFrom + 4) * s",
-    "new": "r: m.ground * s, h: (m.crownFrom + 4) * s",
+    "old": "  const out = [{ c: [x, y, z], r: m.trunk * s, h: (m.crownFrom + 4) * s, lift: 0, body: true, _mark: 0 }];",
+    "new": "  const out = [{ c: [x, y, z], r: m.ground * s, h: (m.crownFrom + 4) * s, lift: 0, body: true, _mark: 0 }];",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "G-35-bodies-unturned",
     "file": "src/world/jungle/grahtOaks.js",
-    "old": "c: [x + (c * bx + sn * bz) * s, y, z + (-sn * bx + c * bz) * s]",
-    "new": "c: [x + (c * bx - sn * bz) * s, y, z + (sn * bx + c * bz) * s]",
+    "old": "      c: [x + (c * bx + sn * bz) * s, y, z + (-sn * bx + c * bz) * s],",
+    "new": "      c: [x + (c * bx - sn * bz) * s, y, z + (sn * bx + c * bz) * s],",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "G-36-fin-bodies-short",
     "file": "src/world/jungle/grahtOaks.js",
-    "old": "d < g.out - 1; d += GRAHT_FIN_STEP",
-    "new": "d < g.out - 6; d += GRAHT_FIN_STEP",
+    "old": "  for (let d = grahtTrunkRadius(t, 0) + GRAHT_FIN_STEP * 0.5; d < g.out - 1; d += GRAHT_FIN_STEP) {",
+    "new": "  for (let d = grahtTrunkRadius(t, 0) + GRAHT_FIN_STEP * 0.5; d < g.out - 6; d += GRAHT_FIN_STEP) {",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "G-38-lod-edge",
     "file": "src/world/jungle/grahtOaks.js",
-    "old": "export const grahtLodOf = (d) => (d < GRAHT.lod[0] ? 0",
-    "new": "export const grahtLodOf = (d) => (d <= GRAHT.lod[0] ? 0",
+    "old": "export const grahtLodOf = (d) => (d < GRAHT.lod[0] ? 0 : d < GRAHT.lod[1] ? 1 : 2);",
+    "new": "export const grahtLodOf = (d) => (d <= GRAHT.lod[0] ? 0 : d < GRAHT.lod[1] ? 1 : 2);",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
@@ -632,8 +632,8 @@
   {
     "name": "G-101-leaves-unheld",
     "file": "src/world/jungle/jungleCanopy.js",
-    "old": "  out[3] = clamp01(w);\n  return out;\n}\n\n/** The sky the water",
-    "new": "  out[3] = w;\n  return out;\n}\n\n/** The sky the water",
+    "old": "  out[3] = clamp01(w);",
+    "new": "  out[3] = w;",
     "tests": [
       "test/world/valenwood_canopy.test.js"
     ]
@@ -650,8 +650,8 @@
   {
     "name": "G-103-water-edges-land",
     "file": "src/world/jungle/grahtOaks.js",
-    "old": "createLookupTable().subarray(16)",
-    "new": "createLookupTable().subarray(0)",
+    "old": "  [...new Set(Array.from(createLookupTable().subarray(16), (v) => v & 0x3f))].sort((a, b) => a - b),",
+    "new": "  [...new Set(Array.from(createLookupTable().subarray(0), (v) => v & 0x3f))].sort((a, b) => a - b),",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]
