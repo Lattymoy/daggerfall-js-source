@@ -31,7 +31,8 @@ export const SD_TITLE_CSS = `
 @media (max-height: 480px) { body:has(.sd-title-card.on:not([style*="display: none"])) .wb-boss-foot { display: none; } }
 `;
 
-let root = null, parts = null;
+let root = null,
+  parts = null;
 const SHOWN = () => ({ vis: '', key: '', sub: null, alpha: -1, cls: '' });
 let shown = SHOWN();
 
@@ -43,10 +44,17 @@ function build(doc) {
     (doc.head ?? doc.body)?.append(st);
     if (doc.head) injectEnhancedFonts(doc);
   }
-  const part = (cls) => { const n = doc.createElement('div'); n.className = cls; return n; };
+  const part = (cls) => {
+    const n = doc.createElement('div');
+    n.className = cls;
+    return n;
+  };
   root = part('sd-title-card');
-  root.setAttribute?.('aria-hidden', 'true');   // the Hour's voice says it in words
-  const kicker = part('sd-title-kicker'), main = part('sd-title-main'), rule = part('sd-title-rule'), sub = part('sd-title-sub');
+  root.setAttribute?.('aria-hidden', 'true'); // the Hour's voice says it in words
+  const kicker = part('sd-title-kicker'),
+    main = part('sd-title-main'),
+    rule = part('sd-title-rule'),
+    sub = part('sd-title-sub');
   root.append(kicker, main, rule, sub);
   (doc.body ?? doc.documentElement)?.append(root);
   parts = { kicker, main, rule, sub };
@@ -60,7 +68,10 @@ export function drawSdTitleCard(model, { hidden = false, doc = globalThis.docume
     build(doc);
   }
   const vis = want ? 'on' : 'off';
-  if (vis !== shown.vis) { shown.vis = vis; root.style.display = want ? '' : 'none'; }
+  if (vis !== shown.vis) {
+    shown.vis = vis;
+    root.style.display = want ? '' : 'none';
+  }
   if (!want || !model) return;
   if (model.key !== shown.key) {
     shown.key = model.key;
@@ -68,15 +79,25 @@ export function drawSdTitleCard(model, { hidden = false, doc = globalThis.docume
     parts.main.textContent = model.main;
     parts.main.style.color = model.color ?? '';
   }
-  if (model.sub !== shown.sub) { shown.sub = model.sub; parts.sub.textContent = model.sub; }
+  if (model.sub !== shown.sub) {
+    shown.sub = model.sub;
+    parts.sub.textContent = model.sub;
+  }
   const cls = `sd-title-card on${model.fresh ? ' in' : ''}`;
-  if (cls !== shown.cls) { shown.cls = cls; root.className = cls; }
-  if (model.alpha !== shown.alpha) { shown.alpha = model.alpha; root.style.opacity = String(model.alpha); }
+  if (cls !== shown.cls) {
+    shown.cls = cls;
+    root.className = cls;
+  }
+  if (model.alpha !== shown.alpha) {
+    shown.alpha = model.alpha;
+    root.style.opacity = String(model.alpha);
+  }
 }
 
 /** The page is going (a test's reset): the node leaves with it. */
 export function destroySdTitleCard() {
   root?.remove?.();
-  root = null; parts = null;
+  root = null;
+  parts = null;
   shown = SHOWN();
 }

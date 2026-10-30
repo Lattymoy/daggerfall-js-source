@@ -47,8 +47,8 @@
   {
     "name": "SD20E-T3-the-card-unmodelled",
     "file": "src/ui/superDungeon/sdMarksView.js",
-    "old": "alpha: Math.round(alpha * 100) / 100, look: 'brass',",
-    "new": "alpha: Math.round(alpha * 100) / 100,",
+    "old": "    alpha: Math.round(alpha * 100) / 100,\n    look: 'brass', // AUDIT SD III (T3): in the Hour's brass, never Dagon's red",
+    "new": "    alpha: Math.round(alpha * 100) / 100, // AUDIT SD III (T3): in the Hour's brass, never Dagon's red",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SD20E-T2-the-card-on-the-chips",
     "file": "src/ui/superDungeon/sdTitleCard.js",
-    "old": ".sd-title-card { top: 40%; }",
-    "new": ".sd-title-card { top: 30%; }",
+    "old": "@media (max-width: 640px) { .sd-title-card { top: 40%; } .sd-title-main { font-size: 28px; } .sd-title-sub { font-size: 15px; } .sd-title-kicker { font-size: 12px; letter-spacing: 0.22em; } }",
+    "new": "@media (max-width: 640px) { .sd-title-card { top: 30%; } .sd-title-main { font-size: 28px; } .sd-title-sub { font-size: 15px; } .sd-title-kicker { font-size: 12px; letter-spacing: 0.22em; } }",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SD20E-T2-the-sideways-card",
     "file": "src/ui/superDungeon/sdTitleCard.js",
-    "old": ".sd-title-card { top: 46%; }",
-    "new": ".sd-title-card { top: 48%; }",
+    "old": "@media (max-height: 480px) { .sd-title-card { top: 46%; } .sd-title-main { font-size: 26px; } .sd-title-kicker { font-size: 12px; } }",
+    "new": "@media (max-height: 480px) { .sd-title-card { top: 48%; } .sd-title-main { font-size: 26px; } .sd-title-kicker { font-size: 12px; } }",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SD20E-T2-the-foot-stays",
     "file": "src/ui/superDungeon/sdTitleCard.js",
-    "old": "@media (max-height: 480px) { body:has(.sd-title-card.on:not([style*=\"display: none\"])) .wb-boss-foot { display: none; } }\n",
-    "new": "",
+    "old": "@media (max-height: 480px) { body:has(.sd-title-card.on:not([style*=\"display: none\"])) .wb-boss-foot { display: none; } }\n`;",
+    "new": "`;",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SD20E-T5-the-count-in-the-head",
     "file": "src/ui/superDungeon/sdRemnantBar.js",
-    "old": "rises: (e, secs) => `${e === 0 ? 'Gold' : 'Silver'} rises - ${secs}s`,",
-    "new": "rises: (e, secs) => `${e === 0 ? 'Gold' : 'Silver'} rises in ${secs}s`,",
+    "old": "  rises: (e, secs) => `${e === 0 ? 'Gold' : 'Silver'} rises - ${secs}s`, // AUDIT SD II (L6 F6): the pair's window; AUDIT SD III (T5): its count after the dash, as every countdown on the bar - \"rises in 12s\" came in afresh each second",
+    "new": "  rises: (e, secs) => `${e === 0 ? 'Gold' : 'Silver'} rises in ${secs}s`, // AUDIT SD II (L6 F6): the pair's window; AUDIT SD III (T5): its count after the dash, as every countdown on the bar - \"rises in 12s\" came in afresh each second",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SD20E-T10-the-gates-word",
     "file": "src/ui/superDungeon/sdRemnantBar.js",
-    "old": "fallen: !!s.fell, fallenText: SD_BAR_TEXT.undone, callout,",
-    "new": "fallen: !!s.fell, callout,",
+    "old": "    fallenText: SD_BAR_TEXT.undone,\n    callout,",
+    "new": "    callout,",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "SD20E-T14-the-tip-another-form",
     "file": "src/ui/superDungeon/sdMarksView.js",
-    "old": "blades: 'Fell Gold and Silver within 10 seconds of each other.',",
-    "new": "blades: 'Strike down both Echoes together.',",
+    "old": "  blades: 'Fell Gold and Silver within 10 seconds of each other.', // AUDIT SD III (T14): the Dragon Break's window in its one form",
+    "new": "  blades: 'Strike down both Echoes together.', // AUDIT SD III (T14): the Dragon Break's window in its one form",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]

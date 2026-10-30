@@ -319,8 +319,8 @@
   {
     "name": "SD18A-rises-again-at-fifteen",
     "file": "src/ui/superDungeon/sdRemnantBar.js",
-    "old": "(s.ec[fallen].dn + sdProfileOf(s).pairMs - now)",
-    "new": "(s.ec[fallen].dn + 15_000 - now)",
+    "old": "        text: SD_BAR_TEXT.rises(fallen, Math.max(0, Math.ceil((s.ec[fallen].dn + sdProfileOf(s).pairMs - now) / 1000))),",
+    "new": "        text: SD_BAR_TEXT.rises(fallen, Math.max(0, Math.ceil((s.ec[fallen].dn + 15_000 - now) / 1000))),",
     "tests": [
       "test/net/superDungeon/sd18a_marks.test.js"
     ]

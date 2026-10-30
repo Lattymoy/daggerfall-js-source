@@ -76,8 +76,8 @@
   {
     "name": "SD11E-F3-the-bar-ended-at-the-word",
     "file": "src/ui/superDungeon/sdRemnantBar.js",
-    "old": "wrath: s.fell ? null : sdHourOver(s, now) ? SD_BAR_TEXT.ended",
-    "new": "wrath: s.fell ? null : s.ended ? SD_BAR_TEXT.ended",
+    "old": "      : sdHourOver(s, now)",
+    "new": "      : s.ended",
     "tests": [
       "test/net/superDungeon/sd11e_laws.test.js"
     ]

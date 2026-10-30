@@ -292,8 +292,8 @@
   {
     "name": "SD26-T9-the-lion-tip-dashed",
     "file": "src/ui/superDungeon/sdMarksView.js",
-    "old": "  daggerfall: 'Its Stomp\\'s ring reaches the rim. Jump it.',",
-    "new": "  daggerfall: 'Jump its Stomp\\'s ring - it reaches the rim.',",
+    "old": "  daggerfall: \"Its Stomp's ring reaches the rim. Jump it.\", // AUDIT SD IV (T9): WB13b's words - no dash aside, no \"X, not Y\"",
+    "new": "  daggerfall: \"Jump its Stomp's ring - it reaches the rim.\", // AUDIT SD IV (T9): WB13b's words - no dash aside, no \"X, not Y\"",
     "tests": [
       "test/ui/gate/sd26_text.test.js",
       "test/scenes/superDungeon/sd11d_words.test.js"

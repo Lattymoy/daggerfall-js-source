@@ -236,8 +236,8 @@
   {
     "name": "SD19-card-gate-fades",
     "file": "src/ui/superDungeon/sdMarksView.js",
-    "old": "  if (mode !== 'gate') {\n",
-    "new": "  if (true) {\n",
+    "old": "  if (mode !== 'gate') {",
+    "new": "  if (true) {",
     "tests": [
       "test/systems/superDungeon/sd19_presence.test.js"
     ]

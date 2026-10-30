@@ -192,8 +192,8 @@
   {
     "name": "SD11D-the-pulse-first-again",
     "file": "src/ui/superDungeon/sdRemnantBar.js",
-    "old": "    if (asleep) callout = { text: SD_BAR_TEXT.stirs(",
-    "new": "    if (clk) callout = callOf(clk, s.ph, SD_BODY.hour, now);\n    else if (asleep) callout = { text: SD_BAR_TEXT.stirs(",
+    "old": "    if (asleep)",
+    "new": "    if (clk) callout = callOf(clk, s.ph, SD_BODY.hour, now);\n    else if (asleep)",
     "tests": [
       "test/scenes/superDungeon/sd11d_words.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "SD11D-a-landed-blow-over-the-pulse",
     "file": "src/ui/superDungeon/sdRemnantBar.js",
-    "old": "} else if (rem && s.ph !== 2 && now < rem.at) callout = callOf(rem, s.ph, SD_BODY.remnant, now);",
-    "new": "} else if (rem && s.ph !== 2) callout = callOf(rem, s.ph, SD_BODY.remnant, now);",
+    "old": "    } else if (rem && s.ph !== 2 && now < rem.at) callout = callOf(rem, s.ph, SD_BODY.remnant, now);",
+    "new": "    } else if (rem && s.ph !== 2) callout = callOf(rem, s.ph, SD_BODY.remnant, now);",
     "tests": [
       "test/scenes/superDungeon/sd11d_words.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "SD11D-the-stun-over-the-pulse",
     "file": "src/ui/superDungeon/sdRemnantBar.js",
-    "old": "    else if (clk) callout = callOf(clk, s.ph, SD_BODY.hour, now);\n    else if (stunned)",
-    "new": "    else if (stunned && !clk) callout = { text: '', color: '', t: null, dagon: false, move: false };\n    else if (clk) callout = callOf(clk, s.ph, SD_BODY.hour, now);\n    else if (stunned)",
+    "old": "    else if (clk) callout = callOf(clk, s.ph, SD_BODY.hour, now);",
+    "new": "    else if (stunned && !clk) callout = { text: '', color: '', t: null, dagon: false, move: false };\n    else if (clk) callout = callOf(clk, s.ph, SD_BODY.hour, now);",
     "tests": [
       "test/scenes/superDungeon/sd11d_words.test.js"
     ]
@@ -219,8 +219,8 @@
   {
     "name": "SD11D-no-echo-clock",
     "file": "src/ui/superDungeon/sdRemnantBar.js",
-    "old": "    else if (fallen >= 0) callout = ",
-    "new": "    else if (false) callout = ",
+    "old": "    else if (fallen >= 0)",
+    "new": "    else if (false)",
     "tests": [
       "test/scenes/superDungeon/sd11d_words.test.js"
     ]
@@ -228,8 +228,8 @@
   {
     "name": "SD11D-no-rise-pulse",
     "file": "src/ui/superDungeon/sdRemnantBar.js",
-    "old": "    hostNear: !!ec && ec.some(",
-    "new": "    hostNear: false && ec.some(",
+    "old": "      !!ec &&",
+    "new": "      false &&",
     "tests": [
       "test/scenes/superDungeon/sd11d_words.test.js"
     ]
@@ -237,8 +237,8 @@
   {
     "name": "SD11D-the-chip-says-fallen",
     "file": "src/ui/superDungeon/sdRemnantBar.js",
-    "old": "const chip = (E) => { const r = riseIn(E); return r === null ? SD_BAR_TEXT.echoLeft(E.h, E.m) : SD_BAR_TEXT.risesIn(Math.ceil(r / 1000)); };",
-    "new": "const chip = (E) => SD_BAR_TEXT.echoLeft(E.h, E.m);",
+    "old": "  const chip = (E) => {\n    const r = riseIn(E);\n    return r === null ? SD_BAR_TEXT.echoLeft(E.h, E.m) : SD_BAR_TEXT.risesIn(Math.ceil(r / 1000));\n  };",
+    "new": "  const chip = (E) => SD_BAR_TEXT.echoLeft(E.h, E.m);",
     "tests": [
       "test/scenes/superDungeon/sd11d_words.test.js"
     ]
@@ -246,8 +246,8 @@
   {
     "name": "SD11D-the-return-outside-time",
     "file": "src/ui/superDungeon/sdRemnantBar.js",
-    "old": "    else if (outside) callout = { text: SD_BAR_TEXT.returns(Math.max(0, Math.ceil((s.ou - now) / 1000))),",
-    "new": "    else if (outside) callout = { text: SD_BAR_TEXT.outside,",
+    "old": "      callout = {\n        text: SD_BAR_TEXT.returns(Math.max(0, Math.ceil((s.ou - now) / 1000))),\n        color: SD_BAR_CSS.ward,\n        t: null,\n        dagon: false,\n        move: false,\n      };",
+    "new": "      callout = { text: SD_BAR_TEXT.outside, color: SD_BAR_CSS.ward, t: null, dagon: false, move: false };",
     "tests": [
       "test/scenes/superDungeon/sd11d_words.test.js"
     ]
