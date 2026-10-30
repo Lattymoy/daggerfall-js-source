@@ -1905,7 +1905,7 @@ export class OnlineSession {
     if (!validVitIn(report) || !this.vitOk || this.status !== 'open' || !this._ws) return false;
     const gate = vitGate(this._vitBucket, this._now());
     if (!gate.pass) return false;
-    try { this._ws.send(JSON.stringify({ t: 'vit', n: report.n, s: report.s, seen: report.seen, ...(report.x !== undefined ? { x: report.x } : {}), ...(report.r !== undefined ? { r: report.r } : {}), ...(report.g !== undefined ? { g: report.g } : {}), ...(report.w !== undefined ? { w: report.w } : {}), ...(report.sh !== undefined ? { sh: report.sh } : {}) })); } catch { return false; }   // PVP-HEALTH: `x`, `r`; PVP-GUARD: `g`; PVP-WARD: `w`; PVP-SHIELD: `sh`
+    try { this._ws.send(JSON.stringify({ t: 'vit', n: report.n, s: report.s, seen: report.seen, ...(report.x !== undefined ? { x: report.x } : {}), ...(report.r !== undefined ? { r: report.r } : {}), ...(report.g !== undefined ? { g: report.g } : {}), ...(report.w !== undefined ? { w: report.w } : {}), ...(report.sh !== undefined ? { sh: report.sh } : {}), ...(report.m !== undefined ? { m: report.m } : {}), ...(report.f !== undefined ? { f: report.f } : {}), ...(report.u !== undefined ? { u: report.u } : {}) })); } catch { return false; }   // PVP-HEALTH: `x`, `r`; PVP-GUARD: `g`; PVP-WARD: `w`; PVP-SHIELD: `sh`; PVP-VITALS: `m`, `f`, `u`
     this._vitBucket = gate.bucket; this.stats.sent++;
     return true;
   }

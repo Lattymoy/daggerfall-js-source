@@ -57,8 +57,12 @@ const { parseReleaseTag, parseVersion } = require('./updateCheck.cjs');
  *  failure direction: silence) - and a late answer still lands (reduce). */
 const CHECK_TIMEOUT_MS = 8000;
 /** How often a running copy asks again - a long session, or a launcher
- *  left open, hears of a release within the hour. */
-const RECHECK_MS = 60 * 60 * 1000;
+ *  left open, hears of a release within the hour. UPDATE-RESTART
+ *  (2026-10-30): five minutes, was an hour - the game now restarts every
+ *  running copy onto a release it has (app/main.cjs restartForUpdate),
+ *  and an hour behind the website is an hour on the old rules. One
+ *  releases/latest read each: twelve an hour, under GitHub's sixty. */
+const RECHECK_MS = 5 * 60 * 1000;
 /** The most releases the news lists. */
 const NEWS_MAX = 8;
 /** How long "Installing" stays on screen before the app closes for the

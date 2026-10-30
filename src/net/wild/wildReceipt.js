@@ -183,7 +183,7 @@ export const SEA_WRECK_V = 'n1';
 export const SEA_WRECK_TTL_S = 3600;
 /** How long the wrecked captain's own tab has to bring it before the killer may bring it for them (his seize clears her
  *  record's lease, and her tab goes to the title), s. AUDIT SEA VENTURES E3: five minutes - her carry waits for a
- *  checkpoint that may go (the dead wait two minutes at sea; a duel's checkpoints are refused), where thirty seconds sent
+ *  checkpoint that may go (the dead rise after ten seconds at sea, DEATH-10; a duel's checkpoints are refused), where thirty seconds sent
  *  an honest captain to the title. Her killer's prize waits on her carry alone: the service answers it as it stands. */
 export const SEA_WRECK_GRACE_S = 300;
 /** A boat's uid as a wreck names it (Come Sail Away's `UID`: a positive whole number). */

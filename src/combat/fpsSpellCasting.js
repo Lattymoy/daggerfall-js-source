@@ -92,6 +92,10 @@ export const castReleaseS = (rate = 1) => (RELEASE_FRAME * CAST_FRAME_PERIOD) / 
 /** frameIndices (:50) - "Animation starts and ends with frame 0". */
 export const FRAME_INDICES = Object.freeze([0, 1, 2, 3, 4, 5, 0]);
 
+/** MW-SHOT-PACE: when the classic hands come down - past their last frame at the cast's rate (0.28 s at rate 1), seconds
+ *  from the cast. A paced Morrowind cast ends its tail here (combat/fpArm.js castSpell's `endIn`). */
+export const castEndS = (rate = 1) => (FRAME_INDICES.length * CAST_FRAME_PERIOD) / validCastRate(rate);
+
 /**
  * The classic element index a spell record carries - the SAME
  * numbering systems/spellcast.js ELEMENTS uses and missileArchive

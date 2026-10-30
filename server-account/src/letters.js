@@ -122,7 +122,7 @@ export async function inboxOf({ db, nowS, primary = db }, reader, env) {   // SC
     for (const p of await withIliacHonoursAll({ db: primary }, await withArenaHonoursAll({ db: primary }, found, nowS), nowS)) rows.set(p.id, p);   // AUDIT PRE-MERGE 1003 S8: the Grand Champion's title, the #1's laurel
     for (const p of await withEgHonoursAll({ db: primary }, [...rows.values()], nowS)) rows.set(p.id, p);   // EG-E2: and Spire Champion (egHonours.js)
     for (const p of await withGambitHonoursAll({ db: primary }, [...rows.values()], nowS)) rows.set(p.id, p);   // KG6: and The King's Gambit's GRANDMASTER
-    for (const p of await withMasteryMarksAll({ db }, [...rows.values()])) rows.set(p.id, p);   // AUDIT HORIZONTAL F5: a worn Mark of Mastery (reads alone)
+    for (const p of await withMasteryMarksAll({ db }, [...rows.values()], env)) rows.set(p.id, p);   // AUDIT HORIZONTAL F5: a worn Mark of Mastery (reads alone)
   }
   const letters = results.map((l) => ({
     id: l.id, from: l.from_name, ...badgeOf(rows.get(l.from_id), env, nowS),
@@ -145,7 +145,7 @@ export async function readLetter({ db, nowS }, reader, env, id) {
   const row = await withIliacHonours({ db }, await withArenaHonours({ db }, await db.prepare('SELECT * FROM players WHERE id = ?').bind(l.from_id).first(), nowS), nowS);   // AUDIT PRE-MERGE 1003 S8; CARDS10: and Iliac Hand's
   return {
     letter: {
-      id: l.id, from: l.from_name, ...badgeOf(await withMasteryMarks({ db }, await withGambitHonours({ db }, await withEgHonours({ db }, row, nowS), nowS)), env, nowS), subject: l.subject, body: l.body,   // EG-E2: and Spire Champion; KG6: the GRANDMASTER's too; AUDIT HORIZONTAL F5: and a Mark of Mastery
+      id: l.id, from: l.from_name, ...badgeOf(await withMasteryMarks({ db, env }, await withGambitHonours({ db }, await withEgHonours({ db }, row, nowS), nowS)), env, nowS), subject: l.subject, body: l.body,   // EG-E2: and Spire Champion; KG6: the GRANDMASTER's too; AUDIT HORIZONTAL F5: and a Mark of Mastery
       sentAt: l.sent_at, readAt: l.read_at ?? nowS,
     },
   };

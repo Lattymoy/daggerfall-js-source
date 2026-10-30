@@ -38,7 +38,7 @@ import { MINUTES_PER_DAY } from '../../src/systems/gameDate.js';
 import { startPoison, POISONS } from '../../src/systems/poisons.js';
 import { respawnHealth } from '../../src/systems/deathRespawn.js';
 import { saveSlot, exitAutosaveNames, QUICK_SAVE_NAME } from '../../src/systems/save/saveSlots.js';
-import { DeathScreen, ONLINE_RESPAWN_SECONDS } from '../../src/ui/deathScreen.js';
+import { DeathScreen, DEATH_AUTO_RISE_S } from '../../src/ui/deathScreen.js';
 import { createTownWatch, isTownThreat, TOWN_WATCH_STAND_DOWN_SECONDS } from '../../src/systems/town/townWatch.js';
 import { createCityGuards, GUARD_MOBILE_TYPE } from '../../src/scenes/cityGuards.js';
 import { createExteriorFoes } from '../../src/scenes/exteriorFoes.js';
@@ -212,7 +212,7 @@ test('DISC19-C: an online page\'s death screen counts its respawn in the hint\'s
   withSearch('?online=1&load=1', () => {
     const ds = new DeathScreen({ eyeHeight: 1.6, capsuleHeight: 1.8 });
     assert.equal(ds.online, true);
-    assert.equal(ds.respawnIn, ONLINE_RESPAWN_SECONDS, 'RISING IN, counted from the whole wait');
+    assert.equal(ds.respawnIn, DEATH_AUTO_RISE_S, 'RISING IN, counted from the whole wait');   // PIN MOVED (DEATH-10)
   });
   withSearch('?load=1', () => {
     const ds = new DeathScreen({ eyeHeight: 1.6, capsuleHeight: 1.8 });

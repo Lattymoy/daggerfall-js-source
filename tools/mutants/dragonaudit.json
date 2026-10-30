@@ -92,12 +92,12 @@
   {
     "name": "AUDIT-DRAGON-the-gate-its-own-number",
     "file": "src/net/wire.js",
-    "old": "export const DRAGON_RELAY_MIN = 293;",
-    "new": "export const DRAGON_RELAY_MIN = 292;",
+    "old": "export const DRAGON_RELAY_MIN = 294;",
+    "new": "export const DRAGON_RELAY_MIN = 293;",
     "tests": [
       "test/net/dragon/dragon2_law.test.js"
     ],
-    "note": "Re-aimed by content (THE MERGE OF MAIN AT c9169e3fb): 293, past DELVE II's world292. Re-aimed by content (DRAGON-HIDDEN): every roll takes the watch's omen, the relay's seed."
+    "note": "Re-aimed by content (THE MERGE OF MAIN AT 8cd7cd52d): 294, past WYRM-RIDER's world293. Re-aimed by content (THE MERGE OF MAIN AT c9169e3fb): 293, past DELVE II's world292. Re-aimed by content (DRAGON-HIDDEN): every roll takes the watch's omen, the relay's seed."
   },
   {
     "name": "AUDIT-DRAGON-the-route-unlisted",

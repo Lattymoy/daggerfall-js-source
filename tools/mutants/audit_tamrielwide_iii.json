@@ -2,12 +2,12 @@
   {
     "name": "AUDIT-TW-III-F1-the-arrival-asks-the-zone-unflagged",
     "file": "src/scenes/portalStoneHost.js",
-    "old": "teleportTo(g.dest, { zoneFree: !pvpFlagOn() })",
+    "old": "teleportTo(g.dest, { zoneFree: true })",
     "new": "teleportTo(g.dest)",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_iii.test.js"
     ],
-    "note": "The stone's arrival asks the zone's law again, unflagged, after the stone is spent."
+    "note": "The stone's arrival asks the zone's law again, after the stone is spent. PVP-PORTAL: re-aimed by content - the arrival never asks it, flagged or not."
   },
   {
     "name": "AUDIT-TW-III-F1-teleportTo-reads-no-word",

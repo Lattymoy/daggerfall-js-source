@@ -99,11 +99,11 @@ test('ETHER-WILD: a death keeps the ground it fell on - the death screen says th
   try {
     setWildHere(true, 4, ETHER_KIND);
     setWildDeath({ killer: 'Ysolde', dropped: 0 });
-    assert.ok(wildDeathLines().includes('Past the Veil the dead wait two minutes.'));
+    assert.ok(wildDeathLines().includes('Past the Veil the dead rise after 10 seconds.'));   // PIN MOVED (DEATH-10): 'Past the Veil the dead wait two minutes.'
     assert.ok(!wildDeathLines().includes(WILD_TEXT.deathHold));
     setWildHere(false);   // the flag let go under a death screen still standing (a load, the room lost)
     setWildDeath({ killer: 'Ysolde', dropped: 3 });   // the drop's answer updates it
-    assert.ok(wildDeathLines().includes('Past the Veil the dead wait two minutes.'), 'the update keeps the ground the death had');
+    assert.ok(wildDeathLines().includes('Past the Veil the dead rise after 10 seconds.'), 'the update keeps the ground the death had');
     setWildDeath(null);
     setWildHere(true, 1);
     setWildDeath({ killer: null, dropped: 0 });

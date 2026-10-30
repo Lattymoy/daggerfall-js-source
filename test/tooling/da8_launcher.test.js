@@ -75,7 +75,7 @@ test('DA8: silence is not a reason to wait - an error, a timeout, or no check at
   assert.equal(off.update.status, 'skipped', 'the toggle, the File-menu checkbox and the probe env (DA6\'s gates)');
   assert.equal(L.viewOf(off).play.enabled, true);
   assert.ok(L.CHECK_TIMEOUT_MS >= 5000 && L.CHECK_TIMEOUT_MS <= 10000, `a slow check is waited on, a dead one is not (${L.CHECK_TIMEOUT_MS} ms)`);
-  assert.equal(L.RECHECK_MS, 60 * 60 * 1000, 'a running copy asks again within the hour');
+  assert.equal(L.RECHECK_MS, 5 * 60 * 1000, 'UPDATE-RESTART: a running copy asks again every five minutes - it restarts onto what it finds');
 });
 
 test('DA8: the notice transport offers its own file beside Play - Download it, or play this version', () => {

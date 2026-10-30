@@ -181,6 +181,15 @@ the row stands names the tame, so a lost answer is told again. The device keeps 
 Dwarven Dragon**, in the Transportation group - goes into the pack at the claim's answer, or at the character's next
 stand-up when another stood then (`scenes/dragonRewards.js` bind), once DRAGON_MOUNT_ONLINE is on (section 13, DRAGON5a).
 
+**The title** (WYRM-RIDER, 2026-10-30, the owner: "we need a title thats basd ass for this DRAGON TAMER"). An account
+that holds a tamed brass dragon (a `dragon_mounts` row, look 0) holds **Wyrm Rider**; one that holds an Aetherbright
+(look 1) holds **Aether Rider**. The earliest tame of each look (by its time, then its id) also holds **First Wyrm
+Rider** or **First Aether Rider**. A developer's tame is never a First (the owner: "DONT COUNT ADMINS"). They are
+derived like the Marks of Mastery (`net/huntLaw.js` DRAGON_TITLES, `server-account/src/hunts.js` DRAGON_COUNTS_SQL),
+signed into the token (relay world294) and shown in the wardrobe under the Dwarven Dragon. Each is worn on a metal
+name plate (the owner: "naw just make the name plate"): brass, aetherium, and the Firsts' gold and ice
+(`ui/titleFlame.js` TITLE_PLATE and plateCss).
+
 ## 9. What a player sees and hears
 
 - **The body** is the Dwarven Dragon's own sprite (`characters/dwarvenDragon.js`, archive 1800) at `DRAGON_SCALE`,
@@ -409,7 +418,7 @@ mutate its other side (`DRAGON5c-the-oil-kept-off-online`, `AUDIT-DRAGON-the-wai
 of its reference damage (`dpsRef`, 5 + level), but the gate's bucket lets it deal three times that, fifteen deep: one
 fighter at the cap took its share in about a minute, and more fighters only brought more shares. `DRAGON_TTK_S` is 720:
 twelve minutes at the reference, about four at the cap - over the Ketch Warden's 600 (KETCH-LONGER, the same finding),
-the rarest world boss the longest fight. Relay world293, world289, world290, world291 then world292 on its branch until HAND-WRAPS, PVP-LINGER, GILDED-GLOW and DELVE II took them (`DRAGON_RIDE_RELAY_MIN` stays 288). PINS MOVED: the relay
+the rarest world boss the longest fight. Relay world294, world289, world290, world291, world292 then world293 on its branch until HAND-WRAPS, PVP-LINGER, GILDED-GLOW, DELVE II and WYRM-RIDER took them (`DRAGON_RIDE_RELAY_MIN` stays 288). PINS MOVED: the relay
 version's (each note before the last), `dragon2_law`'s; `DRAGON2-the-share-the-gates` mutates 720 to 600.
 
 **DRAGON-HIDDEN (2026-10-29, the owner: "people are able to predict the dragon spawn by looking at source code").**
@@ -417,16 +426,16 @@ Every roll was `gateHash(DRAGON_SALT, w, k)`, the salt in the client, so the sou
 province and its pixel. The rolls take a watch's omen now (section 2): the relay's seed, told at its landing, never
 before; the site's number is the seed's, not the watch's. A modified client still learns a site at its landing - it
 must, to draw it - but never a watch ahead, and a forged site still stands a fight of its own (section 2).
-`DRAGON_BRAIN_MIN` 2: an old game is told to reload. The fight's gate is 293 (292 until DELVE II took it), past the
-ride's 288. Pinned by `test/net/dragon/dragonhidden.test.js` (5); `tools/mutants/dragonhidden.json`, 11 dead; eight
-records re-aimed onto the omen, dead.
+`DRAGON_BRAIN_MIN` 2: an old game is told to reload. The fight's gate is 294 (292, then 293, until DELVE II and
+WYRM-RIDER took them), past the ride's 288. Pinned by `test/net/dragon/dragonhidden.test.js` (5);
+`tools/mutants/dragonhidden.json`, 11 dead; eight records re-aimed onto the omen, dead.
 
 **AUDIT DRAGON-HIDDEN (2026-10-30, the owner: "Audit this"; `01-Overview/audits/Audit-Dragon-Hidden.md`).** Three lanes
 read DRAGON-HARDER and DRAGON-HIDDEN cold. The relay holds a forged site to a pixel's centre on its omen's side of the
 Bay's edge (`dragonSiteOk`), and a cell waking lets go of an unslain fight an older law made. An `ask` goes down whatever
 room the player stands in - a siege's battle and a tourney drew no dragon - and is answered each time, asked again after
 two seconds, so a lost answer or a clock ahead of the relay's costs no watch. The tests' omen names its look and theatre:
-a run's random key drew the Aetherbright one time in twenty and failed two pins. Relay world293, re-hashed in place.
+a run's random key drew the Aetherbright one time in twenty and failed two pins. Relay world294, re-hashed in place.
 
 Pinned by `test/net/dragon/dragonhiddenaudit.test.js` (8); `tools/mutants/dragonhiddenaudit.json`, 17 dead. PINS MOVED:
 `dragonhidden`'s answer (each time, not once a socket - `DRAGON-HIDDEN-told-twice` retired with the code) and its ask
