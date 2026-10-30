@@ -758,8 +758,8 @@
   {
     "name": "SEAT2a4-book-why",
     "file": "src/net/townSeatBook.js",
-    "old": "...(r?.why ? { why: r.why } : {}), text: accountRefusalText(r?.error) };   // the rung",
-    "new": "text: accountRefusalText(r?.error) };   // the rung",
+    "old": "      if (!r?.ok)\n        return {\n          ok: false,\n          error: r?.error ?? 'offline',\n          ...(r?.why ? { why: r.why } : {}),\n          text: accountRefusalText(r?.error),\n        }; // the rung, which the carrier reads (net/siege/siegeClaims.js)",
+    "new": "      if (!r?.ok) return { ok: false, error: r?.error ?? 'offline', text: accountRefusalText(r?.error) }; // the rung, which the carrier reads (net/siege/siegeClaims.js)",
     "tests": [
       "test/net/siege/seat2a_siege_play.test.js"
     ]

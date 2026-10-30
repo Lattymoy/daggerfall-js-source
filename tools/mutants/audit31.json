@@ -31,8 +31,8 @@
   {
     "name": "AUDIT31-law-writmay-proto",
     "file": "src/net/writLaw.js",
-    "old": "(Object.hasOwn(WRIT_POWERS, power) ? WRIT_POWERS[power] : [])",
-    "new": "(WRIT_POWERS[power] ?? [])",
+    "old": "export const writMay = (rank, power) => (Object.hasOwn(WRIT_POWERS, power) ? WRIT_POWERS[power] : []).includes(rank);",
+    "new": "export const writMay = (rank, power) => (WRIT_POWERS[power] ?? []).includes(rank);",
     "tests": [
       "test/net/audit31_law.test.js"
     ]
@@ -40,8 +40,8 @@
   {
     "name": "AUDIT31-law-member-takes-more",
     "file": "src/net/writLaw.js",
-    "old": "&& units <= ownDeposit);",
-    "new": "&& units <= ownDeposit + 1);",
+    "old": "  (Number.isSafeInteger(rank) && Number.isSafeInteger(ownDeposit) && units <= ownDeposit);",
+    "new": "  (Number.isSafeInteger(rank) && Number.isSafeInteger(ownDeposit) && units <= ownDeposit + 1);",
     "tests": [
       "test/net/audit31_law.test.js"
     ]
@@ -345,8 +345,8 @@
   {
     "name": "AUDIT31-book-no-session-writ",
     "file": "src/net/writBook.js",
-    "old": "        if (!account()) return { ok: false, error: 'no-session' };\n",
-    "new": "",
+    "old": "        if (!account()) return { ok: false, error: 'no-session' };\n        if (req?.provenance && (keptPieces().has(req.provenance) || holds?.(req.provenance)))",
+    "new": "        if (req?.provenance && (keptPieces().has(req.provenance) || holds?.(req.provenance)))",
     "tests": [
       "test/net/audit31_client.test.js"
     ]
@@ -355,8 +355,8 @@
     "name": "AUDIT31-book-slot-reread",
     "file": "src/net/writBook.js",
     "note": "INT19 (PIN MOVED): re-aimed by content - a fill goes through the realm act and keeps nothing; the slot law is the kept fills' (a tab's from before), each read in its own character alone",
-    "old": "  const keptOf = (key = slot()) => { const k = table()[key]; return Array.isArray(k?.fulfils) ? k.fulfils : []; };",
-    "new": "  const keptOf = (key = slot()) => { const k = Object.values(table())[0]; return Array.isArray(k?.fulfils) ? k.fulfils : []; };",
+    "old": "    const k = table()[key];",
+    "new": "    const k = Object.values(table())[0];",
     "tests": [
       "test/net/audit31_client.test.js"
     ]
@@ -364,8 +364,8 @@
   {
     "name": "AUDIT31-book-id-unslotted-writ",
     "file": "src/net/writBook.js",
-    "old": "    const k = `${slot()}|${key}`;",
-    "new": "    const k = key;",
+    "old": "      const k = `${slot()}|${key}`;",
+    "new": "      const k = key;",
     "tests": [
       "test/net/audit31_client.test.js"
     ]
@@ -382,8 +382,8 @@
   {
     "name": "AUDIT31-book-market-untold",
     "file": "src/net/writBook.js",
-    "old": "      try { market?.told?.(d.balance); } catch { /* the market book's own */ }\n",
-    "new": "",
+    "old": "      try {\n        market?.told?.(d.balance);\n      } catch {\n        /* the market book's own */\n      }\n    }",
+    "new": "    }",
     "tests": [
       "test/net/audit31_client.test.js"
     ]
@@ -391,8 +391,8 @@
   {
     "name": "AUDIT31-book-market-unforgotten",
     "file": "src/net/writBook.js",
-    "old": "    if (r?.ok && MOVES_MARKS.includes(key.split('|')[0])) { try { market?.forget?.(); }",
-    "new": "    if (false) { try { market?.forget?.(); }",
+    "old": "      if (r?.ok && MOVES_MARKS.includes(key.split('|')[0])) {",
+    "new": "      if (false) {",
     "tests": [
       "test/net/audit31_client.test.js"
     ]
@@ -454,8 +454,8 @@
   {
     "name": "AUDIT31-book-holds-writ",
     "file": "src/net/writBook.js",
-    "old": "        if (req?.provenance && (keptPieces().has(req.provenance) || holds?.(req.provenance))) return",
-    "new": "        if (req?.provenance && keptPieces().has(req.provenance)) return",
+    "old": "        if (req?.provenance && (keptPieces().has(req.provenance) || holds?.(req.provenance)))\n          return { ok: false, error: PIECE_KEPT_ERROR };",
+    "new": "        if (req?.provenance && keptPieces().has(req.provenance)) return { ok: false, error: PIECE_KEPT_ERROR };",
     "tests": [
       "test/net/audit31_client.test.js"
     ]
@@ -482,8 +482,8 @@
   {
     "name": "AUDIT31-book-gone-settle-writ",
     "file": "src/net/writBook.js",
-    "old": "            if (PIECE_GONE.includes(r?.error)) { try { drop?.(f.item, f.where); }",
-    "new": "            if (false) { try { drop?.(f.item, f.where); }",
+    "old": "              if (PIECE_GONE.includes(r?.error)) {",
+    "new": "              if (false) {",
     "tests": [
       "test/net/audit31_client.test.js"
     ]

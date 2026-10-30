@@ -2,8 +2,8 @@
   {
     "name": "RIBBON-keepers",
     "file": "src/net/townSeatLaw.js",
-    "old": ".filter((t) => t.title === 'keeper').map((t) => t.guild))]",
-    "new": ".map((t) => t.guild))]",
+    "old": "export const seasonRibbons = (titles) => [\n  ...new Set((titles ?? []).filter((t) => t.title === 'keeper').map((t) => t.guild)),\n];",
+    "new": "export const seasonRibbons = (titles) => [...new Set((titles ?? []).map((t) => t.guild))];",
     "tests": [
       "test/net/season1_ribbon.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "RIBBON-once",
     "file": "src/net/townSeatLaw.js",
-    "old": "export const seasonRibbons = (titles) => [...new Set((titles ?? [])",
-    "new": "export const seasonRibbons = (titles) => [...((titles ?? [])",
+    "old": "export const seasonRibbons = (titles) => [\n  ...new Set((titles ?? []).filter((t) => t.title === 'keeper').map((t) => t.guild)),\n];",
+    "new": "export const seasonRibbons = (titles) => [...(titles ?? []).filter((t) => t.title === 'keeper').map((t) => t.guild)];",
     "tests": [
       "test/net/season1_ribbon.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "RIBBON-season-before",
     "file": "src/net/townSeatLaw.js",
-    "old": "(season && season.n >= 1 ? season.n - 1 : null)",
-    "new": "(season && season.n >= 1 ? season.n : null)",
+    "old": "export const ribbonSeasonOf = (season) => (season && season.n >= 1 ? season.n - 1 : null);",
+    "new": "export const ribbonSeasonOf = (season) => (season && season.n >= 1 ? season.n : null);",
     "tests": [
       "test/net/season1_ribbon.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "RIBBON-season-zero",
     "file": "src/net/townSeatLaw.js",
-    "old": "(season && season.n >= 1 ? season.n - 1 : null)",
-    "new": "(season && season.n >= 0 ? season.n - 1 : null)",
+    "old": "export const ribbonSeasonOf = (season) => (season && season.n >= 1 ? season.n - 1 : null);",
+    "new": "export const ribbonSeasonOf = (season) => (season && season.n >= 0 ? season.n - 1 : null);",
     "tests": [
       "test/net/season1_ribbon.test.js"
     ]

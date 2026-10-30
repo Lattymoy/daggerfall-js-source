@@ -418,8 +418,8 @@
   {
     "name": "CLOTHGEMS-commission-loose-open",
     "file": "src/net/writLaw.js",
-    "old": "UNYIELDED.includes(i.key) || looseOnly(i.key));",
-    "new": "UNYIELDED.includes(i.key));",
+    "old": "export const commissionUnyielded = (recipeId) =>\n  !!recipeById(recipeId)?.inputs.some((i) => UNYIELDED.includes(i.key) || looseOnly(i.key));",
+    "new": "export const commissionUnyielded = (recipeId) => !!recipeById(recipeId)?.inputs.some((i) => UNYIELDED.includes(i.key));",
     "tests": [
       "test/net/audit31_law.test.js",
       "test/net/prof10_law.test.js"

@@ -195,8 +195,8 @@
   {
     "name": "NOTICE-PANEL-control-left-out",
     "file": "src/net/townEconLaw.js",
-    "old": "const lines = seat ? [...(seatTipOf(seat, nowMs)?.lines ?? [])] : area ? [townAreaLine(area)] : [];",
-    "new": "const lines = [];",
+    "old": "  const lines = seat ? [...(seatTipOf(seat, nowMs)?.lines ?? [])] : area ? [townAreaLine(area)] : [];",
+    "new": "  const lines = [];",
     "tests": [
       "test/scenes/fb1029g_townpanel.test.js"
     ],
@@ -205,8 +205,8 @@
   {
     "name": "NOTICE-PANEL-the-area-where-no-seat-holds",
     "file": "src/net/townEconLaw.js",
-    "old": ": area ? [townAreaLine(area)] : [];",
-    "new": ": area !== undefined ? [townAreaLine(area)] : [];",
+    "old": "  const lines = seat ? [...(seatTipOf(seat, nowMs)?.lines ?? [])] : area ? [townAreaLine(area)] : [];",
+    "new": "  const lines = seat ? [...(seatTipOf(seat, nowMs)?.lines ?? [])] : area !== undefined ? [townAreaLine(area)] : [];",
     "tests": [
       "test/scenes/fb1029g_townpanel.test.js"
     ],

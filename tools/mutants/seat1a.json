@@ -2,8 +2,8 @@
   {
     "name": "SEAT1a-report-bytes-reordered",
     "file": "src/net/townSeatLaw.js",
-    "old": "JSON.stringify([seat.key, seat.name, seat.region,",
-    "new": "JSON.stringify([seat.name, seat.key, seat.region,",
+    "old": "  JSON.stringify([seat.key, seat.name, seat.region, seat.tier, seat.pixel[0], seat.pixel[1]]);",
+    "new": "  JSON.stringify([seat.name, seat.key, seat.region, seat.tier, seat.pixel[0], seat.pixel[1]]);",
     "tests": [
       "test/net/seat1a_client.test.js",
       "test/net/seat1a_service.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "SEAT1a-name-one-longer",
     "file": "src/net/townSeatLaw.js",
-    "old": "n.length >= 1 && n.length <= 48 &&",
-    "new": "n.length >= 1 && n.length <= 49 &&",
+    "old": "  typeof n === 'string' && n.length >= 1 && n.length <= 48 && /^[\\x20-\\x7e]+$/.test(n) && n.trim() === n;",
+    "new": "  typeof n === 'string' && n.length >= 1 && n.length <= 49 && /^[\\x20-\\x7e]+$/.test(n) && n.trim() === n;",
     "tests": [
       "test/net/seat1a_client.test.js"
     ]
@@ -21,8 +21,8 @@
   {
     "name": "SEAT1a-crown-any-name",
     "file": "src/net/townSeatLaw.js",
-    "old": " || name !== kingdomSeatName(CROWN_SEAT_REGIONS[region])))",
-    "new": "))",
+    "old": "  if (\n    tier === 'crown' &&\n    (!Object.prototype.hasOwnProperty.call(CROWN_SEAT_REGIONS, region) ||\n      name !== kingdomSeatName(CROWN_SEAT_REGIONS[region]))\n  )\n    return null; // WW7-3: a province's crown its capital's name",
+    "new": "  if (tier === 'crown' && !Object.prototype.hasOwnProperty.call(CROWN_SEAT_REGIONS, region)) return null; // WW7-3: a province's crown its capital's name",
     "tests": [
       "test/net/seat1a_client.test.js",
       "test/net/seat1a_service.test.js"
@@ -31,8 +31,8 @@
   {
     "name": "SEAT1a-switch-open-by-default",
     "file": "src/net/townSeatLaw.js",
-    "old": "(SEATS_SWITCH.includes(v) ? v : 'off')",
-    "new": "(SEATS_SWITCH.includes(v) ? v : 'on')",
+    "old": "export const seatsSwitchOf = (v) => (SEATS_SWITCH.includes(v) ? v : 'off');",
+    "new": "export const seatsSwitchOf = (v) => (SEATS_SWITCH.includes(v) ? v : 'on');",
     "tests": [
       "test/net/seat1a_client.test.js",
       "test/net/seat1a_service.test.js"
@@ -41,8 +41,8 @@
   {
     "name": "SEAT1a-ignored-at-two",
     "file": "src/net/townSeatLaw.js",
-    "old": "  const n = SEAT_WITNESS_UNMATCHED_MAX;\n",
-    "new": "  const n = SEAT_WITNESS_UNMATCHED_MAX - 1;\n",
+    "old": "  const n = SEAT_WITNESS_UNMATCHED_MAX;",
+    "new": "  const n = SEAT_WITNESS_UNMATCHED_MAX - 1;",
     "tests": [
       "test/net/seat1a_client.test.js",
       "test/net/seat1a_service.test.js"
@@ -51,8 +51,8 @@
   {
     "name": "SEAT1a-ignored-for-ever",
     "file": "src/net/townSeatLaw.js",
-    "old": "&& nowS < ts[i] + SEAT_WITNESS_IGNORED_S) { out.add(a); break; }",
-    "new": ") { out.add(a); break; }",
+    "old": "      if (ts[i] - ts[i - n + 1] <= SEAT_WITNESS_IGNORED_S && nowS < ts[i] + SEAT_WITNESS_IGNORED_S) {",
+    "new": "      if (ts[i] - ts[i - n + 1] <= SEAT_WITNESS_IGNORED_S) {",
     "tests": [
       "test/net/seat1a_client.test.js",
       "test/net/audit_seats_law.test.js"
@@ -61,8 +61,8 @@
   {
     "name": "SEAT1a-shared-dissent-counted",
     "file": "src/net/townSeatLaw.js",
-    "old": "if ((givers.get(`${r.key}\\n${r.report}`)?.size ?? 0) > 1) continue;",
-    "new": "if ((givers.get(`${r.key}\\n${r.report}`)?.size ?? 0) > 99) continue;",
+    "old": "    if ((givers.get(`${r.key}\\n${r.report}`)?.size ?? 0) > 1) continue;",
+    "new": "    if ((givers.get(`${r.key}\\n${r.report}`)?.size ?? 0) > 99) continue;",
     "tests": [
       "test/net/seat1a_client.test.js"
     ]
@@ -70,8 +70,8 @@
   {
     "name": "SEAT1a-arrival-unsaid-unheld",
     "file": "src/net/townSeatLaw.js",
-    "old": ": `${seat.name}. Its Charter is unheld.`) + siege;",
-    "new": ": `${seat.name}.`) + siege;",
+    "old": "  return (holder ? `${seat.name}, held by ${guildWords(holder)}.` : `${seat.name}. Its Charter is unheld.`) + siege;",
+    "new": "  return (holder ? `${seat.name}, held by ${guildWords(holder)}.` : `${seat.name}.`) + siege;",
     "tests": [
       "test/net/seat1a_client.test.js"
     ]
@@ -79,8 +79,8 @@
   {
     "name": "SEAT1a-march-one-metal",
     "file": "src/net/townSeatLaw.js",
-    "old": "MARCHES[seat.region].map((k) => KINGDOM_METALS[k])",
-    "new": "[SEAT_RING_UNHELD]",
+    "old": "  const second = isMarch(seat.region)\n    ? MARCHES[seat.region].map((k) => KINGDOM_METALS[k])\n    : isFreeLand(seat.region)\n      ? [FREE_LAND_RING]\n      : null;",
+    "new": "  const second = isMarch(seat.region) ? [SEAT_RING_UNHELD] : isFreeLand(seat.region) ? [FREE_LAND_RING] : null;",
     "tests": [
       "test/net/seat1a_client.test.js"
     ]
@@ -88,8 +88,8 @@
   {
     "name": "SEAT1a-week-an-hour-early",
     "file": "src/net/townSeatLaw.js",
-    "old": "ONLINE_EPOCH_MS + 6 * 24 * H + 18 * H;",
-    "new": "ONLINE_EPOCH_MS + 6 * 24 * H + 17 * H;",
+    "old": "export const SEAT_WEEK0_MS = ONLINE_EPOCH_MS + 6 * 24 * H + 18 * H;",
+    "new": "export const SEAT_WEEK0_MS = ONLINE_EPOCH_MS + 6 * 24 * H + 17 * H;",
     "tests": [
       "test/net/seat1a_client.test.js"
     ]
@@ -97,8 +97,8 @@
   {
     "name": "SEAT1a-reckoning-late",
     "file": "src/net/townSeatLaw.js",
-    "old": ">= SEAT_WEEK_MS - SEAT_RECKONING_MS ? 'reckoning'",
-    "new": "> SEAT_WEEK_MS - SEAT_RECKONING_MS ? 'reckoning'",
+    "old": "  ms - seatWeekStartMs(seatWeekOf(ms)) >= SEAT_WEEK_MS - SEAT_RECKONING_MS ? 'reckoning' : 'muster';",
+    "new": "  ms - seatWeekStartMs(seatWeekOf(ms)) > SEAT_WEEK_MS - SEAT_RECKONING_MS ? 'reckoning' : 'muster';",
     "tests": [
       "test/net/seat1a_client.test.js"
     ]
@@ -241,8 +241,8 @@
   {
     "name": "SEAT1a-book-no-cache",
     "file": "src/net/townSeatBook.js",
-    "old": "if (!force && nowMs() - at < SEAT_LIST_CACHE_MS &&",
-    "new": "if (false && nowMs() - at < SEAT_LIST_CACHE_MS &&",
+    "old": "    if (!force && nowMs() - at < SEAT_LIST_CACHE_MS && seatWeekOf(at) === seatWeekOf(nowMs()))",
+    "new": "    if (false && nowMs() - at < SEAT_LIST_CACHE_MS && seatWeekOf(at) === seatWeekOf(nowMs()))",
     "tests": [
       "test/net/seat1a_client.test.js"
     ]
@@ -250,8 +250,8 @@
   {
     "name": "SEAT1a-book-no-session-held",
     "file": "src/net/townSeatBook.js",
-    "old": "at = r?.error === 'no-session' ? -Infinity : nowMs();",
-    "new": "at = nowMs();",
+    "old": "      at = r?.error === 'no-session' ? -Infinity : nowMs();",
+    "new": "      at = nowMs();",
     "tests": [
       "test/net/seat1a_client.test.js"
     ]
@@ -259,8 +259,8 @@
   {
     "name": "SEAT1a-book-every-arrival",
     "file": "src/net/townSeatBook.js",
-    "old": "      if (t[String(s.key)] === dayNow()) return false;\n",
-    "new": "",
+    "old": "      if (t[String(s.key)] === dayNow()) return false;\n      t[String(s.key)] = dayNow();",
+    "new": "      t[String(s.key)] = dayNow();",
     "tests": [
       "test/net/seat1a_client.test.js"
     ]
@@ -268,8 +268,8 @@
   {
     "name": "SEAT1a-book-shut-reports",
     "file": "src/net/townSeatBook.js",
-    "old": "if (!s || open !== true) return false;",
-    "new": "if (!s) return false;",
+    "old": "      if (!s || open !== true) return false;",
+    "new": "      if (!s) return false;",
     "tests": [
       "test/net/seat1a_client.test.js"
     ]

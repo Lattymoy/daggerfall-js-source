@@ -24,14 +24,24 @@
 //
 // Pure - the door, the storage and the clock are handed in.
 // ═══════════════════════════════════════════════════════════════════
-import { SEAT_REPORT_EVERY_S, SEAT_WATCH_CLAIM_MAX, seatReportOf, seatKeyOk, EDICTS, siegeWindowText, seatWeekOf, seasonOf, guildWords } from './townSeatLaw.js';
+import {
+  SEAT_REPORT_EVERY_S,
+  SEAT_WATCH_CLAIM_MAX,
+  seatReportOf,
+  seatKeyOk,
+  EDICTS,
+  siegeWindowText,
+  seatWeekOf,
+  seasonOf,
+  guildWords,
+} from './townSeatLaw.js';
 import { accountRefusalText } from './accountClient.js';
 import { readWatchReceipt } from './watchReceipt.js';
 import { mintMarksRid } from './marksBook.js';
-import { tideAt } from './tideLaw.js';   // SEASON1 part two: the Tides
-import { fortWork, towersText } from './fortLaw.js';   // SEAT2b: the works; part two: the Watchtowers' word
-import { jittered } from './backoff.js';   // STORM-SHED: a failed claim's wait, jittered as every book's is
-import { seatPixelTest } from '../systems/town/townSeats.js';   // DOMAIN3: the Watch's pixels off the derivation the book is handed
+import { tideAt } from './tideLaw.js'; // SEASON1 part two: the Tides
+import { fortWork, towersText } from './fortLaw.js'; // SEAT2b: the works; part two: the Watchtowers' word
+import { jittered } from './backoff.js'; // STORM-SHED: a failed claim's wait, jittered as every book's is
+import { seatPixelTest } from '../systems/town/townSeats.js'; // DOMAIN3: the Watch's pixels off the derivation the book is handed
 
 /** How long a list read is kept before the next is asked, ms. */
 export const SEAT_LIST_CACHE_MS = 5 * 60_000;
@@ -79,13 +89,16 @@ export const SEAT_TOWERS_EVERY_MS = 10 * 60_000;
  *  each receipt's fate in its `why`, and none of them is mended by asking again). AUDIT-SEATS C10: and the seats shut to
  *  this account - but never `auth` or `no-session`: a session run out is mended by signing in again, and the ticks it
  *  held were dropped with it. */
-const WATCH_SETTLED = Object.freeze(['bad-watch', 'seats-need-account', 'seats-closed', 'progress-seat', 'trade-held']);   // INT16: a tab not seated here, or a character whose trade is held, is owed no tick
+const WATCH_SETTLED = Object.freeze(['bad-watch', 'seats-need-account', 'seats-closed', 'progress-seat', 'trade-held']); // INT16: a tab not seated here, or a character whose trade is held, is owed no tick
 /** AUDIT-SEATS C9: THE STANDINGS' CACHE, whose every clear (an act, a claim, a Tribute) moves its generation - so a read
  *  asked BEFORE an act and answered after it is not kept as the seat's standings (it was the seat before the act: the
  *  Edict just proclaimed read as none for the cache's thirty seconds). */
 class StandingsCache extends Map {
   gen = 0;
-  clear() { this.gen++; super.clear(); }
+  clear() {
+    this.gen++;
+    super.clear();
+  }
 }
 
 /** A developer's chat word (SEAT0 3.2: "`/seat strike <key>`"): `{ op: 'strike', key }`, `{ error }` in words, or null
@@ -96,26 +109,31 @@ export function parseSeatCommand(text) {
   if (!m) return null;
   const [op, key, ...more] = (m[1] ?? '').trim().split(/\s+/).filter(Boolean);
   const k = Number(key);
-  if (String(op ?? '').toLowerCase() !== 'strike' || !/^\d+$/.test(key ?? '') || !seatKeyOk(k) || more.length) return { error: SEAT_USAGE };
+  if (String(op ?? '').toLowerCase() !== 'strike' || !/^\d+$/.test(key ?? '') || !seatKeyOk(k) || more.length)
+    return { error: SEAT_USAGE };
   return { op: 'strike', key: k };
 }
 /** VOID (Seats-Arc 18: "Moderators (MOD1) may **void a siege** (`/siege void`)"): a moderator's chat word -
  *  `{ op: 'void', key }`, `{ error }` in words, or null when the line is not /siege. NEVER GUARDED HERE (RED1's law): whether
  *  this player may is the service's question (server-account/src/seatSiege.js voidSiege). */
-export const SIEGE_USAGE = 'Usage: /siege void <seat key> - the map id of the seat whose battle this week was won by an exploit.';
+export const SIEGE_USAGE =
+  'Usage: /siege void <seat key> - the map id of the seat whose battle this week was won by an exploit.';
 export function parseSiegeCommand(text) {
   const m = /^\/siege(?:\s+([\s\S]*))?$/i.exec(String(text ?? '').trim());
   if (!m) return null;
   const [op, key, ...more] = (m[1] ?? '').trim().split(/\s+/).filter(Boolean);
   const k = Number(key);
-  if (String(op ?? '').toLowerCase() !== 'void' || !/^\d+$/.test(key ?? '') || !seatKeyOk(k) || more.length) return { error: SIEGE_USAGE };
+  if (String(op ?? '').toLowerCase() !== 'void' || !/^\d+$/.test(key ?? '') || !seatKeyOk(k) || more.length)
+    return { error: SIEGE_USAGE };
   return { op: 'void', key: k };
 }
 
 /** DOMAIN1: a gifts answer as the tab reads it - the place, its seat, what it holds and its last gifts. */
 const giftViewOf = (d) => ({
-  place: d?.place === 'stockpile' || d?.place === 'camp' ? d.place : null, key: Number.isSafeInteger(d?.key) ? d.key : null,
-  contents: Array.isArray(d?.contents) ? d.contents : [], recent: Array.isArray(d?.recent) ? d.recent : [],
+  place: d?.place === 'stockpile' || d?.place === 'camp' ? d.place : null,
+  key: Number.isSafeInteger(d?.key) ? d.key : null,
+  contents: Array.isArray(d?.contents) ? d.contents : [],
+  recent: Array.isArray(d?.recent) ? d.recent : [],
 });
 
 /**
@@ -136,8 +154,23 @@ const giftViewOf = (d) => ({
  *   DOMAIN3: `seats` this client's own derivation (systems/town/townSeats.js deriveTownSeats) - its seats' pixels (the
  *   Watch's, where `isSeatPixel` is not handed) and each region's seat of power, reported beside a seat (`witness`)
  */
-export function createTownSeatBook({ door, storage = null, nowMs = () => Date.now(), me = () => null, character = () => null, rid = () => mintMarksRid(), seats = null, isSeatPixel = seats ? seatPixelTest(seats) : () => false, relayNowS = () => null, onRed = null, rand = Math.random, turnMs = 0, stores = null }) {   // DOMAIN1: `stores(count)` the professions' book told a gift's Stores
-  const turnSpreadMs = Math.floor(rand() * SEAT_TURN_READ_SPREAD_MS);   // D1-LOAD: this client's share of the Turning's read
+export function createTownSeatBook({
+  door,
+  storage = null,
+  nowMs = () => Date.now(),
+  me = () => null,
+  character = () => null,
+  rid = () => mintMarksRid(),
+  seats = null,
+  isSeatPixel = seats ? seatPixelTest(seats) : () => false,
+  relayNowS = () => null,
+  onRed = null,
+  rand = Math.random,
+  turnMs = 0,
+  stores = null,
+}) {
+  // DOMAIN1: `stores(count)` the professions' book told a gift's Stores
+  const turnSpreadMs = Math.floor(rand() * SEAT_TURN_READ_SPREAD_MS); // D1-LOAD: this client's share of the Turning's read
   /** CROWN2: the red lines already said, by id - read from the device once */
   let redSeen = null;
   const redSeenList = () => {
@@ -146,7 +179,9 @@ export function createTownSeatBook({ door, storage = null, nowMs = () => Date.no
     try {
       const v = JSON.parse(storage?.getItem?.(SEAT_RED_SEEN_KEY) ?? 'null');
       if (Array.isArray(v)) redSeen = v.filter((id) => Number.isSafeInteger(id)).slice(-SEAT_RED_SEEN_MAX);
-    } catch { /* a bad key reads as none */ }
+    } catch {
+      /* a bad key reads as none */
+    }
     return redSeen;
   };
   /** CROWN2: each red line the list carries that this device has not said yet, handed to `onRed` oldest first - kept as
@@ -154,15 +189,22 @@ export function createTownSeatBook({ door, storage = null, nowMs = () => Date.no
   const sayRed = (rows) => {
     if (!onRed || !Array.isArray(rows)) return;
     const seen = redSeenList();
-    const said = rows.filter((r) => Number.isSafeInteger(r?.id) && typeof r.text === 'string' && !seen.includes(r.id))
+    const said = rows
+      .filter((r) => Number.isSafeInteger(r?.id) && typeof r.text === 'string' && !seen.includes(r.id))
       .filter((r) => onRed({ text: r.text, at: Number(r.at) * 1000 }) !== false);
     if (!said.length) return;
     redSeen = [...seen, ...said.map((r) => r.id)].slice(-SEAT_RED_SEEN_MAX);
-    try { storage?.setItem?.(SEAT_RED_SEEN_KEY, JSON.stringify(redSeen)); } catch { /* this page keeps them */ }
+    try {
+      storage?.setItem?.(SEAT_RED_SEEN_KEY, JSON.stringify(redSeen));
+    } catch {
+      /* this page keeps them */
+    }
   };
   /** whether the seats are open to this account, as the last read said: true, false, or null not yet asked */
   let open = null;
-  let data = null, at = -Infinity, pending = null;
+  let data = null,
+    at = -Infinity,
+    pending = null;
   /** AUDIT SEATS-3 C5: whether the last list read failed (no answer, or the service's fault) - redTick asks again */
   let failed = false;
   /** @type {Map<number, string>} the confirmed seats' states, by key */
@@ -176,15 +218,23 @@ export function createTownSeatBook({ door, storage = null, nowMs = () => Date.no
     try {
       const v = JSON.parse(storage?.getItem?.(SEAT_REPORTED_KEY) ?? 'null');
       if (v && typeof v === 'object' && !Array.isArray(v)) reported = v;
-    } catch { /* a bad key reads as none */ }
+    } catch {
+      /* a bad key reads as none */
+    }
     return reported;
   };
   const writeReported = (t) => {
-    const keep = Object.entries(t).sort((a, b) => b[1] - a[1]).slice(0, SEAT_REPORTED_MAX);
+    const keep = Object.entries(t)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, SEAT_REPORTED_MAX);
     reported = Object.fromEntries(keep);
-    try { storage?.setItem?.(SEAT_REPORTED_KEY, JSON.stringify(reported)); } catch { /* this page keeps it */ }
+    try {
+      storage?.setItem?.(SEAT_REPORTED_KEY, JSON.stringify(reported));
+    } catch {
+      /* this page keeps it */
+    }
   };
-  const dayNow = () => Math.floor((nowMs() - turnMs) / 1000 / SEAT_REPORT_EVERY_S);   // DAY-TURN: the report's day turned at this page's moment
+  const dayNow = () => Math.floor((nowMs() - turnMs) / 1000 / SEAT_REPORT_EVERY_S); // DAY-TURN: the report's day turned at this page's moment
   /** SEAT1b: each seat's standings as last read, `{ at, data }` by key (AUDIT-SEATS C9: cleared by generation); the
    *  Tribute asked and its one request id */
   const standingsAt = new StandingsCache();
@@ -200,67 +250,116 @@ export function createTownSeatBook({ door, storage = null, nowMs = () => Date.no
   let giftAsk = null;
   /** SEAT2b part two: the Watchtowers' words already said (`week:seat:guild:share`), read from the device once, and the
    *  last ask's moment and its flight */
-  let towersSaid = null, towersAt = -Infinity, towersBusy = false;
+  let towersSaid = null,
+    towersAt = -Infinity,
+    towersBusy = false;
   const towersSaidList = () => {
     if (towersSaid) return towersSaid;
     towersSaid = [];
     try {
       const v = JSON.parse(storage?.getItem?.(SEAT_TOWERS_KEY) ?? 'null');
       if (Array.isArray(v)) towersSaid = v.filter((x) => typeof x === 'string').slice(-SEAT_TOWERS_SAID_MAX);
-    } catch { /* a bad key reads as none */ }
+    } catch {
+      /* a bad key reads as none */
+    }
     return towersSaid;
   };
   /** SEAT2b part two: the seats `guild` holds whose Watchtowers stand, as the list last said them. */
   // AUDIT SEATS-3 C4: asked each frame (towersDue) - kept by the list read and the guild, filtered again only when either moves
-  let _towersOf = null, _towersGuild = null, _towers = [];
+  let _towersOf = null,
+    _towersGuild = null,
+    _towers = [];
   const towerSeats = (guild) => {
     if (!guild) return [];
     if (data !== _towersOf || guild !== _towersGuild) {
-      _towersOf = data; _towersGuild = guild;
-      _towers = (data?.seats ?? []).filter((s) => s?.holder?.guild?.id === guild && Number(s?.forts?.watchtowers ?? 0) >= 1);
+      _towersOf = data;
+      _towersGuild = guild;
+      _towers = (data?.seats ?? []).filter(
+        (s) => s?.holder?.guild?.id === guild && Number(s?.forts?.watchtowers ?? 0) >= 1,
+      );
     }
     return _towers;
   };
   /** SEAT1b: the Watch's receipts held - read from the device once, kept in memory where the store refuses writes */
-  let watchList = null, watchBusy = false;
+  let watchList = null,
+    watchBusy = false;
   /** STORM-SHED: the failed claims in a row, and the page's time before which none is asked again */
-  let watchFails = 0, watchRetryAt = -Infinity;
+  let watchFails = 0,
+    watchRetryAt = -Infinity;
   const watchHeld = () => {
     if (watchList) return watchList;
     watchList = [];
     try {
       const v = JSON.parse(storage?.getItem?.(SEAT_WATCH_KEY) ?? 'null');
-      if (Array.isArray(v)) watchList = v.filter((w) => w && typeof w.r === 'string' && typeof w.s === 'string' && Number.isSafeInteger(w.i) && Number.isSafeInteger(w.e)).slice(-SEAT_WATCH_HELD_MAX);
-    } catch { /* a bad key reads as none */ }
+      if (Array.isArray(v))
+        watchList = v
+          .filter(
+            (w) =>
+              w &&
+              typeof w.r === 'string' &&
+              typeof w.s === 'string' &&
+              Number.isSafeInteger(w.i) &&
+              Number.isSafeInteger(w.e),
+          )
+          .slice(-SEAT_WATCH_HELD_MAX);
+    } catch {
+      /* a bad key reads as none */
+    }
     return watchList;
   };
   const writeWatch = (list) => {
     watchList = list;
-    try { storage?.setItem?.(SEAT_WATCH_KEY, JSON.stringify(list)); } catch { /* this page keeps them */ }
+    try {
+      storage?.setItem?.(SEAT_WATCH_KEY, JSON.stringify(list));
+    } catch {
+      /* this page keeps them */
+    }
   };
 
   /** The confirmed seats: the last answer inside SEAT_LIST_CACHE_MS (a refusal too) and this seat week, else the service's. */
   function read({ force = false } = {}) {
     // AUDIT FESTIVAL S1: a list read before the Turning is last week's - its holders' edicts (a Festival, a Curfew) gone
-    if (!force && nowMs() - at < SEAT_LIST_CACHE_MS && seatWeekOf(at) === seatWeekOf(nowMs())) return Promise.resolve({ data, error: open === false ? 'seats-closed' : null });
+    if (!force && nowMs() - at < SEAT_LIST_CACHE_MS && seatWeekOf(at) === seatWeekOf(nowMs()))
+      return Promise.resolve({ data, error: open === false ? 'seats-closed' : null });
     if (pending) return pending;
     pending = (async () => {
       let r;
-      try { r = await door.list(); } catch { r = { ok: false, error: 'offline' }; }
+      try {
+        r = await door.list();
+      } catch {
+        r = { ok: false, error: 'offline' };
+      }
       pending = null;
       // a session not yet there is asked again at the next ask (a player who signs in sees the seats then); any other
       // answer, a refusal too, holds the list's minutes
       at = r?.error === 'no-session' ? -Infinity : nowMs();
-      failed = !r?.ok && !SHUT.includes(r?.error);   // AUDIT SEATS-3 C5
+      failed = !r?.ok && !SHUT.includes(r?.error); // AUDIT SEATS-3 C5
       if (r?.ok) {
-        open = true; data = r.data;
+        open = true;
+        data = r.data;
         states = new Map((data?.seats ?? []).map((s) => [s.key, s.state]));
-        dress = new Map((data?.seats ?? []).map((s) => [s.key, { holder: s.holder ?? null, battle: s.battle ?? null, forts: s.forts ?? null,   // SEAT2b part two: its works standing
-          ...(s.domain ? { domain: true } : {}), ...(s.charter != null ? { charter: s.charter } : {}), listed: s }]));   // DOMAIN3: a seat of power, a holding's Charter
-        sayRed(data?.red);   // CROWN2: the server's red lines, each said once
+        dress = new Map(
+          (data?.seats ?? []).map((s) => [
+            s.key,
+            {
+              holder: s.holder ?? null,
+              battle: s.battle ?? null,
+              forts: s.forts ?? null, // SEAT2b part two: its works standing
+              ...(s.domain ? { domain: true } : {}),
+              ...(s.charter != null ? { charter: s.charter } : {}),
+              listed: s,
+            },
+          ]),
+        ); // DOMAIN3: a seat of power, a holding's Charter
+        sayRed(data?.red); // CROWN2: the server's red lines, each said once
         return { data, error: null };
       }
-      if (SHUT.includes(r?.error)) { open = false; data = null; states = new Map(); dress = new Map(); }
+      if (SHUT.includes(r?.error)) {
+        open = false;
+        data = null;
+        states = new Map();
+        dress = new Map();
+      }
       return { data, error: r?.error ?? 'server' };
     })();
     return pending;
@@ -269,17 +368,21 @@ export function createTownSeatBook({ door, storage = null, nowMs = () => Date.no
   return {
     read,
     /** Whether the seats are open to this account, as the last read said (null before any). */
-    get open() { return open; },
+    get open() {
+      return open;
+    },
     /** A seat's state as the witnesses say it - 'confirmed', 'disputed', or null (unconfirmed, or not read). */
     stateOf: (key) => states.get(key) ?? null,
     /** The last list read, or null. */
-    get data() { return data; },
+    get data() {
+      return data;
+    },
     /** SEAT1c: a seat this client derived, dressed in what the service last said of it - its holder and this week's battle
      *  there (both null for an unheld, quiet one, or a seat not read yet). */
     dressed: (seat) => {
       if (!seat) return null;
       const d = dress.get(seat.key);
-      const out = { ...seat, holder: d?.holder ?? null, battle: d?.battle ?? null, forts: d?.forts ?? null };   // SEAT2b part two: and its works
+      const out = { ...seat, holder: d?.holder ?? null, battle: d?.battle ?? null, forts: d?.forts ?? null }; // SEAT2b part two: and its works
       // DOMAIN3 (Domains.md section 7): a seat of power named for its region; a HOLDING dressed in its Charter as the list
       // says it (`charterSeat`) - its war, its Edicts and its members' discount are its Charter's
       if (d?.domain) out.domain = true;
@@ -290,10 +393,16 @@ export function createTownSeatBook({ door, storage = null, nowMs = () => Date.no
     /** SEAT1c: the guildmaster gives up a Charter at its board - `{ ok, text }`, the list and standings read afresh after. */
     async relinquish(seat) {
       let r;
-      try { r = await door.relinquish(character(), seat.key); } catch { r = { ok: false, error: 'offline' }; }
+      try {
+        r = await door.relinquish(character(), seat.key);
+      } catch {
+        r = { ok: false, error: 'offline' };
+      }
       standingsAt.clear();
       if (r?.ok) at = -Infinity;
-      return r?.ok ? { ok: true, text: `Your guild has given up the Charter of ${seat.name}.` } : { ok: false, text: accountRefusalText(r?.error) };
+      return r?.ok
+        ? { ok: true, text: `Your guild has given up the Charter of ${seat.name}.` }
+        : { ok: false, text: accountRefusalText(r?.error) };
     },
     /**
      * THE SEAT THIS CLIENT STANDS IN, REPORTED - once a UTC day a seat (this device's), only while the seats are open to
@@ -309,72 +418,138 @@ export function createTownSeatBook({ door, storage = null, nowMs = () => Date.no
       writeReported(t);
       // DOMAIN3: and the region's seat of power as this client's own MAPS.BSA ranks it (deriveTownSeats `powers`)
       const power = seats?.powers?.get(s.region);
-      try { await door.witness(s, power == null ? undefined : { region: s.region, key: power }); } catch { /* the next day asks again */ }
+      try {
+        await door.witness(s, power == null ? undefined : { region: s.region, key: power });
+      } catch {
+        /* the next day asks again */
+      }
       return true;
     },
     // ─── SEAT1d: THE HOLDER'S LEVERS, A BOUNTY'S CAMP ───────────────
     /** The Tithe at `seat` set (an Officer's or the guildmaster's, once a week) - `{ ok, text }`, the standings read afresh. */
     async tithe(seat, pct) {
       let r;
-      try { r = await door.tithe(character(), seat.key, pct); } catch { r = { ok: false, error: 'offline' }; }
+      try {
+        r = await door.tithe(character(), seat.key, pct);
+      } catch {
+        r = { ok: false, error: 'offline' };
+      }
       standingsAt.clear();
       if (r?.ok) at = -Infinity;
-      return r?.ok ? { ok: true, text: `The Tithe at ${seat.name} is ${pct}% from the next sale.` } : { ok: false, text: accountRefusalText(r?.error) };
+      return r?.ok
+        ? { ok: true, text: `The Tithe at ${seat.name} is ${pct}% from the next sale.` }
+        : { ok: false, text: accountRefusalText(r?.error) };
     },
     /** The coming week's Edict at `seat` proclaimed (`edict` null: taken back) - `{ ok, text }`. A Bounty names what it
      *  sets aside. */
     async edict(seat, edict, setAside = 0) {
       let r;
-      try { r = await door.edict(character(), seat.key, edict, setAside); } catch { r = { ok: false, error: 'offline' }; }
+      try {
+        r = await door.edict(character(), seat.key, edict, setAside);
+      } catch {
+        r = { ok: false, error: 'offline' };
+      }
       standingsAt.clear();
       if (!r?.ok) return { ok: false, text: accountRefusalText(r?.error) };
-      return { ok: true, text: edict ? `${EDICTS[edict]?.name ?? 'The Edict'} is proclaimed at ${seat.name} for next week. The Turning makes it law.` : 'The Edict for next week is taken back.' };
+      return {
+        ok: true,
+        text: edict
+          ? `${EDICTS[edict]?.name ?? 'The Edict'} is proclaimed at ${seat.name} for next week. The Turning makes it law.`
+          : 'The Edict for next week is taken back.',
+      };
     },
     // ─── SEAT2a: THE BATTLES' WEEK ───────────────────────────────────
     /** One act on this week's battle at `seat` - `{ ok, text }`, the standings read afresh after it. */
     async battleAct(seat, ask, said) {
       let r;
-      try { r = await ask(); } catch { r = { ok: false, error: 'offline' }; }
+      try {
+        r = await ask();
+      } catch {
+        r = { ok: false, error: 'offline' };
+      }
       standingsAt.clear();
       return r?.ok ? { ok: true, text: said(r.data ?? {}) } : { ok: false, text: accountRefusalText(r?.error) };
     },
     /** The holder's window at `seat` set - an Officer's or the guildmaster's. */
     window(seat, day, hour) {
-      return this.battleAct(seat, () => door.window(character(), seat.key, day, hour), () => `The battles at ${seat.name} are fought from ${siegeWindowText({ day, hour })}, from the next Turning.`);
+      return this.battleAct(
+        seat,
+        () => door.window(character(), seat.key, day, hour),
+        () => `The battles at ${seat.name} are fought from ${siegeWindowText({ day, hour })}, from the next Turning.`,
+      );
     },
     /** This character signed onto its side of the battle at `seat` (or as a hired Sellsword). */
     sign(seat) {
-      return this.battleAct(seat, () => door.sign(character(), seat.key), (d) => `You are signed for the ${d.side === 'attack' ? 'attackers' : 'defenders'}${d.sellsword ? ' as a Sellsword' : ''} at ${seat.name}.`);
+      return this.battleAct(
+        seat,
+        () => door.sign(character(), seat.key),
+        (d) =>
+          `You are signed for the ${d.side === 'attack' ? 'attackers' : 'defenders'}${d.sellsword ? ' as a Sellsword' : ''} at ${seat.name}.`,
+      );
     },
     /** This account's place on the battle at `seat` given back. */
     unsign(seat) {
-      return this.battleAct(seat, () => door.unsign(seat.key), () => `You are no longer signed for the battle at ${seat.name}.`);
+      return this.battleAct(
+        seat,
+        () => door.unsign(seat.key),
+        () => `You are no longer signed for the battle at ${seat.name}.`,
+      );
     },
     /** A Sellsword hired by name at a fee in Drakes - the side's Guildmaster's. */
     hire(seat, handle, fee) {
-      return this.battleAct(seat, () => door.hire(character(), seat.key, handle, fee), () => `${handle} is offered a Sellsword's contract${fee ? ` at ${fee} silver` : ''}.`);
+      return this.battleAct(
+        seat,
+        () => door.hire(character(), seat.key, handle, fee),
+        () => `${handle} is offered a Sellsword's contract${fee ? ` at ${fee} silver` : ''}.`,
+      );
     },
     /** A Sellsword's contract withdrawn before it is signed. */
     withdrawHire(seat, handle) {
-      return this.battleAct(seat, () => door.withdrawHire(character(), seat.key, handle), () => `${handle}'s contract is withdrawn.`);
+      return this.battleAct(
+        seat,
+        () => door.withdrawHire(character(), seat.key, handle),
+        () => `${handle}'s contract is withdrawn.`,
+      );
     },
     // ─── SEAT2a part three: THE PASS AND THE CLAIM ───────────────────
     /** A pass into the battle at `seat` (`field` the field this game derived from the town) - `{ ok, pass, side, window }`
      *  or `{ ok: false, error, text }` (`field-unsettled` asks again in a moment). */
     async siegePass(seat, field) {
       let r;
-      try { r = await door.pass(seat.key, field); } catch { r = { ok: false, error: 'offline' }; }
+      try {
+        r = await door.pass(seat.key, field);
+      } catch {
+        r = { ok: false, error: 'offline' };
+      }
       if (!r?.ok) return { ok: false, error: r?.error ?? 'offline', text: accountRefusalText(r?.error) };
       const d = r.data ?? {};
-      return { ok: true, pass: d.pass ?? null, side: d.side, week: d.week, startsAt: d.startsAt, endsAt: d.endsAt, window: d.window };
+      return {
+        ok: true,
+        pass: d.pass ?? null,
+        side: d.side,
+        week: d.week,
+        startsAt: d.startsAt,
+        endsAt: d.endsAt,
+        window: d.window,
+      };
     },
     /** A fighter's `s1` receipt carried to the service - the battle's result, and this character's Honours where it earned
      *  them. `{ ok, result, winner, honours }` or `{ ok: false, error, text }`; the board's standings read afresh. */
     async claimSiege(receipt) {
       let r;
-      try { r = await door.claimSiege(receipt, character()); } catch { r = { ok: false, error: 'offline' }; }
+      try {
+        r = await door.claimSiege(receipt, character());
+      } catch {
+        r = { ok: false, error: 'offline' };
+      }
       standingsAt.clear();
-      if (!r?.ok) return { ok: false, error: r?.error ?? 'offline', ...(r?.why ? { why: r.why } : {}), text: accountRefusalText(r?.error) };   // the rung, which the carrier reads (net/siege/siegeClaims.js)
+      if (!r?.ok)
+        return {
+          ok: false,
+          error: r?.error ?? 'offline',
+          ...(r?.why ? { why: r.why } : {}),
+          text: accountRefusalText(r?.error),
+        }; // the rung, which the carrier reads (net/siege/siegeClaims.js)
       const d = r.data ?? {};
       return { ok: true, result: d.result, winner: d.winner ?? null, honours: d.honours ?? null };
     },
@@ -382,7 +557,11 @@ export function createTownSeatBook({ door, storage = null, nowMs = () => Date.no
      *  spectator's (`watch`). `{ ok, pass, side, week, startsAt, endsAt }` or `{ ok: false, error, text }`. */
     async royalPass(seat, field, watch = false) {
       let r;
-      try { r = await door.royalPass(seat.key, field, watch); } catch { r = { ok: false, error: 'offline' }; }
+      try {
+        r = await door.royalPass(seat.key, field, watch);
+      } catch {
+        r = { ok: false, error: 'offline' };
+      }
       if (!r?.ok) return { ok: false, error: r?.error ?? 'offline', text: accountRefusalText(r?.error) };
       const d = r.data ?? {};
       return { ok: true, pass: d.pass ?? null, side: d.side, week: d.week, startsAt: d.startsAt, endsAt: d.endsAt };
@@ -391,9 +570,19 @@ export function createTownSeatBook({ door, storage = null, nowMs = () => Date.no
      *  the board's standings read afresh (its ladder moved). */
     async claimRoyal(receipt) {
       let r;
-      try { r = await door.claimRoyal(receipt); } catch { r = { ok: false, error: 'offline' }; }
+      try {
+        r = await door.claimRoyal(receipt);
+      } catch {
+        r = { ok: false, error: 'offline' };
+      }
       standingsAt.clear();
-      if (!r?.ok) return { ok: false, error: r?.error ?? 'offline', ...(r?.why ? { why: r.why } : {}), text: accountRefusalText(r?.error) };
+      if (!r?.ok)
+        return {
+          ok: false,
+          error: r?.error ?? 'offline',
+          ...(r?.why ? { why: r.why } : {}),
+          text: accountRefusalText(r?.error),
+        };
       const d = r.data ?? {};
       return { ok: true, counted: !!d.counted, wins: Number(d.wins ?? 0) };
     },
@@ -401,52 +590,101 @@ export function createTownSeatBook({ door, storage = null, nowMs = () => Date.no
     /** One act on this guild's crown politics - `{ ok, text }`, the standings read afresh after it. */
     async politicsAct(ask, said) {
       let r;
-      try { r = await ask(); } catch { r = { ok: false, error: 'offline' }; }
+      try {
+        r = await ask();
+      } catch {
+        r = { ok: false, error: 'offline' };
+      }
       standingsAt.clear();
       return r?.ok ? { ok: true, text: said(r.data ?? {}) } : { ok: false, text: accountRefusalText(r?.error) };
     },
     /** Fealty offered to the guild tagged `tag` - `as` 'vassal' (this guild swears to it) or 'liege' (takes it as vassal). */
     offerFealty(tag, as) {
-      return this.politicsAct(() => door.fealty(character(), tag, as), () => (as === 'vassal' ? `Your guild offers to swear fealty to <${tag}>.` : `Your guild offers to take <${tag}> as its vassal.`));
+      return this.politicsAct(
+        () => door.fealty(character(), tag, as),
+        () =>
+          as === 'vassal'
+            ? `Your guild offers to swear fealty to <${tag}>.`
+            : `Your guild offers to take <${tag}> as its vassal.`,
+      );
     },
     /** The fealty <tag> offered, accepted - sworn from this week. */
     acceptFealty(tag) {
-      return this.politicsAct(() => door.fealtyAccept(character(), tag), () => `The fealty with <${tag}> is sworn.`);
+      return this.politicsAct(
+        () => door.fealtyAccept(character(), tag),
+        () => `The fealty with <${tag}> is sworn.`,
+      );
     },
     /** This guild's fealty with <tag> broken at the next Turning (a vassal's needs no tag) - or its offer withdrawn. */
     breakFealty(tag) {
-      return this.politicsAct(() => door.fealtyBreak(character(), tag), (d) => (d.withdrawn ? 'Your guild\'s offer of fealty is withdrawn.' : 'The fealty ends at the Turning. Your guild loses 10 Standing at each seat it holds.'));
+      return this.politicsAct(
+        () => door.fealtyBreak(character(), tag),
+        (d) =>
+          d.withdrawn
+            ? "Your guild's offer of fealty is withdrawn."
+            : 'The fealty ends at the Turning. Your guild loses 10 Standing at each seat it holds.',
+      );
     },
     /** A Pact offered to <tag>, or its offer signed. */
     offerPact(tag) {
-      return this.politicsAct(() => door.pact(character(), tag), (d) => (d.signed ? `The Pact with <${tag}> is signed, until week ${d.until}.` : `Your guild offers <${tag}> a Pact of non-aggression.`));
+      return this.politicsAct(
+        () => door.pact(character(), tag),
+        (d) =>
+          d.signed
+            ? `The Pact with <${tag}> is signed, until week ${d.until}.`
+            : `Your guild offers <${tag}> a Pact of non-aggression.`,
+      );
     },
     /** The Pact with <tag> broken (a signed one is announced to everyone in red) - or its offer withdrawn. */
     /** AUDIT-SEATS: the offer of fealty the guild tagged `tag` made to this one, declined. */
     declineFealty(tag) {
-      return this.politicsAct(() => door.fealtyBreak(character(), tag), (d) => (d.declined ? `The offer of fealty from <${tag}> is declined.` : d.withdrawn ? 'Your guild\'s offer of fealty is withdrawn.' : 'The fealty ends at the Turning. Your guild loses 10 Standing at each seat it holds.'));
+      return this.politicsAct(
+        () => door.fealtyBreak(character(), tag),
+        (d) =>
+          d.declined
+            ? `The offer of fealty from <${tag}> is declined.`
+            : d.withdrawn
+              ? "Your guild's offer of fealty is withdrawn."
+              : 'The fealty ends at the Turning. Your guild loses 10 Standing at each seat it holds.',
+      );
     },
     /** AUDIT-SEATS: the offer of a Pact the guild tagged `tag` made to this one, declined (an unsigned offer's break). */
     declinePact(tag) {
-      return this.politicsAct(() => door.pactBreak(character(), tag), (d) => (d.announced ? `Your guild has broken its Pact with <${tag}>. Everyone has been told.` : `The offer of a Pact from <${tag}> is declined.`));
+      return this.politicsAct(
+        () => door.pactBreak(character(), tag),
+        (d) =>
+          d.announced
+            ? `Your guild has broken its Pact with <${tag}>. Everyone has been told.`
+            : `The offer of a Pact from <${tag}> is declined.`,
+      );
     },
     breakPact(tag) {
-      return this.politicsAct(() => door.pactBreak(character(), tag), (d) => (d.announced ? `Your guild has broken its Pact with <${tag}>. Everyone has been told.` : `The offer of a Pact with <${tag}> is withdrawn.`));
+      return this.politicsAct(
+        () => door.pactBreak(character(), tag),
+        (d) =>
+          d.announced
+            ? `Your guild has broken its Pact with <${tag}>. Everyone has been told.`
+            : `The offer of a Pact with <${tag}> is withdrawn.`,
+      );
     },
     /** CROWN2: the seats' list read again for the server's red lines, while the seats are open, every SEAT_RED_READ_MS -
      *  AUDIT FESTIVAL S1: and once at the Turning. */
     redTick() {
       // AUDIT SEATS-3 C5: and a read that failed (the first at the session's start above all - the seats left shut, never
       // asked again by the frame) asked again every SEAT_LIST_RETRY_MS until one answers
-      if (!pending && (open === true || failed) && nowMs() - at >= (failed ? SEAT_LIST_RETRY_MS : SEAT_RED_READ_MS)) read({ force: true });
+      if (!pending && (open === true || failed) && nowMs() - at >= (failed ? SEAT_LIST_RETRY_MS : SEAT_RED_READ_MS))
+        read({ force: true });
       // AUDIT FESTIVAL S1: and once when the seat week turns - a player who stays in a town sees the Festival (or Curfew)
       // that ended at the Turning end, and the one that became law begin (the read is this week's: asked once)
       // D1-LOAD: this client's share of SEAT_TURN_READ_SPREAD_MS past the boundary - never every client in one second
-      else if (!pending && open === true && seatWeekOf(at) !== seatWeekOf(nowMs() - turnSpreadMs)) read({ force: true });
+      else if (!pending && open === true && seatWeekOf(at) !== seatWeekOf(nowMs() - turnSpreadMs))
+        read({ force: true });
     },
     // ─── SEASON1 part two: THE TIDES AS THIS CLIENT READS THEM ───────
     /** The week Season 0 began, as the seats' list last said - or null (no Season counted: every land is Calm). */
-    get zero() { return Number.isSafeInteger(data?.zero) ? data.zero : null; },
+    get zero() {
+      return Number.isSafeInteger(data?.zero) ? data.zero : null;
+    },
     /** The Tide at `region` this seat week, while the seats are open to this account and a Season is counted - else Calm. */
     tideAt(region) {
       if (open !== true) return 'calm';
@@ -458,7 +696,11 @@ export function createTownSeatBook({ door, storage = null, nowMs = () => Date.no
     async orcCamp(site, region) {
       if (open !== true) return { counted: false };
       let r;
-      try { r = await door.orcCamp(character(), site, region); } catch { r = { ok: false, error: 'offline' }; }
+      try {
+        r = await door.orcCamp(character(), site, region);
+      } catch {
+        r = { ok: false, error: 'offline' };
+      }
       if (r?.ok) standingsAt.clear();
       return { counted: !!(r?.ok && r.data?.counted) };
     },
@@ -466,7 +708,11 @@ export function createTownSeatBook({ door, storage = null, nowMs = () => Date.no
     async bounty(site, region) {
       if (open !== true) return { paid: 0 };
       let r;
-      try { r = await door.bounty(character(), site, region); } catch { r = { ok: false, error: 'offline' }; }
+      try {
+        r = await door.bounty(character(), site, region);
+      } catch {
+        r = { ok: false, error: 'offline' };
+      }
       return { paid: r?.ok ? Number(r.data?.paid ?? 0) : 0 };
     },
     // ─── SEAT1b: INFLUENCE ─────────────────────────────────────────
@@ -475,10 +721,17 @@ export function createTownSeatBook({ door, storage = null, nowMs = () => Date.no
     async standings(key, { force = false } = {}) {
       const kept = standingsAt.get(key);
       if (!force && kept && nowMs() - kept.at < SEAT_STANDINGS_CACHE_MS) return { data: kept.data, error: null };
-      const gen = standingsAt.gen;   // AUDIT-SEATS C9: an act between the ask and its answer makes the answer old
+      const gen = standingsAt.gen; // AUDIT-SEATS C9: an act between the ask and its answer makes the answer old
       let r;
-      try { r = await door.standings(key, character()); } catch { r = { ok: false, error: 'offline' }; }
-      if (r?.ok) { if (gen === standingsAt.gen) standingsAt.set(key, { at: nowMs(), data: r.data }); return { data: r.data, error: null }; }
+      try {
+        r = await door.standings(key, character());
+      } catch {
+        r = { ok: false, error: 'offline' };
+      }
+      if (r?.ok) {
+        if (gen === standingsAt.gen) standingsAt.set(key, { at: nowMs(), data: r.data });
+        return { data: r.data, error: null };
+      }
       if (SHUT.includes(r?.error)) open = false;
       return { data: kept?.data ?? null, error: r?.error ?? 'server' };
     },
@@ -489,9 +742,16 @@ export function createTownSeatBook({ door, storage = null, nowMs = () => Date.no
       if (kept && nowMs() - kept.at < SEAT_RECORDS_CACHE_MS) return { data: kept.data, error: null };
       if (open !== true) return { data: null, error: 'seats-closed' };
       let r;
-      try { r = await door.records(key); } catch { r = { ok: false, error: 'offline' }; }
+      try {
+        r = await door.records(key);
+      } catch {
+        r = { ok: false, error: 'offline' };
+      }
       if (r?.ok) {
-        const data = { rows: Array.isArray(r.data?.rows) ? r.data.rows : [], zero: Number.isSafeInteger(r.data?.zero) ? r.data.zero : null };
+        const data = {
+          rows: Array.isArray(r.data?.rows) ? r.data.rows : [],
+          zero: Number.isSafeInteger(r.data?.zero) ? r.data.zero : null,
+        };
         recordsAt.set(key, { at: nowMs(), data });
         return { data, error: null };
       }
@@ -503,8 +763,16 @@ export function createTownSeatBook({ door, storage = null, nowMs = () => Date.no
     async forts(key) {
       if (open !== true) return { data: null, error: 'seats-closed' };
       let r;
-      try { r = await door.forts(key); } catch { r = { ok: false, error: 'offline' }; }
-      if (r?.ok) return { data: { works: r.data?.works ?? {}, stockpile: Array.isArray(r.data?.stockpile) ? r.data.stockpile : [] }, error: null };
+      try {
+        r = await door.forts(key);
+      } catch {
+        r = { ok: false, error: 'offline' };
+      }
+      if (r?.ok)
+        return {
+          data: { works: r.data?.works ?? {}, stockpile: Array.isArray(r.data?.stockpile) ? r.data.stockpile : [] },
+          error: null,
+        };
       if (SHUT.includes(r?.error)) open = false;
       return { data: null, error: r?.error ?? 'server' };
     },
@@ -517,14 +785,24 @@ export function createTownSeatBook({ door, storage = null, nowMs = () => Date.no
       if (fortAsk?.ask !== ask) fortAsk = { ask, rid: rid() };
       const id = fortAsk.rid;
       let r;
-      try { r = await door.fortFund(character(), seat.key, work, id, port); } catch { r = { ok: false, error: 'offline' }; }
-      if (r?.ok || (r?.error && !['offline', 'server', 'timeout'].includes(r.error))) { if (fortAsk?.rid === id) fortAsk = null; }
+      try {
+        r = await door.fortFund(character(), seat.key, work, id, port);
+      } catch {
+        r = { ok: false, error: 'offline' };
+      }
+      if (r?.ok || (r?.error && !['offline', 'server', 'timeout'].includes(r.error))) {
+        if (fortAsk?.rid === id) fortAsk = null;
+      }
       standingsAt.clear();
       if (!r?.ok) return { ok: false, text: accountRefusalText(r?.error) };
       const name = fortWork(work)?.name ?? 'work';
       const forts = r.data?.forts ?? null;
       if (r.data?.repeat) return { ok: true, text: `Work on the ${name} at ${seat.name} was already begun.`, forts };
-      return { ok: true, text: `Work on the ${name} at ${seat.name} is begun toward grade ${r.data?.tier}: ${Number(r.data?.marks ?? 0).toLocaleString('en-US')} silver from the treasury. Seat writs deliver what they need.`, forts };
+      return {
+        ok: true,
+        text: `Work on the ${name} at ${seat.name} is begun toward grade ${r.data?.tier}: ${Number(r.data?.marks ?? 0).toLocaleString('en-US')} silver from the treasury. Seat writs deliver what they need.`,
+        forts,
+      };
     },
     /** DOMAIN1 (bible/11-Multiplayer/Domains.md 5): WHERE THIS CHARACTER'S GUILD GIVES in `region` (`/v1/seats/gifts`) -
      *  `{ data: { place, key, contents, recent }, error }`, `place` 'stockpile' (the seat it holds), 'camp' (the seat it
@@ -532,7 +810,11 @@ export function createTownSeatBook({ door, storage = null, nowMs = () => Date.no
     async gifts(region) {
       if (open !== true) return { data: null, error: 'seats-closed' };
       let r;
-      try { r = await door.gifts(character(), region); } catch { r = { ok: false, error: 'offline' }; }
+      try {
+        r = await door.gifts(character(), region);
+      } catch {
+        r = { ok: false, error: 'offline' };
+      }
       if (r?.ok) return { data: giftViewOf(r.data), error: null };
       if (SHUT.includes(r?.error)) open = false;
       return { data: null, error: r?.error ?? 'server' };
@@ -546,27 +828,55 @@ export function createTownSeatBook({ door, storage = null, nowMs = () => Date.no
       if (giftAsk?.ask !== ask) giftAsk = { ask, rid: rid() };
       const id = giftAsk.rid;
       let r;
-      try { r = await door.give(character(), region, material, units, id); } catch { r = { ok: false, error: 'offline' }; }
-      if (r?.ok || (r?.error && !['offline', 'server', 'timeout'].includes(r.error))) { if (giftAsk?.rid === id) giftAsk = null; }
-      standingsAt.clear();   // its influence is the standings'
+      try {
+        r = await door.give(character(), region, material, units, id);
+      } catch {
+        r = { ok: false, error: 'offline' };
+      }
+      if (r?.ok || (r?.error && !['offline', 'server', 'timeout'].includes(r.error))) {
+        if (giftAsk?.rid === id) giftAsk = null;
+      }
+      standingsAt.clear(); // its influence is the standings'
       if (!r?.ok) return { ok: false, data: null, error: r?.error ?? 'server' };
       if (r.data?.store) stores?.(r.data.store);
       const gift = r.data?.gift ?? null;
-      return { ok: true, error: null, data: { ...giftViewOf(r.data), gift, repeat: !!r.data?.repeat, counted: !!r.data?.counted, why: r.data?.why ?? null } };
+      return {
+        ok: true,
+        error: null,
+        data: {
+          ...giftViewOf(r.data),
+          gift,
+          repeat: !!r.data?.repeat,
+          counted: !!r.data?.counted,
+          why: r.data?.why ?? null,
+        },
+      };
     },
     /** A pledge to `seat` for this week (an Officer's or the guildmaster's) - `{ ok, text }`, the standings read afresh after. */
     async pledge(seat) {
       let r;
-      try { r = await door.pledge(character(), seat.key); } catch { r = { ok: false, error: 'offline' }; }
+      try {
+        r = await door.pledge(character(), seat.key);
+      } catch {
+        r = { ok: false, error: 'offline' };
+      }
       standingsAt.clear();
-      return r?.ok ? { ok: true, text: `Your guild is pledged to ${seat.name} this week.` } : { ok: false, text: accountRefusalText(r?.error) };
+      return r?.ok
+        ? { ok: true, text: `Your guild is pledged to ${seat.name} this week.` }
+        : { ok: false, text: accountRefusalText(r?.error) };
     },
     /** The pledge in `region` taken down - `{ ok, text }`. */
     async unpledge(region) {
       let r;
-      try { r = await door.pledge(character(), null, region); } catch { r = { ok: false, error: 'offline' }; }
+      try {
+        r = await door.pledge(character(), null, region);
+      } catch {
+        r = { ok: false, error: 'offline' };
+      }
       standingsAt.clear();
-      return r?.ok ? { ok: true, text: 'The pledge is taken down.' } : { ok: false, text: accountRefusalText(r?.error) };
+      return r?.ok
+        ? { ok: true, text: 'The pledge is taken down.' }
+        : { ok: false, text: accountRefusalText(r?.error) };
     },
     /** TRIBUTE: `marks` Drakes of the guild's treasury burnt on its pledge at `seat` (the guildmaster's) - `{ ok, text }`.
      *  ONE REQUEST ID A PAYMENT: the same seat and sum asked again after an answer that never came carries the same id, so
@@ -576,11 +886,22 @@ export function createTownSeatBook({ door, storage = null, nowMs = () => Date.no
       if (tributeAsk?.ask !== ask) tributeAsk = { ask, rid: rid() };
       const id = tributeAsk.rid;
       let r;
-      try { r = await door.tribute(character(), seat.key, marks, id); } catch { r = { ok: false, error: 'offline' }; }
-      if (r?.ok || (r?.error && !['offline', 'server', 'timeout'].includes(r.error))) { if (tributeAsk?.rid === id) tributeAsk = null; }
+      try {
+        r = await door.tribute(character(), seat.key, marks, id);
+      } catch {
+        r = { ok: false, error: 'offline' };
+      }
+      if (r?.ok || (r?.error && !['offline', 'server', 'timeout'].includes(r.error))) {
+        if (tributeAsk?.rid === id) tributeAsk = null;
+      }
       standingsAt.clear();
       if (!r?.ok) return { ok: false, text: accountRefusalText(r?.error) };
-      return { ok: true, text: r.data?.repeat ? 'That Tribute was already paid.' : `Tribute paid to ${seat.name}: ${marks} silver burned, ${r.data?.influence ?? marks / 10} influence.` };
+      return {
+        ok: true,
+        text: r.data?.repeat
+          ? 'That Tribute was already paid.'
+          : `Tribute paid to ${seat.name}: ${marks} silver burned, ${r.data?.influence ?? marks / 10} influence.`,
+      };
     },
     /**
      * THE WATCH'S TICK, KEPT (net/online.js `onWatch`): a signed receipt for the signed-in account, in a seat's own pixel as
@@ -590,8 +911,9 @@ export function createTownSeatBook({ door, storage = null, nowMs = () => Date.no
     keepWatch(r) {
       const c = readWatchReceipt(r);
       const t = relayNowS();
-      if (!c || !c.signed || open === false || c.s !== me() || !isSeatPixel(c.x, c.y) || (t != null && c.e <= t)) return false;
-      const list = watchHeld().filter((w) => t == null || w.e > t);   // the dead let go as a new one comes
+      if (!c || !c.signed || open === false || c.s !== me() || !isSeatPixel(c.x, c.y) || (t != null && c.e <= t))
+        return false;
+      const list = watchHeld().filter((w) => t == null || w.e > t); // the dead let go as a new one comes
       if (list.some((w) => w.r === r)) return false;
       list.push({ r, s: c.s, i: c.i, e: c.e });
       writeWatch(list.slice(-SEAT_WATCH_HELD_MAX));
@@ -602,11 +924,21 @@ export function createTownSeatBook({ door, storage = null, nowMs = () => Date.no
     /** AUDIT-SEATS C12: WHETHER claimWatch WOULD CLAIM NOW - its own test, asked each frame before the async call
      *  (scenes/world.js), counted in a loop: a frame with nothing due makes no Promise and no list. */
     claimWatchDue() {
-      if (watchBusy || open !== true || nowMs() < watchRetryAt) return false;   // STORM-SHED: a failed claim's wait
-      const list = watchHeld(), who = me(), t = relayNowS();
-      let n = 0, oldest = Infinity;
-      for (const w of list) if (w.s === who && (t == null || w.e > t)) { n++; if (w.i < oldest) oldest = w.i; }
-      return n > 0 && (n >= SEAT_WATCH_CLAIM_MAX || (t == null ? nowMs() : t * 1000) - oldest * 1000 >= SEAT_WATCH_CLAIM_EVERY_MS);
+      if (watchBusy || open !== true || nowMs() < watchRetryAt) return false; // STORM-SHED: a failed claim's wait
+      const list = watchHeld(),
+        who = me(),
+        t = relayNowS();
+      let n = 0,
+        oldest = Infinity;
+      for (const w of list)
+        if (w.s === who && (t == null || w.e > t)) {
+          n++;
+          if (w.i < oldest) oldest = w.i;
+        }
+      return (
+        n > 0 &&
+        (n >= SEAT_WATCH_CLAIM_MAX || (t == null ? nowMs() : t * 1000) - oldest * 1000 >= SEAT_WATCH_CLAIM_EVERY_MS)
+      );
     },
     /**
      * THE KEPT TICKS CLAIMED (`/v1/seats/watch`) - the signed-in account's, SEAT_WATCH_CLAIM_MAX at a time, once a claim's
@@ -616,27 +948,43 @@ export function createTownSeatBook({ door, storage = null, nowMs = () => Date.no
      */
     async claimWatch({ force = false } = {}) {
       if (watchBusy || open !== true) return null;
-      if (!force && nowMs() < watchRetryAt) return null;   // STORM-SHED: a failed claim's wait
+      if (!force && nowMs() < watchRetryAt) return null; // STORM-SHED: a failed claim's wait
       const who = me();
       const t = relayNowS();
       const mine = watchHeld().filter((w) => w.s === who && (t == null || w.e > t));
       if (!mine.length) return null;
       const oldest = Math.min(...mine.map((w) => w.i)) * 1000;
-      if (!force && mine.length < SEAT_WATCH_CLAIM_MAX && (t == null ? nowMs() : t * 1000) - oldest < SEAT_WATCH_CLAIM_EVERY_MS) return null;
+      if (
+        !force &&
+        mine.length < SEAT_WATCH_CLAIM_MAX &&
+        (t == null ? nowMs() : t * 1000) - oldest < SEAT_WATCH_CLAIM_EVERY_MS
+      )
+        return null;
       const batch = mine.slice(0, SEAT_WATCH_CLAIM_MAX);
       watchBusy = true;
       let r;
-      try { r = await door.watch(character(), batch.map((w) => w.r)); } catch { r = { ok: false, error: 'offline' }; } finally { watchBusy = false; }
-      const settled = r?.ok || WATCH_SETTLED.includes(r?.error);   // AUDIT-SEATS C10: a session run out keeps them
+      try {
+        r = await door.watch(
+          character(),
+          batch.map((w) => w.r),
+        );
+      } catch {
+        r = { ok: false, error: 'offline' };
+      } finally {
+        watchBusy = false;
+      }
+      const settled = r?.ok || WATCH_SETTLED.includes(r?.error); // AUDIT-SEATS C10: a session run out keeps them
       if (settled) {
         const gone = new Set(batch.map((w) => w.r));
         writeWatch(watchHeld().filter((w) => !gone.has(w.r)));
         if (r?.ok) standingsAt.clear();
-        watchFails = 0; watchRetryAt = -Infinity;
+        watchFails = 0;
+        watchRetryAt = -Infinity;
       } else {
         // STORM-SHED: kept for the next claim - which waits, the longer the more failures in a row
         watchFails += 1;
-        watchRetryAt = nowMs() + jittered(Math.min(SEAT_WATCH_CLAIM_EVERY_MS, SEAT_WATCH_RETRY_MS * 2 ** (watchFails - 1)), rand);
+        watchRetryAt =
+          nowMs() + jittered(Math.min(SEAT_WATCH_CLAIM_EVERY_MS, SEAT_WATCH_RETRY_MS * 2 ** (watchFails - 1)), rand);
       }
       return r?.ok ? r.data : null;
     },
@@ -654,7 +1002,8 @@ export function createTownSeatBook({ door, storage = null, nowMs = () => Date.no
      *  @param {string|null} guild @param {(text: string) => void} [say] */
     async towers(guild, say = (_text) => {}) {
       if (towersBusy) return [];
-      towersBusy = true; towersAt = nowMs();
+      towersBusy = true;
+      towersAt = nowMs();
       const lines = [];
       try {
         for (const s of towerSeats(guild)) {
@@ -668,30 +1017,50 @@ export function createTownSeatBook({ door, storage = null, nowMs = () => Date.no
             say(text);
             lines.push(text);
             towersSaid = [...said, id].slice(-SEAT_TOWERS_SAID_MAX);
-            try { storage?.setItem?.(SEAT_TOWERS_KEY, JSON.stringify(towersSaid)); } catch { /* this page keeps them */ }
+            try {
+              storage?.setItem?.(SEAT_TOWERS_KEY, JSON.stringify(towersSaid));
+            } catch {
+              /* this page keeps them */
+            }
           }
         }
-      } finally { towersBusy = false; }
+      } finally {
+        towersBusy = false;
+      }
       return lines;
     },
     /** The chat's `/seat strike <key>`: a developer's strike - the list read afresh after. */
     async strike(key) {
       let r;
-      try { r = await door.strike(key); } catch { r = { ok: false, error: 'offline' }; }
-      if (r?.ok) { at = -Infinity; return { ok: true, text: `Seat ${key} is struck from the registry (${r.data?.reports ?? 0} reports).` }; }
+      try {
+        r = await door.strike(key);
+      } catch {
+        r = { ok: false, error: 'offline' };
+      }
+      if (r?.ok) {
+        at = -Infinity;
+        return { ok: true, text: `Seat ${key} is struck from the registry (${r.data?.reports ?? 0} reports).` };
+      }
       return { ok: false, text: accountRefusalText(r?.error) };
     },
     /** VOID: the chat's `/siege void <key>` - a moderator's void of the seat's battle this week; the list and the standings
      *  read afresh after (a Charter may have gone back). */
     async voidSiege(key) {
       let r;
-      try { r = await door.voidSiege(key); } catch { r = { ok: false, error: 'offline' }; }
+      try {
+        r = await door.voidSiege(key);
+      } catch {
+        r = { ok: false, error: 'offline' };
+      }
       if (!r?.ok) return { ok: false, text: accountRefusalText(r?.error) };
       at = -Infinity;
       standingsAt.clear();
       const what = r.data?.battle === 'tourney' ? 'Tourney' : r.data?.battle === 'revolt' ? 'revolt' : 'siege';
       if (r.data?.repeat) return { ok: true, text: `The ${what} at seat ${key} is void already.` };
-      return { ok: true, text: `The ${what} at seat ${key} is voided${r.data?.restored ? ' - its Charter went back to the guild that held it' : ''}.` };
+      return {
+        ok: true,
+        text: `The ${what} at seat ${key} is voided${r.data?.restored ? ' - its Charter went back to the guild that held it' : ''}.`,
+      };
     },
   };
 }

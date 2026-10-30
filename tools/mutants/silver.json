@@ -83,8 +83,8 @@
   {
     "name": "SILVER-an-edict-old",
     "file": "src/net/townSeatLaw.js",
-    "old": "` Costs ${cost.toLocaleString('en-US')} silver.`",
-    "new": "` Costs ${cost.toLocaleString('en-US')} Drakes.`",
+    "old": "  return `${e.name}: ${words}${cost ? ` Costs ${cost.toLocaleString('en-US')} silver.` : ''}`;",
+    "new": "  return `${e.name}: ${words}${cost ? ` Costs ${cost.toLocaleString('en-US')} Drakes.` : ''}`;",
     "tests": [
       "test/net/silver.test.js"
     ]

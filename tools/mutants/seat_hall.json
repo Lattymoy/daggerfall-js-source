@@ -157,8 +157,8 @@
   {
     "name": "SEAT-HALL-law-holder",
     "file": "src/net/townSeatLaw.js",
-    "old": "&& seat.holder?.guild?.id === guildId;",
-    "new": "&& !!seat.holder?.guild?.id;",
+    "old": "export const seatHallOf = (seat, guildId) => !!seat && !!guildId && seat.holder?.guild?.id === guildId;",
+    "new": "export const seatHallOf = (seat, guildId) => !!seat && !!guildId && !!seat.holder?.guild?.id;",
     "tests": [
       "test/net/seathall_client.test.js"
     ]

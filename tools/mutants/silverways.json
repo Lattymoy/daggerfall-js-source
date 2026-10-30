@@ -205,8 +205,8 @@
   {
     "name": "SILVER-WAYS-law-contract-region-segment",
     "file": "src/net/writLaw.js",
-    "old": "return Number(key.slice(0, key.indexOf(':')));",
-    "new": "return Number(key.slice(key.indexOf(':') + 1, key.lastIndexOf(':')));",
+    "old": "  return Number(key.slice(0, key.indexOf(':')));",
+    "new": "  return Number(key.slice(key.indexOf(':') + 1, key.lastIndexOf(':')));",
     "tests": [
       "test/net/silverways_service.test.js"
     ]

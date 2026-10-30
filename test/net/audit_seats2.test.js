@@ -25,7 +25,7 @@ test('AUDIT SEATS-2 L1: THE MARKET HALL\'S TITHE CAP (7.5: "the Tithe\'s cap +1%
   assert.match(seatHoldingLines({ ...seat, name: 'Anticlere' }, { upkeep: 2500, standing: 50 }).join(' '), /the Tithe at most 12%/);
   assert.match(src('src/ui/seatTab.js'), /const cap = seatTitheCap\(seat\);/);
   assert.match(src('server-account/src/seatTurning.js'), /titheCap: marketHallTitheCap\(TITHE_CAP\[h\.tier\] \?\? 0, f\.market \?\? 0\)/);
-  assert.match(src('src/net/townSeatLaw.js'), /tier: s\.tier, titheCap: s\.holder\.titheCap \?\? null,/);
+  assert.match(src('src/net/townSeatLaw.js'), /tier: s\.tier,\n\s*titheCap: s\.holder\.titheCap \?\? null,/);
 });
 
 test('AUDIT SEATS-2 L3, L4, L5, L7: a crown\'s Gatehouse stands from the first and says so; the Bounty\'s camps are the town\'s bailiwick\'s, said so; the Apothecary raised by no one until its stations stand (PROF12: they stand - raised now); the Incursion\'s Drakes said (mutants: the crown\'s line; the Apothecary\'s gate)', () => {

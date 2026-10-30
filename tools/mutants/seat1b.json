@@ -269,8 +269,8 @@
   {
     "name": "SEAT1b-law-gate-cap-off",
     "file": "src/net/townSeatLaw.js",
-    "old": "  const g = Math.min(GATE_WEEK_CAP, amountOf(gates) * GATE_INFLUENCE) * (tide === 'daedra' ? TIDE_EFFECTS.daedraGates : 1);",
-    "new": "  const g = amountOf(gates) * GATE_INFLUENCE * (tide === 'daedra' ? TIDE_EFFECTS.daedraGates : 1);",
+    "old": "  const g =\n    Math.min(GATE_WEEK_CAP, amountOf(gates) * GATE_INFLUENCE) * (tide === 'daedra' ? TIDE_EFFECTS.daedraGates : 1); // SEASON1 part two: a Daedric Incursion's double, past the cap",
+    "new": "  const g = amountOf(gates) * GATE_INFLUENCE * (tide === 'daedra' ? TIDE_EFFECTS.daedraGates : 1); // SEASON1 part two: a Daedric Incursion's double, past the cap",
     "tests": [
       "test/net/seat1b_service.test.js",
       "test/net/seat1b_client.test.js"
@@ -309,8 +309,8 @@
   {
     "name": "SEAT1b-law-home-days-from-purchase",
     "file": "src/net/townSeatLaw.js",
-    "old": "Math.max(0, Math.floor((nowS - Math.max(boughtAtS, weekStartS)) / 86400));",
-    "new": "Math.max(0, Math.floor((nowS - boughtAtS) / 86400));",
+    "old": "export const homeDaysIn = (boughtAtS, weekStartS, nowS) =>\n  Math.max(0, Math.floor((nowS - Math.max(boughtAtS, weekStartS)) / 86400));",
+    "new": "export const homeDaysIn = (boughtAtS, weekStartS, nowS) => Math.max(0, Math.floor((nowS - boughtAtS) / 86400));",
     "tests": [
       "test/net/seat1b_service.test.js",
       "test/net/seat1b_client.test.js"
@@ -329,8 +329,8 @@
   {
     "name": "SEAT1b-law-mine-lines-bound-elsewhere",
     "file": "src/net/townSeatLaw.js",
-    "old": "  else if (mine.bound && mine.bound !== mine.guild) out.push('Your account fights for another guild this week.');",
-    "new": "",
+    "old": "  else if (mine.bound && mine.bound !== mine.guild) out.push('Your account fights for another guild this week.');\n  else if (here?.key === seat.key)",
+    "new": "  else if (here?.key === seat.key)",
     "tests": [
       "test/net/seat1b_client.test.js"
     ]
@@ -347,8 +347,8 @@
   {
     "name": "SEAT1b-receipt-foreign-fields",
     "file": "src/net/watchReceipt.js",
-    "old": "c.d !== undefined || c.b !== undefined || c.w !== undefined) return false;",
-    "new": "c.b !== undefined) return false;",
+    "old": "  if (\n    c.n !== undefined ||\n    c.k !== undefined ||\n    c.t !== undefined ||\n    c.o !== undefined ||\n    c.d !== undefined ||\n    c.b !== undefined ||\n    c.w !== undefined\n  )",
+    "new": "  if (c.n !== undefined || c.k !== undefined || c.t !== undefined || c.o !== undefined || c.b !== undefined)",
     "tests": [
       "test/net/seat1b_client.test.js"
     ]
@@ -411,8 +411,8 @@
   {
     "name": "SEAT1b-book-keeps-another-account",
     "file": "src/net/townSeatBook.js",
-    "old": "if (!c || !c.signed || open === false || c.s !== me() || !isSeatPixel(c.x, c.y) || (t != null && c.e <= t)) return false;",
-    "new": "if (!c || !c.signed || open === false || !isSeatPixel(c.x, c.y) || (t != null && c.e <= t)) return false;",
+    "old": "      if (!c || !c.signed || open === false || c.s !== me() || !isSeatPixel(c.x, c.y) || (t != null && c.e <= t))\n        return false;",
+    "new": "      if (!c || !c.signed || open === false || !isSeatPixel(c.x, c.y) || (t != null && c.e <= t)) return false;",
     "tests": [
       "test/net/seat1b_client.test.js"
     ]
@@ -420,8 +420,8 @@
   {
     "name": "SEAT1b-book-keeps-any-pixel",
     "file": "src/net/townSeatBook.js",
-    "old": "if (!c || !c.signed || open === false || c.s !== me() || !isSeatPixel(c.x, c.y) || (t != null && c.e <= t)) return false;",
-    "new": "if (!c || !c.signed || open === false || c.s !== me() || (t != null && c.e <= t)) return false;",
+    "old": "      if (!c || !c.signed || open === false || c.s !== me() || !isSeatPixel(c.x, c.y) || (t != null && c.e <= t))\n        return false;",
+    "new": "      if (!c || !c.signed || open === false || c.s !== me() || (t != null && c.e <= t)) return false;",
     "tests": [
       "test/net/seat1b_client.test.js"
     ]
@@ -429,7 +429,7 @@
   {
     "name": "SEAT1b-book-claims-every-frame",
     "file": "src/net/townSeatBook.js",
-    "old": "      if (!force && mine.length < SEAT_WATCH_CLAIM_MAX && (t == null ? nowMs() : t * 1000) - oldest < SEAT_WATCH_CLAIM_EVERY_MS) return null;",
+    "old": "      if (\n        !force &&\n        mine.length < SEAT_WATCH_CLAIM_MAX &&\n        (t == null ? nowMs() : t * 1000) - oldest < SEAT_WATCH_CLAIM_EVERY_MS\n      )\n        return null;",
     "new": "",
     "tests": [
       "test/net/seat1b_client.test.js"
@@ -438,8 +438,8 @@
   {
     "name": "SEAT1b-book-drops-on-no-answer",
     "file": "src/net/townSeatBook.js",
-    "old": "      const settled = r?.ok || WATCH_SETTLED.includes(r?.error);",
-    "new": "      const settled = true;",
+    "old": "      const settled = r?.ok || WATCH_SETTLED.includes(r?.error); // AUDIT-SEATS C10: a session run out keeps them",
+    "new": "      const settled = true; // AUDIT-SEATS C10: a session run out keeps them",
     "tests": [
       "test/net/seat1b_client.test.js"
     ]

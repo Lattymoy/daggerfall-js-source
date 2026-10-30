@@ -26,7 +26,7 @@
 //
 // Not a DFU member. Ledger A (EVERY PALACE A SEAT's row).
 import { _b64url, SIG_BYTES, SKEW_S, ID_RE } from './identityToken.js';
-import { worldPixelOk } from './wire.js';   // WW7-5: the world's grid, the wire's own bound
+import { worldPixelOk } from './wire.js'; // WW7-5: the world's grid, the wire's own bound
 
 /** The only version this file reads or writes. */
 export const WATCH_RECEIPT_V = 'k1';
@@ -55,8 +55,12 @@ export const WATCH_VEIL_BOX = Object.freeze({ x0: 64, x1: 8128, y0: -7680, y1: -
  *  it - ETHER-NODES' isles were witnessed and confirmed past the Veil, where no receipt is ever minted. WW7-5
  *  (bible/03-World/World-Wide.md WW7-5): and the land past the Bay - the world's grid (net/wire.js worldPixelOk), never
  *  the Veil's box, so a town, a seat and a node past the Bay are watched and the isles still are not. */
-export const watchPixelOk = (x, y) => Number.isSafeInteger(x) && Number.isSafeInteger(y) && worldPixelOk(x) && worldPixelOk(y)
-  && !(x >= WATCH_VEIL_BOX.x0 && x < WATCH_VEIL_BOX.x1 && y >= WATCH_VEIL_BOX.y0 && y < WATCH_VEIL_BOX.y1);
+export const watchPixelOk = (x, y) =>
+  Number.isSafeInteger(x) &&
+  Number.isSafeInteger(y) &&
+  worldPixelOk(x) &&
+  worldPixelOk(y) &&
+  !(x >= WATCH_VEIL_BOX.x0 && x < WATCH_VEIL_BOX.x1 && y >= WATCH_VEIL_BOX.y0 && y < WATCH_VEIL_BOX.y1);
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();
@@ -68,7 +72,16 @@ const dec = new TextDecoder();
  */
 export function watchReceiptValid(c) {
   if (!c || typeof c !== 'object' || Array.isArray(c)) return false;
-  if (c.n !== undefined || c.k !== undefined || c.t !== undefined || c.o !== undefined || c.d !== undefined || c.b !== undefined || c.w !== undefined) return false;
+  if (
+    c.n !== undefined ||
+    c.k !== undefined ||
+    c.t !== undefined ||
+    c.o !== undefined ||
+    c.d !== undefined ||
+    c.b !== undefined ||
+    c.w !== undefined
+  )
+    return false;
   if (typeof c.s !== 'string' || !ID_RE.test(c.s)) return false;
   if (!watchPixelOk(c.x, c.y)) return false;
   if (!Number.isSafeInteger(c.c) || c.c < 0 || c.c > 0xffffffff) return false;
@@ -90,7 +103,9 @@ export async function mintWatchReceipt({ s, x, y, c }, privateKey, { subtle, now
   if (!watchReceiptValid(claims)) throw new TypeError('mintWatchReceipt refused a claim set it could not verify');
   const body = _b64url.encode(enc.encode(JSON.stringify(claims)));
   if (!privateKey) return `${WATCH_RECEIPT_V}.${body}.`;
-  const sig = new Uint8Array(await subtle.sign({ name: 'Ed25519' }, privateKey, enc.encode(`${WATCH_RECEIPT_V}.${body}`)));
+  const sig = new Uint8Array(
+    await subtle.sign({ name: 'Ed25519' }, privateKey, enc.encode(`${WATCH_RECEIPT_V}.${body}`)),
+  );
   return `${WATCH_RECEIPT_V}.${body}.${_b64url.encode(sig)}`;
 }
 
@@ -106,7 +121,11 @@ export function readWatchReceipt(r) {
   const raw = _b64url.decode(parts[1]);
   if (!raw) return null;
   let c;
-  try { c = JSON.parse(dec.decode(raw)); } catch { return null; }
+  try {
+    c = JSON.parse(dec.decode(raw));
+  } catch {
+    return null;
+  }
   return watchReceiptValid(c) ? { ...c, signed: parts[2].length > 0 } : null;
 }
 
@@ -130,10 +149,18 @@ export async function verifyWatchReceipt(r, publicKey, { subtle, nowS, skewS = S
   const raw = _b64url.decode(body);
   if (!raw) return { ok: false, why: 'body-shape' };
   let good = false;
-  try { good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(`${v}.${body}`)); } catch { return { ok: false, why: 'verify-threw' }; }
+  try {
+    good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(`${v}.${body}`));
+  } catch {
+    return { ok: false, why: 'verify-threw' };
+  }
   if (!good) return { ok: false, why: 'signature' };
   let claims;
-  try { claims = JSON.parse(dec.decode(raw)); } catch { return { ok: false, why: 'json' }; }
+  try {
+    claims = JSON.parse(dec.decode(raw));
+  } catch {
+    return { ok: false, why: 'json' };
+  }
   if (!watchReceiptValid(claims)) return { ok: false, why: 'claims' };
   if (!Number.isSafeInteger(nowS)) return { ok: false, why: 'clock' };
   if (nowS >= claims.e) return { ok: false, why: 'expired' };

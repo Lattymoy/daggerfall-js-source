@@ -467,8 +467,8 @@
   {
     "name": "WW6-picker-town-as-area",
     "file": "src/net/staffPlaces.js",
-    "old": "    const loc = kind === 'town' && Number.isSafeInteger(p?.location) && p.location < -1 ? p.location : -1;",
-    "new": "    const loc = -1;",
+    "old": "    const loc = kind === 'town' && Number.isSafeInteger(p?.location) && p.location < -1 ? p.location : -1; // WW6: a town past the Bay by its own index",
+    "new": "    const loc = -1; // WW6: a town past the Bay by its own index",
     "tests": [
       "test/world/worldWide/ww6_raids.test.js"
     ]

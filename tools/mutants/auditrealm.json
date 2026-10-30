@@ -453,8 +453,8 @@
   {
     "name": "AUDIT-REALM-L2F6-the-session-kept",
     "file": "src/net/tradeSession.js",
-    "old": "        this._ticket?.abandon?.();\n",
-    "new": "",
+    "old": "        this._ticket?.abandon?.();\n        this._finish(",
+    "new": "        this._finish(",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]

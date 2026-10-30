@@ -2,8 +2,8 @@
   {
     "name": "ASL-L1-first",
     "file": "src/net/townSeatLaw.js",
-    "old": "Number(since) <= season.start + (season.n === 1 ? 1 : 0);",
-    "new": "Number(since) <= season.start;",
+    "old": "export const keptWholeSeason = (season, since) => !!season && Number(since) <= season.start + (season.n === 1 ? 1 : 0);",
+    "new": "export const keptWholeSeason = (season, since) => !!season && Number(since) <= season.start;",
     "tests": [
       "test/net/audit_seats_law.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "ASL-L1-any",
     "file": "src/net/townSeatLaw.js",
-    "old": "Number(since) <= season.start + (season.n === 1 ? 1 : 0);",
-    "new": "Number(since) <= season.start + 1;",
+    "old": "export const keptWholeSeason = (season, since) => !!season && Number(since) <= season.start + (season.n === 1 ? 1 : 0);",
+    "new": "export const keptWholeSeason = (season, since) => !!season && Number(since) <= season.start + 1;",
     "tests": [
       "test/net/audit_seats_law.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "ASL-L1-use",
     "file": "src/net/townSeatLaw.js",
-    "old": "    if (keptWholeSeason(season, h.since)) out.push(",
-    "new": "    if (Number(h.since) <= season.start) out.push(",
+    "old": "    if (keptWholeSeason(season, h.since)) out.push({ guild: h.guild, title: 'keeper', key: h.key });",
+    "new": "    if (Number(h.since) <= season.start) out.push({ guild: h.guild, title: 'keeper', key: h.key });",
     "tests": [
       "test/net/audit_seats_law.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "ASL-L2-risen",
     "file": "src/net/townSeatLaw.js",
-    "old": "candidates.push({ ...risen, key: s.key, total, defence });",
-    "new": "candidates.push({ ...g, key: s.key, total, defence });",
+    "old": "      if (total >= CLAIM_THRESHOLD[s.tier] && total > defence)\n        candidates.push({ ...risen, key: s.key, total, defence });",
+    "new": "      if (total >= CLAIM_THRESHOLD[s.tier] && total > defence) candidates.push({ ...g, key: s.key, total, defence });",
     "tests": [
       "test/net/audit_seats_law.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "ASL-L5-first",
     "file": "src/net/townSeatLaw.js",
-    "old": "sort((x, y) => crownFirst(x) - crownFirst(y) || x.key - y.key)",
-    "new": "sort((x, y) => x.key - y.key)",
+    "old": "  for (const b of [...battles].sort((x, y) => crownFirst(x) - crownFirst(y) || x.key - y.key)) {",
+    "new": "  for (const b of [...battles].sort((x, y) => x.key - y.key)) {",
     "tests": [
       "test/net/audit_seats_law.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "ASL-L5-slot",
     "file": "src/net/townSeatLaw.js",
-    "old": "const crownFirst = (b) => (atSiegeWindow(b) && b.tier === 'crown' && CROWN_SIEGE_SLOT[b.kingdom] ? 0 : 1);",
-    "new": "const crownFirst = (b) => (atSiegeWindow(b) && b.tier === 'crown' && CROWN_SIEGE_SLOT[b.kingdom] ? 1 : 0);",
+    "old": "  const crownFirst = (b) => (atSiegeWindow(b) && b.tier === 'crown' && CROWN_SIEGE_SLOT[b.kingdom] ? 0 : 1); // SEAT2b part two (c): a crown's revolt at its slot too",
+    "new": "  const crownFirst = (b) => (atSiegeWindow(b) && b.tier === 'crown' && CROWN_SIEGE_SLOT[b.kingdom] ? 1 : 0); // SEAT2b part two (c): a crown's revolt at its slot too",
     "tests": [
       "test/net/audit_seats_law.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "ASL-L7-bout",
     "file": "src/net/townSeatLaw.js",
-    "old": "with ${plural(Number(d.wins ?? 0), 'bout')} -",
-    "new": "with ${Number(d.wins ?? 0)} bouts -",
+    "old": "      return `${when}, ${d.name || 'a contender'} won the Royal Tourney at ${seat.name} with ${plural(Number(d.wins ?? 0), 'bout')} - Champion of ${kingdomName(d.kingdom) ?? seat.name}.`; // AUDIT-SEATS L7: \"1 bout\"",
+    "new": "      return `${when}, ${d.name || 'a contender'} won the Royal Tourney at ${seat.name} with ${Number(d.wins ?? 0)} bouts - Champion of ${kingdomName(d.kingdom) ?? seat.name}.`; // AUDIT-SEATS L7: \"1 bout\"",
     "tests": [
       "test/net/audit_seats_law.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "ASL-L7-drakes",
     "file": "src/net/townSeatLaw.js",
-    "old": "paid ${marksText(Number(d.marks ?? 0))} in fealty",
-    "new": "paid ${Number(d.marks ?? 0)} Marks in fealty",
+    "old": "      return `${when}, ${guildWords(d.vassal)} paid ${marksText(Number(d.marks ?? 0))} in fealty to ${guildWords(d.liege)}.`; // AUDIT GUILD3 W5: \"Tribute\" is the seat's",
+    "new": "      return `${when}, ${guildWords(d.vassal)} paid ${Number(d.marks ?? 0)} Marks in fealty to ${guildWords(d.liege)}.`; // AUDIT GUILD3 W5: \"Tribute\" is the seat's",
     "tests": [
       "test/net/audit_seats_law.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "ASL-L7-cons",
     "file": "src/net/townSeatLaw.js",
-    "old": "brought ${guildWords(d.guild)} ${marksText(Number(d.marks ?? 0))} of",
-    "new": "brought ${guildWords(d.guild)} ${Number(d.marks ?? 0)} Marks of",
+    "old": "      return `${when}, the crown's Conscription brought ${guildWords(d.guild)} ${marksText(Number(d.marks ?? 0))} of its kingdom's Tithe.`;",
+    "new": "      return `${when}, the crown's Conscription brought ${guildWords(d.guild)} ${Number(d.marks ?? 0)} Marks of its kingdom's Tithe.`;",
     "tests": [
       "test/net/audit_seats_law.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "ASL-L7-article",
     "file": "src/net/townSeatLaw.js",
-    "old": "(e === 'market-day' || e === 'open-gates' ? EDICTS[e].name : `a ${EDICTS[e].name}`)",
-    "new": "(e === 'market-day' ? EDICTS[e].name : `a ${EDICTS[e].name}`)",
+    "old": "export const edictWords = (e) =>\n  edictOk(e) ? (e === 'market-day' || e === 'open-gates' ? EDICTS[e].name : `a ${EDICTS[e].name}`) : null;",
+    "new": "export const edictWords = (e) => (edictOk(e) ? (e === 'market-day' ? EDICTS[e].name : `a ${EDICTS[e].name}`) : null);",
     "tests": [
       "test/net/audit_seats_law.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "ASL-L7-chron",
     "file": "src/net/townSeatLaw.js",
-    "old": "proclaimed ${edictWords(d.edict) ?? 'an Edict'} at",
-    "new": "proclaimed ${EDICTS[d.edict]?.name ?? 'an Edict'} at",
+    "old": "      return `${when}, ${guildWords(d.guild)} proclaimed ${edictWords(d.edict) ?? 'an Edict'} at ${seat.name}.`; // AUDIT-SEATS L7: its article",
+    "new": "      return `${when}, ${guildWords(d.guild)} proclaimed ${EDICTS[d.edict]?.name ?? 'an Edict'} at ${seat.name}.`; // AUDIT-SEATS L7: its article",
     "tests": [
       "test/net/audit_seats_law.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "ASL-L7-rule",
     "file": "src/net/townSeatLaw.js",
-    "old": "? `${edictWordsCap(holder.edict)} is proclaimed.`",
-    "new": "? `${EDICTS[holder.edict].name} is proclaimed.`",
+    "old": "    holder.edict && EDICTS[holder.edict]\n      ? `${edictWordsCap(holder.edict)} is proclaimed.`\n      : 'No Edict rules this week.';",
+    "new": "    holder.edict && EDICTS[holder.edict] ? `${EDICTS[holder.edict].name} is proclaimed.` : 'No Edict rules this week.';",
     "tests": [
       "test/net/audit_seats_law.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "ASL-L7-tail",
     "file": "src/net/townSeatLaw.js",
-    "old": "Number.isSafeInteger(n) && n >= 1 ? `, Season ${n}` : ''",
-    "new": "Number.isSafeInteger(n) ? `, Season ${n}` : ''",
+    "old": "const seasonTail = (n) => (Number.isSafeInteger(n) && n >= 1 ? `, Season ${n}` : '');",
+    "new": "const seasonTail = (n) => (Number.isSafeInteger(n) ? `, Season ${n}` : '');",
     "tests": [
       "test/net/audit_seats_law.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "ASL-L8-from-third",
     "file": "src/net/townSeatLaw.js",
-    "old": "&& nowS < ts[i] + SEAT_WITNESS_IGNORED_S) { out.add(a); break; }",
-    "new": "&& nowS < ts[i - n + 1] + SEAT_WITNESS_IGNORED_S) { out.add(a); break; }",
+    "old": "      if (ts[i] - ts[i - n + 1] <= SEAT_WITNESS_IGNORED_S && nowS < ts[i] + SEAT_WITNESS_IGNORED_S) {",
+    "new": "      if (ts[i] - ts[i - n + 1] <= SEAT_WITNESS_IGNORED_S && nowS < ts[i - n + 1] + SEAT_WITNESS_IGNORED_S) {",
     "tests": [
       "test/net/audit_seats_law.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "ASL-L8-window",
     "file": "src/net/townSeatLaw.js",
-    "old": "if (ts[i] - ts[i - n + 1] <= SEAT_WITNESS_IGNORED_S &&",
-    "new": "if (",
+    "old": "      if (ts[i] - ts[i - n + 1] <= SEAT_WITNESS_IGNORED_S && nowS < ts[i] + SEAT_WITNESS_IGNORED_S) {",
+    "new": "      if (nowS < ts[i] + SEAT_WITNESS_IGNORED_S) {",
     "tests": [
       "test/net/audit_seats_law.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "ASL-L8-future",
     "file": "src/net/townSeatLaw.js",
-    "old": "if (c == null || r.report === c || r.at > nowS) continue;",
-    "new": "if (c == null || r.report === c) continue;",
+    "old": "    if (c == null || r.report === c || r.at > nowS) continue;",
+    "new": "    if (c == null || r.report === c) continue;",
     "tests": [
       "test/net/audit_seats_law.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "ASL-L10-amount",
     "file": "src/net/townSeatLaw.js",
-    "old": "return Number.isFinite(n) && n > 0 ? n : 0; };",
-    "new": "return n > 0 ? n : 0; };",
+    "old": "  return Number.isFinite(n) && n > 0 ? n : 0;",
+    "new": "  return n > 0 ? n : 0;",
     "tests": [
       "test/net/audit_seats_law.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "ASL-G2-end",
     "file": "src/net/townSeatLaw.js",
-    "old": "if (Number.isFinite(battle.endsAt) && nowMs >= battle.endsAt * 1000) return '';",
-    "new": "if (Number.isFinite(battle.endsAt) && nowMs > battle.endsAt * 1000) return '';",
+    "old": "  if (Number.isFinite(battle.endsAt) && nowMs >= battle.endsAt * 1000) return '';",
+    "new": "  if (Number.isFinite(battle.endsAt) && nowMs > battle.endsAt * 1000) return '';",
     "tests": [
       "test/net/audit_seats_law.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "ASL-G2-kind",
     "file": "src/net/townSeatLaw.js",
-    "old": "if (battle?.kind !== 'siege' || !Number.isFinite(battle.startsAt) || battle.state === 'void') return '';",
-    "new": "if (!battle || !Number.isFinite(battle.startsAt) || battle.state === 'void') return '';",
+    "old": "  if (battle?.kind !== 'siege' || !Number.isFinite(battle.startsAt) || battle.state === 'void') return '';",
+    "new": "  if (!battle || !Number.isFinite(battle.startsAt) || battle.state === 'void') return '';",
     "tests": [
       "test/net/audit_seats_law.test.js"
     ]

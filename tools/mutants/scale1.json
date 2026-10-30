@@ -295,7 +295,7 @@
   {
     "name": "SCALE1-F-writs-ask-into-the-minute",
     "file": "src/net/writBook.js",
-    "old": "      if (r?.ok || !ASK_AGAIN_NOW.includes(r?.error)) return r;   // SCALE1: `rate` goes back kept, to the pump",
+    "old": "      if (r?.ok || !ASK_AGAIN_NOW.includes(r?.error)) return r; // SCALE1: `rate` goes back kept, to the pump",
     "new": "      if (r?.ok || !RETRY.includes(r?.error)) return r;",
     "tests": [
       "test/net/scale1.test.js"
@@ -304,8 +304,8 @@
   {
     "name": "SCALE1-F-writs-unjittered",
     "file": "src/net/writBook.js",
-    "old": "await sleep(jittered(WRIT_RETRY_MS[Math.min(i - 1, WRIT_RETRY_MS.length - 1)]));",
-    "new": "await sleep(WRIT_RETRY_MS[Math.min(i - 1, WRIT_RETRY_MS.length - 1)]);",
+    "old": "      if (i > 0) await sleep(jittered(WRIT_RETRY_MS[Math.min(i - 1, WRIT_RETRY_MS.length - 1)]));",
+    "new": "      if (i > 0) await sleep(WRIT_RETRY_MS[Math.min(i - 1, WRIT_RETRY_MS.length - 1)]);",
     "tests": [
       "test/net/scale1.test.js"
     ]

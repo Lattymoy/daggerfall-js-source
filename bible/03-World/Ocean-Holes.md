@@ -509,7 +509,7 @@ AF2-W5-abyss-lairable.
 PITS-WORLD put the pits on the world's grid, but a staff destination in an abyss still held its pit to the Bay's map
 (`net/staffTeleport.js` validStaffDestination, 0..999 and 0..499). The target's game answered `unavailable` and the
 relay dropped the answer, so staff could not /tp to a player in a drowned dungeon past the Bay. The pit is now bounded
-by the world's grid (`src/net/staffTeleport.js:"if (!a || !worldPixelOk(a.PitMapX) || !worldPixelOk(a.PitMapY)"`). The
+by the world's grid (`src/net/staffTeleport.js:"!a ||"`). The
 template stays a Bay dungeon's, so its fields keep the Bay's bounds. Pins: `test/world/worldWide/audit_tamrielwide_relay.test.js` B2 (a Bay pit and three past it,
 through the real hub). Mutants: `tools/mutants/audit_tamrielwide_relay.json` (2, dead). Relay world284.
 

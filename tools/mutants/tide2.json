@@ -11,8 +11,8 @@
   {
     "name": "TIDE2-harvest",
     "file": "src/net/tideLaw.js",
-    "old": "  if (tide === 'harvest' && HARVEST_KINDS.includes(kind)) return TIDE_EFFECTS.harvestYield;\n",
-    "new": "",
+    "old": "  if (tide === 'harvest' && HARVEST_KINDS.includes(kind)) return TIDE_EFFECTS.harvestYield;\n  if (tide === 'blight' && (kind === 'herb' || kind === 'tree')) return TIDE_EFFECTS.blightYield;",
+    "new": "  if (tide === 'blight' && (kind === 'herb' || kind === 'tree')) return TIDE_EFFECTS.blightYield;",
     "tests": [
       "test/net/tide_economy.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "TIDE2-blight-kind",
     "file": "src/net/tideLaw.js",
-    "old": "  if (tide === 'blight' && (kind === 'herb' || kind === 'tree')) return",
-    "new": "  if (tide === 'blight' && (kind === 'herb')) return",
+    "old": "  if (tide === 'blight' && (kind === 'herb' || kind === 'tree')) return TIDE_EFFECTS.blightYield;",
+    "new": "  if (tide === 'blight' && kind === 'herb') return TIDE_EFFECTS.blightYield;",
     "tests": [
       "test/net/tide_economy.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "TIDE2-blight",
     "file": "src/net/tideLaw.js",
-    "old": "  if (tide === 'blight' && (kind === 'herb' || kind === 'tree')) return TIDE_EFFECTS.blightYield;\n",
-    "new": "",
+    "old": "  if (tide === 'blight' && (kind === 'herb' || kind === 'tree')) return TIDE_EFFECTS.blightYield;\n  if (tide === 'storms' && kind === 'haul') return TIDE_EFFECTS.stormsFish;",
+    "new": "  if (tide === 'storms' && kind === 'haul') return TIDE_EFFECTS.stormsFish;",
     "tests": [
       "test/net/tide_economy.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "TIDE2-storms",
     "file": "src/net/tideLaw.js",
-    "old": "  if (tide === 'storms' && kind === 'haul') return TIDE_EFFECTS.stormsFish;\n",
-    "new": "",
+    "old": "  if (tide === 'storms' && kind === 'haul') return TIDE_EFFECTS.stormsFish;\n  return 1;",
+    "new": "  return 1;",
     "tests": [
       "test/net/tide_economy.test.js"
     ]

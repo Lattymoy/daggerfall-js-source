@@ -12,8 +12,8 @@
   {
     "name": "HOMEVENDOR-a-bad-id-taken",
     "file": "src/net/vendorLaw.js",
-    "old": "if (!mapOk(map) || typeof id !== 'string' || !DECOR_ID_RE.test(id)) return null;",
-    "new": "if (!mapOk(map) || typeof id !== 'string') return null;",
+    "old": "  if (!mapOk(map) || typeof id !== 'string' || !DECOR_ID_RE.test(id)) return null;",
+    "new": "  if (!mapOk(map) || typeof id !== 'string') return null;",
     "tests": [
       "test/net/homevendor_service.test.js"
     ]
@@ -21,8 +21,8 @@
   {
     "name": "HOMEVENDOR-one-word-enough",
     "file": "src/net/vendorLaw.js",
-    "old": "return words.every((w) => hay.includes(w));",
-    "new": "return words.some((w) => hay.includes(w));",
+    "old": "    return words.every((w) => hay.includes(w));",
+    "new": "    return words.some((w) => hay.includes(w));",
     "tests": [
       "test/net/homevendor_service.test.js"
     ]

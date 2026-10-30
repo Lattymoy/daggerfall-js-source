@@ -442,8 +442,8 @@
   {
     "name": "STAFF-PANEL5-FOLLOW-tp-fang-loud",
     "file": "src/net/staffTeleport.js",
-    "old": "glyphs.includes('dev') || glyphs.includes('shadowfang')",
-    "new": "glyphs.includes('dev')",
+    "old": "export const quietTeleportAllowed = (glyphs) =>\n  Array.isArray(glyphs) && (glyphs.includes('dev') || glyphs.includes('shadowfang'));",
+    "new": "export const quietTeleportAllowed = (glyphs) => Array.isArray(glyphs) && glyphs.includes('dev');",
     "why": "the Shadow Fang asks the game",
     "tests": [
       "test/net/staffpanel5follow_client.test.js",
@@ -563,8 +563,8 @@
   {
     "name": "STAFF-PANEL5-FOLLOW-notes-feet-some",
     "file": "src/net/staffTeleport.js",
-    "old": "if ([p.wx, p.wy, p.wz].every(finite))",
-    "new": "if ([p.wx, p.wy, p.wz].some(finite))",
+    "old": "    if ([p.wx, p.wy, p.wz].every(finite))",
+    "new": "    if ([p.wx, p.wy, p.wz].some(finite))",
     "why": "half a position placed",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -573,8 +573,8 @@
   {
     "name": "STAFF-PANEL5-FOLLOW-notes-whole-lost",
     "file": "src/net/staffTeleport.js",
-    "old": "whole: !!word || (!m[2] && !m[3]), pos: null",
-    "new": "whole: !!word, pos: null",
+    "old": "    return {\n      kind: 'dungeon',\n      ...at,\n      mapId: +m[1],\n      ...(word ? { ins: word } : {}),\n      whole: !!word || (!m[2] && !m[3]),\n      pos: null,\n    };",
+    "new": "    return { kind: 'dungeon', ...at, mapId: +m[1], ...(word ? { ins: word } : {}), whole: !!word, pos: null };",
     "why": "a public dungeon built at the world's size",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -583,8 +583,8 @@
   {
     "name": "STAFF-PANEL5-FOLLOW-notes-record-byte",
     "file": "src/net/staffTeleport.js",
-    "old": "recordIndex: bk & 0xff,",
-    "new": "recordIndex: bk & 0xffff,",
+    "old": "    door: { blockIndex: 0, recordIndex: bk & 0xff, doorIndex: 0, buildingKey: bk >>> 0 },",
+    "new": "    door: { blockIndex: 0, recordIndex: bk & 0xffff, doorIndex: 0, buildingKey: bk >>> 0 },",
     "why": "the wrong building's door",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -593,8 +593,8 @@
   {
     "name": "STAFF-PANEL5-FOLLOW-notes-no-building",
     "file": "src/net/staffTeleport.js",
-    "old": "if (!integer(bk) || !bk ||",
-    "new": "if (!integer(bk) ||",
+    "old": "  if (!integer(bk) || !bk || !(/^interior:m[1-9]/.test(rk) || home?.buildingKey === bk)) return null;",
+    "new": "  if (!integer(bk) || !(/^interior:m[1-9]/.test(rk) || home?.buildingKey === bk)) return null;",
     "why": "a building of no key",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -603,8 +603,8 @@
   {
     "name": "STAFF-PANEL5-FOLLOW-notes-placed-nowhere",
     "file": "src/net/staffTeleport.js",
-    "old": "if (now.pos) await place(now);",
-    "new": "await place(now);",
+    "old": "      if (now.pos) await place(now);",
+    "new": "      await place(now);",
     "why": "staff put at a spot the note never named",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -623,8 +623,8 @@
   {
     "name": "STAFF-PANEL5-FOLLOW-notes-line-swapped",
     "file": "src/net/staffTeleport.js",
-    "old": "because their where note was missing (the player",
-    "new": "because their where note did not match (the player",
+    "old": "      \"Teleported to {name}'s exact position - their game was asked, because their where note was missing (the player can see this).\",",
+    "new": "      \"Teleported to {name}'s exact position - their game was asked, because their where note did not match (the player can see this).\",",
     "why": "the wrong reason said",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -633,8 +633,8 @@
   {
     "name": "STAFF-PANEL5-FOLLOW-notes-cap-stripped",
     "file": "src/net/staffTeleport.js",
-    "old": "id: m.id, ...nt, ...(m.cap === 1 ? { cap: 1 } : {}) };",
-    "new": "id: m.id, ...nt };",
+    "old": "    if (token(m.id) && m.name == null)\n      return { k: 'ask', nonce: m.nonce, id: m.id, ...nt, ...(m.cap === 1 ? { cap: 1 } : {}) };",
+    "new": "    if (token(m.id) && m.name == null) return { k: 'ask', nonce: m.nonce, id: m.id, ...nt };",
     "why": "the relay never told the note did not match",
     "tests": [
       "test/net/staffpanel5follow_client.test.js"
@@ -925,8 +925,8 @@
   {
     "name": "STAFF-PANEL5-FOLLOW-FIX-note-place-any-private",
     "file": "src/net/staffTeleport.js",
-    "old": "home?.buildingKey === bk)) return null;",
-    "new": "!!home)) return null;",
+    "old": "  if (!integer(bk) || !bk || !(/^interior:m[1-9]/.test(rk) || home?.buildingKey === bk)) return null;",
+    "new": "  if (!integer(bk) || !bk || !(/^interior:m[1-9]/.test(rk) || !!home)) return null;",
     "why": "finding 2: a boat's cabin, a caravan or another building's home placed as this door",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -935,8 +935,8 @@
   {
     "name": "STAFF-PANEL5-FOLLOW-FIX-note-place-home-public",
     "file": "src/net/staffTeleport.js",
-    "old": "...(home ? { privateRoom: rk } : {}), ",
-    "new": "",
+    "old": "    ...(home ? { privateRoom: rk } : {}),\n    ...(word ? { ins: word } : {}),",
+    "new": "    ...(word ? { ins: word } : {}),",
     "why": "finding 2: a home's place is its public building, never the home",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -1065,8 +1065,8 @@
   {
     "name": "STAFF-PANEL5-FOLLOW-FIX-tp-line-missing-as-mismatch",
     "file": "src/net/staffTeleport.js",
-    "old": "if (who.fb === 'missing') return t(",
-    "new": "if (who.fb === 'nope') return t(",
+    "old": "  if (who.fb === 'missing')",
+    "new": "  if (who.fb === 'nope')",
     "why": "the /tp line says a missing note did not match",
     "tests": [
       "test/net/staffpanel5hook.test.js"

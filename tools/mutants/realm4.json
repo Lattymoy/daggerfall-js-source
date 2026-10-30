@@ -164,8 +164,8 @@
   {
     "name": "REALM4-commit-frame-obeyed",
     "file": "src/net/tradeSession.js",
-    "old": "    if (this._escrow) return;\n    // a commit is only ever sent",
-    "new": "    // a commit is only ever sent",
+    "old": "    if (this._escrow) return;\n    // a commit is only ever sent by a side that has seen both confirms, on the revisions both hold",
+    "new": "    // a commit is only ever sent by a side that has seen both confirms, on the revisions both hold",
     "tests": [
       "test/net/realm4.test.js"
     ]
@@ -173,7 +173,7 @@
   {
     "name": "REALM4-older-build-trades",
     "file": "src/net/tradeSession.js",
-    "old": "    if (this._escrow && this.phase === 'open' && ['offer', 'lock', 'confirm'].includes(d.k) && !(d.r >= REALM_TRADE_REV_BASE)) {",
+    "old": "    if (\n      this._escrow &&\n      this.phase === 'open' &&\n      ['offer', 'lock', 'confirm'].includes(d.k) &&\n      !(d.r >= REALM_TRADE_REV_BASE)\n    ) {",
     "new": "    if (false) {",
     "tests": [
       "test/net/realm4.test.js"
@@ -191,8 +191,8 @@
   {
     "name": "REALM4-unknown-restores",
     "file": "src/net/tradeSession.js",
-    "old": "    if (r?.unknown) { this._finish('done', 'The realm did not answer. Your trade stands as the realm recorded it.'); return; }\n",
-    "new": "",
+    "old": "    if (r?.unknown) {\n      this._finish('done', 'The realm did not answer. Your trade stands as the realm recorded it.');\n      return;\n    }\n    if (handle) this.pack.restore(handle);",
+    "new": "    if (handle) this.pack.restore(handle);",
     "tests": [
       "test/net/realm4.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "REALM4-settled-gives-nothing",
     "file": "src/net/tradeSession.js",
-    "old": "      this.pack.give(items, r.gold ?? 0);\n",
-    "new": "",
+    "old": "      this.pack.give(items, r.gold ?? 0);\n      this._finish('done', `Trade with ${this.peerName} complete.`);",
+    "new": "      this._finish('done', `Trade with ${this.peerName} complete.`);",
     "tests": [
       "test/net/realm4.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "REALM4-escrow-skipped",
     "file": "src/net/tradeSession.js",
-    "old": "    if (this._escrow) { this._settle(); return; }\n",
-    "new": "",
+    "old": "    if (this._escrow) {\n      this._settle();\n      return;\n    }\n    const handle = this.pack.take(this.mine.entries, this.mine.gold);",
+    "new": "    const handle = this.pack.take(this.mine.entries, this.mine.gold);",
     "tests": [
       "test/net/realm4.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "REALM4-hold-never-released",
     "file": "src/net/tradeSession.js",
-    "old": "    if (!handle) { ticket.release?.(); this._end('refused');",
-    "new": "    if (!handle) { this._end('refused');",
+    "old": "      ticket.release?.();\n      this._end('refused');",
+    "new": "      this._end('refused');",
     "tests": [
       "test/net/realm4.test.js"
     ]

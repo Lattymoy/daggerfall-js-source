@@ -332,8 +332,8 @@
   {
     "name": "AUDIT-D1-frame-alone",
     "file": "src/net/tradeSession.js",
-    "old": "\n      || tradeCommitBytes({ items: wired, g, to: this.peer, s: this.sid, r: this.rev + 1 }) > TRADE_DATA_MAX",
-    "new": "",
+    "old": "      tradeFrameBytes({ k: 'offer', r: this.rev + 1, items: wired, g, to: this.peer, s: this.sid }) > TRADE_FRAME_MAX ||\n      tradeCommitBytes({ items: wired, g, to: this.peer, s: this.sid, r: this.rev + 1 }) > TRADE_DATA_MAX",
+    "new": "      tradeFrameBytes({ k: 'offer', r: this.rev + 1, items: wired, g, to: this.peer, s: this.sid }) > TRADE_FRAME_MAX",
     "tests": [
       "test/systems/tradeinfo.test.js",
       "test/systems/audit27d.test.js"
@@ -342,8 +342,8 @@
   {
     "name": "AUDIT-D1-revision-now",
     "file": "src/net/tradeSession.js",
-    "old": "o: TRADE_REV_MAX, items, g }).length;",
-    "new": "o: 0, items, g }).length;",
+    "old": "  JSON.stringify({ to, k: 'commit', s, r, o: TRADE_REV_MAX, items, g }).length;",
+    "new": "  JSON.stringify({ to, k: 'commit', s, r, o: 0, items, g }).length;",
     "tests": [
       "test/systems/tradeinfo.test.js"
     ]

@@ -146,8 +146,8 @@
   {
     "name": "F5-reader-old-words",
     "file": "src/net/tradeSession.js",
-    "old": "this._end('refused', true, tradeUnreadableText(this.peerName));",
-    "new": "this._end('refused');",
+    "old": "      this._end('refused', true, tradeUnreadableText(this.peerName));",
+    "new": "      this._end('refused');",
     "tests": [
       "test/net/auditonline2.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "F5-maker-old-words",
     "file": "src/net/tradeSession.js",
-    "old": "d.why === 'refused' ? tradeRefusedText(this.peerName) : tradeWhyText(d.why ?? 'cancelled', this.peerName)",
-    "new": "tradeWhyText(d.why ?? 'cancelled', this.peerName)",
+    "old": "        this._finish(\n          'cancelled',\n          d.why === 'refused' ? tradeRefusedText(this.peerName) : tradeWhyText(d.why ?? 'cancelled', this.peerName),\n        ); // AUDIT ONLINE2 F5: its refusal is its, never \"my\" offer's",
+    "new": "        this._finish('cancelled', tradeWhyText(d.why ?? 'cancelled', this.peerName)); // AUDIT ONLINE2 F5: its refusal is its, never \"my\" offer's",
     "tests": [
       "test/net/auditonline2.test.js"
     ]

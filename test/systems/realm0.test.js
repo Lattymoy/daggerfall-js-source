@@ -423,7 +423,7 @@ test('REALM P0.5: a trade\'s every change to the pack is checkpointed - the good
   // the session queues its commit only after the take returns (net/tradeSession.js _maybeCommit)
   const ts = src('src/net/tradeSession.js');
   assert.ok(ts.indexOf('const handle = this.pack.take(this.mine.entries, this.mine.gold);') > 0);
-  assert.ok(ts.indexOf('const handle = this.pack.take(this.mine.entries, this.mine.gold);') < ts.indexOf("this._enqueue({ k: 'commit'"), 'take, then the frame');
+  assert.ok(ts.indexOf('const handle = this.pack.take(this.mine.entries, this.mine.gold);') < ts.indexOf("this._enqueue(\n      { k: 'commit'"), 'take, then the frame');
 });
 
 test('REALM P0.5 by source: the host checkpoints every slot the exit save writes, quietly, each online frame it is due and through the trade pack', () => {

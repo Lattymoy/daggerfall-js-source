@@ -825,15 +825,15 @@ tiles once (`landingTiles.js:"export function landingTiles(draw, { alive = () =>
 TRADE-WHOLE (found on the way). The trade between players writes the giver's offer for the wire through validLootList,
 and since AUDIT INT that clamp drops a piece the law refuses and keeps the rest
 (`systems/loot/loot.js:"    if (!lawRefuses(it)) out.push(lawPriced(it));"`) - right for a chest, wrong for a trade: the offer was
-never refused (`tradeSession.js:"      if (!wired) return { ok: false, why: 'That cannot be traded.' };"`), so the gem stood
+never refused (`tradeSession.js:"if (!wired) return"`), so the gem stood
 in the giver's offer while the wire carried nothing. Driven hand to hand on the real sessions: offered alone, the peer
 saw an empty table and its lock answered "Nothing is being traded."
-(`tradeSession.js:"    if (!this.hasContent) return { ok: false, why: 'Nothing is being traded.' };"`), the trade left
+(`tradeSession.js:"if (!this.hasContent)"`), the trade left
 open with nothing either side could do; offered beside 10 gold, both sides confirmed and read "Trade with B complete." -
 the take reserves the offered entries, gem included, while the commit sends only what the wire carries
-(`tradeSession.js:"    this._enqueue({ k: 'commit', r: this.rev, o: this.theirRev, items: this._mineWire, g: this.mine.gold }, {"`),
+(`tradeSession.js:"{ k: 'commit', r"`),
 so the gem left the giver's pack and the peer got the gold alone. Through the realm the half's `give` lacked the gem
-(`tradeSession.js:"    const half = { sid: this.sid, give: { items: this._mineWire, gold: this.mine.gold }, get: { items: this._theirRaw, gold: this.theirs.gold }, pick };"`)
+(`tradeSession.js:"const half = {"`)
 and the hold refused the trade first; and `unwire` showed a peer's lot less the piece the law refuses.
 
 FIXED.

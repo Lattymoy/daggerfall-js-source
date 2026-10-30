@@ -32,8 +32,8 @@
   {
     "name": "ASO-minutes-law",
     "file": "src/net/townSeatLaw.js",
-    "old": "Math.max(1, Math.round((endS - startS) / 60))",
-    "new": "Math.max(0, Math.round((endS - startS) / 60))",
+    "old": "    ? Math.max(1, Math.round((endS - startS) / 60))",
+    "new": "    ? Math.max(0, Math.round((endS - startS) / 60))",
     "tests": [
       "test/net/seats_finish.test.js"
     ]
@@ -41,8 +41,8 @@
   {
     "name": "ASO-minutes-order",
     "file": "src/net/townSeatLaw.js",
-    "old": "Number.isFinite(endS) && endS >= startS ?",
-    "new": "Number.isFinite(endS) ?",
+    "old": "  Number.isFinite(startS) && Number.isFinite(endS) && endS >= startS\n    ? Math.max(1, Math.round((endS - startS) / 60))\n    : null;",
+    "new": "  Number.isFinite(startS) && Number.isFinite(endS) ? Math.max(1, Math.round((endS - startS) / 60)) : null;",
     "tests": [
       "test/net/seats_finish.test.js"
     ]
@@ -50,8 +50,8 @@
   {
     "name": "ASO-countwords-tens",
     "file": "src/net/townSeatLaw.js",
-    "old": "if (n < 100) return TENS[Math.floor(n / 10)] + (n % 10 ? `-${ONES[n % 10]}` : '');",
-    "new": "if (n < 100) return TENS[Math.floor(n / 10)] + (n % 10 ? ` ${ONES[n % 10]}` : '');",
+    "old": "  if (n < 100) return TENS[Math.floor(n / 10)] + (n % 10 ? `-${ONES[n % 10]}` : '');",
+    "new": "  if (n < 100) return TENS[Math.floor(n / 10)] + (n % 10 ? ` ${ONES[n % 10]}` : '');",
     "tests": [
       "test/net/seats_finish.test.js"
     ]
@@ -59,8 +59,8 @@
   {
     "name": "ASO-countwords-teen",
     "file": "src/net/townSeatLaw.js",
-    "old": "  if (n < 20) return ONES[n];\n",
-    "new": "  if (n < 10) return ONES[n];\n",
+    "old": "  if (n < 20) return ONES[n];",
+    "new": "  if (n < 10) return ONES[n];",
     "tests": [
       "test/net/seats_finish.test.js"
     ]
@@ -68,8 +68,8 @@
   {
     "name": "ASO-taken-line",
     "file": "src/net/townSeatLaw.js",
-    "old": "after ${countWords(d.minutes)} ${d.minutes === 1 ? 'minute' : 'minutes'}.`",
-    "new": "after ${countWords(d.minutes)} minutes.`",
+    "old": "        ? `${when}, ${guildWords(d.guild)} stormed the gates of ${seat.name} and took its Charter from ${guildWords(d.from)} after ${countWords(d.minutes)} ${d.minutes === 1 ? 'minute' : 'minutes'}.`",
+    "new": "        ? `${when}, ${guildWords(d.guild)} stormed the gates of ${seat.name} and took its Charter from ${guildWords(d.from)} after ${countWords(d.minutes)} minutes.`",
     "tests": [
       "test/net/seats_finish.test.js"
     ]
@@ -177,8 +177,8 @@
   {
     "name": "ASO-acts-alt",
     "file": "src/net/townSeatLaw.js",
-    "old": "act: 'pact-accept', alt: 'pact-decline', tag: c.with.tag });",
-    "new": "act: 'pact-accept', tag: c.with.tag });",
+    "old": "        alt: 'pact-decline',\n        tag: c.with.tag,",
+    "new": "        tag: c.with.tag,",
     "tests": [
       "test/net/seats_finish.test.js"
     ]
@@ -186,8 +186,8 @@
   {
     "name": "ASO-book-decline",
     "file": "src/net/townSeatBook.js",
-    "old": "(d) => (d.declined ? `The offer of fealty from <${tag}> is declined.` :",
-    "new": "(d) => (false ? `The offer of fealty from <${tag}> is declined.` :",
+    "old": "          d.declined",
+    "new": "          false",
     "tests": [
       "test/net/seats_finish.test.js"
     ]

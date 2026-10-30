@@ -146,8 +146,8 @@
   {
     "name": "AD-B2-reservation-stranded",
     "file": "src/net/tradeSession.js",
-    "old": "    if (this._handle && !this._sentCommit && !this._settling) { this.pack.restore(this._handle); this._handle = null; }",
-    "new": "",
+    "old": "    if (this._handle && !this._sentCommit && !this._settling) {\n      this.pack.restore(this._handle);\n      this._handle = null;\n    } // REALM P2.1: a half with the realm is its answer's to restore",
+    "new": "    // REALM P2.1: a half with the realm is its answer's to restore",
     "tests": [
       "test/systems/quest/auditdrops.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "AD-B2-sent-goods-restored-too",
     "file": "src/net/tradeSession.js",
-    "old": "    if (this._handle && !this._sentCommit && !this._settling) { this.pack.restore(this._handle); this._handle = null; }",
-    "new": "    if (this._handle && !this._settling) { this.pack.restore(this._handle); this._handle = null; }",
+    "old": "    if (this._handle && !this._sentCommit && !this._settling) {",
+    "new": "    if (this._handle && !this._settling) {",
     "tests": [
       "test/net/trade_session.test.js",
       "test/systems/quest/auditdrops.test.js"

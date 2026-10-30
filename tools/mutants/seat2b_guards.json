@@ -452,8 +452,8 @@
   {
     "name": "SEAT2b2c-plan-revolt-due",
     "file": "src/net/townSeatLaw.js",
-    "old": "if (unchallenged && revoltDue(w.standing)) revolts.push(",
-    "new": "if (unchallenged && w.standing < 0) revolts.push(",
+    "old": "    if (unchallenged && revoltDue(w.standing)) revolts.push({ key: s.key, guild: s.holder.guild });",
+    "new": "    if (unchallenged && w.standing < 0) revolts.push({ key: s.key, guild: s.holder.guild });",
     "tests": [
       "test/net/seat2b_guards_law.test.js",
       "test/net/seat2b_revolt_service.test.js"
@@ -462,8 +462,8 @@
   {
     "name": "SEAT2b2c-plan-siege-first",
     "file": "src/net/townSeatLaw.js",
-    "old": "if (unchallenged && revoltDue(w.standing)) revolts.push(",
-    "new": "if (revoltDue(w.standing)) revolts.push(",
+    "old": "    if (unchallenged && revoltDue(w.standing)) revolts.push({ key: s.key, guild: s.holder.guild });",
+    "new": "    if (revoltDue(w.standing)) revolts.push({ key: s.key, guild: s.holder.guild });",
     "tests": [
       "test/net/seat2b_guards_law.test.js"
     ]
@@ -471,8 +471,8 @@
   {
     "name": "SEAT2b2c-plan-revolted-lapse",
     "file": "src/net/townSeatLaw.js",
-    "old": "    if (s.holder.revolted) { stateOf.set(s.key, 'revolt');",
-    "new": "    if (false) { stateOf.set(s.key, 'revolt');",
+    "old": "    if (s.holder.revolted) {",
+    "new": "    if (false) {",
     "tests": [
       "test/net/seat2b_guards_law.test.js",
       "test/net/seat2b_revolt_service.test.js"
@@ -481,8 +481,8 @@
   {
     "name": "SEAT2b2c-field-revolt-first",
     "file": "src/net/townSeatLaw.js",
-    "old": "    if (kind === 'revolt' && v.defend) return k;",
-    "new": "    if (kind === 'revolt' && v.defend && joined) return k;",
+    "old": "    if (kind === 'revolt' && v.defend) return k; // SEAT2b part two (c): a revolt has one side - its first defender's",
+    "new": "    if (kind === 'revolt' && v.defend && joined) return k; // SEAT2b part two (c): a revolt has one side - its first defender's",
     "tests": [
       "test/net/seat2b_guards_law.test.js",
       "test/net/seat2b_revolt_service.test.js"
@@ -500,8 +500,8 @@
   {
     "name": "SEAT2b2c-length-revolt",
     "file": "src/net/townSeatLaw.js",
-    "old": "(b.kind === 'tourney' || b.kind === 'revolt' ? BATTLE_LENGTH_MS[b.kind]",
-    "new": "(b.kind === 'tourney' ? BATTLE_LENGTH_MS[b.kind]",
+    "old": "  b.kind === 'tourney' || b.kind === 'revolt'\n    ? BATTLE_LENGTH_MS[b.kind]\n    : (BATTLE_LENGTH_MS[b.tier] ?? BATTLE_LENGTH_MS.palace);",
+    "new": "  b.kind === 'tourney' ? BATTLE_LENGTH_MS[b.kind] : (BATTLE_LENGTH_MS[b.tier] ?? BATTLE_LENGTH_MS.palace);",
     "tests": [
       "test/net/seat2b_guards_law.test.js",
       "test/net/seat2b_revolt_service.test.js"

@@ -2,8 +2,8 @@
   {
     "name": "STANDING-TREND-sign",
     "file": "src/net/townSeatLaw.js",
-    "old": "Number.isFinite(now) ? now - was : null;",
-    "new": "Number.isFinite(now) ? was - now : null;",
+    "old": "  return typeof was === 'number' && Number.isFinite(was) && Number.isFinite(now) ? now - was : null;",
+    "new": "  return typeof was === 'number' && Number.isFinite(was) && Number.isFinite(now) ? was - now : null;",
     "tests": [
       "test/scenes/seat_standing_festival.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "STANDING-TREND-steady-as-up",
     "file": "src/net/townSeatLaw.js",
-    "old": "${trend > 0 ? `up ${trend}`",
-    "new": "${trend >= 0 ? `up ${trend}`",
+    "old": "  return `, ${trend > 0 ? `up ${trend}` : trend < 0 ? `down ${0 - trend}` : 'steady'} since the last Turning`;",
+    "new": "  return `, ${trend >= 0 ? `up ${trend}` : trend < 0 ? `down ${0 - trend}` : 'steady'} since the last Turning`;",
     "tests": [
       "test/scenes/seat_standing_festival.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "STANDING-TREND-line-bare",
     "file": "src/net/townSeatLaw.js",
-    "old": "Standing ${holder.standing}${standingTrendWords(standingTrend(holder))}.",
-    "new": "Standing ${holder.standing}.",
+    "old": "    ? `Held by ${guildWords(holder.guild)} since ${seatWeekName(holder.since)}. Standing ${holder.standing}${standingTrendWords(standingTrend(holder))}.`",
+    "new": "    ? `Held by ${guildWords(holder.guild)} since ${seatWeekName(holder.since)}. Standing ${holder.standing}.`",
     "tests": [
       "test/scenes/seat_standing_festival.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "FESTIVAL-STAGE-any-edict",
     "file": "src/net/townSeatLaw.js",
-    "old": "seat?.holder?.edict === 'festival'",
-    "new": "seat?.holder?.edict != null",
+    "old": "export const festivalRules = (seat) => seat?.holder?.edict === 'festival';",
+    "new": "export const festivalRules = (seat) => seat?.holder?.edict != null;",
     "tests": [
       "test/scenes/seat_standing_festival.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "S1-read-week-unchecked",
     "file": "src/net/townSeatBook.js",
-    "old": " && seatWeekOf(at) === seatWeekOf(nowMs())) return",
-    "new": ") return",
+    "old": "    if (!force && nowMs() - at < SEAT_LIST_CACHE_MS && seatWeekOf(at) === seatWeekOf(nowMs()))",
+    "new": "    if (!force && nowMs() - at < SEAT_LIST_CACHE_MS)",
     "tests": [
       "test/scenes/seat_standing_festival.test.js"
     ],
@@ -201,8 +201,8 @@
   {
     "name": "S1-redtick-no-week-reread",
     "file": "src/net/townSeatBook.js",
-    "old": "      else if (!pending && open === true && seatWeekOf(at) !== seatWeekOf(nowMs() - turnSpreadMs)) read({ force: true });\n",
-    "new": "",
+    "old": "      else if (!pending && open === true && seatWeekOf(at) !== seatWeekOf(nowMs() - turnSpreadMs))\n        read({ force: true });\n    },",
+    "new": "    },",
     "tests": [
       "test/scenes/seat_standing_festival.test.js"
     ],
@@ -211,8 +211,8 @@
   {
     "name": "S1-redtick-every-frame",
     "file": "src/net/townSeatBook.js",
-    "old": "seatWeekOf(at) !== seatWeekOf(nowMs() - turnSpreadMs)) read({ force: true });",
-    "new": "seatWeekOf(at) <= seatWeekOf(nowMs() - turnSpreadMs)) read({ force: true });",
+    "old": "      else if (!pending && open === true && seatWeekOf(at) !== seatWeekOf(nowMs() - turnSpreadMs))\n        read({ force: true });",
+    "new": "      else if (!pending && open === true && seatWeekOf(at) <= seatWeekOf(nowMs() - turnSpreadMs)) read({ force: true });",
     "tests": [
       "test/scenes/seat_standing_festival.test.js"
     ],
@@ -221,8 +221,8 @@
   {
     "name": "S1-redtick-open-gate",
     "file": "src/net/townSeatBook.js",
-    "old": "else if (!pending && open === true && seatWeekOf",
-    "new": "else if (!pending && seatWeekOf",
+    "old": "      else if (!pending && open === true && seatWeekOf(at) !== seatWeekOf(nowMs() - turnSpreadMs))\n        read({ force: true });",
+    "new": "      else if (!pending && seatWeekOf(at) !== seatWeekOf(nowMs() - turnSpreadMs)) read({ force: true });",
     "tests": [
       "test/scenes/seat_standing_festival.test.js"
     ],

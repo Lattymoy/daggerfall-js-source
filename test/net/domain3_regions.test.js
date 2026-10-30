@@ -343,7 +343,7 @@ test('DOMAIN3 THE BOOK: a holding dressed in its Charter as the list says it; a 
   sent.length = 0;
   await plain.witness(ANTICLERE);
   assert.deepEqual(sent, [[ANTICLERE.key, undefined]], 'no seat of power derived: the seat alone');
-  assert.match(src('src/net/townSeatBook.js'), /seats = null, isSeatPixel = seats \? seatPixelTest\(seats\) : \(\) => false,/);
+  assert.match(src('src/net/townSeatBook.js'), /seats = null,\n\s*isSeatPixel = seats \? seatPixelTest\(seats\) : \(\) => false,/);
   assert.match(src('src/scenes/world.js'), /      seats: townSeats,   \/\/ DOMAIN1 \(HOST-SPLIT\)/);
   assert.match(src('src/net/accountClient.js'), /witness: \(seat, domain = undefined\) => post\('\/v1\/seats\/witness', \{ seat, \.\.\.\(domain \? \{ domain \} : \{\}\) \}\),/);
 });
@@ -359,7 +359,7 @@ test('DOMAIN3 THE WORDS AND THE MAP: a seat of power\'s Charter named for its re
   assert.equal(seatInfoLine(town, null), 'Ripmore, in the Charter of Anticlere: held by Silver Hand <SH>');
   // AUDIT DOMAINS C2: the seat's own line through the text core whole, its English as it was
   assert.deepEqual([seatInfoLine(charter, SH), seatInfoLine(charter, null)], ['The Charter of Anticlere: held by Silver Hand <SH>', 'The Charter of Anticlere: unheld']);
-  assert.match(src('src/net/townSeatLaw.js'), /return holder \? t\('seat\.info\.held', '\{charter\}: held by \{guild\}', \{ charter, guild: guildWords\(holder\) \}\) : t\('seat\.info\.unheld', '\{charter\}: unheld', \{ charter \}\);/);
+  assert.match(src('src/net/townSeatLaw.js'), /return holder\n\s*\? t\('seat\.info\.held', '\{charter\}: held by \{guild\}', \{ charter, guild: guildWords\(holder\) \}\)\n\s*: t\('seat\.info\.unheld', '\{charter\}: unheld', \{ charter \}\);/);
   assert.equal(seatMapMark(town).fill, seatMapMark(charter).fill);
   assert.notEqual(seatMapMark(town).fill, null);
   assert.equal(bailiwickOf(LISTED, 21, RIPMORE.pixel).key, ANTICLERE.key, 'the holding skipped');

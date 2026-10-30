@@ -57,8 +57,8 @@
   {
     "name": "WW7-3-a-province-a-tide-s-land",
     "file": "src/net/tideLaw.js",
-    "old": "const k = kingdomOf(region); return k && TIDE_LANDS.includes(k) ? k :",
-    "new": "const k = kingdomOf(region); return k ? k :",
+    "old": "  return k && TIDE_LANDS.includes(k) ? k : isMarch(region) ? 'marches' : isFreeLand(region) ? 'free' : null;",
+    "new": "  return k ? k : isMarch(region) ? 'marches' : isFreeLand(region) ? 'free' : null;",
     "tests": [
       "test/world/worldWide/ww7_seats.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "WW7-3-the-regions-the-bay-s",
     "file": "src/net/townSeatLaw.js",
-    "old": "r >= 0 && r < REGION_NAMES.length;",
-    "new": "r >= 0 && r < BAY_REGION_COUNT;",
+    "old": "export const seatRegionOk = (r) => Number.isSafeInteger(r) && r >= 0 && r < REGION_NAMES.length;",
+    "new": "export const seatRegionOk = (r) => Number.isSafeInteger(r) && r >= 0 && r < BAY_REGION_COUNT;",
     "tests": [
       "test/world/worldWide/ww7_seats.test.js"
     ]
@@ -318,8 +318,8 @@
   {
     "name": "WW7-5-the-watch-the-bay-s",
     "file": "src/net/watchReceipt.js",
-    "old": "Number.isSafeInteger(y) && worldPixelOk(x) && worldPixelOk(y)\n",
-    "new": "Number.isSafeInteger(y) && x >= 0 && x < 1000 && y >= 0 && y < 500\n",
+    "old": "  worldPixelOk(x) &&\n  worldPixelOk(y) &&",
+    "new": "  x >= 0 &&\n  x < 1000 &&\n  y >= 0 &&\n  y < 500 &&",
     "tests": [
       "test/server/ww7_books.test.js"
     ]
@@ -336,8 +336,8 @@
   {
     "name": "WW7-5-a-maps-id-past-the-bay",
     "file": "src/net/townEconLaw.js",
-    "old": "townPixelIdOf(map) < TOWN_PLACE_ID_MIN || ",
-    "new": "",
+    "old": "    if (\n      !grid(px) ||\n      !grid(py) ||\n      townPixelIdOf(map) < TOWN_PLACE_ID_MIN ||\n      !Number.isSafeInteger(location) ||\n      location >= 0 ||\n      location < -0x7fffffff\n    )",
+    "new": "    if (!grid(px) || !grid(py) || !Number.isSafeInteger(location) || location >= 0 || location < -0x7fffffff)",
     "tests": [
       "test/server/ww7_books.test.js"
     ]
@@ -345,8 +345,8 @@
   {
     "name": "WW7-5-a-bay-location-past-it",
     "file": "src/net/townEconLaw.js",
-    "old": "!Number.isSafeInteger(location) || location >= 0 ||",
-    "new": "!Number.isSafeInteger(location) ||",
+    "old": "      location >= 0 ||\n      location < -0x7fffffff",
+    "new": "      location < -0x7fffffff",
     "tests": [
       "test/server/ww7_books.test.js"
     ]

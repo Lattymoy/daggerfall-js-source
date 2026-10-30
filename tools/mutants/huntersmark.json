@@ -238,8 +238,8 @@
   {
     "name": "HUNTERS-MARK-law-hunt-uncapped",
     "file": "src/net/townSeatLaw.js",
-    "old": "const b = Math.min(HUNT_WEEK_CAP, amountOf(hunt));",
-    "new": "const b = amountOf(hunt);",
+    "old": "  const b = Math.min(HUNT_WEEK_CAP, amountOf(hunt)); // HUNTERS-MARK: the boards' clears, a week's 250",
+    "new": "  const b = amountOf(hunt); // HUNTERS-MARK: the boards' clears, a week's 250",
     "tests": [
       "test/server/huntersmark_service.test.js"
     ]

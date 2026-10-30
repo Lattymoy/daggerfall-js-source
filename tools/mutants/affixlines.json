@@ -202,8 +202,8 @@
   {
     "name": "REFORGE-REPLACE-the-essence-flat",
     "file": "src/net/temperLaw.js",
-    "old": "  (tier === 'magic' || tier === 'rare') && Number.isSafeInteger(count) && count >= 0 && count <= REFORGES_MAX ? REFORGE_ESSENCE[tier] * 2 ** count : null);",
-    "new": "  (tier === 'magic' || tier === 'rare') && Number.isSafeInteger(count) && count >= 0 && count <= REFORGES_MAX ? REFORGE_ESSENCE[tier] : null);",
+    "old": "    ? REFORGE_ESSENCE[tier] * 2 ** count",
+    "new": "    ? REFORGE_ESSENCE[tier]",
     "tests": [
       "test/net/craft4_temper.test.js",
       "test/systems/affixlines_reforge.test.js"
@@ -212,8 +212,8 @@
   {
     "name": "REFORGE-REPLACE-the-essence-unbounded",
     "file": "src/net/temperLaw.js",
-    "old": "  (tier === 'magic' || tier === 'rare') && Number.isSafeInteger(count) && count >= 0 && count <= REFORGES_MAX ? REFORGE_ESSENCE[tier] * 2 ** count : null);",
-    "new": "  (tier === 'magic' || tier === 'rare') && Number.isSafeInteger(count) && count >= 0 ? REFORGE_ESSENCE[tier] * 2 ** count : null);",
+    "old": "  (tier === 'magic' || tier === 'rare') && Number.isSafeInteger(count) && count >= 0 && count <= REFORGES_MAX",
+    "new": "  (tier === 'magic' || tier === 'rare') && Number.isSafeInteger(count) && count >= 0",
     "tests": [
       "test/net/craft4_temper.test.js"
     ]

@@ -102,6 +102,6 @@ test('AUDIT COMPASS-PARTY C4 + C6: a concealed mate is no compass mark (the lead
 test('AUDIT TRADE-FIT D1: the wire names the revision\'s bound the offer is measured by, and the session measures the commit with it (driven in tradeinfo.test.js) (mutants: the frame alone)', () => {
   assert.equal(TRADE_REV_MAX, 1_000_000);
   const T = src('src/net/tradeSession.js');
-  assert.match(T, /export const tradeCommitBytes = \(\{ items, g, to, s, r \}\) => JSON\.stringify\(\{ to, k: 'commit', s, r, o: TRADE_REV_MAX, items, g \}\)\.length;/);
-  assert.match(T, /\|\| tradeCommitBytes\(\{ items: wired, g, to: this\.peer, s: this\.sid, r: this\.rev \+ 1 \}\) > TRADE_DATA_MAX\) \{/);
+  assert.match(T, /export const tradeCommitBytes = \(\{ items, g, to, s, r \}\) =>\n\s*JSON\.stringify\(\{ to, k: 'commit', s, r, o: TRADE_REV_MAX, items, g \}\)\.length;/);
+  assert.match(T, /\|\|\n\s*tradeCommitBytes\(\{ items: wired, g, to: this\.peer, s: this\.sid, r: this\.rev \+ 1 \}\) > TRADE_DATA_MAX\n\s*\) \{/);
 });

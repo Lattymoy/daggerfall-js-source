@@ -142,7 +142,7 @@
   {
     "name": "R2-7-province-unlisted",
     "file": "src/net/staffPlaces.js",
-    "old": "  if (region !== null && isProvinceRegion(region)) return provincePlaces(maps, region, places);   // AUDIT RELEASE R2-7",
+    "old": "  if (region !== null && isProvinceRegion(region)) return provincePlaces(maps, region, places); // AUDIT RELEASE R2-7",
     "new": "",
     "tests": [
       "test/world/worldWide/auditrelease_r2_gaps.test.js"
@@ -152,8 +152,8 @@
   {
     "name": "R2-7-offered-as-town",
     "file": "src/net/staffPlaces.js",
-    "old": "    const loc = kind === 'town' && Number.isSafeInteger(p?.location) && p.location < -1 ? p.location : -1;",
-    "new": "    const loc = 0;",
+    "old": "    const loc = kind === 'town' && Number.isSafeInteger(p?.location) && p.location < -1 ? p.location : -1; // WW6: a town past the Bay by its own index",
+    "new": "    const loc = 0; // WW6: a town past the Bay by its own index",
     "tests": [
       "test/world/worldWide/auditrelease_r2_gaps.test.js"
     ],

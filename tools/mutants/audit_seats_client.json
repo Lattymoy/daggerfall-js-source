@@ -471,8 +471,8 @@
   {
     "name": "AUDITSEATS-C9-generation-kept",
     "file": "src/net/townSeatBook.js",
-    "old": "if (r?.ok) { if (gen === standingsAt.gen) standingsAt.set(key",
-    "new": "if (r?.ok) { if (true) standingsAt.set(key",
+    "old": "        if (gen === standingsAt.gen) standingsAt.set(key, { at: nowMs(), data: r.data });",
+    "new": "        if (true) standingsAt.set(key, { at: nowMs(), data: r.data });",
     "tests": [
       "test/net/audit_seats_client.test.js"
     ]
@@ -480,8 +480,8 @@
   {
     "name": "AUDITSEATS-C9-generation-moves",
     "file": "src/net/townSeatBook.js",
-    "old": "  clear() { this.gen++; super.clear(); }",
-    "new": "  clear() { super.clear(); }",
+    "old": "    this.gen++;\n    super.clear();",
+    "new": "    super.clear();",
     "tests": [
       "test/net/audit_seats_client.test.js"
     ]
@@ -489,8 +489,8 @@
   {
     "name": "AUDITSEATS-C10-closed-settles",
     "file": "src/net/townSeatBook.js",
-    "old": "['bad-watch', 'seats-need-account', 'seats-closed', 'progress-seat', 'trade-held']",
-    "new": "['bad-watch', 'seats-need-account', 'progress-seat', 'trade-held']",
+    "old": "const WATCH_SETTLED = Object.freeze(['bad-watch', 'seats-need-account', 'seats-closed', 'progress-seat', 'trade-held']); // INT16: a tab not seated here, or a character whose trade is held, is owed no tick",
+    "new": "const WATCH_SETTLED = Object.freeze(['bad-watch', 'seats-need-account', 'progress-seat', 'trade-held']); // INT16: a tab not seated here, or a character whose trade is held, is owed no tick",
     "tests": [
       "test/net/audit_seats_client.test.js"
     ]
@@ -498,8 +498,8 @@
   {
     "name": "AUDITSEATS-C10-session-keeps",
     "file": "src/net/townSeatBook.js",
-    "old": "const settled = r?.ok || WATCH_SETTLED.includes(r?.error);",
-    "new": "const settled = r?.ok || WATCH_SETTLED.includes(r?.error) || SHUT.includes(r?.error);",
+    "old": "      const settled = r?.ok || WATCH_SETTLED.includes(r?.error); // AUDIT-SEATS C10: a session run out keeps them",
+    "new": "      const settled = r?.ok || WATCH_SETTLED.includes(r?.error) || SHUT.includes(r?.error); // AUDIT-SEATS C10: a session run out keeps them",
     "tests": [
       "test/net/audit_seats_client.test.js",
       "test/net/seat1b_client.test.js"
@@ -544,8 +544,8 @@
   {
     "name": "AUDITSEATS-C12-due-open",
     "file": "src/net/townSeatBook.js",
-    "old": "      if (watchBusy || open !== true || nowMs() < watchRetryAt) return false;   // STORM-SHED: a failed claim's wait\n      const list = watchHeld()",
-    "new": "      if (watchBusy || nowMs() < watchRetryAt) return false;   // STORM-SHED: a failed claim's wait\n      const list = watchHeld()",
+    "old": "      if (watchBusy || open !== true || nowMs() < watchRetryAt) return false; // STORM-SHED: a failed claim's wait",
+    "new": "      if (watchBusy || nowMs() < watchRetryAt) return false; // STORM-SHED: a failed claim's wait",
     "tests": [
       "test/net/audit_seats_client.test.js"
     ]
@@ -553,8 +553,8 @@
   {
     "name": "AUDITSEATS-C12-due-worth",
     "file": "src/net/townSeatBook.js",
-    "old": "(n >= SEAT_WATCH_CLAIM_MAX ||",
-    "new": "(false ||",
+    "old": "      return (\n        n > 0 &&\n        (n >= SEAT_WATCH_CLAIM_MAX || (t == null ? nowMs() : t * 1000) - oldest * 1000 >= SEAT_WATCH_CLAIM_EVERY_MS)\n      );",
+    "new": "      return n > 0 && (false || (t == null ? nowMs() : t * 1000) - oldest * 1000 >= SEAT_WATCH_CLAIM_EVERY_MS);",
     "tests": [
       "test/net/audit_seats_client.test.js"
     ]
@@ -562,8 +562,8 @@
   {
     "name": "AUDITSEATS-C12-due-ten-minutes",
     "file": "src/net/townSeatBook.js",
-    "old": "- oldest * 1000 >= SEAT_WATCH_CLAIM_EVERY_MS);",
-    "new": "- oldest * 1000 >= 0);",
+    "old": "      return (\n        n > 0 &&\n        (n >= SEAT_WATCH_CLAIM_MAX || (t == null ? nowMs() : t * 1000) - oldest * 1000 >= SEAT_WATCH_CLAIM_EVERY_MS)\n      );",
+    "new": "      return n > 0 && (n >= SEAT_WATCH_CLAIM_MAX || (t == null ? nowMs() : t * 1000) - oldest * 1000 >= 0);",
     "tests": [
       "test/net/audit_seats_client.test.js"
     ]

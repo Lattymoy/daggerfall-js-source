@@ -22,8 +22,8 @@
   {
     "name": "TOWNECON2-days",
     "file": "src/net/townEconLaw.js",
-    "old": "if (!(age >= 0 && age < TOWN_ECON_DAYS) || !w || !(n > 0)) continue;",
-    "new": "if (!(age >= 0 && age <= TOWN_ECON_DAYS) || !w || !(n > 0)) continue;",
+    "old": "    if (!(age >= 0 && age < TOWN_ECON_DAYS) || !w || !(n > 0)) continue;",
+    "new": "    if (!(age >= 0 && age <= TOWN_ECON_DAYS) || !w || !(n > 0)) continue;",
     "tests": [
       "test/systems/townecon.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "TOWNECON2-share-most",
     "file": "src/net/townEconLaw.js",
-    "old": ": a === Infinity ? TOWN_PLAYERS_MAX : 0);",
-    "new": ": 0);",
+    "old": "  a > 0 && Number.isFinite(a) ? (TOWN_PLAYERS_MAX * a) / (a + TOWN_ECON_HALF) : a === Infinity ? TOWN_PLAYERS_MAX : 0;",
+    "new": "  a > 0 && Number.isFinite(a) ? (TOWN_PLAYERS_MAX * a) / (a + TOWN_ECON_HALF) : 0;",
     "tests": [
       "test/systems/townecon.test.js"
     ],
@@ -262,8 +262,8 @@
   {
     "name": "TOWNECON2-book-unstopped",
     "file": "src/net/townEconBook.js",
-    "old": "      } else if (TOWN_ECON_STOPS.includes(r?.error)) { stopped = true; heard = true; shares = new Map(); }",
-    "new": "      }",
+    "old": "          } else if (TOWN_ECON_STOPS.includes(r?.error)) {\n            stopped = true;\n            heard = true;\n            shares = new Map();\n          }",
+    "new": "          }",
     "tests": [
       "test/net/townecon_client.test.js"
     ],
@@ -272,8 +272,8 @@
   {
     "name": "TOWNECON2-book-keep-anywhere",
     "file": "src/net/townEconBook.js",
-    "old": "      if (!isTownPixel(c.x, c.y)) return false;\n",
-    "new": "",
+    "old": "      if (!isTownPixel(c.x, c.y)) return false;\n      if (fullAt.get(`${c.x},${c.y}`) === dayNow()) return false; // AUDIT TOWN-ECON 2 SVC-5: its footsteps full today",
+    "new": "      if (fullAt.get(`${c.x},${c.y}`) === dayNow()) return false; // AUDIT TOWN-ECON 2 SVC-5: its footsteps full today",
     "tests": [
       "test/net/townecon_client.test.js"
     ],
@@ -312,7 +312,7 @@
   {
     "name": "TOWNECON2-book-witness-done",
     "file": "src/net/townEconBook.js",
-    "old": "    const done = r?.ok && (r.data?.confirmed === true || r.data?.why === 'known' || r.data?.why === 'struck' || (r.data?.counted === true && r.data?.why !== 'taken'));",
+    "old": "    const done =\n      r?.ok &&\n      (r.data?.confirmed === true ||\n        r.data?.why === 'known' ||\n        r.data?.why === 'struck' ||\n        (r.data?.counted === true && r.data?.why !== 'taken'));",
     "new": "    const done = r?.ok && r.data?.why === 'never';",
     "tests": [
       "test/net/townecon_client.test.js"

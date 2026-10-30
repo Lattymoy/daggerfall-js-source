@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-SEATS2-L1-cap-unpassed",
     "file": "src/net/townSeatLaw.js",
-    "old": "const t = titheCap == null ? titheStanding(tier, tithe) : titheStanding(tier, tithe, titheCap);",
-    "new": "const t = titheStanding(tier, tithe);",
+    "old": "  const t = titheCap == null ? titheStanding(tier, tithe) : titheStanding(tier, tithe, titheCap); // AUDIT SEATS-2 L1: the Market Hall's cap",
+    "new": "  const t = titheStanding(tier, tithe); // AUDIT SEATS-2 L1: the Market Hall's cap",
     "tests": [
       "test/net/audit_seats2.test.js"
     ]
@@ -12,7 +12,7 @@
     "name": "AUDIT-SEATS2-L1-cap-param",
     "file": "src/net/townSeatLaw.js",
     "old": "export function titheStanding(tier, pct, cap = TITHE_CAP[tier] ?? 0) {",
-    "new": "export function titheStanding(tier, pct, _cap = TITHE_CAP[tier] ?? 0) { const cap = TITHE_CAP[tier] ?? 0;",
+    "new": "export function titheStanding(tier, pct, _cap = TITHE_CAP[tier] ?? 0) {\n  const cap = TITHE_CAP[tier] ?? 0;",
     "tests": [
       "test/net/audit_seats2.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-SEATS2-L1-seat-cap",
     "file": "src/net/townSeatLaw.js",
-    "old": "marketHallTitheCap(TITHE_CAP[seat?.tier] ?? 0, seat?.forts?.market ?? 0);",
-    "new": "marketHallTitheCap(TITHE_CAP[seat?.tier] ?? 0, 0);",
+    "old": "export const seatTitheCap = (seat) => marketHallTitheCap(TITHE_CAP[seat?.tier] ?? 0, seat?.forts?.market ?? 0);",
+    "new": "export const seatTitheCap = (seat) => marketHallTitheCap(TITHE_CAP[seat?.tier] ?? 0, 0);",
     "tests": [
       "test/net/audit_seats2.test.js"
     ]

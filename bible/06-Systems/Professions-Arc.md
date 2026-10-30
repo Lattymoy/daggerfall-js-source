@@ -6567,7 +6567,7 @@ possible. No exceptions and no band aids." The decisions below are the record's,
 ### 57.1 What stood
 
 - Crafting stopped at Rare: a Superior rolled Magic, a Masterwork Rare (`recipeLaw.js:"Object.freeze({ condition: 1.3, weight: 0.9, rarity: 'rare' })"`).
-  Tempering and the Reforge with Essence are shut for Legendary and above (`temperLaw.js:"export const TEMPER_SHUT = Object.freeze(['legendary', 'aetheric', 'artifact', 'gilded']);"`).
+  Tempering and the Reforge with Essence are shut for Legendary and above (`temperLaw.js:"export const TEMPER_SHUT"`).
 
 - Law 7 (section 1) and 41.1 said it outright: a crafted piece is never the best a slot holds. The Legendary band came
   only from drops.

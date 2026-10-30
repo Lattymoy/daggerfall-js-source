@@ -40,26 +40,40 @@ export const WED_INCOMING_MAX = 4;
 /** Why a proposal came to nothing, in words (net/wire.js WED_WHY). `name` the other player. */
 export function wedWhyText(why, name = 'They') {
   switch (why) {
-    case 'declined': return `${name} declined your proposal.`;
-    case 'busy': return `${name} cannot answer a proposal now.`;
-    case 'temple': return 'Weddings take place in a temple. Both of you must stand inside one.';
-    case 'house': return 'Only characters who belong to a house (Project Legacy) can wed in the realm.';
-    case 'wed': return `${name} is wed already.`;
-    case 'timeout': return 'No answer came, and the proposal lapsed.';
-    case 'cancelled': return `${name} took the proposal back.`;
-    case 'refused': return 'The temple could not record the wedding.';
-    default: return 'The wedding did not happen.';
+    case 'declined':
+      return `${name} declined your proposal.`;
+    case 'busy':
+      return `${name} cannot answer a proposal now.`;
+    case 'temple':
+      return 'Weddings take place in a temple. Both of you must stand inside one.';
+    case 'house':
+      return 'Only characters who belong to a house (Project Legacy) can wed in the realm.';
+    case 'wed':
+      return `${name} is wed already.`;
+    case 'timeout':
+      return 'No answer came, and the proposal lapsed.';
+    case 'cancelled':
+      return `${name} took the proposal back.`;
+    case 'refused':
+      return 'The temple could not record the wedding.';
+    default:
+      return 'The wedding did not happen.';
   }
 }
 
 /** Why I cannot wed now, in words - my own side of WED_WHY (the Inspect card's reason, and a yes that came too late). */
 export function wedMineText(why) {
   switch (why) {
-    case 'house': return 'Only a character who belongs to a house (Project Legacy) can wed in the realm.';
-    case 'wed': return 'You are wed already.';
-    case 'temple': return 'Weddings take place in a temple. Stand inside one together.';
-    case 'busy': return 'Not now.';
-    default: return 'The wedding did not happen.';
+    case 'house':
+      return 'Only a character who belongs to a house (Project Legacy) can wed in the realm.';
+    case 'wed':
+      return 'You are wed already.';
+    case 'temple':
+      return 'Weddings take place in a temple. Stand inside one together.';
+    case 'busy':
+      return 'Not now.';
+    default:
+      return 'The wedding did not happen.';
   }
 }
 
@@ -82,25 +96,48 @@ export function wedMineText(why) {
  * @param {() => number} [o.rand]
  */
 export function createWedManager({
-  send, now = () => Date.now(), say = () => {}, peerName = () => null, selfId = () => '', can = () => null,
-  peerCan = () => true, half, onPrompt = () => {}, onUnprompt = () => {}, onWed = () => {}, refusalText = () => wedWhyText('refused'),
+  send,
+  now = () => Date.now(),
+  say = () => {},
+  peerName = () => null,
+  selfId = () => '',
+  can = () => null,
+  peerCan = () => true,
+  half,
+  onPrompt = () => {},
+  onUnprompt = () => {},
+  onWed = () => {},
+  refusalText = () => wedWhyText('refused'),
   rand = Math.random,
 }) {
   /** @type {{ peer: string, s: string, at: number } | null} */
-  let outgoing = null;                 // my proposal
+  let outgoing = null; // my proposal
   /** @type {Map<string, { s: string, at: number, sub: string|null, sc: string|null }>} */
-  const incoming = new Map();          // proposals at me, by peer
+  const incoming = new Map(); // proposals at me, by peer
   /** @type {Map<string, number>} */
-  const quiet = new Map();             // peer -> when I last declined them (or their proposal lapsed on me)
+  const quiet = new Map(); // peer -> when I last declined them (or their proposal lapsed on me)
   /** @type {{ peer: string, s: string, at: number, sub: string|null, sc: string|null, posting: boolean, asked: boolean } | null} */
-  let waiting = null;                  // I said yes (or am saying it): the asker's half, and its `done`, are owed
+  let waiting = null; // I said yes (or am saying it): the asker's half, and its `done`, are owed
   /** @type {{ peer: string, s: string } | null} */
-  let closing = null;                  // they said yes: my half is on its way to the account service
+  let closing = null; // they said yes: my half is on its way to the account service
   /** @type {{ peer: string, s: string, sub: string|null, sc: string|null } | null} */
-  let lapsed = null;                   // a wedding I was told did not happen, whose half's withdraw never landed
+  let lapsed = null; // a wedding I was told did not happen, whose half's withdraw never landed
   const nameOf = (id) => peerName(id) ?? 'Someone';
-  const mint = () => { let s = ''; while (s.length < 10) s += rand().toString(36).slice(2); return s.slice(0, 10).replace(/[^a-z0-9]/gi, '0').padEnd(10, '0'); };
-  const once = (data) => { try { return send(data) === true; } catch { return false; } };
+  const mint = () => {
+    let s = '';
+    while (s.length < 10) s += rand().toString(36).slice(2);
+    return s
+      .slice(0, 10)
+      .replace(/[^a-z0-9]/gi, '0')
+      .padEnd(10, '0');
+  };
+  const once = (data) => {
+    try {
+      return send(data) === true;
+    } catch {
+      return false;
+    }
+  };
   /** An answer I owe nobody's wedding goes out at most once a peer each WED_REASK_MS (the duel's AUDIT DUEL1 A3): every
    *  answer spends my own outgoing budget, so a stranger's flood of proposals must not spend it for me. */
   const answered = new Map();
@@ -111,7 +148,9 @@ export function createWedManager({
     answered.set(peer, t);
     return once(frame);
   };
-  const changed = () => { mgr.onChange?.(); };
+  const changed = () => {
+    mgr.onChange?.();
+  };
   /** The union, recorded once a sid (the done and my own ask of the service may both land). */
   let recorded = '';
   const wedNow = (union, peer) => {
@@ -123,23 +162,42 @@ export function createWedManager({
    *  landed keeps the wedding `lapsed`, for a late `done`. */
   const withdrawHalf = async (/** @type {{ peer: string, s: string, sub: string|null, sc: string|null }} */ w) => {
     let r;
-    try { r = await half(w.s, w.sub ?? '', w.sc ?? '', { withdraw: true }); } catch { r = { ok: false, error: 'offline' }; }
+    try {
+      r = await half(w.s, w.sub ?? '', w.sc ?? '', { withdraw: true });
+    } catch {
+      r = { ok: false, error: 'offline' };
+    }
     if (!r?.ok) lapsed = { peer: w.peer, s: w.s, sub: w.sub, sc: w.sc };
     else if (lapsed?.s === w.s) lapsed = null;
     return r;
   };
   /** My half taken back, out of the player's way: a union that stood first is recorded (and `onWedded`). */
   const takeBack = (w, onWedded = () => {}) => {
-    void withdrawHalf(w).then((r) => { if (r?.ok && r.wed) { wedNow(r.union, w.peer); onWedded(); changed(); } });
+    void withdrawHalf(w).then((r) => {
+      if (r?.ok && r.wed) {
+        wedNow(r.union, w.peer);
+        onWedded();
+        changed();
+      }
+    });
   };
   /** My yes, asked of the service (the done arrived, or it never did): the union if the service made it - and my half
    *  withdrawn if it did not, so "the wedding did not happen" stays true. */
   const askAgain = async (w) => {
     const r = await withdrawHalf(w);
-    if (r?.ok && r.wed) { if (waiting === w) waiting = null; wedNow(r.union, w.peer); changed(); return; }   // recorded whatever came meanwhile
+    if (r?.ok && r.wed) {
+      if (waiting === w) waiting = null;
+      wedNow(r.union, w.peer);
+      changed();
+      return;
+    } // recorded whatever came meanwhile
     if (waiting !== w) return;
     waiting = null;
-    say(r?.ok ? `${nameOf(w.peer)}'s answer never reached the temple. The wedding did not happen.` : refusalText(r?.error ?? 'server'));
+    say(
+      r?.ok
+        ? `${nameOf(w.peer)}'s answer never reached the temple. The wedding did not happen.`
+        : refusalText(r?.error ?? 'server'),
+    );
     changed();
   };
 
@@ -157,7 +215,7 @@ export function createWedManager({
      *  on its prompt (`why: 'incoming'` - the host shows it again). */
     request(/** @type {string} */ peer) {
       const st = mgr.stateFor(peer);
-      if (st === 'incoming') return { ok: false, why: 'incoming' };   // answered on its prompt (the host asks it again)
+      if (st === 'incoming') return { ok: false, why: 'incoming' }; // answered on its prompt (the host asks it again)
       if (st !== 'none') return { ok: false, why: st === 'outgoing' ? 'sent' : 'busy' };
       const no = can();
       if (no) return { ok: false, why: no };
@@ -174,33 +232,67 @@ export function createWedManager({
       const a = incoming.get(peer);
       if (!a || waiting || closing) return { ok: false, why: 'gone' };
       const no = can();
-      if (no) { incoming.delete(peer); once({ k: 'no', to: peer, s: a.s, why: no }); changed(); return { ok: false, why: no }; }
+      if (no) {
+        incoming.delete(peer);
+        once({ k: 'no', to: peer, s: a.s, why: no });
+        changed();
+        return { ok: false, why: no };
+      }
       // the relay's stamps of who asked - their account and the character they stand as (O1); an older relay stamps neither
-      if (!a.sub || !a.sc) { incoming.delete(peer); once({ k: 'no', to: peer, s: a.s, why: 'refused' }); changed(); return { ok: false, why: 'refused' }; }
+      if (!a.sub || !a.sc) {
+        incoming.delete(peer);
+        once({ k: 'no', to: peer, s: a.s, why: 'refused' });
+        changed();
+        return { ok: false, why: 'refused' };
+      }
       incoming.delete(peer);
-      for (const [p, x] of incoming) once({ k: 'no', to: p, s: x.s, why: 'busy' });   // a yes answers every other proposal at me
+      for (const [p, x] of incoming) once({ k: 'no', to: p, s: x.s, why: 'busy' }); // a yes answers every other proposal at me
       for (const p of incoming.keys()) onUnprompt(p);
       incoming.clear();
-      if (outgoing) { once({ k: 'no', to: outgoing.peer, s: outgoing.s, why: 'cancelled' }); outgoing = null; }
+      if (outgoing) {
+        once({ k: 'no', to: outgoing.peer, s: outgoing.s, why: 'cancelled' });
+        outgoing = null;
+      }
       const w = { peer, s: a.s, at: now(), sub: a.sub, sc: a.sc, posting: true, asked: false };
       waiting = w;
       changed();
       let r;
-      try { r = await half(a.s, a.sub, a.sc); } catch { r = { ok: false, error: 'offline' }; }
+      try {
+        r = await half(a.s, a.sub, a.sc);
+      } catch {
+        r = { ok: false, error: 'offline' };
+      }
       // taken back while my half was on its way (their `no`): withdrawn now that it has landed - after it, never racing it
-      if (waiting !== w) { if (r?.ok && r.wed) { wedNow(r.union, peer); changed(); } else takeBack(w); return { ok: false, why: 'cancelled' }; }
+      if (waiting !== w) {
+        if (r?.ok && r.wed) {
+          wedNow(r.union, peer);
+          changed();
+        } else takeBack(w);
+        return { ok: false, why: 'cancelled' };
+      }
       if (!r?.ok) {
         waiting = null;
-        takeBack(w);   // a refusal wrote nothing - but an answer lost on the way may have written it
+        takeBack(w); // a refusal wrote nothing - but an answer lost on the way may have written it
         once({ k: 'no', to: peer, s: a.s, why: 'refused' });
         say(refusalText(r?.error ?? 'server'));
         changed();
         return { ok: false, why: 'refused' };
       }
-      if (r.wed) { waiting = null; wedNow(r.union, peer); changed(); return { ok: true }; }   // their half was there first (crossed proposals)
+      if (r.wed) {
+        waiting = null;
+        wedNow(r.union, peer);
+        changed();
+        return { ok: true };
+      } // their half was there first (crossed proposals)
       w.posting = false;
       w.at = now();
-      if (!once({ k: 'yes', to: peer, s: a.s })) { waiting = null; takeBack(w); say(`${nameOf(peer)} could not be reached.`); changed(); return { ok: false, why: 'link' }; }
+      if (!once({ k: 'yes', to: peer, s: a.s })) {
+        waiting = null;
+        takeBack(w);
+        say(`${nameOf(peer)} could not be reached.`);
+        changed();
+        return { ok: false, why: 'link' };
+      }
       say(`You said yes to ${nameOf(peer)}. The priest waits on their word.`);
       changed();
       return { ok: true };
@@ -225,68 +317,114 @@ export function createWedManager({
     },
     /** A frame from `from`, projected and addressed to me; `sub` the sender's account and `sc` their realm character, as
      *  the relay stamped them. */
-    onFrame(/** @type {string} */ from, /** @type {any} */ d, /** @type {string|null} */ sub = null, /** @type {string|null} */ sc = null) {
+    onFrame(
+      /** @type {string} */ from,
+      /** @type {any} */ d,
+      /** @type {string|null} */ sub = null,
+      /** @type {string|null} */ sc = null,
+    ) {
       if (!d || typeof d.k !== 'string') return;
       switch (d.k) {
         case 'ask': {
-          if (waiting || closing) { if ((waiting ?? closing)?.peer !== from) answer(from, { k: 'no', to: from, s: d.s, why: 'busy' }); return; }
+          if (waiting || closing) {
+            if ((waiting ?? closing)?.peer !== from) answer(from, { k: 'no', to: from, s: d.s, why: 'busy' });
+            return;
+          }
           const no = can();
-          if (no) { answer(from, { k: 'no', to: from, s: d.s, why: no }); return; }
-          if (!peerCan(from)) { answer(from, { k: 'no', to: from, s: d.s, why: 'house' }); return; }
+          if (no) {
+            answer(from, { k: 'no', to: from, s: d.s, why: no });
+            return;
+          }
+          if (!peerCan(from)) {
+            answer(from, { k: 'no', to: from, s: d.s, why: 'house' });
+            return;
+          }
           if (outgoing?.peer === from) {
             // crossed proposals: the smaller id keeps its own, the other takes it up - one wedding, both words given
-            if (from < selfId()) { outgoing = null; incoming.set(from, { s: d.s, at: now(), sub, sc }); void mgr.accept(from); }
+            if (from < selfId()) {
+              outgoing = null;
+              incoming.set(from, { s: d.s, at: now(), sub, sc });
+              void mgr.accept(from);
+            }
             return;
           }
           if (incoming.size >= WED_INCOMING_MAX && !incoming.has(from)) return;
-          if (!incoming.has(from) && now() - (quiet.get(from) ?? -Infinity) < WED_REASK_MS) { answer(from, { k: 'no', to: from, s: d.s, why: 'declined' }); return; }
+          if (!incoming.has(from) && now() - (quiet.get(from) ?? -Infinity) < WED_REASK_MS) {
+            answer(from, { k: 'no', to: from, s: d.s, why: 'declined' });
+            return;
+          }
           if (quiet.size > 64) for (const [p, at] of quiet) if (now() - at >= WED_REASK_MS) quiet.delete(p);
           const fresh = !incoming.has(from);
           incoming.set(from, { s: d.s, at: now(), sub, sc });
-          if (fresh) { say(`${nameOf(from)} asks for your hand. Answer on the prompt, or on their Inspect card.`); onPrompt(from); }
+          if (fresh) {
+            say(`${nameOf(from)} asks for your hand. Answer on the prompt, or on their Inspect card.`);
+            onPrompt(from);
+          }
           changed();
           return;
         }
         case 'yes': {
           if (!outgoing || outgoing.peer !== from || outgoing.s !== d.s || closing) {
-            if (!waiting && !closing) answer(from, { k: 'no', to: from, s: d.s, why: 'timeout' });   // a yes to a proposal no longer mine
+            if (!waiting && !closing) answer(from, { k: 'no', to: from, s: d.s, why: 'timeout' }); // a yes to a proposal no longer mine
             return;
           }
           const s = outgoing.s;
           outgoing = null;
           const no = can();
-          if (no || !sub || !sc) { once({ k: 'no', to: from, s, why: no ?? 'refused' }); say(no ? wedMineText(no) : wedWhyText('refused')); changed(); return; }
+          if (no || !sub || !sc) {
+            once({ k: 'no', to: from, s, why: no ?? 'refused' });
+            say(no ? wedMineText(no) : wedWhyText('refused'));
+            changed();
+            return;
+          }
           const c = { peer: from, s };
           closing = c;
           changed();
           void (async () => {
             let r;
-            try { r = await half(s, sub, sc); } catch { r = { ok: false, error: 'offline' }; }
+            try {
+              r = await half(s, sub, sc);
+            } catch {
+              r = { ok: false, error: 'offline' };
+            }
             if (closing !== c) return;
             closing = null;
-            if (r?.ok && r.wed) { wedNow(r.union, from); once({ k: 'done', to: from, s }); }
-            else {
+            if (r?.ok && r.wed) {
+              wedNow(r.union, from);
+              once({ k: 'done', to: from, s });
+            } else {
               // told it did not happen: my half withdrawn (a union that stood first is recorded, and said done)
               takeBack({ peer: from, s, sub, sc }, () => once({ k: 'done', to: from, s }));
               once({ k: 'no', to: from, s, why: 'refused' });
-              say(r?.ok ? `${nameOf(from)}'s answer never reached the temple. The wedding did not happen.` : refusalText(r?.error ?? 'server'));
+              say(
+                r?.ok
+                  ? `${nameOf(from)}'s answer never reached the temple. The wedding did not happen.`
+                  : refusalText(r?.error ?? 'server'),
+              );
             }
             changed();
           })();
           return;
         }
         case 'no': {
-          if (outgoing && outgoing.peer === from && outgoing.s === d.s) { outgoing = null; say(wedWhyText(d.why ?? 'declined', nameOf(from))); changed(); return; }
+          if (outgoing && outgoing.peer === from && outgoing.s === d.s) {
+            outgoing = null;
+            say(wedWhyText(d.why ?? 'declined', nameOf(from)));
+            changed();
+            return;
+          }
           if (waiting && waiting.peer === from && waiting.s === d.s) {
             const w = waiting;
             waiting = null;
-            if (!w.posting) takeBack(w);   // my half landed: taken back (one on its way is taken back as it lands - accept)
+            if (!w.posting) takeBack(w); // my half landed: taken back (one on its way is taken back as it lands - accept)
             say(wedWhyText(d.why ?? 'cancelled', nameOf(from)));
             changed();
             return;
           }
           if (incoming.get(from)?.s === d.s) {
-            incoming.delete(from); quiet.set(from, now()); onUnprompt(from);
+            incoming.delete(from);
+            quiet.set(from, now());
+            onUnprompt(from);
             say(d.why === 'timeout' ? `${nameOf(from)}'s proposal lapsed.` : wedWhyText('cancelled', nameOf(from)));
             changed();
           }
@@ -294,7 +432,12 @@ export function createWedManager({
         }
         case 'done': {
           // a done after I was told it did not happen, whose withdraw never landed: the service is asked once more
-          if (lapsed && lapsed.peer === from && lapsed.s === d.s) { const w = lapsed; lapsed = null; takeBack(w); return; }
+          if (lapsed && lapsed.peer === from && lapsed.s === d.s) {
+            const w = lapsed;
+            lapsed = null;
+            takeBack(w);
+            return;
+          }
           if (!waiting || waiting.peer !== from || waiting.s !== d.s || waiting.posting || waiting.asked) return;
           waiting.asked = true;
           void askAgain(waiting);
@@ -326,12 +469,20 @@ export function createWedManager({
       }
     },
     /** The players a proposal stands with - mine, and those at me (the host drops one whose row is gone: `gone`). */
-    peers() { return [...(outgoing ? [outgoing.peer] : []), ...incoming.keys()]; },
+    peers() {
+      return [...(outgoing ? [outgoing.peer] : []), ...incoming.keys()];
+    },
     /** The player `peer` left (their row gone): what stood between us is dropped - a yes of mine still asks the
      *  service at its time, since their half may have landed. */
     gone(/** @type {string} */ peer) {
-      if (outgoing?.peer === peer) { outgoing = null; changed(); }
-      if (incoming.delete(peer)) { onUnprompt(peer); changed(); }
+      if (outgoing?.peer === peer) {
+        outgoing = null;
+        changed();
+      }
+      if (incoming.delete(peer)) {
+        onUnprompt(peer);
+        changed();
+      }
     },
   };
   return mgr;

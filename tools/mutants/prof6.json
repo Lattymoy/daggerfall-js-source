@@ -2,8 +2,8 @@
   {
     "name": "PROF6-law-pay-rounded-up",
     "file": "src/net/writLaw.js",
-    "old": "return m ? Math.floor((m.value * WRIT_PAY_PCT) / 100) : 0;",
-    "new": "return m ? Math.ceil((m.value * WRIT_PAY_PCT) / 100) : 0;",
+    "old": "  return m ? Math.floor((m.value * WRIT_PAY_PCT) / 100) : 0;",
+    "new": "  return m ? Math.ceil((m.value * WRIT_PAY_PCT) / 100) : 0;",
     "tests": [
       "test/net/prof6_law.test.js"
     ]
@@ -60,8 +60,8 @@
   {
     "name": "PROF6-law-kit-any-quality",
     "file": "src/net/writLaw.js",
-    "old": "  : q === null);",
-    "new": "  : true);",
+    "old": "  commissionTakesQuality(recipeId) ? Number.isInteger(q) && q >= 0 && q <= MASTERWORK : q === null;",
+    "new": "  commissionTakesQuality(recipeId) ? Number.isInteger(q) && q >= 0 && q <= MASTERWORK : true;",
     "tests": [
       "test/net/prof6_law.test.js"
     ]
@@ -69,8 +69,8 @@
   {
     "name": "PROF6-law-quality-strictly-over",
     "file": "src/net/writLaw.js",
-    "old": "&& (c.quality == null || (Number.isInteger(piece.quality) && piece.quality >= c.quality));",
-    "new": "&& (c.quality == null || (Number.isInteger(piece.quality) && piece.quality > c.quality));",
+    "old": "  (c.quality == null || (Number.isInteger(piece.quality) && piece.quality >= c.quality));",
+    "new": "  (c.quality == null || (Number.isInteger(piece.quality) && piece.quality > c.quality));",
     "tests": [
       "test/net/prof6_law.test.js",
       "test/net/prof6_service.test.js"
@@ -545,8 +545,8 @@
     "name": "PROF6-book-fill-unkept",
     "file": "src/net/writBook.js",
     "note": "INT19 (PIN MOVED): re-aimed by content - a fill is no longer kept (the realm act's record is the truth); the fills a tab from before kept are asked again by the settle",
-    "old": "        for (const f of keptOf(key)) {",
-    "new": "        for (const f of []) {",
+    "old": "          for (const f of keptOf(key)) {",
+    "new": "          for (const f of []) {",
     "tests": [
       "test/net/prof6_client.test.js"
     ]
@@ -555,7 +555,7 @@
     "name": "PROF6-book-refused-not-put-back",
     "file": "src/net/writBook.js",
     "note": "INT19 (PIN MOVED): re-aimed by content - a new fill's refusal is the realm act's undo (realmPieceAct, PROF5-book-piece-lost); the writs' own put back is their settle's",
-    "old": "            else { try { putBack(f.item, f.where); } catch (e) { console.warn('[writs] put back', e); } }",
+    "old": "              else {\n                try {\n                  putBack(f.item, f.where);\n                } catch (e) {\n                  console.warn('[writs] put back', e);\n                }\n              }",
     "new": "",
     "tests": [
       "test/net/prof6_client.test.js"
@@ -564,8 +564,8 @@
   {
     "name": "PROF6-book-late-yes-not-dropped",
     "file": "src/net/writBook.js",
-    "old": "          if (r?.ok) { letGo(f.rid, key); try { drop?.(f.item, f.where); } catch (e) { console.warn('[writs] drop', e); } settled++; }",
-    "new": "          if (r?.ok) { letGo(f.rid, key); settled++; }",
+    "old": "              try {\n                drop?.(f.item, f.where);\n              } catch (e) {\n                console.warn('[writs] drop', e);\n              }\n              settled++;",
+    "new": "              settled++;",
     "tests": [
       "test/net/prof6_client.test.js"
     ]
@@ -573,8 +573,8 @@
   {
     "name": "PROF6-book-id-lost-on-silence",
     "file": "src/net/writBook.js",
-    "old": "    if (!kept(r)) ids.delete(k);",
-    "new": "    ids.delete(k);",
+    "old": "      if (!kept(r)) ids.delete(k);",
+    "new": "      ids.delete(k);",
     "tests": [
       "test/net/prof6_client.test.js"
     ]
@@ -582,8 +582,8 @@
   {
     "name": "PROF6-book-marks-untold",
     "file": "src/net/writBook.js",
-    "old": "      try { marks?.set?.(d.balance); } catch { /* the Marks book's own */ }\n",
-    "new": "",
+    "old": "        marks?.set?.(d.balance);\n      } catch {\n        /* the Marks book's own */\n      }\n      try {\n        market?.told?.(d.balance);",
+    "new": "        market?.told?.(d.balance);",
     "tests": [
       "test/net/prof6_client.test.js"
     ]
@@ -591,7 +591,7 @@
   {
     "name": "PROF6-book-stores-untold",
     "file": "src/net/writBook.js",
-    "old": "    if (d.store && typeof d.store.material === 'string') { try { stores?.apply?.(d.store); } catch { /* the professions' book's own */ } }",
+    "old": "    if (d.store && typeof d.store.material === 'string') {\n      try {\n        stores?.apply?.(d.store);\n      } catch {\n        /* the professions' book's own */\n      }\n    }",
     "new": "",
     "tests": [
       "test/net/prof6_client.test.js"

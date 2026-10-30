@@ -263,8 +263,8 @@
   {
     "name": "BLS-audit-rank-capital",
     "file": "src/net/townEconLaw.js",
-    "old": "=== CAPITAL_LANE ? 1 :",
-    "new": "=== CAPITAL_LANE ? 2 :",
+    "old": "export const townAuditRank = (map, location) => (location >= 0 ? 0 : ((map >>> 20) & 0xfff) === CAPITAL_LANE ? 1 : 2);",
+    "new": "export const townAuditRank = (map, location) => (location >= 0 ? 0 : ((map >>> 20) & 0xfff) === CAPITAL_LANE ? 2 : 2);",
     "tests": [
       "test/server/bayleftsea_townaudit.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "BLS-audit-client-page-off-by-one",
     "file": "src/net/townEconBook.js",
-    "old": "return { op: 'audit', page: k - 1 };",
-    "new": "return { op: 'audit', page: k };",
+    "old": "  if (o === 'audit' && /^\\d{1,4}$/.test(key ?? '') && k >= 1 && !more.length) return { op: 'audit', page: k - 1 }; // BAY-LEFT-SEA: a page past the first",
+    "new": "  if (o === 'audit' && /^\\d{1,4}$/.test(key ?? '') && k >= 1 && !more.length) return { op: 'audit', page: k }; // BAY-LEFT-SEA: a page past the first",
     "tests": [
       "test/server/bayleftsea_townaudit.test.js",
       "test/net/townecon_client.test.js"
@@ -282,8 +282,8 @@
   {
     "name": "BLS-audit-client-page-zero",
     "file": "src/net/townEconBook.js",
-    "old": "&& k >= 1 && !more.length) return { op: 'audit', page: k - 1 };",
-    "new": "&& k >= 0 && !more.length) return { op: 'audit', page: k - 1 };",
+    "old": "  if (o === 'audit' && /^\\d{1,4}$/.test(key ?? '') && k >= 1 && !more.length) return { op: 'audit', page: k - 1 }; // BAY-LEFT-SEA: a page past the first",
+    "new": "  if (o === 'audit' && /^\\d{1,4}$/.test(key ?? '') && k >= 0 && !more.length) return { op: 'audit', page: k - 1 }; // BAY-LEFT-SEA: a page past the first",
     "tests": [
       "test/server/bayleftsea_townaudit.test.js"
     ]
@@ -291,8 +291,8 @@
   {
     "name": "BLS-audit-client-more-unsaid",
     "file": "src/net/townEconBook.js",
-    "old": "  if (data?.more === true) lines.push(",
-    "new": "  if (false) lines.push(",
+    "old": "  if (data?.more === true)\n    lines.push(`More confirmed towns of this region: /town audit ${(Number(data.page) || 0) + 2}`);",
+    "new": "  if (false) lines.push(`More confirmed towns of this region: /town audit ${(Number(data.page) || 0) + 2}`);",
     "tests": [
       "test/server/bayleftsea_townaudit.test.js"
     ]
@@ -300,8 +300,8 @@
   {
     "name": "BLS-audit-client-more-page",
     "file": "src/net/townEconBook.js",
-    "old": "/town audit ${(Number(data.page) || 0) + 2}`);",
-    "new": "/town audit ${(Number(data.page) || 0) + 1}`);",
+    "old": "    lines.push(`More confirmed towns of this region: /town audit ${(Number(data.page) || 0) + 2}`);",
+    "new": "    lines.push(`More confirmed towns of this region: /town audit ${(Number(data.page) || 0) + 1}`);",
     "tests": [
       "test/server/bayleftsea_townaudit.test.js"
     ]
@@ -381,8 +381,8 @@
   {
     "name": "BLS-den-id-any-kind",
     "file": "src/net/townSeatLaw.js",
-    "old": "export const bountyDenId = (kind, px, py) => (BOUNTY_DEN_KINDS.includes(kind) && Number.isSafeInteger(px)",
-    "new": "export const bountyDenId = (kind, px, py) => (Number.isSafeInteger(px)",
+    "old": "  BOUNTY_DEN_KINDS.includes(kind) && Number.isSafeInteger(px) && Number.isSafeInteger(py)\n    ? `${px},${py}:${kind}`\n    : null;",
+    "new": "  Number.isSafeInteger(px) && Number.isSafeInteger(py) ? `${px},${py}:${kind}` : null;",
     "tests": [
       "test/net/bayleftsea_bounty.test.js"
     ]
@@ -390,8 +390,8 @@
   {
     "name": "BLS-den-id-fractions",
     "file": "src/net/townSeatLaw.js",
-    "old": "(BOUNTY_DEN_KINDS.includes(kind) && Number.isSafeInteger(px) && Number.isSafeInteger(py) ?",
-    "new": "(BOUNTY_DEN_KINDS.includes(kind) ?",
+    "old": "export const bountyDenId = (kind, px, py) =>\n  BOUNTY_DEN_KINDS.includes(kind) && Number.isSafeInteger(px) && Number.isSafeInteger(py)\n    ? `${px},${py}:${kind}`\n    : null;",
+    "new": "export const bountyDenId = (kind, px, py) => (BOUNTY_DEN_KINDS.includes(kind) ? `${px},${py}:${kind}` : null);",
     "tests": [
       "test/net/bayleftsea_bounty.test.js"
     ]
@@ -444,8 +444,8 @@
   {
     "name": "BLS-edict-den-pay-unsaid",
     "file": "src/net/townSeatLaw.js",
-    "old": "a den cleared, from what is set aside.', { silver: BOUNTY_MARKS });",
-    "new": "a den cleared, from what is set aside.', { silver: 0 });",
+    "old": "    { silver: BOUNTY_MARKS },",
+    "new": "    { silver: 0 },",
     "tests": [
       "test/net/bayleftsea_bounty.test.js"
     ]

@@ -195,8 +195,8 @@
   {
     "name": "INT19-the-writs-name-no-record",
     "file": "src/net/writBook.js",
-    "old": "door.fulfil({ ...body, realm: at })",
-    "new": "door.fulfil(body)",
+    "old": "        const r = heard(await realmPieceAct(realm, piece, (at) => door.fulfil({ ...body, realm: at })));",
+    "new": "        const r = heard(await realmPieceAct(realm, piece, (at) => door.fulfil(body)));",
     "tests": [
       "test/server/int19_crafted_record.test.js"
     ]

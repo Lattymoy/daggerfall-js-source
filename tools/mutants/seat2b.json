@@ -656,7 +656,7 @@
   {
     "name": "SEAT2b-book-rid-kept",
     "file": "src/net/townSeatBook.js",
-    "old": "      if (r?.ok || (r?.error && !['offline', 'server', 'timeout'].includes(r.error))) { if (fortAsk?.rid === id) fortAsk = null; }",
+    "old": "      if (r?.ok || (r?.error && !['offline', 'server', 'timeout'].includes(r.error))) {\n        if (fortAsk?.rid === id) fortAsk = null;\n      }",
     "new": "",
     "tests": [
       "test/net/seat2b_client.test.js"
@@ -665,8 +665,8 @@
   {
     "name": "SEAT2b-book-forts-shut",
     "file": "src/net/townSeatBook.js",
-    "old": "      if (open !== true) return { data: null, error: 'seats-closed' };\n      let r;\n      try { r = await door.forts(key); }",
-    "new": "      let r;\n      try { r = await door.forts(key); }",
+    "old": "    async forts(key) {\n      if (open !== true) return { data: null, error: 'seats-closed' };\n      let r;",
+    "new": "    async forts(key) {\n      let r;",
     "tests": [
       "test/net/seat2b_client.test.js"
     ]
@@ -764,8 +764,8 @@
   {
     "name": "SEAT2b-called-void",
     "file": "src/net/townSeatLaw.js",
-    "old": "if (battle?.kind !== 'siege' || !Number.isFinite(battle.startsAt) || battle.state === 'void') return '';",
-    "new": "if (battle?.kind !== 'siege' || !Number.isFinite(battle.startsAt)) return '';",
+    "old": "  if (battle?.kind !== 'siege' || !Number.isFinite(battle.startsAt) || battle.state === 'void') return '';",
+    "new": "  if (battle?.kind !== 'siege' || !Number.isFinite(battle.startsAt)) return '';",
     "tests": [
       "test/net/audit_seats_law.test.js"
     ]
@@ -773,8 +773,8 @@
   {
     "name": "SEAT2b-called-after-end",
     "file": "src/net/townSeatLaw.js",
-    "old": "  if (Number.isFinite(battle.endsAt) && nowMs >= battle.endsAt * 1000) return '';\n",
-    "new": "",
+    "old": "  if (Number.isFinite(battle.endsAt) && nowMs >= battle.endsAt * 1000) return '';\n  return ` A siege is called for ${battleWhenText(battle.startsAt * 1000)}.`;",
+    "new": "  return ` A siege is called for ${battleWhenText(battle.startsAt * 1000)}.`;",
     "tests": [
       "test/net/audit_seats_law.test.js"
     ]

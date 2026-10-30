@@ -3,8 +3,10 @@
     "name": "R2-1-staff-pixel-the-bays-again",
     "file": "src/net/staffTeleport.js",
     "old": "const pixel = (v) => v && worldPixelOk(v.x) && worldPixelOk(v.y);",
-    "new": "const pixel = (v) => v && Number.isSafeInteger(v.x) && v.x >= 0 && v.x <= 999 && Number.isSafeInteger(v.y) && v.y >= 0 && v.y <= 499;",
-    "tests": ["test/net/auditrelease_r2.test.js"],
+    "new": "const pixel = (v) =>\n  v && Number.isSafeInteger(v.x) && v.x >= 0 && v.x <= 999 && Number.isSafeInteger(v.y) && v.y >= 0 && v.y <= 499;",
+    "tests": [
+      "test/net/auditrelease_r2.test.js"
+    ],
     "note": "the Bay's 0..999 x 0..499 again: staff cannot /tp to a player past the Bay"
   },
   {
@@ -12,7 +14,9 @@
     "file": "src/net/staffTeleport.js",
     "old": "const pixel = (v) => v && worldPixelOk(v.x) && worldPixelOk(v.y);",
     "new": "const pixel = (v) => v && worldPixelOk(v.x) && Number.isSafeInteger(v.y) && v.y >= 0 && v.y <= 499;",
-    "tests": ["test/net/auditrelease_r2.test.js"],
+    "tests": [
+      "test/net/auditrelease_r2.test.js"
+    ],
     "note": "the north-south axis left the Bay's: Solitude and Alinor refused"
   },
   {
@@ -20,7 +24,9 @@
     "file": "src/net/staffTeleport.js",
     "old": "const pixel = (v) => v && worldPixelOk(v.x) && worldPixelOk(v.y);",
     "new": "const pixel = (v) => v && Number.isInteger(v.x) && Number.isInteger(v.y);",
-    "tests": ["test/net/auditrelease_r2.test.js"],
+    "tests": [
+      "test/net/auditrelease_r2.test.js"
+    ],
     "note": "no bound at all: a pixel past the wire's grid taken"
   },
   {
@@ -28,7 +34,9 @@
     "file": "src/net/wire.js",
     "old": "if (!s || typeof s !== 'object' || !worldPixelOk(s.px) || !worldPixelOk(s.py)) return null;",
     "new": "if (!s || typeof s !== 'object' || !intIn(s.px, 0, 999) || !intIn(s.py, 0, 499)) return null;",
-    "tests": ["test/net/auditrelease_r2.test.js"],
+    "tests": [
+      "test/net/auditrelease_r2.test.js"
+    ],
     "note": "the Bay's bounds on the arch's site: a key staked past the Bay for an open never sent"
   },
   {
@@ -36,7 +44,9 @@
     "file": "src/net/wire.js",
     "old": "if (!s || typeof s !== 'object' || !worldPixelOk(s.px) || !worldPixelOk(s.py)) return null;",
     "new": "if (!s || typeof s !== 'object' || !worldPixelOk(s.px) || !intIn(s.py, 0, 499)) return null;",
-    "tests": ["test/net/auditrelease_r2.test.js"],
+    "tests": [
+      "test/net/auditrelease_r2.test.js"
+    ],
     "note": "the north-south axis left the Bay's"
   },
   {
@@ -44,7 +54,9 @@
     "file": "src/net/wire.js",
     "old": "if (!s || typeof s !== 'object' || !worldPixelOk(s.px) || !worldPixelOk(s.py)) return null;",
     "new": "if (!s || typeof s !== 'object' || !Number.isInteger(s.px) || !Number.isInteger(s.py)) return null;",
-    "tests": ["test/net/auditrelease_r2.test.js"],
+    "tests": [
+      "test/net/auditrelease_r2.test.js"
+    ],
     "note": "no bound: a site past the wire's grid kept"
   },
   {
@@ -52,7 +64,9 @@
     "file": "src/scenes/searchPartyHost.js",
     "old": "export const GRAVE_LOC_RE = /^g(-?\\d{1,4}),(-?\\d{1,4})$/;",
     "new": "export const GRAVE_LOC_RE = /^g(\\d{1,3}),(\\d{1,3})$/;",
-    "tests": ["test/net/auditrelease_r2.test.js"],
+    "tests": [
+      "test/net/auditrelease_r2.test.js"
+    ],
     "note": "the Bay's three digits again: a lair's headstone past the Bay owed to no cell"
   },
   {
@@ -60,7 +74,9 @@
     "file": "src/scenes/searchPartyHost.js",
     "old": "export const GRAVE_LOC_RE = /^g(-?\\d{1,4}),(-?\\d{1,4})$/;",
     "new": "export const GRAVE_LOC_RE = /^g(\\d{1,4}),(\\d{1,4})$/;",
-    "tests": ["test/net/auditrelease_r2.test.js"],
+    "tests": [
+      "test/net/auditrelease_r2.test.js"
+    ],
     "note": "no sign: west and north of the Bay's corner refused"
   },
   {
@@ -68,7 +84,9 @@
     "file": "src/net/wire.js",
     "old": "  return worldPixelOk(px) && worldPixelOk(py) && intIn(n, 0, OW_GRAVE_N_MAX) ? [px, py, n] : null;",
     "new": "  return intIn(px, 0, 999) && intIn(py, 0, 499) && intIn(n, 0, OW_GRAVE_N_MAX) ? [px, py, n] : null;",
-    "tests": ["test/net/auditrelease_r2.test.js"],
+    "tests": [
+      "test/net/auditrelease_r2.test.js"
+    ],
     "note": "the Bay's bounds on a stone's row: the word refused whole"
   },
   {
@@ -76,7 +94,9 @@
     "file": "src/net/wire.js",
     "old": "  return worldPixelOk(px) && worldPixelOk(py) && intIn(n, 0, OW_GRAVE_N_MAX) ? [px, py, n] : null;",
     "new": "  return worldPixelOk(px) && intIn(py, 0, 499) && intIn(n, 0, OW_GRAVE_N_MAX) ? [px, py, n] : null;",
-    "tests": ["test/net/auditrelease_r2.test.js"],
+    "tests": [
+      "test/net/auditrelease_r2.test.js"
+    ],
     "note": "the north-south axis the Bay's"
   },
   {
@@ -84,7 +104,9 @@
     "file": "src/net/online.js",
     "old": "      if (primary) this.worldPixelsOk = relaySupportsWorldWide(relayV);   // AUDIT RELEASE R2\n",
     "new": "",
-    "tests": ["test/net/auditrelease_r2.test.js"],
+    "tests": [
+      "test/net/auditrelease_r2.test.js"
+    ],
     "note": "the welcome never says the relay reads the world: nothing past the Bay is said to the world-wide relay either"
   },
   {
@@ -92,7 +114,9 @@
     "file": "src/net/online.js",
     "old": "      if (primary) this.worldPixelsOk = relaySupportsWorldWide(relayV);   // AUDIT RELEASE R2\n",
     "new": "      if (primary) this.worldPixelsOk = true;\n",
-    "tests": ["test/net/auditrelease_r2.test.js"],
+    "tests": [
+      "test/net/auditrelease_r2.test.js"
+    ],
     "note": "every relay taken for the world's: an older one is sent a pixel past the Bay and closes the socket"
   },
   {
@@ -100,7 +124,9 @@
     "file": "src/net/online.js",
     "old": "    if (m?.k === 'answer' && m.dest && !this.worldPixelsOk && !bayMapPixel(m.dest.pixel.x, m.dest.pixel.y)) return this._send({ t: 'stp', k: 'answer', ticket: m.ticket, error: 'unavailable' });\n",
     "new": "",
-    "tests": ["test/net/auditrelease_r2.test.js"],
+    "tests": [
+      "test/net/auditrelease_r2.test.js"
+    ],
     "note": "a destination past the Bay sent to an older relay"
   },
   {
@@ -108,7 +134,9 @@
     "file": "src/net/online.js",
     "old": "    if (w.k === 'open' && !this.egSiteOk(w.site)) return false;",
     "new": "",
-    "tests": ["test/net/auditrelease_r2.test.js"],
+    "tests": [
+      "test/net/auditrelease_r2.test.js"
+    ],
     "note": "an arch past the Bay opened at an older relay"
   },
   {
@@ -116,7 +144,9 @@
     "file": "src/net/online.js",
     "old": "    return !!site && (this.worldPixelsOk || bayMapPixel(site.px, site.py));",
     "new": "    return !!site;",
-    "tests": ["test/net/auditrelease_r2.test.js"],
+    "tests": [
+      "test/net/auditrelease_r2.test.js"
+    ],
     "note": "every site this relay's: the key staked for an open an older relay closes the socket on"
   },
   {
@@ -124,7 +154,9 @@
     "file": "src/scenes/eliteGates/egClient.js",
     "old": "room: f ? !!f.site && (hub()?.egSiteOk?.(f.site) ?? true) : true });",
     "new": "room: f ? !!f.site : true });",
-    "tests": ["test/net/auditrelease_r2.test.js"],
+    "tests": [
+      "test/net/auditrelease_r2.test.js"
+    ],
     "note": "the key's refusal never asks the relay's reach: the key is staked first"
   },
   {
@@ -132,7 +164,9 @@
     "file": "src/net/online.js",
     "old": "owRowInCell(r, room) && (this.worldPixelsOk || bayMapPixel(r?.[0], r?.[1]))",
     "new": "owRowInCell(r, room)",
-    "tests": ["test/net/auditrelease_r2.test.js"],
+    "tests": [
+      "test/net/auditrelease_r2.test.js"
+    ],
     "note": "a headstone past the Bay said to an older relay"
   },
   {
@@ -140,7 +174,9 @@
     "file": "src/net/online.js",
     "old": "x >= 0 && x < MAX_MAP_PIXEL_X && y >= 0 && y < MAX_MAP_PIXEL_Y;",
     "new": "x >= 0 && x <= MAX_MAP_PIXEL_X && y >= 0 && y < MAX_MAP_PIXEL_Y;",
-    "tests": ["test/net/auditrelease_r2.test.js"],
+    "tests": [
+      "test/net/auditrelease_r2.test.js"
+    ],
     "note": "the Bay's east edge one pixel wide"
   },
   {
@@ -148,7 +184,9 @@
     "file": "src/scenes/questWorld.js",
     "old": "return maps.getRegion(r)?.name ?? (isProvinceRegion(r) ? REGION_NAMES[r] : '');",
     "new": "return maps.getRegion(r)?.name ?? '';",
-    "tests": ["test/net/auditrelease_r2.test.js"],
+    "tests": [
+      "test/net/auditrelease_r2.test.js"
+    ],
     "note": "the head's law: past the Bay '' - no NPC there knows a quest's place there"
   },
   {
@@ -156,7 +194,9 @@
     "file": "src/scenes/questWorld.js",
     "old": "return maps.getRegion(r)?.name ?? (isProvinceRegion(r) ? REGION_NAMES[r] : '');",
     "new": "return maps.getRegion(r)?.name ?? (REGION_NAMES[r] ?? '');",
-    "tests": ["test/net/auditrelease_r2.test.js"],
+    "tests": [
+      "test/net/auditrelease_r2.test.js"
+    ],
     "note": "an empty Bay region named where DFU's empty DFRegion says ''"
   }
 ]

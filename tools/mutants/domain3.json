@@ -238,8 +238,8 @@
   {
     "name": "DOMAIN3-book-dress",
     "file": "src/net/townSeatBook.js",
-    "old": "      if (c) out.charterSeat = c;\n",
-    "new": "",
+    "old": "      if (c) out.charterSeat = c;\n      return out;",
+    "new": "      return out;",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "DOMAIN3-book-witness-domain",
     "file": "src/net/townSeatBook.js",
-    "old": "door.witness(s, power == null ? undefined : { region: s.region, key: power })",
-    "new": "door.witness(s, undefined)",
+    "old": "        await door.witness(s, power == null ? undefined : { region: s.region, key: power });",
+    "new": "        await door.witness(s, undefined);",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "DOMAIN3-name-region",
     "file": "src/net/townSeatLaw.js",
-    "old": "if (seat?.domain && REGION_NAMES[seat.region]) return",
-    "new": "if (false && REGION_NAMES[seat.region]) return",
+    "old": "  if (seat?.domain && REGION_NAMES[seat.region])",
+    "new": "  if (false && REGION_NAMES[seat.region])",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "DOMAIN3-arrival-holding",
     "file": "src/net/townSeatLaw.js",
-    "old": "  if (seat?.charterSeat) return holdingWords(seat);   // DOMAIN3: a holding says its region's Charter\n",
-    "new": "",
+    "old": "  if (seat?.charterSeat) return holdingWords(seat); // DOMAIN3: a holding says its region's Charter\n  const siege = siegeCalledClause(seat?.battle, nowMs);",
+    "new": "  const siege = siegeCalledClause(seat?.battle, nowMs);",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "DOMAIN3-box-holding",
     "file": "src/net/townSeatLaw.js",
-    "old": "  if (seat?.charterSeat) return holdingWords(seat, true);",
-    "new": "  if (false) return holdingWords(seat, true);",
+    "old": "  if (seat?.charterSeat) return holdingWords(seat, true); // DOMAIN3: a holding's box names its Charter and the Charter's holder",
+    "new": "  if (false) return holdingWords(seat, true); // DOMAIN3: a holding's box names its Charter and the Charter's holder",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "DOMAIN3-ring-holding",
     "file": "src/net/townSeatLaw.js",
-    "old": "const h = (seat.charterSeat ?? seat).holder?.guild?.heraldry ?? null;",
-    "new": "const h = seat.holder?.guild?.heraldry ?? null;",
+    "old": "  const h = (seat.charterSeat ?? seat).holder?.guild?.heraldry ?? null; // DOMAIN3: a holding in its Charter's holder's colours",
+    "new": "  const h = seat.holder?.guild?.heraldry ?? null; // DOMAIN3: a holding in its Charter's holder's colours",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]
@@ -292,8 +292,8 @@
   {
     "name": "DOMAIN3-bailiwick-client",
     "file": "src/net/townSeatLaw.js",
-    "old": "if (s.region !== region || /** @type {any} */ (s).charter != null) continue;",
-    "new": "if (s.region !== region) continue;",
+    "old": "    if (s.region !== region || /** @type {any} */ (s).charter != null) continue; // DOMAIN3: a holding (the seats' list's mark) is its Charter's bailiwick",
+    "new": "    if (s.region !== region) continue; // DOMAIN3: a holding (the seats' list's mark) is its Charter's bailiwick",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]

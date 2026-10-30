@@ -66,8 +66,8 @@
   {
     "name": "SEATS3-C4-towers-guild-unkeyed",
     "file": "src/net/townSeatBook.js",
-    "old": "if (data !== _towersOf || guild !== _towersGuild) {",
-    "new": "if (data !== _towersOf) {",
+    "old": "    if (data !== _towersOf || guild !== _towersGuild) {",
+    "new": "    if (data !== _towersOf) {",
     "tests": [
       "test/net/audit_seats3_client.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "SEATS3-C5-failure-unmarked",
     "file": "src/net/townSeatBook.js",
-    "old": "      failed = !r?.ok && !SHUT.includes(r?.error);",
-    "new": "      failed = false;",
+    "old": "      failed = !r?.ok && !SHUT.includes(r?.error); // AUDIT SEATS-3 C5",
+    "new": "      failed = false; // AUDIT SEATS-3 C5",
     "tests": [
       "test/net/audit_seats3_client.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "SEATS3-C5-refusal-retried",
     "file": "src/net/townSeatBook.js",
-    "old": "      failed = !r?.ok && !SHUT.includes(r?.error);",
-    "new": "      failed = !r?.ok;",
+    "old": "      failed = !r?.ok && !SHUT.includes(r?.error); // AUDIT SEATS-3 C5",
+    "new": "      failed = !r?.ok; // AUDIT SEATS-3 C5",
     "tests": [
       "test/net/audit_seats3_client.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "SEATS3-C5-no-backoff",
     "file": "src/net/townSeatBook.js",
-    "old": "(failed ? SEAT_LIST_RETRY_MS : SEAT_RED_READ_MS)",
-    "new": "(failed ? 0 : SEAT_RED_READ_MS)",
+    "old": "      if (!pending && (open === true || failed) && nowMs() - at >= (failed ? SEAT_LIST_RETRY_MS : SEAT_RED_READ_MS))",
+    "new": "      if (!pending && (open === true || failed) && nowMs() - at >= (failed ? 0 : SEAT_RED_READ_MS))",
     "tests": [
       "test/net/audit_seats3_client.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "SEATS3-D3-tithe-over-its-cap",
     "file": "src/net/townSeatLaw.js",
-    "old": "Math.min(Math.trunc(pct), seatTitheCap(seat))",
-    "new": "Math.trunc(pct)",
+    "old": "  return seat?.holder && pct > 0 ? Math.min(Math.trunc(pct), seatTitheCap(seat)) : 0;",
+    "new": "  return seat?.holder && pct > 0 ? Math.trunc(pct) : 0;",
     "tests": [
       "test/net/audit_seats3_client.test.js"
     ]

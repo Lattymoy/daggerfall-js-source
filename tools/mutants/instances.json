@@ -469,8 +469,8 @@
   {
     "name": "INSTANCES-STAFF-DEST-DROPS",
     "file": "src/net/staffTeleport.js",
-    "old": "...insOf(d), ...(d.whole === true || d.ins != null ? { whole: true } : {}) };",
-    "new": "};",
+    "old": "    return {\n      ...out,\n      mapId: d.mapId,\n      ...(d.locationKey != null ? { locationKey: d.locationKey } : {}),\n      ...insOf(d),\n      ...(d.whole === true || d.ins != null ? { whole: true } : {}),\n    };",
+    "new": "    return { ...out, mapId: d.mapId, ...(d.locationKey != null ? { locationKey: d.locationKey } : {}) };",
     "tests": [
       "test/net/staffTeleport.test.js"
     ],

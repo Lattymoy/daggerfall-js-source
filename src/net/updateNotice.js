@@ -64,17 +64,19 @@
 // Not a DFU member: Daggerfall Unity is not deployed to anybody.
 // Ledger A row (ONLINE).
 import { relayVersionOf } from './wire.js';
-import { t } from '../systems/textManager.js';   // L10N4: the two notices in the player's language
+import { t } from '../systems/textManager.js'; // L10N4: the two notices in the player's language
 
 /** What a relay restart says. Deliberately about the RELAY and not the
  *  game: nothing the player has is lost, and a notice that sounds like
  *  it might be is worse than no notice. */
-export const RELAY_RESTART_TEXT = 'The server was updated and restarted. Players nearby and chat will come back on their own in a moment.';
+export const RELAY_RESTART_TEXT =
+  'The server was updated and restarted. Players nearby and chat will come back on their own in a moment.';
 /** L10N4: RELAY_RESTART_TEXT as the player reads it, read when it is said. */
 export const relayRestartText = () => t('net.update.relayRestart', RELAY_RESTART_TEXT);
 /** What a new client build says. UPDATE-FORCE (ui/updateScreen.js): the game now saves and reloads for them a
  *  minute later, so the line says that rather than asking them to. */
-export const BUILD_UPDATE_TEXT = 'A new version of the game is out. Your character will be saved and the game reloaded in one minute.';
+export const BUILD_UPDATE_TEXT =
+  'A new version of the game is out. Your character will be saved and the game reloaded in one minute.';
 /** L10N4: BUILD_UPDATE_TEXT as the player reads it. */
 export const buildUpdateText = () => t('net.update.build', BUILD_UPDATE_TEXT);
 
@@ -150,7 +152,10 @@ export function relayVersionSeen(v, now = Date.now()) {
   const s = relayVersionOf(typeof v === 'string' ? v.trim() : v);
   if (!s) return 'unknown';
   if (_relaySeen.has(s)) return 'same';
-  if (_relaySeen.size === 0) { _relaySeen.add(s); return 'first'; }
+  if (_relaySeen.size === 0) {
+    _relaySeen.add(s);
+    return 'first';
+  }
   // Bounded, and it fails towards silence: an emptied set re-baselines.
   if (_relaySeen.size >= RELAY_SEEN_MAX) _relaySeen.clear();
   _relaySeen.add(s);
@@ -225,12 +230,16 @@ export async function fetchLiveBuildTag(url, fetchImpl = null, timeoutMs = BUILD
     // survivable, but leaking one socket per poll is not, so the request
     // is CANCELLED rather than abandoned. Guarded because a host without
     // `AbortSignal.timeout` should poll, not throw.
-    const signal = typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function'
-      ? AbortSignal.timeout(timeoutMs) : undefined;
+    const signal =
+      typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function'
+        ? AbortSignal.timeout(timeoutMs)
+        : undefined;
     const res = await f(url, { cache: 'no-store', signal });
     if (!res?.ok) return null;
     return buildTagOf(await res.text());
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 /** The tests drive a fresh page per case. */

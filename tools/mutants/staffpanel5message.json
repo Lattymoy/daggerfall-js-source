@@ -392,8 +392,8 @@
   {
     "name": "STAFF-PANEL5-MESSAGE-game-shows-twice",
     "file": "src/net/staffMessages.js",
-    "old": "if (typeof m?.id !== 'string' || seen.has(m.id) ||",
-    "new": "if (typeof m?.id !== 'string' ||",
+    "old": "        if (typeof m?.id !== 'string' || seen.has(m.id) || typeof m.text !== 'string' || !m.text) continue;",
+    "new": "        if (typeof m?.id !== 'string' || typeof m.text !== 'string' || !m.text) continue;",
     "why": "a message shown again at every ask",
     "tests": [
       "test/net/staffpanel5message_client.test.js"
@@ -402,8 +402,8 @@
   {
     "name": "STAFF-PANEL5-MESSAGE-game-ok-unsaid",
     "file": "src/net/staffMessages.js",
-    "old": "      const said = io ? call(io, '/v1/safety/staff-message-ok', { id: m.id }) : null;",
-    "new": "      const said = null;",
+    "old": "        const said = io ? call(io, '/v1/safety/staff-message-ok', { id: m.id }) : null; // never throws (accountClient's law)",
+    "new": "        const said = null; // never throws (accountClient's law)",
     "why": "the OK never said",
     "tests": [
       "test/net/staffpanel5message_client.test.js"
@@ -422,8 +422,8 @@
   {
     "name": "STAFF-PANEL5-MESSAGE-game-copy-dropped",
     "file": "src/net/staffMessages.js",
-    "old": "        if (log?.push(STAFF_TAB, { text: staffMessageLine(one), at: one.at, system: true })) staffCopyShown(log);",
-    "new": "",
+    "old": "        if (log?.push(STAFF_TAB, { text: staffMessageLine(one), at: one.at, system: true })) staffCopyShown(log); // on the bar, to be read again",
+    "new": "        // on the bar, to be read again",
     "why": "no copy on the Staff tab",
     "tests": [
       "test/net/staffpanel5message_client.test.js"
@@ -462,8 +462,8 @@
   {
     "name": "STAFF-PANEL5-MESSAGE-FIX-no-ask-after-ok",
     "file": "src/net/staffMessages.js",
-    "old": "      void Promise.resolve(said).then(() => { if (!up && more) void ask(); });",
-    "new": "      void said;",
+    "old": "        void Promise.resolve(said).then(() => {\n          if (!up && more) void ask();\n        }); // the last box OK'd and its OK in: the ones past the answer's bound",
+    "new": "        void said; // the last box OK'd and its OK in: the ones past the answer's bound",
     "why": "finding 7: nothing asked after the last box is OK'd",
     "tests": [
       "test/net/staffpanel5message_client.test.js"
@@ -472,8 +472,8 @@
   {
     "name": "STAFF-PANEL5-MESSAGE-FIX-ask-whatever-more",
     "file": "src/net/staffMessages.js",
-    "old": ".then(() => { if (!up && more) void ask(); });",
-    "new": ".then(() => { if (!up) void ask(); });",
+    "old": "          if (!up && more) void ask();",
+    "new": "          if (!up) void ask();",
     "why": "finding 7: an ask after every OK, though the service said no more",
     "tests": [
       "test/net/staffpanel5message_client.test.js"
@@ -502,8 +502,8 @@
   {
     "name": "STAFF-PANEL5-MESSAGE-FIX-copy-off-bar",
     "file": "src/net/staffMessages.js",
-    "old": ")) staffCopyShown(log);   // on the bar, to be read again",
-    "new": ")) void 0;   // on the bar, to be read again",
+    "old": "        if (log?.push(STAFF_TAB, { text: staffMessageLine(one), at: one.at, system: true })) staffCopyShown(log); // on the bar, to be read again",
+    "new": "        if (log?.push(STAFF_TAB, { text: staffMessageLine(one), at: one.at, system: true })) void 0; // on the bar, to be read again",
     "why": "finding 8: the copy lands on a Staff tab nobody can open",
     "tests": [
       "test/net/staffpanel5message_client.test.js"

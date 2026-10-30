@@ -10,11 +10,30 @@ export const TROPHY_TEMPLATE = 601;
 /** Its row, in DFU's ItemTemplates.txt columns (systems/professions/profTemplates.js registers it). A plaque, light enough
  *  to carry; worth little at a counter, so a trophy is never a purse. */
 export const TROPHY_ROW = Object.freeze({
-  index: TROPHY_TEMPLATE, name: 'Trophy', baseWeight: 2, hitPoints: 100, capacityOrTarget: 0, basePrice: 40,
-  enchantmentPoints: 0, rarity: 10, variants: 0, drawOrderOrEffect: 0, isBluntWeapon: false, isLiquid: false, isOneHanded: false,
-  isIngredient: false, worldTextureArchive: 0, worldTextureRecord: 0, playerTextureArchive: 0, playerTextureRecord: 0,
+  index: TROPHY_TEMPLATE,
+  name: 'Trophy',
+  baseWeight: 2,
+  hitPoints: 100,
+  capacityOrTarget: 0,
+  basePrice: 40,
+  enchantmentPoints: 0,
+  rarity: 10,
+  variants: 0,
+  drawOrderOrEffect: 0,
+  isBluntWeapon: false,
+  isLiquid: false,
+  isOneHanded: false,
+  isIngredient: false,
+  worldTextureArchive: 0,
+  worldTextureRecord: 0,
+  playerTextureArchive: 0,
+  playerTextureRecord: 0,
 });
 /** A trophy's numbers: `message` the beast (its MobileTypes value), `variant` a named mark's name - its index in
  *  huntLaw.js HUNT_MARK_NAMES, plus one - or 0 for a beast with no name. */
-export const trophyFoeOf = (/** @type {any} */ item) => (item?.templateIndex === TROPHY_TEMPLATE && Number.isSafeInteger(item.message) ? item.message : null);
-export const trophyNameIndexOf = (/** @type {any} */ item) => (item?.templateIndex === TROPHY_TEMPLATE && Number.isSafeInteger(item.variant) && item.variant > 0 ? item.variant - 1 : null);
+export const trophyFoeOf = (/** @type {any} */ item) =>
+  item?.templateIndex === TROPHY_TEMPLATE && Number.isSafeInteger(item.message) ? item.message : null;
+export const trophyNameIndexOf = (/** @type {any} */ item) =>
+  item?.templateIndex === TROPHY_TEMPLATE && Number.isSafeInteger(item.variant) && item.variant > 0
+    ? item.variant - 1
+    : null;

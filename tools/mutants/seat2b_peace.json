@@ -99,8 +99,8 @@
   {
     "name": "SEAT2b2-shrine-row-dropped",
     "file": "src/net/townSeatLaw.js",
-    "old": "  add('shrine', Math.max(0, Math.trunc(Number(shrine) || 0)));",
-    "new": "",
+    "old": "  add('shrine', Math.max(0, Math.trunc(Number(shrine) || 0))); // SEAT2b part two (7.5): the Shrine's Standing a week, its tier's (fortLaw.js shrineStanding)",
+    "new": "  // SEAT2b part two (7.5): the Shrine's Standing a week, its tier's (fortLaw.js shrineStanding)",
     "tests": [
       "test/net/seat2b_peace_law.test.js",
       "test/net/seat2b_peace_service.test.js"
@@ -109,8 +109,8 @@
   {
     "name": "SEAT2b2-shrine-row-negative",
     "file": "src/net/townSeatLaw.js",
-    "old": "add('shrine', Math.max(0, Math.trunc(Number(shrine) || 0)));",
-    "new": "add('shrine', Math.trunc(Number(shrine) || 0));",
+    "old": "  add('shrine', Math.max(0, Math.trunc(Number(shrine) || 0))); // SEAT2b part two (7.5): the Shrine's Standing a week, its tier's (fortLaw.js shrineStanding)",
+    "new": "  add('shrine', Math.trunc(Number(shrine) || 0)); // SEAT2b part two (7.5): the Shrine's Standing a week, its tier's (fortLaw.js shrineStanding)",
     "tests": [
       "test/net/seat2b_peace_law.test.js"
     ]
@@ -118,8 +118,8 @@
   {
     "name": "SEAT2b2-plan-no-shrine",
     "file": "src/net/townSeatLaw.js",
-    "old": "shrine: s.holder.shrine ?? 0,",
-    "new": "shrine: 0,",
+    "old": "      shrine: s.holder.shrine ?? 0, // SEAT2b part two: the Shrine's Standing",
+    "new": "      shrine: 0, // SEAT2b part two: the Shrine's Standing",
     "tests": [
       "test/net/seat2b_peace_service.test.js"
     ]
@@ -127,8 +127,8 @@
   {
     "name": "SEAT2b2-standing-line-no-shrine",
     "file": "src/net/townSeatLaw.js",
-    "old": "${s.shrine > 0 ? ` (its Shrine's ${s.shrine.toLocaleString('en-US')})` : ''}",
-    "new": "",
+    "old": "  `${i + 1}. ${guildWords(s.guild)} - ${s.influence.toLocaleString('en-US')} influence${s.shrine > 0 ? ` (its Shrine's ${s.shrine.toLocaleString('en-US')})` : ''}`; // SEAT2b part two: the holder's Shrine's part",
+    "new": "  `${i + 1}. ${guildWords(s.guild)} - ${s.influence.toLocaleString('en-US')} influence`; // SEAT2b part two: the holder's Shrine's part",
     "tests": [
       "test/net/seat2b_peace_law.test.js"
     ]
@@ -375,8 +375,8 @@
   {
     "name": "SEAT2b2-towers-due-anywhere",
     "file": "src/net/townSeatBook.js",
-    "old": "nowMs() - towersAt >= SEAT_TOWERS_EVERY_MS && towerSeats(guild).length > 0;",
-    "new": "nowMs() - towersAt >= SEAT_TOWERS_EVERY_MS;",
+    "old": "      return !towersBusy && open === true && nowMs() - towersAt >= SEAT_TOWERS_EVERY_MS && towerSeats(guild).length > 0;",
+    "new": "      return !towersBusy && open === true && nowMs() - towersAt >= SEAT_TOWERS_EVERY_MS;",
     "tests": [
       "test/ui/seat2b_peace_client.test.js"
     ]
@@ -384,8 +384,8 @@
   {
     "name": "SEAT2b2-towers-due-always",
     "file": "src/net/townSeatBook.js",
-    "old": "nowMs() - towersAt >= SEAT_TOWERS_EVERY_MS &&",
-    "new": "nowMs() - towersAt >= 0 &&",
+    "old": "      return !towersBusy && open === true && nowMs() - towersAt >= SEAT_TOWERS_EVERY_MS && towerSeats(guild).length > 0;",
+    "new": "      return !towersBusy && open === true && nowMs() - towersAt >= 0 && towerSeats(guild).length > 0;",
     "tests": [
       "test/ui/seat2b_peace_client.test.js"
     ]
@@ -393,8 +393,8 @@
   {
     "name": "SEAT2b2-towers-said-again",
     "file": "src/net/townSeatBook.js",
-    "old": "            if (said.includes(id)) continue;\n",
-    "new": "",
+    "old": "            if (said.includes(id)) continue;\n            const text = towersText(s.name ?? 'the seat', guildWords({ name: w.name, tag: w.tag }), w.share);",
+    "new": "            const text = towersText(s.name ?? 'the seat', guildWords({ name: w.name, tag: w.tag }), w.share);",
     "tests": [
       "test/ui/seat2b_peace_client.test.js"
     ]
@@ -402,8 +402,8 @@
   {
     "name": "SEAT2b2-towers-not-kept",
     "file": "src/net/townSeatBook.js",
-    "old": "try { storage?.setItem?.(SEAT_TOWERS_KEY, JSON.stringify(towersSaid)); } catch { /* this page keeps them */ }",
-    "new": "",
+    "old": "            try {\n              storage?.setItem?.(SEAT_TOWERS_KEY, JSON.stringify(towersSaid));\n            } catch {\n              /* this page keeps them */\n            }\n          }",
+    "new": "          }",
     "tests": [
       "test/ui/seat2b_peace_client.test.js"
     ]
@@ -411,8 +411,8 @@
   {
     "name": "SEAT2b2-towers-uncapped",
     "file": "src/net/townSeatBook.js",
-    "old": "towersSaid = [...said, id].slice(-SEAT_TOWERS_SAID_MAX);",
-    "new": "towersSaid = [...said, id];",
+    "old": "            towersSaid = [...said, id].slice(-SEAT_TOWERS_SAID_MAX);",
+    "new": "            towersSaid = [...said, id];",
     "tests": [
       "test/ui/seat2b_peace_client.test.js"
     ]
@@ -420,8 +420,8 @@
   {
     "name": "SEAT2b2-towers-share-forgotten",
     "file": "src/net/townSeatBook.js",
-    "old": "const id = `${week}:${s.key}:${w.guild}:${w.share}`;",
-    "new": "const id = `${week}:${s.key}:${w.guild}`;",
+    "old": "            const id = `${week}:${s.key}:${w.guild}:${w.share}`;",
+    "new": "            const id = `${week}:${s.key}:${w.guild}`;",
     "tests": [
       "test/ui/seat2b_peace_client.test.js"
     ]
@@ -429,8 +429,8 @@
   {
     "name": "SEAT2b2-towers-any-work",
     "file": "src/net/townSeatBook.js",
-    "old": "Number(s?.forts?.watchtowers ?? 0) >= 1",
-    "new": "Number(s?.forts?.watchtowers ?? 0) >= 0",
+    "old": "        (s) => s?.holder?.guild?.id === guild && Number(s?.forts?.watchtowers ?? 0) >= 1,",
+    "new": "        (s) => s?.holder?.guild?.id === guild && Number(s?.forts?.watchtowers ?? 0) >= 0,",
     "tests": [
       "test/ui/seat2b_peace_client.test.js"
     ]
@@ -438,8 +438,8 @@
   {
     "name": "SEAT2b2-dressed-no-works",
     "file": "src/net/townSeatBook.js",
-    "old": "{ holder: s.holder ?? null, battle: s.battle ?? null, forts: s.forts ?? null,",
-    "new": "{ holder: s.holder ?? null, battle: s.battle ?? null,",
+    "old": "              battle: s.battle ?? null,\n              forts: s.forts ?? null, // SEAT2b part two: its works standing",
+    "new": "              battle: s.battle ?? null, // SEAT2b part two: its works standing",
     "tests": [
       "test/ui/seat2b_peace_client.test.js"
     ],

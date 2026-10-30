@@ -1121,8 +1121,8 @@
   {
     "name": "LP-wed-incoming-unbounded",
     "file": "src/net/wedSession.js",
-    "old": "          if (incoming.size >= WED_INCOMING_MAX && !incoming.has(from)) return;\n",
-    "new": "",
+    "old": "          if (incoming.size >= WED_INCOMING_MAX && !incoming.has(from)) return;\n          if (!incoming.has(from) && now() - (quiet.get(from) ?? -Infinity) < WED_REASK_MS) {",
+    "new": "          if (!incoming.has(from) && now() - (quiet.get(from) ?? -Infinity) < WED_REASK_MS) {",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
     ]
@@ -1130,8 +1130,8 @@
   {
     "name": "LP-wed-answer-budget-off",
     "file": "src/net/wedSession.js",
-    "old": "    if (t - (answered.get(peer) ?? -Infinity) < WED_REASK_MS) return false;\n",
-    "new": "",
+    "old": "    if (t - (answered.get(peer) ?? -Infinity) < WED_REASK_MS) return false;\n    if (answered.size > 64) for (const [p, at] of answered) if (t - at >= WED_REASK_MS) answered.delete(p);",
+    "new": "    if (answered.size > 64) for (const [p, at] of answered) if (t - at >= WED_REASK_MS) answered.delete(p);",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
     ]
@@ -1139,7 +1139,7 @@
   {
     "name": "LP-wed-yes-leaves-others-waiting",
     "file": "src/net/wedSession.js",
-    "old": "      for (const [p, x] of incoming) once({ k: 'no', to: p, s: x.s, why: 'busy' });   // a yes answers every other proposal at me",
+    "old": "      for (const [p, x] of incoming) once({ k: 'no', to: p, s: x.s, why: 'busy' }); // a yes answers every other proposal at me",
     "new": "",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
@@ -1148,8 +1148,8 @@
   {
     "name": "LP-wed-taken-back-ignored",
     "file": "src/net/wedSession.js",
-    "old": "      if (waiting !== w) { if (r?.ok && r.wed) { wedNow(r.union, peer); changed(); } else takeBack(w); return { ok: false, why: 'cancelled' }; }\n",
-    "new": "",
+    "old": "      if (waiting !== w) {\n        if (r?.ok && r.wed) {\n          wedNow(r.union, peer);\n          changed();\n        } else takeBack(w);\n        return { ok: false, why: 'cancelled' };\n      }\n      if (!r?.ok) {",
+    "new": "      if (!r?.ok) {",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
     ]
@@ -1157,8 +1157,8 @@
   {
     "name": "LP-wed-stale-no-cancels",
     "file": "src/net/wedSession.js",
-    "old": "if (outgoing && outgoing.peer === from && outgoing.s === d.s) { outgoing = null;",
-    "new": "if (outgoing && outgoing.peer === from) { outgoing = null;",
+    "old": "          if (outgoing && outgoing.peer === from && outgoing.s === d.s) {",
+    "new": "          if (outgoing && outgoing.peer === from) {",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
     ]
@@ -1166,8 +1166,8 @@
   {
     "name": "LP-wed-stale-yes-taken",
     "file": "src/net/wedSession.js",
-    "old": "if (!outgoing || outgoing.peer !== from || outgoing.s !== d.s || closing) {",
-    "new": "if (!outgoing || outgoing.peer !== from || closing) {",
+    "old": "          if (!outgoing || outgoing.peer !== from || outgoing.s !== d.s || closing) {",
+    "new": "          if (!outgoing || outgoing.peer !== from || closing) {",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
     ]
@@ -1411,8 +1411,8 @@
   {
     "name": "AUDIT-LEGACY-III-O1-an-unstamped-ask-accepted",
     "file": "src/net/wedSession.js",
-    "old": "      if (!a.sub || !a.sc) { incoming.delete(peer); once({ k: 'no', to: peer, s: a.s, why: 'refused' }); changed(); return { ok: false, why: 'refused' }; }\n",
-    "new": "",
+    "old": "      if (!a.sub || !a.sc) {\n        incoming.delete(peer);\n        once({ k: 'no', to: peer, s: a.s, why: 'refused' });\n        changed();\n        return { ok: false, why: 'refused' };\n      }\n      incoming.delete(peer);",
+    "new": "      incoming.delete(peer);",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
     ]
@@ -1474,8 +1474,8 @@
   {
     "name": "AUDIT-LEGACY-III-O3-the-late-ask-is-a-yes",
     "file": "src/net/wedSession.js",
-    "old": "  const askAgain = async (w) => {\n    const r = await withdrawHalf(w);",
-    "new": "  const askAgain = async (w) => {\n    let r; try { r = await half(w.s, w.sub ?? '', w.sc ?? ''); } catch { r = { ok: false }; }",
+    "old": "    const r = await withdrawHalf(w);",
+    "new": "    let r;\n    try {\n      r = await half(w.s, w.sub ?? '', w.sc ?? '');\n    } catch {\n      r = { ok: false };\n    }",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
     ]
@@ -1483,8 +1483,8 @@
   {
     "name": "AUDIT-LEGACY-III-O3-a-no-while-waiting-keeps-the-half",
     "file": "src/net/wedSession.js",
-    "old": "            if (!w.posting) takeBack(w);   // my half landed: taken back (one on its way is taken back as it lands - accept)\n",
-    "new": "",
+    "old": "            if (!w.posting) takeBack(w); // my half landed: taken back (one on its way is taken back as it lands - accept)\n            say(wedWhyText(d.why ?? 'cancelled', nameOf(from)));",
+    "new": "            say(wedWhyText(d.why ?? 'cancelled', nameOf(from)));",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
     ]
@@ -1501,8 +1501,8 @@
   {
     "name": "AUDIT-LEGACY-III-O3-a-late-done-unasked",
     "file": "src/net/wedSession.js",
-    "old": "          if (lapsed && lapsed.peer === from && lapsed.s === d.s) { const w = lapsed; lapsed = null; takeBack(w); return; }\n",
-    "new": "",
+    "old": "          if (lapsed && lapsed.peer === from && lapsed.s === d.s) {\n            const w = lapsed;\n            lapsed = null;\n            takeBack(w);\n            return;\n          }\n          if (!waiting || waiting.peer !== from || waiting.s !== d.s || waiting.posting || waiting.asked) return;",
+    "new": "          if (!waiting || waiting.peer !== from || waiting.s !== d.s || waiting.posting || waiting.asked) return;",
     "tests": [
       "test/systems/legacy/auditlegacy3.test.js"
     ]

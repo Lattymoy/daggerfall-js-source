@@ -155,8 +155,8 @@
   {
     "name": "AUDIT-DOMAINS-C2-the-line-english",
     "file": "src/net/townSeatLaw.js",
-    "old": "return holder ? t('seat.info.held', '{charter}: held by {guild}', { charter, guild: guildWords(holder) }) : t('seat.info.unheld', '{charter}: unheld', { charter });",
-    "new": "return `${charter}: ${holder ? `held by ${guildWords(holder)}` : 'unheld'}`;",
+    "old": "  return holder\n    ? t('seat.info.held', '{charter}: held by {guild}', { charter, guild: guildWords(holder) })\n    : t('seat.info.unheld', '{charter}: unheld', { charter });",
+    "new": "  return `${charter}: ${holder ? `held by ${guildWords(holder)}` : 'unheld'}`;",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]

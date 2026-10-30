@@ -122,8 +122,8 @@
   {
     "name": "STORM-SHED-watch-no-wait",
     "file": "src/net/townSeatBook.js",
-    "old": "        watchRetryAt = nowMs() + jittered(Math.min(SEAT_WATCH_CLAIM_EVERY_MS, SEAT_WATCH_RETRY_MS * 2 ** (watchFails - 1)), rand);\n",
-    "new": "",
+    "old": "        watchRetryAt =\n          nowMs() + jittered(Math.min(SEAT_WATCH_CLAIM_EVERY_MS, SEAT_WATCH_RETRY_MS * 2 ** (watchFails - 1)), rand);\n      }",
+    "new": "      }",
     "tests": [
       "test/net/stormshed.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "STORM-SHED-watch-frame-unheld",
     "file": "src/net/townSeatBook.js",
-    "old": "if (watchBusy || open !== true || nowMs() < watchRetryAt) return false;",
-    "new": "if (watchBusy || open !== true) return false;",
+    "old": "      if (watchBusy || open !== true || nowMs() < watchRetryAt) return false; // STORM-SHED: a failed claim's wait",
+    "new": "      if (watchBusy || open !== true) return false; // STORM-SHED: a failed claim's wait",
     "tests": [
       "test/net/stormshed.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "STORM-SHED-watch-claim-unheld",
     "file": "src/net/townSeatBook.js",
-    "old": "      if (!force && nowMs() < watchRetryAt) return null;   // STORM-SHED: a failed claim's wait\n",
-    "new": "",
+    "old": "      if (!force && nowMs() < watchRetryAt) return null; // STORM-SHED: a failed claim's wait\n      const who = me();",
+    "new": "      const who = me();",
     "tests": [
       "test/net/stormshed.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "STORM-SHED-watch-undoubled",
     "file": "src/net/townSeatBook.js",
-    "old": "Math.min(SEAT_WATCH_CLAIM_EVERY_MS, SEAT_WATCH_RETRY_MS * 2 ** (watchFails - 1))",
-    "new": "Math.min(SEAT_WATCH_CLAIM_EVERY_MS, SEAT_WATCH_RETRY_MS)",
+    "old": "        watchRetryAt =\n          nowMs() + jittered(Math.min(SEAT_WATCH_CLAIM_EVERY_MS, SEAT_WATCH_RETRY_MS * 2 ** (watchFails - 1)), rand);",
+    "new": "        watchRetryAt = nowMs() + jittered(Math.min(SEAT_WATCH_CLAIM_EVERY_MS, SEAT_WATCH_RETRY_MS), rand);",
     "tests": [
       "test/net/stormshed.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "STORM-SHED-watch-uncapped",
     "file": "src/net/townSeatBook.js",
-    "old": "Math.min(SEAT_WATCH_CLAIM_EVERY_MS, SEAT_WATCH_RETRY_MS * 2 ** (watchFails - 1))",
-    "new": "SEAT_WATCH_RETRY_MS * 2 ** (watchFails - 1)",
+    "old": "        watchRetryAt =\n          nowMs() + jittered(Math.min(SEAT_WATCH_CLAIM_EVERY_MS, SEAT_WATCH_RETRY_MS * 2 ** (watchFails - 1)), rand);",
+    "new": "        watchRetryAt = nowMs() + jittered(SEAT_WATCH_RETRY_MS * 2 ** (watchFails - 1), rand);",
     "tests": [
       "test/net/stormshed.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "STORM-SHED-watch-kept-past-answer",
     "file": "src/net/townSeatBook.js",
-    "old": "        watchFails = 0; watchRetryAt = -Infinity;\n",
-    "new": "",
+    "old": "        watchFails = 0;\n        watchRetryAt = -Infinity;\n      } else {",
+    "new": "      } else {",
     "tests": [
       "test/net/stormshed.test.js"
     ],

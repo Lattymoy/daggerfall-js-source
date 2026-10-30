@@ -282,8 +282,8 @@
   {
     "name": "AUDIT-SEATS-S3-law-one",
     "file": "src/net/townSeatLaw.js",
-    "old": "    seatTaken.add(s.key); guildTaken.add(s.carried.guild);\n",
-    "new": "",
+    "old": "    seatTaken.add(s.key);\n    guildTaken.add(s.carried.guild);\n    rights.push({",
+    "new": "    rights.push({",
     "tests": [
       "test/net/audit_seats_service.test.js"
     ]
@@ -300,8 +300,8 @@
   {
     "name": "AUDIT-SEATS-S3-law-words",
     "file": "src/net/townSeatLaw.js",
-    "old": ", and ${guildWords(d.guild)}'s Right of Siege carries to the next week.`",
-    "new": ".`",
+    "old": "          ? `${when}, no result of the siege of ${seat.name} came; it is void, ${guildWords(d.holder)} keeps it for now, and ${guildWords(d.guild)}'s Right of Siege carries to the next week.`",
+    "new": "          ? `${when}, no result of the siege of ${seat.name} came; it is void, ${guildWords(d.holder)} keeps it for now.`",
     "tests": [
       "test/net/audit_seats_service.test.js"
     ]
@@ -438,8 +438,8 @@
   {
     "name": "AUDIT-SEATS-S4-words",
     "file": "src/net/townSeatLaw.js",
-    "old": "${Number(d.refund) > 0 ? ` - its claim fee of ${marksText(Number(d.refund))} refunded` : ''}",
-    "new": "",
+    "old": "        ? `${when}, ${seat.name} was struck from the registry, and ${guildWords(d.guild)}'s Charter with it${Number(d.refund) > 0 ? ` - its claim fee of ${marksText(Number(d.refund))} refunded` : ''}.` // GUILD3a: silver, as every sentence says it",
+    "new": "        ? `${when}, ${seat.name} was struck from the registry, and ${guildWords(d.guild)}'s Charter with it.` // GUILD3a: silver, as every sentence says it",
     "tests": [
       "test/net/audit_seats_service.test.js"
     ]
@@ -719,8 +719,8 @@
   {
     "name": "AUDIT-SEATS-T1-minus",
     "file": "src/net/townSeatLaw.js",
-    "old": "standing: raised ? SIEGE_STANDING.held + (throne ? STANDING_CHANGES.throneReached : 0) : 0, taken: false };",
-    "new": "standing: raised ? SIEGE_STANDING.held : 0, taken: false };",
+    "old": "    return {\n      bonus: !!raised,\n      barred: true,\n      standing: raised ? SIEGE_STANDING.held + (throne ? STANDING_CHANGES.throneReached : 0) : 0,\n      taken: false,\n    };",
+    "new": "    return { bonus: !!raised, barred: true, standing: raised ? SIEGE_STANDING.held : 0, taken: false };",
     "tests": [
       "test/net/audit_seats_service.test.js"
     ]
@@ -746,8 +746,8 @@
   {
     "name": "AUDIT-SEATS-T1-never",
     "file": "src/net/townSeatLaw.js",
-    "old": "${d.throne === 0 ? ' The Throne was never reached.' : ''}",
-    "new": "",
+    "old": "      return `${when}, ${guildWords(d.guild)} held ${seat.name} against the siege of ${guildWords(d.against)}${d.throne === 1 ? ', though its Throne was reached' : ''}.${d.throne === 0 ? ' The Throne was never reached.' : ''}`;",
+    "new": "      return `${when}, ${guildWords(d.guild)} held ${seat.name} against the siege of ${guildWords(d.against)}${d.throne === 1 ? ', though its Throne was reached' : ''}.`;",
     "tests": [
       "test/net/audit_seats_service.test.js"
     ]
@@ -755,8 +755,8 @@
   {
     "name": "AUDIT-SEATS-T1-reached",
     "file": "src/net/townSeatLaw.js",
-    "old": "${d.throne === 1 ? ', though its Throne was reached' : ''}",
-    "new": "",
+    "old": "      return `${when}, ${guildWords(d.guild)} held ${seat.name} against the siege of ${guildWords(d.against)}${d.throne === 1 ? ', though its Throne was reached' : ''}.${d.throne === 0 ? ' The Throne was never reached.' : ''}`;",
+    "new": "      return `${when}, ${guildWords(d.guild)} held ${seat.name} against the siege of ${guildWords(d.against)}.${d.throne === 0 ? ' The Throne was never reached.' : ''}`;",
     "tests": [
       "test/net/audit_seats_service.test.js"
     ]

@@ -21,8 +21,8 @@
     "name": "MARKET-KEEP-the-writs-keep-their-own-list",
     "file": "src/net/writBook.js",
     "note": "INT19 (PIN MOVED): re-aimed by content - a new fill is the market's own realm act (realmPieceAct, PIECE_GONE); the writs' own list is their settle's, of a fill a tab from before kept",
-    "old": "            if (PIECE_GONE.includes(r?.error)) { try { drop?.(f.item, f.where); } catch (e) { console.warn('[writs] drop', e); } }   // AUDIT 31 H1",
-    "new": "            if (PIECE_GONE.includes(r?.error) || r?.error === 'market-not-yours') { try { drop?.(f.item, f.where); } catch (e) { console.warn('[writs] drop', e); } }   // AUDIT 31 H1",
+    "old": "              if (PIECE_GONE.includes(r?.error)) {",
+    "new": "              if (PIECE_GONE.includes(r?.error) || r?.error === 'market-not-yours') {",
     "tests": [
       "test/net/fb1001_market.test.js"
     ]

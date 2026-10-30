@@ -472,8 +472,8 @@
   {
     "name": "CROWN1C-lines-prize",
     "file": "src/net/townSeatLaw.js",
-    "old": "The week's champion takes ${Number(r.prize ?? 0).toLocaleString('en-US')} silver",
-    "new": "The week's champion takes ${r.prize} silver",
+    "old": "    `A Royal Tourney is proclaimed: a duel ladder all week at the castle's square, every blow refereed. The week's champion takes ${Number(r.prize ?? 0).toLocaleString('en-US')} silver and the title for good.`,",
+    "new": "    `A Royal Tourney is proclaimed: a duel ladder all week at the castle's square, every blow refereed. The week's champion takes ${r.prize} silver and the title for good.`,",
     "tests": [
       "test/net/crown1_royal_client.test.js"
     ]

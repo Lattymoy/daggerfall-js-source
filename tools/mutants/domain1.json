@@ -110,8 +110,8 @@
   {
     "name": "DOMAIN1-a-fresh-id-each-ask",
     "file": "src/net/townSeatBook.js",
-    "old": "if (giftAsk?.ask !== ask) giftAsk = { ask, rid: rid() };",
-    "new": "giftAsk = { ask, rid: rid() };",
+    "old": "      if (giftAsk?.ask !== ask) giftAsk = { ask, rid: rid() };",
+    "new": "      giftAsk = { ask, rid: rid() };",
     "tests": [
       "test/net/domain1_gifts.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "DOMAIN1-the-stores-untold",
     "file": "src/net/townSeatBook.js",
-    "old": "if (r.data?.store) stores?.(r.data.store);",
-    "new": "if (r.data?.store) stores?.(null);",
+    "old": "      if (r.data?.store) stores?.(r.data.store);",
+    "new": "      if (r.data?.store) stores?.(null);",
     "tests": [
       "test/net/domain1_gifts.test.js"
     ]

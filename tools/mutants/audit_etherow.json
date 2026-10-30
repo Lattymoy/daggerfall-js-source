@@ -133,8 +133,8 @@
   {
     "name": "AEOW-C2-1-watch-world",
     "file": "src/net/watchReceipt.js",
-    "old": "\n  && !(x >= WATCH_VEIL_BOX.x0 && x < WATCH_VEIL_BOX.x1 && y >= WATCH_VEIL_BOX.y0 && y < WATCH_VEIL_BOX.y1);",
-    "new": ";",
+    "old": "  Number.isSafeInteger(x) &&\n  Number.isSafeInteger(y) &&\n  worldPixelOk(x) &&\n  worldPixelOk(y) &&\n  !(x >= WATCH_VEIL_BOX.x0 && x < WATCH_VEIL_BOX.x1 && y >= WATCH_VEIL_BOX.y0 && y < WATCH_VEIL_BOX.y1);",
+    "new": "  Number.isSafeInteger(x) && Number.isSafeInteger(y) && worldPixelOk(x) && worldPixelOk(y);",
     "tests": [
       "test/systems/audit_etherow.test.js"
     ],

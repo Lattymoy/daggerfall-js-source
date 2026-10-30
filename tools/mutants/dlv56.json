@@ -73,8 +73,8 @@
   {
     "name": "DLV56-M3-staff-whole",
     "file": "src/net/staffTeleport.js",
-    "old": "whole: !!word || (!m[2] && !m[3]), pos: null",
-    "new": "whole: !!word || !m[2], pos: null",
+    "old": "    return {\n      kind: 'dungeon',\n      ...at,\n      mapId: +m[1],\n      ...(word ? { ins: word } : {}),\n      whole: !!word || (!m[2] && !m[3]),\n      pos: null,\n    };",
+    "new": "    return { kind: 'dungeon', ...at, mapId: +m[1], ...(word ? { ins: word } : {}), whole: !!word || !m[2], pos: null };",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],

@@ -53,8 +53,8 @@
   {
     "name": "GUILD3a-a-refund-in-marks",
     "file": "src/net/townSeatLaw.js",
-    "old": "its claim fee of ${marksText(Number(d.refund))} refunded",
-    "new": "its claim fee of ${Number(d.refund).toLocaleString('en-US')} Marks refunded",
+    "old": "        ? `${when}, ${seat.name} was struck from the registry, and ${guildWords(d.guild)}'s Charter with it${Number(d.refund) > 0 ? ` - its claim fee of ${marksText(Number(d.refund))} refunded` : ''}.` // GUILD3a: silver, as every sentence says it",
+    "new": "        ? `${when}, ${seat.name} was struck from the registry, and ${guildWords(d.guild)}'s Charter with it${Number(d.refund) > 0 ? ` - its claim fee of ${Number(d.refund).toLocaleString('en-US')} Marks refunded` : ''}.` // GUILD3a: silver, as every sentence says it",
     "tests": [
       "test/net/guild3_plain.test.js",
       "test/net/audit_seats_service.test.js"

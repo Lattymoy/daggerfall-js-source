@@ -2,8 +2,8 @@
   {
     "name": "TOWNECON-AUDIT2-SVC1-pixel-unread",
     "file": "src/net/townEconLaw.js",
-    "old": "|| townPixelIdOf(map) !== py * 1000 + px) return null;",
-    "new": ") return null;",
+    "old": "    if (!ok(location, 9999) || townPixelIdOf(map) !== py * 1000 + px) return null;",
+    "new": "    if (!ok(location, 9999)) return null;",
     "tests": [
       "test/systems/townecon.test.js"
     ],
@@ -23,8 +23,8 @@
   {
     "name": "TOWNECON-AUDIT2-PRICE3-pay-unbound",
     "file": "src/net/townEconLaw.js",
-    "old": "pay = pctOf(townShopFactor(p, 'Sell', seatFactor));",
-    "new": "pay = pctOf(townSaleFactor(p));",
+    "old": "    pay = pctOf(townShopFactor(p, 'Sell', seatFactor)); // AUDIT TOWN-ECON 2 PRICE-3: what a counter pays, SEAT-LOOP's bound and all",
+    "new": "    pay = pctOf(townSaleFactor(p)); // AUDIT TOWN-ECON 2 PRICE-3: what a counter pays, SEAT-LOOP's bound and all",
     "tests": [
       "test/systems/townecon.test.js"
     ],
@@ -33,8 +33,8 @@
   {
     "name": "TOWNECON-AUDIT2-LIV3-no-room",
     "file": "src/net/townEconLaw.js",
-    "old": "if (backers && lines.length <= TOWN_TIP_PATRONS_ROOM) lines.push(backers);",
-    "new": "if (backers) lines.push(backers);",
+    "old": "  if (backers && lines.length <= TOWN_TIP_PATRONS_ROOM) lines.push(backers); // AUDIT TOWN-ECON 2 LIV-3: where the card has room",
+    "new": "  if (backers) lines.push(backers); // AUDIT TOWN-ECON 2 LIV-3: where the card has room",
     "tests": [
       "test/systems/townecon.test.js"
     ],
@@ -233,7 +233,7 @@
   {
     "name": "TOWNECON-AUDIT2-SVC1-book-unwalked",
     "file": "src/net/townEconBook.js",
-    "old": "      if (!receipt) { waiting.set(t.map, t); if (waiting.size > 8) waiting.delete(waiting.keys().next().value); return false; }",
+    "old": "      if (!receipt) {\n        waiting.set(t.map, t);\n        if (waiting.size > 8) waiting.delete(waiting.keys().next().value);\n        return false;\n      }",
     "new": "      if (!receipt) return sendWitness(t, 'k1.none');",
     "tests": [
       "test/net/townecon_client.test.js"
@@ -243,8 +243,8 @@
   {
     "name": "TOWNECON-AUDIT2-SVC1-book-waiting",
     "file": "src/net/townEconBook.js",
-    "old": "      for (const [map, t] of waiting) if (t.px === c.x && t.py === c.y) { waiting.delete(map); if (!witnessStopped) sendWitness(t, /** @type {string} */ (r)); }\n",
-    "new": "",
+    "old": "      for (const [map, t] of waiting)\n        if (t.px === c.x && t.py === c.y) {\n          waiting.delete(map);\n          if (!witnessStopped) sendWitness(t, /** @type {string} */ (r));\n        }\n      if (!isTownPixel(c.x, c.y)) return false;",
+    "new": "      if (!isTownPixel(c.x, c.y)) return false;",
     "tests": [
       "test/net/townecon_client.test.js"
     ],
@@ -253,8 +253,8 @@
   {
     "name": "TOWNECON-AUDIT2-CLI3-taken-done",
     "file": "src/net/townEconBook.js",
-    "old": "(r.data?.counted === true && r.data?.why !== 'taken'));",
-    "new": "r.data?.counted === true);",
+    "old": "      (r.data?.confirmed === true ||\n        r.data?.why === 'known' ||\n        r.data?.why === 'struck' ||\n        (r.data?.counted === true && r.data?.why !== 'taken'));",
+    "new": "      (r.data?.confirmed === true || r.data?.why === 'known' || r.data?.why === 'struck' || r.data?.counted === true);",
     "tests": [
       "test/net/townecon_client.test.js"
     ],
@@ -263,8 +263,8 @@
   {
     "name": "TOWNECON-AUDIT2-CLI3-stale-table",
     "file": "src/net/townEconBook.js",
-    "old": "sort((a, b) => (b[1] % TOWN_ECON_DONE) - (a[1] % TOWN_ECON_DONE))",
-    "new": "sort((a, b) => b[1] - a[1])",
+    "old": "        .sort((a, b) => (b[1] % TOWN_ECON_DONE) - (a[1] % TOWN_ECON_DONE))",
+    "new": "        .sort((a, b) => b[1] - a[1])",
     "tests": [
       "test/net/townecon_client.test.js"
     ],
@@ -273,8 +273,8 @@
   {
     "name": "TOWNECON-AUDIT2-SVC5-book-full-kept",
     "file": "src/net/townEconBook.js",
-    "old": "      if (fullAt.get(`${c.x},${c.y}`) === dayNow()) return false;   // AUDIT TOWN-ECON 2 SVC-5: its footsteps full today\n",
-    "new": "",
+    "old": "      if (fullAt.get(`${c.x},${c.y}`) === dayNow()) return false; // AUDIT TOWN-ECON 2 SVC-5: its footsteps full today\n      const list = watchHeld().filter((w) => alive(w, t));",
+    "new": "      const list = watchHeld().filter((w) => alive(w, t));",
     "tests": [
       "test/net/townecon_client.test.js"
     ],
@@ -283,8 +283,8 @@
   {
     "name": "TOWNECON-AUDIT2-CLI4-no-clock",
     "file": "src/net/townEconBook.js",
-    "old": "      if (nowMs() - dueLookAt >= TOWN_ECON_DUE_LOOK_MS) { dueLookAt = nowMs(); if (due()) book.claim(); }\n",
-    "new": "",
+    "old": "      if (nowMs() - dueLookAt >= TOWN_ECON_DUE_LOOK_MS) {\n        dueLookAt = nowMs();\n        if (due()) book.claim();\n      }\n      return mapId == null || !Number.isFinite(Number(mapId)) ? 0 : (shares.get(Number(mapId) >>> 0) ?? 0);",
+    "new": "      return mapId == null || !Number.isFinite(Number(mapId)) ? 0 : (shares.get(Number(mapId) >>> 0) ?? 0);",
     "tests": [
       "test/net/townecon_client.test.js"
     ],

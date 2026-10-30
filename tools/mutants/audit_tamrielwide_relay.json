@@ -52,8 +52,8 @@
   {
     "name": "AUDIT-TW-B2-the-pit-the-bays",
     "file": "src/net/staffTeleport.js",
-    "old": "!worldPixelOk(a.PitMapX) || !worldPixelOk(a.PitMapY)",
-    "new": "!integer(a.PitMapX, 999) || !integer(a.PitMapY, 499)",
+    "old": "      !worldPixelOk(a.PitMapX) ||\n      !worldPixelOk(a.PitMapY) ||",
+    "new": "      !integer(a.PitMapX, 999) ||\n      !integer(a.PitMapY, 499) ||",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_relay.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "AUDIT-TW-B2-the-row-unbounded",
     "file": "src/net/staffTeleport.js",
-    "old": "!worldPixelOk(a.PitMapX) || !worldPixelOk(a.PitMapY)",
-    "new": "!worldPixelOk(a.PitMapX)",
+    "old": "      !worldPixelOk(a.PitMapY) ||\n      !integer(a.TemplateMapX, 999) ||",
+    "new": "      !integer(a.TemplateMapX, 999) ||",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_relay.test.js"
     ],
