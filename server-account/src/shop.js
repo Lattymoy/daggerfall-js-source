@@ -11,6 +11,7 @@ import { sealKey, sealUnder, openWith } from './sealed.js';
 import { patreonPage, patreonHtml } from './patreon.js';
 import { mustChange } from './realm.js';
 import { timingSafeEqual } from './password.js';
+import { holdsAll } from './titles.js';   // ADMIN-ALL: an admin holds every ware, so is sold none
 
 /** The paths this file answers, none with a session: each is proven by what it carries (a sealed ticket, an order, or
  *  Stripe's signature). */
@@ -73,7 +74,7 @@ export async function shopCardOf(/** @type {any} */ player, /** @type {any} */ e
   const wares = [];
   let key = null;   // derived once a read, at its first Buy link - every account read asks this
   for (const w of SHOP_WARES) {
-    const isHeld = registered(player) && shopOwns(player?.shop_wares, w.id), onSale = sale.includes(w.id);   // ARMORY: a set's pieces, or the set's through its pieces
+    const isHeld = registered(player) && (shopOwns(player?.shop_wares, w.id) || holdsAll(player, env)), onSale = sale.includes(w.id);   // ARMORY: a set's pieces, or the set's through its pieces
     if (on && onSale && !isHeld && registered(player)) key ??= await sealKey(subtle, String(env.STRIPE_SECRET_KEY), SEAL_SALT, 'buy');
     const buy = key && onSale && !isHeld
       ? `${origin}${SHOP_BUY_PATH}?t=${await sealUnder(key, { p: player.id, w: w.id, x: nowS + SHOP_TICKET_S }, { subtle, rand })}`
@@ -197,9 +198,9 @@ export async function shopCheckout(ctx, env, claims, { fetch, origin }) {
   const ware = shopWareById(claims?.w);
   if (!ware) return { page: 'expired' };
   if (!shopOnSale(env).includes(ware.id)) return { page: 'sold' };
-  const player = await db.prepare('SELECT id, handle, shop_wares FROM players WHERE id = ?1').bind(claims.p).first();
+  const player = await db.prepare('SELECT id, handle, shop_wares, staff_suspended FROM players WHERE id = ?1').bind(claims.p).first();
   if (!registered(player)) return { page: 'account' };
-  if (shopOwns(player.shop_wares, ware.id)) return { page: 'held' };
+  if (shopOwns(player.shop_wares, ware.id) || holdsAll(player, env)) return { page: 'held' };   // ADMIN-ALL
   const open = await db.prepare("SELECT stripe_url FROM shop_orders WHERE player = ?1 AND ware = ?2 AND status = 'open' AND expires_at > ?3 AND stripe_url IS NOT NULL ORDER BY created_at DESC LIMIT 1")
     .bind(player.id, ware.id, nowS + 60).first();
   if (open?.stripe_url) return { url: open.stripe_url };
@@ -433,9 +434,9 @@ export async function shopDoor(ctx, env, path, { method, url, bytes, signature, 
     if (!claims) return shopHtml(SHOP_PAGES.expired, 400);
     const ware = /** @type {any} */ (shopWareById(claims.w));
     if (!shopOnSale(env).includes(ware.id)) return shopHtml(SHOP_PAGES.sold, 410);
-    const player = await ctx.db.prepare('SELECT id, handle, shop_wares FROM players WHERE id = ?1').bind(claims.p).first();
+    const player = await ctx.db.prepare('SELECT id, handle, shop_wares, staff_suspended FROM players WHERE id = ?1').bind(claims.p).first();
     if (!registered(player)) return shopHtml(SHOP_PAGES.account, 403);
-    if (shopOwns(player.shop_wares, ware.id)) return shopHtml(SHOP_PAGES.held, 409);
+    if (shopOwns(player.shop_wares, ware.id) || holdsAll(player, env)) return shopHtml(SHOP_PAGES.held, 409);   // ADMIN-ALL
     return shopHtml(shopConfirmPage({ handle: player.handle, ware, ticket }));   // NOTHING IS WRITTEN on a GET
   }
   if (method !== 'POST') return { json: { error: 'method' }, status: 405 };

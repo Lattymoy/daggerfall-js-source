@@ -30,12 +30,14 @@ import { offHandToHit, OFF_HAND_BLOW } from './twoHands/handsLaw.js';   // TWO-H
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 import { weaponSkillUsed } from '../characters/weapons.js';
 import { pvpArrowScale } from './pvpTriangle.js';   // PVP-TRIANGLE
+import { bowFastDamage, landingShaft } from './bowBloom.js';   // BOW-FAST
 import { armorValuesOf } from '../systems/equip.js';   // AUDIT C&C H5: the stand-in's unarmoured table, DFU's own 100s
 import { clawMetalDamage, CLAW_METAL_MAX } from './clawMetal.js';   // AUDIT CLAWS A1: the beast's claws' metal rides the sheet
 import { weaponPastPct } from '../systems/weaponMastery.js';   // PVP-SCALE: the weapon's skill and gear, on a blow at a player
 import { blowRoom } from '../systems/powerCeiling.js';
-import { breakNormalPowerConcealment } from '../systems/concealment.js';   // RPT1026-FIGHTS (STRIKE-UNVEILS): the striker's own concealment, on its blow that lands
-import { DUEL_LEVEL_MAX, DUEL_STAT_MAX, DUEL_SKILL_MAX, DUEL_RACE_MAX, DUEL_TEMPLATE_MAX, DUEL_MATERIAL_MAX, CARD_VITAL_MAX, CAST_EFFECTS_MAX, DUEL_SWINGS } from '../net/wire.js';
+import { breakNormalPowerConcealment } from '../systems/concealment.js';
+import { pvpGearBlowPct, pvpGearBlowFlat, pvpGearLanded } from './pvpGearPowers.js';   // PVP-GEAR: the striker's lines and powers on a blow at a player   // RPT1026-FIGHTS (STRIKE-UNVEILS): the striker's own concealment, on its blow that lands
+import { DUEL_LEVEL_MAX, DUEL_STAT_MAX, DUEL_RACE_MAX, DUEL_TEMPLATE_MAX, DUEL_MATERIAL_MAX, CARD_VITAL_MAX, CAST_EFFECTS_MAX, DUEL_SWINGS } from '../net/wire.js';
 
 /** The four skills a blow reads, in the order the wire carries them (`sk`): the weapon's own (Archery for a bow, the
  *  blade's or the axe's ...), HandToHand, CriticalStrike, Backstabbing. The weapon's slot is resolved on each end off
@@ -74,17 +76,21 @@ const UNREAD_SHARE = Object.freeze({ relayHealth: true });
 /** The skill a weapon template swings with - HandToHand for no weapon. */
 const skillForTemplate = (t) => (Number.isInteger(t) ? (weaponSkillUsed(t) ?? SKILLS.HandToHand) : SKILLS.HandToHand);
 
+/** PVP-SKILL-TOP (2026-10-30, the owner): a sheet's skill reads to 1100, past a full geared set - the wire's
+ *  DUEL_SKILL_MAX (1000) cut a geared skill the sheet showed. The client's own clamp: the relay never reads `sk`. */
+export const PVP_SKILL_TOP = 1100;
+
 /** THE ATTACKER'S SHEET, as the wire carries it (`a`), clamped at the wire's bounds so an honest frame is never refused.
  *  AUDIT CLAWS A1: `cm`, the beast's claws' metal (combat/clawMetal.js) - read here off the striker's own entity, because
  *  the stub has no equip table to read it from; the duel, the siege, the Royal Tourney, a siege work and the wild zone
  *  all strike through this sheet. Never on the wire since INT8 (a strike carries its rolled `d`). */
-export function duelAttackerOf(entity, weapon = null) {
+export function duelAttackerOf(entity, weapon = null, wraps = null, foe = null) {
   const ws = skillForTemplate(weapon?.templateIndex);
   return {
     lv: clamp(entity?.level ?? 1, 1, DUEL_LEVEL_MAX),
     r: clamp(entity?.raceId ?? 0, 0, DUEL_RACE_MAX),
     st: STAT_KEYS_ORDER.map((k) => clamp(liveStat(entity, k), 0, DUEL_STAT_MAX)),
-    sk: [ws, SKILLS.HandToHand, SKILLS.CriticalStrike, SKILLS.Backstabbing].map((id) => clamp(skillValue(entity, id), 0, DUEL_SKILL_MAX)),
+    sk: [ws, SKILLS.HandToHand, SKILLS.CriticalStrike, SKILLS.Backstabbing].map((id) => clamp(skillValue(entity, id), 0, PVP_SKILL_TOP)),
     cf: [clamp(entity?.career?.attackModifierFlags ?? 0, 0, 255), u32(entity?.career?.weaponArmorShieldsBitfield), u32(entity?.career?.abilityFlagsAndSpellPointsBitfield)],
     h: [clamp(entity?.health ?? 0, 0, CARD_VITAL_MAX), clamp(entity?.maxHealth ?? 1, 1, CARD_VITAL_MAX)],
     cm: clamp(clawMetalDamage(entity), 0, CLAW_METAL_MAX),
@@ -92,6 +98,9 @@ export function duelAttackerOf(entity, weapon = null) {
     // the target's share unread (an axe's and a hammer's halves at their mean)
     wp: Math.max(0, Math.round(blowRoom(weaponPastPct(weapon, entity, UNREAD_SHARE), 'mastery') || 0)),
     pl: Math.max(1, Math.trunc(Number(entity?.level) || 1)),   // PVP-TRIANGLE: the real level (`lv` stops at the cast's 30)
+    gp: pvpGearBlowPct(entity, weapon?.werecreatureClaws ? wraps : weapon ?? wraps, undefined, foe),   // WERE-WRAPS: claws strike in the wraps   // PVP-GEAR: what the striker's gear adds, capped - a fist's own pair of Hand Wraps
+    gf: pvpGearBlowFlat(entity, weapon?.werecreatureClaws ? wraps : weapon ?? wraps, foe),   // PVP-GEAR: Serpent's Kiss, flat
+    ...(foe != null ? { fo: foe } : {}),   // PVP-GEAR: the foe struck, for First Blood's memory
   };
 }
 
@@ -195,9 +204,12 @@ export function resolveDuelStrike(d, target, { rolls = Math.random, backFacing =
     weaponAnimTime: d.at ?? 0, rolls, say: null, onInflictPoison: null,
   });
   const rolled = Math.max(0, int(dmg));
-  const scaled = rolled + Math.floor((rolled * Math.max(0, Number(d.a?.wp) || 0)) / 100);   // PVP-SCALE: the weapon's climb and gear
-  const n = d.by === 'arrow' ? Math.floor(scaled * pvpArrowScale(d.a?.pl)) : scaled;   // PVP-TRIANGLE: an arrow's
+  const climbed = rolled + Math.floor((rolled * Math.max(0, Number(d.a?.wp) || 0)) / 100);   // PVP-SCALE: the weapon's climb and gear
+  const geared = climbed + Math.floor((climbed * Math.max(0, Number(d.a?.gp) || 0)) / 100);   // PVP-GEAR: the striker's lines and powers
+  const scaled = geared > 0 ? geared + Math.max(0, Math.trunc(Number(d.a?.gf) || 0)) : 0;   // PVP-GEAR: and a landed blow's flat
+  const n = d.by === 'arrow' ? bowFastDamage(d.relayCut ? { ...landingShaft(), fast: 0 } : landingShaft(), Math.floor(scaled * pvpArrowScale(d.a?.pl))) : scaled;   // PVP-TRIANGLE: an arrow's; BOW-FAST: its stacks (the relay's to cut, `relayCut`: its pull alone)
   if (n > 0 && target?.struckBy) breakNormalPowerConcealment(target.struckBy);   // RPT1026-FIGHTS (STRIKE-UNVEILS): on the striker, never its stub
+  if (n > 0 && target?.struckBy) pvpGearLanded(target.struckBy, undefined, d.a?.fo ?? null);   // PVP-GEAR: Way of the Sword's stack, First Blood's mark
   return { hit: n > 0, dmg: n };
 }
 

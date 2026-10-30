@@ -757,8 +757,8 @@
   {
     "name": "SHADOWCLOAK-my-bones-never-read",
     "file": "src/scenes/auraHost.js",
-    "old": "bones: mwViewBodyBones(CLOAK_BONES) ?? auraSpriteBones(mwViewSpriteFigure()) }",
-    "new": "bones: null ?? auraSpriteBones(mwViewSpriteFigure()) }",
+    "old": "bones: selfLiftNow > 0 ? null : mwViewBodyBones(CLOAK_BONES) ?? auraSpriteBones(mwViewSpriteFigure()) }",
+    "new": "bones: selfLiftNow > 0 ? null : null ?? auraSpriteBones(mwViewSpriteFigure()) }",
     "tests": [
       "test/net/shadowcloak.test.js"
     ],
@@ -822,8 +822,8 @@
   {
     "name": "SHADOWCLOAK-my-riding-ignored",
     "file": "src/scenes/auraHost.js",
-    "old": "/** @type {any} */ (self).mounted = !!player.riding;",
-    "new": "/** @type {any} */ (self).mounted = false;",
+    "old": "/** @type {any} */ (self).mounted = !!player.riding || lift > 0;",
+    "new": "/** @type {any} */ (self).mounted = lift > 0;",
     "tests": [
       "test/net/shadowcloak.test.js"
     ]

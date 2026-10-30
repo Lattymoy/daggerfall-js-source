@@ -88,6 +88,8 @@ export function weaponElement(item, { ladder = lootRarityOn() } = {}) {
 /** The spec a weapon wears, or null - the hot path: no object built, the switches read only for a weapon in hand. */
 function specOf(item, arcane, on, ladder) {
   if (!item || !(on ?? weaponGlowOn())) return null;
+  if (item.glowSet) { const set = glowFromWord(item.glowSet); if (set) return set; }   // GLOW-SET: law 9, a staff's pick, first
+  if (isHandWraps(item)) return fistGlow(undefined, true);   // WRAPS-AURA (mob: "wraps are glowing without the aura on"): wraps glow by the weapon aura alone
   if (isGilded(item) && (ladder ?? lootRarityOn())) return glowSpec('gilded', GILDED_LEVEL);   // GILDED-GLOW: law 8, first
   const i = elementIndex(item, ladder ?? lootRarityOn());
   if (i >= 0) return glowSpec(PROC_ELEMENTS[i], glowLevel(_total));
@@ -107,9 +109,21 @@ export function armoryWeaponLook(kit = ownArmory()) {
   const key = armoryKitPieces(kit).weapon;
   return key ? ARMORY_GLOW[/** @type {keyof typeof ARMORY_GLOW} */ (key)] ?? null : null;
 }
+/** ARMORY-FISTS (2026-10-30, mob: "can we use the glow from wepon aura ... cause we lose out as a hand to hand"): law 7
+ *  on a BARE fist. A fist in Hand Wraps already wears it through the wraps; one with nothing wears the kit's weapon
+ *  piece itself. `kit` is mine by default, a peer's as their token says it. */
+export function fistGlow(kit = ownArmory(), on = weaponGlowOn()) {
+  const look = on ? armoryWeaponLook(kit) : null;
+  return look ? glowSpec(look, ARMORY_LEVEL) : null;
+}
 /** The look of a kit whose ONLY piece is a weapon's - the shop's stage for it is the blade's (render/weaponPiecePreview.js),
  *  since the body pass draws no weapon piece; null for any other kit. Pure. */
 export const armoryWeaponStage = (/** @type {unknown} */ kit) => (Object.entries(armoryKitPieces(kit)).every(([s, k]) => s === 'weapon' || !k) ? armoryWeaponLook(kit) : null);
+/** GLOW-SET (2026-10-30, mob: "can we set the glow on wepaoins say like hand wraps?"): LAW 9, A GLOW SET ON THE PIECE.
+ *  A staff member's `/glow` (systems/staffGlow.js) writes one of the wire's words on the weapon or Hand Wraps in hand, as
+ *  `glowSet`. It shows over every other law: it is a choice, where the others are a reading. A word the wire does not
+ *  take is ignored. */
+export const GLOW_SET_FIELD = 'glowSet';
 /** Law 5's one strength: the enchanted look has no band to read. */
 export const ARCANE_LEVEL = 2;
 /** GILDED-GLOW (2026-10-29, #feature-feedback: "gilded weapons should have a cool crimson glow to them to match the item
@@ -193,7 +207,8 @@ const SPEC_BY_WORD = new Map(Object.values(SPEC_TABLE).flatMap((row) => row.filt
 /** THE CLASSIC HAND'S ASK: the outline its sprite wears (law 8's crimson, an element or law 7's piece - its enchanted
  *  look is its WEAPO1xx sheet), or null. When this answers, the rig swings the PLAIN sheet (combat/fpsWeapon.js
  *  plainWeaponType): an outline round a sheet painted with the blue glow says two things at once.
- *  HAND-WRAPS: the fists have no WEAPO1xx sheet, so enchanted Hand Wraps take law 5's arcane outline here too.
+ *  HAND-WRAPS: the fists have no WEAPO1xx sheet, so enchanted Hand Wraps took law 5's arcane outline here too - until
+ *  WRAPS-AURA, which lights wraps by the weapon aura alone (specOf).
  *  @param {any} item @param {{ on?: boolean, ladder?: boolean }} [opts] */
 export const spriteGlow = (item, opts) => specOf(item, isHandWraps(item), opts?.on, opts?.ladder);
 

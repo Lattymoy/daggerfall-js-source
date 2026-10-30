@@ -117,13 +117,14 @@ test('STOLEN-GOODS the report: a piece stolen off a smith\'s shelf (the real Ste
   assert.ok(paid > 0, `the merchant pays for it (${paid} gold)`);
   assert.deepEqual(player.items, [], 'out of the pack');
   assert.deepEqual(shelf, shelfBefore, 'and NOT on the shelf: the circle is broken');
-  // an honest piece - one the world handed over (a body's dagger) - still lands on the open shelf (Port-Ledger T2)
+  // SOLD-POOF (2026-10-30): an honest piece - one the world handed over (a body's dagger) -
+  // is paid for and gone as well: shelved, it could be stolen straight back and sold again
   const found = createWeapon(DAGGER, 0, () => 0.5);
   player.items.push(found);
   assert.equal(isStolen(found), false);
   assert.ok(sell(shelf, player, found) > 0);
-  assert.equal(shelf.at(-1), found, 'shelved, to be bought back');
-  assert.equal(shelf.length, shelfBefore.length + 1);
+  assert.deepEqual(player.items, [], 'out of the pack');
+  assert.deepEqual(shelf, shelfBefore, 'and NOT on the shelf: nothing sold to steal back');
 });
 
 test('STOLEN-GOODS the enhanced counter\'s Steal marks what it carries off - the one piece picked, and a basket of arrows, which stay a stack of their own beside the pack\'s (mutants: the enhanced steal unmarked)', () => {
@@ -406,8 +407,7 @@ test('STOLEN-GOODS AUDIT S1: A THEFT IS OF THE OWNER\'S PIECES - an honest Longs
   assert.deepEqual([player.items.includes(sword), isStolen(sword)], [true, false], 'back in the pack - the player\'s own, clean');
   assert.deepEqual(theftBasket(keeping, cupboard), [], 'and the theft law counts nothing: the mark and the crime agree');
   const shelf = [];
-  assert.equal(landSold(shelf, sword), true, 'sold, it lands on the shelf as an honest piece');
-  player.items.push(shelf.pop());
+  assert.deepEqual([landSold(shelf, sword), shelf], [false, []], 'sold, it goes nowhere (SOLD-POOF)');
   assert.equal(confiscateStolen(player).includes(sword), false, 'a verdict leaves it');
   // the owner's dagger taken is a theft - marked, and in the basket
   w._pickRemote(cupboard.indexOf(dagger), 'remove');

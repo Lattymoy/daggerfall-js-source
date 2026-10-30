@@ -41,7 +41,7 @@
 import {
   addItem, canHoldAmount, effectiveUnitWeightInKg, totalWeight, isSummoned,
   splitStack, GOLD_PIECE_WEIGHT_KG, goldPiecesOf, addGoldPieces, isGoldPieces, tellTaken,
-  findExistingStack, goldStack,
+  findExistingStack, goldStack, claimedCarryKg,
 } from '../inventory.js';
 import { LOOT_STACK_MAX } from '../loot/loot.js';   // GOLD-WIRE: the most one stack rides the room's word in
 import { isRoomCarried } from '../loot/roomCarriedList.js';   // GOLD-WIRE: whether the room's word carries the list a drop lands in
@@ -452,7 +452,7 @@ export function planTake(item, {
   const canCarry = entity
     ? canHoldAmount(stack, effectiveUnitWeightInKg(item),
       entityMaxEncumbrance(entity),
-      totalWeight(bag) + goldPiecesOf(entity) * GOLD_PIECE_WEIGHT_KG)
+      totalWeight(bag) + goldPiecesOf(entity) * GOLD_PIECE_WEIGHT_KG + claimedCarryKg(entity))   // CARRY-CLAIMS: a shared pile's takes awaiting their grant weigh too
     : stack;
   // The window's own gate went silent when it had no entity to read
   // and spoke when it did; there is one answer here, because the only

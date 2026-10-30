@@ -2,7 +2,7 @@
 // The host constructs it where the code stood. What it reads of the host's scope comes through `host`: the
 // settled names by value at construction, every live one (a `let` someone writes, a `const` made below) read at its
 // use as `host.<name>` - as the code read them where it was.
-import { addGoldPieces, addItem, isGoldPieces, stacksWith } from '../systems/inventory.js';
+import { addGoldPieces, addItem, isGoldPieces, stacksWith, addCarryClaims, pieceKg } from '../systems/inventory.js';   // CARRY-CLAIMS: a claim's lifted piece weighs on the carry gate
 import { asTheRoom } from '../systems/online/onlineLane.js';
 import { withRollerLevel } from '../systems/loot/lootLevelGate.js';   // AUDIT UPDATE L1: the room's base at the room's level
 import { baseSignature, bonusSpent, carriedBase, claimOf, claimWord, composeRoomView, isPersonalLoot, isRoomBaseKind, isRoomWord, judgeRoomClaim, legacyCounts, legacyDelta, legacySig, markPersonal, mergeRoomWord, pieceCount, recentAnswers, roomEmptied, ROOM_ANSWERS_KEPT, ROOM_BASE_FIND, ROOM_BASE_LUCK, ROOM_BASE_MAX, ROOM_BASE_QUARTERS, ROOM_CLAIM_TIMEOUT_MS, ROOM_CLAIMS_MAX, ROOM_PUT_RESAY_MS, ROOM_TAKEN_TEXT, LOOT_SKEW_TEXT, ROOM_LAPSED_TEXT, roomBaseGender, roomBaseLevel, roomClaimId, roomClaimOrder, roomContainerName, roomRoller, roomState, roomTermsBeat, roomWord, sameRoomTerms, seededRolls, settleBonusSpent, validRoomWord } from '../systems/roomLoot.js';
@@ -632,7 +632,19 @@ export function createRoomLoot(host) {
     }
     const give = roomLift(obj, k);
     _roomMine.set(claim.id, { canon, terms: st.terms, claim, item: obj, give, at: host._roomNowMs, saidAt: host._roomNowMs, lapsed: false });
+    addCarryClaims(roomClaimedKg, roomClaimedKg);   // CARRY-CLAIMS: weighed on the carry gate until its verdict
     st.claims.set(claim.id, claim);   // heard here too: a seat that comes to this client judges it with the rest
+  }
+  /** CARRY-CLAIMS (systems/inventory.js claimedCarryKg): what this player's takes in flight and not lapsed weigh - lifted
+   *  out of the pack until their verdict - or null once none is, and the gate lets the block go until its next take. */
+  function roomClaimedKg(e) {
+    let kg = 0, any = false;
+    for (const m of _roomMine.values()) {
+      if (!m.claim || m.lapsed) continue;
+      any = true;
+      if (e === playerEntity) kg += pieceKg(m.item, m.give);
+    }
+    return any ? kg : null;
   }
   /** A piece laid in a room container: the host lands it at once (a refusal comes back once nothing stands open on it);
    *  anyone else's stands in their list as theirs and is said to the host, again until it is answered. */

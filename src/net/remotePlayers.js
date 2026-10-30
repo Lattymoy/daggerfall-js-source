@@ -21,7 +21,7 @@
 // the singleton and could hand the inventory a stranger's doll, or the
 // stranger the player's, panel and all.
 import { composePaperDollPixels } from '../ui/paperDoll.js';
-import { drawnEquipTable, capeShown } from '../systems/capeShown.js';   // CAPE-TOGGLE: my cloak and my aura hidden, on everyone's screen
+import { drawnEquipTable, capeShown } from '../systems/capeShown.js';   // CAPE-TOGGLE: my cloak hidden, on everyone's screen
 import { createEquipTable } from '../characters/equipTable.js';
 import { CAPSULE_HEIGHT } from '../player/motor.js';
 import { drawText, measureText } from '../ui/text.js';
@@ -429,7 +429,7 @@ export function composeLook(entity, { eotbSet = ownEotbSet(), layered = ownLayer
   const klass = careerName(entity);
   // DISC23-B: `eo` OMITTED while the mod is off, `class`'s law - a look without it keeps the bytes it always had
   // LAYERED-GEAR: `lg` OMITTED while the skin is off, the same law
-  // CAPE-TOGGLE: `hc` while my capes are hidden, so a peer draws no aura on me (scenes/auraHost.js) - OMITTED otherwise
+  // CAPE-TOGGLE: `hc` while my capes are hidden (my aura stays on: scenes/auraHost.js) - OMITTED otherwise
   const hc = entity?.isPlayer === true && !capeShown();
   return { race: entity?.race ?? 'Breton', gender: entity?.gender ?? 'male', faceIndex: entity?.faceIndex ?? 0, ...(klass ? { class: klass } : {}), ...(Number.isInteger(eotbSet) ? { eo: eotbSet } : {}), ...(layered === 1 || layered === 2 ? { lg: layered } : {}), ...(hc ? { hc: 1 } : {}), items };
 }
@@ -902,7 +902,7 @@ export class RemotePlayers {
    * answers 0 for every peer.
    * @param {Iterable<any>} peers
    * @param {(p: any) => number[]} [toScene]
-   * @param {{bodyHeight?: (id: any) => number, dt?: number, eye?: number[]|null, poseAgeMs?: ((peer: any) => number)|null, conceal?: (id: any) => object|null, hidden?: (id: any) => boolean, grow?: ((feet: number[]) => number)|null, room?: Iterable<any>|null}} [opts]  PEER-FS1: `eye` is the listener, for the falloff; INVIS-LOOK: `conceal` a concealed peer's draw (ECV1's visual) or null; AUDIT PEER-RANGE A L1/L6: `room` every peer the room draws before a screen's cut (the draw distance's, the court's) - a resurrection is seen in it, and a peer in it keeps its class sprite's bundle while it is cut (`peers` when absent)
+   * @param {{bodyHeight?: (id: any) => number, dt?: number, eye?: number[]|null, poseAgeMs?: ((peer: any) => number)|null, conceal?: (id: any) => object|null, hidden?: (id: any) => boolean|'bar', grow?: ((feet: number[]) => number)|null, room?: Iterable<any>|null}} [opts]  PEER-FS1: `eye` is the listener, for the falloff; INVIS-LOOK: `conceal` a concealed peer's draw (ECV1's visual) or null; AUDIT PEER-RANGE A L1/L6: `room` every peer the room draws before a screen's cut (the draw distance's, the court's) - a resurrection is seen in it, and a peer in it keeps its class sprite's bundle while it is cut (`peers` when absent)
    */
   sync(peers, toScene = (p) => [p.x, p.y, p.z], { bodyHeight = () => 0, dt = 0, eye = null, poseAgeMs = null, conceal = () => null, hidden = () => false, grow = null, room = null } = {}) {
     const live = new Set();
@@ -928,7 +928,9 @@ export class RemotePlayers {
       this._syncRidingSound(peer, toScene, dt, eye, poseAgeMs);
       // AUDIT (the pre-merge audit, I-G): a peer the classic lane stands NOWHERE (INVIS-NET) is still heard - DFU turns a
       // concealed entity's renderer off, not its sounds - but has no sprite, no doll and no name here
-      if (hidden(peer.id)) continue;
+      // PVP-SEEN (the owner: "show no name in hidden", "always health bar for pvp zone"): `'bar'` keeps its tag, nameless
+      const hid = hidden(peer.id);
+      if (hid) { if (hid === 'bar') this._shown.push({ peer, height: bodyHeight(peer.id) || PEER_HEIGHT, hid: true }); continue; }
       // INVIS-LOOK (2026-09-27): a CONCEALED peer (the host hands ECV1's visual) is drawn translucent, as a concealed foe
       // is on the enhanced lane - and carries no name: a name over an invisible player is the player, found
       const veil = conceal(peer.id) ?? null;
@@ -1290,6 +1292,8 @@ export class RemotePlayers {
   /** The batches for the hosts' billboard pass. */
   /** PEERFX3: a peer's drawn sprite (doll or class body), for the hurt flash; null when this layer draws none. */
   batchOf(id) { return this._batches.get(id)?.batch ?? null; }
+  /** AURA-ON-DRAGON: a peer's class sprite's drawn height (m) - a dragon's rider's, the dragon's - or 0 with none drawn. */
+  spriteHeightOf(id) { const e = this._batches.get(id); return e?.kind === 'mobile' && e.height > 0 ? e.height : 0; }
 
   batches() {
     const out = [];
@@ -1349,6 +1353,7 @@ export class RemotePlayers {
         rb: e.peer.rb ?? null,   // SEASON1 part two: and a Season's banner ribbon, the relay's stamp - under the name in both faces
         house: e.peer.house ?? null,   // LEGACY7: and the house, the relay's stamp - a line under the name
         scale: nameScaleFor(s.depth) * lens, depth: s.depth, lens, off: nameOffDeg(view, head) });   // PVP-CONE: its angle off the crosshair
+      if (e.hid) out.push({ ...out.pop(), name: '', title: null, glyphs: [], lv: null, gt: null, rb: null, house: null, hid: true });   // PVP-SEEN: a hidden player's point has no name
     }
     return out;
   }
@@ -1488,6 +1493,7 @@ export class RemotePlayers {
       const tints = new Map(points.filter((p) => p.tint).map((p) => [p.id, p.tint]));
       if (tints.size) { const base = colorOf; colorOf = (id) => tints.get(id) ?? base?.(id) ?? null; }
     }
+    if (points.some((p) => p.hid)) points = points.filter((p) => !p.hid || p.skull || p.bar);   // PVP-SEEN: a hidden player's tag is its skull and bar, or nothing
     if (layer) {
       // the world viewport's own height where the docked HUD shrinks it (E5) - the name is sized by the frame it
       // is drawn into, not by the page (AUDIT NAME1 F3). The rect is NORMALISED (ui/hud/hudLarge.js

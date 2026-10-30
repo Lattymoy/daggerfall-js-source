@@ -6095,8 +6095,8 @@
   "by": "claude-in-session"
  },
  "inventory.cape.title": {
-  "en": "8cd2d555af57",
-  "tr": "6760d93e76cd",
+  "en": "cd250f3b92e7",
+  "tr": "69d668b760a3",
   "by": "claude-in-session"
  },
  "inventory.store.chestAct": {
@@ -12119,6 +12119,26 @@
   "tr": "8b032136e4fe",
   "by": "claude-in-session"
  },
+ "net.update.appBanner": {
+  "en": "828450b15581",
+  "tr": "9f974e81acba",
+  "by": "claude-in-session"
+ },
+ "net.update.appBody": {
+  "en": "e81e53388700",
+  "tr": "5bd7ed516abb",
+  "by": "claude-in-session"
+ },
+ "net.update.appBuild": {
+  "en": "05017b1922f5",
+  "tr": "cdab88e643d5",
+  "by": "claude-in-session"
+ },
+ "net.update.appHold": {
+  "en": "98aca0313218",
+  "tr": "4d1925f11442",
+  "by": "claude-in-session"
+ },
  "net.update.banner": {
   "en": "134e714f0b6f",
   "tr": "df99d2d661e4",
@@ -12152,6 +12172,16 @@
  "net.update.reloading": {
   "en": "ea3678c2b08b",
   "tr": "1abba061e7d0",
+  "by": "claude-in-session"
+ },
+ "net.update.restartButton": {
+  "en": "84c07ca92acc",
+  "tr": "429bcf465358",
+  "by": "claude-in-session"
+ },
+ "net.update.restarting": {
+  "en": "f3d4bca3a858",
+  "tr": "a38adb9e7dce",
   "by": "claude-in-session"
  },
  "net.update.saving": {
@@ -15104,6 +15134,11 @@
   "tr": "e9254d05e48b",
   "by": "claude-in-session"
  },
+ "pvp.evade": {
+  "en": "3ad2db0403c9",
+  "tr": "0f467b6975aa",
+  "by": "claude-in-session"
+ },
  "pvp.flag.level": {
   "en": "64776e968136",
   "tr": "9670d711e9a0",
@@ -15214,11 +15249,6 @@
   "tr": "3da5c1855151",
   "by": "claude-in-session"
  },
- "pvp.kit.cure": {
-  "en": "741ccd1eaaed",
-  "tr": "d5174ad36c58",
-  "by": "claude-in-session"
- },
  "pvp.kit.damage": {
   "en": "7bf6d1d3a58a",
   "tr": "8a7be7760a76",
@@ -15297,6 +15327,11 @@
  "pvp.kit.reflect": {
   "en": "11a5b905dd43",
   "tr": "776127c53a6d",
+  "by": "claude-in-session"
+ },
+ "pvp.kit.regen": {
+  "en": "b04c991e58e7",
+  "tr": "66a340bcb20a",
   "by": "claude-in-session"
  },
  "pvp.kit.resist": {
@@ -15917,6 +15952,11 @@
  "sea.wild.chipTip": {
   "en": "88c4bc67ac34",
   "tr": "2ad2fb08504f",
+  "by": "claude-in-session"
+ },
+ "sea.wild.deathRise": {
+  "en": "29d9b075a86b",
+  "tr": "dc342b4da00f",
   "by": "claude-in-session"
  },
  "sea.wild.dropLate": {
