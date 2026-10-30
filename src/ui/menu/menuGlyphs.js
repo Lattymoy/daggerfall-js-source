@@ -414,16 +414,46 @@ export const DFICON_ROWS = Object.freeze({
   ],
   // ── sizes ──
   'size-s': [
-    '............', '............', '............', '............', '............', '............',
-    '............', '..####......', '..####......', '..####......', '..####......', '............',
+    '............',
+    '............',
+    '............',
+    '............',
+    '............',
+    '............',
+    '............',
+    '..####......',
+    '..####......',
+    '..####......',
+    '..####......',
+    '............',
   ],
   'size-m': [
-    '............', '............', '............', '............', '..######....', '..######....',
-    '..######....', '..######....', '..######....', '..######....', '............', '............',
+    '............',
+    '............',
+    '............',
+    '............',
+    '..######....',
+    '..######....',
+    '..######....',
+    '..######....',
+    '..######....',
+    '..######....',
+    '............',
+    '............',
   ],
   'size-l': [
-    '............', '.##########.', '.##########.', '.##########.', '.##########.', '.##########.',
-    '.##########.', '.##########.', '.##########.', '.##########.', '.##########.', '............',
+    '............',
+    '.##########.',
+    '.##########.',
+    '.##########.',
+    '.##########.',
+    '.##########.',
+    '.##########.',
+    '.##########.',
+    '.##########.',
+    '.##########.',
+    '.##########.',
+    '............',
   ],
   // ── the crafting stations (ui/professions/profPages.js) ──
   forge: [
@@ -939,17 +969,22 @@ export const DFICON_ROWS = Object.freeze({
 /** A glyph as an SVG document: one 1x1 rect a lit pixel, crisp at any size. */
 export function dficonSvg(rows) {
   const rects = [];
-  rows.forEach((row, y) => { for (let x = 0; x < 12; x++) if (row[x] === '#') rects.push(`<rect x='${x}' y='${y}' width='1' height='1'/>`); });
+  rows.forEach((row, y) => {
+    for (let x = 0; x < 12; x++) if (row[x] === '#') rects.push(`<rect x='${x}' y='${y}' width='1' height='1'/>`);
+  });
   return `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' shape-rendering='crispEdges'>${rects.join('')}</svg>`;
 }
 /** A glyph's CSS url - the SVG percent-encoded, so no brace or quote of it can end the rule it stands in. */
-export const dficonUrl = (name) => `url("data:image/svg+xml,${encodeURIComponent(dficonSvg(DFICON_ROWS[name] ?? DFICON_ROWS.misc))}")`;
+export const dficonUrl = (name) =>
+  `url("data:image/svg+xml,${encodeURIComponent(dficonSvg(DFICON_ROWS[name] ?? DFICON_ROWS.misc))}")`;
 
 /** The sheet: every element that asks for a glyph draws it as its ::before, in its own colour; each name its own mask. */
 export const DFICON_CSS = `
 [data-dficon]::before { content: ''; flex: none; display: inline-block; width: 14px; height: 14px; margin-right: 6px; vertical-align: -2px;
   background-color: currentColor; -webkit-mask: var(--dficon) center / contain no-repeat; mask: var(--dficon) center / contain no-repeat; }
-${Object.keys(DFICON_ROWS).map((k) => `[data-dficon="${k}"] { --dficon: ${dficonUrl(k)}; }`).join('\n')}
+${Object.keys(DFICON_ROWS)
+  .map((k) => `[data-dficon="${k}"] { --dficon: ${dficonUrl(k)}; }`)
+  .join('\n')}
 `;
 
 /** AUDIT PACK-PICK A1: a tab's `wake` for the host's pictures, coalesced - the pictures that land in one frame redraw the
@@ -957,8 +992,16 @@ ${Object.keys(DFICON_ROWS).map((k) => `[data-dficon="${k}"] { --dficon: ${dficon
  *  swallowed. */
 export function frameWake(/** @type {() => void} */ redraw) {
   let due = false;
-  const later = (/** @type {() => void} */ f) => (typeof requestAnimationFrame === 'function' ? requestAnimationFrame(f) : setTimeout(f, 16));
-  return () => { if (due) return; due = true; later(() => { due = false; redraw(); }); };
+  const later = (/** @type {() => void} */ f) =>
+    typeof requestAnimationFrame === 'function' ? requestAnimationFrame(f) : setTimeout(f, 16);
+  return () => {
+    if (due) return;
+    due = true;
+    later(() => {
+      due = false;
+      redraw();
+    });
+  };
 }
 
 /** MENU-ORDER: a host's picture (ui/menu/menuPicture.js - `{ src, w, h }`) as a row's `<img>`, made with the row's own `el`:

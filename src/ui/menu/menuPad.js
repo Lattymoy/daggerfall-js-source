@@ -43,12 +43,18 @@ export function padDirection(pad, prev = null, { stick = true } = {}) {
   if (pressed(pad, PAD.DOWN)) return 'down';
   if (pressed(pad, PAD.LEFT)) return 'left';
   if (pressed(pad, PAD.RIGHT)) return 'right';
-  if (!stick) return null;   // PAD-CURSOR: the stick is the cursor's
-  const x = Number(pad?.axes?.[0]) || 0, y = Number(pad?.axes?.[1]) || 0;
+  if (!stick) return null; // PAD-CURSOR: the stick is the cursor's
+  const x = Number(pad?.axes?.[0]) || 0,
+    y = Number(pad?.axes?.[1]) || 0;
   if (Math.max(Math.abs(x), Math.abs(y)) < STICK_DIRECTION) return null;
-  const still = { right: x >= STICK_DIRECTION, left: x <= -STICK_DIRECTION, down: y >= STICK_DIRECTION, up: y <= -STICK_DIRECTION };
+  const still = {
+    right: x >= STICK_DIRECTION,
+    left: x <= -STICK_DIRECTION,
+    down: y >= STICK_DIRECTION,
+    up: y <= -STICK_DIRECTION,
+  };
   if (prev && still[prev]) return prev;
-  return Math.abs(x) >= Math.abs(y) ? (x > 0 ? 'right' : 'left') : (y > 0 ? 'down' : 'up');
+  return Math.abs(x) >= Math.abs(y) ? (x > 0 ? 'right' : 'left') : y > 0 ? 'down' : 'up';
 }
 
 /** The pad to read: a standard-mapped one first, as the game's own picker prefers (gamepadInput.js pickPad). */
@@ -62,27 +68,39 @@ export function pickDoorPad(pads) {
  *  distance across it, so the control in line wins over a nearer one off to the side. Null when nothing lies that
  *  way. Pure. */
 export function nextFocus(from, candidates, dir) {
-  const cx = (r) => r.x + r.w / 2, cy = (r) => r.y + r.h / 2;
-  const fx = cx(from), fy = cy(from);
-  let best = null, bestScore = Infinity;
+  const cx = (r) => r.x + r.w / 2,
+    cy = (r) => r.y + r.h / 2;
+  const fx = cx(from),
+    fy = cy(from);
+  let best = null,
+    bestScore = Infinity;
   for (const c of candidates) {
-    const dx = cx(c.rect) - fx, dy = cy(c.rect) - fy;
+    const dx = cx(c.rect) - fx,
+      dy = cy(c.rect) - fy;
     const along = dir === 'right' ? dx : dir === 'left' ? -dx : dir === 'down' ? dy : -dy;
     const across = dir === 'right' || dir === 'left' ? Math.abs(dy) : Math.abs(dx);
     if (along <= 1) continue;
     const score = along + 2 * across;
-    if (score < bestScore) { bestScore = score; best = c; }
+    if (score < bestScore) {
+      bestScore = score;
+      best = c;
+    }
   }
   return best;
 }
 
 /** The candidate nearest to a rect - where the focus was, after a redraw took the focused control away. */
 export function nearestTo(rect, candidates) {
-  const cx = rect.x + rect.w / 2, cy = rect.y + rect.h / 2;
-  let best = null, bestD = Infinity;
+  const cx = rect.x + rect.w / 2,
+    cy = rect.y + rect.h / 2;
+  let best = null,
+    bestD = Infinity;
   for (const c of candidates) {
     const d = Math.hypot(c.rect.x + c.rect.w / 2 - cx, c.rect.y + c.rect.h / 2 - cy);
-    if (d < bestD) { bestD = d; best = c; }
+    if (d < bestD) {
+      bestD = d;
+      best = c;
+    }
   }
   return best;
 }
@@ -100,17 +118,28 @@ export function nearestTo(rect, candidates) {
  * the next press starts from the first control, as it does on a fresh page.
  */
 export const REFOCUS_MS = 500;
-export const REFOCUS_SLOP = 8;   // px: the same button, redrawn
+export const REFOCUS_SLOP = 8; // px: the same button, redrawn
 export function padDoorFrame(pad, ui, state, now, { stick = true } = {}) {
   const confirm = pressed(pad, PAD.A) || pressed(pad, PAD.START);
   const back = pressed(pad, PAD.B);
   const dir = padDirection(pad, state.dir, { stick });
-  const focusOn = (c) => { if (c) { ui.focus(c.el); state.lastEl = c.el; state.lastRect = c.rect; state.lostAt = null; } };
+  const focusOn = (c) => {
+    if (c) {
+      ui.focus(c.el);
+      state.lastEl = c.el;
+      state.lastRect = c.rect;
+      state.lostAt = null;
+    }
+  };
   // AUDIT PAD-DOOR A5: the last focused control is gone and the PAGE put the focus somewhere (a redraw's own focus, the
   // intro's end) - that is the focus now; kept as lost, every frame walked the whole page asking who held it
   if (state.lastEl && !ui.connected(state.lastEl)) {
     const held = ui.active();
-    if (held) { state.lastEl = held; state.lastRect = ui.candidates().find((c) => c.el === held)?.rect ?? null; state.lostAt = null; }
+    if (held) {
+      state.lastEl = held;
+      state.lastRect = ui.candidates().find((c) => c.el === held)?.rect ?? null;
+      state.lostAt = null;
+    }
   }
   // the redraw: the last focused control is gone and nothing holds the focus
   if (state.lastEl && !ui.connected(state.lastEl) && state.lastRect && !ui.active()) {
@@ -118,7 +147,11 @@ export function padDoorFrame(pad, ui, state, now, { stick = true } = {}) {
     const same = nearestTo(state.lastRect, ui.candidates());
     const off = same ? Math.hypot(same.rect.x - state.lastRect.x, same.rect.y - state.lastRect.y) : Infinity;
     if (off <= REFOCUS_SLOP) focusOn(same);
-    else if (now - state.lostAt > REFOCUS_MS) { state.lastEl = null; state.lastRect = null; state.lostAt = null; }
+    else if (now - state.lostAt > REFOCUS_MS) {
+      state.lastEl = null;
+      state.lastRect = null;
+      state.lostAt = null;
+    }
   }
   if (confirm && !state.confirm) {
     // PAD-CURSOR: with the cursor out, A presses what it stands on - nothing under it presses nothing
@@ -131,8 +164,14 @@ export function padDoorFrame(pad, ui, state, now, { stick = true } = {}) {
   }
   if (back && !state.back) ui.back();
   let fire = false;
-  if (dir && dir !== state.dir) { fire = true; state.heldAt = now; state.lastRepeat = now; }
-  else if (dir && now - state.heldAt >= REPEAT_DELAY_MS && now - state.lastRepeat >= REPEAT_MS) { fire = true; state.lastRepeat = now; }
+  if (dir && dir !== state.dir) {
+    fire = true;
+    state.heldAt = now;
+    state.lastRepeat = now;
+  } else if (dir && now - state.heldAt >= REPEAT_DELAY_MS && now - state.lastRepeat >= REPEAT_MS) {
+    fire = true;
+    state.lastRepeat = now;
+  }
   if (fire) {
     const el = ui.active();
     if (!el) {
@@ -140,10 +179,20 @@ export function padDoorFrame(pad, ui, state, now, { stick = true } = {}) {
     } else if (!((dir === 'left' || dir === 'right') && ui.step(el, dir))) {
       const all = ui.candidates();
       const from = all.find((c) => c.el === el)?.rect;
-      focusOn(from ? nextFocus(from, all.filter((c) => c.el !== el), dir) : all[0]);
+      focusOn(
+        from
+          ? nextFocus(
+              from,
+              all.filter((c) => c.el !== el),
+              dir,
+            )
+          : all[0],
+      );
     }
   }
-  state.confirm = confirm; state.back = back; state.dir = dir;
+  state.confirm = confirm;
+  state.back = back;
+  state.dir = dir;
 }
 
 /** PAD-CURSOR: the stick's dead zone at the door - Unity's per-axis clip, as the game's pad reads it (systems/
@@ -158,17 +207,30 @@ export const DOOR_CURSOR_DEADZONE = 0.19;
  * out and at rest, the pull still settles it on a control. Answers whether it moved. Pure but for `cur`.
  */
 export function padDoorCursorFrame(pad, cur, dt, env) {
-  const h = Number(pad?.axes?.[0]) || 0, v = -(Number(pad?.axes?.[1]) || 0);   // the standard map's y is down; the law's is Unity's, up
+  const h = Number(pad?.axes?.[0]) || 0,
+    v = -(Number(pad?.axes?.[1]) || 0); // the standard map's y is down; the law's is Unity's, up
   const live = Math.hypot(h, v) > DOOR_CURSOR_DEADZONE;
   if (!cur.out && !live) return false;
-  if (!cur.out) { cur.out = true; cur.pos ??= [env.bounds.w / 2, env.bounds.h / 2]; }
+  if (!cur.out) {
+    cur.out = true;
+    cur.pos ??= [env.bounds.w / 2, env.bounds.h / 2];
+  }
   const law = env.law;
   const speed = env.speed ?? law.SPEED;
   let st;
   if (law.assist()) {
     const near = env.near?.(cur.pos[0], cur.pos[1]) ?? null;
     const target = law.pullTarget(near ? [near] : [], cur.pos[0], cur.pos[1]);
-    st = law.step(cur.feel, { h, v, dt, deadzone: DOOR_CURSOR_DEADZONE, speed, over: !!target?.inside, target, at: cur.pos });
+    st = law.step(cur.feel, {
+      h,
+      v,
+      dt,
+      deadzone: DOOR_CURSOR_DEADZONE,
+      speed,
+      over: !!target?.inside,
+      target,
+      at: cur.pos,
+    });
   } else if (live) st = law.linear(h, v, dt, speed / law.SPEED);
   else return false;
   if (Math.abs(st.dx) < 0.05 && Math.abs(st.dy) < 0.05) return false;
@@ -189,13 +251,19 @@ export function domDoorUi(doc = globalThis.document) {
   const scrollParent = (el) => {
     for (let p = el.parentElement; p; p = p.parentElement) {
       const cs = win.getComputedStyle(p);
-      if (/(auto|scroll)/.test(cs.overflowY + cs.overflowX) && (p.scrollHeight > p.clientHeight || p.scrollWidth > p.clientWidth)) return p;
+      if (
+        /(auto|scroll)/.test(cs.overflowY + cs.overflowX) &&
+        (p.scrollHeight > p.clientHeight || p.scrollWidth > p.clientWidth)
+      )
+        return p;
     }
     return null;
   };
   const reachable = (el, r) => {
-    const vw = doc.documentElement.clientWidth, vh = doc.documentElement.clientHeight;
-    const x = r.left + r.width / 2, y = r.top + r.height / 2;
+    const vw = doc.documentElement.clientWidth,
+      vh = doc.documentElement.clientHeight;
+    const x = r.left + r.width / 2,
+      y = r.top + r.height / 2;
     if (x >= 0 && y >= 0 && x < vw && y < vh) {
       const hit = doc.elementFromPoint(x, y);
       if (hit && (hit === el || el.contains(hit))) return true;
@@ -203,7 +271,8 @@ export function domDoorUi(doc = globalThis.document) {
     const sc = scrollParent(el);
     if (!sc) return false;
     const s = sc.getBoundingClientRect();
-    const px = (Math.max(0, s.left) + Math.min(vw, s.right)) / 2, py = (Math.max(0, s.top) + Math.min(vh, s.bottom)) / 2;
+    const px = (Math.max(0, s.left) + Math.min(vw, s.right)) / 2,
+      py = (Math.max(0, s.top) + Math.min(vh, s.bottom)) / 2;
     const hit = doc.elementFromPoint(px, py);
     return !!hit && sc.contains(hit);
   };
@@ -229,17 +298,31 @@ export function domDoorUi(doc = globalThis.document) {
     },
     focus(el) {
       doc.querySelector('.pad-focus')?.classList.remove('pad-focus');
-      try { el.focus({ preventScroll: true, focusVisible: true }); } catch { el.focus(); }
+      try {
+        el.focus({ preventScroll: true, focusVisible: true });
+      } catch {
+        el.focus();
+      }
       el.classList.add('pad-focus');
-      el.scrollIntoView?.({ block: 'center', inline: 'nearest' });   // centred: clear of a strip drawn over a list's edge
+      el.scrollIntoView?.({ block: 'center', inline: 'nearest' }); // centred: clear of a strip drawn over a list's edge
     },
-    press(el) { el.click(); },
+    press(el) {
+      el.click();
+    },
     back() {
       // AUDIT PAD-DOOR A2: the menu's Escape skips a key from a field (enhancedMenu.js onKey - ui/input.js
       // isTextEntryTarget's test), so B on the sign-in's name or the search box did nothing: the field lets go first
       let target = doc.activeElement ?? doc.body;
-      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable === true)) { target.blur?.(); target = doc.body; }
-      target.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true, cancelable: true }));
+      if (
+        target &&
+        (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable === true)
+      ) {
+        target.blur?.();
+        target = doc.body;
+      }
+      target.dispatchEvent(
+        new win.KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true, cancelable: true }),
+      );
     },
     step(el, dir) {
       const d = dir === 'right' ? 1 : -1;
@@ -251,7 +334,8 @@ export function domDoorUi(doc = globalThis.document) {
         return true;
       }
       if (el.tagName === 'INPUT' && el.type === 'range') {
-        if (d > 0) el.stepUp(); else el.stepDown();
+        if (d > 0) el.stepUp();
+        else el.stepDown();
         el.dispatchEvent(new win.Event('input', { bubbles: true }));
         el.dispatchEvent(new win.Event('change', { bubbles: true }));
         return true;
@@ -263,13 +347,19 @@ export function domDoorUi(doc = globalThis.document) {
 
 const PAD_FOCUS_CSS = '.pad-focus { outline: 2px solid #d9b25a !important; outline-offset: 2px !important; }';
 /** PAD-CURSOR: the door's pointer - the gauntlet the game's pad cursor wears under the enhanced skin. */
-const DOOR_CURSOR_CSS = 'position:fixed;left:0;top:0;width:31px;height:32px;pointer-events:none;background-repeat:no-repeat;image-rendering:pixelated;display:none';
+const DOOR_CURSOR_CSS =
+  'position:fixed;left:0;top:0;width:31px;height:32px;pointer-events:none;background-repeat:no-repeat;image-rendering:pixelated;display:none';
 
 /** Start the door's pad loop; answers the detach. Nothing happens until a pad is pressed - a page with no pad polls
  *  an empty list once a frame and does nothing. DA12: `focusStyle: false` for a page that draws its own focus and
  *  whose CSP refuses a style written by script (the desktop launcher, app/launcher/pad.js). PAD-CURSOR: `cursor` is
  *  { law, art } (main.js) - the stick's cursor; without it the stick walks the focus, as it always did. */
-export function attachMenuPad({ doc = globalThis.document, getPads = () => globalThis.navigator?.getGamepads?.() ?? [], focusStyle = true, cursor = null } = {}) {
+export function attachMenuPad({
+  doc = globalThis.document,
+  getPads = () => globalThis.navigator?.getGamepads?.() ?? [],
+  focusStyle = true,
+  cursor = null,
+} = {}) {
   const win = doc?.defaultView;
   if (!win || typeof win.requestAnimationFrame !== 'function') return () => {};
   const ui = domDoorUi(doc);
@@ -278,7 +368,16 @@ export function attachMenuPad({ doc = globalThis.document, getPads = () => globa
     style.textContent = PAD_FOCUS_CSS;
     doc.head.append(style);
   }
-  const state = { confirm: false, back: false, dir: null, heldAt: 0, lastRepeat: 0, lastEl: null, lastRect: null, lostAt: null };
+  const state = {
+    confirm: false,
+    back: false,
+    dir: null,
+    heldAt: 0,
+    lastRepeat: 0,
+    lastEl: null,
+    lastRect: null,
+    lostAt: null,
+  };
   // PAD-CURSOR: the door's cursor - out once the stick moves, away again when a real mouse does; none without a law
   const law = cursor?.law ?? null;
   const cur = { pos: null, out: false, feel: law ? law.createState() : null };
@@ -286,19 +385,23 @@ export function attachMenuPad({ doc = globalThis.document, getPads = () => globa
   if (el) {
     el.className = 'pad-door-cursor';
     el.style.cssText = DOOR_CURSOR_CSS;
-    el.style.zIndex = '2147483001';   // over every window, as the game's pad cursor stands - it takes no pointer events, so the asset picker above all (MWFIX 1) loses no click
+    el.style.zIndex = '2147483001'; // over every window, as the game's pad cursor stands - it takes no pointer events, so the asset picker above all (MWFIX 1) loses no click
     if (cursor.art) el.style.backgroundImage = `url("${cursor.art}")`;
     doc.body.append(el);
   }
   const show = () => {
     if (!el) return;
     el.style.display = cur.out ? 'block' : 'none';
-    if (cur.out && cur.pos) { el.style.left = `${cur.pos[0]}px`; el.style.top = `${cur.pos[1]}px`; }
+    if (cur.out && cur.pos) {
+      el.style.left = `${cur.pos[0]}px`;
+      el.style.top = `${cur.pos[1]}px`;
+    }
   };
   const near = (x, y) => {
     let n = null;
     for (let i = -1; i < 8 && !n; i++) {
-      const a = (i / 8) * Math.PI * 2, r = i < 0 ? 0 : law.PULL_RADIUS;
+      const a = (i / 8) * Math.PI * 2,
+        r = i < 0 ? 0 : law.PULL_RADIUS;
       n = doc.elementFromPoint(x + Math.cos(a) * r, y + Math.sin(a) * r)?.closest?.(FOCUSABLE) ?? null;
     }
     const b = n?.getBoundingClientRect?.();
@@ -315,32 +418,47 @@ export function attachMenuPad({ doc = globalThis.document, getPads = () => globa
   ui.pressAtCursor = () => {
     const n = cur.pos ? doc.elementFromPoint(cur.pos[0], cur.pos[1])?.closest?.(FOCUSABLE) : null;
     if (!n || n.disabled) return false;
-    try { n.focus({ preventScroll: true }); } catch { /* not focusable */ }
+    try {
+      n.focus({ preventScroll: true });
+    } catch {
+      /* not focusable */
+    }
     n.click();
     return true;
   };
   const focus = ui.focus;
-  ui.focus = (n) => {   // the d-pad's walk carries the cursor onto the control it lands on: one pointer
+  ui.focus = (n) => {
+    // the d-pad's walk carries the cursor onto the control it lands on: one pointer
     focus(n);
     if (!cur.out) return;
     const b = n.getBoundingClientRect();
     cur.pos = [b.left + b.width / 2, b.top + b.height / 2];
-    cur.feel.vx = 0; cur.feel.vy = 0;
+    cur.feel.vx = 0;
+    cur.feel.vy = 0;
     show();
   };
   const onMouse = (e) => {
     if (e.isTrusted === false || !(e.movementX || e.movementY) || !cur.out) return;
-    cur.out = false; cur.pos = [e.clientX, e.clientY]; hoverTo(null); show();
+    cur.out = false;
+    cur.pos = [e.clientX, e.clientY];
+    hoverTo(null);
+    show();
   };
   if (law) win.addEventListener('mousemove', onMouse);
-  let raf = 0, live = true, last = null;
+  let raf = 0,
+    live = true,
+    last = null;
   const loop = () => {
     if (!live) return;
     const now = win.performance?.now?.() ?? Date.now();
     const dt = last == null ? 0 : Math.min(0.1, (now - last) / 1000);
     last = now;
     let pad = null;
-    try { pad = pickDoorPad(getPads()); } catch { pad = null; }
+    try {
+      pad = pickDoorPad(getPads());
+    } catch {
+      pad = null;
+    }
     if (pad) {
       const bounds = { w: doc.documentElement.clientWidth, h: doc.documentElement.clientHeight };
       if (law && padDoorCursorFrame(pad, cur, dt, { law, near, bounds })) {

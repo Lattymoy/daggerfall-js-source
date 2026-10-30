@@ -2,8 +2,8 @@
   {
     "name": "MENUORDER-glyph-pixel-dropped",
     "file": "src/ui/menu/menuGlyphs.js",
-    "old": "if (row[x] === '#') rects.push(",
-    "new": "if (row[x] === '#' && x > 0) rects.push(",
+    "old": "    for (let x = 0; x < 12; x++) if (row[x] === '#') rects.push(`<rect x='${x}' y='${y}' width='1' height='1'/>`);",
+    "new": "    for (let x = 0; x < 12; x++)\n      if (row[x] === '#' && x > 0) rects.push(`<rect x='${x}' y='${y}' width='1' height='1'/>`);",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "MENUORDER-glyph-mask-unnamed",
     "file": "src/ui/menu/menuGlyphs.js",
-    "old": "`[data-dficon=\"${k}\"] { --dficon: ${dficonUrl(k)}; }`",
-    "new": "`[data-dficon=\"${k}\"] { }`",
+    "old": "  .map((k) => `[data-dficon=\"${k}\"] { --dficon: ${dficonUrl(k)}; }`)",
+    "new": "  .map((k) => `[data-dficon=\"${k}\"] { }`)",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "MENUORDER-glyph-own-colour",
     "file": "src/ui/menu/menuGlyphs.js",
-    "old": "  background-color: currentColor; -webkit-mask: var(--dficon)",
-    "new": "  background-color: #fff; -webkit-mask: var(--dficon)",
+    "old": "  background-color: currentColor; -webkit-mask: var(--dficon) center / contain no-repeat; mask: var(--dficon) center / contain no-repeat; }",
+    "new": "  background-color: #fff; -webkit-mask: var(--dficon) center / contain no-repeat; mask: var(--dficon) center / contain no-repeat; }",
     "tests": [
       "test/ui/menuorder.test.js"
     ]

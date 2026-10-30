@@ -484,7 +484,7 @@
   {
     "name": "AUDIT-PACK-PICK-A1-each-landing-a-redraw",
     "file": "src/ui/menu/menuGlyphs.js",
-    "old": "  return () => { if (due) return; due = true; later(() => { due = false; redraw(); }); };",
+    "old": "  return () => {\n    if (due) return;\n    due = true;\n    later(() => {\n      due = false;\n      redraw();\n    });\n  };",
     "new": "  return () => redraw();",
     "tests": [
       "test/ui/packpick.test.js"

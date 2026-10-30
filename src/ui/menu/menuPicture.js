@@ -26,14 +26,28 @@ export const MENU_PICTURE_BOX = SLOT_BOX.row;
 /** A piece's picture, fitted: `{ src, w, h }`, or null while it is made (`onReady` when it lands) or for none. */
 export function itemPicture(item, { box = MENU_PICTURE_BOX, onReady = null } = /** @type {any} */ ({})) {
   let img = null;
-  try { img = item ? inventoryItemImage(item) : null; } catch { img = null; }
+  try {
+    img = item ? inventoryItemImage(item) : null;
+  } catch {
+    img = null;
+  }
   if (!img?.archive) return null;
-  return requestFittedIcon(img.archive, img.record, { box, dpr: screenDpr(), dye: img.dye ?? null, dyeTarget: img.dyeTarget ?? null, onReady });
+  return requestFittedIcon(img.archive, img.record, {
+    box,
+    dpr: screenDpr(),
+    dye: img.dye ?? null,
+    dyeTarget: img.dyeTarget ?? null,
+    onReady,
+  });
 }
 
 /** A material's picture - the item the Stores would withdraw it as, pictured; null for a key with no item. */
 export function materialPicture(key, opts = undefined) {
   let item = null;
-  try { item = mintMaterialItem(key); } catch { item = null; }
+  try {
+    item = mintMaterialItem(key);
+  } catch {
+    item = null;
+  }
   return itemPicture(item, opts);
 }

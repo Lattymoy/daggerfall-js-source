@@ -20,7 +20,7 @@
   {
     "name": "AUDIT-A2-escape-on-the-field",
     "file": "src/ui/menu/menuPad.js",
-    "old": "if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable === true)) { target.blur?.(); target = doc.body; }",
+    "old": "      if (\n        target &&\n        (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable === true)\n      ) {\n        target.blur?.();\n        target = doc.body;\n      }",
     "new": "",
     "tests": [
       "test/ui/settings/menupad.test.js"
@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-A5-lost-kept",
     "file": "src/ui/menu/menuPad.js",
-    "old": "    if (held) { state.lastEl = held; state.lastRect = ui.candidates().find((c) => c.el === held)?.rect ?? null; state.lostAt = null; }\n",
-    "new": "",
+    "old": "    if (held) {\n      state.lastEl = held;\n      state.lastRect = ui.candidates().find((c) => c.el === held)?.rect ?? null;\n      state.lostAt = null;\n    }\n  }",
+    "new": "  }",
     "tests": [
       "test/ui/settings/menupad.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-A6-larger-axis-alone",
     "file": "src/ui/menu/menuPad.js",
-    "old": "  if (prev && still[prev]) return prev;\n",
-    "new": "",
+    "old": "  if (prev && still[prev]) return prev;\n  return Math.abs(x) >= Math.abs(y) ? (x > 0 ? 'right' : 'left') : y > 0 ? 'down' : 'up';",
+    "new": "  return Math.abs(x) >= Math.abs(y) ? (x > 0 ? 'right' : 'left') : y > 0 ? 'down' : 'up';",
     "tests": [
       "test/ui/settings/menupad.test.js"
     ]

@@ -58,6 +58,8 @@
 /src/ui/collections/*/
 !/src/ui/ketch/
 /src/ui/ketch/*/
+!/src/ui/menu/
+/src/ui/menu/*/
 !/src/ui/questlines/
 /src/ui/questlines/*/
 !/src/ui/starfall/
