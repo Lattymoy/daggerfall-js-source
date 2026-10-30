@@ -65,7 +65,7 @@ export const MOBILE_TYPES = Object.freeze({
   'Warrior': 144,
   'Knight': 145,
   'Knight_CityWatch': 146,
-  'None': 65535
+  'None': 65535,
 });
 
 // AUDIT 24 (wave 41) / ONE DFU MEMBER, ONE EXPORT. This id is special-
@@ -76,4 +76,3 @@ export const MOBILE_TYPES = Object.freeze({
 // pool IS it - and each of those had written 146 out for itself. The
 // number lives once, here, with the table it comes from.
 export const KNIGHT_CITY_WATCH = MOBILE_TYPES.Knight_CityWatch;
-

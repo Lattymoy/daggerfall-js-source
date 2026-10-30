@@ -83,8 +83,8 @@
   {
     "name": "WW1-walker-bay-only",
     "file": "src/characters/mobile/mobilePerson.js",
-    "old": "export const redguardRegion = (region) => Number.isInteger(region) && areaRace(/** @type {number} */ (region)) === 'Redguard';",
-    "new": "export const redguardRegion = (region) => Number.isInteger(region) && /** @type {number} */ (region) < 62 && areaRace(/** @type {number} */ (region)) === 'Redguard';",
+    "old": "  Number.isInteger(region) && areaRace(/** @type {number} */ (region)) === 'Redguard';",
+    "new": "  Number.isInteger(region) &&\n  /** @type {number} */ (region) < 62 &&\n  areaRace(/** @type {number} */ (region)) === 'Redguard';",
     "tests": [
       "test/world/worldWide/ww1_world.test.js"
     ]

@@ -21,14 +21,14 @@
 // locations - DFU samples the terrain collider).
 
 import { mobileOrientation } from './mobileUnit.js';
-import { areaRace } from '../../world/worldWide/worldGrid.js';   // REGIONAL-FOLK: the region's race, FALL.EXE's (WW1: an area's - the province's past the Bay)
+import { areaRace } from '../../world/worldWide/worldGrid.js'; // REGIONAL-FOLK: the region's race, FALL.EXE's (WW1: an area's - the province's past the Bay)
 
-export const PERSON_MOVE_SPEED = 1.3;          // movementSpeed
-export const PERSON_IDLE_DISTANCE = 2.5;       // idleDistance
-export const TILE_DOWNGRADE_CHANCE = 0.20;     // tileDowngradeChance
-export const RANDOM_CHANGE_CHANCE = 0.025;     // randomChangeChance
-export const PERSON_MOVE_FPS = 4;              // MoveAnimSpeed
-export const PERSON_IDLE_FPS = 1;              // IdleAnimSpeed
+export const PERSON_MOVE_SPEED = 1.3; // movementSpeed
+export const PERSON_IDLE_DISTANCE = 2.5; // idleDistance
+export const TILE_DOWNGRADE_CHANCE = 0.2; // tileDowngradeChance
+export const RANDOM_CHANGE_CHANCE = 0.025; // randomChangeChance
+export const PERSON_MOVE_FPS = 4; // MoveAnimSpeed
+export const PERSON_IDLE_FPS = 1; // IdleAnimSpeed
 export const PERSON_IDLE_RECORD = 5;
 export const PERSON_GUARD_IDLE_RECORD = 15;
 
@@ -62,7 +62,8 @@ export const raceOfPeople = (people) => RACE_OF_PEOPLE[/** @type {0|2|3} */ (peo
  *  (world/worldWide/worldGrid.js) - on the Bay its region, so every region's answer is FALL.EXE's; past the Bay a
  *  province's, and Hammerfell's beyond the Bay is Redguard as its regions on it are.
  *  @param {number|undefined|null} region */
-export const redguardRegion = (region) => Number.isInteger(region) && areaRace(/** @type {number} */ (region)) === 'Redguard';
+export const redguardRegion = (region) =>
+  Number.isInteger(region) && areaRace(/** @type {number} */ (region)) === 'Redguard';
 /** REGIONAL-FOLK (FIELD BUGS 2026-10-10, the Discord's "Add Regional NPCs"; Port-Ledger A): THE RACE A TOWN'S WALKERS
  *  WEAR. DFU dresses them by the climate (above) and names them by the REGION (MobilePersonNPC.cs:214, FALL.EXE's
  *  REGION_RACES), so Sentinel and the Dragontail Mountains walked Breton and Nord bodies under Redguard names. A
@@ -125,13 +126,17 @@ export function personWantsToStop({
   enemiesNearby = () => false,
 } = {}) {
   const withinIdleDistance = distanceToPlayer < PERSON_IDLE_DISTANCE;
-  const wantsToStop = !!playerStandingStill && withinIdleDistance
-    && !!sheathed && !invisible && !inBeastForm;
+  const wantsToStop = !!playerStandingStill && withinIdleDistance && !!sheathed && !invisible && !inBeastForm;
   return wantsToStop && !enemiesNearby();
 }
 
 // MobileDirection order (N, S, E, W) with our world axes (+z north).
-const DIRS = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+const DIRS = [
+  [0, 1],
+  [0, -1],
+  [1, 0],
+  [-1, 0],
+];
 const DIR_YAW = [0, Math.PI, Math.PI / 2, -Math.PI / 2];
 
 // The MoveAnims wheel (records 0-4 mirrored - the monster layout). Exported for the living world's resident
@@ -144,7 +149,10 @@ export class MobilePerson {
    * @param nav CityNavigation
    * @param opts { archive, guard, frameCount(record, archive), collider, groundY(x,z), rand }
    */
-  constructor(nav, { archive, guard = false, frameCount, collider = null, groundY = () => 0, rand = Math.random } = {}) {
+  constructor(
+    nav,
+    { archive, guard = false, frameCount, collider = null, groundY = () => 0, rand = Math.random } = {},
+  ) {
     this.nav = nav;
     this.archive = archive;
     this.guard = guard;
@@ -152,11 +160,13 @@ export class MobilePerson {
     this.collider = collider;
     this.groundY = groundY;
     this.rand = rand;
-    this.state = 'seek';         // seek | move | idle
+    this.state = 'seek'; // seek | move | idle
     this.dir = Math.floor(rand() * 4);
-    this.gx = -1; this.gy = -1;  // current nav cell
-    this.tx = -1; this.ty = -1;  // target nav cell
-    this.pos = [0, 0, 0];        // world (feet)
+    this.gx = -1;
+    this.gy = -1; // current nav cell
+    this.tx = -1;
+    this.ty = -1; // target nav cell
+    this.pos = [0, 0, 0]; // world (feet)
     this.target = [0, 0, 0];
     this.seekCount = 0;
     this.moveCount = 0;
@@ -166,7 +176,8 @@ export class MobilePerson {
 
   /** Place on the grid at a nav cell (InitMotor/InitNavPosition). */
   place(gx, gy) {
-    this.gx = gx; this.gy = gy;
+    this.gx = gx;
+    this.gy = gy;
     const [x, z] = this.nav.navToWorld(gx, gy);
     this.pos = [x, this.groundY(x, z), z];
     // InitMotor parity (audit 2026-08-17): targetScenePosition =
@@ -174,7 +185,8 @@ export class MobilePerson {
     // marches to SELF (instant arrival -> seek), never to a stale
     // origin target.
     this.target = [...this.pos];
-    this.tx = -1; this.ty = -1;
+    this.tx = -1;
+    this.ty = -1;
     // NT2 (F022): NO occupancy flag at spawn - DFU's spawn path sets
     // none (SpawnAvailableMobile only positions the transform,
     // PopulationManager.cs:150-166; GetRandomSpawnPosition only tests
@@ -188,29 +200,41 @@ export class MobilePerson {
 
   /** RandomiseNPC identity re-roll (the pool re-rolls EVERY spawn -
    *  recycled walkers come back as someone else). */
-  setIdentity(archive, guard) { this.archive = archive; this.guard = guard; }
+  setIdentity(archive, guard) {
+    this.archive = archive;
+    this.guard = guard;
+  }
 
   /** SetPerson's tail (:218-224): the TFAC00I0.RCI record the talk
    *  window portraits this walker from. Set by RandomiseNPC. */
   personFaceRecordId = 0;
 
   /** The person's facing as a world yaw (G1: guard spawns inherit it). */
-  get facingYaw() { return DIR_YAW[this.dir] ?? 0; }
+  get facingYaw() {
+    return DIR_YAW[this.dir] ?? 0;
+  }
 
-  release() { this.nav.clearOccupied(this.gx, this.gy); this.nav.clearOccupied(this.tx, this.ty); }
+  release() {
+    this.nav.clearOccupied(this.gx, this.gy);
+    this.nav.clearOccupied(this.tx, this.ty);
+  }
 
   _weight(d) {
-    const gx = this.gx + DIRS[d][0], gy = this.gy + DIRS[d][1];
+    const gx = this.gx + DIRS[d][0],
+      gy = this.gy + DIRS[d][1];
     return this.nav.occupied(gx, gy) ? 0 : this.nav.weightAt(gx, gy);
   }
 
   _clear(d) {
     if (!this.collider) return true;
-    const gx = this.gx + DIRS[d][0], gy = this.gy + DIRS[d][1];
+    const gx = this.gx + DIRS[d][0],
+      gy = this.gy + DIRS[d][1];
     const [x, z] = this.nav.navToWorld(gx, gy);
-    const ty = this.groundY(x, z) + 0.1;   // "aim low to better detect stairs"
+    const ty = this.groundY(x, z) + 0.1; // "aim low to better detect stairs"
     const from = [this.pos[0], this.pos[1] + 0.1, this.pos[2]];
-    const dx = x - from[0], dy = ty - from[1], dz = z - from[2];
+    const dx = x - from[0],
+      dy = ty - from[1],
+      dz = z - from[2];
     const l = Math.hypot(dx, dy, dz) || 1;
     const hit = this.collider.raycast(from, [dx / l, dy / l, dz / l], l);
     return !Number.isFinite(hit) || hit >= l - 1e-3;
@@ -226,7 +250,7 @@ export class MobilePerson {
     const weights = [this._weight(0), this._weight(1), this._weight(2), this._weight(3)];
     const currentWeight = this.nav.weightAt(this.gx, this.gy);
     let targetWeight = this._clear(this.dir) ? weights[this.dir] : 0;
-    if (this.rand() < RANDOM_CHANGE_CHANCE) targetWeight = 0;   // the shuffle
+    if (this.rand() < RANDOM_CHANGE_CHANCE) targetWeight = 0; // the shuffle
     if (targetWeight === 0) {
       // any valid random direction, or stay seeking (the pool
       // recycles at seekCount > 4)
@@ -243,16 +267,20 @@ export class MobilePerson {
     // entered via the random-direction branch or by already heading
     // west. Preserved 1:1.
     if (targetWeight < currentWeight && this.rand() > TILE_DOWNGRADE_CHANCE) {
-      let bestWeight = targetWeight, bestDir = this.dir;
+      let bestWeight = targetWeight,
+        bestDir = this.dir;
       const order = [0, 1, 2].sort(() => this.rand() - 0.5);
       for (const d of order) {
-        if (weights[d] > bestWeight && this._clear(d)) { bestWeight = weights[d]; bestDir = d; }
+        if (weights[d] > bestWeight && this._clear(d)) {
+          bestWeight = weights[d];
+          bestDir = d;
+        }
       }
       this.dir = bestDir;
       this._setTarget();
       return;
     }
-    this._setTarget();   // keep marching
+    this._setTarget(); // keep marching
   }
 
   _setTarget() {
@@ -279,20 +307,32 @@ export class MobilePerson {
     // first frame. The port carried one monotonic frame/timer across
     // states and took `frame % n` - a walker stopping to face the
     // player entered the idle cycle at an arbitrary phase.
-    if (!wantsToStop && this.state === 'idle') { this.state = 'move'; this.frame = 0; this._timer = 0; }
-    else if (wantsToStop && this.state !== 'idle') { this.state = 'idle'; this.frame = 0; this._timer = 0; }
+    if (!wantsToStop && this.state === 'idle') {
+      this.state = 'move';
+      this.frame = 0;
+      this._timer = 0;
+    } else if (wantsToStop && this.state !== 'idle') {
+      this.state = 'idle';
+      this.frame = 0;
+      this._timer = 0;
+    }
 
     if (this.state === 'seek') this._seek();
     else if (this.state === 'move') {
-      const dx = this.target[0] - this.pos[0], dy = this.target[1] - this.pos[1], dz = this.target[2] - this.pos[2];
+      const dx = this.target[0] - this.pos[0],
+        dy = this.target[1] - this.pos[1],
+        dz = this.target[2] - this.pos[2];
       const l = Math.hypot(dx, dy, dz);
       if (l < 0.1) {
-        this.gx = this.tx; this.gy = this.ty;
+        this.gx = this.tx;
+        this.gy = this.ty;
         this.state = 'seek';
         this.moveCount++;
       } else {
         const step = Math.min(PERSON_MOVE_SPEED * dt, l);
-        this.pos[0] += (dx / l) * step; this.pos[1] += (dy / l) * step; this.pos[2] += (dz / l) * step;
+        this.pos[0] += (dx / l) * step;
+        this.pos[1] += (dy / l) * step;
+        this.pos[2] += (dz / l) * step;
       }
     }
 
@@ -300,7 +340,10 @@ export class MobilePerson {
     // moving = the 8-orientation wheel against the facing yaw.
     const fps = this.state === 'idle' ? PERSON_IDLE_FPS : PERSON_MOVE_FPS;
     this._timer += dt;
-    while (this._timer >= 1 / fps) { this._timer -= 1 / fps; this.frame++; }
+    while (this._timer >= 1 / fps) {
+      this._timer -= 1 / fps;
+      this.frame++;
+    }
     if (this.state === 'idle') {
       const rec = this.guard ? PERSON_GUARD_IDLE_RECORD : PERSON_IDLE_RECORD;
       const n = Math.max(1, this.frameCount(rec, this.archive));
@@ -322,8 +365,10 @@ export class MobilePerson {
    * collects every row first and reads them after.
    */
   _frameOut(record, frame, flip) {
-    const o = this._out ??= { record: 0, frame: 0, flip: false };
-    o.record = record; o.frame = frame; o.flip = flip;
+    const o = (this._out ??= { record: 0, frame: 0, flip: false });
+    o.record = record;
+    o.frame = frame;
+    o.flip = flip;
     return o;
   }
 }

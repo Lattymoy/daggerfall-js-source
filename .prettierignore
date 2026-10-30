@@ -10,6 +10,8 @@
 /src/characters/*
 !/src/characters/bodyMotion/
 /src/characters/bodyMotion/*/
+!/src/characters/mobile/
+/src/characters/mobile/*/
 !/src/characters/ownModels/
 /src/characters/ownModels/*/
 !/src/characters/paperdoll/

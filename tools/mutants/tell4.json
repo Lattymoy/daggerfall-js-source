@@ -262,8 +262,8 @@
   {
     "name": "TELL4-pose-not-held",
     "file": "src/characters/mobile/mobileUnit.js",
-    "old": "      if (this.state === 'attack' && this._heldSwing && this._struck && this._hold === 'spent') return;   // TELL4: the follow-through stands\n",
-    "new": "",
+    "old": "      if (this.state === 'attack' && this._heldSwing && this._struck && this._hold === 'spent') return; // TELL4: the follow-through stands\n      if (this._iter >= this._attackFrames.length) {",
+    "new": "      if (this._iter >= this._attackFrames.length) {",
     "tests": [
       "test/characters/enemy/tell4_punish.test.js"
     ]
@@ -271,8 +271,8 @@
   {
     "name": "TELL4-pose-never-let-go",
     "file": "src/characters/mobile/mobileUnit.js",
-    "old": "    if (this._heldSwing && this._struck && this.state === 'attack' && this._hold === 'spent' && hold !== 'spent') { this._heldSwing = false; this._change('idle'); }\n",
-    "new": "",
+    "old": "    if (this._heldSwing && this._struck && this.state === 'attack' && this._hold === 'spent' && hold !== 'spent') {\n      this._heldSwing = false;\n      this._change('idle');\n    }\n    this._hold = hold;",
+    "new": "    this._hold = hold;",
     "tests": [
       "test/characters/enemy/tell4_punish.test.js"
     ]
@@ -280,8 +280,8 @@
   {
     "name": "TELL4-dfu-swing-spent",
     "file": "src/characters/mobile/mobileUnit.js",
-    "old": "      this._heldSwing = this._underHold; this._struck = false;",
-    "new": "      this._heldSwing = true; this._struck = false;",
+    "old": "      this._heldSwing = this._underHold;",
+    "new": "      this._heldSwing = true;",
     "tests": [
       "test/characters/enemy/tell4_punish.test.js"
     ]
@@ -289,8 +289,8 @@
   {
     "name": "TELL4-never-struck",
     "file": "src/characters/mobile/mobileUnit.js",
-    "old": "this._underHold = false; this._struck = this._heldSwing; }",
-    "new": "this._underHold = false; }",
+    "old": "          this._struck = this._heldSwing;\n        } // C16: the scene resolves on it, then clears it",
+    "new": "        } // C16: the scene resolves on it, then clears it",
     "tests": [
       "test/characters/enemy/tell4_punish.test.js"
     ]

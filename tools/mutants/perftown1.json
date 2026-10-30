@@ -39,8 +39,8 @@
   {
     "name": "PERF-TOWN1-5-a-person-shares-one-frame-row-with-every-other-person",
     "file": "src/characters/mobile/mobilePerson.js",
-    "old": "    const o = this._out ??= { record: 0, frame: 0, flip: false };",
-    "new": "    const o = MobilePerson._shared ??= { record: 0, frame: 0, flip: false };",
+    "old": "    const o = (this._out ??= { record: 0, frame: 0, flip: false });",
+    "new": "    const o = (MobilePerson._shared ??= { record: 0, frame: 0, flip: false });",
     "tests": [
       "test/world/perftown1.test.js"
     ]
@@ -48,7 +48,7 @@
   {
     "name": "PERF-TOWN1-6-the-frame-row-goes-back-to-a-fresh-object",
     "file": "src/characters/mobile/mobilePerson.js",
-    "old": "    o.record = record; o.frame = frame; o.flip = flip;\n    return o;",
+    "old": "    o.record = record;\n    o.frame = frame;\n    o.flip = flip;\n    return o;",
     "new": "    return { record, frame, flip };",
     "tests": [
       "test/world/perftown1.test.js"

@@ -147,8 +147,8 @@
   {
     "name": "AUDIT-CAPECARD-C4-no-whole-view-guard",
     "file": "src/characters/mobile/mobileUnit.js",
-    "old": "if (!Number.isInteger(orientation) || (!dx && !dz)) return null;",
-    "new": "if (!dx && !dz) return null;",
+    "old": "  if (!Number.isInteger(orientation) || (!dx && !dz)) return null;",
+    "new": "  if (!dx && !dz) return null;",
     "tests": [
       "test/render/auditcapecard.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "AUDIT-CAPECARD-C4-unwrapped",
     "file": "src/characters/mobile/mobileUnit.js",
-    "old": "  const y = Math.atan2(dx, dz) + orientation * Math.PI / 4;\n  return Math.atan2(Math.sin(y), Math.cos(y));",
-    "new": "  const y = Math.atan2(dx, dz) + orientation * Math.PI / 4;\n  return y;",
+    "old": "  return Math.atan2(Math.sin(y), Math.cos(y));",
+    "new": "  return y;",
     "tests": [
       "test/render/auditcapecard.test.js"
     ]

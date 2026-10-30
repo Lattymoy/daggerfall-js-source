@@ -2,8 +2,8 @@
   {
     "name": "CAPE-CARD-the-view-turned-the-wrong-way",
     "file": "src/characters/mobile/mobileUnit.js",
-    "old": "const y = Math.atan2(dx, dz) + orientation * Math.PI / 4;",
-    "new": "const y = Math.atan2(dx, dz) - orientation * Math.PI / 4;",
+    "old": "  const y = Math.atan2(dx, dz) + (orientation * Math.PI) / 4;",
+    "new": "  const y = Math.atan2(dx, dz) - (orientation * Math.PI) / 4;",
     "tests": [
       "test/render/capecard.test.js"
     ]

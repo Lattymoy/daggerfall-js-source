@@ -2,7 +2,7 @@
   {
     "name": "TELL2-held-minus-one-consumed",
     "file": "src/characters/mobile/mobileUnit.js",
-    "old": "      if (this.state === 'attack' && this._underHold && this._hold === true && this._attackFrames[this._iter] === -1) return;",
+    "old": "      if (this.state === 'attack' && this._underHold && this._hold === true && this._attackFrames[this._iter] === -1)\n        return;",
     "new": "",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js"
@@ -11,8 +11,8 @@
   {
     "name": "TELL2-second-strike-held",
     "file": "src/characters/mobile/mobileUnit.js",
-    "old": "        else { this.doMeleeDamage = true; this.meleeSeq++; this._underHold = false; this._struck = this._heldSwing; }",
-    "new": "        else { this.doMeleeDamage = true; this.meleeSeq++; this._struck = this._heldSwing; }",
+    "old": "          this._underHold = false;\n          this._struck = this._heldSwing;",
+    "new": "          this._struck = this._heldSwing;",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js"
     ]
@@ -20,7 +20,7 @@
   {
     "name": "TELL2-cancel-ignored",
     "file": "src/characters/mobile/mobileUnit.js",
-    "old": "    if (this._underHold && this.state === 'attack' && hold === 'cancel') { this._underHold = false; this._change('idle'); }",
+    "old": "    if (this._underHold && this.state === 'attack' && hold === 'cancel') {\n      this._underHold = false;\n      this._change('idle');\n    }",
     "new": "",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js"
@@ -38,8 +38,8 @@
   {
     "name": "TELL2-any-swing-held",
     "file": "src/characters/mobile/mobileUnit.js",
-    "old": "      this._underHold = this._hold === true;\n      this._heldSwing",
-    "new": "      this._underHold = true;\n      this._heldSwing",
+    "old": "      this._underHold = this._hold === true;",
+    "new": "      this._underHold = true;",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "TELL2-head-strike-under-hold",
     "file": "src/characters/mobile/mobileUnit.js",
-    "old": "        if (this._hold === true) { this.frame = 0; this._iter = 0; }",
-    "new": "        if (false) { this.frame = 0; this._iter = 0; }",
+    "old": "        if (this._hold === true) {",
+    "new": "        if (false) {",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "TELL2-old-swing-kept",
     "file": "src/characters/mobile/mobileUnit.js",
-    "old": "    } else if (striking && (this.state !== 'attack' || (hold === true && !this._underHold))) this._change('attack');",
-    "new": "    } else if (striking && this.state !== 'attack') this._change('attack');",
+    "old": "    } else if (striking && (this.state !== 'attack' || (hold === true && !this._underHold)))",
+    "new": "    } else if (striking && this.state !== 'attack')",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "TELL2-no-meleeseq",
     "file": "src/characters/mobile/mobileUnit.js",
-    "old": "        else { this.doMeleeDamage = true; this.meleeSeq++; this._underHold = false; this._struck = this._heldSwing; }",
-    "new": "        else { this.doMeleeDamage = true; this._underHold = false; this._struck = this._heldSwing; }",
+    "old": "          this.meleeSeq++;\n          this._underHold = false;",
+    "new": "          this._underHold = false;",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js"
     ]

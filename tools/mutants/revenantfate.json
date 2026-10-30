@@ -282,8 +282,8 @@
   {
     "name": "REVENANT-FATE-the-state-left-changed",
     "file": "src/characters/mobile/mobileUnit.js",
-    "old": "    } finally { this.state = was; }",
-    "new": "    } finally { /* kept */ }",
+    "old": "      this.state = was;",
+    "new": "      /* kept */",
     "tests": [
       "test/systems/revenant/revenant_companions.test.js"
     ]
