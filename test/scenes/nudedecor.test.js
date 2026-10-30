@@ -195,6 +195,7 @@ const NO_PERSON = Object.freeze({
   'src/scenes/cityGuards.js': 'the watch as mobile units',
   'src/scenes/comeSailAway/comeSailAwayPool.js': 'the vendored prefabs\' billboards - its people none of the table\'s (pinned below)',
   'src/scenes/corpseMarker.js': 'a foe\'s corpse',
+  'src/scenes/delve/delveProps.js': 'the Brazier Rite\'s carried flame (TEXTURE.210\'s camp fire) - never a person',   // DELVE II DLV4
   'src/scenes/droppedLoot.js': 'loot piles',
   'src/scenes/droppedTorches.js': 'torches',
   'src/scenes/dragonHost.js': 'the Dwarven Dragon, the sky\'s world boss, as a mobile unit - never a person (DRAGON3)',

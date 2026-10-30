@@ -528,7 +528,7 @@ test('INSTANCES the hosts, by source: the place\'s instance is the MODE\'s - set
   assert.match(WM, /if \(next === 'exterior'\) placeInstance = null;/, 'gone with the mode');
   assert.equal((WM.match(/instance: placeInstance/g) ?? []).length, 2, 'the identity of a dungeon and of a building');
   assert.match(fns.get('interiorIdentity'), /\.\.\.\(placeInstance \? \{ ins: instanceWord\(placeInstance\) \} : \{\}\)/);
-  assert.match(WM, /dungeon: \{ \.\.\.\(placeInstance \? \{ ins: instanceWord\(placeInstance\) \} : \{\}\), whole: builtDungeonSize\(dungeonLoc\) === 'full' \} \};/, 'the anchor: room and layout');
+  assert.match(WM, /dungeon: \{ \.\.\.\(placeInstance \? \{ ins: instanceWord\(placeInstance\) \} : \{\}\), whole: dungeonRoomSize\(dungeonLoc\) === 'full' \} \};/, 'the anchor: room and layout');   // PIN MOVED (DELVE II, AUDIT DLV5-6 M3): a curated block's layout is no whole dungeon
   assert.doesNotMatch(fns.get('enterInteriorCore'), /choose|atDoor/, 'a building\'s entry never asks either');
   assert.match(fns.get('enterInteriorCore'), /place = entry \?\? \(restore\?\.ins != null && door \? await door\.entryFor\(/);
   assert.match(fns.get('mountQuestResources'), /host\.instanceDoor\?\.questElsewhere\?\.\(dungeonLoc\); return 'elsewhere'; \}/);   // PIN MOVED (QUEST-ELSEWHERE, FIELD BUGS 2026-10-16c): the gate answers 'elsewhere', and a repair says so

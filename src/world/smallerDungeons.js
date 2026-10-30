@@ -31,6 +31,8 @@ import { getPref } from '../systems/uiPrefs.js';   // DSIZE1: ...and the player'
 import { isOnlinePage } from '../systems/online/onlineLane.js';   // AUDIT DELVE E4 / SD-ONLINE: online the quest's stamp is the world's sizes
 import { seededFirst } from '../systems/wind/wind.js';   // SD-ONLINE: the port's one seeded die - a dungeon's online size, the same on every client
 import { dungeonTier } from '../systems/dungeon/dungeonTier.js';   // AUDIT SD: a Hollow, by the one tier law
+import { curatedLocation, curatedSlot } from './dungeon/curatedSplice.js';   // DELVE II (AUDIT DLV5-6 H1): the curated block, in the location as built
+import { CURATED_RECORDS } from './dungeon/curatedRecords.js';
 
 /** QuestSmallerDungeonsState (DaggerfallUnityEnums.cs:758-763) -
  *  NotSet, DISABLED, ENABLED, in that order. F-B3 (self-audit 2): the
@@ -366,6 +368,12 @@ export function builtDungeonSize(dfLocation) {
   if (isMediumDungeon(dfLocation)) return 'medium';
   return isSmallerDungeon(dfLocation) ? 'small' : 'full';
 }
+/** DELVE II (AUDIT DLV5-6 M3): THE ROOM'S LAYOUT WORD - the size it was built at and the curated block it took, `medium+2`.
+ *  An older page lays that slot as Daggerfall's, so the room is the layout's (net/wire.js dungeonRoomTag: `.m.c2`). */
+export const dungeonRoomSize = (dfLocation) => {
+  const s = builtDungeonSize(dfLocation), n = dfLocation?.curated;
+  return Number.isInteger(n) && n > 0 ? `${s}+${n}` : s;
+};
 
 /**
  * The save stamp - PlayerPositionData_v1.smallerDungeonsState
@@ -405,8 +413,10 @@ export function needsStartWarp(savedState, dfLocation) {
 /** The one door the hosts use: the location to BUILD, sized by the law. DSIZE1: at any of the three sizes. */
 export function dungeonLocationFor(dfLocation, deps = {}) {
   const size = dungeonSizeFor(dfLocation, deps);
-  if (size === 'small') return generateSmallerDungeon(dfLocation);
-  return size === 'medium' ? generateMediumDungeon(dfLocation) : dfLocation;
+  const built = size === 'small' ? generateSmallerDungeon(dfLocation) : size === 'medium' ? generateMediumDungeon(dfLocation) : dfLocation;
+  // DELVE II (AUDIT DLV5-6 H1): and the curated block a game-made dungeon takes, after its size - the layout, the quests'
+  // markers and the room read this one list. The dungeon whole (an instance's, an online quest's) is its own blocks.
+  return deps.whole ? built : curatedLocation(built);
 }
 
 /**
@@ -421,3 +431,7 @@ export function builtSizeFor(dfLocation, deps = {}) {
   const size = dungeonSizeFor(dfLocation, deps);
   return size !== 'full' && laidAnew(dfLocation, SIZE_THRESHOLD[size]) ? size : 'full';
 }
+/** DELVE II (AUDIT DLV5-6 M3): IS ITS PUBLIC ROOM, ONLINE, A LAYOUT OF ITS OWN - built smaller, or whole with a curated
+ *  block (its own list's slot: a dungeon built whole lays the location's own blocks) - where a quest's things, laid whole,
+ *  never stand (scenes/instanceDoor.js dungeonSite). Builds nothing. */
+export const relaidOnline = (dfLocation) => builtSizeFor(dfLocation, { online: true }) !== 'full' || curatedSlot(dfLocation, CURATED_RECORDS) != null;

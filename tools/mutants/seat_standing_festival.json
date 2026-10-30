@@ -81,24 +81,6 @@
   ]
  },
  {
-  "name": "FESTIVAL-STAGE-rumour-boards",
-  "file": "src/scenes/seatFestival.js",
-  "old": "bounty.has(i) ? boardPennantAnchor(b) : null",
-  "new": "!bounty.has(i) ? boardPennantAnchor(b) : null",
-  "tests": [
-   "test/scenes/seat_standing_festival.test.js"
-  ]
- },
- {
-  "name": "FESTIVAL-STAGE-pennants-uncapped",
-  "file": "src/scenes/seatFestival.js",
-  "old": "if (a && out.length < FESTIVAL_BANNERS_MAX) out.push(a);",
-  "new": "if (a) out.push(a);",
-  "tests": [
-   "test/scenes/seat_standing_festival.test.js"
-  ]
- },
- {
   "name": "FESTIVAL-STAGE-taverns-uncapped",
   "file": "src/scenes/seatFestival.js",
   "old": "if (two && out.length + 2 <= FESTIVAL_BANNERS_MAX) out.push(...two);",

@@ -394,6 +394,20 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'worldDungeonSizes', initial: false, online: true }),   // world/smallerDungeons.js WORLD_DUNGEON_SIZES_PREF; forced on online, the room's sizes
   }),
+  // DELVE II (DLV2, 2026-10-28, the owner: "coming upon a wave based encounter, or puzzle solving like you find in some of
+  // our world events"; bible/03-World/Delve-II.md): THE DUNGEONS' ENCOUNTERS - one of seven kinds, fought or worked out
+  // in a room the layout already has, each opening a vault (scenes/delve/delveHost.js). On by default; online (DLV3) the
+  // room keeps the sites and they stand for everyone in it, so the lane forces it on there.
+  Object.freeze({
+    id: 'dungeon-encounters',
+    group: 'world',
+    get title() { return t('features.dungeonEncounters.title', 'Dungeon encounters'); },
+    get note() { return t('features.dungeonEncounters.note', 'Some dungeon rooms hold an encounter: a ward to hold against foes, sources or seals to '
+      + 'break, or a puzzle to work out. Win one to open its vault. Online, your party wins it together.'); },
+    get effect() { return t('features.effect.nextDungeon', 'Takes effect on the next dungeon you enter.'); },
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'dungeonEncounters', initial: true, online: true }),   // scenes/delve/delveHost.js DELVE_PREF
+  }),
   // STEED1 (2026-10-11, the owner: "Horse should have stamina, feeding them grows your bond and improves their stats.
   // Every horse should have different stats"): HORSE CARE (bible/06-Systems/Horse-Care.md, systems/steedCare.js).
   // HORSE-WALK (2026-10-12): its horse walks unless the run gallops it.

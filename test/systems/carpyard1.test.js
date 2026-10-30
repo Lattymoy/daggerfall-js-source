@@ -26,7 +26,7 @@ import { yardGlyph, yardMarkKind } from '../../src/ui/travel/travelViewHud.js';
 import { markGroup, isYardMark } from '../../src/systems/travel/travelViewFilters.js';
 import { CAPSULE_HEIGHT } from '../../src/player/motor.js';
 import { NAV_CELL } from '../../src/world/city/cityNavigation.js';
-import { ROAD_WEIGHT } from '../../src/systems/gothwayBoards.js';
+import { ROAD_WEIGHT } from '../../src/world/city/cityNavigation.js';
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const KEEPER = { name: 'Aldric Thane', sex: 'male', variant: 2 };

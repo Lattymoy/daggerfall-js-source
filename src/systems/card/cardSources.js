@@ -81,9 +81,9 @@ const titled = (/** @type {any} */ e) => !!(e?.eliteFoe || e?.champion || e?.pro
  * @param {any} entity @param {() => number} rolls
  */
 export function foeCardRoll(entity, rolls) {
-  // AUDIT CARDS-6 A10, RECORDED: nothing writes `worldBoss` on an entity today - the Gate's Warden, the Sea Serpent and
-  // the Brass Remnant are the relay's and never pass a death door (their spoils are their hoards'), so that half of the
-  // guard answers for a boss that ever does, and costs nothing until then
+  // AUDIT CARDS-6 A10: a world boss's body (`worldBoss`, the Starfall's master - scenes/starfall/starfallHost.js masterOf)
+  // passes the death door and drops no card: its spoils are its held star's. The Gate's Warden, the Sea Serpent and the
+  // Brass Remnant are the relay's and never pass it (their spoils are their hoards')
   if (!entity || entity.revenant || entity.worldBoss) return null;
   const id = FOE_CARDS[entity.mobileType];
   const card = id ? cardById(id) : null;

@@ -155,7 +155,7 @@ test('WORLD-HOVER: only the loot keys itemise - everything else is a name', () =
   // are the two above-ground bodies, which PX21c could not reach.
   // DW-E3: `dwFish:` is Iliac Puddle No More's fish, a DaggerfallLoot of one item.
   // WB9f: `spoil:` a piece of the Burning Court's spoils on its floor, a pile of one; its gold (`spoilGold:`) a name.
-  assert.deepEqual([...ITEMISED_KEYS], ['loot:', 'corpse:', 'droppedLoot:', 'foeCorpse:', 'guardCorpse:', 'dwFish:', 'spoil:']);
+  assert.deepEqual([...ITEMISED_KEYS], ['loot:', 'corpse:', 'droppedLoot:', 'foeCorpse:', 'guardCorpse:', 'dwFish:', 'spoil:', 'delve:']);   // PIN MOVED (DELVE II): a dungeon encounter's vault
   for (const k of ['loot:0', 'corpse:3', 'droppedLoot:9', 'foeCorpse:abc', 'guardCorpse:x', 'dwFish:12', 'spoil:2']) {
     assert.equal(keyItemises(k), true, k);
   }
@@ -1849,11 +1849,8 @@ test('AUDIT-WH M1: every family in the ray carries a reach, and the widest of th
     const bare = [...read(f).matchAll(/key: [^\n]*distance: RAY_DISTANCE(?![^\n]*reach)/g)];
     assert.deepEqual(bare.map((m) => m[0].slice(0, 70)), [], `${f}: a family reaching for the ray with no reach of its own`);
   }
-  assert.match(read('src/scenes/worldModes.js'),
-    /key: `board:\$\{i\}`, aabb, distance: RAY_DISTANCE, reach: BULLETIN_BOARD_ACTIVATION_DISTANCE/,
-    'the board carries its handler\'s own constant (.cs:315-318, and ActivateBulletinBoard :709-713)');
-  assert.equal((await import('../../src/systems/bulletinBoard.js')).BULLETIN_BOARD_ACTIVATION_DISTANCE, CLAMP,
-    '...which IS the mobile band, from its one home');
+  // PIN MOVED (NOTICE-PANEL): the board that family was is gone from the ray - no board stands in a town
+  assert.doesNotMatch(read('src/scenes/worldModes.js'), /key: `board:/);
 });
 
 test('AUDIT-WH M2/M3/M4/M9: the mod\'s own asymmetries, ported as the mod has them', async () => {

@@ -164,8 +164,8 @@
   {
     "name": "SENSE1-a-shelf-is-no-find",
     "file": "src/systems/dungeon/dungeonSense.js",
-    "old": "['loot:', 'corpse:', 'search:', 'droppedLoot:', 'srch:']",
-    "new": "['loot:', 'corpse:', 'droppedLoot:', 'srch:']",
+    "old": "['loot:', 'corpse:', 'search:', 'droppedLoot:', 'srch:', 'delve:']",
+    "new": "['loot:', 'corpse:', 'droppedLoot:', 'srch:', 'delve:']",
     "tests": [
       "test/systems/sense1_dungeonsense.test.js"
     ]

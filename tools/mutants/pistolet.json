@@ -130,7 +130,7 @@
   {
     "name": "SE-law-not-moved",
     "file": "src/systems/item/itemLaw.js",
-    "old": "export const ITEM_LAW_VERSION = 15;",
+    "old": "export const ITEM_LAW_VERSION = 16;",
     "new": "export const ITEM_LAW_VERSION = 9;",
     "tests": [
       "test/systems/pistolet.test.js",

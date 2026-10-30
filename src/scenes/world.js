@@ -6,11 +6,12 @@
 // locations appear on their pixels, and crossing a pixel boundary
 // recenters the world (streamingWorld.js).
 
+import { wireDelve } from '../net/delve/delveLink.js';   // DELVE II (DLV3): the session's doors to a dungeon's encounters
 import { DecisionBoxWindow } from '../ui/decisionBox.js';   // REST-WARN2: the Plus decision box
-import { wildGiantsAt, WILD_GIANT_STAND_M, WILD_GIANT_RESPAWN_MS, giantGroundBlocked } from '../systems/wild/wildGiants.js';   // ZONE-GIANTS   // GOTHWAY-BOARDS: at the north entrance
+import { wildGiantsAt, WILD_GIANT_STAND_M, WILD_GIANT_RESPAWN_MS, giantGroundBlocked } from '../systems/wild/wildGiants.js';   // ZONE-GIANTS
 import { cyrodiilMask } from '../systems/wild/cyrodiilZone.js';   // WW-C2: the open zone is Cyrodiil's
-import { createZoneHalls } from './zoneHallsHost.js';   // WW-C2: the zone's halls and their ground, out of bootWorld   // ZONE-GIANTS   // GOTHWAY-BOARDS: at the north entrance
-import { pixelKeyText } from '../world/pixelKeys.js';   // PIXEL-KEYS: a built pixel's key text made once   // GOTHWAY-NORTH: the walk grid's cell
+import { createZoneHalls } from './zoneHallsHost.js';   // WW-C2: the zone's halls and their ground, out of bootWorld   // ZONE-GIANTS
+import { pixelKeyText } from '../world/pixelKeys.js';   // PIXEL-KEYS: a built pixel's key text made once
 import { resetPlayerGpsState } from '../world/playerGps.js';   // AUDIT DEX C1: PlayerGPS.ResetState, the jump core's
 import { restAilmentLines } from '../systems/rest/restWarning.js';   // REST-WARN
 import { walkModeOn, bindWalkMode } from '../player/walkMode.js';   // PADWALK: walk mode, one button on and off
@@ -368,7 +369,6 @@ import { createGambitClaims } from '../net/gambit/gambitClaims.js';   // KG6: an
 import { seasonCounted, seasonKept, seasonGuest, seasonFoeGuest } from '../ui/gambitTableWords.js';   // KG6: what the season's claims say
 import { createWritBook } from '../net/writBook.js';   // PROF6: guild writs, commissions, the guild Stores
 
-import { unseenText } from '../net/boardLaw.js';   // NOTICE1: the count over a board
 import { alignSurvival, markOutCold } from '../systems/survival/needs.js';   // SURV7: the needs' markers at an arrival; AUDIT C&C N2: the collapse's hour a night on the ground
 import { sunlit } from '../systems/survival/temperature.js';   // AUDIT C&C: the sun's one law - this reader's minute, and a jump's replay its own
 import { liveLycanthropy } from '../systems/lycanthropy.js';   // SURV7: the env's lycanthrope and beast-form flags
@@ -598,7 +598,7 @@ import { setClassicDialSource, refreshClassicDial } from '../ui/dialClassicArt.j
 import { overlayOpen } from '../ui/enhanced/enhancedOverlays.js';   // AUDIT DEEP2 A3: the Tab dial (and every enhanced overlay) over the travel view
 import { preloadBookArt } from '../ui/bookReader.js'; import { makeOpenBookHook } from '../ui/bookDoor.js';   // B1; EB1: the reader's ONE door
 import { DeathScreen } from '../ui/deathScreen.js';   // AUDIT 21 hosts F6: dying above ground
-import { loadHud, drawHud, hudScale } from '../ui/hud/hud.js';   // AUDIT 21 hosts F7: the classic HUD, which this host did not draw; ONLINE1: the names' scale
+import { loadHud, drawHud, hudScale, classicCompassAnchor } from '../ui/hud/hud.js';   // AUDIT 21 hosts F7: the classic HUD, which this host did not draw; ONLINE1: the names' scale
 import { initEscortFaces, addEscortFace, dropEscortFace, escortQuestEnded } from '../ui/hud/hudEscortFaces.js';   // FE1: the quest escorts' portrait column
 import { largeHudOptions, routeLargeHudClick, hudLargeNextMode, hudLargePrevMode, activeMouseOverLargeHUD, trackLargeHudPointer } from '../ui/hud/hudLarge.js';   // U45: the classic bottom bar and its eleven panels; ROAD-Ar: and the guard that stops them being world clicks too
 import { trackHudPointer } from '../ui/hud/hudActiveSpells.js';   // U46: the spell-icon rows' pointer
@@ -710,7 +710,7 @@ import { createCaptainPageHost } from './captainPageHost.js';   // CAPT-LOG / CA
 import { createDeckPlanDoor } from './deckPlanDoor.js';   // DECK-PROPS: the plan of her deck
 import { createHarbourOffice } from './harbourOffice.js';
 import { createEtherHost } from './etherHost.js';   // ETHER-SEA: the Eltheric Ocean's waters, charts, strands and legends
-import { createCrossingGate, crossingWayAt, crossingTarget, crossingRows, crossingWords, createCrossLand, CROSS_DAYS, CROSS_CHECK_S, CROSS_REFUSED, CROSS_STALE, CROSS_FAILED } from '../systems/naval/etherCrossing.js';   // ETHER-CROSSING: the voyage across
+import { createCrossingGate, crossingWayAt, crossingTarget, crossingRows, crossingWords, createCrossLand, createCrossSea, CROSS_DAYS, CROSS_CHECK_S, CROSS_REFUSED, CROSS_STALE, CROSS_FAILED } from '../systems/naval/etherCrossing.js';   // ETHER-CROSSING: the voyage across
 import { createVeilParty } from './naval/veilParty.js';   // VEIL-PARTY: a party crosses the Veil together
 import { mulberry32 } from '../combat/blood/bloodArt.js';   // CAPT-BOARD: a site's point off its seed
 import { CHART_TEMPLATE } from '../systems/naval/treasureCharts.js';   // CAPT-CHARTS: a treasure chart read   // CAPT-BOARD: the harbourmaster's board, the contracts, the letters
@@ -774,7 +774,6 @@ import { createWorldPartyPing } from './partyPingHost.js';   // PARTY-PING: a lo
 import { pingSubject, pingCrowd } from '../systems/party/partyPingCaption.js';   // PARTY-PING: the name under a look, a person and another player among them
 import { PING_TRAVEL_M } from '../systems/party/partyPing.js';   // PARTY-PING: how far the travel view's look reaches
 import { createBountyFarms, farmSpotLocal, pickFarm } from './bountyFarms.js';   // BOUNTY-FARM: a farm on a farm bounty's pixel, while it is held
-import { questBoardIndices } from '../systems/bounty/bountyBoard.js';   // BOUNTY1: which of a town's boards post bounties (half)
 import { bountyLandWild } from '../systems/bounty/bountyQuarry.js';   // QUARRY-WORLD: the land's own wild about a board's town
 import { createLairDoor } from './lairHost.js';   // RVN7, LAIR-DOOR: a revenant's lair, an enterable dungeon in the boards' ring
 import { createBountyOverlay, closeBountyDoor, bountyDoorOpen } from '../ui/bounty/bountyDoor.js';   // BOUNTY1: the board's window and the payday notice
@@ -811,7 +810,7 @@ import { noteLocalPlayer, tacticsNow, tickTactics, offsetTactics } from '../ai/t
 import { drawableBlows, registerBlowDodgedListener } from '../ai/foeBlows.js';   // TACT4; AUDIT ARENA-LADDER: a dodge told
 import { landViewRead } from '../world/landView.js';   // LV1: the enhanced lane's own streamed radius; FT2: the read is the module's
 import { CityLightAnimator, SUN_RIG_COLOR, INDIRECT_LIGHT_COLOR, INDIRECT_LIGHT_RANGE, exteriorAmbient, indirectLightScale, isCityLightsOn, isNight, hourOf, daylightScale, parseTimeOfDay, sunDirection, sunScale, windowStyleForTime, viewOutLight } from '../world/worldClock.js';
-import { builtDungeonSize } from '../world/smallerDungeons.js';   // AUDIT 28 F-B2: the quest layer sees the sized dungeon; AUDIT FB1013d B1: the size a fallen's dungeon was built at
+import { dungeonRoomSize } from '../world/smallerDungeons.js';   // AUDIT 28 F-B2: the quest layer sees the sized dungeon; AUDIT FB1013d B1: the size a fallen's dungeon was built at; DELVE II (AUDIT DLV5-6 M3): and its curated block
 import { audio, QuestAudioSource, plainSourceGain } from '../systems/audio.js';   // E6: the QuestMachine's own DaggerfallAudioSource (PlaySound's busy-skip)
 import { music } from '../systems/music.js';
 import { AmbientEffects, EXTERIOR_AMBIENT_WAITS, presetForExterior } from '../systems/ambientEffects.js';
@@ -890,7 +889,7 @@ import { seatArrivalLine, boardTithePct } from '../net/townSeatLaw.js';   // SEA
 import { createSeatHallHost } from './seatHallHost.js';   // DOMAIN2 (HOST-SPLIT): a seat's halls and the guild's castle
 import { createOnlineHomes, moveArenaHomes, homeSceneName, homeTownBlocks, homeClaimLayout, checkpointLanded, HOME_RETRY_MS } from '../systems/online/onlineHomes.js';   // HOME1: the account service's homes, one town at a time; ARENA4b: the ones the arena displaced, moved; HOME-PRICE: a town's size; FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed the realm gave, held
 import { createHomesBoot } from './homesBootHost.js';   // KNIGHT-HOUSE's deed holds and ACCOUNT-HOMES' sweep, once a boot
-import { townBoardRows } from '../ui/town/townMapMarks.js';   // TOWN-MARKS: the Notice Boards and the player housing on the town map
+import { createTownPanelHost, panelTownOf } from './townPanelHost.js';   // NOTICE-PANEL: the town panel under the compass - the boards' presses, in any settlement
 import { clearVendorWaypoint, vendorWaypoint, vendorWaypointKey } from '../systems/vendorWaypoint.js';   // HOME-VENDOR: the trader's waypoint
 import { setVendorPage } from '../ui/vendor/vendorPage.js';   // HOME-VENDOR: the Vendor page, under the Professions
 import { setSigilOnline, setSigilRenown } from '../systems/sigil/sigil.js';   // SIGIL1: a weapon won online carries a sigil, woken by my Renown
@@ -946,7 +945,7 @@ import { caravanRoomOf, caravanKeyOf } from '../net/privateInterior.js';   // WA
 import { CARAVAN_TEXT } from '../systems/caravanRoom.js';   // WAGONS2 (FINAL AUDIT): a caravan's save that cannot come back, said
 import { caravanEntryOf, setDrivenCaravanEntry, caravanMayEnter, CARAVAN_VISIT_TEXT } from '../systems/caravanVisit.js';   // WAGONS2-VISIT: who may enter a caravan, and a visit to another's
 import { HOME_ENTRY_WORDS, homeNextEntry } from '../systems/online/onlineHomes.js';   // WAGONS2-VISIT: a caravan's door is turned as a home's is
-import { homeDecorShown } from '../net/homeVoteLaw.js';   // HOME-VOTE: a shunned home's paint stands for its insiders alone
+import { homeDecorShownHere } from '../systems/online/homeMute.js';   // HOME-VOTE: a shunned home's paint stands for its insiders alone; HOME-MUTE: and none of a home I hid
 import { createCaravanVisitLink } from '../net/caravanVisitLink.js';   // WAGONS2-VISIT: the visited caravan's cell, heard from inside it
 import { RECEIVER_MARKS } from '../net/realm/realmTradeLaw.js';   // WAGONS2-VISIT (AUDIT): the last owner's marks, never carried to the next
 import { GATE_BRAIN_V } from '../net/wire.js';   // AUDIT WBX R7: the brain's law this client knows, said on every `in`
@@ -1966,18 +1965,6 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   worldPlaces.register(BAY_SOURCE, bayPlaceRows(_hubRows, { hasPort }));
   _hubRows.length = 0;
   setSeatTitlePlaces((key) => seatAtMapId(townSeats, key));   // SEAT1c: a seat title worded off the seats this client derived
-  /** AUDIT 28 H8: which of a built pixel's boards are bounty boards (systems/bounty/bountyBoard.js questBoardIndices), worked out
-   *  once a pixel - the count over the boards and the press's targets asked it every frame, a sort each time. A pixel's
-   *  boards are laid once, when it is built. (SEAT1a: declared above the boot's first build, which asks it for a seat
-   *  town's banners - BOOT-TDZ2.) */
-  // GOTHWAY-BOARDS: the town's own boards split as ever (the half every client picks), and every board a town stands of its
-  // own (`extra` - Gothway Garden's four, after its blocks' in the list) a bounty board always
-  const boardSplitOf = (p) => (p._boardSplit ??= (() => {
-    const all = p.boards ?? [];
-    const split = questBoardIndices(all.filter((b) => !b.extra));
-    all.forEach((b, i) => { if (b.extra) split.add(i); });
-    return split;
-  })());
   // HOME1 (Mac: "allowing online players to purchase housing in any location"): the online homes - the account
   // service's registry as this page knows it, one town at a time (systems/online/onlineHomes.js). The mode machine's doors
   // read it and the quest's residence filter asks it; offline it does not exist and every door is Daggerfall's. Read
@@ -2039,7 +2026,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   /** @type {Map<string, any>} `${mapId}:${buildingKey}` -> a look the owner's painter is trying */
   const _lookPreview = new Map();
   // HOME-VOTE: a home the town voted below zero stands in its town's own paint but for its insiders (net/homeVoteLaw.js)
-  const lookOfHome = (mapId, bk, row) => (_lookPreview.has(`${mapId}:${bk}`) ? _lookPreview.get(`${mapId}:${bk}`) : homeDecorShown(row) ? row?.look ?? null : null);
+  const lookOfHome = (mapId, bk, row) => (_lookPreview.has(`${mapId}:${bk}`) ? _lookPreview.get(`${mapId}:${bk}`) : homeDecorShownHere(row, mapId) ? row?.look ?? null : null);
   // MARKS1 (PROF0 10.5): the account's Marks as this page knows them - the balance, the Bank's sale carried to its end
   // (a sale whose answer was lost is kept and settled), a guild's Marks moved (net/marksBook.js). Online only.
   const marksBook = params.has('online')
@@ -2400,14 +2387,6 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     marketBook, regionHubs, saveSoon, townSeats, worldPlaces, writBook,   // BAY-LEFT-SEA: the seats and the places, the provinces' market hubs
     get townTalk() { return townTalk; },
   });
-  /** NOTICE1: the town a board on map pixel (px, py) belongs to - its map id (unsigned), its name, and whether one of its
-   *  boards is a bounty board (the Notices tab then pins the line that sends the reader there) - or null off a location. */
-  const noticeTownOf = (px, py, bountyLine = false) => {
-    const loc = locationIndex.get(`${px},${py}`);
-    const mapId = loc?.mapTableData?.mapId;
-    if (!Number.isFinite(mapId)) return null;
-    return { mapId: mapId >>> 0, px, py, name: String(loc.name ?? ''), bountyLine: !!bountyLine };
-  };
   // DECOR1c: and an online home's placed pieces, the service's too - every visitor reads them, the owner writes them
   const homeDecor = params.has('online') ? accountDecor({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }) : null;
 
@@ -5479,7 +5458,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   });
   const { buildPixelNow } = createPixelBuild({   // HOST-SPLIT: src/scenes/pixelBuild.js
     MILL_SAIL_PAD, TERRAIN_INDICES, TERRAIN_INDICES_LOD, _building, _dwRubble, _dwRubbleCarry, _groundBefore,
-    _livingPatrons, _locationToBuild, spawnGroundPlace, _lptSway, _lptWindfall, _reskin, adoptWodCarry, archAabb, blocks, boardSplitOf,
+    _livingPatrons, _locationToBuild, spawnGroundPlace, _lptSway, _lptWindfall, _reskin, adoptWodCarry, archAabb, blocks,
     breather, buildingDoors, built, chapterSheet, climates3x3, collider, cpuModels, deepWaters, destroyPixel,
     dfMeshSize, dwDecor, ecotones, ensurePersonTex, forests, gateClearSweep, getTexture, getWindmillMeshes,
     halfWidthsOf, heightAt, heightCell, holdPixel, hostBed, labGrass, landform, livingArmOf, livingAshore,
@@ -5916,7 +5895,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // for the painter's preview (AUDIT: a colour tried tore the owner's street down under the open panel)
       // HOME-VOTE: a look shown - a shunned home's stands in the merge for everyone but its insiders (never lookOfHome: the
       // painter's preview would tear the owner's street down)
-      for (const [bk, row] of homes) if (!p.homeKeys.has(bk) && p.buildingKeys.has(bk) && ((row?.look && homeDecorShown(row)) || row?.mine || row?.keeper)) merged = true;   // GUILD-YARD: a hall kept
+      for (const [bk, row] of homes) if (!p.homeKeys.has(bk) && p.buildingKeys.has(bk) && ((row?.look && homeDecorShownHere(row, p.homeTown)) || row?.mine || row?.keeper)) merged = true;   // GUILD-YARD: a hall kept
       if (merged) { _reskin.mark(key); continue; }
       for (const m of p.models) {
         if (!m._home) continue;
@@ -9376,17 +9355,18 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const crossGate = createCrossingGate();
   let _crossCheckT = 0;
   /** A map pixel's distance to the nearest land (systems/naval/etherCrossing.js createCrossLand - the map's one water law,
-   *  seaPixel; HOST-SPLIT, SEA VENTURES: out of bootWorld). */
-  const crossLandPx = createCrossLand(seaPixel);
+   *  seaPixel; HOST-SPLIT, SEA VENTURES: out of bootWorld), and SEA-ROWS: to the sea the world sails (createCrossSea - the
+   *  world's lanes and the day's serpent, read when asked: both stand further down). */
+  const crossLandPx = createCrossLand(seaPixel), crossSeaPx = createCrossSea(() => worldLanes, () => serpentOmen?.current?.()?.site);
   /** The way the helm's waters offer now: 'out' only where the crossing out is this game's (AUDIT CAPTAIN'S SEA G2), 'home'
    *  in the Veil under any skin. */
   const crossWayHere = () => {
     const p = playerTravelPixel();
-    return crossingWayAt(p.x, p.y, etherOut && p.x < CROSS_X && !inEther(p.x, p.y) ? crossLandPx(p.x, p.y) : 0);
+    return crossingWayAt(p.x, p.y, etherOut && p.x < CROSS_X && !inEther(p.x, p.y) ? crossLandPx(p.x, p.y) : 0, crossSeaPx);
   };
   /** Why the crossing may not be sailed now - CROSS_REFUSED's key (an enemy near, another player aboard) - or null. */
   const crossRefusal = () => (navalHostileNear() ? 'hostile' : csaPassengersOn(csaRuntime?.state?.CurrentBoat, veilParty.kin) > 0 ? 'passengers' : null);   // VEIL-PARTY: her party aboard crosses with her
-  let _crossBox = null, _crossSaid = null;   // the question up; the waters a refusal was said in
+  let _crossBox = null;   // the question up
   /** AUDIT CAPTAIN'S SEA X2: the question taken back unanswered - a load, a jump, a door (navalTransition). */
   function withdrawCrossing() {
     if (_crossBox && !_crossBox.done) _crossBox.withdraw();
@@ -9395,7 +9375,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   /** The helm's waters asked every CROSS_CHECK_S: a way they offer, not asked since the ship came into them, asked - or
    *  said refused once in those waters (an enemy near, another player aboard), and asked as soon as the deck is clear.
    *  AUDIT CAPTAIN'S SEA X1: a refusal marked the way asked, and the question never came back while she stayed in those
-   *  waters; X3: never while the world is being moved (a party member's helm through the arrival's wait). */
+   *  waters; X3: never while the world is being moved (a party member's helm through the arrival's wait). SEA-ROWS: the
+   *  gate told the waters under a journey too (Travel Options, null when off) - never asked across its way or at a stop. */
   function etherCrossStep(dt) {
     if (!etherSea || _etherCrossing || !csaRuntime?.isSailing?.()) return;
     _crossCheckT -= dt;
@@ -9403,13 +9384,12 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     _crossCheckT = CROSS_CHECK_S;
     if (gamePaused() || _loading || townTalk.overlayActive || modes?.transitioning || worldMoveBusy() || _partyArrivalPending || _mode() !== 'exterior') return;
     const way = crossWayHere();
-    if (way !== _crossSaid) _crossSaid = null;
-    if (!crossGate.offer(way)) return;
+    if (!crossGate.offer(way, travelOptions)) return;   // SEA-ROWS: a journey's waters its own, asked where it arrives
     const why = crossRefusal();
-    if (why) { if (_crossSaid !== way) { _crossSaid = way; townTalk.say(CROSS_REFUSED[why], 4); } return; }
+    if (why) { if (crossGate.refused(way)) townTalk.say(CROSS_REFUSED[why], 4); return; }
     crossGate.asked(way);
     const boat = csaRuntime.state.CurrentBoat;
-    _crossBox = new YesNoBoxWindow({ rows: crossingRows(way, { pvp: _onlineWorldSession() && !!online?.wildOk }), onYes: () => { _crossBox = null; crossYes(way, boat); }, onNo: () => { _crossBox = null; } });
+    _crossBox = new YesNoBoxWindow({ rows: crossingRows(way, { pvp: _onlineWorldSession() && !!online?.wildOk }, way === 'out' ? playerTravelPixel() : crossingTarget('home', captainLedger.crossedFrom())), onYes: () => { _crossBox = null; crossYes(way, boat); }, onNo: () => { _crossBox = null; } });
     townTalk.showOverlay(_crossBox);
   }
   /** AUDIT CAPTAIN'S SEA X2: Yes is the question as it stands NOW - the same helm, the same waters, no enemy, no passenger,
@@ -9421,7 +9401,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       return;
     }
     const why = crossRefusal();
-    if (why) { crossGate.asked(null); _crossSaid = way; townTalk.say(CROSS_REFUSED[why], 4); return; }
+    if (why) { crossGate.asked(null); crossGate.refused(way); townTalk.say(CROSS_REFUSED[why], 4); return; }
     etherCross(way).catch((e) => console.warn('[ether] the crossing:', e?.message ?? e));
   }
   /** THE VOYAGE: the captain and the ship at whose helm they stand carried across (out to Veilhaven's waters; home to the
@@ -9473,7 +9453,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       captainLedger.crossed();
       if (way === 'out') captainLedger.chartIsle(veilhaven().key);   // the landfall's port, on the charts from the first
       else crossGate.asked('out');   // home in the crossing waters: not asked out again until she has left them
-      setMidScreenText(crossingWords(way), 7);
+      setMidScreenText(crossingWords(way, to), 7);   // AUDIT FB1029g SEA F9: the Bay named only where she lands in it
       const heavy = cargoModWords(csaRuntime.state.boatCargoMod);   // FB1012d ETHER-STRAND (bible/01-Overview/bugs/Field-Bugs-2026-10-12d.md): the crossing's words cover the helm's - her load said again beneath them, or the boat that came home never says why she will not move
       if (heavy) townTalk.say(heavy, 7);
       captainSay();
@@ -12107,10 +12087,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     now: () => Date.now(),
   }) : null;
   let _farmSyncT = 0;   // BOUNTY-FARM: the pool is brought in line twice a second
-  /** SCALE4c: the town the street frame last found underfoot, and when (performance.now ms) - the heartbeat's board part
-   *  asks it, so the board is read exactly where and while the frame asked it before; and when the online lane last ran,
-   *  for the letterbox's part the same way. */
-  let _noticeTown = /** @type {{ mapId: number|null, at: number } | null} */ (null);
+  /** SCALE4c: when the online lane last ran, for the letterbox's heartbeat part (the board's: townPanelHost.js boardTown). */
   let _mailFrameAt = -Infinity;
   const FRAME_LIVE_MS = 2500;
   /** BOUNTY-FARM / BOUNTY-TRAIL: how near its spot (the farmhouse, the second group's) the hunter must come before the
@@ -16346,16 +16323,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     get questBridge() { return questBridge; },
     get renameMapBuilding() { return renameMapBuilding; },
     get topicTree() { return topicTree; },
-    get townBoardMarks() { return townBoardMarks; },
   });
-  /** TOWN-MARKS: a built pixel's Notice Boards for the town map - none while the board is closed (the town's boards are
-   *  then Daggerfall's rumour boards) or off a location. */
-  const townBoardMarks = (p) => {
-    if (!noticeBook || noticeBook.open !== true || !p?.boards?.length || !p.location) return [];
-    const bountyAt = boardSplitOf(p);
-    const town = noticeTownOf(p.px, p.py, bountyAt.size > 0);
-    return town ? townBoardRows(p, bountyAt, noticeBook.unseen(town.mapId)) : [];
-  };
   /** SetCustomBuildingName (ExteriorAutomap.cs:867-899): the plate's
    *  double-click raises DFU's DaggerfallInputMessageBox over the open
    *  map (a PUSH, not a replace - the map is still there underneath),
@@ -18188,9 +18156,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   });
   // TK-i: THE RUMOR MILL beside the bridge. Its three consumers are
   // all mounted now: "Any news?" and the questor-post greeting came in
-  // with TK-v, and the BULLETIN BOARD's sign face reads through
-  // `bulletinBoardNews` below (PlayerActivate.cs:706-739 - the arm
-  // worldModes' exterior ray runs). The classic-rumor import runs off
+  // with TK-v, and the BULLETIN BOARD's sign face reads through the
+  // town panel's Notice Board (PlayerActivate.cs:706-739 - NOTICE-PANEL's
+  // press, scenes/townPanelHost.js). The classic-rumor import runs off
   // the RUMOR.DAT the classic-save loader parses, in the one place DFU
   // reads that file (SaveGames.OpenSave :251-260). AddNonQuestRumor's
   // PRODUCER (the regional faction sim, PlayerEntity.
@@ -19965,8 +19933,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     beat: () => heartbeat.beat(),
     visible: () => globalThis.document?.visibilityState !== 'hidden',
   });
-  // the town's board, read where and while the street frame finds the player in a town (the frame stamps it each second)
-  if (noticeBook) heartbeat.add('board', noticeBook.heartbeatPart(() => (_noticeTown && performance.now() - _noticeTown.at < FRAME_LIVE_MS ? _noticeTown.mapId : null)));
+  // the town's board, read where and while the town panel's frame finds the player in a town (AUDIT FB1029g P3: indoors too)
+  if (noticeBook) heartbeat.add('board', noticeBook.heartbeatPart(() => townPanel.boardTown(FRAME_LIVE_MS)));
   /** QUEST-PARTY (2026-09-26, Mac: "Party shares them"): THE PARTY'S LAW FOR A POOL'S QUEST FOES - one home for the
    *  open air's pool (onlineStart) and each building's (worldModes' interior pool, QUEST-PARTY phase 3b). A quest shared
    *  with the party streams its foes to the party, a member stands a party peer's, a peer's blow and a quest foe's hunt
@@ -20245,6 +20213,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     online.onRaid = (f, room) => raidRelayWord(f, room);   // RAID3: a town cell's word about its raid - the ledger, the cleanse, my receipt
     online.onRite = (w) => riteHost?.onBroken(w);   // WB12d: the hub's broken rite
     online.onStar = (w) => starfall?.onStar(w);   // STAR3: a star's cell's ledger, its hold and my receipt
+    online.onDelve = wireDelve(online);   // DELVE II (DLV3): the dungeon room's word of its encounters, to the host that stands them (net/delve/delveLink.js)
     online.onGrant = (g) => grants.answer(g);   // GRANT3: my cell's answer to a grant ask, or an heir's grant
     online.onWatch = (r) => { seatBook?.keepWatch(r); motherlodeBook?.watch(r); townEcon.keepWatch(r); };   // SEAT1b: the Watch's tick, kept where it stands in a seat's pixel; PROF2b: and where it stands on a Motherlode's; TOWN-ECON TE2: and in any town's
     // SEAT2a part four: A SIEGE'S BATTLE - its words to the session; a step refused or a rise at the camp moves me there
@@ -23702,11 +23671,11 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     feet: () => (walkMode && playerSpawned ? player.feetAt() : null),
     online: () => !!online?.riteOk,   // AUDIT WB12d (L5, D9): a relay that keeps the rite (net/wire.js relaySupportsRite) - an older one never hears its word
     foes: {
-      spawn: (career, [x, z], { yaw, site, transient }) => {
+      spawn: (career, [x, z], o) => {
         const y = surfaceAt(x, z);
         if (!Number.isFinite(y)) return Promise.resolve(null);
         const hit = collider.surfaceHit([x, y + 0.2, z], _DOWN, 3);
-        return exteriorFoes.spawnFoe(career, [x, y, z], { yaw, placed: true, groundAlign: { hitDist: hitDistance(hit) }, site, transient });   // WOD7: tagged with its site - shared, as a marker's foe is; AUDIT WB12d (C5): in no save
+        return exteriorFoes.spawnFoe(career, [x, y, z], { ...o, placed: true, groundAlign: { hitDist: hitDistance(hit) } });   // WOD7: tagged with its site - shared, as a marker's foe is; AUDIT WB12d (C5): in no save; STAR-MASTER-FLED: the rite's own (`eventFoe`)
       },
       list: () => exteriorFoes.foes,
       drop: (site) => exteriorFoes.dropSiteFoes(site),   // AUDIT WB12d (C1): taken down, the site kept
@@ -26083,7 +26052,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // AUDIT FB1013d B1: and the dungeon's own key - its save's and its room's (`dungeon:<locationId>`): a made dungeon
       // shares its region's row, the Arena's Undercroft its city's - and the size it was built at (Smaller Dungeons: another
       // size is another layout, where the fallen's floor position is some other room or none)
-      dungeon: dl ? { regionIndex: dl.regionIndex, locationIndex: dl.locationIndex, key: modes?.dungeonCtx?.locationKey?.() ?? null, size: builtDungeonSize(modes?.dungeonLocation) } : null,
+      dungeon: dl ? { regionIndex: dl.regionIndex, locationIndex: dl.locationIndex, key: modes?.dungeonCtx?.locationKey?.() ?? null, size: dungeonRoomSize(modes?.dungeonLocation) } : null,
       pos: mode === 'dungeon' ? pos : null,
       // FB1013d: and the height they stood at - the body stands there (a roof, a bridge): a record's, so in DFU's frame
       // (AUDIT LANDFORMS C1) on the ground it was measured on (TERRAIN-SCALE1), as the Recall anchor keeps its own.
@@ -26533,42 +26502,22 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (plan.kind === 'letter') { _letterPending = { draft: plan.draft, at: performance.now(), lost: NOTE_LETTER_LOST }; closeNoticeDoor(); return { ok: true }; }
     return { ok: false, text: plan.text };
   };
-  /** NOTICE1: the town the player stands in, when one of its boards is a Notice Board (not every one a bounty board). */
-  const noticeTownHere = () => {
-    const at = playerTravelPixel();
-    const p = at ? built.get(`${at.x},${at.y}`) : null;
-    if (!p?.boards?.length || !p.location) return null;
-    const bountyAt = boardSplitOf(p);
-    return bountyAt.size < p.boards.length ? noticeTownOf(p.px, p.py, bountyAt.size > 0) : null;
-  };
-  /** NOTICE1: HOW FAR the count over a board is read from, metres - across a town square, not across the town. */
-  const NOTICE_COUNT_RANGE_M = 40;
-  /** NOTICE1 (PROF0 10.1: "a small count floats over it for the looker - '3 new'"): the name layer's points for every
-   *  Notice Board in range, in front and in sight whose town has notes this device has not read. */
-  const noticeCountPoints = ({ proj, view, w, h, eye, rect, blocked }) => {
-    if (!noticeBook || noticeBook.open !== true || (modes?.mode ?? 'exterior') !== 'exterior') return [];
-    const out = [];
-    for (const p of built.values()) {
-      if (!p.boards?.length || !p.location) continue;
-      const bountyAt = boardSplitOf(p);
-      if (bountyAt.size >= p.boards.length) continue;
-      const town = noticeTownOf(p.px, p.py, bountyAt.size > 0);
-      const n = town ? noticeBook.unseen(town.mapId) : 0;
-      if (!n) continue;
-      const t = state.pixelTranslation(p.px, p.py);
-      p.boards.forEach((b, i) => {
-        if (bountyAt.has(i)) return;
-        const top = [(b.box[0] + b.box[3]) / 2 + t[0], b.box[4] + t[1] + 0.25, (b.box[2] + b.box[5]) / 2 + t[2]];
-        if (eye && Math.hypot(top[0] - eye[0], top[2] - eye[2]) > NOTICE_COUNT_RANGE_M) return;
-        const s = projectToScreen(top, w, h, proj, view, rect);
-        if (!s.front || s.x < -50 || s.x > w + 50 || s.y < -50 || s.y > h + 50) return;
-        const id = `board:${town.mapId}:${i}`;
-        if (blocked && blocked(top, id)) return;
-        out.push({ id, kind: 'board', name: unseenText(n), x: s.x, y: s.y, scale: 1 });
-      });
-    }
-    return out;
-  };
+  /** NOTICE-PANEL: the settlement the player is in - a city, hamlet or village, on its streets or in its buildings, never
+   *  below (the Stores' own reach, _storesReached) - or null. */
+  const settlementHere = () => (_storesReached() ? panelTownOf(_musicLoc, playerTravelPixel(), getLocalizedLocationName) : null);   // AUDIT FB1029g P2, P7
+  const townPanel = createTownPanelHost({   // HOST-SPLIT: src/scenes/townPanelHost.js
+    town: settlementHere,
+    covered: () => townTalk.overlayActive || townTalk.hudCovered || (modes?.hudCovered ?? false) || gamePaused() || !!townTalk.hudHidden || !hudRenderEnabled() || !!travelView?.active
+      || !!travelOptions?.isTravelActive || !!arenaBouts.bout() || !!csaAboard.aboard || !!csaRuntime?.state?.CurrentBoat,   // the journey bar, the versus bar, the helm stand there
+    panelLines: (mapId) => townEcon.panelLinesAt(mapId),
+    unseen: (mapId) => (noticeBook?.open === true ? noticeBook.unseen(mapId) : 0),
+    news: () => rumorMill.getNewsOrRumorsForBulletinBoard(),
+    openNotice: (town, rumour) => openNoticeBoard(town, rumour),
+    showBox: (w) => townTalk.showOverlay(w),
+    bounty: () => !!bountyHost,
+    openBounty: (town) => bountyHost?.openBoard(town) ?? false,
+    anchor: classicCompassAnchor,   // AUDIT FB1029g P6, P13: on the classic skin, the compass's corner
+  });
   const partyMarkers = () => (social?.others() ?? [])
     .filter((m) => !!m.p)
     .map((m) => ({
@@ -28029,7 +27978,6 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       rect: worldViewportRect(canvas.clientWidth, canvas.clientHeight),
       layer: nameLayer, log: chatLog, colorOf: (id) => social?.colorOf(id) ?? null, blocked,
       renderer, font: townTalk.font, scale, hudScale: enhancedHudScale(),
-      extra: noticeCountPoints,   // NOTICE1: "3 new" over a Notice Board, in the names' own face and law
       mask: pvpFlag.mask(wildNameMask, social),   // PVP-SKULL: each wears its skull, PVP-CONE: my party near - WILD3: in the open zone no name but my party's and my guild's - the rest are Strangers, in red
       lift: auraHost.nameTopOf,   // PROFILE-SLOTS: a name over the head piece its peer wears
     });
@@ -28960,31 +28908,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     portTargets: () => portHost?.targets() ?? [],   // SHIPYARDS: the shipyards' people, boards and hulls, the lighthouses' keeper, door, hatch and lamp, in the street's one ray
     activatePort: (key, mode, verb) => portHost?.activate(key, mode, verb) ?? false,   // SHIPYARDS: the shipmaster's window on its page, the crew hall's, the tower's stair
     witches,   // WITCH1: a Wyrd Sister's press and the Hearth Offerings', in the street's one ray (scenes/witchesHost.js)
-    boardTargets: () => {
-      const out = [];
-      for (const p of built.values()) {
-        if (!p.boards?.length) continue;
-        const t = state.pixelTranslation(p.px, p.py);
-        // BOUNTY1: half the town's boards post its bounties - every client picks the same half (questBoardIndices)
-        const bountyAt = p.location ? boardSplitOf(p) : new Set();
-        const noticeTown = noticeBook && p.location ? noticeTownOf(p.px, p.py, bountyAt.size > 0) : null;
-        p.boards.forEach((b, i) => {
-          out.push({
-            min: [b.box[0] + t[0], b.box[1] + t[1], b.box[2] + t[2]],
-            max: [b.box[3] + t[0], b.box[4] + t[1], b.box[5] + t[2]],
-            ...(bountyAt.has(i) ? { bounty: { px: p.px, py: p.py, name: p.location } } : {}),
-            // NOTICE1: every other board of a town is its Notice Board online - keyed by the town's map id (its
-            // MapTableData.MapId, unsigned: regionHubs' key), with whether a bounty board stands in the same town.
-            // ONE-BOARD REVERTED (2026-10-07): every board BOUNTY1 did not take again, each named on hover while open
-            ...(!bountyAt.has(i) && noticeTown ? { notice: noticeTown, named: noticeBook.open === true } : {}),
-          });
-        });
-      }
-      return out;
-    },
     /** AUDIT 64 F11: the StaticBuildings of every built pixel, shifted
-     *  through the LIVE floating-origin translation the boards and
-     *  street NPCs ride - DFU's hit test consumes a world-space
+     *  through the LIVE floating-origin translation the street NPCs
+     *  ride - DFU's hit test consumes a world-space
      *  raycast's point (PlayerActivate.cs:314, :343). The pixel key and
      *  the pixel-local matrix ride along, because the identity lookup
      *  (buildingDataForDoor) works in the pixel's own location frame. */
@@ -29005,11 +28931,6 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       }
       return out;
     },
-    // ActivateBulletinBoard's news (:716) - the mill's SIGN face,
-    // ported at TK-i and until now called by nothing.
-    bulletinBoardNews: () => rumorMill.getNewsOrRumorsForBulletinBoard(),
-    openBountyBoard: (town) => bountyHost?.openBoard(town) ?? false,   // BOUNTY1: a bounty board's press
-    openNoticeBoard: (town, rumour) => openNoticeBoard(town, rumour),   // NOTICE1: a rumour board's press, online
     baseCollider: () => collider,
     // E2: one entered door -> its merged building identity. Door
     // positions resolve in the pixel's LOCATION frame (the raw
@@ -31315,6 +31236,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // told nobody until its player walked out, and a partner in the same house finished their own copy meanwhile. What
     // this frame's tick queues goes out on the next frame, in every mode.
     questSyncTick();
+    townPanel.frame();   // NOTICE-PANEL: above the modal gate as the quest sync is - a town's buildings are the town too
     // AUDIT 66 F11: the torch sweep runs HERE, above the modal
     // return, because that is where the transition is. It used to sit
     // with the tick at the foot of the exterior frame - which this
@@ -32482,12 +32404,6 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     try { bountyHost?.tick(dt); } catch (e) { console.warn('[bounty] tick', e); }   // BOUNTY1: the hunts - packs stood and counted, a purse paid, a notice raised
     try { legacyStep(dt); } catch (e) { console.warn('[legacy] tick', e); }   // LEGACY1: the seat, the elder, the estate, a dead load
     try { gatherHost?.tick(dt); } catch (e) { console.warn('[prof] tick', e); }   // PROF1: the patches, the prompt, the act, the answers
-    // NOTICE1: the town the player stands in is read on arrival (a minute's cache, net/noticeBook.js) - so its boards'
-    // count floats over them and its board opens as the Notice Board at the first press, not the second
-    // AUDIT SCALE B7: once a second by the wall clock, not by the frame's dt - the dt is clamped at 0.1 s, so at four
-    // frames a second or fewer that "second" outran FRAME_LIVE_MS and the board's part dropped out between stamps
-    const stampAt = performance.now();
-    if (noticeBook && (!_noticeTown || stampAt - _noticeTown.at >= 1000)) { const town = noticeTownHere(); _noticeTown = { mapId: town ? town.mapId : null, at: stampAt }; }   // SCALE4c: the heartbeat's board part reads it (above)
     _farmSyncT -= dt;
     if (_farmSyncT <= 0) { _farmSyncT = 0.5; try { bountyFarms?.sync(bountyHost?.farmsWanted() ?? []); } catch (e) { console.warn('[bounty] farms', e); } }   // BOUNTY-FARM: the farms brought in line with the bounties held
     if (state.failed.size) queue.push(...state.retryDue(performance.now()));   // BUILD-RETRY: a failed pixel's wait over, the stream asks for it again
@@ -32867,7 +32783,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // YARD-LIGHT: the yards' lamps - the town's own (homeYards.js yardLampOf: an outdoor lamp is the town's) - scene lights beside
       // the quays', never the player's extras; in the lanterns' hours and colour, each on the town's flicker at its slot (AUDIT
       // YARD-LIGHT L3: after the tick, as the street reads it) at its own reach, rows refilled in place (L4: PERF-LIGHTS' law)
-      if (yards) yardLampRows(yards.lamps(), _yardRows, worldLightAnimator.ranges, CITY_LIGHT_COLOR_F32, csaLit);
+      if (yards) yardLampRows(yards.lamps(), _yardRows, worldLightAnimator.ranges, CITY_LIGHT_COLOR_F32, csaLit, lightingOn);   // CANDLE-DIM: a candle as a room's on the same lane
       // PERF-LIGHTS (2026-09-19): THE LANTERNS ARE A POOL, NOT A FRESH
       // LIST. This built an array and an object PER LANTERN every frame -
       // a town at night is hundreds of them, and the pixel translation

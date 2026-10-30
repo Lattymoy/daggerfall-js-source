@@ -145,7 +145,8 @@ test('EG-H1 RIDDEN POSES ON THIS SCREEN (section 10.8): standing on a moving pie
   const O = readFileSync(new URL('../../../src/net/online.js', import.meta.url), 'utf8');
   // PIN MOVED (DECK-POSE, test/net/peer/deckpose.test.js): and a place aboard a boat beside it, through its own hook
   // PIN MOVED (AUDIT WORLD-EVENTS L1-4): and a body lying down for a raise says where it lies, still, dying - no ride
-  assert.match(O, /const pl = this\.poseRide\?\.\(\) \?\? null;[^\n]*\n\s*const ab = this\.poseAboard\?\.\(\) \?\? null;[^\n]*\n\s*const dn = this\.poseDown\?\.\(\) \?\? null;[^\n]*\n\s*const out = \{ \.\.\.pose, \.\.\.\(dn \? \{ x: dn\[0\], y: dn\[1\], z: dn\[2\], mv: 0, dd: 1 \} : \{\}\), \.\.\.\(pl && !dn \? \{ pl \} : \{\}\), \.\.\.\(ab \? \{ ab \} : \{\}\), ts: this\._stampTs\(\) \};/, 'sendPose lays the ride on the pose');
+  // PIN MOVED (DELVE II DLV3): in _poseOut, the one home of a pose frame's body (sendPose, _poseCurrent)
+  assert.match(O, /const pl = this\.poseRide\?\.\(\) \?\? null;[^\n]*\n\s*const ab = this\.poseAboard\?\.\(\) \?\? null;[^\n]*\n\s*const dn = this\.poseDown\?\.\(\) \?\? null;[^\n]*\n\s*return \{ \.\.\.pose, \.\.\.\(dn \? \{ x: dn\[0\], y: dn\[1\], z: dn\[2\], mv: 0, dd: 1 \} : \{\}\), \.\.\.\(pl && !dn \? \{ pl \} : \{\}\), \.\.\.\(ab \? \{ ab \} : \{\}\), ts: this\._stampTs\(\) \};/, 'sendPose lays the ride on the pose');
   assert.match(O, /if \(s\.pl && this\.rideAt\) \{ const r = \{ \.\.\.s \}; this\.rideAt\(r\); p\.shown = r; \}/, 'the peer walk draws a ride on its piece');
 });
 /** A Spire-frame point (hall `spec`'s own x) as a pose in the dungeon's frame. */

@@ -493,8 +493,9 @@
  {
   "name": "WEAPON-GLOW1-every-word-on-the-wire",
   "file": "src/net/wire.js",
-  "old": "export const LOOK_GLOW_RE = /^(?:(?:fire|frost|shock)[123]|arcane2|brand2|edge2)$/;",
-  "new": "export const LOOK_GLOW_RE = /^(fire|frost|shock|arcane|brand|edge)([123])$/;",
+  "old": "export const LOOK_GLOW_RE = /^(?:(?:fire|frost|shock)[123]|arcane2|brand2|edge2|gilded2)$/;",
+  "new": "export const LOOK_GLOW_RE = /^(fire|frost|shock|arcane|brand|edge|gilded)([123])$/;",
+  "note": "Re-aimed by content (GILDED-GLOW): the pattern takes gilded2 too.",
   "tests": [
    "test/systems/weaponglow1.test.js"
   ],

@@ -192,7 +192,7 @@ test('HOME-LOOK the world host by source: a town\'s homes are asked before its b
   assert.match(w, /_lookV: homeLookRead,/);
   assert.match(w, /if \(homeTown\) host\._homeLookV = -1;/);
   assert.match(w, /if \(!p\.homeTown \|\| p\._lookV === v\) continue;/);
-  assert.match(w, /if \(!p\.homeKeys\.has\(bk\) && p\.buildingKeys\.has\(bk\) && \(\(row\?\.look && homeDecorShown\(row\)\) \|\| row\?\.mine \|\| row\?\.keeper\)\) merged = true;/);   // PIN MOVED: HOME-VOTE - a look counts only where it is shown (never lookOfHome: the preview)
+  assert.match(w, /if \(!p\.homeKeys\.has\(bk\) && p\.buildingKeys\.has\(bk\) && \(\(row\?\.look && homeDecorShownHere\(row, p\.homeTown\)\) \|\| row\?\.mine \|\| row\?\.keeper\)\) merged = true;/);   // PIN MOVED: HOME-VOTE - a look counts only where it is shown (never lookOfHome: the preview); PIN MOVED (HOME-MUTE, FIELD BUGS 2026-10-29f): nor where I hid it
   assert.match(w, /if \(!look\) \{ m\.texRemap = null; continue; \}/);
   assert.match(w, /else renderer\.drawMesh\(m\.gpu, m\._world, m\.texRemap \?\? p\.texRemap\);/);
   assert.match(w, /renderer\.recordShadowMesh\(m\.gpu, m\._world, m\.texRemap \?\? p\.texRemap\);   \/\/ HOME-LOOK/);

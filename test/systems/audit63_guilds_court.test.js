@@ -741,10 +741,13 @@ test('AUDIT 65 MC-2: per family - who reaches for the ray, who keeps the narrow 
   // not select the resource and the click falls through in silence -
   // recorded in worldModes.js's own note and in Quest-Arc.md, and a
   // lane must not port it under cover of this one.
-  const qAt = wm.indexOf('key: `questflat:${i}`');
+  // PIN MOVED (FIELD BUGS 2026-10-29f, HOST-SPLIT): the quest stands' targets live in systems/quest/sceneMount.js questFlatTargets
+  const qs = read('../../src/systems/quest/sceneMount.js');
+  const qAt = qs.indexOf('key: `questflat:${i}`');
   assert.ok(qAt > 0);
-  assert.doesNotMatch(wm.slice(qAt, qAt + 400), /reach:/, 'the quest resource keeps its recorded silence');
-  assert.match(wm, /distance: isPerson \? STATIC_NPC_ACTIVATION_DISTANCE : DEFAULT_ACTIVATION_DISTANCE,/);
+  assert.doesNotMatch(qs.slice(qAt, qAt + 400), /reach:/, 'the quest resource keeps its recorded silence');
+  assert.match(qs, /distance: isPerson \? STATIC_NPC_ACTIVATION_DISTANCE : DEFAULT_ACTIVATION_DISTANCE,/);
+  assert.match(wm, /questFlatTargets\(/, 'the host still hands its stands to it');
   // ...nor is a PERSON: ActivateStaticNPC's 256 units are the gate the
   // port already speaks through townTalk/activateStaticNpc.
   assert.ok(STATIC_NPC_ACTIVATION_DISTANCE > DEFAULT_ACTIVATION_DISTANCE);

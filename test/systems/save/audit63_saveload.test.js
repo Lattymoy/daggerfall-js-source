@@ -200,7 +200,7 @@ test('AUDIT 63 F25: both save hosts write the hand and land it, and neither re-r
     { weaponDrawn: true, usingRightHand: false }, 'and PER FIELD is the law, not a whole-bag pick');
   const landed = { sheathed: true, usingRightHand: true };
   applyWeaponPose(landed, { usingRightHand: false });
-  assert.deepEqual(landed, { sheathed: true, usingRightHand: false }, ':421 sets the property, presence-gated');
+  assert.deepEqual(landed, { sheathed: true, usingRightHand: false, handRestored: false }, ':421 sets the property, presence-gated');   // AUDIT FB1029f D4: a pose without the HAND-FOLLOWS mark follows once   // PIN MOVED (HAND-FOLLOWS, FIELD BUGS 2026-10-29f): and marks the hand restored, so the next UpdateHands keeps it
   assert.match(WORLD, /applyWeaponPose\(weaponRig\.playerWeapon, pose\);/, 'the world host lands it through that law');
   assert.match(WORLD, /modes\?\.applyWeaponPose\?\.\(pose\);/, 'and the pair lands in the interior rig too - DFU sets ONE manager');
 
@@ -230,8 +230,8 @@ test('AUDIT 63 F25: both save hosts write the hand and land it, and neither re-r
   const rig = (sheathed, usingRightHand) => ({ playerWeapon: { sheathed, usingRightHand } });
 
   const drawnLeft = rig(false, false);
-  assert.deepEqual(seam('interior', drawnLeft).weaponPose(), { weaponDrawn: true, usingRightHand: false },
-    'inside a building the pair comes off the INTERIOR rig');
+  assert.deepEqual(seam('interior', drawnLeft).weaponPose(), { weaponDrawn: true, usingRightHand: false, handKept: true },
+    'inside a building the pair comes off the INTERIOR rig');   // PIN MOVED (AUDIT FB1029f D4): and the HAND-FOLLOWS mark
   // null in exterior AND dungeon mode: the world host composes its own
   // rig outdoors, and dungeonContext owns the whole pair underground
   // (:4690 save, :4766/:4772 restore) - answering here would shadow a
@@ -245,8 +245,8 @@ test('AUDIT 63 F25: both save hosts write the hand and land it, and neither re-r
   // its bit in the rig they will meet at the next door.
   const sheathedRight = rig(true, true);
   seam('exterior', sheathedRight).applyWeaponPose({ weaponDrawn: true, usingRightHand: false });
-  assert.deepEqual(sheathedRight.playerWeapon, { sheathed: false, usingRightHand: false },
-    'an outdoor-mode apply still reaches the interior rig');
+  assert.deepEqual(sheathedRight.playerWeapon, { sheathed: false, usingRightHand: false, handRestored: false },
+    'an outdoor-mode apply still reaches the interior rig');   // PIN MOVED (HAND-FOLLOWS): the restored hand marked
   const untouched = rig(true, true);
   seam('interior', untouched).applyWeaponPose({ yaw: 1 });
   assert.deepEqual(untouched.playerWeapon, { sheathed: true, usingRightHand: true }, 'presence-gated, like every additive pose member');

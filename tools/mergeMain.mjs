@@ -25,6 +25,11 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 /** The two version kinds: the relay's (`world<N>`) and the account service's (`acct<N>`). */
 export const KINDS = Object.freeze({ relay: 'world', account: 'acct' });
 
+/** The versions a merge renumbers: a kind the branch bumped (its version past the merge base's) that main reached or
+ *  passed. A kind the branch never bumped keeps main's number and pins - swept, they named a version no service has.
+ *  @param {Record<string, { base: number, ours: number, theirs: number }>} v */
+export const renumbered = (v) => Object.keys(v).filter((k) => v[k].ours > v[k].base && v[k].ours <= v[k].theirs);
+
 /** Split a file's text into plain runs and conflict hunks (`<<<<<<<` / optional `|||||||` base / `=======` / `>>>>>>>`). */
 export function hunksOf(text) {
   const parts = [];
@@ -161,7 +166,7 @@ export function mergeImportHunk(h) {
 }
 
 /**
- * A LINE NUMBER BOTH SIDES MOVED (`Port-Ledger.md:857` on one side, `:862` on the other, `:852` in the base): the hunk's
+ * A LINE NUMBER BOTH SIDES MOVED (`Port-Ledger.md:858` on one side, `:863` on the other, `:853` in the base): the hunk's
  * three sides are the same text but for their numbers, each moved by the rows its side wrote above the line it names -
  * and the merged doc keeps both sides' rows (union), so the merged number is ours + theirs - base. Null unless every
  * side is the same text with only numbers changed (needs the diff3 base: `git checkout --conflict=diff3 -- <file>`).
@@ -243,10 +248,13 @@ const git = (...a) => execFileSync('git', a, { cwd: ROOT, encoding: 'utf8', maxB
 function nextVersions() {
   const wire = git('show', 'MERGE_HEAD:src/net/wire.js'), acct = git('show', 'MERGE_HEAD:server-account/src/service.js');
   const ourWire = git('show', 'HEAD:src/net/wire.js'), ourAcct = git('show', 'HEAD:server-account/src/service.js');
+  const base = git('merge-base', 'HEAD', 'MERGE_HEAD').trim();
+  const baseWire = git('show', `${base}:src/net/wire.js`), baseAcct = git('show', `${base}:server-account/src/service.js`);
   const at = (text, re) => Number(re.exec(text)[1]);
+  const W = /RELAY_VERSION = 'world(\d+)'/, A = /ACCOUNT_VERSION = 'acct(\d+)'/;
   return {
-    world: { theirs: at(wire, /RELAY_VERSION = 'world(\d+)'/), ours: at(ourWire, /RELAY_VERSION = 'world(\d+)'/) },
-    acct: { theirs: at(acct, /ACCOUNT_VERSION = 'acct(\d+)'/), ours: at(ourAcct, /ACCOUNT_VERSION = 'acct(\d+)'/) },
+    world: { base: at(baseWire, W), theirs: at(wire, W), ours: at(ourWire, W) },
+    acct: { base: at(baseAcct, A), theirs: at(acct, A), ours: at(ourAcct, A) },
   };
 }
 
@@ -255,16 +263,17 @@ async function main() {
   if (process.argv.includes('--locales')) return mergeLocales(apply);
   const v = nextVersions();
   const next = { world: v.world.theirs + 1, acct: v.acct.theirs + 1 };
-  if (v.world.ours <= v.world.theirs) console.log(`relay: world${v.world.ours} (ours) -> world${next.world} (past main's world${v.world.theirs})`);
-  if (v.acct.ours <= v.acct.theirs) console.log(`account: acct${v.acct.ours} (ours) -> acct${next.acct} (past main's acct${v.acct.theirs})`);
+  const moves = renumbered(v);   // AUDIT FB1029g: a kind the branch never bumped is main's as it stands
+  if (moves.includes('world')) console.log(`relay: world${v.world.ours} (ours) -> world${next.world} (past main's world${v.world.theirs})`);
+  if (moves.includes('acct')) console.log(`account: acct${v.acct.ours} (ours) -> acct${next.acct} (past main's acct${v.acct.theirs})`);
   if (sweep) {
     let n = 0;
     for (const f of git('ls-files', 'test').split('\n').filter((p) => p.endsWith('.js') || p.endsWith('.mjs'))) {
       const text = readFileSync(join(ROOT, f), 'utf8');
       const lines = text.split('\n');
       const out = lines.map((l) => {
-        let m = sweepLine(l, 'world', [v.world.ours, v.world.theirs], next.world, `the merge of main (${renumberNote('world', v.world.ours, v.world.theirs)})`);
-        m = sweepLine(m, 'acct', [v.acct.ours, v.acct.theirs], next.acct, `the merge of main (${renumberNote('acct', v.acct.ours, v.acct.theirs)})`);
+        let m = l;
+        for (const k of moves) m = sweepLine(m, k, [v[k].ours, v[k].theirs], next[k], `the merge of main (${renumberNote(k, v[k].ours, v[k].theirs)})`);
         return m;
       });
       const moved = out.filter((l, i) => l !== lines[i]).length;
@@ -280,8 +289,8 @@ async function main() {
     for (const p of parts) {
       if (Array.isArray(p)) continue;
       all++;
-      p.lines = mergeVersionHunk(p, 'world', next.world) ?? mergeVersionHunk(p, 'acct', next.acct)
-        ?? mergePinHunk(p, 'world', next.world) ?? mergePinHunk(p, 'acct', next.acct) ?? mergeImportHunk(p) ?? mergeNumbersHunk(p) ?? undefined;
+      const version = (k) => (moves.includes(k) ? mergeVersionHunk(p, k, next[k]) ?? mergePinHunk(p, k, next[k]) : null);
+      p.lines = version('world') ?? version('acct') ?? mergeImportHunk(p) ?? mergeNumbersHunk(p) ?? undefined;
       if (p.lines) done++;
     }
     left += all - done;

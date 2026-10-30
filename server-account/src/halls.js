@@ -49,6 +49,7 @@ import { HERALDRY_CHANGE_DRAKES, heraldryOf, heraldrySame } from '../../src/net/
 import { MARKS_RID_RE, utcDay } from '../../src/net/marksLaw.js';
 import { seatWeekOf } from '../../src/net/townSeatLaw.js';   // AUDIT-SEATS S10: a siege week refuses a change
 import { LAYOUT_MATCH_SQL, layoutMatchBinds, TOWN_LAYOUT_SQL, townLayoutRefusal } from './townLayout.js';   // AUDIT PRE-MERGE 1003 WD1: a hall in its town's layout
+import { accessOrphansCleared } from './accessOrphans.js';   // AUDIT FB1029f A1
 
 /** A guild's hall, as its members read it - or null. */
 export async function hallViewOf(db, guildId) {
@@ -113,6 +114,7 @@ export async function buyHall(ctx, player, body = {}) {
       // ...and the building is the guild's: a building somebody owns is the primary key's refusal, and the batch goes back.
       // AUDIT PRE-MERGE 1003 WD1: in its town's layout, in the write itself (the claim's own SQL, townLayout.js) - the
       // town's stamp, or the hall's own in a town of no homes, and nothing where a row of another layout landed first
+      accessOrphansCleared(db, mapId, buildingKey),   // AUDIT FB1029f A1: what an earlier home there left
       db.prepare(`INSERT INTO homes (map_id, building_key, player, char_id, owner_name, region, entry, price, bought_at, paid, guild_id, layout)
         SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${TOWN_LAYOUT_SQL}
         WHERE NOT EXISTS (SELECT 1 FROM homes t WHERE t.map_id = ? AND NOT (${LAYOUT_MATCH_SQL}))`)

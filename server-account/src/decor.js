@@ -24,14 +24,14 @@
 // of it; the character a write names is the one whose record pays) - so
 // a piece in somebody else's home is exactly as absent as none (`no-home`
 // to place, `no-decor` to move or remove). A placement lands only while
-// the home holds fewer than DECOR_CAP. WHAT a piece is - a model, or a
-// flat - is written once, at the placement, into columns no later
-// statement touches: a move rewrites `place` alone.
+// the home holds fewer than its cap (DECOR-ROOMY: by its ground). WHAT
+// a piece is - a model, or a flat - is written once, at the placement,
+// into columns no later statement touches: a move rewrites `place` alone.
 // ═══════════════════════════════════════════════════════════════════
 import { accountKind, displayName, overRate } from './accounts.js';
 import { CHAR_ID_RE } from './service.js';
 import { homeMapIdOk, homeBuildingKeyOk } from '../../src/net/homeLaw.js';
-import { DECOR_CAP, DECOR_HALL_CAP, DECOR_ID_RE, DECOR_OPS_MAX, DECOR_OPS_WINDOW_S, decorPieceOf, decorPlaceOf, decorHiddenOf, DECOR_YARD_CAP, decorYardPieceOf, decorYardPlaceOf, decorYardHighOk, decorScaleOk, decorGoldMove, decorGoldDelta } from '../../src/net/decorLaw.js';   // HOME-YARD: and a yard's; DECOR-FIGURE: a figure at its own size; a guild hall's interior holds DECOR_HALL_CAP
+import { DECOR_CAP, DECOR_HALL_CAP, DECOR_CAP_MAX, decorCapOf, DECOR_ID_RE, DECOR_OPS_MAX, DECOR_OPS_WINDOW_S, decorPieceOf, decorPlaceOf, decorHiddenOf, DECOR_YARD_CAP, decorYardPieceOf, decorYardPlaceOf, decorYardHighOk, decorScaleOk, decorGoldMove, decorGoldDelta } from '../../src/net/decorLaw.js';   // HOME-YARD: and a yard's; DECOR-FIGURE: a figure at its own size; a guild hall's interior holds DECOR_HALL_CAP
 export { decorGoldMove, decorGoldDelta };
 import { prepareRealmRecord, realmSideOf, realmActFirst, recordMovedOf, mustChange, dropObjects, dropIfUnnamed, REALM_ID_RE } from './realm.js';   // REALM P2.2b; AUDIT REALM L1-F2: the record asked first; AUDIT REALM2 S2/S3
 import { payFromSave, creditSave } from '../../src/net/realm/realmGoldLaw.js';   // REALM P2.2b: the wallet's own order, over the record
@@ -253,21 +253,24 @@ export async function decorOf({ db }, player, { mapId, buildingKey, seat = false
   }
   const S = storeOf(seat);   // SEAT-HALL: a palace's Charter Room, its own table - nothing taken out of a palace
   const piecesRead = db.prepare(`SELECT * FROM ${S.table} WHERE map_id = ? AND building_key = ? AND yard = 0
-    ORDER BY placed_at, id LIMIT ?`).bind(mapId, buildingKey, S.seat ? S.cap : DECOR_HALL_CAP);   // HOME-YARD: the room's alone. A house never passes DECOR_CAP; a guild hall may hold DECOR_HALL_CAP. The Charter Room keeps its own cap.
+    ORDER BY placed_at, id LIMIT ?`).bind(mapId, buildingKey, S.seat ? S.cap : Math.max(DECOR_HALL_CAP, DECOR_CAP_MAX));   // HOME-YARD: the room's alone. A house never passes its own cap (DECOR-ROOMY: decorCapOf, to DECOR_CAP_MAX); a guild hall may hold DECOR_HALL_CAP. The Charter Room keeps its own cap.
   const revRead = db.prepare('SELECT rev FROM decor_rev WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey);
   const revOf = (row) => Number(row?.rev ?? row?.results?.[0]?.rev) || 0;
   if (S.seat) {
     const [{ results = [] }, revRow] = await db.batch([piecesRead, revRead]);
     return { mapId, buildingKey, pieces: results.map(pieceOfRow).filter(Boolean), hidden: [], rev: revOf(revRow?.results?.[0]) };
   }
-  const [{ results = [] }, shown, hidden, revRow] = await db.batch([piecesRead, homeShownRead(db, mapId, buildingKey, player?.id), hiddenRead(db, mapId, buildingKey), revRead]);
+  const capRead = db.prepare('SELECT ground, guild_id FROM homes WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey);   // DECOR-ROOMY
+  const [{ results = [] }, shown, hidden, revRow, capRow] = await db.batch([piecesRead, homeShownRead(db, mapId, buildingKey, player?.id), hiddenRead(db, mapId, buildingKey), revRead, capRead]);
   const pieces = results.map(pieceOfRow).filter(Boolean);
   const rev = revOf(revRow?.results?.[0]);
+  const home = capRow?.results?.[0] ?? null;
+  const cap = home?.guild_id != null ? DECOR_HALL_CAP : decorCapOf(home?.ground);   // DECOR-ROOMY: the room's own, said with it
   // AUDIT HOME-VOTE A3: a home the town voted below zero is handed to anyone but its insiders as Daggerfall furnished it
   // - no placed piece but its hired trader with goods on sale (a shop, never a decoration: B2, II A1), nothing taken out
   // - by the service, so a build from before HOME-VOTE shows no more than the law (homeVotes.js homeShownTo)
-  if (!homeShownOf(shown?.results?.[0] ?? null)) return { mapId, buildingKey, pieces: await shopOf(db, mapId, pieces), hidden: [], rev };
-  return { mapId, buildingKey, pieces, hidden: hiddenListOf(hidden?.results?.[0] ?? null), rev };
+  if (!homeShownOf(shown?.results?.[0] ?? null)) return { mapId, buildingKey, pieces: await shopOf(db, mapId, pieces), hidden: [], rev, cap };
+  return { mapId, buildingKey, pieces, hidden: hiddenListOf(hidden?.results?.[0] ?? null), rev, cap, measured: home?.ground != null };
 }
 
 /** BASE-HIDE: what the home's owner took out of the room (migration 0015) - projected on the way out, so a list the law
@@ -344,6 +347,8 @@ export async function placeDecor(ctx, player, { mapId, buildingKey, character, p
     if (sent.item) return { error: 'hall-item' };
   }
   const out = yard === true ? 1 : 0;
+  // DECOR-ROOMY: a home's room holds its own cap, by its ground
+  const roomCap = S.seat ? S.cap : decorCapOf((await db.prepare('SELECT ground FROM homes WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey).first())?.ground);
   const barred = hallBars(sent, S, out);   // the hall's rule, read again inside the write (AUDIT GUILD1d S3)
   const p = sent.item?.pv ? await provenOf(db, player, sent, mapId, buildingKey) : sent;   // PROF4: a crafted piece's mark off its own record
   if (!p) return { error: 'bad-decor' };
@@ -363,7 +368,7 @@ export async function placeDecor(ctx, player, { mapId, buildingKey, character, p
     SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? WHERE ${S.owns} AND (SELECT COUNT(*) FROM ${S.table} WHERE ${countSql}) < ?
       AND ${ruleSql}${pvSql}`)
     .bind(mapId, buildingKey, p.id, p.model, p.flat?.[0] ?? null, p.flat?.[1] ?? null, placeJson(p), nowS, p.item ? JSON.stringify(p.item) : null,
-      side.at ? ledger : 0, out, mapId, buildingKey, player.id, character, ...countBinds, out ? DECOR_YARD_CAP : (guildHall ? DECOR_HALL_CAP : S.cap),
+      side.at ? ledger : 0, out, mapId, buildingKey, player.id, character, ...countBinds, out ? DECOR_YARD_CAP : (guildHall ? DECOR_HALL_CAP : roomCap),
       ...ruleBinds, ...(pv ? [pv, player.id] : []));
   /** AUDIT GUILD1d S3: a placement the hall's rule refused, in its own word - or null. AUDIT PROF-541 B2: a kept piece's
    *  row gone between, 'bad-decor' (the piece is not what was sent). */

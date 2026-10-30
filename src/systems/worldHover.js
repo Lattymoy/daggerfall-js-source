@@ -47,10 +47,10 @@ export const HOVER_MAX = 6;
  * and `guardCorpse:` are the two above-ground bodies; `dwFish:` is Iliac
  * Puddle No More's fish, a DaggerfallLoot of one item (DW-E3); `spoil:` is a
  * piece of the Burning Court's spoils on its floor, a pile of one (WB9f - the
- * gold beside it is `spoilGold:`, a name). A key whose prefix is not here
- * draws as a name.
+ * gold beside it is `spoilGold:`, a name); `delve:` a dungeon encounter's
+ * vault (DELVE II). A key whose prefix is not here draws as a name.
  */
-export const ITEMISED_KEYS = Object.freeze(['loot:', 'corpse:', 'droppedLoot:', 'foeCorpse:', 'guardCorpse:', 'dwFish:', 'spoil:']);
+export const ITEMISED_KEYS = Object.freeze(['loot:', 'corpse:', 'droppedLoot:', 'foeCorpse:', 'guardCorpse:', 'dwFish:', 'spoil:', 'delve:']);
 
 /** Does this key open a list, or only a name? */
 export const keyItemises = (key) => typeof key === 'string' && ITEMISED_KEYS.some((p) => key.startsWith(p));

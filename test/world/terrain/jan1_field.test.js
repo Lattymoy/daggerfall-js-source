@@ -79,8 +79,8 @@ test('JAN1 (fist): THE POSE IS THE PLAYER\'S, NOT THE RIG\'S - the port has four
   dungeon.updateHands(sword, null); dungeon.sheathed = false; dungeon.applyWeapon();
   assert.equal(dungeon.weapon, sword, 'the sword, drawn');
   // outside: the rig the player left with, frozen at a left hand from a spurious H (the hand report), drawn
-  exterior.sheathed = false; exterior.usingRightHand = false;
-  exterior.updateHands(sword, null); exterior.applyWeapon();
+  exterior.sheathed = false;
+  exterior.updateHands(sword, null); exterior.usingRightHand = false; exterior.applyWeapon();   // PIN MOVED (HAND-FOLLOWS): the H after the hands are filled - a change of them follows the sword
   assert.equal(exterior.weapon, null, 'the screenshot: a drawn rig with an empty left hand is a null weapon');
   assert.equal(weaponTypeForItem(exterior.weapon), WEAPON_TYPES.Melee, 'which draws WEAPON10.CIF, the fist, under the torch the entity holds');
   // the door: the pair crosses through the one home

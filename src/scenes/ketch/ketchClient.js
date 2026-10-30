@@ -66,6 +66,7 @@ import { tooFarAwayText } from '../../player/activate.js';
 import { ketchHudModel, wardenBarModel, drawKetchHud } from '../../ui/ketch/ketchHud.js';
 import { drawGateBossBar } from '../../ui/gate/gateBossBar.js';
 import { KT_RING_R } from '../../ui/ketch/ketchMapMark.js';
+import { carryStep as ketchCarryStep, CARRY_LET_GO_MS as KT_LET_GO_MS } from '../../player/carryStep.js';   // THE HANDS FULL: the one law of every carry
 
 /** A carrier's pace on foot (a share of its own): the cell is heavy, and held in both hands. */
 export { KT_CARRY_PACE };
@@ -75,8 +76,8 @@ export const KT_CAST_BACK_LOSS = 0.15;
 export const KT_FALL_WAKE = 0.25;
 /** The bosun's line's ride (m/s along it), and where it sets a rider down - the gangway's head. */
 export const KT_LINE_SPEED = 11;
-/** A readied weapon lets the cell go; the hands are given back this long before the room's word is waited on again (ms). */
-export const KT_LET_GO_MS = 1500;
+/** A readied weapon lets the cell go (player/carryStep.js, the one law of every carry). */
+export { KT_LET_GO_MS, ketchCarryStep };
 /** The room's refusals a ship walks me out on (its socket's terminal close), and how long after the step aboard a refusal
  *  is still the door's (ms). */
 export const KT_DOOR_MS = 20_000;
@@ -131,20 +132,6 @@ export function ketchPressSpot(key, cl) {
 }
 /** Is a press from `feet` (the deck's frame) further than the room takes it? */
 export const ketchPressFar = (key, cl, feet) => { const s = ketchPressSpot(key, cl); return !!s && !!feet && Math.hypot(feet[0] - s[0], feet[2] - s[1]) > KT_PRESS_REACH; };
-/**
- * THE HANDS FULL, a step a frame: a carrier's readied weapon put up (`sheathe`), said once (`handsFull`); readied again
- * after that, the cell let go - said (`letGo`) only when the word left (AUDIT KETCH L3-6: said when the drop never went,
- * the cell still in the room's hands), else the weapon put up again and the drop asked next frame. Pure.
- * @param {{ carrying: boolean, sheathed: (boolean|undefined), forced: boolean, letGoAt: number }} st @param {number} t
- * @param {() => boolean} sendDrop @returns {{ forced: boolean, letGoAt?: number, sheathe?: boolean, say?: ('handsFull'|'letGo'|null) }}
- */
-export function ketchCarryStep(st, t, sendDrop) {
-  if (!st.carrying) return { forced: false };
-  if (t - st.letGoAt < KT_LET_GO_MS) return { forced: st.forced };   // the hands given back while the room hears the cell let go
-  if (st.forced && st.sheathed === false) return sendDrop() ? { forced: false, letGoAt: t, say: 'letGo' } : { forced: true, sheathe: true };
-  if (!st.sheathed) return { forced: true, sheathe: true, say: st.forced ? null : 'handsFull' };
-  return { forced: true };
-}
 /** A SHIP NEVER HEARD (AUDIT KETCH L3-11 - a busy door closes its socket to be tried again, not for good, and left me on
  *  an empty deck with nothing said): no word of her (`V`, the link's state) KT_DOOR_MS after the step aboard - walked
  *  down, the door's busy word said. */

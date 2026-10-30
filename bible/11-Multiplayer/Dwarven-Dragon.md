@@ -184,6 +184,10 @@ stand-up when another stood then (`scenes/dragonRewards.js` bind), once DRAGON_M
   its walk while it moves, its attack frames at a landing, its hurt frame when a share of its health goes, and the
   Aetherbright's palette when it is the shiny (section 11). Aloft it stands at its altitude
   over the land under it.
+- **At rest in the air it hovers** (DRAGON-HOVER, 2026-10-29, the owner: "we need a fly animation for the dragon when it
+  idle"): records 20-24, eight frames a facing, the wings beating and the body bobbing, on the mobile's RangedAttack1
+  table (it has no ranged blow). The world's dragon hovers while aloft and still; another screen draws a resting dragon
+  rider so (`characters/dwarvenDragonId.js` `dragonHoverFrame`). Grounded, it stands on its idle.
 - **The telegraphs** are the gate's renderer (`render/gate/gateTelegraph.js`) laid on a grid draped over the land's
   heights, so a shape on a hillside follows the hill instead of cutting through it.
 - **The bar** is the gate's boss bar in brass: its name (*the Dwarven Dragon*, or *the Aetherbright Dragon*), its

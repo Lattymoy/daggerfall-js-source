@@ -11,7 +11,7 @@
 // the cursor (DFU shape); WASD + mouse, Shift for speed.
 // ?shot raises window.__shotReady at a fixed vantage for tools/screenshot.mjs.
 
-import { crashText } from './ui/crashText.js';   // the crash line, pinned in its own module
+import { crashText, isBenignWindowError } from './ui/crashText.js';   // the crash line, pinned in its own module
 import { Renderer } from './render/renderer.js';
 import { retroFrameConfig } from './systems/retroMode.js';   // RETRO1: the renderer's retro source - the settings are read here, not in render/
 import { renderScaleSetting } from './systems/renderScale.js';   // PERF-SCALE: the renderer's render-scale source, read the same way
@@ -491,7 +491,7 @@ function crashDismiss(el) {
 let pageGoing = false;
 addEventListener('pagehide', (e) => { if (!e.persisted) releaseGlContexts(); });
 
-addEventListener('error', (e) => crashOverlay(crashText(e.error, e) || e.message));
+addEventListener('error', (e) => { if (!isBenignWindowError(e)) crashOverlay(crashText(e.error, e) || e.message); });
 addEventListener('unhandledrejection', (e) => crashOverlay(`unhandled rejection\n${crashText(e.reason)}`));
 
 // A lost WebGL context is the classic MOBILE black screen: the page

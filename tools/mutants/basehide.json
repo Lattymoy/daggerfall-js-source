@@ -110,11 +110,12 @@
   {
     "name": "BASEHIDE-the-list-unread",
     "file": "server-account/src/decor.js",
-    "old": "return { mapId, buildingKey, pieces, hidden: hiddenListOf(hidden?.results?.[0] ?? null), rev };",
-    "new": "return { mapId, buildingKey, pieces, hidden: [], rev };",
+    "old": "return { mapId, buildingKey, pieces, hidden: hiddenListOf(hidden?.results?.[0] ?? null), rev, cap, measured: home?.ground != null };",
+    "new": "return { mapId, buildingKey, pieces, hidden: [], rev, cap, measured: home?.ground != null };",
     "tests": [
       "test/server/basehide.test.js"
-    ]
+    ],
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "BASEHIDE-the-list-outlives-the-home",
@@ -236,11 +237,12 @@
   {
     "name": "BASEHIDE-the-owners-room-unstood",
     "file": "src/scenes/worldModes.js",
-    "old": "      interiorCtx?.base?.setHidden(Array.isArray(r.data.hidden) ? r.data.hidden : []);   // BASE-HIDE: the room its owner cleared, for everyone\n",
+    "old": "        standRoomHidden(interiorCtx?.base, Array.isArray(r.data.hidden) ? r.data.hidden : []);   // BASE-HIDE: the room its owner cleared, for everyone; DOOR-KEPT: its doors too\n",
     "new": "",
     "tests": [
       "test/server/basehide.test.js"
-    ]
+    ],
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "BASEHIDE-the-save-forgets",

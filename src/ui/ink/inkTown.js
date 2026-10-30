@@ -103,7 +103,7 @@ export const TOWN_PEN = Object.freeze({
   caret: PEN.player,
   halo: PEN.halo,
   // TOWN-MARKS (ui/town/townMapMarks.js): a player's house the player owns is filled in the player's own ink, as the caret
-  // is; a Notice Board and another player's house are the parchment, inked round (TOWN_PEN.halo and .wall)
+  // is; another player's house is the parchment, inked round (TOWN_PEN.halo and .wall)
   home: PEN.player,
 });
 
@@ -136,7 +136,7 @@ export const QUEST_R = 7;
  *  rather than needing its own number per zoom. */
 export const ANCHOR_R = 1.8;
 export const LEAD_AT = 0.9;
-/** TOWN-MARKS: a board's or a home's glyph is centred ON its place (Mac: "I kinda wish the icons were on top of the
+/** TOWN-MARKS: a home's glyph is centred ON its place (Mac: "I kinda wish the icons were on top of the
  *  building itself, not on the side") and reaches this far above and below it, in paper px - the name of a building
  *  that wears one is lettered under it (ui/town/townSheet.js), clear by this much. */
 export const TOWN_MARK_HALF = 6;
@@ -371,7 +371,7 @@ export function paintTownStatic(ctx, plan, view, opts) {
  *                          quarter?:string|null, anchorY?:number, marked?:boolean}>,
  *          player?: {x:number,y:number,yaw?:number}|null,
  *          party?: Array<{x:number,y:number,yaw?:number,name?:string}>, partyFill?: string,
- *          homes?: Array<{x:number,y:number,own?:boolean}>, boards?: Array<{x:number,y:number}>}} opts
+ *          homes?: Array<{x:number,y:number,own?:boolean}>}} opts
  */
 export function paintTownOverlay(ctx, view, opts) {
   if (!ctx?.setTransform) return;
@@ -393,15 +393,11 @@ export function paintTownOverlay(ctx, view, opts) {
     ctx.stroke();
   }
 
-  // TOWN-MARKS: the player's housing and the Notice Boards, on their places and UNDER the names - a building that wears
-  // a glyph has its name lettered below it, and any other name that comes to cross one keeps its words whole
+  // TOWN-MARKS: the player's housing, on its places and UNDER the names - a building that wears a glyph has its name
+  // lettered below it, and any other name that comes to cross one keeps its words whole
   for (const h of opts.homes ?? []) {
     const [x, y] = toPaper(view, h.x, h.y);
     paintHomeMark(ctx, x, y, h.own === true);
-  }
-  for (const b of opts.boards ?? []) {
-    const [x, y] = toPaper(view, b.x, b.y);
-    paintBoardMark(ctx, x, y);
   }
 
   // the names, haloed then inked, as every name on every sheet is
@@ -463,27 +459,6 @@ function paintMarkShape(ctx, pts, fill) {
   path(); ctx.strokeStyle = TOWN_PEN.halo; ctx.lineWidth = 3.5; ctx.stroke();
   path(); ctx.fillStyle = fill; ctx.fill();
   path(); ctx.strokeStyle = TOWN_PEN.wall; ctx.lineWidth = 1.2; ctx.stroke();
-}
-
-/**
- * TOWN-MARKS (Mac: "For the notice boards in town. Can we physically mark them on the town map"): A NOTICE BOARD - a
- * pinned card ON the board's place in the street, two lines of writing on it and a pin at its head. (x, y) is the
- * place, in paper px. Skin.
- */
-export function paintBoardMark(ctx, x, y) {
-  const w = 13, h = 2 * TOWN_MARK_HALF - 1;
-  ctx.save();
-  ctx.setLineDash?.([]);
-  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-  paintMarkShape(ctx, [[x - w / 2, y - h / 2], [x + w / 2, y - h / 2], [x + w / 2, y + h / 2], [x - w / 2, y + h / 2]], TOWN_PEN.halo);
-  ctx.strokeStyle = TOWN_PEN.lead; ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(x - 4, y); ctx.lineTo(x + 4, y);
-  ctx.moveTo(x - 4, y + 2.5); ctx.lineTo(x + 2, y + 2.5);
-  ctx.stroke();
-  ctx.fillStyle = TOWN_PEN.wall;
-  ctx.beginPath(); ctx.arc(x, y - h / 2, 2, 0, Math.PI * 2); ctx.fill();
-  ctx.restore();
 }
 
 /**

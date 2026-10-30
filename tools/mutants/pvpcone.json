@@ -1,6 +1,6 @@
 [
   { "name": "PVP-CONE-band-unread", "file": "src/ui/nameCone.js", "old": "1 - (p.off - lo) / NAME_CONE.band", "new": "1 - (p.off - lo)", "tests": ["test/ui/pvpcone.test.js"] },
-  { "name": "PVP-CONE-near-unread", "file": "src/ui/nameCone.js", "old": "if (!p || p.near || p.kind === 'board'", "new": "if (!p || p.kind === 'board'", "tests": ["test/ui/pvpcone.test.js"] },
+  { "name": "PVP-CONE-near-unread", "file": "src/ui/nameCone.js", "old": "if (!p || p.near || !Number.isFinite(p.off)) return 1;", "new": "if (!p || !Number.isFinite(p.off)) return 1;", "tests": ["test/ui/pvpcone.test.js"] },
   { "name": "PVP-CONE-step-unclamped", "file": "src/ui/nameCone.js", "old": "return was + Math.max(-most, Math.min(most, want - was));", "new": "return want;", "tests": ["test/ui/pvpcone.test.js"] },
   { "name": "PVP-CONE-depth-sign", "file": "src/ui/nameCone.js", "old": "Math.atan2(Math.hypot(x, y), -z)", "new": "Math.atan2(Math.hypot(x, y), z)", "tests": ["test/ui/pvpcone.test.js"] },
   { "name": "PVP-CONE-angle-dropped", "file": "src/net/remotePlayers.js", "old": "depth: s.depth, lens, off: nameOffDeg(view, head) });", "new": "depth: s.depth, lens });", "tests": ["test/ui/pvpcone.test.js"] },

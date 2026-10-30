@@ -3,7 +3,8 @@
 // board, the pixel) and the totals. It writes nothing to the tree; Mac runs it."). The seats are systems/town/townSeats.js
 // deriveTownSeats over the game's own rows (the boot pass's, regionHubs.js pickRegionHubs's); each is laid out
 // (world/locationLayout.js) and its bulletin boards tallied as BOARD-COUNT tallies a hub's (tools/boardCount.mjs), so a
-// seat whose blocks place no Notice Board is named - PROF0 10.1's "a seat ... whose blocks place no board gets one".
+// seat whose blocks place no board is named - PROF0 10.1's "a seat ... whose blocks place no board gets one", met since
+// NOTICE-PANEL (2026-10-29) by the town panel's Notice Board in every settlement, none stood (AUDIT FB1029g R3).
 //
 // The economy is built so the count does not break it: every cost is per seat, and a guild's influence is capped per
 // account (SEAT0 3.1). The count is recorded in Seats-Arc 14 when Mac has run it.
@@ -62,5 +63,5 @@ if (isMain(import.meta.url)) {
   }
   const none = seats.filter((s) => s.boards === 0);
   console.log(`\n${totals.seats} seats: ${totals.crown} crown, ${totals.palace} palace; ${totals.hubs} of them hubs. By kingdom: ${Object.entries(totals.kingdoms).map(([k, n]) => `${k} ${n}`).join(', ')}.`);
-  console.log(`${none.length} with no Notice Board${none.length ? `: ${none.map((s) => s.name).join(', ')}` : ''}.`);
+  console.log(`${none.length} whose blocks place no board (DFU's own - the town panel's Notice Board stands in every one)${none.length ? `: ${none.map((s) => s.name).join(', ')}` : ''}.`);
 }

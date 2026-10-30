@@ -29,6 +29,7 @@ import { transportDragonText } from '../transportWindow.js';   // DRAGON5: the D
 import { POTION_RECTS } from '../potionMakerWindow.js';
 import { ITEM_RECTS, TAB_PAGES } from '../item/itemMakerWindow.js';
 import { enchantmentName, enchantmentParams, enchantmentParamName, PARAM_NONE } from '../../systems/enchantmentCatalogue.js';
+import { makerKeepsName } from '../../systems/enchanting.js';   // GILDED-MAKER: the rename's one law, both skins
 import {
   SPELL_MAKER_RECTS, SPELL_MAKER_TIPS, EFFECT_NAME_PANELS, TARGET_BUTTONS, ELEMENT_BUTTONS,
   EDITOR_RECTS, SPINNER_UP, SPINNER_DOWN, spinnerPart,
@@ -265,7 +266,7 @@ const itemMaker = {
           [{ type: 'group', cls: 'port-card', blocks: [
             sel ? { type: 'tiles', list: true, key: 'sel', items: [tile(sel, () => w._deselect(), { sub: 'Put it back' })] }
               : { type: 'text', center: true, rows: ['No item chosen.'] },
-            { type: 'field', label: 'Name', value: w.itemName, placeholder: sel ? itemName(sel) : '', button: { label: 'Rename', disabled: !sel, act: at(w, ITEM_RECTS.nameItem) } },
+            { type: 'field', label: 'Name', value: w.itemName, placeholder: sel ? itemName(sel) : '', button: { label: 'Rename', disabled: !sel || makerKeepsName(sel), act: at(w, ITEM_RECTS.nameItem) } },   // GILDED-MAKER: a Gilded piece keeps its record's name
           ] },
           { type: 'cols', cols: [
             [{ type: 'rows', title: 'Powers', key: 'pow', maxHeight: 170, empty: 'No powers yet.', items: enchantRows(w, shown.powers) },

@@ -11,9 +11,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { yardLampOf, yardLampSlot, yardLampRows, YARD_LAMP, YARD_LAMP_RAISE, YARD_CANDLE_RECORDS } from '../../src/scenes/homeYards.js';
+import { yardLampOf, yardLampSlot, yardLampRows, YARD_LAMP, YARD_CANDLE_RECORDS } from '../../src/scenes/homeYards.js';
 import { interiorLightProperties } from '../../src/world/interior/interiorLights.js';
-import { createDecorRoom } from '../../src/scenes/decor/decorRoom.js';
+import { createDecorRoom, decorLightLift, DECOR_LAMP_FLAME } from '../../src/scenes/decor/decorRoom.js';   // PIN MOVED (LAMP-FLAME): a yard's lamp hangs at its flame
 import { CITY_LIGHT_RANGE, CITY_LIGHT_INTENSITY, CITY_LIGHT_COLOR } from '../../src/world/city/cityLights.js';
 import { decorYardPieceOf } from '../../src/net/decorLaw.js';
 import { yardWorld, yardPiece, sized, settle } from '../decorFakes.mjs';
@@ -23,12 +23,12 @@ const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const r6 = (v) => Math.round(v * 1e6) / 1e6;
 const at = (l) => [l.x, l.y, l.z].map(r6);
 
-test('YARD-LIGHT the law: a yard\'s TEXTURE.210 flat gives the town\'s lantern (DaggerfallLight [City] - range 18, intensity 1, white) with its flicker slot, hung where the town hangs its own - the drawn top and YARD_LAMP_RAISE; any other piece, and a lamp whose picture has not stood, gives none; the piece itself still carries no light of its own (mutants: YARDLIGHT-any-flat, YARDLIGHT-at-middle, YARDLIGHT-before-its-picture, YARDLIGHT-not-the-town\'s)', () => {
+test('YARD-LIGHT the law: a yard\'s TEXTURE.210 flat gives the town\'s lantern (DaggerfallLight [City] - range 18, intensity 1, white) with its flicker slot, hung at its flame (PIN MOVED, LAMP-FLAME: the post\'s lamp, DECOR_LAMP_FLAME - it was the town\'s drawn top); any other piece, and a lamp whose picture has not stood, gives none; the piece itself still carries no light of its own (mutants: YARDLIGHT-any-flat, YARDLIGHT-at-middle, YARDLIGHT-before-its-picture, YARDLIGHT-not-the-town\'s)', () => {
   assert.deepEqual([CITY_LIGHT_RANGE, CITY_LIGHT_INTENSITY, [...CITY_LIGHT_COLOR]], [18, 1, [1, 1, 1]], 'the [City] prefab\'s');
   assert.deepEqual(YARD_LAMP, { range: CITY_LIGHT_RANGE, intensity: CITY_LIGHT_INTENSITY, color: CITY_LIGHT_COLOR });
   const post = { id: 'lamp', model: null, flat: [210, 29], scale: 1 };
-  assert.deepEqual(yardLampOf(post, { w: 0.6, h: 3.2 }), { light: { ...YARD_LAMP, slot: yardLampSlot('lamp') }, lift: 3.2 + YARD_LAMP_RAISE },
-    'the town\'s lantern and its flicker slot, at its top and the town\'s raise over it');
+  assert.deepEqual(yardLampOf(post, { w: 0.6, h: 3.2 }), { light: { ...YARD_LAMP, slot: yardLampSlot('lamp') }, lift: 3.2 * DECOR_LAMP_FLAME[29] },
+    'the town\'s lantern and its flicker slot, at its lamp');
   assert.equal(yardLampOf({ id: 'crate', model: null, flat: [211, 3], scale: 1 }, { w: 1, h: 2 }), null, 'any other flat');
   assert.equal(yardLampOf({ id: 'chair', model: 41000, flat: null, scale: 1 }, null), null, 'a model');
   assert.equal(yardLampOf(post, null), null, 'a lamp whose picture has not stood yet');
@@ -46,7 +46,7 @@ test('a candle outdoors reaches as the candle it is indoors, and a lantern, torc
   assert.ok(YARD_CANDLE_RECORDS.has(3) && candle.light.range === indoor.range && candle.light.range < YARD_LAMP.range);
   assert.equal(candle.light.intensity, indoor.intensity);
   assert.equal(candle.light.slot, yardLampSlot('c'));
-  assert.equal(candle.lift, size.h + YARD_LAMP_RAISE);
+  assert.equal(candle.lift, decorLightLift({ flat: [210, 3], scale: 1 }, size), 'PIN MOVED (LAMP-FLAME): where a room hangs its own');
   assert.equal(yardLampOf({ id: 'c', flat: [210, 3], scale: 2 }, size).light.range, indoor.range * 2);
   for (const rec of [0, 6, 8, 13, 17, 20, 22, 27, 29]) {
     assert.equal(yardLampOf({ id: 'p', flat: [210, rec], scale: 1 }, size).light.range, YARD_LAMP.range, `record ${rec}`);
@@ -54,9 +54,9 @@ test('a candle outdoors reaches as the candle it is indoors, and a lantern, torc
   const ranges = new Float32Array(64).fill(18);
   ranges[candle.light.slot % 64] = 12;
   const out = [];
-  yardLampRows([{ x: 1, y: 2, z: 3, range: candle.light.range, slot: candle.light.slot }], [], ranges, [1, 1, 1], out);
+  yardLampRows([{ x: 1, y: 2, z: 3, ...candle.light }], [], ranges, [1, 0, 0], out);
   assert.ok(Math.abs(out[0].range - 12 * (indoor.range / CITY_LIGHT_RANGE)) < 1e-6, 'the town flicker, at the candle\'s reach');
-  assert.deepEqual(out[0].color, [1, 1, 1]);
+  assert.deepEqual([...out[0].color], [1, 1, 1], 'PIN MOVED (CANDLE-DIM): its own white at intensity 1, never the street\'s colour');
 });
 
 test('YARD-LIGHT the flicker: each lamp\'s slot on the town\'s animator is named by its piece (FNV-1a of its id), so it keeps its own flicker whatever else stands (mutants: YARDLIGHT-slot-basis, YARDLIGHT-slot-prime, YARDLIGHT-slot-signed)', () => {
@@ -88,10 +88,15 @@ test('YARD-LIGHT the room\'s machinery under the host\'s law: with `lampOf` a la
   assert.equal(yard.lights.length, 0, 'a lamp waits for its picture');
   await settle(); await settle();
   assert.equal(yard.lights.length, 1, 'the lamp alone - the crate\'s own light is never asked under the host\'s law');
-  assert.deepEqual(at(yard.lights[0]), [18, r6(h + YARD_LAMP_RAISE * 1.5), 12], 'at its base, its drawn top and the town\'s raise, its scale with it');
+  assert.deepEqual(at(yard.lights[0]), [18, r6(h * DECOR_LAMP_FLAME[29]), 12], 'at its base and its lamp, its scale with it (PIN MOVED, LAMP-FLAME)');
   assert.deepEqual({ ...yard.lights[0], x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0, range: 18 * 1.5, intensity: 1, color: [1, 1, 1], decor: 'lamp', slot: yardLampSlot('lamp') });
   yard.room.remove('lamp');
   assert.equal(yard.lights.length, 0, 'taken down with its piece');
+  // PIN MOVED (LAMP-FLAME): the yard's law now hangs a lamp where a room would - a law of its own height is asked here
+  const high = pool({ lampOf: (p, s) => { const l = yardLampOf(p, s); return l && { ...l, lift: l.lift + 1 }; } });
+  high.room.put({ id: 'lamp', model: null, flat: [210, 29], pos: [8, 0, 2], rot: [0, 0, 0], scale: 1.5, light: null, storage: false, paid: 10 });
+  await settle(); await settle();
+  assert.deepEqual(at(high.lights[0]), [18, r6(h * DECOR_LAMP_FLAME[29] + 1), 12], 'where the law hangs it, never the room\'s own height');
 
   // a room: the piece's own light, where decorLightLift hangs it (decor1.test.js pins the rest)
   const room = pool();
@@ -103,14 +108,14 @@ test('YARD-LIGHT the room\'s machinery under the host\'s law: with `lampOf` a la
   assert.deepEqual({ ...room.lights[0], x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 0, range: 6, intensity: 2, color: [1, 0, 0], decor: 'lit-crate' }, 'the piece\'s own light and nothing more');
 });
 
-test('YARD-LIGHT the yards\' lamps: a lamp post standing in a yard is a lamp where it stands in the scene - its yard\'s frame, its place, its drawn top and the town\'s raise; any other piece gives none; a recentre moves it in place; a piece taken down takes its lamp, and a pixel gone its yard\'s (mutants: YARDLIGHT-yard-unlit, YARDLIGHT-lamps-unrefilled)', async () => {
+test('YARD-LIGHT the yards\' lamps: a lamp post standing in a yard is a lamp where it stands in the scene - its yard\'s frame, its place and its lamp; any other piece gives none; a recentre moves it in place; a piece taken down takes its lamp, and a pixel gone its yard\'s (mutants: YARDLIGHT-yard-unlit, YARDLIGHT-lamps-unrefilled)', async () => {
   const pieces = [yardPiece({ id: 'lamp', flat: [210, 29], scale: 1.5 }), yardPiece({ id: 'crate', flat: [211, 3], pos: [-8, 0, 2], scale: 1 }), yardPiece({ id: 'bush', pos: [0, 0, -6] })];
   const w = yardWorld({ pieces, sizes: { 210: [24, 112], 211: [20, 30] } });
   await w.run();
-  const y = r6(sized(24, 112, 1.5).h + YARD_LAMP_RAISE * 1.5);
+  const y = r6(sized(24, 112, 1.5).h * DECOR_LAMP_FLAME[29]);   // PIN MOVED (LAMP-FLAME): at its lamp
   const lamps = w.yards.lamps();
   assert.equal(lamps.length, 1, 'the lamp post - neither the crate nor the bush');
-  assert.deepEqual(at(lamps[0]), [18, y, 12], 'its yard\'s frame (10, 0, 10), its place (8, 0, 2), its drawn top and the raise');
+  assert.deepEqual(at(lamps[0]), [18, y, 12], 'its yard\'s frame (10, 0, 10), its place (8, 0, 2), its lamp');
   assert.equal(lamps[0].decor, 'lamp');
   assert.equal(w.yards.lamps(), lamps, 'one list, refilled');
   assert.equal(lamps.length, 1, 'refilled, never grown');
@@ -139,7 +144,7 @@ test('YARD-LIGHT the world host lights them as the town\'s own: in the lanterns\
   assert.match(s, /import \{ createHomeYards, yardLampRows \} from '\.\/homeYards\.js';/);
   const line = s.split('\n').find((l) => l.includes('yards.lamps()'));
   assert.ok(line, 'the yards\' lamps are asked');
-  assert.equal(line.trim(), 'if (yards) yardLampRows(yards.lamps(), _yardRows, worldLightAnimator.ranges, CITY_LIGHT_COLOR_F32, csaLit);');
+  assert.equal(line.trim(), 'if (yards) yardLampRows(yards.lamps(), _yardRows, worldLightAnimator.ranges, CITY_LIGHT_COLOR_F32, csaLit, lightingOn);   // CANDLE-DIM: a candle as a room\'s on the same lane');   // PIN MOVED (CANDLE-DIM)
   const asked = s.indexOf(line), quays = s.indexOf('for (const l of quays?.lights() ?? []) csaLit.push(');
   const night = s.indexOf('    if (lightsOnAt(minute)) {\n      worldLightAnimator.tick(dt);\n');
   const pick = s.indexOf('const wodSel = wodLit || csaLit.length ? _wodSelect(n, _csaFill(wodLit ? _wodFill(n) : n, csaLit)) : null;');

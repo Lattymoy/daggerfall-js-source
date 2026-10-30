@@ -20,7 +20,7 @@ import {
   WARDEN_TOWN_TYPES, isWardenTown, footprintRoadShare, landingOf, strayOf, wardenStamp, validWardenStamp, stampFits, wardenWordOf,
   offlineDue, thrownRecord, thrownTo, WARDEN_LAND_PAST, WARDEN_LAND_SCATTER, WARDEN_ROAD_SHARE, WARDEN_SAME_NATIVES, WARDEN_TEXT,
 } from '../../../src/systems/wagon/wagonWarden.js';
-import { ROAD_WEIGHT } from '../../../src/systems/gothwayBoards.js';
+import { ROAD_WEIGHT } from '../../../src/world/city/cityNavigation.js';
 import { LOCATION_TYPES } from '../../../src/formats/mapsFile.js';
 import { createHorseCartPool } from '../../../src/scenes/horseCartPool.js';
 import { WAGON_MODE, HORSE_MODE } from '../../../src/systems/horse/horseCartLaw.js';
