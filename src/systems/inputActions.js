@@ -208,6 +208,10 @@ export const ACTIONS = Object.freeze([
   // The decorator. Ships with no key: every letter is spent, and F1-F4 are the browser's or already bound.
   // A player gives it one in Controls. It answers only where the Decorate button would stand.
   'Decorate',
+  // TECH-KEY2 (Mac, 2026-10-30, forwarding #feature-feedback: "Have a key bindable for your 2nd weapon technique"): the
+  // held martial path's signature, whatever line the weapon carries (combat/techniques.js). Ships with no key, as
+  // Decorate does. Appended, like every port action before it.
+  'SignatureTechnique',
 ]);
 
 /** AUDIT SOC D3: THE PORT'S OWN ROWS, NAMED SO THE CLASSIC WINDOWS CAN YIELD THEM.
@@ -225,7 +229,7 @@ export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'Quick
   'TorchToggleLight', 'TorchDrop', 'TorchThrow', 'ShoulderSwitch', 'AutoPerspective', 'FollowPaths', 'HorseMount', 'HorseSummon', 'DebugOverlay',
   'BoatDisembark', 'BoatToggleLight', 'BoatToggleSail', 'BoatTrimRight', 'BoatTrimLeft', 'BoatTrimModifier',
   'BoatTimeScaleUp', 'BoatTimeScaleDown', 'BoatTimeScaleReset', 'TravelView', 'WalkMode', 'TogglePerspective', 'ActChoice', 'BoatSailUp', 'BoatSailDown', 'Professions',
-  'LegacyFamily', 'ModeWheel', 'WeaponTechnique', 'Spyglass', 'SaddlePanel', 'ShipHold', 'ShotCycle', 'PartyPing', 'Decorate']);   // PARTY-PING: the party's ping   // the decorator, unbound   // SHOT-KINDS: the guns' load   // CARGO-ANYWHERE: the ship's hold   // SPYGLASS: the captain's glass   // TECH1: the weapon's technique   // LEGACY1: Project Legacy's family tree; MODE-WHEEL: the mode wheel   // KB1; TV1; PADWALK; VIEW-TOGGLE; PROF1   // QUICK-LOOT B4: the plaque's two, drawn in the enhanced pane under their own heading - the classic windows cannot draw them at all
+  'LegacyFamily', 'ModeWheel', 'WeaponTechnique', 'Spyglass', 'SaddlePanel', 'ShipHold', 'ShotCycle', 'PartyPing', 'Decorate', 'SignatureTechnique']);   // TECH-KEY2   // PARTY-PING: the party's ping   // the decorator, unbound   // SHOT-KINDS: the guns' load   // CARGO-ANYWHERE: the ship's hold   // SPYGLASS: the captain's glass   // TECH1: the weapon's technique   // LEGACY1: Project Legacy's family tree; MODE-WHEEL: the mode wheel   // KB1; TV1; PADWALK; VIEW-TOGGLE; PROF1   // QUICK-LOOT B4: the plaque's two, drawn in the enhanced pane under their own heading - the classic windows cannot draw them at all
 
 const ACTION_SET = new Set(ACTIONS);
 
@@ -552,6 +556,7 @@ export const ACTION_GROUPS = Object.freeze([
   g('Combat', [
     ['ReadyWeapon', 'Ready or sheathe weapon'], ['SwingWeapon', 'Swing weapon'], ['SwitchHand', 'Switch hand'],
     ['WeaponTechnique', 'Weapon technique (hold to aim)'],   // TECH1
+    ['SignatureTechnique', 'Martial technique (hold to aim)'],   // TECH-KEY2: the held path's signature
     ['ShotCycle', 'Shot (aboard)'],   // SHOT-KINDS: the guns' load at a helm, stepped on
   ]),
   g('Magic', [

@@ -92,13 +92,14 @@ function host(entity, { online, storage = mem(), tile = 0 } = {}) {
 
 // ---- the question -------------------------------------------------------------------------------------------------
 
-test('LEGACY-CHOICE the question: online three answers - Enduring first, Bloodline, no lineage - each its own tag and words; offline its two', () => {
+test('LEGACY-CHOICE the question: online three answers - Casual first, Enduring, Bloodline - each its own tag and words; offline its two', () => {
   const on = legacyModelOptions({ online: true, tollShare: 0.06 });
-  assert.deepEqual(on.map((o) => o.id), [MODELS.enduring, MODELS.bloodline, NO_LINEAGE], 'Enter without reading still never costs a character');
+  // PIN MOVED (CASUAL-FIRST, Mac 2026-10-30): Casual first online - Enter without reading costs nothing at all
+  assert.deepEqual(on.map((o) => o.id), [NO_LINEAGE, MODELS.enduring, MODELS.bloodline], 'Enter without reading founds no house');
   assert.ok(on.every((o) => !o.locked));
   // PIN MOVED (CASUAL-LIFE): no lineage is Casual online, and says what it does
-  assert.equal(on[2].title, 'Casual');
-  assert.match(on[2].lines.join(' '), /No family line, no heirs/);
+  assert.equal(on[0].title, 'Casual');
+  assert.match(on[0].lines.join(' '), /No family line, no heirs/);
   assert.deepEqual([LEGACY_MODEL_TAGS[MODELS.enduring], LEGACY_MODEL_TAGS[MODELS.bloodline], LEGACY_MODEL_TAGS[NO_LINEAGE]], ['Not permadeath', 'Permadeath', 'No death cost']);
   assert.deepEqual(legacyModelOptions({ online: false, tollShare: 0.06 }).map((o) => o.id), [MODELS.enduring, MODELS.bloodline], 'offline its two');
   assert.ok(isLegacyChoice(NO_LINEAGE) && isLegacyChoice(MODELS.bloodline) && !isLegacyChoice('nobody') && !isLegacyChoice(undefined));
@@ -114,7 +115,7 @@ test('LEGACY-CHOICE the question: online three answers - Enduring first, Bloodli
 
 test('LEGACY-CHOICE the screen: keys 1, 2 and 3 answer their own, up and down are directions over three, a click lands on its own stacked block; a screen of two has no third', () => {
   withPage('?online', () => {
-    for (const [key, want] of [['Digit1', MODELS.enduring], ['char:2', MODELS.bloodline], ['Numpad3', NO_LINEAGE]]) {
+    for (const [key, want] of [['Digit1', NO_LINEAGE], ['char:2', MODELS.enduring], ['Numpad3', MODELS.bloodline]]) {   // PIN MOVED (CASUAL-FIRST)
       const got = [];
       const q = legacyModelScreen((m) => got.push(m));
       q.input(key);
@@ -122,13 +123,14 @@ test('LEGACY-CHOICE the screen: keys 1, 2 and 3 answer their own, up and down ar
     }
     const got = [];
     const q = legacyModelScreen((m) => got.push(m));
-    assert.equal(q.cursor, 0, 'the cursor starts on Enduring');
+    assert.equal(q.cursor, 0, 'the cursor starts on Casual');   // PIN MOVED (CASUAL-FIRST)
+    assert.equal(q.defaultId, NO_LINEAGE, 'CASUAL-FIRST: the default answer is Casual');
     q.input('ArrowDown'); assert.equal(q.cursor, 1);
     q.input('down'); assert.equal(q.cursor, 2);
     q.input('ArrowDown'); assert.equal(q.cursor, 0, 'down wraps');
     q.input('ArrowUp'); assert.equal(q.cursor, 2, 'up goes back');
     q.input('Enter');
-    assert.deepEqual(got, [NO_LINEAGE]);
+    assert.deepEqual(got, [MODELS.bloodline]);
     // a click in each block answers that block, on the screen's own stacked table
     for (let i = 0; i < 3; i++) {
       const picked = [];
@@ -175,10 +177,10 @@ test('LEGACY-CHOICE the popup: on Enhanced Plus the online question wears the Pl
     assert.equal(find(root, 'lvl-hint')[0].textContent, LEGACY_CHOICE_FACE.hint);
     assert.match(LEGACY_CHOICE_FACE.hint, /1, 2 or 3/);
     const tiles = find(root, 'lvl-opt');
-    assert.deepEqual(tiles.map((t) => find(t, 'lvl-tag')[0].textContent), ['Not permadeath', 'Permadeath', 'No death cost']);   // PIN MOVED (CASUAL-LIFE)
-    assert.ok(tiles[0].className.includes('is-on'), 'Enduring chosen first');
+    assert.deepEqual(tiles.map((t) => find(t, 'lvl-tag')[0].textContent), ['No death cost', 'Not permadeath', 'Permadeath']);   // PIN MOVED (CASUAL-LIFE, CASUAL-FIRST)
+    assert.ok(tiles[0].className.includes('is-on'), 'Casual chosen first');
     tiles[2].onclick();
-    assert.deepEqual(got, [NO_LINEAGE]);
+    assert.deepEqual(got, [MODELS.bloodline]);
     assert.equal(levelingFaceOwner(), null, 'the popup goes with the answer');
   }, { doc: true });
   withPage('?skin=enhanced', (doc) => {
@@ -216,7 +218,7 @@ test('LEGACY-POINTER (FIELD 2026-10-06, Mac: "moving the mouse up and down switc
     assert.equal(q.click(160, q.tops[0] + 2), false, 'a canvas press answers nothing while the popup is up');
     assert.deepEqual(got, []);
     tiles[2].onclick();
-    assert.deepEqual(got, [NO_LINEAGE], 'the tile pressed is the answer');
+    assert.deepEqual(got, [MODELS.bloodline], 'the tile pressed is the answer');   // PIN MOVED (CASUAL-FIRST)
   }, { doc: true });
   // the leveling question wears the same face, and the same seam
   withPage('?skin=enhanced', (doc) => {
@@ -248,7 +250,7 @@ test('LEGACY-POINTER (FIELD 2026-10-06, Mac: "moving the mouse up and down switc
     q.hover(160, q.tops[1] + 2);
     assert.equal(q.cursor, 1, 'the hover follows the canvas rows the classic face draws');
     assert.equal(q.click(160, q.tops[2] + 2), true);
-    assert.deepEqual(got, [NO_LINEAGE]);
+    assert.deepEqual(got, [MODELS.bloodline]);   // PIN MOVED (CASUAL-FIRST)
   });
 });
 
@@ -278,8 +280,8 @@ test('LEGACY-CHOICE the answer is the character\'s: the chargen door online puts
     key('Enter'); key('Enter');   // reflexes, summary -> the leveling question (online: always put)
     assert.ok(w.levelingPrompt, 'the leveling question');
     w.input('Enter');
-    assert.deepEqual(w.levelingPrompt?.options?.map((o) => o.id), [MODELS.enduring, MODELS.bloodline, NO_LINEAGE], 'then Project Legacy\'s, three ways');
-    w.input('char:3');
+    assert.deepEqual(w.levelingPrompt?.options?.map((o) => o.id), [NO_LINEAGE, MODELS.enduring, MODELS.bloodline], 'then Project Legacy\'s, three ways');   // PIN MOVED (CASUAL-FIRST)
+    w.input('char:1');
     assert.equal(w.done, true);
     assert.equal(result.legacyModel, NO_LINEAGE);
     const e = { gender: 'male', race: 'Breton' };

@@ -210,9 +210,9 @@ test('SPRITE-FACE the wiring: the view keeps the sprite\'s facing beside its fig
   // PIN MOVED (ARMORY, HOST-SPLIT): the gather and the draw are scenes/auraHost.js's, the facing read once a frame there
   const w = rd('src/scenes/auraHost.js');
   assert.ok(w.includes('self.yaw = faced?.yaw ?? player.bodyYawFor(deps.camYaw());') && w.includes('const spawned = deps.spawned(), faced = mwViewSpriteFacing();'), 'the gather: mine as my picture faces');
-  assert.ok(w.includes('yaw: faced?.yaw ?? player.bodyYawFor(deps.camYaw()), turn: faced?.turn,') && w.includes('riders = deps.riders(), faced = mwViewSpriteFacing();'), 'the draw: mine, and my turning');
-  assert.ok(w.includes('auraSpritePosed(w, walkers?.figureOf(w.id) ?? riders?.figureOf?.(w.id), walkers?.faceOf?.(w.id) ?? riders?.faceOf?.(w.id))'), 'a peer\'s: their picture\'s');
-  assert.ok(w.includes('const face = (walkers?.faceOf?.(d.id) ?? riders?.faceOf?.(d.id))?.yaw ?? peerBodyYaw(d.shown) ?? 0;') && w.includes('w.yaw = face; auraBeastStep(w, !!d.shown.wb, t);'), 'and gathered so - the wings\' light stands where the wings do');
+  assert.ok(w.includes('yaw: faced?.yaw ?? player.bodyYawFor(deps.camYaw()), turn: faced?.turn,') && w.includes('layers = deps.sprites(), faced = mwViewSpriteFacing();'), 'the draw: mine, and my turning');   // CAPE-CARD (PIN MOVED): the sprite layers one list
+  assert.ok(w.includes('auraSpritePosed(w, spriteAnswer(layers, \'figureOf\', w.id), spriteAnswer(layers, \'faceOf\', w.id, eye))'), 'a peer\'s: their picture\'s');   // CAPE-CARD (PIN MOVED): off any sprite layer
+  assert.ok(w.includes('const seenAs = spriteAnswer(layers, \'faceOf\', d.id, eye), p = seenAs?.at ?? deps.toScene(d.shown)') && w.includes('const face = seenAs?.yaw ?? peerBodyYaw(d.shown) ?? 0;') && w.includes('w.yaw = face; auraBeastStep(w, !!d.shown.wb, t);'), 'and gathered so - the wings\' light stands where the wings do');
   const pr = rd('src/net/peer/peerRiders.js');
   assert.equal((pr.match(/faceDrawn\(r, view, yaw, feet, eye\);/g) ?? []).length, 2, 'both layers record it as they draw');
 });

@@ -494,7 +494,8 @@ export function pathSteps(p) {
  *  (combat/techniques.js techniqueInHand). */
 export function useLine(kind) {
   if (kind === 'spell') return t('growth.spec.useSpell', 'Once chosen, buy it wherever spells are sold and cast it like any other spell.');
-  return lootRarityOn() ? t('growth.spec.useTechniqueOwn', 'Once chosen, press your Weapon Technique key while fighting with one of its two skills. A weapon with a technique of its own uses that instead.')
+  // TECH-KEY2 (AUDIT TECH-FEEDBACK II): and the Martial Technique key uses the signature whatever the weapon carries
+  return lootRarityOn() ? t('growth.spec.useTechniqueBoth', 'Once chosen, press your Weapon Technique key while fighting with one of its two skills. A weapon with a technique of its own uses that instead, and your Martial Technique key uses this one.')
     : t('growth.spec.useTechnique', 'Once chosen, press your Weapon Technique key while fighting with one of its two skills.');
 }
 

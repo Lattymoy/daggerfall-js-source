@@ -44,9 +44,9 @@ function withPage(search, fn) {
 
 test('CASUAL-LIFE the answer: online no lineage is Casual, says what it does, and fits the classic face; offline the two as ever', () => {
   const on = legacyModelOptions({ online: true, tollShare: 0.06 });
-  assert.deepEqual(on.map((o) => o.id), [MODELS.enduring, MODELS.bloodline, NO_LINEAGE]);
-  assert.equal(on[2].title, 'Casual');
-  assert.match(on[2].lines.join(' '), /no permadeath.*A death costs no gold, no years and no gear\./);
+  assert.deepEqual(on.map((o) => o.id), [NO_LINEAGE, MODELS.enduring, MODELS.bloodline]);   // PIN MOVED (CASUAL-FIRST)
+  assert.equal(on[0].title, 'Casual');
+  assert.match(on[0].lines.join(' '), /no permadeath.*A death costs no gold, no years and no gear\./);
   assert.equal(LEGACY_MODEL_TAGS[CASUAL], 'No death cost');
   assert.deepEqual(legacyModelOptions({ online: false, tollShare: 0.06 }).map((o) => o.id), [MODELS.enduring, MODELS.bloodline]);
   const tops = stackedTops(on);
@@ -54,7 +54,7 @@ test('CASUAL-LIFE the answer: online no lineage is Casual, says what it does, an
   for (const o of on) for (const line of o.lines) assert.ok(line.length <= 50, line);
   withPage('?online', () => {
     const got = [];
-    legacyModelScreen((m) => got.push(m)).input('Digit3');
+    legacyModelScreen((m) => got.push(m)).input('Digit1');   // PIN MOVED (CASUAL-FIRST)
     assert.deepEqual(got, [CASUAL]);
   });
 });
