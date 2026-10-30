@@ -7271,12 +7271,14 @@ compass's bound; the table's keys; the pipeline over the province; provinceRow; 
 past the Bay and on the Bay's road; the scrying's lair; %lp's eleven). Mutants: `tools/mutants/bayleftb.json`
 (BAY-LEFT-B-B3-*, -B5-*, -B6-*, -B7-*).
 
-## TRIP-FROM-START and TRIP-PIXEL - a travel clock measures its trip as it starts (FIELD BUGS 2026-10-30e)
+## TRIP-FROM-START, TRIP-PIXEL and TRIP-HOME - a travel clock measures its trip as it starts (FIELD BUGS 2026-10-30e)
 
 A flag-16 clock (and the bit-0 hack's) measured its trip once, at the parse, as Clock.cs does - Q3's travel arm above.
 S0000002 is parsed wherever level 4 finds the player, and Helseth starts its `_1stparton_` in Wayrest: 2.5 days for 44
 to 80 days of road, and any journey ended the quest. Now `start timer` measures the trip again from where the player
 stands and keeps the longer (`systems/quest/clock.js` startTimer, the saved `travelArm`). And `travelTimeSeconds` reads a
-site past the Bay at its own pixel (`worldPixel`), not its row's world coords. The record:
+site past the Bay at its own pixel (`worldPixel`), not its row's world coords. TRIP-HOME: a deadline, as it starts, also
+counts the way back to the seat of each at-home individual the quest makes its questor (Elysana's Robe, S0000006, starts
+its clock where the offer found the player). The record:
 `01-Overview/bugs/Field-Bugs-2026-10-30e.md`; Port-Ledger A, TRIP-FROM-START. Pins:
 `test/systems/quest/fb1030e_triphome.test.js`; mutants: `tools/mutants/fb1030e_triphome.json`.
