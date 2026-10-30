@@ -2,8 +2,8 @@
   {
     "name": "CM-flight-floor",
     "file": "src/world/card/cardMotion.js",
-    "old": "const flight = Math.max(FLIGHT_MIN_S, (dist - slide) / FLIGHT_SPEED);",
-    "new": "const flight = (dist - slide) / FLIGHT_SPEED;",
+    "old": "  const flight = Math.max(FLIGHT_MIN_S, (dist - slide) / FLIGHT_SPEED);",
+    "new": "  const flight = (dist - slide) / FLIGHT_SPEED;",
     "tests": [
       "test/world/card/cards3_motion.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "CM-slide-overshoots",
     "file": "src/world/card/cardMotion.js",
-    "old": "const d = v0 * s - 0.5 * SLIDE_DECEL * s * s;",
-    "new": "const d = v0 * s;",
+    "old": "        const d = v0 * s - 0.5 * SLIDE_DECEL * s * s;",
+    "new": "        const d = v0 * s;",
     "tests": [
       "test/world/card/cards3_motion.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "CM-flipshift-wrong-way",
     "file": "src/world/card/cardMotion.js",
-    "old": "return [to[0] - Math.cos(yaw) * CARD_W, to[1], to[2] + Math.sin(yaw) * CARD_W];",
-    "new": "return [to[0] + Math.cos(yaw) * CARD_W, to[1], to[2] - Math.sin(yaw) * CARD_W];",
+    "old": "  return [to[0] - Math.cos(yaw) * CARD_W, to[1], to[2] + Math.sin(yaw) * CARD_W];",
+    "new": "  return [to[0] + Math.cos(yaw) * CARD_W, to[1], to[2] - Math.sin(yaw) * CARD_W];",
     "tests": [
       "test/world/card/cards3_motion.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "CS3-board-no-shift",
     "file": "src/world/card/cardScene.js",
-    "old": "to: flipShift(this._rest(this.places.board[i], i & 1), this.places.boardYaw)",
-    "new": "to: this._rest(this.places.board[i], i & 1)",
+    "old": "          to: flipShift(this._rest(this.places.board[i], i & 1), this.places.boardYaw),",
+    "new": "          to: this._rest(this.places.board[i], i & 1),",
     "tests": [
       "test/world/card/cards3_motion.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "CS3-own-cards-edge",
     "file": "src/world/card/cardScene.js",
-    "old": "t0: m.t1 + TURN_DELAY, pivot: 'middle' })",
-    "new": "t0: m.t1 + TURN_DELAY, pivot: 'edge' })",
+    "old": "                pivot: 'middle',",
+    "new": "                pivot: 'edge',",
     "tests": [
       "test/world/card/cards3_motion.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "CS3-others-seen",
     "file": "src/world/card/cardScene.js",
-    "old": "card: mine ? holeOf(seat, r) : -1,",
-    "new": "card: holeOf(seat, r),",
+    "old": "          this.cards.push({ id: `h${this.handNo}:${seat}:${r}`, card: mine ? holeOf(seat, r) : -1, seat, motions });",
+    "new": "          this.cards.push({ id: `h${this.handNo}:${seat}:${r}`, card: holeOf(seat, r), seat, motions });",
     "tests": [
       "test/world/card/cards3_motion.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "CS3-pot-lost",
     "file": "src/world/card/cardScene.js",
-    "old": "if (h) { this.lastBets.set(i, bet); pot += h.total - h.bet; }",
-    "new": "if (h) { this.lastBets.set(i, bet); }",
+    "old": "          pot += h.total - h.bet;\n        }",
+    "new": "        }",
     "tests": [
       "test/world/card/cards3_motion.test.js"
     ]

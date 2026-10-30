@@ -636,8 +636,8 @@
   {
     "name": "CARDS3c-clamp",
     "file": "src/world/card/cardHand.js",
-    "old": "  const k = Math.max(0, Math.min(1, s));\n  return multiply(m, trs(0, 0, -SQUEEZE_RISE",
-    "new": "  const k = s;\n  return multiply(m, trs(0, 0, -SQUEEZE_RISE",
+    "old": "  const k = Math.max(0, Math.min(1, s));",
+    "new": "  const k = s;",
     "tests": [
       "test/world/card/cards3c_gestures.test.js"
     ]

@@ -354,7 +354,7 @@ structure ours.
 ### 5.3 The board is the cloth
 
 - DECIDED: the board is laid on the table's felt. FACT: the felt is 1.42 by 0.92 m inside its rail
-  (`cardTableProp.js:"export const CARD_TABLE_RAIL = 0.04;"`, with CARD_TABLE_W 1.5 and CARD_TABLE_D 1), and the prop's
+  (`cardTableProp.js:"export const CARD_TABLE_RAIL"`, with CARD_TABLE_W 1.5 and CARD_TABLE_D 1), and the prop's
   chairs stand two to a long side, 0.375 m either side of its middle, and one at each end (`world/card/cardTables.js`
   seatSpots).
 - DECIDED (AUDIT KG C1): laid ALONG THE TABLE'S OWN AXES, square to the felt's edges, as Hold'em's board lies

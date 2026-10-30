@@ -12,7 +12,27 @@
 // through its middle; the burn at the board's head; the muck and the pot either side of the board.
 //
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
-import { CARD_W, CARD_L, CARD_T, DEAL_LIFT, DEAL_STAGGER, dealMotion, flipMotion, flipShift, chipDiscs, pushAt, hashSeed, PUSH_S, SCOOP_LIFT, RIFFLE_S, riffleAt, GATHER_S, gatherMotion, DECK_PLATES, DECK_CARDS } from './cardMotion.js';
+import {
+  CARD_W,
+  CARD_L,
+  CARD_T,
+  DEAL_LIFT,
+  DEAL_STAGGER,
+  dealMotion,
+  flipMotion,
+  flipShift,
+  chipDiscs,
+  pushAt,
+  hashSeed,
+  PUSH_S,
+  SCOOP_LIFT,
+  RIFFLE_S,
+  riffleAt,
+  GATHER_S,
+  gatherMotion,
+  DECK_PLATES,
+  DECK_CARDS,
+} from './cardMotion.js';
 import { SEAT_OUT } from '../../player/seatPose.js';
 
 /** MEASURE (CARDS3): the places on the cloth, metres in from a seat's edge of the table. */
@@ -45,34 +65,40 @@ const SEC = (ms) => ms / 1000;
  */
 export function tablePlaces(frame, seats, seatOf) {
   const top = frame.centre[1];
-  const a = [Math.sin(frame.axisYaw), Math.cos(frame.axisYaw)];   // along the board
-  const p = [Math.cos(frame.axisYaw), 0 - Math.sin(frame.axisYaw)];   // across it
+  const a = [Math.sin(frame.axisYaw), Math.cos(frame.axisYaw)]; // along the board
+  const p = [Math.cos(frame.axisYaw), 0 - Math.sin(frame.axisYaw)]; // across it
   const at = (u, v) => [frame.centre[0] + a[0] * u + p[0] * v, top, frame.centre[2] + a[1] * u + p[1] * v];
   const seatPlace = (s) => {
-    const f = [Math.sin(s.yaw), Math.cos(s.yaw)], r = [Math.cos(s.yaw), 0 - Math.sin(s.yaw)];
+    const f = [Math.sin(s.yaw), Math.cos(s.yaw)],
+      r = [Math.cos(s.yaw), 0 - Math.sin(s.yaw)];
     // AUDIT CARDS-2 L6: a small table's places come in no closer than the middle's own things - the board's row (and its
     // burn) for a seat at an end, the pot and the muck for a seat along a side; a big table keeps the full distances
     const room = (frame.centre[0] - s.feet[0]) * f[0] + (frame.centre[2] - s.feet[2]) * f[1] - SEAT_OUT;
     const alongBoard = Math.abs(f[0] * a[0] + f[1] * a[1]) > Math.SQRT1_2;
     const clear = alongBoard ? (BOARD_SLOTS / 2 + 1) * BOARD_GAP + CARD_L / 2 + CHIP_CLEAR : POT_ACROSS + CHIP_CLEAR;
     const fit = Math.max(PLACE_FIT_MIN, Math.min(1, (room - clear) / BET_IN));
-    const inward = (d, side = 0) => [s.feet[0] + f[0] * (SEAT_OUT + d * fit) + r[0] * side, top, s.feet[2] + f[1] * (SEAT_OUT + d * fit) + r[1] * side];
+    const inward = (d, side = 0) => [
+      s.feet[0] + f[0] * (SEAT_OUT + d * fit) + r[0] * side,
+      top,
+      s.feet[2] + f[1] * (SEAT_OUT + d * fit) + r[1] * side,
+    ];
     return {
       yaw: s.yaw,
       holes: [inward(HOLE_IN, -CARD_W * 0.56), inward(HOLE_IN, CARD_W * 0.56)],
-      bet: inward(BET_IN), stack: inward(STACK_IN, STACK_SIDE),
-      deal: [...inward(0).slice(0, 1), top + DEAL_LIFT, inward(0)[2]],   // the dealer's hand over the edge before him
-      deck: inward(BET_IN * 0.7, -CARD_W * 2.2),   // CARDS3b: where he riffles the deck, to the left of his bet
+      bet: inward(BET_IN),
+      stack: inward(STACK_IN, STACK_SIDE),
+      deal: [...inward(0).slice(0, 1), top + DEAL_LIFT, inward(0)[2]], // the dealer's hand over the edge before him
+      deck: inward(BET_IN * 0.7, -CARD_W * 2.2), // CARDS3b: where he riffles the deck, to the left of his bet
     };
   };
   return {
     seats: seatOf.map((k) => seatPlace(seats[k])),
     board: Array.from({ length: BOARD_SLOTS }, (_, i) => at((i - (BOARD_SLOTS - 1) / 2) * BOARD_GAP, 0)),
     boardYaw: frame.axisYaw + Math.PI / 2,
-    burn: at(-(BOARD_SLOTS / 2 + 1) * BOARD_GAP, 0),   // a gap and a half off the first slot: never on its plane, jittered (AUDIT CARDS-2 L4)
+    burn: at(-(BOARD_SLOTS / 2 + 1) * BOARD_GAP, 0), // a gap and a half off the first slot: never on its plane, jittered (AUDIT CARDS-2 L4)
     muck: at(0, POT_ACROSS),
     pot: at(0, -POT_ACROSS),
-    table: frame,   // AUDIT CARDS-3 C6: the top's own frame - a carried bet is let go on it or not at all
+    table: frame, // AUDIT CARDS-3 C6: the top's own frame - a carried bet is let go on it or not at all
   };
 }
 
@@ -83,18 +109,18 @@ export class CardScene {
    */
   constructor({ places, playerSeat, tableSeed = 0 }) {
     this.places = places;
-    this.playerSeat = playerSeat;   // the session's seat index of the player
+    this.playerSeat = playerSeat; // the session's seat index of the player
     this.tableSeed = tableSeed;
     /** @type {{id: string, card: number, seat: number, motions: any[]}[]} */
     this.cards = [];
     this.handNo = 0;
     this.board = 0;
     this.dealer = 0;
-    this.pushes = [];   // { amount, from, to, t0, yaw }
-    this.lastBets = new Map();   // session seat -> its bet on the street, for the push at the street's end
-    this.busyUntil = 0;          // the clock the cloth's last throw or turn ends on - the next street waits for it
-    this.riffle = null;          // CARDS3b: the dealer's riffle before the deal - { t0, at, yaw }
-    this.deck = null;            // CARDS-TIDY: the squared deck on the cloth - { at, yaw, from, upTo }
+    this.pushes = []; // { amount, from, to, t0, yaw }
+    this.lastBets = new Map(); // session seat -> its bet on the street, for the push at the street's end
+    this.busyUntil = 0; // the clock the cloth's last throw or turn ends on - the next street waits for it
+    this.riffle = null; // CARDS3b: the dealer's riffle before the deal - { t0, at, yaw }
+    this.deck = null; // CARDS-TIDY: the squared deck on the cloth - { at, yaw, from, upTo }
   }
 
   /** The pose a card has at `t` - the motion in force (the last begun). */
@@ -105,10 +131,15 @@ export class CardScene {
   }
 
   /** The place a card lies on the cloth: the top and its thickness, and a little more for each card under it. */
-  _rest(p, layer = 0) { return [p[0], p[1] + CARD_T * (0.5 + layer), p[2]]; }
+  _rest(p, layer = 0) {
+    return [p[0], p[1] + CARD_T * (0.5 + layer), p[2]];
+  }
 
   /** The card's latest motion's end - where and how it rests now. */
-  _restOf(c) { const m = c.motions[c.motions.length - 1]; return m.at(Infinity); }
+  _restOf(c) {
+    const m = c.motions[c.motions.length - 1];
+    return m.at(Infinity);
+  }
 
   /**
    * One session event, at its clock. `holeOf(seat, r)` answers the card a seat's r-th hole card is, when the viewer may
@@ -121,40 +152,77 @@ export class CardScene {
     if (e.t === 'hand') {
       // CARDS-TIDY: the last hand is gathered back to the new dealer's deck first (its cards slide there face down and
       // join it), then he riffles - the cloth is never wiped in one frame
-      const deckAt = this.places.seats[e.button].deck, deckYaw = this.places.seats[e.button].yaw;
-      const left = this.cards.filter((c) => c.seat !== -4);   // cards still on their way from the hand before join the deck now
+      const deckAt = this.places.seats[e.button].deck,
+        deckYaw = this.places.seats[e.button].yaw;
+      const left = this.cards.filter((c) => c.seat !== -4); // cards still on their way from the hand before join the deck now
       // AUDIT CARDS-4 D5: and the last hand's pile goes with them, as it lies - never a full deck at the new dealer's place
       // in the same frame, the old one gone from under it
       const pile = this._pileShown(t) ? this._deckPile(t) : [];
       this.cards = [
-        ...pile.map((p, k) => ({ card: -1, id: `p${e.hand}:${k}`, seat: -4, motions: [gatherMotion({ from: p, to: this._rest(deckAt, k), yaw: deckYaw, t0: t })] })),
-        ...left.map((c, i) => ({ ...c, id: `g${e.hand}:${i}`, seat: -4, motions: [...c.motions, gatherMotion({ from: this._poseOf(c, t), to: this._rest(deckAt, DECK_PLATES + i * 0.1), yaw: deckYaw, t0: t })] })),
+        ...pile.map((p, k) => ({
+          card: -1,
+          id: `p${e.hand}:${k}`,
+          seat: -4,
+          motions: [gatherMotion({ from: p, to: this._rest(deckAt, k), yaw: deckYaw, t0: t })],
+        })),
+        ...left.map((c, i) => ({
+          ...c,
+          id: `g${e.hand}:${i}`,
+          seat: -4,
+          motions: [
+            ...c.motions,
+            gatherMotion({
+              from: this._poseOf(c, t),
+              to: this._rest(deckAt, DECK_PLATES + i * 0.1),
+              yaw: deckYaw,
+              t0: t,
+            }),
+          ],
+        })),
       ];
       const gather = this.cards.length ? GATHER_S : 0;
       this.pushes = [];
       this.lastBets.clear();
       this.busyUntil = t;
       this.handNo = e.hand;
-      if (Number.isInteger(e.seed)) this.tableSeed = e.seed >>> 0;   // CARDS5: the relay's deal names the cloth's seed - one picture for the room
+      if (Number.isInteger(e.seed)) this.tableSeed = e.seed >>> 0; // CARDS5: the relay's deal names the cloth's seed - one picture for the room
       this.board = 0;
       this.dealer = e.button;
-      const n = e.seats.length, btn = e.seats.indexOf(e.button);
+      const n = e.seats.length,
+        btn = e.seats.indexOf(e.button);
       const from = this.places.seats[e.button].deal;
       // CARDS3b: the dealer riffles the deck first; the deal begins when the riffle is done
       this.riffle = { t0: t + gather, at: deckAt, yaw: deckYaw };
       const dealAt = t + gather + RIFFLE_S;
-      this.deck = { at: deckAt, yaw: deckYaw, from: t + gather, upTo: dealAt };   // CARDS-TIDY: the squared deck lies there, but while the riffle holds it; AUDIT CARDS-4 D5: once gathered
+      this.deck = { at: deckAt, yaw: deckYaw, from: t + gather, upTo: dealAt }; // CARDS-TIDY: the squared deck lies there, but while the riffle holds it; AUDIT CARDS-4 D5: once gathered
       let order = 0;
-      for (let r = 0; r < 2; r++) for (let k = 1; k <= n; k++) {
-        const seat = e.seats[(btn + k) % n];
-        const place = this.places.seats[seat];
-        const mine = seat === this.playerSeat;
-        const m = dealMotion({ from, to: this._rest(place.holes[r], r), yaw: place.yaw, roll: Math.PI, t0: dealAt + DEAL_STAGGER * order++, seed: hashSeed(this.tableSeed, this.handNo, seat, r) });
-        const motions = /** @type {any[]} */ ([m]);
-        if (mine) motions.push(flipMotion({ pos: m.rest, yaw: m.at(Infinity).yaw, fromRoll: Math.PI, t0: m.t1 + TURN_DELAY, pivot: 'middle' }));   // he turns his own up where they lie
-        this.cards.push({ id: `h${this.handNo}:${seat}:${r}`, card: mine ? holeOf(seat, r) : -1, seat, motions });
-        this.busyUntil = Math.max(this.busyUntil, motions[motions.length - 1].t1);
-      }
+      for (let r = 0; r < 2; r++)
+        for (let k = 1; k <= n; k++) {
+          const seat = e.seats[(btn + k) % n];
+          const place = this.places.seats[seat];
+          const mine = seat === this.playerSeat;
+          const m = dealMotion({
+            from,
+            to: this._rest(place.holes[r], r),
+            yaw: place.yaw,
+            roll: Math.PI,
+            t0: dealAt + DEAL_STAGGER * order++,
+            seed: hashSeed(this.tableSeed, this.handNo, seat, r),
+          });
+          const motions = /** @type {any[]} */ ([m]);
+          if (mine)
+            motions.push(
+              flipMotion({
+                pos: m.rest,
+                yaw: m.at(Infinity).yaw,
+                fromRoll: Math.PI,
+                t0: m.t1 + TURN_DELAY,
+                pivot: 'middle',
+              }),
+            ); // he turns his own up where they lie
+          this.cards.push({ id: `h${this.handNo}:${seat}:${r}`, card: mine ? holeOf(seat, r) : -1, seat, motions });
+          this.busyUntil = Math.max(this.busyUntil, motions[motions.length - 1].t1);
+        }
       return;
     }
     // AUDIT CARDS-2 L3: a seat's chips go out with its action - the call that closes a street comes out of the session in
@@ -166,14 +234,34 @@ export class CardScene {
       const t0 = Math.max(t, this.busyUntil);
       const from = this.places.seats[this.dealer].deal;
       let order = 0;
-      const burn = dealMotion({ from, to: this._rest(this.places.burn, this.cards.filter((c) => c.seat === -2).length), yaw: this.places.boardYaw, roll: Math.PI, t0, seed: hashSeed(this.tableSeed, this.handNo, 90 + this.board) });
+      const burn = dealMotion({
+        from,
+        to: this._rest(this.places.burn, this.cards.filter((c) => c.seat === -2).length),
+        yaw: this.places.boardYaw,
+        roll: Math.PI,
+        t0,
+        seed: hashSeed(this.tableSeed, this.handNo, 90 + this.board),
+      });
       this.cards.push({ id: `b${this.handNo}:${this.board}`, card: -1, seat: -2, motions: [burn] });
       order++;
       for (let i = this.board; i < e.board.length; i++) {
         // thrown a width short: the dealer's turn over the edge lays it on its slot - the turn across the board's own
         // axis, and the slots a millimetre apart in height, so two neighbours never share a plane (AUDIT CARDS-2 L4)
-        const m = dealMotion({ from, to: flipShift(this._rest(this.places.board[i], i & 1), this.places.boardYaw), yaw: this.places.boardYaw, roll: Math.PI, t0: t0 + DEAL_STAGGER * order++, seed: hashSeed(this.tableSeed, this.handNo, 100 + i) });
-        const flip = flipMotion({ pos: m.rest, yaw: m.at(Infinity).yaw, fromRoll: Math.PI, t0: m.t1 + TURN_DELAY, acrossYaw: this.places.boardYaw });
+        const m = dealMotion({
+          from,
+          to: flipShift(this._rest(this.places.board[i], i & 1), this.places.boardYaw),
+          yaw: this.places.boardYaw,
+          roll: Math.PI,
+          t0: t0 + DEAL_STAGGER * order++,
+          seed: hashSeed(this.tableSeed, this.handNo, 100 + i),
+        });
+        const flip = flipMotion({
+          pos: m.rest,
+          yaw: m.at(Infinity).yaw,
+          fromRoll: Math.PI,
+          t0: m.t1 + TURN_DELAY,
+          acrossYaw: this.places.boardYaw,
+        });
         this.cards.push({ id: `c${this.handNo}:${i}`, card: e.board[i], seat: -1, motions: [m, flip] });
         this.busyUntil = Math.max(this.busyUntil, flip.t1);
       }
@@ -187,7 +275,18 @@ export class CardScene {
         // AUDIT CARDS-2 M6: from where it is NOW - a card still in the air, or still turning, goes on from there (it
         // jumped to its rest first), and a face-up card turns down as it slides
         const at = this._poseOf(c, t);
-        c.motions.push(dealMotion({ from: at.pos, to: this._rest(this.places.muck, layer++), yaw: this.places.boardYaw, roll: Math.PI, t0: t, seed: hashSeed(this.tableSeed, this.handNo, 200 + layer), fromYaw: at.yaw, fromRoll: at.roll }));
+        c.motions.push(
+          dealMotion({
+            from: at.pos,
+            to: this._rest(this.places.muck, layer++),
+            yaw: this.places.boardYaw,
+            roll: Math.PI,
+            t0: t,
+            seed: hashSeed(this.tableSeed, this.handNo, 200 + layer),
+            fromYaw: at.yaw,
+            fromRoll: at.roll,
+          }),
+        );
         c.seat = -3;
       }
       return;
@@ -202,9 +301,15 @@ export class CardScene {
           if (!e.holes[k]) return;
           for (const c of this.cards.filter((x) => x.seat === seat)) {
             const at = this._restOf(c);
-            if (Math.cos(at.roll) > 0) continue;   // already face up (the player's own)
+            if (Math.cos(at.roll) > 0) continue; // already face up (the player's own)
             c.card = e.holes[k][Number(c.id.split(':')[2])];
-            const flip = flipMotion({ pos: at.pos, yaw: at.yaw, fromRoll: at.roll, t0: t0 + DEAL_STAGGER * order++, pivot: 'middle' });   // a hand shown turns where it lies
+            const flip = flipMotion({
+              pos: at.pos,
+              yaw: at.yaw,
+              fromRoll: at.roll,
+              t0: t0 + DEAL_STAGGER * order++,
+              pivot: 'middle',
+            }); // a hand shown turns where it lies
             c.motions.push(flip);
             this.busyUntil = Math.max(this.busyUntil, flip.t1);
           }
@@ -214,20 +319,40 @@ export class CardScene {
       // begins a share is the pot's, drawn once in the pot's pile)
       const pot = e.result.pots.reduce((a, p) => a + p.amount, 0);
       const winners = e.result.payouts.map((p, k) => (p > 0 ? e.seats[k] : -1)).filter((s) => s >= 0);
-      const at = Math.max(t0, this.busyUntil, t + PUSH_S) + POT_BEAT;   // and once the street's last bets are in it
-      winners.forEach((w, n) => this.pushes.push({ amount: e.result.payouts[e.seats.indexOf(w)], from: this.places.pot, to: this.places.seats[w].stack, t0: at + n * PUSH_S * 0.5, yaw: this.places.seats[w].yaw, toSeat: w, potShare: pot }));
+      const at = Math.max(t0, this.busyUntil, t + PUSH_S) + POT_BEAT; // and once the street's last bets are in it
+      winners.forEach((w, n) =>
+        this.pushes.push({
+          amount: e.result.payouts[e.seats.indexOf(w)],
+          from: this.places.pot,
+          to: this.places.seats[w].stack,
+          t0: at + n * PUSH_S * 0.5,
+          yaw: this.places.seats[w].yaw,
+          toSeat: w,
+          potShare: pot,
+        }),
+      );
     }
   }
 
   /** CARDS-TIDY: whether the squared deck lies on the cloth at `t` - not while the riffle holds it, nor (AUDIT CARDS-4 D5)
    *  while the last hand is gathered to it. */
-  _pileShown(t) { return !!this.deck && t >= this.deck.from && !(t >= this.riffle?.t0 && t < this.deck.upTo); }
+  _pileShown(t) {
+    return !!this.deck && t >= this.deck.from && !(t >= this.riffle?.t0 && t < this.deck.upTo);
+  }
   /** CARDS-TIDY: the deck's plates at `t` - DECK_PLATES for a full deck, fewer as its cards leave the dealer's hand (every
    *  card of this hand thrown by then), never fewer than one while a card is still to come. */
   _deckPile(t) {
     const thrown = this.cards.filter((c) => c.seat !== -4 && t > c.motions[0].t0).length;
     const n = Math.max(1, Math.ceil((DECK_PLATES * (DECK_CARDS - thrown)) / DECK_CARDS));
-    return Array.from({ length: n }, (_, k) => ({ card: -1, pos: this._rest(this.deck.at, k), yaw: this.deck.yaw, roll: Math.PI, id: `d${this.handNo}:${k}`, seat: -5, settled: true }));
+    return Array.from({ length: n }, (_, k) => ({
+      card: -1,
+      pos: this._rest(this.deck.at, k),
+      yaw: this.deck.yaw,
+      roll: Math.PI,
+      id: `d${this.handNo}:${k}`,
+      seat: -5,
+      settled: true,
+    }));
   }
 
   /** AUDIT CARDS-3 C4: the clock (seconds) the cloth is still until - the last street turned, the hands shown, the pot's
@@ -238,7 +363,15 @@ export class CardScene {
 
   /** A street's end: every bet slides into the pot. */
   _pushBets(t) {
-    for (const [seat, amount] of this.lastBets) if (amount > 0) this.pushes.push({ amount, from: this.places.seats[seat].bet, to: this.places.pot, t0: t, yaw: this.places.seats[seat].yaw });
+    for (const [seat, amount] of this.lastBets)
+      if (amount > 0)
+        this.pushes.push({
+          amount,
+          from: this.places.seats[seat].bet,
+          to: this.places.pot,
+          t0: t,
+          yaw: this.places.seats[seat].yaw,
+        });
     this.lastBets.clear();
   }
 
@@ -253,17 +386,34 @@ export class CardScene {
   poses(t, view, carried = null) {
     const cards = [];
     for (const c of this.cards) {
-      if (c.seat === -4 && t >= c.motions[c.motions.length - 1].t1) continue;   // CARDS-TIDY: gathered into the deck
+      if (c.seat === -4 && t >= c.motions[c.motions.length - 1].t1) continue; // CARDS-TIDY: gathered into the deck
       const p = this._poseOf(c, t);
-      if (p.held) continue;   // still in the dealer's hand
-      cards.push({ card: c.card, pos: p.pos, yaw: p.yaw, roll: p.roll, id: c.id, seat: c.seat, settled: t >= c.motions[c.motions.length - 1].t1 });   // CARDS3b: whose, and at rest - the player's settled two are his to hold
+      if (p.held) continue; // still in the dealer's hand
+      cards.push({
+        card: c.card,
+        pos: p.pos,
+        yaw: p.yaw,
+        roll: p.roll,
+        id: c.id,
+        seat: c.seat,
+        settled: t >= c.motions[c.motions.length - 1].t1,
+      }); // CARDS3b: whose, and at rest - the player's settled two are his to hold
     }
     if (this.riffle) cards.push(...riffleAt(t, this.riffle.t0, this.riffle.at, this.riffle.yaw));
-    if (this._pileShown(t)) cards.push(...this._deckPile(t));   // CARDS-TIDY: the squared deck, thinning as it is dealt
+    if (this._pileShown(t)) cards.push(...this._deckPile(t)); // CARDS-TIDY: the squared deck, thinning as it is dealt
     const chips = [];
     const live = this.pushes.filter((p) => t < p.t0 + PUSH_S);
     // a push is drawn once it begins; a pot share waiting its turn is still in the pot's pile (below)
-    for (const p of live) if (t >= p.t0 || !p.potShare) chips.push(...chipDiscs(p.amount, pushAt(p.from, p.to, p.t0, Math.max(t, p.t0), p.potShare ? SCOOP_LIFT : 0), p.yaw, p.toSeat != null));   // AUDIT CARDS-3 D10: a share comes home in the stack's own columns - away from his cards
+    for (const p of live)
+      if (t >= p.t0 || !p.potShare)
+        chips.push(
+          ...chipDiscs(
+            p.amount,
+            pushAt(p.from, p.to, p.t0, Math.max(t, p.t0), p.potShare ? SCOOP_LIFT : 0),
+            p.yaw,
+            p.toSeat != null,
+          ),
+        ); // AUDIT CARDS-3 D10: a share comes home in the stack's own columns - away from his cards
     if (view) {
       const hand = view.hand;
       let pot = 0;
@@ -274,15 +424,21 @@ export class CardScene {
         const h = hand && k >= 0 ? hand.seats[k] : null;
         // chips still sliding home are not yet in the stack they slide to
         const coming = live.filter((p) => p.toSeat === i && t < p.t0 + PUSH_S).reduce((a, p) => a + p.amount, 0);
-        const stack = (h ? h.stack : s.stack) - coming - (carried?.seat === i ? carried.amount : 0), bet = h ? h.bet : 0;
-        if (h) { this.lastBets.set(i, bet); pot += h.total - h.bet; }
+        const stack = (h ? h.stack : s.stack) - coming - (carried?.seat === i ? carried.amount : 0),
+          bet = h ? h.bet : 0;
+        if (h) {
+          this.lastBets.set(i, bet);
+          pot += h.total - h.bet;
+        }
         chips.push(...chipDiscs(stack, place.stack, place.yaw, true));
         if (bet > 0) chips.push(...chipDiscs(bet, place.bet, place.yaw));
       });
       // the pot less the bets still sliding into it; at a hand's end, the shares not yet pushed to their winners
       const sliding = live.filter((p) => p.to === this.places.pot).reduce((a, p) => a + p.amount, 0);
       const shares = live.filter((p) => p.potShare);
-      const waiting = shares.length ? shares.filter((p) => t < p.t0).reduce((a, p) => a + p.amount, 0) - sliding : pot - sliding;
+      const waiting = shares.length
+        ? shares.filter((p) => t < p.t0).reduce((a, p) => a + p.amount, 0) - sliding
+        : pot - sliding;
       if (waiting > 0) chips.push(...chipDiscs(waiting, this.places.pot, this.places.boardYaw));
     }
     return { cards, chips };

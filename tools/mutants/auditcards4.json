@@ -1410,8 +1410,8 @@
   {
     "name": "AC4-D4-gather-no-lift",
     "file": "src/world/card/cardMotion.js",
-    "old": "lerp(from.pos[1], to[1], u) + GATHER_LIFT * 4 * u * (1 - u)",
-    "new": "lerp(from.pos[1], to[1], u)",
+    "old": "        pos: [\n          lerp(from.pos[0], to[0], u),\n          lerp(from.pos[1], to[1], u) + GATHER_LIFT * 4 * u * (1 - u),\n          lerp(from.pos[2], to[2], u),\n        ],",
+    "new": "        pos: [lerp(from.pos[0], to[0], u), lerp(from.pos[1], to[1], u), lerp(from.pos[2], to[2], u)],",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1445,8 +1445,8 @@
   {
     "name": "AC4-D4-gather-stays-face",
     "file": "src/world/card/cardMotion.js",
-    "old": "roll: lerp(from.roll, Math.PI, u), moving: t < t1",
-    "new": "roll: from.roll, moving: t < t1",
+    "old": "        roll: lerp(from.roll, Math.PI, u),",
+    "new": "        roll: from.roll,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1480,8 +1480,8 @@
   {
     "name": "AC4-D4-gather-keeps-yaw",
     "file": "src/world/card/cardMotion.js",
-    "old": "yaw: lerp(from.yaw, yaw, u), roll: lerp(from.roll, Math.PI, u)",
-    "new": "yaw: from.yaw, roll: lerp(from.roll, Math.PI, u)",
+    "old": "        yaw: lerp(from.yaw, yaw, u),",
+    "new": "        yaw: from.yaw,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1515,8 +1515,8 @@
   {
     "name": "AC4-D4-gather-instant",
     "file": "src/world/card/cardMotion.js",
-    "old": "  const t1 = t0 + GATHER_S;\n  return {\n    t0, t1, rest: to.slice(),",
-    "new": "  const t1 = t0;\n  return {\n    t0, t1, rest: to.slice(),",
+    "old": "  const t1 = t0 + GATHER_S;",
+    "new": "  const t1 = t0;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1585,8 +1585,8 @@
   {
     "name": "AC4-D4-gather-always-moving",
     "file": "src/world/card/cardMotion.js",
-    "old": "roll: lerp(from.roll, Math.PI, u), moving: t < t1 };",
-    "new": "roll: lerp(from.roll, Math.PI, u), moving: true };",
+    "old": "        moving: t < t1,",
+    "new": "        moving: true,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1727,8 +1727,8 @@
   {
     "name": "AC4-D4-gathered-into-deck",
     "file": "src/world/card/cardScene.js",
-    "old": "to: this._rest(deckAt, DECK_PLATES + i * 0.1)",
-    "new": "to: this._rest(deckAt, 0)",
+    "old": "            gatherMotion({\n              from: this._poseOf(c, t),\n              to: this._rest(deckAt, DECK_PLATES + i * 0.1),\n              yaw: deckYaw,\n              t0: t,\n            }),",
+    "new": "            gatherMotion({ from: this._poseOf(c, t), to: this._rest(deckAt, 0), yaw: deckYaw, t0: t }),",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1797,8 +1797,8 @@
   {
     "name": "AC4-D4-old-dealer-deck",
     "file": "src/world/card/cardScene.js",
-    "old": "      const deckAt = this.places.seats[e.button].deck, deckYaw",
-    "new": "      const deckAt = this.places.seats[this.dealer].deck, deckYaw",
+    "old": "      const deckAt = this.places.seats[e.button].deck,",
+    "new": "      const deckAt = this.places.seats[this.dealer].deck,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1832,8 +1832,8 @@
   {
     "name": "AC4-D4-deck-hidden-gathering",
     "file": "src/world/card/cardScene.js",
-    "old": "!(t >= this.riffle?.t0 && t < this.deck.upTo)",
-    "new": "!(t < this.deck.upTo)",
+    "old": "    return !!this.deck && t >= this.deck.from && !(t >= this.riffle?.t0 && t < this.deck.upTo);",
+    "new": "    return !!this.deck && t >= this.deck.from && !(t < this.deck.upTo);",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1869,8 +1869,8 @@
   {
     "name": "AC4-D4-pile-thins-on-settle",
     "file": "src/world/card/cardScene.js",
-    "old": "c.seat !== -4 && t > c.motions[0].t0).length;",
-    "new": "c.seat !== -4 && t > c.motions[c.motions.length - 1].t1).length;",
+    "old": "    const thrown = this.cards.filter((c) => c.seat !== -4 && t > c.motions[0].t0).length;",
+    "new": "    const thrown = this.cards.filter((c) => c.seat !== -4 && t > c.motions[c.motions.length - 1].t1).length;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1904,8 +1904,8 @@
   {
     "name": "AC4-D4-pile-counts-gathered",
     "file": "src/world/card/cardScene.js",
-    "old": "const thrown = this.cards.filter((c) => c.seat !== -4 && t > c.motions[0].t0).length;",
-    "new": "const thrown = this.cards.filter((c) => t > c.motions[0].t0).length;",
+    "old": "    const thrown = this.cards.filter((c) => c.seat !== -4 && t > c.motions[0].t0).length;",
+    "new": "    const thrown = this.cards.filter((c) => t > c.motions[0].t0).length;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1939,8 +1939,8 @@
   {
     "name": "AC4-D4-pile-flat",
     "file": "src/world/card/cardScene.js",
-    "old": "pos: this._rest(this.deck.at, k), yaw: this.deck.yaw",
-    "new": "pos: this._rest(this.deck.at, 0), yaw: this.deck.yaw",
+    "old": "      pos: this._rest(this.deck.at, k),",
+    "new": "      pos: this._rest(this.deck.at, 0),",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1974,8 +1974,8 @@
   {
     "name": "AC4-D4-pile-face-up",
     "file": "src/world/card/cardScene.js",
-    "old": "yaw: this.deck.yaw, roll: Math.PI, id:",
-    "new": "yaw: this.deck.yaw, roll: 0, id:",
+    "old": "      yaw: this.deck.yaw,\n      roll: Math.PI,",
+    "new": "      yaw: this.deck.yaw,\n      roll: 0,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2009,8 +2009,8 @@
   {
     "name": "AC4-D4-pile-unsettled",
     "file": "src/world/card/cardScene.js",
-    "old": "seat: -5, settled: true",
-    "new": "seat: -5, settled: false",
+    "old": "      settled: true,",
+    "new": "      settled: false,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2044,8 +2044,8 @@
   {
     "name": "AC4-D4-gathered-keep-seat",
     "file": "src/world/card/cardScene.js",
-    "old": "id: `g${e.hand}:${i}`, seat: -4, motions:",
-    "new": "id: `g${e.hand}:${i}`, seat: c.seat, motions:",
+    "old": "          id: `g${e.hand}:${i}`,\n          seat: -4,",
+    "new": "          id: `g${e.hand}:${i}`,\n          seat: c.seat,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2079,8 +2079,8 @@
   {
     "name": "AC4-D4-gathered-keep-id",
     "file": "src/world/card/cardScene.js",
-    "old": "id: `g${e.hand}:${i}`, seat: -4,",
-    "new": "id: c.id, seat: -4,",
+    "old": "          id: `g${e.hand}:${i}`,",
+    "new": "          id: c.id,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2114,8 +2114,8 @@
   {
     "name": "AC4-D4-pile-at-old-place",
     "file": "src/world/card/cardScene.js",
-    "old": "this.deck = { at: deckAt, yaw: deckYaw,",
-    "new": "this.deck = { at: this.deck?.at ?? deckAt, yaw: deckYaw,",
+    "old": "      this.deck = { at: deckAt, yaw: deckYaw, from: t + gather, upTo: dealAt }; // CARDS-TIDY: the squared deck lies there, but while the riffle holds it; AUDIT CARDS-4 D5: once gathered",
+    "new": "      this.deck = { at: this.deck?.at ?? deckAt, yaw: deckYaw, from: t + gather, upTo: dealAt }; // CARDS-TIDY: the squared deck lies there, but while the riffle holds it; AUDIT CARDS-4 D5: once gathered",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",

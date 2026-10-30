@@ -344,8 +344,8 @@
   {
     "name": "E-scene-street-no-push",
     "file": "src/world/card/cardScene.js",
-    "old": "    if (e.t === 'street') {\n      this._pushBets(t);",
-    "new": "    if (e.t === 'street') {",
+    "old": "      this._pushBets(t);\n      // AUDIT CARDS-2 L1: an all-in's run-out says its streets in one drain - each waits for the last one's cards",
+    "new": "      // AUDIT CARDS-2 L1: an all-in's run-out says its streets in one drain - each waits for the last one's cards",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -363,8 +363,8 @@
   {
     "name": "E-scene-coming-ignored",
     "file": "src/world/card/cardScene.js",
-    "old": "const stack = (h ? h.stack : s.stack) - coming - (carried",
-    "new": "const stack = (h ? h.stack : s.stack) - (carried",
+    "old": "        const stack = (h ? h.stack : s.stack) - coming - (carried?.seat === i ? carried.amount : 0),",
+    "new": "        const stack = (h ? h.stack : s.stack) - (carried?.seat === i ? carried.amount : 0),",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -382,8 +382,8 @@
   {
     "name": "E-scene-boardyaw",
     "file": "src/world/card/cardScene.js",
-    "old": "boardYaw: frame.axisYaw + Math.PI / 2,",
-    "new": "boardYaw: frame.axisYaw,",
+    "old": "    boardYaw: frame.axisYaw + Math.PI / 2,",
+    "new": "    boardYaw: frame.axisYaw,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -401,8 +401,8 @@
   {
     "name": "E-scene-stack-side",
     "file": "src/world/card/cardScene.js",
-    "old": "stack: inward(STACK_IN, STACK_SIDE),",
-    "new": "stack: inward(STACK_IN, 0),",
+    "old": "      stack: inward(STACK_IN, STACK_SIDE),",
+    "new": "      stack: inward(STACK_IN, 0),",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -420,8 +420,8 @@
   {
     "name": "E-scene-dealer-from-player",
     "file": "src/world/card/cardScene.js",
-    "old": "const from = this.places.seats[e.button].deal;",
-    "new": "const from = this.places.seats[this.playerSeat].deal;",
+    "old": "      const from = this.places.seats[e.button].deal;",
+    "new": "      const from = this.places.seats[this.playerSeat].deal;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -458,8 +458,8 @@
   {
     "name": "E-scene-muck-not-flagged",
     "file": "src/world/card/cardScene.js",
-    "old": "        c.seat = -3;",
-    "new": "",
+    "old": "        c.seat = -3;\n      }",
+    "new": "      }",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -477,8 +477,8 @@
   {
     "name": "E-scene-burn-layer",
     "file": "src/world/card/cardScene.js",
-    "old": "to: this._rest(this.places.burn, this.cards.filter((c) => c.seat === -2).length)",
-    "new": "to: this._rest(this.places.burn)",
+    "old": "        to: this._rest(this.places.burn, this.cards.filter((c) => c.seat === -2).length),",
+    "new": "        to: this._rest(this.places.burn),",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -496,8 +496,8 @@
   {
     "name": "E-motion-slide-half",
     "file": "src/world/card/cardMotion.js",
-    "old": "const slide = Math.min(dist * 0.5, SLIDE_MIN + js * SLIDE_SPREAD);",
-    "new": "const slide = SLIDE_MIN + js * SLIDE_SPREAD;",
+    "old": "  const slide = Math.min(dist * 0.5, SLIDE_MIN + js * SLIDE_SPREAD);",
+    "new": "  const slide = SLIDE_MIN + js * SLIDE_SPREAD;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -515,8 +515,8 @@
   {
     "name": "E-motion-yaw-jitter-off",
     "file": "src/world/card/cardMotion.js",
-    "old": "const yawRest = yaw + (jx - jz) * YAW_JITTER;",
-    "new": "const yawRest = yaw;",
+    "old": "  const yawRest = yaw + (jx - jz) * YAW_JITTER;",
+    "new": "  const yawRest = yaw;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -800,8 +800,8 @@
   {
     "name": "E-scene-pot-push-now",
     "file": "src/world/card/cardScene.js",
-    "old": "      const at = Math.max(t0, this.busyUntil, t + PUSH_S) + POT_BEAT;",
-    "new": "      const at = t;",
+    "old": "      const at = Math.max(t0, this.busyUntil, t + PUSH_S) + POT_BEAT; // and once the street's last bets are in it",
+    "new": "      const at = t; // and once the street's last bets are in it",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -819,8 +819,8 @@
   {
     "name": "E-scene-pot-while-sliding",
     "file": "src/world/card/cardScene.js",
-    "old": "shares.filter((p) => t < p.t0).reduce((a, p) => a + p.amount, 0) - sliding : pot - sliding;",
-    "new": "shares.reduce((a, p) => a + p.amount, 0) - sliding : pot - sliding;",
+    "old": "      const waiting = shares.length\n        ? shares.filter((p) => t < p.t0).reduce((a, p) => a + p.amount, 0) - sliding\n        : pot - sliding;",
+    "new": "      const waiting = shares.length ? shares.reduce((a, p) => a + p.amount, 0) - sliding : pot - sliding;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1598,8 +1598,8 @@
   {
     "name": "A2-fold-from-rest",
     "file": "src/world/card/cardScene.js",
-    "old": "        const at = this._poseOf(c, t);\n        c.motions.push(dealMotion({ from: at.pos,",
-    "new": "        const at = this._restOf(c);\n        c.motions.push(dealMotion({ from: at.pos,",
+    "old": "        const at = this._poseOf(c, t);",
+    "new": "        const at = this._restOf(c);",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1655,8 +1655,8 @@
   {
     "name": "A2-streets-together",
     "file": "src/world/card/cardScene.js",
-    "old": "      const t0 = Math.max(t, this.busyUntil);\n      const from = this.places.seats[this.dealer].deal;",
-    "new": "      const t0 = t;\n      const from = this.places.seats[this.dealer].deal;",
+    "old": "      // AUDIT CARDS-2 L1: an all-in's run-out says its streets in one drain - each waits for the last one's cards\n      const t0 = Math.max(t, this.busyUntil);",
+    "new": "      // AUDIT CARDS-2 L1: an all-in's run-out says its streets in one drain - each waits for the last one's cards\n      const t0 = t;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1674,8 +1674,8 @@
   {
     "name": "A2-board-one-plane",
     "file": "src/world/card/cardScene.js",
-    "old": "this._rest(this.places.board[i], i & 1)",
-    "new": "this._rest(this.places.board[i])",
+    "old": "          to: flipShift(this._rest(this.places.board[i], i & 1), this.places.boardYaw),",
+    "new": "          to: flipShift(this._rest(this.places.board[i]), this.places.boardYaw),",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1693,8 +1693,8 @@
   {
     "name": "A2-burn-close",
     "file": "src/world/card/cardScene.js",
-    "old": "    burn: at(-(BOARD_SLOTS / 2 + 1) * BOARD_GAP, 0),",
-    "new": "    burn: at(-((BOARD_SLOTS + 1) / 2) * BOARD_GAP, 0),",
+    "old": "    burn: at(-(BOARD_SLOTS / 2 + 1) * BOARD_GAP, 0), // a gap and a half off the first slot: never on its plane, jittered (AUDIT CARDS-2 L4)",
+    "new": "    burn: at(-((BOARD_SLOTS + 1) / 2) * BOARD_GAP, 0), // a gap and a half off the first slot: never on its plane, jittered (AUDIT CARDS-2 L4)",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1750,8 +1750,8 @@
   {
     "name": "A2-flip-wrong-edge",
     "file": "src/world/card/cardMotion.js",
-    "old": "roll: edge ? fromRoll - a : fromRoll + a,",
-    "new": "roll: fromRoll + a,",
+    "old": "        roll: edge ? fromRoll - a : fromRoll + a,",
+    "new": "        roll: fromRoll + a,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1769,8 +1769,8 @@
   {
     "name": "A2-flip-own-yaw",
     "file": "src/world/card/cardScene.js",
-    "old": "t0: m.t1 + TURN_DELAY, acrossYaw: this.places.boardYaw });",
-    "new": "t0: m.t1 + TURN_DELAY });",
+    "old": "        const flip = flipMotion({\n          pos: m.rest,\n          yaw: m.at(Infinity).yaw,\n          fromRoll: Math.PI,\n          t0: m.t1 + TURN_DELAY,\n          acrossYaw: this.places.boardYaw,\n        });",
+    "new": "        const flip = flipMotion({ pos: m.rest, yaw: m.at(Infinity).yaw, fromRoll: Math.PI, t0: m.t1 + TURN_DELAY });",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1788,8 +1788,8 @@
   {
     "name": "A2-scoop-flat",
     "file": "src/world/card/cardScene.js",
-    "old": "p.potShare ? SCOOP_LIFT : 0",
-    "new": "0",
+    "old": "        chips.push(\n          ...chipDiscs(\n            p.amount,\n            pushAt(p.from, p.to, p.t0, Math.max(t, p.t0), p.potShare ? SCOOP_LIFT : 0),\n            p.yaw,\n            p.toSeat != null,\n          ),\n        ); // AUDIT CARDS-3 D10: a share comes home in the stack's own columns - away from his cards",
+    "new": "        chips.push(...chipDiscs(p.amount, pushAt(p.from, p.to, p.t0, Math.max(t, p.t0), 0), p.yaw, p.toSeat != null)); // AUDIT CARDS-3 D10: a share comes home in the stack's own columns - away from his cards",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",

@@ -11,8 +11,8 @@
   {
     "name": "CS-side-min-off",
     "file": "src/world/card/cardTables.js",
-    "old": "(len < SEAT_SIDE_MIN ? 0 :",
-    "new": "(len <= SEAT_SIDE_MIN ? 0 :",
+    "old": "  const along = (len) => (len < SEAT_SIDE_MIN ? 0 : Math.max(1, Math.floor(len / SEAT_SPACING)));",
+    "new": "  const along = (len) => (len <= SEAT_SIDE_MIN ? 0 : Math.max(1, Math.floor(len / SEAT_SPACING)));",
     "tests": [
       "test/world/card/cards2_seat.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "CS-no-seat-min-one",
     "file": "src/world/card/cardTables.js",
-    "old": "Math.max(1, Math.floor(len / SEAT_SPACING))",
-    "new": "Math.floor(len / SEAT_SPACING)",
+    "old": "  const along = (len) => (len < SEAT_SIDE_MIN ? 0 : Math.max(1, Math.floor(len / SEAT_SPACING)));",
+    "new": "  const along = (len) => (len < SEAT_SIDE_MIN ? 0 : Math.floor(len / SEAT_SPACING));",
     "tests": [
       "test/world/card/cards2_seat.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "CS-seat-at-edge",
     "file": "src/world/card/cardTables.js",
-    "old": "at: (t) => [x1 + SEAT_OUT, z0 + t * (z1 - z0)], nx: -1, nz: 0 },",
-    "new": "at: (t) => [x1, z0 + t * (z1 - z0)], nx: -1, nz: 0 },",
+    "old": "    { side: '+x', n: along(z1 - z0), at: (t) => [x1 + SEAT_OUT, z0 + t * (z1 - z0)], nx: -1, nz: 0 },",
+    "new": "    { side: '+x', n: along(z1 - z0), at: (t) => [x1, z0 + t * (z1 - z0)], nx: -1, nz: 0 },",
     "tests": [
       "test/world/card/cards2_seat.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "CS-normal-outward",
     "file": "src/world/card/cardTables.js",
-    "old": "at: (t) => [x0 + t * (x1 - x0), z1 + SEAT_OUT], nx: 0, nz: -1 },",
-    "new": "at: (t) => [x0 + t * (x1 - x0), z1 + SEAT_OUT], nx: 0, nz: 1 },",
+    "old": "    { side: '+z', n: along(x1 - x0), at: (t) => [x0 + t * (x1 - x0), z1 + SEAT_OUT], nx: 0, nz: -1 },",
+    "new": "    { side: '+z', n: along(x1 - x0), at: (t) => [x0 + t * (x1 - x0), z1 + SEAT_OUT], nx: 0, nz: 1 },",
     "tests": [
       "test/world/card/cards2_seat.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "CS-seats-at-the-ends",
     "file": "src/world/card/cardTables.js",
-    "old": "const [lx, lz] = s.at((k + 0.5) / s.n);",
-    "new": "const [lx, lz] = s.at(k / s.n);",
+    "old": "      const [lx, lz] = s.at((k + 0.5) / s.n);",
+    "new": "      const [lx, lz] = s.at(k / s.n);",
     "tests": [
       "test/world/card/cards2_seat.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "CS-floor-at-top",
     "file": "src/world/card/cardTables.js",
-    "old": "  const floorY = aabb.min[1], topY = aabb.max[1];",
-    "new": "  const floorY = aabb.max[1], topY = aabb.max[1];",
+    "old": "  const floorY = aabb.min[1],",
+    "new": "  const floorY = aabb.max[1],",
     "tests": [
       "test/world/card/cards2_seat.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "CS-standing-eye",
     "file": "src/world/card/cardTables.js",
-    "old": "const eye = [p[0], floorY + SEATED_EYE_HEIGHT, p[2]];",
-    "new": "const eye = [p[0], floorY + 1.7, p[2]];",
+    "old": "    const eye = [p[0], floorY + SEATED_EYE_HEIGHT, p[2]];",
+    "new": "    const eye = [p[0], floorY + 1.7, p[2]];",
     "tests": [
       "test/world/card/cards2_seat.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "CS-probe-from-the-floor",
     "file": "src/world/card/cardTables.js",
-    "old": "if (!clear([midW[0], eye[1], midW[2]], eye)) continue;",
-    "new": "if (!clear([midW[0], floorY, midW[2]], eye)) continue;",
+    "old": "    if (!clear([midW[0], eye[1], midW[2]], eye)) continue;",
+    "new": "    if (!clear([midW[0], floorY, midW[2]], eye)) continue;",
     "tests": [
       "test/world/card/cards2_seat.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "CS-top-of-floor",
     "file": "src/world/card/cardTables.js",
-    "old": "feet: [p[0], floorY, p[2]], top: topY - floorY, eye,",
-    "new": "feet: [p[0], floorY, p[2]], top: topY, eye,",
+    "old": "      top: topY - floorY,",
+    "new": "      top: topY,",
     "tests": [
       "test/world/card/cards2_seat.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "CS-one-seat-a-table",
     "file": "src/world/card/cardTables.js",
-    "old": "if (kept.length < HOLDEM_SEATS_MIN) return [];",
-    "new": "if (kept.length < 1) return [];",
+    "old": "  if (kept.length < HOLDEM_SEATS_MIN) return [];",
+    "new": "  if (kept.length < 1) return [];",
     "tests": [
       "test/world/card/cards2_seat.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "CS-no-cap",
     "file": "src/world/card/cardTables.js",
-    "old": "if (kept.length <= HOLDEM_SEATS_MAX) return kept;",
-    "new": "return kept;",
+    "old": "  if (kept.length <= HOLDEM_SEATS_MAX) return kept;",
+    "new": "  return kept;",
     "tests": [
       "test/world/card/cards2_seat.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "CS-cap-first-six",
     "file": "src/world/card/cardTables.js",
-    "old": "for (let k = 0; out.length < HOLDEM_SEATS_MAX; k++) for (const q of queues) if (q[k] && out.length < HOLDEM_SEATS_MAX) out.push(q[k]);",
-    "new": "out.push(...kept.slice(0, HOLDEM_SEATS_MAX));",
+    "old": "  for (let k = 0; out.length < HOLDEM_SEATS_MAX; k++)\n    for (const q of queues) if (q[k] && out.length < HOLDEM_SEATS_MAX) out.push(q[k]);",
+    "new": "  out.push(...kept.slice(0, HOLDEM_SEATS_MAX));",
     "tests": [
       "test/world/card/cards2_seat.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "CS-taken-by-height",
     "file": "src/world/card/cardTables.js",
-    "old": "feet.some((f) => Math.hypot(f[0] - s.x, f[2] - s.z) <= SEAT_TAKEN_RADIUS)",
-    "new": "feet.some((f) => Math.hypot(f[0] - s.x, f[1], f[2] - s.z) <= SEAT_TAKEN_RADIUS)",
+    "old": "  seats.flatMap((s, i) => (feet.some((f) => Math.hypot(f[0] - s.x, f[2] - s.z) <= SEAT_TAKEN_RADIUS) ? [i] : []));",
+    "new": "  seats.flatMap((s, i) => (feet.some((f) => Math.hypot(f[0] - s.x, f[1], f[2] - s.z) <= SEAT_TAKEN_RADIUS) ? [i] : []));",
     "tests": [
       "test/world/card/cards2_seat.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "CS-taken-ignored",
     "file": "src/world/card/cardTables.js",
-    "old": "    if (busy.has(i)) return;",
-    "new": "",
+    "old": "    if (busy.has(i)) return;\n    const d = Math.hypot(s.x - x, s.z - z);",
+    "new": "    const d = Math.hypot(s.x - x, s.z - z);",
     "tests": [
       "test/world/card/cards2_seat.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "CS-farthest-seat",
     "file": "src/world/card/cardTables.js",
-    "old": "if (d < bestD) { best = i; bestD = d; }",
-    "new": "if (!(d <= bestD) || best < 0) { best = i; bestD = d; }",
+    "old": "    if (d < bestD) {",
+    "new": "    if (!(d <= bestD) || best < 0) {",
     "tests": [
       "test/world/card/cards2_seat.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "CS-table-top-a-floor",
     "file": "src/world/card/cardTables.js",
-    "old": "down >= SEATED_EYE_HEIGHT - SEAT_SURFACE_MAX",
-    "new": "down > SEATED_EYE_HEIGHT - SEAT_SURFACE_MAX",
+    "old": "export const seatFloorOk = (down) => down >= SEATED_EYE_HEIGHT - SEAT_SURFACE_MAX && down <= SEAT_FLOOR_PROBE; // a miss (Infinity) and NaN fail both",
+    "new": "export const seatFloorOk = (down) => down > SEATED_EYE_HEIGHT - SEAT_SURFACE_MAX && down <= SEAT_FLOOR_PROBE; // a miss (Infinity) and NaN fail both",
     "tests": [
       "test/world/card/cards2_seat.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "CS-drop-a-floor",
     "file": "src/world/card/cardTables.js",
-    "old": "&& down <= SEAT_FLOOR_PROBE;",
-    "new": "&& down < SEAT_FLOOR_PROBE;",
+    "old": "export const seatFloorOk = (down) => down >= SEATED_EYE_HEIGHT - SEAT_SURFACE_MAX && down <= SEAT_FLOOR_PROBE; // a miss (Infinity) and NaN fail both",
+    "new": "export const seatFloorOk = (down) => down >= SEATED_EYE_HEIGHT - SEAT_SURFACE_MAX && down < SEAT_FLOOR_PROBE; // a miss (Infinity) and NaN fail both",
     "tests": [
       "test/world/card/cards2_seat.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "CS-jump-sits",
     "file": "src/world/card/cardTables.js",
-    "old": "|| mv?.right || jump",
-    "new": "|| mv?.right",
+    "old": "    jump ||\n    (mv?.analog && Math.hypot(Number(mv.analog.x) || 0, Number(mv.analog.y) || 0) > SEAT_STICK_LEAVE)",
+    "new": "    (mv?.analog && Math.hypot(Number(mv.analog.x) || 0, Number(mv.analog.y) || 0) > SEAT_STICK_LEAVE)",
     "tests": [
       "test/world/card/cards2_seat.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "CS-stick-ignored",
     "file": "src/world/card/cardTables.js",
-    "old": "Math.hypot(Number(mv.analog.x) || 0, Number(mv.analog.y) || 0) > SEAT_STICK_LEAVE",
-    "new": "false",
+    "old": "  !!(\n    mv?.forwards ||\n    mv?.backwards ||\n    mv?.left ||\n    mv?.right ||\n    jump ||\n    (mv?.analog && Math.hypot(Number(mv.analog.x) || 0, Number(mv.analog.y) || 0) > SEAT_STICK_LEAVE)\n  );",
+    "new": "  !!(mv?.forwards || mv?.backwards || mv?.left || mv?.right || jump || (mv?.analog && false));",
     "tests": [
       "test/world/card/cards2_seat.test.js"
     ]

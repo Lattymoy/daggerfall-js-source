@@ -630,8 +630,8 @@
   {
     "name": "D-look-one-face",
     "file": "src/world/card/cardRegulars.js",
-    "old": "faceIndex: Math.floor(r() * REGULAR_FACES), items",
-    "new": "faceIndex: 0, items",
+    "old": "  return { race, gender: female ? 'female' : 'male', faceIndex: Math.floor(r() * REGULAR_FACES), items };",
+    "new": "  return { race, gender: female ? 'female' : 'male', faceIndex: 0, items };",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -652,8 +652,8 @@
   {
     "name": "D-look-one-variant",
     "file": "src/world/card/cardRegulars.js",
-    "old": "variant: Math.floor(r() * 2) });",
-    "new": "variant: 0 });",
+    "old": "  const put = (templateIndex, equipSlot) =>\n    items.push({ templateIndex, group, equipSlot, variant: Math.floor(r() * 2) });",
+    "new": "  const put = (templateIndex, equipSlot) => items.push({ templateIndex, group, equipSlot, variant: 0 });",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -674,8 +674,8 @@
   {
     "name": "D-stack-grab-strict",
     "file": "src/world/card/cardHand.js",
-    "old": "<= STACK_GRAB_M;",
-    "new": "< STACK_GRAB_M * 0.95;",
+    "old": "export const onStack = (p, place) => !!p && Math.hypot(p[0] - place.stack[0], p[2] - place.stack[2]) <= STACK_GRAB_M;",
+    "new": "export const onStack = (p, place) =>\n  !!p && Math.hypot(p[0] - place.stack[0], p[2] - place.stack[2]) < STACK_GRAB_M * 0.95;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -696,8 +696,8 @@
   {
     "name": "D-betzone-margin",
     "file": "src/world/card/cardHand.js",
-    "old": "return depth(p) > depth(place.holes[0]) + 0.02;",
-    "new": "return depth(p) > depth(place.holes[0]) - 0.02;",
+    "old": "  return depth(p) > depth(place.holes[0]) + 0.02;",
+    "new": "  return depth(p) > depth(place.holes[0]) - 0.02;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -718,8 +718,8 @@
   {
     "name": "D-peek-no-rise",
     "file": "src/world/card/cardHand.js",
-    "old": "HELD_AT[1] + PEEK_RISE * p + Math.max",
-    "new": "HELD_AT[1] + Math.max",
+    "old": "    const up = HELD_AT[1] + PEEK_RISE * p + Math.max(0, Math.min(HELD_LIFT_MAX * f, lift));",
+    "new": "    const up = HELD_AT[1] + Math.max(0, Math.min(HELD_LIFT_MAX * f, lift));",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -740,8 +740,8 @@
   {
     "name": "D-riffle-yaw-sign",
     "file": "src/world/card/cardMotion.js",
-    "old": "  const r = [Math.cos(yaw), 0 - Math.sin(yaw)];\n  const n = RIFFLE_HALF * 2;",
-    "new": "  const r = [Math.cos(yaw), Math.sin(yaw)];\n  const n = RIFFLE_HALF * 2;",
+    "old": "  if (!(u >= 0 && u < 1)) return [];\n  const r = [Math.cos(yaw), 0 - Math.sin(yaw)];",
+    "new": "  if (!(u >= 0 && u < 1)) return [];\n  const r = [Math.cos(yaw), Math.sin(yaw)];",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -762,8 +762,8 @@
   {
     "name": "D-riffle-no-bend",
     "file": "src/world/card/cardMotion.js",
-    "old": "roll: Math.PI + side * 0.35 * part * (1 - fallen) });",
-    "new": "roll: Math.PI });",
+    "old": "      roll: Math.PI + side * 0.35 * part * (1 - fallen),",
+    "new": "      roll: Math.PI,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -784,8 +784,8 @@
   {
     "name": "D-riffle-no-lift",
     "file": "src/world/card/cardMotion.js",
-    "old": "+ 0.012 * (1 - fallen) * part,",
-    "new": ",",
+    "old": "      pos: [at[0] + r[0] * off, at[1] + CARD_T * (0.5 + layer) + 0.012 * (1 - fallen) * part, at[2] + r[1] * off],",
+    "new": "      pos: [at[0] + r[0] * off, at[1] + CARD_T * (0.5 + layer), at[2] + r[1] * off],",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2265,8 +2265,8 @@
   {
     "name": "C8-carried-on-stack",
     "file": "src/world/card/cardScene.js",
-    "old": " - (carried?.seat === i ? carried.amount : 0), bet",
-    "new": " , bet",
+    "old": "        const stack = (h ? h.stack : s.stack) - coming - (carried?.seat === i ? carried.amount : 0),",
+    "new": "        const stack = (h ? h.stack : s.stack) - coming,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2287,8 +2287,8 @@
   {
     "name": "C6-no-frame",
     "file": "src/world/card/cardScene.js",
-    "old": "    table: frame,   // AUDIT CARDS-3 C6",
-    "new": "    table: null,   // AUDIT CARDS-3 C6",
+    "old": "    table: frame, // AUDIT CARDS-3 C6: the top's own frame - a carried bet is let go on it or not at all",
+    "new": "    table: null, // AUDIT CARDS-3 C6: the top's own frame - a carried bet is let go on it or not at all",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2309,8 +2309,8 @@
   {
     "name": "D10-push-centred",
     "file": "src/world/card/cardScene.js",
-    "old": "p.yaw, p.toSeat != null));",
-    "new": "p.yaw));",
+    "old": "          ...chipDiscs(\n            p.amount,\n            pushAt(p.from, p.to, p.t0, Math.max(t, p.t0), p.potShare ? SCOOP_LIFT : 0),\n            p.yaw,\n            p.toSeat != null,\n          ),",
+    "new": "          ...chipDiscs(p.amount, pushAt(p.from, p.to, p.t0, Math.max(t, p.t0), p.potShare ? SCOOP_LIFT : 0), p.yaw),",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2507,8 +2507,8 @@
   {
     "name": "TIDY-wiped",
     "file": "src/world/card/cardScene.js",
-    "old": "        ...left.map((c, i) =>",
-    "new": "        ...[].map((c, i) =>",
+    "old": "        ...left.map((c, i) => ({",
+    "new": "        ...[].map((c, i) => ({",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2533,8 +2533,8 @@
   {
     "name": "TIDY-regathered",
     "file": "src/world/card/cardScene.js",
-    "old": "      const left = this.cards.filter((c) => c.seat !== -4);",
-    "new": "      const left = this.cards;",
+    "old": "      const left = this.cards.filter((c) => c.seat !== -4); // cards still on their way from the hand before join the deck now",
+    "new": "      const left = this.cards; // cards still on their way from the hand before join the deck now",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2577,8 +2577,8 @@
   {
     "name": "TIDY-no-pile",
     "file": "src/world/card/cardScene.js",
-    "old": "    if (this._pileShown(t)) cards.push(...this._deckPile(t));",
-    "new": "    void this.deck;",
+    "old": "    if (this._pileShown(t)) cards.push(...this._deckPile(t)); // CARDS-TIDY: the squared deck, thinning as it is dealt",
+    "new": "    void this.deck; // CARDS-TIDY: the squared deck, thinning as it is dealt",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2603,8 +2603,8 @@
   {
     "name": "TIDY-pile-never-thins",
     "file": "src/world/card/cardScene.js",
-    "old": "Math.ceil((DECK_PLATES * (DECK_CARDS - thrown)) / DECK_CARDS)",
-    "new": "DECK_PLATES",
+    "old": "    const n = Math.max(1, Math.ceil((DECK_PLATES * (DECK_CARDS - thrown)) / DECK_CARDS));",
+    "new": "    const n = Math.max(1, DECK_PLATES);",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2625,8 +2625,8 @@
   {
     "name": "TIDY-gathered-forever",
     "file": "src/world/card/cardScene.js",
-    "old": "      if (c.seat === -4 && t >= c.motions[c.motions.length - 1].t1) continue;",
-    "new": "      void c;",
+    "old": "      if (c.seat === -4 && t >= c.motions[c.motions.length - 1].t1) continue; // CARDS-TIDY: gathered into the deck",
+    "new": "      void c; // CARDS-TIDY: gathered into the deck",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",

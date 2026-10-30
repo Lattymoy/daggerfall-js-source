@@ -201,8 +201,8 @@
   {
     "name": "AC6-E21-lift-reach-held",
     "file": "src/world/card/cardHand.js",
-    "old": "Math.max(0, Math.min(HELD_LIFT_MAX * f, lift))",
-    "new": "Math.max(0, Math.min(HELD_LIFT_MAX, lift))",
+    "old": "    const up = HELD_AT[1] + PEEK_RISE * p + Math.max(0, Math.min(HELD_LIFT_MAX * f, lift));",
+    "new": "    const up = HELD_AT[1] + PEEK_RISE * p + Math.max(0, Math.min(HELD_LIFT_MAX, lift));",
     "tests": [
       "test/systems/auditcards6_e.test.js"
     ]

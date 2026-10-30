@@ -35,8 +35,8 @@
   {
     "name": "C3b-left-in-front",
     "file": "src/world/card/cardHand.js",
-    "old": "HELD_AT[2] - k * 0.002, -lean, 0, -k * HELD_FAN_DEG);",
-    "new": "HELD_AT[2] + k * 0.002, -lean, 0, -k * HELD_FAN_DEG);",
+    "old": "    const local = trs(HELD_AT[0] + k * gap, f * up, f * HELD_AT[2] - k * 0.002, -lean, 0, -k * HELD_FAN_DEG);",
+    "new": "    const local = trs(HELD_AT[0] + k * gap, f * up, f * HELD_AT[2] + k * 0.002, -lean, 0, -k * HELD_FAN_DEG);",
     "tests": [
       "test/world/card/cards3b_hand.test.js",
       "test/world/card/cards3_motion.test.js",

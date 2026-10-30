@@ -130,6 +130,8 @@
 /src/ui/wild/*/
 !/src/world/
 /src/world/*
+!/src/world/card/
+/src/world/card/*/
 !/src/world/jungle/
 /src/world/jungle/*/
 !/src/world/ketch/
