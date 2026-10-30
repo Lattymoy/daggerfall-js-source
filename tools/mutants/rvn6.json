@@ -155,8 +155,8 @@
   {
     "name": "RVN6-band-unstood",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "      if (revenant && band && !puppet && !allied && entity.revenant) Promise.resolve().then(() => standBand(f, bandMembers(revenant, effectiveLevel(playerEntity))));",
-    "new": "      if (false) Promise.resolve().then(() => standBand(f, bandMembers(revenant, effectiveLevel(playerEntity))));",
+    "old": "      if (revenant && band && !puppet && !allied && entity.revenant) Promise.resolve().then(() => standBand(f, templateBand(revenant, retinueCount(revenant.rank)) ?? bandMembers(revenant, effectiveLevel(playerEntity))));",
+    "new": "      if (false) Promise.resolve().then(() => standBand(f, templateBand(revenant, retinueCount(revenant.rank)) ?? bandMembers(revenant, effectiveLevel(playerEntity))));",
     "tests": [
       "test/systems/rvn6_band.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "RVN6-saved",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "{ yaw: f.ai.yaw, level: m.level, champion: null, eliteFoe: false, transient: true }",
-    "new": "{ yaw: f.ai.yaw, level: m.level, champion: null, eliteFoe: false }",
+    "old": "{ yaw: f.ai.yaw, level: m.level, template: m.template ?? null, champion: null, eliteFoe: false, transient: true }",
+    "new": "{ yaw: f.ai.yaw, level: m.level, template: m.template ?? null, champion: null, eliteFoe: false }",
     "tests": [
       "test/systems/rvn6_band.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "RVN6-a-champion",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "{ yaw: f.ai.yaw, level: m.level, champion: null, eliteFoe: false, transient: true }",
-    "new": "{ yaw: f.ai.yaw, level: m.level, champion: 0, eliteFoe: false, transient: true }",
+    "old": "{ yaw: f.ai.yaw, level: m.level, template: m.template ?? null, champion: null, eliteFoe: false, transient: true }",
+    "new": "{ yaw: f.ai.yaw, level: m.level, template: m.template ?? null, champion: 0, eliteFoe: false, transient: true }",
     "tests": [
       "test/systems/rvn6_band.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "RVN6-an-elite",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "{ yaw: f.ai.yaw, level: m.level, champion: null, eliteFoe: false, transient: true }",
-    "new": "{ yaw: f.ai.yaw, level: m.level, champion: null, eliteFoe: true, transient: true }",
+    "old": "{ yaw: f.ai.yaw, level: m.level, template: m.template ?? null, champion: null, eliteFoe: false, transient: true }",
+    "new": "{ yaw: f.ai.yaw, level: m.level, template: m.template ?? null, champion: null, eliteFoe: true, transient: true }",
     "tests": [
       "test/systems/rvn6_band.test.js"
     ]
