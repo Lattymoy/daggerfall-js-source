@@ -822,6 +822,10 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
       return { active, finished: notebook?.getFinishedQuests() ?? [], ended, hidden: notebook?.getHiddenQuests?.() ?? [], shelved, unlogged, lines: windows && questlinesOn() ? questlines.lineRows() : [], ladders: windows && questlinesOn() ? ladderRows() : [] };   // QL12: the questlines and the guilds' ladders - none while they are off
     },
 
+    /** QUEST-AUDIT IV JOURNAL-2: a host's own rows on the walk (world.js: bounties, revenant hunts, Legacy's death
+     *  quests), through this one seam - so what the player tracks or hides among them lasts as long as they do. */
+    addQuestRows(rows) { hostRows.push(rows); },
+
     /**
      * JOURNAL-CLEAN (2026-09-30, Discord: "Should there be a way to clean both finished and unfinished quests from
      * your journal for a cleaner look?"): the enhanced journal's four tidy-ups, one home - every host that hands its
@@ -830,11 +834,6 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
      * filed entries (the classic logbook's right-click remove, ui/quest/questJournal.js removeEntry, is the same store);
      * hide/unhide only file a uid in the notebook's hidden list, which saves with the notebook.
      */
-    /** QUEST-AUDIT IV JOURNAL-2: a host lays rows of its own on the walk - world.js the bounties, the revenant hunts and
-     *  Legacy's death quests - through this one seam, so what the player tracks or hides among them lasts as they do
-     *  (a wrapper laid them past the bridge, which let a tracked one go each tick and unhid a hidden one at once). */
-    addQuestRows(rows) { hostRows.push(rows); },
-
     journalClean: {
       /** The archived entry at notebook index `i` (the rail's `f:<i>` key); answers whether one went. */
       removeFinished(i) {
