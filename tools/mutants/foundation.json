@@ -661,7 +661,8 @@
     "old": "    const regionIndex = regionOfTheatre(THEATRE_KEYS.indexOf(CAPITALS[at.k]?.province));",
     "new": "    const regionIndex = maps.getRegionIndexAt(px, py);",
     "tests": [
-      "test/world/atlas/f1_atlas_served.test.js"
+      "test/world/atlas/f1_atlas_served.test.js",
+      "test/tesa10_capitals.test.js"
     ]
   },
   {
