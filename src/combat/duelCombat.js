@@ -98,8 +98,8 @@ export function duelAttackerOf(entity, weapon = null, wraps = null, foe = null) 
     // the target's share unread (an axe's and a hammer's halves at their mean)
     wp: Math.max(0, Math.round(blowRoom(weaponPastPct(weapon, entity, UNREAD_SHARE), 'mastery') || 0)),
     pl: Math.max(1, Math.trunc(Number(entity?.level) || 1)),   // PVP-TRIANGLE: the real level (`lv` stops at the cast's 30)
-    gp: pvpGearBlowPct(entity, weapon ?? wraps, undefined, foe),   // PVP-GEAR: what the striker's gear adds, capped - a fist's own pair of Hand Wraps
-    gf: pvpGearBlowFlat(entity, weapon ?? wraps, foe),   // PVP-GEAR: Serpent's Kiss, flat
+    gp: pvpGearBlowPct(entity, weapon?.werecreatureClaws ? wraps : weapon ?? wraps, undefined, foe),   // WERE-WRAPS: claws strike in the wraps   // PVP-GEAR: what the striker's gear adds, capped - a fist's own pair of Hand Wraps
+    gf: pvpGearBlowFlat(entity, weapon?.werecreatureClaws ? wraps : weapon ?? wraps, foe),   // PVP-GEAR: Serpent's Kiss, flat
     ...(foe != null ? { fo: foe } : {}),   // PVP-GEAR: the foe struck, for First Blood's memory
   };
 }

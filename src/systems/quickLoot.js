@@ -377,15 +377,14 @@ export function resetQuickLoot() { _sel = null; _nudge = 0; _pending = null; _ac
 export function quickLootTake(key, hooks, playerEntity, say = () => {}, { getQuest = null, took = null } = {}) {
   const how = _pending;
   _pending = null;   // spent on the press it was armed for, whatever that press finds
-  if (how === 'open') return null;   // J: the player asked for the window
-  if (!quickLootOn() || !hooks || !playerEntity) return null;
-  // DISC10-E L3: a transformed lycanthrope's pack is refused
-  // (DaggerfallInventoryWindow.cs:583-587). Null is "open the window" -
-  // and the window's door says the line and opens nothing.
-  if (racialSuppressInventory(playerEntity)) return null;
+  // WERE-LOOT (2026-10-30, the owner: "let them loot ... just dont let them open inventory"): the beast's pack window
+  // stays shut (DISC10-E L3), so every press of its takes the lot, quick loot on or off
+  const beast = !!racialSuppressInventory(playerEntity);
+  if (how === 'open' && !beast) return null;   // J: the player asked for the window
+  if ((!quickLootOn() && !beast) || !hooks || !playerEntity) return null;
   const items = hooks.items?.();
   if (!Array.isArray(items)) return null;
-  if (how === 'all') {
+  if (how === 'all' || beast) {
     // P: the lot, through the same one-item door - so the carry gate and
     // the gold rule are the window's here too, and a caller cannot get a
     // bulk take that spells them differently. `[...items]` because the
