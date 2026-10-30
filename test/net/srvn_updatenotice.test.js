@@ -243,7 +243,7 @@ test('SRV-N: the host wires BOTH arms and puts a notice on EVERY tab - the prese
   assert.match(w, /online\.onRelay\s*=\s*onRelayVersion/, 'and so does the presence session, which is usually first back after a deploy');
   assert.match(w, /relayVersionSeen\(v\)\s*===\s*'changed'/, 'ONE detector behind both arms, or two sockets say it twice');
   assert.match(w, /chatNotice\(relayRestartText\(\)\)/);   // L10N4 (PIN MOVED): RELAY_RESTART_TEXT through its reader, in the player's language
-  assert.match(w, /=== 'changed' && startForcedUpdate\(\{ notice: chatNotice, save: onlineCheckpoint, busy: /);   // UPDATE-FORCE (PIN MOVED): the warning, the save and the reload
+  assert.match(w, /pollForUpdate\(\{ notice: chatNotice, save: onlineCheckpoint, busy: /);   // UPDATE-FORCE (PIN MOVED): the warning, the save and the reload - PIN MOVED (UPDATE-RESTART): through ui/updateScreen.js pollForUpdate
   // A NOTICE IS NOT A ROOM'S EVENT. It is kept on every one of the log's
   // tabs rather than pushed to the active one, so a later row in CHAT_TABS
   // gets it for free and a player reading one tab is never guessing.
@@ -252,7 +252,7 @@ test('SRV-N: the host wires BOTH arms and puts a notice on EVERY tab - the prese
   // drives what pushAll does.
   assert.match(w, /chatLog\.pushAll\(\{ text \}\);/, 'every tab, one line, and marked as the game\'s');
   assert.match(w, /const chatFrame = \(\) => \{\s*if \(!chatLinks\) return;\s*buildPoll\(/, 'the poll rides the chat frame - there is no notice to give where there is no chat window');
-  assert.match(w, /buildUpdateSeen\(tag, BUILD_TAG\)/, 'against THIS bundle\'s tag, which is the only thing that makes the compare need no baseline');
+  assert.match(rd('src/ui/updateScreen.js'), /buildUpdateSeen\(tag, BUILD_TAG\)/, 'PIN MOVED (UPDATE-RESTART): against THIS bundle\'s tag, which is the only thing that makes the compare need no baseline');
   // AUDIT-SRVN: the gate AND the stamp, adjacent and in that order. A
   // campaign survivor deleted the stamp alone: the gate still read, still
   // compared, and compared against a number nothing ever moved - so after

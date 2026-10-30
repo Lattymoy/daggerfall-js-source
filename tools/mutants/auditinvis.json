@@ -101,7 +101,7 @@
   {
     "name": "AINV-G-hidden-drawn",
     "file": "src/net/remotePlayers.js",
-    "old": "      if (hidden(peer.id)) continue;\n",
+    "old": "      if (hid) { if (hid === 'bar') this._shown.push({ peer, height: bodyHeight(peer.id) || PEER_HEIGHT, hid: true }); continue; }\n",
     "new": "\n",
     "tests": [
       "test/net/invisnet.test.js"

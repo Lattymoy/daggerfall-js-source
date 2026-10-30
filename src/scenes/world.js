@@ -613,8 +613,11 @@ import { createUseMagicItemWindow, noItemToActivateText } from '../ui/useMagicIt
 import { preloadTransportArt } from '../ui/transportWindow.js';   // TR3: the picker's art (the picker itself is the mount rig's)
 import { TRANSPORT_MODES } from '../systems/transport.js';   // TR3: what the rows offer
 import { shipTransition, REPOSITION, isOnShip, shipMemory, shipRestorePos } from '../systems/ship.js';   // TR4: board and disembark; AUDIT-TO1 D1: TransportManager.IsOnShip for the popup; AUDIT 68 S22: the memory's height, compensation-free
+import { createDragonViewHost } from './dragonViewHost.js';   // DRAGON-POV: my dragon in third person
+import { setDragonSaddleCovered } from '../player/dragonSaddle.js';   // DRAGON-POV: the saddle under a panel
 import { createStaffDragonHost } from './staffDragonHost.js';   // DRAGON-RIDE: an Admin's ride on the Dwarven Dragon
 import { parseDragonCommand, DRAGON_HELP_LINE, noteDragonRelay, dragonPoseRide, dragonWireCast, drawPeerCast, dragonRideLook } from '../systems/staffDragon.js';   // DRAGON-RIDE: /dragon's grammar and its /staff line; DRAGON-SHOTS: the cannons on the wire, and a peer's drawn
+import { runGlowCommand } from '../systems/staffGlow.js';   // GLOW-SET: /glow, a staff's pick of weapon glow
 import { dragonMountOf, dragonLookOfItem } from '../systems/dragon/dragonMount.js';   // DRAGON5: a tamed dragon's look in the pose
 import { dragonMounted } from '../player/dragonRide.js';   // DRAGON6: a journey begun on the dragon is flown
 import { dragonFlightPlan } from '../systems/dragon/dragonJourney.js';   // DRAGON6: its plan, straight
@@ -1035,9 +1038,8 @@ import { PageOffers, pageOfferText, pageShownText, pageTooFarText, keptPageToken
 import { quickslotTag, quickslotHand, tagText, actionKeyWord } from '../ui/quickslotTags.js';   // JOURNAL1: the F-menu's own key, named off the live bindings
 import { isTouchDevice } from '../ui/touch/touchDevice.js';   // JOURNAL1: ...or a tap, where a finger points
 import { composeCard, createCardAnswerGate, CARD_WAIT_MS } from '../net/profileCard.js';   // INSPECT1: my card when asked, and how often one asker is answered
-import { relayVersionSeen, buildUpdateSeen, fetchLiveBuildTag, relayRestartText, BUILD_POLL_MS } from '../net/updateNotice.js';   // SRV-N: the relay moved, or the build did
-import { startForcedUpdate } from '../ui/updateScreen.js';   // UPDATE-FORCE: a new build saves and reloads every open game
-import { BUILD_TAG } from '../buildTag.js';   // SRV-N: which build this tab is actually running
+import { relayVersionSeen, relayRestartText, BUILD_POLL_MS } from '../net/updateNotice.js';   // SRV-N: the relay moved, or the build did
+import { pollForUpdate } from '../ui/updateScreen.js';   // UPDATE-FORCE: a new build saves and reloads every open game (UPDATE-RESTART: restarts the desktop app)
 import { morrowindDataCount, morrowindDataGeneration, getBytes, clearRetiredArena } from './dataSource.js';   // MWBODY1: the bodies' gate - Morrowind data attached - and its generation
 // Q4-v: THE QUEST BRIDGE - the machine goes live in this host.
 import { createQuestBridge, tokensToRows, choiceDoor } from './quest/questBridge.js';
@@ -6467,6 +6469,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     surfaceKind: () => _lastFootstepKind, foesNear: () => areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes]), horseBreath: () => upkeep.bar(player.transportMode),
   });
   // RR2: the seams EnhancedRiding's component reads off the scene - in a town (PlayerGPS.IsPlayerInTown(true)), the transport mode
+  const dragonView = createDragonViewHost(renderer, pipeline);   // DRAGON-POV: the wheel out of the head on a dragon shows the dragon
   const staffDragon = createStaffDragonHost({ renderer, canvas, glyphs: () => _staffGlyphs, paused: () => gamePaused() });   // DRAGON-RIDE: /dragon, the flight's pace and the saddle (its cannons are the cast engine's)
   setRrHostSeams({ inTown: () => _isPlayerInTownStrict(), transportMode: () => player.transportMode, riding: () => player.riding });
   preloadPauseFlowArt({ renderer, fetchBytes, palette }).catch((e) => console.warn('[pause] pause/controls art unavailable:', e?.message ?? e));   // I3/I4
@@ -16680,6 +16683,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // dead until Escape. One Set of the surfaces standing: the FIRST to open frees the mouse, the LAST to close takes it
   // back, and the key ladder's resting-state relock (its tail) waits while any stands.
   const pointerSurfaces = new Set();
+  setDragonSaddleCovered(() => pointerSurfaces.size > 0 || !!townTalk.hudHidden || !!travelView?.active);   // DRAGON-POV: the saddle never painted under a chat, a panel or the F-menu (player/dragonSaddle.js)
   const surfaceOpen = (name) => { pointerSurfaces.add(name); setCursorActive(false); releaseLook(); };
   const surfaceClose = (name) => { pointerSurfaces.delete(name); if (!pointerSurfaces.size && !gamePaused()) { if (travelView?.active) setCursorActive(true); else requestLook(canvas); } };   // AUDIT TV B5: a chat closed over the travel view hands the cursor back to the view, never the lock
   let peerMenuReader = null;   // PEERMENU1: assigned beside the peers it reads (below); a key before then is not its
@@ -19751,7 +19755,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       if (!relayCfgLink?.sendRelayCfg({ k: c.k, v: c.v })) say('The relay\'s settings need the hub online, on a relay that takes them.');
       return;
     }
-    if (c.cmd === 'dragon') return staffDragon.command(c, say);   // DRAGON-RIDE
+    if (c.cmd === 'dragon' || c.cmd === 'glow') return c.cmd === 'glow' ? say(runGlowCommand(playerEntity, c, saveSoon.changed)) : staffDragon.command(c, say);   // DRAGON-RIDE; GLOW-SET: the weapon or wraps in my hands (one line: HOST-SPLIT)
     if (c.cmd === 'god' || c.cmd === 'fly') {
       setStaffPowers({ [c.cmd]: c.on });
       say(`${c.cmd === 'god' ? 'God mode' : 'Flying'} ${c.on ? 'on' : 'off'}.`);
@@ -22426,12 +22430,12 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       }
     }
   };
-  /** WILD3: a player's name over their head in the zone - my party's and my guild's as ever, anyone else's never: a
-   *  "Stranger" in its place (the colour is colorOf's, the enemy's red), with none of their badges. */
+  /** WILD3: a player's name over their head in the zone. Under the travel view a stranger is a red "Stranger" with
+   *  none of their badges; in 3D every name shows (PVP-SEEN). */
   const wildNameMask = (p) => {
     if (!p?.id || !online?.peers?.has?.(p.id) || !wildIsStranger(p.id, p.gt)) return p;
     _wildStrangerIds.add(p.id);   // within the names' reach is within the strangers' - red at once, before the next read
-    if (!(travelView?.active)) return null;   // PVPNEAR (the owner: \"the red stranger name should not appear when in 3d mode\"): the Overworld's marks name them; the 3D scene shows no name at all
+    if (!(travelView?.active)) return p;   // PVPNEAR: no red "Stranger" in 3D. PVP-SEEN (the owner, 2026-10-30): the real name instead - none only on the hidden (pvpFlagHost.js look)
     return { ...p, name: WILD_TEXT.stranger, title: null, glyphs: [], lv: null, gt: null, rb: null, house: null, tint: WILD_STRANGER_RGBA };   // in the enemy's red (nameFrame's tint)
   };
   /** My remains for the world map: where they lie (map pixels) and the minutes they have left. */
@@ -26798,7 +26802,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     if (now - _buildPolledAt < BUILD_POLL_MS) return;
     _buildPolledAt = now;
     // UPDATE-FORCE: the minute's warning, then the screen - held while a death screen or a duel is up
-    fetchLiveBuildTag(globalThis.location?.href ?? '').then((tag) => buildUpdateSeen(tag, BUILD_TAG) === 'changed' && startForcedUpdate({ notice: chatNotice, save: onlineCheckpoint, busy: () => !!duelMgr?.duel || townTalk.overlay instanceof DeathScreen || !!modes?.deathUp?.() || successionOpen() }), () => {});   // `fetchLiveBuildTag` swallows its own throws; this is the belt for a rejection it cannot see
+    // UPDATE-RESTART: the site's new build in a browser, the app's own update in the desktop app (ui/updateScreen.js pollForUpdate)
+    pollForUpdate({ notice: chatNotice, save: onlineCheckpoint, busy: () => !!duelMgr?.duel || townTalk.overlay instanceof DeathScreen || !!modes?.deathUp?.() || successionOpen() });
   };
   // ═══ CHAT-CHAN — THE FOUR CHANNELS, AT THE HOST ═══════════════════
   //
@@ -27893,7 +27898,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       for (const acct of [..._partyBodies]) if (!others.some((m) => m.acct === acct)) { _partyBodies.delete(acct); remotePlayers.partyForget(acct); }
     }
     if (online.room) remotePlayers.keepCorpses((r) => r === online.room || ((isWorldRoom(r) || isCellRoom(r)) && (isWorldRoom(online.room) || isCellRoom(online.room))));   // PCORPSE2: never judged while between rooms (a cell crossing's gap) - no room is not another space
-    remotePlayers.sync(visiblePeers, onlineToScene, { bodyHeight: (id) => peerRiders.heightOf(id) || peerBodies.heightOf(id) || peerWalkers.heightOf(id), dt, eye: travelView?.eye ?? player.pos, poseAgeMs: (p) => online.poseAgeMs(p), conceal: veilOf, hidden: (id) => _hiddenPeers.has(id), grow: tvGrow, room: drawable });   // AUDIT PEER-RANGE A L1/L6: the room's whole list - a rise past the draw distance is seen, and a cut peer keeps its sprite's bundle   // AUDIT (pre-merge) I-G: every peer HEARD (a concealed one's steps, swings and hooves - sound is no renderer), the classic lane's concealed drawn nowhere   // 2026-09-17: dt drives the class-enemy billboard path's own animation clock; eye is the local player's own position, needed for mobileOrientation's facing calculation (see remotePlayers.js _syncMobilePeer)   // AUDIT DEEP R-11: under the travel view, the view's own eye - the picture each peer shows is the one the camera sees
+    remotePlayers.sync(visiblePeers, onlineToScene, { bodyHeight: (id) => peerRiders.heightOf(id) || peerBodies.heightOf(id) || peerWalkers.heightOf(id), dt, eye: travelView?.eye ?? player.pos, poseAgeMs: (p) => online.poseAgeMs(p), conceal: veilOf, hidden: (id) => _hiddenPeers.has(id) && (pvpFlag.barKept(id) ? 'bar' : true), grow: tvGrow, room: drawable });   // AUDIT PEER-RANGE A L1/L6: the room's whole list - a rise past the draw distance is seen, and a cut peer keeps its sprite's bundle   // AUDIT (pre-merge) I-G: every peer HEARD (a concealed one's steps, swings and hooves - sound is no renderer), the classic lane's concealed drawn nowhere   // 2026-09-17: dt drives the class-enemy billboard path's own animation clock; eye is the local player's own position, needed for mobileOrientation's facing calculation (see remotePlayers.js _syncMobilePeer)   // AUDIT DEEP R-11: under the travel view, the view's own eye - the picture each peer shows is the one the camera sees
     peerFlashFrame();   // PEERFX3: after every layer has (re)made its sprites this frame
   };
   /** SPELLFX1 (the Unity co-op's RpcPlayPlayerSpellCastVisual): EVERY PEER'S CAST, DRAWN. The pose already carries the
@@ -32444,7 +32449,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const mwv0 = mwViewFrame({
       eyeOverride: travelView?.eye ?? null,
       fpEye: cam.pos, feet: player.feetAt(), yaw: cam.yaw, pitch: cam.pitch,
-      dt, riding: !!player.riding && !_driverSeat && !(player.transportMode === TRANSPORT_MODES.Cart && hcc.benchKind()),   // AUDIT-EOTB F3/F4: the host's own clock, and the one state only it has; WAGONS3: the bench is no saddle (AUDIT WAGONS3 B2: on a frame with no seat either)
+      dt, dragon: dragonView.ride(player, playerEntity.items), riding: !!player.riding && !_driverSeat && !(player.transportMode === TRANSPORT_MODES.Cart && hcc.benchKind()),   // AUDIT-EOTB F3/F4: the host's own clock, and the one state only it has; WAGONS3: the bench is no saddle (AUDIT WAGONS3 B2: on a frame with no seat either)
       horse: player.transportMode === TRANSPORT_MODES.Horse ? { look: riddenHorseLook(playerEntity.items ?? []), slow: player.slowRide } : null,   // COATS3D: on a horse (never the cart), the Morrowind body sits a 3D horse in this look; HORSE-WALK: held under the gallop on a slow ride
       ...(_driverSeat ? { seated: true, stopped: true, feet: _driverSeat.feet } : {}),   // WAGONS3: seated on it, still on it (the sprite plays no stride), the camera's feet the seat's (after `feet`: it wins)
       pivotFloor: _driverSeat ? hcc.cameraFloor() : null,   // BENCH-CAM: the third-person camera turns about a pivot over my wagon's roof, never in my head
@@ -32456,6 +32461,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (yards?.flying()) { const c = { pos: mwv0.eye }; yards.cameraOverride(c); mwv0.eye = c.pos; }
     if (poiEditor?.active()) mwv0.eye = [cam.pos[0], cam.pos[1], cam.pos[2]];   // POI-3: the editor's eye is the frame's, never the body's   // HOME-YARD: the decorator's free eye, while a piece is placed outside (no travel view is up then)
     egWitnessEye(mwv0);   // EG-FULL: the witness's eye, behind a living companion
+    dragonView.frame(player.feetAt(), cam.yaw, mwv0.eye, dt);   // DRAGON-POV: my dragon at my feet while the camera is out of the head
     // TV1: THE TRAVEL VIEW'S EYE, when it is up - risen out of the body's own camera (`ownEye`, the one the frame would
     // draw) and blended back into it on the way down. Every reader below that asks where the picture is taken from
     // reads `mwv.eye`; the fog and the sun's cascades measure from the traveller's head (renderer.setFocus - a frame's:
@@ -32934,6 +32940,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       if (cullOn && billboardOutside(b)) { if (renderer.shadowReachBatch(b)) castBatches.push(b); continue; }   // AUDIT REACH
       allBatches.push(b);
     }
+    dragonView.drawInto(allBatches);   // DRAGON-POV: my dragon, out of the head (never culled: the camera looks at it)
     if (peerRiders) for (const b of peerRiders.batches()) { if (cullOn && billboardOutside(b)) { if (renderer.shadowReachBatch(b)) castBatches.push(b); continue; } allBatches.push(b); }   // RIDE: the others in the saddle; AUDIT FLICKER R3: off screen, a shadow still in reach
     if (peerWalkers) for (const b of peerWalkers.batches()) { if (cullOn && billboardOutside(b)) { if (renderer.shadowReachBatch(b)) castBatches.push(b); continue; } allBatches.push(b); }   // DISC23-B: and on foot, as they chose; AUDIT FLICKER R3: off screen, a shadow still in reach
     if (bandSprites) for (const b of bandSprites.batches()) { if (cullOn && billboardOutside(b)) { if (renderer.shadowReachBatch(b)) castBatches.push(b); continue; } allBatches.push(b); }   // OW-FOES: the bands near, as their monsters; AUDIT FLICKER R3: off screen, a shadow still in reach
