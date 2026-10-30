@@ -10,6 +10,10 @@
 /src/render/*
 !/src/render/dragon/
 /src/render/dragon/*/
+!/src/systems/
+/src/systems/*
+!/src/systems/firstVisit/
+/src/systems/firstVisit/*/
 !/src/ui/
 /src/ui/*
 !/src/ui/ketch/

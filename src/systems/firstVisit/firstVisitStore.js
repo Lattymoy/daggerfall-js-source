@@ -38,7 +38,10 @@ export function textStamp(...parts) {
  *  tools/computationPin.mjs FIRST_VISIT_COMPUTATIONS). @param {string} cache */
 export function firstVisitPin(cache, pins = FIRST_VISIT_PINS) {
   const pin = pins?.[cache];
-  if (typeof pin !== 'string' || !/^[0-9a-f]{8}$/.test(pin)) throw new Error(`FIRST-VISIT: no pin for ${cache} - run scripts/firstVisitPins.mjs (npm install and npm run build do)`);
+  if (typeof pin !== 'string' || !/^[0-9a-f]{8}$/.test(pin))
+    throw new Error(
+      `FIRST-VISIT: no pin for ${cache} - run scripts/firstVisitPins.mjs (npm install and npm run build do)`,
+    );
   return pin;
 }
 
@@ -47,9 +50,27 @@ export function derivedValueStore() {
   if (!globalThis.indexedDB) return null;
   const door = import('../../scenes/dataSource.js');
   return {
-    async get(key) { try { return await (await door).loadDerivedValue(key); } catch { return null; } },
-    async set(key, value) { try { return await (await door).storeDerivedValue(key, value); } catch { return null; } },
-    async sweep(scope, keep) { try { return await (await door).sweepDerived((k) => staleKey(k, scope, keep)); } catch { return null; } },
+    async get(key) {
+      try {
+        return await (await door).loadDerivedValue(key);
+      } catch {
+        return null;
+      }
+    },
+    async set(key, value) {
+      try {
+        return await (await door).storeDerivedValue(key, value);
+      } catch {
+        return null;
+      }
+    },
+    async sweep(scope, keep) {
+      try {
+        return await (await door).sweepDerived((k) => staleKey(k, scope, keep));
+      } catch {
+        return null;
+      }
+    },
   };
 }
 
