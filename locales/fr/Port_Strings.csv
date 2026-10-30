@@ -6986,6 +6986,7 @@ ql.journal.lineStepsLabel,"Les étapes de cette chaîne de quêtes, dans l’ord
 ql.journal.lineTitle,"Terminez-la pour gagner le titre {title}, lié à votre compte."
 ql.journal.lineTitleEarned,"Cette chaîne de quêtes rapporte le titre {title}, lié à votre compte."
 ql.journal.lineTitleWaits,"Le titre {title} attend que le service de compte ait vu chaque exploit que demande cette chaîne de quêtes."
+ql.journal.lineTitleWaitsBefore,"Le titre {title} attend que le service de compte ait vu chaque exploit de {line}."
 ql.journal.lineWaiting,"En attente de la prochaine étape"
 ql.journal.lineWhat,"Une chaîne de quêtes est une histoire racontée en plusieurs quêtes, l’une après l’autre. Chaque étape est confiée quand la précédente se termine."
 ql.journal.lines,"Chaînes de quêtes"

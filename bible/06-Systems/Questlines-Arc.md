@@ -950,3 +950,15 @@ gear only for the quests whose page says so (UI-4). Every string through `t()`, 
 5. **The givers' names**: proposed here - Ysolde Marnhel (already the breach book's author), Corvane Tull (the
    Battlemage), Prior Anselm Vey (the Order of the Hour), Hamid al-Rasheen (Sentinel's packet captain). The owner may
    rename any; each is one `ql name` line and one registry string.
+
+## 11. QUEST-AUDIT IV (2026-10-30)
+
+`01-Overview/audits/Quest-Audit-IV.md`. Decision 1 is read by the line: a line is taken with the switch on, so each of
+its steps is the layer's whatever the switch says when that step starts, and a save's unstamped step is stamped at the
+next look (D1). A DFU quest begun with the switch off is still DFU's to its end, and the Features row's words ("quests
+you already have keep the rules they began with") hold of a line as of a quest.
+
+The introductions and the Old Coil (section 4.5's list): the Herald's Call is a registered account's, and both its steps
+need a bout the Arena's ladder still offers - the climb's end as the account's board last said, kept on the device (C2,
+AUDIT QA4 B1). The Old Coil's QLOC02 and QLOC03 need Naval Combat on, and QLOC03 needs nothing once its Serpent is slain
+(B1, AUDIT QA4 C4).

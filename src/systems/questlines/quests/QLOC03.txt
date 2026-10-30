@@ -3,6 +3,7 @@
 -- Serpent slain (`ql act serpent-slain 1`). Then Hamid's question: the serpent's blood poured back to Satakal (the
 -- sailors' offering) or its scale kept. Lore: canon - Satakal, the World-Skin. The port's own: Sethrakul, the Old Coil,
 -- the harbour bells (bible/03-World/Sea-Serpent.md), the offering, Hamid al-Rasheen.
+-- QUEST-AUDIT IV B2, B3 and AUDIT QA4 C1, C2, C5 (bible/01-Overview/audits/Quest-Audit-IV.md): the deed's own return clock, its late end, a one-line answer.
 Quest: QLOC03
 DisplayName: The Shed Skin
 -- Message panels

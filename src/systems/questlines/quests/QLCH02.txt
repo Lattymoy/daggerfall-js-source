@@ -5,6 +5,7 @@
 -- given to the foe before it is placed (B0B81Y02's map) and brought back to Ysolde (`toting`, as DFU's deliveries). The
 -- key is a quest item that only LOOKS like a Weir Key in its coven-cloth (a talisman, its words in message 1017): the
 -- real one is the account service's to pay, at the line's last step (net/questlineClaims.js `key`).
+-- QUEST-AUDIT IV B2 and AUDIT QA4 C1, C2, C5 (bible/01-Overview/audits/Quest-Audit-IV.md): the key's return clock and its late end.
 Quest: QLCH02
 DisplayName: The Lieutenant
 -- Message panels

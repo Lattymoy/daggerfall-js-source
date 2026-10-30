@@ -8,6 +8,7 @@
 -- qlLayer.js reward: AUDIT KETCH L5-2, its give showed the QuestComplete box twice) and pays. A visit before is answered and cleared (M0B30Y04's `_clearclick_`). Lore:
 -- canon - aetherium, the Dwemer's blue crystal, mined and fought over (the Aetherium Wars); the tonal architecture. The
 -- port's own - the cells, the Starved Engine, the arc-coils (Sky-Ketch.md section 6).
+-- QUEST-AUDIT IV C3 (bible/01-Overview/audits/Quest-Audit-IV.md): the book is the player's to keep.
 Quest: QLSK02
 DisplayName: The Starved Engine
 -- Message panels

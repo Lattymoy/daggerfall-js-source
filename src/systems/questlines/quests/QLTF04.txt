@@ -10,6 +10,7 @@
 -- Guild's study and Arkay's temple are the three ways the holiday names. Lore: canon - Hircine the Huntsman, the
 -- Glenmoril Witches' Prince; Arkay, god of the cycle of life and death, and the Order of Arkay (FACTION.TXT 82, the
 -- god's own 21's). The port's own: Morwen, the spindle, the three ways.
+-- QUEST-AUDIT IV B3 (bible/01-Overview/audits/Quest-Audit-IV.md): a one-line answer.
 Quest: QLTF04
 DisplayName: What the Thread Is Worth
 -- Message panels

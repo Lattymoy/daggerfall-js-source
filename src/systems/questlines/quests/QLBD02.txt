@@ -5,6 +5,7 @@
 -- (`give item` to a foe before it is placed, as B0B81Y02's map). The branch is the player's, asked when the book is in
 -- hand: read it, or carry it to Ysolde shut (the Mages Guild's standing, on the sheet). Lore: the faithful's rite is the
 -- port's own, as "On the Burning Doors" tells it (systems/portBooks.js).
+-- QUEST-AUDIT IV B2, B3, B4 and AUDIT QA4 C1, C2, C5 (bible/01-Overview/audits/Quest-Audit-IV.md): the return clock, one-line answers, a first courier.
 Quest: QLBD02
 DisplayName: The Faithful
 -- Message panels

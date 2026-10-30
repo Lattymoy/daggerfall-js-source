@@ -22,7 +22,7 @@ read-only lanes, each driving its quests on the real bridge with the freeware AR
 24 reported; L1 and L5 found the same two (the backbone, the restored start): 22 defects. Each was reproduced with a
 script before it was fixed. Each fix is pinned by a test that fails on the code before it
 (`test/systems/quest/questaudit4.test.js`, `test/systems/questlines/questaudit4_lines.test.js`), with a mutant in
-`tools/mutants/questaudit4.json` (36, all dead). Each fix in code carries a `QUEST-AUDIT IV <id>` comment.
+`tools/mutants/questaudit4.json` (36, all dead). Each fix carries a `QUEST-AUDIT IV <id>` comment, a script's in a header line (AUDIT QA4 D13).
 
 ## The starts and the main story (A)
 
@@ -56,13 +56,13 @@ some 270 map pixels away. Until then a quest that needs a dungeon is set aside b
 | ID | Sev | Finding | Fix |
 |---|---|---|---|
 | B1 | MAJOR | **The Old Coil looped for ever online with Come Sail Away off**: no berth reported, no Serpent fought, QLOC02 failed at 60 days and came back a day later. | QLOC02 and QLOC03 need `naval`, as the sea's introduction's steps do. |
-| B2 | MINOR | **A deed done late failed its step**: QLOC03's Serpent slain on day 55, QLHR02's Hour broken on day 50, QLBD02's book or QLCH02's key in the pack - the 60-day clock ran on and its words denied the deed. | The deed stops the wait and starts a 30-day return, whose end (1050) says the deed was done. |
+| B2 | MINOR | **A deed done late failed its step**: QLOC03's Serpent slain on day 55, QLHR02's Hour broken on day 50, QLBD02's book or QLCH02's key in the pack - the 60-day clock ran on and its words denied the deed. | The deed starts a 30-day return; the step ends at the later of the 60 days and the deed plus 30 (AUDIT QA4 C5), on the sheet's own `late` end (C1), whose words (1050) say the step comes again (C2). A return that lapses still fails the step, offered again a day later. |
 | B3 | MINOR | **Thirteen answers ran past the classic pick list**, five past the screen's edge. | Each one line of at most 30 characters; the pin applies BRANCH-8's answer rule to every line's script. |
 | B4 | MINOR | **Two couriers spoke of a meeting that never happened** (QLBD02 "again", QLWR03 "the same boy"): since QL-OFFERED the first letter is taken in hand. | Worded as first meetings. |
 | B5 | MINOR | **A named blade the ending hands over was never offered** to a class whose two best weapon skills it does not use (Corvane's Spire-Blade 0 of 50 to an archer). | The named card skips the skill filter; a class barred from it still is. |
 | B6 | MINOR | **The Hour broken before the Prior was met** filed "Now I must reach the Hour" after it, and paid only at a second click nothing asked for. | The road's entry only while the Hour stands, and the first click kept: the answer pays. |
 | C1 | MAJOR | **The Thirteenth of Frostfall stuck for good when the Festival closed**: QLTF01 was set aside after its star was held, though the walk to Glenmoril needs no Festival, and no next Festival is listed. The last night's star, held past the close, was heard by nothing. | A step names its seasonal deed (`deed: '_held_'`); once done it needs nothing and is never set aside. A running step keeps the Festival's need while the last star landed before the close still lives (`NEED_TAILS`); the line itself opens on the Festival's days alone. |
-| C2 | MAJOR | **The Herald's Call could never end for a guest, or an account that beat the Grand Champion**: the ladder online refuses both, and the line was offered and taken. | The line is a registered account's, and each step needs a bout the Herald still offers (`arena/arenaLadder.js` noteLadderDone, from the arena board). |
+| C2 | MAJOR | **The Herald's Call could never end for a guest, or an account that beat the Grand Champion**: the ladder online refuses both, and the line was offered and taken. | The line is a registered account's, and each step needs a bout the Herald still offers: the climb's end as the account's Arena board last said, kept by account on the device (`arena/arenaClimbSeen.js`, AUDIT QA4 B1). A device that never heard the board offers the line until the Arena is visited. |
 | C3 | MINOR | **Imrah's two books left the pack when each step ended** - `get item` keeps them the quest's. | Each made permanent where it is handed over. |
 | C4 | MINOR | **The Tonal Warden's act went to whoever stood when the share was answered** - a switch before a retry spent the voyage on the wrong character. | The receipt keeps the character it came to; one not standing is owed the act, said when they stand (`net/ketch/ketchClaims.js`, the stars' AUDIT STARFALL 7 law). |
 
@@ -75,12 +75,53 @@ event's own decision.
 | ID | Sev | Finding | Fix |
 |---|---|---|---|
 | D1 | MAJOR | **A line's step started unstamped could not count.** The stamp was read at the start the machine's next tick runs: a take in a pause with the switch then turned off, or a later step saved in the invoke queue and loaded with it off, started unstamped. Its acts were never heard and its end moved no line: a step done again and paid twice. | A line's step is stamped whatever the switch says; a save's unstamped step is stamped at the next look; an unstamped step's end still moves its line (`qlLayer.js`). |
-| D2 | MINOR | **The Covens' Hoard's page said its title earned while the service held it back** (paid only once the Burning Doors are witnessed whole). | A step the service pays by the line before marks `waits`, and the page says the title waits. |
+| D2 | MINOR | **The Covens' Hoard's page said its title earned while the service held it back** (paid only once the Burning Doors are witnessed whole). | A step the service pays for a title or a key marks `waits` until the service answers it witnessed, and the page says the title waits - naming the line before, where the step is paid by it (AUDIT QA4 B4). |
 | D3 | MINOR | **The witnessed steps' explanation left out the Sky-Ketch**, whose Tonal Warden is one. | Named, in all thirteen drafted languages. |
 
 ## The pins
 
-`test/systems/quest/questaudit4.test.js` (9) and `test/systems/questlines/questaudit4_lines.test.js` (12), over
+`test/systems/quest/questaudit4.test.js` (12) and `test/systems/questlines/questaudit4_lines.test.js` (14), over
 `test/qlStepRig.mjs`, a questline step on the real bridge. Pins moved: `ql12_lines` ACTS-2 (the needs, the Old Coil's
-and the Herald's), `auditstarts` W5 (its fixture). Mutants: `tools/mutants/questaudit4.json`, 36, all dead; two
-survived the first run (the held row's join, the stamp under the switch) and their pins were tightened.
+and the Herald's), `auditstarts` W5 (its fixture), `guide4_tracker` and `guide2_wayThere` (the street's place name), `ql2_journal` (the
+witnessed places). Mutants: `tools/mutants/questaudit4.json`, 36, and `tools/mutants/auditqa4.json`, 37, all dead; 19
+records of older lists re-aimed by content at the change, and 18 more at its audit, each re-judged dead.
+
+## AUDIT QA4 - the change read cold, 2026-10-30
+
+The owner: *"Audit this"*. Four cold lanes read a frozen snapshot of the change (`a321c4cb1`), none given this page:
+
+| Lane | Read | Found |
+|---|---|---|
+| A | the starts, the backbone, the quest core | 6 - 1 HIGH, 1 MED, 4 LOW |
+| B | the questlines' runtime, the ladder's flag, the Ketch's claims | 5 - 1 MED, 1 LOW-MED, 3 LOW |
+| C | the scripts and the words, in every language | 7 - 2 MED, 5 LOW |
+| D | this record, the pins, 25 adversarial mutants | 14 - 3 HIGH, 6 MED, 3 LOW-MED, 2 LOW |
+
+32 reported; B1 and D2 (the ladder's flag) are one. Every one is fixed or its record corrected, pinned by the two
+files above and `tools/mutants/auditqa4.json`.
+
+| ID | Found | Fixed |
+|---|---|---|
+| A1 | Saves the old A1 law broke kept their early backbone - every character born online since the starts. | A load mends at its first tick: a live backbone beside a start not handed off, no opener and no story step, goes, its `ran` with it (`mainSpine.js` storyMends, `machine.js` mendStory). The opener starts it in order. |
+| A2 | The old `restored()` had handed a second Curse and commission to stories that ran. | The same mend: the later Curse goes, with any start begun beside it that has not handed off. |
+| A3 | The opener's retry lasted the start's tombstone week; after it the Curse read as the opener's trace. | The hand-off is recorded (`spine.handed`, saved) until the opener begins: owed after the start is gone, and no Curse read as a trace beside it. |
+| A4 | The retry said its failure every check. | Parsed in a try, said once (keepSpine's law). |
+| A5 | Two held lairs of one name past the Bay read each other by order. | `place.js` siteRowIndex reads a site by its map id where a row of its name has it; every held site of a name is joined; a pixel that stood nothing is not stood again. |
+| A6 | Three comments false. | Corrected. |
+| B1 = D2 | The ladder's flag was page memory, unknown at a page's start and read across accounts. | Kept by account on the device (`arena/arenaClimbSeen.js`); the runner asks for the signed-in account. Pinned through the Arena's own client. |
+| B2 | A star counted after its step was set aside out of season was dropped. | An act a step set aside for its season waits on takes the step back (`qlLineRunner.js` wakeAside); the player's own aside stays theirs. |
+| B3, B5 | Comments false; owed Warden acts kept for ever. | Corrected; an owed act lapses in a week. |
+| B4 | The Covens' Hoard's title gave the wrong reason. | The row names the line before; the page says the title waits on its deeds, in the 13 drafted languages too. |
+| C1, C2 | The return's end filed "failed" words, and 1050 said the matter closed while the line sends the step again. | A `late` outcome on `_gone_`, before `failed`, in each sheet; 1050 says the step may come again. |
+| C3 | Imrah's guide doubled on a retaken step and shut Restart. | Made permanent at the pay, not the take. |
+| C4 | The Old Coil's walk back was set aside with Naval Combat off. | QLOC03's `deed: '_slain_'`. |
+| C5 | An early deed shortened the 60 days. | `_wait_` and `_meet_` are flags; `_lapsed_` ends an undone step at 60, `_gone_` a done one at the later clock. Empty clock tasks parse and fire (driven). |
+| C6, C7 | "Ladder" said as a staircase in nine languages; "the Abyss's" the wild sea's word, the sentence long. | Each language's ranking word; "an Abyss Dungeon's Shattered Hour", in three short sentences. |
+| D1, D3-D5, D8-D10 | Pins that held their law by source text alone, or survived a mutant. | Driven on the producer: the Ketch's claims with a minted receipt, `keepOpener` through the tick, the commission's take, the paid title rendered, all four scripts' clocks, the tail on a waiting step, the draw that throws. |
+| D6, D7, D11 | Decision 1 changed unsaid; the MAIN-SPINE row and two departures unrecorded; the Questlines arc not amended. | `06-Systems/Questlines-Arc.md` section 11; Port-Ledger's MAIN-SPINE row amended and two rows added. |
+| D12-D14 | This page's counts and claims. | Corrected above. |
+
+Left: the Arena climb's answer reaches the flag through a source pin alone (a ladder receipt's answer); a device that
+never heard an account's board offers the Herald's Call until the Arena is visited; the Abyss Dungeon's place names
+in each language are the drafts' own.
+

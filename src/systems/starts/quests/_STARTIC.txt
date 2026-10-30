@@ -3,6 +3,7 @@
 -- in it; StartSiteImperial's row names it to the world, quest/place.js). Under the contract every start keeps: the commission
 -- is opened when the player chooses, and _BRISIEN begins in the city of Daggerfall. Its tie to the main story is
 -- the Blades' own - the commission from White-Gold. A `say` ends its task's tick (Quest.cs QuestBreak), so each task's popup is its last word.
+-- QUEST-AUDIT IV A6 (bible/01-Overview/audits/Quest-Audit-IV.md): the wake true at the prison's door as in its cell.
 Quest: _STARTIC
 DisplayName: The Emperor's Commission
 -- Message panels

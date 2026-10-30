@@ -10,6 +10,7 @@
 -- tutorialCatalogue.js `legacy`).
 -- Lore: canon - the Spire's portal keys and the Weir Gate; the Empire sealed the Spire. The port's own - the torn halls
 -- the key's road reaches now (bible/11-Multiplayer/Elite-Gates.md section 3).
+-- QUEST-AUDIT IV B3 (bible/01-Overview/audits/Quest-Audit-IV.md): one-line answers.
 Quest: QLCH03
 DisplayName: What the Key Opens
 -- Message panels

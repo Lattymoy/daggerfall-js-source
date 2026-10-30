@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { spineRecord, spineOwed, openerOwed, storyMends, SPINE, SPINE_CURSE, SPINE_OPENER } from '../../../src/systems/quest/mainSpine.js';
+import { spineRecord, spineOwed, openerOwed, storyMends, SPINE, SPINE_CURSE, SPINE_OPENER, SPINE_CHECK_TICKS } from '../../../src/systems/quest/mainSpine.js';
 import { siteRowIndex } from '../../../src/systems/quest/place.js';
 import { QuestListsManager, SELECT_TRIES } from '../../../src/systems/quest/questLists.js';
 import { createStartsHost } from '../../../src/scenes/startsHost.js';
@@ -42,6 +42,9 @@ test('QUEST-AUDIT IV A1: the backbone is one - a second `start quest 999 999` wh
   assert.equal(m.scheduleQuestByName(SPINE), null);
   assert.deepEqual(asked, [], 'never parsed');
   m.quests.get(1).questTombstoned = true;
+  m.questsToInvoke.push(named(SPINE));
+  assert.equal(m.scheduleQuestByName(SPINE), null, 'one waiting for the next tick guards too');
+  m.questsToInvoke.length = 0;
   m.scheduleQuestByName(SPINE);
   assert.deepEqual(asked, [SPINE], 'an ended one is no guard');
 });
@@ -73,6 +76,7 @@ test('QUEST-AUDIT IV A2, A3: a load hands the commission over only where no stor
     ['the spine\'s record', { spine: { opened: true, ran: false } }],
     ['an ended story step', { storyEnded: new Set(['S0000004']) }],
     ['a classic game\'s global set', { globalVars: new Map([[1, false], [12, true]]) }],
+    ['a Curse waiting for the next tick', { questsToInvoke: [named(SPINE_CURSE)] }],
   ]) assert.deepEqual(host(o), [], why);
 });
 
@@ -80,6 +84,10 @@ test('QUEST-AUDIT IV A7: a questor\'s draw sets aside a quest that will not stan
   const parsed = [];
   const lists = new QuestListsManager({ rolls: () => 0, readListTable: () => null, getQuestSourceLines: (n) => [n], parseQuest: (lines) => { parsed.push(lines[0]); return lines[0].startsWith('GOOD') ? { questName: lines[0] } : null; } });
   assert.equal(lists.selectQuest([{ name: 'BAD1' }, { name: 'GOOD1' }], 0)?.questName, 'GOOD1');
+  const throws = new QuestListsManager({ rolls: () => 0, readListTable: () => null, getQuestSourceLines: (n) => [n], parseQuest: (lines) => { if (lines[0] === 'BOOM') throw new Error('no site'); return { questName: lines[0] }; } });
+  const w = console.warn;
+  console.warn = () => {};
+  try { assert.equal(throws.selectQuest([{ name: 'BOOM' }, { name: 'GOOD2' }], 0)?.questName, 'GOOD2', 'a draw that throws goes on to another'); } finally { console.warn = w; }
   parsed.length = 0;
   assert.equal(lists.selectQuest(Array.from({ length: 10 }, (_, i) => ({ name: `BAD${i}` })), 0), null);
   assert.equal(parsed.length, SELECT_TRIES);
@@ -92,6 +100,8 @@ test('QUEST-AUDIT IV A5: a start\'s commission never leaves the pack, Drop Quest
   try {
     setValue('GUI', 'CanDropQuestItems', 'True');
     assert.equal(questTransferRefused(item, { fromLocal: true, getQuest: () => quest }), true);
+    assert.equal(questTransferRefused(item, { fromLocal: false, getQuest: () => quest }), false, 'AUDIT QA4 D4: taken from its pile, never refused');
+    assert.equal(questTransferRefused({ ...item, questSymbol: new QuestSymbol('_other_') }, { fromLocal: true, getQuest: () => quest }), false, 'the commission alone');
   } finally { _resetForTests(); }
 });
 
@@ -99,6 +109,7 @@ test('QUEST-AUDIT IV A6: the Imperial start\'s wake is true at the prison\'s doo
   const text = readFileSync(join(ROOT, 'src/systems/starts/quests/_STARTIC.txt'), 'utf8');
   const wake = text.slice(text.indexOf('Message:  1020'), text.indexOf('\n\n', text.indexOf('Message:  1020')));
   assert.doesNotMatch(wake, /wake on the floor|door standing open/);
+  assert.match(wake, /Someone unlocked your cell before dawn/);
 });
 
 test('QUEST-AUDIT IV A8: the journal, the HUD card and the talk\'s same-building check read the place by its quest name - a capital\'s slice as a quest site names it (mutants: any of the six back on the slice\'s own name)', () => {
@@ -119,7 +130,8 @@ test('QUEST-AUDIT IV A9: a site a quest holds is found by its name before a near
   const p = createQuestProvinceSites({
     worldPlaces: { inTheatre: () => [], generation: () => 0 }, regionAt: () => R,
     standAt: (x, y) => { if (x === 2082) stood++; return stand.get(`${x},${y}`) ?? null; },
-    lairsNear: () => [{ mapId: near.mapTableData.mapId, name: near.name, px: 2065, py: 579, type: LOCATION_TYPES.DungeonRuin, dungeonType: 9 }],
+    // from the third pixel the held lair is the table's own row too - first of its name
+    lairsNear: () => [...(origin.x === 2075 ? [{ mapId: held.mapTableData.mapId, name: held.name, px: 2082, py: 636, type: LOCATION_TYPES.DungeonRuin, dungeonType: 9 }] : []), { mapId: near.mapTableData.mapId, name: near.name, px: 2065, py: 579, type: LOCATION_TYPES.DungeonRuin, dungeonType: 9 }],
     origin: () => origin,
     heldSites: () => [{ regionIndex: R, locationName: held.name, mapId: held.mapTableData.mapId, worldPixel: { x: 2082, y: 636 } }],
   });
@@ -132,6 +144,9 @@ test('QUEST-AUDIT IV A9: a site a quest holds is found by its name before a near
   const again = p.getRegion(R);
   assert.equal(again.mapTable[again.mapNameLookup.get(held.name)].mapId, held.mapTableData.mapId);
   assert.equal(stood, was, 'found once, kept across tables');
+  origin = { x: 2075, y: 610 };
+  const third = p.getRegion(R);
+  assert.equal(third.mapTable.filter((row) => row.mapId === held.mapTableData.mapId).length, 1, 'a table whose own lairs hold it: joined once');
 });
 
 // ═══ AUDIT QA4 (the cold audit of QUEST-AUDIT IV): what the old laws left in saves, the hand-off kept, a held name by id ═══
@@ -186,6 +201,16 @@ test('AUDIT QA4 A3, A4: a hand-off whose opener has not begun is recorded and sa
     ok = true;
     assert.equal(mm.keepOpener(), true);
   } finally { console.warn = warn; }
+  // the machine's own check: a start handed off and no opener - the tick at the backbone's beat asks for _BRISIEN
+  const asked = [];
+  const tm = packMachine({ getQuestSourceLines: (n) => [n] });
+  tm.quests.set(1, { ...named(HAND_START_QUEST, { uid: 1 }), tasks: startOf(true).tasks, update() {}, isEnding: () => false });
+  tm.scheduleQuest = (lines) => { asked.push(lines[0]); return null; };
+  const w2 = console.warn;
+  console.warn = () => {};
+  try { for (let i = 0; i < SPINE_CHECK_TICKS; i++) tm.tick(); } finally { console.warn = w2; }
+  assert.deepEqual(asked, [SPINE_OPENER], 'one ask at the beat');
+  assert.equal(tm.spine.handed, true);
 });
 
 test('AUDIT QA4 A5: a site is read by its map id where its name is shared - past the Bay two held lairs of one name are each joined, and each holder reads its own (mutants: the name first; one held site joined)', () => {

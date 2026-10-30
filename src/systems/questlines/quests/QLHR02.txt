@@ -7,6 +7,7 @@
 -- AUDIT QUESTLINES LINES-26: the letter signs off on one line, its sender's name and calling - DFU's pack names a
 -- quest letter by its last line (ItemHelper.cs:335-348, itemInfo.js questLetterName), and it was
 -- "Letter: of the Order of the Hour".
+-- QUEST-AUDIT IV B2, B6 and AUDIT QA4 C1, C2, C5 (bible/01-Overview/audits/Quest-Audit-IV.md): the return clock, the Hour broken first, the Prior's click kept.
 Quest: QLHR02
 DisplayName: The Orrery of Endings
 -- Message panels

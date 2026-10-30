@@ -5,6 +5,7 @@
 -- is answered and cleared (M0B30Y04's `_clearclick_`). Lore: canon - the Kyn's ranks, a Valkynaz a warrior duke of
 -- his Prince's council, Ruhn one of them; the Spire's council died in 3E 398. The port's own - Valkynaz Ilthys at the
 -- Broken Galleries' fifth Court, the raised masters (bible/11-Multiplayer/Elite-Gates.md sections 3 and 7).
+-- QUEST-AUDIT IV B4 (bible/01-Overview/audits/Quest-Audit-IV.md): a first courier.
 Quest: QLWR03
 DisplayName: A Warrior Duke
 -- Message panels

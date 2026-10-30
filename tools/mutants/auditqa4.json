@@ -1,0 +1,335 @@
+[
+  {
+    "name": "QA4A-A1-early-backbone-kept",
+    "file": "src/systems/quest/mainSpine.js",
+    "old": "  const early = before ? quests.filter((q) => named(q, SPINE)) : [];",
+    "new": "  const early = [];",
+    "tests": [
+      "test/systems/quest/questaudit4.test.js"
+    ]
+  },
+  {
+    "name": "QA4A-A1-court-step-ignored",
+    "file": "src/systems/quest/mainSpine.js",
+    "old": "const before = !opener && waiting && m.storyStarted.size === 0;",
+    "new": "const before = !opener && waiting;",
+    "tests": [
+      "test/systems/quest/questaudit4.test.js"
+    ]
+  },
+  {
+    "name": "QA4A-A1-scheduled-kept",
+    "file": "src/systems/quest/mainSpine.js",
+    "old": "const scheduled = before && m.questsToInvoke.some((q) => named(q, SPINE));",
+    "new": "const scheduled = false;",
+    "tests": [
+      "test/systems/quest/questaudit4.test.js"
+    ]
+  },
+  {
+    "name": "QA4A-A1-mend-unarmed",
+    "file": "src/systems/quest/machine.js",
+    "old": "    this.mendPending = true;   // AUDIT QA4 A1, A2: what the old laws left in the save, mended at the next tick\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit4.test.js"
+    ]
+  },
+  {
+    "name": "QA4A-A2-second-curse-kept",
+    "file": "src/systems/quest/mainSpine.js",
+    "old": "for (const extra of curses.slice(1)) {",
+    "new": "for (const extra of curses.slice(2)) {",
+    "tests": [
+      "test/systems/quest/questaudit4.test.js"
+    ]
+  },
+  {
+    "name": "QA4A-A2-its-start-kept",
+    "file": "src/systems/quest/mainSpine.js",
+    "old": "    for (const q of quests) if (isStartQuestName(q.questName) && !ranStartOf(q, SPINE_OPENER) && !later(extra, q)) remove.push(q);\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit4.test.js"
+    ]
+  },
+  {
+    "name": "QA4A-A3-handed-unread",
+    "file": "src/systems/quest/mainSpine.js",
+    "old": "  if (m.spine?.handed) return true;\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit4.test.js"
+    ]
+  },
+  {
+    "name": "QA4A-A3-curse-beside-hand-off",
+    "file": "src/systems/quest/mainSpine.js",
+    "old": "&& !names.some((x) => isStartQuestName(x)) && !handed;",
+    "new": "&& !names.some((x) => isStartQuestName(x));",
+    "tests": [
+      "test/systems/quest/questaudit4.test.js"
+    ]
+  },
+  {
+    "name": "QA4A-A3-handed-unrecorded",
+    "file": "src/systems/quest/machine.js",
+    "old": "    this.spine.handed = true;\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit4.test.js"
+    ]
+  },
+  {
+    "name": "QA4A-A4-said-every-check",
+    "file": "src/systems/quest/machine.js",
+    "old": "else if (!this.openerSaid) { this.openerSaid = true; console.warn(",
+    "new": "else { console.warn(",
+    "tests": [
+      "test/systems/quest/questaudit4.test.js"
+    ]
+  },
+  {
+    "name": "QA4A-A4-opener-never-asked",
+    "file": "src/systems/quest/machine.js",
+    "old": "const lines = this.deps.getQuestSourceLines?.(SPINE_OPENER);",
+    "new": "const lines = null;",
+    "tests": [
+      "test/systems/quest/questaudit4.test.js"
+    ]
+  },
+  {
+    "name": "QA4A-A5-name-first",
+    "file": "src/systems/quest/place.js",
+    "old": "return byId != null && region.mapTable?.[byId]?.name === sd?.locationName ? byId : byName;",
+    "new": "return byName;",
+    "tests": [
+      "test/systems/quest/questaudit4.test.js"
+    ]
+  },
+  {
+    "name": "QA4A-A5-one-joined",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "      const i = table ? join(table, row) : getRegion(r)?.mapIdLookup.get(row.mapId);   // joined whether or not it answers\n      first ??= i;",
+    "new": "      first ??= table ? join(table, row) : getRegion(r)?.mapIdLookup.get(row.mapId);",
+    "tests": [
+      "test/systems/quest/questaudit4.test.js"
+    ]
+  },
+  {
+    "name": "QA4A-B1-account-unread",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": "NEED_CHECKS[n]?.(nowMs(), { account: service?.account?.() ?? null })",
+    "new": "NEED_CHECKS[n]?.(nowMs(), {})",
+    "tests": [
+      "test/systems/questlines/questaudit4_lines.test.js"
+    ]
+  },
+  {
+    "name": "QA4A-B1-device-unread",
+    "file": "src/systems/arena/arenaClimbSeen.js",
+    "old": "  return _heard.get(account) ?? kept()[account] === 1;",
+    "new": "  return _heard.get(account) ?? false;",
+    "tests": [
+      "test/systems/questlines/questaudit4_lines.test.js"
+    ]
+  },
+  {
+    "name": "QA4A-D2-board-unheard",
+    "file": "src/scenes/arena/arenaOnline.js",
+    "old": "noteLadderDone(board.me?.ladder, deps.account.me?.() ?? null); } }, () => {})",
+    "new": "} }, () => {})",
+    "tests": [
+      "test/systems/questlines/questaudit4_lines.test.js"
+    ]
+  },
+  {
+    "name": "QA4A-B2-wake-unread",
+    "file": "src/systems/questlines/qlLayer.js",
+    "old": "        if (quest.shelvedAt != null && !runner.wakeAside(quest, kind)) continue;",
+    "new": "        if (quest.shelvedAt != null) continue;",
+    "tests": [
+      "test/systems/questlines/questaudit4_lines.test.js"
+    ]
+  },
+  {
+    "name": "QA4A-B2-any-kind",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": "      if (![...(quest.tasks?.values?.() ?? [])].some((t) => t.actions?.some((a) => a.constructor?.typeName === 'QlAct' && a.kind === kind))) return false;\n",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/questaudit4_lines.test.js"
+    ]
+  },
+  {
+    "name": "QA4A-B2-player-aside",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": "if (!rec?.aside || rec.done || rec.step !== at.index || quest.shelvedAt == null) return false;",
+    "new": "if (!rec || rec.done || rec.step !== at.index || quest.shelvedAt == null) return false;",
+    "tests": [
+      "test/systems/questlines/questaudit4_lines.test.js"
+    ]
+  },
+  {
+    "name": "QA4A-B4-line-before-unnamed",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": "after: l.opens.after ? lineById(l.opens.after)?.title() ?? null : null,",
+    "new": "after: null,",
+    "tests": [
+      "test/systems/questlines/questaudit4_lines.test.js"
+    ]
+  },
+  {
+    "name": "QA4A-B5-owed-forever",
+    "file": "src/net/ketch/ketchClaims.js",
+    "old": "o.ch && !(Number.isFinite(o.at) && nowMs() - o.at >= KT_ACT_KEEP_MS));",
+    "new": "o.ch);",
+    "tests": [
+      "test/systems/questlines/questaudit4_lines.test.js"
+    ]
+  },
+  {
+    "name": "QA4A-C1-late-outcome",
+    "file": "src/systems/questlines/sheets/questlines.json",
+    "old": "{\"id\":\"late\",\"text\":\"You slew the Old Coil, but Hamid al-Rasheen sailed before you brought him word.\",\"on\":{\"task\":\"_gone_\"},\"pay\":\"none\",\"failure\":true},",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/questaudit4_lines.test.js"
+    ]
+  },
+  {
+    "name": "QA4A-C2-final-words",
+    "file": "src/systems/questlines/quests/QLOC03.txt",
+    "old": "<ce>             He may send for you again.",
+    "new": "<ce>          The lanes will tell him what you did.",
+    "tests": [
+      "test/systems/questlines/questaudit4_lines.test.js"
+    ]
+  },
+  {
+    "name": "QA4A-C5-meet-alone",
+    "file": "src/systems/questlines/quests/QLOC03.txt",
+    "old": "_gone_ task:\n\twhen _wait_ and _meet_\n",
+    "new": "_gone_ task:\n\twhen _meet_\n",
+    "tests": [
+      "test/systems/questlines/questaudit4_lines.test.js"
+    ]
+  },
+  {
+    "name": "QA4A-C5-meet-31",
+    "file": "src/systems/questlines/quests/QLOC03.txt",
+    "old": "Clock _meet_ 30.00:00 0 flag 1 range 0 1",
+    "new": "Clock _meet_ 31.00:00 0 flag 1 range 0 1",
+    "tests": [
+      "test/systems/questlines/questaudit4_lines.test.js"
+    ]
+  },
+  {
+    "name": "QA4A-C5-meet-7",
+    "file": "src/systems/questlines/quests/QLOC03.txt",
+    "old": "Clock _meet_ 30.00:00 0 flag 1 range 0 1",
+    "new": "Clock _meet_ 7.00:00 0 flag 1 range 0 1",
+    "tests": [
+      "test/systems/questlines/questaudit4_lines.test.js"
+    ]
+  },
+  {
+    "name": "QA4A-C3-guide-at-take",
+    "file": "src/systems/questlines/quests/QLSK01.txt",
+    "old": "_book_ task:\n\tget item _guide_\n\n",
+    "new": "_book_ task:\n\tget item _guide_\n\tmake _guide_ permanent\n\n",
+    "tests": [
+      "test/systems/questlines/questaudit4_lines.test.js"
+    ]
+  },
+  {
+    "name": "QA4A-C4-coil-deed",
+    "file": "src/systems/questlines/qlLines.js",
+    "old": "'The Shed Skin'), needs: ['naval'], deed: '_slain_' },",
+    "new": "'The Shed Skin'), needs: ['naval'] },",
+    "tests": [
+      "test/systems/questlines/questaudit4_lines.test.js"
+    ]
+  },
+  {
+    "name": "QA4A-C7-abyss-unnamed",
+    "file": "src/ui/questlines/qlJournal.js",
+    "old": "or an Abyss Dungeon’s Shattered Hour.",
+    "new": "or the Abyss’s Shattered Hour.",
+    "tests": [
+      "test/systems/questlines/questaudit4_lines.test.js"
+    ]
+  },
+  {
+    "name": "QA4A-D4-take-refused",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "if (fromLocal && isStartQuestName(quest?.questName) && questItem?.symbol?.name === 'commission') return true;",
+    "new": "if (isStartQuestName(quest?.questName) && questItem?.symbol?.name === 'commission') return true;",
+    "tests": [
+      "test/systems/quest/questaudit4.test.js"
+    ]
+  },
+  {
+    "name": "QA4A-D4-any-start-item",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "if (fromLocal && isStartQuestName(quest?.questName) && questItem?.symbol?.name === 'commission') return true;",
+    "new": "if (fromLocal && isStartQuestName(quest?.questName)) return true;",
+    "tests": [
+      "test/systems/quest/questaudit4.test.js"
+    ]
+  },
+  {
+    "name": "QA4A-D5-paid-waits",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": "qlStepClaimed(l.id, i) && said !== 'witnessed';",
+    "new": "qlStepClaimed(l.id, i);",
+    "tests": [
+      "test/systems/questlines/questaudit4_lines.test.js"
+    ]
+  },
+  {
+    "name": "QA4A-D10-waiting-guards",
+    "file": "src/systems/quest/machine.js",
+    "old": "[...this.quests.values(), ...this.questsToInvoke].some((q) => questNameIn([SPINE], q.questName) && !q.questTombstoned)",
+    "new": "[...this.quests.values()].some((q) => questNameIn([SPINE], q.questName) && !q.questTombstoned)",
+    "tests": [
+      "test/systems/quest/questaudit4.test.js"
+    ]
+  },
+  {
+    "name": "QA4A-D10-storyBegun-invoke",
+    "file": "src/scenes/startsHost.js",
+    "old": "[...(m.quests?.values?.() ?? []), ...(m.questsToInvoke ?? [])].some(",
+    "new": "[...(m.quests?.values?.() ?? [])].some(",
+    "tests": [
+      "test/systems/quest/questaudit4.test.js"
+    ]
+  },
+  {
+    "name": "QA4A-D10-tail-waiting",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": ".filter((n) => !(q && NEED_TAILS[n]?.(nowMs())));",
+    "new": ".filter((n) => !(NEED_TAILS[n]?.(nowMs())));",
+    "tests": [
+      "test/systems/questlines/questaudit4_lines.test.js"
+    ]
+  },
+  {
+    "name": "QA4A-D10-catch-stops",
+    "file": "src/systems/quest/questLists.js",
+    "old": "        console.warn(`[quest] Exception for quest ${questData.name} during quest compile: ${e?.message ?? e}`);\n",
+    "new": "        console.warn(`[quest] Exception for quest ${questData.name} during quest compile: ${e?.message ?? e}`);\n        return null;\n",
+    "tests": [
+      "test/systems/quest/questaudit4.test.js"
+    ]
+  },
+  {
+    "name": "QA4A-D10-held-once",
+    "file": "src/scenes/quest/questProvinceSites.js",
+    "old": "if (!ids.has(row.mapId)) { ids.add(row.mapId); rows.push(row); }",
+    "new": "{ rows.push(row); }",
+    "tests": [
+      "test/systems/quest/questaudit4.test.js"
+    ]
+  }
+]

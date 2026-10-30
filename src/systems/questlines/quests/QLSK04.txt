@@ -10,6 +10,7 @@
 -- do or contradicts the canon - the charm's hum is Imrah's tale (the piece is a plain amulet), the hammer's metal the
 -- roll's (qlRewards.js baseOf), and the Brass God walked some five hundred years before (2E 896), so the ship was pulled
 -- once before; the porter came off the anchor-lift, never "last Loredas" (L5-3: the Ketch keeps the real week).
+-- QUEST-AUDIT IV B3 (bible/01-Overview/audits/Quest-Audit-IV.md): a one-line answer.
 Quest: QLSK04
 DisplayName: What the Lodestone Answers
 -- Message panels

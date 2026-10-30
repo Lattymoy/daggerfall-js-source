@@ -14,6 +14,7 @@
 -- spindle in hand her patience has no end (`stop timer`). Lore: canon - the Sisters of the Bluff (FACTION.TXT 423), the
 -- Coven on the Bluff (MAPS.BSA, the quest table's BluffCoven). The port's own: the Spinner, her spindle, the starlight
 -- spun on it.
+-- QUEST-AUDIT IV B3 (bible/01-Overview/audits/Quest-Audit-IV.md): a one-line answer.
 Quest: QLTF02
 DisplayName: The Coven on the Bluff
 -- Message panels

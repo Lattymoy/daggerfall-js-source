@@ -302,11 +302,11 @@ test('GUIDE2 THE FOUR HOSTS, by source: the street (world.js) hands the pause ta
   assert.doesNotMatch(callback, /return false;/, 'the travel callback inside it keeps its own answers');
   assert.match(w, /const showQuestPlace = \(find\) => toggleTravelMap\(\{ siteDetails: find \}\);/, 'the find-place payload, as both maps read it');
   const pause = w.slice(w.indexOf('const pauseDoorHooks = () => ({'), w.indexOf('  const keys = new Set();', w.indexOf('const pauseDoorHooks = () => ({')));
-  for (const k of ['currentLocationName: () => _questLoc()?.name ?? \'\'', 'canFindPlace: (regionName, name, site) => canFindPlace(maps, mapDict, regionName, name, questPlacePixel, site)', 'showQuestPlace: (find) => showQuestPlace(find)']) {
+  for (const k of ['currentLocationName: () => _questName()', 'canFindPlace: (regionName, name, site) => canFindPlace(maps, mapDict, regionName, name, questPlacePixel, site)', 'showQuestPlace: (find) => showQuestPlace(find)']) {
     assert.ok(pause.includes(k), `the street's pause bag: ${k}`);
   }
   assert.match(w, /showQuestPlace: \(modes\?\.mode \?\? 'exterior'\) === 'exterior' \? \(find\) => showQuestPlace\(find\) : undefined,/, 'the journal builder: the door only where the map opens');
-  assert.match(w, /questCanFindPlace: \(regionName, name, site\) => canFindPlace\(maps, mapDict, regionName, name, questPlacePixel, site\),\n\s*questLocationName: \(\) => _questLoc\(\)\?\.name \?\? '',/, 'the questions, handed on to the other hosts');
+  assert.match(w, /questCanFindPlace: \(regionName, name, site\) => canFindPlace\(maps, mapDict, regionName, name, questPlacePixel, site\),\n\s*questLocationName: \(\) => _questName\(\),/, 'the questions, handed on to the other hosts');
 
   const m = rd('src/scenes/worldModes.js');
   const interior = m.slice(m.indexOf('const interiorPauseHooks = () => ({'), m.indexOf('});', m.indexOf('const interiorPauseHooks = () => ({')));

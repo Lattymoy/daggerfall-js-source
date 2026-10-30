@@ -7,6 +7,7 @@
 -- the ones who close his doors, and the cage his faithful keep her in (bible/11-Multiplayer/World-Bosses.md, "The
 -- caged Broker"). AUDIT QUESTLINES LINES-23: the Covenant is Akatosh's with the Emperors' blood (portBooks.js "The
 -- Covenant") - the Order of the Hour is Akatosh's, never the Covenant's keeper (1032, 1041).
+-- QUEST-AUDIT IV B3 (bible/01-Overview/audits/Quest-Audit-IV.md): one-line answers.
 Quest: QLBD05
 DisplayName: The Caged Broker
 -- Message panels

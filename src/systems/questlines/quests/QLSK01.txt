@@ -13,6 +13,7 @@
 -- before is answered and cleared (M0B30Y04's `_clearclick_`). Lore: canon - the Rourken, the clan that would not join
 -- the Chimer, threw Volendrung and built where it fell; the Dwemer vanished, every one, in a day. The port's own - the
 -- Mzunthar, Imrah, the anchor-lift (Sky-Ketch.md section 1).
+-- QUEST-AUDIT IV C3 and AUDIT QA4 C3 (bible/01-Overview/audits/Quest-Audit-IV.md): the guide is the player's once paid.
 Quest: QLSK01
 DisplayName: The Ketch That Never Lands
 -- Message panels

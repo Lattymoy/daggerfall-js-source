@@ -7,6 +7,7 @@
 -- Corvane, and why the keys were given up (said as his account, never against the canon). AUDIT QUESTLINES LINES-9:
 -- the page is dated "today", never a year the online calendar runs past (it was "3E 406"), and he has known "since
 -- the Spire fell", never a count of years.
+-- QUEST-AUDIT IV B3 (bible/01-Overview/audits/Quest-Audit-IV.md): one-line answers.
 Quest: QLWR04
 DisplayName: The Battlemage’s Account
 -- Message panels
