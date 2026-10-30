@@ -4,15 +4,20 @@
 // only be taken out. A room's swing door (`intdoor:`) may be taken out, and nothing else. An exit, a chained
 // door or a ladder is the building's structure.
 
-import { t } from '../textManager.js';
+import { t, localizedTable } from '../textManager.js';
 
 const NONE = Object.freeze({ move: false, duplicate: false, remove: false, out: false });
 
 /** Who may use a chest or a station, in the door's order: a press moves it on. */
 export const DECOR_USE_MODES = Object.freeze(['private', 'friends', 'party', 'guild']);
 /** The row's word, the door's shape: "Who may use: Me". */
-export const DECOR_USE_WORDS = Object.freeze({ private: 'Me', friends: 'Friends', party: 'Party', guild: 'Guild' });
+export const DECOR_USE_WORDS = /** @type {Readonly<{ private: string, friends: string, party: string, guild: string }>} */ (localizedTable({   // AUDIT FB1029f C7: in the player's language
+  private: () => t('decor.look.who.private', 'Me'), friends: () => t('decor.look.who.friends', 'Friends'),
+  party: () => t('decor.look.who.party', 'Party'), guild: () => t('decor.look.who.guild', 'Guild'),
+}));
 export const decorUseLabel = (mode) => t('decor.look.use', 'Who may use: {who}', { who: DECOR_USE_WORDS[mode] ?? DECOR_USE_WORDS.private });
+/** REST-GUEST: the bar's word for who may rest in the home - its owner, and whoever they name: "Who may rest: Friends". */
+export const decorRestLabel = (mode) => t('decor.look.rest', 'Who may rest: {who}', { who: DECOR_USE_WORDS[mode] ?? DECOR_USE_WORDS.private });
 export const decorUseNext = (mode) => DECOR_USE_MODES[(Math.max(0, DECOR_USE_MODES.indexOf(mode)) + 1) % DECOR_USE_MODES.length];
 /** A hall chest is the guild's. A press moves the lowest rank that may open it, and every higher rank may too. */
 export const HALL_USE_RANKS = Object.freeze([3, 2, 1, 0]);

@@ -431,8 +431,7 @@ test('D11: A LEFT-HANDED PLAYER\'S PAIR IS THE MIRROR - every hand drawn where t
 
 test('D11: ONE PISTOL IN THE LEFT HAND is drawn as DFU draws the weapon in use - on the Handedness side, its picture unmirrored, at the unmirrored rect (mutant: the picture mirrored by the hand)', async () => {
   const rig = await pistolRig({ left: createPistolet() });
-  rig.r.switchHand();   // H: the left hand in use - the one that holds the weapon
-  await rig.frame();
+  await rig.frame();   // PIN MOVED (HAND-FOLLOWS): the lone pistol's hand is in use without H
   assert.equal(rig.r.playerWeapon.pistols?.lead, 'L', 'the left pistol leads');
   const q = (await rig.frame())[0];
   assert.ok(q, 'drawn');

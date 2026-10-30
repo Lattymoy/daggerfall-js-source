@@ -20,8 +20,8 @@
   {
     "name": "ARENA4B-CARRY-COLUMN",
     "file": "server-account/src/homes.js",
-    "old": "'rent_due', 'look', 'layout', 'deed']);",
-    "new": "'rent_due', 'layout', 'deed']);",
+    "old": "'rent_due', 'look', 'layout', 'deed', 'ground']);",
+    "new": "'rent_due', 'layout', 'deed', 'ground']);",
     "tests": [
       "test/net/arena4b_homes.test.js"
     ],

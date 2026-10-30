@@ -1,0 +1,83 @@
+[
+  {
+    "name": "YARDBORDER-midline-unread",
+    "file": "src/scenes/homeYards.js",
+    "old": "    return !(gap2(near, x, z, mine) < mine);   // the nearer house's, a tie this one's",
+    "new": "    return true;",
+    "tests": [
+      "test/scenes/yardborder.test.js"
+    ]
+  },
+  {
+    "name": "YARDBORDER-facing-uncut",
+    "file": "src/scenes/homeYards.js",
+    "old": "        if (r[i] >= o[j]) facing.push((o[j] + r[i]) / 2); else if (r[j] <= o[i]) facing.push((r[j] + o[i]) / 2);\n",
+    "new": "",
+    "tests": [
+      "test/scenes/yardborder.test.js"
+    ]
+  },
+  {
+    "name": "YARDBORDER-road-uncut",
+    "file": "src/scenes/homeYards.js",
+    "old": "    if (holes.some((r) => x > r[0] && x < r[2] && z > r[1] && z < r[3])) return false;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/yardborder.test.js"
+    ]
+  },
+  {
+    "name": "YARDBORDER-host-lineless",
+    "file": "src/scenes/homeYards.js",
+    "old": "quads: yardLotQuads(cur.lot, o, YARD_MARK_HIGH, cur.roads, cur.lines) };",
+    "new": "quads: yardLotQuads(cur.lot, o, YARD_MARK_HIGH, cur.roads) };",
+    "tests": [
+      "test/scenes/yardborder.test.js"
+    ]
+  },
+  {
+    "name": "YARDJOINED-walls-unjoined",
+    "file": "src/scenes/homeYards.js",
+    "old": "  return { ...lot, walls: [...(lot.walls ?? [lot.house]), ...mates.flatMap((m) => m.walls)] };",
+    "new": "  return lot;",
+    "tests": [
+      "test/scenes/yardborder.test.js"
+    ]
+  },
+  {
+    "name": "YARDJOINED-past-the-bound",
+    "file": "src/scenes/homeYards.js",
+    "old": "  if (Math.abs(x) > DECOR_YARD_POS_MAX || Math.abs(z) > DECOR_YARD_POS_MAX) return YARD_OFF_LOT;   // the service's bound (net/decorLaw.js decorYardPlaceOf)\n",
+    "new": "",
+    "tests": [
+      "test/scenes/yardborder.test.js"
+    ]
+  },
+  {
+    "name": "YARDJOINED-host-unjoined",
+    "file": "src/scenes/homeYards.js",
+    "old": "    const lot = yardJoinLots(y.lot, [...mates.values()]);   // YARD-JOINED",
+    "new": "    const lot = y.lot;",
+    "tests": [
+      "test/scenes/yardborder.test.js"
+    ]
+  },
+  {
+    "name": "YARDJOINED-mate-a-line",
+    "file": "src/scenes/homeYards.js",
+    "old": "        if (holds && !mate) lines.push(g);",
+    "new": "        if (holds) lines.push(g);",
+    "tests": [
+      "test/scenes/yardborder.test.js"
+    ]
+  },
+  {
+    "name": "YARDJOINED-stranger-a-mate",
+    "file": "src/scenes/homeYards.js",
+    "old": "      if (h2?.own !== true || h2.hall) continue;",
+    "new": "      if (!h2 || h2.hall) continue;",
+    "tests": [
+      "test/scenes/yardborder.test.js"
+    ]
+  }
+]

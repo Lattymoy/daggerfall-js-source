@@ -440,6 +440,7 @@ function useQuickslotNow(slot, { entity = null, items = null, hooks = {}, say = 
  */
 export function swapQuickslot(opts = {}) { return (_performed = swapQuickslotNow(opts)); }   // AUDIT CONTRIB H3: what the press did, for the hotbar's flash
 function swapQuickslotNow({ entity = null, say = null, rows = null, hand = null } = {}) {
+  const door = hand;   // the rig's hand door - the bare arm's `hand` is a slot
   // DISC10-E L3: the swap is an EQUIP from the pack - the inventory
   // window's own act - and the beast's pack is refused
   // (DaggerfallInventoryWindow.cs:583-587). Without this a werewolf put a
@@ -456,6 +457,7 @@ function swapQuickslotNow({ entity = null, say = null, rows = null, hand = null 
     const held = table[hand] ?? null;
     if (!held) { say?.(QUICKSLOT_TEXT.handsEmpty); return { kind: 'none' }; }
     unequipSlot(entity, hand);
+    door?.keepHand?.();   // AUDIT FB1029f D2: bare hands asked are bare hands - the hand in use stays, never follows the other
     billEquipDelayOnClose(entity, snap);
     state.swap = canSwapTo(held) ? { key: quickslotKey(held), name: itemLongName(held) } : null;
     say?.(QUICKSLOT_TEXT.putAway(itemLongName(held)));
@@ -517,7 +519,9 @@ function swapQuickslotNow({ entity = null, say = null, rows = null, hand = null 
   // follows the weapon through ToggleHand, the one door DFU has for it
   // (:702-729) - its line, its shield refusal, its switch delay.
   const landed = r.item.equipSlot ?? null;
-  if (hand && landed != null && landed !== inUse) hand.switchHand?.();
+  // AUDIT FB1029f D1: the hand in use is SET to where the weapon landed, never toggled - HAND-FOLLOWS has already moved
+  // it there when the hands changed, and a toggle flipped it back to the empty hand (fists, training Hand-to-Hand)
+  if (hand && landed != null) { if (hand.useHand) hand.useHand(landed); else if (landed !== inUse) hand.switchHand?.(); }
   // THE NEXT SWAP is what left the hand: the weapon that was there, or
   // bare hands when nothing was (AUDIT QS F2). A leaver that is not a
   // weapon - a shield a left-only bow bumped - is not a swap, and the

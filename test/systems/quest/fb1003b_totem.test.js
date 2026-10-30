@@ -246,7 +246,8 @@ test('TOTEM-CAGE: the hosts wire it - the dungeon adapter hands its item stand t
   assert.match(standIn, /width: 0, height: 0, batch: null, active: true, dead: false, behaviour, off: null \};/, 'the stand the law reads');
   assert.match(standIn, /stand\.batch = renderer\.createBillboardBatch\(drawArchive, drawRecord, size, \[\[x, by, z\]\]\);\n\s*rideSceneMarker\(stand, stand\.off\);/, 'the fill draws through the travel');
   assert.match(standIn, /follow: \(offset\) => rideSceneMarker\(stand, offset\),/, 'the host\'s door is the one law');
-  const targets = wm.slice(wm.indexOf('const questFlatTargets = (list) => {'), wm.indexOf('const clickQuestFlat ='));
+  const sm = readFileSync(new URL('../../../src/systems/quest/sceneMount.js', import.meta.url), 'utf8');   // PIN MOVED (HOST-SPLIT): the walk beside questStandBox
+  const targets = sm.slice(sm.indexOf('export function questFlatTargets(list) {'), sm.indexOf('\n}\n', sm.indexOf('export function questFlatTargets(list) {')));
   assert.match(targets, /aabb: questStandBox\(s\),/, 'the ray meets the stand where it is');
   assert.doesNotMatch(targets, /s\.x - s\.width \/ 2/, 'and never at its placed point');
   assert.match(dc, /questMarkerMover: \(markerID\) => sceneMarkerMover\(dungeon\.blocks, actions, markerID\),/, 'the context names the mover');

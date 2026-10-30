@@ -5,9 +5,9 @@
 // A shared container's goods live in decor_bin, not in two saves at once.
 import { accountKind, displayName } from './accounts.js';
 import { CHAR_ID_RE } from './service.js';
-import { homeMapIdOk, homeBuildingKeyOk } from '../../src/net/homeLaw.js';
+import { homeMapIdOk, homeBuildingKeyOk, homeGroundOk, homeGroundKept } from '../../src/net/homeLaw.js';   // DECOR-ROOMY: a home's ground
 import { homeSceneName } from '../../src/net/homeScene.js';
-import { DECOR_ID_RE } from '../../src/net/decorLaw.js';
+import { DECOR_ID_RE, DECOR_REST_ID } from '../../src/net/decorLaw.js';
 import { OWNS } from './decor.js';
 import { dropIfUnnamed, dropObjects, getRealmBlob, mustChange, prepareRealmRecord, realmActFirst, realmSaveTextOf, realmSideOf, recordMovedOf, REALM_ID_RE } from './realm.js';
 import { HANDLE_RE } from '../../src/net/handleShape.js';
@@ -18,6 +18,9 @@ import { GUILD_RANK_RECRUIT, guildRankOk } from '../../src/net/guild/guildLaw.js
 import { creditSave } from '../../src/net/realm/realmGoldLaw.js';
 
 const KINDS = new Set(['storage', 'station']);
+/** REST-GUEST: and the home's own row of who may rest in it - set by its owner, read with the grants; never a hall's,
+ *  whose members rest there already. */
+const SET_KINDS = new Set([...KINDS, 'rest']);
 const MODES = new Set(['private', 'guild', 'friends', 'party', 'chosen_friends']);
 const storedMode = (mode) => (mode === 'chosen_friends' ? 'friends' : mode);
 const FRIENDS_MAX = 24;
@@ -184,12 +187,14 @@ export async function setDecorAccess(ctx, player, body) {
   const { mapId, buildingKey, character, id, kind, mode } = body ?? {};
   if (accountKind(player) !== 'linked') return { error: 'homes-need-account' };
   if (!homeMapIdOk(mapId) || !homeBuildingKeyOk(buildingKey)) return { error: 'bad-home' };
-  if (typeof id !== 'string' || !DECOR_ID_RE.test(id) || !KINDS.has(kind) || !MODES.has(mode)) return { error: 'bad-decor' };
+  if (typeof id !== 'string' || !DECOR_ID_RE.test(id) || !SET_KINDS.has(kind) || !MODES.has(mode)) return { error: 'bad-decor' };
+  if ((kind === 'rest') !== (id === DECOR_REST_ID)) return { error: 'bad-decor' };   // REST-GUEST: the home's row is the rest's alone
   if (typeof character !== 'string' || !REALM_ID_RE.test(character)) return { error: 'realm-only' };
-  if (!(await pieceKind(db, mapId, buildingKey, id, kind))) return { error: 'no-decor' };
+  if (kind !== 'rest' && !(await pieceKind(db, mapId, buildingKey, id, kind))) return { error: 'no-decor' };
   if (!(await owns(db, mapId, buildingKey, player, character))?.owns) return { error: 'no-home' };
   const kept = storedMode(mode);
   const home = await homeOf(db, mapId, buildingKey);
+  if (kind === 'rest' && home?.guild_id != null) return { error: 'bad-decor' };
   if (home?.guild_id != null) {
     if (!guildRankOk(body.rank)) return { error: 'bad-decor' };
     await db.prepare(`INSERT INTO decor_access (map_id, building_key, piece_id, kind, mode, friends) VALUES (?, ?, ?, ?, 'guild', ?)
@@ -361,6 +366,7 @@ async function decorGrants(ctx, player, body) {
       WHERE a.player = ? AND a.char_id = ? AND b.player = ? AND b.char_id = ?`).bind(home.player, home.char_id, player.id, character).first();
     guild = !!hit;
   }
+  let rest = owner;   // REST-GUEST: the owner always may; a guest as the home's own row says
   for (const row of results) {
     let ids = [];
     try { ids = JSON.parse(row.friends); } catch { ids = []; }
@@ -368,7 +374,8 @@ async function decorGrants(ctx, player, body) {
     const allowed = owner || (row.mode === 'guild' && guild) || named;
     if (owner && row.mode !== 'private') use.push({ id: row.piece_id, mode: row.mode === 'chosen_friends' ? 'friends' : row.mode });
     if (!allowed) continue;
-    if (row.kind === 'storage') storage.push(row.piece_id);
+    if (row.kind === 'rest') rest = true;
+    else if (row.kind === 'storage') storage.push(row.piece_id);
     else station.push(row.piece_id);
   }
   if (owner) {
@@ -382,7 +389,7 @@ async function decorGrants(ctx, player, body) {
   }
   const held = await db.prepare('SELECT DISTINCT piece_id FROM decor_bin WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey).all();
   for (const row of held.results ?? []) if (storage.includes(row.piece_id)) bin.push(row.piece_id);
-  return { ok: true, storage, station, bin, ...(owner ? { use } : {}) };
+  return { ok: true, storage, station, bin, rest, ...(owner ? { use } : {}) };
 }
 
 async function decorDeposit(ctx, player, body) {
@@ -620,8 +627,26 @@ async function decorVault(ctx, player, body) {
 }
 
 /** One door. `op` is set, grants, open, deposit, withdraw, settle, vault, craft, list, hold or release. */
+/** DECOR-ROOMY: A HOME BOUGHT BEFORE ITS GROUND WAS KEPT names it once - its owner's client, from the measure its price
+ *  was set from: kept only where that price is the one the ground and the town's blocks set (homeGroundOk), and only
+ *  where none is kept yet. A guild's hall keeps its own cap. */
+async function setHomeGround(ctx, player, { mapId, buildingKey, character, ground, townBlocks } = {}) {
+  const { db } = ctx;
+  if (!homeMapIdOk(mapId) || !homeBuildingKeyOk(buildingKey)) return { error: 'bad-home' };
+  if (typeof character !== 'string' || !REALM_ID_RE.test(character)) return { error: 'realm-only' };
+  if (!(await owns(db, mapId, buildingKey, player, character))?.owns) return { error: 'no-home' };
+  const home = await db.prepare('SELECT price, ground, guild_id FROM homes WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey).first();
+  if (!home || home.guild_id != null) return { error: 'no-home' };
+  if (home.ground != null) return { ok: true, ground: home.ground };
+  if (!homeGroundOk(ground, townBlocks, home.price)) return { error: 'bad-home' };
+  const kept = homeGroundKept(ground);
+  await db.prepare('UPDATE homes SET ground = ? WHERE map_id = ? AND building_key = ? AND ground IS NULL').bind(kept, mapId, buildingKey).run();
+  return { ok: true, ground: kept };
+}
+
 export async function decorUse(ctx, player, body = {}) {
   if (body.op === 'set') return setDecorAccess(ctx, player, body);
+  if (body.op === 'ground') return setHomeGround(ctx, player, body);   // DECOR-ROOMY
   if (body.op === 'grants') return decorGrants(ctx, player, body);
   if (body.op === 'deposit') return decorDeposit(ctx, player, body);
   if (body.op === 'withdraw') return decorWithdraw(ctx, player, body);

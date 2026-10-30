@@ -946,7 +946,7 @@ import { caravanRoomOf, caravanKeyOf } from '../net/privateInterior.js';   // WA
 import { CARAVAN_TEXT } from '../systems/caravanRoom.js';   // WAGONS2 (FINAL AUDIT): a caravan's save that cannot come back, said
 import { caravanEntryOf, setDrivenCaravanEntry, caravanMayEnter, CARAVAN_VISIT_TEXT } from '../systems/caravanVisit.js';   // WAGONS2-VISIT: who may enter a caravan, and a visit to another's
 import { HOME_ENTRY_WORDS, homeNextEntry } from '../systems/online/onlineHomes.js';   // WAGONS2-VISIT: a caravan's door is turned as a home's is
-import { homeDecorShown } from '../net/homeVoteLaw.js';   // HOME-VOTE: a shunned home's paint stands for its insiders alone
+import { homeDecorShownHere } from '../systems/online/homeMute.js';   // HOME-VOTE: a shunned home's paint stands for its insiders alone; HOME-MUTE: and none of a home I hid
 import { createCaravanVisitLink } from '../net/caravanVisitLink.js';   // WAGONS2-VISIT: the visited caravan's cell, heard from inside it
 import { RECEIVER_MARKS } from '../net/realm/realmTradeLaw.js';   // WAGONS2-VISIT (AUDIT): the last owner's marks, never carried to the next
 import { GATE_BRAIN_V } from '../net/wire.js';   // AUDIT WBX R7: the brain's law this client knows, said on every `in`
@@ -2039,7 +2039,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   /** @type {Map<string, any>} `${mapId}:${buildingKey}` -> a look the owner's painter is trying */
   const _lookPreview = new Map();
   // HOME-VOTE: a home the town voted below zero stands in its town's own paint but for its insiders (net/homeVoteLaw.js)
-  const lookOfHome = (mapId, bk, row) => (_lookPreview.has(`${mapId}:${bk}`) ? _lookPreview.get(`${mapId}:${bk}`) : homeDecorShown(row) ? row?.look ?? null : null);
+  const lookOfHome = (mapId, bk, row) => (_lookPreview.has(`${mapId}:${bk}`) ? _lookPreview.get(`${mapId}:${bk}`) : homeDecorShownHere(row, mapId) ? row?.look ?? null : null);
   // MARKS1 (PROF0 10.5): the account's Marks as this page knows them - the balance, the Bank's sale carried to its end
   // (a sale whose answer was lost is kept and settled), a guild's Marks moved (net/marksBook.js). Online only.
   const marksBook = params.has('online')
@@ -5916,7 +5916,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // for the painter's preview (AUDIT: a colour tried tore the owner's street down under the open panel)
       // HOME-VOTE: a look shown - a shunned home's stands in the merge for everyone but its insiders (never lookOfHome: the
       // painter's preview would tear the owner's street down)
-      for (const [bk, row] of homes) if (!p.homeKeys.has(bk) && p.buildingKeys.has(bk) && ((row?.look && homeDecorShown(row)) || row?.mine || row?.keeper)) merged = true;   // GUILD-YARD: a hall kept
+      for (const [bk, row] of homes) if (!p.homeKeys.has(bk) && p.buildingKeys.has(bk) && ((row?.look && homeDecorShownHere(row, p.homeTown)) || row?.mine || row?.keeper)) merged = true;   // GUILD-YARD: a hall kept
       if (merged) { _reskin.mark(key); continue; }
       for (const m of p.models) {
         if (!m._home) continue;
@@ -32867,7 +32867,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // YARD-LIGHT: the yards' lamps - the town's own (homeYards.js yardLampOf: an outdoor lamp is the town's) - scene lights beside
       // the quays', never the player's extras; in the lanterns' hours and colour, each on the town's flicker at its slot (AUDIT
       // YARD-LIGHT L3: after the tick, as the street reads it) at its own reach, rows refilled in place (L4: PERF-LIGHTS' law)
-      if (yards) yardLampRows(yards.lamps(), _yardRows, worldLightAnimator.ranges, CITY_LIGHT_COLOR_F32, csaLit);
+      if (yards) yardLampRows(yards.lamps(), _yardRows, worldLightAnimator.ranges, CITY_LIGHT_COLOR_F32, csaLit, lightingOn);   // CANDLE-DIM: a candle as a room's on the same lane
       // PERF-LIGHTS (2026-09-19): THE LANTERNS ARE A POOL, NOT A FRESH
       // LIST. This built an array and an object PER LANTERN every frame -
       // a town at night is hundreds of them, and the pixel translation

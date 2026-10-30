@@ -56,21 +56,22 @@
   {
     "name": "DECOROUTDOOR-tree-unnamed",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": " : kind === 'nature' && isTreeRecord(c.nature, c.flat[1]) ? 'Tree' : null));",
-    "new": " : null));",
+    "old": " : kind === 'nature' && isTreeRecord(c.nature, c.flat[1]) ? 'Tree' : FLAT_BASE[c.as ?? c.flat[0]] ?? null));",
+    "new": " : FLAT_BASE[c.as ?? c.flat[0]] ?? null));",
     "tests": [
       "test/systems/decor/decoroutdoor.test.js"
     ],
-    "note": "DECOR-MODS (FIELD BUGS 2026-10-05b, PIN MOVED): re-aimed by content - the line now reads a mod's piece's own name and filing too."
+    "note": "DECOR-MODS (FIELD BUGS 2026-10-05b, PIN MOVED): re-aimed by content - the line now reads a mod's piece's own name and filing too. AUDIT FB1029f (PIN MOVED): re-aimed by content."
   },
   {
     "name": "DECOROUTDOOR-outside-indoors",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "    && (!e.outside || !!room?.yard || e.kind === 'outdoor')\n",
+    "old": "    && (!e.outside || !!room?.yard || !!e.inRoom)   // DECOR-KINDS: the street's plain pieces, filed now as what they are\n",
     "new": "",
     "tests": [
       "test/systems/decor/decoroutdoor.test.js"
-    ]
+    ],
+    "note": "DECOR-KINDS (FIELD BUGS 2026-10-29f, PIN MOVED): re-aimed by content - a piece is filed by what it is first."
   },
   {
     "name": "DECOROUTDOOR-any-climate",

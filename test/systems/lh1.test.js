@@ -53,5 +53,5 @@ test('LH1 by source: every host hands the swap its LIVE rig\'s hand door - the s
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) assert.match(read(f), /const quickSwap = \(rig = weaponRig\) => \{[^\n]*\n\s*swapQuickslot\(\{[^\n]*hand: rig\.handDoor\(\) \}\);/, f);
   assert.match(read('src/scenes/worldModes.js'), /host\.quickSwap\?\.\(interiorWeapon\)/);
   assert.match(read('src/scenes/dungeonContext.js'), /hand: weaponRig\.handDoor\(\) \}\);/);
-  assert.match(read('src/combat/weapon/weaponRig.js'), /handDoor\(\) \{\s*\n\s*syncWorn\(\);\s*\n\s*return \{ usingRightHand: playerWeapon\.usingRightHand, switchHand: \(\) => this\.switchHand\(\) \};/);
+  assert.match(read('src/combat/weapon/weaponRig.js'), /handDoor\(\) \{\s*\n\s*syncWorn\(\);\s*\n\s*return \{\s*\n\s*usingRightHand: playerWeapon\.usingRightHand, switchHand: \(\) => this\.switchHand\(\),/);   // PIN MOVED (AUDIT FB1029f D1): the door also sets a hand (useHand) and keeps one (keepHand)
 });

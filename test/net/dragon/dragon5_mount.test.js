@@ -42,7 +42,7 @@ test('DRAGON5 the item: a Transportation piece of its own template, bound to the
   assert.deepEqual(itemFindings({ ...it, dragonId: 'not-a-tame' }), ['dragon']);
   assert.deepEqual(itemFindings({ ...it, dragonLook: 2 }).includes('dragon') || itemFindings({ ...it, dragonLook: 2 }).includes('field'), true);
   assert.ok(itemFindings({ group: 'Weapons', templateIndex: 0, dragonId: ID }).includes('dragon'));
-  assert.equal(ITEM_LAW_VERSION, 15);
+  assert.equal(ITEM_LAW_VERSION, 16);   // PIN MOVED (GILDED-MAKER): law 16 - the item maker's rows on a Gilded piece lawful (15 on its branch, renumbered past DRAGON5's 15 at the merge)
   assert.equal(dragonMountWellFormed(it), true);
   assert.equal(hasDragon([{ templateIndex: 94 }, it]), true);
   assert.equal(dragonMountOf([it]), it);

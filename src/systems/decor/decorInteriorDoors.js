@@ -91,9 +91,12 @@ export function createInteriorDoors({ draws, addDoor, removeDoor }) {
     rec.hidden = false;
     return true;
   }
+  /** The room's doors as `list` keeps them: each named door out, every other back (AUDIT FB1029f A3: a door put back
+   *  on another device is back here too). Answers how many moved. */
   function apply(list) {
+    const out = new Set(interiorDoorKeys(list).map(interiorDoorIndex));
     let n = 0;
-    for (const key of interiorDoorKeys(list)) if (hide(interiorDoorIndex(key))) n += 1;
+    for (const r of [...recs]) if (out.has(r.index) ? hide(r.index) : show(r.index)) n += 1;
     return n;
   }
 
