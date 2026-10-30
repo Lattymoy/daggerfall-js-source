@@ -193,7 +193,7 @@ test('WIKIMAID grant: WIKIMAID_HANDLES names SylviaBun, and the list grants the 
   assert.equal(auraRefusal('lilacwarren', sb, off), 'not-held');
   assert.deepEqual(titlesHeld({ ...sb, handle: null }, ENV), [], 'a guest holds none');
   assert.deepEqual(aurasHeld({ ...sb, handle: null }, ENV), []);
-  for (const h of ['Flylighter', 'Sureme', 'GA00250', 'SirMcMobdon', 'Diggleborf', 'SylviaB', 'SylviaBunny', 'Sylvia Bun']) {
+  for (const h of ['Flylighter', 'Sureme', 'GA00250', 'Diggleborf', 'SylviaB', 'SylviaBunny', 'Sylvia Bun']) {
     assert.ok(!titlesHeld(row(h), ENV).includes('wikimaid'), `${h} does not hold it`);
     assert.ok(!aurasHeld(row(h), ENV).includes('lilacwarren'), `nor the warren: ${h}`);
     assert.equal(auraRefusal('lilacwarren', row(h), ENV), 'not-held');

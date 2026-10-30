@@ -19,15 +19,18 @@ test('GLYPH-WEAR law: hidden is the stored choice read against what is true now;
   const env = { DEVELOPER_HANDLES: 'Dev', MODERATOR_HANDLES: 'Dev' };
   const nowS = 2_000_000_000;
   const row = { handle: 'Dev', created_at: 1, glyphs_off: 'mod sprout' };
-  assert.deepEqual(glyphsOf(row, env, nowS), ['dev', 'mod']);
+  // ADMIN-ALL (PIN MOVED): an Admin holds the paint glyphs too (titles.js holdsAll), after the true ones
+  const paint = glyphsOf({ handle: 'Dev', created_at: 1 }, { DEVELOPER_HANDLES: 'Dev' }, nowS).slice(1);
+  assert.ok(paint.length > 0 && !paint.includes('mod'));
+  assert.deepEqual(glyphsOf(row, env, nowS), ['dev', 'mod', ...paint]);
   assert.deepEqual(glyphsHidden(row, env, nowS), ['mod'], 'the sprout is long gone - not "hidden", just not true');
-  assert.deepEqual(glyphsShown(row, env, nowS), ['dev']);
-  assert.deepEqual(wardrobeOf(row, env, nowS).glyphs, ['dev', 'mod'], 'the wardrobe still lists every glyph that is true');
+  assert.deepEqual(glyphsShown(row, env, nowS), ['dev', ...paint]);
+  assert.deepEqual(wardrobeOf(row, env, nowS).glyphs, ['dev', 'mod', ...paint], 'the wardrobe still lists every glyph that is true');
   assert.deepEqual(wardrobeOf(row, env, nowS).glyphsOff, ['mod']);
   assert.equal(glyphRefusal('dev', row, env, nowS), null);
   assert.equal(glyphRefusal('dm', row, env, nowS), 'not-held');
   assert.equal(glyphRefusal('crown', row, env, nowS), 'no-glyph');
-  assert.deepEqual(glyphsShown({ handle: 'Dev', created_at: 1 }, env, nowS), ['dev', 'mod'], 'a row that never chose shows everything');
+  assert.deepEqual(glyphsShown({ handle: 'Dev', created_at: 1 }, env, nowS), ['dev', 'mod', ...paint], 'a row that never chose shows everything');
 });
 
 test('GLYPH-WEAR service: /v1/account/glyph hides and shows; the token keeps `g` whole and signs `gx` beside it; the answer says both (mutants: the hidden glyph dropped from `g`, so /red goes with the paint)', async () => {

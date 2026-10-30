@@ -203,7 +203,7 @@ test('PENITENT grant: Diggleborf alone holds it, case-folded, title and glyph to
   const founder = row('Diggleborf', { created_at: FOUNDER_UNTIL - 86_400, title: 'founder' });
   assert.deepEqual(titlesHeld(founder, env), ['founder', 'penitent']);
   assert.equal(titleWorn(founder, env), 'founder', 'nothing wears the new one for them');
-  for (const h of ['SirMcMobdon', 'Dutchess', 'valenvalarys', 'SquidKamer', 'Lattymoy', 'Stranger']) {
+  for (const h of ['Dutchess', 'valenvalarys', 'SquidKamer', 'Stranger']) {   // ADMIN-ALL (PIN MOVED): the Admins are out of this list - an Admin holds every title and aura (test/server/admin_all.test.js)
     assert.ok(!titlesHeld(row(h), env).includes('penitent'), `${h} does not hold it`);
     assert.ok(!glyphsOf(row(h), env, nowS).includes('penitent'));
     assert.equal(equipRefusal('penitent', row(h), env), 'not-held');
