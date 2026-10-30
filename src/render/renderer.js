@@ -2880,7 +2880,7 @@ export class Renderer {
     });
     if (!n) return false;
     const gl = this.gl;
-    for (const [sp, row, base] of [[this._wl.space, WL_GRID_ROW, WL_LIST_BASE], [this._wl.farSpace, WL_FAR_GRID_ROW, WL_FAR_LIST_BASE]]) {   // LIGHT-REACH: and the far rows' band
+    for (const { sp, row, base } of [{ sp: this._wl.space, row: WL_GRID_ROW, base: WL_LIST_BASE }, { sp: this._wl.farSpace, row: WL_FAR_GRID_ROW, base: WL_FAR_LIST_BASE }]) {   // LIGHT-REACH: and the far rows' band
       this._activeTexture(gl.TEXTURE0 + CLUSTER_GRID_UNIT);
       gl.bindTexture(gl.TEXTURE_2D, this._clusterTex.grid);
       gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, row, CLUSTER_GRID_W, CLUSTER_GRID_H, gl.RG_INTEGER, gl.UNSIGNED_SHORT, sp.grid);

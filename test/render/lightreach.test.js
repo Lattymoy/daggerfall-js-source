@@ -56,12 +56,12 @@ function crossMask(W = 64, at = glassAt) {
 }
 /** Glass high in its tile and off to one side, so the glass's centre is not the tile's. */
 const highAt = (u, v) => u > 0.2 && u < 0.95 && v > 0.45 && v < 0.95 && Math.abs(u - 0.6) > 0.05;
-/** A house front `tiles` x 2 tiles of 2.5 m, its glass facing +z at z = -10, turned by `yaw` about the origin. */
-function front(tiles = 8, yaw = 0) {
+/** A house front `tiles` x 2 tiles of `tw` m from x = `x0`, its glass facing +z at z = -10, turned by `yaw` about the origin. */
+function front(tiles = 8, yaw = 0, tw = 2.5, x0 = -0.5 * tw * tiles) {
   const cs = Math.cos(yaw), sn = Math.sin(yaw), rot = (x, z) => [x * cs + z * sn, -x * sn + z * cs];
   const P = [], N = [], UV = [];
   for (const [a, b] of [[0, 0], [1, 0], [1, 1], [0, 1]]) {
-    const [x, z] = rot(-1.25 * tiles + 2.5 * tiles * a, -10), [nx, nz] = rot(0, 1);
+    const [x, z] = rot(x0 + tw * tiles * a, -10), [nx, nz] = rot(0, 1);
     P.push(x, 5 * b, z); N.push(nx, 0, nz); UV.push(tiles * a, 2 * b);
   }
   const set = windowAperturesOf(new Float32Array(P), new Float32Array(N), new Float32Array(UV), new Uint32Array([0, 1, 2, 0, 2, 3]), 0, 6);
@@ -112,6 +112,24 @@ test('LIGHT-REACH LR1: THE BOX BUILDER - a sphere\'s view box takes the sphere\'
   assert.equal(none.total, 0, 'a box of no size takes no cell');
 });
 
+test('LIGHT-REACH LR1b: A LANTERN IS LISTED BY ITS SLICES - in each depth slice a sphere takes the tiles of its widest circle there, not of its whole box: a third fewer entries on a street of lanterns at the lane\'s reach, and every point of every sphere still in a cell that lists it (mutants: the slice not narrowed, the circle taken as the sphere)', () => {
+  const R = rng(21), proj = mirrorProjectionX(perspective(Math.PI / 3, 16 / 9, 0.1, 400)), view = lookAt([0, 1.7, 0], [0, 1.7, -1], [0, 1, 0]);
+  let sliced = 0, boxed = 0;
+  for (let t = 0; t < 20; t++) {
+    const n = 48, sp = new Float32Array(n * 4), bx = new Float32Array(n * LC_BOX);
+    for (let i = 0; i < n; i++) { const x = (R() - 0.5) * 200, z = -R() * 250 + 10; sp.set([x, 4.1, z, 27], i * 4); bx.set([x, 4.1, z, 27, 0, 0, 0, 27, 0, 0, 0, 27], i * LC_BOX); }
+    const A = createClusterSpace(64), B = createClusterSpace(64);
+    assert.ok(buildLightClusters(sp, n, view, proj, A) && buildLightClusterBoxes(bx, n, view, proj, B));
+    sliced += A.total; boxed += B.total;
+    for (let k = 0; k < 300; k++) {   // a point inside a sphere: its cell lists the sphere
+      const i = Math.floor(R() * n), u = norm([R() - 0.5, R() - 0.5, R() - 0.5]), d = Math.cbrt(R()) * 27 * 0.999;
+      const p = [sp[i * 4] + u[0] * d, sp[i * 4 + 1] + u[1] * d, sp[i * 4 + 2] + u[2] * d], cell = cellOfPoint(p, view, proj, VP);
+      if (cell) assert.ok(cellLights(A, cell[0], cell[1], cell[2]).includes(i), `light ${i} at ${p.map((v) => v.toFixed(1))}`);
+    }
+  }
+  assert.ok(sliced < 0.75 * boxed, `the slices hold ${(100 * sliced / boxed).toFixed(0)}% of the boxes' entries`);
+});
+
 test('LIGHT-REACH LR2: A WINDOW LIGHT\'S BOX holds every point it lights - the lamp\'s beam through the glass out to its reach, the sun\'s along its rays into a room, the glass\'s glow beside it - by the shader\'s own twin over five hundred lights of every turn, size and skew; and it is under a tenth of the box of the reach\'s sphere, the old bound (mutants: the frustum\'s spread, the soft edge, the glow\'s half-box, the sun\'s run)', () => {
   const R = rng(5);
   let lit = 0, vol = 0, volSphere = 0;
@@ -135,6 +153,24 @@ test('LIGHT-REACH LR2: A WINDOW LIGHT\'S BOX holds every point it lights - the l
   }
   assert.ok(lit > 2000, `${lit} lit points`);
   assert.ok(vol / volSphere < 0.1, `the boxes are ${(100 * vol / volSphere).toFixed(1)}% of the spheres' boxes`);
+  // the soft edge with the glow off (a far row's box): a narrow pane's beam lights a rim past its glass's lines - by the
+  // lamp's footprint - and at the far end of its reach that rim is outside a box drawn through the glass's lines alone
+  for (const [su, sv] of [[1, 0], [-1, 0], [0, -1]]) {
+    const c = [0, 3, 0], nf = [0, 0, 1], U = [0.6, 0, 0], V = [0, 0.8, 0], src = lampOf(c, nf, V);
+    const l = { c, U, V, nf, uv: [0.5, 0.5, 1, 1], src, kind: WL_KIND.lamp, layer: 0, reach: WL_LAMP_RANGE, area: 0.48, gobo: [1, 1, 1], spill: [0, 0, 0], halfDiag: 0.5 };
+    const rec = new Float32Array(WL_VEC4 * 4), B = new Float32Array(LC_BOX);
+    writeWindowLight(rec, 0, l);
+    windowLightBox(l, true, B, 0, false);
+    let p = null;
+    for (let it = 0, tt = 0.85; it < 4; it++) {   // a point 0.97 of the reach out along a ray through the rim, 0.8 of the footprint past the glass
+      const C = [c[0] + su * (0.3 + 0.8 * 2 * 0.1 * tt), c[1] + sv * (0.4 + 0.8 * 2 * 0.1 * tt), 0], d = norm([C[0] - src[0], C[1] - src[1], C[2] - src[2]]);
+      p = [src[0] + d[0] * 0.97 * WL_LAMP_RANGE, src[1] + d[1] * 0.97 * WL_LAMP_RANGE, src[2] + d[2] * 0.97 * WL_LAMP_RANGE];
+      tt = p[2] / (p[2] - src[2]);
+    }
+    const toLamp = norm([src[0] - p[0], src[1] - p[1], src[2] - p[2]]);
+    assert.ok(windowLightAt(rec, p, toLamp, () => 1, elAttenuation)[0] > 0, `the rim lit (${su}, ${sv})`);
+    assert.ok(inBox(B, 0, p), `and inside the box (${su}, ${sv}): ${p.map((v) => v.toFixed(2))}`);
+  }
   // the glow alone: a pane the sun does not face is its half-box on its own side, WL_SPILL_REACH every way
   const g = new Float32Array(LC_BOX);
   windowLightBox({ c: [0, 3, 0], U: [1, 0, 0], V: [0, 1, 0], nf: [0, 0, 1], src: [0, 1, 0], kind: WL_KIND.sun, reach: WL_SPILL_REACH, halfDiag: 0.7 }, false, g, 0);
@@ -153,6 +189,11 @@ test('LIGHT-REACH LR3: A FAR ROW LIGHTS WHAT ITS TILES LIGHT - a storey\'s run o
   const R = rng(9), mAt = (u, v) => (glassAt(u, v) ? 1 : 0);
   const frame = [0, 0, 0, 1e-3, 1, 1, 1, 1e6];   // no near cut, no far cut: every lit tile whole
   let rows = 0, lit = 0, curtained = 0;
+  // a front of sixteen 1 m tiles: one cell holds more of a storey than a row may
+  const narrow = front(16, 0, 1, 2), t1 = pass._cellTiles(s, narrow, 0), f1 = narrow.cells[4];
+  const storey = (ty) => t1.rows.filter((r) => narrow.ap[(f1 + r.js[0]) * 18 + 1] === ty);
+  assert.ok(storey(0).reduce((n, r) => n + r.js.length, 0) > WL_ROW_TILES, 'more tiles in a storey than a row holds');
+  assert.ok(storey(0).length >= 2 && storey(0).every((r) => r.js.length <= WL_ROW_TILES), 'so the storey is two rows');
   for (let ci = 0; ci < sub.cells.length / 6; ci++) {
     const t = pass._cellTiles(s, sub, ci);
     const first = sub.cells[ci * 6 + 4];

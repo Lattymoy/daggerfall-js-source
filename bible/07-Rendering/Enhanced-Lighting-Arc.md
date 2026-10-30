@@ -2302,7 +2302,7 @@ copies element by element and names a record through one shared descriptor, so t
 The town's 155 lanterns (2.4 a block) already filled the lane's 48 slots out to 170-280 m, and the Imperial City's
 fabric lamps (8 a cell) to 140-175 m: no lantern was cut by its distance. Each reached DFU's 18 (the [City] prefab), a
 pool of about 9 m, with lanterns 70 to 130 m apart. The windows' light stopped 40 to 64 m out, where WL1's block of
-128 was full, and reached 8 m from the glass. The windows were also the cost: on SwiftShader they were 30 to 42 percent
+128 was full, and reached 8 m from the glass. The windows were also the cost: on SwiftShader they were up to 43 percent
 of a night street frame.
 
 **Why they cost so much.** LC1 lists a light in every cell its sphere's box touches. A window's light falls only in
@@ -2315,9 +2315,17 @@ half-axes under the sphere's rules (`src/render/lightClusters.js:"export functio
 **Farther from the source.** A window's lamp reaches 12 m (`WL_LAMP_RANGE`, WL1's 8). On the lane a town lantern
 reaches 27 (`src/world/city/cityLights.js:"export const STREET_LIGHT_REACH = 1.5;"`, half again the prefab's 18), its
 flicker's variance and step scaled with it, so it flickers by the same share of its range. The classic set keeps DFU's
-18 and DaggerfallLight's Animate exactly. A yard's lamp rides the town's flicker and reaches with it. The lane's lantern
-loop now leaves a surface turned from a light before that light's shadow taps: there its diffuse is zero and its
-glint is at most one display step on the darkest ground (N.H is at most 0.71, under a lobe of power 24).
+18 and DaggerfallLight's Animate exactly. A yard's lamp rides the town's flicker and reaches with it.
+
+**What the lanterns' reach costs, and what pays for it.** Half again the reach is more than twice the lit area, and
+the cells listing a lantern doubled with it. Two changes take that back without changing a pixel. A sphere is listed in
+each depth slice only by the tiles of its widest circle there (`src/render/lightClusters.js:"export function sphereSlice(vx, vy, vz, r, cz, proj, out) {"`),
+not by its whole box: a third fewer entries at either reach. And the lane's lantern loop leaves a surface turned from a
+light before its shadow taps: its diffuse there is zero and its glint at most one display step on the darkest ground
+(N.H is at most 0.71, under a lobe of power 24).
+
+**Tried and dropped:** a one-tap shadow past 0.6 of a light's reach. With that switch in the loop the lanterns cost more
+than without it, at either share, since SIMD lanes that take different filters run both, on SwiftShader as on a GPU.
 
 **Farther from the player.** Past the nearest 128 tiles, a street's lit windows are gathered out to 160 m
 (`WL_FAR_GATHER`) as rows (`src/render/windowLight.js:"export function cellRows(ap, first, t) {"`): a storey's run of
@@ -2326,7 +2334,12 @@ rounding. 127 rows ride a second uniform block (binding 4) and a third band of L
 crowd the other's out. A tile is the near tier's inside its cut and the row's past it, by one fade, and the two sum to
 one. A row has no glow, and its curtains stand at their mean edges.
 
-**Measured after.** [[AB]]
+**Measured after** (`tools/lightReachProbe.mjs` on this tree and on a worktree of main, one machine, three night
+street views, SwiftShader milliseconds a frame). The whole frame: 3249 to 3220, 2898 to 3030, 4023 to 3879 - 0.4
+percent less over the three. The windows' share fell by a fifth to a third (940 to 693, 140 to 93, 1740 to 1425) while
+they reached 12 m and drew 120 to 126 far rows out to 112-124 m. The lanterns' share held in two views (367 to 373, 471
+to 478) and rose in the third (183 to 299) at half again the reach. The frame with neither light read 3 to 11 percent
+higher on this tree, and the totals above carry that. NOT SEEN ON A GPU: SwiftShader's milliseconds are not a player's.
 
 **The departures.** From DFU's [City] prefab range on the lane (ledger section A, LIGHT-REACH). The windows' light is
 WL1's own, not a DFU member.

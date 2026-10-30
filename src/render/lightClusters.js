@@ -101,6 +101,8 @@ export function createClusterSpace(maxLights = 64) {
     built: false,    // the last build's answer
     _tiles: new Int16Array(4),   // AUDIT LC1: a slice's tile range, scratch
     _box: new Int16Array(7 * maxLights),   // per light: x0 x1 y0 y1 z0 z1 nearFull (64 by default - the lane's cap is 48; WL1 asks for its own)
+    _slices: new Int16Array(4 * CLUSTER_Z * maxLights),   // LIGHT-REACH: per light and slice its tiles x0 x1 y0 y1, x0 -1 for none
+    _sphere: new Float32Array(4 * maxLights),   // LIGHT-REACH: a sphere light's view centre and radius, for its slices
   };
 }
 
@@ -170,6 +172,7 @@ function tilesIn(box, at, cz, out) {
  * count, then write - so the lists are one flat array in cell order with no per-cell allocation.
  */
 export function buildLightClusters(lights, count, view, proj, space) {
+  const sph = space._sphere;
   return binLights(count, space, (i, box, at) => {
     const r = lights[i * 4 + 3];
     if (!(r > 0)) return false;
@@ -177,8 +180,36 @@ export function buildLightClusters(lights, count, view, proj, space) {
     const vx = view[0] * x + view[4] * y + view[8] * z + view[12];
     const vy = view[1] * x + view[5] * y + view[9] * z + view[13];
     const vz = view[2] * x + view[6] * y + view[10] * z + view[14];
+    sph[i * 4] = vx; sph[i * 4 + 1] = vy; sph[i * 4 + 2] = vz; sph[i * 4 + 3] = r;
     return cellsOfSphere(vx, vy, vz, r, proj, box, at);
-  });
+  }, (i, cz, out) => sphereSlice(sph[i * 4], sph[i * 4 + 1], sph[i * 4 + 2], sph[i * 4 + 3], cz, proj, out));
+}
+/** LIGHT-REACH: the depths slice k spans (the shader's sliceOf), widened by a thousandth for the GPU's rounding. */
+const sliceNear = (k) => (k <= 0 ? 0 : CLUSTER_NEAR * Math.exp(k / CLUSTER_Z_SCALE) * 0.999);
+const sliceFar = (k) => (k >= CLUSTER_Z - 1 ? Infinity : CLUSTER_NEAR * Math.exp((k + 1) / CLUSTER_Z_SCALE) * 1.001);
+/** LIGHT-REACH: a sphere's tiles in one slice, narrowed in `out` (its box's tiles) to those of its cross-section there:
+ *  the box of the sphere within the slab is as wide as its widest circle in the slab. A light near the edge of its
+ *  depth took every tile its whole box did. False when the slab holds none of it. */
+export function sphereSlice(vx, vy, vz, r, cz, proj, out) {
+  const dc = -vz, lo = sliceNear(cz), hi = sliceFar(cz);
+  const dz = dc < lo ? lo - dc : dc > hi ? dc - hi : 0;
+  if (dz >= r) return false;
+  const rs = Math.sqrt(r * r - dz * dz), dA = Math.max(lo, dc - r, CLUSTER_NEAR), dB = Math.min(hi, dc + r);
+  if (!(dB > dA)) return true;   // within the near band: the box's own tiles
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (let c = 0; c < 8; c++) {
+    const x = c & 1 ? vx + rs : vx - rs, y = c & 2 ? vy + rs : vy - rs, z = c & 4 ? -dB : -dA;
+    const cw = proj[3] * x + proj[7] * y + proj[11] * z + proj[15];
+    if (!(cw > 1e-6)) return true;
+    const nx = (proj[0] * x + proj[4] * y + proj[8] * z + proj[12]) / cw, ny = (proj[1] * x + proj[5] * y + proj[9] * z + proj[13]) / cw;
+    if (nx < minX) minX = nx; if (nx > maxX) maxX = nx;
+    if (ny < minY) minY = ny; if (ny > maxY) maxY = ny;
+  }
+  if (minX > 1 || maxX < -1 || minY > 1 || maxY < -1) return false;
+  const tile = (n, cells) => { const t = Math.floor((n + 1) * 0.5 * cells); return t < 0 ? 0 : t >= cells ? cells - 1 : t; };
+  out[0] = Math.max(out[0], tile(minX, CLUSTER_X)); out[1] = Math.min(out[1], tile(maxX, CLUSTER_X));
+  out[2] = Math.max(out[2], tile(minY, CLUSTER_Y)); out[3] = Math.min(out[3], tile(maxY, CLUSTER_Y));
+  return out[0] <= out[1] && out[2] <= out[3];
 }
 /** LIGHT-REACH: THE BUILD for lights bounded by boxes: `boxes` holds LC_BOX floats a light - a world box's centre and
  *  its three half-axes (each a vector: the axis times half its length, any orientation). The view-space box of each
@@ -202,9 +233,11 @@ export function buildLightClusterBoxes(boxes, count, view, proj, space) {
 }
 /** LIGHT-REACH: a box light's floats - its centre, then three half-axis vectors. */
 export const LC_BOX = 12;
-/** The two passes both builds share: `cells(i, box, at)` writes light i's cell range, or answers false for none. */
-function binLights(count, space, cells) {
-  const counts = space.counts, grid = space.grid, list = space.list, box = space._box;
+/** The two passes both builds share: `cells(i, box, at)` writes light i's cell range, or answers false for none;
+ *  `slice(i, cz, out)`, given, narrows a slice's tiles (LIGHT-REACH: a sphere's cross-section) or answers false for none.
+ *  The first pass keeps each slice's tiles, so the second writes the same cells it counted. */
+function binLights(count, space, cells, slice = null) {
+  const counts = space.counts, grid = space.grid, list = space.list, box = space._box, st = space._slices;
   counts.fill(0);
   space.total = 0; space.lights = 0; space.rows = 0; space.built = false;
   const n = Math.min(count, box.length / 7, 255);   // a list entry is one byte
@@ -217,7 +250,11 @@ function binLights(count, space, cells) {
     touched++;
     const z0 = box[at + 4], z1 = box[at + 5];
     for (let cz = z0; cz <= z1; cz++) {
-      const [x0, x1, y0, y1] = tilesIn(box, at, cz, t4);
+      const s = (i * CLUSTER_Z + cz) * 4;
+      tilesIn(box, at, cz, t4);
+      if (slice && !(cz === 0 && box[at + 6]) && !slice(i, cz, t4)) { st[s] = -1; continue; }
+      st[s] = t4[0]; st[s + 1] = t4[1]; st[s + 2] = t4[2]; st[s + 3] = t4[3];
+      const x0 = t4[0], x1 = t4[1], y0 = t4[2], y1 = t4[3];
       total += (x1 - x0 + 1) * (y1 - y0 + 1);
       for (let cy = y0; cy <= y1; cy++) {
         const row = cy * CLUSTER_X + cz * CLUSTER_X * CLUSTER_Y;
@@ -241,7 +278,9 @@ function binLights(count, space, cells) {
     if (box[at] < 0) continue;
     const z0 = box[at + 4], z1 = box[at + 5];
     for (let cz = z0; cz <= z1; cz++) {
-      const [x0, x1, y0, y1] = tilesIn(box, at, cz, t4);
+      const s = (i * CLUSTER_Z + cz) * 4;
+      if (st[s] < 0) continue;
+      const x0 = st[s], x1 = st[s + 1], y0 = st[s + 2], y1 = st[s + 3];
       for (let cy = y0; cy <= y1; cy++) {
         const row = cy * CLUSTER_X + cz * CLUSTER_X * CLUSTER_Y;
         for (let cx = x0; cx <= x1; cx++) {
