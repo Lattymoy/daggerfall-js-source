@@ -7,7 +7,7 @@
 import { overAccountRate } from './accounts.js';
 import { isDeveloper, holdsAll } from './titles.js';   // ADMIN-ALL: an admin holds every item and both folios, so is sold none
 import { mustChange } from './realm.js';
-import { aurumRow, balanceOfRow, AURUM_BALANCE_SQL } from './aurum.js';
+import { aurumRow, balanceOfRow, aurumOpenFor, AURUM_BALANCE_SQL } from './aurum.js';
 import { utcDay } from '../../src/net/marksLaw.js';
 import {
   PASS_SOURCES, PASS_DAY_ASKS, PASS_DAY_AURUM, PASS_CHALLENGES, PASS_FINDS_FROM_MS, PASS_PREMIUM_AURUM,
@@ -43,11 +43,13 @@ const premiumOf = async (/** @type {any} */ db, /** @type {string} */ account, /
 /** A find's answer kept under its id, as a repeat (progress.js spends nothing on one) - null when the id is new. One whose
  *  answer was never written (its batch landed, the write after it did not) answers no gain. */
 async function passAskOf(/** @type {any} */ db, /** @type {string} */ account, /** @type {string} */ rid) {
-  const row = await db.prepare('SELECT answer FROM pass_asks WHERE account = ?1 AND rid = ?2').bind(account, rid).first();
+  const row = await db.prepare('SELECT answer, day FROM pass_asks WHERE account = ?1 AND rid = ?2').bind(account, rid).first();
   if (!row) return null;
   let a = null;
   try { a = JSON.parse(row.answer); } catch { a = null; }
-  return { ...(a && typeof a === 'object' ? a : { gained: 0, done: [] }), repeat: true };
+  // AUDIT-STOREFRONT III B4: the day it counted on rides with it (its `today` is that day's); one not yet answered (a twin
+  // still out) says so with no `today`, and the page reads the card again
+  return { ...(a && typeof a === 'object' ? a : { gained: 0, done: [] }), day: int(row.day), repeat: true };
 }
 /** AUDIT-STOREFRONT II (lane B 2): an account's finds' ids past PASS_ASK_KEEP_DAYS before `day` - read by its own key. */
 export const passAskSweep = (/** @type {any} */ db, /** @type {string} */ account, /** @type {number} */ day) =>
@@ -137,17 +139,18 @@ export async function findPass(ctx, player, body, env) {
   const end = out[2 + mine.length * 3]?.results?.[0] ?? {};
   const found = int(end.last), today = int(end.today);
   const gained = found + mine.filter((c) => done.includes(c.key)).reduce((a, c) => a + c.aurum, 0);
-  const answer = { gained, found, today, ...(today >= PASS_DAY_AURUM ? { capped: true } : {}), done, season: season?.id ?? null };
+  const answer = { gained, found, today, day, ...(today >= PASS_DAY_AURUM ? { capped: true } : {}), done, season: season?.id ?? null };   // AUDIT-STOREFRONT III B4: `day`, the UTC day `today` counts
   if (rid) {
     try { await db.prepare('UPDATE pass_asks SET answer = ?3 WHERE account = ?1 AND rid = ?2').bind(player.id, rid, JSON.stringify(answer)).run(); } catch { /* the find counted either way */ }
   }
   return answer;
 }
 
-/** The checks a track's or an item's buy shares: a registered account, the switch, a season whose tracks sell now. */
+/** The checks a track's or an item's buy shares: a registered account, both switches, a season whose tracks sell now.
+ *  AUDIT-STOREFRONT III A1: AURUM_OPEN too - shut, nothing is bought for Aurum (wrangler.toml), as the window reads it. */
 function buyGate(/** @type {any} */ player, /** @type {any} */ env, /** @type {unknown} */ seasonId, /** @type {number} */ nowS) {
   if (!player?.handle) return { error: 'pass-guest' };
-  if (!passOpenFor(player, env)) return { error: 'pass-closed' };
+  if (!passOpenFor(player, env) || !aurumOpenFor(player, env)) return { error: 'pass-closed' };
   const season = passSeasonById(seasonId);
   if (!season) return { error: 'pass-season' };
   if (!passTracksOpen(season, nowS * 1000)) return { error: 'pass-soon' };

@@ -152,8 +152,8 @@
   {
     "name": "PASS-PANELS-service-the-switch-ignored",
     "file": "server-account/src/battlePass.js",
-    "old": "  if (!passOpenFor(player, env)) return { error: 'pass-closed' };\n",
-    "new": "",
+    "old": "  if (!passOpenFor(player, env) || !aurumOpenFor(player, env)) return { error: 'pass-closed' };\n",
+    "new": "  if (!aurumOpenFor(player, env)) return { error: 'pass-closed' };\n",
     "tests": [
       "test/server/passpanels_service.test.js"
     ]

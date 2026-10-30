@@ -428,7 +428,7 @@ test('SLAM8: RELAY_VERSION names exactly one relay law - change the worker or th
   // SHOP (2026-10-28, world276 - bible/06-Systems/Shop.md): net/identityToken.js's TITLES, AURAS and GLYPHS each gain one, last, and the token's body bound is 896 - the bundle's files unchanged.
   // ARMORY (world278 - bible/04-Characters/Aura-Armory.md): net/armoryLaw.js JOINED THE BUNDLE, walked where net/identityToken.js
   // imports it, before houseLaw.js - the token's kit claim and the wire's badge read its law.
-  // STOREFRONT (world295, world286, world288, world289, world290, world291, world293 then world294 on its branch - bible/06-Systems/Storefront.md): net/effectLaw.js JOINED THE BUNDLE, walked where net/identityToken.js
+  // STOREFRONT (world295; world281, world283, world286, world288, world289, world290, world291, world293 then world294 on its branch - bible/06-Systems/Storefront.md): net/effectLaw.js JOINED THE BUNDLE, walked where net/identityToken.js
   // imports it, after armoryLaw.js - the token's effects kit `fx` and the wire's badge read its law.
   // SD-PARTY (main, world275): server/src/sdCopy.js JOINED THE BUNDLE - a party's own Hour, its copy of the realm; walked where main's index.js imports it.
   // SHARED-HEALTH (world277): net/siege/refereeHealthShare.js joined the bundle - the referee's count of a player's health, walked from siegeRef.js.

@@ -33,7 +33,8 @@ export const aurumRow = (/** @type {any} */ db, /** @type {string} */ id) =>
 export const balanceOfRow = (/** @type {any} */ row) => int(row?.packs) + int(row?.lines);
 
 /** THE SALE THE DAILY WARES READ, per config: what SHOP_ON_SALE names (a daily ware too - the owner's one list), dropped
- *  by SHOP_FEATURED's first window, and inside a limited window where the schedule marks one. `cache` the rotation's
+ *  by SHOP_FEATURED's first window, and a limited window holding the whole UTC day where the schedule marks one
+ *  (AUDIT-STOREFRONT III A3: a window shut mid-day sold the ware for Aurum past it). `cache` the rotation's
  *  (aurumLaw.js aurumDailyOf), one a config, kept for the isolate. */
 const sales = /** @type {Map<string, { eligible: (id: string, day: number) => boolean, cache: any }>} */ (new Map());
 export function dailySaleOf(/** @type {any} */ env) {
@@ -45,7 +46,7 @@ export function dailySaleOf(/** @type {any} */ env) {
       const w = shopWareById(id), at = day * DAY_MS;
       if (!w || !onSale.includes(id) || !shopDropped(w, featured, at)) return false;
       const limits = featured.filter((e) => e.id === id && e.limited);
-      return !limits.length || limits.some((e) => at >= e.fromMs && at < e.toMs);
+      return !limits.length || limits.some((e) => at >= e.fromMs && at + DAY_MS <= e.toMs);
     };
     if (sales.size > 4) sales.clear();
     sales.set(key, s = { eligible, cache: {} });
@@ -58,7 +59,7 @@ export const dailyWaresAt = (/** @type {any} */ env, /** @type {number} */ nowS)
 /**
  * THE AURUM'S CARD on the account read (aurumLaw.js aurumCardOf reads it): whether it is open to this account, the
  * balance, the day's wares with what this account holds of them, and the week's deeds struck. A guest's is null - a guest
- * cannot buy, and its deeds' Aurum waits on its row for the username it may be given.
+ * cannot buy, and its deeds strike no Aurum (every claim that strikes one refuses a guest).
  * @param {{ db: any, nowS: number }} ctx @param {any} player @param {any} env
  */
 export async function aurumCardOf({ db, nowS }, player, env) {
@@ -98,15 +99,16 @@ export async function buyDaily({ db, nowS }, player, body, env) {
     const row = await aurumRow(db, player.id);
     if (!row) return { error: 'aurum-guest' };
     if (shopOwns(row, d.id)) return { error: 'aurum-held' };
+    // AUDIT-STOREFRONT III A5: Aurum already paid for it (a line keyed by the ware): given back free, never asked again
+    const paid = !!(await db.prepare("SELECT 1 AS x FROM aurum_ledger WHERE account = ?1 AND kind = 'buy' AND ref = ?2").bind(player.id, d.id).first());
     const balance = balanceOfRow(row);
-    if (balance < d.aurum) return { error: 'aurum-short', balance };
+    if (!paid && balance < d.aurum) return { error: 'aurum-short', balance };
     const toks = String(row.shop_held ?? '').split(' ').filter(Boolean);
     const after = { shop_wares: (Number(row.shop_wares) || 0) | w.bit, shop_held: (w.bit || toks.includes(d.id) ? toks : [...toks, d.id]).join(' ') };
     try {
       await db.batch([
-        db.prepare(`INSERT INTO aurum_ledger (account, kind, ref, amount, day, at) SELECT ?1, 'buy', ?2, ?3, ?4, ?5
-          WHERE ${AURUM_BALANCE_SQL} >= ?6`).bind(player.id, d.id, -d.aurum, utcDay(nowS), nowS, d.aurum),
-        mustChange(db),
+        ...(paid ? [] : [db.prepare(`INSERT INTO aurum_ledger (account, kind, ref, amount, day, at) SELECT ?1, 'buy', ?2, ?3, ?4, ?5
+          WHERE ${AURUM_BALANCE_SQL} >= ?6`).bind(player.id, d.id, -d.aurum, utcDay(nowS), nowS, d.aurum), mustChange(db)]),
         db.prepare('UPDATE players SET shop_wares = ?2, shop_held = ?3 WHERE id = ?1 AND shop_wares = ?4 AND shop_held = ?5')
           .bind(player.id, after.shop_wares, after.shop_held, Number(row.shop_wares) || 0, String(row.shop_held ?? '')),
         mustChange(db),
@@ -114,7 +116,7 @@ export async function buyDaily({ db, nowS }, player, body, env) {
     } catch {
       continue;   // the row moved, or the balance fell under the price meanwhile: read again
     }
-    return { ok: true, ware: d.id, spent: d.aurum, row: await db.prepare('SELECT * FROM players WHERE id = ?1').bind(player.id).first() };
+    return { ok: true, ware: d.id, spent: paid ? 0 : d.aurum, row: await db.prepare('SELECT * FROM players WHERE id = ?1').bind(player.id).first() };
   }
   return { error: 'aurum-busy' };
 }

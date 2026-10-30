@@ -159,7 +159,7 @@ export function shopConfirmPage({ handle, ware, ticket, cents = ware.cents, hold
 export function shopDonePage(/** @type {any} */ order) {
   const w = shopWareById(order?.ware);
   if (!w) return { heading: 'Thank you', lines: ['Go back to the game. Your mailbox says what arrived.'] };
-  if (order.status === 'paid') return { heading: 'Thank you', lines: [`${wareLine(w)} is on your account now.`, 'Go back to the game: wear it from your profile. A receipt is in your mailbox.', SHOP_PROCEEDS] };
+  if (order.status === 'paid') return { heading: 'Thank you', lines: [`${wareLine(w)} is on your account now.`, shopRepeatable(w) ? 'Go back to the game: spend it in the shop. A receipt is in your mailbox.' : 'Go back to the game: wear it from your profile. A receipt is in your mailbox.', SHOP_PROCEEDS] };   // AUDIT-STOREFRONT III A7: Aurum is spent, not worn
   if (order.status === 'open') return { heading: 'Thank you', lines: ['Your payment is being confirmed.', `${wareLine(w)} arrives on your account in a minute or two, with a receipt in your mailbox.`, SHOP_PROCEEDS] };
   if (order.status === 'expired') return { heading: 'Not paid', lines: ['This checkout ended without a payment. Nothing was charged.', 'Buy it again from the shop in the game.'] };
   return { heading: 'Order closed', lines: [`The payment for ${wareLine(w)} was ${order.status === 'disputed' ? 'disputed' : 'refunded'}. Your mailbox says more.`] };
@@ -295,7 +295,7 @@ export async function stripeSignatureOk(/** @type {string} */ secret, /** @type 
 
 /** STOREFRONT: where a ware is used, as its receipt says it - Aurum in the shop, the rest from the profile. Pure. */
 export function receiptUse(/** @type {any} */ w) {
-  if (w.kind === 'aurum') return 'Spend it in the shop, on the Battle Pass and the daily wares.';   // AURUM; PASS-PANELS: the pass is bought with it
+  if (w.kind === 'aurum') return 'Spend it in the shop, on the Folios and the daily wares.';   // AURUM; PASS-PANELS: the Folios are bought with it (AUDIT-STOREFRONT III A7: the player's word)
   return 'Wear it from your profile, or from the Collections page.';
 }
 /** THE RECEIPT, its words fixed here (a letter no player writes - post.js's law). Pure. */
@@ -416,9 +416,13 @@ const rowWrite = (/** @type {any} */ db, /** @type {string} */ player, /** @type
   db.prepare('UPDATE players SET shop_wares = ?2, shop_held = ?3 WHERE id = ?1 AND shop_wares = ?4 AND shop_held = ?5')
     .bind(player, after.shop_wares, after.shop_held, before.shop_wares, before.shop_held);
 const heldRow = (/** @type {any} */ db, /** @type {string} */ player) => db.prepare(`SELECT ${HELD_COLS} FROM players WHERE id = ?1`).bind(player).first();
-/** An account's other paid orders - what else covers its wares. */
-const paidOthers = async (/** @type {any} */ db, /** @type {any} */ order) =>
-  (await db.prepare("SELECT id, ware, credit FROM shop_orders WHERE player = ?1 AND status = 'paid' AND id <> ?2").bind(order.player, order.id).all())?.results ?? [];
+/** An account's other paid orders - what else covers its wares - and AUDIT-STOREFRONT III A5 its wares bought for Aurum
+ *  (aurum.js buyDaily's `buy` lines), each its own holder for good: a money refund never takes a ware Aurum paid for. */
+const paidOthers = async (/** @type {any} */ db, /** @type {any} */ order) => {
+  const paid = (await db.prepare("SELECT id, ware, credit FROM shop_orders WHERE player = ?1 AND status = 'paid' AND id <> ?2").bind(order.player, order.id).all())?.results ?? [];
+  const bought = (await db.prepare("SELECT ref FROM aurum_ledger WHERE account = ?1 AND kind = 'buy'").bind(order.player).all())?.results ?? [];
+  return [...paid, ...bought.map((/** @type {any} */ b) => ({ id: `aurum:${b.ref}`, ware: String(b.ref), credit: '' }))];
+};
 
 const postStatement = (/** @type {any} */ db, /** @type {string} */ to, /** @type {{ batch: string, subject: string, body: string }} */ p, /** @type {string|null} */ ware, /** @type {number} */ nowS) =>
   db.prepare(`INSERT OR IGNORE INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at, ware)
@@ -470,9 +474,11 @@ async function chargeFate(/** @type {any} */ db, /** @type {unknown} */ intent) 
     (SELECT COUNT(*) FROM shop_charge_words WHERE intent = ?1 AND kind = 'dispute' AND open = 1) AS disputes`).bind(intent).first();
   return { refunded: Number(r?.refunded) > 0, disputes: Number(r?.disputes) || 0 };
 }
-/** A word on a payment kept: a refund (`ref` ''), or a dispute opened (`open` 1) or closed (0) by its id. */
+/** A word on a payment kept: a refund (`ref` ''), or a dispute opened (`open` 1) or closed (0) by its id. AUDIT-STOREFRONT
+ *  III A4: Stripe promises no order, so a closed word is never opened again - a won dispute whose created word lands
+ *  late stays closed; a lost one is kept open (its money stays taken back). */
 const keepWord = (/** @type {any} */ db, /** @type {string} */ intent, /** @type {'refund'|'dispute'} */ kind, /** @type {string} */ ref, /** @type {number} */ open, /** @type {number} */ nowS) =>
-  db.prepare('INSERT INTO shop_charge_words (intent, kind, ref, open, at) VALUES (?1, ?2, ?3, ?4, ?5) ON CONFLICT (intent, kind, ref) DO UPDATE SET open = excluded.open, at = excluded.at')
+  db.prepare('INSERT INTO shop_charge_words (intent, kind, ref, open, at) VALUES (?1, ?2, ?3, ?4, ?5) ON CONFLICT (intent, kind, ref) DO UPDATE SET open = MIN(open, excluded.open), at = excluded.at')
     .bind(intent.slice(0, 255), kind, ref.slice(0, 255), open, nowS).run();
 /** AUDIT-STOREFRONT II A2, A5: whether a giver's payment is for a price no longer its row's - what the row holds of it
  *  changed since its checkout (a credited ware's own payment went back, or a ware it gives was bought meanwhile). Pure. */
@@ -534,8 +540,8 @@ export async function fulfilOrder({ db, nowS }, orderId, { intent = null, amount
 }
 
 /** AUDIT-STOREFRONT S3: an account's open pages that a grant left wrong - for a ware it now holds, or at a price that is
- *  no longer its own - closed. */
-async function closeStale(/** @type {{ db: any, nowS: number }} */ ctx, /** @type {any} */ env, /** @type {typeof fetch|undefined} */ fetch, /** @type {string} */ player) {
+ *  no longer its own - closed. AUDIT-STOREFRONT III A6: a daily ware bought for Aurum is such a grant (index.js). */
+export async function closeStale(/** @type {{ db: any, nowS: number }} */ ctx, /** @type {any} */ env, /** @type {typeof fetch|undefined} */ fetch, /** @type {string} */ player) {
   const row = await heldRow(ctx.db, player);
   const open = (await ctx.db.prepare("SELECT id, ware, cents, stripe_session FROM shop_orders WHERE player = ?1 AND status = 'open'").bind(player).all())?.results ?? [];
   await closePages(ctx, env, fetch, open.filter((/** @type {any} */ o) => shopPriceFor(row, o.ware) !== o.cents));
@@ -639,14 +645,19 @@ export async function shopWebhook(ctx, env, body, signature, fetch) {
       if (o.refunded !== true || typeof o.payment_intent !== 'string') return { ok: true, applied: 0 };   // a part refund keeps the ware
       await keepWord(ctx.db, o.payment_intent, 'refund', '', 1, ctx.nowS);
       return revokeOrder(ctx, o.payment_intent, 'refunded', { env, fetch });
-    case 'charge.dispute.created':
+    case 'charge.dispute.created': {
       if (typeof o.payment_intent !== 'string') return { ok: true, applied: 0 };
       await keepWord(ctx.db, o.payment_intent, 'dispute', String(o.id ?? ''), 1, ctx.nowS);
+      const word = await ctx.db.prepare("SELECT open FROM shop_charge_words WHERE intent = ?1 AND kind = 'dispute' AND ref = ?2").bind(o.payment_intent.slice(0, 255), String(o.id ?? '').slice(0, 255)).first();
+      if (Number(word?.open) !== 1) return { ok: true, applied: 0 };   // AUDIT-STOREFRONT III A4: closed in our favour before this word landed
       return revokeOrder(ctx, o.payment_intent, 'disputed', { env, fetch });
-    case 'charge.dispute.closed':
+    }
+    case 'charge.dispute.closed': {
       if (typeof o.payment_intent !== 'string') return { ok: true, applied: 0 };
-      await keepWord(ctx.db, o.payment_intent, 'dispute', String(o.id ?? ''), 0, ctx.nowS);
-      return o.status === 'won' || o.status === 'warning_closed' ? restoreOrder(ctx, o.payment_intent) : { ok: true, applied: 0 };   // an inquiry closed: no chargeback
+      const ours = o.status === 'won' || o.status === 'warning_closed';   // an inquiry closed: no chargeback
+      await keepWord(ctx.db, o.payment_intent, 'dispute', String(o.id ?? ''), ours ? 0 : 1, ctx.nowS);
+      return ours ? restoreOrder(ctx, o.payment_intent) : { ok: true, applied: 0 };
+    }
     default:
       return { ok: true, applied: 0 };
   }

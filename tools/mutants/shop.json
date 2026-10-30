@@ -148,8 +148,8 @@
   {
     "name": "SHOP-dispute-lost-restores",
     "file": "server-account/src/shop.js",
-    "old": "return o.status === 'won' || o.status === 'warning_closed' ? restoreOrder(",
-    "new": "return o.status ? restoreOrder(",
+    "old": "const ours = o.status === 'won' || o.status === 'warning_closed';",
+    "new": "const ours = !!o.status;",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -310,8 +310,8 @@
   {
     "name": "SHOP-inquiry-closed-keeps-the-ware",
     "file": "server-account/src/shop.js",
-    "old": "o.status === 'won' || o.status === 'warning_closed' ? restoreOrder(",
-    "new": "o.status === 'won' ? restoreOrder(",
+    "old": "const ours = o.status === 'won' || o.status === 'warning_closed';",
+    "new": "const ours = o.status === 'won';",
     "tests": [
       "test/server/shop_service.test.js"
     ]
