@@ -11,6 +11,7 @@ import { skullSrc } from '../ui/pvpSkull.js';
 import { CONCEAL_MODE } from '../systems/combatVisuals.js';   // PVP-BAR
 import { isVillain } from '../systems/wild/villainLaw.js';   // PVP-VILLAIN
 import { wildHere, WILD_TEXT } from '../systems/wild/wildZone.js';   // PVP-FLAG-ZONE
+import { setPvpFoeSight, pvpGearStruck } from '../combat/pvpGearPowers.js';   // PVP-GEAR: a foe's bar and my hits taken
 import { PVP_FLAG_SPOT, createPvpHud, pvpHitLine, pvpHitsAdd, pvpLockOverText, pvpSlewText, PVP_SAY_S } from '../ui/pvpHud.js';   // PVP-HUD
 
 /** PVP-BAR: a concealed player in a PvP fight - a faint body that keeps its skull and bar (the name is taken). */
@@ -102,6 +103,7 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
     if (g?.k !== 'hp') return false;
     if (g.by === me() || g.to === me()) {
       fightAt = now(); wasLock = true;
+      if (g.to === me() && g.d > 0) pvpGearStruck(player);   // PVP-GEAR: Bedrock's stack, Hex's window
       foes.set(g.by === me() ? g.to : g.by, fightAt);
       hitLines = pvpHitsAdd(hitLines, pvpHitLine(g, me(), nameOf));   // PVP-HUD: the last hits panel
       paint();
@@ -171,6 +173,7 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
     },
   };
   _current = api;
+  setPvpFoeSight((id) => ({ h: bars.get(id)?.h ?? null, fighting: foeOf(id) }));   // PVP-GEAR: the foe as my bars see it
   return api;
 }
 

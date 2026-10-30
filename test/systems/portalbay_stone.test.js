@@ -212,18 +212,17 @@ test('PORTAL-BAY a Portal Stone to EVERY city past the Bay the stone\'s map offe
   assert.equal(W.scope.wildTravelGate(cities[0].pixel, 0, teleportJourney).ok, true, 'a teleport too');
 });
 
-test('PORTAL-BAY a refused pick never fades and never spends; a refused step is refused BEFORE the black, said, and the screen never blacked; an arrival that does not come lifts the black (mutants: the step\'s gate after the black; the arrival\'s answer unread; teleportTo\'s answer)', async () => {
+test('PORTAL-BAY a refused step is refused BEFORE the black, said, and the screen never blacked; an arrival that does not come lifts the black; PVP-PORTAL: online the zone\'s land is a stone\'s end - the pick spends, the step arrives (mutants: the step\'s gate after the black; the arrival\'s answer unread; teleportTo\'s answer; the stone asking the zone again)', async () => {
   skin('enhanced');
   globalThis.document = fakeDocument();
   setCapitalsStanding(true);
   hudFade.hasTarget = true; hudFade.allowFade = true;
   const imperial = capitalsPastBay().find((c) => c.name === 'Imperial City');
-  const ZONE = `In ${WILD_NAME} you can teleport only to or from a city, town or village. Walk or ride its roads.`;
   const zone = buildWildMask({ width: 100, height: 100, ox: imperial.pixel.x - 50, oy: imperial.pixel.y - 50, inZone: () => true });
   const blacks = countBlacks();
   try {
-    // THE PICK: online, a pixel of the zone no settlement stands on (the harness stands none - WILD-CITY-PORT's cities are
-    // pinned below) - refused at the pick, said, nothing spent, nothing blacked
+    // PVP-PORTAL (the owner: "they need to work all over"): online, a pixel of the zone no settlement stands on (the
+    // harness stands none) - the pick spends one stone and opens the portal, the step arrives under the black
     let W = worldHost({ online: { wildOk: true }, wildMapMask: () => zone });
     let s = stoneHost(W);
     const pack = [portalStones(2)];
@@ -234,17 +233,15 @@ test('PORTAL-BAY a refused pick never fades and never spends; a refused step is 
     pressAt(win, imperial.x, imperial.y);
     win._confirmTeleport(true);
     closeMap(win);
-    assert.deepEqual([W.said.at(-1), pack[0].stackCount, s.host.portalGates.mine(), blacks.n, hudFade.backgroundColor[3]], [ZONE, 2, null, 0, 0], 'refused at the pick: said, no stone spent, no portal, no black');
+    assert.deepEqual([W.said.at(-1), pack[0].stackCount, s.host.portalGates.mine()?.dest.name, blacks.n], [PORTAL_TEXT.opened(imperial.name), 1, imperial.name, 0], 'the zone\'s land picked: one stone, a portal, no black');
     win.dispose?.();
-    // THE STEP: a portal standing to the zone's land (a peer's, or mine opened before the zone was raised) - refused before
-    // the black, said, never blacked; no arrival
     W = worldHost({ online: { wildOk: true }, wildMapMask: () => zone });
     s = stoneHost(W);
     s.host.portalGates.open([0, 0, 2], { pixel: imperial.pixel, name: imperial.name });
     hudFade.clearFade(); blacks.n = 0; W.said.length = 0;
     s.walkIn();
     await settle();
-    assert.deepEqual([W.said, blacks.n, hudFade.backgroundColor[3], W.jumps], [[ZONE], 0, 0, []], 'refused before the black: said once, never blacked, no arrival');
+    assert.deepEqual([W.said, blacks.n, W.jumps.length], [[`You arrive at ${imperial.name}.`], 1, 1], 'the step into the zone arrives');
     // the Veil's, the same: the step asks the teleport's whole gate before the black
     W = worldHost({ etherSea: true });
     W.scope.here = { x: 300, y: 300 };
@@ -302,7 +299,7 @@ const IC_BASE = { name: 'B', regionIndex: 1, regionName: 'R', politic: 129, clim
 const IC_NAMES = new Map(['GENR', 'ARMR', 'ALCH', 'GEMS', 'BOOK', 'PAWN', 'BANK', 'TVRN', 'RESI', 'FIGH', 'TEMP', 'LIBR', 'THIE', 'MAGE'].map((k) => [k, [`${k}AA00.RMB`]]));
 const capitalSliceAt = (x, y) => { const on = capitalOnPixel(x, y); return on ? synthesizeCapitalLocation(on, { base: IC_BASE, names: IC_NAMES, blockOf: (n) => (n.startsWith('TES') ? null : IC_FH), px: x, py: y }) : null; };
 
-test('WILD-CITY-PORT (the owner: "Even with the open pvp, players should be able to teleport in and out of the cities"): online, every teleport goes into and out of the zone at a settlement - the guild\'s, Recall, a stone\'s door, pick and step - over the Imperial City\'s own slices, and asks no zone fare; the zone\'s other land, and a dungeon under the city, still refused (mutants: the city end refused; the end I stand at refused; a dungeon free; the old law; the teleport the journey\'s)', async () => {
+test('WILD-CITY-PORT (the owner: "Even with the open pvp, players should be able to teleport in and out of the cities"): online, every teleport goes into and out of the zone at a settlement - the guild\'s, Recall, a stone\'s door, pick and step - over the Imperial City\'s own slices, and asks no zone fare; the zone\'s other land, and a dungeon under the city, still refused to the guild\'s and Recall - a stone\'s door anywhere (PVP-PORTAL) (mutants: the city end refused; the end I stand at refused; a dungeon free; the old law; the teleport the journey\'s)', async () => {
   skin('enhanced');
   globalThis.document = fakeDocument();
   setCapitalsStanding(true);
@@ -352,17 +349,17 @@ test('WILD-CITY-PORT (the owner: "Even with the open pvp, players should be able
     await W.scope.recallToAnchor().catch(() => {});
     assert.deepEqual(W.jumps.map((j) => [j.px, j.py]), reached ? [[bare.x, bare.y]] : [], reached ? 'a Mark in the village\'s streets' : 'a Mark past its walls');
   }
-  // A STONE: its door in the city's streets (outdoors, settledAt's frame) opens; in the open country past it, refused
+  // A STONE: its door in the city's streets (outdoors, settledAt's frame) opens; PVP-PORTAL (the owner: "they need to work
+  // all over"): in the open country past it too - the zone's law is not a stone's
   const loc = capitalSliceAt(ic.x, ic.y), r = locationWorldRect(loc, ic.x, ic.y);
   const street = [(r.minX + r.maxX) / 2, 0, (r.minZ + r.maxZ) / 2], country = [r.maxX + 40 * 4096, 0, (r.minZ + r.maxZ) / 2];
-  for (const [feet, opens] of [[street, true], [country, false]]) {
+  for (const [feet, where] of [[street, 'in the city\'s streets'], [country, 'in the open country']]) {
     W = online({ here: { ...ic }, player: { feetAt: () => feet }, locationIndex: new Map([[`${ic.x},${ic.y}`, loc]]) });
     const { stone } = stoneHost(W);
     const pack = [portalStones(2)];
     playerEntity.health = 50;
-    assert.equal(stone.openPortalStone(pack[0], pack), opens, opens ? 'the door, in the city\'s streets' : 'the door, in the open country');
-    if (opens) W.scope.overlay.dispose?.();
-    else assert.equal(W.said.at(-1), ZONE);
+    assert.equal(stone.openPortalStone(pack[0], pack), true, `the door, ${where}`);
+    W.scope.overlay.dispose?.();
   }
   // its pick into the city, from the Bay: one stone spent, the portal torn open; the step arrives
   W = online();
@@ -396,7 +393,7 @@ test('PORTAL-BAY the wiring: the world host constructs the stone\'s host where i
 const LAND = [{ x: 1734, y: -545, name: 'Skyrim' }, { x: 2359, y: 890, name: 'Imperial Province' }, { x: -223, y: 2006, name: 'Sumurset Isle' }];
 const SEA = { x: 240, y: 2006 };
 
-test('PORTAL-ANYWHERE the stone\'s map picks ANY land past the Bay, named by its province, and the portal goes there through the host\'s own road - the step, the world\'s teleportTo, the rebuild at that pixel under the black, "You arrive at"; the sea picks nothing and spends nothing; the guild\'s teleport map and the travel map pick no bare land; a quest\'s place past the Bay is a portal\'s end (PIN MOVED, TRAVEL-EVERYWHERE: on every teleport map, as a Bay place is); the hover points at it; online the zone\'s land is refused at the pick (mutants: the law\'s sea; the press\'s land unread; the guild\'s map given it; the stone\'s map not asking; the hover; the quest place)', async () => {
+test('PORTAL-ANYWHERE the stone\'s map picks ANY land past the Bay, named by its province, and the portal goes there through the host\'s own road - the step, the world\'s teleportTo, the rebuild at that pixel under the black, "You arrive at"; the sea picks nothing and spends nothing; the guild\'s teleport map and the travel map pick no bare land; a quest\'s place past the Bay is a portal\'s end (PIN MOVED, TRAVEL-EVERYWHERE: on every teleport map, as a Bay place is); the hover points at it; online the zone\'s land a stone\'s end too (PVP-PORTAL) (mutants: the law\'s sea; the press\'s land unread; the guild\'s map given it; the stone\'s map not asking; the hover; the quest place)', async () => {
   skin('enhanced');
   globalThis.document = fakeDocument();
   setCapitalsStanding(true);
@@ -464,7 +461,7 @@ test('PORTAL-ANYWHERE the stone\'s map picks ANY land past the Bay, named by its
   assert.equal(guildMap._questPlace(haunt).portal, true, 'the guild\'s: the quest\'s place, as a Bay place');
   assert.equal(guildMap._pastBayPick(LAND[0].x, LAND[0].y, 'x').portal, false, 'the guild\'s: no bare land');
   stoneMap.dispose?.(); guildMap.dispose?.();
-  // online, the zone's land: refused at the pick, said, nothing spent
+  // PVP-PORTAL: online, the zone's land a stone's end too - picked, one stone spent, the portal named by its province
   const imperial = LAND[1];
   const zone = buildWildMask({ width: 100, height: 100, ox: imperial.x - 50, oy: imperial.y - 50, inZone: () => true });
   const W = worldHost({ online: { wildOk: true }, wildMapMask: () => zone });
@@ -475,7 +472,7 @@ test('PORTAL-ANYWHERE the stone\'s map picks ANY land past the Bay, named by its
   pressAt(win, imperial.x + 0.5, imperial.y + 0.5);
   win._confirmTeleport(true);
   closeMap(win);
-  assert.deepEqual([W.said.at(-1), pack[0].stackCount, host.portalGates.mine()], [`In ${WILD_NAME} you can teleport only to or from a city, town or village. Walk or ride its roads.`, 2, null], 'the zone\'s land: refused at the pick');
+  assert.deepEqual([W.said.at(-1), pack[0].stackCount, host.portalGates.mine()?.dest.name], [PORTAL_TEXT.opened(imperial.name), 1, imperial.name], 'the zone\'s land: picked');
   win.dispose?.();
 });
 

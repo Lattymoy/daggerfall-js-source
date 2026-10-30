@@ -142,7 +142,7 @@ test('PVP-HUD THE LINES (ui/pvpHud.js): each blow\'s line, a nameless one\'s too
   assert.equal(pvpSlewText(null), 'You slew another player.');
 });
 
-test('PVP-HUD THE LOCK\'S DOORS (scenes/pvpFlagHost.js, scenes/portalStoneHost.js, scenes/pvpRulesHost.js): flagged in the lock a Portal Stone is refused with the seconds left, mid-screen 3 s; the rest refusal counts the seconds; the flag\'s own drop says its seconds 3 s; out of the lock none of it (mutants: the stone\'s lock unasked; unflagged refused; the rest line static)', () => {
+test('PVP-HUD THE LOCK\'S DOORS (scenes/pvpFlagHost.js, scenes/portalStoneHost.js, scenes/pvpRulesHost.js): in the lock a Portal Stone is refused with the seconds left, mid-screen 3 s, flagged or not (PVP-PORTAL); the rest refusal counts the seconds; the flag\'s own drop says its seconds 3 s; out of the lock none of it (mutants: the stone\'s lock unasked; unflagged free in the lock; the rest line static)', () => {
   const s = page();
   const stone = createPortalStoneHost({});
   s.f.toggle();
@@ -167,7 +167,9 @@ test('PVP-HUD THE LOCK\'S DOORS (scenes/pvpFlagHost.js, scenes/portalStoneHost.j
   s.clock = 0;
   s.f.heard({ k: 'hp', by: 'peer-x', to: 'peer-me', d: 10, r: 0, h: [] });
   assert.equal(s.f.on(), false);
-  assert.equal(stone.lockRefused(), false, 'unflagged: the stone is free (PVP-FLAG)');
+  assert.equal(stone.lockRefused(), true, 'unflagged in the lock: held too (PVP-PORTAL, the owner: "agro or flag time cool down")');
+  s.clock = L;
+  assert.equal(stone.lockRefused(), false, 'the lock over: free');
   const src = rd('src/scenes/portalStoneHost.js');
   assert.ok(src.includes("    if (lockRefused()) return false;\n    const why = portalDoorRefusal();"), 'the door asks it first');
   assert.ok(src.includes('if (!pick?.pixel || lockRefused()) return;'), 'and the pick');

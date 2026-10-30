@@ -10,6 +10,7 @@
 import { HEALTH_SHARE_WHOLE, PVP_RESTORATION_MAX } from './refereeHealthShare.js';
 import { SKILLS, skillValue } from '../../systems/skills.js';
 import { pvpArmorKept, pvpWardKept, pvpShieldShare } from '../../combat/pvpGuard.js';
+import { pvpGuardWithGear } from '../../combat/pvpGearPowers.js';   // PVP-GEAR: the guard powers' share
 import { capPvpBuffs } from '../../combat/pvpBuffs.js';
 import { setPvpFight } from '../../combat/pvpPotions.js';
 import '../../combat/pvpArmourCasting.js';   // PVP-ARMOUR-CAST: its doors, registered where the fight flag is set
@@ -160,7 +161,7 @@ export function createPlayerHealthMirror(player, onlineOf) {
     },
     send: (report) => onlineOf()?.sendVit?.(report) === true,
     restoration: () => skillValue(player, SKILLS.Restoration),
-    guard: () => pvpArmorKept(player),
+    guard: () => pvpGuardWithGear(pvpArmorKept(player), player),
     ward: () => pvpWardKept(player),
     shield: () => pvpShieldShare(player),   // PVP-KIT: the Shield's share
   });

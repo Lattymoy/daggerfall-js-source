@@ -13,7 +13,7 @@ reference it reads. It ships in stages; this page holds what is built.
   and `siegeRef.js:"export const PVP_CASTS = Object.freeze({ max: 19, windowMs: 10_000 });"` pace a fight.
 - **PVP-HEAL.** For 30 s after a player's blow, all heals together restore 25% of the whole a 15 s, plus 1% for each 20
   Restoration past 100, to 35%. A duel heals under that cap; a siege still blocks heals by report.
-- **PVP-SCALE.** A player's blow scales with the weapon's climb and gear percent (`wp`), and skill reads to 1,000.
+- **PVP-SCALE.** A player's blow scales with the weapon's climb and gear percent (`wp`), and skill reads to 1,100 (PVP-SKILL-TOP, 2026-10-30: past a full geared set; 1,000 cut one).
 - **PVP-SPELLS.** A spell at a player uses its first effect: Damage, or a heal. Drain is off between players until it is balanced (PVP-NO-DRAIN).
 
 ## PVP-GUARD: armour against a player's blow
@@ -23,8 +23,26 @@ row for each kind of blow (edged, blunt, unarmed), its condition and the natural
 parts as a blow picks them, a shield's block left out (`pvpGuard.js:"export function pvpArmorKept("`). The report
 carries the three shares (`g`); the referee holds each to 10..150 and takes that share of the blow before PVP-HIT's cap
 (`refereeHealthShare.js:"export function guardedBlow("`). Bare at 50s is 100; Daedric plate keeps 34, 40 and 30, and 14,
-20 and 10 at 100s. The client is trusted for its own armour as it is for its health share. Guard powers (loot, sets,
-the sky) are not read yet.
+20 and 10 at 100s. The client is trusted for its own armour as it is for its health share. The loot ladder's guard
+powers ride the same shares (PVP-GEAR, below); the sets' and the sky's are not read yet.
+
+## PVP-GEAR: gear powers between players, capped
+
+2026-10-30, the owner: gear was planned to count in PvP ("we have the cap", then "all imprint"). The striker's sheet
+carries `gp`, a percent on its blow after PVP-SCALE, at most 40 (`pvpGearPowers.js:"export function pvpGearBlowPct("`):
+the striking piece's damage lines and gems (a fist's own pair of Hand Wraps), Way of the Sword's stacks from blows on
+players, Many Endings' chance as its mean, Open Hand on a bare fist, Hunter's Moon at night, Orc Rage when low, Sweet
+Mother's Kiss on a foe whose bar is under 25%, and First Blood and Silent Death on a foe not struck in the lock's minute.
+Serpent's Kiss adds its flat 8 to a landed blow, 16 on a foe under half (`gf`).
+
+The struck player's guard powers take a share off each armour share it reports, at most 30 off
+(`pvpGearPowers.js:"export function pvpGearKept("`): Dawnward's every sixth blow and the Raven's evasion as their means,
+Last Stand under its line, Bedrock's stacks and Hex's window from player hits taken, Bulwark's 5 as 5%. Client only:
+the relay reads the same `g`, and the client is trusted for its gear as for its armour.
+
+Not between players: a slayer, bane or foe-group line (the owner: "same as human"); the splash of Chain Lightning and
+Earthshaker (one blow, one target). Vigil, Divine Grace, Hist-Sap, Unyielding and the kill effects need the relay to
+keep a heal or a count.
 
 ## PVP-WARD: resistances against a player's spell
 
@@ -98,9 +116,9 @@ The zone word carries it; the referee holds the lock and says each flag to the r
 (`server/src/index.js:"_wildFlagSay(st, a, x, flagWas, wasIn, fl) {"`).
 
 "flaggin is so yu dont hit a player when ur trying to kill a monster": an unflagged striker touches no player
-(`wildRef.js:"if (!a.flag) return"`), and the flag never shields its bearer; party, duel and guild kin stay unhittable as before. While the flag is down
-the Portal Stone works anywhere in the zone (`portalStoneHost.js:"const zoneRefused = (to = null) =>"`), its arrival
-too (`portalStoneHost.js:"teleportTo(g.dest, { zoneFree: !pvpFlagOn() })"`, AUDIT TAMRIEL-WIDE III F1). Chat types no
+(`wildRef.js:"if (!a.flag) return"`), and the flag never shields its bearer; party, duel and guild kin stay unhittable as before. The Portal Stone
+works anywhere in the zone, flagged or not (PVP-PORTAL, below; `portalStoneHost.js:"const teleportRefused = (to) =>"`), its
+arrival too (`portalStoneHost.js:"teleportTo(g.dest, { zoneFree: true })"`, AUDIT TAMRIEL-WIDE III F1). Chat types no
 capitals under the flag's Caps Lock (`capsFix.js:"export function capsFixKey(e, field) {"`). Skulls overhead
 come next. A departure: DFU has no flag.
 
@@ -426,10 +444,18 @@ the next frame is asked, so the ring moves smoothly; out of it nothing runs. A s
 combat" and the seconds. There is no "turning off" ring: the flag drops at once outside the lock.
 
 The lock's lines are said mid-screen 3 s (`pvpHud.js:"export const PVP_SAY_S = 3;"`): the flag's own drop, a Portal
-Stone (`portalStoneHost.js:"const lockRefused = () => {"` - a new hold: flagged in the lock, the door and the pick
-refuse; unflagged the stone stays free), rest (`pvpRulesHost.js:"const restLock = () => pvpLimited() && lockS() > 0;"`,
+Stone (`portalStoneHost.js:"const lockRefused = () => {"` - a hold: in the lock the door and the pick refuse, flagged or
+not, PVP-PORTAL), rest (`pvpRulesHost.js:"const restLock = () => pvpLimited() && lockS() > 0;"`,
 asked before the flag's own line) and the end, "You are out of combat." (`pvpFlagHost.js:"const beat = () => {"`).
 Log out in combat is the relay's, built apart.
+
+**PVP-PORTAL** (2026-10-30, the owner: "they need to work all over", held only by "agro or flag time cool down"): a
+Portal Stone asks none of the zone's teleport law, flagged or not - its door, its pick and its step go into, out of and
+across Cyrodiil (`portalStoneHost.js:"const teleportRefused = (to) =>"`). Two holds stand in the zone: the combat lock
+after a PvP blow, whatever the flag (`portalStoneHost.js:"const lockRefused = () => {"`), and a monster alerted to me -
+the owner's pick, "Only one attacking me" - never one merely near
+(`portalStoneHost.js:"enemies: wildHere() ? exteriorFoes.foes.some(foeAlerted) :"`). Out of the zone the stone keeps
+its holds. The guild's teleport, Recall and a party's journey keep the zone's law.
 
 "Last hits", bottom right: my three newest PvP blows, flagged in the zone while the lock runs
 (`pvpHud.js:"export function pvpHitLine("`). The referee's `hp` word carries who, on whom and what was dealt, so a Shield's
