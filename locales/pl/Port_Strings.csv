@@ -2911,6 +2911,7 @@ prof.page.reforge.how,"Zaklinacz zastępuje jedną cechę przedmiotu Magicznego 
 prof.page.reforge.rank,"Od Zaczarowywania {rank} możesz tu za Esencję tajemną zastąpić jedną cechę przedmiotu Magicznego lub Rzadkiego cechą innego rodzaju."
 prof.page.work.ember,"{n, plural, one {# żar z Martwych Krain} few {# żary z Martwych Krain} many {# żarów z Martwych Krain} other {# żaru z Martwych Krain}}"
 prof.page.work.emberHeld,"{n, plural, one {# żar z Martwych Krain} few {# żary z Martwych Krain} many {# żarów z Martwych Krain} other {# żaru z Martwych Krain}} ({held})"
+pvp.evade,"Unikasz ciosu."
 pvp.flag.level,"PvP otwiera się na poziomie {n}."
 pvp.flag.locked,"Walczysz. PvP wyłączysz za {s} s."
 pvp.flag.off,"PvP jest wyłączone."

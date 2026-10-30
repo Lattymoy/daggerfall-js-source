@@ -788,6 +788,7 @@ prof.page.reforge.how,"Thợ Phù phép thay một dòng của món Ma thuật b
 prof.page.reforge.rank,"Từ Phù phép {rank}, tại đây bạn có thể thay một dòng của món Ma thuật hoặc Hiếm bằng một dòng loại khác, đổi lấy Tinh chất Bí thuật."
 prof.page.work.ember,"{n, plural, other {# Tàn lửa Deadlands}}"
 prof.page.work.emberHeld,"{n, plural, other {# Tàn lửa Deadlands}} ({held})"
+pvp.evade,"Bạn né được đòn đánh."
 pvp.flag.level,"PvP mở từ cấp {n}."
 pvp.flag.locked,"Bạn đang chiến đấu. Bạn có thể tắt PvP sau {s} giây."
 pvp.flag.off,"PvP đã tắt."

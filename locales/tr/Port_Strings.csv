@@ -895,6 +895,7 @@ prof.page.reforge.how,"Bir Büyücü, Büyülü bir eşyanın bir satırını {m
 prof.page.reforge.rank,"Büyüleme {rank} seviyesinden itibaren burada Gizemli Öz karşılığında Büyülü ya da Nadir bir eşyanın bir satırını başka türden bir satırla değiştirebilirsin."
 prof.page.work.ember,"{n, plural, one {# Deadlands Közü} other {# Deadlands Közü}}"
 prof.page.work.emberHeld,"{n, plural, one {# Deadlands Közü} other {# Deadlands Közü}} ({held})"
+pvp.evade,"Darbeden kaçıyorsun."
 pvp.flag.level,"PvP {n}. seviyede açılır."
 pvp.flag.locked,"Savaştasın. PvP'yi {s} sn sonra kapatabilirsin."
 pvp.flag.off,"PvP kapalı."

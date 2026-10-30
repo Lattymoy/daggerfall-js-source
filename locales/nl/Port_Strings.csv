@@ -2229,6 +2229,7 @@ prof.page.reforge.how,"Een betoveraar vervangt één eigenschap van een Magisch 
 prof.page.reforge.rank,"Vanaf Betoveren {rank} kun je hier één eigenschap van een Magisch of Zeldzaam stuk vervangen door een eigenschap van een ander soort, voor Arcane Essentie."
 prof.page.work.ember,"{n, plural, one {# sintel uit de Doodslanden} other {# sintels uit de Doodslanden}}"
 prof.page.work.emberHeld,"{n, plural, one {# sintel uit de Doodslanden} other {# sintels uit de Doodslanden}} ({held})"
+pvp.evade,"Je ontwijkt de slag."
 pvp.flag.level,"PvP gaat open op niveau {n}."
 pvp.flag.locked,"Je bent in gevecht. Je kunt PvP over {s} s uitzetten."
 pvp.flag.off,"PvP staat uit."

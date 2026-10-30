@@ -788,6 +788,7 @@ prof.page.reforge.how,"附魔師花費 {magic} 奧術精華，將魔法物品的
 prof.page.reforge.rank,"附魔達到 {rank} 後，你可以在這裡花費奧術精華，將魔法或稀有物品的一條詞條替換為另一種類的詞條。"
 prof.page.work.ember,"{n, plural, other {# 枚死亡之地餘燼}}"
 prof.page.work.emberHeld,"{n, plural, other {# 枚死亡之地餘燼}} ({held})"
+pvp.evade,"你躲開了這一擊。"
 pvp.flag.level,"PvP 在 {n} 級開放。"
 pvp.flag.locked,"你正在戰鬥中。{s} 秒後可關閉 PvP。"
 pvp.flag.off,"PvP 已關閉。"

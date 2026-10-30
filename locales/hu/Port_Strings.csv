@@ -2696,6 +2696,7 @@ prof.page.reforge.how,"Egy Bűbájoló egy Mágikus darab egy sorát más fajta 
 prof.page.reforge.rank,"Bűbájolás {rank} szinttől itt Arkán esszenciáért lecserélheted egy Mágikus vagy Ritka darab egy sorát egy más fajta sorra."
 prof.page.work.ember,"{n, plural, one {# Deadlands-parázs} other {# Deadlands-parázs}}"
 prof.page.work.emberHeld,"{n, plural, one {# Deadlands-parázs} other {# Deadlands-parázs}} ({held})"
+pvp.evade,"Kitérsz az ütés elől."
 pvp.flag.level,"A PvP a(z) {n}. szinttől nyílik meg."
 pvp.flag.locked,"Harcban vagy. {s} mp múlva kapcsolhatod ki a PvP-t."
 pvp.flag.off,"A PvP ki van kapcsolva."

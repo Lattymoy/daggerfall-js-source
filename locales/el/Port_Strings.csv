@@ -2354,6 +2354,7 @@ prof.page.reforge.how,"Ένας Γητευτής αντικαθιστά μια �
 prof.page.reforge.rank,"Από τη Γοητεία {rank}, μπορείς εδώ να αντικαταστήσεις μια γραμμή ενός Μαγικού ή Σπάνιου αντικειμένου με γραμμή άλλου είδους, έναντι Απόκρυφης Ουσίας."
 prof.page.work.ember,"{n, plural, one {# Θράκα των Deadlands} other {# Θράκες των Deadlands}}"
 prof.page.work.emberHeld,"{n, plural, one {# Θράκα των Deadlands} other {# Θράκες των Deadlands}} ({held})"
+pvp.evade,"Αποφεύγεις το χτύπημα."
 pvp.flag.level,"Το PvP ανοίγει στο επίπεδο {n}."
 pvp.flag.locked,"Είσαι σε μάχη. Μπορείς να κλείσεις το PvP σε {s} δ."
 pvp.flag.off,"Το PvP είναι κλειστό."

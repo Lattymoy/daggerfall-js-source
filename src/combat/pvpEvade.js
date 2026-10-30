@@ -7,6 +7,7 @@ import { SKILLS, skillValue } from '../systems/skills.js';
 import { powerKind } from '../systems/loot/lootPowers.js';
 import { reportPlayerAttack } from './formulas.js';
 import { hudText } from '../systems/notify.js';
+import { t } from '../systems/textManager.js';
 
 /** My live Dodging, gear counted - 0.05% evade a point, to 25%. */
 export const pvpDodging = (entity) => Math.max(0, Math.min(VIT_DODGE_MAX, Math.round(Number(skillValue(entity, SKILLS.Dodging)) || 0)));
@@ -17,6 +18,6 @@ export const pvpGearEvade = (entity) => Math.max(0, Math.min(VIT_EVADE_MAX, Math
  *  True: the word is said. */
 export function pvpEvadeHeard(mine) {
   if (mine) reportPlayerAttack({ hit: false, damage: 0, critical: false, backstab: false, ineffective: false });
-  else hudText('You evade the blow.');
+  else hudText(t('pvp.evade', 'You evade the blow.'));
   return true;
 }
