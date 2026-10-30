@@ -21936,7 +21936,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const wildStrikeOut = (to, by, weapon, swing, drawMs = 0, { off = false } = {}) => {
     if (!wildFair(to)) return false;
     const a = withoutFirmament(playerEntity, () => duelAttackerOf(playerEntity, weapon, weaponRig?.playerWeapon?.wraps, to)), w = duelWeaponOf(weapon), sw = duelSwingOf(swing);
-    const at = drawMs > 0 ? { at: Math.min(60000, Math.trunc(drawMs)) } : {};
+    const at = { relayCut: true, ...(drawMs > 0 ? { at: Math.min(60000, Math.trunc(drawMs)) } : {}) };   // BOW-FAST: the zone referee cuts a quick shaft
     const r = resolveDuelStrike({ by, a, ...(w ? { w } : {}), ...(sw ? { sw } : {}), ...at, ...(off ? { off } : {}) }, duelStandIn(playerEntity));
     if (!(r.dmg > 0)) { reportPlayerAttack({ hit: false, damage: 0, critical: false, backstab: false, ineffective: false }); zoneWatchCall(); return true; }
     const n = wildFight.blow(to, 'strike', { by, p: campToWire(player.feetAt()), d: Math.trunc(r.dmg), ...(w ? { w } : {}), ...(sw ? { sw } : {}), ...at });

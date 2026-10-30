@@ -14,6 +14,8 @@ import { PVP_POTION_MS } from '../../src/combat/pvpPotions.js';
 import { validVitIn, validWildData } from '../../src/net/wire.js';
 import { createRefereeHealthMirror } from '../../src/net/siege/refereeHealthMirror.js';
 import { BOW_NUM_FRAMES, CLASSIC_UPDATE_INTERVAL, MELEE_NUM_FRAMES, SWING_FRAME_MIN } from '../../src/characters/weaponStates.js';
+import { BOW_FAST, BOW_KINDS, whileShaftLands } from '../../src/combat/bowBloom.js';
+import { resolveDuelStrike, duelStandIn } from '../../src/combat/duelCombat.js';
 import { declarePotion, declareKitSelf, pendingDeclares, resetPvpDeclares } from '../../src/combat/pvpDeclare.js';
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
@@ -132,6 +134,20 @@ test('BOW-FAST: the relay cuts a judged shaft landing within a second of the las
   const s = newFighter(10, 0), l = newFighter(10, 0);
   assert.deepEqual([bowFastCut(s, 100, 1000, 129), bowFastCut(s, 100, 1800, 129)], [100, 100], 'a Short Bow rests sooner');
   assert.deepEqual([bowFastCut(l, 100, 1000, 130), bowFastCut(l, 100, 2200, 130)], [100, 80], 'a Long Bow later');
+});
+
+test('BOW-FAST, the split: the relay numbers are the game ones; a shaft the zone referee judges leaves the game uncut by its stacks, its pull kept, so it is cut once (mutants: the skip unread; the zone host unmarked)', () => {
+  assert.deepEqual(RELAY_BOW_FAST, BOW_FAST);
+  assert.deepEqual(BOW_FAST_WITHIN, { 129: BOW_KINDS[129].within, 130: BOW_KINDS[130].within });
+  const a = { lv: 1, r: 0, st: [50, 50, 50, 50, 50, 50, 50, 50], sk: [30, 0, 0, 0], cf: [0, 0, 0], h: [100, 100] };
+  const seq = () => { const v = [0, 0.99, 0.05, 0.999, 0.99]; let i = 0; return () => v[i++ % v.length]; };
+  const roll = (shaft, relayCut) => whileShaftLands(shaft, () => resolveDuelStrike({ by: 'arrow', a, w: { t: 130, m: 4, c: 100 }, sw: 'StrikeDown', ...(relayCut ? { relayCut } : {}) }, duelStandIn(), { rolls: seq() }).dmg);
+  const raw = roll({ fast: 0, pull: 1 }, false);
+  assert.ok(raw > 4);
+  assert.ok(roll({ fast: 2, pull: 1 }, false) < raw, 'PvE and duels: the game cuts');
+  assert.equal(roll({ fast: 2, pull: 1 }, true), raw, 'the zone: the relay cuts');
+  assert.equal(roll({ fast: 2, pull: 1.5 }, true), roll({ fast: 0, pull: 1.5 }, false), 'the pull kept');
+  assert.ok(/const wildStrikeOut = [\s\S]{0,400}const at = \{ relayCut: true/.test(rd('src/scenes/world.js')), 'the zone host marks its strike');
 });
 
 test('SWING-RATE: a melee blow on one player comes no sooner than the quickest swing, two may bunch; a Cleave lands on each player in its arc (mutants: no bucket; one bucket for all targets)', () => {

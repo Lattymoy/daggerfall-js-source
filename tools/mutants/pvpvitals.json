@@ -156,5 +156,25 @@
     "tests": [
       "test/net/pvpvitals.test.js"
     ]
+  },
+  {
+    "name": "BOW-FAST-skip-unread",
+    "file": "src/combat/duelCombat.js",
+    "old": "bowFastDamage(d.relayCut ? { ...landingShaft(), fast: 0 } : landingShaft(),",
+    "new": "bowFastDamage(landingShaft(),",
+    "tests": [
+      "test/net/pvpvitals.test.js"
+    ],
+    "note": "A PvP arrow in the zone would be cut by the game and again by the relay."
+  },
+  {
+    "name": "BOW-FAST-zone-unmarked",
+    "file": "src/scenes/world.js",
+    "old": "const at = { relayCut: true, ...(drawMs > 0",
+    "new": "const at = { ...(drawMs > 0",
+    "tests": [
+      "test/net/pvpvitals.test.js"
+    ],
+    "note": "The zone strike would be cut by the game and again by the relay."
   }
 ]

@@ -207,7 +207,7 @@ export function resolveDuelStrike(d, target, { rolls = Math.random, backFacing =
   const climbed = rolled + Math.floor((rolled * Math.max(0, Number(d.a?.wp) || 0)) / 100);   // PVP-SCALE: the weapon's climb and gear
   const geared = climbed + Math.floor((climbed * Math.max(0, Number(d.a?.gp) || 0)) / 100);   // PVP-GEAR: the striker's lines and powers
   const scaled = geared > 0 ? geared + Math.max(0, Math.trunc(Number(d.a?.gf) || 0)) : 0;   // PVP-GEAR: and a landed blow's flat
-  const n = d.by === 'arrow' ? bowFastDamage(landingShaft(), Math.floor(scaled * pvpArrowScale(d.a?.pl))) : scaled;   // PVP-TRIANGLE: an arrow's; BOW-FAST: its stacks
+  const n = d.by === 'arrow' ? bowFastDamage(d.relayCut ? { ...landingShaft(), fast: 0 } : landingShaft(), Math.floor(scaled * pvpArrowScale(d.a?.pl))) : scaled;   // PVP-TRIANGLE: an arrow's; BOW-FAST: its stacks (the relay's to cut, `relayCut`: its pull alone)
   if (n > 0 && target?.struckBy) breakNormalPowerConcealment(target.struckBy);   // RPT1026-FIGHTS (STRIKE-UNVEILS): on the striker, never its stub
   if (n > 0 && target?.struckBy) pvpGearLanded(target.struckBy, undefined, d.a?.fo ?? null);   // PVP-GEAR: Way of the Sword's stack, First Blood's mark
   return { hit: n > 0, dmg: n };
