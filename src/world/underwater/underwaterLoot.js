@@ -15,8 +15,8 @@
 // C# makes them.
 // ═══════════════════════════════════════════════════════════════════
 
-import { rangeInt, rangeFloat } from '../../systems/unleveledLoot.js';   // Random.Range(int, int) and (float, float)
-import { rollCount, pickRingDistance } from './underwaterEnemies.js';   // DeepWaterWorld.RollCount and PickRingDistance, one home
+import { rangeInt, rangeFloat } from '../../systems/unleveledLoot.js'; // Random.Range(int, int) and (float, float)
+import { rollCount, pickRingDistance } from './underwaterEnemies.js'; // DeepWaterWorld.RollCount and PickRingDistance, one home
 
 const f32 = Math.fround;
 const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
@@ -74,17 +74,37 @@ export const DEFAULT_WATER_DEPTH = 200;
 /** CreateLootContainer's picture: DaggerfallLootDataTables.randomTreasureArchive (TEXTURE.216). */
 export const TREASURE_PILE_ARCHIVE = 216;
 /** TreasurePileRecords: the 25 records of TEXTURE.216 a pile is drawn with (the assembly's static array). */
-export const TREASURE_PILE_RECORDS = Object.freeze([0, 1, 3, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 40]);
+export const TREASURE_PILE_RECORDS = Object.freeze([
+  0, 1, 3, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 40,
+]);
 /** RubbleRecords: the 17 flats the debris round a pile and a wreck is made of - UnderwaterDecorationRecord(archive, record). */
-export const RUBBLE_RECORDS = Object.freeze([
-  [105, 0], [105, 5], [105, 6], [105, 7], [105, 8], [105, 9], [105, 10],
-  [400, 0], [400, 1], [400, 4], [400, 6], [380, 1], [96, 0], [96, 2], [96, 3], [96, 4], [96, 5],
-].map(([archive, record]) => Object.freeze({ archive, record })));
+export const RUBBLE_RECORDS = Object.freeze(
+  [
+    [105, 0],
+    [105, 5],
+    [105, 6],
+    [105, 7],
+    [105, 8],
+    [105, 9],
+    [105, 10],
+    [400, 0],
+    [400, 1],
+    [400, 4],
+    [400, 6],
+    [380, 1],
+    [96, 0],
+    [96, 2],
+    [96, 3],
+    [96, 4],
+    [96, 5],
+  ].map(([archive, record]) => Object.freeze({ archive, record })),
+);
 /** The TEXTURE files the rubble reads. */
 export const RUBBLE_ARCHIVES = Object.freeze([...new Set(RUBBLE_RECORDS.map((r) => r.archive))]);
 
 /** DeepWaterWorld.WorldCellKey: the cell's two FloorToInt coordinates, one key (a long in the C#, a string here). */
-export const worldCellKey = (x, z, cellSize) => `${Math.floor(f32(f32(x) / cellSize))},${Math.floor(f32(f32(z) / cellSize))}`;
+export const worldCellKey = (x, z, cellSize) =>
+  `${Math.floor(f32(f32(x) / cellSize))},${Math.floor(f32(f32(z) / cellSize))}`;
 
 /**
  * DeepWaterWorld.DepthSpawnMultiplier: 1 with no column under the player,
@@ -104,7 +124,7 @@ export function depthSpawnMultiplier(column, waterDepth) {
  */
 export function shouldSpawnTreasureCluster(s, roll) {
   const rate = Math.max(0, f32(s.rate));
-  if (rate <= 0) return false;   // bgt.un (IL_19efb): the C#'s own form - a NaN rate goes on
+  if (rate <= 0) return false; // bgt.un (IL_19efb): the C#'s own form - a NaN rate goes on
   if (s.liveClusters >= s.maxLiveClusters) return false;
   const mult = s.cove ? TREASURE_COVE_CLUSTER_CHANCE_MULTIPLIER : NORMAL_LOOT_MULTIPLIER;
   const chance = Math.min(f32(f32(f32(rate * mult) * f32(s.shore)) * f32(s.depthMultiplier)), MAX_CLUSTER_CHANCE);
@@ -120,9 +140,12 @@ export function shouldSpawnTreasureCluster(s, roll) {
 export function rollStrayLootCount(s, roll) {
   if (s.clusterSpawned && !s.cove) return 0;
   const rate = Math.max(0, f32(s.rate));
-  if (rate <= 0) return 0;   // bgt.un (IL_19f98)
+  if (rate <= 0) return 0; // bgt.un (IL_19f98)
   const mult = s.cove ? TREASURE_COVE_STRAY_MULTIPLIER : NORMAL_LOOT_MULTIPLIER;
-  const n = rollCount(f32(f32(f32(f32(FULL_STRAY_LOOT_PER_PULSE * rate) * mult) * f32(s.shore)) * f32(s.depthMultiplier)), roll);
+  const n = rollCount(
+    f32(f32(f32(f32(FULL_STRAY_LOOT_PER_PULSE * rate) * mult) * f32(s.shore)) * f32(s.depthMultiplier)),
+    roll,
+  );
   return Math.min(s.cove ? TREASURE_COVE_MAX_STRAY_LOOT_PER_PULSE : MAX_STRAY_LOOT_PER_PULSE, Math.max(0, n));
 }
 
@@ -133,10 +156,16 @@ export function rollStrayLootCount(s, roll) {
  * @param {?number[]} camForward @param {?number[]} playerForward
  */
 export function pickSpawnAngle(camForward, playerForward, roll) {
-  let fx = camForward?.[0] ?? 0, fy = camForward?.[1] ?? 0, fz = camForward?.[2] ?? 0;
-  if (fx * fx + fy * fy + fz * fz < 0.001 && playerForward) { fx = playerForward[0]; fy = playerForward[1]; fz = playerForward[2]; }
+  let fx = camForward?.[0] ?? 0,
+    fy = camForward?.[1] ?? 0,
+    fz = camForward?.[2] ?? 0;
+  if (fx * fx + fy * fy + fz * fz < 0.001 && playerForward) {
+    fx = playerForward[0];
+    fy = playerForward[1];
+    fz = playerForward[2];
+  }
   if (fx * fx + fz * fz < 0.001 || roll() > FORWARD_BIAS_CHANCE) return rangeFloat(0, TWO_PI, roll);
-  const arc = f32(FORWARD_SPAWN_ARC_DEGREES * Math.PI / 180);   // 1.919862151145935f
+  const arc = f32((FORWARD_SPAWN_ARC_DEGREES * Math.PI) / 180); // 1.919862151145935f
   return f32(Math.atan2(fz, fx) + rangeFloat(-arc, arc, roll));
 }
 
@@ -148,11 +177,12 @@ export function pickSpawnAngle(camForward, playerForward, roll) {
  * @param {number[]} pos @param {?number[]} camForward @param {number} revealDistance - SpawnRevealDistance
  */
 export function tryPickFogAheadPoint(pos, maxDistance, camForward, revealDistance, roll) {
-  const fx = camForward?.[0] ?? 0, fz = camForward?.[2] ?? 0;
+  const fx = camForward?.[0] ?? 0,
+    fz = camForward?.[2] ?? 0;
   if (fx * fx + fz * fz < 0.001) return null;
   const reveal = f32(revealDistance + 2);
-  if (reveal >= maxDistance) return null;   // blt.un (IL_5795)
-  const quarter = f32(Math.PI / 4);   // 0.7853981852531433f
+  if (reveal >= maxDistance) return null; // blt.un (IL_5795)
+  const quarter = f32(Math.PI / 4); // 0.7853981852531433f
   const angle = f32(Math.atan2(fz, fx) + rangeFloat(-quarter, quarter, roll));
   const d = Math.min(f32(reveal + f32(roll() * 25)), maxDistance);
   return [pos[0] + Math.cos(angle) * d, pos[1], pos[2] + Math.sin(angle) * d];
@@ -166,8 +196,8 @@ export function tryPickFogAheadPoint(pos, maxDistance, camForward, revealDistanc
  * @returns {?{y: number, entry: object}}
  */
 export function resolveSeafloorAt(column) {
-  if (!column || !column.entry || column.depth < SEAFLOOR_Y_CLEARANCE) return null;   // bge.un (IL_1aa49)
-  if (column.oceanY - column.renderedSeafloorY < SEAFLOOR_Y_CLEARANCE) return null;   // bge.un (IL_1aa68)
+  if (!column || !column.entry || column.depth < SEAFLOOR_Y_CLEARANCE) return null; // bge.un (IL_1aa49)
+  if (column.oceanY - column.renderedSeafloorY < SEAFLOOR_Y_CLEARANCE) return null; // bge.un (IL_1aa68)
   return { y: column.renderedSeafloorY + LOOT_FLOOR_LIFT, entry: column.entry };
 }
 
@@ -176,13 +206,14 @@ export function resolveSeafloorAt(column) {
  * @param {?{depth: number}} column
  */
 export const isDeepEnoughForWreck = (column, waterDepth) =>
-  !!column && column.depth >= f32(Math.max(1, waterDepth) * WRECK_MINIMUM_DEPTH_FRACTION);   // clt.un; ceq (IL_1a980): a NaN depth is none
+  !!column && column.depth >= f32(Math.max(1, waterDepth) * WRECK_MINIMUM_DEPTH_FRACTION); // clt.un; ceq (IL_1a980): a NaN depth is none
 
 /** IsFarEnoughFromClusterLoot: no spot of the cluster's within 3 m (flat). @param {number[][]} spots */
 export function isFarEnoughFromClusterLoot(p, spots) {
   const min = CLUSTER_LOOT_MIN_SPACING * CLUSTER_LOOT_MIN_SPACING;
   for (const s of spots) {
-    const dx = p[0] - s[0], dz = p[2] - s[2];
+    const dx = p[0] - s[0],
+      dz = p[2] - s[2];
     if (dx * dx + dz * dz < min) return false;
   }
   return true;
@@ -234,13 +265,21 @@ export const pickRubbleRecord = (roll) => RUBBLE_RECORDS[rangeInt(0, RUBBLE_RECO
 export function pickRubbleRecordExcept(used, roll) {
   if (!used || used.size >= RUBBLE_RECORDS.length) return pickRubbleRecord(roll);
   let r;
-  do r = pickRubbleRecord(roll); while (used.has(r));
+  do r = pickRubbleRecord(roll);
+  while (used.has(r));
   return r;
 }
 
 /** FillRandomItem's seven kinds, by one Random.value: a religious item, a potion, jewellery, a gem, clothing, a weapon, armour. */
 /** @type {ReadonlyArray<[number, string]>} */
-const ITEM_KIND_BANDS = Object.freeze([[f32(0.25), 'religious'], [f32(0.45), 'potion'], [f32(0.6), 'jewellery'], [f32(0.75), 'gem'], [f32(0.85), 'clothing'], [f32(0.95), 'weapon']]);
+const ITEM_KIND_BANDS = Object.freeze([
+  [f32(0.25), 'religious'],
+  [f32(0.45), 'potion'],
+  [f32(0.6), 'jewellery'],
+  [f32(0.75), 'gem'],
+  [f32(0.85), 'clothing'],
+  [f32(0.95), 'weapon'],
+]);
 /** @returns {string} */
 export function pickRandomItemKind(v) {
   for (const [edge, kind] of ITEM_KIND_BANDS) if (v < edge) return kind;
@@ -251,7 +290,8 @@ export function pickRandomItemKind(v) {
 export function pruneLiveClusters(centres, playerPos) {
   const max = DESPAWN_DISTANCE * DESPAWN_DISTANCE;
   for (let i = centres.length - 1; i >= 0; i--) {
-    const dx = centres[i][0] - playerPos[0], dz = centres[i][2] - playerPos[2];
+    const dx = centres[i][0] - playerPos[0],
+      dz = centres[i][2] - playerPos[2];
     if (dx * dx + dz * dz > max) centres.splice(i, 1);
   }
 }
@@ -260,6 +300,10 @@ export function pruneLiveClusters(centres, playerPos) {
 export function centroidLocal(placements) {
   if (!placements?.length) return [0, 0, 0];
   const c = [0, 0, 0];
-  for (const p of placements) { c[0] += p.local[0]; c[1] += p.local[1]; c[2] += p.local[2]; }
+  for (const p of placements) {
+    c[0] += p.local[0];
+    c[1] += p.local[1];
+    c[2] += p.local[2];
+  }
   return [c[0] / placements.length, c[1] / placements.length, c[2] / placements.length];
 }

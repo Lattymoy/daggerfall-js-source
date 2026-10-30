@@ -65,8 +65,8 @@
   {
     "name": "DW-E2-open-ocean-weight",
     "file": "src/world/underwater/underwaterDecorations.js",
-    "old": "  add(l, R(106, 2), 12); add(l, R(106, 3), 10);",
-    "new": "  add(l, R(106, 2), 11); add(l, R(106, 3), 10);",
+    "old": "  add(l, R(106, 2), 12);",
+    "new": "  add(l, R(106, 2), 11);",
     "tests": [
       "test/world/deepWater/dwe_decorations.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "DW-E2-swamp-is-temperate",
     "file": "src/world/underwater/underwaterDecorations.js",
-    "old": "    case 228: return WATER_BIOME.Swamp;",
-    "new": "    case 228: return WATER_BIOME.Temperate;",
+    "old": "      return WATER_BIOME.Swamp;",
+    "new": "      return WATER_BIOME.Temperate;",
     "tests": [
       "test/world/deepWater/dwe_decorations.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "DW-E2-open-ocean-passes-rounded",
     "file": "src/world/underwater/underwaterDecorations.js",
-    "old": "    case WATER_BIOME.OpenOcean: return Math.ceil(f32(passes * f32(1.35)));",
-    "new": "    case WATER_BIOME.OpenOcean: return Math.round(f32(passes * f32(1.35)));",
+    "old": "      return Math.ceil(f32(passes * f32(1.35)));",
+    "new": "      return Math.round(f32(passes * f32(1.35)));",
     "tests": [
       "test/world/deepWater/dwe_decorations.test.js"
     ]
@@ -166,7 +166,7 @@
   {
     "name": "DW-E2-animated-clearance-as-still",
     "file": "src/world/underwater/underwaterDecorations.js",
-    "old": "export const seafloorClearance = (rec) => (usesArchiveAnimation(rec) ? ANIMATED_DECORATION_SEAFLOOR_CLEARANCE : DECORATION_SEAFLOOR_CLEARANCE);",
+    "old": "export const seafloorClearance = (rec) =>\n  usesArchiveAnimation(rec) ? ANIMATED_DECORATION_SEAFLOOR_CLEARANCE : DECORATION_SEAFLOOR_CLEARANCE;",
     "new": "export const seafloorClearance = (rec) => DECORATION_SEAFLOOR_CLEARANCE;",
     "tests": [
       "test/world/deepWater/dwe_decorations.test.js"
@@ -1093,8 +1093,8 @@
   {
     "name": "DW-E4-slaughterfish-weight",
     "file": "src/world/underwater/underwaterEnemies.js",
-    "old": "[MOBILE.Slaughterfish, 60, 0, 0.7]",
-    "new": "[MOBILE.Slaughterfish, 55, 0, 0.7]",
+    "old": "    [MOBILE.Slaughterfish, 60, 0, 0.7],",
+    "new": "    [MOBILE.Slaughterfish, 55, 0, 0.7],",
     "tests": [
       "test/scenes/dwe_enemies.test.js"
     ]
@@ -1102,8 +1102,8 @@
   {
     "name": "DW-E4-lich-band",
     "file": "src/world/underwater/underwaterEnemies.js",
-    "old": "[MOBILE.Lich, 2, 0.85, 1]",
-    "new": "[MOBILE.Lich, 2, 0.8, 1]",
+    "old": "    [MOBILE.Lich, 2, 0.85, 1],",
+    "new": "    [MOBILE.Lich, 2, 0.8, 1],",
     "tests": [
       "test/scenes/dwe_enemies.test.js"
     ]
@@ -1111,8 +1111,8 @@
   {
     "name": "DW-E4-rare-roster",
     "file": "src/world/underwater/underwaterEnemies.js",
-    "old": "export const RARE_TYPES = Object.freeze([MOBILE.Ghost, MOBILE.SkeletalWarrior,",
-    "new": "export const RARE_TYPES = Object.freeze([MOBILE.SkeletalWarrior, MOBILE.Ghost,",
+    "old": "  MOBILE.Ghost,\n  MOBILE.SkeletalWarrior,",
+    "new": "  MOBILE.SkeletalWarrior,\n  MOBILE.Ghost,",
     "tests": [
       "test/scenes/dwe_enemies.test.js"
     ]
@@ -1129,8 +1129,8 @@
   {
     "name": "DW-E4-roster-order",
     "file": "src/world/underwater/underwaterEnemies.js",
-    "old": "for (const t of [...DEPTH_AQUATIC_TABLE.map((e) => e.type), ...RARE_TYPES, ...BOSS_TYPES])",
-    "new": "for (const t of [...DEPTH_AQUATIC_TABLE.map((e) => e.type), ...BOSS_TYPES, ...RARE_TYPES])",
+    "old": "  for (const t of [...DEPTH_AQUATIC_TABLE.map((e) => e.type), ...RARE_TYPES, ...BOSS_TYPES])",
+    "new": "  for (const t of [...DEPTH_AQUATIC_TABLE.map((e) => e.type), ...BOSS_TYPES, ...RARE_TYPES])",
     "tests": [
       "test/scenes/dwe_enemies.test.js"
     ],
@@ -1140,8 +1140,8 @@
   {
     "name": "DW-E4-band-softness",
     "file": "src/world/underwater/underwaterEnemies.js",
-    "old": "return f32(e.weight * clamp01(f32(1 - f32(off / f32(DEPTH_EDGE_SOFTNESS)))));",
-    "new": "return f32(e.weight * clamp01(f32(1 - f32(off / f32(0.2)))));",
+    "old": "  return f32(e.weight * clamp01(f32(1 - f32(off / f32(DEPTH_EDGE_SOFTNESS)))));",
+    "new": "  return f32(e.weight * clamp01(f32(1 - f32(off / f32(0.2)))));",
     "tests": [
       "test/scenes/dwe_enemies.test.js"
     ]
@@ -1149,8 +1149,8 @@
   {
     "name": "DW-E4-nothing-weighs",
     "file": "src/world/underwater/underwaterEnemies.js",
-    "old": "if (total <= 0) return MOBILE.Slaughterfish;",
-    "new": "if (total <= 0) return MOBILE.Dreugh;",
+    "old": "  if (total <= 0) return MOBILE.Slaughterfish;",
+    "new": "  if (total <= 0) return MOBILE.Dreugh;",
     "tests": [
       "test/scenes/dwe_enemies.test.js"
     ],
@@ -1178,8 +1178,8 @@
   {
     "name": "DW-E4-boss-draw-everywhere",
     "file": "src/world/underwater/underwaterEnemies.js",
-    "old": "if (depthFraction >= BOSS_MIN_DEPTH_FRACTION && roll() < BOSS_SPAWN_CHANCE) return pickBoss(roll);",
-    "new": "if (roll() < BOSS_SPAWN_CHANCE && depthFraction >= BOSS_MIN_DEPTH_FRACTION) return pickBoss(roll);",
+    "old": "  if (depthFraction >= BOSS_MIN_DEPTH_FRACTION && roll() < BOSS_SPAWN_CHANCE) return pickBoss(roll);",
+    "new": "  if (roll() < BOSS_SPAWN_CHANCE && depthFraction >= BOSS_MIN_DEPTH_FRACTION) return pickBoss(roll);",
     "tests": [
       "test/scenes/dwe_enemies.test.js"
     ]
@@ -1187,8 +1187,8 @@
   {
     "name": "DW-E4-nymph-swims",
     "file": "src/world/underwater/underwaterEnemies.js",
-    "old": "const FLOOR_TYPES = new Set([MOBILE.Zombie, MOBILE.SkeletalWarrior, MOBILE.IceAtronach, MOBILE.Nymph,",
-    "new": "const FLOOR_TYPES = new Set([MOBILE.Zombie, MOBILE.SkeletalWarrior, MOBILE.IceAtronach,",
+    "old": "  MOBILE.Nymph,\n  MOBILE.Lich,",
+    "new": "  MOBILE.Lich,",
     "tests": [
       "test/scenes/dwe_enemies.test.js"
     ]
@@ -1268,8 +1268,8 @@
   {
     "name": "DW-E4-roll-count-fraction",
     "file": "src/world/underwater/underwaterEnemies.js",
-    "old": "  if (roll() < scaledCount - n) n++;\n",
-    "new": "  if (roll() <= scaledCount - n) n++;\n",
+    "old": "  if (roll() < scaledCount - n) n++;",
+    "new": "  if (roll() <= scaledCount - n) n++;",
     "tests": [
       "test/scenes/dwe_enemies.test.js"
     ]
@@ -1313,8 +1313,8 @@
   {
     "name": "DW-E4-reveal-ignored",
     "file": "src/world/underwater/underwaterEnemies.js",
-    "old": "return flatSq > view.revealDistance * view.revealDistance;",
-    "new": "return true;",
+    "old": "  if (v[0] >= -margin && v[0] <= 1 + margin && v[1] >= -margin && v[1] <= 1 + margin)\n    return flatSq > view.revealDistance * view.revealDistance;",
+    "new": "  if (v[0] >= -margin && v[0] <= 1 + margin && v[1] >= -margin && v[1] <= 1 + margin) return true;",
     "tests": [
       "test/scenes/dwe_enemies.test.js"
     ]
@@ -1322,8 +1322,8 @@
   {
     "name": "DW-E4-top-margin",
     "file": "src/world/underwater/underwaterEnemies.js",
-    "old": "if (!(v[0] < -margin) && !(v[0] > 1 + margin) && !(v[1] < -margin)) return v[1] > 1 + margin;",
-    "new": "if (!(v[0] < -margin) && !(v[0] > 1 + margin) && !(v[1] < -margin)) return false;",
+    "old": "  if (!(v[0] < -margin) && !(v[0] > 1 + margin) && !(v[1] < -margin)) return v[1] > 1 + margin;",
+    "new": "  if (!(v[0] < -margin) && !(v[0] > 1 + margin) && !(v[1] < -margin)) return false;",
     "tests": [
       "test/scenes/dwe_enemies.test.js"
     ]

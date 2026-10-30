@@ -66,10 +66,12 @@ export const SHAFT_REACH_M = 24;
 export function refractedSun(toSun, out = [0, 0, 0]) {
   const y = toSun[1];
   if (!(y > 0)) return null;
-  const h = Math.hypot(toSun[0], toSun[2]);   // sin of the angle from straight up (toSun is unit)
+  const h = Math.hypot(toSun[0], toSun[2]); // sin of the angle from straight up (toSun is unit)
   const sinW = Math.min(1, h) / WATER_REFRACTION;
   const s = h > 1e-6 ? sinW / h : 0;
-  out[0] = toSun[0] * s; out[1] = Math.sqrt(1 - sinW * sinW); out[2] = toSun[2] * s;
+  out[0] = toSun[0] * s;
+  out[1] = Math.sqrt(1 - sinW * sinW);
+  out[2] = toSun[2] * s;
   return out;
 }
 
@@ -81,13 +83,20 @@ export function refractedSun(toSun, out = [0, 0, 0]) {
  * @param {{keep: number[], body: number[], sunW: number[], shaft: number[]}} [out]
  * @returns {{keep: number[], body: number[], sunW: number[], shaft: number[]}} - the shaft colour is 0 when no shaft draws
  */
-export function underwaterLookUniforms({ depth, daylight, toSun, sunColor, sunScale }, out = { keep: [0, 0, 0], body: [0, 0, 0], sunW: [0, 0, 0], shaft: [0, 0, 0] }) {
+export function underwaterLookUniforms(
+  { depth, daylight, toSun, sunColor, sunScale },
+  out = { keep: [0, 0, 0], body: [0, 0, 0], sunW: [0, 0, 0], shaft: [0, 0, 0] },
+) {
   const d = Math.max(0, depth);
   const deep = clamp01(d / BODY_DEEP_M);
   const day = clamp01(daylight);
   const night = NIGHT_BODY_SHARE + (1 - NIGHT_BODY_SHARE) * day;
   const sun = refractedSun(toSun, out.sunW);
-  if (!sun) { out.sunW[0] = 0; out.sunW[1] = 1; out.sunW[2] = 0; }
+  if (!sun) {
+    out.sunW[0] = 0;
+    out.sunW[1] = 1;
+    out.sunW[2] = 0;
+  }
   const lit = sun ? SHAFT_STRENGTH * Math.max(0, sunScale) * day * Math.exp(-d / SHAFT_FADE_M) : 0;
   for (let i = 0; i < 3; i++) {
     out.keep[i] = (BODY_KEEP[i] + (BODY_KEEP_DEEP[i] - BODY_KEEP[i]) * deep) * (0.85 + 0.15 * day);

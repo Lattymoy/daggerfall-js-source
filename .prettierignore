@@ -84,6 +84,8 @@
 /src/world/peaks/*/
 !/src/world/starfall/
 /src/world/starfall/*/
+!/src/world/underwater/
+/src/world/underwater/*/
 !/tools/
 /tools/*
 !/tools/layered-armor/

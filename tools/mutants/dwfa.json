@@ -29,8 +29,8 @@
   {
     "name": "DW-FA-seafloor-ordered",
     "file": "src/world/underwater/underwaterLoot.js",
-    "old": "column.depth < SEAFLOOR_Y_CLEARANCE) return null;",
-    "new": "!(column.depth >= SEAFLOOR_Y_CLEARANCE)) return null;",
+    "old": "  if (!column || !column.entry || column.depth < SEAFLOOR_Y_CLEARANCE) return null; // bge.un (IL_1aa49)",
+    "new": "  if (!column || !column.entry || !(column.depth >= SEAFLOOR_Y_CLEARANCE)) return null; // bge.un (IL_1aa49)",
     "tests": [
       "test/scenes/dwf_audit.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "DW-FA-seafloor-sea-ordered",
     "file": "src/world/underwater/underwaterLoot.js",
-    "old": "  if (column.oceanY - column.renderedSeafloorY < SEAFLOOR_Y_CLEARANCE) return null;",
-    "new": "  if (!(column.oceanY - column.renderedSeafloorY >= SEAFLOOR_Y_CLEARANCE)) return null;",
+    "old": "  if (column.oceanY - column.renderedSeafloorY < SEAFLOOR_Y_CLEARANCE) return null; // bge.un (IL_1aa68)",
+    "new": "  if (!(column.oceanY - column.renderedSeafloorY >= SEAFLOOR_Y_CLEARANCE)) return null; // bge.un (IL_1aa68)",
     "tests": [
       "test/scenes/dwf_audit.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "DW-FA-wreck-ordered",
     "file": "src/world/underwater/underwaterLoot.js",
-    "old": "!!column && column.depth >= f32(Math.max(1, waterDepth) * WRECK_MINIMUM_DEPTH_FRACTION);",
-    "new": "!!column && !(column.depth < f32(Math.max(1, waterDepth) * WRECK_MINIMUM_DEPTH_FRACTION));",
+    "old": "  !!column && column.depth >= f32(Math.max(1, waterDepth) * WRECK_MINIMUM_DEPTH_FRACTION); // clt.un; ceq (IL_1a980): a NaN depth is none",
+    "new": "  !!column && !(column.depth < f32(Math.max(1, waterDepth) * WRECK_MINIMUM_DEPTH_FRACTION)); // clt.un; ceq (IL_1a980): a NaN depth is none",
     "tests": [
       "test/scenes/dwf_audit.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "DW-FA-fog-ahead-ordered",
     "file": "src/world/underwater/underwaterLoot.js",
-    "old": "  if (reveal >= maxDistance) return null;",
-    "new": "  if (!(reveal < maxDistance)) return null;",
+    "old": "  if (reveal >= maxDistance) return null; // blt.un (IL_5795)",
+    "new": "  if (!(reveal < maxDistance)) return null; // blt.un (IL_5795)",
     "tests": [
       "test/scenes/dwf_audit.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "DW-FA-cluster-rate-ordered",
     "file": "src/world/underwater/underwaterLoot.js",
-    "old": "  if (rate <= 0) return false;",
-    "new": "  if (!(rate > 0)) return false;",
+    "old": "  if (rate <= 0) return false; // bgt.un (IL_19efb): the C#'s own form - a NaN rate goes on",
+    "new": "  if (!(rate > 0)) return false; // bgt.un (IL_19efb): the C#'s own form - a NaN rate goes on",
     "tests": [
       "test/scenes/dwf_audit.test.js"
     ]
