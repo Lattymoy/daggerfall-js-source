@@ -106,6 +106,8 @@
 /src/systems/ketch/*/
 !/src/systems/lockpick/
 /src/systems/lockpick/*/
+!/src/systems/map/
+/src/systems/map/*/
 !/src/systems/party/
 /src/systems/party/*/
 !/src/systems/region/

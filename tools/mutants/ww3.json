@@ -2,7 +2,7 @@
   {
     "name": "WW3-the-directory-unbounded",
     "file": "src/systems/map/mapDirectory.js",
-    "old": "  return onMap(mapPixelX, mapPixelY) ? mapDict?.get(getMapPixelID(mapPixelX, mapPixelY)) ?? null : null;",
+    "old": "  return onMap(mapPixelX, mapPixelY) ? (mapDict?.get(getMapPixelID(mapPixelX, mapPixelY)) ?? null) : null;",
     "new": "  return mapDict?.get(getMapPixelID(mapPixelX, mapPixelY)) ?? null;",
     "tests": [
       "test/world/worldWide/ww3_sea.test.js"
@@ -11,8 +11,8 @@
   {
     "name": "WW3-the-directory-a-column-short",
     "file": "src/systems/map/mapDirectory.js",
-    "old": "x >= 0 && y >= 0 && x < MAP_W && y < MAP_H;",
-    "new": "x >= 0 && y >= 0 && x < MAP_W - 1 && y < MAP_H;",
+    "old": "const onMap = (x, y) => Number.isInteger(x) && Number.isInteger(y) && x >= 0 && y >= 0 && x < MAP_W && y < MAP_H;",
+    "new": "const onMap = (x, y) => Number.isInteger(x) && Number.isInteger(y) && x >= 0 && y >= 0 && x < MAP_W - 1 && y < MAP_H;",
     "tests": [
       "test/world/worldWide/ww3_sea.test.js"
     ]

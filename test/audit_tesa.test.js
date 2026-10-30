@@ -295,7 +295,7 @@ test('AUDIT-TESA A2-3: a pixel id past the Bay aliases a Bay row (y * 1000 + x) 
   ]) assert.match(W, re);
   // PIN MOVED (WORLD-WIDE folded into TESA, #1184): the harbour's loop no longer bounds itself - WW3's directory answers no
   // row off the Bay's map (systems/map/mapDirectory.js locationSummaryAt), so a pixel past the Bay aliases none
-  assert.match(read('src/systems/map/mapDirectory.js'), /return onMap\(mapPixelX, mapPixelY\) \? mapDict\?\.get\(getMapPixelID\(mapPixelX, mapPixelY\)\) \?\? null : null;/);
+  assert.match(read('src/systems/map/mapDirectory.js'), /return onMap\(mapPixelX, mapPixelY\) \? \(mapDict\?\.get\(getMapPixelID\(mapPixelX, mapPixelY\)\) \?\? null\) : null;/);
 });
 
 // ── WAVE 3 ──────────────────────────────────────────────────────

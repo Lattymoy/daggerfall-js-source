@@ -303,7 +303,7 @@
   {
     "name": "AUDIT-TESA-A2-3-port-alias",
     "file": "src/systems/map/mapDirectory.js",
-    "old": "  return onMap(mapPixelX, mapPixelY) ? mapDict?.get(getMapPixelID(mapPixelX, mapPixelY)) ?? null : null;",
+    "old": "  return onMap(mapPixelX, mapPixelY) ? (mapDict?.get(getMapPixelID(mapPixelX, mapPixelY)) ?? null) : null;",
     "new": "  return mapDict?.get(getMapPixelID(mapPixelX, mapPixelY)) ?? null;",
     "tests": [
       "test/audit_tesa.test.js",

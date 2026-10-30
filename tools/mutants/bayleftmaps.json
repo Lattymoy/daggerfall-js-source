@@ -149,7 +149,7 @@
   {
     "name": "BLM-C2-the-flags-held-to-the-bay",
     "file": "src/systems/map/mapWaypoints.js",
-    "old": "const onMap = (mx, my) => Number.isFinite(mx) && Number.isFinite(my) && worldPixelOk(Math.floor(mx)) && worldPixelOk(Math.floor(my));",
+    "old": "const onMap = (mx, my) =>\n  Number.isFinite(mx) && Number.isFinite(my) && worldPixelOk(Math.floor(mx)) && worldPixelOk(Math.floor(my));",
     "new": "const onMap = (mx, my) => Number.isFinite(mx) && Number.isFinite(my) && mx >= 0 && my >= 0 && mx < 1000 && my < 500;",
     "tests": [
       "test/ui/bayleft_marks.test.js",
@@ -159,8 +159,8 @@
   {
     "name": "BLM-C2-the-world's-edge-a-pixel-short",
     "file": "src/systems/map/mapWaypoints.js",
-    "old": "worldPixelOk(Math.floor(mx)) && worldPixelOk(Math.floor(my));",
-    "new": "worldPixelOk(Math.ceil(mx)) && worldPixelOk(Math.floor(my));",
+    "old": "  Number.isFinite(mx) && Number.isFinite(my) && worldPixelOk(Math.floor(mx)) && worldPixelOk(Math.floor(my));",
+    "new": "  Number.isFinite(mx) && Number.isFinite(my) && worldPixelOk(Math.ceil(mx)) && worldPixelOk(Math.floor(my));",
     "tests": [
       "test/ui/bayleft_marks.test.js"
     ]

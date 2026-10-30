@@ -85,8 +85,8 @@
   {
     "name": "WP-another-moves-it",
     "file": "src/systems/map/mapWaypoints.js",
-    "old": "  if (!have || (have.src && src && have.src !== src)) return true;   // only its author moves a shared waypoint",
-    "new": "  if (!have) return true;   // only its author moves a shared waypoint",
+    "old": "  if (!have || (have.src && src && have.src !== src)) return true; // only its author moves a shared waypoint",
+    "new": "  if (!have) return true; // only its author moves a shared waypoint",
     "tests": [
       "test/systems/map/waypoints.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "WP-another-adds-over-it",
     "file": "src/systems/map/mapWaypoints.js",
-    "old": "      if (have.src && src && have.src !== src) return true;   // another's word on a waypoint they did not make\n",
-    "new": "",
+    "old": "      if (have.src && src && have.src !== src) return true; // another's word on a waypoint they did not make\n      have.mx = d.mx;",
+    "new": "      have.mx = d.mx;",
     "tests": [
       "test/systems/map/waypoints.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "WP-my-echo-stands-again",
     "file": "src/systems/map/mapWaypoints.js",
-    "old": "  if (line.mine) return true;\n",
-    "new": "",
+    "old": "  if (line.mine) return true;\n  const kind = line.ch === 'party' || line.ch === 'guild' ? line.ch : null;",
+    "new": "  const kind = line.ch === 'party' || line.ch === 'guild' ? line.ch : null;",
     "tests": [
       "test/systems/map/waypoints.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "WP-group-left-kept",
     "file": "src/systems/map/mapWaypoints.js",
-    "old": "      if (w.grp !== g) { st.list.splice(i, 1); st.follow = st.follow.filter((f) => f !== w.id); gone++; }",
-    "new": "      if (false) { gone++; }",
+    "old": "      if (w.grp !== g) {\n        st.list.splice(i, 1);\n        st.follow = st.follow.filter((f) => f !== w.id);",
+    "new": "      if (false) {",
     "tests": [
       "test/systems/map/waypoints.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "WP-old-never-adopted",
     "file": "src/systems/map/mapWaypoints.js",
-    "old": "      if (w.grp == null && g != null) { w.grp = g; moved = true; continue; }   // kept from before: adopted\n",
-    "new": "",
+    "old": "      if (w.grp == null && g != null) {\n        w.grp = g;\n        moved = true;\n        continue;\n      } // kept from before: adopted\n      if (w.grp !== g) {",
+    "new": "      if (w.grp !== g) {",
     "tests": [
       "test/systems/map/waypoints.test.js"
     ]
