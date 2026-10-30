@@ -12,7 +12,7 @@
   {
     "name": "CC-not-started-at-the-mount",
     "file": "src/render/cloudsArrival.js",
-    "old": "  if (parallelCompile(gl)) startPrograms(gl, CLOUDS_ARRIVAL_PROGRAMS);",
+    "old": "  if (parallelCompile(gl)) startPrograms(gl, CLOUDS_ARRIVAL_PROGRAMS);\n",
     "new": "",
     "tests": [
       "test/render/cloudsarrival.test.js",

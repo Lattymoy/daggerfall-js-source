@@ -311,8 +311,8 @@
   {
     "name": "PERF-SCALE-review-the-slot-held",
     "file": "src/render/airPass.js",
-    "old": "    this._frames[slot] = null;\n",
-    "new": "",
+    "old": "    this._frames[slot] = null;\n    if (this.frame === kept) {",
+    "new": "    if (this.frame === kept) {",
     "tests": [
       "test/systems/perfscale.test.js"
     ]
@@ -320,8 +320,8 @@
   {
     "name": "PERF-SCALE-review-a-freed-frame-still-the-frame",
     "file": "src/render/airPass.js",
-    "old": "    if (this.frame === kept) { this.frame = null; this.prevValid = false; }\n",
-    "new": "",
+    "old": "    if (this.frame === kept) {\n      this.frame = null;\n      this.prevValid = false;\n    }\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/perfscale.test.js"
     ]

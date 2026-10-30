@@ -121,11 +121,17 @@ void main() {
 }`;
 
 import { createVolume, withVolumeLayer, finishVolume } from './renderTarget.js';
-import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
+import { buildProgram } from './glProgram.js'; // AUDIT 68 S17-gl-program-dup: the one compile and link
 
 /** BOOT-COMPILE: the noise's three programs - the shape volume's, the detail volume's and the lab's slice - as its
  *  constructor builds them: what the boot starts ahead of the build (render/bootPrograms.js). */
-export const CLOUD_NOISE_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[NOISE_VS, SHAPE_FS], [NOISE_VS, DETAIL_FS], [NOISE_VS, SLICE_FS]]));
+export const CLOUD_NOISE_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (
+  Object.freeze([
+    [NOISE_VS, SHAPE_FS],
+    [NOISE_VS, DETAIL_FS],
+    [NOISE_VS, SLICE_FS],
+  ])
+);
 
 export class CloudNoise {
   /** Builds both volumes at once - a DRAW path. `viewport` is the
@@ -145,8 +151,14 @@ export class CloudNoise {
     this.shapeProgram = buildProgram(gl, ...shape);
     this.detailProgram = buildProgram(gl, ...detail);
     this.sliceProgram = buildProgram(gl, ...slice);
-    this.su = { uZ: gl.getUniformLocation(this.shapeProgram, 'uZ'), uSize: gl.getUniformLocation(this.shapeProgram, 'uSize') };
-    this.du = { uZ: gl.getUniformLocation(this.detailProgram, 'uZ'), uSize: gl.getUniformLocation(this.detailProgram, 'uSize') };
+    this.su = {
+      uZ: gl.getUniformLocation(this.shapeProgram, 'uZ'),
+      uSize: gl.getUniformLocation(this.shapeProgram, 'uSize'),
+    };
+    this.du = {
+      uZ: gl.getUniformLocation(this.detailProgram, 'uZ'),
+      uSize: gl.getUniformLocation(this.detailProgram, 'uSize'),
+    };
     this.lu = {};
     for (const n of ['uVolume', 'uZ', 'uTiles', 'uChannel']) this.lu[n] = gl.getUniformLocation(this.sliceProgram, n);
     this.shape = createVolume(gl, SHAPE_SIZE);
@@ -158,7 +170,10 @@ export class CloudNoise {
   _fill(volume, program, u, viewport) {
     const gl = this.gl;
     gl.useProgram(program);
-    gl.disable(gl.DEPTH_TEST); gl.depthMask(false); gl.disable(gl.CULL_FACE); gl.disable(gl.BLEND);
+    gl.disable(gl.DEPTH_TEST);
+    gl.depthMask(false);
+    gl.disable(gl.CULL_FACE);
+    gl.disable(gl.BLEND);
     gl.uniform1f(u.uSize, volume.size);
     gl.bindVertexArray(this.vao);
     for (let z = 0; z < volume.size; z++) {
@@ -169,24 +184,33 @@ export class CloudNoise {
     }
     gl.bindVertexArray(null);
     finishVolume(gl, volume, viewport);
-    gl.depthMask(true); gl.enable(gl.DEPTH_TEST); gl.enable(gl.CULL_FACE);
+    gl.depthMask(true);
+    gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.CULL_FACE);
   }
 
   /** The lab's viewer: draw a slice over the current viewport. A DRAW
    *  path like the sky's - the host marks it. */
   drawSlice(which, z, channel, tiles = 1) {
-    const gl = this.gl, u = this.lu;
+    const gl = this.gl,
+      u = this.lu;
     const volume = which === 'detail' ? this.detail : this.shape;
     gl.useProgram(this.sliceProgram);
-    gl.disable(gl.DEPTH_TEST); gl.depthMask(false); gl.disable(gl.CULL_FACE);
+    gl.disable(gl.DEPTH_TEST);
+    gl.depthMask(false);
+    gl.disable(gl.CULL_FACE);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_3D, volume.tex);
     gl.uniform1i(u.uVolume, 0);
-    gl.uniform1f(u.uZ, z); gl.uniform1f(u.uTiles, tiles); gl.uniform1i(u.uChannel, channel);
+    gl.uniform1f(u.uZ, z);
+    gl.uniform1f(u.uTiles, tiles);
+    gl.uniform1i(u.uChannel, channel);
     gl.bindVertexArray(this.vao);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     gl.bindVertexArray(null);
     gl.bindTexture(gl.TEXTURE_3D, null);
-    gl.depthMask(true); gl.enable(gl.DEPTH_TEST); gl.enable(gl.CULL_FACE);
+    gl.depthMask(true);
+    gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.CULL_FACE);
   }
 }

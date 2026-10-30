@@ -346,7 +346,7 @@ structure ours.
 ### 5.2 The kings are the Bay's
 
 - THE MOD'S kings are two sprites over one set of numbers (2.2). DECIDED: each side's king is one of the four crowns'
-  kings in the deck of the Iliac Bay (`cardFaces.js:"export const SUIT_CROWNS = Object.freeze(["` - Gothryd of
+  kings in the deck of the Iliac Bay (`cardFaces.js:"export const SUIT_CROWNS"` - Gothryd of
   Daggerfall, Eadwyre of Wayrest, Camaron of Sentinel, Gortwog of Orsinium; the painted royal, the K of the crown's suit),
   with the mod's king's numbers. The player's crown is the player's choice at the setup; a regular's is the regular's
   seed's, never the player's. Q4.

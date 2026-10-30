@@ -192,8 +192,8 @@
   {
     "name": "SM-settled-at-once",
     "file": "src/render/bootPrograms.js",
-    "old": "  settled = false;\n",
-    "new": "  settled = true;\n",
+    "old": "  settled = false;",
+    "new": "  settled = true;",
     "tests": [
       "test/render/shadermount.test.js"
     ],

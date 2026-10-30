@@ -47,8 +47,8 @@
   {
     "name": "PERFVOL-stale-answer",
     "file": "src/render/bounds.js",
-    "old": "  if (e !== undefined) { e.rad = rad; e.ox = o[0]; e.oy = o[1]; e.oz = o[2]; e.h = h; e.ans = ans; return ans; }",
-    "new": "  if (e !== undefined) { e.rad = rad; e.ox = o[0]; e.oy = o[1]; e.oz = o[2]; e.h = h; return ans; }",
+    "old": "    e.ans = ans;\n    return ans;",
+    "new": "    return ans;",
     "tests": [
       "test/render/perfvol.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "PERFVOL-key-not-refreshed",
     "file": "src/render/bounds.js",
-    "old": "  if (e !== undefined) { e.rad = rad; e.ox = o[0]; e.oy = o[1]; e.oz = o[2]; e.h = h; e.ans = ans; return ans; }",
-    "new": "  if (e !== undefined) { e.ans = ans; return ans; }",
+    "old": "    e.rad = rad;\n    e.ox = o[0];\n    e.oy = o[1];\n    e.oz = o[2];\n    e.h = h;\n    e.ans = ans;",
+    "new": "    e.ans = ans;",
     "tests": [
       "test/render/perfvol.test.js"
     ]
@@ -66,7 +66,7 @@
     "name": "PERFVOL-one-memo",
     "file": "src/render/bounds.js",
     "old": "  let m = q.vol;\n  if (m === null || m === undefined) m = q.vol = new Map();",
-    "new": "  let m = placementsInVolumeOf.memo ??= new Map();",
+    "new": "  let m = (placementsInVolumeOf.memo ??= new Map());",
     "tests": [
       "test/render/perfvol.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "PERFVOL-memo-unbounded",
     "file": "src/render/bounds.js",
-    "old": "  if (m.size >= VOLUME_MEMO_MAX) m.clear();\n",
-    "new": "",
+    "old": "  if (m.size >= VOLUME_MEMO_MAX) m.clear();\n  m.set(name, { rad, ox: o[0], oy: o[1], oz: o[2], h, ans });",
+    "new": "  m.set(name, { rad, ox: o[0], oy: o[1], oz: o[2], h, ans });",
     "tests": [
       "test/render/perfvol.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "PERFORDER-blind-drawn",
     "file": "src/render/airPass.js",
-    "old": "          const tex = f.textures.get(key);\n          if (!tex) continue;\n",
-    "new": "          const tex = f.textures.get(key);\n",
+    "old": "          if (!tex) continue;\n          if (bound !== P.emitBb) {",
+    "new": "          if (bound !== P.emitBb) {",
     "tests": [
       "test/render/perfvol.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "PERFORDER-unseen-drawn",
     "file": "src/render/airPass.js",
-    "old": "          if (!emis) continue;\n          if (!batchVisible(planes, b)) continue;   // EL5\n",
-    "new": "          if (!emis) continue;\n",
+    "old": "          if (!batchVisible(planes, b)) continue; // EL5\n          const tex = f.textures.get(key);",
+    "new": "          const tex = f.textures.get(key);",
     "tests": [
       "test/render/perfvol.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "PERFORDER-sphere-first",
     "file": "src/render/airPass.js",
-    "old": "          const key = billboardKey(b);\n          const emis = f.emissionTextures.get(key);\n          if (!emis) continue;\n          if (!batchVisible(planes, b)) continue;   // EL5\n",
-    "new": "          if (!batchVisible(planes, b)) continue;   // EL5\n          const key = billboardKey(b);\n          const emis = f.emissionTextures.get(key);\n          if (!emis) continue;\n",
+    "old": "          const key = billboardKey(b);\n          const emis = f.emissionTextures.get(key);\n          if (!emis) continue;\n          if (!batchVisible(planes, b)) continue; // EL5",
+    "new": "          if (!batchVisible(planes, b)) continue; // EL5\n          const key = billboardKey(b);\n          const emis = f.emissionTextures.get(key);\n          if (!emis) continue;",
     "tests": [
       "test/render/perfvol.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "PERFORDER-picture-first",
     "file": "src/render/airPass.js",
-    "old": "          const emis = f.emissionTextures.get(key);\n          if (!emis) continue;\n          if (!batchVisible(planes, b)) continue;   // EL5\n          const tex = f.textures.get(key);\n",
-    "new": "          const emis = f.emissionTextures.get(key);\n          const tex = f.textures.get(key);\n          if (!emis) continue;\n          if (!batchVisible(planes, b)) continue;   // EL5\n",
+    "old": "          if (!emis) continue;\n          if (!batchVisible(planes, b)) continue; // EL5\n          const tex = f.textures.get(key);",
+    "new": "          const tex = f.textures.get(key);\n          if (!emis) continue;\n          if (!batchVisible(planes, b)) continue; // EL5",
     "tests": [
       "test/render/perfvol.test.js"
     ]
@@ -138,7 +138,7 @@
     "name": "PERFVOL-rad-tolerant",
     "file": "src/render/bounds.js",
     "old": "  if (e !== undefined && e.rad === rad && e.ox === o[0] && e.oy === o[1] && e.oz === o[2] && e.h === h) return e.ans;",
-    "new": "  if (e !== undefined && Math.abs(e.rad - rad) <= 1e-3 && e.ox === o[0] && e.oy === o[1] && e.oz === o[2] && e.h === h) return e.ans;",
+    "new": "  if (e !== undefined && Math.abs(e.rad - rad) <= 1e-3 && e.ox === o[0] && e.oy === o[1] && e.oz === o[2] && e.h === h)\n    return e.ans;",
     "tests": [
       "test/render/perfvol.test.js"
     ]
@@ -147,7 +147,7 @@
     "name": "PERFVOL-origin-tolerant",
     "file": "src/render/bounds.js",
     "old": "  if (e !== undefined && e.rad === rad && e.ox === o[0] && e.oy === o[1] && e.oz === o[2] && e.h === h) return e.ans;",
-    "new": "  if (e !== undefined && e.rad === rad && Math.abs(e.ox - o[0]) < 1e-3 && Math.abs(e.oy - o[1]) < 1e-3 && Math.abs(e.oz - o[2]) < 1e-3 && e.h === h) return e.ans;",
+    "new": "  if (\n    e !== undefined &&\n    e.rad === rad &&\n    Math.abs(e.ox - o[0]) < 1e-3 &&\n    Math.abs(e.oy - o[1]) < 1e-3 &&\n    Math.abs(e.oz - o[2]) < 1e-3 &&\n    e.h === h\n  )\n    return e.ans;",
     "tests": [
       "test/render/perfvol.test.js"
     ]
@@ -156,7 +156,7 @@
     "name": "PERFVOL-h-abs",
     "file": "src/render/bounds.js",
     "old": "  if (e !== undefined && e.rad === rad && e.ox === o[0] && e.oy === o[1] && e.oz === o[2] && e.h === h) return e.ans;",
-    "new": "  if (e !== undefined && e.rad === rad && e.ox === o[0] && e.oy === o[1] && e.oz === o[2] && Math.abs(e.h) === Math.abs(h)) return e.ans;",
+    "new": "  if (\n    e !== undefined &&\n    e.rad === rad &&\n    e.ox === o[0] &&\n    e.oy === o[1] &&\n    e.oz === o[2] &&\n    Math.abs(e.h) === Math.abs(h)\n  )\n    return e.ans;",
     "tests": [
       "test/render/perfvol.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "PERFVOL-named-at-first-sight",
     "file": "src/render/bounds.js",
-    "old": "    _volSeen.add(h);\n    return 0;",
-    "new": "    _volSeen.add(h);\n    return _volNext++;",
+    "old": "    return 0;",
+    "new": "    return _volNext++;",
     "tests": [
       "test/render/perfvol.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "PERFVOL-hash-alone",
     "file": "src/render/bounds.js",
-    "old": "      for (let i = 0; i < 24; i++) if (e.bits[i] !== u[i]) continue find;\n",
-    "new": "",
+    "old": "      for (let i = 0; i < 24; i++) if (e.bits[i] !== u[i]) continue find;\n      return e.id;",
+    "new": "      return e.id;",
     "tests": [
       "test/render/perfvol.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "PERFVOL-names-reused",
     "file": "src/render/bounds.js",
-    "old": "  if (_volNamedCount >= VOLUME_TABLE_MAX) { _volNamed = new Map(); _volNamedCount = 0; }",
-    "new": "  if (_volNamedCount >= VOLUME_TABLE_MAX) { _volNamed = new Map(); _volNamedCount = 0; _volNext = 1; }",
+    "old": "    _volNamedCount = 0;\n  }",
+    "new": "    _volNamedCount = 0;\n    _volNext = 1;\n  }",
     "tests": [
       "test/render/perfvol.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "PERFVOL-named-never-forget",
     "file": "src/render/bounds.js",
-    "old": "  if (_volNamedCount >= VOLUME_TABLE_MAX) { _volNamed = new Map(); _volNamedCount = 0; }\n",
-    "new": "",
+    "old": "  if (_volNamedCount >= VOLUME_TABLE_MAX) {\n    _volNamed = new Map();\n    _volNamedCount = 0;\n  }\n  const e = { bits: Uint32Array.from(u), id: _volNext++ };",
+    "new": "  const e = { bits: Uint32Array.from(u), id: _volNext++ };",
     "tests": [
       "test/render/perfvol.test.js"
     ]
@@ -210,7 +210,7 @@
     "name": "PERFVOL-sights-forget-names",
     "file": "src/render/bounds.js",
     "old": "    if (_volSeen.size >= VOLUME_TABLE_MAX) _volSeen.clear();",
-    "new": "    if (_volSeen.size >= VOLUME_TABLE_MAX) { _volSeen.clear(); _volNamed = new Map(); _volNamedCount = 0; }",
+    "new": "    if (_volSeen.size >= VOLUME_TABLE_MAX) {\n      _volSeen.clear();\n      _volNamed = new Map();\n      _volNamedCount = 0;\n    }",
     "tests": [
       "test/render/perfvol.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "PERFVOL-sights-never-forget",
     "file": "src/render/bounds.js",
-    "old": "    if (_volSeen.size >= VOLUME_TABLE_MAX) _volSeen.clear();\n",
-    "new": "",
+    "old": "    if (_volSeen.size >= VOLUME_TABLE_MAX) _volSeen.clear();\n    _volSeen.add(h);",
+    "new": "    _volSeen.add(h);",
     "tests": [
       "test/render/perfvol.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "PERFVOL-renamed-every-sight",
     "file": "src/render/bounds.js",
-    "old": "      for (let i = 0; i < 24; i++) if (e.bits[i] !== u[i]) continue find;\n      return e.id;",
-    "new": "      for (let i = 0; i < 24; i++) if (e.bits[i] !== u[i]) continue find;\n      return (e.id = _volNext++);",
+    "old": "      return e.id;",
+    "new": "      return (e.id = _volNext++);",
     "tests": [
       "test/render/perfvol.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "PERFVOL-view-by-buffer",
     "file": "src/render/bounds.js",
-    "old": "  let u = _volBits.get(planes);\n  if (u === undefined) { u = new Uint32Array(planes.buffer, planes.byteOffset, 24); _volBits.set(planes, u); }",
-    "new": "  let u = _volBits.get(planes.buffer);\n  if (u === undefined) { u = new Uint32Array(planes.buffer, planes.byteOffset, 24); _volBits.set(planes.buffer, u); }",
+    "old": "  let u = _volBits.get(planes);\n  if (u === undefined) {\n    u = new Uint32Array(planes.buffer, planes.byteOffset, 24);\n    _volBits.set(planes, u);",
+    "new": "  let u = _volBits.get(planes.buffer);\n  if (u === undefined) {\n    u = new Uint32Array(planes.buffer, planes.byteOffset, 24);\n    _volBits.set(planes.buffer, u);",
     "tests": [
       "test/render/perfvol.test.js"
     ]
@@ -263,7 +263,7 @@
   {
     "name": "PERFVOL-mix-dropped",
     "file": "src/render/bounds.js",
-    "old": "  for (let i = 0; i < 24; i++) { h = Math.imul(h ^ u[i], 16777619); h ^= h >>> 15; }",
+    "old": "  for (let i = 0; i < 24; i++) {\n    h = Math.imul(h ^ u[i], 16777619);\n    h ^= h >>> 15;\n  }",
     "new": "  for (let i = 0; i < 24; i++) h = Math.imul(h ^ u[i], 16777619);",
     "tests": [
       "test/render/perfvol.test.js"

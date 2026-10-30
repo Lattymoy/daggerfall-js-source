@@ -2353,8 +2353,8 @@
   {
     "name": "BAY-wrong-king",
     "file": "src/render/cardFaces.js",
-    "old": "court('Gothryd', 'King of Daggerfall', 'crown')",
-    "new": "court('Lysandus', 'King of Daggerfall', 'crown')",
+    "old": "      court('Gothryd', 'King of Daggerfall', 'crown'),",
+    "new": "      court('Lysandus', 'King of Daggerfall', 'crown'),",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2375,8 +2375,8 @@
   {
     "name": "BAY-two-reds",
     "file": "src/render/cardFaces.js",
-    "old": "colour: '#9a5c08'",
-    "new": "colour: '#a3141e'",
+    "old": "    colour: '#9a5c08',",
+    "new": "    colour: '#a3141e',",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2397,8 +2397,8 @@
   {
     "name": "BAY-pips-upright",
     "file": "src/render/cardFaces.js",
-    "old": "if (y > 0.01) ctx.rotate(Math.PI);",
-    "new": "void y;",
+    "old": "      if (y > 0.01) ctx.rotate(Math.PI);",
+    "new": "      void y;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2419,8 +2419,8 @@
   {
     "name": "BAY-made-up-name",
     "file": "src/render/cardFaces.js",
-    "old": "court(null, 'Queen of Orsinium', 'circlet')",
-    "new": "court('Ulda', 'Queen of Orsinium', 'circlet')",
+    "old": "      court(null, 'Queen of Orsinium', 'circlet'),",
+    "new": "      court('Ulda', 'Queen of Orsinium', 'circlet'),",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2441,8 +2441,8 @@
   {
     "name": "BAY-seal-unnamed",
     "file": "src/render/cardFaces.js",
-    "old": "  if (rankOf(c) === RANK_ACE) return `The Seal of ${crown}`;\n",
-    "new": "",
+    "old": "  if (rankOf(c) === RANK_ACE) return `The Seal of ${crown}`;\n  return `${rankLabel(rankOf(c))} of ${crown}`;",
+    "new": "  return `${rankLabel(rankOf(c))} of ${crown}`;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",

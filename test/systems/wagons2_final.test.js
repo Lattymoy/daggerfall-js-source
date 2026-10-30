@@ -264,7 +264,7 @@ test('RW1 x WAGONS2 (FINAL AUDIT) A DARK ROOM GLOWS NOWHERE: the room\'s lit see
   assert.match(EMIT_MESH_FS, /if \(uRoomsLit > 0\.5 && !rwRoomLit\(rwSeedBits\(normalize\(vNormal\), vWorldPos, uModel\[3\]\.xyz, vUV\)\)\) discard;/, 'unlit (the room\'s own law): no bloom');
   const ap = read('src/render/airPass.js');
   assert.match(ap, /gl\.uniform1f\(P\.emitMesh\.uRoomsLit, f\.windowRooms && sm\._evWin === GLASS_EXTERIOR \? 1 : 0\);/, 'set for every sub-mesh - a room\'s glass alone');
-  assert.match(ap, /'uBloomSize', 'uRoomsLit'\]\),/, 'its location asked');
+  assert.match(ap, /'uBloomSize',\n\s*'uRoomsLit',\n\s*\]\),/, 'its location asked');
   assert.match(read('src/render/renderer.js'), /windowRooms: !!this\._rw\?\.rooms,/, 'the renderer says whether rooms stand behind exterior glass');
   // the JS twin of the hash (world/windowRoomArt.js roomSeedBits): the share the shader keeps
   let lit = 0, n = 0;

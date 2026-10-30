@@ -308,8 +308,8 @@
   {
     "name": "DISC7-contact-rect-y-from-x",
     "file": "src/render/airPass.js",
-    "old": "out[1] = rect[1] / H;",
-    "new": "out[1] = rect[1] / W;",
+    "old": "  out[1] = rect[1] / H;",
+    "new": "  out[1] = rect[1] / W;",
     "tests": [
       "test/systems/disc7.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "DISC7-contact-rect-never-held",
     "file": "src/render/airPass.js",
-    "old": "this.prevValid = !!this.frame && !this._cut && !jumped; holdPrevRect(this.prevRect, this.rect, this.canvas); }",
-    "new": "this.prevValid = !!this.frame && !this._cut && !jumped; }",
+    "old": "      holdPrevRect(this.prevRect, this.rect, this.canvas);\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/disc7.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "DISC7-contact-rect-never-uploaded",
     "file": "src/render/airPass.js",
-    "old": "    gl.uniform4fv(loc.prevRect, this.prevRect);   // DISC7\n",
-    "new": "",
+    "old": "    gl.uniform4fv(loc.prevRect, this.prevRect); // DISC7\n    this.contactParams[3] = live ? 1 : 0;",
+    "new": "    this.contactParams[3] = live ? 1 : 0;",
     "tests": [
       "test/systems/disc7.test.js"
     ]

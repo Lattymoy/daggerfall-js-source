@@ -29,8 +29,8 @@
   {
     "name": "BC-lane-water-left-out",
     "file": "src/render/bootPrograms.js",
-    "old": "  if (lane?.shadows && !renderer.waterSurfaceProgramLane) programs.push(",
-    "new": "  if (lane?.shadows && !renderer.waterSurfaceProgramLane) void (",
+    "old": "    programs.push([WATER_SURFACE_VS, waterSurfaceFs(CLOUD_SHADOW_GLSL, SHADOW_GLSL)]);",
+    "new": "    void [WATER_SURFACE_VS, waterSurfaceFs(CLOUD_SHADOW_GLSL, SHADOW_GLSL)];",
     "tests": [
       "test/render/bootcompile.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "BC-air-list-drifts",
     "file": "src/render/airPass.js",
-    "old": "    quad(resolveFs(0, 0)), quad(resolveFs(0, 1)), quad(resolveFs(1, 0)), quad(resolveFs(1, 1)),",
-    "new": "    quad(resolveFs(0, 0)), quad(resolveFs(0, 1)), quad(resolveFs(1, 0)), quad(resolveFs(1, 0)),",
+    "old": "    quad(resolveFs(1, 1)),",
+    "new": "    quad(resolveFs(1, 0)),",
     "tests": [
       "test/render/bootcompile.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "BC-lane-clip-left-out",
     "file": "src/render/bootPrograms.js",
-    "old": "  if (clip && !clipSet?.terrainClip) programs.push(",
-    "new": "  if (clip && !clipSet?.terrainClip) void (",
+    "old": "  if (clip && !clipSet?.terrainClip) programs.push([TERRAIN_VS, terrainClipFs(lane ? lane.terrainFs : TERRAIN_FS)]);",
+    "new": "  if (clip && !clipSet?.terrainClip) void [TERRAIN_VS, terrainClipFs(lane ? lane.terrainFs : TERRAIN_FS)];",
     "tests": [
       "test/render/bootcompile.test.js"
     ]
@@ -182,7 +182,7 @@
   {
     "name": "BC-dynamic-sky-door-ignored",
     "file": "src/render/bootPrograms.js",
-    "old": "  const dynamicSky = enhancedSky && (skyDoor === 'dynamic' || (skyDoor === null && !!modSetting('dynamic-skies', 'Enabled')));",
+    "old": "  const dynamicSky =\n    enhancedSky && (skyDoor === 'dynamic' || (skyDoor === null && !!modSetting('dynamic-skies', 'Enabled')));",
     "new": "  const dynamicSky = enhancedSky && skyDoor === null && !!modSetting('dynamic-skies', 'Enabled');",
     "tests": [
       "test/render/bootcompile.test.js"
@@ -200,8 +200,8 @@
   {
     "name": "BC-grass-density-ignored",
     "file": "src/render/bootPrograms.js",
-    "old": "!!getPref('enhancedEnvironments') && Number(getPref('grassDensity')) > 0 && pageParam('grass', search) !== 'off';",
-    "new": "!!getPref('enhancedEnvironments') && pageParam('grass', search) !== 'off';",
+    "old": "  const grass =\n    isEnhanced() &&\n    !!getPref('enhancedEnvironments') &&\n    Number(getPref('grassDensity')) > 0 &&\n    pageParam('grass', search) !== 'off';",
+    "new": "  const grass = isEnhanced() && !!getPref('enhancedEnvironments') && pageParam('grass', search) !== 'off';",
     "tests": [
       "test/render/bootcompile.test.js"
     ]

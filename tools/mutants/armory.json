@@ -79,8 +79,8 @@
   {
     "name": "ARMORY-the-staff-taken-for-the-head",
     "file": "src/render/armoryPose.js",
-    "old": "first = runAt(r0, headMin);",
-    "new": "first = runAt(r0);",
+    "old": "      first = runAt(r0, headMin);",
+    "new": "      first = runAt(r0);",
     "tests": [
       "test/render/armory.test.js"
     ]
@@ -88,8 +88,8 @@
   {
     "name": "ARMORY-a-sprites-forearm-measured",
     "file": "src/render/armoryPose.js",
-    "old": "out.card = true; out.limbs = 'upper';",
-    "new": "out.card = true; out.limbs = 'full';",
+    "old": "  out.limbs = 'upper';",
+    "new": "  out.limbs = 'full';",
     "tests": [
       "test/render/armory.test.js"
     ]
@@ -97,8 +97,8 @@
   {
     "name": "ARMORY-the-yaw-unturned",
     "file": "src/render/armoryPose.js",
-    "old": "o[o3] = at[0] + c * p[i] + s * p[i + 2]",
-    "new": "o[o3] = at[0] + p[i]",
+    "old": "  o[o3] = at[0] + c * p[i] + s * p[i + 2] + (d ? right[0] * d : 0);",
+    "new": "  o[o3] = at[0] + p[i] + (d ? right[0] * d : 0);",
     "tests": [
       "test/render/armory.test.js"
     ]
@@ -409,8 +409,8 @@
   {
     "name": "ARMORY-a-shield-taken-for-the-arm",
     "file": "src/render/armoryPose.js",
-    "old": "      else e += slope;",
-    "new": "      else e = near.hi;",
+    "old": "      } else e += slope;",
+    "new": "      } else e = near.hi;",
     "tests": [
       "test/render/armory.test.js"
     ]
@@ -418,8 +418,8 @@
   {
     "name": "ARMORY-a-staff-in-front-the-head",
     "file": "src/render/armoryPose.js",
-    "old": "      if (thin >= 3) break;\n",
-    "new": "",
+    "old": "      if (thin >= 3) break;\n      [a, b] = best;",
+    "new": "      [a, b] = best;",
     "tests": [
       "test/render/armory.test.js"
     ]
@@ -427,8 +427,8 @@
   {
     "name": "ARMORY-the-arms-off-the-table-again",
     "file": "src/render/armoryPose.js",
-    "old": "const arms = mk?.arms;",
-    "new": "const arms = null;",
+    "old": "  const arms = mk?.arms;",
+    "new": "  const arms = null;",
     "tests": [
       "test/render/armory.test.js"
     ]
@@ -454,8 +454,8 @@
   {
     "name": "ARMORY-a-staff-taken-for-a-leg",
     "file": "src/render/armoryPose.js",
-    "old": "Math.abs((x0 + x1) / 2 - axis) <= bodyOff + 8 * A && !shaft(r, x0, x1))",
-    "new": "Math.abs((x0 + x1) / 2 - axis) <= bodyOff + 8 * A)",
+    "old": "      .filter(([x0, x1]) => x1 - x0 + 1 >= 3 && Math.abs((x0 + x1) / 2 - axis) <= bodyOff + 8 * A && !shaft(r, x0, x1))",
+    "new": "      .filter(([x0, x1]) => x1 - x0 + 1 >= 3 && Math.abs((x0 + x1) / 2 - axis) <= bodyOff + 8 * A)",
     "tests": [
       "test/render/armory.test.js"
     ]
@@ -463,8 +463,8 @@
   {
     "name": "ARMORY-the-body-sought-at-the-pictures-middle",
     "file": "src/render/armoryPose.js",
-    "old": "const axis = legW ? legSum / legW : mid;",
-    "new": "const axis = mid;",
+    "old": "  const axis = legW ? legSum / legW : mid;",
+    "new": "  const axis = mid;",
     "tests": [
       "test/render/armory.test.js"
     ]
@@ -481,8 +481,8 @@
   {
     "name": "ARMORY-the-legs-off-the-table-again",
     "file": "src/render/armoryPose.js",
-    "old": "const legs = mk?.legs;",
-    "new": "const legs = null;",
+    "old": "  const legs = mk?.legs;",
+    "new": "  const legs = null;",
     "tests": [
       "test/render/armory.test.js"
     ]
@@ -490,8 +490,8 @@
   {
     "name": "ARMORY-a-robe-one-leg",
     "file": "src/render/armoryPose.js",
-    "old": "return wd >= 2 * legMin + 2 ? [",
-    "new": "return false ? [",
+    "old": "    return wd >= 2 * legMin + 2\n      ? [x0 + wd / 4 - 0.5 - mid, x1 - wd / 4 + 0.5 - mid]\n      : [(x0 + x1) / 2 - mid, (x0 + x1) / 2 - mid];",
+    "new": "    return false ? [x0 + wd / 4 - 0.5 - mid, x1 - wd / 4 + 0.5 - mid] : [(x0 + x1) / 2 - mid, (x0 + x1) / 2 - mid];",
     "tests": [
       "test/render/armory.test.js"
     ]
@@ -517,8 +517,8 @@
   {
     "name": "ARMORY-the-art-unread",
     "file": "src/render/armoryPose.js",
-    "old": "const A = art > 0 ? art : 1, sc =",
-    "new": "const A = 1, sc =",
+    "old": "  const A = art > 0 ? art : 1,",
+    "new": "  const A = 1,",
     "tests": [
       "test/render/armory.test.js"
     ]
@@ -526,8 +526,8 @@
   {
     "name": "ARMORY-the-poses-rows-the-pictures-pixels",
     "file": "src/render/armoryPose.js",
-    "old": "  const art = fig.marks?.art > 0 ? fig.marks.art : 1;   // a record drawn at another scale",
-    "new": "  const art = 1;   // a record drawn at another scale",
+    "old": "  const art = fig.marks?.art > 0 ? fig.marks.art : 1; // a record drawn at another scale: the sets' rows in its pixels (spriteMarks)",
+    "new": "  const art = 1; // a record drawn at another scale: the sets' rows in its pixels (spriteMarks)",
     "tests": [
       "test/render/armory.test.js"
     ]
@@ -553,8 +553,8 @@
   {
     "name": "ARMORY-the-arms-read-at-the-sets-rows",
     "file": "src/render/armoryPose.js",
-    "old": "rows = at0.map((r) => Math.round(r * A));",
-    "new": "rows = at0;",
+    "old": "      rows = at0.map((r) => Math.round(r * A)); // the sets' rows, and the picture's",
+    "new": "      rows = at0; // the sets' rows, and the picture's",
     "tests": [
       "test/render/armory.test.js"
     ]

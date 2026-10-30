@@ -254,8 +254,8 @@
   {
     "name": "SHOP-stroll-never-stops",
     "file": "src/render/auraPreview.js",
-    "old": "  return { pace: s.pace * Math.max(0, walk) ** 0.6,",
-    "new": "  return { pace: s.pace * (0.5 + 0.5 * Math.abs(walk)),",
+    "old": "  return { pace: s.pace * Math.max(0, walk) ** 0.6, yaw: s.turn * Math.sin((2 * Math.PI * t) / s.turnS) };",
+    "new": "  return { pace: s.pace * (0.5 + 0.5 * Math.abs(walk)), yaw: s.turn * Math.sin((2 * Math.PI * t) / s.turnS) };",
     "tests": [
       "test/ui/shop_window.test.js"
     ]

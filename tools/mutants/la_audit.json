@@ -201,8 +201,8 @@
   {
     "name": "LA-AUDIT-B5-1-the-low-byte-unrounded",
     "file": "src/render/airPass.js",
-    "old": "floor(t.r * 255.0 + 0.5) * 256.0 + floor(t.g * 255.0 + 0.5)",
-    "new": "floor(t.r * 255.0 + 0.5) * 256.0 + t.g * 255.0",
+    "old": "  return (floor(t.r * 255.0 + 0.5) * 256.0 + floor(t.g * 255.0 + 0.5)) / ${glslFloat(AIR_ADAPT_STEPS)} * ${glslFloat(AIR_ADAPT_LOG_RANGE[1] - AIR_ADAPT_LOG_RANGE[0])} + (${glslFloat(AIR_ADAPT_LOG_RANGE[0])});",
+    "new": "  return (floor(t.r * 255.0 + 0.5) * 256.0 + t.g * 255.0) / ${glslFloat(AIR_ADAPT_STEPS)} * ${glslFloat(AIR_ADAPT_LOG_RANGE[1] - AIR_ADAPT_LOG_RANGE[0])} + (${glslFloat(AIR_ADAPT_LOG_RANGE[0])});",
     "tests": [
       "test/render/la_audit.test.js",
       "test/render/la_post.test.js"
@@ -211,8 +211,8 @@
   {
     "name": "LA-AUDIT-B5-2-the-eye-sampler-lowp-again",
     "file": "src/render/airPass.js",
-    "old": "uniform highp sampler2D uAdapt;   // LA-AUDIT B5",
-    "new": "uniform sampler2D uAdapt;   // LA-AUDIT B5",
+    "old": "uniform highp sampler2D uAdapt;   // LA-AUDIT B5: sixteen bits, at a precision that holds them",
+    "new": "uniform sampler2D uAdapt;   // LA-AUDIT B5: sixteen bits, at a precision that holds them",
     "tests": [
       "test/render/la_audit.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "LA-AUDIT-B6-1-the-one-surface-test-loosened",
     "file": "src/render/airPass.js",
-    "old": "abs(a - b) <= max(abs(a), abs(b)) * 0.5 + uBlurRange * 0.25)",
-    "new": "abs(a - b) <= max(abs(a), abs(b)) * 0.5 + uBlurRange)",
+    "old": "  if (a * b >= 0.0 && abs(a - b) <= max(abs(a), abs(b)) * 0.5 + uBlurRange * 0.25) return vec2((a + b) * 0.5, (b - a) * 0.5);",
+    "new": "  if (a * b >= 0.0 && abs(a - b) <= max(abs(a), abs(b)) * 0.5 + uBlurRange) return vec2((a + b) * 0.5, (b - a) * 0.5);",
     "tests": [
       "test/render/la_audit.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "LA-AUDIT-B6-3-the-parabola-dropped",
     "file": "src/render/airPass.js",
-    "old": "return vec2((a + b) * 0.5, (b - a) * 0.5);",
-    "new": "return vec2(0.0);",
+    "old": "  if (a * b >= 0.0 && abs(a - b) <= max(abs(a), abs(b)) * 0.5 + uBlurRange * 0.25) return vec2((a + b) * 0.5, (b - a) * 0.5);",
+    "new": "  if (a * b >= 0.0 && abs(a - b) <= max(abs(a), abs(b)) * 0.5 + uBlurRange * 0.25) return vec2(0.0);",
     "tests": [
       "test/render/la_audit.test.js",
       "test/render/la_post.test.js"

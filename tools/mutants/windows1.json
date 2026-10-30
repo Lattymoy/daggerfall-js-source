@@ -430,8 +430,8 @@
   {
     "name": "RW1-glass-blooms",
     "file": "src/render/airPass.js",
-    "old": "          if (sm._evWin === GLASS_INTERIOR) continue;",
-    "new": "",
+    "old": "          if (sm._evWin === GLASS_INTERIOR) continue; // RW1: an interior's declared glass rides the emission unit and is never an emission - it glows nowhere (render/realWindows.js)",
+    "new": "          // RW1: an interior's declared glass rides the emission unit and is never an emission - it glows nowhere (render/realWindows.js)",
     "tests": [
       "test/render/windows1_view.test.js"
     ]
@@ -538,8 +538,8 @@
   {
     "name": "RW1-AUDIT-the-replays-stale-vao",
     "file": "src/render/airPass.js",
-    "old": "    f.bindVao?.(null);   // RW1 (AUDIT)",
-    "new": "    void f;   // RW1 (AUDIT)",
+    "old": "    f.bindVao?.(null); // RW1 (AUDIT): the images' quads bind their own VAO behind the renderer's back - its shadow still named a mesh's, so the first replay's bind of that mesh was skipped and drew from the quad (GL 1282, \"no element array buffer bound\")",
+    "new": "    void f; // RW1 (AUDIT): the images' quads bind their own VAO behind the renderer's back - its shadow still named a mesh's, so the first replay's bind of that mesh was skipped and drew from the quad (GL 1282, \"no element array buffer bound\")",
     "tests": [
       "test/render/windows1_view.test.js"
     ]

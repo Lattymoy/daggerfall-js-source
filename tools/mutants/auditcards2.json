@@ -534,8 +534,8 @@
   {
     "name": "E-draw-edge-uv-face",
     "file": "src/render/cardTableDraw.js",
-    "old": "const s = [[su0, sv0], [su1, sv0], [su1, sv1], [su0, sv1]];",
-    "new": "const s = [[fu0, fv0], [fu1, fv0], [fu1, fv1], [fu0, fv1]];",
+    "old": "    [su0, sv0],\n    [su1, sv0],\n    [su1, sv1],\n    [su0, sv1],",
+    "new": "    [fu0, fv0],\n    [fu1, fv0],\n    [fu1, fv1],\n    [fu0, fv1],",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -553,8 +553,8 @@
   {
     "name": "E-draw-chip-cap-uv",
     "file": "src/render/cardTableDraw.js",
-    "old": "positions.push(0, y, 0); normals.push(0, ny, 0); uvs.push(um, vBody);",
-    "new": "positions.push(0, y, 0); normals.push(0, ny, 0); uvs.push(um, vBand);",
+    "old": "    uvs.push(um, vBody);",
+    "new": "    uvs.push(um, vBand);",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -572,8 +572,8 @@
   {
     "name": "E-draw-texture-not-released",
     "file": "src/render/cardTableDraw.js",
-    "old": "      renderer.releaseTexture?.(CARD_ARCHIVE, CARD_RECORD);\n",
-    "new": "\n",
+    "old": "      renderer.releaseTexture?.(CARD_ARCHIVE, CARD_RECORD);",
+    "new": "",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",

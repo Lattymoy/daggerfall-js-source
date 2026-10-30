@@ -27,9 +27,11 @@
  */
 export function billboardKey(b) {
   if (b._bbKey == null || b._bbKeyRecord !== b.record || b._bbKeyFrame !== b.frame || b._bbKeyArchive !== b.archive) {
-    b._bbKeyRecord = b.record; b._bbKeyFrame = b.frame; b._bbKeyArchive = b.archive;
+    b._bbKeyRecord = b.record;
+    b._bbKeyFrame = b.frame;
+    b._bbKeyArchive = b.archive;
     b._bbKey = b.frame == null ? `${b.archive}_${b.record}` : `${b.archive}_${b.record}#${b.frame}`;
-    b._bbKeyId = keyId(b._bbKey);   // LA-COST2
+    b._bbKeyId = keyId(b._bbKey); // LA-COST2
   }
   return b._bbKey;
 }
@@ -61,7 +63,11 @@ let _count = new Int32Array(64);
 /** @type {number[]} */ const _bucketKey = [];
 /** @type {number[]} */ const _order = [];
 /** @type {any[]} */ const _placed = [];
-const byKey = (x, y) => { const a = _keyStrs[_bucketKey[x]], b = _keyStrs[_bucketKey[y]]; return a < b ? -1 : a > b ? 1 : 0; };
+const byKey = (x, y) => {
+  const a = _keyStrs[_bucketKey[x]],
+    b = _keyStrs[_bucketKey[y]];
+  return a < b ? -1 : a > b ? 1 : 0;
+};
 
 /** LA-COST2: the interned id of a texture key - one small integer per distinct string, for the life of the page. */
 export function keyId(key) {
@@ -70,7 +76,11 @@ export function keyId(key) {
     id = _keyStrs.length;
     _keyIds.set(key, id);
     _keyStrs.push(key);
-    if (id >= _slot.length) { const grown = new Int32Array(_slot.length * 2); grown.set(_slot); _slot = grown; }
+    if (id >= _slot.length) {
+      const grown = new Int32Array(_slot.length * 2);
+      grown.set(_slot);
+      _slot = grown;
+    }
   }
   return id;
 }
@@ -88,13 +98,17 @@ export function sortByKey(list, n = list.length) {
   let k = 0;
   for (let i = 0; i < n; i++) {
     const b = list[i];
-    const id = b._bbKeyId ?? (b._bbKeyId = keyId(b._bbKey));   // a key minted before its id (a batch dressed by hand) interns here
+    const id = b._bbKeyId ?? (b._bbKeyId = keyId(b._bbKey)); // a key minted before its id (a batch dressed by hand) interns here
     let s = _slot[id];
     if (s === 0) {
       s = ++k;
       _slot[id] = s;
       _bucketKey[s - 1] = id;
-      if (s > _count.length) { const grown = new Int32Array(_count.length * 2); grown.set(_count); _count = grown; }
+      if (s > _count.length) {
+        const grown = new Int32Array(_count.length * 2);
+        grown.set(_count);
+        _count = grown;
+      }
       _count[s - 1] = 0;
     }
     _count[s - 1]++;
@@ -104,9 +118,20 @@ export function sortByKey(list, n = list.length) {
     for (let s = 0; s < k; s++) _order[s] = s;
     _order.sort(byKey);
     let at = 0;
-    for (let j = 0; j < k; j++) { const s = _order[j], c = _count[s]; _count[s] = at; at += c; }   // each bucket's count becomes its first position
-    for (let i = 0; i < n; i++) { const b = list[i]; _placed[_count[_slot[b._bbKeyId] - 1]++] = b; }
-    for (let i = 0; i < n; i++) { list[i] = _placed[i]; _placed[i] = null; }   // a scratch keeps no batch alive past the call
+    for (let j = 0; j < k; j++) {
+      const s = _order[j],
+        c = _count[s];
+      _count[s] = at;
+      at += c;
+    } // each bucket's count becomes its first position
+    for (let i = 0; i < n; i++) {
+      const b = list[i];
+      _placed[_count[_slot[b._bbKeyId] - 1]++] = b;
+    }
+    for (let i = 0; i < n; i++) {
+      list[i] = _placed[i];
+      _placed[i] = null;
+    } // a scratch keeps no batch alive past the call
   }
   for (let s = 0; s < k; s++) _slot[_bucketKey[s]] = 0;
   return list;

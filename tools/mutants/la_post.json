@@ -11,8 +11,8 @@
   {
     "name": "LA-POST1-quarters-unthresholded",
     "file": "src/render/airPass.js",
-    "old": "  return c * smoothstep(uThreshold, 1.0, dot(c, vec3(0.2126, 0.7152, 0.0722)));\n}\nvoid main() {\n  // the block's centre",
-    "new": "  return c;\n}\nvoid main() {\n  // the block's centre",
+    "old": "  return c * smoothstep(uThreshold, 1.0, dot(c, vec3(0.2126, 0.7152, 0.0722)));",
+    "new": "  return c;",
     "tests": [
       "test/render/la_post.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "LA-POST1-taps-half-a-pixel-out",
     "file": "src/render/airPass.js",
-    "old": "export const AIR_BRIGHT_TAPS = Object.freeze([[-1, -1], [1, -1], [-1, 1], [1, 1]]",
-    "new": "export const AIR_BRIGHT_TAPS = Object.freeze([[-0.5, -0.5], [0.5, -0.5], [-0.5, 0.5], [0.5, 0.5]]",
+    "old": "    [-1, -1],\n    [1, -1],\n    [-1, 1],\n    [1, 1],",
+    "new": "    [-0.5, -0.5],\n    [0.5, -0.5],\n    [-0.5, 0.5],\n    [0.5, 0.5],",
     "tests": [
       "test/render/la_post.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "LA-POST2-taps-back-on-the-row",
     "file": "src/render/airPass.js",
-    "old": "    const y = +(0.3 + 0.18 * k).toFixed(2),",
-    "new": "    const y = +(0.18 * k).toFixed(2),",
+    "old": "      const y = +(0.3 + 0.18 * k).toFixed(2),",
+    "new": "      const y = +(0.18 * k).toFixed(2),",
     "tests": [
       "test/render/la_post.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "LA-POST2-taps-share-rows",
     "file": "src/render/airPass.js",
-    "old": "    const x = 0.25 * (k + 1), y = +((0.4 + 0.05 * k) * (k % 2 ? 1 : -1)).toFixed(2);",
-    "new": "    const x = 0.25 * (k + 1), y = +((0.3 + 0.18 * k) * (k % 2 ? 1 : -1)).toFixed(2);",
+    "old": "        y = +((0.4 + 0.05 * k) * (k % 2 ? 1 : -1)).toFixed(2);",
+    "new": "        y = +((0.3 + 0.18 * k) * (k % 2 ? 1 : -1)).toFixed(2);",
     "tests": [
       "test/render/la_post.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "LA-POST2-veto-hard",
     "file": "src/render/airPass.js",
-    "old": "if (cuv == clamp(cuv, vec2(0.0), vec2(1.0))) vis *= 1.0 - filtered(cuv, lantern, true);",
-    "new": "if (cuv == clamp(cuv, vec2(0.0), vec2(1.0)) && filtered(cuv, lantern, true) > 0.0) vis = 0.0;",
+    "old": "      if (cuv == clamp(cuv, vec2(0.0), vec2(1.0))) vis *= 1.0 - filtered(cuv, lantern, true);",
+    "new": "      if (cuv == clamp(cuv, vec2(0.0), vec2(1.0)) && filtered(cuv, lantern, true) > 0.0) vis = 0.0;",
     "tests": [
       "test/render/la_post.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "LA-POST2-sweep-dropped",
     "file": "src/render/airPass.js",
-    "old": "    if ((now & 63) === 0) for (const [k, v] of hold) if (now - v.seen > 120) hold.delete(k);",
-    "new": "",
+    "old": "    if ((now & 63) === 0) for (const [k, v] of hold) if (now - v.seen > 120) hold.delete(k);\n  }",
+    "new": "  }",
     "tests": [
       "test/render/la_post.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "LA-POST3-bloom-in-bytes",
     "file": "src/render/airPass.js",
-    "old": "      bloom: color(bw, bh, f16), bloomB: color(bw, bh, f16),",
-    "new": "      bloom: color(bw, bh), bloomB: color(bw, bh),",
+    "old": "      bloom: color(bw, bh, f16),\n      bloomB: color(bw, bh, f16),",
+    "new": "      bloom: color(bw, bh),\n      bloomB: color(bw, bh),",
     "tests": [
       "test/render/la_post.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "LA-POST3-shafts-in-bytes",
     "file": "src/render/airPass.js",
-    "old": "      shaft: color(bw, bh, f16), shaftRaw: color(bw, bh, f16),",
-    "new": "      shaft: color(bw, bh), shaftRaw: color(bw, bh),",
+    "old": "      shaft: color(bw, bh, f16),\n      shaftRaw: color(bw, bh, f16), // VC7b: the haze march's jittered image, averaged into `shaft` by VOL1's depth-aware tile",
+    "new": "      shaft: color(bw, bh),\n      shaftRaw: color(bw, bh), // VC7b: the haze march's jittered image, averaged into `shaft` by VOL1's depth-aware tile",
     "tests": [
       "test/render/la_post.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "LA-POST3-float-read-as-bytes",
     "file": "src/render/airPass.js",
-    "old": "    if (T.float) {\n      const v = new Float32Array(n);",
-    "new": "    if (false) {\n      const v = new Float32Array(n);",
+    "old": "    if (T.float) {",
+    "new": "    if (false) {",
     "tests": [
       "test/render/la_post.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "LA-POST4-low-byte-dropped",
     "file": "src/render/airPass.js",
-    "old": "floor(t.r * 255.0 + 0.5) * 256.0 + floor(t.g * 255.0 + 0.5)",
-    "new": "floor(t.r * 255.0 + 0.5) * 256.0",
+    "old": "  return (floor(t.r * 255.0 + 0.5) * 256.0 + floor(t.g * 255.0 + 0.5)) / ${glslFloat(AIR_ADAPT_STEPS)} * ${glslFloat(AIR_ADAPT_LOG_RANGE[1] - AIR_ADAPT_LOG_RANGE[0])} + (${glslFloat(AIR_ADAPT_LOG_RANGE[0])});",
+    "new": "  return (floor(t.r * 255.0 + 0.5) * 256.0) / ${glslFloat(AIR_ADAPT_STEPS)} * ${glslFloat(AIR_ADAPT_LOG_RANGE[1] - AIR_ADAPT_LOG_RANGE[0])} + (${glslFloat(AIR_ADAPT_LOG_RANGE[0])});",
     "tests": [
       "test/render/la_post.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "LA-POST4-black-tap-unheld",
     "file": "src/render/airPass.js",
-    "old": ", 1e-9)), ${glslFloat(AIR_LUM_LOG_RANGE[0])}, ${glslFloat(AIR_LUM_LOG_RANGE[1])});",
-    "new": ", 1e-9)), -99.0, ${glslFloat(AIR_LUM_LOG_RANGE[1])});",
+    "old": "      acc += clamp(log2(max(dot(c, vec3(0.2126, 0.7152, 0.0722)) / prev, 1e-9)), ${glslFloat(AIR_LUM_LOG_RANGE[0])}, ${glslFloat(AIR_LUM_LOG_RANGE[1])});",
+    "new": "      acc += clamp(log2(max(dot(c, vec3(0.2126, 0.7152, 0.0722)) / prev, 1e-9)), -99.0, ${glslFloat(AIR_LUM_LOG_RANGE[1])});",
     "tests": [
       "test/render/la_post.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "LA-POST6-claim-hard",
     "file": "src/render/airPass.js",
-    "old": "smoothstep(0.02, ${glslFloat(0.02 + AIR_CONTACT_RAMP)}, behind)",
-    "new": "step(0.02, behind)",
+    "old": "    occ = max(occ, smoothstep(0.02, ${glslFloat(0.02 + AIR_CONTACT_RAMP)}, behind) * (1.0 - smoothstep(uContactParams.y * 0.75, uContactParams.y, behind)));",
+    "new": "    occ = max(occ, step(0.02, behind) * (1.0 - smoothstep(uContactParams.y * 0.75, uContactParams.y, behind)));",
     "tests": [
       "test/render/la_post.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "LA-POST6-thickness-fade-dropped",
     "file": "src/render/airPass.js",
-    "old": " * (1.0 - smoothstep(uContactParams.y * 0.75, uContactParams.y, behind)));",
-    "new": ");",
+    "old": "    occ = max(occ, smoothstep(0.02, ${glslFloat(0.02 + AIR_CONTACT_RAMP)}, behind) * (1.0 - smoothstep(uContactParams.y * 0.75, uContactParams.y, behind)));",
+    "new": "    occ = max(occ, smoothstep(0.02, ${glslFloat(0.02 + AIR_CONTACT_RAMP)}, behind));",
     "tests": [
       "test/render/la_post.test.js",
       "test/render/el8_contact.test.js"
@@ -264,8 +264,8 @@
   {
     "name": "LA-POST6-shift-a-no-op",
     "file": "src/render/airPass.js",
-    "old": "      for (let r = 0; r < 4; r++) m[12 + r] -= ox * m[r] + oy * m[4 + r] + oz * m[8 + r];",
-    "new": "",
+    "old": "      for (let r = 0; r < 4; r++) m[12 + r] -= ox * m[r] + oy * m[4 + r] + oz * m[8 + r];\n    }",
+    "new": "    }",
     "tests": [
       "test/render/la_post.test.js"
     ]
@@ -282,7 +282,7 @@
   {
     "name": "LA-POST6-held-eye-left-behind",
     "file": "src/render/airPass.js",
-    "old": "    this._prevEye[0] += ox; this._prevEye[1] += oy; this._prevEye[2] += oz;",
+    "old": "    this._prevEye[0] += ox;\n    this._prevEye[1] += oy;\n    this._prevEye[2] += oz;",
     "new": "",
     "tests": [
       "test/render/la_post.test.js"
@@ -309,8 +309,8 @@
   {
     "name": "LA-POST6-release-kept",
     "file": "src/render/airPass.js",
-    "old": "    this._cut = true;   // LA-POST6: and the frame the reopened door draws follows none",
-    "new": "    // LA-POST6: and the frame the reopened door draws follows none",
+    "old": "    this._cut = true; // LA-POST6: and the frame the reopened door draws follows none - the depth it would march is from before the door shut",
+    "new": "    // LA-POST6: and the frame the reopened door draws follows none - the depth it would march is from before the door shut",
     "tests": [
       "test/render/la_post.test.js"
     ]
@@ -354,8 +354,8 @@
   {
     "name": "LA-POST8-depth-reattached",
     "file": "src/render/airPass.js",
-    "old": "    f.fbo = f.fbos[f.depthIndex];   // LA-POST8",
-    "new": "    f.fbo = f.fbos[0]; gl.bindFramebuffer(gl.FRAMEBUFFER, f.fbo); gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, f.depth, 0);   // LA-POST8",
+    "old": "    f.fbo = f.fbos[f.depthIndex]; // LA-POST8: the framebuffer with this frame's depth - bound, not re-attached",
+    "new": "    f.fbo = f.fbos[0];\n    gl.bindFramebuffer(gl.FRAMEBUFFER, f.fbo);\n    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, f.depth, 0); // LA-POST8: the framebuffer with this frame's depth - bound, not re-attached",
     "tests": [
       "test/render/la_post.test.js"
     ]
@@ -363,8 +363,8 @@
   {
     "name": "LA-POST8-shafts-cleared-at-night",
     "file": "src/render/airPass.js",
-    "old": "    // LA-POST8: with neither, the shafts' image is not cleared",
-    "new": "    if (!(sun || haze)) { quad(this.programs.shaft, T.shaft); gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT); }\n    // LA-POST8: with neither, the shafts' image is not cleared",
+    "old": "    // LA-POST8: with neither, the shafts' image is not cleared - nothing reads it: the resolve is built without its read",
+    "new": "    if (!(sun || haze)) {\n      quad(this.programs.shaft, T.shaft);\n      gl.clearColor(0, 0, 0, 1);\n      gl.clear(gl.COLOR_BUFFER_BIT);\n    }\n    // LA-POST8: with neither, the shafts' image is not cleared - nothing reads it: the resolve is built without its read",
     "tests": [
       "test/render/la_post.test.js"
     ]
@@ -372,8 +372,8 @@
   {
     "name": "LA-POST8-bloom-for-a-menu",
     "file": "src/render/airPass.js",
-    "old": "    if (prepared) {\n      quad(PB, T.bloom);",
-    "new": "    if (true) {\n      quad(PB, T.bloom);",
+    "old": "    if (prepared) {",
+    "new": "    if (true) {",
     "tests": [
       "test/render/la_post.test.js"
     ]

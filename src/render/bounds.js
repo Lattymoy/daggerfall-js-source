@@ -10,7 +10,7 @@
 // (sphereInPlanes). A bundle without bounds is always drawn - the cull is
 // an optimisation, never a gate.
 
-import { frustumPlanes } from './frustum.js';   // EV3's plane extraction - one home
+import { frustumPlanes } from './frustum.js'; // EV3's plane extraction - one home
 
 /** A batch with no origin sits at the world's: createBillboardBatch mints
  *  `origin: null` for every static flat. AUDIT 68 S16-v-replay-origin-alloc:
@@ -26,7 +26,10 @@ export function spherePlanes(m, out = new Float32Array(24)) {
   frustumPlanes(m, out);
   for (let k = 0; k < 6; k++) {
     const l = Math.hypot(out[k * 4], out[k * 4 + 1], out[k * 4 + 2]) || 1;
-    out[k * 4] /= l; out[k * 4 + 1] /= l; out[k * 4 + 2] /= l; out[k * 4 + 3] /= l;
+    out[k * 4] /= l;
+    out[k * 4 + 1] /= l;
+    out[k * 4 + 2] /= l;
+    out[k * 4 + 3] /= l;
   }
   return out;
 }
@@ -44,21 +47,37 @@ export function sphereInPlanes(planes, x, y, z, r) {
  *  in index units). The centre is the box's, the radius the farthest
  *  vertex from it. Empty input gives a zero sphere at the origin. */
 export function boundsOf(positions, indices = null, start = 0, count = -1, stride = 3) {
-  let minX = Infinity, minY = Infinity, minZ = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+  let minX = Infinity,
+    minY = Infinity,
+    minZ = Infinity,
+    maxX = -Infinity,
+    maxY = -Infinity,
+    maxZ = -Infinity;
   const n = indices ? (count < 0 ? indices.length - start : count) : Math.floor(positions.length / stride);
-  const at = (k) => (indices ? indices[start + k] : k) * stride;   // EL7: `stride` floats per vertex (a character rig's interleaved 9 or 11)
+  const at = (k) => (indices ? indices[start + k] : k) * stride; // EL7: `stride` floats per vertex (a character rig's interleaved 9 or 11)
   for (let k = 0; k < n; k++) {
-    const o = at(k), x = positions[o], y = positions[o + 1], z = positions[o + 2];
-    if (x < minX) minX = x; if (x > maxX) maxX = x;
-    if (y < minY) minY = y; if (y > maxY) maxY = y;
-    if (z < minZ) minZ = z; if (z > maxZ) maxZ = z;
+    const o = at(k),
+      x = positions[o],
+      y = positions[o + 1],
+      z = positions[o + 2];
+    if (x < minX) minX = x;
+    if (x > maxX) maxX = x;
+    if (y < minY) minY = y;
+    if (y > maxY) maxY = y;
+    if (z < minZ) minZ = z;
+    if (z > maxZ) maxZ = z;
   }
   const out = new Float32Array(4);
   if (n === 0) return out;
-  out[0] = (minX + maxX) / 2; out[1] = (minY + maxY) / 2; out[2] = (minZ + maxZ) / 2;
+  out[0] = (minX + maxX) / 2;
+  out[1] = (minY + maxY) / 2;
+  out[2] = (minZ + maxZ) / 2;
   let r2 = 0;
   for (let k = 0; k < n; k++) {
-    const o = at(k), dx = positions[o] - out[0], dy = positions[o + 1] - out[1], dz = positions[o + 2] - out[2];
+    const o = at(k),
+      dx = positions[o] - out[0],
+      dy = positions[o + 1] - out[1],
+      dz = positions[o + 2] - out[2];
     const d2 = dx * dx + dy * dy + dz * dz;
     if (d2 > r2) r2 = d2;
   }
@@ -90,23 +109,37 @@ export const BOUNDS_RANGE = 8192;
  */
 export function* boundsSteps(positions, range = BOUNDS_RANGE) {
   const n = Math.floor(positions.length / 3);
-  let minX = Infinity, minY = Infinity, minZ = Infinity, maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+  let minX = Infinity,
+    minY = Infinity,
+    minZ = Infinity,
+    maxX = -Infinity,
+    maxY = -Infinity,
+    maxZ = -Infinity;
   for (let k0 = 0; k0 < n; k0 += range) {
     for (let o = k0 * 3, end = Math.min(n, k0 + range) * 3; o < end; o += 3) {
-      const x = positions[o], y = positions[o + 1], z = positions[o + 2];
-      if (x < minX) minX = x; if (x > maxX) maxX = x;
-      if (y < minY) minY = y; if (y > maxY) maxY = y;
-      if (z < minZ) minZ = z; if (z > maxZ) maxZ = z;
+      const x = positions[o],
+        y = positions[o + 1],
+        z = positions[o + 2];
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+      if (z < minZ) minZ = z;
+      if (z > maxZ) maxZ = z;
     }
     yield;
   }
   const sphere = new Float32Array(4);
   if (n === 0) return sphere;
-  sphere[0] = (minX + maxX) / 2; sphere[1] = (minY + maxY) / 2; sphere[2] = (minZ + maxZ) / 2;
+  sphere[0] = (minX + maxX) / 2;
+  sphere[1] = (minY + maxY) / 2;
+  sphere[2] = (minZ + maxZ) / 2;
   let reach2 = 0;
   for (let k0 = 0; k0 < n; k0 += range) {
     for (let o = k0 * 3, end = Math.min(n, k0 + range) * 3; o < end; o += 3) {
-      const dx = positions[o] - sphere[0], dy = positions[o + 1] - sphere[1], dz = positions[o + 2] - sphere[2];
+      const dx = positions[o] - sphere[0],
+        dy = positions[o + 1] - sphere[1],
+        dz = positions[o + 2] - sphere[2];
       const d2 = dx * dx + dy * dy + dz * dz;
       if (d2 > reach2) reach2 = d2;
     }
@@ -134,14 +167,15 @@ export function matrixScale(m) {
 }
 /** transformSphere with the matrix's scale already in hand (matrixScale) - the one home of the transform. */
 export function transformSphereScaled(m, s, sc, out, o = 0) {
-  const x = s[0], y = s[1], z = s[2];
+  const x = s[0],
+    y = s[1],
+    z = s[2];
   out[o] = m[0] * x + m[4] * y + m[8] * z + m[12];
   out[o + 1] = m[1] * x + m[5] * y + m[9] * z + m[13];
   out[o + 2] = m[2] * x + m[6] * y + m[10] * z + m[14];
   out[o + 3] = s[3] * sc;
   return out;
 }
-
 
 /** A shadow record's own sphere, or always when it carries none. */
 export function recordVisible(planes, r) {
@@ -150,7 +184,8 @@ export function recordVisible(planes, r) {
 /** Sub-mesh i of a bounded mesh record: its own sphere, or always when it has none (radius -1). */
 export function subMeshVisible(planes, r, i) {
   if (!r.bounded) return true;
-  const o = i * 4, rad = r.subSpheres[o + 3];
+  const o = i * 4,
+    rad = r.subSpheres[o + 3];
   return rad < 0 || sphereInPlanes(planes, r.subSpheres[o], r.subSpheres[o + 1], r.subSpheres[o + 2], rad);
 }
 /**
@@ -191,7 +226,7 @@ export function batchSphere(b, out) {
   out[0] = s[0] + (o ? o[0] : 0);
   out[1] = s[1] + (o ? o[1] : 0) + batchLift(b);
   out[2] = s[2] + (o ? o[2] : 0);
-  out[3] = batchReach(b) + (b.size?.h ?? 0) * _flatLean;   // AUDIT DEEP R-7: a leaned flat's top swings out by h sin(lean)
+  out[3] = batchReach(b) + (b.size?.h ?? 0) * _flatLean; // AUDIT DEEP R-7: a leaned flat's top swings out by h sin(lean)
   return out;
 }
 
@@ -215,9 +250,10 @@ export function batchSphere(b, out) {
  * @param {{ bounds?: ArrayLike<number>|null, size?: { w?: number, h: number }|null }} b  a batch WITH bounds - batchSphere answers null for one without
  */
 export function batchReach(b) {
-  const r = b.bounds[3], z = b.size;
+  const r = b.bounds[3],
+    z = b.size;
   if (!z) return r;
-  const q = (z.w * z.w + z.h * z.h) * 0.25;   // the half-diagonal, squared - a root only when it is the answer
+  const q = (z.w * z.w + z.h * z.h) * 0.25; // the half-diagonal, squared - a root only when it is the answer
   return q > r * r * (1 + 1e-6) ? Math.sqrt(q) : r;
 }
 
@@ -227,7 +263,9 @@ export function batchReach(b) {
  *  The host sets it before its culls; a sphere a little large only draws a little more (the shadows' own, upright,
  *  are culled conservatively by it too). */
 let _flatLean = 0;
-export function setFlatLean(sinLean) { _flatLean = Number.isFinite(sinLean) && sinLean > 0 ? Math.min(1, sinLean) : 0; }
+export function setFlatLean(sinLean) {
+  _flatLean = Number.isFinite(sinLean) && sinLean > 0 ? Math.min(1, sinLean) : 0;
+}
 /** THE LIFT's one home (batchSphere says why it is the whole correctness of the sphere): how far above its placement a
  *  batch's quad is centred - half its height, downward for an upside-down flame's negative one.
  *
@@ -244,7 +282,7 @@ export function batchLift(b) {
 export function quadHalfDiagonal(size) {
   return Math.hypot(size.w, size.h) * 0.5;
 }
-const _batchSphere = new Float64Array(4);   // batchVisible's scratch - the replays' hot path allocates nothing
+const _batchSphere = new Float64Array(4); // batchVisible's scratch - the replays' hot path allocates nothing
 /** A billboard batch against the planes, on batchSphere's sphere (no bounds: always drawn). */
 export function batchVisible(planes, b) {
   const c = batchSphere(b, _batchSphere);
@@ -306,37 +344,81 @@ export function placementGrid(centers) {
   const n = centers.length;
   const G = n > PLACEMENT_ONE_CELL ? PLACEMENT_GRID : 1;
   const pts = new Float32Array(n * 3);
-  for (let i = 0; i < n; i++) { const c = centers[i]; pts[i * 3] = c[0]; pts[i * 3 + 1] = c[1]; pts[i * 3 + 2] = c[2]; }
-  let x0 = Infinity, z0 = Infinity, x1 = -Infinity, z1 = -Infinity;
-  for (let i = 0; i < n * 3; i += 3) {
-    const x = pts[i], z = pts[i + 2];
-    if (x < x0) x0 = x; if (x > x1) x1 = x; if (z < z0) z0 = z; if (z > z1) z1 = z;
-  }
-  const sx = (x1 - x0) / G || 1, sz = (z1 - z0) / G || 1;
-  const cell = new Int32Array(n), start = new Uint32Array(G * G + 1);
   for (let i = 0; i < n; i++) {
-    const gx = Math.min(G - 1, Math.floor((pts[i * 3] - x0) / sx)), gz = Math.min(G - 1, Math.floor((pts[i * 3 + 2] - z0) / sz));
-    cell[i] = gx * G + gz; start[cell[i] + 1]++;
+    const c = centers[i];
+    pts[i * 3] = c[0];
+    pts[i * 3 + 1] = c[1];
+    pts[i * 3 + 2] = c[2];
+  }
+  let x0 = Infinity,
+    z0 = Infinity,
+    x1 = -Infinity,
+    z1 = -Infinity;
+  for (let i = 0; i < n * 3; i += 3) {
+    const x = pts[i],
+      z = pts[i + 2];
+    if (x < x0) x0 = x;
+    if (x > x1) x1 = x;
+    if (z < z0) z0 = z;
+    if (z > z1) z1 = z;
+  }
+  const sx = (x1 - x0) / G || 1,
+    sz = (z1 - z0) / G || 1;
+  const cell = new Int32Array(n),
+    start = new Uint32Array(G * G + 1);
+  for (let i = 0; i < n; i++) {
+    const gx = Math.min(G - 1, Math.floor((pts[i * 3] - x0) / sx)),
+      gz = Math.min(G - 1, Math.floor((pts[i * 3 + 2] - z0) / sz));
+    cell[i] = gx * G + gz;
+    start[cell[i] + 1]++;
   }
   for (let k = 0; k < G * G; k++) start[k + 1] += start[k];
-  const fill = start.slice(0, G * G), byCell = new Float32Array(n * 3);
-  for (let i = 0; i < n; i++) { const o = fill[cell[i]]++ * 3; byCell[o] = pts[i * 3]; byCell[o + 1] = pts[i * 3 + 1]; byCell[o + 2] = pts[i * 3 + 2]; }
+  const fill = start.slice(0, G * G),
+    byCell = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) {
+    const o = fill[cell[i]]++ * 3;
+    byCell[o] = pts[i * 3];
+    byCell[o + 1] = pts[i * 3 + 1];
+    byCell[o + 2] = pts[i * 3 + 2];
+  }
   const cs = new Float32Array(G * G * 4);
   for (let k = 0; k < G * G; k++) {
-    const a = start[k] * 3, e = start[k + 1] * 3;
-    if (a === e) { cs[k * 4 + 3] = -1; continue; }
-    let lx = Infinity, ly = Infinity, lz = Infinity, hx = -Infinity, hy = -Infinity, hz = -Infinity;
-    for (let i = a; i < e; i += 3) {
-      if (byCell[i] < lx) lx = byCell[i]; if (byCell[i] > hx) hx = byCell[i];
-      if (byCell[i + 1] < ly) ly = byCell[i + 1]; if (byCell[i + 1] > hy) hy = byCell[i + 1];
-      if (byCell[i + 2] < lz) lz = byCell[i + 2]; if (byCell[i + 2] > hz) hz = byCell[i + 2];
+    const a = start[k] * 3,
+      e = start[k + 1] * 3;
+    if (a === e) {
+      cs[k * 4 + 3] = -1;
+      continue;
     }
-    const cx = (lx + hx) / 2, cy = (ly + hy) / 2, cz = (lz + hz) / 2;
+    let lx = Infinity,
+      ly = Infinity,
+      lz = Infinity,
+      hx = -Infinity,
+      hy = -Infinity,
+      hz = -Infinity;
+    for (let i = a; i < e; i += 3) {
+      if (byCell[i] < lx) lx = byCell[i];
+      if (byCell[i] > hx) hx = byCell[i];
+      if (byCell[i + 1] < ly) ly = byCell[i + 1];
+      if (byCell[i + 1] > hy) hy = byCell[i + 1];
+      if (byCell[i + 2] < lz) lz = byCell[i + 2];
+      if (byCell[i + 2] > hz) hz = byCell[i + 2];
+    }
+    const cx = (lx + hx) / 2,
+      cy = (ly + hy) / 2,
+      cz = (lz + hz) / 2;
     let r2 = 0;
-    for (let i = a; i < e; i += 3) { const dx = byCell[i] - cx, dy = byCell[i + 1] - cy, dz = byCell[i + 2] - cz; if (dx * dx + dy * dy + dz * dz > r2) r2 = dx * dx + dy * dy + dz * dz; }
-    cs[k * 4] = cx; cs[k * 4 + 1] = cy; cs[k * 4 + 2] = cz; cs[k * 4 + 3] = Math.sqrt(r2) * (1 + 1e-6) + 1e-4;
+    for (let i = a; i < e; i += 3) {
+      const dx = byCell[i] - cx,
+        dy = byCell[i + 1] - cy,
+        dz = byCell[i + 2] - cz;
+      if (dx * dx + dy * dy + dz * dz > r2) r2 = dx * dx + dy * dy + dz * dz;
+    }
+    cs[k * 4] = cx;
+    cs[k * 4 + 1] = cy;
+    cs[k * 4 + 2] = cz;
+    cs[k * 4 + 3] = Math.sqrt(r2) * (1 + 1e-6) + 1e-4;
   }
-  return { G, x0, z0, x1, z1, sx, sz, start, pts: byCell, cs, hw: NaN, hh: NaN, half: 0, vol: null };   // the review: the half-diagonal's memo (placedHalfDiagonal), born empty; PERF-VOL: the volume answers' (placementsInVolumeOf)
+  return { G, x0, z0, x1, z1, sx, sz, start, pts: byCell, cs, hw: NaN, hh: NaN, half: 0, vol: null }; // the review: the half-diagonal's memo (placedHalfDiagonal), born empty; PERF-VOL: the volume answers' (placementsInVolumeOf)
 }
 /** PERF-EXT1: the radius that bounds one quad of a batch - its half-diagonal `half` plus WIND3's `lean` at the crown -
  *  a hair wide, so the float32 the GPU places a corner in can never land outside the double this is compared in. */
@@ -350,8 +432,13 @@ export function placementRadius(half, lean) {
  *  so the grid keeps the w and h its answer is of and asks again for any other: the same arithmetic on the same
  *  values, so every radius keeps its bits. */
 export function placedHalfDiagonal(b) {
-  const q = b._place, s = b.size;
-  if (q.hw !== s.w || q.hh !== s.h) { q.hw = s.w; q.hh = s.h; q.half = quadHalfDiagonal(s); }
+  const q = b._place,
+    s = b.size;
+  if (q.hw !== s.w || q.hh !== s.h) {
+    q.hw = s.w;
+    q.hh = s.h;
+    q.half = quadHalfDiagonal(s);
+  }
   return q.half;
 }
 const _cells = new Int32Array(4);
@@ -373,7 +460,11 @@ const _cubeArgs = new Float64Array(5);
  *  outside it rasterises into none of them - the cube, not the far SPHERE, whose corners a face still draws. */
 export function placementsInCube(b, rad, px, py, pz, far) {
   const c = _cubeArgs;
-  c[0] = rad; c[1] = px; c[2] = py; c[3] = pz; c[4] = far;
+  c[0] = rad;
+  c[1] = px;
+  c[2] = py;
+  c[3] = pz;
+  c[4] = far;
   return placementsInCubeOf(b, c);
 }
 /** PERF-ALLOC2 (2026-10-10): placementsInCube with its cube in a Float64Array - [rad, px, py, pz, far] - the same test
@@ -381,17 +472,29 @@ export function placementsInCube(b, rad, px, py, pz, far) {
  *  heap number: the shadow pass's lantern walk (_candidateQuads) asks this once a placed batch a lantern a frame, and its
  *  five numbers were 153 KB of the 1.4 MB the real game's night frame allocated at Knightstale. */
 export function placementsInCubeOf(b, c) {
-  const rad = c[0], px = c[1], py = c[2], pz = c[3], far = c[4];
-  const q = b._place, o = b.origin || ZERO_ORIGIN, R = far + rad;
-  const lx = px - o[0], ly = py - o[1] - batchLift(b), lz = pz - o[2];   // the light in the batch's frame, the lift folded in
+  const rad = c[0],
+    px = c[1],
+    py = c[2],
+    pz = c[3],
+    far = c[4];
+  const q = b._place,
+    o = b.origin || ZERO_ORIGIN,
+    R = far + rad;
+  const lx = px - o[0],
+    ly = py - o[1] - batchLift(b),
+    lz = pz - o[2]; // the light in the batch's frame, the lift folded in
   if (!cellRange(q, lx - R, lz - R, lx + R, lz + R)) return false;
-  const G = q.G, cs = q.cs, st = q.start, p = q.pts;
+  const G = q.G,
+    cs = q.cs,
+    st = q.start,
+    p = q.pts;
   for (let gx = _cells[0], gx1 = _cells[1]; gx <= gx1; gx++) {
     for (let k = gx * G + _cells[2], ke = gx * G + _cells[3]; k <= ke; k++) {
       const cr = cs[k * 4 + 3];
       if (cr < 0) continue;
       const rr = R + cr;
-      if (Math.abs(cs[k * 4] - lx) > rr || Math.abs(cs[k * 4 + 1] - ly) > rr || Math.abs(cs[k * 4 + 2] - lz) > rr) continue;
+      if (Math.abs(cs[k * 4] - lx) > rr || Math.abs(cs[k * 4 + 1] - ly) > rr || Math.abs(cs[k * 4 + 2] - lz) > rr)
+        continue;
       for (let i = st[k] * 3, e = st[k + 1] * 3; i < e; i += 3) {
         if (Math.abs(p[i] - lx) <= R && Math.abs(p[i + 1] - ly) <= R && Math.abs(p[i + 2] - lz) <= R) return true;
       }
@@ -402,9 +505,14 @@ export function placementsInCubeOf(b, c) {
 /** PERF-EXT1: does any quad of batch `b` (a quad radius `rad` from placementRadius) touch the volume `planes` bound
  *  (a cascade, a face)? Each cell's sphere first, then that cell's placements, each against the planes. */
 export function placementsInVolume(b, rad, planes) {
-  const q = b._place, o = b.origin || ZERO_ORIGIN;
-  const ox = o[0], oy = o[1] + batchLift(b), oz = o[2];
-  const cs = q.cs, st = q.start, p = q.pts;
+  const q = b._place,
+    o = b.origin || ZERO_ORIGIN;
+  const ox = o[0],
+    oy = o[1] + batchLift(b),
+    oz = o[2];
+  const cs = q.cs,
+    st = q.start,
+    p = q.pts;
   for (let k = 0, n = q.G * q.G; k < n; k++) {
     const cr = cs[k * 4 + 3];
     if (cr < 0 || !sphereInPlanes(planes, cs[k * 4] + ox, cs[k * 4 + 1] + oy, cs[k * 4 + 2] + oz, cr + rad)) continue;
@@ -419,7 +527,9 @@ export function placementsInVolume(b, rad, planes) {
  *  grid keeps, before each starts over. */
 export const VOLUME_TABLE_MAX = 512;
 export const VOLUME_MEMO_MAX = 128;
-let _volNamed = new Map(), _volNamedCount = 0, _volNext = 1;
+let _volNamed = new Map(),
+  _volNamedCount = 0,
+  _volNext = 1;
 const _volSeen = new Set();
 const _volBits = new WeakMap();
 /** PERF-VOL: the hash a set of plane words is filed under - FNV-1a over the 24 words, each step folded down
@@ -428,7 +538,10 @@ const _volBits = new WeakMap();
  *  words compared. Exported for the pins, which build two sets of one hash from it. */
 export function volumeHash(u) {
   let h = 2166136261;
-  for (let i = 0; i < 24; i++) { h = Math.imul(h ^ u[i], 16777619); h ^= h >>> 15; }
+  for (let i = 0; i < 24; i++) {
+    h = Math.imul(h ^ u[i], 16777619);
+    h ^= h >>> 15;
+  }
   return h;
 }
 /**
@@ -451,7 +564,10 @@ export function volumeHash(u) {
 export function volumeName(planes) {
   if (!(planes instanceof Float32Array) || planes.length !== 24) return 0;
   let u = _volBits.get(planes);
-  if (u === undefined) { u = new Uint32Array(planes.buffer, planes.byteOffset, 24); _volBits.set(planes, u); }
+  if (u === undefined) {
+    u = new Uint32Array(planes.buffer, planes.byteOffset, 24);
+    _volBits.set(planes, u);
+  }
   const h = volumeHash(u);
   const list = _volNamed.get(h);
   if (list !== undefined) {
@@ -461,16 +577,21 @@ export function volumeName(planes) {
       return e.id;
     }
   }
-  if (!_volSeen.has(h)) {   // the first sight: its hash alone
+  if (!_volSeen.has(h)) {
+    // the first sight: its hash alone
     if (_volSeen.size >= VOLUME_TABLE_MAX) _volSeen.clear();
     _volSeen.add(h);
     return 0;
   }
-  _volSeen.delete(h);   // the second: named from now on
-  if (_volNamedCount >= VOLUME_TABLE_MAX) { _volNamed = new Map(); _volNamedCount = 0; }
+  _volSeen.delete(h); // the second: named from now on
+  if (_volNamedCount >= VOLUME_TABLE_MAX) {
+    _volNamed = new Map();
+    _volNamedCount = 0;
+  }
   const e = { bits: Uint32Array.from(u), id: _volNext++ };
   const into = _volNamed.get(h);
-  if (into !== undefined) into.push(e); else _volNamed.set(h, [e]);
+  if (into !== undefined) into.push(e);
+  else _volNamed.set(h, [e]);
   _volNamedCount++;
   return e.id;
 }
@@ -480,13 +601,23 @@ export function volumeName(planes) {
  *  different - or NaN, which equals nothing - and it is asked afresh and kept again. */
 export function placementsInVolumeOf(b, rad, planes, name) {
   if (name === 0) return placementsInVolume(b, rad, planes);
-  const q = b._place, o = b.origin || ZERO_ORIGIN, h = b.size?.h ?? 0;
+  const q = b._place,
+    o = b.origin || ZERO_ORIGIN,
+    h = b.size?.h ?? 0;
   let m = q.vol;
   if (m === null || m === undefined) m = q.vol = new Map();
   const e = m.get(name);
   if (e !== undefined && e.rad === rad && e.ox === o[0] && e.oy === o[1] && e.oz === o[2] && e.h === h) return e.ans;
   const ans = placementsInVolume(b, rad, planes);
-  if (e !== undefined) { e.rad = rad; e.ox = o[0]; e.oy = o[1]; e.oz = o[2]; e.h = h; e.ans = ans; return ans; }
+  if (e !== undefined) {
+    e.rad = rad;
+    e.ox = o[0];
+    e.oy = o[1];
+    e.oz = o[2];
+    e.h = h;
+    e.ans = ans;
+    return ans;
+  }
   if (m.size >= VOLUME_MEMO_MAX) m.clear();
   m.set(name, { rad, ox: o[0], oy: o[1], oz: o[2], h, ans });
   return ans;

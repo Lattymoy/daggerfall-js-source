@@ -370,7 +370,7 @@
     "name": "AUDITRETRO1-D5-a-menu-frees-the-retro-slot",
     "file": "src/render/airPass.js",
     "old": "    if (kept) this._deleteFrame(kept);",
-    "new": "    { const k = this.frame; if (k) this._deleteFrame(k); }",
+    "new": "    {\n      const k = this.frame;\n      if (k) this._deleteFrame(k);\n    }",
     "tests": [
       "test/render/auditretro1.test.js"
     ],
@@ -379,8 +379,8 @@
   {
     "name": "AUDITRETRO1-D5-the-slot-swap-keeps-a-previous",
     "file": "src/render/airPass.js",
-    "old": "      if (this.frame !== kept) { this.frame = kept; this.prevValid = false; }",
-    "new": "      if (this.frame !== kept) { this.frame = kept; }",
+    "old": "        this.prevValid = false;\n      } // RETRO1: the other slot's image - its previous depth is not this frame's previous",
+    "new": "      } // RETRO1: the other slot's image - its previous depth is not this frame's previous",
     "tests": [
       "test/render/auditretro1.test.js"
     ]

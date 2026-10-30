@@ -204,8 +204,8 @@
   {
     "name": "JAN1-the-glare-vetoes-a-surface-behind-the-light",
     "file": "src/render/airPass.js",
-    "old": "hide ? smoothstep(${glslFloat(AIR_GLARE_SLACK)}, ${glslFloat(2 * AIR_GLARE_SLACK)}, lantern - d)",
-    "new": "hide ? smoothstep(${glslFloat(AIR_GLARE_SLACK)}, ${glslFloat(2 * AIR_GLARE_SLACK)}, d - lantern)",
+    "old": "  return hide ? smoothstep(${glslFloat(AIR_GLARE_SLACK)}, ${glslFloat(2 * AIR_GLARE_SLACK)}, lantern - d)",
+    "new": "  return hide ? smoothstep(${glslFloat(AIR_GLARE_SLACK)}, ${glslFloat(2 * AIR_GLARE_SLACK)}, d - lantern)",
     "tests": [
       "test/world/terrain/jan1_field.test.js"
     ]

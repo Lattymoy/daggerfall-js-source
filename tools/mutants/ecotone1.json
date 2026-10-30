@@ -94,8 +94,8 @@
   {
     "name": "ECOTONE1-glsl-stretch-dropped",
     "file": "src/render/ecotoneGlsl.js",
-    "old": "float n = clamp((n0 - 0.5) * ${f(ECOTONE.stretch)} + 0.5, 0.0, 1.0);",
-    "new": "float n = n0;",
+    "old": "  float n = clamp((n0 - 0.5) * ${f(ECOTONE.stretch)} + 0.5, 0.0, 1.0);",
+    "new": "  float n = n0;",
     "tests": [
       "test/systems/ecotone1.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "ECOTONE1-glsl-skip-rule",
     "file": "src/render/ecotoneGlsl.js",
-    "old": "if (abs(ux) < ${f(ECOTONE_REACH)} && !(nx == 0 && nd == nz))",
-    "new": "if (abs(ux) < ${f(ECOTONE_REACH)} && !(nx == 0))",
+    "old": "  if (abs(ux) < ${f(ECOTONE_REACH)} && !(nx == 0 && nd == nz)) { float s = ecoShare(ux, lt, ${ECOTONE.saltX}u); ox = sx < 0.0 ? s : 1.0 - s; }",
+    "new": "  if (abs(ux) < ${f(ECOTONE_REACH)} && !(nx == 0)) { float s = ecoShare(ux, lt, ${ECOTONE.saltX}u); ox = sx < 0.0 ? s : 1.0 - s; }",
     "tests": [
       "test/systems/ecotone1.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "ECOTONE1-glsl-switch-ignored",
     "file": "src/render/ecotoneGlsl.js",
-    "old": "  if (uEcoOrigin.z == 0) return vec4(1.0, 0.0, 0.0, 0.0);   // every neighbour wears the pixel's own set\n",
-    "new": "",
+    "old": "  if (uEcoOrigin.z == 0) return vec4(1.0, 0.0, 0.0, 0.0);   // every neighbour wears the pixel's own set\n  float sx = local.x < 409.6 ? -1.0 : 1.0, sz = local.y < 409.6 ? -1.0 : 1.0;",
+    "new": "  float sx = local.x < 409.6 ? -1.0 : 1.0, sz = local.y < 409.6 ? -1.0 : 1.0;",
     "tests": [
       "test/systems/ecotone1.test.js"
     ]
@@ -276,8 +276,8 @@
   {
     "name": "ECOTONE1-glsl-origin-mediump",
     "file": "src/render/ecotoneGlsl.js",
-    "old": "uniform highp ivec3 uEcoOrigin;",
-    "new": "uniform ivec3 uEcoOrigin;",
+    "old": "uniform highp ivec3 uEcoOrigin;   // the pixel's first world tile (x east, z north of row ${ECOTONE.row0}); z 1 when a neighbour's set differs",
+    "new": "uniform ivec3 uEcoOrigin;   // the pixel's first world tile (x east, z north of row ${ECOTONE.row0}); z 1 when a neighbour's set differs",
     "tests": [
       "test/systems/ecotone1.test.js"
     ]
@@ -285,8 +285,8 @@
   {
     "name": "ECOTONE1-glsl-hash-mediump",
     "file": "src/render/ecotoneGlsl.js",
-    "old": "  highp uint h = (uint(c.x) * 0x8da6b343u)",
-    "new": "  uint h = (uint(c.x) * 0x8da6b343u)",
+    "old": "  highp uint h = (uint(c.x) * 0x8da6b343u) ^ (uint(c.y) * 0xd8163841u) ^ (salt * 0xcb1ab31fu);",
+    "new": "  uint h = (uint(c.x) * 0x8da6b343u) ^ (uint(c.y) * 0xd8163841u) ^ (salt * 0xcb1ab31fu);",
     "tests": [
       "test/systems/ecotone1.test.js"
     ]

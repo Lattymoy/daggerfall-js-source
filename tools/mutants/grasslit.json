@@ -170,8 +170,8 @@
   {
     "name": "GRASSLIT-ao-depth-blit",
     "file": "src/render/airPass.js",
-    "old": "gl.blitFramebuffer(0, 0, F.w, F.h, 0, 0, F.w, F.h, gl.DEPTH_BUFFER_BIT, gl.NEAREST);",
-    "new": "gl.blitFramebuffer(0, 0, F.w, F.h, 0, 0, F.w, F.h, gl.COLOR_BUFFER_BIT, gl.NEAREST);",
+    "old": "    gl.blitFramebuffer(0, 0, F.w, F.h, 0, 0, F.w, F.h, gl.DEPTH_BUFFER_BIT, gl.NEAREST);",
+    "new": "    gl.blitFramebuffer(0, 0, F.w, F.h, 0, 0, F.w, F.h, gl.COLOR_BUFFER_BIT, gl.NEAREST);",
     "tests": [
       "test/render/grasslit.test.js",
       "test/render/grasspx.test.js",

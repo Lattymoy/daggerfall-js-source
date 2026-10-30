@@ -272,8 +272,8 @@
   {
     "name": "ASH-embers-blended",
     "file": "src/render/dryFall.js",
-    "old": "      gl.blendFunc(gl.ONE, gl.ONE);   // the embers' own light, added",
-    "new": "      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);   // the embers' own light, added",
+    "old": "      gl.blendFunc(gl.ONE, gl.ONE); // the embers' own light, added",
+    "new": "      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA); // the embers' own light, added",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -281,7 +281,7 @@
   {
     "name": "ASH-the-count-whole",
     "file": "src/render/dryFall.js",
-    "old": "export const dryCount = (strength01, look) => Math.round(look.count * Math.max(0, Math.min(1, Number(strength01) || 0)));",
+    "old": "export const dryCount = (strength01, look) =>\n  Math.round(look.count * Math.max(0, Math.min(1, Number(strength01) || 0)));",
     "new": "export const dryCount = (strength01, look) => (Number(strength01) > 0 ? look.count : 0);",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
@@ -290,8 +290,8 @@
   {
     "name": "ASH-the-clock-unwrapped",
     "file": "src/render/dryFall.js",
-    "old": "    gl.uniform1f(U.uTime, wispClock(timeSeconds));   // wrapped here, in double precision",
-    "new": "    gl.uniform1f(U.uTime, timeSeconds);   // wrapped here, in double precision",
+    "old": "    gl.uniform1f(U.uTime, wispClock(timeSeconds)); // wrapped here, in double precision",
+    "new": "    gl.uniform1f(U.uTime, timeSeconds); // wrapped here, in double precision",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "ASH-the-least-size",
     "file": "src/render/dryFall.js",
-    "old": "gl.uniform1f(U.uMinSize, DRY_MIN_PX / Math.max(1, viewH || gl.drawingBufferHeight || 720));",
-    "new": "gl.uniform1f(U.uMinSize, 0);",
+    "old": "    gl.uniform1f(U.uMinSize, DRY_MIN_PX / Math.max(1, viewH || gl.drawingBufferHeight || 720)); // half the least size, in the world image's -1..1",
+    "new": "    gl.uniform1f(U.uMinSize, 0); // half the least size, in the world image's -1..1",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "ASH-the-least-size-the-canvas",
     "file": "src/render/dryFall.js",
-    "old": "DRY_MIN_PX / Math.max(1, viewH || gl.drawingBufferHeight || 720)",
-    "new": "DRY_MIN_PX / Math.max(1, gl.drawingBufferHeight || 720)",
+    "old": "    gl.uniform1f(U.uMinSize, DRY_MIN_PX / Math.max(1, viewH || gl.drawingBufferHeight || 720)); // half the least size, in the world image's -1..1",
+    "new": "    gl.uniform1f(U.uMinSize, DRY_MIN_PX / Math.max(1, gl.drawingBufferHeight || 720)); // half the least size, in the world image's -1..1",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "ASH-a-flake-fills-the-screen",
     "file": "src/render/dryFall.js",
-    "old": "  vFade *= smoothstep(0.3, 1.0, c.w);",
-    "new": "  vFade *= 1.0;",
+    "old": "  vFade *= smoothstep(0.3, 1.0, c.w);   // ASHFALL1's audit: a flake at the eye goes before it fills the screen (0.2 m off, a disc 200 px across)",
+    "new": "  vFade *= 1.0;   // ASHFALL1's audit: a flake at the eye goes before it fills the screen (0.2 m off, a disc 200 px across)",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]

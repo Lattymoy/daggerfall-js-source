@@ -358,8 +358,8 @@
   {
     "name": "PERF-EXT23-the-sliced-sphere-centre-is-not-rounded-before-the-reach",
     "file": "src/render/bounds.js",
-    "old": "  const sphere = new Float32Array(4);\n  if (n === 0) return sphere;",
-    "new": "  const sphere = new Float64Array(4);\n  if (n === 0) return sphere;",
+    "old": "  const sphere = new Float32Array(4);",
+    "new": "  const sphere = new Float64Array(4);",
     "tests": [
       "test/render/publishtail.test.js"
     ]
@@ -367,8 +367,8 @@
   {
     "name": "PERF-EXT23-a-range-skips-its-last-vertex",
     "file": "src/render/bounds.js",
-    "old": "    for (let o = k0 * 3, end = Math.min(n, k0 + range) * 3; o < end; o += 3) {\n      const x = positions[o]",
-    "new": "    for (let o = k0 * 3, end = Math.min(n, k0 + range) * 3 - 3; o < end; o += 3) {\n      const x = positions[o]",
+    "old": "  for (let k0 = 0; k0 < n; k0 += range) {\n    for (let o = k0 * 3, end = Math.min(n, k0 + range) * 3; o < end; o += 3) {\n      const x = positions[o],",
+    "new": "  for (let k0 = 0; k0 < n; k0 += range) {\n    for (let o = k0 * 3, end = Math.min(n, k0 + range) * 3 - 3; o < end; o += 3) {\n      const x = positions[o],",
     "tests": [
       "test/render/publishtail.test.js"
     ]
@@ -376,8 +376,8 @@
   {
     "name": "PERF-EXT23-the-reach-pass-measures-from-the-box-corner",
     "file": "src/render/bounds.js",
-    "old": "  sphere[0] = (minX + maxX) / 2; sphere[1] = (minY + maxY) / 2; sphere[2] = (minZ + maxZ) / 2;",
-    "new": "  sphere[0] = minX; sphere[1] = (minY + maxY) / 2; sphere[2] = (minZ + maxZ) / 2;",
+    "old": "  sphere[0] = (minX + maxX) / 2;",
+    "new": "  sphere[0] = minX;",
     "tests": [
       "test/render/publishtail.test.js"
     ]

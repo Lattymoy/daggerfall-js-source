@@ -38,8 +38,8 @@
   {
     "name": "PROFILE-SLOTS-the-rings-reach-the-dagonfires",
     "file": "src/render/characterStage.js",
-    "old": "reach: Math.max(...Object.values(AURA_LOOK).map((l) => l.ringR))",
-    "new": "reach: 0.85",
+    "old": "export const STAGE_FRAME = Object.freeze({\n  pitch: /** @type {number} */ (0.2),\n  top: 0.21,\n  bottom: 0.95,\n  reach: Math.max(...Object.values(AURA_LOOK).map((l) => l.ringR)),\n});",
+    "new": "export const STAGE_FRAME = Object.freeze({ pitch: /** @type {number} */ (0.2), top: 0.21, bottom: 0.95, reach: 0.85 });",
     "tests": [
       "test/ui/profileslots.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PROFILE-SLOTS-the-frame-on-the-head-alone",
     "file": "src/render/characterStage.js",
-    "old": "poseFromBones(bones, pose) ? stageTopOf(head, pose) : head",
-    "new": "head",
+    "old": "  return stageCamera(poseFromBones(bones, pose) ? stageTopOf(head, pose) : head, aspect);",
+    "new": "  return stageCamera(head, aspect);",
     "tests": [
       "test/ui/profileslots.test.js"
     ]

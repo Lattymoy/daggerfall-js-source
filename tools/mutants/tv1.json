@@ -552,8 +552,8 @@
   {
     "name": "AUDIT-DEEP-R7-leaned-tops-pop",
     "file": "src/render/bounds.js",
-    "old": "  out[3] = batchReach(b) + (b.size?.h ?? 0) * _flatLean;",
-    "new": "  out[3] = batchReach(b);",
+    "old": "  out[3] = batchReach(b) + (b.size?.h ?? 0) * _flatLean; // AUDIT DEEP R-7: a leaned flat's top swings out by h sin(lean)",
+    "new": "  out[3] = batchReach(b); // AUDIT DEEP R-7: a leaned flat's top swings out by h sin(lean)",
     "tests": [
       "test/render/tv1_travel_view.test.js"
     ],

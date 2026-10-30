@@ -65,8 +65,8 @@
   {
     "name": "PERFALLOC2-cube-short",
     "file": "src/render/bounds.js",
-    "old": "  const rad = c[0], px = c[1], py = c[2], pz = c[3], far = c[4];",
-    "new": "  const rad = c[0], px = c[1], py = c[2], pz = c[3], far = c[4] - c[0];",
+    "old": "    far = c[4];",
+    "new": "    far = c[4] - c[0];",
     "tests": [
       "test/render/perfalloc1.test.js"
     ]

@@ -408,8 +408,8 @@
   {
     "name": "RETRO1-slot-swap-keeps-the-other-image",
     "file": "src/render/airPass.js",
-    "old": "      if (this.frame !== kept) { this.frame = kept; this.prevValid = false; }",
-    "new": "      if (this.frame !== kept) { this.prevValid = false; }",
+    "old": "        this.frame = kept;\n        this.prevValid = false;",
+    "new": "        this.prevValid = false;",
     "tests": [
       "test/render/retro1.test.js"
     ]

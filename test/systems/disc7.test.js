@@ -281,7 +281,7 @@ test('DISC7 contact: the previous frame\'s depth is sampled through the world re
   assert.equal((AIR_CONTACT_GLSL.match(/texture\(uPrevDepth, prevDepthUV\(uv0?\)\)/g) ?? []).length, 2, 'both samples go through the rect');
   assert.doesNotMatch(AIR_CONTACT_GLSL, /texture\(uPrevDepth, uv0?\)/);
   const air = rd('src/render/airPass.js');
-  assert.match(air, /this\.prevValid = !!this\.frame && !this\._cut && !jumped; holdPrevRect\(this\.prevRect, this\.rect, this\.canvas\); \}/, 'held with the view-projection, from the rect before this frame\'s (LA-POST6: valid unless a cut came between)');
+  assert.match(air, /this\.prevValid = !!this\.frame && !this\._cut && !jumped;\n\s*holdPrevRect\(this\.prevRect, this\.rect, this\.canvas\);\n\s*\}/, 'held with the view-projection, from the rect before this frame\'s (LA-POST6: valid unless a cut came between)');
   assert.match(air, /gl\.uniform4fv\(loc\.prevRect, this\.prevRect\);/);
   assert.match(rd('src/render/renderer.js'), /prevRect: gl\.getUniformLocation\(p, 'uPrevRect'\)/);
 });

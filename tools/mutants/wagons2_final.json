@@ -408,8 +408,8 @@
   {
     "name": "WAGONS2-FINAL-a-dark-room-blooms",
     "file": "src/render/airPass.js",
-    "old": "  if (uRoomsLit > 0.5 && !rwRoomLit(rwSeedBits(normalize(vNormal), vWorldPos, uModel[3].xyz, vUV))) discard;",
-    "new": "",
+    "old": "  if (uRoomsLit > 0.5 && !rwRoomLit(rwSeedBits(normalize(vNormal), vWorldPos, uModel[3].xyz, vUV))) discard;   // the room drawn dark (render/realWindows.js): no amber halo round it",
+    "new": "   // the room drawn dark (render/realWindows.js): no amber halo round it",
     "tests": [
       "test/systems/wagons2_final.test.js"
     ]
@@ -417,8 +417,8 @@
   {
     "name": "WAGONS2-FINAL-the-replays-uniform-unset",
     "file": "src/render/airPass.js",
-    "old": "          gl.uniform1f(P.emitMesh.uRoomsLit, f.windowRooms && sm._evWin === GLASS_EXTERIOR ? 1 : 0);",
-    "new": "",
+    "old": "          gl.uniform1f(P.emitMesh.uRoomsLit, f.windowRooms && sm._evWin === GLASS_EXTERIOR ? 1 : 0); // WAGONS2 (FINAL AUDIT): a room behind it - its own lit test",
+    "new": "          // WAGONS2 (FINAL AUDIT): a room behind it - its own lit test",
     "tests": [
       "test/systems/wagons2_final.test.js"
     ]

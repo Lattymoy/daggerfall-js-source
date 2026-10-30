@@ -242,8 +242,8 @@
   {
     "name": "AUDIT-FLICKER-F3-the-derivative-after-the-return",
     "file": "src/render/airPass.js",
-    "old": "  vec3 pdx = dFdx(p), pdy = dFdy(p);\n  if (d0 >= 0.99999) { outColor = vec4(1.0); return; }\n",
-    "new": "  if (d0 >= 0.99999) { outColor = vec4(1.0); return; }\n  vec3 pdx = dFdx(p), pdy = dFdy(p);\n",
+    "old": "  vec3 pdx = dFdx(p), pdy = dFdy(p);\n  if (d0 >= 0.99999) { outColor = vec4(1.0); return; }",
+    "new": "  if (d0 >= 0.99999) { outColor = vec4(1.0); return; }\n  vec3 pdx = dFdx(p), pdy = dFdy(p);",
     "tests": [
       "test/render/el3_air.test.js"
     ]

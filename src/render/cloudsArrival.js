@@ -42,7 +42,9 @@ export function createCloudsArrival(gl, quality, testCellSpec, wholeFirstSweep =
   // The clouds are never needed this frame (nothing played reads them), so the door is never forced: get() with no
   // argument waits for the driver however long it takes. Until then each ask polls the seven programs' completion,
   // which waits on nothing (SHADER-STALL measured 0-0.4 ms a poll).
-  const door = compiledPass(gl, CLOUDS_ARRIVAL_PROGRAMS, build, (e) => console.warn('[clouds] the volumetric clouds could not be built - the sky stands without them', e));
+  const door = compiledPass(gl, CLOUDS_ARRIVAL_PROGRAMS, build, (e) =>
+    console.warn('[clouds] the volumetric clouds could not be built - the sky stands without them', e),
+  );
   // Started at the controller's mount, not at the sky's first draw: the boot started them already (bootPrograms.js), and
   // a sky whose switches the boot read otherwise compiles from here. Where the driver cannot compile beside the page,
   // nothing is started - a link queued ahead would hold the page's next GL read.

@@ -123,8 +123,8 @@
   {
     "name": "C3b-draw-own-matrix",
     "file": "src/render/cardTableDraw.js",
-    "old": "back, c.matrix ?? cardMatrix(c.pos, c.yaw, c.roll), null,",
-    "new": "back, cardMatrix(c.pos, c.yaw, c.roll), null,",
+    "old": "        renderer.drawMesh(isCard(c.card) ? faces[c.card] : back, c.matrix ?? cardMatrix(c.pos, c.yaw, c.roll), null, {",
+    "new": "        renderer.drawMesh(isCard(c.card) ? faces[c.card] : back, cardMatrix(c.pos, c.yaw, c.roll), null, {",
     "tests": [
       "test/world/card/cards3b_hand.test.js",
       "test/world/card/cards3_motion.test.js",

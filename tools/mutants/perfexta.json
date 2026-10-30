@@ -65,8 +65,8 @@
   {
     "name": "PERF-EXT1-8-the-cube-is-the-far-sphere-the-hunters-first-cut",
     "file": "src/render/bounds.js",
-    "old": "if (Math.abs(p[i] - lx) <= R && Math.abs(p[i + 1] - ly) <= R && Math.abs(p[i + 2] - lz) <= R) return true;",
-    "new": "if (Math.hypot(p[i] - lx, p[i + 1] - ly, p[i + 2] - lz) <= R) return true;",
+    "old": "        if (Math.abs(p[i] - lx) <= R && Math.abs(p[i + 1] - ly) <= R && Math.abs(p[i + 2] - lz) <= R) return true;",
+    "new": "        if (Math.hypot(p[i] - lx, p[i + 1] - ly, p[i + 2] - lz) <= R) return true;",
     "tests": [
       "test/render/perfexta.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "PERF-EXT1-9-the-cube-forgets-the-lift",
     "file": "src/render/bounds.js",
-    "old": "const lx = px - o[0], ly = py - o[1] - batchLift(b), lz = pz - o[2];",
-    "new": "const lx = px - o[0], ly = py - o[1], lz = pz - o[2];",
+    "old": "    ly = py - o[1] - batchLift(b),",
+    "new": "    ly = py - o[1],",
     "tests": [
       "test/render/perfexta.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "PERF-EXT1-10-the-volume-forgets-the-lift",
     "file": "src/render/bounds.js",
-    "old": "  const ox = o[0], oy = o[1] + batchLift(b), oz = o[2];\n  const cs = q.cs, st = q.start, p = q.pts;\n  for (let k = 0, n = q.G * q.G;",
-    "new": "  const ox = o[0], oy = o[1], oz = o[2];\n  const cs = q.cs, st = q.start, p = q.pts;\n  for (let k = 0, n = q.G * q.G;",
+    "old": "    oy = o[1] + batchLift(b),",
+    "new": "    oy = o[1],",
     "tests": [
       "test/render/perfexta.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "PERF-EXT1-15-a-cell-sphere-leaves-out-its-farthest-placement",
     "file": "src/render/bounds.js",
-    "old": "cs[k * 4 + 3] = Math.sqrt(r2) * (1 + 1e-6) + 1e-4;",
-    "new": "cs[k * 4 + 3] = Math.sqrt(r2) * 0.9;",
+    "old": "    cs[k * 4 + 3] = Math.sqrt(r2) * (1 + 1e-6) + 1e-4;",
+    "new": "    cs[k * 4 + 3] = Math.sqrt(r2) * 0.9;",
     "tests": [
       "test/render/perfexta.test.js"
     ]
@@ -417,8 +417,8 @@
   {
     "name": "PERF-EXT-R5-the-half-diagonal-asked-at-every-ask",
     "file": "src/render/bounds.js",
-    "old": "{ q.hw = s.w; q.hh = s.h; q.half = quadHalfDiagonal(s); }",
-    "new": "{ q.half = quadHalfDiagonal(s); }",
+    "old": "    q.hw = s.w;\n    q.hh = s.h;\n    q.half = quadHalfDiagonal(s);",
+    "new": "    q.half = quadHalfDiagonal(s);",
     "tests": [
       "test/render/perfexta.test.js"
     ]
@@ -480,8 +480,8 @@
   {
     "name": "PERF-EXT-R12-the-cube-writes-the-lift-out-again",
     "file": "src/render/bounds.js",
-    "old": "const lx = px - o[0], ly = py - o[1] - batchLift(b), lz = pz - o[2];",
-    "new": "const lx = px - o[0], ly = py - o[1] - b.size.h * 0.5, lz = pz - o[2];",
+    "old": "    ly = py - o[1] - batchLift(b),",
+    "new": "    ly = py - o[1] - b.size.h * 0.5,",
     "tests": [
       "test/render/perfexta.test.js"
     ]

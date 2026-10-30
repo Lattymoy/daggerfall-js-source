@@ -92,8 +92,8 @@
   {
     "name": "C7-bailed-frame-keeps-its-previous",
     "file": "src/render/airPass.js",
-    "old": "{ this.f = null; this.prevValid = false; return; }",
-    "new": "{ this.f = null; return; }",
+    "old": "      this.prevValid = false;\n      return;",
+    "new": "      return;",
     "tests": [
       "test/systems/auditdisc7.test.js"
     ]
