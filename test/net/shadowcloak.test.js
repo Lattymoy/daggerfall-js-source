@@ -84,9 +84,9 @@ test('SHADOW-CLOAK grant: SHADOW_FANG_HANDLES still names SirMcMobdon, and the l
   for (const h of ['SirMcMobdon', 'sirmcmobdon', 'SIRMCMOBDON']) {
     const p = row(h);
     // STAFF-PANEL1 (PIN MOVED, mob, 06:33Z: "add me to the dev and my shadow fang just becomes vanity"): each beside the developer's
-    assert.deepEqual(titlesHeld(p, ENV), ['developer', 'shadowfang'], `${h}: the title, by name, case-folded`);
-    assert.deepEqual(glyphsOf(p, ENV, LATER), ['dev', 'shadowfang'], 'and its glyph');
-    assert.deepEqual(aurasHeld(p, ENV), ['shadowcloak', 'seraphwings'], 'and the cloak, first');
+    assert.deepEqual(titlesHeld(p, ENV).slice(0, 2), ['developer', 'shadowfang'], `${h}: the title, by name, case-folded`);   // ADMIN-ALL (PIN MOVED): an Admin holds every cosmetic after these (test/server/admin_all.test.js) - the head is what is earned
+    assert.deepEqual(glyphsOf(p, ENV, LATER).slice(0, 2), ['dev', 'shadowfang'], 'and its glyph');   // ADMIN-ALL (PIN MOVED): an Admin holds every cosmetic after these (test/server/admin_all.test.js)
+    assert.deepEqual(aurasHeld(p, ENV).slice(0, 2), ['shadowcloak', 'seraphwings'], 'and the cloak, first');   // ADMIN-ALL (PIN MOVED): an Admin holds every aura after these (test/server/admin_all.test.js)
     assert.equal(auraRefusal('shadowcloak', p, ENV), null, 'theirs to wear');
   }
   const sir = row('SirMcMobdon', { title: 'shadowfang', aura: 'shadowcloak' });
@@ -94,13 +94,17 @@ test('SHADOW-CLOAK grant: SHADOW_FANG_HANDLES still names SirMcMobdon, and the l
   assert.equal(auraWorn(sir, ENV), 'shadowcloak');
   assert.equal(auraWorn(sir), undefined, 'without the config, the Broker\'s alone - the cloak is a list\'s');
   const both = row('SirMcMobdon', { insignia: 'aura:dagonfire', aura: 'dagonfire' });
-  assert.deepEqual(aurasHeld(both, ENV), ['shadowcloak', 'seraphwings', 'dagonfire'], 'the lists\' first, then what the Broker sold');
+  assert.deepEqual(aurasHeld(both, ENV).slice(0, 3), ['shadowcloak', 'seraphwings', 'dagonfire'], 'the lists\' first, then what the Broker sold');   // ADMIN-ALL (PIN MOVED): an Admin holds every aura after these
   const w = wardrobeOf(sir, ENV, LATER);
-  assert.deepEqual([w.titles, w.title, w.glyphs, w.auras, w.aura], [['developer', 'shadowfang'], 'shadowfang', ['dev', 'shadowfang'], ['shadowcloak', 'seraphwings'], 'shadowcloak'], 'the account card\'s whole answer: what they wore stays worn');
+  assert.deepEqual([w.titles.slice(0, 2), w.title, w.glyphs.slice(0, 2), w.auras.slice(0, 2), w.aura], [['developer', 'shadowfang'], 'shadowfang', ['dev', 'shadowfang'], ['shadowcloak', 'seraphwings'], 'shadowcloak'], 'the account card\'s whole answer: what they wore stays worn');
   const off = { ...ENV, SHADOW_FANG_HANDLES: '' };
-  assert.deepEqual([titlesHeld(sir, off), glyphsOf(sir, off, LATER), aurasHeld(sir, off)], [['developer'], ['dev'], ['seraphwings']], 'off the list, all three go - the developer\'s stay');
-  assert.equal(auraWorn(sir, off), undefined, 'and the cloak is not worn by a row nobody cleared');
-  assert.equal(auraRefusal('shadowcloak', sir, off), 'not-held');
+  // ADMIN-ALL (PIN MOVED): an Admin off the list still holds every title and aura as an Admin (test/server/admin_all.test.js) -
+  // but never the Shadow Fang's glyph, which opens the staff's commands
+  assert.deepEqual([titlesHeld(sir, off)[0], glyphsOf(sir, off, LATER)[0], aurasHeld(sir, off)[0]], ['developer', 'dev', 'seraphwings'], 'off the list, the developer\'s stay');
+  assert.ok(!glyphsOf(sir, off, LATER).includes('shadowfang'), 'and the Shadow Fang\'s glyph goes');
+  const offAll = { ...off, DEVELOPER_HANDLES: '' };   // ADMIN-ALL: and not an Admin either - an Admin holds the cloak as every aura
+  assert.equal(auraWorn(sir, offAll), undefined, 'and the cloak is not worn by a row nobody cleared');
+  assert.equal(auraRefusal('shadowcloak', sir, offAll), 'not-held');
   assert.deepEqual(aurasHeld({ ...sir, handle: null }, ENV), [], 'a guest holds none');
   assert.deepEqual(aurasHeld(row('Sureme'), ENV), ['oblivionward'], 'Sureme holds the ward and not the cloak');
   assert.deepEqual(aurasHeld(row('GA00250'), ENV), ['radiance'], 'GA00250 the radiance and not the cloak');

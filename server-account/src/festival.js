@@ -42,7 +42,7 @@ import { dayOfYearFromMinutes } from '../../src/systems/gameDate.js';
 import { homeMapIdOk, homeBuildingKeyOk } from '../../src/net/homeLaw.js';
 import {
   festivalOpen, isFindSource, FIND_SOURCES, findCount, FIND_ASKS_PER_DAY, FIND_CAKES_PER_DAY,
-  OFFERING_STOCK_MAX, OFFERING_FILL, OFFERING_TAKE, wareById, accountWare, bowlWare, festivalWaresHeld, SALE_RID_RE,
+  OFFERING_STOCK_MAX, OFFERING_FILL, OFFERING_TAKE, wareById, accountWare, bowlWare, festivalWaresHeld, SALE_RID_RE, FESTIVAL_WARES,
 } from '../../src/net/festivalLaw.js';
 
 /** The festival's moves an account an hour - a find a kill, so a fight's worth a minute and then some. Counted in the
@@ -111,7 +111,7 @@ export async function festivalOf({ db, nowS }, player, env) {
   // CAKE-CAP-SAID: the day's cakes found so far (findFestival's own row), so the Wyrd's window says how near the day's end is
   const finds = await db.prepare('SELECT found FROM fest_finds WHERE account = ?1 AND day = ?2').bind(player.id, utcDay(nowS)).first();
   return {
-    cakes: int(row?.fest_cakes), bowls: int(row?.fest_bowls), wares: festivalWaresHeld(row?.fest_wares), given: int(row?.fest_given), taken: int(row?.fest_taken),
+    cakes: int(row?.fest_cakes), bowls: int(row?.fest_bowls), wares: isDeveloper(player, env) ? FESTIVAL_WARES.filter(accountWare).map((w) => w.id) : festivalWaresHeld(row?.fest_wares), given: int(row?.fest_given), taken: int(row?.fest_taken),
     today: int(finds?.found),
     open: festivalOpenFor(player, env) && inDays(nowS),
     offerings: (mine ?? []).map((/** @type {any} */ r) => ({ mapId: int(r.map_id), buildingKey: int(r.building_key), character: String(r.char_id), stock: int(r.stock) })),
@@ -179,6 +179,7 @@ export async function buyFestival(ctx, player, body, env) {
   const w = wareById(body?.ware);
   if (!w) return { error: 'ware' };
   const own = accountWare(w), bowl = bowlWare(w);
+  if (own && isDeveloper(player, env)) return { error: 'owned' };   // ADMIN-ALL: an admin holds every account ware (titles.js holdsAll)
   if (own && festivalWaresHeld((await db.prepare('SELECT fest_wares FROM players WHERE id = ?1').bind(player.id).first())?.fest_wares).includes(w.id)) return { error: 'owned' };
   const [took] = await db.batch([
     db.prepare(`UPDATE players SET fest_cakes = fest_cakes - ?2${own ? ", fest_wares = TRIM(fest_wares || ' ' || ?3)" : ''}${bowl ? ', fest_bowls = fest_bowls + 1' : ''}
