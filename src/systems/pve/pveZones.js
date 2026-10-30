@@ -1,12 +1,15 @@
 // @ts-check
 // FIXED-PVE STAGE 7 (bible/05-Combat/Fixed-PvE.md section 9): THE FIXED-LEVEL ZONES. Every place in Tamriel has a level
-// band set by where it stands - its region (0..70: the Bay's 62 and the provinces' nine), the 96-pixel district inside it
-// and what the place is - and never by who walks there. A province holds several bands, a rare district is a high-level
-// enclave with a warning, a road keeps its region's band, a town is safe and a dungeon is a step harder. The
-// recommendation is advice only: it changes no foe and bars no one. Ledger A (FIXED-PVE).
+// band set by where it stands - how far it lies from its area's starting town toward the Imperial City (CENTER-HARDEST),
+// the 96-pixel district and what the place is - and never by who walks there. A rare district is a high-level enclave
+// with a warning, a road keeps its band, a town is safe and a dungeon is a step harder. The recommendation is advice
+// only: it changes no foe and bars no one. Ledger A (FIXED-PVE).
 import { BAY_REGION_COUNT, REGION_NAMES } from '../../formats/mapsTables.js';
 import { DUNGEON_TYPES } from '../../formats/mapsFile.js';
 import { districtOf } from '../../world/worldWide/worldGrid.js';
+import { CITIES } from '../../world/tamriel/tamrielGeography.js';
+import { pictureToBay } from '../../world/tamriel/tamrielFrame.js';
+import { STARTS } from '../starts/starts.js';
 import { placeRng } from './pveEncounter.js';
 import { BUILD_KIND_KEYS, buildAt } from './pveBuilds.js';
 import { combatScore } from './pveProfile.js';
@@ -15,17 +18,58 @@ import { combatScore } from './pveProfile.js';
 export const ZONE_BANDS = Object.freeze([[1, 8], [6, 15], [12, 22], [20, 30], [28, 38], [36, 45]].map((b) => Object.freeze(b)));
 const TOP = ZONE_BANDS.length - 1;
 
-/** Each region's base band, by index 0..70 - a first pass from the map's own country: the Bay's cities and their
- *  shores low, its deserts, mountains and isles high, then the nine provinces past it. */
-export const REGION_TIER = Object.freeze([
-  3, 4, 1, 1, 2, 1, 2, 3, 2, 4, 2, 3, 2, 1, 2, 1,   // Alik'r .. Bjoulsae River
-  4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 2,               // Wrothgarian Mountains, the seven cities, two villages, Orsinium Area, Skeffington Wood
-  1, 2, 1, 2,                                       // the four coasts
-  2, 1, 1, 2, 2, 2, 2, 2, 3, 2, 2, 3, 3, 3, 2, 3, 3, 2, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 1, 2,   // Northmoor .. Cybiades
-  2, 3, 4, 4, 3, 3, 3, 5, 5,                        // High Rock, Hammerfell, Skyrim, Morrowind, Sumurset Isle, Valenwood, Elsweyr, Black Marsh, Cyrodiil
-]);
+/** CENTER-HARDEST (the owner, 2026-10-30: "every area has a starting area so we need it to scale to the center",
+ *  "center is hardest", "look where people spawn"): each area - the Bay and the nine provinces - is lowest where a new
+ *  character wakes (systems/starts/starts.js STARTS: a province's start near its capital, else the Bay's Privateer's
+ *  Hold) and climbs band by band toward the Imperial City, the top. Cyrodiil is the heart: its start is the center
+ *  itself, so it reads its distance against the other areas' mean reach and all of it stands high. */
+export const ZONE_CENTER = 'Imperial City';
+/** BAY-OWN: Privateer's Hold's own pixel in MAPS.BSA (the Daggerfall region), where the Bay's start wakes. */
+const BAY_START_PX = Object.freeze([109, 158]);
+/** Each province's region (62..70, REGION_NAMES) to its key in PROVINCES. */
+const PROVINCE_OF_REGION = Object.freeze({ 'High Rock': 'HighRock', Hammerfell: 'Hammerfell', Skyrim: 'Skyrim', Morrowind: 'Morrowind',
+  'Sumurset Isle': 'Sumurset', Valenwood: 'Valenwood', Elsweyr: 'Elsweyr', 'Black Marsh': 'BlackMarsh', Cyrodiil: 'Imperial' });
 
-/** A district's step from its region's band, drawn from its key - most stand at the base, some a step either side. */
+/** The area a region belongs to: 'IliacBay' for the Bay's 62, a province's key past it, null for none. @param {number} region */
+export function zoneAreaOf(region) {
+  if (!Number.isInteger(region) || region < 0 || region >= REGION_NAMES.length) return null;
+  return region < BAY_REGION_COUNT ? 'IliacBay' : PROVINCE_OF_REGION[REGION_NAMES[region]] ?? null;
+}
+/** A town of CITIES on the world's pixels (read each call: the picture's fit can move). */
+const cityPx = (c) => (c ? pictureToBay(c.at[0], c.at[1]) : null);
+/** The town each area's new characters wake near: its start's capital, or the Bay's for an area with no start of its own. */
+export const ZONE_STARTS = Object.freeze(Object.fromEntries(['IliacBay', ...Object.values(PROVINCE_OF_REGION)].map((area) => {
+  const start = STARTS.find((s) => s.province === area);
+  return [area, start ? CITIES.find((c) => c.capital && c.province === area)?.name ?? null : "Privateer's Hold"];
+})));
+/** The world pixel an area starts at; null for the heart, whose start is the center. @param {string} area */
+export function zoneStartPx(area) {
+  if (ZONE_STARTS[area] === "Privateer's Hold") return BAY_START_PX;
+  return area === 'Imperial' ? null : cityPx(CITIES.find((c) => c.name === ZONE_STARTS[area]));
+}
+export const zoneCenterPx = () => cityPx(CITIES.find((c) => c.name === ZONE_CENTER));
+const reachOf = (s, c) => Math.hypot(s[0] - c[0], s[1] - c[1]);
+/** An area's reach: its start's distance to the center; the heart's, the mean of the others'. @param {string} area */
+export function zoneReach(area) {
+  const c = /** @type {number[]} */ (zoneCenterPx()), s = zoneStartPx(area);
+  if (s) return reachOf(s, c);
+  const all = Object.keys(ZONE_STARTS).filter((a) => a !== 'Imperial').map((a) => reachOf(/** @type {number[]} */ (zoneStartPx(a)), c));
+  return all.reduce((a, b) => a + b, 0) / all.length;
+}
+
+/** How far (`px`, `py`) has come on the road from its area's start to the center: its distance from the start over
+ *  that and its distance to the center - 0 at the start, 1 at the center, the back country between. The heart has no
+ *  start: its distance to the center against the others' mean reach. */
+export function zoneProgress(px, py, area) {
+  const c = /** @type {number[]} */ (zoneCenterPx()), s = zoneStartPx(area), toC = Math.hypot(px - c[0], py - c[1]);
+  if (!s) return Math.max(0, 1 - toC / zoneReach(area));
+  const fromS = Math.hypot(px - s[0], py - s[1]);
+  return fromS + toC > 0 ? fromS / (fromS + toC) : 0;
+}
+/** The base band at (`px`, `py`) in `area`: its progress cut into six even steps, the center the top. */
+export const zoneBaseTier = (px, py, area) => Math.min(TOP, Math.floor(zoneProgress(px, py, area) * ZONE_BANDS.length));
+
+/** A district's step from its base band, drawn from its key - most stand at the base, some a step either side. */
 export const DISTRICT_STEP = Object.freeze([-1, 0, 0, 0, 1, 1]);
 /** Of each hundred districts: the first ENCLAVE are high-level enclaves (three bands up), the next FARMING farming
  *  grounds (a dense, steady population at the band). */
@@ -50,8 +94,9 @@ export function districtRoll(px, py) {
  * @param {{ px: number, py: number, region: number, place?: string, dungeon?: number|null }} at
  */
 export function pveZoneAt({ px, py, region, place = 'wild', dungeon = null }) {
-  const base = REGION_TIER[region];
-  if (base == null || !ZONE_PLACES.includes(place)) return null;
+  const area = zoneAreaOf(region);
+  if (area == null || !ZONE_PLACES.includes(place)) return null;
+  const base = zoneBaseTier(px, py, area);
   const roll = districtRoll(px, py);
   const enclave = place === 'wild' && roll < ZONE_SHARE.enclave;
   const farming = place === 'wild' && !enclave && roll < ZONE_SHARE.enclave + ZONE_SHARE.farming;
@@ -61,7 +106,7 @@ export function pveZoneAt({ px, py, region, place = 'wild', dungeon = null }) {
   else if (place === 'town') tier = 0;
   else if (place === 'dungeon') tier = clampTier(tier + 1 + (DEEP_DUNGEONS.includes(/** @type {number} */ (dungeon)) ? 1 : 0));
   const band = ZONE_BANDS[tier];
-  return Object.freeze({ region, name: REGION_NAMES[region], pastBay: region >= BAY_REGION_COUNT, place, tier, band,
+  return Object.freeze({ region, name: REGION_NAMES[region], area, pastBay: region >= BAY_REGION_COUNT, place, tier, band,
     safe: place === 'town', enclave, farming, warning: enclave || tier >= base + 2 });
 }
 

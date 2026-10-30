@@ -2,7 +2,7 @@
 // spawn table, and the population manager that keeps a cell's count fixed whoever comes.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ZONE_BANDS, REGION_TIER, DISTRICT_STEP, ZONE_SHARE, DEEP_DUNGEONS, pveZoneAt, districtRoll, recommendedScore } from '../../../src/systems/pve/pveZones.js';
+import { ZONE_BANDS, ZONE_STARTS, zoneAreaOf, zoneBaseTier, zoneStartPx, zoneCenterPx, DISTRICT_STEP, ZONE_SHARE, DEEP_DUNGEONS, pveZoneAt, districtRoll, recommendedScore } from '../../../src/systems/pve/pveZones.js';
 import { spawnTable, POPULATIONS, POP_DENSITY, RESPAWN_S, RARE_CHANCE } from '../../../src/systems/pve/pveSpawnTable.js';
 import { populationLedger, wakeCell, slotFell, populationDue, sleepCells, CELL_IDLE_S } from '../../../src/systems/pve/pvePopulation.js';
 import { ORSINIUM_REGION, PROVINCE_KEYS } from '../../../src/systems/pve/pveBestiary.js';
@@ -10,6 +10,8 @@ import { encounterPool, bandGroups, meetsHostile, readabilityProblems } from '..
 import { MOB_TEMPLATES, GROUP_TEMPLATES, templateProblems, groupProblems } from '../../../src/systems/pve/pveTemplates.js';
 import { CLIMATES, REGION_NAMES, BAY_REGION_COUNT, CYRODIIL_REGION } from '../../../src/formats/mapsTables.js';
 import { DUNGEON_TYPES } from '../../../src/formats/mapsFile.js';
+import { CITIES } from '../../../src/world/tamriel/tamrielGeography.js';
+import { pictureToBay } from '../../../src/world/tamriel/tamrielFrame.js';
 
 const SKYRIM = BAY_REGION_COUNT + 2, HIGH_ROCK = BAY_REGION_COUNT;
 /** The first district pixel whose draw keeps `ok`. */
@@ -17,43 +19,59 @@ function pixelWhere(ok) {
   for (let px = -4000; px < 4000; px += 96) for (let py = -4000; py < 4000; py += 96) if (ok(districtRoll(px, py))) return [px, py];
   throw new Error('no such district');
 }
-const plain = pixelWhere((r) => r >= ZONE_SHARE.enclave + ZONE_SHARE.farming && DISTRICT_STEP[r % DISTRICT_STEP.length] === 0);
+/** The first district pixel whose draw keeps `ok` and whose base band in `region`'s area is `tier`. */
+function pixelAt(region, tier, ok) {
+  for (let px = -4000; px < 4000; px += 96) for (let py = -4000; py < 4000; py += 96) if (ok(districtRoll(px, py)) && zoneBaseTier(px, py, zoneAreaOf(region)) === tier) return [px, py];
+  throw new Error('no such district');
+}
+const plainRoll = (r) => r >= ZONE_SHARE.enclave + ZONE_SHARE.farming && DISTRICT_STEP[r % DISTRICT_STEP.length] === 0;
+const plain = pixelWhere(plainRoll);
 
-test('STAGE 7: every region has a band, the bands overlap and climb to 45, and a province holds more than one', () => {
-  assert.equal(REGION_TIER.length, REGION_NAMES.length, 'the Bay\'s 62 and the provinces\' nine');
-  for (const t of REGION_TIER) assert.ok(t >= 0 && t < ZONE_BANDS.length);
+test('CENTER-HARDEST: every area starts low at its own town and climbs to the Imperial City, the top band', () => {
   assert.deepEqual([ZONE_BANDS[0][0], ZONE_BANDS[ZONE_BANDS.length - 1][1]], [1, 45]);
   for (let i = 1; i < ZONE_BANDS.length; i++) assert.ok(ZONE_BANDS[i][0] <= ZONE_BANDS[i - 1][1], 'no wall between bands');
-  for (const region of [SKYRIM, ORSINIUM_REGION]) {
-    const tiers = new Set();
-    for (let px = -2000; px < 2000; px += 96) tiers.add(pveZoneAt({ px, py: 500, region }).tier);
-    assert.ok(tiers.size >= 2, `${REGION_NAMES[region]} holds several bands`);
-  }
+  for (let r = 0; r < REGION_NAMES.length; r++) assert.ok(zoneAreaOf(r), `${REGION_NAMES[r]} has an area`);
+  assert.deepEqual([zoneAreaOf(17), zoneAreaOf(SKYRIM), zoneAreaOf(CYRODIIL_REGION), zoneAreaOf(71)], ['IliacBay', 'Skyrim', 'Imperial', null]);
+  for (const area of Object.keys(ZONE_STARTS).filter((a) => a !== 'Imperial')) assert.equal(zoneBaseTier(...zoneStartPx(area), area), 0, `${area} starts in the first band`);
+  assert.deepEqual([zoneStartPx('IliacBay'), zoneStartPx('HighRock'), zoneStartPx('Hammerfell')], [[109, 158], [109, 158], [109, 158]], 'the Bay\'s peoples wake at Privateer\'s Hold');
+  assert.deepEqual([ZONE_STARTS.Skyrim, ZONE_STARTS.Morrowind, ZONE_STARTS.Imperial, zoneStartPx('Imperial')], ['Solitude', 'Mournhold', 'Imperial City', null], 'where each start wakes');
+  const [cx, cy] = zoneCenterPx();
+  for (const area of Object.keys(ZONE_STARTS)) assert.equal(zoneBaseTier(cx, cy, area), ZONE_BANDS.length - 1, 'the center is the top');
+  const town = (n) => { const c = CITIES.find((x) => x.name === n); return zoneBaseTier(...pictureToBay(c.at[0], c.at[1]), c.province); };
+  assert.ok(town('Whiterun') > town('Solitude') && town('Falkreath') > town('Whiterun'), 'Skyrim climbs south toward the heart');
+  assert.ok(zoneBaseTier(859, 244, 'IliacBay') > zoneBaseTier(207, 213, 'IliacBay'), 'Wayrest stands above Daggerfall');
+  assert.ok(town('Blacklight') > town('Mournhold'), 'the back country climbs away from the start');
+  assert.ok(['Anvil', 'Bravil', 'Leyawiin', 'Cheydinhal'].every((n) => town(n) >= 3), 'all Cyrodiil stands high');
   assert.equal(pveZoneAt({ px: 0, py: 0, region: 71 }), null);
   assert.equal(pveZoneAt({ px: 0, py: 0, region: 17, place: 'sky' }), null);
 });
 
-test('STAGE 7: a town is safe, a road keeps its region\'s band, a dungeon is deeper, an enclave warns', () => {
-  const [px, py] = plain;
+test('STAGE 7: a town is safe, a road keeps its base band, a dungeon is deeper, an enclave warns', () => {
+  const [px, py] = plain, base = (x, y, r) => zoneBaseTier(x, y, zoneAreaOf(r));
   const at = (o) => pveZoneAt({ px, py, region: HIGH_ROCK, ...o });
-  assert.equal(at({}).tier, REGION_TIER[HIGH_ROCK]);
+  const B = base(px, py, HIGH_ROCK);
+  assert.equal(at({}).tier, B);
+  assert.equal(at({}).area, 'HighRock');
   assert.deepEqual([at({ place: 'town' }).tier, at({ place: 'town' }).safe], [0, true]);
-  assert.equal(at({ place: 'dungeon', dungeon: DUNGEON_TYPES.Crypt }).tier, REGION_TIER[HIGH_ROCK] + 1);
-  assert.equal(at({ place: 'dungeon', dungeon: DEEP_DUNGEONS[0] }).tier, REGION_TIER[HIGH_ROCK] + 2);
-  assert.equal(at({ place: 'dungeon', dungeon: DEEP_DUNGEONS[0] }).warning, true);
-  const up = pixelWhere((r) => r >= ZONE_SHARE.enclave + ZONE_SHARE.farming && DISTRICT_STEP[r % DISTRICT_STEP.length] === 1);
-  assert.equal(pveZoneAt({ px: up[0], py: up[1], region: 2, place: 'road' }).tier, REGION_TIER[2], 'a road never climbs past its region');
-  assert.equal(pveZoneAt({ px: up[0], py: up[1], region: 2 }).tier, REGION_TIER[2] + 1);
-  const low = pixelWhere((r) => r >= ZONE_SHARE.enclave + ZONE_SHARE.farming && DISTRICT_STEP[r % DISTRICT_STEP.length] === -1);
-  assert.equal(pveZoneAt({ px: low[0], py: low[1], region: 2, place: 'road' }).tier, REGION_TIER[2] - 1);
+  assert.equal(at({ place: 'dungeon', dungeon: DUNGEON_TYPES.Crypt }).tier, Math.min(5, B + 1));
+  assert.equal(at({ place: 'dungeon', dungeon: DEEP_DUNGEONS[0] }).tier, Math.min(5, B + 2));
+  assert.equal(at({ place: 'dungeon', dungeon: DEEP_DUNGEONS[0] }).warning, B + 2 <= 5);
+  const up = pixelAt(CYRODIIL_REGION, 3, (r) => r >= ZONE_SHARE.enclave + ZONE_SHARE.farming && DISTRICT_STEP[r % DISTRICT_STEP.length] === 1);
+  const U = base(up[0], up[1], CYRODIIL_REGION);
+  assert.equal(pveZoneAt({ px: up[0], py: up[1], region: CYRODIIL_REGION, place: 'road' }).tier, U, 'a road never climbs past its base');
+  assert.equal(pveZoneAt({ px: up[0], py: up[1], region: CYRODIIL_REGION }).tier, U + 1);
+  const low = pixelAt(CYRODIIL_REGION, 3, (r) => r >= ZONE_SHARE.enclave + ZONE_SHARE.farming && DISTRICT_STEP[r % DISTRICT_STEP.length] === -1);
+  const L = base(low[0], low[1], CYRODIIL_REGION);
+  assert.equal(pveZoneAt({ px: low[0], py: low[1], region: CYRODIIL_REGION, place: 'road' }).tier, L - 1);
   const [ex, ey] = pixelWhere((r) => r < ZONE_SHARE.enclave);
   const enclave = pveZoneAt({ px: ex, py: ey, region: 2 });
-  assert.deepEqual([enclave.enclave, enclave.warning, enclave.tier, enclave.farming], [true, true, REGION_TIER[2] + 3, false]);
+  assert.deepEqual([enclave.enclave, enclave.warning, enclave.tier, enclave.farming], [true, true, Math.min(5, base(ex, ey, 2) + 3), false]);
   assert.equal(pveZoneAt({ px: ex, py: ey, region: 2, place: 'road' }).enclave, false, 'only the wild is an enclave');
   const [fx, fy] = pixelWhere((r) => r === ZONE_SHARE.enclave + ZONE_SHARE.farming - 1);
   assert.equal(pveZoneAt({ px: fx, py: fy, region: 2 }).farming, true);
   assert.equal(pveZoneAt({ px: fx, py: fy, region: 2, place: 'road' }).farming, false);
-  assert.equal(pveZoneAt({ px: ex, py: ey, region: CYRODIIL_REGION }).tier, ZONE_BANDS.length - 1, 'the top band caps an enclave');
+  const [cx, cy] = zoneCenterPx().map(Math.floor);
+  assert.ok(pveZoneAt({ px: cx, py: cy, region: CYRODIIL_REGION }).tier >= ZONE_BANDS.length - 2, 'the heart stands at the top');
 });
 
 test('STAGE 7: the recommended score climbs with the band and is advice only', () => {
@@ -62,7 +80,8 @@ test('STAGE 7: the recommended score climbs with the band and is advice only', (
   assert.equal(Object.keys(pveZoneAt({ px: 0, py: 0, region: 17 })).includes('score'), false, 'the zone holds no player number');
 });
 
-const orsinium = { px: plain[0], py: plain[1], region: ORSINIUM_REGION, province: 'HighRock', climate: CLIMATES.Mountain, factions: ['orc-clans'] };
+const [ox, oy] = pixelAt(ORSINIUM_REGION, 3, plainRoll);
+const orsinium = { px: ox, py: oy, region: ORSINIUM_REGION, province: 'HighRock', climate: CLIMATES.Mountain, factions: ['orc-clans'] };
 
 test('STAGE 7: a spawn table is the place\'s alone - settlement, ambient, encounters and groups split by disposition', () => {
   const t = spawnTable(orsinium);
@@ -81,7 +100,8 @@ test('STAGE 7: a spawn table is the place\'s alone - settlement, ambient, encoun
 });
 
 test('STAGE 7: a town holds no hostile population unless an event says so, and no territorial beast', () => {
-  const at = { px: plain[0], py: plain[1], region: 17, province: 'HighRock', climate: CLIMATES.Woodlands, place: 'town', factions: ['bandits'] };
+  const [tx, ty] = pixelAt(17, 0, plainRoll);
+  const at = { px: tx, py: ty, region: 17, province: 'HighRock', climate: CLIMATES.Woodlands, place: 'town', factions: ['bandits'] };
   const town = spawnTable(at);
   assert.ok(spawnTable({ ...at, place: 'wild' }).lists.encounter.length > 0, 'bandits hold the land round it');
   for (const pop of ['farming', 'encounter', 'group', 'patrol', 'rare']) assert.deepEqual(town.lists[pop], [], pop);
@@ -93,7 +113,7 @@ test('STAGE 7: a town holds no hostile population unless an event says so, and n
 });
 
 test('STAGE 7: past the Bay - a farming ground and a road patrol in a province, bandits only where they hold the land', () => {
-  const [fx, fy] = pixelWhere((r) => r >= ZONE_SHARE.enclave && r < ZONE_SHARE.enclave + ZONE_SHARE.farming && DISTRICT_STEP[r % DISTRICT_STEP.length] === 0);
+  const [fx, fy] = pixelAt(5, 1, (r) => r >= ZONE_SHARE.enclave && r < ZONE_SHARE.enclave + ZONE_SHARE.farming && DISTRICT_STEP[r % DISTRICT_STEP.length] === 0);
   const at = { px: fx, py: fy, region: BAY_REGION_COUNT + 1, province: 'Hammerfell', climate: CLIMATES.Desert, factions: ['bandits'] };
   const t = spawnTable({ ...at, region: 2, province: 'HighRock', climate: CLIMATES.Woodlands });
   assert.equal(t.zone.farming, true);

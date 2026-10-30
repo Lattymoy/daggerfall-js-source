@@ -136,12 +136,16 @@ composition. Daggerfall Unity has one player and none of this. The tests: `test/
 ## 9. Stage 7: zones, spawn tables and the population manager (2026-10-30)
 
 Still behind the switch. A zone (`pveZones.js` `pveZoneAt`) is one of six fixed bands, 1-8 up to 36-45, each
-overlapping the next. Its region (0..70: the Bay's 62 and the nine provinces) sets a base band, a first pass from the
-map: the Bay's cities low, its deserts, mountains and isles high, Black Marsh and Cyrodiil highest. Each 96-pixel
-district steps one band down or up from its key alone, so every province holds several bands. Four districts in a
-hundred are high-level enclaves, three bands up, with a warning; ten are farming grounds. A road keeps its region's
-band, a town is safe, a dungeon is one band deeper and the old and undead ones two. The recommended Combat Score is
-advice and changes no foe.
+overlapping the next. CENTER-HARDEST (the owner, 2026-10-30: "every area has a starting area", "center is hardest",
+"look where people spawn"): each of the ten areas is lowest where its new characters wake (`starts.js` STARTS: a
+province's start near its capital; the Bay, High Rock and Hammerfell at Privateer's Hold) and climbs toward the Imperial
+City. A place's progress is its distance from the start over that plus its distance to the center, cut into six even
+bands, so the back country stands mid-way and the center at the top. Cyrodiil, whose start is the center, reads its
+distance against the others' mean reach and stands high throughout.
+
+Each 96-pixel district steps one band down or up from its key alone. Four districts in a hundred are high-level
+enclaves, three bands up, with a warning; ten are farming grounds. A road keeps its base band, a town is safe, a dungeon
+is one band deeper and the old and undead ones two. The recommended Combat Score is advice and changes no foe.
 
 A spawn table (`pveSpawnTable.js`) follows the spec's six steps: place, bestiary, hour and event and factions, band,
 then the populations - settlement (a community group), ambient, farming, encounter, group, road patrol and rare. A
