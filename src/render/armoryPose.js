@@ -55,8 +55,9 @@ export const ARM_PX = Object.freeze({ half: 3.5, step: 3, reach: 34 });
 /** ARMORY-MIRROR (the owner: "Guild patch is still wrong"): WHERE A BAND IS WORN ON A PICTURE'S ARM - `at` of the way
  *  from the shoulder row to the elbow's, or the first row under it, to `last` of the way, where the arm's own run stands
  *  clear of the body; as wide as that run, `min` to `max` of the sets' pixels. A painted arm is 3 to 6 px, often hidden
- *  by a strap or a shadow at the shoulder; half an arm in from its edge stood the Insignia Armlet on the chest. */
-export const ARM_BAND = Object.freeze({ at: 0.36, last: 0.8, min: 4, max: 9 });
+ *  by a strap or a shadow at the shoulder; half an arm in from its edge stood the Insignia Armlet on the chest. Never
+ *  clear of the body, the arm ends where its colour steps by `step` (of 255). */
+export const ARM_BAND = Object.freeze({ at: 0.36, last: 0.8, min: 4, max: 10, step: 40 });
 /** Whether a view's arms are read from its picture: a side view's outer edges are its chest and its back, so its arms
  *  stay the sets' rows turned with the body (eotbSprite.js spriteFor's `view`, 2 the side). Pure. */
 export const spriteArmsSeen = (/** @type {number|undefined} */ view) => view !== 2;
@@ -171,6 +172,30 @@ export function spriteMarks(/** @type {ArrayLike<number>} */ colors, /** @type {
       const run = held.get(r);
       if (!run || out(s > 0 ? run[0] : run[1]) <= 0 || run[1] - run[0] + 1 > ARM_BAND.max * A) continue;
       band = { row: r / A, c: (run[0] + run[1]) / 2 - mid, wd: Math.max(ARM_BAND.min * A, run[1] - run[0] + 1) };
+    }
+    // never clear of the body (a three-quarter back view's near arm against its back): where the arm's colour ends, the
+    // strongest step 3 to 12 px in from its edge, when most rows agree on a steady width
+    if (!band) {
+      const lum = (/** @type {number} */ x, /** @type {number} */ r) => { const c = colors[r * w + x]; return (c & 255) * 0.3 + ((c >>> 8) & 255) * 0.59 + ((c >>> 16) & 255) * 0.11; };
+      const found = [];
+      for (let r = fromRow; r >= toRow; r--) {
+        const run = held.get(r);
+        if (!run) continue;
+        const e0 = s > 0 ? run[1] : run[0];
+        let best = 0, inner = -1;
+        for (let k = Math.round(3 * A); k <= Math.round(12 * A); k++) {
+          const x = e0 - s * k;
+          if (!solid(x, r) || !solid(x - s, r)) break;
+          const d = Math.abs(lum(x, r) - lum(x - s, r));
+          if (d > best) { best = d; inner = x; }
+        }
+        if (best >= ARM_BAND.step) found.push({ r, c: (e0 + inner) / 2, wd: Math.abs(inner - e0) + 1 });
+      }
+      const wds = found.map((f) => f.wd).sort((p, q) => p - q), md = wds[wds.length >> 1];
+      if (found.length >= (fromRow - toRow + 1) * 0.6 && wds[wds.length - 1] - wds[0] <= 2 * A && md <= ARM_BAND.max * A) {
+        const f = found.find((g) => g.wd === md) ?? found[0];
+        band = { row: f.r / A, c: f.c - mid, wd: Math.max(ARM_BAND.min * A, md) };
+      }
     }
     return { sh: at(rows[0]), el: at(rows[1]), wa: at(rows[2]), rows: at0, band };
   };

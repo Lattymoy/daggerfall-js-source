@@ -3,15 +3,17 @@
 Two reports from the owner, of the Aura Armory (`04-Characters/Aura-Armory.md`) on an Eye of the Beholder sprite: "New
 guild arm band isnt correct on the sprite" and "Head aura doesnt allign on the sprite". Then, of the fixes as they
 landed: "Arm band still has issues", "Guild patch is still wrong", "Still wrong on one of the angles", and "Dont worry
-about the skin system. Only worry about the layered system". Read on `b92fd38e1` with the freeware's data
+about the skin system. Only worry about the layered system". Then: "ensure the armory aura sets dont show through the
+body and allign perfectly on the sprites". Read on `b92fd38e1` with the freeware's data
 (`tools/fetch-data.sh`). Not a DFU member: Daggerfall Unity has no cosmetic pieces. The pins are
 `test/render/armorymirror.test.js` and `test/render/armory.test.js` (HOST-SPLIT, its pins moved), the mutants
-`tools/mutants/armorymirror.json` (16, all dead). The probe `tools/armorySpriteProbe.mjs`, on Layered Gearing: 10 of 257
+`tools/mutants/armorymirror.json` (22, all dead). The probe `tools/armorySpriteProbe.mjs`, on Layered Gearing: 10 of 257
 before (none of the armlet's), 293 of 293 after, and 93 of 93 close up.
 
 | | Report | What it was | Done |
 |---|---|---|---|
 | 1 | "New guild arm band isnt correct on the sprite" | Every sprite piece stood mirrored across the card; a side view put the band on the right arm, a three-quarter back view on the back | ARMORY-MIRROR 1, 2 |
+| 4 | "ensure the armory aura sets dont show through the body" | The Ashbound Bracers and Eternal Armlets drew on an arm the picture hides, on the back; a side view's on the body's middle | ARMORY-MIRROR 4 |
 | 3 | "Guild patch is still wrong", "Still wrong on one of the angles" | The patch stood half a guessed arm in from the arm's edge, on the strap and the shoulder's shadow, wider than the arm; a side view's on the body's middle | ARMORY-MIRROR 3 |
 | 2 | "Head aura doesnt allign on the sprite" | The same mirror: the crown and the halo stood beside the head | ARMORY-MIRROR 1 |
 
@@ -42,7 +44,7 @@ FOUND TOO, after the owner's "Arm band still has issues", in close-ups. Seen fro
 three-quarter back picture (mirrored) hides the left arm behind the torso in every set. Its picture's left edge is the
 back's or the cape's, so the band stood on the back. The three-quarter front picture shows both arms, so it keeps them.
 
-FIXED TOO. `armletSide` answers none there (`ARMLET_HIDDEN_SIN`, the eighth's edge off straight behind), and nothing is
+FIXED TOO. `armletSide` answers none there (`ARM_HIDDEN_SIN`, the eighth's edge off straight behind), and nothing is
 drawn. A side view with the right side to the eye draws none either: the far arm's glow showed past the body's back.
 
 ## 3. The patch on the painted arm (ARMORY-MIRROR 3)
@@ -57,13 +59,30 @@ own run stands clear of the body, its middle and its width. The patch stands the
 view's patch stands half an arm in from the body's back edge, brought toward the eye along its line of sight, so it
 stays on the painted arm from any distance. The arm reader's own points are unchanged.
 
-## 4. How it is checked
+## 4. Both arms' pieces (ARMORY-MIRROR 4)
+
+FOUND. Drawn on Layered Gearing from all eight views, the crown, the halo, the heart, the sigil and both legs' pieces
+stood on their parts. The Ashbound Bracers and the Eternal Armlets drew on both arms from every view. From three-quarters
+behind, the far arm is hidden in the picture, so its piece stood on the back. A side view's near arm piece stood on the
+body's middle, and both drew on the reader's guessed line.
+
+FIXED. `armSide` answers each arm as `armletSide` answers the left: the picture's side, or none where the picture hides
+it. Each arm's piece stands on its band where the arm stands clear, as wide, its line moved across to pass through it; a
+side view's on the arm at the body's back edge, along the eye's line.
+
+FOUND TOO, close up. From three-quarters behind, the near arm is painted against the back and never stands clear, so
+the guess half an arm in stood its chain a picture's pixel or two outward: that arm is 9 px. FIXED: where no row stands
+clear, the arm ends where its colour steps (`ARM_BAND.step`), when most rows agree on a steady width; else the guess.
+
+## 5. How it is checked
 
 `tools/armorySpriteProbe.mjs` draws Layered Gearing as the world composes it (`eotbSprite.js` spriteFor, decodeSprite,
 flipRows), through the renderer's own billboard under the game's lens, from all eight views: male and female, leather,
 chain and plate chests, and a cloak. It measures each piece against the picture's marks: the crown and the halo over
 the head, the armlet on the left upper arm and no wider than it (hidden where the body covers that arm), the Ember Heart
-on the chest seen square on, and the Eternal Greaves between the knees and feet. `CLOSE=1` draws it at 1.2 m.
+on the chest seen square on, and the Eternal Greaves between the knees and feet. `CLOSE=1` draws it at 1.2 m. `SETS=1`
+draws every body piece of both lines alone and each line whole, full length: no arm piece over an arm the picture hides,
+and each arm's band no wider than the painted arm.
 
 Three measures allow for the pieces' own design, in the picture's pixels. The halo is read by its ring's ends, since its
 comet and its spark run round the ring. The heart is read square on only: its point stands 0.1 m forward of the body's

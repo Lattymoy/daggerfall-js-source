@@ -118,9 +118,11 @@ traced up from the neck. On a side view the near arm lies over the body with no 
 the sets' rows, turned with the body.
 
 **The arm's band** (ARMORY-MIRROR, `01-Overview/bugs/Field-Bugs-2026-10-30c.md`). Each arm's band is read too: from a
-third of the way down, the first row where the arm stands clear of the body, and its width there. The Insignia
-Armlet's patch is worn on it, as wide. A side view's patch stands half an arm in from the body's back edge, where the
-pictures paint its near arm.
+third of the way down, the first row where the arm stands clear of the body, and its width there; never clear, where
+its colour ends. Every arm piece is
+worn on it, as wide: the Insignia Armlet's patch, and the Ashbound Bracers' and the Eternal Armlets' line moved across
+through it. A side view's stand half an arm in from the body's back edge, where the pictures paint its near arm. An arm
+the picture hides behind the body (`armSide`) wears none.
 
 **The pieces.** Tubes round a limb or the brow, a decal on the chest, cards for embers and motes. Light is added, the
 depth tested and never written, and the fog applied. One program a piece (the auras' AURA-SPLIT law), each started at

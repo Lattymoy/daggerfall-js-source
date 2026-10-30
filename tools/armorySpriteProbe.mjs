@@ -16,7 +16,7 @@ import { PNG } from 'pngjs';
 process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
 const PORT = 5233;
 const SHOTS = process.argv.includes('--shots') ? process.argv[process.argv.indexOf('--shots') + 1] : null;
-const CLOSE = process.env.CLOSE === '1';
+const CLOSE = process.env.CLOSE === '1', SETS = process.env.SETS === '1', ONLY = process.env.ONLY ?? '';
 if (SHOTS) mkdirSync(SHOTS, { recursive: true });
 const results = [];
 const check = (name, ok, detail = '') => { results.push(ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`); };
@@ -28,8 +28,8 @@ const page = await browser.newPage({ viewport: { width: 400, height: 400 } });
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
 await page.goto(`http://127.0.0.1:${PORT}/LICENSE`, { waitUntil: 'domcontentloaded', timeout: 180000 });
-const W = CLOSE ? 400 : 240, H = CLOSE ? 300 : 320;
-const out = await page.evaluate(async ({ W, H, CLOSE }) => {
+const W = SETS ? 300 : CLOSE ? 400 : 240, H = SETS ? 500 : CLOSE ? 300 : 320;
+const out = await page.evaluate(async ({ W, H, CLOSE, SETS, ONLY }) => {
   const [{ Renderer }, m4, bb, sp, ap, apass] = await Promise.all([
     import('/src/render/renderer.js'), import('/src/world/mat4.js'), import('/src/player/eyeOfTheBeholder/eotbBillboard.js'),
     import('/src/player/eyeOfTheBeholder/eotbSprite.js'), import('/src/render/armoryPose.js'), import('/src/render/armoryPass.js'),
@@ -48,9 +48,11 @@ const out = await page.evaluate(async ({ W, H, CLOSE }) => {
     'male cloak': { gender: 'male', outfit: 'lcl~2' }, 'female cloak': { gender: 'female', outfit: 'lll~5' },
   };
   const ARMS = { heraldry: { field: 'crimson', border: 'gold', device: 'dragon', division: 'quarterly', field2: 'sable' }, logo: null };
-  const KITS = CLOSE ? { armlet: '00c00' } : { crown: 'a0000', halo: 'b0000', armlet: '00c00', heart: '0a000', greaves: '000b0' };
+  // SETS=1: every body piece of both lines alone, and each line whole
+  const KITS = SETS ? { crown: 'a0000', halo: 'b0000', heart: '0a000', sigil: '0b000', ashbound: '00a00', armlets: '00b00', cinder: '000a0', greaves: '000b0', dagonfire: 'aaaa0', eternal: 'bbbb0' }
+    : CLOSE ? { armlet: '00c00' } : { crown: 'a0000', halo: 'b0000', armlet: '00c00', heart: '0a000', greaves: '000b0' };
   const rows = [];
-  for (const [bodyName, who] of Object.entries(BODIES)) {
+  for (const [bodyName, who] of Object.entries(BODIES).filter(([n]) => !ONLY || ONLY.split('|').includes(n))) {
     const look = { onFoot: 0, wornArmour: true, ...who };
     for (let o = 0; o < 8; o++) {
       const s = sp.spriteFor('Idle', o, 0, look);
@@ -61,9 +63,9 @@ const out = await page.evaluate(async ({ W, H, CLOSE }) => {
       r.uploadTexture('probe-body', key, { width: raw.width, height: raw.height, colors: new Uint8Array(colors.buffer, colors.byteOffset, colors.byteLength) });
       const xml = sp.spriteOffset(s.archive, s.record), size = sp.spriteSize(raw.width, raw.height, {}, xml.scale);
       // the camera at view o of a figure at the origin facing +Z, a hair off the views' edges, as eotbBody stands it
-      const a = o * Math.PI / 4 + 0.05, d = CLOSE ? 1.2 : 2.4, eye = [d * Math.sin(a), 1.6, d * Math.cos(a)];
+      const a = o * Math.PI / 4 + 0.05, d = SETS ? 2.6 : CLOSE ? 1.2 : 2.4, eye = [d * Math.sin(a), 1.6, d * Math.cos(a)];
       const yaw = Math.atan2(-eye[0], -eye[2]), right = [Math.cos(yaw), 0, -Math.sin(yaw)];   // eotbBody's camRight
-      const proj = m4.mirrorProjectionX(m4.perspective(50 * Math.PI / 180, W / H, 0.1, 50)), view = m4.lookAt(eye, [0, CLOSE ? 1.35 : 1.2, 0], [0, 1, 0]);   // the game's HANDEDNESS (mat4.js)
+      const proj = m4.mirrorProjectionX(m4.perspective(50 * Math.PI / 180, W / H, 0.1, 50)), view = m4.lookAt(eye, [0, SETS ? 1.1 : CLOSE ? 1.35 : 1.2, 0], [0, 1, 0]);   // the game's HANDEDNESS (mat4.js)
       const x = (xml.x / xml.scale) * (s.mirror ? -1 : 1), base = xml.y / xml.scale;
       const marks = ap.spriteMarks(new Uint32Array(colors.buffer, colors.byteOffset, raw.width * raw.height), raw.width, raw.height, { arms: ap.spriteArmsSeen(s.view), art: sp.spriteArtScale(s.archive, s.record) });
       const fig = { base, mpp: size.h / raw.height, marks, shift: x };
@@ -83,6 +85,8 @@ const out = await page.evaluate(async ({ W, H, CLOSE }) => {
       const vp = m4.multiply(proj, view);
       /** the screen column (0 the left) a world point lands on under the game's lens */
       const colOf = (pt) => { const c = [0, 1, 2, 3].map((i) => vp[i] * pt[0] + vp[4 + i] * pt[1] + vp[8 + i] * pt[2] + vp[12 + i]); return (c[0] / c[3] * 0.5 + 0.5) * cv.width; };
+      /** and the readback's row (0 the bottom) */
+      const rowOf = (pt) => { const c = [0, 1, 2, 3].map((i) => vp[i] * pt[0] + vp[4 + i] * pt[1] + vp[8 + i] * pt[2] + vp[12 + i]); return (c[1] / c[3] * 0.5 + 0.5) * cv.height; };
       /** a picture's column (px off its middle) at height `y` where the billboard draws it: along camRight from the card's middle */
       const along = (px, y) => { const dd = x + px * fig.mpp; return [right[0] * dd, y, right[2] * dd]; };
       const yOf = (n) => pose.pts[ap.POSE_AT[n] + 1];
@@ -120,14 +124,38 @@ const out = await page.evaluate(async ({ W, H, CLOSE }) => {
         if (name === 'heart' && o === 0 && mk?.chest != null) { y = yOf('chest'); want = colOf(along(mk.chest, y)); }
         if (name === 'greaves' && mk?.legs) { y = (yOf('knL') + yOf('ftL')) / 2; want = colOf(along((mk.legs.knee[0] + mk.legs.knee[1] + mk.legs.ankle[0] + mk.legs.ankle[1]) / 4, y)); tol = o % 4 === 2 ? 3 : 1.8; }
         const unit = pxAt(y);
+        // the arms' pieces, each arm (armSide): none over an arm the picture hides (from behind, its line where it would
+        // stand); on one it shows clear, at the band's row no wider than the painted arm
+        const armChecks = [];
+        if ((name === 'ashbound' || name === 'armlets') && mk?.arms) {
+          const strong = (i) => Math.abs(worn[i * 4] - plain[i * 4]) + Math.abs(worn[i * 4 + 1] - plain[i * 4 + 1]) + Math.abs(worn[i * 4 + 2] - plain[i * 4 + 2]) > 90;
+          for (const arm of ['left', 'right']) {
+            const sd = apass.armSide(pose, fwd, [0, 1.2, 0], eye, arm);
+            if (!sd) {
+              const ps = (arm === 'left') === (fwd[0] * eye[0] + fwd[2] * eye[2] > 0) ? 'R' : 'L', A = mk.arms[ps], yy = yOf(`sh${ps}`) + (yOf(`el${ps}`) - yOf(`sh${ps}`)) * 0.45;
+              const c0 = colOf(along(A.sh + (A.el - A.sh) * 0.45, yy)), u = pxAt(yy), r0 = Math.round(rowOf(along(A.sh + (A.el - A.sh) * 0.45, yy)));
+              let hits = 0;
+              for (let rr = r0 - Math.round(4 * u); rr <= r0 + Math.round(4 * u); rr++) for (let cc = Math.round(c0 - 2 * u); cc <= Math.round(c0 + 2 * u); cc++) if (rr >= 0 && rr < cv.height && cc >= 0 && cc < cv.width && strong(rr * cv.width + cc)) hits++;
+              armChecks.push({ what: `the ${arm} arm hidden: nothing over it`, ok: hits === 0, detail: `${hits} px at its line` });
+              continue;
+            }
+            const b = mk.arms[sd]?.band;
+            if (!b) continue;
+            const yy = pose.bands[sd].y, u = pxAt(yy), c0 = colOf(along(b.c, yy)), sp = [colOf(along(b.c - b.wd / 2, yy)), colOf(along(b.c + b.wd / 2, yy))].sort((p, q) => p - q);
+            const r0 = Math.round(rowOf(along(b.c, yy)));
+            let l2 = Infinity, h2 = -Infinity;
+            for (let rr = r0 - Math.round(u); rr <= r0 + Math.round(u); rr++) for (let cc = Math.round(c0 - b.wd * u); cc <= Math.round(c0 + b.wd * u); cc++) if (rr >= 0 && rr < cv.height && cc >= 0 && cc < cv.width && strong(rr * cv.width + cc)) { l2 = Math.min(l2, cc); h2 = Math.max(h2, cc); }   // a chain's dark links leave a row bare
+            armChecks.push({ what: `the ${arm} arm's band: on it, no wider`, ok: l2 <= h2 && l2 >= sp[0] - u && h2 <= sp[1] + u, detail: `${l2}..${h2} px, the arm ${sp[0].toFixed(1)}..${sp[1].toFixed(1)}` });
+          }
+        }
         const col = name === 'halo' ? (hi >= lo ? (lo + hi) / 2 : null) : n ? sum / n : null;
-        row.pieces[name] = { n, col, onBody: n ? onBody / n : 0, want, tol: tol * unit, unit, span, lo, hi, worn: toB64(worn) };
+        row.pieces[name] = { n, col, onBody: n ? onBody / n : 0, want, tol: tol * unit, unit, span, lo, hi, armChecks, worn: toB64(worn) };
       }
       rows.push(row);
     }
   }
   return rows;
-}, { W, H, CLOSE });
+}, { W, H, CLOSE, SETS, ONLY });
 
 for (const row of out) {
   if (row.missing) { check(`${row.body} view ${row.o}: a picture`, false); continue; }
@@ -136,6 +164,7 @@ for (const row of out) {
       check(`${row.body} view ${row.o} armlet: the left arm behind the body, hidden`, p.n < 20, `${p.n} px changed`);
       continue;
     }
+    for (const c of p.armChecks ?? []) check(`${row.body} view ${row.o} ${name}: ${c.what}`, c.ok, c.detail);
     if (p.want == null) continue;   // the heart from behind or the side: not measured here (tools/armoryProbe.mjs)
     if (p.col == null) { check(`${row.body} view ${row.o} ${name}: drawn`, false, 'nothing changed'); continue; }
     const off = Math.abs(p.col - p.want);

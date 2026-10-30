@@ -8,7 +8,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { ArmoryRenderer, armoryDraws, armletSide, cardRightOf, ARMORY_ARMLET } from '../../src/render/armoryPass.js';
+import { ArmoryRenderer, armoryDraws, armletSide, armSide, cardRightOf, ARMORY_ARMLET } from '../../src/render/armoryPass.js';
 import { newPose, poseFromFigure, poseWorld, spriteMarks, POSE_AT, ARM_BAND, ARM_PX } from '../../src/render/armoryPose.js';
 import { lookAt, perspective, mirrorProjectionX, ortho, multiply } from '../../src/world/mat4.js';
 
@@ -134,4 +134,47 @@ test('ARMORY-MIRROR the Insignia Armlet on a picture\'s band: there and as wide 
   assert.ok(Math.hypot(...cross) / Math.hypot(...toCard) < 1e-6, 'on the eye\'s line through the arm painted at its back edge');
   assert.ok(Math.hypot(...toMid) < Math.hypot(...toCard) - 0.1, 'before the card: the near arm');
   assert.deepEqual(armoryDraws('insigniaarmlet', { at: [0, 0, 0], yaw, kit: '00c00', pose: side, kindle: 1, torn: -1, _d: 3 }, [3, 1.5, 0.5], true, [0, 0, 1]), [], 'its right side to the eye, a little before it: none');
+});
+
+test('ARMORY-MIRROR both arms\' pieces, each arm as the picture paints it: the right arm\'s side and where it is hidden, as the left\'s mirrored; one chain from three-quarters behind; each band on its arm\'s clear run and as wide (the owner: "ensure the armory aura sets dont show through the body and allign perfectly on the sprites"; mutants: the right arm read as the left; its picture side swapped; the hidden arm drawn; the band unread)', () => {
+  const { px, w, h } = armsPicture(), mpp = 0.019, fwd = [0, 0, 1], chest = [0, 1.3, 0];
+  const read = newPose();
+  poseFromFigure({ base: 0, mpp, marks: spriteMarks(px, w, h), shift: 0 }, read);
+  assert.equal(armSide(read, fwd, chest, [0, 1.6, 3], 'right'), 'L', 'from before it: the picture\'s left');
+  assert.equal(armSide(read, fwd, chest, [0.3, 1.6, -3], 'right'), 'R', 'from behind: the picture\'s right');
+  assert.equal(armSide(read, fwd, chest, [-2, 1.6, -2], 'right'), null, 'three-quarter behind its left: the right arm hidden');
+  assert.equal(armSide(read, fwd, chest, [2, 1.6, -2], 'right'), 'R', 'three-quarter behind its right: the near arm');
+  assert.equal(armSide(newPose(), fwd, chest, [0, 1.6, 3], 'right'), 'R', 'a rig\'s right bones');
+  const side = newPose();
+  poseFromFigure({ base: 0, mpp, marks: spriteMarks(px, w, h, { arms: false }), shift: 0 }, side);
+  assert.deepEqual([armSide(side, fwd, chest, [-3, 1.5, 0.5], 'right'), armSide(side, fwd, chest, [-3, 1.5, 0.5], 'left')], [null, 'L'], 'its left side seen: the right arm behind it');
+  const wearer = (/** @type {string} */ kit, /** @type {any} */ pose) => ({ at: [0, 0, 0], yaw: 0, kit, pose, kindle: 1, torn: -1, _d: 3 });
+  const behind = armoryDraws('ashbound', wearer('00a00', read), [2, 1.6, -2], true, [-0.7, 0, 0.7]);
+  assert.equal(behind.filter((d) => d.mesh === 0).length, 1, 'three-quarter behind: one arm\'s chain, the near one\'s');
+  // from before it, its card right +x: each band on its arm's clear run, as wide
+  const right = [1, 0, 0], front = armoryDraws('eternalarmlets', wearer('00b00', read), [0, 1.6, 3], true, right).filter((d) => d.mesh === 0);
+  assert.equal(front.length, 2, 'both arms');
+  const across = front.map((d) => +(((d.A[0] + d.B[0]) / 2) / mpp).toFixed(1)).sort((p, q) => p - q);
+  assert.ok(Math.abs(across[0] + 11) < 0.3 && Math.abs(across[1] - 11) < 0.3, `each band on its arm's run, 11 px either side (${across})`);
+  assert.ok(Math.abs(front[0].r[1] - 0.066 * (6 * mpp) / (2 * 0.064)) < 1e-9, 'as wide as the painted arm');
+  // the chain runs the arm's own slope, moved across to pass through its band (the reader's line stands 1.7 px inside it)
+  const chains = armoryDraws('ashbound', wearer('00a00', read), [0, 1.6, 3], true, right).filter((d) => d.mesh === 0);
+  for (const c of chains) {
+    const y = read.bands.R.y, t = (y - c.A[1]) / (c.B[1] - c.A[1]), x = (c.A[0] + (c.B[0] - c.A[0]) * t) / mpp;
+    assert.ok(Math.abs(Math.abs(x) - 11) < 0.05, `through the band at its row (${x.toFixed(2)} px)`);
+  }
+});
+
+test('ARMORY-MIRROR an arm never clear of the body (a three-quarter back view\'s near arm against its back): its band where its colour ends - when most rows agree on a steady width; none on a picture with no step (mutants: the colour unread; the far side of the step taken)', () => {
+  const w = 64, h = 112, px = new Uint32Array(w * h);
+  const fill = (/** @type {number} */ x0, /** @type {number} */ x1, /** @type {number} */ y0, /** @type {number} */ y1, /** @type {number} */ c) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) px[y * w + x] = c; };
+  const DARK = 0xff202020, SKIN = 0xff7090d0;   // a dark back; a bare arm (color32: red low byte)
+  fill(26, 37, 0, 90, DARK); fill(28, 35, 91, 104, DARK);
+  fill(38, 46, 60, 88, SKIN); fill(17, 25, 60, 88, DARK);   // the right arm a skin column against the back; the left as dark as it
+  const m = spriteMarks(px, w, h);
+  assert.equal(m.arms.R.band.wd, 9, 'the skin column, 9 px');
+  assert.equal(m.arms.R.band.c, 42 - 31.5, 'its middle');
+  assert.equal(m.arms.L.band, null, 'no step on the left: none');
+  for (let y = 60; y <= 88; y++) fill(17, y % 2 ? 20 : 25, y, y, SKIN);   // a step that jumps 4 to 9 px row by row: a strap's, not an arm's
+  assert.equal(spriteMarks(px, w, h).arms.L.band, null, 'an unsteady width: none');
 });
