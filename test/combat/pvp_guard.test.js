@@ -28,6 +28,7 @@ import { calculateCastCost } from '../../src/systems/spellcost.js';
 import { castRate } from '../../src/systems/castSpeed.js';
 import { buildCustomSpell } from '../../src/systems/spell/spellMaker.js';
 import { setPvpFight } from '../../src/combat/pvpPotions.js';
+import { whileShaftLands, bowFastDamage } from '../../src/combat/bowBloom.js';
 import { pvpSpellCrit, pvpCritHarm } from '../../src/combat/pvpSpellCrit.js';
 import { SKILLS as SK } from '../../src/systems/skills.js';
 import { PVP_BUFF_ROUNDS, capPvpBuffs } from '../../src/combat/pvpBuffs.js';
@@ -151,6 +152,8 @@ test('PVP-TRIANGLE: an arrow at a player 1.28x, 1.67x from level 40; a harmful s
   assert.ok(a39 > 0 && m39 > 0);
   assert.equal(Math.floor(a40 / 1.67), Math.floor(a39 / 1.28), 'the same draw, its late number');
   assert.equal(m40, m39, 'a swing is not an arrow');
+  assert.equal(whileShaftLands({ fast: 4 }, () => strike(39, 'arrow')), bowFastDamage({ fast: 4 }, a39), 'BOW-FAST: the landing shaft\'s stacks on a player too');
+  assert.equal(whileShaftLands({ fast: 4 }, () => strike(39, 'melee')), m39, 'BOW-FAST: never a swing');
 });
 
 test('PVP-SHIELD: a live Shield on a player is reported (`sh`), and the referee takes 25% off a swing and 35% off a shaft; no Shield, nothing (mutants: the report unread; the shaft read as a swing)', () => {

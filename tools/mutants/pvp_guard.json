@@ -128,7 +128,7 @@
   {
     "name": "PVP-TRIANGLE-the-arrow-unscaled",
     "file": "src/combat/duelCombat.js",
-    "old": "  const n = d.by === 'arrow' ? Math.floor(scaled * pvpArrowScale(d.a?.pl)) : scaled;",
+    "old": "  const n = d.by === 'arrow' ? bowFastDamage(landingShaft(), Math.floor(scaled * pvpArrowScale(d.a?.pl))) : scaled;",
     "new": "  const n = scaled;",
     "tests": [
       "test/combat/pvp_guard.test.js"

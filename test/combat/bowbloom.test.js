@@ -2,9 +2,9 @@
 // rest shrinks; the first shot after a rest flies true.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { BOW_BLOOM, bowBloomNow, bowBloomShot, _resetBowBloomForTests } from '../../src/combat/bowBloom.js';
+import { BOW_BLOOM, BOW_FAST, bowBloomNow, bowBloomShot, bowFastShot, bowFastDamage, whileShaftLands, landingShaft, _resetBowBloomForTests } from '../../src/combat/bowBloom.js';
 import { bloomRingPx, paintBowBloomRing } from '../../src/ui/bowBloomRing.js';
-import { ArrowFlight } from '../../src/combat/arrowFlight.js';
+import { ArrowFlight, shaftOnRelayBody } from '../../src/combat/arrowFlight.js';
 
 const deg = (a, b) => (Math.acos(Math.min(1, a[0] * b[0] + a[1] * b[1] + a[2] * b[2])) * 180) / Math.PI;
 const FWD = [0, 0, -1];
@@ -55,4 +55,33 @@ test('BOW-BLOOM THE LANE: a player\'s bow shot blooms; a foe\'s, a technique\'s 
   fl.fire([0, 0, 0], FWD, { fromPlayer: false, weapon: null });
   fl.fire([0, 0, 0], FWD, { fromPlayer: true, weapon: null, technique: { id: 'volley' } });
   assert.equal(bowBloomNow(), 0, 'a foe\'s shot and a technique\'s leave it');
+});
+
+test('BOW-FAST THE LAW: 20% a stack, 4 at most, a shot within 1 s of the last (mutants: the cut moved; the cap off)', () => {
+  assert.deepEqual({ ...BOW_FAST }, { cut: 20, most: 4, within: 1 });
+});
+
+test('BOW-FAST: a rested shot whole; each quick one a stack more, to four; a rest clears them; at least 1 lands (mutants: the window unread; the floor off)', () => {
+  _resetBowBloomForTests();
+  assert.deepEqual([0, 0.25, 0.5, 0.75, 1, 1.25].map((t) => bowFastShot(400 + t)), [0, 1, 2, 3, 4, 4]);
+  assert.equal(bowFastShot(403), 0, 'a rest of a second or more: whole again');
+  assert.deepEqual([0, 1, 2, 3, 4].map((fast) => bowFastDamage({ fast }, 50)), [50, 40, 30, 20, 10]);
+  assert.equal(bowFastDamage({ fast: 4 }, 2), 1, 'never nothing where it was something');
+  assert.equal(bowFastDamage(null, 30), 30, 'no shaft: whole');
+  _resetBowBloomForTests();
+  for (let k = 0; k < 30; k++) bowFastShot(500 + k * 0.9);
+  assert.equal(bowFastShot(500 + 30 * 0.9), 4, 'every 0.9 s is inside the window: it stacks');
+});
+
+test('BOW-FAST THE LANE: the player\'s bow shaft carries its stacks; a duel\'s door reads the shaft landing; a foe\'s shaft none (mutants: the stamp off; the landing unset)', () => {
+  _resetBowBloomForTests();
+  const fl = new ArrowFlight({ getGpuMesh: () => null });
+  fl.fire([0, 0, 0], FWD, { fromPlayer: true, weapon: null });
+  fl.fire([0, 0, 0], FWD, { fromPlayer: true, weapon: null });
+  fl.fire([0, 0, 0], FWD, { fromPlayer: false, weapon: null });
+  assert.deepEqual(fl.arrows.map((a) => a.fast), [0, 1, undefined]);
+  assert.equal(landingShaft(), null);
+  assert.equal(whileShaftLands({ fast: 2 }, () => bowFastDamage(landingShaft(), 100)), 60);
+  assert.equal(landingShaft(), null, 'cleared after');
+  assert.equal(shaftOnRelayBody({ fast: 3 }, { name: 'x' }, 50), 20);
 });

@@ -26,8 +26,34 @@ export function bowBloomShot(dir, now = bloomClock(), rand = Math.random) {
   return bloomNorm([dir[0] * c + u[0] * a + v[0] * b, dir[1] * c + u[1] * a + v[1] * b, dir[2] * c + u[2] * a + v[2] * b]);
 }
 
-/** Tests: the circle closed. */
-export function _resetBowBloomForTests() { _deg = 0; _at = 0; }
+// BOW-FAST (2026-10-30: "stackable damage reduction if you shoot too fast"): a shot within `within` s of the last adds a
+// stack, at most `most`, each taking `cut` per cent off its damage; a shot after a longer rest has none. The stacks ride
+// the shaft from its loose (`fast`) and are read where it lands (bowFastDamage), PvE and PvP alike.
+export const BOW_FAST = Object.freeze({ cut: 20, most: 4, within: 1 });
+let _stacks = 0, _last = -Infinity, _landing = /** @type {any} */ (null);
+
+/** A shot loosed now: its stacks. */
+export function bowFastShot(now = bloomClock()) {
+  _stacks = now - _last < BOW_FAST.within ? Math.min(BOW_FAST.most, _stacks + 1) : 0;
+  _last = now;
+  return _stacks;
+}
+/** `dmg` after the stacks shaft `m` carries - at least 1 where it was over 0. */
+export function bowFastDamage(m, dmg) {
+  const k = Math.max(0, Math.min(BOW_FAST.most, Math.trunc(Number(m?.fast) || 0)));
+  return k > 0 && dmg > 0 ? Math.max(1, Math.round((dmg * (100 - BOW_FAST.cut * k)) / 100)) : dmg;
+}
+/** Run `fn` while shaft `m` lands, so a door that rolls the blow itself (combat/duelCombat.js) reads its stacks. */
+export function whileShaftLands(m, fn) {
+  const was = _landing;
+  _landing = m;
+  try { return fn(); } finally { _landing = was; }
+}
+/** The shaft landing now, or null. */
+export const landingShaft = () => _landing;
+
+/** Tests: the circle closed, the stacks cleared. */
+export function _resetBowBloomForTests() { _deg = 0; _at = 0; _stacks = 0; _last = -Infinity; _landing = null; }
 
 /** @param {number[]} a @param {number[]} b */
 const bloomCross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];

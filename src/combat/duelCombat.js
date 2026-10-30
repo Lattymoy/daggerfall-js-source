@@ -30,6 +30,7 @@ import { offHandToHit, OFF_HAND_BLOW } from './twoHands/handsLaw.js';   // TWO-H
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 import { weaponSkillUsed } from '../characters/weapons.js';
 import { pvpArrowScale } from './pvpTriangle.js';   // PVP-TRIANGLE
+import { bowFastDamage, landingShaft } from './bowBloom.js';   // BOW-FAST
 import { armorValuesOf } from '../systems/equip.js';   // AUDIT C&C H5: the stand-in's unarmoured table, DFU's own 100s
 import { clawMetalDamage, CLAW_METAL_MAX } from './clawMetal.js';   // AUDIT CLAWS A1: the beast's claws' metal rides the sheet
 import { weaponPastPct } from '../systems/weaponMastery.js';   // PVP-SCALE: the weapon's skill and gear, on a blow at a player
@@ -196,7 +197,7 @@ export function resolveDuelStrike(d, target, { rolls = Math.random, backFacing =
   });
   const rolled = Math.max(0, int(dmg));
   const scaled = rolled + Math.floor((rolled * Math.max(0, Number(d.a?.wp) || 0)) / 100);   // PVP-SCALE: the weapon's climb and gear
-  const n = d.by === 'arrow' ? Math.floor(scaled * pvpArrowScale(d.a?.pl)) : scaled;   // PVP-TRIANGLE: an arrow's
+  const n = d.by === 'arrow' ? bowFastDamage(landingShaft(), Math.floor(scaled * pvpArrowScale(d.a?.pl))) : scaled;   // PVP-TRIANGLE: an arrow's; BOW-FAST: its stacks
   if (n > 0 && target?.struckBy) breakNormalPowerConcealment(target.struckBy);   // RPT1026-FIGHTS (STRIKE-UNVEILS): on the striker, never its stub
   return { hit: n > 0, dmg: n };
 }

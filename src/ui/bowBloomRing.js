@@ -1,7 +1,7 @@
 // @ts-check
 // BOW-BLOOM's ring: a circle round the screen's centre the size of the bow's bloom, drawn while it is open. Started
 // by the first bloomed shot (bowShotAim), so no host wires it. A departure: DFU has no bloom.
-import { bowBloomNow, bowBloomShot } from '../combat/bowBloom.js';
+import { bowBloomNow, bowBloomShot, bowFastShot } from '../combat/bowBloom.js';
 import { fieldOfView } from './viewSettings.js';
 
 /** The ring's diameter in pixels for a bloom of `deg` on a view `height` tall at vertical field of view `fov` (radians). */
@@ -32,3 +32,5 @@ export function bowShotAim(dir) {
   startRing();
   return bowBloomShot(dir);
 }
+/** The dungeon lane's `extra` for a player's shot: BOW-FAST's stacks for a bow's (a gun's none), and a conjured round's word. */
+export const bowShotExtra = (gun, summoned) => ({ ...(gun ? {} : { fast: bowFastShot() }), ...(summoned ? { summoned: true } : {}) });
