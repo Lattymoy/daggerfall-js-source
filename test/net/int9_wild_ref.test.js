@@ -177,8 +177,8 @@ test('INT9 (AUDIT) THE REFEREE\'S LAW, NO FREE BAR: a word off and on keeps the 
   st = zone();
   wildBlow(st, 'acct-a', 'acct-b', { d: 999, held: FIST, rid: 'eeeeeeeeeee4' }, 10_300);
   wildZone(st, 'acct-b', { id: 'peer-b', lv: 10 }, false, at(1), 10_400);
-  wildZone(st, 'acct-b', { id: 'peer-b', lv: 10 }, true, at(1), 10_400 + WILD_REF.riseMs);
-  assert.equal(wildVitals(st, 'acct-a', 'acct-b')[1][1], whole, 'away the rise: whole');
+  wildZone(st, 'acct-b', { id: 'peer-b', lv: 10 }, true, at(1), 10_400 + WILD_REF.awayMs);
+  assert.equal(wildVitals(st, 'acct-a', 'acct-b')[1][1], whole, 'away the minute: whole');   // PIN MOVED (DEATH-10): the away minute is awayMs now, the rise 10 s
   assert.equal(st.fighters.get('acct-b').f.share.heard, false, 'SHARED-HEALTH: and waiting for the player\'s report of its own health');
   // the carry
   st = zone();

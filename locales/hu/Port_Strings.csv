@@ -2859,6 +2859,7 @@ sea.cross.landfall,"A Fátyol bezárul a tat mögött, és a levegő ismét sót
 sea.cross.openSea,"nyílt tenger"
 sea.exchange.band,"A kikötő gazdasága: {band}. A tőzsdei árak ezt követik."
 sea.wild.chipTip,"Az {word}-óceán Veilhaven békéjén túl: más játékosok megtámadhatnak. Az ellenfelek négyszer erősebbek, és akár kétszer annyi zsákmányt dobnak (25%-kal többet a Zátonyokon, kétszer annyit a Mélységben). Egy játékos általi halál biztosítatlan felszerelésbe vagy aranyba kerülhet."
+sea.wild.deathRise,"A Fátylon túl a holtak 10 másodperc után kelnek fel."
 sea.wild.dropLate,"Amit a gyilkosod elvett, amikor a tengeren meghaltál, kikerült a csomagodból."
 sea.wild.enter,"Kihajózol Veilhaven békéjéből a nyílt {word}-óceánra, egy nyílt PvP-zónába. Az ellenfelek itt négyszer erősebbek. Ha egy másik játékos megöl, elvehet egy biztosítatlan viselt tárgyat vagy aranyat."
 sea.wild.walkInto,"A nyílt {word}-óceánra vezet Veilhaven békéjén túl, egy nyílt PvP-zónába. Ott más játékosok megölhetnek, és elvehetnek egy viselt tárgyat vagy aranyat."

@@ -951,6 +951,7 @@ sea.cross.landfall,"帷幕在船尾合拢，空气中再次弥漫着盐与焦油
 sea.cross.openSea,"开阔海面"
 sea.exchange.band,"港口经济：{band}。交易所价格随之变动。"
 sea.wild.chipTip,"Veilhaven 和平海域之外的 {word} 大洋：其他玩家可以攻击你。敌人强四倍，掉落的战利品最多翻倍（浅滩多 25%，深渊翻倍）。被玩家杀死可能让你失去未投保的装备或金币。"
+sea.wild.deathRise,"在帷幕之外，死者10秒后复起。"
 sea.wild.dropLate,"你在海上死去时，杀死你的人拿走的东西已离开你的背包。"
 sea.wild.enter,"你驶离 Veilhaven 的和平海域，进入开阔的 {word} 大洋，这是一片开放 PvP 区域。这里的敌人强四倍。如果你被其他玩家杀死，对方可能拿走你一件未投保的穿戴装备，或者金币。"
 sea.wild.walkInto,"通往 Veilhaven 和平海域之外开阔的 {word} 大洋，这是一片开放 PvP 区域。其他玩家可能在那里杀死你，并拿走一件穿戴装备或金币。"

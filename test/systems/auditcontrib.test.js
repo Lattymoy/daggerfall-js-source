@@ -10,7 +10,7 @@ import { resurrectionSpell, RESURRECT_TEXT } from '../../src/systems/resurrect.j
 import { OnlineSession } from '../../src/net/online.js';
 import { fakeSocketClass } from '../fakeSocket.mjs';
 import { RemotePlayers, CORPSE_MS } from '../../src/net/remotePlayers.js';
-import { DeathScreen, ONLINE_RESPAWN_SECONDS, DEATH_RISE_MIN_S } from '../../src/ui/deathScreen.js';
+import { DeathScreen, DEATH_AUTO_RISE_S, DEATH_RISE_MIN_S } from '../../src/ui/deathScreen.js';
 import { validFoeRecord } from '../../src/net/wire.js';
 import { createExteriorFoes } from '../../src/scenes/exteriorFoes.js';
 import { audio } from '../../src/systems/audio.js';
@@ -124,16 +124,20 @@ test('AUDIT CONTRIB A5: ONLINE the hold is the screen\'s on the CLASSIC skin too
   ds.fall = false; ds.online = true;
   ds.tick(5);
   assert.equal(resets, 0, 'three seconds used to respawn and clear the body');
-  assert.equal(ds.respawnIn, ONLINE_RESPAWN_SECONDS - 5, 'and the classic face says how long');
+  assert.equal(ds.respawnIn, DEATH_AUTO_RISE_S - 5, 'and the classic face says how long');   // PIN MOVED (DEATH-10): the screen's 10 s
+  assert.equal(DEATH_RISE_MIN_S, 0, 'PIN MOVED (DEATH-10): Enter waits for nothing');
   ds.input('confirm');
-  assert.equal(resets, 0, 'PIN MOVED (DEATH-15): Enter waits out the first fifteen seconds');
-  ds.tick(DEATH_RISE_MIN_S - 5);
-  ds.input('confirm');
-  assert.equal(resets, 1, 'then Enter rises at once');
+  assert.equal(resets, 1, 'Enter rises at once');
+  const auto = new DeathScreen({ eyeHeight: 1.6, capsuleHeight: 1.8, onReset: () => { resets++; } });
+  auto.fall = false; auto.online = true;
+  auto.tick(DEATH_AUTO_RISE_S - 0.5);
+  assert.equal(resets, 1, 'DEATH-10: not yet');
+  auto.tick(1);
+  assert.equal(resets, 2, 'DEATH-10: risen on its own at 10 s');
   const off = new DeathScreen({ eyeHeight: 1.6, capsuleHeight: 1.8, onReset: () => { resets++; } });
   off.fall = false; off.online = false;
   off.tick(3.1);
-  assert.equal(resets, 2, 'offline classic: DFU\'s TimeBeforeReset, untouched');
+  assert.equal(resets, 3, 'offline classic: DFU\'s TimeBeforeReset, untouched');
   assert.equal(off.respawnIn, null);
 });
 

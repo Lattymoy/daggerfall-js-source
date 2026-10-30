@@ -315,16 +315,23 @@ gear. The service is acct214 (acct211 on its branch). A departure: DFU has no Pv
 
 "Need to have to eake up im nearest town", "Jist like pve deaths": a death in the zone rises at the nearest town or temple
 outside it (Wild-Zone.md THE RISE, as before), after the online PvE wait of 60 s
-(`wildZone.js:"export const WILD_DEATH_HOLD_S = 60;"`), not two minutes. The referee keeps the fighter down as long
-(`wildRef.js:"riseMs: 60_000,"`, the wire's `down` word at most `wire.js:"export const WILD_DOWN_MS_MAX = 60_000;"`). A
-departure: DFU has no PvP.
+(`WILD_DEATH_HOLD_S`, 60 s then; DEATH-10 below), not two minutes. The referee keeps the fighter down as long
+(`WILD_REF.riseMs`, the wire's `down` word at most `WILD_DOWN_MS_MAX`). A departure: DFU has no PvP.
 
 DEATH-15 ("Change that to 15 second on death", "For both"; the owner chose to keep the Resurrect minute): online, in
-the zone or out of it, Enter rises once `deathScreen.js:"export const DEATH_RISE_MIN_S = 15;"` have passed (a rejoin's
+the zone or out of it, Enter rose once 15 s of `DEATH_RISE_MIN_S` had passed (DEATH-10 below; a rejoin's
 served time counts, `canRise`); until then the screen says only the count. The rest of the minute is for a party
 member's Resurrect, and the body still lies the minute. The raise window is the longest screen and half a minute,
 `revived.js:"export const REZ_HOLD_S = 90;"` (150 while the zone held two minutes). Relay world282. A departure: DFU
 rises after its three seconds.
+
+DEATH-10 (2026-10-30, the owner: "give death a 10 second timer let them click respawn now but at 10 auto respawn
+them", "for pve and pvp"): online, Enter rises at once (`deathScreen.js:"export const DEATH_RISE_MIN_S = 0;"`) and the
+screen rises by itself at `deathScreen.js:"export const DEATH_AUTO_RISE_S = 10;"`, in the zone
+`wildZone.js:"export const WILD_DEATH_HOLD_S = 10;"`. The referee keeps a fallen down 10 s
+(`wildRef.js:"riseMs: 10_000,"`, the wire's word at most `wire.js:"export const WILD_DOWN_MS_MAX = 10_000;"`). A step
+out of the zone still heals whole only after the minute (`awayMs`). A party Resurrect has those 10 s, and the body
+still lies the minute. Relay world293. A departure: DFU rises after its three seconds.
 
 ## PVP-NO-TENTH: no tenth at a kill, gold as the last roll
 

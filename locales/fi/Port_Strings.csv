@@ -3059,6 +3059,7 @@ sea.cross.landfall,"Verho sulkeutuu perän takana, ja ilma tuoksuu taas suolalta
 sea.cross.openSea,"avomeri"
 sea.exchange.band,"Sataman talous: {band}. Pörssin hinnat seuraavat sitä."
 sea.wild.chipTip,"{word}-valtameri Veilhavenin rauhan takana: muut pelaajat voivat hyökätä kimppuusi. Viholliset ovat neljä kertaa vahvempia ja pudottavat jopa kaksinkertaisen saaliin (25 % enemmän Matalikoilla, kaksinkertaisesti Syvyydessä). Pelaajan tappo voi maksaa sinulle vakuuttamattomia varusteita tai kultaa."
+sea.wild.deathRise,"Verhon takana kuolleet nousevat 10 sekunnin kuluttua."
 sea.wild.dropLate,"Se, minkä surmaajasi otti, kun kuolit merellä, on lähtenyt repustasi."
 sea.wild.enter,"Purjehdit Veilhavenin rauhasta avoimelle {word}-valtamerelle, avoimelle PvP-alueelle. Viholliset ovat täällä neljä kertaa vahvempia. Jos toinen pelaaja tappaa sinut, hän voi ottaa yhden vakuuttamattoman yllesi puetun esineen tai kultaa."
 sea.wild.walkInto,"Se johtaa avoimelle {word}-valtamerelle Veilhavenin rauhan taakse, avoimelle PvP-alueelle. Muut pelaajat voivat tappaa sinut siellä ja ottaa yllesi puetun esineen tai kultaa."

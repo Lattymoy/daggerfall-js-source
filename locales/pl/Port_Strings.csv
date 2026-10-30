@@ -3074,6 +3074,7 @@ sea.cross.landfall,"Zasłona zamyka się za rufą, a powietrze znów pachnie sol
 sea.cross.openSea,"otwarte morze"
 sea.exchange.band,"Gospodarka portu: {band}. Ceny na giełdzie idą za nią."
 sea.wild.chipTip,"Ocean {word} za pokojem Veilhaven: inni gracze mogą cię zaatakować. Wrogowie są czterokrotnie silniejsi i upuszczają do dwóch razy więcej łupów (o 25% więcej na Płyciznach, dwa razy więcej w Otchłani). Śmierć z ręki gracza może cię kosztować nieubezpieczony ekwipunek albo złoto."
+sea.wild.deathRise,"Za Zasłoną umarli wstają po 10 sekundach."
 sea.wild.dropLate,"To, co zabrał twój zabójca, gdy zginąłeś na morzu, opuściło twój plecak."
 sea.wild.enter,"Wypływasz z pokoju Veilhaven na otwarty ocean {word}, otwartą strefę PvP. Wrogowie są tu czterokrotnie silniejsi. Jeśli zabije cię inny gracz, może zabrać jeden nieubezpieczony noszony przedmiot albo złoto."
 sea.wild.walkInto,"Prowadzi na otwarty ocean {word} za pokojem Veilhaven, do otwartej strefy PvP. Inni gracze mogą cię tam zabić i zabrać noszony przedmiot albo złoto."

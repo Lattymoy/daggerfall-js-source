@@ -5055,7 +5055,7 @@ export const relaySupportsWildStreets = (v) => { const m = /^world(\d+)$/.exec(t
 export const WILD_REF_KINDS = Object.freeze(['hp', 'fell', 'rc', 'hull', 'wreck', 'wc', 'down', 'grace', 'flag', 'bar', 'vil']);
 /** WILD-REJOIN: the longest a `down` word says a fallen has left to lie, ms (net/wild/wildRef.js WILD_REF.riseMs, pinned
  *  equal - this leaf imports no referee). */
-export const WILD_DOWN_MS_MAX = 60_000;
+export const WILD_DOWN_MS_MAX = 10_000;   // DEATH-10
 /** ZONE-GRACE: the most a `grace` word says is left of safe passage, ms (net/wild/wildRef.js WILD_GRACE.ms, pinned equal - this
  *  leaf reads no referee). */
 export const WILD_GRACE_MS_MAX = 60_000;

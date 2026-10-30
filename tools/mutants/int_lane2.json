@@ -403,7 +403,7 @@
   {
     "name": "INT9-AUDIT-A-WORD-OFF-AND-ON-A-HEAL",
     "file": "src/net/wild/wildRef.js",
-    "old": "    if (now - x.outAt >= WILD_REF.riseMs && !x.down) { x.f.hp = x.f.max; x.struckAt = -Infinity; resetHealthShare(x.f, now); }",
+    "old": "    if (now - x.outAt >= WILD_REF.awayMs && !x.down) { x.f.hp = x.f.max; x.struckAt = -Infinity; resetHealthShare(x.f, now); }",
     "new": "    if (!x.down) { x.f.hp = x.f.max; x.struckAt = -Infinity; resetHealthShare(x.f, now); }",
     "tests": [
       "test/net/int9_wild_ref.test.js"

@@ -84,8 +84,9 @@ test('ZONE-GRACE THE LAW, A RISE AND A CROSSING: a fallen rising on its word has
   wildZone(st, 'acct-b', { id: 'peer-b', lv: 10, ed: true }, true, at(1), fellAt + WILD_REF.riseMs);
   assert.equal(wildGraceLeft(st, 'acct-b', fellAt + WILD_REF.riseMs), 0, 'risen: no passage');
   wildZone(st, 'acct-b', { id: 'peer-b', lv: 10 }, false, at(1), fellAt + WILD_REF.riseMs + 1);
-  wildZone(st, 'acct-b', { id: 'peer-b', lv: 10, ed: true }, true, at(1), fellAt + 2 * WILD_REF.riseMs);
-  assert.equal(wildGraceLeft(st, 'acct-b', fellAt + 2 * WILD_REF.riseMs), G, 'a later entry from outside: its passage');
+  const later = fellAt + WILD_REF.riseMs + WILD_GRACE.fightMs;   // PIN MOVED (DEATH-10): the rise is 10 s, so out of the fight a minute past it
+  wildZone(st, 'acct-b', { id: 'peer-b', lv: 10, ed: true }, true, at(1), later);
+  assert.equal(wildGraceLeft(st, 'acct-b', later), G, 'a later entry from outside: its passage');
   // a fallen gone to town, back past the rise: the rise is its entry, and no passage
   const away = enter(-G);
   let j = 0, q;

@@ -51,7 +51,7 @@ import { isVillain, villainAfter, villainClamp, villainKillPoints, VILLAIN } fro
  *  respawn or a reconnect left its place stale for good - now it is believed, and the jumper waits); the most fighters
  *  and falls a room keeps; AUDIT FOE-KEEPS E2: how recent a fair player's blow names them the killer of a death the
  *  referee did not see (systems/wild/wildZone.js WILD_KILL_CREDIT_MS, pinned equal - "the player who brought you down"). */
-export const WILD_REF = Object.freeze({ mendMs: 30_000, pickMs: 10_000, truceMs: 10 * 60_000, riseMs: 60_000, jumpMs: 2_000, fightersMax: 200, fallsMax: 64, creditMs: 10_000 });
+export const WILD_REF = Object.freeze({ mendMs: 30_000, pickMs: 10_000, truceMs: 10 * 60_000, riseMs: 10_000, awayMs: 60_000, jumpMs: 2_000, fightersMax: 200, fallsMax: 64, creditMs: 10_000 });
 
 /** ZONE-GRACE (2026-10-26, the owner chose "Entry/rise grace"): safe passage's length (the owner's sixty seconds), and what
  *  an entry asks first - away from the zone this long, and no blow landed by or on the fighter this long. */
@@ -84,7 +84,7 @@ export const newWildRef = () => ({ fighters: new Map(), falls: new Map(), fights
  * stands at. A NEW fighter takes the vitality it CARRIES (`carry` - the hub's word on its last fight in another room:
  * `{ hp, max, down, downAt, at, heard }`, AUDIT INT9: a step into another cell was a fresh bar), unless that word is
  * older than WILD_REF.mendMs. A fighter down rises on its word that it stands in the zone again once WILD_REF.riseMs has
- * passed (its respawn - never at once), its count started again; so does one away from the zone WILD_REF.riseMs. One back
+ * passed (its respawn - never at once), its count started again; so does one away from the zone WILD_REF.awayMs. One back
  * sooner keeps its bar (AUDIT INT9: a word off and on was a heal). SHARED-HEALTH: a count started again waits for the player's report, which can lower it and never lift it.
  * Answers the fighter, or null (none made: a word off, a full room).
  */
@@ -113,7 +113,7 @@ export function wildZone(st, sub, { id, lv = 1, cl = null, ci = '', carry = null
   if (rose) { x.f = newFighter(lv, now); x.down = false; x.struckAt = -Infinity; }
   if (z && !x.zone) {
     // SHARED-HEALTH: back after long away, the count starts again from the player's own health (its next report)
-    if (now - x.outAt >= WILD_REF.riseMs && !x.down) { x.f.hp = x.f.max; x.struckAt = -Infinity; resetHealthShare(x.f, now); }
+    if (now - x.outAt >= WILD_REF.awayMs && !x.down) { x.f.hp = x.f.max; x.struckAt = -Infinity; resetHealthShare(x.f, now); }
     // ZONE-GRACE: an entry - away long enough, and out of every fight long enough; never after a death (PVP-DEATH, above -
     // a foe's death, `died` on its way out or `dd` carried, as well); PVP-EDGE: and only walked in over the edge (`ed`)
     if (!x.down && x.diedAt > -Infinity) x.diedAt = -Infinity;

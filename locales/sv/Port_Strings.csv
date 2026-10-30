@@ -2437,6 +2437,7 @@ sea.cross.landfall,"Slöjan sluter sig akterut, och luften doftar åter av salt 
 sea.cross.openSea,"öppna havet"
 sea.exchange.band,"Hamnens ekonomi: {band}. Börsens priser följer den."
 sea.wild.chipTip,"{word}-havet bortom Veilhavens fred: andra spelare kan anfalla dig. Fiender är fyra gånger så starka och släpper upp till dubbelt så mycket byte (25 % mer på Grunden, dubbelt i Avgrunden). Att dödas av en spelare kan kosta dig oförsäkrad utrustning eller guld."
+sea.wild.deathRise,"Bortom Slöjan reser sig de döda efter 10 sekunder."
 sea.wild.dropLate,"Det din baneman tog när du dog till sjöss har lämnat din packning."
 sea.wild.enter,"Du seglar ut ur Veilhavens fred på det öppna {word}-havet, en öppen PvP-zon. Fiender här är fyra gånger så starka. Om en annan spelare dödar dig kan hen ta ett oförsäkrat föremål du har på dig, eller guld."
 sea.wild.walkInto,"Den leder ut på det öppna {word}-havet bortom Veilhavens fred, en öppen PvP-zon. Andra spelare kan döda dig där och ta ett föremål du har på dig, eller guld."

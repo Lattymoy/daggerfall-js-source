@@ -719,8 +719,8 @@ its "+75% loot" English.
 - A DEATH: at another player's hand, the bag and a tenth of the purse into the room's remains, a killer's pick of one
   worn piece in the open (the two-phase handoff); to a foe - a monster, a ship, the sea - nothing dropped and the usual
   tenth of the purse paid at the rise (FOE-KEEPS, 2026-10-24, the owner: "I feel like the eltheric sea can be too
-  punishing. I dont want people to lose everything they have"; `11-Multiplayer/Wild-Zone.md` section 4); the two
-  minutes' wait ("Past the Veil the dead wait two minutes." - the death keeps the ground it
+  punishing. I dont want people to lose everything they have"; `11-Multiplayer/Wild-Zone.md` section 4); the wait
+  ("Past the Veil the dead rise after 10 seconds." - the death keeps the ground it
   fell on, `setWildDeath`'s `kind`), the remains twelve minutes, marked for their owner. THE RISE is the sea's own,
   AUDIT CAPTAIN'S SEA P4's: THE NEAREST FREEPORT'S TOWN, however far - sought from `ETHER_RISE_PX` out, the reach doubled
   until a port stands within it (`etherWild.js:"for (let r = ETHER_RISE_PX; ; r *= 2) {"`, `etherRisePort`; Veilhaven

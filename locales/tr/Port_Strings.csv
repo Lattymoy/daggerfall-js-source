@@ -1058,6 +1058,7 @@ sea.cross.landfall,"Peçe kıçın ardında kapanıyor ve hava yeniden tuz ve ka
 sea.cross.openSea,"açık deniz"
 sea.exchange.band,"Liman ekonomisi: {band}. Borsa fiyatları onu izler."
 sea.wild.chipTip,"Veilhaven'ın huzurunun ötesindeki {word} Okyanusu: diğer oyuncular sana saldırabilir. Düşmanlar dört kat güçlüdür ve iki katına kadar ganimet düşürür (Sığlıklarda %25 fazla, Uçurumda iki kat). Bir oyuncunun seni öldürmesi sana sigortasız teçhizata ya da altına mal olabilir."
+sea.wild.deathRise,"Peçenin ötesinde ölüler 10 saniye sonra kalkar."
 sea.wild.dropLate,"Denizde öldüğünde katilinin aldıkları çantandan çıktı."
 sea.wild.enter,"Veilhaven'ın huzurundan açık {word} Okyanusu'na, açık bir PvP bölgesine yelken açıyorsun. Buradaki düşmanlar dört kat güçlü. Seni başka bir oyuncu öldürürse, giydiğin sigortasız bir eşyayı ya da altın alabilir."
 sea.wild.walkInto,"Veilhaven'ın huzurunun ötesindeki açık {word} Okyanusu'na, açık bir PvP bölgesine çıkar. Orada diğer oyuncular seni öldürüp giydiğin bir eşyayı ya da altın alabilir."
