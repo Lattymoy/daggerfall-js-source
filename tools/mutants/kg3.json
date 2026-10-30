@@ -1174,8 +1174,8 @@
   {
     "name": "KG3-D-atlas-key",
     "file": "src/render/gambitTableDraw.js",
-    "old": "'k0', 'k1', 'k2', 'k3', 'back']);",
-    "new": "'k0', 'k1', 'k2', 'k2', 'back']);",
+    "old": "export const GAMBIT_ATLAS_KEYS = Object.freeze([...KG_ROSTER.map((u) => `u${u.id}`), 'k0', 'k1', 'k2', 'k3', 'back']);",
+    "new": "export const GAMBIT_ATLAS_KEYS = Object.freeze([...KG_ROSTER.map((u) => `u${u.id}`), 'k0', 'k1', 'k2', 'k2', 'back']);",
     "tests": [
       "test/world/card/kg3_draw.test.js"
     ]
@@ -1183,8 +1183,8 @@
   {
     "name": "KG3-D-inset",
     "file": "src/render/gambitTableDraw.js",
-    "old": "const u0 = (col * GAMBIT_CELL_W + 0.5) / GAMBIT_ATLAS_W",
-    "new": "const u0 = (col * GAMBIT_CELL_W) / GAMBIT_ATLAS_W",
+    "old": "  const u0 = (col * GAMBIT_CELL_W + 0.5) / GAMBIT_ATLAS_W,",
+    "new": "  const u0 = (col * GAMBIT_CELL_W) / GAMBIT_ATLAS_W,",
     "tests": [
       "test/world/card/kg3_draw.test.js"
     ]
@@ -1192,8 +1192,8 @@
   {
     "name": "KG3-D-triangle",
     "file": "src/render/gambitTableDraw.js",
-    "old": "if (cr[0] * n[0] + cr[1] * n[1] + cr[2] * n[2] >= 0) indices.push(base, base + 1, base + 2, base, base + 2, base + 3);",
-    "new": "if (cr[0] * n[0] + cr[1] * n[1] + cr[2] * n[2] < 0) indices.push(base, base + 1, base + 2, base, base + 2, base + 3);",
+    "old": "    if (cr[0] * n[0] + cr[1] * n[1] + cr[2] * n[2] >= 0)",
+    "new": "    if (cr[0] * n[0] + cr[1] * n[1] + cr[2] * n[2] < 0)",
     "tests": [
       "test/world/card/kg3_draw.test.js"
     ]
@@ -1201,8 +1201,8 @@
   {
     "name": "KG3-D-outline",
     "file": "src/render/gambitTableDraw.js",
-    "old": "    ctx.strokeStyle = I.outline; ctx.lineWidth = w + 2; path(); ctx.stroke();\n",
-    "new": "\n",
+    "old": "    ctx.strokeStyle = I.outline;\n    ctx.lineWidth = w + 2;\n    path();\n    ctx.stroke();",
+    "new": "",
     "tests": [
       "test/world/card/kg3_draw.test.js"
     ]
@@ -1210,8 +1210,8 @@
   {
     "name": "KG3-D-notch",
     "file": "src/render/gambitTableDraw.js",
-    "old": "ring(p.col, p.row, p.side === 0 ? I.bone : I.stone, 1.5, 2, p.side === 1);",
-    "new": "ring(p.col, p.row, p.side === 0 ? I.bone : I.stone, 1.5, 2, false);",
+    "old": "  for (const p of look.pieces ?? []) ring(p.col, p.row, p.side === 0 ? I.bone : I.stone, 1.5, 2, p.side === 1);",
+    "new": "  for (const p of look.pieces ?? []) ring(p.col, p.row, p.side === 0 ? I.bone : I.stone, 1.5, 2, false);",
     "tests": [
       "test/world/card/kg3_draw.test.js"
     ]
@@ -1219,8 +1219,8 @@
   {
     "name": "KG3-D-release",
     "file": "src/render/gambitTableDraw.js",
-    "old": "    if (matKey !== null) renderer.releaseTexture?.(GAMBIT_ARCHIVE, GAMBIT_MAT);   // the cache keeps",
-    "new": "    if (!renderer) renderer.releaseTexture?.(GAMBIT_ARCHIVE, GAMBIT_MAT);   // the cache keeps",
+    "old": "      if (matKey !== null) renderer.releaseTexture?.(GAMBIT_ARCHIVE, GAMBIT_MAT); // the cache keeps a key's first picture: a new look is a new upload",
+    "new": "      if (!renderer) renderer.releaseTexture?.(GAMBIT_ARCHIVE, GAMBIT_MAT); // the cache keeps a key's first picture: a new look is a new upload",
     "tests": [
       "test/world/card/kg3_draw.test.js"
     ]
@@ -1228,8 +1228,8 @@
   {
     "name": "KG3-D-scale",
     "file": "src/render/gambitTableDraw.js",
-    "old": "  const s = (GAMBIT_CARD_SHARE * places.cell) / CARD_W;\n  const yaw = gambitCardYaw(places, side);",
-    "new": "  const s = GAMBIT_CARD_SHARE;\n  const yaw = gambitCardYaw(places, side);",
+    "old": "  const s = (GAMBIT_CARD_SHARE * places.cell) / CARD_W;",
+    "new": "  const s = GAMBIT_CARD_SHARE;",
     "tests": [
       "test/world/card/kg3_draw.test.js"
     ]
@@ -1237,8 +1237,8 @@
   {
     "name": "KG3-D-plate-a-draw",
     "file": "src/render/gambitTableDraw.js",
-    "old": "    if (!m) { m = renderer.createMesh(gambitPlateModel(key)); plates.set(key, m); }",
-    "new": "    { m = renderer.createMesh(gambitPlateModel(key)); plates.set(key, m); }",
+    "old": "    let m = plates.get(key);\n    if (!m) {",
+    "new": "    let m = plates.get(key);\n    {",
     "tests": [
       "test/world/card/kg3_draw.test.js",
       "test/systems/kg3_host.test.js"

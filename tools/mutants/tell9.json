@@ -290,8 +290,8 @@
   {
     "name": "TELL9-contrast-never",
     "file": "src/render/foeTelegraph.js",
-    "old": "    gl.uniform1f(U.uContrast, contrast ? 1 : 0);   // TELL9",
-    "new": "    gl.uniform1f(U.uContrast, 0);   // TELL9",
+    "old": "    gl.uniform1f(U.uContrast, contrast ? 1 : 0); // TELL9",
+    "new": "    gl.uniform1f(U.uContrast, 0); // TELL9",
     "tests": [
       "test/ui/enhanced/tell9_screen.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "TELL9-contrast-unapplied",
     "file": "src/render/foeTelegraph.js",
-    "old": "  if (uContrast > 0.5) oColor = telegraphContrast(",
-    "new": "  if (uContrast > 1.5) oColor = telegraphContrast(",
+    "old": "  if (uContrast > 0.5) oColor = telegraphContrast(oColor, dist, inside ? 1.0 : 0.0, vec2(across, along), uIron, uColor, fogK);   // TELL9",
+    "new": "  if (uContrast > 1.5) oColor = telegraphContrast(oColor, dist, inside ? 1.0 : 0.0, vec2(across, along), uIron, uColor, fogK);   // TELL9",
     "tests": [
       "test/ui/enhanced/tell9_screen.test.js"
     ]

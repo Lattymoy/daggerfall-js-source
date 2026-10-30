@@ -97,8 +97,8 @@
   {
     "name": "KGSET-bear-muzzle",
     "file": "src/render/iliacCardFaces.js",
-    "old": "    oval(ctx, 0, 0.21, 0.19, 0.15); oval(ctx, 0, 0.21, 0.15, 0.115);\n",
-    "new": "",
+    "old": "    oval(ctx, 0, 0.21, 0.19, 0.15);\n    oval(ctx, 0, 0.21, 0.15, 0.115);\n    mirrorQ(ctx, [",
+    "new": "    mirrorQ(ctx, [",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]

@@ -21,7 +21,7 @@ import { floraSpec } from '../world/terrain/floraCover.js';
 import { getWorldClimateSettings, CLIMATE_BASE_TYPES } from '../formats/mapsFile.js';
 import { scaledBillboardSize } from '../world/rmbFlats.js';
 import { textureDeriveContext, decodedTexture, decodedTextureTopDown } from '../systems/textureReplacement.js';
-import { landsFloraSpec, landsTreePicks } from '../world/terrain/floraCover.js';   // TESA-LANDS: a zone's own woods, and its Trees
+import { landsFloraSpec, landsTreePicks } from '../world/terrain/floraCover.js'; // TESA-LANDS: a zone's own woods, and its Trees
 import { LANDS, landKeyAt } from '../world/tamriel/tamrielLands.js';
 import { compileDress, setPrototypes, dressRecord, landLuminance, DRESS_DIALS } from '../world/tamriel/groundDress.js';
 
@@ -30,17 +30,26 @@ export const FLORA_MIN_LAND_VIEW = 4;
 
 /** ?farflora=off - the far woods' kill door (the far views' ground stands bare, as before). */
 export function floraDisabled(search = globalThis.location?.search) {
-  try { return /[?&]farflora=off\b/.test(search ?? ''); }
-  catch { return false; }
+  try {
+    return /[?&]farflora=off\b/.test(search ?? '');
+  } catch {
+    return false;
+  }
 }
 
 /** The mean colour of a picture's opaque texels (rgba, alpha over 0; every texel with `all` - a ground tile is opaque
  *  whatever its index 0) - [r, g, b, count]. Pure. */
 export function opaqueMean(data, all = false) {
-  let r = 0, g = 0, b = 0, n = 0;
+  let r = 0,
+    g = 0,
+    b = 0,
+    n = 0;
   for (let i = 0; i + 3 < data.length; i += 4) {
     if (!all && !data[i + 3]) continue;
-    r += data[i]; g += data[i + 1]; b += data[i + 2]; n++;
+    r += data[i];
+    g += data[i + 1];
+    b += data[i + 2];
+    n++;
   }
   return n ? [r / n, g / n, b / n, n] : [0, 0, 0, 0];
 }
@@ -55,12 +64,28 @@ export function opaqueMean(data, all = false) {
 export async function treeArt(archive, read) {
   const records = TREE_RECORDS[archive];
   if (!records) return null;
-  let r = 0, g = 0, b = 0, n = 0, h = 0, w = 0, sized = 0;
+  let r = 0,
+    g = 0,
+    b = 0,
+    n = 0,
+    h = 0,
+    w = 0,
+    sized = 0;
   for (const record of records) {
     const pic = await read.rgba(archive, record).catch(() => null);
-    if (pic?.data) { const m = opaqueMean(pic.data); r += m[0] * m[3]; g += m[1] * m[3]; b += m[2] * m[3]; n += m[3]; }
+    if (pic?.data) {
+      const m = opaqueMean(pic.data);
+      r += m[0] * m[3];
+      g += m[1] * m[3];
+      b += m[2] * m[3];
+      n += m[3];
+    }
     const s = await read.size(archive, record).catch(() => null);
-    if (s?.h > 0) { h += s.h; w += s.w; sized++; }
+    if (s?.h > 0) {
+      h += s.h;
+      w += s.w;
+      sized++;
+    }
   }
   if (!n || !sized) return null;
   return Object.freeze({ rgb: Object.freeze([r / n, g / n, b / n]), h: h / sized, w: w / sized });
@@ -97,19 +122,38 @@ export async function groundArt(archive, read) {
  * @param {any} recipe @param {Parameters<typeof treeArt>[1]} read
  */
 export async function landTreeArt(recipe, read) {
-  let r = 0, g = 0, b = 0, n = 0, h = 0, w = 0, sized = 0;
+  let r = 0,
+    g = 0,
+    b = 0,
+    n = 0,
+    h = 0,
+    w = 0,
+    sized = 0;
   for (const [archive, record, weight] of landsTreePicks(recipe)) {
     const pic = await read.rgba(archive, record).catch(() => null);
-    if (pic?.data) { const m = opaqueMean(pic.data); r += m[0] * m[3] * weight; g += m[1] * m[3] * weight; b += m[2] * m[3] * weight; n += m[3] * weight; }
+    if (pic?.data) {
+      const m = opaqueMean(pic.data);
+      r += m[0] * m[3] * weight;
+      g += m[1] * m[3] * weight;
+      b += m[2] * m[3] * weight;
+      n += m[3] * weight;
+    }
     const s = await read.size(archive, record).catch(() => null);
-    if (s?.h > 0) { h += s.h * weight; w += s.w * weight; sized += weight; }
+    if (s?.h > 0) {
+      h += s.h * weight;
+      w += s.w * weight;
+      sized += weight;
+    }
   }
   if (!n || !sized) return null;
   return Object.freeze({ rgb: Object.freeze([r / n, g / n, b / n]), h: h / sized, w: w / sized });
 }
 
 /** A picture read as a ground layer (square: a ground tile's). */
-const asLayer = (pic) => { const side = Math.round(Math.sqrt(pic.data.length / 4)); return { width: pic.width ?? side, height: pic.height ?? side, colors: pic.data }; };
+const asLayer = (pic) => {
+  const side = Math.round(Math.sqrt(pic.data.length / 4));
+  return { width: pic.width ?? side, height: pic.height ?? side, colors: pic.data };
+};
 /** A macrotask's wait: the page draws a frame between a far zone's records (AUDIT: eight zones asked at once dressed
  *  theirs back to back, a 120 ms task). */
 const frameBack = () => new Promise((go) => setTimeout(go, 0));
@@ -122,7 +166,8 @@ const frameBack = () => new Promise((go) => setTimeout(go, 0));
  * @param {any} dress LANDS' `ground` @param {number} archive @param {{ rgba: (a: number, r: number) => Promise<any>, classic?: (a: number, r: number) => Promise<any> }} read
  */
 export async function landGroundArt(dress, archive, read) {
-  const drawn = [], classic = [];
+  const drawn = [],
+    classic = [];
   for (const record of Object.values(GROUND_RECORDS)) {
     const pic = await read.rgba(archive, record).catch(() => null);
     if (!pic?.data) return null;
@@ -130,7 +175,10 @@ export async function landGroundArt(dress, archive, read) {
     const c = read.classic ? await read.classic(archive, record).catch(() => null) : null;
     if (c?.data) classic[record] = asLayer(c);
   }
-  const protos = setPrototypes(drawn), mats = compileDress(dress), a = landLuminance(protos), b = classic.length ? landLuminance(setPrototypes(classic)) : 0;
+  const protos = setPrototypes(drawn),
+    mats = compileDress(dress),
+    a = landLuminance(protos),
+    b = classic.length ? landLuminance(setPrototypes(classic)) : 0;
   const light = DRESS_DIALS.albedo * (a > 0 && b > 0 ? a / b : 1);
   const out = {};
   for (const [k, record] of Object.entries(GROUND_RECORDS)) {
@@ -186,36 +234,59 @@ export function pipelinePictures() {
  * @param {{ read?: () => ?ReturnType<typeof pipelineRead>, forests?: () => boolean, lands?: boolean }} [o]
  */
 export function createFloraArt({ read = pipelineRead, forests = () => true, lands = false } = {}) {
-  const arts = new Map(), grounds = new Map(), specs = new Map();
+  const arts = new Map(),
+    grounds = new Map(),
+    specs = new Map();
   let version = 0;
   const ask = (book, archive, how) => {
     const r = read();
-    if (!r) return;   // no pipeline yet: asked again on the next build
+    if (!r) return; // no pipeline yet: asked again on the next build
     book.set(archive, null);
-    how(archive, r).then((art) => { book.set(archive, art); if (art) version++; }, () => book.delete(archive));
+    how(archive, r).then(
+      (art) => {
+        book.set(archive, art);
+        if (art) version++;
+      },
+      () => book.delete(archive),
+    );
   };
   return {
-    get version() { return version; },
+    get version() {
+      return version;
+    },
     /** The Real forests switch the book reads its climates by (FAR-TREES: the band's layout asks it too). */
-    get forests() { return !!forests(); },
+    get forests() {
+      return !!forests();
+    },
     /** TESA-LANDS: the lands' row the book reads its zones by (FAR-TREES: the band's layout asks it too). */
-    get lands() { return !!lands; },
+    get lands() {
+      return !!lands;
+    },
     /** @param {number} climate a CLIMATE.PAK value @param {number} [x] @param {number} [y] the map pixel (TESA-LANDS) */
     floraOf(climate, x, y) {
       let s = specs.get(climate);
       if (!s) {
         const c = getWorldClimateSettings(climate);
-        s = { archive: c.natureArchive, groundArchive: c.groundArchive, spec: floraSpec(c.natureArchive, c.climateType === CLIMATE_BASE_TYPES.Desert, forests()) };
+        s = {
+          archive: c.natureArchive,
+          groundArchive: c.groundArchive,
+          spec: floraSpec(c.natureArchive, c.climateType === CLIMATE_BASE_TYPES.Desert, forests()),
+        };
         specs.set(climate, s);
       }
       // TESA-LANDS: a zone's own woods, Trees and ground where it names them - its climate's where it does not
-      const zone = lands && x != null && y != null ? landKeyAt(Math.floor(x), Math.floor(y)) : null, land = zone ? /** @type {any} */ (LANDS)[zone] : null;
-      const recipe = land?.flora && forests() ? land.flora : null, dress = land?.ground ?? null;
+      const zone = lands && x != null && y != null ? landKeyAt(Math.floor(x), Math.floor(y)) : null,
+        land = zone ? /** @type {any} */ (LANDS)[zone] : null;
+      const recipe = land?.flora && forests() ? land.flora : null,
+        dress = land?.ground ?? null;
       const spec = recipe ? landsFloraSpec(recipe) : s.spec;
-      const artKey = recipe ? `lands:${zone}` : s.archive, groundArchive = dress ? dress.base ?? s.groundArchive : s.groundArchive;
+      const artKey = recipe ? `lands:${zone}` : s.archive,
+        groundArchive = dress ? (dress.base ?? s.groundArchive) : s.groundArchive;
       const groundKey = dress ? `lands:${zone}:${groundArchive}` : s.groundArchive;
-      if (!arts.has(artKey) && (spec.treeShare > 0 || spec.coverShare > 0)) ask(arts, artKey, recipe ? (_, r) => landTreeArt(recipe, r) : treeArt);
-      if (!grounds.has(groundKey)) ask(grounds, groundKey, dress ? (_, r) => landGroundArt(dress, groundArchive, r) : groundArt);
+      if (!arts.has(artKey) && (spec.treeShare > 0 || spec.coverShare > 0))
+        ask(arts, artKey, recipe ? (_, r) => landTreeArt(recipe, r) : treeArt);
+      if (!grounds.has(groundKey))
+        ask(grounds, groundKey, dress ? (_, r) => landGroundArt(dress, groundArchive, r) : groundArt);
       return { spec, art: arts.get(artKey) ?? null, ground: grounds.get(groundKey) ?? null };
     },
   };

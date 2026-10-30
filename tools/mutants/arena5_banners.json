@@ -11,8 +11,8 @@
   {
     "name": "ARENA5-WASH-EL-DROPPED",
     "file": "src/render/enhancedLighting.js",
-    "old": "  lit *= elDecode(uBatchTint);",
-    "new": "",
+    "old": "  lit *= elDecode(uBatchTint);   // ARENA5: the batch's wash after both maps (the classic lane's law, in the lane's linear light - white is white)",
+    "new": "   // ARENA5: the batch's wash after both maps (the classic lane's law, in the lane's linear light - white is white)",
     "tests": [
       "test/systems/arena/arena5_banners.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "ARENA5-WASH-EL-UNDECODED",
     "file": "src/render/enhancedLighting.js",
-    "old": "lit *= elDecode(uBatchTint);",
-    "new": "lit *= uBatchTint;",
+    "old": "  lit *= elDecode(uBatchTint);   // ARENA5: the batch's wash after both maps (the classic lane's law, in the lane's linear light - white is white)",
+    "new": "  lit *= uBatchTint;   // ARENA5: the batch's wash after both maps (the classic lane's law, in the lane's linear light - white is white)",
     "tests": [
       "test/systems/arena/arena5_banners.test.js"
     ]

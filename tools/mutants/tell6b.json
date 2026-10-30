@@ -66,8 +66,8 @@
   {
     "name": "TELL6b-mirror-lunge",
     "file": "src/render/foeTelegraph.js",
-    "old": "  if (kind === 'lunge' || kind === 'charge') {   // TELL6: the charge's lane, the lunge's law\n    const P = BLOW[kind];",
-    "new": "  if (kind === 'lunge' || kind === 'charge') {   // TELL6: the charge's lane, the lunge's law\n    const P = BLOW.lunge;",
+    "old": "    const P = BLOW[kind];",
+    "new": "    const P = BLOW.lunge;",
     "tests": [
       "test/characters/enemy/tell6b_charge.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "TELL6b-quad-short",
     "file": "src/render/foeTelegraph.js",
-    "old": "ring: BLOW.ring.rOut, charge: BLOW.charge.len,",
-    "new": "ring: BLOW.ring.rOut, charge: BLOW.lunge.len,",
+    "old": "  charge: BLOW.charge.len,",
+    "new": "  charge: BLOW.lunge.len,",
     "tests": [
       "test/characters/enemy/tell6b_charge.test.js"
     ]

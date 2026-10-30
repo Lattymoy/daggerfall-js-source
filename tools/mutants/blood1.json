@@ -2491,8 +2491,8 @@
   {
     "name": "BLOOD2f-a-dry-mark-glints",
     "file": "src/render/enhancedLighting.js",
-    "old": "    if (wet > 0.0) {\n      float g = pow",
-    "new": "    if (true) {\n      float g = pow",
+    "old": "    if (wet > 0.0) {",
+    "new": "    if (true) {",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]
@@ -2734,8 +2734,8 @@
   {
     "name": "AUDIT5-the-sun-map-is-read-twice",
     "file": "src/render/enhancedLighting.js",
-    "old": "* ${glslFloat(EL_WET_STRENGTH)} * sheen * wetFresnel(dot(V, H)) * sunVis);",
-    "new": "* ${glslFloat(EL_WET_STRENGTH)} * sheen * wetFresnel(dot(V, H)) * cloudShadowAt(vWorld) * sunShadowAt(vWorld, n));",
+    "old": "    sunGlint = uDecalSun * (pow(max(dot(n, H), 0.0), ${EL_WET_GLOSS}.0) * ${glslFloat(EL_WET_STRENGTH)} * sheen * wetFresnel(dot(V, H)) * sunVis);",
+    "new": "    sunGlint = uDecalSun * (pow(max(dot(n, H), 0.0), ${EL_WET_GLOSS}.0) * ${glslFloat(EL_WET_STRENGTH)} * sheen * wetFresnel(dot(V, H)) * cloudShadowAt(vWorld) * sunShadowAt(vWorld, n));",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]

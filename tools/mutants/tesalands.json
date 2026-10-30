@@ -318,8 +318,8 @@
   {
     "name": "TL-band-code-unread",
     "file": "src/render/farTrees.js",
-    "old": "const [a, r] = bandTreeArt(p.archive, t[i + 3]);",
-    "new": "const [a, r] = [p.archive, t[i + 3]];",
+    "old": "      const [a, r] = bandTreeArt(p.archive, t[i + 3]); // TESA-LANDS: its own archive's art where it carries one",
+    "new": "      const [a, r] = [p.archive, t[i + 3]]; // TESA-LANDS: its own archive's art where it carries one",
     "tests": [
       "test/world/tesalands_flora.test.js"
     ]
@@ -327,8 +327,8 @@
   {
     "name": "TL-zone-unread",
     "file": "src/render/farFlora.js",
-    "old": "const zone = lands && x != null && y != null ? landKeyAt(Math.floor(x), Math.floor(y)) : null",
-    "new": "const zone = null",
+    "old": "      const zone = lands && x != null && y != null ? landKeyAt(Math.floor(x), Math.floor(y)) : null,",
+    "new": "      const zone = null,",
     "tests": [
       "test/world/tesalands_flora.test.js"
     ]
@@ -336,8 +336,8 @@
   {
     "name": "TL-weights-dropped",
     "file": "src/render/farFlora.js",
-    "old": "r += m[0] * m[3] * weight; g += m[1] * m[3] * weight; b += m[2] * m[3] * weight; n += m[3] * weight;",
-    "new": "r += m[0] * m[3]; g += m[1] * m[3]; b += m[2] * m[3]; n += m[3];",
+    "old": "      r += m[0] * m[3] * weight;\n      g += m[1] * m[3] * weight;\n      b += m[2] * m[3] * weight;\n      n += m[3] * weight;",
+    "new": "      r += m[0] * m[3];\n      g += m[1] * m[3];\n      b += m[2] * m[3];\n      n += m[3];",
     "tests": [
       "test/world/tesalands_flora.test.js"
     ]
@@ -345,8 +345,8 @@
   {
     "name": "TL-dress-undone",
     "file": "src/render/farFlora.js",
-    "old": "const m = opaqueMean(dressRecord(drawn[record], record, mats, protos, light).colors, true);",
-    "new": "const m = opaqueMean(drawn[record].colors, true);",
+    "old": "    const m = opaqueMean(dressRecord(drawn[record], record, mats, protos, light).colors, true);",
+    "new": "    const m = opaqueMean(drawn[record].colors, true);",
     "tests": [
       "test/world/tesalands_flora.test.js"
     ]
@@ -543,8 +543,8 @@
   {
     "name": "TL-grey-coloured",
     "file": "src/render/landPropArt.js",
-    "old": "out[o] = g; out[o + 1] = g; out[o + 2] = g;",
-    "new": "out[o] = g; out[o + 1] = g; out[o + 2] = g >> 1;",
+    "old": "        out[o + 2] = g;",
+    "new": "        out[o + 2] = g >> 1;",
     "tests": [
       "test/world/tesalands_props.test.js"
     ]
@@ -552,8 +552,8 @@
   {
     "name": "TL-card-alpha-half",
     "file": "src/render/landPropArt.js",
-    "old": "return paint(w, h, (x, y) => { const c = px[y * w + x]; return c ? [c[0], c[1], c[2], 255] : null; });",
-    "new": "return paint(w, h, (x, y) => { const c = px[y * w + x]; return c ? [c[0], c[1], c[2], 128] : null; });",
+    "old": "    return c ? [c[0], c[1], c[2], 255] : null;",
+    "new": "    return c ? [c[0], c[1], c[2], 128] : null;",
     "tests": [
       "test/world/tesalands_props.test.js"
     ]
@@ -588,8 +588,8 @@
   {
     "name": "TL-atlas-drawn-lent",
     "file": "src/render/farTrees.js",
-    "old": "if (this._wanted.has(k) || this._drawnArts.has(k) || this._layingArts.has(k)) continue;",
-    "new": "if (this._wanted.has(k) || this._layingArts.has(k)) continue;",
+    "old": "      if (this._wanted.has(k) || this._drawnArts.has(k) || this._layingArts.has(k)) continue;",
+    "new": "      if (this._wanted.has(k) || this._layingArts.has(k)) continue;",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -597,8 +597,8 @@
   {
     "name": "TL-atlas-unfull-dropped",
     "file": "src/render/farTrees.js",
-    "old": "    this._layingArts = new Set();\n    this._unfull();\n",
-    "new": "    this._layingArts = new Set();\n",
+    "old": "    this._unfull();\n  }",
+    "new": "  }",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -606,8 +606,8 @@
   {
     "name": "TL-atlas-overrun",
     "file": "src/render/farTrees.js",
-    "old": "if (this.layers.size < TREE_LAYERS) return this.layers.size;",
-    "new": "return this.layers.size;",
+    "old": "    if (this.layers.size < TREE_LAYERS) return this.layers.size;",
+    "new": "    return this.layers.size;",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -615,8 +615,8 @@
   {
     "name": "TL-atlas-laying-lent",
     "file": "src/render/farTrees.js",
-    "old": "for (const p of pixels) for (const a of p.arts) if (this.layers.has(a)) laying.add(a);",
-    "new": "for (const p of pixels) for (const a of p.arts) if (false) laying.add(a);",
+    "old": "    for (const p of pixels) for (const a of p.arts) if (this.layers.has(a)) laying.add(a);",
+    "new": "    for (const p of pixels) for (const a of p.arts) if (false) laying.add(a);",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -705,8 +705,8 @@
   {
     "name": "TL-far-ground-whole",
     "file": "src/render/farFlora.js",
-    "old": "    await frameBack();\n",
-    "new": "",
+    "old": "    await frameBack();\n    const m = opaqueMean(dressRecord(drawn[record], record, mats, protos, light).colors, true);",
+    "new": "    const m = opaqueMean(dressRecord(drawn[record], record, mats, protos, light).colors, true);",
     "tests": [
       "test/world/tesalands_flora.test.js"
     ]
@@ -1031,8 +1031,8 @@
   {
     "name": "TL-atlas-full-asked-whatever",
     "file": "src/render/farTrees.js",
-    "old": "    if (!this._lendable()) return;\n",
-    "new": "",
+    "old": "    if (!this._lendable()) return;\n    for (const [k, st] of this.arts) if (st === 'full') this.arts.delete(k);",
+    "new": "    for (const [k, st] of this.arts) if (st === 'full') this.arts.delete(k);",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -1040,8 +1040,8 @@
   {
     "name": "TL-atlas-late-picture-unheld",
     "file": "src/render/farTrees.js",
-    "old": "if (l !== undefined) laying.add(k); return l;",
-    "new": "return l;",
+    "old": "      if (l !== undefined) laying.add(k);\n      return l;",
+    "new": "      return l;",
     "tests": [
       "test/render/fartrees.test.js"
     ]

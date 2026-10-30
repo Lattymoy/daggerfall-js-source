@@ -113,7 +113,7 @@ test('RVN5 THE PYRE\'S SHAPE: the brain\'s verdict a disc about its locked point
   assert.ok(blowField('pyre', 2.1, 8, 8).rim, 'its rim');
   assert.equal(BLOW_KIND.pyre, BLOW_KIND.slam);
   const tg = read('src/render/foeTelegraph.js');
-  assert.match(tg, /else if \(b\.kind === 'leap' \|\| b\.kind === 'pyre'\) gl\.uniform4f\(U\.uP, P\.r, b\.ahead \?\? 0, 0, 0\);/, 'the shader: its radius and its point');
+  assert.match(tg, /else if \(b\.kind === 'leap' \|\| b\.kind === 'pyre'\)\n\s*gl\.uniform4f\(U\.uP, P\.r, b\.ahead \?\? 0, 0, 0\);/, 'the shader: its radius and its point');
   assert.match(tg, /const P = BLOW\[b\.kind\]/, 'its own numbers');
   assert.ok(Math.abs(quadHalf('pyre', 8) - (8 + 2.2 + 0.6)) < 1e-9);
   assert.ok(Math.abs(quadHalf('pyre') - (12 + 2.2 + 0.6)) < 1e-9, 'unplaced: its farthest');

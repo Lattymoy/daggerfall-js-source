@@ -541,8 +541,8 @@
   {
     "name": "TECH1-the-mark-at-the-kind-size",
     "file": "src/render/foeTelegraph.js",
-    "old": "      if (b.technique) {   // TECH1: the player's own mark",
-    "new": "      if (false) {   // TECH1: the player's own mark",
+    "old": "      if (b.technique) {",
+    "new": "      if (false) {",
     "tests": [
       "test/scenes/tech1_hosts.test.js"
     ]

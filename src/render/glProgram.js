@@ -27,7 +27,11 @@ const queued = () => ({ prog: null, wanted: false });
 /** SHADER-EASE MOUNT-START (2026-10-29): the sources a build has made, per context - a queue that comes after never
  *  starts them again (a host that mounted before the queue built its passes cold). */
 const TAKEN = new WeakMap();
-const takenOf = (gl) => { let t = TAKEN.get(gl); if (!t) TAKEN.set(gl, (t = new Set())); return t; };
+const takenOf = (gl) => {
+  let t = TAKEN.get(gl);
+  if (!t) TAKEN.set(gl, (t = new Set()));
+  return t;
+};
 /** SHADER-EASE GFX-BAR (2026-10-29): the started and queued programs on `gl` not yet taken, as [key, program or null]
  *  - read only, nothing linked or started (ui/gfxPrepBar.js). @param {any} gl @returns {Array<[string, any]>} */
 export const startedPrograms = (gl) => [...(STARTED.get(gl) ?? [])].map(([k, s]) => [k, s.prog]);
@@ -66,18 +70,21 @@ export function startPrograms(gl, pairs) {
   let started = STARTED.get(gl);
   if (!started) STARTED.set(gl, (started = new Map()));
   const keyed = pairs.map(([vs, fs]) => [`${vs}\0${fs}`, vs, fs]);
-  const startAll = () => keyed.map(([k, vs, fs]) => {
-    let s = started.get(k);
-    if (!s) started.set(k, (s = link(gl, vs, fs)));
-    else if (!s.prog) s.wanted = true;   // COMPILE-QUEUE: a queued pair waits its turn, at the front
-    return s.prog;
-  });
+  const startAll = () =>
+    keyed.map(([k, vs, fs]) => {
+      let s = started.get(k);
+      if (!s) started.set(k, (s = link(gl, vs, fs)));
+      else if (!s.prog) s.wanted = true; // COMPILE-QUEUE: a queued pair waits its turn, at the front
+      return s.prog;
+    });
   startAll();
   const ext = parallelCompile(gl);
   let done = false;
   return () => {
     if (done || !ext || gl.isContextLost?.()) return (done = true);
-    return (done = startAll().every((p) => p !== null && gl.getProgramParameter(p, ext.COMPLETION_STATUS_KHR) === true));
+    return (done = startAll().every(
+      (p) => p !== null && gl.getProgramParameter(p, ext.COMPLETION_STATUS_KHR) === true,
+    ));
   };
 }
 
@@ -98,12 +105,18 @@ export async function startProgramsInTurn(gl, pairs, wait) {
   const turn = () => keyed.find(([k]) => started.get(k)?.wanted) ?? keyed.find(([k]) => started.get(k)?.prog === null);
   try {
     for (let next = turn(); next && !gl.isContextLost?.(); next = turn()) {
-      const [k, vs, fs] = next, s = link(gl, vs, fs);
+      const [k, vs, fs] = next,
+        s = link(gl, vs, fs);
       started.set(k, s);
-      while (started.get(k) === s && !gl.isContextLost?.() && gl.getProgramParameter(s.prog, ext.COMPLETION_STATUS_KHR) !== true) await wait();
+      while (
+        started.get(k) === s &&
+        !gl.isContextLost?.() &&
+        gl.getProgramParameter(s.prog, ext.COMPLETION_STATUS_KHR) !== true
+      )
+        await wait();
     }
   } finally {
-    for (const [k] of keyed) if (started.get(k)?.prog === null) started.delete(k);   // a queue that ends early strands no pair: its door starts it
+    for (const [k] of keyed) if (started.get(k)?.prog === null) started.delete(k); // a queue that ends early strands no pair: its door starts it
   }
 }
 
@@ -112,7 +125,8 @@ export async function startProgramsInTurn(gl, pairs, wait) {
  *  A pair taken or never started counts as done; true at once where the context cannot say.
  *  @param {any} gl @param {ReadonlyArray<readonly [string, string]>} pairs @returns {boolean} */
 export function startedDone(gl, pairs) {
-  const ext = parallelCompile(gl), started = STARTED.get(gl);
+  const ext = parallelCompile(gl),
+    started = STARTED.get(gl);
   if (!ext || !started || gl.isContextLost?.()) return true;
   return pairs.every(([vs, fs]) => {
     const prog = started.get(`${vs}\0${fs}`)?.prog;
@@ -128,11 +142,14 @@ export function releasePrograms(gl, pairs) {
   const started = STARTED.get(gl);
   if (!started) return;
   for (const [vs, fs] of pairs) {
-    const k = `${vs}\0${fs}`, s = started.get(k);
+    const k = `${vs}\0${fs}`,
+      s = started.get(k);
     if (!s) continue;
     started.delete(k);
-    if (!s.prog) continue;   // COMPILE-QUEUE: queued and never started - its turn is dropped, nothing to free
-    gl.deleteShader(s.vs); gl.deleteShader(s.fs); gl.deleteProgram(s.prog);
+    if (!s.prog) continue; // COMPILE-QUEUE: queued and never started - its turn is dropped, nothing to free
+    gl.deleteShader(s.vs);
+    gl.deleteShader(s.fs);
+    gl.deleteProgram(s.prog);
   }
 }
 
@@ -146,12 +163,20 @@ export function releasePrograms(gl, pairs) {
  *  @template T @param {any} gl @param {ReadonlyArray<readonly [string, string]>} programs @param {() => T} make
  *  @param {(e: any) => void} [fail] @returns {((need?: boolean) => T|null) & { readonly settled: boolean }} */
 export function compiledPass(gl, programs, make, fail = () => {}) {
-  let ready = /** @type {(() => boolean)|null} */ (null), pass = /** @type {T|null} */ (null), tried = false;
+  let ready = /** @type {(() => boolean)|null} */ (null),
+    pass = /** @type {T|null} */ (null),
+    tried = false;
   const door = (need = false) => {
     if (pass || tried || !gl) return pass;
     if (!(ready ??= startPrograms(gl, programs))() && !need) return null;
     tried = true;
-    try { pass = make(); } catch (e) { fail(e); pass = null; releasePrograms(gl, programs); }
+    try {
+      pass = make();
+    } catch (e) {
+      fail(e);
+      pass = null;
+      releasePrograms(gl, programs);
+    }
     return pass;
   };
   return /** @type {any} */ (Object.defineProperty(door, 'settled', { get: () => !!pass || tried }));
@@ -188,21 +213,31 @@ export function buildProgram(gl, vsSrc, fsSrc, label = '') {
   const took = started?.get(key);
   if (took) started.delete(key);
   takenOf(gl).add(key);
-  const { prog, vs, fs } = took?.prog ? took : link(gl, vsSrc, fsSrc);   // COMPILE-QUEUE: a queued pair is compiled here, out of its turn
+  const { prog, vs, fs } = took?.prog ? took : link(gl, vsSrc, fsSrc); // COMPILE-QUEUE: a queued pair is compiled here, out of its turn
   let fault = /** @type {string|null} */ (null);
-  const t0 = clock(), linked = gl.getProgramParameter(prog, gl.LINK_STATUS), ms = clock() - t0;
+  const t0 = clock(),
+    linked = gl.getProgramParameter(prog, gl.LINK_STATUS),
+    ms = clock() - t0;
   if (ms > LINK_WAIT_MS) {
     const wait = { label: label || `${vsSrc.length}+${fsSrc.length} chars`, ms: Math.round(ms), started: !!took?.prog };
     if (WAITS.push(wait) > LINK_WAIT_KEEP) WAITS.shift();
   }
   if (!linked) {
-    for (const sh of [vs, fs]) if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) { fault = `${label ? `${label} shader: ` : ''}${gl.getShaderInfoLog(sh)}`; break; }
+    for (const sh of [vs, fs])
+      if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
+        fault = `${label ? `${label} shader: ` : ''}${gl.getShaderInfoLog(sh)}`;
+        break;
+      }
     fault ??= `${label ? `${label} link: ` : ''}${gl.getProgramInfoLog(prog)}`;
   }
   // AUDIT EG V (lane 6's shader objects; EVERY ALLOCATION HAS AN OWNER): the two stages flagged for deletion once the link
   // is read - attached, they live as long as the program and go with its deleteProgram. Kept, every pass rebuilt (the
   // Spire's look each breach, the spans' ghosts each circle) left its two behind. A build that throws frees its program too.
-  gl.deleteShader(vs); gl.deleteShader(fs);
-  if (fault != null) { gl.deleteProgram(prog); throw new Error(fault); }
+  gl.deleteShader(vs);
+  gl.deleteShader(fs);
+  if (fault != null) {
+    gl.deleteProgram(prog);
+    throw new Error(fault);
+  }
   return prog;
 }

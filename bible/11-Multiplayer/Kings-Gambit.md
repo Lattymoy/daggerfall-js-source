@@ -1208,7 +1208,7 @@ The owner: **"Dont come back until this is completed in full"** - the slice afte
 - FOUND AT THE DRAFTS - A NO-BREAK SPACE WAS A PLACE TO BREAK. French sets a no-break space before a colon ("Continu :"),
   and the face's wrapper split the words on every white space (`/\s+/` matches U+00A0): the colon wrapped onto the next
   line's head and the space came back a plain one. The wrapper breaks on white space but never a no-break space now
-  (`iliacCardFaces.js:"export const CARD_BREAK = "`) - U+00A0, U+2007 and U+202F - and keeps it; no French rules line
+  (`iliacCardFaces.js:"export const CARD_BREAK"`) - U+00A0, U+2007 and U+202F - and keeps it; no French rules line
   opens on its colon at any width.
 - FOUND AT THE GATES - THE ACCOUNT WORKER CARRIES THE WORDS. The account service bundles `systems/iliac/iliacItems.js` (the
   item law reads a card item), so the words module a card item's lines read rides its bundle beside the text core it

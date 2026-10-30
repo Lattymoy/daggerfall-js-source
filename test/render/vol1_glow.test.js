@@ -164,5 +164,5 @@ test('BOUNCE1, WITHDRAWN BY ITS AUDIT: no bounce term anywhere - a per-lantern b
   const el = rd('src/render/enhancedLighting.js'), r = rd('src/render/renderer.js');
   assert.ok(!/export (const|function) (EL_BOUNCE|bounceOn)/.test(el) && !/setBounce|_bounceWanted/.test(r), 'the constants, the door and the setter are gone');
   assert.match(el, /BOUNCE1 \(2026-09-23\), WITHDRAWN THE SAME DAY BY ITS AUDIT/, 'and the reason stands where the term stood');
-  assert.match(el, /renderer\.setVolumetrics\?\.\(volumetricsOn\(search\)\); renderer\.setHaze\?\.\(hazeOn\(search\)\); \}/, 'the glow\'s door, then VC7b\'s haze - and no bounce door between or after them');
+  assert.match(el, /renderer\.setVolumetrics\?\.\(volumetricsOn\(search\)\);\n\s*renderer\.setHaze\?\.\(hazeOn\(search\)\);\n\s*\}/, 'the glow\'s door, then VC7b\'s haze - and no bounce door between or after them');
 });

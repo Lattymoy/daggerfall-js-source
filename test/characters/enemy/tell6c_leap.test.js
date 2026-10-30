@@ -43,7 +43,7 @@ test('TELL6c: the leap - a disc 1.8 m at its point, a second, x1.6, 3-9 m off, i
   }
   assert.equal(BLOW_KIND.leap, BLOW_KIND.slam, 'the shader\'s disc ahead');
   // PIN MOVED (RVN5: the pyre's disc shares the leap's uniforms - its own radius and point)
-  assert.match(rd('src/render/foeTelegraph.js'), /else if \(b\.kind === 'leap' \|\| b\.kind === 'pyre'\) gl\.uniform4f\(U\.uP, P\.r, b\.ahead \?\? 0, 0, 0\);/);
+  assert.match(rd('src/render/foeTelegraph.js'), /else if \(b\.kind === 'leap' \|\| b\.kind === 'pyre'\)\n\s*gl\.uniform4f\(U\.uP, P\.r, b\.ahead \?\? 0, 0, 0\);/);
   assert.match(rd('src/render/foeTelegraph.js'), /gl\.uniform1f\(U\.uHalf, quadHalf\(b\.kind, b\.ahead\)\);/);
   assert.equal(punishSeconds('leap'), 1.2);
   assert.equal(TELL.TRACKERS.includes('leap'), false, 'its point locks at its start');

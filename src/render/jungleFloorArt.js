@@ -17,7 +17,18 @@
 // as the meadow's do; which plant a tuft wears is the width byte's, by shares the patch leans (a lush patch more fern and
 // leaf, a poor one more grass and sedge) - ladderPick's law in the vertex stage, floorPick's here.
 // ═══════════════════════════════════════════════════════════════════
-import { fitSprite, meadowSpriteBox, buildMeadowAtlas, buildMeadowMips, cardMeasures, MEADOW_SLOTS, MEADOW_GREEN, MEADOW_LUSH, MEADOW_PATCH_SCALE, MEADOW_BLADES_PER_TUFT } from './grassMeadow.js';
+import {
+  fitSprite,
+  meadowSpriteBox,
+  buildMeadowAtlas,
+  buildMeadowMips,
+  cardMeasures,
+  MEADOW_SLOTS,
+  MEADOW_GREEN,
+  MEADOW_LUSH,
+  MEADOW_PATCH_SCALE,
+  MEADOW_BLADES_PER_TUFT,
+} from './grassMeadow.js';
 import { MEADOW_SPRITES } from './meadowArt.js';
 import { ladderPick, heightFloor, heightSpan, LAB_GRASS } from './labGrass.js';
 import { smoothstep } from '../systems/mathf.js';
@@ -63,12 +74,25 @@ export const JUNGLE_FLOOR_PLANTS_M2 = JUNGLE_FLOOR_GRASS + (JUNGLE_FLOOR_JUDGED 
  * floor over this one - a fern stands as often a square metre as the owner judged it), the grass the rest, its tuft and
  * its sedge in their judged proportion - so a poor patch keeps more grass than a lush one, as it did.
  */
-export const JUNGLE_FLOOR_PLANTS = Object.freeze(JUDGED_PLANTS.map((p) => Object.freeze({
-  name: p.name, record: p.record, height: p.height, stiff: p.stiff, sway: p.sway, grass: p.grass,
-  share: Object.freeze([0, 1].map((end) => (p.grass
-    ? (p.judged[end] / grassShare(end)) * (1 - (floraShare(end) * JUNGLE_FLOOR_JUDGED) / JUNGLE_FLOOR_PLANTS_M2)
-    : (p.judged[end] * JUNGLE_FLOOR_JUDGED) / JUNGLE_FLOOR_PLANTS_M2))),
-})));
+export const JUNGLE_FLOOR_PLANTS = Object.freeze(
+  JUDGED_PLANTS.map((p) =>
+    Object.freeze({
+      name: p.name,
+      record: p.record,
+      height: p.height,
+      stiff: p.stiff,
+      sway: p.sway,
+      grass: p.grass,
+      share: Object.freeze(
+        [0, 1].map((end) =>
+          p.grass
+            ? (p.judged[end] / grassShare(end)) * (1 - (floraShare(end) * JUNGLE_FLOOR_JUDGED) / JUNGLE_FLOOR_PLANTS_M2)
+            : (p.judged[end] * JUNGLE_FLOOR_JUDGED) / JUNGLE_FLOOR_PLANTS_M2,
+        ),
+      ),
+    }),
+  ),
+);
 /** The lab's mean blade height (m): a card's side is a blade's height times its plant's scale. */
 export const FLOOR_MEAN_BLADE = heightFloor(LAB_GRASS.height) + heightSpan(LAB_GRASS.height) / 2;
 
@@ -81,18 +105,35 @@ export const FLOOR_MEAN_BLADE = heightFloor(LAB_GRASS.height) + heightSpan(LAB_G
 export function jungleFloorArt(pictureOf) {
   const sprites = [];
   for (const p of JUNGLE_FLOOR_PLANTS) {
-    if (p.record == null) { sprites.push(MEADOW_SPRITES[0]); continue; }
+    if (p.record == null) {
+      sprites.push(MEADOW_SPRITES[0]);
+      continue;
+    }
     const pic = pictureOf(p.record);
     if (!pic?.width || !pic.height) return null;
     sprites.push(fitSprite(pic, p.name));
   }
   const boxes = sprites.map((s) => Object.freeze(meadowSpriteBox(s)));
-  const variants = JUNGLE_FLOOR_PLANTS.map((p, i) => Object.freeze({ name: p.name, scale: p.height / (FLOOR_MEAN_BLADE * Math.max(boxes[i].v1, 1e-3)), stiff: p.stiff, sway: p.sway }));
+  const variants = JUNGLE_FLOOR_PLANTS.map((p, i) =>
+    Object.freeze({
+      name: p.name,
+      scale: p.height / (FLOOR_MEAN_BLADE * Math.max(boxes[i].v1, 1e-3)),
+      stiff: p.stiff,
+      sway: p.sway,
+    }),
+  );
   const atlas = buildMeadowAtlas({ sprites });
   return Object.freeze({
-    name: 'jungle-floor', variants: Object.freeze(variants), boxes: Object.freeze(boxes), sprites,
+    name: 'jungle-floor',
+    variants: Object.freeze(variants),
+    boxes: Object.freeze(boxes),
+    sprites,
     pick: ladderPick(JUNGLE_FLOOR_PLANTS.map((p, i) => [i, p.share[0], p.share[1]])),
-    green: MEADOW_GREEN, hue: 0, ...cardMeasures(variants, boxes), mips: () => buildMeadowMips(atlas), slots: MEADOW_SLOTS,
+    green: MEADOW_GREEN,
+    hue: 0,
+    ...cardMeasures(variants, boxes),
+    mips: () => buildMeadowMips(atlas),
+    slots: MEADOW_SLOTS,
   });
 }
 
@@ -100,11 +141,19 @@ export function jungleFloorArt(pictureOf) {
  *  tint, and its card's side over the lab's blade height. `art` jungleFloorArt's. Pure. */
 export function floorPick(art, r, tint) {
   const lush = smoothstep(MEADOW_LUSH[0], MEADOW_LUSH[1], tint);
-  let at = 0, variant = JUNGLE_FLOOR_PLANTS.length - 1;
+  let at = 0,
+    variant = JUNGLE_FLOOR_PLANTS.length - 1;
   for (let i = 0; i < JUNGLE_FLOOR_PLANTS.length - 1; i++) {
     const [poor, rich] = JUNGLE_FLOOR_PLANTS[i].share;
-    at += poor * (1 - lush) + rich * lush;   // GLSL's mix, term for term
-    if (r < at) { variant = i; break; }
+    at += poor * (1 - lush) + rich * lush; // GLSL's mix, term for term
+    if (r < at) {
+      variant = i;
+      break;
+    }
   }
-  return { variant, scale: art.variants[variant].scale * (MEADOW_PATCH_SCALE[0] * (1 - lush) + MEADOW_PATCH_SCALE[1] * lush), lush };
+  return {
+    variant,
+    scale: art.variants[variant].scale * (MEADOW_PATCH_SCALE[0] * (1 - lush) + MEADOW_PATCH_SCALE[1] * lush),
+    lush,
+  };
 }

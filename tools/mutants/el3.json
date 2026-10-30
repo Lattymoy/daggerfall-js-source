@@ -319,8 +319,8 @@
   {
     "name": "lane-no-air",
     "file": "src/render/enhancedLighting.js",
-    "old": "  air: true,       // EL3: and its AirPass, behind `?air=off` (syncLightingLane reads the door)\n",
-    "new": "",
+    "old": "  air: true, // EL3: and its AirPass, behind `?air=off` (syncLightingLane reads the door)\n  maxLights: EL_MAX_LIGHTS,",
+    "new": "  maxLights: EL_MAX_LIGHTS,",
     "tests": [
       "test/render/el3_air.test.js"
     ]
@@ -337,8 +337,8 @@
   {
     "name": "sync-no-air",
     "file": "src/render/enhancedLighting.js",
-    "old": "renderer.setAir(airOn(search));",
-    "new": "renderer.setAir(true);",
+    "old": "    renderer.setAir(airOn(search));",
+    "new": "    renderer.setAir(true);",
     "tests": [
       "test/render/el1_enhancedlighting.test.js"
     ]

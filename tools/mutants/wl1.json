@@ -472,8 +472,8 @@
   {
     "name": "WL1-lane-point-unlit",
     "file": "src/render/enhancedLighting.js",
-    "old": "  return acc + winLit(wp, n, 0.0, 1.0);",
-    "new": "  return acc;",
+    "old": "  return acc + winLit(wp, n, 0.0, 1.0);   // WL1: the windows' light, through their glass",
+    "new": "  return acc;   // WL1: the windows' light, through their glass",
     "tests": [
       "test/render/wl1_windowlight.test.js"
     ]
@@ -774,8 +774,8 @@
   {
     "name": "WL1-FIX-flat-vertex-ignores-the-window-sun",
     "file": "src/render/enhancedLighting.js",
-    "old": "  vBBSunVis = (dot(uBBSun, uBBSun) > 0.0 || uWinOn == 2) ? (uMesh",
-    "new": "  vBBSunVis = (dot(uBBSun, uBBSun) > 0.0) ? (uMesh",
+    "old": "  vBBSunVis = (dot(uBBSun, uBBSun) > 0.0 || uWinOn == 2) ? (uMesh > 0.5 ? sunShadowAt(sunAt, vec3(0.0, 1.0, 0.0)) : sunShadowSoftAt(sunAt, vec3(0.0, 1.0, 0.0), uSize.y)) : 1.0;   // LA-COST3: EL2's point, TREES1's kernel, PERF-SUN2's gate; AUDIT FLICKER S1: its height, off its own card; AUDIT LPT B4: a low-poly tree's every VERTEX runs this, so one tap at its root`,",
+    "new": "  vBBSunVis = (dot(uBBSun, uBBSun) > 0.0) ? (uMesh > 0.5 ? sunShadowAt(sunAt, vec3(0.0, 1.0, 0.0)) : sunShadowSoftAt(sunAt, vec3(0.0, 1.0, 0.0), uSize.y)) : 1.0;   // LA-COST3: EL2's point, TREES1's kernel, PERF-SUN2's gate; AUDIT FLICKER S1: its height, off its own card; AUDIT LPT B4: a low-poly tree's every VERTEX runs this, so one tap at its root`,",
     "tests": [
       "test/render/la_cost.test.js"
     ]

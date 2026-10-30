@@ -87,9 +87,9 @@ export const PX_TUFT_H = 16;
  *     (2..6 texels of 16)
  *   - the highlight lands only on a blade tall enough to clear the
  *     sward: `highlightMinFor(h)`, five eighths of the tuft (20 of 32) */
-export const tuftMarginFor = (w) => Math.max(1, Math.round(w * 3 / 16));
+export const tuftMarginFor = (w) => Math.max(1, Math.round((w * 3) / 16));
 export const bladeMinFor = (h) => Math.floor(h * 0.45);
-export const highlightMinFor = (h) => Math.round(h * 20 / 32);
+export const highlightMinFor = (h) => Math.round((h * 20) / 32);
 export const PX_TUFT_MARGIN = tuftMarginFor(PX_TUFT_W);
 export const PX_BLADE_MIN = bladeMinFor(PX_TUFT_H);
 export const PX_HIGHLIGHT_MIN = highlightMinFor(PX_TUFT_H);
@@ -118,7 +118,7 @@ export const PX_BLADES_PER_TUFT = 2;
 export function mulberry32(seed) {
   let a = seed >>> 0;
   return () => {
-    a = (a + 0x6D2B79F5) >>> 0;
+    a = (a + 0x6d2b79f5) >>> 0;
     let t = a;
     t = Math.imul(t ^ (t >>> 15), t | 1);
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
@@ -127,7 +127,7 @@ export function mulberry32(seed) {
 }
 
 /** the byte a tone is stored as: 0, 64, 128, 192, 255 */
-export const toneByte = (tone) => tone >= PX_TONES ? 255 : tone * 64;
+export const toneByte = (tone) => (tone >= PX_TONES ? 255 : tone * 64);
 
 /**
  * One tuft's blades, as the placer's own laws would lay them if they
@@ -141,19 +141,19 @@ export const toneByte = (tone) => tone >= PX_TONES ? 255 : tone * 64;
  */
 export function layTuft(rnd, w = PX_TUFT_W, h = PX_TUFT_H) {
   const blades = [];
-  const n = 3 + Math.floor(rnd() * 3);            // three to five blades
+  const n = 3 + Math.floor(rnd() * 3); // three to five blades
   // GRASS-PX4: the laws at THIS size - the margin and the lean are the
   // sheet's fractions (the functions beside the constants), scaled to
   // whatever w and h a caller hands in, so a tuft laid for a pin at
   // 16x32 and the shipped 8x16 are the same tuft at two scales.
   const margin = tuftMarginFor(w);
   for (let b = 0; b < n; b++) {
-    const x0 = margin + Math.floor(rnd() * (w - 2 * margin));   // never on the edge columns, so no tuft touches its neighbour
-    const height = Math.floor(h * (0.45 + rnd() * 0.55));   // bladeMinFor(h)..h: 7..16 of 16
-    let lean = (rnd() * 2 - 1) * (2 + rnd() * 4) * (w / 16);   // sideways travel at the tip, either way, in texels of THIS width
-    lean = Math.max(1 - x0, Math.min(w - 2 - x0, lean));   // ...but the tip stays inside the tuft: a blade cut off by the sheet's edge is a flat line, not a blade
-    const wide = rnd() < 0.5;                     // half the blades carry a two-texel base
-    const head = height >= h * 0.8 && rnd() < 0.4;   // a tall blade may carry a seed head
+    const x0 = margin + Math.floor(rnd() * (w - 2 * margin)); // never on the edge columns, so no tuft touches its neighbour
+    const height = Math.floor(h * (0.45 + rnd() * 0.55)); // bladeMinFor(h)..h: 7..16 of 16
+    let lean = (rnd() * 2 - 1) * (2 + rnd() * 4) * (w / 16); // sideways travel at the tip, either way, in texels of THIS width
+    lean = Math.max(1 - x0, Math.min(w - 2 - x0, lean)); // ...but the tip stays inside the tuft: a blade cut off by the sheet's edge is a flat line, not a blade
+    const wide = rnd() < 0.5; // half the blades carry a two-texel base
+    const head = height >= h * 0.8 && rnd() < 0.4; // a tall blade may carry a seed head
     // AUDIT GRASS-PX4 F3: the head is two texels wide and sits to the tip's RIGHT, so a headed tip one column
     // short of the edge painted the edge column - on 6% of tufts at 8x16 (3% at 16x32), none of them the shipped
     // seeds', which is why "no tuft on its edge column" passed as a pin and was not a law. The head stays inside
@@ -181,7 +181,8 @@ export function toneAt(f, isTip, height, highlightMin = PX_HIGHLIGHT_MIN) {
  *  GRASS-PX4: "tall" is five eighths of the tuft, whatever the tuft's
  *  height - `highlightMin` is PX_HIGHLIGHT_MIN for the shipped sheet
  *  and the same fraction of any other size paintTuft is handed. */
-export const isHighlightRow = (r, top, height, highlightMin = PX_HIGHLIGHT_MIN) => height >= highlightMin && r >= top - 1;
+export const isHighlightRow = (r, top, height, highlightMin = PX_HIGHLIGHT_MIN) =>
+  height >= highlightMin && r >= top - 1;
 
 /**
  * Paint one tuft into a sheet. Later blades paint over earlier ones,
@@ -193,10 +194,10 @@ export const isHighlightRow = (r, top, height, highlightMin = PX_HIGHLIGHT_MIN) 
  * @param {ReturnType<typeof layTuft>} blades
  */
 export function paintTuft(out, stride, ox, blades, w = PX_TUFT_W, h = PX_TUFT_H) {
-  const highlightMin = highlightMinFor(h);   // GRASS-PX4: the sheet's fraction, at this height - the ONE function (AUDIT GRASS-PX4 F1)
+  const highlightMin = highlightMinFor(h); // GRASS-PX4: the sheet's fraction, at this height - the ONE function (AUDIT GRASS-PX4 F1)
   const put = (x, y, tone, f, ordinal) => {
     if (x < 0 || x >= w || y < 0 || y >= h) return;
-    const i = ((y * stride) + ox + x) * 4;
+    const i = (y * stride + ox + x) * 4;
     out[i] = toneByte(tone);
     out[i + 1] = Math.round(f * 255);
     out[i + 2] = Math.round(ordinal * 255);
@@ -210,7 +211,13 @@ export function paintTuft(out, stride, ox, blades, w = PX_TUFT_W, h = PX_TUFT_H)
       // AUDIT 1: painted BEFORE the stalk, so the stalk's own highlight
       // texel lands on top of it and not under it.
       const xt = bl.x0 + Math.round(bl.lean);
-      for (const [dx, dy] of [[0, -1], [1, -1], [0, 0], [1, 0]]) put(xt + dx, top + dy, 2, 1, bl.ordinal);
+      for (const [dx, dy] of [
+        [0, -1],
+        [1, -1],
+        [0, 0],
+        [1, 0],
+      ])
+        put(xt + dx, top + dy, 2, 1, bl.ordinal);
     }
     for (let r = 0; r <= top; r++) {
       const f = top > 0 ? r / top : 1;
@@ -219,7 +226,7 @@ export function paintTuft(out, stride, ox, blades, w = PX_TUFT_W, h = PX_TUFT_H)
       const x = bl.x0 + Math.round(bl.lean * f * f);
       const tone = isHighlightRow(r, top, bl.height, highlightMin) ? 4 : toneAt(f, r === top, bl.height, highlightMin);
       put(x, r, tone, f, bl.ordinal);
-      if (bl.wide && f < 0.2) put(x + (bl.lean >= 0 ? -1 : 1), r, 1, f, bl.ordinal);   // the base's second texel sits on the side the blade leans AWAY from, and only the bottom fifth carries it - wider and the bases read as blocks
+      if (bl.wide && f < 0.2) put(x + (bl.lean >= 0 ? -1 : 1), r, 1, f, bl.ordinal); // the base's second texel sits on the side the blade leans AWAY from, and only the bottom fifth carries it - wider and the bases read as blocks
     }
   }
 }
@@ -229,7 +236,8 @@ export function paintTuft(out, stride, ox, blades, w = PX_TUFT_W, h = PX_TUFT_H)
  * stream of the seed. Returns the level-0 texels and the sheet's size.
  */
 export function buildTuftSheet({ variants = PX_VARIANTS, w = PX_TUFT_W, h = PX_TUFT_H, seed = PX_SEED } = {}) {
-  const width = variants * w, height = h;
+  const width = variants * w,
+    height = h;
   const data = new Uint8Array(width * height * 4);
   for (let v = 0; v < variants; v++) {
     const rnd = mulberry32((seed ^ Math.imul(v + 1, 0x85ebca6b)) >>> 0);
@@ -265,28 +273,42 @@ export function buildTuftSheet({ variants = PX_VARIANTS, w = PX_TUFT_W, h = PX_T
  */
 export function downsampleCoverage(level, { targetFrac, variants = PX_VARIANTS }) {
   const { width, height, data } = level;
-  const w2 = Math.max(1, width >> 1), h2 = Math.max(1, height >> 1);
+  const w2 = Math.max(1, width >> 1),
+    h2 = Math.max(1, height >> 1);
   const out = new Uint8Array(w2 * h2 * 4);
   const blocks = [];
   for (let y = 0; y < h2; y++) {
     for (let x = 0; x < w2; x++) {
-      let count = 0, bi = -1, bg = -1, bt = 9;
+      let count = 0,
+        bi = -1,
+        bg = -1,
+        bt = 9;
       for (let dy = 0; dy < 2; dy++) {
         for (let dx = 0; dx < 2; dx++) {
-          const sx = Math.min(width - 1, x * 2 + dx), sy = Math.min(height - 1, y * 2 + dy);
+          const sx = Math.min(width - 1, x * 2 + dx),
+            sy = Math.min(height - 1, y * 2 + dy);
           const i = (sy * width + sx) * 4;
           if (!data[i + 3]) continue;
           count++;
-          const g = data[i + 1], t = data[i];
-          if (g > bg || (g === bg && t < bt)) { bg = g; bt = t; bi = i; }
+          const g = data[i + 1],
+            t = data[i];
+          if (g > bg || (g === bg && t < bt)) {
+            bg = g;
+            bt = t;
+            bi = i;
+          }
         }
       }
       const o = (y * w2 + x) * 4;
-      if (bi >= 0) { out[o] = data[bi]; out[o + 1] = data[bi + 1]; out[o + 2] = data[bi + 2]; }
+      if (bi >= 0) {
+        out[o] = data[bi];
+        out[o + 1] = data[bi + 1];
+        out[o + 2] = data[bi + 2];
+      }
       blocks.push({ x, y, count, g: bg, o });
     }
   }
-  const tuftAt = w2 / variants;   // this level's texels per tuft, across
+  const tuftAt = w2 / variants; // this level's texels per tuft, across
   const covered = blocks.filter((b) => b.count > 0);
   covered.sort((a, b) => b.count - a.count || b.g - a.g || b.y - a.y || a.x - b.x);
   const keep = Math.min(covered.length, Math.max(1, Math.round(targetFrac * w2 * h2)));
@@ -296,7 +318,8 @@ export function downsampleCoverage(level, { targetFrac, variants = PX_VARIANTS }
   // claim on it fills the whole level, which is the "always grass" law
   // for the last three levels stated once rather than twice
   for (let v = 0; v < variants; v++) {
-    const x0 = Math.floor(v * tuftAt), x1 = Math.floor((v + 1) * tuftAt);
+    const x0 = Math.floor(v * tuftAt),
+      x1 = Math.floor((v + 1) * tuftAt);
     const mine = covered.filter((b) => b.x >= x0 && b.x < x1);
     if (mine.length && !mine.some((b) => out[b.o + 3])) out[mine[0].o + 3] = 255;
   }

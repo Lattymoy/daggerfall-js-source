@@ -326,8 +326,8 @@
   {
     "name": "VEIN-HUE-the-el-multiply-kept",
     "file": "src/render/enhancedLighting.js",
-    "old": "  if (uBatchDye > 0.0) lit = mix(lit, undyed * elDecode(uBatchTint), uBatchDye);   // VEIN-HUE: a dyed batch's wash is its colour\n",
-    "new": "",
+    "old": "  if (uBatchDye > 0.0) lit = mix(lit, undyed * elDecode(uBatchTint), uBatchDye);   // VEIN-HUE: a dyed batch's wash is its colour\n  if (uConceal.x == 2.0) lit *= ${SHADE_DARK};   // AUDIT-EL F14: a uniform nothing uploaded read 0 - every shade a black cut-out",
+    "new": "  if (uConceal.x == 2.0) lit *= ${SHADE_DARK};   // AUDIT-EL F14: a uniform nothing uploaded read 0 - every shade a black cut-out",
     "tests": [
       "test/render/fb1012b_veinhue.test.js"
     ]

@@ -272,8 +272,8 @@
   {
     "name": "VC7b-door-not-read",
     "file": "src/render/enhancedLighting.js",
-    "old": "renderer.setHaze?.(hazeOn(search)); }",
-    "new": "}",
+    "old": "    renderer.setHaze?.(hazeOn(search));\n  } // EL3: the door is the page's, read here alone; EL8: the contact door too; LC1: the grid's; SC1: the cache's; VOL1: the glow's",
+    "new": "  } // EL3: the door is the page's, read here alone; EL8: the contact door too; LC1: the grid's; SC1: the cache's; VOL1: the glow's",
     "tests": [
       "test/render/vc7b_shafts.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "VC7b-door-inverted",
     "file": "src/render/enhancedLighting.js",
-    "old": "return pageParam('haze', search) !== 'off';",
-    "new": "return pageParam('haze', search) === 'off';",
+    "old": "  return pageParam('haze', search) !== 'off'; // PERF-URL",
+    "new": "  return pageParam('haze', search) === 'off'; // PERF-URL",
     "tests": [
       "test/render/vc7b_shafts.test.js"
     ]

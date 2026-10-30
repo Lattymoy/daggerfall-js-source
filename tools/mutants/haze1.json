@@ -137,8 +137,8 @@
   {
     "name": "HAZE1-shader-axis",
     "file": "src/render/heatHaze.js",
-    "old": "vec2(0.9239, 0.3827)), vWorld.y * 1.5",
-    "new": "vec2(0.3827, 0.9239)), vWorld.y * 1.5",
+    "old": "  vec4 r1 = vec4(dot(vWorld.xz, vec2(0.9239, 0.3827)), vWorld.y * 1.5, dot(vWorld.xz, vec2(-0.4226, 0.9063)), vWorld.y * 1.5) * k;",
+    "new": "  vec4 r1 = vec4(dot(vWorld.xz, vec2(0.3827, 0.9239)), vWorld.y * 1.5, dot(vWorld.xz, vec2(-0.4226, 0.9063)), vWorld.y * 1.5) * k;",
     "tests": [
       "test/systems/haze1_heatHaze.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "HAZE1-drift",
     "file": "src/render/heatHaze.js",
-    "old": "HAZE_DRIFT = Object.freeze([0.026, -0.30, -0.043, -0.48]);",
-    "new": "HAZE_DRIFT = Object.freeze([0.026, -0.30, -0.043, -0.38]);",
+    "old": "export const HAZE_DRIFT = Object.freeze([0.026, -0.3, -0.043, -0.48]);",
+    "new": "export const HAZE_DRIFT = Object.freeze([0.026, -0.3, -0.043, -0.38]);",
     "tests": [
       "test/systems/haze1_heatHaze.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "HAZE1-bend-mix",
     "file": "src/render/heatHaze.js",
-    "old": "(n1 * 1.15 + n2 * 0.85)",
-    "new": "(n1 * 0.85 + n2 * 1.15)",
+    "old": "  vec2 bend = (n1 * 1.15 + n2 * 0.85) * vec2(0.3, 1.0) * strength;",
+    "new": "  vec2 bend = (n1 * 0.85 + n2 * 1.15) * vec2(0.3, 1.0) * strength;",
     "tests": [
       "test/systems/haze1_heatHaze.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "HAZE1-anchor-sign",
     "file": "src/render/heatHaze.js",
-    "old": "this.anchor[0] -= offset[0];",
-    "new": "this.anchor[0] += offset[0];",
+    "old": "    this.anchor[0] -= offset[0];",
+    "new": "    this.anchor[0] += offset[0];",
     "tests": [
       "test/systems/haze1_heatHaze.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "HAZE1-phase-axis-scale",
     "file": "src/render/heatHaze.js",
-    "old": "out[0] = ax * k * HAZE_AXES.k1;",
-    "new": "out[0] = ax * k * HAZE_AXES.k2;",
+    "old": "  out[0] = ax * k * HAZE_AXES.k1;",
+    "new": "  out[0] = ax * k * HAZE_AXES.k2;",
     "tests": [
       "test/systems/haze1_heatHaze.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "HAZE1-copy-rect",
     "file": "src/render/heatHaze.js",
-    "old": "gl.copyTexSubImage2D(gl.TEXTURE_2D, 0, 0, 0, vx, vy, vw, vh);",
-    "new": "gl.copyTexSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 0, 0, vw, vh);",
+    "old": "    gl.copyTexSubImage2D(gl.TEXTURE_2D, 0, 0, 0, vx, vy, vw, vh);",
+    "new": "    gl.copyTexSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 0, 0, vw, vh);",
     "tests": [
       "test/systems/haze1_heatHaze.test.js"
     ]

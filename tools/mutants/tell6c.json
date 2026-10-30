@@ -75,8 +75,8 @@
   {
     "name": "TELL6c-mirror-at-feet",
     "file": "src/render/foeTelegraph.js",
-    "old": "    const r = BLOW[kind].r, d = Math.hypot(across, along - ahead);",
-    "new": "    const r = BLOW[kind].r, d = Math.hypot(across, along);",
+    "old": "      d = Math.hypot(across, along - ahead);",
+    "new": "      d = Math.hypot(across, along);",
     "tests": [
       "test/characters/enemy/tell6c_leap.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "TELL6c-up-unset",
     "file": "src/render/foeTelegraph.js",
-    "old": "      else if (b.kind === 'leap' || b.kind === 'pyre') gl.uniform4f(U.uP, P.r, b.ahead ?? 0, 0, 0);   // RVN5: the pyre's disc at its point\n",
-    "new": "",
+    "old": "      else if (b.kind === 'leap' || b.kind === 'pyre')\n        gl.uniform4f(U.uP, P.r, b.ahead ?? 0, 0, 0); // RVN5: the pyre's disc at its point\n      else if (b.kind === 'aimed') gl.uniform4f(U.uP, b.ahead ?? 0, P.halfW, 0, 0);",
+    "new": "      else if (b.kind === 'aimed') gl.uniform4f(U.uP, b.ahead ?? 0, P.halfW, 0, 0);",
     "tests": [
       "test/characters/enemy/tell6c_leap.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "TELL6c-quad-fixed",
     "file": "src/render/foeTelegraph.js",
-    "old": "ahead + (kind === 'leap' ? BLOW.leap.r : kind === 'pyre' ? BLOW.pyre.r : 0) :",
-    "new": "ahead + (kind === 'pyre' ? BLOW.pyre.r : 0) :",
+    "old": "    ? ahead + (kind === 'leap' ? BLOW.leap.r : kind === 'pyre' ? BLOW.pyre.r : 0)",
+    "new": "    ? ahead + (kind === 'pyre' ? BLOW.pyre.r : 0)",
     "tests": [
       "test/characters/enemy/tell6c_leap.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "TELL6c-kind-id",
     "file": "src/render/foeTelegraph.js",
-    "old": "ring: 3, charge: 0, leap: 2, aimed: 0, pyre: 2 });",
-    "new": "ring: 3, charge: 0, leap: 3, aimed: 0, pyre: 2 });",
+    "old": "export const BLOW_KIND = Object.freeze({ lunge: 0, sweep: 1, slam: 2, ring: 3, charge: 0, leap: 2, aimed: 0, pyre: 2 }); // RVN5: the pyre's disc the slam's too   // TELL6: the charge's lane and the aimed line are the lunge's branch, the leap's disc the slam's - each its own numbers",
+    "new": "export const BLOW_KIND = Object.freeze({ lunge: 0, sweep: 1, slam: 2, ring: 3, charge: 0, leap: 3, aimed: 0, pyre: 2 }); // RVN5: the pyre's disc the slam's too   // TELL6: the charge's lane and the aimed line are the lunge's branch, the leap's disc the slam's - each its own numbers",
     "tests": [
       "test/characters/enemy/tell6c_leap.test.js"
     ]

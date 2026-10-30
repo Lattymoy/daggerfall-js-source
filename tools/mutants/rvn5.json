@@ -302,8 +302,8 @@
   {
     "name": "RVN5-shader-branch-lunge",
     "file": "src/render/foeTelegraph.js",
-    "old": "aimed: 0, pyre: 2 });",
-    "new": "aimed: 0, pyre: 0 });",
+    "old": "export const BLOW_KIND = Object.freeze({ lunge: 0, sweep: 1, slam: 2, ring: 3, charge: 0, leap: 2, aimed: 0, pyre: 2 }); // RVN5: the pyre's disc the slam's too   // TELL6: the charge's lane and the aimed line are the lunge's branch, the leap's disc the slam's - each its own numbers",
+    "new": "export const BLOW_KIND = Object.freeze({ lunge: 0, sweep: 1, slam: 2, ring: 3, charge: 0, leap: 2, aimed: 0, pyre: 0 }); // RVN5: the pyre's disc the slam's too   // TELL6: the charge's lane and the aimed line are the lunge's branch, the leap's disc the slam's - each its own numbers",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -311,8 +311,8 @@
   {
     "name": "RVN5-reach-none",
     "file": "src/render/foeTelegraph.js",
-    "old": "aimed: 0, pyre: BLOW.pyre.range + BLOW.pyre.r });",
-    "new": "aimed: 0, pyre: 0 });",
+    "old": "  pyre: BLOW.pyre.range + BLOW.pyre.r,",
+    "new": "  pyre: 0,",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -320,8 +320,8 @@
   {
     "name": "RVN5-quad-unplaced",
     "file": "src/render/foeTelegraph.js",
-    "old": "(kind === 'leap' || kind === 'aimed' || kind === 'pyre') ? ahead",
-    "new": "(kind === 'leap' || kind === 'aimed') ? ahead",
+    "old": "  (Number.isFinite(ahead) && (kind === 'leap' || kind === 'aimed' || kind === 'pyre')",
+    "new": "  (Number.isFinite(ahead) && (kind === 'leap' || kind === 'aimed')",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -329,8 +329,8 @@
   {
     "name": "RVN5-quad-leap-radius",
     "file": "src/render/foeTelegraph.js",
-    "old": "kind === 'pyre' ? BLOW.pyre.r : 0)",
-    "new": "kind === 'pyre' ? BLOW.leap.r : 0)",
+    "old": "    ? ahead + (kind === 'leap' ? BLOW.leap.r : kind === 'pyre' ? BLOW.pyre.r : 0)",
+    "new": "    ? ahead + (kind === 'leap' ? BLOW.leap.r : kind === 'pyre' ? BLOW.leap.r : 0)",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -338,8 +338,8 @@
   {
     "name": "RVN5-field-leap-radius",
     "file": "src/render/foeTelegraph.js",
-    "old": "    const r = BLOW[kind].r, d = Math.hypot(across, along - ahead);",
-    "new": "    const r = BLOW.leap.r, d = Math.hypot(across, along - ahead);",
+    "old": "    const r = BLOW[kind].r,",
+    "new": "    const r = BLOW.leap.r,",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]
@@ -347,8 +347,8 @@
   {
     "name": "RVN5-shader-pyre-unset",
     "file": "src/render/foeTelegraph.js",
-    "old": "      else if (b.kind === 'leap' || b.kind === 'pyre') gl.uniform4f(U.uP, P.r, b.ahead ?? 0, 0, 0);",
-    "new": "      else if (b.kind === 'leap') gl.uniform4f(U.uP, P.r, b.ahead ?? 0, 0, 0);",
+    "old": "      else if (b.kind === 'leap' || b.kind === 'pyre')",
+    "new": "      else if (b.kind === 'leap')",
     "tests": [
       "test/systems/rvn5_sig.test.js"
     ]

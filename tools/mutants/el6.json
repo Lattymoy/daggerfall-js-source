@@ -183,8 +183,8 @@
   {
     "name": "lane-no-dither",
     "file": "src/render/enhancedLighting.js",
-    "old": "  return dwWaterFog(col, wp) + (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0;",
-    "new": "  return dwWaterFog(col, wp);",
+    "old": "  return dwWaterFog(col, wp) + (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0;   // EL6: dithered at the byte, zero-mean - a lantern's falloff on a dark floor is bands without it   // DW-C: the sea's distance fog on the DISPLAY colour - the mod's post effect reads the camera's finished image",
+    "new": "  return dwWaterFog(col, wp);   // EL6: dithered at the byte, zero-mean - a lantern's falloff on a dark floor is bands without it   // DW-C: the sea's distance fog on the DISPLAY colour - the mod's post effect reads the camera's finished image",
     "tests": [
       "test/render/el6_field.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "scatter-no-early-out",
     "file": "src/render/enhancedLighting.js",
-    "old": "    if (length(rel) > dist + uPointLights[i].w) continue;   // EL6: a lantern farther than the ray reaches plus its range glows on no part of it\n",
-    "new": "",
+    "old": "    if (length(rel) > dist + uPointLights[i].w) continue;   // EL6: a lantern farther than the ray reaches plus its range glows on no part of it\n    acc += elScatter(rel, uPointLights[i].w, dir, dist) * uPointColors[i];",
+    "new": "    acc += elScatter(rel, uPointLights[i].w, dir, dist) * uPointColors[i];",
     "tests": [
       "test/render/el6_field.test.js"
     ]

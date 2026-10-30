@@ -5,8 +5,8 @@
 // the JS. `uGroundEdge` is the switch (renderer.js `coastEdges`): 0 draws every tile as DFU does.
 import { GROUND_EDGE, COAST_CUT, COAST_CUT_WANDER, packGroundKinds } from '../world/terrain/groundEdge.js';
 import { CLIP_SENTINEL } from '../world/terrain/terrainSurface.js';
-import { pageParam } from '../systems/pageQuery.js';   // the kill door
-import { isEnhanced } from '../systems/uiSkin.js';   // the skin
+import { pageParam } from '../systems/pageQuery.js'; // the kill door
+import { isEnhanced } from '../systems/uiSkin.js'; // the skin
 
 /** The enhanced skin's, `?coastedges=off` the kill door; the classic skin keeps DFU's tiles and the mod's whole-tile cut.
  *  No Features row: a picture alone, as ROAD-LOOK's. @param {string} [search] */

@@ -193,8 +193,8 @@
   {
     "name": "ROAD-LOOK-the-lane-call-dropped",
     "file": "src/render/enhancedLighting.js",
-    "old": "  tex = roadEdge(tex, data, unwrapped, gx, gy, t);   // ROAD-LOOK: a road's edge blended into its ground, its neighbour decoded as its own\n",
-    "new": "",
+    "old": "  tex = roadEdge(tex, data, unwrapped, gx, gy, t);   // ROAD-LOOK: a road's edge blended into its ground, its neighbour decoded as its own\n  if (!ge) tex = ecotone(tex, ew, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share",
+    "new": "  if (!ge) tex = ecotone(tex, ew, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share",
     "tests": [
       "test/world/road/roadlook.test.js",
       "test/systems/ecotone1.test.js"

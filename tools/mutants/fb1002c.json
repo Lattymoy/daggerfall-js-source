@@ -211,8 +211,8 @@
   {
     "name": "SPRITEGRAD-el-ternary",
     "file": "src/render/enhancedLighting.js",
-    "old": "  vec4 tex = texture(uTex, uv);\n  vec3 emissionTexel",
-    "new": "  vec4 tex = (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) ? vec4(0.0) : texture(uTex, uv);\n  vec3 emissionTexel",
+    "old": "  vec4 tex = texture(uTex, uv);",
+    "new": "  vec4 tex = (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) ? vec4(0.0) : texture(uTex, uv);",
     "tests": [
       "test/render/spritegrad.test.js"
     ]

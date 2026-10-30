@@ -249,8 +249,8 @@
   {
     "name": "lane-no-adapt",
     "file": "src/render/enhancedLighting.js",
-    "old": "  float ex = uELExposure * elAdapt();   // EL4: the eye's own multiplier rides the scene's exposure\n  vec3 tm = elTonemapRGB(lit * ex);   // HQ1: the colour through the curve",
-    "new": "  float ex = uELExposure;   // EL4\n  vec3 tm = elTonemapRGB(lit * ex);   // HQ1: the colour through the curve",
+    "old": "  float ex = uELExposure * elAdapt();   // EL4: the eye's own multiplier rides the scene's exposure",
+    "new": "  float ex = uELExposure;   // EL4",
     "tests": [
       "test/render/el4_frame.test.js"
     ]
@@ -267,8 +267,8 @@
   {
     "name": "lane-dungeon-always",
     "file": "src/render/enhancedLighting.js",
-    "old": "export function dungeonAmbient(on, rgb) {\n  if (!on) return rgb;",
-    "new": "export function dungeonAmbient(on, rgb) {",
+    "old": "  if (!on) return rgb;\n  return new Float32Array([",
+    "new": "  return new Float32Array([",
     "tests": [
       "test/render/el4_frame.test.js"
     ]
@@ -276,8 +276,8 @@
   {
     "name": "lane-trilight-unscaled",
     "file": "src/render/enhancedLighting.js",
-    "old": "  if (!on || !tri) return tri;\n  if (into) {",
-    "new": "  if (!on || tri) return tri;\n  if (into) {",
+    "old": "  if (!on || !tri) return tri;",
+    "new": "  if (!on || tri) return tri;",
     "tests": [
       "test/render/el4_frame.test.js"
     ]

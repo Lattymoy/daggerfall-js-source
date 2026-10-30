@@ -264,8 +264,8 @@
   {
     "name": "DISSOLVE-the-lane-without-it",
     "file": "src/render/enhancedLighting.js",
-    "old": "  if (dissolveGone(uv)) discard;   // DISSOLVE: burnt away, or not yet through its portal\n",
-    "new": "",
+    "old": "  if (dissolveGone(uv)) discard;   // DISSOLVE: burnt away, or not yet through its portal\n  vec3 emission = elDecode(emissionTexel);   // SPRITE-GRAD: sampled above the cut",
+    "new": "  vec3 emission = elDecode(emissionTexel);   // SPRITE-GRAD: sampled above the cut",
     "tests": [
       "test/systems/revenant/revenant_companions.test.js"
     ]

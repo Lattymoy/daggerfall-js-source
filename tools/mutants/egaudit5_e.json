@@ -39,8 +39,8 @@
   {
     "name": "EGA5E-shaders-kept",
     "file": "src/render/glProgram.js",
-    "old": "  gl.deleteShader(vs); gl.deleteShader(fs);\n",
-    "new": "",
+    "old": "  gl.deleteShader(vs);\n  gl.deleteShader(fs);\n  if (fault != null) {",
+    "new": "  if (fault != null) {",
     "tests": [
       "test/net/eliteGates/egaudit5_e.test.js",
       "test/render/audit68_render_b.test.js"
@@ -49,8 +49,8 @@
   {
     "name": "EGA5E-fragment-shader-kept",
     "file": "src/render/glProgram.js",
-    "old": "  gl.deleteShader(vs); gl.deleteShader(fs);\n",
-    "new": "  gl.deleteShader(vs);\n",
+    "old": "  gl.deleteShader(fs);\n  if (fault != null) {",
+    "new": "  if (fault != null) {",
     "tests": [
       "test/net/eliteGates/egaudit5_e.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "EGA5E-failed-program-kept",
     "file": "src/render/glProgram.js",
-    "old": "if (fault != null) { gl.deleteProgram(prog); throw new Error(fault); }",
-    "new": "if (fault != null) { throw new Error(fault); }",
+    "old": "    gl.deleteProgram(prog);\n    throw new Error(fault);",
+    "new": "    throw new Error(fault);",
     "tests": [
       "test/net/eliteGates/egaudit5_e.test.js"
     ]

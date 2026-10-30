@@ -112,8 +112,8 @@
   {
     "name": "LW-started-never-true",
     "file": "src/render/glProgram.js",
-    "old": "started: !!took?.prog };",
-    "new": "started: false };",
+    "old": "    const wait = { label: label || `${vsSrc.length}+${fsSrc.length} chars`, ms: Math.round(ms), started: !!took?.prog };",
+    "new": "    const wait = { label: label || `${vsSrc.length}+${fsSrc.length} chars`, ms: Math.round(ms), started: false };",
     "tests": [
       "test/render/shaderease.test.js"
     ],

@@ -245,8 +245,8 @@
   {
     "name": "FAR-FLORA-the-field-snow-canopy",
     "file": "src/render/farField.js",
-    "old": "whiten(flora, (j * side + i) * 4 + 1, capShare(",
-    "new": "whiten(flora, (j * side + i) * 4 + 2, capShare(",
+    "old": "        whiten(flora, (j * side + i) * 4 + 1, capShare(positions[o + 1] - seaY, normals[o + 1], caps[j * side + i])); // FAR-FLORA: the canopy under the same snow",
+    "new": "        whiten(flora, (j * side + i) * 4 + 2, capShare(positions[o + 1] - seaY, normals[o + 1], caps[j * side + i])); // FAR-FLORA: the canopy under the same snow",
     "tests": [
       "test/render/farflora.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "FAR-FLORA-the-field-lift-first",
     "file": "src/render/farField.js",
-    "old": "  if (lift) for (let v = 0; v < n; v++) positions[v * 3 + 1] += lift[v];",
-    "new": "  if (lift) for (let v = 0; v < 0; v++) positions[v * 3 + 1] += lift[v];",
+    "old": "  if (lift) for (let v = 0; v < n; v++) positions[v * 3 + 1] += lift[v]; // FAR-FLORA: the canopy over the ground the normals read",
+    "new": "  if (lift) for (let v = 0; v < 0; v++) positions[v * 3 + 1] += lift[v]; // FAR-FLORA: the canopy over the ground the normals read",
     "tests": [
       "test/render/farflora.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "FAR-FLORA-the-alpha-test",
     "file": "src/render/farFlora.js",
-    "old": "if (!all && !data[i + 3]) continue;",
-    "new": "if (!all && data[i + 3] > 255) continue;",
+    "old": "    if (!all && !data[i + 3]) continue;",
+    "new": "    if (!all && data[i + 3] > 255) continue;",
     "tests": [
       "test/render/farflora.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "FAR-FLORA-the-weighting",
     "file": "src/render/farFlora.js",
-    "old": "r += m[0] * m[3]; g += m[1] * m[3]; b += m[2] * m[3]; n += m[3];",
-    "new": "r += m[0]; g += m[1]; b += m[2]; n += 1;",
+    "old": "      r += m[0] * m[3];\n      g += m[1] * m[3];\n      b += m[2] * m[3];\n      n += m[3];",
+    "new": "      r += m[0];\n      g += m[1];\n      b += m[2];\n      n += 1;",
     "tests": [
       "test/render/farflora.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "FAR-FLORA-the-size",
     "file": "src/render/farFlora.js",
-    "old": "if (s?.h > 0) { h += s.h; w += s.w; sized++; }",
-    "new": "if (s?.h > 0) { h += s.h; w += s.h; sized++; }",
+    "old": "      w += s.w;",
+    "new": "      w += s.h;",
     "tests": [
       "test/render/farflora.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "FAR-FLORA-the-ask-once",
     "file": "src/render/farFlora.js",
-    "old": "if (!arts.has(artKey) && (spec.treeShare > 0 || spec.coverShare > 0)) ask(arts, artKey,",
-    "new": "if ((spec.treeShare > 0 || spec.coverShare > 0)) ask(arts, artKey,",
+    "old": "      if (!arts.has(artKey) && (spec.treeShare > 0 || spec.coverShare > 0))",
+    "new": "      if (spec.treeShare > 0 || spec.coverShare > 0)",
     "tests": [
       "test/render/farflora.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "FAR-FLORA-the-version",
     "file": "src/render/farFlora.js",
-    "old": "book.set(archive, art); if (art) version++;",
-    "new": "book.set(archive, art);",
+    "old": "        if (art) version++;\n      },",
+    "new": "      },",
     "tests": [
       "test/render/farflora.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "FAR-FLORA-the-lane-mix",
     "file": "src/render/enhancedLighting.js",
-    "old": "elDecode(vCanopy) * floraLight(uAmbient, uSunColor, sun, uMoonColor, uMoonScale) * floraGrain(vWorld.xz), vFlora);",
-    "new": "elDecode(vCanopy) * floraGrain(vWorld.xz), vFlora);",
+    "old": "  vec3 lit = mix(elDecode(vColor) * (uAmbient + uSunColor * (sun * diff) + uMoonColor * (uMoonScale * mdiff)), elDecode(vCanopy) * floraLight(uAmbient, uSunColor, sun, uMoonColor, uMoonScale) * floraGrain(vWorld.xz), vFlora);   // FAR-FLORA: the canopy over the ground, lit as the trees are near",
+    "new": "  vec3 lit = mix(elDecode(vColor) * (uAmbient + uSunColor * (sun * diff) + uMoonColor * (uMoonScale * mdiff)), elDecode(vCanopy) * floraGrain(vWorld.xz), vFlora);   // FAR-FLORA: the canopy over the ground, lit as the trees are near",
     "tests": [
       "test/render/farflora.test.js"
     ]

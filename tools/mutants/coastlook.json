@@ -128,8 +128,8 @@
   {
     "name": "COAST-LOOK-glsl-bilinear-corner",
     "file": "src/render/groundEdgeGlsl.js",
-    "old": "float c = mix(mix(float(m & 1u), float((m >> 1u) & 1u), f.x), mix(float((m >> 2u) & 1u), float((m >> 3u) & 1u), f.x), f.y);",
-    "new": "float c = mix(mix(float(m & 1u), float((m >> 2u) & 1u), f.x), mix(float((m >> 1u) & 1u), float((m >> 3u) & 1u), f.x), f.y);",
+    "old": "  float c = mix(mix(float(m & 1u), float((m >> 1u) & 1u), f.x), mix(float((m >> 2u) & 1u), float((m >> 3u) & 1u), f.x), f.y);",
+    "new": "  float c = mix(mix(float(m & 1u), float((m >> 2u) & 1u), f.x), mix(float((m >> 1u) & 1u), float((m >> 3u) & 1u), f.x), f.y);",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "COAST-LOOK-glsl-share-wander-sign",
     "file": "src/render/groundEdgeGlsl.js",
-    "old": "c + geWander(p));",
-    "new": "c - geWander(p));",
+    "old": "  s = smoothstep(${f(0.5 - s)}, ${f(0.5 + s)}, c + geWander(p));",
+    "new": "  s = smoothstep(${f(0.5 - s)}, ${f(0.5 + s)}, c - geWander(p));",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "COAST-LOOK-glsl-entry-half",
     "file": "src/render/groundEdgeGlsl.js",
-    "old": "((d & 1u) * 16u)) & 65535u;",
-    "new": "((d & 1u) * 8u)) & 65535u;",
+    "old": "highp uint geEntry(highp uint d) { return (GE_KINDS[int(d >> 1u)] >> ((d & 1u) * 16u)) & 65535u; }`;",
+    "new": "highp uint geEntry(highp uint d) { return (GE_KINDS[int(d >> 1u)] >> ((d & 1u) * 8u)) & 65535u; }`;",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "COAST-LOOK-glsl-switch-unread",
     "file": "src/render/groundEdgeGlsl.js",
-    "old": "  if (uGroundEdge <= 0.0) return false;\n",
-    "new": "",
+    "old": "  if (uGroundEdge <= 0.0) return false;\n  highp uint e = geEntry(d);",
+    "new": "  highp uint e = geEntry(d);",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "COAST-LOOK-glsl-base-gradient",
     "file": "src/render/groundEdgeGlsl.js",
-    "old": "vec3(f, float(k)), dux, duy).rgb)",
-    "new": "vec3(f, float(k)), dux, dux).rgb)",
+    "old": "vec3 geBase(highp uint k, vec2 f, vec2 dux, vec2 duy) { return ${decode}(textureGrad(uTileArr, vec3(f, float(k)), dux, duy).rgb); }",
+    "new": "vec3 geBase(highp uint k, vec2 f, vec2 dux, vec2 duy) { return ${decode}(textureGrad(uTileArr, vec3(f, float(k)), dux, dux).rgb); }",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "COAST-LOOK-glsl-cut-wander-unscaled",
     "file": "src/render/groundEdgeGlsl.js",
-    "old": "if (lin + ${f(COAST_CUT_WANDER)} * geWander(p) >",
-    "new": "if (lin + geWander(p) >",
+    "old": "  if (lin + ${f(COAST_CUT_WANDER)} * geWander(p) > ${f(COAST_CUT.line)}) return true;",
+    "new": "  if (lin + geWander(p) > ${f(COAST_CUT.line)}) return true;",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "COAST-LOOK-glsl-kept-tile-cut",
     "file": "src/render/groundEdgeGlsl.js",
-    "old": "  if (data != ${CLIP_SENTINEL}u) return false;",
-    "new": "  if (data == 0u) return false;",
+    "old": "  if (data != ${CLIP_SENTINEL}u) return false;   // a cell the mod kept is never cut",
+    "new": "  if (data == 0u) return false;   // a cell the mod kept is never cut",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "COAST-LOOK-glsl-nearer-edge-second",
     "file": "src/render/groundEdgeGlsl.js",
-    "old": "  if (u <= v) { if (!kb)",
-    "new": "  if (u > v) { if (!kb)",
+    "old": "  if (u <= v) { if (!kb) { n = cb; dn = db; } else if (!kc) { n = cc; dn = dc; } }",
+    "new": "  if (u > v) { if (!kb) { n = cb; dn = db; } else if (!kc) { n = cc; dn = dc; } }",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "COAST-LOOK-glsl-mirror-dropped",
     "file": "src/render/groundEdgeGlsl.js",
-    "old": "  l = vec2(l.x < 0.0 ? -l.x : (l.x > 1.0 ? 2.0 - l.x : l.x), l.y < 0.0 ? -l.y : (l.y > 1.0 ? 2.0 - l.y : l.y));\n",
-    "new": "",
+    "old": "  l = vec2(l.x < 0.0 ? -l.x : (l.x > 1.0 ? 2.0 - l.x : l.x), l.y < 0.0 ? -l.y : (l.y > 1.0 ? 2.0 - l.y : l.y));\n  tileUV = l; tuv = ROT[t] * l + TRANS[t]; gx = ROT[t] * dux; gy = ROT[t] * duy;",
+    "new": "  tileUV = l; tuv = ROT[t] * l + TRANS[t]; gx = ROT[t] * dux; gy = ROT[t] * duy;",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "COAST-LOOK-glsl-gradient-unturned",
     "file": "src/render/groundEdgeGlsl.js",
-    "old": "gx = ROT[t] * dux; gy = ROT[t] * duy;",
-    "new": "gx = dux; gy = duy;",
+    "old": "  tileUV = l; tuv = ROT[t] * l + TRANS[t]; gx = ROT[t] * dux; gy = ROT[t] * duy;",
+    "new": "  tileUV = l; tuv = ROT[t] * l + TRANS[t]; gx = dux; gy = duy;",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "COAST-LOOK-lane-blend-dropped",
     "file": "src/render/enhancedLighting.js",
-    "old": "  if (ge) tex = mix(ecotone(geBase(geA, tileUV, dux, duy), ew, vec3(tileUV, float(geA)), dux, duy), ecotone(geBase(geB, tileUV, dux, duy), ew, vec3(tileUV, float(geB)), dux, duy), geS);\n",
-    "new": "",
+    "old": "  if (ge) tex = mix(ecotone(geBase(geA, tileUV, dux, duy), ew, vec3(tileUV, float(geA)), dux, duy), ecotone(geBase(geB, tileUV, dux, duy), ew, vec3(tileUV, float(geB)), dux, duy), geS);\n  tex = roadEdge(tex, data, unwrapped, gx, gy, t);   // ROAD-LOOK: a road's edge blended into its ground, its neighbour decoded as its own",
+    "new": "  tex = roadEdge(tex, data, unwrapped, gx, gy, t);   // ROAD-LOOK: a road's edge blended into its ground, its neighbour decoded as its own",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "COAST-LOOK-lane-kinds-undecoded",
     "file": "src/render/enhancedLighting.js",
-    "old": "${groundEdgeGlsl('elDecode')}",
-    "new": "${groundEdgeGlsl()}",
+    "old": "${groundEdgeGlsl('elDecode')}   // COAST-LOOK: a transition's two kinds, the sea's cut on their line (render/groundEdgeGlsl.js)",
+    "new": "${groundEdgeGlsl()}   // COAST-LOOK: a transition's two kinds, the sea's cut on their line (render/groundEdgeGlsl.js)",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "COAST-LOOK-lane-snow-one-kind",
     "file": "src/render/enhancedLighting.js",
-    "old": "vec3(tileUV, float(geA)), dux, duy), snowGround(tex, ew, snowC, vec3(tileUV, float(geB)), dux, duy), geS)",
-    "new": "vec3(tileUV, float(geA)), dux, duy), snowGround(tex, ew, snowC, vec3(tileUV, float(geA)), dux, duy), geS)",
+    "old": "  tex = ge ? mix(snowGround(tex, ew, snowC, vec3(tileUV, float(geA)), dux, duy), snowGround(tex, ew, snowC, vec3(tileUV, float(geB)), dux, duy), geS) : snowGround(tex, ew, snowC, vec3(tuv, float(layer)), gx, gy);",
+    "new": "  tex = ge ? mix(snowGround(tex, ew, snowC, vec3(tileUV, float(geA)), dux, duy), snowGround(tex, ew, snowC, vec3(tileUV, float(geA)), dux, duy), geS) : snowGround(tex, ew, snowC, vec3(tuv, float(layer)), gx, gy);",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "COAST-LOOK-classic-skin-blended",
     "file": "src/render/groundEdgeGlsl.js",
-    "old": "return pageParam('coastedges', search) !== 'off' && isEnhanced(search);",
-    "new": "return pageParam('coastedges', search) !== 'off';",
+    "old": "  return pageParam('coastedges', search) !== 'off' && isEnhanced(search);",
+    "new": "  return pageParam('coastedges', search) !== 'off';",
     "tests": [
       "test/render/coastlook.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "COAST-LOOK-kill-door-unread",
     "file": "src/render/groundEdgeGlsl.js",
-    "old": "return pageParam('coastedges', search) !== 'off' && isEnhanced(search);",
-    "new": "return isEnhanced(search);",
+    "old": "  return pageParam('coastedges', search) !== 'off' && isEnhanced(search);",
+    "new": "  return isEnhanced(search);",
     "tests": [
       "test/render/coastlook.test.js"
     ]

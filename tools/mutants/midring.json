@@ -229,8 +229,8 @@
   {
     "name": "FAR-FIELD-frame-off-a-pixel",
     "file": "src/render/farField.js",
-    "old": "positions[o + 2] = (by + 1 - yc) * S;",
-    "new": "positions[o + 2] = (by - yc) * S;",
+    "old": "      positions[o + 2] = (by + 1 - yc) * S;",
+    "new": "      positions[o + 2] = (by - yc) * S;",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "FAR-FIELD-sea-a-third",
     "file": "src/render/farField.js",
-    "old": "majority = (FAR_SAMPLES.length ** 2) / 2",
-    "new": "majority = (FAR_SAMPLES.length ** 2) / 3",
+    "old": "    majority = FAR_SAMPLES.length ** 2 / 2;",
+    "new": "    majority = FAR_SAMPLES.length ** 2 / 3;",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "FAR-FIELD-ocean-climate-ignored",
     "file": "src/render/farField.js",
-    "old": "const wet = low[v] > majority || oceanAt(px, py, v);",
-    "new": "const wet = low[v] > majority;",
+    "old": "      const wet = low[v] > majority || oceanAt(px, py, v);",
+    "new": "      const wet = low[v] > majority;",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "FAR-FIELD-sea-tint-land",
     "file": "src/render/farField.js",
-    "old": "tintAt(px, py, wet ? 0 : high[v], v)",
-    "new": "tintAt(px, py, high[v], v)",
+    "old": "      const t = tintAt(px, py, wet ? 0 : high[v], v);",
+    "new": "      const t = tintAt(px, py, high[v], v);",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "FAR-FIELD-order-nearest-first",
     "file": "src/render/farField.js",
-    "old": "b[2] - a[2] ||",
-    "new": "a[2] - b[2] ||",
+    "old": "  list.sort((a, b) => b[2] - a[2] || a[1] - b[1] || a[0] - b[0]);",
+    "new": "  list.sort((a, b) => a[2] - b[2] || a[1] - b[1] || a[0] - b[0]);",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "FAR-FIELD-hole-too-wide",
     "file": "src/render/farField.js",
-    "old": "centre(cx + 1) <= covered.x1",
-    "new": "centre(cx) <= covered.x1",
+    "old": "      if (inY && centre(cx) >= covered.x0 && centre(cx + 1) <= covered.x1) continue;",
+    "new": "      if (inY && centre(cx) >= covered.x0 && centre(cx) <= covered.x1) continue;",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "FAR-FIELD-reach-short",
     "file": "src/render/farField.js",
-    "old": "const reach = radius + 2 * FAR_REBUILD_DRIFT + 1",
-    "new": "const reach = radius",
+    "old": "  const reach = radius + 2 * FAR_REBUILD_DRIFT + 1,",
+    "new": "  const reach = radius,",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -292,8 +292,8 @@
   {
     "name": "FAR-FIELD-reorder-every-frame",
     "file": "src/render/farField.js",
-    "old": "if (!this.vao || key === this._orderKey) return;",
-    "new": "if (!this.vao) return;",
+    "old": "    if (!this.vao || key === this._orderKey) return;",
+    "new": "    if (!this.vao) return;",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -573,8 +573,8 @@
   {
     "name": "PIXEL-FADE-lane-mix-inverted",
     "file": "src/render/enhancedLighting.js",
-    "old": "tex = mix(tex, uFadeTint.rgb, uFadeTint.a);",
-    "new": "tex = mix(tex, uFadeTint.rgb, 1.0 - uFadeTint.a);",
+    "old": "  tex = mix(tex, uFadeTint.rgb, uFadeTint.a);   // MID-RING: out of the middle ring's tint, a just-built pixel's",
+    "new": "  tex = mix(tex, uFadeTint.rgb, 1.0 - uFadeTint.a);   // MID-RING: out of the middle ring's tint, a just-built pixel's",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -766,8 +766,8 @@
   {
     "name": "FAR-FIELD-steps-by-the-row",
     "file": "src/render/farField.js",
-    "old": "if (v && v % FAR_CELLS_A_STEP === 0) yield;",
-    "new": "if (v && v % (FAR_CELLS_A_STEP * 64) === 0) yield;",
+    "old": "      if (v && v % FAR_CELLS_A_STEP === 0) yield;",
+    "new": "      if (v && v % (FAR_CELLS_A_STEP * 64) === 0) yield;",
     "tests": [
       "test/render/midring.test.js"
     ]
@@ -775,8 +775,8 @@
   {
     "name": "FAR-FIELD-normals-whole",
     "file": "src/render/farField.js",
-    "old": "if (j % FAR_NORMAL_ROWS === 0) yield;",
-    "new": "if (j === 0) yield;",
+    "old": "    if (j % FAR_NORMAL_ROWS === 0) yield; // the normals a few rows a step too (all 14,641 at once ran a step to 6-35 ms)",
+    "new": "    if (j === 0) yield; // the normals a few rows a step too (all 14,641 at once ran a step to 6-35 ms)",
     "tests": [
       "test/render/midring.test.js"
     ]

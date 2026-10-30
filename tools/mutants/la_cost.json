@@ -237,8 +237,8 @@
   {
     "name": "LA-COST3-the-read-without-the-half-unit-lift",
     "file": "src/render/enhancedLighting.js",
-    "old": "max(0.5, uSunLift * uSize.y",
-    "new": "max(0.0, uSunLift * uSize.y",
+    "old": "  vec3 sunAt = vBBBase + vec3(0.0, max(0.5, uSunLift * uSize.y * (uMesh > 0.5 ? aScale : abs(aCorner.x) * 2.0)), 0.0);   // AUDIT BANTHA1 TREE-2: a jungle tree reads its sun at its crown, near and far alike - at its root under a closed canopy every crown, an emergent's in full sun, stood in its neighbours' shade",
+    "new": "  vec3 sunAt = vBBBase + vec3(0.0, max(0.0, uSunLift * uSize.y * (uMesh > 0.5 ? aScale : abs(aCorner.x) * 2.0)), 0.0);   // AUDIT BANTHA1 TREE-2: a jungle tree reads its sun at its crown, near and far alike - at its root under a closed canopy every crown, an emergent's in full sun, stood in its neighbours' shade",
     "tests": [
       "test/render/la_cost.test.js",
       "test/render/el2_shadows.test.js",
@@ -249,8 +249,8 @@
   {
     "name": "LA-COST3-the-fragment-reads-the-map-again",
     "file": "src/render/enhancedLighting.js",
-    "old": "uBBSun * cloudShadowAt(vBBWorld) * vBBSunVis : vec3(0.0);",
-    "new": "uBBSun * cloudShadowAt(vBBWorld) * sunShadowSoftAt(base, vec3(0.0, 1.0, 0.0)) : vec3(0.0);",
+    "old": "  vec3 sunLit = dot(uBBSun, uBBSun) > 0.0 ? uBBSun * cloudShadowAt(vBBWorld) * vBBSunVis : vec3(0.0);",
+    "new": "  vec3 sunLit = dot(uBBSun, uBBSun) > 0.0 ? uBBSun * cloudShadowAt(vBBWorld) * sunShadowSoftAt(base, vec3(0.0, 1.0, 0.0)) : vec3(0.0);",
     "tests": [
       "test/render/la_cost.test.js"
     ]
@@ -258,8 +258,8 @@
   {
     "name": "LA-COST3-the-value-interpolated",
     "file": "src/render/enhancedLighting.js",
-    "old": "flat out float vBBSunVis;",
-    "new": "out float vBBSunVis;",
+    "old": "flat out float vBBSunVis;   // LA-COST3: the sun map's word at the flat's base, one value for the whole quad",
+    "new": "out float vBBSunVis;   // LA-COST3: the sun map's word at the flat's base, one value for the whole quad",
     "tests": [
       "test/render/la_cost.test.js"
     ]
@@ -276,8 +276,8 @@
   {
     "name": "LA-COST3-the-int-precision-the-stages-disagree-on",
     "file": "src/render/enhancedLighting.js",
-    "old": "precision mediump int;   // LA-COST3",
-    "new": "// LA-COST3",
+    "old": "precision mediump int;   // LA-COST3: the fragment stage's default, so the uniforms both stages declare agree",
+    "new": "// LA-COST3: the fragment stage's default, so the uniforms both stages declare agree",
     "tests": [
       "test/render/la_cost.test.js"
     ]
@@ -323,8 +323,8 @@
   {
     "name": "LA-COST4-the-glow-gate-inverted",
     "file": "src/render/enhancedLighting.js",
-    "old": "  if (uELScatter > 0.0) {\n    vec3 glow",
-    "new": "  if (uELScatter <= 0.0) {\n    vec3 glow",
+    "old": "  if (uELScatter > 0.0) {",
+    "new": "  if (uELScatter <= 0.0) {",
     "tests": [
       "test/render/la_cost.test.js"
     ]
@@ -350,8 +350,8 @@
   {
     "name": "LA-COST5-the-march-run-past-the-band",
     "file": "src/render/enhancedLighting.js",
-    "old": "      : (k == -2 || d > uPointLights[i].w * ${glslFloat(AIR_CONTACT_RANGE_FRACTION)}) ? 1.0",
-    "new": "      : (k == -2) ? 1.0",
+    "old": "      : (k == -2 || d > uPointLights[i].w * ${glslFloat(AIR_CONTACT_RANGE_FRACTION)}) ? 1.0   // MAC-T1: -2 is the hand's light, by name",
+    "new": "      : (k == -2) ? 1.0   // MAC-T1: -2 is the hand's light, by name",
     "tests": [
       "test/render/la_cost.test.js"
     ]

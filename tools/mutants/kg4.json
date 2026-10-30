@@ -236,8 +236,8 @@
   {
     "name": "KG4-D-recess",
     "file": "src/render/gambitTableDraw.js",
-    "old": "const y = water(c, r) ? top - GAMBIT_WATER_DROP : top;",
-    "new": "const y = top;",
+    "old": "      const y = water(c, r) ? top - GAMBIT_WATER_DROP : top;",
+    "new": "      const y = top;",
     "tests": [
       "test/world/kg4_board.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "KG4-D-back-turn",
     "file": "src/render/gambitTableDraw.js",
-    "old": "return plateModel([u0, v0, u1, v1], [u1, v0, u0, v1], ",
-    "new": "return plateModel([u0, v0, u1, v1], [u0, v0, u1, v1], ",
+    "old": "  return plateModel([u0, v0, u1, v1], [u1, v0, u0, v1], gambitCellUv(gambitAtlasCell('back')), onAtlas);",
+    "new": "  return plateModel([u0, v0, u1, v1], [u0, v0, u1, v1], gambitCellUv(gambitAtlasCell('back')), onAtlas);",
     "tests": [
       "test/world/kg4_board.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "KG4-D-face-side",
     "file": "src/render/gambitTableDraw.js",
-    "old": "  const Y = cross(Z, X);\n  const H = gambitCardHeight(places.cell);",
-    "new": "  const Y = cross(X, Z);\n  const H = gambitCardHeight(places.cell);",
+    "old": "  const Y = cross(Z, X);",
+    "new": "  const Y = cross(X, Z);",
     "tests": [
       "test/world/kg4_board.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "KG4-D-lift",
     "file": "src/render/gambitTableDraw.js",
-    "old": "(p.id === selected ? GAMBIT_SELECT_LIFT : 0)",
-    "new": "0",
+    "old": "    const foot = [\n      base[0] + shake[0],\n      places.top + GAMBIT_CARD_FOOT + (p.id === selected ? GAMBIT_SELECT_LIFT : 0),\n      base[2] + shake[2],\n    ];",
+    "new": "    const foot = [base[0] + shake[0], places.top + GAMBIT_CARD_FOOT + 0, base[2] + shake[2]];",
     "tests": [
       "test/world/kg4_board.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "KG4-D-remap",
     "file": "src/render/gambitTableDraw.js",
-    "old": "const remap = p.flash ? GAMBIT_REMAP_HURT : p.glow ? GAMBIT_REMAP_GLOW : null;",
-    "new": "const remap = null;",
+    "old": "    const remap = p.flash ? GAMBIT_REMAP_HURT : p.glow ? GAMBIT_REMAP_GLOW : null;",
+    "new": "    const remap = null;",
     "tests": [
       "test/world/kg4_board.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "KG4-D-tint",
     "file": "src/render/gambitTableDraw.js",
-    "old": "paintGambitAtlas(t.ctx); tintGambitAtlas(t.ctx, tint);",
-    "new": "paintGambitAtlas(t.ctx);",
+    "old": "      tintGambitAtlas(t.ctx, tint);\n      upload(record, t.ctx, GAMBIT_ATLAS_W, GAMBIT_ATLAS_H);",
+    "new": "      upload(record, t.ctx, GAMBIT_ATLAS_W, GAMBIT_ATLAS_H);",
     "tests": [
       "test/world/kg4_board.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "KG4-D-cutout",
     "file": "src/render/gambitTableDraw.js",
-    "old": "upload(GAMBIT_FX, c.ctx, W, H, { cutout: true });",
-    "new": "upload(GAMBIT_FX, c.ctx, W, H);",
+    "old": "    upload(GAMBIT_FX, c.ctx, W, H, { cutout: true }); // a flame's, a bubble's, a glyph's clear texels are no texels",
+    "new": "    upload(GAMBIT_FX, c.ctx, W, H); // a flame's, a bubble's, a glyph's clear texels are no texels",
     "tests": [
       "test/world/kg4_board.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "KG4-D-mesh-once",
     "file": "src/render/gambitTableDraw.js",
-    "old": "    if (!m) { m = renderer.createMesh(model()); meshes.set(key, m); }",
-    "new": "    { m = renderer.createMesh(model()); meshes.set(key, m); }",
+    "old": "    let m = meshes.get(key);\n    if (!m) {",
+    "new": "    let m = meshes.get(key);\n    {",
     "tests": [
       "test/world/kg4_board.test.js"
     ]

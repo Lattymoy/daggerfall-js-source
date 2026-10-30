@@ -83,8 +83,8 @@
   {
     "name": "MACT-the-march-ignores-the-table",
     "file": "src/render/enhancedLighting.js",
-    "old": "      : (k == -2 || d > uPointLights[i].w",
-    "new": "      : (d > uPointLights[i].w",
+    "old": "      : (k == -2 || d > uPointLights[i].w * ${glslFloat(AIR_CONTACT_RANGE_FRACTION)}) ? 1.0   // MAC-T1: -2 is the hand's light, by name",
+    "new": "      : (d > uPointLights[i].w * ${glslFloat(AIR_CONTACT_RANGE_FRACTION)}) ? 1.0   // MAC-T1: -2 is the hand's light, by name",
     "tests": [
       "test/render/mact_bugs.test.js",
       "test/render/el5_field.test.js",

@@ -38,8 +38,8 @@
   {
     "name": "SNOW-TELL-e-the-pass-unlifted",
     "file": "src/render/foeTelegraph.js",
-    "old": "gl.uniform1f(U.uLift, telegraphLift(snowRise));",
-    "new": "gl.uniform1f(U.uLift, BLOW_LIFT);",
+    "old": "    gl.uniform1f(U.uLift, telegraphLift(snowRise)); // SNOW-TELL: over the deep snow, where the frame drew it",
+    "new": "    gl.uniform1f(U.uLift, BLOW_LIFT); // SNOW-TELL: over the deep snow, where the frame drew it",
     "tests": [
       "test/render/fb1011_snowtell.test.js"
     ]

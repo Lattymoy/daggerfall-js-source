@@ -402,8 +402,8 @@
   {
     "name": "TELL5-ucut-unset",
     "file": "src/render/foeTelegraph.js",
-    "old": "      gl.uniform1f(U.uCut, phase.cut > 0 ? phase.cut : 0);   // TELL5",
-    "new": "      gl.uniform1f(U.uCut, 0);   // TELL5",
+    "old": "      gl.uniform1f(U.uCut, phase.cut > 0 ? phase.cut : 0); // TELL5",
+    "new": "      gl.uniform1f(U.uCut, 0); // TELL5",
     "tests": [
       "test/characters/enemy/tell5_patterns.test.js"
     ]

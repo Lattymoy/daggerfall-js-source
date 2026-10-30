@@ -148,8 +148,8 @@
   {
     "name": "ECOTONE1-lane-call-dropped",
     "file": "src/render/enhancedLighting.js",
-    "old": "  if (!ge) tex = ecotone(tex, ew, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share\n",
-    "new": "",
+    "old": "  if (!ge) tex = ecotone(tex, ew, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share\n  float snowC = snowCover(vLocalXZ, vWorldPos.y, gx, gy);   // PRECIP4: the snow the ground keeps (the bed below reads it too)",
+    "new": "  float snowC = snowCover(vLocalXZ, vWorldPos.y, gx, gy);   // PRECIP4: the snow the ground keeps (the bed below reads it too)",
     "tests": [
       "test/systems/ecotone1.test.js"
     ]

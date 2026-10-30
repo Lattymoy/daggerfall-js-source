@@ -146,8 +146,8 @@
   {
     "name": "PEAKS1-the-face-dropped-from-the-lane",
     "file": "src/render/enhancedLighting.js",
-    "old": "  snowC = snowFace(tex, snowC, vLocalXZ, vWorldPos.y, normalize(vNormal), tuv, gx, gy);",
-    "new": "  snowC = snowC;",
+    "old": "  snowC = snowFace(tex, snowC, vLocalXZ, vWorldPos.y, normalize(vNormal), tuv, gx, gy);   // PEAKS1: a steep face over the cap's line is bare rock (render/snowCapGlsl.js)",
+    "new": "  snowC = snowC;   // PEAKS1: a steep face over the cap's line is bare rock (render/snowCapGlsl.js)",
     "tests": [
       "test/world/peaks1_snowcap.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "PEAKS1-the-far-field-s-whiten",
     "file": "src/render/farField.js",
-    "old": "if (caps && !sea[j * side + i]) whiten(colors, o, capShare(positions[o + 1] - seaY, normals[o + 1], caps[j * side + i]));",
-    "new": "if (caps && !sea[j * side + i]) whiten(colors, o, 0);",
+    "old": "      if (caps && !sea[j * side + i])\n        whiten(colors, o, capShare(positions[o + 1] - seaY, normals[o + 1], caps[j * side + i])); // PEAKS1",
+    "new": "      if (caps && !sea[j * side + i]) whiten(colors, o, 0); // PEAKS1",
     "tests": [
       "test/world/peaks1_snowcap.test.js"
     ]

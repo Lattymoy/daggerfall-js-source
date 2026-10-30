@@ -58,8 +58,8 @@
   {
     "name": "TELL6d-mirror-endless",
     "file": "src/render/foeTelegraph.js",
-    "old": "const W = BLOW.aimed.halfW, inside = along >= -0.3 && along <= ahead && Math.abs(across) <= W;",
-    "new": "const W = BLOW.aimed.halfW, inside = along >= -0.3 && along <= 99 && Math.abs(across) <= W;",
+    "old": "      inside = along >= -0.3 && along <= ahead && Math.abs(across) <= W;",
+    "new": "      inside = along >= -0.3 && along <= 99 && Math.abs(across) <= W;",
     "tests": [
       "test/characters/enemy/tell6d_aimed.test.js"
     ]
@@ -67,8 +67,8 @@
   {
     "name": "TELL6d-up-unset",
     "file": "src/render/foeTelegraph.js",
-    "old": "      else if (b.kind === 'aimed') gl.uniform4f(U.uP, b.ahead ?? 0, P.halfW, 0, 0);\n",
-    "new": "",
+    "old": "      else if (b.kind === 'aimed') gl.uniform4f(U.uP, b.ahead ?? 0, P.halfW, 0, 0);\n      else gl.uniform4f(U.uP, P.r, P.ahead, 0, 0);",
+    "new": "      else gl.uniform4f(U.uP, P.r, P.ahead, 0, 0);",
     "tests": [
       "test/characters/enemy/tell6d_aimed.test.js"
     ]
@@ -76,8 +76,8 @@
   {
     "name": "TELL6d-quad-fixed",
     "file": "src/render/foeTelegraph.js",
-    "old": "(Number.isFinite(ahead) && (kind === 'leap' || kind === 'aimed' || kind === 'pyre') ?",
-    "new": "(Number.isFinite(ahead) && (kind === 'leap' || kind === 'pyre') ?",
+    "old": "  (Number.isFinite(ahead) && (kind === 'leap' || kind === 'aimed' || kind === 'pyre')",
+    "new": "  (Number.isFinite(ahead) && (kind === 'leap' || kind === 'pyre')",
     "tests": [
       "test/characters/enemy/tell6d_aimed.test.js"
     ]

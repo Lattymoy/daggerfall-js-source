@@ -238,8 +238,8 @@
   {
     "name": "lit-no-early-out",
     "file": "src/render/enhancedLighting.js",
-    "old": "    if (d >= uPointLights[i].w) continue;   // EL5: outside the window the term is exactly zero - no shadow taps, no glint, no pow for it\n",
-    "new": "",
+    "old": "    if (d >= uPointLights[i].w) continue;   // EL5: outside the window the term is exactly zero - no shadow taps, no glint, no pow for it\n    vec3 Ln = L / max(d, 1e-4);",
+    "new": "    vec3 Ln = L / max(d, 1e-4);",
     "tests": [
       "test/render/el5_field.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "flat-no-early-out",
     "file": "src/render/enhancedLighting.js",
-    "old": "    if (d >= uPointLights[i].w) continue;   // EL5\n",
-    "new": "",
+    "old": "    if (d >= uPointLights[i].w) continue;   // EL5\n    vec3 toL = uPointLights[i].xyz - base;",
+    "new": "    vec3 toL = uPointLights[i].xyz - base;",
     "tests": [
       "test/render/el5_field.test.js"
     ]

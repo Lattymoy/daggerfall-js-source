@@ -30,11 +30,15 @@
 // 0.4 degrees over the horizon (no curvature is drawn) - a few pixels of a 65-degree lens.
 // ═══════════════════════════════════════════════════════════════════
 
-import { TERRAIN_SIZE, SCALED_BEACH_ELEVATION, BASE_HEIGHT_SCALE as BYTE_SCALE } from '../world/terrain/terrainSampler.js';
+import {
+  TERRAIN_SIZE,
+  SCALED_BEACH_ELEVATION,
+  BASE_HEIGHT_SCALE as BYTE_SCALE,
+} from '../world/terrain/terrainSampler.js';
 import { FAR_CELL, FAR_RADIUS, FAR_REBUILD_DRIFT, FAR_SAMPLES, farFieldSide } from '../world/terrain/midRingGrid.js';
 import { runHorizonSteps } from './midRing.js';
-import { capShare, whiten } from '../world/peaks/snowcap.js';   // PEAKS1: a range white on the horizon
-import { plantCanopy, layGround } from './midRing.js';   // FAR-FLORA: a vertex's woods and its ground
+import { capShare, whiten } from '../world/peaks/snowcap.js'; // PEAKS1: a range white on the horizon
+import { plantCanopy, layGround } from './midRing.js'; // FAR-FLORA: a vertex's woods and its ground
 import { expectedTrees, FLORA } from '../world/terrain/floraCover.js';
 
 /** The far field's rim: its nearest edge with the base drifted FAR_REBUILD_DRIFT cells toward it (the far ring's own
@@ -46,8 +50,11 @@ export const FAR_LENS_FAR = (FAR_RADIUS + 1) * FAR_CELL * TERRAIN_SIZE * 1.5;
 
 /** ?farfield=off - the far field's kill door (the far ring closes into the sky at its rim, as before). */
 export function farFieldDisabled(search = globalThis.location?.search) {
-  try { return /[?&]farfield=off\b/.test(search ?? ''); }
-  catch { return false; }
+  try {
+    return /[?&]farfield=off\b/.test(search ?? '');
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -79,49 +86,86 @@ export const FAR_CELLS_A_STEP = 32;
 export const FAR_NORMAL_ROWS = 8;
 
 /** farFieldVertices a step of rows at a time - its answer the generator's own. @param {Parameters<typeof farFieldVertices>[0]} o */
-export function* farFieldVertexSteps({ high, low, baseCX, baseCY, radius = FAR_RADIUS, cell = FAR_CELL, heightOf, tintAt, oceanAt, seaY, snowAt = null, floraAt = null }) {
-  const side = farFieldSide(radius), n = side * side, S = TERRAIN_SIZE;
-  const positions = new Float32Array(n * 3), normals = new Float32Array(n * 3), colors = new Uint8Array(n * 3), sea = new Uint8Array(n);
-  const bx = baseCX * cell, by = baseCY * cell, half = cell / 2, majority = (FAR_SAMPLES.length ** 2) / 2;
-  const caps = snowAt ? new Float32Array(n) : null;   // PEAKS1: each cell's cap line
-  const flora = floraAt ? new Uint8Array(n * 4) : null, lift = floraAt ? new Float32Array(n) : null;   // FAR-FLORA: the canopy (render/midRing.js plantCanopy's four bytes) and its lift
+export function* farFieldVertexSteps({
+  high,
+  low,
+  baseCX,
+  baseCY,
+  radius = FAR_RADIUS,
+  cell = FAR_CELL,
+  heightOf,
+  tintAt,
+  oceanAt,
+  seaY,
+  snowAt = null,
+  floraAt = null,
+}) {
+  const side = farFieldSide(radius),
+    n = side * side,
+    S = TERRAIN_SIZE;
+  const positions = new Float32Array(n * 3),
+    normals = new Float32Array(n * 3),
+    colors = new Uint8Array(n * 3),
+    sea = new Uint8Array(n);
+  const bx = baseCX * cell,
+    by = baseCY * cell,
+    half = cell / 2,
+    majority = FAR_SAMPLES.length ** 2 / 2;
+  const caps = snowAt ? new Float32Array(n) : null; // PEAKS1: each cell's cap line
+  const flora = floraAt ? new Uint8Array(n * 4) : null,
+    lift = floraAt ? new Float32Array(n) : null; // FAR-FLORA: the canopy (render/midRing.js plantCanopy's four bytes) and its lift
   for (let j = 0; j < side; j++) {
     for (let i = 0; i < side; i++) {
-      const v = j * side + i, o = v * 3;
+      const v = j * side + i,
+        o = v * 3;
       if (v && v % FAR_CELLS_A_STEP === 0) yield;
-      const cx = baseCX - radius + i, cy = baseCY - radius + j;
-      const xc = cx * cell + half, yc = cy * cell + half, px = Math.floor(xc), py = Math.floor(yc);
+      const cx = baseCX - radius + i,
+        cy = baseCY - radius + j;
+      const xc = cx * cell + half,
+        yc = cy * cell + half,
+        px = Math.floor(xc),
+        py = Math.floor(yc);
       const wet = low[v] > majority || oceanAt(px, py, v);
       positions[o] = (xc - bx) * S;
-      positions[o + 1] = wet ? seaY : heightOf(high[v], px, py, v);   // BREATHTAKER2: the law at the cell's centre pixel; RELIEF-PEAKS: `v` the vertex (the worker's ground at its node)
+      positions[o + 1] = wet ? seaY : heightOf(high[v], px, py, v); // BREATHTAKER2: the law at the cell's centre pixel; RELIEF-PEAKS: `v` the vertex (the worker's ground at its node)
       positions[o + 2] = (by + 1 - yc) * S;
       const t = tintAt(px, py, wet ? 0 : high[v], v);
-      colors[o] = t[0]; colors[o + 1] = t[1]; colors[o + 2] = t[2];
+      colors[o] = t[0];
+      colors[o + 1] = t[1];
+      colors[o + 2] = t[2];
       if (wet) sea[v] = 255;
       else {
-        if (caps) caps[v] = snowAt(px, py, v);   // PEAKS1
-        const f = floraAt && high[v] * BYTE_SCALE >= SCALED_BEACH_ELEVATION ? floraAt(px, py, high[v], v) : null;   // FAR-FLORA: over the beach line; lifted after the normals (the cell's ground's)
+        if (caps) caps[v] = snowAt(px, py, v); // PEAKS1
+        const f = floraAt && high[v] * BYTE_SCALE >= SCALED_BEACH_ELEVATION ? floraAt(px, py, high[v], v) : null; // FAR-FLORA: over the beach line; lifted after the normals (the cell's ground's)
         if (f) {
-          layGround(colors, o, f.ground, FLORA.ground[1], FLORA.ground[2], FLORA.ground[3]);   // the near ground's own tiles, by the law's mean shares
+          layGround(colors, o, f.ground, FLORA.ground[1], FLORA.ground[2], FLORA.ground[3]); // the near ground's own tiles, by the law's mean shares
           lift[v] = plantCanopy(flora, v, expectedTrees(f.spec, high[v]), f.art);
         }
       }
     }
   }
-  const h = (i, j) => positions[(Math.max(0, Math.min(side - 1, j)) * side + Math.max(0, Math.min(side - 1, i))) * 3 + 1];
+  const h = (i, j) =>
+    positions[(Math.max(0, Math.min(side - 1, j)) * side + Math.max(0, Math.min(side - 1, i))) * 3 + 1];
   const span = cell * S;
   for (let j = 0; j < side; j++) {
-    if (j % FAR_NORMAL_ROWS === 0) yield;   // the normals a few rows a step too (all 14,641 at once ran a step to 6-35 ms)
+    if (j % FAR_NORMAL_ROWS === 0) yield; // the normals a few rows a step too (all 14,641 at once ran a step to 6-35 ms)
     for (let i = 0; i < side; i++) {
       // rows run south (+j is -z): the far ring's own differences
-      const nx = h(i - 1, j) - h(i + 1, j), nz = h(i, j + 1) - h(i, j - 1), ny = 2 * span;
-      const l = Math.hypot(nx, ny, nz), o = (j * side + i) * 3;
-      normals[o] = nx / l; normals[o + 1] = ny / l; normals[o + 2] = nz / l;
-      if (caps && !sea[j * side + i]) whiten(colors, o, capShare(positions[o + 1] - seaY, normals[o + 1], caps[j * side + i]));   // PEAKS1
-      if (caps && flora?.[(j * side + i) * 4]) whiten(flora, (j * side + i) * 4 + 1, capShare(positions[o + 1] - seaY, normals[o + 1], caps[j * side + i]));   // FAR-FLORA: the canopy under the same snow
+      const nx = h(i - 1, j) - h(i + 1, j),
+        nz = h(i, j + 1) - h(i, j - 1),
+        ny = 2 * span;
+      const l = Math.hypot(nx, ny, nz),
+        o = (j * side + i) * 3;
+      normals[o] = nx / l;
+      normals[o + 1] = ny / l;
+      normals[o + 2] = nz / l;
+      if (caps && !sea[j * side + i])
+        whiten(colors, o, capShare(positions[o + 1] - seaY, normals[o + 1], caps[j * side + i])); // PEAKS1
+      if (caps && flora?.[(j * side + i) * 4])
+        whiten(flora, (j * side + i) * 4 + 1, capShare(positions[o + 1] - seaY, normals[o + 1], caps[j * side + i])); // FAR-FLORA: the canopy under the same snow
     }
   }
-  if (lift) for (let v = 0; v < n; v++) positions[v * 3 + 1] += lift[v];   // FAR-FLORA: the canopy over the ground the normals read
+  if (lift) for (let v = 0; v < n; v++) positions[v * 3 + 1] += lift[v]; // FAR-FLORA: the canopy over the ground the normals read
   return { positions, normals, colors, sea, side, flora };
 }
 
@@ -132,31 +176,44 @@ export function* farFieldVertexSteps({ high, low, baseCX, baseCY, radius = FAR_R
  * @returns {Uint16Array | Uint32Array}
  */
 export function farFieldOrder({ baseCX, baseCY, curCX, curCY, radius = FAR_RADIUS, cell = FAR_CELL, covered }) {
-  const side = farFieldSide(radius), centre = (k) => k * cell + cell / 2, cells = side - 1;
+  const side = farFieldSide(radius),
+    centre = (k) => k * cell + cell / 2,
+    cells = side - 1;
   // THE OFFSETS, SORTED ONCE: a grid's cells ordered by their distance from a cell are its offsets from that cell so
   // ordered - farthest first, then the lower row and column (the index's own order) - so a crossing walks the one list
   // and keeps the cells the field holds (sorting the cells a crossing cost the field 16-30 ms on a loaded machine)
-  const reach = radius + 2 * FAR_REBUILD_DRIFT + 1, offs = cellOffsets(reach);   // the traveller within twice the drift of the base
-  const ci = curCX - (baseCX - radius), cj = curCY - (baseCY - radius);
+  const reach = radius + 2 * FAR_REBUILD_DRIFT + 1,
+    offs = cellOffsets(reach); // the traveller within twice the drift of the base
+  const ci = curCX - (baseCX - radius),
+    cj = curCY - (baseCY - radius);
   const keep = new Uint8Array(cells * cells);
   let k = 0;
   for (let j = 0; j < cells; j++) {
-    const cy = baseCY - radius + j, inY = centre(cy) >= covered.y0 && centre(cy + 1) <= covered.y1;
+    const cy = baseCY - radius + j,
+      inY = centre(cy) >= covered.y0 && centre(cy + 1) <= covered.y1;
     for (let i = 0; i < cells; i++) {
       const cx = baseCX - radius + i;
       if (inY && centre(cx) >= covered.x0 && centre(cx + 1) <= covered.x1) continue;
-      keep[j * cells + i] = 1; k++;
+      keep[j * cells + i] = 1;
+      k++;
     }
   }
   const out = new (side * side <= 65536 ? Uint16Array : Uint32Array)(k * 6);
   let o = 0;
   for (let t = 0; t < offs.length; t += 2) {
-    const i = ci + offs[t], j = cj + offs[t + 1];
+    const i = ci + offs[t],
+      j = cj + offs[t + 1];
     if (i < 0 || j < 0 || i >= cells || j >= cells || !keep[j * cells + i]) continue;
     const i0 = j * side + i;
-    const i1 = i0 + 1, i2 = i0 + side, i3 = i2 + 1;
-    out[o++] = i0; out[o++] = i2; out[o++] = i3;
-    out[o++] = i0; out[o++] = i3; out[o++] = i1;
+    const i1 = i0 + 1,
+      i2 = i0 + side,
+      i3 = i2 + 1;
+    out[o++] = i0;
+    out[o++] = i2;
+    out[o++] = i3;
+    out[o++] = i0;
+    out[o++] = i3;
+    out[o++] = i1;
   }
   return out;
 }
@@ -168,7 +225,8 @@ export function cellOffsets(reach) {
   let out = _offsets.get(reach);
   if (out) return out;
   const list = [];
-  for (let dy = -reach; dy <= reach; dy++) for (let dx = -reach; dx <= reach; dx++) list.push([dx, dy, (dx + 0.5) ** 2 + (dy + 0.5) ** 2]);
+  for (let dy = -reach; dy <= reach; dy++)
+    for (let dx = -reach; dx <= reach; dx++) list.push([dx, dy, (dx + 0.5) ** 2 + (dy + 0.5) ** 2]);
   list.sort((a, b) => b[2] - a[2] || a[1] - b[1] || a[0] - b[0]);
   out = Int16Array.from(list.flatMap(([dx, dy]) => [dx, dy]));
   _offsets.set(reach, out);
@@ -186,11 +244,14 @@ export class FarFieldMesh {
     this.indexBuffer = null;
     this.count = 0;
     this.indexType = 0;
-    this.baseCX = 0; this.baseCY = 0;
+    this.baseCX = 0;
+    this.baseCY = 0;
     this._orderKey = '';
   }
 
-  get built() { return !!this.vao; }
+  get built() {
+    return !!this.vao;
+  }
 
   /** The vertex arrays uploaded round the base cell. */
   build(v, { baseCX, baseCY }) {
@@ -210,13 +271,14 @@ export class FarFieldMesh {
     buf(v.normals, 1, gl.FLOAT, false);
     buf(v.colors, 2, gl.UNSIGNED_BYTE, true);
     buf(v.sea, 3, gl.UNSIGNED_BYTE, true, 1);
-    if (v.flora) buf(v.flora, 5, gl.UNSIGNED_BYTE, true, 4);   // FAR-FLORA: the canopy's cover and colour
+    if (v.flora) buf(v.flora, 5, gl.UNSIGNED_BYTE, true, 4); // FAR-FLORA: the canopy's cover and colour
     this.indexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
     this.buffers.push(this.indexBuffer);
     gl.bindVertexArray(null);
     this.vao = vao;
-    this.baseCX = baseCX; this.baseCY = baseCY;
+    this.baseCX = baseCX;
+    this.baseCY = baseCY;
     this._orderKey = '';
   }
 

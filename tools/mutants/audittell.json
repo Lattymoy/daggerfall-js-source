@@ -231,8 +231,8 @@
   {
     "name": "AUDITTELL-shatter-shader",
     "file": "src/render/foeTelegraph.js",
-    "old": "      gl.uniform1f(U.uShatter, phase.shatter > 0 ? phase.shatter : 0);   // AUDIT TELL (3.2)\n",
-    "new": "",
+    "old": "      gl.uniform1f(U.uShatter, phase.shatter > 0 ? phase.shatter : 0); // AUDIT TELL (3.2)\n      const c = b.color ?? [1, 0.42, 0.12];",
+    "new": "      const c = b.color ?? [1, 0.42, 0.12];",
     "tests": [
       "test/scenes/audittell.test.js"
     ]
@@ -589,8 +589,8 @@
   {
     "name": "AUDITTELL-U8-rear",
     "file": "src/render/foeTelegraph.js",
-    "old": "dist = inside ? (d < 0.5 && ang > uP.y ? 0.5 - d : min(uP.x - d, d >= 0.5 ? (uP.y - ang) * d : 1e3)) : min(max(d - uP.x, (ang - uP.y) * d), d - 0.5);",
-    "new": "dist = inside ? min(uP.x - d, d >= 0.5 ? (uP.y - ang) * d : 1e3) : max(d - uP.x, d >= 0.5 ? (ang - uP.y) * d : 0.0);",
+    "old": "    dist = inside ? (d < 0.5 && ang > uP.y ? 0.5 - d : min(uP.x - d, d >= 0.5 ? (uP.y - ang) * d : 1e3)) : min(max(d - uP.x, (ang - uP.y) * d), d - 0.5);",
+    "new": "    dist = inside ? min(uP.x - d, d >= 0.5 ? (uP.y - ang) * d : 1e3) : max(d - uP.x, d >= 0.5 ? (ang - uP.y) * d : 0.0);",
     "tests": [
       "test/scenes/audittell.test.js"
     ]
@@ -598,8 +598,8 @@
   {
     "name": "AUDITTELL-U10-discard",
     "file": "src/render/foeTelegraph.js",
-    "old": "  if (beyond) oColor = vec4(0.0);",
-    "new": "  if (beyond) discard;",
+    "old": "  if (beyond) oColor = vec4(0.0);   // AUDIT TELL U10: premultiplied nothing - the blend leaves the floor as it was",
+    "new": "  if (beyond) discard;   // AUDIT TELL U10: premultiplied nothing - the blend leaves the floor as it was",
     "tests": [
       "test/scenes/audittell.test.js"
     ]

@@ -182,8 +182,8 @@
   {
     "name": "CARDS10-atlas-cells",
     "file": "src/render/iliacTableDraw.js",
-    "old": "[i % ILIAC_ATLAS_COLS, Math.floor(i / ILIAC_ATLAS_COLS)]",
-    "new": "[0, Math.floor(i / ILIAC_ATLAS_COLS)]",
+    "old": "  return i === undefined ? ILIAC_CELL_BACK.slice() : [i % ILIAC_ATLAS_COLS, Math.floor(i / ILIAC_ATLAS_COLS)];",
+    "new": "  return i === undefined ? ILIAC_CELL_BACK.slice() : [0, Math.floor(i / ILIAC_ATLAS_COLS)];",
     "tests": [
       "test/systems/cards10_table.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "CARDS10-atlas-free",
     "file": "src/render/iliacTableDraw.js",
-    "old": "      renderer.releaseTexture?.(ILIAC_ARCHIVE, ILIAC_RECORD);\n",
-    "new": "",
+    "old": "      renderer.releaseTexture?.(ILIAC_ARCHIVE, ILIAC_RECORD);\n      meshes.clear();",
+    "new": "      meshes.clear();",
     "tests": [
       "test/systems/cards10_table.test.js"
     ]

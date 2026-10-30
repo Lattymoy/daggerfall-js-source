@@ -297,8 +297,8 @@
   {
     "name": "RED-MOUNTAIN-the-lane's-ring-in-the-haze",
     "file": "src/render/enhancedLighting.js",
-    "old": "uRimStart, uRimEnd, summitHold(uHazeHold, vDist))));",
-    "new": "uRimStart, uRimEnd, uHazeHold)));",
+    "old": "  vec3 col = mix(shown, uFogColor, ringHaze(horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, summitHold(uHazeHold, vDist))));   // BANTHA1: and the jungle's haze",
+    "new": "  vec3 col = mix(shown, uFogColor, ringHaze(horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, uHazeHold)));   // BANTHA1: and the jungle's haze",
     "tests": [
       "test/world/redmountain.test.js"
     ]

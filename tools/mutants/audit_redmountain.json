@@ -157,8 +157,8 @@
   {
     "name": "AUDIT-RED-MOUNTAIN-F9-the-far-draw-without-a-cone",
     "file": "src/render/ghostfenceGlow.js",
-    "old": "for (const isFar of cone ? [true, false] : [false])",
-    "new": "for (const isFar of [true, false])",
+    "old": "    for (const isFar of cone ? [true, false] : [false]) {",
+    "new": "    for (const isFar of [true, false]) {",
     "tests": [
       "test/world/audit_redmountain.test.js"
     ]
@@ -287,8 +287,8 @@
   {
     "name": "AUDIT-RED-MOUNTAIN-N5-the-feet-bilinear",
     "file": "src/render/ghostfenceGlow.js",
-    "old": "(u >= v ? h00 + u * (h10 - h00) + v * (h11 - h10) : h00 + v * (h01 - h00) + u * (h11 - h01))",
-    "new": "((h00 * (1 - u) + h10 * u) * (1 - v) + (h01 * (1 - u) + h11 * u) * v)",
+    "old": "  u >= v ? h00 + u * (h10 - h00) + v * (h11 - h10) : h00 + v * (h01 - h00) + u * (h11 - h01);",
+    "new": "  (h00 * (1 - u) + h10 * u) * (1 - v) + (h01 * (1 - u) + h11 * u) * v;",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -441,8 +441,8 @@
   {
     "name": "AUDIT-RED-MOUNTAIN-R1-the-curtain's-fade",
     "file": "src/render/ghostfenceGlow.js",
-    "old": "fade = 1.0 - smoothstep(${f1(GLOW.fade[0])}, ${f1(GLOW.fade[1])}, d);",
-    "new": "fade = 1.0;",
+    "old": "  float d = distance(vWorld, uEye), fade = 1.0 - smoothstep(${f1(GLOW.fade[0])}, ${f1(GLOW.fade[1])}, d);",
+    "new": "  float d = distance(vWorld, uEye), fade = 1.0;",
     "tests": [
       "test/world/audit_redmountain.test.js"
     ]

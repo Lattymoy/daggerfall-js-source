@@ -385,8 +385,8 @@
   {
     "name": "ATACT-D-depth-left-off",
     "file": "src/render/foeTelegraph.js",
-    "old": "    gl.enable(gl.CULL_FACE);\n    gl.depthMask(true);",
-    "new": "    gl.enable(gl.CULL_FACE);",
+    "old": "    gl.depthMask(true);\n    gl.disable(gl.BLEND);",
+    "new": "    gl.disable(gl.BLEND);",
     "tests": [
       "test/scenes/audittact.test.js"
     ]
@@ -403,8 +403,8 @@
   {
     "name": "ATACT-D-blend-left-on",
     "file": "src/render/foeTelegraph.js",
-    "old": "    gl.depthMask(true);\n    gl.disable(gl.BLEND);",
-    "new": "    gl.depthMask(true);",
+    "old": "    gl.disable(gl.BLEND);\n    return this.drawn;",
+    "new": "    return this.drawn;",
     "tests": [
       "test/scenes/audittact.test.js"
     ]

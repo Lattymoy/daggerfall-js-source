@@ -2,8 +2,8 @@
   {
     "name": "FAR-TREES-the-ring",
     "file": "src/render/farTrees.js",
-    "old": "if (c > radius || !built?.has(`${x},${y}`)) out.push([x, y]);",
-    "new": "if (c >= radius || !built?.has(`${x},${y}`)) out.push([x, y]);",
+    "old": "      if (c > radius || !built?.has(`${x},${y}`)) out.push([x, y]);",
+    "new": "      if (c >= radius || !built?.has(`${x},${y}`)) out.push([x, y]);",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "FAR-TREES-the-built-test",
     "file": "src/render/farTrees.js",
-    "old": "if (c > radius || !built?.has(`${x},${y}`)) out.push([x, y]);",
-    "new": "if (c > radius) out.push([x, y]);",
+    "old": "      if (c > radius || !built?.has(`${x},${y}`)) out.push([x, y]);",
+    "new": "      if (c > radius) out.push([x, y]);",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "FAR-TREES-the-order",
     "file": "src/render/farTrees.js",
-    "old": "  for (let y = cy - r; y <= cy + r; y++) {\n    for (let x = cx - r; x <= cx + r; x++) {\n      const c =",
-    "new": "  for (let x = cx - r; x <= cx + r; x++) {\n    for (let y = cy - r; y <= cy + r; y++) {\n      const c =",
+    "old": "  for (let y = cy - r; y <= cy + r; y++) {\n    for (let x = cx - r; x <= cx + r; x++) {",
+    "new": "  for (let x = cx - r; x <= cx + r; x++) {\n    for (let y = cy - r; y <= cy + r; y++) {",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "FAR-TREES-the-hash",
     "file": "src/render/farTrees.js",
-    "old": "Math.imul((k | 0) + 0x27d4eb2f, 0xc2b2ae3d)",
-    "new": "Math.imul((k | 0) + 0x27d4eb2e, 0xc2b2ae3d)",
+    "old": "  let h = Math.imul(px | 0, 0x9e3779b1) ^ Math.imul(py | 0, 0x85ebca77) ^ Math.imul((k | 0) + 0x27d4eb2f, 0xc2b2ae3d);",
+    "new": "  let h = Math.imul(px | 0, 0x9e3779b1) ^ Math.imul(py | 0, 0x85ebca77) ^ Math.imul((k | 0) + 0x27d4eb2e, 0xc2b2ae3d);",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "FAR-TREES-the-layer-scale",
     "file": "src/render/farTrees.js",
-    "old": "s = Math.max(pic.width, pic.height) / side;",
-    "new": "s = pic.width / side;",
+    "old": "    s = Math.max(pic.width, pic.height) / side;",
+    "new": "    s = pic.width / side;",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "FAR-TREES-the-layer-centre",
     "file": "src/render/farTrees.js",
-    "old": "x0 = (side - w) / 2, y0 = side - h;",
-    "new": "x0 = 0, y0 = side - h;",
+    "old": "    x0 = (side - w) / 2,",
+    "new": "    x0 = 0,",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "FAR-TREES-the-layer-foot",
     "file": "src/render/farTrees.js",
-    "old": "x0 = (side - w) / 2, y0 = side - h;",
-    "new": "x0 = (side - w) / 2, y0 = 0;",
+    "old": "    y0 = side - h;",
+    "new": "    y0 = 0;",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "FAR-TREES-the-frame-north",
     "file": "src/render/farTrees.js",
-    "old": "oz = (baseY - p.py) * TERRAIN_SIZE",
-    "new": "oz = (p.py - baseY) * TERRAIN_SIZE",
+    "old": "      oz = (baseY - p.py) * TERRAIN_SIZE,",
+    "new": "      oz = (p.py - baseY) * TERRAIN_SIZE,",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "FAR-TREES-the-frame-east",
     "file": "src/render/farTrees.js",
-    "old": "const ox = (p.px - baseX) * TERRAIN_SIZE",
-    "new": "const ox = (baseX - p.px) * TERRAIN_SIZE",
+    "old": "    const ox = (p.px - baseX) * TERRAIN_SIZE,",
+    "new": "    const ox = (baseX - p.px) * TERRAIN_SIZE,",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "FAR-TREES-the-no-layer",
     "file": "src/render/farTrees.js",
-    "old": "      if (layer === undefined) continue;\n",
-    "new": "\n",
+    "old": "      if (layer === undefined) continue;",
+    "new": "",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "FAR-TREES-the-hash-index",
     "file": "src/render/farTrees.js",
-    "old": "treeHash(p.px, p.py, i >> 2)",
-    "new": "treeHash(p.px, p.py, i)",
+    "old": "      u[k * TREE_STRIDE + 13] = treeHash(p.px, p.py, i >> 2);",
+    "new": "      u[k * TREE_STRIDE + 13] = treeHash(p.px, p.py, i);",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "FAR-TREES-the-pixel-step",
     "file": "src/render/farTrees.js",
-    "old": "  for (const p of pixels) {\n    yield;\n",
-    "new": "  for (const p of pixels) {\n",
+    "old": "    yield;\n    const ox = (p.px - baseX) * TERRAIN_SIZE,",
+    "new": "    const ox = (p.px - baseX) * TERRAIN_SIZE,",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "FAR-TREES-the-archive",
     "file": "src/render/farTrees.js",
-    "old": "pixels[k * 4 + 2] = c.natureArchive;",
-    "new": "pixels[k * 4 + 2] = c.groundArchive;",
+    "old": "      pixels[k * 4 + 2] = c.natureArchive;",
+    "new": "      pixels[k * 4 + 2] = c.groundArchive;",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "FAR-TREES-the-one-ask",
     "file": "src/render/farTrees.js",
-    "old": "if (missing.length && !this._asking && !this._failed)",
-    "new": "if (missing.length && !this._failed)",
+    "old": "    if (missing.length && !this._asking && !this._failed) this._ask(missing, climateOf, forests, landform, lands);",
+    "new": "    if (missing.length && !this._failed) this._ask(missing, climateOf, forests, landform, lands);",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "FAR-TREES-the-art-once",
     "file": "src/render/farTrees.js",
-    "old": "    if (this.arts.has(key)) return;\n",
-    "new": "\n",
+    "old": "    if (this.arts.has(key)) return;\n    const [archive, record] = key.split(',').map(Number),",
+    "new": "    const [archive, record] = key.split(',').map(Number),",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "FAR-TREES-the-side",
     "file": "src/render/farTrees.js",
-    "old": "this.sides[layer] = Math.max(size.w, size.h);",
-    "new": "this.sides[layer] = size.h;",
+    "old": "        this.sides[layer] = Math.max(size.w, size.h);",
+    "new": "        this.sides[layer] = size.h;",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "FAR-TREES-the-art-wait",
     "file": "src/render/farTrees.js",
-    "old": "for (const a of this._wanted) if (this.arts.get(a) === 'asking') return;",
-    "new": "for (const a of this._wanted) if (false) return;",
+    "old": "    for (const a of this._wanted) if (this.arts.get(a) === 'asking') return; // its art still being read",
+    "new": "    for (const a of this._wanted) if (false) return; // its art still being read",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "FAR-TREES-the-slices",
     "file": "src/render/farTrees.js",
-    "old": "bytes - at)));\n        yield;\n",
-    "new": "bytes - at)));\n",
+    "old": "        yield;\n      }",
+    "new": "      }",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "FAR-TREES-the-swap",
     "file": "src/render/farTrees.js",
-    "old": "this._swap(buffer, count, baseX, baseY);",
-    "new": "this._swap(buffer, 0, baseX, baseY);",
+    "old": "        this._swap(buffer, count, baseX, baseY);",
+    "new": "        this._swap(buffer, 0, baseX, baseY);",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "FAR-TREES-the-points",
     "file": "src/render/farTrees.js",
-    "old": "gl.drawArrays(gl.POINTS, 0, this.drawn.count);",
-    "new": "gl.drawArrays(gl.TRIANGLES, 0, this.drawn.count);",
+    "old": "    gl.drawArrays(gl.POINTS, 0, this.drawn.count);",
+    "new": "    gl.drawArrays(gl.TRIANGLES, 0, this.drawn.count);",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "FAR-TREES-the-rim",
     "file": "src/render/farTrees.js",
-    "old": "(s.radius + this.fade[0]) * TERRAIN_SIZE, (s.radius + this.fade[1]) * TERRAIN_SIZE",
-    "new": "(s.radius + this.fade[0]) * TERRAIN_SIZE, (s.radius + this.fade[0]) * TERRAIN_SIZE",
+    "old": "      (s.radius + this.fade[1]) * TERRAIN_SIZE,",
+    "new": "      (s.radius + this.fade[0]) * TERRAIN_SIZE,",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "FAR-TREES-the-band-from",
     "file": "src/render/farTrees.js",
-    "old": "gl.uniform3f(u.uBandFrom, s.origin[0] + 0.5 * TERRAIN_SIZE, 0, s.origin[2] + 0.5 * TERRAIN_SIZE);",
-    "new": "gl.uniform3f(u.uBandFrom, s.origin[0], 0, s.origin[2]);",
+    "old": "    gl.uniform3f(u.uBandFrom, s.origin[0] + 0.5 * TERRAIN_SIZE, 0, s.origin[2] + 0.5 * TERRAIN_SIZE);",
+    "new": "    gl.uniform3f(u.uBandFrom, s.origin[0], 0, s.origin[2]);",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "FAR-TREES-the-unit",
     "file": "src/render/farTrees.js",
-    "old": "gl.uniform1i(u.uTrees, TREES_UNIT);",
-    "new": "gl.uniform1i(u.uTrees, 0);",
+    "old": "    gl.uniform1i(u.uTrees, TREES_UNIT);",
+    "new": "    gl.uniform1i(u.uTrees, 0);",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "FAR-TREES-the-dispose",
     "file": "src/render/farTrees.js",
-    "old": "    this._free(this.drawn);\n    this.drawn = null;\n    if (this.tex)",
-    "new": "    this.drawn = null;\n    if (this.tex)",
+    "old": "    this._free(this.drawn);\n    this.drawn = null;",
+    "new": "    this.drawn = null;",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "FAR-TREES-the-foot",
     "file": "src/render/farTrees.js",
-    "old": "vec3 world = aPos + uOrigin + vec3(0.0, 0.5 * side, 0.0);",
-    "new": "vec3 world = aPos + uOrigin + vec3(0.0, side, 0.0);",
+    "old": "  vec3 world = aPos + uOrigin + vec3(0.0, 0.5 * side, 0.0);",
+    "new": "  vec3 world = aPos + uOrigin + vec3(0.0, side, 0.0);",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "FAR-TREES-the-size",
     "file": "src/render/farTrees.js",
-    "old": "float px = side * uBand.w * uBand.z * 0.5 / max(gl_Position.w, 1.0);",
-    "new": "float px = side * uBand.w * uBand.z / max(gl_Position.w, 1.0);",
+    "old": "  float px = side * uBand.w * uBand.z * 0.5 / max(gl_Position.w, 1.0);",
+    "new": "  float px = side * uBand.w * uBand.z / max(gl_Position.w, 1.0);",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "FAR-TREES-the-share",
     "file": "src/render/farTrees.js",
-    "old": "float keep = min(px * px, 1.0) * (",
-    "new": "float keep = min(px, 1.0) * (",
+    "old": "  float keep = min(px * px, 1.0) * (1.0 - smoothstep(uBand.x, uBand.y, max(d.x, d.y)));",
+    "new": "  float keep = min(px, 1.0) * (1.0 - smoothstep(uBand.x, uBand.y, max(d.x, d.y)));",
     "tests": [
       "test/render/fartrees.test.js"
     ]
@@ -254,7 +254,7 @@
   {
     "name": "FAR-TREES-the-lanes",
     "file": "src/render/farTrees.js",
-    "old": "export const treesFsFor = (lane) => (!lane ? FS : lane.key === 'classic-shadows' ? classicLook(TREES_LANE_FS) : TREES_LANE_FS);",
+    "old": "export const treesFsFor = (lane) =>\n  !lane ? FS : lane.key === 'classic-shadows' ? classicLook(TREES_LANE_FS) : TREES_LANE_FS;",
     "new": "export const treesFsFor = (lane) => (!lane ? FS : TREES_LANE_FS);",
     "tests": [
       "test/render/fartrees.test.js"

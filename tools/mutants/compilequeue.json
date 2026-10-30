@@ -2,8 +2,8 @@
   {
     "name": "CQ-started-without-waiting-their-turn",
     "file": "src/render/glProgram.js",
-    "old": "!== true) await wait();",
-    "new": "!== true) break;",
+    "old": "        await wait();",
+    "new": "        break;",
     "tests": [
       "test/render/compilequeue.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "CQ-the-ask-ignored",
     "file": "src/render/glProgram.js",
-    "old": "keyed.find(([k]) => started.get(k)?.wanted) ?? ",
-    "new": "",
+    "old": "  const turn = () => keyed.find(([k]) => started.get(k)?.wanted) ?? keyed.find(([k]) => started.get(k)?.prog === null);",
+    "new": "  const turn = () => keyed.find(([k]) => started.get(k)?.prog === null);",
     "tests": [
       "test/render/compilequeue.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "CQ-started-out-of-turn",
     "file": "src/render/glProgram.js",
-    "old": "    else if (!s.prog) s.wanted = true;",
-    "new": "    else if (!s.prog) started.set(k, (s = link(gl, vs, fs)));",
+    "old": "      else if (!s.prog) s.wanted = true; // COMPILE-QUEUE: a queued pair waits its turn, at the front",
+    "new": "      else if (!s.prog) started.set(k, (s = link(gl, vs, fs))); // COMPILE-QUEUE: a queued pair waits its turn, at the front",
     "tests": [
       "test/render/compilequeue.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "CQ-a-null-program-read",
     "file": "src/render/glProgram.js",
-    "old": "p !== null && gl.getProgramParameter(p, ext.COMPLETION_STATUS_KHR)",
-    "new": "gl.getProgramParameter(p, ext.COMPLETION_STATUS_KHR)",
+    "old": "    return (done = startAll().every(\n      (p) => p !== null && gl.getProgramParameter(p, ext.COMPLETION_STATUS_KHR) === true,\n    ));",
+    "new": "    return (done = startAll().every((p) => gl.getProgramParameter(p, ext.COMPLETION_STATUS_KHR) === true));",
     "tests": [
       "test/render/compilequeue.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "CQ-the-queued-pair-taken-as-a-program",
     "file": "src/render/glProgram.js",
-    "old": "took?.prog ? took : link(gl, vsSrc, fsSrc)",
-    "new": "took ?? link(gl, vsSrc, fsSrc)",
+    "old": "  const { prog, vs, fs } = took?.prog ? took : link(gl, vsSrc, fsSrc); // COMPILE-QUEUE: a queued pair is compiled here, out of its turn",
+    "new": "  const { prog, vs, fs } = took ?? link(gl, vsSrc, fsSrc); // COMPILE-QUEUE: a queued pair is compiled here, out of its turn",
     "tests": [
       "test/render/compilequeue.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "CQ-a-taken-pair-started-again",
     "file": "src/render/glProgram.js",
-    "old": "keyed.find(([k]) => started.get(k)?.prog === null)",
-    "new": "keyed.find(([k]) => !started.get(k)?.prog)",
+    "old": "  const turn = () => keyed.find(([k]) => started.get(k)?.wanted) ?? keyed.find(([k]) => started.get(k)?.prog === null);",
+    "new": "  const turn = () => keyed.find(([k]) => started.get(k)?.wanted) ?? keyed.find(([k]) => !started.get(k)?.prog);",
     "tests": [
       "test/render/compilequeue.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "CQ-a-queued-pair-freed-as-a-program",
     "file": "src/render/glProgram.js",
-    "old": "    if (!s.prog) continue;   // COMPILE-QUEUE: queued and never started - its turn is dropped, nothing to free\n",
-    "new": "",
+    "old": "    if (!s.prog) continue; // COMPILE-QUEUE: queued and never started - its turn is dropped, nothing to free\n    gl.deleteShader(s.vs);",
+    "new": "    gl.deleteShader(s.vs);",
     "tests": [
       "test/render/compilequeue.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "CQ-the-turn-waits-on-a-taken-program",
     "file": "src/render/glProgram.js",
-    "old": "while (started.get(k) === s && ",
-    "new": "while (",
+    "old": "      while (\n        started.get(k) === s &&\n        !gl.isContextLost?.() &&\n        gl.getProgramParameter(s.prog, ext.COMPLETION_STATUS_KHR) !== true\n      )\n        await wait();",
+    "new": "      while (!gl.isContextLost?.() && gl.getProgramParameter(s.prog, ext.COMPLETION_STATUS_KHR) !== true) await wait();",
     "tests": [
       "test/render/compilequeue.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "CQ-the-turn-blind-to-the-loss",
     "file": "src/render/glProgram.js",
-    "old": "!gl.isContextLost?.() && gl.getProgramParameter(s.prog",
-    "new": "gl.getProgramParameter(s.prog",
+    "old": "      while (\n        started.get(k) === s &&\n        !gl.isContextLost?.() &&\n        gl.getProgramParameter(s.prog, ext.COMPLETION_STATUS_KHR) !== true\n      )\n        await wait();",
+    "new": "      while (started.get(k) === s && gl.getProgramParameter(s.prog, ext.COMPLETION_STATUS_KHR) !== true) await wait();",
     "tests": [
       "test/render/compilequeue.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "CQ-the-queued-pairs-left-behind",
     "file": "src/render/glProgram.js",
-    "old": "    for (const [k] of keyed) if (started.get(k)?.prog === null) started.delete(k);",
-    "new": "",
+    "old": "    for (const [k] of keyed) if (started.get(k)?.prog === null) started.delete(k); // a queue that ends early strands no pair: its door starts it",
+    "new": "    // a queue that ends early strands no pair: its door starts it",
     "tests": [
       "test/render/compilequeue.test.js"
     ]

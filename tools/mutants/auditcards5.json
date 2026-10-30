@@ -2985,8 +2985,8 @@
   {
     "name": "faces5-F01-shield-floats-up",
     "file": "src/render/iliacCardFaces.js",
-    "old": "shield = { x: w - p - 1.8 * u - hw, y: h - p - 1.6 * u - hh, hw, hh }",
-    "new": "shield = { x: w - p - 1.8 * u - hw, y: h - p - 30 * u - hh, hw, hh }",
+    "old": "      shield = { x: w - p - 1.8 * u - hw, y: h - p - 1.6 * u - hh, hw, hh };",
+    "new": "      shield = { x: w - p - 1.8 * u - hw, y: h - p - 30 * u - hh, hw, hh };",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -2994,8 +2994,8 @@
   {
     "name": "faces5-F01b-tile-shield-on-banner",
     "file": "src/render/iliacCardFaces.js",
-    "old": "shield = { x: w - p - 1.2 * u - hw, y: banner.y - 0.8 * u - hh, hw, hh }",
-    "new": "shield = { x: w - p - 1.2 * u - hw, y: banner.y + 3 * u - hh, hw, hh }",
+    "old": "      shield = { x: w - p - 1.2 * u - hw, y: banner.y - 0.8 * u - hh, hw, hh };",
+    "new": "      shield = { x: w - p - 1.2 * u - hw, y: banner.y + 3 * u - hh, hw, hh };",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3003,8 +3003,8 @@
   {
     "name": "faces5-F01c-shield-tip-cut-by-edge",
     "file": "src/render/iliacCardFaces.js",
-    "old": "shield = { x: w - p - 1.8 * u - hw, y: h - p - 1.6 * u - hh",
-    "new": "shield = { x: w - p - 1.8 * u - hw, y: h - p - 1.5 * u",
+    "old": "      shield = { x: w - p - 1.8 * u - hw, y: h - p - 1.6 * u - hh, hw, hh };",
+    "new": "      shield = { x: w - p - 1.8 * u - hw, y: h - p - 1.5 * u, hw, hh };",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3012,8 +3012,8 @@
   {
     "name": "faces5-F02-shield-to-the-left",
     "file": "src/render/iliacCardFaces.js",
-    "old": "shield = { x: w - p - 1.8 * u - hw,",
-    "new": "shield = { x: p + 1.8 * u + hw,",
+    "old": "      shield = { x: w - p - 1.8 * u - hw, y: h - p - 1.6 * u - hh, hw, hh };",
+    "new": "      shield = { x: p + 1.8 * u + hw, y: h - p - 1.6 * u - hh, hw, hh };",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3021,8 +3021,8 @@
   {
     "name": "faces5-F03-gem-bottom-left",
     "file": "src/render/iliacCardFaces.js",
-    "old": "gem = { x: p + 0.87 * r + 1.2 * u, y: p + r + 1 * u, r }",
-    "new": "gem = { x: p + 0.87 * r + 1.2 * u, y: h - p - r - 1 * u, r }",
+    "old": "      gem = { x: p + 0.87 * r + 1.2 * u, y: p + r + 1 * u, r };",
+    "new": "      gem = { x: p + 0.87 * r + 1.2 * u, y: h - p - r - 1 * u, r };",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3030,8 +3030,8 @@
   {
     "name": "faces5-F03b-tile-gem-off-panel",
     "file": "src/render/iliacCardFaces.js",
-    "old": "gem = { x: p + 0.87 * r + 0.6 * u, y: p + r + 0.6 * u, r }",
-    "new": "gem = { x: p + 0.87 * r - 4 * u, y: p + r + 0.6 * u, r }",
+    "old": "      gem = { x: p + 0.87 * r + 0.6 * u, y: p + r + 0.6 * u, r };",
+    "new": "      gem = { x: p + 0.87 * r - 4 * u, y: p + r + 0.6 * u, r };",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3039,8 +3039,8 @@
   {
     "name": "faces5-F04-name-in-tier-colour",
     "file": "src/render/iliacCardFaces.js",
-    "old": "ctx.fillStyle = TEXT_INK; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';",
-    "new": "ctx.fillStyle = colour; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';",
+    "old": "  const { px, lines } = fitName(ctx, text, L);\n  ctx.fillStyle = TEXT_INK;",
+    "new": "  const { px, lines } = fitName(ctx, text, L);\n  ctx.fillStyle = colour;",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3048,8 +3048,8 @@
   {
     "name": "faces5-F05-rules-in-box-colour",
     "file": "src/render/iliacCardFaces.js",
-    "old": "ctx.font = `${pick.px}${FACE}`; ctx.fillStyle = TEXT_INK;",
-    "new": "ctx.font = `${pick.px}${FACE}`; ctx.fillStyle = TEXT_BOX;",
+    "old": "  ctx.font = `${pick.px}${FACE}`;\n  ctx.fillStyle = TEXT_INK;",
+    "new": "  ctx.font = `${pick.px}${FACE}`;\n  ctx.fillStyle = TEXT_BOX;",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3057,8 +3057,8 @@
   {
     "name": "faces5-F06-cost-in-gem-colour",
     "file": "src/render/iliacCardFaces.js",
-    "old": "fitFont(ctx, t, g.r * 1.3, g.r * 1.05, g.r * 0.6, 'bold ');",
-    "new": "ctx.fillStyle = COST_GEM; fitFont(ctx, t, g.r * 1.3, g.r * 1.05, g.r * 0.6, 'bold ');",
+    "old": "  fitFont(ctx, t, g.r * 1.3, g.r * 1.05, g.r * 0.6, 'bold ');",
+    "new": "  ctx.fillStyle = COST_GEM;\n  fitFont(ctx, t, g.r * 1.3, g.r * 1.05, g.r * 0.6, 'bold ');",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3066,8 +3066,8 @@
   {
     "name": "faces5-F07-power-in-shield-colour",
     "file": "src/render/iliacCardFaces.js",
-    "old": "fitFont(ctx, t, s.hw * 1.5, s.hh * 1.05, s.hh * 0.5, 'bold ');",
-    "new": "ctx.fillStyle = POWER_SHIELD; fitFont(ctx, t, s.hw * 1.5, s.hh * 1.05, s.hh * 0.5, 'bold ');",
+    "old": "  fitFont(ctx, t, s.hw * 1.5, s.hh * 1.05, s.hh * 0.5, 'bold ');",
+    "new": "  ctx.fillStyle = POWER_SHIELD;\n  fitFont(ctx, t, s.hw * 1.5, s.hh * 1.05, s.hh * 0.5, 'bold ');",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3075,8 +3075,8 @@
   {
     "name": "faces5-F08-emblem-in-ground-ink",
     "file": "src/render/iliacCardFaces.js",
-    "old": "EMBLEM_PAINTERS[emblem](ctx, cx, cy, size, art.ink);",
-    "new": "EMBLEM_PAINTERS[emblem](ctx, cx, cy, size, art.ground);",
+    "old": "  EMBLEM_PAINTERS[emblem](ctx, cx, cy, size, art.ink);",
+    "new": "  EMBLEM_PAINTERS[emblem](ctx, cx, cy, size, art.ground);",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3084,8 +3084,8 @@
   {
     "name": "faces5-F09-emblem-tiny",
     "file": "src/render/iliacCardFaces.js",
-    "old": "(landscape ? 0.86 : tile ? 0.8 : 0.78)",
-    "new": "(landscape ? 0.86 : tile ? 0.8 : 0.08)",
+    "old": "    size: Math.min(win.w, win.h) * (landscape ? 0.86 : tile ? 0.8 : 0.78),",
+    "new": "    size: Math.min(win.w, win.h) * (landscape ? 0.86 : tile ? 0.8 : 0.08),",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3093,8 +3093,8 @@
   {
     "name": "faces5-F10-emblem-off-centre",
     "file": "src/render/iliacCardFaces.js",
-    "old": "cx: win.x + win.w / 2,",
-    "new": "cx: win.x + win.w * 2,",
+    "old": "    cx: win.x + win.w / 2,",
+    "new": "    cx: win.x + win.w * 2,",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3102,8 +3102,8 @@
   {
     "name": "faces5-F11-name-dropped-low",
     "file": "src/render/iliacCardFaces.js",
-    "old": "y0 = b.y + b.h / 2 + 0.03 * px",
-    "new": "y0 = b.y + b.h / 2 + 3 * px",
+    "old": "    y0 = b.y + b.h / 2 + 0.03 * px - ((lines.length - 1) * lh) / 2;",
+    "new": "    y0 = b.y + b.h / 2 + 3 * px - ((lines.length - 1) * lh) / 2;",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3111,8 +3111,8 @@
   {
     "name": "faces5-F12-name-never-shrinks",
     "file": "src/render/iliacCardFaces.js",
-    "old": "  const set = (px) => { ctx.font = `bold ${px}${FACE}`; };\n",
-    "new": "  const set = (px) => { ctx.font = `bold ${px}${FACE}`; };\n  set(f.one); if (text) return { px: f.one, lines: [text] };\n",
+    "old": "  for (let px = f.one; px >= f.oneMin - 1e-9; px -= f.step) {",
+    "new": "  set(f.one);\n  if (text) return { px: f.one, lines: [text] };\n  for (let px = f.one; px >= f.oneMin - 1e-9; px -= f.step) {",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3120,8 +3120,8 @@
   {
     "name": "faces5-F12b-name-never-squeezed",
     "file": "src/render/iliacCardFaces.js",
-    "old": "if (wide) ctx.fillText(t, nb.x + nb.w / 2, y0 + i * lh, nb.w);",
-    "new": "if (wide) ctx.fillText(t, nb.x + nb.w / 2, y0 + i * lh);",
+    "old": "    if (wide) ctx.fillText(t, nb.x + nb.w / 2, y0 + i * lh, nb.w);",
+    "new": "    if (wide) ctx.fillText(t, nb.x + nb.w / 2, y0 + i * lh);",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3129,8 +3129,8 @@
   {
     "name": "faces5-F12c-name-box-over-notches",
     "file": "src/render/iliacCardFaces.js",
-    "old": "const nameBox = { x: banner.x + notch + nameMargin, y: banner.y, w: banner.w - 2 * notch - 2 * nameMargin,",
-    "new": "const nameBox = { x: banner.x + nameMargin, y: banner.y, w: banner.w - 2 * nameMargin,",
+    "old": "  const nameBox = {\n    x: banner.x + notch + nameMargin,\n    y: banner.y,\n    w: banner.w - 2 * notch - 2 * nameMargin,\n    h: banner.h,\n  };",
+    "new": "  const nameBox = { x: banner.x + nameMargin, y: banner.y, w: banner.w - 2 * nameMargin, h: banner.h };",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3138,8 +3138,8 @@
   {
     "name": "faces5-F12d-name-split-uneven",
     "file": "src/render/iliacCardFaces.js",
-    "old": "if (!best || m < best.m) best = { m, pair };",
-    "new": "if (!best) best = { m, pair };",
+    "old": "    if (!best || m < best.m) best = { m, pair };",
+    "new": "    if (!best) best = { m, pair };",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3147,8 +3147,8 @@
   {
     "name": "faces5-F12e-tile-name-floor-low",
     "file": "src/render/iliacCardFaces.js",
-    "old": "two: 7.6 * u, twoMin: 7.2 * u,",
-    "new": "two: 7.6 * u, twoMin: 5 * u,",
+    "old": "    ? { one: 8.6 * u, oneMin: 7.6 * u, two: 7.6 * u, twoMin: 7.2 * u, step: 0.2 * u, lh: 1.02 }",
+    "new": "    ? { one: 8.6 * u, oneMin: 7.6 * u, two: 7.6 * u, twoMin: 5 * u, step: 0.2 * u, lh: 1.02 }",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3156,8 +3156,8 @@
   {
     "name": "faces5-F13-rules-run-wide",
     "file": "src/render/iliacCardFaces.js",
-    "old": "right = box.x + box.w - pad;",
-    "new": "right = box.x + box.w * 1.6;",
+    "old": "    right = box.x + box.w - pad;",
+    "new": "    right = box.x + box.w * 1.6;",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3165,8 +3165,8 @@
   {
     "name": "faces5-F14-rules-lines-stacked",
     "file": "src/render/iliacCardFaces.js",
-    "old": "pick.lines.forEach((t, i) => { const y = top + i * lh,",
-    "new": "pick.lines.forEach((t, i) => { const y = top + 0 * i * lh,",
+    "old": "    const y = top + i * lh,",
+    "new": "    const y = top + 0 * i * lh,",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3174,8 +3174,8 @@
   {
     "name": "faces5-F15-flavor-at-top",
     "file": "src/render/iliacCardFaces.js",
-    "old": "fl.forEach((t, i) => { const y = y0 + i * flh,",
-    "new": "fl.forEach((t, i) => { const y = top + i * flh,",
+    "old": "    const y = y0 + i * flh,",
+    "new": "    const y = top + i * flh,",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3183,8 +3183,8 @@
   {
     "name": "faces5-F16-flavor-never",
     "file": "src/render/iliacCardFaces.js",
-    "old": "if (f) { pick = { px, lines, f }; break; }",
-    "new": "if (f && !f) { pick = { px, lines, f }; break; }",
+    "old": "      if (f) {",
+    "new": "      if (f && !f) {",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3192,8 +3192,8 @@
   {
     "name": "faces5-F16b-flavor-never-shrinks",
     "file": "src/render/iliacCardFaces.js",
-    "old": "fpx >= 3.0 * u - 1e-9; fpx -= 0.2 * u",
-    "new": "fpx >= Math.min(px * 0.9, 4.6 * u) - 1e-9; fpx -= 0.2 * u",
+    "old": "    for (let fpx = Math.min(px * 0.9, 4.6 * u); fpx >= 3.0 * u - 1e-9; fpx -= 0.2 * u) {",
+    "new": "    for (let fpx = Math.min(px * 0.9, 4.6 * u); fpx >= Math.min(px * 0.9, 4.6 * u) - 1e-9; fpx -= 0.2 * u) {",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3201,8 +3201,8 @@
   {
     "name": "faces5-F16c-rules-never-yield-to-flavor",
     "file": "src/render/iliacCardFaces.js",
-    "old": "if (px < 3.8 * u - 1e-9) break;",
-    "new": "if (px < 5.2 * u - 1e-9) break;",
+    "old": "    if (px < 3.8 * u - 1e-9) break;",
+    "new": "    if (px < 5.2 * u - 1e-9) break;",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3210,8 +3210,8 @@
   {
     "name": "faces5-F17-box-to-card-edge",
     "file": "src/render/iliacCardFaces.js",
-    "old": "box.h = h - p - 1.6 * u - box.y;",
-    "new": "box.h = h - box.y;",
+    "old": "    box.h = h - p - 1.6 * u - box.y;",
+    "new": "    box.h = h - box.y;",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3219,8 +3219,8 @@
   {
     "name": "faces5-F17b-text-past-box-foot",
     "file": "src/render/iliacCardFaces.js",
-    "old": "bottom = box.y + box.h - pad * 0.6, gap = 0.8 * u;",
-    "new": "bottom = box.y + box.h + 5 * u, gap = 0.8 * u;",
+    "old": "    bottom = box.y + box.h - pad * 0.6,",
+    "new": "    bottom = box.y + box.h + 5 * u,",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3228,8 +3228,8 @@
   {
     "name": "faces5-F18-arch-painted-square",
     "file": "src/render/iliacCardFaces.js",
-    "old": "else if (L.shape === 'arch') {",
-    "new": "else if (L.shape === 'archX') {",
+    "old": "  else if (L.shape === 'arch') {",
+    "new": "  else if (L.shape === 'archX') {",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3237,8 +3237,8 @@
   {
     "name": "faces5-F19-window-colour-edge-lost",
     "file": "src/render/iliacCardFaces.js",
-    "old": "ctx.beginPath(); windowPath(ctx, L); ctx.stroke();\n  ctx.strokeStyle = colour; ctx.lineWidth = 0.5 * u; ctx.stroke();",
-    "new": "ctx.beginPath(); windowPath(ctx, L); ctx.stroke();\n  ctx.lineWidth = 0.5 * u;",
+    "old": "  ctx.strokeStyle = colour;\n  ctx.lineWidth = 0.5 * u;\n  ctx.stroke();",
+    "new": "  ctx.lineWidth = 0.5 * u;",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3246,8 +3246,8 @@
   {
     "name": "faces5-F20-side-studs-at-centre",
     "file": "src/render/iliacCardFaces.js",
-    "old": "[w / 2, mid], [w / 2, h - mid], [mid, h / 2], [w - mid, h / 2]]",
-    "new": "[w / 2, h / 2], [w / 2, h / 2], [w / 2, h / 2], [w / 2, h / 2]]",
+    "old": "    [w / 2, mid],\n    [w / 2, h - mid],\n    [mid, h / 2],\n    [w - mid, h / 2],",
+    "new": "    [w / 2, h / 2],\n    [w / 2, h / 2],\n    [w / 2, h / 2],\n    [w / 2, h / 2],",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3255,8 +3255,8 @@
   {
     "name": "faces5-F21-double-rule-misplaced",
     "file": "src/render/iliacCardFaces.js",
-    "old": "roundRect(ctx, p + 1.1 * u, p + 1.1 * u, w - 2 * p - 2.2 * u, h - 2 * p - 2.2 * u, 2 * u);",
-    "new": "roundRect(ctx, p + 20 * u, p + 20 * u, w - 2 * p - 2.2 * u, h - 2 * p - 2.2 * u, 2 * u);",
+    "old": "    roundRect(ctx, p + 1.1 * u, p + 1.1 * u, w - 2 * p - 2.2 * u, h - 2 * p - 2.2 * u, 2 * u);",
+    "new": "    roundRect(ctx, p + 20 * u, p + 20 * u, w - 2 * p - 2.2 * u, h - 2 * p - 2.2 * u, 2 * u);",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3264,8 +3264,8 @@
   {
     "name": "faces5-F22-panel-dark",
     "file": "src/render/iliacCardFaces.js",
-    "old": "ctx.fillStyle = STOCK; ctx.beginPath();",
-    "new": "ctx.fillStyle = FRAME_DARK; ctx.beginPath();",
+    "old": "  ctx.fillStyle = STOCK;",
+    "new": "  ctx.fillStyle = FRAME_DARK;",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3273,8 +3273,8 @@
   {
     "name": "faces5-F23-tier-colour-ignored",
     "file": "src/render/iliacCardFaces.js",
-    "old": "const colour = picture ? PICTURE_RIM : RARITIES[tier].colour;",
-    "new": "const colour = picture ? PICTURE_RIM : RARITIES.common.colour;",
+    "old": "  const colour = picture ? PICTURE_RIM : RARITIES[tier].colour;",
+    "new": "  const colour = picture ? PICTURE_RIM : RARITIES.common.colour;",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3282,8 +3282,8 @@
   {
     "name": "faces5-F24-card-emblem-ignored",
     "file": "src/render/iliacCardFaces.js",
-    "old": "const emblem = EMBLEM_PAINTERS[card?.emblem] ? card.emblem : KIND_EMBLEM[kind];",
-    "new": "const emblem = KIND_EMBLEM[kind];",
+    "old": "  const emblem = EMBLEM_PAINTERS[card?.emblem] ? card.emblem : KIND_EMBLEM[kind];",
+    "new": "  const emblem = KIND_EMBLEM[kind];",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3291,8 +3291,8 @@
   {
     "name": "faces5-F25-skull-sockets-lost",
     "file": "src/render/iliacCardFaces.js",
-    "old": "circ(ctx, -0.14, -0.04, 0.1); circ(ctx, 0.14, -0.04, 0.1);",
-    "new": "",
+    "old": "  circ(ctx, -0.14, -0.04, 0.1);\n  circ(ctx, 0.14, -0.04, 0.1); // the sockets",
+    "new": "  // the sockets",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3300,8 +3300,8 @@
   {
     "name": "faces5-F26-crescent-a-full-moon",
     "file": "src/render/iliacCardFaces.js",
-    "old": "crescent(ctx, -0.06, 0, 0.42, 0.1, -0.06, 0.34); part(ctx);",
-    "new": "circ(ctx, -0.06, 0, 0.42); part(ctx);",
+    "old": "    crescent(ctx, -0.06, 0, 0.42, 0.1, -0.06, 0.34);",
+    "new": "    circ(ctx, -0.06, 0, 0.42);",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3309,8 +3309,8 @@
   {
     "name": "faces5-F27-back-N-off-card",
     "file": "src/render/iliacCardFaces.js",
-    "old": "ctx.fillText('N', 0, -R - 4 * u);",
-    "new": "ctx.fillText('N', 0, R * 3);",
+    "old": "  ctx.fillText('N', 0, -R - 4 * u);",
+    "new": "  ctx.fillText('N', 0, R * 3);",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3318,8 +3318,8 @@
   {
     "name": "faces5-F28-back-no-rose",
     "file": "src/render/iliacCardFaces.js",
-    "old": "for (let k = 0; k < 4; k++) {\n      const a = from",
-    "new": "for (let k = 0; k < 0; k++) {\n      const a = from",
+    "old": "  ]) {\n    for (let k = 0; k < 4; k++) {",
+    "new": "  ]) {\n    for (let k = 0; k < 0; k++) {",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3327,8 +3327,8 @@
   {
     "name": "faces5-F29-back-rose-tiny",
     "file": "src/render/iliacCardFaces.js",
-    "old": "R = Math.min(w, h) * 0.36;",
-    "new": "R = Math.min(w, h) * 0.036;",
+    "old": "    R = Math.min(w, h) * 0.36;",
+    "new": "    R = Math.min(w, h) * 0.036;",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3336,8 +3336,8 @@
   {
     "name": "faces5-F30-unit-window-small",
     "file": "src/render/iliacCardFaces.js",
-    "old": "const s = Math.min(43 * u, innerW - 4 * u);",
-    "new": "const s = Math.min(43 * u, innerW - 4 * u) * 0.3;",
+    "old": "      const s = Math.min(43 * u, innerW - 4 * u);",
+    "new": "      const s = Math.min(43 * u, innerW - 4 * u) * 0.3;",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3345,8 +3345,8 @@
   {
     "name": "faces5-F31-shield-tip-long",
     "file": "src/render/iliacCardFaces.js",
-    "old": "s.y + s.hh * 0.7, s.x, s.y + s.hh);",
-    "new": "s.y + s.hh * 0.7, s.x, s.y + s.hh * 5);",
+    "old": "  ctx.quadraticCurveTo(s.x + s.hw, s.y + s.hh * 0.7, s.x, s.y + s.hh);",
+    "new": "  ctx.quadraticCurveTo(s.x + s.hw, s.y + s.hh * 0.7, s.x, s.y + s.hh * 5);",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3354,8 +3354,8 @@
   {
     "name": "faces5-F32-gem-lit-all-over",
     "file": "src/render/iliacCardFaces.js",
-    "old": "poly(ctx, [pts[5], pts[0], pts[1], [g.x, g.y - g.r * 0.62]]);",
-    "new": "poly(ctx, pts);",
+    "old": "  poly(ctx, [pts[5], pts[0], pts[1], [g.x, g.y - g.r * 0.62]]);",
+    "new": "  poly(ctx, pts);",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3363,8 +3363,8 @@
   {
     "name": "faces5-F33-text-box-dark",
     "file": "src/render/iliacCardFaces.js",
-    "old": "ctx.fillStyle = TEXT_BOX; ctx.strokeStyle = FRAME_DARK;",
-    "new": "ctx.fillStyle = FRAME_DARK; ctx.strokeStyle = FRAME_DARK;",
+    "old": "  ctx.fillStyle = TEXT_BOX;",
+    "new": "  ctx.fillStyle = FRAME_DARK;",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3372,8 +3372,8 @@
   {
     "name": "faces5-F34-landscape-shrunk",
     "file": "src/render/iliacCardFaces.js",
-    "old": "win = { x: p + 1.5 * u, y: banner.y + banner.h + 2.5 * u, w: innerW - 3 * u, h: 36 * u };",
-    "new": "win = { x: p + 1.5 * u, y: banner.y + banner.h + 2.5 * u, w: (innerW - 3 * u) * 0.5, h: 20 * u };",
+    "old": "    if (landscape) win = { x: p + 1.5 * u, y: banner.y + banner.h + 2.5 * u, w: innerW - 3 * u, h: 36 * u };",
+    "new": "    if (landscape) win = { x: p + 1.5 * u, y: banner.y + banner.h + 2.5 * u, w: (innerW - 3 * u) * 0.5, h: 20 * u };",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3381,8 +3381,8 @@
   {
     "name": "faces5-N01-tile-mode-off",
     "file": "src/render/iliacCardFaces.js",
-    "old": "const tile = h <= ILIAC_TILE_MAX_H;",
-    "new": "const tile = h < 0;",
+    "old": "  const tile = h <= ILIAC_TILE_MAX_H;",
+    "new": "  const tile = h < 0;",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3390,8 +3390,8 @@
   {
     "name": "faces5-N02-tile-writes-rules",
     "file": "src/render/iliacCardFaces.js",
-    "old": "if (L.box) paintText(ctx, L, words?.rules ?? '', words?.flavor ?? '');",
-    "new": "paintText(ctx, L.box ? L : { ...L, box: { x: L.p, y: h * 0.8, w: w - 2 * L.p, h: h * 0.15 } }, words?.rules ?? '', words?.flavor ?? '');",
+    "old": "  if (L.box) paintText(ctx, L, words?.rules ?? '', words?.flavor ?? '');",
+    "new": "  paintText(\n    ctx,\n    L.box ? L : { ...L, box: { x: L.p, y: h * 0.8, w: w - 2 * L.p, h: h * 0.15 } },\n    words?.rules ?? '',\n    words?.flavor ?? '',\n  );",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3399,8 +3399,8 @@
   {
     "name": "faces5-N03-shield-not-cleared",
     "file": "src/render/iliacCardFaces.js",
-    "old": "if (s && y + lh > s.y - s.hh - 0.6 * u)",
-    "new": "if (s && y + lh > 1e9)",
+    "old": "  if (s && y + lh > s.y - s.hh - 0.6 * u) return [left, Math.min(right, s.x - s.hw - 0.8 * u)];",
+    "new": "  if (s && y + lh > 1e9) return [left, Math.min(right, s.x - s.hw - 0.8 * u)];",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3408,8 +3408,8 @@
   {
     "name": "faces5-N04-shield-clears-whole-box",
     "file": "src/render/iliacCardFaces.js",
-    "old": "if (s && y + lh > s.y - s.hh - 0.6 * u)",
-    "new": "if (s)",
+    "old": "  if (s && y + lh > s.y - s.hh - 0.6 * u) return [left, Math.min(right, s.x - s.hw - 0.8 * u)];",
+    "new": "  if (s) return [left, Math.min(right, s.x - s.hw - 0.8 * u)];",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3426,8 +3426,8 @@
   {
     "name": "faces5-N06-glow-halo-opaque",
     "file": "src/render/iliacCardFaces.js",
-    "old": "ctx.save(); ctx.globalAlpha = 0.55; ctx.strokeStyle = colour; ctx.lineWidth = 2.4 * u;",
-    "new": "ctx.save(); ctx.globalAlpha = 1; ctx.strokeStyle = colour; ctx.lineWidth = 2.4 * u;",
+    "old": "    ctx.save();\n    ctx.globalAlpha = 0.55;\n    ctx.strokeStyle = colour;",
+    "new": "    ctx.save();\n    ctx.globalAlpha = 1;\n    ctx.strokeStyle = colour;",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3435,8 +3435,8 @@
   {
     "name": "faces5-N07-rim-shine-lost",
     "file": "src/render/iliacCardFaces.js",
-    "old": "if (frame.glow) { ctx.strokeStyle = GLOW_CORE; ctx.lineWidth = 0.35 * u; ctx.stroke(); }",
-    "new": "",
+    "old": "  if (frame.glow) {\n    ctx.strokeStyle = GLOW_CORE;\n    ctx.lineWidth = 0.35 * u;\n    ctx.stroke();\n  } // the rim's shine",
+    "new": "  // the rim's shine",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3444,7 +3444,7 @@
   {
     "name": "faces5-N08-double-rule-not-edged",
     "file": "src/render/iliacCardFaces.js",
-    "old": "ctx.strokeStyle = FRAME_DARK; ctx.lineWidth = 0.9 * u; ctx.stroke();",
+    "old": "    ctx.strokeStyle = FRAME_DARK;\n    ctx.lineWidth = 0.9 * u;\n    ctx.stroke();",
     "new": "",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
@@ -3453,8 +3453,8 @@
   {
     "name": "faces5-N09-cost-on-lit-facet",
     "file": "src/render/iliacCardFaces.js",
-    "old": "ctx.fillText(t, g.x, g.y + g.r * 0.16);",
-    "new": "ctx.fillText(t, g.x, g.y - g.r * 0.3);",
+    "old": "  ctx.fillText(t, g.x, g.y + g.r * 0.16);",
+    "new": "  ctx.fillText(t, g.x, g.y - g.r * 0.3);",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3462,8 +3462,8 @@
   {
     "name": "faces5-N10-cost-digit-oversize",
     "file": "src/render/iliacCardFaces.js",
-    "old": "fitFont(ctx, t, g.r * 1.3, g.r * 1.05, g.r * 0.6, 'bold ');",
-    "new": "fitFont(ctx, t, g.r * 1.3, g.r * 1.8, g.r * 0.6, 'bold ');",
+    "old": "  fitFont(ctx, t, g.r * 1.3, g.r * 1.05, g.r * 0.6, 'bold ');",
+    "new": "  fitFont(ctx, t, g.r * 1.3, g.r * 1.8, g.r * 0.6, 'bold ');",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3471,8 +3471,8 @@
   {
     "name": "faces5-N11-prince-gap-is-azura",
     "file": "src/render/iliacCardFaces.js",
-    "old": "prince: 'daedric', location: 'city' }",
-    "new": "prince: 'prince', location: 'city' }",
+    "old": "const KIND_EMBLEM = Object.freeze({ unit: 'warrior', spell: 'shock', prince: 'daedric', location: 'city' });",
+    "new": "const KIND_EMBLEM = Object.freeze({ unit: 'warrior', spell: 'shock', prince: 'prince', location: 'city' });",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3480,8 +3480,8 @@
   {
     "name": "faces5-N12-harpy-one-winged",
     "file": "src/render/iliacCardFaces.js",
-    "old": "poly(ctx, wing); part(ctx); poly(ctx, flipX(wing)); part(ctx);",
-    "new": "poly(ctx, wing); part(ctx);",
+    "old": "    poly(ctx, flipX(wing));\n    part(ctx);\n    oval(ctx, 0, 0.08, 0.1, 0.2);",
+    "new": "    oval(ctx, 0, 0.08, 0.1, 0.2);",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3489,8 +3489,8 @@
   {
     "name": "faces5-N13-flavor-ignores-rules",
     "file": "src/render/iliacCardFaces.js",
-    "old": "if (y0 < above + gap) return null;",
-    "new": "if (y0 < top) return null;",
+    "old": "      if (y0 < above + gap) return null;",
+    "new": "      if (y0 < top) return null;",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3498,8 +3498,8 @@
   {
     "name": "faces5-N14-wrap-width-fn-ignored",
     "file": "src/render/iliacCardFaces.js",
-    "old": "const limit = typeof maxWidth === 'function' ? maxWidth : () => maxWidth;",
-    "new": "const limit = typeof maxWidth === 'function' ? () => 1e9 : () => maxWidth;",
+    "old": "  const limit = typeof maxWidth === 'function' ? maxWidth : () => maxWidth;",
+    "new": "  const limit = typeof maxWidth === 'function' ? () => 1e9 : () => maxWidth;",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3507,8 +3507,8 @@
   {
     "name": "faces5-N15-tile-banner-short",
     "file": "src/render/iliacCardFaces.js",
-    "old": "const bh = 18 * u;",
-    "new": "const bh = 9 * u;",
+    "old": "    const bh = 18 * u;",
+    "new": "    const bh = 9 * u;",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3516,8 +3516,8 @@
   {
     "name": "faces5-N16-tile-arch-emblem-low",
     "file": "src/render/iliacCardFaces.js",
-    "old": "if (tile && art.window === 'arch') emblem.cy = win.y + win.h * 0.56;",
-    "new": "if (tile && art.window === 'arch') emblem.cy = win.y + win.h * 0.9;",
+    "old": "  if (tile && art.window === 'arch') emblem.cy = win.y + win.h * 0.56;",
+    "new": "  if (tile && art.window === 'arch') emblem.cy = win.y + win.h * 0.9;",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3525,8 +3525,8 @@
   {
     "name": "faces5-N17-name-margin-into-notch",
     "file": "src/render/iliacCardFaces.js",
-    "old": "const notch = 2.2 * u, nameMargin = 1 * u;",
-    "new": "const notch = 2.2 * u, nameMargin = -1 * u;",
+    "old": "    nameMargin = 1 * u;",
+    "new": "    nameMargin = -1 * u;",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3534,8 +3534,8 @@
   {
     "name": "faces5-N18-tile-shield-small",
     "file": "src/render/iliacCardFaces.js",
-    "old": "if (art.power) { const hw = 7 * u, hh = 8 * u;",
-    "new": "if (art.power) { const hw = 5 * u, hh = 8 * u;",
+    "old": "      const hw = 7 * u,",
+    "new": "      const hw = 5 * u,",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3543,8 +3543,8 @@
   {
     "name": "faces5-N19-tile-gem-small",
     "file": "src/render/iliacCardFaces.js",
-    "old": "if (art.cost) { const r = 8 * u;",
-    "new": "if (art.cost) { const r = 5 * u;",
+    "old": "      const r = 8 * u;",
+    "new": "      const r = 5 * u;",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3552,8 +3552,8 @@
   {
     "name": "faces5-N20-ellipsis-dropped",
     "file": "src/render/iliacCardFaces.js",
-    "old": "lines[room - 1] = `${last}…`;",
-    "new": "lines[room - 1] = last;",
+    "old": "        lines[room - 1] = `${last}…`;",
+    "new": "        lines[room - 1] = last;",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3561,8 +3561,8 @@
   {
     "name": "faces5-N21-second-name-line-on-first",
     "file": "src/render/iliacCardFaces.js",
-    "old": "const lh = px * L.nameFont.lh, y0",
-    "new": "const lh = 0 * px * L.nameFont.lh, y0",
+    "old": "  const lh = px * L.nameFont.lh,",
+    "new": "  const lh = 0 * px * L.nameFont.lh,",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3570,8 +3570,8 @@
   {
     "name": "faces5-N22-studs-off-the-rim",
     "file": "src/render/iliacCardFaces.js",
-    "old": "const studR = (frame.band * 0.7 + 0.8) * u;\n  const studs = [[mid, mid],",
-    "new": "const studR = (frame.band * 0.7 + 0.8) * u;\n  const studs = [[mid * 3, mid],",
+    "old": "    [mid, mid],",
+    "new": "    [mid * 3, mid],",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3579,8 +3579,8 @@
   {
     "name": "faces5-N23-glow-halo-inside",
     "file": "src/render/iliacCardFaces.js",
-    "old": "ctx.beginPath(); roundRect(ctx, p, p, w - 2 * p, h - 2 * p, 2.5 * u); ctx.stroke(); ctx.restore();",
-    "new": "ctx.beginPath(); roundRect(ctx, p + 6 * u, p, w - 2 * p, h - 2 * p, 2.5 * u); ctx.stroke(); ctx.restore();",
+    "old": "    roundRect(ctx, p, p, w - 2 * p, h - 2 * p, 2.5 * u);",
+    "new": "    roundRect(ctx, p + 6 * u, p, w - 2 * p, h - 2 * p, 2.5 * u);",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]
@@ -3588,8 +3588,8 @@
   {
     "name": "faces5-N24-new-emblem-detail-lost",
     "file": "src/render/iliacCardFaces.js",
-    "old": "circ(ctx, 0, 0, 0.21); circ(ctx, 0, 0, 0.165); circ(ctx, 0, 0, 0.12); part(ctx, 'evenodd');",
-    "new": "circ(ctx, 0, 0, 0.21); part(ctx, 'evenodd');",
+    "old": "    circ(ctx, 0, 0, 0.165);\n    circ(ctx, 0, 0, 0.12);\n    part(ctx, 'evenodd');",
+    "new": "    part(ctx, 'evenodd');",
     "tests": [
       "test/net/iliac/cards8_faces.test.js"
     ]

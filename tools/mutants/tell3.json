@@ -205,8 +205,8 @@
   {
     "name": "TELL3-uiron-unset",
     "file": "src/render/foeTelegraph.js",
-    "old": "      gl.uniform1f(U.uIron, b.guard === 'iron' ? 1 : 0);   // TELL3",
-    "new": "      gl.uniform1f(U.uIron, 0);   // TELL3",
+    "old": "      gl.uniform1f(U.uIron, b.guard === 'iron' ? 1 : 0); // TELL3",
+    "new": "      gl.uniform1f(U.uIron, 0); // TELL3",
     "tests": [
       "test/characters/enemy/tell3_iron.test.js"
     ]
@@ -214,8 +214,8 @@
   {
     "name": "TELL3-iron-undrawn",
     "file": "src/render/foeTelegraph.js",
-    "old": "  if (uIron > 0.5) oColor = telegraphIron(",
-    "new": "  if (uIron > 1.5) oColor = telegraphIron(",
+    "old": "  if (uIron > 0.5) oColor = telegraphIron(oColor, dist, inside ? 1.0 : 0.0, vec2(across, along), uColor, fogK);   // TELL3",
+    "new": "  if (uIron > 1.5) oColor = telegraphIron(oColor, dist, inside ? 1.0 : 0.0, vec2(across, along), uColor, fogK);   // TELL3",
     "tests": [
       "test/characters/enemy/tell3_iron.test.js"
     ]

@@ -102,7 +102,7 @@
   {
     "name": "f6-fog-unscaled",
     "file": "src/render/enhancedLighting.js",
-    "old": "  return { ...fog, color: [c[0] * EL_DUNGEON_AMBIENT_SCALE, c[1] * EL_DUNGEON_AMBIENT_SCALE, c[2] * EL_DUNGEON_AMBIENT_SCALE] };",
+    "old": "  return {\n    ...fog,\n    color: [c[0] * EL_DUNGEON_AMBIENT_SCALE, c[1] * EL_DUNGEON_AMBIENT_SCALE, c[2] * EL_DUNGEON_AMBIENT_SCALE],\n  };",
     "new": "  return { ...fog, color: [c[0], c[1], c[2]] };",
     "tests": [
       "test/render/audit_el.test.js"
@@ -176,8 +176,8 @@
   {
     "name": "f14-shade-black",
     "file": "src/render/enhancedLighting.js",
-    "old": "  if (uConceal.x == 2.0) lit *= ${SHADE_DARK};",
-    "new": "  if (uConceal.x == 2.0) lit *= 0.0;",
+    "old": "  if (uConceal.x == 2.0) lit *= ${SHADE_DARK};   // AUDIT-EL F14: a uniform nothing uploaded read 0 - every shade a black cut-out",
+    "new": "  if (uConceal.x == 2.0) lit *= 0.0;   // AUDIT-EL F14: a uniform nothing uploaded read 0 - every shade a black cut-out",
     "tests": [
       "test/render/audit_el.test.js"
     ]

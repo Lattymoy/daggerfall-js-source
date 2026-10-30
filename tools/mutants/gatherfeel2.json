@@ -290,8 +290,8 @@
   {
     "name": "GF2-VEINCRACKS-the-lane-albedo-whole",
     "file": "src/render/enhancedLighting.js",
-    "old": "  vec3 albedo = max(elDecode(tex.rgb * veinCrackShade(uv)) - emission, vec3(0.0));",
-    "new": "  vec3 albedo = max(elDecode(tex.rgb) - emission, vec3(0.0));",
+    "old": "  vec3 albedo = max(elDecode(tex.rgb * veinCrackShade(uv)) - emission, vec3(0.0));   // VEIN-CRACKS: a worked vein's seams, the classic lane's law - AUDIT GATHER-FEEL V4: the shade the texel's display colour takes there, then decoded with it (on the linear albedo a seam stood at half the classic's dark)",
+    "new": "  vec3 albedo = max(elDecode(tex.rgb) - emission, vec3(0.0));   // VEIN-CRACKS: a worked vein's seams, the classic lane's law - AUDIT GATHER-FEEL V4: the shade the texel's display colour takes there, then decoded with it (on the linear albedo a seam stood at half the classic's dark)",
     "tests": [
       "test/systems/gf2_veincracks.test.js"
     ]
