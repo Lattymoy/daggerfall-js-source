@@ -248,7 +248,7 @@
   {
     "name": "AURUM-CACHES-the-clear-ray-unread",
     "file": "src/scenes/aurumCacheHost.js",
-    "old": "if (Number.isFinite(collider.raycast(from, dir, AURUM_CACHE_CLEAR_M, MESH_ONLY))) continue;",
+    "old": "    if (Number.isFinite(collider.raycast(from, dir, off + AURUM_CACHE_CLEAR_M, MESH_ONLY))) continue;\n",
     "new": "",
     "tests": [
       "test/scenes/aurum_cache_world.test.js"
@@ -257,7 +257,7 @@
   {
     "name": "AURUM-CACHES-the-step-unread",
     "file": "src/scenes/aurumCacheHost.js",
-    "old": " || Math.abs(at[1] - down - g[1]) > AURUM_CACHE_STEP_M",
+    "old": " || Math.abs(at[1] - down - floor) > AURUM_CACHE_STEP_M",
     "new": "",
     "tests": [
       "test/scenes/aurum_cache_world.test.js"
@@ -266,8 +266,8 @@
   {
     "name": "AURUM-CACHES-the-sides-unread",
     "file": "src/scenes/aurumCacheHost.js",
-    "old": "if ([1, -1].some((s) => Number.isFinite(collider.raycast(at, [dir[2] * s, 0, -dir[0] * s], AURUM_CACHE_SIDE_M, MESH_ONLY)))) continue;",
-    "new": "",
+    "old": "if (!walled(collider, foot) && clear(foot)) return foot;",
+    "new": "if (clear(foot)) return foot;",
     "tests": [
       "test/scenes/aurum_cache_world.test.js"
     ]
@@ -275,8 +275,8 @@
   {
     "name": "AURUM-CACHES-the-foot-left-at-knee-height",
     "file": "src/scenes/aurumCacheHost.js",
-    "old": "return [at[0], at[1] - down, at[2]];",
-    "new": "return [at[0], at[1], at[2]];",
+    "old": "const foot = [at[0], at[1] - down, at[2]];",
+    "new": "const foot = [at[0], at[1], at[2]];",
     "tests": [
       "test/scenes/aurum_cache_world.test.js"
     ]
@@ -320,8 +320,8 @@
   {
     "name": "AURUM-CACHES-the-open-not-kept",
     "file": "src/scenes/aurumCacheHost.js",
-    "old": "coffer.open = true; keepId(storage, me.id, id, day); stand();",
-    "new": "coffer.open = true; stand();",
+    "old": "      if (r?.ok || r?.error === 'cache-taken') keepId(storage, me.id, id, day);\n",
+    "new": "",
     "tests": [
       "test/scenes/aurum_cache_world.test.js"
     ]
@@ -329,8 +329,8 @@
   {
     "name": "AURUM-CACHES-the-picture-not-swapped",
     "file": "src/scenes/aurumCacheHost.js",
-    "old": "coffer.open = true; keepId(storage, me.id, id, day); stand();",
-    "new": "coffer.open = true; keepId(storage, me.id, id, day);",
+    "old": "const opened = () => { coffer.open = true; stand(); };",
+    "new": "const opened = () => { coffer.open = true; };",
     "tests": [
       "test/scenes/aurum_cache_world.test.js"
     ]
@@ -356,8 +356,8 @@
   {
     "name": "AURUM-CACHES-a-late-answer-stands-a-picture",
     "file": "src/scenes/aurumCacheHost.js",
-    "old": "      asking = false;\n      if (gone) return;\n",
-    "new": "      asking = false;\n",
+    "old": "      if (gone) { if (r?.ok) lateSay(found()); return; }\n",
+    "new": "",
     "tests": [
       "test/scenes/aurum_cache_world.test.js"
     ]
