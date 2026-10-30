@@ -77,11 +77,11 @@ test('SKILL-SWAP the level does not move: a trained skill brought into the class
   }
 });
 
-test('SKILL-SWAP the refusals: a mastered skill stays, a skill outside the class cannot be given up, one inside cannot be taken; the choices say the same (mutants: a mastered skill given up, a class skill taken in)', () => {
+test('SKILL-SWAP the refusals: a mastered skill stays, a skill outside the class cannot be given up, one of the same group cannot be taken (SKILL-TRADE: another group\'s can - test/systems/skilltrade.test.js); the choices say the same (mutants: a mastered skill given up, a class skill taken in)', () => {
   const p = frank();
   assert.equal(skillSwapRefusal(p, BL, LB), 'A mastered skill stays in your class.');
   assert.equal(skillSwapRefusal(p, LB, SE), 'Choose one of your class skills to give up.');
-  assert.equal(skillSwapRefusal(p, SE, DO), 'Choose a skill outside your class to take its place.');
+  assert.equal(skillSwapRefusal(p, SE, CL), 'Choose a skill outside your class, or one from another group, to take its place.');
   assert.ok(!swapOutChoices(p).includes(BL)); assert.ok(swapOutChoices(p).includes(SE));
   assert.ok(swapInChoices(p).includes(LB)); assert.ok(!swapInChoices(p).includes(DO));
   assert.equal(swapInChoices(p).length, 35 - 12);

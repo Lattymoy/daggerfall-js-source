@@ -1,9 +1,9 @@
 // @ts-check
 // PVP-FLAG (systems/wild/pvpFlag.js): THE FLAG, ON THIS PAGE - the module the world host wires (src/scenes/fishHost.js is
 // the shape). It holds my flag and every peer's as the zone's referee says them (`wref` k 'flag'), notes my last PvP blow
-// given or taken (`wref` k 'hp'), toggles on Caps Lock or the HUD button, and answers the two doors the host asks: may I
-// strike a player (my flag up), and is a Portal Stone free of the zone's law (I am not flagged - the owner: "with no
-// flagg we will allow player to use portal stone anywwere").
+// given or taken (`wref` k 'hp'), toggles on its key (PvpFlag, Caps Lock by default) or the HUD button, and answers the
+// two doors the host asks: may I strike a player (my flag up), and is a Portal Stone free of the zone's law (I am not
+// flagged - the owner: "with no flagg we will allow player to use portal stone anywwere").
 import { pvpFlagRefusal, PVP_FLAG, pvpAggroLeft } from '../systems/wild/pvpFlag.js';
 import { t } from '../systems/textManager.js';
 import { noteCaps } from '../ui/capsFix.js';
@@ -13,6 +13,11 @@ import { isVillain } from '../systems/wild/villainLaw.js';   // PVP-VILLAIN
 import { wildHere, WILD_TEXT } from '../systems/wild/wildZone.js';   // PVP-FLAG-ZONE
 import { setPvpFoeSight, pvpGearStruck } from '../combat/pvpGearPowers.js';   // PVP-GEAR: a foe's bar and my hits taken
 import { PVP_FLAG_SPOT, createPvpHud, pvpHitLine, pvpHitsAdd, pvpLockOverText, pvpSlewText, PVP_SAY_S } from '../ui/pvpHud.js';   // PVP-HUD
+import { actionsOf, mouseCode } from '../ui/input.js';   // PVP-KEY: the flag's key is the registry's
+import { actionKeyWord } from '../ui/quickslotTags.js';
+
+/** PVP-KEY: the flag's action in the bindings registry (systems/inputActions.js). */
+export const PVP_FLAG_ACTION = 'PvpFlag';
 
 /** PVP-BAR: a concealed player in a PvP fight - a faint body that keeps its skull and bar (the name is taken). */
 export const PVP_FIGHT_VEIL = Object.freeze({ mode: CONCEAL_MODE.reveal, alpha: 0.3, t: 0, phase: 0, named: true });
@@ -29,9 +34,10 @@ const SKULL_EDGE = Object.freeze({ off: '#5a4a30', white: '#8a7246', gold: '#e8b
  * The host's own (positional, so the wiring is one line of it): its live link, the player, the mid-screen line and the
  * town talk a line is said on.
  * @param {() => any} online @param {any} player @param {(line: string, s?: number) => void} midScreen @param {{ say: (line: string) => void }} talk
- * @param {{ doc?: Document | null, now?: () => number, zone?: () => boolean }} [o]
+ * @param {{ doc?: Document | null, now?: () => number, zone?: () => boolean, keyActions?: (e: { code: string | null }) => string[], keyWord?: () => string }} [o]
  */
-export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeof document === 'undefined' ? null : document, now = Date.now, zone = wildHere } = {}) {
+export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeof document === 'undefined' ? null : document, now = Date.now, zone = wildHere,
+  keyActions = (e) => actionsOf(e), keyWord = () => actionKeyWord(PVP_FLAG_ACTION) } = {}) {
   const level = () => Math.trunc(player?.level || 1);
   const say = (line) => { midScreen(line); talk.say(line); };
   const sayLock = (line) => { midScreen(line, PVP_SAY_S); talk.say(line); };   // PVP-HUD: a combat timer's line, 3 s
@@ -63,7 +69,8 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
     const kind = mySkull();
     Object.assign(button.style, { backgroundImage: `url("${skullSrc(kind ?? 'white')}")`, borderColor: SKULL_EDGE[kind ?? 'off'],
       filter: kind ? '' : 'grayscale(1) brightness(0.6)', boxShadow: kind === 'gold' ? `0 0 0 3px ${SKULL_EDGE.gold}55` : '' });
-    button.title = on ? t('pvp.flag.onTitle', 'PvP on (Caps Lock)') : t('pvp.flag.offTitle', 'PvP off (Caps Lock)');
+    const key = keyWord() || t('pvp.flag.noKey', 'no key');   // PVP-KEY: the key it answers now
+    button.title = on ? t('pvp.flag.onTitle', 'PvP on ({key})', { key }) : t('pvp.flag.offTitle', 'PvP off ({key})', { key });
     button.setAttribute('aria-label', button.title);
     hud?.draw({ kind, left: pvpAggroLeft(fightAt, now()), shown: here(), hits: hitLines });
   };
@@ -74,7 +81,7 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
     wasLock = lock;
   };
   const set = (v) => { on = v; online()?.setWildFlag?.(v); paint(); };
-  /** Caps Lock or the button: up at once from level 30, down at once outside the lock. */
+  /** The key or the button: up at once from level 30, down at once outside the lock. */
   const toggle = () => {
     if (!on && !zone()) return false;   // PVP-FLAG-ZONE: up only in the zone
     const why = pvpFlagRefusal({ on: !on, level: level(), fightAt, now: now(), red: isVillain(villainy) });
@@ -114,10 +121,14 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
   if (doc) {
     doc.addEventListener('keydown', (e) => {
       const el = /** @type {any} */ (e.target);
-      if (e.code !== 'CapsLock' || e.repeat || el?.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el?.tagName ?? '')) return;
-      noteCaps('game');
-      if (here()) toggle();
+      if (e.repeat || el?.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el?.tagName ?? '')) return;
+      if (e.code === 'CapsLock') {   // PVP-FLAG-CAPS: the light a press in the game turns on, whatever the key is bound to
+        noteCaps('game');
+      }
+      if (here() && keyActions(e).includes(PVP_FLAG_ACTION)) toggle();
     });
+    // PVP-KEY: a mouse button the player bound to the flag
+    doc.addEventListener('mousedown', (e) => { const code = mouseCode(e.button); if (code && here() && keyActions({ code }).includes(PVP_FLAG_ACTION)) toggle(); });
     // PVP-FLAG-SPOT (the owner: "left center or right center"): the screen's right edge, just over its middle -
     // clear of the Decorate button centred there (ui/decorPanel.js .dfdecor-open).
     button = doc.createElement('button');

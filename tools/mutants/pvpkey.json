@@ -1,0 +1,17 @@
+[
+  { "name": "PVP-KEY-default-dropped", "file": "src/systems/inputActions.js",
+    "old": "  ['CapsLock', 'PvpFlag'],\n", "new": "",
+    "tests": ["test/net/pvpkey.test.js"], "why": "the flag ships with no key" },
+  { "name": "PVP-KEY-caps-raw", "file": "src/scenes/pvpFlagHost.js",
+    "old": "      if (here() && keyActions(e).includes(PVP_FLAG_ACTION)) toggle();", "new": "      if (here() && e.code === 'CapsLock') toggle();",
+    "tests": ["test/net/pvpkey.test.js"], "why": "Caps Lock read raw again - a player's own Caps Lock action flags PvP too" },
+  { "name": "PVP-KEY-registry-unread", "file": "src/scenes/pvpFlagHost.js",
+    "old": "      if (here() && keyActions(e).includes(PVP_FLAG_ACTION)) toggle();", "new": "      if (here() && keyActions(e).length) toggle();",
+    "tests": ["test/net/pvpkey.test.js"], "why": "any bound key flags PvP" },
+  { "name": "PVP-KEY-mouse-unheard", "file": "src/scenes/pvpFlagHost.js",
+    "old": "if (code && here() && keyActions({ code }).includes(PVP_FLAG_ACTION)) toggle(); });", "new": "void code; });",
+    "tests": ["test/net/pvpkey.test.js"], "why": "a mouse button bound to the flag does nothing" },
+  { "name": "PVP-KEY-unnamed", "file": "src/scenes/pvpFlagHost.js",
+    "old": "    const key = keyWord() || t('pvp.flag.noKey', 'no key');", "new": "    const key = 'Caps Lock';",
+    "tests": ["test/net/pvpkey.test.js"], "why": "the button names Caps Lock whatever the key is" }
+]
