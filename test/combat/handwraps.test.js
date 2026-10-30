@@ -5,6 +5,7 @@
 // the glow on the classic fists, the Morrowind hands and a peer's; the Stats page; no doll layer, no Damage row.
 import '../modsOff.js';
 import { test } from 'node:test';
+import { SESSION_KEY } from '../../src/net/accountClient.js';   // WRAPS-AURA: the weapon aura read off the stored session
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { setPref, _resetForTests } from '../../src/systems/uiPrefs.js';
@@ -140,16 +141,25 @@ test('HAND-WRAPS the Stats page: a plain pair reads as the fists, and the wraps\
   try { assert.deepEqual(computeCombatStats(A, { weapon: w, core: 'classic' }).head.byFoe[0].dmg.parts.roll, bare.parts.roll.map((r) => r + 2)); } finally { registerWeaponDamageMod('handwraps-stats', null); }
 });
 
-test('HAND-WRAPS the glow: the classic fists wear the element, and the arcane outline for an enchantment (they have no magic sheet), as a blade\'s Morrowind hand does; a blade\'s classic outline is unmoved (mutants: no arcane for the wraps; arcane for every classic hand)', () => {
+test('HAND-WRAPS the glow, WRAPS-AURA (mob: "wraps are glowing without the aura on"): wraps glow by the weapon aura alone - no element, no arcane outline - and a blade\'s classic outline is unmoved (mutants: the aura rule dropped; arcane for every classic hand)', () => {
   on();
   const f = fireWraps();
-  assert.deepEqual(WG.spriteGlow(f, { on: true }), WG.glowSpec('fire', 1));
-  assert.deepEqual(WG.meshGlow(f, { on: true }), WG.glowSpec('fire', 1));
+  assert.equal(WG.spriteGlow(f, { on: true }), null, 'an element line: none');
+  assert.equal(WG.meshGlow(f, { on: true }), null);
   const ench = createHandWraps(), blade = createWeapon(120, 0);
   for (const it of [ench, blade]) applyEnchantments(it, [{ type: ENCHANTMENT_TYPES.CastWhenStrikes, param: 14 }]);   // the item maker's own
-  assert.deepEqual(WG.spriteGlow(ench, { on: true }), WG.glowSpec('arcane', WG.ARCANE_LEVEL), 'the fists\' arcane outline');
+  assert.equal(WG.spriteGlow(ench, { on: true }), null, 'enchanted: none');
+  assert.equal(WG.meshGlow(ench, { on: true }), null);
   assert.equal(WG.spriteGlow(blade, { on: true }), null, 'a blade\'s is its WEAPO1xx sheet');
+  assert.deepEqual(WG.meshGlow(blade, { on: true }), WG.glowSpec('arcane', WG.ARCANE_LEVEL), 'a blade\'s Morrowind hand keeps the arcane look');
   assert.equal(WG.spriteGlow(createHandWraps(), { on: true }), null, 'a plain pair: none');
+  const was = globalThis.localStorage, m = new Map();
+  globalThis.localStorage = /** @type {any} */ ({ getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k), key: () => null, get length() { return m.size; } });
+  try {
+    m.set(SESSION_KEY, JSON.stringify({ id: 'u1', name: 'Me', kind: 'linked', sessionId: 's1', secret: 'x', glyphs: [], armory: 'b000b' }));
+    assert.deepEqual(WG.spriteGlow(ench, { on: true }), WG.glowSpec('edge', WG.ARMORY_LEVEL), 'the weapon aura on: its look');
+    assert.deepEqual(WG.meshGlow(f, { on: true }), WG.glowSpec('edge', WG.ARMORY_LEVEL));
+  } finally { globalThis.localStorage = was; }
 });
 
 test('HAND-WRAPS the Morrowind hands: the wraps key as the empty hand; the fists\' ranges are the skin\'s hands and a glove\'s hand parts; the arm lays the glow while the fists are up - never sheathed or casting - and the rig and a peer\'s body say it, a peer\'s under my switch (mutants: keyed as a weapon; the ranges a weapon\'s; the glow while sheathed; the rig untold; the switch unread)', async () => {

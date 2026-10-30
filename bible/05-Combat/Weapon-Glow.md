@@ -72,8 +72,9 @@ reference's enchantment glow as not ported.
    a choice, where laws 1 to 8 are a reading, so it shows first. The viewer's switch still answers. The words are the
    wire's, so peers see it on every relay since world291, with no relay change.
 10. **A bare fist wears the Aura Armory's weapon piece** (ARMORY-FISTS, 2026-10-30, mob: "we lose out as a hand to
-   hand"): law 7 with no weapon and no Hand Wraps, in both hands' drawers (`systems/weaponGlow.js` `fistGlow`). Wraps
-   already wear it. A peer's bare fists read their own kit, which their token carries, so no relay change.
+   hand"): law 7 with no weapon and no Hand Wraps, in both hands' drawers (`systems/weaponGlow.js` `fistGlow`). A peer's
+   bare fists read their own kit, which their token carries, so no relay change. Hand Wraps wear the piece and nothing
+   else, after law 9 (WRAPS-AURA, mob: "wraps are glowing without the aura on"): no element, Gilded or arcane look.
 
 The frame asks every frame (the held weapon's, and the arm's), so the ask builds nothing: the element is summed into
 arrays kept for it, and every spec - `{ look, code, level, word, ramp, win }` - is built once, frozen whole, and
