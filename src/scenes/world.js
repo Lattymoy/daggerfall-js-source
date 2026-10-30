@@ -332,7 +332,7 @@ import { setProfessionsPages, forgeOffered, stationDoorAt, stationColdLine, dise
 import { materialPicture, itemPicture } from '../ui/menu/menuPicture.js';   // MENU-ORDER: a material's and a piece's picture for the menus' rows
 import { createSaddleHost } from './saddleHost.js';   // STEED-UI: the saddle panel - the horse and the wagon on screen (Enhanced Plus)
 import { setHoldingsProvider, stableProviderFor } from '../ui/holdingsPages.js';   // HOLDINGS: the Stable and the Fleet pages on the pause menu's Holdings tab
-import { fleetBook, fleetShip, titleDeed, knowShip, retitle, setShipPort, forgetShip, fleetSaveSlot, FLEET_SAVE_VENDOR } from '../systems/fleet.js';   // HOLDINGS: the Fleet's ledger and its book of titles
+import { fleetBook, fleetShip, titleDeed, knowShip, retitle, setShipPort, forgetShip, fleetSaveSlot, FLEET_SAVE_VENDOR, shipFigureheadOf } from '../systems/fleet.js';   // HOLDINGS: the Fleet's ledger and its book of titles; FIGUREHEAD: a boat of mine's carving
 import { createFleetHost } from './fleetHost.js';   // HOLDINGS: the Fleet page's host half
 import { createQuayPool } from './quayPool.js';   // QUAYS: a harbour's quays, stood off its berths, and the gangways
 import { createMonuments } from './lefayMonumentHost.js';   // LEFAY1: the monuments - Julian LeFay's in Gothway Garden, Patrick Stewart's by the White-Gold Tower - and the flowers laid at them
@@ -7305,6 +7305,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const _csaOnAtLoad = latchModLoaded('come-sail-away', (() => { try { return modSetting('come-sail-away', 'Enabled') !== false; } catch { return false; } })());   // AUDIT PRE-MERGE 0928 S4: and the mod's other doors (the shelf's rows, its keys, its effect's restore) read this answer too
   const csaOn = () => _csaOnAtLoad;
   const csa = createComeSailAwayPool({ renderer, pipeline, log: console, liveryOf: (boat) => (boat.uid ? fleetShip(boat.uid)?.livery ?? null : null), fittingsOf: (boat) => (boat.uid ? fleetShip(boat.uid)?.deck ?? [] : []),   // SHIP-LIVERY: a boat of mine's paint, the Fleet's; DECK-PROPS: and her fittings
+    figureheadOf: shipFigureheadOf,   // FIGUREHEAD: her carving at her stem
     plaqueOf: (boat) => { const r = boat.uid ? fleetShip(boat.uid) : null; return r?.plaque && r.name ? r.name : null; }, plaqueFont: () => fetchBytes('FONT0003.FNT') });   // SHIP-PLAQUE: her name on her bows, in the shops' lettering
   /** MENU-ORDER: the shipmaster's cards' pictures - each hull's portrait boat, drawn after the frame's own pass (below) */
   const shipPortraits = createShipPortraits({ renderer, canvas, doc: typeof document !== 'undefined' ? document : null, portrait: (hull) => (csaOn() ? csa.portrait(hull) : null) });
@@ -8580,6 +8581,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       flag: shipFlags.wireFlag(b),   // SHIP-COLOURS: and the flag she flies
       livery: b.uid ? fleetShip(b.uid)?.livery ?? null : null, fittings: b.uid ? fleetShip(b.uid)?.deck ?? [] : [],   // SHIP-LIVERY: and her paint; DECK-PROPS: her fittings
       plaque: !!(b.uid && fleetShip(b.uid)?.plaque),   // SHIP-PLAQUE: her name on her bows
+      figurehead: b.uid ? fleetShip(b.uid)?.figurehead ?? 0 : 0,   // FIGUREHEAD: her carving
     }));
     const rec = csaWireRecord(view, campToWire);
     if (rec && modes?.sailingCabin) rec.cabin = 1;

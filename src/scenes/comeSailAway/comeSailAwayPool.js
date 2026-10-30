@@ -64,6 +64,8 @@ import { registerLargeBoatArt, LARGE_BOAT_ARCHIVE } from '../../world/ships/larg
 import { toColor32 } from '../../formats/color32Order.js';
 import { createShipPlaques, BLOCK_LETTERS, fntLetters } from './shipPlaque.js';   // SHIP-PLAQUE: her name on her bows
 import { FntFile } from '../../formats/fntFile.js';   // SHIP-PLAQUE: FONT0003, the boards' lettering
+import { createFigureheads } from './shipFigurehead.js';   // FIGUREHEAD: a carving at her stem
+import { carvingPaint, figureheadOfCode } from '../../systems/naval/figurehead.js';
 import { addVendorTextures, decodedTexture } from '../../systems/textureReplacement.js';
 import { adoptLight } from '../../render/lightId.js';   // LIGHT-ID: a lantern's light named by its lantern
 
@@ -166,14 +168,14 @@ export const RIG_STILL_M = 0.001;
 
 /**
  * @param {{ renderer?: any, pipeline?: any, fetchFn?: any, log?: any, liveryOf?: ((boat: any) => any) | null, fittingsOf?: ((boat: any) => any[]) | null,
- *   plaqueOf?: ((boat: any) => string | null) | null, plaqueFont?: (() => Promise<Uint8Array>) | null }} [o]
+ *   plaqueOf?: ((boat: any) => string | null) | null, plaqueFont?: (() => Promise<Uint8Array>) | null, figureheadOf?: ((boat: any) => number) | null }} [o]
  *   SHIP-LIVERY: `liveryOf(boat)` a boat of mine's livery (the Fleet's ledger, by her number); a peer's boat says its own
  *   (`boat.livery`, its owner's word), and a sea ship her own (SEA-COLOURS: the naval host's, systems/naval/seaColours.js). DECK-PROPS: `fittingsOf(boat)` a boat of mine's deck
  *   fittings, the same way (a peer's `boat.fittings`). SHIP-PLAQUE: `plaqueOf(boat)` the name a boat of mine shows on her
  *   bows (null: none; a peer's `boat.plaqueName`, a sea ship none); `plaqueFont()` FONT0003's bytes, the boards' lettering
  *   (none, or none to be had: the block letters)
  */
-export function createComeSailAwayPool({ renderer = null, pipeline = null, fetchFn = null, log = console, liveryOf = null, fittingsOf = null, plaqueOf = null, plaqueFont = null } = {}) {
+export function createComeSailAwayPool({ renderer = null, pipeline = null, fetchFn = null, log = console, liveryOf = null, fittingsOf = null, plaqueOf = null, plaqueFont = null, figureheadOf = null } = {}) {
   /** @type {any} */ let models = null;
   let modelsLoading = null, modelsFailed = false;
   /** @type {any[]} */ const boats = [];
@@ -218,6 +220,9 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
   const plaques = createShipPlaques({ renderer, surfaceOf: (hull) => hullSurface(hull), buildOf: (hull) => hullBuild(hull), letters: lettersNow });
   /** The name a boat shows on her bows: mine by my ledger, a peer's by her owner's word, a sea ship none. */
   const plaqueNameOf = (boat) => (mineBoats.has(boat) ? plaqueOf?.(boat) ?? null : peerBoats.includes(boat) ? boat.plaqueName || null : null);
+  // FIGUREHEAD (scenes/comeSailAway/shipFigurehead.js): her carving at her stem - mine by my ledger, a peer's by her word
+  const figureheads = createFigureheads({ renderer, surfaceOf: (hull) => hullSurface(hull), buildOf: (hull) => hullBuild(hull) });
+  const carvingOf = (boat) => figureheadOfCode(mineBoats.has(boat) ? figureheadOf?.(boat) : peerBoats.includes(boat) ? boat.figurehead : 0);
   const _cullOn = !cullDisabled();   // AUDIT NAV1 (#13): ?cull=off, read once, as the world reads it
   const _cullPv = new Float32Array(16), _cullPlanes = new Float32Array(24), _cullSphere = new Float32Array(4), _cullBox = new Float32Array(6);
   const meshes = new Map();      // rendererModelKey -> gpu mesh | null
@@ -508,6 +513,7 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
       // AUDIT 2: and, the same way, each hull's planking and bows read for her name boards (SHIP-PLAQUE: 10-50 ms a hull, the
       // pool's draw's the first time a named ship of it was seen) and the livery painter's base pictures
       for (let hull = 0; hull < HULL_NAMES.length; hull++) plaques.prime(hull);
+      for (let hull = 0; hull < HULL_NAMES.length; hull++) figureheads.prime(hull);   // FIGUREHEAD: her stem read and the carving fitted (20-100 ms a hull)
       try { warmLiveryArt(); } catch { /* painted as she is first seen painted - the paint shop's own ask says what failed */ }
       preloaded = true;
       return true;
@@ -941,10 +947,13 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
       for (const c of still) if (!batch || !frame || !batch.nodes.has(c.node)) one(c.gpu, placed(c.rec), paint);
       const shown = boat.GameObject?.activeSelf && boat.MeshObject?.activeSelf ? plaqueNameOf(boat) : null;   // SHIP-PLAQUE: her name boards, in her hull's frame - AUDIT 2: only where she is drawn (a hidden peer's boat - her look 'hidden' - sailed two boards with her name across the water; mine, off while I am indoors, hung them in the room)
       if (shown) for (const mesh of plaques.meshesFor(boat, shown)) one(mesh, frame ?? worldOf(boat.MeshObject), paint);
+      const carved = boat.GameObject?.activeSelf && boat.MeshObject?.activeSelf ? figureheads.drawFor(boat, carvingOf(boat), carvingPaint(boat.hull, liveryCodeOf(boat))) : null;   // FIGUREHEAD: her carving, in her trim paint
+      if (carved) one(carved.mesh, multiply(frame ?? worldOf(boat.MeshObject), carved.matrix, boat._figureM ??= new Float32Array(16)), paint);   // her own matrix: the shadow pass keeps it
       if (fade < 1) r.setDissolve?.(1);
     }
     _shift = null;
     plaques.sweep();
+    figureheads.sweep();
     return n;
   }
 
@@ -1129,6 +1138,7 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
 
   return {
     hullSurface,   // SHIP-PLAQUE
+    figureheads,   // FIGUREHEAD: each hull's mount (a probe's reading)
     ensureModels, spawn, spawnNow, preload, ready: () => preloaded, remove, setVariant, frame, batches, people, draw, lights, offsetAll, destroyAll,
     deckOf,   // DECK-WALK
     hullRig,   // OWS2

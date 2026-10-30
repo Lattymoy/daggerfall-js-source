@@ -22,6 +22,7 @@ import { flagSvg } from './flagArt.js';   // SHIP-COLOURS: and its picture
 import { SHIP_PAINTS, LIVERY_PARTS, liveryOf } from '../systems/naval/shipLivery.js';   // SHIP-LIVERY: her paint's law
 import { clothSvg, sailClothRows } from './sailClothPanel.js';   // GUILD-SHOP: her sailcloth
 import { t } from '../systems/textManager.js';   // SHIP-COLOURS: the designer's words in the player's language
+import { carvingOpen, toggleCarving, carvingShut, carvingPanel } from './figureheadPanel.js';   // FIGUREHEAD: her carving's panel
 
 export const FLEET_PAGE_SECTIONS = Object.freeze([Object.freeze(['fleet', 'Fleet'])]);
 /** Come Sail Away's two items' pictures: a deed's (209/5) for a ship whose title is held, her parts' (212/11) packed. */
@@ -391,9 +392,12 @@ function shipCard(el, s, { rerender, meter, door, arms = null }) {
   // SHIP-LIVERY: her paint - every hull that takes one
   acts.append(button(el, s.fittings ? t('naval.deck.openN', 'Deck ({n})', { n: s.fittings }) : t('naval.deck.open', 'Deck'), null, () => act('deckPlan')));   // DECK-PROPS: the plan of her deck, her fittings on it
   if (s.paints?.length || s.cabin != null) acts.append(button(el, t('naval.paint.open', 'Paint'), null, () => { const open = _open?.uid === s.uid && _open.panel === 'paint'; _open = open ? null : { uid: s.uid, panel: 'paint' }; _paint = null; _said = null; rerender(); }));
+  // FIGUREHEAD: her carving at her stem - every hull with a stem for one
+  if (s.carvable) acts.append(button(el, t('naval.figurehead.open', 'Figurehead'), null, () => { _open = null; toggleCarving(s.uid); _said = null; rerender(); }));
   text.append(acts);
   if (_open?.uid === s.uid) text.append(_open.panel === 'refit' ? refitPanel(el, s, rerender, act) : _open.panel === 'crew' ? crewPanel(el, s, act) : _open.panel === 'colours' ? coloursPanel(el, s, rerender, act, arms) : _open.panel === 'paint' ? paintPanel(el, s, rerender, act, arms) : renamePanel(el, s, rerender, act));
   item.append(text);
+  if (carvingOpen(s.uid)) text.append(carvingPanel(el, s, rerender, act, button));   // FIGUREHEAD: under the card's acts, as the page's own panels
   return item;
 }
 
@@ -403,6 +407,7 @@ function shipCard(el, s, { rerender, meter, door, arms = null }) {
  */
 export function drawFleetPage(detail, rerender, { el, divider, meter = null, door = null } = /** @type {any} */ ({})) {
   ensureHoldingsStyle();
+  if (_open) carvingShut();   // FIGUREHEAD: a panel the page opened shuts the carving's
   const m = fleet()?.model?.() ?? { ships: [], gold: 0, atPort: false };
   detail.append(divider(`Fleet (${m.ships.length})`));
   if (!m.ships.length) {
@@ -418,4 +423,4 @@ export function drawFleetPage(detail, rerender, { el, divider, meter = null, doo
 }
 
 /** A visit's words forgotten (an act's answer, an open panel) - the pause menu's every mount. */
-export function resetFleetPage() { _said = null; _open = null; _draft = ''; _flag = null; }
+export function resetFleetPage() { _said = null; _open = null; _draft = ''; _flag = null; carvingShut(); }
