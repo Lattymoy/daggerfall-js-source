@@ -12477,7 +12477,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
 
   const makeInventoryWindow = (extra = {}) => createInventoryWindow({
     ...packDoors,   // UI2: the book, the camp and the spellbook - one bag with the hotbar's Use
-    postItem: (text, item) => postItemInChat(text, item), linkItem: (item) => linkItemInChat(item), canPostItem: () => canPostItemInChat(),   // CHAT-POST: post or link into the field
+    linkItem: (item) => linkItemInChat(item), canPostItem: () => canPostItemInChat(),   // CHAT-POST: link into the field
     say: (l) => townTalk.say(l),   // FX1 (F128): the "Equipping %s" cue on close
     items: () => (playerEntity.items ??= []),
     wagonItems: () => (playerEntity.wagonItems ??= []),   // W-slice: the cart's collection
@@ -26852,12 +26852,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   /** CHAT-CHAN: a typed line said on `tabId` - each tab's own door. False keeps the line in the field (AUDIT CHAT B2):
    *  nothing went. A reason is said as a line on the tab the line was typed on (`from`): the strip speaks for the
    *  active tab alone, and `/p` is typed on another. */
-  /** CHAT-POST (2026-09-27, Discord - Tabitha: "Link in chat / Post in chat"): an item's line and its record
-   *  (itemChatText + the piece) said on the chat's open tab - chatSend's own door, so every tab's reasons hold
-   *  (no party, an older relay); none offline. A hearing client draws a coloured [Name] and the pack's hover card. */
+  /** CHAT-POST: insert the piece into the chat field as `[Label]` - the player finishes the line and sends.
+   *  Online only, with a chat tab open; a hearing client draws a coloured [Name] and the pack's hover card. */
   const canPostItemInChat = () => !!(chatLog?.active && chatPanel);
-  const postItemInChat = (text, item) => (canPostItemInChat() ? chatSend(chatLog.active, text, chatLog.active, { item }) === true : false);
-  /** CHAT-POST: insert the piece into the chat field as `[Label]` - the player finishes the line and sends. */
   const linkItemInChat = (item) => (canPostItemInChat() ? chatPanel.linkItem?.(item) === true : false);
   const chatSend = (tabId, text, from = tabId, { me = false, item = null, items = null } = {}) => {
     const why = (line) => { chatLog.push(from, { text: line, system: true }); return false; };
@@ -28350,7 +28347,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     partyLevels: () => partyMateLevels(),   // PARTY-LOOT: my party's levels, for the level a room container's base is minted at
     roomHost: () => online?.host ?? null,   // PARTY-LOOT: the relay's seat - whose word a room container's state is (the host grants the takes)
     peers: peersNear,
-    postItem: (text, item) => postItemInChat(text, item), linkItem: (item) => linkItemInChat(item), canPostItem: () => canPostItemInChat(),   // CHAT-POST: the building's and the dungeon's packs post too
+    linkItem: (item) => linkItemInChat(item), canPostItem: () => canPostItemInChat(),   // CHAT-POST: the building's and the dungeon's packs link too
     partyNear: () => partyOnMaps(), professionMarks: (feet) => professionMarks(feet),   // DISC23-A: the party's bodies, for the dungeon's and the building's plans (AUDIT pre-merge I-E: those drawn here); NODE-MARKS: the dungeon's veins (and a body the knife may skin) on its compass, at its own feet
     allyMarks: (sp) => allyMarksNear(sp),   // AID1 onto ALLY-CAST: the dungeon's own cast engine gives to the same mates - SPELL-GIFT: and strangers, by the spell
     companionBodies: () => [...crewAshore.bodies(), ...revenantAshore.bodies()],   // COMPANION-KIT: my companions underground, for the dungeon's own cast engine (REVENANT-COMPANION: the sworn too)
