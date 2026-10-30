@@ -19511,7 +19511,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const auraHost = createAuraHost({
     renderer, online: () => online, travelActive: () => !!travelView?.active, quiet: () => !!egClient?.quiet?.(), player: () => player, camYaw: () => cam.yaw,
     spawned: () => playerSpawned, beast: () => !!liveLycanthropy(playerEntity)?.isTransformed, veiled: (id) => _veils.has(id), toScene: (shown) => onlineToScene(shown),
-    walkers: () => peerWalkers, riders: () => peerRiders, bodies: () => peerBodies,
+    sprites: () => [peerWalkers, peerRiders, remotePlayers], bodies: () => peerBodies,   // CAPE-CARD: every layer that draws a peer as a picture - the paperdolls and class sprites (remotePlayers) with the sets'
   });
   const renownXpAdopt = (xp) => {
     if (onlineOn && Number.isSafeInteger(xp) && xp >= 0 && (renownXp === null || xp > renownXp)) renownXp = xp;

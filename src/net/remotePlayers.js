@@ -49,7 +49,7 @@ export function ribbonTints(rb) {
 // the same class-enemy sprite classic dungeon humanoids already use (Warrior, Mage, Knight, ...), driven by simple
 // moving/striking flags off the peer's synced pose instead of AI - the reusable pieces dungeonContext.js already
 // builds a foe's OWN mobile unit from (MobileUnit.update takes the same flags EnemyMotor's AI would set).
-import { MobileUnit } from '../characters/mobile/mobileUnit.js';
+import { MobileUnit, mobilePortrayedYaw } from '../characters/mobile/mobileUnit.js';   // CAPE-CARD: and the way its picture faces
 import { ENEMY_BASICS, ENEMY_NAMES } from '../characters/enemy/enemyBasics.js';
 import { MOBILE_TYPES } from '../characters/mobile/mobileTypes.js';   // DISC12: the beast a peer in beast form stands as
 import { mobileBillboardSize } from '../world/rmbFlats.js';
@@ -1290,6 +1290,21 @@ export class RemotePlayers {
   /** The batches for the hosts' billboard pass. */
   /** PEERFX3: a peer's drawn sprite (doll or class body), for the hurt flash; null when this layer draws none. */
   batchOf(id) { return this._batches.get(id)?.batch ?? null; }
+
+  /** CAPE-CARD (2026-10-30): the way a peer's picture faces as `eye` sees it, SPRITE-FACE's { yaw, turn } (peerRiders.js
+   *  faceOf) - a doll shows every eye its front; a class sprite the view it was drawn in (mobilePortrayedYaw). `turn` the
+   *  pose's own facing, which an aura's swing reads; `card` - a flat card with no figure to read (render/auraRing.js
+   *  auraSpritePosed). Written in place on the peer's entry; null for a peer this layer draws no picture of. */
+  faceOf(id, eye) {
+    const e = this._batches.get(id), at = e?.batch?.origin;
+    if (!e || !at || !eye) return null;
+    const yaw = e.kind === 'mobile' ? mobilePortrayedYaw(e.mobileUnit.orientation, at, eye)
+      : eye[0] !== at[0] || eye[2] !== at[2] ? Math.atan2(eye[0] - at[0], eye[2] - at[2]) : null;
+    if (yaw === null) return null;
+    const turn = peerBodyYaw(e.peer?.shown), f = e.face ?? (e.face = { yaw: 0, turn: 0, card: true });
+    f.yaw = yaw; f.turn = Number.isFinite(turn) ? turn : yaw;
+    return f;
+  }
 
   batches() {
     const out = [];

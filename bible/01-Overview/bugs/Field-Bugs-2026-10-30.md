@@ -1,0 +1,67 @@
+# FIELD BUGS 2026-10-30 - the Eternal cape on a peer's front, and its curved cut (CAPE-CARD, CAPE-FLAT)
+
+The owner, with a screenshot of a player in the Eternal cape: "With the new cape why is it showing on the front of the
+player? Did we learn nothing from the angel wings aura? And the cape sides and top shouldnt be curved". Read on main's
+`cc2e350af` with the freeware's data. The pins are `test/render/capecard.test.js`, the mutants
+`tools/mutants/capecard.json` (11, all dead).
+
+| | Report | What it was | Done |
+|---|---|---|---|
+| 1 | The cape on the front of the player | A peer drawn as a paperdoll or a class sprite had no face and no figure, so the cape hung on the pose's yaw, on the body's axis | CAPE-CARD |
+| 2 | "the cape sides and top shouldnt be curved" | The cape was a span of the turn round the body, 0.64 of it at the collar | CAPE-FLAT |
+
+## 1. The cape on a peer's front (CAPE-CARD)
+
+FOUND. The ring and spark in the shot are the cape's outside, between the shoulder blades. They face the eye, under a
+picture that shows its face, so the cape hung on the far side from the way the picture faces. A peer stands in one of
+four layers: a Morrowind body (bones), the Eye of the Beholder walkers and riders (a figure and a face, WINGS-FIT and
+SPRITE-FACE), or `net/remotePlayers.js`'s paperdoll or class sprite. The aura host asked only the first three. On the
+fourth the cape hung on the pose's yaw from the rest pose on the axis. A paperdoll always shows its front, so a peer
+facing away wore the cape over the doll's chest. The figures in the shot stand as Daggerfall's paperdolls do.
+
+A class sprite had the same gap. Its picture is chosen for my own place, not my camera, so its cape could hang up to a
+view off the picture. From the side it lay over the card, as the wings did before WINGS-FIT.
+
+FIXED. `RemotePlayers.faceOf(id, eye)` says how its picture faces as the eye sees it - a doll its front, a class sprite
+its view (`mobilePortrayedYaw`, mobileOrientation run backwards) - with the pose's yaw as `turn`, and `card`.
+`auraSpritePosed` hangs a face that says `card` from the rest pose WING_SPRITE_BACK behind the card
+(`CLOAK_CARD_POSE`). The aura host reads every sprite layer as one list (`sprites`, `spriteAnswer`), so the Aura
+Armory's pieces on a doll face as the doll does too. In `scenes/world.js` the list replaces the two getters it held, so
+bootWorld does not grow.
+
+WHY THE PINS PASSED. ETERNAL-FIT's pin hung the cape on an Eye of the Beholder sprite's pose. No pin drew a peer as a
+doll or a class sprite under an aura. The new pins build both with `RemotePlayers`' own producers (`Home.md`, TEST THE
+SHAPE THE PRODUCER MINTS), and one hangs the cape on the doll from the shot: all of it behind the card now, more than a
+hundred points in front of it before.
+
+SEEN. A scratch Chromium probe drew the real pass over an Eye of the Beholder front picture standing for a doll whose
+peer faces away. Before, the cape covered the picture's front with its sigil out, as in the shot. After, it hangs
+behind the picture and shows at its edge.
+
+THE FOUR HOSTS: world.js WIRED (the list); worldModes.js and dungeonContext.js draw through world.js's aura host,
+unchanged; exterior.js draws no aura, unchanged.
+
+## 2. The cut (CAPE-FLAT)
+
+FOUND. Eternal's cloth was the Holo Shadow Cloak's shell cut to a span of the turn round the body: 0.47 of it at the
+hem, 0.5 at the shoulders, 0.64 at the collar. Its top wrapped the neck, its sides bowed round the body, and its hem
+rose at the sides.
+
+FIXED. `eternalPoint` cuts it straight. Its top edge lies across the shoulders at ETERNAL_TOP (1.47 m at rest),
+ETERNAL_HALF.top either side of the middle. Its sides run straight out to ETERNAL_HALF.hem at a level hem
+(ETERNAL_HEM_Y). It falls straight from ETERNAL_BACK.top behind the shoulders to ETERNAL_BACK.hem. Its folds and its
+wave move it in depth alone, and no fold lies along the top edge or a side, so its outline stays straight. It keeps the
+cloak's pose and swing law - the shoulders, the crouch, the pendulum, the turn's lag, the knees, a hand off the legs -
+and ETERNAL-FIT's push. The fire, the sigil, the wisps and the embers read the flat measures.
+
+PINS MOVED. `test/ui/shop_window.test.js` (the look's height, 1.47 for 1.54), `test/net/shadowcloak.test.js` and
+`test/net/seraphwings.test.js` (the host's lines, now one list), and the three host fixtures that named the two
+getters. Mutant records re-aimed by content: `armory.json`, `seraphwings.json`, `shadowcloak.json` (the cape now has
+its own copy of the cloak's pendulum line, so the cloak's records name the cloak's comment) and `spriteface.json`.
+
+## Not changed
+
+An Eye of the Beholder rider's face has no figure and says no card: wings over a horse's picture hang at the body, as
+before. A class sprite's picture is still chosen for my own place (world.js remotePlayers.sync's `eye`), not my
+camera; the cape follows the picture it shows. From the side, the cape on a card stands WING_SPRITE_BACK behind the
+picture's back, ETERNAL-FIT's law.

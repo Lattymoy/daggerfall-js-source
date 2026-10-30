@@ -93,7 +93,7 @@ test('CAPE-TOGGLE the auras: hidden, my own aura is not gathered (its token stil
       renderer: { gl: null }, online: () => online, travelActive: () => false, quiet: () => false, camYaw: () => 0,
       player: () => ({ feetAt: () => [1, 0, 2], bodyFeetAt: () => [1, 0, 2], bodyYawFor: () => 0, height: 1.8, riding: false }),
       spawned: () => true, beast: () => false, veiled: () => false, toScene: (/** @type {any} */ s) => s.at,
-      walkers: () => null, riders: () => null, bodies: () => null,
+      sprites: () => [], bodies: () => null,
     });
     host.issued({ aura: 'eternal' });
     const seen = [{ id: 'p2', shown: { at: [5, 0, 5] } }, { id: 'p3', shown: { at: [6, 0, 6] } }];

@@ -168,10 +168,11 @@ Pins: `test/server/shoplocal.test.js`. Mutants: `tools/mutants/shoplocal.json`.
   itself, in M, L, Q and Z; five details (the wing's panes, the belly's plates, the eye, the spark and its halo). It moves
   in the SVG itself - the light turning round its scales, the eye breathing, the spark swelling - and stands still for
   less motion. `Q` on the classic face: a ring with its tail.
-- **Eternal** (`render/auraRing.js`, the pass's sixteenth look, kind 15): the Holo Shadow Cloak's cloth and pose seams
-  (cloakPoint, auraCapeStep, auraMotionStep) cut to a cape behind the arms with no hood, a wave flowing down it, a flare
-  at the hem and a swing larger than the cloak's; a dark mantle burning down into tongues of blue fire, flame veins, the
-  Origin's ring and spark on the back; wisps and embers the third draw; a glow pool. No cloth from its wearer's own eye,
+- **Eternal** (`render/auraRing.js`, the pass's sixteenth look, kind 15): the Holo Shadow Cloak's pose seams
+  (auraCapeStep, auraMotionStep) and its pose and swing law, on a cape cut straight across the back with no hood
+  (CAPE-FLAT, below), a wave flowing down it and a swing larger than the cloak's; a dark mantle burning down into
+  tongues of blue fire, flame veins, the Origin's ring and spark on the back; wisps and embers the third draw; a glow
+  pool. No cloth from its wearer's own eye,
   none on a rider, burned away in beast form. The hosts already pose and swing any look with a `mesh`: none changed.
 - **ETERNAL-FIT** (2026-10-28, the owner, with a shot of the cape over a Beholder sprite: "The new aura isnt properly
   positioned. It needs to follow the same law as the wing aura"). A sprite is a flat card through its feet, so a cape
@@ -179,6 +180,11 @@ Pins: `test/server/shoplocal.test.js`. Mutants: `tools/mutants/shoplocal.json`.
   `eternalPoint` moves its cloth back along the facing by the pose's `wingBack` (`uWingBack`: WING_SPRITE_BACK on a
   sprite, 0 on a rig), and its wisps and embers fly from the moved cloth. From the front round to either side none of it
   lies over the body. From behind it covers the back, as a cape does.
+- **CAPE-CARD, CAPE-FLAT** (2026-10-30, the owner, with a shot of the cape on a player's front: "Did we learn nothing
+  from the angel wings aura? And the cape sides and top shouldnt be curved"; `01-Overview/bugs/Field-Bugs-2026-10-30.md`).
+  A peer drawn as a paperdoll or a class sprite now says how its picture faces and that it is a card
+  (`net/remotePlayers.js` faceOf), so the cape hangs behind it as on a sprite. The cape is cut straight: a top edge
+  across the shoulders, straight sides and a straight fall to a level hem (ETERNAL_HALF, ETERNAL_BACK, ETERNAL_HEM_Y).
 
 ## 7. Seen
 
@@ -198,5 +204,5 @@ Wear and its sentence, Escape back to the gem - at 1280 and on a 390 phone, sign
 - The Collections page still draws an aura as a ring of its colours; `auraPreview.js` could show it in the round there.
 
 Pins: `test/server/shop_service.test.js` (the law, the service end to end), `test/ui/shop_window.test.js` (the
-window, the faces, the catalogue's entries, ETERNAL-FIT). Mutants: `tools/mutants/shop.json`,
-`tools/mutants/eternalfit.json`.
+window, the faces, the catalogue's entries, ETERNAL-FIT), `test/render/capecard.test.js` (CAPE-CARD, CAPE-FLAT).
+Mutants: `tools/mutants/shop.json`, `tools/mutants/eternalfit.json`, `tools/mutants/capecard.json`.
