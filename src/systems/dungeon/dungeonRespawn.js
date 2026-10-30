@@ -12,8 +12,9 @@ export const ELITE_DUNGEON_RESPAWN_MS = 40 * 60_000;
 
 /** The respawn time of a dungeon: `{ elite, wild, superTier }` its kind. */
 export const dungeonRespawnMs = ({ elite = false, wild = false, superTier = false } = {}) =>
-  (wild || superTier ? RESPAWN_MS : elite ? ELITE_DUNGEON_RESPAWN_MS : DUNGEON_RESPAWN_MS);
+  wild || superTier ? RESPAWN_MS : elite ? ELITE_DUNGEON_RESPAWN_MS : DUNGEON_RESPAWN_MS;
 
 /** Is a stamp (when it fell, when it was emptied - the relay's clock) past the dungeon's respawn time by `nowMs`? False
  *  for no stamp or no clock (offline: nothing respawns, DFU's own), as respawnDue. */
-export const dungeonRespawnDue = (stampMs, nowMs, ms) => Number.isFinite(stampMs) && Number.isFinite(nowMs) && nowMs - stampMs >= ms;
+export const dungeonRespawnDue = (stampMs, nowMs, ms) =>
+  Number.isFinite(stampMs) && Number.isFinite(nowMs) && nowMs - stampMs >= ms;

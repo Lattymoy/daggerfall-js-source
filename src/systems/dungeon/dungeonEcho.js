@@ -21,8 +21,8 @@
 //
 // Not a DFU member. Pure but for the book's own list.
 
-import { isActionDoorObject, PLAY_DEPTH_MAX } from '../../world/actionSystem.js';   // AUDIT DELVE A7/A4: a door is an action door; IsPlaying's depth
-import { sceneCompassWord } from '../compassWords.js';   // AUDIT DELVE C8: the eight ways, one home
+import { isActionDoorObject, PLAY_DEPTH_MAX } from '../../world/actionSystem.js'; // AUDIT DELVE A7/A4: a door is an action door; IsPlaying's depth
+import { sceneCompassWord } from '../compassWords.js'; // AUDIT DELVE C8: the eight ways, one home
 
 /** A mover set going nearer than this to the eye needs no word: the player heard it beside them (m). */
 export const ECHO_NEAR_M = 3;
@@ -98,7 +98,11 @@ export function chainMovers(next, o, max = ECHO_CHAIN_MAX) {
 }
 
 /** A box's middle. Pure. */
-export const boxMiddle = (box) => [(box.min[0] + box.max[0]) / 2, (box.min[1] + box.max[1]) / 2, (box.min[2] + box.max[2]) / 2];
+export const boxMiddle = (box) => [
+  (box.min[0] + box.max[0]) / 2,
+  (box.min[1] + box.max[1]) / 2,
+  (box.min[2] + box.max[2]) / 2,
+];
 
 /**
  * THE EXAMINE'S LINE for the object `o`: the way from it to the first mover its chain reaches ("Works something to the
@@ -112,9 +116,12 @@ export function examineLine(o, next, boxOf) {
   for (const m of chainMovers(next, o)) {
     const box = boxOf(m);
     if (!box) continue;
-    const a = boxMiddle(from), b = boxMiddle(box);
+    const a = boxMiddle(from),
+      b = boxMiddle(box);
     const d = Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
-    return d <= ECHO_NEAR_M ? 'Works something close by' : `Works something ${wayWord(b[0] - a[0], b[1] - a[1], b[2] - a[2], 'it')}`;   // D10: from the lever
+    return d <= ECHO_NEAR_M
+      ? 'Works something close by'
+      : `Works something ${wayWord(b[0] - a[0], b[1] - a[1], b[2] - a[2], 'it')}`; // D10: from the lever
   }
   return null;
 }
@@ -138,13 +145,18 @@ export function createEchoBook({ max = ECHO_MAP_MAX } = {}) {
     has: (key) => list.some((e) => e.key === key),
     /** @param {(e: { key: string, at: number[] }) => boolean} found */
     take(found) {
-      const out = [], keep = [];
+      const out = [],
+        keep = [];
       for (const e of list) (found(e) ? out : keep).push(e);
       list = keep;
       return out;
     },
     points: () => list.map((e) => e.at),
-    get size() { return list.length; },
-    clear() { list = []; },
+    get size() {
+      return list.length;
+    },
+    clear() {
+      list = [];
+    },
   };
 }

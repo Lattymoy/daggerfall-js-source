@@ -34,6 +34,8 @@
 /src/systems/*
 !/src/systems/deepWater/
 /src/systems/deepWater/*/
+!/src/systems/dungeon/
+/src/systems/dungeon/*/
 !/src/systems/firstVisit/
 /src/systems/firstVisit/*/
 !/src/systems/grammar/

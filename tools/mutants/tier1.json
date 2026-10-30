@@ -2,8 +2,8 @@
   {
     "name": "TIER1-a-Hollow-read-as-its-other-flags",
     "file": "src/systems/dungeon/dungeonTier.js",
-    "old": "  if (loc.superTier === true) return 'super';\n",
-    "new": "",
+    "old": "  if (loc.superTier === true) return 'super';\n  return loc.elite === true ? 'elite' : 'regular';",
+    "new": "  return loc.elite === true ? 'elite' : 'regular';",
     "tests": [
       "test/world/tier1_dungeontiers.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "TIER1-the-phrase-drops-the-size",
     "file": "src/systems/dungeon/dungeonTier.js",
-    "old": "(label?.text ? `${label.text}${label.size ? `, ${label.size}` : ''}` : '')",
-    "new": "(label?.text ? label.text : '')",
+    "old": "export const tierPhrase = (label) => (label?.text ? `${label.text}${label.size ? `, ${label.size}` : ''}` : '');",
+    "new": "export const tierPhrase = (label) => (label?.text ? label.text : '');",
     "tests": [
       "test/world/tier1_dungeontiers.test.js"
     ],
