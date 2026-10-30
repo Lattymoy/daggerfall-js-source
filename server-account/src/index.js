@@ -384,6 +384,7 @@ import {
 } from './patreon.js';   // PATREON-LINK: a patron's own Patreon, linked
 import { SHOP_OPEN_ROUTES, SHOP_WEBHOOK_PATH, SHOP_HOOK_MAX_BYTES, shopDoor, shopCardOf } from './shop.js';   // SHOP: the shop's doors, and its card on the account read
 import { aurumCardOf, buyDaily, AURUM_STATUS } from './aurum.js';   // AURUM: the balance, the day's wares and a ware bought
+import { claimCache, AURUM_CACHE_STATUS } from './aurumCache.js';   // AURUM-CACHES: a cache claimed
 
 // THIS MODULE EXPORTS `default` AND NOTHING ELSE, and that is a
 // runtime requirement rather than a preference: in a module Worker
@@ -2405,6 +2406,15 @@ const service = {
         if ('error' in r) return json({ error: r.error, ...(Number.isSafeInteger(r.balance) ? { balance: r.balance } : {}) }, AURUM_STATUS[/** @type {keyof typeof AURUM_STATUS} */ (r.error)] ?? 400, origin);
         const after = await withSeatTitles(ctx, r.row, env);
         return json({ ok: true, ware: r.ware, spent: r.spent, ...accountWardrobe(after, env, nowS), aurum: await aurumCardOf(ctx, after, env) }, 200, origin);
+      }
+
+      if (path === '/v1/aurum/cache') {
+        // AURUM-CACHES (bible/06-Systems/Aurum.md section 3a): AN AURUM CACHE CLAIMED - one ledger line a cache an account,
+        // under the day's bound (aurumCache.js claimCache)
+        if (request.method !== 'POST') return no('method', 405, origin);
+        const r = await claimCache(ctx, who.player, body, env);
+        if ('error' in r) return json({ error: r.error }, AURUM_CACHE_STATUS[/** @type {keyof typeof AURUM_CACHE_STATUS} */ (r.error)] ?? 400, origin);
+        return json(r, 200, origin);
       }
 
       if (path === '/v1/account/glyph' && request.method === 'POST') {

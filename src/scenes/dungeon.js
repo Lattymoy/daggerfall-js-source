@@ -331,7 +331,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // read their name on the plaque and ate the press in silence. The
     // modal dungeon arm answers them; two hosts over one context must
     // not disagree about one key.
-    if (key !== null && (key.startsWith('loot:') || key.startsWith('corpse:') || key.startsWith('droppedLoot:') || key.startsWith('droppedTorch:') || key.startsWith('camp:') || key.startsWith('hearth:') || key.startsWith('search:') || key.startsWith('delve:'))) {   // SEARCH1: the modal host's arm, in step
+    if (key !== null && (key.startsWith('loot:') || key.startsWith('corpse:') || key.startsWith('droppedLoot:') || key.startsWith('droppedTorch:') || key.startsWith('camp:') || key.startsWith('hearth:') || key.startsWith('search:') || key.startsWith('delve:') || key.startsWith('aurum:'))) {   // SEARCH1: the modal host's arm, in step
       ctx.takeLoot(key, getInteractionMode());   // HT1: a dropped torch takes the mode (Grab/Steal picks it up, Info/Talk names it)
       return key;
     }

@@ -1314,6 +1314,31 @@
   "tr": "b015a31b54ef",
   "by": "claude-in-session"
  },
+ "account.refusal.cacheCapped": {
+  "en": "664ac093c9f4",
+  "tr": "436a596610e5",
+  "by": "claude-in-session"
+ },
+ "account.refusal.cacheClosed": {
+  "en": "e8e601ad45b4",
+  "tr": "07bc8740396e",
+  "by": "claude-in-session"
+ },
+ "account.refusal.cacheGuest": {
+  "en": "5d072ec43d19",
+  "tr": "6cf93b0f936b",
+  "by": "claude-in-session"
+ },
+ "account.refusal.cacheId": {
+  "en": "de898300fc42",
+  "tr": "32ff7c989f79",
+  "by": "claude-in-session"
+ },
+ "account.refusal.cacheTaken": {
+  "en": "90e8e1c18163",
+  "tr": "ce2c047dd8b1",
+  "by": "claude-in-session"
+ },
  "account.refusal.capped": {
   "en": "92d9eb9cf38c",
   "tr": "db1aa09ab00d",
@@ -4402,6 +4427,31 @@
  "armory.slot.weapon": {
   "en": "ead533685e26",
   "tr": "01d0d3c5874f",
+  "by": "claude-in-session"
+ },
+ "aurumCache.empty": {
+  "en": "bd5fbad0d973",
+  "tr": "5bd26a7e6940",
+  "by": "claude-in-session"
+ },
+ "aurumCache.emptyName": {
+  "en": "3f04bf059cdb",
+  "tr": "c469d757dc1d",
+  "by": "claude-in-session"
+ },
+ "aurumCache.found": {
+  "en": "fb6e5a19c080",
+  "tr": "fb6e5a19c080",
+  "by": "claude-in-session"
+ },
+ "aurumCache.here": {
+  "en": "9b1a850d79d7",
+  "tr": "6a28f54090ba",
+  "by": "claude-in-session"
+ },
+ "aurumCache.name": {
+  "en": "f720d05cbd33",
+  "tr": "d79988f1c535",
   "by": "claude-in-session"
  },
  "bank.houseOffer": {

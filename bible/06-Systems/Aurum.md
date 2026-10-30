@@ -59,6 +59,43 @@ Each is struck by a trigger on the receipt's own row (migration 0198), in the cl
 strikes nothing, and no client asks for Aurum. A receipt is the relay's signed word the service already counts, so the
 week's 120 Aurum a player can earn is held by the same checks those claims are.
 
+## 3a. Earned: the caches (AURUM-CACHES, 2026-10-30)
+
+The owner, asked whether "world finds" meant deeds alone or "also Aurum caches placed in the world (dungeon chests,
+points of interest) that a player picks up, each one server-checked and under a daily cap": *"Also Aurum caches"*.
+
+**Where they stand.** Each UTC day one dungeon in five holds an Aurum coffer, the same dungeons for every player: a
+hash of the day and the dungeon's key (`src/net/aurumCacheLaw.js` aurumCacheHolds). The key is the professions'
+(`src/scenes/dungeonIdentity.js`): a Bay dungeon's pixel id, and the whole map id of a lair, a ruin, a spawned dungeon
+or an abyss past the Bay, so every theatre has its caches. A made level (the Burning Court, the Shattered Hour, the
+Spire, the ketch), an Abyss Dungeon, the arena's floor and undercroft and a zone hall hold none. Inside, the coffer
+stands beside one of the dungeon's random treasure piles, picked by the cache's hash, 0.9 m from it where the floor
+is level and no wall is near (`src/scenes/aurumCacheHost.js` aurumCacheFoot). Every client stands it in the same spot.
+
+**Found and opened.** In a cache dungeon the HUD says "An Aurum coffer is hidden in this dungeon today." The coffer is
+an oak chest bound in gold, the Aurum coin's sun on its lock plate (`src/world/aurumCofferArt.js`, a billboard as
+Daggerfall's treasure is). The activate key opens it at a treasure pile's reach: the page asks the service, and on a
+yes the coffer stands open and empty and the HUD says "+15 Aurum". A refusal says why. A coffer the account emptied
+stands open for it on every visit that day; the device keeps a note, and the service's answer is what counts.
+
+**The claim.** `/v1/aurum/cache` `{ id }` (`server-account/src/aurumCache.js` claimCache) takes a cache's id,
+`<day>:d<dungeon>`, checked by the law alone: in its one spelling, a place that holds a cache that day, of today or
+yesterday (a coffer found just before midnight). One statement writes a ledger line of 15 Aurum, kind `cache` and ref
+the id, only while the account has claimed fewer than three today; the line's key makes a second claim of one id
+write nothing. So the caches pay an account 45 Aurum a day at most. The balance needs nothing new: it sums the ledger.
+It refuses a guest, a closed Aurum (`AURUM_OPEN`), a bad id, a cache already taken and a day's caches spent, and it is
+a progression claim (`progress.js`): asked of the seated realm character, as the Maul's day is.
+
+**What the service cannot see.** It holds no map, so a forged id of a real-shaped dungeon that holds a cache that day
+is taken. The day's bound is what holds: no account earns more than 45 Aurum a day from caches, forged or found.
+
+**The four hosts.** `dungeonContext.js` stands the coffer at the end of its build, and its takeLoot presses it; the loot
+arms of `worldModes.js`'s dungeon ladder and the standalone `dungeon.js` carry the `aurum:` key there, as DELVE II's
+`delve:` key is carried. No host grew: `castleBlockAt` reads the block lookup the context already kept (`blockAtXZ`),
+which freed the context's three lines. `world.js` and
+`exterior.js` stand none: the streets' points of interest are the POI editor's placements (`POI-Editor-Arc.md`),
+another slice. Not a DFU member (Port-Ledger section A, AURUM-CACHES).
+
 ## 4. Bought
 
 Four packs, sold through Stripe like every ware (`src/net/shopLaw.js`, kind `aurum`): 500 for $4.99, 1,100 for $9.99,
@@ -125,3 +162,8 @@ Aurum spent beside each ware's orders, and lists each day's wares beside its fea
 `test/server/aurum_service.test.js` (the balance and every line's kind, the deeds, the buy and its guards, the switch),
 `test/ui/aurum_shop.test.js` (the sections, the balance, the two-press Buy, the flow) and
 `test/server/storefront_service.test.js` (the demand). The mutants are `tools/mutants/aurum.json`.
+
+The caches (section 3a): `test/net/aurum_cache_law.test.js` (the share, the id, the check, the spot),
+`test/server/aurum_cache_service.test.js` (the claim, the bound, a repeat, a forged id, the guards),
+`test/scenes/aurum_cache_world.test.js` (which dungeons, the spot, the press; a Bay dungeon and a lair of Cyrodiil on
+the freeware) and `test/world/aurum_coffer_art.test.js` (the pictures). The mutants are `tools/mutants/aurum_caches.json`.

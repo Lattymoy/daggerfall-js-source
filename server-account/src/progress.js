@@ -88,6 +88,7 @@ export const PROGRESS_ROUTES = Object.freeze({
   // AUDIT-STOREFRONT (lane 5 W2): the Resonant Maul's day (seasonClaim.js) - asked of the account's seated character as the
   // season's finds are, on their stream; the UTC day bounds it, and its answer (no `xp`) spends nothing
   '/v1/season/maul': Object.freeze(['pass', false]),
+  '/v1/aurum/cache': Object.freeze(['pass', false]),   // AURUM-CACHES: a cache claimed, asked of the seat as the Maul's day is (aurumCache.js)
   '/v1/prof/harvest': Object.freeze(['prof', true]),
   '/v1/prof/smelt': Object.freeze(['prof', true]),
   '/v1/prof/craft': Object.freeze(['prof', true]),

@@ -363,6 +363,7 @@ import { createSearchRoom } from './searchRoom.js';   // GRAVE-PARTY: whose a se
 import { monsterVolume } from '../systems/monsterVolume.js';   // MONSTER-VOL: a monster's pain cry rides the Audio tab's Monster Volume
 import { isAbyssMapId } from '../world/oceanHoles.js';   // PITS-WORLD: an Ocean Hole's abyss, the Bay's or one past it - never a hall's or an Abyss Dungeon's id
 import { dungeonIdentity } from './dungeonIdentity.js';   // AUDIT TAMRIEL-WIDE C3: the professions' name for a dungeon, past the Bay too
+import { standAurumCache } from './aurumCacheHost.js';   // AURUM-CACHES: today's Aurum coffer, where this dungeon holds one
 
 
 
@@ -7294,12 +7295,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  Same block lookup as the water surface above, because it is the same
    *  question: which RDB block is the player standing in. */
   function castleBlockAt(x, z) {
-    for (const b of dungeon.blocks) {
-      if (x >= b.originX && x < b.originX + RDB_SIDE && z >= b.originZ && z < b.originZ + RDB_SIDE) {
-        return Boolean(b.layout.castleBlock);
-      }
-    }
-    return false;
+    return Boolean(blockAtXZ(x, z)?.layout.castleBlock);   // AURUM-CACHES (HOST-SPLIT): the one block lookup, blockAtXZ above
   }
   /** AUDIT 26 F183: the castle block's sibling. SpecialAreaCheck
    *  (PlayerEnterExit.cs:1221-1238) switches on the block NAME and has
@@ -10638,6 +10634,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // outdoors and indoors.
       if (kind === 'camp' || kind === 'hearth') return camps.activate(key, mode, plaqueActionFor(key)) ? 1 : 0;   // REST2: the plaque's lit row
       if (kind === 'delve') return delve.press(key, mode);   // DELVE II: a vault - sealed, said; won, opened
+      if (kind === 'aurum') return _aurumCache?.press(key) ? 1 : 0;   // AURUM-CACHES: today's coffer, claimed (scenes/aurumCacheHost.js)
       if (kind === 'search') return activateSearchable(i, mode);   // SEARCH1
       let source = null;
       let onEmptied = null;
@@ -10911,6 +10908,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // DELVE II (DLV2): THE DUNGEON'S ENCOUNTERS - the site law on the built collider, the fire plan's doors and fires, the
   // dungeon's own pile roll; its targets and plaque through the api's own doors (scenes/delve/delveHost.js)
   const delve = createDelveHost({ api, deps, location: dfLocation, blocks: dungeon.blocks, hearths: dungeonHearths, fires: dungeonFires, player: () => playerEntity, rollPile: rollPileItems, online: onlineRoom });
+  const _aurumCache = standAurumCache(api, dfLocation, lootPiles);   // AURUM-CACHES: stood once the level and its piles are, beside one of them
   if (sdEnd && !_sdEndAsked) { _sdEndAsked = true; standSdEnd(); }
   return api;
 }
