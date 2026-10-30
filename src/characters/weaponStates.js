@@ -325,6 +325,23 @@ export function blowSchedule(m, liveSpeed, animCtx = null, dt = 0) {
   return { seconds: (strikeTicks(m) + holdOf(m)) * step, hitAt: Math.max(0, (m.hitFrame ?? HIT_FRAME_MELEE) - at) * step, step };
 }
 
+/** MW-SHOT-PACE (the owner, 2026-10-30: "morrowind hand shoot bow slow"): A BOW'S SHOT, TIMED AS blowSchedule TIMES A
+ *  BLOW - when the loose (HIT_FRAME_BOW) lands and when the release ends, from the frame the shot stands on (a drawn idle
+ *  bow starts at BOW_DRAWN_HOLD_FRAME). The Morrowind arm fits its draw into it (combat/fpArm.js blowPace), so its
+ *  "shoot release" comes with the classic loose and a shot repeats as fast on both looks. Null for anything but a bow's
+ *  release not yet loosed. */
+export function shotSchedule(m, dt = 0) {
+  if (!m || !m.isBow || m.state !== 'StrikeDown') return null;
+  const tick = m.tick ?? CLASSIC_UPDATE_INTERVAL;
+  if (!(tick > 0) || !Number.isFinite(tick)) return null;
+  const at = m.frame > 0 ? m.frame | 0 : 0;
+  const hitFrame = m.hitFrame ?? HIT_FRAME_BOW;
+  if (at >= hitFrame) return null;
+  const frames = (m.frames ?? BOW_NUM_FRAMES).StrikeDown ?? BOW_NUM_FRAMES.StrikeDown;
+  const step = dt > 0 ? dt * Math.max(1, Math.ceil(tick / dt - 1e-9)) : tick;
+  return { seconds: (frames - at) * step, hitAt: (hitFrame - at) * step, step };
+}
+
 /** TWO-HANDS (AUDIT 2): the ticks a melee strike just begun takes from the frame it stands on to its end - FPSWeapon's
  *  eight-tick list for the unarmed strike to the left, else its frames past the one it stands on - before any held at
  *  its end (`m.hold`, machineStep). What an off-hand blow's burden is reckoned on (combat/twoHands/handsLaw.js offHandHold). */
