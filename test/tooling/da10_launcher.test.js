@@ -188,7 +188,7 @@ test('DA10: the shell - Play is the only way in, the news is the check\'s own re
   // the actions the page can name, and no others
   const acts = main.slice(main.indexOf("ipcMain.on('launcher:act'"), main.indexOf('// THE NAVIGATION FENCES'));
   assert.deepEqual([...acts.matchAll(/case '([\w-]+)':/g)].map((m) => m[1]).sort(),
-    ['choose-folder', 'download', 'open', 'open-saves', 'play', 'play-now', 'reinstall', 'retry-saved', 'set-update-check', 'skip-setup', 'use-found']);
+    ['choose-folder', 'download', 'open', 'open-saves', 'play', 'play-now', 'reinstall', 'restart', 'retry-saved', 'set-backend', 'set-update-check', 'skip-setup', 'use-found']);
   assert.match(acts, /case 'set-update-check': setCheckOnLaunch\(arg === true\); break;/, 'only a real true turns it on');
   assert.match(acts, /const f = Number\.isInteger\(arg\) \? st\.setup\.found\[arg\] : null;/, 'a found folder by its index, and nothing else');
   assert.match(acts, /const r = await judgeForLauncher\(\{ op: 'judge', dir: f\.dir \}, JUDGE_DEADLINE_MS\);/, 'judged again when it is taken - a drive can go away while the window sits open (AUDIT INSTALL L5-21) - in a process of its own (R2-D1)');
@@ -270,11 +270,57 @@ test('DA10: the page - the news, the card, the options, the bar and PLAY; every 
   for (const id of ['news', 'setup', 'found', 'setup-actions', 'files', 'update-check', 'status', 'detail', 'progress', 'status-actions', 'play', 'version']) {
     assert.match(html, new RegExp(`id="${id}"`), `#${id}`);
   }
-  assert.deepEqual([...html.matchAll(/data-act="([\w-]+)"/g)].map((m) => m[1]), ['choose-folder', 'open-saves', 'reinstall', 'play']);
+  assert.deepEqual([...html.matchAll(/data-act="([\w-]+)"/g)].map((m) => m[1]), ['choose-folder', 'open-saves', 'reinstall', 'restart', 'play']);
   assert.match(html, /<button id="play" class="play" type="button" data-act="play" disabled>Play<\/button>/, 'Play starts held - the first view frees it');
   const js = rd('app/launcher/launcher.js');
   assert.match(js, /\$\('update-check'\)\.addEventListener\('change', \(e\) => bridge\.act\('set-update-check', e\.target\.checked\)\);/);
   assert.match(js, /if \(act && !act\.disabled\) bridge\.act\(act\.dataset\.act\);/, 'a held Play sends nothing');
   assert.match(js, /if \(Object\.hasOwn\(BADGE, note\.badge\)\) head\.append\(el\('span', `badge \$\{note\.badge\}`, BADGE\[note\.badge\]\)\);/, 'a mark is one of two words, never the shell\'s string');
   assert.match(js, /play\.disabled = !v\.play\.enabled;/);
+});
+
+// GPU-BACKEND-LAUNCHER (#1379, 2026-10-30): Vulkan drew the game blank, and its only switch was in the game's settings.
+test('GPU-BACKEND-LAUNCHER: the Graphics option - Windows only; the box is the backend the next start uses; Restart while that differs from this launch, never after Play or over a download or an install', () => {
+  const on = (backend, ...events) => L.viewOf(run(fresh({ backend }), { type: 'check-none' }, ...events)).options.graphics;
+  assert.equal(L.viewOf(fresh()).options.graphics, null, 'no option off Windows (the shell passes none)');
+  assert.deepEqual(on({ chosen: 'default', held: false, running: false }), { on: false, enabled: true, note: '', restart: false });
+  assert.deepEqual(on({ chosen: 'vulkan', held: false, running: true }), { on: true, enabled: true, note: '', restart: false });
+  assert.deepEqual(on({ chosen: 'default', held: false, running: false }, { type: 'backend-chosen', backend: 'vulkan' }),
+    { on: true, enabled: true, note: '', restart: true }, 'chosen here: Restart');
+  assert.deepEqual(on({ chosen: 'vulkan', held: false, running: true }, { type: 'backend-chosen', backend: 'default' }),
+    { on: false, enabled: true, note: '', restart: true }, 'and back');
+  assert.deepEqual(on({ chosen: 'vulkan', held: true, running: false }),
+    { on: false, enabled: true, note: 'Vulkan did not work on this graphics card.', restart: false }, 'held off by a failure on record');
+  assert.deepEqual(on({ chosen: 'vulkan', held: true, running: false }, { type: 'backend-chosen', backend: 'vulkan' }),
+    { on: true, enabled: true, note: '', restart: true }, 'chosen again: the record is cleared, the next start tries');
+  const later = { chosen: 'default', held: false, running: false };
+  const downloading = L.viewOf(run(fresh({ backend: later }), { type: 'check-available', version: '0.1.4700' }, { type: 'backend-chosen', backend: 'vulkan' })).options.graphics;
+  assert.deepEqual([downloading.restart, downloading.note], [false, 'From the next start.'], 'a download is not cut off');
+  const played = L.viewOf(run(fresh({ backend: later }), { type: 'check-none' }, { type: 'backend-chosen', backend: 'vulkan' }, { type: 'play' })).options.graphics;
+  assert.deepEqual([played.enabled, played.restart], [false, false], 'after Play the option is the game\'s');
+  assert.equal(L.canRestart(run(fresh(), { type: 'check-available', version: '0.1.4700' }, { type: 'downloaded', version: '0.1.4700' })), false, 'installing');
+  assert.equal(run(fresh(), { type: 'backend-chosen', backend: 'vulkan' }).backend, null, 'no option, no choice');
+});
+
+test('GPU-BACKEND-LAUNCHER: a launch the guard held alone on the default offers no Restart the player did not ask for; a record the guard cleared frees the box; a write that failed says so (mutants: Restart on a held launch; the cleared record still shown; a silent refusal)', () => {
+  const on = (backend, ...events) => L.viewOf(run(fresh({ backend }), { type: 'check-none' }, ...events)).options.graphics;
+  assert.deepEqual(on({ chosen: 'vulkan', held: false, running: false, once: true }),
+    { on: true, enabled: true, note: 'Direct3D 11 for this start only.', restart: false }, 'no answer to the box, or a record that did not land: the next start tries Vulkan');
+  assert.deepEqual(on({ chosen: 'vulkan', held: false, running: false, once: true }, { type: 'backend-chosen', backend: 'default' }),
+    { on: false, enabled: true, note: '', restart: false });
+  assert.deepEqual(on({ chosen: 'vulkan', held: true, running: false }, { type: 'backend-cleared' }),
+    { on: true, enabled: true, note: '', restart: true }, 'a driver update cleared the record as the launcher opened: the next start tries Vulkan');
+  assert.deepEqual(on({ chosen: 'default', held: false, running: false }, { type: 'backend-refused' }),
+    { on: false, enabled: true, note: 'The setting could not be saved.', restart: false });
+  assert.equal(on({ chosen: 'default', held: false, running: false }, { type: 'backend-refused' }, { type: 'backend-chosen', backend: 'vulkan' }).note, '', 'the next write that lands clears it');
+});
+
+test('GPU-BACKEND-LAUNCHER: the page - the box sends its choice by name, the note and Restart are the view\'s', () => {
+  const html = rd('app/launcher/index.html');
+  assert.match(html, /<section id="graphics" class="opt" hidden>/, 'hidden until the shell offers it');
+  assert.match(html, /<input id="backend-vulkan" type="checkbox" aria-describedby="backend-note">/);
+  const js = rd('app/launcher/launcher.js');
+  assert.match(js, /\$\('backend-vulkan'\)\.addEventListener\('change', \(e\) => bridge\.act\('set-backend', e\.target\.checked \? 'vulkan' : 'default'\)\);/);
+  assert.match(js, /\$\('graphics'\)\.hidden = !g;/);
+  assert.match(js, /document\.querySelector\('\[data-act="restart"\]'\)\.hidden = !g\.restart;/);
 });

@@ -101,7 +101,7 @@
   {
     "name": "BOW-FAST-the-stamp-off",
     "file": "src/combat/arrowFlight.js",
-    "old": "meta = { ...meta, ...bowShotStamp(meta.weapon) };",
+    "old": "meta = { ...meta, ...bowShotStampNow(meta.weapon) };",
     "new": "meta = { ...meta };",
     "tests": [
       "test/combat/bowbloom.test.js"
@@ -168,6 +168,42 @@
     "new": "export const bowKindOf = (weapon) => BOW_PLAIN;",
     "tests": [
       "test/combat/bowbloom.test.js"
+    ]
+  },
+  {
+    "name": "BOW-PVP-ONLY-the-gate-off",
+    "file": "src/ui/bowBloomRing.js",
+    "old": "  if (!bowPvpRules()) return dir;",
+    "new": "",
+    "tests": [
+      "test/combat/bowbloom.test.js"
+    ]
+  },
+  {
+    "name": "BOW-PVP-ONLY-the-stamp-ungated",
+    "file": "src/ui/bowBloomRing.js",
+    "old": "(bowPvpRules() ? bowShotStamp(weapon) : {})",
+    "new": "bowShotStamp(weapon)",
+    "tests": [
+      "test/combat/bowbloom.test.js"
+    ]
+  },
+  {
+    "name": "BOW-PVP-ONLY-the-word-unwired",
+    "file": "src/combat/pvpPotions.js",
+    "old": "fight = !!active; setBowFight(fight); }",
+    "new": "fight = !!active; }",
+    "tests": [
+      "test/combat/bowbloom.test.js"
+    ]
+  },
+  {
+    "name": "SHAFT-SWEEP-the-end-alone",
+    "file": "src/systems/spellcast.js",
+    "old": "  return from ? sweptSphereOverlapsCapsule(from, pos,",
+    "new": "  return false ? sweptSphereOverlapsCapsule(from, pos,",
+    "tests": [
+      "test/systems/shaftsweep.test.js"
     ]
   }
 ]

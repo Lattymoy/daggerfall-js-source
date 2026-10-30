@@ -282,8 +282,8 @@
   {
     "name": "AUDIT-1019-L5-4-unmarked",
     "file": "src/systems/skillSwap.js",
-    "old": "entity.career[key].map((id) => (id === out ? inn : id)), swapped: true };",
-    "new": "entity.career[key].map((id) => (id === out ? inn : id)) };",
+    "old": "entity.career[key].map((id) => (id === out ? inn : id)), ...traded, swapped: true };",
+    "new": "entity.career[key].map((id) => (id === out ? inn : id)), ...traded };",
     "tests": [
       "test/systems/fb1019b_audit.test.js"
     ],
@@ -322,8 +322,8 @@
   {
     "name": "AUDIT-1019-L6-2-group-word-fixed",
     "file": "src/systems/skillSwap.js",
-    "old": "group: groupWord(group) }) };",
-    "new": "group: 'minor' }) };",
+    "old": "group: groupWord(group), other: groupWord(other) };",
+    "new": "group: 'minor', other: groupWord(other) };",
     "tests": [
       "test/systems/fb1019b_audit.test.js"
     ],
@@ -362,8 +362,8 @@
   {
     "name": "AUDIT-1019-L6-1-yes-nothing",
     "file": "src/ui/growth/specGuide.js",
-    "old": "    ], () => { _note = sw.go(out, inn).text; _noteFresh = true; rerender(); });",
-    "new": "    ], () => { rerender(); });",
+    "old": "      const r = sw.go(out, inn);\n",
+    "new": "      const r = { ok: false, text: '' };\n",
     "tests": [
       "test/ui/growth/fb1019b_swappage.test.js"
     ],

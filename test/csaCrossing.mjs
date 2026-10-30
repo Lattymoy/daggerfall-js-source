@@ -47,8 +47,8 @@ const frame = (s) => { s.rt.endOfFrame(); s.rt.fixedUpdate(); s.rt.update(); s.r
 
 /** The journey's hand at the mod's helm: the keys the helm says, pressed as the host presses them, until the boat is
  *  within 60 m of a mark `dist` metres off `markDeg`, the wind blowing toward `windDeg`. The game's seconds it took -
- *  or null, never there in `maxS`. FB1020c OAR-RUNG: `presses`, the helm's own keys pressed one a frame before the
- *  journey sets out (W, S, the arrows: the rung she is left on); the answer carries the helm's rung at the end and
+ *  or null, never there in `maxS` - and BEAT-LANE's `off`, the most metres she stood off the line to the mark.
+ *  FB1020c OAR-RUNG: `presses`, the helm's own keys pressed one a frame before the journey sets out (W, S, the arrows: the rung she is left on); the answer carries the helm's rung at the end and
  *  `letGo(seconds)` - the journey's end as world.js tvSeaFrame makes it (the hand off the helm, the sails lowered if
  *  they stand), then `seconds` of the helm left alone: `{ run }` the metres she made, `way` her way at the last, `rung`. */
 export function sailTo(hull, windDeg, markDeg, { dist = 600, windLen = 1.5, maxS = 1500, presses = [] } = {}) {
@@ -64,10 +64,13 @@ export function sailTo(hull, windDeg, markDeg, { dist = 600, windLen = 1.5, maxS
   const mark = [Math.sin(mr) * dist, Math.cos(mr) * dist];
   const st = createSeaHelm();
   const dt = 0.25;
+  let off = 0;
   for (let t = 0; t < maxS; t += dt) {
     wind();
     const p = boat.GameObject.position, fw = quatRotate(boat.GameObject.rotation, [0, 0, 1]);
-    if (Math.hypot(mark[0] - p[0], mark[1] - p[2]) < 60) {
+    off = Math.max(off, Math.abs(p[0] * Math.cos(mr) - p[2] * Math.sin(mr)));
+    const toMark = Math.hypot(mark[0] - p[0], mark[1] - p[2]);
+    if (toMark < 60) {
       const letGo = (seconds) => {
         s.held.clear(); s.started.clear(); s.input.toggleAutorun = false;   // tvSeaRelease
         if (s.rt.state.sailPosition > 0) { s.started.add(BOAT_ACTIONS.toggleSail); frame(s); s.started.clear(); }   // the sails down
@@ -76,11 +79,11 @@ export function sailTo(hull, windDeg, markDeg, { dist = 600, windLen = 1.5, maxS
         const q = boat.GameObject.position, v = s.rt.state.MoveVectorCurrent;
         return { run: Math.hypot(q[0] - from[0], q[2] - from[2]), way: Math.hypot(v[0], v[1], v[2]), rung: s.rt.state.oarThrottle };
       };
-      return { t, fatigue: s.out.fatigue, rung: s.rt.state.oarThrottle, letGo };
+      return { t, off, fatigue: s.out.fatigue, rung: s.rt.state.oarThrottle, letGo };
     }
     const v = s.rt.state.velocityCurrent ?? [0, 0, 0], w = s.rt.state.windVectorCurrent, cargo = s.rt.state.boatCargoMod;
     const cmd = seaHelmStep(st, {
-      heading: headingOf(fw[0], fw[2]), bearing: headingOf(mark[0] - p[0], mark[1] - p[2]), wind: [w[0], w[2]], hasSails: boat.Sails.length > 0,
+      heading: headingOf(fw[0], fw[2]), bearing: headingOf(mark[0] - p[0], mark[1] - p[2]), dist: toMark, wind: [w[0], w[2]], hasSails: boat.Sails.length > 0,
       squareOnly: squareOnly(boat), sailsUp: s.rt.state.sailPosition > 0, canSail: s.rt.CanSail(boat), way: v[2], dt,
       crewed: boat.crewed, oarWay: HANDLING.moveSpeedOar * boat.modifierMoveSpeedOar * cargo, sailWay: HANDLING.moveSpeedSail * boat.modifierMoveSpeedSail * cargo * Math.hypot(w[0], w[2]),
     });
