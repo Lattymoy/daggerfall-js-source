@@ -72,8 +72,8 @@
   {
     "name": "SKILL-TICK-strip-line-never",
     "file": "src/ui/levelUp/levelNotice.js",
-    "old": "    if (improvable > 0) out.push(",
-    "new": "    if (improvable > 99) out.push(",
+    "old": "    if (improvable > 0)",
+    "new": "    if (improvable > 99)",
     "tests": [
       "test/systems/fb1019b_skilltick.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "SKILL-TICK-strip-ranked-under",
     "file": "src/ui/levelUp/levelNotice.js",
-    "old": "r.kind === NOTICE_IMPROVE ? 1 : 0);",
-    "new": "r.kind === NOTICE_IMPROVE ? 3 : 0);",
+    "old": "    const rank = (r) => (r.kind === NOTICE_LEVEL ? 2 : r.kind === NOTICE_IMPROVE ? 1 : 0);",
+    "new": "    const rank = (r) => (r.kind === NOTICE_LEVEL ? 2 : r.kind === NOTICE_IMPROVE ? 3 : 0);",
     "tests": [
       "test/systems/fb1019b_skilltick.test.js"
     ],

@@ -205,7 +205,7 @@ test('L10N3d crossings: the magic-item, transport, enchanting, level-up, trade a
     ['scenes/world.js', /\{ \.\.\.sale, text: cannotCarryText\(\) \}/],
     ['ui/native/nativeTrade.js', /text: cannotRemoveItemText\(\), center: true/], ['ui/enhanced/enhancedTrade.js', /text: cannotRemoveItemText\(\), center: true/],
     ['ui/native/nativeTrade.js', /plan\.refusal\?\.text \?\? cannotCarryText\(\)/], ['ui/enhanced/enhancedTrade.js', /plan\.refusal\?\.text \?\? cannotCarryText\(\)/],
-    ['ui/levelUp/levelUpView.js', /LANE_VIRTUE \? REMAINING_POINTS_ERROR : mustDistributeBonusPointsText\(\)\);/],
+    ['ui/levelUp/levelUpView.js', /LANE_VIRTUE \? REMAINING_POINTS_ERROR : mustDistributeBonusPointsText\(\);/],
     ['combat/pcaao.js', /say\?\.\(successfulBackstabText\(\)\);/], ['combat/pcaao.js', /say\?\.\(materialIneffectiveText\(\)\);/],
     ['ui/enhanced/enhancedInventory.js', /potion: localizedText\('potionOf', 'Potion of %po'\)\.replaceAll\('%po', potionMacroName\(item\)\)/],
     ['ui/chargenArt.js', /shadowText\(renderer, font, raceDisplayName\(flow\.race\.key\)/], ['ui/provinceMap.js', /people: raceDisplayName\(race\.key\),/],

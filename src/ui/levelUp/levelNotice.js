@@ -62,10 +62,10 @@ import { isEnhanced } from '../../systems/uiSkin.js';
 import { audio } from '../../systems/audio.js';
 import { SOUND } from '../../systems/soundClips.js';
 import { SKILL_NAMES } from '../../systems/skills.js';
-import { localizedText, t } from '../../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; QUEST-NOTE: the port's own words
+import { localizedText, t } from '../../systems/textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language; QUEST-NOTE: the port's own words
 import { bindings } from '../input.js';
-import { codeForAction } from '../../systems/inputActions.js';   // LV2: the inverse read, one home
-import { buttonText } from '../../systems/controlsConfig.js';    // GetButtonText - the key as a player sees it
+import { codeForAction } from '../../systems/inputActions.js'; // LV2: the inverse read, one home
+import { buttonText } from '../../systems/controlsConfig.js'; // GetButtonText - the key as a player sees it
 // THE ONE PLAYER, read directly - PX5's law for the pause clock ("no
 // host seam is needed and no host can drift"). The standing reminder
 // is a question about THE player's state, there is one of them, and a
@@ -73,10 +73,10 @@ import { buttonText } from '../../systems/controlsConfig.js';    // GetButtonTex
 // four more places to forget it. The module is a leaf here: it imports
 // systems/skills.js and a faction constant, and nothing in ui/.
 import { playerEntity } from '../../characters/playerEntity.js';
-import { countReadyToImprove } from '../../systems/advancement.js';   // SKILL-TICK: the standing skills line
-import { ownMinutes } from '../../systems/worldTick.js';   // AUDIT SUGGESTIONS-1019 L3-1: the character's own clock, the skill check's gate (read at a call, never at load)
-import { openLevelUpWindow } from './levelUpOpener.js';   // LV3: the strip's level row is a button now
-import { noteFirstUse } from '../../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { countReadyToImprove } from '../../systems/advancement.js'; // SKILL-TICK: the standing skills line
+import { ownMinutes } from '../../systems/worldTick.js'; // AUDIT SUGGESTIONS-1019 L3-1: the character's own clock, the skill check's gate (read at a call, never at load)
+import { openLevelUpWindow } from './levelUpOpener.js'; // LV3: the strip's level row is a button now
+import { noteFirstUse } from '../../systems/tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
 
 /** The three things this surface announces. */
 export const NOTICE_LEVEL = 'level';
@@ -93,10 +93,16 @@ export const NOTICE_QUEST = 'quest';
  *  notification to let players know they should probably rest, since XP does not hang over". */
 export const NOTICE_IMPROVE = 'improve';
 export const improveTitle = () => t('notice.skills.improve', 'Skills can be improved');
-export const improveSub = (n) => t('notice.skills.improveSub', '{n, plural, one {# skill is ready. Rest or travel to raise it} other {# skills are ready. Rest or travel to raise them}}', { n });   // AUDIT SUGGESTIONS-1019 L6-6: the pronoun in each arm
-export const questSlainTitle = () => t('pause.journal.questSlain', 'Quest target slain');   // L10N4: read when it is drawn
+export const improveSub = (n) =>
+  t(
+    'notice.skills.improveSub',
+    '{n, plural, one {# skill is ready. Rest or travel to raise it} other {# skills are ready. Rest or travel to raise them}}',
+    { n },
+  ); // AUDIT SUGGESTIONS-1019 L6-6: the pronoun in each arm
+export const questSlainTitle = () => t('pause.journal.questSlain', 'Quest target slain'); // L10N4: read when it is drawn
 /** QUEST-NOTE: who fell, as the notice and the chat name it - the Foe's own name, else its type's, else the quest's foe. */
-export const questFoeName = (foe) => String(foe?.displayName || foe?.typeName || t('pause.journal.questFoe', 'Your quest\'s foe')).trim();
+export const questFoeName = (foe) =>
+  String(foe?.displayName || foe?.typeName || t('pause.journal.questFoe', "Your quest's foe")).trim();
 
 /** How long an announcement holds before it goes (or, for the level,
  *  before it folds down to the standing line). Skyrim's own
@@ -145,7 +151,8 @@ export class LevelNotices {
   _push(kind, key, title, sub, now) {
     const at = this.rows.findIndex((r) => r.key === key);
     const row = { key, kind, title, sub, at: now, seq: ++this._seq };
-    if (at >= 0) this.rows[at] = row; else this.rows.push(row);
+    if (at >= 0) this.rows[at] = row;
+    else this.rows.push(row);
     // THE LEVEL'S ROW IS NEVER THE ONE THAT FALLS OFF. Everything else
     // is chatter beside it: the whole point of the element is that the
     // player is told they may spend, and a rest that raises six skills
@@ -166,8 +173,13 @@ export class LevelNotices {
 
   /** FIRM1: a Renown level was reached - the level's own title, its new Stars beneath. */
   announceRenown(level, stars, now) {
-    const sub = stars > 0 ? t('level.renown.subStars', 'Renown {level} · {stars, plural, one {# new Star} other {# new Stars}}', { level, stars })
-      : t('level.renown.sub', 'Renown {level}', { level });   // AUDIT UICALM-FIRM1 L4 M8: in the player's language
+    const sub =
+      stars > 0
+        ? t('level.renown.subStars', 'Renown {level} · {stars, plural, one {# new Star} other {# new Stars}}', {
+            level,
+            stars,
+          })
+        : t('level.renown.sub', 'Renown {level}', { level }); // AUDIT UICALM-FIRM1 L4 M8: in the player's language
     return this._push(NOTICE_RENOWN, NOTICE_RENOWN, RISEN_TITLE, sub, now);
   }
 
@@ -200,7 +212,7 @@ export class LevelNotices {
     for (const r of this.rows) {
       const age = now - r.at;
       if (r.kind === NOTICE_LEVEL) {
-        if (!owed) continue;                         // spent, by any road - the reminder is state, not memory
+        if (!owed) continue; // spent, by any road - the reminder is state, not memory
         const standing = age >= ANNOUNCE_MS;
         // THE STANDING ROW CHANGES ITS WORDS, not just its size. "You
         // have risen" is NEWS and it stops being news; what is left is
@@ -211,7 +223,7 @@ export class LevelNotices {
         continue;
       }
       if (age >= ANNOUNCE_MS) continue;
-      const fadeIn = age - (ANNOUNCE_MS - FADE_MS);   // SKILL2: ms into the fade, negative before it starts
+      const fadeIn = age - (ANNOUNCE_MS - FADE_MS); // SKILL2: ms into the fade, negative before it starts
       out.push({ ...r, standing: false, fading: fadeIn >= 0, fadeElapsed: Math.max(0, fadeIn) });
     }
     // A LEVEL THAT IS OWED BUT WAS NEVER ANNOUNCED HERE still shows:
@@ -219,10 +231,27 @@ export class LevelNotices {
     // this surface was not mounted. The player is owed the reminder
     // either way, and the strip is the only place that says so.
     if (owed && !out.some((r) => r.kind === NOTICE_LEVEL)) {
-      out.push({ key: NOTICE_LEVEL, kind: NOTICE_LEVEL, title: AWAITS_TITLE, sub: '', at: -Infinity, seq: -1, standing: true });
+      out.push({
+        key: NOTICE_LEVEL,
+        kind: NOTICE_LEVEL,
+        title: AWAITS_TITLE,
+        sub: '',
+        at: -Infinity,
+        seq: -1,
+        standing: true,
+      });
     }
     // SKILL-TICK: the skills the next pass raises - standing while any is ready, gone the pass that raises them
-    if (improvable > 0) out.push({ key: NOTICE_IMPROVE, kind: NOTICE_IMPROVE, title: improveTitle(), sub: improveSub(improvable), at: -Infinity, seq: -2, standing: true });
+    if (improvable > 0)
+      out.push({
+        key: NOTICE_IMPROVE,
+        kind: NOTICE_IMPROVE,
+        title: improveTitle(),
+        sub: improveSub(improvable),
+        at: -Infinity,
+        seq: -2,
+        standing: true,
+      });
     // NEWEST FIRST, and THE LEVEL'S ROW IS ALWAYS LAST - which on a
     // strip pinned by its foot means nearest the vitals, where the eye
     // already is. It is the only row that asks for something, so it
@@ -232,7 +261,7 @@ export class LevelNotices {
     // skill raise - the one row a player is looking for, moving.
     // SKILL-TICK: the skills' standing line sits just above it - the other row that asks for something
     const rank = (r) => (r.kind === NOTICE_LEVEL ? 2 : r.kind === NOTICE_IMPROVE ? 1 : 0);
-    return out.sort((a, b) => (rank(a) - rank(b)) || (b.seq - a.seq));
+    return out.sort((a, b) => rank(a) - rank(b) || b.seq - a.seq);
   }
 
   /** Drop what has expired, so the queue cannot grow across an
@@ -273,7 +302,7 @@ const nowMs = () => (typeof performance !== 'undefined' ? performance.now() : Da
  * suite, because under node every call took the classic arm and the
  * enhanced one was unreachable.
  */
-const DOC = (typeof document === 'undefined' ? null : document);
+const DOC = typeof document === 'undefined' ? null : document;
 
 /**
  * THE HOST SEAM for a level-up, and the fork this slice is about.
@@ -290,13 +319,13 @@ const DOC = (typeof document === 'undefined' ? null : document);
  * lanes apart without asking the skin a second time.
  */
 export function announceLevelUp(entity, { say = null, open = null, now = nowMs(), doc = DOC } = {}) {
-  noteFirstUse('level-up');   // TUT1
+  noteFirstUse('level-up'); // TUT1
   if (!isEnhanced() || !doc) {
     say?.('You have gained a level!');
     open?.();
     return false;
   }
-  const level = entity?.pendingLevel ?? ((entity?.level ?? 0) + 1);
+  const level = entity?.pendingLevel ?? (entity?.level ?? 0) + 1;
   // AUDIT LV2 F2 - ONCE PER LEVEL, NOT ONCE PER PASS. DFU RE-OFFERS
   // the sheet on every later raise: RaiseSkills' tail sits outside the
   // skill loop (:1413) and `checkForLevelUp` stays TRUE while `level`
@@ -312,7 +341,7 @@ export function announceLevelUp(entity, { say = null, open = null, now = nowMs()
   // reminder it put up is still up saying it.
   if (!levelNotices.fanfareOwed(level)) return true;
   levelNotices.announceLevel(level, now);
-  audio.playOneShot(SOUND.LevelUp, 1);   // UpdatePlayerValues (:373) - moved to the MOMENT, which is what a notification is
+  audio.playOneShot(SOUND.LevelUp, 1); // UpdatePlayerValues (:373) - moved to the MOMENT, which is what a notification is
   return true;
 }
 
@@ -323,8 +352,15 @@ export function announceLevelUp(entity, { say = null, open = null, now = nowMs()
 export function announceRenownRise(level, { stars = 0, say = null, now = nowMs(), doc = DOC } = {}) {
   audio.playOneShot(SOUND.LevelUp, 1);
   if (!isEnhanced() || !doc) {
-    say?.(stars > 0 ? t('level.renown.risenStars', 'You have risen to Renown {level}! {stars, plural, one {# new Star shines} other {# new Stars shine}} in your Firmament.', { level, stars })
-      : t('level.renown.risen', 'You have risen to Renown {level}!', { level }));
+    say?.(
+      stars > 0
+        ? t(
+            'level.renown.risenStars',
+            'You have risen to Renown {level}! {stars, plural, one {# new Star shines} other {# new Stars shine}} in your Firmament.',
+            { level, stars },
+          )
+        : t('level.renown.risen', 'You have risen to Renown {level}!', { level }),
+    );
     return false;
   }
   levelNotices.announceRenown(level, stars, now);
@@ -333,13 +369,21 @@ export function announceRenownRise(level, { stars = 0, say = null, now = nowMs()
 
 /** QUEST-NOTE: A QUEST'S FOE FELL - on the enhanced strip a row in the mastery's brass ("Quest target slain", who and
  *  for which quest, its count where there are several); on the classic skin the HUD's line. */
-export function announceQuestFoeSlain({ who, quest, done = 1, of = 1, key = null }, { say = null, now = nowMs(), doc = DOC } = {}) {
+export function announceQuestFoeSlain(
+  { who, quest, done = 1, of = 1, key = null },
+  { say = null, now = nowMs(), doc = DOC } = {},
+) {
   const count = of > 1 ? ` (${Math.min(done, of)}/${of})` : '';
   if (!isEnhanced() || !doc) {
     say?.(`${who} slain${count}.${quest ? ` (${quest})` : ''}`);
     return false;
   }
-  levelNotices.announceQuest(key ?? `${quest}|${who}`, questSlainTitle(), `${who}${count}${quest ? ` · ${quest}` : ''}`, now);
+  levelNotices.announceQuest(
+    key ?? `${quest}|${who}`,
+    questSlainTitle(),
+    `${who}${count}${quest ? ` · ${quest}` : ''}`,
+    now,
+  );
   return true;
 }
 
@@ -349,7 +393,7 @@ export function announceQuestFoeSlain({ who, quest, done = 1, of = 1, key = null
  *  another thing the world said. */
 export function announceSkillRaise(id, value, { say = null, now = nowMs(), doc = DOC } = {}) {
   if (!isEnhanced() || !doc) {
-    say?.(localizedText('skillImprove', 'Your %s skill has improved.').replaceAll('%s', SKILL_NAMES[id]));   // PlayerEntity.cs:1389
+    say?.(localizedText('skillImprove', 'Your %s skill has improved.').replaceAll('%s', SKILL_NAMES[id])); // PlayerEntity.cs:1389
     return false;
   }
   levelNotices.announceSkill(id, value, now);
@@ -432,7 +476,8 @@ let last = '';
 function rehome(doc, node) {
   const home = doc.querySelector?.('.hud-bottom') ?? doc.body;
   if (!home || node.parentNode === home) return;
-  if (home === doc.body) home.append(node); else home.prepend(node);
+  if (home === doc.body) home.append(node);
+  else home.prepend(node);
 }
 
 function rowNode(doc, r) {
@@ -450,7 +495,11 @@ function rowNode(doc, r) {
   if (clickable) {
     n.type = 'button';
     n.title = 'Open the level-up window';
-    n.onclick = (e) => { e?.preventDefault?.(); e?.stopPropagation?.(); openLevelUpWindow(); };
+    n.onclick = (e) => {
+      e?.preventDefault?.();
+      e?.stopPropagation?.();
+      openLevelUpWindow();
+    };
   }
   const gem = doc.createElement('span');
   gem.className = 'lv-note-gem';
@@ -496,9 +545,15 @@ function rowNode(doc, r) {
  */
 export const levelOwed = (e = playerEntity) => !!e?.readyToLevelUp;
 /** SKILL-TICK: how many skills the next pass would raise - what the strip's standing skills line counts. */
-export const skillsImprovable = (e = playerEntity) => countReadyToImprove(e, { now: ownMinutes() });   // AUDIT SUGGESTIONS-1019 L3-1/L3-4: on the gate's clock, building nothing
+export const skillsImprovable = (e = playerEntity) => countReadyToImprove(e, { now: ownMinutes() }); // AUDIT SUGGESTIONS-1019 L3-1/L3-4: on the gate's clock, building nothing
 
-export function drawLevelNotices({ owed = levelOwed(), improvable = undefined, hidden = false, now = nowMs(), doc = (typeof document === 'undefined' ? null : document) } = {}) {
+export function drawLevelNotices({
+  owed = levelOwed(),
+  improvable = undefined,
+  hidden = false,
+  now = nowMs(),
+  doc = typeof document === 'undefined' ? null : document,
+} = {}) {
   if (!doc || !isEnhanced()) return null;
   // SKILL-READY (2026-10-20, Dudey: "dont use this annoying message bar for this anymore"): the skills a rest would raise
   // are a tile beside the Renown bar now (ui/hud/hudAdvance.js, which counts them with skillsImprovable); the strip says
@@ -513,7 +568,11 @@ export function drawLevelNotices({ owed = levelOwed(), improvable = undefined, h
   const sig = rows.map((r) => `${r.key}|${r.title}|${r.sub}|${r.standing ? 1 : 0}|${r.fading ? 1 : 0}`).join('\n');
   if (sig === last && (host || !rows.length)) return host;
   last = sig;
-  if (!rows.length) { host?.remove(); host = null; return null; }
+  if (!rows.length) {
+    host?.remove();
+    host = null;
+    return null;
+  }
   if (!host) {
     host = doc.createElement('div');
     host.id = LEVEL_NOTICE_ID;

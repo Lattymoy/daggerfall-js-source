@@ -113,8 +113,8 @@
   {
     "name": "LEVEL-45-II-cap-unsaid",
     "file": "src/ui/levelUp/levelUpView.js",
-    "old": "label: t('levelup.progress.cap', 'Highest level reached'), cap: true };",
-    "new": "label: t('levelup.progress.cap', 'Highest level reached') };",
+    "old": "  if (atLevelCap(e))\n    return { now: 1, max: 1, carried: 0, label: t('levelup.progress.cap', 'Highest level reached'), cap: true }; // AUDIT FB1026d II C3: `cap` - the bar says its label alone",
+    "new": "  if (atLevelCap(e)) return { now: 1, max: 1, carried: 0, label: t('levelup.progress.cap', 'Highest level reached') }; // AUDIT FB1026d II C3: `cap` - the bar says its label alone",
     "tests": [
       "test/systems/fb1026d_levelcap.test.js"
     ],
@@ -123,8 +123,8 @@
   {
     "name": "LEVEL-45-II-next-level-notes",
     "file": "src/ui/levelUp/levelUpView.js",
-    "old": "    note: capped ? '' : ROLE_NOTE[roles.get(id) ?? ROLE_IDLE],",
-    "new": "    note: ROLE_NOTE[roles.get(id) ?? ROLE_IDLE],",
+    "old": "    note: capped ? '' : ROLE_NOTE[roles.get(id) ?? ROLE_IDLE], // AUDIT FB1026d II C3: at the cap no skill counts toward a next level",
+    "new": "    note: ROLE_NOTE[roles.get(id) ?? ROLE_IDLE], // AUDIT FB1026d II C3: at the cap no skill counts toward a next level",
     "tests": [
       "test/systems/fb1026d_levelcap.test.js"
     ],

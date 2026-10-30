@@ -152,7 +152,7 @@ carry it over the name too (`travelViewMarks.js:"skull: pvpSkullOf(t.id) });"`).
 character level the token signs (`cl`) and refuses every blow given or taken under 30, and any flag asked up
 (`wildRef.js:"if (pvpYoung(a.cl) || pvpYoung(t.cl)) return"`). A token with no level is left to the game's own flag
 refusal. Online, the level up from 29 to 30 asks first, Yes or Not yet; Not yet keeps the level owed
-(`pvp30Ask.js:"export const pvp30Asks = (e) =>"`), on the sheet's door and the Growth tab alike. A departure: DFU has no PvP.
+(`pvp30Ask.js:"export const pvp30Asks"`), on the sheet's door and the Growth tab alike. A departure: DFU has no PvP.
 
 ## PVP-DEATH: no safe passage after a death
 
@@ -482,7 +482,7 @@ My kill says "You slew" (`pvpHud.js:"export const pvpSlewText = "`); the fallen'
 (`wildZone.js:"export const wildDeathSlain = "`). A villain the room says is red is marked on the Overworld where the
 law would hide it, nameless (`travelViewMarks.js:"const villainMark = (id, at, dropped) => {"`); one in no room of mine
 is unknown to this client. The owed level 29 reads "Level 29 · 1 level owed", its button "Go to 30"
-(`pvp30Ask.js:"export const pvp30Owed = "`). Tests: `test/ui/pvphud.test.js`. A departure: DFU has no PvP.
+(`pvp30Ask.js:"export const pvp30Owed"`). Tests: `test/ui/pvphud.test.js`. A departure: DFU has no PvP.
 
 ## PVP-VITALS: the relay owns a flagged fighter's pools
 

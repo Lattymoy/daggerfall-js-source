@@ -138,6 +138,8 @@
 /src/ui/guild/*/
 !/src/ui/ketch/
 /src/ui/ketch/*/
+!/src/ui/levelUp/
+/src/ui/levelUp/*/
 !/src/ui/map/
 /src/ui/map/*/
 !/src/ui/menu/

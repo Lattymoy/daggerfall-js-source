@@ -122,8 +122,8 @@
   {
     "name": "LEVEL-EVEN-online-words-unread",
     "file": "src/ui/levelUp/levelUpView.js",
-    "old": "get endurance() { return isOnlinePage() ?",
-    "new": "get endurance() { return false ?",
+    "old": "    return isOnlinePage()",
+    "new": "    return false",
     "tests": [
       "test/systems/fb1019b_leveleven.test.js"
     ],

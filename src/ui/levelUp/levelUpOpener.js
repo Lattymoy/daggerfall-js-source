@@ -47,11 +47,12 @@ const synth = (win, type, code) => win.dispatchEvent(new KeyboardEvent(type, { c
 export function openLevelUpWindow({ defer = false, win = globalThis } = {}) {
   const code = codeForAction(bindings(), 'CharacterSheet');
   if (code == null || typeof win?.dispatchEvent !== 'function' || typeof KeyboardEvent === 'undefined') return false;
-  const codes = getCombo(code) ?? [code];   // a chord presses its modifiers too, as the touch layer's `codesOf` does
+  const codes = getCombo(code) ?? [code]; // a chord presses its modifiers too, as the touch layer's `codesOf` does
   const press = () => {
     for (const c of codes) synth(win, 'keydown', c);
     for (const c of [...codes].reverse()) synth(win, 'keyup', c);
   };
-  if (defer) setTimeout(press, 0); else press();
+  if (defer) setTimeout(press, 0);
+  else press();
   return true;
 }
