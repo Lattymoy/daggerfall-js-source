@@ -1238,7 +1238,7 @@ test('FIELD-GUN17a: the shot leaves the BARREL, and the barrel is measured off t
     ['src/scenes/world.js', /arrows\.fire\(cam\.pos, fwd, \{ fromPlayer: true, weapon: weaponRig\.playerWeapon\.weapon, muzzle: weaponRig\.thunderlockMuzzle\(fieldOfView\(\)\), summoned: shot\.summoned \}\)/],
     ['src/scenes/exterior.js', /arrows\.fire\(eye, fwd, \{ fromPlayer: true, weapon: weaponRig\.playerWeapon\.weapon, muzzle: weaponRig\.thunderlockMuzzle\(fieldOfView\(\)\), summoned: shot\.summoned \}\)/],
     ['src/scenes/worldModes.js', /interiorArrows\.fire\(player\.eye, eyeDir\(\), \{ fromPlayer: true, weapon: interiorWeapon\.playerWeapon\.weapon, muzzle: interiorWeapon\.thunderlockMuzzle\(fieldOfView\(\)\), summoned: shot\.summoned \}\)/],
-    ['src/scenes/dungeonContext.js', /fireArrow\(eye, lookDir, playerWeapon\.weapon, true, null, null, weaponRig\.thunderlockMuzzle\(fieldOfView\(\)\), shot\.summoned \? \{ summoned: true \} : null\)/],
+    ['src/scenes/dungeonContext.js', /fireArrow\(eye, orbArchiveFor\(playerWeapon\.weapon\) \? lookDir : bowShotAim\(lookDir\), playerWeapon\.weapon, true, null, null, weaponRig\.thunderlockMuzzle\(fieldOfView\(\)\), bowShotExtra\(!!orbArchiveFor\(playerWeapon\.weapon\), shot\.summoned\)\)/],   // PIN MOVED (BOW-BLOOM, BOW-FAST: a bow's aim and stacks, a gun's untouched)
   ];
   for (const [f, re] of HOSTS) assert.match(hostText(f), re, `${f} passes the muzzle`);
 
