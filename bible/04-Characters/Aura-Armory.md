@@ -139,6 +139,11 @@ THE CARD LAW: on a sprite every point is lifted toward the eye (`ARMORY_LIFT_M`)
 side and what stands behind the body is hidden by the card's own depth. A chest piece weighs how squarely it faces the
 eye; the Eternal Sigil also burns on the back, clear of a rig's torso.
 
+**The card's right** (ARMORY-MIRROR, `01-Overview/bugs/Field-Bugs-2026-10-30c.md`). A sprite's points move across its
+card along the billboard's own right (`render/armoryPass.js` cardRightOf). Under the world's mirrored lens that is the
+view's first row turned round; under the stage's plain lens, the row itself. Read off the row in the world, every
+piece stood mirrored across the card.
+
 **A sprite's forearm is not drawn.** A painting has no elbow or wrist to measure past the shoulder, so on a sprite an
 arm piece is drawn on the upper arm alone; the forearm draws on a rig. The legs draw from the knee down on both.
 
@@ -229,6 +234,9 @@ peer's name lifts only over a head piece drawn in that frame, and a sprite's Cin
 - `test/systems/weaponglow1.test.js` law 7 - the weapon piece's place among the looks.
 - `tools/armoryProbe.mjs` - the pass on a real GPU (Chromium): on the stand-in, the sprite and retail's Morrowind
   skeleton; placement, the card law, the clock's wrap, and the weapon pieces' stages.
+- `tools/armorySpriteProbe.mjs` - a sprite through the renderer's own billboard under the world's mirrored lens, eight
+  views: each piece on the part its picture paints (ARMORY-MIRROR). `test/render/armorymirror.test.js` pins the card's
+  right and a side view's armlet; `tools/mutants/armorymirror.json` mutates them.
 - `01-Overview/audits/Audit-Armory.md` - the audit and what it fixed.
 - `tools/mutants/armory.json` - every law above, mutated.
 - `test/ui/profileslots.test.js` - the slots, the presses, the stage's frame, the head pieces' tips, the bodies, and the

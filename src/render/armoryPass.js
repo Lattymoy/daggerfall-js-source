@@ -487,13 +487,21 @@ export function armoryHeadTip(w) {
 /**
  * GUILD-SHOP: THE SIDE OF THE POSE THE WEARER'S LEFT ARM IS. A rig's `L` points are its left bones. A sprite's are the
  * picture's left as the eye sees it, so the body's left arm is the picture's right while the eye stands before it (in
- * front of the chest along the body's facing). Pure. @param {any} pose @param {number[]} fwd @param {number[]} chest
- * @param {ArrayLike<number>} eye
+ * front of the chest along the body's facing). ARMORY-MIRROR: a sprite's arms not read off its picture (a side view)
+ * are the sets' rows turned with the body, its own left and right, as a rig's. Seen from behind and to its right (the
+ * three-quarter back view's eighth) the left arm is behind the body in every picture: null, none drawn. Pure.
+ * @param {any} pose @param {number[]} fwd @param {number[]} chest @param {ArrayLike<number>} eye @returns {'L'|'R'|null}
  */
 export function armletSide(pose, fwd, chest, eye) {
-  if (!pose?.card) return 'L';
-  return (eye[0] - chest[0]) * fwd[0] + (eye[2] - chest[2]) * fwd[2] > 0 ? 'R' : 'L';
+  if (!pose?.card || pose.armsTurned) return 'L';
+  const ex = eye[0] - chest[0], ez = eye[2] - chest[2], l = Math.hypot(ex, ez) || 1;
+  const ahead = (ex * fwd[0] + ez * fwd[2]) / l, right = (ex * fwd[2] - ez * fwd[0]) / l;
+  if (ahead < 0 && right > ARMLET_HIDDEN_SIN) return null;
+  return ahead > 0 ? 'R' : 'L';
 }
+/** ARMORY-MIRROR: half an eighth of a turn's sine - past it, off the line straight behind, the picture is a three-quarter
+ *  back view's (eotbBillboard.js RECORD_OFFSETS 3). */
+export const ARMLET_HIDDEN_SIN = Math.sin(Math.PI / 8);
 
 /**
  * WHAT A PIECE DRAWS on wearer `w` this frame - its draws `{ mesh, part, A, B, N, U, r, size, count, face, gain }` in the
@@ -559,6 +567,7 @@ export function armoryDraws(key, w, eye, near, right = null) {
     // GUILD-SHOP (the owner: "shows your guild insigia in a detailed format on one of the upper arms. Just one side"): the
     // wearer's left arm. A sprite's points are the picture's sides, so seen from the front its left arm is the right one
     const side = armletSide(pose, fwd, pt('chest'), eye), A = ARMORY_ARMLET;
+    if (!side) return out;   // ARMORY-MIRROR: the left arm behind the body
     const sh = pt(`sh${side}`), el = pt(`el${side}`), d = unit(sub(el, sh)), mid = mix(sh, el, A.at), up = [-d[0], -d[1], -d[2]];
     tube(0, add(mid, d, (A.tall / 2) * s), add(mid, d, (-A.tall / 2) * s), A.r, A.r * 1.04);
     // out from the body: its own left (the facing turned a quarter), toward whichever side this shoulder stands, square to the arm
@@ -653,6 +662,13 @@ export function mirroredVp(/** @type {ArrayLike<number>} */ m) {
   const det = m[0] * (m[5] * m[10] - m[9] * m[6]) - m[4] * (m[1] * m[10] - m[9] * m[2]) + m[8] * (m[1] * m[6] - m[5] * m[2]);
   return det > 0;
 }
+/** ARMORY-MIRROR (2026-10-30, the owner: "Head aura doesnt allign on the sprite"): the right a sprite's card is drawn
+ *  along, the billboards' camRight. The view's first row is the screen's right under a plain lens (the profile's stage)
+ *  and its LEFT under the world's mirrorProjectionX, so a sprite's head and arms were placed mirrored across the card. */
+export function cardRightOf(/** @type {ArrayLike<number>} */ proj, /** @type {ArrayLike<number>} */ view) {
+  const k = proj && mirroredVp(proj) ? -1 : 1;
+  return [view[0] * k, view[4] * k, view[8] * k];
+}
 /** GUILD-SHOP: the crest's picture for `arms` on a canvas of this page's - null where no canvas can be made (a pin's
  *  node), and the armlet then draws its band and glow alone. */
 function paintCrestCanvas(/** @type {any} */ arms) {
@@ -718,7 +734,7 @@ export class ArmoryRenderer {
     const gl = this.gl;
     mat4Multiply(this._vp, proj, view);
     this._frame++;
-    const right = [view[0], view[4], view[8]], up = [view[1], view[5], view[9]];
+    const right = cardRightOf(proj, view), up = [view[1], view[5], view[9]];   // ARMORY-MIRROR: the card's right, not the view's first row
     const t = auraClock(seconds);
     gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);
     gl.depthMask(false);

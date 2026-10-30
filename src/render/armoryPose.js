@@ -39,7 +39,7 @@ const SPRITE_ROWS_CHEST = SPRITE_ROWS.chest, SPRITE_ROWS_PELVIS = SPRITE_ROWS.pe
 
 /** A fresh pose - its points the rest pose's; `dx` each point's offset along a sprite card's right (m), 0 on a rig. */
 export function newPose() {
-  return { pts: Float32Array.from(REST_POINTS), dx: new Float32Array(POSE_POINTS.length), card: false, limbs: 'full', sunk: false, scale: 1 };
+  return { pts: Float32Array.from(REST_POINTS), dx: new Float32Array(POSE_POINTS.length), card: false, limbs: 'full', sunk: false, scale: 1, armsTurned: false };
 }
 
 /** THE ROWS a picture's marks are read at, in the sets' pixels over the frame's foot (EOTB_FIGURE's and SPRITE_ROWS'). */
@@ -268,6 +268,7 @@ export function poseFromFigure(/** @type {any} */ fig, /** @type {any} */ out) {
     });
   }
   out.card = true; out.limbs = 'upper'; out.sunk = at(EOTB_FIGURE.shoulder) < CLOAK_SHOULDER_Y * 0.4; out.scale = m / EOTB_FIGURE.mpp;
+  out.armsTurned = !arms;   // ARMORY-MIRROR: no arms read - the sets' rows turned with the body, its own sides (armoryPass.js armletSide)
   return true;
 }
 

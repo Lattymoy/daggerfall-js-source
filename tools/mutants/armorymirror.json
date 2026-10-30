@@ -1,0 +1,74 @@
+[
+  {
+    "name": "ARMORY-MIRROR-the-lens-mirror-unread",
+    "file": "src/render/armoryPass.js",
+    "old": "  const k = proj && mirroredVp(proj) ? -1 : 1;",
+    "new": "  const k = 1;",
+    "tests": [
+      "test/render/armorymirror.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-the-pass-reads-the-view-row",
+    "file": "src/render/armoryPass.js",
+    "old": "    const right = cardRightOf(proj, view), up = [view[1], view[5], view[9]];",
+    "new": "    const right = [view[0], view[4], view[8]], up = [view[1], view[5], view[9]];",
+    "tests": [
+      "test/render/armorymirror.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-the-host-gathers-off-the-view-row",
+    "file": "src/scenes/auraHost.js",
+    "old": "right = vw ? cardRightOf(renderer._proj, vw) : null;",
+    "new": "right = vw ? [vw[0], vw[4], vw[8]] : null;",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-mine-stepped-off-the-view-row",
+    "file": "src/scenes/auraHost.js",
+    "old": "armoryMotionStep(selfKit, now, vw ? cardRightOf(renderer._proj, vw) : null);",
+    "new": "armoryMotionStep(selfKit, now, vw ? [vw[0], vw[4], vw[8]] : null);",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-a-side-view-read-as-the-picture",
+    "file": "src/render/armoryPass.js",
+    "old": "  if (!pose?.card || pose.armsTurned) return 'L';",
+    "new": "  if (!pose?.card) return 'L';",
+    "tests": [
+      "test/render/armorymirror.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-the-hidden-arm-drawn",
+    "file": "src/render/armoryPass.js",
+    "old": "  if (ahead < 0 && right > ARMLET_HIDDEN_SIN) return null;\n",
+    "new": "",
+    "tests": [
+      "test/render/armorymirror.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-the-near-arm-hidden",
+    "file": "src/render/armoryPass.js",
+    "old": "  if (ahead < 0 && right > ARMLET_HIDDEN_SIN) return null;",
+    "new": "  if (ahead < 0 && right < -ARMLET_HIDDEN_SIN) return null;",
+    "tests": [
+      "test/render/armorymirror.test.js"
+    ]
+  },
+  {
+    "name": "ARMORY-MIRROR-the-arms-called-read",
+    "file": "src/render/armoryPose.js",
+    "old": "  out.armsTurned = !arms;",
+    "new": "  out.armsTurned = false;",
+    "tests": [
+      "test/render/armorymirror.test.js"
+    ]
+  }
+]
