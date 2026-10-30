@@ -184,7 +184,7 @@
     "file": "src/scenes/homeYards.js",
     "old": "  const h = pad + 1e-4;",
     "new": "  const h = 1e-4;",
-    "tests": [
+    "tests": ["test/world/fb1030_yarddeck.test.js", 
       "test/scenes/fb1001_yard.test.js",
       "test/scenes/homeyard.test.js"
     ]
