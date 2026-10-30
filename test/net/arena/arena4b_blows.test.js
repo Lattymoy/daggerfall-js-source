@@ -86,8 +86,8 @@ test('ARENA4b the dungeon\'s host numbers its blows and routes a spell on my opp
   // PVPDUNGEON: the open zone's fair player takes the swing first (opts.wildStrike, the defender resolves it - no referee
   // there); the number is still drawn before every body the referee hears of
   assert.match(D, /function resolvePlayerHit\(eye, inViewFn, playerFeet, lookDir\) \{\n(?:\s*\/\/[^\n]*\n)*\s+if \(opts\.wildBodies && opts\.wildStrike\) \{\n[^]{0,900}?\n\s+if \(best && opts\.wildStrike\(best, [^\n]*\) return true;\n\s+\}\n\s+nextArenaQ\(\);/, 'a swing is one number, every body it meets');
-  assert.match(D, /if \(rv && missileHitsCapsule\(m\.pos, rv\.ai\.feet, rv\.ai\.height, rv\.ai\.radius\)\) \{\n\s+nextArenaQ\(\);/, 'a shaft on my opponent its own');
-  assert.match(D, /if \(missileHitsFoe\(m\.pos, f\)\) \{[^\n]*\n\s+nextArenaQ\(\);/, 'a shaft on a relay\'s fighter its own');
+  assert.match(D, /if \(rv && missileHitsCapsule\(m\.pos, rv\.ai\.feet, rv\.ai\.height, rv\.ai\.radius, _from\)\) \{\n\s+nextArenaQ\(\);/, 'a shaft on my opponent its own');
+  assert.match(D, /if \(missileHitsFoe\(m\.pos, f, _from\)\) \{[^\n]*\n\s+nextArenaQ\(\);/, 'a shaft on a relay\'s fighter its own');
   // a relay fighter's claim: a swing's or a shaft's sequence; a spell's damage (the sinks' kind 'spell', no record) claimed
   // as a spell - never a swing held to a sword's reach - under its cast's one number, every body of the blast sharing it
   assert.match(D, /const cast = kind === 'spell' \|\| !!spell;\n\s+if \(fromPlayer && damage >= 0\) opts\.onArenaHit\?\.\(\{ i: `a\$\{foe\._ownI\}`, d: damage, kind: kind === 'arrow' \? 'arrow' : cast \? 'spell' : 'melee', [^\n]*, q: cast \? arenaSpellQ\(\) : _arenaQ \}\);/, 'a relay fighter\'s claim carries its sequence, a spell as a spell');
