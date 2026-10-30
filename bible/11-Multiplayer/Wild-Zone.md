@@ -701,9 +701,9 @@ near holds the journey slower still (STRANGER-PACE, section 11).
   "Stranger" within `WILD_STRANGER_SEE_M` (1,500 m, `wildZone.js:"export const WILD_STRANGER_SEE_M"` - STRANGER-SEE,
   2026-10-08, the owner: "make strangers visible at 1,5km"); their coming said within WILD_STRANGER_M (600 m, as WILD3
   had it); within WILD_STRANGER_SLOW_M (200 m) they hold a journey as any foe does (`journeyThreats`); and over their
-  heads no name - on the Overworld a red "Stranger" with none of their badges, in the 3D scene no plate at all
-  (`wildNameMask`, `world.js:"const wildNameMask"`; PVPNEAR, the owner: "the red stranger name should not appear when
-  in 3d mode").
+  heads on the Overworld a red "Stranger" with none of their badges (`wildNameMask`, `world.js:"const wildNameMask"`).
+  In 3D their own name shows (PVPNEAR; PVP-SEEN, 2026-10-30). A concealed or invisible flagged player shows its
+  skull and bar, no name (`pvpFlagHost.js:"barKept: (id) =>"`).
 - STRANGER-PACE (PVPNEAR, the owner: "near a stranger 300m 10x, 200m 5x speed", then: "10x 600m 5x 300 3x 200m and
   1x 100m"): the nearest stranger sets the journey's pace whatever the foe dial says - x10 within 600 m, x5 within
   300, x3 within 200, x1 within 100 (`journeyThreatCap`, `world.js:"function journeyThreatCap"`, its `strangerRate`).

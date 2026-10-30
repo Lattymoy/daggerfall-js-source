@@ -164,10 +164,14 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
     /** PVP-BAR (the owner: "They always have some body just fiant"): a concealed peer in a PvP fight (its skull gold) is
      *  drawn faint, never nowhere - `look` is combatVisuals.js peerDraw's answer for its pose's `cv`. */
     look: (id, bits, look) => {
-      if (look?.kind === 'plain' || (bits & 7) === 7 || !['gold', 'red'].includes(skullOf(id) ?? '')) return look;   // 7: a staff member inside its event's boss
-      veiled.set(id, now());
-      return { kind: 'conceal', visual: PVP_FIGHT_VEIL };
+      const k = skullOf(id);
+      if (look?.kind === 'plain' || (bits & 7) === 7 || !k) return look;   // 7: a staff member inside its event's boss
+      veiled.set(id, now());   // PVP-SEEN (the owner: "concealded or incvis still have a health bar"): nameless, its skull and bar kept
+      if (k === 'gold' || k === 'red') return { kind: 'conceal', visual: PVP_FIGHT_VEIL };
+      return look.kind === 'conceal' ? { kind: 'conceal', visual: { ...look.visual, named: true } } : look;
     },
+    /** PVP-SEEN: an invisible flagged player keeps its tag (net/remotePlayers.js sync's `hidden` answers 'bar'). */
+    barKept: (id) => now() - (veiled.get(id) ?? -Infinity) < VEIL_FRAME_MS,
   };
   _current = api;
   return api;
