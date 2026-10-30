@@ -1,105 +1,83 @@
-# The Battle Pass - Season One: Dwemer's Breach (STOREFRONT)
+# The Battle Pass - Season One: Dwemer's Breach (STOREFRONT, PASS-PANELS)
 
-> Design page and record (2026-10-29), beside `06-Systems/Storefront.md`. Where the page and the code disagree, the
-> code's headers and the pins are what runs. Not a DFU member: Daggerfall Unity has no seasons, accounts or passes
-> (Port-Ledger section A, STOREFRONT).
+> Design page and record (2026-10-29, reworked 2026-10-30), beside `06-Systems/Storefront.md` and `06-Systems/Aurum.md`.
+> Where the page and the code disagree, the code's headers and the pins are what runs. Not a DFU member: Daggerfall Unity
+> has no seasons, accounts or passes (Port-Ledger section A, STOREFRONT).
 
 ## 1. What was asked
 
 The owner, 2026-10-29, with a developer's notes from the Discord: *"Battle Pass should not be just a Battle Pass. It
 should be thematic Battle Pass like a 'Dwemer's breach'. And the whole world should change a little in relation to this.
-Like new dwemer enemies, new boss, new weapon"*; *"Battle Pass is the MOST profitable but at the same time MOST DANGEROUS
-in terms of outflow of players"*; *"booster to boost your BP progression. Maybe run a test BP for a 2 months (like 10
-November to 10 Jan) ... and divide the Battle Pass into 3 stages (20 days each)"*.
+Like new dwemer enemies, new boss, new weapon"*; *"divide the Battle Pass into 3 stages (20 days each)"*.
 
-The pass card: a Premium Pass at $29.99 with a fifty-level track, and a Deluxe at $49.99 with everything in Premium and
-its own rewards unlocked at once. Sold here at $14.99 and $24.99, under the shop's $30 cap (`Storefront.md` section 2).
+PASS-PANELS, the owner, 2026-10-30: *"I want to rework this to be more of a helldivers type system. Like a free panel
+track and a premium panel track using our new currency to both unlock tracks and buy the items."* Asked how, the owner
+chose: Aurum earned by deeds, world finds and Aurum caches; a panel opened by spending on its track; the premium track
+opened with Aurum alone (the money passes retired); and tracks that never expire.
+
+So the pass has no levels, experience, boosters or money passes. None of those had shipped: the branch that built them
+was reworked before it merged.
 
 ## 2. The season
 
-**Dwemer's Breach**, 10 November 2026 to the end of 8 January 2027, UTC: sixty days in three stages of twenty
-(`src/net/battlePassLaw.js` PASS_SEASONS). The Bay shakes; old Rourken works under High Rock and Hammerfell crack open to the
-sky, and brass comes up out of them.
+**Dwemer's Breach** runs 10 November 2026 to the end of 8 January 2027, UTC: sixty days in three stages of twenty
+(`src/net/battlePassLaw.js` PASS_SEASONS). The Bay shakes; old Rourken works under High Rock and Hammerfell crack open to
+the sky, and brass comes up out of them.
 
-| Stage | Days | Levels open | The world |
-| --- | --- | --- | --- |
-| I. The Tremor | 10 Nov - 29 Nov | 1-17 | the ground shakes; two Brass Fissures open in each region's wilds; Spheres and Iron Golems climb out |
-| II. The Brass Halls | 30 Nov - 19 Dec | 18-34 | three Fissures a region; Steam Centurions walk with them |
-| III. The Heart Wakes | 20 Dec - 8 Jan | 35-50 | each region's Heart Fissure wakes the Brass Colossus |
-
-A level past the open stage's top is banked: its experience is kept and counts the day the next stage opens. So a player
-who plays hard is never more than a stage ahead of one who plays a little, and every stage is news for both.
-
-## 3. The track
-
-Fifty levels of 1,000 experience each. **The free track** is every registered account's. **The premium track** opens
-with the Premium Pass or the Deluxe; a premium reward reached before the purchase is given at once. Every reward is the
-account's for good, on every character, held from the level reached - read off the row at every ask (ACC3's law), never
-a letter to claim.
-
-AURUM (2026-10-29, the owner: "Ensure the reward tracks make sense. No overbundence of titles and profile icons"): the
-track was cut to one title on each track and three profile icons in all, and most levels give **Aurum** instead - the
-shop's currency for its daily wares (`06-Systems/Aurum.md`). The free track gives 525 Aurum over the season, the premium
-1,350. A track's Aurum is counted from the level reached at every ask, never stored, so it leaves with the pass that
-opened it (`src/net/aurumLaw.js` aurumTrackOf). The titles Brassbound, Tonal Architect and Brasswright and the portraits
-Centurion Helm, Brass Spider, Dwarven Sphere, Brass Colossus and Numidium were cut: none had shipped.
-
-| Level | Free | Premium |
+| Stage | Days | The world |
 | --- | --- | --- |
-| 1 | | Tonal Fork (glyph) |
-| 2, 4, 6 | | 50 Aurum each |
-| 5 | 50 Aurum | |
-| 8 | | Dwemer Lexicon (profile icon) |
-| 10 | Dwemer Cog (glyph) | 75 Aurum |
-| 12, 14 | | 50 Aurum each |
-| 15 | 50 Aurum | |
-| 16, 18 | | 75 Aurum each |
-| 20 | Aetherium Shard (profile icon) | Tonal Shatter (kill effect) |
-| 22, 26, 32, 36 | | 50 Aurum each |
-| 24, 28, 38, 42, 44 | | 75 Aurum each |
-| 25 | 75 Aurum | |
-| 30 | 75 Aurum | Brass Gate (portal skin) |
-| 34, 46, 48 | | 100 Aurum each |
-| 35, 45 | 100 Aurum each | |
-| 40 | 75 Aurum | Gearheart (profile icon) |
-| 50 | Tremor-Born (title) | Aetherium Coil (aura), Heart-Waker (title) |
+| I. The Tremor | 10 Nov - 29 Nov | the ground shakes; two Brass Fissures open in each region's wilds; Spheres and Iron Golems climb out |
+| II. The Brass Halls | 30 Nov - 19 Dec | three Fissures a region; Steam Centurions walk with them |
+| III. The Heart Wakes | 20 Dec - 8 Jan | each region's Heart Fissure wakes the Brass Colossus |
 
-**The Deluxe Pass** gives the premium track, five levels at once, and its own three: the Gilded Coil (an aura), the
-Brass Automaton (a mount look) and Echo of Numidium (a title on an animated brass plate).
+The season's days bound its world and its challenges. Its tracks sell from its first instant for good, and the finds'
+Aurum never stops (`passTracksOpen`, PASS_FINDS_FROM_MS).
 
-## 4. Experience
+## 3. The tracks
 
-The account service holds each account's season experience (`players.pass_s1`, migration 0196) and decides every find
-(`server-account/src/battlePass.js`), as it decides a Soul Cake: the page asks with a deed's source, the service answers.
+Each season has two tracks of panels. **The free track** is every registered account's. **The premium track** opens once
+for 1,000 Aurum (PASS_PREMIUM_AURUM). Each item is bought once, for its own Aurum, in any order the open panels allow. A
+panel opens when its own track has had its `open` Aurum spent on it; the first panel of each track is open from the start.
+Every item is the account's for good, on every character, read off the row at every ask (`players.pass_items`).
 
-| Source | Experience |
+| Track | Panel (opens at) | Items (Aurum) |
+| --- | --- | --- |
+| Free | I (0) | Dwemer Cog, glyph (200); Aetherium Shard, profile icon (300) |
+| Free | II (300) | Tremor-Born, title (400); Brass Gate, portal skin (700) |
+| Free | III (1,000) | Tonal Shatter, kill effect (700) |
+| Premium | I (0) | Tonal Fork, glyph (200); Dwemer Lexicon, profile icon (300); Aetherium Coil, aura (1,000) |
+| Premium | II (600) | Gearheart, profile icon (400); Brass Crown, glyph (300); Heart-Waker, title (600); Gilded Coil, aura (1,200) |
+| Premium | III (2,000) | Echo of Numidium, title (800); Brass Automaton, mount look (1,600) |
+
+The free track costs 2,300 Aurum, the premium 1,000 to open and 6,400 more. The owner's "No overbundence of titles and
+profile icons" holds: one title free and two premium, three icons in all. The Brass Crown came with the retired Seasonal
+Collector; it is the premium track's now, and no shop ware.
+
+## 4. Aurum from deeds
+
+The account service decides every find (`server-account/src/battlePass.js`), as it decides a Soul Cake: the page asks
+with a deed's source, the service answers with the Aurum found. A UTC day pays 100 Aurum of finds at most
+(PASS_DAY_AURUM), in one ledger line a day (`aurum_ledger` kind `find`), and hears 2,000 asks.
+
+| Source | Aurum |
 | --- | --- |
-| a foe my blow killed; the dead and the summoned | 12; 15 |
-| an elite or a champion | 60 |
-| a Dwemer construct (the season's) | 40 |
-| gathering; making; the loot's laws | 8; 12; 10 |
-| a tavern game won; the sea | 50; 40 |
-| a world event; a quest done; a bounty paid | 120; 150; 150 |
-| the endgame (a breach closed, a Redoubt, the Serpent, a star held) | 300 |
+| a foe my blow killed; the dead; the summoned | 1 each |
+| a Dwemer construct (the season's) | 2 |
+| an elite or a champion | 4 |
+| gathering; making; the loot's laws | 1 each |
+| a tavern game won; the sea | 3 each |
+| a world event | 8 |
+| a quest done; a bounty paid | 10 each |
+| the endgame (a breach closed, a Redoubt, the Serpent, a star held) | 20 |
 
-A UTC day takes 2,000 experience before a booster's share and 2,000 asks. **The challenges**, five a stage, count their
-deeds while their stage is open and pay once, beside the day's bound: 6,800 in the first stage, 8,500 in the second,
-10,000 in the third. A steady hour a day reaches level 50 by the season's end without a booster.
+**The challenges**, five a stage, count their deeds while their stage runs and pay their Aurum once, beside the day's
+bound: 470 in the first stage, 560 in the second, 710 in the third (`aurum_ledger` kind `challenge`). With the week's
+deeds and the caches (`06-Systems/Aurum.md`), a player who finds the day's 100 most days buys the free track in the
+first month and most of the premium by the season's end. Aurum bought in packs buys the same items sooner.
 
-## 5. Boosters
+## 5. Boosters (retired)
 
-The developer's "booster to boost your BP progression", sold as the sheet's three EXP Boosters under the shop's cap. A booster is the
-season's: its share of every find's experience for the rest of it, and levels at once. The highest held counts, never
-their sum. The share is on top of the day's bound, so it speeds every player.
-
-| Booster | Price | Share | At once |
-| --- | --- | --- | --- |
-| Cog Booster | $2.99 | +25% | - |
-| Tonal Booster | $5.99 | +50% | 3 levels |
-| Heart Booster | $9.99 | +100% | 8 levels |
-
-Levels given at once are experience like a find's: past the open stage's top they are kept for the next stage, as
-section 2 says - the Deluxe's five too - and a booster's look says so (`src/ui/passText.js` passBoostText, AUDIT PASS 12).
+PASS-PANELS retired the Cog, Tonal and Heart Boosters with the levels they sped. They never shipped.
 
 ## 6. The world
 
@@ -215,10 +193,12 @@ and 10) are the shop's.
   day's 2,000 asks for each hour of play. The silver finds' stream (twenty a day) would refuse an honest page. A line
   staff wrote before the stream existed reads its first line for it (`06-Systems/Integrity-Arc.md` INT17).
 - **8.** A find answers its season, tracks and share, so a level reached after a purchase is told with its premium reward.
+  PASS-PANELS: a find answers the day's Aurum and the challenges it paid, and the page tells a challenge with its Aurum.
 - **9.** The read at bind runs in the finds' queue: a late answer put the level back, and the next level was said twice.
+  PASS-PANELS: a late answer would put the day's Aurum back, and the day's bound would be said twice.
 - **11.** A refusal stands the page back (`net/askRest.js` ASK_REST_MS): the day's asks spent until the next UTC day, a
   find called closed, a rate or an empty bucket a minute, a seat or hold refused ten minutes.
-- **12.** Section 7 says what the window draws, and section 5 that levels at once wait past the open stage's top.
+- **12.** Section 7 says what the window draws. (Section 5's levels at once were retired with the boosters.)
 - **The Witches' Festival's twins of 2 and 3.** The festival's finds had both faults. Its `open` is now the switch's word
   alone too (`festival.js` festivalOf), and `/v1/festival/find` is a progression claim on a stream of its own,
   `festival` - an honest page asks a Soul Cake and a pass find for one kill, so a shared bucket would refuse it. The

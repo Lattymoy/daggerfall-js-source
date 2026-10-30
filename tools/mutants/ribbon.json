@@ -193,8 +193,8 @@
   {
     "name": "RIBBON-ix-token",
     "file": "server-account/src/index.js",
-    "old": "          pi: iconWorn(who.player, nowS),   // WITCH1: the profile icon worn, the aura's law - absent for none (the character's face)\n          ak: armoryWorn(who.player),   // ARMORY: the Aura Armory's kit worn, the aura's law - absent for none\n          fx: effectsWorn(who.player, nowS),   // STOREFRONT: the effects kit worn (a kill effect, a portal skin, a mount look) - absent for none\n          ...(rb ? { rb } : {}),\n",
-    "new": "          pi: iconWorn(who.player, nowS),   // WITCH1: the profile icon worn, the aura's law - absent for none (the character's face)\n          ak: armoryWorn(who.player),   // ARMORY: the Aura Armory's kit worn, the aura's law - absent for none\n          fx: effectsWorn(who.player, nowS),   // STOREFRONT: the effects kit worn (a kill effect, a portal skin, a mount look) - absent for none\n",
+    "old": "          pi: iconWorn(who.player),   // WITCH1: the profile icon worn, the aura's law - absent for none (the character's face)\n          ak: armoryWorn(who.player),   // ARMORY: the Aura Armory's kit worn, the aura's law - absent for none\n          fx: effectsWorn(who.player),   // STOREFRONT: the effects kit worn (a kill effect, a portal skin, a mount look) - absent for none\n          ...(rb ? { rb } : {}),\n",
+    "new": "          pi: iconWorn(who.player),   // WITCH1: the profile icon worn, the aura's law - absent for none (the character's face)\n          ak: armoryWorn(who.player),   // ARMORY: the Aura Armory's kit worn, the aura's law - absent for none\n          fx: effectsWorn(who.player),   // STOREFRONT: the effects kit worn (a kill effect, a portal skin, a mount look) - absent for none\n",
     "tests": [
       "test/net/season1_ribbon.test.js"
     ],

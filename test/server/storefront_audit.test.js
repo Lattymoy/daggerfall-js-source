@@ -196,14 +196,14 @@ test('AUDIT-STOREFRONT S3 end to end: a bundle\'s page opened, the Pyre bought, 
 
 // ── S12: A GIVER HELD IN PART ───────────────────────────────────────
 
-test('AUDIT-STOREFRONT S12 the confirm page says a giver held in part - the Pyre inside the Daedric Champion (PIN MOVED, PASS-PANELS: the Premium inside the Collector\'s Deluxe, retired) (mutants: a lower price with no word why)', async (t) => {
+test('AUDIT-STOREFRONT S12 the confirm page says why a bundle costs less - the Pyre held inside the Daedric Champion, counted (PIN MOVED, PASS-PANELS: the Premium inside the Collector\'s Deluxe was the case, and no ware gives a giver now; the words for one held in part are pinned in storefront_audit_window) (mutants: a lower price with no word why)', async (t) => {
   t.mock.timers.enable({ apis: ['Date'], now: IN_TREMOR });
   const s = await stand();
   const me = await s.registered('Partial');
   assert.equal((await s.buy(me, 'kill:pyre')).applied, 1);
   const ticket = new URL((await s.account(me)).shop.wares.find((w) => w.id === 'bundle:daedricchampion').buy).searchParams.get('t');
   const html = await (await s.fetch(`https://accounts.invalid/v1/shop/buy?t=${encodeURIComponent(ticket)}`)).text();
-  assert.match(html, /holds part of it already, so the price is less/);
+  assert.match(html, /holds 1 of them already, so the price is less/);
 });
 
 // ── S8: THE DEMAND ──────────────────────────────────────────────────

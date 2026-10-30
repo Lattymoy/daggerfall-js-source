@@ -36,24 +36,6 @@
     ]
   },
   {
-    "name": "AUDIT-STOREFRONT-a-page-outliving-its-season",
-    "file": "src/net/shopLaw.js",
-    "old": "if (w.season && !(passOpen(season, nowMs) && passOpen(season, nowMs + SHOP_CHECKOUT_MS))) return false;",
-    "new": "if (w.season && !passOpen(season, nowMs)) return false;",
-    "tests": [
-      "test/server/storefront_service.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-STOREFRONT-a-spent-booster-sold",
-    "file": "src/net/shopLaw.js",
-    "old": "  return !!b && b.levels === 0 && passMult(b.season, shopHeldIds(row)) >= b.mult;",
-    "new": "  return false;",
-    "tests": [
-      "test/server/storefront_audit.test.js"
-    ]
-  },
-  {
     "name": "AUDIT-STOREFRONT-a-drop-to-come-told",
     "file": "src/net/shopLaw.js",
     "old": "  return !mine.some((e) => e.bad) && (!mine.length || nowMs >= Math.min(...mine.map((e) => e.fromMs)));",
@@ -63,46 +45,10 @@
     ]
   },
   {
-    "name": "AUDIT-STOREFRONT-the-client-buying-a-spent-booster",
-    "file": "src/net/shopLaw.js",
-    "old": "const spent = r.held !== true && r.spent === true;",
-    "new": "const spent = false;",
-    "tests": [
-      "test/server/storefront_audit.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-STOREFRONT-a-deluxe-playing-a-lost-premium",
-    "file": "src/net/battlePassLaw.js",
-    "old": "premium: !!w && held.includes(w.premium), deluxe:",
-    "new": "premium: !!w && (held.includes(w.premium) || held.includes(w.deluxe)), deluxe:",
-    "tests": [
-      "test/server/storefront_audit.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-STOREFRONT-the-card-reading-the-deluxe-as-premium",
-    "file": "src/net/battlePassLaw.js",
-    "old": "premium: c.tracks?.premium === true, deluxe:",
-    "new": "premium: c.tracks?.premium === true || c.tracks?.deluxe === true, deluxe:",
-    "tests": [
-      "test/systems/pass/passclient.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-STOREFRONT-a-season-sold-while-its-finds-are-shut",
-    "file": "server-account/src/shop.js",
-    "old": "const seasonShut = (/** @type {any} */ env, /** @type {any} */ w) => !!w?.season && passSwitchOf(env?.PASS_OPEN) !== 'on';",
-    "new": "const seasonShut = (/** @type {any} */ env, /** @type {any} */ w) => false;",
-    "tests": [
-      "test/server/storefront_audit.test.js"
-    ]
-  },
-  {
     "name": "AUDIT-STOREFRONT-a-drop-to-come-on-the-card",
     "file": "server-account/src/shop.js",
-    "old": "    if (!isHeld && !onSale && (!shopDropped(w, schedule, nowS * 1000) || seasonShut(env, w) || aurumShut(env, w))) continue;   // AUDIT-STOREFRONT S2: nothing upcoming is told; AURUM: no pack while Aurum is shut",
-    "new": "",
+    "old": "    if (!isHeld && !onSale && (!shopDropped(w, schedule, nowS * 1000) || aurumShut(env, w))) continue;   // AUDIT-STOREFRONT S2: nothing upcoming is told; AURUM: no pack while Aurum is shut\n",
+    "new": "    if (!isHeld && !onSale && aurumShut(env, w)) continue;\n",
     "tests": [
       "test/server/storefront_service.test.js"
     ]
@@ -114,33 +60,6 @@
     "new": "const feat = live.find((e) => e.id === w.id);",
     "tests": [
       "test/server/storefront_service.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-STOREFRONT-the-card-offering-a-spent-booster",
-    "file": "server-account/src/shop.js",
-    "old": "const spent = !isHeld && registered(player) && shopSpent(player, w.id);",
-    "new": "const spent = false;",
-    "tests": [
-      "test/server/storefront_audit.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-STOREFRONT-a-spent-booster-checked-out",
-    "file": "server-account/src/shop.js",
-    "old": "  if (shopSpent(player, ware.id)) return { page: 'spent' };\n",
-    "new": "",
-    "tests": [
-      "test/server/storefront_audit.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-STOREFRONT-a-spent-booster-confirmed",
-    "file": "server-account/src/shop.js",
-    "old": "    if (shopSpent(player, ware.id)) return shopHtml(SHOP_PAGES.spent, 409);\n",
-    "new": "",
-    "tests": [
-      "test/server/storefront_audit.test.js"
     ]
   },
   {
@@ -175,15 +94,6 @@
     "file": "server-account/src/shop.js",
     "old": "refund = shopOwns(row, w.id) ? 'held' :",
     "new": "refund = false ? 'held' :",
-    "tests": [
-      "test/server/storefront_audit.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-STOREFRONT-a-season-ware-granted-after-it",
-    "file": "server-account/src/shop.js",
-    "old": "w.season && !passOpen(passSeasonById(w.season), nowS * 1000) ? 'late' : creditMoved(row, w, order) ? 'price' : null;",
-    "new": "creditMoved(row, w, order) ? 'price' : null;",
     "tests": [
       "test/server/storefront_audit.test.js"
     ]

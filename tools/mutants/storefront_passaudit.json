@@ -33,8 +33,8 @@
   {
     "name": "PASSAUDIT-2-open-the-season-days-again",
     "file": "server-account/src/battlePass.js",
-    "old": "    season: season.id, open: passOpenFor(player, env), stage: passStageAt(season, nowMs),",
-    "new": "    season: season.id, open: passOpenFor(player, env) && !!passSeasonAt(nowMs), stage: passStageAt(season, nowMs),",
+    "old": "open: passOpenFor(player, env), stage: passStageAt(season, nowS * 1000),",
+    "new": "open: passOpenFor(player, env) && !!passSeasonAt(nowS * 1000), stage: passStageAt(season, nowS * 1000),",
     "tests": [
       "test/server/storefront_passaudit.test.js"
     ]
@@ -115,12 +115,23 @@
     ]
   },
   {
-    "name": "PASSAUDIT-8-the-answer-without-its-tracks",
-    "file": "server-account/src/battlePass.js",
-    "old": "done, season: season.id, tracks: passTracks(season.id, held), mult };",
-    "new": "done };",
+    "name": "PASSAUDIT-8-a-challenge-told-without-its-aurum",
+    "file": "src/systems/pass/passClient.js",
+    "old": "_doors.onEvent({ kind: 'challenge', key, aurum: c.aurum });",
+    "new": "_doors.onEvent({ kind: 'challenge', key });",
     "tests": [
-      "test/server/storefront_passaudit.test.js"
+      "test/server/storefront_passaudit.test.js",
+      "test/systems/pass/passclient.test.js"
+    ]
+  },
+  {
+    "name": "PASSAUDIT-8-the-bound-told-at-every-find",
+    "file": "src/systems/pass/passClient.js",
+    "old": "if (_fullSaid !== k) { _fullSaid = k; _doors.onEvent({ kind: 'full' }); }",
+    "new": "{ _fullSaid = k; _doors.onEvent({ kind: 'full' }); }",
+    "tests": [
+      "test/server/storefront_passaudit.test.js",
+      "test/systems/pass/passclient.test.js"
     ]
   },
   {

@@ -52,7 +52,7 @@
   {
     "name": "ACC3a-6-a-worn-title-trusted-without-the-grant",
     "file": "server-account/src/titles.js",
-    "old": "  return titlesHeld(player, env, nowS).includes(t) ? t : undefined;",
+    "old": "  return titlesHeld(player, env).includes(t) ? t : undefined;",
     "new": "  return t;",
     "tests": [
       "test/server/acc3titles.test.js"
@@ -62,7 +62,7 @@
   {
     "name": "ACC3a-7-equip-checks-the-vocabulary-and-not-the-grant",
     "file": "server-account/src/titles.js",
-    "old": "  return titlesHeld(player, env, nowS).includes(title) ? null : 'not-held';",
+    "old": "  return titlesHeld(player, env).includes(title) ? null : 'not-held';",
     "new": "  return null;",
     "tests": [
       "test/server/acc3titles.test.js"

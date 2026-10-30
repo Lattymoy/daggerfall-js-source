@@ -122,8 +122,8 @@
   {
     "name": "AEGIS-the-wardrobe-without-the-config",
     "file": "server-account/src/titles.js",
-    "old": "  auras: aurasHeld(player, env, nowS),   // AEGIS:",
-    "new": "  auras: aurasHeld(player, undefined, nowS),   // AEGIS:",
+    "old": "  auras: aurasHeld(player, env),   // AEGIS:",
+    "new": "  auras: aurasHeld(player),   // AEGIS:",
     "tests": [
       "test/net/aegis.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "AEGIS-the-mint-without-the-config",
     "file": "server-account/src/index.js",
-    "old": "          au: auraWorn(who.player, env, nowS),",
-    "new": "          au: auraWorn(who.player, undefined, nowS),",
+    "old": "          au: auraWorn(who.player, env),",
+    "new": "          au: auraWorn(who.player),",
     "tests": [
       "test/net/aegis.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "AEGIS-the-aura-door-without-the-config",
     "file": "server-account/src/accounts.js",
-    "old": "  const why = auraRefusal(aura, player, env, nowS);",
-    "new": "  const why = auraRefusal(aura, player, undefined, nowS);",
+    "old": "  const why = auraRefusal(aura, player, env);",
+    "new": "  const why = auraRefusal(aura, player);",
     "tests": [
       "test/net/aegis.test.js"
     ],

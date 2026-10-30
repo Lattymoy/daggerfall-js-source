@@ -166,7 +166,7 @@
   {
     "name": "WB9g-a-stored-aura-worn-unheld",
     "file": "server-account/src/titles.js",
-    "old": "  return aurasHeld(player, env, nowS).includes(a) ? a : undefined;",
+    "old": "  return aurasHeld(player, env).includes(a) ? a : undefined;",
     "new": "  return a;",
     "tests": [
       "test/net/wb9g_insignia.test.js"
@@ -176,7 +176,7 @@
   {
     "name": "WB9g-any-aura-wearable",
     "file": "server-account/src/titles.js",
-    "old": "  return aurasHeld(player, env, nowS).includes(aura) ? null : 'not-held';",
+    "old": "  return aurasHeld(player, env).includes(aura) ? null : 'not-held';",
     "new": "  return null;",
     "tests": [
       "test/net/wb9g_insignia.test.js"
@@ -186,7 +186,7 @@
   {
     "name": "WB9g-the-mint-reads-no-aura",
     "file": "server-account/src/index.js",
-    "old": "          au: auraWorn(who.player, env, nowS),   // WB9g: the aura worn, the title's law - absent for none; AEGIS: a list's read off the config\n",
+    "old": "          au: auraWorn(who.player, env),   // WB9g: the aura worn, the title's law - absent for none; AEGIS: a list's read off the config\n",
     "new": "",
     "tests": [
       "test/net/wb9g_insignia.test.js"

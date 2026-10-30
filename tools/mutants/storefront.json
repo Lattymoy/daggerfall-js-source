@@ -41,8 +41,8 @@
   {
     "name": "STOREFRONT-a-challenge-paid-twice",
     "file": "server-account/src/battlePass.js",
-    "old": "AND challenge = ?3 AND n >= ?5 AND paid = 0)`).bind(player.id, season.id, c.key, c.xp, c.n),",
-    "new": "AND challenge = ?3 AND n >= ?5)`).bind(player.id, season.id, c.key, c.xp, c.n),",
+    "old": "AND n >= ?5 AND paid = 0 RETURNING challenge",
+    "new": "AND n >= ?5 RETURNING challenge",
     "tests": [
       "test/server/storefront_service.test.js"
     ]
@@ -50,8 +50,8 @@
   {
     "name": "STOREFRONT-the-day-unbounded",
     "file": "server-account/src/battlePass.js",
-    "old": "UPDATE pass_days SET last = MIN(?4, MAX(0, ?5 - xp)), xp = xp + MIN(?4, MAX(0, ?5 - xp))",
-    "new": "UPDATE pass_days SET last = ?4, xp = xp + ?4",
+    "old": "UPDATE pass_days SET last = MIN(?3, MAX(0, ?4 - aurum)), aurum = aurum + MIN(?3, MAX(0, ?4 - aurum))",
+    "new": "UPDATE pass_days SET last = ?3 + 0 * ?4, aurum = aurum + ?3",
     "tests": [
       "test/server/storefront_service.test.js"
     ]
@@ -229,11 +229,12 @@
     ]
   },
   {
-    "name": "STOREFRONT-a-stray-pass-level-kept",
+    "name": "STOREFRONT-a-stray-day-aurum-kept",
     "file": "src/net/battlePassLaw.js",
-    "old": "xp: whole(c.xp, PASS_LEVELS * PASS_XP_PER_LEVEL * 10), level: whole(c.level, PASS_LEVELS),",
-    "new": "xp: whole(c.xp, PASS_LEVELS * PASS_XP_PER_LEVEL * 10), level: c.level,",
+    "old": "today: whole(c.today, PASS_DAY_AURUM), dayMax",
+    "new": "today: c.today, dayMax",
     "tests": [
+      "test/net/passpanels_law.test.js",
       "test/systems/pass/passclient.test.js"
     ]
   },
@@ -428,19 +429,19 @@
     ]
   },
   {
-    "name": "STOREFRONT-a-level-unsaid",
+    "name": "STOREFRONT-a-challenge-unsaid",
     "file": "src/scenes/seasonHost.js",
-    "old": "          setMidScreenText(PASS_EVENT_TEXT.level(e.level));\n",
-    "new": "",
+    "old": "if (e.kind === 'challenge') tell(PASS_EVENT_TEXT.challenge(passChallengeText(e.key), e.aurum));",
+    "new": "if (e.kind === 'challenge') void 0;",
     "tests": [
       "test/scenes/season_world.test.js"
     ]
   },
   {
-    "name": "STOREFRONT-the-rewards-unnamed",
+    "name": "STOREFRONT-a-challenge-aurum-unsaid",
     "file": "src/scenes/seasonHost.js",
-    "old": "worn.map(passGrantName).join(', ')",
-    "new": "worn.join(', ')",
+    "old": "PASS_EVENT_TEXT.challenge(passChallengeText(e.key), e.aurum)",
+    "new": "PASS_EVENT_TEXT.challenge(passChallengeText(e.key), 0)",
     "tests": [
       "test/scenes/season_world.test.js"
     ]

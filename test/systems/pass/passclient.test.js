@@ -194,7 +194,7 @@ test('AUDIT PASS 9: a find whose bind read went unanswered reads the pass first,
   assert.equal(passState(), null, 'the bind\'s read lost');
   await askPassFind('construct');
   assert.equal(n, 2, 'read again before the find');
-  assert.deepEqual([passState().season, passState().today], ['s1', 42], 'the card read, the find\'s day on it');
+  assert.deepEqual([passState().season, passState().today, passState().tracks], ['s1', 42, { free: true, premium: false }], 'the card read, the find\'s day on it - never the find\'s answer for the card');
   _resetPassClientForTests();
 });
 

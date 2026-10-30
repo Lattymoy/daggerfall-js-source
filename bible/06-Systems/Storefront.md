@@ -26,9 +26,9 @@ in the shop weighed before it ships and timed to its launch window; and sales tr
 | Name Visuals ($6.99 / $12.99 / $24.99) | Built: Dawnbringer, Voidwalker, Eternal Champion - titles on animated plates (section 6) |
 | Portal Stone Skins ($14.99 / $29.99 / $49.99) | Built: Runic Stone, Daedric Stone, Aetheric Stone - every portal of mine (section 5) |
 | Mounts ($19.99 / $34.99 / $59.99) | Built as mount looks on the horse I ride: Spectral Steed, Dawnfire Charger, Daedric Warhorse (section 7) |
-| Battle Pass ($29.99 / $49.99) | Built: `Battle-Pass.md` |
-| EXP Boosters ($4.99 / $12.99 / $24.99) | Built as Pass Boosters: they speed the pass's track, never a character |
-| Bundles | Built: Daedric Champion, Portal Master, Lord of Oblivion, Seasonal Collector (section 8) |
+| Battle Pass ($29.99 / $49.99) | Built, then reworked (PASS-PANELS): two panel tracks bought with Aurum, no money pass (`Battle-Pass.md`) |
+| EXP Boosters ($4.99 / $12.99 / $24.99) | Built as Pass Boosters, then retired with the pass's levels (PASS-PANELS) |
+| Bundles | Built: Daedric Champion, Portal Master, Lord of Oblivion (section 8) |
 | Housing Furniture, Interior / Exterior Textures, Complete Housing Themes, Holiday Decorations, Noble Estate | Not built (section 11) |
 | Name Change | Not built: the owner's open question (section 11) |
 | Consumable Bundles | Not built: every consumable in the game is power (section 11) |
@@ -36,62 +36,65 @@ in the shop weighed before it ships and timed to its launch window; and sales tr
 **Nothing over $30** (the owner, 2026-10-29: *"the most expensive anything should be is $30"*). The table quotes the
 sheet's prices. Ours keep its three tiers and are about half of them, none over `SHOP_PRICE_CAP` (`src/net/shopLaw.js`):
 a kill effect $4.99 to $14.99, a portal skin $7.99 to $19.99, a mount look $9.99 to $24.99, a name visual $3.99 to
-$9.99, the passes $14.99 and $24.99, a booster $2.99 to $9.99, a bundle $19.99 to $29.99 and an Aurum pack $4.99 to
-$29.99. `test/server/shop_service.test.js` holds every ware to the cap.
+$9.99, a bundle $19.99 to $29.99 and an Aurum pack $4.99 to $29.99. `test/server/shop_service.test.js` holds every ware
+to the cap.
 
 **Cosmetic, always.** The shop's own line is "Every item is cosmetic. It gives no power in the game." and the Terms of
 Service section 9 is "No pay-to-win rights". Renown is power (it raises health and magicka a level), so the sheet's EXP
-Boosters are built as Pass Boosters: they speed the pass's track, whose every reward is a cosmetic. THE CEILING HOLDS
+Boosters were built as Pass Boosters, which sped the pass's track alone; PASS-PANELS retired them. THE CEILING HOLDS
 (`Home.md`) is untouched.
 
 ## 3. The catalogue (`src/net/shopLaw.js`)
 
 The window's sections, in order: the Battle Pass, the Daily Wares (AURUM: the day's wares sold for Aurum, while Aurum is
 open to the account - `06-Systems/Aurum.md`), Kill Effects, Portal Skins, Mounts, Name Visuals (titles and glyphs),
-Auras, Aura Armory, Bundles, Pass Boosters and Aurum (its four packs). A ware has a **tier** - Standard, Premium or Exclusive, the sheet's three
+Auras, Aura Armory, Bundles and Aurum (its four packs). The Battle Pass sells nothing for money: its tracks are bought
+with Aurum (`Battle-Pass.md` section 3). A ware has a **tier** - Standard, Premium or Exclusive, the sheet's three
 columns - shown as a mark on its panel; the pre-alpha wares keep their Pre-alpha mark instead.
 
 **Held by id.** The first nine wares are bits on `players.shop_wares`; the bits stay, since a stored bit is a sale that
 happened. Every later ware is held by its id in `players.shop_held`, space-separated in sale order (migration 0196): a
-32-bit mask had room for 22 more, and a season alone adds five. `shopHeldIds` reads both.
+32-bit mask had room for 22 more. `shopHeldIds` reads both. The pass's items are not shop wares: they are held on
+`players.pass_items`.
 
-**A ware that gives others.** A bundle, the Deluxe Pass and the Eternal Set each give a list of wares. Holding one holds
-everything it gives, read at every ask. A ware is not sold again once it, or everything it gives, is held. Its price for
-an account is its price times the share of its worth not yet held, never under Stripe's fifty cents: a Daedric
-Champion bought by someone who holds the Daedric Pyre costs less by the Pyre's share. The Eternal Set follows the same
-law, a departure from ARMORY's full $20 for a buyer who held pieces (`04-Characters/Aura-Armory.md`).
+**A ware that gives others.** A bundle and the Eternal Set each give a list of wares. Holding one holds everything it
+gives, read at every ask. A ware is not sold again once it, or everything it gives, is held. Its price for an account is
+its price times the share of its worth not yet held, never under Stripe's fifty cents: a Daedric Champion bought by
+someone who holds the Daedric Pyre costs less by the Pyre's share. The Eternal Set follows the same law, a departure
+from ARMORY's full $20 for a buyer who held pieces (`04-Characters/Aura-Armory.md`).
 
 **What a payment covers** (AUDIT-STOREFRONT S1). An order keeps its **credit** - what of its ware the account held at
 checkout, which its price took off (`shopCreditOf`). It covers the rest (`orderCovers`). A payment taken back - a refund,
 a dispute - takes off what it alone covered: its ware, and each ware a giver still held would give that no other paid
 order covers. Those are marked `-<id>` in `shop_held` (`shopLostOf`), so the giver no longer gives them; a payment that
 covers one again takes its mark off. So a Pyre bought, then a Champion bought for less, then the Pyre disputed, leaves
-no Pyre. The Deluxe Pass gives the Premium the same way: a Deluxe whose Premium went back plays its own track only.
+no Pyre.
 
-**Bundle-only wares.** The Daedric Dominion aura and three glyphs (the Oblivion Sigil, the Gate Sigil and the Brass
-Crown) are sold only inside a bundle. Each has a worth, so a
-bundle's price can be weighed, and is never sold alone.
+**Bundle-only wares.** The Daedric Dominion aura and two glyphs (the Oblivion Sigil and the Gate Sigil) are sold only
+inside a bundle. PASS-PANELS: the Brass Crown, the Seasonal Collector's, is a premium track item now. Each has a worth,
+so a bundle's price can be weighed, and is never sold alone.
 
 ## 3.1 Featured, and limited
 
 The owner times every ware. `SHOP_ON_SALE` (wrangler.toml) still names what is sold. `SHOP_FEATURED` names what the
 carousel shows and when: an entry a line, `<ware> <from> <to>`, the days in UTC, and `limited` after it for a ware sold
-ONLY inside that window. The live season's Battle Pass leads the carousel while its season runs. Nothing is featured
-outside its window, and nothing upcoming is told: a drop is news when it lands.
+ONLY inside that window. Nothing is featured outside its window, and nothing upcoming is told: a drop is news when it
+lands.
 
 A ware whose first window has not opened is not on the account's card at all, and Collections says it is not yet
-available (AUDIT-STOREFRONT S2). A season's days are told already, so its passes stand "On sale from" before it. The
-dates read strictly: 31 November is no date, never 1 December. A line that names a ware but does not read whole shuts
-that ware's sale (S4), and a test reads every line of the deploy's own schedule. A season's wares are sold only while
-`PASS_OPEN` is `on` (S6), and stop 31 minutes before the season ends, the life of a checkout page (S10).
+available (AUDIT-STOREFRONT S2). The dates read strictly: 31 November is no date, never 1 December. A line that names a
+ware but does not read whole shuts that ware's sale (S4), and a test reads every line of the deploy's own schedule.
+PASS-PANELS retired the season's wares, and with them S6 and S10 (sold only while `PASS_OPEN` is on; stopped before the
+season ends).
 
 ## 3.2 Payments the service returns
 
 A press of Buy at a new price closes the account's older page for that ware at Stripe, and a grant closes each open page
-it left wrong - a ware now held, a price that moved (AUDIT-STOREFRONT S3). A page paid anyway is refunded in full, by the
-service itself, under the order's own key: a ware held by then (`held`), a booster a stronger one makes worth nothing
-(`spent`, S5), a season's ware paid after its season (`late`). The order says why (`refund`) and stays `refund_owed`
-until Stripe takes it; Stripe's next word on the order asks again, and the demand lists what is still owed.
+it left wrong - a ware now held, a price that moved (AUDIT-STOREFRONT S3). A page paid anyway is refunded in full, by
+the service itself, under the order's own key: a ware held by then (`held`), or a price that moved (`price`).
+PASS-PANELS retired `spent` (S5, a booster a stronger one made worth nothing) and `late` (S10). The order says why
+(`refund`) and stays `refund_owed` until Stripe takes it; Stripe's next word on the order asks again, and the demand
+lists what is still owed.
 
 ## 3.3 The demand
 
@@ -171,7 +174,7 @@ picture flickered from frame to frame. A few horse pixels that every other set's
 | Spectral Steed | Standard | a pale blue ghost lit from within, mist through it, its rim glowing, its legs dissolving toward the hooves; a mane and tail of glowing wisps |
 | Dawnfire Charger | Premium | radiant gold, a sheen along its back, its legs burning white from the hooves; a mane and tail of fire |
 | Daedric Warhorse | Exclusive | obsidian, lit red from below by its own fire, embers on its hide, its hooves burning; a mane and tail of fire |
-| Brass Automaton | the Deluxe Pass | polished brass in riveted plates, its joints ringed, an aetherium heart at its chest; a steel mane |
+| Brass Automaton | the premium track | polished brass in riveted plates, its joints ringed, an aetherium heart at its chest; a steel mane |
 
 The look rides no wire of its own: the horse's code on the wire is the item's four parts (`wireHorseLook`), and each
 screen lays a rider's look on from its token (`systems/horse/mountLook.js`). The beat - hoofprints, a mane, steam - is the
@@ -185,11 +188,10 @@ dye and its beat, is drawn by the viewer's "Others' effects" choice, as its kill
 | Daedric Champion | $27.99 | the Daedric Dominion aura, the Daedric Pyre, Eternal Champion, the Oblivion Sigil | $42.96 |
 | Portal Master | $19.99 | the Daedric Stone, the Daedric Dominion aura, the Gate Sigil | $30.97 |
 | Lord of Oblivion | $29.99 | the Daedric Warhorse, the Daedric Stone, the Daedric Dominion aura, the Daedric Pyre | $67.96 |
-| Seasonal Collector | $29.99 | the Deluxe Pass, the Heart Booster, the Brass Crown | $37.97 |
 
-Each costs well under its worth (section 2's cap, AUDIT-STOREFRONT II). The sheet's Seasonal Collector also gave
-seasonal housing decorations, which are not built. The sheet's Lord of Oblivion priced a Standard mount; its mount is the
-Exclusive Daedric Warhorse, and the cap holds it at $29.99.
+Each costs well under its worth (section 2's cap, AUDIT-STOREFRONT II). The sheet's Seasonal Collector was built and
+then retired with the money passes (PASS-PANELS); its Brass Crown is on the premium track. The sheet's Lord of Oblivion
+priced a Standard mount; its mount is the Exclusive Daedric Warhorse, and the cap holds it at $29.99.
 
 ## 9. The window
 
@@ -211,9 +213,7 @@ to a row. A title's paint on a page is inked under the Grimoire (`grimoireDress.
 A panel's stage is live: a title on its plate, a glyph, an aura or a piece worn, a kill effect or a portal skin played on
 the character's stage (`render/effectStage.js`), a horse in its mount look (`ui/mountPreview.js`). The figure is the
 player's own - the profile's body (`ui/profileBody.js`, asked once a window), the stand-in only with no character
-(AUDIT-STOREFRONT). A bundle's stage lays out its pieces, each in its picture; a booster's and a pass's banner is built
-round the season's art - the Cog, the Tonal Fork, the Gearheart, the Centurion, Numidium - the Deluxe's own three beside
-it (`ui/wareArt.js`, one door for every picture shown without playing: an effect's emblem, `ui/effectEmblems.js`; a
+(AUDIT-STOREFRONT). A bundle's stage lays out its pieces, each in its picture (`ui/wareArt.js`, one door for every picture shown without playing: an effect's emblem, `ui/effectEmblems.js`; a
 glyph, an aura or a title in its medallion). The profile's effect choices and the pass's track show the same pictures.
 
 An emblem and a medallion are drawn by the profile icons' engine (`profileIcons.js` drawnIconNode): a metal bezel, a
@@ -221,9 +221,8 @@ shaded field and modelled relief, with motion that stops for less motion (`ui/ic
 horses share one head, shaded and kept inside the rim, each with its own armour, mane and light.
 
 A panel says its tier, its featured window and the price this account pays, the list price struck through beside it
-where it is less. A bundle's panel lists what it gives, each held one marked (one held in part,
-the Premium inside a Deluxe, marked so), and its worth. A featured window's tag and days left are told only beside its
-sale, and counted again at UTC midnight. A booster a stronger one makes worth nothing says so, with no Buy. An effect's
+where it is less. A bundle's panel lists what it gives, each held one marked, and its worth. A featured window's tag and days left are told only beside its
+sale, and counted again at UTC midnight. An effect's
 sound is heard when the player points at its stage or chooses its slide, never on every loop.
 
 **The profile** (`ui/characterSlots.js`, PROFILE-SLOTS) has three more slots under its stage: Kill effect, Portals and

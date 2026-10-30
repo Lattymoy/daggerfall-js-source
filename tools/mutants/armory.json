@@ -345,8 +345,8 @@
   {
     "name": "ARMORY-four-singles-the-set",
     "file": "src/net/shopLaw.js",
-    "old": "  if (!w || held.includes(w.id)) return 0;\n  return w.gives.length ? w.extra",
-    "new": "  if (!w || held.includes(w.id) || w.gives.some((g) => held.includes(g))) return 0;\n  return w.gives.length ? w.extra",
+    "old": "  if (!w || held.includes(w.id)) return 0;\n  return w.gives.length ? w.gives.reduce(",
+    "new": "  if (!w || held.includes(w.id) || w.gives.some((g) => held.includes(g))) return 0;\n  return w.gives.length ? w.gives.reduce(",
     "tests": [
       "test/server/armory_service.test.js",
       "test/render/armory.test.js"

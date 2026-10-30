@@ -29,8 +29,8 @@
   {
     "name": "SHOP-client-card-buy-held",
     "file": "src/net/shopLaw.js",
-    "old": "buy: card.on && r.sale === true && r.held !== true && !spent ? buy : null",
-    "new": "buy: card.on && r.sale === true && !spent ? buy : null",
+    "old": "buy: card.on && r.sale === true && r.held !== true ? buy : null",
+    "new": "buy: card.on && r.sale === true ? buy : null",
     "tests": [
       "test/server/shop_service.test.js"
     ]

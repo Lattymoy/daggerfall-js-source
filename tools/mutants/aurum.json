@@ -82,10 +82,19 @@
     ]
   },
   {
-    "name": "AURUM-service-premium-without-pass",
+    "name": "AURUM-service-a-line-kind-left-out",
     "file": "server-account/src/aurum.js",
-    "old": "aurumTrackOf(row, shopHeldIds(row), nowS * 1000) + int(row?.packs)",
-    "new": "aurumTrackOf(row, ['pass:s1premium'], nowS * 1000) + int(row?.packs)",
+    "old": "export const LINES_SQL = '(SELECT COALESCE(SUM(amount), 0) FROM aurum_ledger WHERE account = ?1)';",
+    "new": "export const LINES_SQL = \"(SELECT COALESCE(SUM(amount), 0) FROM aurum_ledger WHERE account = ?1 AND kind != 'cache')\";",
+    "tests": [
+      "test/server/aurum_service.test.js"
+    ]
+  },
+  {
+    "name": "AURUM-service-an-unpaid-pack-counted",
+    "file": "server-account/src/aurum.js",
+    "old": "FROM shop_orders WHERE player = ?1 AND status = 'paid')\";",
+    "new": "FROM shop_orders WHERE player = ?1)\";",
     "tests": [
       "test/server/aurum_service.test.js"
     ]
@@ -102,8 +111,8 @@
   {
     "name": "AURUM-service-price-never-spent",
     "file": "server-account/src/aurum.js",
-    "old": ".bind(player.id, d.id, -d.aurum, utcDay(nowS), nowS, track, d.aurum)",
-    "new": ".bind(player.id, d.id, 0, utcDay(nowS), nowS, track, d.aurum)",
+    "old": ".bind(player.id, d.id, -d.aurum, utcDay(nowS), nowS, d.aurum)",
+    "new": ".bind(player.id, d.id, 0, utcDay(nowS), nowS, d.aurum)",
     "tests": [
       "test/server/aurum_service.test.js"
     ]
@@ -120,8 +129,8 @@
   {
     "name": "AURUM-service-balance-guard-dropped",
     "file": "server-account/src/aurum.js",
-    "old": "WHERE ?6 + ${PACKS_SQL} + ${LINES_SQL} >= ?7",
-    "new": "WHERE ?7 > 0",
+    "old": "WHERE ${AURUM_BALANCE_SQL} >= ?6`).bind(player.id, d.id,",
+    "new": "WHERE ?6 > 0`).bind(player.id, d.id,",
     "tests": [
       "test/server/aurum_service.test.js"
     ]
@@ -129,8 +138,8 @@
   {
     "name": "AURUM-service-row-guard-dropped",
     "file": "server-account/src/aurum.js",
-    "old": "WHERE id = ?1 AND shop_wares = ?4 AND shop_held = ?5${passGuard}",
-    "new": "WHERE id = ?1${passGuard}",
+    "old": "WHERE id = ?1 AND shop_wares = ?4 AND shop_held = ?5')",
+    "new": "WHERE id = ?1 AND ?4 = ?4 AND ?5 = ?5')",
     "tests": [
       "test/server/aurum_service.test.js"
     ]
@@ -246,8 +255,8 @@
   {
     "name": "AURUM-flow-answer-card-ignored",
     "file": "src/ui/accountFlow.js",
-    "old": "      self.aurum = aurumCardOf(r.data.aurum) ?? self.aurum;",
-    "new": "      self.aurum = self.aurum;",
+    "old": "      self.aurum = aurumCardOf(r.data.aurum) ?? self.aurum;\n      self.busy = false;\n      self.note = t('account.flow.aurumBought'",
+    "new": "      self.aurum = self.aurum;\n      self.busy = false;\n      self.note = t('account.flow.aurumBought'",
     "tests": [
       "test/ui/aurum_shop.test.js"
     ]
