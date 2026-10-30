@@ -80,6 +80,7 @@ import { createGatherEar } from '../systems/gatherSounds.js';   // GATHER-FEEL: 
 import { gatherBlowFeel, landedBlow, chunksFor, shedChunks, stepChunk, chunkSink, chunkBox, VEIN_CHUNKS } from '../systems/gatherBlow.js';   // GATHER-FEEL II: what a landed blow does besides its sound
 import { setBatchCrack, crackSeedOf } from '../systems/veinCrack.js';   // VEIN-CRACKS: a worked vein's cracks, on its own batch
 import { createGatherPose } from '../net/peer/peerGather.js';   // PEER-ACTS: the act and its beats, on the pose the others draw
+import { gatherNodeShown, onTravelViewGather } from '../systems/travel/travelViewGatherFilters.js';   // OW-GATHER-TYPES: which nodes the Overworld's groups count
 
 /** A node answers E within DFU's activation distance, and within this many degrees of the look. */
 export const NODE_REACH = DEFAULT_ACTIVATION_DISTANCE;
@@ -105,7 +106,7 @@ export const NODE_MARK_SIZE = Object.freeze({ w: 1.8, h: 1.3 });
 export const GROUP_M = 3000;
 export const GROUP_MAX = 12;
 export const GROUP_REFRESH_MS = 500;
-/** GATHER-OW: a group's mark this far over its nodes' middle (m). */
+/** GATHER-OW: a group's mark this far over its node (m). */
 export const GROUP_LIFT_M = 2;
 /** GATHER-OW: a group's words - the profession and its count today. */
 export const groupLabel = (profession, n) => `${professionName(profession)} \u00d7${n}`;
@@ -535,6 +536,7 @@ export function createGatherHost(deps) {
   /** NODE-MARKS: the marks' one list and the records it is refilled from; what a kind's mark is asked with */
   const _marks = [], _markPool = [];
   let groupsAt = /** @type {number|null} */ (null), groupsKept = /** @type {any[]} */ ([]);   // GATHER-OW: the Overworld's groups, as last read - each its pixel and its node's place
+  const stopGatherFilters = onTravelViewGather(() => { groupsAt = null; });   // OW-GATHER-TYPES: a changed switch is read at the next frame, not at the refresh
   const markCtx = { specs };
 
   // ─── THE NODES ─────────────────────────────────────────────────────
@@ -1412,7 +1414,7 @@ export function createGatherHost(deps) {
     },
     /**
      * GATHER-OW: THE GROUPS FOR THE OVERWORLD - each profession's nodes on a stood pixel, those its kind would still mark
-     * (NODE-MARKS' own test: not worked today), as one mark at their middle with their count: `{ key, at, label, kind:
+     * (NODE-MARKS' own test: not worked today), as one mark on the node nearest `pos` with their count: `{ key, at, label, kind:
      * 'gather <profession>', color }` - the travel view's own mark shape. Within GROUP_M of `pos`, the nearest
      * GROUP_MAX; read again at most every GROUP_REFRESH_MS (the view asks every frame), and none with the professions
      * shut or underground. Hunting's bodies are no group (they lie where they fell, nearby alone). MINE-PERKS: a node its
@@ -1426,13 +1428,13 @@ export function createGatherHost(deps) {
         groupsAt = now;
         groupsKept = [];
         if (book.state.open === true && isVec3(pos) && !dungeon) {
-          /** `${pixel}:${profession}` -> { s, profession, nodes, x, z } (x, z the sum of the nodes' pixel-local places) */
+          /** `${pixel}:${profession}` -> { s, profession, nodes } */
           const byKey = new Map();
           const join = (s, n, profession) => {
             const key = `${pixelKey(s.entry.px, s.entry.py)}:${profession}`;
             let g = byKey.get(key);
-            if (!g) byKey.set(key, g = { s, profession, nodes: [], x: 0, z: 0 });
-            g.nodes.push(n); g.x += n.local[0]; g.z += n.local[2];
+            if (!g) byKey.set(key, g = { s, profession, nodes: [] });
+            g.nodes.push(n);
           };
           const ones = [];   // MINE-PERKS: the nodes their kind marks on their own (a Prospector's veins)
           for (const s of nearPixels(pos, GROUP_M)) {
@@ -1440,6 +1442,7 @@ export function createGatherHost(deps) {
               const k = kindOf(n);
               if (!k || !(k.mark ? k.mark(n, markCtx) : !k.gone(n))) continue;
               const profession = k.professions[0];
+              if (!gatherNodeShown(k.id, n, rank(profession))) continue;   // OW-GATHER-TYPES: a type switched off, or beyond my rank
               const one = k.overworldOne?.(n, markCtx) ?? null;
               if (one) {
                 const tr = deps.pixelTranslation(s.entry.px, s.entry.py, _t);
@@ -1459,13 +1462,13 @@ export function createGatherHost(deps) {
           for (const o of ones.splice(kept)) join(o.s, o.n, o.profession);
           const all = [];
           for (const [key, g] of byKey) {
-            // AUDIT GATHER-OW: at the node nearest their middle, never the middle itself - two schools' middle was dry land,
-            // a forest's on the pixel's open ground, and a hill's in the air or under it
-            const cx = g.x / g.nodes.length, cz = g.z / g.nodes.length;
-            let at = g.nodes[0], best = Infinity;
-            for (const n of g.nodes) { const e = Math.hypot(n.local[0] - cx, n.local[2] - cz); if (e < best) { best = e; at = n; } }
+            // OW-GATHER-NEAR (a player's ask: the glyph of a far group stood on a far node while a node of it stood beside
+            // me): on the node of the group NEAREST ME, a node's own place and never a middle (AUDIT GATHER-OW: two
+            // schools' middle was dry land, a forest's on the pixel's open ground, a hill's in the air). It moves as I
+            // do, at the refresh's pace - the group's count and key are the pixel's, and stay
             const tr = deps.pixelTranslation(g.s.entry.px, g.s.entry.py, _t);
-            const d = Math.hypot(at.local[0] + tr[0] - pos[0], at.local[2] + tr[2] - pos[2]);
+            let at = g.nodes[0], d = Infinity;
+            for (const n of g.nodes) { const e = Math.hypot(n.local[0] + tr[0] - pos[0], n.local[2] + tr[2] - pos[2]); if (e < d) { d = e; at = n; } }
             if (!(d <= GROUP_M)) continue;
             all.push({ d, s: g.s, local: at.local, mark: { key: `gather:${key}`, at: [0, 0, 0], label: groupLabel(g.profession, g.nodes.length), kind: `gather ${g.profession}`, color: nodeMarkCss(g.profession), dist: d / 1000 } });   // OW-NODE-KM: how far off, km - the Overworld's node reach reads it
           }
@@ -1485,6 +1488,6 @@ export function createGatherHost(deps) {
       return out;
     },
     /** The page's teardown. */
-    dispose() { this.leaveDungeon(); for (const s of stood.values()) unstand(s.entry); for (const bu of bursts) dropBurst(bu); bursts = []; cracks.clear(); crackBatches.clear(); worked = null; if (act) letGo(act); for (const sw of swings) letGo(sw); follow = null; swings = []; stood.clear(); standGen.clear(); act = null; syncPointer(); hud.dispose(); },   // GATHER-FEEL: the ear's beats, the hand and the landings let go; VEIN-CRACKS: the chunks, the cracks
+    dispose() { this.leaveDungeon(); for (const s of stood.values()) unstand(s.entry); for (const bu of bursts) dropBurst(bu); bursts = []; cracks.clear(); crackBatches.clear(); worked = null; if (act) letGo(act); for (const sw of swings) letGo(sw); follow = null; swings = []; stood.clear(); standGen.clear(); act = null; syncPointer(); stopGatherFilters(); hud.dispose(); },   // GATHER-FEEL: the ear's beats, the hand and the landings let go; VEIN-CRACKS: the chunks, the cracks
   };
 }

@@ -74,8 +74,8 @@
   {
     "name": "HERB-CURSOR-dispose-unsynced",
     "file": "src/scenes/gatherHost.js",
-    "old": "standGen.clear(); act = null; syncPointer(); hud.dispose(); },",
-    "new": "standGen.clear(); act = null; hud.dispose(); },",
+    "old": "standGen.clear(); act = null; syncPointer(); stopGatherFilters();",
+    "new": "standGen.clear(); act = null; stopGatherFilters();",
     "tests": [
       "test/systems/foraging/fb1002_herbcursor.test.js"
     ]
