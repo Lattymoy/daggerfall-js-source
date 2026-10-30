@@ -48,7 +48,7 @@ export const armoryLineKit = (/** @type {unknown} */ line) => armoryKitOf(armory
 export const ARMORY_NAME = Object.freeze({
   burningcrown: 'Crown of the Burning Door', emberheart: 'Ember Heart', ashbound: 'Ashbound Bracers', cinderstride: 'Cinderstride',
   breachbrand: 'Brand of the Breach', eternalhalo: 'Eternal Halo', eternalsigil: 'Eternal Sigil', eternalarmlets: 'Eternal Armlets',
-  eternalgreaves: 'Eternal Greaves', eternaledge: 'Eternal Edge', eternalset: 'The Eternal Set', insigniaarmlet: 'Insignia Armlet',
+  eternalgreaves: 'Eternal Greaves', eternaledge: 'Eternal Edge', insigniaarmlet: 'Insignia Armlet', eternalset: 'The Eternal Set',
 });
 
 /** A piece by its key, or null. */

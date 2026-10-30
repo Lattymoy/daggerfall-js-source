@@ -126,6 +126,7 @@ test('GUILD1 the law: founding costs 10,000 gold and Renown 10; a guild holds 75
   assert.deepEqual(Object.fromEntries(Object.entries(GUILD_POWERS).map(([k, v]) => [k, [...v]])), {
     invite: [0, 1], remove: [0, 1], promote: [0, 1], deposit: [0, 1, 2, 3], withdraw: [0], renameRanks: [0], handOver: [0], disband: [0],
     rename: [0], vaultGrant: [0],   // GUILD2 (PIN MOVED): the guild's own new name and the vault's grants, the guildmaster's alone
+    shop: [0], logo: [0],   // GUILD-SHOP (PIN MOVED): the hall's furniture bought and a logo sent, the guildmaster's alone
   });
   assert.deepEqual([guildMay(0, 'withdraw'), guildMay(1, 'withdraw'), guildMay(3, 'deposit'), guildMay(2, 'invite'), guildMay(0, 'nonsense')], [true, false, true, false, false]);
   assert.deepEqual([guildOutranks(1, 2), guildOutranks(1, 1), guildOutranks(2, 1), guildOutranks(0, 4)], [true, false, false, false]);
