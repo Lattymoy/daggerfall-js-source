@@ -19,5 +19,8 @@ import { imperialSliceYards } from '../imperialYards.js';
  */
 export function townYardsOf(dfLocation) {
   const cap = dfLocation?.capital ? CAPITALS[dfLocation.capital.k] : null;
-  return { plan: townFabricOf(dfLocation)?.plan ?? null, fixed: cap?.family ? imperialSliceYards(dfLocation.capital.s) : null };
+  return {
+    plan: townFabricOf(dfLocation)?.plan ?? null,
+    fixed: cap?.family ? imperialSliceYards(dfLocation.capital.s) : null,
+  };
 }

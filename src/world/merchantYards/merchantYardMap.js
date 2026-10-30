@@ -30,7 +30,10 @@ export const YARD_MAP_TYPE = BUILDING_TYPES.GeneralStore;
 export const YARD_MAP_BYTE = YARD_MAP_TYPE + 1;
 /** SHIPYARDS-FOUND: the type each port place is drawn and lettered as - the shipyard a shop's (its counter's), the
  *  lighthouse a house's (a keeper's home and his tower). */
-export const PORT_MAP_TYPE = Object.freeze({ shipyard: BUILDING_TYPES.GeneralStore, lighthouse: BUILDING_TYPES.House2 });
+export const PORT_MAP_TYPE = Object.freeze({
+  shipyard: BUILDING_TYPES.GeneralStore,
+  lighthouse: BUILDING_TYPES.House2,
+});
 /** A block's side, metres: its 64 cells of NAV_CELL (1.6 m) - RMB_DIMENSION * 0.025, the plates' own block. */
 export const YARD_MAP_BLOCK_M = NAV_CELLS_PER_BLOCK * NAV_CELL;
 
@@ -49,23 +52,34 @@ export function yardTownBlocks(rows, sites) {
   const copied = new Set();
   const rowAt = (bx, by) => out.find((r) => r.x === bx && r.y === by) ?? null;
   for (const s of sites) {
-    const kind = validYardKind(s?.kind) ?? validPortSite(s?.kind);   // SHIPYARDS-FOUND: a port town's two besides
+    const kind = validYardKind(s?.kind) ?? validPortSite(s?.kind); // SHIPYARDS-FOUND: a port town's two besides
     if (!kind) continue;
-    const type = /** @type {Record<string, number>} */ (PORT_MAP_TYPE)[kind] ?? YARD_MAP_TYPE, byte = type + 1;
+    const type = /** @type {Record<string, number>} */ (PORT_MAP_TYPE)[kind] ?? YARD_MAP_TYPE,
+      byte = type + 1;
     for (let cy = s.gy; cy < s.gy + s.nz; cy++) {
       for (let cx = s.gx; cx < s.gx + s.nx; cx++) {
-        const bx = Math.floor(cx / N), by = Math.floor(cy / N);
+        const bx = Math.floor(cx / N),
+          by = Math.floor(cy / N);
         const r = rowAt(bx, by);
         if (!r?.autoMap?.length) continue;
-        if (!copied.has(r)) { r.autoMap = r.autoMap.slice(); copied.add(r); }
+        if (!copied.has(r)) {
+          r.autoMap = r.autoMap.slice();
+          copied.add(r);
+        }
         r.autoMap[(N - 1 - (cy - by * N)) * N + (cx - bx * N)] = byte;
       }
     }
-    const bx = Math.floor(s.x / YARD_MAP_BLOCK_M), by = Math.floor(s.z / YARD_MAP_BLOCK_M);
+    const bx = Math.floor(s.x / YARD_MAP_BLOCK_M),
+      by = Math.floor(s.z / YARD_MAP_BLOCK_M);
     const r = rowAt(bx, by);
     if (!r) continue;
-    const name = validYardKind(kind) ? yardName(kind, s.keeper?.name) : (typeof s.name === 'string' && s.name) || portPlaceName(kind);
-    r.places = [...(r.places ?? []), { name, position: [s.x - bx * YARD_MAP_BLOCK_M, 0, s.z - by * YARD_MAP_BLOCK_M], buildingType: type, yard: kind }];
+    const name = validYardKind(kind)
+      ? yardName(kind, s.keeper?.name)
+      : (typeof s.name === 'string' && s.name) || portPlaceName(kind);
+    r.places = [
+      ...(r.places ?? []),
+      { name, position: [s.x - bx * YARD_MAP_BLOCK_M, 0, s.z - by * YARD_MAP_BLOCK_M], buildingType: type, yard: kind },
+    ];
   }
   return out;
 }

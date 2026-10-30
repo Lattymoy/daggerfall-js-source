@@ -2,8 +2,8 @@
   {
     "name": "IC-PROPS-plan-streets-unread",
     "file": "src/world/merchantYards/merchantYardSites.js",
-    "old": "if (k === K.main || k === K.pave || k === K.side) { shut[i] = 1; street[i] = 1; }",
-    "new": "if (false) { shut[i] = 1; street[i] = 1; }",
+    "old": "      if (k === K.main || k === K.pave || k === K.side) {",
+    "new": "      if (false) {",
     "tests": [
       "test/world/icprops_yards.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "IC-PROPS-front-onto-nothing-as-good",
     "file": "src/world/merchantYards/merchantYardSites.js",
-    "old": "const score = d + (street(s[0], s[1], s[2], s[3]) > 0 ? 0 : YARD_FRONT_COST);",
-    "new": "const score = d;",
+    "old": "        const score = d + (street(s[0], s[1], s[2], s[3]) > 0 ? 0 : YARD_FRONT_COST);",
+    "new": "        const score = d;",
     "tests": [
       "test/world/icprops_yards.test.js",
       "test/world/merchantyards1.test.js"
@@ -21,8 +21,8 @@
   {
     "name": "IC-PROPS-stable-nearest-the-middle",
     "file": "src/world/merchantYards/merchantYardSites.js",
-    "old": "byExit = kind === 'stable', garden = false } = {}) {",
-    "new": "byExit = false, garden = false } = {}) {",
+    "old": "  { edge = kind === 'stable', square = kind !== 'stable', byExit = kind === 'stable', garden = false } = {},",
+    "new": "  { edge = kind === 'stable', square = kind !== 'stable', byExit = false, garden = false } = {},",
     "tests": [
       "test/world/icprops_yards.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "IC-PROPS-garden-unread",
     "file": "src/world/merchantYards/merchantYardSites.js",
-    "old": "(!garden && gardens?.[y * W + x])",
-    "new": "false",
+    "old": "        shut[y * W + x] ||\n        (!edge && land?.[y * W + x]) ||\n        (!square && paving?.[y * W + x]) ||\n        (!garden && gardens?.[y * W + x])\n          ? 1\n          : 0,",
+    "new": "        shut[y * W + x] || (!edge && land?.[y * W + x]) || (!square && paving?.[y * W + x]) || false ? 1 : 0,",
     "tests": [
       "test/world/icprops_yards.test.js"
     ]
@@ -39,7 +39,7 @@
   {
     "name": "IC-PROPS-no-last-step",
     "file": "src/world/merchantYards/merchantYardSites.js",
-    "old": "export const YARD_LAW_STEPS = Object.freeze([{}, { edge: true, byExit: true }, { edge: true, garden: true, square: true }]);",
+    "old": "export const YARD_LAW_STEPS = Object.freeze([\n  {},\n  { edge: true, byExit: true },\n  { edge: true, garden: true, square: true },\n]);",
     "new": "export const YARD_LAW_STEPS = Object.freeze([{}, { edge: true, byExit: true }]);",
     "tests": [
       "test/world/icprops_yards.test.js"
@@ -48,8 +48,8 @@
   {
     "name": "IC-PROPS-edge-land-unbounded",
     "file": "src/world/merchantYards/merchantYardSites.js",
-    "old": "    for (let i = 0; i < n; i++) if (land[i] && near[i] > 3 * EDGE_LAND_CELLS) land[i] = 0;\n",
-    "new": "",
+    "old": "    for (let i = 0; i < n; i++) if (land[i] && near[i] > 3 * EDGE_LAND_CELLS) land[i] = 0;\n  } else land.fill(0);",
+    "new": "  } else land.fill(0);",
     "tests": [
       "test/world/icprops_yards.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "IC-PROPS-law-on-a-capitals-slice",
     "file": "src/world/merchantYards/merchantYardSites.js",
-    "old": "      const s = g.fixed ? fixedSite(g, kind) : yield* lawSiteSteps(g, kind);   // IC-PROPS: a capital that names its own stands those",
-    "new": "      const s = yield* lawSiteSteps(g, kind);   // IC-PROPS: a capital that names its own stands those",
+    "old": "      const s = g.fixed ? fixedSite(g, kind) : yield* lawSiteSteps(g, kind); // IC-PROPS: a capital that names its own stands those",
+    "new": "      const s = yield* lawSiteSteps(g, kind); // IC-PROPS: a capital that names its own stands those",
     "tests": [
       "test/world/icprops_yards.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "IC-PROPS-fixed-over-a-closed-cell",
     "file": "src/world/merchantYards/merchantYardSites.js",
-    "old": " || g.blocked[gy * g.width + gx]) return null;",
-    "new": ") return null;",
+    "old": "    for (let gx = s.gx; gx < s.gx + s.nx; gx++)\n      if (gx < 0 || gy < 0 || gx >= g.width || gy >= g.height || g.blocked[gy * g.width + gx]) return null;",
+    "new": "    for (let gx = s.gx; gx < s.gx + s.nx; gx++) if (gx < 0 || gy < 0 || gx >= g.width || gy >= g.height) return null;",
     "tests": [
       "test/world/icprops_yards.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "IC-PROPS-city-names-none",
     "file": "src/world/merchantYards/townYards.js",
-    "old": "fixed: cap?.family ? imperialSliceYards(dfLocation.capital.s) : null };",
-    "new": "fixed: null };",
+    "old": "  return {\n    plan: townFabricOf(dfLocation)?.plan ?? null,\n    fixed: cap?.family ? imperialSliceYards(dfLocation.capital.s) : null,\n  };",
+    "new": "  return { plan: townFabricOf(dfLocation)?.plan ?? null, fixed: null };",
     "tests": [
       "test/world/icprops_yards.test.js"
     ]

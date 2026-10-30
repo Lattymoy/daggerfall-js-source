@@ -906,7 +906,7 @@ TS2's mask over the outline before its crops, with no edge band
 today's ring is no road on it (`terrainGen.js:"export function ringAsWas(paths, ring, yardGround) {"`). The host hands
 both (`scenes/pixelBuild.js` shapeWas, yardShut), so the Bay's yards keep #1184's mask whatever today's becomes.
 
-**A broken yard placed again** (`merchantYardSites.js:"export function* keptSitesSteps(g, sites, ports = [], gained = null) {"`). A
+**A broken yard placed again** (`merchantYardSites.js:"export function* keptSitesSteps"`). A
 yard keeps its #1184 place unless the place no longer fits the town as it stands (siteFits: its cells on no road and
 nothing shut, its pad clear of the wall and every closed cell). One that does not is placed again by its kind's law on
 the new ground, every kept yard's and port's ground closed first (`scenes/world.js` townPlacesFor, `world/townWalls.js`

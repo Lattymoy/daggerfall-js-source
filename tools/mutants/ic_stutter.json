@@ -202,8 +202,8 @@
   {
     "name": "ICS-yards-ground-rows-unbroken",
     "file": "src/world/merchantYards/merchantYardSites.js",
-    "old": "    if (gy && gy % YARD_ROWS_A_STEP === 0) yield;\n",
-    "new": "",
+    "old": "    if (gy && gy % YARD_ROWS_A_STEP === 0) yield;\n    for (let gx = 0; gx < W; gx++) {",
+    "new": "    for (let gx = 0; gx < W; gx++) {",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -212,8 +212,8 @@
   {
     "name": "ICS-yards-search-rows-unbroken",
     "file": "src/world/merchantYards/merchantYardSites.js",
-    "old": "      if ((gy - pad) % YARD_ROWS_A_STEP === YARD_ROWS_A_STEP - 1) yield;\n",
-    "new": "",
+    "old": "      if ((gy - pad) % YARD_ROWS_A_STEP === YARD_ROWS_A_STEP - 1) yield;\n      for (let gx = pad; gx + nx + pad <= W; gx++) {",
+    "new": "      for (let gx = pad; gx + nx + pad <= W; gx++) {",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "ICS-yards-measures-in-one",
     "file": "src/world/merchantYards/merchantYardSites.js",
-    "old": "  for (const b of yl?.blocks ?? []) { yield; was.push(one(b)); }",
-    "new": "  for (const b of yl?.blocks ?? []) { was.push(one(b)); }",
+    "old": "    yield;\n    was.push(one(b));",
+    "new": "    was.push(one(b));",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],

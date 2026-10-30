@@ -113,8 +113,8 @@
   {
     "name": "AUDIT-TW-E5-the-ports-unclosed",
     "file": "src/world/merchantYards/merchantYardSites.js",
-    "old": "for (const s of [...sites, ...ports]) if (!broken.includes(s)) closeSite(g, s);",
-    "new": "for (const s of [...sites]) if (!broken.includes(s)) closeSite(g, s);",
+    "old": "  for (const s of [...sites, ...ports]) if (!broken.includes(s)) closeSite(g, s);",
+    "new": "  for (const s of [...sites]) if (!broken.includes(s)) closeSite(g, s);",
     "tests": [
       "test/world/fb1028_walls.test.js"
     ],

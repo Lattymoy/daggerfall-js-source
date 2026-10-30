@@ -301,8 +301,8 @@
   {
     "name": "AUDIT-FB1028-B5-the-growth-unread",
     "file": "src/world/merchantYards/merchantYardSites.js",
-    "old": "(g.blocked[y * W + x] && (own || !gained?.[y * W + x]))",
-    "new": "g.blocked[y * W + x]",
+    "old": "      if (x < 0 || y < 0 || x >= W || y >= g.height || (g.blocked[y * W + x] && (own || !gained?.[y * W + x])))\n        return false;",
+    "new": "      if (x < 0 || y < 0 || x >= W || y >= g.height || g.blocked[y * W + x]) return false;",
     "tests": [
       "test/world/fb1028_walls.test.js"
     ]
@@ -310,8 +310,8 @@
   {
     "name": "AUDIT-FB1028-B5-the-growth-under-its-own",
     "file": "src/world/merchantYards/merchantYardSites.js",
-    "old": "(g.blocked[y * W + x] && (own || !gained?.[y * W + x]))",
-    "new": "(g.blocked[y * W + x] && !gained?.[y * W + x])",
+    "old": "      if (x < 0 || y < 0 || x >= W || y >= g.height || (g.blocked[y * W + x] && (own || !gained?.[y * W + x])))\n        return false;",
+    "new": "      if (x < 0 || y < 0 || x >= W || y >= g.height || (g.blocked[y * W + x] && !gained?.[y * W + x])) return false;",
     "tests": [
       "test/world/fb1028_walls.test.js"
     ]
@@ -373,8 +373,8 @@
   {
     "name": "FB1028-Y1-the-keep-reads-1184s-things",
     "file": "src/world/merchantYards/merchantYardSites.js",
-    "old": "townGroundSteps(yl, measures?.now ? { ...measures.now, keep: measures.keep } : measures, now, ways);",
-    "new": "townGroundSteps(yl, measures, now, ways);",
+    "old": "  const g = yield* townGroundSteps(yl, measures?.now ? { ...measures.now, keep: measures.keep } : measures, now, ways); // FB1028 YARDS Y1: the gates' things as they stand",
+    "new": "  const g = yield* townGroundSteps(yl, measures, now, ways); // FB1028 YARDS Y1: the gates' things as they stand",
     "tests": [
       "test/world/fb1028_walls.test.js"
     ]
@@ -382,8 +382,8 @@
   {
     "name": "FB1028-Y1-the-things-move-read-as-any-closed",
     "file": "src/world/merchantYards/merchantYardSites.js",
-    "old": "  if (was) gained = g.blocked.map(",
-    "new": "  if (false) gained = g.blocked.map(",
+    "old": "  if (was) gained = g.blocked.map((v, i) => ((v && !was.blocked[i]) || gained?.[i] ? 1 : 0));",
+    "new": "  if (false) gained = g.blocked.map((v, i) => ((v && !was.blocked[i]) || gained?.[i] ? 1 : 0));",
     "tests": [
       "test/world/fb1028_walls.test.js"
     ]
@@ -391,8 +391,8 @@
   {
     "name": "FB1028-Y1-the-shared-block-measured-twice",
     "file": "src/world/merchantYards/merchantYardSites.js",
-    "old": "now.push(b === yl.blocks[i] ? was[i] : one(b));",
-    "new": "now.push(one(b));",
+    "old": "    now.push(b === yl.blocks[i] ? was[i] : one(b));",
+    "new": "    now.push(one(b));",
     "tests": [
       "test/world/fb1028_walls.test.js"
     ]

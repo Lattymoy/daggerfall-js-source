@@ -51,21 +51,21 @@
 // every function below keeps its name and its answer, run to its end (stepsDone): the same work in the same order, the
 // same sites. IC-PROPS x IC-STUTTER: the yards' law of a town (yardLaw - its fabric's ways, its edge land, its gardens),
 // a ground's exits' field and each yard's place by the law's steps are passes over the same grid, stepped the same way.
-import { stepsDone } from '../puddleMask.js';   // IC-STUTTER: OW-HITCH's runner, the one export
+import { stepsDone } from '../puddleMask.js'; // IC-STUTTER: OW-HITCH's runner, the one export
 import { CityNavigation, NAV_CELL, NAV_CELLS_PER_BLOCK } from '../city/cityNavigation.js';
-import { trs, multiply } from '../mat4.js';   // AUDIT MERCHANT-YARDS R2: the blocks' measures, here where they are pinned
+import { trs, multiply } from '../mat4.js'; // AUDIT MERCHANT-YARDS R2: the blocks' measures, here where they are pinned
 import { staticBuildingBox, staticBuildingWorldAabb } from '../staticBuildings.js';
 import { localAabb, transformedAabb } from '../../render/frustum.js';
 import { ROAD_WEIGHT } from '../city/cityNavigation.js';
 import { YARD_KIND_ORDER, CRAFT_YARD_ORDER } from '../../systems/merchantYards.js';
-import { FABRIC, FABRIC_KIND, isPortCell } from '../urban/townFabric.js';   // IC-PROPS: a house's garden by URBANIZER's law, its plan's ways, the town's own blocks
+import { FABRIC, FABRIC_KIND, isPortCell } from '../urban/townFabric.js'; // IC-PROPS: a house's garden by URBANIZER's law, its plan's ways, the town's own blocks
 
 /** Each yard's ground, metres: half its width (x) and half its depth (z) - its fence and the apron before its gate
  *  where its sign and its keeper stand (world/merchantYards/merchantYardModels.js lays both out inside it). */
 export const YARD_FOOT = Object.freeze({
   stable: Object.freeze({ hx: 7, hz: 5.75 }),
   transport: Object.freeze({ hx: 9, hz: 6.75 }),
-  carpenter: Object.freeze({ hx: 7, hz: 6 }),   // CARP-YARD: the joinery, 14 m by 12
+  carpenter: Object.freeze({ hx: 7, hz: 6 }), // CARP-YARD: the joinery, 14 m by 12
 });
 /** The ring round a yard that must be open ground too (a road allowed), metres. */
 export const YARD_PAD_M = NAV_CELL;
@@ -102,10 +102,16 @@ export function summed(w, h, at) {
   const S = new Int32Array((w + 1) * (h + 1));
   for (let y = 0; y < h; y++) {
     let row = 0;
-    for (let x = 0; x < w; x++) { row += at(x, y); S[(y + 1) * (w + 1) + x + 1] = S[y * (w + 1) + x + 1] + row; }
+    for (let x = 0; x < w; x++) {
+      row += at(x, y);
+      S[(y + 1) * (w + 1) + x + 1] = S[y * (w + 1) + x + 1] + row;
+    }
   }
   return (x0, y0, x1, y1) => {
-    x0 = Math.max(0, x0); y0 = Math.max(0, y0); x1 = Math.min(w, x1); y1 = Math.min(h, y1);
+    x0 = Math.max(0, x0);
+    y0 = Math.max(0, y0);
+    x1 = Math.min(w, x1);
+    y1 = Math.min(h, y1);
     if (x1 <= x0 || y1 <= y0) return 0;
     return S[y1 * (w + 1) + x1] - S[y0 * (w + 1) + x1] - S[y1 * (w + 1) + x0] + S[y0 * (w + 1) + x0];
   };
@@ -114,7 +120,8 @@ export function summed(w, h, at) {
 /** A yard's cell spans for a turn: [across x, across z]. Pure. */
 export function yardSpans(kind, turn) {
   const F = YARD_FOOT[kind];
-  const sx = turn % 2 ? F.hz : F.hx, sz = turn % 2 ? F.hx : F.hz;
+  const sx = turn % 2 ? F.hz : F.hx,
+    sz = turn % 2 ? F.hx : F.hz;
   return [Math.ceil((2 * sx) / NAV_CELL - 1e-9), Math.ceil((2 * sz) / NAV_CELL - 1e-9)];
 }
 
@@ -134,12 +141,15 @@ export const yardGround = (nav, measures = {}) => stepsDone(yardGroundSteps(nav,
  *  @param {{width: number, height: number, weightAt: (gx: number, gy: number) => number}} nav @param {YardMeasures} [measures]
  *  @returns {Generator<void, YardGround, void>} */
 export function* yardGroundSteps(nav, { buildings = [], props = [], flats = [], closedBlocks = [], keep = [] } = {}) {
-  const W = nav.width, H = nav.height;
-  const blocked = new Uint8Array(W * H), road = new Uint8Array(W * H);
+  const W = nav.width,
+    H = nav.height;
+  const blocked = new Uint8Array(W * H),
+    road = new Uint8Array(W * H);
   for (let gy = 0; gy < H; gy++) {
     if (gy && gy % YARD_ROWS_A_STEP === 0) yield;
     for (let gx = 0; gx < W; gx++) {
-      const w = nav.weightAt(gx, gy), i = gy * W + gx;
+      const w = nav.weightAt(gx, gy),
+        i = gy * W + gx;
       if (!(w > 0)) blocked[i] = 1;
       else if (w === ROAD_WEIGHT) road[i] = 1;
     }
@@ -147,21 +157,27 @@ export function* yardGroundSteps(nav, { buildings = [], props = [], flats = [], 
   // a box grown by `pad` closes every cell whose centre is in it
   const closeBox = (b, pad) => {
     if (!Array.isArray(b) || b.length < 4 || !b.every(Number.isFinite)) return;
-    const gx0 = Math.max(0, Math.ceil((b[0] - pad) / NAV_CELL - 0.5)), gx1 = Math.min(W - 1, Math.floor((b[2] + pad) / NAV_CELL - 0.5));
-    const gy0 = Math.max(0, Math.ceil((b[1] - pad) / NAV_CELL - 0.5)), gy1 = Math.min(H - 1, Math.floor((b[3] + pad) / NAV_CELL - 0.5));
+    const gx0 = Math.max(0, Math.ceil((b[0] - pad) / NAV_CELL - 0.5)),
+      gx1 = Math.min(W - 1, Math.floor((b[2] + pad) / NAV_CELL - 0.5));
+    const gy0 = Math.max(0, Math.ceil((b[1] - pad) / NAV_CELL - 0.5)),
+      gy1 = Math.min(H - 1, Math.floor((b[3] + pad) / NAV_CELL - 0.5));
     for (let gy = gy0; gy <= gy1; gy++) for (let gx = gx0; gx <= gx1; gx++) blocked[gy * W + gx] = 1;
   };
   const closeDisc = (x, z, r) => {
     if (![x, z, r].every(Number.isFinite)) return;
-    const gx0 = Math.max(0, Math.floor((x - r) / NAV_CELL)), gx1 = Math.min(W - 1, Math.floor((x + r) / NAV_CELL));
-    const gy0 = Math.max(0, Math.floor((z - r) / NAV_CELL)), gy1 = Math.min(H - 1, Math.floor((z + r) / NAV_CELL));
+    const gx0 = Math.max(0, Math.floor((x - r) / NAV_CELL)),
+      gx1 = Math.min(W - 1, Math.floor((x + r) / NAV_CELL));
+    const gy0 = Math.max(0, Math.floor((z - r) / NAV_CELL)),
+      gy1 = Math.min(H - 1, Math.floor((z + r) / NAV_CELL));
     const reach = (r + NAV_CELL / 2) ** 2;
-    for (let gy = gy0; gy <= gy1; gy++) for (let gx = gx0; gx <= gx1; gx++) {
-      // AUDIT MERCHANT-YARDS G2: squared, never Math.hypot - ECMA-262 lets each engine approximate it, and two browsers
-      // closing one cell differently stood a yard in two places
-      const dx = (gx + 0.5) * NAV_CELL - x, dz = (gy + 0.5) * NAV_CELL - z;
-      if (dx * dx + dz * dz <= reach) blocked[gy * W + gx] = 1;
-    }
+    for (let gy = gy0; gy <= gy1; gy++)
+      for (let gx = gx0; gx <= gx1; gx++) {
+        // AUDIT MERCHANT-YARDS G2: squared, never Math.hypot - ECMA-262 lets each engine approximate it, and two browsers
+        // closing one cell differently stood a yard in two places
+        const dx = (gx + 0.5) * NAV_CELL - x,
+          dz = (gy + 0.5) * NAV_CELL - z;
+        if (dx * dx + dz * dz <= reach) blocked[gy * W + gx] = 1;
+      }
   };
   yield;
   for (const b of buildings) closeBox(b, BUILDING_CLEAR_M);
@@ -171,7 +187,15 @@ export function* yardGroundSteps(nav, { buildings = [], props = [], flats = [], 
   for (const f of flats) closeDisc(f[0], f[1], FLAT_CLEAR_M);
   for (const k of keep) closeDisc(k[0], k[1], k[2]);
   for (const [bx, by] of closedBlocks) {
-    closeBox([bx * NAV_CELLS_PER_BLOCK * NAV_CELL, by * NAV_CELLS_PER_BLOCK * NAV_CELL, (bx + 1) * NAV_CELLS_PER_BLOCK * NAV_CELL, (by + 1) * NAV_CELLS_PER_BLOCK * NAV_CELL], 0);
+    closeBox(
+      [
+        bx * NAV_CELLS_PER_BLOCK * NAV_CELL,
+        by * NAV_CELLS_PER_BLOCK * NAV_CELL,
+        (bx + 1) * NAV_CELLS_PER_BLOCK * NAV_CELL,
+        (by + 1) * NAV_CELLS_PER_BLOCK * NAV_CELL,
+      ],
+      0,
+    );
   }
   return { width: W, height: H, blocked, road };
 }
@@ -199,7 +223,12 @@ export const exitField = (g) => stepsDone(exitFieldSteps(g));
 /** IC-PROPS x IC-STUTTER: exitField a band of rows at a time. @param {any} g @returns {Generator<void, Int32Array, void>} */
 export function* exitFieldSteps(g) {
   if (g.toExit) return g.toExit;
-  const W = g.width, H = g.height, n = W * H, street = g.street ?? g.road, town = g.town, INF = 0x3fffffff;
+  const W = g.width,
+    H = g.height,
+    n = W * H,
+    street = g.street ?? g.road,
+    town = g.town,
+    INF = 0x3fffffff;
   const own = (x, y) => x >= 0 && y >= 0 && x < W && y < H && (!town || town[y * W + x] === 1);
   const edge = new Uint8Array(n);
   for (let y = 0; y < H; y++) {
@@ -212,7 +241,11 @@ export function* exitFieldSteps(g) {
   const near = yield* chamferSteps(W, H, edge, INF);
   const seeds = new Uint8Array(n);
   let any = false;
-  for (let i = 0; i < n; i++) if (street[i] && near[i] <= 3 * EXIT_REACH) { seeds[i] = 1; any = true; }
+  for (let i = 0; i < n; i++)
+    if (street[i] && near[i] <= 3 * EXIT_REACH) {
+      seeds[i] = 1;
+      any = true;
+    }
   g.toExit = any ? yield* chamferSteps(W, H, seeds, INF) : near;
   return g.toExit;
 }
@@ -227,17 +260,25 @@ function* chamferSteps(W, H, seed, INF) {
       const i = y * W + x;
       let v = d[i];
       if (x > 0) v = Math.min(v, d[i - 1] + 3);
-      if (y > 0) { v = Math.min(v, d[i - W] + 3); if (x > 0) v = Math.min(v, d[i - W - 1] + 4); if (x < W - 1) v = Math.min(v, d[i - W + 1] + 4); }
+      if (y > 0) {
+        v = Math.min(v, d[i - W] + 3);
+        if (x > 0) v = Math.min(v, d[i - W - 1] + 4);
+        if (x < W - 1) v = Math.min(v, d[i - W + 1] + 4);
+      }
       d[i] = v;
     }
   }
   for (let y = H - 1; y >= 0; y--) {
-    if ((H - 1 - y) && (H - 1 - y) % YARD_ROWS_A_STEP === 0) yield;
+    if (H - 1 - y && (H - 1 - y) % YARD_ROWS_A_STEP === 0) yield;
     for (let x = W - 1; x >= 0; x--) {
       const i = y * W + x;
       let v = d[i];
       if (x < W - 1) v = Math.min(v, d[i + 1] + 3);
-      if (y < H - 1) { v = Math.min(v, d[i + W] + 3); if (x < W - 1) v = Math.min(v, d[i + W + 1] + 4); if (x > 0) v = Math.min(v, d[i + W - 1] + 4); }
+      if (y < H - 1) {
+        v = Math.min(v, d[i + W] + 3);
+        if (x < W - 1) v = Math.min(v, d[i + W + 1] + 4);
+        if (x > 0) v = Math.min(v, d[i + W - 1] + 4);
+      }
       d[i] = v;
     }
   }
@@ -259,59 +300,99 @@ function* chamferSteps(W, H, seed, INF) {
 export const yardSite = (g, kind, o = {}) => stepsDone(yardSiteSteps(g, kind, o));
 /** IC-STUTTER: yardSite a band of rows of a turn at a time - the same places weighed in the same order.
  *  @param {any} g @param {string} kind @param {{ edge?: boolean, square?: boolean, byExit?: boolean, garden?: boolean }} [o] */
-export function* yardSiteSteps(g, kind, { edge = kind === 'stable', square = kind !== 'stable', byExit = kind === 'stable', garden = false } = {}) {
+export function* yardSiteSteps(
+  g,
+  kind,
+  { edge = kind === 'stable', square = kind !== 'stable', byExit = kind === 'stable', garden = false } = {},
+) {
   if (!g || !YARD_FOOT[kind]) return null;
   const { width: W, height: H } = g;
   const closed = summed(W, H, (x, y) => g.blocked[y * W + x]);
   const roads = summed(W, H, (x, y) => g.road[y * W + x]);
-  const shut = g.shut, land = g.edgeLand, paving = g.square, ways = g.street, gardens = g.garden;
-  const own = shut ? summed(W, H, (x, y) => (shut[y * W + x] || (!edge && land?.[y * W + x]) || (!square && paving?.[y * W + x]) || (!garden && gardens?.[y * W + x]) ? 1 : 0)) : null;
+  const shut = g.shut,
+    land = g.edgeLand,
+    paving = g.square,
+    ways = g.street,
+    gardens = g.garden;
+  const own = shut
+    ? summed(W, H, (x, y) =>
+        shut[y * W + x] ||
+        (!edge && land?.[y * W + x]) ||
+        (!square && paving?.[y * W + x]) ||
+        (!garden && gardens?.[y * W + x])
+          ? 1
+          : 0,
+      )
+    : null;
   const plaza = paving && square ? summed(W, H, (x, y) => paving[y * W + x]) : null;
   const street = ways ? summed(W, H, (x, y) => ways[y * W + x]) : roads;
   yield;
   const toExit = byExit ? yield* exitFieldSteps(g) : null;
-  const pad = Math.ceil(YARD_PAD_M / NAV_CELL - 1e-9), m = Math.max(pad, SQUARE_MARGIN);
-  const mx = W / 2, my = H / 2;
-  let best = null, bestScore = Infinity;
+  const pad = Math.ceil(YARD_PAD_M / NAV_CELL - 1e-9),
+    m = Math.max(pad, SQUARE_MARGIN);
+  const mx = W / 2,
+    my = H / 2;
+  let best = null,
+    bestScore = Infinity;
   for (let turn = 0; turn < 4; turn++) {
     const [nx, nz] = yardSpans(kind, turn);
     for (let gy = pad; gy + nz + pad <= H; gy++) {
       if ((gy - pad) % YARD_ROWS_A_STEP === YARD_ROWS_A_STEP - 1) yield;
       for (let gx = pad; gx + nx + pad <= W; gx++) {
-        const cx = gx + nx / 2, cy = gy + nz / 2;
+        const cx = gx + nx / 2,
+          cy = gy + nz / 2;
         // AUDIT MERCHANT-YARDS G2: Math.sqrt of an exact sum (half-cells squared), the same on every engine - Math.hypot
         // is approximated per engine, and put genuine ties (3.5, 3) and (4.5, 1) a rounding apart. IC-PROPS: by an exit,
         // its exit's (an integer chamfer, a third a cell)
-        const d = toExit ? toExit[Math.floor(cy) * W + Math.floor(cx)] / 3 : Math.sqrt((cx - mx) * (cx - mx) + (cy - my) * (cy - my));
-        if (d > bestScore) continue;   // facing a way only lowers the score to d: a place already further cannot win (one as far may tie, and ties go by the rule below)
+        const d = toExit
+          ? toExit[Math.floor(cy) * W + Math.floor(cx)] / 3
+          : Math.sqrt((cx - mx) * (cx - mx) + (cy - my) * (cy - my));
+        if (d > bestScore) continue; // facing a way only lowers the score to d: a place already further cannot win (one as far may tie, and ties go by the rule below)
         if (closed(gx - pad, gy - pad, gx + nx + pad, gy + nz + pad) !== 0) continue;
         if (roads(gx, gy, gx + nx, gy + nz) !== 0) continue;
-        if (own && own(gx, gy, gx + nx, gy + nz) !== 0) continue;   // IC-PROPS: never a way, a garden or ground not its kind's
-        if (plaza && plaza(gx, gy, gx + nx, gy + nz) !== 0 && closed(gx - m, gy - m, gx + nx + m, gy + nz + m) !== 0) continue;   // IC-PROPS: on paving, a plaza's middle
+        if (own && own(gx, gy, gx + nx, gy + nz) !== 0) continue; // IC-PROPS: never a way, a garden or ground not its kind's
+        if (plaza && plaza(gx, gy, gx + nx, gy + nz) !== 0 && closed(gx - m, gy - m, gx + nx + m, gy + nz + m) !== 0)
+          continue; // IC-PROPS: on paving, a plaza's middle
         const s = frontStrip(gx, gy, nx, nz, turn);
         const score = d + (street(s[0], s[1], s[2], s[3]) > 0 ? 0 : YARD_FRONT_COST);
-        if (score < bestScore || (score === bestScore && best && (gy < best.gy || (gy === best.gy && (gx < best.gx || (gx === best.gx && turn < best.turn)))))) {
-          bestScore = score; best = { gx, gy, nx, nz, turn };
+        if (
+          score < bestScore ||
+          (score === bestScore &&
+            best &&
+            (gy < best.gy || (gy === best.gy && (gx < best.gx || (gx === best.gx && turn < best.turn)))))
+        ) {
+          bestScore = score;
+          best = { gx, gy, nx, nz, turn };
         }
       }
     }
   }
   if (!best) return null;
   return {
-    kind, turn: best.turn, yaw: YARD_TURNS[best.turn],
-    x: (best.gx + best.nx / 2) * NAV_CELL, z: (best.gy + best.nz / 2) * NAV_CELL,
-    gx: best.gx, gy: best.gy, nx: best.nx, nz: best.nz,
+    kind,
+    turn: best.turn,
+    yaw: YARD_TURNS[best.turn],
+    x: (best.gx + best.nx / 2) * NAV_CELL,
+    z: (best.gy + best.nz / 2) * NAV_CELL,
+    gx: best.gx,
+    gy: best.gy,
+    nx: best.nx,
+    nz: best.nz,
   };
 }
 /** IC-PROPS: a kind's place by the law, each step taken only where the town has no room left for the one before it: its own
  *  ground (the Stable's by an exit, its edge land with it; the Wagon Yard's and the joinery's nearest the middle, a plaza
  *  with it); the Wagon Yard and the joinery by an exit on the open land past the town, as the Stable stands; and last, a
  *  house's garden with the rest (YARD_LAW_STEPS) - so no town that stood a yard before stands none now. */
-export const YARD_LAW_STEPS = Object.freeze([{}, { edge: true, byExit: true }, { edge: true, garden: true, square: true }]);
+export const YARD_LAW_STEPS = Object.freeze([
+  {},
+  { edge: true, byExit: true },
+  { edge: true, garden: true, square: true },
+]);
 function* lawSiteSteps(g, kind) {
   for (const [i, o] of YARD_LAW_STEPS.entries()) {
-    if (i === 1 && kind === 'stable') continue;   // the Stable's first step is already by an exit, its edge land with it
-    const s = yield* yardSiteSteps(g, kind, o);   // the Stable's edge and exit its own (yardSite's defaults)
+    if (i === 1 && kind === 'stable') continue; // the Stable's first step is already by an exit, its edge land with it
+    const s = yield* yardSiteSteps(g, kind, o); // the Stable's edge and exit its own (yardSite's defaults)
     if (s) return s;
   }
   return null;
@@ -322,8 +403,20 @@ function* lawSiteSteps(g, kind) {
 function fixedSite(g, kind) {
   const s = g.fixed.find((t) => t.kind === kind);
   if (!s) return null;
-  for (let gy = s.gy; gy < s.gy + s.nz; gy++) for (let gx = s.gx; gx < s.gx + s.nx; gx++) if (gx < 0 || gy < 0 || gx >= g.width || gy >= g.height || g.blocked[gy * g.width + gx]) return null;
-  return { kind, turn: s.turn, yaw: YARD_TURNS[s.turn], x: (s.gx + s.nx / 2) * NAV_CELL, z: (s.gy + s.nz / 2) * NAV_CELL, gx: s.gx, gy: s.gy, nx: s.nx, nz: s.nz };
+  for (let gy = s.gy; gy < s.gy + s.nz; gy++)
+    for (let gx = s.gx; gx < s.gx + s.nx; gx++)
+      if (gx < 0 || gy < 0 || gx >= g.width || gy >= g.height || g.blocked[gy * g.width + gx]) return null;
+  return {
+    kind,
+    turn: s.turn,
+    yaw: YARD_TURNS[s.turn],
+    x: (s.gx + s.nx / 2) * NAV_CELL,
+    z: (s.gy + s.nz / 2) * NAV_CELL,
+    gx: s.gx,
+    gy: s.gy,
+    nx: s.nx,
+    nz: s.nz,
+  };
 }
 
 /** Close a placed yard's ground and YARD_GAP_M round it on the placing grid (the next yard stands clear of it).
@@ -331,7 +424,8 @@ function fixedSite(g, kind) {
 export function closeSite(g, s) {
   const gap = Math.ceil(YARD_GAP_M / NAV_CELL - 1e-9);
   for (let gy = Math.max(0, s.gy - gap); gy < Math.min(g.height, s.gy + s.nz + gap); gy++) {
-    for (let gx = Math.max(0, s.gx - gap); gx < Math.min(g.width, s.gx + s.nx + gap); gx++) g.blocked[gy * g.width + gx] = 1;
+    for (let gx = Math.max(0, s.gx - gap); gx < Math.min(g.width, s.gx + s.nx + gap); gx++)
+      g.blocked[gy * g.width + gx] = 1;
   }
 }
 
@@ -343,7 +437,7 @@ export function* yardSitesSteps(g) {
   const place = function* (order) {
     const out = [];
     for (const kind of order) {
-      const s = g.fixed ? fixedSite(g, kind) : yield* lawSiteSteps(g, kind);   // IC-PROPS: a capital that names its own stands those
+      const s = g.fixed ? fixedSite(g, kind) : yield* lawSiteSteps(g, kind); // IC-PROPS: a capital that names its own stands those
       if (!s) continue;
       out.push(s);
       closeSite(g, s);
@@ -353,11 +447,13 @@ export function* yardSitesSteps(g) {
   // IC-PROPS: a Stable at the edge can take the one room a cramped town has for its Wagon Yard - where the order stands
   // fewer than both, the Wagon Yard is placed first on the same ground, and the order that stands more is kept (the first
   // on a tie), the sites in YARD_KIND_ORDER either way
-  const was = Uint8Array.from(g.blocked), toExit = g.toExit;
+  const was = Uint8Array.from(g.blocked),
+    toExit = g.toExit;
   const out = yield* place(YARD_KIND_ORDER);
   if (out.length >= YARD_KIND_ORDER.length || g.fixed) return out;
   const kept = Uint8Array.from(g.blocked);
-  g.blocked.set(was); g.toExit = toExit;
+  g.blocked.set(was);
+  g.toExit = toExit;
   const other = yield* place([...YARD_KIND_ORDER].reverse());
   if (other.length > out.length) return YARD_KIND_ORDER.flatMap((k) => other.filter((t) => t.kind === k));
   g.blocked.set(kept);
@@ -367,13 +463,16 @@ export function* yardSitesSteps(g) {
 /** FB1028 YARDS: a yard's place still good on a ground - its own cells on no road, no way and nothing shut, and its pad
  *  round it (YARD_PAD_M) clear of every closed cell: the wall's, a house's, the ground's edge. @param {any} g @param {any} s */
 export function siteFits(g, s, gained = null) {
-  const pad = Math.ceil(YARD_PAD_M / NAV_CELL - 1e-9), W = g.width;
-  for (let y = s.gy - pad; y < s.gy + s.nz + pad; y++) for (let x = s.gx - pad; x < s.gx + s.nx + pad; x++) {
-    const own = x >= s.gx && y >= s.gy && x < s.gx + s.nx && y < s.gy + s.nz;
-    // AUDIT FB1028 B5: a cell only the wall's growth since #1184 closed (`gained`) breaks its own ground, not its pad
-    if (x < 0 || y < 0 || x >= W || y >= g.height || (g.blocked[y * W + x] && (own || !gained?.[y * W + x]))) return false;
-    if (own && (g.road[y * W + x] || g.shut?.[y * W + x])) return false;
-  }
+  const pad = Math.ceil(YARD_PAD_M / NAV_CELL - 1e-9),
+    W = g.width;
+  for (let y = s.gy - pad; y < s.gy + s.nz + pad; y++)
+    for (let x = s.gx - pad; x < s.gx + s.nx + pad; x++) {
+      const own = x >= s.gx && y >= s.gy && x < s.gx + s.nx && y < s.gy + s.nz;
+      // AUDIT FB1028 B5: a cell only the wall's growth since #1184 closed (`gained`) breaks its own ground, not its pad
+      if (x < 0 || y < 0 || x >= W || y >= g.height || (g.blocked[y * W + x] && (own || !gained?.[y * W + x])))
+        return false;
+      if (own && (g.road[y * W + x] || g.shut?.[y * W + x])) return false;
+    }
   return true;
 }
 
@@ -390,9 +489,15 @@ export function* keptSitesSteps(g, sites, ports = [], gained = null) {
   for (const s of [...sites, ...ports]) if (!broken.includes(s)) closeSite(g, s);
   const out = [];
   for (const s of sites) {
-    if (!broken.includes(s)) { out.push(s); continue; }
+    if (!broken.includes(s)) {
+      out.push(s);
+      continue;
+    }
     const t = yield* lawSiteSteps(g, s.kind);
-    if (t) { out.push(t); closeSite(g, t); }
+    if (t) {
+      out.push(t);
+      closeSite(g, t);
+    }
   }
   return out;
 }
@@ -400,7 +505,7 @@ export function* keptSitesSteps(g, sites, ports = [], gained = null) {
 /** FB1028 YARDS: keptSitesSteps on the town's ground as it stands now (`now` its shut, townGroundSteps' ground).
  *  @param {any} yl @param {any} measures @param {any} now @param {any} ways @param {any[]} sites @param {any[]} ports */
 export function* keptTownSitesSteps(yl, measures, now, ways, sites, ports) {
-  const g = yield* townGroundSteps(yl, measures?.now ? { ...measures.now, keep: measures.keep } : measures, now, ways);   // FB1028 YARDS Y1: the gates' things as they stand
+  const g = yield* townGroundSteps(yl, measures?.now ? { ...measures.now, keep: measures.keep } : measures, now, ways); // FB1028 YARDS Y1: the gates' things as they stand
   if (!g) return sites;
   let gained = now?.gained?.() ?? null;
   // FB1028 YARDS Y1: and the cells only the gates' things closed since #1184 (stood clear of the grown towers) - as B5's
@@ -418,7 +523,7 @@ export const craftYardSitesOn = (g) => stepsDone(craftYardSitesSteps(g));
 export function* craftYardSitesSteps(g) {
   const out = [];
   for (const kind of CRAFT_YARD_ORDER) {
-    const s = g.fixed ? fixedSite(g, kind) : yield* lawSiteSteps(g, kind);   // IC-PROPS
+    const s = g.fixed ? fixedSite(g, kind) : yield* lawSiteSteps(g, kind); // IC-PROPS
     if (!s) continue;
     out.push(s);
     closeSite(g, s);
@@ -442,7 +547,8 @@ export function yardSitesOf(loc, measures = {}) {
  * on (yardSitesOf), and the port's two after them (world/portSites.js portSitesOn: on what the yards left). Pure.
  * @param {{width: number, height: number, blocks: any[]}} loc @param {Parameters<typeof yardGround>[1]} [measures]
  */
-export const townGroundOf = (loc, measures = {}, shut = null, ways = null) => stepsDone(townGroundSteps(loc, measures, shut, ways));
+export const townGroundOf = (loc, measures = {}, shut = null, ways = null) =>
+  stepsDone(townGroundSteps(loc, measures, shut, ways));
 /** IC-STUTTER: townGroundOf a block at a time, then yardGround's steps and the yards' law's. @param {{width: number, height: number, blocks: any[]}} loc
  *  @param {YardMeasures} [measures] @param {?((nav: any) => void)} [shut] @param {?{ plan?: any, fixed?: any[] | null }} [ways]
  *  @returns {Generator<void, ?YardGround, void>} */
@@ -456,9 +562,9 @@ export function* townGroundSteps(loc, measures = {}, shut = null, ways = null) {
     nav.setBlockData(b.x, b.y, fld.autoMapData, (tx, ty) => tiles[tx][ty].textureRecord, { enhancedWater: true });
     yield;
   }
-  shut?.(nav);   // TS7: the town's own ground, off its wall (world/townWalls.js townWalkShut)
+  shut?.(nav); // TS7: the town's own ground, off its wall (world/townWalls.js townWalkShut)
   const g = yield* yardGroundSteps(nav, measures);
-  yield* yardLawSteps(g, loc, nav, ways);   // IC-PROPS: the yards' own ground, the town's streets and its edge
+  yield* yardLawSteps(g, loc, nav, ways); // IC-PROPS: the yards' own ground, the town's streets and its edge
   return g;
 }
 
@@ -485,18 +591,36 @@ export const yardLaw = (g, loc, nav, ways = null) => stepsDone(yardLawSteps(g, l
 /** IC-STUTTER: yardLaw a block, a band of rows or a garden's flood at a time. @param {any} g @param {any} loc @param {any} nav
  *  @param {?{ plan?: any, fixed?: any[] | null }} [ways] */
 export function* yardLawSteps(g, loc, nav, ways = null) {
-  const W = g.width, H = g.height, n = W * H, C = NAV_CELLS_PER_BLOCK;
-  const shut = new Uint8Array(n), street = Uint8Array.from(g.road), town = new Uint8Array(n), land = new Uint8Array(n), square = new Uint8Array(n);
-  const grass = new Uint8Array(n), house = new Uint8Array(n), garden = new Uint8Array(n);
+  const W = g.width,
+    H = g.height,
+    n = W * H,
+    C = NAV_CELLS_PER_BLOCK;
+  const shut = new Uint8Array(n),
+    street = Uint8Array.from(g.road),
+    town = new Uint8Array(n),
+    land = new Uint8Array(n),
+    square = new Uint8Array(n);
+  const grass = new Uint8Array(n),
+    house = new Uint8Array(n),
+    garden = new Uint8Array(n);
   const open = (i) => nav.grid[i] >> 4 > 0;
   for (const b of loc.blocks) {
     yield;
-    const fld = b.dfBlock?.rmbBlock?.fldHeader, tiles = fld?.groundData?.groundTiles, auto = fld?.autoMapData;
-    const name = b.blockName ?? b.dfBlock?.name, port = isPortCell(name), edgeLand = port && isEdgeLandBlock(name), plaza = port && isCapitalOwnBlock(name);
+    const fld = b.dfBlock?.rmbBlock?.fldHeader,
+      tiles = fld?.groundData?.groundTiles,
+      auto = fld?.autoMapData;
+    const name = b.blockName ?? b.dfBlock?.name,
+      port = isPortCell(name),
+      edgeLand = port && isEdgeLandBlock(name),
+      plaza = port && isCapitalOwnBlock(name);
     for (let ay = 0; ay < C; ay++) {
       for (let ax = 0; ax < C; ax++) {
-        const i = (b.y * C + (C - 1 - ay)) * W + b.x * C + ax;   // the walk grid's own flip (CityNavigation.setBlockData)
-        if (port) { if (edgeLand && open(i)) land[i] = 1; else if (plaza && open(i)) square[i] = 1; continue; }
+        const i = (b.y * C + (C - 1 - ay)) * W + b.x * C + ax; // the walk grid's own flip (CityNavigation.setBlockData)
+        if (port) {
+          if (edgeLand && open(i)) land[i] = 1;
+          else if (plaza && open(i)) square[i] = 1;
+          continue;
+        }
         town[i] = 1;
         if (auto && isHouseByte(auto[ay * C + ax])) house[i] = 1;
         if (((tiles?.[ax >> 2]?.[ay >> 2]?.textureRecord ?? -1) & 0x3f) === 2 && open(i)) grass[i] = 1;
@@ -505,7 +629,11 @@ export function* yardLawSteps(g, loc, nav, ways = null) {
   }
   // the edge land: only within EDGE_LAND_CELLS of the town's own ground
   let anyTown = false;
-  for (let i = 0; i < n; i++) if (town[i]) { anyTown = true; break; }
+  for (let i = 0; i < n; i++)
+    if (town[i]) {
+      anyTown = true;
+      break;
+    }
   if (anyTown) {
     const near = yield* chamferSteps(W, H, town, 0x3fffffff);
     for (let i = 0; i < n; i++) if (land[i] && near[i] > 3 * EDGE_LAND_CELLS) land[i] = 0;
@@ -514,38 +642,64 @@ export function* yardLawSteps(g, loc, nav, ways = null) {
   for (let i = 0; i < n; i++) if (!town[i] && !land[i] && !square[i]) shut[i] = 1;
   // a house's garden: each piece of open grass (four-connected), FABRIC.yard[0] to FABRIC.yard[1] cells, touching a house
   // along FABRIC.yardTouch cell edges at the least - URBANIZER's yard, read as its plan reads it
-  const seen = new Uint8Array(n), stack = [];
+  const seen = new Uint8Array(n),
+    stack = [];
   for (let i0 = 0; i0 < n; i0++) {
     if (i0 && i0 % (YARD_ROWS_A_STEP * W) === 0) yield;
     if (!grass[i0] || seen[i0]) continue;
     const cells = [];
     let touch = 0;
-    seen[i0] = 1; stack.push(i0);
+    seen[i0] = 1;
+    stack.push(i0);
     while (stack.length) {
-      const i = /** @type {number} */ (stack.pop()), x = i % W, y = (i - x) / W;
+      const i = /** @type {number} */ (stack.pop()),
+        x = i % W,
+        y = (i - x) / W;
       cells.push(i);
-      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-        const nx = x + dx, ny = y + dy;
+      for (const [dx, dy] of [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+      ]) {
+        const nx = x + dx,
+          ny = y + dy;
         if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
         const j = ny * W + nx;
         if (house[j]) touch++;
-        if (grass[j] && !seen[j]) { seen[j] = 1; stack.push(j); }
+        if (grass[j] && !seen[j]) {
+          seen[j] = 1;
+          stack.push(j);
+        }
       }
     }
-    if (cells.length >= FABRIC.yard[0] && cells.length <= FABRIC.yard[1] && touch >= FABRIC.yardTouch) for (const i of cells) garden[i] = 1;
+    if (cells.length >= FABRIC.yard[0] && cells.length <= FABRIC.yard[1] && touch >= FABRIC.yardTouch)
+      for (const i of cells) garden[i] = 1;
   }
   // the town's fabric where it is planned: its ways and its yards (URBANIZER, past the Bay)
   yield;
-  const plan = ways?.plan, K = FABRIC_KIND;
+  const plan = ways?.plan,
+    K = FABRIC_KIND;
   if (plan?.kind && plan.W === W && plan.H === H) {
     for (let i = 0; i < n; i++) {
       const k = plan.kind[i];
-      if (k === K.main || k === K.pave || k === K.side) { shut[i] = 1; street[i] = 1; }
-      else if (k === K.alley) shut[i] = 1;
+      if (k === K.main || k === K.pave || k === K.side) {
+        shut[i] = 1;
+        street[i] = 1;
+      } else if (k === K.alley) shut[i] = 1;
       else if (k === K.yard) garden[i] = 1;
     }
   }
-  Object.assign(g, { town, shut, garden, street, edgeLand: land, square, toExit: null, fixed: Array.isArray(ways?.fixed) ? ways.fixed : null });
+  Object.assign(g, {
+    town,
+    shut,
+    garden,
+    street,
+    edgeLand: land,
+    square,
+    toExit: null,
+    fixed: Array.isArray(ways?.fixed) ? ways.fixed : null,
+  });
   return g;
 }
 
@@ -571,29 +725,59 @@ export const yardMeasuresOf = (yl, measure = {}) => stepsDone(yardMeasuresSteps(
 /** IC-STUTTER: yardMeasuresOf a block at a time. @param {any} yl
  *  @param {{boxOf?: (id: number, at: ArrayLike<number>) => (number[]|null), fieldOf?: (id: number) => any, millBox?: (at: ArrayLike<number>) => (number[]|null),
  *   flatsOf?: (block: any) => any[], closedBlock?: (block: any) => boolean}} [measure] */
-export function* yardMeasuresSteps(yl, { boxOf = () => null, fieldOf = () => null, millBox = () => null, flatsOf = () => [], closedBlock = () => false } = {}) {
+export function* yardMeasuresSteps(
+  yl,
+  {
+    boxOf = () => null,
+    fieldOf = () => null,
+    millBox = () => null,
+    flatsOf = () => [],
+    closedBlock = () => false,
+  } = {},
+) {
   const one = (b) => {
-    const buildings = [], props = [], flats = [], closedBlocks = [], origin = trs(b.originX, 0, b.originZ, 0, 0, 0);
+    const buildings = [],
+      props = [],
+      flats = [],
+      closedBlocks = [],
+      origin = trs(b.originX, 0, b.originZ, 0, 0, 0);
     if (closedBlock(b)) closedBlocks.push([b.x, b.y]);
     for (const m of b.layout?.models ?? []) {
       const at = multiply(origin, m.matrix);
       const field = fieldOf(m.modelIdNum);
-      if (field) { props.push(fieldRect(field, at)); continue; }
+      if (field) {
+        props.push(fieldRect(field, at));
+        continue;
+      }
       const box = boxOf(m.modelIdNum, at);
       if (box) (m.recordIndex != null ? buildings : props).push(box);
     }
-    for (const w of b.layout?.windmills ?? []) { const box = millBox(multiply(origin, w.matrix)); if (box) buildings.push(box); }
+    for (const w of b.layout?.windmills ?? []) {
+      const box = millBox(multiply(origin, w.matrix));
+      if (box) buildings.push(box);
+    }
     for (const fl of flatsOf(b) ?? []) flats.push([b.originX + fl.x, b.originZ + fl.z]);
     return { buildings, props, flats, closedBlocks };
   };
-  const all = (list) => ({ buildings: list.flatMap((m) => m.buildings), props: list.flatMap((m) => m.props), flats: list.flatMap((m) => m.flats), closedBlocks: list.flatMap((m) => m.closedBlocks) });
+  const all = (list) => ({
+    buildings: list.flatMap((m) => m.buildings),
+    props: list.flatMap((m) => m.props),
+    flats: list.flatMap((m) => m.flats),
+    closedBlocks: list.flatMap((m) => m.closedBlocks),
+  });
   const was = [];
-  for (const b of yl?.blocks ?? []) { yield; was.push(one(b)); }
+  for (const b of yl?.blocks ?? []) {
+    yield;
+    was.push(one(b));
+  }
   if (!yl?.now) return all(was);
   // FB1028 YARDS Y1: a layout with its carrier as #1184 laid it (world/townWalls.js townWallYardLayout) - and the town's
   // as it stands, `now`, for keptTownSitesSteps; a block the two share measured once
   const now = [];
-  for (const [i, b] of (yl.now.blocks ?? []).entries()) { yield; now.push(b === yl.blocks[i] ? was[i] : one(b)); }
+  for (const [i, b] of (yl.now.blocks ?? []).entries()) {
+    yield;
+    now.push(b === yl.blocks[i] ? was[i] : one(b));
+  }
   return { ...all(was), now: all(now) };
 }
 /** AUDIT MERCHANT-YARDS G1: the ground a field of flats sows over, [x0, z0, x1, z1] - round the misc model's own point
@@ -601,7 +785,8 @@ export function* yardMeasuresSteps(yl, { boxOf = () => null, fieldOf = () => nul
  *  @param {any} spec @param {ArrayLike<number>} at */
 export function fieldRect(spec, at) {
   const n = Number.isFinite(spec?.noise) ? spec.noise : 0;
-  const hx = Math.trunc((spec?.rangeX ?? 0) / 2) + n, hz = Math.trunc((spec?.rangeZ ?? 0) / 2) + n;
+  const hx = Math.trunc((spec?.rangeX ?? 0) / 2) + n,
+    hz = Math.trunc((spec?.rangeZ ?? 0) / 2) + n;
   return [at[12] - hx, at[14] - hz, at[12] + hx, at[14] + hz];
 }
 /** AUDIT MERCHANT-YARDS G1: A PLACED MODEL'S BOX under `at`, [x0, z0, x1, z1] - a registered model's own geometry first
@@ -614,7 +799,10 @@ export function placedModelBox(id, at, { custom = () => null, classic = () => nu
   const p = custom(id);
   if (p?.length) {
     let box = cache?.get(id);
-    if (!box) { box = localAabb(p); cache?.set(id, box); }
+    if (!box) {
+      box = localAabb(p);
+      cache?.set(id, box);
+    }
     const w = transformedAabb(box, at);
     return [w[0], w[2], w[3], w[5]];
   }
@@ -630,11 +818,15 @@ export function carveYards(nav, sites) {
   if (!nav?.grid) return 0;
   let n = 0;
   for (const s of sites ?? []) {
-    for (let gy = s.gy; gy < s.gy + s.nz; gy++) for (let gx = s.gx; gx < s.gx + s.nx; gx++) {
-      if (!nav.inBounds(gx, gy)) continue;
-      const i = gy * nav.width + gx;
-      if (nav.grid[i] !== 0) { nav.grid[i] = 0; n++; }
-    }
+    for (let gy = s.gy; gy < s.gy + s.nz; gy++)
+      for (let gx = s.gx; gx < s.gx + s.nx; gx++) {
+        if (!nav.inBounds(gx, gy)) continue;
+        const i = gy * nav.width + gx;
+        if (nav.grid[i] !== 0) {
+          nav.grid[i] = 0;
+          n++;
+        }
+      }
   }
   return n;
 }

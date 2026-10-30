@@ -353,7 +353,7 @@ heart, in a house's garden (a house's plot of grass, nothing to say it was one),
 earth, or - past the Bay, where a town's outline leaves open land round it - on that land wherever the middle of the grid
 fell; and a place facing no way at all won over one beside a road a dozen cells further (NO_ROAD_COST, 12 cells).
 
-**What stands** (`merchantYards/merchantYardSites.js:"export function* yardLawSteps(g, loc, nav, ways = null) {"`, read once a
+**What stands** (`merchantYards/merchantYardSites.js:"export function* yardLawSteps"`, read once a
 ground by townGroundOf):
 - NO YARD ON A WAY: the roads and paths as before, and where URBANIZER planned the town its main and side streets,
   pavements and alleys (`ways.plan` - `world/merchantYards/townYards.js` hands the town's fabric); NOR ON GROUND NOT THE
@@ -363,7 +363,7 @@ ground by townGroundOf):
   own law (FABRIC.yard's size, FABRIC.yardTouch edges on a house), and the plan's yards. A town with no other room stands
   its yard there still - the law's last step (YARD_LAW_STEPS) - so no town that stood a yard stands none.
 - ITS GATE ONTO A WAY, always where the town has such a place
-  (`merchantYardSites.js:"const score = d + (street(s[0], s[1], s[2], s[3]) > 0 ? 0 : YARD_FRONT_COST);"` - YARD_FRONT_COST
+  (`merchantYardSites.js:"const score = d +"` - YARD_FRONT_COST
   more than any town is across; NO_ROAD_COST's twelve cells stay the port's own places').
 - THE STABLE AT THE TOWN'S EDGE BY ITS ROAD OUT: nearest an exit (exitField - a way within EXIT_REACH of the town's edge,
   a gate), on the town's own ground or the open land just past it. THE WAGON YARD AND THE JOINERY on a street's or a

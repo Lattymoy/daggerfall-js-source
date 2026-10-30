@@ -2647,7 +2647,7 @@ issue. They have no logical placements"*, and *"No band aids or half assed work"
   north-west corner (`rmbFlats.js` collectBlockFlats; DFU's RMB nature flat), and the first reading set it a tile off,
   so the Elven Gardens' Wagon Yard stood under a tree the host closed and was not stood at all
   (`imperialYards.js:"const FX = TX * TILE_CELLS, FZ = TZ * TILE_CELLS + TILE_CELLS;"`). Every slice hands the yards'
-  law its share (`merchantYards/townYards.js:"export function townYardsOf(dfLocation) {"`, from `scenes/world.js`
+  law its share (`merchantYards/townYards.js:"export function townYardsOf"`, from `scenes/world.js`
   townPlacesFor) and the law places none by itself on any slice.
 - EVERY HOUSE DOOR A "RESIDENCE" (`online/onlineHomes.js:"export const homeDoorName = (name, hasVerbs, type = null) =>"`):
   a House1 to House6 with no name of its own is named as DFU discovers it - DFU's own `residence` text, no new string -

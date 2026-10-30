@@ -276,8 +276,8 @@
   {
     "name": "SIGN-PASS-a-yard-board-laid-a-bodys",
     "file": "src/world/merchantYards/merchantYardModels.js",
-    "old": "  f.hang(true);\n  const { w, h, t } = SIGN_BOARD",
-    "new": "  const { w, h, t } = SIGN_BOARD",
+    "old": "  f.hang(true);\n  const { w, h, t } = SIGN_BOARD,",
+    "new": "  const { w, h, t } = SIGN_BOARD,",
     "tests": [
       "test/world/fb1025i_signsnag.test.js"
     ]
@@ -285,8 +285,8 @@
   {
     "name": "SIGN-PASS-the-mark-left-on-after-the-board",
     "file": "src/world/merchantYards/merchantYardModels.js",
-    "old": "  f.hang(false);\n",
-    "new": "",
+    "old": "  f.hang(false);\n}",
+    "new": "}",
     "tests": [
       "test/world/fb1025i_signsnag.test.js"
     ]
@@ -303,8 +303,8 @@
   {
     "name": "SIGN-PASS-every-yard-triangle-a-bodys",
     "file": "src/world/merchantYards/merchantYardModels.js",
-    "old": "sight[v / 3 + k] = g.hung[k] ? 1 : 0;",
-    "new": "sight[v / 3 + k] = 0;",
+    "old": "    for (let k = 0; k < n / 3; k++) sight[v / 3 + k] = g.hung[k] ? 1 : 0;",
+    "new": "    for (let k = 0; k < n / 3; k++) sight[v / 3 + k] = 0;",
     "tests": [
       "test/world/fb1025i_signsnag.test.js"
     ]
