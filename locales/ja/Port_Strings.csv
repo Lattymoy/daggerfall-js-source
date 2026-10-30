@@ -273,7 +273,6 @@ account.refusal.guildPatron,"ギルドは支部の後援に入札しています
 account.refusal.guildRank,"あなたのギルドでの階級では、それはできません。"
 account.refusal.guildRankWord,"階級の名前には、名前に使えない語を含められません。"
 account.refusal.guildRate,"この1時間でギルドの変更を多く行いすぎました。しばらくしてからもう一度お試しください。"
-account.refusal.guildRenameGold,"新しい名前には{cost, number}ゴールドかかり、レルムのキャラクターが金庫に入れたゴールドから支払われますが、それだけの額がありません。"
 account.refusal.guildRenameMoved,"改名中にギルドが変更されました。何も支払われていません。もう一度確認してください。"
 account.refusal.guildRenameSame,"それはすでにギルドの名前とタグです。"
 account.refusal.guildRenameSiege,"ギルドは今週、攻城戦またはトーナメントに参加しています。戦いが終わるまで改名できません。"

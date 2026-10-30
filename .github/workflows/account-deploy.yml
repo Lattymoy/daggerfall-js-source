@@ -192,6 +192,8 @@ on:
       - "src/net/appearanceLaw.js"
       - "src/net/bagLaw.js"
       - "src/net/guild/guildVaultLaw.js"
+      - "src/net/guild/guildShopLaw.js"
+      - "src/net/guild/guildLogoLaw.js"
       - "src/net/canon.js"
       - "src/net/realm/realmGoldLaw.js"
       - "src/net/realm/realmSaveCodec.js"

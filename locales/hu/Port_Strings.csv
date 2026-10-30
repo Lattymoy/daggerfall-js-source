@@ -273,7 +273,6 @@ account.refusal.guildPatron,"A céh licitált egy páholy pártfogására. Nem o
 account.refusal.guildRank,"A céhbeli rangod ezt nem teheti meg."
 account.refusal.guildRankWord,"Egy rang neve nem tartalmazhat olyan szót, amely nevekben nem engedélyezett."
 account.refusal.guildRate,"Ebben az órában túl gyakran változtattál a céheden. Próbáld újra később."
-account.refusal.guildRenameGold,"Egy új név {cost, number} aranyba kerül, amelyet a birodalmi karakterek által a kincstárba tett aranyból kell fizetni, és abból nincs ennyi."
 account.refusal.guildRenameMoved,"A céh megváltozott az átnevezés közben. Nem történt fizetés. Nézd meg újra."
 account.refusal.guildRenameSame,"Már ez a céh neve és jele."
 account.refusal.guildRenameSiege,"A céh ezen a héten ostromban vagy Tornán vesz részt. A csata végéig nem nevezhető át."

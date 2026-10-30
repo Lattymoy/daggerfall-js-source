@@ -42,7 +42,8 @@ import { displayName, overRate } from './accounts.js';
 import { guildActorOf } from './guilds.js';
 import { marksOpenFor } from './marks.js';
 import { mustChange } from './realm.js';
-import { GUILD_TREASURY_MAX, GUILD_OPS_MAX, GUILD_OPS_WINDOW_S } from '../../src/net/guild/guildLaw.js';
+import { GUILD_TREASURY_MAX, GUILD_OPS_MAX, GUILD_OPS_WINDOW_S, guildMay } from '../../src/net/guild/guildLaw.js';
+import { guildPowerSql } from './guildPowerSql.js';   // GUILD-RANKS: the guild's powers, read in the statement
 import { GUILD_HALL_ENTRY_DEFAULT, HALL_POWERS, hallMay, guildHallPrice, guildHallEntryOk, guildHallOwner } from '../../src/net/hallLaw.js';
 import { HOME_CLAIMS_MAX, HOME_CLAIMS_WINDOW_S, homeMapIdOk, homeBuildingKeyOk, homeRegionOk, homePriceOk, homeSaleRefund, homeInArenaCell, homeLayoutOk, homeMoved } from '../../src/net/homeLaw.js';   // ARENA4b: the arena's cell; QUEST-HOME: what a hall's buy or sale moved
 import { HERALDRY_CHANGE_DRAKES, heraldryOf, heraldrySame } from '../../src/net/heraldryLaw.js';
@@ -197,12 +198,12 @@ export async function setHallEntry(ctx, player, { character, entry } = {}) {
   const { db, nowS } = ctx;
   const a = await guildActorOf(db, player, character);
   if ('error' in a) return a;
-  if (!hallMay(a.me.rank, 'hallEntry')) return { error: 'guild-rank' };
+  if (!guildMay(a.me.rank, 'hallEntry', a.powers)) return { error: 'guild-rank' };   // GUILD-RANKS: as the guild set it
   if (!guildHallEntryOk(entry)) return { error: 'bad-entry' };
   if (await overRate({ db, nowS }, `guild:${player.id}`, GUILD_OPS_MAX, GUILD_OPS_WINDOW_S)) return { error: 'guild-rate' };
   // AUDIT GUILD1d S7: the rank asked in the write too - an Officer demoted since the read turns nothing
   const r = await db.prepare(`UPDATE homes SET entry = ?1 WHERE guild_id = ?2
-    AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?3 AND guild_id = ?2 AND rank IN (${HALL_POWERS.hallEntry.join(', ')}))`).bind(entry, a.me.guild_id, a.me.rid).run();
+    AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?3 AND guild_id = ?2 AND ${guildPowerSql('hallEntry', 'rank', '?2')})`).bind(entry, a.me.guild_id, a.me.rid).run();
   if (r?.meta?.changes) return { ok: true, entry };
   return { error: (await db.prepare('SELECT 1 FROM homes WHERE guild_id = ?').bind(a.me.guild_id).first()) ? 'guild-rank' : 'guild-hall-none' };
 }

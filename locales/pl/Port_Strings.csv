@@ -273,7 +273,6 @@ account.refusal.guildPatron,"Gildia złożyła ofertę o patronat kapituły. Nie
 account.refusal.guildRank,"Twoja ranga w gildii na to nie pozwala."
 account.refusal.guildRankWord,"Nazwa rangi nie może zawierać słowa niedozwolonego w nazwach."
 account.refusal.guildRate,"Zbyt wiele zmian w twojej gildii w tej godzinie. Spróbuj później."
-account.refusal.guildRenameGold,"Nowa nazwa kosztuje {cost, number} złota, płatne ze złota wpłaconego do kasy przez postacie królestwa, a tyle go nie ma."
 account.refusal.guildRenameMoved,"Gildia zmieniła się podczas zmiany nazwy. Nic nie zapłacono. Spójrz jeszcze raz."
 account.refusal.guildRenameSame,"To już jest nazwa i skrót gildii."
 account.refusal.guildRenameSiege,"Gildia bierze w tym tygodniu udział w oblężeniu lub Turnieju. Nie można zmienić jej nazwy, dopóki bitwa się nie skończy."

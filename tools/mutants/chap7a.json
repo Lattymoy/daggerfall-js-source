@@ -382,7 +382,7 @@
   {
     "name": "CHAP7A-BID-RANK",
     "file": "server-account/src/npcChapters.js",
-    "old": "  if (!guildMay(a.me.rank, 'withdraw')) return { error: 'guild-rank' };\n",
+    "old": "  if (!guildMay(a.me.rank, 'withdraw', a.powers)) return { error: 'guild-rank' };\n",
     "new": "",
     "tests": [
       "test/net/chap7a_patrons.test.js"
