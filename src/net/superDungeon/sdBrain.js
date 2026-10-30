@@ -19,7 +19,7 @@
 // jump (world/superDungeon/sdSteps.js) is 145 m long.
 //
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
-import { sdMarksLaw, sdMarksOf } from './sdMarks.js';   // SD18a: a Hollow's marks - a leaf, so the relay's bundle takes it
+import { sdMarksLaw, sdMarksOf } from './sdMarks.js'; // SD18a: a Hollow's marks - a leaf, so the relay's bundle takes it
 
 /** The Threshold's centre in the dungeon's frame: the made block's middle (RDB_SIDE / 2 either way), the floor at y 0. */
 export const SD_REALM_ORIGIN = Object.freeze([25.6, 0, 25.6]);
@@ -70,7 +70,11 @@ export const SD_HOURS = 12;
 export const SD_STONE_RING_R = 11;
 export const SD_STONE_BEARINGS = Object.freeze([30, 90, 150, 210, 270, 330].map((d) => (d * Math.PI) / 180));
 /** Where each stone stands, in the realm's frame. */
-export const SD_STONE_POS = Object.freeze(SD_STONE_BEARINGS.map((b) => Object.freeze({ x: SD_ORRERY.x + SD_STONE_RING_R * Math.sin(b), z: SD_ORRERY.z + SD_STONE_RING_R * Math.cos(b) })));
+export const SD_STONE_POS = Object.freeze(
+  SD_STONE_BEARINGS.map((b) =>
+    Object.freeze({ x: SD_ORRERY.x + SD_STONE_RING_R * Math.sin(b), z: SD_ORRERY.z + SD_STONE_RING_R * Math.cos(b) }),
+  ),
+);
 /** A player within this of a stone (metres, on the floor) turns it; the relay allows a pose's lag over it. */
 export const SD_STONE_REACH = 3;
 export const SD_STONE_REACH_SLACK = 1;
@@ -114,10 +118,30 @@ export function sdRng(seed) {
   };
 }
 const sdPick = (r, n) => Math.floor(r() * n);
-const sdShuffle = (r, xs) => { const a = [...xs]; for (let i = a.length - 1; i > 0; i--) { const j = sdPick(r, i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const sdShuffle = (r, xs) => {
+  const a = [...xs];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = sdPick(r, i + 1);
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
 
 const SD_ORRERY_SALT = 0x0e4ae7;
-const SD_HOUR_WORDS = Object.freeze(['twelfth', 'first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'ninth', 'tenth', 'eleventh']);
+const SD_HOUR_WORDS = Object.freeze([
+  'twelfth',
+  'first',
+  'second',
+  'third',
+  'fourth',
+  'fifth',
+  'sixth',
+  'seventh',
+  'eighth',
+  'ninth',
+  'tenth',
+  'eleventh',
+]);
 const SD_COUNT_WORDS = Object.freeze(['', 'one', 'two', 'three', 'four', 'five']);
 const sdCap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 /** SD6c: an hour's word - 'the third hour' is `sdHourWord(3)`'s 'third', the twelfth's 0. */
@@ -126,7 +150,8 @@ export const sdHourWord = (h) => SD_HOUR_WORDS[sdHour(Math.round(h))];
 /** A riddle's words. Kinds: `plain` (a keeps hour h), `offset` (a keeps b's hour and k more - k -5 to 5), `opposite`
  *  (a stands six hours from b), `mirror` (a stands as far before twelve as b stands past it - 12 - h). */
 export function sdRiddleText(c) {
-  const A = SD_STONES[c.a].name, B = c.b != null ? SD_STONES[c.b].name : '';
+  const A = SD_STONES[c.a].name,
+    B = c.b != null ? SD_STONES[c.b].name : '';
   if (c.kind === 'plain') return `${sdCap(A)} keeps the ${sdHourWord(c.h)} hour.`;
   if (c.kind === 'opposite') return `${sdCap(A)} stands opposite ${B}.`;
   // AUDIT SD II (L4 C5): it said "Read A from twelve backwards and you read B", which counts twelve as the first and reads
@@ -137,7 +162,8 @@ export function sdRiddleText(c) {
 }
 /** Whether a set of hours answers a riddle. */
 export function sdRiddleHolds(c, hours) {
-  const a = sdHour(hours[c.a]), b = c.b != null ? sdHour(hours[c.b]) : 0;
+  const a = sdHour(hours[c.a]),
+    b = c.b != null ? sdHour(hours[c.b]) : 0;
   if (c.kind === 'plain') return a === sdHour(c.h);
   if (c.kind === 'opposite') return a === sdHour(b + 6);
   if (c.kind === 'mirror') return sdHour(a + b) === 0;
@@ -173,7 +199,8 @@ export function orreryOf(s, opts = null) {
   const key = opts ? `${s}:${opts.turnsMin}:${opts.turnsMax}:${opts.fray ?? ''}` : s;
   const had = orreryCache.get(key);
   if (had) return had;
-  const tMin = opts?.turnsMin ?? SD_TRUTH_TURNS_MIN, tMax = opts?.turnsMax ?? SD_TRUTH_TURNS_MAX;
+  const tMin = opts?.turnsMin ?? SD_TRUTH_TURNS_MIN,
+    tMax = opts?.turnsMax ?? SD_TRUTH_TURNS_MAX;
   const r = sdRng(sdSeed(s, SD_ORRERY_SALT));
   const n = SD_STONES.length;
   // THE GEARING: a hidden order; each stone after the first turns one or two stones before it, one or two hours either way
@@ -191,18 +218,42 @@ export function orreryOf(s, opts = null) {
   const clues = [];
   for (let q = 0; q < n; q++) {
     const a = chain[q];
-    if (q < 2) { truth[a] = sdPick(r, SD_HOURS); clues.push({ kind: 'plain', a, h: truth[a] }); continue; }
-    const b = chain[sdPick(r, q)], roll = r();
-    if (roll < 0.2) { truth[a] = sdHour(truth[b] + 6); clues.push({ kind: 'opposite', a, b }); }
-    else if (roll < 0.5) { truth[a] = sdHour(-truth[b]); clues.push(r() < 0.5 ? { kind: 'mirror', a, b } : { kind: 'mirror', a: b, b: a }); }
-    else { const k = sdPick(r, 11) - 5; truth[a] = sdHour(truth[b] + k); clues.push({ kind: 'offset', a, b, k }); }
+    if (q < 2) {
+      truth[a] = sdPick(r, SD_HOURS);
+      clues.push({ kind: 'plain', a, h: truth[a] });
+      continue;
+    }
+    const b = chain[sdPick(r, q)],
+      roll = r();
+    if (roll < 0.2) {
+      truth[a] = sdHour(truth[b] + 6);
+      clues.push({ kind: 'opposite', a, b });
+    } else if (roll < 0.5) {
+      truth[a] = sdHour(-truth[b]);
+      clues.push(r() < 0.5 ? { kind: 'mirror', a, b } : { kind: 'mirror', a: b, b: a });
+    } else {
+      const k = sdPick(r, 11) - 5;
+      truth[a] = sdHour(truth[b] + k);
+      clues.push({ kind: 'offset', a, b, k });
+    }
   }
   // THE START: drawn until the way from it to the truth is SD_TRUTH_TURNS_MIN to SD_TRUTH_TURNS_MAX turns at its shortest
   let start, way;
-  do { start = Array.from({ length: n }, () => sdPick(r, SD_HOURS)); way = solveGear(order, gear, start, truth); }
-  while (sdWayTurns(way) < tMin || sdWayTurns(way) > tMax);
+  do {
+    start = Array.from({ length: n }, () => sdPick(r, SD_HOURS));
+    way = solveGear(order, gear, start, truth);
+  } while (sdWayTurns(way) < tMin || sdWayTurns(way) > tMax);
   const riddles = sdShuffle(r, clues).map((c) => Object.freeze({ ...c, text: sdRiddleText(c) }));
-  const o = Object.freeze({ s, order: Object.freeze(order), gear: Object.freeze(gear.map((g) => Object.freeze(g))), start: Object.freeze(start), way: Object.freeze(way), truth: Object.freeze(truth), riddles: Object.freeze(riddles) , fray: opts?.fray ?? (opts ? SD_FRAY_MAX : sdMarksLaw(sdMarksOf(s)).fray ?? SD_FRAY_MAX) });   // SD18a: the Fraying's thirty-six
+  const o = Object.freeze({
+    s,
+    order: Object.freeze(order),
+    gear: Object.freeze(gear.map((g) => Object.freeze(g))),
+    start: Object.freeze(start),
+    way: Object.freeze(way),
+    truth: Object.freeze(truth),
+    riddles: Object.freeze(riddles),
+    fray: opts?.fray ?? (opts ? SD_FRAY_MAX : (sdMarksLaw(sdMarksOf(s)).fray ?? SD_FRAY_MAX)),
+  }); // SD18a: the Fraying's thirty-six
   if (orreryCache.size >= 64) orreryCache.delete(orreryCache.keys().next().value);
   orreryCache.set(key, o);
   return o;
@@ -227,9 +278,15 @@ export const orreryFresh = (o) => ({ st: [...o.start], f: 0, ok: false });
  */
 export function orreryStep(o, state, i, a) {
   if (state.ok) return null;
-  let st = orreryTurn(o, state.st, i, a), f = state.f + 1, x = false;
+  let st = orreryTurn(o, state.st, i, a),
+    f = state.f + 1,
+    x = false;
   const ok = orreryConcord(o, st);
-  if (!ok && f >= (o.fray ?? SD_FRAY_MAX)) { st = [...o.start]; f = 0; x = true; }   // SD18a: its Hollow's fray
+  if (!ok && f >= (o.fray ?? SD_FRAY_MAX)) {
+    st = [...o.start];
+    f = 0;
+    x = true;
+  } // SD18a: its Hollow's fray
   return { st, f, ok, x, lit: orreryLit(o, st) };
 }
 /**
@@ -259,7 +316,11 @@ export const SD_TURN_COMPANY_MS = 60_000;
 /** The line a refused turner reads. */
 export const SD_TURN_WAIT_LINE = 'The stones will not answer you while others turn them.';
 /** A thread's rights, fresh. */
-export const orreryRightsFresh = () => ({ by: /** @type {Record<string, { long: number, at: number }>} */ ({}), ids: /** @type {Record<string, number>} */ ({}), wt: /** @type {Record<string, 1>} */ ({}) });
+export const orreryRightsFresh = () => ({
+  by: /** @type {Record<string, { long: number, at: number }>} */ ({}),
+  ids: /** @type {Record<string, number>} */ ({}),
+  wt: /** @type {Record<string, 1>} */ ({}),
+});
 /** RPT1026-EVENTS ORRERY-HANDS: the rights past a snap - the lash's nets begun again with the thread, each turner's count of
  *  the road it lengthened kept for the Hollow. AUDIT RPT1026 I1: save a hand the thread held out behind held hands alone
  *  (`wt`, orreryWaited) - its count begins again with the thread. Held hands hold each other: once a team has spent its six
@@ -284,7 +345,8 @@ export function orreryMayTurn(R, who, now) {
  *  held too, so the snap a held hand brings on frees it (orreryRightsSnapped); a free hand turning (a solver, a learner
  *  inside its six) marks nobody. */
 export function orreryWaited(R, who, now) {
-  for (const [k, v] of Object.entries(R.by)) if (k !== who && now - v.at < SD_TURN_COMPANY_MS && v.long < SD_TURN_LONG_MAX) return;
+  for (const [k, v] of Object.entries(R.by))
+    if (k !== who && now - v.at < SD_TURN_COMPANY_MS && v.long < SD_TURN_LONG_MAX) return;
   (R.wt ??= {})[who] = 1;
 }
 /** A turn by `who` (its socket's peer `id`) taken at `now`: `road` the fewest turns to the Concord before it, `after`
@@ -297,7 +359,11 @@ export function orreryTurned(R, who, id, road, after, now) {
 }
 /** Whom the snap lashes: the peers who turned this thread and did not bring the Concord nearer by it, net - at most
  *  `max`. */
-export const orreryLashed = (R, max = 256) => Object.entries(R.ids).filter(([, net]) => net >= 0).map(([id]) => id).slice(0, max);
+export const orreryLashed = (R, max = 256) =>
+  Object.entries(R.ids)
+    .filter(([, net]) => net >= 0)
+    .map(([id]) => id)
+    .slice(0, max);
 /**
  * EG-H3 (2026-10-12; bible/11-Multiplayer/Elite-Gates.md sections 8.4 and 31, EG4): ONE TURN OF A STONE, JUDGED - the
  * Hour's realm's judge (server/src/index.js _sdTurn) and the Spire's Athenaeum's (net/eliteGates/egBrain.js), one law over the one
@@ -310,7 +376,10 @@ export const orreryLashed = (R, max = 256) => Object.entries(R.ids).filter(([, n
  */
 export function orreryJudge(o, lock, last, i, a, now, R = null, who = '', id = '') {
   if (lock.ok || now - (last[i] ?? 0) < SD_STONE_SETTLE_MS) return null;
-  if (R && !orreryMayTurn(R, who, now)) { orreryWaited(R, who, now); return { wait: true }; }   // AUDIT RPT1026 I1: held out behind held hands alone - freed at the snap
+  if (R && !orreryMayTurn(R, who, now)) {
+    orreryWaited(R, who, now);
+    return { wait: true };
+  } // AUDIT RPT1026 I1: held out behind held hands alone - freed at the snap
   const road = R ? orreryShortest(o, lock.st) : 0;
   const res = orreryStep(o, lock, i, a);
   if (!res) return null;
@@ -320,6 +389,7 @@ export function orreryJudge(o, lock, last, i, a, now, R = null, who = '', id = '
 
 /** Whether a pose (the realm's frame) reaches stone `i` - the relay allowing `slack` for a pose's lag. A pose that is no
  *  number reaches nothing (NaN compares false). */
-export const stoneInReach = (i, x, z, slack = 0) => Math.hypot(x - SD_STONE_POS[i].x, z - SD_STONE_POS[i].z) <= SD_STONE_REACH + slack;
+export const stoneInReach = (i, x, z, slack = 0) =>
+  Math.hypot(x - SD_STONE_POS[i].x, z - SD_STONE_POS[i].z) <= SD_STONE_REACH + slack;
 /** Whether a pose (the realm's frame) stands in the Orrery's hall - where the snap's lash reaches. */
 export const inOrreryHall = (x, z) => Math.hypot(x - SD_ORRERY.x, z - SD_ORRERY.z) <= SD_ORRERY.r;

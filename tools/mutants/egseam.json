@@ -353,8 +353,8 @@
   {
     "name": "EGSEAM-the-road-after-unmoved",
     "file": "src/net/superDungeon/sdBrain.js",
-    "old": "orreryTurned(R, who, id, road, orreryShortest(o, orreryTurn(o, lock.st, i, a)), now);",
-    "new": "orreryTurned(R, who, id, road, orreryShortest(o, lock.st), now);",
+    "old": "  if (R) orreryTurned(R, who, id, road, orreryShortest(o, orreryTurn(o, lock.st, i, a)), now);",
+    "new": "  if (R) orreryTurned(R, who, id, road, orreryShortest(o, lock.st), now);",
     "tests": [
       "test/net/eliteGates/egseam_law.test.js"
     ]

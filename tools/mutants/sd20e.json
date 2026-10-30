@@ -191,8 +191,8 @@
   {
     "name": "SD20E-T9-the-old-signature",
     "file": "src/net/superDungeon/sdMarks.js",
-    "old": "sig: 'The Dragon\\'s Haste',",
-    "new": "sig: 'The Dragon\\'s Break',",
+    "old": "    sig: \"The Dragon's Haste\",",
+    "new": "    sig: \"The Dragon's Break\",",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "SD20E-T14-a-fixed-fifteen",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "SD_FIGHT_TEXT.dragonBreak(sdProfileOf(state).pairMs)",
-    "new": "SD_FIGHT_TEXT.dragonBreak(15_000)",
+    "old": "      if (w.k === 'ph' && was.fi)\n        say(w.n === 2 ? SD_FIGHT_TEXT.dragonBreak(sdProfileOf(state).pairMs) : SD_FIGHT_TEXT.lastMoment);",
+    "new": "      if (w.k === 'ph' && was.fi) say(w.n === 2 ? SD_FIGHT_TEXT.dragonBreak(15_000) : SD_FIGHT_TEXT.lastMoment);",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "SD20E-T13-garbled-again",
     "file": "src/net/superDungeon/sdMarks.js",
-    "old": "text: 'Each Mantella Pulse climbs twice as fast, to three quarters of your health at most.'",
-    "new": "text: 'Each Mantella Pulse climbs twice as steeply - to three quarters of your health.'",
+    "old": "    text: 'Each Mantella Pulse climbs twice as fast, to three quarters of your health at most.',",
+    "new": "    text: 'Each Mantella Pulse climbs twice as steeply - to three quarters of your health.',",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "SD20E-T15-the-cast-out-the-hollows",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": "'The Hour closes, and the Abyss Dungeon folds in on itself behind you.'",
-    "new": "'The Hour closes, and the Hollow folds in on itself behind you.'",
+    "old": "export const SD_CAST_OUT_LINE = 'The Hour closes, and the Abyss Dungeon folds in on itself behind you.'; // AUDIT SD III (T15): the player's word for it (ABYSS-NAME) - it said \"the Hollow\"",
+    "new": "export const SD_CAST_OUT_LINE = 'The Hour closes, and the Hollow folds in on itself behind you.'; // AUDIT SD III (T15): the player's word for it (ABYSS-NAME) - it said \"the Hollow\"",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -345,8 +345,8 @@
     "name": "SD20E-T19-the-region-after-near",
     "file": "src/net/superDungeon/sdLaw.js",
     "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
-    "old": "region ? `in the ${region} region` : province ? 'in ' + province : 'near ' + SD_BAY_NAME",
-    "new": "region ? `near ${region}` : province ? 'in ' + province : 'near ' + SD_BAY_NAME",
+    "old": "  near ? `near ${near}` : region ? `in the ${region} region` : province ? 'in ' + province : 'near ' + SD_BAY_NAME; // WW5: a province's Hollow is in its province (`province` - its name)",
+    "new": "  near ? `near ${near}` : region ? `near ${region}` : province ? 'in ' + province : 'near ' + SD_BAY_NAME; // WW5: a province's Hollow is in its province (`province` - its name)",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]

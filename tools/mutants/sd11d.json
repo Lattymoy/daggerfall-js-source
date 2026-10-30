@@ -264,8 +264,8 @@
   {
     "name": "SD11D-no-heart-line",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "      else if (w.k === 'cxb' && was.fi && was.cx?.i === w.i && (was.cx.c[w.c]?.[2] ?? 0) > 0) say(",
-    "new": "      else if (false) say(",
+    "old": "      else if (w.k === 'cxb' && was.fi && was.cx?.i === w.i && (was.cx.c[w.c]?.[2] ?? 0) > 0)",
+    "new": "      else if (false)",
     "tests": [
       "test/scenes/superDungeon/sd11d_words.test.js"
     ]
@@ -273,8 +273,8 @@
   {
     "name": "SD11D-a-broken-heart-said-twice",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": " && was.cx?.i === w.i && (was.cx.c[w.c]?.[2] ?? 0) > 0) say(",
-    "new": ") say(",
+    "old": "      else if (w.k === 'cxb' && was.fi && was.cx?.i === w.i && (was.cx.c[w.c]?.[2] ?? 0) > 0)",
+    "new": "      else if (w.k === 'cxb' && was.fi)",
     "tests": [
       "test/scenes/superDungeon/sd11d_words.test.js"
     ]
@@ -282,8 +282,8 @@
   {
     "name": "SD11D-the-line-off-its-thread",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "state.cx.c.filter((q) => q[2] > 0).length : 0), SD_HEARTS_KEY);",
-    "new": "state.cx.c.filter((q) => q[2] > 0).length : 0));",
+    "old": "        say(SD_FIGHT_TEXT.heartBroken(w.n, state.cx ? state.cx.c.filter((q) => q[2] > 0).length : 0), SD_HEARTS_KEY); // AUDIT SD II (L6 F7): a Heart broken, by whom, and how many stand",
+    "new": "        say(SD_FIGHT_TEXT.heartBroken(w.n, state.cx ? state.cx.c.filter((q) => q[2] > 0).length : 0)); // AUDIT SD II (L6 F7): a Heart broken, by whom, and how many stand",
     "tests": [
       "test/scenes/superDungeon/sd11d_words.test.js"
     ]
@@ -291,8 +291,8 @@
   {
     "name": "SD11D-the-last-heart-a-count",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "(left > 0 ? `${who || 'A fighter'} breaks a Heart. ${left} ${left === 1 ? 'remains' : 'remain'}.` : `${who || 'A fighter'} breaks the last Heart!`)",
-    "new": "`${who || 'A fighter'} breaks a Heart. ${left} remain.`",
+    "old": "  heartBroken: (who, left) =>\n    left > 0\n      ? `${who || 'A fighter'} breaks a Heart. ${left} ${left === 1 ? 'remains' : 'remain'}.`\n      : `${who || 'A fighter'} breaks the last Heart!`,",
+    "new": "  heartBroken: (who, left) => `${who || 'A fighter'} breaks a Heart. ${left} remain.`,",
     "tests": [
       "test/scenes/superDungeon/sd11d_words.test.js"
     ]
@@ -300,8 +300,8 @@
   {
     "name": "SD11D-the-old-dragon-break",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "dragonBreak: (ms) => `The Dragon Break! Fell Gold and Silver within ${Math.round(ms / 1000)} seconds of each other.`,",
-    "new": "dragonBreak: () => 'The Dragon Break! The Remnant steps outside time - strike down the GOLD and SILVER Echoes together.',",
+    "old": "  dragonBreak: (ms) => `The Dragon Break! Fell Gold and Silver within ${Math.round(ms / 1000)} seconds of each other.`, // AUDIT SD III (T14): the window's one form, by its frame's own - \"together\" said none",
+    "new": "  dragonBreak: () =>\n    'The Dragon Break! The Remnant steps outside time - strike down the GOLD and SILVER Echoes together.', // AUDIT SD III (T14): the window's one form, by its frame's own - \"together\" said none",
     "tests": [
       "test/scenes/superDungeon/sd11d_words.test.js"
     ]
@@ -309,8 +309,8 @@
   {
     "name": "SD11D-the-old-stun",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "stunned: 'The Reset breaks! Strike now!',",
-    "new": "stunned: 'The Reset is broken! The Remnant is stunned.',",
+    "old": "  stunned: 'The Reset breaks! Strike now!', // the bar says \"Stunned - 8s\"",
+    "new": "  stunned: 'The Reset is broken! The Remnant is stunned.', // the bar says \"Stunned - 8s\"",
     "tests": [
       "test/scenes/superDungeon/sd11d_words.test.js"
     ]

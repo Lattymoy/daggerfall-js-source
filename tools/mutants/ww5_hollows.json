@@ -119,8 +119,8 @@
   {
     "name": "WW5-SD-a-provinces-census-region",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": "[CHAT_BAY_REGIONS - 1 + lane]",
-    "new": "[CHAT_BAY_REGIONS + lane]",
+    "old": "      ? [CHAT_BAY_REGIONS - 1 + lane]",
+    "new": "      ? [CHAT_BAY_REGIONS + lane]",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "WW5-SD-the-lanes-zero",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": "({ s: lane * SD_LANE_SPAN, ph: 'gone'",
-    "new": "({ s: 0, ph: 'gone'",
+    "old": "  /** @type {SdRecord} */ ({\n    s: lane * SD_LANE_SPAN,\n    ph: 'gone',\n    r: -1,\n    at: now,\n    until: now,\n    next: now + SD_FIRST_RISE_MS,\n  });",
+    "new": "  /** @type {SdRecord} */ ({ s: 0, ph: 'gone', r: -1, at: now, until: now, next: now + SD_FIRST_RISE_MS });",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "WW5-SD-a-rise-across-lanes",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": "  if (!sdLaneOpen(lane) || (prev && sdLaneOf(prev.s) !== lane)) return null;\n",
-    "new": "  if (!sdLaneOpen(lane)) return null;\n",
+    "old": "  if (!sdLaneOpen(lane) || (prev && sdLaneOf(prev.s) !== lane)) return null;",
+    "new": "  if (!sdLaneOpen(lane)) return null;",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "WW5-SD-a-rise-in-anothers-region",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": " || !sdLaneRegionOk(lane, region)) return null;",
-    "new": ") return null;",
+    "old": "  if (!Number.isSafeInteger(region) || region < -1 || region >= SD_REGION_COUNT || !sdLaneRegionOk(lane, region))\n    return null;",
+    "new": "  if (!Number.isSafeInteger(region) || region < -1 || region >= SD_REGION_COUNT) return null;",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "WW5-SD-the-lanes-overflow",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": "  if (s > SD_SLOT_MAX || sdLaneOf(s) !== lane) return null;\n",
-    "new": "  if (s > SD_SLOT_MAX) return null;\n",
+    "old": "  if (s > SD_SLOT_MAX || sdLaneOf(s) !== lane) return null;",
+    "new": "  if (s > SD_SLOT_MAX) return null;",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "WW5-SD-the-pick-across-lanes",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": "  for (const r of sdLaneRegions(sdLaneOf(s))) if",
-    "new": "  for (let r = 0; r < SD_REGION_COUNT; r++) if",
+    "old": "  for (const r of sdLaneRegions(sdLaneOf(s)))",
+    "new": "  for (let r = 0; r < SD_REGION_COUNT; r++)",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "WW5-SD-the-province-unnamed",
     "file": "src/net/superDungeon/sdHerald.js",
-    "old": "return lane > 0 ? PROVINCE_REGION_NAMES[lane - 1] ?? '' : '';",
-    "new": "return '';",
+    "old": "  return lane > 0 ? (PROVINCE_REGION_NAMES[lane - 1] ?? '') : '';",
+    "new": "  return '';",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "WW5-SD-the-bays-rise-text-moved",
     "file": "src/net/superDungeon/sdHerald.js",
-    "old": "somewhere in ${sdProvinceName(rec.s) || SD_BAY_NAME}, and",
-    "new": "somewhere in ${SD_BAY_NAME}, and",
+    "old": "    text: `A bell rings where there is no bell. A column of brass-gold light stands over it somewhere in ${sdProvinceName(rec.s) || SD_BAY_NAME}, and the taverns of the nearest city speak of it. No map shows it until someone reaches its door.`, // WW5: a province's in its province",
+    "new": "    text: `A bell rings where there is no bell. A column of brass-gold light stands over it somewhere in ${SD_BAY_NAME}, and the taverns of the nearest city speak of it. No map shows it until someone reaches its door.`, // WW5: a province's in its province",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "WW5-SD-the-province-unsaid",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": "region ? `in the ${region} region` : province ? 'in ' + province : 'near ' + SD_BAY_NAME",
-    "new": "region ? `in the ${region} region` : 'near ' + SD_BAY_NAME",
+    "old": "  near ? `near ${near}` : region ? `in the ${region} region` : province ? 'in ' + province : 'near ' + SD_BAY_NAME; // WW5: a province's Hollow is in its province (`province` - its name)",
+    "new": "  near ? `near ${near}` : region ? `in the ${region} region` : 'near ' + SD_BAY_NAME; // WW5: a province's Hollow is in its province (`province` - its name)",
     "tests": [
       "test/world/worldWide/ww5_hollows.test.js"
     ]

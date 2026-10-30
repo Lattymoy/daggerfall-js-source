@@ -164,8 +164,8 @@
   {
     "name": "SD9B-an-unsigned-one-kept",
     "file": "src/net/superDungeon/sdClaims.js",
-    "old": "  const live = (r) => { const c = typeof r === 'string' ? readSdReceipt(r) : null; const t = nowS(); return c && c.signed && (t == null || c.e > t) ? c : null; };",
-    "new": "  const live = (r) => { const c = typeof r === 'string' ? readSdReceipt(r) : null; const t = nowS(); return c && (t == null || c.e > t) ? c : null; };",
+    "old": "    return c && c.signed && (t == null || c.e > t) ? c : null;",
+    "new": "    return c && (t == null || c.e > t) ? c : null;",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "SD9B-an-expired-one-kept",
     "file": "src/net/superDungeon/sdClaims.js",
-    "old": "  const live = (r) => { const c = typeof r === 'string' ? readSdReceipt(r) : null; const t = nowS(); return c && c.signed && (t == null || c.e > t) ? c : null; };",
-    "new": "  const live = (r) => { const c = typeof r === 'string' ? readSdReceipt(r) : null; return c && c.signed ? c : null; };",
+    "old": "    const t = nowS();\n    return c && c.signed && (t == null || c.e > t) ? c : null;",
+    "new": "    return c && c.signed ? c : null;",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "SD9B-anothers-offered",
     "file": "src/net/superDungeon/sdClaims.js",
-    "old": "        if (!mine || live(r)?.s !== mine) continue;",
-    "new": "        if (!mine) continue;",
+    "old": "        if (!mine || live(r)?.s !== mine) continue; // another account's waits for its own sign-in",
+    "new": "        if (!mine) continue; // another account's waits for its own sign-in",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "SD9B-the-title-unsaid",
     "file": "src/net/superDungeon/sdClaims.js",
-    "old": "          if (answer.data.title === true) say(SD_CLAIM_TEXT.title);\n",
-    "new": "",
+    "old": "          if (answer.data.title === true) say(SD_CLAIM_TEXT.title);\n          if (answer.data.aura === true) say(SD_CLAIM_TEXT.aura);",
+    "new": "          if (answer.data.aura === true) say(SD_CLAIM_TEXT.aura);",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "SD9B-the-aura-unsaid",
     "file": "src/net/superDungeon/sdClaims.js",
-    "old": "          if (answer.data.aura === true) say(SD_CLAIM_TEXT.aura);\n",
-    "new": "",
+    "old": "          if (answer.data.aura === true) say(SD_CLAIM_TEXT.aura);\n          // HONOUR-BANNER: its popup - for a grant the account did not hold before (AUDIT FIVE-ASKS E1: a re-roll of a held one is",
+    "new": "          // HONOUR-BANNER: its popup - for a grant the account did not hold before (AUDIT FIVE-ASKS E1: a re-roll of a held one is",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "SD9B-the-guest-said-twice",
     "file": "src/net/superDungeon/sdClaims.js",
-    "old": "} else if (answer?.ok && answer.data?.why === 'guest' && !guestSaid.has(r)) {",
-    "new": "} else if (answer?.ok && answer.data?.why === 'guest') {",
+    "old": "        } else if (answer?.ok && answer.data?.why === 'guest' && !guestSaid.has(r)) {",
+    "new": "        } else if (answer?.ok && answer.data?.why === 'guest') {",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "SD9B-a-guest-let-go",
     "file": "src/net/superDungeon/sdClaims.js",
-    "old": "  if (answer?.ok) return answer.data?.why === 'guest' ? 'keep' : 'done';",
-    "new": "  if (answer?.ok) return 'done';",
+    "old": "  if (answer?.ok) return answer.data?.why === 'guest' ? 'keep' : 'done'; // counted, or counted before",
+    "new": "  if (answer?.ok) return 'done'; // counted, or counted before",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "SD9B-unbounded",
     "file": "src/net/superDungeon/sdClaims.js",
-    "old": "        const drop = theirs.length >= SD_CLAIMS_MAX ? theirs[0] : null;",
-    "new": "        const drop = null;",
+    "old": "        const drop = theirs.length >= SD_CLAIMS_MAX ? theirs[0] : null; // the account's own oldest, never another's",
+    "new": "        const drop = null; // the account's own oldest, never another's",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "SD9B-two-of-one-hollow",
     "file": "src/net/superDungeon/sdClaims.js",
-    "old": "return k === r || (o?.d === c.d && o?.s === c.s);",
-    "new": "return k === r;",
+    "old": "          return k === r || (o?.d === c.d && o?.s === c.s);",
+    "new": "          return k === r;",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "SD9B-the-clock-ignored",
     "file": "src/net/superDungeon/sdClaims.js",
-    "old": "      if (!signedIn && !due) return false;\n",
-    "new": "",
+    "old": "      if (!signedIn && !due) return false;\n      if (!kept().some((r) => mine && live(r)?.s === mine)) {",
+    "new": "      if (!kept().some((r) => mine && live(r)?.s === mine)) {",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]

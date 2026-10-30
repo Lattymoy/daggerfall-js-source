@@ -20,8 +20,8 @@
   {
     "name": "SD8A-a-heart-for-every-living",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "SD_HEARTS[0] + Math.floor(Math.max(0, n) / 2)",
-    "new": "SD_HEARTS[0] + Math.max(0, n)",
+    "old": "export const heartCountFor = (n) =>\n  Math.max(SD_HEARTS[0], Math.min(SD_HEARTS[1], SD_HEARTS[0] + Math.floor(Math.max(0, n) / 2)));",
+    "new": "export const heartCountFor = (n) => Math.max(SD_HEARTS[0], Math.min(SD_HEARTS[1], SD_HEARTS[0] + Math.max(0, n)));",
     "tests": [
       "test/net/superDungeon/sd8a_remnant.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SD8A-the-share-at-full",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "  f.hp += share * frac;\n  rescaleEchoes(f);",
-    "new": "  f.hp += share;\n  rescaleEchoes(f);",
+    "old": "  f.hp += share * frac;",
+    "new": "  f.hp += share;",
     "tests": [
       "test/net/superDungeon/sd8a_remnant.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SD8A-the-bucket-always-full",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "bucket: fresh ? BUCKET_DEPTH_X * dpsRef(level) : 0,",
-    "new": "bucket: BUCKET_DEPTH_X * dpsRef(level),",
+    "old": "    bucket: fresh ? BUCKET_DEPTH_X * dpsRef(level) : 0,",
+    "new": "    bucket: BUCKET_DEPTH_X * dpsRef(level),",
     "tests": [
       "test/net/superDungeon/sd8a_remnant.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SD8A-the-stun-unweighted",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "d * (now < f.stunUntil ? SD_STUN_HIT_X : 1)",
-    "new": "d",
+    "old": "  const got = spendPurse(p, d * (now < f.stunUntil ? SD_STUN_HIT_X : 1), Math.max(0, f.hp - floorOf(f)), now);",
+    "new": "  const got = spendPurse(p, d, Math.max(0, f.hp - floorOf(f)), now);",
     "tests": [
       "test/net/superDungeon/sd8a_remnant.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SD8A-awake-from-the-birth",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "export const remnantOpen = (f, now) => !over(f, now) && now >= f.op && f.phase !== 2",
-    "new": "export const remnantOpen = (f, now) => !over(f, now) && f.phase !== 2",
+    "old": "export const remnantOpen = (f, now) => !over(f, now) && now >= f.op && f.phase !== 2 && now >= (f.outUntil ?? 0);",
+    "new": "export const remnantOpen = (f, now) => !over(f, now) && f.phase !== 2 && now >= (f.outUntil ?? 0);",
     "tests": [
       "test/net/superDungeon/sd8a_remnant.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SD8A-struck-outside-time",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "&& now >= f.op && f.phase !== 2 && now >= (f.outUntil ?? 0);",
-    "new": "&& now >= f.op && now >= (f.outUntil ?? 0);",
+    "old": "export const remnantOpen = (f, now) => !over(f, now) && now >= f.op && f.phase !== 2 && now >= (f.outUntil ?? 0);",
+    "new": "export const remnantOpen = (f, now) => !over(f, now) && now >= f.op && now >= (f.outUntil ?? 0);",
     "tests": [
       "test/net/superDungeon/sd8a_remnant.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SD8A-no-walk-in",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "    if (B.atk.a === SD_BLOWS.hand.id || B.atk.a === SD_BLOWS.volley.id) B.walkUntil = now + SD_WALK_IN_MS;",
-    "new": "    if (false) B.walkUntil = now + SD_WALK_IN_MS;",
+    "old": "    if (B.atk.a === SD_BLOWS.hand.id || B.atk.a === SD_BLOWS.volley.id) B.walkUntil = now + SD_WALK_IN_MS; // a far blow: it walks in after",
+    "new": "    if (false) B.walkUntil = now + SD_WALK_IN_MS; // a far blow: it walks in after",
     "tests": [
       "test/net/superDungeon/sd8a_remnant.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "SD8A-the-stomp-from-afar",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "ringPct: 0.3, ringBase: 8, aim: 'self', range: 5, w: 2 })",
-    "new": "ringPct: 0.3, ringBase: 8, aim: 'self', range: 40, w: 2 })",
+    "old": "    range: 5,",
+    "new": "    range: 40,",
     "tests": [
       "test/net/superDungeon/sd8a_remnant.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "SD8A-the-volley-at-everyone",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "    tg = live.slice(0, P.volleyMax).map(",
-    "new": "    tg = live.map(",
+    "old": "    tg = live.slice(0, P.volleyMax).map((o) => keepInArena(o.x, o.z, SD_ARENA.r - 1)); // SD18a: Sunfall's seven",
+    "new": "    tg = live.map((o) => keepInArena(o.x, o.z, SD_ARENA.r - 1)); // SD18a: Sunfall's seven",
     "tests": [
       "test/net/superDungeon/sd8a_remnant.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SD8A-the-hand-one-way",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "b === SD_BODY.gold ? 1 : rng() < 0.5 ? 1 : -1)) : 0;",
-    "new": "b === SD_BODY.gold ? 1 : 1)) : 0;",
+    "old": "  const way =\n    A === SD_BLOWS.hand ? sw || (b === SD_BODY.silver ? -1 : b === SD_BODY.gold ? 1 : rng() < 0.5 ? 1 : -1) : 0;",
+    "new": "  const way = A === SD_BLOWS.hand ? sw || (b === SD_BODY.silver ? -1 : b === SD_BODY.gold ? 1 : 1) : 0;",
     "tests": [
       "test/net/superDungeon/sd8a_remnant.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SD8A-the-echoes-the-whole-left",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "const m = Math.max(0, f.hp - SD_PHASE_AT[1] * f.max) / 2, up = now + SD_BREAK_MS;",
-    "new": "const m = f.hp / 2, up = now + SD_BREAK_MS;",
+    "old": "    const m = Math.max(0, f.hp - SD_PHASE_AT[1] * f.max) / 2,",
+    "new": "    const m = f.hp / 2,",
     "tests": [
       "test/net/superDungeon/sd8a_remnant.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "SD8A-no-rise",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "        if (X.h > 0 || X.downAt == null || now - X.downAt < sdProfileOf(f).pairMs) continue;",
-    "new": "        if (true) continue;",
+    "old": "        if (X.h > 0 || X.downAt == null || now - X.downAt < sdProfileOf(f).pairMs) continue; // SD18a: the Dragon's Break's",
+    "new": "        if (true) continue; // SD18a: the Dragon's Break's",
     "tests": [
       "test/net/superDungeon/sd8a_remnant.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "SD8A-a-blow-on-an-echo-not-off-the-whole",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "  E.h -= got;\n  f.hp -= got;",
-    "new": "  E.h -= got;",
+    "old": "  f.hp -= got;\n  if (E.h > 1e-6) return out;",
+    "new": "  if (E.h > 1e-6) return out;",
     "tests": [
       "test/net/superDungeon/sd8a_remnant.test.js"
     ]
@@ -173,7 +173,7 @@
   {
     "name": "SD8A-the-hand-from-one",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "    if (due && standing.every((X) => !X.body.atk || now >= X.body.atk.until) && here.length) pairHand(f, standing, now, here, rng, out);",
+    "old": "    if (due && standing.every((X) => !X.body.atk || now >= X.body.atk.until) && here.length)\n      pairHand(f, standing, now, here, rng, out);",
     "new": "    if (false) pairHand(f, standing, now, here, rng, out);",
     "tests": [
       "test/net/superDungeon/sd8a_remnant.test.js"
@@ -191,8 +191,8 @@
   {
     "name": "SD8A-no-hold-for-the-pair",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "{ hold: due, pair: both }",
-    "new": "{ hold: false, pair: both }",
+    "old": "        beatBody(f, X.e === 0 ? SD_BODY.gold : SD_BODY.silver, X.body, now, here, rng, out, { hold: due, pair: both });",
+    "new": "        beatBody(f, X.e === 0 ? SD_BODY.gold : SD_BODY.silver, X.body, now, here, rng, out, {\n          hold: false,\n          pair: both,\n        });",
     "tests": [
       "test/net/superDungeon/sd8a_remnant.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "SD8A-the-pair-at-once-again",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "  f.ecHandAt = now + sdProfileOf(f).pairHandMs;",
-    "new": "  f.ecHandAt = now;",
+    "old": "  f.ecHandAt = now + sdProfileOf(f).pairHandMs; // SD18a: the Twin Hands'",
+    "new": "  f.ecHandAt = now; // SD18a: the Twin Hands'",
     "tests": [
       "test/net/superDungeon/sd8a_remnant.test.js"
     ]
@@ -209,7 +209,7 @@
   {
     "name": "SD8A-the-reset-never",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "    if (f.phase === 3 && !B.atk && f.resetAt > 0 && now >= f.resetAt && now >= B.nextAt && !(f.clock && f.clock.a === SD_BLOWS.pulse.id)) {",
+    "old": "    if (\n      f.phase === 3 &&\n      !B.atk &&\n      f.resetAt > 0 &&\n      now >= f.resetAt &&\n      now >= B.nextAt &&\n      !(f.clock && f.clock.a === SD_BLOWS.pulse.id)\n    ) {",
     "new": "    if (false) {",
     "tests": [
       "test/net/superDungeon/sd8a_remnant.test.js"
@@ -218,8 +218,8 @@
   {
     "name": "SD8A-the-reset-shortened",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "export const windupFor = (A, phase, body) => (CHOSEN.includes(A) && (",
-    "new": "export const windupFor = (A, phase, body) => ((",
+    "old": "  CHOSEN.includes(A) && (body === SD_BODY.gold || body === SD_BODY.silver || phase >= 3)\n    ? Math.round(A.windup * SD_FAST)\n    : A.windup;",
+    "new": "  body === SD_BODY.gold || body === SD_BODY.silver || phase >= 3 ? Math.round(A.windup * SD_FAST) : A.windup;",
     "tests": [
       "test/net/superDungeon/sd8a_remnant.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "SD8A-the-heal-forgotten",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "      f.hp = Math.min(f.max, f.hp + SD_RESET_HEAL * f.max);\n",
-    "new": "",
+    "old": "      f.hp = Math.min(f.max, f.hp + SD_RESET_HEAL * f.max);\n    }",
+    "new": "    }",
     "tests": [
       "test/net/superDungeon/sd8a_remnant.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "SD8A-the-hearts-open-to-the-end",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "&& now < f.rem.atk.at - SD_HEARTS_CLOSE_MS;",
-    "new": "&& now < f.rem.atk.at;",
+    "old": "export const heartsOpen = (f, now) =>\n  !!f.rem.atk && f.rem.atk.a === SD_BLOWS.reset.id && !!f.cx && now < f.rem.atk.at - SD_HEARTS_CLOSE_MS;",
+    "new": "export const heartsOpen = (f, now) => !!f.rem.atk && f.rem.atk.a === SD_BLOWS.reset.id && !!f.cx && now < f.rem.atk.at;",
     "tests": [
       "test/net/superDungeon/sd8a_remnant.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "SD8A-hearts-on-the-pillars",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "    if (SD_PILLARS.some(([px, pz]) => dist(px, pz, x, z) < SD_HEART.pillarGap)) continue;\n",
-    "new": "",
+    "old": "    if (SD_PILLARS.some(([px, pz]) => dist(px, pz, x, z) < SD_HEART.pillarGap)) continue;\n    if (dist(B.x, B.z, x, z) < clear) continue; // AUDIT SD II (L4 F8): a Heart rose inside its body in 4% of Resets",
+    "new": "    if (dist(B.x, B.z, x, z) < clear) continue; // AUDIT SD II (L4 F8): a Heart rose inside its body in 4% of Resets",
     "tests": [
       "test/net/superDungeon/sd8a_remnant.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "SD8A-last-moment-not-faster",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "P.remSpeed * (f.phase >= 3 ? SD_LAST_SPEED_X : 1) : P.echoSpeed",
-    "new": "P.remSpeed : P.echoSpeed",
+    "old": "  return b === SD_BODY.remnant ? P.remSpeed * (f.phase >= 3 ? SD_LAST_SPEED_X : 1) : P.echoSpeed;",
+    "new": "  return b === SD_BODY.remnant ? P.remSpeed : P.echoSpeed;",
     "tests": [
       "test/net/superDungeon/sd8a_remnant.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "SD8A-the-pulse-from-the-birth",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "clock: null, pulses: 0, pulseAt: op + P.pulseMs,",
-    "new": "clock: null, pulses: 0, pulseAt: now + P.pulseMs,",
+    "old": "    pulseAt: op + P.pulseMs,",
+    "new": "    pulseAt: now + P.pulseMs,",
     "tests": [
       "test/net/superDungeon/sd8a_remnant.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "SD8A-swept-past-its-length",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "  if (d > A.len) return false;\n",
-    "new": "",
+    "old": "  if (d > A.len) return false;\n  const k0 = Math.max(0, (t0 - atk.at) / A.active),",
+    "new": "  const k0 = Math.max(0, (t0 - atk.at) / A.active),",
     "tests": [
       "test/net/superDungeon/sd8a_remnant.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "SD8A-the-fights-number-dropped",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "k: 'st', s: f.s, fi: f.fi,",
-    "new": "k: 'st', s: f.s,",
+    "old": "    fi: f.fi,\n    ph: f.phase,",
+    "new": "    ph: f.phase,",
     "tests": [
       "test/net/superDungeon/sd8a_remnant.test.js"
     ]

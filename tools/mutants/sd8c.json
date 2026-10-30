@@ -2,8 +2,8 @@
   {
     "name": "SD8C-a-walk-keeps-its-blow",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "  return { ...B, x: w.x, z: w.z, mv, atk: null, yw: turn ?",
-    "new": "  return { ...B, x: w.x, z: w.z, mv, atk: B.atk, yw: turn ?",
+    "old": "  return { ...B, x: w.x, z: w.z, mv, atk: null, yw: turn ? Math.atan2(w.tx - w.x, w.tz - w.z) : B.yw };",
+    "new": "  return { ...B, x: w.x, z: w.z, mv, atk: B.atk, yw: turn ? Math.atan2(w.tx - w.x, w.tz - w.z) : B.yw };",
     "tests": [
       "test/net/superDungeon/sd8c_remnant_page.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SD8C-an-echo-fallen-walking",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "        if (had && w.d === k) B = stopped(B, w.at);   // fallen where it stood\n",
-    "new": "",
+    "old": "        if (had && w.d === k) B = stopped(B, w.at); // fallen where it stood\n        return { ...bodyOf(B), h: t[0], m: t[1], up: t[2], dn: t[3] };",
+    "new": "        return { ...bodyOf(B), h: t[0], m: t[1], up: t[2], dn: t[3] };",
     "tests": [
       "test/net/superDungeon/sd8c_remnant_page.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SD8C-the-stun-keeps-the-hearts",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "    case 'stun': return { ...s, su: w.until, stunAt: w.at, rem: stopped(s.rem, w.at), cx: null,",
-    "new": "    case 'stun': return { ...s, su: w.until, stunAt: w.at, rem: stopped(s.rem, w.at), cx: s.cx,",
+    "old": "        rem: stopped(s.rem, w.at),\n        cx: null,",
+    "new": "        rem: stopped(s.rem, w.at),\n        cx: s.cx,",
     "tests": [
       "test/net/superDungeon/sd8c_remnant_page.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SD8C-the-end-leaves-them-walking",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "        return { ...s, clk: atkOf(w), ended: w.at, rem: stopped(s.rem, at),",
-    "new": "        return { ...s, clk: atkOf(w), ended: w.at, rem: s.rem,",
+    "old": "          rem: stopped(s.rem, at),",
+    "new": "          rem: s.rem,",
     "tests": [
       "test/net/superDungeon/sd8c_remnant_page.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SD8C-the-fall-where-it-began",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "      return { ...s, fell: { at: w.at, top: w.top, n: w.n, ...(w.dm ? { dm: w.dm } : {}) }, rem: stopped(s.rem, w.at), h: 0,",
-    "new": "      return { ...s, fell: { at: w.at, top: w.top, n: w.n, ...(w.dm ? { dm: w.dm } : {}) }, rem: { ...s.rem, mv: null, atk: null }, h: 0,",
+    "old": "        fell: { at: w.at, top: w.top, n: w.n, ...(w.dm ? { dm: w.dm } : {}) },\n        rem: stopped(s.rem, w.at),",
+    "new": "        fell: { at: w.at, top: w.top, n: w.n, ...(w.dm ? { dm: w.dm } : {}) },\n        rem: { ...s.rem, mv: null, atk: null },",
     "tests": [
       "test/net/superDungeon/sd8c_remnant_page.test.js"
     ]
@@ -74,7 +74,7 @@
   {
     "name": "SD8C-the-chart-lost",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "      if (s.fell) return w.dm && !s.fell.dm ? { ...s, fell: { ...s.fell, dm: w.dm }, heardAt: now } : { ...s, heardAt: now };",
+    "old": "      if (s.fell)\n        return w.dm && !s.fell.dm ? { ...s, fell: { ...s.fell, dm: w.dm }, heardAt: now } : { ...s, heardAt: now };",
     "new": "      if (s.fell) return { ...s, heardAt: now };",
     "tests": [
       "test/net/superDungeon/sd8c_remnant_page.test.js"
@@ -83,8 +83,8 @@
   {
     "name": "SD8C-the-last-moment-no-reset-clock",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "rk: w.up + sdProfileOf(s).resetFirstMs, ",
-    "new": "rk: s.rk, ",
+    "old": "        rk: w.up + sdProfileOf(s).resetFirstMs,",
+    "new": "        rk: s.rk,",
     "tests": [
       "test/net/superDungeon/sd8c_remnant_page.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SD8C-a-word-before-the-state",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "  if (!s.fi) return s;   // nothing but a whole state starts a fight\n",
-    "new": "",
+    "old": "  if (!s.fi) return s; // nothing but a whole state starts a fight\n  switch (w.k) {",
+    "new": "  switch (w.k) {",
     "tests": [
       "test/net/superDungeon/sd8c_remnant_page.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "SD8C-any-state-an-answer",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "      if (w.k === 'st' && w.me === 1) { mine = state.fi; refused = null; }",
-    "new": "      if (w.k === 'st') { mine = state.fi; refused = null; }",
+    "old": "      if (w.k === 'st' && w.me === 1) {",
+    "new": "      if (w.k === 'st') {",
     "tests": [
       "test/net/superDungeon/sd8c_remnant_page.test.js"
     ]
@@ -137,7 +137,7 @@
   {
     "name": "SD8C-a-refusal-for-good-lapsing",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "      if (refused && (FOR_GOOD.includes(refused.m) || (refused.fi === state.fi && refused.lost === state.lost && !silent))) return false;",
+    "old": "      if (\n        refused &&\n        (FOR_GOOD.includes(refused.m) || (refused.fi === state.fi && refused.lost === state.lost && !silent))\n      )\n        return false;",
     "new": "      if (refused && refused.fi === state.fi && refused.lost === state.lost && !silent) return false;",
     "tests": [
       "test/net/superDungeon/sd8c_remnant_page.test.js"
@@ -146,7 +146,7 @@
   {
     "name": "SD8C-a-refusal-never-lapsing",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "      if (refused && (FOR_GOOD.includes(refused.m) || (refused.fi === state.fi && refused.lost === state.lost && !silent))) return false;",
+    "old": "      if (\n        refused &&\n        (FOR_GOOD.includes(refused.m) || (refused.fi === state.fi && refused.lost === state.lost && !silent))\n      )\n        return false;",
     "new": "      if (refused) return false;",
     "tests": [
       "test/net/superDungeon/sd8c_remnant_page.test.js"
@@ -164,8 +164,8 @@
   {
     "name": "SD8C-joined-to-a-lost-fight",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "    joined: () => state.fi > 0 && mine === state.fi && !state.lost && !state.fell && !sdHourOver(state, now()),",
-    "new": "    joined: () => state.fi > 0 && mine === state.fi,",
+    "old": "    joined: () => state.fi > 0 && mine === state.fi && !state.lost && !state.fell && !sdHourOver(state, now()), // AUDIT SD II (L4 F3): its End by the clock",
+    "new": "    joined: () => state.fi > 0 && mine === state.fi, // AUDIT SD II (L4 F3): its End by the clock",
     "tests": [
       "test/net/superDungeon/sd8c_remnant_page.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "SD8C-the-turns-unsaid",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "      if (w.k === 'ph' && was.fi) say(w.n === 2 ? SD_FIGHT_TEXT.dragonBreak(sdProfileOf(state).pairMs) : SD_FIGHT_TEXT.lastMoment);",
-    "new": "      if (w.k === 'ph' && was.fi) { /* unsaid */ }",
+    "old": "      if (w.k === 'ph' && was.fi)\n        say(w.n === 2 ? SD_FIGHT_TEXT.dragonBreak(sdProfileOf(state).pairMs) : SD_FIGHT_TEXT.lastMoment);\n      else if (w.k === 'ec' && was.fi) {",
+    "new": "      if (w.k === 'ph' && was.fi) {\n        /* unsaid */\n      } else if (w.k === 'ec' && was.fi) {",
     "tests": [
       "test/net/superDungeon/sd8c_remnant_page.test.js"
     ]

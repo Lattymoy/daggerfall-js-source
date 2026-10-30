@@ -47,8 +47,8 @@
   {
     "name": "HONOUR-BANNER-the-hour-pops-nothing",
     "file": "src/net/superDungeon/sdClaims.js",
-    "old": "          if (answer.data.titleNew === true) announce('title', SD_HONOUR_KEYS.title);\n",
-    "new": "",
+    "old": "          if (answer.data.titleNew === true) announce('title', SD_HONOUR_KEYS.title);\n          if (answer.data.auraNew === true) announce('aura', SD_HONOUR_KEYS.aura);",
+    "new": "          if (answer.data.auraNew === true) announce('aura', SD_HONOUR_KEYS.aura);",
     "tests": [
       "test/server/sd9b_claim.test.js",
       "test/systems/lootbanner.test.js"
@@ -57,8 +57,8 @@
   {
     "name": "HONOUR-BANNER-the-aura-pops-nothing",
     "file": "src/net/superDungeon/sdClaims.js",
-    "old": "          if (answer.data.auraNew === true) announce('aura', SD_HONOUR_KEYS.aura);\n",
-    "new": "",
+    "old": "          if (answer.data.auraNew === true) announce('aura', SD_HONOUR_KEYS.aura);\n        } else if (answer?.ok && answer.data?.why === 'guest' && !guestSaid.has(r)) {",
+    "new": "        } else if (answer?.ok && answer.data?.why === 'guest' && !guestSaid.has(r)) {",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]

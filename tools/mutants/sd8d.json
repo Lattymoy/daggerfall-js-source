@@ -29,8 +29,8 @@
   {
     "name": "SD8D-the-disc-unbounded",
     "file": "src/net/superDungeon/sdStrike.js",
-    "old": "      if (landing('disc') && d <= S.r) hits.push(",
-    "new": "      if (landing('disc')) hits.push(",
+    "old": "      if (landing('disc') && d <= S.r) hits.push({ part: 'disc', pct: A.pct, base: A.base, ...el });",
+    "new": "      if (landing('disc')) hits.push({ part: 'disc', pct: A.pct, base: A.base, ...el });",
     "tests": [
       "test/net/superDungeon/sd8d_remnant_blows.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SD8D-the-pillars-shade-forgotten",
     "file": "src/net/superDungeon/sdStrike.js",
-    "old": " && (over || !behindPillar(atk.x, atk.z, px, pz))) {",
-    "new": ") {",
+    "old": "      if (\n        !out.beam &&\n        !stale &&\n        t0 <= end &&\n        handSwept(atk, px, pz, Math.max(t0, atk.at), t1) &&\n        (over || !behindPillar(atk.x, atk.z, px, pz))\n      ) {",
+    "new": "      if (!out.beam && !stale && t0 <= end && handSwept(atk, px, pz, Math.max(t0, atk.at), t1)) {",
     "tests": [
       "test/net/superDungeon/sd8d_remnant_blows.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SD8D-the-beam-from-behind",
     "file": "src/net/superDungeon/sdStrike.js",
-    "old": "if (!out.beam && !stale && t0 <= end && handSwept(atk, px, pz, Math.max(t0, atk.at), t1) &&",
-    "new": "if (!out.beam && !stale && t0 <= end && Math.hypot(px - atk.x, pz - atk.z) <= SD_BLOWS.hand.len &&",
+    "old": "        handSwept(atk, px, pz, Math.max(t0, atk.at), t1) &&",
+    "new": "        Math.hypot(px - atk.x, pz - atk.z) <= SD_BLOWS.hand.len &&",
     "tests": [
       "test/net/superDungeon/sd8d_remnant_blows.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SD8D-a-strike-a-disc",
     "file": "src/net/superDungeon/sdStrike.js",
-    "old": "      if (landing('discs') && (atk.tg ?? []).some((q) => dist(px, pz, q[0], q[1]) <= S.r)) hits.push({ part: 'discs', pct: A.pct, base: A.base, ...el });",
-    "new": "      if (landing('discs')) for (const q of atk.tg ?? []) if (dist(px, pz, q[0], q[1]) <= S.r) hits.push({ part: 'discs', pct: A.pct, base: A.base, ...el });",
+    "old": "      if (landing('discs') && (atk.tg ?? []).some((q) => dist(px, pz, q[0], q[1]) <= S.r))\n        hits.push({ part: 'discs', pct: A.pct, base: A.base, ...el });",
+    "new": "      if (landing('discs'))\n        for (const q of atk.tg ?? [])\n          if (dist(px, pz, q[0], q[1]) <= S.r) hits.push({ part: 'discs', pct: A.pct, base: A.base, ...el });",
     "tests": [
       "test/net/superDungeon/sd8d_remnant_blows.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SD8D-the-pulse-not-growing",
     "file": "src/net/superDungeon/sdStrike.js",
-    "old": "      const pct = A === SD_BLOWS.pulse ? pulsePctOf(atk) :",
-    "new": "      const pct = A === SD_BLOWS.pulse ? pulsePctOf({ n: 0 }) :",
+    "old": "      const pct = A === SD_BLOWS.pulse ? pulsePctOf(atk) : A === SD_BLOWS.reset ? SD_RESET_PCT : SD_END_PCT; // SD18a: a Restless Pulse's own step",
+    "new": "      const pct = A === SD_BLOWS.pulse ? pulsePctOf({ n: 0 }) : A === SD_BLOWS.reset ? SD_RESET_PCT : SD_END_PCT; // SD18a: a Restless Pulse's own step",
     "tests": [
       "test/net/superDungeon/sd8d_remnant_blows.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SD8D-the-arena-reaching-the-steps",
     "file": "src/net/superDungeon/sdStrike.js",
-    "old": "        if (inArena(px, pz, SD_ARENA_SLACK)) hits.push(",
-    "new": "        if (true) hits.push(",
+    "old": "        if (inArena(px, pz, SD_ARENA_SLACK)) hits.push({ part: 'all', pct, base: A.base }); // AUDIT SD II (L4 C2): never the Steps",
+    "new": "        if (true) hits.push({ part: 'all', pct, base: A.base }); // AUDIT SD II (L4 C2): never the Steps",
     "tests": [
       "test/net/superDungeon/sd8d_remnant_blows.test.js"
     ]

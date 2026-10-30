@@ -243,8 +243,8 @@
   {
     "name": "ORRERY-HANDS-nets-kept",
     "file": "src/net/superDungeon/sdBrain.js",
-    "old": "  return { by, ids: /** @type {Record<string, number>} */ ({}), wt:",
-    "new": "  return { by, ids: R.ids, wt:",
+    "old": "  return { by, ids: /** @type {Record<string, number>} */ ({}), wt: /** @type {Record<string, 1>} */ ({}) };",
+    "new": "  return { by, ids: R.ids, wt: /** @type {Record<string, 1>} */ ({}) };",
     "tests": [
       "test/net/superDungeon/rpt1026_events_orrery.test.js"
     ],

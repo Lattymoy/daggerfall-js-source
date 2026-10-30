@@ -20,7 +20,7 @@
 //
 // PURE, and all three ends import it. Not a DFU member. Ledger A (SUPER-DUNGEONS).
 import { _b64url, SIG_BYTES, SKEW_S, ID_RE } from '../identityToken.js';
-import { bodyMeasureValid } from '../bossBody.js';   // INT14: the count's measure, carried
+import { bodyMeasureValid } from '../bossBody.js'; // INT14: the count's measure, carried
 
 /** The only version this file reads or writes. */
 export const SD_RECEIPT_V = 'h1';
@@ -46,14 +46,24 @@ const dec = new TextDecoder();
  */
 export function sdReceiptValid(c) {
   if (!c || typeof c !== 'object' || Array.isArray(c)) return false;
-  if (c.n !== undefined || c.k !== undefined || c.t !== undefined || c.o !== undefined || c.w !== undefined || c.y !== undefined || c.r !== undefined || c.h !== undefined) return false;
+  if (
+    c.n !== undefined ||
+    c.k !== undefined ||
+    c.t !== undefined ||
+    c.o !== undefined ||
+    c.w !== undefined ||
+    c.y !== undefined ||
+    c.r !== undefined ||
+    c.h !== undefined
+  )
+    return false;
   if (!Number.isSafeInteger(c.d) || c.d < 1 || c.d > SD_RECEIPT_SLOT_MAX) return false;
   if (c.b !== SD_RECEIPT_BOSS) return false;
   if (typeof c.s !== 'string' || !ID_RE.test(c.s)) return false;
   if (!Number.isSafeInteger(c.c) || c.c < 0 || c.c > 0xffffffff) return false;
   if (!SD_EARNED.includes(c.x)) return false;
   if (!Number.isSafeInteger(c.l) || c.l < 1 || c.l > SD_RECEIPT_LV_MAX) return false;
-  if (c.m !== undefined && !bodyMeasureValid(c.m)) return false;   // INT14: optional - a receipt minted before it carries none
+  if (c.m !== undefined && !bodyMeasureValid(c.m)) return false; // INT14: optional - a receipt minted before it carries none
   if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
   if (c.e <= c.i || c.e - c.i > SD_RECEIPT_TTL_S) return false;
   return true;
@@ -68,7 +78,17 @@ export function sdReceiptValid(c) {
  */
 export async function mintSdReceipt({ d, s, c, x, l, m }, privateKey, { subtle, nowS }) {
   if (!Number.isSafeInteger(nowS)) throw new TypeError('mintSdReceipt needs an integer epoch-seconds clock');
-  const claims = { d, b: SD_RECEIPT_BOSS, s, c, x, l, ...(m !== undefined ? { m } : {}), i: nowS, e: nowS + SD_RECEIPT_TTL_S };
+  const claims = {
+    d,
+    b: SD_RECEIPT_BOSS,
+    s,
+    c,
+    x,
+    l,
+    ...(m !== undefined ? { m } : {}),
+    i: nowS,
+    e: nowS + SD_RECEIPT_TTL_S,
+  };
   if (!sdReceiptValid(claims)) throw new TypeError('mintSdReceipt refused a claim set it could not verify');
   const body = _b64url.encode(enc.encode(JSON.stringify(claims)));
   if (!privateKey) return `${SD_RECEIPT_V}.${body}.`;
@@ -88,7 +108,11 @@ export function readSdReceipt(r) {
   const raw = _b64url.decode(parts[1]);
   if (!raw) return null;
   let c;
-  try { c = JSON.parse(dec.decode(raw)); } catch { return null; }
+  try {
+    c = JSON.parse(dec.decode(raw));
+  } catch {
+    return null;
+  }
   return sdReceiptValid(c) ? { ...c, signed: parts[2].length > 0 } : null;
 }
 
@@ -112,10 +136,18 @@ export async function verifySdReceipt(r, publicKey, { subtle, nowS, skewS = SKEW
   const raw = _b64url.decode(body);
   if (!raw) return { ok: false, why: 'body-shape' };
   let good = false;
-  try { good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(`${v}.${body}`)); } catch { return { ok: false, why: 'verify-threw' }; }
+  try {
+    good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(`${v}.${body}`));
+  } catch {
+    return { ok: false, why: 'verify-threw' };
+  }
   if (!good) return { ok: false, why: 'signature' };
   let claims;
-  try { claims = JSON.parse(dec.decode(raw)); } catch { return { ok: false, why: 'json' }; }
+  try {
+    claims = JSON.parse(dec.decode(raw));
+  } catch {
+    return { ok: false, why: 'json' };
+  }
   if (!sdReceiptValid(claims)) return { ok: false, why: 'claims' };
   if (!Number.isSafeInteger(nowS)) return { ok: false, why: 'clock' };
   if (nowS >= claims.e) return { ok: false, why: 'expired' };

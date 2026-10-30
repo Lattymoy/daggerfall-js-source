@@ -12,8 +12,8 @@
   {
     "name": "AUDIT-RPT1026-I1-snap-forgives-nobody",
     "file": "src/net/superDungeon/sdBrain.js",
-    "old": "by[k] = R.wt?.[k] ? { long: 0, at: v.at } : v;",
-    "new": "by[k] = v;",
+    "old": "  for (const [k, v] of Object.entries(R.by)) by[k] = R.wt?.[k] ? { long: 0, at: v.at } : v;",
+    "new": "  for (const [k, v] of Object.entries(R.by)) by[k] = v;",
     "tests": [
       "test/net/superDungeon/audit_rpt1026_events.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "AUDIT-RPT1026-I1-judge-never-marks",
     "file": "src/net/superDungeon/sdBrain.js",
-    "old": "  if (R && !orreryMayTurn(R, who, now)) { orreryWaited(R, who, now); return { wait: true }; }",
-    "new": "  if (R && !orreryMayTurn(R, who, now)) { return { wait: true }; }",
+    "old": "    orreryWaited(R, who, now);\n    return { wait: true };",
+    "new": "    return { wait: true };",
     "tests": [
       "test/net/superDungeon/audit_rpt1026_events.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "AUDIT-RPT1026-I1-marked-behind-a-free-hand-too",
     "file": "src/net/superDungeon/sdBrain.js",
-    "old": "now - v.at < SD_TURN_COMPANY_MS && v.long < SD_TURN_LONG_MAX) return;",
-    "new": "now - v.at < SD_TURN_COMPANY_MS && false) return;",
+    "old": "  for (const [k, v] of Object.entries(R.by))\n    if (k !== who && now - v.at < SD_TURN_COMPANY_MS && v.long < SD_TURN_LONG_MAX) return;",
+    "new": "  for (const [k, v] of Object.entries(R.by)) if (k !== who && now - v.at < SD_TURN_COMPANY_MS && false) return;",
     "tests": [
       "test/net/superDungeon/audit_rpt1026_events.test.js"
     ],

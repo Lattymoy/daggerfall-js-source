@@ -319,6 +319,17 @@
 !/src/net/staffTeleport.js
 !/src/net/starfall/
 /src/net/starfall/*/
+!/src/net/superDungeon/
+/src/net/superDungeon/*
+!/src/net/superDungeon/sdBrain.js
+!/src/net/superDungeon/sdClaims.js
+!/src/net/superDungeon/sdFightLink.js
+!/src/net/superDungeon/sdHerald.js
+!/src/net/superDungeon/sdLaw.js
+!/src/net/superDungeon/sdMarks.js
+!/src/net/superDungeon/sdReceipt.js
+!/src/net/superDungeon/sdRemnant.js
+!/src/net/superDungeon/sdStrike.js
 !/src/net/temperLaw.js
 !/src/net/tideLaw.js
 !/src/net/townEconBook.js

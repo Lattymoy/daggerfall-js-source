@@ -17,7 +17,7 @@
 //
 // Pure - the call, the store and the clocks are handed in. Not a DFU member. Ledger A (SUPER-DUNGEONS).
 import { readSdReceipt } from './sdReceipt.js';
-import { noteAct } from '../../systems/questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
+import { noteAct } from '../../systems/questlines/qlActs.js'; // QL11: the features' acts, heard by the running quests
 
 /** The device's Hour receipts not yet settled with the account service. */
 export const SD_CLAIMS_KEY = 'sd9.sdClaims';
@@ -49,7 +49,7 @@ export const SD_CLAIM_MENDABLE = Object.freeze(['signature', 'verify-threw', 'fu
 
 /** What the account service's answer does to a kept receipt: 'done' (let it go) or 'keep'. */
 export function sdClaimVerdict(answer) {
-  if (answer?.ok) return answer.data?.why === 'guest' ? 'keep' : 'done';   // counted, or counted before
+  if (answer?.ok) return answer.data?.why === 'guest' ? 'keep' : 'done'; // counted, or counted before
   return answer?.error === 'receipt' && !SD_CLAIM_MENDABLE.includes(answer.why) ? 'done' : 'keep';
 }
 
@@ -69,37 +69,75 @@ export function sdRecordText(rec) {
  *   `nowS` the relay's clock (null unheard); `me` the signed-in account's id, null for none; `announce` HONOUR-BANNER's
  *   popup for a grant (ui/lootBanner.js announceHonour), beside its chat line
  */
-export function createSdClaims({ claim, store = null, nowS = () => Math.floor(Date.now() / 1000), nowMs = () => Date.now(), say = () => {}, onBroken = () => {}, me = () => null, announce = () => {} }) {
-  let busy = false, again = false, lastAt = -Infinity;
-  let lastMe, meAt = -Infinity;
-  const settled = new Set(), guestSaid = new Set();
-  const live = (r) => { const c = typeof r === 'string' ? readSdReceipt(r) : null; const t = nowS(); return c && c.signed && (t == null || c.e > t) ? c : null; };
+export function createSdClaims({
+  claim,
+  store = null,
+  nowS = () => Math.floor(Date.now() / 1000),
+  nowMs = () => Date.now(),
+  say = () => {},
+  onBroken = () => {},
+  me = () => null,
+  announce = () => {},
+}) {
+  let busy = false,
+    again = false,
+    lastAt = -Infinity;
+  let lastMe,
+    meAt = -Infinity;
+  const settled = new Set(),
+    guestSaid = new Set();
+  const live = (r) => {
+    const c = typeof r === 'string' ? readSdReceipt(r) : null;
+    const t = nowS();
+    return c && c.signed && (t == null || c.e > t) ? c : null;
+  };
   let memory = [];
   function kept() {
     let v;
-    try { v = store ? store.get(SD_CLAIMS_KEY) : undefined; } catch { v = undefined; }
+    try {
+      v = store ? store.get(SD_CLAIMS_KEY) : undefined;
+    } catch {
+      v = undefined;
+    }
     return (Array.isArray(v) ? v : v === undefined ? memory : []).filter((r) => live(r));
   }
-  const keep = (list) => { memory = list; try { store?.set(SD_CLAIMS_KEY, list); } catch { /* memory holds it */ } };
+  const keep = (list) => {
+    memory = list;
+    try {
+      store?.set(SD_CLAIMS_KEY, list);
+    } catch {
+      /* memory holds it */
+    }
+  };
 
   async function flush() {
-    if (busy) { again = true; return 0; }
+    if (busy) {
+      again = true;
+      return 0;
+    }
     busy = true;
     lastAt = nowMs();
     let recorded = 0;
     try {
       const list = kept();
-      keep(list);   // the expired go unasked
+      keep(list); // the expired go unasked
       const mine = me();
       for (const r of list) {
-        if (!mine || live(r)?.s !== mine) continue;   // another account's waits for its own sign-in
+        if (!mine || live(r)?.s !== mine) continue; // another account's waits for its own sign-in
         let answer;
-        try { answer = await claim(r); } catch { answer = { ok: false, error: 'offline' }; }
+        try {
+          answer = await claim(r);
+        } catch {
+          answer = { ok: false, error: 'offline' };
+        }
         if (answer?.ok && answer.data?.recorded === true) {
           recorded++;
-          noteAct('hour-broken');   // QL11: the Brass Remnant broken - its h1 receipt counted once (`recorded`)
+          noteAct('hour-broken'); // QL11: the Brass Remnant broken - its h1 receipt counted once (`recorded`)
           const n = Number.isSafeInteger(answer.data.broken) ? answer.data.broken : null;
-          if (n != null) { onBroken(n); say(SD_CLAIM_TEXT.recorded(n)); }
+          if (n != null) {
+            onBroken(n);
+            say(SD_CLAIM_TEXT.recorded(n));
+          }
           if (answer.data.title === true) say(SD_CLAIM_TEXT.title);
           if (answer.data.aura === true) say(SD_CLAIM_TEXT.aura);
           // HONOUR-BANNER: its popup - for a grant the account did not hold before (AUDIT FIVE-ASKS E1: a re-roll of a held one is
@@ -110,10 +148,18 @@ export function createSdClaims({ claim, store = null, nowS = () => Math.floor(Da
           guestSaid.add(r);
           say(SD_CLAIM_TEXT.guest);
         }
-        if (sdClaimVerdict(answer) === 'done') { settled.add(r); keep(kept().filter((k) => k !== r)); }
+        if (sdClaimVerdict(answer) === 'done') {
+          settled.add(r);
+          keep(kept().filter((k) => k !== r));
+        }
       }
-    } finally { busy = false; }
-    if (again) { again = false; void flush(); }
+    } finally {
+      busy = false;
+    }
+    if (again) {
+      again = false;
+      void flush();
+    }
     return recorded;
   }
 
@@ -124,9 +170,14 @@ export function createSdClaims({ claim, store = null, nowS = () => Math.floor(Da
       const c = live(r);
       if (!c || settled.has(r)) return false;
       const list = kept();
-      if (!list.some((k) => { const o = readSdReceipt(k); return k === r || (o?.d === c.d && o?.s === c.s); })) {
+      if (
+        !list.some((k) => {
+          const o = readSdReceipt(k);
+          return k === r || (o?.d === c.d && o?.s === c.s);
+        })
+      ) {
         const theirs = list.filter((k) => readSdReceipt(k)?.s === c.s);
-        const drop = theirs.length >= SD_CLAIMS_MAX ? theirs[0] : null;   // the account's own oldest, never another's
+        const drop = theirs.length >= SD_CLAIMS_MAX ? theirs[0] : null; // the account's own oldest, never another's
         keep([...list.filter((k) => k !== drop), r].slice(-SD_CLAIMS_ALL_MAX));
       }
       void flush();
@@ -136,13 +187,18 @@ export function createSdClaims({ claim, store = null, nowS = () => Math.floor(Da
      *  a session at once, and the first after another account signs in. */
     tick() {
       if (busy) return false;
-      const t = nowMs(), due = t - lastAt >= SD_CLAIM_RETRY_MS;
+      const t = nowMs(),
+        due = t - lastAt >= SD_CLAIM_RETRY_MS;
       if (!due && t - meAt < SD_ME_POLL_MS) return false;
       meAt = t;
-      const mine = me(), signedIn = mine !== lastMe;
+      const mine = me(),
+        signedIn = mine !== lastMe;
       lastMe = mine;
       if (!signedIn && !due) return false;
-      if (!kept().some((r) => mine && live(r)?.s === mine)) { lastAt = nowMs(); return false; }
+      if (!kept().some((r) => mine && live(r)?.s === mine)) {
+        lastAt = nowMs();
+        return false;
+      }
       void flush();
       return true;
     },

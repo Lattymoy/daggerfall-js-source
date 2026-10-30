@@ -1477,7 +1477,7 @@ origin - `arenaOf`).
   exports `spendBlow` and `spendPurse` now, and the Remnant keeps no blow rate or bucket of its own: one hand and one purse
   for every body in the fight. A pose in the arena, a melee blow within reach of the body it meets; asleep, outside time or
   past the Hour, nothing lands; a blow that reaches the purse SEES its striker (RPT1026-FIGHTS RETIRED-BLOW: a share the
-  beat retired comes back first, at the fraction - `net/superDungeon/sdRemnant.js:"function sighted(f, p, now) {"` - and the relay drops a
+  beat retired comes back first, at the fraction - `net/superDungeon/sdRemnant.js:"function sighted"` - and the relay drops a
   blow from a pose older than `SD_POSE_FRESH_MS`, the census's own age); a phase holds its floor; a stunned Remnant takes half again; the Last Moment's last blow
   fells it - where it stands, the fight's best three and every fighter's part (the gate's `topDealers`, `damageChart`;
   `earned` reads it as the gate's does).
@@ -3649,7 +3649,7 @@ concealed body is drawn by nobody (INVIS-NET), so the forty could not tell which
   learning the gearing (each long turn mended) was held out of every thread by one held griefer account turning on: over
   the realm's own judge the Concord came in no slot of 24 against a single griefer, where the old law's came in all 24.
   Now a hand told to wait while every hand it waits behind is held too is marked
-  (`sdBrain.js:"export function orreryWaited("`), and the snap begins its count again (`orreryRightsSnapped`); a hand
+  (`sdBrain.js:"export function orreryWaited"`), and the snap begins its count again (`orreryRightsSnapped`); a hand
   held out by a free hand's turns -
   a solver's, a learner's inside its six - keeps its count, so the contest above stands. The learned team reaches the
   Concord in every slot against one, two, four or eight griefer accounts. Pinned by
@@ -3683,7 +3683,7 @@ The owner: *"the abyss dungeon ... we need to make this a party instance ... to 
 added a share to the Remnant's health and a Heart to each Reset, drew Gear Volleys, turned the Orrery's stones and
 woke the fight's fifteen-minute clock. The first kill then collapsed the Hollow for every other group in it.
 
-**The room.** A realm is now `sd:<s>.<owner>` (`sdLaw.js:"export const sdRoomKey = (s, owner) =>"`), the owner an
+**The room.** A realm is now `sd:<s>.<owner>` (`sdLaw.js:"export const sdRoomKey"`), the owner an
 account digest (`instanceOwnerOf`, the Ketch's crew law). The bare `sd:<s>` is no room: the Worker mints no object for
 it. The page picks the copy (`scenes/superDungeon/sdCopy.js` `sdCopyChoice`): the one it went into, while that slot is
 the same, the party is the same and its owner is still in it; else the party leader's; alone, its own. It is kept on

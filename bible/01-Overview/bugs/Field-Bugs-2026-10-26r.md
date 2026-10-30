@@ -965,7 +965,7 @@ its tuning-forks had the same shape. The Elite Breach's lords did not: a blow th
 
 FIXED. A BLOW IS A SIGHTING. A blow that reaches the purse comes from a pose in the arena, so its striker is seen and
 its share brought back, at the fraction the boss stands at (a return never heals it), before what it lands is judged:
-`net/superDungeon/sdRemnant.js:"function sighted(f, p, now) {"` in applyRemnantHit, applyEchoHit (the Echoes rescaled
+`net/superDungeon/sdRemnant.js:"function sighted"` in applyRemnantHit, applyEchoHit (the Echoes rescaled
 with it) and applyHeartHit; `gateBrain.js` applyHit; `ketchWarden.js:"function sighted"`
 in applyWardenHit and applyForkHit. Restored rather than refused: the same blow a beat later would find its share in,
 so a refusal only drops an honest blow struck between a return and the beat that sees it. And the relay judges a blow
@@ -2178,7 +2178,7 @@ AUDIT RPT1026 I1 (2026-10-27): held hands hold each other - a held hand waits wh
 company's minute - and the Hollow-long count took away the snap that had freed them. A team that spent its six apiece
 learning the gearing (each long turn mended) was held out of every thread by one held griefer account turning on: over
 the realm's own judge the Concord came in no slot of 24 against one griefer (the old law's 24). Now a hand the thread
-held out behind held hands alone is marked (`sdBrain.js:"export function orreryWaited("`) and begun again at the snap; a
+held out behind held hands alone is marked (`sdBrain.js:"export function orreryWaited"`) and begun again at the snap; a
 hand held out by a free hand's turns keeps its count, so the contest above stands. Against one, two, four or eight griefer
 accounts the learned team reaches the Concord in every slot. Pinned by `test/net/superDungeon/audit_rpt1026_events.test.js`
 (the realm's judge, `orreryJudge`, and its snap); mutants `tools/mutants/audit_rpt1026_events.json` (I1, 5, dead);

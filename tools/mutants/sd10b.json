@@ -326,8 +326,8 @@
   {
     "name": "AUDIT-SD-R1-an-ended-fight-never-lost",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "if ((f.emptySince != null && now - f.emptySince >= SD_LOST_MS) || (f.ended && now - f.ended.at >= SD_LOST_MS)) {",
-    "new": "if (f.emptySince != null && now - f.emptySince >= SD_LOST_MS) {",
+    "old": "  if ((f.emptySince != null && now - f.emptySince >= SD_LOST_MS) || (f.ended && now - f.ended.at >= SD_LOST_MS)) {",
+    "new": "  if (f.emptySince != null && now - f.emptySince >= SD_LOST_MS) {",
     "tests": [
       "test/net/superDungeon/sd10b_audit.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "AUDIT-SD-R1-lost-a-beat-late",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "(f.ended && now - f.ended.at >= SD_LOST_MS)",
-    "new": "(f.ended && now - f.ended.at > SD_LOST_MS)",
+    "old": "  if ((f.emptySince != null && now - f.emptySince >= SD_LOST_MS) || (f.ended && now - f.ended.at >= SD_LOST_MS)) {",
+    "new": "  if ((f.emptySince != null && now - f.emptySince >= SD_LOST_MS) || (f.ended && now - f.ended.at > SD_LOST_MS)) {",
     "tests": [
       "test/net/superDungeon/sd10b_audit.test.js"
     ]

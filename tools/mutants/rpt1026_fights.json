@@ -2,7 +2,7 @@
   {
     "name": "RETIRED-BLOW-remnant-unseen",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "  sighted(f, p, now);   // RPT1026-FIGHTS (RETIRED-BLOW): its share in before its blow is judged",
+    "old": "  sighted(f, p, now); // RPT1026-FIGHTS (RETIRED-BLOW): its share in before its blow is judged",
     "new": "",
     "tests": [
       "test/net/superDungeon/rpt1026_fights.test.js"
@@ -12,7 +12,7 @@
   {
     "name": "RETIRED-BLOW-echo-unseen",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "  sighted(f, p, now);   // RPT1026-FIGHTS (RETIRED-BLOW): its share in - the Echoes rescaled with it - before its blow is judged",
+    "old": "  sighted(f, p, now); // RPT1026-FIGHTS (RETIRED-BLOW): its share in - the Echoes rescaled with it - before its blow is judged",
     "new": "",
     "tests": [
       "test/net/superDungeon/rpt1026_fights.test.js"
@@ -22,7 +22,7 @@
   {
     "name": "RETIRED-BLOW-heart-unseen",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "  sighted(f, p, now);   // RPT1026-FIGHTS (RETIRED-BLOW): a Heart's striker stands in the arena too",
+    "old": "  sighted(f, p, now); // RPT1026-FIGHTS (RETIRED-BLOW): a Heart's striker stands in the arena too",
     "new": "",
     "tests": [
       "test/net/superDungeon/rpt1026_fights.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "RETIRED-BLOW-sighting-never-restores",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "  if (!p.retired) return;\n  restoreShare(f, p);\n  rescaleEchoes(f);",
-    "new": "  if (p.retired) return;\n  restoreShare(f, p);\n  rescaleEchoes(f);",
+    "old": "  if (!p.retired) return;",
+    "new": "  if (p.retired) return;",
     "tests": [
       "test/net/superDungeon/rpt1026_fights.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "RETIRED-BLOW-echoes-not-rescaled",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "  restoreShare(f, p);\n  rescaleEchoes(f);\n}",
-    "new": "  restoreShare(f, p);\n}",
+    "old": "  rescaleEchoes(f);\n}",
+    "new": "}",
     "tests": [
       "test/net/superDungeon/rpt1026_fights.test.js"
     ],

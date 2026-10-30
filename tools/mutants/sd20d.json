@@ -128,8 +128,8 @@
   {
     "name": "SD20D-A2-the-first-a-knell",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "s?.ended > 0 && atk.at > s.ended;",
-    "new": "s?.ended > 0 && atk.at >= s.ended;",
+    "old": "export const sdEndAgain = (atk, s) => !!atk && atk.a === SD_BLOWS.end.id && s?.ended > 0 && atk.at > s.ended;",
+    "new": "export const sdEndAgain = (atk, s) => !!atk && atk.a === SD_BLOWS.end.id && s?.ended > 0 && atk.at >= s.ended;",
     "tests": [
       "test/scenes/superDungeon/sd20d_audio.test.js"
     ]

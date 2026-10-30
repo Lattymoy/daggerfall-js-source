@@ -353,8 +353,8 @@
   {
     "name": "SD20C-V5-a-slab-of-a-pillar",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "      const a = (pz - w - oz) / dz, b = (pz + w - oz) / dz;",
-    "new": "      const a = (pz - w - oz) / dz, b = (pz + 2 * w - oz) / dz;",
+    "old": "        b = (pz + w - oz) / dz;",
+    "new": "        b = (pz + 2 * w - oz) / dz;",
     "tests": [
       "test/scenes/superDungeon/sd20c_render.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "SD20C-V5-the-arena-unsquared",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "x * x + z * z <= (SD_ARENA.r + pad) * (SD_ARENA.r + pad);",
-    "new": "x * x + z * z <= SD_ARENA.r + pad;",
+    "old": "export const inArena = (x, z, pad = 0) =>\n  Number.isFinite(x) && Number.isFinite(z) && x * x + z * z <= (SD_ARENA.r + pad) * (SD_ARENA.r + pad); // AUDIT SD III (V5): squared - Math.hypot's builtin boxes its numbers, and a frame asks it",
+    "new": "export const inArena = (x, z, pad = 0) => Number.isFinite(x) && Number.isFinite(z) && x * x + z * z <= SD_ARENA.r + pad; // AUDIT SD III (V5): squared - Math.hypot's builtin boxes its numbers, and a frame asks it",
     "tests": [
       "test/scenes/superDungeon/sd20c_render.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "SD20C-V5-the-keep-made",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "  const d = Math.sqrt(x * x + z * z), o = out ?? [0, 0];",
-    "new": "  const d = Math.sqrt(x * x + z * z), o = [0, 0];",
+    "old": "    o = out ?? [0, 0];",
+    "new": "    o = [0, 0];",
     "tests": [
       "test/scenes/superDungeon/sd20c_render.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "SD20C-V5-a-body-made",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "  const o = out ?? [0, 0];\n  if (!B) {",
-    "new": "  const o = [0, 0];\n  if (!B) {",
+    "old": "  const o = out ?? [0, 0];",
+    "new": "  const o = [0, 0];",
     "tests": [
       "test/scenes/superDungeon/sd20c_render.test.js"
     ]
