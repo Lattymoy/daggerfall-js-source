@@ -32,7 +32,7 @@ function peLayout(b) {
   const optSize = u16(b, coff + 16);
   const opt = coff + 20;
   const magic = u16(b, opt);
-  const dirs = opt + (magic === 0x20b ? 112 : 96);   // PE32+ carries a wider optional header
+  const dirs = opt + (magic === 0x20b ? 112 : 96); // PE32+ carries a wider optional header
   const cliRva = u32(b, dirs + 14 * 8);
   const sections = [];
   for (let i = 0, s = opt + optSize; i < nSections; i++, s += 40) {
@@ -54,12 +54,13 @@ export function metadataStreams(bytes) {
   o += 4;
   const out = new Map();
   for (let i = 0; i < count; i++) {
-    const offset = u32(b, o), size = u32(b, o + 4);
+    const offset = u32(b, o),
+      size = u32(b, o + 4);
     let e = o + 8;
     while (b[e] !== 0) e++;
     const name = String.fromCharCode(...b.subarray(o + 8, e));
     out.set(name, { offset: root + offset, size });
-    o = (e + 4) & ~3;   // the name, its NUL, padded to four
+    o = (e + 4) & ~3; // the name, its NUL, padded to four
   }
   return out;
 }
@@ -70,15 +71,25 @@ export function userStrings(bytes) {
   const us = metadataStreams(b).get('#US');
   if (!us) return [];
   const out = [];
-  let o = us.offset + 1;   // entry 0 is the empty blob
+  let o = us.offset + 1; // entry 0 is the empty blob
   const end = us.offset + us.size;
   while (o < end) {
     const c = b[o];
     let len, head;
-    if ((c & 0x80) === 0) { len = c; head = 1; }
-    else if ((c & 0xc0) === 0x80) { len = ((c & 0x3f) << 8) | b[o + 1]; head = 2; }
-    else { len = ((c & 0x1f) << 24) | (b[o + 1] << 16) | (b[o + 2] << 8) | b[o + 3]; head = 4; }
-    if (len === 0) { o += head; continue; }   // the heap's zero padding
+    if ((c & 0x80) === 0) {
+      len = c;
+      head = 1;
+    } else if ((c & 0xc0) === 0x80) {
+      len = ((c & 0x3f) << 8) | b[o + 1];
+      head = 2;
+    } else {
+      len = ((c & 0x1f) << 24) | (b[o + 1] << 16) | (b[o + 2] << 8) | b[o + 3];
+      head = 4;
+    }
+    if (len === 0) {
+      o += head;
+      continue;
+    } // the heap's zero padding
     const chars = [];
     for (let i = 0; i + 1 < len; i += 2) chars.push(u16(b, o + head + i));
     out.push(String.fromCharCode(...chars));

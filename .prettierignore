@@ -180,6 +180,8 @@
 /tools/*
 !/tools/layered-armor/
 /tools/layered-armor/*/
+!/tools/lib/
+/tools/lib/*/
 !/tools/mutation/
 /tools/mutation/*/
 !/tools/neutral/

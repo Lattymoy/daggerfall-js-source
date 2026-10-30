@@ -71,7 +71,10 @@ export function bestClassicBlock(pic, records, sizes = [32, 64, 128]) {
         for (let y = 0; y < w; y++) {
           for (let x = 0; x < w; x++) {
             const i = ((by + y) * pic.width + bx + x) * 4;
-            if (pic.data[i + 3] === 0) { block[y * w + x] = -1; continue; }   // clear: no packed RGB is -1
+            if (pic.data[i + 3] === 0) {
+              block[y * w + x] = -1;
+              continue;
+            } // clear: no packed RGB is -1
             const c = rgbAt(pic.data, i);
             block[y * w + x] = c;
             counts.set(c, (counts.get(c) ?? 0) + 1);
@@ -82,12 +85,16 @@ export function bestClassicBlock(pic, records, sizes = [32, 64, 128]) {
         const floor = Math.max(best?.share ?? 0, 0) * visible;
         for (const r of recs) {
           let bound = 0;
-          for (const [c, n] of counts) { const m = r.counts.get(c); if (m) bound += Math.min(n, m); }
+          for (const [c, n] of counts) {
+            const m = r.counts.get(c);
+            if (m) bound += Math.min(n, m);
+          }
           if (bound <= floor) continue;
           let same = 0;
           for (let i = 0; i < w * w; i++) if (block[i] === r.px[i]) same++;
           const share = same / visible;
-          if (!best || share > best.share) best = { archive: r.archive, record: r.record, frame: r.frame, size: w, at: [bx, by], share };
+          if (!best || share > best.share)
+            best = { archive: r.archive, record: r.record, frame: r.frame, size: w, at: [bx, by], share };
         }
       }
     }
@@ -97,17 +104,25 @@ export function bestClassicBlock(pic, records, sizes = [32, 64, 128]) {
 
 /** A picture cut to the box its visible pixels fill - a small sprite pasted on a clear canvas is judged at its own size. */
 export function cropToVisible(pic) {
-  let x0 = pic.width, y0 = pic.height, x1 = -1, y1 = -1;
+  let x0 = pic.width,
+    y0 = pic.height,
+    x1 = -1,
+    y1 = -1;
   for (let y = 0; y < pic.height; y++) {
     for (let x = 0; x < pic.width; x++) {
       if (pic.data[(y * pic.width + x) * 4 + 3] === 0) continue;
-      if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+      if (x < x0) x0 = x;
+      if (x > x1) x1 = x;
+      if (y < y0) y0 = y;
+      if (y > y1) y1 = y;
     }
   }
   if (x1 < 0) return null;
-  const w = x1 - x0 + 1, h = y1 - y0 + 1;
+  const w = x1 - x0 + 1,
+    h = y1 - y0 + 1;
   const data = new Uint8Array(w * h * 4);
-  for (let y = 0; y < h; y++) data.set(pic.data.subarray(((y0 + y) * pic.width + x0) * 4, ((y0 + y) * pic.width + x1 + 1) * 4), y * w * 4);
+  for (let y = 0; y < h; y++)
+    data.set(pic.data.subarray(((y0 + y) * pic.width + x0) * 4, ((y0 + y) * pic.width + x1 + 1) * 4), y * w * 4);
   return { width: w, height: h, data, at: [x0, y0] };
 }
 

@@ -50,16 +50,18 @@ export function readFsb5(b) {
   const codec = u32le(b, 24);
   const base = version === 0 ? 0x40 : 0x3c;
   const dataStart = base + headersSize + namesSize;
-  if (dataStart + dataSize > b.length) throw new Error(`FSB5: ${dataStart + dataSize} bytes declared, ${b.length} present`);
+  if (dataStart + dataSize > b.length)
+    throw new Error(`FSB5: ${dataStart + dataSize} bytes declared, ${b.length} present`);
   const samples = [];
   let o = base;
   for (let i = 0; i < count; i++) {
-    const lo = u32le(b, o), hi = u32le(b, o + 4);
+    const lo = u32le(b, o),
+      hi = u32le(b, o + 4);
     o += 8;
     const s = {
       rate: FSB5_RATES[(lo >>> 1) & 0x0f],
       channels: [1, 2, 6, 8][(lo >>> 5) & 0x03],
-      dataOffset: ((((hi & 0x03) << 25) | ((lo >>> 7) & 0x1ffffff)) * 32),
+      dataOffset: (((hi & 0x03) << 25) | ((lo >>> 7) & 0x1ffffff)) * 32,
       numSamples: (hi >>> 2) & 0x3fffffff,
       loop: null,
       vorbisCrc: null,
@@ -105,11 +107,21 @@ export function fsb5VorbisPackets(data) {
 // ---- the Vorbis setup header, to its mode table (Vorbis I, 4.2.4) ----------
 
 /** The number of bits an unsigned value needs (the spec's ilog). */
-export const ilog = (v) => { let n = 0; while (v > 0) { n++; v >>>= 1; } return n; };
+export const ilog = (v) => {
+  let n = 0;
+  while (v > 0) {
+    n++;
+    v >>>= 1;
+  }
+  return n;
+};
 
 /** Vorbis reads its bits least significant first. */
 class BitReader {
-  constructor(b) { this.b = b; this.pos = 0; }
+  constructor(b) {
+    this.b = b;
+    this.pos = 0;
+  }
   read(n) {
     let v = 0;
     for (let i = 0; i < n; i++, this.pos++) {
@@ -138,14 +150,16 @@ function lookup1Values(entries, dimensions) {
  * @returns {{ codebooks:number, floors:number, residues:number, mappings:number, modes: {blockflag:number, mapping:number}[], framingBit:number }}
  */
 export function parseVorbisSetup(setup, channels) {
-  if (setup[0] !== 5 || String.fromCharCode(...setup.subarray(1, 7)) !== 'vorbis') throw new Error('not a Vorbis setup header');
+  if (setup[0] !== 5 || String.fromCharCode(...setup.subarray(1, 7)) !== 'vorbis')
+    throw new Error('not a Vorbis setup header');
   const r = new BitReader(setup.subarray(7));
   const codebooks = r.read(8) + 1;
   for (let c = 0; c < codebooks; c++) {
     if (r.read(24) !== 0x564342) throw new Error(`Vorbis setup: codebook ${c} has no sync pattern`);
     const dimensions = r.read(16);
     const entries = r.read(24);
-    if (r.read(1)) {   // ordered
+    if (r.read(1)) {
+      // ordered
       let entry = 0;
       r.read(5);
       while (entry < entries) entry += r.read(ilog(entries - entry));
@@ -156,7 +170,8 @@ export function parseVorbisSetup(setup, channels) {
     }
     const lookup = r.read(4);
     if (lookup === 1 || lookup === 2) {
-      r.read(32); r.read(32);
+      r.read(32);
+      r.read(32);
       const valueBits = r.read(4) + 1;
       r.read(1);
       const values = lookup === 1 ? lookup1Values(entries, dimensions) : entries * dimensions;
@@ -164,25 +179,33 @@ export function parseVorbisSetup(setup, channels) {
     } else if (lookup !== 0) throw new Error(`Vorbis setup: codebook ${c} lookup type ${lookup}`);
   }
   const times = r.read(6) + 1;
-  for (let i = 0; i < times; i++) if (r.read(16) !== 0) throw new Error('Vorbis setup: a time-domain transform that is not 0');
+  for (let i = 0; i < times; i++)
+    if (r.read(16) !== 0) throw new Error('Vorbis setup: a time-domain transform that is not 0');
   const floors = r.read(6) + 1;
   for (let f = 0; f < floors; f++) {
     const type = r.read(16);
     if (type === 0) {
-      r.read(8); r.read(16); r.read(16); r.read(6); r.read(8);
+      r.read(8);
+      r.read(16);
+      r.read(16);
+      r.read(6);
+      r.read(8);
       const books = r.read(4) + 1;
       for (let i = 0; i < books; i++) r.read(8);
     } else if (type === 1) {
       const partitions = r.read(5);
       const classList = [];
       let maxClass = -1;
-      for (let i = 0; i < partitions; i++) { classList.push(r.read(4)); maxClass = Math.max(maxClass, classList[i]); }
+      for (let i = 0; i < partitions; i++) {
+        classList.push(r.read(4));
+        maxClass = Math.max(maxClass, classList[i]);
+      }
       const dims = [];
       for (let i = 0; i <= maxClass; i++) {
         dims.push(r.read(3) + 1);
         const subclasses = r.read(2);
         if (subclasses) r.read(8);
-        for (let j = 0; j < (1 << subclasses); j++) r.read(8);
+        for (let j = 0; j < 1 << subclasses; j++) r.read(8);
       }
       r.read(2);
       const rangeBits = r.read(4);
@@ -193,7 +216,9 @@ export function parseVorbisSetup(setup, channels) {
   for (let i = 0; i < residues; i++) {
     const type = r.read(16);
     if (type > 2) throw new Error(`Vorbis setup: residue type ${type}`);
-    r.read(24); r.read(24); r.read(24);
+    r.read(24);
+    r.read(24);
+    r.read(24);
     const classifications = r.read(6) + 1;
     r.read(8);
     const cascade = [];
@@ -211,20 +236,28 @@ export function parseVorbisSetup(setup, channels) {
     const submaps = r.read(1) ? r.read(4) + 1 : 1;
     if (r.read(1)) {
       const steps = r.read(8) + 1;
-      for (let s = 0; s < steps; s++) { r.read(chBits); r.read(chBits); }
+      for (let s = 0; s < steps; s++) {
+        r.read(chBits);
+        r.read(chBits);
+      }
     }
-    if (r.read(2) !== 0) throw new Error('Vorbis setup: a mapping\'s reserved bits are set');
+    if (r.read(2) !== 0) throw new Error("Vorbis setup: a mapping's reserved bits are set");
     if (submaps > 1) for (let c = 0; c < channels; c++) r.read(4);
-    for (let s = 0; s < submaps; s++) { r.read(8); r.read(8); r.read(8); }
+    for (let s = 0; s < submaps; s++) {
+      r.read(8);
+      r.read(8);
+      r.read(8);
+    }
   }
   const modeCount = r.read(6) + 1;
   const modes = [];
   for (let i = 0; i < modeCount; i++) {
     const blockflag = r.read(1);
-    if (r.read(16) !== 0 || r.read(16) !== 0) throw new Error('Vorbis setup: a mode whose window or transform is not 0');
+    if (r.read(16) !== 0 || r.read(16) !== 0)
+      throw new Error('Vorbis setup: a mode whose window or transform is not 0');
     modes.push({ blockflag, mapping: r.read(8) });
   }
-  const framingBit = 56 + r.pos;   // the packet's bit the framing flag is
+  const framingBit = 56 + r.pos; // the packet's bit the framing flag is
   if (r.read(1) !== 1) throw new Error('Vorbis setup: no framing bit after the modes');
   const left = setup.length * 8 - 56 - r.pos;
   if (left >= 8) throw new Error(`Vorbis setup: ${left} bits after the framing bit`);
@@ -237,7 +270,7 @@ const OGG_CRC = (() => {
   const t = new Uint32Array(256);
   for (let i = 0; i < 256; i++) {
     let c = i << 24;
-    for (let k = 0; k < 8; k++) c = (c & 0x80000000) ? ((c << 1) ^ 0x04c11db7) : (c << 1);
+    for (let k = 0; k < 8; k++) c = c & 0x80000000 ? (c << 1) ^ 0x04c11db7 : c << 1;
     t[i] = c >>> 0;
   }
   return t;
@@ -254,7 +287,7 @@ function oggPage({ flags, granule, serial, seq, lacing, body }) {
   const head = 27 + lacing.length;
   const page = new Uint8Array(head + body.length);
   const v = new DataView(page.buffer);
-  page.set([0x4f, 0x67, 0x67, 0x53], 0);   // OggS
+  page.set([0x4f, 0x67, 0x67, 0x53], 0); // OggS
   page[4] = 0;
   page[5] = flags;
   v.setBigUint64(6, BigInt(granule), true);
@@ -275,14 +308,27 @@ function oggPage({ flags, granule, serial, seq, lacing, body }) {
  */
 function oggPages(packets, { serial, pageBody = 4096, flushAfter = () => false, bos = true }) {
   const pages = [];
-  let lacing = [], chunks = [], size = 0, granule = -1, continued = false, seq = 0;
+  let lacing = [],
+    chunks = [],
+    size = 0,
+    granule = -1,
+    continued = false,
+    seq = 0;
   const close = (last) => {
     const body = new Uint8Array(size);
     let o = 0;
-    for (const c of chunks) { body.set(c, o); o += c.length; }
+    for (const c of chunks) {
+      body.set(c, o);
+      o += c.length;
+    }
     const flags = (continued ? 1 : 0) | (bos && seq === 0 ? 2 : 0) | (last ? 4 : 0);
-    pages.push(oggPage({ flags, granule: granule < 0 ? 0xffffffffffffffffn : granule, serial, seq: seq++, lacing, body }));
-    lacing = []; chunks = []; size = 0; granule = -1;
+    pages.push(
+      oggPage({ flags, granule: granule < 0 ? 0xffffffffffffffffn : granule, serial, seq: seq++, lacing, body }),
+    );
+    lacing = [];
+    chunks = [];
+    size = 0;
+    granule = -1;
   };
   packets.forEach((p, i) => {
     let off = 0;
@@ -291,7 +337,10 @@ function oggPages(packets, { serial, pageBody = 4096, flushAfter = () => false, 
     // a packet's lacing: 255s, then the remainder (0 when it is a multiple of 255)
     for (;;) {
       const seg = Math.min(255, n - off);
-      if (lacing.length === 255) { close(false); continued = off > 0; }
+      if (lacing.length === 255) {
+        close(false);
+        continued = off > 0;
+      }
       lacing.push(seg);
       chunks.push(p.data.subarray(off, off + seg));
       size += seg;
@@ -301,7 +350,10 @@ function oggPages(packets, { serial, pageBody = 4096, flushAfter = () => false, 
     granule = p.granule;
     const last = i === packets.length - 1;
     if (last) close(true);
-    else if (flushAfter(i) || size >= pageBody) { close(false); continued = false; }
+    else if (flushAfter(i) || size >= pageBody) {
+      close(false);
+      continued = false;
+    }
   });
   return pages;
 }
@@ -310,7 +362,8 @@ function oggPages(packets, { serial, pageBody = 4096, flushAfter = () => false, 
 export function vorbisIdHeader(channels, rate, short = 256, long = 2048) {
   const h = new Uint8Array(30);
   const v = new DataView(h.buffer);
-  h[0] = 1; h.set([0x76, 0x6f, 0x72, 0x62, 0x69, 0x73], 1);   // "vorbis"
+  h[0] = 1;
+  h.set([0x76, 0x6f, 0x72, 0x62, 0x69, 0x73], 1); // "vorbis"
   v.setUint32(7, 0, true);
   h[11] = channels;
   v.setUint32(12, rate, true);
@@ -324,7 +377,8 @@ export function vorbisCommentHeader(vendor) {
   const vb = new TextEncoder().encode(vendor);
   const h = new Uint8Array(7 + 4 + vb.length + 4 + 1);
   const v = new DataView(h.buffer);
-  h[0] = 3; h.set([0x76, 0x6f, 0x72, 0x62, 0x69, 0x73], 1);
+  h[0] = 3;
+  h.set([0x76, 0x6f, 0x72, 0x62, 0x69, 0x73], 1);
   v.setUint32(7, vb.length, true);
   h.set(vb, 11);
   v.setUint32(11 + vb.length, 0, true);
@@ -333,7 +387,7 @@ export function vorbisCommentHeader(vendor) {
 }
 
 export const REMUX_VENDOR = 'daggerfall-js FSB5 remux';
-export const REMUX_SERIAL = 0x43534131;   // "CSA1"
+export const REMUX_SERIAL = 0x43534131; // "CSA1"
 
 /**
  * An FSB5 Vorbis bank's first sample as an Ogg Vorbis file.
@@ -355,7 +409,8 @@ export function fsb5ToOgg(fsbBytes, setupFor) {
     { data: vorbisCommentHeader(REMUX_VENDOR), granule: 0 },
     { data: setup, granule: 0 },
   ];
-  let prev = 0, granule = 0;
+  let prev = 0,
+    granule = 0;
   for (const p of audio) {
     if (p[0] & 1) throw new Error('FSB5 Vorbis: an audio packet whose type bit is set');
     const mode = (p[0] >> 1) & ((1 << modeBits) - 1);
@@ -370,6 +425,16 @@ export function fsb5ToOgg(fsbBytes, setupFor) {
   const pages = oggPages(packets, { serial: REMUX_SERIAL, flushAfter: (i) => i === 0 || i === 2 });
   const out = new Uint8Array(pages.reduce((n, p) => n + p.length, 0));
   let o = 0;
-  for (const p of pages) { out.set(p, o); o += p.length; }
-  return { ogg: out, channels: s.channels, rate: s.rate, numSamples: s.numSamples, packets: audio.length, crc: s.vorbisCrc };
+  for (const p of pages) {
+    out.set(p, o);
+    o += p.length;
+  }
+  return {
+    ogg: out,
+    channels: s.channels,
+    rate: s.rate,
+    numSamples: s.numSamples,
+    packets: audio.length,
+    crc: s.vorbisCrc,
+  };
 }

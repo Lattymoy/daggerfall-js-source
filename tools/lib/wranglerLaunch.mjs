@@ -42,7 +42,11 @@ export function devSpawnOptions(options, platform = process.platform) {
 
 /** Kill the process tree a `devSpawnOptions` spawn started. Throws when there is nothing left to kill, as
  *  `process.kill` does; `signal` is the group's off Windows, where taskkill's /F is always a hard kill. */
-export function killTree(pid, signal, { platform = process.platform, kill = (id, sig) => process.kill(id, sig), spawnSync = nodeSpawnSync } = {}) {
+export function killTree(
+  pid,
+  signal,
+  { platform = process.platform, kill = (id, sig) => process.kill(id, sig), spawnSync = nodeSpawnSync } = {},
+) {
   if (platform !== 'win32') {
     kill(-pid, signal);
     return;
