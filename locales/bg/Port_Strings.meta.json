@@ -41244,16 +41244,6 @@
   "tr": "5de7e4665105",
   "by": "claude-in-session"
  },
- "shop.daily.turnsH": {
-  "en": "2e9b038a693b",
-  "tr": "738329fb1770",
-  "by": "claude-in-session"
- },
- "shop.daily.turnsM": {
-  "en": "766c2a0f1fdc",
-  "tr": "174df8dc262c",
-  "by": "claude-in-session"
- },
  "shop.deals.line": {
   "en": "d3940286c4b7",
   "tr": "73726b4c1586",
@@ -41262,6 +41252,16 @@
  "shop.deals.title": {
   "en": "64386239cff6",
   "tr": "0a1d6b0121e6",
+  "by": "claude-in-session"
+ },
+ "shop.deals.turnsH": {
+  "en": "18e3f5ce6eaf",
+  "tr": "428fd127a5b0",
+  "by": "claude-in-session"
+ },
+ "shop.deals.turnsM": {
+  "en": "fa8df9926cd7",
+  "tr": "33bb3f04561f",
   "by": "claude-in-session"
  },
  "shop.deed.done": {

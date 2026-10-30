@@ -85,7 +85,7 @@ test('AURUM the Daily Deals section (AURUM-ONLY, PIN MOVED: the Daily Wares): wh
   const w = win(flow, { cat: 'daily' });
   const head = all(w.root, 'sh-dailyhead')[0];
   assert.equal(all(head, 'sh-turns')[0].textContent, aurumTurnsText((DAY + 1) * 86_400_000, NOW));
-  assert.equal(aurumTurnsText((DAY + 1) * 86_400_000, NOW), 'New wares in 12 h 0 min');
+  assert.equal(aurumTurnsText((DAY + 1) * 86_400_000, NOW), 'New deals in 12 h 0 min');   // PIN MOVED (AURUM-ONLY): the day's deals
   assert.deepEqual(all(head, 'sh-deed').map((d) => [String(d.className).includes('sh-deed-done'), all(d, 'sh-deedpay')[0].textContent]),
     Object.entries(AURUM_DEEDS).map(([k, n]) => (['gate', 'serpent'].includes(k) ? [true, 'Done this week'] : [false, `+${n} Aurum`])));
   assert.deepEqual(all(w.root, 'sh-panel').map((p) => p.attrs['data-ware']), WARES);

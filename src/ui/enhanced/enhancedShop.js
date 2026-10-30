@@ -187,7 +187,7 @@ const wearable = (/** @type {{ kind: string }} */ w) => !['bundle', 'aurum'].inc
 /** AURUM: how long until the day's deals turn, in words. Pure. */
 export function aurumTurnsText(/** @type {number} */ untilMs, /** @type {number} */ nowMs) {
   const min = Math.max(1, Math.ceil((untilMs - nowMs) / 60_000)), h = Math.floor(min / 60);
-  return h ? t('shop.daily.turnsH', 'New wares in {h} h {m} min', { h, m: min % 60 }) : t('shop.daily.turnsM', 'New wares in {m} min', { m: min });
+  return h ? t('shop.deals.turnsH', 'New deals in {h} h {m} min', { h, m: min % 60 }) : t('shop.deals.turnsM', 'New deals in {m} min', { m: min });
 }
 /** AURUM: a week's deed, as its chip says it (net/aurumLaw.js AURUM_DEEDS, a receipt each). */
 const DEED_TEXT = Object.freeze({
