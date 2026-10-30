@@ -8,9 +8,12 @@ of a chest-armour family but moved a pixel or two between families. Per frame an
   - the grip `q`, the head's centre `t`, the head's radius `hr` and the side its face is on (`side`, +-1);
   - the depth along the shaft (`d`: from 16 px behind the grip to 70 px past it, f where the hammer was in front of the
     body, b where the body hid it, ? where it crossed open air);
-  - the fill: the shift or mirror that best continues the body round the hole the head leaves (`fill`), or 0.
+  - the fill: the shift or mirror that best continues the body round the hole the head leaves (`fill`), or 0;
+  - in a walk or idle frame whose hammer hides its shaft, the line the weapon is drawn on (`w`: SHAFT, Daggerfall's own
+    sword), and in each walk and idle frame the free hand a bow is held in (`bow`).
 The PNG is three tiles (leather, chain, plate chest), alpha 255 where the hammer is. The manifest also carries each
-metal's colour ramp (16 steps by brightness, from the strips' own metal tiles) for the weapons drawn in its place.
+metal's colour ramp (16 steps by brightness, from the strips' own metal tiles) for the weapons drawn in its place,
+the hammer's length (`len`) and the body's own bow (`bow`).
 
 usage: python -I build_weapon_rig.py <repo>/vendor/layered-armor [male:0-0 ...]   (needs numpy, scipy, pillow; frames named
   are rebuilt alone, the rest kept)
@@ -101,12 +104,49 @@ HAND = {
     ('female', '4-2'): dict(q=(79, 90.5), t=(81, 95), lit=[(76, 88, 81, 92)], all=[(77, 92, 85, 99)]),
     ('female', '4-3'): dict(q=(81.5, 88.5), t=(83, 93.5), lit=[(79, 82, 84, 90)], all=[(79, 90, 86, 97)]),
 }
-# Walk and idle frames whose shaft pointed at the camera hang the weapon from the fist instead: `carry`. HANG: frames
-# that carry whatever their shaft, from the hand their fill leaves (a front view's mirrored arm), not the art's grip.
-CARRY_BELOW, CARRY_TILT = 0.45, math.radians(12)
-HANG = {('male', '0-0'): (5, 68), ('male', '0-1'): (6, 63), ('male', '0-3'): (4.5, 63), ('male', '15-0'): (9, 60),
-        ('male', '16-0'): (27, 57), ('female', '0-1'): (51.5, 84), ('female', '0-3'): (48.5, 85.5),
-        ('female', '15-0'): (48, 87), ('female', '16-0'): (55, 80)}
+# Walk and idle frames whose hammer hides its shaft - a front view's points at the camera, a back view's is behind the
+# body with its butt out - draw the weapon on Daggerfall's own sword (TEXTURE.482, .481: the Archer, one render with
+# the strips) instead: (grip, the head's place at the hammer's length, and the blade's side of the body: f before it, b
+# behind it, None as the art's hammer is). The grip is the fist's blade side (a front view's: the hand its fill
+# leaves). The sword's own length is twice the hammer's, so the head's place is half way to its tip.
+SHAFT = {
+    ('male', '0-0'): (7, 66, 11.7, 58.6, 'f'), ('male', '0-1'): (6.5, 63, 9.7, 52.7, 'f'),
+    ('male', '0-3'): (5, 63, 7.7, 52.7, 'f'), ('male', '2-2'): (37.5, 56.5, 11.2, 50.6, None),
+    ('male', '3-0'): (46.1, 60.1, 20.3, 52.4, 'b'), ('male', '3-1'): (49.7, 57.8, 26.5, 47.9, 'b'),
+    ('male', '3-2'): (59.9, 62.6, 43.5, 53.7, 'b'), ('male', '3-3'): (54.7, 58.9, 33.1, 50.5, 'b'),
+    ('male', '4-0'): (49.5, 56.8, 43.6, 50.3, None), ('male', '4-1'): (55.8, 54.0, 49.4, 44.8, None),
+    ('male', '4-2'): (65.3, 56.5, 66.1, 49.1, None), ('male', '4-3'): (54.7, 54.6, 48.0, 46.0, None),
+    ('male', '15-0'): (10.5, 58.5, 18.6, 50.9, 'f'), ('male', '16-0'): (28, 54, 18.9, 44.1, 'f'),
+    ('male', '18-0'): (26.9, 50.5, 8.3, 41.7, None),
+    ('female', '0-0'): (50, 88, 44.2, 86.8, 'f'), ('female', '0-1'): (51, 82, 52.9, 71.3, 'f'),
+    ('female', '0-3'): (48.5, 84, 49.4, 74.2, 'f'), ('female', '3-0'): (87.2, 93.3, 73.1, 87.3, 'b'),
+    ('female', '3-1'): (83.7, 89.4, 60.7, 80.3, 'b'), ('female', '3-2'): (64.5, 78.5, 48.3, 71.1, None),
+    ('female', '3-3'): (83.4, 88.5, 63.8, 76.8, 'b'), ('female', '4-1'): (80.7, 85.8, 75.9, 76.3, None),
+    ('female', '4-2'): (77.8, 87.8, 74.0, 79.2, None), ('female', '4-3'): (80.6, 85.6, 77.9, 76.6, None),
+    ('female', '15-0'): (49, 85.5, 53, 78.3, 'f'), ('female', '16-0'): (54, 78, 47, 69.4, 'f'),
+    ('female', '18-0'): (59.7, 77.7, 43.4, 69.8, None),
+}
+# The free (left) hand that carries a bow in the walk and the idle - the shot's own bow hand: (x, y, in front of the
+# body). Read from the bard sprites' gloves (TEXTURE.484, .483 - one render with the strips) and the hand's skin; where
+# the art hides that hand (the side views), its place half a stride on, behind the body.
+BOW_HAND = {
+    'male': {'0-0': (64.3, 65.3, 1), '0-1': (66.0, 60.0, 1), '0-2': (68.4, 62.9, 1), '0-3': (64.4, 61.7, 1),
+             '1-0': (83.3, 65.4, 1), '1-1': (76.2, 59.9, 1), '1-2': (65.4, 62.1, 1), '1-3': (77.3, 60.8, 1),
+             '2-0': (36.6, 57.1, 0), '2-1': (45.7, 58.7, 0), '2-2': (43.5, 60.5, 0), '2-3': (42.9, 57.0, 0),
+             '3-0': (13.9, 62.6, 1), '3-1': (8.9, 56.4, 1), '3-2': (9.4, 56.4, 1), '3-3': (13.8, 57.6, 1),
+             '4-0': (1.7, 58.7, 0), '4-1': (4.0, 53.0, 0), '4-2': (14.0, 61.2, 0), '4-3': (3.0, 55.5, 0),
+             '15-0': (53.8, 61.0, 1), '16-0': (79.7, 60.6, 1), '17-0': (44.0, 58.0, 0), '18-0': (55.0, 64.0, 0),
+             '19-0': (8.2, 59.5, 0)},
+    'female': {'0-0': (89.2, 90.3, 1), '0-1': (91.8, 87.1, 1), '0-2': (88.4, 91.9, 1), '0-3': (92.2, 87.3, 1),
+               '1-0': (90.5, 87.5, 1), '1-1': (99.0, 87.0, 1), '1-2': (102.0, 92.0, 1), '1-3': (99.5, 86.0, 1),
+               '2-0': (74.8, 91.1, 0), '2-1': (73.9, 87.8, 0), '2-2': (79.0, 88.7, 0), '2-3': (72.4, 87.6, 0),
+               '3-0': (48.8, 88.4, 1), '3-1': (54.0, 87.6, 1), '3-2': (90.0, 90.0, 0), '3-3': (54.7, 87.8, 1),
+               '4-0': (44.0, 91.0, 0), '4-1': (39.8, 86.8, 0), '4-2': (43.4, 91.8, 0), '4-3': (39.2, 86.2, 0),
+               '15-0': (88.7, 90.5, 1), '16-0': (98.1, 90.3, 1), '17-0': (70.0, 88.0, 0), '18-0': (88.0, 93.0, 0),
+               '19-0': (40.0, 89.5, 0)},
+}
+# The body's own bow (the loose's art, records 20-24), tip to tip, px: the long bow; the short bow is three quarters.
+BOW_PX = {'male': 75, 'female': 78}
 # Front views whose hole is the body's other side, mirrored: the fill copies it, alpha and all.
 MIRROR = {('male', '0-0'), ('male', '0-1'), ('male', '0-3'), ('male', '15-0')} | {('female', f'0-{i}') for i in (0, 1, 3)} | {('female', '15-0')}
 
@@ -270,17 +310,6 @@ def hand(body, rf, fam):
     return dict(m=m, L=L, st=st, q=(float(qx), float(qy)), t=(float(T[0]), float(T[1])), hr=hr, side=side)
 
 
-def carry(body, rf, p, ln):
-    """[ux, uy, front] for a walk or idle frame whose shaft was shorter than CARRY_BELOW of the body's: down, tilted
-    outward from the body's middle; in front of the body in the front, front-3/4 and side views."""
-    rec = int(rf.split('-')[0])
-    if rec > 4 and not 15 <= rec <= 19: return None
-    if (body, rf) not in HANG and math.hypot(p['t'][0] - p['q'][0], p['t'][1] - p['q'][1]) >= CARRY_BELOW * ln: return None
-    L = strip_base(body, 'leather_leather_leather', rf); cx = float(np.nonzero(L[..., 3] > 0)[1].mean())
-    out = 1 if p['q'][0] >= cx else -1
-    return [round(out * math.sin(CARRY_TILT), 3), round(math.cos(CARRY_TILT), 3), 1 if rec % 5 <= 2 else 0]
-
-
 def body_side(img, m):
     """Which mask px the body was behind (nearest outside px opaque, most of them at the edge) - the runtime's own rule
     (layeredWeapon.js)."""
@@ -369,6 +398,7 @@ def inpaint(imgs, m, bp, R=11, P=2):
     return off, has
 
 
+
 def depth(g, lo=LO, hi=HI):
     (qx, qy), (tx, ty), m, L = g['q'], g['t'], g['m'], g['L']; H, W = m.shape
     D = math.hypot(tx - qx, ty - qy) or 1.0; ux, uy = (tx - qx) / D, (ty - qy) / D; nx, ny = -uy, ux
@@ -434,13 +464,23 @@ def main(only=None):
             frames[rf] = per
             print(body, rf, [p['fill'] for p in per])
         ln = round(float(np.percentile(lengths, 95)), 1)
-        for rf, per in frames.items():
-            c = carry(body, rf, per[0], ln)
+        for rf, per in frames.items():   # Daggerfall's sword, where the hammer hides its shaft
+            for fam, p in zip(FAMS, per):
+                p.pop('carry', None); p.pop('hang', None); p.pop('w', None)
+                if (body, rf) not in SHAFT: continue
+                gx, gy, ex, ey, blade = SHAFT[(body, rf)]
+                ox, oy = (p['q'][0] - HAND[(body, rf)]['q'][0], p['q'][1] - HAND[(body, rf)]['q'][1]) if (body, rf) in HAND else (0, 0)
+                p['w'] = [round(gx + ox, 1), round(gy + oy, 1), round(ex + ox, 1), round(ey + oy, 1)]
+                tiles = np.array(Image.open(f'{V}/weapon/{body}/{rf}.png').convert('RGBA')); tw = tiles.shape[1] // len(FAMS)
+                m = tiles[:, FAMS.index(fam) * tw:(FAMS.index(fam) + 1) * tw, 3] > 0
+                d = depth({'q': p['w'][:2], 't': p['w'][2:], 'm': m, 'L': stable(body, rf, fam)[1]})
+                d = d[:-LO - 3] + 'b' * 3 + d[-LO:]   # the fist closes over the handle
+                p['d'] = d if blade is None else d[:-LO] + blade * (HI + 1)
+        for rf, per in frames.items():   # the bow's hand, where a frame carries one
             for p in per:
-                p.pop('carry', None); p.pop('hang', None)
-                if c: p['carry'] = c
-                if c and (body, rf) in HANG: p['hang'] = list(HANG[(body, rf)])
-        rig[body] = {'len': ln, 'frames': frames}
+                p.pop('bow', None)
+                if rf in BOW_HAND[body]: p['bow'] = list(BOW_HAND[body][rf])
+        rig[body] = {'len': ln, 'bow': BOW_PX[body], 'frames': frames}
     with open(f'{V}/weapon/manifest.json', 'w') as f: json.dump(rig, f, separators=(',', ':'))
     print('weapon rig written')
 

@@ -157,8 +157,9 @@ test('a hole px copies its own source where the rig gives one, before the frame\
 });
 
 test('a mirror fill keeps what joins the body and drops a copied piece that floats', () => {
-  // the body at columns 4-5, the other arm alone at 8; the hole at 0 (the arm's mirror) and 3 (the body's)
-  const w = 9, h = 3, data = new Uint8Array(w * h * 4), mask = new Uint8Array(w * h);
+  // the body at columns 4-5, the other arm alone at 8; the hole at 0 (the arm's mirror) and 3 (the body's); the arm's
+  // copy is longer than a speck, so only the mirror's own rule drops it
+  const w = 9, h = 48, data = new Uint8Array(w * h * 4), mask = new Uint8Array(w * h);
   for (let y = 0; y < h; y++) for (const x of [4, 5, 8]) data.set([100, 50, 20, 255], (y * w + x) * 4);
   for (let y = 0; y < h; y++) for (const x of [0, 3]) { data.set([20, 20, 20, 255], (y * w + x) * 4); mask[y * w + x] = 1; }
   removeWeapon({ width: w, height: h, data }, mask, [1, 4, 0]);
@@ -208,22 +209,54 @@ test('composed: the chest a swing crossed is the body\'s own px, copied from whe
   assert.ok(n > 40 && same > n * 0.9, `${same} of ${n} hole px are their source's`);
 });
 
-test('a walk whose hammer pointed at the camera hangs the weapon from the hand: down, the handle behind the fist', { skip: !PNG && 'no pngjs' }, async () => {
-  for (const [body, rf] of [['male', '4-1'], ['female', '4-2'], ['male', '0-0'], ['female', '0-3'], ['male', '15-0']]) {
-    const fr = weaponRigOf(body, rf);
-    assert.ok(Array.isArray(fr.carry) && fr.carry[1] > 0.9, `${body} ${rf}: hangs down`);
-    const [hx, hy] = fr.hang ?? fr.q, plain = `LA:${body}:leather_leather_leather:${rf}:lll`;
-    const bare = await decodeLayered(`${plain}@0`, decodePng, opts), armed = await decodeLayered(`${plain}@ls1`, decodePng, opts);
-    let n = 0, sy = 0, over = 0;
+test('a walk whose hammer hides its shaft draws on Daggerfall\'s sword: pointed at the camera, or behind the body', { skip: !PNG && 'no pngjs' }, async () => {
+  const diff = async (body, rf, code) => {
+    const plain = `LA:${body}:leather_leather_leather:${rf}:lll`;
+    const bare = await decodeLayered(`${plain}@0`, decodePng, opts), armed = await decodeLayered(`${plain}@${code}`, decodePng, opts);
+    const px = [];
     for (let i = 0; i < bare.width * bare.height; i++) {
-      if (![0, 1, 2, 3].some((c) => armed.data[i * 4 + c] !== bare.data[i * 4 + c])) continue;
-      const y = (i / bare.width) | 0; n++; sy += y;
-      if (y < hy - 1.5 && bare.data[i * 4 + 3]) over++;
+      if ([0, 1, 2, 3].some((c) => armed.data[i * 4 + c] !== bare.data[i * 4 + c])) px.push([i % bare.width, (i / bare.width) | 0, bare.data[i * 4 + 3] > 0]);
     }
-    assert.ok(n > 20 && sy / n > hy + 8, `${body} ${rf}: the sword hangs below the hand (${n} px, mean y ${(sy / n).toFixed(1)} vs ${hx}, ${hy})`);
-    assert.equal(over, 0, `${body} ${rf}: the handle drawn over the arm`);
+    return px;
+  };
+  // a front view's blade comes at the camera: up from the hand, before the body - never hanging below it
+  for (const [body, rf] of [['male', '0-0'], ['male', '0-1'], ['male', '15-0'], ['female', '0-1'], ['female', '15-0']]) {
+    const fr = weaponRigOf(body, rf), [gx, gy] = fr.w, px = await diff(body, rf, 'ls1');
+    assert.ok(fr.carry === undefined && fr.hang === undefined, `${body} ${rf}: no carry`);
+    assert.ok(px.length > 15 && px.reduce((t, p) => t + p[1], 0) / px.length < gy, `${body} ${rf}: the blade rises from the hand`);
+    assert.ok(px.some((p) => p[2]), `${body} ${rf}: drawn before the body`);
+    assert.ok(Math.min(...px.map(([x, y]) => Math.hypot(x + 0.5 - gx, y + 0.5 - gy))) <= 3, `${body} ${rf}: drawn from the hand`);
   }
-  assert.equal(weaponRigOf('male', '2-0').carry, undefined, 'a side walk whose hammer trailed keeps its line');
+  // a back-3/4 view's blade is behind the body: drawn only where the body is not, the butt out of the fist
+  for (const [body, rf] of [['male', '3-0'], ['male', '3-1'], ['female', '3-1'], ['female', '3-3']]) {
+    const fr = weaponRigOf(body, rf), [gx, gy, ex, ey] = fr.w, px = await diff(body, rf, 'cm1');
+    const blade = px.filter(([x, y]) => (x - gx) * (ex - gx) + (y - gy) * (ey - gy) > 4 * Math.hypot(ex - gx, ey - gy));
+    assert.ok(blade.length > 0 && blade.every((p) => !p[2]), `${body} ${rf}: the blade shows only past the body`);
+  }
+  assert.equal(weaponRigOf('male', '2-0').w, undefined, 'a side walk keeps the hammer\'s own line');
+});
+
+test('a bow is held upright in the free hand, its string toward the body; the fist closes over the grip', { skip: !PNG && 'no pngjs' }, async () => {
+  for (const [body, rf] of [['male', '0-0'], ['male', '3-1'], ['female', '1-1'], ['female', '16-0'], ['male', '2-0'], ['female', '4-2']]) {
+    const fr = weaponRigOf(body, rf), [hx, hy, before] = fr.bow, plain = `LA:${body}:leather_leather_leather:${rf}:lll`;
+    const bare = await decodeLayered(`${plain}@0`, decodePng, opts);
+    for (const [code, part] of [['lb0', 1], ['sb0', 0.75]]) {
+      const armed = await decodeLayered(`${plain}@${code}`, decodePng, opts);
+      let y0 = Infinity, y1 = -Infinity, over = 0, fist = 0;
+      for (let i = 0; i < bare.width * bare.height; i++) {
+        if (![0, 1, 2, 3].some((c) => armed.data[i * 4 + c] !== bare.data[i * 4 + c])) continue;
+        const x = i % bare.width, y = (i / bare.width) | 0;
+        y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+        if (bare.data[i * 4 + 3]) over++;
+        if ((x + 0.5 - hx) ** 2 + (y + 0.5 - hy) ** 2 <= 4.4 && bare.data[i * 4 + 3]) fist++;
+      }
+      assert.equal(fist, 0, `${body} ${rf} ${code}: the fist covers the grip`);
+      if (!before) { assert.equal(over, 0, `${body} ${rf} ${code}: a hand behind the body shows its bow in open air only`); continue; }
+      const len = rig[body].bow * part;
+      assert.ok(Math.abs(y1 - y0 - len * Math.cos(Math.PI / 15)) <= 3, `${body} ${rf} ${code}: tip to tip ${y1 - y0} px`);
+      assert.ok(Math.abs((y0 + y1) / 2 - hy) <= 2, `${body} ${rf} ${code}: held at its middle`);
+    }
+  }
 });
 
 test('a back walk keeps the fist: the dark glove round the grip is not the hammer', { skip: !PNG && 'no pngjs' }, async () => {

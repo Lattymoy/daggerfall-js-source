@@ -1,7 +1,8 @@
 // LAYERED-WEAPONS (bible/04-Characters/Layered-Gearing.md): the layered body holds the weapon it uses, not the art's
 // own warhammer. The rig (tools/layered-armor/build_weapon_rig.py) says where that hammer is in each frame, per chest
 // family: its pixels, the grip, the head, and where the body hid it. A body that holds nothing has the hammer taken
-// out and the body filled behind it; a body that holds a weapon has it drawn along the hammer's shaft, in its metal.
+// out and the body filled behind it; a body that holds a weapon has it drawn along the hammer's shaft, in its metal,
+// and a bow in its free hand.
 
 import rig from '../../../vendor/layered-armor/weapon/manifest.json' with { type: 'json' };
 import { WEAPONS } from '../../characters/weapons.js';
@@ -187,10 +188,15 @@ const SHAPES = Object.freeze({
 });
 /** The warhammer's grip-to-head length, in cm - the rig's `len` is the art's own, so one px is len/70 cm. */
 const HAMMER_CM = 70;
-/** A carried weapon's foreshortening: hung from the fist, a little toward or away from the camera. */
-const CARRY_F = 0.72;
-/** A bow, held at its middle: [length cm, bulge cm]. */
-const BOW_DIMS = Object.freeze({ sb: [86, 11], lb: [116, 14] });
+/** A bow, as parts of the body's own (the loose's art, which is the long bow): [tip to tip, the grip's reach past the
+ *  string]. */
+const BOW_DIMS = Object.freeze({ sb: [0.75, 0.11], lb: [1, 0.15] });
+/** Each view's screen x of the body's facing and of the bow hand's side (the art's: its side view holds the weapon
+ *  near and the bow hand far). A held bow turns its back BOW_TURN from the facing toward that side and leans BOW_LEAN
+ *  forward, so no view sees it edge on. */
+const FACING_X = [0, -0.707, -1, -0.707, 0], BOW_SIDE_X = [1, 0.707, 0, -0.707, -1];
+const BOW_TURN = Math.PI / 8, BOW_LEAN = Math.PI / 15;
+const BOW_WOOD = ramp([30, 20, 9], [124, 78, 44]);   // the loose's own bow's browns
 
 const shadeOf = (n) => {
   const diff = Math.max(0, n[0] * L3[0] + n[1] * L3[1] + n[2] * L3[2]);
@@ -227,8 +233,9 @@ function sample(parts, s, v, side, px) {
       hit = [p.mat, [t * px.nx, t * px.ny, Math.sqrt(1 - e * e)]];
       continue;
     }
-    if (s < p.from || s > p.to) continue;
-    const a = (s - p.from) / Math.max(1e-6, p.to - p.from);
+    const pad = Math.max(0, ((px.minS ?? 0) - (p.to - p.from)) / 2);   // a guard seen end on keeps a px of thickness
+    if (s < p.from - pad || s > p.to + pad) continue;
+    const a = Math.max(0, Math.min(1, (s - p.from) / Math.max(1e-6, p.to - p.from)));
     let hw = p.w0 + (p.w1 - p.w0) * a;
     let vv = v + (p.curve ? side * p.curve * a * a : 0);
     if (p.side) { const sv = vv * side * p.side; if (sv < 0 || sv > hw) continue; vv = sv - hw / 2; hw /= 2; }
@@ -269,43 +276,25 @@ const depthOf = (fr) => { let v = _depth.get(fr); if (!v) { v = settleDepth(fr.d
  * weapon stays behind it (drawn only into open air); the fist round the grip covers its handle.
  * @param {{width:number,height:number,data:Uint8Array}} out @param {any} fr the frame's rig (weaponRigOf)
  * @param {string} code the weapon code ('ls7') @param {number} len the body's hammer length, px @param {number} view 0..4
+ * @param {number} [bowPx] the body's own bow, tip to tip, px
  */
-export function drawWeapon(out, fr, code, len, view = 2) {
+export function drawWeapon(out, fr, code, len, view = 2, bowPx = 70) {
   const shape = code.slice(0, 2), metal = Number(code.slice(2)) || 0;
   if (shape === 'wh') return;   // the art's own
+  if (BOWS.has(shape)) return Array.isArray(fr.bow) ? drawBow(out, fr.bow, shape, metal, view, bowPx) : out;
   const w = out.width, h = out.height, d = out.data;
-  const [qx, qy] = Array.isArray(fr.carry) && fr.hang ? fr.hang : fr.q, [tx, ty] = fr.t;
+  // the line the weapon is drawn on: the hammer's, or (`w`) where the hammer hides its shaft - pointed at the camera,
+  // or behind the body - Daggerfall's own sword's (bible/04-Characters/Layered-Gearing.md, "Held")
+  const [qx, qy, tx, ty] = Array.isArray(fr.w) ? fr.w : [...fr.q, ...fr.t];
   const D = Math.hypot(tx - qx, ty - qy) || 1;
-  // a walk or idle frame whose shaft pointed at the camera hangs the weapon from the fist instead (`carry`: its way
-  // down and its side of the body), where a stub would be drawn
-  const carry = Array.isArray(fr.carry) ? fr.carry : null;
-  const ux = carry ? carry[0] : (tx - qx) / D, uy = carry ? carry[1] : (ty - qy) / D, nx = -uy, ny = ux;
+  const ux = (tx - qx) / D, uy = (ty - qy) / D, nx = -uy, ny = ux;
   const k = len / HAMMER_CM;   // px a cm
-  const f = carry ? CARRY_F : Math.max(0.14, Math.min(1, D / len));   // the shaft's foreshortening in this frame
+  const f = Math.max(0.14, Math.min(1, D / len));   // the shaft's foreshortening in this frame
   const depth = depthOf(fr), lo = WEAPON_SPAN[0];
-  const front = carry ? (proj) => carry[2] === 1 && proj > 0.5 : (proj) => depth[Math.max(0, Math.min(depth.length - 1, Math.round(proj) - lo))] === 'f';
-  const px = { ux, uy, nx, ny };
+  const front = (proj) => depth[Math.max(0, Math.min(depth.length - 1, Math.round(proj) - lo))] === 'f';
+  const px = { ux, uy, nx, ny, minS: 1.1 / (k * f) };
   const side = fr.side || 1;
-  let parts, toLocal;
-  if (BOWS.has(shape)) {
-    // a bow hangs in the hand upright, its belly forward (away from where the hammer trailed), seen edge-on from the
-    // front and the back
-    const [L, B] = BOW_DIMS[shape];
-    const fwd = tx - qx > 0 ? -1 : 1, amp = [0, 0.7, 1, 0.7, 0][view] ?? 1;   // the hammer trailed: the belly faces the other way
-    const inFront = [1, 2, 3, 4, 5].filter((t) => front(t)).length >= 3;
-    parts = null;
-    toLocal = (x, y) => ({ s: (qy - y) / k, v: (x - qx) * fwd / k, inFront });
-    return paint(out, (x, y) => {
-      const { s, v } = toLocal(x, y), half = L / 2, a = Math.abs(s) / half;
-      if (a > 1) return null;
-      const belly = B * amp * (1 - a * a) - B * amp;   // the grip at 0, the tips back toward the string
-      const limb = 2.4 - 1.2 * a;
-      if (Math.abs(v - belly) <= limb) { const c = (v - belly) / limb; return ['wood', [c * fwd, 0, Math.sqrt(1 - c * c)]]; }
-      if (amp > 0 && Math.abs(v + B * amp) <= 0.55) return ['string', [0, 0, 1]];
-      return null;
-    }, () => inFront, [qx - (B + 4) * k, qy - (L / 2 + 4) * k, qx + (B + 4) * k, qy + (L / 2 + 4) * k], metal);
-  }
-  parts = SHAPES[shape];
+  const parts = SHAPES[shape];
   if (!parts) return;
   const sMin = Math.min(...parts.map((p) => p.from)), sMax = Math.max(...parts.map((p) => p.to));
   const wide = 20 * k;   // the widest part's reach from the shaft, px
@@ -343,6 +332,53 @@ export function drawWeapon(out, fr, code, len, view = 2) {
     }
     return o;
   }
+}
+
+/**
+ * Draw a bow into a composed picture in the free hand, in place (the rig's `bow`: the fist, and 1 where it is before the
+ * body): upright, its back turned BOW_TURN from the facing toward that hand's side and leant forward, the string on the
+ * body's side. The fist closes over the grip; a hand behind the body shows the bow only in open air.
+ * @param {{width:number,height:number,data:Uint8Array}} out @param {number[]} bow @param {string} shape 'sb' or 'lb'
+ * @param {number} metal @param {number} view 0..4 @param {number} bowPx the body's own bow, tip to tip, px
+ */
+function drawBow(out, bow, shape, metal, view, bowPx) {
+  const [hx, hy, before] = bow, w = out.width, h = out.height, d = out.data;
+  const [lr, br] = BOW_DIMS[shape] ?? BOW_DIMS.sb, half = (bowPx * lr) / 2, B = bowPx * br;
+  const v = Math.max(0, Math.min(4, view | 0));
+  const bx = Math.cos(BOW_TURN) * FACING_X[v] + Math.sin(BOW_TURN) * BOW_SIDE_X[v];   // the bow's back, screen x
+  const lean = Math.sin(BOW_LEAN) * FACING_X[v], up = Math.cos(BOW_LEAN);
+  const string = Math.abs(bx) > 0.2;
+  // at u (-1 the bottom tip .. 1 the top): the limb's centre, its slope dx/dy, and the string's
+  const at = (x, y) => {
+    const u = (hy - y) / (half * up);
+    if (Math.abs(u) > 1) return null;
+    const lx = hx + u * half * lean - B * u * u * bx, slope = -(half * lean - 2 * B * u * bx) / (half * up);
+    const n = Math.hypot(1, slope), dist = (x - lx) / n, hw = Math.abs(u) < 0.08 ? 1.0 : 0.8 - 0.3 * Math.abs(u);
+    if (Math.abs(dist) <= hw) {
+      const c = dist / hw, nrm = [c / n, (-c * slope) / n, Math.sqrt(1 - c * c)];
+      return [Math.abs(u) < 0.08 ? 'grip' : 'wood', nrm];
+    }
+    const sx = hx + u * half * lean - B * bx;
+    if (string && Math.abs((x - sx) / Math.hypot(1, lean / up)) <= 0.5) return ['string', null];
+    return null;
+  };
+  const x0 = Math.max(0, Math.floor(hx - half * Math.abs(lean) - B - 2)), x1 = Math.min(w - 1, Math.ceil(hx + half * Math.abs(lean) + B + 2));
+  const y0 = Math.max(0, Math.floor(hy - half * up - 1)), y1 = Math.min(h - 1, Math.ceil(hy + half * up + 1));
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+    const i = (y * w + x) * 4;
+    if (d[i + 3] && (!before || (x + 0.5 - hx) ** 2 + (y + 0.5 - hy) ** 2 <= 4.4)) continue;   // the body before it, or the fist round its grip
+    let hits = 0, R = 0, G = 0, Bl = 0;
+    for (let sy = 0; sy < 3; sy++) for (let sx = 0; sx < 3; sx++) {
+      const hit = at(x + (sx + 0.5) / 3, y + (sy + 0.5) / 3);
+      if (!hit) continue;
+      const k = hit[1] ? shadeOf(hit[1]) : 0;
+      const c = hit[0] === 'string' ? [104, 96, 80] : hit[0] === 'grip' ? GRIP[k] : metal >= 2 ? (METAL_RAMPS[metal] ?? METAL_RAMPS[0])[Math.max(0, k - 2)] : BOW_WOOD[k];
+      R += c[0]; G += c[1]; Bl += c[2]; hits++;
+    }
+    if (hits < 4) continue;
+    d[i] = R / hits; d[i + 1] = G / hits; d[i + 2] = Bl / hits; d[i + 3] = 255;
+  }
+  return out;
 }
 
 /** Recolour the art's own warhammer head to another metal: its px within the head's radius, step for step by
@@ -384,3 +420,5 @@ export function fillFrom(strip, top = 'l') {
   return from;
 }
 export const weaponLen = (body) => rig[body]?.len ?? 30;
+/** The body's own bow (the loose's), tip to tip, px. */
+export const bowLen = (body) => rig[body]?.bow ?? 70;

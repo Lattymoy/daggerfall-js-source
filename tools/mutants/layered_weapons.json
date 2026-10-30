@@ -132,8 +132,8 @@
   {
     "name": "LAYERED-WEAPONS-weapon-undrawn",
     "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-    "old": "    if (hand && takeOut && held !== '0') drawWeapon(res, hand.fr, held, hand.len, hand.view);",
-    "new": "    if (false) drawWeapon(res, hand.fr, held, hand.len, hand.view);",
+    "old": "    if (hand && takeOut && held !== '0') drawWeapon(res, hand.fr, held, hand.len, hand.view, hand.bow);",
+    "new": "    if (false) drawWeapon(res, hand.fr, held, hand.len, hand.view, hand.bow);",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
@@ -210,36 +210,6 @@
     "why": "a struck walker's sword blinks out for the flinch"
   },
   {
-    "name": "LAYERED-WEAPONS-carry-unread",
-    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
-    "old": "  const carry = Array.isArray(fr.carry) ? fr.carry : null;",
-    "new": "  const carry = null;",
-    "tests": [
-      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
-    ],
-    "why": "a back walk's sword drawn as a stub pointing at the camera"
-  },
-  {
-    "name": "LAYERED-WEAPONS-hang-unread",
-    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
-    "old": "  const [qx, qy] = Array.isArray(fr.carry) && fr.hang ? fr.hang : fr.q, [tx, ty] = fr.t;",
-    "new": "  const [qx, qy] = fr.q, [tx, ty] = fr.t;",
-    "tests": [
-      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
-    ],
-    "why": "a front walk's sword hung from the forearm, not the hand"
-  },
-  {
-    "name": "LAYERED-WEAPONS-carry-handle-over",
-    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
-    "old": "carry[2] === 1 && proj > 0.5",
-    "new": "carry[2] === 1",
-    "tests": [
-      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
-    ],
-    "why": "a hung sword's handle drawn over the arm above the fist"
-  },
-  {
     "name": "LAYERED-WEAPONS-mirror-islands-kept",
     "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
     "old": "  for (let i = 0; i < w * h; i++) if (mask[i] && !held[i]) d[i * 4 + 3] = 0;\n",
@@ -278,5 +248,65 @@
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
     "why": "the game never reads the rig's per-pixel sources"
+  },
+  {
+    "name": "LAYERED-WEAPONS-shaft-unread",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "  const [qx, qy, tx, ty] = Array.isArray(fr.w) ? fr.w : [...fr.q, ...fr.t];",
+    "new": "  const [qx, qy, tx, ty] = [...fr.q, ...fr.t];",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a front walk's sword drawn off the hammer's head block, a back walk's toward its butt"
+  },
+  {
+    "name": "LAYERED-WEAPONS-bow-in-weapon-hand",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "return Array.isArray(fr.bow) ? drawBow(out, fr.bow, shape, metal, view, bowPx) : out;",
+    "new": "return drawBow(out, [...fr.q, 1], shape, metal, view, bowPx);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the bow back in the hammer's hand, over the body"
+  },
+  {
+    "name": "LAYERED-WEAPONS-bow-fist-open",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "if (d[i + 3] && (!before || (x + 0.5 - hx) ** 2 + (y + 0.5 - hy) ** 2 <= 4.4)) continue;",
+    "new": "if (d[i + 3] && !before) continue;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the bow's grip drawn over the fist that holds it"
+  },
+  {
+    "name": "LAYERED-WEAPONS-bow-behind-drawn-over",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "if (d[i + 3] && (!before || (x + 0.5 - hx) ** 2 + (y + 0.5 - hy) ** 2 <= 4.4)) continue;",
+    "new": "if (d[i + 3] && (x + 0.5 - hx) ** 2 + (y + 0.5 - hy) ** 2 <= 4.4) continue;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a bow in the far hand drawn across the body"
+  },
+  {
+    "name": "LAYERED-WEAPONS-bow-one-size",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "const [lr, br] = BOW_DIMS[shape] ?? BOW_DIMS.sb",
+    "new": "const [lr, br] = BOW_DIMS.lb",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a short bow as long as a long bow"
+  },
+  {
+    "name": "LAYERED-WEAPONS-bow-body-unread",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "drawWeapon(res, hand.fr, held, hand.len, hand.view, hand.bow);",
+    "new": "drawWeapon(res, hand.fr, held, hand.len, hand.view);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "each body's bow not the size of its own loose's bow"
   }
 ]

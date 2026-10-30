@@ -28,7 +28,7 @@
 import manifest from '../../../vendor/layered-armor/manifest.json' with { type: 'json' };
 import cloakManifest from '../../../vendor/layered-armor/cloak/manifest.json' with { type: 'json' };
 import { drawnPiece } from '../../net/appearanceLaw.js';   // APPEARANCES: a worn piece's look
-import { weaponShownFor, weaponRigOf, removeWeapon, drawWeapon, recolourHammer, maskTile, fillFrom, weaponLen, BARE_TWINS, ARMED_TWINS, GUN_FIRE_FRAME, isGunCode } from './layeredWeapon.js';   // LAYERED-WEAPONS: the weapon in the hands
+import { weaponShownFor, weaponRigOf, removeWeapon, drawWeapon, recolourHammer, maskTile, fillFrom, weaponLen, bowLen, BARE_TWINS, ARMED_TWINS, GUN_FIRE_FRAME, isGunCode } from './layeredWeapon.js';   // LAYERED-WEAPONS: the weapon in the hands
 
 /** The texture archives the composed pictures are uploaded under - one per body, clear of every vendored archive. */
 export const LAYERED_ARCHIVE = Object.freeze({ male: 1700, female: 1701 });
@@ -362,7 +362,7 @@ export function applyHoodFix(out, fs, pieces, dye, skip = null) {
  * @param {string} code the outfit code ('p6cl', 'p6cl~2' with a cloak dyed Red)
  * @param {{strip:{width:number,height:number,data:Uint8Array|Uint8ClampedArray}, over:boolean, noSlivers?:boolean,
  *   fix?:{width:number,height:number,data:Uint8Array|Uint8ClampedArray}|null}|null} [cloak] the frame's cloak strip (and its hood fix)
- * @param {{mask:Uint8Array, fr:any, len:number, view:number}|null} [weapon] LAYERED-WEAPONS: the frame's rig  @returns {{width:number,height:number,data:Uint8Array}}
+ * @param {{mask:Uint8Array, fr:any, len:number, view:number, bow?:number}|null} [weapon] LAYERED-WEAPONS: the frame's rig  @returns {{width:number,height:number,data:Uint8Array}}
  */
 export function composeStrip(strip, code, cloak = null, weapon = null) {
   const pieces = outfitPieces(code);
@@ -382,7 +382,7 @@ export function composeStrip(strip, code, cloak = null, weapon = null) {
       applyCloak(res, cloak.strip, pieces.cloak, cloak.over, pieces.head[0], cloak.noSlivers === true, pieces.top[0]);
       if (cloak.fix) applyHoodFix(res, cloak.fix, pieces, pieces.cloak, hand && takeOut ? hand.mask : null);
     }
-    if (hand && takeOut && held !== '0') drawWeapon(res, hand.fr, held, hand.len, hand.view);
+    if (hand && takeOut && held !== '0') drawWeapon(res, hand.fr, held, hand.len, hand.view, hand.bow);
     return res;
   };
   if (w === sw) return finish();
@@ -448,7 +448,7 @@ export async function decodeLayered(key, decodePng, { fetchUrl = (u) => fetch(u)
     const wu = weaponUrlOf(`weapon/${body}/${rf}`);
     try {
       const pic = wu ? await pictureOf(wu) : null;
-      if (pic) weapon = { mask: maskTile(pic, pieces.top[0]), from: fillFrom(pic, pieces.top[0]), fr, len: weaponLen(body), view: Number(rf.split('-')[0]) % 5 };
+      if (pic) weapon = { mask: maskTile(pic, pieces.top[0]), from: fillFrom(pic, pieces.top[0]), fr, len: weaponLen(body), bow: bowLen(body), view: Number(rf.split('-')[0]) % 5 };
     } catch { weapon = null; }
   }
   return composeStrip(strip, code, cloak, weapon);

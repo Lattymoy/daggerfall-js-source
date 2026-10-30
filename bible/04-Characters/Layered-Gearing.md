@@ -94,7 +94,7 @@ hurt and idle frame of every outfit. The body now holds what the player holds: `
 |---|---|---|
 | Sheathed, a spell readied, bare hands | Idle, Move, Death, IdleSpell, MoveSpell, any melee table with nothing held | nothing: the hammer is taken out |
 | A melee weapon | IdleMelee, MoveMelee, AttackMelee | the weapon, its shape and its metal |
-| A bow | IdleRanged, MoveRanged | the bow, upright in the hand |
+| A bow | IdleRanged, MoveRanged | the bow, upright in the free hand; the weapon hand empty |
 | The loose | AttackRanged | the strips' own bow (records 20-24), as before |
 | A cast | AttackSpell | the swing's wind-up and throw (records 5-9, frames 0-3), hands empty |
 | A gun (thunderlock, pistolet) | AttackMelee | the swing's frame 3, held for the shot, from the hip |
@@ -120,9 +120,9 @@ too, so a chain or plate sleeve stays.
 **Taking it out.** Each hammer pixel takes the side of the nearest pixels outside it - at its edge, the side most of
 them are on, so a butt poking past the fist into the air goes with the air: open air is cleared, a pixel the body was
 behind is filled. Each such pixel copies its own source, written into the mask's colour (`fillFrom`): the builder fills
-the hole from its edge in, each pixel from the place whose neighbourhood best matches what is round it over the
-family's outfits, keeping a neighbour's source where it is nearly as good, so the body's texture carries on instead of
-a blur. Where none fits, the frame's shift, else the blend.
+the hole from its edge in, each pixel from the place whose neighbourhood best matches its surroundings over the
+family's outfits, so the body's texture carries on instead of a blur. Where none fits, the frame's shift, else the
+blend.
 
 **The front views** (`MIRROR`: the walk's 0-0, 0-1 and 0-3 and the idle's 15-0) copy the body's other side, mirrored,
 its alpha too, so the hidden hand comes back whole; a copied piece that touches no body (the other forearm, by the hip)
@@ -138,10 +138,20 @@ shapes follow the templates (`characters/weapons.js` WEAPONS), finer than `fpsWe
 which fold a tanto and a claymore into one long blade. The Hand Wraps are bare hands. A weapon wearing a look is drawn
 as the look.
 
-**Carried.** A walk or idle frame whose shaft pointed at the camera (shorter than 0.45 of the body's) drew a stub. It
-hangs the weapon from the fist instead (`carry`): down, 12 degrees out from the body, in front of it in the front,
-front-3/4 and side views and behind it in the back ones, the handle behind the fist. The front views and the front
-idles hang it from the hand their fill leaves (`HANG`), not the art's grip, which sat up the forearm.
+**Held.** Daggerfall's walk holds the weapon before the body, pointed ahead and a little up: its Archer's sword
+(TEXTURE.482, .481, one render with the strips) lies along the hammer's shaft wherever both show. Where the hammer hides
+its shaft, the weapon is drawn on the sword's line instead (`SHAFT`, the rig's `w`). A front view's points at the
+camera, up from the hand and before the body. A back-3/4 view's crosses behind the body and shows past it, the butt out
+of the fist. A back view's shows its first inches over the back. The grip is the fist's blade side (a front view's: the
+hand its fill leaves); the head's place is half way to the sword's tip, the sword being twice the hammer. The fist
+closes over the handle. Nothing hangs from the hand: the third pass's carry, which hung it straight down, is gone.
+
+**The bow** is held in the free hand (`BOW_HAND`, the loose's own bow hand) at its middle, upright and leant 12 degrees
+forward, its back turned 22.5 degrees from the facing toward that hand's side, so no view sees it edge on; the string
+is toward the body. Its size is the loose's own bow (`BOW_PX`, records 20-24): the long bow tip to tip, 75 px on the
+male and 78 on the female, the short bow three quarters of it, in that bow's browns, with a faint string. The fist
+closes over the grip; a hand behind the body (the side views) shows its bow only in open air. The loose plays the
+strips' own bow as drawn: it could not be cut out of the art cleanly, so it keeps its colour whatever bow is held.
 
 **Whose hands.** My body reads the item in the hand in use (`combat/weapon/weaponRig.js` eotbState `heldWeapon`,
 `eotbBody.js` lookNow). A walker holds the tool of its gathering act, else the weapon in the hand its pose says it uses
@@ -153,8 +163,8 @@ go with its outfit's (`releaseOutfits`).
 hands strike with both fists; new swings need new frames drawn in all 27 outfits. An attack frame whose hammer points
 at the camera draws the weapon short. Each outfit's helmet and legs draw the hammer's rim their own way, so a pixel or
 two of it can stay, and a fill can borrow a patch of another piece's colour. Male 5-1 keeps the thumb laid up the
-shaft. No weapon draws its enchanted glow. Verified by `test/player/eyeOfTheBeholder/layered_weapons.test.js` and
-`tools/mutants/layered_weapons.json` (28 mutants, all dead); the peer-art pins moved to the new codes
+shaft. The female's back-view flinch (14-0) keeps its raised hand two pixels off the wrist. No weapon draws its enchanted glow. Verified by `test/player/eyeOfTheBeholder/layered_weapons.test.js` and
+`tools/mutants/layered_weapons.json` (31 mutants, all dead); the peer-art pins moved to the new codes
 (`test/net/peer/fb1022d_peerart.test.js`).
 
 ## The art - the doctrine's third exception
