@@ -10,12 +10,41 @@
 // is fed the same files off the disk by the tests.
 
 const IN_BROWSER = typeof window !== 'undefined';
-const PRESETS = IN_BROWSER ? import.meta.glob('../../../vendor/dynamic-skies/SkyboxSettings/*.json', { eager: true, query: '?raw', import: 'default' }) : {};
-const FOGS = IN_BROWSER ? import.meta.glob('../../../vendor/dynamic-skies/FogSettings/*.json', { eager: true, query: '?raw', import: 'default' }) : {};
-const CURVES = IN_BROWSER ? import.meta.glob('../../../vendor/dynamic-skies/LightCurveSettings/*.json', { eager: true, query: '?raw', import: 'default' }) : {};
-const TEXTURES = IN_BROWSER ? import.meta.glob('../../../vendor/dynamic-skies/Textures/*.png', { eager: true, query: '?url', import: 'default' }) : {};
+const PRESETS = IN_BROWSER
+  ? import.meta.glob('../../../vendor/dynamic-skies/SkyboxSettings/*.json', {
+      eager: true,
+      query: '?raw',
+      import: 'default',
+    })
+  : {};
+const FOGS = IN_BROWSER
+  ? import.meta.glob('../../../vendor/dynamic-skies/FogSettings/*.json', {
+      eager: true,
+      query: '?raw',
+      import: 'default',
+    })
+  : {};
+const CURVES = IN_BROWSER
+  ? import.meta.glob('../../../vendor/dynamic-skies/LightCurveSettings/*.json', {
+      eager: true,
+      query: '?raw',
+      import: 'default',
+    })
+  : {};
+const TEXTURES = IN_BROWSER
+  ? import.meta.glob('../../../vendor/dynamic-skies/Textures/*.png', { eager: true, query: '?url', import: 'default' })
+  : {};
 
-const byName = (map) => Object.fromEntries(Object.entries(map).map(([p, v]) => [p.split('/').pop().replace(/\.(json|png)$/, ''), v]));
+const byName = (map) =>
+  Object.fromEntries(
+    Object.entries(map).map(([p, v]) => [
+      p
+        .split('/')
+        .pop()
+        .replace(/\.(json|png)$/, ''),
+      v,
+    ]),
+  );
 const presets = byName(PRESETS);
 const fogPresets = byName(FOGS);
 const curves = byName(CURVES);
@@ -40,7 +69,10 @@ export function dynamicSkiesTextureUrl(name) {
 export function loadDynamicSkiesTexture(name) {
   const url = dynamicSkiesTextureUrl(name);
   return new Promise((resolve, reject) => {
-    if (!url) { reject(new Error(`Dynamic Skies: no texture named ${name}`)); return; }
+    if (!url) {
+      reject(new Error(`Dynamic Skies: no texture named ${name}`));
+      return;
+    }
     const img = new Image();
     img.onload = () => resolve(img);
     img.onerror = () => reject(new Error(`Dynamic Skies: ${name} failed to load from ${url}`));
