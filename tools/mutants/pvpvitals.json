@@ -59,5 +59,45 @@
       "test/net/pvpvitals.test.js"
     ],
     "note": "A game could declare a potion every report."
+  },
+  {
+    "name": "BOW-RATE-no-bucket",
+    "file": "src/net/wild/pvpVitals.js",
+    "old": "  if (v.shafts < 1) return false;",
+    "new": "  if (false) return false;",
+    "tests": [
+      "test/net/pvpvitals.test.js"
+    ],
+    "note": "A cheated bow would loose arrows as fast as it sends them."
+  },
+  {
+    "name": "BOW-RATE-deeper",
+    "file": "src/net/wild/pvpVitals.js",
+    "old": "  shaftMs: 250, shaftBurst: 2,",
+    "new": "  shaftMs: 250, shaftBurst: 4,",
+    "tests": [
+      "test/net/pvpvitals.test.js"
+    ],
+    "note": "Four arrows could land at once, a burst no honest bow makes."
+  },
+  {
+    "name": "SWING-RATE-no-bucket",
+    "file": "src/net/wild/pvpVitals.js",
+    "old": "  if (left < 1) return false;",
+    "new": "  if (false) return false;",
+    "tests": [
+      "test/net/pvpvitals.test.js"
+    ],
+    "note": "A cheated weapon would land blows as fast as it sends them."
+  },
+  {
+    "name": "SWING-RATE-one-bucket",
+    "file": "src/net/wild/pvpVitals.js",
+    "old": "  const [n, at] = v.swings[to] ?? [PVP_VITALS.shaftBurst, now];",
+    "new": "  const [n, at] = v.swings.all ?? [PVP_VITALS.shaftBurst, now]; to = 'all';",
+    "tests": [
+      "test/net/pvpvitals.test.js"
+    ],
+    "note": "An honest Cleave on three players would land on only two."
   }
 ]

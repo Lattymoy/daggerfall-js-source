@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { VITAL_WHOLE, KIT_COSTS, KIT_ORDER, KIT_COST_BY_TYPE, PVP_VITALS, DECLARE, vitalsOf, vitalsReport, castPaid, payFatigue, runPaid, healCredit, healthCapAt, shieldPaid, kitLanded, vitalsCarry, absorbLanded } from '../../src/net/wild/pvpVitals.js';
+import { VITAL_WHOLE, KIT_COSTS, KIT_ORDER, KIT_COST_BY_TYPE, PVP_VITALS, DECLARE, vitalsOf, vitalsReport, castPaid, shaftPaid, swingPaid, payFatigue, runPaid, healCredit, healthCapAt, shieldPaid, kitLanded, vitalsCarry, absorbLanded } from '../../src/net/wild/pvpVitals.js';
 import { HEALTH_SHARE_WHOLE, takeHealthReport, PVP_HEALTH_MAX } from '../../src/net/siege/refereeHealthShare.js';
 import { newWildRef, wildZone, wildBlow, wildCarry, wildCarryOf, WILD_GRACE } from '../../src/net/wild/wildRef.js';
 import { SIEGE_UNITS_PER_M, SIEGE_HIT, newFighter } from '../../src/net/siege/siegeRef.js';
@@ -13,6 +13,7 @@ import { KIT_SPELLS, KIT_IDS } from '../../src/systems/wild/pvpKit.js';
 import { PVP_POTION_MS } from '../../src/combat/pvpPotions.js';
 import { validVitIn, validWildData } from '../../src/net/wire.js';
 import { createRefereeHealthMirror } from '../../src/net/siege/refereeHealthMirror.js';
+import { BOW_NUM_FRAMES, CLASSIC_UPDATE_INTERVAL, MELEE_NUM_FRAMES, SWING_FRAME_MIN } from '../../src/characters/weaponStates.js';
 import { declarePotion, declareKitSelf, pendingDeclares, resetPvpDeclares } from '../../src/combat/pvpDeclare.js';
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
@@ -101,6 +102,37 @@ test('PVP-VITALS FATIGUE: a swing pays from the relay\'s fatigue and an empty le
   runPaid(f, 12, 1000, 2000);
   assert.equal(vitalsOf(f, 2000).fp, 5000 - PVP_VITALS.runPerS);
   assert.equal(payFatigue(f, 99_999, 3000), false);
+});
+
+test('BOW-RATE: an arrow comes no sooner than the fastest honest bow (its loose, no reload), two may bunch, a third that soon lands nothing; a refused arrow costs no fatigue (mutants: no bucket; the bucket deeper)', () => {
+  assert.equal(PVP_VITALS.shaftMs, Math.round(BOW_NUM_FRAMES.StrikeUp * CLASSIC_UPDATE_INTERVAL * 1000));
+  const f = newFighter(10, 0);
+  assert.deepEqual([shaftPaid(f, 1000), shaftPaid(f, 1010), shaftPaid(f, 1020)], [true, true, false]);
+  assert.equal(shaftPaid(f, 1020 + PVP_VITALS.shaftMs), true, 'one more after a loose');
+  let t = 20_000, ok = 0;
+  for (let i = 0; i < 40; i++) if (shaftPaid(f, t += PVP_VITALS.shaftMs)) ok++;
+  assert.equal(ok, 40, 'an honest archer at the floor is never refused');
+  const st = zone();
+  const a = st.fighters.get('acct-a');
+  const shot = (n, now) => wildBlow(st, 'acct-a', 'acct-b', { d: 5, r: SIEGE_HIT.Shaft, held: FIST, rid: `cccccccccc${n}` }, now).why;
+  shot('01', 10_000); shot('02', 10_050);
+  const fp = vitalsOf(a.f, 10_100).fp;
+  assert.equal(shot('03', 10_100), 'rate');
+  assert.equal(vitalsOf(a.f, 10_100).fp, fp);
+});
+
+test('SWING-RATE: a melee blow on one player comes no sooner than the quickest swing, two may bunch; a Cleave lands on each player in its arc (mutants: no bucket; one bucket for all targets)', () => {
+  assert.equal(PVP_VITALS.swingMs, Math.round(MELEE_NUM_FRAMES.StrikeDown * SWING_FRAME_MIN * 1000));
+  const f = newFighter(10, 0);
+  assert.deepEqual([swingPaid(f, 'b', 1000), swingPaid(f, 'b', 1010), swingPaid(f, 'b', 1020)], [true, true, false]);
+  assert.deepEqual([swingPaid(f, 'c', 1020), swingPaid(f, 'd', 1020)], [true, true], 'a Cleave');
+  let t = 20_000, ok = 0;
+  for (let i = 0; i < 40; i++) if (swingPaid(f, 'b', t += PVP_VITALS.swingMs)) ok++;
+  assert.equal(ok, 40, 'an honest swing at the floor is never refused');
+  const st = zone();
+  const hit = (n, now) => wildBlow(st, 'acct-a', 'acct-b', { d: 5, held: FIST, rid: `dddddddddd${n}` }, now).why;
+  hit('01', 10_000); hit('02', 10_050);
+  assert.equal(hit('03', 10_100), 'rate');
 });
 
 test('PVP-VITALS HEALTH: flagged, a frozen bar\'s word heals only the regen it banked; a declared health potion or a paid self heal credits a rise, an unpaid heal none; a Shield counts only paid, for a minute; the whole is held to the signed level\'s (mutants: the rise unsourced; the heal unpaid; the Shield believed; the level unread)', () => {

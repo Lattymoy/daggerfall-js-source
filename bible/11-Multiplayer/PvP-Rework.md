@@ -450,3 +450,9 @@ A Shield counts only while a paid one runs. The health whole is held to the sign
 The game declares its potions and self-cast bar spells in its report (`pvpDeclare.js:"export function declarePotion("`).
 A harmful cast carries its number, so one area cast is one price. Not yet the relay's: armour and
 resistances. Relay world293. Tests: `test/net/pvpvitals.test.js`. A departure: DFU has no PvP.
+
+BOW-RATE: an arrow comes no sooner than the fastest honest bow, its four-tick loose with no reload, so 0.25 s. Two may
+arrive together over a late network. A sooner one lands nothing (`wildRef.js:"if (r === SIEGE_HIT.Shaft ? !shaftPaid(a.f, now)"`).
+The relay cannot trust a Speed, so it holds every build to that floor. A slower bow law can raise it.
+SWING-RATE: a melee blow on one player comes no sooner than the quickest swing, five frames at the 0.09 s floor, so
+0.45 s, two deep. It is counted per target, because a Cleave lands on each player in its arc.

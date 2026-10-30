@@ -24,7 +24,13 @@ export const KIT_COST_BY_TYPE = Object.freeze({ 10: KIT_COSTS.heal, 35: KIT_COST
 export const PVP_VITALS = Object.freeze({
   hpRegen: 10, mpRegen: 5, potionMs: 15_000, mpPotion: 6_000, fpPotion: 5_000, buffMs: 60_000,
   healLo: 25, healHi: 35, swing: 5, runPerS: 80, walkMps: 8.9, castMs: 1_500, creditMax: 1, regenBank: 0.05, creditMs: 5_000,
+  shaftMs: 250, shaftBurst: 2, swingMs: 450,
 });
+
+/** BOW-RATE: `shaftMs` is the closest two honest arrows come - the bow's loose at no reload, four ticks
+ *  (characters/weaponStates.js BOW_NUM_FRAMES.StrikeUp x CLASSIC_UPDATE_INTERVAL, pinned equal);
+ *  `shaftBurst` the arrows a late network may bunch together. SWING-RATE: `swingMs` the quickest honest swing
+ *  (MELEE_NUM_FRAMES.StrikeDown x SWING_FRAME_MIN, pinned equal), per target - a Cleave lands on several. */
 
 /** Declarations a report may carry (`u`): a potion drunk (health, magicka, other), or a kit spell cast on myself (10 + its
  *  place in KIT_ORDER). */
@@ -42,11 +48,11 @@ export function healthCapAt(cl, cap = 3000) {
 export const potionHealAt = (cl) => 5 + 19 * (Number.isSafeInteger(cl) && cl >= 1 ? cl : 45);
 
 /**
- * @typedef {{ heard: boolean, mp: number, fp: number, credit: number, creditAt: number, at: number, potion: Record<string, number>, shieldTo: number, absorbTo: number, castC: number, castAt: number, castTo: string[] }} Vitals
+ * @typedef {{ heard: boolean, mp: number, fp: number, credit: number, creditAt: number, at: number, potion: Record<string, number>, shieldTo: number, absorbTo: number, castC: number, castAt: number, castTo: string[], shafts: number, shaftAt: number, swings: Record<string, [number, number]> }} Vitals
  */
 /** A fighter's ledgers - made unheard (full until the game's word anchors them). @param {any} f @param {number} now @returns {Vitals} */
 export function vitalsOf(f, now) {
-  if (!f.vitals) f.vitals = { heard: false, mp: VITAL_WHOLE, fp: VITAL_WHOLE, credit: 0, creditAt: -Infinity, at: now, potion: {}, shieldTo: 0, absorbTo: 0, castC: 0, castAt: 0, castTo: [] };
+  if (!f.vitals) f.vitals = { heard: false, mp: VITAL_WHOLE, fp: VITAL_WHOLE, credit: 0, creditAt: -Infinity, at: now, potion: {}, shieldTo: 0, absorbTo: 0, castC: 0, castAt: 0, castTo: [], shafts: PVP_VITALS.shaftBurst, shaftAt: now, swings: {} };
   return f.vitals;
 }
 /** The regen since the ledgers last moved: magicka, and health credit (to `creditMax` of the whole). */
@@ -78,6 +84,26 @@ export function payFatigue(f, n, now) {
   const v = vitalsOf(f, now);
   if (v.fp < n) return false;
   v.fp -= n;
+  return true;
+}
+/** BOW-RATE: an arrow loosed now - false (none spent) where it comes sooner than the bow allows. */
+export function shaftPaid(f, now) {
+  const v = vitalsOf(f, now);
+  v.shafts = Math.min(PVP_VITALS.shaftBurst, (v.shafts ?? PVP_VITALS.shaftBurst) + Math.max(0, now - (v.shaftAt ?? now)) / PVP_VITALS.shaftMs);
+  v.shaftAt = now;
+  if (v.shafts < 1) return false;
+  v.shafts -= 1;
+  return true;
+}
+/** SWING-RATE: a melee blow on `to` now - false where it comes sooner than the quickest swing allows (two may bunch). */
+export function swingPaid(f, to, now) {
+  const v = vitalsOf(f, now);
+  v.swings ??= {};
+  const [n, at] = v.swings[to] ?? [PVP_VITALS.shaftBurst, now];
+  const left = Math.min(PVP_VITALS.shaftBurst, n + Math.max(0, now - at) / PVP_VITALS.swingMs);
+  if (left < 1) return false;
+  for (const k in v.swings) if (now - v.swings[k][1] > 10_000) delete v.swings[k];   // a target long left
+  v.swings[to] = [left - 1, now];
   return true;
 }
 /** A heal of `hp` the relay saw paid for, credited to `f`'s rise. */
