@@ -6,3 +6,7 @@
 /src/poi/*/
 !/src/poi/uv/
 /src/poi/uv/*/
+!/tools/
+/tools/*
+!/tools/layered-armor/
+/tools/layered-armor/*/
