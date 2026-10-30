@@ -69,8 +69,21 @@ export const shieldProtectedBodyParts = (templateIndex) => SHIELD_PARTS[template
 
 // ---- ItemBuilder.materialsByModifier + FormulaHelper.RandomMaterial ----
 export const MATERIALS_BY_MODIFIER = Object.freeze([64, 128, 10, 21, 13, 8, 5, 3, 2, 5]);
+/** FOE-METAL (bible/05-Combat/Fixed-PvE.md section 15; the owner, 2026-10-30: "material also need to follow a scale",
+ *  "around 20-30 daedric need to be 7% drop like vanilla"): a template foe's kit and loot roll DFU's own material curve
+ *  at the FOE's fixed level, Unleveled Loot passed by, so a zone's metal climbs with its band. Null outside the scope. */
+let _foeLevel = null;
+/** Run `fn` with every material roll under it at foe level `level` (synchronous; nests). */
+export function withFoeMaterialLevel(level, fn) {
+  const was = _foeLevel;
+  _foeLevel = Math.max(1, Number(level) | 0);
+  try { return fn(); } finally { _foeLevel = was; }
+}
+export const foeMaterialLevel = () => _foeLevel;
+
 export function randomMaterial(playerLevel, rolls = Math.random) {
-  const o = formulaOverride('randomMaterial')?.(playerLevel, rolls);   // UL1: TryGetOverride("RandomMaterial")
+  if (_foeLevel != null) playerLevel = _foeLevel;   // FOE-METAL: the foe's level, DFU's curve
+  const o = _foeLevel != null ? undefined : formulaOverride('randomMaterial')?.(playerLevel, rolls);   // UL1: TryGetOverride("RandomMaterial")
   if (o !== undefined) return o;
   let levelModifier = playerLevel - 10;
   levelModifier *= levelModifier >= 0 ? 2 : 4;
@@ -86,7 +99,8 @@ export function randomMaterial(playerLevel, rolls = Math.random) {
 // ---- ArmorMaterialTypes + RandomArmorMaterial ----
 export const ARMOR_MATERIAL = Object.freeze({ Leather: 0x0000, Chain: 0x0100, PLATE_BASE: 0x0200 });
 export function randomArmorMaterial(playerLevel, rolls = Math.random) {
-  const o = formulaOverride('randomArmorMaterial')?.(playerLevel, rolls);   // UL1: TryGetOverride("RandomArmorMaterial")
+  if (_foeLevel != null) playerLevel = _foeLevel;   // FOE-METAL
+  const o = _foeLevel != null ? undefined : formulaOverride('randomArmorMaterial')?.(playerLevel, rolls);   // UL1: TryGetOverride("RandomArmorMaterial")
   if (o !== undefined) return o;
   const roll = 1 + Math.floor(rolls() * 100);                // Dice100.Roll
   if (roll >= 70) {

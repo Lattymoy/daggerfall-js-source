@@ -20,7 +20,7 @@ import {
 } from '../combat/formulas.js';
 import { combatVoicesEnabled, ATTACK_VOICE_CHANCE, PAIN_VOICE_CHANCE, combatVoice, playerVoice, rollVoiceRace, isHeavyDamage } from '../combat/combatVoices.js';   // C2-slice; playerVoice AUDIT 24 (wave 46)
 import { RACES } from '../systems/races.js';   // C2-slice: the player grunt's race
-import { assignEnemyStartingEquipment, equipmentVariantFor, equipmentItems } from '../combat/enemyEquipment.js';   // RRI2: EnemyEntity.AssignEnemyEquipment, the delegate
+import { assignEnemyStartingEquipment, equipmentVariantFor, equipmentItems, withFoeMaterialLevel } from '../combat/enemyEquipment.js';   // RRI2: EnemyEntity.AssignEnemyEquipment, the delegate
 import { rollEnemyWeaponPoison } from '../systems/poisons.js';
 import { EQUIP_SLOTS, equipTableOf, getEquipSlot } from '../systems/equip.js';
 import { generateItems, addEnemyLootExtras, enemyLootTableKey, createRandomWeapon, createRandomArmor } from '../systems/loot/loot.js';   // RF2: the spawn chain's DFU half, in its one home; RRI2: MobLootKeys; LOOT7: a champion's minted piece
@@ -151,7 +151,11 @@ const eliteLooted = (entity) => !!(entity?.eliteFoe || entity?.elite || champion
 // the dice reach every draw (the table's, the kit's variant and its poison were Math.random), and `quarters`, `luck` and
 // `find` default to the roller's own (renownLootQuarters, the live Luck, legendaryFindMult) only when the caller names
 // none. `rejects`, when given, receives the pieces PLAIN-LOOT's keep let go - the personal bonus's own draw.
-export function spawnEnemyLoot(entity, mobileType, basics, player, { rolls = Math.random, lootDropMult = 1, lootQualityMult = 1, where = null, quarters = renownLootQuarters(), luck = liveStat(player, 'luck'), find = undefined, rejects = null } = {}) {
+export function spawnEnemyLoot(entity, mobileType, basics, player, opts = {}) {
+  const roll = () => rollEnemyLoot(entity, mobileType, basics, player, opts);
+  return entity?.pveTemplate ? withFoeMaterialLevel(entity.level, roll) : roll();   // FOE-METAL: a template foe's metal at its own level
+}
+function rollEnemyLoot(entity, mobileType, basics, player, { rolls = Math.random, lootDropMult = 1, lootQualityMult = 1, where = null, quarters = renownLootQuarters(), luck = liveStat(player, 'luck'), find = undefined, rejects = null } = {}) {
   const itemChanceScale = (isHumanoid(entity) ? HUMANOID_LOOT_ITEM_SCALE : 1) * lootDropMult;
   const ease = quarters;   // RENOWN-LOOT: the roller's Renown, read once for the keep and the ladder alike (PARTY-LOOT: the caller's terms)
   entity.items = generateItems(enemyLootTableKey(mobileType, basics?.lootTableKey ?? '-'), { level: effectiveLevel(player), gender: player.gender }, rolls, { itemChanceScale, mobileType });   // PARTY-LOOT: on the caller's dice (it rolled Math.random whatever `rolls` said)

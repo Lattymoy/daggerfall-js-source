@@ -234,3 +234,12 @@ weapon, armour piece and ring take the roller's three best trained skills in ord
 line leans to level 20, two to 35, three in the top band (the owner: "23 to early"). The other
 lines, the values and garments roll as ever. With the switch off no foe carries a template, so nothing leans. Daggerfall
 Unity's items have no lines. The tests: `test/systems/loot/skilllean.test.js`.
+
+## 15. A template foe's metal follows its level (FOE-METAL, 2026-10-30)
+
+The owner: "material also need to follow a scale", "around 20-30 daedric need to be 7% drop like vanilla". A template
+foe's whole loot chain (`hostCombat.js` `spawnEnemyLoot`) runs inside `withFoeMaterialLevel` (`combat/enemyEquipment.js`)
+at the foe's fixed level. Every material roll under it reads Daggerfall Unity's own `RandomMaterial` and
+`RandomArmorMaterial` at that level, and Unleveled Loot is passed by, so the metal climbs with the zone. A weapon is
+Daedric in none under level 10, about 8% at 20, 16% at 30 and 28% at 45; a plate piece about a ninth of that. Other foes
+keep Unleveled Loot. The tests: `test/systems/loot/foemetal.test.js`.
