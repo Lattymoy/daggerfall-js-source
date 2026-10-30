@@ -10,6 +10,7 @@ import {
   iconRefusal, armoryRefusal, wardrobeOf, TIER_GLYPH,
 } from '../../server-account/src/titles.js';
 import { TITLES, AURAS, ICONS, GLYPHS, titleClaimed } from '../../src/net/identityToken.js';
+import { DRAGON_TITLES } from '../../src/net/huntLaw.js';
 import { ARMORY_PIECES } from '../../src/net/armoryLaw.js';
 import { INSIGNIA } from '../../src/net/insignia.js';
 import { SHOP_WARES } from '../../src/net/shopLaw.js';
@@ -25,7 +26,8 @@ const mod = { id: 'm', handle: 'mod1', registered_at: NOW - 9_999_999, created_a
 test('ADMIN-ALL: an admin holds every title but a claim\'s, every aura, icon, armory piece and Broker offer', () => {
   assert.ok(holdsAll(admin, env));
   const titles = titlesHeld(admin, env);
-  for (const t of TITLES) assert.equal(titles.includes(t), !titleClaimed(t), t);
+  const first = [DRAGON_TITLES.first, DRAGON_TITLES.firstAether];   // WYRM-RIDER: a look's First is one tamer's
+  for (const t of TITLES) assert.equal(titles.includes(t), !titleClaimed(t) && !first.includes(t), t);
   assert.deepEqual([...aurasHeld(admin, env)].sort(), [...AURAS].sort());
   assert.deepEqual(iconsHeld(admin, env), [...ICONS]);
   assert.deepEqual(armoryHeld(admin, env), ARMORY_PIECES.map((p) => p.key));
