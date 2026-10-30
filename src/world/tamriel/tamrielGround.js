@@ -36,6 +36,7 @@ import { WATER_BYTE } from '../roadsProducer.js';   // AUDIT TESA II R1: the bea
 import { rumareBasin, rumareMouthPixel } from '../rumareWaters.js';   // RUMARE-WATER: the land let down about the Imperial City at the sea
 import { perlinNoise } from '../perlin.js';   // RELIEF-PEAKS: the large map before it (largeMapBefore), for the records written on it
 import { inEtherLaw } from '../ethericSea.js';   // RELIEF-PEAKS: the Eltheric Ocean's box keeps its own large map
+import { landLayer } from '../land/landLayer.js';   // FOUNDATION F4: the land's rows, asked before the law
 import { BASE_HEIGHT_SCALE, NOISE_MAP_SCALE, MAX_TERRAIN_HEIGHT, EXTRA_NOISE_SCALE, cubicInterpolator } from '../terrain/terrainSampler.js';   // RELIEF-PEAKS: the kernel's own two terms
 
 /** The height law's bytes (WOODS' own units: byte * 8 metres; the sea at 3 and under). AUDIT TESA II R1/G12: the shore - the
@@ -130,6 +131,7 @@ export function tamrielHeightByte(x, y) {
   let byte = rumareMouthPixel(x, y) ? 0 : authoredHeightByte(px, py, (groundHash(x, y) - 0.5) * 4);   // RUMARE-WATER: the mouth's pixels the sea's
   const basin = byte > SHORE_BYTE ? rumareBasin(x, y) : 0;
   if (basin > 0) byte = Math.round(byte - (byte - SHORE_BYTE) * basin);
+  byte = landLayer().heightAt(x, y) ?? byte;   // FOUNDATION F4: a row of the land's (world/land/landLayer.js) over the law
   if (_bytes.size >= GROUND_CACHE_MAX) _bytes.clear();
   _bytes.set(k, byte);
   return byte;
@@ -140,7 +142,7 @@ export function tamrielHeightByte(x, y) {
  *  biomeAtPicture answers one for any point of a province's land), so the province's own climate it fell back to answered
  *  nothing and is gone; every reader asks of a pixel past the Bay (the Bay's own read the Bay's map). */
 export function tamrielClimateAt(x, y) {
-  return tamrielBiomeAt(x, y)?.climate ?? CLIMATES.Ocean;
+  return landLayer().climateAt(x, y) ?? tamrielBiomeAt(x, y)?.climate ?? CLIMATES.Ocean;   // FOUNDATION F4: a row's climate first, for every reader
 }
 
 /** AUDIT TESA-BIOME Z4: whether a pixel (px, py)'s 3x3 of climates (ECOTONE1, the host's climates3x3) reads its neighbour
@@ -291,6 +293,8 @@ export function groundClimateIndex(bayClimateIndex) {
 export function groundAirClimateIndex(bayClimateIndex) {
   return (x, y) => {
     if (inBay(x, y)) return bayClimateIndex(x, y);
+    const row = landLayer().climateAt(x, y);   // AUDIT FOUNDATION II L4: a row's climate its air too
+    if (row !== undefined) return row;
     const zone = tamrielBiomeAt(x, y);   // AUDIT TESA-BIOME Z7: the zone read once
     return zone ? zone.air ?? zone.climate : tamrielClimateAt(x, y);
   };
@@ -304,7 +308,7 @@ export function groundAirClimateIndex(bayClimateIndex) {
  * @param {number} x @param {number} y @param {number} climate
  */
 export function feltClimateIndex(x, y, climate) {
-  return (inBay(x, y) ? null : tamrielBiomeAt(x, y)?.air) ?? climate;
+  return (inBay(x, y) || landLayer().climateAt(x, y) !== undefined ? null : tamrielBiomeAt(x, y)?.air) ?? climate;   // AUDIT FOUNDATION II L4: a row's climate felt
 }
 
 /** WW-R (bible/03-World/World-Wide.md WW-R): THE POLITIC MAP PAST THE BAY - a province's land its region's politic

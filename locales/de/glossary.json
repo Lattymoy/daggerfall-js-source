@@ -1,5 +1,6 @@
 {
  "Damage": "Schaden",
+ "Figurehead": "Galionsfigur",
  "Hit chance": "Trefferchance",
  "Critical": "Kritisch",
  "Critical Strike": "Kritischer Treffer",
@@ -276,5 +277,23 @@
  "piece (an Aura Armory piece)": "Stück",
  "Eternal (in an Aura Armory piece name: Eternal Halo, Eternal Sigil...)": "Ewiger / Ewige / Ewiges",
  "Dwarven Dragon": "Zwergendrache",
- "hoard": "Hort"
+ "hoard": "Hort",
+ "Guild Shop (the guild window's silver shop; page name Shop)": "Gildenladen (Seite: Laden)",
+ "silver treasury (the guild's shared silver)": "Silberkasse",
+ "Hall furniture (guild shop)": "Gildenhausmöbel",
+ "Insignia Armlet": "Insignien-Armreif",
+ "Guild Crest (portrait icon)": "Gildenemblem",
+ "Guild Sailcloth": "Gildensegeltuch",
+ "Guild Banker": "Gildenbankier",
+ "Heraldic Standard": "Wappenstandarte",
+ "Crest Plaque": "Wappentafel",
+ "Guildmaster's Seat": "Sitz des Gildenmeisters",
+ "War Table": "Kriegstisch",
+ "Weapon Rack": "Waffenständer",
+ "Guild Brazier": "Gildenfeuerschale",
+ "device (heraldry)": "Wappenbild",
+ "logo (a guild's uploaded picture)": "Logo",
+ "under review (a logo)": "wird geprüft",
+ "Plain, Stripes, Bands, Quartered, Chevron, Cross, Border, Saltire (sail patterns)": "Schlicht, Pfähle, Balken, Geviert, Sparren, Kreuz, Bord, Schrägkreuz",
+ "Guild / Wealth / Identity (guild window groups)": "Gilde / Vermögen / Identität"
 }

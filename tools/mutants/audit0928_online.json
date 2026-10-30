@@ -30,8 +30,8 @@
   {
     "name": "A0928-O1-build-uncontained",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "        if (boat) list[i] = { boat, hull: w.hull, variant: w.variant, wire: w.position, slot: i, shown: null, turn: null, helm: false, light: false };\n      } catch (e) { fail(owner, e); }",
-    "new": "        if (boat) list[i] = { boat, hull: w.hull, variant: w.variant, wire: w.position, slot: i, shown: null, turn: null, helm: false, light: false };\n      } catch (e) { throw e; }",
+    "old": "        if (boat) boat.figurehead = w.figurehead ?? 0;   // FIGUREHEAD: her carving, from her first word\n      } catch (e) { fail(owner, e); }",
+    "new": "        if (boat) boat.figurehead = w.figurehead ?? 0;   // FIGUREHEAD: her carving, from her first word\n      } catch (e) { throw e; }",
     "tests": [
       "test/scenes/audit0928_online.test.js"
     ]

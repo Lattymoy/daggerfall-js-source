@@ -381,3 +381,22 @@ one weapon skill"*), through Mac; asked, Mac: *"Paid skill swap"*. Record: `01-O
   `tools/mutants/fb1019b_skillswap.json`, `fb1019b_audit.json`, `swapcycle.json`. Audit:
   `01-Overview/audits/Audit-Suggestions-1019.md`.
 
+## 12. SKILL-TRADE - two class skills change groups, for gold
+
+Discord #feature-feedback, 2026-10-24 (Spat: *"Its a lil annoying that I need to swap a misc skill in and then shuffle
+the 2 skills around. Even if it costs 300K"*), through Mac; price asked, Mac: *"100,000"*.
+
+- **The law** (`skillSwap.js:"export function swapTradeChoices(entity, out) {"`): an unmastered class skill of another
+  group may take `out`'s place, and `out` takes its place. Both stay class skills and neither is mastered, so no
+  mastery slot moves. One `SKILL_SWAP_GOLD`, as a swap; before, the same change was three swaps through a miscellaneous
+  skill. The level sums follow SWAP-CYCLE (section 11): a drop moves neither, and a rise moves both offline. Online a
+  rise moves the start so the climb's share stands (AUDIT TRADE-KEY A2: the online level reads the start, and a start
+  moved by the rise paid levels - a swap's as much as a trade's).
+- **The page** (`specGuide.js:"const ins = [...sw.in, ...sw.trade(_swapOut)];"`): *Take instead* lists the outsiders,
+  then the other groups' unmastered class skills with their group (*Restoration (Major)*, its own words). The ask names
+  both groups, warns when `out` goes into a group whose mastery slots are spent, and names the right skill in the 95
+  lock's words. A swap done resets both picks. A family's hint counts a trade that would open a path.
+- Pins: `test/systems/skilltrade.test.js`, `test/ui/growth/skilltrade_page.test.js`; `tools/mutants/skilltrade.json`.
+  `fb1019b_skillswap.test.js`'s refusal pin moved: a skill of another group is no longer refused. Audit:
+  `01-Overview/audits/Audit-Trade-Key.md`.
+

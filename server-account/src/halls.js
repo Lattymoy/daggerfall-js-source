@@ -42,9 +42,11 @@ import { displayName, overRate } from './accounts.js';
 import { guildActorOf } from './guilds.js';
 import { marksOpenFor } from './marks.js';
 import { mustChange } from './realm.js';
-import { GUILD_TREASURY_MAX, GUILD_OPS_MAX, GUILD_OPS_WINDOW_S } from '../../src/net/guild/guildLaw.js';
+import { GUILD_TREASURY_MAX, GUILD_OPS_MAX, GUILD_OPS_WINDOW_S, guildMay } from '../../src/net/guild/guildLaw.js';
+import { guildPowerSql } from './guildPowerSql.js';   // GUILD-RANKS: the guild's powers, read in the statement
 import { GUILD_HALL_ENTRY_DEFAULT, HALL_POWERS, hallMay, guildHallPrice, guildHallEntryOk, guildHallOwner } from '../../src/net/hallLaw.js';
 import { HOME_CLAIMS_MAX, HOME_CLAIMS_WINDOW_S, homeMapIdOk, homeBuildingKeyOk, homeRegionOk, homePriceOk, homeSaleRefund, homeInArenaCell, homeLayoutOk, homeMoved } from '../../src/net/homeLaw.js';   // ARENA4b: the arena's cell; QUEST-HOME: what a hall's buy or sale moved
+import { homeListedOff, homeListedPrice } from '../../src/net/homeListingLaw.js';   // FOUNDATION F3: the listings' rows
 import { HERALDRY_CHANGE_DRAKES, heraldryOf, heraldrySame } from '../../src/net/heraldryLaw.js';
 import { MARKS_RID_RE, utcDay } from '../../src/net/marksLaw.js';
 import { seatWeekOf } from '../../src/net/townSeatLaw.js';   // AUDIT-SEATS S10: a siege week refuses a change
@@ -92,6 +94,8 @@ export async function buyHall(ctx, player, body = {}) {
   if (!homePriceOk(price)) return { error: 'home-update' };   // HOME-PRICE: a build from before the online price (homes.js claimHome)
   if (!homeLayoutOk(layout)) return { error: 'bad-home' };   // AUDIT PRE-MERGE 1003 WD1: the layout the buyer's town stands in
   if (homeInArenaCell(mapId, buildingKey)) return { error: 'home-arena' };   // ARENA4b: the arena stands there - a build from before it still stands GEMSAL03 (homes.js claimHome's guard)
+  if (homeListedOff(mapId, buildingKey, undefined, layout)) return { error: 'home-unlisted' };   // FOUNDATION F3: off the market by its row
+  if (homeListedPrice(mapId, buildingKey, price, undefined, layout) !== price) return { error: 'home-update' };
   if (!Object.hasOwn(body ?? {}, 'layout')) return { error: 'home-update' };   // AUDIT PRE-MERGE 1003 WD1: a build from before the town mods (AUDIT WD3 B2)
   const gid = a.me.guild_id;
   const held = await db.prepare('SELECT guild_id FROM homes WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey).first();
@@ -197,12 +201,12 @@ export async function setHallEntry(ctx, player, { character, entry } = {}) {
   const { db, nowS } = ctx;
   const a = await guildActorOf(db, player, character);
   if ('error' in a) return a;
-  if (!hallMay(a.me.rank, 'hallEntry')) return { error: 'guild-rank' };
+  if (!guildMay(a.me.rank, 'hallEntry', a.powers)) return { error: 'guild-rank' };   // GUILD-RANKS: as the guild set it
   if (!guildHallEntryOk(entry)) return { error: 'bad-entry' };
   if (await overRate({ db, nowS }, `guild:${player.id}`, GUILD_OPS_MAX, GUILD_OPS_WINDOW_S)) return { error: 'guild-rate' };
   // AUDIT GUILD1d S7: the rank asked in the write too - an Officer demoted since the read turns nothing
   const r = await db.prepare(`UPDATE homes SET entry = ?1 WHERE guild_id = ?2
-    AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?3 AND guild_id = ?2 AND rank IN (${HALL_POWERS.hallEntry.join(', ')}))`).bind(entry, a.me.guild_id, a.me.rid).run();
+    AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?3 AND guild_id = ?2 AND ${guildPowerSql('hallEntry', 'rank', '?2')})`).bind(entry, a.me.guild_id, a.me.rid).run();
   if (r?.meta?.changes) return { ok: true, entry };
   return { error: (await db.prepare('SELECT 1 FROM homes WHERE guild_id = ?').bind(a.me.guild_id).first()) ? 'guild-rank' : 'guild-hall-none' };
 }

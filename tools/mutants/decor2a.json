@@ -355,8 +355,8 @@
   {
     "name": "DECOR2a-gold-asked-for-ones-own",
     "file": "src/scenes/decor/decorTool.js",
-    "old": "    const free = entry.kind === 'own';",
-    "new": "    const free = false;",
+    "old": "    const free = entry.kind === 'own' || entry.guild != null;",
+    "new": "    const free = entry.guild != null;",
     "tests": [
       "test/systems/decor2a.test.js"
     ]
@@ -409,7 +409,7 @@
   {
     "name": "DECOR2a-its-going-unsaid",
     "file": "src/scenes/decor/decorTool.js",
-    "old": "    if (p.free && !deps.packHas?.(p.entry.own)) return p.entry.furnishing ? 'It is no longer among your things.' : 'It is no longer in your pack.';   // DECOR2a (DECOR2b: furniture)\n",
+    "old": "    if (p.free && p.entry.kind === 'own' && !deps.packHas?.(p.entry.own)) return p.entry.furnishing ? 'It is no longer among your things.' : 'It is no longer in your pack.';   // DECOR2a (DECOR2b: furniture)\n",
     "new": "",
     "tests": [
       "test/systems/decor2a.test.js"
