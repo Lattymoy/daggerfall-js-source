@@ -22,7 +22,7 @@
 import { gambitAct, finishTurn } from '../../net/kingsGambit.js';
 import { GAMBIT_TURN_END_MS } from '../../net/gambit/gambitTable.js';
 import { dealRegular, regularStep } from './gambitPatrons.js';
-import { SUIT_CROWNS } from '../../render/cardFaces.js';   // the Bay deck's four crowns - pure, its painters take a canvas
+import { SUIT_CROWNS } from '../../render/cardFaces.js'; // the Bay deck's four crowns - pure, its painters take a canvas
 
 /** THE MOD'S BEATS (2.10): the turn's end after its last action (KG5: its one home the relay's table's, which runs it
  *  online too), the regular's pause before each action, the result. */
@@ -47,12 +47,16 @@ export const GAMBIT_LOG_MAX = 12;
 export const GAMBIT_CROWNS = Object.freeze(SUIT_CROWNS.map((c) => c.crown.toLowerCase()));
 export const GAMBIT_CROWN_FIRST = 'daggerfall';
 /** A crown's index in GAMBIT_CROWNS, the first's for a key it does not hold. */
-export const crownIndex = (/** @type {any} */ key) => { const i = GAMBIT_CROWNS.indexOf(key); return i >= 0 ? i : GAMBIT_CROWNS.indexOf(GAMBIT_CROWN_FIRST); };
+export const crownIndex = (/** @type {any} */ key) => {
+  const i = GAMBIT_CROWNS.indexOf(key);
+  return i >= 0 ? i : GAMBIT_CROWNS.indexOf(GAMBIT_CROWN_FIRST);
+};
 /** The player's crown as the save keeps it, and back (10.4): one of the four, else Daggerfall. */
 export const gambitCrownRestore = (/** @type {any} */ v) => GAMBIT_CROWNS[crownIndex(v)];
 
 /** The stake a pick puts down: the tier's least stake times the pick's multiplier, or 0 for no pick. */
-export const stakeOf = (/** @type {{stake: number}} */ tier, /** @type {number} */ mult) => (GAMBIT_STAKE_MULTS.includes(mult) ? tier.stake * mult : 0);
+export const stakeOf = (/** @type {{stake: number}} */ tier, /** @type {number} */ mult) =>
+  GAMBIT_STAKE_MULTS.includes(mult) ? tier.stake * mult : 0;
 
 export class GambitTableSession {
   /**
@@ -66,24 +70,33 @@ export class GambitTableSession {
     this.stake = Number.isSafeInteger(stake) && stake > 0 ? stake : 0;
     this.rand32 = rand32;
     /** @type {any[]} */ this.events = [];
-    this.endAt = null;      // the turn's end, while a turn is ending
-    this.actAt = null;      // the regular's next action, on the regular's turn
-    this.resultAt = null;   // the result's beat, once the game is decided
-    this.shown = false;     // the result shown
+    this.endAt = null; // the turn's end, while a turn is ending
+    this.actAt = null; // the regular's next action, on the regular's turn
+    this.resultAt = null; // the result's beat, once the game is decided
+    this.shown = false; // the result shown
     /** @type {{winner: number|null, by: 'king'|'forfeit'|'void'}|null} */ this.over = null;
     this.state = dealRegular({ army, tier: this.tier, rand32 });
-    if (!this.state) { this.over = { winner: null, by: 'void' }; this.shown = true; return; }
+    if (!this.state) {
+      this.over = { winner: null, by: 'void' };
+      this.shown = true;
+      return;
+    }
     this._say({ t: 'game', layout: this.state.layout, stake: this.stake }, now);
   }
 
-  _say(/** @type {any} */ e, /** @type {number} */ now) { this.events.push({ ...e, at: now }); }
+  _say(/** @type {any} */ e, /** @type {number} */ now) {
+    this.events.push({ ...e, at: now });
+  }
 
   /** A step the law took: its events said, the game decided or its turn's end on the clock. */
   _apply(/** @type {{state: any, events: any[]}} */ out, /** @type {number} */ now) {
     this.state = out.state;
     for (const e of out.events) this._say(e, now);
     if (this.state.over) this._decide(this.state.over.winner, 'king', now);
-    else if (this.state.ending) { this.endAt = now + GAMBIT_TURN_END_MS; this.actAt = null; }
+    else if (this.state.ending) {
+      this.endAt = now + GAMBIT_TURN_END_MS;
+      this.actAt = null;
+    }
   }
 
   /** The game is decided: who won and how; the result's beat starts. */
@@ -100,7 +113,7 @@ export class GambitTableSession {
     if (this.over || !this.state) return 'over';
     const out = gambitAct(this.state, 0, cmd, this.rand32);
     if ('refused' in out) {
-      if (out.refused === 'rand') this._decide(null, 'void', now);   // the table's source broke: no game, no gold
+      if (out.refused === 'rand') this._decide(null, 'void', now); // the table's source broke: no game, no gold
       return out.refused;
     }
     this._apply(out, now);
@@ -110,20 +123,29 @@ export class GambitTableSession {
   /** The clock moves: a turn ending ends after its beat; on the regular's turn the regular acts, a pause before each. */
   tick(/** @type {number} */ now) {
     if (this.over) {
-      if (!this.shown && this.resultAt !== null && now >= this.resultAt) { this.shown = true; this._say({ t: 'result', ...this.over }, now); }
+      if (!this.shown && this.resultAt !== null && now >= this.resultAt) {
+        this.shown = true;
+        this._say({ t: 'result', ...this.over }, now);
+      }
       return;
     }
     if (this.endAt !== null && now >= this.endAt) {
       this.endAt = null;
       const out = finishTurn(this.state, this.rand32);
-      if ('refused' in out) { this._decide(null, 'void', now); return; }
+      if ('refused' in out) {
+        this._decide(null, 'void', now);
+        return;
+      }
       this._apply(out, now);
       if (!this.over && this.state.turn === 1) this.actAt = now + GAMBIT_REGULAR_PAUSE_MS;
       return;
     }
     if (this.state.turn !== 1 || this.state.ending || this.actAt === null || now < this.actAt) return;
     const step = regularStep(this.state, 1, this.tier, this.rand32, this.rand32);
-    if (!step) { this._decide(null, 'void', now); return; }   // a broken source takes no step - never a turn passed in silence
+    if (!step) {
+      this._decide(null, 'void', now);
+      return;
+    } // a broken source takes no step - never a turn passed in silence
     this._apply(step, now);
     if (!this.over && !this.state.ending) this.actAt = now + GAMBIT_REGULAR_PAUSE_MS;
   }
@@ -136,9 +158,13 @@ export class GambitTableSession {
   }
 
   /** Whether a game is under way (dealt and undecided). */
-  playing() { return !!this.state && !this.over; }
+  playing() {
+    return !!this.state && !this.over;
+  }
   /** Whose the turn is - 0 the player's, 1 the regular's - while a game is under way, else null. */
-  turnOf() { return this.playing() ? this.state.turn : null; }
+  turnOf() {
+    return this.playing() ? this.state.turn : null;
+  }
 
   /**
    * WHAT THE GOLD DOES, once decided: `pay` the gold the table hands the player (the stake back and the regular's on a
@@ -153,31 +179,57 @@ export class GambitTableSession {
   }
 
   /** The events since the last drain. */
-  drain() { const e = this.events; this.events = []; return e; }
+  drain() {
+    const e = this.events;
+    this.events = [];
+    return e;
+  }
 }
 
 // ── A REGULAR'S NIGHT: THE BOOK ───────────────────────────────────────────────────────────────────────────────────
 
 /** What regular `name` has paid out net at table `key` on `day` (negative once the regular won back more). */
-export function gambitNightPaid(/** @type {any} */ book, /** @type {string} */ key, /** @type {number} */ day, /** @type {string} */ name) {
+export function gambitNightPaid(
+  /** @type {any} */ book,
+  /** @type {string} */ key,
+  /** @type {number} */ day,
+  /** @type {string} */ name,
+) {
   const e = book?.[key];
   const v = e && e.day === day && e.net && typeof e.net === 'object' ? e.net[name] : 0;
   return Number.isSafeInteger(v) ? v : 0;
 }
 /** What is left of regular `name`'s night at `tier`: the night's GAMBIT_NIGHT_MULT least stakes less what the regular
  *  has paid out net, never below 0. */
-export function gambitNightLeft(/** @type {any} */ book, /** @type {string} */ key, /** @type {number} */ day, /** @type {string} */ name, /** @type {{stake: number}} */ tier) {
+export function gambitNightLeft(
+  /** @type {any} */ book,
+  /** @type {string} */ key,
+  /** @type {number} */ day,
+  /** @type {string} */ name,
+  /** @type {{stake: number}} */ tier,
+) {
   return Math.max(0, tier.stake * GAMBIT_NIGHT_MULT - gambitNightPaid(book, key, day, name));
 }
 /** The book after regular `name` paid out `net` at table `key` on `day` (negative: won back): a new book, a day past
  *  the table's last starting it afresh, the oldest days dropped past GAMBIT_PURSES_BOOK_MAX - a tie in the day keeping the
  *  table just booked (AUDIT CARDS-6 B6's rule, the forfeits' book's). */
-export function gambitPursesAfter(/** @type {any} */ book, /** @type {string} */ key, /** @type {number} */ day, /** @type {string} */ name, /** @type {number} */ net) {
+export function gambitPursesAfter(
+  /** @type {any} */ book,
+  /** @type {string} */ key,
+  /** @type {number} */ day,
+  /** @type {string} */ name,
+  /** @type {number} */ net,
+) {
   const base = book && typeof book === 'object' && !Array.isArray(book) ? book : {};
   const kept = base[key]?.day === day && base[key].net && typeof base[key].net === 'object' ? base[key].net : {};
   const names = { ...kept, [name]: gambitNightPaid(base, key, day, name) + (Number.isSafeInteger(net) ? net : 0) };
-  const next = { ...base, [key]: { day, net: Object.fromEntries(Object.entries(names).slice(-GAMBIT_PURSES_NAMES_MAX)) } };
-  const keys = Object.keys(next).sort((a, b) => (next[b]?.day ?? 0) - (next[a]?.day ?? 0) || (b === key ? 1 : 0) - (a === key ? 1 : 0));
+  const next = {
+    ...base,
+    [key]: { day, net: Object.fromEntries(Object.entries(names).slice(-GAMBIT_PURSES_NAMES_MAX)) },
+  };
+  const keys = Object.keys(next).sort(
+    (a, b) => (next[b]?.day ?? 0) - (next[a]?.day ?? 0) || (b === key ? 1 : 0) - (a === key ? 1 : 0),
+  );
   return Object.fromEntries(keys.slice(0, GAMBIT_PURSES_BOOK_MAX).map((k) => [k, next[k]]));
 }
 /** The book as the save keeps it, and back - only well-formed entries, never more than GAMBIT_PURSES_BOOK_MAX tables of
@@ -187,7 +239,9 @@ export function gambitPursesRestore(/** @type {any} */ raw) {
   const out = {};
   for (const [k, v] of Object.entries(raw).slice(0, GAMBIT_PURSES_BOOK_MAX)) {
     if (!v || !Number.isSafeInteger(v.day) || !v.net || typeof v.net !== 'object' || Array.isArray(v.net)) continue;
-    const net = Object.entries(v.net).filter(([n, x]) => typeof n === 'string' && Number.isSafeInteger(x)).slice(0, GAMBIT_PURSES_NAMES_MAX);
+    const net = Object.entries(v.net)
+      .filter(([n, x]) => typeof n === 'string' && Number.isSafeInteger(x))
+      .slice(0, GAMBIT_PURSES_NAMES_MAX);
     out[k] = { day: v.day, net: Object.fromEntries(net) };
   }
   return out;

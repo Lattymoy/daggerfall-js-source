@@ -290,8 +290,8 @@
   {
     "name": "KG5-M-flip",
     "file": "src/systems/gambit/gambitRemoteTable.js",
-    "old": "  view(game) { return this.side === 1 ? flipGambitState(game) : game; }",
-    "new": "  view(game) { return game; }",
+    "old": "    return this.side === 1 ? flipGambitState(game) : game;",
+    "new": "    return game;",
     "tests": [
       "test/net/kg5_client.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "KG5-M-winner",
     "file": "src/systems/gambit/gambitRemoteTable.js",
-    "old": "const winner = e.winner === null ? null : this.side === 1 ? 1 - e.winner : e.winner;",
-    "new": "const winner = e.winner;",
+    "old": "        const winner = e.winner === null ? null : this.side === 1 ? 1 - e.winner : e.winner;",
+    "new": "        const winner = e.winner;",
     "tests": [
       "test/net/kg5_client.test.js"
     ]
@@ -335,7 +335,7 @@
   {
     "name": "KG5-M-one-at-a-time",
     "file": "src/systems/gambit/gambitRemoteTable.js",
-    "old": "    if (this.sentAt !== null || this.queue.length) { if (this.held.length < GAMBIT_HELD_MAX) this.held.push(cmd); return null; }",
+    "old": "    if (this.sentAt !== null || this.queue.length) {\n      if (this.held.length < GAMBIT_HELD_MAX) this.held.push(cmd);\n      return null;\n    }",
     "new": "    // one at a time",
     "tests": [
       "test/net/kg5_client.test.js"

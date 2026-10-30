@@ -46,6 +46,8 @@
 /src/systems/festival/*/
 !/src/systems/firstVisit/
 /src/systems/firstVisit/*/
+!/src/systems/gambit/
+/src/systems/gambit/*/
 !/src/systems/grammar/
 /src/systems/grammar/*/
 !/src/systems/hunt/

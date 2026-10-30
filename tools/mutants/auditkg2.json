@@ -38,8 +38,8 @@
   {
     "name": "AKG2-B2-last",
     "file": "src/systems/gambit/gambitRemoteTable.js",
-    "old": "const told = !state?.game && last && !events.some((e) => e.t === 'result');",
-    "new": "const told = false;",
+    "old": "    const told = !state?.game && last && !events.some((e) => e.t === 'result');",
+    "new": "    const told = false;",
     "tests": [
       "test/net/auditkg2_online.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "AKG2-B10-gap",
     "file": "src/systems/gambit/gambitRemoteTable.js",
-    "old": "(this.watch || e.side === 1 - this.side)",
-    "new": "(e.side === 1 - this.side)",
+    "old": "    const theirs = events.some((e) => LAW_ACTIONS.includes(e.t) && (this.watch || e.side === 1 - this.side));",
+    "new": "    const theirs = events.some((e) => LAW_ACTIONS.includes(e.t) && e.side === 1 - this.side);",
     "tests": [
       "test/net/auditkg2_online.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "AKG2-B11-held",
     "file": "src/systems/gambit/gambitRemoteTable.js",
-    "old": "const no = this.over ? null : gambitRefusal(this.state, 0, cmd) ?? this._send(cmd, now);",
-    "new": "const no = null;",
+    "old": "      const no = this.over ? null : (gambitRefusal(this.state, 0, cmd) ?? this._send(cmd, now));",
+    "new": "      const no = null;",
     "tests": [
       "test/net/auditkg2_online.test.js",
       "test/net/kg5_client.test.js"

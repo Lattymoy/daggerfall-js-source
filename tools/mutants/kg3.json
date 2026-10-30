@@ -38,8 +38,8 @@
   {
     "name": "KG3-S-turn-ended-at-once",
     "file": "src/systems/gambit/gambitTableSession.js",
-    "old": "else if (this.state.ending) { this.endAt = now + GAMBIT_TURN_END_MS; this.actAt = null; }",
-    "new": "else if (this.state.ending) { this.endAt = now; this.actAt = null; }",
+    "old": "      this.endAt = now + GAMBIT_TURN_END_MS;",
+    "new": "      this.endAt = now;",
     "tests": [
       "test/systems/kg3_session.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "KG3-S-refusal-applied",
     "file": "src/systems/gambit/gambitTableSession.js",
-    "old": "      if (out.refused === 'rand') this._decide(null, 'void', now);",
-    "new": "      this._decide(null, 'void', now);",
+    "old": "      if (out.refused === 'rand') this._decide(null, 'void', now); // the table's source broke: no game, no gold",
+    "new": "      this._decide(null, 'void', now); // the table's source broke: no game, no gold",
     "tests": [
       "test/systems/kg3_session.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "KG3-S-refusal-ends-turn",
     "file": "src/systems/gambit/gambitTableSession.js",
-    "old": "      return out.refused;\n    }\n    this._apply(out, now);",
-    "new": "      this.state = gambitAct(this.state, 0, { type: 'end' }, this.rand32).state ?? this.state; return out.refused;\n    }\n    this._apply(out, now);",
+    "old": "      return out.refused;",
+    "new": "      this.state = gambitAct(this.state, 0, { type: 'end' }, this.rand32).state ?? this.state;\n      return out.refused;",
     "tests": [
       "test/systems/kg3_session.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "KG3-S-pay",
     "file": "src/systems/gambit/gambitTableSession.js",
-    "old": "{ pay: this.stake * GAMBIT_WIN_PAYS, net: this.stake }",
-    "new": "{ pay: this.stake, net: this.stake }",
+    "old": "    return winner === 0 ? { pay: this.stake * GAMBIT_WIN_PAYS, net: this.stake } : { pay: 0, net: -this.stake };",
+    "new": "    return winner === 0 ? { pay: this.stake, net: this.stake } : { pay: 0, net: -this.stake };",
     "tests": [
       "test/systems/kg3_session.test.js",
       "test/systems/kg3_host.test.js"
@@ -95,8 +95,8 @@
   {
     "name": "KG3-S-net-sign",
     "file": "src/systems/gambit/gambitTableSession.js",
-    "old": ": { pay: 0, net: -this.stake };",
-    "new": ": { pay: 0, net: this.stake };",
+    "old": "    return winner === 0 ? { pay: this.stake * GAMBIT_WIN_PAYS, net: this.stake } : { pay: 0, net: -this.stake };",
+    "new": "    return winner === 0 ? { pay: this.stake * GAMBIT_WIN_PAYS, net: this.stake } : { pay: 0, net: this.stake };",
     "tests": [
       "test/systems/kg3_session.test.js"
     ]
@@ -104,8 +104,8 @@
   {
     "name": "KG3-S-void-kept",
     "file": "src/systems/gambit/gambitTableSession.js",
-    "old": "return { pay: winner === null ? this.stake : 0, net: 0 };",
-    "new": "return { pay: 0, net: 0 };",
+    "old": "    if (!this.stake || winner === null) return { pay: winner === null ? this.stake : 0, net: 0 };",
+    "new": "    if (!this.stake || winner === null) return { pay: 0, net: 0 };",
     "tests": [
       "test/systems/kg3_session.test.js"
     ]
@@ -122,8 +122,8 @@
   {
     "name": "KG3-S-book-day-kept",
     "file": "src/systems/gambit/gambitTableSession.js",
-    "old": "const v = e && e.day === day && e.net && typeof e.net === 'object' ? e.net[name] : 0;",
-    "new": "const v = e && e.net && typeof e.net === 'object' ? e.net[name] : 0;",
+    "old": "  const v = e && e.day === day && e.net && typeof e.net === 'object' ? e.net[name] : 0;",
+    "new": "  const v = e && e.net && typeof e.net === 'object' ? e.net[name] : 0;",
     "tests": [
       "test/systems/kg3_session.test.js"
     ]
@@ -131,8 +131,8 @@
   {
     "name": "KG3-S-night-floor",
     "file": "src/systems/gambit/gambitTableSession.js",
-    "old": "return Math.max(0, tier.stake * GAMBIT_NIGHT_MULT - gambitNightPaid(book, key, day, name));",
-    "new": "return tier.stake * GAMBIT_NIGHT_MULT - gambitNightPaid(book, key, day, name);",
+    "old": "  return Math.max(0, tier.stake * GAMBIT_NIGHT_MULT - gambitNightPaid(book, key, day, name));",
+    "new": "  return tier.stake * GAMBIT_NIGHT_MULT - gambitNightPaid(book, key, day, name);",
     "tests": [
       "test/systems/kg3_session.test.js"
     ]
@@ -140,8 +140,8 @@
   {
     "name": "KG3-S-book-bound",
     "file": "src/systems/gambit/gambitTableSession.js",
-    "old": "return Object.fromEntries(keys.slice(0, GAMBIT_PURSES_BOOK_MAX).map((k) => [k, next[k]]));",
-    "new": "return Object.fromEntries(keys.map((k) => [k, next[k]]));",
+    "old": "  return Object.fromEntries(keys.slice(0, GAMBIT_PURSES_BOOK_MAX).map((k) => [k, next[k]]));",
+    "new": "  return Object.fromEntries(keys.map((k) => [k, next[k]]));",
     "tests": [
       "test/systems/kg3_session.test.js"
     ]
@@ -149,8 +149,8 @@
   {
     "name": "KG3-S-book-tie",
     "file": "src/systems/gambit/gambitTableSession.js",
-    "old": "(next[b]?.day ?? 0) - (next[a]?.day ?? 0) || (b === key ? 1 : 0) - (a === key ? 1 : 0)",
-    "new": "(next[b]?.day ?? 0) - (next[a]?.day ?? 0)",
+    "old": "  const keys = Object.keys(next).sort(\n    (a, b) => (next[b]?.day ?? 0) - (next[a]?.day ?? 0) || (b === key ? 1 : 0) - (a === key ? 1 : 0),\n  );",
+    "new": "  const keys = Object.keys(next).sort((a, b) => (next[b]?.day ?? 0) - (next[a]?.day ?? 0));",
     "tests": [
       "test/systems/kg3_session.test.js"
     ]
@@ -158,8 +158,8 @@
   {
     "name": "KG3-S-names-cap",
     "file": "src/systems/gambit/gambitTableSession.js",
-    "old": "net: Object.fromEntries(Object.entries(names).slice(-GAMBIT_PURSES_NAMES_MAX))",
-    "new": "net: Object.fromEntries(Object.entries(names))",
+    "old": "  const next = {\n    ...base,\n    [key]: { day, net: Object.fromEntries(Object.entries(names).slice(-GAMBIT_PURSES_NAMES_MAX)) },\n  };",
+    "new": "  const next = { ...base, [key]: { day, net: Object.fromEntries(Object.entries(names)) } };",
     "tests": [
       "test/systems/kg3_session.test.js"
     ]
@@ -167,8 +167,8 @@
   {
     "name": "KG3-S-restore-checks",
     "file": "src/systems/gambit/gambitTableSession.js",
-    "old": "if (!v || !Number.isSafeInteger(v.day) || !v.net || typeof v.net !== 'object' || Array.isArray(v.net)) continue;",
-    "new": "if (!v || !v.net) continue;",
+    "old": "    if (!v || !Number.isSafeInteger(v.day) || !v.net || typeof v.net !== 'object' || Array.isArray(v.net)) continue;",
+    "new": "    if (!v || !v.net) continue;",
     "tests": [
       "test/systems/kg3_session.test.js"
     ]

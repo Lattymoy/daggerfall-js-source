@@ -23,8 +23,21 @@
 //
 // Not a DFU member: Daggerfall Unity has no such game - the mod does. Ledger A row (THE KING'S GAMBIT).
 import {
-  KG_POINT_BUDGET, KG_POTIONS_PER_SIDE, KG_HAZARD_DAMAGE, KG_UNREACHABLE,
-  autoFill, newGambit, gambitAct, nextDouble, checkedRand32, cellIndex, pathMap, hazardAt, reachable, foesInRange, targetInRange,
+  KG_POINT_BUDGET,
+  KG_POTIONS_PER_SIDE,
+  KG_HAZARD_DAMAGE,
+  KG_UNREACHABLE,
+  autoFill,
+  newGambit,
+  gambitAct,
+  nextDouble,
+  checkedRand32,
+  cellIndex,
+  pathMap,
+  hazardAt,
+  reachable,
+  foesInRange,
+  targetInRange,
 } from '../../net/kingsGambit.js';
 import { drawBelow } from '../../net/dice.js';
 
@@ -43,7 +56,7 @@ export const GAMBIT_TIERS = Object.freeze([
   Object.freeze({ key: 'grandmaster', stake: 1000, budget: 450, potions: 4, blunder: 0 }),
 ]);
 /** TierFor's hash: (seed x 73856093) ^ 0x127409F on an int32 (the product wraps), its remainder by 100 made positive. */
-export const GAMBIT_TIER_HASH = Object.freeze([73856093, 0x127409F]);
+export const GAMBIT_TIER_HASH = Object.freeze([73856093, 0x127409f]);
 /** TierFor's bands: under 40 Amateur, under 75 Seasoned, under 93 Veteran, else Grandmaster. */
 export const GAMBIT_TIER_BANDS = Object.freeze([40, 75, 93]);
 
@@ -67,7 +80,12 @@ export const regularArmy = (tier, rand32) => autoFill([], tier.budget, rand32);
  * @param {{army: number[], tier: {budget: number, potions: number}, rand32: () => number}} p
  */
 export function dealRegular({ army, tier, rand32 }) {
-  return newGambit({ armies: [army, regularArmy(tier, rand32)], rand32, potions: [KG_POTIONS_PER_SIDE, tier.potions], budgets: [KG_POINT_BUDGET, tier.budget] });
+  return newGambit({
+    armies: [army, regularArmy(tier, rand32)],
+    rand32,
+    potions: [KG_POTIONS_PER_SIDE, tier.potions],
+    budgets: [KG_POINT_BUDGET, tier.budget],
+  });
 }
 
 // ── THE PLAY ──────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -82,7 +100,16 @@ export const GAMBIT_BLOW_WEIGHTS = Object.freeze({ king: 40, kill: 30 });
  *  `flee`, else `stay`. Any other piece, from a cell that puts a foe in range: `reach`, `king` more with the king among
  *  them, and a ranged one `space` times its distance from the nearest foe (to `spaceMax`); from any other cell, its gain
  *  in nearness times `close`. */
-export const GAMBIT_MOVE_WEIGHTS = Object.freeze({ alarm: 4, flee: 5, stay: -100, reach: 50, king: 20, space: 0.5, spaceMax: 20, close: 3 });
+export const GAMBIT_MOVE_WEIGHTS = Object.freeze({
+  alarm: 4,
+  flee: 5,
+  stay: -100,
+  reach: 50,
+  king: 20,
+  space: 0.5,
+  spaceMax: 20,
+  close: 3,
+});
 /** HazardPenalty: what a move to a hazard's cell costs - a warning, an active hazard. */
 export const GAMBIT_HAZARD_PENALTY = Object.freeze({ warning: 8, active: 40 });
 /** The draw a move's or an escape's score is jittered by: Random.value times this, ties broken at random. */
@@ -120,12 +147,16 @@ function blunder(state, mine, rand32) {
  *  none is clear.
  *  @param {GambitState} state @param {GambitPiece} p @param {number[][]} maps @param {() => number} rand32 */
 function escapeCell(state, p, maps, rand32) {
-  let best = -Infinity, cell = null;   // float.MinValue: below every score
+  let best = -Infinity,
+    cell = null; // float.MinValue: below every score
   for (const [c, r] of reachable(state, p)) {
     if (hazardAt(state, c, r)) continue;
     const near = nearestPath(maps, c, r);
     const score = f32((p.king ? near : -near) + f32(value(rand32) * f32(GAMBIT_JITTER)));
-    if (score > best) { best = score; cell = [c, r]; }
+    if (score > best) {
+      best = score;
+      cell = [c, r];
+    }
   }
   return cell;
 }
@@ -154,14 +185,18 @@ export function regularAction(state, side, tier, rand32) {
   const mine = state.pieces.filter((p) => p.side === side);
   const foes = state.pieces.filter((p) => p.side !== side);
   if (!mine.length || !foes.length) return null;
-  const lastAction = state.actions === 1;   // AiTurnRoutine's a == 1: a turn opens with KG_ACTIONS_PER_TURN, two
+  const lastAction = state.actions === 1; // AiTurnRoutine's a == 1: a turn opens with KG_ACTIONS_PER_TURN, two
   if (value(rand32) < f32(tier.blunder)) return blunder(state, mine, rand32);
   const maps = foes.map((f) => pathMap(state.tiles, f.col, f.row));
   if (state.potions[side] > 0) {
-    let drinker = null, low = f32(1);
+    let drinker = null,
+      low = f32(1);
     for (const p of mine) {
       const share = f32(f32(p.hp) / f32(p.maxHp));
-      if (share <= f32(p.king ? GAMBIT_POTION_LINE.king : GAMBIT_POTION_LINE.other) && share < low) { drinker = p; low = share; }
+      if (share <= f32(p.king ? GAMBIT_POTION_LINE.king : GAMBIT_POTION_LINE.other) && share < low) {
+        drinker = p;
+        low = share;
+      }
     }
     if (drinker) return { type: 'potion', piece: drinker.id };
   }
@@ -171,18 +206,26 @@ export function regularAction(state, side, tier, rand32) {
     const cell = escapeCell(state, p, maps, rand32);
     if (cell) return { type: 'move', piece: p.id, col: cell[0], row: cell[1] };
   }
-  let best = -Infinity, striker = null, struck = null;
+  let best = -Infinity,
+    striker = null,
+    struck = null;
   for (const p of mine) {
     for (const t of foesInRange(state, p)) {
       let score = f32(p.atk + value(rand32));
       if (t.king) score = f32(score + GAMBIT_BLOW_WEIGHTS.king);
       if (t.hp <= p.atk) score = f32(score + GAMBIT_BLOW_WEIGHTS.kill);
-      if (score > best) { best = score; striker = p; struck = t; }
+      if (score > best) {
+        best = score;
+        striker = p;
+        struck = t;
+      }
     }
   }
   if (striker) return { type: 'attack', piece: striker.id, target: struck.id };
   const W = GAMBIT_MOVE_WEIGHTS;
-  let top = f32(0), mover = null, to = null;
+  let top = f32(0),
+    mover = null,
+    to = null;
   for (const p of mine) {
     const here = nearestPath(maps, p.col, p.row);
     for (const [c, r] of reachable(state, p)) {
@@ -191,15 +234,25 @@ export function regularAction(state, side, tier, rand32) {
       if (p.king) {
         score = here <= W.alarm && there > here ? f32((there - here) * W.flee) : W.stay;
       } else {
-        let inRange = false, kingInRange = false;
+        let inRange = false,
+          kingInRange = false;
         for (const f of foes) {
-          if (targetInRange(state, p, c, r, f)) { inRange = true; if (f.king) kingInRange = true; }
+          if (targetInRange(state, p, c, r, f)) {
+            inRange = true;
+            if (f.king) kingInRange = true;
+          }
         }
-        score = inRange ? f32(W.reach + (kingInRange ? W.king : 0) + (p.ranged ? f32(W.space * Math.min(there, W.spaceMax)) : 0)) : f32((here - there) * W.close);
+        score = inRange
+          ? f32(W.reach + (kingInRange ? W.king : 0) + (p.ranged ? f32(W.space * Math.min(there, W.spaceMax)) : 0))
+          : f32((here - there) * W.close);
       }
       score = f32(score - hazardPenalty(state, c, r));
       score = f32(score + f32(value(rand32) * f32(GAMBIT_JITTER)));
-      if (score > top) { top = score; mover = p; to = [c, r]; }
+      if (score > top) {
+        top = score;
+        mover = p;
+        to = [c, r];
+      }
     }
   }
   return mover ? { type: 'move', piece: mover.id, col: to[0], row: to[1] } : null;
@@ -219,7 +272,11 @@ export function regularAction(state, side, tier, rand32) {
 export function regularStep(state, side, tier, aiRand, gameRand) {
   if (!state || state.over || state.turn !== side || state.ending || state.actions <= 0 || !playable(tier)) return null;
   let cmd;
-  try { cmd = regularAction(state, side, tier, checkedRand32(aiRand)); } catch { return null; }
+  try {
+    cmd = regularAction(state, side, tier, checkedRand32(aiRand));
+  } catch {
+    return null;
+  }
   const out = cmd ? gambitAct(state, side, cmd, gameRand) : null;
   if (out?.state) return { cmd, state: out.state, events: out.events };
   const end = gambitAct(state, side, { type: 'end' });
