@@ -2,8 +2,8 @@
   {
     "name": "TWO-HANDS-SPREAD-no-min",
     "file": "src/combat/twoHands/handsLaw.js",
-    "old": "  let lo = share(PAIR_SPREAD.MIN), hi = share(PAIR_SPREAD.MAX);",
-    "new": "  let lo = 0, hi = share(PAIR_SPREAD.MAX);",
+    "old": "  let lo = share(PAIR_SPREAD.MIN),",
+    "new": "  let lo = 0,",
     "tests": [
       "test/combat/twohands_mw.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "TWO-HANDS-SPREAD-halving-backwards",
     "file": "src/combat/twoHands/handsLaw.js",
-    "old": "if (clear(m)) hi = m; else lo = m; }",
-    "new": "if (clear(m)) lo = m; else hi = m; }",
+    "old": "    if (clear(m)) hi = m;\n    else lo = m;",
+    "new": "    if (clear(m)) lo = m;\n    else hi = m;",
     "tests": [
       "test/combat/twohands_mw.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "TWO-HANDS-SPREAD-answer-short",
     "file": "src/combat/twoHands/handsLaw.js",
-    "old": "if (clear(m)) hi = m; else lo = m; }\n  return hi;",
-    "new": "if (clear(m)) hi = m; else lo = m; }\n  return lo;",
+    "old": "  return hi;",
+    "new": "  return lo;",
     "tests": [
       "test/combat/twohands_mw.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "TWO-HANDS-SPREAD-one-blade-asks",
     "file": "src/combat/twoHands/handsLaw.js",
-    "old": "return !e || !Number.isFinite(e.L) || !Number.isFinite(e.R) || ",
-    "new": "return !e || ",
+    "old": "    return (\n      !e ||\n      !Number.isFinite(e.L) ||\n      !Number.isFinite(e.R) ||\n      /** @type {number} */ (e.L) + /** @type {number} */ (e.R) >= gap\n    );",
+    "new": "    return !e || /** @type {number} */ (e.L) + /** @type {number} */ (e.R) >= gap;",
     "tests": [
       "test/combat/twohands_mw.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "TWO-HANDS-SPREAD-inward",
     "file": "src/combat/twoHands/mirrorRig.js",
-    "old": "-plan.outward[side] * req.spread), e.rotation)",
-    "new": "plan.outward[side] * req.spread), e.rotation)",
+    "old": "        rotation: mat33Mul(rotAxisAngle(uprightOver(skeleton, cur, top), -plan.outward[side] * req.spread), e.rotation),",
+    "new": "        rotation: mat33Mul(rotAxisAngle(uprightOver(skeleton, cur, top), plan.outward[side] * req.spread), e.rotation),",
     "tests": [
       "test/combat/twohands_mw.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "TWO-HANDS-SPREAD-own-frame",
     "file": "src/combat/twoHands/mirrorRig.js",
-    "old": "rotation: mat33Mul(rotAxisAngle(uprightOver(skeleton, cur, top), -plan.outward[side] * req.spread), e.rotation)",
-    "new": "rotation: mat33Mul(e.rotation, rotAxisAngle(uprightOver(skeleton, cur, top), -plan.outward[side] * req.spread))",
+    "old": "        rotation: mat33Mul(rotAxisAngle(uprightOver(skeleton, cur, top), -plan.outward[side] * req.spread), e.rotation),",
+    "new": "        rotation: mat33Mul(e.rotation, rotAxisAngle(uprightOver(skeleton, cur, top), -plan.outward[side] * req.spread)),",
     "tests": [
       "test/combat/twohands_mw.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "TWO-HANDS-SPREAD-ignored",
     "file": "src/combat/twoHands/mirrorRig.js",
-    "old": "  const spreading = !!(req?.spread > 0);",
-    "new": "  const spreading = false;",
+    "old": "  const spreading = !!(req?.spread > 0); // TWO-HANDS SPREAD",
+    "new": "  const spreading = false; // TWO-HANDS SPREAD",
     "tests": [
       "test/combat/twohands_mw.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "TWO-HANDS-SPREAD-not-alone",
     "file": "src/combat/twoHands/mirrorRig.js",
-    "old": "if (!req || (!composing && !carrying && !dipping && !spreading))",
-    "new": "if (!req || (!composing && !carrying && !dipping))",
+    "old": "  if (!req || (!composing && !carrying && !dipping && !spreading)) {",
+    "new": "  if (!req || (!composing && !carrying && !dipping)) {",
     "tests": [
       "test/combat/twohands_mw.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "TWO-HANDS-SPREAD-not-kept",
     "file": "src/combat/twoHands/mirrorRig.js",
-    "old": "const keep = !!st && (composing || !!st.from || dipping || spreading);",
-    "new": "const keep = !!st && (composing || !!st.from || dipping);",
+    "old": "  const keep = !!st && (composing || !!st.from || dipping || spreading);",
+    "new": "  const keep = !!st && (composing || !!st.from || dipping);",
     "tests": [
       "test/combat/twohands_mw.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "TWO-HANDS-SPREAD-new-key-pops",
     "file": "src/combat/twoHands/mirrorRig.js",
-    "old": "!st.from && !composing && !dipping && !spreading) { st.key = c.key; return null; }",
-    "new": "!st.from && !composing && !dipping) { st.key = c.key; return null; }",
+    "old": "  if (st && st.key !== c.key && !st.last && !st.from && !composing && !dipping && !spreading) {",
+    "new": "  if (st && st.key !== c.key && !st.last && !st.from && !composing && !dipping) {",
     "tests": [
       "test/combat/twohands_mw.test.js"
     ]

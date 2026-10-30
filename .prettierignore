@@ -18,6 +18,8 @@
 /src/combat/gun/*/
 !/src/combat/technique/
 /src/combat/technique/*/
+!/src/combat/twoHands/
+/src/combat/twoHands/*/
 !/src/formats/
 /src/formats/*
 !/src/formats/save/

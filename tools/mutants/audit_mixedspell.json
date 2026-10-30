@@ -401,8 +401,8 @@
   {
     "name": "AUDITMS-L3-11-stance-no-wait",
     "file": "src/combat/twoHands/spellHandArm.js",
-    "old": "  if (upper === U.Equipping || upper === U.Unequipping) return 'wait';\n",
-    "new": "",
+    "old": "  if (upper === U.Equipping || upper === U.Unequipping) return 'wait';\n  if (upper === U.Casting) return 'afterCast';",
+    "new": "  if (upper === U.Casting) return 'afterCast';",
     "tests": [
       "test/combat/spellhand_mw.test.js"
     ]
@@ -410,8 +410,8 @@
   {
     "name": "AUDITMS-L3-11-stance-no-after-cast",
     "file": "src/combat/twoHands/spellHandArm.js",
-    "old": "  if (upper === U.Casting) return 'afterCast';\n",
-    "new": "",
+    "old": "  if (upper === U.Casting) return 'afterCast';\n  return spellReady ? 'drop' : 'keep';",
+    "new": "  return spellReady ? 'drop' : 'keep';",
     "tests": [
       "test/combat/spellhand_mw.test.js"
     ]
@@ -428,8 +428,8 @@
   {
     "name": "AUDITMS-L3-11-draw-mid-cast",
     "file": "src/combat/twoHands/spellHandArm.js",
-    "old": "!!spellHand && !!spellReady && !casting;",
-    "new": "!!spellHand && !!spellReady;",
+    "old": "  !!spellHand && !!spellReady && !casting;",
+    "new": "  !!spellHand && !!spellReady;",
     "tests": [
       "test/combat/spellhand_mw.test.js"
     ]
@@ -437,8 +437,8 @@
   {
     "name": "AUDITMS-L3-11-off-stance-on-two-blades",
     "file": "src/combat/twoHands/mixedArm.js",
-    "old": "(gunArmOf({ dual: true, weapon, offWeapon }) && offWeapon ? offWeapon.type ?? null : null)",
-    "new": "(offWeapon ? offWeapon.type ?? null : null)",
+    "old": "  gunArmOf({ dual: true, weapon, offWeapon }) && offWeapon ? (offWeapon.type ?? null) : null;",
+    "new": "  offWeapon ? (offWeapon.type ?? null) : null;",
     "tests": [
       "test/combat/spellhand_mw.test.js"
     ]
@@ -446,8 +446,8 @@
   {
     "name": "AUDITMS-L3-11-aim-for-any-blow",
     "file": "src/combat/twoHands/mixedArm.js",
-    "old": "!!attacking && !(hold && hold.only && dual && hand !== hold.only)",
-    "new": "!!attacking",
+    "old": "export const gunAimShooting = ({ attacking = false, hold = null, dual = false, hand = null } = {}) =>\n  !!attacking && !(hold && hold.only && dual && hand !== hold.only);",
+    "new": "export const gunAimShooting = ({ attacking = false, hold = null, dual = false, hand = null } = {}) => !!attacking;",
     "tests": [
       "test/combat/spellhand_mw.test.js"
     ]
@@ -455,8 +455,8 @@
   {
     "name": "AUDITMS-L3-11-striking-always-right",
     "file": "src/combat/twoHands/mixedArm.js",
-    "old": "(hand === 'L' && offWeapon ? offWeapon : weapon)",
-    "new": "weapon",
+    "old": "export const blowWeaponOf = ({ hand = null, weapon = null, offWeapon = null } = {}) =>\n  hand === 'L' && offWeapon ? offWeapon : weapon;",
+    "new": "export const blowWeaponOf = ({ hand = null, weapon = null, offWeapon = null } = {}) => weapon;",
     "tests": [
       "test/combat/spellhand_mw.test.js"
     ]
@@ -464,8 +464,8 @@
   {
     "name": "AUDITMS-L3-6-muzzle-always-right",
     "file": "src/combat/twoHands/mixedArm.js",
-    "old": "(hand === 'L' && pieces.find((p) => p.slot === 'offweapon')) || pieces.find",
-    "new": "pieces.find",
+    "old": "export const muzzlePieceOf = (pieces, hand = 'R') =>\n  (hand === 'L' && pieces.find((p) => p.slot === 'offweapon')) || pieces.find((p) => p.slot === 'weapon') || null;",
+    "new": "export const muzzlePieceOf = (pieces, hand = 'R') => pieces.find((p) => p.slot === 'weapon') || null;",
     "tests": [
       "test/combat/spellhand_mw.test.js"
     ]
@@ -585,8 +585,8 @@
   {
     "name": "AUDITMS-L5-gunHandOf-and",
     "file": "src/combat/twoHands/handsLaw.js",
-    "old": "  if (!dualEligible(right) || !dualEligible(left)) return null;\n  const r = dualGun(right)",
-    "new": "  if (!dualEligible(right) && !dualEligible(left)) return null;\n  const r = dualGun(right)",
+    "old": "  if (!dualEligible(right) || !dualEligible(left)) return null;",
+    "new": "  if (!dualEligible(right) && !dualEligible(left)) return null;",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]

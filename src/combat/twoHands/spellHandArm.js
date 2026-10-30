@@ -31,7 +31,10 @@ export function createHeldClips({ pick, step, sampleTrack }) {
     clip(r, group, dt = 0) {
       if (!r || !r.sources || !group) return null;
       let m = memo.get(r);
-      if (!m) { m = new Map(); memo.set(r, m); }
+      if (!m) {
+        m = new Map();
+        memo.set(r, m);
+      }
       if (!m.has(group)) m.set(group, pick(r, group));
       const p = m.get(group);
       if (!p) return null;
@@ -49,8 +52,20 @@ export function createHeldClips({ pick, step, sampleTrack }) {
  * @param {{ casting?: boolean, ready?: boolean, weaponIdle?: object | null, spellIdle?: object | null }} s
  */
 export function spellHandLimbs({ casting = false, ready = false, weaponIdle = null, spellIdle = null } = {}) {
-  if (casting) return weaponIdle ? { limbs: { [SPELL_HAND_ARM.weapon]: { clip: weaponIdle, side: SPELL_HAND_ARM.weapon, mirror: false } }, key: 'spellhand:cast' } : null;
-  if (ready) return spellIdle ? { limbs: { [SPELL_HAND_ARM.spell]: { clip: spellIdle, side: SPELL_HAND_ARM.spell, mirror: false } }, key: 'spellhand:ready' } : null;
+  if (casting)
+    return weaponIdle
+      ? {
+          limbs: { [SPELL_HAND_ARM.weapon]: { clip: weaponIdle, side: SPELL_HAND_ARM.weapon, mirror: false } },
+          key: 'spellhand:cast',
+        }
+      : null;
+  if (ready)
+    return spellIdle
+      ? {
+          limbs: { [SPELL_HAND_ARM.spell]: { clip: spellIdle, side: SPELL_HAND_ARM.spell, mirror: false } },
+          key: 'spellhand:ready',
+        }
+      : null;
   return null;
 }
 
@@ -76,4 +91,5 @@ export function spellHandStanceStep({ upper, spellReady }, U) {
  * blade). True when the draw takes the spell into the free hand: the spell hand is up and a Spell stance stands, no cast in
  * flight.
  */
-export const drawsIntoSpellHand = ({ spellHand = false, spellReady = false, casting = false } = {}) => !!spellHand && !!spellReady && !casting;
+export const drawsIntoSpellHand = ({ spellHand = false, spellReady = false, casting = false } = {}) =>
+  !!spellHand && !!spellReady && !casting;

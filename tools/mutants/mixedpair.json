@@ -20,8 +20,8 @@
   {
     "name": "MIXEDPAIR-blade-read-as-gun",
     "file": "src/combat/twoHands/handsLaw.js",
-    "old": "  if (!dualEligible(right) || !dualEligible(left)) return null;\n  const r = dualGun(right), l = dualGun(left);",
-    "new": "  if (!dualEligible(right) || !dualEligible(left)) return null;\n  const r = dualGun(right), l = true;",
+    "old": "    l = dualGun(left);",
+    "new": "    l = true;",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]

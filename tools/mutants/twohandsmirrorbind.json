@@ -20,8 +20,8 @@
   {
     "name": "TWO-HANDS-MIRROR-BIND-left-node-rest",
     "file": "src/combat/twoHands/mirrorRig.js",
-    "old": "  else if (skeleton.nodes.get(ref).name.includes('Left') && !srcs.some((s) => s.has(ref))) K = { a: S3, t: [0, 0, 0] };   // rule 13's own test",
-    "new": "  else if (false) K = { a: S3, t: [0, 0, 0] };   // rule 13's own test",
+    "old": "  else if (skeleton.nodes.get(ref).name.includes('Left') && !srcs.some((s) => s.has(ref)))",
+    "new": "  else if (false)",
     "tests": [
       "test/combat/twohands_mw.test.js"
     ]
@@ -30,7 +30,7 @@
     "name": "TWO-HANDS-MIRROR-BIND-left-node-over-its-bind",
     "file": "src/combat/twoHands/mirrorRig.js",
     "old": "  if (pair) K = { a: mat33Mul(transposed(turnOf(pair[1])), mat33Mul(S3, turnOf(pair[0]))), t: [0, 0, 0] };",
-    "new": "  if (pair && !skeleton.nodes.get(ref).name.includes('Left')) K = { a: mat33Mul(transposed(turnOf(pair[1])), mat33Mul(S3, turnOf(pair[0]))), t: [0, 0, 0] };",
+    "new": "  if (pair && !skeleton.nodes.get(ref).name.includes('Left'))\n    K = { a: mat33Mul(transposed(turnOf(pair[1])), mat33Mul(S3, turnOf(pair[0]))), t: [0, 0, 0] };",
     "tests": [
       "test/combat/twohands_mw.test.js"
     ]

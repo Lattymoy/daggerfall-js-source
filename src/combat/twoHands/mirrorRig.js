@@ -78,14 +78,31 @@ import { rotAxisAngle } from '../climbRig.js';
 
 // ---- the algebra: affines { a: row-major 3x3 (rotation x uniform scale), t: [3] }, column vectors ------------------
 
-const apply = (m, v) => [m[0] * v[0] + m[1] * v[1] + m[2] * v[2], m[3] * v[0] + m[4] * v[1] + m[5] * v[2], m[6] * v[0] + m[7] * v[1] + m[8] * v[2]];
-const mul = (A, B) => { const t = apply(A.a, B.t); return { a: mat33Mul(A.a, B.a), t: [t[0] + A.t[0], t[1] + A.t[1], t[2] + A.t[2]] }; };
+const apply = (m, v) => [
+  m[0] * v[0] + m[1] * v[1] + m[2] * v[2],
+  m[3] * v[0] + m[4] * v[1] + m[5] * v[2],
+  m[6] * v[0] + m[7] * v[1] + m[8] * v[2],
+];
+const mul = (A, B) => {
+  const t = apply(A.a, B.t);
+  return { a: mat33Mul(A.a, B.a), t: [t[0] + A.t[0], t[1] + A.t[1], t[2] + A.t[2]] };
+};
 const scaleOf = (a) => Math.hypot(a[0], a[3], a[6]) || 1;
 /** The inverse of an affine whose 3x3 is a rotation times a uniform scale (every node's) - or a reflection times one. */
 function inv(A) {
   const s2 = scaleOf(A.a) ** 2;
   const a = A.a;
-  const ia = Float32Array.from([a[0] / s2, a[3] / s2, a[6] / s2, a[1] / s2, a[4] / s2, a[7] / s2, a[2] / s2, a[5] / s2, a[8] / s2]);
+  const ia = Float32Array.from([
+    a[0] / s2,
+    a[3] / s2,
+    a[6] / s2,
+    a[1] / s2,
+    a[4] / s2,
+    a[7] / s2,
+    a[2] / s2,
+    a[5] / s2,
+    a[8] / s2,
+  ]);
   const t = apply(ia, A.t);
   return { a: ia, t: [-t[0], -t[1], -t[2]] };
 }
@@ -94,42 +111,91 @@ const transposed = (m) => Float32Array.from([m[0], m[3], m[6], m[1], m[4], m[7],
 function quatOf(r) {
   const tr = r[0] + r[4] + r[8];
   let x, y, z, w;
-  if (tr > 0) { const s = Math.sqrt(tr + 1) * 2; w = s / 4; x = (r[7] - r[5]) / s; y = (r[2] - r[6]) / s; z = (r[3] - r[1]) / s; }
-  else if (r[0] > r[4] && r[0] > r[8]) { const s = Math.sqrt(1 + r[0] - r[4] - r[8]) * 2; w = (r[7] - r[5]) / s; x = s / 4; y = (r[1] + r[3]) / s; z = (r[2] + r[6]) / s; }
-  else if (r[4] > r[8]) { const s = Math.sqrt(1 + r[4] - r[0] - r[8]) * 2; w = (r[2] - r[6]) / s; x = (r[1] + r[3]) / s; y = s / 4; z = (r[5] + r[7]) / s; }
-  else { const s = Math.sqrt(1 + r[8] - r[0] - r[4]) * 2; w = (r[3] - r[1]) / s; x = (r[2] + r[6]) / s; y = (r[5] + r[7]) / s; z = s / 4; }
+  if (tr > 0) {
+    const s = Math.sqrt(tr + 1) * 2;
+    w = s / 4;
+    x = (r[7] - r[5]) / s;
+    y = (r[2] - r[6]) / s;
+    z = (r[3] - r[1]) / s;
+  } else if (r[0] > r[4] && r[0] > r[8]) {
+    const s = Math.sqrt(1 + r[0] - r[4] - r[8]) * 2;
+    w = (r[7] - r[5]) / s;
+    x = s / 4;
+    y = (r[1] + r[3]) / s;
+    z = (r[2] + r[6]) / s;
+  } else if (r[4] > r[8]) {
+    const s = Math.sqrt(1 + r[4] - r[0] - r[8]) * 2;
+    w = (r[2] - r[6]) / s;
+    x = (r[1] + r[3]) / s;
+    y = s / 4;
+    z = (r[5] + r[7]) / s;
+  } else {
+    const s = Math.sqrt(1 + r[8] - r[0] - r[4]) * 2;
+    w = (r[3] - r[1]) / s;
+    x = (r[2] + r[6]) / s;
+    y = (r[5] + r[7]) / s;
+    z = s / 4;
+  }
   const n = Math.hypot(x, y, z, w) || 1;
   return [x / n, y / n, z / n, w / n];
 }
 /** A unit quaternion's rotation matrix, into `out`. */
 function matInto(out, [x, y, z, w]) {
-  out[0] = 1 - 2 * (y * y + z * z); out[1] = 2 * (x * y - z * w); out[2] = 2 * (x * z + y * w);
-  out[3] = 2 * (x * y + z * w); out[4] = 1 - 2 * (x * x + z * z); out[5] = 2 * (y * z - x * w);
-  out[6] = 2 * (x * z - y * w); out[7] = 2 * (y * z + x * w); out[8] = 1 - 2 * (x * x + y * y);
+  out[0] = 1 - 2 * (y * y + z * z);
+  out[1] = 2 * (x * y - z * w);
+  out[2] = 2 * (x * z + y * w);
+  out[3] = 2 * (x * y + z * w);
+  out[4] = 1 - 2 * (x * x + z * z);
+  out[5] = 2 * (y * z - x * w);
+  out[6] = 2 * (x * z - y * w);
+  out[7] = 2 * (y * z + x * w);
+  out[8] = 1 - 2 * (x * x + y * y);
   return out;
 }
 /** The rotation a share `k` of the way from identity to `q` (the short way), into `out`. */
 function quatPowInto(out, q, k) {
   let [x, y, z, w] = q;
-  if (w < 0) { x = -x; y = -y; z = -z; w = -w; }
+  if (w < 0) {
+    x = -x;
+    y = -y;
+    z = -z;
+    w = -w;
+  }
   const ang = 2 * Math.acos(Math.min(1, w));
   const s = Math.sin(ang / 2);
-  if (s < 1e-9) { out[0] = 0; out[1] = 0; out[2] = 0; out[3] = 1; return out; }
-  const h = (ang * k) / 2, sh = Math.sin(h) / s;
-  out[0] = x * sh; out[1] = y * sh; out[2] = z * sh; out[3] = Math.cos(h);
+  if (s < 1e-9) {
+    out[0] = 0;
+    out[1] = 0;
+    out[2] = 0;
+    out[3] = 1;
+    return out;
+  }
+  const h = (ang * k) / 2,
+    sh = Math.sin(h) / s;
+  out[0] = x * sh;
+  out[1] = y * sh;
+  out[2] = z * sh;
+  out[3] = Math.cos(h);
   return out;
 }
 
 // The frame's scratch (TWO-HANDS AUDIT: the mirror allocates its answer and nothing else). The module never re-enters
 // itself, so one set serves every rig.
 const scratchAffine = () => ({ a: new Float64Array(9), t: new Float64Array(3) });
-const T0 = scratchAffine(), T1 = scratchAffine(), T2 = scratchAffine();
-const Q = [0, 0, 0, 1], QM = new Float64Array(9);
+const T0 = scratchAffine(),
+  T1 = scratchAffine(),
+  T2 = scratchAffine();
+const Q = [0, 0, 0, 1],
+  QM = new Float64Array(9);
 /** out = A . B (affines; `out` aliases neither). */
 function mulInto(out, A, B) {
-  const a = A.a, b = B.a, o = out.a;
+  const a = A.a,
+    b = B.a,
+    o = out.a;
   for (let r = 0; r < 3; r++) {
-    const a0 = a[r * 3], a1 = a[r * 3 + 1], a2 = a[r * 3 + 2];
+    const a0 = a[r * 3],
+      a1 = a[r * 3 + 1],
+      a2 = a[r * 3 + 2];
     o[r * 3] = a0 * b[0] + a1 * b[3] + a2 * b[6];
     o[r * 3 + 1] = a0 * b[1] + a1 * b[4] + a2 * b[7];
     o[r * 3 + 2] = a0 * b[2] + a1 * b[5] + a2 * b[8];
@@ -141,7 +207,9 @@ function mulInto(out, A, B) {
 function affineInto(out, e) {
   const s = e.scale ?? 1;
   for (let i = 0; i < 9; i++) out.a[i] = e.rotation[i] * s;
-  out.t[0] = e.translation[0]; out.t[1] = e.translation[1]; out.t[2] = e.translation[2];
+  out.t[0] = e.translation[0];
+  out.t[1] = e.translation[1];
+  out.t[2] = e.translation[2];
   return out;
 }
 /** An affine as a fresh pose entry - the one thing the frame allocates per bone it writes. */
@@ -160,21 +228,39 @@ export function counterpartName(name) {
   const n = String(name || '').toLowerCase();
   if (n === 'weapon bone') return 'weapon bone left';
   if (n === 'weapon bone left') return 'weapon bone';
-  const swap = (s, a, b) => s.replace(new RegExp(`\\b${a}\\b`, 'g'), '\u0000').replace(new RegExp(`\\b${b}\\b`, 'g'), a).replace(/\u0000/g, b);
+  const swap = (s, a, b) =>
+    s
+      .replace(new RegExp(`\\b${a}\\b`, 'g'), '\u0000')
+      .replace(new RegExp(`\\b${b}\\b`, 'g'), a)
+      .replace(/\u0000/g, b);
   return swap(swap(n, 'l', 'r'), 'left', 'right');
 }
 
 const ATTACH_OF = Object.fromEntries(Object.entries(HELD_BONE_ALIASES).map(([attach, bip]) => [bip, attach]));
-const CLAVICLE = { L: ['bip01 l clavicle', ATTACH_OF['bip01 l clavicle']], R: ['bip01 r clavicle', ATTACH_OF['bip01 r clavicle']] };
-const UPPER = { L: ['bip01 l upperarm', ATTACH_OF['bip01 l upperarm']], R: ['bip01 r upperarm', ATTACH_OF['bip01 r upperarm']] };
+const CLAVICLE = {
+  L: ['bip01 l clavicle', ATTACH_OF['bip01 l clavicle']],
+  R: ['bip01 r clavicle', ATTACH_OF['bip01 r clavicle']],
+};
+const UPPER = {
+  L: ['bip01 l upperarm', ATTACH_OF['bip01 l upperarm']],
+  R: ['bip01 r upperarm', ATTACH_OF['bip01 r upperarm']],
+};
 const HAND = { L: ['bip01 l hand', ATTACH_OF['bip01 l hand']], R: ['bip01 r hand', ATTACH_OF['bip01 r hand']] };
 
 /** The plan, read off the skeleton as it stands (mirrorPlan memoises it, per skeleton and space). */
 function buildPlan(skeleton, root, skelMats) {
   if (!skeleton?.nodes || !skeleton.byName) return null;
-  const find = (names) => { for (const n of names) { if (!n) continue; const r = skeleton.byName.get(n); if (r !== undefined) return r; } return null; };
+  const find = (names) => {
+    for (const n of names) {
+      if (!n) continue;
+      const r = skeleton.byName.get(n);
+      if (r !== undefined) return r;
+    }
+    return null;
+  };
   const rest = skelMats(skeleton, new Map(), root);
-  const upL = find(UPPER.L), upR = find(UPPER.R);
+  const upL = find(UPPER.L),
+    upR = find(UPPER.R);
   if (upL == null || upR == null || !rest.get(upL) || !rest.get(upR)) return null;
   const x0 = (rest.get(upL).t[0] + rest.get(upR).t[0]) / 2;
   const children = new Map();
@@ -184,21 +270,34 @@ function buildPlan(skeleton, root, skelMats) {
   }
   // parent first: a walk down from every node whose parent is not a bone
   const order = [];
-  const walk = (ref) => { order.push(ref); for (const k of children.get(ref) ?? []) walk(k); };
+  const walk = (ref) => {
+    order.push(ref);
+    for (const k of children.get(ref) ?? []) walk(k);
+  };
   for (const [ref, node] of skeleton.nodes) if (!skeleton.nodes.has(node.parent)) walk(ref);
   const counterpart = new Map();
   for (const [ref, node] of skeleton.nodes) {
     const c = skeleton.byName.get(counterpartName(node.name));
     counterpart.set(ref, c !== undefined ? c : null);
   }
-  const restOf = new Map(), restInv = new Map();
-  for (const ref of order) { const m = rest.get(ref); if (m) { restOf.set(ref, m); restInv.set(ref, inv(m)); } }
+  const restOf = new Map(),
+    restInv = new Map();
+  for (const ref of order) {
+    const m = rest.get(ref);
+    if (m) {
+      restOf.set(ref, m);
+      restInv.set(ref, inv(m));
+    }
+  }
   const arm = (s) => {
     const top = find(CLAVICLE[s]) ?? find(UPPER[s]);
     const set = [];
-    const take = (ref) => { set.push(ref); for (const k of children.get(ref) ?? []) take(k); };
+    const take = (ref) => {
+      set.push(ref);
+      for (const k of children.get(ref) ?? []) take(k);
+    };
     if (top != null) take(top);
-    return set;   // parent first, as `take` walks
+    return set; // parent first, as `take` walks
   };
   const arms = { L: arm('L'), R: arm('R') };
   // a bone IN an arm whose name has no side (the left forearm's Shield Bone, the right hand's Weapon Bone on a rig with
@@ -209,7 +308,13 @@ function buildPlan(skeleton, root, skelMats) {
   const outR = Math.sign(rest.get(upR).t[0] - rest.get(upL).t[0]) || 1;
   // THE MIRROR IN EACH BONE'S FRAME (the header's law): L'(b) = A(b) . L(m) . B(b), two constants a bone -
   // B(b) = K^(b), the 3x3 of K(b) = Rest(m)^-1 . S . Rest(b), and A(b) = RestL(b) . K^(b)^-1 . RestL(m)^-1
-  const restLocal = (ref) => { const r = skeleton.nodes.get(ref).rest; return { a: Float32Array.from(r.rotation, (v) => v * (r.scale ?? 1)), t: [r.translation[0], r.translation[1], r.translation[2]] }; };
+  const restLocal = (ref) => {
+    const r = skeleton.nodes.get(ref).rest;
+    return {
+      a: Float32Array.from(r.rotation, (v) => v * (r.scale ?? 1)),
+      t: [r.translation[0], r.translation[1], r.translation[2]],
+    };
+  };
   const linear = (m) => ({ a: m.a, t: [0, 0, 0] });
   const link = new Map();
   for (const ref of order) {
@@ -218,17 +323,26 @@ function buildPlan(skeleton, root, skelMats) {
     const Kb = linear(mul(mul(restInv.get(m), S), restOf.get(ref)));
     link.set(ref, { m, A: mul(mul(restLocal(ref), inv(Kb)), inv(restLocal(m))), B: Kb });
   }
-  const armSkeleton = (s) => ({ nodes: new Map(arms[s].map((ref) => [ref, skeleton.nodes.get(ref)])), byName: skeleton.byName });
+  const armSkeleton = (s) => ({
+    nodes: new Map(arms[s].map((ref) => [ref, skeleton.nodes.get(ref)])),
+    byName: skeleton.byName,
+  });
   return {
-    x0, order, counterpart, restOf, restInv, children, link,
+    x0,
+    order,
+    counterpart,
+    restOf,
+    restInv,
+    children,
+    link,
     S,
     arms,
     armSkeletons: { L: armSkeleton('L'), R: armSkeleton('R') },
     hands: { L: find(HAND.L), R: find(HAND.R) },
     uppers: { L: upL, R: upR },
-    outward: { L: -outR, R: outR },   // TWO-HANDS SPREAD: each arm's way out across the graph's x
-    targets: new Map(),   // the frame's scratch: the composition's locals before they are written
-    pictureK: new WeakMap(),   // each bone's K(b) across the picture, per bind sources (pictureMirrorArm) - read the first time an arm is mirrored
+    outward: { L: -outR, R: outR }, // TWO-HANDS SPREAD: each arm's way out across the graph's x
+    targets: new Map(), // the frame's scratch: the composition's locals before they are written
+    pictureK: new WeakMap(), // each bone's K(b) across the picture, per bind sources (pictureMirrorArm) - read the first time an arm is mirrored
   };
 }
 
@@ -243,7 +357,10 @@ const _plans = new WeakMap();
 export function mirrorPlan(skeleton, root, skelMats) {
   if (!skeleton?.nodes || !skeleton.byName) return null;
   let per = _plans.get(skeleton);
-  if (!per) { per = new Map(); _plans.set(skeleton, per); }
+  if (!per) {
+    per = new Map();
+    _plans.set(skeleton, per);
+  }
   if (per.has(root)) return per.get(root);
   const plan = buildPlan(skeleton, root, skelMats);
   per.set(root, plan);
@@ -281,10 +398,17 @@ const sameLocal = (p, q) => {
  *  so it rides wherever its (carried) parent is drawn. A fresh entry. */
 function carried(off, base, k) {
   matInto(QM, quatPowInto(Q, off.q, k));
-  const r = base.rotation, rotation = new Float32Array(9);
-  for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) rotation[i * 3 + j] = QM[i * 3] * r[j] + QM[i * 3 + 1] * r[3 + j] + QM[i * 3 + 2] * r[6 + j];
+  const r = base.rotation,
+    rotation = new Float32Array(9);
+  for (let i = 0; i < 3; i++)
+    for (let j = 0; j < 3; j++)
+      rotation[i * 3 + j] = QM[i * 3] * r[j] + QM[i * 3 + 1] * r[3 + j] + QM[i * 3 + 2] * r[6 + j];
   const t = base.translation;
-  return { rotation, translation: [t[0] + off.d[0] * k, t[1] + off.d[1] * k, t[2] + off.d[2] * k], scale: (base.scale ?? 1) * off.ds ** k };
+  return {
+    rotation,
+    translation: [t[0] + off.d[0] * k, t[1] + off.d[1] * k, t[2] + off.d[2] * k],
+    scale: (base.scale ?? 1) * off.ds ** k,
+  };
 }
 
 /**
@@ -298,24 +422,46 @@ export function applyMirrorRig(skeleton, pose, root, skelMats, req) {
   const st = c?.state ?? null;
   const composing = !!(req && (req.full || req.limbs?.L || req.limbs?.R));
   const dipping = !!(req?.dip && (req.dip.L > 0 || req.dip.R > 0));
-  const spreading = !!(req?.spread > 0);   // TWO-HANDS SPREAD
+  const spreading = !!(req?.spread > 0); // TWO-HANDS SPREAD
   // a carry that has drawn nothing yet takes its first composition as it stands: there is no drawn pose to carry from
-  if (st && st.key === undefined) { st.key = c.key; st.from = null; st.k = 0; st.last = null; }
+  if (st && st.key === undefined) {
+    st.key = c.key;
+    st.from = null;
+    st.k = 0;
+    st.last = null;
+  }
   // a change of key with nothing of the mirror's on the arms (the clip's own pose stood last frame, no carry under way)
   // and nothing asked now: the clip's pose stands, and there is nothing to carry - no plan read, no bone walked
-  if (st && st.key !== c.key && !st.last && !st.from && !composing && !dipping && !spreading) { st.key = c.key; return null; }
+  if (st && st.key !== c.key && !st.last && !st.from && !composing && !dipping && !spreading) {
+    st.key = c.key;
+    return null;
+  }
   const carrying = !!st && (!!st.from || st.key !== c.key);
   // nothing composed, no composition changing and none still carrying, no arm lowered or spread: the clip's pose stands
-  if (!req || (!composing && !carrying && !dipping && !spreading)) { if (st) st.last = null; return null; }
+  if (!req || (!composing && !carrying && !dipping && !spreading)) {
+    if (st) st.last = null;
+    return null;
+  }
   const plan = mirrorPlan(skeleton, root, skelMats);
-  if (!plan) { if (st) { st.key = c.key; st.from = null; st.last = null; } return null; }
+  if (!plan) {
+    if (st) {
+      st.key = c.key;
+      st.from = null;
+      st.last = null;
+    }
+    return null;
+  }
   // the clip's own pose: nothing is written into `pose` before step 4, so every read below sees the clip
   const clip = pose;
   const clipL = (ref) => clip.get(ref) ?? skeleton.nodes.get(ref).rest;
   const targets = plan.targets;
   targets.clear();
   // 1. the whole body in the mirror (a bone with no counterpart keeps its local and rides its mirrored parent)
-  if (req.full) for (const ref of plan.order) { const k = plan.link.get(ref); if (k) targets.set(ref, mirrorLocal(k, clipL(k.m))); }
+  if (req.full)
+    for (const ref of plan.order) {
+      const k = plan.link.get(ref);
+      if (k) targets.set(ref, mirrorLocal(k, clipL(k.m)));
+    }
   // 2. an arm set from a pose: its own side's arm copied, or the other side's mirrored onto it - each bone's local read
   // off that pose, so the arm hangs from this frame's parent wherever this frame's torso stands; under `plane` a mirrored
   // arm is the mirror ACROSS THE PICTURE instead (pictureMirrorArm)
@@ -331,15 +477,21 @@ export function applyMirrorRig(skeleton, pose, root, skelMats, req) {
       if (pictureMirrorArm(skeleton, plan, world, req.plane, side, from, srcL, clipL, targets)) continue;
     }
     for (const ref of plan.arms[side]) {
-      if (l.mirror && from !== side) { const k = plan.link.get(ref); if (k) targets.set(ref, mirrorLocal(k, srcL(k.m))); else targets.delete(ref); }
-      else targets.set(ref, srcL(ref));
+      if (l.mirror && from !== side) {
+        const k = plan.link.get(ref);
+        if (k) targets.set(ref, mirrorLocal(k, srcL(k.m)));
+        else targets.delete(ref);
+      } else targets.set(ref, srcL(ref));
     }
   }
   // 2b. the guard: an arm lowered at its shoulder, over the composition - laid into its locals, so the carry below starts
   // from what was drawn, the dip with it (the weight itself eases on its own: the caller's guardStep)
   if (dipping) {
     const cur = (ref) => targets.get(ref) ?? clipL(ref);
-    for (const side of /** @type {const} */ (['L', 'R'])) { const e = dipArm(skeleton, cur, plan, side, req.dip[side]); if (e) targets.set(plan.uppers[side], e); }
+    for (const side of /** @type {const} */ (['L', 'R'])) {
+      const e = dipArm(skeleton, cur, plan, side, req.dip[side]);
+      if (e) targets.set(plan.uppers[side], e);
+    }
   }
   // 2c. TWO-HANDS SPREAD: both arms turned out, each at its top about the upright line through its own joint, over the
   // composition and its dip - so the carry starts from what was drawn, the spread with it
@@ -349,7 +501,11 @@ export function applyMirrorRig(skeleton, pose, root, skelMats, req) {
       const top = plan.arms[side][0];
       if (top == null) continue;
       const e = cur(top);
-      targets.set(top, { rotation: mat33Mul(rotAxisAngle(uprightOver(skeleton, cur, top), -plan.outward[side] * req.spread), e.rotation), translation: e.translation, scale: e.scale });
+      targets.set(top, {
+        rotation: mat33Mul(rotAxisAngle(uprightOver(skeleton, cur, top), -plan.outward[side] * req.spread), e.rotation),
+        translation: e.translation,
+        scale: e.scale,
+      });
     }
   }
   // 3. the carry, IN EACH BONE'S OWN FRAME: a new composition starts every bone from the local it was drawn with last
@@ -363,17 +519,25 @@ export function applyMirrorRig(skeleton, pose, root, skelMats, req) {
       st.key = c.key;
       st.from = new Map();
       for (const ref of plan.order) {
-        const prev = prevOf.get(ref) ?? clipL(ref), now = targets.get(ref) ?? clipL(ref);
+        const prev = prevOf.get(ref) ?? clipL(ref),
+          now = targets.get(ref) ?? clipL(ref);
         if (sameLocal(prev, now)) continue;
         st.from.set(ref, {
           q: quatOf(mat33Mul(prev.rotation, transposed(now.rotation))),
-          d: [prev.translation[0] - now.translation[0], prev.translation[1] - now.translation[1], prev.translation[2] - now.translation[2]],
+          d: [
+            prev.translation[0] - now.translation[0],
+            prev.translation[1] - now.translation[1],
+            prev.translation[2] - now.translation[2],
+          ],
           ds: (prev.scale ?? 1) / (now.scale ?? 1),
         });
       }
       st.k = st.from.size ? 1 : 0;
     } else if (st.k > 0) st.k *= Math.exp(-Math.max(0, c.dt || 0) / Math.max(1e-4, c.tau || 0.06));
-    if (st.k < 1e-3) { st.k = 0; st.from = null; }
+    if (st.k < 1e-3) {
+      st.k = 0;
+      st.from = null;
+    }
   }
   // 4. written: the composition's locals, each carried by its offset while the carry stands
   const k = st?.from ? st.k : 0;
@@ -423,14 +587,22 @@ function pictureMirrorArm(skeleton, plan, world, plane, side, from, srcL, clipL,
   const eye = world.get(plane.ref).t;
   const P = { a: S3, t: [2 * (eye[0] + (plane.dx || 0)), 0, 0] };
   const ks = pictureKs(plan, plane.binds);
-  const src = new Map(), drawn = new Map();
-  const parentWorld = (ref, own) => { const p = skeleton.nodes.get(ref).parent; return own.get(p) ?? world.get(p); };
+  const src = new Map(),
+    drawn = new Map();
+  const parentWorld = (ref, own) => {
+    const p = skeleton.nodes.get(ref).parent;
+    return own.get(p) ?? world.get(p);
+  };
   for (const ref of plan.arms[from]) src.set(ref, mul(parentWorld(ref, src), affineOf(srcL(ref))));
   for (const ref of plan.arms[side]) {
     const m = plan.counterpart.get(ref);
     const Wm = m != null ? src.get(m) : null;
     const up = parentWorld(ref, drawn);
-    if (!Wm || !plan.restOf.has(ref)) { drawn.set(ref, mul(up, affineOf(clipL(ref)))); targets.delete(ref); continue; }
+    if (!Wm || !plan.restOf.has(ref)) {
+      drawn.set(ref, mul(up, affineOf(clipL(ref))));
+      targets.delete(ref);
+      continue;
+    }
     const W = mul(mul(P, Wm), pictureK(skeleton, plan, plane.binds, ks, ref, m));
     drawn.set(ref, W);
     targets.set(ref, entryOf(mul(inv(up), W)));
@@ -477,7 +649,14 @@ export function mirrorBindSources({ nif = null, pieces = null } = {}) {
     const m = new Map();
     skin.bones.forEach((ref, i) => {
       const t = data.bones[i]?.transform;
-      if (t && Number.isInteger(ref)) m.set(ref, bindOf(Float32Array.from(t.rotation, (v) => v * (t.scale ?? 1)), t.translation));
+      if (t && Number.isInteger(ref))
+        m.set(
+          ref,
+          bindOf(
+            Float32Array.from(t.rotation, (v) => v * (t.scale ?? 1)),
+            t.translation,
+          ),
+        );
     });
     if (m.size) out.push(m);
   }
@@ -496,11 +675,17 @@ const NO_BINDS = Object.freeze([]);
 function pictureKs(plan, binds) {
   const key = binds ?? NO_BINDS;
   let ks = plan.pictureK.get(key);
-  if (!ks) { ks = new Map(); plan.pictureK.set(key, ks); }
+  if (!ks) {
+    ks = new Map();
+    plan.pictureK.set(key, ks);
+  }
   return ks;
 }
 /** The 3x3 of an affine with its uniform scale divided out. */
-const turnOf = (m) => { const s = scaleOf(m.a); return Float32Array.from(m.a, (v) => v / s); };
+const turnOf = (m) => {
+  const s = scaleOf(m.a);
+  return Float32Array.from(m.a, (v) => v / s);
+};
 /** Two binds a mirrored pair: each joint's y and z the other's, to a hundredth of the span between them. */
 const mirroredBinds = (b, c) => {
   const span = Math.max(1, Math.hypot(b.t[0] - c.t[0], b.t[1] - c.t[1], b.t[2] - c.t[2]));
@@ -517,11 +702,13 @@ function pictureK(skeleton, plan, binds, ks, ref, m) {
   const srcs = binds ?? NO_BINDS;
   let pair = srcs.map((s) => [s.get(ref), s.get(m)]).find(([b, c]) => b && c && mirroredBinds(b, c));
   if (!pair) {
-    const b = srcs.find((s) => s.has(ref))?.get(ref), c = srcs.find((s) => s.has(m))?.get(m);
+    const b = srcs.find((s) => s.has(ref))?.get(ref),
+      c = srcs.find((s) => s.has(m))?.get(m);
     if (b && c && mirroredBinds(b, c)) pair = [b, c];
   }
   if (pair) K = { a: mat33Mul(transposed(turnOf(pair[1])), mat33Mul(S3, turnOf(pair[0]))), t: [0, 0, 0] };
-  else if (skeleton.nodes.get(ref).name.includes('Left') && !srcs.some((s) => s.has(ref))) K = { a: S3, t: [0, 0, 0] };   // rule 13's own test
+  else if (skeleton.nodes.get(ref).name.includes('Left') && !srcs.some((s) => s.has(ref)))
+    K = { a: S3, t: [0, 0, 0] }; // rule 13's own test
   else K = mul(mul(plan.restInv.get(m), plan.S), plan.restOf.get(ref));
   ks.set(ref, K);
   return K;
@@ -534,13 +721,19 @@ function chainWorld(skeleton, root, localOf) {
   const get = (ref) => {
     if (ref === root || ref == null || ref < 0 || !skeleton.nodes.has(ref)) return IDENT_AFFINE;
     let m = memo.get(ref);
-    if (!m) { m = mul(get(skeleton.nodes.get(ref).parent), affineOf(localOf(ref))); memo.set(ref, m); }
+    if (!m) {
+      m = mul(get(skeleton.nodes.get(ref).parent), affineOf(localOf(ref)));
+      memo.set(ref, m);
+    }
     return m;
   };
   return { get };
 }
 /** A pose entry as a fresh affine. */
-const affineOf = (e) => { const s = e.scale ?? 1; return { a: Float32Array.from(e.rotation, (v) => v * s), t: [e.translation[0], e.translation[1], e.translation[2]] }; };
+const affineOf = (e) => {
+  const s = e.scale ?? 1;
+  return { a: Float32Array.from(e.rotation, (v) => v * s), t: [e.translation[0], e.translation[1], e.translation[2]] };
+};
 
 const IDENT3 = Float32Array.from([1, 0, 0, 0, 1, 0, 0, 0, 1]);
 const IDENT_AFFINE = Object.freeze({ a: IDENT3, t: [0, 0, 0] });
@@ -563,22 +756,37 @@ function uprightOver(skeleton, loc, ref) {
  * arm's turned local (a fresh entry), or null when there is no way down.
  */
 function dipArm(skeleton, loc, plan, side, angle) {
-  const up = plan.uppers[side], hand = plan.hands[side];
+  const up = plan.uppers[side],
+    hand = plan.hands[side];
   if (!(angle > 0) || up == null || hand == null) return null;
   const upward = uprightOver(skeleton, loc, up);
   // the wrist from the shoulder, in the parent's frame: the arm's locals from the upper arm down to the hand
   const down = [];
-  for (let r = hand; r !== up; r = skeleton.nodes.get(r).parent) { if (!skeleton.nodes.has(r)) return null; down.push(r); }
+  for (let r = hand; r !== up; r = skeleton.nodes.get(r).parent) {
+    if (!skeleton.nodes.has(r)) return null;
+    down.push(r);
+  }
   let A = { a: Float32Array.from(IDENT3), t: [0, 0, 0] };
-  for (const ref of [up, ...down.reverse()]) { const e = loc(ref); A = mul(A, { a: Float32Array.from(e.rotation, (v) => v * (e.scale ?? 1)), t: e.translation }); }
+  for (const ref of [up, ...down.reverse()]) {
+    const e = loc(ref);
+    A = mul(A, { a: Float32Array.from(e.rotation, (v) => v * (e.scale ?? 1)), t: e.translation });
+  }
   const s0 = loc(up).translation;
   const d = [A.t[0] - s0[0], A.t[1] - s0[1], A.t[2] - s0[2]];
   // the axis that lowers it: d x up (a turn about it by a negative angle takes d toward -up)
-  const n = [d[1] * upward[2] - d[2] * upward[1], d[2] * upward[0] - d[0] * upward[2], d[0] * upward[1] - d[1] * upward[0]];
+  const n = [
+    d[1] * upward[2] - d[2] * upward[1],
+    d[2] * upward[0] - d[0] * upward[2],
+    d[0] * upward[1] - d[1] * upward[0],
+  ];
   const nl = Math.hypot(n[0], n[1], n[2]);
-  if (!(nl > 1e-6 * Math.hypot(d[0], d[1], d[2]))) return null;   // an arm hanging plumb has no way down
+  if (!(nl > 1e-6 * Math.hypot(d[0], d[1], d[2]))) return null; // an arm hanging plumb has no way down
   const e = loc(up);
-  return { rotation: mat33Mul(rotAxisAngle([n[0] / nl, n[1] / nl, n[2] / nl], -angle), e.rotation), translation: e.translation, scale: e.scale };
+  return {
+    rotation: mat33Mul(rotAxisAngle([n[0] / nl, n[1] / nl, n[2] / nl], -angle), e.rotation),
+    translation: e.translation,
+    scale: e.scale,
+  };
 }
 
 /**
@@ -588,9 +796,15 @@ function dipArm(skeleton, loc, plan, side, angle) {
 export function strikingSide(skeleton, root, skelMats, poseA, poseB) {
   const plan = mirrorPlan(skeleton, root, skelMats);
   if (!plan || plan.hands.L == null || plan.hands.R == null) return null;
-  const a = skelMats(skeleton, poseA, root), b = skelMats(skeleton, poseB, root);
-  const travel = (h) => { const p = a.get(h)?.t, q = b.get(h)?.t; return p && q ? Math.hypot(q[0] - p[0], q[1] - p[1], q[2] - p[2]) : 0; };
-  const l = travel(plan.hands.L), r = travel(plan.hands.R);
+  const a = skelMats(skeleton, poseA, root),
+    b = skelMats(skeleton, poseB, root);
+  const travel = (h) => {
+    const p = a.get(h)?.t,
+      q = b.get(h)?.t;
+    return p && q ? Math.hypot(q[0] - p[0], q[1] - p[1], q[2] - p[2]) : 0;
+  };
+  const l = travel(plan.hands.L),
+    r = travel(plan.hands.R);
   if (!(Math.max(l, r) > 1e-6)) return null;
   return r >= l ? 'R' : 'L';
 }
@@ -617,10 +831,14 @@ function skinHandMirror(nif, a, b) {
     const skin = Number.isInteger(shape?.skin) && shape.skin >= 0 ? nif.records[shape.skin] : null;
     const data = skin && Number.isInteger(skin.data) ? nif.records[skin.data] : null;
     if (!skin?.bones || !data?.bones) continue;
-    const ia = skin.bones.indexOf(a), ib = skin.bones.indexOf(b);
+    const ia = skin.bones.indexOf(a),
+      ib = skin.bones.indexOf(b);
     if (ia < 0 || ib < 0 || !data.bones[ia]?.transform || !data.bones[ib]?.transform) continue;
     if (!unturned(data.transform) || !unturned(shape)) continue;
-    const invBind = (i) => { const t = data.bones[i].transform; return { a: Float32Array.from(t.rotation, (v) => v * (t.scale ?? 1)), t: [0, 0, 0] }; };
+    const invBind = (i) => {
+      const t = data.bones[i].transform;
+      return { a: Float32Array.from(t.rotation, (v) => v * (t.scale ?? 1)), t: [0, 0, 0] };
+    };
     return mul(mul(invBind(ia), { a: S3, t: [0, 0, 0] }), inv(invBind(ib))).a;
   }
   return null;
@@ -662,16 +880,41 @@ export function offWeaponBoneAddon(skeleton, root, skelMats, nif = null) {
   if (!F) {
     const rest = skelMats(skeleton, new Map(), root);
     if (!rest.get(pr) || !rest.get(pl)) return null;
-    F = mul(mul(inv({ a: rest.get(pr).a, t: [0, 0, 0] }), { a: S3, t: [0, 0, 0] }), { a: rest.get(pl).a, t: [0, 0, 0] }).a;
+    F = mul(mul(inv({ a: rest.get(pr).a, t: [0, 0, 0] }), { a: S3, t: [0, 0, 0] }), {
+      a: rest.get(pl).a,
+      t: [0, 0, 0],
+    }).a;
   }
   const e = skeleton.nodes.get(wb).rest;
-  const local = mul(mul(inv({ a: F, t: [0, 0, 0] }), { a: Float32Array.from(e.rotation, (v) => v * (e.scale ?? 1)), t: [e.translation[0], e.translation[1], e.translation[2]] }), { a: S3, t: [0, 0, 0] });
+  const local = mul(
+    mul(inv({ a: F, t: [0, 0, 0] }), {
+      a: Float32Array.from(e.rotation, (v) => v * (e.scale ?? 1)),
+      t: [e.translation[0], e.translation[1], e.translation[2]],
+    }),
+    { a: S3, t: [0, 0, 0] },
+  );
   const s = scaleOf(local.a);
   return {
     roots: [0],
     records: [
-      { type: 'NiNode', name: skeleton.nodes.get(pl).name, rotation: Float32Array.from([1, 0, 0, 0, 1, 0, 0, 0, 1]), translation: [0, 0, 0], scale: 1, children: [1], extra: -1 },
-      { type: 'NiNode', name: `${skeleton.nodes.get(wb).name} Left`, rotation: Float32Array.from(local.a, (v) => v / s), translation: [local.t[0], local.t[1], local.t[2]], scale: s, children: [], extra: 2 },
+      {
+        type: 'NiNode',
+        name: skeleton.nodes.get(pl).name,
+        rotation: Float32Array.from([1, 0, 0, 0, 1, 0, 0, 0, 1]),
+        translation: [0, 0, 0],
+        scale: 1,
+        children: [1],
+        extra: -1,
+      },
+      {
+        type: 'NiNode',
+        name: `${skeleton.nodes.get(wb).name} Left`,
+        rotation: Float32Array.from(local.a, (v) => v / s),
+        translation: [local.t[0], local.t[1], local.t[2]],
+        scale: s,
+        children: [],
+        extra: 2,
+      },
       { type: 'NiStringExtraData', string: 'BONE', next: -1 },
     ],
   };
