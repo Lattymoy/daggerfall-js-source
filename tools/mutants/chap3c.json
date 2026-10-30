@@ -235,8 +235,8 @@
   {
     "name": "CHAP3C-SPELLMAKER",
     "file": "src/ui/spell/spellMakerWindow.js",
-    "old": "this.totalGoldCost = chapterPriced(gold, this.priceFactor?.() ?? 1);",
-    "new": "this.totalGoldCost = chapterPriced(gold, 1);",
+    "old": "    this.totalGoldCost = chapterPriced(gold, this.priceFactor?.() ?? 1); // AUDIT CHAP3 R12: the law's one rounding",
+    "new": "    this.totalGoldCost = chapterPriced(gold, 1); // AUDIT CHAP3 R12: the law's one rounding",
     "tests": [
       "test/systems/guild/chap3c_halls.test.js",
       "test/net/audit_chap3.test.js"
@@ -245,8 +245,8 @@
   {
     "name": "CHAP3C-SPELLMAKER-SP",
     "file": "src/ui/spell/spellMakerWindow.js",
-    "old": "    this.totalSpellPointCost = sp;\n  }",
-    "new": "    { const f = this.priceFactor?.() ?? 1; this.totalSpellPointCost = f === 1 ? sp : Math.round(sp * f); }\n  }",
+    "old": "    this.totalSpellPointCost = sp;",
+    "new": "    {\n      const f = this.priceFactor?.() ?? 1;\n      this.totalSpellPointCost = f === 1 ? sp : Math.round(sp * f);\n    }",
     "tests": [
       "test/systems/guild/chap3c_halls.test.js"
     ],
@@ -255,8 +255,8 @@
   {
     "name": "CHAP3C-SPELLMAKER-KEPT",
     "file": "src/ui/spell/spellMakerWindow.js",
-    "old": "    this.priceFactor = priceFactor;\n",
-    "new": "",
+    "old": "    this.priceFactor = priceFactor;\n    this.done = false;",
+    "new": "    this.done = false;",
     "tests": [
       "test/systems/guild/chap3c_halls.test.js"
     ]

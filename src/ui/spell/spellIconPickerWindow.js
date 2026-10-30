@@ -53,8 +53,8 @@ import { nativeMetrics, drawRect } from '../native/nativePanel.js';
 import { drawScreenDimBackdrop } from '../chargenArt.js';
 import { drawSpellIcon, SPELL_ICON_COUNT } from './spellIcons.js';
 import { drawText } from '../text.js';
-import { VerticalScrollBar, drawScrollThumb } from '../verticalScrollBar.js';   // ROAD-G G4: the scroller is DFU's component, not a painted rectangle
-import { localizedText } from '../../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { VerticalScrollBar, drawScrollThumb } from '../verticalScrollBar.js'; // ROAD-G G4: the scroller is DFU's component, not a painted rectangle
+import { localizedText } from '../../systems/textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
 
 // #region UI Rects (:27-31), verbatim - the main panel is centred.
 export const ICON_PICKER_PANEL_SIZE = Object.freeze([274, 180]);
@@ -89,7 +89,8 @@ const OUTLINE = [1, 1, 1, 1];
  */
 export function buildIconPickerLayout(iconCount = SPELL_ICON_COUNT) {
   const items = [];
-  let xpos = 2, ypos = 2;
+  let xpos = 2,
+    ypos = 2;
   const startX = xpos;
   items.push({ type: 'header', text: localizedText('classicIcons', CLASSIC_ICONS_HEADER), x: xpos, y: ypos + 4 });
   ypos += ICON_SPACING;
@@ -144,12 +145,14 @@ export class SpellIconPickerWindow {
       onScroll: (i) => this._setScroll(i),
     });
     this.selectedIcon = null;
-    this._pointer = null;   // last pointer position, panel-relative
+    this._pointer = null; // last pointer position, panel-relative
     this.closed = false;
   }
 
   /** ResetScrollPosition (:116-119). */
-  resetScrollPosition() { this._setScroll(0); }
+  resetScrollPosition() {
+    this._setScroll(0);
+  }
 
   /** The main panel's top-left on the 320x200 virtual screen -
    *  Center/Middle alignment (:72-73). */
@@ -161,8 +164,9 @@ export class SpellIconPickerWindow {
   _panelPoint(vx, vy) {
     const [px, py] = SpellIconPickerWindow.panelOrigin();
     const [sx, sy, sw, sh] = ICON_PICKER_SCROLL_PANEL;
-    const x = vx - px - sx, y = vy - py - sy;
-    return (x >= 0 && y >= 0 && x < sw && y < sh) ? [x, y] : null;
+    const x = vx - px - sx,
+      y = vy - py - sy;
+    return x >= 0 && y >= 0 && x < sw && y < sh ? [x, y] : null;
   }
 
   /** ROAD-G G4: native (vx, vy) -> MAIN-panel-relative, the space the
@@ -203,8 +207,7 @@ export class SpellIconPickerWindow {
       for (const it of this.items) {
         if (it.type !== 'icon') continue;
         const y = it.y + dy;
-        if (p[0] >= it.x && p[0] < it.x + ICON_PICKER_ICON_SIZE
-          && p[1] >= y && p[1] < y + ICON_PICKER_ICON_SIZE) {
+        if (p[0] >= it.x && p[0] < it.x + ICON_PICKER_ICON_SIZE && p[1] >= y && p[1] < y + ICON_PICKER_ICON_SIZE) {
           over = it;
         }
       }
@@ -235,10 +238,14 @@ export class SpellIconPickerWindow {
   /** ROAD-G G4: the button coming up - Update's `else` arm (:123-129).
    *  Both consumers forward it beside `hover`; unforwarded, a released
    *  thumb resumes from its stale anchor on the next move. */
-  release() { this.scroller.draggingThumb = false; }
+  release() {
+    this.scroller.draggingThumb = false;
+  }
 
   /** OnMouseScrollUp/Down (:252-262): one scroller step per notch. */
-  wheel(dir) { this._setScroll(this.scrollIndex + Math.sign(dir)); }
+  wheel(dir) {
+    this._setScroll(this.scrollIndex + Math.sign(dir));
+  }
 
   /** ScrollingPanel_OnMouseClick (:269-274): re-derive, then close
    *  ONLY when the click landed on an icon - a miss keeps the window
@@ -249,7 +256,10 @@ export class SpellIconPickerWindow {
     // two paging arms outside the thumb, Update's latch on it - and
     // never the panel's click. `press` is that split.
     const [mx, my] = this._mainPoint(vx, vy);
-    if (this._syncScroller().contains(mx, my)) { this.scroller.press(mx, my); return true; }
+    if (this._syncScroller().contains(mx, my)) {
+      this.scroller.press(mx, my);
+      return true;
+    }
     this._pointer = this._panelPoint(vx, vy);
     this._updateSelectedIcon();
     if (this.selectedIcon) this._close();
@@ -264,8 +274,11 @@ export class SpellIconPickerWindow {
   }
 
   input(code) {
-    if (code === 'Escape') { this.cancel(); return true; }
-    return true;   // modal - no key falls through to the window below
+    if (code === 'Escape') {
+      this.cancel();
+      return true;
+    }
+    return true; // modal - no key falls through to the window below
   }
 
   _close() {

@@ -363,8 +363,8 @@
   {
     "name": "HOLD-STEP-disabled-takes",
     "file": "src/ui/spell/spellMakerWindow.js",
-    "old": "if (!this.enabled(field) || !Number.isFinite(Number(value))) return;",
-    "new": "if (!Number.isFinite(Number(value))) return;",
+    "old": "    if (!this.enabled(field) || !Number.isFinite(Number(value))) return;",
+    "new": "    if (!Number.isFinite(Number(value))) return;",
     "tests": [
       "test/ui/enhanced/holdstep.test.js"
     ]

@@ -252,5 +252,5 @@ test('MC1 maker: the bought spell carries the picked icon', () => {
   w.click(...iconCenter(55));
   assert.equal(w.icon, 55);
   // buildCustomSpell reads this.icon (:232's shape) - pinned at the source
-  assert.match(src('ui/spell/spellMakerWindow.js'), /name: this\.name\.trim\(\), icon: this\.icon,/);
+  assert.match(src('ui/spell/spellMakerWindow.js'), /name: this\.name\.trim\(\),\n\s*icon: this\.icon,/);
 });

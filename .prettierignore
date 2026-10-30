@@ -148,6 +148,8 @@
 /src/ui/poi/*/
 !/src/ui/questlines/
 /src/ui/questlines/*/
+!/src/ui/spell/
+/src/ui/spell/*/
 !/src/ui/starfall/
 /src/ui/starfall/*/
 !/src/ui/superDungeon/
