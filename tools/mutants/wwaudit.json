@@ -162,8 +162,8 @@
   {
     "name": "WWAUDIT-F2-pupil-lit",
     "file": "src/characters/werewolfSkin.js",
-    "old": "      const q = 0.25 + 0.75 * Math.min(1, l / 0.6);",
-    "new": "      const q = 1;",
+    "old": "      const q = 0.25 + 0.75 * Math.min(1, l / 0.6); // the eye's light: its glow burns, its pupil stays dark",
+    "new": "      const q = 1; // the eye's light: its glow burns, its pupil stays dark",
     "tests": [
       "test/net/shadowfangskin.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "WWAUDIT-F7-fringe-never-wraps",
     "file": "src/characters/werewolfSkin.js",
-    "old": "  const cx = tapsOf(w, 1, wrapS), cy = tapsOf(h, 1, wrapT);",
-    "new": "  const cx = tapsOf(w, 1, false), cy = tapsOf(h, 1, false);",
+    "old": "  const cx = tapsOf(w, 1, wrapS),\n    cy = tapsOf(h, 1, wrapT);",
+    "new": "  const cx = tapsOf(w, 1, false),\n    cy = tapsOf(h, 1, false);",
     "tests": [
       "test/net/shadowfangskin.test.js"
     ],
@@ -232,8 +232,8 @@
   {
     "name": "WWAUDIT-F7-mean-with-the-holes",
     "file": "src/characters/werewolfSkin.js",
-    "old": "        if (A[j] >= 128) { s += L[j]; c++; }",
-    "new": "        s += L[j]; c++;",
+    "old": "        if (A[j] >= 128) {\n          s += L[j];\n          c++;\n        }",
+    "new": "        s += L[j];\n        c++;",
     "tests": [
       "test/net/shadowfangskin.test.js"
     ],
@@ -242,8 +242,8 @@
   {
     "name": "WWAUDIT-F13-short-level-zero-filled",
     "file": "src/characters/werewolfSkin.js",
-    "old": "  if (mips.some((m) => !m?.rgba || m.rgba.length < m.width * m.height * 4)) return mips;\n",
-    "new": "",
+    "old": "  if (mips.some((m) => !m?.rgba || m.rgba.length < m.width * m.height * 4)) return mips;\n  const clamp = Number.isInteger(u.clamp) ? u.clamp & 3 : 3;",
+    "new": "  const clamp = Number.isInteger(u.clamp) ? u.clamp & 3 : 3;",
     "tests": [
       "test/net/shadowfangskin.test.js"
     ],

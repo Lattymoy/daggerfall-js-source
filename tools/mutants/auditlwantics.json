@@ -191,8 +191,8 @@
   {
     "name": "AUDIT-LW-ANTICS-side-shift",
     "file": "src/characters/residentWalker.js",
-    "old": ": SHIFT_RECORDS.has(rec) ? IDLE_SHIFT_FRAMES : SIDE_SHIFT_FRAMES);",
-    "new": ": IDLE_SHIFT_FRAMES);",
+    "old": "  guard\n    ? SHIFT_RECORDS.has(rec)\n      ? GUARD_SHIFT_FRAMES\n      : null\n    : SHIFT_RECORDS.has(rec)\n      ? IDLE_SHIFT_FRAMES\n      : SIDE_SHIFT_FRAMES;",
+    "new": "  guard ? (SHIFT_RECORDS.has(rec) ? GUARD_SHIFT_FRAMES : null) : IDLE_SHIFT_FRAMES;",
     "tests": [
       "test/systems/livingWorld/standlife_street.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "AUDIT-LW-ANTICS-guard-frames",
     "file": "src/characters/residentWalker.js",
-    "old": "(guard ? (SHIFT_RECORDS.has(rec) ? GUARD_SHIFT_FRAMES : null) :",
-    "new": "(guard ? (SHIFT_RECORDS.has(rec) ? IDLE_SHIFT_FRAMES : null) :",
+    "old": "      ? GUARD_SHIFT_FRAMES",
+    "new": "      ? IDLE_SHIFT_FRAMES",
     "tests": [
       "test/systems/livingWorld/standlife_street.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "AUDIT-LW-ANTICS-attending-glance",
     "file": "src/characters/residentWalker.js",
-    "old": "this.stir = this._stirDraw() < 0.5 && !this.attending ? 'glance' : 'shift';",
-    "new": "this.stir = this._stirDraw() < 0.5 ? 'glance' : 'shift';",
+    "old": "    this.stir = this._stirDraw() < 0.5 && !this.attending ? 'glance' : 'shift';",
+    "new": "    this.stir = this._stirDraw() < 0.5 ? 'glance' : 'shift';",
     "tests": [
       "test/systems/livingWorld/standlife_street.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "AUDIT-LW-ANTICS-glance-yaw",
     "file": "src/characters/residentWalker.js",
-    "old": "export const IDLE_GLANCE_YAW = 0.85;",
-    "new": "export const IDLE_GLANCE_YAW = 0.7;",
+    "old": "export const IDLE_GLANCE_YAW = 0.85; // AUDIT STAND-LIFE B5: past the wheel's 45-degree sector, so a glance always shows (0.7 drew nothing new one time in nine)",
+    "new": "export const IDLE_GLANCE_YAW = 0.7; // AUDIT STAND-LIFE B5: past the wheel's 45-degree sector, so a glance always shows (0.7 drew nothing new one time in nine)",
     "tests": [
       "test/systems/livingWorld/standlife_street.test.js"
     ]

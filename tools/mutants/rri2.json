@@ -93,7 +93,7 @@
   {
     "name": "RRI2-11-the-max-damage-override-is-skipped",
     "file": "src/characters/weapons.js",
-    "old": "  const o = _damageOverride.max?.(weapon);   // TryGetOverride(\"CalculateWeaponMaxDamage\")\n  if (o != null) return o;",
+    "old": "  const o = _damageOverride.max?.(weapon); // TryGetOverride(\"CalculateWeaponMaxDamage\")\n  if (o != null) return o;",
     "new": "",
     "tests": [
       "test/systems/rri2_realism.test.js"

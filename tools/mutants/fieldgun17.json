@@ -144,8 +144,8 @@
   {
     "name": "FIELD-GUN17-16-an-empty-sample-counts-as-the-sample",
     "file": "src/characters/thunderlockIds.js",
-    "old": "  const c = orbColourFrom(color32);\n  if (!c) return false;\n  _orb.colour = c; _orb.sampled = true;",
-    "new": "  const c = orbColourFrom(color32);\n  _orb.sampled = true;\n  if (!c) return false;\n  _orb.colour = c;",
+    "old": "  if (!c) return false;\n  _orb.colour = c;\n  _orb.sampled = true;",
+    "new": "  _orb.sampled = true;\n  if (!c) return false;\n  _orb.colour = c;",
     "tests": [
       "test/systems/thunderlock.test.js"
     ]

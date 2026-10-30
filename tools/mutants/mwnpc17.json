@@ -2,7 +2,7 @@
   {
     "name": "MWNPC17-cut-ignored",
     "file": "src/characters/wardrobe.js",
-    "old": "  const prefer = cut === 'robe' ? ['robe', 'skirt', 'pants'] : cut === 'skirt' ? ['skirt', 'pants', 'robe'] : cut === 'pants' ? ['pants', 'skirt', 'robe'] : null;",
+    "old": "  const prefer =\n    cut === 'robe'\n      ? ['robe', 'skirt', 'pants']\n      : cut === 'skirt'\n        ? ['skirt', 'pants', 'robe']\n        : cut === 'pants'\n          ? ['pants', 'skirt', 'robe']\n          : null;",
     "new": "  const prefer = null;",
     "tests": [
       "test/characters/mwnpc17_wardrobe.test.js"
@@ -20,8 +20,8 @@
   {
     "name": "MWNPC17-chain-helm",
     "file": "src/characters/wardrobe.js",
-    "old": "    if (material === MAT.Chain && !CHAIN_PIECES.has(templateIndex)) material = MAT.Iron;",
-    "new": "",
+    "old": "    if (material === MAT.Chain && !CHAIN_PIECES.has(templateIndex)) material = MAT.Iron; // no chain helm in Morrowind: iron, its own neighbour",
+    "new": "    // no chain helm in Morrowind: iron, its own neighbour",
     "tests": [
       "test/characters/mwnpc17_wardrobe.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "MWNPC17-pauldron-alone",
     "file": "src/characters/wardrobe.js",
-    "old": "  if (l && !r) out.push(",
-    "new": "  if (false) out.push(",
+    "old": "  if (l && !r)",
+    "new": "  if (false)",
     "tests": [
       "test/characters/mwnpc17_wardrobe.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "MWNPC17-noble-in-common",
     "file": "src/characters/wardrobe.js",
-    "old": "tiers: [0, 35, 45, 20]",
-    "new": "tiers: [10, 35, 45, 20]",
+    "old": "    tiers: [0, 35, 45, 20],",
+    "new": "    tiers: [10, 35, 45, 20],",
     "tests": [
       "test/characters/mwnpc17_wardrobe.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "MWNPC17-face-one-hash",
     "file": "src/characters/wardrobe.js",
-    "old": "hair: wmix(n.seed ^ 0x4a12b0b5) });",
-    "new": "hair: wmix(n.seed ^ 0x4ead5eed) });",
+    "old": "export const npcFaceOf = (n) => ({ head: wmix(n.seed ^ 0x4ead5eed), hair: wmix(n.seed ^ 0x4a12b0b5) });",
+    "new": "export const npcFaceOf = (n) => ({ head: wmix(n.seed ^ 0x4ead5eed), hair: wmix(n.seed ^ 0x4ead5eed) });",
     "tests": [
       "test/characters/mwnpc17_wardrobe.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "MWNPC17-player-hint-read",
     "file": "src/characters/wardrobe.js",
-    "old": "  if (!n || typeof n !== 'object' || !Number.isInteger(n.seed) || n.seed < 0 || n.seed > 0xffffffff",
-    "new": "  if (!n || typeof n !== 'object' || !Number.isInteger(n.seed)",
+    "old": "  if (!n || typeof n !== 'object' || !Number.isInteger(n.seed) || n.seed < 0 || n.seed > 0xffffffff) return null;",
+    "new": "  if (!n || typeof n !== 'object' || !Number.isInteger(n.seed)) return null;",
     "tests": [
       "test/characters/mwnpc17_wardrobe.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "AUDIT-MWNPC16-18-R2-door-priest-unrobed",
     "file": "src/characters/rosterBodies.js",
-    "old": "cut: kind === 'priest' ? 'robe' : null",
-    "new": "cut: null",
+    "old": "    const d = dressPerson({ role: kind, gender, seed, cut: kind === 'priest' ? 'robe' : null }); // MWNPC17: their kind's role, off their own id's seed - a priest at the door in the robes his picture wears",
+    "new": "    const d = dressPerson({ role: kind, gender, seed, cut: null }); // MWNPC17: their kind's role, off their own id's seed - a priest at the door in the robes his picture wears",
     "tests": [
       "test/characters/mwnpc17_wardrobe.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "AUDIT-MWNPC16-18-R2-rogue-unarmoured",
     "file": "src/characters/wardrobe.js",
-    "old": "armor: 'rogue'",
-    "new": "armor: null",
+    "old": "    armor: 'rogue',",
+    "new": "    armor: null,",
     "tests": [
       "test/characters/mwnpc17_wardrobe.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "AUDIT-MWNPC16-18-R2-underworld-commoner",
     "file": "src/characters/peopleBodies.js",
-    "old": "underworld: 'rogue',",
-    "new": "underworld: 'commoner',",
+    "old": "  underworld: 'rogue',",
+    "new": "  underworld: 'commoner',",
     "tests": [
       "test/characters/mwnpc17_wardrobe.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "AUDIT-MWNPC16-18-R2-scholar-commoner",
     "file": "src/characters/peopleBodies.js",
-    "old": "scholar: 'scholar', common:",
-    "new": "scholar: 'commoner', common:",
+    "old": "  scholar: 'scholar',",
+    "new": "  scholar: 'commoner',",
     "tests": [
       "test/characters/mwnpc17_wardrobe.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "AUDIT-MWNPC16-18-R2-formal-swapped",
     "file": "src/characters/wardrobe.js",
-    "old": "    const cloak = female ? (formal ? W.formalCloak : W.casualCloak) : (formal ? M.formalCloak : M.casualCloak);",
-    "new": "    const cloak = female ? (formal ? W.casualCloak : W.formalCloak) : (formal ? M.casualCloak : M.formalCloak);",
+    "old": "    const cloak = female ? (formal ? W.formalCloak : W.casualCloak) : formal ? M.formalCloak : M.casualCloak;",
+    "new": "    const cloak = female ? (formal ? W.casualCloak : W.formalCloak) : formal ? M.casualCloak : M.formalCloak;",
     "tests": [
       "test/characters/mwnpc17_wardrobe.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "AUDIT-MWNPC16-18-R2-rung-step-off",
     "file": "src/characters/wardrobe.js",
-    "old": "n.tier + (step < 2 ? -1 : step === 2 ? 1 : 0)",
-    "new": "n.tier + 0",
+    "old": "  const tier = Math.max(n.lo ?? 0, Math.min(n.hi ?? 3, n.tier + (step < 2 ? -1 : step === 2 ? 1 : 0)));",
+    "new": "  const tier = Math.max(n.lo ?? 0, Math.min(n.hi ?? 3, n.tier + 0));",
     "tests": [
       "test/characters/mwnpc17_wardrobe.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "AUDIT-MWNPC16-18-R2-helm-always",
     "file": "src/characters/wardrobe.js",
-    "old": "['Head', A.Helm, 0.3]]",
-    "new": "['Head', A.Helm, 1]]",
+    "old": "      ['Head', A.Helm, 0.3],",
+    "new": "      ['Head', A.Helm, 1],",
     "tests": [
       "test/characters/mwnpc17_wardrobe.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "AUDIT-MWNPC16-18-R2-merchant-poor",
     "file": "src/characters/wardrobe.js",
-    "old": "tiers: [45, 45, 9, 1]",
-    "new": "tiers: [100, 0, 0, 0]",
+    "old": "    tiers: [45, 45, 9, 1],",
+    "new": "    tiers: [100, 0, 0, 0],",
     "tests": [
       "test/characters/mwnpc17_wardrobe.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "AUDIT-MWNPC16-18-R2-knight-exq-iron",
     "file": "src/characters/wardrobe.js",
-    "old": "[[MAT.Dwarven, 30], [MAT.Ebony, 30], [MAT.Orcish, 20], [MAT.Silver, 20]],",
-    "new": "[[MAT.Iron, 30], [MAT.Iron, 30], [MAT.Iron, 20], [MAT.Iron, 20]],",
+    "old": "        [MAT.Dwarven, 30],\n        [MAT.Ebony, 30],\n        [MAT.Orcish, 20],\n        [MAT.Silver, 20],",
+    "new": "        [MAT.Iron, 30],\n        [MAT.Iron, 30],\n        [MAT.Iron, 20],\n        [MAT.Iron, 20],",
     "tests": [
       "test/characters/mwnpc17_wardrobe.test.js"
     ]

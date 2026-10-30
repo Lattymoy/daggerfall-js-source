@@ -332,8 +332,8 @@
   {
     "name": "WATCH-PROTECTS-walker-pace",
     "file": "src/characters/residentWalker.js",
-    "old": "PERSON_MOVE_FPS * this.pace;",
-    "new": "PERSON_MOVE_FPS;",
+    "old": "    const fps = st === 'idle' ? PERSON_IDLE_FPS : PERSON_MOVE_FPS * this.pace;",
+    "new": "    const fps = st === 'idle' ? PERSON_IDLE_FPS : PERSON_MOVE_FPS;",
     "tests": [
       "test/systems/livingWorld/watchprotects_watch.test.js"
     ],

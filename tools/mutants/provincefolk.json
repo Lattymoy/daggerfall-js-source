@@ -2,8 +2,8 @@
   {
     "name": "PFOLK-own-race-second",
     "file": "src/characters/provinceFolk.js",
-    "old": "Morrowind: folk([['DarkElf', 82], ['Imperial', 6],",
-    "new": "Morrowind: folk([['Imperial', 6], ['DarkElf', 82],",
+    "old": "    ['DarkElf', 82],\n    ['Imperial', 6],",
+    "new": "    ['Imperial', 6],\n    ['DarkElf', 82],",
     "tests": [
       "test/characters/provincefolk.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "PFOLK-a-share-moved",
     "file": "src/characters/provinceFolk.js",
-    "old": "Sumurset: folk([['HighElf', 92], ['WoodElf', 4],",
-    "new": "Sumurset: folk([['HighElf', 93], ['WoodElf', 3],",
+    "old": "    ['HighElf', 92],\n    ['WoodElf', 4],",
+    "new": "    ['HighElf', 93],\n    ['WoodElf', 3],",
     "tests": [
       "test/characters/provincefolk.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PFOLK-the-seed-unmixed",
     "file": "src/characters/provinceFolk.js",
-    "old": "let r = mix((seed >>> 0) ^ 0x70f01c) % total;",
-    "new": "let r = (seed >>> 0) % total;",
+    "old": "  let r = mix((seed >>> 0) ^ 0x70f01c) % total;",
+    "new": "  let r = (seed >>> 0) % total;",
     "tests": [
       "test/characters/provincefolk.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PFOLK-the-weights-ignored",
     "file": "src/characters/provinceFolk.js",
-    "old": "for (const [race, w] of people) { if (r < w) return race; r -= w; }",
-    "new": "return people[r % people.length][0];",
+    "old": "  for (const [race, w] of people) {\n    if (r < w) return race;\n    r -= w;\n  }",
+    "new": "  return people[r % people.length][0];",
     "tests": [
       "test/characters/provincefolk.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "PFOLK-the-Imperial-everywhere",
     "file": "src/characters/peopleBodies.js",
-    "old": "const own = RACE_NAME[data.race], native = own ? nativeAt(feet) : null;",
-    "new": "const own = RACE_NAME[data.race], native = own ? nativeAt(feet) ?? 'Imperial' : null;",
+    "old": "    native = own ? nativeAt(feet) : null;",
+    "new": "    native = own ? (nativeAt(feet) ?? 'Imperial') : null;",
     "tests": [
       "test/characters/provincefolk.test.js"
     ]

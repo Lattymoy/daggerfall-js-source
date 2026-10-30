@@ -129,7 +129,7 @@
   {
     "name": "TWOHANDS-AUDIT2-machine-never-holds",
     "file": "src/characters/weaponStates.js",
-    "old": "if (m.hold > 0 && m.frame >= frames - 1) { m.hold -= 1; continue; }",
+    "old": "      if (m.hold > 0 && m.frame >= frames - 1) {\n        m.hold -= 1;\n        continue;\n      }",
     "new": "",
     "tests": [
       "test/combat/twohands.test.js"
@@ -138,8 +138,8 @@
   {
     "name": "TWOHANDS-AUDIT2-machine-holds-before-the-hit",
     "file": "src/characters/weaponStates.js",
-    "old": "if (m.hold > 0 && m.frame >= frames - 1) { m.hold -= 1; continue; }",
-    "new": "if (m.hold > 0) { m.hold -= 1; continue; }",
+    "old": "      if (m.hold > 0 && m.frame >= frames - 1) {",
+    "new": "      if (m.hold > 0) {",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "TWOHANDS-AUDIT2-strike-keeps-an-old-hold",
     "file": "src/characters/weaponStates.js",
-    "old": "  m.hold = 0;   // TWO-HANDS (AUDIT 2): ticks held at the swing's end - set by its caller for an off-hand blow, else none\n",
-    "new": "",
+    "old": "  m.hold = 0; // TWO-HANDS (AUDIT 2): ticks held at the swing's end - set by its caller for an off-hand blow, else none\n  return true;",
+    "new": "  return true;",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "TWOHANDS-AUDIT2-schedule-forgets-the-hold",
     "file": "src/characters/weaponStates.js",
-    "old": "return { seconds: (strikeTicks(m) + holdOf(m)) * step,",
-    "new": "return { seconds: strikeTicks(m) * step,",
+    "old": "  return {\n    seconds: (strikeTicks(m) + holdOf(m)) * step,\n    hitAt: Math.max(0, (m.hitFrame ?? HIT_FRAME_MELEE) - at) * step,\n    step,\n  };",
+    "new": "  return { seconds: strikeTicks(m) * step, hitAt: Math.max(0, (m.hitFrame ?? HIT_FRAME_MELEE) - at) * step, step };",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -788,8 +788,8 @@
   {
     "name": "TWOHANDS-AUDIT2-strike-ticks-from-the-first-frame",
     "file": "src/characters/weaponStates.js",
-    "old": "  return Math.max(0, frames - Math.max(0, m.frame | 0));\n}",
-    "new": "  return frames;\n}",
+    "old": "  return Math.max(0, frames - Math.max(0, m.frame | 0));",
+    "new": "  return frames;",
     "tests": [
       "test/combat/twohands.test.js"
     ]

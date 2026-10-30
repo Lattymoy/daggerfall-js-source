@@ -205,8 +205,8 @@
   {
     "name": "LW2-no-reset",
     "file": "src/characters/residentWalker.js",
-    "old": "if (st !== this.state) { this.state = st; this.frame = 0; this._timer = 0; this.stir = null; this._stirT = 0; this._stirNext = 0; }",
-    "new": "if (st !== this.state) { this.state = st; this.stir = null; this._stirT = 0; this._stirNext = 0; }",
+    "old": "      this.frame = 0;\n      this._timer = 0;\n      this.stir = null;",
+    "new": "      this.stir = null;",
     "tests": [
       "test/systems/livingWorld/lw2_livingTown.test.js"
     ]

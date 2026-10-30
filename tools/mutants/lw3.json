@@ -355,7 +355,7 @@
   {
     "name": "LW3-armed-frames-unread",
     "file": "src/characters/residentWalker.js",
-    "old": "    if (this.armed && this.unit) return this.unit.update(dt, { moving: this.moving && !wantsToStop }, this.yaw, this.pos, cameraPos);",
+    "old": "    if (this.armed && this.unit)\n      return this.unit.update(dt, { moving: this.moving && !wantsToStop }, this.yaw, this.pos, cameraPos);",
     "new": "    void this.unit;",
     "tests": [
       "test/systems/livingWorld/lw3_roads.test.js"

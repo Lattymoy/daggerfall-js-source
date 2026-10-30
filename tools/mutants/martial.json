@@ -551,8 +551,8 @@
   {
     "name": "BAL10-the-port-law-reads-no-short-blade",
     "file": "src/characters/weaponStates.js",
-    "old": "      handling: swingHandling(ctx.weaponType, !!w?.twoHanded, !!w?.shortBlade),",
-    "new": "      handling: swingHandling(ctx.weaponType, !!w?.twoHanded),",
+    "old": "        handling: swingHandling(ctx.weaponType, !!w?.twoHanded, !!w?.shortBlade), // BAL10: a short blade handles as a dagger",
+    "new": "        handling: swingHandling(ctx.weaponType, !!w?.twoHanded), // BAL10: a short blade handles as a dagger",
     "tests": [
       "test/systems/martial_paths.test.js"
     ]

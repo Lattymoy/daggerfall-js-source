@@ -15,7 +15,7 @@ const MORPHS = ['Human', 'Elf', 'Khajiit', 'Argonian'];
  *  archives encode race+gender; until that table is wired, this is a
  *  deterministic spread so a crowd shows all four morphologies. */
 export function raceOfArchive(archive) {
-  return MORPHS[((archive | 0) % MORPHS.length + MORPHS.length) % MORPHS.length];
+  return MORPHS[(((archive | 0) % MORPHS.length) + MORPHS.length) % MORPHS.length];
 }
 
 /**
@@ -25,13 +25,21 @@ export function raceOfArchive(archive) {
  */
 export function buildRaceCharacter(race, spriteRamps, opts = {}) {
   const tone = opts.tone ?? 0;
-  let bodyRamp, coat, belly, hairColor, hairStyle = opts.hairStyle ?? 'short';
+  let bodyRamp,
+    coat,
+    belly,
+    hairColor,
+    hairStyle = opts.hairStyle ?? 'short';
 
   if (race === 'Khajiit') {
     const f = KHAJIIT_FURS[tone % KHAJIIT_FURS.length];
-    coat = f.coat; belly = f.belly; bodyRamp = coat; hairColor = coat;
+    coat = f.coat;
+    belly = f.belly;
+    bodyRamp = coat;
+    hairColor = coat;
   } else if (race === 'Argonian') {
-    bodyRamp = ARGONIAN_HIDES[tone % ARGONIAN_HIDES.length].ramp; hairColor = bodyRamp;
+    bodyRamp = ARGONIAN_HIDES[tone % ARGONIAN_HIDES.length].ramp;
+    hairColor = bodyRamp;
   } else if (race === 'Elf') {
     bodyRamp = ELF_TONES[tone % ELF_TONES.length].ramp;
     hairColor = HAIR_RAMPS[['brown', 'black', 'blonde'][(opts.hairTone ?? 0) % 3]];
@@ -44,8 +52,13 @@ export function buildRaceCharacter(race, spriteRamps, opts = {}) {
   const faces = body.slice();
   faces.push(...buildHair(hairColor, race, bodyRamp, hairStyle));
 
-  if (race === 'Khajiit') { faces.push(...buildTail(coat, 'khajiit')); faces.push(...buildBodyFur(body, coat, belly)); }
-  else if (race === 'Argonian') { faces.push(...buildTail(bodyRamp, 'argonian')); faces.push(...buildBodyScales(body, bodyRamp)); }
+  if (race === 'Khajiit') {
+    faces.push(...buildTail(coat, 'khajiit'));
+    faces.push(...buildBodyFur(body, coat, belly));
+  } else if (race === 'Argonian') {
+    faces.push(...buildTail(bodyRamp, 'argonian'));
+    faces.push(...buildBodyScales(body, bodyRamp));
+  }
 
   return faces;
 }

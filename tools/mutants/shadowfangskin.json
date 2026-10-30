@@ -2,8 +2,8 @@
   {
     "name": "SFSKIN-base-left-light",
     "file": "src/characters/werewolfSkin.js",
-    "old": "  dark: 0.3,",
-    "new": "  dark: 0.9,",
+    "old": "  dark: 0.3, // the base keeps this share of its light",
+    "new": "  dark: 0.9, // the base keeps this share of its light",
     "tests": [
       "test/net/shadowfangskin.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SFSKIN-eye-not-the-glyphs-red",
     "file": "src/characters/werewolfSkin.js",
-    "old": "  eye: Object.freeze([255, 34, 46]),",
-    "new": "  eye: Object.freeze([255, 0, 0]),",
+    "old": "  eye: Object.freeze([255, 34, 46]), // #ff222e - the glyph's own eye (ui/playerBadge.js GLYPH_DETAIL)",
+    "new": "  eye: Object.freeze([255, 0, 0]), // #ff222e - the glyph's own eye (ui/playerBadge.js GLYPH_DETAIL)",
     "tests": [
       "test/net/shadowfangskin.test.js"
     ]

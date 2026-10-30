@@ -164,8 +164,8 @@
   {
     "name": "AUDITMWNPC2-K1-beggar-stood",
     "file": "src/characters/rosterBodies.js",
-    "old": "  if (role === 'beggar') return null;\n",
-    "new": "",
+    "old": "  if (role === 'beggar') return null;\n  const cls = person.stillLook ? null : (person.cls ?? null);",
+    "new": "  const cls = person.stillLook ? null : (person.cls ?? null);",
     "tests": [
       "test/characters/mwnpc_audit2.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "AUDITMWNPC2-K1-dress-read-once",
     "file": "src/characters/rosterBodies.js",
-    "old": "  if (!k || k.res !== res || k.cls !== cls || k.guard !== guard || k.still !== still) k = person._mwRes = { res, look: null, cls, guard, still };",
-    "new": "  if (!k || k.res !== res) k = person._mwRes = { res, look: null, cls, guard, still };",
+    "old": "  if (!k || k.res !== res || k.cls !== cls || k.guard !== guard || k.still !== still)\n    k = person._mwRes = { res, look: null, cls, guard, still }; // a compare a frame, no allocation",
+    "new": "  if (!k || k.res !== res) k = person._mwRes = { res, look: null, cls, guard, still }; // a compare a frame, no allocation",
     "tests": [
       "test/characters/mwnpc_audit2.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "AUDITMWNPC2-K1-uniform-unworn",
     "file": "src/characters/rosterBodies.js",
-    "old": "personFaceRecordId: res.face ?? 0, gender: res.gender ?? 0, guard }, res.race ?? 'Breton', seed);",
-    "new": "personFaceRecordId: res.face ?? 0, gender: res.gender ?? 0, guard: false }, res.race ?? 'Breton', seed);",
+    "old": "      guard,",
+    "new": "      guard: false,",
     "tests": [
       "test/characters/mwnpc_audit2.test.js"
     ],
@@ -292,8 +292,8 @@
   {
     "name": "AUDITMWNPC2-H2-lanes-under-overworld",
     "file": "src/characters/npcBodies.js",
-    "old": "      if (!actor?.look || !actor.feet || npcBodiesHeld()) return;",
-    "new": "      if (!actor?.look || !actor.feet) return;",
+    "old": "      if (!actor?.look || !actor.feet || npcBodiesHeld()) return; // AUDIT MW-NPC II H2: none under the Overworld",
+    "new": "      if (!actor?.look || !actor.feet) return; // AUDIT MW-NPC II H2: none under the Overworld",
     "tests": [
       "test/characters/mwnpc_audit2.test.js"
     ]

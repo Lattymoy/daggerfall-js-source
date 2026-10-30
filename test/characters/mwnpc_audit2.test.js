@@ -183,7 +183,7 @@ test('AUDIT MW-NPC II K1: a living resident walking the street stands in what th
   assert.ok(town.includes('|| (want && (p.stillRole ?? null) !== role)) {'), 'and stills again when only the kind changed (two kinds share pictures)');
   const walker = rd('src/characters/residentWalker.js');
   assert.ok(walker.includes('    this.stillRole = look ? role : null;'), 'the walker keeps it while the picture stands');
-  assert.ok(walker.includes('this.stillLook = null; this.stillRole = null; this._stillAnim = null; }'), 'and forgets it with the rest when dressed as another');
+  assert.ok(walker.includes('this.stillLook = null;\n    this.stillRole = null;\n    this._stillAnim = null;\n  }'), 'and forgets it with the rest when dressed as another');
   assert.ok(rd('src/scenes/world.js').includes('if (a) folkStreet.offer(a, batch); else batch.castOnly = false;'), 'a row without a body shows its flat');
 });
 

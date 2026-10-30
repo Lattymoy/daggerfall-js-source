@@ -2,8 +2,8 @@
   {
     "name": "REGION-NAMES-gro-gra-swapped",
     "file": "src/characters/regionNames.js",
-    "old": "${c.female ? 'gra' : 'gro'}-${c.fam()}",
-    "new": "${c.female ? 'gro' : 'gra'}-${c.fam()}",
+    "old": "        make: (c) => `${twoPart(c, ORC.on, c.female ? ORC.endF : ORC.endM)} ${c.female ? 'gra' : 'gro'}-${c.fam()}`,",
+    "new": "        make: (c) => `${twoPart(c, ORC.on, c.female ? ORC.endF : ORC.endM)} ${c.female ? 'gro' : 'gra'}-${c.fam()}`,",
     "tests": [
       "test/characters/regionnames.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "REGION-NAMES-nord-clan-share",
     "file": "src/characters/regionNames.js",
-    "old": "{ key: 'clan', w: (c) => (c.home === 'Skyrim' ? 0.4 : 0.15)",
-    "new": "{ key: 'clan', w: (c) => (c.home === 'Skyrim' ? 0.05 : 0.15)",
+    "old": "      { key: 'clan', w: (c) => (c.home === 'Skyrim' ? 0.4 : 0.15), make: (c) => `${nordGiven(c)} ${c.fam()}` },",
+    "new": "      { key: 'clan', w: (c) => (c.home === 'Skyrim' ? 0.05 : 0.15), make: (c) => `${nordGiven(c)} ${c.fam()}` },",
     "tests": [
       "test/characters/regionnames.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "REGION-NAMES-nord-patronym-ends",
     "file": "src/characters/regionNames.js",
-    "old": "(c.r() < 0.5 ? 'sdottir' : 'sen')",
-    "new": "(c.r() < 0.5 ? 'sdottir' : 'son')",
+    "old": "          return `${nordGiven(c)} ${father}${c.female ? (c.r() < 0.5 ? 'sdottir' : 'sen') : c.r() < 0.6 ? 'sen' : 'son'}`;",
+    "new": "          return `${nordGiven(c)} ${father}${c.female ? (c.r() < 0.5 ? 'sdottir' : 'son') : c.r() < 0.6 ? 'sen' : 'son'}`;",
     "tests": [
       "test/characters/regionnames.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "REGION-NAMES-nord-epithet",
     "file": "src/characters/regionNames.js",
-    "old": "`${nordGiven(c)} the ${pick(c.r, NORD.epithet, c.fashion)}`",
-    "new": "`${nordGiven(c)} ${pick(c.r, NORD.epithet, c.fashion)}`",
+    "old": "        make: (c) => `${nordGiven(c)} the ${pick(c.r, NORD.epithet, c.fashion)}`,",
+    "new": "        make: (c) => `${nordGiven(c)} ${pick(c.r, NORD.epithet, c.fashion)}`,",
     "tests": [
       "test/characters/regionnames.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "REGION-NAMES-dunmer-house-after",
     "file": "src/characters/regionNames.js",
-    "old": "make: (c) => `${pick(c.r, DUNMER.houses)} ${twoPart(c, c.female ? DUNMER.onF : DUNMER.onM, c.female ? DUNMER.endF : DUNMER.endM)}` },",
-    "new": "make: (c) => `${twoPart(c, c.female ? DUNMER.onF : DUNMER.onM, c.female ? DUNMER.endF : DUNMER.endM)} ${pick(c.r, DUNMER.houses)}` },",
+    "old": "          `${pick(c.r, DUNMER.houses)} ${twoPart(c, c.female ? DUNMER.onF : DUNMER.onM, c.female ? DUNMER.endF : DUNMER.endM)}`,",
+    "new": "          `${twoPart(c, c.female ? DUNMER.onF : DUNMER.onM, c.female ? DUNMER.endF : DUNMER.endM)} ${pick(c.r, DUNMER.houses)}`,",
     "tests": [
       "test/characters/regionnames.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "REGION-NAMES-dunmer-redoran",
     "file": "src/characters/regionNames.js",
-    "old": "houses: freeze(['Hlaalu', 'Indoril', 'Dres']),",
-    "new": "houses: freeze(['Hlaalu', 'Indoril', 'Redoran']),",
+    "old": "  houses: freeze(['Hlaalu', 'Indoril', 'Dres']),",
+    "new": "  houses: freeze(['Hlaalu', 'Indoril', 'Redoran']),",
     "tests": [
       "test/characters/regionnames.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "REGION-NAMES-dunmer-ashlanders-abroad",
     "file": "src/characters/regionNames.js",
-    "old": "{ key: 'ashlander', w: (c) => (c.home === 'Morrowind' ? 0.15 : 0)",
-    "new": "{ key: 'ashlander', w: (c) => (c.home === 'Morrowind' ? 0.15 : 0.15)",
+    "old": "        w: (c) => (c.home === 'Morrowind' ? 0.15 : 0),",
+    "new": "        w: (c) => (c.home === 'Morrowind' ? 0.15 : 0.15),",
     "tests": [
       "test/characters/regionnames.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "REGION-NAMES-redguard-at-as-ra",
     "file": "src/characters/regionNames.js",
-    "old": "`${n} at-${redguardGiven(",
-    "new": "`${n} ra-${redguardGiven(",
+    "old": "          return c.r() < 0.35 ? `${n} at-${redguardGiven({ ...c, female: c.r() < 0.3 })}` : n;",
+    "new": "          return c.r() < 0.35 ? `${n} ra-${redguardGiven({ ...c, female: c.r() < 0.3 })}` : n;",
     "tests": [
       "test/characters/regionnames.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "REGION-NAMES-redguard-al-family",
     "file": "src/characters/regionNames.js",
-    "old": "`${redguardGiven(c)} al-${pick(c.r, REDGUARD.places, c.fashion)}`",
-    "new": "`${redguardGiven(c)} al-${c.fam()}`",
+    "old": "        make: (c) => `${redguardGiven(c)} al-${pick(c.r, REDGUARD.places, c.fashion)}`,",
+    "new": "        make: (c) => `${redguardGiven(c)} al-${c.fam()}`,",
     "tests": [
       "test/characters/regionnames.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "REGION-NAMES-khajiit-titled-share",
     "file": "src/characters/regionNames.js",
-    "old": "{ key: 'titled', w: (c) => (c.home === 'Elsweyr' ? 0.55 : 0.35)",
-    "new": "{ key: 'titled', w: (c) => (c.home === 'Elsweyr' ? 0.05 : 0.35)",
+    "old": "        w: (c) => (c.home === 'Elsweyr' ? 0.55 : 0.35),",
+    "new": "        w: (c) => (c.home === 'Elsweyr' ? 0.05 : 0.35),",
     "tests": [
       "test/characters/regionnames.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "REGION-NAMES-khajiit-bare-root",
     "file": "src/characters/regionNames.js",
-    "old": "if (twice || s.length < 3) s +=",
-    "new": "if (twice) s +=",
+    "old": "  if (twice || s.length < 3) s += pick(c.r, KHAJIIT.roots); // never a bare Sa",
+    "new": "  if (twice) s += pick(c.r, KHAJIIT.roots); // never a bare Sa",
     "tests": [
       "test/characters/regionnames.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "REGION-NAMES-argonian-gloss-dashes",
     "file": "src/characters/regionNames.js",
-    "old": "`${pick(c.r, ARGONIAN.verbs, c.fashion)}-${",
-    "new": "`${pick(c.r, ARGONIAN.verbs, c.fashion)} ${",
+    "old": "          `${pick(c.r, ARGONIAN.verbs, c.fashion)}-${c.r() < 0.25 ? (c.female ? 'Her' : 'His') : pick(c.r, ARGONIAN.links)}-${pick(c.r, ARGONIAN.nouns)}`,",
+    "new": "          `${pick(c.r, ARGONIAN.verbs, c.fashion)} ${c.r() < 0.25 ? (c.female ? 'Her' : 'His') : pick(c.r, ARGONIAN.links)}-${pick(c.r, ARGONIAN.nouns)}`,",
     "tests": [
       "test/characters/regionnames.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "REGION-NAMES-altmer-cities",
     "file": "src/characters/regionNames.js",
-    "old": "of ${pick(c.r, ALTMER.cities, c.fashion)}",
-    "new": "of ${c.fam()}",
+    "old": "          `${twoPart(c, c.female ? ALTMER.onF : ALTMER.onM, c.female ? ALTMER.endF : ALTMER.endM)} of ${pick(c.r, ALTMER.cities, c.fashion)}`,",
+    "new": "          `${twoPart(c, c.female ? ALTMER.onF : ALTMER.onM, c.female ? ALTMER.endF : ALTMER.endM)} of ${c.fam()}`,",
     "tests": [
       "test/characters/regionnames.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "REGION-NAMES-families-region-unseeded",
     "file": "src/characters/regionNames.js",
-    "old": "const r = stream(mixSeed(hashOf(culture), region + 0x46));",
-    "new": "const r = stream(mixSeed(hashOf(culture), 0x46));",
+    "old": "    const r = stream(mixSeed(hashOf(culture), region + 0x46));",
+    "new": "    const r = stream(mixSeed(hashOf(culture), 0x46));",
     "tests": [
       "test/characters/regionnames.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "REGION-NAMES-family-share",
     "file": "src/characters/regionNames.js",
-    "old": "fams && r() < REGION_FAMILY_SHARE ?",
-    "new": "fams && r() < 0.2 ?",
+    "old": "    fam: () =>\n      fams && r() < REGION_FAMILY_SHARE ? fams[Math.floor(r() * fams.length)] : def.family(r, gender !== MALE),",
+    "new": "    fam: () => (fams && r() < 0.2 ? fams[Math.floor(r() * fams.length)] : def.family(r, gender !== MALE)),",
     "tests": [
       "test/characters/regionnames.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "REGION-NAMES-fashion-region-unseeded",
     "file": "src/characters/regionNames.js",
-    "old": "fashion: regional ? mixSeed(hashOf(own), region + 0xfa) : 0,",
-    "new": "fashion: regional ? mixSeed(hashOf(own), 0xfa) : 0,",
+    "old": "    fashion: regional ? mixSeed(hashOf(own), region + 0xfa) : 0,",
+    "new": "    fashion: regional ? mixSeed(hashOf(own), 0xfa) : 0,",
     "tests": [
       "test/characters/regionnames.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "REGION-NAMES-bay-weight",
     "file": "src/characters/regionNames.js",
-    "old": "{ key: 'daggerfall', w: (c) => (c.onBay ? 0.3 : 0.05)",
-    "new": "{ key: 'daggerfall', w: (c) => (c.onBay ? 0.05 : 0.05)",
+    "old": "      { key: 'daggerfall', w: (c) => (c.onBay ? 0.3 : 0.05), make: (c) => c.classic },",
+    "new": "      { key: 'daggerfall', w: (c) => (c.onBay ? 0.05 : 0.05), make: (c) => c.classic },",
     "tests": [
       "test/characters/regionnames.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "REGION-NAMES-bay-regions-edge",
     "file": "src/characters/regionNames.js",
-    "old": "onBay: regional ? region < BAY_REGIONS : home == null,",
-    "new": "onBay: regional ? region <= BAY_REGIONS : home == null,",
+    "old": "    onBay: regional ? region < BAY_REGIONS : home == null,",
+    "new": "    onBay: regional ? region <= BAY_REGIONS : home == null,",
     "tests": [
       "test/characters/regionnames.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "REGION-NAMES-classic-unguarded",
     "file": "src/characters/regionNames.js",
-    "old": "if (k.key === 'daggerfall' || k.key === 'imperial') { if (!c.classic) return 0; }",
-    "new": "if (k.key === 'daggerfall' || k.key === 'imperial') { /* unguarded */ }",
+    "old": "      if (!c.classic) return 0;",
+    "new": "      /* unguarded */",
     "tests": [
       "test/characters/regionnames.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "REGION-NAMES-reach-share",
     "file": "src/characters/regionNames.js",
-    "old": "(mixSeed(seed, 0x72656163) % 10) < 7",
-    "new": "(mixSeed(seed, 0x72656163) % 10) < 3",
+    "old": "  culture === 'breton' && home === 'skyrimReach' && mixSeed(seed, 0x72656163) % 10 < 7 ? 'reach' : culture; // 'reac'",
+    "new": "  culture === 'breton' && home === 'skyrimReach' && mixSeed(seed, 0x72656163) % 10 < 3 ? 'reach' : culture; // 'reac'",
     "tests": [
       "test/characters/regionnames.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "REGION-NAMES-vowel-seam",
     "file": "src/characters/regionNames.js",
-    "old": "const seam = same && (/[aeiouy]/i.test(b[0]) || /[^aeiouy]/i.test(b[1] ?? 'a'));",
-    "new": "const seam = same && /[^aeiouy]/i.test(b[1] ?? 'a');",
+    "old": "  const seam = same && (/[aeiouy]/i.test(b[0]) || /[^aeiouy]/i.test(b[1] ?? 'a'));",
+    "new": "  const seam = same && /[^aeiouy]/i.test(b[1] ?? 'a');",
     "tests": [
       "test/characters/regionnames.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "REGION-NAMES-orc-race-moved",
     "file": "src/characters/regionNames.js",
-    "old": "Khajiit: 'khajiit', Argonian: 'argonian', Imperial: 'imperial', Orc: 'orc', Reachman: 'reach',",
-    "new": "Khajiit: 'khajiit', Argonian: 'argonian', Imperial: 'imperial', Orc: 'nord', Reachman: 'reach',",
+    "old": "    Orc: 'orc',",
+    "new": "    Orc: 'nord',",
     "tests": [
       "test/characters/regionnames.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "REGION-NAMES-stream-unseeded",
     "file": "src/characters/regionNames.js",
-    "old": "const r = stream(mixSeed(seed, hashOf(own)));",
-    "new": "const r = stream(hashOf(own));",
+    "old": "  const r = stream(mixSeed(seed, hashOf(own)));",
+    "new": "  const r = stream(hashOf(own));",
     "tests": [
       "test/characters/regionnames.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "REGION-NAMES-orc-parts-cut",
     "file": "src/characters/regionNames.js",
-    "old": "on: freeze(['Bag', 'Bol',",
-    "new": "on: freeze(['Bag'], ['Bol',",
+    "old": "  on: freeze([\n    'Bag',\n    'Bol',\n    'Dush',\n    'Gash',\n    'Ghor',\n    'Gul',\n    'Lob',\n    'Mau',\n    'Mog',\n    'Mul',\n    'Nar',\n    'Ogr',\n    'Shag',\n    'Sharn',\n    'Ur',\n    'Yam',\n    'Grush',\n    'Lurb',\n    'Mazg',\n    'Snag',\n    'Krag',\n    'Dur',\n    'Borg',\n    'Gor',\n    'Mash',\n    'Ugr',\n    'Yag',\n    'Bur',\n    'Gham',\n  ]),",
+    "new": "  on: freeze(\n    ['Bag'],\n    [\n      'Bol',\n      'Dush',\n      'Gash',\n      'Ghor',\n      'Gul',\n      'Lob',\n      'Mau',\n      'Mog',\n      'Mul',\n      'Nar',\n      'Ogr',\n      'Shag',\n      'Sharn',\n      'Ur',\n      'Yam',\n      'Grush',\n      'Lurb',\n      'Mazg',\n      'Snag',\n      'Krag',\n      'Dur',\n      'Borg',\n      'Gor',\n      'Mash',\n      'Ugr',\n      'Yag',\n      'Bur',\n      'Gham',\n    ],\n  ),",
     "tests": [
       "test/characters/regionnames.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "REGION-NAMES-person-second-draw",
     "file": "src/characters/personNames.js",
-    "old": "const classic = fullName(bank, gender);",
-    "new": "const classic = (fullName(bank, gender), fullName(bank, gender));",
+    "old": "  const classic = fullName(bank, gender);",
+    "new": "  const classic = (fullName(bank, gender), fullName(bank, gender));",
     "tests": [
       "test/characters/regionnames.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "REGION-NAMES-person-seed-not-back",
     "file": "src/characters/personNames.js",
-    "old": "} finally { setSeed(saved); }",
-    "new": "} finally { /* kept */ }",
+    "old": "    setSeed(saved);",
+    "new": "    /* kept */",
     "tests": [
       "test/characters/regionnames.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "REGION-NAMES-person-race-unread",
     "file": "src/characters/personNames.js",
-    "old": "culture: cultureOfRace(race) ?? cultureOfBank(bank),",
-    "new": "culture: cultureOfBank(bank),",
+    "old": "  return regionName({ culture: cultureOfRace(race) ?? cultureOfBank(bank), gender, seed, region, home, classic });",
+    "new": "  return regionName({ culture: cultureOfBank(bank), gender, seed, region, home, classic });",
     "tests": [
       "test/characters/regionnames.test.js"
     ]

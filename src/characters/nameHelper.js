@@ -49,20 +49,40 @@
 // installed between two sessions (L10N5: saves hold ids).
 
 import { rand, srand, randomRangeInclusive } from '../formats/dfRandom.js';
-import { REGION_NAME_BANKS } from '../formats/mapsTables.js';   // WW-R: the Bay's banks its races' (FALL.EXE's), a province's its people's
+import { REGION_NAME_BANKS } from '../formats/mapsTables.js'; // WW-R: the Bay's banks its races' (FALL.EXE's), a province's its people's
 import { RACES } from '../systems/races.js';
-import { localeDocument, localizedText } from '../systems/textManager.js';   // L10N3f: a pack's NameGen.txt and the Nord suffix
+import { localeDocument, localizedText } from '../systems/textManager.js'; // L10N3f: a pack's NameGen.txt and the Nord suffix
 import { PACK_KIND } from '../systems/translationPacks.js';
 import nameGen from './nameGen.json' with { type: 'json' };
 
 export const BANK_TYPES = Object.freeze({
-  Breton: 0, Redguard: 1, Nord: 2, DarkElf: 3, HighElf: 4,
-  WoodElf: 5, Khajiit: 6, Imperial: 7, Monster1: 8, Monster2: 9, Monster3: 10,
+  Breton: 0,
+  Redguard: 1,
+  Nord: 2,
+  DarkElf: 3,
+  HighElf: 4,
+  WoodElf: 5,
+  Khajiit: 6,
+  Imperial: 7,
+  Monster1: 8,
+  Monster2: 9,
+  Monster3: 10,
 });
 export const GENDERS = Object.freeze({ Male: 0, Female: 1 });
 
-const BANK_NAMES = ['Breton', 'Redguard', 'Nord', 'DarkElf', 'HighElf',
-  'WoodElf', 'Khajiit', 'Imperial', 'Monster1', 'Monster2', 'Monster3'];
+const BANK_NAMES = [
+  'Breton',
+  'Redguard',
+  'Nord',
+  'DarkElf',
+  'HighElf',
+  'WoodElf',
+  'Khajiit',
+  'Imperial',
+  'Monster1',
+  'Monster2',
+  'Monster3',
+];
 
 /**
  * The JSON NameHelper deserializes, read as DFU's FullSerializer
@@ -76,12 +96,21 @@ const BANK_NAMES = ['Breton', 'Redguard', 'Nord', 'DarkElf', 'HighElf',
 export function parseFsJson(src) {
   const s = String(src ?? '');
   let i = 0;
-  const fail = (what) => { throw new Error(`${what} at ${i}`); };
+  const fail = (what) => {
+    throw new Error(`${what} at ${i}`);
+  };
   const space = () => {
     for (;;) {
       while (i < s.length && /\s/.test(s[i])) i++;
-      if (s[i] === '/' && s[i + 1] === '/') { while (i < s.length && s[i] !== '\n' && s[i] !== '\r') i++; continue; }
-      if (s[i] === '/' && s[i + 1] === '*') { const end = s.indexOf('*/', i + 2); i = end < 0 ? s.length : end + 2; continue; }
+      if (s[i] === '/' && s[i + 1] === '/') {
+        while (i < s.length && s[i] !== '\n' && s[i] !== '\r') i++;
+        continue;
+      }
+      if (s[i] === '/' && s[i + 1] === '*') {
+        const end = s.indexOf('*/', i + 2);
+        i = end < 0 ? s.length : end + 2;
+        continue;
+      }
       return;
     }
   };
@@ -90,9 +119,17 @@ export function parseFsJson(src) {
     if (s[i] !== '"') fail('Expected a string');
     let out = '';
     for (i++; i < s.length && s[i] !== '"'; i++) {
-      if (s[i] !== '\\') { out += s[i]; continue; }
+      if (s[i] !== '\\') {
+        out += s[i];
+        continue;
+      }
       const e = s[++i];
-      if (e === 'u') { const hex = s.slice(i + 1, i + 5); if (!/^[0-9a-f]{4}$/i.test(hex)) fail('Bad \\u escape'); out += String.fromCharCode(parseInt(hex, 16)); i += 4; } else if (ESCAPES[e] !== undefined) out += ESCAPES[e];
+      if (e === 'u') {
+        const hex = s.slice(i + 1, i + 5);
+        if (!/^[0-9a-f]{4}$/i.test(hex)) fail('Bad \\u escape');
+        out += String.fromCharCode(parseInt(hex, 16));
+        i += 4;
+      } else if (ESCAPES[e] !== undefined) out += ESCAPES[e];
       else fail(`Bad escape \\${e}`);
     }
     if (s[i] !== '"') fail('Unterminated string');
@@ -144,13 +181,16 @@ export function parseFsJson(src) {
  *  a non-empty list of strings (a draw over none is DFU's
  *  DivideByZeroException). Throws otherwise. */
 export function nameBanksOf(parsed) {
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('NameGen is not a dictionary of banks');
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed))
+    throw new Error('NameGen is not a dictionary of banks');
   const banks = {};
   for (const name of BANK_NAMES) {
     const bank = parsed[name];
-    if (!Array.isArray(bank?.sets) || bank.sets.length < nameGen[name].sets.length) throw new Error(`NameGen bank ${name} is missing or short`);
+    if (!Array.isArray(bank?.sets) || bank.sets.length < nameGen[name].sets.length)
+      throw new Error(`NameGen bank ${name} is missing or short`);
     for (const set of bank.sets) {
-      if (!Array.isArray(set?.parts) || !set.parts.length || !set.parts.every((p) => typeof p === 'string')) throw new Error(`NameGen bank ${name} has a set without parts`);
+      if (!Array.isArray(set?.parts) || !set.parts.length || !set.parts.every((p) => typeof p === 'string'))
+        throw new Error(`NameGen bank ${name} has a set without parts`);
     }
     banks[name] = bank;
   }
@@ -165,8 +205,12 @@ export function nameBanksOf(parsed) {
 export function loadNameGenData() {
   const text = localeDocument(PACK_KIND.NAMEGEN, 'NameGen');
   if (text == null) return nameGen;
-  try { return nameBanksOf(parseFsJson(text)); } catch (err) {
-    console.log(`Could not load or deserialize NameGen.txt database from StreamingAssets/Text or internal Resources. Check file exists and is in correct format. (${err?.message ?? err})`);
+  try {
+    return nameBanksOf(parseFsJson(text));
+  } catch (err) {
+    console.log(
+      `Could not load or deserialize NameGen.txt database from StreamingAssets/Text or internal Resources. Check file exists and is in correct format. (${err?.message ?? err})`,
+    );
     return nameGen;
   }
 }
@@ -174,11 +218,14 @@ export function loadNameGenData() {
 // The session's banks and Nord suffix - read at the first name made, then held (see L10N3f above).
 let _session = null;
 function session() {
-  if (!_session) _session = { banks: loadNameGenData(), nordSuffix: localizedText('nordSurnameImmutableSuffix', 'sen') };
+  if (!_session)
+    _session = { banks: loadNameGenData(), nordSuffix: localizedText('nordSurnameImmutableSuffix', 'sen') };
   return _session;
 }
 /** A new session's read, as a new page makes one. Tests; nothing in the game calls it. */
-export function resetNameBanks() { _session = null; }
+export function resetNameBanks() {
+  _session = null;
+}
 /** AUDIT TESA II P10: THE GAME'S OWN BANKS FOR A PLACE'S NAME. A place's name is the world's, as MAPS.BSA's names are -
  *  every client's alike, a pack or none (world/tamrielPlaces.js, world/tamrielCountry.js, world/tamrielDungeons.js name the
  *  places past the Bay): `fn` drawn on the vendored banks and DFU's own Nord suffix ('sen'), whatever NameGen.txt a
@@ -187,7 +234,11 @@ export function resetNameBanks() { _session = null; }
 export function withGameNameBanks(fn) {
   const was = _session;
   _session = GAME_SESSION;
-  try { return fn(); } finally { _session = was; }
+  try {
+    return fn();
+  } finally {
+    _session = was;
+  }
 }
 const GAME_SESSION = Object.freeze({ banks: nameGen, nordSuffix: 'sen' });
 
@@ -200,17 +251,22 @@ const draw = (parts) => parts[rand() % parts.length];
  *  expect Argonian names" (NameHelper.cs:50). Anything unknown falls
  *  to Breton, which is C#'s `default` arm sharing the Breton case. */
 const BANK_BY_RACE = Object.freeze({
-  Breton: BANK_TYPES.Breton, Redguard: BANK_TYPES.Redguard, Nord: BANK_TYPES.Nord,
-  DarkElf: BANK_TYPES.DarkElf, HighElf: BANK_TYPES.HighElf, WoodElf: BANK_TYPES.WoodElf,
-  Khajiit: BANK_TYPES.Khajiit, Argonian: BANK_TYPES.Imperial,
+  Breton: BANK_TYPES.Breton,
+  Redguard: BANK_TYPES.Redguard,
+  Nord: BANK_TYPES.Nord,
+  DarkElf: BANK_TYPES.DarkElf,
+  HighElf: BANK_TYPES.HighElf,
+  WoodElf: BANK_TYPES.WoodElf,
+  Khajiit: BANK_TYPES.Khajiit,
+  Argonian: BANK_TYPES.Imperial,
 });
 export const getNameBank = (raceKey) => BANK_BY_RACE[raceKey] ?? BANK_TYPES.Breton;
 
-
 /** EntityEnums.Races ordinal -> race key, so the 1..8 roll below can
  *  be handed to getNameBank exactly as C# hands GetNameBank a Races. */
-const RACE_KEY_BY_ORDINAL = Object.freeze(Object.fromEntries(
-  Object.entries(RACES).map(([key, ordinal]) => [ordinal, key])));
+const RACE_KEY_BY_ORDINAL = Object.freeze(
+  Object.fromEntries(Object.entries(RACES).map(([key, ordinal]) => [ordinal, key])),
+);
 
 /** MacroHelper.GetRandomNameBank (MacroHelper.cs:303-308):
  *
@@ -273,9 +329,8 @@ export function firstName(type, gender) {
     case BANK_TYPES.WoodElf:
     case BANK_TYPES.Khajiit:
     case BANK_TYPES.Imperial: {
-      const [a, b] = gender === GENDERS.Male
-        ? [bank.sets[0].parts, bank.sets[1].parts]
-        : [bank.sets[2].parts, bank.sets[3].parts];
+      const [a, b] =
+        gender === GENDERS.Male ? [bank.sets[0].parts, bank.sets[1].parts] : [bank.sets[2].parts, bank.sets[3].parts];
       return draw(a) + draw(b);
     }
     case BANK_TYPES.Redguard: {
@@ -285,7 +340,7 @@ export function firstName(type, gender) {
       const c = draw(bank.sets[2].parts);
       let d = '';
       // Verbatim short-circuit: female never rolls the 75%.
-      if (gender === GENDERS.Female || (rand() % 100 < 75)) d = draw(partsD);
+      if (gender === GENDERS.Female || rand() % 100 < 75) d = draw(partsD);
       return a + b + c + d;
     }
     default:
@@ -325,20 +380,25 @@ export function fullName(type, gender) {
  *  pick never returns it, exactly as GetRandomMonsterName carries
  *  it). All part draws ride DFRandom.rand(). */
 export function monsterName(gender = GENDERS.Male, bankRoll = Math.random, bankType = null) {
-  const type = bankType ?? (8 + Math.floor(bankRoll() * 2));
+  const type = bankType ?? 8 + Math.floor(bankRoll() * 2);
   const bank = bankOf(type);
   const partsA = bank.sets[0].parts;
   const partsB = bank.sets[1].parts;
   const partsC = bank.sets[2].parts;
   const partsD = bank.sets.length >= 4 ? bank.sets[3].parts : null;
-  let a = '', b = '', c = '', d = '';
-  if (type !== BANK_TYPES.Monster3) {   // Monster1 or Monster2
+  let a = '',
+    b = '',
+    c = '',
+    d = '';
+  if (type !== BANK_TYPES.Monster3) {
+    // Monster1 or Monster2
     a = draw(partsA);
     if (rand() % 50 < 25) b = draw(partsB);
     c = draw(partsC);
     // Additional set for Monster2 female
     if (partsD && gender === GENDERS.Female) d = draw(partsD);
-  } else {   // Monster3
+  } else {
+    // Monster3
     if (gender === GENDERS.Female || rand() % 100 >= 25) {
       a = draw(partsA);
     } else {

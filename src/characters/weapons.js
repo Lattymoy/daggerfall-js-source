@@ -10,17 +10,32 @@
 // CalculateWeaponToHit (modifier * 10). Constants byte-exact.
 import templates from './itemTemplates.json' with { type: 'json' };
 import { DYE_COLORS, DYE_TARGETS, getDyeColorTable } from './dyes.js';
-import { SKILLS } from '../systems/skills.js';   // GetWeaponSkillIDAsShort's return set
-import { SOUND } from '../systems/soundClips.js';   // F023: GetEquipSound's clips (soundClips is a leaf)
+import { SKILLS } from '../systems/skills.js'; // GetWeaponSkillIDAsShort's return set
+import { SOUND } from '../systems/soundClips.js'; // F023: GetEquipSound's clips (soundClips is a leaf)
 import { THUNDERLOCK_TEMPLATE, PISTOLET_TEMPLATE, PISTOLET_SPAN } from './thunderlockIds.js';
 import { HAND_WRAPS_TEMPLATE } from './handWrapsIds.js';
-import { customItemClass } from '../systems/roleplayRealismItems/rriItems.js';   // RRI1: a custom weapon class answers its own skill, damage and equip sound (virtuals)   // the port's own weapon - a leaf, so no cycle (see the file)
+import { customItemClass } from '../systems/roleplayRealismItems/rriItems.js'; // RRI1: a custom weapon class answers its own skill, damage and equip sound (virtuals)   // the port's own weapon - a leaf, so no cycle (see the file)
 
 export const WEAPONS = Object.freeze({
-  Dagger: 113, Tanto: 114, Staff: 115, Shortsword: 116, Wakazashi: 117,
-  Broadsword: 118, Saber: 119, Longsword: 120, Katana: 121, Claymore: 122,
-  Dai_Katana: 123, Mace: 124, Flail: 125, Warhammer: 126, Battle_Axe: 127,
-  War_Axe: 128, Short_Bow: 129, Long_Bow: 130, Arrow: 131,
+  Dagger: 113,
+  Tanto: 114,
+  Staff: 115,
+  Shortsword: 116,
+  Wakazashi: 117,
+  Broadsword: 118,
+  Saber: 119,
+  Longsword: 120,
+  Katana: 121,
+  Claymore: 122,
+  Dai_Katana: 123,
+  Mace: 124,
+  Flail: 125,
+  Warhammer: 126,
+  Battle_Axe: 127,
+  War_Axe: 128,
+  Short_Bow: 129,
+  Long_Bow: 130,
+  Arrow: 131,
 });
 
 /** DaggerfallUnityItem.GetEquipSound's WEAPONS arm (:839-867) - the
@@ -38,33 +53,52 @@ export const WEAPONS = Object.freeze({
 export function equipSoundFor(item) {
   const W = WEAPONS;
   if (!item || item.werecreatureClaws) return null;
-  const cls = customItemClass(item.templateIndex);   // RRI1: GetEquipSound
+  const cls = customItemClass(item.templateIndex); // RRI1: GetEquipSound
   if (cls?.equipSound) return SOUND[cls.equipSound];
   switch (item.templateIndex) {
-    case W.Battle_Axe: case W.War_Axe:
+    case W.Battle_Axe:
+    case W.War_Axe:
       return SOUND.EquipAxe;
-    case W.Broadsword: case W.Longsword: case W.Saber: case W.Katana:
+    case W.Broadsword:
+    case W.Longsword:
+    case W.Saber:
+    case W.Katana:
       return SOUND.EquipLongBlade;
-    case W.Claymore: case W.Dai_Katana:
+    case W.Claymore:
+    case W.Dai_Katana:
       return SOUND.EquipTwoHandedBlade;
-    case W.Dagger: case W.Tanto: case W.Wakazashi: case W.Shortsword:
+    case W.Dagger:
+    case W.Tanto:
+    case W.Wakazashi:
+    case W.Shortsword:
       return SOUND.EquipShortBlade;
     case W.Flail:
       return SOUND.EquipFlail;
-    case W.Mace: case W.Warhammer:
+    case W.Mace:
+    case W.Warhammer:
       return SOUND.EquipMaceOrHammer;
     case W.Staff:
       return SOUND.EquipStaff;
-    case W.Short_Bow: case W.Long_Bow:
+    case W.Short_Bow:
+    case W.Long_Bow:
       return SOUND.EquipBow;
     default:
-      return null;   // SoundClips.None
+      return null; // SoundClips.None
   }
 }
 
 export const WEAPON_MATERIALS = Object.freeze({
-  None: -1, Iron: 0, Steel: 1, Silver: 2, Elven: 3, Dwarven: 4,
-  Mithril: 5, Adamantium: 6, Ebony: 7, Orcish: 8, Daedric: 9,
+  None: -1,
+  Iron: 0,
+  Steel: 1,
+  Silver: 2,
+  Elven: 3,
+  Dwarven: 4,
+  Mithril: 5,
+  Adamantium: 6,
+  Ebony: 7,
+  Orcish: 8,
+  Daedric: 9,
 });
 
 // ItemBuilder.cs statics, verbatim (indexed by WeaponMaterialTypes).
@@ -90,18 +124,20 @@ export const WEAPON_CONDITION_POOL = 1600;
 
 // FormulaHelper.CalculateWeaponMinDamage, verbatim case groups.
 const W = WEAPONS;
-const MIN_DAMAGE = new Map([
-  [[W.Dagger, W.Tanto, W.Wakazashi, W.Shortsword, W.Broadsword, W.Staff, W.Mace], 1],
-  [[W.Longsword, W.Claymore, W.Battle_Axe, W.War_Axe, W.Flail], 2],
-  [[W.Saber, W.Katana, W.Dai_Katana, W.Warhammer], 3],
-  [[W.Short_Bow, W.Long_Bow], 5],   // BAL-ARCHERY: +1 over FormulaHelper's 4
-].flatMap(([ws, v]) => ws.map((w) => [w, v])));
+const MIN_DAMAGE = new Map(
+  [
+    [[W.Dagger, W.Tanto, W.Wakazashi, W.Shortsword, W.Broadsword, W.Staff, W.Mace], 1],
+    [[W.Longsword, W.Claymore, W.Battle_Axe, W.War_Axe, W.Flail], 2],
+    [[W.Saber, W.Katana, W.Dai_Katana, W.Warhammer], 3],
+    [[W.Short_Bow, W.Long_Bow], 5], // BAL-ARCHERY: +1 over FormulaHelper's 4
+  ].flatMap(([ws, v]) => ws.map((w) => [w, v])),
+);
 export function weaponMinDamage(weapon) {
-  if (weapon === THUNDERLOCK_TEMPLATE) return THUNDERLOCK_SPAN.min;   // THE DEPARTURE, below
-  if (weapon === PISTOLET_TEMPLATE) return PISTOLET_SPAN.min;   // PISTOLET: the second gun's, the same departure
-  const cls = customItemClass(weapon);   // RRI1: GetBaseDamageMin
+  if (weapon === THUNDERLOCK_TEMPLATE) return THUNDERLOCK_SPAN.min; // THE DEPARTURE, below
+  if (weapon === PISTOLET_TEMPLATE) return PISTOLET_SPAN.min; // PISTOLET: the second gun's, the same departure
+  const cls = customItemClass(weapon); // RRI1: GetBaseDamageMin
   if (cls?.baseDamageMin) return cls.baseDamageMin();
-  const o = _damageOverride.min?.(weapon);   // TryGetOverride("CalculateWeaponMinDamage") - RRI2's weaponBalance registers one
+  const o = _damageOverride.min?.(weapon); // TryGetOverride("CalculateWeaponMinDamage") - RRI2's weaponBalance registers one
   if (o != null) return o;
   return MIN_DAMAGE.get(weapon) ?? 0;
 }
@@ -118,24 +154,26 @@ export function registerWeaponDamageOverride({ min = null, max = null } = {}) {
 }
 
 // FormulaHelper.CalculateWeaponMaxDamage, verbatim case groups.
-const MAX_DAMAGE = new Map([
-  [[W.Dagger], 6],
-  [[W.Tanto, W.Shortsword, W.Staff], 8],
-  [[W.Wakazashi], 10],
-  [[W.Broadsword, W.Saber, W.Battle_Axe, W.Mace], 12],
-  [[W.Flail], 14],
-  [[W.Longsword, W.Katana, W.War_Axe], 16],
-  [[W.Short_Bow], 17],   // BAL-ARCHERY: +1 over FormulaHelper's 16
-  [[W.Claymore, W.Warhammer], 18],
-  [[W.Long_Bow], 19],   // BAL-ARCHERY: +1 over FormulaHelper's 18
-  [[W.Dai_Katana], 21],
-].flatMap(([ws, v]) => ws.map((w) => [w, v])));
+const MAX_DAMAGE = new Map(
+  [
+    [[W.Dagger], 6],
+    [[W.Tanto, W.Shortsword, W.Staff], 8],
+    [[W.Wakazashi], 10],
+    [[W.Broadsword, W.Saber, W.Battle_Axe, W.Mace], 12],
+    [[W.Flail], 14],
+    [[W.Longsword, W.Katana, W.War_Axe], 16],
+    [[W.Short_Bow], 17], // BAL-ARCHERY: +1 over FormulaHelper's 16
+    [[W.Claymore, W.Warhammer], 18],
+    [[W.Long_Bow], 19], // BAL-ARCHERY: +1 over FormulaHelper's 18
+    [[W.Dai_Katana], 21],
+  ].flatMap(([ws, v]) => ws.map((w) => [w, v])),
+);
 export function weaponMaxDamage(weapon) {
-  if (weapon === THUNDERLOCK_TEMPLATE) return THUNDERLOCK_SPAN.max;   // THE DEPARTURE, below
-  if (weapon === PISTOLET_TEMPLATE) return PISTOLET_SPAN.max;   // PISTOLET
-  const cls = customItemClass(weapon);   // RRI1: GetBaseDamageMax
+  if (weapon === THUNDERLOCK_TEMPLATE) return THUNDERLOCK_SPAN.max; // THE DEPARTURE, below
+  if (weapon === PISTOLET_TEMPLATE) return PISTOLET_SPAN.max; // PISTOLET
+  const cls = customItemClass(weapon); // RRI1: GetBaseDamageMax
   if (cls?.baseDamageMax) return cls.baseDamageMax();
-  const o = _damageOverride.max?.(weapon);   // TryGetOverride("CalculateWeaponMaxDamage")
+  const o = _damageOverride.max?.(weapon); // TryGetOverride("CalculateWeaponMaxDamage")
   if (o != null) return o;
   return MAX_DAMAGE.get(weapon) ?? 0;
 }
@@ -173,13 +211,15 @@ const THUNDERLOCK_SPAN = Object.freeze({ min: 7, max: 26 });
  *  an enchanted broadsword swung with LongBlade 70 was scored on
  *  HandToHand 20. Returns null (not HandToHand) for an unmapped
  *  template so callers keep DFU's own fallthrough. */
-export const WEAPON_SKILL_USED = new Map([
-  [[W.Dagger, W.Tanto, W.Wakazashi, W.Shortsword], SKILLS.ShortBlade],
-  [[W.Broadsword, W.Longsword, W.Saber, W.Katana, W.Claymore, W.Dai_Katana], SKILLS.LongBlade],
-  [[W.Battle_Axe, W.War_Axe], SKILLS.Axe],
-  [[W.Flail, W.Mace, W.Warhammer, W.Staff], SKILLS.BluntWeapon],
-  [[W.Short_Bow, W.Long_Bow], SKILLS.Archery],
-].flatMap(([ws, v]) => ws.map((w) => [w, v])));
+export const WEAPON_SKILL_USED = new Map(
+  [
+    [[W.Dagger, W.Tanto, W.Wakazashi, W.Shortsword], SKILLS.ShortBlade],
+    [[W.Broadsword, W.Longsword, W.Saber, W.Katana, W.Claymore, W.Dai_Katana], SKILLS.LongBlade],
+    [[W.Battle_Axe, W.War_Axe], SKILLS.Axe],
+    [[W.Flail, W.Mace, W.Warhammer, W.Staff], SKILLS.BluntWeapon],
+    [[W.Short_Bow, W.Long_Bow], SKILLS.Archery],
+  ].flatMap(([ws, v]) => ws.map((w) => [w, v])),
+);
 export function weaponSkillUsed(templateIndex) {
   // THE DEPARTURE (see THUNDERLOCK_SPAN above): Mac's call - "should
   // work with the archery skill" - and its own nature. It is fired
@@ -187,9 +227,9 @@ export function weaponSkillUsed(templateIndex) {
   // which skill a hit was scored on answers Archery from here, without
   // any of them learning that a new weapon exists.
   if (templateIndex === THUNDERLOCK_TEMPLATE) return SKILLS.Archery;
-  if (templateIndex === PISTOLET_TEMPLATE) return SKILLS.Archery;   // PISTOLET: fired, and it spends the Pellet - the same answer
-  if (templateIndex === HAND_WRAPS_TEMPLATE) return SKILLS.HandToHand;   // HAND-WRAPS: the fists' own skill
-  const cls = customItemClass(templateIndex);   // RRI1: GetWeaponSkillUsed
+  if (templateIndex === PISTOLET_TEMPLATE) return SKILLS.Archery; // PISTOLET: fired, and it spends the Pellet - the same answer
+  if (templateIndex === HAND_WRAPS_TEMPLATE) return SKILLS.HandToHand; // HAND-WRAPS: the fists' own skill
+  const cls = customItemClass(templateIndex); // RRI1: GetWeaponSkillUsed
   if (cls?.weaponSkillUsed) return SKILLS[cls.weaponSkillUsed];
   return WEAPON_SKILL_USED.get(templateIndex) ?? null;
 }
@@ -198,35 +238,60 @@ export function weaponSkillUsed(templateIndex) {
 export function weaponMaterialModifier(material) {
   const M = WEAPON_MATERIALS;
   switch (material) {
-    case M.Iron: return -1;
-    case M.Steel: case M.Silver: return 0;
-    case M.Elven: return 1;
-    case M.Dwarven: return 2;
-    case M.Mithril: case M.Adamantium: return 3;
-    case M.Ebony: return 4;
-    case M.Orcish: return 5;
-    case M.Daedric: return 6;
-    default: return 0;
+    case M.Iron:
+      return -1;
+    case M.Steel:
+    case M.Silver:
+      return 0;
+    case M.Elven:
+      return 1;
+    case M.Dwarven:
+      return 2;
+    case M.Mithril:
+    case M.Adamantium:
+      return 3;
+    case M.Ebony:
+      return 4;
+    case M.Orcish:
+      return 5;
+    case M.Daedric:
+      return 6;
+    default:
+      return 0;
   }
 }
 // FormulaHelper.CalculateWeaponToHit, verbatim.
-export function weaponToHit(material) { return weaponMaterialModifier(material) * 10; }
+export function weaponToHit(material) {
+  return weaponMaterialModifier(material) * 10;
+}
 
 // ItemHelper.GetWeaponDyeColor, verbatim (default: Unchanged).
 export function weaponDyeColor(material) {
-  const M = WEAPON_MATERIALS, D = DYE_COLORS;
+  const M = WEAPON_MATERIALS,
+    D = DYE_COLORS;
   switch (material) {
-    case M.Iron: return D.Iron;
-    case M.Steel: return D.Steel;
-    case M.Silver: return D.Silver;
-    case M.Elven: return D.Elven;
-    case M.Dwarven: return D.Dwarven;
-    case M.Mithril: return D.Mithril;
-    case M.Adamantium: return D.Adamantium;
-    case M.Ebony: return D.Ebony;
-    case M.Orcish: return D.Orcish;
-    case M.Daedric: return D.Daedric;
-    default: return D.Unchanged;
+    case M.Iron:
+      return D.Iron;
+    case M.Steel:
+      return D.Steel;
+    case M.Silver:
+      return D.Silver;
+    case M.Elven:
+      return D.Elven;
+    case M.Dwarven:
+      return D.Dwarven;
+    case M.Mithril:
+      return D.Mithril;
+    case M.Adamantium:
+      return D.Adamantium;
+    case M.Ebony:
+      return D.Ebony;
+    case M.Orcish:
+      return D.Orcish;
+    case M.Daedric:
+      return D.Daedric;
+    default:
+      return D.Unchanged;
   }
 }
 
@@ -235,10 +300,13 @@ const byIndex = new Map(templates.map((t) => [t.index, t]));
 // ItemBuilder.CalculateWeightForMaterial, verbatim (quarter-kg math).
 // Unity Mathf.Round is round-half-to-EVEN (banker's), not JS half-up -
 // 4.5kg Daedric hits 22.5 quarter-kgs exactly, DFU rounds to 22.
-const roundHalfEven = (x) => { const f = Math.floor(x); return (x - f === 0.5) ? (f % 2 === 0 ? f : f + 1) : Math.round(x); };
+const roundHalfEven = (x) => {
+  const f = Math.floor(x);
+  return x - f === 0.5 ? (f % 2 === 0 ? f : f + 1) : Math.round(x);
+};
 export function weightForMaterial(weightInKg, material) {
   const quarterKgs = Math.trunc(weightInKg * 4);
-  const matQuarterKgs = (quarterKgs * (weightMultipliersByMaterial[material] ?? 4)) / 4;   // AUDIT 68 S27-weightForMaterial-dup: an unknown material weighs its base (x4/4), never NaN - the inventory copy's guard, kept in the one home
+  const matQuarterKgs = (quarterKgs * (weightMultipliersByMaterial[material] ?? 4)) / 4; // AUDIT 68 S27-weightForMaterial-dup: an unknown material weighs its base (x4/4), never NaN - the inventory copy's guard, kept in the one home
   return roundHalfEven(matQuarterKgs) / 4;
 }
 
@@ -277,5 +345,8 @@ export function buildWeapon(templateIndex, material, { female = false } = {}) {
  *  ART_PAL. `palGet(index) -> {r,g,b}`. Dark -> light for shadePiece. */
 export function weaponMaterialRamp(material, palGet) {
   const idx = getDyeColorTable(weaponDyeColor(material), DYE_TARGETS.WeaponsAndArmor);
-  return idx.map((i) => { const c = palGet(i); return [c.r, c.g, c.b]; });
+  return idx.map((i) => {
+    const c = palGet(i);
+    return [c.r, c.g, c.b];
+  });
 }

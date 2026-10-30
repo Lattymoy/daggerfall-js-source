@@ -65,8 +65,8 @@
   {
     "name": "MWNPC10c-always-drawn",
     "file": "src/characters/rosterBodies.js",
-    "old": "a.drawn = !!drawn;",
-    "new": "a.drawn = true;",
+    "old": "  a.drawn = !!drawn;",
+    "new": "  a.drawn = true;",
     "tests": [
       "test/characters/mwnpc10c_roads.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "MWNPC10c-class-a-walker",
     "file": "src/characters/rosterBodies.js",
-    "old": "  if (cls != null) return rosterLook(rec,",
-    "new": "  if (false) return rosterLook(rec,",
+    "old": "  if (cls != null)",
+    "new": "  if (false)",
     "tests": [
       "test/characters/mwnpc10c_roads.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "MWNPC10c-class-race-bay",
     "file": "src/characters/rosterBodies.js",
-    "old": "seed, race: res.race });",
-    "new": "seed });",
+    "old": "  if (cls != null)\n    return rosterLook(rec, { mobileType: cls, gender: res.sex === 'female' ? 'female' : 'male', seed, race: res.race });",
+    "new": "  if (cls != null) return rosterLook(rec, { mobileType: cls, gender: res.sex === 'female' ? 'female' : 'male', seed });",
     "tests": [
       "test/characters/mwnpc10c_roads.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "MWNPC10c-class-all-men",
     "file": "src/characters/rosterBodies.js",
-    "old": "gender: res.sex === 'female' ? 'female' : 'male', seed,",
-    "new": "gender: 'male', seed,",
+    "old": "  if (cls != null)\n    return rosterLook(rec, { mobileType: cls, gender: res.sex === 'female' ? 'female' : 'male', seed, race: res.race });",
+    "new": "  if (cls != null) return rosterLook(rec, { mobileType: cls, gender: 'male', seed, race: res.race });",
     "tests": [
       "test/characters/mwnpc10c_roads.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "MWNPC10c-courtier-common",
     "file": "src/characters/rosterBodies.js",
-    "old": "courtier: 'noble',",
-    "new": "courtier: 'merchant',",
+    "old": "  courtier: 'noble',",
+    "new": "  courtier: 'merchant',",
     "tests": [
       "test/characters/mwnpc10c_roads.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "MWNPC10c-still-undyed",
     "file": "src/characters/rosterBodies.js",
-    "old": "const d = dressPerson({ role: kind, gender, seed, cut:",
-    "new": "const d = dressPerson({ role: kind, gender, seed: 0, cut:",
+    "old": "    const d = dressPerson({ role: kind, gender, seed, cut: kind === 'priest' ? 'robe' : null }); // MWNPC17: their kind's role, off their own id's seed - a priest at the door in the robes his picture wears",
+    "new": "    const d = dressPerson({ role: kind, gender, seed: 0, cut: kind === 'priest' ? 'robe' : null }); // MWNPC17: their kind's role, off their own id's seed - a priest at the door in the robes his picture wears",
     "tests": [
       "test/characters/mwnpc10c_roads.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "MWNPC10c-folk-one-seed",
     "file": "src/characters/rosterBodies.js",
-    "old": "res.race ?? 'Breton', seed);   // WATCH-DAY",
-    "new": "res.race ?? 'Breton', 0);   // WATCH-DAY",
+    "old": "    seed,",
+    "new": "    0,",
     "tests": [
       "test/characters/mwnpc10c_roads.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "MWNPC10c-guard-on-duty-off",
     "file": "src/characters/rosterBodies.js",
-    "old": "archive: guard ? res.archive : (res.civvies ?? res.archive),",
-    "new": "archive: res.archive,",
+    "old": "    {\n      archive: guard ? res.archive : (res.civvies ?? res.archive),\n      personFaceRecordId: res.face ?? 0,\n      gender: res.gender ?? 0,\n      guard,\n    },",
+    "new": "    { archive: res.archive, personFaceRecordId: res.face ?? 0, gender: res.gender ?? 0, guard },",
     "tests": [
       "test/characters/mwnpc10c_roads.test.js"
     ]

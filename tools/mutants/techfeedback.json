@@ -152,8 +152,8 @@
   {
     "name": "AUDIT-TECH-FEEDBACK-F1-bow-cut-undrawn",
     "file": "src/characters/weaponStates.js",
-    "old": "m.frame = m.isBow && m.bowIdleDrawn ? BOW_DRAWN_HOLD_FRAME : 0; m.ticks = 0;",
-    "new": "m.frame = 0; m.ticks = 0;",
+    "old": "  m.frame = m.isBow && m.bowIdleDrawn ? BOW_DRAWN_HOLD_FRAME : 0;",
+    "new": "  m.frame = 0;",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ],
@@ -183,8 +183,8 @@
   {
     "name": "TECH-CANCEL-gun-reload-waived",
     "file": "src/characters/weaponStates.js",
-    "old": "  if (m.ranged && !m.isBow) return null;",
-    "new": "  if (false) return null;",
+    "old": "  if (m.ranged && !m.isBow) return null; // a gun's shot and its reload stand (AUDIT PISTOL-PORT C1: a technique waits for them)",
+    "new": "  if (false) return null; // a gun's shot and its reload stand (AUDIT PISTOL-PORT C1: a technique waits for them)",
     "tests": [
       "test/systems/tech1_runner.test.js",
       "test/combat/gun/pistolport_audit.test.js"

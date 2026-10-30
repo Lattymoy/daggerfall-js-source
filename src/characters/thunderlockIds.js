@@ -35,7 +35,8 @@ export const PISTOLET_ARCHIVE = 562;
 export const PISTOLET_SPAN = Object.freeze({ min: 4, max: 15 });
 
 /** Is this item one of the port's own guns? The one question every reader that is not about ONE of them asks. */
-export const isGunTemplate = (templateIndex) => templateIndex === THUNDERLOCK_TEMPLATE || templateIndex === PISTOLET_TEMPLATE;
+export const isGunTemplate = (templateIndex) =>
+  templateIndex === THUNDERLOCK_TEMPLATE || templateIndex === PISTOLET_TEMPLATE;
 
 /**
  * THE AMMUNITION LINK: what does this weapon spend?
@@ -47,8 +48,7 @@ export const isGunTemplate = (templateIndex) => templateIndex === THUNDERLOCK_TE
  * Null for everything that spends nothing; the bow's own answer
  * (Arrow, 131) stays with the bow.
  */
-export const ammoTemplateFor = (item) =>
-  (isGunTemplate(item?.templateIndex) ? PELLET_TEMPLATE : null);   // PISTOLET: both guns eat the Pellet
+export const ammoTemplateFor = (item) => (isGunTemplate(item?.templateIndex) ? PELLET_TEMPLATE : null); // PISTOLET: both guns eat the Pellet
 
 /**
  * WHAT COMES OUT OF THE BARREL.
@@ -83,8 +83,7 @@ export const ORB_RECORD = 0;
 
 /** Does this weapon's shot fly as an orb? The archive, or null for
  *  every weapon whose shot is a shaft - which is all of DFU's. */
-export const orbArchiveFor = (item) =>
-  (isGunTemplate(item?.templateIndex) ? ORB_ARCHIVE : null);   // PISTOLET: the Pellet flies as the same orb from either gun
+export const orbArchiveFor = (item) => (isGunTemplate(item?.templateIndex) ? ORB_ARCHIVE : null); // PISTOLET: the Pellet flies as the same orb from either gun
 
 /**
  * THE ORB'S OWN COLOUR, SAMPLED RATHER THAN NAMED.
@@ -150,19 +149,38 @@ const _orb = { colour: [1, 1, 1], sampled: false };
 export function orbColourFrom(color32) {
   const d = color32?.colors;
   if (!d || !d.length) return null;
-  let r = 0, g = 0, b = 0, w = 0;          // chroma-weighted
-  let pr = 0, pg = 0, pb = 0, pw = 0;      // plain alpha-weighted, for the greyscale fallback
+  let r = 0,
+    g = 0,
+    b = 0,
+    w = 0; // chroma-weighted
+  let pr = 0,
+    pg = 0,
+    pb = 0,
+    pw = 0; // plain alpha-weighted, for the greyscale fallback
   for (let i = 0; i < d.length; i += 4) {
     const a = d[i + 3];
     if (!a) continue;
-    const R = d[i], G = d[i + 1], B = d[i + 2];
-    pr += R * a; pg += G * a; pb += B * a; pw += a;
+    const R = d[i],
+      G = d[i + 1],
+      B = d[i + 2];
+    pr += R * a;
+    pg += G * a;
+    pb += B * a;
+    pw += a;
     const chroma = Math.max(R, G, B) - Math.min(R, G, B);
     if (!chroma) continue;
     const k = a * chroma;
-    r += R * k; g += G * k; b += B * k; w += k;
+    r += R * k;
+    g += G * k;
+    b += B * k;
+    w += k;
   }
-  if (!w) { r = pr; g = pg; b = pb; w = pw; }   // nothing chromatic: the old answer, on purpose
+  if (!w) {
+    r = pr;
+    g = pg;
+    b = pb;
+    w = pw;
+  } // nothing chromatic: the old answer, on purpose
   if (!w) return null;
   const peak = Math.max(r, g, b);
   if (peak <= 0) return null;
@@ -174,7 +192,8 @@ export function noteOrbColour(color32) {
   if (_orb.sampled) return false;
   const c = orbColourFrom(color32);
   if (!c) return false;
-  _orb.colour = c; _orb.sampled = true;
+  _orb.colour = c;
+  _orb.sampled = true;
   return true;
 }
 
@@ -183,7 +202,10 @@ export function noteOrbColour(color32) {
 export const orbColour = () => _orb.colour;
 /** Test seam: the port never un-samples, but a suite drives more than
  *  one archive through this and must not inherit the last one's. */
-export function resetOrbColour() { _orb.colour = [1, 1, 1]; _orb.sampled = false; }
+export function resetOrbColour() {
+  _orb.colour = [1, 1, 1];
+  _orb.sampled = false;
+}
 
 /**
  * How far in front of the eye a shot is born.

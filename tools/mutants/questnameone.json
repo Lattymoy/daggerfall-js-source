@@ -2,8 +2,8 @@
   {
     "name": "QUEST-NAME-ONE-the-namer-re-draws",
     "file": "src/characters/staticNpc.js",
-    "old": "  return data.personName || drawn;\n",
-    "new": "  return drawn;\n",
+    "old": "  return data.personName || drawn;",
+    "new": "  return drawn;",
     "tests": [
       "test/systems/fb1020_questnameone.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "QUEST-NAME-ONE-the-name-before-the-draw",
     "file": "src/characters/staticNpc.js",
-    "old": "  srand(data.nameSeed);\n  const bank = nameBank ?? BANK_TYPES.Breton;",
-    "new": "  if (data.personName) return data.personName;\n  srand(data.nameSeed);\n  const bank = nameBank ?? BANK_TYPES.Breton;",
+    "old": "  srand(data.nameSeed);",
+    "new": "  if (data.personName) return data.personName;\n  srand(data.nameSeed);",
     "tests": [
       "test/systems/fb1020_questnameone.test.js"
     ]

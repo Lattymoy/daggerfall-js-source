@@ -82,8 +82,8 @@
   {
     "name": "HANDWRAPS-skill",
     "file": "src/characters/weapons.js",
-    "old": "  if (templateIndex === HAND_WRAPS_TEMPLATE) return SKILLS.HandToHand;",
-    "new": "",
+    "old": "  if (templateIndex === HAND_WRAPS_TEMPLATE) return SKILLS.HandToHand; // HAND-WRAPS: the fists' own skill",
+    "new": "  // HAND-WRAPS: the fists' own skill",
     "tests": [
       "test/combat/handwraps.test.js"
     ],

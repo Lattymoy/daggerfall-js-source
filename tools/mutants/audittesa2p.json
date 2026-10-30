@@ -506,8 +506,8 @@
   {
     "name": "P10-game-banks-unset",
     "file": "src/characters/nameHelper.js",
-    "old": "  _session = GAME_SESSION;\n",
-    "new": "",
+    "old": "  _session = GAME_SESSION;\n  try {",
+    "new": "  try {",
     "tests": [
       "test/world/audittesa2p_world.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "STALL-FLATS-the-archive-law-dropped",
     "file": "src/characters/peopleBodies.js",
-    "old": "  if (!data.questPerson && !isNpcFlat(data.billboardArchiveIndex)) return (pn._mwLook = null);\n",
-    "new": "",
+    "old": "  if (!data.questPerson && !isNpcFlat(data.billboardArchiveIndex)) return (pn._mwLook = null);\n  const kind = wardrobeOf(faction);",
+    "new": "  const kind = wardrobeOf(faction);",
     "tests": [
       "test/scenes/mwnpc8b_streetdungeon.test.js"
     ]

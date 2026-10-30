@@ -87,7 +87,7 @@ change (`:975`, A MOD'S MATERIALS, and `:976`, AN ENEMY'S GLOW), and are aimed a
 QUESTOR-SHE (found on the way). The four pronouns of the Work answer are the questor's
 (`talkMacros.js:"  const female = () => ctx.questorGender?.() === GENDERS.Female;"`). That helper compared the string
 `'female'`, but the pool's NPCData carries the Genders enum
-(`staticNpc.js:"    gender: ((pn.flags ?? 0) & 32) === 32 ? GENDERS.Female : GENDERS.Male,"`), and the world host hands
+(`staticNpc.js:"gender: ((pn.flags ?? 0) & 32)"`), and the world host hands
 it on unchanged (`world.js:"      return npcSession.getQuestorGender();"`). So every woman with work, 44.8% of questors,
 was "he/him/his" in four of 8076's six variants and three of 8077's eight. The pins had handed the helper the string,
 which no producer mints. DFU switches on the enum (TalkManagerMCP.cs:146-195), so this restores DFU and departs from

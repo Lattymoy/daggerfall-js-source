@@ -804,8 +804,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-pace-negative-counts",
     "file": "src/characters/weaponStates.js",
-    "old": "    try { const v = _pace[i][1](ctx, w); if (Number.isFinite(v) && v > 0) pct += v; }",
-    "new": "    try { const v = _pace[i][1](ctx, w); if (Number.isFinite(v)) pct += v; }",
+    "old": "      if (Number.isFinite(v) && v > 0) pct += v;",
+    "new": "      if (Number.isFinite(v)) pct += v;",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"

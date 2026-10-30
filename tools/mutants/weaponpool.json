@@ -38,8 +38,8 @@
   {
     "name": "WEAPON-POOL-viewer-on-the-rows",
     "file": "src/characters/weapons.js",
-    "old": "const pool = templateIndex === WEAPONS.Arrow ? t.hitPoints : WEAPON_CONDITION_POOL;",
-    "new": "const pool = t.hitPoints;",
+    "old": "  const pool = templateIndex === WEAPONS.Arrow ? t.hitPoints : WEAPON_CONDITION_POOL;",
+    "new": "  const pool = t.hitPoints;",
     "tests": [
       "test/systems/weaponpool.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WEAPON-POOL-viewer-arrow-on-the-pool",
     "file": "src/characters/weapons.js",
-    "old": "const pool = templateIndex === WEAPONS.Arrow ? t.hitPoints : WEAPON_CONDITION_POOL;",
-    "new": "const pool = WEAPON_CONDITION_POOL;",
+    "old": "  const pool = templateIndex === WEAPONS.Arrow ? t.hitPoints : WEAPON_CONDITION_POOL;",
+    "new": "  const pool = WEAPON_CONDITION_POOL;",
     "tests": [
       "test/systems/weaponpool.test.js"
     ]

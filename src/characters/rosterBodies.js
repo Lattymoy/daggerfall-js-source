@@ -8,7 +8,7 @@
 // characters/creatureBodies.js; a person's).
 import { rosterLook } from './foeBodies.js';
 import { folkLookOf } from './folkBodies.js';
-import { dressPerson } from './wardrobe.js';   // MWNPC17: a still picture's kind, dressed by its role
+import { dressPerson } from './wardrobe.js'; // MWNPC17: a still picture's kind, dressed by its role
 import { textSeed } from '../systems/livingWorld/seed.js';
 
 /** A key a host changed: a finite number or a string is one; null, undefined and NaN are none. */
@@ -24,14 +24,56 @@ const keyOf = (k) => (typeof k === 'string' || Number.isFinite(k) ? k : null);
  * @param {{ id: any, look: any, feet: number[], yaw: number, moving?: boolean, running?: boolean, swingKey?: any,
  *   hitKey?: any, dead?: number, scale?: number, drawn?: boolean }} o
  */
-export function rosterActor(rec, { id, look, feet, yaw, moving = false, running = false, swingKey = null, hitKey = null, dead = 0, scale = 1, drawn = true }) {
-  const a = rec._mwActor ??= { id, look: null, feet: null, yaw: 0, moving: false, running: false, drawn: true, swings: 0, strike: 1, casts: 0, castRange: 2, hits: 0, dead: 0, scale: 1 };
-  a.id = id; a.look = look; a.feet = feet; a.yaw = Number.isFinite(yaw) ? yaw : 0; a.drawn = !!drawn;
-  a.moving = !!moving; a.running = !!moving && !!running;
-  const sk = keyOf(swingKey), hk = keyOf(hitKey);
-  if (sk !== rec._mwSwingKey) { if (sk !== null) a.swings = (a.swings + 1) & 0xffff; rec._mwSwingKey = sk; }
-  if (hk !== rec._mwHitKey) { if (hk !== null) a.hits = (a.hits + 1) & 0xffff; rec._mwHitKey = hk; }
-  a.strike = 1 + (a.swings % 6);   // POSE_STRIKES 1..6, off the count as a foe's is
+export function rosterActor(
+  rec,
+  {
+    id,
+    look,
+    feet,
+    yaw,
+    moving = false,
+    running = false,
+    swingKey = null,
+    hitKey = null,
+    dead = 0,
+    scale = 1,
+    drawn = true,
+  },
+) {
+  const a = (rec._mwActor ??= {
+    id,
+    look: null,
+    feet: null,
+    yaw: 0,
+    moving: false,
+    running: false,
+    drawn: true,
+    swings: 0,
+    strike: 1,
+    casts: 0,
+    castRange: 2,
+    hits: 0,
+    dead: 0,
+    scale: 1,
+  });
+  a.id = id;
+  a.look = look;
+  a.feet = feet;
+  a.yaw = Number.isFinite(yaw) ? yaw : 0;
+  a.drawn = !!drawn;
+  a.moving = !!moving;
+  a.running = !!moving && !!running;
+  const sk = keyOf(swingKey),
+    hk = keyOf(hitKey);
+  if (sk !== rec._mwSwingKey) {
+    if (sk !== null) a.swings = (a.swings + 1) & 0xffff;
+    rec._mwSwingKey = sk;
+  }
+  if (hk !== rec._mwHitKey) {
+    if (hk !== null) a.hits = (a.hits + 1) & 0xffff;
+    rec._mwHitKey = hk;
+  }
+  a.strike = 1 + (a.swings % 6); // POSE_STRIKES 1..6, off the count as a foe's is
   a.dead = dead > 0 ? dead | 0 : 0;
   a.scale = scale > 0 ? scale : 1;
   return a;
@@ -42,7 +84,12 @@ export function rosterActor(rec, { id, look, feet, yaw, moving = false, running 
  *  Keyed by the resident's job - a street's still picture is their job's kind (looks.js stillRoleOf: a priest's, a
  *  stall's merchant's), a room's flat their job's too (world/travellerSprites.js). MWNPC17: the wardrobe's role
  *  (characters/wardrobe.js WARDROBE_ROLES) each is dressed by. */
-export const STILL_WARDROBE = Object.freeze({ courtier: 'noble', priest: 'priest', keeper: 'merchant', merchant: 'merchant' });
+export const STILL_WARDROBE = Object.freeze({
+  courtier: 'noble',
+  priest: 'priest',
+  keeper: 'merchant',
+  merchant: 'merchant',
+});
 
 /**
  * MWNPC10c (bible/04-Characters/Morrowind-NPCs.md section 15c): ONE OF THE LIVING WORLD'S PEOPLE AS THEIR SPRITE SHOWS
@@ -58,14 +105,24 @@ export const STILL_WARDROBE = Object.freeze({ courtier: 'noble', priest: 'priest
  */
 export function residentLook(rec, res, { still = false, cls = res.cls, guard = false } = {}) {
   const seed = textSeed(String(res.id));
-  if (cls != null) return rosterLook(rec, { mobileType: cls, gender: res.sex === 'female' ? 'female' : 'male', seed, race: res.race });
+  if (cls != null)
+    return rosterLook(rec, { mobileType: cls, gender: res.sex === 'female' ? 'female' : 'male', seed, race: res.race });
   const kind = still ? STILL_WARDROBE[res.job] : undefined;
   if (kind) {
     const gender = res.sex === 'female' ? 'female' : 'male';
-    const d = dressPerson({ role: kind, gender, seed, cut: kind === 'priest' ? 'robe' : null });   // MWNPC17: their kind's role, off their own id's seed - a priest at the door in the robes his picture wears
+    const d = dressPerson({ role: kind, gender, seed, cut: kind === 'priest' ? 'robe' : null }); // MWNPC17: their kind's role, off their own id's seed - a priest at the door in the robes his picture wears
     return { race: res.race ?? 'Breton', gender, faceIndex: (seed >>> 0) % 10, items: d.items, npc: d.npc };
   }
-  return folkLookOf({ archive: guard ? res.archive : (res.civvies ?? res.archive), personFaceRecordId: res.face ?? 0, gender: res.gender ?? 0, guard }, res.race ?? 'Breton', seed);   // WATCH-DAY: on duty in the uniform, off it in his own clothes, as his sprite is
+  return folkLookOf(
+    {
+      archive: guard ? res.archive : (res.civvies ?? res.archive),
+      personFaceRecordId: res.face ?? 0,
+      gender: res.gender ?? 0,
+      guard,
+    },
+    res.race ?? 'Breton',
+    seed,
+  ); // WATCH-DAY: on duty in the uniform, off it in his own clothes, as his sprite is
 }
 
 /**
@@ -91,9 +148,15 @@ export function residentWalkerActor(person, feet) {
   const guard = !!person.guard;
   const still = !!person.stillLook;
   let k = person._mwRes;
-  if (!k || k.res !== res || k.cls !== cls || k.guard !== guard || k.still !== still) k = person._mwRes = { res, look: null, cls, guard, still };   // a compare a frame, no allocation
+  if (!k || k.res !== res || k.cls !== cls || k.guard !== guard || k.still !== still)
+    k = person._mwRes = { res, look: null, cls, guard, still }; // a compare a frame, no allocation
   k.look ??= residentLook(k, res, { still, cls, guard });
-  return rosterActor(k, { id: `res:${res.id}`, look: k.look, feet, yaw: Number.isFinite(person.yaw) ? person.yaw : (person.facingYaw ?? 0),
-    moving: person.state === 'move', drawn: cls != null });
+  return rosterActor(k, {
+    id: `res:${res.id}`,
+    look: k.look,
+    feet,
+    yaw: Number.isFinite(person.yaw) ? person.yaw : (person.facingYaw ?? 0),
+    moving: person.state === 'move',
+    drawn: cls != null,
+  });
 }
-
