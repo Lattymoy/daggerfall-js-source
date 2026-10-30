@@ -128,8 +128,8 @@
   {
     "name": "STAR4-the-streak-linear",
     "file": "src/render/starfall/starfallPass.js",
-    "old": "d = 1 - Math.min(1, Math.max(0, k)) ** 2;",
-    "new": "d = 1 - Math.min(1, Math.max(0, k));",
+    "old": "    d = 1 - Math.min(1, Math.max(0, k)) ** 2;",
+    "new": "    d = 1 - Math.min(1, Math.max(0, k));",
     "tests": [
       "test/systems/starfall/star4_world.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "STAR4-no-clamp",
     "file": "src/render/starfall/starfallPass.js",
-    "old": "const s = d > STAR_SKY_R ? STAR_SKY_R / d : 1;",
-    "new": "const s = 1;",
+    "old": "  const s = d > STAR_SKY_R ? STAR_SKY_R / d : 1;",
+    "new": "  const s = 1;",
     "tests": [
       "test/systems/starfall/star4_world.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "STAR4-the-ring-unfaded",
     "file": "src/render/starfall/starfallPass.js",
-    "old": "return { r: STAR_RING_M * (1 - (1 - k) ** 2), fade: (1 - k) ** 1.5 };",
-    "new": "return { r: STAR_RING_M * (1 - (1 - k) ** 2), fade: 1 };",
+    "old": "  return { r: STAR_RING_M * (1 - (1 - k) ** 2), fade: (1 - k) ** 1.5 };",
+    "new": "  return { r: STAR_RING_M * (1 - (1 - k) ** 2), fade: 1 };",
     "tests": [
       "test/systems/starfall/star4_world.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "STAR4-the-int-mediump",
     "file": "src/render/starfall/starfallPass.js",
-    "old": "precision highp float;\nprecision highp int;\n`;",
-    "new": "precision highp float;\n`;",
+    "old": "precision highp int;\n`; // the int too: a fragment shader's is mediump by default, and `uKind` is both stages' (they would not link)",
+    "new": "`; // the int too: a fragment shader's is mediump by default, and `uKind` is both stages' (they would not link)",
     "tests": [
       "test/systems/starfall/star4_world.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "AUDIT-STARFALL-R2-the-column-unscaled",
     "file": "src/render/starfall/starfallPass.js",
-    "old": "const s = b.scale > 0 && b.scale <= 1 ? b.scale : 1;",
-    "new": "const s = 1;",
+    "old": "        const s = b.scale > 0 && b.scale <= 1 ? b.scale : 1;",
+    "new": "        const s = 1;",
     "tests": [
       "test/systems/starfall/star4_world.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "AUDIT-STARFALL-R3-the-ring-flat",
     "file": "src/render/starfall/starfallPass.js",
-    "old": "uGround[i * 2 + j] + ${STAR_RING_LIFT_M.toFixed(2)}",
-    "new": "${STAR_RING_LIFT_M.toFixed(2)}",
+    "old": "  return uAt + vec3(sin(a) * r, uGround[i * 2 + j] + ${STAR_RING_LIFT_M.toFixed(2)}, cos(a) * r);",
+    "new": "  return uAt + vec3(sin(a) * r, ${STAR_RING_LIFT_M.toFixed(2)}, cos(a) * r);",
     "tests": [
       "test/systems/starfall/star4_world.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "AUDIT-STARFALL-R3-one-edge-in-the-shader",
     "file": "src/render/starfall/starfallPass.js",
-    "old": "float r = j == 0 ? max(0.0, uR - uWidth) : uR + uWidth;",
-    "new": "float r = uR;",
+    "old": "  float r = j == 0 ? max(0.0, uR - uWidth) : uR + uWidth;",
+    "new": "  float r = uR;",
     "tests": [
       "test/systems/starfall/star4_world.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "AUDIT-STARFALL-R3-no-ground-handed",
     "file": "src/render/starfall/starfallPass.js",
-    "old": "gl.uniform1fv(U.uGround, r.ground?.length === STAR_RING_SEGS * 2 ? r.ground : FLAT_RING);",
-    "new": "gl.uniform1fv(U.uGround, FLAT_RING);",
+    "old": "        gl.uniform1fv(U.uGround, r.ground?.length === STAR_RING_SEGS * 2 ? r.ground : FLAT_RING);",
+    "new": "        gl.uniform1fv(U.uGround, FLAT_RING);",
     "tests": [
       "test/systems/starfall/star4_world.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "AUDIT-STARFALL-R5-the-sky-no-focus",
     "file": "src/render/starfall/starfallPass.js",
-    "old": "'uLight', 'uTime', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uJungleHaze']);",
-    "new": "'uLight', 'uTime', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos']);",
+    "old": "      'uCamPos',\n      'uFocus',\n      'uJungleHaze',\n    ]);\n    this.ring = buildProgram(gl, ring[0], ring[1], 'star ring');",
+    "new": "      'uCamPos',\n    ]);\n    this.ring = buildProgram(gl, ring[0], ring[1], 'star ring');",
     "tests": [
       "test/systems/starfall/star4_world.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "AUDIT-STARFALL-R5-the-ring-no-focus",
     "file": "src/render/starfall/starfallPass.js",
-    "old": "'uGround', 'uFade', 'uColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uJungleHaze']);",
-    "new": "'uGround', 'uFade', 'uColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos']);",
+    "old": "      'uCamPos',\n      'uFocus',\n      'uJungleHaze',\n    ]);\n    const col = beaconVertices();",
+    "new": "      'uCamPos',\n    ]);\n    const col = beaconVertices();",
     "tests": [
       "test/systems/starfall/star4_world.test.js"
     ]

@@ -16,6 +16,8 @@
 /src/render/dragon/*/
 !/src/render/ketch/
 /src/render/ketch/*/
+!/src/render/starfall/
+/src/render/starfall/*/
 !/src/systems/
 /src/systems/*
 !/src/systems/firstVisit/
