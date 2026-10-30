@@ -8,7 +8,8 @@
 import { YARD_MESH_KIT } from './merchantYards/merchantYardModels.js';
 import { registerCustomModel } from './customModels.js';
 import { GUILD_ART_ARCHIVE, GUILD_ART_REC as R } from './guildFurnitureArt.js';
-import { GUILD_SHOP_WARES, GUILD_SHOP_NAME, GUILD_FURNITURE_MODELS, guildWareOfModel } from '../net/guild/guildShopLaw.js';
+import { GUILD_SHOP_WARES, GUILD_FURNITURE_MODELS, guildWareOfModel } from '../net/guild/guildShopLaw.js';
+import { guildWareName } from '../ui/guild/guildShopText.js';   // a piece's name, in the player's language
 
 const { faces, box, drum, assemble } = YARD_MESH_KIT;
 const solid = { under: true };
@@ -130,7 +131,7 @@ export const GUILD_BRAZIER_LIGHT = Object.freeze({ color: [1.0, 0.62, 0.3], rang
  * the vault; the brazier lights.
  */
 export const GUILD_FURNITURE_ENTRIES = Object.freeze(GUILD_SHOP_WARES.filter((w) => w.model != null).map((w) => Object.freeze({
-  key: `m${w.model}`, model: w.model, flat: null, kind: 'furniture', name: GUILD_SHOP_NAME[/** @type {keyof typeof GUILD_SHOP_NAME} */ (w.key)], guild: w.key,
+  key: `m${w.model}`, model: w.model, flat: null, kind: 'furniture', get name() { return guildWareName(w.key); }, guild: w.key,
   count: 0, storage: false, light: w.key === 'brazier' ? GUILD_BRAZIER_LIGHT : null, hall: true,
 })));
 /** Whether a placed piece is the guild's banker (scenes/worldModes.js: its press opens the vault). */

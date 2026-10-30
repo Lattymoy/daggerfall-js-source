@@ -57,8 +57,8 @@ import { GUILD_FOUND_GOLD, guildGoldOk } from './guildLaw.js';
 import { guildHallEntryOk } from '../hallLaw.js';   // GUILD1d: who may walk into a hall
 import { heraldryOf } from '../heraldryLaw.js';   // GUILD1d: a heraldry chosen, in the law's shape
 import { mintMarksRid } from '../marksBook.js';   // GUILD1d: a heraldry changed burns Drakes - one request id a choice
-import { setArmsDoor, noteGuildArms, noteOwnGuild } from './guildArmsBook.js';
-import { setGuildStockReader, noteGuildShop } from './guildStock.js';   // GUILD-SHOP: the hall pieces the guild owns, for the decor tool   // GUILD-SHOP: every guild's arms by its tag - the door it asks through, and this guild's told
+import { setArmsDoor, noteGuildArms, noteOwnGuild } from './guildArmsBook.js';   // GUILD-SHOP: every guild's arms by its tag - the door it asks through, and this guild's told
+import { setGuildStockReader, noteGuildShop } from './guildStock.js';   // GUILD-SHOP: the guild shop's stock and wares, for the decor tool and the fleet
 import { walletReserve } from '../realm/realmGoldLaw.js';   // MARKET-AUDIT: a refusal gives back exactly what the payment took
 import { lastOnlineText } from '../social.js';   // GUILD-SEEN: a member's "last online" in the friends list's own words
 import { PLAY_GRACE_S } from '../playClock.js';   // GUILD-SEEN: and "Online" by the play beat's own sitting
@@ -181,6 +181,7 @@ export class GuildBook {
     /** @type {{ask: string, rid: string}|null} DOMAIN2: a castle bought or given up, and its one request id */ this._castleAsk = null;
     /** @type {Map<string, {key: string, rid: string}>} GUILD-SHOP: each silver act asked (a rename, a ware, a logo) and its one request id */ this._asks = new Map();
     /** @type {any} GUILD-SHOP: the guild shop as the last read said it (guildShop.js guildShopOf), or null not yet read */ this.shopView = null;
+    /** @type {string | null | undefined} GUILD-SHOP: the guild whose stock the shop's module holds */ this._shopTag = undefined;
     /** @type {string|null} GUILD-SHOP: the last shop read's refusal, or null */ this.shopError = null;
     setArmsDoor(door, now);
     setGuildStockReader(() => { if (!this._stockAsked) { this._stockAsked = true; this.readShop().finally(() => { this._stockAsked = false; }); } });   // GUILD-SHOP: the decor tool's ask
@@ -221,6 +222,7 @@ export class GuildBook {
     this.guild = mine.data?.guild ?? null;
     if (this.guild) noteGuildArms(this.guild.tag, this.guild.heraldry, this.guild.logo, this.guild.name);   // GUILD-SHOP: the faces that draw this guild's arms
     noteOwnGuild(this.guild?.tag ?? null);
+    if (this._shopTag !== (this.guild?.tag ?? null)) { this._shopTag = this.guild?.tag ?? null; noteGuildShop(null); }   // GUILD-SHOP: another guild's stock is read afresh
     this.invites = Array.isArray(inv.data?.invites) ? inv.data.invites : [];
     this.state = 'ready';
     this.error = null;
@@ -389,7 +391,7 @@ export class GuildBook {
     const gen = (this._shopGen = (this._shopGen ?? 0) + 1);
     const r = await this.door.shop(character);
     if (gen !== this._shopGen) return r;
-    if (r?.ok) { this.shopView = r.data?.shop ?? null; this.shopError = null; noteGuildShop(this.shopView); } else { this.shopError = r?.error ?? 'server'; this._whole(r?.error); }
+    if (r?.ok) { this.shopView = r.data?.shop ?? null; this.shopError = null; noteGuildShop(this.shopView); } else { this.shopError = r?.error ?? 'server'; this._whole(r?.error); if (r?.error === 'no-guild' || r?.error === 'guilds-need-account') noteGuildShop(null, true); }
     this._changed();
     return r;
   }

@@ -11,7 +11,8 @@ import { seatRealm } from '../realmSeat.mjs';
 import { GUILD_FURNITURE_BUILDS, GUILD_FURNITURE_ENTRIES, GUILD_BRAZIER_LIGHT, isGuildBanker, registerGuildFurniture } from '../../src/world/guildFurniture.js';
 import { GUILD_ART_ARCHIVE, GUILD_ART_REC, guildMaterialArt, guildArmsArt, wearGuildArt } from '../../src/world/guildFurnitureArt.js';
 import { customModelFor } from '../../src/world/customModels.js';
-import { GUILD_FURNITURE_MODELS, GUILD_SHOP_NAME } from '../../src/net/guild/guildShopLaw.js';
+import { GUILD_FURNITURE_MODELS } from '../../src/net/guild/guildShopLaw.js';
+import { guildWareName } from '../../src/ui/guild/guildShopText.js';
 import { decorRoomEntries } from '../../src/systems/decor/decorCatalogue.js';
 import { decorLightOf } from '../../src/net/decorLaw.js';
 import { hallPiecePress } from '../../src/scenes/guildHallPress.js';
@@ -46,7 +47,7 @@ test('GUILD-SHOP the hall pieces: seven models of the port\'s own, each standing
 });
 
 test('GUILD-SHOP the catalogue: the pieces offered in a guild\'s hall alone, never a home or a yard; named, free of gold (their stock instead), the brazier lit (mutants: a home offered them; the brazier dark)', () => {
-  assert.deepEqual(GUILD_FURNITURE_ENTRIES.map((e) => [e.model, e.guild, e.name]), GUILD_FURNITURE_MODELS.map((m, i) => [m, Object.keys(GUILD_FURNITURE_BUILDS)[i], GUILD_SHOP_NAME[Object.keys(GUILD_FURNITURE_BUILDS)[i]]]));
+  assert.deepEqual(GUILD_FURNITURE_ENTRIES.map((e) => [e.model, e.guild, e.name]), GUILD_FURNITURE_MODELS.map((m, i) => [m, Object.keys(GUILD_FURNITURE_BUILDS)[i], guildWareName(Object.keys(GUILD_FURNITURE_BUILDS)[i])]));
   assert.equal(decorRoomEntries(GUILD_FURNITURE_ENTRIES, { hall: true }).length, 7);
   assert.equal(decorRoomEntries(GUILD_FURNITURE_ENTRIES, { hall: false }).length, 0, 'a home');
   assert.equal(decorRoomEntries(GUILD_FURNITURE_ENTRIES, { hall: true, yard: true }).length, 0, 'a hall\'s yard');

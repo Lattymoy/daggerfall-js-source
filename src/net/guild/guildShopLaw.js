@@ -35,13 +35,6 @@ export const GUILD_SHOP_WARES = Object.freeze([
 ]);
 /** Every ware's key. */
 export const GUILD_SHOP_KEYS = Object.freeze(GUILD_SHOP_WARES.map((w) => w.key));
-/** A ware's name in English - the service's ledger and letters (the client's own words: ui/guild/guildShopText.js). */
-export const GUILD_SHOP_NAME = Object.freeze({
-  insigniaarmlet: 'Insignia Armlet', guildcrest: 'Guild Crest', guildsails: 'Guild Sailcloth', banker: 'Guild Banker',
-  standard: 'Heraldic Standard', crestplaque: 'Crest Plaque', throne: 'Guildmaster\'s Seat', wartable: 'War Table',
-  weaponrack: 'Weapon Rack', brazier: 'Guild Brazier',
-});
-
 /** A ware by its key, or null. */
 export const guildWareOf = (/** @type {unknown} */ key) => (typeof key === 'string' ? GUILD_SHOP_WARES.find((w) => w.key === key) ?? null : null);
 /** The account wares held on a `players.guild_wares` value, by key, in the window's order. */

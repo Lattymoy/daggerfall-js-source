@@ -10,7 +10,8 @@
 //
 // Not a DFU member. Ledger A (THE WITCHES' FESTIVAL).
 
-import { shieldSvg } from './heraldryArt.js';   // GUILD-SHOP: the Guild Crest wears its wearer's guild's arms
+import { shieldSvg } from './heraldryArt.js';
+import { t } from '../systems/textManager.js';   // GUILD-SHOP: the Guild Crest wears its wearer's guild's arms
 import { ownGuildArms, guildLogoSrc } from '../net/guild/guildArmsBook.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -21,7 +22,7 @@ export const ICON_TEXT = Object.freeze({
   twinmoons: 'Twin Moons',
   wyrdcauldron: 'Wyrd Cauldron',
   soulcake: 'Soul Cake',
-  guildcrest: 'Guild Crest',   // GUILD-SHOP
+  get guildcrest() { return t('profile.icon.guildcrest', 'Guild Crest'); },   // GUILD-SHOP
 });
 
 /** Each icon's drawing: its field's two colours (the round ground, inner to outer) and its shapes - each `[tag, attrs]`

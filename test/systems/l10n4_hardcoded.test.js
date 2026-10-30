@@ -77,7 +77,7 @@ const HARDCODED = {
   'src/net/accountClient.js': 14,
   'src/net/arena/arenaBrain.js': 2,
   'src/net/arena/arenaLaw.js': 28,
-  'src/net/armoryLaw.js': 10,   // ARMORY: ARMORY_NAME - the pieces' names and the Eternal set's in the service's English (the shop's receipt, the account's letters); the client says them through ui/armoryText.js, a pin holding the two equal
+  'src/net/armoryLaw.js': 11,   // GUILD-SHOP: and the Insignia Armlet's (armory.test.js holds every piece's service name to its client words). ARMORY: ARMORY_NAME - the pieces' names and the Eternal set's in the service's English (the shop's receipt, the account's letters); the client says them through ui/armoryText.js, a pin holding the two equal
   'src/net/bagLaw.js': 26,
   'src/net/boardLaw.js': 4,
   'src/net/card/cardLaw.js': 6,
@@ -774,7 +774,7 @@ const HARDCODED = {
   'src/ui/sigilRune.js': 5,
   'src/ui/skinCard.js': 7,
   'src/ui/socialMenu.js': 4,
-  'src/ui/socialPanel.js': 235,   // GUILD-WINDOW: -2, the header's two sentences are its tiles, their names in t()
+  'src/ui/socialPanel.js': 234,   // GUILD-WINDOW: -2, the header's two sentences are its tiles, their names in t()
   'src/ui/socketWells.js': 4,
   'src/ui/spell/spellMakerWindow.js': 15,
   'src/ui/spellbookWindow.js': 4,

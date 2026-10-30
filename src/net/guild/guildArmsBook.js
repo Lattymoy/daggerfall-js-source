@@ -51,6 +51,8 @@ export function noteOwnGuild(/** @type {unknown} */ tag) { _own = typeof tag ===
 export const ownGuildArms = () => (_own ? guildArmsOf(_own) : null);
 /** @type {any} the arms of the guild whose hall stands round the reader now, as its decor read said them */
 let _hall = null;
+/** @type {((id: string) => unknown) | null} */
+let _peerTag = null;
 /** GUILD-SHOP: a guild hall's arms, told with its pieces (server-account/src/decor.js decorOf's `arms`); null for none. */
 export function noteHallArms(/** @type {any} */ arms) {
   _hall = arms && typeof arms === 'object' ? { heraldry: heraldryOf(arms.heraldry), logo: typeof arms.logo === 'string' ? arms.logo : null } : null;
@@ -77,5 +79,9 @@ function askSoon() {
   }).catch(() => {}).finally(() => { _asking = false; });
 }
 
+/** GUILD-SHOP: a peer's guild tag by their id (online.js guildTagOf - their token's), as the host that holds the session
+ *  wires it (scenes/auraHost.js); null for none or before it is wired. A boat's sailcloth flies its owner's arms by it. */
+export function setPeerTagReader(/** @type {((id: string) => unknown) | null} */ fn) { _peerTag = typeof fn === 'function' ? fn : null; }
+export const peerGuildTag = (/** @type {string} */ id) => { const t = _peerTag?.(id); return typeof t === 'string' && GUILD_TAG_RE.test(t) ? t : null; };
 /** For the tests: everything forgotten. */
-export function _resetArmsBook() { _hall = null; _own = null; _arms.clear(); _wanted.clear(); _door = null; _asking = false; _askedAt = -Infinity; _version = 0; _now = () => Date.now(); }
+export function _resetArmsBook() { _peerTag = null; _hall = null; _own = null; _arms.clear(); _wanted.clear(); _door = null; _asking = false; _askedAt = -Infinity; _version = 0; _now = () => Date.now(); }

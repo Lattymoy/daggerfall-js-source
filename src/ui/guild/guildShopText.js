@@ -1,7 +1,6 @@
 // @ts-check
 // GUILD-SHOP (bible/11-Multiplayer/Guild-Shop.md): THE GUILD SHOP'S WORDS, in the player's language - each ware's name and
-// what it looks like, each section's name, and who pays. The service's English for the same wares is
-// net/guild/guildShopLaw.js GUILD_SHOP_NAME (its ledger and letters).
+// what it looks like, each section's name, and who pays. The service names a ware by its key alone.
 import { t } from '../../systems/textManager.js';
 
 /** A ware's name. */

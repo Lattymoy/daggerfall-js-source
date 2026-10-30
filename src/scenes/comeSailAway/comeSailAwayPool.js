@@ -41,6 +41,7 @@ import { createLiveryPaint } from './shipLiveryPaint.js';   // SHIP-LIVERY: a bo
 import { warmLiveryArt } from '../../world/ships/shipLiveryArt.js';   // AUDIT 2: the painter's base pictures, while the world loads
 import { fitBoats } from './deckFittingsHost.js';   // DECK-PROPS: her fittings, stood in her tree
 import { liveryCode } from '../../systems/naval/shipLivery.js';
+import { ownGuildArms, guildArmsOf } from '../../net/guild/guildArmsBook.js';   // GUILD-SHOP: the arms a sailcloth flies
 import { spawnBoat, boatAssetNeeds, DUNGEON_LIGHT_HANDLER, HULL_NAMES, setBoatVariant, Boat, FIRST_HULL_MODEL_ID, meshLocalBounds, worldBounds } from '../../systems/comeSailAway/comeSailAwayBoat.js';
 import { resolveNodePointer, instantiatePrefab, prefabShapeStamp } from '../../world/prefabNode.js';
 import { StaticBatchBuilder } from '../../render/staticBatch.js';   // AUDIT NAV1 (#13): a boat's still parts merged as a town's statics are
@@ -196,6 +197,9 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
     if (boat._liveryRec !== rec || boat._liveryCode == null) { boat._liveryRec = rec; boat._liveryCode = liveryCode(rec); }
     return boat._liveryCode;
   };
+  /** GUILD-SHOP: the arms her sailcloth flies, where it flies them - mine my guild's, a peer's its owner's guild's (the tag
+   *  their token carries), a sea ship's none. */
+  const sailArmsOf = (boat, code) => ((code >> 16) & 128 ? (mineBoats.has(boat) ? ownGuildArms() : boat.guildTag ? guildArmsOf(boat.guildTag) : null) : null);
   // SHIP-PLAQUE (scenes/comeSailAway/shipPlaque.js): her name on her bows - laid on her planking (hullSurface, below),
   // lettered in FONT0003 once its bytes are in (the block letters where they are not to be had)
   /** @type {any} */ let plaqueLetters = plaqueFont ? null : BLOCK_LETTERS;
@@ -886,7 +890,8 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
       const fade = Math.max(0, Math.min(1, boat.fade ?? 1));
       if (fade <= 0) continue;
       if (fade < 1) r.setDissolve?.(fade);
-      const paint = paints.remapOf(boat.hull, liveryCodeOf(boat), cityLights, drawRemap);   // SHIP-LIVERY: her paint over the host's remap
+      const code = liveryCodeOf(boat);
+      const paint = paints.remapOf(boat.hull, code, cityLights, drawRemap, sailArmsOf(boat, code));   // SHIP-LIVERY: her paint over the host's remap; GUILD-SHOP: her sails' arms
       const walk = walkOf(boat);   // AUDIT PRE-MERGE 0928 R5
       _shift = heldShift(boat, walk);   // BOAT-FAR: a held boat's walk, carried to where she stands now
       const recs = walk.recs, parts = planOf(boat, walk).parts;   // PERF-SAILS3: her renderers, found once

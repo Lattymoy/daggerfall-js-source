@@ -30,6 +30,9 @@ import {
 import { captainRefit } from '../systems/naval/captainTree.js';   // CAPTAIN-TREE: her captain's stars over her refits
 import { flagSizeOf } from '../systems/naval/shipFlag.js';   // SHIP-COLOURS: the hulls that fly a flag
 import { liveryPartsOf, isPaint } from '../systems/naval/shipLivery.js';   // SHIP-LIVERY: the paints a hull takes
+import { sailClothCode } from '../systems/naval/sailCloth.js';   // GUILD-SHOP: her sailcloth, the Guild Sailcloth's
+import { guildWareHeld } from '../net/guild/guildStock.js';
+import { SAILCLOTH_SHUT } from '../ui/sailClothPanel.js';
 import { cabinShipType } from '../systems/sailingCabin.js';   // CABIN-LOOK: the hulls with a cabin below
 import { SHIP_TYPES } from '../systems/banking.js';
 import { HULL_NAMES, HULL_PRICES } from '../systems/comeSailAway/comeSailAwayBoat.js';
@@ -193,6 +196,7 @@ export function createFleetHost(deps) {
         hold: holdsCargo(rec.hull),   // CARGO-ANYWHERE: her Hold button - every hull but the Rowboat's
         flag: !!flagSizeOf(rec.hull), colours: rec.colours ?? null,   // SHIP-COLOURS: whether she flies a flag, and the one she flies
         paints: liveryPartsOf(rec.hull), livery: rec.livery ?? null,   // SHIP-LIVERY: the parts her paint takes, and her paint
+        cloth: liveryPartsOf(rec.hull).includes('sail') ? guildWareHeld('guildsails') : false,   // GUILD-SHOP: whether her sailcloth is to be had (null: unread)
         cabin: cabinShipType(rec.hull) !== SHIP_TYPES.None ? rec.cabin ?? 0 : null,   // CABIN-LOOK: her cabin's stain (null: she has no cabin)
         fittings: rec.deck?.length ?? 0,   // DECK-PROPS: how many fittings stand on her deck
         plaque: !!rec.plaque, named: !!rec.name,   // SHIP-PLAQUE: her name on her bows, and whether she has one to show
@@ -268,6 +272,8 @@ export function createFleetHost(deps) {
       // CABIN-LOOK: and her cabin's stain with it, where she has a cabin (made at her next visit below) - both read before
       // either is set, so a paint refused leaves her as she was
       const below = cabinShipType(rec.hull) !== SHIP_TYPES.None, cabin = arg?.cabin ?? 0;
+      // GUILD-SHOP: a sailcloth other than hers is the Guild Sailcloth's - one she flies already stays through a repaint
+      if (sailClothCode(arg?.cloth) && sailClothCode(arg?.cloth) !== sailClothCode(rec.livery?.cloth) && guildWareHeld('guildsails') !== true) return said(false, SAILCLOTH_SHUT());
       if ((below && !isPaint(cabin)) || !setShipLivery(uid, arg ?? null)) return said(false, t('naval.paint.bad', 'Unknown paint.'));
       if (below) setShipCabin(uid, cabin);
       deps.changed?.();

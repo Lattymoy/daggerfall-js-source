@@ -26,6 +26,7 @@ import { HALL_POWERS } from '../hallLaw.js';
 import { WRIT_POWERS, writDeliverMay, contractPaidMay } from '../writLaw.js';
 import { SEAT_POWERS, SEAT_LEVER_RANKS } from '../townSeatLaw.js';
 import { VAULT_RANK_DEFAULTS } from './guildVaultLaw.js';
+import { t } from '../../systems/textManager.js';   // GUILD-SHOP: the new acts' words, in the player's language
 
 /** The four tables by the name a row gives them; `levers` the seat's levers (SEAT_LEVER_RANKS, one list of ranks). */
 const TABLES = Object.freeze({ guild: GUILD_POWERS, hall: HALL_POWERS, writ: WRIT_POWERS, seat: SEAT_POWERS });
@@ -68,8 +69,8 @@ export const GUILD_RANK_ACTS = Object.freeze([
   Object.freeze({ table: 'guild', power: 'vaultGrant', words: 'grant or take back each member\'s use of the vault' }),
   Object.freeze({ table: 'guild', power: 'renameRanks', words: 'rename the ranks' }),
   Object.freeze({ table: 'guild', power: 'rename', words: 'give the guild a new name, for a price' }),
-  Object.freeze({ table: 'guild', power: 'shop', words: 'buy hall furniture from the guild shop with the silver treasury' }),   // GUILD-SHOP
-  Object.freeze({ table: 'guild', power: 'logo', words: 'send the guild\'s own logo to the moderators for review' }),   // GUILD-LOGO
+  Object.freeze({ table: 'guild', power: 'shop', get words() { return t('guild.power.shop', 'buy hall furniture from the guild shop with the silver treasury'); } }),   // GUILD-SHOP
+  Object.freeze({ table: 'guild', power: 'logo', get words() { return t('guild.power.logo', 'send the guild\'s own logo to the moderators for review'); } }),   // GUILD-LOGO
   Object.freeze({ table: 'guild', power: 'handOver', words: 'hand the guild on' }),
   Object.freeze({ table: 'guild', power: 'disband', words: 'disband it' }),
 ]);
