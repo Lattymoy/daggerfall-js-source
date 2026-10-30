@@ -290,7 +290,7 @@ test('BAL11 the seams by source: both build arms of the dungeon say an ally, the
   assert.equal((dc.match(/else if \(puppet && e\.level == null\) applyProgressionScalingTo\(entity, basics, \{ puppet: true, ally: !!e\.allied \}\);/g) ?? []).length, 2);
   assert.match(dc, /const _heroStage = _made != null \|\| isArenaFloor\(dfLocation\);/);
   const xf = rd('src/scenes/exteriorFoes.js');
-  assert.match(xf, /\} else if \(puppet && !allied && !inLocation\(\)\) \{\n[^\n]*\n\s*applyProgressionScaling\(entity, progressionScaling\(null, 0, 0, 0, heroThreatOf\(playerEntity, \{ puppet: true \}\)\)\);/);
+  assert.match(xf, /\} else if \(puppet && !allied && !inLocation\(\) && !tpl\) \{\n[^\n]*\n\s*applyProgressionScaling\(entity, progressionScaling\(null, 0, 0, 0, heroThreatOf\(playerEntity, \{ puppet: true \}\)\)\);/);
   // THE FOUR HOSTS: world.js's wilds and every dungeon (worldModes.js's dungeon mode, the standalone dungeon) through the
   // two seams; worldModes.js's interiors and exterior.js's fixed city hand their pools no `inLocation` - a town's ground
   assert.match(rd('src/scenes/world.js'), /inLocation: \(\) => _musicInLocationRect\(\),/);

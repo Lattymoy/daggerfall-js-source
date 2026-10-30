@@ -345,7 +345,7 @@ export function createGrantHost({ session, climateAt = null, faunaAt = () => nul
   }
   const verdicts = new Map();   // `${owner}|${grant}` -> { gr, sg, ok }
   const members = new Map();    // `${owner}|${grant}|${member}` -> the record's number standing on it
-  const pups = new Map();       // `${owner}|${record}` -> { s, i, k }: what a puppet's grant was
+  const pups = new Map();       // `${owner}|${record}` -> { s, i, k, gr }: what a puppet's grant was
   const tallies = new Map();    // `${owner}|${reason}` -> how many
   const capable = new Set();    // owners that have carried a grant: a hostile record of theirs with none is `ungranted`
   const waiters = new Map();    // `${owner}|${grant}` -> the checks waiting to hear it (GRANT6)
@@ -411,7 +411,7 @@ export function createGrantHost({ session, climateAt = null, faunaAt = () => nul
     const ok = await v.ok;
     if (ok === null) return null;
     if (!ok) return note(from, 'unsigned');
-    pups.set(`${from}|${r.i}`, { s: v.gr.s, i, k: v.gr.k });
+    pups.set(`${from}|${r.i}`, { s: v.gr.s, i, k: v.gr.k, gr: v.gr });
     capMap(pups, GRANT_MEMBERS_MAX);
     const at = cell ?? session()?.room ?? '';
     const why = grantRefusal(v.gr, { from, cell: at, cover: session()?.coverOf?.(at) ?? at, nowMs: now(), i })   // COST-2 (b): in any cell the socket it came on covers
@@ -483,6 +483,8 @@ export function createGrantHost({ session, climateAt = null, faunaAt = () => nul
   /** GRANT8: my `encr` member's species - its seed's at its pixel's climate (-1: none, or no map to read). */
   /** FIXED-PVE: member `i`'s template under `gr` (its body, level, health, blow), or null - the switch off, no table. */
   const templateOf = (gr, i) => (tableAt && gr ? templateFoe(grantTemplateKey(gr, i, tableAt(gr))) : null);
+  /** FIXED-PVE: the template of `from`'s record `seq`, once its grant is judged here - null before, or switched off. */
+  const puppetTemplate = (from, seq) => { const m = pups.get(`${from}|${seq}`); return m ? templateOf(m.gr, m.i) : null; };
   const speciesOf = (gr, i, inRect) => (tableAt && gr?.k === 'encr' ? templateOf(gr, i)?.mobile ?? -1 : gr?.k === 'encr' && climateAt ? grantSpecies(gr, i, climateAt(gr.p[0], gr.p[1]), !!inRect, faunaAt(gr.p[0], gr.p[1])) : -1);
   /** Is the law enforcing in my cell (GRANT6: the pool stands down what the check refuses)? */
   const enforcing = () => open()?.grantMode === 'enforce';
@@ -515,5 +517,5 @@ export function createGrantHost({ session, climateAt = null, faunaAt = () => nul
     for (const [g, p] of watchmen) if (p === pool && (!here.has(g) || g._gone)) { watchmen.delete(g); ended(g); }
   }
 
-  return { memberFor, stood, ended, handed, tick, frameGrants, adopted, heard, check, downed, statsRefused, answer, enforcing, standsDown, watchReady, watchSweep, speciesOf, templateOf, tallied: () => new Map(tallies), live: () => [...live] };
+  return { memberFor, stood, ended, handed, tick, frameGrants, adopted, heard, check, downed, statsRefused, answer, enforcing, standsDown, watchReady, watchSweep, speciesOf, templateOf, puppetTemplate, tallied: () => new Map(tallies), live: () => [...live] };
 }

@@ -771,6 +771,7 @@ export function calculateAttackDamage(attacker, target, { weapon = null, wraps: 
   // ELITE DUNGEONS: an elite foe's blows land at `damageScale` times (scenes/dungeonContext.js
   // applyEliteScaling). After either core - stock or a mod's override - so the multiplier holds
   // whichever formula rolled the hit; the concealment break and the HUD below see the real number.
+  if (!attacker.isPlayer && damage > 0 && Array.isArray(attacker.pveBlow)) damage = attacker.pveBlow[0] + Math.floor(rolls() * (attacker.pveBlow[1] - attacker.pveBlow[0] + 1));   // FIXED-PVE (bible/05-Combat/Fixed-PvE.md section 10): a template foe lands its own blow, under its elite's scale
   if (!attacker.isPlayer && damage > 0 && Number.isFinite(attacker.damageScale) && attacker.damageScale !== 1) {
     damage = Math.max(1, Math.round(damage * attacker.damageScale));
   }

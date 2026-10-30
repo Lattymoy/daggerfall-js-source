@@ -168,8 +168,8 @@
   {
     "name": "AUDIT-WATCH1-A5-the-puppet-rolls-the-city-watch-bonus-again",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "{ exactLevel: !!puppet });",
-    "new": "{ exactLevel: false });",
+    "old": "{ exactLevel: !!puppet || !!tpl }), tpl);",
+    "new": "{ exactLevel: false }), tpl);",
     "tests": [
       "test/characters/enemy/watch1.test.js"
     ]

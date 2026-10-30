@@ -1,7 +1,7 @@
 # Fixed PvE - the world sets the foe (FIXED-PVE, 2026-10-28)
 
 The PvE overhaul replaces player-scaled foes with fixed ones: a foe's level, health and blow come from its own
-template, never from the player who meets it. This page holds Stages 2 to 7 of twelve: the data, the balance tools, how a creature meets a player, where it lives, how a fight is built and paid, and the zones and populations. Nothing in the game
+template, never from the player who meets it. This page holds Stages 2 to 8 of twelve: the data, the balance tools, how a creature meets a player, where it lives, how a fight is built and paid, the zones and populations, and the template foe in the open world. Nothing in the game
 reads it yet - `src/systems/pve/pveSwitch.js` `fixedPveOn` is off, and every foe stands as it does today. Daggerfall
 Unity has no templates: its monsters stand at their row and its class foes at the player's level
 (`EnemyEntity.SetEnemyCareer`). A departure: Ledger A (FIXED-PVE).
@@ -160,3 +160,17 @@ reader stand the same template. Its level, health and blow are the template's: t
 move them, and a reader refuses a record whose body or level differs, with no slack. Who holds a place is a first pass
 (`factionsHolding`): outlaws every road and wild, the clans Wrothgar and their strongholds. Daggerfall Unity rolls a
 climate's table at the player's level. The tests: `test/systems/pve/pve_grant.test.js`.
+
+## 10. Stage 8: the template foe in the open world (2026-10-30)
+
+Still off: the world hands the grant host no table yet, so no foe below stands. The open world's pool
+(`scenes/exteriorFoes.js` spawnFoe) asks the grant host for a template: my own encounter's from my `encr` grant
+(`templateOf`), a peer's foe from its owner's grant once judged here (`puppetTemplate`). A template foe is built at its
+own level and `standTemplate` (`pveGrant.js`) sets its health and blow. Every blow it lands is a roll in its range
+(`combat/formulas.js`, before an elite's or champion's scale), and the player's progression scaling, hero threat and the
+party's weight on its health and blows are skipped.
+
+Before the switch turns on: the world passes `tableAt` (`scenes/world.js` builds the grant host, and `bootWorld` stands at
+its ceiling); a camp's members and a dungeon's foes stand templates; a template's spells take its range too; and a
+peer's foe that arrives before its grant is judged stands as it would today. Daggerfall Unity levels a class foe by the
+player (`EnemyEntity.SetEnemyCareer`). The tests: `test/systems/pve/pve_grant.test.js`.

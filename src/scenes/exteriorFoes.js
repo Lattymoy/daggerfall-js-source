@@ -118,6 +118,7 @@ import { raidLeaderNameOf } from '../systems/raidKinds.js';   // RAID5: a raid's
 import { huntMarkSeen } from '../systems/hunt/namedMark.js';   // HUNTERS-MARK-II: a hunter's named mark, read off its record
 import { elitesAllowed, promoteEliteFoe, promoteRaidLeader, rollOverworldElite, grantEliteLoot, eliteLoot, eliteGlow, setBatchEliteGlow, eliteSize, isEliteCorpse, markEliteCorpseBatch, isStaffBoss, promoteStaffBoss, STAFF_BOSS_SPELL_TAKEN, staffBossHit, STAFF_BOSS_FIGHTERS_MAX } from '../systems/eliteFoes.js';   // ELITE FOES: 5% of the wilds' foes   // HITFLASH1
 import { grantKindOf, grantElite } from '../net/grantLaw.js';   // GRANT3-GRANT4: a stand's grant - its kind, its member's elite (bible/11-Multiplayer/Spawn-Grants.md)
+import { standTemplate } from '../systems/pve/pveGrant.js';   // FIXED-PVE: a template foe at its own level, health and blow
 
 // The port's allocation-owner guards (classic self-limits through the
 // 144-minute cadence; these keep a long session bounded).
@@ -450,20 +451,21 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     pending.capped = capped;
     spawning.push(pending);
     const gen = epoch;   // AUDIT-39r: the world this foe is being built for
+    let tpl = puppet ? _net?.grants?.puppetTemplate?.(puppet, seq) ?? null : null;   // FIXED-PVE: a template foe (systems/pve/pveGrant.js) - none while the switch is off
     try {
       if (grantKind === 'enc' && grantAsk) {   // GRANT8 (Spawn-Grants section 16): an encounter whose grant rolls its species (`encr`) stands that species
         const a = await grantAsk, t = a && 'gr' in a ? (_net?.grants?.speciesOf(a.gr, a.i, inLocation()) ?? -1) : -1;
-        if (t >= 0 && ENEMY_BASICS[t]?.maleTexture) { mobileType = t; basics = ENEMY_BASICS[t]; }
+        if (t >= 0 && ENEMY_BASICS[t]?.maleTexture) { mobileType = t; basics = ENEMY_BASICS[t]; tpl = _net?.grants?.templateOf?.(a.gr, a.i) ?? null; }
       }
       const isClass = enemyEntityType(mobileType) === 'class', career = loadEnemyCareer(mobileType, fetchBytes);   // DEX1: SetupDemoEnemy's type, SetEnemyCareer's one career door (a mod's id too)
-      const builtLevel = level ?? effectiveLevel(playerEntity);   // SOFTCAP2: a mentor's foes at the group's level
+      const builtLevel = tpl?.level ?? level ?? effectiveLevel(playerEntity);   // SOFTCAP2: a mentor's foes at the group's level
       // GRANT3: its grant (none inside GRANT_WAIT_MS: it stands as it would have with no law) - the grant's marks in place of
       // the street's rolls, through the same gates: its elite only where an elite may stand, its trait only a capped stand's
       const granted = grantAsk ? await grantAsk : null, gm = granted && 'gr' in granted ? granted : null;
       if (grantAsk && !gm && _net?.grants?.enforcing()) return null;   // GRANT6: while the law enforces, a stand stands on its grant or not at all
       if (gm && !revenant && eliteFoe === undefined) eliteFoe = grantElite(gm.gr, gm.i) && !allied && !questBehaviour && !replacing && !team && !inLocation() && elitesAllowed({ onlinePage: isOnlinePage(), inRoom: _net != null });
       if (gm && !revenant && champion === undefined && capped) champion = gm.gr.c[gm.i] >= 0 ? gm.gr.c[gm.i] : null;
-      const entity = makeEnemyEntity(mobileType, basics, await career, builtLevel, Math.random, { exactLevel: !!puppet });   // AUDIT WORLD6b-ii B2: a puppet at its OWNER's foe's level, not mine; AUDIT WATCH1 A5: EXACTLY that level (the City Watch bonus is the owner's roll, already in the word)
+      const entity = standTemplate(makeEnemyEntity(mobileType, basics, await career, builtLevel, Math.random, { exactLevel: !!puppet || !!tpl }), tpl);   // AUDIT WORLD6b-ii B2: a puppet at its OWNER's foe's level, not mine; AUDIT WATCH1 A5: EXACTLY that level (the City Watch bonus is the owner's roll, already in the word)
       // MT-ii: an ALLIED summon (Sanguine Rose / Skull of Corruption).
       // SetupDemoEnemy.cs:85-86 overwrites the MobileEnemy STRUCT COPY
       // before SetEnemy, and EnemyEntity.cs:316 seeds Entity.Team from
@@ -482,13 +484,13 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       if (entity.eliteFoe && !puppet && !entity.raidLeader && !bossTraitsOf(entity).length) eliteTraits(entity);   // BOSS-TRAITS: an elite of my own carries a trait, mine to draw (its record carries it - `bt`)
       // SOFTCAP5: THE WILDS ARE AN AREA TOO - the dungeons' law, with the wilderness's share (22% by day, 44% at night):
       // my own foes only (a puppet is its owner's build), never an ally, never on a location's ground
-      if (!puppet && !allied && !inLocation()) {
+      if (!puppet && !allied && !inLocation() && !tpl) {   // FIXED-PVE: a template foe stands at its own numbers - no player's scaling
         let night = false;
         try { night = isNight((skyMinute ?? currentMinute)()); } catch { /* no clock: day */ }   // TIME1: the sky's night
         // BAL3 (bible/05-Combat/Balance-Arc.md section 5): and the wilds' own threat - tier 5 by day, a harpy nest's 7 at night - while the ladder stands
         // BAL11 (section 17): and the hero's threat - my level past 10 and my Renown past 15, every kind alike
         applyProgressionScaling(entity, progressionScaling(combatStanding(playerEntity), wildernessShare(night), foeShare(basics?.level ?? entity.level, isClass), lootRarityOn() ? placeVeteran(wildernessThreat(night)) : 0, heroThreatOf(playerEntity)));
-      } else if (puppet && !allied && !inLocation()) {
+      } else if (puppet && !allied && !inLocation() && !tpl) {
         // BAL11: a peer's foe strikes ME at MY threat - its blows alone; its maximum is its owner's word (the record's `k`)
         applyProgressionScaling(entity, progressionScaling(null, 0, 0, 0, heroThreatOf(playerEntity, { puppet: true })));
       }
@@ -926,11 +928,11 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   /** BOSS-EXACT (mob 2026-10-25: "the rat isnt takeing any dmage"): a shared foe whose health its fighters' toughness weighs -
    *  never a staff event's mini boss, whose health is the exact number staff typed (BOSS-HP); over eight fighters' 4.5 a
    *  Daedric blow on a 10,000-health boss took four. Its blows at me still weigh by them (partyHit). */
-  const _toughFoe = (f) => _sharedFoe(f) && !f.entity?.staffBoss;
+  const _toughFoe = (f) => _sharedFoe(f) && !f.entity?.staffBoss && !f.entity?.pveTemplate;   // FIXED-PVE: a template foe's toughness is its composition, never the party's
   const fightN = (f) => (f.puppet ? (f._fightN ?? 1) : (f._fightN = foeFighters(f, _now())));
   /** PSCALE1: a shared foe's weapon or arrow hit on me, weighed by the players fighting it (partyFoeHits), the
    *  remainder carried on me (AUDIT PSCALE1 DOORS-4). */
-  const partyHit = (dmg, f) => (_sharedFoe(f) ? partyFoeHits(dmg, fightN(f), playerEntity) : dmg);
+  const partyHit = (dmg, f) => (_sharedFoe(f) && !f?.entity?.pveTemplate ? partyFoeHits(dmg, fightN(f), playerEntity) : dmg);
   /** AUDIT PSCALE1 DOORS-5: a heal on my foe - a shared one's over its fighters' toughness, as its damage is; a
    *  puppet's copy is its owner's to heal (the next record says so) and keeps the heal unweighed until then. */
   function healFoe(f, n) {

@@ -69,3 +69,15 @@ export function templateDiceRefusal(gr, r, table) {
   if (!f) return 'dice';
   return r.t !== f.mobile || (Number.isInteger(r.l) && r.l !== f.level) ? 'dice' : null;
 }
+
+/** Stand `entity` as template `foe`: its own level and health, and every blow it lands in the template's range
+ *  (combat/formulas.js reads `pveBlow`) - after which nothing of the player's moves it. @param {any} entity @param {ReturnType<typeof templateFoe>} foe */
+export function standTemplate(entity, foe) {
+  if (!entity || !foe) return entity;
+  entity.level = foe.level;
+  entity.maxHealth = foe.health; entity.health = foe.health;
+  entity.pveBlow = [foe.damage[0], foe.damage[1]];
+  entity.pveTemplate = foe.key;
+  return entity;
+}
+

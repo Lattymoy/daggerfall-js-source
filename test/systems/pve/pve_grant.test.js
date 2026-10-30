@@ -4,11 +4,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { factionsHolding, pveTableAt, grantTemplateKey, templateFoe, templateDiceRefusal } from '../../../src/systems/pve/pveGrant.js';
+import { factionsHolding, pveTableAt, grantTemplateKey, templateFoe, templateDiceRefusal, standTemplate } from '../../../src/systems/pve/pveGrant.js';
 import { ORSINIUM_REGION } from '../../../src/systems/pve/pveBestiary.js';
 import { TEMPLATE_BY_KEY, templateStats } from '../../../src/systems/pve/pveTemplates.js';
 import { grantDiceRefusal, createGrantHost } from '../../../src/scenes/grantHost.js';
 import { fixedPveOn } from '../../../src/systems/pve/pveSwitch.js';
+import { calculateAttackDamage, registerFormulaOverride } from '../../../src/combat/formulas.js';
 import { CLIMATES, BAY_REGION_COUNT } from '../../../src/formats/mapsTables.js';
 import { DUNGEON_TYPES } from '../../../src/formats/mapsFile.js';
 import { CITIES } from '../../../src/world/tamriel/tamrielGeography.js';
@@ -87,4 +88,40 @@ test('STAGE 7: the grant host stands templates only when handed a table - and th
   assert.equal(createGrantHost({ session: () => null, tableAt: () => null }).speciesOf(gr, 0, false), -1);
   assert.match(readFileSync(new URL('../../../src/scenes/grantHost.js', import.meta.url), 'utf8'),
     /const diceRefusal = \(gr, r\) => grantDiceRefusal\(gr, r, climateAt, faunaAt, tableAt\);/, 'the reader\'s check reads the table');
+});
+
+test('STAGE 8: a template foe stands at its own level, health and blow - and lands its blow in range, under its elite\'s scale', () => {
+  const foe = templateFoe('orc-grunt');
+  const e = standTemplate({ level: 3, maxHealth: 10, health: 10 }, foe);
+  assert.deepEqual([e.level, e.maxHealth, e.health, e.pveBlow, e.pveTemplate], [foe.level, foe.health, foe.health, [...foe.damage], 'orc-grunt']);
+  assert.equal(standTemplate(null, foe), null);
+  const plain = { level: 3 };
+  assert.equal(standTemplate(plain, null), plain);
+  assert.deepEqual(plain, { level: 3 }, 'no template, nothing moved');
+  registerFormulaOverride('calculateAttackDamage', () => 10);   // the core pinned: the tail alone
+  try {
+    const me = { isPlayer: true, reflexes: 2, health: 100 };
+    assert.equal(calculateAttackDamage({ isPlayer: false, pveBlow: [40, 49] }, me, { rolls: () => 0 }), 40);
+    assert.equal(calculateAttackDamage({ isPlayer: false, pveBlow: [40, 49] }, me, { rolls: () => 0.9999 }), 49);
+    assert.equal(calculateAttackDamage({ isPlayer: false, pveBlow: [40, 49], damageScale: 2 }, me, { rolls: () => 0 }), 80, 'an elite doubles its own blow');
+    assert.equal(calculateAttackDamage({ isPlayer: false }, me, { rolls: () => 0 }), 10, 'any other foe as it was');
+    registerFormulaOverride('calculateAttackDamage', () => 0);
+    assert.equal(calculateAttackDamage({ isPlayer: false, pveBlow: [40, 49] }, me, { rolls: () => 0 }), 0, 'a miss stays a miss');
+  } finally { registerFormulaOverride('calculateAttackDamage', null); }
+});
+
+test('STAGE 8: the open world\'s pool stands a granted template and lets no player scale it', () => {
+  const src = readFileSync(new URL('../../../src/scenes/exteriorFoes.js', import.meta.url), 'utf8');
+  assert.match(src, /let tpl = puppet \? _net\?\.grants\?\.puppetTemplate\?\.\(puppet, seq\) \?\? null : null;/, 'a puppet\'s from its owner\'s judged grant');
+  assert.match(src, /mobileType = t; basics = ENEMY_BASICS\[t\]; tpl = _net\?\.grants\?\.templateOf\?\.\(a\.gr, a\.i\) \?\? null;/, 'my own from my grant');
+  assert.match(src, /const builtLevel = tpl\?\.level \?\? level \?\? effectiveLevel\(playerEntity\);/);
+  assert.match(src, /const entity = standTemplate\(makeEnemyEntity\([^\n]*\{ exactLevel: !!puppet \|\| !!tpl \}\), tpl\);/);
+  assert.match(src, /if \(!puppet && !allied && !inLocation\(\) && !tpl\) \{/, 'no progression scaling');
+  assert.match(src, /\} else if \(puppet && !allied && !inLocation\(\) && !tpl\) \{/, 'nor a puppet\'s hero threat');
+  assert.match(src, /const _toughFoe = \(f\) => _sharedFoe\(f\) && !f\.entity\?\.staffBoss && !f\.entity\?\.pveTemplate;/, 'nor the party\'s toughness');
+  assert.match(src, /const partyHit = \(dmg, f\) => \(_sharedFoe\(f\) && !f\?\.entity\?\.pveTemplate \?/, 'nor the party\'s weight on its blows');
+  const host = readFileSync(new URL('../../../src/scenes/grantHost.js', import.meta.url), 'utf8');
+  assert.match(host, /pups\.set\(`\$\{from\}\|\$\{r\.i\}`, \{ s: v\.gr\.s, i, k: v\.gr\.k, gr: v\.gr \}\);/, 'a judged grant kept whole for its puppet');
+  const on = createGrantHost({ session: () => null, tableAt: () => orcs });
+  assert.equal(on.puppetTemplate('someone', 1), null, 'a puppet not yet judged stands as it would');
 });
