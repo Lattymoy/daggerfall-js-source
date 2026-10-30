@@ -27,6 +27,7 @@ import { setPref, getPref, PREF_DEFAULTS } from '../../src/systems/uiPrefs.js';
 import { FEATURES, checkFeature } from '../../src/systems/features.js';
 import { SYSTEM_PANES } from '../../src/ui/enhanced/enhancedMenu.js';
 import { holdFrame, claimFrame } from '../../src/scenes/shared.js';
+import { hostText } from '../hostText.mjs';   // PIN MOVED (HOST-SPLIT TEST-PRESET): the world host whole
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8').replace(/\r\n/g, '\n');   // the pins are the LF the suite runs on; this checkout writes CRLF
 const enc = async () => ({ blob: new Blob(['full']), thumb: new Blob(['thumb']), w: 1920, h: 1080 });
@@ -363,7 +364,7 @@ test('LOAD1 the screen stands on a shot from the turn, with its caption; with no
 });
 
 test('LOAD1 the hosts: the boot raises the screen at once and its title steps are its line, ended at status(null); the world frame asks AUDIT 68 S22\'s one question and a door\'s build; a claimed loop lets go; a film takes the screen aside (mutants: the frame sync gone; the boot hold never ended; the claimed loop keeps the screen)', () => {
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   const boot = w.slice(w.indexOf('export async function bootWorld('));
   const head = boot.slice(0, boot.indexOf('const realmNew = '));
   assert.match(head, /const bootLoading = beginLoading\(\{ delay: 0, [^}]*why: 'the boot' \}\);/, 'before the realm\'s join - the first await');

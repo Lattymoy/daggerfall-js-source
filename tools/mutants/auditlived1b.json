@@ -547,7 +547,7 @@
   },
   {
     "name": "AUDITLIVED1B-R4-born-online-at-the-classic-start",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/testPresetHost.js",
     "old": "          if (sharedClockOn()) playerEntity.lastSkillCheckTime = Math.floor(ownMinutes());\n",
     "new": "",
     "tests": [
@@ -556,7 +556,7 @@
   },
   {
     "name": "AUDITLIVED1B-R4-the-heir-born-at-the-classic-start",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/testPresetHost.js",
     "old": "      if (sharedClockOn()) playerEntity.lastSkillCheckTime = Math.floor(ownMinutes());   // AUDIT LIVED1b R4, as the wizard's\n",
     "new": "",
     "tests": [

@@ -620,8 +620,8 @@ import { createDroppedLoot, droppedLootHooks, containerDropPos } from './dropped
 import { CONTAINER_IMAGES } from '../ui/targetIconPanel.js';   // DW-E3: a fish's DaggerfallLoot keeps the field's default picture (Chest) under its icon
 import { preloadPaperDollArt } from '../ui/paperDoll.js';   // U8f: the avatar base
 import { seedStartingEquipment } from '../systems/equip.js';   // U8h: the worn-weapon binding
-import { createChargenFlow, createChargenWindow, finishChargen, loadSpellIndex, applyHeadlessChargen, handHeroGenderToGrammar } from '../systems/chargenSession.js';   // S3c/U9; L10N3g: the hero's gender to the grammar
-import { testEntryById, applyTestCharacter, seedTestMount, seedTestLoot, testRoomOnlineRefused, TEST_ROOM_OFFLINE_TEXT, TEST_SEA, TEST_SEA_TEXT, enableTestSea } from '../systems/testRoom.js';   // TR3: the Test Room's one home; TSR4: the ride; AUDIT SET D4: its character's online refusal
+import { loadSpellIndex, handHeroGenderToGrammar } from '../systems/chargenSession.js';   // S3c/U9; L10N3g: the hero's gender to the grammar
+import { testEntryById, testRoomOnlineRefused, TEST_ROOM_OFFLINE_TEXT, TEST_SEA, TEST_SEA_TEXT, enableTestSea } from '../systems/testRoom.js';   // TR3: the Test Room's one home; TSR4: the ride; AUDIT SET D4: its character's online refusal
 import { publishBootParams, refuseOnlinePowerFlags, BOOT_DOOR_KEYS } from '../systems/online/onlineLane.js';   // AUDIT SET D4: a refused Test Room boot drops `online` from the URL the lane reads; REALM P0.1: the URL's powers stay offline
 import { preloadChargenArt } from '../ui/chargenArt.js';   // U10
 import { preloadMessageBoxArt } from '../ui/messageBox.js';   // U11
@@ -813,7 +813,7 @@ import { jumpSpeedMultiplier, isEnhancedJumping, tallySkill, SKILLS } from '../s
 import { playerEntity, surfacePlayer, hurtPlayer, forcePlayerDeath, presentHeardDeath, playerBlowCameToNothing, setDeathPresenter, presentPlayerDeath, setDeathListener, setAvoidDeathHook, setStaffPowers, staffPowers, registerPlayerDamageMod, registerLevitateWard, registerFreeFlight } from '../characters/playerEntity.js';   // AUDIT-SEATS G5: a siege's ward on Levitate   // AUDIT-SEATS G4: a spectator's flight
 import { bodySayer } from '../net/bossBody.js';   // INT15: my body, said to a boss fight's room
 import { SOUND } from '../systems/soundClips.js';
-import { createWeaponRig, autoBuildArms, armIdentityOf, armBuiltFor, armsReady, sheetHolderOf, buildArmsFor, prebuildArmsForSave } from '../combat/weapon/weaponRig.js';   // MWA1: the arms at boot; MWA3: the identity the arm should stand for, beside the one it does; MW-EARLY: and before the world is read
+import { createWeaponRig, autoBuildArms, armIdentityOf, armBuiltFor, armsReady, sheetHolderOf, prebuildArmsForSave } from '../combat/weapon/weaponRig.js';   // MWA1: the arms at boot; MWA3: the identity the arm should stand for, beside the one it does; MW-EARLY: and before the world is read
 import { weaponPoseOf, applyWeaponPose, playerMeleeCanHit, registerPlayerSwingListener } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law, and SL-2's per-field merge with the mode host's live rig
 import { ArrowFlight, playerArrowHitFoe, shaftOnRelayBody } from '../combat/arrowFlight.js';   // C13: visible exterior arrows; AUDIT 39 (#64): and the shaft that LANDS
 import { addItem, addGoldPieces, isGoldPieces, spendAmmoFor, carriedWeight } from '../systems/inventory.js';
@@ -1246,6 +1246,7 @@ import { createShipBoard } from './shipBoardHost.js';   // HOST-SPLIT
 import { createWorldShotHooks } from './worldShotHooks.js';   // HOST-SPLIT
 import { createWorldShotProbes } from './worldShotProbes.js';   // HOST-SPLIT
 import { createProfessionsHost } from './professionsHost.js';   // HOST-SPLIT
+import { createTestPreset } from './testPresetHost.js';   // HOST-SPLIT
 
 /** Internal_Strings_en 654 / 655, the two guild map-reveal notes
  *  (ThievesGuild.cs:115, DarkBrotherhood.cs:108). %map is the
@@ -6706,112 +6707,14 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     setTransportModeHere(TRANSPORT_MODES.Horse);
     console.log(`[testroom] ride out: mounted ${groundThere ? 'outside the location, facing it' : 'where you stand'}`);
   };
-  if (testPreset) {
-    (async () => {
-      const preset = testPreset;
-      const sbi = await loadSpellIndex(fetchBytes);
-      spellsByIndex = sbi;
-      const { added } = await applyTestCharacter(playerEntity, preset, { fetchBytes, spellsByIndex: sbi });
-      preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture },
-        { race: playerEntity.race, gender: playerEntity.gender, faceIndex: playerEntity.faceIndex });
-      surfacePlayer();
-      questInitAtGameStart();
-      console.log(`[testroom] ${preset.label}: ${added} armory items in the pack`);
-      // TSR4: the horse in the pack now; the landing and the mount wait
-      // for the first stand (the frame loop's spawn gate calls rideOut).
-      if (testEntry.ride) { seedTestMount(playerEntity); rideOutWanted = true; }
-      if (testEntry.sea) seaTestWanted = true;   // FIELD BUGS 2026-09-29 (the sea) #5: the Bay, her helm and a pirate wait for the first stand
-      if (testEntry.loot) console.log(`[testroom] loot ladder: ${seedTestLoot(playerEntity).length} rolled items in the pack`);   // LR3
-      // The Morrowind rigs, WITHOUT the trip to the pause card - the
-      // room exists to look at them. Only when the data is attached;
-      // without it the classic sprite stands exactly as everywhere
-      // else, and the pause card's button still names why.
-      if (morrowindDataCount() > 0) {
-        const res = await buildArmsFor(playerEntity);
-        if (!res.ok) console.warn(`[testroom] arms refused - ${res.stage}: ${res.error}`);
-      }
-    })().catch((e) => console.warn('[testroom] boot failed; the wizard stands in', e));
-  } else if (!playerEntity.chargenDone && params.has('legacyborn') && !params.has('load')) {
-    // LEGACY1 (bible/06-Systems/Legacy-Arc.md section 4): A MEMBER OF THE FAMILY IS BORN - Project Legacy's heir, or a
-    // sibling played for the first time. Not the wizard: the person's own record, through THE ONE CONSTRUCTION SEAM
-    // (finishChargen over a result the family law builds - legacyHost.bornResult), in the town the boot stood the world
-    // in (`?region=&loc=`). AUDIT LEGACY B7: a birth that waits for nobody (a stale address, a birth already made) or
-    // whose files would not load goes back to the title menu, SAID - never to a stranger's wizard: the line waits on the
-    // record (its heir chosen, unborn), and the fallen's save asks again. BAY-LEFT-B: a seat past the Bay is reached
-    // first (`farStart`, scenes/bootStartHost.js), so the heir is made, and first saved, there.
-    const legacyBirthFailed = (why) => { console.warn(`[legacy] the birth did not take: ${why}`); setRealmNotice(globalThis.sessionStorage, `The heir could not be born: ${why}. The house waits. ${realmNew ? 'Choose who carries it on from the Online page' : 'Load the fallen\'s save to try again'}.`); releaseUnloadGuard(); exitToTitleMenu(); };   // HOUSE-WAITS (FIELD BUGS 2026-10-09f): online the fallen is a tombstone - the Online page names the waiting house
-    Promise.all([createChargenFlow(fetchBytes), legacyReady, farStart]).then(([{ careers, spellsByIndex: sbi, factionDict }, host]) => {
-      spellsByIndex = sbi;
-      const r = host?.bornResult({ careers, factionDict });
-      if (!r) { legacyBirthFailed('no birth waits for this address'); return; }
-      finishChargen(playerEntity, r, sbi);
-      if (sharedClockOn()) playerEntity.lastSkillCheckTime = Math.floor(ownMinutes());   // AUDIT LIVED1b R4, as the wizard's
-      preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture }, { race: r.race, gender: r.gender, faceIndex: r.faceIndex });
-      surfacePlayer();
-      questInitAtGameStart();
-      autoBuildArms(playerEntity);
-      if (realmNew) { legacyRealmBirth(host).catch((e) => { console.error('[legacy] the online birth failed', e); realmLost('server'); }); return; }   // LEGACY7: born into the realm
-      host.onBorn();
-      // AUDIT LEGACY B7: the born member is saved (onBorn) - this page is that save's now, so a reload loads them
-      const key = newestSaveOf(enumerateSaves().info, String(playerEntity.characterId ?? ''));
-      if (key >= 0) { try { globalThis.history.replaceState(globalThis.history.state, '', `${location.pathname}${loadSearch(location.search, key)}`); } catch { /* a page that refuses keeps its address; the menu's Load still finds them */ } }
-    }).catch((e) => legacyBirthFailed(e?.message ?? String(e)));
-  } else if (!playerEntity.chargenDone && params.has('class')) {
-    // AUDIT 17f: ?class=N is the headless skip - parsed here for the
-    // DUNGEON the host might build, but never honoured for the host's
-    // own chargen, so a town boot had no way past the overlay.
-    loadSpellIndex(fetchBytes).then((sbi) => { spellsByIndex = sbi; return applyHeadlessChargen(playerEntity, Number(params.get('class')), { fetchBytes, spellsByIndex: sbi }); })
-      .then(() => {
-        preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture },
-          { race: playerEntity.race, gender: playerEntity.gender, faceIndex: playerEntity.faceIndex });
-        surfacePlayer();
-        questInitAtGameStart();   // Q4-v: OnStartGame for the headless character
-        legacyHost?.onCharacterMade();   // LEGACY1: and its family
-      })
-      .catch((e) => console.warn('[chargen] CLASS*.CFG unavailable; the interim entity stands in', e));
-  } else if (!playerEntity.chargenDone && !params.has('load')
-    && !(params.has('classicload') && peekPendingClassicSave())) {
-    // AUDIT 24: ...and not when a SAVE is about to be loaded. The save
-    // carries chargenDone, but it arrives after the boot walk, so the
-    // wizard would mount over the game the player asked to resume.
-    // SAV3: a classic import is a load by another door - same gate,
-    // but ONLY with a real pending SaveGames: a stale ?classicload
-    // typed into the URL has nothing to import and must not leave the
-    // player wizard-less on an interim entity.
-    // AUDIT 17i: ONE construction seam - the flow arrives with every
-    // dependency already attached (careers, SPELLS.STD, the biography
-    // question sets), so a host cannot forget one. Three separate bugs
-    // came from hosts wiring these by hand.
-    createChargenFlow(fetchBytes).then(({ flow, spellsByIndex: sbi }) => {
-      spellsByIndex = sbi;   // M2
-      setLoadingAside('window', true);   // AUDIT LOAD1 2: the wizard is shown mid-boot, before any frame asks - it is the player's, never under the screen
-      townTalk.showOverlay(createChargenWindow(flow, {
-        // ui-chargen-4: the race screen's back cancels the wizard to
-        // the front door (DFU unwinds to the start screen); the
-        // reload re-runs the boot flow.
-        // AUDIT-MACL F3: ...and the guard stands down first, because
-        // this is a door the GAME opened - the same law `exitToTitleMenu`
-        // follows. A player who presses Cancel has asked to leave.
-        onCancel: () => { releaseUnloadGuard(); location.reload(); },
-        startChoice: starts.page,   // START2: where the story begins - the page past the Bay's starts (ui/startChoice.js)
-        onDone: (r) => {
-          setLoadingAside('window', false);   // AUDIT LOAD1 2: a boot still going stands its screen again; the frame asks from its first
-          finishChargen(playerEntity, r, sbi);
-          // AUDIT LIVED1b R4: DFU's AssignCharacter stamps the skill check at WorldTime.Now (PlayerEntity.cs:881); chargen
-          // stamps the classic game's start, which is now offline - online the character's clock begins at the world's,
-          // months past it, and the six-hour gate was open at birth
-          if (sharedClockOn()) playerEntity.lastSkillCheckTime = Math.floor(ownMinutes());
-          preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture },
-            { race: r.race, gender: r.gender, faceIndex: r.faceIndex });
-          surfacePlayer();
-          questInitAtGameStart(r.startKey);   // Q4-v: OnStartGame for the new character - START2: where their story begins
-          autoBuildArms(playerEntity);   // MWA1: the new character's arms - race, sex and face are known now
-          legacyHost?.onCharacterMade(r.legacyModel ?? null);   // LEGACY1: the family founded at the character's birth (D9), its model the question's answer
-          if (realmNew) starts.settled.then(realmBirth).catch((e) => { console.error('[realm] the birth failed', e); realmLost('server'); });   // REALM P1.3: born online - START2: where the story begins
-        },
-      }));
-    }).catch((e) => console.warn('[chargen] CLASS*.CFG unavailable; the interim entity stands in', e));
-  }
+  createTestPreset({   // HOST-SPLIT: src/scenes/testPresetHost.js
+    farStart, getTexture, legacyReady, legacyRealmBirth, palette, params, questInitAtGameStart, realmBirth,
+    realmLost, realmNew, renderer, starts, testEntry, testPreset, townTalk,
+    get legacyHost() { return legacyHost; },
+    get rideOutWanted() { return rideOutWanted; }, set rideOutWanted(value) { rideOutWanted = value; },
+    get seaTestWanted() { return seaTestWanted; }, set seaTestWanted(value) { seaTestWanted = value; },
+    get spellsByIndex() { return spellsByIndex; }, set spellsByIndex(value) { spellsByIndex = value; },
+  });
   const droppedLoot = createDroppedLoot({ renderer, getTexture, uploadRecordFrame });   // U8e
   const lootLines = createLootLines(renderer.gl);   // LOOT11: the lines of light over a find, one pass for every mode
   // NPC-MARKS (scenes/npcMarksHost.js): a bobbing mark over a street person's body whose click is a quest's or a guild's -

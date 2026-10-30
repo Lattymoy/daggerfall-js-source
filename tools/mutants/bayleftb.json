@@ -85,7 +85,7 @@
   },
   {
     "name": "BAY-LEFT-B-B1-birth-waits",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/testPresetHost.js",
     "old": "Promise.all([createChargenFlow(fetchBytes), legacyReady, farStart])",
     "new": "Promise.all([createChargenFlow(fetchBytes), legacyReady])",
     "tests": ["test/systems/legacy/bayleftb_seat.test.js"]

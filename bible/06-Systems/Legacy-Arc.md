@@ -990,7 +990,7 @@ WHAT IT IS NOW:
   (`world/etherPlaces.js:"export function etherPlacePixelOfId(id) {"`) - else by name, the registry's first listed place
   of that name and region past the Bay. Any `?region=&loc=` boot reaches it, a dev boot's as a birth's; a load's place
   stays the save's; a Bay name MAPS.BSA lacks still throws, as it always did.
-- **The birth waits on the move** (`world.js:"Promise.all([createChargenFlow(fetchBytes), legacyReady, farStart])"`), so
+- **The birth waits on the move** (`testPresetHost.js:"Promise.all([createChargenFlow(fetchBytes), legacyReady, farStart])"`), so
   the heir is made, and first saved (offline `onBorn`, online the realm's checkpoint, legacyRealmBirth), at the seat; a
   reload loads that save. No way to it (the trace never landed, the place gone): said (`start.noSite`, START2's own
   words) and born where the world stood.

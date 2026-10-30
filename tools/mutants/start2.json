@@ -359,7 +359,7 @@
   },
   {
     "name": "START2-realm-born-early",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/testPresetHost.js",
     "old": "          if (realmNew) starts.settled.then(realmBirth).catch(",
     "new": "          if (realmNew) realmBirth().catch(",
     "tests": [
@@ -369,7 +369,7 @@
   },
   {
     "name": "START2-page-answer-dropped",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/testPresetHost.js",
     "old": "          questInitAtGameStart(r.startKey);   // Q4-v: OnStartGame for the new character",
     "new": "          questInitAtGameStart();   // Q4-v: OnStartGame for the new character",
     "tests": [

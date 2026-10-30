@@ -12,6 +12,7 @@ import { fpsStats, mountFpsCounter } from '../../../src/ui/fpsCounter.js';
 import { autoBuildArms, armsStandFor, armIdentityOf } from '../../../src/combat/weapon/weaponRig.js';
 import { PREF_DEFAULTS } from '../../../src/systems/uiPrefs.js';
 import { morrowindCard, morrowindArmsLine, morrowindTroubleLines, MW_CARD_LINE } from '../../../src/ui/enhanced/enhancedMenu.js';
+import { hostText } from '../../hostText.mjs';   // PIN MOVED (HOST-SPLIT TEST-PRESET): the world host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
@@ -114,7 +115,7 @@ test('MWA1 pins: the hosts build at every door a made character arrives through 
   assert.match(rig, /export async function autoBuildArms\(entity, \{ dataCount = morrowindDataCount, measure = registerMorrowindData, measured = morrowindDataFingerprint, standing = armsStandFor, intent = null \} = \{\}\)/);
   assert.match(rig, /if \(measured\(\) == null\) await measure\(\)\.catch\(\(\) => 0\);\n\s+const res = await buildArmsFor\(entity\);/, 'AUDIT 65 XL-6: the store is measured before the face verdict, not parsed a dozen times');
   assert.match(rig, /if \(!entity\?\.chargenDone \|\| !\(dataCount\(\) > 0\) \|\| standing\(entity\)\) return null;/, 'the three gates, the last so a second door does not rebuild an arm that already stands FOR THIS ENTITY (MWA3: not merely a built one)');
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.equal((w.match(/autoBuildArms\(playerEntity\);/g) ?? []).length, 5, 'world: the rig, the wizard, the load, the classic load, a family member\'s birth (LEGACY1)');
   assert.match(w, /questInitAtGameStart\(r\.startKey\);\s+\/\/ Q4-v: OnStartGame for the new character[^\n]*\n\s+autoBuildArms\(playerEntity\);/, 'after the wizard');   // PIN MOVED (START2): the page's answer handed on
   assert.match(w, /if \(!extras\) \{ townTalk\.say\('Save version mismatch\.'\); return; \}\n\s+autoBuildArms\(playerEntity\);/, 'after the restore');
@@ -131,7 +132,7 @@ test('MWA4 (before the merge: "remove the on and off button (defunct) and only k
   assert.doesNotMatch(menu, /'Unload arms'|'Build first-person arms'/, 'MWA2\'s two retired buttons stay retired');
   // every consumer of the pack reads the files alone
   assert.doesNotMatch(read('src/combat/weapon/weaponRig.js'), /getPref\('mwArms'\)/, 'the boot build');
-  assert.match(read('src/scenes/world.js'), /enabled: \(\) => enhanced && morrowindDataCount\(\) > 0,/, 'the peer bodies');
+  assert.match(hostText('src/scenes/world.js'), /enabled: \(\) => enhanced && morrowindDataCount\(\) > 0,/, 'the peer bodies');
   assert.doesNotMatch(read('src/systems/online/onlineLane.js'), /\bmwArms: true/, 'the lane forces no switch that is not there');
   assert.match(read('src/player/mwView.js'), /if \(fpArm\.canThirdPerson\(\)\) return false;/, 'and the view seam asks the arm, which unload() empties - so Remove data hands third person to the sprite');
 });

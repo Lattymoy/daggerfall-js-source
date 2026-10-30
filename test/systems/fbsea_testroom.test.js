@@ -10,9 +10,10 @@ import { TEST_SEA, TEST_SEA_TEXT, TEST_RIDE, TEST_LOOT, TEST_PRESETS, testEntryB
 import { modSetting, setModSetting, _resetModSettings } from '../../src/systems/modSettings.js';
 import { getPref, setPref, _resetForTests as _resetPrefs } from '../../src/systems/uiPrefs.js';
 import { classById, batteriesOf } from '../../src/systems/naval/navalShips.js';
+import { hostText } from '../hostText.mjs';   // PIN MOVED (HOST-SPLIT TEST-PRESET): the world host whole
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
-const WORLD = read('src/scenes/world.js');
+const WORLD = hostText('src/scenes/world.js');
 
 test('FIELD BUGS 2026-09-29 (the sea) #5: THE SEA BATTLE\'S DOOR - one entry through the one door (the baseline preset, sea true), a spawn outdoors as the ride is (never the classic start\'s dungeon), its card in the pane, its two switches turned on at the door; her hull armed on both sides and her foe a real class (mutants: the entry unresolved, the route\'s list without it, a switch unturned)', () => {
   assert.equal(TEST_SEA.id, 'sea');
@@ -197,7 +198,7 @@ test('FIELD BUGS 2026-09-29 (the sea) #5: the world\'s wiring - the switches tur
   const latch = WORLD.indexOf("const _csaOnAtLoad = latchModLoaded('come-sail-away'");
   assert.ok(on > 0 && latch > on, 'on before the latch');
   assert.ok(WORLD.indexOf('const navalOn = () =>') > latch, 'and Naval Combat\'s switch is read live');
-  assert.match(WORLD, /if \(testEntry\.sea\) seaTestWanted = true;/);
+  assert.match(WORLD, /if \(testEntry\.sea\) boot\.seaTestWanted = true;/);
   assert.match(WORLD, /if \(rideOutWanted && playerSpawned\) rideOut\(\);[^\n]*\n\s+if \(seaTestWanted && playerSpawned\) seaTest\(\);/, 'the same gate, beside the ride\'s');
   assert.ok(WORLD.indexOf('if (seaTestWanted && playerSpawned) seaTest();') > WORLD.indexOf('const seaTest = () => {'), 'defined at the boot, fired from the loop');
 });

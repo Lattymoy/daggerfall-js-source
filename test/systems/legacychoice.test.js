@@ -28,6 +28,7 @@ import { snapshotPlayer, restorePlayer } from '../../src/systems/save/save.js';
 import { noFamilyLine } from '../../src/ui/familyPages.js';
 import { setModSetting, _resetModSettings } from '../../src/systems/modSettings.js';
 import { _resetModSaveData } from '../../src/systems/modSaveData.js';
+import { hostText } from '../hostText.mjs';   // PIN MOVED (HOST-SPLIT TEST-PRESET): the world host whole
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const FONT = { fnt: { fixedHeight: 9, fixedWidth: 4, glyphWidth: () => 4 }, tex: 'tex:font', cols: 16, rows: 16, cw: 8, ch: 8 };
@@ -357,7 +358,7 @@ test('LEGACY-CHOICE the Family tab says why there is no house: no lineage chosen
   assert.match(noFamilyLine({ on: () => false }), /Turn on Project Legacy/);
   assert.match(noFamilyLine(null), /Open this from a game to see your family\./);
   // the world hands the tab both
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /choice: \(\) => playerEntity\.legacyChoice \?\? null,   \/\/ LEGACY-CHOICE: why a character has no house\n\s*online: \(\) => isOnlinePage\(\),/);
   // the boot's own call is the load, the chargen's the birth
   const h = read('src/scenes/legacyHost.js');

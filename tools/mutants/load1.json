@@ -406,7 +406,7 @@
  },
  {
   "name": "LOAD1-chargen-under-the-screen",
-  "file": "src/scenes/world.js",
+  "file": "src/scenes/testPresetHost.js",
   "old": "      setLoadingAside('window', true);   // AUDIT LOAD1 2: the wizard",
   "new": "      // AUDIT LOAD1 2: the wizard",
   "tests": [

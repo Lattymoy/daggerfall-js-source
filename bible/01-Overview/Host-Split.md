@@ -911,3 +911,13 @@ as the module makes them (`host.modes`, `host.modeNow()`); the three that lift a
 (`fb1001_mining.test.js`, `fb1002_herbcursor_audit.test.js`, `auditdisenchant_host.test.js`); `nodemarks.test.js`
 reads the split import line in two; `l10n4_hardcoded.test.js` carries the 35 English lines with the code (world.js
 315 -> 280). All PIN MOVED (HOST-SPLIT PROFESSIONS).
+
+## TEST-PRESET - the test room's boot and the wizard's door out of bootWorld (CLEANUP, 2026-10-30)
+
+The `if (testPreset) { ... } else if ...` chain - the test room's character, its loot and its ride, and the classic
+start's wizard - went out verbatim (`--group @6709 --handle boot`: the block already names a `host`) to
+`scenes/testPresetHost.js` `createTestPreset`: fifteen names by value, four live (three written). `bootWorld` 33,878 ->
+33,789 logical lines, and the ceiling at it. Six records and one doc anchor re-aimed by the tool, three code-comment
+cites by hand (`playerEntity.js`, `exterior.js`, `chargenSession.js`); the moved comment cut to eight lines. Twelve red
+pins: ten files read the host through `hostText`, two regexes name `boot.` reads, and the English map carries its
+three lines. Seven records, all dead.

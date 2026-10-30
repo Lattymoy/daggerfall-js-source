@@ -13,6 +13,7 @@ import { fileURLToPath } from 'node:url';
 import { ChargenFlow } from '../../src/ui/chargen.js';
 import { createChargenWindow } from '../../src/systems/chargenSession.js';
 import { SKILLS } from '../../src/systems/skills.js';
+import { hostText } from '../hostText.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const seq = (...v) => { let i = 0; return () => v[Math.min(i++, v.length - 1)]; };
@@ -78,7 +79,7 @@ test('ui-chargen-4: every host owns the unwind - the reload arms', () => {
   assert.ok(!dc.includes('chargenFlow?.cancelled'),
     'the poll is gone - the window owns the cancel');
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeonContext.js']) {
-    const s = readFileSync(join(root, host), 'utf8');
+    const s = hostText(host);   // PIN MOVED (HOST-SPLIT TEST-PRESET): world.js's wizard is scenes/testPresetHost.js
     // AUDIT-MACL F3: ...and it stands the unload guard down FIRST. The
     // wizard's Cancel is a door the GAME opened, so prompting the
     // player for it is how you train them to click through the prompt
