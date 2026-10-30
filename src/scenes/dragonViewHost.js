@@ -1,12 +1,11 @@
 // @ts-check
 // DRAGON-POV (2026-10-30, mob: "can we get a 3rd person dragon for scrolling its brokewn"): MY DRAGON IN THIRD PERSON.
-// The wheel out of the head on a dragon either did nothing (a tamed dragon is a ride, and RIDE-POV held every ride but the
-// 3D horse in the head) or showed my own body standing in the air with the saddle still painted over the screen (an
-// Admin's /dragon). Out of the head on a dragon now the camera stands back from the dragon the others see me on - the
-// Dwarven Dragon's own sprite with its rider in the art, puppeted the way net/remotePlayers.js puppets a peer's
-// (DRAGON1), hovering at rest (DRAGON-HOVER) - and neither my body (player/mwView.js mwViewDrawBody) nor the saddle
-// (player/dragonSaddle.js, its two hosts) is drawn. The wheel zooms out past the foot's far end to DRAGON_VIEW_REACH_M,
-// by the helm's ratio (player/seaZoom.js), and the camera turns about the rider's seat, not my feet. Not a DFU member.
+// The wheel out of the head on a dragon did nothing (a tamed dragon is a ride, and RIDE-POV held every ride but the 3D
+// horse in the head) or showed my own body standing in the air under the saddle's picture (an Admin's /dragon). Out of
+// the head on a dragon the camera stands back from the dragon the others see me on - its own sprite with its rider in
+// the art, puppeted as net/remotePlayers.js puppets a peer's (DRAGON1), hovering at rest (DRAGON-HOVER) - and neither my
+// body (player/mwView.js) nor the saddle (player/dragonSaddle.js) is drawn. The wheel reaches out to DRAGON_VIEW_REACH_M
+// by the helm's ratio (player/seaZoom.js), about the rider's seat. Not a DFU member.
 import { RemotePlayers } from '../net/remotePlayers.js';
 import { POSE_RIDE } from '../net/wire.js';
 import { TRANSPORT_MODES } from '../systems/transport.js';
