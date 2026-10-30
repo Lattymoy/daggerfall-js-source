@@ -21,17 +21,20 @@
 // Pure: no DOM, no clock, no network.
 // ═══════════════════════════════════════════════════════════════════
 
-import { GUILD_POWERS, GUILD_RANK_MASTER, GUILD_RANK_OFFICER, GUILD_RANK_MEMBER, GUILD_RANK_RECRUIT, GUILD_RANK_NAMES } from './guildLaw.js';
+import { GUILD_POWERS, GUILD_RANK_MASTER, GUILD_RANK_OFFICER, GUILD_RANK_MEMBER, GUILD_RANK_RECRUIT, GUILD_RANK_NAMES, GUILD_RANKS_MAX } from './guildLaw.js';
 import { HALL_POWERS } from '../hallLaw.js';
 import { WRIT_POWERS, writDeliverMay, contractPaidMay } from '../writLaw.js';
 import { SEAT_POWERS, SEAT_LEVER_RANKS } from '../townSeatLaw.js';
 import { VAULT_RANK_DEFAULTS } from './guildVaultLaw.js';
+import { t } from '../../systems/textManager.js';   // GUILD-SHOP: the new acts' words, in the player's language
 
 /** The four tables by the name a row gives them; `levers` the seat's levers (SEAT_LEVER_RANKS, one list of ranks). */
 const TABLES = Object.freeze({ guild: GUILD_POWERS, hall: HALL_POWERS, writ: WRIT_POWERS, seat: SEAT_POWERS });
 /** AUDIT GUILD3 W3: the acts the writs' law gives a rank by a rule, not a table - read off the rule at the call. */
 const RULES = Object.freeze({ deliver: writDeliverMay, paid: contractPaidMay });
 const RANKS = Object.freeze([GUILD_RANK_MASTER, GUILD_RANK_OFFICER, GUILD_RANK_MEMBER, GUILD_RANK_RECRUIT]);
+/** GUILD-RANKS: a guild's `n` ranks, the guildmaster first (four where it names no count). */
+const ranksOf = (/** @type {number} */ n) => (Number.isInteger(n) && n > RANKS.length ? [...Array(Math.min(n, GUILD_RANKS_MAX)).keys()] : [...RANKS]);
 
 /** EVERY RANK'S ACTS, in the order a member meets them - `{ table, power, words }`; `{ any: true, words }` for what every
  *  member may do whatever the tables say (pin a note: guildBoard.js; put materials into the guild Stores and take one's
@@ -66,25 +69,32 @@ export const GUILD_RANK_ACTS = Object.freeze([
   Object.freeze({ table: 'hall', power: 'hall', words: 'buy and sell the hall' }),
   Object.freeze({ table: 'hall', power: 'heraldry', words: 'choose the guild\'s arms' }),
   Object.freeze({ table: 'guild', power: 'vaultGrant', words: 'grant or take back each member\'s use of the vault' }),
-  Object.freeze({ table: 'guild', power: 'renameRanks', words: 'rename the ranks' }),
+  Object.freeze({ table: 'guild', power: 'renameRanks', get words() { return t('guild.power.ranks', 'rename, add and remove the ranks, and choose what each may do'); } }),   // GUILD-RANKS
   Object.freeze({ table: 'guild', power: 'rename', words: 'give the guild a new name, for a price' }),
+  Object.freeze({ table: 'guild', power: 'shop', get words() { return t('guild.power.shop', 'buy hall furniture from the guild shop with the silver treasury'); } }),   // GUILD-SHOP
+  Object.freeze({ table: 'guild', power: 'logo', get words() { return t('guild.power.logo', 'send the guild\'s own logo to the moderators for review'); } }),   // GUILD-LOGO
   Object.freeze({ table: 'guild', power: 'handOver', words: 'hand the guild on' }),
   Object.freeze({ table: 'guild', power: 'disband', words: 'disband it' }),
 ]);
 
-/** The ranks a row's act is a rank's, off its own table or rule at the call (the vault's row: every rank with a place). */
-export function guildActRanks(/** @type {any} */ row) {
-  if (row?.any) return [...RANKS];
+/** The ranks a row's act is a rank's, off its own table or rule at the call (the vault's row: every rank with a place).
+ *  GUILD-RANKS: a guild's own powers (`powers`, guildLaw.js guildPowersOf) over its `n` ranks, where given. */
+export function guildActRanks(/** @type {any} */ row, /** @type {any} */ powers = null, n = RANKS.length) {
+  const all = ranksOf(n);
+  if (row?.any) return all;
   if (row?.master) return [GUILD_RANK_MASTER];
-  if (row?.vault) return RANKS.filter((r) => guildVaultActsOf(r).length > 0);
-  if (typeof row?.rule === 'string') { const may = /** @type {any} */ (RULES)[row.rule]; return typeof may === 'function' ? RANKS.filter((r) => may(r)) : []; }
+  if (row?.vault) return all.filter((r) => guildVaultActsOf(r).length > 0);
+  if (typeof row?.rule === 'string') { const may = /** @type {any} */ (RULES)[row.rule]; return typeof may === 'function' ? all.filter((r) => may(r)) : []; }
   if (row?.table === 'levers') return [...SEAT_LEVER_RANKS];
+  const own = (row?.table === 'guild' || row?.table === 'hall') && powers && Array.isArray(powers[row?.power]) ? powers[row.power] : null;
+  if (own) return own.filter((/** @type {number} */ r) => all.includes(r));
   const table = /** @type {Record<string, readonly number[]>} */ (/** @type {any} */ (TABLES)[row?.table] ?? {});
   return Object.hasOwn(table, row?.power) ? [...table[row.power]] : [];
 }
 
 /** A rank's place at the vault by default (VAULT_RANK_DEFAULTS), `{ level, limit }`, or null. */
-const vaultDefaultOf = (/** @type {number} */ rank) => /** @type {Record<number, { level: string, limit: number }>} */ (VAULT_RANK_DEFAULTS)[rank] ?? null;
+const vaultDefaultOf = (/** @type {number} */ rank) => /** @type {Record<number, { level: string, limit: number }>} */ (VAULT_RANK_DEFAULTS)[rank]
+  ?? (Number.isInteger(rank) && rank > GUILD_RANK_RECRUIT && rank < GUILD_RANKS_MAX ? VAULT_RANK_DEFAULTS[GUILD_RANK_RECRUIT] : null);   // GUILD-RANKS: a rank under the Recruit as one
 /** A take's limit in words: "10 a day", "as many as they like" (0, none). */
 const takeWords = (/** @type {number} */ limit) => (limit > 0 ? `${limit} a day` : 'any number');   // AUDIT GUILD3 W11: the vault grant's own words (guildVaultLaw.js vaultStandingText)
 /** @typedef {{ key: string, words: string, limit?: number }} Act */
@@ -100,13 +110,14 @@ export function guildVaultActsOf(/** @type {number} */ rank) {
   return out;
 }
 
-/** EVERY ACT RANK `rank` MAY DO, `[{ key, words }]` in GUILD_RANK_ACTS' order. */
-function actsOf(/** @type {number} */ rank) {
+/** EVERY ACT RANK `rank` MAY DO, `[{ key, words }]` in GUILD_RANK_ACTS' order - GUILD-RANKS: in a guild of `n` ranks and
+ *  its own `powers`, where given. */
+function actsOf(/** @type {number} */ rank, /** @type {any} */ powers = null, n = RANKS.length) {
   /** @type {Act[]} */
   const out = [];
   GUILD_RANK_ACTS.forEach((row, i) => {
     if (row.vault) { out.push(...guildVaultActsOf(rank)); return; }
-    if (guildActRanks(row).includes(rank)) out.push({ key: `act-${i}`, words: /** @type {string} */ (row.words) });
+    if (guildActRanks(row, powers, n).includes(rank)) out.push({ key: `act-${i}`, words: /** @type {string} */ (row.words) });
   });
   return out;
 }
@@ -137,11 +148,12 @@ const EXCEPT_MAX = 2;
  * @param {(rank: number) => Act[]} acts @param {readonly string[]} [names]
  */
 export function rankLinesOf(acts, names = GUILD_RANK_NAMES) {
-  const nameOf = (/** @type {number} */ r) => String(names?.[r] ?? GUILD_RANK_NAMES[r]);
-  return RANKS.map((rank, i) => {
+  const nameOf = (/** @type {number} */ r) => String(names?.[r] ?? GUILD_RANK_NAMES[r] ?? r + 1);
+  const ranks = ranksOf(Array.isArray(names) ? names.length : RANKS.length);   // GUILD-RANKS: each of the guild's ranks
+  return ranks.map((rank, i) => {
     const all = acts(rank).map((a) => a.words);
     let text = all.length ? `${all.join('; ').charAt(0).toUpperCase()}${all.join('; ').slice(1)}.` : 'Nothing yet.';
-    const below = i + 1 < RANKS.length ? RANKS[i + 1] : null;
+    const below = i + 1 < ranks.length ? ranks[i + 1] : null;
     if (below !== null) {
       const mine = acts(rank), theirs = acts(below);
       const more = mine.filter((a) => !theirs.some((t) => t.key === a.key && t.words === a.words)).map((a) => a.words);
@@ -154,8 +166,9 @@ export function rankLinesOf(acts, names = GUILD_RANK_NAMES) {
   });
 }
 /** THE MEMBERS PAGE'S LIST: `[{ rank, name, text }]`, the guildmaster first, over the guild's own acts (rankLinesOf).
- *  `names` the guild's rank names (GUILD_RANK_NAMES where it has none). @param {readonly string[]} [names] */
-export const guildRankLines = (names = GUILD_RANK_NAMES) => rankLinesOf(actsOf, names);
+ *  `names` the guild's rank names (GUILD_RANK_NAMES where it has none); GUILD-RANKS: `powers` its own table, where given.
+ *  @param {readonly string[]} [names] @param {any} [powers] */
+export const guildRankLines = (names = GUILD_RANK_NAMES, powers = null) => rankLinesOf((r) => actsOf(r, powers, names.length), names);
 
 /** What the list closes on: a member's vault place is the guildmaster's to change, member by member. */
 export const GUILD_RANK_ACTS_NOTE = 'The guildmaster can grant or remove each member\'s vault access on this page.';

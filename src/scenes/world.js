@@ -332,10 +332,10 @@ import { setProfessionsPages, forgeOffered, stationDoorAt, stationColdLine, dise
 import { materialPicture, itemPicture } from '../ui/menu/menuPicture.js';   // MENU-ORDER: a material's and a piece's picture for the menus' rows
 import { createSaddleHost } from './saddleHost.js';   // STEED-UI: the saddle panel - the horse and the wagon on screen (Enhanced Plus)
 import { setHoldingsProvider, stableProviderFor } from '../ui/holdingsPages.js';   // HOLDINGS: the Stable and the Fleet pages on the pause menu's Holdings tab
-import { fleetBook, fleetShip, titleDeed, knowShip, retitle, setShipPort, forgetShip, fleetSaveSlot, FLEET_SAVE_VENDOR } from '../systems/fleet.js';   // HOLDINGS: the Fleet's ledger and its book of titles
+import { fleetBook, fleetShip, titleDeed, knowShip, retitle, setShipPort, forgetShip, fleetSaveSlot, FLEET_SAVE_VENDOR, shipFigureheadOf } from '../systems/fleet.js';   // HOLDINGS: the Fleet's ledger and its book of titles; FIGUREHEAD: a boat of mine's carving
 import { createFleetHost } from './fleetHost.js';   // HOLDINGS: the Fleet page's host half
 import { createQuayPool } from './quayPool.js';   // QUAYS: a harbour's quays, stood off its berths, and the gangways
-import { createLefayMonument } from './lefayMonumentHost.js';   // LEFAY1: the monument to Julian LeFay outside Privateer's Hold (HOLD-MONUMENT), and the flowers laid at it
+import { createMonuments } from './lefayMonumentHost.js';   // LEFAY1: the monuments - Julian LeFay's in Gothway Garden, Patrick Stewart's by the White-Gold Tower - and the flowers laid at them
 import { createMerchantYards } from './merchantYardsHost.js';   // MERCHANT-YARDS: every city's and town's Stable and Wagon Yard, and their trade
 import { createWitchesHost } from './witchesHost.js';   // WITCH1: the Witches' Festival in the streets - the Hearth Offerings, the Wyrd Sister's window, the festival's doors
 import { createPortHost, PORT_TEXT, stairRefusal, stairFeetY } from './portHost.js';   // SHIPYARDS: every port town's shipyard and lighthouse, their people, their press and the lamp - and the stair's refusals
@@ -499,6 +499,7 @@ import '../systems/courtRulesDoor.js';   // AUDIT WORLD-EVENTS L1-10: and their 
 import { sendRaiseWord } from '../net/raiseWord.js';   // AUDIT WORLD-EVENTS L1-1, L1-4: a Resurrect said to the room that keeps the death
 import { gateRoomKey, isGateRoom, gateBossOf, gateTimes, gateAdmits, gateAt, gatePortentsOf, gateLaneOf, GATE_COLLAPSE_MS } from '../net/gate/gateLaw.js';   // WB3b: the court's room, and its day's end
 import { createGateCrowd, gateCrowdMax, crowdKept } from '../net/gate/gateCrowd.js';   // GATE-CROWD: the card's count draws the nearest of a crowd (CROWD-WIDE: everywhere a stranger cannot fight me)
+import { withIndoorFloor, indoorSceneY, keepIndoorFloor } from '../net/peer/indoorFloor.js';   // INDOOR-FLOOR: a pose indoors over its room's floor
 import { createPeerRange, peerRangeOf } from '../net/peer/peerRange.js';   // PEER-RANGE: the others drawn out to the distance on the Other players card
 import { gateLandingFor, courtRing, courtArena, courtArenaAt, courtToDungeon, courtBraziers, COURT_TEXT, COURT_FOG, LAVA_Y } from '../world/gate/gateArena.js';   // WB3b: the Burning Court's way home, its ring and its words   // WB2: the gate's countdown over the screen, near it
 import { isMainStoryDungeon } from '../world/dungeon/dungeonTextures.js';   // SPAWNED-DUNGEONS1: the main story's own dungeons are never cloned
@@ -1000,7 +1001,7 @@ import { createPlayerHealthMirror } from '../net/siege/refereeHealthMirror.js'; 
 import { wildHallPicks, wildHallAt, wildHallTemplateOk } from '../systems/wild/wildDungeons.js';   // PVPDUNGEONS: the day's halls, picked alike on every client   // PVPDUNGEONS
 import { setWildHere, wildHere, isWildRegion, WILD_REGION, wildInside, wildNear, setWildDeath, wildDeath, wildDeathAtHand, wildDeathKill, wildFallHeard, WILD_TEXT, WILD_DEATH_HOLD_S, WILD_NAME, ZONE_WATCH_SCALE } from '../systems/wild/wildZone.js';
 import { createPartyTruce } from '../systems/wild/wildZone.js';   // PARTY-TRUCE (FIELD BUGS 2026-10-09b)
-import { settledAt, zoneSafe, zoneSafeFrame, zonePortFree, teleportLanding, ZONE_SAFE_TEXT } from '../systems/wild/zoneSafe.js';   // ZONE-SAFE (the owner, 2026-10-25: "All cities should be considered safe zones"): a settlement's streets are peace
+import { settledAt, zoneSafe, zoneSafeFrame, zonePortFree, teleportLanding, zoneBankOpen, ZONE_SAFE_TEXT } from '../systems/wild/zoneSafe.js';   // ZONE-SAFE (the owner, 2026-10-25: "All cities should be considered safe zones"): a settlement's streets are peace
 import { zoneEdgeSee } from '../systems/wild/zoneEdge.js';   // PVP-EDGE: safe passage only for a walk in over the zone's edge
 import { GREATER_GIANT_CALL, GREATER_GIANT_CALL_AT, noteWildBlow } from '../systems/wild/wildZone.js';   // GREATER-GIANT; AUDIT PVP-EASE L2-1: the combat lock's blow
 import { wildRing, wildRingAt, wildRingName, wildRingBonus, wildZoneKind, zoneWord, zoneRingName, setWildMask, wildMask, WILD_RINGS, wildJourney, WILD_GIANT, WILD_GIANT_CHANCE, WILD_GIANT_MAX, WILD_STRANGER_M, WILD_STRANGER_SEE_M, WILD_STRANGER_SLOW_M, WILD_STRANGER_RGBA } from '../systems/wild/wildZone.js';   // WILD2: the four rings; WILD3: the journeys
@@ -1029,10 +1030,9 @@ import { createDuelRecords, duelUncountedText } from '../net/duel/duelRecord.js'
 import { createDuelPrompt } from '../ui/duelPrompt.js';   // DUEL1: the challenge, as the challenged player sees it
 import { DuelWallRenderer } from '../render/duelWall.js';   // DUEL1: the ring's holographic wall
 import { BannerRenderer, BANNER_TEX_W, BANNERS_MAX } from '../render/bannerPass.js';   // GUILD1d: a guild's banners, the cloth
-import { createHallBanners } from './hallBanners.js';
+import { createHallBanners, paintHallBanner } from './hallBanners.js';   // GUILD-LOGO: a banner's cloth and its logo
 import { createSeatBanners } from './seatBanners.js';   // SEAT1a: a seat town's banners   // GUILD1d: ...hung beside its hall's door
 import { createFestivalStage } from './seatFestival.js';   // FESTIVAL-STAGE: a Festival's music, banners and lanterns
-import { drawBanner } from '../ui/heraldryArt.js';   // GUILD1d: ...its heraldry painted on it
 import { heraldryLookup } from '../ui/heraldrySwatch.js';   // HERALDRY-SHOWN: a guild's heraldry by its tag, off what this client holds
 import { createAuraHost } from './auraHost.js';   // WB9g, SHADOW-CLOAK, AURA-STALL, ARMORY: the auras at the feet and the Aura Armory's pieces on the body - a module of their own (HOST-SPLIT)
 import { insigniaRowOf, insigniaEquip } from './brokerInsignia.js';   // ARMORY: the Broker's rows and their wear, every kind's (the Dagonfire pieces')
@@ -1831,7 +1831,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const locationIndex = new Map();
   let bountyFarms = null;   // BOUNTY-FARM: the farm pool, made beside the bounty pack's stander; read late (a transition, a load, the frame)
   let quays = null;   // QUAYS: the harbours' quays (scenes/quayPool.js), made beside the farms; read late (a transition, a load, the frame)
-  let lefay = null;   // LEFAY1: the monument to Julian LeFay (scenes/lefayMonumentHost.js), made beside the Sigil Broker; read late (a transition, a load, the frame)
+  let lefay = null;   // LEFAY1: the monuments (scenes/lefayMonumentHost.js createMonuments), made beside the Sigil Broker; read late (a transition, a load, the frame)
   let poiHost = null;   // POI-2: the approved POIs (scenes/poiHost.js), made beside the monument; read late (a transition, a load, the frame)
   let poiFeed = null;   // POI-2: the approved set they are read from (poi/poiFeed.js) - the editor's drafts laid over it (POI-3)
   let poiEditor = null;   // POI-3: the editor in the world (scenes/poiEditorHost.js) - `?editor` alone, a builder's; read late (the frame)
@@ -2786,7 +2786,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const bannerPass = (() => {
     try {
       return new BannerRenderer(renderer.gl, {
-        paint: (h) => { const c = document.createElement('canvas'); c.width = BANNER_TEX_W; c.height = BANNER_TEX_W * 3; const g = c.getContext('2d'); if (!g) return null; drawBanner(g, h, BANNER_TEX_W); return c; },
+        paint: (h) => { const c = document.createElement('canvas'); c.width = BANNER_TEX_W; c.height = BANNER_TEX_W * 3; const g = c.getContext('2d'); if (!g) return null; paintHallBanner(g, h, BANNER_TEX_W); return c; },   // GUILD-LOGO: and its logo
       });
     } catch (e) { console.warn('[guild] the banners could not be built', e); return null; }
   })();
@@ -5606,7 +5606,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // in the host, `?terrainthread=off`, one that died) the queue below is
     // what it always was.
     if (terrainGen.threaded) {
-      for (const p of restridePending.values()) promoteOffThread(p);
+      for (const p of restridePending.values()) restrideOffThread(p);
       restridePending.clear();
       return;
     }
@@ -5627,21 +5627,22 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
 
   /** PERF-EXT26: a promotion's grid, built on the terrain worker. The
    *  reply swaps the surface only if the pixel it was asked for still
-   *  stands and still wants stride 1 - an eviction, a rebuild or a walk
-   *  back out while it was away drops it, and a pixel already promoted
+   *  stands and still wants `stride` - an eviction, a rebuild or a walk
+   *  back out while it was away drops it, and a pixel already restrided
    *  keeps what it has. Nothing is made for a dropped reply, so nothing
-   *  is left to free. */
-  function promoteOffThread(p) {
+   *  is left to free. OW-DEMOTE: a demotion's too - past the Bay its
+   *  ghost rows read the continent's ground, 30-60 ms a crossing here. */
+  function restrideOffThread(p, stride = 1) {
     const key = `${p.px},${p.py}`;
     if (built.get(key) !== p) return;                  // evicted while it waited
     if (strideFor(p.px, p.py) === p._stride) return;   // walked back out of the near ring
     const bedBytes = waterOn ? bedBytesOf(p) : null;   // AUDIT WATER-NEXT P1: the bed carved on the worker with the grid
-    terrainGen.grid({ ...gridGround(p), stride: 1, landform, bed: bedBytes }).then((grid) => {   // LANDFORM1-3: the ghost rows the build took; ACROSS-EDGE: and its meets
+    terrainGen.grid({ ...gridGround(p), stride, landform, bed: bedBytes }).then((grid) => {   // LANDFORM1-3: the ghost rows the build took; ACROSS-EDGE: and its meets
       if (built.get(key) !== p) return;                              // evicted, or rebuilt, while the worker built it
-      if (strideFor(p.px, p.py) !== 1 || p._stride === 1) return;   // walked back out, or promoted meanwhile
-      if (waterOn && bedBytesOf(p) !== bedBytes) grid = { ...grid, bed: gridBed(grid, bedBytesOf(p), 1, grid.bed?.halo ?? null) };   // the cap's TileMap moved meanwhile: carved by the one that stands
-      restrideTerrain(p, 1, grid);
-    }).catch((e) => console.error(`[terrain] promotion of ${key} failed:`, e));
+      if (strideFor(p.px, p.py) !== stride || p._stride === stride) return;   // walked back out, or restrided meanwhile
+      if (waterOn && bedBytesOf(p) !== bedBytes) grid = { ...grid, bed: gridBed(grid, bedBytesOf(p), stride, grid.bed?.halo ?? null) };   // the cap's TileMap moved meanwhile: carved by the one that stands
+      restrideTerrain(p, stride, grid);
+    }).catch((e) => console.error(`[terrain] restride of ${key} failed:`, e));
   }
 
   function restrideTerrain(p, stride, grid = restrideGrid({ ...gridGround(p), woods, stride, landform, roads: terrainGen.roads(), sites: _landformSites, beyond: beyondSites.beyond(), climates: _landformClimates, bed: waterOn ? bedBytesOf(p) : null })) {   // PERF-EXT26: or the grid the worker built; LANDFORM1-3: the build's ghost rows; LANDFORM4/6: the same sites and climates; AUDIT WATER-NEXT P1: the bed with it
@@ -7308,6 +7309,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const _csaOnAtLoad = latchModLoaded('come-sail-away', (() => { try { return modSetting('come-sail-away', 'Enabled') !== false; } catch { return false; } })());   // AUDIT PRE-MERGE 0928 S4: and the mod's other doors (the shelf's rows, its keys, its effect's restore) read this answer too
   const csaOn = () => _csaOnAtLoad;
   const csa = createComeSailAwayPool({ renderer, pipeline, log: console, liveryOf: (boat) => (boat.uid ? fleetShip(boat.uid)?.livery ?? null : null), fittingsOf: (boat) => (boat.uid ? fleetShip(boat.uid)?.deck ?? [] : []),   // SHIP-LIVERY: a boat of mine's paint, the Fleet's; DECK-PROPS: and her fittings
+    figureheadOf: shipFigureheadOf,   // FIGUREHEAD: her carving at her stem
     plaqueOf: (boat) => { const r = boat.uid ? fleetShip(boat.uid) : null; return r?.plaque && r.name ? r.name : null; }, plaqueFont: () => fetchBytes('FONT0003.FNT') });   // SHIP-PLAQUE: her name on her bows, in the shops' lettering
   /** MENU-ORDER: the shipmaster's cards' pictures - each hull's portrait boat, drawn after the frame's own pass (below) */
   const shipPortraits = createShipPortraits({ renderer, canvas, doc: typeof document !== 'undefined' ? document : null, portrait: (hull) => (csaOn() ? csa.portrait(hull) : null) });
@@ -8583,6 +8585,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       flag: shipFlags.wireFlag(b),   // SHIP-COLOURS: and the flag she flies
       livery: b.uid ? fleetShip(b.uid)?.livery ?? null : null, fittings: b.uid ? fleetShip(b.uid)?.deck ?? [] : [],   // SHIP-LIVERY: and her paint; DECK-PROPS: her fittings
       plaque: !!(b.uid && fleetShip(b.uid)?.plaque),   // SHIP-PLAQUE: her name on her bows
+      figurehead: b.uid ? fleetShip(b.uid)?.figurehead ?? 0 : 0,   // FIGUREHEAD: her carving
     }));
     const rec = csaWireRecord(view, campToWire);
     if (rec && modes?.sailingCabin) rec.cabin = 1;
@@ -10307,7 +10310,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     (key) => dragonSky?.keepHoverName(key) ?? null,   // DRAGON5b: my tamed dragon by its name and its verbs, another's by its name
     (key) => hcc.hoverName(key),   // HCC: the horse by its name (HorseNameTooltipController's HorseTargetLabel), the wagon, a peer's by whose it is
     (key) => csaHoverName(key),   // CSA-D: a boat, by its hull's name
-    // LEFAY1: the monument to Julian LeFay - its years, the flowers laid, and its rows; after the Sigil Broker's and the
+    // LEFAY1: a monument - its lines, the flowers laid, and its rows; after the Sigil Broker's and the
     // rite's (WB12d holds those two together) and before another player's (PEER-PLAQUE1's, the array's last): its press
     // is the street's (worldModes.tryEnter, the ladder's last family), and it answers its own key alone
     (key) => lefay?.hoverName(key) ?? null,
@@ -13313,7 +13316,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     doorGeneration += 1;   // WORLD-HOVER: the origin was re-anchored, so every door's WORLD matrix moved with it
     bountyFarms?.destroyAll();   // BOUNTY-FARM: the frame moves under it - it stands again from the bounty, in the new one
     quays?.destroyAll();   // QUAYS: and the quays - stood again off the harbours found in the new one
-    lefay?.destroyAll();   // LEFAY1: and the monument - stood again the next frame that finds Privateer's Hold built
+    lefay?.destroyAll();   // LEFAY1: and the monuments - each stood again the next frame that finds its place built
     poiHost?.destroyAll();   // POI-2: and the POIs - stood again the next frame off the new anchor
     merchantYards?.destroyAll();   // MERCHANT-YARDS: and the yards - stood again the next frame, in the new frame
     portHost?.destroyAll();   // SHIPYARDS: and the shipyards and lighthouses, the same
@@ -24356,18 +24359,19 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     open: openBroker,
     gone: () => closeBrokerDoor(),   // midnight took her from under her open window: it is shut, and she says so
   }) : null;
-  // LEFAY1: THE MONUMENT TO JULIAN LEFAY (scenes/lefayMonumentHost.js) - outside Privateer's Hold (HOLD-MONUMENT), where its
-  // pixel's build found open ground (`p.lefay`, the location frame), carried by the live floating-origin translation;
-  // the flowers a press throws there laid in the character's own pile (systems/save/save.js carries it)
+  // LEFAY1: THE MONUMENTS (scenes/lefayMonumentHost.js) - Julian LeFay's in Gothway Garden (GOTHWAY-MONUMENT), Patrick
+  // Stewart's by the White-Gold Tower (STEWART-MONUMENT): each where its pixel's build put it (`p.monument`, its id and
+  // its spot in the location frame), carried by the live floating-origin translation; the flowers a press throws there
+  // laid in the character's own pile for it (systems/save/save.js carries each)
   const _lefayT = [0, 0, 0], _lefaySite = [0, 0, 0];
-  lefay = createLefayMonument({
+  lefay = createMonuments({
     renderer, getTexture, uploadRecord, billboardSize, collider: () => collider,
-    site: () => {
+    site: (id) => {
       if (_mode() !== 'exterior') return null;
       for (const p of built.values()) {
-        if (!p.lefay || !p.locOrigin) continue;
+        if (p.monument?.id !== id || !p.locOrigin) continue;
         const t = state.pixelTranslation(p.px, p.py, _lefayT);
-        _lefaySite[0] = t[0] + p.locOrigin[0] + p.lefay.x; _lefaySite[1] = t[2] + p.locOrigin[2] + p.lefay.z;
+        _lefaySite[0] = t[0] + p.locOrigin[0] + p.monument.x; _lefaySite[1] = t[2] + p.locOrigin[2] + p.monument.z;
         _lefaySite[2] = state.compensation[1];   // AUDIT LEFAY1 C2: a vertical recentre re-reads its ground
         return _lefaySite;
       }
@@ -24375,7 +24379,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     },
     groundAt: (x, z) => surfaceAt(x, z),   // the drawn ground, as the Broker's cage stands on (no ground: its pixel not built)
     eye: () => cam.pos, feet: () => (walkMode && playerSpawned ? player.feetAt() : null),
-    tribute: () => playerEntity.lefayTribute, keep: (next) => { playerEntity.lefayTribute = next; },
+    tribute: (field) => playerEntity[field], keep: (field, next) => { playerEntity[field] = next; },
     say: (text) => townTalk.say(text), midText: (text) => setMidScreenText(text),
     sound: () => audio.playOneShot(SOUND.SwingHighPitch, 0.4),   // the hand's swing, as a thrown torch's (systems/handheldTorches.js CLIPS.throwSwing)
     restores: restoresSoFar,   // AUDIT LEFAY1 B1: a flower thrown before a load, whichever load, lands nowhere
@@ -27575,7 +27579,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       if (_wildGhost && _wildGhostEndAt != null && Date.now() >= _wildGhostEndAt && !_wildDeposits.length) wildGhostLeave();   // AUDIT INT9: a hall's or a building's ghost, its deposit gone
       if (online.room && !_wildGhost) {
         // PCORPSE1: the body is left where it fell - one last pose, flagged, before the leave below takes the living figure
-        _deadMark = online._pose ? { k: online.room, x: online._pose.x, y: online._pose.y, z: online._pose.z, at: Date.now() } : null;
+        _deadMark = online._pose ? keepIndoorFloor({ k: online.room, x: online._pose.x, y: online._pose.y, z: online._pose.z, at: Date.now() }, online._pose) : null;   // AUDIT FB1030 N1: the room's floor too
         _partyComposedAt = -Infinity;
         // PDEATH-FOES, AUDIT CONTRIB P1: my foes are the survivors' now (handOverFoes), named on my last frame BEFORE the
         // death pose; what nobody took stays mine
@@ -27634,12 +27638,12 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // shift too (AUDIT ONLINE D7), the dungeon's frame is its own
     const shedY = overworld || mode === 'interior';
     const nativeFrame = overworld || !!privateInteriorOf(key);
-    const pose = nativeFrame
+    const pose = withIndoorFloor(nativeFrame
       ? { x: wc.x, y: player.pos[1] - state.compensation[1], z: wc.z, yaw: cam.yaw, pitch: cam.pitch, mv: 0 }
-      : { x: player.pos[0], y: shedY ? player.pos[1] - state.compensation[1] : player.pos[1], z: player.pos[2], yaw: cam.yaw, pitch: cam.pitch, mv: 0 };
+      : { x: player.pos[0], y: shedY ? player.pos[1] - state.compensation[1] : player.pos[1], z: player.pos[2], yaw: cam.yaw, pitch: cam.pitch, mv: 0 }, mode === 'interior' && modes?.interiorCtx, state.compensation[1]);   // INDOOR-FLOOR (net/peer/indoorFloor.js): a pose indoors carries its room's floor
     onlineToScene = nativeFrame
-      ? (p) => { const l = state.localFromWorld(p.x, p.z); return [l[0], p.y + state.compensation[1], l[1]]; }
-      : (p) => [p.x, shedY ? p.y + state.compensation[1] : p.y, p.z];
+      ? (p) => { const l = state.localFromWorld(p.x, p.z); return [l[0], indoorSceneY(p, mode === 'interior' && modes?.interiorCtx, state.compensation[1]), l[1]]; }
+      : (p) => [p.x, shedY ? indoorSceneY(p, mode === 'interior' && modes?.interiorCtx, state.compensation[1]) : p.y, p.z];
     sceneToOnline = nativeFrame ? campToWire : (q) => [q[0], shedY ? q[1] - state.compensation[1] : q[1], q[2]];   // AUDIT MERGE-PLUS B1
     // CARDS2b: seated at a card table, the pose is the SEAT's - the feet and the facing the body is drawn at (the capsule
     // stands where it sat down from), in the room's frame like any point; `st` rides the arm below
@@ -28269,7 +28273,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     wildDungeonElite: () => wildDungeonIsOpenHere(),   // PVPDUNGEONS: every open hall is an elite dungeon
     wildHallRing: () => wildHallHere()?.ring ?? 0,   // PVPDUNGEONS: its tier
     wildHallEpoch: () => { const h = wildHallHere(); return h ? (_wdunEpoch.get(h.key) ?? 0) : 0; },   // PVPDUNGEONS: its reset's epoch
-    wildNoBank: () => { if (!wildHere()) return false; townTalk.say('There are no banks in the mountains.'); return true; },
+    wildNoBank: () => { if (zoneBankOpen(wildHere(), playerTravelPixel(), _locationToBuild)) return false; townTalk.say(ZONE_SAFE_TEXT.bank); return true; },   // ZONE-BANK (systems/wild/zoneSafe.js): a settlement's bank serves
     onDungeonLeave: () => { if (_wdunInside) wdunLeft(false); const n = handOverRoomFoes(); if (n) console.info(`[foes] handed ${n} quest foe(s) at the dungeon's door`); doorToken.leaving(); gatherHost?.leaveDungeon(); worldPublish(performance.now(), true); },   // WORLD1: the room's memory goes out while the dungeon still stands; QUEST-PARTY phase 3c: my shared quest's foes to the party who stay   // DOOR-TOKEN: the cell outside's token, if the walk to the door did not mint it
     // OH-D: the four DFU events There's a Hole in the Bottom of the Ocean subscribes to (its Install), raised by the doors
     onSetDungeon: (ctx) => ohAbyss?.onDungeonSet(ohDungeonOf(ctx)),   // DaggerfallDungeon.OnSetDungeon
@@ -28868,7 +28872,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     activateGrave: (g, mode) => activateGrave(g, mode),   // SEARCH1
     lampClaim: _accountLamp ? () => _accountLamp.claim() : undefined,   // LAMP-KEEPER II: a lamp keeper spoken to - I Love Lamp, the account's
     lampAccount: _accountLamp ? () => _accountLamp.account() : undefined,   // AUDIT FIVE-ASKS D2: whose it is - another sign-in asks afresh
-    monumentTargets: () => lefay?.targets() ?? [],   // LEFAY1: the monument to Julian LeFay, in the street's one ray
+    monumentTargets: () => lefay?.targets() ?? [],   // LEFAY1: the monuments, in the street's one ray
     activateMonument: (key, mode, verb) => lefay?.activate(key, mode, verb) ?? false,   // LEFAY1: read it, or throw it a flower
     yardTargets: () => merchantYards?.targets() ?? [],   // MERCHANT-YARDS: the yards' keepers, signs, horses and wagons on show, in the street's one ray
     activateYard: (key, mode, verb) => merchantYards?.activate(key, mode, verb) ?? false,   // MERCHANT-YARDS: buy from a yard, or sell to it
@@ -29997,7 +30001,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     for (let y = at.y - r; y <= at.y + r; y++) {
       for (let x = at.x - r; x <= at.x + r; x++) {
         const summary = tvPlaceSummary(x, y);
-        if (!summary || summary.loc?.wildHall) continue;   // HALL-PLATE (the owner: "it also shows as town right now too in white fonts"): a hall wears the dungeons' plate alone (travelViewDungeons)
+        if (!summary || summary.loc?.wildHall || summary.loc?.spawned) continue;   // HALL-PLATE (the owner: "it also shows as town right now too in white fonts"): a hall wears the dungeons' plate alone (travelViewDungeons) - SPAWN-PLATE: a spawned dungeon too, as on the Bay
         const rect = tvPlaceRect(summary);
         list.push({ key: `place:${summary.mapId}`, summary, x: rect.cx, z: rect.cz });
       }
@@ -32314,8 +32318,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // - and a crossing promotes FIVE pixels at once, whatever the land
       // view distance is (the ring boundary is Chebyshev 3, not the
       // radius). Paying all five inline is 15.6 ms in a single frame, a
-      // dropped frame every 819 units walked. Demotions are 0.11 ms and
-      // stay inline; promotions go on a queue the frame loop spends a
+      // dropped frame every 819 units walked. Demotions were 0.11 ms, inline (OW-DEMOTE: past the Bay 30-60 ms, so
+      // the worker's where one is up); promotions go on a queue the frame loop spends a
       // budget of, nearest first, exactly as GR5 fills grass cells. A
       // pixel waiting its turn keeps the coarser surface it already had,
       // which is the same heightfield at a tessellation nobody can
@@ -32324,7 +32328,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         const want = strideFor(p.px, p.py);
         if (want === p._stride) continue;
         if (want === 1) restridePending.set(`${p.px},${p.py}`, p);   // the dear way round
-        else { restridePending.delete(`${p.px},${p.py}`); restrideTerrain(p, want); }
+        else { restridePending.delete(`${p.px},${p.py}`); (terrainGen.threaded ? restrideOffThread : restrideTerrain)(p, want); }   // OW-DEMOTE: the worker's too, where one is up
       }
       if (terrainGen.threaded) spendRestrides();   // PERF-EXT26: the promotions reach the worker on the crossing frame, ahead of the new pixels' jobs
       console.log(`stream: entered ${r.current.x},${r.current.y} (load ${r.load.length}, unload ${r.unload.length})`);
@@ -32724,7 +32728,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     try { if (_mode() === 'exterior' && !_loading) harbourBook.step(now / 1000); } catch (e) { console.warn('[harbours] book', e?.message ?? e); }   // HARBOUR-BOOK: the port near the player sounded, before its quays stand
     if (_mode() === 'exterior') camps.ride(dt);   // DECK-CAMP: the camps on a boat's deck posed off her - after she moved, before the lights (a fire's) and the world pass
     try { quays?.frame(); } catch (e) { console.warn('[quays] pool', e?.message ?? e); }   // QUAYS: the harbours' quays stood or taken down, before the lights (their lanterns) and the world pass
-    try { lefay?.frame(); } catch (e) { console.warn('[lefay] monument', e?.message ?? e); }   // LEFAY1: the monument stood where Privateer's Hold is built, its flowers in flight and laid
+    try { lefay?.frame(); } catch (e) { console.warn('[lefay] monument', e?.message ?? e); }   // LEFAY1: each monument stood where its place is built, its flowers in flight and laid
     try { poiEditor?.frame(); poiHost?.frame(); } catch (e) { console.warn('[poi] host', e?.message ?? e); }   // POI-3: the editor's drafts laid over the feed first   // POI-2: the approved POIs on the built pixels - stood, placed, collided; the feed asked each minute
     try { merchantYards?.frame(); } catch (e) { console.warn('[yards] the yards', e?.message ?? e); }   // MERCHANT-YARDS: each town's Stable and Wagon Yard stood where it is built
     portFrame();   // SHIPYARDS: each port town's shipyard and lighthouse stood where it is built, before the lights (its lamp)
@@ -32834,7 +32838,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     bountyFarms?.draw(renderer);   // BOUNTY-FARM: a held farm bounty's farmstead
     quays?.draw(renderer);   // QUAYS: the harbours' quays and the gangways to my ships made fast
     yards?.draw(renderer);   // HOME-YARD: the pieces outside the town's homes, and the one being placed
-    lefay?.draw(renderer);   // LEFAY1: the monument to Julian LeFay
+    lefay?.draw(renderer);   // LEFAY1: the monuments
     merchantYards?.draw(renderer, yardCull);   // MERCHANT-YARDS: the yards' timber and the Wagon Yards' wagons on show; PERF-YARD (AUDIT 15): the street's view test
     poiHost?.draw(renderer, yardCull);   // POI-2: the approved POIs' opaque parts, by the street's view test
     portHost?.draw(renderer, yardCull);   // SHIPYARDS: the shipyards' timber and the lighthouses' stone, by the street's view test as the yards are
@@ -33431,7 +33435,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (_mode() === 'exterior') livePersonBatches.push(...portalGates.batches());   // PORTAL1: the vortexes on the flats' axis
     if (sigilBroker && _mode() === 'exterior') livePersonBatches.push(...sigilBroker.batches());   // SET7: the Broker on the flats' axis, as a foe stands
     if (dragonSky && _mode() === 'exterior') livePersonBatches.push(...dragonSky.batches());   // DRAGON3: the Dwarven Dragon, in its sky or on its ground
-    if (lefay && _mode() === 'exterior') livePersonBatches.push(...lefay.batches());   // LEFAY1: the flowers laid at the monument, and the ones in flight
+    if (lefay && _mode() === 'exterior') livePersonBatches.push(...lefay.batches());   // LEFAY1: the flowers laid at the monuments, and the ones in flight
     if (merchantYards && _mode() === 'exterior') livePersonBatches.push(...merchantYards.batches());   // MERCHANT-YARDS: the keepers and the Stables' horses on the flats' axis
     portBatchesInto(livePersonBatches);   // SHIPYARDS: the port's people on the flats' axis
     if (wardenShows && _mode() === 'exterior') livePersonBatches.push(...wardenShows.batches());   // WARDEN1: the guard, and the horses it carries

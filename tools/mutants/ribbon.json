@@ -279,8 +279,8 @@
   {
     "name": "RIBBON-rl-attach",
     "file": "server/src/index.js",
-    "old": "au: who.au, ...(who.pi ? { pi: who.pi } : {}), ...(who.rb ? { rb: who.rb } : {}), ...(who.ak ? { ak: who.ak } : {}), ...(who.fx ? { fx: who.fx } : {}), lv: who.lv,",
-    "new": "au: who.au, ...(who.pi ? { pi: who.pi } : {}), ...(who.ak ? { ak: who.ak } : {}), ...(who.fx ? { fx: who.fx } : {}), lv: who.lv,",
+    "old": "au: who.au, ...(who.pi ? { pi: who.pi } : {}), ...(who.rb ? { rb: who.rb } : {}), lv: who.lv,",
+    "new": "au: who.au, ...(who.pi ? { pi: who.pi } : {}), lv: who.lv,",
     "tests": [
       "test/net/season1_ribbon.test.js"
     ]

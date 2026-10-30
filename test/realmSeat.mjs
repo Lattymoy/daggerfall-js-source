@@ -20,10 +20,10 @@ export function r2() {
   const m = new Map();
   return {
     _map: m,
-    async put(key, body) { m.set(key, new Uint8Array(body instanceof ArrayBuffer ? body : new TextEncoder().encode(String(body)))); return { key }; },
+    async put(key, body) { m.set(key, new Uint8Array(body instanceof ArrayBuffer ? body : ArrayBuffer.isView(body) ? body.slice().buffer : new TextEncoder().encode(String(body)))); return { key }; },   // GUILD-LOGO: a picture's bytes, as R2 takes them
     async get(key) {
       const v = m.get(key);
-      return v === undefined ? null : { key, size: v.byteLength, body: v, async text() { return new TextDecoder().decode(v); } };
+      return v === undefined ? null : { key, size: v.byteLength, body: v, async text() { return new TextDecoder().decode(v); }, async arrayBuffer() { return v.slice().buffer; } };
     },
     async delete(key) { m.delete(key); },
     async list({ prefix = '' } = {}) { return { objects: [...m.keys()].filter((k) => k.startsWith(prefix)).map((key) => ({ key })) }; },

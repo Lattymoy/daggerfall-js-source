@@ -386,6 +386,7 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/ui/enhanced/` | The Enhanced skin's windows and HUD - its windows. |
 | `src/ui/gate/` | The Oblivion Gate on screen: the banner, the boss bar, the damage chart, the ground view, the marks and the title card. |
 | `src/ui/growth/` | The pause window's Growth tab (`10-UI/Growth.md`): its rail and landings, the specialisations' guide, and the stage that draws the Firmament, the captain's stars and the Ascension in its pane. |
+| `src/ui/guild/` | The guild window's own pages (`11-Multiplayer/Guild-Shop.md`): the Shop page with its words and pictures, a guild's crest and logo, the Ranks page, join requests and the window's look. |
 | `src/ui/hud/` | The classic HUD: vitals, compass, crosshair, active spells - its windows. |
 | `src/ui/icons/` | The drawn icons' art, each drawn by `profileIcons.js` drawnIconNode: the profile icons' shared shapes and motions, Season One's and the daily wares' icons (none a figure, `06-Systems/Aurum.md` section 7) and the effect emblems (`06-Systems/Storefront.md` section 9). |
 | `src/ui/ink/` | The ink maps: town, dungeon, automap - its windows. |

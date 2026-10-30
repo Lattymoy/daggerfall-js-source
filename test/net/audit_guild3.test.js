@@ -66,7 +66,8 @@ test('AUDIT GUILD3 W1: an OPEN writ or contract holds its pay in escrow by right
 });
 
 test('AUDIT GUILD3 W2: a silver line the SERVICE made is the guild\'s - its `who` is a label (\'A Sellsword\', \'The Turning\', \'The registry\', a writ\'s material, an auction\'s id, a work\'s name), never the sentence\'s subject; a member\'s own act (a deposit, a withdrawal, the arms, a deed, a contract put up, a Tribute, a patron\'s bid) says its name (mutants: the member kinds, the subject)', () => {
-  assert.deepEqual([...GUILD_SILVER_MEMBER_KINDS].sort(), ['contract-escrow', 'guild-deed', 'guild-deposit', 'guild-withdraw', 'heraldry', 'patron-escrow', 'tribute']);
+  // PIN MOVED: GUILD-SHOP and GUILD-LOGO - the guildmaster's new name, a ware bought and a logo's fee held are a member's own acts
+  assert.deepEqual([...GUILD_SILVER_MEMBER_KINDS].sort(), ['contract-escrow', 'guild-deed', 'guild-deposit', 'guild-rename', 'guild-shop', 'guild-withdraw', 'heraldry', 'logo-escrow', 'patron-escrow', 'tribute']);
   const labels = { 'sellsword-escrow': 'A Sellsword', 'seat-claim': 'The Turning', 'seat-strike-refund': 'The registry', 'writ-escrow': 'iron', tithe: 'auction:9f', fort: 'Palisade', 'royal-escrow': 'The Tourney' };
   for (const [raw, who] of Object.entries(labels)) {
     const t = guildSilverLineText({ who, raw, out: raw !== 'tithe' && raw !== 'seat-strike-refund', amount: 100 });
@@ -277,6 +278,9 @@ test('AUDIT GUILD3 T1: the gate and the guildmaster\'s view read ONE list of hol
   s.raw.prepare('INSERT INTO town_seat_weeks (week, settled_at) VALUES (9, 0)').run();
   s.raw.prepare("INSERT INTO town_seat_rights (week, key, kind, guild_id, against, at) VALUES (8, 901, 'siege', 'gother', ?, ?)").run(s.gid, T0);
   s.raw.prepare("INSERT INTO npc_chapter_patron_bids (faction, region, season, guild_id, amount, at, state) VALUES (41, 21, 3, ?, 1000, ?, 'won')").run(s.gid, T0);
+  const logo = (id, state) => s.raw.prepare(`INSERT INTO guild_logos (id, guild_id, state, obj, src, type, bytes, side, fee, by_player, by_name, rid, at)
+    VALUES (?, ?, ?, 'o', 's', 'image/png', 10, 128, 2500, 'p', 'Aldric', ?, ?)`).run(id, s.gid, state, `rid-${id}`, T0);
+  logo('a'.repeat(32), 'denied');   // GUILD-LOGO: a review ended holds nothing
   assert.deepEqual([await keepsOf(s), gate()], [[], 0], 'nothing holds it - the page and the gate agree');
   // and each in a state that holds
   s.raw.prepare('UPDATE guild_prof_stores SET qty = 1').run();
@@ -284,17 +288,19 @@ test('AUDIT GUILD3 T1: the gate and the guildmaster\'s view read ONE list of hol
   contract('c-open', 'open', 0, 50);
   s.raw.prepare("INSERT INTO town_seat_rights (week, key, kind, guild_id, against, at) VALUES (10, 902, 'siege', 'gother', ?, ?)").run(s.gid, T0);
   s.raw.prepare("INSERT INTO npc_chapter_patron_bids (faction, region, season, guild_id, amount, at, state) VALUES (41, 21, 4, ?, 1000, ?, 'open')").run(s.gid, T0);
-  assert.deepEqual([await keepsOf(s), gate()], [['guild-stores', 'guild-writs', 'guild-writ-escrow', 'guild-contracts', 'guild-battle', 'guild-patron'], 1]);
+  logo('b'.repeat(32), 'pending');   // GUILD-LOGO: a review under way, its fee in escrow
+  assert.deepEqual([await keepsOf(s), gate()], [['guild-stores', 'guild-writs', 'guild-writ-escrow', 'guild-contracts', 'guild-battle', 'guild-patron', 'guild-logo'], 1]);
   // a closed contract's pay alone, the writs' gone: its own word, once
   s.raw.prepare('DELETE FROM guild_writs').run();
   s.raw.prepare("UPDATE guild_contracts SET state = 'expired' WHERE id = 'c-open'").run();
   s.raw.prepare('UPDATE guild_prof_stores SET qty = 0').run();
   s.raw.prepare("DELETE FROM town_seat_rights WHERE week = 10").run();
   s.raw.prepare("UPDATE npc_chapter_patron_bids SET state = 'lost'").run();
+  s.raw.prepare("UPDATE guild_logos SET state = 'withdrawn'").run();
   assert.deepEqual([await keepsOf(s), gate()], [['guild-writ-escrow'], 1]);
   writ('w-wait-2', 'expired', 0, 20);
   assert.deepEqual([await keepsOf(s), gate()], [['guild-writ-escrow'], 1], 'a writ\'s and a contract\'s pay both waiting: one word, once');
-  assert.deepEqual(GUILD_HOLD_KEEP_CODES, ['guild-stores', 'guild-writs', 'guild-writ-escrow', 'guild-contracts', 'guild-hall', 'guild-vault', 'guild-seat', 'guild-battle', 'guild-patron']);
+  assert.deepEqual(GUILD_HOLD_KEEP_CODES, ['guild-stores', 'guild-writs', 'guild-writ-escrow', 'guild-contracts', 'guild-hall', 'guild-vault', 'guild-seat', 'guild-battle', 'guild-patron', 'guild-logo']);
 });
 
 test('AUDIT GUILD3 T4, T5: a guildmaster with members who would leave is told the hand-over and the rest; the gold before the hall, as ever; an Officer\'s view carries no list (mutants: the list stopped at the hand-over, the order, an Officer asked)', async () => {

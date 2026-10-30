@@ -103,7 +103,7 @@ heard (`relayNowS`).
   theatre's gate of the day on its pixel or beside it. World of Daggerfall's rock keeps 26 m off it, and the grass off
   its scorch. On the map, the Bay's sheet or the continent's, each is a brass cog crossed by a blue crack, a Heart
   Fissure's larger and ringed, its card naming its town and what waits there.
-- **A fissure, built** (`world/fissureModel.js`, its art `fissureArt.js`, pseudo-archive 38341): a scorched oval
+- **A fissure, built** (`world/fissureModel.js`, its art `fissureArt.js`, pseudo-archive 38361): a scorched oval
   on the land, the crack's black depths with the aetherium's blue in them, short cracks off it, slabs of earth heaved up
   along both lips; round it a toothed cog past each end and one off the south lip, a split copper pipe, and a fallen
   brass pillar with its capital - the Sky-Ketch's metals. The slabs and wreckage are solid. Its three vents breathe
@@ -228,7 +228,7 @@ dead); lane 5's `SEASONAUDIT-a-lost-answer-refused` is aimed at the kept id's li
 - **B2. A find lost to a dropped answer.** Off line or a 5xx, the find was dropped, and with no id it could not be asked
   again safely. A find now carries its own id, sixteen hex, and is asked again with it while the service cannot be
   reached: 4 s on, doubling to a minute, the deeds behind it waiting. The service keeps the id with its answer
-  (`pass_asks`, migration 0198), written in the find's own batch, so an id asked again is answered as it was and counted
+  (`pass_asks`, migration 0200), written in the find's own batch, so an id asked again is answered as it was and counted
   once (`server-account/src/battlePass.js:"const kept = rid ? await passAskOf(db, player.id, rid) : null;"`). An
   account's ids go two days after their own, at its first find of a later day: an hourly job would take a share of
   every other job's statements (`cron.js` runCron).

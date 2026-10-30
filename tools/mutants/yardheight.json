@@ -102,7 +102,7 @@
   {
     "name": "DECOR-TURN-lot-unasked",
     "file": "src/scenes/decor/decorTool.js",
-    "old": "    if (why) { deps.say?.(why); return false; }\n    pool.put(next);",
+    "old": "    if (why && (next.model != null || why !== whyNotHere({ piece: cur, radius }))) { deps.say?.(why); return false; }\n    pool.put(next);",
     "new": "    if (why && false) { deps.say?.(why); return false; }\n    pool.put(next);",
     "tests": [
       "test/net/yardheight.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "DECOR-TURN-shown-late",
     "file": "src/scenes/decor/decorTool.js",
-    "old": "    if (why) { deps.say?.(why); return false; }\n    pool.put(next);\n",
-    "new": "    if (why) { deps.say?.(why); return false; }\n",
+    "old": "    if (why && (next.model != null || why !== whyNotHere({ piece: cur, radius }))) { deps.say?.(why); return false; }\n    pool.put(next);\n",
+    "new": "    if (why && (next.model != null || why !== whyNotHere({ piece: cur, radius }))) { deps.say?.(why); return false; }\n",
     "tests": [
       "test/net/yardheight.test.js"
     ],

@@ -1,5 +1,6 @@
 {
  "Damage": "Щети",
+ "Figurehead": "Носова фигура",
  "Hit chance": "Шанс за попадение",
  "Critical": "Крит",
  "Critical Strike": "Критичен удар",
@@ -418,5 +419,23 @@
  "Daedric": "даедрически",
  "Shatter (kill effect names)": "разпад (Пепелен разпад, Тонален разпад)",
  "Stone (portal skin names)": "камък (Руничен / Даедрически / Етерен камък)",
- "aura and title names inside a shop line (Daedric Dominion, Gilded Coil, Eternal Champion, Echo of Numidium)": "as the catalog names them - kept in English"
+ "aura and title names inside a shop line (Daedric Dominion, Gilded Coil, Eternal Champion, Echo of Numidium)": "as the catalog names them - kept in English",
+ "Guild Shop (the guild window's silver shop; page name Shop)": "Магазин на гилдията (страница: Магазин)",
+ "silver treasury (the guild's shared silver)": "сребърна хазна",
+ "Hall furniture (guild shop)": "Мебели за залата",
+ "Insignia Armlet": "Гривна с инсигния",
+ "Guild Crest (portrait icon)": "Емблема на гилдията",
+ "Guild Sailcloth": "Платна на гилдията",
+ "Guild Banker": "Банкер на гилдията",
+ "Heraldic Standard": "Хералдически щандарт",
+ "Crest Plaque": "Плоча с герб",
+ "Guildmaster's Seat": "Кресло на Гилдмайстора",
+ "War Table": "Военна маса",
+ "Weapon Rack": "Стойка за оръжия",
+ "Guild Brazier": "Мангал на гилдията",
+ "device (heraldry)": "знак",
+ "logo (a guild's uploaded picture)": "лого",
+ "under review (a logo)": "се преглежда",
+ "Plain, Stripes, Bands, Quartered, Chevron, Cross, Border, Saltire (sail patterns)": "Гладко, Стълбове, Пояси, Разчетворено, Шеврон, Кръст, Кант, Андреевски кръст",
+ "Guild / Wealth / Identity (guild window groups)": "Гилдия / Богатство / Облик"
 }

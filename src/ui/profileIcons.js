@@ -10,7 +10,9 @@
 //
 // Not a DFU member. Ledger A (THE WITCHES' FESTIVAL).
 
-import { t } from '../systems/textManager.js';   // STOREFRONT: the season's portraits' words, in the player's language
+import { shieldSvg } from './heraldryArt.js';
+import { t } from '../systems/textManager.js';   // STOREFRONT: the season's portraits' words, in the player's language; GUILD-SHOP: the Guild Crest wears its wearer's guild's arms
+import { ownGuildArms, guildLogoSrc } from '../net/guild/guildArmsBook.js';
 import { SEASON_ICON_ART } from './icons/seasonIconArt.js';   // STOREFRONT: Season One's
 import { DAILY_ICON_ART } from './icons/dailyIconArt.js';   // AURUM: the daily wares'
 
@@ -35,6 +37,7 @@ export const ICON_TEXT = Object.freeze({
   get hourglass() { return t('account.icon.hourglass', 'Turning Hourglass'); },
   get sanguinerose() { return t('account.icon.sanguinerose', 'Sanguine Rose'); },
   get whitegold() { return t('account.icon.whitegold', 'White-Gold Tower'); },
+  get guildcrest() { return t('profile.icon.guildcrest', 'Guild Crest'); },   // GUILD-SHOP
 });
 
 /** Each icon's drawing: its field's two colours (the round ground, inner to outer) and its shapes - each `[tag, attrs]`
@@ -224,9 +227,10 @@ const namedIn = (/** @type {any[]} */ shapes) => shapes.flatMap((/** @type {any}
  * children?]`; AURUM: its children may animate it, left out for a still drawing (`still`, by default the player's
  * reduced motion). The paints a shape names, the drawing's own (`defs`) before the shared, are laid in its own `<defs>`
  * with its ids. Null for a key with no drawing or a document that cannot make SVG.
- * @param {any} doc @param {unknown} key @param {string} [cls] @param {number} [size] @param {{ still?: boolean }} [o]
+ * @param {any} doc @param {unknown} key @param {string} [cls] @param {number} [size] @param {{ still?: boolean, arms?: any }} [o]
  */
-export function profileIconNode(doc, key, cls = 'px-icon', size = 64, { still = reducedMotion() } = {}) {
+export function profileIconNode(doc, key, cls = 'px-icon', size = 64, { still = reducedMotion(), arms = undefined } = {}) {
+  if (key === 'guildcrest') return guildCrestNode(doc, cls, size, arms === undefined ? ownGuildArms() : arms);   // GUILD-SHOP
   const art = /** @type {any} */ (typeof key === 'string' && Object.hasOwn(ICON_ART, key) ? ICON_ART[/** @type {keyof typeof ICON_ART} */ (key)] : null);
   return art ? drawnIconNode(doc, art, { key: `pxicon-${key}`, label: ICON_TEXT[/** @type {keyof typeof ICON_TEXT} */ (key)], cls, size, still }) : null;
 }
@@ -287,5 +291,40 @@ export function drawnIconNode(doc, art, { key, label = '', cls = 'px-icon', size
   if (inner) pic.append(inner);
   svg.append(defs, node('circle', { cx: 32, cy: 32, r: 31, fill: `url(#${id})`, stroke: art.bezel ? 'none' : '#c9a55a', 'stroke-width': 1.5 }), pic);
   for (const sh of rim) { const c = build(sh); if (c) svg.append(c); }
+  return svg;
+}
+
+/** GUILD-SHOP: A SHIELD'S OUTLINE for arms not known yet (or none): Ash on the dark field. */
+const PLAIN_SHIELD = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 104"><path d="M8 4 H92 V46 C92 74 74 92 50 102 C26 92 8 74 8 46 Z" fill="#e6e6e6" stroke="#8a8a8a" stroke-width="10"/></svg>';
+/**
+ * GUILD-SHOP: THE GUILD CREST - the wearer's guild's arms in the portrait well: a round field of deep blue rimmed in gold,
+ * the arms' shield on it (heraldryArt.js shieldSvg), or the guild's approved logo in a gilt ring. `arms` - `{ heraldry,
+ * logo }`, the wearer's guild's (net/guild/guildArmsBook.js), or null for a plain shield. Null where SVG cannot be made.
+ * @param {any} doc @param {string} cls @param {number} size @param {any} arms
+ */
+export function guildCrestNode(doc, cls, size, arms) {
+  if (typeof doc?.createElementNS !== 'function') return null;
+  const node = (/** @type {string} */ tag, /** @type {Record<string, any>} */ attrs = {}) => {
+    const n = doc.createElementNS(SVG_NS, tag);
+    for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, String(v));
+    return n;
+  };
+  const svg = node('svg', { viewBox: '0 0 64 64', width: size, height: size, class: cls, role: 'img', 'aria-label': ICON_TEXT.guildcrest });
+  const id = `pxicon-guildcrest-${++_gradientId}`;
+  const defs = node('defs');
+  const grad = node('radialGradient', { id, cx: '50%', cy: '42%', r: '60%' });
+  grad.append(node('stop', { offset: '0%', 'stop-color': '#2a3a6a' }), node('stop', { offset: '100%', 'stop-color': '#0a0f22' }));
+  const clip = node('clipPath', { id: `${id}c` });
+  clip.append(node('circle', { cx: 32, cy: 32, r: 20 }));
+  defs.append(grad, clip);
+  svg.append(defs, node('circle', { cx: 32, cy: 32, r: 31, fill: `url(#${id})`, stroke: '#c9a55a', 'stroke-width': 1.5 }));
+  const logo = typeof arms?.logo === 'string' ? guildLogoSrc(arms.logo) : null;
+  if (logo) {
+    svg.append(node('circle', { cx: 32, cy: 32, r: 22, fill: '#1a1408', stroke: '#e0b84e', 'stroke-width': 2.5 }));
+    svg.append(node('image', { href: logo, x: 12, y: 12, width: 40, height: 40, 'clip-path': `url(#${id}c)`, preserveAspectRatio: 'xMidYMid slice' }));
+    return svg;
+  }
+  const shield = shieldSvg(arms?.heraldry, { size: 40 }) || PLAIN_SHIELD;
+  svg.append(node('image', { href: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(shield)}`, x: 12, y: 10, width: 40, height: 42 }));
   return svg;
 }

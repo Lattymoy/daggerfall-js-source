@@ -103,7 +103,7 @@
   {
     "name": "GUILD1b-a-look-always-moving-the-version",
     "file": "src/net/guild/guildBook.js",
-    "old": "    if (pictureOf(this.state, this.guild, this.invites) !== was) this._changed();",
+    "old": "    if (pictureOf(this.state, this.guild, [this.invites, this.requests]) !== was) this._changed();",
     "new": "    this._changed();",
     "tests": [
       "test/net/guild/guild1b.test.js"
@@ -185,7 +185,7 @@
   {
     "name": "GUILD1b-promote-offered-to-any",
     "file": "src/ui/socialPanel.js",
-    "old": "const mayMove = [guildMayMove(me, m.rank, m.rank - 1),",
+    "old": "const mayMove = [guildMayMove(me, m.rank, m.rank - 1, v.powers, rankCount(v)),",
     "new": "const mayMove = [m.rank > 0,",
     "tests": [
       "test/net/guild/guild1b.test.js"
@@ -203,8 +203,8 @@
   {
     "name": "GUILD1b-remove-upward",
     "file": "src/ui/socialPanel.js",
-    "old": "const mayRemove = guildMay(me, 'remove') && guildOutranks(me, m.rank);",
-    "new": "const mayRemove = guildMay(me, 'remove');",
+    "old": "const mayRemove = guildMay(me, 'remove', v.powers) && guildOutranks(me, m.rank);",
+    "new": "const mayRemove = guildMay(me, 'remove', v.powers);",
     "tests": [
       "test/net/guild/guild1b.test.js"
     ]
@@ -212,7 +212,7 @@
   {
     "name": "GUILD1b-withdraw-offered-to-an-officer",
     "file": "src/ui/socialPanel.js",
-    "old": "enabled: !g.busy && goldTyped() > 0 && !overCap() && guildMay(me, 'withdraw')",
+    "old": "enabled: !g.busy && goldTyped() > 0 && !overCap() && guildMay(me, 'withdraw', v.powers)",
     "new": "enabled: !g.busy && goldTyped() > 0 && !overCap()",
     "tests": [
       "test/net/guild/guild1b.test.js"
@@ -238,9 +238,9 @@
   },
   {
     "name": "GUILD1b-a-rename-offered-to-nobody",
-    "file": "src/ui/socialPanel.js",
-    "old": "    if (guildMay(me, 'renameRanks')) {",
-    "new": "    if (false) {",
+    "file": "src/ui/guild/guildRanksPage.js",
+    "old": "  const master = guildMay(me, 'renameRanks', v.powers);",
+    "new": "  const master = false;",
     "tests": [
       "test/net/guild/guild1b.test.js"
     ]

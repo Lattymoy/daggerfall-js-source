@@ -1369,11 +1369,6 @@
   "tr": "2c3269d26724",
   "by": "claude-in-session"
  },
- "account.refusal.guildRenameGold": {
-  "en": "a91541390908",
-  "tr": "4eddbf75be3a",
-  "by": "claude-in-session"
- },
  "account.refusal.guildRenameMoved": {
   "en": "114d8b59f29d",
   "tr": "bbc303c9b152",
@@ -7399,6 +7394,16 @@
   "tr": "05d2136cc45b",
   "by": "claude-in-session"
  },
+ "menu.autoUpdates.name": {
+  "en": "1e138bf814eb",
+  "tr": "4bef44a5e86a",
+  "by": "claude-in-session"
+ },
+ "menu.autoUpdates.note": {
+  "en": "4541de510f7f",
+  "tr": "edf1e3aadf0d",
+  "by": "claude-in-session"
+ },
  "menu.begin.blurb": {
   "en": "e4e4d4d671eb",
   "tr": "d2617355205a",
@@ -12809,6 +12814,11 @@
   "tr": "a0b130905b58",
   "by": "claude-in-session"
  },
+ "net.update.buildReady": {
+  "en": "b489ad1935f5",
+  "tr": "823bdba156c1",
+  "by": "claude-in-session"
+ },
  "net.update.button": {
   "en": "b50ba5528eed",
   "tr": "587a068448b9",
@@ -15082,6 +15092,11 @@
  "wagon.upkeep.boons.rickety": {
   "en": "8dcc1fe1e4b7",
   "tr": "548cc997b72c",
+  "by": "claude-in-session"
+ },
+ "wild.bank.shut": {
+  "en": "838ae35da1d4",
+  "tr": "d7103d58316b",
   "by": "claude-in-session"
  },
  "wild.death.away": {

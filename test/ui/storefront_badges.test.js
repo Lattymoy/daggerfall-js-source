@@ -167,7 +167,7 @@ test('STOREFRONT the glyphs: each a path in its 16-unit box, a classic mark of i
 // ── THE PORTRAITS ─────────────────────────────────────────────────────
 
 test('STOREFRONT the portraits (AURUM, the owner: "For profile icons no figures should be used. Ensure some are fully animated and go beyond with detail"): Season One\'s three and the daily wares\' eight, each its words, drawn in its field, its shapes clipped to it and its bezel; no figure among them; more than half of them move, and a still drawing (less motion) carries no motion at all (mutants: a figure kept; the motion kept for a still drawing; a shape outside the field)', () => {
-  assert.deepEqual(ICONS.slice(-11), NEW_ICONS);
+  assert.deepEqual(ICONS.slice(4, 4 + NEW_ICONS.length), NEW_ICONS);   // PIN MOVED (GUILD-SHOP, at the merge of main): after the festival's four, the Guild Crest after them
   for (const gone of ['centurion', 'spider', 'sphere', 'colossus', 'numidium']) assert.ok(!ICONS.includes(gone) && !Object.hasOwn(ICON_ART, gone), `${gone}: a figure, gone`);
   assert.deepEqual(NEW_ICONS.map((k) => ICON_TEXT[k]), ['Aetherium Shard', 'Dwemer Lexicon', 'Gearheart', 'Gate of Flame', 'The Aurbis', 'Elder Scroll', 'Azura\'s Star', 'Red Mountain', 'Turning Hourglass', 'Sanguine Rose', 'White-Gold Tower']);
   const doc = { createElementNS: (_ns, tag) => { const n = { tag, attrs: {}, children: [], setAttribute(k, v) { n.attrs[k] = v; }, append(...c) { n.children.push(...c); } }; return n; } };

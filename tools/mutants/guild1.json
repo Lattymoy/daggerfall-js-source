@@ -74,8 +74,8 @@
   {
     "name": "GUILD1-a-move-to-nothing",
     "file": "src/net/guild/guildLaw.js",
-    "old": "!guildRankOk(to) || from === to) return false;",
-    "new": "!guildRankOk(to)) return false;",
+    "old": "!guildRankOk(to, n) || from === to) return false;",
+    "new": "!guildRankOk(to, n)) return false;",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "GUILD1-a-recruit-inviting",
     "file": "server-account/src/guilds.js",
-    "old": "  if (!guildMay(a.me.rank, 'invite')) return { error: 'guild-rank' };\n",
-    "new": "",
+    "old": "  if (!guildMay(a.me.rank, 'invite', a.powers)) return { error: 'guild-rank' };\n  if (typeof handle",
+    "new": "  if (typeof handle",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -362,7 +362,7 @@
   {
     "name": "GUILD1-a-joiner-not-a-recruit",
     "file": "server-account/src/guilds.js",
-    "old": "SELECT ?1, ?2, ?3, ${GUILD_RANK_RECRUIT}, ?4, ?5",
+    "old": "SELECT ?1, ?2, ?3, ${lowestRankSql('?3')}, ?4, ?5",
     "new": "SELECT ?1, ?2, ?3, ${GUILD_RANK_OFFICER}, ?4, ?5",
     "tests": [
       "test/server/guild1.test.js"
@@ -434,8 +434,8 @@
   {
     "name": "GUILD1-a-removal-upward",
     "file": "server-account/src/guilds.js",
-    "old": "if (!guildMay(a.me.rank, 'remove') || !guildOutranks(a.me.rank, t.rank)) return { error: 'guild-rank' };",
-    "new": "if (!guildMay(a.me.rank, 'remove')) return { error: 'guild-rank' };",
+    "old": "if (!guildMay(a.me.rank, 'remove', a.powers) || !guildOutranks(a.me.rank, t.rank)) return { error: 'guild-rank' };",
+    "new": "if (!guildMay(a.me.rank, 'remove', a.powers)) return { error: 'guild-rank' };",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -452,7 +452,7 @@
   {
     "name": "GUILD1-any-rank-moved",
     "file": "server-account/src/guilds.js",
-    "old": "  if (!guildMayMove(a.me.rank, t.rank, rank)) return { error: 'guild-rank' };\n",
+    "old": "  if (!guildMayMove(a.me.rank, t.rank, rank, a.powers, a.ranks)) return { error: 'guild-rank' };\n",
     "new": "",
     "tests": [
       "test/server/guild1.test.js"
@@ -461,8 +461,8 @@
   {
     "name": "GUILD1-a-move-from-a-stale-rank",
     "file": "server-account/src/guilds.js",
-    "old": "'UPDATE guild_members SET rank = ? WHERE rowid = ? AND guild_id = ? AND rank = ?').bind(rank, t.rid, a.me.guild_id, t.rank)",
-    "new": "'UPDATE guild_members SET rank = ? WHERE rowid = ? AND guild_id = ? AND ? IS NOT NULL').bind(rank, t.rid, a.me.guild_id, t.rank)",
+    "old": "WHERE rowid = ?2 AND guild_id = ?3 AND rank = ?4 AND ?1 <=",
+    "new": "WHERE rowid = ?2 AND guild_id = ?3 AND ?4 IS NOT NULL AND ?1 <=",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "GUILD1-a-rename-by-anyone",
     "file": "server-account/src/guilds.js",
-    "old": "  if (!guildMay(a.me.rank, 'renameRanks')) return { error: 'guild-rank' };\n",
-    "new": "",
+    "old": "  if (!guildMay(a.me.rank, 'renameRanks', a.powers)) return { error: 'guild-rank' };\n  const names = guildRankNamesOf(ranks);",
+    "new": "  const names = guildRankNamesOf(ranks);",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "GUILD1-an-overdraft",
     "file": "server-account/src/guilds.js",
-    "old": "WHERE id = ?2 AND treasury >= ?1 RETURNING treasury')",
-    "new": "WHERE id = ?2 RETURNING treasury')",
+    "old": "WHERE id = ?2 AND treasury >= ?1\n        AND ${withdrawerSql('?5', '?6')} RETURNING treasury`)",
+    "new": "WHERE id = ?2\n        AND ${withdrawerSql('?5', '?6')} RETURNING treasury`)",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "GUILD1-an-officer-taking-gold",
     "file": "server-account/src/guilds.js",
-    "old": "  if (!guildMay(a.me.rank, 'withdraw')) return { error: 'guild-rank' };\n",
-    "new": "",
+    "old": "  if (!guildMay(a.me.rank, 'withdraw', a.powers)) return { error: 'guild-rank' };\n  if (!guildGoldOk(gold)) return { error: 'bad-gold' };\n  if (await spend(ctx, player)) return { error: 'guild-rate' };\n  if (side.at) return realmTreasury(ctx, player, a.me, side.at, 'withdraw'",
+    "new": "  if (!guildGoldOk(gold)) return { error: 'bad-gold' };\n  if (await spend(ctx, player)) return { error: 'guild-rate' };\n  if (side.at) return realmTreasury(ctx, player, a.me, side.at, 'withdraw'",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "GUILD1-the-moment-lost",
     "file": "server-account/src/guilds.js",
-    "old": ".bind(gold, me.guild_id, who, nowS).first();",
-    "new": ".bind(gold, me.guild_id, who, 0).first();",
+    "old": ".bind(gold, me.guild_id, who, nowS, me.rid, me.rank).first();",
+    "new": ".bind(gold, me.guild_id, who, 0, me.rid, me.rank).first();",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -624,8 +624,8 @@
   {
     "name": "GUILD1-the-promoted-actor-read-stale",
     "file": "server-account/src/guilds.js",
-    "old": "return { me: first.rank === GUILD_RANK_MASTER ? first : await memberRow(db, player.id, character) };",
-    "new": "return { me: first };",
+    "old": "const me = first.rank === GUILD_RANK_MASTER ? first : await memberRow(db, player.id, character);",
+    "new": "const me = first;",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -633,8 +633,8 @@
   {
     "name": "GUILD1-a-recruit-seeing-the-invitations",
     "file": "server-account/src/guilds.js",
-    "old": "  const invites = guildMay(me.rank, 'invite')\n",
-    "new": "  const invites = true\n",
+    "old": "  const asks = guildMay(me.rank, 'invite', powers);\n",
+    "new": "  const asks = true;\n",
     "tests": [
       "test/server/guild1.test.js"
     ]

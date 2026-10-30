@@ -5,10 +5,12 @@ import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  updatePhase, countdownOf, startForcedUpdate, resetForcedUpdate, forcedUpdateRunning, updateAppNoticeText,
+  updatePhase, countdownOf, startForcedUpdate, resetForcedUpdate, forcedUpdateRunning, updateAppNoticeText, pollForUpdate, autoUpdatesOn, updateReadyNoticeText,
   UPDATE_WARN_MS, UPDATE_SCREEN_MS, UPDATE_HOLD_MAX_MS, UPDATE_SCREEN_ID, UPDATE_BANNER_ID,
 } from '../../src/ui/updateScreen.js';
-import { BUILD_UPDATE_TEXT, BUILD_POLL_MS } from '../../src/net/updateNotice.js';
+import { BUILD_UPDATE_TEXT, BUILD_POLL_MS, resetUpdateNotice } from '../../src/net/updateNotice.js';
+import { getPref, setPref, _resetForTests as resetPrefsForTests } from '../../src/systems/uiPrefs.js';
+import { ONLINE_PLAYERS_OWN_PREFS } from '../../src/systems/online/onlineLane.js';
 import { forceShellUpdates, resetShellUpdates, shellRestartsFor } from '../../src/systems/shellUpdates.js';
 import { armUnloadGuard, unloadGuardArmed, resetUnloadGuard } from '../../src/systems/unloadGuard.js';
 
@@ -116,7 +118,8 @@ test('UPDATE-FORCE: the host starts it where the build poll finds a new build, w
   // PIN MOVED (UPDATE-RESTART): the host hands its save and hold to the poll, which starts the run (ui/updateScreen.js pollForUpdate)
   assert.match(w, /pollForUpdate\(\{ notice: chatNotice, save: onlineCheckpoint, busy: \(\) => !!duelMgr\?\.duel \|\| townTalk\.overlay instanceof DeathScreen \|\| !!modes\?\.deathUp\?\.\(\) \|\| successionOpen\(\) \}\);/);
   const u = readFileSync(new URL('../../src/ui/updateScreen.js', import.meta.url), 'utf8');
-  assert.match(u, /buildUpdateSeen\(tag, BUILD_TAG\) === 'changed' && startForcedUpdate\(opts\)/);
+  // PIN MOVED (AUTO-UPDATE): the run with the player's switch on, the notice without
+  assert.match(u, /buildUpdateSeen\(tag, BUILD_TAG\) === 'changed' && \(autoUpdatesOn\(\) \? startForcedUpdate\(opts\) : opts\.notice\?\.\(updateReadyNoticeText\(\)\)\)/);
 });
 
 // UPDATE-RESTART (2026-10-30, the owner: "we should close the desktop app instead of reload it does not update" / "make
@@ -164,7 +167,8 @@ test('UPDATE-RESTART: the app\'s update starts the run once it can be put in pla
 
 test('UPDATE-RESTART: the host starts the app\'s run with the same save and hold, ended by the shell\'s restart; the shell quits and starts again', () => {
   const u = readFileSync(new URL('../../src/ui/updateScreen.js', import.meta.url), 'utf8');
-  assert.match(u, /forceShellUpdates\(shell, \(\) => startForcedUpdate\(\{ \.\.\.opts, app: true, reload: \(\) => shell\.restartForUpdate\(\) \}\)\);/, 'the same save and hold as the browser\'s run');
+  // PIN MOVED (AUTO-UPDATE): and only with the player's switch on
+  assert.match(u, /forceShellUpdates\(shell, \(\) => autoUpdatesOn\(\) && startForcedUpdate\(\{ \.\.\.opts, app: true, reload: \(\) => shell\.restartForUpdate\(\) \}\)\);/, 'the same save and hold as the browser\'s run');
   const pre = readFileSync(new URL('../../app/preload.cjs', import.meta.url), 'utf8');
   assert.match(pre, /restartForUpdate: \(\) => ipcRenderer\.send\('dagger:restart-for-update'\)/);
   const main = readFileSync(new URL('../../app/main.cjs', import.meta.url), 'utf8');
@@ -172,4 +176,50 @@ test('UPDATE-RESTART: the host starts the app\'s run with the same save and hold
   assert.match(fn, /if \(updateReady\?\.game\) \{[^}]*app\.relaunch\(\{ args: \[\.\.\.process\.argv\.slice\(1\)\.filter\(\(a\) => a !== PLAY_SWITCH\), PLAY_SWITCH\] \}\);\s*app\.quit\(\);/, 'a channel version: quit and start again, straight into the game');
   assert.match(fn, /currentUpdateTransport\(\) === 'updater'\) \{ installNow\(updateReady\.version\); return; \}/, 'an installer: it runs and reopens the app');
   assert.match(main, /ipcMain\.on\('dagger:restart-for-update', \(e\) => \{\s*if \(gameWindow && !gameWindow\.isDestroyed\(\) && e\.sender === gameWindow\.webContents\) restartForUpdate\(\);/, 'only the game\'s own window');
+});
+
+// AUTO-UPDATE (2026-10-30, the owner: "turn off the automatic updates by default. Im tired of players being forced out of
+// the game"): the forced run is the player's switch, off by default.
+test('AUTO-UPDATE: off by default - a new build on the site is told once in chat and nothing reloads; switched on, the forced run starts; the app\'s own update the same (mutants: the switch on by default; the switch unread on the site; the switch unread in the app)', async () => {
+  resetPrefsForTests();
+  assert.equal(getPref('autoUpdates'), false, 'off by default');
+  assert.equal(autoUpdatesOn(), false);
+  assert.ok(ONLINE_PLAYERS_OWN_PREFS.includes('autoUpdates'), 'the player\'s own, online too');
+  const was = { fetch: globalThis.fetch, location: globalThis.location };
+  globalThis.location = { href: 'https://example.test/play/' };
+  globalThis.fetch = async () => ({ ok: true, text: async () => '<meta name="build-tag" content="a-newer-build">' });
+  try {
+    const { doc, win } = fakePage();
+    const said = [];
+    resetUpdateNotice();
+    await pollForUpdate({ notice: (t) => said.push(t), doc, win, reload: () => { win.reloads++; } }, undefined);
+    assert.deepEqual(said, [updateReadyNoticeText()], 'told, once');
+    assert.equal(forcedUpdateRunning(), false, 'no countdown, no screen');
+    await pollForUpdate({ notice: (t) => said.push(t), doc, win }, undefined);
+    assert.equal(said.length, 1, 'the same build is not told again');
+    // on: the run starts on the next new build
+    setPref('autoUpdates', true);
+    resetUpdateNotice();
+    await pollForUpdate({ notice: (t) => said.push(t), doc, win, reload: () => { win.reloads++; } }, undefined);
+    assert.equal(forcedUpdateRunning(), true, 'switched on: the forced run');
+    assert.equal(said.at(-1), BUILD_UPDATE_TEXT);
+  } finally {
+    globalThis.fetch = was.fetch; globalThis.location = was.location;
+    resetForcedUpdate(); resetUpdateNotice(); resetShellUpdates(); resetPrefsForTests();
+  }
+  // the app's own update: heard, it starts the run only with the switch on
+  let ready = null;
+  const shell = { onUpdateReady(fn) { ready = fn; }, restartForUpdate() {} };
+  globalThis.fetch = async () => ({ ok: false });
+  try {
+    await pollForUpdate({ notice() {}, ...fakePage() }, shell);
+    ready({ version: '9.9.9', manual: false });
+    assert.equal(forcedUpdateRunning(), false, 'off: the HUD line alone (systems/shellUpdates.js updateReadyText)');
+    setPref('autoUpdates', true);
+    await pollForUpdate({ notice() {}, ...fakePage() }, shell);
+    assert.equal(forcedUpdateRunning(), true, 'on: the app restarts onto it after the minute');
+  } finally {
+    globalThis.fetch = was.fetch;
+    resetForcedUpdate(); resetShellUpdates(); resetPrefsForTests();
+  }
 });

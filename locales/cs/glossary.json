@@ -1,5 +1,6 @@
 {
  "Damage": "Poškození",
+ "Figurehead": "Příďová figura",
  "Hit chance": "Šance na zásah",
  "Critical": "Kritický",
  "Critical Strike": "Kritický zásah",
@@ -420,5 +421,23 @@
  "Shatter (kill effect names)": "rozpad (Popelný rozpad, Tónový rozpad)",
  "Stone (portal skin names)": "kámen (Runový / Daedrický / Éterický kámen)",
  "Gather {n, plural, ...} times (a real ICU plural now)": "Sbírej suroviny {n, plural, one {jednou} few {#krát} many {#krát} other {#krát}}",
- "aura and title names inside a shop line (Daedric Dominion, Gilded Coil, Eternal Champion, Echo of Numidium)": "as the catalog names them - kept in English"
+ "aura and title names inside a shop line (Daedric Dominion, Gilded Coil, Eternal Champion, Echo of Numidium)": "as the catalog names them - kept in English",
+ "Guild Shop (the guild window's silver shop; page name Shop)": "Cechovní obchod (stránka: Obchod)",
+ "silver treasury (the guild's shared silver)": "stříbrná pokladna",
+ "Hall furniture (guild shop)": "Nábytek do síně",
+ "Insignia Armlet": "Náramek s insignií",
+ "Guild Crest (portrait icon)": "Cechovní znak",
+ "Guild Sailcloth": "Cechovní plachtovina",
+ "Guild Banker": "Cechovní bankéř",
+ "Heraldic Standard": "Erbovní korouhev",
+ "Crest Plaque": "Erbovní deska",
+ "Guildmaster's Seat": "Křeslo mistra cechu",
+ "War Table": "Válečný stůl",
+ "Weapon Rack": "Stojan na zbraně",
+ "Guild Brazier": "Cechovní ohniště",
+ "device (heraldry)": "znamení",
+ "logo (a guild's uploaded picture)": "logo",
+ "under review (a logo)": "posuzuje se",
+ "Plain, Stripes, Bands, Quartered, Chevron, Cross, Border, Saltire (sail patterns)": "Prostý, Kůly, Břevna, Čtvrcený, Krokev, Kříž, Lem, Ondřejský kříž",
+ "Guild / Wealth / Identity (guild window groups)": "Cech / Majetek / Identita"
 }

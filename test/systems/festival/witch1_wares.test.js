@@ -135,7 +135,7 @@ test('WITCH1 THE WITCHFIRE AURA: its look and its own branch of the shader; its 
 });
 
 test('WITCH1 THE PROFILE ICONS: each drawn in code - a round field, its rim and its shapes - and nothing for a word no icon has or a page with no SVG', () => {
-  assert.deepEqual(Object.keys(ICON_ART), ICONS);
+  assert.deepEqual(Object.keys(ICON_ART), ICONS.filter((i) => i !== 'guildcrest'));   // GUILD-SHOP (PIN MOVED): the Guild Crest is drawn of its guild's arms (ui/profileIcons.js guildCrestNode), no fixed art
   assert.deepEqual(Object.keys(ICON_TEXT), ICONS);
   const made = [];
   const node = (tag) => { const n = { tag, attrs: {}, kids: [], setAttribute(k, v) { this.attrs[k] = v; }, append(...k) { this.kids.push(...k); } }; made.push(n); return n; };

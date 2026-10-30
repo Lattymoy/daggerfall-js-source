@@ -2,7 +2,7 @@
 // AURUM (2026-10-29, the owner: "Implement a currency that can be earned ingame and through the past + purchased to be
 // used to purchase a selection of rotating items daily"; bible/06-Systems/Aurum.md): THE AURUM AS THE SERVICE KEEPS IT.
 // A balance is never stored: it is counted at every ask from the account's paid packs (shop.js sells them) and the
-// ledger's lines - what the finds, the challenges, the week's witnessed deeds (migration 0198's triggers) and the caches
+// ledger's lines - what the finds, the challenges, the week's witnessed deeds (migration 0200's triggers) and the caches
 // gave, and what the pass and the daily wares cost. So a refund takes a pack's Aurum back by its order's status. The law
 // both ends read is src/net/aurumLaw.js.
 import { shopOwns, shopWareById, shopOnSaleOf, shopFeaturedOf, shopDropped } from '../../src/net/shopLaw.js';

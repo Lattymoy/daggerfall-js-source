@@ -272,7 +272,7 @@ export const glyphsInOrder = (/** @type {ReadonlyArray<string>} */ list) => GLYP
  *  title's reason: a picture another player's Inspect card shows is one the service vouches for. Holding one is the
  *  service's business (server-account/src/titles.js iconsHeld: the Witches' Festival's, bought or earned); this list is
  *  the vocabulary both ends share. Appended, never reordered. */
-export const ICONS = Object.freeze(['tallowskull', 'twinmoons', 'wyrdcauldron', 'soulcake', 'aetherium', 'lexicon', 'gearheart', 'gatefire', 'aurbis', 'elderscroll', 'azurastar', 'redmountain', 'hourglass', 'sanguinerose', 'whitegold']);   // STOREFRONT (2026-10-29, bible/06-Systems/Battle-Pass.md): Season One's three portraits, then the daily wares' eight (AURUM, bible/06-Systems/Aurum.md - the owner: "For profile icons no figures should be used"), last
+export const ICONS = Object.freeze(['tallowskull', 'twinmoons', 'wyrdcauldron', 'soulcake', 'aetherium', 'lexicon', 'gearheart', 'gatefire', 'aurbis', 'elderscroll', 'azurastar', 'redmountain', 'hourglass', 'sanguinerose', 'whitegold', 'guildcrest']);   // STOREFRONT (2026-10-29, bible/06-Systems/Battle-Pass.md): Season One's three portraits, then the daily wares' eight (AURUM, bible/06-Systems/Aurum.md - the owner: "For profile icons no figures should be used"), last   // GUILD-SHOP: the Guild Crest - the wearer's guild's arms (guildShopLaw.js)
 
 /** RENOWN1 (2026-09-24, Mac: "What if the leveling system was something
  *  seperate unique to online but compatible" ... "Plus having their level
@@ -323,7 +323,7 @@ export function nameIsIssuable(name) {
 /**
  * The claims, as they ride. Short keys because this travels in a hello
  * on every connection and the payload is base64 on top.
- * @typedef {{s: string, n: string, k: 'guest'|'linked', i: number, e: number, t?: string, g?: string[], mu?: number, fz?: number, lv?: number, gi?: string, gt?: string, gm?: string, rc?: 0|1, ci?: string, au?: string, ak?: string, fx?: string, ar?: number, cl?: number, wa?: [number, 0|1], vl?: number, hn?: string, hc?: string, hb?: 1, hg?: number, hd?: 1, fo?: string}} Claims
+ * @typedef {{s: string, n: string, k: 'guest'|'linked', i: number, e: number, t?: string, g?: string[], mu?: number, fz?: number, lv?: number, gi?: string, gt?: string, gm?: string, rc?: 0|1, ci?: string, au?: string, ak?: string, fx?: string, sc?: 1, ar?: number, cl?: number, wa?: [number, 0|1], vl?: number, hn?: string, hc?: string, hb?: 1, hg?: number, hd?: 1, fo?: string}} Claims
  *   s  the account id          n  the display name
  *   k  guest or linked         i  issued at, epoch seconds
  *   e  expires at, epoch seconds
@@ -439,7 +439,8 @@ export function claimsValid(c, { maxTtlS = MAX_TTL_S } = {}) {
   if (titleClaimed(c.t) ? !seatTitleClaimOk(c.ts) : c.ts !== undefined) return false;
   if (c.pi !== undefined && !ICONS.includes(c.pi)) return false;   // WITCH1: the profile icon worn, the aura's law - absent for none (the face), one of the known or refused
   if (c.au !== undefined && !AURAS.includes(c.au)) return false;   // WB9g: the aura worn, the title's law - absent for none, one of the known or refused
-  if (c.ak !== undefined && !armoryKitOk(c.ak)) return false;   // ARMORY: the kit worn, the aura's law - absent for none, a kit of known pieces or refused
+  if (c.ak !== undefined && !armoryKitOk(c.ak)) return false;
+  if (c.sc !== undefined && c.sc !== 1) return false;   // AUDIT GUILD-SHOP S2: the Guild Sailcloth held - absent for none, 1 or refused   // ARMORY: the kit worn, the aura's law - absent for none, a kit of known pieces or refused
   if (c.fx !== undefined && !effectKitOk(c.fx)) return false;   // STOREFRONT: the effects kit worn (a kill effect, a portal skin, a mount look), the armory's law
   if (c.rb !== undefined && !ribbonClaimOk(c.rb)) return false;   // SEASON1 part two: a Season's banner ribbon - absent for none, two of the sixteen colours or refused
   if (c.g !== undefined) {
@@ -514,7 +515,7 @@ export const tokenBodyOf = (/** @type {string} */ token) => String(token ?? '').
  * MINT. The account service's half - it holds the private key and
  * nothing else does.
  *
- * @param {{s:string, n:string, k:'guest'|'linked', t?:string, ts?:number[], g?:string[], mu?:number, fz?:number, lv?:number, gi?:string, gt?:string, gm?:string, rc?:0|1, ci?:string, au?:string, ak?:string, fx?:string, pi?:string, rb?:number[], gx?:string[], ar?:number, cl?:number, wa?:[number, 0|1], vl?:number, hn?:string, hc?:string, hb?:1, hg?:number, hd?:1, fo?:string}} who
+ * @param {{s:string, n:string, k:'guest'|'linked', t?:string, ts?:number[], g?:string[], mu?:number, fz?:number, lv?:number, gi?:string, gt?:string, gm?:string, rc?:0|1, ci?:string, au?:string, ak?:string, fx?:string, sc?:1, pi?:string, rb?:number[], gx?:string[], ar?:number, cl?:number, wa?:[number, 0|1], vl?:number, hn?:string, hc?:string, hb?:1, hg?:number, hd?:1, fo?:string}} who
  * @param {CryptoKey} privateKey  an Ed25519 private key
  * @param {{subtle: SubtleCrypto, nowS: number, ttlS?: number}} env
  * @returns {Promise<string>}
@@ -536,7 +537,8 @@ export async function mintToken(who, privateKey, { subtle, nowS, ttlS = MAX_TTL_
   if (who?.rc !== undefined) claims.rc = who.rc;   // REALM-DOOR: a 0 is said, never dropped as falsy - it is the relay's refusal
   if (who?.ci !== undefined) claims.ci = who.ci;   // AUDIT LEGACY III O1: only with the realm's yes - a 0, or none named, the bytes as before
   if (who?.au !== undefined) claims.au = who.au;   // WB9g: only while an aura is worn - a player wearing none mints the bytes they always did
-  if (who?.ak !== undefined) claims.ak = who.ak;   // ARMORY: only while a piece is worn - a player wearing none mints the bytes they always did
+  if (who?.ak !== undefined) claims.ak = who.ak;
+  if (who?.sc !== undefined) claims.sc = who.sc;   // AUDIT GUILD-SHOP S2: only while the Guild Sailcloth is held - none, the bytes as before   // ARMORY: only while a piece is worn - a player wearing none mints the bytes they always did
   if (who?.fx !== undefined) claims.fx = who.fx;   // STOREFRONT: only while an effect is worn - a player wearing none mints the bytes they always did
   if (who?.pi !== undefined) claims.pi = who.pi;   // WITCH1: only while a profile icon is worn - a player wearing none mints the bytes they always did
   if (who?.rb !== undefined) claims.rb = who.rb;   // SEASON1 part two: only while a Season's ribbon is worn - none, the bytes as before

@@ -14,6 +14,8 @@
 //
 // Pure but for the text core: no DOM. Not a DFU member - Daggerfall Unity has no accounts. Ledger A (COLLECTIONS-II).
 import { t, intlLocale } from '../../systems/textManager.js';
+import { marksText } from '../../net/marksLaw.js';   // GUILD-SHOP: a price in silver
+import { guildWareOf } from '../../net/guild/guildShopLaw.js';   // GUILD-SHOP: a guild shop ware's price
 import { TITLES, AURAS, ICONS, GLYPHS } from '../../net/identityToken.js';
 import { TITLE_TEXT, AURA_TEXT } from '../playerBadge.js';
 import { ICON_TEXT } from '../profileIcons.js';
@@ -58,6 +60,7 @@ export const WARDROBE_SOURCES = Object.freeze([
   wordPair('ranked', () => t('coll.src.ranked', 'The Arena and the Card Tables')),
   wordPair('world', () => t('coll.src.world', 'Around Tamriel')),
   wordPair('account', () => t('coll.src.account', 'Your Account')),
+  wordPair('guild', () => t('coll.src.guild', 'The Guild Shop')),   // GUILD-SHOP: bought for silver on the Guild window's Shop page
   wordPair('shop', () => t('coll.src.shop', 'The Shop')),   // SHOP: the pause face's shop, its pre-alpha wares
   wordPair('patrons', () => t('coll.src.patrons', 'Patrons')),
   wordPair('staff', () => t('coll.src.staff', 'The Game’s Staff')),
@@ -160,6 +163,8 @@ const passReward = (/** @type {string} */ grant) => () => {
 };
 /** STOREFRONT: Season One's - its availability read against its days (wardrobeAvail). */
 const S1 = Object.freeze({ season: 's1' });
+/** GUILD-SHOP: a guild shop ware's way - its silver price, a member's own (net/guild/guildShopLaw.js). */
+const guildWare = (/** @type {string} */ key) => () => t('coll.how.guildShop', 'Buy it on the Shop page of the Guild window for {price} of your own silver. It shows your guild\'s arms.', { price: marksText(guildWareOf(key)?.price ?? 0) });
 /** ARMORY: an Eternal piece's words of how - alone at its price, or with the four others in the Eternal Set. */
 const shopPiece = (/** @type {string} */ id) => () => t('coll.how.shopPiece', 'Buy it from the shop, the gem on the pause screen, for {price}, or with the other four in The Eternal Set for {set}. All proceeds go to the costs of developing DFO Online.', { price: shopPriceText(shopWareById(id)?.cents ?? 0, intlLocale()), set: shopPriceText(shopWareById('armory:eternalset')?.cents ?? 0, intlLocale()) });
 const patron = (/** @type {string} */ tier) => () => t('coll.how.patron', 'Support DFO Online on Patreon at the {tier} tier, then link Patreon from your profile - or be granted it by name.', { tier: TITLE_TEXT[/** @type {keyof typeof TITLE_TEXT} */ (tier)] });
@@ -329,6 +334,7 @@ export const WARDROBE = Object.freeze({
     // STOREFRONT: Season One's three portraits; AURUM: the daily wares' eight
     ...Object.fromEntries(['aetherium', 'lexicon', 'gearheart'].map((k) => [k, E('pass', 'pass', passReward(`icon:${k}`), S1)])),
     ...Object.fromEntries(['gatefire', 'aurbis', 'elderscroll', 'azurastar', 'redmountain', 'hourglass', 'sanguinerose', 'whitegold'].map((k) => [k, E('shop', 'daily', daily(`icon:${k}`))])),
+    guildcrest: E('guild', 'open', guildWare('guildcrest')),   // GUILD-SHOP: the Guild Crest
   }),
   glyph: Object.freeze({
     sprout: E('account', 'auto', () => t('coll.how.sprout', 'Every new account shows it for its first two weeks.')),
@@ -368,7 +374,9 @@ export const WARDROBE = Object.freeze({
   // ARMORY (bible/04-Characters/Aura-Armory.md section 4): the Dagonfire line the Sigil Broker sells, the Eternal line the shop
   armory: Object.freeze(Object.fromEntries(ARMORY_PIECES.map((p) => [p.key, p.source === 'broker'
     ? E('broker', 'open', broker(`armory:${p.key}`), { look: ARMORY_LOOK[/** @type {keyof typeof ARMORY_LOOK} */ (p.key)] })
-    : E('shop', 'shop', shopPiece(`armory:${p.key}`), { look: ARMORY_LOOK[/** @type {keyof typeof ARMORY_LOOK} */ (p.key)] })]))),
+    : p.source === 'guild'   // GUILD-SHOP: the Insignia Armlet, the guild shop's for silver
+      ? E('guild', 'open', guildWare(p.key), { look: ARMORY_LOOK[/** @type {keyof typeof ARMORY_LOOK} */ (p.key)] })
+      : E('shop', 'shop', shopPiece(`armory:${p.key}`), { look: ARMORY_LOOK[/** @type {keyof typeof ARMORY_LOOK} */ (p.key)] })]))),
 });
 
 /** One entry, or null. */

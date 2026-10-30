@@ -13,6 +13,7 @@
 // bound"): a home is its ACCOUNT's now - B owns A's home too, its door B's own and its cupboard B's own save's (PIN MOVED
 // below); the stations' one owner question stands, and serves both.
 import { test } from 'node:test';
+import { hallPiecePress } from '../../src/scenes/guildHallPress.js';   // GUILD-SHOP: activateDecor's hall pieces
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { parse } from 'acorn';
@@ -76,6 +77,7 @@ function room(home, { privateVisitRoom = null } = {}) {
     interiorKeyCtx: { togglePause: (o) => log.opened.push(['page', o.at]) },
     offerStationActs: (p) => log.opened.push(['chooser', p.station]), openStationMaker: (p) => log.opened.push(['maker', p.station]),
     openHomeVendor: () => log.opened.push(['vendor']), isHallBoard: () => false, openHallBoard: () => {}, openHallChest: () => log.opened.push(['hall chest']),
+    hallPiecePress,   // GUILD-SHOP: the hall's board and its banker, pressed (scenes/guildHallPress.js)
     CROWN_HALL_TEXT: { chestShut: () => 'shut' }, interiorInventory: () => ({ storage: true }),
     useDecorPiece, interiorCamps: { activate: () => log.opened.push(['fire']) }, getInteractionMode: () => 'steal', restFromInteriorBed: () => log.opened.push(['bed']),   // DECOR-USE: a placed bed's and fire's own press, ahead of the stations
     // DECOR-ACCESS: the service's grants, none heard - the gate's own law decides, as before the room's list arrives

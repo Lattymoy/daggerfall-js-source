@@ -3114,6 +3114,16 @@
   "tr": "64e143018a99",
   "by": "claude-in-session"
  },
+ "menu.autoUpdates.name": {
+  "en": "1e138bf814eb",
+  "tr": "8570c1ed4aa6",
+  "by": "claude-in-session"
+ },
+ "menu.autoUpdates.note": {
+  "en": "4541de510f7f",
+  "tr": "edc2e4138be0",
+  "by": "claude-in-session"
+ },
  "menu.home.back": {
   "en": "b52b36b7269f",
   "tr": "f6dab074d7bb",
@@ -3732,6 +3742,11 @@
  "net.update.build": {
   "en": "f1068141ad9f",
   "tr": "2d13a48cb9c6",
+  "by": "claude-in-session"
+ },
+ "net.update.buildReady": {
+  "en": "b489ad1935f5",
+  "tr": "3dc17ef4410f",
   "by": "claude-in-session"
  },
  "net.update.button": {
@@ -5552,6 +5567,11 @@
  "wagon.upkeep.boons.rickety": {
   "en": "8dcc1fe1e4b7",
   "tr": "2b571830d773",
+  "by": "claude-in-session"
+ },
+ "wild.bank.shut": {
+  "en": "838ae35da1d4",
+  "tr": "03edb30a3126",
   "by": "claude-in-session"
  },
  "wild.death.away": {

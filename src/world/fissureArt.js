@@ -9,7 +9,7 @@ import { image, putTexel, noiseField, ramp, paletteOf, quantize } from './superD
 import { ketchBrassArt, ketchGearArt, ketchCopperArt, ketchStoneArt } from './ketch/ketchArt.js';
 
 /** The fissure's pseudo-archive (registered in world/eliteGates/pseudoArchives.js). */
-export const FISSURE_ARCHIVE = 38341;
+export const FISSURE_ARCHIVE = 38361;
 /** Its records: the scorched earth, the crack, the slabs, and the wreckage's brass, cogs, copper and stone. */
 export const FISSURE_REC = Object.freeze({ earth: 0, crack: 1, slab: 2, brass: 3, gear: 4, copper: 5, stone: 6 });
 /** Every picture is this square. */

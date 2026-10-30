@@ -169,7 +169,7 @@ import { getNameBankOfRegion } from '../characters/nameHelper.js';   // AUDIT 23
 import { createHitEffects } from './hitEffects.js';
 import { createTownScratch, createPersonTextureKeys } from './townScratch.js';   // PERF-TOWN1: the town loop's per-frame seats, and the memoised texture key
 import { createDroppedTorches } from './droppedTorches.js';
-import { createLefayMonument } from './lefayMonumentHost.js'; import { isLefayTown, lefaySpotOf, lefayExitOf, carveLefay } from '../world/lefayMonument.js'; import { dungeonEntranceLanding } from '../player/enterExit.js';   // LEFAY1: the monument to Julian LeFay, when the place on the bench is Privateer's Hold (HOLD-MONUMENT)
+import { createMonuments } from './lefayMonumentHost.js'; import { isLefayTown, monumentSpotOf, carveLefay } from '../world/lefayMonument.js';   // LEFAY1: the monuments (GOTHWAY-MONUMENT: Gothway Garden's stands on the bench)
 import { createCamps } from './camps.js'; import { PORTAL_TEXT } from '../systems/portalStone.js';   // SURV3: the camps this host stands; PORTAL1: the street's own refusal
 import { drinkAtSource, isWaterSourceFlat, isDrySourceFlat, WATER_SOURCE_MODELS, DRY_SOURCE_TEXT } from '../systems/survival/items.js';   // SURV3: the mod's water sources
 import { survivalOn } from '../systems/survival/switch.js';   // HT1: Handheld Torches' dropped lights, thrown torches and burning foes   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
@@ -715,7 +715,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   const staticBuildings = [];
   const animalAmbience = createAnimalAmbience(audio, () => ambientAnimals);
   const cityNav = new CityNavigation(loc.width, loc.height);   // T1 towns
-  let lefaySpot = null;   // LEFAY1: world.js's spot - this host's frame is the location's own (HOLD-MONUMENT: outside Privateer's Hold, measured once its blocks stand)
+  let lefaySpot = null;   // LEFAY1: world.js's spot (world/lefayMonument.js monumentSpotOf) - this host's frame is the location's own
   for (const b of loc.blocks) {
     const originMatrix = trs(b.originX, 0, b.originZ, 0, 0, 0);
     if (b.blockName === ARENA_BLOCK && isArenaCity(dfLocation)) arenaCityOrigin = [b.originX, 0, b.originZ];   // ARENA-FIX 12
@@ -904,12 +904,9 @@ export async function bootExterior(canvas, renderer, params, status) {
       if (isHearthFlat(LIGHTS_ARCHIVE, light.record)) cityHearths.push({ ...l, foot: light.foot, w: light.w, h: light.h });   // FIX-D: and its sprite, for the eye's box
     }
   }
-  // HOLD-MONUMENT (AUDIT FIVE-ASKS B1): world.js's spot, beside the Hold's way out - DFU's exit landing over the dungeon-entrance
-  // doors this host's blocks stood (its frame the location's own), clear of World of Daggerfall's camp on or off
-  if (isLefayTown(dfLocation)) {
-    lefaySpot = lefaySpotOf(loc, { camp: { block: PRIVATEERS_HOLD_BLOCK, models: HOLD_MODELS }, exit: lefayExitOf(dungeonEntranceLanding(buildingDoors.filter((e) => e.door.doorType === DOOR_TYPE.DUNGEON_ENTRANCE).map((e) => e.door))) });
-    if (!lefaySpot) console.warn('[lefay] no open ground for the monument outside Privateer\'s Hold');   // AUDIT FIVE-ASKS B8: never silent
-  }
+  // GOTHWAY-MONUMENT, STEWART-MONUMENT: world.js's spot, a function of the layout alone
+  lefaySpot = monumentSpotOf(dfLocation, loc);
+  if (isLefayTown(dfLocation) && !lefaySpot) console.warn('[lefay] no open ground for the monument in Gothway Garden');   // AUDIT FIVE-ASKS B8: never silent
   // WOD4: THE CAMP AT PRIVATEER'S HOLD (world/worldOfDaggerfall/wodPrivateersHold.js),
   // world.js's stand in this host's location frame: the models with the
   // location's climate (DaggerfallLocation re-skins every mesh under its
@@ -1754,15 +1751,15 @@ export async function bootExterior(canvas, renderer, params, status) {
     say: (l) => townTalk.say(l), showOverlay: (w) => townTalk.showOverlay(w), openRest: () => { townTalk.closeOverlay(); toggleRest(); },
     advanceMinutes: (n) => { playerTicker.advance(n); runEncounterTick(walkMode ? player.pos : cam.pos, true); },   // CAMP-REST: a camp meal is a skip - no group roll on the replay
   });
-  // LEFAY1: THE MONUMENT TO JULIAN LEFAY (scenes/lefayMonumentHost.js) - world.js's twin: on the bench the location's
-  // frame is the scene's, so its spot stands still and the ground is the one plane
+  // LEFAY1: THE MONUMENTS (scenes/lefayMonumentHost.js) - world.js's twin: on the bench the location's frame is the
+  // scene's, so a spot stands still and the ground is the one plane
   const _lefaySite = lefaySpot ? [lefaySpot.x, lefaySpot.z] : null;
-  const lefay = createLefayMonument({
+  const lefay = createMonuments({
     renderer, getTexture, uploadRecord, billboardSize, collider: () => collider,
-    site: () => (_mode() === 'exterior' ? _lefaySite : null),
+    site: (id) => (_mode() === 'exterior' && lefaySpot?.id === id ? _lefaySite : null),
     groundAt: () => GROUND_OFFSET * 0.025,
     eye: () => cam.pos, feet: () => (walkMode ? player.pos : null),
-    tribute: () => playerEntity.lefayTribute, keep: (next) => { playerEntity.lefayTribute = next; },
+    tribute: (field) => playerEntity[field], keep: (field, next) => { playerEntity[field] = next; },
     say: (text) => townTalk.say(text), midText: (text) => setMidScreenText(text),
     sound: () => audio.playOneShot(SOUND.SwingHighPitch, 0.4),
   });
@@ -1914,7 +1911,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       ? waterSourceHoverName(!!springAt(key)?.dry) : null),
     (key) => wagonHoverName(key),
     (key) => hcc.hoverName(key),   // HCC
-    (key) => lefay.hoverName(key),   // LEFAY1: the monument to Julian LeFay - last, as world.js's twin
+    (key) => lefay.hoverName(key),   // LEFAY1: the monuments - last, as world.js's twin
   ];
   /**
    * WORLD-HOVER H2: THE MOD'S MOBILE BAND (.cs:297-320), IN ITS OWN
@@ -4581,7 +4578,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     // the same list the activation ray reads for a building's people,
     // one mode up (PlayerActivate.ActivateStaticNPC :741-767).
     npcTargets: () => exteriorNpcs,
-    monumentTargets: () => lefay.targets(),   // LEFAY1: the monument to Julian LeFay, in the street's one ray
+    monumentTargets: () => lefay.targets(),   // LEFAY1: the monuments, in the street's one ray
     activateMonument: (key, mode, verb) => lefay.activate(key, mode, verb),   // LEFAY1: read it, or throw it a flower
     // PlayerGPS's building directory: this host knows its own location
     // outright, so it hands over the same bag the world host builds -
@@ -5893,7 +5890,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     camps.draw(renderer, texRemap, streetCull);   // SURV3: the tents; PERF-WAGON: by the street's view test
     hcc.draw(renderer, texRemap, undefined, streetCull);   // HCC: the wagon and its cargo; PERF-WAGON: by the street's view test
     try { lefay.frame(); } catch (e) { console.warn('[lefay] monument', e?.message ?? e); }   // LEFAY1: stood, its flowers in flight and laid
-    lefay.draw(renderer);   // LEFAY1: the monument to Julian LeFay
+    lefay.draw(renderer);   // LEFAY1: the monuments
     renderer.setWindowRooms(realWindowsMode());   // RW1 (render/realWindows.js): this frame's rooms behind the town's glass, asked after its beginFrame (world.js's twin); and the street kept for a building's view out
     // GROUND-LAST (2026-09-21): the ground is drawn AFTER every opaque
     // mesh - the buildings, the mills, the rig, the arrows - below, just

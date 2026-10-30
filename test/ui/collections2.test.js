@@ -153,6 +153,7 @@ const CATALOGUE = {
   'icon:aetherium': 'pass pass', 'icon:lexicon': 'pass pass', 'icon:gearheart': 'pass pass', 'glyph:tonalfork': 'pass pass', 'glyph:cog': 'pass pass',
   'icon:gatefire': 'shop daily', 'icon:aurbis': 'shop daily', 'icon:elderscroll': 'shop daily', 'icon:azurastar': 'shop daily',
   'icon:redmountain': 'shop daily', 'icon:hourglass': 'shop daily', 'icon:sanguinerose': 'shop daily', 'icon:whitegold': 'shop daily',
+  'armory:insigniaarmlet': 'guild open', 'icon:guildcrest': 'guild open',   // GUILD-SHOP (PIN MOVED): the guild shop's armlet and crest, any member's for silver
 };
 
 // ── THE CATALOGUE ──────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -164,7 +165,7 @@ test('COLLECTIONS-II THE CATALOGUE IS WHOLE AND AS RECORDED: every title, aura, 
   for (const kind of W.WARDROBE_KINDS) for (const e of W.wardrobeEntries(kind)) got[`${kind}:${e.key}`] = [e.src, e.avail, ...(e.scope ? [e.scope] : [])].join(' ');
   assert.deepEqual(got, CATALOGUE);
   // PIN MOVED (WYRM-RIDER): the Dwarven Dragon's source, after the Sea Serpent's
-  assert.deepEqual(W.WARDROBE_SOURCES.map(([id]) => id), ['spire', 'abyss', 'serpent', 'dragon', 'broker', 'questlines', 'hunt', 'mastery', 'festival', 'pass', 'seats', 'chapters', 'ranked', 'world', 'account', 'shop', 'patrons', 'staff', 'bestowed'] /* PIN MOVED (SHOP): the shop before the patrons */ /* PIN MOVED (STOREFRONT): the Battle Pass after the festival, a season's play */, 'play\'s first, what no play earns last');   // PIN MOVED (HUNTERS-MARK, MARKS-OF-MASTERY): The Hunt and Marks of Mastery, play's own, after the questlines
+  assert.deepEqual(W.WARDROBE_SOURCES.map(([id]) => id), ['spire', 'abyss', 'serpent', 'dragon', 'broker', 'questlines', 'hunt', 'mastery', 'festival', 'pass', 'seats', 'chapters', 'ranked', 'world', 'account', 'guild', 'shop', 'patrons', 'staff', 'bestowed'] /* PIN MOVED (GUILD-SHOP): the guild shop, after the account's own */ /* PIN MOVED (SHOP): the shop before the patrons */ /* PIN MOVED (STOREFRONT): the Battle Pass after the festival, a season's play */, 'play\'s first, what no play earns last');   // PIN MOVED (HUNTERS-MARK, MARKS-OF-MASTERY): The Hunt and Marks of Mastery, play's own, after the questlines
   for (const kind of W.WARDROBE_KINDS) for (const e of W.wardrobeEntries(kind)) {
     const how = e.how();
     assert.ok(typeof how === 'string' && how.length > 12, `${kind}:${e.key} says how`);

@@ -149,7 +149,7 @@ export const CATEGORIES = Object.freeze([
     sec("tooltips", "Tooltips", [
       "GUI/EnableToolTips", "GUI/ToolTipDelayInSeconds", "GUI/ToolTipTextColor", "GUI/ToolTipBackgroundColor"]),
     sec("start", "Starting up & loading", [
-      "port:skipStartVideo", "feat:loading-screen", "GUI/ShowOptionsAtStart", "GUI/HideLoginName"]),
+      "port:skipStartVideo", "port:autoUpdates", "feat:loading-screen", "GUI/ShowOptionsAtStart", "GUI/HideLoginName"]),
   ]),
   tab("audio", "Audio", [
     sec("volume", "Volume", [

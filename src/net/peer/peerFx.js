@@ -146,7 +146,7 @@ function playPeerKill(/** @type {{ at: number[], kill: string, h: number }} */ q
  * what is due; `splashed(pos)` is told of every splash drawn here (the dedupe). An update's `veiled`: whether the draw
  * conceals that peer (hidden, or drawn translucent).
  * @param {{play?: {blow?: (fx: any) => void, hurt?: (fx: any) => void, flinch?: (id: string) => void},
- *   toScene?: (p: {x: number, y: number, z: number}) => any, now?: () => number}} [opts]
+ *   toScene?: (p: {x: number, y: number, z: number, fy?: number}) => any, now?: () => number}} [opts]
  */
 export function createPeerFxPlayer({ play, toScene, now = () => performance.now() / 1000 } = {}) {
   const seen = new Map();   // id -> { hk, hu, xk, tick, bt, ut, kt }
@@ -185,7 +185,7 @@ export function createPeerFxPlayer({ play, toScene, now = () => performance.now(
       if (hk && hk !== s.hk) {
         s.hk = hk;
         const hp = Array.isArray(pose.hp) && pose.hp.length === 3 && pose.hp.every(Number.isFinite) ? pose.hp : null;
-        const at = hp ? toScene?.({ x: hp[0], y: hp[1], z: hp[2] }) : null;
+        const at = hp ? toScene?.({ x: hp[0], y: hp[1], z: hp[2], fy: pose.fy }) : null;   // AUDIT FB1030 N2: over the sender's room floor, as its body
         // AUDIT MERGE-PLUS B6: no faster than a blow can land (FX_MIN_GAP_S) - a modified client's pose said a new blow
         // on every one of its twenty frames a second, blood and a ring at any point it liked; the wire audit: and none
         // past its farthest shaft from its own feet (BLOW_PEER_M)

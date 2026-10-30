@@ -102,8 +102,8 @@
   {
     "name": "WB9g-the-socket-row-drops-it",
     "file": "server/src/index.js",
-    "old": "glyphs: who.glyphs, gx: who.gx, au: who.au, ...(who.pi ? { pi: who.pi } : {}), ...(who.rb ? { rb: who.rb } : {}), ...(who.ak",
-    "new": "glyphs: who.glyphs, gx: who.gx, ...(who.pi ? { pi: who.pi } : {}), ...(who.rb ? { rb: who.rb } : {}), ...(who.ak",
+    "old": "glyphs: who.glyphs, gx: who.gx, au: who.au, ...(who.pi ? { pi: who.pi } : {}), ...(who.rb ? { rb: who.rb } : {}), lv: who.lv,",
+    "new": "glyphs: who.glyphs, gx: who.gx, ...(who.pi ? { pi: who.pi } : {}), ...(who.rb ? { rb: who.rb } : {}), lv: who.lv,",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]

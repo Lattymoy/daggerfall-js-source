@@ -16,7 +16,7 @@ import { FLORA, midRingFloraPixel, unpackFlora, treesPerTile, floraSpec, canopyC
 import { buildMidRingHeights, midRingPixel, midRingSide, midRingNormals, MID_RADIUS, MID_REBUILD_DRIFT } from '../../src/world/terrain/midRingGrid.js';
 import { midRingVertices, plantCanopy, layGround, MID_FLORA_EASE, MidRingMesh } from '../../src/render/midRing.js';
 import { farFieldVertices } from '../../src/render/farField.js';
-import { FarRingRenderer, buildFarRingGrid, ringHeight } from '../../src/render/farRing.js';
+import { FarRingRenderer, buildFarRingGrid, ringHeight, FLORA_SETTLE_MS, FLORA_WAIT_MAX_MS } from '../../src/render/farRing.js';
 import { opaqueMean, treeArt, groundArt, createFloraArt, floraDisabled, FLORA_MIN_LAND_VIEW, GROUND_RECORDS } from '../../src/render/farFlora.js';
 import { FLORA_GLSL, FLORA_LIGHT_GLSL, FLORA_CROWN_M, FLORA_GROVE_M } from '../../src/render/horizonHaze.js';
 import { capShare, SNOWCAP } from '../../src/world/peaks/snowcap.js';
@@ -242,13 +242,13 @@ test('FAR-FLORA the far ring\'s and the far field\'s woods: the law\'s expectati
 
 test('FAR-FLORA the far ring\'s knob and its builds: the woods at Land View 4 and up (Low\'s 3 keeps the ring of before: no ask, no attribute, the grain off), asked beside the middle ring\'s heights, built again when a tree\'s art lands; the ground answered under the canopy; the kill door (mutant: the knob, the job, the stale test, the uniform, groundAt)', async () => {
   assert.equal(FLORA_MIN_LAND_VIEW, 4);
-  let version = 0;
+  let version = 0, clock = 0;
   const book = { get version() { return version; }, floraOf: () => ({ spec: WOODS_SPEC, art: version ? ART : null, ground: version ? GROUND : null }) };
   const W = 200, Hh = 200, inputs = { heightBytes: new Uint8Array(W * Hh).fill(40), mapWidth: W, mapHeight: Hh, climateAt: () => 231, baseX: 100, baseY: 100, relief: false };
   const ring = (lv) => {
     const { gl, log } = fakeGl();
     const asks = [];
-    const r = new FarRingRenderer(gl, { mid: { midRing: (job) => { asks.push(job); return new Promise(() => {}); } }, flora: book });
+    const r = new FarRingRenderer(gl, { mid: { midRing: (job) => { asks.push(job); return new Promise(() => {}); } }, flora: book, now: () => clock });
     r.build(inputs, 100, 100, lv, null);
     r.draw(new Float32Array(16), { origin: [0, 0, 0], lightDir: [0, 1, 0], ambient: [0, 0, 0], sunScale: 1, sunColor: [1, 1, 1], fogColor: [0, 0, 0], fogEnd: 1, fovY: 1, aspect: 1 });
     return { r, log, asks };
@@ -265,13 +265,30 @@ test('FAR-FLORA the far ring\'s knob and its builds: the woods at Land View 4 an
   assert.deepEqual(med.log.u4.find((u) => u[0] === 'uCanopyBand'), ['uCanopyBand', 0, 1, 0, 0], 'no band: the canopy everywhere');
   assert.equal(med.r.needsRebuild(100, 100), false, 'built with the book as it stands');
   version = 1;   // a tree's art landed
-  assert.equal(med.r.needsRebuild(100, 100), true, 'built again with it');
+  // PIN MOVED (OW-RING): built again once the book has stood still FLORA_SETTLE_MS - a burst of arts one build
+  assert.deepEqual([FLORA_SETTLE_MS, FLORA_WAIT_MAX_MS], [1500, 6000]);
+  assert.equal(med.r.needsRebuild(100, 100), false, 'the book just moved: not yet');
+  clock += FLORA_SETTLE_MS - 1;
+  assert.equal(med.r.needsRebuild(100, 100), false);
+  clock += 1;
+  assert.equal(med.r.needsRebuild(100, 100), true, 'built again with it, once the book stands still');
   assert.equal(low.r.needsRebuild(100, 100), false, 'Low never');
   med.r.build(inputs, 100, 100, 4, null);
   assert.equal(med.r.needsRebuild(100, 100), false);
   assert.equal(med.r._floraStale({ floraVersion: 0 }), true, 'a middle ring or far field laid before it: owed');
   assert.equal(med.r._floraStale({ floraVersion: 1 }), false);
   assert.equal(low.r._floraStale({ floraVersion: -1 }), false, 'Low: none owed');
+  // OW-RING: a burst - an art a second, each beginning the wait again - is built FLORA_WAIT_MAX_MS after its first
+  const first = clock;
+  for (let k = 0; k < 6; k++) { version++; assert.equal(med.r.needsRebuild(100, 100), false, `art ${k + 1} of the burst: waiting`); clock += 1000; }
+  version++;
+  assert.equal(clock - first, FLORA_WAIT_MAX_MS);
+  assert.equal(med.r.needsRebuild(100, 100), true, 'the burst never stilled: built at the longest wait');
+  med.r.build(inputs, 100, 100, 4, null);
+  assert.equal(med.r.needsRebuild(100, 100), false, 'built: owed nothing, the wait let go');
+  version++;
+  assert.equal(med.r.needsRebuild(100, 100), false, 'an art after the build: a wait of its own');
+  version = 1;
   const ground = ringHeight(40);
   assert.ok(Math.abs(med.r.groundAt(100, 100) - ground) < 1e-3, `the ground, never the canopy (${med.r.groundAt(100, 100)})`);
   assert.ok(med.r._ringY.positions[(12 * 0 + 48 * 97 + 48) * 3 + 1] > ground + 1, 'the canopy drawn over it');

@@ -421,6 +421,7 @@ export const HALL_BOARD_ENTRY = Object.freeze({
 export function decorRoomEntries(entries, room, show = null, mods = null) {
   const nude = !(show ?? showNudity());
   return entries?.filter((e) => (!e.hall || (!!room?.hall && !room?.yard))
+    && !(e.guild != null && room?.seat)   // AUDIT GUILD-SHOP R6: a guild's own pieces in its hall, never a palace's Charter Room
     && !(room?.yard && e.kind === 'door')
     && !(nude && e.nude)
     && (!e.outside || !!room?.yard || !!e.inRoom)   // DECOR-KINDS: the street's plain pieces, filed now as what they are

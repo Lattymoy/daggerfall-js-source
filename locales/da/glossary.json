@@ -1,5 +1,6 @@
 {
  "Damage": "Skade",
+ "Figurehead": "Galionsfigur",
  "Hit chance": "Træfchance",
  "Critical": "Kritisk",
  "Critical Strike": "Kritisk træffer",
@@ -445,5 +446,23 @@
  "tonal (Dwemer)": "klang-",
  "aura and title names in shop text (Daedric Dominion, Gilded Coil, Eternal Champion, Echo of Numidium)": "stay English, as the Collections page draws them",
  "endgame": "endgame",
- "elites or champions (foes)": "elite- eller mesterfjender"
+ "elites or champions (foes)": "elite- eller mesterfjender",
+ "Guild Shop (the guild window's silver shop; page name Shop)": "Laugsbutik (siden: Butik)",
+ "silver treasury (the guild's shared silver)": "sølvskatkammer",
+ "Hall furniture (guild shop)": "Laugshusmøbler",
+ "Insignia Armlet": "Insignie-armring",
+ "Guild Crest (portrait icon)": "Laugsemblem",
+ "Guild Sailcloth": "Laugssejldug",
+ "Guild Banker": "Laugsbankier",
+ "Heraldic Standard": "Heraldisk standart",
+ "Crest Plaque": "Våbenplade",
+ "Guildmaster's Seat": "Laugsmesterens stol",
+ "War Table": "Krigsbord",
+ "Weapon Rack": "Våbenstativ",
+ "Guild Brazier": "Laugsfyrfad",
+ "device (heraldry)": "figur",
+ "logo (a guild's uploaded picture)": "logo",
+ "under review (a logo)": "venter på godkendelse",
+ "Plain, Stripes, Bands, Quartered, Chevron, Cross, Border, Saltire (sail patterns)": "Glat, Pæle, Bjælker, Kvadreret, Sparre, Kors, Bort, Skråkors",
+ "Guild / Wealth / Identity (guild window groups)": "Laug / Formue / Identitet"
 }

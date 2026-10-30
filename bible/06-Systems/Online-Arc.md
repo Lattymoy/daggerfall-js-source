@@ -12794,7 +12794,8 @@ Seats-Arc 9.2. New: `src/ui/hallOfRecords.js`.
   Anyone the seats are open to may read it, as the standings; the standings keep their own eight.
 - **The book** (`townSeatLaw.js` `hallOfRecordsChapters`, `hallOfRecordsTitle`; `ui/hallOfRecords.js`): "The Hall of
   Records of Anticlere", centred in the title face; one chapter a Season under its name, centred; each line a paragraph;
-  "Nothing is written here yet." for an empty Hall. Opened through the reader's one door (`ui/bookDoor.js`), so the
+  "No guild has held this seat yet. Its claims, sieges and holders are written here." for an empty Hall (RECORDS-SAID,
+  `01-Overview/bugs/Field-Bugs-2026-10-30b.md` section 6; it said "Nothing is written here yet."). Opened through the reader's one door (`ui/bookDoor.js`), so the
   enhanced skin reads it in its book window and the classic in its scroll.
 - **Where it is read** (`worldModes.js` `hallOfRecordsHere`, `openHallOfRecords`; the host's `hallOfRecords` in
   `scenes/world.js`): DECIDED, a seat's palace's shelf-set models - geometry in DFU's palace, no shop and no bookshelf -

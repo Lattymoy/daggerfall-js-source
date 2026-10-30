@@ -47,8 +47,8 @@
   {
     "name": "GUILD1e-down-a-members-rank",
     "file": "server-account/src/guildBoard.js",
-    "old": "rank IN (${HALL_POWERS.notes.join(', ')})))`)",
-    "new": "rank IN (0, 1, 2)))`)",
+    "old": "AND ${guildPowerSql('notes', 'rank', '?2')}))`)",
+    "new": "AND rank IN (0, 1, 2)))`)",
     "tests": [
       "test/net/guild1e_service.test.js"
     ]
@@ -101,7 +101,7 @@
   {
     "name": "GUILD1e-keeper-unsaid",
     "file": "server-account/src/guildBoard.js",
-    "old": "      keeper: hallMay(me.rank, 'notes'),",
+    "old": "      keeper: guildMay(me.rank, 'notes', powers),",
     "new": "      keeper: false,",
     "tests": [
       "test/net/guild1e_service.test.js",
@@ -230,8 +230,8 @@
   {
     "name": "GUILD1e-scan-without-the-board",
     "file": "src/systems/decor/decorScan.js",
-    "old": "[...decorCatalogue(mods ? addDecorMods(read) : read), HALL_BOARD_ENTRY]",
-    "new": "[...decorCatalogue(mods ? addDecorMods(read) : read)]",
+    "old": "[...decorCatalogue(mods ? addDecorMods(read) : read), HALL_BOARD_ENTRY, ...GUILD_FURNITURE_ENTRIES]",
+    "new": "[...decorCatalogue(mods ? addDecorMods(read) : read), ...GUILD_FURNITURE_ENTRIES]",
     "tests": [
       "test/net/guild1e_client.test.js"
     ],

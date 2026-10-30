@@ -409,6 +409,7 @@ export function lerpPose(from, to, t) {
     ...(to.ga ? { ga: to.ga, ...(to.gm ? { gm: to.gm } : {}) } : {}), ...(to.gb ? { gb: to.gb } : {}),   // PEER-ACTS: the gathering act and the net's throw, and the beats on their own - discrete, omitted at none as the wire omits them
     ...(to.ab ? { ab: aboardAlong(from.ab, to.ab, k) } : {}),   // DECK-POSE: the place aboard, eased along its deck as the feet are - omitted ashore as the wire omits it
     ...(to.pl ? { pl: rideAlong(from.pl, to.pl, k) } : {}),   // EG-H1 (RIDE-PLAY): the ride on a breach's moving piece, eased on one piece as the feet are - dropped here, no ridden peer ever reached rideAt
+    ...(Number.isFinite(to.fy) ? { fy: to.fy } : {}),   // INDOOR-FLOOR: the sender's room floor - discrete, omitted outdoors as the wire omits it
   };
 }
 /** DECK-POSE (net/wire.js validAboard): a place aboard drawn between two poses' - on one deck, the feet in her frame eased
@@ -3005,6 +3006,10 @@ export class OnlineSession {
     if (id === this.id) return this.fx ?? null;
     return (this.peers.get(id) ?? this._known.get(id))?.fx ?? null;
   }
+  /** AUDIT GUILD-SHOP S2: whether a peer's token says the Guild Sailcloth is theirs - their ships' sailcloth flown only so. */
+  sailclothOf(id) {
+    return id != null && this.peers.get(id)?.sc === true;   // a peer in a room - their ships are a room's
+  }
   /** WITCH1: THE PROFILE ICON A PLAYER WEARS, BY ID - mine, or a peer's in a room or introduced - or null (the face). */
   iconOf(id) {
     if (id == null) return null;
@@ -4455,7 +4460,7 @@ export class OnlineSession {
     // answers a title or null and a list or empty, so nothing below
     // ever has to tell "absent" from "none".
     const { title, glyphs, ts = null } = readBadge(p);   // SEAT1c: and a seat title's claim
-    return { id: p.id, name: sanitizeName(p.name), title, ts, glyphs, au: readAura(p), ak: readArmory(p), fx: readEffects(p), pi: readIcon(p), rb: readRibbon(p), lv: readRenown(p), gt: readGuildTag(p), house: readHouse(p), sub: subOf(p), look: validLook(p.look), told: true, pose, from: pose, at: now, seenAt: now, shown: pose ? { ...pose } : null };   // GUILD1c: `gt` the guild tag the relay stamped   // MOD1: `sub` the relay-verified account, what /mute names   // RENOWN1: `lv` the level the relay stamped
+    return { id: p.id, name: sanitizeName(p.name), title, ts, glyphs, au: readAura(p), ak: readArmory(p), fx: readEffects(p), pi: readIcon(p), rb: readRibbon(p), lv: readRenown(p), gt: readGuildTag(p), house: readHouse(p), sub: subOf(p), look: validLook(p.look), told: true, pose, sc: p.gsc === 1, from: pose, at: now, seenAt: now, shown: pose ? { ...pose } : null };   // AUDIT GUILD-SHOP S2: `sc` whether the Guild Sailcloth is theirs   // GUILD1c: `gt` the guild tag the relay stamped   // MOD1: `sub` the relay-verified account, what /mute names   // RENOWN1: `lv` the level the relay stamped
   }
 
   /** A known peer said hello again: its name and look are the new ones, its pose arrives as any other. */
@@ -4471,6 +4476,7 @@ export class OnlineSession {
     p.au = readAura(m);   // WB9g: and the newest hello's aura, including none - one taken off is gone at the next hello
     p.ak = readArmory(m);   // ARMORY: and the newest hello's kit, including none
     p.fx = readEffects(m);   // STOREFRONT: and the newest hello's effects, including none
+    p.sc = m.gsc === 1;   // AUDIT GUILD-SHOP S2: and whether the Guild Sailcloth is theirs (D1: `gsc` on the row - the relay's own `sc` is a secret)
     p.pi = readIcon(m);   // WITCH1: and the newest hello's profile icon, including none
     p.rb = readRibbon(m);   // SEASON1 part two: and the newest hello's ribbon, including none - a Season's end takes it off
     p.house = readHouse(m);   // LEGACY7: and the newest hello's house, including none (a member played now of another line)
