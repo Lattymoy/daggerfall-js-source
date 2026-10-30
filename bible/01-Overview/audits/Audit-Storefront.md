@@ -255,7 +255,7 @@ Pins: `test/systems/pass/passclient_audit3.test.js`, `test/net/storefront_audit3
 | B5 | LOW | A find held while the service was unreachable was paid to whoever signed in meanwhile | FIXED: a find keeps its account |
 | B6 | LOW | A find not yet answered died with the page | FIXED: kept on the device a day and asked again with its own id |
 | B7 | LOW | One refusal said in two wordings | FIXED with C10 |
-| B8 | LOW | The shop judged the season's opening by the device's clock | FIXED: the shared clock |
+| B8 | LOW | The shop judged the season's opening by the device's clock | FIXED: the shared clock (`enhancedShop.js` shopNow, an event-clock row in `test/fixtures/time1_census.json`) |
 
 ### C - the window, seen
 
