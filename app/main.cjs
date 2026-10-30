@@ -35,6 +35,7 @@
 const { app, BrowserWindow, Menu, dialog, ipcMain, protocol, net, session, shell, utilityProcess } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
+const { clientModResponse } = require('./lib/clientMods.cjs');
 const { pathToFileURL } = require('node:url');
 const { frameRateSwitches } = require('./lib/frameRate.cjs');   // FPS-VSYNC: VSync off lifts Chromium's wait
 const { backendLaunch, holdsVSync, watchBackend, backendOption, chooseBackend, restartArgs } = require('./lib/graphicsBackend.cjs');   // GPU-BACKEND: the Vulkan opt-in and its guard
@@ -410,6 +411,7 @@ function handleDagger(req) {
     return new Response('bad request', { status: 400 });
   }
   if (url.host === 'launcher') return serveLauncherFile(parts);
+  if (url.host === 'game' && parts[0] === '__client_mods') return clientModResponse(req, app.getPath('userData'));
   // /arena2/NAME and /play/arena2/NAME - the game fetches relative to
   // its document, the probes fetch absolute. EXACTLY the two doors
   // the dev middleware mounts, and no more: a looser "any path ending

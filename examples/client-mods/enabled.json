@@ -1,0 +1,12 @@
+{
+  "enabled": true,
+  "apiVersion": 1,
+  "mods": [
+    {
+      "id": "health-numbers",
+      "apiVersion": 1,
+      "requires": ["hud.health-label"],
+      "entry": "main.js"
+    }
+  ]
+}

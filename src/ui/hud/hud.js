@@ -49,6 +49,7 @@ import { drawEscortFaces, escortFacesBottom } from './hudEscortFaces.js';   // F
 import { drawText, measureText } from '../text.js';   // AUDIT 28 W2: the arrow counter's label
 import { HudFlickerController } from './hudFlicker.js';   // AUDIT 28 W2d: the near-death warning
 import { lastHealthLost, lastHealthLostPercent, hudHealth } from './hudVitals.js';   // BLOOD2e: HealthLostPercent, as CameraRecoiler reads it; DUEL-BAR: the health the HUD reads
+import { clientMods } from '../../systems/clientMods.js';
 import { getBool } from '../../systems/settings/settings.js';   // AUDIT 28 W2: EnableArrowCounter, BowLeftHandWithSwitching
 import { getItem, isSummoned, ARROW_TEMPLATE } from '../../systems/inventory.js';   // AUDIT 28 W2: GetItem(Arrow, priorityToConjured)
 import { EQUIP_SLOTS } from '../../systems/equip.js';   // AUDIT 28 W2: the bow hand
@@ -515,6 +516,7 @@ export function drawCompassStrip(renderer, art, x, y, s, heading01) {
  * every digit before the window could read one.
  */
 export function hideHudTextSurfaces(hudText = null) {
+  clientMods.publishHealth(null, null);
   // FB1018f DUNGEON-DIGITS: the enhanced HUD itself, with its bar - drawHud's word under a window (hidden, paused),
   // which is all that hands a window the digits the bar takes ahead of every host (enhancedHud.js). A HUD never built
   // (the classic skin builds none: a skin is changed by a reload) answers nothing.
@@ -632,6 +634,7 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   // MAP-FIELD2: `hudHidden` is the OTHER question - a window that takes the HUD away outright rather than being painted over it, so it skips the large-HUD carve-out (which is DFU's own law, for DFU's own windows; see windowStack.hidesHud).
   const hudCovered = hudHidden || ((windowCoversHud ?? cursorActive) && !largeHud?.art);
   const hudDrawn = hudRenderEnabled() && !hudCovered;
+  clientMods.publishHealth(hudDrawn ? health.health : null, hudDrawn ? health.maxHealth : null);
   // F-A6 (self-audit): DFU's flicker steps on Time.deltaTime, which a
   // paused game holds at 0 (timeScale) - the tint FREEZES under a
   // window rather than throbbing on. cursorActive is this HUD's
