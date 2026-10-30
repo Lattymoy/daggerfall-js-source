@@ -768,5 +768,75 @@
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
     "why": "the art's bow in hands that hold no bow"
+  },
+  {
+    "name": "LAYERED-DUAL-no-second",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "      if (off) drawWeapon(res, off, /** @type {string} */ (pieces?.offhand), hand.len, hand.view, { ...hand, pic: hand.offPic ?? null, mirror: false });\n",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the pair's other weapon never drawn"
+  },
+  {
+    "name": "LAYERED-DUAL-no-flip-swap",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "  const swap = pair && (hands === 'AttackMelee' ? look?.strike === 'L' : flip);",
+    "new": "  const swap = pair && (hands === 'AttackMelee' ? look?.strike === 'L' : false);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a flipped body holds the right weapon in its left hand"
+  },
+  {
+    "name": "LAYERED-DUAL-strike-ignored",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "  const swap = pair && (hands === 'AttackMelee' ? look?.strike === 'L' : flip);",
+    "new": "  const swap = pair && (hands === 'AttackMelee' ? false : flip);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the left hand's blow struck with the right weapon"
+  },
+  {
+    "name": "LAYERED-DUAL-off-blade-side",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "'bbb' + blade.repeat(hi + 1)",
+    "new": "'bbb' + c.repeat(hi + 1)",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the second blade shown from behind"
+  },
+  {
+    "name": "LAYERED-DUAL-rig-pair-lost",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "    ...layeredPair(),   // LAYERED-DUAL: a pair's two weapons and the hand striking\n",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "my pair never reaches the body"
+  },
+  {
+    "name": "LAYERED-DUAL-peer-one-hand",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "  return h?.dual ? layeredHands(",
+    "new": "  return false ? layeredHands(",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a walker's pair drawn as one weapon"
+  },
+  {
+    "name": "LAYERED-DUAL-release-pair",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "(b === undefined ? hands.has(held) : pair.has(a) && pair.has(b))",
+    "new": "hands.has(held)",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a pair's pictures let go every time the outfit is looked at again"
   }
 ]

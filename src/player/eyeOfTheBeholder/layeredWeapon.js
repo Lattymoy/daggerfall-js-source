@@ -37,6 +37,13 @@ export function layeredWeaponOf(item) {
   const m = Number.isInteger(it.material) && it.material >= 0 && it.material <= 9 ? it.material : 0;
   return `${shape}${m}`;
 }
+/** LAYERED-DUAL: what a layered body's hands hold, for its look - a pair's right weapon (`weapon`), its left (`offhand`)
+ *  and the hand whose blow is in flight (`strike`); else the hand in use's weapon. `s` the rig's state: heldWeapon, and
+ *  pairRight, pairLeft, pairStrike where the hands hold a pair. */
+export function layeredHands(s) {
+  if (s?.pairRight && s?.pairLeft) return { weapon: layeredWeaponOf(s.pairRight), offhand: layeredWeaponOf(s.pairLeft), strike: s.pairStrike ?? null };
+  return { weapon: layeredWeaponOf(s?.heldWeapon) };
+}
 export const isBowCode = (code) => typeof code === 'string' && BOWS.has(code.slice(0, 2));
 
 /** What the sprite of one table shows in the hands: '0' nothing (the hammer taken out), a weapon code, or null - the art
@@ -65,6 +72,20 @@ export function weaponRigOf(body, rf, top = 'l') {
   return f ? f[Math.max(0, rig.families.indexOf({ l: 'leather', c: 'chain', p: 'plate' }[top] ?? 'leather'))] : null;
 }
 export const WEAPON_SPAN = Object.freeze([...rig.span]);
+const _off = new WeakMap();
+/** LAYERED-DUAL: a pair's other weapon's rig in a frame, as drawWeapon reads one - its line in the other hand (the rig's
+ *  `off`: the free hand's, else fanned off the first behind the body), the blade on its side and the fist over the
+ *  handle - or null where the frame has none. */
+export function offRigOf(fr) {
+  if (!Array.isArray(fr?.off)) return null;
+  let o = _off.get(fr);
+  if (!o) {
+    const [lo, hi] = rig.span, blade = fr.off[4], c = blade === 'x' ? 'b' : blade;
+    o = { w: fr.off.slice(0, 4), d: c.repeat(-lo - 3) + 'bbb' + blade.repeat(hi + 1), side: fr.side, cv: fr.cv };
+    _off.set(fr, o);
+  }
+  return o;
+}
 
 // ── TAKING THE HAMMER OUT ──────────────────────────────────────────────────────────────────────────────────────────
 /**

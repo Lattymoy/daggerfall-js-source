@@ -28,7 +28,7 @@
 import manifest from '../../../vendor/layered-armor/manifest.json' with { type: 'json' };
 import cloakManifest from '../../../vendor/layered-armor/cloak/manifest.json' with { type: 'json' };
 import { drawnPiece } from '../../net/appearanceLaw.js';   // APPEARANCES: a worn piece's look
-import { weaponShownFor, weaponRigOf, removeWeapon, drawWeapon, recolourHammer, maskTile, fillFrom, weaponLen, bowLen, weaponCm, heldPictureOf, loadHeldPicture, BARE_TWINS, ARMED_TWINS, GUN_FIRE_FRAME, isGunCode, isBowCode } from './layeredWeapon.js';   // LAYERED-WEAPONS: the weapon in the hands
+import { weaponShownFor, weaponRigOf, offRigOf, removeWeapon, drawWeapon, recolourHammer, maskTile, fillFrom, weaponLen, bowLen, weaponCm, heldPictureOf, loadHeldPicture, BARE_TWINS, ARMED_TWINS, GUN_FIRE_FRAME, isGunCode, isBowCode } from './layeredWeapon.js';   // LAYERED-WEAPONS: the weapon in the hands
 
 /** The texture archives the composed pictures are uploaded under - one per body, clear of every vendored archive. */
 export const LAYERED_ARCHIVE = Object.freeze({ male: 1700, female: 1701 });
@@ -84,12 +84,13 @@ export function outfitOfItems(items) {
   return outfitOfSlots(slots);
 }
 
-const PIECE = /^(l|c|p[0-6])(l|c|p[0-6])(l|c|p[0-6])(?:~([0-9]))?(?:@(0|[a-z]{2}[0-9]))?$/;
+const PIECE = /^(l|c|p[0-6])(l|c|p[0-6])(l|c|p[0-6])(?:~([0-9]))?(?:@(0|[a-z]{2}[0-9])(?:\+([a-z]{2}[0-9]))?)?$/;
 const FAMILY = { l: 'leather', c: 'chain', p: 'plate' };
-/** An outfit code split into its three pieces (and the cloak's dye, or null), or null. */
+/** An outfit code split into its three pieces (and the cloak's dye, or null; what the hands hold, and LAYERED-DUAL a
+ *  pair's other weapon after `+`), or null. */
 export function outfitPieces(outfit) {
   const m = PIECE.exec(String(outfit ?? ''));
-  return m ? { head: m[1], top: m[2], legs: m[3], cloak: m[4] == null ? null : Number(m[4]), weapon: m[5] ?? null } : null;
+  return m ? { head: m[1], top: m[2], legs: m[3], cloak: m[4] == null ? null : Number(m[4]), weapon: m[5] ?? null, offhand: m[6] ?? null } : null;
 }
 /** The art's folder for an outfit: '<head>_<top>_<legs>' families. */
 export const outfitCombo = (p) => `${FAMILY[p.head[0]]}_${FAMILY[p.top[0]]}_${FAMILY[p.legs[0]]}`;
@@ -156,9 +157,15 @@ export function layeredSprite(tableAsked, offset, frame, tableFrames, look, mirr
   const hands = table === 'Death' && look?.armedTable ? look.armedTable : table;   // a flinch keeps what the hands held
   const shown = weaponRigOf(body, `${record}-${f}`) ? weaponShownFor(hands, look?.weapon ?? null) : null;
   const weapon = shown === 'wh0' ? null : shown;
-  const code = `${pieces.head}${pieces.top}${pieces.legs}${cloak == null ? '' : `~${cloak}`}${weapon == null ? '' : `@${weapon}`}`;
+  // LAYERED-DUAL: a pair's other weapon, in the other hand, beside a weapon of its own (a melee stance's: weaponShownFor)
+  const pair = weapon && weapon !== '0' && !isBowCode(weapon) && OFF_CODE.test(look?.offhand ?? '') ? look.offhand : null;
   const twin = (weapon === '0' ? BARE_TWINS : weapon ? ARMED_TWINS : {})[body]?.[`${record}-${f}`] ?? null;
   const [rec, fr] = twin ? twin.split('-').map(Number) : [record, f], flip = twin && weapon === '0' ? !mirror : mirror;
+  // the art's hammer line holds the striking hand's weapon in a swing; else the right's - the left's once flipped, as the
+  // flip swaps the hands
+  const swap = pair && (hands === 'AttackMelee' ? look?.strike === 'L' : flip);
+  const held = weapon == null ? '' : pair ? `@${swap ? pair : weapon}+${swap ? weapon : pair}` : `@${weapon}`;
+  const code = `${pieces.head}${pieces.top}${pieces.legs}${cloak == null ? '' : `~${cloak}`}${held}`;
   const hand = flip && isBowCode(weapon) && weaponRigOf(body, `${rec}-${fr}`)?.bowM ? ':m' : '';   // a flipped picture's bow is in the art's other hand: its own picture
   return {
     archive: LAYERED_ARCHIVE[body], record: rec, frame: fr, mirror: flip,
@@ -166,6 +173,8 @@ export function layeredSprite(tableAsked, offset, frame, tableFrames, look, mirr
     rec: `${code}_${rec}-${fr}${flip ? 'm' : ''}`,
   };
 }
+
+const OFF_CODE = /^[a-z]{2}[0-9]$/;
 
 /** A worn-armour sprite key (`LA:...`) - what eotbSpriteUrl hands back as its own "URL", and the decoders take. */
 export const isLayeredKey = (key) => typeof key === 'string' && key.startsWith('LA:');
@@ -365,7 +374,7 @@ export function applyHoodFix(out, fs, pieces, dye, skip = null) {
  * @param {string} code the outfit code ('p6cl', 'p6cl~2' with a cloak dyed Red)
  * @param {{strip:{width:number,height:number,data:Uint8Array|Uint8ClampedArray}, over:boolean, noSlivers?:boolean,
  *   fix?:{width:number,height:number,data:Uint8Array|Uint8ClampedArray}|null}|null} [cloak] the frame's cloak strip (and its hood fix)
- * @param {{mask:Uint8Array, fr:any, len:number, view:number, bow?:number, pic?:any, cm?:number, swing?:boolean, mirror?:boolean}|null} [weapon] LAYERED-WEAPONS: the frame's rig
+ * @param {{mask:Uint8Array, fr:any, len:number, view:number, bow?:number, pic?:any, offPic?:any, cm?:number, swing?:boolean, mirror?:boolean}|null} [weapon] LAYERED-WEAPONS: the frame's rig
  * @returns {{width:number,height:number,data:Uint8Array,held?:Uint8Array}} `held` the weapon's own px (LAYERED-GLOW)
  */
 export function composeStrip(strip, code, cloak = null, weapon = null) {
@@ -388,7 +397,9 @@ export function composeStrip(strip, code, cloak = null, weapon = null) {
       if (cloak.fix) applyHoodFix(res, cloak.fix, pieces, pieces.cloak, hand && takeOut ? hand.mask : null);
     }
     if (hand && takeOut && held !== '0') {
-      const was = out.slice();
+      const was = out.slice(), off = pieces?.offhand ? offRigOf(hand.fr) : null;
+      // LAYERED-DUAL: the pair's other weapon first, in the other hand - the line's weapon over it where they cross
+      if (off) drawWeapon(res, off, /** @type {string} */ (pieces?.offhand), hand.len, hand.view, { ...hand, pic: hand.offPic ?? null, mirror: false });
       drawWeapon(res, hand.fr, held, hand.len, hand.view, hand);
       res.held = heldPx(out, was);
     } else if (art) res.held = heldPx(out, art, hand?.mask);
@@ -472,6 +483,7 @@ export async function decodeLayered(key, decodePng, { fetchUrl = (u) => fetch(u)
     } catch { weapon = null; }
     // the weapon as its paper-doll picture, held; the drawn shape where it has none
     if (weapon && pieces.weapon !== '0') weapon.pic = await heldPictureOf(pieces.weapon, body, heldArt);
+    if (weapon && pieces.offhand) weapon.offPic = await heldPictureOf(pieces.offhand, body, heldArt);   // LAYERED-DUAL
   }
   return composeStrip(strip, code, cloak, weapon);
 }

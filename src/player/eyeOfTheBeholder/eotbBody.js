@@ -55,7 +55,7 @@ import { spriteFor, eotbSpriteUrl, spriteCount, spriteSize, spriteOffset, sprite
 import { decodePng } from '../../systems/textureReplacement.js';   // EOTB-FLIP: the one PNG decoder the world's other PNG billboards take
 import { decodeServedPng } from '../../systems/vanillaEnhanced/vanillaEnhancedPack.js';   // FIRST-VISIT: and its decode workers
 import { isLayeredKey, decodeLayered, outfitOfSlots, layeredGenderOf, LAYERED_ARCHIVE } from './layeredArmor.js';   // WORN-ARMOUR: the body in the armour it wears
-import { layeredWeaponOf } from './layeredWeapon.js';   // LAYERED-WEAPONS: and the weapon it holds
+import { layeredHands } from './layeredWeapon.js';   // LAYERED-WEAPONS: and the weapon it holds (LAYERED-DUAL: or the pair)
 import { playerEntity } from '../../characters/playerEntity.js';   // WORN-ARMOUR: whose armour
 import { drawnEquipTable } from '../../systems/capeShown.js';   // WORN-ARMOUR: what they wear; CAPE-TOGGLE: as it is drawn
 import { horseLookCode, horseLookOfCode, lookSuffix } from '../../systems/horse/horseCoats.js';   // COATS1: the ridden horse's look
@@ -189,6 +189,7 @@ export function bodyState(s = {}) {
     spellcasting: !!s.spellcasting,
     usingBow: !!s.usingBow,
     heldWeapon: s.heldWeapon ?? null,   // LAYERED-WEAPONS: the item in the hand in use (weaponRig's eotbState)
+    pairRight: s.pairRight ?? null, pairLeft: s.pairLeft ?? null, pairStrike: s.pairStrike ?? null,   // LAYERED-DUAL: a pair's two and the hand striking
     attacking: !!s.attacking,
     swingN: Number.isInteger(s.swingN) ? s.swingN : null,   // AUDIT PRE-MERGE 0929 S1: the rig's blow count, or none named
     castPlaying: !!s.castPlaying,
@@ -451,17 +452,17 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
   function releaseOutfits(s, lk) {
     const layered = isLayeredKey(s.key);
     if (!layered && lk.outfit) return;
-    const now = layered ? `${s.archive}|${lk.outfit}|${lk.weapon ?? ''}` : null;
+    const now = layered ? `${s.archive}|${lk.outfit}|${lk.weapon ?? ''}|${lk.offhand ?? ''}` : null;
     if (now === outfitUp) return;
     const had = outfitUp;
     outfitUp = now;
     if (had == null) return;
     const plain = String(lk.outfit ?? '').split('~')[0];
     // LAYERED-WEAPONS: an outfit's pictures stand in every hand the weapon held now shows - empty, the weapon, the art's own
-    const hands = new Set([undefined, '0', lk.weapon ?? undefined]);
+    const hands = new Set([undefined, '0', lk.weapon ?? undefined]), pair = new Set([lk.weapon, lk.offhand].filter(Boolean));
     const stands = (archive, code) => {
-      const [worn, held] = String(code).split('@');
-      return layered && archive === s.archive && (worn === lk.outfit || worn === plain) && hands.has(held);
+      const [worn, held] = String(code).split('@'), [a, b] = String(held).split('+');   // LAYERED-DUAL: a pair's, either way round
+      return layered && archive === s.archive && (worn === lk.outfit || worn === plain) && (b === undefined ? hands.has(held) : pair.has(a) && pair.has(b));
     };
     for (const k of [...tex.keys()]) {
       const i = k.indexOf(':'), archive = Number(k.slice(0, i));
@@ -482,7 +483,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
    *  spriteFor here asked for the werewolf, and a wereboar saw the wolf
    *  on themselves while the others (net/peer/peerRiders.js, off the pose's
    *  `wb`) draw the boar. The look is the settings plus the live form. */
-  const lookNow = () => ({ ...cfg, lycanthropyType: last.lycanthropyType, horse: last.horseLook ?? 0, ...(cfg.wornArmour ? { ...wornOutfit(layeredGenderOf(cfg.layeredChoice, playerEntity?.gender)), weapon: layeredWeaponOf(last.heldWeapon) } : {}) });   // LAYERED-GEAR-ON: the own body read as the character is now   // COATS1: and the horse's look, off the rig's record
+  const lookNow = () => ({ ...cfg, lycanthropyType: last.lycanthropyType, horse: last.horseLook ?? 0, ...(cfg.wornArmour ? { ...wornOutfit(layeredGenderOf(cfg.layeredChoice, playerEntity?.gender)), ...layeredHands(last) } : {}) });   // LAYERED-GEAR-ON: the own body read as the character is now   // COATS1: and the horse's look, off the rig's record
   /** PR-WW1: the form the lycan tables were last fetched for */
   let preloadedForm = null;
   /** COATS1: the look the mounted tables were last fetched in */

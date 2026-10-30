@@ -780,6 +780,12 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     fpArm.setStandIn?.(beast ? !(wolf && isMwWerewolf(entity)) : wolf);
   };
   bindArm();
+  // LAYERED-DUAL (2026-10-30, the owner: "We need to find a way to implement duel wielding perfectly"): a pair's right
+  // and left weapons for the layered body, and the hand whose blow is in flight - nothing of it outside a pair
+  const layeredPair = () => (playerWeapon.handsMode !== HANDS_MODE.Dual ? { pairRight: null, pairLeft: null, pairStrike: null } : {
+    pairRight: playerWeapon.handItem('R'), pairLeft: playerWeapon.handItem('L'),
+    pairStrike: playerWeapon.machine.state !== 'Idle' && playerWeapon.strike ? playerWeapon.strike.hand : null,
+  });
   // EOTB5: THE OTHER BODY, attached in the same breath as the arm it
   // stands in for. THE FOUR HOSTS named: exterior.js, world.js,
   // worldModes.js and dungeonContext.js - none of them carries a call,
@@ -823,6 +829,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     spellcasting: spellArmed(),
     usingBow: !!playerWeapon.machine.isBow,
     heldWeapon: playerWeapon.weapon ?? null,   // LAYERED-WEAPONS: the item the sprite's hands hold (player/eyeOfTheBeholder/layeredWeapon.js)
+    ...layeredPair(),   // LAYERED-DUAL: a pair's two weapons and the hand striking
     transformed: !!entity && isTransformedLycanthrope(entity),
     lycanthropyType: (entity && liveLycanthropy(entity)?.infectionType) || 0,
     horseLook: entity ? riddenHorseLook(entity.items ?? []) : 0,   // COATS1: its code

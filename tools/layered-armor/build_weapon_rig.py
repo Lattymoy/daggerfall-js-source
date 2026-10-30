@@ -155,6 +155,8 @@ BOW_NEAR = {(b, rf) for b in ('male', 'female') for rf in ('2-0', '2-1', '2-2', 
 # Records 1-3 and 16-18 are also drawn flipped (eotbBillboard.js MIRRORED), and the flip swaps the hands: there the left
 # hand is the art's other one, the hammer's fist, on the far side - the bow at that fist (`bowM`), behind the body, which
 # may hide it (the owner, 2026-10-30: "Its okay if the body hides it"), turned to that hand's side.
+# LAYERED-DUAL: where both fists hold the haft, a pair's second weapon fans this far off the first (radians).
+OFF_FAN = math.radians(22)
 # The body's own bow (the loose's art, records 20-24), tip to tip, px: the long bow; the short bow is three quarters.
 BOW_PX = {'male': 75, 'female': 78}
 # Front views whose hole is the body's other side, mirrored: the fill copies it, alpha and all.
@@ -499,6 +501,20 @@ def main(only=None):
                 if (body, rf) in BOW_NEAR: p['bow'] = fist + [1]
                 rec = int(rf.split('-')[0])
                 if rec in (1, 2, 3, 16, 17, 18) and 'bow' in p: p['bowM'] = fist + [0, -1]
+        for rf, per in frames.items():   # LAYERED-DUAL: a pair's other weapon (`off`: grip, the head's place, the blade's side)
+            rec = int(rf.split('-')[0])
+            for p in per:
+                p.pop('off', None)
+                gx, gy, ex, ey = p.get('w') or (p['q'] + p['t']); D = math.hypot(ex - gx, ey - gy) or 1.0
+                ux, uy = (ex - gx) / D, (ey - gy) / D
+                free = BOW_HAND[body].get(rf) if rec <= 4 or 15 <= rec <= 19 else None
+                if free:   # the walk and the idle: in the free hand, as the other is held - mirrored in a front or back view
+                    hx, hy, front = free; vx, vy = (-ux, uy) if rec % 5 in (0, 4) else (ux, uy)
+                    blade = 'x' if rec % 5 == 4 else 'f' if front else 'b'
+                    p['off'] = [hx, hy, round(hx + vx * D, 1), round(hy + vy * D, 1), blade]
+                else:   # both fists on the haft (a swing, a flinch), or the far hand hidden: fanned off the first, behind it
+                    c, sn = math.cos(OFF_FAN), math.sin(OFF_FAN); vx, vy = ux * c - uy * sn, ux * sn + uy * c
+                    p['off'] = [round(gx, 1), round(gy, 1), round(gx + vx * D, 1), round(gy + vy * D, 1), 'b']
         for rf, per in frames.items():   # a flail's chain lags the hand: the head's move since the frame before (`cv`, px)
             rec, i = map(int, rf.split('-')); n = sum(1 for k in frames if k.startswith(f'{rec}-'))
             prev = f'{rec}-{(i - 1) % n}' if rec <= 4 else f'{rec}-{i - 1}' if i > 0 else None   # a walk loops, a swing starts at rest

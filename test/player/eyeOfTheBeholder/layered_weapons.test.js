@@ -5,13 +5,13 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import {
   layeredWeaponOf, weaponShownFor, weaponRigOf, WEAPON_SHAPES, BARE_TWINS, ARMED_TWINS, GUN_FIRE_FRAME, isGunCode, removeWeapon,
-  maskTile, fillFrom, weaponLen, WEAPON_SPAN, heldPicture, heldBow, heldImage, drawWeapon, chainWay, heldChain,
+  maskTile, fillFrom, weaponLen, WEAPON_SPAN, heldPicture, heldBow, heldImage, drawWeapon, chainWay, heldChain, layeredHands, offRigOf,
 } from '../../../src/player/eyeOfTheBeholder/layeredWeapon.js';
 import { inventoryItemImage } from '../../../src/systems/item/itemTemplates.js';
 import { layeredSprite, outfitPieces, outfitCombo, decodeLayered } from '../../../src/player/eyeOfTheBeholder/layeredArmor.js';
 import { ALL_LOOKS, APPEARANCE_KINDS } from '../../../src/net/appearanceLaw.js';
 import { bodyState } from '../../../src/player/eyeOfTheBeholder/eotbBody.js';
-import { walkerWeapon } from '../../../src/net/peer/peerRiders.js';
+import { walkerWeapon, walkerHeld } from '../../../src/net/peer/peerRiders.js';
 import { GATHER_POSE_ACTS } from '../../../src/net/peer/peerGather.js';
 import { WEAPONS } from '../../../src/characters/weapons.js';
 import { THUNDERLOCK_TEMPLATE, PISTOLET_TEMPLATE } from '../../../src/characters/thunderlockIds.js';
@@ -292,7 +292,8 @@ test('the body reads the held weapon off the rig, and its look carries the code'
   const rigSrc = readFileSync(new URL('../../../src/combat/weapon/weaponRig.js', import.meta.url), 'utf8');
   assert.match(rigSrc, /heldWeapon: playerWeapon\.weapon \?\? null,/);
   const bodySrc = readFileSync(new URL('../../../src/player/eyeOfTheBeholder/eotbBody.js', import.meta.url), 'utf8');
-  assert.match(bodySrc, /weapon: layeredWeaponOf\(last\.heldWeapon\)/);
+  assert.match(bodySrc, /\.\.\.layeredHands\(last\)/);   // PIN MOVED (LAYERED-DUAL): the hand in use's weapon, or the pair
+  assert.deepEqual(layeredHands({ heldWeapon: sword }), { weapon: 'sa5' });
 });
 
 // THE PAPER DOLL'S PICTURE: a synthetic picture (color32, row 0 the bottom) - a handle, the doll's hand's gap, a guard,
@@ -606,4 +607,70 @@ test('the loose\'s frames hold the art\'s own bow: with no bow in hand they are 
   assert.ok(!bow.key.includes('@') && bow.record === 20, `a bow's loose is the art's: ${bow.key}`);
   const unnamed = layeredSprite('AttackRanged', 0, 1, 4, { outfit: 'lll', gender: 'male' }, false);
   assert.ok(!unnamed.key.includes('@') && unnamed.record === 20, 'a look that names no weapon keeps the art\'s loose');
+});
+
+// ── LAYERED-DUAL ───────────────────────────────────────────────────────────────────────────────────────────────────
+test('LAYERED-DUAL (2026-10-30, the owner: "We need to find a way to implement duel wielding perfectly"): a pair is both codes, the line\'s first; the art\'s hammer line holds the right weapon, the left\'s once flipped, the striking hand\'s in a swing; sheathed, a bow or empty hands hold no pair', () => {
+  assert.deepEqual(outfitPieces('p6cl@ls1+dg3'), { head: 'p6', top: 'c', legs: 'l', cloak: null, weapon: 'ls1', offhand: 'dg3' });
+  assert.equal(outfitPieces('lll@ls1+'), null, 'a pair names its second');
+  const look = (o = {}) => ({ outfit: 'lll', gender: 'male', weapon: 'ls1', offhand: 'dg3', ...o });
+  const held = (table, o = {}, mirror = false, offset = 2) => layeredSprite(table, offset, 0, 4, look(o), mirror).key.split(':')[4].split('@')[1];
+  assert.equal(held('MoveMelee'), 'ls1+dg3', 'the right on the line, the left in the free hand');
+  assert.equal(held('MoveMelee', {}, true), 'dg3+ls1', 'flipped: the hands swap, so the left weapon is on the line');
+  assert.equal(held('IdleMelee', {}, false, 0), 'ls1+dg3');
+  assert.equal(held('AttackMelee', { strike: 'L' }), 'dg3+ls1', 'the left hand\'s blow: its weapon on the line');
+  assert.equal(held('AttackMelee', { strike: 'L' }, true), 'dg3+ls1', 'a blow keeps its striker, flipped or not');
+  assert.equal(held('AttackMelee', { strike: 'R' }, true), 'ls1+dg3');
+  assert.equal(held('Move'), '0', 'sheathed: both hands empty');
+  assert.equal(held('MoveMelee', { weapon: null }), '0', 'no weapon of its own: no pair');
+  assert.equal(held('MoveRanged', { weapon: 'lb1' }), 'lb1', 'a bow is no pair');
+  assert.equal(held('MoveMelee', { offhand: 'nonsense' }), 'ls1', 'a code that is no weapon\'s: one weapon');
+  // what the rig and the peers hand on
+  const R = weapon(WEAPONS.Longsword, 1), L = weapon(WEAPONS.Dagger, 3);
+  assert.deepEqual(layeredHands({ heldWeapon: R, pairRight: R, pairLeft: L, pairStrike: 'L' }), { weapon: 'ls1', offhand: 'dg3', strike: 'L' });
+  assert.deepEqual(layeredHands({ heldWeapon: R, pairRight: R, pairLeft: null }), { weapon: 'ls1' }, 'one hand: no pair');
+  const st = bodyState({ heldWeapon: L, pairRight: R, pairLeft: L, pairStrike: 'L' });
+  assert.deepEqual([st.pairRight, st.pairLeft, st.pairStrike], [R, L, 'L'], 'the body keeps the rig\'s pair');
+  const peer = { items: [{ ...R, equipSlot: EQUIP_SLOTS.RightHand }, { ...L, equipSlot: EQUIP_SLOTS.LeftHand }] };
+  assert.deepEqual(walkerHeld(peer, { wd: 1, ah: 1 }), { weapon: 'ls1', offhand: 'dg3', strike: 'L' }, 'a walker\'s pair, its last blow the left\'s');
+  assert.deepEqual(walkerHeld({ items: [{ ...R, equipSlot: EQUIP_SLOTS.RightHand }] }, { wd: 1 }), { weapon: 'ls1' });
+  const rigSrc = readFileSync(new URL('../../../src/combat/weapon/weaponRig.js', import.meta.url), 'utf8');
+  assert.match(rigSrc, /\.\.\.layeredPair\(\),/);
+  assert.match(rigSrc, /pairRight: playerWeapon\.handItem\('R'\), pairLeft: playerWeapon\.handItem\('L'\),/);
+  const bodySrc = readFileSync(new URL('../../../src/player/eyeOfTheBeholder/eotbBody.js', import.meta.url), 'utf8');
+  assert.match(bodySrc, /pair\.has\(a\) && pair\.has\(b\)/, 'a pair\'s pictures stand while the pair is held, either way round');
+});
+
+test('LAYERED-DUAL the second weapon\'s line: in the free hand where the art shows it - mirrored from the front and behind, the blade hidden from behind; else both fists on the haft, fanned off the first behind the body', () => {
+  for (const body of ['male', 'female']) for (const rf of Object.keys(rig[body].frames)) {
+    const fr = weaponRigOf(body, rf), [gx, gy, ex, ey] = fr.w ?? [...fr.q, ...fr.t];
+    assert.equal(fr.off?.length, 5, `${body} ${rf}: a second line`);
+    const D = Math.hypot(ex - gx, ey - gy), [ox, oy, oex, oey, blade] = fr.off;
+    assert.ok(Math.abs(Math.hypot(oex - ox, oey - oy) - D) < 0.3, `${body} ${rf}: as long as the first`);
+    const o = offRigOf(fr);
+    assert.ok(o.d.length === rig.span[1] - rig.span[0] + 1 && o.d.endsWith(blade), `${body} ${rf}: the blade on its side`);
+  }
+  // the walk: the free hand (the bow's), from the front mirrored; a swing: the fists together, 22 degrees off
+  const front = weaponRigOf('male', '0-0'), [fx, fy] = front.bow;
+  assert.deepEqual(front.off.slice(0, 2), [fx, fy]);
+  const [ax, ay, bx, by] = front.w, [cx, cy, dx, dy] = front.off;
+  assert.ok(Math.sign(dx - cx) === -Math.sign(bx - ax) && Math.abs((dy - cy) - (by - ay)) < 0.2, 'mirrored from the front');
+  assert.equal(weaponRigOf('male', '4-0').off[4], 'x', 'from behind the blade is hidden');
+  const swing = weaponRigOf('female', '7-3'), [sx, sy, tx, ty] = swing.w ?? [...swing.q, ...swing.t], [px, py, qx, qy] = swing.off;
+  const turn = Math.atan2(qy - py, qx - px) - Math.atan2(ty - sy, tx - sx);
+  assert.ok(Math.hypot(px - sx, py - sy) < 0.2 && Math.abs(Math.abs(Math.atan2(Math.sin(turn), Math.cos(turn))) - Math.PI * 22 / 180) < 0.01 && swing.off[4] === 'b', 'a swing: fanned off the joined fists, behind');
+});
+
+test('LAYERED-DUAL composed: the second weapon is drawn in the other hand - every px the one weapon drew stays, more are drawn; the glow counts both', { skip: !PNG && 'no pngjs' }, async () => {
+  for (const [body, rf] of [['male', '0-0'], ['male', '7-3'], ['female', '1-1'], ['female', '15-0']]) {
+    const plain = `LA:${body}:leather_leather_leather:${rf}:lll`;
+    const one = await decodeLayered(`${plain}@ls1`, decodePng, opts), two = await decodeLayered(`${plain}@ls1+dg3`, decodePng, opts);
+    let more = 0, lost = 0;
+    for (let i = 0; i < one.width * one.height; i++) {
+      if (one.held[i] && !two.held[i]) lost++;
+      if (two.held[i] && !one.held[i]) more++;
+    }
+    assert.ok(more > 4, `${body} ${rf}: the second weapon drew ${more} px`);
+    assert.ok(lost <= 2, `${body} ${rf}: the first keeps its px (${lost} lost)`);
+  }
 });
