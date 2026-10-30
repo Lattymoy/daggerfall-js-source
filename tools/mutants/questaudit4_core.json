@@ -1,26 +1,86 @@
 [
-  { "name": "QA4-C1-the-name-unsaved", "file": "src/systems/quest/item.js",
-    "old": "      ...(this.itemName ? { itemName: this.itemName } : {}),\n", "new": "",
-    "tests": ["test/systems/quest/questaudit4_core.test.js"] },
-  { "name": "QA4-C1-the-name-unread", "file": "src/systems/quest/item.js",
-    "old": "this.itemName = typeof dataIn.itemName === 'string' ? dataIn.itemName : (mintedAsLetter(this.daggerfallUnityItem) ? 'letter' : this.itemName);", "new": "",
-    "tests": ["test/systems/quest/questaudit4_core.test.js"] },
-  { "name": "QA4-C1-an-older-letter-unread", "file": "src/systems/quest/item.js",
-    "old": "(mintedAsLetter(this.daggerfallUnityItem) ? 'letter' : this.itemName)", "new": "this.itemName",
-    "tests": ["test/systems/quest/questaudit4_core.test.js"] },
-  { "name": "QA4-C1-every-mint-a-letter", "file": "src/systems/quest/item.js",
-    "old": "  return it.group === group && it.templateIndex === GROUP_TEMPLATE_INDICES[group]?.[questParseInt(table.getValue('p2', 'letter'))];", "new": "  return it.group === group;",
-    "tests": ["test/systems/quest/questaudit4_core.test.js"] },
-  { "name": "QA4-C2-the-grace-unsaved", "file": "src/systems/quest/quest.js",
-    "old": "      ...(this.ticksToEnd > 0 ? { ticksToEnd: this.ticksToEnd } : {}),", "new": "",
-    "tests": ["test/systems/quest/questaudit4_core.test.js"] },
-  { "name": "QA4-C2-re-armed-whole", "file": "src/systems/quest/machine.js",
-    "old": "if (!quest.questComplete && endQuestRan(quest) && !(quest.ticksToEnd > 0)) quest.ticksToEnd = 2;", "new": "if (!quest.questComplete && endQuestRan(quest)) quest.ticksToEnd = 2;",
-    "tests": ["test/systems/quest/questaudit4_core.test.js"] },
-  { "name": "QA4-C2-an-older-envelope-never-ends", "file": "src/systems/quest/machine.js",
-    "old": "if (!quest.questComplete && endQuestRan(quest) && !(quest.ticksToEnd > 0)) quest.ticksToEnd = 2;", "new": "",
-    "tests": ["test/systems/quest/questaudit3_life.test.js", "test/systems/quest/auditqa3_life.test.js"] },
-  { "name": "QA4-C4-a-restore-unnamed", "file": "src/systems/quest/quest.js",
-    "old": "    this.localizeDisplayName(localizedQuestDisplayName(this.questName));\n", "new": "",
-    "tests": ["test/systems/quest/questaudit4_core.test.js", "test/systems/quest/l10n5_saves.test.js"] }
+  {
+    "name": "QA4-C1-the-name-unsaved",
+    "file": "src/systems/quest/item.js",
+    "old": "      ...(this.itemName ? { itemName: this.itemName } : {}),\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit4_core.test.js"
+    ]
+  },
+  {
+    "name": "QA4-C1-the-name-unread",
+    "file": "src/systems/quest/item.js",
+    "old": "this.itemName = typeof dataIn.itemName === 'string' ? dataIn.itemName : (mintedAsLetter(this.daggerfallUnityItem) ? 'letter' : this.itemName);",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit4_core.test.js"
+    ]
+  },
+  {
+    "name": "QA4-C1-an-older-letter-unread",
+    "file": "src/systems/quest/item.js",
+    "old": "(mintedAsLetter(this.daggerfallUnityItem) ? 'letter' : this.itemName)",
+    "new": "this.itemName",
+    "tests": [
+      "test/systems/quest/questaudit4_core.test.js"
+    ]
+  },
+  {
+    "name": "QA4-C1-every-mint-a-letter",
+    "file": "src/systems/quest/item.js",
+    "old": "  return it.group === group && it.templateIndex === GROUP_TEMPLATE_INDICES[group]?.[questParseInt(table.getValue('p2', 'letter'))];",
+    "new": "  return it.group === group;",
+    "tests": [
+      "test/systems/quest/questaudit4_core.test.js"
+    ]
+  },
+  {
+    "name": "QA4-C2-the-grace-unsaved",
+    "file": "src/systems/quest/quest.js",
+    "old": "      ...(this.ticksToEnd > 0 ? { ticksToEnd: this.ticksToEnd } : {}),",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit4_core.test.js"
+    ]
+  },
+  {
+    "name": "QA4-C2-re-armed-whole",
+    "file": "src/systems/quest/machine.js",
+    "old": "if (!quest.questComplete && endQuestRan(quest) && !(quest.ticksToEnd > 0)) quest.ticksToEnd = 2;",
+    "new": "if (!quest.questComplete && endQuestRan(quest)) quest.ticksToEnd = 2;",
+    "tests": [
+      "test/systems/quest/questaudit4_core.test.js"
+    ]
+  },
+  {
+    "name": "QA4-C2-an-older-envelope-never-ends",
+    "file": "src/systems/quest/machine.js",
+    "old": "if (!quest.questComplete && endQuestRan(quest) && !(quest.ticksToEnd > 0)) quest.ticksToEnd = 2;",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit3_life.test.js",
+      "test/systems/quest/auditqa3_life.test.js"
+    ]
+  },
+  {
+    "name": "QA4-C4-a-restore-unnamed",
+    "file": "src/systems/quest/quest.js",
+    "old": "    this.localizeDisplayName(localizedQuestDisplayName(this.questName));\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questaudit4_core.test.js",
+      "test/systems/quest/l10n5_saves.test.js"
+    ]
+  },
+  {
+    "name": "QA4-C5-the-clan-with-its-article",
+    "file": "src/systems/quest/questMacros.js",
+    "old": "return typeof name === 'string' ? name.replace(/^the /i, '') : name;",
+    "new": "return name;",
+    "tests": [
+      "test/systems/quest/questmacros.test.js",
+      "test/systems/quest/l10n3e_quest.test.js"
+    ]
+  }
 ]

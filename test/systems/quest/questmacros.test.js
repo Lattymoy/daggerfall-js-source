@@ -588,9 +588,10 @@ test('%vcn succeeds for a VampireClan person by home region; the region miss fal
     lastResourceReferenced: { isPerson: true, factionData: { type: 6, name: 'The Selenu' }, homeRegionIndex: -1 },
   };
   const src = questMacroSource(stub);
-  assert.equal(src.vampireNpcClan(), 'the Vraseth', 'home -1 falls to the CURRENT region (0)');
+  // PIN MOVED (QUEST-AUDIT IV CORE-5): the clan bare of its article, as %kno is - R0C11Y28 says "one of the %vcn"
+  assert.equal(src.vampireNpcClan(), 'Vraseth', 'home -1 falls to the CURRENT region (0)');
   stub.lastResourceReferenced.homeRegionIndex = 5;
-  assert.equal(src.vampireNpcClan(), 'The Selenu', 'an unmapped region answers the faction name');
+  assert.equal(src.vampireNpcClan(), 'Selenu', 'an unmapped region answers the faction name');
 });
 
 test("%oth reads the QUESTOR's race first, then the clicked NPC, then the region", () => {

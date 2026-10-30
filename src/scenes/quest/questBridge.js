@@ -687,8 +687,8 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     try {
       const seen = lens.look(ctx.questWhere ?? {});
       if (follow) questTracker.hear(seen);
-      if (follow && questTracker.pinned != null && !machineRow(questTracker.pinned) && !seen.quests.some((v) => v.id === questTracker.pinned)) questTracker.pinned = null;
       if (herald) questHerald.hear(seen);
+      if (follow && questTracker.pinned != null && !machineRow(questTracker.pinned) && !seen.quests.some((v) => v.id === questTracker.pinned)) questTracker.pinned = null;
     } catch (err) { warnNewsOnce(err); }
   }
 

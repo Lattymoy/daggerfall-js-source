@@ -357,7 +357,8 @@ export function questMacroSource(quest) {
       if (regionIndex === -1) regionIndex = world()?.currentRegionIndex?.() ?? -1;
       // L10N3e: the person's faction record came off GetFactionData, its
       // name in the player's language (QuestMCP.cs:162) - by its id
-      return world()?.regionVampireClanName?.(regionIndex) ?? getLocalizedFactionName(person.factionData.id, person.factionData.name);
+      const name = world()?.regionVampireClanName?.(regionIndex) ?? getLocalizedFactionName(person.factionData.id, person.factionData.name);
+      return typeof name === 'string' ? name.replace(/^the /i, '') : name;   // QUEST-AUDIT IV CORE-5: "one of the %vcn" read "one of the The Vraseth" - bare, as %kno
     },
     // %qdt %qdat - the CURRENT log step's date (the journal sets
     // currentLogMessageId while rendering; -1 falls to quest start)
