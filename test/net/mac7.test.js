@@ -207,7 +207,7 @@ test('MAC7: the hosts by source - weaponRig counts every strike it starts before
   assert.doesNotMatch(w, /\{ \.\.\.pose, mv \}/);
   const pb = rd('src/net/peer/peerBodies.js');
   // PEER-CADENCE: the rig is stepped on two branches inside the same guard - the posing frame and the clocks-only one
-  assert.match(pb, /try \{\s*this\._arm\(b, peer\.shown, peer\.look\);\s*(?:\/\/[^\n]*\n\s*)*b\.bank = Math\.min\(EFFECTS_BANK_MAX_S, b\.bank \+ dt\);[\s\S]*?if \(pose\) \{ b\.rig\.update\(dt, \{ pose: true, effectsDt: b\.bank \}\);[^\n]*\n\s*else b\.rig\.update\(dt, \{ pose: false \}\);\s*\} catch \(e\) \{ this\._fail\(b, `update threw: \$\{e\?\.message \?\? e\}`\); \}/, 'the arm inside the update guard (AUDIT MWBODY A1)');
+  assert.match(pb, /try \{\s*this\._arm\(b, peer\.shown, peer\.look, peer\.ak\);\s*(?:\/\/[^\n]*\n\s*)*b\.bank = Math\.min\(EFFECTS_BANK_MAX_S, b\.bank \+ dt\);[\s\S]*?if \(pose\) \{ b\.rig\.update\(dt, \{ pose: true, effectsDt: b\.bank \}\);[^\n]*\n\s*else b\.rig\.update\(dt, \{ pose: false \}\);\s*\} catch \(e\) \{ this\._fail\(b, `update threw: \$\{e\?\.message \?\? e\}`\); \}/, 'the arm inside the update guard (AUDIT MWBODY A1)');   // PIN MOVED (ARMORY-FISTS): and the peer's kit
   assert.match(pb, /b\.rig\.setSheathed\?\.\(!drawn\);/);
   assert.match(pb, /if \(b\.weapon && b\.ammo !== am && \(b\.rig\.upperBodyReady\?\.\(\) \?\? true\) && b\.rig\.setWeapon\?\.\(b\.weapon, \{ hasAmmo: !!am \}\) !== false\) b\.ammo = am;/, 'the arrow through setWeapon, once per change - when the arm is quiet and only as the rig took it (AUDIT WORLD C5/C6)');
   assert.match(pb, /b\.rig\.readySpell\?\.\(!b\.wolf && !!shown\.sr\);/);
