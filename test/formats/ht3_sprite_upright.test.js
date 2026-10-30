@@ -63,7 +63,7 @@ test('HT3 the SCREEN doors keep their rows; the WORLD doors still flip', () => {
   assert.match(read('src/combat/weapon/weaponWidgetAssets.js'), /return toScreenOrder\(await decodePng\(bytes\)\);/, 'the widget\'s loose PNG');
   // DWHD1: and so does the widget's BUNDLE arm - the reader answers top-first already (decodeTexture2D flips Unity's
   // bottom-up rows), so a flip here drew every bundle frame upside down ("all weapons are overhead")
-  assert.match(read('src/combat/weapon/weaponWidgetAssets.js'), /try \{ return toScreenOrder\(tex\.rgba\(\)\); \}/);
+  assert.match(read('src/combat/weapon/weaponWidgetAssets.js'), /try \{\n\s*return toScreenOrder\(tex\.rgba\(\)\);\n\s*\}/);
   // the ones that draw in the world are untouched
   assert.match(read('src/scenes/droppedTorches.js'), /return toColor32\(await decodePng\(new Uint8Array\(await res\.arrayBuffer\(\)\)\)\);/, 'the dropped torches are billboards');
   assert.match(read('src/systems/seasonsIliacBayAssets.js'), /const image = toColor32\(await decode\(bytes\)\);/, 'seasons: terrain');

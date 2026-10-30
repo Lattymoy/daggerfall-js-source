@@ -168,8 +168,8 @@
   {
     "name": "DW1-19-the-clone-asks-by-the-classic-name",
     "file": "src/combat/weapon/weaponWidget.js",
-    "old": "    const file = atlasFileName(w.specificWeapon, classic, undefined, ctx?.glow ? false : undefined);",
-    "new": "    const file = classic;",
+    "old": "    const file = atlasFileName(w.specificWeapon, classic, undefined, ctx?.glow ? false : undefined); // WEAPON-GLOW1: an element shown asks the plain set",
+    "new": "    const file = classic; // WEAPON-GLOW1: an element shown asks the plain set",
     "tests": [
       "test/combat/weapon/dw1_diverseweapons.test.js"
     ]
@@ -177,8 +177,8 @@
   {
     "name": "DW1-20-a-miss-blocks-the-next-name-for-ever",
     "file": "src/combat/weapon/weaponWidget.js",
-    "old": "      if (misses.has(name)) continue;   // answered \"nothing carries it\": the next name's turn",
-    "new": "",
+    "old": "      if (misses.has(name)) continue; // answered \"nothing carries it\": the next name's turn\n      if (!cache.has(name)) {",
+    "new": "      if (!cache.has(name)) {",
     "tests": [
       "test/combat/weapon/dw1_diverseweapons.test.js"
     ]
@@ -332,8 +332,8 @@
   {
     "name": "AUDITDW-F3-the-plain-fall-through-draws-doubled",
     "file": "src/combat/weapon/weaponWidget.js",
-    "old": "      else if (w.s.doubleScale && custom.doubled !== false) {   // AUDIT-DW F3: only a `w_` texture is drawn into the doubled box",
-    "new": "      else if (w.s.doubleScale) {",
+    "old": "      } else if (w.s.doubleScale && custom.doubled !== false) {\n        // AUDIT-DW F3: only a `w_` texture is drawn into the doubled box",
+    "new": "      } else if (w.s.doubleScale) {",
     "tests": [
       "test/combat/weapon/auditdw.test.js"
     ]

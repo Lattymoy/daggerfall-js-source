@@ -473,8 +473,8 @@
   {
     "name": "AUDITMS-L2-1-applies-only-while-drawing",
     "file": "src/combat/weapon/weaponWidget.js",
-    "old": "  function applies() { return !!ctx && !!w.art && ctx.weaponType !== T.None; }",
-    "new": "  function applies() { return drawing(); }",
+    "old": "    return !!ctx && !!w.art && ctx.weaponType !== T.None;",
+    "new": "    return drawing();",
     "tests": [
       "test/combat/spellhand.test.js"
     ]

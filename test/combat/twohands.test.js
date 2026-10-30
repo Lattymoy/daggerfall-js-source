@@ -1115,7 +1115,7 @@ test('TWO-HANDS x WEAPON-GLOW1: each hand of a pair wears ITS OWN weapon\'s elem
   // PIN MOVED (HAND-WRAPS, AUDIT C2): a bare fist's clone its wraps' glow (test/combat/handwraps.test.js)
   assert.match(rig, /function cloneFrame\(item, hand, f\) \{[^]{0,400}glow: item \? glowOf\(item\) : handGlowOf\(hand\)/, 'each clone - the one hand\'s and each of a pair\'s');
   assert.match(rig, /fpArm\.setWeaponGlow\?\.\(meshGlow\(armItem\), armItem\);\s*fpArm\.setOffWeaponGlow\?\.\(offItem \? meshGlow\(offItem\) : null, offItem\);/, 'the arm: the blade it holds, and the left its own');
-  assert.match(rd('src/combat/weapon/weaponWidget.js'), /renderer\.drawScreenQuad\(tex, rect, uv, tint \?\? undefined\);\s*if \(ctx\.glow\) renderer\.drawScreenQuadGlow\?\.\(tex, rect, uv, ctx\.glow,/, 'a clone of a pair: its outline on its own rect and source');
+  assert.match(rd('src/combat/weapon/weaponWidget.js'), /renderer\.drawScreenQuad\(tex, rect, uv, tint \?\? undefined\);\n\s*if \(ctx\.glow\)\n\s*renderer\.drawScreenQuadGlow\?\.\(tex, rect, uv, ctx\.glow,/, 'a clone of a pair: its outline on its own rect and source');
 });
 
 const ARENA2 = process.env.ARENA2_PATH;
@@ -1288,7 +1288,7 @@ test('TWO-HANDS rig, by source: the two-hands branch is the classic body\'s own 
   // the record rides the quad (WEAPON-GLOW1's outline is measured in its own pixels), the draw's two lines main's own
   assert.match(fps, /const q = fpsWeaponQuad\(canvas, art, state, frame, \{ flipHorizontal, offsetHeight \}\);\n\s*if \(!q\) return;\n\s*const \{\n\s*tex,\n\s*rect: \{ x, y, w, h \},\n\s*uv: src,\n\s*rec,\n\s*\} = q;\n\s*renderer\.drawScreenQuad\(tex, \{ x, y, w, h \}, src, tint \?\? undefined\); \/\/ MAC-I: Tint\n\s*if \(glow\)\n\s*renderer\.drawScreenQuadGlow\?\.\(tex, \{ x, y, w, h \}, src, glow, \{\n\s*art: \[rec\.width, rec\.height\]/);
   // and the one hand's clone draws the mod's own line; only a hand of a pair takes the guard and the mirror
-  assert.match(rd('src/combat/weapon/weaponWidget.js'), /if \(!transform && !mirror\) \{\n\s*renderer\.drawScreenQuad\(tex, getWeaponRect\(\), w\.curAnimRect, tint \?\? undefined\);\n\s*if \(ctx\.glow\) renderer\.drawScreenQuadGlow\?\.\(tex, getWeaponRect\(\), w\.curAnimRect, ctx\.glow,[^\n]*\n\s*return true;\n\s*\}/);
+  assert.match(rd('src/combat/weapon/weaponWidget.js'), /if \(!transform && !mirror\) \{\n\s*renderer\.drawScreenQuad\(tex, getWeaponRect\(\), w\.curAnimRect, tint \?\? undefined\);\n\s*if \(ctx\.glow\)\n\s*renderer\.drawScreenQuadGlow\?\.\(tex, getWeaponRect\(\), w\.curAnimRect, ctx\.glow, \{\n\s*art: \[rec\.width, rec\.height\],\n\s*view: \[canvas\.width, canvas\.height\],\n\s*\}\); \/\/ WEAPON-GLOW1: the element's outline, as the sprite it stands in for draws it \(the rig's ctx says it each frame\), in the record's own pixels\n\s*return true;\n\s*\}/);
 });
 
 test('TWO-HANDS rig: a left-handed player\'s picture is mirrored whole - the right hand on the left, mirrored; the left hand on the right, as DFU draws a right hand', async () => {

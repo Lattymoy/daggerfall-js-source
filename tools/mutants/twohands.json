@@ -725,7 +725,7 @@
   {
     "name": "TWOHANDS-AUDIT-sway-mirrored",
     "file": "src/combat/weapon/weaponWidget.js",
-    "old": "  const pairRect = (mirror) => (mirror ? transformRect(w.weaponPosition, { position: [w.swayDx.bob - w.swayDx.inertia, w.position[1]] }) : getWeaponRect());",
+    "old": "  const pairRect = (mirror) =>\n    mirror\n      ? transformRect(w.weaponPosition, { position: [w.swayDx.bob - w.swayDx.inertia, w.position[1]] })\n      : getWeaponRect();",
     "new": "  const pairRect = (mirror) => getWeaponRect();",
     "tests": [
       "test/combat/twohands.test.js"
@@ -869,7 +869,7 @@
   {
     "name": "TWOHANDS-AUDIT-PINS-widget-left-hand-not-moved-across",
     "file": "src/combat/weapon/weaponWidget.js",
-    "old": "if (mirror) rect = mirrorRect(rect, w.screenRect.width, w.screenRect.x);",
+    "old": "    if (mirror) rect = mirrorRect(rect, w.screenRect.width, w.screenRect.x);",
     "new": "",
     "tests": [
       "test/combat/twohands.test.js"
@@ -878,7 +878,7 @@
   {
     "name": "TWOHANDS-AUDIT-PINS-widget-hands-no-guard",
     "file": "src/combat/weapon/weaponWidget.js",
-    "old": "if (transform) rect = transform(rect);",
+    "old": "    if (transform) rect = transform(rect);",
     "new": "",
     "tests": [
       "test/combat/twohands.test.js"
@@ -1148,8 +1148,8 @@
   {
     "name": "TWOHANDS-GLOW-clone-pair-no-outline",
     "file": "src/combat/weapon/weaponWidget.js",
-    "old": "    if (ctx.glow) renderer.drawScreenQuadGlow?.(tex, rect, uv, ctx.glow, { art: [rec.width, rec.height], view: [canvas.width, canvas.height] });   // WEAPON-GLOW1: this hand's own element, on its own rect and source\n",
-    "new": "",
+    "old": "    if (ctx.glow)\n      renderer.drawScreenQuadGlow?.(tex, rect, uv, ctx.glow, {\n        art: [rec.width, rec.height],\n        view: [canvas.width, canvas.height],\n      }); // WEAPON-GLOW1: this hand's own element, on its own rect and source\n    return true;",
+    "new": "    return true;",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -1374,8 +1374,8 @@
   {
     "name": "TWOHANDS-SPRITE2-bob-inward",
     "file": "src/combat/weapon/weaponWidget.js",
-    "old": "position: [w.swayDx.bob - w.swayDx.inertia, w.position[1]]",
-    "new": "position: [-w.position[0], w.position[1]]",
+    "old": "    mirror\n      ? transformRect(w.weaponPosition, { position: [w.swayDx.bob - w.swayDx.inertia, w.position[1]] })\n      : getWeaponRect();",
+    "new": "    mirror ? transformRect(w.weaponPosition, { position: [-w.position[0], w.position[1]] }) : getWeaponRect();",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -1383,8 +1383,8 @@
   {
     "name": "TWOHANDS-SPRITE2-inertia-mirrored",
     "file": "src/combat/weapon/weaponWidget.js",
-    "old": "position: [w.swayDx.bob - w.swayDx.inertia, w.position[1]]",
-    "new": "position: [w.swayDx.bob + w.swayDx.inertia, w.position[1]]",
+    "old": "      ? transformRect(w.weaponPosition, { position: [w.swayDx.bob - w.swayDx.inertia, w.position[1]] })",
+    "new": "      ? transformRect(w.weaponPosition, { position: [w.swayDx.bob + w.swayDx.inertia, w.position[1]] })",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -1392,8 +1392,8 @@
   {
     "name": "TWOHANDS-SPRITE2-own-clock",
     "file": "src/combat/weapon/weaponWidget.js",
-    "old": "      w.time = k.time;\n",
-    "new": "      w.time += dt;\n",
+    "old": "      w.time = k.time;",
+    "new": "      w.time += dt;",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -1410,8 +1410,8 @@
   {
     "name": "TWOHANDS-SPRITE2-windup-at-rest",
     "file": "src/combat/weapon/weaponWidget.js",
-    "old": "      if (c.fromBelow && w.s.offset) w.offsetCurrent = [0, 1];\n",
-    "new": "",
+    "old": "      if (c.fromBelow && w.s.offset) w.offsetCurrent = [0, 1];\n      playAttackAnimation(play);",
+    "new": "      playAttackAnimation(play);",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -1473,8 +1473,8 @@
   {
     "name": "TWOHANDS-SPRITE2-born-slides-in",
     "file": "src/combat/weapon/weaponWidget.js",
-    "old": "if (c.shown) { w.offsetCurrent = [0, 0]; w.offsetTarget = [0, 0]; }",
-    "new": "if (c.shown) { w.offsetTarget = [0, 0]; }",
+    "old": "        w.offsetCurrent = [0, 0];\n        w.offsetTarget = [0, 0];",
+    "new": "        w.offsetTarget = [0, 0];",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -1509,8 +1509,8 @@
   {
     "name": "TWOHANDS-SPRITE2-pair-clone-flipped",
     "file": "src/combat/weapon/weaponWidget.js",
-    "old": "    if (c.pairHand) {\n",
-    "new": "    if (false) {\n",
+    "old": "    if (c.pairHand) {",
+    "new": "    if (false) {",
     "tests": [
       "test/combat/twohands.test.js"
     ]

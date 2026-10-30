@@ -123,6 +123,13 @@
 !/src/combat/thunderlockArt.js
 !/src/combat/twoHands/
 /src/combat/twoHands/*/
+!/src/combat/weapon/
+/src/combat/weapon/*
+!/src/combat/weapon/swapPace.js
+!/src/combat/weapon/weaponAlign.js
+!/src/combat/weapon/weaponWidget.js
+!/src/combat/weapon/weaponWidgetAssets.js
+!/src/combat/weapon/weaponWidgetMotion.js
 !/src/formats/
 /src/formats/*
 !/src/formats/imgFile.js

@@ -491,7 +491,7 @@ test('RRI2 wiring: the install registers the six delegates; the read-through sit
   assert.match(rd('src/systems/chargenSession.js'), /assignStartingEquipment\(playerEntity, \{ classIndex: result\.careerIndex/);
   // PIN MOVED (TWO-HANDS, bible/05-Combat/Two-Hands.md): the clone's own three fields, unless the rig hands its swing's
   // ctx (a hand of a pair: the striking hand and the strike's tempo - the clock the machine runs on)
-  assert.match(rd('src/combat/weapon/weaponWidget.js'), /const animCtx = \(\) => ctx\?\.animCtx\?\.\(\) \?\? \(\{ entity: ctx\?\.entity \?\? null, weaponType: w\.currentWeaponType, usingRightHand: usingRightHand\(\) \}\);/);
+  assert.match(rd('src/combat/weapon/weaponWidget.js'), /const animCtx = \(\) =>\n\s*ctx\?\.animCtx\?\.\(\) \?\? \{\n\s*entity: ctx\?\.entity \?\? null,\n\s*weaponType: w\.currentWeaponType,\n\s*usingRightHand: usingRightHand\(\),\n\s*\};/);
   assert.equal((rd('src/combat/weapon/weaponWidget.js').match(/widgetAnimTickTime\(w\.currentWeaponType, liveSpeed\(\), w\.s\.swing, animCtx\(\)\)/g) ?? []).length, 4, 'every tick asks with the ctx');
   assert.equal(conditionPercentage({ currentCondition: 1, maxCondition: 3 }), 33, 'ConditionPercentage: C# integer division');
   assert.equal(conditionPercentage({ currentCondition: 0, maxCondition: 0 }), 100);
