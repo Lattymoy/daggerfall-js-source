@@ -354,7 +354,7 @@ test('PVP-FLAG-ZONE (scenes/pvpFlagHost.js; the owner: "or i can flag anywerte")
     assert.deepEqual(sent, [], 'outside the zone: no flag');
     ticks[0]();
     assert.equal(button.style.display, 'none', 'outside the zone: no button');
-    assert.deepEqual([button.style.right, button.style.top, button.style.transform], ['8px', '50%', 'translateY(-50%)'], 'the middle of the right edge');
+    assert.deepEqual([button.style.right, button.style.top, button.style.transform], ['8px', 'calc(50% - 64px)', 'none'], 'the right edge, just over its middle: clear of the Decorate button there (ui/decorPanel.js .dfdecor-open)');
     inZone = true;
     ticks[0]();
     assert.equal(button.style.display, 'block');

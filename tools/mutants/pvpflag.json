@@ -191,5 +191,12 @@
     "old": ", zoneEdgeSee(wildHere(), player.pos, Date.now()));",
     "new": ");",
     "tests": ["test/net/pvpflag.test.js"]
+  },
+  {
+    "name": "PVP-FLAG-SPOT-back-on-the-decorate-button",
+    "file": "src/scenes/pvpFlagHost.js",
+    "old": "top: 'calc(50% - 64px)', right: '8px', transform: 'none',",
+    "new": "top: '50%', right: '8px', transform: 'translateY(-50%)',",
+    "tests": ["test/net/pvpflag.test.js"]
   }
 ]

@@ -116,10 +116,11 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
       noteCaps('game');
       if (here()) toggle();
     });
-    // PVP-FLAG-SPOT (the owner: "left center or right center"): the middle of the screen's right edge.
+    // PVP-FLAG-SPOT (the owner: "left center or right center"): the screen's right edge, just over its middle -
+    // clear of the Decorate button centred there (ui/decorPanel.js .dfdecor-open).
     button = doc.createElement('button');
     button.type = 'button';
-    Object.assign(button.style, { position: 'fixed', top: '50%', right: '8px', transform: 'translateY(-50%)', zIndex: '40', width: '36px', height: '36px', backgroundColor: '#2a241c', backgroundSize: '24px', backgroundRepeat: 'no-repeat', backgroundPosition: 'center', imageRendering: 'pixelated', border: '2px solid', cursor: 'pointer', display: 'none' });
+    Object.assign(button.style, { position: 'fixed', top: 'calc(50% - 64px)', right: '8px', transform: 'none', zIndex: '40', width: '36px', height: '36px', backgroundColor: '#2a241c', backgroundSize: '24px', backgroundRepeat: 'no-repeat', backgroundPosition: 'center', imageRendering: 'pixelated', border: '2px solid', cursor: 'pointer', display: 'none' });
     button.addEventListener('click', () => toggle());
     doc.body?.appendChild(button);
     if (doc.body && typeof doc.createElementNS === 'function') hud = createPvpHud(doc, () => { beat(); paint(); });   // PVP-HUD: the ring, the banner, the last hits
