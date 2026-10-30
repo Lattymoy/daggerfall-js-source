@@ -19,7 +19,7 @@
 // player is standing. The player arm and its damage law live here
 // now, one copy for the three hosts that share this flight.
 
-import { MISSILE_SPEED, ARROW_FLIGHT_SPEED, MISSILE_COLLIDER_RADIUS, MISSILE_LIFESPAN_S, playerShotOrigin, missileHitsCapsule, missileReach, PLAYER_BODY_RADIUS } from '../systems/spellcast.js';   // FIELD-GUN17: playerMuzzleOrigin - the gun's own barrel, where GetAimPosition speaks for the bow   // AUDIT 65 CV-2: the player's own controller radius
+import { MISSILE_SPEED, ARROW_FLIGHT_SPEED, MISSILE_COLLIDER_RADIUS, MISSILE_LIFESPAN_S, playerShotOrigin, missileHitsCapsule, missileReach, PLAYER_BODY_RADIUS, sweepFrom } from '../systems/spellcast.js';   // FIELD-GUN17: playerMuzzleOrigin - the gun's own barrel, where GetAimPosition speaks for the bow   // AUDIT 65 CV-2: the player's own controller radius
 import { CAPSULE_HEIGHT } from '../player/motor.js';   // ROAD-H tail: the standing capsule, the contact's default height   // ROAD-H H1c: GetAimPosition's player arrow arm
 import { trs } from '../world/mat4.js';
 import { SWING_MODS, foeUnaware } from './playerWeapon.js';   // CalculateSwingModifiers, read live at the arrow's impact (SET2: and whether the shaft's foe had noticed me)
@@ -278,7 +278,7 @@ export class ArrowFlight {
       const cs = c ? coverStep(coverDistance(c, m.pos, unit, reach), c.raycast(m.pos, unit, reach), reach, reach - step * Math.hypot(m.dir[0], m.dir[1], m.dir[2]), step * Math.hypot(m.dir[0], m.dir[1], m.dir[2]), !!m.fromPlayer) : null;   // WALL-SHAFT: a player's shaft is swept (SHAFT-SWEEP), so a wall is met by touch and a foe before it first
       if (cs && Number.isFinite(cs.stop)) { this._stick(m, [m.pos[0] + unit[0] * cs.stop, m.pos[1] + unit[1] * cs.stop, m.pos[2] + unit[2] * cs.stop], unit); m.dead = true; continue; }   // met geometry: the arrow is LOST (DFU); STUCK-ARROWS: the player's stays where it struck - the RAY's point (`unit`, the collider's units)
       const adv = cs ? step * cs.advance : step;
-      const from = m.fromPlayer ? [m.pos[0], m.pos[1], m.pos[2]] : null;   // STUCK-ARROWS: the step's start, for the ground's crossing
+      const from = m.fromPlayer ? sweepFrom(m.pos, c) : null;   // STUCK-ARROWS: the step's start, for the ground's crossing (AUDIT WALL-SHAFT W1: and the sweep, never through a wall)
       const was = boxTargets?.length && m.fromPlayer ? [m.pos[0], m.pos[1], m.pos[2]] : null;   // SERPENT4: the step's start, for a box
       m.pos[0] += m.dir[0] * adv;
       m.pos[1] += m.dir[1] * adv;

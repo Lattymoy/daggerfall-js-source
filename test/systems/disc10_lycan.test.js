@@ -386,7 +386,7 @@ test('DISC10-E L4: a level gained under the urge adds its hit points to the RAW 
   assert.ok(q.rawMaxHealth > 100, `the virtue lane too: ${q.rawMaxHealth}`);
 });
 
-test('DISC10-E L3, WERE-LOOT, WERE-PICK: the beast loots with its window shut - the lit row on a press, the lot on P or with quick loot off (mutants: every press the lot; the beast takes nothing)', async () => {
+test('DISC10-E L3, WERE-LOOT, WERE-PICK: the beast loots with its window shut - one row on a press (the lit one, else the first), the lot on P or with quick loot off (mutants: every press the lot; the beast takes nothing; no first row)', async () => {
   const { quickLootTake, foldQuickLoot, resetQuickLoot, quickLootArm, quickLootWheel } = await import('../../src/systems/quickLoot.js');
   const { hoverLines } = await import('../../src/systems/worldHover.js');
   const { setPref, PREF_DEFAULTS } = await import('../../src/systems/uiPrefs.js');
@@ -411,6 +411,15 @@ test('DISC10-E L3, WERE-LOOT, WERE-PICK: the beast loots with its window shut - 
     quickLootArm('QuickLootAll');
     assert.ok(quickLootTake('pile:1', { items: () => items }, p, () => {}));
     assert.equal(items.length, 0, 'P: the lot');
+    // AUDIT WERE-PICK P1: no row lit on the pressed pile - a touch screen draws no plaque, a search find or a vault has no
+    // frame yet - takes the plaque's first row, never the lot
+    const touch = pile();
+    foldQuickLoot(null);
+    assert.ok(quickLootTake('pile:2', { items: () => touch }, p, () => {}));
+    assert.deepEqual(names(touch), ['Dagger', 'Mace'], 'nothing lit: one row, the first');
+    foldQuickLoot(frame());   // lit on pile:1, pressed on pile:2
+    assert.ok(quickLootTake('pile:2', { items: () => touch }, p, () => {}));
+    assert.deepEqual(names(touch), ['Mace'], 'another pile lit: still one row of the pressed one');
 
     setPref('quickLoot', false); resetQuickLoot();
     const off = pile(), frameOff = frameOf(off);

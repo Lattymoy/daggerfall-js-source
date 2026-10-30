@@ -437,7 +437,7 @@ export function coverDistance(collider, origin, dir, maxDist, sight = false) {
 }
 
 /**
- * AUDIT TACT B5: A MISSILE MEETS COVER AS IT MEETS A BODY - BY TOUCH. A wall is met at the step's whole reach (DFU's
+ * AUDIT TACT B5: A MISSILE MEETS COVER AS IT MEETS A BODY - BY TOUCH. A wall is met at the step's whole reach (`swept`: by touch; DFU's
  * own sweep); cover answered the same way ate every shot at someone standing in front of a trunk whenever a frame's
  * step crossed both (a 20 fps arrow never struck a player half a metre before a tree). So: the missile stops on cover
  * only when its own radius touches it (`cov <= radius`); short of that, it is advanced only as far as the touch (the

@@ -448,7 +448,7 @@ test('START-INSTANCE (FIELD BUGS 2026-10-30e) the door asks whether a dungeon is
   const q = p.m.startQuestByName(STARTS[1].quest);
   p.tick(2);
   assert.equal(h.lairOpen(LAIR_MAP_ID), true, 'its dungeon, the commission in it');
-  assert.equal(h.lairOpen(LAIR_MAP_ID | 0), true, 'the map id read unsigned');
+  assert.equal(h.lairOpen(LAIR_MAP_ID - 2 ** 32), true, 'the map id read unsigned (AUDIT S4: its signed spelling)');
   assert.equal(h.lairOpen(LAIR_MAP_ID + 1), false, 'another dungeon');
   assert.equal(h.lairOpen(undefined), false);
   q.getItem({ name: 'commission' }).setPlayerClicked();

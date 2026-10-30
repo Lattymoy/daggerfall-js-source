@@ -388,8 +388,23 @@ export function sweptSphereOverlapsCapsule(a, b, radius, feet, height, bodyRadiu
       else if (t > 1) { t = 1; s = Math.min(1, Math.max(0, (B - C) / A)); }
     }
   }
-  const px = a[0] + d1[0] * s, py = a[1] + d1[1] * s, pz = a[2] + d1[2] * s;
-  return Math.hypot(px - feet[0], py - (y0 + d2y * t), pz - feet[2]) <= radius + bodyRadius;
+  const px = a[0] + d1[0] * s, py = a[1] + d1[1] * s, pz = a[2] + d1[2] * s, qy = y0 + d2y * t;
+  const d = Math.hypot(px - feet[0], py - qy, pz - feet[2]);
+  return d <= radius + bodyRadius && !walledOff(/** @type {any} */ (a).collider, [px, py, pz], [feet[0], qy, feet[2]], d);
+}
+
+/** AUDIT WALL-SHAFT W1: a step's start for the sweep, carrying the collider a contact must not reach through - the shaft
+ *  stops a radius short of a wall, and its radius and the body's together reached a foe behind a door. */
+export function sweepFrom(pos, collider = null) {
+  return Object.assign([pos[0], pos[1], pos[2]], collider?.raycast ? { collider } : {});
+}
+/** Geometry between the shaft's nearest point `p` and the body's axis `q`, `reach` apart: the axis, not the hit surface,
+ *  which stands 0.45 m out where a foe walks 0.35 m off a wall (CAPSULE_RADIUS) and so pokes through a door. */
+function walledOff(collider, p, q, reach) {
+  if (!collider || !(reach > 1e-3)) return false;
+  const l = Math.hypot(q[0] - p[0], q[1] - p[1], q[2] - p[2]) || 1;
+  const hit = collider.raycast(p, [(q[0] - p[0]) / l, (q[1] - p[1]) / l, (q[2] - p[2]) / l], reach);
+  return Number.isFinite(hit) && hit < reach;
 }
 
 /**

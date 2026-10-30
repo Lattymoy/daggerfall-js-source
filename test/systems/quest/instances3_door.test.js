@@ -12,7 +12,7 @@ import { QuestMachine } from '../../../src/systems/quest/machine.js';
 import { Place, SITE_TYPES } from '../../../src/systems/quest/place.js';
 import { loadQuestTables } from '../../../src/systems/quest/tables.js';
 import { relayQuestOnline, repairActiveQuests, questElsewhereLine } from '../../../src/systems/quest/questRepair.js';
-import { questsAtSite, openerQuestOf, questMountsHere, questDungeonWhole, partnerInstances, instanceOffer, questInstanceEpoch } from '../../../src/systems/instancePlaces.js';
+import { questsAtSite, openerQuestOf, questMountsHere, questDungeonWhole, partnerInstances, instanceOffer, questInstanceEpoch, startPublicShut } from '../../../src/systems/instancePlaces.js';
 import { createInstanceDoor, INSTANCE_TEXT, dungeonSite, buildingSite, siteBase } from '../../../src/scenes/instanceDoor.js';
 import { instanceRoomOf, instanceWord, INSTANCE_DOOR_WORD } from '../../../src/net/instanceRoom.js';
 import { wdunRoomKey } from '../../../src/net/wire.js';
@@ -358,7 +358,9 @@ test('START-INSTANCE (FIELD BUGS 2026-10-30e, #bug-reports: "The emperor\'s comm
   const kinds = (o) => instanceOffer({ online: true, instanceOk: true, ...o })?.map((r) => r.kind) ?? null;
   assert.equal(kinds({ questHere: true, relaid: true, startLair: true }), null, 'my instance alone: no choice to make');
   assert.deepEqual(kinds({ questHere: true, relaid: true, startLair: true, partners }), ['join', 'mine']);
-  assert.deepEqual(kinds({ questHere: true, startLair: true, partners }), ['join', 'mine'], 'laid whole in public too');
+  assert.deepEqual(kinds({ questHere: true, startLair: true, partners }), ['public', 'join', 'mine'], 'AUDIT S1: a public room laid whole stands the commission - Public kept, first');
+  assert.equal(startPublicShut({ startLair: true, questHere: true, relaid: true }), true);
+  assert.deepEqual([[false, true, true], [true, false, true], [true, true, false]].map(([startLair, questHere, relaid]) => startPublicShut({ startLair, questHere, relaid })), [false, false, false]);
   assert.deepEqual(kinds({ relaid: true, startLair: true, partners }), ['public', 'join'], 'no quest of mine here: as ever');
   assert.deepEqual(kinds({ isHold: true, questHere: true, relaid: true }), ['mine'], 'HOLD-ONCE unchanged');
   // the page half: Summerset's Laboratory of Silinaire, its public room laid small online
@@ -370,17 +372,23 @@ test('START-INSTANCE (FIELD BUGS 2026-10-30e, #bug-reports: "The emperor\'s comm
   const m = new QuestMachine();
   const q = questAt(m, { siteType: SITE_TYPES.Dungeon, mapId: SILINAIRE.mapTableData.mapId });
   const shown = [];
-  const asked = [];
+  const asked = [], said = [];
   const d = createInstanceDoor({
     online: () => true, instanceOk: () => true, account: () => 'acct-alice', character: () => 'char_alice', members: () => [],
-    questMachine: () => m, openOverlay: (win) => { shown.push(win); return true; }, say: () => {}, wild: () => false,
+    questMachine: () => m, openOverlay: (win) => { shown.push(win); return true; }, say: (l) => said.push(l), wild: () => false,
     startLair: (mapId) => { asked.push(mapId); return mapId === SILINAIRE.mapTableData.mapId; },
   });
   const site = d.dungeonSite(SILINAIRE);
   assert.equal(site.relaid, true, 'online its public room is laid smaller');
   assert.deepEqual(await d.choose(site), { instance: { owner: ME, epoch: q.instanceEpoch }, whole: true }, 'straight into my instance, whole');
   assert.equal(shown.length, 0, 'no popup');
-  assert.deepEqual(asked, [SILINAIRE.mapTableData.mapId]);
+  assert.deepEqual(said, [INSTANCE_TEXT.questHere()], 'AUDIT S2: and the line says why');
+  assert.ok(asked.every((id) => id === SILINAIRE.mapTableData.mapId));
+  // AUDIT S3: a Recall anchored in the public room (`recorded`, no instance) goes in by the quest while that room is shut
+  assert.deepEqual(await d.entryFor(site, {}), { instance: { owner: ME, epoch: q.instanceEpoch }, whole: true });
+  assert.deepEqual(await d.entryFor(site, { whole: false }), { instance: { owner: ME, epoch: q.instanceEpoch }, whole: true });
+  const annRoom = { owner: ANN, epoch: '89abcdef' };
+  assert.notDeepEqual(await d.entryFor(site, { ins: instanceWord(annRoom) }), { instance: { owner: ME, epoch: q.instanceEpoch }, whole: true }, 'an anchor in an instance keeps its own law');
   // with a party member inside: their room and mine, and no word of a Public row that is not offered
   const withAnn = createInstanceDoor({
     online: () => true, instanceOk: () => true, account: () => 'acct-alice', character: () => 'char_alice', questMachine: () => m,

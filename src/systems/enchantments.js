@@ -282,8 +282,8 @@ export function setEnchantmentEffectDoors(doors) { Object.assign(_fx, doors); }
  *  effects re-roll once the item has been worn this many classic
  *  hours since the last roll. */
 export const REROLL_MINIMUM_HOURS = 6;
-/** WORN-CONCEAL (FIELD BUGS 2026-10-30e; a DEPARTURE, Port-Ledger A): magic rounds after a blow ended a worn piece's
- *  Chameleon, Invisibility or Shadow before the piece casts it again. DFU waits for the 6-hour reroll. */
+/** WORN-CONCEAL (FIELD BUGS 2026-10-30e; a DEPARTURE, Port-Ledger A): magic rounds after the last blow that ended a worn
+ *  piece's Chameleon, Invisibility or Shadow before it stands again. DFU waits for the 6-hour reroll. */
 export const WORN_CONCEAL_BACK_ROUNDS = 2;
 const MINUTES_PER_HOUR = 60;
 
@@ -1018,7 +1018,8 @@ export function enchantmentMagicRound(entity, round, { nowMinutes = 0, ctx = nul
     for (const item of items) {
       if (!entity.activeEffects.some((a) => a.heldItem === item)) continue;
       const hours = Math.floor((nowMinutes - (item.timeEffectsLastRerolled ?? nowMinutes)) / MINUTES_PER_HOUR);
-      if ((hours < REROLL_MINIMUM_HOURS && !concealBack(entity, item)) || item.equipSlot == null) continue;
+      concealBack(entity, item);   // WORN-CONCEAL
+      if (hours < REROLL_MINIMUM_HOURS || item.equipSlot == null) continue;
       _fx.removeItemPinnedEffects?.(entity, item);
       doItemEnchantmentPayloads(PAYLOAD.RerollEffect, item, { entity, round, nowMinutes, ctx });
       item.timeEffectsLastRerolled = nowMinutes;
@@ -1026,16 +1027,15 @@ export function enchantmentMagicRound(entity, round, { nowMinutes = 0, ctx = nul
   }
 }
 
-/** WORN-CONCEAL: counts the rounds since a blow ended `item`'s concealment; true once WORN_CONCEAL_BACK_ROUNDS have
- *  passed. Only the three normal powers: a worn Shield a blow busted waits for its reroll, as in DFU. */
+/** WORN-CONCEAL: counts the rounds since the last blow (concealment.js resets the count) and stands `item`'s ended
+ *  concealment up again in place once WORN_CONCEAL_BACK_ROUNDS have passed. AUDIT C1: in place, never a reroll - the
+ *  piece's other powers keep their rolls and state (a busted Shield stays busted), and its 6-hour clock stands. */
 function concealBack(entity, item) {
-  let back = false;
   for (const a of entity.activeEffects) {
     if (a.heldItem !== item || !a.ended || !NORMAL_POWER_CONCEALMENTS.includes(a.kind)) continue;
     a.endedRounds = (a.endedRounds ?? 0) + 1;
-    if (a.endedRounds >= WORN_CONCEAL_BACK_ROUNDS) back = true;
+    if (a.endedRounds >= WORN_CONCEAL_BACK_ROUNDS) { a.ended = false; delete a.endedRounds; }
   }
-  return back;
 }
 
 /** E2: the RESTORE half of the held bundles. DFU serializes each

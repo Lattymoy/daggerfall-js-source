@@ -89,9 +89,9 @@ test('HELD-CONCEAL: a worn Invisibility a landed blow broke is broken now - unre
   assert.equal(isInvisible(w), false, 'broken for a round');
   assert.deepEqual(pins(w), [['invisNormal', 'ended', 0]]);
   until(EQUIPPED_AT + WORN_CONCEAL_BACK_ROUNDS);
-  assert.equal(isInvisible(w), true, 'the piece cast it again, still worn');
-  assert.deepEqual(pins(w), [['invisNormal']], 'fresh, the ended one stripped first');
-  assert.equal(ring.timeEffectsLastRerolled, EQUIPPED_AT + WORN_CONCEAL_BACK_ROUNDS);
+  assert.equal(isInvisible(w), true, 'it stands again, still worn');
+  assert.deepEqual(pins(w), [['invisNormal']], 'the same entry, no longer ended (AUDIT WORN-CONCEAL C1: in place)');
+  assert.equal(ring.timeEffectsLastRerolled, EQUIPPED_AT, 'no reroll: the piece\'s clock stands');
   assert.deepEqual(icons(w), [['Invisibility', true]]);
 }));
 

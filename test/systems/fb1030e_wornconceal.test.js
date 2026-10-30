@@ -62,43 +62,59 @@ function world(fn) {
 const REROLL_AT = EQUIPPED_AT + REROLL_MINIMUM_HOURS * 60;
 
 const MARK = 137;   // the Mark (lootRarity.js's Mark of the Hist's template)
-const SHIELD = { index: 7, name: 'Shield', rangeType: 0, element: 4, effects: [{ type: 35, subType: 255, durationBase: 3, durationMod: 0, durationPerLevel: 1, chanceBase: 0, chanceMod: 0, chancePerLevel: 1, magnitudeBaseLow: 5, magnitudeBaseHigh: 5, magnitudeLevelBase: 0, magnitudeLevelHigh: 0, magnitudePerLevel: 1 }] };
+/** A Shield in SPELLS.STD's field shape (effects.js isShieldEffect: type 35, subtype 255), an index of the fixtures' own. */
+const SHIELD = { index: 200, name: 'Shield', rangeType: 0, element: 4, effects: [{ type: 35, subType: 255, durationBase: 3, durationMod: 0, durationPerLevel: 1, chanceBase: 0, chanceMod: 0, chancePerLevel: 1, magnitudeBaseLow: 5, magnitudeBaseHigh: 5, magnitudeLevelBase: 0, magnitudeLevelHigh: 0, magnitudePerLevel: 1 }] };
 
-test('WORN-CONCEAL: a worn Mark\'s Chameleon a blow ended is cast again two rounds on, not six hours; each blow ends it again (mutants: the six-hour wait; the count never reached)', () => world((clock, until) => {
+test('WORN-CONCEAL: a worn Mark\'s Chameleon a blow ended stands again two rounds on, not six hours - in place, no condition spent, no reroll (mutants: the six-hour wait; the count never reached; at once)', () => world((clock, until) => {
   assert.equal(WORN_CONCEAL_BACK_ROUNDS, 2);
   const mark = piece(MARK, CHAM);
   const w = clock.w = wearer([mark]);
   equipItem(w, mark);
+  const entry = w.activeEffects.find((a) => a.heldItem === mark), cond = mark.currentCondition;
   assert.equal(isBlending(w), true, 'worn: blending');
   assert.ok(blow(w) > 0);
   assert.equal(isBlending(w), false, 'a landed blow ends it (HELD-CONCEAL, DFU\'s law)');
   assert.deepEqual(icons(w), []);
   until(EQUIPPED_AT + 1);
-  assert.equal(isBlending(w), false, 'a round on: still broken');
+  assert.equal(isBlending(w), false, 'a round on: still down');
   until(EQUIPPED_AT + 2);
-  assert.equal(isBlending(w), true, 'two rounds on: the Mark cast it again');
+  assert.equal(isBlending(w), true, 'two rounds on: it stands again');
   assert.deepEqual(icons(w), [['Chameleon', true]], 'its icon back, the item\'s');
-  assert.deepEqual(pins(w), [['chameleonNormal']]);
-  const cond = mark.currentCondition;
-  assert.ok(blow(w) > 0);
-  assert.equal(isBlending(w), false, 'the next blow ends it again');
-  until(EQUIPPED_AT + 4);
-  assert.equal(isBlending(w), true);
-  assert.equal(mark.currentCondition, cond, 'no condition spent on the recasts');
-  assert.ok(EQUIPPED_AT + 4 < EQUIPPED_AT + REROLL_MINIMUM_HOURS * 60, 'well inside the six hours');
+  assert.equal(w.activeEffects.find((a) => a.heldItem === mark), entry, 'the same entry');
+  assert.equal(mark.currentCondition, cond, 'no condition spent');
+  assert.equal(mark.timeEffectsLastRerolled, EQUIPPED_AT, 'no reroll: the six-hour clock stands');
+  assert.ok(EQUIPPED_AT + 2 < EQUIPPED_AT + REROLL_MINIMUM_HOURS * 60);
 }));
 
-test('WORN-CONCEAL: only the three normal powers come back early - a worn Shield a blow busted waits for its six-hour reroll, as in DFU; a spell\'s Invisibility stays broken (mutants: every ended pin recast)', () => world((clock, until) => {
+test('AUDIT WORN-CONCEAL C2: in a fight it stays down - each landed blow starts the two rounds again (mutants: counted from the first blow)', () => world((clock, until) => {
+  const mark = piece(MARK, INVIS);
+  const w = clock.w = wearer([mark]);
+  equipItem(w, mark);
+  let t = EQUIPPED_AT;
+  for (let i = 0; i < 6; i++) {
+    assert.ok(blow(w) > 0);
+    until(++t);
+    assert.equal(isInvisible(w), false, `a blow every round: still down after ${i + 1}`);
+  }
+  until(++t);
+  assert.equal(isInvisible(w), true, 'two rounds after the last blow it stands');
+}));
+
+test('AUDIT WORN-CONCEAL C1: a piece with a second power keeps that power as it was - a busted Shield on the same piece stays busted, and a Shield alone waits for its reroll; a spell\'s Invisibility stays broken (mutants: every ended pin stood up; a reroll)', () => world((clock, until) => {
   const SPELLS_SHIELD = new Map([...SPELLS, [SHIELD.index, SHIELD]]);
   setDefaultEnchantCtx({ spellsByIndex: () => SPELLS_SHIELD, now: () => clock.now, sinks: {} });
-  const ring = piece(RING, SHIELD);
-  const w = clock.w = wearer([ring]);
-  equipItem(w, ring);
-  const sh = w.activeEffects.find((a) => a.heldItem === ring);
-  assert.equal(sh?.kind, 'shield');
-  sh.ended = true; sh.roundsRemaining = 0; sh.shieldRemaining = 0;   // busted (playerEntity.js damageShieldPool's end)
+  const both = piece(MARK, CHAM, SHIELD), alone = piece(RING, SHIELD);
+  const w = clock.w = wearer([both, alone]);
+  equipItem(w, both);
+  equipItem(w, alone);
+  const shields = w.activeEffects.filter((a) => a.kind === 'shield');
+  assert.equal(shields.length, 2, 'both Shields stand');
+  for (const sh of shields) { sh.ended = true; sh.roundsRemaining = 0; sh.shieldRemaining = 0; }   // busted (playerEntity.js damageShieldPool's end)
+  assert.ok(blow(w) > 0);
   until(EQUIPPED_AT + 10);
-  assert.equal(w.activeEffects.find((a) => a.heldItem === ring)?.ended, true, 'the busted Shield stays busted');
+  assert.equal(isBlending(w), true, 'the Chameleon stands again');
+  assert.deepEqual(w.activeEffects.filter((a) => a.kind === 'shield').map((a) => [a.ended, a.shieldRemaining]), [[true, 0], [true, 0]], 'both Shields still busted');
+  assert.equal(both.timeEffectsLastRerolled, EQUIPPED_AT, 'no reroll');
   applySpell(INVIS, w.level, w, {}, seq(0), { entity: w, sinks: {} });
   assert.ok(blow(w) > 0);
   until(EQUIPPED_AT + 20);

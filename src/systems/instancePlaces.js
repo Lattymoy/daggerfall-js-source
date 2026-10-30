@@ -101,6 +101,10 @@ export const questMountsHere = ({ online, builtSize }) => !online || builtSize =
  *  relay) and a running quest names it: Mac's first answer ("1"), folded into the instances as their fallback. */
 export const questDungeonWhole = ({ online, instanceOk, questHere }) => !!(online && !instanceOk && questHere);
 
+/** START-INSTANCE: a province start's dungeon, its commission in it (`startLair`, startsHost.js lairOpen), whose public
+ *  room is laid smaller (`relaid`) - that room cannot stand the commission, so the door never enters it. */
+export const startPublicShut = ({ startLair = false, questHere = false, relaid = false }) => !!(startLair && questHere && relaid);
+
 /**
  * The party's instances at this place: each instance a member stands in (its party pose's `ins`, the instance's room
  * key - net/wire.js validPartyPose) whose public room is `base` (net/online.js roomKeyFor's, the place's: a dungeon
@@ -156,7 +160,7 @@ export function instanceOffer({ online, instanceOk, isHold = false, questHere = 
   if (!online || !instanceOk) return null;
   const rows = [];
   const publicLast = questHere && relaid;
-  const noPublic = isHold || (startLair && questHere);   // START-INSTANCE: a new character's commission is never left in a room that cannot stand it
+  const noPublic = isHold || startPublicShut({ startLair, questHere, relaid });   // START-INSTANCE (AUDIT S1: a public room laid whole stands it)
   if (!noPublic && !publicLast) rows.push({ kind: 'public' });
   if (castle?.owner && castle?.epoch) rows.push({ kind: 'castle', owner: castle.owner, epoch: castle.epoch });
   // The party's rooms come before mine: a member who holds a copy of the quest has an instance of their own, which is

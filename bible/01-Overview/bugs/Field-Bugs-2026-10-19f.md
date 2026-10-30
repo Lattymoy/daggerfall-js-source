@@ -1008,7 +1008,7 @@ EnemyAttack.cs:316-318, all at the formula's tail), the FromSource damage of a s
 DaggerfallEntityBehaviour.cs:196-201) and Silence's aggro; casting a spell breaks nothing, in DFU or here.
 `breakNormalPowerConcealment` ends every LIVE normal power (Invisibility, Chameleon, Shadow; the TRUE three never): a
 spell's entry is removed, as before - DFU's end, a round sooner - and a worn item's is ENDED in place and keeps its pin,
-`concealment.js:"if (a.heldItem) { a.roundsRemaining = 0; a.ended = true; }"`. `hasActiveEffect` reads an ended entry
+`concealment.js:"if (a.heldItem) { a.roundsRemaining = 0; a.ended = true;"`. `hasActiveEffect` reads an ended entry
 as absent (DFU's HasEnded skip), so IsInvisible, IsBlending and IsAShade, the senses' closures and the pose's
 concealment bits all read it broken; `mysticism.js` liveBundles already skipped an ended entry, so the HUD's icon goes
 with it. The reroll recasts it once the item's six hours since its last roll are out (REROLL_MINIMUM_HOURS, E2's

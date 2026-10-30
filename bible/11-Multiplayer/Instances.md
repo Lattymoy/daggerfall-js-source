@@ -154,8 +154,8 @@ THE LAW is pure (instancePlaces.js):
   be done in. Everywhere else the order above stands.
 
   START-INSTANCE (`01-Overview/bugs/Field-Bugs-2026-10-30e.md` section 3): a province start's own dungeon, its commission
-  still in it, offers no Public row at all, as the Hold offers none (`startsHost.js` lairOpen, `instanceOffer`'s
-  `startLair`). With no party there is no popup: the door enters my instance.
+  still in it and its public room laid smaller, offers no Public row, as the Hold offers none (`startsHost.js` lairOpen,
+  `instancePlaces.js` startPublicShut). With no party there is no popup: the door enters my instance and says why.
 
   A place with nothing but its public room has no popup: the door opens as it always did.
 - **questMountsHere**: online, a quest's things stand only in a dungeon whole - an instance, a main-story keep, a dungeon
