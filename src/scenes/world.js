@@ -335,7 +335,7 @@ import { setHoldingsProvider, stableProviderFor } from '../ui/holdingsPages.js';
 import { fleetBook, fleetShip, titleDeed, knowShip, retitle, setShipPort, forgetShip, fleetSaveSlot, FLEET_SAVE_VENDOR } from '../systems/fleet.js';   // HOLDINGS: the Fleet's ledger and its book of titles
 import { createFleetHost } from './fleetHost.js';   // HOLDINGS: the Fleet page's host half
 import { createQuayPool } from './quayPool.js';   // QUAYS: a harbour's quays, stood off its berths, and the gangways
-import { createLefayMonument } from './lefayMonumentHost.js';   // LEFAY1: the monument to Julian LeFay outside Privateer's Hold (HOLD-MONUMENT), and the flowers laid at it
+import { createMonuments } from './lefayMonumentHost.js';   // LEFAY1: the monuments - Julian LeFay's in Gothway Garden, Patrick Stewart's by the White-Gold Tower - and the flowers laid at them
 import { createMerchantYards } from './merchantYardsHost.js';   // MERCHANT-YARDS: every city's and town's Stable and Wagon Yard, and their trade
 import { createWitchesHost } from './witchesHost.js';   // WITCH1: the Witches' Festival in the streets - the Hearth Offerings, the Wyrd Sister's window, the festival's doors
 import { createPortHost, PORT_TEXT, stairRefusal, stairFeetY } from './portHost.js';   // SHIPYARDS: every port town's shipyard and lighthouse, their people, their press and the lamp - and the stair's refusals
@@ -1828,7 +1828,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const locationIndex = new Map();
   let bountyFarms = null;   // BOUNTY-FARM: the farm pool, made beside the bounty pack's stander; read late (a transition, a load, the frame)
   let quays = null;   // QUAYS: the harbours' quays (scenes/quayPool.js), made beside the farms; read late (a transition, a load, the frame)
-  let lefay = null;   // LEFAY1: the monument to Julian LeFay (scenes/lefayMonumentHost.js), made beside the Sigil Broker; read late (a transition, a load, the frame)
+  let lefay = null;   // LEFAY1: the monuments (scenes/lefayMonumentHost.js createMonuments), made beside the Sigil Broker; read late (a transition, a load, the frame)
   let poiHost = null;   // POI-2: the approved POIs (scenes/poiHost.js), made beside the monument; read late (a transition, a load, the frame)
   let poiFeed = null;   // POI-2: the approved set they are read from (poi/poiFeed.js) - the editor's drafts laid over it (POI-3)
   let poiEditor = null;   // POI-3: the editor in the world (scenes/poiEditorHost.js) - `?editor` alone, a builder's; read late (the frame)
@@ -10305,7 +10305,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     (key) => dragonSky?.keepHoverName(key) ?? null,   // DRAGON5b: my tamed dragon by its name and its verbs, another's by its name
     (key) => hcc.hoverName(key),   // HCC: the horse by its name (HorseNameTooltipController's HorseTargetLabel), the wagon, a peer's by whose it is
     (key) => csaHoverName(key),   // CSA-D: a boat, by its hull's name
-    // LEFAY1: the monument to Julian LeFay - its years, the flowers laid, and its rows; after the Sigil Broker's and the
+    // LEFAY1: a monument - its lines, the flowers laid, and its rows; after the Sigil Broker's and the
     // rite's (WB12d holds those two together) and before another player's (PEER-PLAQUE1's, the array's last): its press
     // is the street's (worldModes.tryEnter, the ladder's last family), and it answers its own key alone
     (key) => lefay?.hoverName(key) ?? null,
@@ -13353,7 +13353,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     doorGeneration += 1;   // WORLD-HOVER: the origin was re-anchored, so every door's WORLD matrix moved with it
     bountyFarms?.destroyAll();   // BOUNTY-FARM: the frame moves under it - it stands again from the bounty, in the new one
     quays?.destroyAll();   // QUAYS: and the quays - stood again off the harbours found in the new one
-    lefay?.destroyAll();   // LEFAY1: and the monument - stood again the next frame that finds Privateer's Hold built
+    lefay?.destroyAll();   // LEFAY1: and the monuments - each stood again the next frame that finds its place built
     poiHost?.destroyAll();   // POI-2: and the POIs - stood again the next frame off the new anchor
     merchantYards?.destroyAll();   // MERCHANT-YARDS: and the yards - stood again the next frame, in the new frame
     portHost?.destroyAll();   // SHIPYARDS: and the shipyards and lighthouses, the same
@@ -24390,18 +24390,19 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     open: openBroker,
     gone: () => closeBrokerDoor(),   // midnight took her from under her open window: it is shut, and she says so
   }) : null;
-  // LEFAY1: THE MONUMENT TO JULIAN LEFAY (scenes/lefayMonumentHost.js) - outside Privateer's Hold (HOLD-MONUMENT), where its
-  // pixel's build found open ground (`p.lefay`, the location frame), carried by the live floating-origin translation;
-  // the flowers a press throws there laid in the character's own pile (systems/save/save.js carries it)
+  // LEFAY1: THE MONUMENTS (scenes/lefayMonumentHost.js) - Julian LeFay's in Gothway Garden (GOTHWAY-MONUMENT), Patrick
+  // Stewart's by the White-Gold Tower (STEWART-MONUMENT): each where its pixel's build put it (`p.monument`, its id and
+  // its spot in the location frame), carried by the live floating-origin translation; the flowers a press throws there
+  // laid in the character's own pile for it (systems/save/save.js carries each)
   const _lefayT = [0, 0, 0], _lefaySite = [0, 0, 0];
-  lefay = createLefayMonument({
+  lefay = createMonuments({
     renderer, getTexture, uploadRecord, billboardSize, collider: () => collider,
-    site: () => {
+    site: (id) => {
       if (_mode() !== 'exterior') return null;
       for (const p of built.values()) {
-        if (!p.lefay || !p.locOrigin) continue;
+        if (p.monument?.id !== id || !p.locOrigin) continue;
         const t = state.pixelTranslation(p.px, p.py, _lefayT);
-        _lefaySite[0] = t[0] + p.locOrigin[0] + p.lefay.x; _lefaySite[1] = t[2] + p.locOrigin[2] + p.lefay.z;
+        _lefaySite[0] = t[0] + p.locOrigin[0] + p.monument.x; _lefaySite[1] = t[2] + p.locOrigin[2] + p.monument.z;
         _lefaySite[2] = state.compensation[1];   // AUDIT LEFAY1 C2: a vertical recentre re-reads its ground
         return _lefaySite;
       }
@@ -24409,7 +24410,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     },
     groundAt: (x, z) => surfaceAt(x, z),   // the drawn ground, as the Broker's cage stands on (no ground: its pixel not built)
     eye: () => cam.pos, feet: () => (walkMode && playerSpawned ? player.feetAt() : null),
-    tribute: () => playerEntity.lefayTribute, keep: (next) => { playerEntity.lefayTribute = next; },
+    tribute: (field) => playerEntity[field], keep: (field, next) => { playerEntity[field] = next; },
     say: (text) => townTalk.say(text), midText: (text) => setMidScreenText(text),
     sound: () => audio.playOneShot(SOUND.SwingHighPitch, 0.4),   // the hand's swing, as a thrown torch's (systems/handheldTorches.js CLIPS.throwSwing)
     restores: restoresSoFar,   // AUDIT LEFAY1 B1: a flower thrown before a load, whichever load, lands nowhere
@@ -28902,7 +28903,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     activateGrave: (g, mode) => activateGrave(g, mode),   // SEARCH1
     lampClaim: _accountLamp ? () => _accountLamp.claim() : undefined,   // LAMP-KEEPER II: a lamp keeper spoken to - I Love Lamp, the account's
     lampAccount: _accountLamp ? () => _accountLamp.account() : undefined,   // AUDIT FIVE-ASKS D2: whose it is - another sign-in asks afresh
-    monumentTargets: () => lefay?.targets() ?? [],   // LEFAY1: the monument to Julian LeFay, in the street's one ray
+    monumentTargets: () => lefay?.targets() ?? [],   // LEFAY1: the monuments, in the street's one ray
     activateMonument: (key, mode, verb) => lefay?.activate(key, mode, verb) ?? false,   // LEFAY1: read it, or throw it a flower
     yardTargets: () => merchantYards?.targets() ?? [],   // MERCHANT-YARDS: the yards' keepers, signs, horses and wagons on show, in the street's one ray
     activateYard: (key, mode, verb) => merchantYards?.activate(key, mode, verb) ?? false,   // MERCHANT-YARDS: buy from a yard, or sell to it
@@ -32757,7 +32758,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     try { if (_mode() === 'exterior' && !_loading) harbourBook.step(now / 1000); } catch (e) { console.warn('[harbours] book', e?.message ?? e); }   // HARBOUR-BOOK: the port near the player sounded, before its quays stand
     if (_mode() === 'exterior') camps.ride(dt);   // DECK-CAMP: the camps on a boat's deck posed off her - after she moved, before the lights (a fire's) and the world pass
     try { quays?.frame(); } catch (e) { console.warn('[quays] pool', e?.message ?? e); }   // QUAYS: the harbours' quays stood or taken down, before the lights (their lanterns) and the world pass
-    try { lefay?.frame(); } catch (e) { console.warn('[lefay] monument', e?.message ?? e); }   // LEFAY1: the monument stood where Privateer's Hold is built, its flowers in flight and laid
+    try { lefay?.frame(); } catch (e) { console.warn('[lefay] monument', e?.message ?? e); }   // LEFAY1: each monument stood where its place is built, its flowers in flight and laid
     try { poiEditor?.frame(); poiHost?.frame(); } catch (e) { console.warn('[poi] host', e?.message ?? e); }   // POI-3: the editor's drafts laid over the feed first   // POI-2: the approved POIs on the built pixels - stood, placed, collided; the feed asked each minute
     try { merchantYards?.frame(); } catch (e) { console.warn('[yards] the yards', e?.message ?? e); }   // MERCHANT-YARDS: each town's Stable and Wagon Yard stood where it is built
     portFrame();   // SHIPYARDS: each port town's shipyard and lighthouse stood where it is built, before the lights (its lamp)
@@ -32866,7 +32867,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     bountyFarms?.draw(renderer);   // BOUNTY-FARM: a held farm bounty's farmstead
     quays?.draw(renderer);   // QUAYS: the harbours' quays and the gangways to my ships made fast
     yards?.draw(renderer);   // HOME-YARD: the pieces outside the town's homes, and the one being placed
-    lefay?.draw(renderer);   // LEFAY1: the monument to Julian LeFay
+    lefay?.draw(renderer);   // LEFAY1: the monuments
     merchantYards?.draw(renderer, yardCull);   // MERCHANT-YARDS: the yards' timber and the Wagon Yards' wagons on show; PERF-YARD (AUDIT 15): the street's view test
     poiHost?.draw(renderer, yardCull);   // POI-2: the approved POIs' opaque parts, by the street's view test
     portHost?.draw(renderer, yardCull);   // SHIPYARDS: the shipyards' timber and the lighthouses' stone, by the street's view test as the yards are
@@ -33464,7 +33465,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (_mode() === 'exterior') livePersonBatches.push(...portalGates.batches());   // PORTAL1: the vortexes on the flats' axis
     if (sigilBroker && _mode() === 'exterior') livePersonBatches.push(...sigilBroker.batches());   // SET7: the Broker on the flats' axis, as a foe stands
     if (dragonSky && _mode() === 'exterior') livePersonBatches.push(...dragonSky.batches());   // DRAGON3: the Dwarven Dragon, in its sky or on its ground
-    if (lefay && _mode() === 'exterior') livePersonBatches.push(...lefay.batches());   // LEFAY1: the flowers laid at the monument, and the ones in flight
+    if (lefay && _mode() === 'exterior') livePersonBatches.push(...lefay.batches());   // LEFAY1: the flowers laid at the monuments, and the ones in flight
     if (merchantYards && _mode() === 'exterior') livePersonBatches.push(...merchantYards.batches());   // MERCHANT-YARDS: the keepers and the Stables' horses on the flats' axis
     portBatchesInto(livePersonBatches);   // SHIPYARDS: the port's people on the flats' axis
     if (wardenShows && _mode() === 'exterior') livePersonBatches.push(...wardenShows.batches());   // WARDEN1: the guard, and the horses it carries
