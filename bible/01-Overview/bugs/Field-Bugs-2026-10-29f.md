@@ -86,7 +86,7 @@ FOUND. A swing door taken out (HOME-DOORS) was kept in the owner's save alone. O
 saw it gone, and the service's list refused the door's name.
 
 FIXED. A door's name rides the room's one list of what is taken out (`net/decorLaw.js` DECOR_BASE_KEY_RE takes
-`intdoor:<record>`), stood whole by `scenes/decor/decorBase.js:"export function standRoomHidden(base, list) {"`. The
+`intdoor:<record>`), stood whole by `scenes/decor/decorBase.js:"export function standRoomHidden"`. The
 decorator writes the doors and the furniture in one write. The list sets the doors exactly, and an online home's save
 record is never stood, so a door put back on one device is back on every one (AUDIT FB1029f A3).
 

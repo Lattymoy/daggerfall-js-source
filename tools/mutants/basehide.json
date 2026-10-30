@@ -38,8 +38,8 @@
   {
     "name": "BASEHIDE-out-but-solid",
     "file": "src/scenes/decor/decorBase.js",
-    "old": "    if (p.draw) { drop(drawList, p.draw); lateSolidsOf(collider)?.remove(baseBucketOf(key)); }",
-    "new": "    if (p.draw) { drop(drawList, p.draw); }",
+    "old": "      lateSolidsOf(collider)?.remove(baseBucketOf(key));\n    } // DECOR-CLEAR: or its triangles withheld",
+    "new": "    } // DECOR-CLEAR: or its triangles withheld",
     "tests": [
       "test/server/basehide.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "BASEHIDE-back-but-a-ghost",
     "file": "src/scenes/decor/decorBase.js",
-    "old": "      if (p.cpu?.positions && p.cpu?.indices) lateSolidsOf(collider)?.add(baseBucketOf(key), p.cpu.positions, p.cpu.indices, p.matrix);\n",
-    "new": "",
+    "old": "      if (p.cpu?.positions && p.cpu?.indices)\n        lateSolidsOf(collider)?.add(baseBucketOf(key), p.cpu.positions, p.cpu.indices, p.matrix);\n    }",
+    "new": "    }",
     "tests": [
       "test/server/basehide.test.js"
     ]

@@ -40,8 +40,8 @@
   {
     "name": "DC-the-rooms-own-past-the-gate",
     "file": "src/scenes/decor/decorBase.js",
-    "old": "lateSolidsOf(collider)?.add(baseBucketOf(key), p.cpu.positions, p.cpu.indices, p.matrix);",
-    "new": "lateSolidsOf(collider)?.add(baseBucketOf(key), p.cpu.positions, p.cpu.indices, p.matrix, null);",
+    "old": "        lateSolidsOf(collider)?.add(baseBucketOf(key), p.cpu.positions, p.cpu.indices, p.matrix);",
+    "new": "        lateSolidsOf(collider)?.add(baseBucketOf(key), p.cpu.positions, p.cpu.indices, p.matrix, null);",
     "tests": [
       "test/scenes/decor/fb1019f_decorclear.test.js"
     ]
@@ -49,8 +49,8 @@
   {
     "name": "DC-the-rooms-own-taken-out-forgets-nothing",
     "file": "src/scenes/decor/decorBase.js",
-    "old": "lateSolidsOf(collider)?.remove(baseBucketOf(key)); }",
-    "new": "collider?.removeBucket?.(baseBucketOf(key)); }",
+    "old": "      lateSolidsOf(collider)?.remove(baseBucketOf(key));",
+    "new": "      collider?.removeBucket?.(baseBucketOf(key));",
     "tests": [
       "test/scenes/decor/fb1019f_decorclear.test.js"
     ],

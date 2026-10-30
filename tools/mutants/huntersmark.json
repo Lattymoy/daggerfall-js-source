@@ -491,8 +491,8 @@
   {
     "name": "HUNTERS-MARK-plaque-rows-unflipped",
     "file": "src/scenes/decor/trophyArt.js",
-    "old": "const i = ((H - 1 - y) * W + x) * 4;   // top-down in, bottom-up out",
-    "new": "const i = (y * W + x) * 4;",
+    "old": "    const i = ((H - 1 - y) * W + x) * 4; // top-down in, bottom-up out",
+    "new": "    const i = (y * W + x) * 4;",
     "tests": [
       "test/systems/huntersmark_trophies.test.js"
     ]
@@ -500,8 +500,8 @@
   {
     "name": "HUNTERS-MARK-plaque-box-unfitted",
     "file": "src/scenes/decor/trophyArt.js",
-    "old": "const s = Math.min((BEAST.x1 - BEAST.x0) / bw, (BEAST.y1 - BEAST.y0) / bh);",
-    "new": "const s = 1;",
+    "old": "      const s = Math.min((BEAST.x1 - BEAST.x0) / bw, (BEAST.y1 - BEAST.y0) / bh);",
+    "new": "      const s = 1;",
     "tests": [
       "test/systems/huntersmark_trophies.test.js"
     ]
@@ -509,8 +509,8 @@
   {
     "name": "HUNTERS-MARK-plaque-upload-key",
     "file": "src/scenes/decor/trophyArt.js",
-    "old": "uploadTexture?.('trophy', archive,",
-    "new": "uploadTexture?.('mount', archive,",
+    "old": "        renderer?.uploadTexture?.('trophy', archive, composeTrophy(frame), { mips: false, variant: '' }) ?? null;",
+    "new": "        renderer?.uploadTexture?.('mount', archive, composeTrophy(frame), { mips: false, variant: '' }) ?? null;",
     "tests": [
       "test/systems/huntersmark_trophies.test.js"
     ]

@@ -508,6 +508,10 @@
 !/src/scenes/comeSailAway/
 /src/scenes/comeSailAway/*/
 !/src/scenes/deckPlanDoor.js
+!/src/scenes/decor/
+/src/scenes/decor/*
+!/src/scenes/decor/decorBase.js
+!/src/scenes/decor/trophyArt.js
 !/src/scenes/delve/
 /src/scenes/delve/*/
 !/src/scenes/doorTokenHost.js
