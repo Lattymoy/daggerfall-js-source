@@ -68,6 +68,8 @@
 /src/render/starfall/*/
 !/src/scenes/
 /src/scenes/*
+!/src/scenes/delve/
+/src/scenes/delve/*/
 !/src/scenes/wagon/
 /src/scenes/wagon/*/
 !/src/systems/

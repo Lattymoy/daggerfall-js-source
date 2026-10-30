@@ -333,8 +333,8 @@
   {
     "name": "DLV56-LAB-draft-by-id-unread",
     "file": "src/scenes/delve/delveBench.js",
-    "old": "drafts[params.get('draft') ?? current ?? '']",
-    "new": "drafts[current ?? '']",
+    "old": "  return drafts[params.get('draft') ?? current ?? ''] ?? null;",
+    "new": "  return drafts[current ?? ''] ?? null;",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ],
@@ -364,8 +364,8 @@
   {
     "name": "DLV56-LAB-types-first",
     "file": "src/scenes/delve/delveLab.js",
-    "old": "const t = labTypes(types.value);",
-    "new": "const t = labTypes(types.value)?.slice(0, 1) ?? null;",
+    "old": "    const t = labTypes(types.value);",
+    "new": "    const t = labTypes(types.value)?.slice(0, 1) ?? null;",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -374,8 +374,8 @@
   {
     "name": "DLV56-LAB-export-n-default",
     "file": "src/scenes/delve/delveLab.js",
-    "old": "const exportN = num(d.from ?? Math.max(",
-    "new": "const exportN = num(Math.max(",
+    "old": "  const exportN = num(d.from ?? Math.max(1, ...CURATED_RECORDS.map((r) => r.n + 1))); // AUDIT DLV5-6 M5: a shipped block ships as its own number",
+    "new": "  const exportN = num(Math.max(1, ...CURATED_RECORDS.map((r) => r.n + 1))); // AUDIT DLV5-6 M5: a shipped block ships as its own number",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -394,8 +394,8 @@
   {
     "name": "DLV56-LAB-base-unchecked",
     "file": "src/scenes/delve/delveBench.js",
-    "old": "(blocks && blocks.getBlockIndex(draft.base) === -1 ? `base: ${draft.base} is not in your BLOCKS.BSA` : null)",
-    "new": "null",
+    "old": "    const why =\n      setCuratedDraft(draft) ??\n      (blocks && blocks.getBlockIndex(draft.base) === -1 ? `base: ${draft.base} is not in your BLOCKS.BSA` : null);",
+    "new": "    const why = setCuratedDraft(draft) ?? null;",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ],
@@ -404,8 +404,8 @@
   {
     "name": "DLV56-BENCH-spawn-unbuilt",
     "file": "src/scenes/delve/delveBench.js",
-    "old": "return { location: dungeonLocationFor(clone, { online: params.has('online') }) };",
-    "new": "return { location: clone };",
+    "old": "    return { location: dungeonLocationFor(clone, { online: params.has('online') }) }; // AUDIT DLV5-6: built as the world builds it",
+    "new": "    return { location: clone }; // AUDIT DLV5-6: built as the world builds it",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -414,8 +414,8 @@
   {
     "name": "DLV56-BENCH-elite-unread",
     "file": "src/scenes/delve/delveBench.js",
-    "old": "elite: params.has('elite') });",
-    "new": "elite: false });",
+    "old": "    const clone = synthesizeDungeonLocation(template, { salt: WORLD_SALT, px, py, elite: params.has('elite') });",
+    "new": "    const clone = synthesizeDungeonLocation(template, { salt: WORLD_SALT, px, py, elite: false });",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -424,8 +424,8 @@
   {
     "name": "DLV56-HOST-first-floor",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "floors.push([c.pos[0], f.y + 0.05, c.pos[2]]);",
-    "new": "floors.push([c.pos[0], c.pos[1], c.pos[2]]);",
+    "old": "        if (f && Number.isFinite(f.y)) floors.push([c.pos[0], f.y + 0.05, c.pos[2]]);",
+    "new": "        if (f && Number.isFinite(f.y)) floors.push([c.pos[0], c.pos[1], c.pos[2]]);",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -434,8 +434,8 @@
   {
     "name": "DLV56-HOST-floor-ward-unread",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "floors.filter((p) => past(p) && Math.abs(p[1] - s0.y) < 1)",
-    "new": "floors.filter((p) => Math.abs(p[1] - s0.y) < 1)",
+    "old": "      const near = s0 ? floors.filter((p) => past(p) && Math.abs(p[1] - s0.y) < 1).sort((a, b) => off(a) - off(b)) : [];",
+    "new": "      const near = s0 ? floors.filter((p) => Math.abs(p[1] - s0.y) < 1).sort((a, b) => off(a) - off(b)) : [];",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -444,8 +444,8 @@
   {
     "name": "DLV56-HOST-floor-step-lost",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "!inWard({ ...s, r: s.r + LAB_STEP_M }, p[0], p[1], p[2])",
-    "new": "!inWard(s, p[0], p[1], p[2])",
+    "old": "        past = (p) => plan.sites.every((s) => !inWard({ ...s, r: s.r + LAB_STEP_M }, p[0], p[1], p[2]));",
+    "new": "        past = (p) => plan.sites.every((s) => !inWard(s, p[0], p[1], p[2]));",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -454,8 +454,8 @@
   {
     "name": "DLV56-HOST-floor-unsorted",
     "file": "src/scenes/delve/delveHost.js",
-    "old": ".sort((a, b) => off(a) - off(b))",
-    "new": "",
+    "old": "      const near = s0 ? floors.filter((p) => past(p) && Math.abs(p[1] - s0.y) < 1).sort((a, b) => off(a) - off(b)) : [];",
+    "new": "      const near = s0 ? floors.filter((p) => past(p) && Math.abs(p[1] - s0.y) < 1) : [];",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],
@@ -464,8 +464,8 @@
   {
     "name": "DLV56-HOST-floor-storey-unread",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "past(p) && Math.abs(p[1] - s0.y) < 1)",
-    "new": "past(p))",
+    "old": "      const near = s0 ? floors.filter((p) => past(p) && Math.abs(p[1] - s0.y) < 1).sort((a, b) => off(a) - off(b)) : [];",
+    "new": "      const near = s0 ? floors.filter((p) => past(p)).sort((a, b) => off(a) - off(b)) : [];",
     "tests": [
       "test/world/dlv56_audit.test.js"
     ],

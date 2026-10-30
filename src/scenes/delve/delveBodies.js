@@ -9,7 +9,16 @@ import { crystalStandIn } from '../../world/gate/gateBoss.js';
 import { registerFootSpeedMod } from '../../player/motor.js';
 import { registerPlayerHurtListener } from '../../characters/playerEntity.js';
 import { carryStep } from '../../player/carryStep.js';
-import { DP, SPRING_R, SPRING_H, SEAL_R, SEAL_H, VIGIL_RELIC_H, DELVE_BURDEN, breakSpots } from '../../net/delve/delveLaw.js';
+import {
+  DP,
+  SPRING_R,
+  SPRING_H,
+  SEAL_R,
+  SEAL_H,
+  VIGIL_RELIC_H,
+  DELVE_BURDEN,
+  breakSpots,
+} from '../../net/delve/delveLaw.js';
 import { DELVE_PIECE_TEXT } from '../../systems/delve/delveWords.js';
 
 /** A piece's number on the crystal seam: past every court's crystals, sixteen a site. Pure. */
@@ -25,7 +34,8 @@ export const isDelveCrystal = (c) => delveCrystalOf(c) != null;
 /** The crystals a blow can meet in a dungeon: the court's (a Reckoning's) and the encounters' pieces, numbered apart. Both,
  *  never the first that answers: outside a Reckoning the court answers an empty list, not none. Pure. */
 export function dungeonCrystals(court, pieces) {
-  const a = Array.isArray(court) ? court : [], b = Array.isArray(pieces) ? pieces : [];
+  const a = Array.isArray(court) ? court : [],
+    b = Array.isArray(pieces) ? pieces : [];
   return !a.length ? b : !b.length ? a : [...a, ...b];
 }
 /** The mark a Vigil's foes carry, and its relic's: the Starfall's quarry rule reads the two equal (huntsStar). */
@@ -37,10 +47,22 @@ const STAND_LOOK = Object.freeze({ mobile: 31, scale: 1 });
  *  pushed into `out`: a Wellsprings' sources while they pour, the seals while they stand; `standIn(c, kind)` the
  *  piece's stand-in. Pure but for `out` and the stand-ins. @param {any} site @param {any} view */
 export function breakTargets(site, view, standIn, out = []) {
-  if (!view || !((site.kind === 'wellsprings' && view.p === DP.spring) || (site.kind === 'seals' && view.p === DP.work))) return out;
+  if (
+    !view ||
+    !((site.kind === 'wellsprings' && view.p === DP.spring) || (site.kind === 'seals' && view.p === DP.work))
+  )
+    return out;
   const seal = site.kind === 'seals';
   breakSpots(site, view).forEach((p, j) => {
-    if (view.hp?.[j] > 0) out.push({ c: delveCrystalC(site.i, j), feet: p, height: seal ? SEAL_H : SPRING_H, radius: seal ? SEAL_R : SPRING_R, entity: standIn(delveCrystalC(site.i, j), site.kind), delve: true });
+    if (view.hp?.[j] > 0)
+      out.push({
+        c: delveCrystalC(site.i, j),
+        feet: p,
+        height: seal ? SEAL_H : SPRING_H,
+        radius: seal ? SEAL_R : SPRING_R,
+        entity: standIn(delveCrystalC(site.i, j), site.kind),
+        delve: true,
+      });
   });
   return out;
 }
@@ -49,7 +71,11 @@ export function createStandIns() {
   const made = new Map();
   return (c, kind) => {
     let e = made.get(c);
-    if (!e) { e = crystalStandIn(STAND_LOOK, c); e.name = kind === 'seals' ? DELVE_PIECE_TEXT.seal() : DELVE_PIECE_TEXT.source(); made.set(c, e); }
+    if (!e) {
+      e = crystalStandIn(STAND_LOOK, c);
+      e.name = kind === 'seals' ? DELVE_PIECE_TEXT.seal() : DELVE_PIECE_TEXT.source();
+      made.set(c, e);
+    }
     return e;
   };
 }
@@ -58,10 +84,24 @@ export function createStandIns() {
  *  starfallHost.js makeWard): `onBlow()` each foe's blow that lands on it. @param {any} site */
 export function makeRelic(site, onBlow) {
   return {
-    starWard: true, site: delveHuntSite(site.i), living: true,
-    ai: { feet: [site.x, site.y, site.z], height: VIGIL_RELIC_H, centreOffset: VIGIL_RELIC_H / 2, radius: 0.6, target: null, isHostile: false, wouldBeSpawned: true, yaw: 0 },
+    starWard: true,
+    site: delveHuntSite(site.i),
+    living: true,
+    ai: {
+      feet: [site.x, site.y, site.z],
+      height: VIGIL_RELIC_H,
+      centreOffset: VIGIL_RELIC_H / 2,
+      radius: 0.6,
+      target: null,
+      isHostile: false,
+      wouldBeSpawned: true,
+      yaw: 0,
+    },
     entity: { team: 'Civilian', mobileTeam: 'Civilian', health: 1000, maxHealth: 1000 },
-    hurtFromFoe() { onBlow(); return 1; },
+    hurtFromFoe() {
+      onBlow();
+      return 1;
+    },
   };
 }
 
@@ -71,23 +111,45 @@ export function makeRelic(site, onBlow) {
  * whether the piece went. `weapon()` the player's weapon, `player()` the entity, `say(key)` the carry's line.
  */
 let carries = 0;
-export function createDelveCarry({ player = () => null, weapon = () => null, say = (/** @type {string} */ _k) => {} } = {}) {
-  let carrying = false, forced = false, letGoAt = -Infinity, drop = /** @type {((why: string) => boolean)|null} */ (null);
-  const name = `delve-carry:${++carries}`;   // its own: one dungeon's teardown never takes the next one's
+export function createDelveCarry({
+  player = () => null,
+  weapon = () => null,
+  say = (/** @type {string} */ _k) => {},
+} = {}) {
+  let carrying = false,
+    forced = false,
+    letGoAt = -Infinity,
+    drop = /** @type {((why: string) => boolean)|null} */ (null);
+  const name = `delve-carry:${++carries}`; // its own: one dungeon's teardown never takes the next one's
   registerFootSpeedMod(name, () => (carrying ? DELVE_BURDEN : 1));
-  registerPlayerHurtListener(name, (e, hurt) => { if (carrying && e === player() && hurt?.dmg > 0) drop?.('hurt'); });
+  registerPlayerHurtListener(name, (e, hurt) => {
+    if (carrying && e === player() && hurt?.dmg > 0) drop?.('hurt');
+  });
   return {
-    set(on, onDrop = null) { carrying = !!on; drop = carrying ? onDrop : null; if (!carrying) forced = false; },
+    set(on, onDrop = null) {
+      carrying = !!on;
+      drop = carrying ? onDrop : null;
+      if (!carrying) forced = false;
+    },
     carrying: () => carrying,
     /** A frame of the hands full, at `t` ms. */
     frame(t) {
       const pw = weapon();
-      const s = carryStep({ carrying: carrying && !!pw, sheathed: pw?.sheathed, forced, letGoAt }, t, () => !!drop?.('let'));
+      const s = carryStep(
+        { carrying: carrying && !!pw, sheathed: pw?.sheathed, forced, letGoAt },
+        t,
+        () => !!drop?.('let'),
+      );
       forced = s.forced;
       if (s.letGoAt != null) letGoAt = s.letGoAt;
       if (s.sheathe && pw) pw.sheathed = true;
       if (s.say) say(s.say);
     },
-    destroy() { carrying = false; drop = null; registerFootSpeedMod(name, null); registerPlayerHurtListener(name, null); },
+    destroy() {
+      carrying = false;
+      drop = null;
+      registerFootSpeedMod(name, null);
+      registerPlayerHurtListener(name, null);
+    },
   };
 }

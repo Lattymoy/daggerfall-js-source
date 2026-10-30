@@ -276,7 +276,7 @@ test('DLV2 THE PIECES: the chest stands once, in the mesh list and the collider 
   assert.equal(glCalls, 0, 'nothing compiled or built at the teardown');
   P.standChest(1, [0, 0, 0], 0); await flush();
   assert.equal(draws.length, 0, 'nothing stands after it');
-  assert.match(rd('src/scenes/delve/delvePieces.js'), /fog\.mode = renderer\._fogMode; fog\.density = renderer\._fogDensity; fog\.range = renderer\._fogRange;[^\n]*\n[^\n]*\n[^\n]*\n[^\n]*\n {8}for \(const sh of shapes\) \{ pass\.draw\(sh, proj, view, eye, s, fog, centre, null, floor\);/, 'the frame\'s fog, as nodeGlow.js passes it');
+  assert.match(rd('src/scenes/delve/delvePieces.js'), /fog\.mode = renderer\._fogMode;\n\s*fog\.density = renderer\._fogDensity;\n\s*fog\.range = renderer\._fogRange;\n\s*fog\.color = renderer\._fogColor;\n\s*fog\.camPos = renderer\._camPos;\n\s*let drew = false;\n\s*for \(const \{ site, shapes \} of list\) \{\n\s*const \{ centre, floor \} = frameOf\(site\);\n\s*for \(const sh of shapes\) \{\n\s*pass\.draw\(sh, proj, view, eye, s, fog, centre, null, floor\);/, 'the frame\'s fog, as nodeGlow.js passes it');
 });
 
 test('DLV2 THE KEY AND THE NONE: a vault\'s key its site; no site in a dungeon the row turns off, a made level, an arena\'s sand, an Abyss Hollow or Privateer\'s Hold (mutants: the row unread; the Hollow stood; the Hold stood)', () => {

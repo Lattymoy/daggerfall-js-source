@@ -629,8 +629,8 @@
   {
     "name": "DLV4-broken-piece-a-body",
     "file": "src/scenes/delve/delveBodies.js",
-    "old": "    if (view.hp?.[j] > 0) out.push(",
-    "new": "    if (view.hp?.[j] >= 0) out.push(",
+    "old": "    if (view.hp?.[j] > 0)",
+    "new": "    if (view.hp?.[j] >= 0)",
     "tests": [
       "test/scenes/delve/dlv4_host.test.js"
     ]
@@ -638,8 +638,8 @@
   {
     "name": "DLV4-relic-site-unmarked",
     "file": "src/scenes/delve/delveBodies.js",
-    "old": "    starWard: true, site: delveHuntSite(site.i), living: true,",
-    "new": "    starWard: true, site: 'delve', living: true,",
+    "old": "    site: delveHuntSite(site.i),",
+    "new": "    site: 'delve',",
     "tests": [
       "test/scenes/delve/dlv4_host.test.js"
     ]
@@ -647,8 +647,8 @@
   {
     "name": "DLV4-carry-shared-name",
     "file": "src/scenes/delve/delveBodies.js",
-    "old": "  const name = `delve-carry:${++carries}`;",
-    "new": "  const name = 'delve-carry';",
+    "old": "  const name = `delve-carry:${++carries}`; // its own: one dungeon's teardown never takes the next one's",
+    "new": "  const name = 'delve-carry'; // its own: one dungeon's teardown never takes the next one's",
     "tests": [
       "test/scenes/delve/dlv4_host.test.js"
     ]
@@ -656,8 +656,8 @@
   {
     "name": "DLV4-carry-burden-unregistered",
     "file": "src/scenes/delve/delveBodies.js",
-    "old": "  registerFootSpeedMod(name, () => (carrying ? DELVE_BURDEN : 1));\n",
-    "new": "",
+    "old": "  registerFootSpeedMod(name, () => (carrying ? DELVE_BURDEN : 1));\n  registerPlayerHurtListener(name, (e, hurt) => {",
+    "new": "  registerPlayerHurtListener(name, (e, hurt) => {",
     "tests": [
       "test/scenes/delve/dlv4_host.test.js"
     ]
@@ -665,8 +665,8 @@
   {
     "name": "DLV4-carry-blow-ignored",
     "file": "src/scenes/delve/delveBodies.js",
-    "old": "if (carrying && e === player() && hurt?.dmg > 0) drop?.('hurt');",
-    "new": "if (false) drop?.('hurt');",
+    "old": "    if (carrying && e === player() && hurt?.dmg > 0) drop?.('hurt');",
+    "new": "    if (false) drop?.('hurt');",
     "tests": [
       "test/scenes/delve/dlv4_host.test.js"
     ]
@@ -683,8 +683,8 @@
   {
     "name": "DLV4-look-crypt-a-pool",
     "file": "src/scenes/delve/delveProps.js",
-    "old": "const TOMBS = new Set([DUNGEON_TYPES.Crypt, ",
-    "new": "const TOMBS = new Set([",
+    "old": "const TOMBS = new Set([\n  DUNGEON_TYPES.Crypt,\n  DUNGEON_TYPES.VampireHaunt,\n  DUNGEON_TYPES.Cemetery,\n  DUNGEON_TYPES.DesecratedTemple,\n]);",
+    "new": "const TOMBS = new Set([DUNGEON_TYPES.VampireHaunt, DUNGEON_TYPES.Cemetery, DUNGEON_TYPES.DesecratedTemple]);",
     "tests": [
       "test/scenes/delve/dlv4_host.test.js"
     ]
@@ -692,8 +692,8 @@
   {
     "name": "DLV4-crystal-scale-the-courts",
     "file": "src/scenes/delve/delveProps.js",
-    "old": "export const DELVE_CRYSTAL_SCALE = Object.freeze({ source: 0.42,",
-    "new": "export const DELVE_CRYSTAL_SCALE = Object.freeze({ source: 1,",
+    "old": "export const DELVE_CRYSTAL_SCALE = Object.freeze({ source: 0.42, seal: 0.4, relic: 0.32 });",
+    "new": "export const DELVE_CRYSTAL_SCALE = Object.freeze({ source: 1, seal: 0.4, relic: 0.32 });",
     "tests": [
       "test/scenes/delve/dlv4_host.test.js"
     ]
@@ -710,8 +710,8 @@
   {
     "name": "DLV4-lit-brazier-unlit",
     "file": "src/scenes/delve/delveProps.js",
-    "old": "if (won || lit & (1 << j)) out.push(",
-    "new": "if (won) out.push(",
+    "old": "    if (won || lit & (1 << j)) out.push([`b${j}`, [b[0], b[1] + DELVE_PEDESTAL_TOP, b[2]]]);",
+    "new": "    if (won) out.push([`b${j}`, [b[0], b[1] + DELVE_PEDESTAL_TOP, b[2]]]);",
     "tests": [
       "test/scenes/delve/dlv4_host.test.js"
     ]
@@ -719,8 +719,8 @@
   {
     "name": "DLV4-flame-at-the-heart-always",
     "file": "src/scenes/delve/delveProps.js",
-    "old": "  if (won) return out;\n  if (!view ||",
-    "new": "  if (!view ||",
+    "old": "  if (won) return out;\n  if (!view || view.p === DP.idle || view.fl === FLAME.heart || view.p !== DP.work)",
+    "new": "  if (!view || view.p === DP.idle || view.fl === FLAME.heart || view.p !== DP.work)",
     "tests": [
       "test/scenes/delve/dlv4_host.test.js"
     ]
@@ -728,8 +728,8 @@
   {
     "name": "DLV4-carried-weight-at-home",
     "file": "src/scenes/delve/delveProps.js",
-    "old": "    if (t?.s === WEIGHT.carried) return null;\n",
-    "new": "",
+    "old": "    if (t?.s === WEIGHT.carried) return null;\n    if (t?.s === WEIGHT.plate && plates[t.p]) return plates[t.p];",
+    "new": "    if (t?.s === WEIGHT.plate && plates[t.p]) return plates[t.p];",
     "tests": [
       "test/scenes/delve/dlv4_host.test.js"
     ]
@@ -737,8 +737,8 @@
   {
     "name": "DLV4-seals-stood-asleep",
     "file": "src/scenes/delve/delveProps.js",
-    "old": "} else if (site.kind === 'seals' && view && (view.p === DP.work || view.p === DP.sunk)) {",
-    "new": "} else if (site.kind === 'seals') {",
+    "old": "  } else if (site.kind === 'seals' && view && (view.p === DP.work || view.p === DP.sunk)) {",
+    "new": "  } else if (site.kind === 'seals') {",
     "tests": [
       "test/scenes/delve/dlv4_host.test.js"
     ]
@@ -746,8 +746,8 @@
   {
     "name": "DLV4-pour-counted-a-wave",
     "file": "src/scenes/delve/delveHold.js",
-    "old": "        if (!f.dead && s.src != null) { srcLive.set(s.src, (srcLive.get(s.src) ?? 0) + 1); continue; }\n",
-    "new": "",
+    "old": "        if (!f.dead && s.src != null) {\n          srcLive.set(s.src, (srcLive.get(s.src) ?? 0) + 1);\n          continue;\n        }\n        if (!f.dead && s.drift) {",
+    "new": "        if (!f.dead && s.drift) {",
     "tests": [
       "test/scenes/delve/dlv4_host.test.js"
     ]
@@ -755,8 +755,8 @@
   {
     "name": "DLV4-drift-unstamped",
     "file": "src/scenes/delve/delveHold.js",
-    "old": "    drift(at) { standLoose(at, { drift: true }, driftFlight); },",
-    "new": "    drift(at) { standLoose(at, {}, driftFlight); },",
+    "old": "      standLoose(at, { drift: true }, driftFlight);",
+    "new": "      standLoose(at, {}, driftFlight);",
     "tests": [
       "test/scenes/delve/dlv4_host.test.js"
     ]
@@ -773,8 +773,8 @@
   {
     "name": "DLV4-host-alive-cap",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "        if (r.foes.sourceLive(j) < SPRING_ALIVE) r.foes.pour(",
-    "new": "        if (r.foes.sourceLive(j) < SPRING_ALIVE + 1) r.foes.pour(",
+    "old": "        if (r.foes.sourceLive(j) < SPRING_ALIVE) r.foes.pour(j, toward(site, p, HOLD_RANK_STEP_M));",
+    "new": "        if (r.foes.sourceLive(j) < SPRING_ALIVE + 1) r.foes.pour(j, toward(site, p, HOLD_RANK_STEP_M));",
     "tests": [
       "test/scenes/delve/dlv4_host.test.js"
     ]
@@ -782,7 +782,7 @@
   {
     "name": "DLV4-host-relic-mark",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "  const hunting = (site) => ({ ...foeHost, mark: (f) => { f.starSite = delveHuntSite(site.i); } });",
+    "old": "  const hunting = (site) => ({\n    ...foeHost,\n    mark: (f) => {\n      f.starSite = delveHuntSite(site.i);\n    },\n  });",
     "new": "  const hunting = (site) => ({ ...foeHost, mark: () => {} });",
     "tests": [
       "test/scenes/delve/dlv4_host.test.js"
@@ -791,8 +791,8 @@
   {
     "name": "DLV4-host-relic-hunted-idle",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "return runs.filter((r) => r.relic && r.led && r.led.p !== DP.idle && r.led.p !== DP.won && foesMine(r)).map((r) => r.relic);",
-    "new": "return runs.filter((r) => r.relic && foesMine(r)).map((r) => r.relic);",
+    "old": "      return runs\n        .filter((r) => r.relic && r.led && r.led.p !== DP.idle && r.led.p !== DP.won && foesMine(r))\n        .map((r) => r.relic); // online: hunted by my machine's foes alone",
+    "new": "      return runs.filter((r) => r.relic && foesMine(r)).map((r) => r.relic); // online: hunted by my machine's foes alone",
     "tests": [
       "test/scenes/delve/dlv4_host.test.js"
     ]
@@ -800,8 +800,8 @@
   {
     "name": "DLV4-host-rest-unread",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "    if (!r.led) { if (!iw || r.dark || now < r.rest) return;",
-    "new": "    if (!r.led) { if (!iw || r.dark) return;",
+    "old": "      if (!iw || r.dark || now < r.rest) return;",
+    "new": "      if (!iw || r.dark) return;",
     "tests": [
       "test/scenes/delve/dlv4_host.test.js"
     ]
@@ -809,8 +809,8 @@
   {
     "name": "DLV4-host-take-unasked",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "if (d <= DELVE_REACH_M && !(led.fl === FLAME.lying && r.byFall)) act(r, 'take', -1, feet);",
-    "new": "if (false) act(r, 'take', -1, feet);",
+    "old": "        if (d <= DELVE_REACH_M && !(led.fl === FLAME.lying && r.byFall)) act(r, 'take', -1, feet);",
+    "new": "        if (false) act(r, 'take', -1, feet);",
     "tests": [
       "test/scenes/delve/dlv4_host.test.js"
     ]
@@ -818,8 +818,8 @@
   {
     "name": "DLV4-host-set-on-a-taken-plate",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "if (j >= 0 && plate >= 0 && plate !== r.offPlate && !led.wt.some((t) => t.s === WEIGHT.plate && t.p === plate)) act(r, 'set', j, feet);",
-    "new": "if (j >= 0 && plate >= 0 && plate !== r.offPlate) act(r, 'set', j, feet);",
+    "old": "      if (j >= 0 && plate >= 0 && plate !== r.offPlate && !led.wt.some((t) => t.s === WEIGHT.plate && t.p === plate))\n        act(r, 'set', j, feet);",
+    "new": "      if (j >= 0 && plate >= 0 && plate !== r.offPlate) act(r, 'set', j, feet);",
     "tests": [
       "test/scenes/delve/dlv4_host.test.js"
     ]
@@ -910,8 +910,8 @@
   {
     "name": "DLV4-blow-ward-without-line",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "inWard: holds(run.site, lastFeet), pose: lastFeet",
-    "new": "inWard: inWard(run.site, lastFeet[0], lastFeet[1], lastFeet[2]), pose: lastFeet",
+    "old": "          { party: true, inWard: holds(run.site, lastFeet), pose: lastFeet, nowMs: now },",
+    "new": "          { party: true, inWard: inWard(run.site, lastFeet[0], lastFeet[1], lastFeet[2]), pose: lastFeet, nowMs: now },",
     "tests": [
       "test/scenes/delve/dlv4_host.test.js"
     ]
@@ -919,8 +919,8 @@
   {
     "name": "DLV4-act-ward-without-line",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "inWard: holds(r.site, feet), pose: feet",
-    "new": "inWard: inWard(r.site, feet[0], feet[1], feet[2]), pose: feet",
+    "old": "        foldDelveAct(r.led, r.site, ME, { a, j }, { party: true, inWard: holds(r.site, feet), pose: feet, nowMs: now }),",
+    "new": "        foldDelveAct(\n          r.led,\n          r.site,\n          ME,\n          { a, j },\n          { party: true, inWard: inWard(r.site, feet[0], feet[1], feet[2]), pose: feet, nowMs: now },\n        ),",
     "tests": [
       "test/scenes/delve/dlv4_host.test.js"
     ]
@@ -928,8 +928,8 @@
   {
     "name": "DLV4-fallen-flame-taken-up-at-once",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "if (d <= DELVE_REACH_M && !(led.fl === FLAME.lying && r.byFall)) act(r, 'take', -1, feet);",
-    "new": "if (d <= DELVE_REACH_M) act(r, 'take', -1, feet);",
+    "old": "        if (d <= DELVE_REACH_M && !(led.fl === FLAME.lying && r.byFall)) act(r, 'take', -1, feet);",
+    "new": "        if (d <= DELVE_REACH_M) act(r, 'take', -1, feet);",
     "tests": [
       "test/scenes/delve/dlv4_host.test.js"
     ]
@@ -1010,8 +1010,8 @@
   {
     "name": "DLV4-lifted-weight-set-straight-back",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "if (j >= 0 && plate >= 0 && plate !== r.offPlate && !led.wt.some",
-    "new": "if (j >= 0 && plate >= 0 && !led.wt.some",
+    "old": "      if (j >= 0 && plate >= 0 && plate !== r.offPlate && !led.wt.some((t) => t.s === WEIGHT.plate && t.p === plate))\n        act(r, 'set', j, feet);",
+    "new": "      if (j >= 0 && plate >= 0 && !led.wt.some((t) => t.s === WEIGHT.plate && t.p === plate)) act(r, 'set', j, feet);",
     "tests": [
       "test/scenes/delve/dlv4_host.test.js"
     ]
@@ -1037,8 +1037,8 @@
   {
     "name": "DLV4-drift-from-the-heart",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "r.foes.drift(spots[Math.floor(Math.random() * spots.length)]);",
-    "new": "r.foes.drift([site.x, site.y, site.z]);",
+    "old": "        r.foes.drift(spots[Math.floor(Math.random() * spots.length)]);",
+    "new": "        r.foes.drift([site.x, site.y, site.z]);",
     "tests": [
       "test/scenes/delve/dlv4_host.test.js"
     ]
@@ -1046,8 +1046,8 @@
   {
     "name": "DLV4-blow-said-landed-when-refused",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "return led.hp[at.j] < was;",
-    "new": "return true;",
+    "old": "      return led.hp[at.j] < was; // whether it landed (AUDIT DLV4 F12: a refused blow keeps no spell's rounds on the piece)",
+    "new": "      return true; // whether it landed (AUDIT DLV4 F12: a refused blow keeps no spell's rounds on the piece)",
     "tests": [
       "test/scenes/delve/dlv4_host.test.js"
     ]
@@ -1073,8 +1073,8 @@
   {
     "name": "DLV4-motor-feet-kept",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "      lastFeet = myFeet; lastYaw",
-    "new": "      lastFeet = feet; lastYaw",
+    "old": "      lastFeet = myFeet;",
+    "new": "      lastFeet = feet;",
     "tests": [
       "test/scenes/delve/dlv4_host.test.js"
     ]
@@ -1112,8 +1112,8 @@
   {
     "name": "DLV4-weight-box-own",
     "file": "src/scenes/delve/delveHost.js",
-    "old": "aabb: { min: [at[0] - DELVE_WEIGHT_HALF_M, at[1], at[2] - DELVE_WEIGHT_HALF_M]",
-    "new": "aabb: { min: [at[0] - 0.3, at[1], at[2] - DELVE_WEIGHT_HALF_M]",
+    "old": "              min: [at[0] - DELVE_WEIGHT_HALF_M, at[1], at[2] - DELVE_WEIGHT_HALF_M],",
+    "new": "              min: [at[0] - 0.3, at[1], at[2] - DELVE_WEIGHT_HALF_M],",
     "tests": [
       "test/scenes/delve/dlv4_host.test.js"
     ],

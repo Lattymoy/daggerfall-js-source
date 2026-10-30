@@ -17,7 +17,10 @@ import { appStorage } from '../../systems/appStorage.js';
 /** The lab's draft: a shipped record's (`?lab=<id>`), a kept one by its id (`?draft=<id>`), else the open one, else null. */
 export function readLabDraft(params, storage) {
   const id = params.get('lab');
-  if (id) { const rec = CURATED_RECORDS.find((r) => r.id === id); return rec ? labDraftOf(rec) : null; }
+  if (id) {
+    const rec = CURATED_RECORDS.find((r) => r.id === id);
+    return rec ? labDraftOf(rec) : null;
+  }
   const { drafts, current } = labKept(storage);
   return drafts[params.get('draft') ?? current ?? ''] ?? null;
 }
@@ -39,24 +42,45 @@ export function labTemplate(maps, type) {
  *  the first encounter, outside its ward (scenes/delve/delveHost.js firstFloor - its heart would wake it at the boot). */
 export function labSpawn(params) {
   const raw = String(params.get('at') ?? '').split(',');
-  return raw.length === 3 && raw.every((v) => v.trim() !== '' && Number.isFinite(Number(v))) ? raw.map(Number) : null;   // an empty field is no 0
+  return raw.length === 3 && raw.every((v) => v.trim() !== '' && Number.isFinite(Number(v))) ? raw.map(Number) : null; // an empty field is no 0
 }
 /** DLV6: where the bench stands me in its lab - its `?at` spot, else the host's floor by the first encounter; null off
  *  the lab, the game's own spawn (scenes/dungeon.js). @param {any} bench benchLocation's @param {any} delve the host */
-export const labStand = (bench, delve) => (bench?.draft ? bench.spawn ?? delve?.firstFloor?.() ?? null : null);
+export const labStand = (bench, delve) => (bench?.draft ? (bench.spawn ?? delve?.firstFloor?.() ?? null) : null);
 /**
  * DLV5-6: the lab's panel over the bench (scenes/delve/delveLab.js, loaded for a lab alone): a Rebuild keeps the draft
  * and lays it again where I stand; one the law refuses, or no storage, is said and never laid (AUDIT DLV5-6 M6).
  * @param {any} bench @param {{ feet: () => number[], delve: () => any, foot: (item: any) => Promise<number | null>, storage?: any, go?: (q: string) => void, doc?: any }} o
  */
-export function mountLabPanel(bench, { feet, delve, foot, storage = appStorage(), go = (q) => { globalThis.location.search = q; }, doc }) {
+export function mountLabPanel(
+  bench,
+  {
+    feet,
+    delve,
+    foot,
+    storage = appStorage(),
+    go = (q) => {
+      globalThis.location.search = q;
+    },
+    doc,
+  },
+) {
   if (!bench?.draft) return null;
   const rebuild = (d, at) => {
     const why = labKeep(storage, d);
     if (!why) go(`?dungeon=lab&draft=${encodeURIComponent(d.id)}&class=1&novideo&at=${at.join(',')}`);
     return why;
   };
-  return import('./delveLab.js').then(({ mountDelveLab }) => mountDelveLab({ draft: bench.draft, feet, landing: (at, r) => delve()?.landing(at, r) ?? { ok: false, rule: 'none' }, foot, rebuild, ...(doc ? { doc } : {}) }));
+  return import('./delveLab.js').then(({ mountDelveLab }) =>
+    mountDelveLab({
+      draft: bench.draft,
+      feet,
+      landing: (at, r) => delve()?.landing(at, r) ?? { ok: false, rule: 'none' },
+      foot,
+      rebuild,
+      ...(doc ? { doc } : {}),
+    }),
+  );
 }
 /**
  * DLV6: how far a thing's origin stands over its foot (m), so the lab sets it ON the floor at my feet - a model's lowest
@@ -87,11 +111,14 @@ export function labFoot(arch, getTexture) {
  * @param {URLSearchParams} params @param {any} maps the bench's MapsFile @param {any} [storage] @param {any} [blocks]
  */
 export function benchLocation(params, maps, storage = appStorage(), blocks = null) {
-  const name = params.get('dungeon') ?? '', region = params.get('region') || 'Daggerfall';
+  const name = params.get('dungeon') ?? '',
+    region = params.get('region') || 'Daggerfall';
   if (name === 'lab') {
     const draft = readLabDraft(params, storage);
     if (!draft) throw new Error('the lab holds no draft: open delve.html first');
-    const why = setCuratedDraft(draft) ?? (blocks && blocks.getBlockIndex(draft.base) === -1 ? `base: ${draft.base} is not in your BLOCKS.BSA` : null);
+    const why =
+      setCuratedDraft(draft) ??
+      (blocks && blocks.getBlockIndex(draft.base) === -1 ? `base: ${draft.base} is not in your BLOCKS.BSA` : null);
     if (why) throw new Error(`the lab's draft: ${why}`);
     const template = labTemplate(maps, draft.types[0]);
     if (!template) throw new Error(`the lab's draft: no dungeon of type ${draft.types[0]} to borrow borders from`);
@@ -103,7 +130,7 @@ export function benchLocation(params, maps, storage = appStorage(), blocks = nul
     const template = maps.getLocationByName(region, name);
     if (!template || !Number.isInteger(px) || !Number.isInteger(py)) return null;
     const clone = synthesizeDungeonLocation(template, { salt: WORLD_SALT, px, py, elite: params.has('elite') });
-    return { location: dungeonLocationFor(clone, { online: params.has('online') }) };   // AUDIT DLV5-6: built as the world builds it
+    return { location: dungeonLocationFor(clone, { online: params.has('online') }) }; // AUDIT DLV5-6: built as the world builds it
   }
   return null;
 }
