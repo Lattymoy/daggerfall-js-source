@@ -108,7 +108,7 @@ test('DRAGON-POV: the saddle over the view is first person\'s alone, on both rid
   const w = rd('src/scenes/world.js');
   assert.match(w, /dragon: dragonView\.ride\(player, playerEntity\.items\)/);
   assert.match(w, /dragonView\.frame\(player\.feetAt\(\), cam\.yaw, mwv0\.eye, dt\)/);
-  assert.match(w, /for \(const b of dragonView\.batches\(\)\) allBatches\.push\(b\);/, 'the street\'s billboard pass draws my dragon');
+  assert.match(w, /dragonView\.drawInto\(allBatches\);/, 'the street\'s billboard pass draws my dragon');
 });
 
 test('DRAGON-POV (mob: "saddle over lay is in alot of uis"): the saddle is not painted while a panel covers the view', async () => {

@@ -63,5 +63,7 @@ export function createDragonViewHost(renderer, deps, third = mwViewThirdPerson) 
     shown: () => shown,
     /** Its batch, for the host's billboard pass (none in first person). */
     batches: () => (shown ? layer.batches() : []),
+    /** Its batch onto the street's billboard list `out` (none in first person). @param {any[]} out */
+    drawInto(out) { if (shown) for (const b of layer.batches()) out.push(b); },
   };
 }
