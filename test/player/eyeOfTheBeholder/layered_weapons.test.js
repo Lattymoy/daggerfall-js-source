@@ -10,6 +10,7 @@ import {
 } from '../../../src/player/eyeOfTheBeholder/layeredWeapon.js';
 import { inventoryItemImage } from '../../../src/systems/item/itemTemplates.js';
 import { layeredSprite, outfitPieces, outfitCombo, decodeLayered } from '../../../src/player/eyeOfTheBeholder/layeredArmor.js';
+import { SPELL_COLOURS } from '../../../src/player/eyeOfTheBeholder/layeredSpell.js';
 import { ALL_LOOKS, APPEARANCE_KINDS } from '../../../src/net/appearanceLaw.js';
 import { bodyState } from '../../../src/player/eyeOfTheBeholder/eotbBody.js';
 import { walkerWeapon, walkerHeld } from '../../../src/net/peer/peerRiders.js';
@@ -612,7 +613,7 @@ test('the loose\'s frames hold the art\'s own bow: with no bow in hand they are 
 
 // ── LAYERED-DUAL ───────────────────────────────────────────────────────────────────────────────────────────────────
 test('LAYERED-DUAL (2026-10-30, the owner: "We need to find a way to implement duel wielding perfectly"): a pair is both codes, the line\'s first; the art\'s hammer line holds the right weapon, the left\'s once flipped, the striking hand\'s in a swing; sheathed, a bow or empty hands hold no pair', () => {
-  assert.deepEqual(outfitPieces('p6cl@ls1+dg3'), { head: 'p6', top: 'c', legs: 'l', cloak: null, weapon: 'ls1', offhand: 'dg3' });
+  assert.deepEqual(outfitPieces('p6cl@ls1+dg3'), { head: 'p6', top: 'c', legs: 'l', cloak: null, weapon: 'ls1', offhand: 'dg3', spell: null });
   assert.equal(outfitPieces('lll@ls1+'), null, 'a pair names its second');
   const look = (o = {}) => ({ outfit: 'lll', gender: 'male', weapon: 'ls1', offhand: 'dg3', ...o });
   const held = (table, o = {}, mirror = false, offset = 2) => layeredSprite(table, offset, 0, 4, look(o), mirror).key.split(':')[4].split('@')[1];
@@ -633,8 +634,8 @@ test('LAYERED-DUAL (2026-10-30, the owner: "We need to find a way to implement d
   const st = bodyState({ heldWeapon: L, pairRight: R, pairLeft: L, pairStrike: 'L' });
   assert.deepEqual([st.pairRight, st.pairLeft, st.pairStrike], [R, L, 'L'], 'the body keeps the rig\'s pair');
   const peer = { items: [{ ...R, equipSlot: EQUIP_SLOTS.RightHand }, { ...L, equipSlot: EQUIP_SLOTS.LeftHand }] };
-  assert.deepEqual(walkerHeld(peer, { wd: 1, ah: 1 }), { weapon: 'ls1', offhand: 'dg3', strike: 'L' }, 'a walker\'s pair, its last blow the left\'s');
-  assert.deepEqual(walkerHeld({ items: [{ ...R, equipSlot: EQUIP_SLOTS.RightHand }] }, { wd: 1 }), { weapon: 'ls1' });
+  assert.deepEqual(walkerHeld(peer, { wd: 1, ah: 1 }), { weapon: 'ls1', offhand: 'dg3', strike: 'L', cast: 4 }, 'a walker\'s pair, its last blow the left\'s');
+  assert.deepEqual(walkerHeld({ items: [{ ...R, equipSlot: EQUIP_SLOTS.RightHand }] }, { wd: 1, ce: 0 }), { weapon: 'ls1', cast: 0 });
   const rigSrc = readFileSync(new URL('../../../src/combat/weapon/weaponRig.js', import.meta.url), 'utf8');
   assert.match(rigSrc, /\.\.\.layeredPair\(\),/);
   assert.match(rigSrc, /pairRight: playerWeapon\.handItem\('R'\), pairLeft: playerWeapon\.handItem\('L'\),/);
@@ -742,4 +743,47 @@ test('SWING-CUTS a thrust\'s strike points the blade the way the body faces, alo
   assert.ok(t.off[4] === 'b' && Math.abs(Math.abs(Math.atan2(Math.sin(turn), Math.cos(turn))) - (22 * Math.PI) / 180) < 0.01, 'a pair\'s second blade fanned off it');
   assert.equal(thrustRigOf(weaponRigOf('male', '7-3'), 'dg1', 2, 3, rig.male.len), null, 'only the strike');
   assert.equal(thrustRigOf(weaponRigOf('male', '7-2'), 'ls1', 2, 2, rig.male.len), null, 'only a thrust');
+});
+
+// ── SPELL-BURST ────────────────────────────────────────────────────────────────────────────────────────────────────
+test('SPELL-BURST (2026-10-30, the owner, of a concept sheet\'s "Wrath of Sithis": "Do both. I wanna see what you can cook"): a cast carries its element; the spell is drawn in its hands - an orb at the fists, swelling with veins, a burst thrown ahead, specks after - in the element\'s colours; a weapon beside the spell stays in hand', { skip: !PNG && 'no pngjs' }, async () => {
+  assert.equal(outfitPieces('lll@0!3').spell, 3);
+  assert.equal(outfitPieces('lll@0!5'), null, 'five elements, 0-4');
+  const look = (o = {}) => ({ outfit: 'lll', gender: 'male', cast: 0, ...o });
+  const key = (o, table = 'AttackSpell', f = 1) => layeredSprite(table, 2, f, 4, look(o), false).key.split(':')[4];
+  assert.equal(key({}), 'lll@0!0', 'the cast: hands empty, the fire in them');
+  assert.equal(key({ weapon: 'dg3' }), 'lll@0!0', 'a weapon sheathed beside the cast: not in hand');
+  assert.equal(key({ weapon: 'dg3', spellHand: true }), 'lll@dg3!0', 'the spell hand: the weapon stays');
+  assert.equal(key({ cast: undefined }), 'lll@0', 'no element named: no spell drawn');
+  assert.equal(key({ cast: 1.5 }), 'lll@0', 'nor one that is no element');
+  assert.equal(key({}, 'AttackMelee'), 'lll@0', 'a blow carries none');
+  assert.deepEqual(layeredHands({ heldWeapon: null, castElement: 1, spellHand: false }), { weapon: null, cast: 1 });
+  // drawn: each stage's spell in its element's colours, at the fists then thrown ahead along the throw's line
+  const px = (img, bare) => { const o = []; for (let i = 0; i < img.width * img.height; i++) if ([0, 1, 2, 3].some((c) => img.data[i * 4 + c] !== bare.data[i * 4 + c])) o.push([i % img.width, (i / img.width) | 0, [...img.data.subarray(i * 4, i * 4 + 3)]]); return o; };
+  const bare = async (rf) => decodeLayered(`LA:male:leather_leather_leather:${rf}:lll@0`, decodePng, opts);
+  const counts = [];
+  for (const f of [0, 1, 2, 3]) {
+    const rf = `7-${f}`, drawn = px(await decodeLayered(`LA:male:leather_leather_leather:${rf}:lll@0!0`, decodePng, opts), await bare(rf));
+    counts.push(drawn.length);
+    const fr = weaponRigOf('male', rf), [gx, gy] = fr.w ?? fr.q, cx = drawn.reduce((t, p) => t + p[0], 0) / drawn.length, cy = drawn.reduce((t, p) => t + p[1], 0) / drawn.length;
+    if (f < 2) assert.ok(Math.hypot(cx - gx, cy - gy) < 8, `frame ${f}: at the fists (${cx.toFixed(1)}, ${cy.toFixed(1)} vs ${gx}, ${gy})`);
+    else assert.ok(cx < gx - 4, `frame ${f}: thrown ahead (${cx.toFixed(1)} past the fists at ${gx})`);
+    assert.ok(drawn.some(([, , c]) => c.join() === SPELL_COLOURS[0].body.join()), `frame ${f}: fire's own red`);
+  }
+  assert.ok(counts[0] < counts[1] && counts[1] < counts[2] && counts[3] < counts[2] / 3, `it gathers, bursts, scatters to specks: ${counts}`);
+  for (const e of [1, 2, 3, 4]) {
+    const drawn = px(await decodeLayered(`LA:male:leather_leather_leather:7-2:lll@0!${e}`, decodePng, opts), await bare('7-2'));
+    assert.ok(drawn.some(([, , c]) => c.join() === SPELL_COLOURS[e].body.join()), `element ${e}: its own colour`);
+  }
+  // thrown from behind it flies away from the eye: past the body only, flying on until most of it clears the body
+  for (const rf of ['8-2', '8-3', '9-2', '9-3']) {
+    const backBare = await bare(rf), back = px(await decodeLayered(`LA:male:leather_leather_leather:${rf}:lll@0!0`, decodePng, opts), backBare);
+    assert.ok(back.every(([x, y]) => !backBare.data[(y * backBare.width + x) * 4 + 3]), `${rf}: past the body only`);
+    assert.ok(back.length > (rf.endsWith('2') ? 120 : 40), `${rf}: seen, not lost behind the back (${back.length} px)`);
+  }
+  // the weapon's glow is the weapon's: the spell is not in its px
+  const withDagger = await decodeLayered('LA:male:leather_leather_leather:7-2:lll@dg3!0', decodePng, opts), noSpell = await decodeLayered('LA:male:leather_leather_leather:7-2:lll@dg3', decodePng, opts);
+  assert.deepEqual([...withDagger.held], [...noSpell.held], 'the held px the dagger\'s alone');
+  const rigSrc = readFileSync(new URL('../../../src/combat/weapon/weaponRig.js', import.meta.url), 'utf8');
+  assert.match(rigSrc, /castElement: castPlaying\(\) \? cast\.element : null, spellHand: !!spellHandNow\(\)/);
 });

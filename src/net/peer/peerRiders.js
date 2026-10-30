@@ -406,10 +406,12 @@ export const walkerHands = (pose) => (gatherActOf(pose)
  *  says it uses (the look carries both hands) - as a weapon code (layeredWeapon.js), or null for bare hands. Pure. */
 export const walkerWeapon = (look, pose) => layeredWeaponOf(gatherActOf(pose) ? peerGatherTool(pose) : peerWeaponOf(look, pose));
 /** LAYERED-DUAL: what a walker's hands hold for its worn look - a pair (peerHandsOf: the right, the left, the last
- *  blow's hand `ah`), else walkerWeapon's one; a gathering act's tool before either. */
+ *  blow's hand `ah`), else walkerWeapon's one; a gathering act's tool before either. SPELL-BURST: its cast's element
+ *  (the pose's `ce`) and its spell hand. */
 export function walkerHeld(look, pose) {
   const h = gatherActOf(pose) ? null : peerHandsOf(look, pose);
-  return h?.dual ? layeredHands({ pairRight: h.right, pairLeft: h.left, pairStrike: pose?.ah ? 'L' : 'R' }) : { weapon: walkerWeapon(look, pose) };
+  const held = h?.dual ? layeredHands({ pairRight: h.right, pairLeft: h.left, pairStrike: pose?.ah ? 'L' : 'R' }) : { weapon: walkerWeapon(look, pose) };
+  return { ...held, cast: Number.isInteger(pose?.ce) ? pose.ce : 4, ...(h?.spellHand ? { spellHand: true } : {}) };
 }
 
 /**

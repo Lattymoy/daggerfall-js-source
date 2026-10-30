@@ -197,13 +197,21 @@ blade slashes (4 2 3 3 4 4), the rest chop (0-5). A thrust's strike points its b
 arms (`thrustRigOf`): from aside the whole blade, from the front a stub, from behind hidden. A pair's left-hand blow is
 the right's flipped from the front or behind, and its own cut run backwards from aside, a rising backhand.
 
+**The spell in the hands** (SPELL-BURST, the owner, 2026-10-30, of a concept sheet's "Wrath of Sithis": "Do both. I
+wanna see what you can cook"). The art has no cast; the cast plays the swing's first four frames, and the outfit code
+carries its element (`!0` fire to `!4` magic, `layeredSpell.js` `drawSpellBurst`). An orb gathers at the fists (0),
+swells with crooked veins (1), bursts ahead as the arms throw (2) and scatters to specks (3), in the element's colours.
+Thrown, it flies the way the body faces from the throw's fists; from behind it is past the body only, and flies on until
+most of it clears the back. A one-handed weapon beside the spell (`spellHand`) stays in hand; else the hands are empty.
+My cast's element is the rig's (`layeredCast`); a walker's is its pose's `ce`. The weapon's glow is not the spell's.
+
 **Whose hands.** My body reads the item in the hand in use (`combat/weapon/weaponRig.js` eotbState `heldWeapon`,
 `eotbBody.js` lookNow). A walker holds the tool of its gathering act, else the weapon in the hand its pose says it uses
 (`net/peer/peerRiders.js` walkerWeapon, `peerBodies.js` peerWeaponOf): nothing new on the wire. The outfit code carries
 what the hands show (`p6cl~2@ls7`, `@0` empty), so the pictures of each are their own; my body lets the last weapon's
 go with its outfit's (`releaseOutfits`).
 
-**Known limits.** The body has the hammer's one two-handed swing; each weapon plays its own cut of it (below), and new
+**Known limits.** The body has the hammer's one two-handed swing; each weapon plays its own cut of it (above), and new
 motion needs new frames in every outfit. An attack frame whose hammer points
 at the camera draws the weapon short. Each outfit's helmet and legs draw the hammer's rim their own way, so a pixel or
 two of it can stay, and a fill can borrow a patch of another piece's colour. Male 5-1 keeps the thumb laid up the
@@ -211,7 +219,7 @@ shaft. The female's back-view flinch (14-0) keeps its raised hand two pixels off
 and with empty hands her back-3/4 swing (8-2) its hand, whose arm is behind the body. A weapon's glow stands round the
 weapon alone (LAYERED-GLOW, `05-Combat/Weapon-Glow.md` "Round the weapon"). Verified by
 `test/player/eyeOfTheBeholder/layered_weapons.test.js`, `spriteglow.test.js` and `tools/mutants/layered_weapons.json`
-(93 mutants, all dead); the peer-art pins moved to the new codes (`test/net/peer/fb1022d_peerart.test.js`).
+(108 mutants, all dead); the peer-art pins moved to the new codes (`test/net/peer/fb1022d_peerart.test.js`).
 
 ## The art - the doctrine's third exception
 

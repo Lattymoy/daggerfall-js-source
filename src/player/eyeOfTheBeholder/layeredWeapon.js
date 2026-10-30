@@ -38,18 +38,21 @@ export function layeredWeaponOf(item) {
   return `${shape}${m}`;
 }
 /** LAYERED-DUAL: what a layered body's hands hold, for its look - a pair's right weapon (`weapon`), its left (`offhand`)
- *  and the hand whose blow is in flight (`strike`); else the hand in use's weapon. `s` the rig's state: heldWeapon, and
- *  pairRight, pairLeft, pairStrike where the hands hold a pair. */
+ *  and the hand whose blow is in flight (`strike`); else the hand in use's weapon. SPELL-BURST: a cast's element (`cast`)
+ *  and a weapon kept beside the spell (`spellHand`). `s` the rig's state: heldWeapon, and pairRight, pairLeft,
+ *  pairStrike where the hands hold a pair; castElement, spellHand. */
 export function layeredHands(s) {
-  if (s?.pairRight && s?.pairLeft) return { weapon: layeredWeaponOf(s.pairRight), offhand: layeredWeaponOf(s.pairLeft), strike: s.pairStrike ?? null };
-  return { weapon: layeredWeaponOf(s?.heldWeapon) };
+  const held = s?.pairRight && s?.pairLeft ? { weapon: layeredWeaponOf(s.pairRight), offhand: layeredWeaponOf(s.pairLeft), strike: s.pairStrike ?? null } : { weapon: layeredWeaponOf(s?.heldWeapon) };
+  return { ...held, ...(Number.isInteger(s?.castElement) ? { cast: s.castElement } : {}), ...(s?.spellHand ? { spellHand: true } : {}) };
 }
 export const isBowCode = (code) => typeof code === 'string' && BOWS.has(code.slice(0, 2));
 
 /** What the sprite of one table shows in the hands: '0' nothing (the hammer taken out), a weapon code, or null - the art
- *  as drawn (the loose's own bow). Sheathed, a readied spell and bare hands show nothing; the bow's tables show the bow. */
-export function weaponShownFor(table, held) {
+ *  as drawn (the loose's own bow). Sheathed, a readied spell and bare hands show nothing; the bow's tables show the bow.
+ *  SPELL-BURST: a cast beside a one-handed weapon (`spellHand`, combat/twoHands/spellHand.js) keeps it in hand. */
+export function weaponShownFor(table, held, spellHand = false) {
   switch (table) {
+    case 'AttackSpell': return spellHand && held && !isBowCode(held) ? held : '0';
     case 'AttackRanged': return null;
     case 'IdleRanged': case 'MoveRanged': return isBowCode(held) ? held : '0';
     case 'IdleMelee': case 'MoveMelee': case 'AttackMelee': return held && !isBowCode(held) ? held : '0';
@@ -448,7 +451,9 @@ const BOW_DIMS = Object.freeze({ sb: [0.75, 0.11], lb: [1, 0.15] });
 /** Each view's screen x of the body's facing and of the bow hand's side (the art's: its side view holds the weapon
  *  near and the bow hand far). A held bow turns its back BOW_TURN from the facing toward that side and leans BOW_LEAN
  *  forward, so no view sees it edge on. */
-const FACING_X = [0, -0.707, -1, -0.707, 0], BOW_SIDE_X = [1, 0.707, 0, -0.707, -1];
+/** Screen x of the body's facing, per view (0 front .. 4 back). */
+export const FACING_X = Object.freeze([0, -0.707, -1, -0.707, 0]);
+const BOW_SIDE_X = [1, 0.707, 0, -0.707, -1];
 const BOW_TURN = Math.PI / 8, BOW_LEAN = Math.PI / 15;
 const BOW_WOOD = ramp([30, 20, 9], [124, 78, 44]);   // the loose's own bow's browns
 

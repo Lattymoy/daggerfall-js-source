@@ -786,6 +786,8 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     pairRight: playerWeapon.handItem('R'), pairLeft: playerWeapon.handItem('L'),
     pairStrike: playerWeapon.machine.state !== 'Idle' && playerWeapon.strike ? playerWeapon.strike.hand : null,
   });
+  // SPELL-BURST: the cast's element, drawn in the layered body's hands, and a weapon kept in hand beside the spell
+  const layeredCast = () => ({ castElement: castPlaying() ? cast.element : null, spellHand: !!spellHandNow() });
   // EOTB5: THE OTHER BODY, attached in the same breath as the arm it
   // stands in for. THE FOUR HOSTS named: exterior.js, world.js,
   // worldModes.js and dungeonContext.js - none of them carries a call,
@@ -830,6 +832,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     usingBow: !!playerWeapon.machine.isBow,
     heldWeapon: playerWeapon.weapon ?? null,   // LAYERED-WEAPONS: the item the sprite's hands hold (player/eyeOfTheBeholder/layeredWeapon.js)
     ...layeredPair(),   // LAYERED-DUAL: a pair's two weapons and the hand striking
+    ...layeredCast(),   // SPELL-BURST: the cast's element and the spell hand
     transformed: !!entity && isTransformedLycanthrope(entity),
     lycanthropyType: (entity && liveLycanthropy(entity)?.infectionType) || 0,
     horseLook: entity ? riddenHorseLook(entity.items ?? []) : 0,   // COATS1: its code

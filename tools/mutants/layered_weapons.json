@@ -928,5 +928,155 @@
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
     "why": "the handle and guard over the fingers"
+  },
+  {
+    "name": "SPELL-BURST-spell-hand-sheathed",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "case 'AttackSpell': return spellHand && held",
+    "new": "case 'AttackSpell': return held",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a weapon sheathed beside the cast comes out"
+  },
+  {
+    "name": "SPELL-BURST-spell-hand-dropped",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "case 'AttackSpell': return spellHand && held",
+    "new": "case 'AttackSpell': return false && held",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the spell hand's weapon leaves the hand"
+  },
+  {
+    "name": "SPELL-BURST-cast-unread",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "...(Number.isInteger(s?.castElement) ? { cast: s.castElement } : {})",
+    "new": "...{}",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the rig's element never reaches the look"
+  },
+  {
+    "name": "SPELL-BURST-any-table",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "const spell = table === 'AttackSpell' && held",
+    "new": "const spell = held",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a blow carries the spell"
+  },
+  {
+    "name": "SPELL-BURST-unnamed-element",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "Number.isInteger(look?.cast) && look.cast >= 0",
+    "new": "look.cast !== null && look.cast >= 0",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "no element named draws one anyway"
+  },
+  {
+    "name": "SPELL-BURST-five-elements",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "(?:!([0-4]))?$/",
+    "new": "(?:!([0-9]))?$/",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "an element past the five reads"
+  },
+  {
+    "name": "SPELL-BURST-never-drawn",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "if (hand && pieces?.spell != null) drawSpellBurst",
+    "new": "if (false) drawSpellBurst",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the spell is never drawn"
+  },
+  {
+    "name": "SPELL-BURST-colour-one",
+    "file": "src/player/eyeOfTheBeholder/layeredSpell.js",
+    "old": "const C = SPELL_COLOURS[element] ?? SPELL_COLOURS[4]",
+    "new": "const C = SPELL_COLOURS[4]",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "every element the same colour"
+  },
+  {
+    "name": "SPELL-BURST-not-thrown",
+    "file": "src/player/eyeOfTheBeholder/layeredSpell.js",
+    "old": "const thrown = stage >= 2,",
+    "new": "const thrown = false,",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the burst stays at the fists"
+  },
+  {
+    "name": "SPELL-BURST-thrown-back",
+    "file": "src/player/eyeOfTheBeholder/layeredSpell.js",
+    "old": "[Math.sign(fx), 0]",
+    "new": "[-Math.sign(fx), 0]",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "thrown backward"
+  },
+  {
+    "name": "SPELL-BURST-not-grown",
+    "file": "src/player/eyeOfTheBeholder/layeredSpell.js",
+    "old": "r0 = S.r * k,",
+    "new": "r0 = 4 * k,",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "it does not gather, burst and scatter"
+  },
+  {
+    "name": "SPELL-BURST-no-scatter",
+    "file": "src/player/eyeOfTheBeholder/layeredSpell.js",
+    "old": "(S.keep < 1 && hash(",
+    "new": "(false && hash(",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the last frame does not scatter"
+  },
+  {
+    "name": "SPELL-BURST-over-back",
+    "file": "src/player/eyeOfTheBeholder/layeredSpell.js",
+    "old": "if (behind && d[i + 3]) return;",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "thrown from behind, drawn over the back"
+  },
+  {
+    "name": "SPELL-BURST-lost-behind",
+    "file": "src/player/eyeOfTheBeholder/layeredSpell.js",
+    "old": "behind && along < most && hidden(along)",
+    "new": "false && along < most && hidden(along)",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "lost behind the back"
+  },
+  {
+    "name": "SPELL-BURST-walker-element",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "cast: Number.isInteger(pose?.ce) ? pose.ce : 4",
+    "new": "cast: 4",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a walker's element never read"
   }
 ]
