@@ -1203,7 +1203,7 @@ once (`wornPowers`). Each Foxglove's +15 Luck did not, and Luck multiplies every
   `wornItems` (the affix fold, the card's resistance and its compare) and `lootPowers.js` `wornPieces` (wornSum's
   lines, the powers) read through it. The first copy in the equip table counts. Two different records, and two Rares,
   still add up.
-- **Fortune's Favour is a quarter** (`mult: 1.25`): the owner, "Yeah reduce the change and fix" (the chance). One Foxglove now makes a
+- **Fortune's Favour is a quarter** (`mult: 1.25`): the owner, "Yeah reduce the change and fix", then "Chance". One Foxglove now makes a
   Legendary 1.44x as likely at Luck 50, and a second adds nothing.
 
 Pinned: `test/systems/loot/foxstack.test.js`; moved: `loot5_powers` (the find). `tools/mutants/foxstack.json`, 5, all
