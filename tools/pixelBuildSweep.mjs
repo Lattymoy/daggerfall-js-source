@@ -228,7 +228,8 @@ for (const r of rows) {
   if (!by.has(why)) by.set(why, []);
   by.get(why).push(`${r.px},${r.py}${r.location ? ` ${r.location}` : ''}`);
 }
-const kinds = rows.reduce((m, r) => ((m[r.kind] = (m[r.kind] ?? 0) + 1), m), {});
+const kinds = {};
+for (const r of rows) kinds[r.kind] = (kinds[r.kind] ?? 0) + 1;
 const summary = { pixels: rows.length, stood: rows.filter((r) => r.built && !r.error).length, threw: rows.filter((r) => r.error).length, unsettled: rows.filter((r) => r.timeout).length, crashed: rows.filter((r) => r.crash).length, kinds, causes: [...by].map(([why, px]) => ({ why, n: px.length, pixels: px.slice(0, 20) })) };
 writeFileSync(join(OUT, 'summary.json'), JSON.stringify(summary, null, 1));
 console.log(`swept ${summary.pixels}: ${summary.stood} stood, ${summary.threw} threw, ${summary.unsettled} unsettled, ${summary.crashed} crashed; ${Object.entries(kinds).map(([k, v]) => `${k} ${v}`).join(', ')}`);

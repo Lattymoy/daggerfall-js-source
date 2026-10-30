@@ -23047,7 +23047,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   // words for this machine's site, and its host (scenes/dragonHost.js). Online alone: the relay runs its fight. The Bay's
   // scan is read once its slices are whole, never forced in a frame (AUDIT WB C7).
   dragonSky = params.has('online') ? createDragonSky({
-    bayScan: () => (warmGateScan(), _gateScan), theatres: () => theatreGates,
+    bayScan: () => { warmGateScan(); return _gateScan; }, theatres: () => theatreGates,
     street: () => (modes?.mode ?? 'exterior') === 'exterior' && playerSpawned, barBlocked: () => _serpentBarUp, barHidden: () => gamePaused() || !!townTalk.hudHidden, drawBar: drawGateBossBar,
     now: () => Date.now() + _sharedOffsetMs,
     online: { ready: (cell) => !!online?.dragonReady?.(cell), send: (w, cell) => !!online?.sendDragon?.(w, cell) },

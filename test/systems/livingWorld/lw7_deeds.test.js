@@ -402,5 +402,5 @@ test('LW7 the streaming host: every resident\'s place by the lives (`livingCycle
   assert.match(tt, /_toneTarget = _toneNext;   \/\/ LW7[^\n]*\n\s*_toneNext = null;/, 'the window takes the door\'s resident, and every other door leaves nobody');
   assert.match(tt, /livingTalk\?\.talked\?\.\(target\.person\);[^\n]*\n\s*_toneNext = target\.person\.living \? target\.person : null;/, 'the mobile door names its resident');
   assert.match(tt, /_toneHeard\(\);   \/\/ LW7: the question's tone/);
-  assert.match(tt, /askWork: \(\) => \(_toneHeard\(\), eng\.pipeline\.getAnswerText\(workListItem\(\), \{/);
+  assert.match(tt, /askWork: \(\) => \{\n\s+_toneHeard\(\);\n\s+return eng\.pipeline\.getAnswerText\(workListItem\(\), \{/);
 });

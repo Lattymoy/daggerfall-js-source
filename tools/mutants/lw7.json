@@ -954,8 +954,8 @@
   {
     "name": "LW7-talk-work",
     "file": "src/scenes/townTalk.js",
-    "old": "askWork: () => (_toneHeard(), eng.pipeline",
-    "new": "askWork: () => (eng.pipeline",
+    "old": "        askWork: () => {\n          _toneHeard();\n",
+    "new": "        askWork: () => {\n",
     "tests": [
       "test/systems/livingWorld/lw7_deeds.test.js"
     ]

@@ -56,7 +56,7 @@
   {
     "name": "AUDITTESA2G-G2-a-lost-relief-rejects-the-trace",
     "file": "src/ui/tamrielTrace.js",
-    "old": "trace.relief = await loadRelief(trace).catch((e) => (console.warn('[tamriel] the relief did not load; the authored heights stand:', e?.message ?? e), null));",
+    "old": "trace.relief = await loadRelief(trace).catch((e) => { console.warn('[tamriel] the relief did not load; the authored heights stand:', e?.message ?? e); return null; });",
     "new": "trace.relief = await loadRelief(trace);",
     "tests": [
       "test/world/tamrielrelief.test.js"

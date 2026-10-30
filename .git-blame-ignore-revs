@@ -1,0 +1,5 @@
+# Commits that only reformat code (LEGIBLE 3, bible/01-Overview/Readability-Arc.md).
+# git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# LEGIBLE 3 pilot: src/poi/ formatted
+ce8b2f66a8efa93da7d360887996b5ebb3769a9f

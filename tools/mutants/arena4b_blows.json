@@ -29,8 +29,8 @@
   {
     "name": "ARENA4b-BLOW-RIVAL-NO-SEQ",
     "file": "src/scenes/dungeonContext.js",
-    "old": "m: playerWeapon.strikingWeapon?.material ?? 0, q: _arenaQ }));",
-    "new": "m: playerWeapon.strikingWeapon?.material ?? 0 }));",
+    "old": "m: playerWeapon.strikingWeapon?.material ?? 0, q: _arenaQ }); };",
+    "new": "m: playerWeapon.strikingWeapon?.material ?? 0 }); };",
     "tests": [
       "test/net/arena/arena4b_blows.test.js"
     ]

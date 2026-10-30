@@ -199,7 +199,10 @@ export function quickslotOf(item) {
 }
 
 /** The slot's stored kind, or null. A copy: nothing outside writes it. */
-export const quickslotEntry = (slot) => (assertSlot(slot), state[slot] ? { ...state[slot] } : null);
+export const quickslotEntry = (slot) => {
+  assertSlot(slot);
+  return state[slot] ? { ...state[slot] } : null;
+};
 
 const packOf = (entity) => (Array.isArray(entity?.items) ? entity.items : []);
 
@@ -1091,7 +1094,10 @@ function settled(entry, pvp) {
 const assertHot = (i) => { if (!Number.isInteger(i) || i < 0 || i >= HOTBAR_CAPACITY) throw new Error(`hotbar: no slot ${i}`); };
 
 /** A copy of slot i's entry, or null. */
-export const hotbarEntry = (i) => (assertHot(i), hotbar[i] ? { ...hotbar[i] } : null);
+export const hotbarEntry = (i) => {
+  assertHot(i);
+  return hotbar[i] ? { ...hotbar[i] } : null;
+};
 export const hotbarRevision = () => hotbarRev;
 
 /** Put an entry on slot i. ONE KIND LIVES IN ONE SLOT, as the diamond's

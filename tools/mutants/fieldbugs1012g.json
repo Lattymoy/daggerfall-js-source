@@ -437,8 +437,8 @@
   {
     "name": "OPEN-HAND-the-rival-carrying-it",
     "file": "src/scenes/dungeonContext.js",
-    "old": "const landOnRival = (rb, damage, kind) => (takeOwed(rb.entity), !!opts.onArenaHit?.({ i: rb.rival, d: damage, kind,",
-    "new": "const landOnRival = (rb, damage, kind) => (damage += takeOwed(rb.entity), !!opts.onArenaHit?.({ i: rb.rival, d: damage, kind,",
+    "old": "const landOnRival = (rb, damage, kind) => { takeOwed(rb.entity); return !!opts.onArenaHit?.({ i: rb.rival, d: damage, kind,",
+    "new": "const landOnRival = (rb, damage, kind) => { damage += takeOwed(rb.entity); return !!opts.onArenaHit?.({ i: rb.rival, d: damage, kind,",
     "tests": [
       "test/systems/fb1012g_openhand.test.js",
       "test/net/arena/arena4b_blows.test.js"

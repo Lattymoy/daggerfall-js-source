@@ -79,8 +79,8 @@ the owner's to call.
 | LEGIBLE 1 | The ceiling counts logical lines, so it is blind to layout | shipped (below) |
 | LEGIBLE 1b | Testing.md's file table closed; the suite counts itself | shipped (below) |
 | LEGIBLE 2 | The syntax-tree comparison that proves a mechanical change, and the carrier that moves mutant records and cites through one | shipped (below) |
-| LEGIBLE 3 | The formatter: one pinned version and configuration, the whole tree formatted folder by folder with its pins carried, a `--check` in CI and `.git-blame-ignore-revs` | a new dev dependency; a quiet window per folder |
-| LEGIBLE 4 | Lint that holds the line: one statement per line, no comma sequences, a ratchet on new short names | - |
+| LEGIBLE 3 | The formatter: one pinned version and configuration, the whole tree formatted folder by folder with its pins carried, a `--check` in CI and `.git-blame-ignore-revs` | the tool and the pilot folder shipped (below); a quiet window per further folder |
+| LEGIBLE 4 | Lint that holds the line: one statement per line, no comma sequences, a ratchet on new short names | the first two shipped (below); the short names wait for LEGIBLE 5's glossary |
 | LEGIBLE 5 | The glossary (`Glossary.md`) and the renames, one abbreviation per slice (`dw`, `csa`, `wod`, `lpt`, ...), by the language service and carried like the formatter | a quiet window per rename |
 | LEGIBLE 6 | Comments: a register of every tag and the page that records it, then tag-led comments rewritten as reasons, file by file | - |
 | LEGIBLE 7 | Shapes: typedefs for the objects that travel (a terrain pixel, a face, a foe, an item), `// @ts-check` as each file is done | - |
@@ -242,3 +242,36 @@ that has code after it, which splits crowded lines as a formatter would - standi
 The carrier's first run on `world.js` was killed at 13 GB. A carried record's text was a slice of the transformed
 mutant, and in V8 a slice keeps the whole string it was cut from alive: 3,781 records held 3,781 copies of a 3 MB
 file. The records are copied out of their file now, and the same run peaks at 1.2 GB.
+
+## LEGIBLE 3 - the formatter, and its pilot folder (2026-10-30)
+
+Taken in the cleanup session of 2026-10-30, the owner: *"I want to take this all on. A full session and take
+autonomy"* - the two decisions this page left to the owner, the dependency and the window, taken for one folder.
+
+- **One version, one configuration.** Prettier 3.9.10, pinned exactly in `package.json`, with `.prettierrc.json`
+  (120 columns, single quotes, trailing commas, semicolons). `tools/format.mjs` is the carrier's transform: Prettier 3
+  answers asynchronously, so it runs on a worker and `transform` waits on a shared flag.
+- **The folders it owns.** `tools/formatted.json` lists them; `.prettierignore` is written from that list (`node
+  tools/format.mjs --ignore`), so an editor's format-on-save leaves every other file alone.
+- **The check.** `test/tooling/legible3_format.test.js` fails on a listed file the formatter would change, so CI's
+  suite is the `--check` (four mutants, all dead).
+- **The pilot, `src/poi/`.** 23 files, quiet that week. `node tools/carryPins.mjs --transform tools/format.mjs
+  src/poi/*.js --write` carried all 299 mutant records and 22 cites; `node tools/sameProgram.mjs --against HEAD` proved
+  all 23 files the same programs. The commit is in `.git-blame-ignore-revs`.
+
+The next folder is the same three commands, in a window the owner calls. A folder's tests that match source text by
+regular expression are not carried; the pilot's 19 test files passed unchanged.
+
+## LEGIBLE 4 - lint that holds the line (2026-10-30)
+
+- **No comma sequence** in shipped code (`no-sequences` over `src/`, the two Workers, `tools/` and `scripts/`). The
+  tree held eight. Seven are now the statements they hid (`quickslots.js` twice, `dungeonContext.js` landOnRival,
+  `townTalk.js` askWork, `world.js` bayScan, `tamrielTrace.js`, `pixelBuildSweep.mjs`); their five text pins and four
+  mutant records were re-aimed, all dead. bayScan's two statements raised `bootWorld`'s ceiling by one, said beside it.
+  The eighth is `egFragLaw.js`, in the relay's bundle where a byte is a relay version: it is excepted in
+  `eslint.config.js` until the next relay change.
+- **One statement a line** (`max-statements-per-line`, 1) in the folders the formatter owns. `eslint.config.js` reads
+  `tools/formatted.json`, so a folder takes the rule in the change that formats it. The rest of the tree held 37,500
+  crowded lines when this was written; they go folder by folder with LEGIBLE 3.
+- **The short names** wait for LEGIBLE 5: a ratchet needs the glossary's list of the names the field uses first.
+

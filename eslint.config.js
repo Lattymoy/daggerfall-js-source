@@ -1,6 +1,11 @@
 // The gate's static-analysis leg (added after the trs/index crash):
 // unbound identifiers are invisible to node --check, vite build, and
 // headless tests - no-undef catches the whole class.
+import { readFileSync } from 'node:fs';
+
+/** The folders the formatter owns (LEGIBLE 3). */
+const FORMATTED = JSON.parse(readFileSync(new URL('./tools/formatted.json', import.meta.url), 'utf8'));
+
 export default [
   {
     // ONLINE1 / AUDIT ONLINE A13: the relay's Worker is linted with the tree - its globals are the runtime's
@@ -80,6 +85,19 @@ export default [
       'no-const-assign': 'error',
       'no-unreachable': 'error',
     },
+  },
+  {
+    // LEGIBLE 4 (bible/01-Overview/Readability-Arc.md): no comma sequence in shipped code - `(a(), b)` hides a
+    // statement inside an expression. egFragLaw.js is in the relay's bundle, where a byte is a relay version: its one
+    // goes with the next relay change.
+    files: ['src/**/*.js', 'server/src/**/*.js', 'server-account/src/**/*.js', 'tools/**/*.{js,mjs}', 'scripts/**/*.{js,mjs}'],
+    ignores: ['src/net/eliteGates/egFragLaw.js'],
+    rules: { 'no-sequences': 'error' },
+  },
+  {
+    // LEGIBLE 4: one statement a line in the folders the formatter owns (tools/formatted.json, LEGIBLE 3).
+    files: FORMATTED.map((folder) => `${folder}/**/*.{js,mjs}`),
+    rules: { 'max-statements-per-line': ['error', { max: 1 }] },
   },
   // generated and gitignored trees the lint paths above reach into
   { ignores: ['app/release/**', 'tools/parity/dfu/**', 'tools/parity/cs/api/**', 'tools/parity/out/**'] },
