@@ -568,6 +568,11 @@
 !/src/scenes/ketch/ketchSky.js
 !/src/scenes/ketch/ketchStanding.js
 !/src/scenes/ketch/ketchStations.js
+!/src/scenes/livingWorld/
+/src/scenes/livingWorld/*
+!/src/scenes/livingWorld/livingLanes.js
+!/src/scenes/livingWorld/livingWatch.js
+!/src/scenes/livingWorld/roadStrike.js
 !/src/scenes/localeData.js
 !/src/scenes/lockpickHost.js
 !/src/scenes/lootLines.js

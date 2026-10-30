@@ -294,8 +294,8 @@
   {
     "name": "P7-lanes-from-past-the-bay",
     "file": "src/scenes/livingWorld/livingLanes.js",
-    "old": "return w && to && (livingSide(to) === livingSide(town) || !!l.cross) ? [{ to, len: w.len, key: l.key, ...(far ? { far: true } : {}) }] : [];",
-    "new": "return w && to ? [{ to, len: w.len, key: l.key, ...(far ? { far: true } : {}) }] : [];",
+    "old": "            return w && to && (livingSide(to) === livingSide(town) || !!l.cross)\n              ? [{ to, len: w.len, key: l.key, ...(far ? { far: true } : {}) }]\n              : []; // WW7-7: past the Bay as on it - a lane to a port of its own side; WW7-9: or one across the edge",
+    "new": "            return w && to ? [{ to, len: w.len, key: l.key, ...(far ? { far: true } : {}) }] : []; // WW7-7: past the Bay as on it - a lane to a port of its own side; WW7-9: or one across the edge",
     "tests": [
       "test/world/worldWide/auditww.test.js",
       "test/world/worldWide/ww7_people.test.js"

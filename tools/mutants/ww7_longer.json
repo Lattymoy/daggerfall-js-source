@@ -342,8 +342,8 @@
   {
     "name": "WW7-11-lanes-cross-not-far",
     "file": "src/scenes/livingWorld/livingLanes.js",
-    "old": "          const far = !!l.cross || livingSide(town) === LIVING_SIDES.beyond;",
-    "new": "          const far = livingSide(town) === LIVING_SIDES.beyond;",
+    "old": "            const far = !!l.cross || livingSide(town) === LIVING_SIDES.beyond; // WW7-11: past the Bay or across its edge - a passage of more cycles than one",
+    "new": "            const far = livingSide(town) === LIVING_SIDES.beyond; // WW7-11: past the Bay or across its edge - a passage of more cycles than one",
     "tests": [
       "test/world/worldWide/ww7_longer.test.js"
     ],
@@ -352,8 +352,8 @@
   {
     "name": "WW7-11-lanes-past-not-far",
     "file": "src/scenes/livingWorld/livingLanes.js",
-    "old": "          const far = !!l.cross || livingSide(town) === LIVING_SIDES.beyond;",
-    "new": "          const far = !!l.cross;",
+    "old": "            const far = !!l.cross || livingSide(town) === LIVING_SIDES.beyond; // WW7-11: past the Bay or across its edge - a passage of more cycles than one",
+    "new": "            const far = !!l.cross; // WW7-11: past the Bay or across its edge - a passage of more cycles than one",
     "tests": [
       "test/world/worldWide/ww7_longer.test.js"
     ],
@@ -362,8 +362,8 @@
   {
     "name": "WW7-11-lanes-bay-shape",
     "file": "src/scenes/livingWorld/livingLanes.js",
-    "old": "[{ to, len: w.len, key: l.key, ...(far ? { far: true } : {}) }]",
-    "new": "[{ to, len: w.len, key: l.key, far }]",
+    "old": "              ? [{ to, len: w.len, key: l.key, ...(far ? { far: true } : {}) }]",
+    "new": "              ? [{ to, len: w.len, key: l.key, far }]",
     "tests": [
       "test/world/worldWide/ww7_longer.test.js"
     ],

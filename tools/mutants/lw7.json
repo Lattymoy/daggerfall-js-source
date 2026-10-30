@@ -860,8 +860,8 @@
   {
     "name": "LW7-host-road-tally",
     "file": "src/scenes/livingWorld/roadStrike.js",
-    "old": "    tallyCrimeGuildRequirements(playerEntity, false, 5);\n    playerWeaponHitEntity",
-    "new": "    playerWeaponHitEntity",
+    "old": "    tallyCrimeGuildRequirements(playerEntity, false, 5);\n    playerWeaponHitEntity(playerEntity, { health: 0 }, { isCivilian: true });",
+    "new": "    playerWeaponHitEntity(playerEntity, { health: 0 }, { isCivilian: true });",
     "tests": [
       "test/systems/livingWorld/lw7_deeds.test.js",
       "test/systems/livingWorld/fb1025i_roadspare.test.js"

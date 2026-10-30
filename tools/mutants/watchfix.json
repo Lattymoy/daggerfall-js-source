@@ -128,8 +128,8 @@
   {
     "name": "WATCH-FIX-never-lent",
     "file": "src/scenes/livingWorld/livingWatch.js",
-    "old": "    if (!w.lent && w.res && w.town) { w.town.lend(w.res); w.lent = true; }",
-    "new": "    if (!w.lent && w.res && w.town) { w.lent = true; }",
+    "old": "      w.town.lend(w.res);\n      w.lent = true;",
+    "new": "      w.lent = true;",
     "tests": [
       "test/systems/livingWorld/watchfix_watch.test.js"
     ]
@@ -137,7 +137,7 @@
   {
     "name": "WATCH-FIX-resolve-unread",
     "file": "src/scenes/livingWorld/livingWatch.js",
-    "old": "    if (!w.res || !w.town) { const got = resolve(w.from.id); if (got) { w.res = got.res; w.town = got.town; } }",
+    "old": "    if (!w.res || !w.town) {\n      const got = resolve(w.from.id);\n      if (got) {\n        w.res = got.res;\n        w.town = got.town;\n      }\n    }",
     "new": "    void resolve;",
     "tests": [
       "test/systems/livingWorld/watchfix_watch.test.js"

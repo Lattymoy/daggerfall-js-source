@@ -66,7 +66,7 @@ a face the watch knows and its stop's 600 gold, pinned as intended.
 
 FIXED. The road's strike is its own module (out of `bootWorld`, 9 logical lines), and asks the street's law: a
 traveller it spares stops the swing - nothing killed, nothing reported, no door behind them bashed (AUDIT 29g)
-(`roadStrike.js:"if (cityGuards.playerSparesPerson(near.entry.person)) return ROAD_SPARED;"`). No fight, or the
+(`roadStrike.js:"if (cityGuards.playerSparesPerson(near.entry.person))"`). No fight, or the
 protection off, and a blow at a traveller is DFU's one-hit civilian. AUDIT FB1025i D2: a stood traveller (LW7b) another
 hand cut down - a beast, a peer, an ally - is KILLED, never the player's slain (no report): the pool's death door names
 whose hand (`exteriorFoes.js` `killedBy`, the watch pool's own word) and `roadStands.js` slays on the player's kill

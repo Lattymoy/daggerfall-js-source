@@ -502,8 +502,8 @@
   {
     "name": "WW7-9-passage-across-refused",
     "file": "src/scenes/livingWorld/livingLanes.js",
-    "old": "(livingSide(to) === livingSide(town) || !!l.cross)",
-    "new": "(livingSide(to) === livingSide(town))",
+    "old": "            return w && to && (livingSide(to) === livingSide(town) || !!l.cross)",
+    "new": "            return w && to && livingSide(to) === livingSide(town)",
     "tests": [
       "test/world/worldWide/ww7_cross.test.js"
     ],

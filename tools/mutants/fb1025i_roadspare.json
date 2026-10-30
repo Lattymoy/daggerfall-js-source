@@ -2,8 +2,8 @@
   {
     "name": "ROAD-SPARE-unasked",
     "file": "src/scenes/livingWorld/roadStrike.js",
-    "old": "    if (cityGuards.playerSparesPerson(near.entry.person)) return ROAD_SPARED;",
-    "new": "",
+    "old": "    if (cityGuards.playerSparesPerson(near.entry.person)) return ROAD_SPARED; // ROAD-SPARE: the street's law, on the road",
+    "new": "    // ROAD-SPARE: the street's law, on the road",
     "tests": [
       "test/systems/livingWorld/fb1025i_roadspare.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "ROAD-SPARE-spared-as-nobody",
     "file": "src/scenes/livingWorld/roadStrike.js",
-    "old": "return ROAD_SPARED;   // ROAD-SPARE",
-    "new": "return false;   // ROAD-SPARE",
+    "old": "    if (cityGuards.playerSparesPerson(near.entry.person)) return ROAD_SPARED; // ROAD-SPARE: the street's law, on the road",
+    "new": "    if (cityGuards.playerSparesPerson(near.entry.person)) return false; // ROAD-SPARE: the street's law, on the road",
     "tests": [
       "test/systems/livingWorld/fb1025i_roadspare.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "ROAD-SPARE-every-blow-spared",
     "file": "src/scenes/livingWorld/roadStrike.js",
-    "old": "    if (cityGuards.playerSparesPerson(near.entry.person)) return ROAD_SPARED;",
-    "new": "    if (near) return ROAD_SPARED;",
+    "old": "    if (cityGuards.playerSparesPerson(near.entry.person)) return ROAD_SPARED; // ROAD-SPARE: the street's law, on the road",
+    "new": "    if (near) return ROAD_SPARED; // ROAD-SPARE: the street's law, on the road",
     "tests": [
       "test/systems/livingWorld/fb1025i_roadspare.test.js"
     ],

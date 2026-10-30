@@ -272,8 +272,8 @@
   {
     "name": "LW5b-host-far",
     "file": "src/scenes/livingWorld/livingLanes.js",
-    "old": "to = townOfPort(l.a.id === id ? l.b.id : l.a.id);",
-    "new": "to = townOfPort(id);",
+    "old": "              to = townOfPort(l.a.id === id ? l.b.id : l.a.id);",
+    "new": "              to = townOfPort(id);",
     "tests": [
       "test/systems/livingWorld/lw5b_sea.test.js"
     ]

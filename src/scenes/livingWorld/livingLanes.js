@@ -14,7 +14,7 @@
 import { packetsAt } from '../../systems/naval/seaLanes.js';
 import { portPackets } from '../../systems/livingWorld/portCrews.js';
 import { portIdOf } from '../../world/worldWide/worldPorts.js';
-import { livingSide, LIVING_SIDES } from './livingIndex.js';   // WW7-7: a trip keeps to its own side of the Bay's edge
+import { livingSide, LIVING_SIDES } from './livingIndex.js'; // WW7-7: a trip keeps to its own side of the Bay's edge
 
 /**
  * @param {{ lanes: () => any[], way: (lane: any) => any, townOfPort: (id: number) => any,
@@ -30,15 +30,26 @@ export function createLivingLanes({ lanes, way, townOfPort, sailorsOf, generatio
   /** @type {Map<number, { packets: any[], sailors: any[] }>} */ const berths = new Map();
   /** The world's lanes now - every book dropped when they or the places moved. */
   const fresh = () => {
-    const n = lanes(), g = generation();
-    if (n !== net || g !== gen) { net = n; gen = g; counts.clear(); from.clear(); berths.clear(); }
+    const n = lanes(),
+      g = generation();
+    if (n !== net || g !== gen) {
+      net = n;
+      gen = g;
+      counts.clear();
+      from.clear();
+      berths.clear();
+    }
     return n;
   };
   /** How many packets ply `lane` (systems/naval/seaLanes.js packetsAt - none where it has no way). */
   const count = (lane) => {
     fresh();
     let n = counts.get(lane.key);
-    if (n === undefined) { const w = way(lane); n = w ? packetsAt(lane, w, 0).length : 0; counts.set(lane.key, n); }
+    if (n === undefined) {
+      const w = way(lane);
+      n = w ? packetsAt(lane, w, 0).length : 0;
+      counts.set(lane.key, n);
+    }
     return n;
   };
   return {
@@ -53,12 +64,17 @@ export function createLivingLanes({ lanes, way, townOfPort, sailorsOf, generatio
       const n = fresh();
       let got = from.get(town.mapId);
       if (!got) {
-        const id = portIdOf(town);   // WW3: a port's one number - the Bay's masked id, the world's key past it
-        got = n.filter((l) => l.a.id === id || l.b.id === id).flatMap((l) => {
-          const w = way(l), to = townOfPort(l.a.id === id ? l.b.id : l.a.id);
-          const far = !!l.cross || livingSide(town) === LIVING_SIDES.beyond;   // WW7-11: past the Bay or across its edge - a passage of more cycles than one
-          return w && to && (livingSide(to) === livingSide(town) || !!l.cross) ? [{ to, len: w.len, key: l.key, ...(far ? { far: true } : {}) }] : [];   // WW7-7: past the Bay as on it - a lane to a port of its own side; WW7-9: or one across the edge
-        });
+        const id = portIdOf(town); // WW3: a port's one number - the Bay's masked id, the world's key past it
+        got = n
+          .filter((l) => l.a.id === id || l.b.id === id)
+          .flatMap((l) => {
+            const w = way(l),
+              to = townOfPort(l.a.id === id ? l.b.id : l.a.id);
+            const far = !!l.cross || livingSide(town) === LIVING_SIDES.beyond; // WW7-11: past the Bay or across its edge - a passage of more cycles than one
+            return w && to && (livingSide(to) === livingSide(town) || !!l.cross)
+              ? [{ to, len: w.len, key: l.key, ...(far ? { far: true } : {}) }]
+              : []; // WW7-7: past the Bay as on it - a lane to a port of its own side; WW7-9: or one across the edge
+          });
         from.set(town.mapId, got);
       }
       return got;
@@ -67,7 +83,10 @@ export function createLivingLanes({ lanes, way, townOfPort, sailorsOf, generatio
     berths(portId) {
       const n = fresh();
       let book = berths.get(portId);
-      if (!book) { book = { packets: portPackets(n, portId, count), sailors: sailorsOf(portId) }; berths.set(portId, book); }
+      if (!book) {
+        book = { packets: portPackets(n, portId, count), sailors: sailorsOf(portId) };
+        berths.set(portId, book);
+      }
       return book;
     },
   };
