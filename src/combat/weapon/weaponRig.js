@@ -36,7 +36,7 @@ import { ownWerewolfSkin } from '../../systems/ownGlyphs.js';   // SHADOW-FANG: 
 import { ARMOR_ENUM } from '../enemyEquipment.js';   // MW-D32
 import { loadFpsWeaponArt, drawFpsWeapon, fpsWeaponQuad, weaponTypeForItem, WEAPON_TYPES, fpLightingOn, WEAPON_FILE, plainWeaponType, isGunType, isPistoletType } from '../fpsWeapon.js';
 import { isHandWraps } from '../../characters/handWrapsIds.js';   // HAND-WRAPS: the fists' weapon
-import { spriteGlow, meshGlow } from '../../systems/weaponGlow.js';   // WEAPON-GLOW1: the held weapon's element, as each hand shows it
+import { spriteGlow, meshGlow, fistGlow } from '../../systems/weaponGlow.js';   // WEAPON-GLOW1: the held weapon's element, as each hand shows it
 import { loadThunderlockArt } from '../thunderlockArt.js';
 import { THUNDERLOCK_NUM_FRAMES } from '../../characters/weaponStates.js';   // THUNDERLOCK-ART2's audit: the cycle's length, never a literal six
 import { loadPistoletArt } from '../gun/pistoletArt.js';   // PISTOLET: the second gun's strip
@@ -918,11 +918,11 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   // was asked of: a hand changed later in the frame is asked again, never handed the last weapon's glow (or its sheet).
   let heldGlow = null, heldFor = null;
   const heldNow = () => playerWeapon.weapon ?? playerWeapon.wraps ?? null;   // HAND-WRAPS: a bare fist glows with its wraps
-  const askHeld = () => { heldFor = heldNow(); heldGlow = spriteGlow(heldFor); };
+  const askHeld = () => { heldFor = heldNow(); heldGlow = heldFor ? spriteGlow(heldFor) : fistGlow(); };   // ARMORY-FISTS: a bare fist the kit's weapon piece
   const glowOf = (item) => (item && item === heldFor ? heldGlow : spriteGlow(item));
   const heldGlowNow = () => { if (heldNow() !== heldFor) askHeld(); return heldGlow; };
   /** HAND-WRAPS (AUDIT C): a hand's glow - its weapon's, else the wraps its fist wears (the hand in use with none named). */
-  const handGlowOf = (hand) => { const item = hand ? playerWeapon.handItem(hand) : playerWeapon.weapon; if (item) return glowOf(item); const w = hand ? playerWeapon.wrapsOf(hand) : playerWeapon.wraps; return w ? glowOf(w) : null; };
+  const handGlowOf = (hand) => { const item = hand ? playerWeapon.handItem(hand) : playerWeapon.weapon; if (item) return glowOf(item); const w = hand ? playerWeapon.wrapsOf(hand) : playerWeapon.wraps; return w ? glowOf(w) : fistGlow(); };   // ARMORY-FISTS
   /** HAND-WRAPS (AUDIT C2): the Morrowind hands' one glow - the first pair's of the right fist, then the left, with one. */
   const wrapsMeshGlow = () => { for (const h of ['R', 'L']) { const w = playerWeapon.wrapsOf(h); const g = w ? meshGlow(w) : null; if (g) return g; } return null; };
   const heldType = (item) => (glowOf(item) ? plainWeaponType(weaponTypeForItem(item)) : weaponTypeForItem(item));
@@ -2026,7 +2026,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         // left blade its own
         fpArm.setWeaponGlow?.(meshGlow(armItem), armItem);
         fpArm.setOffWeaponGlow?.(offItem ? meshGlow(offItem) : null, offItem);
-        fpArm.setHandGlow?.(wrapsMeshGlow());   // HAND-WRAPS: the fists wear the wraps' glow (bible/05-Combat/Hand-Wraps.md)
+        fpArm.setHandGlow?.(wrapsMeshGlow() ?? (armItem ? null : fistGlow()));   // HAND-WRAPS: the fists wear the wraps' glow (bible/05-Combat/Hand-Wraps.md); ARMORY-FISTS: bare, the kit's weapon piece
         // MW-D32: THE BODY FOLLOWS THE EQUIP TABLE. The same per-frame
         // read that swaps the weapon now hands the rig its worn list;
         // setWorn's fast path is one key compare, and a change - a

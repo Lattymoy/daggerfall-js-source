@@ -160,7 +160,7 @@ test('AUDIT TAMRIEL-WIDE B4/C7: /tp <x> <y> takes a pixel of the world\'s grid, 
   const help = staffHelpLines();
   // AUDIT TAMRIEL-WIDE II A5: the place's line says what the search reaches - every Bay place, the named ones past it
   assert.ok(help.includes('/tp <place> - to a named place: any on the Bay, past it a city or town the map names'), help.join(' | '));
-  assert.equal(help.length, 10);   // PIN MOVED (STAFF-PULL, #1389): main's /tpa line joined the list
+  assert.equal(help.length, 11);   // PIN MOVED (STAFF-PULL, #1389): main's /tpa line joined the list; PIN MOVED (GLOW-SET): and /glow's
   assert.ok(help.includes('/tpa <player> - bring them to you (admins and Shadow Fang)'), 'STAFF-PULL\'s line kept beside the place\'s');
   assert.ok(help.includes('/tp <x> <y> - to a map pixel') && !help.some((l) => /0-999/.test(l)), 'the help names no Bay bound');
   assert.match(src('src/scenes/world.js'), /const staffCmd = isStaffT\(staffGlyphs\(\)\) \? \(parseDragonCommand\(text\) \?\? parseStaffLine\(/, 'the host reads the world\'s grammar (after DRAGON-RIDE\'s /dragon)');
