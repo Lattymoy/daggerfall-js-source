@@ -1,0 +1,12 @@
+[
+  {"name": "STAGE5-no-art-spawns", "file": "src/systems/pve/pveBestiary.js", "old": "  if (!hasArt(r.species)) return 'unavailable';\n", "new": "", "tests": ["test/systems/pve/pve_bestiary.test.js"]},
+  {"name": "STAGE5-region-ignored", "file": "src/systems/pve/pveBestiary.js", "old": "(region != null ? r.regions?.[region] : undefined) ?? r.provinces", "new": "r.provinces", "tests": ["test/systems/pve/pve_bestiary.test.js"]},
+  {"name": "STAGE5-dungeon-unchecked", "file": "src/systems/pve/pveBestiary.js", "old": "{ if (!r.dungeons?.includes(dungeon)) return 'unavailable'; }", "new": "{ }", "tests": ["test/systems/pve/pve_bestiary.test.js"]},
+  {"name": "STAGE5-climate-unchecked", "file": "src/systems/pve/pveBestiary.js", "old": "  else if (!r.climates || (climate != null && !r.climates.includes(climate))) return 'unavailable';\n", "new": "", "tests": ["test/systems/pve/pve_bestiary.test.js"]},
+  {"name": "STAGE5-needs-ignored", "file": "src/systems/pve/pveBestiary.js", "old": "  if (r.needs?.length && !r.needs.every((n) => metSet.has(n))) return 'unavailable';\n", "new": "", "tests": ["test/systems/pve/pve_bestiary.test.js"]},
+  {"name": "STAGE5-faction-ignored", "file": "src/systems/pve/pveBestiary.js", "old": "  if (r.factions?.length && !r.factions.some((f) => held.has(f))) return 'unavailable';\n", "new": "", "tests": ["test/systems/pve/pve_bestiary.test.js"]},
+  {"name": "STAGE5-validator-lets-no-art", "file": "src/systems/pve/pveBestiary.js", "old": "  if (!hasArt(r?.species) && cats.some((c) => c !== 'unavailable')) out.push(`${r?.species} has no art and cannot spawn`);\n", "new": "", "tests": ["test/systems/pve/pve_bestiary.test.js"]},
+  {"name": "STAGE5-validator-lets-proposed-lead", "file": "src/systems/pve/pveBestiary.js", "old": "  if ((r?.lore === 'proposed' || r?.lore === 'requiresReview') && cats.some((c) => c === 'primary' || c === 'secondary')) out.push(`a ${r.lore} record may not be primary or secondary`);\n", "new": "", "tests": ["test/systems/pve/pve_bestiary.test.js"]},
+  {"name": "STAGE5-unsorted", "file": "src/systems/pve/pveBestiary.js", "old": "    .sort((a, b) => a.species.localeCompare(b.species));", "new": "    .sort((a, b) => b.species.localeCompare(a.species));", "tests": ["test/systems/pve/pve_bestiary.test.js"]},
+  {"name": "STAGE5-every-province-alike", "file": "src/systems/pve/pveBestiary.js", "old": "r.provinces[province ?? ''] ?? r.provinces[ALL]", "new": "r.provinces[ALL] ?? r.provinces[province ?? '']", "tests": ["test/systems/pve/pve_bestiary.test.js"]}
+]

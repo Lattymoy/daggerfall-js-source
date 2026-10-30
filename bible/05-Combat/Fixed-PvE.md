@@ -1,7 +1,7 @@
 # Fixed PvE - the world sets the foe (FIXED-PVE, 2026-10-28)
 
 The PvE overhaul replaces player-scaled foes with fixed ones: a foe's level, health and blow come from its own
-template, never from the player who meets it. This page holds Stages 2 to 4 of twelve: the data, the balance tools and how a creature meets a player. Nothing in the game
+template, never from the player who meets it. This page holds Stages 2 to 5 of twelve: the data, the balance tools, how a creature meets a player and where it lives. Nothing in the game
 reads it yet - `src/systems/pve/pveSwitch.js` `fixedPveOn` is off, and every foe stands as it does today. Daggerfall
 Unity has no templates: its monsters stand at their row and its class foes at the player's level
 (`EnemyEntity.SetEnemyCareer`). A departure: Ledger A (FIXED-PVE).
@@ -16,6 +16,7 @@ Unity has no templates: its monsters stand at their row and its class foes at th
 | Ability | `pveAbilities.js` | Abilities on systems the game has: tactics gap closers, boss traits, a body's classic spell list, heals |
 | Disposition | `pveDisposition.js` | 7 states, 5 wildlife ways, the services a peaceful creature offers |
 | Standing | `pveStanding.js` | Stage 4: the state a creature meets a player in, what a blow on it costs, the services it offers (section 6) |
+| Bestiary | `pveBestiary.js` | Stage 5: where each species lives, by province, region, climate, dungeon type, faction and need (section 7) |
 | Template | `pveTemplates.js` | One gameplay variant: species, level 1-45, category, 1-2 roles, abilities, disposition, faction, kit metal |
 
 ## 2. The numbers
@@ -91,3 +92,18 @@ nothing - so farming the peaceful never beats hunting the hostile. A service nee
 standing it asks (`SERVICE_REP`: trade 0, quest 10, train 20, hire 30). A group marked `community` holds no member that
 starts hostile; the first is the Orc Stronghold. Daggerfall Unity's monsters are all hostile and its people all peaceful.
 The tests: `test/systems/pve/pve_standing.test.js`.
+
+## 7. Stage 5: where a species lives (2026-10-30)
+
+`pveBestiary.js` holds one record a species, still behind the switch. A record says how the species stands in each of the
+nine provinces (`world/tamriel/tamrielGeography.js`) or a game region: primary 1, secondary 0.4, localized 0.6,
+conditional 0.3, exceptional 0.02 of a spawn table, or unavailable. Outdoors it lives only in its climates
+(`formats/mapsTables.js` CLIMATES); in a dungeon only in its dungeon types (`formats/mapsFile.js` DUNGEON_TYPES). A need
+(night, an incursion) or a faction's presence must be met. So the orcs are primary in Orsinium (region 27), secondary in
+High Rock and Skyrim, conditional elsewhere, and absent where no clan holds the place; a werewolf walks only by night.
+
+The placements are a first pass from the spec's matrix and the climates each body suits. A record is established where
+Daggerfall names it (Orsinium, a crypt, a harpy nest), else inferred; a proposed one may not be primary or secondary. A species the spec names with no art keeps a record and spawns
+nowhere. `regionalSpecies` and `regionalTemplates` read the place alone, sorted by key, so every player gets the same
+list. Daggerfall Unity picks a foe from a climate's or a dungeon's encounter table, with no provinces and no factions.
+The tests: `test/systems/pve/pve_bestiary.test.js`.

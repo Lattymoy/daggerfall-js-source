@@ -850,6 +850,7 @@ const HARDCODED = {
   // FIXED-PVE stage 2 (2026-10-28): the templates' and species' proper names and the validator's reasons (a
   // developer's) - the switch is off and no screen shows them; routing them through t() is the stage that shows a name.
   'src/systems/pve/pveAbilities.js': 4,
+  'src/systems/pve/pveBestiary.js': 13,   // stage 5: the bestiary's notes and its validator's lines - a planner's, behind the switch
   'src/systems/pve/pveBuilds.js': 7,   // stage 3: the reference builds' names and notes, a planner's
   'src/systems/pve/pveProfile.js': 1,
   'src/systems/pve/pveCategories.js': 1,
