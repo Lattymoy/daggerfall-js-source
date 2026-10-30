@@ -2049,6 +2049,11 @@
   "tr": "a8b493a5f4f4",
   "by": "claude-in-session"
  },
+ "account.refusal.noLogo": {
+  "en": "ea92e7a4ca08",
+  "tr": "b30bfde9f8d1",
+  "by": "claude-in-session"
+ },
  "account.refusal.noMember": {
   "en": "0cf25f508548",
   "tr": "043fd028303b",

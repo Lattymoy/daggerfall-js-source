@@ -409,6 +409,7 @@ account.refusal.noInsignia,"仲買人はもうそれを売っていません。�
 account.refusal.noInvite,"その招待はもう有効ではありません。"
 account.refusal.noLetter,"その手紙はもう郵便受けにありません。"
 account.refusal.noLineage,"レルムにはまだその一族の記録がありません。一度セーブしてから、もう一度お試しください。"
+account.refusal.noLogo,"そのロゴは現在表示されていません。"
 account.refusal.noMember,"そのメンバーはもうギルドにいません。"
 account.refusal.noNameAs,"アカウントサービスはその名前の選択肢を知りません。ゲームの更新が必要かもしれません。"
 account.refusal.noNote,"その貼り紙はもう掲示板にありません。"

@@ -738,6 +738,7 @@ const REFUSAL_WORDS = {
   'logo-file': () => t('account.refusal.logoFile', 'That file is too large. Choose a picture under 8 MB.'),
   'logo-soon': () => t('account.refusal.logoSoon', 'A guild can send one logo every {min} minutes. Try again soon.', { min: GUILD_LOGO_GAP_S / 60 }),
   'logo-none': () => t('account.refusal.logoNone', 'No logo is under review.'),
+  'no-logo': () => t('account.refusal.noLogo', 'That logo is not shown now.'),   // GUILD-SHOP: a picture under no review and worn by no guild
   'logo-bytes': () => t('account.refusal.logoBytes', 'That picture is too large. A logo is at most {kb} KB.', { kb: GUILD_LOGO_MAX_BYTES / 1024 }),
   'logo-type': () => t('account.refusal.logoType', 'A logo must be a PNG or WebP picture.'),
   'logo-square': () => t('account.refusal.logoSquare', 'A logo must be square.'),

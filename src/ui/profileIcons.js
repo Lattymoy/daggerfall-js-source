@@ -89,7 +89,7 @@ let _gradientId = 0;
  * @param {any} doc @param {unknown} key @param {string} [cls] @param {number} [size]
  */
 export function profileIconNode(doc, key, cls = 'px-icon', size = 64, { arms = undefined } = {}) {
-  if (key === 'guildcrest') return guildCrestNode(doc, cls, size, arms === undefined ? ownGuildArms() : arms);   // GUILD-SHOP
+  if (key === 'guildcrest') return guildCrestIcon(doc, cls, size, arms === undefined ? ownGuildArms() : arms);   // GUILD-SHOP
   const art = typeof key === 'string' && Object.hasOwn(ICON_ART, key) ? ICON_ART[/** @type {keyof typeof ICON_ART} */ (key)] : null;
   if (!art || typeof doc?.createElementNS !== 'function') return null;
   const node = (/** @type {string} */ tag, /** @type {Record<string, any>} */ attrs = {}) => {
@@ -116,7 +116,7 @@ const PLAIN_SHIELD = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 1
  * logo }`, the wearer's guild's (net/guild/guildArmsBook.js), or null for a plain shield. Null where SVG cannot be made.
  * @param {any} doc @param {string} cls @param {number} size @param {any} arms
  */
-export function guildCrestNode(doc, cls, size, arms) {
+export function guildCrestIcon(doc, cls, size, arms) {
   if (typeof doc?.createElementNS !== 'function') return null;
   const node = (/** @type {string} */ tag, /** @type {Record<string, any>} */ attrs = {}) => {
     const n = doc.createElementNS(SVG_NS, tag);
