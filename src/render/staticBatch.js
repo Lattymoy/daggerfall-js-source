@@ -19,6 +19,7 @@
 // ranges by texture into the shape `renderer.createMesh` takes.
 
 import { boundsOf, boundsSteps } from './bounds.js';   // PERF-EXT23: the spheres createMesh takes, measured in the merge's own slices - a leaf, no GL
+import { apertureSteps } from './windowApertures.js';   // WL1: a window picture's glass, tile by tile, measured in the same slices - a leaf
 
 /** The rotation part of a TRS matrix applied to a normal. The block
  *  matrices are rotations and translations (rmbLayout's trs, scale 1),
@@ -43,7 +44,7 @@ function det3(m) {
  * result does not matter, rotateNormal renormalises) - or null when the
  * columns are one length (rotation and uniform scale: the matrix itself
  * is exact once renormalised). A world-data model's XScale/YScale/ZScale
- * (Detailed Ships' ropes and railings) is the case: Unity lights it
+ * (Warm Ashes' small raid, a town pack's stretched rafters) is the case: Unity lights it
  * through the inverse transpose, as it does World of Daggerfall's rocks.
  */
 export function unevenScaleNormalMatrix(m) {
@@ -122,13 +123,14 @@ export function shadowCells(positions, indices, size) {
 export const SHADOW_CELL_SIZE = 16;
 
 export class StaticBatchBuilder {
-  /** @param {{ shadowCell?: number, pieces?: boolean }} [opts] shadowCell: LA-AUDIT A1's cell side; 0 (the default)
+  /** @param {{ shadowCell?: number, pieces?: boolean, windows?: ((archive: number, record: number) => boolean) | null }} [opts] shadowCell: LA-AUDIT A1's cell side; 0 (the default)
    *  builds no cells. pieces: RW1 - every merged sub-mesh also carries one sphere per model that went into it
    *  (`pieces`, [cx, cy, cz, r] each), so a window's glass measured on the screen is that model's, not the whole batch's
    *  (render/realWindows.js: the view out is cropped to the glass a frame met). Off by default: a city pixel's batch
    *  never measures them. */
-  constructor({ shadowCell = 0, pieces = false } = {}) {
+  constructor({ shadowCell = 0, pieces = false, windows = null } = {}) {
     this.pieces = !!pieces;
+    this.windows = windows;   // WL1: (archive, record) => may this picture hold glass - its group's apertures are measured in the merge
     this.chunks = [];        // [{positions, normals, uvs, base}] one per model, already transformed
     this.groups = new Map(); // resolved key -> [Uint32Array index runs, already offset by base]
     this.vertexCount = 0;
@@ -246,6 +248,7 @@ export class StaticBatchBuilder {
         runs.forEach((run, i) => pieces.set(boundsOf(positions, run), i * 4));
         sub.pieces = pieces;
       }
+      if (this.windows?.(archive, record)) sub.apertures = yield* apertureSteps(positions, normals, uvs, indices, start, at - start);   // WL1: renderer.createMesh takes them as they are
       subMeshes.push(sub);
       if (withBounds) { subs.push(boundsOf(positions, indices, start, at - start)); yield; }
     }

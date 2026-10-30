@@ -47,7 +47,7 @@ function host({ online = true, relay = true, realm = false, stake = null }) {
       cardStakes: realm ? { goldOk: () => true, purse: () => 1000, elsewhere: () => [], voidable: () => [], owed: () => [], seated: () => {}, recover: async () => {}, claim: async () => {}, stake: async (q) => { asked.push(q); return stake ? stake(q) : { ok: true, stake: 'ORDER', id: 'abcdef0123456789abcd' }; } } : null,
     },
     say: (s) => said.push(s), cam: { yaw: 0, pitch: 0, pos: null },
-    getNameBankOfRegion: () => 0, residentName: (seed, bank, g) => `R${seed}:${g}`,
+    getNameBankOfRegion: () => 0, seededPersonName: (seed, bank, g) => `R${seed}:${g}`,   // REGION-NAMES: PIN MOVED - the regulars named through personNames.js
     stakesFor: sess.stakesFor, buyInRange: sess.buyInRange, goldAmount: court.goldAmount,
     holdCursor, renderer: {},
     createCardTableDraw: () => ({ draw() {}, destroy() {} }),

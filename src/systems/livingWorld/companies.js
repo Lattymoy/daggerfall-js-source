@@ -55,16 +55,27 @@ const DEALS = new WeakMap();
 
 /**
  * THE COMPANIES of a town's roster - each `{ key, places, name }`, `places` the roster's own entries (the first leads its
- * trip). A town of one adventurer keeps none.
- * @param {any[]} roster @returns {{ key: string, places: any[], name: string }[]}
+ * trip). A town of one adventurer keeps none. LW-WIDE: the divers' after them, `wide`.
+ * @param {any[]} roster @returns {{ key: string, places: any[], name: string, wide?: boolean }[]}
  */
 export function companiesOf(roster) {
   let got = DEALS.get(roster);
   if (got) return got;
   const advs = roster.filter((r) => r.job === 'adventurer').sort((a, b) => a.slot - b.slot);
+  got = [];
+  // LW-WIDE: the roster's first ranks dealt as they always were, then its divers among themselves (`wide`)
+  const from = /** @type {any} */ (roster).wideFrom ?? Infinity;
+  dealCompanies(advs.filter((r) => r.slot < from), got, false);
+  dealCompanies(advs.filter((r) => r.slot >= from), got, true);
+  DEALS.set(roster, got);
+  return got;
+}
+
+/** The deal of one rank's adventurers (slot order) onto `got`, each company `wide` where it is the divers'.
+ *  @param {any[]} advs @param {{ key: string, places: any[], name: string, wide?: boolean }[]} got @param {boolean} wide */
+function dealCompanies(advs, got, wide) {
   const max = advs.length >= COMPANY_CITY_ADVENTURERS ? COMPANY_CITY_MAX : COMPANY_SIZE[1];
   const left = [...advs];
-  got = [];
   while (left.length >= 2) {
     const first = /** @type {any} */ (left.shift());
     const size = Math.min(left.length + 1, rollInt(lwRng(first.town >>> 0, first.slot, COMP), COMPANY_SIZE[0], max));
@@ -75,10 +86,8 @@ export function companiesOf(roster) {
       places.push(left.splice(i >= 0 ? i : 0, 1)[0]);
     }
     const key = `C${first.town >>> 0}.${got.length}`;
-    got.push({ key, places, name: companyName(key, first.name, '') });
+    got.push({ key, places, name: companyName(key, first.name, ''), ...(wide ? { wide: true } : {}) });
   }
-  DEALS.set(roster, got);
-  return got;
 }
 
 /** A company's name off its key: "The <word> Company", "<beasts> of <town>", or "<first>'s company".

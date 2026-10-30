@@ -14,7 +14,8 @@ import { resetQuickLoot } from '../../src/systems/quickLoot.js';
 import { setUiSkin } from '../../src/systems/uiSkin.js';
 import { _resetForTests as resetPrefs } from '../../src/systems/uiPrefs.js';
 import { staticNpcName } from '../../src/characters/staticNpc.js';
-import { BANK_TYPES, GENDERS } from '../../src/characters/nameHelper.js';
+import { BANK_TYPES, GENDERS, fullName } from '../../src/characters/nameHelper.js';
+import { personName } from '../../src/characters/personNames.js';
 import { createAnimalAmbience } from '../../src/systems/animalAmbience.js';
 import { srand, rand, getSeed } from '../../src/formats/dfRandom.js';
 import { SOUND } from '../../src/systems/soundClips.js';
@@ -50,11 +51,16 @@ const teardown = () => { destroyWorldPlaque(); resetPrefs(); resetQuickLoot(); }
 
 test('CAT-MEOW: the plaque names the person and leaves the classic stream where it found it', () => {
   setup();
+  // REGION-NAMES: PIN MOVED - DFU's draw beneath (Tristastyr Moorton), the person named off it on the plaque
+  srand(TRISTASTYR.nameSeed);
+  assert.equal(fullName(BANK_TYPES.Breton, GENDERS.Male), 'Tristastyr Moorton', 'DFU\'s own draw');
+  srand(TRISTASTYR.nameSeed);
+  const want = personName(BANK_TYPES.Breton, GENDERS.Male);
   srand(777);
   const before = getSeed();
   const named = { n: 0 };
   const f = hoverPerson(TRISTASTYR, named);
-  assert.equal(f?.title, 'Tristastyr Moorton', 'DisplayName answered the plaque');
+  assert.equal(f?.title, want, 'DisplayName answered the plaque');
   assert.equal(named.n, 1);
   assert.equal(getSeed(), before, 'the name\'s srand and draws are put back');
   // the field's own number: the stream DisplayName leaves behind draws 38 next, under the animals' roll

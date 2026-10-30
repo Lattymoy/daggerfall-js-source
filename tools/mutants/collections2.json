@@ -138,8 +138,8 @@
   {
     "name": "C2-the-wrong-press-for-a-kind",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": "{ title: 'equip', aura: 'wearAura', icon: 'wearIcon', glyph: 'toggleGlyph' }",
-    "new": "{ title: 'equip', aura: 'wearIcon', icon: 'wearAura', glyph: 'toggleGlyph' }",
+    "old": "{ title: 'equip', aura: 'wearAura', armory: 'wearArmory', icon: 'wearIcon', glyph: 'toggleGlyph' }",
+    "new": "{ title: 'equip', aura: 'wearIcon', armory: 'wearArmory', icon: 'wearAura', glyph: 'toggleGlyph' }",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -294,8 +294,8 @@
   {
     "name": "C2A-a-press-while-busy",
     "file": "src/ui/collections/wardrobePart.js",
-    "old": "  b.onclick = () => { if (flow.busy) return; _noteKind = e.kind; Promise.resolve(flow[press](e.key)).catch(() => {}); };",
-    "new": "  b.onclick = () => { _noteKind = e.kind; Promise.resolve(flow[press](e.key)).catch(() => {}); };",
+    "old": "  b.onclick = () => { if (flow.busy) return; _noteKind = e.kind; Promise.resolve(e.kind === 'armory'",
+    "new": "  b.onclick = () => { _noteKind = e.kind; Promise.resolve(e.kind === 'armory'",
     "tests": [
       "test/ui/collections2.test.js"
     ]
@@ -493,8 +493,8 @@
   {
     "name": "C2A-the-glyph-door-without-honours",
     "file": "server-account/src/arena.js",
-    "old": ", '/v1/account/glyph', '/v1/account/icon']);",
-    "new": ", '/v1/account/icon']);",
+    "old": ", '/v1/account/glyph', '/v1/account/icon', '/v1/account/armory']);",
+    "new": ", '/v1/account/icon', '/v1/account/armory']);",
     "tests": [
       "test/net/arena/arena4_service.test.js"
     ]
@@ -502,8 +502,8 @@
   {
     "name": "C2A-the-icon-door-without-honours",
     "file": "server-account/src/arena.js",
-    "old": ", '/v1/account/glyph', '/v1/account/icon']);",
-    "new": ", '/v1/account/glyph']);",
+    "old": ", '/v1/account/glyph', '/v1/account/icon', '/v1/account/armory']);",
+    "new": ", '/v1/account/glyph', '/v1/account/armory']);",
     "tests": [
       "test/net/arena/arena4_service.test.js"
     ]

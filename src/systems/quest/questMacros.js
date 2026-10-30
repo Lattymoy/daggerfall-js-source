@@ -36,7 +36,8 @@ import { liveStat } from '../statMods.js';                       // M-X: %mad's 
 import { permanentSkillValue, SKILL_NAMES } from '../skills.js'; // M-X: %ski
 import { entityMaxEncumbrance, damageModifier, toHitModifier, hitPointsModifier, healingRateModifier } from '../../combat/formulas.js'; // M-X: %enc (FormulaHelper.MaxEncumbrance over LiveStrength); ATTRMACRO1: and the four DERIVED modifiers
 import { surname, getRandomNameBank } from '../../characters/nameHelper.js';   // M-X: %ln (E-fix: GetRandomNameBank)
-import { GENDERS, getNameBankOfRegion, fullName, getNameBank, getRandomFullName } from '../../characters/nameHelper.js';   // AUDIT 58: GetRandomFullName's one home
+import { GENDERS, getNameBankOfRegion, fullName, getNameBank } from '../../characters/nameHelper.js';
+import { personName, randomPersonName } from '../../characters/personNames.js';   // REGION-NAMES: %n %fn %mn, and AUDIT 58's GetRandomFullName draw
 
 // FactionRaces number -> race key (FactionFile.cs:609-624 through
 // RaceTemplate.GetRaceFromFactionRace; unmapped falls to Breton in
@@ -321,16 +322,16 @@ export function questMacroSource(quest) {
       const w = world();
       const bank = getNameBankOfRegion(w?.currentRegionIndex?.() ?? -1);
       const gender = randomRangeInclusive(0, 1) === 1 ? GENDERS.Female : GENDERS.Male;
-      return fullName(bank, gender);
+      return personName(bank, gender);
     },
     // %fn - seed uid; %mn - seed uid + 3457
     femaleName() {
       srand(quest.uid);
-      return fullName(getNameBankOfRegion(world()?.currentRegionIndex?.() ?? -1), GENDERS.Female);
+      return personName(getNameBankOfRegion(world()?.currentRegionIndex?.() ?? -1), GENDERS.Female);
     },
     maleName() {
       srand(quest.uid + 3457);
-      return fullName(getNameBankOfRegion(world()?.currentRegionIndex?.() ?? -1), GENDERS.Male);
+      return personName(getNameBankOfRegion(world()?.currentRegionIndex?.() ?? -1), GENDERS.Male);
     },
     // %kno - the quest faction's name, 'The ' trimmed for readability.
     // L10N3e: GetFactionData hands the name back in the player's
@@ -538,7 +539,7 @@ const HANDLERS = {
     if (!w) return null;
     // AUDIT 58: this arm IS MacroHelper.GetRandomFullName (:333-341),
     // now through its one home rather than a second copy of the body.
-    return getRandomFullName(w.currentRegionIndex?.() ?? -1);
+    return randomPersonName(getNameBankOfRegion(w.currentRegionIndex?.() ?? -1));
   },
   // %rt/%t: RegentTitle (MacroHelper.cs:644-650) DISCARDS
   // FindFactionByTypeAndRegion's bool and reads the out struct

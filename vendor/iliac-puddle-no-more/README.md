@@ -37,8 +37,8 @@ archive carries no licence text and no readme.**
   rounded to a power of two - which is why the mod restores the icon's
   aspect at run time) decoded at its first mip, every pixel the game
   samples. None is a classic record: `tools/iliacPuddleAssets.mjs`
-  measures each against every record of every TEXTURE file by the search
-  Detailed Ships' pictures went through, and refuses to write one a record
+  measures each against every record of every TEXTURE file
+  (`tools/lib/classicSource.mjs`), and refuses to write one a record
   covers.
 - `ItemTemplates.json` - the mod's seven item templates (9001-9007, the
   fish as items), the bundle's text verbatim (DW-E3).

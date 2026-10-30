@@ -9738,7 +9738,7 @@ changes to a placed piece.
   hangings), that stands doing nothing (no action, never a door), a flat but a marker, an acting flat or nature; found
   only there, a piece is "Dungeon furniture"; every place's names are numbered after the earlier places' (a room's
   first), so no room's name moves (`01-Overview/bugs/Field-Bugs-2026-10-05b.md`). DECOR-MODS (the same record, the town
-  mods' furnishings): and the pieces it stands in for what Beautiful Villages, Beautiful Cities and Detailed Ships place
+  mods' furnishings): and the pieces it stands in for what Beautiful Villages and Beautiful Cities place
   - 297, measured over their own blocks, a room's or a street's as the mods stand them, never the town's own structure -
   named and numbered after every place of Daggerfall's (`systems/decor/decorMods.js`), every one catalogued whatever is on and
   offered while the port stands it (AUDIT 05b A3: asked as the offer is made).
@@ -10307,6 +10307,9 @@ home's alone - they are about other players.
   town to measure in - and the decorator refuses a piece off it (`placeOk`: "Outside your lot - keep it within the
   marked edge.", "That is inside your house...", "That is another building's ground."); the lot's edge is MARKED while
   a piece is placed (four upright bands on the decal pass, `lot`).
+- **IC-BACKYARD** (2026-10-29): an Imperial City house's lot is the court behind it, turned with the house and opened
+  from its door; a house with no court of its own keeps its door's box (AUDIT TAMRIEL-WIDE A1 and II W1).
+  `03-World/Arena-Provinces.md` IC-BACKYARD.
 - **The service** (`decor.js` over `migrations/0039_home_yard.sql` - `home_decor.yard`): placed with `yard`, under
   its own cap and law (a yard piece moved stays a yard's); the room's list and cap are the room's own; the town's yards
   are read together at `/v1/homes/yards`, by any session.
@@ -13833,9 +13836,8 @@ read by the station, the popup's onService, the probe door and both popups' own 
 `ui/covenWindow.js`). `test/ui/stationrows.test.js`.
 
 **DECOR-MODFLATS ("Above #49 decorations stopped working. Most sprites decorations are invisable above this
-number").** The catalogue is read out of the world's own blocks, and the ships Detailed Ships lays in them carry its
-own flats (1210, 1230) and the DET flats the port stands in (10009 to 10027): named in id order, "Decoration 49"
-onward. The piece law's archive bound was 999, so none of them was ever a piece - no ghost drawn, and Place did
+number").** The catalogue is read out of the world's own blocks, and a mod's ships laid in them carried its own flats
+(1210, 1230) and the DET flats the port stands in (10009 to 10027): named in id order, "Decoration 49" onward. The piece law's archive bound was 999, so none of them was ever a piece - no ghost drawn, and Place did
 nothing. `DECOR_ARCHIVE_MAX` is 99,999 now (the account service reads the same law, and takes it at its deploy). And
 the panel's row pictures ask `ui/textureCanvas.js` loadIcon, which read its answer four turns after the classic file's
 read - a race a mod's picture, which has no classic file and decodes in its own time, could lose, the panel keeping the
@@ -14088,6 +14090,31 @@ law), and is out of this slice by Mac's choice. `/spawn` and `/killall` were lef
 foes are shared online, so both act on other players.
 
 `net/staffCommands.js` (pure); `test/net/staff1.test.js` (5); `tools/mutants/staff1.json` (16, all dead).
+
+AUDIT TAMRIEL-WIDE B4/C7 (2026-10-28; the owner: "ensure our future development isnt just Daggerfall anymore and is the
+entirety of tamriel"): the staff reach and see past the Bay. `/tp <x> <y>` takes a pixel of the world's grid, either
+sign, as `/pos` prints it (`worldPixelOk`). `/tp 2700 187` had answered "A map pixel is x 0-999, y 0-499.", and
+`/tp 1688 -488` had searched for a place of that name. `/tp <place>` searches the world's registry's places past the
+Bay after the Bay's own, in the order it always read them, so `/tp Solitude` finds the city. The flat map (Shift+N)
+finds a province's box over the continent's frame, 8 pixels apart (`staffFlatMapHost.js:"const COARSE = 8;"`), and
+draws it as it draws a Bay region. It had scanned the Bay's 1000 x 500 and drawn nothing.
+
+The grammar and the search are `scenes/staffTp.js`, read ahead of `net/staffCommands.js`. That file is in the relay's
+bundle (its `isStaff`), and this batch was written to leave the relay alone. The relay's copy still states the Bay's
+bound in its header and `STAFF_HELP_LINES`; the client's `/staff` drops it (`staffHelpLines`). The PR ships world284
+anyway, for B1, B2, B5 and E3 (AUDIT TAMRIEL-WIDE II A5), so folding the grammar back into `staffCommands.js` waits
+for no release now - it is left as a cleanup. Its place line now says what the search reaches: any place on the Bay,
+and past it the cities and towns the map names (the registry's listed places), not every place. Pinned:
+`test/world/worldWide/audit_tamrielwide_account.test.js` (4 of its 8, II A3/A4's with them), `tools/mutants/audit_tamrielwide_account.json`
+(13 of its 20), all dead. STAFF1's host pin and its `STAFF1-ungated` record read `parseStaffLine` now (PIN MOVED).
+
+STAFF-PULL (2026-10-28, with the PvP rework at world281; the owner: "tpa player so tp them to us"): `/tpa <player>`,
+and the Staff Panel's Bring to me, bring a player to where the staff member stands - an Admin's or Shadow Fang's alone,
+asked of the signed token by the relay (`server/src/staffTeleport.js` routeStaffPull); the player's game lands through
+`scenes/staffPullHost.js`. The `pull` carries the staff member's place as a staff destination (`net/staffTeleport.js`
+validStaffDestination), a pixel of the world's grid, so it reaches every province as `/tp` does; a pit past the Bay
+goes only to world284 or later (AUDIT TAMRIEL-WIDE III M1). No record had said so (III P3/T13). Pinned:
+`test/net/staffpull.test.js`, and a pull from Skyrim in `audit_tamrielwide_iii.test.js`.
 
 ## VOICE1 reverted (2026-09-28, Mac: "Do not merge voice chat. Please revert voice chat but keep other changes") - world124 again
 

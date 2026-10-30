@@ -38,9 +38,11 @@
 // ═════════════════════════════════════════════════════════════════════
 import { SIEGE_HIT, newFighter, refereeBlow, refereeCast, refereeStep } from '../siege/siegeRef.js';
 import { resetHealthShare } from '../siege/refereeHealthShare.js';
+import { pvpFlagCanDrop, pvpAggroLeft, pvpYoung, PVP_FLAG } from '../../systems/wild/pvpFlag.js';   // PVP-FLAG
+import { isVillain, villainAfter, villainClamp, villainKillPoints, VILLAIN } from '../../systems/wild/villainLaw.js';   // PVP-VILLAIN
 
 /** The zone referee's own numbers: how long a bar carried from another room stands (`mendMs` - SHARED-HEALTH: no longer a
- *  heal; the name is kept for its pins and the client's readout, which hides a fight this quiet); how long a killer has to pick a worn piece before the fall is signed without one; the party's truce
+ *  heal; the name is kept for its pins and the client's readout, which hides a fight this quiet); how long a fall waits to be signed (PVP-REWARD: no pick - the service rolls the piece; the wait lets the fallen's first dead frame lay its body); the party's truce
  *  (systems/wild/wildZone.js WILD_PARTY_TRUCE_MS, pinned equal - the hub holds it for the relay); how long a fallen stays down
  *  before its word that it stands in the zone raises it (the death screen's WILD_DEATH_HOLD_S, pinned equal - AUDIT INT9:
  *  it rose on its next word, where it fell, whole), and how long one away from the zone that long comes back whole; how
@@ -48,7 +50,7 @@ import { resetHealthShare } from '../siege/refereeHealthShare.js';
  *  respawn or a reconnect left its place stale for good - now it is believed, and the jumper waits); the most fighters
  *  and falls a room keeps; AUDIT FOE-KEEPS E2: how recent a fair player's blow names them the killer of a death the
  *  referee did not see (systems/wild/wildZone.js WILD_KILL_CREDIT_MS, pinned equal - "the player who brought you down"). */
-export const WILD_REF = Object.freeze({ mendMs: 30_000, pickMs: 60_000, truceMs: 10 * 60_000, riseMs: 120_000, jumpMs: 2_000, fightersMax: 200, fallsMax: 64, creditMs: 10_000 });
+export const WILD_REF = Object.freeze({ mendMs: 30_000, pickMs: 10_000, truceMs: 10 * 60_000, riseMs: 60_000, jumpMs: 2_000, fightersMax: 200, fallsMax: 64, creditMs: 10_000 });
 
 /** ZONE-GRACE (2026-10-26, the owner chose "Entry/rise grace"): safe passage's length (the owner's sixty seconds), and what
  *  an entry asks first - away from the zone this long, and no blow landed by or on the fighter this long. */
@@ -73,11 +75,11 @@ export function wildKin({ party = false, duel = false, guilds = null } = {}) {
 }
 
 /** A room's zone: its fighters by account, its falls waiting on a pick or a signature. */
-export const newWildRef = () => ({ fighters: new Map(), falls: new Map() });
+export const newWildRef = () => ({ fighters: new Map(), falls: new Map(), fights: new Map() });
 
 /**
  * A SOCKET'S WORD ON THE ZONE (`zone` - `z` true: it stands in the zone; false: it has left it): its fighter made or
- * kept (`id` its socket's id now, `lv` the Renown its token signs, `ci` its realm character), its place the pose it
+ * kept (`id` its socket's id now, `lv` the Renown its token signs, `cl` its character level, `ci` its realm character, `ed` its word that it walked in over the edge, `vl` the villain meter its token signs, `sf` its word that it stands in a settlement's safe streets), its place the pose it
  * stands at. A NEW fighter takes the vitality it CARRIES (`carry` - the hub's word on its last fight in another room:
  * `{ hp, max, down, downAt, at, heard }`, AUDIT INT9: a step into another cell was a fresh bar), unless that word is
  * older than WILD_REF.mendMs. A fighter down rises on its word that it stands in the zone again once WILD_REF.riseMs has
@@ -85,7 +87,7 @@ export const newWildRef = () => ({ fighters: new Map(), falls: new Map() });
  * sooner keeps its bar (AUDIT INT9: a word off and on was a heal). SHARED-HEALTH: a count started again waits for the player's report, which can lower it and never lift it.
  * Answers the fighter, or null (none made: a word off, a full room).
  */
-export function wildZone(st, sub, { id, lv = 1, ci = '', carry = null, died = false }, z, pose, now) {
+export function wildZone(st, sub, { id, lv = 1, cl = null, ci = '', carry = null, died = false, fl = null, ed = false, vl = 0, sf = false }, z, pose, now) {
   let x = st.fighters.get(sub);
   if (!x) {
     if (!z) return null;
@@ -96,20 +98,42 @@ export function wildZone(st, sub, { id, lv = 1, ci = '', carry = null, died = fa
     st.fighters.set(sub, x);
   } else if (z && !x.zone && carry && carry.at > x.outAt) takeCarry(x, carry, now);   // it fought in another room since it left this one
   x.id = id; if (ci) x.ci = ci;
-  if (z && x.down && now - x.downAt >= WILD_REF.riseMs) { x.f = newFighter(lv, now); x.down = false; x.struckAt = -Infinity; x.graceUntil = now + WILD_GRACE.ms; }   // ZONE-GRACE: a rise
+  if (Number.isSafeInteger(cl)) x.cl = cl;   // PVP-30: the character level its token signs
+  if (villainClamp(vl) > villainClamp(x.vi)) x.vi = villainClamp(vl);   // PVP-VILLAIN-KEEP: the meter its token signs, where it is the larger
+  // PVP-FLAG: a word with its flag - up at once, down only past the lock after its last fight; a word with none keeps it.
+  // PVP-30: never up under level 30
+  if (pvpYoung(x.cl)) x.flag = false;
+  else if (isVillain(x.vi)) x.flag = true;   // PVP-VILLAIN: a villain is always in aggro
+  else if (fl === 0 && pvpFlagCanDrop(Math.max(x.fightAt, x.struckAt), now)) x.flag = false;
+  else if (fl === 1 || x.flag === undefined) x.flag = true;
+  // PVP-DEATH (the PvP rework, 2026-10-29 - the owner: "when u die u need to take away player protection form ebing killed
+  // again", "they go to town in a safe zone when dead"): a rise, or an entry after a death, has no safe passage
+  const rose = z && x.down && now - x.downAt >= WILD_REF.riseMs;
+  if (rose) { x.f = newFighter(lv, now); x.down = false; x.struckAt = -Infinity; }
   if (z && !x.zone) {
     // SHARED-HEALTH: back after long away, the count starts again from the player's own health (its next report)
     if (now - x.outAt >= WILD_REF.riseMs && !x.down) { x.f.hp = x.f.max; x.struckAt = -Infinity; resetHealthShare(x.f, now); }
-    // ZONE-GRACE: an entry - away long enough, and out of every fight long enough. AUDIT PVP-EASE L3-6 (the owner: "Yes,
-    // every rise"): or a rise from a death the referee did not keep (a foe's - `died` on its way out, `dd` carried)
-    if (!x.down && x.diedAt > -Infinity) { x.graceUntil = Math.max(x.graceUntil, now + WILD_GRACE.ms); x.diedAt = -Infinity; }
-    else if (!x.down && now - x.outAt >= WILD_GRACE.awayMs && now - Math.max(x.fightAt, x.struckAt) >= WILD_GRACE.fightMs) x.graceUntil = Math.max(x.graceUntil, now + WILD_GRACE.ms);
+    // ZONE-GRACE: an entry - away long enough, and out of every fight long enough; never after a death (PVP-DEATH, above -
+    // a foe's death, `died` on its way out or `dd` carried, as well); PVP-EDGE: and only walked in over the edge (`ed`)
+    if (!x.down && x.diedAt > -Infinity) x.diedAt = -Infinity;
+    else if (!x.down && !rose && ed && now - x.outAt >= WILD_GRACE.awayMs && now - Math.max(x.fightAt, x.struckAt) >= WILD_GRACE.fightMs) x.graceUntil = Math.max(x.graceUntil, now + WILD_GRACE.ms);
     x.zoneAt = now;
   }
   if (!z && x.zone) x.outAt = now;
   if (!z && died && !x.down) x.diedAt = now;   // AUDIT PVP-EASE L3-6: a death the referee kept rises by its own law (above)
   x.zone = !!z;
+  x.streets = !!z && !!sf;   // PVP-SAFE-HIT: wildStreetsBar reads it
   return x;
+}
+
+/** PVP-SAFE-HIT (the owner: "Let them hit them jit ge that back in safezone"): a fighter in a settlement's safe streets
+ *  (`streets`, its own word) and no villain on the meter this room keeps strikes a villain alone, and nobody strikes it.
+ *  A villain's word on the streets shields nothing: the meter is the referee's. Answers why a blow is refused, or null.
+ *  @param {any} a the striker @param {any} t the struck */
+export function wildStreetsBar(a, t) {
+  if (t.streets && !isVillain(t.vi)) return 'streets';
+  if (a.streets && !isVillain(a.vi) && !isVillain(t.vi)) return 'streets';
+  return null;
 }
 
 /** A fighter takes the vitality it carries from another room (`carry` - wildCarry's word, kept by the hub), unless that word
@@ -121,6 +145,7 @@ export function wildZone(st, sub, { id, lv = 1, ci = '', carry = null, died = fa
 function takeCarry(x, carry, now) {
   if (!carry || !Number.isFinite(carry.at)) return;
   if (Number.isFinite(carry.fa)) x.fightAt = Math.max(x.fightAt, carry.fa);
+  if (Number.isSafeInteger(carry.vi)) x.vi = carry.vi;   // PVP-VILLAIN: the meter, of any age (it never decays)
   x.outAt = carry.in === 1 ? now : Math.max(x.outAt, carry.at);
   x.graceUntil = Number.isFinite(carry.gr) && carry.gr > now ? carry.gr : -Infinity;   // ZONE-GRACE: the safe passage it had there - or none
   if (Number.isFinite(carry.dd)) x.diedAt = Math.max(x.diedAt, carry.dd);
@@ -141,7 +166,7 @@ export function wildCarryOf(v) {
   if (!v || typeof v !== 'object' || !Number.isFinite(v.at) || !Number.isFinite(v.hp) || !Number.isFinite(v.max)) return null;
   const sea = v.sea && typeof v.sea === 'object' && Number.isFinite(v.sea.h) && Number.isFinite(v.sea.at) ? { h: Math.max(0, Math.min(1, v.sea.h)), at: v.sea.at } : null;
   const grace = Number.isFinite(v.gr) ? { gr: v.gr } : {};   // ZONE-GRACE
-  const pass = { ...(Number.isFinite(v.fa) ? { fa: v.fa } : {}), ...(v.in === 1 ? { in: 1 } : {}), ...(Number.isFinite(v.dd) ? { dd: v.dd } : {}), ...(typeof v.lr === 'string' && v.lr.length <= 96 ? { lr: v.lr } : {}) };   // AUDIT PVP-EASE L3-1 (`lr`, the last room: a foes frame's `rk` is a raid's, and the relay reads none - test/systems/raid2_raidsOnline.test.js)
+  const pass = { ...(Number.isFinite(v.fa) ? { fa: v.fa } : {}), ...(v.in === 1 ? { in: 1 } : {}), ...(Number.isFinite(v.dd) ? { dd: v.dd } : {}), ...(typeof v.lr === 'string' && v.lr.length <= 96 ? { lr: v.lr } : {}), ...(Number.isSafeInteger(v.vi) && v.vi > 0 ? { vi: Math.min(VILLAIN.max, v.vi) } : {}) };   // AUDIT PVP-EASE L3-1 (`lr`, the last room: a foes frame's `rk` is a raid's, and the relay reads none - test/systems/raid2_raidsOnline.test.js)
   return { hp: Math.max(0, Math.trunc(v.hp)), max: Math.max(1, Math.trunc(v.max)), down: v.down === true, downAt: Number.isFinite(v.downAt) ? v.downAt : 0, at: v.at, heard: v.heard === true, pvpAt: Number.isFinite(v.pvpAt) ? v.pvpAt : 0, rep: Number.isSafeInteger(v.rep) && v.rep >= 0 ? v.rep : 0, ...grace, ...pass, ...(sea ? { sea } : {}) };   // SHARED-HEALTH: `heard` - its count anchored to the player's health
 }
 
@@ -152,7 +177,7 @@ export const WILD_FALL_PREFIX = 'wildfall:';
 export function wildFallOf(v) {
   if (!v || typeof v !== 'object' || typeof v.r !== 'string' || typeof v.fallen !== 'string' || typeof v.killer !== 'string' || !Number.isFinite(v.at)) return null;
   return { r: v.r, fallen: v.fallen, fallenId: typeof v.fallenId === 'string' ? v.fallenId : '', ci: typeof v.ci === 'string' ? v.ci : '', killer: v.killer, killerId: typeof v.killerId === 'string' ? v.killerId : '', kc: typeof v.kc === 'string' ? v.kc : '', m: typeof v.m === 'string' ? v.m : '', at: v.at,
-    w: Number.isInteger(v.w) ? v.w : -1, wt: Array.isArray(v.wt) && v.wt.length === 2 ? [v.wt[0], v.wt[1]] : null, picked: v.picked === true };
+    w: Number.isInteger(v.w) ? v.w : -1, wt: Array.isArray(v.wt) && v.wt.length === 2 ? [v.wt[0], v.wt[1]] : null, picked: v.picked === true, vp: Number.isSafeInteger(v.vp) && v.vp > 0 ? Math.min(VILLAIN.max, v.vp) : 0 };
 }
 
 /** A FIGHTER'S SOCKET GONE from the room (no other of its account's left): out of the zone, and its place in a full room
@@ -172,7 +197,7 @@ export const wildCarry = (st, sub, now) => {
   const x = st.fighters.get(sub);
   if (!x) return null;
   const grace = x.graceUntil > now ? { gr: x.graceUntil } : {};
-  const pass = { ...(Number.isFinite(x.fightAt) ? { fa: x.fightAt } : {}), ...(x.zone ? { in: 1 } : {}), ...(x.diedAt > -Infinity ? { dd: x.diedAt } : {}) };
+  const pass = { ...(Number.isFinite(x.fightAt) ? { fa: x.fightAt } : {}), ...(x.zone ? { in: 1 } : {}), ...(x.diedAt > -Infinity ? { dd: x.diedAt } : {}), ...(x.vi > 0 ? { vi: x.vi } : {}) };   // PVP-VILLAIN: `vi`
   return { hp: Math.max(0, x.f.hp), max: x.f.max, down: x.down, downAt: Number.isFinite(x.downAt) ? x.downAt : 0, at: now, heard: x.f.share?.heard === true, pvpAt: x.f.share?.playerBlowAt ?? 0, rep: x.f.share?.report ?? 0, ...grace, ...pass };   // SHARED-HEALTH: its count's anchor, its no-heal window and its last report
 };
 /** AUDIT PVP-EASE L3-4 (the owner: "Any take ends passage"): a fighter that takes from a remains - its own or another's -
@@ -214,15 +239,19 @@ const mendUnheard = (x, now) => {
  * signed into its receipt, `m`). ZONE-GRACE: a striker under safe passage loses it (`graceEnded`), and a struck one under it
  * takes nothing (`why` 'grace'). Answers `{ ok, dealt, fell, fall, why, graceEnded? }`.
  * @param {any} st @param {string} by @param {string} to
- * @param {{ d?: number, r?: number, held?: any, wa?: any, kin?: boolean, rid?: string, room?: string }} o
+ * @param {{ d?: number, r?: number, held?: any, wa?: any, kin?: boolean, rid?: string, room?: string, el?: number|null }} o
  * @param {number} now
  */
-export function wildBlow(st, by, to, { d = 0, r = SIEGE_HIT.Melee, held = null, wa = null, kin = false, rid = '', room = '' } = {}, now) {
+export function wildBlow(st, by, to, { d = 0, r = SIEGE_HIT.Melee, held = null, wa = null, kin = false, rid = '', room = '', el = null } = {}, now) {
   const a = st.fighters.get(by), t = st.fighters.get(to);
   if (!a || !t || by === to) return { ok: false, dealt: 0, fell: false, fall: null, why: 'no-fighter' };
   if (!a.zone || !t.zone) return { ok: false, dealt: 0, fell: false, fall: null, why: 'zone' };
   if (a.down || t.down) return { ok: false, dealt: 0, fell: false, fall: null, why: 'down' };
   if (kin) return { ok: false, dealt: 0, fell: false, fall: null, why: 'kin' };
+  if (pvpYoung(a.cl) || pvpYoung(t.cl)) return { ok: false, dealt: 0, fell: false, fall: null, why: 'young' };   // PVP-30: under level 30 no player strikes or is struck
+  const streets = wildStreetsBar(a, t);   // PVP-SAFE-HIT: the safe streets
+  if (streets) return { ok: false, dealt: 0, fell: false, fall: null, why: streets };
+  if (!a.flag) return { ok: false, dealt: 0, fell: false, fall: null, why: 'unflagged' };   // PVP-FLAG: an unflagged striker touches no player - the struck one's flag never shields it
   if (now - a.jumpAt < WILD_REF.jumpMs) return { ok: false, dealt: 0, fell: false, fall: null, why: 'jump' };
   // ZONE-GRACE: my blow on a fair player ends my safe passage; theirs keeps them from it
   const graceEnded = a.graceUntil > now;
@@ -230,10 +259,11 @@ export function wildBlow(st, by, to, { d = 0, r = SIEGE_HIT.Melee, held = null, 
   if (t.graceUntil > now) return { ok: false, dealt: 0, fell: false, fall: null, why: 'grace', graceEnded };
   mendUnheard(a, now); mendUnheard(t, now);
   const res = r === SIEGE_HIT.Spell
-    ? refereeCast(a.f, t.f, { from: a.pose, at: t.pose, d }, now)
+    ? refereeCast(a.f, t.f, { from: a.pose, at: t.pose, d, el }, now)
     : refereeBlow(a.f, t.f, { from: a.pose, at: t.pose, held, d, r, wa }, now);
   if (!res.ok || !res.dealt) return { ok: res.ok, dealt: 0, fell: false, fall: null, why: res.why, graceEnded };
   t.struckAt = now; a.fightAt = now; t.fightAt = now;   // ZONE-GRACE: a fight, for an entry's ask
+  wildOpen(st, by, to, now);   // PVP-VILLAIN: who struck first
   t.by = { sub: by, at: now, room: typeof room === 'string' ? room : '' };   // AUDIT FOE-KEEPS E2: the last fair player's blow
   if (!res.fell) return { ok: true, dealt: res.dealt, fell: false, fall: null, why: null, graceEnded };
   const { fall, evicted } = fallOf(st, rid, to, t, by, a, room, now);
@@ -250,7 +280,9 @@ function fallOf(/** @type {any} */ st, /** @type {string} */ rid, /** @type {str
   t.fell = { r: rid, at: now, pose: t.pose ? { ...t.pose } : null };
   let evicted = null;
   if (st.falls.size >= WILD_REF.fallsMax) { evicted = st.falls.values().next().value; evicted.picked = true; st.falls.delete(evicted.r); }
-  const fall = { r: rid, fallen: to, fallenId: t.id, ci: t.ci, killer: by, killerId: a.id, kc: a.ci || '', m: typeof room === 'string' ? room : '', at: now, w: -1, wt: null, picked: false };   // SEA-BOUNTY: the killer's character and the room, for the receipt
+  // PVP-VILLAIN: the kill's points - none where the fallen struck its killer first (its party's: the relay's, wildVillainy)
+  const vp = villainKillPoints({ killer: a.cl ?? null, victim: t.cl ?? null, flagged: !!t.flag, defended: wildFirst(st, by, to, now) === to });
+  const fall = { r: rid, fallen: to, fallenId: t.id, ci: t.ci, killer: by, killerId: a.id, kc: a.ci || '', m: typeof room === 'string' ? room : '', at: now, w: -1, wt: null, picked: false, vp };   // SEA-BOUNTY: the killer's character and the room, for the receipt
   st.falls.set(rid, fall);
   return { fall, evicted };
 }
@@ -334,3 +366,93 @@ export function wildDownWord(st, sub, now) {
 
 /** The fighters' vitality as the referee's word says it: `[[id, hp, max], [id, hp, max]]` for `a` and `b`. */
 export const wildVitals = (st, a, b) => [a, b].map((sub) => { const x = st.fighters.get(sub); return [x.id, Math.max(0, x.f.hp), x.f.max]; });
+
+/** PVP-SKULL: the flag word for a flagged fighter in aggro after a blow (`a`, the ms its skull stays gold), or null - said
+ *  once each PVP_FLAG.sayMs while its blows go on, so a fight of many blows costs the room a word in ten seconds. */
+export function wildAggroWord(x, now) {
+  if (!x?.flag || now - (x.aggroSaid ?? -Infinity) < PVP_FLAG.sayMs) return null;
+  x.aggroSaid = now;
+  return { t: 'wref', k: 'flag', id: x.id, f: 1, a: pvpAggroLeft(Math.max(x.fightAt, x.struckAt), now), ...wildRed(x) };
+}
+
+/** PVP-SKULL: a flagged fighter's word to one entering - its aggro left riding it. */
+export const wildFlagWord = (x, now) => ({ t: 'wref', k: 'flag', id: x.id, f: 1, ...(pvpAggroLeft(Math.max(x.fightAt, x.struckAt), now) ? { a: pvpAggroLeft(Math.max(x.fightAt, x.struckAt), now) } : {}), ...wildRed(x) });
+
+/** PVP-BAR (the owner, 2026-10-29: "How does the health and shield bar look", then "Perfect" to its mockup): how often a
+ *  room looks for a flagged fighter's bar that moved - so each is said at most once in that time. */
+export const WILD_BAR = Object.freeze({ sayMs: 500 });
+
+/** PVP-BAR: a flagged fighter's bar as the room hears it - its health in whole per cent (1 while it stands), and `s` a
+ *  Shield's share in per cent of its top (PVP-KIT: 10..25, 25 full). Null for a pool no report anchored. */
+export function wildBarWord(x) {
+  const f = x?.f;
+  if (!f || !f.share?.heard || !(f.max > 0)) return null;
+  const hp = Math.max(0, f.hp);
+  const h = hp > 0 ? Math.max(1, Math.min(100, Math.round((100 * hp) / f.max))) : 0;
+  return { t: 'wref', k: 'bar', id: x.id, h, ...(f.share.shield > 0 ? { s: Math.min(100, Math.round(f.share.shield * 4)) } : {}) };
+}
+
+/** PVP-BAR: the bars that moved since the room last said them - flagged fighters in the zone alone, the room's whole look
+ *  at most once each WILD_BAR.sayMs. A fighter unflagged or gone forgets its last bar, so its next flag says it again. */
+export function wildBarWords(st, now) {
+  if (now - (st.barAt ?? -Infinity) < WILD_BAR.sayMs) return [];
+  st.barAt = now;
+  const out = [];
+  for (const x of st.fighters.values()) {
+    if (!x.flag || !x.zone) { x.barSaid = undefined; continue; }
+    const w = wildBarWord(x);
+    const key = w ? `${w.h}/${w.s ?? 0}` : undefined;
+    if (!w || key === x.barSaid) continue;
+    x.barSaid = key;
+    out.push(w);
+  }
+  return out;
+}
+
+/** PVP-VILLAIN: a pair's fight key (the order of the two never matters). */
+const fightKey = (/** @type {string} */ a, /** @type {string} */ b) => (a < b ? `${a}|${b}` : `${b}|${a}`);
+/** The most fights a room keeps; past it the stale are dropped first, then the oldest. */
+const FIGHTS_MAX = 512;
+
+/** PVP-VILLAIN: a landed blow `by` on `to` - a fight between them opened by `by` when none is fresh (a blow between the
+ *  two inside PVP_FLAG.lockMs - the aggro's minute), else kept fresh. */
+export function wildOpen(/** @type {any} */ st, /** @type {string} */ by, /** @type {string} */ to, /** @type {number} */ now) {
+  const fights = (st.fights ??= new Map()), key = fightKey(by, to), was = fights.get(key);
+  if (was && now - was.at < PVP_FLAG.lockMs) { was.at = now; return; }
+  if (fights.size >= FIGHTS_MAX) for (const [k, v] of fights) if (now - v.at >= PVP_FLAG.lockMs) fights.delete(k);
+  if (fights.size >= FIGHTS_MAX) fights.delete(fights.keys().next().value);
+  fights.delete(key);
+  fights.set(key, { first: by, a: by, b: to, at: now });
+}
+
+/** PVP-VILLAIN: who struck first in the fresh fight between `a` and `b`, or null. */
+export function wildFirst(/** @type {any} */ st, /** @type {string} */ a, /** @type {string} */ b, /** @type {number} */ now) {
+  const f = st.fights?.get(fightKey(a, b));
+  return f && now - f.at < PVP_FLAG.lockMs ? f.first : null;
+}
+
+/** PVP-VILLAIN: every account `sub` struck first in a fight still fresh - the relay asks whether one is its killer's party. */
+export function wildOpenedBy(/** @type {any} */ st, /** @type {string} */ sub, /** @type {number} */ now) {
+  const out = [];
+  for (const f of st.fights?.values() ?? []) if (f.first === sub && now - f.at < PVP_FLAG.lockMs) out.push(f.a === sub ? f.b : f.a);
+  return out;
+}
+
+/** PVP-VILLAIN: a fall's points laid on its killer's meter - none where `partyFirst` (the fallen struck one of the
+ *  killer's party first; the relay asks the hub). Answers `{ vi, turned }`: the meter now, and whether it went red. */
+export function wildVillainy(/** @type {any} */ st, /** @type {any} */ fall, /** @type {boolean} */ partyFirst = false) {
+  if (partyFirst) fall.vp = 0;
+  const x = st.fighters.get(fall.killer);
+  if (!x) return { vi: 0, turned: false };
+  const was = isVillain(x.vi);
+  x.vi = villainAfter(x.vi, fall.vp);
+  if (isVillain(x.vi)) x.flag = true;
+  return { vi: x.vi, turned: !was && isVillain(x.vi) };
+}
+
+/** PVP-VILLAIN: a fighter's red mark on its flag word (`v` 1), or nothing. */
+export const wildRed = (/** @type {any} */ x) => (isVillain(x?.vi) ? { v: 1 } : {});
+
+/** PVP-VILLAIN-KEEP: what a realm character's hello puts on its socket - its id (AUDIT LEGACY III O1) and the villain meter
+ *  its token signs (`vl`, absent at 0), which wildZone seeds its fighter from. */
+export const wildTokenAtt = (/** @type {any} */ who) => ({ ci: who.ci, ...(Number.isSafeInteger(who.vl) && who.vl > 0 ? { vl: villainClamp(who.vl) } : {}) });

@@ -392,7 +392,7 @@ test('AUDIT DEEP T2-4/T2-5/T2-6/T2-7/T2-8: the planner never swims a corner of t
   assert.ok(((i, j) => i >= 0 && j >= 0 && i < j)(w.indexOf('let tvPlates = { at: null, list: [] };'), w.indexOf('tvPlates = { at: null, list: [] };   // AUDIT DEEP T2-4')), 'BOOT-TDZ: declared above the load that clears it');
   assert.match(w, /to: travelOptions\?\.route\?\.summary\?\.pixel \?\? travelOptions\?\.route\?\.point\?\.pixel \?\? travelOptions\?\.state\?\.autopilot\?\.destinationMapPixel \?\? null,/);
   // PIN MOVED (OW-PATH): the roads asked only in the Roads mode - the net is the road net or none, Free walking across country
-  assert.match(w, /const raw = terrainGen\.roads\(\);\n\s*const roadNet = raw\?\.source === 'basic-roads' \? raw : null;\n(?:\s*\/\/[^\n]*\n)*\s*let net = \(roads \|\| travelPathUsesRoads\(\)\) \? roadNet : null;\n\s*let plan = planRoute\(from, summary\.pixel,/);   // PIN MOVED (AUDIT OW5 S3): a let - a plan that never sails is planned again on land
+  assert.match(w, /const raw = terrainGen\.roads\(\);\n\s*const roadNet = raw\?\.source === 'basic-roads' \? raw : null;\n(?:\s*\/\/[^\n]*\n)*\s*let net = \(roads \|\| travelPathUsesRoads\(\)\) \? roadNet : null;\n\s*let plan = \(dragonMounted\(\) \? dragonFlightPlan\(from, summary\.pixel\) : null\) \?\? planRoute\(from, summary\.pixel,/);   // PIN MOVED (AUDIT OW5 S3): a let - a plan that never sails is planned again on land   // PIN MOVED (DRAGON6): a journey begun on the dragon is flown straight (systems/dragon/dragonJourney.js)
   assert.match(w, /if \(travelOptions\?\.settings\?\.targetCoordsAllowed === false\) tvSay\(TRAVEL_VIEW_TEXT\.placesOnly\); else travelViewWalkTo\(hit\.point, pix, \{ outside: !middle && !fineMoveHeld\(e\) \}\);/);   // PIN MOVED (OW-TOWN-ROUND): a click on a town's edge is a spot outside it
 });
 
@@ -418,7 +418,7 @@ test('AUDIT DEEP T2-1: a road journey RESUMES on the leg it was aiming at, or a 
   d.state.pixel = { x: 503, y: 252 };
   d.to.resumeTravel();
   assert.equal(d.to.route.i, 3, 'no sea: the nearest leg ahead');
-  assert.match(hostText('src/scenes/world.js'), /isWater: \(x, y\) => x < 0 \|\| y < 0 \|\| x >= 1000 \|\| y >= 500 \|\| woods\.getHeightMapValue\(x, y\) <= WATER_BYTE,/);
+  assert.match(hostText('src/scenes/world.js'), /isWater: \(x, y\) => tvWater\(x, y\),/);   // PIN MOVED (AUDIT TAMRIEL-WIDE C5): the host's own sea, which reads the land past the Bay
 });
 
 test('TV2 journey: the mod\'s stops still stop it (a foe near: boxed); interrupted, it RESUMES on its road from the nearest leg ahead; a journey of the mod\'s replaces it', () => {
@@ -687,7 +687,7 @@ test('OW-ONLY (Mac: "Remove the ground travel alltogether. Now selecting a locat
   assert.match(w, /tvJourneyUp\(\);   \/\/ OW-ONLY[^\n]*\n\s*const tvHeadEye/, 'every frame, before the view\'s own');
   // MOUNTAINS WALKABLE: the line stands, but the host's ground names no peak now (routeGround's peakAt) - it says nothing
   // on the real map (test/systems/travel/fb0929d_toroads.test.js walks a spot on a Mountain pixel); over a ground that refuses, it would
-  assert.match(w, /if \(!door && !water && tvRouteGround\(\)\.peakAt\(pix\.x, pix\.y\)\) \{ tvSay\(TRAVEL_VIEW_TEXT\.mountains\); return false; \}/, 'OW-MOUNTAINS: a spot among the peaks refused (AUDIT OW4 D1: a spawn\'s door is a place\'s - tv6_dungeons; OW-WOD-PATH: the ground\'s own peaks - the Mountain climate and a World of Daggerfall massif)');
+  assert.match(w, /if \(!door && !water && !dragonMounted\(\) && tvRouteGround\(\)\.peakAt\(pix\.x, pix\.y\)\) \{ tvSay\(TRAVEL_VIEW_TEXT\.mountains\); return false; \}/, 'OW-MOUNTAINS: a spot among the peaks refused (AUDIT OW4 D1: a spawn\'s door is a place\'s - tv6_dungeons; OW-WOD-PATH: the ground\'s own peaks - the Mountain climate and a World of Daggerfall massif)');   // PIN MOVED (DRAGON6): a journey begun on the dragon is flown straight (systems/dragon/dragonJourney.js)
   assert.match(w, /\.\.\.tvRouteGround\(\), sea: tvSeaAsk\(means, 'land'\) \}\);   \/\/ OW-MOUNTAINS: never across the peaks/, 'a place\'s route round them');
   assert.equal(TRAVEL_VIEW_TEXT.mountains, 'The mountains cannot be crossed on foot.');
 });
@@ -730,7 +730,7 @@ test('AUDIT OW3 J5 (AUDIT OW4 J1), then MOUNTAINS WALKABLE (the owner, the Wroth
   assert.ok(planRoute({ x: 10, y: 5 }, { x: 15, y: 5 }, { width: W, height: H, openBlocked: up }), 'a place on it: its own pixel stays exempt');
   const w = hostText('src/scenes/world.js');
   // PIN MOVED (AUDIT OW5 S3): a let
-  assert.match(w, /let plan = planRoute\(from, pix, \{ roads: wnet\?\.roads \?\? null, tracks: wnet\?\.tracks \?\? null, \.\.\.tvRouteGround\(\), goalExempt: !!door, sea: seaAsk \}\);/, 'the spot\'s journey asks its last step (AUDIT OW3 J8: and the peaks\' law at all)');
+  assert.match(w, /let plan = \(dragonMounted\(\) \? dragonFlightPlan\(from, pix\) : null\) \?\? planRoute\(from, pix, \{ roads: wnet\?\.roads \?\? null, tracks: wnet\?\.tracks \?\? null, \.\.\.tvRouteGround\(\), goalExempt: !!door, sea: seaAsk \}\);/, 'the spot\'s journey asks its last step (AUDIT OW3 J8: and the peaks\' law at all)');   // PIN MOVED (DRAGON6): a journey begun on the dragon is flown straight (systems/dragon/dragonJourney.js)
   // AUDIT OW4 J3: the law bound to the world's own climate and heightmap, read once (routeGround: its behaviour pinned below)
   // PIN MOVED (WILD1): the open zone's pixels read as flat dry ground (the sea still the sea), the tables read again as
   // the zone comes or goes - and outside it the world's own climate and heightmap, as before. PIN MOVED (TV-BEYOND): and

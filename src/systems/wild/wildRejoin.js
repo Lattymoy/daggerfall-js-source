@@ -77,7 +77,7 @@ export function createWildRejoin({ now = () => Date.now(), present = () => {}, p
      * The referee's `down` word (net/wire.js validWildRefOut's projection: `{ ms, r?, p? }`), heard while `alive` says
      * whether the character stands. Answers the death this page takes - its words set (systems/wild/wildZone.js: a kill,
      * nothing dropped yet, the time served) and the character put down - or null when the word is not for it.
-     * @param {{ ms: number, r?: string, p?: number[] }} word @param {{ alive: boolean }} state
+     * @param {{ ms: number, r?: string, p?: number[], aw?: number, n?: string }} word @param {{ alive: boolean }} state
      * @returns {WildRejoinDeath | null}
      */
     heard(word, { alive }) {
@@ -86,7 +86,8 @@ export function createWildRejoin({ now = () => Date.now(), present = () => {}, p
       ownDeathAt = now();
       const servedS = Math.max(0, WILD_DEATH_HOLD_S - Math.ceil(word.ms / 1000));
       waiting = { servedS, p: Array.isArray(word.p) ? [...word.p] : null };
-      setWildDeath({ kill: true, dropped: 0, served: servedS });
+      // PVP-LINGER-RISE: a body slain while I was away (`aw`), its killer named (`n`)
+      setWildDeath({ kill: true, dropped: 0, served: servedS, ...(word.aw === 1 ? { away: true, ...(typeof word.n === 'string' && word.n ? { killer: word.n } : {}) } : {}) });
       present();
       return waiting;
     },

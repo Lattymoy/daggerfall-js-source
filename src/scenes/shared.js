@@ -24,6 +24,7 @@ import { dreadGrade, DREAD_SKY_WORD } from '../world/dreadSky.js';   // EVENT1: 
 import { sunbabyHaze, sunbabyWaterSky } from '../world/sunbabySky.js';   // SUNBABY1: the sun baby's haze and the sky the water mirrors under it
 import { sdBrassGrade } from '../systems/superDungeon/sdOmen.js';   // SD19: the brass air near a standing Hollow
 import { SunbabySkyRenderer } from '../render/sunbabySkyRenderer.js';   // SUNBABY1: its flower sky, over every sky
+import { createAuroraHost, withAuroraLight } from './auroraHost.js';   // SKYRIM-AURORA: Skyrim's aurora over the lane's night sky, its light and its reflection
 import { QUALITY as CLOUD_QUALITY } from '../render/volumetricClouds.js';   // VC3: the clouds over the dome
 import { createCloudsArrival } from '../render/cloudsArrival.js';   // CLOUD-COMPILE: the clouds built once their programs are done
 import { canopyWaterSky } from '../world/jungle/jungleCanopy.js';   // VALENWOOD-CANOPY: the sky the water mirrors under a closed canopy
@@ -68,6 +69,7 @@ import { killIfAnyLiveStatZero } from '../systems/statMods.js';   // AUDIT 24 (w
 import { hasSpecialAbility, SPECIAL_ABILITY, healthRecoveryRate, fatigueRecoveryRate, spellPointRecoveryRate, restIgnoresNoRegen } from '../systems/rest/rest.js';
 import { entityImprovedAthleticism } from '../systems/enchantments.js';   // AUDIT 26 F044: the ImprovesTalents fatigue arm   // the rested hour's three rates, one home for every host (V5 + S40, same line from two lanes)
 import { getPreventedRestMessage } from '../systems/rest/restSession.js';
+import { pvpFallSpared, takePvpFallSpare } from '../systems/wild/pvpRules.js';   // PVP-RULES
 import { nightDue, nightRealMinutesLeft, stampNight, runRestNight, topUpRest, sleepShortRest, spendRoomNight, roomNightsLeft, heardNight, REST_CHANNEL_SECONDS, REST_ACT_TEXT, NIGHT_HOURS, openChannelHeal, stepChannelHeal } from '../systems/rest/restAct.js';   // REST1: the rest act online
 import { registerPreventRestCondition } from '../systems/rest/restSession.js';   // SURV7: the survival rest gate's seam
 import { quietNights } from '../systems/encounters.js';   // CAMP-ROLL: a camp mate's night rolls nothing of mine
@@ -80,6 +82,7 @@ import { FOOTSTEP_VOLUME } from '../systems/footsteps.js';   // AUDIT 58: Player
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage
 import { SOUND } from '../systems/soundClips.js';
 import { surfacePlayer, hurtPlayer, duelSpare, staffFly, levitateWarded, freeFlight } from '../characters/playerEntity.js';   // DUEL1: the duel's floor, for its damage over time   // AUDIT-SEATS G5: a siege's ward on Levitate   // AUDIT-SEATS G4: a spectator's flight
+import { dragonAloft } from '../player/dragonRide.js';   // DRAGON5: the tamed dragon's flight, one home
 import { standardSpellsByIndex } from '../systems/spell/standardSpells.js';   // G4: the two magic registries, one home; DEX4a: a mod's SpellRecords.json merged, as RebuildClassicSpellsDict merges it
 import { readMagicDef } from '../formats/magicDef.js';
 import { setMagicItemTemplates, setSpellRecordsByIndex } from '../systems/loot/loot.js';
@@ -90,7 +93,6 @@ import { setMusicReplacements } from '../systems/musicReplacement.js';   // M-EX
 import { setSoundReplacements } from '../systems/soundReplacer.js';   // SNDREP1: the player's sound pack, on the same seam
 import { installDiverseWeaponsIcons } from '../combat/diverseWeapons/diverseWeaponsIcons.js';
 import { installRoleplayRealismItems } from '../systems/roleplayRealismItems/rriInstall.js';
-import { installDetailedShipsArt } from '../systems/detailedShips.js';   // DS1: Detailed Ships' pictures and xml scales
 import { installStudioArt } from '../systems/studioArt/studioArt.js';   // STUDIO1: the game's artists' own pictures
 import { installWarmAshesShips } from '../systems/warmAshesShips.js';   // WA1: Warm Ashes - Ships' quest list and save slot
 import { installRestItemLoot, litCandle, meditate, snuffCandle, draughtTaken, spendDraught, DRAUGHT_SPENT_MINUTES } from '../systems/rest/restItems.js';   // REST6: the seven that fill the gaps
@@ -103,6 +105,7 @@ import '../systems/gate/gateSpoils.js'; import '../systems/portalStone.js'; impo
    // WB5: the Sigil Stone's own template (570) registers in every host, so a save carrying one loads it in any of the four; PORTAL1: and the Portal Stone's Use (572)
 import '../systems/sigil/sigilBroker.js';   // SET7: the Broker's record (what this character bought today) registers its save slot in every host, so a save made anywhere carries it
 import { installImmersiveTravel } from '../systems/immersiveTravel.js';   // IT1: Immersive Travel's Init - the drivers' and sailors' factions, their Fast Travel services
+import { installPortStandIns } from '../world/townStandIns.js';   // AUDIT SHIP-REFIT: DET's pieces and archive 1210/1230's items, at every boot
 import { installRoleplayRealism } from '../systems/roleplayRealism/rrInstall.js';   // RR1: Roleplay & Realism's InitMod - after Items', as DFU loads them (Items is the one it looks up)   // RRI1: the templates, the patches, the art - the same seam, the same reason   // DW3: its icons, on the replacement door - here and not at worldTick's module scope, where the mod's law sits in an import cycle (a TDZ)
 import { installEnemyExpansion } from '../systems/enemyExpansion/dexInstall.js';   // DEX1: Daggerfall Enemy Expansion's fifty enemies, their careers and the classic edits, once at boot
 import { installDwarvenDragon } from '../characters/dwarvenDragon.js';   // DWARVEN-DRAGON: the staff's clockwork dragon, its row and pictures
@@ -280,6 +283,8 @@ export function createSkyController(gl, params) {
   // The rect the sky last drew in, handed to the clouds' build to restore (the noise draws in its own targets).
   let skyViewport = /** @type {number[]|null} */ (null);
   const dynamicSky = dynamicOn ? new DynamicSkiesRenderer(gl) : null;
+  // SKYRIM-AURORA: on the lane's sky, the port's dome or the mod's - the classic panorama stays Daggerfall's own
+  const aurora = enhancedLane ? createAuroraHost(gl, params, { quality: cloudQuality }) : null;   // its march the clouds' tier's
   // PS3 (Mac: "there's these progressing circles in the sky when I want it
   // to be a smooth sky transition"): the mod's own REDUCE_COLOR quantizes
   // with a bare ceil and no dither, so the sky's iso-luminance contours -
@@ -314,9 +319,11 @@ export function createSkyController(gl, params) {
   const dreaded = (ws) => brassed(sunbabyWaterSky(dreadW > 0 ? { zenith: dreadGrade(ws.zenith, dreadW), horizon: dreadGrade(ws.horizon, dreadW) } : ws, sunbabyW, sunbabyEvil));   // SUNBABY2: the wrath's sky
   /** VALENWOOD-CANOPY: and under a closed canopy, the leaves' (world/jungle/jungleCanopy.js canopyWaterSky). */
   const leaved = (ws) => canopyWaterSky(ws, canopyLeaves);
+  /** SKYRIM-AURORA: and the aurora's dome map, for the water to reflect (render/waterSurface.js) - null under none. */
+  const auroraIn = (ws) => { const map = aurora?.skyMap ?? null; return map ? { ...ws, aurora: map } : ws; };
   /** EV5: the moons' term (`moonlight` below) - the dome's own state; DS1: the same term from the mod's own moons - where
    *  its orbit puts them, lit by DFU's phase - so the world's night agrees with the sky it stands under. */
-  const moonNow = () => (enhancedSky?.state ? moonlightTerm(enhancedSky.state) : dynamicMoonlight(dynamicMoons));
+  const moonNow = (minute) => withAuroraLight(enhancedSky?.state ? moonlightTerm(enhancedSky.state) : dynamicMoonlight(dynamicMoons), aurora?.light(minute) ?? null);   // SKYRIM-AURORA: and the aurora's light (at a view out's clock minute)
   // NIGHT-FOG (systems/weather/nightFog.js): THE FOG IS LIT BY THE LIGHT THE LAND IS LIT BY - on the enhanced lane the
   // frame's fog is never darker than air lit by the open air's light (the hour and the weather's sunlight scale the last
   // use() was handed, the player's Night Brightness, the moons); the classic panorama keeps SetSkyFogColor verbatim, and
@@ -520,16 +527,17 @@ export function createSkyController(gl, params) {
      *  horizon this frame ({zenith, horizon}, 0..1 rgb), from the SAME
      *  state the dome is drawn from; under the mod, the mod's fog colour
      *  at the horizon and its dome fill above; null under the classic
-     *  sky, which draws no water surface. */
+     *  sky, which draws no water surface. SKYRIM-AURORA: and `aurora`,
+     *  the aurora's dome map ({ tex }) or null. */
     waterSky() {
-      if (enhancedSky?.state) return leaved(dreaded({ zenith: enhancedSky.state.zenith, horizon: enhancedSky.state.horizon }));
+      if (enhancedSky?.state) return auroraIn(leaved(dreaded({ zenith: enhancedSky.state.zenith, horizon: enhancedSky.state.horizon })));
       if (dynamicSky) {
         // WATER-AUDIT (L3): the mod publishes ONE colour (its fog colour is
         // its clear colour is its fill), so a zenith is DERIVED from it -
         // darker and bluer, the way any day sky deepens overhead - rather
         // than a second copy of the horizon that made the reflection flat
         const h = dynamic?.fogColor ?? dynamicSky.clearColor;
-        return leaved(dreaded({ zenith: [h[0] * 0.55, h[1] * 0.65, h[2] * 0.85], horizon: h }));   // EVENT1: graded under the dread on this lane too
+        return auroraIn(leaved(dreaded({ zenith: [h[0] * 0.55, h[1] * 0.65, h[2] * 0.85], horizon: h })));   // EVENT1: graded under the dread on this lane too
       }
       return null;
     },
@@ -607,6 +615,7 @@ export function createSkyController(gl, params) {
       windModel.jump();
       dynamic?.weatherJump();   // DS1: SaveLoadManager_OnLoad's forced re-apply
       clouds?.jump();   // VC3: the profile takes the new weather whole, both maps re-marched whole
+      aurora?.jump();   // SKYRIM-AURORA: and the aurora the place it landed in
     },
     /** WEATHER2b: the sim's word changed by a CROSSING - the player walked
      *  into a cell of the field, or it drifted over them. The wind builds
@@ -627,7 +636,7 @@ export function createSkyController(gl, params) {
      *  cloud-dimmed visibility; secunda's ambient lift). null under
      *  the classic sky - which has no moon state, so the 1:1 lane
      *  keeps DFU's hard-off night - and null by day. */
-    moonlight() { return moonNow(); },
+    moonlight(minute) { return moonNow(minute); },   // SKYRIM-AURORA: `minute`, a view out of a building's clock
     /** Ensure the panorama for (skyIndex, minuteOfDay); async, frame-late.
      *  ES1: the enhanced sky takes the same call and needs the weather
      *  and the classic clock too (`extra`), for the clouds and the moons;
@@ -705,6 +714,10 @@ export function createSkyController(gl, params) {
         const easeDt = windModel.inLead() ? dt * (WEATHER_EASE_MINUTES / windModel.leadMinutes()) : dt;   // WEATHER2b: the front's own lead - a crossing's few minutes, the day roll's three hours
         weatherRowNow = easeWeather(weatherRowNow, want, easeDt);
         weatherRowNow.wind = windModel.vector();
+        // SKYRIM-AURORA: the eased cover hides it as the clouds come; the port's dome reads no WeatherStyle (its cover is
+        // the front's), the mod's presets switch on it; over the sky's own decks it goes sooner; the sun baby's flower
+        // sky puts it out (its water's sky is the flower's)
+        aurora?.use(minuteOfDay, skyNow, weatherRowNow.cover, (dynamic ? showNightSky : true) && !sunbabyOn && !(sunbabyW > 0), !cloudsShown, nowMin);
         // WIND2: the cloud DRIFT is integrated here, once - the one place
         // the wind and the clock meet. Every deck reads this offset
         // instead of multiplying wind by time, which with a wind that
@@ -831,6 +844,7 @@ export function createSkyController(gl, params) {
       const meter = meterFor(gl);
       meter?.mark('sky');
       (enhancedSky ?? dynamicSky ?? sky).draw(yaw, pitch, fovY, aspect);
+      aurora?.draw(yaw, pitch, fovY, aspect, viewport, 1 - brassW);   // SKYRIM-AURORA: over the night sky, under the clouds; dimmed in a Hollow's brass air
       // CLOUD-COMPILE: marched from their build; the composite draws nothing until their first whole sweep. The
       // per-frame setters (dread, brass, haze, bolt) reach them from the frame after their build, before that sweep.
       skyViewport = viewport;
@@ -1315,7 +1329,7 @@ export function applyMotorEffectFlags(player, entity, { waterSurfaceY = null, sw
   // DW-D: Iliac Puddle No More's forge rides this ONE write - LevitateMotor.IsSwimming's setter arms CancelMovement
   // on every change, so a clear here and a forge after it would cancel the swimmer's every step (XL-1's bug again)
   player.swimming = !!swimming;
-  player.levitating = hasActiveEffect(entity, 'levitate') && !levitateWarded() || staffFly() || freeFlight();   // STAFF1: /fly   // AUDIT-SEATS G5: a siege's ward holds the effect (`&&` first: the staff's /fly is never warded)   // AUDIT-SEATS G4: a battle's spectator flies
+  player.levitating = hasActiveEffect(entity, 'levitate') && !levitateWarded() || staffFly() || freeFlight() || dragonAloft();   // DRAGON5: a tamed dragon aloft   // STAFF1: /fly   // AUDIT-SEATS G5: a siege's ward holds the effect (`&&` first: the staff's /fly is never warded)   // AUDIT-SEATS G4: a battle's spectator flies
   player.waterWalking = isEntityWaterWalking(entity);   // CSA-I: either effect that raises IsWaterWalking
   player.slowFalling = hasActiveEffect(entity, 'slowfall');
 }
@@ -1393,6 +1407,7 @@ export const WARDROBE_FATIGUE_MOST = 50;
  *  billed its own and the Long Road was dead below ground. */
 export function playerFallDamage(entity, distance) {
   const less = Math.min(WARDROBE_FALL_MOST, Math.max(0, Number(entity?._mods?.fallLess) || 0)) / 100;
+  if (pvpFallSpared()) return 0;   // PVP-RULES: the fall a flag's ward on Levitate began costs nothing
   return Math.trunc(FALL_HP_PER_METRE * (distance - FALL_DAMAGE_THRESHOLD) * (1 - less));
 }
 /** AcrobatMotor.CheckFallingDamage (:214-222) + PlayerHealth
@@ -1423,7 +1438,7 @@ export function applyFallLanding(entity, distance, { hurt = null, sound = null, 
   // Hosts pass this from isOutdoorWaterTile(the tile under the
   // player); it defaults FALSE, which is DFU's own answer for the
   // -1 the streaming world reports off terrain (indoors, dungeons).
-  if (inOutdoorWater) return;
+  if (inOutdoorWater || takePvpFallSpare()) return;   // PVP-RULES: and the fall a flag's ward on Levitate began, spent here
   if (distance > FALL_DAMAGE_THRESHOLD) {
     const dmg = playerFallDamage(entity, distance);   // LOOT15 (bible/06-Systems/Loot-II-Arc.md section 7): the bill, the Long Road off it
     // AUDIT 21 (hosts lane, F6): the no-`hurt` arm went through the ONE
@@ -1493,7 +1508,7 @@ export function ensureAudio(fetch = fetchBytes) {
   // archive that has replacements is actually loaded.
   installDwarvenDragon();   // DWARVEN-DRAGON: the staff's clockwork dragon - its row, name and pictures before the archives load
   installImmersiveTravel();   // IT1: Carriage Drivers (8642) and Sailors (8643), and their Fast Travel - before the faction dictionary is built at the load
-  installDetailedShipsArt();   // DS1: archives 1210/1230 on the texture door (their pictures built from your own records at the archive's load) and the six xml scales
+  installPortStandIns();   // AUDIT SHIP-REFIT: a placed decoration's DET piece or item picture stands whatever is switched on (world/townStandIns.js)
   installForaging();   // FORAGE1: the ForagingQuests list (before any quest bridge is built), the six tools' and five foods' UseItem, the seven pictures, Foraging_Tools
   installWarmAshesShips();   // WA1: the WA_Ships quest list (before any quest bridge is built - LoadQuestLists reads it) and the mod's save record
   installDiverseWeaponsIcons();   // DW3: before the archives load, so 233/234's preload carries the mod's icons

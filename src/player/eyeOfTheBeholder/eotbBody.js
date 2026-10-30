@@ -50,12 +50,13 @@ import {
   meleeStrokeFrames, forwardFrames, holdDrawFrames, mirrorFlips, mirrorRevertTime,
   DELAYED_FRAMES, ORIENTATION_TIME, signedAngleY, tableMoveSpeed, portrayedYaw,
 } from './eotbBillboard.js';
-import { spriteFor, eotbSpriteUrl, spriteCount, spriteSize, spriteOffset, flipRows, worldOrderColors, lookedPixels } from './eotbSprite.js';
+import { spriteMarks, spriteArmsSeen } from '../../render/armoryPose.js';   // ARMORY: where the body stands in its own picture
+import { spriteFor, eotbSpriteUrl, spriteCount, spriteSize, spriteOffset, spriteArtScale, flipRows, worldOrderColors, lookedPixels, decodeSprite } from './eotbSprite.js';
 import { decodePng } from '../../systems/textureReplacement.js';   // EOTB-FLIP: the one PNG decoder the world's other PNG billboards take
 import { decodeServedPng } from '../../systems/vanillaEnhanced/vanillaEnhancedPack.js';   // FIRST-VISIT: and its decode workers
 import { isLayeredKey, decodeLayered, outfitOfSlots, layeredGenderOf, LAYERED_ARCHIVE } from './layeredArmor.js';   // WORN-ARMOUR: the body in the armour it wears
 import { playerEntity } from '../../characters/playerEntity.js';   // WORN-ARMOUR: whose armour
-import { equipTableOf } from '../../systems/equip.js';   // WORN-ARMOUR: what they wear
+import { drawnEquipTable } from '../../systems/capeShown.js';   // WORN-ARMOUR: what they wear; CAPE-TOGGLE: as it is drawn
 import { horseLookCode, horseLookOfCode, lookSuffix } from '../../systems/horse/horseCoats.js';   // COATS1: the ridden horse's look
 import { getMeleeWeaponAnimTime } from '../../characters/weaponStates.js';   // [IL] GetMeleeAnimTickTime reads FormulaHelper's own
 import { setPlayerTorchOffsetOverride, setPlayerWaistLightOverride } from '../../systems/playerTorch.js';   // [IL] TorchOffset writes PlayerTorch's position; HT-WAIST: and the lantern at the waist lights from where it hangs
@@ -152,7 +153,7 @@ function look() {
  *  character's own). An equip table that cannot be read is plain leather. */
 function wornOutfit(gender) {
   let slots = null;
-  try { slots = equipTableOf(playerEntity); } catch { slots = null; }
+  try { slots = drawnEquipTable(playerEntity); } catch { slots = null; }   // CAPE-TOGGLE: a hidden cloak is not drawn
   return { outfit: outfitOfSlots(slots), gender };
 }
 
@@ -207,18 +208,7 @@ export function bodyState(s = {}) {
   };
 }
 
-/**
- * THE BROWSER DECODE, lifted out so it can be replaced.
- *
- * EOTB-FLIP: the decode is the DROPPED TORCH's door - `decodePng`, then
- * the one row-order converter - and not a canvas of its own. A decode
- * that fails answers a rejection, as the Image's onerror did.
- * FIRST-VISIT: decodeServedPng (vanillaEnhancedPack.js) fetches and decodes.
- */
-export async function decodeSprite(url) {
-  if (isLayeredKey(url)) return worldOrderColors(await decodeLayered(url, decodePng, { picture: decodeServedPng }), { owned: true });   // WORN-ARMOUR: composed from its strip
-  return worldOrderColors(await decodeServedPng(url), { owned: true });   // PERF-PEERS5: the decode is this door's alone - turned in its own bytes
-}
+export { decodeSprite };   // PROFILE-SLOTS: the decode's one door is eotbSprite.js's now - the profile's stage takes it too
 
 const norm2 = (v) => { const l = Math.hypot(v[0], v[2]); return l > 0 ? [v[0] / l, 0, v[2] / l] : [0, 0, 0]; };
 
@@ -292,6 +282,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
   let batch = null;
   let batchRec = null;
   let batchSize = null, batchPx = 0;   // AUDIT 3 (SERAPH-WINGS): and the frame's own pixels tall - the figure's metres a pixel
+  let batchMarks = null;   // ARMORY: where the body stands in that picture (render/armoryPose.js spriteMarks), read at its upload
   let figure = null;   // SERAPH-WINGS: the frame last drawn, as an aura reads it - its base over the feet (m), its metres a pixel and its form (AUDIT 3)
   let facingDrawn = null;   // SPRITE-FACE: the frame last drawn's facing, as an aura reads it - { yaw, turn } (facing(), below)
   /** The one sprite that decides whether this lane may open at all. See `ready()`. */
@@ -406,7 +397,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       // is its own pixels under its own key (`s.rec`, EOTB5)
       const px = s.mirror ? flipRows(colors, width, height) : colors;
       renderer.uploadTexture(s.archive, s.rec, { width, height, colors: px });
-      return { w: width, h: height };
+      return { w: width, h: height, marks: spriteMarks(px, width, height, { arms: spriteArmsSeen(s.view), art: spriteArtScale(s.archive, s.record) }) };   // ARMORY: the body's place in the picture, read once
     })();
     tex.set(cacheKey(s), p);
     p.then((r) => { if (tex.get(cacheKey(s)) !== p) return; tex.set(cacheKey(s), r); firstUp = true; },
@@ -1044,13 +1035,13 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
           batch.noShadow = grow > 1;   // AUDIT OW5 R2: OW-BIG's giant casts NOTHING - selfCard off was never that (render/shadowPass.js: it only keeps the card out of the lamps' maps when it is not the player's own; the sun's cascades drew the tenfold card, a fifty-metre shadow at a low sun, and the lamps' maps baked it)
           batchRec = key;
         }
-        batchSize = size; batchPx = up.h;
+        batchSize = size; batchPx = up.h; batchMarks = up.marks ?? null;
       }
       if (!batch) return false;                 // nothing up yet: the last sprite stays until one is
       const c = place();
       if (!c) return false;
       batch.origin[0] = c[0]; batch.origin[1] = c[1]; batch.origin[2] = c[2];
-      figure = last.riding || FP ? null : { base: c[1] - cam.feet[1], mpp: batchPx > 0 ? batchSize.h * grow / batchPx : 0, beast: !!last.transformed };   // SERAPH-WINGS: a rider's frame is the horse's too - no shoulders read off it; AUDIT 3: nor the first-person billboard's (the camera is in it), and its metres a pixel (the shoulders by the pixel - auraSpriteBones) and its form
+      figure = last.riding || FP ? null : { base: c[1] - cam.feet[1], mpp: batchPx > 0 ? batchSize.h * grow / batchPx : 0, beast: !!last.transformed, marks: batchMarks, shift: (c[0] - cam.feet[0]) * Math.cos(cam.yaw) - (c[2] - cam.feet[2]) * Math.sin(cam.yaw) };   // ARMORY: and where the body stands in it - its marks, and the quad's offset along its right   // SERAPH-WINGS: a rider's frame is the horse's too - no shoulders read off it; AUDIT 3: nor the first-person billboard's (the camera is in it), and its metres a pixel (the shoulders by the pixel - auraSpriteBones) and its form
       // SPRITE-FACE: AND THE WAY THIS FRAME FACES - the picture's (portrayedYaw: the shown orientation about this frame's
       // eye, the repaint that has LANDED), which the wings and the cloak hang on; and the body's own turning (turnYaw),
       // which their swing reads. In the saddle too (the horse's picture faces as the rider's does); none in first person

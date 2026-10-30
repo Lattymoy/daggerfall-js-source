@@ -66,11 +66,11 @@ test('AUDIT FOE-KEEPS E2 THE WIRE AND THE CLIENT: the zone word carries `dd` onl
   assert.deepEqual(validWildData({ k: 'zone', z: 0, dd: 1 }), { k: 'zone', z: 0, dd: 1 });
   assert.deepEqual(validWildData({ k: 'zone', z: 1, dd: 1 }), { k: 'zone', z: 1 }, 'never with a word that it stands in it');
   assert.deepEqual(validWildData({ k: 'zone', z: 0, dd: true }), { k: 'zone', z: 0 }, 'one shape alone');
-  assert.ok(rd('src/scenes/world.js').includes('    online?.setWildZone?.(wildCan() ? 1 : 0, playerEntity.health <= 0);'), 'the host says it');
+  assert.ok(rd('src/scenes/world.js').includes('    online?.setWildZone?.(wildCan() ? 1 : wildCan(true) ? 2 : 0, playerEntity.health <= 0, zoneEdgeSee(wildHere(), player.pos, Date.now()));'), 'the host says it');
   const o = rd('src/net/online.js');
-  assert.ok(o.includes("this._sayZone(this._ws, v, !v && dead);"));
-  assert.ok(o.includes("ws.send(JSON.stringify({ t: 'wild', data: { k: 'zone', z, ...(dead ? { dd: 1 } : {}) } }));"));
-  assert.ok(rd('server/src/index.js').includes("if (k === 'zone') { await this._wildZoneWord(a, m.data.z, now, m.data.dd === 1); return; }"), 'the relay hands it on');
+  assert.ok(o.includes("this._sayZone(this._ws, v, !v && dead, entry && edge);"));
+  assert.ok(o.includes("ws.send(JSON.stringify({ t: 'wild', data: { k: 'zone', z, ...(z === 1 && sf ? { sf: 1 } : {}), ...(dead ? { dd: 1 } : {}),"));   // PIN MOVED (PVP-SAFE-HIT): the streets' `sf` first
+  assert.ok(rd('server/src/index.js').includes("if (k === 'zone') { await this._wildZoneWord(a, m.data.z, now, m.data.dd === 1, m.data.fl ?? null, m.data.ed === 1, m.data.sf === 1); return; }"), 'the relay hands it on');   // PIN MOVED (PVP-SAFE-HIT): and `sf`
 });
 
 test('AUDIT FOE-KEEPS E2 THE RELAY: a player\'s blow, then my word that I left the zone dying inside the credit - the room hears my fall at that player\'s hand, the killer\'s pick signs it and the receipt names us both; a word without `dd`, or past the credit, is a foe\'s death and no fall (mutants: the relay\'s credit unasked; the fall unsaid)', async () => {

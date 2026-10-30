@@ -46,10 +46,10 @@ export const DECOR_ID_RE = /^[A-Za-z0-9_-]{1,24}$/;
  *  past them (Roleplay & Realism's weapons and armour, 513 to 526; Climates & Calories', 532 to 539), so a mounted
  *  weapon of theirs shows its own picture.
  *  DECOR-MODFLATS (2026-09-27, Discord: "Above #49 decorations stopped working. Most sprites decorations are invisable
- *  above this number"): or a MOD's, to five digits. The catalogue is read out of the world's own blocks, and the ships
- *  Detailed Ships lays in them carry its own flats (archives 1210 and 1230) and the DET flats the port stands in (10009
- *  to 10027) - "Decoration 49" onward, numbered after the classic ones. The bound refused every one: the piece being
- *  placed was never a piece, so its picture never stood and Place did nothing. */
+ *  above this number"): or a MOD's, to five digits. The catalogue holds the town mods' flats (archives 1210 and 1230)
+ *  and the DET flats the port stands in (10009 to 10028) - "Decoration 49" onward, numbered after the classic ones.
+ *  The bound refused every one: the piece being placed was never a piece, so its picture never stood and Place did
+ *  nothing. */
 export const DECOR_MODEL_MAX = 999_999;
 export const DECOR_ARCHIVE_MAX = 99_999;
 export const DECOR_RECORD_MAX = 511;
@@ -353,13 +353,15 @@ export function mintDecorId(rand = Math.random) {
 // into the room its owner cleared. Pure, as the rest of this file is.
 
 /** One built-in piece's name - `m<placement>:<model>` or `f<flat>:<archive>.<record>`, every number canonical. WD3: a
- *  flat's archive runs to five digits - the town mods' interiors (Beautiful Villages, Beautiful Cities) and Detailed
- *  Ships' cabins lay flats of the mods' own archives (DET's 10010-10028, the table clutter's 56790), and a name with a
+ *  flat's archive runs to five digits - the town mods' interiors (Beautiful Villages, Beautiful Cities) lay flats of
+ *  the mods' own archives (DET's 10010-10028, the table clutter's 56790), and a name with a
  *  classic archive's three digits could not name them: online the room's whole list was refused, offline the piece came
  *  back at the next load. */
 export const DECOR_BASE_KEY_RE = /^(?:m(?:0|[1-9]\d{0,3}):(?:0|[1-9]\d{0,5})|f(?:0|[1-9]\d{0,3}):(?:0|[1-9]\d{0,4})\.(?:0|[1-9]\d{0,2}))$/;
-/** How many built-in pieces one room may keep taken out - more than any interior lays, and a whole list at its widest
- *  (eighteen bytes a name) still one write under the service's 4 KiB body (service.js MAX_BODY_BYTES). */
+/** How many built-in pieces one room may keep taken out - more than any home lays (127 at most, measured with the town
+ *  mods' furniture built in; AUDIT FB1029e H3: a Detailed Ships cabin lays up to 456, and keeps this many out), and a
+ *  whole list at its widest (eighteen bytes a name) still one write under the service's 4 KiB body (service.js
+ *  MAX_BODY_BYTES). */
 export const DECOR_HIDDEN_CAP = 200;
 export const decorBaseModelKey = (placement, model) => `m${placement}:${model}`;
 export const decorBaseFlatKey = (flat, archive, record) => `f${flat}:${archive}.${record}`;

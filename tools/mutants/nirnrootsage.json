@@ -100,44 +100,44 @@
     "note": "The aura's word not as named."
   },
   {
-    "name": "NIRNROOT-SAGE-heart-deep",
+    "name": "NIRNROOT-SAGE-veins-deep",
     "file": "src/ui/playerBadge.js",
-    "old": "'M8.3 1.35Q9.4 1.35 9.4 2.8Q9.4 4.25 8.3 4.25Q7.2 4.25 7.2 2.8Q7.2 1.35 8.3 1.35Z', rgba: NIRN_HAZE",
-    "new": "'M8.3 1.35Q9.4 1.35 9.4 2.8Q9.4 4.25 8.3 4.25Q7.2 4.25 7.2 2.8Q7.2 1.35 8.3 1.35Z', rgba: NIRN_DEEP",
+    "old": "'M6.41 12.63L3.32 13.39L6.46 12.84ZM6.61 11.6L1.69 9.32L6.51 11.8ZM7.27 10.97L3.5 4.91L7.08 11.09ZM8.11 10.8L8 2.28L7.89 10.8ZM8.92 11.09L12.5 4.91L8.73 10.97ZM9.49 11.8L14.31 9.32L9.39 11.6ZM9.54 12.84L12.68 13.39L9.59 12.63ZM4.62 10.92L3.96 11.02L4.43 10.82ZM4.76 10.65L4.43 10.07L4.56 10.55ZM3.35 10.3L2.69 10.4L3.15 10.2ZM3.48 10.03L3.15 9.45L3.28 9.93ZM5.82 9.07L5.14 8.84L5.71 8.88ZM6.08 8.92L6.2 8.2L5.97 8.73ZM5.07 7.82L4.39 7.59L4.96 7.63ZM5.33 7.67L5.45 6.95L5.22 7.48ZM4.32 6.57L3.64 6.34L4.21 6.38ZM4.58 6.42L4.7 5.7L4.47 6.23ZM7.85 8.27L7.32 7.72L7.85 8.05ZM8.15 8.27L8.68 7.72L8.15 8.05ZM7.85 6.84L7.32 6.29L7.85 6.62ZM8.15 6.84L8.68 6.29L8.15 6.62ZM7.85 5.41L7.32 4.86L7.85 5.19ZM8.15 5.41L8.68 4.86L8.15 5.19ZM7.85 3.97L7.32 3.42L7.85 3.75ZM8.15 3.97L8.68 3.42L8.15 3.75ZM9.92 8.92L9.8 8.2L10.03 8.73ZM10.18 9.07L10.86 8.84L10.29 8.88ZM10.67 7.67L10.55 6.95L10.78 7.48ZM10.93 7.82L11.61 7.59L11.04 7.63ZM11.42 6.42L11.3 5.7L11.53 6.23ZM11.68 6.57L12.36 6.34L11.79 6.38ZM11.24 10.65L11.57 10.07L11.44 10.55ZM11.38 10.92L12.04 11.02L11.57 10.82ZM12.52 10.03L12.85 9.45L12.72 9.93ZM12.65 10.3L13.31 10.4L12.85 10.2Z', rgba: NIRN_HAZE",
+    "new": "'M6.41 12.63L3.32 13.39L6.46 12.84ZM6.61 11.6L1.69 9.32L6.51 11.8ZM7.27 10.97L3.5 4.91L7.08 11.09ZM8.11 10.8L8 2.28L7.89 10.8ZM8.92 11.09L12.5 4.91L8.73 10.97ZM9.49 11.8L14.31 9.32L9.39 11.6ZM9.54 12.84L12.68 13.39L9.59 12.63ZM4.62 10.92L3.96 11.02L4.43 10.82ZM4.76 10.65L4.43 10.07L4.56 10.55ZM3.35 10.3L2.69 10.4L3.15 10.2ZM3.48 10.03L3.15 9.45L3.28 9.93ZM5.82 9.07L5.14 8.84L5.71 8.88ZM6.08 8.92L6.2 8.2L5.97 8.73ZM5.07 7.82L4.39 7.59L4.96 7.63ZM5.33 7.67L5.45 6.95L5.22 7.48ZM4.32 6.57L3.64 6.34L4.21 6.38ZM4.58 6.42L4.7 5.7L4.47 6.23ZM7.85 8.27L7.32 7.72L7.85 8.05ZM8.15 8.27L8.68 7.72L8.15 8.05ZM7.85 6.84L7.32 6.29L7.85 6.62ZM8.15 6.84L8.68 6.29L8.15 6.62ZM7.85 5.41L7.32 4.86L7.85 5.19ZM8.15 5.41L8.68 4.86L8.15 5.19ZM7.85 3.97L7.32 3.42L7.85 3.75ZM8.15 3.97L8.68 3.42L8.15 3.75ZM9.92 8.92L9.8 8.2L10.03 8.73ZM10.18 9.07L10.86 8.84L10.29 8.88ZM10.67 7.67L10.55 6.95L10.78 7.48ZM10.93 7.82L11.61 7.59L11.04 7.63ZM11.42 6.42L11.3 5.7L11.53 6.23ZM11.68 6.57L12.36 6.34L11.79 6.38ZM11.24 10.65L11.57 10.07L11.44 10.55ZM11.38 10.92L12.04 11.02L11.57 10.82ZM12.52 10.03L12.85 9.45L12.72 9.93ZM12.65 10.3L13.31 10.4L12.85 10.2Z', rgba: NIRN_DEEP",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
-    "note": "The bulb's heart dark - a nirnroot that does not glow."
+    "note": "NIRN-LEAF: the veins dark - not the pale veins of Skyrim's nirnroot."
   },
   {
-    "name": "NIRNROOT-SAGE-heart-out-of-bulb",
+    "name": "NIRNROOT-SAGE-stem-out-of-stem",
     "file": "src/ui/playerBadge.js",
-    "old": "'M8.3 1.35Q9.4 1.35 9.4 2.8Q9.4 4.25 8.3 4.25Q7.2 4.25 7.2 2.8Q7.2 1.35 8.3 1.35Z'",
-    "new": "'M8.3 7.35Q9.4 7.35 9.4 8.8Q9.4 10.25 8.3 10.25Q7.2 10.25 7.2 8.8Q7.2 7.35 8.3 7.35Z'",
+    "old": "'M7.86 15.45L7.9 12.7L8.1 12.7L8.14 15.45Z'",
+    "new": "'M7.86 11.45L7.9 8.7L8.1 8.7L8.14 11.45Z'",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
-    "note": "The heart down the stem, out of the bulb."
+    "note": "NIRN-LEAF: the stem's core up into the fan, out of the stem."
   },
   {
-    "name": "NIRNROOT-SAGE-leaf-dropped",
+    "name": "NIRNROOT-SAGE-leaflet-dropped",
     "file": "src/ui/playerBadge.js",
-    "old": "L8.9 12.6Q12.2 10 15.4 10.6Q13.2 15.4 8.7 15.6Z',",
-    "new": "L8.9 15.6L8.7 15.6Z',",
+    "old": "L9 12.51L9.52 12.59L10.62 12.29L10.73 12.62L11.8 12.46L11.89 12.86L12.88 13.08L13.28 13.52L12.73 13.76L11.74 13.56L11.49 13.89L10.58 13.31L10.35 13.56L9.47 12.85L8.96 12.71L8.26 12.9L8.32 15.6Z'",
+    "new": "L8.26 12.9L8.32 15.6Z'",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
-    "note": "The right broad leaf gone - a sprig with one leaf at its foot."
+    "note": "NIRN-LEAF: the right drooping leaflet gone - a fan of six."
   },
   {
     "name": "NIRNROOT-SAGE-outline-crossing",
     "file": "src/ui/playerBadge.js",
-    "old": "L7.5 10.8Q4.6 10.9 2.4 7.4",
-    "new": "L7.5 10.8Q4.6 15.9 2.4 7.4",
+    "old": "L7.52 1.76L8 0.8",
+    "new": "L9.52 1.76L8 0.8",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
-    "note": "The upper left leaf's edge swung through the broad leaf below it: the outline crosses itself, and the aura's even-odd fill cuts a hole where they overlap."
+    "note": "NIRN-LEAF: the middle leaflet's last tooth swung across its own tip: the outline crosses itself, and the aura's even-odd fill cuts a hole where they overlap."
   },
   {
     "name": "NIRNROOT-SAGE-list-key",
@@ -212,12 +212,12 @@
   {
     "name": "NIRNROOT-SAGE-relay-unmoved",
     "file": "src/net/wire.js",
-    "old": "export const RELAY_VERSION = 'world279';",
+    "old": "export const RELAY_VERSION = 'world290';",
     "new": "export const RELAY_VERSION = 'world267';",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
-    "note": "Re-aimed by content (AUDIT FB1028 A2-A3): world279, GROUND_LAW 4. Re-aimed by content (FB1028 TOWN-GROUND): world278, GROUND_LAW 3. MASTER-THREE (PIN MOVED): world271 (MASTERY_SLOTS 3/2/1 in systems/masterSkills.js, a file the bundle reaches; world269, then world270, on its branch, renumbered past BOW-TOPS and CHAT-POST at the merges). The vocabulary changed under a relay version already named. SHOP (re-aimed by content): the line it quotes grew with the shop. PIN MOVED: SD-PARTY world275, re-aimed by content."
+    "note": "Re-aimed by content (THE MERGES OF MAIN INTO THE DWARVEN DRAGON'S BRANCH AT 45342d9fa, c72b366b5 AND f2e1fe700): world288, the pose keeps rd 3 and the dragon's fight (world281, world283, world284, world285, world286 then world287 on its branch, renumbered past main's world281 to world287 at the merges). Re-aimed by content (CAPE-TOGGLE): world285, a look's `hc` (world284 on its branch, past AUDIT TAMRIEL-WIDE at the merge of main). Re-aimed by content (THE MERGES OF MAIN INTO AUDIT TAMRIEL-WIDE): world284, past main's world281 to world283. Re-aimed by content (AUDIT TAMRIEL-WIDE B1, B2, B5 and E3): world280. Re-aimed by content (AUDIT FB1028 A2-A3): world279, GROUND_LAW 4. Re-aimed by content (FB1028 TOWN-GROUND): world278, GROUND_LAW 3. MASTER-THREE (PIN MOVED): world271 (MASTERY_SLOTS 3/2/1 in systems/masterSkills.js, a file the bundle reaches; world269, then world270, on its branch, renumbered past BOW-TOPS and CHAT-POST at the merges). The vocabulary changed under a relay version already named. SHOP (re-aimed by content): the line it quotes grew with the shop. PIN MOVED: SD-PARTY world275, re-aimed by content."
   },
   {
     "name": "NIRNROOT-SAGE-the-kind",
@@ -432,7 +432,7 @@
   {
     "name": "NIRNROOT-SAGE-veins-dropped",
     "file": "src/render/auraRing.js",
-    "old": "  col = mix(col, SG_DEEP, clamp(0.5 - sageVeinD(g) / px, 0.0, 1.0));\n",
+    "old": "  col = mix(col, SG_HAZE, 0.8 * clamp(0.5 - sageVeinD(g) / px, 0.0, 1.0));\n",
     "new": "",
     "tests": [
       "test/net/nirnrootsage.test.js"
@@ -440,14 +440,14 @@
     "note": "The aura's nirnroots without their veins - not the badge's own."
   },
   {
-    "name": "NIRNROOT-SAGE-heart-dropped",
+    "name": "NIRNROOT-SAGE-stem-dropped",
     "file": "src/render/auraRing.js",
-    "old": "  col = mix(col, SG_HAZE, clamp(0.5 - sageBudD(g) / px, 0.0, 1.0));\n",
+    "old": "  col = mix(col, SG_DEEP, clamp(0.5 - sageStemD(g) / px, 0.0, 1.0));\n",
     "new": "",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
-    "note": "The aura's nirnroots without the bulb's glowing heart."
+    "note": "NIRN-LEAF: the aura's nirnroots without the stem's dark core."
   },
   {
     "name": "NIRNROOT-SAGE-halo-covering",
@@ -588,5 +588,15 @@
       "test/net/nirnrootsage.test.js"
     ],
     "note": "Every wearer's smoke in step."
+  },
+  {
+    "name": "NIRNROOT-SAGE-leaf-one-colour",
+    "file": "src/render/auraRing.js",
+    "old": "heart: Object.freeze([0.2, 0.66, 0.52])",
+    "new": "heart: Object.freeze([0.66, 0.97, 0.84])",
+    "tests": [
+      "test/net/nirnrootsage.test.js"
+    ],
+    "note": "NIRN-LEAF: the leaf mint all over - no teal at the fan's heart."
   }
 ]

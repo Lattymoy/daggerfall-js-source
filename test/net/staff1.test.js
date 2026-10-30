@@ -49,7 +49,7 @@ test('STAFF1 grammar: /tp takes a place, a map pixel or @player; /god and /fly f
   assert.deepEqual(parseStaffCommand('/staff'), { cmd: 'staff' });
   assert.ok('error' in parseStaffCommand('/heal me'));
   for (const line of ['/red hi', '/unstuck', 'tp Daggerfall', '/tpx 1 2', '//tp 1 2', 'hello']) assert.equal(parseStaffCommand(line), null, line);
-  assert.deepEqual([...STAFF_COMMANDS], ['tp', 'god', 'fly', 'heal', 'pos', 'staff', 'relay']);   // PIN MOVED (SCALE5b): /relay, a developer's (net/relayCfg.js, test/net/scale5b.test.js)
+  assert.deepEqual([...STAFF_COMMANDS], ['tp', 'tpa', 'god', 'fly', 'heal', 'pos', 'staff', 'relay']);   // PIN MOVED (STAFF-PULL): /tpa, bring a player (test/net/staffpull.test.js); PIN MOVED (SCALE5b): /relay, a developer's (net/relayCfg.js, test/net/scale5b.test.js)
   for (const c of STAFF_COMMANDS.filter((n) => n !== 'staff')) assert.ok(STAFF_HELP_LINES.some((l) => l.startsWith(`/${c} `)), `/staff lists /${c}`);
 });
 
@@ -98,10 +98,11 @@ test('STAFF1 host wiring by source: asked only of staff by the service\'s own gl
   // folded to /god before the parser
   assert.match(w, /\nconst TEST_GODMODE = false;\nconst isStaffT = \(g\) => TEST_GODMODE \|\| isStaff\(g\);\n/, 'TESTBUILD: the switch ships off, so isStaffT is isStaff');
   // PIN MOVED (DRAGON-RIDE): /dragon's own grammar asked first (systems/staffDragon.js - the relay reads net/staffCommands.js's bytes)
-  assert.match(w, /const staffCmd = isStaffT\(staffGlyphs\(\)\) \? \(parseDragonCommand\(text\) \?\? parseStaffCommand\(text\.replace\(\/\^\\\/godmode\\b\/i, '\/god'\), staffPowers\(\)\)\) : null;[^\n]*\n\s*if \(staffCmd\) \{ runStaffCommand\(tabId, staffCmd\); return 'error' in staffCmd \? false : true; \}/);
+  // PIN MOVED (AUDIT TAMRIEL-WIDE B4/C7): then scenes/staffTp.js parseStaffLine, a pixel past the Bay first
+  assert.match(w, /const staffCmd = isStaffT\(staffGlyphs\(\)\) \? \(parseDragonCommand\(text\) \?\? parseStaffLine\(text\.replace\(\/\^\\\/godmode\\b\/i, '\/god'\), staffPowers\(\)\)\) : null;[^\n]*\n\s*if \(staffCmd\) \{ runStaffCommand\(tabId, staffCmd\); return 'error' in staffCmd \? false : true; \}/);
   assert.ok(w.indexOf('const staffCmd = isStaffT(') < w.indexOf('const cmd = parseChatLine('), 'asked before the chat\'s own refusal');
   assert.match(w, /_staffGlyphs = Array\.isArray\(who\?\.glyphs\) \? who\.glyphs : \[\];[^\n]*\n\s*if \(!isStaffT\(_staffGlyphs\)\) setStaffPowers\(\{ god: false, fly: false \}\);/);
   assert.match(w, /const staffGlyphs = \(\) => _staffGlyphs;/);
-  assert.match(w, /if \(_teleporting \|\| worldMoveBusy\(\)\) \{ say\('You cannot teleport right now\.'\); return; \}\n\s*hudFade\.smashHUDToBlack\(\);[^\n]*\n\s*teleportTo\(pick\)\.catch\(/);
+  assert.match(w, /if \(_teleporting \|\| worldMoveBusy\(\)\) \{ say\('You cannot teleport right now\.'\); return; \}\n\s*hudFade\.smashHUDToBlack\(\);[^\n]*\n\s*teleportTo\(pick\)\.then\(\(ok\) => ok \|\| hudFade\.clearFade\(\)\)[^\n]*\n\s*\.catch\(/);   // PIN MOVED (AUDIT TAMRIEL-WIDE III V1): a refusal lifts the black
   assert.match(rd('src/scenes/dungeonContext.js'), /playerLevitating: \(\) => hasActiveEffect\(playerEntity, 'levitate'\) && !levitateWarded\(\) \|\| staffFly\(\),/);   // PIN MOVED (AUDIT SD V L1): the ward holds the effect, never /fly
 });

@@ -9,8 +9,8 @@
   {
     "name": "WILD-INSURE-the-premium-rounded-down",
     "file": "src/systems/wild/wildInsureLaw.js",
-    "old": "Math.max(1, Math.ceil(itemWorth(item) / WILD_INSURE_DIVISOR))",
-    "new": "Math.max(1, Math.floor(itemWorth(item) / WILD_INSURE_DIVISOR))",
+    "old": "Math.max(1, Math.ceil((itemWorth(item) + wildMakerGold(item)) / WILD_INSURE_DIVISOR))",
+    "new": "Math.max(1, Math.floor((itemWorth(item) + wildMakerGold(item)) / WILD_INSURE_DIVISOR))",
     "tests": ["test/systems/wild/wildinsure.test.js"]
   },
   {
@@ -28,11 +28,12 @@
     "tests": ["test/systems/wild/wildinsure.test.js"]
   },
   {
-    "name": "WILD-INSURE-a-plain-piece-insurable",
+    "name": "WILD-INSURE-a-piece-of-no-gear-insurable",
     "file": "src/systems/wild/wildInsureLaw.js",
-    "old": "  return ledgerKeyOf(item) != null && wildCanLose(item);",
+    "old": "  return (valuablePiece(item) || WILD_GEAR_GROUPS.includes(item.group)) && wildCanLose(item);",
     "new": "  return wildCanLose(item);",
-    "tests": ["test/systems/wild/wildinsure.test.js"]
+    "note": "Re-aimed by content (INSURE-ALL): a plain piece of gear is insurable now; the mutant insures a piece of no gear",
+    "tests": ["test/systems/wild/wildinsure.test.js", "test/systems/wild/insureall.test.js"]
   },
   {
     "name": "WILD-INSURE-the-pick-blind",
@@ -58,8 +59,8 @@
   {
     "name": "WILD-INSURE-the-policies-unread",
     "file": "server-account/src/wild.js",
-    "old": "const insured = wildInsuredBy(policies.filter((p) => wildPolicyInForce(Number(p.at), fallAt)).map((p) => String(p.key)));",
-    "new": "const insured = wildInsuredBy([]);",
+    "old": "const insured = pvpInsuredFor(live.map((p) => String(p.key)),",
+    "new": "const insured = pvpInsuredFor([],",
     "tests": ["test/systems/wild/wildinsure.test.js"]
   },
   {

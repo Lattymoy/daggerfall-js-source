@@ -55,8 +55,9 @@ export const wildRingLoot = (ring) => WILD_RING_LOOT[(ring | 0) - 1] ?? WILD_RIN
 /** A ring's word for the maps and the HUD. */
 export const wildRingName = (ring) => ['The Borderlands', 'The Wilds', 'The Heartlands', 'The Heart'][(ring | 0) - 1] ?? 'The Heart';   // WW-C2: Cyrodiil's, its border to the Imperial heart (the mountains' Foothills to High Crags retired)
 export const wildRingBonus = (ring) => `+${Math.round((wildRingLoot(ring) - 1) * 100)}% loot`;
-/** "has to wait 2mins till respawn" - and a killer's body lies as long. */
-export const WILD_DEATH_HOLD_S = 120;
+/** PVP-RISE (the owner, 2026-10-29: "Need to have to eake up im nearest town", "Jist like pve deaths"): the wait an online
+ *  PvE death has (ui/deathScreen.js ONLINE_RESPAWN_SECONDS), once "has to wait 2mins till respawn" - and a body lies as long. */
+export const WILD_DEATH_HOLD_S = 60;
 /** A blow from another player this recent at the death names them the killer (a lingering spell, a foe's last swing
  *  after a player's - the player who brought you down). */
 export const WILD_KILL_CREDIT_MS = 10_000;
@@ -586,20 +587,23 @@ export function createPartyTruce(ms = WILD_PARTY_TRUCE_MS) {
 
 // ── the words ─────────────────────────────────────────────────────────────────────────────────────────────────────────
 export const WILD_TEXT = Object.freeze({
-  // FOE-KEEPS (2026-10-24, the owner: "I dont want people to lose everything they have"): only another player's kill drops
-  // what you carry (a foe's takes the usual tenth of the purse) - said so where the zone is entered, on its chip and at a
-  // foe's death; through the text core (L10N4), read when they are said (a getter: a string where the callers read one).
+  // PVP-WORDS (PVP-REWARD, 2026-10-29: no bag drops): a player's kill may take one uninsured worn piece, or gold; a foe's
+  // death pays the usual death penalty - said where the zone is entered, on its chip and at a foe's death; through the
+  // text core (L10N4), read when they are said (a getter: a string where the callers read one).
   // WW-C2: the zone is Cyrodiil's - a name, said with no article
-  get enter() { return t('wild.zone.enter', 'You enter {zone}, an open PvP zone. Foes here are four times as strong. If another player kills you, you drop what you carry.', { zone: WILD_NAME }); },
+  get enter() { return t('wild.zone.enter', 'You enter {zone}, an open PvP zone. Foes here are four times as strong. If another player kills you, they may take one uninsured worn piece, or gold.', { zone: WILD_NAME }); },
   leave: `You leave ${WILD_NAME}.`,
   chip: 'Open PvP',
-  get chipTip() { return t('wild.zone.chipTip', '{zone}: other players may attack you. Foes are four times as strong and drop up to twice the loot (25% more at the edge, twice in the heart). If another player kills you, you drop what you carry.', { zone: WILD_NAME }); },
+  get chipTip() { return t('wild.zone.chipTip', '{zone}: other players may attack you. Foes are four times as strong and drop up to twice the loot (25% more at the edge, twice in the heart). A player\'s kill may cost uninsured gear or gold.', { zone: WILD_NAME }); },
   mapKey: 'Open PvP zone',
-  deathPvp: (name) => `${name || 'Another player'} may claim one piece of your worn gear.`,
+  // PVP-LINGER-RISE (the owner: "So u respawn in town if u get killed and log back in?"): my body fell while I was away
+  deathAway: (/** @type {string | null | undefined} */ name) => (name ? t('wild.death.away', 'Slain by {name} while you were away.', { name }) : t('wild.death.awayAnon', 'You were slain while you were away.')),
+  deathSlain: (name) => (name ? t('wild.death.slain', 'Slain by {name}.', { name }) : t('wild.death.slainAnon', 'Slain by another player.')),   // PVP-HUD: the mockup's head
+  deathPvp: (name) => `${name || 'Another player'} may take one uninsured worn piece of yours, or gold.`,   // PVP-WORDS: the service's roll
   deathDrop: (n) => (n > 0 ? `${n} ${n === 1 ? 'thing you carried lies' : 'things you carried lie'} where you fell, for ten minutes.` : ''),
   // FOE-KEEPS: a foe's kill. AUDIT FOE-KEEPS O1, H5: it said "You keep what you carry" over the gold the same death
   // claims, and a revenant's theft at the rise - nothing DROPS, which is true of both
-  deathKept: () => t('wild.death.kept', 'Nothing dropped. Only another player\'s kill drops what you carry.'),
+  deathKept: () => t('wild.death.kept', 'Nothing dropped. You pay the usual death penalty.'),   // PVP-WORDS: no bag drops at a kill either
   // BURNT-SAID (FIELD BUGS 2026-10-18b): a held record's drop is taken and laid nowhere (Integrity-Arc, Lane 1's freeze) -
   // said, where it was said as nothing at all; and the letters of credit among what a death took, by their worth - through
   // the text core (L10N4), read when they are said
@@ -622,6 +626,15 @@ export const WILD_TEXT = Object.freeze({
     : t('wild.escrow.heldTakenAnon', 'Your killer collected your {item}.', { item: item || t('wild.escrow.gear', 'gear') })),
   collected: (item) => t('wild.escrow.collected', 'You take {item}.', { item }),
   collectLate: () => t('wild.escrow.collectLate', 'That piece was no longer held for you.'),
+  // PVP-REWARD: every piece the fallen wore was insured - the gold of one policy, as coin or as a letter of credit
+  policyGold: (n) => t('pvp.reward.gold', 'All their gear was insured. You take {n} gold from one policy.', { n: Number(n).toLocaleString('en-US') }),
+  policyLetter: (n) => t('pvp.reward.letter', 'All their gear was insured. The coin was too heavy, so you take a letter of credit for {n} gold.', { n: Number(n).toLocaleString('en-US') }),
+  // PVP-NO-TENTH: no piece to take and no policy to pay - the last roll, a tenth of the coin and the letters together
+  lastGold: (n) => t('pvp.reward.last', 'They had no gear to take and no insurance. You take {n} gold, a tenth of their wealth.', { n: Number(n).toLocaleString('en-US') }),
+  lastLetter: (n) => t('pvp.reward.lastLetter', 'They had no gear to take and no insurance. The coin was too heavy, so you take a letter of credit for {n} gold.', { n: Number(n).toLocaleString('en-US') }),
+  deathLast: (name, gold) => (gold > 0 ? (name
+    ? t('wild.death.last', '{name} took {gold} gold, a tenth of your coin and letters of credit. You had no gear to take and no insurance.', { name, gold: Number(gold).toLocaleString('en-US') })
+    : t('wild.death.lastAnon', 'Your killer took {gold} gold, a tenth of your coin and letters of credit. You had no gear to take and no insurance.', { gold: Number(gold).toLocaleString('en-US') })) : ''),
   deathHold: `In ${WILD_NAME} the dead wait two minutes.`,
   remainsName: (name) => (name ? `${name}'s remains` : 'Remains'),
   mine: 'Your remains',
@@ -630,12 +643,12 @@ export const WILD_TEXT = Object.freeze({
   picked: (name, item) => `You take ${item} from ${name || 'the body'}.`,
   chosen: (name, item) => `You choose ${item} from ${name || 'the body'}. It comes to you from their remains.`,   // INT9: the pick is the relay's to sign
   lostPiece: (name, item) => `${name || 'Your killer'} took your ${item}.`,
-  dropLate: `What you dropped when you died in ${WILD_NAME} has left your pack. It lies where you fell.`,   // INT9 (AUDIT): a receipt that found the fallen risen
+  dropLate: `What your killer took when you died in ${WILD_NAME} has left your pack.`,   // INT9 (AUDIT): a receipt that found the fallen risen
   burntLate: () => t('wild.death.burntLate', 'What you dropped when you died in Cyrodiil has left your pack. This character\'s trading is frozen, so it was lost.'),   // BURNT-SAID: the same, for a held record
   noFight: 'You cannot attack a member of your party.',
   // PARTY-TRUCE: a party left in the zone, and a walk that leads into it
   truce: `No longer in your party. In ${WILD_NAME} you and they cannot fight for ten minutes. Then you are strangers.`,
-  walkInto: `It leads into ${WILD_NAME}, an open PvP zone. Other players may kill you there and take what you carry.`,
+  walkInto: `It leads into ${WILD_NAME}, an open PvP zone. Other players may kill you there and take a worn piece or gold.`,
   // AUDIT SEA VENTURES C6, C7: two more of the zone's own, so a ground of its own says them its way (zoneWord) - through
   // the text core (L10N4), read when they are said (a getter: a string where the callers read one)
   get unstuckOut() { return t('wild.zone.unstuckOut', '/unstuck does not work outdoors in Cyrodiil.'); },
@@ -653,7 +666,7 @@ export const WILD_TEXT = Object.freeze({
   // worth" - systems/wild/wildInsureLaw.js): the pack's card and menu (net/wild/wildInsureBook.js) and the death screen -
   // through the text core (L10N4), read when they are said
   insureAct: (gold) => t('wild.insure.act', 'Insure ({gold} gold)', { gold: Number(gold).toLocaleString('en-US') }),
-  insuredLine: () => t('wild.insure.line', 'Insured. A player\'s kill in an open PvP zone will not take it, and the policy is spent when it saves this piece.'),
+  insuredLine: () => t('wild.insure.line', 'Insured. A player\'s kill in an open PvP zone will not take it, unless you are a villain. The policy is spent when it saves this piece.'),   // PVP-WORDS: wild.js pvpInsuredFor keeps nothing of a villain's
   insuredSoon: (min) => t('wild.insure.soon', 'Insured. The policy takes effect in {min, plural, one {# minute} other {# minutes}}.', { min }),
   insureDone: (gold) => t('wild.insure.done', 'Insured for {gold} gold. The policy takes effect in two minutes.', { gold: Number(gold).toLocaleString('en-US') }),
   insureInZone: () => t('wild.insure.inZone', 'No one writes insurance inside an open PvP zone. Insure your gear before you go in.'),
@@ -733,7 +746,7 @@ let _killed = false;
 /** My fall, the referee's word (`wref` `fell`): `{ r, by, room, at }` - kept here beside the kill it makes (it was the world
  *  host's `_wildFell`), until the death ends. */
 let _fell = null;
-/** The world host's word at a death in the zone - `{ killer, dropped, claimed, held, burnt, letters, insured, shield }` (the
+/** The world host's word at a death in the zone - `{ killer, dropped, claimed, held, burnt, letters, insured, shield, last }` (the
  *  last two: WILD-INSURE's count of pieces my policies kept, and REPEAT-SHIELD's word that nothing was taken) (the killer's name or
  *  null, how many things were left where the body fell, the worn piece the killer took - `held`: MAC (2026-10-14), held in
  *  escrow until they collect it - BURNT-SAID: how many were taken and laid nowhere, a held record's, and `letters` the
@@ -747,7 +760,7 @@ export function setWildDeath(d) {
   if (!d) { _killed = false; _fell = null; }
   else if (d.kill === true || (typeof d.killer === 'string' && d.killer)) _killed = true;
   _death = d ? { killer: typeof d.killer === 'string' && d.killer ? d.killer : null, kill: _killed, dropped: Math.max(0, d.dropped | 0), claimed: typeof d.claimed === 'string' && d.claimed ? d.claimed : null, held: d.held === true,
-    burnt: Math.max(0, d.burnt | 0), letters: wildLettersOf(d.letters), insured: Math.max(0, d.insured | 0), shield: d.shield === true, kind: d.kind ?? _death?.kind ?? _kind ?? WILD_KIND } : null;   // ETHER-WILD: the ground it fell on, for its words; WILD-INSURE and REPEAT-SHIELD: what kept
+    burnt: Math.max(0, d.burnt | 0), letters: wildLettersOf(d.letters), insured: Math.max(0, d.insured | 0), shield: d.shield === true, last: Math.max(0, Math.floor(Number(d.last) || 0)), away: d.away === true || (d.away === undefined && _death?.away === true), kind: d.kind ?? _death?.kind ?? _kind ?? WILD_KIND } : null;   // ETHER-WILD: the ground it fell on, for its words; WILD-INSURE and REPEAT-SHIELD: what kept
   if (_death) _death.served = served;
 }
 /** BURNT-SAID: the letters of credit among `items` - how many, and the gold they stand for. AUDIT FOE-KEEPS LETTERS-TENTH:
@@ -770,11 +783,14 @@ export function wildDeathAtHand(/** @type {any} */ fell, /** @type {string | nul
 export const wildDeathKill = () => _killed;
 /** The referee's fall heard for me since my last rise, or null (wildDeathBegin shows my worn pieces to its killer). */
 export const wildFallHeard = () => _fell;
+/** PVP-HUD (the mockup): the death screen's head at a player's kill - "Slain by" the killer - or '' for any other. */
+export const wildDeathSlain = (d = _death) => (d && !d.away && (d.killer || d.kill) ? WILD_TEXT.deathSlain(d.killer) : '');   // PVP-LINGER-RISE: away, its own line says it
 /** The death screen's lines for a death in the zone (empty for any other). */
 export function wildDeathLines(d = _death) {
   if (!d) return [];
+  if (d.away) return [WILD_TEXT.deathAway(d.killer), ...wildDeathLines({ ...d, away: false })];   // PVP-LINGER-RISE: slain while I was away
   const head = d.shield ? WILD_TEXT.deathShield()   // REPEAT-SHIELD: no claim, no drop - said in their place
     : d.killer || d.kill ? (d.claimed ? (d.held ? WILD_TEXT.deathHeld : WILD_TEXT.deathClaim)(d.killer, d.claimed) : WILD_TEXT.deathPvp(d.killer)) : WILD_TEXT.deathKept();
   return [head, WILD_TEXT.deathDrop(d.dropped), WILD_TEXT.deathInsured(d.insured ?? 0),
-    WILD_TEXT.deathBurnt(d.burnt ?? 0), WILD_TEXT.deathLetters(d.letters?.n ?? 0, d.letters?.gold ?? 0), WILD_TEXT.deathLettersTenth(d.letters?.tenth ?? 0), zoneWord('deathHold', d.kind ?? WILD_KIND)].filter(Boolean);
+    WILD_TEXT.deathBurnt(d.burnt ?? 0), WILD_TEXT.deathLetters(d.letters?.n ?? 0, d.letters?.gold ?? 0), d.last ? WILD_TEXT.deathLast(d.killer, d.last) : WILD_TEXT.deathLettersTenth(d.letters?.tenth ?? 0), zoneWord('deathHold', d.kind ?? WILD_KIND)].filter(Boolean);
 }

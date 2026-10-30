@@ -1,11 +1,11 @@
 // WD3 (2026-10-01): THE PICTURES THE STAND-INS WEAR THAT DAGGERFALL HAS NONE OF - drawn by the port, in code.
 //
-// Daggerfall Expanded Textures hangs tapestries and banners - a region's, a god's, a pattern's - and Rosy's
-// Resources lays rugs; Beautiful Villages and Beautiful Cities place them by the hundred, and Detailed Ships flies
-// four from its masts and beams. None of it is the port's to carry, and Daggerfall has no woven cloth to derive it
-// from (its own paintings it does have, and the painting stand-ins wear THOSE - world/townStandIns.js). So these are
-// the port's own drawings: a woven field, a border, a charge or a god's sign, at Daggerfall's own coarse pixel, made
-// the same way every time (no file, no randomness at run time - one seed per picture).
+// Daggerfall Expanded Textures hangs tapestries and banners - a region's, a god's, a pattern's - and Rosy's Resources
+// lays rugs; Beautiful Villages and Beautiful Cities place them by the hundred. None of it is the port's to carry, and
+// Daggerfall has no woven cloth to derive it from (its own paintings it does have, and the painting stand-ins wear
+// THOSE - world/townStandIns.js). So these are the port's own drawings: a woven field, a border, a charge or a god's
+// sign, at Daggerfall's own coarse pixel, made the same way every time (no file, no randomness at run time - one seed
+// per picture).
 //
 // One archive, `TOWN_PICTURE_ARCHIVE`, past every classic and mod archive the port knows; each record a picture
 // (`TOWN_PICTURES`, by record). The models that wear them name (archive, record) as any model names a classic

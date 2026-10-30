@@ -95,7 +95,13 @@ export function folkWhere(feet = null) {
   const p = _pixelOf && _regionAt ? _pixelOf(feet) : null;
   return p ? folkAt(p.x, p.y, _regionAt?.(p.x, p.y) ?? -1) : null;
 }
+/** SKYRIM-AURORA: the map pixel the player stands on, through the same door - null with no host (the fixed-city bench
+ *  sets none). The sky's aurora reads it (scenes/auroraHost.js), so no host hands the sky a pixel of its own. */
+export const pixelHere = () => (_pixelOf ? _pixelOf(null) : null);
 /** The people where the player stands. A standing person and a roster of the place read it. */
 export const folkHere = () => folkWhere(null);
 /** The place's own people's race where the player stands (Cyrodiil's Imperial, the Reach's Breton), or null on the Bay. */
 export const nativeHere = () => folkHere()?.[0][0] ?? null;
+/** AUDIT TAMRIEL-WIDE E2: the own people's race where scene `feet` stand (the player's for none) - a person drawn by a
+ *  border is of their own side, on every machine. @param {number[]|null} [feet] */
+export const nativeAt = (feet = null) => folkWhere(feet)?.[0][0] ?? null;

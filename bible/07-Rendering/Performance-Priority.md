@@ -1523,7 +1523,7 @@ client completely freezes for about 5-10 seconds".*
 **Found.** The aura pass (`render/auraRing.js`) was built in play at its first use, outside SHADER-STALL's door.
 `drawAuras` made it the first frame a wearer stood within `AURA_RANGE_M` of the eye, and its constructor's
 `buildProgram` read the link, which waits for the whole compile. Its one program carries every look: 81 KB of fragment
-shader, 1,158 lines, 19 loops. The travel view draws no aura (`world.js:"if (!online || travelView?.active) return;"`),
+shader, 1,158 lines, 19 loops. The travel view draws no aura (`auraHost.js:"if (!online || deps.travelActive()) return;"`),
 so a player who rode the Overworld to a crowd met the build on the frame the view came down. A crowd at a Breach nearly
 always holds a wearer. The pass was tried once a page, and Chromium's shader cache answers a source it has compiled
 before (57 ms on a reload), so the freeze came once, on the first session after a change to the aura's shaders.
@@ -1536,7 +1536,7 @@ before (57 ms on a reload), so the freeze came once, on the first session after 
 - The world builds the pass through `compiledPass` and never asks it as needed. An aura is cosmetic, so a wearer stands
   without it while its program compiles. The capes' pose and swing are stepped meanwhile. Without the extension, the
   pass is built at its first wearer as before. SUPERSEDED in part at AURA-SPLIT: the world's door
-  (`world.js:"const auraPassOf = compiledPass(renderer.gl, [],"`) waits on no program, and each look's waits at its own.
+  (`auraHost.js:"const auraPassOf = compiledPass(renderer.gl, [],"`) waits on no program, and each look's waits at its own.
 
 bootWorld lost 3 logical lines (its ceiling 36,256 -> 36,253, `test/scenes/hostceiling.test.js`; 36,287 -> 36,284 at the
 merge of main past STAFF-PANEL5's wiring).
@@ -1589,7 +1589,7 @@ the one program that every player's shader cache keyed.
   frame; the capes' pose and swing are stepped meanwhile.
 - The wearers are drawn farthest first, as before. A look's program is bound again only where the look changes, and is
   handed the draw's camera, clock and fog once a draw (`_bind`).
-- The world's door waits on no program (`world.js:"const auraPassOf = compiledPass(renderer.gl, [],"`): it builds the
+- The world's door waits on no program (`auraHost.js:"const auraPassOf = compiledPass(renderer.gl, [],"`): it builds the
   pass at the first wearer in range, and a throw costs the auras, never the game.
 - Without `KHR_parallel_shader_compile`, each look is built at its first draw and waits for that look's compile alone.
 
@@ -2727,7 +2727,7 @@ the ways' land pieces - answer with what they built without waiting for it (`tes
 |---|---|---|---|---|
 | walks' ground tiles | `world/terrain/groundTilesKept.js` | the pin (BlocksFile, the world-data door, packs, patches, the arena's block, the carriages' layer, and the mods' shipped WorldData, WorldDataPatches and packs); BLOCKS.BSA's stamp; what the door serves blocks by (each block file's mod, pack version, layers, in name order); each block by its name | a change to that code or shipped world data; another BLOCKS.BSA; a mod switched, a pack updated, a layer added | `fv-ground:` - one record |
 | land's pieces | `systems/travel/landPiecesKept.js` | the pin (`routeGround` and the step law); every byte the fold reads (climate, heights, roads, tracks) | a change to the fold; another ground or road network | `fv-pieces:` - one network's |
-| port sites | `world/portSitesKept.js` | the pin (`portSitesOn`, `closeSite` and what they reach); per town, the ground's cells and the sea field at every cell | a change to the placing; a town's ground or water changed | `fv-port-sites:` - one record |
+| port sites | `world/portSitesKept.js` | the pin (`portSitesOn`, `closeSite` and what they reach); per town, the ground's cells, the sea field at every cell and its `PORT_PLACES_NEAR` row's value | a change to the placing; a town's ground or water changed | `fv-port-sites:` - one record |
 | ship builds | `systems/comeSailAway/shipBuildsKept.js` | the pin (the three prefab builders and what they reach); the bake's sha256 and text, the mod prefabs read, the base | a change to a builder; a new bake or mod prefab | `fv-ship:<ship>:` - one a ship |
 | ships' pictures | `world/ships/standInsKept.js` | the pin (the three ships' art and the palette's look); the picture's name; the palette | a change to the painting; another palette | `fv-standin:<name>:` - one a picture |
 | Bay fit | `world/tamriel/bayFitKept.js` | the pin (`fitBayToPicture` and what it reaches); the trace's land and the Bay's land at every pixel | a change to the fit; another picture or another Bay | `fv-bayfit:` - one |
@@ -2844,7 +2844,7 @@ real boot, each made new by a comment so that no cache answered (ANGLE D3D11, RT
   through `startPrograms` as soon as `main.js` has made the renderer, behind a dynamic import (BOOT2's ceiling). It
   starts only what the page's switches build: the lane when Enhanced Lighting is on, the air with its door, the sky's
   passes and the grass by their switches, the clip when Deep Waters stands, and no outdoor pass behind `?interior` or
-  `?dungeon`. The cloud march goes first: it is the longest single compile (6.6 s alone). The constructor starts its
+  `?dungeon`. The clouds go last: their door waits (SHADER-EASE MOUNT-START). The constructor starts its
   own seven programs before it reads the first. Each pass's build is unchanged: `buildProgram` takes the started
   program for the same sources. Where the driver cannot compile beside the page, nothing is started.
 - **P2.** `warmSteps()` and `lazyWarmSteps()` are `{ start, run, need }` steps (`render/warmPrograms.js`): a step's
@@ -2996,6 +2996,24 @@ its own difference (22%) is that page, not the world. Nothing is drawn later tha
 built where its owner builds it, and every draw that builds on demand still does. The standing frame rate was lower on
 the head in two of the three pairs, by less than the two base runs differ from each other (10 fps); the change runs
 nothing per frame, and these runs cannot tell a few percent either way.
+
+**SHADER-EASE WARM-POLL (2026-10-29).** Deep Waters' seven programs, Ocean Holes' two and the rain's one to three were
+still warmed by a bare step: every compile and its LINK_STATUS read in one idle callback, seven cold compiles back to
+back after each update. Each is now a named step (`DEEP_WATERS_PROGRAMS`, `OCEAN_HOLES_PROGRAMS`, `precipPrograms`,
+`precipWarmStep`): started, built once the driver says done, stood down when a draw built the pass first. Without
+KHR_parallel_shader_compile it builds at its first idle, as before. **LINK-WAIT:** `buildProgram` times its one
+LINK_STATUS read; a read over 50 ms is kept (`linkWaits()`, the last 32: label, ms, whether a start had it ahead). Pins: `test/render/shaderease.test.js`. Mutants: `tools/mutants/shaderease_warmpoll.json`, 13, all
+dead.
+
+**SHADER-EASE MOUNT-START and QUEUE-ORDER (2026-10-29: in Chrome the game froze for the first 30-60 s in the world
+after each update).** Each pass an outdoor host builds at mount read its link at once, cold: the shadow pass's depth
+and body programs, the far ring and trees, the skies and weather, duel wall, banners, flags, curtains, loot lines and
+NPC marks. The depth programs join `laneBootPrograms`; `render/mountPrograms.js` lists the rest by each host's own
+switch - none behind `?interior` or `?dungeon`, only the sky and marks for the fixed city (`?exterior`, `?region`,
+`?loc`). They are queued one at a time (COMPILE-QUEUE) once the boot's batch ahead of the clouds is done
+(`startedDone`, read only), or after `MOUNT_WAIT_TURNS`. The play queue adds the nodes' glow and the sea fight's
+effects, auras and armory last. Pins: `test/render/shadermount.test.js`. Mutants: `tools/mutants/shader_mount.json`,
+28, all dead.
 
 ## CLOUD-COMPILE — the volumetric clouds arrive when their programs are done
 

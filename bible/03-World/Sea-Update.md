@@ -18,8 +18,8 @@ way in.
 
 | slice | what | commit | page |
 |---|---|---|---|
-| WD1 + AS1 | the world-data patch layer (the author's edit over the player's own blocks); Aquatic Sprites 1.0 (Cliffworms) | `992f5b2b` | `02-Formats/World-Data-Patches.md`, `03-World/Aquatic-Sprites.md` |
-| DS1 | Detailed Ships 1.0.0 (Cliffworms), its DET pieces the port's own stand-ins (Mac: "Build your own") | `70396ed2` | `03-World/Detailed-Ships.md` |
+| WD1 + AS1 | the world-data patch layer (the author's edit over the player's own blocks), and a mod of underwater flats, removed on 2026-10-29 | `992f5b2b` | `02-Formats/World-Data-Patches.md`, `03-World/Dungeon-Flora.md` (its replacement) |
+| DS1 | a mod that furnished the player's ships, removed on 2026-10-29; its DET pieces were the port's own stand-ins (Mac: "Build your own"), which the towns keep | `70396ed2` | `03-World/Ship-Refit.md` (its replacement) |
 | WA1 | Warm Ashes - Ships 1.1 (Kamer), and the seams it needed (`systems/modSaveData.js`, the ship transport) | `ca7abcdb` | `03-World/Warm-Ashes-Ships.md` |
 | DW-A to DW-D | Iliac Puddle No More 1.2.2 (jet082): the carved sea, its look, its swimmer | `1bcbec78` | `03-World/Deep-Waters.md` |
 | DW-E1, DW-E2 | the runtime's other half; the seafloor's decorations | `186196de` | `03-World/Deep-Waters.md` |

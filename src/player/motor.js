@@ -95,6 +95,28 @@ export function flySpeedMult() {
   for (const fn of _flyMods.values()) { try { const v = Number(fn()); if (Number.isFinite(v) && v > 0) k *= v; } catch { /* a ride is not the flight's problem */ } }
   return k;
 }
+// DRAGON5 (bible/11-Multiplayer/Dwarven-Dragon.md section 10; Ledger A): a tamed dragon's flight. The ride's step is told
+// each update's input before the motor moves (player/dragonRide.js: the takeoff's held jump), one slot; and a named
+// registry of sinks pulls the levitating ladder down (a winded dragon glides). None registered is DFU's levitation.
+let _rideStep = null;
+export function registerRideStep(fn) { _rideStep = typeof fn === 'function' ? fn : null; }
+const _flySinks = new Map();
+export function registerFlySink(name, fn) { if (typeof fn === 'function') _flySinks.set(name, fn); else _flySinks.delete(name); }
+/** The levitating ladder's sink now - the sum of every sink's positive number (one that throws is none). */
+export function flySink() {
+  let k = 0;
+  for (const fn of _flySinks.values()) { try { const v = Number(fn()); if (Number.isFinite(v) && v > 0) k += v; } catch { /* a ride is not the flight's problem */ } }
+  return k;
+}
+// DRAGON6 (bible/11-Multiplayer/Dwarven-Dragon.md section 10): a flown journey's HOLD - the ladder's climb (1) or dive (-1)
+// the ride's governor asks while the Overworld flies it, in place of the look's pitch and the float keys. One slot; null
+// (or none registered) is the ladder as it was.
+let _flyHold = null;
+export function registerFlyHold(fn) { _flyHold = typeof fn === 'function' ? fn : null; }
+/** The hold now, in -1..1, or null. */
+export function flyHold() {
+  try { const v = _flyHold ? _flyHold() : null; return v == null || !Number.isFinite(Number(v)) ? null : Math.max(-1, Math.min(1, Number(v))); } catch { return null; }
+}
 // KETCH (2026-10-24, bible/11-Multiplayer/Sky-Ketch.md section 6; a departure from DFU, Ledger A): THE BURDEN - a named
 // registry of modifiers on EVERY pace on foot (the walk, the run, the crouch, the sneak - never a mount's), read every step:
 // an aether cell carried in both hands slows its carrier whatever its pace. None registered, or each answering 1 (or no
@@ -106,6 +128,22 @@ export function footSpeedMult() {
   let k = 1;
   for (const fn of _footMods.values()) { try { const v = Number(fn()); if (Number.isFinite(v) && v > 0) k *= v; } catch { /* a burden is not the step's problem */ } }
   return k;
+}
+// PVP-RULES (bible/11-Multiplayer/PvP-Rework.md): THE CAPS - a named registry of `fn() -> { mps, jump } | null`, the
+// most metres a second on foot (every pace, never a mount's) and the most jump multiplier; the least of each wins. None
+// registered, or each answering null, is DFU's pace and jump exactly. A departure from DFU, Ledger A.
+const _moveCaps = new Map();
+export function registerMoveCap(name, fn) { if (typeof fn === 'function') _moveCaps.set(name, fn); else _moveCaps.delete(name); }
+/** The caps now: `{ mps, jump }`, Infinity where none holds (a cap that throws is none). */
+export function moveCapNow() {
+  let mps = Infinity, jump = Infinity;
+  for (const fn of _moveCaps.values()) {
+    let c = null;
+    try { c = fn(); } catch { c = null; }
+    if (Number(c?.mps) > 0) mps = Math.min(mps, Number(c.mps));
+    if (Number(c?.jump) > 0) jump = Math.min(jump, Number(c.jump));
+  }
+  return { mps, jump };
 }
 // HOTFIX 2026-08-17 (live mobile report: "jumping has me go in the
 // air but instantly snaps me to the ground"): the motor integrated
@@ -1628,6 +1666,7 @@ export class PlayerMotor {
    *  that accumulates less than one physics step must not swallow the
    *  press (AUDIT 18 - at 120 Hz that dropped every other crouch). */
   update(dt, input, yaw, pitch = 0) {
+    try { _rideStep?.(dt, this, input); } catch (e) { console.warn('[motor] ride step', e?.message ?? e); }   // DRAGON5: the mount's flight hears the jump first
     this.jumped = false;
     this.parkoured = null;
     if (this.climbEvents.length) this.climbEvents = [];
@@ -2504,9 +2543,12 @@ export class PlayerMotor {
   _pkRunLeapSpeeds(pk, dir) {
     const { along, up } = runLeapLaunch(jumpingSkill(pk.inputs?.() ?? {}), GRAVITY);
     const run = dir ? this._airVelX * dir[0] + this._airVelZ * dir[2] : 0;
-    const boost = this.jumpBoost ? this.jumpBoost() : 1;
-    return [Math.max(along, run + JUMP_SPEED * JUMP_FWD_BOOST), Math.max(up, JUMP_SPEED * boost)];
+    const boost = this._jumpBoostNow();
+    return [Math.max(along, run + JUMP_SPEED * JUMP_FWD_BOOST), Math.max(up, JUMP_SPEED * boost)];   // PVP-RULES: the boost under its cap (the leap's own rise is the skill's, held to 100)
   }
+
+  /** The skill jump's multiplier (AcrobatMotor jumpSpeedMultiplier), under PVP-RULES' cap where one holds. */
+  _jumpBoostNow() { const b = this.jumpBoost ? this.jumpBoost() : 1; return _moveCaps.size ? Math.min(b, moveCapNow().jump) : b; }
 
   /** AUDIT CLIMB-ARC L10: running at pace - the way the body really went last step, PARKOUR_RUN_SHARE of the run's speed or more. */
   _pkAtPace() { return (this._pkPace ?? 0) > 1e-3 && this._pkPace >= PARKOUR_RUN_SHARE * this.speed - 1e-6; }
@@ -3148,6 +3190,8 @@ export class PlayerMotor {
       if (this.swimming && overEncumbered && !this.climb?.isClimbing && !this.waterWalking) my -= 1;
       else if (input.up) my += 1;
       else if (input.down) my -= 1;
+      if (this.levitating) { const hold = flyHold(); if (hold != null) my = hold; }   // DRAGON6: a flown journey's cruise, the look's pitch and the keys aside
+      if (this.levitating) my -= flySink();   // DRAGON5: a winded dragon glides down
       // AddMovement's THREE arms, in DFU's own order (LevitateMotor.cs
       // :116-140). AUDIT 24 player: the port had a different ladder -
       // levitation short-circuited the water-walking arm, and the
@@ -3300,6 +3344,7 @@ export class PlayerMotor {
       if (this.isSneaking) speed = sneakSpeed(speed);
     }
     if (rideBase == null && _footMods.size) speed *= footSpeedMult();   // KETCH: the burden - an aether cell in both hands, on every pace on foot
+    if (rideBase == null && _moveCaps.size) speed = Math.min(speed, moveCapNow().mps);   // PVP-RULES: a flagged fighter's pace
     // AUDIT 64 F0 - UpdateSpeed's THIRD statement (PlayerMotor.cs
     // :383-389): `if (playerEnterExit.IsPlayerSwimming &&
     // !PlayerEntity.IsWaterWalking) speed = GetSwimSpeed(speed)`, over
@@ -3450,7 +3495,7 @@ export class PlayerMotor {
         && this.transportMode !== TRANSPORT_MODES.Cart) {
       const boost = this.transportMode === TRANSPORT_MODES.Horse
         ? HORSE_JUMP_MULTIPLIER
-        : (this.jumpBoost ? this.jumpBoost() : 1);
+        : this._jumpBoostNow();
       this.velY = JUMP_SPEED * boost;
       if (this.crouching) this.velY *= CROUCH_JUMP_DELTA;
       if (input.forward !== 0 || input.strafe !== 0) {

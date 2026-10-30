@@ -17,7 +17,7 @@ import { snapshotPlayer, restorePlayer } from '../../src/systems/save/save.js';
 import { mintPiece } from '../../src/systems/smithItems.js';
 import { applyRarity, legendaryById } from '../../src/systems/loot/lootRarity.js';
 import { applyEnchantments } from '../../src/systems/enchanting.js';
-import { doItemEnchantmentPayloads, assignHeldSpell, PAYLOAD, HELD_DEGRADE_RATE, ENCHANTMENT_TYPES as T } from '../../src/systems/enchantments.js';
+import { doItemEnchantmentPayloads, assignHeldSpell, PAYLOAD, ENCHANTMENT_TYPES as T, HELD_DEGRADE_RATE } from '../../src/systems/enchantments.js';
 import { classicCastingCost } from '../../src/systems/spellcost.js';
 import { damageEquipment } from '../../src/combat/formulas.js';
 
@@ -77,7 +77,7 @@ test('WEAPON-POOL: every weapon type mints one pool, the Warhammer\'s 1,600, thr
   }
 });
 
-test('WEAPON-POOL: the flat costs stop picking a type - a Worm\'s Tooth (the Legendary that rolls on a Dagger or a Tanto) strikes 160 times at iron before it breaks, as a Warp-Edge Claymore does; a Cast-When-Held dagger the item maker made pays its spell\'s first-equip bill (159 - an iron dagger\'s 50 broke on it) and runs four magic rounds a point of what is left, 5,764; 25 blows of 20 damage, which broke an iron short bow, leave it at 1,550 (mutants: the pool\'s number; the weapon test)', () => {
+test('WEAPON-POOL: the flat costs stop picking a type - a Worm\'s Tooth (the Legendary that rolls on a Dagger or a Tanto) strikes 160 times at iron before it breaks, as a Warp-Edge Claymore does; a Cast-When-Held dagger the item maker made pays its spell\'s first-equip bill (159 - an iron dagger\'s 50 broke on it) and runs HELD_DEGRADE_RATE magic rounds a point of what is left (36 - HELD-WEAR; DFU\'s 4 ran 5,764); 25 blows of 20 damage, which broke an iron short bow, leave it at 1,550 (mutants: the pool\'s number; the weapon test)', () => {
   // Cast-When-Strikes bills 10 a strike (CastWhenStrikes.cs:30) through the real dispatcher, to the break - PIN MOVED
   // (RPT1026-ITEMS RARE-KEPT): the break no longer consumes a laddered piece, so the count runs to its condition's end, and
   // the piece is still in the pack after it (test/systems/rpt1026_items.test.js holds that law)
@@ -101,7 +101,8 @@ test('WEAPON-POOL: the flat costs stop picking a type - a Worm\'s Tooth (the Leg
   assert.equal(strikesToBreak(legendary('warp-edge', WEAPONS.Claymore)), 160, 'it was 140');
   // Cast-When-Held (AUDIT WEAPON-POOL P5): the first equip bills the spell's classic casting cost in condition
   // (assignHeldSpell, CastWhenHeld.cs's InstantiateSpellBundle) - test/systems/enchantcast.test.js's own Levitate record, 159 at
-  // skill 50, where the loot's held spells run about 120-160 - and then 1 every four magic rounds (CastWhenHeld.cs:27)
+  // skill 50, where the loot's held spells run about 120-160 - and then 1 every HELD_DEGRADE_RATE magic rounds (HELD-WEAR's 36;
+  // CastWhenHeld.cs:27 has 4)
   const owner = P();
   const held = applyEnchantments(createWeapon(WEAPONS.Dagger, WEAPON_MATERIALS.Iron, () => 0.5), [{ type: T.CastWhenHeld, param: HELD_SPELL.index }]);
   owner.items.push(held);
@@ -111,7 +112,7 @@ test('WEAPON-POOL: the flat costs stop picking a type - a Worm\'s Tooth (the Leg
   assert.deepEqual([held.maxCondition, held.currentCondition], [1600, 1441], 'the bill paid - it broke an iron dagger\'s 50 on the spot');
   let round = 0;
   while (owner.items.includes(held) && round < 100000) doItemEnchantmentPayloads(PAYLOAD.MagicRound, held, { entity: owner, round: ++round });
-  assert.equal(round, 1441 * HELD_DEGRADE_RATE, 'HELD_DEGRADE_RATE rounds a point of what the bill left (HELD-WEAR: 36)');
+  assert.equal(round, 1441 * HELD_DEGRADE_RATE, 'HELD_DEGRADE_RATE rounds a point of what the bill left');
   // a blow wears (10 x damage + 50) / 100 - 2 at 20 damage - on DFU's own scale (WEAR-ONE)
   const archer = P(), bow = createWeapon(WEAPONS.Short_Bow, WEAPON_MATERIALS.Iron, () => 0.5);
   for (let i = 0; i < 25; i++) damageEquipment(archer, P(), 20, bow, 0, { rolls: () => 0.99 });

@@ -1099,8 +1099,8 @@
   {
     "name": "ACS-G7-raids",
     "file": "src/scenes/raidHost.js",
-    "old": "return !(etherSea && inEther(px.x, px.y)) && politicClaimed(",
-    "new": "return politicClaimed(",
+    "old": "return !(etherSea && inEther(px.x, px.y)) && (politicClaimed(pol)",
+    "new": "return (politicClaimed(pol)",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1363,8 +1363,8 @@
   {
     "name": "ACS-P6-recall",
     "file": "src/scenes/world.js",
-    "old": "wildTeleportRefused(plan.anchor?.pixel ?? null) || veilRefused(plan.anchor?.pixel ?? null)",
-    "new": "wildTeleportRefused(plan.anchor?.pixel ?? null)",
+    "old": "wildTeleportRefused(plan.anchor?.pixel ?? null, teleportLanding(plan.anchor)) || veilRefused(plan.anchor?.pixel ?? null)",
+    "new": "wildTeleportRefused(plan.anchor?.pixel ?? null, teleportLanding(plan.anchor))",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1372,18 +1372,18 @@
   {
     "name": "ACS-P6-guild",
     "file": "src/scenes/world.js",
-    "old": "if (wildTeleportRefused(pick.pixel) || veilRefused(pick.pixel)) return false;   // PVPDUNGEONS",
-    "new": "if (wildTeleportRefused(pick.pixel)) return false;   // PVPDUNGEONS",
+    "old": "if ((!zoneFree && wildTeleportRefused(pick.pixel)) || veilRefused(pick.pixel)) return false;   // PVPDUNGEONS",
+    "new": "if ((!zoneFree && wildTeleportRefused(pick.pixel))) return false;   // PVPDUNGEONS",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ],
-    "note": "PORTAL-BAY (PIN MOVED): re-aimed by content - teleportTo answers whether it arrived (false for a refusal)"
+    "note": "Re-aimed by content (AUDIT TAMRIEL-WIDE III): the line its fix rewrote. PORTAL-BAY (PIN MOVED): re-aimed by content - teleportTo answers whether it arrived (false for a refusal)"
   },
   {
     "name": "ACS-P6-party",
     "file": "src/scenes/world.js",
-    "old": "wildTeleportRefused(pick.pixel ?? null) || (!pick.veil && veilRefused(pick.pixel ?? null))",
-    "new": "wildTeleportRefused(pick.pixel ?? null)",
+    "old": "wildTeleportRefused(pick.pixel ?? null, teleportLanding(pick.besideAt())) || (!pick.veil && veilRefused(pick.pixel ?? null))",
+    "new": "wildTeleportRefused(pick.pixel ?? null, teleportLanding(pick.besideAt()))",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1400,8 +1400,8 @@
   {
     "name": "ACS-P6-map-false",
     "file": "src/scenes/portalStoneHost.js",
-    "old": "    if (host.wildTeleportRefused() || host.veilRefused()) return false;",
-    "new": "    if (host.wildTeleportRefused()) return false;",
+    "old": "    if (zoneRefused() || host.veilRefused()) return false;",
+    "new": "    if (zoneRefused()) return false;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1409,8 +1409,8 @@
   {
     "name": "ACS-P6-stone",
     "file": "src/scenes/portalStoneHost.js",
-    "old": "const teleportRefused = (to) => host.wildTeleportRefused(to) || host.veilRefused(to) || ",
-    "new": "const teleportRefused = (to) => host.wildTeleportRefused(to) || ",
+    "old": "const teleportRefused = (to) => zoneRefused(to) || host.veilRefused(to) || ",
+    "new": "const teleportRefused = (to) => zoneRefused(to) || ",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ],

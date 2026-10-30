@@ -20,8 +20,9 @@
   {
     "name": "cart-not-gated",
     "file": "src/systems/immersiveFootsteps.js",
-    "old": "m.transportMode === TRANSPORT_MODES.Horse || m.transportMode === TRANSPORT_MODES.Cart",
-    "new": "m.transportMode === TRANSPORT_MODES.Horse",
+    "old": "if (isRiding(m.transportMode)) footstepTimer = 0;",
+    "new": "if (m.transportMode === 'Horse') footstepTimer = 0;",
+    "note": "Re-aimed by content (DRAGON5): every mount silences the feet (isRiding), the cart among them.",
     "tests": [
       "test/systems/if1_immersivefootsteps.test.js"
     ]

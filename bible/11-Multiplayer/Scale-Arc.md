@@ -83,6 +83,12 @@ Four read-only audits covered the relay (`server/src/index.js`), the account ser
 | RELAY-LOAD | The relay's own metrics read by the operator - the rooms by kind, every five minutes by kind, the busiest rooms - from the Actions tab, as D1-LOAD reads the account service's | No | **Built** (2026-10-18, this branch - no version, no drop) |
 | FOES-FIRST | The full foes frames first on a room's foes budget: a delta stops at a reserve (a quarter of it), a full frame (once a second a sender), a handover (once a second a sender, AUDIT FOES-FIRST) or an unheard sender's frame may borrow as far below empty - the live cells dropped their full frames first; the blows a destination's funnels drop counted, and the full frames dropped, on the metrics point's blobs | Yes, once | **Built** (2026-10-21, relay world239, NOT YET DEPLOYED) |
 | FOES-HOLD | Where a room's full frames alone are more than its budget, a first frame the budget refuses is HELD for its turn: one line, one turn a sender, a newer full frame in its sender's place, nothing of a sender overtaking its own, no delta past a held frame, a held sender beaten so its readers keep it, a leaving sender's handovers tried before its leave - the star's large owner heard as often as the rest (0% before) | Yes, once (with FOES-FIRST's) | **Built** (2026-10-21, relay world239, NOT YET DEPLOYED) |
+| LODE-HERD | The account database overloaded at 00:00 UTC (2026-10-29): every Motherlodes read before the day's mark ran the pick's scan, 33 of 1.8 s in a minute. One read a minute holds the day's claim and picks; the rest answer none; the clock picks unclaimed | No | **Built** (2026-10-29; acct210, acct209 on its branch) |
+| HUNT-LEAN | The overload of the evening of 2026-10-28: the hunt's read, new on 2026-10-27, was some 5 primary statements a player every two minutes, a rate window's write among them. It writes nothing now, a replica serves it, it stands back in an overload, and the book asks every ten minutes | No | **Built** (2026-10-29; acct210, acct209 on its branch) |
+| GROUND-KEPT | The overload held past midnight (2026-10-29, 01:00 UTC, 22% of requests 503): a writ board read scanned its region's witnessed ground - 123,000 rows in 409 ms - twice a read where the day's writs had not posted, 684 times an hour on the primary. An isolate keeps a region's ground ten minutes; none is never kept | No | **Built** (2026-10-29; acct210, acct209 on its branch) |
+| KEEP-MARK | The overload held after LODE-HERD, HUNT-LEAN and GROUND-KEPT deployed (2026-10-29, 47-55% of requests 503): the read replicas served 0% of statements from 01:15, against a fifth to a half while the service was well. A shed or refused replica read said no bookmark and a read past its wait timed out, and the page forgets its bookmark on both (AUDIT SCALE II A-6, C-7) - so every next read started at the primary. Such an answer hands back the bookmark it carried; a read that timed out keeps the page's | No | **Built** (2026-10-29; acct211) |
+| SHED-REPLICA | KEEP-MARK deployed and the replica still served 0%: overloaded, the primary outran its replica, so no replica was as new as a page's bookmark and D1 sent every read to the primary. A replica read an isolate would shed asks any instance instead - a display its replica's lag old, never a 503; a busy read no replica may serve is shed as before | No | **Built** (2026-10-29; acct212) |
+| MINT-TITLE-GATE, TOMB-RIDES, ORPHAN-GATE, RETRY-SEEN | The overload held at about 23% of requests 503 (2026-10-29). The mint reads a title family only for a title of it worn; a town's tombstone rides its homes batch; a festival read with no offering writes nothing; the 503's Retry-After is exposed to the page | No | **Built** (2026-10-29; acct213) |
 | SCALE6 | Abuse and backups: Turnstile on guest creation, /64 IPv6 rate keys, bans, report and ignore, `ALLOWED_ORIGIN`, R2 snapshots, a hub export | Some | Alongside |
 
 **Relay deploy policy (SCALE):** relay changes are batched into as few deploys as possible, each in a window announced beforehand. A deploy drops every player, and until SCALE2 every reconnect is a D1 write storm.
@@ -3549,7 +3555,7 @@ the Cloudflare token: "Use it", then "Do everything. No band aids. No short fixe
 - **The Daggerfall city's yards past the bound**: YARD-TOWN's (`06-Systems/Online-Arc.md`, 2026-10-25) - the bound raised
   to what a built row keeps (6,500) and refused at the placement, every town built again at it (migration 0175).
   YARD-CELL (`Yard-Cells.md`, 2026-10-26; YC1 built) replaced the town's row with one row a block, read by version,
-  and dropped the town-wide bound: `home_yards` and `home_yards_ver` stay only as the rollback's net until YC3.
+  and dropped the town-wide bound: `home_yards` and `home_yards_ver` stayed as the rollback's net until YC3 dropped them (migration 0193).
 - **The arena's board past the bound**: its climb is every account that ever won a ladder bout, every season's; at some
   5,000-15,000 such accounts (lanes B and D measured) its text passes KEPT_BOARD_MAX_BYTES and the board is counted every
   time, as before - the log says so. Live, 2026-10-20: 13,051 ladder bouts in all, 230 banner members - far under it.
@@ -4564,3 +4570,157 @@ HIBERNATE-halo-peer-heartbeat-dropped re-aimed by content to `aloneNow`; its pin
 FOLLOW-DROP's "draws the target where they stand" - a target with nobody near but hidden watchers (the staff game
 hidden, or out of its room) is lone, and the follow draws it where its last pose put it, never more than a lone
 minute's walk behind; with the staff game standing in the cell, shown, where it stands, as before.
+
+## LODE-HERD, HUNT-LEAN and GROUND-KEPT: built (2026-10-29, this branch - acct210 (acct209 until main's ARMORY took it), no migration, no relay change)
+
+Reported 2026-10-29: "People are experiencing server issues." Read off the live service with the account's Cloudflare
+token: the account database answered `D1 DB is overloaded. Requests queued for too long.` through the evening, and the
+service answered 503 to 226,000 requests from 18:00 to 24:00 UTC on 2026-10-28 (5.7%, the week's worst six hours) and
+to 31% of them in the first minutes of 2026-10-29 - the token's mint among them. The relay was well throughout.
+
+### Measured (live, acct208)
+
+- **The primary's statements a player** (each a heartbeat's share, Analytics Engine): 45 to 49 on 2026-10-24, 55 to
+  63 on 2026-10-28. `/v1/hunt/state` (HUNTERS-MARK, deployed 2026-10-27 18:00 UTC) was 5.0 of the rise: 0.9 asks a
+  heartbeat, every statement the primary's - a session's lookup, a rate window's write (`overRate`) and a batch of three
+  reads. `/v1/homes/town`'s primary share rose with the overload itself (1.35 to 3.44 a heartbeat, the replica's share
+  falling), an effect, not a cause.
+- **The day's turn.** D1's query insights, 23:59:30 to 00:01:00: the Motherlodes pick's scan of `world_witness`
+  (470,000 rows) ran 33 times at 1,838 ms each - 61 s of the one primary in a minute. Every read that found the day
+  unmarked ran it; each run held the day unmarked longer.
+
+### Built
+
+- **LODE-HERD** (`motherlodes.js` motherlodesOf): a read that finds the day unmarked asks the day's claim first - a
+  rate window (`lode-pick:<day>`, one ask in LODE_PICK_WINDOW_S, 60 s). Its holder picks as before; every other read
+  answers none and scans nothing, and the client reads again within five minutes (MOTHERLODE_READ_MS). A holder that
+  dies before its batch holds its minute only. The minute's job (`cron.js`) picks without the claim.
+- **HUNT-LEAN** (`hunts.js` huntState): the read writes nothing - the rate window stays on `/v1/hunt/clear`, the writes
+  it guards. It is a replica route (`service.js` REPLICA_ROUTES, the client's D1_BOOKMARK_READS), a busy read
+  (`busyLaw.js` BUSY_READS), and the hunt book asks it every ten minutes (`huntBook.js` HUNT_STATE_MS, two before): a
+  clear's own answer carries the state, so the poll only catches another tab's clears.
+
+### GROUND-KEPT (read again at 01:20 UTC, 2026-10-29)
+
+The overload did not ease past midnight as it had on other nights: 22% of requests answered 503 from 01:00, four sign-ins
+in ten answered. D1's query insights for the hour named one statement first - `professions.js` regionGround, the writ
+board's read of its region's witnessed ground: 684 runs at 409 ms and 123,000 rows each, from some 300
+`/v1/writs/list` reads. A board read scans it in `postWrits` until the day's writs are posted and in `postMemberWrits`
+until a member's writ is; a post the overload refused marks nothing, and ground with no material in it (open sea)
+never posts, so each read scanned again. The table's day had posted 17 regions by 01:20, against 40 the day before.
+
+- **GROUND-KEPT** (`professions.js` regionGround): an isolate keeps a region's ground REGION_GROUND_KEEP_MS (ten
+  minutes) by the binding (DB_ROOT, `homes.js` homeLayoutsKept's way), and asks in flight share one read. Ground of none
+  is never kept - a region posts the moment its ground is witnessed. The writs are drawn once a day, so ground ten
+  minutes old draws the same day.
+
+### Left for the owner
+
+The overload is the primary's ceiling, not one route: some 45,000 to 50,000 statements a minute at the evening's peak,
+and each slice that adds a polled read adds to it. These two take back roughly what HUNTERS-MARK added. The rest of
+the evening's load is spread over many routes (`node tools/d1Load.mjs`); the next real step is moving polled state off
+the one primary, which is the owner's to choose.
+
+### Pins
+
+`test/server/lode_herd.test.js` (4); `tools/mutants/lode_herd.json` (9, all dead); `test/server/ground_kept.test.js`
+(2); `tools/mutants/ground_kept.json` (3, all dead). PIN MOVED: the version pins to
+acct210; `test/net/busy_gate.test.js` and `test/server/scale4g.test.js` name the hunt's read.
+
+## KEEP-MARK: built (2026-10-29, this branch - acct211, no migration, no relay change)
+
+Read again at 02:20 UTC, after acct210, the site and the relay's world280 had all deployed: 47-55% of requests still
+answered 503, and the primary served some 13,000 reads a minute where it had served 30,000 before 01:15. No heavy
+statement was left. The service's own metrics (`double7`, the statements a replica served) named the loop: the
+replicas' share was 20-45% while 503s stayed under a tenth, and 0% in every stretch the overload held - 23:45 to 00:25,
+00:50 to 01:05, and from 01:15 on.
+
+A replica serves a read only on the session of the bookmark the page carries; with none, the session starts at the
+primary (REPLICA_CONSTRAINT). And the page lets its bookmark go on a read answered with none (AUDIT SCALE II C-7) and on
+a call that could not be made (A-6). An overload answers exactly so: BUSY-GATE's shed and a refused statement's 503 run
+no session that says a position, and a read past its fifteen seconds times out. So the overload took every page's
+bookmark, every read went to the primary, and the primary stayed past its ceiling.
+
+- **The service** (`index.js` service.fetch): a replica read whose session says no position hands back the
+  `x-d1-bookmark` it carried. The page already holds that position, so nothing it reads changes; it keeps it. A route
+  that is no replica read says none; a malformed bookmark is never said back. Every page open now benefits.
+- **The page** (`net/accountClient.js` call): a bookmark read that timed out keeps the bookmark, as the session pass is
+  kept through a timeout (AUDIT PLAN-1000 E7). A call that could not be made still lets it go (A-6: a service rolled
+  back past the header), and so does a write that timed out - a read answered while it was out may stand before it.
+
+C-7 holds: a service rolled back past SCALE4g says no bookmark at all, and the page lets its own go.
+
+Pins: `test/server/keep_mark.test.js` (2); `tools/mutants/keep_mark.json` (3, all dead). PIN MOVED: the version pins to
+acct211.
+
+## SHED-REPLICA: built (2026-10-29, this branch - acct212, no migration, no relay change)
+
+KEEP-MARK deployed at 02:48 UTC and the replica served no statement in the six minutes after it. D1's own analytics by
+role told why, and measured the primary besides:
+
+- **The replica is the queue's way out, and lag shuts it.** Over the thirty hours before, the replica served 35-45% of
+  the database's statements; from 01:00 on 2026-10-29, 7%, then 2%, then none. A read on a bookmark's session may be
+  served only by an instance at least as new as the bookmark. Overloaded, the primary outruns its replica, so no
+  replica is that new, and D1 sends the read to the primary - which stays overloaded.
+- **The primary itself slowed at 01:15.** The realm's death check (`SELECT 1 FROM realm_characters WHERE id = ?2 AND
+  player = ?1 AND dead_at IS NOT NULL`, the same plan, no row read) took 0.13 ms at the median from 00:30 to 01:10 and
+  0.27-0.30 ms after, while the primary answered half the statements it had - and the replica's median for it did not
+  move (0.23-0.24 ms). Nothing in the service changed at 01:15; that is the instance's own, reported to Cloudflare.
+
+**The fix** (`index.js` route): a replica read (REPLICA_ROUTES) that the isolate would shed (`shedding`: BUSY-GATE or
+SLOW-SHED open) runs on a session at any instance (REPLICA_ANY) instead, so the replica answers it whatever its lag. A
+display its replica's lag old is the trade, taken only while the primary is refusing; the writes a route makes still go
+to the primary, and a session's own lookup that misses there asks the primary (BOOKMARK-SPIRAL's fallback, kept). A busy
+read no replica may serve (the yards, the layouts, the seats' list, the towns' shares) is shed as before. SHED-LONG's
+rollback measured a replica queue longer than the primary's at a time the replica was not idle; here it was.
+
+**BUSY-HEART's two stay shed** (`service.js` `SHED_NO_REPLICA`). The heartbeat writes its beat on every ask and the
+motherlodes their claim and pick; on a replica's session those writes are still the overloaded primary's. The first
+build moved them too, and `test/net/busy_heart.test.js` failed `main`'s verify, so acct212 did not deploy.
+
+Pins: `test/server/shed_replica.test.js` (1), `test/net/busy_heart.test.js` (its service pin, unchanged);
+`tools/mutants/shed_replica.json` (6, all dead). PIN MOVED:
+`test/net/busy_gate.test.js` and `test/net/slow_shed.test.js` shed the towns' layouts, a busy read no replica may serve;
+`test/server/keep_mark.test.js` reads a town on a session that says no position; BUSYGATE-shed-unread and SCALE4d's two
+records re-aimed at the line they mutate; the version pins to acct212.
+
+
+## MINT-TITLE-GATE, TOMB-RIDES, ORPHAN-GATE and RETRY-SEEN: built (2026-10-29, this branch - acct213, no migration, no relay change)
+
+At 05:55 UTC the overload still answered about 23% of requests 503. Traces of the busiest routes, each checked by an
+adversarial reader, found four account-service cuts that change no answer.
+
+- **MINT-TITLE-GATE** (`index.js` mint): the mint read the Charter titles (two statements) and the Marks of Mastery (one)
+  on every mint, 14,957 an hour. `worn` is read by `titleWorn` alone, which signs the chosen title only if `titlesHeld`
+  holds it, and each family's read adds only its own titles. So a family is read only when the title worn is one of it,
+  and the signed token is the same. A new family laid on the row for `titlesHeld` needs its gate there too.
+- **TOMB-RIDES** (`homes.js` homesInTown): `/v1/homes/town`, 80,901 an hour, asked the door's tombstone on a trip of
+  its own before the homes batch. The tombstone now rides that batch, seats open or closed: one trip an ask, a tombstone
+  still 410 `dead`.
+- **ORPHAN-GATE** (`festival.js` festivalOf): every festival read ran the orphans' write batch on the primary. An orphan
+  is one of the account's own offerings, so an account with none skips it.
+- **RETRY-SEEN** (`index.js` overloaded, ADMIT-LINE): the 503's Retry-After was not exposed, so a page read it as null.
+  Exposed, every `server` or `queue` 503 holds the page's gated reads at least that long: fewer reads in a bad minute,
+  displays a little older.
+
+Pins: `test/server/mint_title_gate.test.js`, `test/systems/online/homes_shed.test.js` (TOMB-RIDES, and HOMES-SHED's
+batch sizes moved), `test/server/witch1_festival.test.js` (ORPHAN-GATE), `test/server/keep_mark.test.js` (RETRY-SEEN),
+`test/net/busy_gate.test.js` and `test/server/admitline.test.js` (the header exposed). Mutants: `tools/mutants/`
+`mint_title_gate.json`, `tomb_rides.json`, `orphan_gate.json`, `retry_seen.json`; CHAP4C-MINT-WORN, HOMESSHED-gates-own-trip,
+PRIMARYFOLD-door-asks-no-stream and AUDIT-LEGACY-III-O12-the-mint-refused re-aimed. The version pins to acct213.
+
+## CRAFT-SET and DECOR-SEEK: built (2026-10-29, this branch - acct216, no migration, no relay change)
+
+After acct213 the database still stalled for a minute every 10 to 20 minutes. The 10:02 UTC hour named the cause: the
+Work tab's eligible read (`writs.js` eligibleHere) ran 871 ms on average and read about 6.4M rows a run, and
+`/v1/writs/list` read 1.01 billion rows in 221 asks.
+
+- **CRAFT-SET** (`professions.js` craftedBySql): the read asked, for each candidate piece, whether any of the account's
+  crafts named it as its first or second piece - a scan of every craft, once a piece. The crafts are now one
+  uncorrelated IN list, read once a statement. A crafting writ's piece check (`craftWrits.js` pieceOkSql) reads it too.
+- **DECOR-SEEK**: `json_extract(item, '$.pv') = p.provenance` gives the comparison the column's TEXT affinity, so
+  `idx_home_decor_pv` was scanned whole once a piece. `+p.provenance` drops the affinity and the index is searched. The
+  eligible read, pieceOkSql and the market's pieceWaysRead take it.
+
+The answers are the same. A bench of 3,000 crafts, 50,000 decor rows and 20 commissions ran 15.9 s, now 13 ms. Pins:
+`test/server/craft_set.test.js`; mutants: `tools/mutants/craft_set.json`. The version pins to acct216.

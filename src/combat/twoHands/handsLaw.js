@@ -16,6 +16,7 @@
 // arms' (combat/fpArm.js) - and the swing's (combat/playerWeapon.js), so one law says which hand strikes and what it
 // costs, whichever picture is on the screen.
 
+import { isHandWraps } from '../../characters/handWrapsIds.js';   // HAND-WRAPS: the fists' weapon (a leaf)
 import { swingHeft, SWING_FRAME_MAX } from '../../characters/weaponStates.js';   // SWING-LAW's heft, the one home for a weapon's weight against a Strength, and its slowest frame
 
 /** How the two hands are held. `single` is DFU's: one hand fights (the used hand, H switches it) and the other holds a
@@ -61,7 +62,8 @@ const dualGun = (/** @type {HandDesc} */ h) => DUAL_GUN_TYPES.includes(/** @type
  */
 export function handsModeOf({ right = null, left = null, claws = false, leftBusy = false } = {}) {
   if (claws || leftBusy) return HANDS_MODE.Single;
-  if (!right?.item && !left?.item) return HANDS_MODE.Fists;
+  // HAND-WRAPS: a hand in Hand Wraps is a fist - both fists up, the wraps on both (combat/playerWeapon.js handItem)
+  if ((!right?.item || isHandWraps(right.item)) && (!left?.item || isHandWraps(left.item))) return HANDS_MODE.Fists;
   if (dualEligible(right) && dualEligible(left)) return HANDS_MODE.Dual;
   return HANDS_MODE.Single;
 }

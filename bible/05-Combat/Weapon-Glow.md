@@ -54,11 +54,16 @@ reference's enchantment glow as not ported.
    the plain sheet in the classic one (AUDIT WEAPON-GLOW LAW-2: named in Not done).
 6. **The switch**: the Features row Weapon glow (`weaponGlow`, on by default; `?weaponglow=off` the kill door), read
    every frame. The loot ladder's own switch answers first: off, no line is read, so no element shows.
+7. **The Aura Armory's weapon piece** (ARMORY, 2026-10-28; `04-Characters/Aura-Armory.md` section 8): a weapon in my
+   hand wears the weapon piece my kit holds (`armoryWeaponLook`, off `ownGlyphs.js` `ownArmory`) - the Brand of the
+   Breach as `brand`, the Eternal Edge as `edge`, at their one strength (`ARMORY_LEVEL`, 2). An element shows first,
+   then the piece, then the arcane look. Both hands wear it when dual wielding. The classic hand draws it as an
+   outline on the plain sheet, as an element is drawn, so an enchanted weapon's own sheet gives way to it.
 
 The frame asks every frame (the held weapon's, and the arm's), so the ask builds nothing: the element is summed into
 arrays kept for it, and every spec - `{ look, code, level, word, ramp, win }` - is built once, frozen whole, and
-handed back as it stands (`glowSpec`; AUDIT WEAPON-GLOW LAW-3/LAW-5). The ten words are exactly the specs' (`glowWord`,
-`glowFromWord`).
+handed back as it stands (`glowSpec`; AUDIT WEAPON-GLOW LAW-3/LAW-5). The twelve words are exactly the specs' (`glowWord`,
+`glowFromWord`) - law 7 added `brand2` and `edge2`.
 
 ## The looks (`render/weaponGlowGlsl.js`)
 
@@ -72,6 +77,8 @@ shades, never a smooth blend), its REACH - how far the band stands off the edge 
 | frost | square (Chebyshev - ice is angular) | 0.8 + 0.8 x level, still spikes where a cell's hash says, a 3 s breath | a crystal glints white for a fifth of a second |
 | shock | diamond (Manhattan - jagged) | 1.6 + 0.3 x level, arcs out where a stepped noise peaks, a surge on one in five of its thirds of a second | the band crackles in 2x2 blocks twelve times a second |
 | arcane | round | 1.6 + 0.6 x level, a slow wave | an even halo that turns |
+| brand (law 7) | round | (1 + 0.7 x level) x (0.6 + 0.8 x a noise scrolled DOWN the weapon, a drip, or a gout falling down its column) | molten fire runs down the blade and drips off it; a spark caught in the band now and then |
+| edge (law 7) | round | 1 + 0.4 x level + 1.6 x a light running along the blade (or 0.6 x a slower one running back) | a white-hot line on the blade, a light sweeping its length; glints in the band |
 
 Inside the silhouette the weapon's own edge takes the element's light (the rim), so the outline reads as the weapon's
 and not a sticker behind it.
@@ -170,13 +177,17 @@ second hand (`offGlowShown`: the blade bound, the pair drawn). The arm's held gl
 the right hand's, whichever hand strikes - the weapon in use changes mid-blow, and the key guard would drop it for every
 left blow). A third-person picture is padded for the larger of the two outlines.
 
+**The fists** (HAND-WRAPS, `05-Combat/Hand-Wraps.md`): the Hand Wraps glow on both fists. The classic sheet takes the
+arcane outline for an enchantment, since Melee has no magic sheet; the Morrowind hands are lit on their own ranges
+(`renderer.js` `inGlowSlot` 'hands').
+
 ## Online
 
-The affixes that decide a glow never travel, so the look says it: a weapon in a hand carries `glow`, one of ten words -
+The affixes that decide a glow never travel, so the look says it: a weapon in a hand carries `glow`, one of twelve words (law 7's `brand2` and `edge2` since world278) -
 `fire2`, `arcane2` (`weaponGlow.js` `glowWord`; `wire.js` `LOOK_GLOW_RE`, `lookGlowOk`, `validLookItem`) - written by
 `remotePlayers.js` `composeLook` on every weapon of a player's look in a hand (`LOOK_GLOW_SLOTS`, the equip table's
 RightHand and LeftHand) from the owner's card (law 4 holds: the owner's knowledge), whatever the owner's own switch
-says. A weapon in a hand's alone (AUDIT NET-4: a weapon anywhere else is in no hand; the pattern takes the ten words a
+says. A weapon in a hand's alone (AUDIT NET-4: a weapon anywhere else is in no hand; the pattern takes the twelve words a
 client can say and no other), a PLAYER's look's alone (a foe's kit is said on its record - `foeBodies.js` `encodeWorn`
 - which carries no glow, so a foe's weapon glowing on the host's screen alone would be one fight seen two ways), and
 OMITTED when none, `class`'s law: a plain weapon's item keeps the bytes it always had. A glow changing (a piece

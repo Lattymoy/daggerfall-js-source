@@ -897,7 +897,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
   const schoolOf = (e) => castSchool(caster?.entity ?? null, spell, e);
   // AUDIT SCHOOLS L2 F2, F9: never a WORN item's bundle (a Cast When Held effect keeps what it landed with until the
   // item's reroll - past a duel's start and a mentoring alike); never my own spell a foe turned back at me
-  const noSchool = ctx.heldItem != null || (ctx.reflectedCount ?? 0) > 0;
+  const noSchool = ctx.heldItem != null || (ctx.reflectedCount ?? 0) > 0 || spell?.pvpKit != null;   // PVP-KIT: the PvP bar's numbers are its own
   const potencyOf = (e, self) => (noSchool ? 1 : schoolMult(caster?.entity ?? null, target, schoolOf(e), { self }));
   /** The caster a regenerate entry keeps for its rounds' school: mine, when the school may read at all. */
   const selfSchoolCaster = () => (noSchool ? null : caster?.entity ?? null);
@@ -1907,6 +1907,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
         list[i].bundleSelfCast = selfCast;
         list[i].bundleAlly = allyCast;   // AUDIT ALLY-CAST C2/C4: a party mate's gift - never merged with my own, and mine to dispel without a roll
         if (duelCast) list[i].bundleDuel = true;   // DUEL1: the duel opponent's - floored, and stripped when the duel ends
+        if (spell?.pvpKit != null) list[i].bundleKit = true;   // PVP-KIT: the PvP bar's - the flag's limits keep it (systems/wild/pvpRules.js)
         if (powerCast) list[i].bundlePower = true;   // AUDIT SCHOOLS: a power's - a merge with it takes the larger pool or chance
       }
     }

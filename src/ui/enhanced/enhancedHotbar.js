@@ -38,7 +38,7 @@
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { PIXEL_STACK } from '../pixelifyFive.js';
 import { getPref } from '../../systems/uiPrefs.js';
-import { HOTBAR_STYLES } from '../../systems/uiSkin.js';   // DIAMOND-HB: the styles that are this bar
+import { HOTBAR_STYLES, hotbarForced } from '../../systems/uiSkin.js';   // DIAMOND-HB: the styles that are this bar; PVP-SET: held up under the flag
 import { isTextEntryTarget, bindings, eventActions, mouseCode, hostPaused } from '../input.js';   // AUDIT FB1018f L2-5: and the host's pause, at the press
 import { HOTBAR_SLOT_ACTIONS } from '../../systems/inputActions.js';   // KB1: the ten slots are ten registry actions
 import { quickslotTag } from '../quickslotTags.js';   // KB1: a slot's chip names the key its action is bound to
@@ -47,6 +47,7 @@ import {
   hotbarEntryForItem, hotbarEntryForSpell, setHotbarSlot, clearHotbarSlot, swapHotbarSlots, hotbarEntry,
   hotbarSlotOf, firstFreeHotbarSlot, hotbarKindOf,
 } from '../../systems/quickslots.js';
+import { hotbarSetName } from '../../systems/quickslots.js';   // PVP-SET
 import { shownSpellName } from '../../systems/loot/loot.js';   // L10N3e: a spell's name as the book shows it
 import { modelIconUrl } from '../item/itemIconUrl.js';
 import { fpArm } from '../../combat/fpArm.js';
@@ -72,7 +73,7 @@ import { noteFirstUse } from '../../systems/tutorials.js';   // TUT1: the first 
 
 /** The pref and its two words (systems/features.js 'quickbar-style'). */
 export const HOTBAR_PREF = 'quickbarStyle';
-export const hotbarMode = () => HOTBAR_STYLES.includes(getPref(HOTBAR_PREF));   // DIAMOND-HB: the row of ten, or the diamond's four
+export const hotbarMode = () => hotbarForced() || HOTBAR_STYLES.includes(getPref(HOTBAR_PREF));   // DIAMOND-HB: the row of ten, or the diamond's four
 /** DIAMOND-HB: the diamond - the bar's first four slots, laid out as the quickslot diamond. */
 export const DIAMOND_SIZE = 4;
 export const hotbarDiamond = () => getPref(HOTBAR_PREF) === 'diamond';
@@ -106,6 +107,7 @@ let hbTook = null;       // AUDIT 27h B1: the press a socket stopped ({ node, bu
 let slots = [];          // per slot: { node, icon, glyph, count, key, wear, wearFill, pip }
 let caption = null;
 let hint = null;
+let pvpBtn = null;   // PVP-SET
 let dock = null;         // the HUD's own place for it
 let quadDock = null;     // DIAMOND-HB: HUD container for the diamond layout (bottom-left)
 let barShape = 'row';    // DIAMOND-HB: current layout: 'row', 'xb' (crossbar) or 'quad' (diamond)
@@ -136,6 +138,23 @@ const iconKeys = [];     // per slot: the kind whose picture is drawn
  *  hidden while a window is up and rises only while something is being DRAGGED: an item out of the pack (the pack
  *  says so, setHotbarDragging) or a spell out of the book or a slot off the bar (this file's own drag). */
 let extDragging = false;
+
+// PVP-SET (ui/pvpSpellMenu.js): the PvP set is shown in these same slots. Its module hands each slot's marks (cost,
+// short of magicka, last cast, the cast clock, the combat padlock), the lock line and the menu's door.
+let second = /** @type {any} */ (null);
+let armed = /** @type {null | { kit: any, name: string }} */ (null);   // a toolkit spell picked in the menu, put down by a click
+export function setHotbarSecondSet(p) { second = p && typeof p === 'object' ? p : null; lastSig = null; }
+const secondOn = () => { try { return !!second?.on() && hotbarSetName() === 'pvp'; } catch { return false; } };
+const secondRaised = () => { try { return !!second?.raised?.(); } catch { return false; } };
+const lockLine = () => { try { return secondOn() ? second.lockLine?.() ?? null : null; } catch { return null; } };
+const refuseLocked = () => { const why = lockLine(); if (why) showCaption(why, true); return !!why; };
+/** The PvP menu's door, for the spellbook's button; false with no PvP set here. */
+export const openHotbarSecondSet = () => { try { return second?.open?.() === true; } catch { return false; } };
+export const hotbarHasSecondSet = () => !!second;
+export const hotbarSecondSetLabel = () => { try { return String(second?.label?.() ?? ''); } catch { return ''; } };
+/** A toolkit spell picked in the menu: the next click on a slot puts it there (null lets go). */
+export function armHotbarKit(kit, name = '') { armed = kit ? { kit, name } : null; raiseSync(); }
+export const hotbarArmedKit = () => armed;
 export function setHotbarDragging(on) {
   extDragging = !!on;
   raiseSync();
@@ -175,7 +194,7 @@ export const PAD_ARRANGE_TEXT = Object.freeze({
 /** The bar's raise and its picked slot, from every reason it may be up under a window. */
 function raiseSync() {
   if (!bar) return;
-  bar.classList.toggle('dragging', extDragging || !!hbDrag?.moved || arranging || !!hand);
+  bar.classList.toggle('dragging', extDragging || !!hbDrag?.moved || arranging || !!hand || secondRaised());   // PVP-SET: and the PvP menu
   bar.classList.toggle('arranging', arranging || !!hand);
   slots.forEach((s, i) => s.node.classList.toggle('hb-inhand', hand?.kind === 'slot' && hand.slot === i));
 }
@@ -378,16 +397,20 @@ function build() {
     const flash = el('i', 'hb-flash');
     const badge = el('img', 'xb-badge');   // PADPLUS1: the crossbar's button glyph
     badge.alt = ''; badge.draggable = false;
-    node.append(frame, face, wear, count, pip, key, flash, badge);
+    const cd = el('i', 'hb-cd'), lock = el('i', 'hb-lock');   // PVP-SET: the cast clock's shade, the combat padlock
+    node.append(frame, face, cd, wear, count, pip, key, flash, badge, lock);
     bindSlot(node, i);
     if (i < HOTBAR_SIZE) row.append(node);
-    slots.push({ node, face, icon, glyph, count, key, wear, wearFill, pip, badge });
+    slots.push({ node, face, icon, glyph, count, key, wear, wearFill, pip, badge, cd });
     iconKeys[i] = null;
   }
   rowHold = el('div', 'xb-hold');   // DIAMOND-HB: holds the slot nodes the current layout does not show
   for (let i = HOTBAR_SIZE; i < HOTBAR_CAPACITY; i++) rowHold.append(slots[i].node);
   hint = el('div', 'hb-hint', HINT_DROP);
-  bar.append(caption, row, hint);
+  pvpBtn = el('button', 'hb-pvpbtn');   // PVP-SET: the PvP menu's door on the bar
+  pvpBtn.type = 'button';
+  pvpBtn.addEventListener('click', (e) => { e.stopPropagation(); openHotbarSecondSet(); });
+  bar.append(caption, row, hint, pvpBtn);
 }
 
 /** The HUD hands the bar its place in play: the bottom column, above the
@@ -471,14 +494,20 @@ function paint() {
     bar.classList.toggle('editing', editing);
     if (!editing && hbDrag) dragEnd(false);   // the look taken back mid-drag: never mind
   }
-  const hintText = hand ? (xbOn ? PAD_ARRANGE_TEXT.hintHand : PAD_ARRANGE_TEXT.hintHandRow) : arranging ? PAD_ARRANGE_TEXT.hint
-    : xbOn ? HINT_XB : editing ? HINT_EDIT : HINT_DROP;   // PAD-ARRANGE
+  const pvp = secondOn();
+  if (second) raiseSync();   // PVP-SET: the menu's raise
+  bar.classList.toggle('hb-pvp', pvp);
+  const label = pvp ? String(second.label?.() ?? '') : '';
+  if (pvpBtn && pvpBtn.textContent !== label) pvpBtn.textContent = label;
+  const hintText = (pvp && dropping && second.hint?.()) || (hand ? (xbOn ? PAD_ARRANGE_TEXT.hintHand : PAD_ARRANGE_TEXT.hintHandRow) : arranging ? PAD_ARRANGE_TEXT.hint
+    : xbOn ? HINT_XB : editing ? HINT_EDIT : HINT_DROP);   // PAD-ARRANGE; PVP-SET: the menu's own
   if (hint && hint.textContent !== hintText) hint.textContent = hintText;
   if (!shown) return;
   const entity = dropping ? (dropEntity ?? liveEntity) : liveEntity;
   const readiedIndex = liveOpts.readied?.index ?? null;
   const view = hotbarView(entity, { readiedIndex, size: HOTBAR_CAPACITY });
   const fit = slotFit();   // UI2: the box a slot's picture is fitted to - a change of it redraws the pictures
+  const marks = view.map((v) => (pvp ? slotMarks(v, entity) : null));   // PVP-SET
   const rev = bindings().rev;
   if (rev !== keysRev) { keysRev = rev; slots.forEach((sl, i) => { const t = hotbarKeyOf(i) ?? ''; if (sl.key.textContent !== t) sl.key.textContent = t; }); }   // KB1: a rebind renames the chips
   const sig = `${hotbarRevision()}|${dropping ? 1 : 0}|${fit.box}x${fit.dpr}|${view.map((v) => (v.empty ? '-'
@@ -487,14 +516,27 @@ function paint() {
       // an item identified or a sigil grown in, and the slot kept its old colour until something else moved
       + `|${v.item && v.type !== 'spell' ? `${rarityAttr(v.item) ?? ''}${validSigil(v.item.sigil) ? '*' : ''}${setIdOf(v.item) ?? ''}` : ''}`   // SET5: and its set
       // AUDIT FINAL F2: and the item's own dye - Blue Straps and Red Straps are one name, one kind
-      + `|${v.item && v.type !== 'spell' ? itemDyeColor(v.item) ?? '' : ''}`)).join('~')}`;
+      + `|${v.item && v.type !== 'spell' ? itemDyeColor(v.item) ?? '' : ''}`)).join('~')}|${marks.map(markSig).join('~')}`;   // PVP-SET: and its marks
   if (sig === lastSig) return;
   lastSig = sig;
-  view.forEach((v) => paintSlot(slots[v.slot], v, entity));
+  view.forEach((v, k) => paintSlot(slots[v.slot], v, entity, marks[k]));
 }
 
-function paintSlot(s, v, entity) {
+/** PVP-SET: a slot's marks from the PvP set's module, or null. */
+function slotMarks(v, entity) { try { return second?.marks?.(v, entity) ?? null; } catch { return null; } }
+const markSig = (m) => (m ? `${m.cost ?? ''}|${m.short ? 1 : 0}|${m.last ? 1 : 0}|${Math.round((m.cd ?? 0) * 20)}|${m.lock ? 1 : 0}` : '');
+function paintMarks(s, m) {
   const n = s.node;
+  n.classList.toggle('hb-last', !!m?.last);
+  n.classList.toggle('hb-short', !!m?.short);
+  n.classList.toggle('hb-locked', !!m?.lock);
+  const cd = Math.max(0, Math.min(1, Math.round((m?.cd ?? 0) * 20) / 20));
+  if (s.cd) s.cd.style.transform = `scaleY(${cd})`;
+}
+
+function paintSlot(s, v, entity, m = null) {
+  const n = s.node;
+  paintMarks(s, m);   // PVP-SET
   // RARITY-UI / SIGIL-UI: the slot's frame wears its item's tier (the Plus sheet's [data-rarity] rules) and a sigil
   // weapon its rune - a slot outlives its item, so both are taken off when the kind changes
   const it = !v.empty && v.type !== 'spell' ? v.item : null;
@@ -505,13 +547,22 @@ function paintSlot(s, v, entity) {
   n.classList.toggle('hb-empty', !!v.empty);
   n.classList.toggle('hb-gone', !!v.ghost);
   n.classList.toggle('hb-active', !!v.active);
-  n.classList.toggle('hb-spell', v.type === 'spell');
-  for (const c of ELEMENT_CLASS) n.classList.toggle(`el-${c}`, v.type === 'spell' && ELEMENT_CLASS[v.element] === c);
+  const spellish = v.type === 'spell' || v.type === 'kit';   // PVP-SET: a toolkit spell wears a spell's stone
+  n.classList.toggle('hb-spell', spellish);
+  for (const c of ELEMENT_CLASS) n.classList.toggle(`el-${c}`, spellish && ELEMENT_CLASS[v.element] === c);
   n.title = v.empty ? `Slot ${v.slot + 1}` : `${v.name}${v.type === 'spell' && RANGE_WORD[v.rangeType] ? ` (${RANGE_WORD[v.rangeType]})` : ''}`;
   if (v.empty) {
     iconFor(s, v.slot, null, entity);
     s.glyph.textContent = '';
     s.count.textContent = '';
+    s.pip.textContent = '';
+    n.classList.remove('hb-hasbar', 'hb-worn');
+    return;
+  }
+  if (v.type === 'kit') {   // PVP-SET: its icon, its cost in the count's corner
+    const drew = iconFor(s, v.slot, null, entity, v.icon);
+    s.glyph.textContent = drew ? '' : spellSigil(v.name);
+    s.count.textContent = m?.cost != null ? String(m.cost) : '';
     s.pip.textContent = '';
     n.classList.remove('hb-hasbar', 'hb-worn');
     return;
@@ -814,10 +865,20 @@ export function hotbarSlotNode(target) {
   return n && bar.contains(n) ? n : null;
 }
 
+/** PVP-SET: a toolkit spell from the PvP menu onto slot i (the PvP set alone takes one). */
+export function hotbarDropKit(i, kit, name = '') {
+  if (refuseLocked()) return false;
+  if (!setHotbarSlot(i, { type: 'kit', kit, name })) return false;
+  lastSig = null; paint(); strike(i, true);
+  showCaption(HOTBAR_TEXT.added(name, i + 1));
+  return true;
+}
+
 /** Can this item go on the bar at all? */
 export const hotbarTakesItem = (item) => !!hotbarKindOf(item);
 
 export function hotbarDropItem(i, item) {
+  if (refuseLocked()) return false;   // PVP-SET: the PvP set is fixed in combat
   const e = hotbarEntryForItem(item);
   if (!e || !setHotbarSlot(i, e)) return false;
   lastSig = null; paint(); strike(i, true);
@@ -825,7 +886,9 @@ export function hotbarDropItem(i, item) {
   return true;
 }
 export function hotbarDropSpell(i, sp) {
+  if (refuseLocked()) return false;   // PVP-SET
   const e = hotbarEntryForSpell(sp);
+  if (e && secondOn() && !setHotbarSlot(i, e)) { showCaption(second.bookLine?.() ?? '', true); return false; }   // PVP-SET: no book spell in the PvP set
   if (!e || !setHotbarSlot(i, e)) return false;
   lastSig = null; paint(); strike(i, true);
   showCaption(HOTBAR_TEXT.added(entryName(e), i + 1));
@@ -850,7 +913,7 @@ export function toggleHotbarItem(item) {
   if (e) { hand = { kind: 'item', item, name: e.name }; lastSig = null; raiseSync(); paint(); return PAD_ARRANGE_TEXT.choose(e.name); }
   const free = firstFreeHotbarSlot(hotbarSize());   // DIAMOND-HB: the diamond's four
   if (free < 0) return HOTBAR_TEXT.full;
-  hotbarDropItem(free, item);
+  if (!hotbarDropItem(free, item)) return lockLine() ?? HOTBAR_TEXT.full;   // PVP-SET
   return HOTBAR_TEXT.added(hotbarEntryForItem(item)?.name ?? 'It', free + 1);
 }
 export function toggleHotbarSpell(sp) {
@@ -860,7 +923,7 @@ export function toggleHotbarSpell(sp) {
   if (e) { hand = { kind: 'spell', spell: sp, name: e.name }; lastSig = null; raiseSync(); paint(); return PAD_ARRANGE_TEXT.choose(entryName(e)); }   // L10N3e: its name as the book shows it
   const free = firstFreeHotbarSlot(hotbarSize());   // DIAMOND-HB
   if (free < 0) return HOTBAR_TEXT.full;
-  hotbarDropSpell(free, sp);
+  if (!hotbarDropSpell(free, sp)) return lockLine() ?? second?.bookLine?.() ?? HOTBAR_TEXT.full;   // PVP-SET: the PvP set takes no book spell
   return HOTBAR_TEXT.added(shownSpellName(sp) ?? 'It', free + 1);
 }
 /** KB1: the key a slot answers to, as its chip names it - the slot's registry action through the diamond's own tag
@@ -983,7 +1046,9 @@ function dragEnd(commit) {
   if (!commit) return;
   const i = dropAt;
   if (d.payload.kind === 'spell') { if (i >= 0) hotbarDropSpell(i, d.payload.spell); return; }
+  if (d.payload.kind === 'kit') { if (i >= 0) hotbarDropKit(i, d.payload.kit, d.payload.name); return; }   // PVP-SET: a row of the PvP menu
   if (d.payload.kind === 'slot') {
+    if (refuseLocked()) return;   // PVP-SET
     const from = d.payload.slot;
     if (i < 0) {
       const name = entryName(hotbarEntry(from));
@@ -1002,6 +1067,7 @@ function bindSlot(node, i) {
   node.addEventListener('pointerdown', (e) => {
     if (editable()) {
       if (hand && (e.button ?? 0) === 0) { e.preventDefault(); handPress = i; return; }   // PAD-ARRANGE: the hand is put down on this press's click
+      if (armed && (e.button ?? 0) === 0) { e.preventDefault(); const a = armed; armed = null; hotbarDropKit(i, a.kit, a.name); raiseSync(); second?.changed?.(); return; }   // PVP-SET: the picked row put down
       if (!hotbarEntry(i)) return;
       const s = slots[i];
       e.preventDefault();   // no text selection, no focus theft - the press is the bar's
@@ -1040,7 +1106,7 @@ function bindSlot(node, i) {
     if (!editable()) return;
     e.preventDefault();
     const name = entryName(hotbarEntry(i));
-    if (!name) return;
+    if (!name || refuseLocked()) return;   // PVP-SET: fixed in combat
     clearHotbarSlot(i);
     if (hand?.kind === 'slot' && hand.slot === i) { hand = null; handPress = -1; raiseSync(); }   // PAD-ARRANGE: the slot in hand cleared
     showCaption(HOTBAR_TEXT.removed(name));
@@ -1287,6 +1353,24 @@ export const HOTBAR_CSS = `
 
 /* A FINGER IN PLAY: the slots are the phone's digit row. */
 @media (pointer: coarse) { .hb.on .hb-slot { pointer-events: auto; } }
+
+/* PVP-SET: the PvP set's marks - the last cast's gold edge, the cast clock's shade, grey when short, the padlock. */
+.hb-cd { position: absolute; inset: 0; background: rgba(0,0,0,0.62); transform: scaleY(0); transform-origin: 50% 100%; pointer-events: none; }
+.hb-slot.hb-last .hb-frame { border-color: #e8b62c; border-style: solid; box-shadow: 0 0 6px rgba(232,182,44,0.55); }
+.hb-slot.hb-short .hb-face { filter: grayscale(1); opacity: 0.45; }
+.hb-slot.hb-short .hb-count { color: #d98074; }
+.hb-lock { display: none; position: absolute; left: 50%; top: 50%; width: 12px; height: 9px; margin: -1px 0 0 -6px;
+  background: #c9b27a; border-radius: 1px; box-shadow: 1px 1px 0 #000; pointer-events: none; }
+.hb-lock::before { content: ''; position: absolute; left: 2px; top: -7px; width: 4px; height: 5px; border: 2px solid #c9b27a;
+  border-bottom: 0; border-radius: 4px 4px 0 0; }
+.hb-slot.hb-locked .hb-lock { display: block; }
+.hb-slot.hb-locked .hb-face { opacity: 0.55; }
+.hb-pvpbtn { display: none; position: absolute; right: 100%; bottom: 0; margin-right: 6px; padding: 3px 7px; font: inherit;
+  font-size: 11px; letter-spacing: 0.08em; color: #e9d9b0; background: rgba(14,16,19,0.88); border: 1px solid rgba(192,138,62,0.65);
+  cursor: pointer; pointer-events: auto; white-space: nowrap; }
+.hb.hb-pvp .hb-pvpbtn { display: block; }
+.hb.hb-pvp.dropping .hb-pvpbtn { display: none; }
+@media (max-width: 760px) { .hb-pvpbtn { right: auto; left: 0; bottom: 100%; margin: 0 0 4px; } }
 
 /* THE CARRIED SPELL OR SLOT. */
 .hb-ghost { position: fixed; z-index: 16; pointer-events: none; transform: translate(-50%, -60%);

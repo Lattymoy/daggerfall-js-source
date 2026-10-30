@@ -22,6 +22,7 @@ test('BUSY-GATE the law: the reads that stand back are the fourteen display read
     ['/v1/heartbeat', 'POST'], ['/v1/prof/motherlodes', 'POST'],
     ['/v1/towns/econ', 'POST'],   // PIN MOVED (AUDIT TOWN-ECON 2 CLI-8): and the towns' shares, an isolate's kept read
     ['/v1/festival/town', 'POST'],   // PIN MOVED (WITCH1): and a town's Hearth Offerings, a replica's read
+    ['/v1/hunt/state', 'POST'],   // PIN MOVED (HUNT-LEAN): and a character's hunt, a replica's read (test/server/lode_herd.test.js)
   ]);
   for (const [path, method] of BUSY_READS) {
     assert.ok(ROUTES.has(path), `${path}: a route the service serves`);
@@ -45,15 +46,18 @@ test('BUSY-GATE the law: the reads that stand back are the fourteen display read
 
 const BASE = 'https://accounts.invalid';
 
-test('BUSY-GATE the client: an overload answer holds the reads busyLaw names for its wait - each answered `server` 503 without a request, never at once - while a write, a sign-in, the heartbeat and every other read go; the wait doubles with each overload answer in a row, never shorter than its Retry-After; an answer starts the count again and lets a hold already running run out; a 500 and `offline` hold nothing (mutants: never held; held at once; the count not kept; the Retry-After unread; the count never started again; an answer cutting the hold)', async () => {
+test('BUSY-GATE the client: an overload answer holds the reads busyLaw names for its wait - each answered `server` 503 without a request, never at once - while a write, a sign-in, the heartbeat and every other read go; the wait doubles with each overload answer in a row, never shorter than its Retry-After; a held read\'s own answer starts the count again (BUSY-COUNT: an act\'s does not) and lets a hold already running run out; a 500 and `offline` hold nothing (mutants: never held; held at once; the count not kept; the Retry-After unread; the count never started again; any answer starts it again; an answer cutting the hold)', async () => {
   _resetBusyForTests();
   let now = 1_000_000;
   const sent = [];
   /** @type {{status: number, body: any, headers: Record<string, string>}} */
   let answer = { status: 503, body: { error: 'server' }, headers: {} };
+  /** @type {Promise<void>|null} */
+  let pending = null;   // an answer kept back until it resolves
   const fetch = async (/** @type {string} */ url, /** @type {any} */ init) => {
     sent.push(url.slice(BASE.length));
     const a = answer;
+    if (pending) await pending;
     return { ok: a.status < 300, status: a.status, headers: { get: (/** @type {string} */ k) => a.headers[k.toLowerCase()] ?? null }, json: async () => a.body };
   };
   const held = [];
@@ -76,11 +80,29 @@ test('BUSY-GATE the client: an overload answer holds the reads busyLaw names for
   answer = { status: 200, body: { ok: true }, headers: {} };
   for (const p of ['/v1/homes/claim', '/v1/auth/token', '/v1/chapters/list', '/v1/market/read']) assert.equal((await call(io, p, {})).ok, true, p);
   assert.deepEqual(sent.slice(1), ['/v1/homes/claim', '/v1/auth/token', '/v1/chapters/list', '/v1/market/read']);
-  // those answers started the count again, but the hold already running runs out
+  // PIN MOVED (BUSY-COUNT, 2026-10-29): those answers leave the count standing - they kept the wait at its first step
+  // all through an overload - and the hold already running runs out
   assert.equal((await town()).busy, true, 'still held');
   now += BUSY_BASE_MS;
   answer = { status: 503, body: { error: 'server' }, headers: {} };
   assert.equal((await town()).busy, undefined, 'asked at the wait\'s end');
+  assert.equal(busyUntil(), now + 10_000, 'the count kept: the second wait');
+  // a held read's own answer starts the count again, and lets a hold already running run out
+  now = busyUntil();
+  answer = { status: 200, body: { ok: true }, headers: {} };
+  /** @type {() => void} */
+  let answered = () => {};
+  pending = new Promise((resolve) => { answered = resolve; });
+  const slow = town();   // a held read out as its wait ends, its answer slow
+  pending = null;
+  answer = { status: 503, body: { error: 'server' }, headers: {} };
+  await call(io, '/v1/homes/claim', {});   // an act's overload answer meanwhile: the third wait
+  assert.equal(busyUntil(), now + 20_000);
+  answered();
+  assert.equal((await slow).ok, true);
+  assert.equal(busyUntil(), now + 20_000, 'the hold already running runs out');
+  now = busyUntil();
+  await town();
   assert.equal(busyUntil(), now + BUSY_BASE_MS, 'the count started again: the first wait');
   // each overload answer in a row doubles it, to BUSY_MAX_MS
   for (const w of [10_000, 20_000, 40_000, 60_000, 60_000]) {
@@ -122,7 +144,9 @@ test('BUSY-GATE the service: an overloaded database met on any route opens the i
   const post = (path, body) => svc.fetch(`https://accounts.invalid${path}`, {
     method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${who.secret}` }, body: JSON.stringify(body),
   });
-  const town = () => post('/v1/homes/town', { mapId: 152, character: who.character });
+  // PIN MOVED (SHED-REPLICA, 2026-10-29): the shed's example is a busy read no replica may serve - the towns' layouts, an
+  // isolate's kept read; a replica read the shed would take asks any instance instead (test/server/shed_replica.test.js)
+  const town = () => post('/v1/homes/layouts', {});
   const live = () => svc.fetch('https://accounts.invalid/v1/seats/sieges/live', { method: 'GET' });
   const error = console.error;
   console.error = () => {};
@@ -133,6 +157,7 @@ test('BUSY-GATE the service: an overloaded database met on any route opens the i
     let res = await live();
     assert.equal(res.status, 503);
     assert.equal(res.headers.get('retry-after'), String(BUSY_RETRY_AFTER_S), 'the overload\'s answer says its Retry-After');
+    assert.match(res.headers.get('access-control-expose-headers') ?? '', /retry-after/, 'RETRY-SEEN: exposed, so the page can read it');
     fault = null;
     // the shed: the town's homes answered as the overload is, and not one statement asked
     asked.length = 0;
@@ -140,6 +165,7 @@ test('BUSY-GATE the service: an overloaded database met on any route opens the i
     assert.equal(res.status, 503);
     assert.deepEqual(await res.json(), { error: 'server' });
     assert.equal(res.headers.get('retry-after'), String(BUSY_RETRY_AFTER_S));
+    assert.match(res.headers.get('access-control-expose-headers') ?? '', /retry-after/, 'RETRY-SEEN: the shed\'s too');
     assert.deepEqual(asked, [], 'not one statement - not even the session\'s lookup');
     // a write still runs
     res = await post('/v1/account/played', {});

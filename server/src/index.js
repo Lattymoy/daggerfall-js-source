@@ -263,9 +263,10 @@ import { isSiegeRoom, newFighter, armsOk, SIEGE_HIT, ROYAL_RING, isSiegeNpcId, s
 import { mintSiegeReceipt, SIEGE_RECEIPT_TTL_S, mintRoyalReceipt } from '../../src/net/siege/siegeReceipt.js';   // SEAT2a: the relay's fourth signature - a fighter's result and Honours
 import { takeHealthReport, poolWord, poolUnheard } from '../../src/net/siege/refereeHealthShare.js';   // SHARED-HEALTH: one health pool under the referee
 import { newDuelRef, duelNote, duelOpen, duelBoutOf, duelBlow, duelPose, duelEnd, duelForfeit, duelStep, duelVitals } from '../../src/net/duel/duelRef.js';   // INT8: the duel refereed
-import { newWildRef, wildZone, wildPose, wildBlow, wildKin, sameGuild, wildPick, wildSigned, wildStep, wildVitals, wildGone, wildCarry, wildCarryOf, wildSignNow, wildCredit, wildFallOf, wildDownWord, wildGraceLeft, wildGraceTaken, WILD_GRACE, WILD_FALL_PREFIX, WILD_REF } from '../../src/net/wild/wildRef.js';   // INT9: the open zone refereed
+import { newWildRef, wildZone, wildTokenAtt, wildPose, wildBlow, wildKin, sameGuild, wildPick, wildSigned, wildStep, wildVitals, wildGone, wildCarry, wildCarryOf, wildSignNow, wildCredit, wildFallOf, wildDownWord, wildGraceLeft, wildGraceTaken, wildAggroWord, wildFlagWord, wildBarWord, wildBarWords, wildOpenedBy, wildVillainy, wildRed, WILD_GRACE, WILD_FALL_PREFIX, WILD_REF } from '../../src/net/wild/wildRef.js';   // INT9: the open zone refereed
 import { mintWildReceipt, mintWildCollect, mintSeaWreck, WILD_RECEIPT_TTL_S, SEA_WRECK_TTL_S } from '../../src/net/wild/wildReceipt.js';   // INT9: a fall, signed; MAC (2026-10-14): and a killer's collect; SHIP-PVP: and a wreck
 import { seaHelm, seaShot, seaBoard, seaStep, seaGone, seaCarry, seaWreckOf, SEA_WRECK_PREFIX, SEA_REF } from '../../src/net/sea/seaRef.js';
+import { lingerHold, lingerTarget, lingerStep, lingerHello, lingerZone, lingerSlain } from './pvpLinger.js';   // PVP-LINGER: a body left in its lock
 /** AUDIT SEA VENTURES A8: a signed word owed an account that is away (a fall's receipt, a wreck's) kept in the room's storage
  *  under this prefix as long as a receipt lives - a relay object that slept lost it from its memory, and a captain back
  *  in the zone was handed nothing. */
@@ -288,7 +289,7 @@ import { mintSerpentReceipt, readSerpentReceipt } from '../../src/net/serpent/se
 // SERPENT2 (2026-10-04, the owner: "the discord integration needs to happen"): ONE FILE JOINS THE BUNDLE -
 // net/serpent/serpentHerald.js (the serpent's Discord posts and when they are owed, pure law - it imports serpentLaw.js,
 // gateHerald.js and wire.js, all here). The hub posts off its own alarm, beside the gate's herald.
-import { serpentHeraldRole, serpentOmenPost, serpentFellPost, serpentHeraldOmenDue, serpentHeraldKill, serpentSiteDayOk, agreedSerpentSite, serpentAtWord } from '../../src/net/serpent/serpentHerald.js';
+import { serpentHeraldRole, serpentOmenPost, serpentFellPost, serpentHeraldOmenDue, serpentHeraldKill, serpentSiteWordOk, SERPENT_SITE_RECORD, agreedSerpentSite, serpentAtWord } from '../../src/net/serpent/serpentHerald.js';
 // RAID3 (2026-09-27, Mac, on World Events - Raiding Parties online: "1. Server"): TWO FILES JOIN THE BUNDLE -
 // net/raid/raidLaw.js (a town raid's ledger, pure law - it imports nothing) and net/raid/raidReceipt.js (a raid's receipt, the
 // relay's second signature under the gate's one key - it imports identityToken.js and raidLaw.js, both here).
@@ -372,7 +373,7 @@ import { newRemains, foldFall, takeFrom, remainsNamedFor, collectAsk, remainsWor
 import { wildGate, wildDirected, WILD_HZ_MAX, WDUN_HZ_MAX, WDUN_HERE_MS, WDUN_INTERNAL_RESET, WDUN_INTERNAL_KIN, WDUN_INTERNAL_GONE, WILD_INTERNAL_VIT, wdunRoomKey, wdunHall, wdunHallOfRoom, seaRoomCell, DUNGEON_ROOM_TAGS, WILD_REMAINS_MS as WDUN_PILE_MS } from './relay.js';
 import { WDUN_KEY, wdunOf, wdunPrune, wdunEnter, wdunHere, wdunLeave, wdunDie, wdunGone, wdunState, wdunCrows, wdunBound, wdunGiantDie, wdunGiants, wdunFleetSunk, wdunFleets, WDUN_SAVE_MS, WDUN_NEW_HALLS_MAX, wdunNewHall, wdunMeterOf } from '../../src/net/wild/wildLaw.js';   // PVPDUNGEONS: the zone's halls, kept by the hub; AUDIT TESA III E2-5: bounded, an account's meter, a write each WDUN_SAVE_MS
 import { validSdRecord, sdRelayGate, validSdFoundTell, chatRegionRoom, SD_INTERNAL_CENSUS, SD_INTERNAL_FOUND, SD_INTERNAL_LIVE, SD_TELL_RETRY_MS, SD_KEY, SD_FOUND_KEY, SD_REALM_KEY, sdDeadKey, SD_REGION_COUNT, SD_FIGHTERS_MAX, sdPzRelayGate, SD_ORRERY_KEY, sdFightRelayGate, SD_BRAIN_MIN, SD_NO_WORDS, SD_FIGHT_KEY, SD_INTERNAL_FELL, validSdFellTell, SD_INTERNAL_IN, validSdInTell, SD_RC_PREFIX, sdReceiptKey, SD_HERE_HOLD_MS, SD_SLOT_KEY, SD_HELD_KEY, sdLaneKey, SD_LANE_KIND, SD_LANE_SPAN } from './relay.js';   // SD3: the Super dungeon's frame, its record and its doors (the wire's, through relay.js)
-import { sdFirst, sdRise, sdFind, sdEnter, sdFell, sdGone, sdDue, pickSdRegion, sdFindBelieved, sdNearSite, sdHolds, sdAdmits, isSdRoom, sdSlotOfRoom, SD_NO_CLOSED, SD_NO_FULL, sdDownWord, sdMayRaise, SD_REZ_MS, SD_PUB_SEATS, isSdPubOwner, sdOwnerOfRoom, SD_COLLAPSE_MS, sdLaneOf, SD_LANES, sdLaneRegions } from '../../src/net/superDungeon/sdLaw.js';   // SD3: the Super dungeon's law - the director's moves, the census's pick, the find, the realm's room
+import { sdFirst, sdRise, sdFind, sdEnter, sdFell, sdGone, sdDue, pickSdRegion, sdFindBelieved, sdNearSite, sdHolds, sdAdmits, isSdRoom, sdSlotOfRoom, SD_NO_CLOSED, SD_NO_FULL, sdDownWord, sdMayRaise, SD_REZ_MS, SD_PUB_SEATS, isSdPubOwner, sdOwnerOfRoom, SD_COLLAPSE_MS, sdLaneOf, SD_LANES, sdLaneRegions, sdHeldPast, sdRiseNotBefore, sdBeatOrder } from '../../src/net/superDungeon/sdLaw.js';   // SD3: the Super dungeon's law - the director's moves, the census's pick, the find, the realm's room
 // SD-HERALD (2026-10-09, the owner: "We need to add discord integration to abyss dungeons"): TWO FILES JOIN THE BUNDLE -
 // net/superDungeon/sdHerald.js (the Abyss Dungeon's Discord posts and when they are owed, pure law - it imports sdLaw.js and
 // gateHerald.js, both here) and formats/mapsTables.js (MapsFile's verbatim tables, which import nothing - the region a
@@ -398,6 +399,8 @@ import { egResume, egHoldDone, egRelease, egBeatGap, egReceiptSeed, EG_LIVE_MAX,
 import { egEnd, egGeo } from '../../src/net/eliteGates/egBrain.js';
 import { egHallOf, egCircleOfHall, EG_LAST_WORD_MS, EG_ABSENT_TRIAL_MS } from '../../src/net/eliteGates/egLaw.js';   // AUDIT EG III: and a closed socket's body held for the absence's window
 import { mintEgReceipt } from '../../src/net/eliteGates/egReceipt.js';
+import { dragonWord, dragonTick, dragonTrails, dragonFellInternal, dragonReceiptTo, sweepDragonReceipts, mergeBeats, DRAGON_REST_MS, DRAGON_INTERNAL_FELL } from './dragonFights.js';   // DRAGON2: the Dwarven Dragon's fight, the relay's half
+import { dragonGate } from '../../src/net/wire.js';   // DRAGON2: its frames' own bucket
 // EG-ZA (2026-10-12, Mac: "I said I want everything"; Elite-Gates.md sections 22 and 23): A KEY IS NEVER LOST - the hub's
 // open retried and its call told the room, an open the room never took voided by the room (its tombstone first), a client's
 // void of a stake no call answered, every receipt held at the hub (`egrc:<sub>`) until its account says it is counted, a
@@ -1081,6 +1084,7 @@ export class Room {
     if (path === GATE_INTERNAL_COURT) return this._gateCourtInternal(request);   // GATE-COURTS: a court's kill, told the first court's book
     if (path === GATE_INTERNAL_PARTY) return this._gatePartyInternal(request);   // GATE-COURTS: the book asking the hub an account's party
     if (path === SERPENT_INTERNAL_FELL) return this._serpentFellInternal(request);   // SERPENT1: the serpent's kill, said to the hub
+    if (path === DRAGON_INTERNAL_FELL) return dragonFellInternal(this, request);   // DRAGON2: a dragon's kill and its receipts, to the hub
     if (path === RAID_INTERNAL_CLEAN) return this._raidCleanInternal(request);   // RAID3: a raid's cleanse, said to the hub
     if (path === SEV_INTERNAL_BOOK) return staffBookInternal(this);   // STAFF-EVENT: a cell asking the hub for the book of staff events
     if (path === SEV_INTERNAL_TELL) return staffTellInternal(this, request);   // STAFF-EVENT: a cell telling the hub an event's meter
@@ -1415,6 +1419,7 @@ export class Room {
     { try { const g = await this._serpentFellsOf(); if (g && serpentHolds(g.d, now)) for (const fell of g.list) this._send(ws, JSON.stringify({ t: 'serpent', ...fell })); } catch (e) { console.warn('[hub] serpent word failed', e?.message ?? e); } }
     { try { await this._serpentAtTo(ws, now); } catch (e) { console.warn('[hub] serpent site word failed', e?.message ?? e); } }   // WW7-12: and where the accounts agree it lies
     if (sub) { try { await this._serpentReceiptTo(ws, sub, now); } catch (e) { console.warn('[hub] serpent receipt failed', e?.message ?? e); } }
+    if (sub) { try { await dragonReceiptTo(this, ws, sub, now); } catch (e) { console.warn('[hub] dragon receipt failed', e?.message ?? e); } }   // DRAGON2: and a dragon's, while it is good
     // AUDIT WB A4: and this account's receipt, while it is good (spent, it goes)
     if (sub) { try { await this._gateReceiptTo(ws, sub, now); } catch (e) { console.warn('[hub] gate receipt failed', e?.message ?? e); } }
     // SD9a: and this account's Hour receipt, while it is good (spent, it goes)
@@ -1442,7 +1447,7 @@ export class Room {
     }
     // RAID3: the raids cleansed today and yesterday - so a raid this player's machine still holds open is closed quietly,
     // never said withdrawn (the cleanse's own word went out while they were away)
-    { try { const l = await this._raidCleansOf(now); if (l.length) this._send(ws, JSON.stringify({ t: 'raid', k: 'cls', l })); } catch (e) { console.warn('[hub] raid word failed', e?.message ?? e); } }
+    { try { const l = await this._raidCleansOf(now); if (l.length) this._send(ws, JSON.stringify({ t: 'raid', k: 'cls', l: [...l].reverse() })); } catch (e) { console.warn('[hub] raid word failed', e?.message ?? e); } }   // AUDIT TAMRIEL-WIDE II R1: newest first - a build before world284 reads 64 (wire.js validRaidOut), today's
     // AUDIT RAID R2: and this account's raid receipts the hub holds - an earner who was not in the town's cell at the
     // cleanse, or whose link dropped at it, is handed them here (the account service counts each once)
     if (sub) { try { await this._raidReceiptsTo(ws, sub, now); } catch (e) { console.warn('[hub] raid receipts failed', e?.message ?? e); } }
@@ -3231,10 +3236,10 @@ export class Room {
     // SERPENT1: A CELL WITH A SERPENT'S FIGHT beats it - and its other duties (a rite's tell, its raids' ends) still run,
     // every SERPENT_REST_MS while the fight beats and on every firing once it is over, under one alarm: the soonest of the
     // beat and what they arm
-    const sp = await this._serpentTick();
+    const sp = mergeBeats(await this._serpentTick(), await dragonTick(this));   // DRAGON2: and a dragon's fight, on the same alarm
     if (sp) {
       const now = Date.now();
-      if (!sp.live || !(now < this._serpentRestAt)) { this._serpentRestAt = now + SERPENT_REST_MS; await this._alarmRest(); }
+      if (!sp.live || !(now < this._serpentRestAt)) { this._serpentRestAt = now + Math.min(SERPENT_REST_MS, DRAGON_REST_MS); await this._alarmRest(); }
       const rest = await this.state.storage.getAlarm();
       await this.state.storage.setAlarm(Math.min(sp.at, Number.isFinite(rest) && rest > now ? rest : Infinity));
       return;
@@ -3261,7 +3266,7 @@ export class Room {
    *  next hello, as a drain's is. The cursors ride storage; a full page is followed SWEEP_STEP_MS later, an empty one
    *  ACCOUNT_SWEEP_MS later from the start. */
   async _sweepHub(now) {
-    const cur = (await this.state.storage.get(['sweep:acct', 'sweep:party', 'sweep:gaterc', 'sweep:raidrc', 'sweep:serpentrc', 'sweep:sdrc', 'sweep:egrc', 'sweep:egcall', 'sweep:starrc', 'sweep:ktrc']));   // AUDIT WBX2 M9: one read (EG-ZA: and the breach receipts' cursor; AUDIT EG IV: and the calls'; STAR3: and the star receipts')
+    const cur = (await this.state.storage.get(['sweep:acct', 'sweep:party', 'sweep:gaterc', 'sweep:raidrc', 'sweep:serpentrc', 'sweep:sdrc', 'sweep:egrc', 'sweep:egcall', 'sweep:starrc', 'sweep:ktrc', 'sweep:dragonrc']));   // AUDIT WBX2 M9: one read (EG-ZA: and the breach receipts' cursor; AUDIT EG IV: and the calls'; STAR3: and the star receipts'; AUDIT DRAGON: and the dragon receipts')
     const acur = cur.get('sweep:acct') ?? null, pcur = cur.get('sweep:party') ?? null, gcur = cur.get('sweep:gaterc') ?? null, rcur = cur.get('sweep:raidrc') ?? null, scur = cur.get('sweep:serpentrc') ?? null;
     const accts = await this.state.storage.list({ prefix: 'acct:', limit: SWEEP_PAGE, ...(acur ? { startAfter: acur } : {}) });
     const dead = [], idle = []; let alast = null;
@@ -3317,9 +3322,10 @@ export class Room {
     const krc = await this.state.storage.list({ prefix: KT_RC_PREFIX, limit: SWEEP_PAGE, ...(kcur ? { startAfter: kcur } : {}) });
     let klast = null;
     for (const [k, v] of krc) { klast = k; if (!v || typeof v !== 'object' || !(Number.isFinite(v.e) && now < v.e * 1000)) dead.push(k); }
+    const dragonRc = await sweepDragonReceipts(this, now, cur.get('sweep:dragonrc') ?? null, dead, SWEEP_PAGE);   // AUDIT DRAGON: and a dragon receipt kept for an account that never came back
     for (let i = 0; i < dead.length; i += SWEEP_PAGE) await this.state.storage.delete(dead.slice(i, i + SWEEP_PAGE));
-    const more = accts.size >= SWEEP_PAGE || parties.size >= SWEEP_PAGE || kept.size >= SWEEP_PAGE || rcs.size >= SWEEP_PAGE || src.size >= SWEEP_PAGE || drc.size >= SWEEP_PAGE || erc.size >= SWEEP_PAGE || calls.size >= SWEEP_PAGE || trc.size >= SWEEP_PAGE || krc.size >= SWEEP_PAGE;
-    await this.state.storage.put({ 'sweep:acct': accts.size >= SWEEP_PAGE ? alast : null, 'sweep:party': parties.size >= SWEEP_PAGE ? plast : null, 'sweep:gaterc': kept.size >= SWEEP_PAGE ? glast : null, 'sweep:raidrc': rcs.size >= SWEEP_PAGE ? rlast : null, 'sweep:serpentrc': src.size >= SWEEP_PAGE ? slast : null, 'sweep:sdrc': drc.size >= SWEEP_PAGE ? dlast : null, 'sweep:egrc': erc.size >= SWEEP_PAGE ? elast : null, 'sweep:egcall': calls.size >= SWEEP_PAGE ? clast : null, 'sweep:starrc': trc.size >= SWEEP_PAGE ? tlast : null, 'sweep:ktrc': krc.size >= SWEEP_PAGE ? klast : null });
+    const more = dragonRc.full || accts.size >= SWEEP_PAGE || parties.size >= SWEEP_PAGE || kept.size >= SWEEP_PAGE || rcs.size >= SWEEP_PAGE || src.size >= SWEEP_PAGE || drc.size >= SWEEP_PAGE || erc.size >= SWEEP_PAGE || calls.size >= SWEEP_PAGE || trc.size >= SWEEP_PAGE || krc.size >= SWEEP_PAGE;
+    await this.state.storage.put({ 'sweep:acct': accts.size >= SWEEP_PAGE ? alast : null, 'sweep:party': parties.size >= SWEEP_PAGE ? plast : null, 'sweep:gaterc': kept.size >= SWEEP_PAGE ? glast : null, 'sweep:raidrc': rcs.size >= SWEEP_PAGE ? rlast : null, 'sweep:serpentrc': src.size >= SWEEP_PAGE ? slast : null, 'sweep:dragonrc': dragonRc.full ? dragonRc.last : null, 'sweep:sdrc': drc.size >= SWEEP_PAGE ? dlast : null, 'sweep:egrc': erc.size >= SWEEP_PAGE ? elast : null, 'sweep:egcall': calls.size >= SWEEP_PAGE ? clast : null, 'sweep:starrc': trc.size >= SWEEP_PAGE ? tlast : null, 'sweep:ktrc': krc.size >= SWEEP_PAGE ? klast : null });
     await this.state.storage.setAlarm(now + (more ? SWEEP_STEP_MS : ACCOUNT_SWEEP_MS));
   }
 
@@ -3484,6 +3490,8 @@ export class Room {
     const house = c.hn ? { hn: c.hn, ...(c.hc ? { hc: c.hc } : {}), ...(c.hb ? { hb: c.hb } : {}), ...(c.hg ? { hg: c.hg } : {}) } : {};
     // AUDIT LEGACY III O1: and the realm character itself - `ci`, beside the realm's yes alone (identityToken.js claimsValid)
     // INT7: and its ARMS (`wa`, the judged pack's most reach and its bow) - every referee's clip of a blow between players
+    if (c.ak) house.ak = c.ak;   // ARMORY: `ak`, the Aura Armory's kit the token signed for (stamped by `badged` beside the aura) - set here, as `fo` is, the return's literal being pinned
+    if (c.vl) house.vl = c.vl;   // PVP-VILLAIN-KEEP: `vl`, the villain meter the token signed for (wildRef.js wildTokenAtt puts it on the socket)
     if (c.fo) house.fo = c.fo;   // STAFF-PANEL5-FOLLOW: `fo`, the account a hidden spectator follows (beside `hd` alone - claimsValid); set here, as the return's literal is pinned by other mutant lists
     if (c.hd === 1) this._hidHellos.add(m);   // STAFF-PANEL5-HIDDEN: `hd`, a hidden staff spectator's token - the hello marked off the signature (staffHidden.js hiddenHello)
     return { name: c.n, kind: c.k, subject: c.s, title: c.t, ts: c.ts, glyphs: c.g, gx: c.gx, au: c.au, pi: c.pi, rb: c.rb, mu, lt, lv: c.lv, ...guild, gio: c.i, ar: c.ar, cl: c.cl, ...house, ci: c.ci, wa: c.wa };   // ARENA4: the season's rating, the hall's queue's   // ARENA4b: `cl` the character's level, a ladder fighter's vitality's
@@ -3872,7 +3880,7 @@ export class Room {
         // AUDIT SCALE II R2-4: and kept, so a woken instance whose sockets say nothing still knows it
         if (this._hubKeyKept !== this._hubKey) { this._hubKeyKept = this._hubKey; try { await this.state.storage.put(HUB_KEY_KEY, this._hubKey); } catch { this._hubKeyKept = null; } }
       }
-      if (!this._setAttach(ws, { ...a, ...placed, ...shown, ...(shard ? { vid, hm: { acct: m.acct ?? null, as: m.asecret ?? null, ps: m.ps === 1 ? 1 : 0, sc: m.secret } } : copy ? { vid } : {}), ...(m.gv >= GRANT_HELLO_LAW && streamsFoes(a.key) ? { gv: 1 } : {}), id: m.id, sc: m.secret, name: who.name, title: who.title, ...(who.ts ? { ts: who.ts } : {}), glyphs: who.glyphs, gx: who.gx, au: who.au, ...(who.pi ? { pi: who.pi } : {}), ...(who.rb ? { rb: who.rb } : {}), lv: who.lv, ...guild, ...(who.hn ? { hn: who.hn, hc: who.hc, hb: who.hb, hg: who.hg } : {}), ...(who.ci && !chat && !isSocialRoom(a.key) ? { ci: who.ci } : {}), ...(armsOk(who.wa) && !chat && !isSocialRoom(a.key) ? { wa: who.wa } : {}), gio: who.gio, ...(Number.isSafeInteger(who.lt) ? { lt: who.lt } : {}), ...(m.ls === 1 && leaseRoom(a.key) ? { ld: 0 } : {}), sub: who.subject, ...instAtt, ...(siegeSide ? { sd: siegeSide } : {}), mu: who.mu, ...(who.fz ? { fz: who.fz } : {}), ...(m.fv === 1 ? { fv: 1 } : {}), pose: chat ? null : m.pose, since: this._seatKeep(replaced, now), ...arena, ...charLv, ...linked, ...(chat && who.kind === 'guest' ? { gu: 1 } : {}), ...(m.w2 === 1 ? { w2: 1 } : {}), ...(who.fo ? { fo: who.fo } : {}), ...(m.sm === 1 && isSocialRoom(a.key) ? { sm: 1 } : {}), ...(who.hid ? { hid: 1, lk: 0 } : {}) })) { this._refuse(ws, 'hello too large'); return; }   // MOD1: `sub` the verified account (what a mute names), `mu` until when it may not talk   // RENOWN1: `lv` the Renown level the token carried   // AUDIT SAFE RELAY-11: `gu`, a guest's socket in a channel - paced as a sprout's (`_newVoiceWait`)   // STAFF-PANEL5-MESSAGE: `sm`, a hub socket whose game shows a staff message's box (its hello said so) - one without it is "old game, not shown"   // STAFF-PANEL5-HIDDEN: `hid`, a hidden staff spectator's socket (staffHidden.js) - and in no census (`lk` 0 over `linked`)
+      if (!this._setAttach(ws, { ...a, ...placed, ...shown, ...(shard ? { vid, hm: { acct: m.acct ?? null, as: m.asecret ?? null, ps: m.ps === 1 ? 1 : 0, sc: m.secret } } : copy ? { vid } : {}), ...(m.gv >= GRANT_HELLO_LAW && streamsFoes(a.key) ? { gv: 1 } : {}), id: m.id, sc: m.secret, name: who.name, title: who.title, ...(who.ts ? { ts: who.ts } : {}), glyphs: who.glyphs, gx: who.gx, au: who.au, ...(who.pi ? { pi: who.pi } : {}), ...(who.rb ? { rb: who.rb } : {}), lv: who.lv, ...guild, ...(who.hn ? { hn: who.hn, hc: who.hc, hb: who.hb, hg: who.hg } : {}), ...(who.ci && !chat && !isSocialRoom(a.key) ? wildTokenAtt(who) : {}), ...(armsOk(who.wa) && !chat && !isSocialRoom(a.key) ? { wa: who.wa } : {}), gio: who.gio, ...(Number.isSafeInteger(who.lt) ? { lt: who.lt } : {}), ...(m.ls === 1 && leaseRoom(a.key) ? { ld: 0 } : {}), sub: who.subject, ...instAtt, ...(siegeSide ? { sd: siegeSide } : {}), mu: who.mu, ...(who.fz ? { fz: who.fz } : {}), ...(m.fv === 1 ? { fv: 1 } : {}), pose: chat ? null : m.pose, since: this._seatKeep(replaced, now), ...arena, ...charLv, ...linked, ...(chat && who.kind === 'guest' ? { gu: 1 } : {}), ...(m.w2 === 1 ? { w2: 1 } : {}), ...(who.fo ? { fo: who.fo } : {}), ...(m.sm === 1 && isSocialRoom(a.key) ? { sm: 1 } : {}), ...(who.hid ? { hid: 1, lk: 0 } : {}) })) { this._refuse(ws, 'hello too large'); return; }   // MOD1: `sub` the verified account (what a mute names), `mu` until when it may not talk   // RENOWN1: `lv` the Renown level the token carried   // AUDIT SAFE RELAY-11: `gu`, a guest's socket in a channel - paced as a sprout's (`_newVoiceWait`)   // STAFF-PANEL5-MESSAGE: `sm`, a hub socket whose game shows a staff message's box (its hello said so) - one without it is "old game, not shown"   // STAFF-PANEL5-HIDDEN: `hid`, a hidden staff spectator's socket (staffHidden.js) - and in no census (`lk` 0 over `linked`)
       if (!chat && m.pose && this._trailing({ key: a.key, sub: who.subject })) this._trailPose(ws, m.pose, now);   // AUDIT INT11: a fighter's socket new to the room stands where its hello put it, from now - on its trail, or none says when
       // SRV-N: `v` rides EVERY welcome, a channel's included. A player in the enhanced skin holds a presence socket
       // and one chat socket per tab; whichever reconnects first after a hand deploy is the one that notices, and the
@@ -4296,7 +4304,7 @@ export class Room {
       const k = m.data.k;
       if (k === 'strike' || k === 'spell') { if (m.data.to === a.id) { this._junk(ws); return; } await this._wildBlow(a, m.data, now); return; }
       if (k === 'helm' || k === 'shot' || k === 'board') { await this._seaWord(a, m.data, now); return; }   // SHIP-PVP: the open sea's guns, the referee's
-      if (k === 'zone') { await this._wildZoneWord(a, m.data.z, now, m.data.dd === 1); return; }   // AUDIT FOE-KEEPS E2: `dd`, its word that it died
+      if (k === 'zone') { await this._wildZoneWord(a, m.data.z, now, m.data.dd === 1, m.data.fl ?? null, m.data.ed === 1, m.data.sf === 1); return; }   // AUDIT FOE-KEEPS E2: `dd`, its word that it died - PVP-SAFE-HIT: `sf`, the safe streets
       if (k === 'pick') { await this._wildPickWord(a, m.data, now); return; }
       if (wildDirected(m.data)) {
         const to = m.data.to;
@@ -4473,6 +4481,13 @@ export class Room {
       }
       if (!isCellRoom(a.key) || typeof a.sub !== 'string' || !a.sub) { this._junk(ws); return; }
       try { await this._serpentFrame(ws, a, m, now); } catch (e) { console.warn('[serpent] word failed', e?.message ?? e); }
+      return;
+    }
+    if (m.t === 'dragon') {   // DRAGON2: a word on the Dwarven Dragon's fight, to its site's cell (server/src/dragonFights.js)
+      const now = Date.now();
+      if (!this._spend(ws, now, dragonGate, 'dragonBucket', 'dragonDrops', 'too many dragon frames')) return;
+      if (!isCellRoom(a.key) || typeof a.sub !== 'string' || !a.sub) { this._junk(ws); return; }
+      try { await dragonWord(this, ws, a, m, now); } catch (e) { console.warn('[dragon] word failed', e?.message ?? e); }
       return;
     }
     if (m.t === 'rite') {
@@ -5196,14 +5211,16 @@ export class Room {
     followLeft(this, ws, a);   // STAFF-PANEL5-FOLLOW: a spectator gone, or a followed account's last socket here
     // INT9 (AUDIT): a fighter whose last socket here went is out of the zone (a closed tab kept its `zone` for good, and a
     // room of them refused every newcomer)
-    if (a.sub && this._wildRef && ![...this._all()].some(([w, b]) => w !== ws && b.id && b.sub === a.sub)) { wildGone(this._wildRef, a.sub, Date.now()); seaGone(this._wildRef, a.sub, Date.now()); this._wildLeaveCarry(a, Date.now()); }   // SHIP-PVP: and her ship off the guns (AUDIT SEA VENTURES F1/A1: her bar kept)
+    const wildLast = !!a.sub && !!this._wildRef && ![...this._all()].some(([w, b]) => w !== ws && b.id && b.sub === a.sub);
+    const lingers = wildLast && !last && await this._lingerHold(a, Date.now());   // PVP-LINGER (pvpLinger.js): a body in its lock stays, its leave said when it goes
+    if (wildLast && !lingers) { wildGone(this._wildRef, a.sub, Date.now()); seaGone(this._wildRef, a.sub, Date.now()); this._wildLeaveCarry(a, Date.now()); }   // SHIP-PVP: and her ship off the guns (AUDIT SEA VENTURES F1/A1: her bar kept)
     this._looks.delete(a.id);
     if (!last) this._secrets.set(a.id, null);   // SCALE2b: the kept copy goes with the stored one (a drain's sweep clears both)
     this._raidTownsUp.delete(ws);   // SCALE2b: an upload its socket never finished goes with it
     if (!last && !isChatRoom(a.key)) { try { await this.state.storage.delete(lookKey(a.id)); } catch { /* the room forgets it on the next empty hello */ } }
     // ROSTER-G: a channel says its leaves now, as it says its joins - the roster beside the chat is everyone online
     const out = JSON.stringify({ t: 'leave', id: a.id, ...(isChatRoom(a.key) && !(isChannelShard(a.key) && this._hubTotal == null) ? { n: isChannelShard(a.key) ? this._hubN(this._namedCount()) : this._vsocks.size ? this._busCount() : this._namedCount() } : {}) });   // AUDIT SCALE II R2-4 (p4d): and a woken shard's leave none, as its join   // SCALE5c: a shard's, the hub's count   // AUDIT SCALE5a C1-C3: a channel's leave says the room's count, as its join does
-    if (a.hid) { /* STAFF-PANEL5-HIDDEN: a hidden socket's leave said to nobody */ } else if (isChatRoom(a.key)) this._fanRoster(ws, out); else this._fanBut(ws, out);   // SCALE5a: in place, as the join's; SCALE5b: a channel's, the second wire's batched
+    if (lingers) { /* PVP-LINGER: said when its body goes */ } else if (a.hid) { /* STAFF-PANEL5-HIDDEN: a hidden socket's leave said to nobody */ } else if (isChatRoom(a.key)) this._fanRoster(ws, out); else this._fanBut(ws, out);   // SCALE5a: in place, as the join's; SCALE5b: a channel's, the second wire's batched
     if ((isChannelShard(a.key) || (a.ly && isGateRoom(a.key))) && a.vid) { this._vidIdx.delete(a.vid); this._hubUpOwe(a.vid, 'x', 0); }   // SCALE5d part two: a court copy's too   // SCALE5c: and the bus told it went
     else if (isChannelBus(a.key)) this._busCountMoved();   // SCALE5c: the bus's - its shards told the hub's count
     this._travOwed.delete(a.id);   // AUDIT DEEP2 C2: the leave takes the mark out - an owed clear of it is said
@@ -6746,7 +6763,7 @@ export class Room {
     }
     const r = d.k === 'spell' ? SIEGE_HIT.Spell : d.by === 'arrow' ? SIEGE_HIT.Shaft : SIEGE_HIT.Melee;
     const held = d.k === 'strike' ? siegeHeld(look, d.w ? d.w.t : -1, d.w ? d.w.m : 0) : null;
-    const res = duelBlow(st, a.sub, d.to, { d: d.d, r, held, wa: a.wa ?? null }, now);
+    const res = duelBlow(st, a.sub, d.to, { d: d.d, r, held, wa: a.wa ?? null, el: d.el ?? null }, now);   // PVP-WARD: the spell's element
     if (!res.ok || !res.dealt) return;
     this._duelSay(bout, { t: 'dref', k: 'hp', s: bout.s, by: a.id, to: d.to, d: res.dealt, r, h: duelVitals(bout) });
     const struck = bout.a.id === d.to ? bout.a : bout.b;
@@ -6783,7 +6800,7 @@ export class Room {
   /**
    * The pools this room's referees hold for an account: its open-zone fighter, its live duel's side, its siege fighter.
    * Never a Royal Tourney contender's: the tourney keeps its own count between bouts. Each `{ fighter, healsBlocked,
-   * kept }` - `healsBlocked` a duel's or a siege's (no heal by report for its whole length), `kept` what the room does once the count has moved
+   * kept }` - `healsBlocked` a siege's (no heal by report for its whole length - PVP-HEAL: a duel's are capped instead), `kept` what the room does once the count has moved
    * (the zone's carry at the hub, a siege's checkpoint).
    */
   async _vitPools(sub, now) {
@@ -6794,7 +6811,7 @@ export class Room {
       if (x && !x.down) pools.push({ fighter: x.f, healsBlocked: false, kept: async () => this._wildCarryPut(sub, this._zoneCarry(st, sub, now)) });
     }
     const bout = this._duelRef ? duelBoutOf(this._duelRef, sub) : null;
-    if (bout) pools.push({ fighter: bout.a.sub === sub ? bout.a.f : bout.b.f, healsBlocked: true, kept: async () => {} });   // a duel heals nobody for its whole length
+    if (bout) pools.push({ fighter: bout.a.sub === sub ? bout.a.f : bout.b.f, healsBlocked: false, kept: async () => {} });   // PVP-HEAL: a duel heals, to the fight's window
     const siege = this._siege;
     const siegeFighter = siege?.fighters?.[sub];
     if (siegeFighter && siege.battle?.kind !== 'royal') pools.push({ fighter: siegeFighter, healsBlocked: true, kept: () => this._siegeSave(now, false) });   // a siege heals nobody by report either: its heals are the side-mates' spells and the wave's rise, the referee's own
@@ -6891,7 +6908,7 @@ export class Room {
     let look = this._looks.get(a.id) ?? null;
     if (!look && m.k === 'blow') { look = (await this.state.storage.get(lookKey(a.id))) ?? null; if (look) this._looks.set(a.id, look); }
     const res = m.k === 'cast'
-      ? refereeCast(by, to, { from: by.pose, at: to.pose, d: m.d, heal }, now)
+      ? refereeCast(by, to, { from: by.pose, at: to.pose, d: m.d, heal, el: m.el ?? null }, now)
       : refereeBlow(by, to, { from: by.pose, at: to.pose, held: siegeHeld(look, m.w, m.m), d: m.d, r: m.r, wa: a.wa ?? null }, now);   // INT7: clipped to the striker's signed arms
     if (!res.ok || !res.dealt) return;
     if (b?.kind !== 'royal') this._vitSay(target.sub, to);   // SHARED-HEALTH: the blow or the heal on the player's own health
@@ -7395,6 +7412,7 @@ export class Room {
     if (isGateRoom(a.key)) { const f = this._fight; return !!f?.players?.[sub] && !f.fell && !f.wrath; }
     if (isSdRoom(a.key)) { const f = this._sdFight; return !!f?.players?.[sub] && !f.fell && !f.lost; }
     if (isKetchRoom(a.key)) { const V = this._kt; return !!V?.players?.[sub] && !V.said; }   // KETCH: every member aboard, until the Warden's fall is said
+    if (dragonTrails(this, sub)) return true;   // DRAGON2: a dragon's fighter, until it falls or leaves
     if (!this._serpents?.size) return false;
     for (const f of this._serpents.values()) if (f.players?.[sub] && !f.fell && !f.gone) return true;
     return false;
@@ -8270,7 +8288,8 @@ export class Room {
         else if (f.said && !f.told) await this._serpentTellHubOnce(id, f, now);
       } catch (e) { console.warn('[serpent] beat failed', e?.message ?? e); }
       const heard = [...this._all()].some(([, b]) => this._serpentHears(id, f, b));
-      if (f.said && !f.told) at = Math.min(at, now + SERPENT_TELL_RETRY_MS);
+      if (f.fell && !f.said) at = Math.min(at, now + SERPENT_TELL_RETRY_MS);   // SERPENT-RETRY: a kill whose receipts failed to mint is tried again, never left to the fight's end (the dragon's AUDIT DRAGON twin)
+      else if (f.said && !f.told) at = Math.min(at, now + SERPENT_TELL_RETRY_MS);
       else if (heard && !f.fell && !f.gone) { at = Math.min(at, now + serpentBrain.SERPENT_TICK_MS); live = true; }
       else at = Math.min(at, end);
     }
@@ -8596,17 +8615,17 @@ export class Room {
   // went), and the kill read off the hub's own kept kills (_serpentFellsOf - one a site), posted for the agreed site alone.
   /** The hub's record of where the serpent lies - the instance's, else storage's. */
   async _serpentSiteOf() {
-    if (this._serpentSiteRec === undefined) this._serpentSiteRec = (await this.state.storage.get('serpentsite')) ?? null;
+    if (this._serpentSiteRec === undefined) this._serpentSiteRec = (await this.state.storage.get(SERPENT_SITE_RECORD)) ?? null;
     return this._serpentSiteRec;
   }
   /** An account's word of where the serpent the clock is about lies, folded into the record (one word an account a day -
    *  net/gate/gateHerald.js foldGateSite, the site's native point in its pixel slots) and kept when it moved it. */
   async _serpentSite(sub, m, now) {
-    if (!serpentSiteDayOk(m.d, now)) return;
+    if (!serpentSiteWordOk(m, now)) return;   // AUDIT TAMRIEL-WIDE E3: its own site law's word alone
     const had = await this._serpentSiteOf();
     const rec = foldGateSite(had, m.d, sub, m.sx, m.sz, m.pl);
     if (rec === had) return;
-    await this.state.storage.put('serpentsite', rec);
+    await this.state.storage.put(SERPENT_SITE_RECORD, rec);
     this._serpentSiteRec = rec;
     this._serpentAtTell(had, rec, now);   // WW7-12: every game online told where the accounts now agree it lies
   }
@@ -8693,7 +8712,7 @@ export class Room {
           const due = sdHeraldDue(rec, st, now);
           st = due.st;
           if (!due.kind) break;
-          if (!(await this._heraldSend(sdHeraldPost(due.kind, rec, h.sdRole), 'abyss'))) { retry = now + HERALD_RETRY_MS; break; }
+          if (!(await this._heraldSend(sdHeraldPost(due.kind, rec, h.sdRole, sdRiseNotBefore(rec, now, await this._sdRecs())), 'abyss'))) { retry = now + HERALD_RETRY_MS; break; }   // AUDIT FRONTS A1: the next's turn and a free place
           st[due.kind === 'fell' || due.kind === 'fade' ? 'end' : due.kind] = rec.s;
         }
         if (JSON.stringify(st) !== was) await this.state.storage.put(sdLaneKey('sdherald', lane), st);   // the alarm alone writes it (its beats never overlap)
@@ -8842,15 +8861,23 @@ export class Room {
   /** The hub's alarm armed for the director's next move, unless it is armed sooner - WW5: the soonest of every lane's. */
   async _sdArm(now) {
     let at = Infinity;
-    for (const lane of SD_LANES) { const due = sdDue(await this._sdOf(lane), now); at = Math.min(at, due.act ? now : due.at ?? Infinity); }
+    for (const lane of SD_LANES) { const due = sdDue(await this._sdOf(lane), now, await this._sdHeldPast(now, lane)); at = Math.min(at, due.act ? now : due.at ?? Infinity); }
     if (Number.isFinite(at)) await this._hubArm(at);
   }
+  /** FRONTS: every lane's record, in SD_LANES' order. */
+  async _sdRecs() {
+    const recs = [];
+    for (const l of SD_LANES) recs.push(await this._sdOf(l));
+    return recs;
+  }
+  /** FRONTS: the Hollows standing past the Bay on the lanes other than `lane` - the director's cap reads every lane's record. */
+  async _sdHeldPast(now, lane) { return sdHeldPast(await this._sdRecs(), now, lane); }
   /** THE DIRECTOR'S BEAT, on the hub's alarm: every move that is due made and fanned (a hub that slept past a Hollow's
    *  end and its rest makes both), then the alarm armed for the next. A rise asks the census first, and reads the record
    *  again after it - the census awaited other objects, and a find or a fall may have been said meanwhile. */
   async _sdBeat(now) {
     try { await this._sdHeldBeat(now); } catch (e) { console.warn('[sd] held beat failed', e?.message ?? e); await this._hubArm(now + SD_BEAT_RETRY_MS); }   // AUDIT SD II (L5 F3)
-    for (const lane of SD_LANES) await this._sdLaneBeat(now, lane);   // WW5: a Hollow in every theatre that keeps one
+    for (const lane of sdBeatOrder(await this._sdRecs())) await this._sdLaneBeat(now, lane);   // WW5: a Hollow in every theatre that keeps one; AUDIT FRONTS A2: the province that waited longest first
   }
   /** WW5: ONE LANE'S DIRECTOR - its moves due made and fanned, its census its own regions', its next armed (the SD3 beat,
    *  a lane at a time: a lane's failure is its own). */
@@ -8858,7 +8885,7 @@ export class Room {
     try {
       for (let step = 0; step < 4; step++) {
         const rec = await this._sdOf(lane);
-        const due = sdDue(rec, now);
+        const due = sdDue(rec, now, await this._sdHeldPast(now, lane));   // FRONTS: a province's rise on its turn, the provinces' Hollows capped
         // slot 0 is the hub's own: said to nobody. AUDIT SD II (L3 F7): a hub that raised Hollows before starts again from
         // the highest it raised - its next rise is the one past it
         if (due.act === 'first') { const hw = await this._sdHwOf(lane); await this._sdSave(hw > 0 ? { ...sdFirst(now, lane), s: hw } : sdFirst(now, lane)); continue; }
@@ -8867,8 +8894,9 @@ export class Room {
           const counts = await this._sdCensus(lane);
           const cur = await this._sdOf(lane);
           const base = cur?.s ?? lane * SD_LANE_SPAN;
-          const risen = sdRise(cur, now, pickSdRegion(base + 1, counts, cur && cur.s % SD_LANE_SPAN ? cur.r : -1), lane);
-          if (!risen) break;
+          const held = await this._sdHeldPast(now, lane);
+          const risen = sdRise(cur, now, pickSdRegion(base + 1, counts, cur && cur.s % SD_LANE_SPAN ? cur.r : -1), lane, held);
+          if (!risen) { const d = sdDue(cur, now, held); if (d.at != null) await this._hubArm(d.at); break; }   // AUDIT FRONTS A9: a turn that ended while the census was asked arms the next
           await this._sdSave(risen); this._sdFan(risen);
           continue;
         }
@@ -11282,6 +11310,7 @@ export class Room {
   }
   /** The live remains to a socket that just said hello. */
   async _wildHello(ws, now) {
+    await lingerHello(this, ws, now);   // PVP-LINGER: my own body taken back, the others shown to me
     const map = await this._wildRemains(now);
     for (const rec of [...map.values()]) {
       if (!remainsLive(rec, now)) { await this._wildDrop(map, rec.r); continue; }
@@ -11410,13 +11439,16 @@ export class Room {
   /** A socket's word that it stands in the zone or has left it - and a fall signed while it was away, said again. A
    *  fighter is a realm character in play (AUDIT INT9: one with none fought and dropped nothing - its fall's receipt named
    *  no record); standing in the zone again, it takes the vitality it carries from its last fight in another room. */
-  async _wildZoneWord(a, z, now, died = false) {
+  async _wildZoneWord(a, z, now, died = false, fl = null, ed = false, sf = false) {
     if (!a.sub || (z === 1 && !a.ci)) return;
     const st = await this._wildSt();
     if (z !== 1 && died) await this._wildCredit(st, a, now);   // AUDIT FOE-KEEPS E2: a death within the kill credit of a player's blow
     const was = st.fighters.get(a.sub), graceWas = was?.graceUntil ?? -Infinity, wasIn = !!was?.zone;
     const carry = z === 1 && (!was || !was.zone) ? await this._wildCarryAsk(a.sub) : null;
-    const x = wildZone(st, a.sub, { id: a.id, lv: a.lv, ci: a.ci ?? '', carry, died }, z === 1, a.pose, now);
+    const flagWas = was?.flag;
+    const x = wildZone(st, a.sub, { id: a.id, lv: a.lv, cl: a.cl ?? null, ci: a.ci ?? '', carry, died, fl, ed, vl: a.vl ?? 0, sf }, z === 1, a.pose, now);
+    if (x) this._wildFlagSay(st, a, x, flagWas, wasIn, fl);   // PVP-FLAG
+    if (x && z === 1) await lingerZone(this, a.sub, x, now);   // PVP-LINGER: a body taken back hears its health; PVP-LINGER-RISE: one slain away, its death
     if (x && x.graceUntil > now && x.graceUntil !== graceWas) this._wildGraceSay(a, x.graceUntil - now);   // ZONE-GRACE: safe passage begun, or carried in
     if (x && (x.zone !== wasIn || died)) this._wildCarryPut(a.sub, this._zoneCarry(st, a.sub, now, a.key));   // AUDIT PVP-EASE L3-1: an entry, a leave and a death, at the hub
     if (x && carry?.sea) x.seaCarry = carry.sea;   // AUDIT SEA VENTURES F1/A1: her ship's bar too, for her next helm word (seaRef.js seaHelm)
@@ -11444,6 +11476,7 @@ export class Room {
     const res = wildCredit(st, a.sub, rid, now);
     if (!res) return;
     if (res.evicted) await this._wildSign(res.evicted, now);
+    await this._wildVillainy(st, res.fall, now);   // PVP-VILLAIN
     try { await this.state.storage.put(`${WILD_FALL_PREFIX}${rid}`, res.fall); } catch (e) { console.warn('[wild] credited fall kept failed', e?.message ?? e); }
     this._wildFan({ t: 'wref', k: 'fell', id: a.id, by: res.fall.killerId, r: rid });
     if (!isCellRoom(res.fall.m || a.key)) { const f = wildSignNow(st, rid); if (f) await this._wildSign(f, now); }
@@ -11453,7 +11486,7 @@ export class Room {
   async _wildBlow(a, d, now) {
     if (!a.sub) return;
     const st = await this._wildSt();
-    const target = this._idFirst(d.to);   // SCALE5b: by the id index
+    const target = this._idFirst(d.to) ?? lingerTarget(this, d.to);   // SCALE5b: by the id index; PVP-LINGER: or a body left in its lock
     const tb = target?.[1];
     const fa = st.fighters.get(a.sub), ft = tb?.sub ? st.fighters.get(tb.sub) : null;
     // INT9 (AUDIT): what the referee refuses anyway is refused before the hub is asked (a blow a frame asked it)
@@ -11473,25 +11506,63 @@ export class Room {
     const bytes = new Uint8Array(6);
     globalThis.crypto.getRandomValues(bytes);
     const rid = [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
-    const res = wildBlow(st, a.sub, tb.sub, { d: d.d, r, held, wa: a.wa ?? null, kin, rid, room: a.key }, now);   // SEA-BOUNTY: the room it fell in
+    const res = wildBlow(st, a.sub, tb.sub, { d: d.d, r, held, wa: a.wa ?? null, kin, rid, room: a.key, el: d.el ?? null }, now);   // SEA-BOUNTY: the room it fell in
     if (res.evicted) await this._wildSign(res.evicted, now);   // INT9 (AUDIT): a full room's oldest fall, signed without its pick - never forgotten
     if (res.graceEnded || res.why === 'grace') this._wildGraceBlow(a, tb, st, res, now);   // ZONE-GRACE
     if (!res.ok || !res.dealt) return;
+    this._wildAggroSay(st, [a.sub, tb.sub], now);   // PVP-SKULL: the striker's and the struck one's skulls gold
     const word = JSON.stringify({ t: 'wref', k: 'hp', by: a.id, to: tb.id, d: res.dealt, r, h: wildVitals(st, a.sub, tb.sub) });
-    this._send(target[0], word);
+    if (target[0]) this._send(target[0], word);   // PVP-LINGER: a body has no socket
     const mine = this._siegeSocketOf(a.sub);
     if (mine) this._send(mine[0], word);
     this._wildCarryPut(tb.sub, this._zoneCarry(st, tb.sub, now, a.key));   // INT9 (AUDIT): the bar it carries into the next room
     this._vitSay(tb.sub, ft.f);   // SHARED-HEALTH: the blow on the struck player's own health
     if (!res.fell) return;
+    await this._wildVillainy(st, res.fall, now);   // PVP-VILLAIN: the kill's points on its killer
     try { await this.state.storage.put(`${WILD_FALL_PREFIX}${rid}`, res.fall); } catch (e) { console.warn('[wild] fall kept failed', e?.message ?? e); }
     this._wildFan({ t: 'wref', k: 'fell', id: tb.id, by: a.id, r: rid });
+    if (!target[0]) await lingerSlain(this, tb.sub, a, now);   // PVP-LINGER-RISE: a body slain while its player was away
     // INT9 (AUDIT): a building's or a dungeon's room searches no body (the worn offer is the open country's) - its fall is
     // signed at once, never a minute later with the fallen gone from it
     if (!isCellRoom(a.key)) { const f = wildSignNow(st, rid); if (f) await this._wildSign(f, now); }
   }
   /** ZONE-GRACE (2026-10-26, the owner chose "Entry/rise grace" - wildRef.js WILD_GRACE): A FIGHTER'S SAFE PASSAGE SAID TO
    *  THE ROOM (`wref` `grace`: its id and the ms it has left; 0, ended by its own blow). */
+  /** PVP-FLAG (systems/wild/pvpFlag.js): a fighter's flag said to the room when it moves (or the relay kept it up - its
+   *  word refused in the lock), and every flagged fighter's said to one that has just stood in the zone. */
+  _wildFlagSay(st, a, x, flagWas, wasIn, fl) {
+    if (x.flag !== flagWas || !wasIn || (fl === 0 && x.flag) || (fl === 1 && !x.flag)) this._wildFan({ t: 'wref', k: 'flag', id: a.id, f: x.flag ? 1 : 0, ...(x.flag ? wildRed(x) : {}) });
+    if (wasIn || !x.zone) return;
+    const mine = this._siegeSocketOf(a.sub);
+    if (!mine) return;
+    this._send(mine[0], JSON.stringify({ t: 'wref', k: 'vil', n: x.vi ?? 0 }));   // PVP-VILLAIN: my own meter, for the sheet
+    for (const [sub, o] of st.fighters) if (sub !== a.sub && o.zone && o.flag) this._send(mine[0], JSON.stringify(wildFlagWord(o, Date.now())));
+    this._wildBarsTo(st, a.sub, mine[0]);   // PVP-BAR: and each one's bar
+  }
+  /** PVP-BAR (wildRef.js wildBarWords): each flagged fighter's bar that moved, said to the room - at most once each half second. */
+  _wildBarSay(st, now) { for (const w of wildBarWords(st, now)) this._wildFan(w); }
+  /** PVP-BAR: every flagged fighter's bar but its own, to one that has just stood in the zone. */
+  _wildBarsTo(st, sub, ws) {
+    for (const [s, o] of st.fighters) { const w = s !== sub && o.zone && o.flag ? wildBarWord(o) : null; if (w) this._send(ws, JSON.stringify(w)); }
+  }
+
+  /** PVP-VILLAIN (systems/wild/villainLaw.js): a fall's points on its killer's meter - none where the fallen struck one of
+   *  the killer's party first (the hub's party word, wildOpenedBy); the meter told its killer, a new villain's red to the
+   *  room, and the meter kept at the hub for the next room. */
+  async _wildVillainy(st, fall, now) {
+    let partyFirst = false;
+    if (fall.vp > 0) for (const sub of wildOpenedBy(st, fall.fallen, now)) if (sub !== fall.killer && await this._wdunKinOf(fall.killer, sub, now)) { partyFirst = true; break; }
+    const { vi, turned } = wildVillainy(st, fall, partyFirst);
+    if (!(fall.vp > 0)) return;
+    const mine = this._siegeSocketOf(fall.killer), x = st.fighters.get(fall.killer);
+    if (mine) this._send(mine[0], JSON.stringify({ t: 'wref', k: 'vil', n: vi }));
+    if (turned && x) this._wildFan(wildFlagWord(x, now));
+    this._wildCarryPut(fall.killer, this._zoneCarry(st, fall.killer, now, fall.m));
+  }
+  /** PVP-SKULL: each flagged fighter of a blow said to the room in aggro (wildRef.js wildAggroWord). */
+  _wildAggroSay(st, subs, now) {
+    for (const sub of subs) { const w = wildAggroWord(st.fighters.get(sub), now); if (w) this._wildFan(w); }
+  }
   _wildGraceSay(a, ms) { this._wildFan({ t: 'wref', k: 'grace', id: a.id, ms: Math.max(0, Math.min(WILD_GRACE.ms, Math.ceil(ms))) }); }
   /** ZONE-GRACE: a blow's word on safe passage - the striker's ended by its own blow, said to the room; a blow the struck
    *  one's kept off, said to the striker alone (`n` 1, with the ms it has left). */
@@ -11508,6 +11579,14 @@ export class Room {
     if (!st || !a.sub || !wildGraceTaken(st, a.sub, now)) return;
     this._wildGraceSay(a, 0);
     this._wildCarryPut(a.sub, this._zoneCarry(st, a.sub, now, a.key));
+  }
+  /** PVP-LINGER (pvpLinger.js lingerHold): a fighter's last socket gone - its body kept while its lock runs, with its look
+   *  for one who enters. Answers whether it stays. */
+  async _lingerHold(a, now) {
+    if (!this._wildRef?.fighters.get(a.sub)?.zone) return false;
+    let look = this._looks.get(a.id) ?? null;
+    if (!look) { try { look = (await this.state.storage.get(lookKey(a.id))) ?? null; } catch { look = null; } }
+    return lingerHold(this, a, look, now);
   }
   /** AUDIT PVP-EASE L3-1: a fighter's socket gone from the room (wildGone) - its leave kept at the hub, so the next room it
    *  stands in reads a crossing, never an entry. */
@@ -11526,7 +11605,9 @@ export class Room {
    *  without a piece. */
   async _wildBeat(now) {
     const st = await this._wildSt();
+    await lingerStep(this, now);   // PVP-LINGER: each body taken back, gone, or said again
     for (const w of seaStep(st, now)) await this._seaSign(w, now);   // SHIP-PVP: a wreck its killer never boarded, signed unboarded
+    this._wildBarSay(st, now);   // PVP-BAR
     if (!st.falls.size) return;
     for (const fall of wildStep(st, now)) await this._wildSign(fall, now);
   }
@@ -11536,7 +11617,7 @@ export class Room {
     let rc = null;
     // WILD-REJOIN: a fallen with no socket here has no tab to take its drop first - its killer carries the receipt at once
     const fallenGone = this._siegeSocketOf(fall.fallen) ? 0 : 1;
-    try { rc = await mintWildReceipt({ f: fall.fallen, c: fall.ci, k: fall.killer, r: fall.r, w: fall.w, wt: fall.wt, m: fall.m, kc: fall.kc, g: fallenGone }, await this._receiptKeyOf(), { subtle: globalThis.crypto.subtle, nowS: Math.floor(now / 1000) }); } catch (e) { console.warn('[wild] receipt failed', e?.message ?? e); }
+    try { rc = await mintWildReceipt({ f: fall.fallen, c: fall.ci, k: fall.killer, r: fall.r, w: fall.w, wt: fall.wt, m: fall.m, kc: fall.kc, g: fallenGone, vp: fall.vp }, await this._receiptKeyOf(), { subtle: globalThis.crypto.subtle, nowS: Math.floor(now / 1000) }); } catch (e) { console.warn('[wild] receipt failed', e?.message ?? e); }
     wildSigned(this._wildRef, fall.r);
     try { await this.state.storage.delete(`${WILD_FALL_PREFIX}${fall.r}`); } catch { /* read back and signed again: the service takes a fall once */ }
     if (!rc) return;

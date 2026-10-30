@@ -92,7 +92,7 @@ import { RMB_SIDE, layoutLocation, hasCustomLocationPosition } from '../world/lo
 import { lookAt, multiply, perspective, mirrorProjectionX, transformPoint, trs, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 import { frustumPlanes, aabbOutside, localAabb, transformedAabb, flatBatchAabb, cullDisabled } from '../render/frustum.js';   // EV3: the frustum
 import { decorCullVerdict, DECOR_DRAW } from './decor/decorRoom.js';   // PERF-WAGON: the street's verdict on a cart's, a wagon's and a tent's box
-import { withMoonAmbient } from '../render/enhancedSky.js';   // EV5: secunda rides the ambient
+import { withMoonAmbient, lightStreetAt } from '../render/enhancedSky.js';   // EV5: secunda rides the ambient; WL1: the street lit by the clock
 import { drawCharacterSprite } from '../render/characterSprite.js';
 import { collectBlockFlats, billboardSize, mobileBillboardSize, centredBase, isNatureArchive, NATURE_FLATS_Y } from '../world/rmbFlats.js'; import { blockHillSeat, seatNatureFlat, blockHillPatch } from '../world/townStandIns.js';   // TREES-SEATED: a block's trees on the hills drawn under them; FIELD BUGS 2026-10-13e HILL-SEAT: and the pads under what its author stood on them
 import { blockSolids } from '../world/flatFields.js';   // FIELD BUGS 2026-10-04d CROPS: a crop field keeps a metre off the block's solids
@@ -276,7 +276,7 @@ import { gridValueAt } from '../world/terrain/terrainSurface.js';   // SNOWFALL1
 import { BODY_CAPSULE_RADIUS } from '../systems/spellcast.js';   // SNOWFALL1: a foe's controller, as its track's width reads it
 import { windfallResponse } from '../systems/windfall.js';   // WINDFALL1: a flora batch's share of the mod's lean
 import { createWindAudio, windSoundOn } from '../systems/wind/windAudio.js';   // WIND3: the wind, heard
-import { PrecipitationRenderer } from '../render/precipitation.js';
+import { PrecipitationRenderer, precipWarmStep } from '../render/precipitation.js';
 import { warmPrograms } from '../render/warmPrograms.js';
 import { setWeather, setHeardWeather, heardWeather, fallingWeather, currentWeather, currentWeatherRaw, tickWeather, weatherJumpStamp, sampleWeatherField, weatherCrossingStamp, currentFieldCells, currentWeatherIntensity, currentCloudBase, currentWindApproach, currentMapSystems, sampleWeatherIndoors, weatherArrivalStamp, mapGround } from '../systems/weather/weatherSim.js';   // W1: the live weather state; WEATHER2b: the field; WEATHER3b: the map's intensity; WEATHER3c: its sky and wind
 import { createDistantStorms, thunderSourceAt, THUNDER_SOURCE_M } from '../systems/distantStorms.js';   // WEATHER3d: the storms at a distance
@@ -295,7 +295,7 @@ import { HeadBobber } from '../player/headBobber.js';   // AUDIT 28 W10: HeadBob
 import { createClimbFeelHost } from '../player/climb/climbFeel.js';   // CLIMB4: the climb's camera
 import { lastHealthLost, lastHealthLostPercent } from '../ui/hud/hudVitals.js';   // AUDIT 28 W9: the detector's loss
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
-import { keyEdges, noteKeyDown, noteKeyUp, beginInputFrame, pressed, released, actionsOf, held, moveHeld, anyMove, swallowBrowserKey, isTextEntryTarget, mouseCode, isSwingButton, keyboardLook, routeAction, installContextMenuGuard, POLLED_ACTIONS, QUICKSLOT_ACTIONS, swingKeyHeld, bindings } from '../ui/input.js';
+import { keyEdges, noteKeyDown, noteKeyUp, letGoOnBlur, beginInputFrame, pressed, released, actionsOf, held, moveHeld, anyMove, swallowBrowserKey, isTextEntryTarget, mouseCode, isSwingButton, keyboardLook, routeAction, installContextMenuGuard, POLLED_ACTIONS, QUICKSLOT_ACTIONS, swingKeyHeld, bindings } from '../ui/input.js';
 import { useQuickslot, swapQuickslot, offHandQuickslot, spellQuickslotPress, offHandOffersSwap, tickQuickslotHold } from '../systems/quickslots.js';   // QS2/QS4: the diamond's performers   // QS6: the spell slot, the off hand's swap question, and the hold machine
 import { armUnloadGuard, releaseUnloadGuard } from '../systems/unloadGuard.js';   // MAC-L3: one door in front of every way out of a running game; AUDIT-MACL F3: ...and down for a door the game opened itself   // I2: the rebindable registry; AUDIT 39r: the mouse half of the held set
 import { hudShortcutKey, retroToggleKey, hudRenderEnabled } from '../ui/hud/hudShortcuts.js';   // AUDIT 64 F36/F37: DaggerfallHUD.Update's LargeHUDToggle / HUDToggle arms; AUDIT PRE-MERGE 1003 U8: the arena's HUD hides with the toggle
@@ -558,7 +558,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   void warmPrograms([
     ...renderer.warmSteps(),
     ...(renderer.lazyWarmSteps?.() ?? []),   // PERF-COMPILE1: the telegraph pass and the windows' background, at idle
-    () => { if (!precip) precip = new PrecipitationRenderer(renderer.gl, precipOpts); },
+    precipWarmStep(renderer.gl, precipOpts, () => precip, (made) => { precip = made; }),   // SHADER-EASE WARM-POLL: started, then built
   ]);
   const wisps = sky.enhanced ? new WindWispsRenderer(renderer.gl) : null;   // WIND3: built on the enhanced lane, so a shader fault is a boot fault; its row is read per frame
   const hazeGl = sky.enhanced ? new HeatHazeRenderer(renderer.gl) : null;   // HAZE1: Heat Haze on the enhanced lane (world.js's twin note) - this host's one city has no floating origin to shift it
@@ -3751,6 +3751,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   // movement Set since the first host and never told the open window
   // anything; DFU's buttons hear both edges (Button.cs:79-92) and the
   // travel popup's EXIT is the deferral that needs the release.
+  letGoOnBlur(keys, latch.edge);   // KEYS-BLUR: a key held as the page lost focus is let go
   addEventListener('keyup', (e) => { keys.delete(e.code); noteKeyUp(latch.edge, e.code); if (e.code === 'Escape') backButtonHeld = false; if (e.code === 'AltLeft') e.preventDefault(); townTalk.keyup(e); modes?.keyup?.(e); });   // ROAD-E E1: the up seam reaches BOTH slots this host feeds - the outer overlay and the mode machine's
   // U45: Actions.ActivateCursor (Enter) frees the mouse during play
   // and takes it back - PlayerMouseLook.cursorActive, which had been
@@ -4338,7 +4339,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       // WAGONS2 (FINAL AUDIT): and the weather's - the street frame's own terms (world/worldClock.js viewOutLight), so the clock's
       // air below compares a dimmed sun with a dimmed sun
       const light = viewOutLight(clockMinute, getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), weatherTerms().sun, sky.sunFactor());
-      r.setLighting(withMoonAmbient(light.ambient, sky.moonlight()), light.sun, SUN_RIG_COLOR);
+      lightStreetAt(r, light, sky.moonlight(clockMinute), SUN_RIG_COLOR);   // WL1: and the moon of the hour, whose light a window lets in (render/enhancedSky.js) - the sky's night light at the clock's minute
       r.setFogColor(clockFogColor(keptFog, keptSun, r._sunScale));   // RW1 (AUDIT): ...re-lit by the clock
       r.setWindowEmission(windowEmissionRGB(windowStyleForTime(clockMinute)));
       r.setPointLights(lightsOnAt(clockMinute) ? nearestLights(cityLights, cam.pos, r.maxPointLights, lightAnimator.ranges) : new Float32Array(0), CITY_LIGHT_COLOR_F32);   // RW1 (AUDIT): the town's lanterns by the clock - never the player's own light
@@ -5429,7 +5430,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         const odo = player.odometer?.h ?? 0, metres = _upkeepOdo == null ? 0 : Math.max(0, odo - _upkeepOdo);
         _upkeepOdo = odo;
         const mode = player.transportMode;
-        const galloping = !_overlayHeld && mode === TRANSPORT_MODES.Horse && !!player.isRunning && !player.standing;
+        const galloping = !_overlayHeld && (mode === TRANSPORT_MODES.Horse || mode === TRANSPORT_MODES.Dragon) && !!player.isRunning && !player.standing;   // DRAGON5c: the dragon gallops on horse care's breath
         upkeep.tick(gamePaused() ? 0 : dt, {
           mode, galloping, moving: !player.standing,
           metres, road: _surfPath, load: wagonLoadShare(),

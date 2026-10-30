@@ -146,20 +146,16 @@ popup stands.
 block as a WD1 patch (`02-Formats/World-Data-Patches.md`), rebuilt at load from
 the player's own `BLOCKS.BSA`.
 
-**BUILT WITHOUT A BLOCKS.BSA.** No ARENA2 in this container. The tool read the
-edit off the files alone: the editor appends the author's records and leaves the
-header's counts at the classic block's (2 models, 1 flat in all four), so the
-records past the counts are the author's - 6, 5, 7 and 10 of them. And the two
-round-trip changes the editor makes to every block, which the files show on
-their own (AUDIT IT1 G1): BuildingDataList written at its count where the
-classic block reads 32 slots (28 removed - Warm Ashes' patches, diffed against a
-real BSA, remove the same), and a scale of 1 on the two classic models, whose
-records carry none (6 sets). What it cannot carry is any other round-trip change
-to a classic record (an automap byte, a rotation's equivalent). The loader checks each rebuild against the
-author's sha256 and says when it differs, and `test/formats/worldData/it1_worlddata.test.js`
-checks all four with `ARENA2_PATH` set. **OWED:** that run, on a machine with
-the ARENA2 - and if it differs, `node tools/immersiveTravelPatches.mjs
-<immersivetravel.dfmod> <arena2>`, which writes WD1's own diff, checked.
+**CUT AGAINST BLOCKS.BSA (ARENA2-IT, 2026-10-29).** The first four were read off
+the files alone, with no ARENA2: the author's records past the header's counts
+(6, 5, 7 and 10) and the round trip the files show (AUDIT IT1 G1: 28 building
+slots removed, a scale on the two classic models). The run with the freeware
+ARENA2 failed all four sha256 checks: the editor had also zeroed WALLAA08's
+automap ground-flat byte and written WALLAA09-11's subrecord rotations (and on 09
+and 10 a classic model's) as their negative equivalents. The four are now WD1's
+diff (`node tools/immersiveTravelPatches.mjs <immersivetravel.dfmod> <arena2>`),
+each rebuilding the author's file sha256 for sha256; the loader checks it again,
+and `test/formats/worldData/it1_worlddata.test.js` with `ARENA2_PATH` set.
 
 **THE LAYER - A RECORDED DEPARTURE** (the owner: "Add carriages to either").
 Beautiful Cities ships the same four names, its own redrawn gates, and 52
@@ -260,6 +256,22 @@ character's own clock (LIVED1).
     capitals' table is the Bay's 40). The trip is DFU's fast travel at the mod's fare, as
     any driver's (`03-World/Arena-Provinces.md` TRAVEL-EVERYWHERE). A captain's map keeps the Bay's docks, and the
     classic skin's map is the Bay's alone. `test/ui/travel_everywhere.test.js`.
+14. **A capital past the Bay stands its carriages** (CAPITAL-CARRIAGES, 2026-10-29, the owner: "Ensure all capitals
+    and cities outside the bay properly have the wagon transport at their gates"). A walled city carries each template
+    gate's records to its own gates (TS4, TS7, `03-World/Town-Shapes.md`; AUDIT CAPITAL-CARRIAGES: off its roads, a
+    fifth gate dressed). The seven capitals are our own plans with no WALLAA gate, so their 18 road gates had no driver.
+    Each now takes the records of the Daggerfall gate that faces the way they stand (outside, its side's: WALLAA08 north
+    to 11 west; inside, the opposite side's), carried as TS7 carries them (`world/capitalCarriages.js`). They move the
+    least step that stands every record on the capital's gardens or open ground, off its rim, clear of its models, its
+    approach and the gate's lane, and a model level on the ground as drawn.
+15. **Inside the gate where the ground outside is too narrow.** Mournhold's, Alinor's and Torval's walls stand 6 to 8 m
+    in from their rim, whose ground is blended to the land's. Their carriages stand just inside each gate, facing in, on
+    the garden ring. Falinesti has no wall: its carriages stand inside its own ground where each road reaches it. The
+    Imperial City's (Talos Bridge's landing, on a level apron - `world/rumareWaters.js` RUMARE_LANDING), Helstrom's and
+    Solitude's stand outside. Solitude's slope fell half a metre a metre under its main gate, so its relief has a level
+    stand west of the Gate Road's last run (`world/solitudeRelief.js` SOLITUDE_CARRIAGE_STAND). Each gate's records go on
+    the block of its cell, with no tree and no walker under them. The maps' wheel marks a capital's slice with a road
+    gate in it (`isCarriageTown`): the Imperial City's west slice of its 625.
 
 ## Pins
 
@@ -269,3 +281,13 @@ with `ARENA2_PATH`), `test/systems/travel/it1_heldmap.test.js` (4), `test/system
 `01-Overview/audits/Audit-IT1.md`): `test/systems/auditit1.test.js` (16) and
 `tools/mutants/auditit1.json` (30, all dead). Not seen in a browser: no ARENA2,
 no GPU in this container.
+
+CAPITAL-CARRIAGES: `test/world/capitalcarriages.test.js` (8, three with `ARENA2_PATH`: the gate frames off BLOCKS.BSA and
+the 407 city templates; every capital's records on the ground the terrain kernel draws; a walled city's gates on their
+roads, on the Bay and past it); `tools/mutants/capitalcarriages.json` (16) and `tools/mutants/audit_capitalcarriages.json`
+(32, two equivalent as recorded), all dead with `ARENA2_PATH` set. Audited the same day:
+`01-Overview/audits/Audit-Capital-Carriages.md`. PINS MOVED: `test/audit_tesa.test.js` (the install line),
+`test/world/baywalls.test.js` (the carrier's furniture), `test/ui/fb1004e_overworld.test.js` (the map's wheel);
+re-aimed by content: AUDIT-TESA-A6-2-own-law-alone, AUDIT-TESA-A6-2-garden-open, AUDIT-TESA-A6-2-install-no-footprint,
+AUDIT-TESA-II-C7-the-centre-carrier-alone, TESA10-models-every-block, TB-the-carrier-bare, TB-the-fallback-unlaid,
+FB1028-Y1-the-carrier-laid-as-today. A driver's click not seen in a browser (the audit's lane P): pinned on the game's own reader and router.

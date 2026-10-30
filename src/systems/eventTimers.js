@@ -24,7 +24,8 @@ import { gateAt, gateTimes, gatePhase, GATE_EVERY_DAYS, gameDayAt, GATE_DAY_MINU
 import { wallMsForClassicMinutes } from '../net/wire.js';
 import { seatWeekOf, seatWeekStartMs, seatPhaseOf, SEAT_RECKONING_MS, seasonOf, seatSeasonName, battleLengthMs, SIGN_CLOSES_MS, guildWords } from '../net/townSeatLaw.js';
 import { serpentAt, serpentTimes, serpentPhase, serpentBossOf, SERPENT_EVERY_DAYS } from '../net/serpent/serpentLaw.js';   // SERPENT-TIMERS: the sea serpent's day
-import { sdPhase, SD_COLLAPSE_MS } from '../net/superDungeon/sdLaw.js';   // SD2c: the Super dungeon's record, once it is news
+import { sdPhase, SD_COLLAPSE_MS, sdRiseNotBefore } from '../net/superDungeon/sdLaw.js';   // SD2c: the Super dungeon's record, once it is news; FRONTS: a province's next rise on its turn, with a place free
+import { frontTimerRows } from './frontWords.js';   // FRONTS: the provinces past the Bay whose turn it is, and the next
 import { egTimes } from '../net/eliteGates/egLaw.js';   // EG-F: an Elite Breach's clock - the company's own row
 import { arenaSeasonOf, arenaSeasonEndsS } from '../net/arena/arenaLaw.js';   // EG-ZM: the Spire's boards keep the arena's season
 import { ketchVoyageAt } from '../net/ketch/ketchLaw.js';   // KETCH: the Sky-Ketch's voyage - the clock's alone
@@ -37,7 +38,7 @@ const DAY_MS = 86_400_000;
 
 /** TIMERS2: the window's groups, in the order it draws them - each row's kind belongs to one. */
 export const TIMER_GROUPS = Object.freeze([
-  Object.freeze({ id: 'world', kinds: Object.freeze(['gate', 'serpent', 'super', 'star', 'ketch']) }),
+  Object.freeze({ id: 'world', kinds: Object.freeze(['gate', 'serpent', 'super', 'star', 'ketch', 'front']) }),
   Object.freeze({ id: 'spire', kinds: Object.freeze(['elite']) }),
   Object.freeze({ id: 'raids', kinds: Object.freeze(['raid']) }),
   Object.freeze({ id: 'seats', kinds: Object.freeze(['seat', 'battle']) }),
@@ -48,14 +49,14 @@ export const timerGroupOf = (kind) => TIMER_GROUPS.find((g) => g.kinds.includes(
 /**
  * TIMERS2: the rows laid out by group - `[{ id, rows, live }]` in TIMER_GROUPS's order, each group's rows in the list's
  * own order (live first, soonest end first, then soonest start), `live` how many are under way; a group with no row left out.
- * @template {{ kind: string, live: boolean }} R
+ * @template {{ kind: string, live: boolean, sched?: boolean }} R
  * @param {ReadonlyArray<R>|null|undefined} rows
  * @returns {Array<{ id: string, rows: R[], live: number }>}
  */
 export function timerGroups(rows) {
   return TIMER_GROUPS.map((g) => {
     const of = (rows ?? []).filter((r) => timerGroupOf(r.kind) === g.id);
-    return { id: g.id, rows: of, live: of.filter((r) => r.live).length };
+    return { id: g.id, rows: of, live: of.filter((r) => r.live && !r.sched).length };   // AUDIT FRONTS B4: a schedule is not under way
   }).filter((g) => g.rows.length);
 }
 
@@ -85,6 +86,7 @@ function ketchRows(now, coming, live, theatre = 0) {
  * would bury the Bay's. Its words the player's language's, the province by the region list's own name.
  */
 function sdLaneRows(src, now, live, coming, rows) {
+  const recs = (src?.sd?.lanes ?? []).map((L) => L?.rec);
   for (const L of src?.sd?.lanes ?? []) {
     const lr = L?.rec ?? null, lp = sdPhase(lr, now);
     if (!lr || !Number.isSafeInteger(lr.s)) continue;
@@ -93,7 +95,10 @@ function sdLaneRows(src, now, live, coming, rows) {
     const lwhere = lplace ? t('events.where.near', 'Near {place}', { place: lplace }) : province ? t('sd.timers.in', 'In {province}', { province }) : null;
     if (lp === 'found') live(`sd:${lr.s}`, 'super', t('events.super.stands', '{name} stands', { name: lname }), lr.until, lwhere, t('sd.timers.fades', 'Found. It fades away unbeaten when this runs out'));
     else if (lp === 'fell') { live(`sd:${lr.s}`, 'super', t('sd.timers.collapses', '{name} collapses', { name: lname }), lr.fellAt + SD_COLLAPSE_MS, lwhere, t('sd.timers.broken', 'Its Hour is broken. It collapses when this runs out')); rows[rows.length - 1].shut = true; }
-    else if (lp === 'gone' && L.mine && Number.isFinite(lr.next) && lr.next > now) coming(`sd:${lr.s + 1}`, 'super', t('sd.timers.rises', 'An Abyss Dungeon rises'), lr.next, null, t('sd.timers.watch', 'Not before this. Watch {province} for its brass omen', { province }));
+    else if (lp === 'gone' && L.mine && Number.isFinite(lr.next)) {
+      const rise = sdRiseNotBefore(lr, now, recs);   // FRONTS: not before its province's turn, nor while two stand past the Bay (AUDIT FRONTS B1)
+      if (rise > now) coming(`sd:${lr.s + 1}`, 'super', t('sd.timers.rises', 'An Abyss Dungeon rises'), rise, null, t('sd.timers.watch', 'Not before this. Watch {province} for its brass omen', { province }));
+    }
   }
 }
 
@@ -101,7 +106,7 @@ function sdLaneRows(src, now, live, coming, rows) {
  * @param {{ now: number,
  *           pixel?: { x: number, y: number } | null,
  *           gate?: { place?: string|null, fellAt?: (day: number) => (number|null) } | null,
- *           gates?: Array<{ lane: number, place?: string|null }> | null,
+ *           gates?: Array<{ lane: number, place?: string|null }> | null, fronts?: boolean,
  *           serpent?: { place?: string|null, fellAt?: (day: number) => (number|null) } | null,
  *           sd?: { rec: any, name?: string|null, place?: string|null, site?: { cityName?: string, px?: number, py?: number } | null,
  *                  lanes?: Array<{ rec: any, lane: number, province: string, mine?: boolean, name?: string|null, site?: { cityName?: string, px?: number, py?: number } | null }> } | null,
@@ -114,7 +119,7 @@ function sdLaneRows(src, now, live, coming, rows) {
 export function eventTimerRows(src) {
   const now = Number(src?.now);
   if (!Number.isFinite(now)) return [];
-  /** @type {Array<{id: string, kind: string, title: string, where: string|null, detail: string|null, live: boolean, at: number, until: number|null, door?: string, shut?: boolean}>} */
+  /** @type {Array<{id: string, kind: string, title: string, where: string|null, detail: string|null, live: boolean, at: number, until: number|null, door?: string, shut?: boolean, sched?: boolean}>} */
   const rows = [];
   const coming = (id, kind, title, at, where = null, detail = null) => rows.push({ id, kind, title, where, detail, live: false, at, until: null });
   const live = (id, kind, title, until, where = null, detail = null) => rows.push({ id, kind, title, where, detail, live: true, at: until, until });
@@ -135,6 +140,9 @@ export function eventTimerRows(src) {
   else gateRows(t, phase, place);
   // ...and the gate after it, once this one is under way
   if (phase !== 'quiet') coming(gateEventId(t.day + GATE_EVERY_DAYS), 'gate', 'Next Dagon\'s Breach opens', gateTimes(t.day + GATE_EVERY_DAYS).openAt);
+  // FRONTS (bible/03-World/World-Wide.md FRONTS): the provinces past the Bay whose turn it is, and the next two days' -
+  // where the host stands the provinces' events (`fronts`)
+  if (src?.fronts) rows.push(...frontTimerRows(now));
   // WW2 (bible/03-World/World-Wide.md): AND EVERY LANE'S PAST THE BAY that has found its site (`gates` - the host's), from
   // its omen to its collapse, named where it stands - a province's gate has no row before its omen (nine of them coming,
   // each with no place to go, would bury the Bay's)
@@ -229,7 +237,7 @@ export function eventTimerRows(src) {
     // the soonest to matter: one under way (to its end), else the next to start
     const next = elsewhere.reduce((a, r) => ((r.startMs <= now ? r.endMs : r.startMs) < (a.startMs <= now ? a.endMs : a.startMs) ? r : a));
     const more = elsewhere.length - 1;
-    const rest = more ? `${more} more today across the Iliac Bay` : null;
+    const rest = more ? `${more} more today across Tamriel` : null;
     const under = next.startMs <= now;
     const id = `raids:elsewhere`;
     const title = home ? `Raids elsewhere: ${next.name}` : `Next raid: ${next.name}`;

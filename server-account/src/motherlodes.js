@@ -51,6 +51,9 @@ import {
 
 /** A strike's silver line id - the account's one Motherlode a UTC day, under the service's own `:`. */
 export const motherlodeRid = (day) => `motherlode:${day}`;
+/** LODE-HERD: the day's pick claimed under this rate key and the day, one read in a window this long (s). */
+export const LODE_PICK_CLAIM = 'lode-pick:';
+export const LODE_PICK_WINDOW_S = 60;
 /** Whether a harvest's node names a Motherlode (index.js asks before it hands the harvest on). */
 export const isMotherlodeNode = (node) => typeof node === 'string' && node.startsWith('mlode:');
 
@@ -75,14 +78,18 @@ const rowView = (r) => ({
  * reads (a replica holding the mark holds the picks written beside it), and a day found unpicked - on whatever the
  * session answered - is read again, picked and kept on `primary` (the binding, index.js ctx), the mark asked there
  * first. A caller with no `primary` (the cron's, on the binding) is its own.
- * @param {{ db: any, primary?: any, rand?: () => number }} ctx
+ * @param {{ db: any, primary?: any, rand?: () => number, nowS?: number }} ctx
  */
-export async function motherlodesOf({ db: read, primary = read, rand }, day) {
+export async function motherlodesOf({ db: read, primary = read, rand, nowS = Math.floor(Date.now() / 1000) }, day, { clock = false } = {}) {
   const keptOf = async (/** @type {any} */ db) => ((await db.prepare('SELECT * FROM motherlodes WHERE day = ?1 ORDER BY k').bind(day).all())?.results ?? []).map(rowView);
   const marked = async (/** @type {any} */ db) => !!(await db.prepare('SELECT 1 FROM motherlode_days WHERE day = ?1').bind(day).first());
   if (await marked(read)) return keptOf(read);
   const db = primary;
   if (db !== read && await marked(db)) return keptOf(db);
+  // LODE-HERD (2026-10-29, bible/11-Multiplayer/Scale-Arc.md): A READ PICKS ONLY UNDER THE DAY'S CLAIM. Every read before
+  // the mark ran the scan - 33 of 1.8 s at the turn of 2026-10-29. One read a minute holds the claim, so a holder that
+  // dies is followed a minute on; the rest answer none until the mark is kept. The clock never asks.
+  if (!clock && await overRate({ db, nowS }, `${LODE_PICK_CLAIM}${day}`, 1, LODE_PICK_WINDOW_S)) return [];
   const before = day * 86400;
   const { results = [] } = await db.prepare(`SELECT key, account, report, at FROM world_witness
     WHERE kind = 'pixel' AND at < ?1 AND key IN (SELECT key FROM world_witness WHERE kind = 'pixel' AND at < ?1

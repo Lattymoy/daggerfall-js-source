@@ -558,6 +558,16 @@ export const FEATURES = Object.freeze([
     // this page's), so off online brings back Daggerfall's flat tile and the Deep Waters sea's own scrolling texture.
     control: Object.freeze({ store: 'prefs', key: 'enhancedWater', initial: true, online: 'player' }),   // WATER1: on by default like the other enhanced visuals; `?water=off` the kill door
   }),
+  // ARMORY (2026-10-28; bible/04-Characters/Aura-Armory.md section 7): WHOSE AURA ARMORY PIECES ARE DRAWN - every other
+  // player's, those near, or none (scenes/auraHost.js). One's own always is. For a weak machine in a crowd.
+  Object.freeze({
+    id: 'armory-others',
+    group: 'sight',
+    get title() { return t('features.armoryOthers.title', 'Others\' Aura Armory'); },
+    get note() { return t('features.armoryOthers.note', 'Whose Aura Armory pieces are shown. Near shows the players close to you. Your own pieces always show.'); },
+    kinds: Object.freeze(['enhanced', 'classic']),
+    control: Object.freeze({ store: 'prefs', key: 'armoryOthers', initial: 'all', online: 'player', tiers: Object.freeze([tier('all', () => t('features.armoryOthers.all', 'All')), tier('near', () => t('features.armoryOthers.near', 'Near')), tier('none', () => t('features.armoryOthers.none', 'None'))]) }),
+  }),
   // WATER-NEXT (2026-10-07, the overhaul's plan: "a cheaper setting for a weak GPU"): HOW MUCH THE WATER DRAWS. Full
   // copies the frame under the water once a frame (the look through it, the depth it measures) and keeps the ripple
   // field; Simple does neither - the bed, the swell, the foam and the body stand, the blend does the looking-through.
@@ -906,27 +916,29 @@ export const FEATURES = Object.freeze([
   // traversalable but used and connected as a gigantic map ... seen by players ingame"): the held map's world sheet
   // zooms out past the Bay onto the whole continent, authored in the same hand (ui/tamrielInk.js,
   // world/tamriel/tamrielGeography.js, bible/03-World/Tamriel.md). Read where the window is built (ui/map/mapSkin.js
-  // tamrielMapOn), so a change takes the next map opened; `?tamriel=off` is the kill door.
+  // tamrielMapOn), so a change takes the next map opened; `?tamriel=off` is the kill door. AUDIT TAMRIEL-WIDE D1: a place
+  // past the Bay is travelled to as a Bay place is (TRAVEL-EVERYWHERE) - with the land on (AUDIT TAMRIEL-WIDE II), and the note says so.
   Object.freeze({
     id: 'tamriel-map',
     group: 'interface',
-    title: 'Tamriel on the map',
-    note: 'The enhanced map zooms out past the Iliac Bay to show all of Tamriel: its provinces, capitals, mountains and '
-      + 'seas, hand-drawn and joined to the Bay’s own coast. You can’t travel beyond the Bay.',
-    effect: 'Takes effect the next time a map is opened.',
+    get title() { return t('features.tamrielMap.title', 'Tamriel on the map'); },
+    get note() { return t('features.tamrielMap.note', 'The enhanced map zooms out to all of Tamriel: its provinces, cities, mountains and seas, '
+      + 'hand-drawn and joined to the Bay’s own coast. With Land beyond the Bay on, fast travel reaches them, except into or out of Cyrodiil online.'); },   // AUDIT TAMRIEL-WIDE III F3: the open zone's own law (wildZone.js wildJourney)
+    get effect() { return t('features.effect.nextMap', 'Takes effect the next time a map is opened.'); },
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'tamrielMap', initial: true, online: 'player' }),
   }),
   // TAMRIEL2 (2026-10-08, Mac: "only implement the land mass"): the streamed world goes on past the Bay's edge over the
   // authored continent - its ground, its climate's textures and trees, nothing built on it (world/tamriel/tamrielGround.js;
-  // scenes/shared.js tamrielLandOn, read once as the world mounts). `?tamrielland=off` the kill door.
+  // scenes/shared.js tamrielLandOn, read once as the world mounts). `?tamrielland=off` the kill door. AUDIT TAMRIEL-WIDE
+  // D1: TESA's cities, towns, roads and lairs stand on it now, and the note says so.
   Object.freeze({
     id: 'tamriel-land',
     group: 'world',
-    title: 'Land beyond the Bay',
-    note: 'The land goes on past the edge of the Iliac Bay, with the hills, mountains, coasts, sky and trees of each '
-      + 'province. There are no towns, roads or dungeons there yet.',
-    effect: 'Takes effect when the world next loads.',
+    get title() { return t('features.tamrielLand.title', 'Land beyond the Bay'); },
+    get note() { return t('features.tamrielLand.note', 'The world goes on past the Iliac Bay over all of Tamriel. Each province has its own land, sky '
+      + 'and trees, and its own cities, towns, roads and dungeons. Off ends the world at the Bay’s edge.'); },
+    get effect() { return t('features.effect.worldLoads', 'Takes effect when the world next loads.'); },
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'tamrielLand', initial: true, online: 'player' }),
   }),
@@ -1156,13 +1168,6 @@ export const FEATURES = Object.freeze([
   // wilderness itself. Read at the world's mount, like the roads it
   // consults: the loader's list is built once per world.
   modFeature('world-of-daggerfall', () => t('features.effect.worldLoads', 'Takes effect when the world next loads.'), 'world'),
-  // AS1 (2026-09-25): AQUATIC SPRITES - `world`, three flooded dungeon
-  // blocks. The door caches a block once it is served, so a switch flipped
-  // mid-session reaches the next load, not the dungeon you stand in.
-  modFeature('aquatic-sprites', () => t('features.effect.gameLoads', 'Takes effect when the game next loads.'), 'world'),
-  // DS1 (2026-09-25): DETAILED SHIPS - `world`, the two ships you can own.
-  // Their building records are read through the door once per load.
-  modFeature('detailed-ships', () => t('features.effect.gameLoads', 'Takes effect when the game next loads.'), 'world'),
   // WD3 (2026-10-01): BEAUTIFUL VILLAGES and BEAUTIFUL CITIES - `world`, the towns themselves. The world-data
   // loader reads each switch once, when the game loads (scenes/modWorldData.js latches it), so a town never moves
   // under the player; online the room owns both.
@@ -1869,10 +1874,8 @@ export const FEATURES = Object.freeze([
     id: 'naval-combat',
     group: 'combat',
     get title() { return t('features.navalCombat.title', 'Naval Combat'); },
-    get note() { return t('features.navalCombat.note', 'Ship battles on Come Sail Away\u2019s boats: at the helm, look to one side and hold Attack to aim a broadside, '
-      + 'then let go to fire. Pirates, merchant ships and navies sail the Bay; batter a ship until it surrenders, board '
-      + 'it, take its cargo, then sink it or let it go. Piracy is a crime, and pirates can board your ship and '
-      + 'fight you on deck. Online, everyone in the room shares one sea.'); },
+    get note() { return t('features.navalCombat.note', 'Ship battles on Come Sail Away\u2019s boats: look to one side and hold Attack to aim a broadside, '
+      + 'then let go to fire. Pirates, merchants and navies sail every sea. Board a ship that surrenders. Piracy is a crime.'); },
     get effect() { return t('features.navalCombat.effect', 'Takes effect at once; Ship handling, the next time you take the helm. Online it is always on.'); },   // AUDIT NAV2 F14: the helm takes the handling once a session (comeSailAway.js responsive)
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({

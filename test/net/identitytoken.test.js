@@ -335,7 +335,9 @@ test('ACC1a: PURE, and both ends can import it', async () => {
   // relay bundles it with this order
   // PIN MOVED (FIELD BUGS 2026-10-14 QUEST-HOME, world201): and homeLaw.js's town and building shapes for a home order - it
   // imports nothing; the relay bundles it with this order
-  assert.deepEqual(imports, ['./staffEvent/staffEventLaw.js', './wire.js', './guild/guildLaw.js', './heraldryLaw.js', './siege/siegeRef.js', './houseLaw.js', './homeLaw.js'], 'a new import here is a new file in the relay\'s bundle');
+  // PIN MOVED (ARMORY): and armoryLaw.js's kit for the Aura Armory's claim (`ak`) - it imports nothing; the relay bundles it
+  // with the wire's badge (net/wire.js badged)
+  assert.deepEqual(imports, ['./staffEvent/staffEventLaw.js', './wire.js', './guild/guildLaw.js', './heraldryLaw.js', './siege/siegeRef.js', './armoryLaw.js', './houseLaw.js', './homeLaw.js'], 'a new import here is a new file in the relay\'s bundle');
 });
 
 // ═══ ACC1d: THE TRIPWIRE FIRED, AND THIS IS WHAT REPLACED IT ═══════

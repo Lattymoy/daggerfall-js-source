@@ -86,7 +86,7 @@ export function bayToPicture(x, y) {
 }
 /** Is a Bay-coordinate point on the Bay's own map - the data's ground, where nothing authored is drawn? */
 export function inBay(x, y) {
-  return x >= 0 && y >= 0 && x < BAY_W && y < BAY_H;
+  return x >= 0 && y >= 0 && x < BAY_W && y < BAY_H;   // BAY-OWN: inBay itself
 }
 /** The Bay's rectangle on the picture grid: {x0, y0, x1, y1}, picture units. */
 export function bayPictureRect() {

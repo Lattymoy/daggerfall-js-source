@@ -44,6 +44,7 @@ import { packImgTexture } from './packArt.js';   // OVH2: a worn UI pack's backd
 import { racialPaperDollBackground, racialOverrideHeadArt, racialSuppressPaperDollBodyAndItems } from '../systems/vampirism.js';   // V5: the curse art laws, both curses' one switch
 import { CifRciFile } from '../formats/cifRciFile.js';
 import { getBool } from '../systems/settings/settings.js';   // UI3: EnableGeographicBackgrounds; ChildGuard/PlayerNudity gates the welds
+import { isProvinceRegion } from '../formats/mapsTables.js';   // AUDIT TAMRIEL-WIDE C6
 import { EQUIP_SLOTS, equipTableOf, getItemHands, ITEM_HANDS } from '../systems/equip.js';
 import { getTemplate, paperdollOrder } from '../characters/paperdoll/paperdoll.js';
 import { applyDyeToIndex, DYE_TARGETS, DYE_COLORS, CLOTHING_DYES } from '../characters/dyes.js';
@@ -56,6 +57,7 @@ import { ownItemImage } from '../systems/item/itemTemplates.js';   // THUNDERLOC
 import { clampArmorVariant, armorArchive, HUMAN_MORPHOLOGY, ARMOR_MATERIAL } from '../systems/armorMaterials.js';
 import { raceArt, FACES_PER_RACE, raceByKey } from '../systems/races.js';   // S3c/U9: all eight races
 import { drawnPiece } from '../net/appearanceLaw.js';   // APPEARANCES: a worn piece's look
+import { isHandWraps } from '../characters/handWrapsIds.js';   // HAND-WRAPS: no doll layer
 
 export const PAPERDOLL_W = 110;
 export const PAPERDOLL_H = 184;
@@ -120,11 +122,14 @@ export function paperDollBackground(raceBackground, {
   inTown = false, inDungeon = false, inGraveyard = false,
 } = {}) {
   if (!enabled) return raceBackground;
-  if (region < 0 || region >= regionCount || region >= REGION_BACKGROUND_CHARS.length) return raceBackground;
+  // DEPARTURE (AUDIT TAMRIEL-WIDE C6): a province past the Bay (62..70) takes the town's, dungeon's and graveyard's
+  // backdrops, which name no region; on its open road the race's, as DFU gives any region its table lacks
+  const bay = region >= 0 && region < regionCount && region < REGION_BACKGROUND_CHARS.length;   // BAY-OWN: the Bay's region backdrops; a province takes the context's (C6)
+  if (!bay && !isProvinceRegion(region)) return raceBackground;
   if (inTown) return CONTEXT_BG.town;
   if (inDungeon) return CONTEXT_BG.dungeon;
   if (inGraveyard) return CONTEXT_BG.graveyard;
-  return `SCBG0${REGION_BACKGROUND_CHARS[region]}I0.IMG`;
+  return bay ? `SCBG0${REGION_BACKGROUND_CHARS[region]}I0.IMG` : raceBackground;
 }
 
 // AUDIT 17e F32/F33: clampArmorVariant + the armor archive rule
@@ -138,7 +143,7 @@ export function paperdollItemImage(worn, { gender = 'male', race = 'Breton' } = 
   const item = drawnPiece(worn);   // APPEARANCES (bible/04-Characters/Wardrobe.md): a piece wearing a look is drawn as the look - the player's doll and every peer's
   const morph = raceByKey(race)?.morphologyIndex ?? HUMAN_MORPHOLOGY;
   const t = getTemplate(item.templateIndex);
-  if (!t) return null;
+  if (!t || isHandWraps(item)) return null;   // HAND-WRAPS: worn on the fists, no layer of the doll's own
   // RRI1: GetItemImage(forPaperDoll) reads the same two virtuals the
   // inventory does (ItemHelper.cs:405-406), then bumps an Either-hand
   // weapon worn right by one (:412-414) - the Archer's Axe's second

@@ -69,8 +69,8 @@ export function countryPixelOfId(id) {
   return { x: (n & ((1 << COUNTRY_GRID.wBits) - 1)) - COUNTRY_GRID.x0, y: (n >>> COUNTRY_GRID.wBits) - COUNTRY_GRID.y0 };
 }
 /** TESA8 (world/tamrielDungeons.js): the lairs' one lane, after the country places' - a dungeon an 8 x 8 cell of the
- *  grid at most, so its cell's index (19 bits) with 0x80000 set is its low 20: no two of them share a dungeon's identity
- *  (net/nodeLaw.js DUNGEON_ID_MAX, DFU's MapId & 0xfffff), and none a Bay place's. */
+ *  grid at most, its cell's index (19 bits) with 0x80000 set its low 20, none a Bay place's. AUDIT TAMRIEL-WIDE C3: an
+ *  isle's ruin can share those 20 bits, so a dungeon's identity past the Bay is its whole id (scenes/dungeonIdentity.js). */
 export const LAIR_LANE = COUNTRY_LANE + COUNTRY_LANES;
 /** Is a map id a place the port made past the Bay - a country place's (TESA7), a lair's (TESA8) or a capital's (TESA10)?
  *  BAY-LEFT-B: a house is sold in one and its deed read there, held to its own map id (systems/banking.js deedHeldIn over

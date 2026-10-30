@@ -13,7 +13,7 @@
 import { discoveryGeneration, hasDiscoveredLocationId, discoveryKeyOf, BAKED_KNOWN_TYPES } from '../systems/discovery.js';
 import { capitalStreet } from './livingWorld/livingIndex.js';   // OW-BEYOND-KNOWN: a capital is one town (IC-GRAND)
 import { etherPlaceIsle } from '../world/etherPlaces.js';
-import { hasCarriageGate } from '../world/immersiveTravelGates.js';
+import { isCarriageTown } from '../world/capitalCarriages.js';   // AUDIT CAPITAL-CARRIAGES L6: a capital's slice by its gates
 import { immersiveTravelLoaded } from '../systems/immersiveTravel.js';
 import { inEther } from '../world/ethericSea.js';
 import { isHallMapId, spawnedHallMapId } from '../net/wire.js';
@@ -48,7 +48,7 @@ export function createMapPlaces(host) {
     if (_carriageOf.gen !== host._locIndexGen) { _carriageOf.of.clear(); _carriageOf.gen = host._locIndexGen; }
     const id = discoveryKeyOf(mapId);
     let on = _carriageOf.of.get(id);
-    if (on === undefined) { on = hasCarriageGate(townOfKey(id)); _carriageOf.of.set(id, on); }
+    if (on === undefined) { on = isCarriageTown(townOfKey(id)); _carriageOf.of.set(id, on); }
     return on;
   };
   /** The place a key (discoveryKeyOf's) names where it stands: a Bay pixel id's place on that pixel; a whole id's on the
@@ -75,6 +75,9 @@ export function createMapPlaces(host) {
   /** OW-BEYOND-KNOWN (bible/06-Systems/Travel-View.md): past the Bay a place is known by its kind, as MAPS.BSA bakes the
    *  Bay's (systems/discovery.js BAKED_KNOWN_TYPES) - a capital by its centre alone, its other slices its streets. */
   const knownByKind = (mapId, type) => BAKED_KNOWN_TYPES.has(type) && !capitalStreet({ mapId });
+  /** AUDIT TAMRIEL-WIDE D2: the places past the Bay the held map inks and hovers (world/pastBayPlaces.js), known as the
+   *  Overworld knows them - by their kind, or found (its row's id, tvPlaceSummary's own read) - so a lair is inked once found. */
+  const knownPastBayIn = (x0, y0, x1, y1) => pastBayPlacesIn(x0, y0, x1, y1).filter((p) => BAKED_KNOWN_TYPES.has(p.type) || hasDiscoveredLocationId(provinceQuestPlaces?.rowAt(p.x, p.y)?.mapId ?? -1));
   const tvPlaceSummary = (px, py, named = false) => {
     // ETHER-OW: past the Veil, an isle's place - known, it is its own summary (HALL-JOURNEY's way), its region the isles'
     if (etherSea && inEther(px, py)) {
@@ -157,5 +160,5 @@ export function createMapPlaces(host) {
     return s ? { locationType: s.locationType ?? s.loc?.mapTableData?.locationType, mapId: s.mapId, discovered: true } : null;
   };
   setPastBayPlaceLaw(tvPlaceSummary);   // TRAVEL-EVERYWHERE: the held map's places past the Bay are this law's (world/pastBayPlaces.js)
-  return { carriageTown, tvEtherPlace, tvKnownGen, tvPlaceSummary, tvFarSettlements, junctionPlaceAt };
+  return { carriageTown, tvEtherPlace, tvKnownGen, tvPlaceSummary, tvFarSettlements, junctionPlaceAt, knownPastBayIn };
 }

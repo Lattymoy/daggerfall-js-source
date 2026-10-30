@@ -10,9 +10,10 @@ import { utcDay } from './marksLaw.js';
 export const HUNT_KEPT_KEY = 'hunt1.kept';
 /** The most reports one slot keeps - over an hour of the fastest hunt (tools/huntPace.mjs); the oldest goes first. */
 export const HUNT_KEPT_MAX = 32;
-/** How often the pump asks the kept reports again, and how long a read of the state stands (ms). */
+/** How often the pump asks the kept reports again, and how long a read of the state stands (ms). HUNT-LEAN: ten
+ *  minutes, where it was two - a clear's answer carries the state, so the poll only catches another tab's clears. */
 export const HUNT_PUMP_MS = 20_000;
-export const HUNT_STATE_MS = 120_000;
+export const HUNT_STATE_MS = 600_000;
 /** AUDIT HORIZONTAL F4: how often a guest's book asks again whether the account keeps a rank (a registration opens it). */
 export const HUNT_CLOSED_MS = 300_000;
 /** The answers a kept report waits through, asked again later: the network, the service's load or fault, a session not

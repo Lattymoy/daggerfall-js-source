@@ -270,7 +270,11 @@ export const RADIANCE_ROUND = 24;
 /** Its rates (Hz), each a whole number of cycles over AURA_CLOCK_PERIOD: the light's breath, the rays' turn (a turn in
  *  30 s), and the slowest mote's climb (the others two and three times it); and the shafts' climb in lattice cells a
  *  second. */
-export const RADIANCE_HZ = Object.freeze({ pulse: 1 / 4, rays: 1 / 30, mote: 1 / 6 });
+export const RADIANCE_HZ = Object.freeze({ pulse: 1 / 4, rays: 1 / 30, mote: 1 / 6, ribbon: 1 / 10 });
+/** AURA DETAIL: the two ribbons of light winding up the column - turns round it from the feet to its top - and their
+ *  width (m); the sun under the feet - its points and its reach (m). */
+export const RADIANCE_RIBBON = Object.freeze({ turns: 1.25, width: 0.07 });
+export const RADIANCE_SUN = Object.freeze({ points: 12, r: 0.42 });
 export const RADIANCE_FLOW = Object.freeze({ shafts: 0.5 });
 /** Every radiance rate whole over the clock. Pure. */
 export const radianceRatesWhole = () => [...Object.values(RADIANCE_HZ), ...Object.values(RADIANCE_FLOW)]
@@ -431,7 +435,8 @@ export const RESONANCE_H = RESONANCE_CELLS * RESONANCE_PITCH_M;
 export const RESONANCE_HZ = Object.freeze({ wave: 61 / 120, counter: 41 / 120, bounce: 59 / 120, beat: 1 });
 export const RESONANCE_CRESTS = Object.freeze({ wave: 3, counter: 2 });
 /** Every resonance rate whole over the clock. Pure. */
-export const resonanceRatesWhole = () => Object.values(RESONANCE_HZ).every((r) => r > 0 && Number.isInteger(Math.round(r * AURA_CLOCK_PERIOD * 1e6) / 1e6));   // AUDIT: and none stopped
+export const resonanceRatesWhole = () => Object.values(RESONANCE_HZ).every((r) => r > 0 && Number.isInteger(Math.round(r * AURA_CLOCK_PERIOD * 1e6) / 1e6))   // AUDIT: and none stopped
+  && Number.isInteger(Math.round(AURA_CLOCK_PERIOD / RESONANCE_PEAK.step * 1e6) / 1e6) && RESONANCE_RIPPLE.life < 1 / RESONANCE_HZ.beat;   // AURA DETAIL: the caps' grid whole, a ripple gone before the next beat
 /** Its light: the reference's purple, #a349a4 - the Crystal Fist's title and glyph, read from ui/playerBadge.js
  *  CRYSTAL_PURPLE (AUDIT: one literal, not two). RGB 0..1. One colour. */
 export const RESONANCE_RGB = Object.freeze({ purple: Object.freeze(CRYSTAL_PURPLE.slice(0, 3)) });
@@ -458,6 +463,32 @@ export const resonanceClock = (seconds, seed) => auraClock(seconds) + (Number.is
  *  so the squares a GPU lights are node's law's and no float32 sin's. Pure but for `out`. */
 export function resonanceLitInto(out, t, kindle = 1) {
   for (let k = 0; k < RESONANCE_COLUMNS; k++) out[k] = resonanceLit(k, t, kindle);
+  return out;
+}
+/** AURA DETAIL: THE PEAKS, a visualiser's caps - each column's highest of late held `hold` s, then falling at `fall`
+ *  cells/s/s; read every `step` s on the clock's own grid (whole over it), so a cap never flickers between two rows. */
+export const RESONANCE_PEAK = Object.freeze({ hold: 0.3, fall: 30, step: 0.05 });
+/** AURA DETAIL: THE BEAT'S RIPPLE - a ring of squares, one under each column, run out over the ground `reach` m in
+ *  `life` s after each beat, covering `cover` at its start and nothing at its end. The one purple. */
+export const RESONANCE_RIPPLE = Object.freeze({ reach: 0.32, life: 0.55, cover: 0.8 });
+/** A cap's height, a share of a square's side - flat, so it reads as a cap and not one more square. */
+export const RESONANCE_CAP_H = 0.45;
+/** AURA DETAIL: column k's CAP at `t` - the row its peak square stands in, over its lit squares (resonanceLit) or, a
+ *  column standing full, in them - or -1 unkindled. Pure. */
+export function resonancePeak(k, t, kindle = 1) {
+  if (!(kindle > 0)) return -1;
+  const P = RESONANCE_PEAK, kk = Math.min(1, kindle) * RESONANCE_CELLS, span = P.hold + Math.sqrt(RESONANCE_CELLS / P.fall);
+  let top = resonanceLevel(k, t) * kk;
+  for (let n = Math.floor(t / P.step), i = 0; ; i++) {
+    const at = (n - i) * P.step, s = t - at;
+    if (s > span) break;
+    top = Math.max(top, resonanceLevel(k, at) * kk - (s > P.hold ? P.fall * (s - P.hold) ** 2 : 0));
+  }
+  return Math.min(RESONANCE_CELLS - 1, Math.ceil(top - 1e-9));
+}
+/** AURA DETAIL: every column's cap at once, into `out` - what the draw hands the shader (`uResCap`). Pure but for `out`. */
+export function resonanceCapInto(out, t, kindle = 1) {
+  for (let k = 0; k < RESONANCE_COLUMNS; k++) out[k] = resonancePeak(k, t, kindle);
   return out;
 }
 
@@ -544,7 +575,10 @@ export const MAELSTROM_CURL_H = 0.12;    // the curl's crest at the lip, its mid
 export const MAELSTROM_DROPS = 16;
 /** Its rates, in turns a second: the pool's turn, the light's breath, the surf round the lip, the drops' arcs. */
 export const MAELSTROM_HZ = Object.freeze({ spin: 1 / 12, pulse: 1 / 4, surf: 1 / 3, drop: 1 / 6 });
-export const maelstromRatesWhole = () => Object.values(MAELSTROM_HZ).every((r) => r > 0 && Number.isInteger(Math.round(r * AURA_CLOCK_PERIOD * MAELSTROM_ARMS * 1e6) / 1e6) && Number.isInteger(Math.round(r * AURA_CLOCK_PERIOD * 1e6) / 1e6));
+/** AURA DETAIL: the light rippling over the pool's floor and the lace torn off its foam, flowing in lattice cells a
+ *  second (AURA_FLOW's measure). */
+export const MAELSTROM_FLOW = Object.freeze({ caustic: 0.5, lace: 1 });
+export const maelstromRatesWhole = () => Object.values(MAELSTROM_FLOW).every((r) => Number.isInteger(Math.round(r * AURA_CLOCK_PERIOD * 1e6) / 1e6)) && Object.values(MAELSTROM_HZ).every((r) => r > 0 && Number.isInteger(Math.round(r * AURA_CLOCK_PERIOD * MAELSTROM_ARMS * 1e6) / 1e6) && Number.isInteger(Math.round(r * AURA_CLOCK_PERIOD * 1e6) / 1e6));
 /** AUDIT WORLD-REWARDS D1: the Coilbreaker's colours as the pass ADDS them - at MAELSTROM_SHADE, The First Hour's own law
  *  (FIRST_SHADE): at full strength the near-white foam washed out to white over a lit floor (4,706 pixels clipped at a
  *  0.55 floor, where The Turning Hour clipped 497) and the sea's hue read as mint-white; shaded, 444. */
@@ -589,6 +623,12 @@ export const STAIR_H = 1.9;               // the embers fall from over the head
 export const STAIR_EMBERS = 20;
 /** Its rates: the stair turning down, its fire's flare, the embers' fall. */
 export const STAIR_HZ = Object.freeze({ descend: 1 / 12, flare: 1 / 2, ember: 1 / 4 });
+/** AURA DETAIL: the stair's fire flowing up its lips' tongues and through its treads' cracks, in lattice cells a second
+ *  (AURA_FLOW's measure). */
+export const STAIR_FLOW = Object.freeze({ tongue: 2.5, crack: 0.25 });
+/** AURA DETAIL: Beaconlight's beams - how high a freshly lit beacon's light stands up off the ring (a share of the wall)
+ *  and how wide (m) - and the light running round the ring from one beacon to the next. */
+export const BEACON_BEAM = Object.freeze({ up: 0.85, width: 0.035 });
 // SPIRE-FIRST (2026-10-20, the owner, for Serveride, who took Redoubt 10 first and alone: "Since hes world first. He should
 // get this title plus a custom aura"): FIRSTLIGHT, REBUILT AS HIS OWN - only the first company ever holds it.
 export const DAWN_R = 0.9;                // Firstlight: its ring, the ten Redoubts standing on it, m
@@ -629,7 +669,7 @@ export function dawnClimb(k, t) {
 }
 /** SPIRE-FIRST: Redoubt k's spire's height at clock `t`, m - a third of itself, and all of it as its Redoubt is taken. Pure. */
 export const dawnSpireH = (k, t) => (DAWN_SPIRE_H[0] + (DAWN_SPIRE_H[1] - DAWN_SPIRE_H[0]) * k / (DAWN_REDOUBTS - 1)) * (0.3 + 0.7 * dawnClimb(k, t).taken);
-export const spireRatesWhole = () => [...Object.values(BEACON_HZ), ...Object.values(STAIR_HZ), ...Object.values(DAWN_HZ), ...Object.values(DAWN_FLOW)]
+export const spireRatesWhole = () => [...Object.values(BEACON_HZ), ...Object.values(STAIR_HZ), ...Object.values(STAIR_FLOW), ...Object.values(DAWN_HZ), ...Object.values(DAWN_FLOW)]
   .every((r) => r > 0 && Number.isInteger(Math.round(r * AURA_CLOCK_PERIOD * 1e6) / 1e6));
 /** The Spire's colours (ui/playerBadge.js SPIRE_*): the beacon's gold and white, the ember, its coal and the flame
  *  between the ember and the beacon, the dawn's white and its gold - SPIRE-FIRST: and its rose, low on the sky. */
@@ -870,6 +910,13 @@ export const SAGE_RGB = Object.freeze({
   leaf: Object.freeze(NIRN_LEAF.slice(0, 3)), glow: Object.freeze(NIRN_GLOW.slice(0, 3)), haze: Object.freeze(NIRN_HAZE.slice(0, 3)),
   deep: Object.freeze(NIRN_DEEP.slice(0, 3)), smoke: Object.freeze(NIRN_SMOKE.slice(0, 3)),
 });
+/** NIRN-LEAF (2026-10-29, the owner: "nicer nirnroot more marijuana style", after Skyrim's pale teal nirnroot): a
+ *  nirnroot leaf's own colours, RGB 0..1 - a cool TEAL at the fan's heart, out to a pale MINT at the leaflets' tips. */
+export const SAGE_LEAF_RGB = Object.freeze({ heart: Object.freeze([0.2, 0.66, 0.52]), tip: Object.freeze([0.66, 0.97, 0.84]) });
+/** Where the leaflets meet in the glyph's 16-unit box (GLYPH_PATH.nirnrootsage), and the tallest one's reach from it -
+ *  the leaf's colour runs heart to tip over it. */
+export const SAGE_FAN = Object.freeze([8, 12.4]);
+export const SAGE_FAN_R = 11.7;
 /** A share 0..1 off two numbers - node's alone (the AUDIT A2 law: the GPU is handed what this says, never asked it). */
 const sageHash = (a, b) => { const x = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453; return x - Math.floor(x); };
 /** NIRNROOT-SAGE: PUFF m AT THE CLOCK `t` - where it is about the feet (`x`, `y`, `z`, m), its size (m), its `age` (0 rising
@@ -1019,8 +1066,9 @@ precision highp int;
 `;
 /** THE FIRE'S NOISE, PERIODIC: value noise on a lattice that wraps at `per` (both whole), so a flow scrolled by the clock
  *  meets itself at the clock's wrap and the angle's noise meets itself where the ring closes - no pop every
- *  AURA_CLOCK_PERIOD, no seam behind the wearer. Each octave doubles the lattice and its period together. */
-const NOISE_GLSL = `
+ *  AURA_CLOCK_PERIOD, no seam behind the wearer. Each octave doubles the lattice and its period together. ARMORY: the
+ *  Aura Armory's pieces burn on it too (render/armoryPass.js) - one home. */
+export const AURA_NOISE_GLSL = `
 float h21(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
 float vnoiseP(vec2 p, vec2 per) {
   vec2 i = floor(p), f = fract(p);
@@ -1039,9 +1087,16 @@ vec3 fireRamp(float v) {
 /** The fire's rates, each a whole number of lattice cells over AURA_CLOCK_PERIOD (the ground's flow outward, the
  *  flames' rise and their flicker's), and the lattice's cells round the ring (the ground's, the flames' two). */
 export const AURA_FLOW = Object.freeze({ ground: 1.75, rise: 2.4, flicker: 4.8 });
+/** AURA DETAIL (2026-10-28, the owner: "push this further"): Dagon's Fire's finer work - the Deadlands stone's seams
+ *  flowing, the licks spreading out over the ground (lattice cells a second, as AURA_FLOW), the sparks off the flames
+ *  (how many, their climb a second at the slowest) and the flares (how many sites round the ring, each its rate). */
+export const AURA_SEAMS = Object.freeze({ crack: 0.25, lick: 1.5 });
+export const AURA_SPARKS = 24;
+export const AURA_DETAIL_HZ = Object.freeze({ spark: 1 / 3, flare: 1 / 5 });
+export const AURA_FLARES = 5;
 export const AURA_ROUND = Object.freeze({ ground: 18, flames: 26, flicker: 60 });
 /** The wrap is whole for every flow: its cells over the clock's period are a whole number. Pure. */
-export const auraFlowsWhole = () => Object.values(AURA_FLOW).every((r) => Number.isInteger(Math.round(r * AURA_CLOCK_PERIOD * 1e6) / 1e6));
+export const auraFlowsWhole = () => [...Object.values(AURA_FLOW), ...Object.values(AURA_SEAMS), ...Object.values(AURA_DETAIL_HZ)].every((r) => Number.isInteger(Math.round(r * AURA_CLOCK_PERIOD * 1e6) / 1e6));
 const v3 = (c) => `vec3(${c.map((x) => x.toFixed(3)).join(', ')})`;
 /** A number as GLSL writes a float, to a tenth or a thousandth (SPIRE-FIRST: up here, before the first look that reads them). */
 const g1 = (x) => x.toFixed(1), g3 = (x) => x.toFixed(3);
@@ -1171,6 +1226,8 @@ const RADIANCE_GLSL = `
 const vec3 RAD_GOLD = ${v3(RADIANCE_RGB.gold)};
 const vec3 RAD_HEART = ${v3(RADIANCE_RGB.heart)};
 float radianceBreath() { return 0.85 + 0.15 * sin(uTime * TAU ${hzGlsl(RADIANCE_HZ.pulse)}); }
+// a line hw wide either side of x0, its edges a pixel soft
+float radianceLine(float x, float x0, float hw, float px) { return clamp((hw - abs(x - x0)) / px + 0.5, 0.0, 1.0); }
 vec3 radianceGround(vec2 p) {
   float r = length(p), a = atan(p.y, p.x);
   if (r > uGroundR) discard;
@@ -1183,6 +1240,14 @@ vec3 radianceGround(vec2 p) {
   // THE RAYS out from the ring across the pool, turning slowly - a whole number round, so no seam behind the wearer
   float ray = pow(0.5 + 0.5 * cos(${RADIANCE_RAYS.toFixed(1)} * (a - uTime * TAU ${hzGlsl(RADIANCE_HZ.rays)})), 8.0);
   col += RAD_GOLD * ray * 0.3 * breath * smoothstep(R * 0.9, R + 0.08, r) * (1.0 - smoothstep(R + 0.15, ${RADIANCE_POOL_R.toFixed(3)}, r));
+  // THE SUN under the feet: a star of twelve points turning against the rays, a fine ring of light round it and a
+  // second just inside the column's foot - a sigil in the light, never a disc over the stone
+  float sunA = a + uTime * TAU ${hzGlsl(RADIANCE_HZ.rays)};
+  float points = pow(0.5 + 0.5 * cos(${RADIANCE_SUN.points.toFixed(1)} * sunA), 6.0);
+  float star = (1.0 - smoothstep(0.0, ${g3(RADIANCE_SUN.r)}, r / (0.35 + 0.65 * points))) * smoothstep(0.03, 0.09, r);
+  float px = max(max(length(dFdx(vWorld)), length(dFdy(vWorld))), 0.002);   // a pixel on the ground (the Turning Hour's turnPixel, which stands after this)
+  float rings = radianceLine(r, ${g3(RADIANCE_SUN.r)}, 0.006, px) + radianceLine(r, R - 0.071, 0.004, px) * 0.6;
+  col += RAD_GOLD * star * 0.22 * breath + RAD_HEART * rings * 0.35 * breath;
   return col * (1.0 - smoothstep(uGroundR - 0.2, uGroundR, r));
 }
 vec3 radianceWall(vec2 q) {
@@ -1199,8 +1264,14 @@ vec3 radianceWall(vec2 q) {
   // never from inside it: the wearer's own first person sees no gold veil, only the motes, dimmer
   float outside = smoothstep(uRingR + 0.1, uRingR + 0.6, length(vec2(length(uCamPos.xz - uAt.xz), max(max(uAt.y - uCamPos.y, uCamPos.y - uAt.y - uFlameH), 0.0))));   // AUDIT 3: out of the column, over or under it too
   vec3 col = RAD_GOLD * rim * rise * (0.35 + 0.65 * shaft * shaft) * 0.75 * radianceBreath() * outside;
-  // THE MOTES, rising the column's height each at its own place and pace, kindling off the ground and dimming as they go
+  // THE RIBBONS: two bands of light winding up the column as it turns, white-gold at their hearts, thinning toward its
+  // top - seen, as the shell is, where the eye looks along the column more than through it
   float circ = TAU * uRingR, sparks = 0.0;
+  float wind = fract(u * 2.0 + v * ${g3(RADIANCE_RIBBON.turns * 2)} - uTime ${hzGlsl(RADIANCE_HZ.ribbon)});
+  float wm = (wind - 0.5) / sqrt(4.0 / (circ * circ) + ${g3((RADIANCE_RIBBON.turns * 2) ** 2)} / (uFlameH * uFlameH));   // across the band, m: its step over its gradient
+  float ribbon = exp(-wm * wm / ${(RADIANCE_RIBBON.width * RADIANCE_RIBBON.width).toFixed(6)}) * (1.0 - smoothstep(0.55, 0.95, v)) * smoothstep(0.0, 0.08, v);
+  col += (RAD_HEART * 0.6 + RAD_GOLD * 0.5) * ribbon * (0.12 + 0.88 * rim) * radianceBreath() * outside * 0.8;
+  // THE MOTES, rising the column's height each at its own place and pace, kindling off the ground and dimming as they go
   for (int m = 0; m < ${RADIANCE_MOTES}; m++) {
     float fm = float(m);
     float h1 = fract(sin(fm * 63.71 + 2.3) * 43758.5453), h2 = fract(sin(fm * 27.13 + 5.9) * 24634.6345);
@@ -1226,20 +1297,28 @@ const float RES_PITCH = ${RESONANCE_PITCH_M.toFixed(3)};
 float resPixel() { return max(max(length(dFdx(vWorld)), length(dFdy(vWorld))), 0.002); }
 // the cover of a square of side RES_SQ at (x, y) from its middle (m), in a cell pitchX by pitchY: its edge a pixel wide,
 // and, once the cell is a couple of pixels or less, the cell's average cover instead - so the rows do not moire far off
-float resCover(vec2 q, float pitchX, float pitchY) {
+float resBox(vec2 q, vec2 side, float pitchX, float pitchY) {
   float px = resPixel();
-  vec2 e = clamp((vec2(RES_SQ * 0.5) - abs(q)) / px + 0.5, 0.0, 1.0);
-  float avg = RES_SQ * RES_SQ / (pitchX * pitchY);
+  vec2 e = clamp((side * 0.5 - abs(q)) / px + 0.5, 0.0, 1.0);
+  float avg = side.x * side.y / (pitchX * pitchY);
   return mix(e.x * e.y, avg, smoothstep(0.35, 0.7, px / min(pitchX, pitchY)));
 }
+float resCover(vec2 q, float pitchX, float pitchY) { return resBox(q, vec2(RES_SQ), pitchX, pitchY); }
 vec4 resonanceWall(vec2 q) {
   float u = fract(q.x), v = q.y;
   float cu = u * RES_N, k = floor(cu);
   float pitch = TAU * uRingR / RES_N;
   float y = v * uFlameH, j = floor(y / RES_PITCH);
-  float lit = uResLit[int(clamp(k, 0.0, RES_N - 1.0))];   // node's count for this column (resonanceLitInto)
-  if (j >= lit) return vec4(0.0);
-  float c = resCover(vec2((fract(cu) - 0.5) * pitch, y - (j + 0.5) * RES_PITCH), pitch, RES_PITCH);
+  int col = int(clamp(k, 0.0, RES_N - 1.0));
+  float lit = uResLit[col];   // node's count for this column (resonanceLitInto)
+  vec2 at = vec2((fract(cu) - 0.5) * pitch, y - (j + 0.5) * RES_PITCH);
+  // AURA DETAIL: its cap - a flat square held over the column at its peak, then falling (resonanceCapInto)
+  if (j >= lit) {
+    if (j != uResCap[col]) return vec4(0.0);
+    float c = resBox(at, vec2(RES_SQ, RES_SQ * ${RESONANCE_CAP_H}), pitch, RES_PITCH);
+    return vec4(RES_PURPLE * c, c);
+  }
+  float c = resCover(at, pitch, RES_PITCH);
   return vec4(RES_PURPLE * c, c);
 }
 vec4 resonanceGround(vec2 p) {
@@ -1247,11 +1326,18 @@ vec4 resonanceGround(vec2 p) {
   if (r > uGroundR) discard;
   // nothing but the feet, on the ring - and never the angle at the middle, where atan(0, 0) is no number and a NaN under
   // the premultiplied blend paints the floor white (AUDIT)
-  if (abs(r - uRingR) > RES_SQ) return vec4(0.0);
+  // AURA DETAIL: the beat's ripple, its squares run out from the feet and gone (RESONANCE_RIPPLE); the beat is node's,
+  // on the wearer's own clock (resonanceLevel's, at each whole second of it)
+  float e = fract(uTime + uSeed * ${AURA_CLOCK_PERIOD.toFixed(1)}) / ${RESONANCE_RIPPLE.life.toFixed(3)};
+  float ripR = uRingR + ${RESONANCE_RIPPLE.reach.toFixed(3)} * (1.0 - (1.0 - min(e, 1.0)) * (1.0 - min(e, 1.0)));
+  bool onRing = abs(r - uRingR) <= RES_SQ, onRip = e < 1.0 && abs(r - ripR) <= RES_SQ;
+  if (!onRing && !onRip) return vec4(0.0);
   float cu = fract(atan(p.y, p.x) / TAU) * RES_N;
   // each column's foot, a square lying on the ring under it
-  float pitch = TAU * r / RES_N;
-  float c = resCover(vec2((fract(cu) - 0.5) * pitch, r - uRingR), pitch, RES_PITCH) * uKindle;
+  float pitch = TAU * r / RES_N, x = (fract(cu) - 0.5) * pitch;
+  float c = resCover(vec2(x, r - uRingR), pitch, RES_PITCH);
+  if (onRip) c = max(c, resCover(vec2(x, r - ripR), pitch, RES_PITCH) * ${RESONANCE_RIPPLE.cover.toFixed(2)} * (1.0 - e));
+  c *= uKindle;
   return vec4(RES_PURPLE * c, c);
 }
 `;
@@ -1341,10 +1427,12 @@ const vec3 MS_FOAM = ${v3(MAELSTROM_RGB.foam)};
 // the pool's turn - clockwise as the eye sees it (maelstromSpin)
 float maelstromSpin() { return -TAU * uTime ${hzGlsl(MAELSTROM_HZ.spin)}; }
 float maelstromBreath() { return 0.85 + 0.15 * sin(uTime * TAU ${hzGlsl(MAELSTROM_HZ.pulse)}); }
-// an arm's crest at (r, a): one on it, falling away between (maelstromArmAngle's spiral)
+// an arm's phase at (r, a): 0 on an arm, PI midway between two (maelstromArmAngle's spiral)
+// the spiral's phase at (r, a) - maelstromArmAngle's law
+float maelstromPhase(float r, float a) { return ${MAELSTROM_ARMS.toFixed(1)} * (a - maelstromSpin()) + ${MAELSTROM_TWIST.toFixed(1)} * log(max(r, 0.02) / ${MAELSTROM_R.toFixed(3)}); }
+// an arm's crest at (r, a): one on it, falling away between
 float maelstromArm(float r, float a) {
-  float ph = ${MAELSTROM_ARMS.toFixed(1)} * (a - maelstromSpin()) + ${MAELSTROM_TWIST.toFixed(1)} * log(max(r, 0.02) / ${MAELSTROM_R.toFixed(3)});
-  return pow(max(0.5 + 0.5 * cos(ph), 0.0), ${MAELSTROM_SHARP.toFixed(1)});   // AUDIT WORLD-REWARDS D2: never a pow of a negative (a cos a hair under -1 - AUDIT SD II L2 F12's law)
+  return pow(max(0.5 + 0.5 * cos(maelstromPhase(r, a)), 0.0), ${MAELSTROM_SHARP.toFixed(1)});   // AUDIT WORLD-REWARDS D2: never a pow of a negative (a cos a hair under -1 - AUDIT SD II L2 F12's law)
 }
 vec3 maelstromGround(vec2 p) {
   float r = length(p);
@@ -1361,6 +1449,25 @@ vec3 maelstromGround(vec2 p) {
     // THE LIP: a ring of foam breaking round the pool, the surf running round it
     float ld = (r - ${MAELSTROM_R.toFixed(3)}) / 0.035;
     col += MS_FOAM * exp(-ld * ld) * (0.55 + 0.45 * sin(a * 7.0 + uTime * TAU ${hzGlsl(MAELSTROM_HZ.surf)})) * 0.45;
+    // AURA DETAIL - the water's finer work, carried round with the turn (sp, in turns) and never where an arm or the
+    // midway between two stands bright or dark (the streaks' phase twice the arms' and a half turn on)
+    float sp = fract((a - maelstromSpin()) / TAU), ph = maelstromPhase(r, a);
+    float open = smoothstep(${MAELSTROM_EYE_R.toFixed(3)}, ${(MAELSTROM_EYE_R + 0.15).toFixed(3)}, r) * (1.0 - smoothstep(${(MAELSTROM_R - 0.06).toFixed(3)}, ${MAELSTROM_R.toFixed(3)}, r));
+    // THE STREAKS: finer foam wound between the arms
+    col += MS_FOAM * pow(max(0.5 + 0.5 * cos(2.0 * ph + 3.14159265), 0.0), 18.0) * open * 0.22 * breath;
+    // THE CAUSTICS: light rippling over the pool's floor in a net, drawn in toward the eye as it turns
+    float lr = log(max(r, 0.02));
+    float c1 = vnoiseP(vec2(sp * 16.0, lr * 5.0 + uTime * ${MAELSTROM_FLOW.caustic.toFixed(3)}), vec2(16.0, ${g1(MAELSTROM_FLOW.caustic * AURA_CLOCK_PERIOD)}));
+    float c2 = vnoiseP(vec2(sp * 24.0 + 7.0, lr * 7.0 + uTime * ${(MAELSTROM_FLOW.caustic * 2).toFixed(3)}), vec2(24.0, ${g1(MAELSTROM_FLOW.caustic * 2 * AURA_CLOCK_PERIOD)}));
+    float caus = pow(1.0 - abs(c1 * 2.0 - 1.0), 10.0) * 0.6 + pow(1.0 - abs(c2 * 2.0 - 1.0), 14.0) * 0.4;
+    col += mix(MS_TIDE, MS_FOAM, 0.35) * caus * open * 0.3 * breath;
+    // THE EYE's rim, a thin ring of foam round the open water
+    float er = (r - ${MAELSTROM_EYE_R.toFixed(3)}) / 0.012;
+    col += MS_FOAM * exp(-er * er) * 0.28 * breath;
+    // THE LACE torn off the lip's foam, either side of the break
+    float lace = fbmP(vec2(sp * 30.0, r * 20.0 - uTime * ${MAELSTROM_FLOW.lace.toFixed(3)}), vec2(30.0, ${g1(MAELSTROM_FLOW.lace * AURA_CLOCK_PERIOD)}));
+    float lb = (r - ${MAELSTROM_R.toFixed(3)}) / 0.07;
+    col += MS_FOAM * smoothstep(0.55, 0.78, lace) * exp(-lb * lb) * 0.3 * breath;
   }
   return col * uKindle * (1.0 - smoothstep(uGroundR - 0.2, uGroundR, r));
 }
@@ -1371,6 +1478,15 @@ vec3 maelstromWall(vec2 q) {
   vec3 col = MS_TIDE * 0.3 * (1.0 - smoothstep(crest - 0.02, crest, y)) * clamp(y / crest, 0.0, 1.0);
   float cd = (y - crest) / 0.012;
   col += MS_FOAM * 0.6 * exp(-cd * cd);
+  // AURA DETAIL - the curl's water streaked as it runs round, its crest's foam torn into lace, a mist off it
+  float wu = fract(u - maelstromSpin() / TAU);
+  float under = (1.0 - smoothstep(crest - 0.02, crest, y)) * clamp(y / crest, 0.0, 1.0);
+  float wn = vnoiseP(vec2(wu * 40.0, y * 30.0 - uTime * ${MAELSTROM_FLOW.lace.toFixed(3)}), vec2(40.0, ${g1(MAELSTROM_FLOW.lace * AURA_CLOCK_PERIOD)}));
+  col += mix(MS_TIDE, MS_FOAM, 0.4) * pow(wn, 3.0) * under * 0.35;
+  float cl = fbmP(vec2(wu * 50.0, y * 25.0 - uTime * ${(MAELSTROM_FLOW.lace * 2).toFixed(3)}), vec2(50.0, ${g1(MAELSTROM_FLOW.lace * 2 * AURA_CLOCK_PERIOD)}));
+  float cw = (y - crest - 0.02) / 0.035;
+  col += MS_FOAM * smoothstep(0.5, 0.75, cl) * exp(-cw * cw) * 0.4;
+  col += mix(MS_TIDE, MS_FOAM, 0.5) * 0.06 * smoothstep(crest, crest + 0.03, y) * (1.0 - smoothstep(crest + 0.03, crest + 0.22, y)) * (0.5 + 0.5 * cl) * breath;
   // THE SPRAY: drops thrown up off the crest, each on its own arc and back down, carried round with the pool
   float circ = TAU * uRingR, spray = 0.0;
   for (int m = 0; m < ${MAELSTROM_DROPS}; m++) {
@@ -1404,19 +1520,31 @@ float beaconBreath() { return 0.85 + 0.15 * sin(uTime * TAU ${hzGlsl(BEACON_HZ.p
 vec3 beaconGround(vec2 p) {
   float r = length(p);
   if (r > uGroundR) discard;
-  float breath = beaconBreath();
-  // THE POOL of gold-white light about the feet, and THE RING the beacons stand on, a thin line of gold
+  float breath = beaconBreath(), px = turnPixel();
+  // THE POOL of gold-white light about the feet, and THE RING the beacons stand on - the Spire's wall seen from above:
+  // a line of gold between two fine white ones, its glow about it
   float dr = r - uRingR;
-  vec3 col = SP_BEACON * exp(-r * r / 0.35) * 0.22 * breath + SP_BEACON * exp(-dr * dr / 0.0009) * 0.35 * breath;
+  vec3 col = SP_BEACON * exp(-r * r / 0.35) * 0.18 * breath + SP_BEACON * exp(-dr * dr / 0.004) * 0.14 * breath;
+  col += SP_BEACON * turnBand(dr, -0.011, 0.011, px) * 0.5 * breath;
+  col += SP_WHITE * (turnBand(dr, -0.05, -0.043, px) + turnBand(dr, 0.043, 0.05, px)) * 0.2 * breath;
   // never the angle at the middle, where atan(0, 0) is no number (the resonance's AUDIT)
   if (r > 0.05) {
-    // THE BEACONS: white fire on the ring, lit one after another round it (beaconLit) and fading after
-    float a = atan(p.y, p.x);
-    float k = floor(fract(a / TAU) * ${BEACON_LIGHTS.toFixed(1)} + 0.5);
+    // THE BEACONS: braziers of white fire on the ring, lit one after another round it (beaconLit) and fading after -
+    // each a gold bowl, a white heart, and a four-pointed glint as it catches
+    float a = atan(p.y, p.x), turn = fract(a / TAU);
+    float k = floor(turn * ${BEACON_LIGHTS.toFixed(1)} + 0.5);
     float ak = k / ${BEACON_LIGHTS.toFixed(1)} * TAU;
     vec2 d = p - vec2(cos(ak), sin(ak)) * uRingR;
-    float age = fract(uTime ${hzGlsl(BEACON_HZ.kindle)} - k / ${BEACON_LIGHTS.toFixed(1)});
-    col += (SP_WHITE * 0.9 + SP_BEACON * 0.4) * exp(-dot(d, d) / 0.0025) * (0.3 + 0.7 * exp(-age * 4.0));
+    float age = fract(uTime ${hzGlsl(BEACON_HZ.kindle)} - k / ${BEACON_LIGHTS.toFixed(1)}), lit = exp(-age * 4.0);
+    float bowl = turnBand(length(d), 0.034, 0.043, px);
+    float heart = exp(-dot(d, d) / 0.0012) * (0.35 + 0.65 * lit);
+    vec2 ad = abs(d);
+    float glint = (exp(-ad.x * 110.0 - ad.y * 11.0) + exp(-ad.y * 110.0 - ad.x * 11.0)) * lit;
+    col += SP_BEACON * bowl * 0.55 + (SP_WHITE * 0.9 + SP_BEACON * 0.4) * heart + SP_WHITE * glint * 0.9;
+    col += SP_BEACON * exp(-dot(d, d) / 0.012) * 0.25 * lit;   // its light on the stone about it
+    // THE LIGHT PASSING round the ring from the last beacon lit to the next: a comet on the line, its tail behind it
+    float behind = fract(fract(uTime ${hzGlsl(BEACON_HZ.kindle)}) - turn);
+    col += (SP_WHITE * 0.7 + SP_BEACON * 0.5) * exp(-behind * 18.0) * exp(-dr * dr / 0.0005) * 0.9;
   }
   return col * uKindle * spireFade(r);
 }
@@ -1424,8 +1552,18 @@ vec3 beaconWall(vec2 q) {
   float u = q.x, v = q.y;
   // a faint rise of gold off the ring, gone by the knee
   vec3 col = SP_BEACON * 0.1 * (1.0 - smoothstep(0.0, 0.25, v)) * beaconBreath();
+  // THE BEAMS: each beacon throws its light straight up as it is lit - a white shaft off its brazier, as high as the
+  // chest when it catches and sinking as it fades, a shimmer climbing it
+  float circ = TAU * uRingR;
+  float k = floor(u * ${BEACON_LIGHTS.toFixed(1)} + 0.5);
+  float age = fract(uTime ${hzGlsl(BEACON_HZ.kindle)} - k / ${BEACON_LIGHTS.toFixed(1)}), lit = exp(-age * 3.0);
+  float du = (fract(u - k / ${BEACON_LIGHTS.toFixed(1)} + 0.5) - 0.5) * circ;
+  float reach = ${g3(BEACON_BEAM.up)} * (0.25 + 0.75 * lit);
+  float shaft = exp(-du * du / ${(BEACON_BEAM.width * BEACON_BEAM.width).toFixed(6)}) * (1.0 - smoothstep(reach * 0.4, reach, v));
+  float shimmer = 0.75 + 0.25 * sin(TAU * (v * 6.0 - uTime ${hzGlsl(BEACON_HZ.pulse)} * 4.0));
+  col += (SP_WHITE * 0.55 + SP_BEACON * 0.45) * shaft * (0.12 + 0.88 * lit) * shimmer * 0.9;
   // THE MOTES: gold-white, rising off the ring past the chest, each at its own place and pace, swaying as they climb
-  float circ = TAU * uRingR, motes = 0.0;
+  float motes = 0.0;
   for (int m = 0; m < ${BEACON_MOTES}; m++) {
     float fm = float(m);
     float h1 = fract(sin(fm * 91.17 + 0.7) * 43758.5453), h2 = fract(sin(fm * 33.71 + 2.9) * 24634.6345);
@@ -1443,17 +1581,38 @@ vec3 stairGround(vec2 p) {
   float r = length(p);
   if (r > uGroundR) discard;
   float px = turnPixel(), flare = stairFlare();
-  // THE COAL's glow under the feet
+  // THE COAL's glow under the feet, cracked: the floor within the stair burning through its seams
   vec3 col = SP_COAL * exp(-r * r / 0.3) * 0.3 * flare;
   if (r > 0.05) {
-    // THE STAIR: its steps round the feet, each a little hotter than the one above it, the whole of it turning DOWN
-    float a = atan(p.y, p.x);
-    float s = fract(a / TAU - uTime ${hzGlsl(STAIR_HZ.descend)}) * ${STAIR_STEPS.toFixed(1)};
+    // THE STAIR: its steps round the feet, each a little hotter than the one above it, the whole of it turning DOWN -
+    // each tread a slab of stone, its lip burning, the fire showing through the cracks across it
+    float a = atan(p.y, p.x), turn = fract(a / TAU);
+    float s = fract(turn - uTime ${hzGlsl(STAIR_HZ.descend)}) * ${STAIR_STEPS.toFixed(1)};
     float k = floor(s), f = fract(s), heat = (k + 1.0) / ${STAIR_STEPS.toFixed(1)};
-    float tread = turnBand(r, uRingR - ${STAIR_W.toFixed(3)}, uRingR, px);
+    // the stair winds down as it turns: each step's inner edge a little further in than the one above it, the lowest
+    // the whole tread
+    float inner = uRingR - ${STAIR_W.toFixed(3)} + 0.05 * (1.0 - heat);
+    float tread = turnBand(r, inner, uRingR, px);
     float riser = 1.0 - smoothstep(0.0, 0.07, f);   // the step's lip, lit, along its leading edge
     float gap = smoothstep(0.0, 0.03, f) * (1.0 - smoothstep(0.97, 1.0, f));   // and a dark line between two steps
-    col += mix(SP_COAL, SP_EMBER, heat) * (0.3 + 0.6 * heat) * tread * gap * flare + SP_FLAME * tread * riser * 0.7 * heat;
+    float across = (r - inner) / (uRingR - inner);
+    float cn = vnoiseP(vec2(s * 3.0, across * 4.0 + uTime * ${g3(STAIR_FLOW.crack)}), vec2(${g1(STAIR_STEPS * 3)}, ${g1(STAIR_FLOW.crack * AURA_CLOCK_PERIOD)}));
+    float crack = pow(1.0 - abs(cn * 2.0 - 1.0), 14.0) * smoothstep(0.08, 0.3, f);
+    float stone = 0.75 + 0.25 * vnoiseP(vec2(s * 9.0, across * 7.0), vec2(${g1(STAIR_STEPS * 9)}, 7.0));
+    col += mix(SP_COAL, SP_EMBER, heat) * (0.15 + 0.55 * heat) * stone * tread * gap * flare;
+    col += SP_FLAME * tread * riser * 0.8 * (0.4 + 0.6 * heat) * flare;
+    col += fireRamp(0.45 + 0.4 * heat) * crack * tread * gap * (0.15 + 0.85 * heat) * flare;
+    // THE EMBERS' LANDING: each falling ember (stairWall's) striking the stair in a splash of sparks
+    for (int m = 0; m < ${STAIR_EMBERS}; m++) {
+      float fm = float(m);
+      float h1 = fract(sin(fm * 57.31 + 1.3) * 43758.5453), h2 = fract(sin(fm * 21.77 + 4.1) * 24634.6345);
+      float mv = 1.0 - fract(uTime ${hzGlsl(STAIR_HZ.ember)} * (1.0 + mod(fm, 3.0)) + h2);
+      float fresh = 1.0 - smoothstep(0.0, 0.06, mv);
+      if (fresh <= 0.0) continue;
+      float am = (h1 + 0.05 * sin(TAU * h1) / (TAU * uRingR)) * TAU;
+      vec2 dm = p - vec2(cos(am), sin(am)) * (uRingR - ${STAIR_W.toFixed(3)} * 0.5);
+      col += (SP_FLAME * 0.8 + SP_EMBER * 0.5) * exp(-dot(dm, dm) / 0.0016) * fresh;
+    }
   }
   return col * uKindle * spireFade(r);
 }
@@ -1461,6 +1620,14 @@ vec3 stairWall(vec2 q) {
   float u = q.x, v = q.y, flare = stairFlare();
   // the stair's heat rising off it, gone by the knee
   vec3 col = SP_EMBER * 0.1 * (1.0 - smoothstep(0.0, 0.2, v)) * flare;
+  // THE LIPS' FIRE: low tongues licking up off each step's burning lip as the stair turns down, the lower steps' taller
+  float s = fract(u - uTime ${hzGlsl(STAIR_HZ.descend)}) * ${STAIR_STEPS.toFixed(1)};
+  float k = floor(s), heat = (k + 1.0) / ${STAIR_STEPS.toFixed(1)};
+  float lipM = min(fract(s), 1.0 - fract(s)) * TAU * uRingR / ${STAIR_STEPS.toFixed(1)};
+  float tn = fbmP(vec2(s * 4.0, v * 5.0 - uTime * ${g3(STAIR_FLOW.tongue)}), vec2(${g1(STAIR_STEPS * 4)}, ${g1(STAIR_FLOW.tongue * AURA_CLOCK_PERIOD)}));
+  float tall = 0.05 + 0.13 * heat;
+  float tongue = (1.0 - smoothstep(0.0, 0.035, lipM - 0.02 * tn)) * (1.0 - smoothstep(0.0, tall, v * uFlameH - (tn - 0.5) * 0.06));   // edges in order (GLSL's smoothstep)
+  col += fireRamp(0.35 + 0.5 * heat * (1.0 - v * uFlameH / max(tall, 0.01))) * tongue * 0.9 * flare;
   // THE EMBERS, FALLING from over the head, each at its own place and pace, drifting - a streak longer than it is wide,
   // cooling as it falls
   float circ = TAU * uRingR, embers = 0.0;
@@ -2052,7 +2219,18 @@ vec4 eternalGround(vec2 p) {
   float flick = vnoiseP(vec2(fract(a / CLOAK_TAU) * 12.0, uTime * ${g3(ETERNAL_FLOW.hem)}), vec2(12.0, ${g1(ETERNAL_FLOW.hem * AURA_CLOCK_PERIOD)}));
   float pool = cloakSq(1.0 - smoothstep(0.1, ${g3(ETERNAL_POOL_R)}, r)) * (0.45 + 0.55 * behind) * (0.75 + 0.5 * flick);
   float vis = 1.0 - smoothstep(uKindle * 1.4 - 0.1, uKindle * 1.4, r);
-  return vec4(mix(ET_BLUE, ET_VIOLET, behind) * pool * 0.16 * eternalBreath() * vis, 0.0);
+  float breath = eternalBreath();
+  vec3 col = mix(ET_BLUE, ET_VIOLET, behind) * pool * 0.22 * breath;
+  // AURA DETAIL: THE ORIGIN'S MARK burning faintly in the stone under the feet - its ring and its spark, turning slowly
+  float ta = a + uTime * CLOAK_TAU ${hzGlsl(ETERNAL_HZ.sigil)} / 4.0;
+  vec2 sp = vec2(cos(ta), sin(ta)) * r / ${g3(ETERNAL_SIGIL.r * 3.2)};
+  col += mix(ET_BLUE, ET_HEART, 0.35) * eternalSigil(sp) * 0.16 * (0.75 + 0.25 * sin(uTime * CLOAK_TAU ${hzGlsl(ETERNAL_HZ.sigil)})) * smoothstep(0.02, 0.06, r);
+  // A RING OF ITS FIRE round the pool's middle, tongues of blue-violet light lying on the stone and running round it
+  float ra = fract(a / CLOAK_TAU);
+  float tn = vnoiseP(vec2(ra * 24.0, r * 6.0 - uTime * ${g3(ETERNAL_FLOW.hem)}), vec2(24.0, ${g1(ETERNAL_FLOW.hem * AURA_CLOCK_PERIOD)}));
+  float rd = (r - ${g3(ETERNAL_POOL_R * 0.62)}) / (0.03 + 0.05 * tn);
+  col += eternalFire(0.45 + 0.35 * tn, 0.4 + 0.4 * behind) * exp(-rd * rd) * (0.35 + 0.65 * tn) * 0.3 * breath;
+  return vec4(col * vis, 0.0);
 }
 // A CARD (uv its card's 0..1, s its age, its kind - 0 a wisp, 1 an ember - and its number): a wisp a tongue of flame,
 // hot at its root and violet at its tip, guttering out; an ember a spark
@@ -2239,6 +2417,23 @@ vec3 witchGround(vec2 p) {
     vec2 d = p - vec2(cos(ak), sin(ak)) * uRingR;
     float flick = 0.75 + 0.25 * sin(uTime * TAU ${hzGlsl(WITCH_HZ.flicker)} * (1.0 + mod(k, 3.0)) + k * 2.3);
     col += WF_TALLOW * exp(-dot(d, d) / 0.0016) * 1.1 * flick;
+    // AURA DETAIL - THE COVEN'S CIRCLE: a seven-pointed star drawn candle to candle (each to the third on), a fine
+    // ring of violet within the fire, both burning faint, and the candles' tallow pooled about their feet
+    float px = max(max(length(dFdx(vWorld)), length(dFdy(vWorld))), 0.002);
+    float star = 1e3;
+    for (int j = 0; j < ${WITCH_CANDLES}; j++) {
+      float a0 = float(j) / ${WITCH_CANDLES.toFixed(1)} * TAU, a1 = float(j + 3) / ${WITCH_CANDLES.toFixed(1)} * TAU;
+      vec2 e0 = vec2(cos(a0), sin(a0)) * uRingR, e1 = vec2(cos(a1), sin(a1)) * uRingR, ed = e1 - e0;
+      float h = clamp(dot(p - e0, ed) / dot(ed, ed), 0.0, 1.0);
+      star = min(star, length(p - e0 - ed * h));
+    }
+    float lines = clamp((0.006 - star) / px + 0.5, 0.0, 1.0) + exp(-star * star / 0.0006) * 0.35;
+    float inner = (r - uRingR * 0.66) / 0.008;
+    col += (WF_VIOLET * 0.7 + WF_FIRE * 0.3) * lines * 0.4 * breath + WF_VIOLET * exp(-inner * inner) * 0.3 * breath;
+    col += WF_TALLOW * 0.25 * exp(-dot(d, d) / 0.0045) * (1.0 - exp(-dot(d, d) / 0.0012));
+    // THE MOSS creeping in the pool, its veins faint green
+    float mn = vnoiseP(vec2(fract(a / TAU) * 28.0, r * 9.0), vec2(28.0, 64.0));
+    col += WF_MOSS * pow(1.0 - abs(mn * 2.0 - 1.0), 12.0) * (1.0 - smoothstep(uRingR * 0.6, uRingR, r)) * 0.5 * breath;
   }
   return col * uKindle * (1.0 - smoothstep(uGroundR - 0.25, uGroundR, r));
 }
@@ -2259,12 +2454,20 @@ vec3 witchWall(vec2 q) {
     motes += exp(-dot(dm, dm) / 0.00035) * (1.0 - mv) * smoothstep(0.0, 0.06, mv);
   }
   col += (WF_VIOLET * 0.8 + WF_GLOW * 0.15) * motes;
+  // AURA DETAIL - THE CANDLES' FLAMES standing over their wicks: a tallow teardrop, a blue root, each guttering on its
+  // own beat (the ground's own candles, witchCandleAt)
+  float kc = mod(floor(q.x * ${WITCH_CANDLES.toFixed(1)} + 0.5), ${WITCH_CANDLES.toFixed(1)});
+  float cu = (fract(q.x - kc / ${WITCH_CANDLES.toFixed(1)} + 0.5) - 0.5) * circ, cy = v * uFlameH;
+  float gutter = 0.75 + 0.25 * sin(uTime * TAU ${hzGlsl(WITCH_HZ.flicker)} * (1.0 + mod(kc, 3.0)) + kc * 2.3);
+  float fh = 0.07 * gutter, fw = 0.012 * (1.0 - smoothstep(0.0, fh, cy - 0.01)) * smoothstep(0.0, 0.02, cy);
+  float drop = clamp((fw - abs(cu + 0.004 * sin(uTime * TAU ${hzGlsl(WITCH_HZ.flicker)} * 3.0 + kc))) / 0.003, 0.0, 1.0);
+  col += mix(WF_TALLOW, vec3(1.0), 0.3) * drop * 0.9 + WF_VIOLET * drop * (1.0 - smoothstep(0.0, 0.02, cy - 0.005)) * 0.6;
   // kindled UP: the fire rising from the feet
   return col * clamp(uKindle * 1.25 - v, 0.0, 0.15) / 0.15;
 }
 `;
 
-const SAGE_EDGES = glyphEdges(GLYPH_PATH.nirnrootsage), SAGE_VEIN_EDGES = glyphEdges(GLYPH_DETAIL.nirnrootsage[0].path), SAGE_BUD_EDGES = glyphEdges(GLYPH_DETAIL.nirnrootsage[1].path);
+const SAGE_EDGES = glyphEdges(GLYPH_PATH.nirnrootsage), SAGE_VEIN_EDGES = glyphEdges(GLYPH_DETAIL.nirnrootsage[0].path), SAGE_STEM_EDGES = glyphEdges(GLYPH_DETAIL.nirnrootsage[1].path);
 /** NIRNROOT-SAGE: a shape's distance in its box, named, over its edges - negative inside, filled even-odd (warrenD's law). */
 const edgeDGlsl = (fn, name, edges) => `${glyphEdgesGlsl(name, edges)}
 float ${fn}(vec2 g) {
@@ -2281,10 +2484,12 @@ const vec3 SG_GLOW = ${v3(SAGE_RGB.glow)};
 const vec3 SG_HAZE = ${v3(SAGE_RGB.haze)};
 const vec3 SG_DEEP = ${v3(SAGE_RGB.deep)};
 const vec3 SG_SMOKE = ${v3(SAGE_RGB.smoke)};
+const vec3 SG_TEAL = ${v3(SAGE_LEAF_RGB.heart)};
+const vec3 SG_MINT = ${v3(SAGE_LEAF_RGB.tip)};
 const int SAGE_SCRIPT[${SAGE_RUNES}] = int[${SAGE_RUNES}](${SAGE_SCRIPT.join(', ')});
 ${edgeDGlsl('sageRootD', 'SAGE_EDGES', SAGE_EDGES)}
 ${edgeDGlsl('sageVeinD', 'SAGE_VEIN_EDGES', SAGE_VEIN_EDGES)}
-${edgeDGlsl('sageBudD', 'SAGE_BUD_EDGES', SAGE_BUD_EDGES)}
+${edgeDGlsl('sageStemD', 'SAGE_STEM_EDGES', SAGE_STEM_EDGES)}
 float sageBreath() { return 0.85 + 0.15 * sin(uTime * TAU ${hzGlsl(SAGE_HZ.breath)}); }
 // a rune's stroke lit - the ward's inked, in the nirnroot's greens: a pale heart, the glow's body, a leaf-green halo
 vec3 sageInked(float d, float w) {
@@ -2359,8 +2564,9 @@ vec4 sageCard(vec2 uv, vec3 s) {
     col = mix(col, SG_GLOW * 0.75, (1.0 - age) * (1.0 - age) * (1.0 - uv.y) * 0.5);
     return vec4(col * a, a);
   }
-  // A NIRNROOT: the badge's own sprig (GLYPH_PATH.nirnrootsage, in its box with room about it, SAGE_ROOT_PAD) - leaf green at
-  // its foot into its glow at the bulb, its veins the deep green, the bulb's heart the haze; its glow about it, added
+  // A NIRNROOT: the badge's own leaf (GLYPH_PATH.nirnrootsage, in its box with room about it, SAGE_ROOT_PAD) - teal at the
+  // fan's heart out to mint at its tips (NIRN-LEAF), its veins the haze, its stem's core the deep green; its glow about
+  // it, added
   vec2 g = (vec2(uv.x, 1.0 - uv.y) - 0.5) * ${g3(16 * SAGE_ROOT_PAD)} + 8.0;
   float px = turnPixel() * ${g3((16 * SAGE_ROOT_PAD) / SAGE_ROOT_M)};   // a pixel, in the box's units
   float d = sageRootD(g);
@@ -2369,9 +2575,9 @@ vec4 sageCard(vec2 uv, vec3 s) {
   float edge = smoothstep(0.0, 0.08, min(min(uv.x, 1.0 - uv.x), min(uv.y, 1.0 - uv.y)));
   vec3 halo = SG_GLOW * exp(-out1 * out1 / 2.5) * 0.35 * sageBreath() * edge;
   if (body <= 0.0) return vec4(halo, 0.0);
-  vec3 col = mix(SG_LEAF, SG_GLOW, 1.0 - smoothstep(4.0, 15.0, g.y));
-  col = mix(col, SG_DEEP, clamp(0.5 - sageVeinD(g) / px, 0.0, 1.0));
-  col = mix(col, SG_HAZE, clamp(0.5 - sageBudD(g) / px, 0.0, 1.0));
+  vec3 col = mix(SG_TEAL, SG_MINT, smoothstep(0.05, 0.95, length(g - vec2(${g3(SAGE_FAN[0])}, ${g3(SAGE_FAN[1])})) / ${g3(SAGE_FAN_R)}));
+  col = mix(col, SG_HAZE, 0.8 * clamp(0.5 - sageVeinD(g) / px, 0.0, 1.0));
+  col = mix(col, SG_DEEP, clamp(0.5 - sageStemD(g) / px, 0.0, 1.0));
   return vec4(col * body + halo * (1.0 - body), body);
 }
 `;
@@ -2703,6 +2909,7 @@ uniform float uTorn;    // SHADOW-CLOAK: the seconds since the wearer turned bea
 uniform vec4 uSwing, uCapeH;   // SHADOW-CLOAK: the swing - its lag on a turn (w) turns the cloth's facing too; the head's middle (uCapeH) - the hood an eye can stand inside
 uniform float uTime, uSeed, uKindle, uRingR, uGroundR, uFlameH;
 uniform float uResLit[${RESONANCE_COLUMNS}];   // CRYSTAL-FIST AUDIT: each column's lit squares, node's count (resonanceLitInto)
+uniform float uResCap[${RESONANCE_COLUMNS}];   // AURA DETAIL: each column's cap, its row - -1 none (resonanceCapInto)
 uniform vec4 uWarren[${WARREN_BUNNIES}];   // WIKIMAID: the rabbits (warrenBunniesInto) - their shadows on the ground
 uniform vec2 uWarrenPrint[${WARREN_BUNNIES * WARREN_PRINTS}];   // WIKIMAID: their tracks - each landing's angle and its age (warrenPrintsInto)
 uniform int uFogMode;
@@ -2710,7 +2917,7 @@ uniform float uFogDensity;
 uniform vec2 uFogRange;
 uniform vec3 uCamPos;
 out vec4 o;
-${FOG_FACTOR_GLSL}${NOISE_GLSL}
+${FOG_FACTOR_GLSL}${AURA_NOISE_GLSL}
 const float TAU = 6.283185307179586;
 ${WARD_GLSL}${RADIANCE_GLSL}${RESONANCE_GLSL}${TURNING_GLSL}${MAELSTROM_GLSL}${SPIRE_GLSL}${CLOAK_SHAPE_GLSL}${CLOAK_FS_GLSL}${ETERNAL_SHAPE_GLSL}${ETERNAL_FS_GLSL}${WING_SHARED_GLSL}${WING_FS_GLSL}${WARREN_GLSL}${WITCH_GLSL}${SAGE_GLSL}
 void main() {
@@ -2760,7 +2967,19 @@ void main() {
     // the glow in the stone within, and the ring's edge soft
     float inner = 0.22 * (1.0 - smoothstep(0.0, uRingR, r)) * (0.8 + 0.2 * sin(uTime * TAU / 3.0 + uSeed));
     float edge = 1.0 - smoothstep(uGroundR - 0.35, uGroundR, r);
+    // THE DEADLANDS' STONE within: cracked, the fire showing through its seams - two orders of crack, the finer
+    // between the greater, brightest toward the band and dark under the feet, their fire flowing
+    float within = smoothstep(0.1, 0.3, r) * (1.0 - smoothstep(uRingR - 0.06, uRingR + 0.02, r));
+    float c1 = vnoiseP(vec2(u * 20.0 + floor(uSeed * 7.0), r * 6.0 - uTime * ${AURA_SEAMS.crack.toFixed(3)}), vec2(20.0, ${(AURA_SEAMS.crack * AURA_CLOCK_PERIOD).toFixed(1)}));
+    float c2 = vnoiseP(vec2(u * 44.0 + 3.0, r * 13.0 + uTime * ${AURA_SEAMS.crack.toFixed(3)}), vec2(44.0, ${(AURA_SEAMS.crack * AURA_CLOCK_PERIOD).toFixed(1)}));
+    float seam = max(pow(1.0 - abs(c1 * 2.0 - 1.0), 16.0), 0.55 * pow(1.0 - abs(c2 * 2.0 - 1.0), 22.0));
+    float seamHeat = seam * within * (0.3 + 0.7 * smoothstep(0.15, uRingR, r)) * (0.75 + 0.25 * crest);
+    // THE LICKS spreading out over the ground past the band, flowing outward, thinning as they go
+    float lk = fbmP(vec2(u * 36.0 + floor(uSeed * 3.0), r * 5.0 - uTime * ${AURA_SEAMS.lick.toFixed(3)}), vec2(36.0, ${(AURA_SEAMS.lick * AURA_CLOCK_PERIOD).toFixed(1)}));
+    float out1 = (r - uRingR - 0.1) / 0.3;
+    float licks = smoothstep(0.42 + 0.35 * clamp(out1, 0.0, 1.0), 0.75, lk) * step(0.0, out1 + 0.3) * (1.0 - smoothstep(0.0, 1.0, out1));
     col = fireRamp(clamp(heat * 1.05, 0.0, 1.0)) * heat * 0.95 + vec3(1.0, 0.72, 0.30) * ember * 1.2 + vec3(0.55, 0.08, 0.02) * inner;
+    col += fireRamp(0.42 + 0.35 * seamHeat) * seamHeat * 0.55 + fireRamp(0.35 + 0.3 * licks) * licks * 0.35;
     col *= edge;
   } else {
     float u = fract(vP.x + turn / TAU), v = vP.y;
@@ -2770,11 +2989,30 @@ void main() {
     float n = fbmP(vec2((u + sway) * ${AURA_ROUND.flames.toFixed(1)} + floor(uSeed * 5.0), v * 1.3 - uTime * ${AURA_FLOW.rise.toFixed(3)}), vec2(${AURA_ROUND.flames.toFixed(1)}, ${(AURA_FLOW.rise * AURA_CLOCK_PERIOD).toFixed(1)}));
     float n2 = vnoiseP(vec2(u * ${AURA_ROUND.flicker.toFixed(1)}, v * 3.0 - uTime * ${AURA_FLOW.flicker.toFixed(3)}), vec2(${AURA_ROUND.flicker.toFixed(1)}, ${(AURA_FLOW.flicker * AURA_CLOCK_PERIOD).toFixed(1)}));
     float f = n * 0.8 + n2 * 0.25;
-    float th = 0.28 + v * 0.62;
+    // THE FLARES: at AURA_FLARES places round the ring the fire leaps now and then, its tongues standing taller
+    float flare = 0.0;
+    for (int k = 0; k < ${AURA_FLARES}; k++) {
+      float fk = float(k), h = fract(sin(fk * 47.3 + uSeed * 11.0) * 43758.5);
+      float du = fract(u - (fk + 0.35 * h) / ${AURA_FLARES.toFixed(1)} + 0.5) - 0.5;
+      float beat = pow(max(0.5 + 0.5 * sin(TAU * (uTime ${hzGlsl(AURA_DETAIL_HZ.flare)} * (1.0 + mod(fk, 2.0)) + h)), 0.0), 10.0);
+      flare = max(flare, beat * exp(-du * du * 900.0));
+    }
+    float th = 0.28 + v * 0.62 - flare * 0.12;
     float body = smoothstep(th - 0.06, th + 0.10, f);
     float core = smoothstep(th + 0.06, th + 0.25, f);
     float fade = pow(1.0 - v, 1.3);
-    col = (fireRamp(0.3 + 0.45 * core) * body * 0.8 + vec3(1.0, 0.8, 0.45) * core * 0.3) * fade;
+    float root = 1.0 - smoothstep(0.0, 0.16, v);   // white-hot where the tongues leave the ground
+    col = (fireRamp(0.3 + 0.45 * core + 0.12 * root) * body * (0.8 + 0.1 * root) + vec3(1.0, 0.8, 0.45) * core * 0.3) * fade;
+    // THE SPARKS thrown up off the flames, each its own place and pace, swirling a little as it climbs and dimming
+    float circ = TAU * uRingR, sparks = 0.0;
+    for (int m = 0; m < ${AURA_SPARKS}; m++) {
+      float fm = float(m);
+      float h1 = fract(sin(fm * 73.13 + uSeed * 7.0) * 43758.5453), h2 = fract(sin(fm * 29.71 + 1.9) * 24634.6345);
+      float mv = fract(uTime ${hzGlsl(AURA_DETAIL_HZ.spark)} * (1.0 + mod(fm, 3.0)) + h2);
+      vec2 dm = vec2((fract(u - h1 + 0.5) - 0.5) * circ + 0.05 * sin(TAU * (mv * 1.5 + h1)), (v - mv * 0.85) * uFlameH * 0.6);
+      sparks += exp(-dot(dm, dm) / 0.00012) * (1.0 - mv) * smoothstep(0.0, 0.1, mv);
+    }
+    col += vec3(1.0, 0.62, 0.18) * sparks * 1.1;
   }
   o = vec4(col * uKindle * fogFactorAt(vWorld), 1.0);
 }`;
@@ -2904,7 +3142,7 @@ export const EOTB_FIGURE = Object.freeze({ mpp: 0.019, shoulder: 86, neck: 91, h
  *  is drawn. Pure. */
 export function auraSpriteBones(fig) {
   if (!fig || !Number.isFinite(fig.base) || !(fig.mpp > 0)) return null;
-  const m = fig.mpp * (fig.beast === true ? EOTB_FIGURE.beast : 1), at = (px) => fig.base + px * m, half = CLOAK_SHOULDER_HALF * m / EOTB_FIGURE.mpp;
+  const m = fig.mpp * (fig.beast === true ? EOTB_FIGURE.beast : 1) * (fig.marks?.art > 0 ? fig.marks.art : 1), at = (px) => fig.base + px * m, half = CLOAK_SHOULDER_HALF * m / EOTB_FIGURE.mpp;   // ARMORY: a record drawn at another scale (armoryPose.js spriteMarks' `art`)
   return {
     'bip01 l upperarm': [-half, at(EOTB_FIGURE.shoulder), 0], 'bip01 r upperarm': [half, at(EOTB_FIGURE.shoulder), 0],
     'bip01 neck': [0, at(EOTB_FIGURE.neck), 0], 'bip01 head': [0, at(EOTB_FIGURE.head), 0], 'bip01 spine2': [0, at(EOTB_FIGURE.spine), 0],
@@ -2970,6 +3208,17 @@ export function auraCapeStep(w, posed, crouch = 1) {
   return w;
 }
 
+/** ARMORY-SEEN: whether wearer `w`'s cloth covers its body from `eye` - its aura hangs cloth on the back (`mesh` 'cloak' or
+ *  'cape', drawn premultiplied, so it covers what was drawn before it), not folded away on a rider, and the eye on the
+ *  side its back faces (`w.yaw` as auraCapeStep placed it). What the body wears is drawn under the cloth then
+ *  (scenes/auraHost.js armoryLayers). Pure. */
+export function auraClothOver(w, eye) {
+  const mesh = auraLookOf(w?.aura).mesh;
+  if ((mesh !== 'cloak' && mesh !== 'cape') || w.mounted === true || !Array.isArray(w.at) || !eye) return false;
+  const yaw = Number.isFinite(w.yaw) ? w.yaw : 0;
+  return (eye[0] - w.at[0]) * Math.sin(yaw) + (eye[2] - w.at[2]) * Math.cos(yaw) < 0;
+}
+
 /** SHADOW-CLOAK: THE CAPE'S SWING - how its hem answers its wearer's motion: the seconds of their speed it trails
  *  behind them (m per m/s, a walk's 4 m/s a hand and a half, a run's more) and the most it trails; the metres it lifts
  *  per m/s of falling and the most; the radians it lags per rad/s of turning and the most; and the spring it swings on
@@ -3031,7 +3280,7 @@ export function auraBeastStep(w, beast, t) {
 /** AURA-SPLIT (#1143, bible/07-Rendering/Performance-Priority.md): every look's kind, once each. */
 export const AURA_KINDS = Object.freeze([...new Set(Object.values(AURA_LOOK).map((l) => l.kind))]);
 /** AURA-SPLIT: the uniforms a look's program is handed (`uAura` is its constant, not one of them). */
-const AURA_UNIFORMS = Object.freeze(['uVP', 'uKind', 'uAt', 'uGroundR', 'uRingR', 'uFlameH', 'uLift', 'uTime', 'uSeed', 'uKindle', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uJungleHaze', 'uYaw', 'uSide', 'uTorn', 'uSwing', 'uCapeS', 'uCapeH', 'uKneeL', 'uKneeR', 'uTorsoU', 'uTorsoF', 'uWingBack', 'uResLit', 'uWarren', 'uWarrenPrint', 'uSage', 'uSageLook']);
+const AURA_UNIFORMS = Object.freeze(['uVP', 'uKind', 'uAt', 'uGroundR', 'uRingR', 'uFlameH', 'uLift', 'uTime', 'uSeed', 'uKindle', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uJungleHaze', 'uYaw', 'uSide', 'uTorn', 'uSwing', 'uCapeS', 'uCapeH', 'uKneeL', 'uKneeR', 'uTorsoU', 'uTorsoF', 'uWingBack', 'uResLit', 'uResCap', 'uWarren', 'uWarrenPrint', 'uSage', 'uSageLook']);
 const _lookPrograms = new Map();
 /** AURA-SPLIT (#1143): ONE PROGRAM A LOOK - AURA_VS and AURA_FS with `uAura` declared a constant, so the compiler drops
  *  every other look's code. The whole source (every look, 81 KB of fragment shader) compiled 8.5-11 s on D3D11; a look
@@ -3092,6 +3341,7 @@ export class AuraRingRenderer {
     gl.bindVertexArray(null);
     this._vp = new Float32Array(16);
     this._resLit = new Float32Array(RESONANCE_COLUMNS);   // CRYSTAL-FIST AUDIT: one list, refilled per wearer
+    this._resCap = new Float32Array(RESONANCE_COLUMNS);   // AURA DETAIL: and the caps over them
     this._warren = new Float32Array(WARREN_BUNNIES * 4);   // WIKIMAID: the rabbits, and their tracks - refilled per wearer
     this._warrenPrints = new Float32Array(WARREN_BUNNIES * WARREN_PRINTS * 2);
     this._sage = new Float32Array(SAGE_CARDS * 4);   // NIRNROOT-SAGE: the smoke's puffs and the nirnroots - refilled per wearer
@@ -3191,7 +3441,11 @@ export class AuraRingRenderer {
         gl.uniform3f(U.uTorsoU, torso[0], torso[1], torso[2]); gl.uniform3f(U.uTorsoF, torso[3], torso[4], torso[5]);
         gl.uniform1f(U.uWingBack, Number.isFinite(pose.wingBack) ? pose.wingBack : 0);   // WINGS-FIT: a sprite's wings rooted further back
         // CRYSTAL-FIST AUDIT: the resonance's counts, node's law on the wearer's own clock - the GPU lights exactly these
-        if (look === AURA_LOOK.resonance) gl.uniform1fv(U.uResLit, resonanceLitInto(this._resLit, resonanceClock(seconds, w.seed), Math.max(0, Math.min(1, Number.isFinite(w.kindle) ? w.kindle : 1))));
+        if (look === AURA_LOOK.resonance) {
+          const t = resonanceClock(seconds, w.seed), kin = Math.max(0, Math.min(1, Number.isFinite(w.kindle) ? w.kindle : 1));
+          gl.uniform1fv(U.uResLit, resonanceLitInto(this._resLit, t, kin));
+          gl.uniform1fv(U.uResCap, resonanceCapInto(this._resCap, t, kin));   // AURA DETAIL: the peaks held over them
+        }
         // WIKIMAID: the rabbits and their tracks, node's law on the wearer's own clock - the rabbits farthest first
         if (look === AURA_LOOK.lilacwarren) {
           const t = warrenClock(seconds, w.seed);

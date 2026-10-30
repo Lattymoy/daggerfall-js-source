@@ -1761,7 +1761,8 @@ test('MW-D29: the thread is unbroken - the menu reads the equip table, the build
   // TR2: the worn read lives in weaponRig's opts home now; the menu
   // reaches it through buildArmsFor (swept in the MW-D27 pin above).
   const rig = readFileSync('src/combat/weapon/weaponRig.js', 'utf8');
-  assert.match(rig, /armor: dfWornEquipment\(equipTableOf\(entity\), EQUIP_SLOTS, ARMOR_ENUM\)/);
+  // PIN MOVED (CAPE-TOGGLE, 2026-10-29): the table as the body is drawn (systems/capeShown.js) - the worn one, a hidden cloak left out
+  assert.match(rig, /armor: dfWornEquipment\(drawnEquipTable\(entity\), EQUIP_SLOTS, ARMOR_ENUM\)/);
   // and the readout itself: armor slots in, shields from hands, a
   // sword in a hand refused.
   const slots = []; slots[12] = { templateIndex: ARMOR_ENUM.Helm, material: 2 };
@@ -1955,7 +1956,8 @@ test('MW-D32: setWorn is one key compare per frame, and a change rebuilds throug
 
 test('MW-D32: the per-frame read in weaponRig hands the rig its worn list', () => {
   const rig = readFileSync('src/combat/weapon/weaponRig.js', 'utf8');
-  assert.match(rig, /fpArm\.setWorn\(dfWornEquipment\(equipTableOf\(entity\), EQUIP_SLOTS, ARMOR_ENUM\)\)/,
+  // PIN MOVED (CAPE-TOGGLE, 2026-10-29): the table as the body is drawn (systems/capeShown.js) - the worn one, a hidden cloak left out
+  assert.match(rig, /fpArm\.setWorn\(dfWornEquipment\(drawnEquipTable\(entity\), EQUIP_SLOTS, ARMOR_ENUM\)\)/,
     'the game no longer dresses the rig from the equip table');
   const arm = readFileSync('src/combat/fpArm.js', 'utf8');
   assert.match(arm, /return this\.build\(\{ \.\.\.lastBuildOpts, armor: pieces, weapon: lastBuildOpts\.weapon \}\);/,
@@ -2481,7 +2483,9 @@ test('MW-D36: the pack takes the model only when it stands, and never lets the m
 
 test('AUDIT 33: the figure stands in ANY view, through the one upload, at a quantised yaw', () => {
   const arm = readFileSync('src/combat/fpArm.js', 'utf8');
-  const fig = arm.slice(arm.indexOf('    figure({ yaw = 0, height = 384 } = {}) {'), arm.indexOf('    figure({ yaw = 0, height = 384 } = {}) {') + 2600);
+  // PIN MOVED (PROFILE-SLOTS): the figure's posing is posePortrait's, which figure() and the profile's stage() share
+  assert.match(arm.slice(arm.indexOf('    figure({ yaw = 0, height = 384 } = {}) {')), /^ {4}figure\(\{ yaw = 0, height = 384 \} = \{\}\) \{\n {6}if \(!posePortrait\(\)\) return null;/);
+  const fig = arm.slice(arm.indexOf('  function posePortrait() {'), arm.indexOf('  function posePortrait() {') + 2600);
   // F1: the inventory opens from first person; the figure must not
   // demand the wheel's view mode or a mesh only the wheel uploads.
   assert.ok(!/thirdActive\(\)/.test(fig), 'the figure gates on the wheel being active');
@@ -2830,7 +2834,8 @@ test('PX25: a worn change during a rebuild is applied when the build settles, no
 test('PX25: the pack hands the rig the worn table on every refresh', () => {
   const pack = readFileSync('src/ui/enhanced/enhancedInventory.js', 'utf8');
   const refresh = pack.slice(pack.indexOf('const refresh = () => {'), pack.indexOf('const refresh = () => {') + 1400);
-  assert.match(refresh, /arm\.setWorn\(dfWornEquipment\(equipTableOf\(deps\.entity\), EQUIP_SLOTS, ARMOR_ENUM\)\)/,
+  // PIN MOVED (CAPE-TOGGLE, 2026-10-29): the table as the body is drawn (systems/capeShown.js) - the worn one, a hidden cloak left out
+  assert.match(refresh, /arm\.setWorn\(dfWornEquipment\(drawnEquipTable\(deps\.entity\), EQUIP_SLOTS, ARMOR_ENUM\)\)/,
     'refresh must tell the rig what is worn');
   const src = readFileSync('src/combat/fpArm.js', 'utf8');
   assert.match(src, /if \(busy\) \{ pendingWorn = pieces; return false; \}/);
@@ -3190,7 +3195,8 @@ test('PX26 F1/F2/F3: the menu figure carries the hand, instantly, and a mid-buil
   // F1: the portrait shows the weapon whether or not it is drawn
   // PIN MOVED (TWO-HANDS AUDIT): the window 3000 -> 3400 - the portrait poses a carried pair with both arms up (its
   // `mirror:`) and flags the left hand's blade, which moved the flag lines past the old edge
-  const fig = arm.slice(arm.indexOf('    figure({ yaw = 0, height = 384 } = {}) {'), arm.indexOf('    figure({ yaw = 0, height = 384 } = {}) {') + 3400);
+  // PIN MOVED (PROFILE-SLOTS): figure()'s posing and flags are posePortrait's (figure() opens with it - AUDIT 33's pin)
+  const fig = arm.slice(arm.indexOf('  function posePortrait() {'), arm.indexOf('  function posePortrait() {') + 3400);
   assert.match(fig, /if \(r\.slot === 'weapon'\) r\.hidden = false;/, 'a paperdoll shows what you carry, drawn or not');
   assert.match(fig, /else if \(r\.slot === 'arrow'\) r\.hidden = !arrowShown;/, 'the arrow still follows its shoot keys');
   // F2: the pack hands the rig the hand as well as the worn table
@@ -3288,7 +3294,7 @@ test('PX29: the movement rate divides by the PLAYING clip\u2019s own velocity (M
 // says what it is (the lesson of the nine dead probes, bible/09-Testing/Testing-Rows-2026-10-19.md).
 test('PX32: the inventory figure poses the body before it uploads it', () => {
   const arm = readFileSync('src/combat/fpArm.js', 'utf8');
-  const start = arm.indexOf('    figure({ yaw = 0, height = 384 } = {}) {');
+  const start = arm.indexOf('  function posePortrait() {');   // PIN MOVED (PROFILE-SLOTS): figure()'s posing, shared with stage()
   const fig = arm.slice(start, start + 3000);
   const pose = fig.indexOf('poseAssembly(t.arm');
   const upload = fig.indexOf('uploadThirdMesh(t);');

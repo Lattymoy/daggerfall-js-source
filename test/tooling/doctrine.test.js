@@ -481,15 +481,6 @@ const PUBLIC_ALLOWLIST = new Map([
   ['vendor/climates-calories/Textures/539_0-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - the waterskin"],
   ['vendor/climates-calories/Textures/50_7-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - the tent's canvas (SURV-TENT)"],
   ['vendor/climates-calories/Textures/67_10-0.png', "THIRD-PARTY - Climates & Calories 1.7.1 (Ralzar), carried on the author's permission (relayed by Mac); the mod's own pixel art - the tent's pole (SURV-TENT)"],
-  // DS1 (2026-09-25): DETAILED SHIPS 1.0.0 (Cliffworms) - the four of its
-  // thirteen pictures that NO classic record is, measured against every
-  // record of every TEXTURE file at every offset (tools/detailedShipsAssets.mjs);
-  // the nine that are classic records ship as specs over the player's
-  // own (Textures/derived.json), never as pixels.
-  ['vendor/detailed-ships/Textures/1210_10-0.png', "THIRD-PARTY - Detailed Ships 1.0.0 (Cliffworms), carried under the author's readme ('may be distributed ... as long as I am credited'); the author's own 7x15 drawing - a green bottle"],
-  ['vendor/detailed-ships/Textures/1210_11-0.png', "THIRD-PARTY - Detailed Ships 1.0.0 (Cliffworms), carried under the author's readme ('may be distributed ... as long as I am credited'); the author's own 7x15 drawing - a blue bottle"],
-  ['vendor/detailed-ships/Textures/1210_12-0.png', "THIRD-PARTY - Detailed Ships 1.0.0 (Cliffworms), carried under the author's readme ('may be distributed ... as long as I am credited'); the author's own 7x15 drawing - an amber bottle"],
-  ['vendor/detailed-ships/Textures/1230_30-0.png', "THIRD-PARTY - Detailed Ships 1.0.0 (Cliffworms), carried under the author's readme; the Kynareth statue the readme credits to King of Worms and Zoran ('for the deity statues'), credited beside him"],
   // FOEBAR1 (2026-09-17): THE TARGET BAR'S BLADE FACE. Two pictures a
   // friend of Mac's drew for this port and sent through him to be its
   // alternate enemy health bar - a twin-bladed shape with a skull hub,
@@ -869,7 +860,8 @@ const PUBLIC_ALLOWLIST = new Map([
   ['src/assets/horse/hair.png', "SUPPLIED - the owner's mane and tail picture for the Courser's nine alpha cards (COATS3D, 2026-10-11), 512x512 RGBA, as sent - no ARENA2 pixel in it"],
   // DWARVEN-DRAGON (2026-10-28): the staff's clockwork dragon's ninety sprites, archive 1800 - our own three.js renders of
   // our own model, posed by the werewolf's joint directions (no Morrowind or ARENA2 pixel; src/characters/dwarvenDragon.js).
-  ...dwarvenDragonSpriteEntries({ fetchBytes: async () => new Uint8Array(0) }).map((e) => [`public/${DWARVEN_DRAGON_ART}${e.fileName}.png`,
+  // PIN MOVED (DRAGON7): the files that ship alone - the Aetherbright's archive 1801 is these under its palette, no file of its own
+  ...dwarvenDragonSpriteEntries({ fetchBytes: async () => new Uint8Array(0) }).filter((e) => e.archive === 1800).map((e) => [`public/${DWARVEN_DRAGON_ART}${e.fileName}.png`,
     "OURS - the Dwarven Dragon's sprite (DWARVEN-DRAGON, 2026-10-28), rendered from our own model, 471x262 indexed"]),
   // DRAGON-RIDE (2026-10-28): the saddle drawn over an Admin's view on the dragon - our own model's rider view again
   ...SADDLE_PICTURES.map((n) => [`public/${DWARVEN_DRAGON_ART}${n}.png`, "OURS - the Dwarven Dragon's saddle view (DRAGON-RIDE, 2026-10-28), rendered from our own model, 320x97 indexed"]),

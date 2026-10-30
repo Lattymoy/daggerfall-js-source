@@ -44,6 +44,7 @@ import { drawRigSpriteBox } from '../../src/render/characterSprite.js';
 import { perspective, lookAt } from '../../src/world/mat4.js';
 import { FEATURES } from '../../src/systems/features.js';
 import { fixtureBodyDeps, countingRenderer } from '../fixtures/mw/bodyRig.mjs';
+import { SESSION_KEY } from '../../src/net/accountClient.js';   // ARMORY: law 7 reads the kit off the stored session
 
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
@@ -224,18 +225,19 @@ test('WEAPON-GLOW1: a spec is built once a look and level - the frame asks and a
   assert.equal(WG.glowSpec('poison', 1), null, 'no element but the blow\'s three and the arcane');
   for (const level of [0, 4, 1.5, '2', null, undefined, -1]) assert.equal(WG.glowSpec('fire', level), null, `level ${String(level)}`);
   assert.equal(WG.glowSpec('hasOwnProperty', 1), null, 'no prototype key is a look');
-  assert.deepEqual(WG.GLOW_LOOKS, ['none', 'fire', 'frost', 'shock', 'arcane']);
-  for (const look of ['fire', 'frost', 'shock', 'arcane']) {
+  assert.deepEqual(WG.GLOW_LOOKS, ['none', 'fire', 'frost', 'shock', 'arcane', 'brand', 'edge']);   // PIN MOVED (ARMORY): the Aura Armory's two weapon pieces
+  for (const look of ['fire', 'frost', 'shock', 'arcane', 'brand', 'edge']) {
     const r = WG.GLOW_RAMPS[look];
     assert.equal(r.length, 4);
     const lum = (c) => 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2];
     for (let i = 1; i < 4; i++) assert.ok(lum(r[i]) > lum(r[i - 1]), `${look}: the ramp climbs, dark to hot`);
   }
-  // AUDIT WEAPON-GLOW LAW-7 / NET-4: the specs' words are EXACTLY the words the wire's pattern takes - ten
+  // AUDIT WEAPON-GLOW LAW-7 / NET-4: the specs' words are EXACTLY the words the wire's pattern takes - ten; PIN MOVED
+  // (ARMORY): twelve, the Aura Armory's Brand and Edge at their one strength
   const words = [];
   for (const look of WG.GLOW_LOOKS) for (let l = 0; l <= 4; l++) words.push(`${look}${l}`);
   const specWords = words.filter((w) => WG.glowFromWord(w));
-  assert.equal(specWords.length, 10);
+  assert.equal(specWords.length, 12);
   assert.deepEqual(words.filter((w) => LOOK_GLOW_RE.test(w)), specWords);
   for (const w of specWords) assert.equal(WG.glowWord(WG.glowFromWord(w)), w, 'the word reads back to itself');
   for (const bad of [null, 3, '', 'FIRE1', 'fire1 ']) assert.equal(WG.glowFromWord(bad), null);
@@ -256,9 +258,10 @@ test('WEAPON-GLOW1: the classic hand swings the PLAIN sheet while an element sho
   assert.equal(atlasFileName(it, 'WEAPON04.CIF', true), 'LONGSWORDMAGIC.CIF');
   // the rig: one ask a frame, the art's type and key and loader all off it, the clone told the plain set
   const rig = strip(read('src/combat/weapon/weaponRig.js'));
-  assert.match(rig, /const askHeld = \(\) => \{ heldFor = playerWeapon\.weapon; heldGlow = spriteGlow\(heldFor\); \};/);
+  assert.match(rig, /const askHeld = \(\) => \{ heldFor = heldNow\(\); heldGlow = spriteGlow\(heldFor\); \};/);   // PIN MOVED (HAND-WRAPS, AUDIT C): the held weapon, else the fist's wraps
+  assert.match(rig, /const heldNow = \(\) => playerWeapon\.weapon \?\? playerWeapon\.wraps \?\? null;/);
   assert.match(rig, /const glowOf = \(item\) => \(item && item === heldFor \? heldGlow : spriteGlow\(item\)\);/, 'the weapon it was asked of, never another\'s');
-  assert.match(rig, /const heldGlowNow = \(\) => \{ if \(playerWeapon\.weapon !== heldFor\) askHeld\(\); return heldGlow; \};/);
+  assert.match(rig, /const heldGlowNow = \(\) => \{ if \(heldNow\(\) !== heldFor\) askHeld\(\); return heldGlow; \};/);   // PIN MOVED (HAND-WRAPS, AUDIT C): asked again when the held item, the wraps included, changes
   assert.match(rig, /syncWorn\(\);[^\n]*\n\s*askHeld\(\);/, 'asked once a frame, after the hand is synced');
   assert.match(rig, /const heldType = \(item\) => \(glowOf\(item\) \? plainWeaponType\(weaponTypeForItem\(item\)\) : weaponTypeForItem\(item\)\);/);
   assert.match(rig, /const plain = !!glowOf\(held\);\s*const type = heldType\(held\);/);   // PIN MOVED (APPEARANCES): the weapon held is `held` - its glow and its type the piece's own, its art the look it wears (drawnPiece)
@@ -266,11 +269,13 @@ test('WEAPON-GLOW1: the classic hand swings the PLAIN sheet while an element sho
   assert.match(rig, /loadFpsWeaponArt\(fetchBytes, palette, renderer, type, item\?\.material \?\? 0, item, \{ plain \}\)/);
   // PIN MOVED (TWO-HANDS): a clone's frame is built per hand's item (weaponRig.js cloneFrame - the one hand's, or each of
   // a pair's), its set and outline that item's own
-  assert.match(rig, /weaponType: heldType\(item\), material: drawnPiece\(item\)\?\.material \?\? -1, glow: glowOf\(item\),/, 'the clone told the set and the outline');   // PIN MOVED (APPEARANCES): the metal the look's
+  // PIN MOVED (HAND-WRAPS, AUDIT C2): a bare fist's clone its wraps' outline
+  assert.match(rig, /weaponType: heldType\(item\), material: drawnPiece\(item\)\?\.material \?\? -1, glow: item \? glowOf\(item\) : handGlowOf\(hand\),/, 'the clone told the set and the outline');   // PIN MOVED (APPEARANCES): the metal the look's
   // PIN MOVED (PISTOLET): the frame drawn through the hand's mirror (`uv`), each pistol of a pair outlined by its own
   // glow, and the field in the art's NATIVE pixels - the Thunderlock's union box, the Pistolet's own texture size (AUDIT
   // PISTOLET B4: its union box is in design pixels)
-  assert.match(rig, /renderer\.drawScreenQuad\(tex, rect, uv, lit \?\? undefined\);\s*const elementGlow = hand \? glowOf\(playerWeapon\.handItem\(hand\)\) : heldGlowNow\(\);[^\n]*\n\s*if \(elementGlow\) renderer\.drawScreenQuadGlow\?\.\(tex, rect, uv, elementGlow, \{ art: art\.native \? \[art\.native\.w, art\.native\.h\] : \[art\.unionBox\.w, art\.unionBox\.h\], view: \[canvas\.width, canvas\.height\] \}\);/, 'the Thunderlock\'s frame, then its outline - in its art\'s native pixels');
+  // PIN MOVED (HAND-WRAPS, AUDIT C2): a hand's outline its item's, or a bare fist's wraps' (weaponRig.js handGlowOf)
+  assert.match(rig, /renderer\.drawScreenQuad\(tex, rect, uv, lit \?\? undefined\);\s*const elementGlow = hand \? handGlowOf\(hand\) : heldGlowNow\(\);[^\n]*\n\s*if \(elementGlow\) renderer\.drawScreenQuadGlow\?\.\(tex, rect, uv, elementGlow, \{ art: art\.native \? \[art\.native\.w, art\.native\.h\] : \[art\.unionBox\.w, art\.unionBox\.h\], view: \[canvas\.width, canvas\.height\] \}\);/, 'the Thunderlock\'s frame, then its outline - in its art\'s native pixels');
   // PIN MOVED (SPELL-HAND): the sprite's offset is the climb's (`offsetHeight`, built once on the line above) less the
   // spell hand's guard (was: `weaponOffsetHeight() - climbDrop(...)` inline); the glow did not move
   // AUDIT SPELL-HAND L5-9: one pin, in order - the climb's offset, the guard's drop off it, the sprite drawn at their difference
@@ -774,4 +779,30 @@ test('WEAPON-GLOW1: a peer\'s body wears the word off the look NOW - the hand in
   // a weapon identified or socketed is a new look with the same template in the same hand: the word follows it
   pb._arm(b(), { wd: 1, an: 0, cn: 0 }, { ...LOOK, items: [{ ...right, glow: 'fire3' }, left] });
   assert.equal(said.at(-1)[0], WG.glowSpec('fire', 3));
+});
+
+test('WEAPON-GLOW1 law 7 (ARMORY): the Aura Armory\'s weapon piece on every hand of mine - after the element, which is the blow\'s truth, and before the arcane look; no weapon piece, no look (mutants: the piece over the element; the arcane over the piece; the edge read as the brand)', () => {
+  on();
+  assert.deepEqual([WG.armoryWeaponLook('0000a'), WG.armoryWeaponLook('0000b'), WG.armoryWeaponLook('a0000'), WG.armoryWeaponLook(null)], ['brand', 'edge', null, null]);
+  const was = globalThis.localStorage, m = new Map();
+  globalThis.localStorage = /** @type {any} */ ({ getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k), key: () => null, get length() { return m.size; } });
+  try {
+    m.set(SESSION_KEY, JSON.stringify({ id: 'u1', name: 'Me', kind: 'linked', sessionId: 's1', secret: 'x', glyphs: [], armory: 'b000a' }));
+    const plain = sword();
+    assert.deepEqual(WG.meshGlow(plain, { on: true }), WG.glowSpec('brand', WG.ARMORY_LEVEL), 'the Morrowind hand');
+    assert.deepEqual(WG.spriteGlow(plain, { on: true }), WG.glowSpec('brand', WG.ARMORY_LEVEL), 'the classic hand\'s outline');
+    const hidden = mintRare();
+    LR.setGem(hidden, 'ruby');
+    hidden.isIdentified = false;
+    assert.deepEqual(WG.meshGlow(hidden, { on: true }), WG.glowSpec('brand', WG.ARMORY_LEVEL), 'the piece before the arcane');
+    hidden.isIdentified = true;
+    assert.equal(WG.meshGlow(hidden, { on: true }).look, 'fire', 'the element first');
+    assert.equal(WG.meshGlow(plain, { on: false }), null, 'the switch off, nothing');
+    m.set(SESSION_KEY, JSON.stringify({ id: 'u1', name: 'Me', kind: 'linked', sessionId: 's1', secret: 'x', glyphs: [], armory: 'b000b' }));
+    assert.equal(WG.meshGlow(plain, { on: true }).look, 'edge', 'a wear since is read at the next ask');
+    m.set(SESSION_KEY, JSON.stringify({ id: 'u1', name: 'Me', kind: 'linked', sessionId: 's1', secret: 'x', glyphs: [], armory: 'b0000' }));
+    assert.equal(WG.meshGlow(plain, { on: true }), null, 'no weapon piece, no look');
+  } finally {
+    if (was === undefined) delete globalThis.localStorage; else globalThis.localStorage = was;
+  }
 });

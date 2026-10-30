@@ -350,7 +350,8 @@ The bounty host reports every bounty it pays, with its board's region (`scenes/b
 service answers it, and asked again on the pump's beat, as the professions book keeps its acts. A refusal for good
 (`hunt-tier`, `hunt-id`) lets it go; a lost network, a seat this tab does not hold, a rate or no session on the device
 keeps it (HUNT_KEEP). An account's full day keeps it until the service's UTC day turns (12.10). A report past the
-clock's window is never kept. The state is read again every two minutes, and its answer redraws an open board.
+clock's window is never kept. The state is read again every ten minutes (HUNT-LEAN, `11-Multiplayer/Scale-Arc.md`),
+and its answer redraws an open board.
 
 ### 12.3 The rank
 
@@ -506,7 +507,7 @@ written under an offline id before INT16's seat) counted as a living Master. A M
 the crafting writs read it (`craftWrits.js` ranksOf), alone and in a batch. MEASURED and bounded: the Marks of Mastery's
 clears read visited every hunt row of the account on each mint, wardrobe read and board row (SQLite's steps grew with
 the rows: 5,000 at 1,000 clears, 250,000 at 50,000). It stops at the top title's 750 now (`hunts.js` CLEARS_READ),
-flat past it. NOT CHANGED, named: the hunter's own state read (`huntStateOf`, every two minutes on an open board and each
+flat past it. NOT CHANGED, named: the hunter's own state read (`huntStateOf`, every ten minutes on an open board and each
 clear) counts the character's and the account's rows whole; a counter is a migration this lane was not given.
 
 **F8 and G3: the record's numbers.** `11-Multiplayer/Seats-Arc.md` 4.2's row names migration 0182; the Trophy Hunter's
@@ -522,3 +523,17 @@ Pins: the tests and mutant records above, each named for its finding (`AUDIT-F*`
 `tools/mutants/huntersmark.json`). PIN MOVED: the ceiling's 48 (the law's test), the traits' line (the window's test),
 six records of this slice re-aimed by content; `mail1.test.js`'s D1 harness gained D1's own `batch`. The account service changed (ACCOUNT_VERSION at the merge); the relay
 and the wire did not.
+
+## 14. GRAVE-PACK - a graveyard's hunt stands at its graveyard (FB1029, 2026-10-29)
+
+A graveyard's hunt stands its pack in the open air, through the camp's stand (`scenes/world.js` _standCampEncounter).
+That stand refused any spot in a location's rect (DISC19-F), and the graveyard's own rect runs a block past its walls,
+so from its door or its grounds nothing ever stood, and from a fast travel's arrival one try in six (the Crypts of
+Wickfield).
+Now the board hands the stand the hunt's own pixel (`scenes/bountyHost.js` packTick, `place`), and that location's
+rect is not refused (`_inAnyLocationRect`'s `own`). Every other location's rect, a town's among them, still is, and a
+hunt on open ground hands no place.
+
+A pack stood outside is judged by the street's pool in every mode (`foePool`'s `open`), so a trip down into the crypt
+keeps it while its beasts stand, and lets it go when they were handed off at the door. Its beasts carry the place (`bountyPlace`), so WILD-ALERT treats them as wild foes: the mark, the fast traveller's
+gate and the stealth check. Record: `01-Overview/bugs/Field-Bugs-2026-10-29b.md`; AUDIT FB1029 B1-B4.

@@ -2,8 +2,8 @@
   {
     "name": "ETHER-STRAND-the-far-boat-shown",
     "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "    if (boat.inside || (boat.MapPixel != null && pixelsApart(deps.currentMapPixel(), boat.MapPixel) > 1)) {",
-    "new": "    if (boat.inside || (boat.MapPixel != null && pixelsApart(deps.currentMapPixel(), boat.MapPixel) > 1e9)) {",
+    "old": "pixelOf(boat)) > 1) {   // NO-PIXEL",
+    "new": "pixelOf(boat)) > 1e9) {   // NO-PIXEL",
     "tests": [
       "test/systems/comeSailAway/fb1012d_etherstrand.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "ETHER-STRAND-the-loaded-far-boat-shown",
     "file": "src/systems/comeSailAway/comeSailAway.js",
-    "old": "      if (allBoat2.inside || (allBoat2.MapPixel != null && pixelsApart(deps.currentMapPixel(), allBoat2.MapPixel) > 1)) {",
-    "new": "      if (allBoat2.inside || (allBoat2.MapPixel != null && pixelsApart(deps.currentMapPixel(), allBoat2.MapPixel) > 1e9)) {",
+    "old": "pixelOf(allBoat2)) > 1) {",
+    "new": "pixelOf(allBoat2)) > 1e9) {",
     "tests": [
       "test/systems/comeSailAway/fb1012d_etherstrand.test.js"
     ]

@@ -37,7 +37,7 @@ import { isOnlinePage } from '../systems/online/onlineLane.js';   // DEATH4: the
 import { stateDeathLoss, deathGoldLoss, deathPenaltyLine } from '../systems/deathPenalty.js';   // DEATH-PENALTY: the screen says what the respawn is about to take
 import { isCasual } from '../systems/legacy/casual.js';   // CASUAL-LIFE: a Casual death states no loss
 import { goldPiecesOf } from '../systems/inventory.js';   // DEATH-PENALTY: the purse the loss is read off
-import { wildDeath, wildDeathLines, WILD_DEATH_HOLD_S } from '../systems/wild/wildZone.js';   // WILD1: a death in the open zone holds two minutes, Enter or not
+import { wildDeath, wildDeathLines, wildDeathSlain, WILD_DEATH_HOLD_S } from '../systems/wild/wildZone.js';   // WILD1: a death in the open zone holds two minutes, Enter or not
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 import { t } from '../systems/textManager.js';   // L10N4: the classic face's words in the player's language
 
@@ -62,6 +62,9 @@ const hintText = (hint) => HINT_TEXT[hint]?.() ?? hint;
 // corpse disappears"): the wait is the body's own life on the others' screens (net/remotePlayers.js CORPSE_MS), so a
 // player who waits it out rises as their body fades, and Enter still rises at once.
 export const ONLINE_RESPAWN_SECONDS = 60;
+/** DEATH-15 (the owner, 2026-10-29: "Change that to 15 second on death", "For both"): online, in the zone too, Enter
+ *  rises after this many seconds; the rest of the minute is for a party member's Resurrect. */
+export const DEATH_RISE_MIN_S = 15;
 
 const DIM = [0.5, 0.5, 0.45, 1];
 
@@ -209,14 +212,16 @@ export class DeathScreen {
   /** DEATH6 / WILD1: the online wait - the body's minute, or the zone's two. WILD-REJOIN: less what a death the referee
    *  told this page of had lain before it came back (systems/wild/wildZone.js `served`). */
   get holdSeconds() { return this.wild ? WILD_DEATH_HOLD_S - (this.wild.served ?? 0) : ONLINE_RESPAWN_SECONDS; }
+  /** DEATH-15: may Enter rise now? Offline always; online once the minimum has passed (a rejoin's served time counts). */
+  get canRise() { return !this.online || this.clock + (this.wild?.served ?? 0) >= DEATH_RISE_MIN_S; }
   /** DEATH4: whole seconds left before an online respawn, or null offline. */
   get respawnIn() {
     if (!this.online) return null;
     return Math.max(0, Math.ceil(this.holdSeconds - this.clock));
   }
   input(action) {
-    // ENTER ends the run now; the sequence's own reset is the timer. WILD1: not in the open zone - the dead wait there
-    if (action === 'confirm' && !this.wild) this.sequence.tick(DEATH_TIME_BEFORE_RESET + 1);
+    // ENTER ends the run now; the sequence's own reset is the timer. DEATH-15: online only after the minimum, zone or not
+    if (action === 'confirm' && this.canRise) this.sequence.tick(DEATH_TIME_BEFORE_RESET + 1);
   }
   draw(renderer, canvas, font, s) {
     // FadeHUDToBlack over the death: the world dims to black behind
@@ -230,11 +235,11 @@ export class DeathScreen {
     if (isEnhanced() && typeof document !== 'undefined') { drawEnhancedDeath(this, fade); return; }
     const died = t('death.title', 'YOU HAVE DIED');
     drawText(renderer, font, died, (canvas.width - measureText(font.fnt, died) * s) / 2, canvas.height / 2 - 10 * s, s, [0.9, 0.2, 0.15, 1]);
-    const hint = this.online ? (this.wild ? t('death.risingInWild', 'RISING IN {n}', { n: this.respawnIn }) : t('death.risingIn', 'RISING IN {n}   ENTER now', { n: this.respawnIn })) : hintText(this.rises ? riseHint(this.hint) : this.hint);   // WILD1: no Enter in the zone   // AUDIT CONTRIB A5: the hold said out loud, as the enhanced face's "Rising in"   // BAL4: a Legacy rise's Enter raises
+    const hint = this.online ? (!this.canRise ? t('death.risingInWild', 'RISING IN {n}', { n: this.respawnIn }) : t('death.risingIn', 'RISING IN {n}   ENTER now', { n: this.respawnIn })) : hintText(this.rises ? riseHint(this.hint) : this.hint);   // DEATH-15: Enter said once it rises   // AUDIT CONTRIB A5: the hold said out loud, as the enhanced face's "Rising in"   // BAL4: a Legacy rise's Enter raises
     drawText(renderer, font, hint, (canvas.width - measureText(font.fnt, hint) * s) / 2, canvas.height / 2 + 6 * s, s, DIM);
     // WILD1: the zone's lines on the classic face, under the hold (the enhanced face draws its own)
     let wy = canvas.height / 2 + (this.goldLoss > 0 ? 38 : 22) * s;
-    for (const l of wildDeathLines(this.wild)) {
+    for (const l of [wildDeathSlain(this.wild), ...wildDeathLines(this.wild)].filter(Boolean)) {   // PVP-HUD: "Slain by" first
       const up = l.toUpperCase();
       drawText(renderer, font, up, (canvas.width - measureText(font.fnt, up) * s) / 2, wy, s, [0.85, 0.35, 0.25, 1]);
       wy += 12 * s;

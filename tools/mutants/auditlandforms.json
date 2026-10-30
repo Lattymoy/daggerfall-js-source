@@ -424,8 +424,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-liftfield-blend-to-zero",
     "file": "src/world/landforms.js",
-    "old": "blendLocationTerrain(field, sum / field.length, locationRect, hDim, classic, true);",
-    "new": "blendLocationTerrain(field, 0, locationRect, hDim, classic, true);",
+    "old": "blendLocationTerrain(field, sum / field.length, locationRect, hDim, unmet?.classic ?? classic, true, unmet?.field);",
+    "new": "blendLocationTerrain(field, 0, locationRect, hDim, unmet?.classic ?? classic, true, unmet?.field);",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -554,8 +554,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-liftAt-memo-blind-to-rect",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "const key = `${px},${py},${rect ? `${rect.xMin},${rect.xMax},${rect.yMin},${rect.yMax}` : '-'},${terrainGen.roads() ? 1 : 0},${before ? 'before' : beyondSites.generation()}`;",
-    "new": "const key = `${px},${py},${terrainGen.roads() ? 1 : 0},${before ? 'before' : beyondSites.generation()}`;",
+    "old": "const key = `${px},${py},${rect ? `${rect.xMin},${rect.xMax},${rect.yMin},${rect.yMax}` : '-'},${terrainGen.roads() ? 1 : 0},${before ? 'before' : beyondSites.generation()},${aboutKey(about)}`;",
+    "new": "const key = `${px},${py},${terrainGen.roads() ? 1 : 0},${before ? 'before' : beyondSites.generation()},${aboutKey(about)}`;",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js",
@@ -912,7 +912,7 @@
   {
     "name": "AUDIT-LANDFORMS-D3-classic-unblended",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "    if (classic) blendLocationTerrain(classic, flat?.classic ?? calcAvgMaxHeight(classic)[0], locationRect, HEIGHTMAP_DIMENSION, ground ?? classic);\n",
+    "old": "    if (classic) blendLocationTerrain(classic, flat?.classic ?? calcAvgMaxHeight(unmet?.classic ?? classic)[0], locationRect, HEIGHTMAP_DIMENSION, ground ?? classic, false, unmet?.classic);\n",
     "new": "",
     "tests": [
       "test/systems/landform.test.js",
@@ -922,8 +922,8 @@
   {
     "name": "AUDIT-LANDFORMS-D3-classic-blended-to-the-shaped-mean",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "if (classic) blendLocationTerrain(classic, flat?.classic ?? calcAvgMaxHeight(classic)[0], locationRect, HEIGHTMAP_DIMENSION, ground ?? classic);",
-    "new": "if (classic) blendLocationTerrain(classic, avg, locationRect, HEIGHTMAP_DIMENSION, ground ?? classic);",
+    "old": "if (classic) blendLocationTerrain(classic, flat?.classic ?? calcAvgMaxHeight(unmet?.classic ?? classic)[0], locationRect, HEIGHTMAP_DIMENSION, ground ?? classic, false, unmet?.classic);",
+    "new": "if (classic) blendLocationTerrain(classic, avg, locationRect, HEIGHTMAP_DIMENSION, ground ?? classic, false, unmet?.classic);",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -968,8 +968,8 @@
   {
     "name": "AUDIT-LANDFORMS-C4-rivers-unnamed",
     "file": "src/ui/enhanced/enhancedMenu.js",
-    "old": "ground: roads, rivers, camp sites,",
-    "new": "ground: roads, camp sites,",
+    "old": "ground: roads, rivers, camp sites and",
+    "new": "ground: roads, camp sites and",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]
@@ -997,8 +997,8 @@
   {
     "name": "AUDIT-LANDFORMS-B2-wild-memo-blind-to-the-sample",
     "file": "src/world/landforms.js",
-    "old": "      const k = x * hDim + y;\n      let v = memo.get(k);\n      if (v === undefined) memo.set(k, v = (Math.fround(shaped(x, y))",
-    "new": "      const k = x;\n      let v = memo.get(k);\n      if (v === undefined) memo.set(k, v = (Math.fround(shaped(x, y))",
+    "old": "      const k = x * hDim + y;\n      let v = memo.get(k);\n      if (v === undefined) memo.set(k, v = (lifted(ms, x, y, Math.fround(shaped(x, y)))",
+    "new": "      const k = x;\n      let v = memo.get(k);\n      if (v === undefined) memo.set(k, v = (lifted(ms, x, y, Math.fround(shaped(x, y)))",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -1008,7 +1008,7 @@
   {
     "name": "AUDIT-LANDFORMS-B2-host-hands-no-landforms",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "landformLiftField(host.woods, px, py, rect, HEIGHTMAP_DIMENSION, landformsHere({ before }))",
+    "old": "landformLiftField(host.woods, px, py, rect, HEIGHTMAP_DIMENSION, landformsHere({ before }), about)",
     "new": "landformLiftField(host.woods, px, py, rect)",
     "tests": [
       "test/systems/landform.test.js",
@@ -1019,8 +1019,8 @@
   {
     "name": "AUDIT-LANDFORMS-B2-field-blind-to-the-network",
     "file": "src/scenes/groundFrameHost.js",
-    "old": ": '-'},${terrainGen.roads() ? 1 : 0},${before ? 'before' : beyondSites.generation()}`;",
-    "new": ": '-'},${before ? 'before' : beyondSites.generation()}`;",
+    "old": ": '-'},${terrainGen.roads() ? 1 : 0},${before ? 'before' : beyondSites.generation()},${aboutKey(about)}`;",
+    "new": ": '-'},${before ? 'before' : beyondSites.generation()},${aboutKey(about)}`;",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js"
@@ -1537,8 +1537,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-J6-north-row-off",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "    if (!host.woods || !inWorldGrid(px, py)) return 0;",
-    "new": "    if (!host.woods || !inWorldGrid(px, py) || py === 0) return 0;",
+    "old": "    if (!host.woods || !inWorldGrid(px, py)) return 0;   // BAY-LEFT-GROUND: the world's grid",
+    "new": "    if (!host.woods || !inWorldGrid(px, py) || py === 0) return 0;   // BAY-LEFT-GROUND: the world's grid",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ],
@@ -1584,8 +1584,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-J12-wild-not-float32",
     "file": "src/world/landforms.js",
-    "old": "v = (Math.fround(shaped(x, y)) - Math.fround(plain(x, y))) * MAX_TERRAIN_HEIGHT",
-    "new": "v = (shaped(x, y) - plain(x, y)) * MAX_TERRAIN_HEIGHT",
+    "old": "v = (lifted(ms, x, y, Math.fround(shaped(x, y))) - lifted(mp, x, y, Math.fround(plain(x, y)))) * MAX_TERRAIN_HEIGHT",
+    "new": "v = (lifted(ms, x, y, shaped(x, y)) - lifted(mp, x, y, plain(x, y))) * MAX_TERRAIN_HEIGHT",
     "tests": [
       "test/world/terrain/auditlandforms.test.js"
     ]

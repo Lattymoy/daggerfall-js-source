@@ -291,9 +291,9 @@ test('TESA13 the marks: the hover - the nearest the view inks within CITY_HIT_PX
   assert.equal(tamrielMarkAt(10.5, 5, view, () => [{ x: 10, y: 5, type: T.HomeFarms, name: 'Bay' }], { band: 'near' }), null, 'on the Bay the Bay\'s own reads');
   const ink = buildTamrielInk();
   const text = tamrielPlaceAt(22.5, -19.5, view, ink, { placesIn, band: 'near' });
-  assert.match(text, / : The Sacred Oracle \(temple, beyond the Bay\)$/);
-  assert.match(tamrielPlaceAt(30.5, -19.5, view, ink, { placesIn, band: 'near' }), / : The Gilded Inn \(tavern, beyond the Bay\)$/);
-  assert.match(tamrielPlaceAt(26.5, -19.5, view, ink, { placesIn, band: 'near' }), / : Ashwood \(town, beyond the Bay\)$/, 'MacroHelper.LocationTypeName: a hamlet is a town');
+  assert.match(text, / : The Sacred Oracle \(temple\)$/);   // PIN MOVED (AUDIT TAMRIEL-WIDE D3): the land past the Bay is the world's, named by its province and place alone
+  assert.match(tamrielPlaceAt(30.5, -19.5, view, ink, { placesIn, band: 'near' }), / : The Gilded Inn \(tavern\)$/);
+  assert.match(tamrielPlaceAt(26.5, -19.5, view, ink, { placesIn, band: 'near' }), / : Ashwood \(town\)$/, 'MacroHelper.LocationTypeName: a hamlet is a town');
   assert.doesNotMatch(tamrielPlaceAt(22.5, -19.5, view, ink) ?? '', /Oracle/, 'no atlas: the province\'s answer');
 });
 
@@ -334,7 +334,7 @@ test('TESA13 the host: _locationToBuild\'s order - a capital, an Arena place, th
   assert.match(body('  function lairCloneOf(at, px, py) {'), /const blocks = lairBlocksOf\(at\);/);
   const from = W.indexOf('  function buildTravelMapWindow(extra = {}) {');
   const map = W.slice(from, W.indexOf('      ...extra,', from));
-  assert.match(map, /tamrielPlacesIn: tamrielLand \? pastBayPlacesIn : null,/, 'the one map seam hands the regions\' places');
+  assert.match(map, /tamrielPlacesIn: tamrielLand \? \(x0, y0, x1, y1\) => knownPastBayIn\(x0, y0, x1, y1\) : null,/, 'the one map seam hands the regions\' places - PIN MOVED (AUDIT TAMRIEL-WIDE D2): the known ones');
   assert.match(map, /tamrielPlaceName: tamrielLand \? tamrielPlaceName : null,/, 'and a mark\'s name');
   assert.match(W, /const tamrielPlaceName = \(px, py\) => countryRollAt\(px, py\)\?\.name \?\? lairRollAt\(px, py\)\?\.name \?\? '';/, 'off the one roll');
   assert.doesNotMatch(W, /createTamrielAtlas|tamrielPlacesPending/, 'no second roll on this thread');

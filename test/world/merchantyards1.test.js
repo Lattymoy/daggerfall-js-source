@@ -58,11 +58,11 @@ test('MERCHANT-YARDS THE STOCK: the Stable sells a Horse, the Wagon Yard the Sma
   // and sells a sack of oats; the Wagon Yard a Wagon Repair Kit beside its three - the upkeep's items offline, and online
   // while their switch is on (UPKEEP-ONLINE: on since 2026-10-12 - systems/upkeep/upkeepItemRows.js)
   const s = yardStock('stable');
-  assert.deepEqual(s.map((it) => [it.group, it.templateIndex, it.name]), [...Array(3).fill(['Transportation', TRANSPORT_HORSE, 'Horse']), ['UselessItems2', 1710, 'Sack of Oats']]);
+  assert.deepEqual(s.map((it) => [it.group, it.templateIndex, it.name]), [...Array(3).fill(['Transportation', TRANSPORT_HORSE, 'Horse']), ['UselessItems2', 1710, 'Sack of Oats'], ['UselessItems2', 1712, 'Dwarven Oil']]);   // PIN MOVED (DRAGON5c): and the tamed dragon's oil
   assert.ok(s[0].value > 0 && s[0].maxCondition > 0 && s[0].currentCondition === s[0].maxCondition, 'named, valued and whole, as a shelf\'s row');
   const t = yardStock('transport');
   assert.deepEqual(t.map((it) => [it.templateIndex, it.wagonKind ?? null, it.value]), [[TRANSPORT_SMALL_CART, null, 150], [TRANSPORT_SMALL_CART, 'openWagon', WAGON_KINDS.openWagon.value], [TRANSPORT_SMALL_CART, 'caravan', WAGON_KINDS.caravan.value], [1711, null, 60]]);
-  assert.deepEqual([yardStock('stable', { online: true }), yardStock('transport', { online: true })].map((l) => l.at(-1).templateIndex), [1710, 1711], 'UPKEEP-ONLINE: online the oats and the kits too');
+  assert.deepEqual([yardStock('stable', { online: true }), yardStock('transport', { online: true })].map((l) => l.at(-1).templateIndex), [1712, 1711], 'UPKEEP-ONLINE: online the oats and the kits too');   // PIN MOVED (DRAGON5c): the oil not online until its switch (DWARVEN_OIL_ONLINE)
   assert.notEqual(yardStock('stable')[0], s[0], 'a yard never sells out: each Buy mints its stock afresh');
   assert.deepEqual(yardStock('barn'), []);
 });
@@ -121,7 +121,10 @@ test('MERCHANT-YARDS THE KEEPER: named on the region\'s bank on the town and the
   const banks = [...byBank.values()].filter((rs) => rs.length >= 2);
   assert.ok(banks.length >= 2, 'two banks with two regions each');
   const [[p0, p1], [q0]] = banks;
-  assert.equal(yardKeeper(4242, 'stable', p0).name, yardKeeper(4242, 'stable', p1).name, 'one bank, one keeper');
+  // REGION-NAMES: PIN MOVED - one region, one keeper on every client; two regions of one bank each their own families and
+  // fashions (characters/regionNames.js), so not one keeper any more
+  assert.equal(yardKeeper(4242, 'stable', p0).name, yardKeeper(4242, 'stable', p0).name, 'one region, one keeper');
+  assert.ok(p1 !== p0);
   const differ = [...Array(40).keys()].filter((m) => yardKeeper(m, 'stable', p0).name !== yardKeeper(m, 'stable', q0).name).length;
   assert.ok(differ >= 30, `another bank, another keeper (${differ} of 40)`);
   const seen = new Set(), sexes = new Set();

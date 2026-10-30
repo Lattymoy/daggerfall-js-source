@@ -1,0 +1,272 @@
+[
+  {
+    "name": "PVP-VILLAIN-KEEP-the-fall-step-unwired",
+    "file": "server-account/src/wild.js",
+    "old": "    ...villainFallSteps(ctx.db, sea),   // PVP-VILLAIN-KEEP: the kill's points on its killer, once with the fall\n",
+    "new": "",
+    "tests": [
+      "test/net/pvpvillainkeep.test.js"
+    ]
+  },
+  {
+    "name": "PVP-VILLAIN-KEEP-the-shields-fall-uncounted",
+    "file": "server-account/src/wild.js",
+    "old": "      ...villainFallSteps(ctx.db, sea),   // PVP-VILLAIN-KEEP: a shielded kill is still a kill its killer chose\n",
+    "new": "",
+    "tests": [
+      "test/net/pvpvillainkeep.test.js"
+    ]
+  },
+  {
+    "name": "PVP-VILLAIN-KEEP-the-top-unheld",
+    "file": "server-account/src/villainy.js",
+    "old": "SET villainy = MIN(?3, villainy + ?4)",
+    "new": "SET villainy = villainy + ?4 + 0 * ?3",
+    "tests": [
+      "test/net/pvpvillainkeep.test.js"
+    ]
+  },
+  {
+    "name": "PVP-VILLAIN-KEEP-the-killers-account-unasked",
+    "file": "server-account/src/villainy.js",
+    "old": "villainy + ?4) WHERE id = ?1 AND player = ?2'",
+    "new": "villainy + ?4) WHERE id = ?1 AND ?2 IS NOT NULL'",
+    "tests": [
+      "test/net/pvpvillainkeep.test.js"
+    ]
+  },
+  {
+    "name": "PVP-VILLAIN-KEEP-the-raid-unwired",
+    "file": "server-account/src/raids.js",
+    "old": "    villainRaidStep(db, player.id, character, c.w, nonce),   // PVP-VILLAIN-KEEP: last, so no place above moves\n",
+    "new": "",
+    "tests": [
+      "test/net/pvpvillainkeep.test.js"
+    ]
+  },
+  {
+    "name": "PVP-VILLAIN-KEEP-a-red-raid-counted",
+    "file": "server-account/src/villainy.js",
+    "old": " AND villainy > 0 AND villainy < ?6'",
+    "new": " AND villainy > 0 AND ?6 > 0'",
+    "tests": [
+      "test/net/pvpvillainkeep.test.js"
+    ]
+  },
+  {
+    "name": "PVP-VILLAIN-KEEP-the-raids-floor-gone",
+    "file": "server-account/src/villainy.js",
+    "old": "SET villainy = MAX(0, villainy - ?5)",
+    "new": "SET villainy = villainy - ?5",
+    "tests": [
+      "test/net/pvpvillainkeep.test.js"
+    ]
+  },
+  {
+    "name": "PVP-VILLAIN-KEEP-the-raid-once-unasked",
+    "file": "server-account/src/villainy.js",
+    "old": "    + ' AND EXISTS (SELECT 1 FROM raid_cleanses WHERE raid = ?3 AND account = ?1 AND nonce = ?4)')",
+    "new": "    + ' AND EXISTS (SELECT 1 FROM raid_cleanses WHERE raid = ?3 AND account = ?1 AND ?4 IS NOT NULL)')",
+    "tests": [
+      "test/net/pvpvillainkeep.test.js"
+    ]
+  },
+  {
+    "name": "PVP-VILLAIN-KEEP-the-credit-unbounded",
+    "file": "server-account/src/villainy.js",
+    "old": "Math.min(/** @type {number} */ (vd), Math.trunc(r.credited), VILLAIN_REPORT_DOWN_MAX)",
+    "new": "Math.min(/** @type {number} */ (vd), VILLAIN_REPORT_DOWN_MAX)",
+    "tests": [
+      "test/net/pvpvillainkeep.test.js"
+    ]
+  },
+  {
+    "name": "PVP-VILLAIN-KEEP-the-reports-top-gone",
+    "file": "server-account/src/villainy.js",
+    "old": "Math.trunc(r.credited), VILLAIN_REPORT_DOWN_MAX)",
+    "new": "Math.trunc(r.credited))",
+    "tests": [
+      "test/net/pvpvillainkeep.test.js"
+    ]
+  },
+  {
+    "name": "PVP-VILLAIN-KEEP-the-floor-gone",
+    "file": "server-account/src/villainy.js",
+    "old": "SET villainy = MAX(0, villainy - ?3)",
+    "new": "SET villainy = villainy - ?3",
+    "tests": [
+      "test/net/pvpvillainkeep.test.js"
+    ]
+  },
+  {
+    "name": "PVP-VILLAIN-KEEP-the-report-route-unwired",
+    "file": "server-account/src/index.js",
+    "old": "        await lowerVillainy(ctx, who.player.id, body.character, villainReportDown(body.vd, r));",
+    "new": "",
+    "tests": [
+      "test/net/pvpvillainkeep.test.js"
+    ]
+  },
+  {
+    "name": "PVP-VILLAIN-KEEP-the-meter-unread",
+    "file": "server-account/src/realm.js",
+    "old": "    vl: villainClamp(row.villainy),",
+    "new": "    vl: 0,",
+    "tests": [
+      "test/net/pvpvillainkeep.test.js"
+    ]
+  },
+  {
+    "name": "PVP-VILLAIN-KEEP-the-meter-unsigned",
+    "file": "server-account/src/index.js",
+    "old": "...(fz ? { fz } : {}), ...(rc && facts.vl > 0 ? { vl: facts.vl } : {}) };",
+    "new": "...(fz ? { fz } : {}) };",
+    "tests": [
+      "test/net/pvpvillainkeep.test.js"
+    ]
+  },
+  {
+    "name": "PVP-VILLAIN-KEEP-the-claim-unchecked",
+    "file": "src/net/identityToken.js",
+    "old": "  if (c.vl !== undefined && !(c.rc === 1 && villainyIssuable(c.vl))) return false;",
+    "new": "",
+    "tests": [
+      "test/net/pvpvillainkeep.test.js"
+    ]
+  },
+  {
+    "name": "PVP-VILLAIN-KEEP-the-realms-yes-unasked",
+    "file": "src/net/identityToken.js",
+    "old": "!(c.rc === 1 && villainyIssuable(c.vl))",
+    "new": "!villainyIssuable(c.vl)",
+    "tests": [
+      "test/net/pvpvillainkeep.test.js"
+    ]
+  },
+  {
+    "name": "PVP-VILLAIN-KEEP-the-bounds-unread",
+    "file": "src/net/identityToken.js",
+    "old": "Number.isSafeInteger(vl) && vl >= 1 && vl <= TOKEN_VILLAINY_MAX;",
+    "new": "Number.isFinite(vl);",
+    "tests": [
+      "test/net/pvpvillainkeep.test.js"
+    ]
+  },
+  {
+    "name": "PVP-VILLAIN-KEEP-the-mint-drops-it",
+    "file": "src/net/identityToken.js",
+    "old": "  if (who?.vl !== undefined) claims.vl = who.vl;",
+    "new": "",
+    "tests": [
+      "test/net/pvpvillainkeep.test.js"
+    ]
+  },
+  {
+    "name": "PVP-VILLAIN-KEEP-the-token-unread",
+    "file": "src/net/wild/wildRef.js",
+    "old": "  if (villainClamp(vl) > villainClamp(x.vi)) x.vi = villainClamp(vl);",
+    "new": "",
+    "tests": [
+      "test/net/pvpvillainkeep.test.js"
+    ]
+  },
+  {
+    "name": "PVP-VILLAIN-KEEP-the-smaller-kept",
+    "file": "src/net/wild/wildRef.js",
+    "old": "  if (villainClamp(vl) > villainClamp(x.vi)) x.vi = villainClamp(vl);",
+    "new": "  if (villainClamp(vl) > 0) x.vi = villainClamp(vl);",
+    "tests": [
+      "test/net/pvpvillainkeep.test.js"
+    ]
+  },
+  {
+    "name": "PVP-VILLAIN-KEEP-the-socket-never-carries-it",
+    "file": "src/net/wild/wildRef.js",
+    "old": "({ ci: who.ci, ...(Number.isSafeInteger(who.vl) && who.vl > 0 ? { vl: villainClamp(who.vl) } : {}) })",
+    "new": "({ ci: who.ci })",
+    "tests": [
+      "test/net/pvpvillainkeep.test.js"
+    ]
+  },
+  {
+    "name": "PVP-VILLAIN-KEEP-the-relay-names-it-not",
+    "file": "server/src/index.js",
+    "old": "    if (c.vl) house.vl = c.vl;",
+    "new": "",
+    "tests": [
+      "test/net/pvpvillainkeep.test.js"
+    ]
+  },
+  {
+    "name": "PVP-VILLAIN-KEEP-the-zone-word-unpassed",
+    "file": "server/src/index.js",
+    "old": "carry, died, fl, ed, vl: a.vl ?? 0, sf }",
+    "new": "carry, died, fl, ed, vl: 0, sf }",
+    "tests": [
+      "test/net/pvpvillainkeep.test.js"
+    ]
+  },
+  {
+    "name": "PVP-VILLAIN-KEEP-the-hello-unattached",
+    "file": "server/src/index.js",
+    "old": "? wildTokenAtt(who) : {}), ",
+    "new": "? { ci: who.ci } : {}), ",
+    "tests": [
+      "test/net/pvpvillainkeep.test.js"
+    ]
+  },
+  {
+    "name": "PVP-VILLAIN-KEEP-the-kills-word-unsent",
+    "file": "src/scenes/world.js",
+    "old": "renownTracker.earn(xp, villainMonsterLowers(playerEntity.level, renownFoeLevel(foe)));",
+    "new": "renownTracker.earn(xp);",
+    "tests": [
+      "test/net/pvpvillainkeep.test.js"
+    ]
+  },
+  {
+    "name": "PVP-VILLAIN-KEEP-the-quests-word-unsent",
+    "file": "src/scenes/world.js",
+    "old": "renownTracker.earn(xp, villainQuestLowers());",
+    "new": "renownTracker.earn(xp);",
+    "tests": [
+      "test/net/pvpvillainkeep.test.js"
+    ]
+  },
+  {
+    "name": "PVP-VILLAIN-KEEP-the-pages-bound-gone",
+    "file": "src/net/renownTracker.js",
+    "old": "    const vd = Math.min(vdPend, xp);",
+    "new": "    const vd = vdPend;",
+    "tests": [
+      "test/net/pvpvillainkeep.test.js"
+    ]
+  },
+  {
+    "name": "PVP-VILLAIN-KEEP-the-pages-word-unsent",
+    "file": "src/net/renownTracker.js",
+    "old": "h.rid, h.region, h.vd); } catch { r = { ok: false, error: 'offline' }; }",
+    "new": "h.rid, h.region, 0); } catch { r = { ok: false, error: 'offline' }; }",
+    "tests": [
+      "test/net/pvpvillainkeep.test.js"
+    ]
+  },
+  {
+    "name": "PVP-VILLAIN-KEEP-the-pages-word-uncounted",
+    "file": "src/net/renownTracker.js",
+    "old": "      if (Number.isFinite(vd) && vd > 0) vdPend += Math.trunc(vd);",
+    "new": "",
+    "tests": [
+      "test/net/pvpvillainkeep.test.js"
+    ]
+  },
+  {
+    "name": "PVP-VILLAIN-KEEP-the-client-drops-it",
+    "file": "src/net/accountClient.js",
+    "old": ", ...(vd > 0 ? { vd } : {}) });",
+    "new": " });",
+    "tests": [
+      "test/net/pvpvillainkeep.test.js"
+    ]
+  }
+]

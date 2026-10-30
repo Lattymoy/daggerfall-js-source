@@ -20,6 +20,7 @@
 //
 // Not a DFU member: Daggerfall Unity has no other players. Ledger A (ONLINE).
 import { calculateAttackDamage, baseDamageMax, damageModifier, WEAPON_MATERIAL_MODIFIER } from './formulas.js';
+import { isHandWraps } from '../characters/handWrapsIds.js';   // HAND-WRAPS (AUDIT B): a fist in wraps strikes as the bare hand
 import { weaponDamageMods } from '../systems/entityMods.js';
 import { SWING_MODS, WEAPON_REACH } from './playerWeapon.js';
 import { createWeapon } from './enemyEquipment.js';
@@ -28,8 +29,11 @@ import { liveStat } from '../systems/statMods.js';
 import { offHandToHit, OFF_HAND_BLOW } from './twoHands/handsLaw.js';   // TWO-HANDS (AUDIT): the off hand's terms on a blow between players
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 import { weaponSkillUsed } from '../characters/weapons.js';
+import { pvpArrowScale } from './pvpTriangle.js';   // PVP-TRIANGLE
 import { armorValuesOf } from '../systems/equip.js';   // AUDIT C&C H5: the stand-in's unarmoured table, DFU's own 100s
 import { clawMetalDamage, CLAW_METAL_MAX } from './clawMetal.js';   // AUDIT CLAWS A1: the beast's claws' metal rides the sheet
+import { weaponPastPct } from '../systems/weaponMastery.js';   // PVP-SCALE: the weapon's skill and gear, on a blow at a player
+import { blowRoom } from '../systems/powerCeiling.js';
 import { breakNormalPowerConcealment } from '../systems/concealment.js';   // RPT1026-FIGHTS (STRIKE-UNVEILS): the striker's own concealment, on its blow that lands
 import { DUEL_LEVEL_MAX, DUEL_STAT_MAX, DUEL_SKILL_MAX, DUEL_RACE_MAX, DUEL_TEMPLATE_MAX, DUEL_MATERIAL_MAX, CARD_VITAL_MAX, CAST_EFFECTS_MAX, DUEL_SWINGS } from '../net/wire.js';
 
@@ -64,6 +68,9 @@ const int = (v) => Math.trunc(Number(v) || 0);
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, int(v)));
 const u32 = (v) => { const n = Number(v); return Number.isFinite(n) ? (n >>> 0) : 0; };
 
+/** A body whose health share this machine has no word of (combat/healthShare.js: null - the mean). */
+const UNREAD_SHARE = Object.freeze({ relayHealth: true });
+
 /** The skill a weapon template swings with - HandToHand for no weapon. */
 const skillForTemplate = (t) => (Number.isInteger(t) ? (weaponSkillUsed(t) ?? SKILLS.HandToHand) : SKILLS.HandToHand);
 
@@ -81,13 +88,17 @@ export function duelAttackerOf(entity, weapon = null) {
     cf: [clamp(entity?.career?.attackModifierFlags ?? 0, 0, 255), u32(entity?.career?.weaponArmorShieldsBitfield), u32(entity?.career?.abilityFlagsAndSpellPointsBitfield)],
     h: [clamp(entity?.health ?? 0, 0, CARD_VITAL_MAX), clamp(entity?.maxHealth ?? 1, 1, CARD_VITAL_MAX)],
     cm: clamp(clawMetalDamage(entity), 0, CLAW_METAL_MAX),
+    // PVP-SCALE (the PvP rework, 2026-10-28): the percent the weapon's climb and gear add, as a blow at a foe takes it -
+    // the target's share unread (an axe's and a hammer's halves at their mean)
+    wp: Math.max(0, Math.round(blowRoom(weaponPastPct(weapon, entity, UNREAD_SHARE), 'mastery') || 0)),
+    pl: Math.max(1, Math.trunc(Number(entity?.level) || 1)),   // PVP-TRIANGLE: the real level (`lv` stops at the cast's 30)
   };
 }
 
 /** THE WEAPON, as the wire carries it (`w`): template, material and condition as a percentage - null for a bare hand
- *  (a werecreature's claws strike as the bare hand: playerWeapon.js strikingWeapon hands none). */
+ *  (a werecreature's claws strike as the bare hand: playerWeapon.js strikingWeapon hands none; HAND-WRAPS: so do the wraps). */
 export function duelWeaponOf(item) {
-  if (!item || !Number.isInteger(item.templateIndex) || item.templateIndex < 0 || item.templateIndex > DUEL_TEMPLATE_MAX) return null;
+  if (!item || isHandWraps(item) || !Number.isInteger(item.templateIndex) || item.templateIndex < 0 || item.templateIndex > DUEL_TEMPLATE_MAX) return null;
   const max = Number(item.maxCondition), cur = Number(item.currentCondition);
   const c = max > 0 && Number.isFinite(cur) ? clamp(Math.round((100 * cur) / max), 0, 100) : 100;
   return { t: item.templateIndex, m: clamp(item.material ?? 0, 0, DUEL_MATERIAL_MAX), c };
@@ -183,7 +194,9 @@ export function resolveDuelStrike(d, target, { rolls = Math.random, backFacing =
     backstabChance: backFacing ? stub.skillOverrides[SKILLS.Backstabbing] : 0,
     weaponAnimTime: d.at ?? 0, rolls, say: null, onInflictPoison: null,
   });
-  const n = Math.max(0, int(dmg));
+  const rolled = Math.max(0, int(dmg));
+  const scaled = rolled + Math.floor((rolled * Math.max(0, Number(d.a?.wp) || 0)) / 100);   // PVP-SCALE: the weapon's climb and gear
+  const n = d.by === 'arrow' ? Math.floor(scaled * pvpArrowScale(d.a?.pl)) : scaled;   // PVP-TRIANGLE: an arrow's
   if (n > 0 && target?.struckBy) breakNormalPowerConcealment(target.struckBy);   // RPT1026-FIGHTS (STRIKE-UNVEILS): on the striker, never its stub
   return { hit: n > 0, dmg: n };
 }

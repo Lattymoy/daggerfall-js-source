@@ -1,0 +1,157 @@
+[
+  {
+    "name": "PROFILE-SLOTS-a-locked-piece-worn",
+    "file": "src/ui/characterSlots.js",
+    "old": "b.onclick = () => { if (locked) { tryOn(on); return false; } trial = null; lastPress = keyOf(); return wear(); };",
+    "new": "b.onclick = () => { trial = null; lastPress = keyOf(); return wear(); };",
+    "tests": [
+      "test/ui/profileslots.test.js"
+    ]
+  },
+  {
+    "name": "PROFILE-SLOTS-the-try-on-never-reaching-the-stage",
+    "file": "src/ui/characterSlots.js",
+    "old": "const tryOn = (/** @type {{ slot: string, key: string|null }|null} */ next) => { trial = next; show(); };",
+    "new": "const tryOn = (/** @type {{ slot: string, key: string|null }|null} */ next) => { trial = next; };",
+    "tests": [
+      "test/ui/profileslots.test.js"
+    ]
+  },
+  {
+    "name": "PROFILE-SLOTS-the-gap-dropped",
+    "file": "src/ui/characterSlots.js",
+    "old": "Math.round(at.y - gap)",
+    "new": "Math.round(at.y)",
+    "tests": [
+      "test/ui/profileslots.test.js"
+    ]
+  },
+  {
+    "name": "PROFILE-SLOTS-a-slot-left-out",
+    "file": "src/ui/characterSlots.js",
+    "old": "  Object.freeze({ id: 'icon', side: 'right', armory: null }),\n",
+    "new": "",
+    "tests": [
+      "test/ui/profileslots.test.js"
+    ]
+  },
+  {
+    "name": "PROFILE-SLOTS-the-rings-reach-the-dagonfires",
+    "file": "src/render/characterStage.js",
+    "old": "reach: Math.max(...Object.values(AURA_LOOK).map((l) => l.ringR))",
+    "new": "reach: 0.85",
+    "tests": [
+      "test/ui/profileslots.test.js"
+    ]
+  },
+  {
+    "name": "PROFILE-SLOTS-the-frame-on-the-head-alone",
+    "file": "src/render/characterStage.js",
+    "old": "poseFromBones(bones, pose) ? stageTopOf(head, pose) : head",
+    "new": "head",
+    "tests": [
+      "test/ui/profileslots.test.js"
+    ]
+  },
+  {
+    "name": "PROFILE-SLOTS-the-names-lift-dropped",
+    "file": "src/net/remotePlayers.js",
+    "old": "f[1] + Math.max(e.height, lift?.(e.peer.id) ?? 0)",
+    "new": "f[1] + e.height",
+    "tests": [
+      "test/ui/profileslots.test.js"
+    ]
+  },
+  {
+    "name": "PROFILE-SLOTS-the-lower-taken",
+    "file": "src/net/remotePlayers.js",
+    "old": "f[1] + Math.max(e.height, lift?.(e.peer.id) ?? 0)",
+    "new": "f[1] + Math.min(e.height, lift?.(e.peer.id) ?? e.height)",
+    "tests": [
+      "test/ui/profileslots.test.js"
+    ]
+  },
+  {
+    "name": "PROFILE-SLOTS-the-sprites-offset-unmirrored",
+    "file": "src/ui/profileBody.js",
+    "old": "shift: (xml.x / xml.scale) * (s.mirror ? -1 : 1)",
+    "new": "shift: xml.x / xml.scale",
+    "tests": [
+      "test/ui/profileslots.test.js"
+    ],
+    "equivalent": true,
+    "why": "The profile's sprite is the idle table's orientation 0, the front, which the table never mirrors; the flip is kept so the body follows eotbBody.js place()'s whole law should another view be asked for."
+  },
+  {
+    "name": "PROFILE-SLOTS-the-mw-body-with-no-camera",
+    "file": "src/ui/profileBody.js",
+    "old": "frame: (/** @type {any} */ bones) => stageCameraOfBones(head, bones, width / height) }",
+    "new": "frame: () => null }",
+    "tests": [
+      "test/ui/profileslots.test.js"
+    ]
+  },
+  {
+    "name": "PROFILE-SLOTS-the-dead-stage-kept",
+    "file": "src/ui/characterSlots.js",
+    "old": "if (canvas && stage && stage.alive?.() === false) { canvas = null;",
+    "new": "if (false) { canvas = null;",
+    "tests": [
+      "test/ui/profileslots.test.js"
+    ]
+  },
+  {
+    "name": "PROFILE-SLOTS-the-look-never-read-again",
+    "file": "src/ui/characterSlots.js",
+    "old": "if (++looked >= 30) { looked = 0; freshLook(); }",
+    "new": "if (++looked >= 30) { looked = 0; }",
+    "tests": [
+      "test/ui/profileslots.test.js"
+    ]
+  },
+  {
+    "name": "PROFILE-SLOTS-the-focus-retrying-the-press",
+    "file": "src/ui/characterSlots.js",
+    "old": "b.onfocus = () => { if (keyOf() === lastPress) { lastPress = ''; return; } tryOn(on); };",
+    "new": "b.onfocus = () => tryOn(on);",
+    "tests": [
+      "test/ui/profileslots.test.js"
+    ]
+  },
+  {
+    "name": "PROFILE-SLOTS-the-weapon-note-dropped",
+    "file": "src/ui/characterSlots.js",
+    "old": "const where = slot === 'weapon' ?",
+    "new": "const where = slot === 'nonsuch' ?",
+    "tests": [
+      "test/ui/profileslots.test.js"
+    ]
+  },
+  {
+    "name": "PROFILE-SLOTS-the-drawn-mark-dropped",
+    "file": "src/scenes/auraHost.js",
+    "old": "for (const w of armoryDraw) w.drawn = gathered;",
+    "new": "",
+    "tests": [
+      "test/ui/profileslots.test.js"
+    ]
+  },
+  {
+    "name": "PROFILE-SLOTS-the-frames-never-counted",
+    "file": "src/scenes/auraHost.js",
+    "old": "armoryList.length = 0; gathered++;",
+    "new": "armoryList.length = 0;",
+    "tests": [
+      "test/ui/profileslots.test.js"
+    ]
+  },
+  {
+    "name": "PROFILE-SLOTS-a-beasts-name-lifted",
+    "file": "src/scenes/auraHost.js",
+    "old": "if (!w || w.drawn !== gathered || w.torn >= 0) return 0;",
+    "new": "if (!w || w.drawn !== gathered) return 0;",
+    "tests": [
+      "test/ui/profileslots.test.js"
+    ]
+  }
+]

@@ -69,7 +69,8 @@ import { portDirectoryRows, FOUND_KIND_ORDER, FOUND_TALK_GROUPS, lettersOnMap } 
 import { OPENED_SHOP_TYPES, OPENED_SHOP_GROUPS } from '../world/buildingNames.js';   // PROF-FOUND: the shops the port opened, asked after
 import { LIST_ITEM_TYPE, QUESTION_TYPE } from '../systems/topicTree.js';   // TK-vi: the window's rows are the tree's ListItems; B6: the Work question type
 import { discoverBuilding, townBookId, townBookOf } from '../systems/discovery.js';   // T4: %loc's mark side effect; BAY-LEFT-MAPS (C7 = E2): its town's own book; IC-PROPS: a door's town's
-import { getNameBankOfRegion, fullName as nameHelperFullName, GENDERS } from '../characters/nameHelper.js';   // MACRO-6: %fn/%mn in the engine-less answer
+import { getNameBankOfRegion, GENDERS } from '../characters/nameHelper.js';   // MACRO-6: %fn/%mn in the engine-less answer
+import { personName } from '../characters/personNames.js';   // REGION-NAMES
 import { talkMacroSource } from '../systems/talk/talkMacros.js';
 import { bumpSeed } from '../formats/dfRandom.js';
 import { FACTION_TYPES } from '../formats/factionFile.js';
@@ -1296,7 +1297,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // region's name bank, and MaleName's DFRandom seed nudge), the ones
     // the engine path answers through - 7269 and 7275-7294 carry them.
     const names = talkMacroSource({
-      fullName: (gender) => nameHelperFullName(provinceBank() ?? getNameBankOfRegion(regionNow()), gender === 'female' ? GENDERS.Female : GENDERS.Male),   // TESA3
+      fullName: (gender) => personName(provinceBank() ?? getNameBankOfRegion(regionNow()), gender === 'female' ? GENDERS.Female : GENDERS.Male),   // TESA3; REGION-NAMES
       bumpSeed,
     });
     // AUDIT 18 F1: ExpandRandomTextRecord (TalkManager.cs:3580-3587)

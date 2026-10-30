@@ -171,3 +171,18 @@ inside. The source sweep checks that every `renderer.resolveFrame();` in the hos
 with only notes and SS1's save shot between; that the cap's held line never pays; that `ui/screenshot.js` takes
 no frame callback of its own; and that neither modal host has a foot of its own. The mutants are in
 `tools/mutants/shot1.json`: 12, all dead.
+
+## SHADER-EASE GFX-BAR and FIX-STUTTER (2026-10-29)
+
+The owner: in Chrome the game froze for 30-60 s in the world after each update, while shaders compiled.
+
+**GFX-BAR.** A "Preparing graphics" bar at the foot of either boot menu (`main.js` raises it, `ui/gfxPrepBar.js` draws
+it) fills as the programs started at page load report done. It reads
+`glProgram.js:"export const startedPrograms = (gl) =>"`, never `startPrograms`' `ready()`, which starts again a program
+a build took; a taken program counts as done. Full, it says "Graphics ready" and holds while the menu stands.
+GFX-ALWAYS (the owner: "dont see shader bar"): a warm cache, or a build done during the intro, shows ready at once.
+No KHR_parallel_shader_compile shows no bar. It never holds Play.
+
+**FIX-STUTTER.** A page cannot clear the browser's shader cache. A Chromium tab gets a Fix stutter button whose panel
+gives the Windows and Mac folders to delete, each path with Copy. The desktop app clears its own (CACHE-TURN). Pins:
+`test/ui/gfxprepbar.test.js`. Mutants: `tools/mutants/shader_bar.json`, 21, all dead; `gfx_always.json`, 4, all dead.

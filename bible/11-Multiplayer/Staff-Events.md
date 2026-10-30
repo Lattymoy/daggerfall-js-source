@@ -309,8 +309,24 @@ member is told so, and a player without staff glyphs never sees the command.
   with no save or resistance. It passes through party mates, duel opponents, bosses of the court and other players.
   It costs no magicka.
 - **This page alone.** The ride, its pace and its balls are never sent; the relay judges no pose speed outside an arena
-  bout, so the flight needs no relay change. **Others see the dragon** from world276: my pose's `rd` says 3
+  bout, so the flight needs no relay change. **Others see the dragon** from world281: my pose's `rd` says 3
   (`dragonPoseRide`, the wire's `POSE_RIDE.Dragon`), and their games draw me as the Dwarven Dragon's own sprite, its
-  rider in the art. An older relay would clamp 3 to the cart, so the pose says it only once the relay's welcome named
-  world276 or later (`noteDragonRelay`); before that, others see me fly on foot.
+  rider in the art. An older relay would clamp 3 to the cart, so the pose says it only to a relay the wire's own gate
+  names (`relaySupportsDragonRide`, read by `noteDragonRelay`); before that, others see me fly on foot.
+- **DRAGON1 (2026-10-29, `11-Multiplayer/Dwarven-Dragon.md` section 12).** This section first said world276. The wire's
+  half was on #1360, which did not merge, and this file kept its own copy of the number; main's relay reached world280
+  with no dragon in its pose law, so other players saw an Admin on a cart. The gate now lives in `net/wire.js` beside
+  `POSE_RIDE`, the relay that keeps the dragon is world281, and `test/net/dragonride_wire.test.js` holds the gate and
+  the law to each other at this wire's own version.
+- **DRAGON-SHOTS (2026-10-29, the owner: "the dragons spells are not seeable by others").** The pose's cast count
+  (`cn`) was the rig's alone, counted as the hands play a cast, and the cannons play none, so no other player saw a ball.
+  Each volley now counts (`systems/staffDragon.js` `dragonWireCast`, a ranged shock), and another screen draws a dragon
+  rider's cast from both barrels (`drawPeerCast`, `dragonVolley`); a rider the relay draws on foot shows one ball from the eye.
+- **DRAGON-BLUE (2026-10-29, the owner: "can i get a blue aetherbright version").** `/dragon blue` (or `aether`,
+  `aetherbright`) mounts the Aetherbright, `/dragon brass` the brass, and either changes the look in the saddle. The look
+  rides the pose's `rc` (1 the Aetherbright), as a tamed dragon's does (`Dwarven-Dragon.md` section 11), and the saddle
+  takes its colours.
+- **DRAGON-AIM (2026-10-29, the owner: the shots crossed at one distance).** The balls met 40 m down the look and split
+  past it. They now meet on the nearest body within `DRAGON_AIM_SLACK` of the look (`dragonAimDistance`), else 300 m
+  away, so they fly near level.
 

@@ -15,7 +15,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { webcrypto } from 'node:crypto';
 
-import { accountTokenMinter, SESSION_KEY, MINT_COOL_MS, MINT_COOL_MAX_MS } from '../../src/net/accountClient.js';
+import { accountTokenMinter, call, busyUntil, _resetBusyForTests, SESSION_KEY, MINT_COOL_MS, MINT_COOL_MAX_MS, TOKEN_REUSE_MS, TOKEN_STRETCH_MS } from '../../src/net/accountClient.js';
 import { OnlineSession, TOKEN_WAIT_MS, BACKOFF_MIN_MS, BACKOFF_MAX_MS } from '../../src/net/online.js';
 import { CLOSE_POLICY } from '../../src/net/wire.js';
 import { createTownSeatBook, SEAT_WATCH_RETRY_MS, SEAT_WATCH_CLAIM_EVERY_MS } from '../../src/net/townSeatBook.js';
@@ -103,6 +103,64 @@ test('STORM-SHED A: rooms waiting on a mint that fails are answered with its wor
   release();
   assert.deepEqual(await Promise.all(asked), [null, null, null, null]);
   assert.equal(svc.n, 1, 'and only that one: the four failed together');
+}));
+
+// TOKEN-STRETCH (2026-10-29, the account database overloaded): each retry of a room that needed a token was a mint into
+// the overload, while the page held a token the relay would take for five minutes.
+test('TOKEN-STRETCH: while this sign-in\'s last mint failed, or the page\'s gate holds, the held token opens new rooms up to TOKEN_STRETCH_MS from when its mint was SENT - never a room it opened; `ahead` mints nothing it would open; a token brings back the reuse minute; a forget or a ban drops it (mutants: never stretched; stretched while well; counted from the answer; the gate unread; ahead unstretched)', async () => quiet(async () => {
+  _resetBusyForTests();
+  assert.equal(TOKEN_STRETCH_MS, 240_000, 'a minute short of the relay\'s five');
+  let t = 1_000_000;
+  const sent = t;
+  const svc = service();
+  let release = () => {};
+  svc.held = new Promise((r) => { release = r; });
+  const mint = accountTokenMinter({ fetch: svc.fetch, storage: fakeStorage(SESSION), now: () => t, rand: () => 0.5 });
+  const asked = mint('world:3,12');
+  await settle();
+  t += 20_000;   // answered 20 s after it was sent
+  release();
+  const tok = await asked;
+  svc.held = null;
+  mint.opened('world:3,12', tok);
+  t = sent + 80_000;
+  svc.fail = 'server';
+  assert.equal(await mint('world:4,12'), null, 'past its minute, the service well until now: minted, and it failed');
+  assert.equal(svc.n, 2);
+  _resetBusyForTests();   // the failure alone stretches it, not the gate it opened
+  assert.equal(await mint('world:4,12'), tok, 'the last mint failed: the held token, nothing on the wire');
+  assert.equal(await mint('world:3,12'), null, 'never into a room it opened');
+  t = sent + TOKEN_STRETCH_MS - 1;
+  assert.equal(await mint('chat:region.17'), tok);
+  assert.equal(svc.n, 2);
+  assert.equal(mint.ahead(null, 0), false, 'a door: the held token opens its room');
+  assert.equal(mint.ahead(null, 1), true, 'out by the time its socket asks: minted');
+  await settle();
+  assert.equal(svc.n, 3);
+  _resetBusyForTests();
+  t = sent + TOKEN_STRETCH_MS;
+  assert.equal(mint.holds('chat:world'), false, 'TOKEN_STRETCH_MS from the send, though 220 s from the answer');
+  // a token brings back the minute
+  svc.fail = null;
+  t += MINT_COOL_MAX_MS;
+  const tok2 = await mint('chat:world');
+  assert.ok(tok2 && tok2 !== tok);
+  t += TOKEN_REUSE_MS;
+  assert.equal(mint.holds('world:9,9'), false, 'the service well: its minute');
+  // the page's gate held by any overload answer stretches it too
+  await call({ fetch: service({ fail: 'server' }).fetch, base: 'https://accounts.invalid' }, '/v1/homes/town', { mapId: 1 });
+  assert.ok(busyUntil() > Date.now());
+  assert.equal(mint.holds('world:9,9'), true, 'the gate holds: stretched');
+  mint.forget();
+  assert.equal(mint.holds('world:9,9'), false, 'a forget drops it in the stretch');
+  _resetBusyForTests();
+  const tok3 = await mint('chat:world');
+  t += TOKEN_REUSE_MS;
+  svc.fail = 'banned';
+  assert.equal(await mint('world:9,9'), null);
+  assert.equal(mint.holds('world:8,8'), false, 'a ban drops it in the stretch');
+  assert.ok(tok3);
+  _resetBusyForTests();
 }));
 
 test('STORM-SHED A: a token opens a room when a hello carries it there - one the session gave up waiting for opened nothing, and that room is handed it again; a hello\'s word of another token changes nothing (mutants: the room marked at the mint; `opened` unheard; any token\'s word taken)', async () => quiet(async () => {

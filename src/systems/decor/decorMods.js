@@ -7,37 +7,32 @@
 // decoration"; asked which, the town mods' furnishings first. Beautiful
 // Villages and Beautiful Cities redecorate some 1,400 interiors - coloured
 // beds, paintings, tapestries and banners, rugs, set tables and stocked
-// shelves, a captain's chest - and Detailed Ships furnishes its two ships;
-// none of it could be set in a house. WD3 kept the catalogue to Daggerfall's
-// own blocks (systems/decor/decorScan.js reads BLOCKS.BSA past the door), so the
-// mods' pieces would never renumber it nor leave it when a mod went off -
-// and with it, the flats DECOR-MODFLATS had let a player place out of
-// Detailed Ships' ships went too.
+// shelves, a captain's chest - and none of it could be set in a house. WD3
+// kept the catalogue to Daggerfall's own blocks (systems/decor/decorScan.js
+// reads BLOCKS.BSA past the door), so the mods' pieces would never renumber
+// it nor leave it when a mod went off.
 //
 // THE PIECES are the port's own stand-ins for what the mods place (world/
-// townStandIns.js, world/detStandIns.js, systems/detailedShips.js), MEASURED
-// over the mods' own blocks - both town packs and the two ships, rebuilt
-// from the player's BLOCKS.BSA (test/systems/decor/decormods.test.js measures them again
-// where ARENA2 is at hand): each with how many times the mods stand it, a
-// room's where any of it stands inside (offered in every room, and a yard),
-// a street's where all of it stands outside (a yard's alone). Never the
-// town's own structure - its hills, a temple's platform and foundation, the
-// roofs' domes, the docks, the city wall's fill, a chimney; nor the crop
-// fields (a field the town sows, no piece); nor the dolphins (drawn to break
-// the sea's surface, half their picture under it). A piece two of the mods'
-// ids stand in for alike is offered once (DECOR_MOD_TWINS), and DET's old
-// archive numbers are its new ones' (DET_OLD_ARCHIVES).
+// townStandIns.js, world/detStandIns.js), MEASURED over both town packs,
+// rebuilt from the player's BLOCKS.BSA (test/systems/decor/decormods.test.js
+// measures them again where ARENA2 is at hand): each with how many times the
+// mods stand it, a room's where any of it stands inside (offered in every
+// room, and a yard), a street's where all of it stands outside (a yard's
+// alone). Never the town's own structure - its hills, a temple's platform and
+// foundation, the roofs' domes, the docks, the city wall's fill, a chimney;
+// nor the crop fields (a field the town sows, no piece). A piece two of the
+// mods' ids stand in for alike is offered once (DECOR_MOD_TWINS), and DET's
+// old archive numbers are its new ones' (DET_OLD_ARCHIVES).
 //
 // WHILE THEY STAND: a piece is offered while the port stands it - its
 // stand-in's own switch, the one the mods' towns are drawn by (a town mod
-// loaded for the game, or a save's town pinned to one; Detailed Ships' own
-// switch for its ships' pieces; online, the town mods are on for every
-// player). A piece placed stands while its mod does, as the mod's towns do.
-// AUDIT 05b A3: every piece is in the catalogue whatever is on - so none's
-// name or number moves with a switch - and the switch is asked as the
-// piece is offered (decorModsLive, systems/decor/decorCatalogue.js
+// loaded for the game, or a save's town pinned to one; online, the town mods
+// are on for every player). A piece placed stands while its mod does, as the
+// mod's towns do. AUDIT 05b A3: every piece is in the catalogue whatever is
+// on - so none's name or number moves with a switch - and the switch is
+// asked as the piece is offered (decorModsLive, systems/decor/decorCatalogue.js
 // decorRoomEntries), never once when the catalogue was read: the switches
-// turn mid-game (Detailed Ships turned off, a town pack landing).
+// turn mid-game (a town pack landing).
 //
 // NAMED as the port names them: a bed by its colour, a hanging by its
 // picture (world/townPictures.js - the one table its builder reads,
@@ -51,18 +46,17 @@
 
 import {
   townBedOf, TOWN_BED_COLOURS, TOWN_PAINTINGS, RMBRP_ROCKS, RMBRP_STALLS, RMBRP_HILLS, TOWN_CROP_FIELDS,
-  CITY_WALL_PIECE, TOWN_CLUTTER, TOWN_CLUTTER_ARCHIVE, TOWN_GARDEN, TOWN_GARDEN_ARCHIVE, ROSYS_PICTURES,
+  CITY_WALL_PIECE, TOWN_CLUTTER, TOWN_CLUTTER_ARCHIVE, TOWN_GARDEN, TOWN_GARDEN_ARCHIVE, TOWN_ITEMS, ROSYS_PICTURES,
 } from '../../world/townStandIns.js';
-import { DET_FLAT_STAND_INS, DET_FLAT_DRAWINGS, DET_TOWN_FLATS, DET_OLD_ARCHIVES, DET_DOLPHIN_RECORDS, DET_PICTURES } from '../../world/detStandIns.js';
+import { DET_FLAT_STAND_INS, DET_FLAT_DRAWINGS, DET_TOWN_FLATS, DET_OLD_ARCHIVES, DET_PICTURES } from '../../world/detStandIns.js';
 import { TOWN_PICTURES } from '../../world/townPictures.js';
-import { DETAILED_SHIPS_DERIVED } from '../detailedShips.js';
 import { customAliasFor, hasCustomModel } from '../../world/customModels.js';
 import { hasTextureReplacement } from '../textureReplacement.js';
 import { decorKey, isDecorModEntry } from './decorCatalogue.js';   // AUDIT 05b A11: the one key a piece and its entry share
 
 /** THE MODS' PIECES THAT STAND INSIDE - offered in every room (and a yard): model id or `archive_record` -> how many
- *  times the mods stand it (measured, 2026-10-05: Beautiful Villages 1.4.2, Beautiful Cities 0.5.0, Detailed Ships
- *  1.0.0, over the player's own BLOCKS.BSA). */
+ *  times the mods stand it (measured, 2026-10-29: Beautiful Villages 1.4.2 and Beautiful Cities 0.5.0, over the
+ *  player's own BLOCKS.BSA). */
 export const DECOR_MOD_ROOMS = Object.freeze({
   models: Object.freeze({
     // the beds, six colours of Daggerfall's three
@@ -71,11 +65,11 @@ export const DECOR_MOD_ROOMS = Object.freeze({
     // DET's: the regions' tapestries and banners; the pillars, the ensign staff, a stump, a flower pot, the wind vane;
     // the decorative tapestries and the Eight's; a column's drum, the sea chest, the weapon rack, two rugs
     45008: 8, 45023: 8, 45024: 10, 45029: 4, 45034: 6, 45044: 16, 45059: 20, 45060: 14, 45065: 7, 45070: 8,
-    45081: 10015, 45082: 452, 45110: 29252, 45111: 284, 45112: 93, 45114: 60, 45120: 36, 45121: 9, 45129: 4892,
+    45081: 10004, 45082: 451, 45110: 29249, 45111: 284, 45112: 93, 45114: 60, 45120: 36, 45121: 8, 45129: 4892,
     45134: 14, 45135: 89, 45136: 110, 45137: 137, 45138: 55, 45139: 44, 45140: 21, 45141: 12, 45142: 19, 45143: 20,
-    45144: 25, 45145: 25, 45146: 12, 45147: 20, 45148: 16, 45150: 20, 45151: 30, 45152: 16, 45153: 24, 45154: 56,
-    45155: 16, 45156: 32, 45157: 40, 45158: 62, 45159: 122, 45160: 35, 45161: 60, 45162: 76, 45163: 138, 45164: 38,
-    45169: 42, 45190: 548, 45191: 363, 45192: 14, 45194: 8,
+    45144: 25, 45145: 24, 45146: 12, 45147: 20, 45148: 16, 45150: 20, 45151: 30, 45152: 16, 45153: 24, 45154: 56,
+    45155: 16, 45156: 32, 45157: 40, 45158: 62, 45159: 122, 45160: 35, 45161: 57, 45162: 72, 45163: 138, 45164: 37,
+    45169: 42, 45190: 547, 45191: 362, 45192: 14, 45194: 8,
     // the paintings (Rosy's Resources, New Paintings) and Rosy's small hangings and rugs
     69420: 37, 69421: 50, 69422: 71, 69423: 85, 69424: 123, 69425: 25, 69426: 98, 69427: 77, 69428: 65, 69429: 186,
     69430: 82, 69431: 83, 69432: 208, 69433: 49, 69434: 49, 69435: 115, 69436: 78, 69437: 111, 69440: 84, 69441: 186,
@@ -87,18 +81,16 @@ export const DECOR_MOD_ROOMS = Object.freeze({
     79030: 60,
   }),
   flats: Object.freeze({
-    // Cliffworms' Items (Detailed Ships' pictures, the towns' shelves too) and his statuette
-    '1210_1': 2, '1210_3': 1, '1210_4': 1, '1210_8': 1, '1210_10': 166, '1210_11': 170, '1210_12': 113, '1210_17': 145,
-    '1210_18': 22, '1210_19': 40, '1210_20': 45, '1230_30': 2,
-    // DET's: the ship's monkey; rats and dogs; the galley's food; the easel, firewood, a sack, bottles, a planter; the
-    // stores' odds and ends; a statue
-    '10009_14': 12, '10010_36': 16, '10010_38': 8, '10010_40': 32, '10010_73': 103, '10010_74': 6, '10010_75': 11,
+    // the RMB Resource Pack's items: bottles, bread and ham
+    '1210_10': 160, '1210_11': 164, '1210_12': 110, '1210_17': 141, '1210_18': 22, '1210_19': 32, '1210_20': 36,
+    // DET's: a monkey; rats and dogs; the table's food; the easel, firewood, a sack, bottles, a planter; odds and ends;
+    // a statue
+    '10009_14': 12, '10010_36': 16, '10010_38': 7, '10010_40': 32, '10010_73': 103, '10010_74': 6, '10010_75': 11,
     '10010_77': 64, '10010_78': 65, '10021_0': 120, '10021_1': 130, '10021_2': 159, '10021_3': 126, '10021_4': 237,
-    '10021_5': 17, '10021_6': 196, '10021_7': 471, '10021_8': 351, '10021_9': 46, '10021_10': 193, '10021_11': 24,
-    '10021_12': 273, '10021_13': 251, '10021_14': 175, '10021_15': 152, '10021_16': 21, '10021_17': 300, '10021_22': 1,
-    '10021_27': 1, '10022_4': 24, '10023_0': 11, '10024_2': 19, '10025_0': 37, '10025_2': 25, '10025_3': 146,
-    '10027_0': 204, '10027_1': 47, '10027_3': 5, '10027_4': 1, '10027_5': 1, '10027_6': 8, '10027_7': 2, '10027_8': 4,
-    '10027_9': 2, '10027_10': 4, '10027_11': 1, '10027_12': 1, '10027_13': 1, '10027_14': 1, '10028_4': 12,
+    '10021_5': 12, '10021_6': 196, '10021_7': 471, '10021_8': 351, '10021_9': 43, '10021_10': 193, '10021_11': 24,
+    '10021_12': 272, '10021_13': 250, '10021_14': 175, '10021_15': 152, '10021_16': 18, '10021_17': 297,
+    '10022_4': 24, '10023_0': 11, '10024_2': 19, '10025_0': 36, '10025_2': 25, '10025_3': 142, '10027_0': 202, '10027_1': 47,
+    '10027_3': 4, '10028_4': 12,
     // the towns' set tables and stocked shelves
     '56790_1': 13, '56790_2': 328, '56790_3': 151, '56790_4': 136, '56790_5': 24, '56790_7': 213, '56790_8': 289,
     '56790_9': 73, '56790_10': 122, '56790_11': 152, '56790_12': 186, '56790_13': 75, '56790_14': 45, '56790_16': 251,
@@ -106,6 +98,30 @@ export const DECOR_MOD_ROOMS = Object.freeze({
     '56790_24': 237, '56790_25': 602,
   }),
 });
+/** AUDIT FB1029e H1: THE MODELS DAGGERFALL LAYS AS FURNITURE (ObjectType 3) in its own rooms - measured over every
+ *  interior of BLOCKS.BSA (test/scenes/builtin_mods_alinor.test.js measures it again). The mods reuse other classic
+ *  ids as their rooms' structure and their ships' rigging (a 12.6 m beam, a mast), which are never furniture. */
+export const ROOM_PROP_MODELS = Object.freeze([
+  41000, 41001, 41002, 41003, 41004, 41005, 41006, 41007, 41008, 41009, 41010, 41011, 41012, 41013, 41014, 41015, 41016,
+  41017, 41018, 41019, 41020, 41021, 41022, 41023, 41025, 41026, 41027, 41028, 41029, 41030, 41031, 41032, 41033, 41034,
+  41035, 41036, 41037, 41039, 41040, 41041, 41042, 41044, 41045, 41046, 41047, 41048, 41049, 41050, 41051, 41100, 41101,
+  41102, 41103, 41104, 41105, 41106, 41108, 41109, 41110, 41111, 41112, 41113, 41114, 41115, 41116, 41117, 41118, 41119,
+  41120, 41121, 41122, 41123, 41124, 41125, 41126, 41127, 41128, 41300, 41302, 41309, 41409, 41800, 41801, 41802, 41803,
+  41804, 41805, 41806, 41807, 41808, 41810, 41811, 41812, 41813, 41814, 41816, 41817, 41818, 41819, 41821, 41822, 41823,
+  41824, 41825, 41826, 41827, 41828, 41829, 41831, 41832, 41833, 41834, 41901, 51109, 51115, 51116, 51117, 51118, 51119,
+  51122, 51128,
+]);
+const ROOM_PROPS = new Set(ROOM_PROP_MODELS);
+/** AUDIT FB1029e H1: the mods' room pieces that hold the room up - DET's pillars (its ceilings' timbers and rafters) and
+ *  a column's drum - never taken out. */
+export const MOD_ROOM_STRUCTURE = Object.freeze([45081, 45110, 45111, 45112, 45129, 45169]);
+const STRUCTURE = new Set(MOD_ROOM_STRUCTURE);
+/** BUILT-IN-MODS (FIELD BUGS 2026-10-29e, "things that cannot be removed from the house I bought in Alinor"): whether a
+ *  room's model is its furniture - one Daggerfall lays as a prop in its rooms, or a piece the mods stand inside that is
+ *  not their structure. The town mods write most of a room's furniture as scenery (ObjectType 0), which BASE-HIDE never
+ *  offered (scenes/interiorContext.js). */
+export const isRoomFurnishing = (/** @type {number} */ id) => Number.isSafeInteger(id)
+  && (ROOM_PROPS.has(id) || (Object.hasOwn(DECOR_MOD_ROOMS.models, id) && !STRUCTURE.has(id)));
 /** THE MODS' PIECES THAT STAND OUTSIDE ALONE - a yard's: the rocks, the market stalls, a temple column's head; the
  *  towns' fowl, sheep, cattle, horses and doves; the grain; a temple's garden rows. */
 export const DECOR_MOD_STREETS = Object.freeze({
@@ -125,6 +141,17 @@ export const DECOR_MOD_STREETS = Object.freeze({
     '10035_1': 20, '10035_2': 16, '10035_3': 31, '10035_4': 29, '10035_5': 14, '10035_6': 13, '10035_7': 28,
   }),
 });
+/** AUDIT SHIP-REFIT: THE PIECES A REMOVED MOD'S SHIPS STOOD - offered still (their pictures stand at every boot,
+ *  world/townStandIns.js installPortStandIns) and numbered among a room's, so no piece's name or number moves: each with
+ *  the count last measured on those ships (2026-10-05). */
+export const DECOR_MOD_KEPT = Object.freeze({
+  models: Object.freeze({}),
+  flats: Object.freeze({
+    '1210_1': 2, '1210_3': 1, '1210_4': 1, '1210_8': 1, '1230_30': 2, '10021_22': 1, '10021_27': 1, '10027_4': 1,
+    '10027_5': 1, '10027_6': 8, '10027_7': 2, '10027_8': 4, '10027_9': 2, '10027_10': 4, '10027_11': 1, '10027_12': 1,
+    '10027_13': 1, '10027_14': 1,
+  }),
+});
 /** Two ids the mods place that the port stands in alike - the one offered for both (its count both's). */
 export const DECOR_MOD_TWINS = Object.freeze({ 45113: 45112, 45087: 45121, 45115: 45114, 45122: 45120 });
 /** What the mods stand that is never a piece - the town itself, a field it sows, the sea's - by why. */
@@ -132,7 +159,6 @@ export const DECOR_MOD_LEFT_OUT = Object.freeze({
   hills: Object.freeze(Object.keys(RMBRP_HILLS).map(Number)),   // the ground the pack raises under its buildings
   structure: Object.freeze([53160, 53170, 53182, 53187, 53194, 53140, 53141, 53142, 53143, 53144, CITY_WALL_PIECE, 45074, 45076, 45077]),   // a temple's platform and foundation, the roofs' domes, the docks and their ramp and steps, the city wall's fill, a chimney's base, flue and topper
   fields: Object.freeze(Object.keys(TOWN_CROP_FIELDS).map(Number)),   // the crop fields - a field of flats sown by id, no model
-  sea: Object.freeze(DET_DOLPHIN_RECORDS.map((r) => `10009_${r}`)),   // the dolphins, drawn half under the sea's surface
 });
 
 const words = (name) => name.replace(/([A-Z])/g, ' $1').toLowerCase().replace(/^./, (c) => c.toUpperCase());
@@ -143,18 +169,17 @@ const MODEL_NAMES = Object.freeze({
   45082: 'Ensign staff', 45114: 'Stump', 45120: 'Flower pot', 45121: 'Wind vane', 45169: 'Column drum', 45170: 'Column head',
   45190: 'Sea chest', 45191: 'Weapon rack',
 });
-/** Detailed Ships' own drawings (no classic record is them): the bottles and the statuette. */
-const OWN_ART_NAMES = Object.freeze({ '1210_10': 'Green bottle', '1210_11': 'Blue bottle', '1210_12': 'Brown bottle', '1230_30': 'Statuette' });
-
-/** The classic flat a mod's flat stands in as - [archive, record] - or null (a drawing of the port's, or the author's). */
+/** The items named by the piece since they were offered (AUDIT SHIP-REFIT: their names never move). */
+const ITEM_NAMES = Object.freeze({ '1210_10': 'Green bottle', '1210_11': 'Blue bottle', '1210_12': 'Brown bottle', '1230_30': 'Statuette' });
+/** The classic flat a mod's flat stands in as - [archive, record] - or null (a drawing of the port's). */
 export function decorModFlatSource(archive, record) {
   const a = DET_OLD_ARCHIVES[archive] ?? archive;
   const det = DET_FLAT_STAND_INS[a]?.[record] ?? DET_TOWN_FLATS[a]?.[record] ?? null;
   if (det) return [det[0], det[1]];
   if (a === TOWN_CLUTTER_ARCHIVE) return TOWN_CLUTTER[record] ? [...TOWN_CLUTTER[record]] : null;
   if (a === TOWN_GARDEN_ARCHIVE) return TOWN_GARDEN[record] ? [...TOWN_GARDEN[record]] : null;
-  const derived = DETAILED_SHIPS_DERIVED[`${a}_${record}-0`];
-  return derived?.from ? [derived.from[0], derived.from[1]] : null;
+  const item = TOWN_ITEMS[a]?.[record];
+  return item ? [item[0], item[1]] : null;
 }
 
 /**
@@ -177,8 +202,8 @@ export function decorModNaming(what) {
     return { base: pic != null ? capital(TOWN_PICTURES[pic]?.name ?? '') || null : null, as: id };
   }
   const [archive, record] = what.flat;
-  const k = `${archive}_${record}`;
-  if (OWN_ART_NAMES[k]) return { base: OWN_ART_NAMES[k], as: archive === 1210 ? 205 : archive };   // the bottles are bottles
+  const named = ITEM_NAMES[`${archive}_${record}`];
+  if (named) return { base: named, as: archive === 1210 ? 205 : archive };   // the bottles are bottles
   const drawn = DET_FLAT_DRAWINGS[DET_OLD_ARCHIVES[archive] ?? archive]?.[record];
   if (drawn) return { base: words(drawn[0]), as: archive };
   const from = decorModFlatSource(archive, record);
@@ -218,7 +243,7 @@ export function addDecorMods(into = new Map()) {
     if (into.has(key)) return;
     into.set(key, { ...what, count, from, ...decorModNaming(what) });
   };
-  for (const { table, from } of [{ table: DECOR_MOD_ROOMS, from: 'mod' }, { table: DECOR_MOD_STREETS, from: 'modstreet' }]) {
+  for (const { table, from } of [{ table: DECOR_MOD_ROOMS, from: 'mod' }, { table: DECOR_MOD_KEPT, from: 'mod' }, { table: DECOR_MOD_STREETS, from: 'modstreet' }]) {
     for (const [id, count] of Object.entries(table.models)) put({ model: Number(id), flat: null }, count, from);
     for (const [k, count] of Object.entries(table.flats)) put({ model: null, flat: k.split('_').map(Number) }, count, from);
   }

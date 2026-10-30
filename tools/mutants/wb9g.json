@@ -242,8 +242,8 @@
   {
     "name": "WB9g-the-session-writes-no-aura",
     "file": "src/net/accountClient.js",
-    "old": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon, nameAsAt })",
-    "new": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, icon, nameAsAt })",
+    "old": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon, armory, nameAsAt })",
+    "new": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, icon, armory, nameAsAt })",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ],
@@ -271,8 +271,8 @@
   {
     "name": "WB9g-the-peers-aura-never-read",
     "file": "src/net/online.js",
-    "old": "title, ts, glyphs, au: readAura(p), pi: readIcon(p), rb: readRibbon(p), lv: readRenown(p),",
-    "new": "title, ts, glyphs, pi: readIcon(p), rb: readRibbon(p), lv: readRenown(p),",
+    "old": "title, ts, glyphs, au: readAura(p), ak: readArmory(p), pi: readIcon(p), rb: readRibbon(p), lv: readRenown(p),",
+    "new": "title, ts, glyphs, ak: readArmory(p), pi: readIcon(p), rb: readRibbon(p), lv: readRenown(p),",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ],
@@ -290,8 +290,8 @@
   {
     "name": "WB9g-the-memory-loses-it",
     "file": "src/net/online.js",
-    "old": "gt: p.gt ?? null, au: p.au ?? null, pi: p.pi ?? null, rb: p.rb ?? null, house: p.house ?? null, sub: p.sub",
-    "new": "gt: p.gt ?? null, pi: p.pi ?? null, rb: p.rb ?? null, house: p.house ?? null, sub: p.sub",
+    "old": "gt: p.gt ?? null, au: p.au ?? null, ak: p.ak ?? null, pi: p.pi ?? null, rb: p.rb ?? null, house: p.house ?? null, sub: p.sub",
+    "new": "gt: p.gt ?? null, ak: p.ak ?? null, pi: p.pi ?? null, rb: p.rb ?? null, house: p.house ?? null, sub: p.sub",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ],
@@ -300,8 +300,8 @@
   {
     "name": "WB9g-the-re-stood-peer-bare",
     "file": "src/net/online.js",
-    "old": "gt: knew.gt, au: knew.au, pi: knew.pi, rb: knew.rb, ...(knew.house ?? {}), sub: knew.sub",
-    "new": "gt: knew.gt, pi: knew.pi, rb: knew.rb, ...(knew.house ?? {}), sub: knew.sub",
+    "old": "gt: knew.gt, au: knew.au, ak: knew.ak, pi: knew.pi, rb: knew.rb, ...(knew.house ?? {}), sub: knew.sub",
+    "new": "gt: knew.gt, ak: knew.ak, pi: knew.pi, rb: knew.rb, ...(knew.house ?? {}), sub: knew.sub",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ],
@@ -355,7 +355,7 @@
   {
     "name": "WB9g-my-feet-never-told",
     "file": "src/ui/accountFlow.js",
-    "old": "      self.note = want ? t('account.flow.wearing', 'Wearing {what}.', { what: AURA_TEXT[want] ?? want }) : t('account.flow.auraRemoved', 'Aura removed.');   // SHADOW-CLOAK (AUDIT): the aura's name, never its key\n      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), icon: iconStated(r.data), secret: asked });\n      changed();",
+    "old": "      self.note = want ? t('account.flow.wearing', 'Wearing {what}.', { what: AURA_TEXT[want] ?? want }) : t('account.flow.auraRemoved', 'Aura removed.');   // SHADOW-CLOAK (AUDIT): the aura's name, never its key\n      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), armory: armoryStated(r.data), icon: iconStated(r.data), secret: asked });\n      changed();",
     "new": "      self.note = want ? t('account.flow.wearing', 'Wearing {what}.', { what: AURA_TEXT[want] ?? want }) : t('account.flow.auraRemoved', 'Aura removed.');   // SHADOW-CLOAK (AUDIT): the aura's name, never its key\n      changed();",
     "tests": [
       "test/net/wb9g_insignia.test.js"
@@ -372,18 +372,18 @@
   },
   {
     "name": "WB9g-no-aura-row",
-    "file": "src/ui/enhanced/enhancedAccount.js",
-    "old": "    if (auras.length) {",
-    "new": "    if (false) {",
+    "file": "src/ui/characterSlots.js",
+    "old": "      for (const key of auras) {",
+    "new": "      for (const key of []) {",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]
   },
   {
     "name": "WB9g-the-aura-button-wears-a-title",
-    "file": "src/ui/enhanced/enhancedAccount.js",
-    "old": "        b.onclick = () => flow.wearAura(key);",
-    "new": "        b.onclick = () => flow.equip(key);",
+    "file": "src/ui/characterSlots.js",
+    "old": "() => flow.wearAura(key)));",
+    "new": "() => flow.equip(key)));",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]
@@ -563,7 +563,7 @@
   {
     "name": "WB9g-the-auras-never-gathered",
     "file": "src/scenes/world.js",
-    "old": "    auraFrame(seen);   // WB9g",
+    "old": "    auraHost.frame(seen);   // WB9g",
     "new": "    // WB9g",
     "tests": [
       "test/net/wb9g_insignia.test.js"
@@ -572,7 +572,7 @@
   {
     "name": "WB9g-the-auras-never-drawn",
     "file": "src/scenes/world.js",
-    "old": "peerBodies?.drawVeiled(); drawAuras(); nodeGlintPass.draw(travelView?.active ? null : nodeMarksAt(enchantFeet())); partyPing?.draw(renderer); };",
+    "old": "peerBodies?.drawVeiled(); auraHost.draw(); nodeGlintPass.draw(travelView?.active ? null : nodeMarksAt(enchantFeet())); partyPing?.draw(renderer); };",
     "new": "peerBodies?.drawVeiled(); nodeGlintPass.draw(travelView?.active ? null : nodeMarksAt(enchantFeet())); partyPing?.draw(renderer); };",
     "tests": [
       "test/net/wb9g_insignia.test.js"
@@ -580,9 +580,9 @@
   },
   {
     "name": "WB9g-a-concealed-peers-fire-shown",
-    "file": "src/scenes/world.js",
-    "old": "      if (_veils.has(d.id) || !d.shown) continue;",
-    "new": "      if (!d.shown) continue;",
+    "file": "src/scenes/auraHost.js",
+    "old": "        if (deps.veiled(d.id) || !d.shown) continue;",
+    "new": "        if (!d.shown) continue;",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]

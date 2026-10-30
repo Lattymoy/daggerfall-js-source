@@ -96,8 +96,9 @@ test('LW-ROOMS a labourer\'s and a courier\'s lunch at the tavern comes after th
     }
   }
   assert.ok(lunches >= 20, `lunches enough to read (${lunches})`);
-  const { most } = tavernDay(() => synthTown({ blocksW: 4, blocksH: 4 }), 16);
-  assert.ok(most['before noon'] <= 9, `the tavern before noon: ${most['before noon']} at the most (the first cut's 23, every one now at their lunch)`);
+  // LW-WIDE: PIN MOVED - those who neither lodge nor work there: the fourth rank's adventurers lodge at the tavern (8 before it too)
+  const { most, mostOut } = tavernDay(() => synthTown({ blocksW: 4, blocksH: 4 }), 16);
+  assert.ok(mostOut['before noon'] <= 8, `the tavern before noon: ${mostOut['before noon']} at the most (the first cut's 23, every one now at their lunch)`);
   // AUDIT LW-ROOMS: the probe's most inside at once is the minute's - read every quarter, it missed those come in at
   // 11:40-11:57 for the noon lunch (four where nine were)
   const pf = synthTown({ blocksW: 4, blocksH: 4 });   // the probe's own town

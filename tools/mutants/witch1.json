@@ -83,12 +83,12 @@
   {
     "name": "WITCH1-a-hall-is-a-home",
     "file": "server-account/src/festival.js",
-    "old": "AND h.char_id = ?4 AND h.guild_id IS NULL)`;",
-    "new": "AND h.char_id = ?4)`;",
+    "old": "h.player = ?3 AND h.guild_id IS NULL AND (h.deed = 0 OR h.char_id = ?4))`;",
+    "new": "h.player = ?3 AND (h.deed = 0 OR h.char_id = ?4))`;",
     "tests": [
       "test/server/witch1_festival.test.js"
     ],
-    "note": "A guild hall's keeper sets an offering at its guild's door."
+    "note": "A guild hall's keeper sets an offering at its guild's door. Re-aimed by content (HEARTH-SIBLING, FIELD BUGS 2026-10-29e): the home check is the account's."
   },
   {
     "name": "WITCH1-no-take-in-after",
@@ -143,8 +143,8 @@
   {
     "name": "WITCH1-the-peer-icon-unread",
     "file": "src/net/online.js",
-    "old": "au: readAura(p), pi: readIcon(p), rb: readRibbon(p), lv: readRenown(p),",
-    "new": "au: readAura(p), rb: readRibbon(p), lv: readRenown(p),",
+    "old": "au: readAura(p), ak: readArmory(p), pi: readIcon(p), rb: readRibbon(p), lv: readRenown(p),",
+    "new": "au: readAura(p), ak: readArmory(p), rb: readRibbon(p), lv: readRenown(p),",
     "tests": [
       "test/systems/festival/witch1_law.test.js"
     ],
@@ -213,8 +213,8 @@
   {
     "name": "WITCH1-offline-the-bowls-stay",
     "file": "src/scenes/witchesHost.js",
-    "old": "    if (who !== account) { account = who; heard = false; towns.clear(); for (const k of [...stood.keys()]) unstand(k); }",
-    "new": "    if (who !== account) { account = who; heard = false; towns.clear(); }",
+    "old": "      account = who; towns.clear(); for (const k of [...stood.keys()]) unstand(k);",
+    "new": "      account = who; towns.clear();",
     "tests": [
       "test/scenes/witch1_host.test.js"
     ],
@@ -303,8 +303,8 @@
   {
     "name": "WITCH1-AUDIT-the-pack-unrestacked",
     "file": "src/systems/festival/festivalClient.js",
-    "old": "if (Array.isArray(items) && restackSoulCakes(items, d.cakes)) _doors.saved();",
-    "new": "if (false && Array.isArray(items) && restackSoulCakes(items, d.cakes)) _doors.saved();",
+    "old": "if (Array.isArray(items)) restackSoulCakes(items, d.cakes);",
+    "new": "if (false && Array.isArray(items)) restackSoulCakes(items, d.cakes);",
     "tests": [
       "test/systems/festival/witch1_client.test.js"
     ],
@@ -313,8 +313,8 @@
   {
     "name": "WITCH1-AUDIT-the-bowls-unrestacked",
     "file": "src/systems/festival/festivalClient.js",
-    "old": "if (Array.isArray(items) && restackHearthOfferings(items, d.bowls)) _doors.saved();",
-    "new": "if (false && Array.isArray(items) && restackHearthOfferings(items, d.bowls)) _doors.saved();",
+    "old": "if (Array.isArray(items)) restackHearthOfferings(items, d.bowls);",
+    "new": "if (false && Array.isArray(items)) restackHearthOfferings(items, d.bowls);",
     "tests": [
       "test/systems/festival/witch1_client.test.js"
     ],
@@ -454,8 +454,8 @@
   {
     "name": "WITCH1-AUDIT-icon-unkept",
     "file": "src/net/accountClient.js",
-    "old": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon, nameAsAt })",
-    "new": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, nameAsAt })",
+    "old": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon, armory, nameAsAt })",
+    "new": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, armory, nameAsAt })",
     "tests": [
       "test/systems/festival/witch1_client.test.js"
     ],

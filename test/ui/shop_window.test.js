@@ -13,6 +13,8 @@ import { shopWareState, shopWhoText, shopWindow, shopMark, shopWareTag, shopWare
 import { postHead } from '../../src/net/postLaw.js';
 import { AccountFlow } from '../../src/ui/accountFlow.js';
 import { SESSION_KEY } from '../../src/net/accountClient.js';
+import { setLocale, currentLocale, PSEUDO_LOCALE, t } from '../../src/systems/textManager.js';
+import { armoryPieceName } from '../../src/ui/armoryText.js';   // ARMORY: a piece's arrival said in the player's language
 import {
   TITLE_TEXT, AURA_TEXT, TITLE_RGBA, TITLE_FLAME, GLYPH_PATH, GLYPH_DETAIL, GLYPH_MOTION, GLYPH_MARK, GLYPH_EDGE_OF, AURA_PAINT,
   GENESIS_DEEP, GENESIS_HEART, titleBadge, titlePaint, glyphBadges, glyphArtNode, glyphDetails,
@@ -62,6 +64,26 @@ const all = (root, cls) => { const out = []; walk(root, (n) => { if (String(n.cl
 const card = (o = {}) => ({ on: true, wares: SHOP_WARES.map((w) => ({ id: w.id, sale: true, held: false, buy: `https://accounts.invalid/v1/shop/buy?t=${w.key}`, ...(o[w.id] ?? {}) })) });
 const flowIn = (shop = card(), extra = {}) => ({ stage: 'in', account: { handle: 'Aelwyn', kind: 'linked' }, wardrobe: { titles: [], glyphs: [], auras: [] }, shop, busy: false, ...extra });
 
+test('ARMORY: an Aura Armory piece bought is said in the player\'s own language when it lands - its name the client\'s (ui/armoryText.js), never the receipt\'s English (mutants: the service\'s English name said)', async () => {
+  const reads = [
+    { account: { id: 'a1', name: 'Aelwyn', kind: 'linked', handle: 'Aelwyn' }, wardrobe: { titles: [], glyphs: [] }, devices: [], shop: card() },
+    { account: { id: 'a1', name: 'Aelwyn', kind: 'linked', handle: 'Aelwyn' }, wardrobe: { titles: [], glyphs: [], auras: [], armoryHeld: ['eternalhalo'], armory: null }, devices: [], shop: card({ 'armory:eternalhalo': { held: true, buy: null } }) },
+  ];
+  let n = 0;
+  const fetch = async (url) => (new URL(url).pathname === '/v1/account' ? Response.json(reads[Math.min(n++, reads.length - 1)]) : Response.json({ ok: true }));
+  const m = new Map([[SESSION_KEY, JSON.stringify({ id: 'a1', name: 'Aelwyn', kind: 'linked', sessionId: 's1', secret: 'sec' })]]);
+  const storage = { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k) };
+  const flow = AccountFlow({ io: { fetch, base: 'https://accounts.invalid' }, storage });
+  await flow.start();
+  flow.shopOpened('armory:eternalhalo');
+  const was = currentLocale();
+  setLocale(PSEUDO_LOCALE);
+  try {
+    assert.equal(await flow.refresh(), true);
+    assert.ok(flow.note.includes(t('armory.name.eternalhalo', 'Eternal Halo')) && !flow.note.includes('Eternal Halo'), flow.note);
+  } finally { setLocale(was); }
+});
+
 // ── THE DISCLAIMER AND THE NAMES ──────────────────────────────────────
 
 test('SHOP: the window\'s disclaimer is the service\'s, word for word - the proceeds and the cosmetic line - and it stands first, above every ware (mutants: a word changed on one side; the disclaimer after the panels)', () => {
@@ -79,7 +101,7 @@ test('SHOP: the window\'s disclaimer is the service\'s, word for word - the proc
 
 test('SHOP: each ware\'s name is the one every face says - the title\'s, the aura\'s, the glyph\'s label - and the service\'s English is the same (mutants: a name drifting between the receipt and the window)', () => {
   for (const w of SHOP_WARES) {
-    const face = w.kind === 'title' ? TITLE_TEXT[w.key] : w.kind === 'aura' ? AURA_TEXT[w.key] : GLYPH_LABEL[w.key];
+    const face = w.kind === 'title' ? TITLE_TEXT[w.key] : w.kind === 'aura' ? AURA_TEXT[w.key] : w.kind === 'armory' ? armoryPieceName(w.key) : GLYPH_LABEL[w.key];   // PIN MOVED (ARMORY): a piece's name, the client's own (ui/armoryText.js)
     assert.equal(SHOP_WARE_NAME[w.id], face, w.id);
     assert.equal(shopWareName(w), face);
     assert.ok(typeof SHOP_LOOK[w.id] === 'function' && SHOP_LOOK[w.id]().length > 20, `${w.id}: a sentence of its look`);
@@ -116,7 +138,7 @@ test('SHOP: the window - a tab a category with its count, a panel a ware with it
   flow.shopOpened = (id) => { opened = id; };
   const keep = {};
   const w = shopWindow(doc, { flow: () => flow, onClose() {}, keep, focus: false, preview: async () => null });
-  assert.deepEqual(all(w.root, 'sh-tab').map((t) => t.textContent), ['Titles1', 'Glyphs1', 'Auras1']);
+  assert.deepEqual(all(w.root, 'sh-tab').map((t) => t.textContent), ['Titles1', 'Glyphs1', 'Auras1', 'Aura Armory6']);   // PIN MOVED (ARMORY): the Eternal set and its five pieces, a tab of their own, last
   assert.equal(all(w.root, 'sh-tab')[0].attrs['aria-selected'], 'true');
   assert.deepEqual(all(w.root, 'sh-price').map((p) => p.textContent), ['$5.00']);
   const buy = all(w.root, 'sh-buy')[0];
@@ -144,22 +166,45 @@ test('SHOP: the window - a tab a category with its count, a panel a ware with it
   w.stop(); again.stop();
 });
 
+test('SHOP: The Eternal Set - its own panel first in the Aura Armory tab at $20, a set of five; held, Wear puts every piece on at once and, every piece worn, takes them all off - one piece off, the set is not worn (mutants: the set worn a piece at a time; the set worn with a piece off)', () => {
+  const doc = fakeDoc();
+  const ETERNAL = ['armory:eternalset', 'armory:eternalhalo', 'armory:eternalsigil', 'armory:eternalarmlets', 'armory:eternalgreaves', 'armory:eternaledge'];
+  const flow = flowIn(card(Object.fromEntries(ETERNAL.map((id) => [id, { held: true, buy: null }]))), { wardrobe: { titles: [], glyphs: [], auras: [], armory: null } });
+  /** @type {unknown[]} */ const asked = [];
+  flow.wearArmoryKit = (/** @type {unknown} */ kit) => { asked.push(kit); };
+  const w = shopWindow(doc, { flow: () => flow, onClose() {}, keep: { cat: 'armory' }, focus: false, preview: async () => null });
+  assert.deepEqual(all(w.root, 'sh-name').map((n) => n.textContent), ['The Eternal Set', 'Eternal Halo', 'Eternal Sigil', 'Eternal Armlets', 'Eternal Greaves', 'Eternal Edge']);
+  assert.deepEqual(all(w.root, 'sh-price').map((p) => p.textContent), ['$20.00', '$6.00', '$6.00', '$6.00', '$6.00', '$6.00']);
+  assert.equal(all(w.root, 'sh-kind')[0].textContent, 'Aura Armory · a set of 5');
+  const set = SHOP_WARES.find((x) => x.id === 'armory:eternalset');
+  all(w.root, 'sh-wear')[0].click();
+  assert.deepEqual(asked, ['bbbbb'], 'every piece on at once');
+  flow.wardrobe.armory = 'bbbbb';
+  assert.equal(shopWareState(flow, set).worn, true);
+  w.draw();
+  all(w.root, 'sh-wear')[0].click();
+  assert.deepEqual(asked, ['bbbbb', null], 'worn whole, every piece off');
+  flow.wardrobe.armory = 'bbbb0';
+  assert.equal(shopWareState(flow, set).worn, false, 'the Edge off: the set is not worn');
+  w.stop();
+});
+
 test('SHOP: the tab strip by keys - an arrow steps to the next category and wraps, Home and End the ends, the focus with it; only the open tab is in the Tab order (mutants: no keys on the strip; the arrows unwrapped)', () => {
   const doc = fakeDoc();
   const w = shopWindow(doc, { flow: () => flowIn(), onClose() {}, keep: {}, focus: false, preview: async () => null });
   const strip = all(w.root, 'sh-tabs')[0], tabs = () => all(w.root, 'sh-tab');
   const key = (k) => { let stopped = false; for (const f of strip.listeners.keydown ?? []) f({ key: k, preventDefault() {}, stopPropagation() { stopped = true; } }); return stopped; };
   const open = () => tabs().findIndex((t) => t.attrs['aria-selected'] === 'true');
-  assert.deepEqual(tabs().map((t) => t.tabIndex), [0, -1, -1]);
+  assert.deepEqual(tabs().map((t) => t.tabIndex), [0, -1, -1, -1]);   // PIN MOVED (ARMORY): four tabs
   assert.equal(key('ArrowRight'), true, 'the strip keeps its keys');
   assert.equal(open(), 1);
   assert.equal(doc.activeElement, tabs()[1], 'the focus on the tab opened');
-  key('End'); assert.equal(open(), 2);
+  key('End'); assert.equal(open(), 3);
   key('ArrowRight'); assert.equal(open(), 0, 'round from the last to the first');
-  key('ArrowLeft'); assert.equal(open(), 2);
+  key('ArrowLeft'); assert.equal(open(), 3);
   key('Home'); assert.equal(open(), 0);
   assert.equal(key('Enter'), false, 'any other key is the page\'s');
-  assert.deepEqual(tabs().map((t) => t.tabIndex), [0, -1, -1]);
+  assert.deepEqual(tabs().map((t) => t.tabIndex), [0, -1, -1, -1]);   // PIN MOVED (ARMORY): four tabs
   w.stop();
 });
 
@@ -245,9 +290,12 @@ test('SHOP: a receipt\'s head keeps its ware - one of the shop\'s, nothing else 
 test('SHOP: Collections says how each ware is had - from the Shop, at its price, the proceeds\' line - and each is In the shop exactly while the service\'s SHOP_ON_SALE names it, else No longer obtainable (mutants: a sale ended and the catalogue still selling; the shop not Obtainable)', () => {
   const toml = rd('server-account/wrangler.toml');
   const onSale = shopOnSaleOf(/^SHOP_ON_SALE = "([^"]*)"$/m.exec(toml)?.[1]);
-  for (const w of SHOP_WARES) {
+  // ARMORY: a set is no entry of its own - its pieces are, each naming the set and its price
+  const set = SHOP_WARES.find((w) => w.id === 'armory:eternalset');
+  for (const w of SHOP_WARES.filter((x) => x !== set)) {
     const e = wardrobeEntry(w.kind, w.key);
     assert.equal(e.src, 'shop', w.id);
+    if (w.kind === 'armory') assert.match(e.how(), /The Eternal Set for \$20\.00/, `${w.id}: the set beside it`);
     assert.equal(e.avail, onSale.includes(w.id) ? 'shop' : 'retired', `${w.id}: its availability follows the sale list`);
     assert.match(e.how(), new RegExp(`\\$${(w.cents / 100).toFixed(2).replace('.', '\\.')}`), `${w.id}: its price`);
     assert.match(e.how(), /All proceeds go to the costs of developing DFO Online\./);

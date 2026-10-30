@@ -245,8 +245,8 @@ test('EV4: the wiring - fog seam, far ring, restride, and the per-set index buff
   // it too (terrainGen.js restrideGrid) - on the terrain worker when one
   // is up, on this thread when not.
   // PIN MOVED (BAY-LEFT-GROUND, D1): and the sites past the Bay beside the Bay's (test/world/terrain/bayleftground_sites.test.js)
-  assert.ok(world.includes('restrideGrid({ woods, px: p.px, py: p.py, stride, samples: p.samples, landform, roads: terrainGen.roads(), sites: _landformSites, beyond: beyondSites.beyond(), climates: _landformClimates, bed: waterOn ? bedBytesOf(p) : null })'), 'the restride reads the neighbor pixels (LANDFORM1-3: shaped as the build shaped them; LANDFORM4/6: the same sites and climates)');   // PIN MOVED (AUDIT WATER-NEXT P1): and carves the bed with the grid
-  assert.ok(readFileSync('src/world/terrain/terrainGen.js', 'utf8').includes('ghostSampler(woods, px, py, HEIGHTMAP_DIMENSION, lf)'),
+  assert.ok(world.includes('restrideGrid({ ...gridGround(p), woods, stride, landform, roads: terrainGen.roads(), sites: _landformSites, beyond: beyondSites.beyond(), climates: _landformClimates, bed: waterOn ? bedBytesOf(p) : null })'), 'the restride reads the neighbor pixels (LANDFORM1-3: shaped as the build shaped them; LANDFORM4/6: the same sites and climates)');   // PIN MOVED (AUDIT WATER-NEXT P1): and carves the bed with the grid; PIN MOVED (FB1029 ACROSS-EDGE): its pixel, samples and meets terrainGen.js gridGround's
+  assert.ok(readFileSync('src/world/terrain/terrainGen.js', 'utf8').includes('const raw = ghostSampler(woods, px, py, HEIGHTMAP_DIMENSION, lf);'),   // PIN MOVED (FB1029 ACROSS-EDGE): the kernel's rows, the meets' cones over them
     'the kernel reads them for every build');
   // the renderer keeps one shared buffer PER index set, not one total
   const renderer = readFileSync('src/render/renderer.js', 'utf8');

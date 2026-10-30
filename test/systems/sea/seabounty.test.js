@@ -146,8 +146,8 @@ test('SEA-BOUNTY the service, end to end over its routes and real records: a kil
   h.raw('UPDATE realm_characters SET held = ?1 WHERE id = ?2', 'law', h.R.pat.id);
   assert.equal((await h.post('pat', 'kim', 500)).body.error, 'trade-held', 'a held record hands no gold toward another\'s hand');
   h.raw('UPDATE realm_characters SET held = NULL WHERE id = ?1', h.R.pat.id);
-  assert.equal(h.gold('val'), 4500, 'three falls at kim\'s hand, a tenth of her purse at the first');   // PIN MOVED (FOE-KEEPS, bible/11-Multiplayer/Wild-Zone.md section 4): a tenth, the usual death's share - it was half (625); PIN MOVED (REPEAT-SHIELD, 2026-10-26): the second and third inside half an hour took nothing (it was 3,645)
-  assert.equal((await h.post('val', 'kim', 5000)).body.error, 'realm-gold', 'more than her record holds');   // PIN MOVED (FOE-KEEPS): her 3,645 - it was 1,000 past her 625; PIN MOVED (REPEAT-SHIELD): her 4,500
+  assert.equal(h.gold('val'), 5000, 'three falls at kim\'s hand, her purse whole');   // PIN MOVED (PVP-NO-TENTH): a kill takes no tenth (a last roll only where the room collects)   // PIN MOVED (FOE-KEEPS, bible/11-Multiplayer/Wild-Zone.md section 4): a tenth, the usual death's share - it was half (625); PIN MOVED (REPEAT-SHIELD, 2026-10-26): the second and third inside half an hour took nothing (it was 3,645)
+  assert.equal((await h.post('val', 'kim', 5001)).body.error, 'realm-gold', 'more than her record holds');   // PIN MOVED (PVP-NO-TENTH): past her 5,000   // PIN MOVED (FOE-KEEPS): her 3,645 - it was 1,000 past her 625; PIN MOVED (REPEAT-SHIELD): her 4,500
   assert.equal((await h.post('val', 'kim', 500)).status, 200, 'the victim posts too');
   assert.equal((await h.board('kim')).mine, 2500, 'kim sees the bounty on her own head');
   assert.equal((await h.board('pat')).wanted[0].bounty, 2500);
@@ -360,15 +360,15 @@ test('SEA-BOUNTY the Wanted section in the shipwright\'s window: a freeport\'s t
 
 test('SEA-BOUNTY the seams by source: the relay passes the room and signs it with the killer\'s character; the fall\'s batch writes the kill; the routes; the world hands the sea\'s host the record\'s gold acts and the harbourmaster\'s tab its Wanted section; the deploy watches the law (mutants: each seam)', () => {
   const relay = src('server/src/index.js');
-  assert.match(relay, /wildBlow\(st, a\.sub, tb\.sub, \{ d: d\.d, r, held, wa: a\.wa \?\? null, kin, rid, room: a\.key \}, now\)/);
-  assert.match(relay, /mintWildReceipt\(\{ f: fall\.fallen, c: fall\.ci, k: fall\.killer, r: fall\.r, w: fall\.w, wt: fall\.wt, m: fall\.m, kc: fall\.kc, g: fallenGone \}/);   // PIN MOVED (WILD-REJOIN): and whether its fallen had gone from the room
+  assert.match(relay, /wildBlow\(st, a\.sub, tb\.sub, \{ d: d\.d, r, held, wa: a\.wa \?\? null, kin, rid, room: a\.key, el: d\.el \?\? null \}, now\)/);
+  assert.match(relay, /mintWildReceipt\(\{ f: fall\.fallen, c: fall\.ci, k: fall\.killer, r: fall\.r, w: fall\.w, wt: fall\.wt, m: fall\.m, kc: fall\.kc, g: fallenGone, vp: fall\.vp \}/);   // PIN MOVED (WILD-REJOIN): and whether its fallen had gone from the room; PIN MOVED (PVP-VILLAIN): and the kill's villain points
   const ref = src('src/net/wild/wildRef.js');
   assert.match(ref, /killerId: a\.id, kc: a\.ci \|\| '', m: typeof room === 'string' \? room : '',/);
   assert.match(ref, /kc: typeof v\.kc === 'string' \? v\.kc : '', m: typeof v\.m === 'string' \? v\.m : '',/);
   const wild = src('server-account/src/wild.js');
   assert.match(wild, /sea = c;/);
-  assert.match(wild, /\.\.\.seaKillSteps\(ctx\.db, sea, ctx\.nowS\),\n {4}\/\/ WILD-INSURE: each policy that kept its piece, spent in the batch that kept it\n {4}\.\.\.spent\.map\(/);   // PIN MOVED (WILD-INSURE, 2026-10-26): the kill's bounties, then the policies the fall spent - one batch
-  assert.match(wild, /\.bind\(r, charId, fallen, killer, ctx\.nowS, room, JSON\.stringify\(tk\), fallAt\),\n {6}\.\.\.seaKillSteps\(ctx\.db, sea, ctx\.nowS\),\n {4}\]\);/, 'REPEAT-SHIELD: a shielded fall still writes its kill at sea');   // PIN MOVED (AUDIT PVP-EASE L1-1, 2026-10-26): the row carries its kill's moment, `ki`
+  assert.match(wild, /\.\.\.seaKillSteps\(ctx\.db, sea, ctx\.nowS\),\n {4}\.\.\.villainFallSteps\(ctx\.db, sea\),[^\n]*\n {4}\/\/ WILD-INSURE: each policy that kept its piece, spent in the batch that kept it\n {4}\.\.\.spent\.map\(/);   // PIN MOVED (WILD-INSURE, 2026-10-26): the kill's bounties, then the policies the fall spent - one batch
+  assert.match(wild, /\.bind\(r, charId, fallen, killer, ctx\.nowS, room, JSON\.stringify\(tk\), fallAt\),\n {6}\.\.\.seaKillSteps\(ctx\.db, sea, ctx\.nowS\),\n {6}\.\.\.villainFallSteps\(ctx\.db, sea\),[^\n]*\n {4}\]\);/, 'REPEAT-SHIELD: a shielded fall still writes its kill at sea');   // PIN MOVED (AUDIT PVP-EASE L1-1, 2026-10-26): the row carries its kill's moment, `ki`
   const idx = src('server-account/src/index.js');
   assert.match(idx, /'\/v1\/sea\/bounty\/board': async \(\) => seaBountyBoard\(sctx, who\.player, body\),/);
   assert.match(idx, /'\/v1\/sea\/bounty\/post': async \(\) => seaBountyPost\(sctx, who\.player, body\),/);

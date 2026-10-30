@@ -1176,6 +1176,8 @@ img.fit { image-rendering: pixelated; }   /* AUDIT UI A1: a fitted picture drawn
 .card .acctwear { margin: 0 0 16px; display: flex; flex-direction: column; gap: 6px; }
 .card .acctwear .fieldlabel { margin-top: 6px; }
 .card .acctwearrow { display: flex; flex-wrap: wrap; gap: 8px; }
+.card .acctarmoryrow { align-items: center; }   /* ARMORY: a slot's row - its name, then its pieces */
+.card .acctarmoryslot { min-width: 5.5em; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); }
 .card button.acttitle {
   font: inherit; font-size: 13px; letter-spacing: 0.04em;
   padding: 6px 12px; border: 1px solid currentColor; border-radius: 2px;
@@ -1207,6 +1209,51 @@ img.fit { image-rendering: pixelated; }   /* AUDIT UI A1: a fitted picture drawn
 .card button.acctglyph.worn { opacity: 1; }
 .card button.acctglyph:hover:not(:disabled) { border-color: rgba(255, 255, 255, 0.18); }
 .card button.acctglyph:disabled { cursor: default; }
+/* PROFILE-SLOTS (2026-10-28, the owner: "a detailed character slot section ... an actual preview") - THE CHARACTER, the
+   whole window's width under the plate: its slots down both sides of its stage, the picker of the slot pressed under
+   them (ui/characterSlots.js). A tile is the slot's name over what it wears, in that thing's own paint - the badge
+   rules above colour it, as they colour the picker's buttons. Narrow, the stage stands over its slots, two to a row. */
+.card .acctslots { min-width: 0; }
+.card .slots-stage { display: grid; grid-template-columns: minmax(0, 1fr) minmax(150px, 220px) minmax(0, 1fr); gap: 10px; align-items: stretch; }
+.card .slots-col { display: flex; flex-direction: column; justify-content: space-between; gap: 8px; min-width: 0; }
+.card .slots-left button.slottile { align-items: flex-end; text-align: right; }   /* the body's slots lean in toward it */
+.card .slots-right button.slottile { align-items: flex-start; }
+.card .slots-mid { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.card .slots-figure { position: relative; aspect-ratio: 3 / 4; overflow: hidden; border: 2px solid var(--iron);
+  background: radial-gradient(circle at 50% 42%, #1b1826 0%, #08070c 76%); }
+.card .slots-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.card .slots-platehost { position: absolute; inset: 0; overflow: hidden; pointer-events: none; font-size: 13px;
+  font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none; -moz-osx-font-smoothing: grayscale; }   /* the world's names' face (nameLayer.js .dfnames) */
+/* a name or title wider than the stage ends in an ellipsis inside it, never cut at its edges; the Renown and glyphs kept whole */
+.card .slots-platehost .dfname { max-width: calc(100% - 8px); }
+.card .slots-platehost .dfname-tag, .card .slots-platehost .dfname-title { max-width: 100%; }
+.card .slots-platehost .dfname-who, .card .slots-platehost .dfname-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.card .slots-platehost .dfname-renown, .card .slots-platehost .dfname-glyphs { flex-shrink: 0; }
+.card .slots-bodies { display: flex; justify-content: center; gap: 6px; }
+.card .slots-bodies button.acttitle { font-size: 11px; padding: 3px 8px; }
+.card .slots-bodies button.acttitle.worn { padding: 2px 7px; }
+.card button.slottile { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; min-width: 0;
+  padding: 7px 9px; border: 1px solid var(--iron); border-radius: 2px; background: rgba(0, 0, 0, 0.25); font: inherit;
+  text-align: left; cursor: pointer; opacity: 1; }
+.card button.slottile:hover { background: rgba(255, 255, 255, 0.06); }
+.card button.slottile.on { border-color: var(--brass); box-shadow: inset 0 0 0 1px var(--brass); background: rgba(255, 255, 255, 0.06); }
+.card button.slottile .slotname { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); }
+.card button.slottile .slotworn { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.card button.slottile.empty .slotworn { color: var(--dim); }
+.card button.slottile .slotglyphs { display: flex; gap: 4px; }
+.card button.slottile .sloticon { width: 18px; height: 18px; }
+.card .slots-picker { margin: 12px 0 0; }
+.card .slots-pickhead { display: flex; align-items: baseline; gap: 10px; }
+.card .slots-pickname { font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--brass); }
+.card button.acttitle.actnone { color: var(--dim); }
+/* a piece not held: tried on when pointed at, its way of being had said under the row - never worn from here */
+.card button.acttitle.actaura .actauraword { display: inline-block; }   /* an aura's or a piece's word, painted as its title's (badgeCss) */
+.card button.actarmory.locked.aura-dagonfire, .card button.actarmory.locked.aura-eternal { opacity: 0.4; border-style: dashed; }
+.card .slots-look { margin: 4px 0 0; min-height: 2.6em; }
+@container (max-width: 480px) {
+  .card .slots-stage { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .card .slots-mid { grid-column: 1 / -1; order: -1; justify-self: center; width: min(100%, 240px); }
+}
 /* PATREON-LINK - THE PATRON'S ROW. Link Patreon is a LINK (the account read carries it, so the press opens it at once,
    as TERMS1's document links do), worn as an .act so it reads as the button it is; what the pledge holds is a fact
    beside it, drawn as the glyphs' facts are - quiet, not pressable. */
@@ -2664,6 +2711,9 @@ ${SUPPORT_MARKS_CSS}
   .px-stage.px-acctstage { padding: max(10px, env(safe-area-inset-top)) 8px max(10px, env(safe-area-inset-bottom)); background: rgba(8,10,15,0.88); }
   .px-win.px-acctwin, .px-win.px-acctwin:has(.card.acct.acctin) { width: 100%; max-height: calc(100dvh - 20px); }
   .px-win.px-acctwin .px-body { padding: 18px 16px 20px; }
+  /* PROFILE-SLOTS: the stage's one track the screen's width - px-stage centres its tracks, so the window's 100% was
+     only ever its content's width (the skin card's row, which happened to fill it) */
+  .px-stage.px-acctstage { grid-template-columns: minmax(0, 1fr); }
 }
 .px-win.px-acctwin .card.acct.acctin .acctsec { text-align: left; }
 .px-win.px-acctwin .card.acct.acctin ul.acctfacts li { justify-content: space-between; }
@@ -2797,7 +2847,7 @@ ${SUPPORT_MARKS_CSS}
 .px-timerswin .tm-name::before { content: '\\25c6'; position: absolute; left: -14px; top: 50%; transform: translateY(-50%); font-size: 9px;
   line-height: 1; color: var(--tm-kind, #9c937d); }
 .px-timerswin .tm-gate { --tm-kind: ${heraldCss('gate')}; } .px-timerswin .tm-serpent { --tm-kind: ${SERPENT_RING_MAP_CSS}; } .px-timerswin .tm-super { --tm-kind: ${SD_RING_MAP_CSS}; } .px-timerswin .tm-star { --tm-kind: ${STAR_VIOLET_CSS}; } .px-timerswin .tm-ketch { --tm-kind: ${heraldCss('ketch')}; } .px-timerswin .tm-raid { --tm-kind: #f2c46b; } .px-timerswin .tm-battle { --tm-kind: #d98074; }
-.px-timerswin .tm-seat { --tm-kind: #c08a3e; } .px-timerswin .tm-reset { --tm-kind: #85a8a1; } .px-timerswin .tm-elite { --tm-kind: ${EG_ARCH_RING_CSS}; }
+.px-timerswin .tm-front { --tm-kind: #8fd17a; } .px-timerswin .tm-seat { --tm-kind: #c08a3e; } .px-timerswin .tm-reset { --tm-kind: #85a8a1; } .px-timerswin .tm-elite { --tm-kind: ${EG_ARCH_RING_CSS}; }
 .px-timerswin .tm-row.live { background: rgba(192,138,62,0.08); }
 .px-timerswin .tm-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .px-timerswin .tm-name { font-size: 15px; color: #efe8d6; }

@@ -41,7 +41,8 @@
 import { HANDLE_RE } from './handleShape.js';
 import { carryYardOrder } from './yardPush.js';   // YARD-CELL YC2
 import { SESSION_PASS_HEADER } from './sessionPassLaw.js';   // SESSION-SIGN: the pass's one name on the wire
-import { AURAS, ICONS } from './identityToken.js';   // WB9g: the auras that exist - a stored one is one of them, or none; WITCH1: and the icons
+import { AURAS, ICONS } from './identityToken.js';
+import { armoryKitOk } from './armoryLaw.js';   // ARMORY: a stored kit is a kit of known pieces, or none   // WB9g: the auras that exist - a stored one is one of them, or none; WITCH1: and the icons
 import { NAME_MAX } from './wire.js';   // NAME-AS: the wire's bound on a name, in the sentence that says a character's is past it
 import { LETTER_SUBJECT_MAX, LETTER_BODY_MAX, LETTER_LINES_MAX, LETTERS_SENT_MAX, LETTERS_PAIR_MAX } from './letterLaw.js';   // MAIL1: the letter's bounds, in the refusals' own sentences
 import { banRangeText, bannedText } from './safety/safetyLaw.js';   // SAFE4: a ban's bound in its refusal's sentence, from its home; AUDIT SAFE CLIENT-2: and the ban itself
@@ -216,6 +217,10 @@ const REFUSAL_WORDS = {
   // WITCH1, the Witches' Festival (server-account/src/festival.js) - the festival's own words, its keys shared with
   // systems/festival/festivalWords.js so the sentence is one in every language
   'no-icon': () => t('account.refusal.noIcon', 'The account service does not know that icon. The game may need updating.'),
+  // ARMORY, the Aura Armory (server-account/src/accounts.js equipArmory): a piece the account does not hold, and one the
+  // service does not know or that is not of the slot asked
+  'armory-not-held': () => t('account.refusal.armoryNotHeld', 'That piece is not yours to wear.'),
+  'no-piece': () => t('account.refusal.noPiece', 'The account service does not know that piece. The game may need updating.'),
   source: () => t('account.refusal.source', 'The account service does not know that. The game may need updating.'),
   rid: () => t('account.refusal.rid', 'That request could not be read. Try again.'),
   ware: () => t('festival.refusal.ware', 'The Wyrd Sister has no such thing.'),
@@ -769,7 +774,8 @@ const REFUSAL_WORDS = {
   'lineage-person': () => t('account.refusal.lineagePerson', 'That member of the family cannot take up the line. They have died, retired, married into it, or are still a child.'),
   'lineage-played': () => t('account.refusal.lineagePlayed', 'That member of the family already has a character in the realm.'),
   'lineage-model': () => t('account.refusal.lineageModel', 'A family keeps the way of death it was founded with.'),
-  'too-many-lineages': () => t('account.refusal.tooManyLineages', 'You have as many families as an account may hold online.'),
+  'too-many-lineages': () => t('account.refusal.tooManyLineages', 'You have as many families as an account may hold online. Remove a family you no longer play to make room.'),   // FAMILY-REMOVE: and the way past it
+  'lineage-in-use': () => t('account.refusal.lineageInUse', 'A living character still plays that family.'),
   'lineage-stale': () => t('account.refusal.lineageStale', 'Your family was changed on another device. This one takes those changes in and saves again.'),
   'wed-no-line': () => t('account.refusal.wedNoLine', 'Only a character of a house (Project Legacy) can be wed in the realm.'),
   'wed-already': () => t('account.refusal.wedAlready', 'You are wed already.'),
@@ -1030,6 +1036,7 @@ export const D1_BOOKMARK_READS = new Map([
   ['/v1/saves', 'GET'],
   ['/v1/arena/board', 'POST'],
   ['/v1/festival/town', 'POST'],   // WITCH1: a town's Hearth Offerings
+  ['/v1/hunt/state', 'POST'],   // HUNT-LEAN: a character's hunt
 ]);
 let _d1Mark = { secret: null, mark: null };
 /** AUDIT SCALE II A-2: how many times the page's bookmark has been forgotten - a read's answer is kept only under the
@@ -1149,7 +1156,9 @@ export async function call({ fetch, base = DEFAULT_ACCOUNT_SERVICE, secret = nul
     // A NETWORK FAILURE IS A REFUSAL, NOT A THROW. ONCRASH1's law on
     // this side too: a throw out of a button handler ends more than the
     // button. Every arm of this function returns the same shape.
-    forgetD1Bookmark();   // AUDIT SCALE II A-6: a call that could not be made - a preflight refusing the header among them
+    // AUDIT SCALE II A-6: a call that could not be made - a preflight refusing the header among them. KEEP-MARK: but a read
+    // that timed out keeps it, as the pass is kept (E7) - the overload's own answer, which sent every next read to the primary
+    if (!read || !passKeptThrough(e)) forgetD1Bookmark();
     if (!passKeptThrough(e)) forgetSessionPass();   // SESSION-SIGN: the same, for the pass's - but a timeout's (E7)
     // SLOW-SHED (bible/11-Multiplayer/Scale-Arc.md SLOW-SHED): A READ THE SERVICE WAS TOO SLOW TO ANSWER IS ITS OVERLOAD'S
     // WORD - its reads stand back as an overload answer stands them back. In the 18:05 overload the database answered
@@ -1206,7 +1215,9 @@ export async function call({ fetch, base = DEFAULT_ACCOUNT_SERVICE, secret = nul
   // with its own id (the service's `repeat` answers one that landed), a read shows the last good view. As `ok` with no
   // data it let a kept purchase go unminted and cached a blank market for a minute. A 204 says it has nothing to say.
   if (!parsed && res.status !== 204) { forgetD1Bookmark(); return { ok: false, error: 'offline', unknown: true, status: res.status }; }   // AUDIT SCALE II A-6: `offline`, as one never made
-  _busy = { n: 0, until: _busy.until };   // BUSY-GATE: an answer starts the count again; a hold already running runs out
+  // BUSY-GATE: a held read's own answer starts the count again (BUSY-COUNT: an act's, a write's or a mint's, which always go,
+  // kept it at the first wait all through an overload); a hold already running runs out
+  if (busyRead(path, method)) _busy = { n: 0, until: _busy.until };
   heardHomeOrders(data);   // QUEST-HOME: a home bought, held or given up, said to every page online
   if (typeof data?.yardOrder === 'string') carryYardOrder(data.yardOrder);   // YARD-CELL YC2: a yard that moved, carried to the hub (net/yardPush.js)
   return { ok: true, data, status: res.status };
@@ -1289,6 +1300,11 @@ export const equipTitle = (io, title) => call(io, '/v1/account/title', { title: 
 /** WB9g: wear one of the Broker's auras, or none - `{ ok, titles, title, glyphs, auras, aura, insignia }`, the wardrobe
  *  after the write. */
 export const equipAura = (io, aura) => call(io, '/v1/account/aura', { aura: aura ?? null });
+/** ARMORY: wear one Aura Armory piece in its slot, or empty the slot (`piece` null) - the wardrobe after the write. The
+ *  service refuses `not-held` for a piece this account does not hold, and `no-piece` for one that is not of the slot. */
+export const equipArmory = (io, slot, piece) => call(io, '/v1/account/armory', { slot, piece: piece ?? null });
+/** ARMORY: a whole kit at once (the Eternal set's Wear), or `null` to bare every slot - the same door. */
+export const equipArmoryKit = (io, kit) => call(io, '/v1/account/armory', { kit: kit ?? null });
 /** WITCH1: wear one profile icon, or none (null: the character's face) - the wardrobe after the write. The service refuses
  *  `not-held` for an icon this account does not hold. */
 export const equipIcon = (io, icon) => call(io, '/v1/account/icon', { icon: icon ?? null });
@@ -1379,9 +1395,10 @@ export function storedSession(storage) {
  *  NEVER PART OF THIS - `register`, `recover` and `newRecoveryCodes`
  *  hand them back and they are the screen's to show and the player's to
  *  write down. */
-export function keepSession(storage, { id, name, kind, sessionId, secret, glyphs, aura, icon, nameAsAt }) {
+export function keepSession(storage, { id, name, kind, sessionId, secret, glyphs, aura, icon, armory, nameAsAt }) {
   try {
-    storage?.setItem?.(SESSION_KEY, JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon, nameAsAt }));   // SHADOW-FANG: `glyphs` when the service has stated them (adoptIdentity) - JSON leaves it out otherwise; WB9g: `aura` likewise; WITCH1: `icon` likewise; NAME-AS: `nameAsAt` likewise
+    // ARMORY-SEEN: every field adoptIdentity writes is kept here - a field it writes and this drops never lands
+    storage?.setItem?.(SESSION_KEY, JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon, armory, nameAsAt }));   // SHADOW-FANG: `glyphs` when the service has stated them (adoptIdentity) - JSON leaves it out otherwise; WB9g: `aura` likewise; WITCH1: `icon` likewise; NAME-AS: `nameAsAt` likewise
     return true;
   } catch { return false; }
 }
@@ -1441,9 +1458,9 @@ export function keepSession(storage, { id, name, kind, sessionId, secret, glyphs
  * profile mark and the account card read it here (systems/ownGlyphs.js ownIcon).
  *
  * @param {any} storage
- * @param {{ name?: string, kind?: string, glyphs?: string[], glyphsOff?: string[], aura?: string|null, icon?: string|null, nameAsAt?: number, secret?: string }} [who]
+ * @param {{ name?: string, kind?: string, glyphs?: string[], glyphsOff?: string[], aura?: string|null, armory?: string|null, icon?: string|null, nameAsAt?: number, secret?: string }} [who]
  */
-export function adoptIdentity(storage, { name, kind, glyphs, glyphsOff, aura, icon, nameAsAt, secret } = {}) {
+export function adoptIdentity(storage, { name, kind, glyphs, glyphsOff, aura, armory, icon, nameAsAt, secret } = {}) {
   const was = storedSession(storage);
   if (!was) return false;
   if (typeof secret === 'string' && was.secret !== secret) return false;
@@ -1454,9 +1471,10 @@ export function adoptIdentity(storage, { name, kind, glyphs, glyphsOff, aura, ic
   if (Array.isArray(glyphs)) next.glyphs = glyphs.filter((g) => typeof g === 'string' && g.length <= 24 && !off.includes(g)).slice(0, 16);
   if (aura !== undefined) next.aura = typeof aura === 'string' && AURAS.includes(aura) ? aura : null;   // WB9g: one that exists, or none
   if (icon !== undefined) next.icon = typeof icon === 'string' && ICONS.includes(icon) ? icon : null;   // WITCH1: likewise
+  if (armory !== undefined) next.armory = armoryKitOk(armory) ? armory : null;   // ARMORY: likewise
   if (Number.isSafeInteger(nameAsAt) && nameAsAt > 0 && !(Number.isSafeInteger(was.nameAsAt) && was.nameAsAt >= nameAsAt)) next.nameAsAt = nameAsAt;   // NAME-AS: forward only
   const sameGlyphs = (next.glyphs ?? []).join('+') === (was.glyphs ?? []).join('+');
-  const sameAura = (next.aura ?? null) === (was.aura ?? null) && (next.icon ?? null) === (was.icon ?? null);   // WITCH1: and the icon
+  const sameAura = (next.aura ?? null) === (was.aura ?? null) && (next.icon ?? null) === (was.icon ?? null) && (next.armory ?? null) === (was.armory ?? null);   // WITCH1: and the icon; ARMORY: and the kit
   if (next.name === was.name && next.kind === was.kind && sameGlyphs && sameAura && next.nameAsAt === was.nameAsAt) return false;   // nothing to write, and a write is a storage event every open tab hears
   return keepSession(storage, next);
 }
@@ -1476,6 +1494,12 @@ export function forgetSession(storage) {
  *  burst (and a deploy's reconnect wave) and keeps what the token signs - the level, the title, the guild - no older
  *  than that in any room it opens; the token itself lives MAX_TTL_S (five minutes). */
 export const TOKEN_REUSE_MS = 60_000;
+/** TOKEN-STRETCH (2026-10-29, the account database overloaded and two mints in three answered 503): while this sign-in's
+ *  last mint failed, or the page's BUSY-GATE holds, the held token opens new rooms up to TOKEN_STRETCH_MS from when its
+ *  mint was SENT - the relay takes it for MAX_TTL_S (five minutes), and the service signs it after the send, so a minute
+ *  is left for the hello. Each retry of a room that needs a token was another mint into the overload. The cost: a
+ *  room opened on it reads level, title, guild and a mute or freeze laid since the mint up to four minutes late, not one. */
+export const TOKEN_STRETCH_MS = 240_000;
 
 /** STORM-SHED (2026-10-06 evening, the account service overloaded a second time - "D1 DB is overloaded"; decorations
  *  missing): A FAILED MINT HOLDS THE PAGE'S NEXT ONE OFF. A room whose hello the relay refused for want of a token asks
@@ -1599,7 +1623,7 @@ export const lineHoldMs = (/** @type {unknown} */ wait, rand = Math.random) => {
  * @returns {((room?: string|null) => Promise<string|null>) & { lastWhy: string|null, coolMs: () => number, opened: (room: string|null, token: string) => void, unopened: (room: string|null, token: string) => void, ahead: (room?: string|null, withinMs?: number) => boolean, holds: (room: string|null) => boolean, forget: () => void }}
  */
 export function accountTokenMinter({ fetch, storage, onIssued = null, character = null, now = () => Date.now(), rand = Math.random }) {
-  /** @type {{ token: string, secret: string, character: string|null, at: number, rooms: Set<string> } | null} */
+  /** @type {{ token: string, secret: string, character: string|null, at: number, sent: number, rooms: Set<string> } | null} */
   let held = null;
   /** @type {Promise<string|null> | null} */
   let minting = null;
@@ -1609,9 +1633,13 @@ export function accountTokenMinter({ fetch, storage, onIssued = null, character 
   /** STORM-SHED: the mints held off after a failure - one sign-in's (its secret), until `until` on now()'s clock, the
    *  failures in a row counted and the last one's word kept to answer with. */
   let cool = { secret: /** @type {string|null} */ (null), fails: 0, until: -Infinity, why: /** @type {string|null} */ (null) };
+  /** TOKEN-STRETCH: this sign-in's last mint failed, or the page's gate holds (its own clock, Date.now: `call`'s). */
+  const stretching = (/** @type {string} */ secret) => (cool.secret === secret && (cool.fails > 0 || cool.why === 'queue')) || Date.now() < busyUntil();
+  /** Whether the held token may still open a new room at `t`: its reuse minute, or TOKEN-STRETCH's from its send. */
+  const lives = (/** @type {number} */ t, /** @type {string} */ secret) => !!held && (t - held.at < TOKEN_REUSE_MS || (stretching(secret) && t - held.sent < TOKEN_STRETCH_MS));
   const reuse = (/** @type {string|null} */ room, /** @type {string} */ secret, /** @type {string|null} */ named) => {
     if (!held || room == null || held.rooms.has(room) || held.secret !== secret || held.character !== named) return null;
-    if (!(now() - held.at < TOKEN_REUSE_MS)) return null;
+    if (!lives(now(), secret)) return null;
     return held.token;
   };
   /** The character the next mint names (RENOWN1) - read at each ask; a seam that throws costs the level, never the hello. */
@@ -1624,9 +1652,10 @@ export function accountTokenMinter({ fetch, storage, onIssued = null, character 
    *  its failure's hold set (STORM-SHED) - the one door the minter and DOOR-TOKEN's `ahead` both mint through. */
   const start = (/** @type {any} */ session, /** @type {string|null} */ named) => {
     const era = forgets;
+    const sent = now();   // TOKEN-STRETCH: the stretch is counted from here - the service signs the token after it
     const p = mintFresh(session, named).then((token) => {
       if (token) {
-        if (era === forgets) held = { token, secret: session.secret, character: named, at: now(), rooms: new Set() };   // STORM-SHED: opened by a hello (`opened`), never by the mint
+        if (era === forgets) held = { token, secret: session.secret, character: named, at: now(), sent, rooms: new Set() };   // STORM-SHED: opened by a hello (`opened`), never by the mint
         cool = { secret: null, fails: 0, until: -Infinity, why: null };
       } else if (minter.lastWhy === 'queue') {
         // AUDIT SCALE II L4a: the line's own wait, its failures in a row left where they stood
@@ -1689,7 +1718,7 @@ export function accountTokenMinter({ fetch, storage, onIssued = null, character 
       if (cool.secret === session.secret && now() < cool.until) return false;
       const named = namedNow();
       const by = now() + Math.max(0, Number(withinMs) || 0);   // AUDIT A2: when its socket asks - the door's own margin
-      const opens = !!held && held.secret === session.secret && held.character === named && by - held.at < TOKEN_REUSE_MS && !(room != null && held.rooms.has(room));
+      const opens = !!held && held.secret === session.secret && held.character === named && lives(by, session.secret) && !(room != null && held.rooms.has(room));
       if (opens) return false;
       start(session, named);
       return true;
@@ -1729,6 +1758,8 @@ export function accountTokenMinter({ fetch, storage, onIssued = null, character 
           ...('aura' in answer.data ? { aura: typeof answer.data.aura === 'string' ? answer.data.aura : null } : {}),
           // WITCH1: the profile icon I wear (null for the face) - absent from a service before acct165, which says nothing
           ...('icon' in answer.data ? { icon: typeof answer.data.icon === 'string' ? answer.data.icon : null } : {}),
+          // ARMORY-SEEN: the Aura Armory kit I wear (null for none) - absent from a service before acct209, which says nothing
+          ...('armory' in answer.data ? { armory: typeof answer.data.armory === 'string' ? answer.data.armory : null } : {}),
           // SEASON1 part two: a Season's banner ribbon under my own name (null for none) - absent from a service before acct58
           ...('ribbon' in answer.data ? { ribbon: Array.isArray(answer.data.ribbon) ? answer.data.ribbon : null } : {}),
           // LEGACY7: the house my realm character wears (null for none) - absent from a service before acct87
@@ -1929,6 +1960,23 @@ export function accountStars({ fetch, storage }) {
   };
 }
 
+/** DRAGON4: a Dwarven Dragon's receipt the relay signed for this account, carried to the service with the character that
+ *  fought it and this device's claim id (the hoard's key) - `{ recorded, slain, spoils, tamed }`, or `{ recorded: false,
+ *  why, slain, spoils, tamed }` (`claimed`, `guest`). `tamed` the kill's tame (`{ id, look, character }`) while its row stands. */
+export const claimDragonReceipt = (io, receipt, character, name = null, cid = null) => call(io, '/v1/dragon/claim', { receipt, character, name, ...(cid ? { cid } : {}) });
+/** AUDIT DRAGON: the tames the service drew for this account - `{ tames: [{ id, character, look, watch }] }`. */
+export const dragonTamesOf = (io) => call(io, '/v1/dragon/tames', {});
+
+/** DRAGON4: THE DRAGONS' ONE CALL, bound to this device's stored session (the stars' own shape); no session, `no-session`. */
+export function accountDragons({ fetch, storage }) {
+  const io = () => { const s = storedSession(storage); return s ? { fetch, base: serviceBase(storage), secret: s.secret } : null; };
+  return {
+    claim: async (receipt, character, name = null, cid = null) => { const i = io(); return i ? claimDragonReceipt(i, receipt, character, name, cid) : { ok: false, error: 'no-session' }; },
+    tames: async () => { const i = io(); return i ? dragonTamesOf(i) : { ok: false, error: 'no-session' }; },
+    me: () => storedSession(storage)?.id ?? null,
+  };
+}
+
 /** SD9b: a Brass Remnant's receipt the relay signed for this account, carried to the service - `{ recorded, slot, title,
  *  aura, broken }`, or `{ recorded: false, why }` (`claimed`, `guest`). */
 export const claimSdReceipt = (io, receipt) => call(io, '/v1/sd/claim', { receipt });
@@ -2062,7 +2110,7 @@ export function accountArena({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
 }
 
 /** RENOWN1: what one of this account's characters earned online - `{ character, xp, level, credited, rose, order }`. */
-export const reportRenownXp = (io, character, xp, name = null, rid = null, region = null) => call(io, '/v1/renown/xp', { character, xp, name, ...(rid ? { rid } : {}), ...(region != null ? { region } : {}) });   // AUDIT RENOWN1 DATA-4: `rid` the report's own id; SEAT1b: `region` where it was earned
+export const reportRenownXp = (io, character, xp, name = null, rid = null, region = null, vd = 0) => call(io, '/v1/renown/xp', { character, xp, name, ...(rid ? { rid } : {}), ...(region != null ? { region } : {}), ...(vd > 0 ? { vd } : {}) });   // AUDIT RENOWN1 DATA-4: `rid` the report's own id; SEAT1b: `region` where it was earned; PVP-VILLAIN-KEEP: `vd` the villain meter it lowers
 
 /**
  * RENOWN1: THE RENOWN'S REPORT, bound to this device's stored
@@ -2071,14 +2119,14 @@ export const reportRenownXp = (io, character, xp, name = null, rid = null, regio
  * never a knock.
  */
 export function accountRenown({ fetch, storage }) {
-  const report = async (character, xp, name = null, rid = null, keepalive = false, region = null) => {
+  const report = async (character, xp, name = null, rid = null, keepalive = false, region = null, vd = 0) => {
     const s = storedSession(storage);
-    return s ? reportRenownXp({ fetch, base: serviceBase(storage), secret: s.secret, keepalive }, character, xp, name, rid, region) : { ok: false, error: 'no-session' };
+    return s ? reportRenownXp({ fetch, base: serviceBase(storage), secret: s.secret, keepalive }, character, xp, name, rid, region, vd) : { ok: false, error: 'no-session' };
   };
   return {
-    report: (character, xp, name = null, rid = null, region = null) => report(character, xp, name, rid, false, region),
+    report: (character, xp, name = null, rid = null, region = null, vd = 0) => report(character, xp, name, rid, false, region, vd),
     /** AUDIT RENOWN1 GAME-8: the same report as the page goes - `keepalive`, so the browser finishes it after the page. */
-    leave: (character, xp, name = null, rid = null, region = null) => report(character, xp, name, rid, true, region),
+    leave: (character, xp, name = null, rid = null, region = null, vd = 0) => report(character, xp, name, rid, true, region, vd),
   };
 }
 

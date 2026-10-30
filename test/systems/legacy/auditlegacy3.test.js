@@ -20,7 +20,7 @@ import { renownHeldSql } from '../../../server-account/src/renownTracks.js';
 import { RENOWN_TRACKS_MAX } from '../../../src/net/renown.js';
 import { GUILD_FOUND_RENOWN, GUILD_RANK_MASTER } from '../../../src/net/guild/guildLaw.js';
 import {
-  mintToken, verifyToken, claimsValid, REALM_CHARACTER_RE, TOKEN_MAX_CHARS, TOKEN_BODY_MAX, tokenBodyOf, GLYPHS, SEAT_TITLES, AURAS, ICONS,
+  mintToken, verifyToken, claimsValid, REALM_CHARACTER_RE, TOKEN_MAX_CHARS, TOKEN_BODY_MAX, TOKEN_VILLAINY_MAX, tokenBodyOf, GLYPHS, SEAT_TITLES, AURAS, ICONS,
   RENOWN_MAX, ARENA_RATING_MAX, CHARACTER_LEVEL_MAX, TOKEN_ARMS_TOP_MAX,
 } from '../../../src/net/identityToken.js';
 import { HOUSE_NAME_MAX, HOUSE_GIVEN_MAX, HOUSE_GEN_MAX } from '../../../src/net/houseLaw.js';
@@ -177,6 +177,7 @@ test('AUDIT LEGACY III O11: THE TOKEN\'S BODY BOUND IS ONE - the relay\'s hello 
   const every = {
     s: 'a'.repeat(40), n: 'W'.repeat(NAME_MAX), k: 'linked', t: seatT, ts: [0xffffffff, 9999], g: [...GLYPHS], au: aura, pi: icon, mu: nowS + 10 ** 9, lv: RENOWN_MAX,
     gi: `g${'z'.repeat(10)}`, gt: 'WWWW', gm: `m${'9'.repeat(15)}`, rc: 1, rb: [15, 14], ar: ARENA_RATING_MAX, cl: CHARACTER_LEVEL_MAX,
+    ak: 'aaaaa',   // ARMORY: and a kit in every slot
   };
   const house = { hn: 'H'.repeat(HOUSE_NAME_MAX), hc: 'G'.repeat(HOUSE_GIVEN_MAX), hb: 1, hg: HOUSE_GEN_MAX };
   // INT7: and the arms (`wa`, at their widest) - every claim the realm signs, the house still inside the hello's bound
@@ -185,7 +186,7 @@ test('AUDIT LEGACY III O11: THE TOKEN\'S BODY BOUND IS ONE - the relay\'s hello 
   // past the hello's 864: the mint then leaves the house unsaid (the rule this test reads below), and the token it makes
   // is the one checked here. Without the province crowns the house still fits beside every other claim (855).
   const crowns = /^crown(SK|MW|SU|VW|EW|BM|CY)$/;
-  const arms = { ci: `r${'f'.repeat(20)}`, wa: [TOKEN_ARMS_TOP_MAX, 1] };
+  const arms = { ci: `r${'f'.repeat(20)}`, wa: [TOKEN_ARMS_TOP_MAX, 1], vl: TOKEN_VILLAINY_MAX };   // PVP-VILLAIN-KEEP: and the villain meter at its top
   assert.ok(tokenBodyOf(await mintToken({ ...every, ...house, ...arms }, kp.privateKey, { subtle, nowS })).length > TOKEN_BODY_MAX, 'every glyph and a house: past the hello - the mint leaves the house unsaid');
   const bay = tokenBodyOf(await mintToken({ ...every, g: GLYPHS.filter((g) => !crowns.test(g)), ...house, ...arms }, kp.privateKey, { subtle, nowS })).length;
   assert.ok(bay <= TOKEN_BODY_MAX, `the house beside every claim but the province crowns (${bay} of ${TOKEN_BODY_MAX})`);

@@ -224,8 +224,8 @@ building.
 
 Online the world-data door is open whatever Replace Game Artwork says
 (`worldDataDoorOpen`): the ground is the room's, and a player with the switch off
-stood no town of the room's (Detailed Ships' decks and Roleplay & Realism's
-fort had the same hole). The switch keeps the textures and the music it gates
+stood no town of the room's (the ships' decks and Roleplay & Realism's fort
+had the same hole). The switch keeps the textures and the music it gates
 elsewhere.
 
 ## Daggerfall's own laws the mods meet
@@ -339,7 +339,7 @@ elsewhere.
   port stands in for what the mods place join it after every place of
   Daggerfall's - every one whatever is on, so none renumbers it, and offered
   while the port stands it (asked as the offer is made, AUDIT 05b A3) -
-  measured over both packs and Detailed Ships' ships, never the town's own
+  measured over both packs, never the town's own
   structure (`systems/decor/decorMods.js`; `01-Overview/bugs/Field-Bugs-2026-10-05b.md`).
 - **Houses for sale.** Every building the bank or a door can sell in either
   mod stands on a classic model (measured: 1,658 village houses and 3,358 city
@@ -359,7 +359,7 @@ Resource Pack, Daggerfall Expanded Textures (DET), Diep's Rosy's Resources,
 New Paintings and DET Harvestable Crops - and eighteen beds of their own
 whose prefabs point at nothing. Daggerfall Unity without the peers draws
 nothing at all where they stand. Mac's answer for a peer the port lacks was
-"Build your own" (DS1), and the handover asked it again: "For anything
+"Build your own" (2026-09-25), and the handover asked it again: "For anything
 missing I need you to curate, like textures". So every piece below is the
 PORT'S OWN, made for the places the author put it - read off the placements
 (thousands for most ids: where they stand, how they turn, what they stand
@@ -370,22 +370,21 @@ needed (the rocks, the stalls, the docks), and nothing of them is carried.
 
 All of it stands behind the town mods' load - installed when a town pack
 opens, for the game or for a save's pinned town (`world/townStandIns.js`
-`installTownStandIns`) - and costs a game with neither mod nothing. DET's
-pieces and Cliffworms' pictures are shared with Detailed Ships: each id has
-one stand-in, on while either mod that places it is loaded.
+`installTownStandIns`) - and costs a game with neither mod nothing. Each id
+has one stand-in.
 
 | piece | ids | placed | stand-in |
 |---|---|---|---|
 | the beds | `42069`-`42086` | 4,029 | Daggerfall's own bed (`42069 + 3k` a `41000`, `+1` a `41001`, `+2` a `41002`, read off where each stands) out of the player's ARCH3D, its three bedclothes (`TEXTURE.090` 5, 6, 7) recoloured in code blue, brown, grey, orange, purple or yellow - the green measured and moved, the sheet and the frame kept (an ALIAS, `world/customModels.js`; Roleplay & Realism rests on it as on its own) |
 | Rosy's and New Paintings' paintings | `69420`-`69464`, `79010`-`79030` (62) | 4,237 | Daggerfall's own six framed paintings (`TEXTURE.048`, which the climate swap changes region by region as it does a classic wall's) on a dark board two units deep, hung as each id hangs - upright, on its side turned up by the author's X rotation, or lying face down - a pixel a unit |
 | Rosy's small hangings and rugs | `69467`-`69469`, `69471`, `69472` | 586 | cloth drawn in code (`world/townPictures.js`): a hanging on its rod, either face out; a rug on the floor |
-| DET's timbers | `45081`, `45110` (shared with Detailed Ships), `45111`-`45113`, `45129` | 44,522 | squared timbers four to ten units thick, a segment (85 units) long: every fireplace's mantel, every beamed hall's rafters |
+| DET's timbers | `45081`, `45110`, `45111`-`45113`, `45129` | 44,522 | squared timbers four to ten units thick, a segment (85 units) long: every fireplace's mantel, every beamed hall's rafters |
 | DET's chimneys | `45074`, `45076`, `45077` | 14,440 | the sloped base, the stackable flue (53 units square, 114 tall - the step 3,334 stacks climb by) and the topper - a corbelled cap and two pots |
-| DET's tapestries and banners | `45008`-`45070`, `45134`-`45164` (40; `45145`, `45161`, `45162`, `45164` shared with Detailed Ships) | 1,476 | cloth drawn in code: the five regions' arms, the Eight Divines', fourteen patterns - two-sided on a rod, banners swallow-tailed |
+| DET's tapestries and banners | `45008`-`45070`, `45134`-`45164` (40) | 1,476 | cloth drawn in code: the five regions' arms, the Eight Divines', fourteen patterns - two-sided on a rod, banners swallow-tailed |
 | DET's other town pieces | stumps, planters, column drums and heads, rugs, vanes (`45087`) | 178 | built in code, classic textures |
 | DET's flats | archives `10009`-`10028` (and the editor's old `1010`, `1021`, `1025`) | 8,916 | the player's own sprite of the same thing where Daggerfall has one (a cow, a horse, the Great Daenian dogs, sacks, crates, a goblet), drawn in code where it has none (`world/standInSprites.js`: fruit, cheeses, porridge, a cabbage, chickens and roosters, sheep, rats, doves, a monkey, firewood, an easel...) |
-| Cliffworms' Items | `1210_10`-`_12`, `_17`-`_20` | 665 | Detailed Ships' pictures of them - the same author's set, which the RMB Resource Pack carries too ("Cliffworms' Items"; his bottles, and classic pieces he moved there), shared (`systems/detailedShips.js` `detailedShipsArtOn`) |
-| DET pieces shared with Detailed Ships | `45082` (ensign staff), `45121` (dog vane), `45190` (sea chest), `45191` (weapon rack) | 1,364 | Detailed Ships' own stand-ins (`world/detStandIns.js`), which the towns share |
+| the RMB Resource Pack's items | `1210_10`-`_12`, `_17`-`_20` | 665 | Daggerfall's own picture of each thing, sized by its record (TOWN-ITEMS, below): three bottles, a loaf, a ham, two bottles of wine |
+| DET's staff, vane, sea chest and weapon rack | `45082`, `45121`, `45190`, `45191` | 1,364 | built in code, classic textures (`world/detStandIns.js` `DET_MODELS`) |
 | the table clutter | archive `56790` (22 records) | 4,827 | no peer's catalogue names it; each record a piece of Daggerfall's own clutter of the kind its height says - tableware and books on the tables, jars, potions and books on shelves and ledges |
 | the temple gardens | archive `10035` (7 records) | 151 | no catalogue names it either; rows of one record each on three temples' grounds - each a garden plant of Daggerfall's own (`TEXTURE.301`): cabbages, greens, lavender, flowers, a berry bush |
 | the RMB Resource Pack's rocks | 23 ids | 245 | a boulder of the climate's rock (`302_3`) over the pack's own mesh's box, never past it, at its prefab's scale of 2 to 8 (FIELD BUGS 2026-10-15f TEMPLE-STEPS: they had been the mesh alone, and 143 of the 245 stood wholly under the ground they were laid on). ROCK-SMEAR (FIELD BUGS 2026-10-18f, "Rock missing textures and clipping with the pole. In Ipsmoth."): every face looks out of the boulder - 40 of its 48 (its sides and its underside) had taken the normal their corners' order gave, looking in, and under the world's back-face culling each rock drew as the inside of its far half, a hollow grey shell with whatever stood in it seen through it - and its picture is box-mapped (`boulderUv`, a repeat a metre along the axis a face leans on most; it had been the side view (x, -y) on every face, one smeared row on the underside and a sliver on every side facing x) |
@@ -448,6 +447,30 @@ the hills, the pads, or the author's own models under it (a temple on its founda
 two, named: Merdale's third stair, whose pad would bury the second, and TEMPASH4's temple's back edge, 2.27 m over the
 pack's own hill too (`test/world/fb1013e_hillseat.test.js`; the whole packs swept with the player's ARCH3D on `ARENA2_PATH`).
 
+**The pack's items** (TOWN-ITEMS, 2026-10-29; Mac: "we need to do comprehensive replacements"). The bottles, bread
+and ham of archive `1210` on the towns' shelves and tables wore pictures from a vendored mod, taken out that day. Each
+now wears Daggerfall's own picture of the thing, sized by its record (`world/townStandIns.js` `TOWN_ITEMS`): the green,
+blue and brown bottles `TEXTURE.205`'s at three fifths, as small as the shelves hold them; the loaf and the ham
+`TEXTURE.211`'s; the two bottles of wine `205`'s. A player's own RMB Resource Pack answers first. No town places
+`1210_1`, `_3`, `_4`, `_8`, `_9` or `1230_30`; the removed mod's ships stood them, and they wear a map, a scroll,
+scrolls, two baskets and a statuette.
+
+**What stands at every boot** (AUDIT SHIP-REFIT R1, R2). The removed mod registered these pictures and DET's pieces at
+boot behind its own switch, on by default and the room's online, so a decoration a player placed from them stood with
+every town mod off. They still do (`installPortStandIns`, called by `scenes/shared.js`); the beds, the paintings and the
+pack's own pieces stand with the towns, as before. The eighteen pieces only the ships stood stay in the decorator,
+offered and numbered as they were (`decorMods.js` `DECOR_MOD_KEPT`), and the bottles keep their names: no
+decoration's name or number moved (`decormods.test.js`, `wd3_standins.test.js`).
+
+**The stand-in doors' seams** (2026-09-25, found when the first stand-ins were wired; `standinDoor.test.js`). A
+stand-in answers its scale as `{ width, height }`, the shape `scaledBillboardSize` reads - it had answered `{ x, y }`,
+and every stand-in came out NaN-sized. It carries its `archive`, so a mod's xml scale lands on it. Its record 3 asks for
+no window mask: `IsExteriorWindow` reads `archive % 100`, a mod's picture has no classic bitmap, and DFU's
+`GetStaticBillboardMaterial` gives it no window emission. An archive past `TEXTURE.511`, or a model id, that nothing
+supplies is logged once and draws nothing, as DFU's `MaterialReader` and `GetModelData` answer
+(`RDBLayout.cs:634-638`); it had thrown the pixel build and the dungeon. A classic archive that will not load is still
+the player's missing data, and still throws.
+
 ### Not stood in
 
 What follows draws nothing, as in DFU without the peers - each because no
@@ -463,8 +486,8 @@ packs):
 | `45179`, `45198`, `45205`, `45206`, `43756` | 286 | DET pieces no catalogue names, in few blocks |
 | `53129`, `53130` | 18 | the pack's wooden bridges: their rails are in its published files, their decks are not, so neither shape nor size can be read - the six village blocks that place them stand bridgeless |
 | `53132`, `53134` | 13 | its stone bridges: two meshes each under transforms the published files do not settle |
-| `1210_13`, `_16`, `_24` | 75 | Cliffworms' items Detailed Ships does not carry - no picture of them is known |
-| `1230_2` ... `1230_22` (8) | 39 | one record to each of the eight temple blocks' variants, a metre up - by every sign each temple's own deity statue (archive 1230 is King of Worms' and Zoran's statues); only Kynareth's (`1230_30`, Detailed Ships') is known, and it is none of these |
+| `1210_13`, `_16`, `_24` | 75 | the pack's items no catalogue names - no picture of them is known |
+| `1230_2` ... `1230_22` (8) | 39 | one record to each of the eight temple blocks' variants, a metre up - by every sign each temple's own deity statue, from a statue set the port does not carry; no picture of any is known |
 | `10025_1`, `1200_4`, `1200_9` | 11 | an uncatalogued DET flat; two of StarMadeKnight's NPC billboards |
 
 A record of a stand-in archive that has no picture (the eight statues, the
@@ -495,7 +518,9 @@ layout pins above, and by four more things the stand-ins needed:
   taken-out list was refused for it, offline the piece came back at the next
   load. The name takes five digits now (`net/decorLaw.js`
   `DECOR_BASE_KEY_RE`), and every flat and model both packs' interiors lay
-  is pinned to fit it.
+  is pinned to fit it. BUILT-IN-MODS (`01-Overview/bugs/Field-Bugs-2026-10-29e.md`): the mods write most furniture as
+  scenery (ObjectType 0), which BASE-HIDE never offered - a piece is now a prop or such furniture. BED-TURN: the
+  coloured beds lie as the classic beds they replaced, turned back by the half turn their prefab faces from it.
 - **The decor preview and the ghost** draw a stand-in or an alias bed as the
   room does - both ask the pipeline (`getGpuMesh`, `cpuModels`), which
   builds an alias from the player's own ARCH3D.

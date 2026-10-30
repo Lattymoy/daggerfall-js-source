@@ -521,6 +521,8 @@ test('AUDIT TESA II C10/R2 with ARENA2: a gate\'s lane is clear - no building of
   lane('solitude', SOLITUDE.wall.southGate, SOLITUDE.wall.south, -1);
   lane('alinor', ALINOR.wall.northGate, ALINOR.wall.north, 1);
   lane('torval', TORVAL.wall.northGate, TORVAL.wall.north, 1);
+  // PIN KEPT (FB1029 BRIDGE-ENDS, AUDIT FB1029 C-S4): the 9 m from each deck's end, whose first 6.4 m its abutment now
+  // fills - the ground a walker meets is the same, its foot 2.6 m of it
   for (const x of ALINOR.bridges) lane('alinor', x, ALINOR.river.z0, -1);
   // the roads' ends: on the ground they walk, the first such out from the side
   const walk = (x, y) => tamrielHeightByte(x, y) > WATER_BYTE && !tc.capitalOnPixel(x, y);

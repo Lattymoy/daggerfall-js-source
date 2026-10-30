@@ -81,7 +81,7 @@ test('AUDIT-RR2 G3: a duplicate mapId or name is refused BEFORE any write to the
 test('AUDIT-RR2 G4/G26: the docked HUD lift is `(int)` (EnhancedRiding.cs:257) and the pitch floor rests while paused (:122-131)', () => {
   const mr = rd('src/player/mountRig.js');
   assert.match(mr, /const offset = Math\.trunc\(dockedLargeHudHeight\(\)\);/);
-  assert.match(mr, /setPitchFloorProvider\(\(\) => \(enhancedRiding\?\.\(\) && isRiding\(player\.transportMode\) && !paused\(\) \? _terrainAngle \+ RR_RIDING\.pitchMaxOffset : null\)\);/);
+  assert.match(mr, /setPitchFloorProvider\(\(\) => \(enhancedRiding\?\.\(\) && isHorseRide\(player\.transportMode\) && !paused\(\) \? _terrainAngle \+ RR_RIDING\.pitchMaxOffset : null\)\);/);   // PIN MOVED (DRAGON5): a horse ride's alone - a dragon's rider sees its saddle (isHorseRide)
 });
 
 test('AUDIT-RR2 G5/G24/G25: the charge voice plays on the foe with EnemySounds\' pitch lift, the latch IS the foe\'s pickpocket latch (:185, :204), the foe arm knocks along the controller\'s move direction (:173)', () => {
@@ -178,7 +178,7 @@ test('AUDIT-RR2 G13: a building entry sets WorldDataVariants\' last key to THIS 
 
 test('AUDIT-RR2 G14/G16/G19: an RDB/RDI JSON is served whole since WD1 (never with a null body); the variant arm takes every asset the suffix finds (:284-292); the padded building rows are None', () => {
   const s = rd('src/formats/worldData/worldDataReplacement.js');
-  // G14 was the refusal of an RDB/RDI file the converter could not read; WD1 (Aquatic Sprites) ported the RDB
+  // G14 was the refusal of an RDB/RDI file the converter could not read; WD1 ported the RDB
   // and RDI halves, so the block is converted whole and only an RMB takes the building replacements (:382-384)
   // PIN MOVED (AUDIT QA2 B1): the served name rides with the block - the port's curations key on the name the town lays
   assert.match(s, /const dfBlock = blockFromJson\(json, block, blockName\);\s+if \(blockName\.endsWith\('\.RMB'\)\) replaceRmbBlockBuildingData\(blockName, block, dfBlock\);/);

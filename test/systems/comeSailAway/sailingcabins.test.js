@@ -427,7 +427,13 @@ test('existing bank Transport callback enters the launched deed boat through the
     navalHostileNear: () => false, CABIN_REFUSAL,   // FB1020c CABIN-FOES: no hostile ship near
     // PIN MOVED (AUDIT SEA VENTURES C1): the cabin is a teleport to her boat's pixel like any - here neither the open zone's
     // refusal nor the Veil's (each says its own); refused, it asks nothing further and boards nothing
-    wildTeleportRefused: (px) => { assert.deepEqual(px, { x: boat.MapPixel.X, y: boat.MapPixel.Y }, 'asked of her boat\'s pixel'); return false; }, veilRefused: () => false,
+    // PIN MOVED (AUDIT TAMRIEL-WIDE E1): and of her landing, her hull's own point in the wire frame (campToWire, world.js's law)
+    wildTeleportRefused: (px, landing) => {
+      assert.deepEqual(px, { x: boat.MapPixel.X, y: boat.MapPixel.Y }, 'asked of her boat\'s pixel');
+      assert.deepEqual(landing, boat.GameObject ? [...boat.GameObject.position] : null, 'asked of her landing');
+      return false;
+    }, veilRefused: () => false,
+    campToWire: (p) => { const wc = args.state.worldCoords(p); return [wc.x, p[1] - args.state.compensation[1], wc.z]; },
     boatPixelOf: (b) => ({ x: b.MapPixel.X, y: b.MapPixel.Y }) };
   const enter = new Function(...Object.keys(args), `return (${worldFunction('enterLinkedBankCabin')});`)(...Object.values(args));
   const refusedArgs = { ...args, wildTeleportRefused: () => true };

@@ -132,7 +132,7 @@
   {
     "name": "AUDITTESA2Z-Z5-the-doors-zone-unread",
     "file": "src/scenes/portalStoneHost.js",
-    "old": "    if (host.wildTeleportRefused() || host.veilRefused()) return false;",
+    "old": "    if (zoneRefused() || host.veilRefused()) return false;",
     "new": "    if (host.veilRefused()) return false;",
     "tests": [
       "test/systems/portal1_stone.test.js"

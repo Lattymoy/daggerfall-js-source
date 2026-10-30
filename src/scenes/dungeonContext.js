@@ -27,6 +27,7 @@ import { isArenaUndercroft } from '../world/arena/arenaCity.js';   // ARENA-FIX 
 import { undercroftPopulation, chainTag, deepFoesOf, undercroftHallNear } from '../world/arena/arenaUndercroft.js';   // ARENA2: the arena floor's instance - what the sand will not allow
 import { ARENA_TEXT } from '../systems/arena/arenaText.js';   // WB3b: the Burning Court - what the Deadlands will not allow
 import { dungeonFirePlan, colliderFireProbe, inFireWard, DUNGEON_FIRE_FLAT, fireLayoutInputs, isPalaceLayout } from '../world/dungeon/dungeonFires.js';   // REST3: the dungeon's own campfires
+import { standDungeonFlora } from '../world/dungeon/dungeonFlora.js';   // the seabed under a flooded block's water
 import { withFireMarks } from '../ui/nodeMarks.js';   // REST3: the campfires on the compass
 import { expandMacros } from '../systems/talk/talkSession.js';   // MACRO1: the global symbols every TEXT.RSC box passes through (MacroHelper)
 import { executeConsoleCommand } from '../systems/consoleCommands.js';   // E3: the probe door runs the real database
@@ -359,6 +360,7 @@ import { createRoomLoot } from './roomLootHost.js';   // HOST-SPLIT
 import { createSearchRoom } from './searchRoom.js';   // GRAVE-PARTY: whose a searched object's word is - the searcher's party's, never a stranger's
 import { monsterVolume } from '../systems/monsterVolume.js';   // MONSTER-VOL: a monster's pain cry rides the Audio tab's Monster Volume
 import { isAbyssMapId } from '../world/oceanHoles.js';   // PITS-WORLD: an Ocean Hole's abyss, the Bay's or one past it - never a hall's or an Abyss Dungeon's id
+import { dungeonIdentity } from './dungeonIdentity.js';   // AUDIT TAMRIEL-WIDE C3: the professions' name for a dungeon, past the Bay too
 
 
 
@@ -1109,6 +1111,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     dungeonHearths.push(...kept);
     dungeonFires.length = 0;
   }
+  await standDungeonFlora({ blocks: dungeon.blocks, collider, getTexture, flatGroups, positionsOf: (id) => cpuModels.get(id)?.positions ?? null, seed: dfLocation?.dungeon?.recordElement?.header?.locationId ?? 0 });   // SEABED: every flooded block's seabed, batched with the layout's flats (world/dungeon/dungeonFlora.js)
 
   // Enemies (C3): the classic selection over this dungeon's markers -
   // fixed (record 16) + random (record 15, LocationId-seeded tables).
@@ -10502,13 +10505,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      * recorded on the mod's Features row in as many words.
      */
     hoverName(key, hit) { return opts.profHoverName?.(key) ?? _namer(key, hit); },   // PROF-MENU: a profession node's acts first
-    /** PROF2 (bible/06-Systems/Professions-Arc.md 23): this dungeon as the professions name it - DFU's own identity
-     *  (MapTableData.MapId & 0xfffff), its climate and region - or null for one a client's hash made, which grows no
-     *  vein (nothing any other client, or the witnesses, could stand behind). */
+    /** PROF2 (bible/06-Systems/Professions-Arc.md 23): this dungeon as the professions name it - its identity, climate
+     *  and region (scenes/dungeonIdentity.js: DFU's MapId & 0xfffff on the Bay, the whole id past it, AUDIT TAMRIEL-WIDE
+     *  C3) - or null for one a client's hash made, which grows no vein (nothing any other client, or the witnesses,
+     *  could stand behind). */
     profIdentity() {
       // AUDIT 29 D5: nor the Burning Court - every court is "dungeon 0" by its own record (gateArena.js), no dungeon's
       if (dfLocation?.spawned || isGateArena(dfLocation) || isArenaFloor(dfLocation) || !Number.isSafeInteger(dfLocation?.mapTableData?.mapId)) return null;
-      return { id: dfLocation.mapTableData.mapId & 0xfffff, climate: dfLocation.climate?.worldClimate ?? null, region: dfLocation.regionIndex ?? null };
+      return dungeonIdentity(dfLocation);
     },
     /** PROF2: A DUNGEON VEIN'S WALL - from one of this dungeon's foe markers (the layout's own list, the same on every
      *  client, so every client stands the vein in one place), a ray at chest height along `bearing` through the collider

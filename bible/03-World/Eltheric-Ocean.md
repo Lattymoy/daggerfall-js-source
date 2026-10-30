@@ -675,7 +675,7 @@ its "+75% loot" English.
 
 - THE FIGHTS: two players past the peace may strike each other - outdoors, on an isle or across a deck, and in an
   isle's ruin - never kin (a party, its truce, a duel's two, a guild); the relay referees every blow
-  (`wildRef.js`), and its zone word is the client's own, as the mountains' is (`world.js:"online?.setWildZone?.(wildCan() ? 1 : 0, playerEntity.health <= 0)"`).
+  (`wildRef.js`), and its zone word is the client's own, as the mountains' is (`world.js:"setWildZone?.(wildCan() ? 1 : wildCan(true)"`).
   A peer's pose past the peace is fair (`wildAtWire`, `world.js:"const wildAtWire = (p, near = false) => {"`). The relay
   reads no map (AUDIT SEA VENTURES A9 - the record said otherwise): two sockets that both say zone 1 are refereed
   wherever they stand, in Veilhaven's own cell too, so the peace is each honest client's word - its own `wildCan` - as
@@ -716,7 +716,7 @@ its "+75% loot" English.
   teleport into, out of or about the open Eltheric Ocean. Sail.") - asked before the mountains' mask, beside the Veil's
   own refusal (`veilRefused`, P6). The way about the sea is the sea. THE LINKED BANK CABIN is a teleport like any - to
   her boat's pixel, refused into, out of or about the open sea and across the Veil
-  (`world.js:"if (!loading && (wildTeleportRefused(boatPixelOf(boat)) || veilRefused(boatPixelOf(boat)))) return true;"`
+  (`world.js:"if (!loading && (wildTeleportRefused(boatPixelOf(boat), boat.GameObject ? campToWire(boat.GameObject.position) : null) || veilRefused(boatPixelOf(boat)))) return true;"`
   - AUDIT SEA VENTURES C1: Transport > Ship's carried a captain from a Bay town's bank onto her boat a hundred leagues
   past the Veil, and back, past every refusal).
 - THE COMPANIONS: a hand ashore's pack and a sworn one's pack and kit are storage no death takes (STORE-KEEPS,
@@ -1014,7 +1014,7 @@ service's gold acts (a card table's stake, a market's collect) and the open zone
 
 **A KILL AT SEA** is a fall the relay refereed in a room of the open sea at another player's hand. The relay already
 signs every such fall (`f1` - `06-Systems/Integrity-Arc.md` lane 2); it now signs WHERE - `m`, the room that refereed it
-(`server/src/index.js:"const res = wildBlow(st, a.sub, tb.sub, { d: d.d, r, held, wa: a.wa ?? null, kin, rid, room: a.key }, now);"`)
+(`server/src/index.js:"const res = wildBlow(st, a.sub, tb.sub, { d: d.d, r, held, wa: a.wa ?? null, kin, rid, room: a.key, el: d.el ?? null }, now);"`)
 - and WHOSE HAND by character - `kc`, the killer's realm character off its hello (`net/wild/wildRef.js` wildBlow, kept
 through a restart by `wildFallOf`). Both are optional in the receipt's law (`WILD_ROOM_RE`, `REALM_CHARACTER_RE`; a
 collect `g1` carries neither), so an older relay's receipt still verifies and simply names no kill at sea;

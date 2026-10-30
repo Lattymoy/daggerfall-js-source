@@ -69,6 +69,7 @@ export function createDuelRecords({ read, now = () => Date.now(), onRecord = () 
       const more = {
         ...(Number.isSafeInteger(d?.raids?.defended) ? { raids: { defended: d.raids.defended } } : {}),
         ...(Number.isSafeInteger(d?.serpents?.slain) ? { serpents: { slain: d.serpents.slain } } : {}),
+        ...(Number.isSafeInteger(d?.dragons?.slain) ? { dragons: { slain: d.dragons.slain } } : {}),   // AUDIT DRAGON
         ...(Number.isSafeInteger(d?.sds?.broken) ? { sds: { broken: d.sds.broken } } : {}),
       };
       const rec = d && Number.isSafeInteger(d.wins) && Number.isSafeInteger(d.losses) ? { wins: d.wins, losses: d.losses, ...gates, ...more } : null;

@@ -20,7 +20,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { mintId, overRate } from './accounts.js';
-import { asks, shut, trackView, trackRow, craftCapSql, renownAnswer } from './professions.js';
+import { asks, shut, trackView, trackRow, craftCapSql, renownAnswer, craftedBySql } from './professions.js';
 import { marksOpenFor, balanceOf } from './marks.js';
 import { prepareRealmRecord, realmActFirst, recordMovedOf, mustChange, dropObjects, dropIfUnnamed } from './realm.js';
 import { chaptersOpenFor } from './npcRoll.js';
@@ -62,14 +62,14 @@ export const brewedLeftSql = (p, c, potion, product) => `(COALESCE((SELECT SUM(c
  *  purchase's wall: `bought_with` 'gold' with `loose` 0, migration 0142). ANY-GOODS (FIELD BUGS 2026-10-26): a piece made
  *  of goods from the pack (looted, or bought with gold - AUDIT BAG-CRAFT A1's wall, `loose` 1) fills a writ as any other
  *  of its make. AUDIT CRAFT-WRITS T2: `bought_with` 'marks' is a piece made of goods bought for silver (AUDIT PROF-541 B7). */
-const pieceOkSql = (p, c, pv, recipes) => `EXISTS (SELECT 1 FROM products pk WHERE pk.provenance = ${pv} AND pk.owner = ${p} AND pk.char_id = ${c}
+export const pieceOkSql = (p, c, pv, recipes) => `EXISTS (SELECT 1 FROM products pk WHERE pk.provenance = ${pv} AND pk.owner = ${p} AND pk.char_id = ${c}
     AND pk.listed = 0 AND (pk.bought_with IS NOT 'gold' OR pk.loose = 1) AND pk.recipe IN (SELECT value FROM json_each(${recipes}))
-    AND EXISTS (SELECT 1 FROM prof_crafts cr WHERE cr.player = ${p} AND (cr.provenance = pk.provenance OR cr.provenance2 = pk.provenance))
+    AND pk.provenance IN ${craftedBySql(p)}
     AND NOT EXISTS (SELECT 1 FROM market_listings WHERE provenance = pk.provenance AND state = 'open')
     AND NOT EXISTS (SELECT 1 FROM market_auctions WHERE provenance = pk.provenance AND state = 'open')
     AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE provenance = pk.provenance AND collected = 0)
     AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE player = ${p} AND collected = 0 AND item IS NOT NULL AND json_extract(item, '$.provenance') = pk.provenance)
-    AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = pk.provenance))`;   // AUDIT CRAFT-WRITS S2: its own alias (`pk`) - the board's outer `pr` named here made the check its own piece's
+    AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = +pk.provenance))`;   // AUDIT CRAFT-WRITS S2: its own alias (`pk`) - the board's outer `pr` named here made the check its own piece's
 
 /** The ranks the day's draw reads: the account's best crafter's - the most Provisioning and Smithing any living realm
  *  character of it holds, and whether one has smithed at all (E1: the writs are the account's). */

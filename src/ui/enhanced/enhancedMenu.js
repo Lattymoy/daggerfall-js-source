@@ -90,6 +90,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { statsHunt } from '../bounty/huntRank.js';   // HUNTERS-MARK (Bounty-Boards.md 12.3)
+import { statsVillainy } from '../pvpVillainBar.js';   // PVP-VILLAIN
 import { fpArm, hasDaggerfallArrows } from '../../combat/fpArm.js';
 import { dressStanding } from '../../systems/clothingStanding.js';   // DRESS1 (2026-09-30, Discord): the Standing page's Dress line
 import { questRail, shelvedRail, unloggedRail, journalLines, questTitleOf, QUEST_URGENT_SECONDS, remainWords } from '../quest/questRail.js';   // MAC-K2: the ONE quest walk, shared with the chronicle
@@ -122,7 +123,7 @@ import { sharedClassicMinutes } from '../../net/wire.js';   // AUDIT LIVED1 G: t
 import { SKY_SEGMENTS, skyClassicMinutes, wallMsForSkyMinutes } from '../../net/skyLaw.js';   // TIME4: the sky's day, said at the door
 import {
   realmIo, realmList, realmCustoms, realmPut, realmDelete, realmUndo, realmFetch, realmRowAsSave, realmSummaryOf, realmRefusalText, takeRealmNotice,
-  sweepUnsent,
+  sweepUnsent, realmLineageRemove,
 } from '../../systems/realmSaves.js';   // REALM P1.3: the Online door lists the realm's characters, the service's
 import { applyCustoms, customsLines, crossLeveling, LEVELING_CROSS_LINE } from '../../systems/realmCustoms.js';   // REALM P1.5: an offline character comes in once, through customs
 import { REALM_COPY_SAVE_NAME, realmCopyIds } from '../../systems/realmCopyMark.js';   // a copy of a realm character never comes in
@@ -131,7 +132,7 @@ import { strandedNotice } from './strandedNotice.js';   // STRANDED: and said on
 import { bringOnlineButton } from './bringOnlineButton.js';
 import { createRealmLine } from '../../systems/legacy/realmLine.js';   // HOUSE-WAITS (FIELD BUGS 2026-10-09f): the account's lines, read at the door
 import { loadFamily } from '../../systems/legacy/store.js';
-import { waitingHouses, takeUpLine, houseWaitsTitle, houseWaitsLine, heirButtonLabel, newbornButtonLabel } from '../../systems/legacy/waitingHouses.js';
+import { waitingHouses, spareFamilies, withoutLine, takeUpLine, houseWaitsTitle, houseWaitsLine, heirButtonLabel, newbornButtonLabel } from '../../systems/legacy/waitingHouses.js';
 import { legacySettings } from '../../systems/legacy/settings.js';   // RPT1026-MISC HEIR-WAITS: the Descendants dial a newborn heir is offered by
 import { mintCharacterId } from '../../systems/characterId.js';   // REALM P1.4: a copy to offline is a new offline character
 import { exportSavesZip, collectSlots, importSlots, entriesFromFiles, slotPathOf, TRANSFER_ZIP_NAME } from '../../systems/save/saveTransfer.js';   // SP1: saves move between the website and the app
@@ -242,6 +243,12 @@ import '../../systems/featureLanes.js';   // FT18: the wind, the quick slots and
 import { AccountFlow } from '../accountFlow.js';
 import { accountCard } from './enhancedAccount.js';
 import { skinCard } from '../skinCard.js';   // DISC23-B2: the skin, on the profile
+import { startCharacterStage } from '../../render/characterStage.js';   // PROFILE-SLOTS: the character on its stage, on the profile
+import { profileBodies } from '../profileBody.js';   // PROFILE-SLOTS: its Morrowind body in a game, its sprite everywhere
+import { wardrobeEntry } from '../collections/wardrobeCatalogue.js';   // PROFILE-SLOTS: how a piece not held is had
+import { injectNameStyle } from '../nameLayer.js';   // PROFILE-SLOTS: the world's name sheet, for the plate over the stage's head
+import { NAME_GAP_PX } from '../../net/remotePlayers.js';   // PROFILE-SLOTS: and the world's clearance under it
+import { outfitOfSlots, outfitOfItems } from '../../player/eyeOfTheBeholder/layeredArmor.js';   // PROFILE-SLOTS: the armour a sprite in Layered Gearing wears
 import { saveTile, cloudStateOf, saveFromCard, newerBackup } from '../saveTile.js';   // TILE1 (Mac: "a detailed tile based design for your saves... showing your portrait and character information"), and ACC2c's card-shaped save
 import { loadFace } from '../facePortrait.js';
 import { timersMark, timersWindow, anchorBeside } from './enhancedTimers.js';   // TIMERS1: the hourglass beside the profile mark, and its window
@@ -555,6 +562,7 @@ export function takePickedLegacyBirth() { const b = _pickedLegacyBirth; _pickedL
 /** REALM P1.3: the realm's characters as the service listed them this visit (null: not asked yet), its bound, what the
  *  last act said (a refusal, customs' report, a copy's word) and whether an act is running. Per VISIT, as the cloud's. */
 let realmRows = null;
+let realmRowsOk = false;   // AUDIT FB1029e F5: the roster as the realm answered it - a failed read lists no one, and plays no line
 let realmAsked = false;
 let realmMax = 0;
 let realmWords = [];
@@ -564,6 +572,8 @@ let realmLineIds = null;
 let realmLinesAsked = false;
 export function takePickedSaveName() { const n = _pickedSaveName; _pickedSaveName = null; return n; }
 
+/** PROFILE-SLOTS: a save's worn armour as an outfit code (layeredArmor.js outfitOfItems), or null for none it can read. */
+const outfitOf = (items) => { try { return Array.isArray(items) ? outfitOfItems(items) : null; } catch { return null; } };
 /** One slot as the cards draw it: the character's line and numbers, and the slot's own name. */
 function saveOf(entry) {
   const snap = entry.snap;
@@ -582,6 +592,7 @@ function saveOf(entry) {
     race: typeof snap.race === 'string' ? snap.race : null,
     gender: snap.gender === 'female' ? 'female' : 'male',
     faceIndex: Number.isInteger(snap.faceIndex) ? snap.faceIndex : 0,
+    outfit: outfitOf(snap.items),   // PROFILE-SLOTS: the armour the profile's sprite wears in Layered Gearing
     career: snap.career?.name ?? null,
     level: snap.level ?? null,
     health: snap.health, maxHealth: snap.maxHealth,
@@ -1194,11 +1205,14 @@ function accountBody() {
   if (fresh) acctFlow = newAccountFlow(() => acctPaint?.());
   // PROFILE-MENU: the card's plate wears the corner mark's portrait and says whose face it is - the same character
   // the mark shows (profileCharacter), its face asked for as a COPY (the mark and a save tile may draw this very face)
+  injectNameStyle(document);   // PROFILE-SLOTS: the plate over the character's stage wears the world's name sheet
   const save = profileCharacter();
   const card = accountCard(document, acctFlow, {
     onClose: closeAccount,
     face: save ? loadFace(save, { scale: 2, copy: true }) : null,
     character: save ? `Playing ${characterLine(save)}` : null,
+    // PROFILE-SLOTS: the character the card is about, as the world draws it - its Morrowind body where one stands (paused)
+    slots: { start: startCharacterStage, bodies: profileBodies({ arm: mode === 'pause' ? fpArm : null, who: () => bodyWho(save) }), entryOf: wardrobeEntry, gap: NAME_GAP_PX },
   });
   acctPaint = card.paint;
   acctOff?.(); acctOff = card.off ?? null;
@@ -1209,6 +1223,17 @@ function accountBody() {
   // AUDIT RECOVERY-SET B1: asked once per window, not once per render.
   if (fresh) Promise.resolve(acctFlow.start()).catch(() => {});
   return host;
+}
+
+/** PROFILE-SLOTS: the body and armour the profile's sprite is drawn in - the character played, paused; the save's, at
+ *  the door (its items' worn pieces). */
+function bodyWho(save) {
+  if (mode === 'pause' && playerEntity?.race) {
+    let slots = null;
+    try { slots = equipTableOf(playerEntity); } catch { slots = null; }
+    return { gender: playerEntity.gender, outfit: outfitOfSlots(slots) };
+  }
+  return save ? { gender: save.gender, outfit: save.outfit ?? null } : null;
 }
 
 /** Is there a session on this device? A storage read, no network - so
@@ -1397,6 +1422,7 @@ function realmCard(who) {
     realmList(realmIo({ fetch: (...a) => globalThis.fetch(...a), storage: appStorage() })).then((r) => {
       realmRows = r.ok ? r.characters : [];
       if (r.ok) sweepUnsent(appStorage(), r.characters, storedSession(appStorage())?.id ?? null);   // AUDIT RESCUE-SAVE A7 + 2 B5: a copy no join can play goes
+      realmRowsOk = !!r.ok;
       realmMax = r.ok ? r.max : 0;
       if (!r.ok) realmWords = [...realmWords, realmRefusalText(r.error)];
       render();
@@ -1425,6 +1451,8 @@ function realmCard(who) {
     box.append(grid);
   } else box.append(el('p', 'meta', t('menu.realm.none', 'No online characters yet. Make one, or bring one of yours in below.')));
   for (const card of waitingHouseCards()) box.append(card);
+  const spare = spareFamiliesCard();
+  if (spare) box.append(spare);
   box.append(acts([{ label: t('menu.realm.new', 'New online character'), primary: !realmRows.length, disabled: realmBusy || realmRows.length >= realmMax, onClick: () => onAction('online-new') }]));
   return box;
 }
@@ -1457,6 +1485,35 @@ function waitingHouseCards() {
     }] : [])]));
     return card;
   });
+}
+/** FAMILY-REMOVE (FIELD BUGS 2026-10-29e, a one-life player: "being able to remove old families"): the account's lines
+ *  no living character plays, each with its Remove. Deleted and fallen characters never freed a line, so a player with
+ *  none left could found no other (LINEAGES_MAX). A waiting Succession is such a line too: removed, it is not carried on. */
+let familiesShown = false;
+function spareFamiliesCard() {
+  const spare = spareFamilies({ rows: realmRows, rowsOk: realmRowsOk, lineIds: realmLineIds, load: (id) => loadFamily(appStorage(), id) });
+  if (!spare) return null;
+  const card = el('div', 'card svfamilies');
+  card.append(el('h4', null, t('menu.realm.families', 'Families with no living character: {n, number}', { n: spare.length })));
+  card.append(acts([{ label: familiesShown ? t('menu.realm.familiesHide', 'Hide') : t('menu.realm.familiesShow', 'Show'), onClick: () => { familiesShown = !familiesShown; render(); } }]));
+  if (!familiesShown) return card;
+  for (const family of spare) {
+    const name = family.surname || t('menu.realm.familyUnnamed', 'Unnamed');
+    card.append(el('p', 'meta', t('menu.realm.familyRow', 'The {name} family ({model, select, bloodline {Bloodline} other {Enduring}})', { name, model: family.model })));
+    card.append(acts([{
+      label: t('menu.realm.removeFamily', 'Remove family'),
+      disabled: realmBusy,
+      onClick: () => ask(t('menu.realm.removeFamilyAsk', 'Remove the {name} family?', { name }),
+        t('menu.realm.removeFamilyBody', 'Its line ends online and frees room for a new family. Its fallen stay fallen, and no heir of it can carry it on. Your characters are not changed.'),
+        t('menu.realm.removeFamilyYes', 'Remove'),
+        // AUDIT FB1029e F3: a line the realm no longer holds (removed from another device, a lost answer) is gone - said so
+        () => realmAct(() => realmLineageRemove(realmIoNow(), family.id).then((r) => (r?.error === 'no-lineage' ? { ok: true } : r)), () => {
+          realmLineIds = withoutLine(realmLineIds, family.id);
+          return [t('menu.realm.familyRemoved', 'The {name} family is removed.', { name })];
+        })),
+    }]));
+  }
+  return card;
 }
 /** HOUSE-WAITS: the Succession's choice, made here - the record stored and the realm's copy written (its birth checks
  *  the person there), then the boot births them online. */
@@ -2505,11 +2562,11 @@ const ONLINE_LOCK_NOTE = 'Always on online: the shared world uses every enhancem
 /** MODS-ONLINE-2: the Mods pane's own line. The lane's note (above)
  *  is about the PORT's switches and was wrong over the tiles the
  *  moment a mod stopped being forced. */
-const ONLINE_MODS_NOTE = 'Most mods are your choice online. A few are set for everyone, so all players share the same ground and rules. Ground: Basic Roads, World of Daggerfall, Detailed Ships, Iliac Puddle No More\u2019s sea and depth, and There\u2019s a Hole in the Bottom of the Ocean. Rules: every setting of Meaner Monsters, the Combat and Armor Overhaul, Unleveled Loot, Roleplay & Realism, Roleplay & Realism: Items and Oblivion leveling, except who stands behind shop counters and which leveling your character uses. Travel Options is on for everyone, so every trip over land is traveled and ships sail only from ports. Immersive Travel is on for everyone too: carriages wait at every city gate, a driver\u2019s fare is your fast travel over land, and fares are the same for everyone. Its map style stays your choice.';   // AUDIT IT1 W5: a port's ship passage is fast travel online too
-const ONLINE_GROUND_NOTE = 'Set for everyone online, because everyone has to stand on the same ground: roads, rivers, camp sites, ship decks and the seafloor. Offline, your own choice applies.';   // AUDIT LANDFORMS C4: the rivers' row is one of the ground's since LANDFORM3 cut their channels
+const ONLINE_MODS_NOTE = 'Most mods are your choice online. A few are set for everyone, so all players share the same ground and rules. Ground: Basic Roads, World of Daggerfall, Iliac Puddle No More\u2019s sea and depth, and There\u2019s a Hole in the Bottom of the Ocean. Rules: every setting of Meaner Monsters, the Combat and Armor Overhaul, Unleveled Loot, Roleplay & Realism, Roleplay & Realism: Items and Oblivion leveling, except who stands behind shop counters and which leveling your character uses. Travel Options is on for everyone, so every trip over land is traveled and ships sail only from ports. Immersive Travel is on for everyone too: carriages wait at every city gate, a driver\u2019s fare is your fast travel over land, and fares are the same for everyone. Its map style stays your choice.';   // AUDIT IT1 W5: a port's ship passage is fast travel online too
+const ONLINE_GROUND_NOTE = 'Set for everyone online, because everyone has to stand on the same ground: roads, rivers, camp sites and the seafloor. Offline, your own choice applies.';   // AUDIT LANDFORMS C4: the rivers' row is one of the ground's since LANDFORM3 cut their channels
 /** WOD1: the vendors whose room-owned switch is the GROUND's - the two
  *  that write terrain heights (roads' beds, World of Daggerfall's sites). */
-const ONLINE_GROUND_VENDORS = Object.freeze(['roads-hazelnut', 'world-of-daggerfall', 'detailed-ships', 'ocean-holes']);   // DS1: the ships' shared deck   // OH-A: the pits cut into the seafloor
+const ONLINE_GROUND_VENDORS = Object.freeze(['roads-hazelnut', 'world-of-daggerfall', 'ocean-holes']);   // OH-A: the pits cut into the seafloor
 /** DW-D: a vendor whose room-owned switches are the ground's AND other reasons names its ground keys - the carved
  *  sea's switch and its depth. */
 const ONLINE_GROUND_KEYS = Object.freeze({ 'iliac-puddle-no-more': Object.freeze(['Enabled', 'General.WaterDepth']) });
@@ -5328,7 +5385,7 @@ function statsMaster(detail, m) {
  *  unmount takes it down (the sheet's key left it over the running game, its Y still choosing a permanent path). */
 let askUp = /** @type {null | (() => void)} */ (null);
 let askSeq = 0;
-function askCard(lines, onYes) {
+function askCard(lines, onYes, { no = null } = {}) {
   askUp?.();
   const back = el('div', 'px-master-ask');
   const card = el('div', 'inputbox yesnobox');
@@ -5365,7 +5422,7 @@ function askCard(lines, onYes) {
   askUp = close;
   const bar = acts([
     { label: t('pause.ask.yes', 'Yes'), onClick: () => answer(true) },
-    { label: t('pause.ask.no', 'No'), primary: true, onClick: () => answer(false) },
+    { label: no ?? t('pause.ask.no', 'No'), primary: true, onClick: () => answer(false) },
   ]);
   bar.classList.add('yesnobox-acts');
   const hint = el('div', 'notice-hint', t('pause.ask.hint', 'Y yes · N or Enter no'));
@@ -5470,6 +5527,7 @@ function statsSpecials(detail, m) {
 const signedRep = (v) => el('span', `v${v > 0 ? ' won' : v < 0 ? ' bad' : ''}`, v > 0 ? `+${v}` : String(v));
 
 function statsStanding(detail) {
+  statsVillainy(detail, { el, meter: pxMeter }, undefined, String(hooks.playerId?.() ?? hooks.playerName?.() ?? ''));   // PVP-VILLAIN: the villain meter, the page's top
   detail.append(pxDivider(t('pause.standing.reputation', 'Reputation')));
   const reps = playerEntity.sGroupReputations ?? [];
   const groupNames = socialGroupNames();

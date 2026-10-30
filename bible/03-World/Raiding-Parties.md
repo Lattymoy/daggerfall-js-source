@@ -10,7 +10,7 @@ questions, Mac answered "1. Server 2. Keep 3. We can also add renown and it's ow
 ## What it does
 
 Each game day, towns across the Iliac Bay are raided (and, since WW6, the towns of every province past it - each
-province's own day, below). The roll picks a region evenly among the travel map's regions
+province's own day, below; since FRONTS, online, the day's two provinces alone - `03-World/World-Wide.md` FRONTS). The roll picks a region evenly among the travel map's regions
 that hold a city, hamlet or village, then a town evenly in that region; a town is raided at most once a day. Each raid
 starts between 00:00 and 22:00, lasts two game hours (ten real minutes), and brings one party - knights (Knights),
 bandits (Rogue 50%, Thief 30%, Burglar 20%) or orcs (Orc 70%, Sergeant 25%, Warlord 5%) - with 15 to 25 deaths to
@@ -500,7 +500,8 @@ The owner's call taken (2026-10-26: *"Every single thing here needs to be addres
   generator (`net/raid/raidLaw.js raidDayRandom(day, lane)`), its towns the world's registry's listed towns there grouped by
   AREA - the province's districts, what a region is to the Bay's draw (`systems/raidingParties.js raidLaneGroups`; a capital
   one town, its centre) - each keyed by its own location index (`64:-1000124:600` - Torbarke in Skyrim), at the mod's pace
-  (half a raid an area a game day: 125 a day past the Bay on the freeware beside the Bay's 22). Cyrodiil, the open zone,
+  (half a raid an area a game day: 125 a day past the Bay on the freeware beside the Bay's 22; online since FRONTS, 29 to
+  33). Cyrodiil, the open zone,
   stands none (the owner's call, taken 2026-10-26: no site-bound world event in the open PvP zone).
 - **The province's own parties.** A lane draws the mod's parties its province's fauna stands (TESA-BIOME's rosters,
   `RAID_LANE_PARTIES`): High Rock all three (Orsinium's orcs), Valenwood bandits and orcs (Malabal Tor's), Morrowind and
@@ -520,3 +521,17 @@ The owner's call taken (2026-10-26: *"Every single thing here needs to be addres
 
 Pins: `test/world/worldWide/ww6_raids.test.js` (12, its last half with ARENA2) and `test/server/townecon_service.test.js`
 (a raid past the Bay's receipt at the account service); `tools/mutants/ww6.json` (59, all dead).
+
+### AUDIT TAMRIEL-WIDE B5 - every lane's cleanses kept for a hello (2026-10-28)
+
+The hub kept 64 cleanses for a hello's `cls`, and the client read no more: two days of the Bay's raids. WW6's lanes roll
+286 to 334 raids in two days on the freeware, so the hub let go of cleanses still today's or yesterday's, and a joiner
+read those raids as standing. The cap is now two days of every lane's slots, the raid law's own numbers
+(`src/net/wire.js:"export const RAID_CLEANS_MAX = 2 * RAID_SLOTS_MAX * (1 + RAID_LANES_BEYOND.length);"`, 576). The hub
+and the client read the one constant. Pins: `test/world/worldWide/audit_tamrielwide_relay.test.js` B5 (576 cleanses through the real hub, and the oldest let go past them).
+Mutants: `tools/mutants/audit_tamrielwide_relay.json` (4, dead). Relay world284.
+
+AUDIT TAMRIEL-WIDE II R1 (2026-10-29): the hello says the list newest first. A build before world284 stops its read at
+64, and the hub keeps them oldest first, so on release day an older tab kept yesterday's and read today's cleansed raids
+as standing. The client's read keeps every one whatever their order. Pinned in the same B5 test; mutant: the hello oldest
+first.

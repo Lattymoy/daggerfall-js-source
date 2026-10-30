@@ -31,9 +31,12 @@
 
 import { readLines, validAffix, PROC_ELEMENTS, lootRarityOn, rarityKnown } from './loot/lootRarity.js';
 import { isEnchanted } from './inventory.js';
+import { isHandWraps } from '../characters/handWrapsIds.js';   // HAND-WRAPS: the fists' arcane outline
 import { getPref } from './uiPrefs.js';
 import { pageParam } from './pageQuery.js';
 import { GLOW_SPRITE_WINDOW } from '../render/weaponGlowGlsl.js';   // the sprite's search window - a leaf with no imports
+import { ownArmory } from './ownGlyphs.js';   // ARMORY: the Aura Armory kit this device's player wears
+import { armoryKitPieces } from '../net/armoryLaw.js';
 
 /** The pref the Features row stores. */
 export const WEAPON_GLOW_PREF = 'weaponGlow';
@@ -45,7 +48,7 @@ export function weaponGlowOn(search = globalThis.location?.search ?? '', pref = 
 }
 
 /** The looks, by the code the shaders read (`uGlowLook`): 0 is none. */
-export const GLOW_LOOKS = Object.freeze(['none', 'fire', 'frost', 'shock', 'arcane']);
+export const GLOW_LOOKS = Object.freeze(['none', 'fire', 'frost', 'shock', 'arcane', 'brand', 'edge']);   // ARMORY: the Aura Armory's two weapon pieces last
 export const GLOW_CODE = Object.freeze(Object.fromEntries(GLOW_LOOKS.map((k, i) => [k, i])));
 
 /** Law 3: the strength a total reads at - the elemental bands' own edges (lootRarity.js AFFIX_RANGES.elemental). */
@@ -86,8 +89,25 @@ function specOf(item, arcane, on, ladder) {
   if (!item || !(on ?? weaponGlowOn())) return null;
   const i = elementIndex(item, ladder ?? lootRarityOn());
   if (i >= 0) return glowSpec(PROC_ELEMENTS[i], glowLevel(_total));
+  const worn = armoryWeaponLook();   // ARMORY: law 7 - the Aura Armory's weapon piece, where no element shows
+  if (worn) return glowSpec(worn, ARMORY_LEVEL);
   return arcane && isEnchanted(item) ? glowSpec('arcane', ARCANE_LEVEL) : null;
 }
+/** Law 7's one strength. */
+export const ARMORY_LEVEL = 2;
+/** ARMORY (2026-10-28; bible/04-Characters/Aura-Armory.md section 5): THE WEAPON PIECE'S LOOK - law 7. A weapon in this
+ *  player's hand wears the Aura Armory's weapon piece their kit holds (systems/ownGlyphs.js ownArmory): the Brand of the
+ *  Breach a molten fire running down it, the Eternal Edge a blue-violet line with a light running along it. An element
+ *  shows first - it is the blow's truth (law 1) - and the piece before the arcane look. Every hand is this player's (the
+ *  classic sheet, the Morrowind hands, the look a peer is sent), so one read serves them all. */
+export const ARMORY_GLOW = Object.freeze({ breachbrand: 'brand', eternaledge: 'edge' });
+export function armoryWeaponLook(kit = ownArmory()) {
+  const key = armoryKitPieces(kit).weapon;
+  return key ? ARMORY_GLOW[/** @type {keyof typeof ARMORY_GLOW} */ (key)] ?? null : null;
+}
+/** The look of a kit whose ONLY piece is a weapon's - the shop's stage for it is the blade's (render/weaponPiecePreview.js),
+ *  since the body pass draws no weapon piece; null for any other kit. Pure. */
+export const armoryWeaponStage = (/** @type {unknown} */ kit) => (Object.entries(armoryKitPieces(kit)).every(([s, k]) => s === 'weapon' || !k) ? armoryWeaponLook(kit) : null);
 /** Law 5's one strength: the enchanted look has no band to read. */
 export const ARCANE_LEVEL = 2;
 
@@ -115,6 +135,9 @@ export const GLOW_RAMPS = Object.freeze({
   frost: Object.freeze([[0.08, 0.2, 0.52], [0.25, 0.55, 0.92], [0.6, 0.85, 1.0], [0.92, 0.98, 1.0]]),
   shock: Object.freeze([[0.22, 0.1, 0.55], [0.48, 0.32, 1.0], [0.75, 0.7, 1.0], [0.97, 0.95, 1.0]]),
   arcane: Object.freeze([[0.3, 0.26, 0.78], [0.38, 0.5, 1.0], [0.6, 0.76, 1.0], [0.88, 0.94, 1.0]]),
+  // ARMORY: the Brand's coal-dark crimson to a molten gold, darker than fire's; the Edge's Genesis blues and violets
+  brand: Object.freeze([[0.3, 0.02, 0.01], [0.75, 0.14, 0.03], [1.0, 0.45, 0.08], [1.0, 0.82, 0.45]]),
+  edge: Object.freeze([[0.247, 0.388, 1.0], [0.561, 0.357, 1.0], [0.839, 0.722, 1.0], [0.957, 0.933, 1.0]]),
 });
 
 /** The ramp of a look, flat - twelve floats, the `uRamp[4]` a shader takes. Null for none. A fresh copy each ask (the
@@ -132,7 +155,7 @@ const SPEC_TABLE = (() => {
   const table = {};
   for (const look of GLOW_LOOKS.slice(1)) {
     const row = [null, null, null, null];
-    for (const level of look === 'arcane' ? [ARCANE_LEVEL] : [1, 2, 3]) {   // law 5: the arcane look has one strength
+    for (const level of look === 'arcane' ? [ARCANE_LEVEL] : look === 'brand' || look === 'edge' ? [ARMORY_LEVEL] : [1, 2, 3]) {   // law 5: the arcane look has one strength; law 7: the armory's pieces one each
       row[level] = (Object.freeze({
         look, code: GLOW_CODE[/** @type {keyof typeof GLOW_CODE} */ (look)], level, word: `${look}${level}`,
         ramp: Object.freeze(GLOW_RAMPS[/** @type {keyof typeof GLOW_RAMPS} */ (look)].flat()),
@@ -154,8 +177,9 @@ const SPEC_BY_WORD = new Map(Object.values(SPEC_TABLE).flatMap((row) => row.filt
 /** THE CLASSIC HAND'S ASK: the outline its sprite wears (an element alone - its enchanted look is its WEAPO1xx sheet),
  *  or null. When this answers, the rig swings the PLAIN sheet (combat/fpsWeapon.js plainWeaponType): the element is
  *  the more that is known, and a fire outline round a sheet painted with the blue glow says two things at once.
+ *  HAND-WRAPS: the fists have no WEAPO1xx sheet, so enchanted Hand Wraps take law 5's arcane outline here too.
  *  @param {any} item @param {{ on?: boolean, ladder?: boolean }} [opts] */
-export const spriteGlow = (item, opts) => specOf(item, false, opts?.on, opts?.ladder);
+export const spriteGlow = (item, opts) => specOf(item, isHandWraps(item), opts?.on, opts?.ladder);
 
 /** THE MORROWIND HAND'S ASK: its element, or the arcane look for an enchanted weapon with none showing (law 5).
  *  @param {any} item @param {{ on?: boolean, ladder?: boolean }} [opts] */

@@ -108,7 +108,7 @@ crons = ["* * * * *", "41 * * * *"]
 [vars]
 # Answered by /health so a deploy that did not happen cannot look like
 # one that did. Kept in step with ACCOUNT_VERSION in src/service.js.
-ACCOUNT_VERSION = "acct208"
+ACCOUNT_VERSION = "acct224"
 # WB5b: THE RELAY'S PUBLIC HALF, GATE_PUBLIC_KEY - the key an Oblivion
 # Gate's kill receipts verify with (src/net/gate/gateReceipt.js) - is NOT a
 # var here. GATE-KEYS (2026-09-26): the account deploy mints the pair
@@ -462,7 +462,8 @@ PATREON_TIERS = "29666211:disciple,29666234:herald,29666221:hierophant"
 # deploy; those who bought it keep it. The shop takes payments only once the
 # deploy has put STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET from the
 # repository's own secrets (.github/workflows/account-deploy.yml).
-SHOP_ON_SALE = "title:genesis,glyph:origin,aura:eternal"
+# ARMORY (2026-10-28, bible/04-Characters/Aura-Armory.md): and the Aura Armory's Eternal line, a piece a slot.
+SHOP_ON_SALE = "title:genesis,glyph:origin,aura:eternal,armory:eternalset,armory:eternalhalo,armory:eternalsigil,armory:eternalarmlets,armory:eternalgreaves,armory:eternaledge"
 
 [[d1_databases]]
 binding = "DB"

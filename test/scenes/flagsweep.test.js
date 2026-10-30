@@ -165,7 +165,7 @@ test('FS1: the melee/arrow clauses are retired, and the tree contradicts them', 
   // alone, and the fixed-city host took the same three-pool swing
   // verbatim; replacing its encounter arm with four comment lines (so
   // no cite could move) left the swing as watch -> civilians with the
-  // shipped comment still claiming world.js:"proj, view, new Float32Array(mwv.eye), undefined".."renderer.markForeignPass();"'s order, green.
+  // shipped comment still claiming world.js:"proj, view, wxEye32, undefined".."renderer.markForeignPass();"'s order, green.
   for (const [file, foeTargets] of [
     ['src/scenes/world.js', /foeTargets: \[\.\.\.\[\.\.\.exteriorFoes\.foes, \.\.\.cityGuards\.guards\]/],   // DUEL1: the pools, then my duel opponent's body
     ['src/scenes/exterior.js', /foeTargets: exteriorFoePool\(\)\.filter\(\(t\) => !t\.dead && t\.ai\)/],

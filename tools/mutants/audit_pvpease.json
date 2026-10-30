@@ -23,15 +23,15 @@
   {
     "name": "AUDIT-PVP-EASE-L1-3-every-carried-policy-spent",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "  return [...new Set(would.taken.filter((it) => insured(it)).map(ledgerKeyOf).filter((k) => k != null))];",
-    "new": "  return [...new Set((Array.isArray(entity?.items) ? entity.items : []).filter((it) => insured(it)).map(ledgerKeyOf).filter((k) => k != null))];",
+    "old": "  return [...new Set(would.taken.filter((it) => insured(it)).map(keyOf).filter((k) => k != null))];",
+    "new": "  return [...new Set((Array.isArray(entity?.items) ? entity.items : []).filter((it) => insured(it)).map(keyOf).filter((k) => k != null))];",
     "tests": ["test/systems/wild/wildinsure.test.js"]
   },
   {
     "name": "AUDIT-PVP-EASE-L1-3-the-pick-saves-nothing",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "  const would = takeWildDeath(copy, w, keep, wt, { letters });",
-    "new": "  const would = takeWildDeath(copy, -1, keep, wt, { letters });",
+    "old": "  const would = takeWildDeath(copy, w, keep, wt, { letters, bag });",
+    "new": "  const would = takeWildDeath(copy, -1, keep, wt, { letters, bag });",
     "tests": ["test/systems/wild/wildinsure.test.js"]
   },
   {
@@ -133,10 +133,10 @@
     "tests": ["test/net/zonegrace.test.js"]
   },
   {
-    "name": "AUDIT-PVP-EASE-L3-6-a-foe-rise-ungraced",
+    "name": "PVP-DEATH-a-foes-death-an-entry",
     "file": "src/net/wild/wildRef.js",
-    "old": "if (!x.down && x.diedAt > -Infinity) {",
-    "new": "if (false) {",
+    "old": "if (!x.down && x.diedAt > -Infinity) x.diedAt = -Infinity;",
+    "new": "if (false) x.diedAt = -Infinity;",
     "tests": ["test/net/zonegrace.test.js"]
   },
   {
@@ -154,10 +154,10 @@
     "tests": ["test/net/zonegrace.test.js"]
   },
   {
-    "name": "AUDIT-PVP-EASE-L3-6-granted-twice",
+    "name": "PVP-DEATH-a-foes-death-graced",
     "file": "src/net/wild/wildRef.js",
-    "old": "x.graceUntil = Math.max(x.graceUntil, now + WILD_GRACE.ms); x.diedAt = -Infinity; }",
-    "new": "x.graceUntil = Math.max(x.graceUntil, now + WILD_GRACE.ms); }",
+    "old": "if (!x.down && x.diedAt > -Infinity) x.diedAt = -Infinity;",
+    "new": "if (!x.down && x.diedAt > -Infinity) { x.graceUntil = now + WILD_GRACE.ms; x.diedAt = -Infinity; }",
     "tests": ["test/net/zonegrace.test.js"]
   },
   {

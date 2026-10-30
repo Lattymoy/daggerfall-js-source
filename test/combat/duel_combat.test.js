@@ -19,7 +19,7 @@ import { hurtPlayer, setDeathPresenter, setAvoidDeathHook, registerDuelFell, due
 import { applySpell, tickActiveEffects } from '../../src/systems/effects.js';
 import { SKILLS } from '../../src/systems/skills.js';
 import { WEAPON_REACH, SWING_MODS } from '../../src/combat/playerWeapon.js';
-import { validDuelData, DUEL_LEVEL_MAX, DUEL_STAT_MAX, DUEL_SWINGS } from '../../src/net/wire.js';
+import { validDuelData, DUEL_LEVEL_MAX, DUEL_STAT_MAX, DUEL_SKILL_MAX, DUEL_SWINGS } from '../../src/net/wire.js';
 import { DUEL_RADIUS_M, NATIVES_PER_M } from '../../src/net/duel/duelSession.js';
 import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2 (AUDIT, the second read): its negatives read the host whole
 
@@ -88,6 +88,19 @@ test('DUEL1 the sheet the wire carries: level and attributes clamped at the hone
   assert.equal(duelSwingOf('StrikeUp'), 'StrikeUp');
   assert.equal(duelSwingOf('Idle'), undefined);
   assert.deepEqual(Object.keys(SWING_MODS).sort(), [...DUEL_SWINGS].sort(), 'the wire\'s swings are the formula\'s');
+});
+
+test('PVP-SCALE (the PvP rework, 2026-10-28: "damage scales with skill + gear"): the sheet carries a skill past 100 (DUEL_SKILL_MAX 1000), and a blow takes the weapon\'s climb and gear percent (`wp`) on top of its roll (mutants: the old 100 clamp; `wp` unread)', () => {
+  assert.equal(DUEL_SKILL_MAX, 1000);
+  const fists = duelAttackerOf(mkPlayer({ skillOverrides: { [SKILLS.HandToHand]: 600 } }), null);
+  assert.equal(fists.sk[1], 600, 'skill and gear, unclamped at 100');
+  assert.equal(fists.wp, 0, 'a fist: its roll reads the skill whole, no percent on top');
+  const sword = createWeapon(SWORD, 3, () => 0.5);
+  const a = duelAttackerOf(mkPlayer(), sword);
+  const roll = (wp) => { let n = 0; for (let seed = 1; seed < 60; seed++) n += resolveDuelStrike({ by: 'melee', a: { ...a, wp }, w: duelWeaponOf(sword), sw: 'StrikeDown' }, mkPlayer(), { rolls: lcg(seed) }).dmg; return n; };
+  const plain = roll(0), doubled = roll(100);
+  assert.ok(plain > 0);
+  assert.ok(doubled >= 2 * plain - 60 && doubled <= 2 * plain, 'x2 at 100%, each blow floored');
 });
 
 test('DUEL1 the numbers are the STRIKER\'s: the defender\'s resolution never pops a number on the defender\'s HUD; the striker\'s HUD hears the answer through the one seam (mutants: the defender\'s HUD popping the opponent\'s numbers; the striker\'s silent)', () => {
@@ -168,7 +181,7 @@ test('DUEL1 WHERE A BLOW MAY COME FROM: the striker\'s claimed feet near where t
 
 test('DUEL1 hosts by source: the swing reaches my opponent before any pool and is theirs when it left; my shaft on them is a strike and a foe\'s stops on them; my harmful spells meet them as a mark (touch, missile, blast, area) through the duel\'s door; INT8: my blow out a number rolled on my own sheet for the referee, the defender\'s half gone; the travel map, a journey, rest and every door refuse a duellist (mutants: the melee arm after the pools; the shaft\'s damage dealt at home; a defender\'s half left; a door out of the ring)', () => {
   const w = hostText('src/scenes/world.js');
-  assert.match(w, /if \(duelMeleeHit\(cam\.pos, makeInView\(proj, view, multiply\)\)\) \{\s*\n\s*tallySwingSkills\(playerEntity, weaponRig\.playerWeapon\.weapon, weaponRig\.playerWeapon\.blowWeight\);\s*\n\s*surfacePlayer\(\);\s*\n\s*\} else if \(!cityGuards\.resolvePlayerHit/, 'the duel arm first, the ladder after');
+  assert.match(w, /if \(duelMeleeHit\(cam\.pos, makeInView\(proj, view, multiply\)\)(?: \|\| !!dragonSky\?\.swing\([^\n]*\))?\) \{\s*\n\s*tallySwingSkills\(playerEntity, weaponRig\.playerWeapon\.weapon, weaponRig\.playerWeapon\.blowWeight\);\s*\n\s*surfacePlayer\(\);\s*\n\s*\} else if \(!cityGuards\.resolvePlayerHit/, 'the duel arm first, the ladder after');   // PIN MOVED (DRAGON3): a grounded dragon's swing beside the duel's, both before any pool
   assert.match(w, /\.filter\(\(t\) => !t\.dead && t\.ai\)\.map\(\(t\) => \(\{ feet: t\.ai\.feet, ref: t \}\)\), \.\.\.duelArrowTargets\(\)\]/);
   assert.match(w, /onFoeHit: \(m, t\) => \(t\?\.duel \? undefined : exteriorFoes\.arrowHitFoe\(m, t\)\)/);
   // PIN MOVED (AUDIT-SEATS): the shaft's target's id rides too - outside a duel, a battle's foe it struck (G5's shaft)
@@ -183,7 +196,7 @@ test('DUEL1 hosts by source: the swing reaches my opponent before any pool and i
   // cancelled every attribute I brought and charged me for my own luck (test/systems/auditcc_pvp.test.js)
   assert.match(w, /const r = resolveDuelStrike\(\{ by, a, \.\.\.\(w \? \{ w \} : \{\}\), \.\.\.\(sw \? \{ sw \} : \{\}\), \.\.\.at, \.\.\.\(off \? \{ off \} : \{\}\) \}, duelStandIn\(playerEntity\)\);/, 'rolled on my own sheet against the neutral stand-in');   // PIN MOVED (TWO-HANDS AUDIT): and the off hand's terms; PIN MOVED (RPT1026-FIGHTS STRIKE-UNVEILS): the striker named
   assert.match(w, /const n = duelMgr\.blow\('strike', \{ by, p: campToWire\(player\.feetAt\(\)\), d: Math\.trunc\(r\.dmg\),/, 'sent as a number');
-  assert.match(w, /const n = duelMgr\.blow\('spell', \{ p: campToWire\(player\.feetAt\(\)\), d: siegeCastClamp\(harm, false\) \}\);/, 'a spell\'s harm, counted at home');
+  assert.match(w, /const n = duelMgr\.blow\('spell', pvpCastFrame\(campToWire\(player\.feetAt\(\)\), harm, sp\)\);/, 'a spell\'s harm, counted at home (PVP-WARD: with its element)');
   // NAV-H (2026-09-28): a hostile ship in reach joined the same doors, after the duel and the foes
   assert.match(w, /if \(duelEnemyNear\(\) \|\| areEnemiesNearby\(\[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\]\) \|\| navalHostileNear\(\)\) \{[^\n]*\n\s*townTalk\.say\(localizedText\('cannotTravelWithEnemiesNearby', CANNOT_TRAVEL_ENEMIES_TEXT\)\);/, 'the travel map');
   assert.equal((w.match(/enemiesNearby: \(\) => duelEnemyNear\(\) \|\| areEnemiesNearby\(/g) ?? []).length, 2, 'rest and a journey');

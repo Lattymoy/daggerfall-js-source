@@ -314,7 +314,7 @@
   {
     "name": "CRYSTALFIST-the-counts-ignored",
     "file": "src/render/auraRing.js",
-    "old": "  float lit = uResLit[int(clamp(k, 0.0, RES_N - 1.0))];",
+    "old": "  float lit = uResLit[col];",
     "new": "  float lit = ${RESONANCE_CELLS.toFixed(1)};",
     "tests": [
       "test/net/crystalfist.test.js"
@@ -324,8 +324,8 @@
   {
     "name": "CRYSTALFIST-the-counts-not-handed",
     "file": "src/render/auraRing.js",
-    "old": "if (look === AURA_LOOK.resonance) gl.uniform1fv(U.uResLit,",
-    "new": "if (look === AURA_LOOK.radiance) gl.uniform1fv(U.uResLit,",
+    "old": "if (look === AURA_LOOK.resonance) {",
+    "new": "if (look === AURA_LOOK.radiance) {",
     "tests": [
       "test/net/crystalfist.test.js"
     ],
@@ -344,8 +344,8 @@
   {
     "name": "CRYSTALFIST-the-count-off-by-one",
     "file": "src/render/auraRing.js",
-    "old": "  if (j >= lit) return vec4(0.0);",
-    "new": "  if (j > lit) return vec4(0.0);",
+    "old": "  if (j >= lit) {",
+    "new": "  if (j > lit) {",
     "tests": [
       "test/net/crystalfist.test.js"
     ],
@@ -354,8 +354,8 @@
   {
     "name": "CRYSTALFIST-the-gap-filled",
     "file": "src/render/auraRing.js",
-    "old": "  vec2 e = clamp((vec2(RES_SQ * 0.5) - abs(q)) / px + 0.5, 0.0, 1.0);",
-    "new": "  vec2 e = clamp((vec2(RES_SQ * 1.5) - abs(q)) / px + 0.5, 0.0, 1.0);",
+    "old": "  vec2 e = clamp((side * 0.5 - abs(q)) / px + 0.5, 0.0, 1.0);",
+    "new": "  vec2 e = clamp((side * 1.5 - abs(q)) / px + 0.5, 0.0, 1.0);",
     "tests": [
       "test/net/crystalfist.test.js"
     ],
@@ -394,7 +394,7 @@
   {
     "name": "CRYSTALFIST-the-feet-dropped",
     "file": "src/render/auraRing.js",
-    "old": "  float c = resCover(vec2((fract(cu) - 0.5) * pitch, r - uRingR), pitch, RES_PITCH) * uKindle;",
+    "old": "  float c = resCover(vec2(x, r - uRingR), pitch, RES_PITCH);",
     "new": "  float c = 0.0;",
     "tests": [
       "test/net/crystalfist.test.js"
@@ -404,8 +404,8 @@
   {
     "name": "CRYSTALFIST-the-feet-off-their-columns",
     "file": "src/render/auraRing.js",
-    "old": "  float c = resCover(vec2((fract(cu) - 0.5) * pitch, r - uRingR), pitch, RES_PITCH) * uKindle;",
-    "new": "  float c = resCover(vec2(fract(cu) * pitch, r - uRingR), pitch, RES_PITCH) * uKindle;",
+    "old": "float pitch = TAU * r / RES_N, x = (fract(cu) - 0.5) * pitch;",
+    "new": "float pitch = TAU * r / RES_N, x = fract(cu) * pitch;",
     "tests": [
       "test/net/crystalfist.test.js"
     ],
@@ -414,7 +414,7 @@
   {
     "name": "CRYSTALFIST-the-rings-guard-dropped",
     "file": "src/render/auraRing.js",
-    "old": "  if (abs(r - uRingR) > RES_SQ) return vec4(0.0);\n",
+    "old": "  if (!onRing && !onRip) return vec4(0.0);\n",
     "new": "",
     "tests": [
       "test/net/crystalfist.test.js"

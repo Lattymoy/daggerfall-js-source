@@ -86,8 +86,8 @@
   {
     "name": "AUDIT-FLICKER-S2-a-near-texel",
     "file": "src/render/shadowPass.js",
-    "old": "sunAnchorFor(f.eye, this._sunAnchor, f.lightDir, sunTexelWorld(SHADOW_CASCADES.length - 1, k));",
-    "new": "sunAnchorFor(f.eye, this._sunAnchor, f.lightDir, sunTexelWorld(0, k));",
+    "old": "sunAnchorFor(f.eye, this._sunAnchor, sunDir, sunTexelWorld(SHADOW_CASCADES.length - 1, k));",
+    "new": "sunAnchorFor(f.eye, this._sunAnchor, sunDir, sunTexelWorld(0, k));",
     "tests": [
       "test/render/audit_flicker.test.js",
       "test/render/la_shadow.test.js"

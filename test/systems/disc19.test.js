@@ -221,7 +221,7 @@ test('DISC19-C: an online page\'s death screen counts its respawn in the hint\'s
   });
   // PIN MOVED (BAL4, bible/05-Combat/Balance-Arc.md section 6): offline, a death Project Legacy will raise says Rise (riseHint)
   // L10N4: the count and the hint in the player's language (t(), hintText) - the English hint kept as the hosts give it
-  assert.match(rd('src/ui/deathScreen.js'), /const hint = this\.online \? (?:\(this\.wild \? t\('death\.risingInWild', 'RISING IN \{n\}', \{ n: this\.respawnIn \}\) : )?t\('death\.risingIn', 'RISING IN \{n\}   ENTER now', \{ n: this\.respawnIn \}\)\)? : hintText\(this\.rises \? riseHint\(this\.hint\) : this\.hint\);/, 'no dead key drawn online');
+  assert.match(rd('src/ui/deathScreen.js'), /const hint = this\.online \? (?:\((?:this\.wild|!this\.canRise) \? t\('death\.risingInWild', 'RISING IN \{n\}', \{ n: this\.respawnIn \}\) : )?t\('death\.risingIn', 'RISING IN \{n\}   ENTER now', \{ n: this\.respawnIn \}\)\)? : hintText\(this\.rises \? riseHint\(this\.hint\) : this\.hint\);/, 'no dead key drawn online');
 });
 
 // ═══ F: the watch and the town ════════════════════════════════════════════════════════════════════════════════════
@@ -363,9 +363,10 @@ test('DISC19-F by source: the host runs the town watch after the pools move, res
   assert.ok(swingAt > 0 && order.every((i, k) => i >= 0 && (k === 0 || i > order[k - 1])), `the three passes in order: ${order}`);
   assert.equal(w.split('cityGuards.resolvePlayerHit(').length - 1, 1, 'one pass over the watch - none that offers the defenders alone');
   assert.match(w, /inside: false, inLocationRect: _inAnyLocationRect\(walkMode \? player\.pos : cam\.pos\),/, 'the chunk roll asks the pixel just entered');
-  assert.match(w, /anchor = campAnchorSpot\(\{ feet, [^\n]*\n\s*if \(anchor && _inAnyLocationRect\(\[anchor\.x, anchor\.y, anchor\.z\]\)\) anchor = null;/, 'the camp is never pitched in a town');
-  assert.match(w, /spot = placeFoeFreely\(memberEnv, [^\n]*\n\s*if \(spot && _inAnyLocationRect\(\[spot\.x, spot\.y, spot\.z\]\)\) spot = null;/, 'nor a member over its line');
-  assert.match(w, /const loc = locationIndex\.get\(`\$\{px\.x \+ dx\},\$\{px\.y \+ dy\}`\);\n\s*if \(loc\?\.exterior\?\.exteriorData && isInLocationRect\(wc\.x, wc\.z, locationWorldRect\(loc, px\.x \+ dx, px\.y \+ dy\)\)\) return true;/, 'every location\'s widened rect, the pixel and its neighbours');
+  // PIN MOVED (FB1029 GRAVE-PACK): the rect test is handed the hunt's own place - a camp hands none (test/scenes/fb1029_gravepack.test.js)
+  assert.match(w, /anchor = campAnchorSpot\(\{ feet, [^\n]*\n\s*if \(anchor && _inAnyLocationRect\(\[anchor\.x, anchor\.y, anchor\.z\], hit\.ownPlace\)\) anchor = null;/, 'the camp is never pitched in a town');
+  assert.match(w, /spot = placeFoeFreely\(memberEnv, [^\n]*\n\s*if \(spot && _inAnyLocationRect\(\[spot\.x, spot\.y, spot\.z\], hit\.ownPlace\)\) spot = null;/, 'nor a member over its line');
+  assert.match(w, /const loc = locationIndex\.get\(`\$\{px\.x \+ dx\},\$\{px\.y \+ dy\}`\);\n\s*if \(loc\?\.exterior\?\.exteriorData && !\(own\?\.px === px\.x \+ dx && own\?\.py === px\.y \+ dy\) && isInLocationRect\(wc\.x, wc\.z, locationWorldRect\(loc, px\.x \+ dx, px\.y \+ dy\)\)\) return true;/, 'every location\'s widened rect, the pixel and its neighbours');
 });
 
 // ═══ E: the King of Worms' door ═══════════════════════════════════════════════════════════════════════════════════

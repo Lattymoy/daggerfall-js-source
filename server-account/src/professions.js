@@ -44,7 +44,7 @@ import { renownHeldSql } from './renownTracks.js';   // AUDIT LEGACY III O5: the
 import { isDeveloper } from './titles.js';
 import { marksOpenFor, balanceOf, gatherStrikeStatement, gatherStrikeRid, findLineStatements, findLineFrom } from './marks.js';   // SILVER-FINDS: a harvest's find; GATHER-SPEED: read in its batch
 import { dice } from './unitRoll.js';   // SILVER-FINDS: the service's dice, below this file and marks.js (which needs them too)
-import { CHAR_ID_RE, readAll } from './service.js';   // GATHER-SPEED: a harvest's reads in one round trip
+import { CHAR_ID_RE, readAll, DB_ROOT } from './service.js';   // GATHER-SPEED: a harvest's reads in one round trip; GROUND-KEPT: the binding
 import { MARKS_MAX, utcDay, gatherFindOf } from '../../src/net/marksLaw.js';
 import { renownForXp, RENOWN_XP_MAX, RENOWN_TRACKS_MAX } from '../../src/net/renown.js';
 import {
@@ -245,6 +245,11 @@ const carriedSql = (p, c, m) => `COALESCE((SELECT SUM(qty) FROM prof_carried WHE
  *  no writ, no guild and no sale). `m` the material's SQL, `p` and `c` the player's and the character's. */
 const originsSql = (list) => list.map((o) => `'${o}'`).join(', ');
 export const spendableSql = (p, c, m) => `COALESCE((SELECT SUM(qty) FROM prof_stores WHERE player = ${p} AND char_id = ${c} AND material = ${m} AND origin IN (${originsSql(WRIT_ORIGINS)})), 0)`;
+/** CRAFT-SET (OVERLOAD-EASE 3, 2026-10-29): every provenance player `p` crafted (a craft's first piece or its second), as
+ *  an IN list. Uncorrelated, so SQLite reads it once a statement - a correlated `EXISTS (... provenance = x OR provenance2
+ *  = x)` scanned the player's every craft for each piece, and the Work tab's eligible read cost ~6M rows a run. */
+export const craftedBySql = (p) => `(SELECT provenance FROM prof_crafts WHERE player = ${p}
+    UNION ALL SELECT provenance2 FROM prof_crafts WHERE player = ${p} AND provenance2 IS NOT NULL)`;
 /** AUDIT BAG-CRAFT A1: THE UNITS A STATION MAY SPEND - a craft, a smelt, a brew, a temper: own, bought and loose, never
  *  gold's (bagLaw.js STATION_ORIGINS); spent by `workStatements`, loose first. */
 export const workableSql = (p, c, m) => `COALESCE((SELECT SUM(qty) FROM prof_stores WHERE player = ${p} AND char_id = ${c} AND material = ${m} AND origin IN (${originsSql(STATION_ORIGINS)})), 0)`;
@@ -1728,8 +1733,33 @@ const writView = (w, me) => ({
   state: !w.filled_by ? 'open' : w.filled_by === me ? 'mine' : 'taken',
 });
 
-/** A region's witnessed pixels: each pixel whose witnesses name this region, with whether it is confirmed. */
+/** GROUND-KEPT (2026-10-29, bible/11-Multiplayer/Scale-Arc.md GROUND-KEPT): A REGION'S GROUND, READ ONCE AN ISOLATE IN
+ *  REGION_GROUND_KEEP_MS. Its scan read 123,000 rows in 409 ms at 01:00 UTC, twice a board read where the writs had not
+ *  posted (an overloaded post never marks its day), 684 times an hour on the primary. Ground changes slowly and the
+ *  writs are drawn once a day, so a region's ground is kept by the binding (DB_ROOT) and asks in flight share one
+ *  read. Ground of none is never kept - a region posts the moment it has some. */
+export const REGION_GROUND_KEEP_MS = 10 * 60_000;
+const groundKept = new WeakMap(), groundAsking = new WeakMap();
 async function regionGround(db, region) {
+  const root = db?.[DB_ROOT] ?? db;
+  const now = Date.now();
+  const kept = groundKept.get(root)?.get(region);
+  if (kept && now - kept.at < REGION_GROUND_KEEP_MS) return kept.ground;
+  if (!groundAsking.has(root)) groundAsking.set(root, new Map());
+  const asking = groundAsking.get(root);
+  if (asking.has(region)) return asking.get(region);
+  const ask = regionGroundRead(db, region).then((ground) => {
+    if (ground.length) {
+      if (!groundKept.has(root)) groundKept.set(root, new Map());
+      groundKept.get(root).set(region, { at: now, ground });
+    }
+    return ground;
+  }).finally(() => { if (asking.get(region) === ask) asking.delete(region); });
+  asking.set(region, ask);
+  return ask;
+}
+/** A region's witnessed pixels: each pixel whose witnesses name this region, with whether it is confirmed. */
+async function regionGroundRead(db, region) {
   // AUDIT 29 A11: the pixels any report names for the region, each read over ALL its reports - a pixel one early report
   // named for this region and three confirmed for another is the other's
   const { results = [] } = await db.prepare(`SELECT key, account, report, at FROM world_witness WHERE kind = 'pixel'

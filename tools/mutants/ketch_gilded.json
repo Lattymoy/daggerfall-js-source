@@ -56,7 +56,7 @@
   {
     "name": "KTG-the-word-answering-itself",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "if (mark && now < mark.until && weapon !== mark.by) {",
+    "old": "if (mark && now < mark.until && held !== mark.by) {",
     "new": "if (mark && now < mark.until) {",
     "tests": [
       "test/systems/ketch/ketch_gilded.test.js"
@@ -74,8 +74,8 @@
   {
     "name": "KTG-the-mark-everlasting",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "if (mark && now < mark.until && weapon !== mark.by) {",
-    "new": "if (mark && weapon !== mark.by) {",
+    "old": "if (mark && now < mark.until && held !== mark.by) {",
+    "new": "if (mark && held !== mark.by) {",
     "tests": [
       "test/systems/ketch/ketch_gilded.test.js"
     ]

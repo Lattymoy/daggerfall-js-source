@@ -57,24 +57,30 @@ test('AUDIT FOE-KEEPS P4 THE WORDS READ WHEN SAID: the mountains\' entry and chi
   try {
     tm.setLocale('de');
     // PIN MOVED (WORLD-WIDE folded into TESA, #1184): the zone Cyrodiil (WW-C2), named bare in every language
-    assert.equal(WILD_TEXT.enter, 'Du betrittst Cyrodiil, eine offene PvP-Zone. Gegner sind hier viermal so stark. Tötet dich ein anderer Spieler, lässt du fallen, was du trägst.');
-    assert.match(WILD_TEXT.chipTip, /^Cyrodiil: Andere Spieler dürfen dich angreifen\..*Tötet dich ein anderer Spieler, lässt du fallen, was du trägst\.$/);
-    assert.equal(WILD_TEXT.deathKept(), 'Nichts fällt zu Boden. Was du trägst, fällt nur, wenn dich ein Spieler tötet.');   // PIN MOVED (AUDIT FOE-KEEPS O1)
+    // PIN MOVED (PVP-WORDS): 'Tötet dich ein anderer Spieler, lässt du fallen, was du trägst.' - no bag drops at a kill
+    assert.equal(WILD_TEXT.enter, 'Du betrittst Cyrodiil, eine offene PvP-Zone. Gegner sind hier viermal so stark. Tötet dich ein anderer Spieler, darf er ein unversichertes getragenes Stück oder Gold nehmen.');
+    assert.match(WILD_TEXT.chipTip, /^Cyrodiil: Andere Spieler dürfen dich angreifen\..*Ein Spielertod kann dich unversicherte Ausrüstung oder Gold kosten\.$/);
+    assert.equal(WILD_TEXT.deathKept(), 'Nichts fällt zu Boden. Du zahlst den üblichen Preis des Todes.');   // PIN MOVED (PVP-WORDS): 'Nichts fällt zu Boden. Was du trägst, fällt nur, wenn dich ein Spieler tötet.'
   } finally { tm.setLocale(tm.BASE_LOCALE); }
   assert.match(WILD_TEXT.enter, /^You enter Cyrodiil/, 'English again');
 });
 
-test('FOE-KEEPS THE WORDS (wildZone.js WILD_TEXT, etherWild.js ETHER_WILD_TEXT, wildZoneMap.js ZONE_RULES, the tutorial): the mountains and the sea say a player\'s kill drops what you carry, never any death; a foe\'s death says you keep it, a player\'s does not (mutants: the kept line unsaid; said at a kill)', () => {
-  const kill = /If another player kills you, you drop what you carry\.$/;
-  for (const [name, w] of [['mountains enter', WILD_TEXT.enter], ['mountains chip', WILD_TEXT.chipTip], ['sea enter', ETHER_WILD_TEXT.enter()], ['sea chip', ETHER_WILD_TEXT.chipTip()]]) {
-    assert.match(w, kill, name);
-    assert.doesNotMatch(w, /can lose what you carry|If you die, you drop/, `${name}: never any death`);
+test('FOE-KEEPS THE WORDS (wildZone.js WILD_TEXT, etherWild.js ETHER_WILD_TEXT, wildZoneMap.js ZONE_RULES, the tutorial): the mountains and the sea say a player\'s kill may take one uninsured worn piece or gold, never a bag dropped and never any death; a foe\'s death says nothing dropped and the usual penalty, a player\'s does not (mutants: the kept line unsaid; said at a kill; an old line back)', () => {
+  // PIN MOVED (PVP-WORDS, PVP-REWARD): 'If another player kills you, you drop what you carry.' - the killer's one roll now
+  const enter = /If another player kills you, they may take one uninsured worn piece, or gold\.$/, chip = /A player's kill may cost uninsured gear or gold\.$/;
+  for (const [name, w, law] of [['mountains enter', WILD_TEXT.enter, enter], ['mountains chip', WILD_TEXT.chipTip, chip], ['sea enter', ETHER_WILD_TEXT.enter(), enter], ['sea chip', ETHER_WILD_TEXT.chipTip(), chip]]) {
+    assert.match(w, law, name);
+    assert.doesNotMatch(w, /what you carry|can lose|If you die/, `${name}: no bag drops, and never any death`);
   }
   assert.match(WILD_TEXT.enter, /^You enter Cyrodiil, an open PvP zone\./);   // PIN MOVED (WORLD-WIDE folded into TESA, #1184)
-  assert.ok(ZONE_RULES.some((l) => l.startsWith('If another player kills you, what you carry drops')), 'the zone map\'s legend');
-  assert.ok(rd('src/systems/tutorialCatalogue.js').includes("t('tutorials.wildZone.body2', 'If another player kills you there, your bag drops"), 'the tutorial page');   // PIN MOVED (AUDIT FOE-KEEPS O4): both zones, the cart only while with you, the tenths
+  // PIN MOVED (PVP-WORDS): 'If another player kills you, what you carry drops and lies there for 10 minutes. ...'
+  assert.ok(ZONE_RULES.includes('If another player kills you, nothing drops. They may take one uninsured worn piece, or gold. Insured gear is kept, but never a villain\'s.'), 'the zone map\'s legend');
+  assert.ok(ZONE_RULES.every((l) => !/what you carry|lies there/.test(l)), 'the legend drops no bag');
+  // PIN MOVED (PVP-WORDS): 'If another player kills you there, your bag drops with a tenth of your gold, ...'
+  assert.ok(rd('src/systems/tutorialCatalogue.js').includes("t('tutorials.wildZone.body2', 'If another player kills you there, nothing drops. They may take one uninsured worn piece"), 'the tutorial page');
+  for (const w of [WILD_TEXT.walkInto, ETHER_WILD_TEXT.walkInto(), WILD_TEXT.dropLate, ETHER_WILD_TEXT.dropLate(), WILD_TEXT.deathPvp('Borin')]) assert.doesNotMatch(w, /what you carry|you dropped|lies where you fell|may claim one piece/, w);
   setWildDeath({ killer: null, dropped: 0 });
-  assert.deepEqual(wildDeathLines(), ['Nothing dropped. Only another player\'s kill drops what you carry.', WILD_TEXT.deathHold], 'a foe\'s death: kept');   // PIN MOVED (AUDIT FOE-KEEPS O1, H5): "You keep what you carry" stood over the tenth the death claims
+  assert.deepEqual(wildDeathLines(), ['Nothing dropped. You pay the usual death penalty.', WILD_TEXT.deathHold], 'a foe\'s death: kept');   // PIN MOVED (PVP-WORDS): 'Nothing dropped. Only another player\'s kill drops what you carry.'
   setWildDeath({ killer: 'Borin', dropped: 3 });
   assert.deepEqual(wildDeathLines(), [WILD_TEXT.deathPvp('Borin'), WILD_TEXT.deathDrop(3), WILD_TEXT.deathHold], 'a kill: no kept line');
   setWildDeath(null);
@@ -83,7 +89,7 @@ test('FOE-KEEPS THE WORDS (wildZone.js WILD_TEXT, etherWild.js ETHER_WILD_TEXT, 
 test('FOE-KEEPS THE HOST (world.js wildDeathBegin, wildTakeDrop, the online respawn): a death to a foe asks no drop - the first dead frame shows my worn pieces to a killer and asks nothing else, and the drop is asked against a receipt alone; the rise pays the usual tenth unless a player\'s kill (mutants: the drop asked at a foe\'s death; the tenth skipped at any death in the zone; a drop asked with no receipt)', () => {
   const w = hostText('src/scenes/world.js');   // PIN MOVED (HOST-SPLIT): wildTakeDrop in scenes/wildDropHost.js, read with its host
   const begin = /const wildDeathBegin = \(\) => \{[\s\S]*?\n {2}\};/.exec(w)?.[0] ?? '';
-  assert.ok(begin.includes('if (worn.length) wildFight.offerWorn(fell.by, fell.r, worn.map(wildRecord));'), 'the fixture: the first dead frame');
+  assert.ok(begin.includes('// PVP-REWARD: no worn offer - the account service rolls the killer\'s piece (systems/wild/pvpReward.js)'), 'the fixture: the first dead frame');   // PIN MOVED (PVP-REWARD): it offered my worn pieces
   assert.ok(!begin.includes('wildTakeDrop('), 'no drop asked at the death itself - a kill\'s waits on the relay\'s receipt');
   assert.match(w, /const wildRise = !!wildDeath\(\) \|\| wildDeathKill\(\), wildKilled = wildDeathKill\(\);[^\n]*\n\s*wildGhostEnd\(\);/, 'the kill read before the ghost ends');   // PIN MOVED (AUDIT FOE-KEEPS H1): the referee's word, never the screen's name
   assert.match(w, /const goldLost = wildKilled \|\| madeRuleHere\('deathPenalty'\) === 'none' \? 0 : applyDeathPenalty\(playerEntity\);/, 'a kill\'s tenth is in the remains; any other death pays it');

@@ -28,12 +28,14 @@ import { eotbBody } from '../../player/eyeOfTheBeholder/eotbBody.js';   // EOTB5
 import { eotbCamera } from '../../player/eyeOfTheBeholder/eotbCamera.js';
 import { racialFpsWeapon } from '../../systems/lycanthropy.js';   // V4: the transformed rig's claws
 import { EQUIP_SLOTS, equipTableOf, fillEquipTable } from '../../systems/equip.js';   // AUDIT 17e F17; MW-D32 the worn read; MW-EARLY: a save's worn set
+import { drawnEquipTable } from '../../systems/capeShown.js';   // CAPE-TOGGLE: the worn read as the body is drawn
 import { swapPace } from './swapPace.js';   // SWAP-PACE: the swap pause's drain, halved outside the open PvP zone
 import { setItemFields } from '../../systems/item/itemTemplates.js';   // MW-EARLY: a save's items as the restore reads them
 import { dfWornEquipment } from '../../formats/morrowind/mwItemMap.js';   // MW-D32
 import { ownWerewolfSkin } from '../../systems/ownGlyphs.js';   // SHADOW-FANG: the skin my own werewolf wears
 import { ARMOR_ENUM } from '../enemyEquipment.js';   // MW-D32
 import { loadFpsWeaponArt, drawFpsWeapon, fpsWeaponQuad, weaponTypeForItem, WEAPON_TYPES, fpLightingOn, WEAPON_FILE, plainWeaponType, isGunType, isPistoletType } from '../fpsWeapon.js';
+import { isHandWraps } from '../../characters/handWrapsIds.js';   // HAND-WRAPS: the fists' weapon
 import { spriteGlow, meshGlow } from '../../systems/weaponGlow.js';   // WEAPON-GLOW1: the held weapon's element, as each hand shows it
 import { loadThunderlockArt } from '../thunderlockArt.js';
 import { THUNDERLOCK_NUM_FRAMES } from '../../characters/weaponStates.js';   // THUNDERLOCK-ART2's audit: the cycle's length, never a literal six
@@ -146,7 +148,7 @@ export function armBuildOptsOf(entity) {
     race: mwRaceId(entity.race),
     female: entity.gender === 'female',
     faceIndex: entity.faceIndex | 0,
-    armor: dfWornEquipment(equipTableOf(entity), EQUIP_SLOTS, ARMOR_ENUM),
+    armor: dfWornEquipment(drawnEquipTable(entity), EQUIP_SLOTS, ARMOR_ENUM),   // CAPE-TOGGLE: built as the frame tick dresses it
     weapon: worn,
     hasAmmo: hasAmmoFor(entity.items, worn),
     ammoCount: ammoCountFor(entity.items, worn),   // WS1: the quiver
@@ -548,7 +550,8 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   const handsEmpty = () => {
     if (!bindWorn || !entity) return false;
     const slots = entity.equip?.slots;
-    if (slots?.[EQUIP_SLOTS.RightHand] || slots?.[EQUIP_SLOTS.LeftHand]) return false;
+    const held = (s) => slots?.[s] && !isHandWraps(slots[s]);   // HAND-WRAPS (AUDIT C5): the wraps leave the hands empty
+    if (held(EQUIP_SLOTS.RightHand) || held(EQUIP_SLOTS.LeftHand)) return false;
     if (lightInHand() || racialFpsWeapon(entity)) return false;
     if (spellArmed() || fpsSpellCasting.isPlayingAnim || actTool() || sheetWindowUp()) return false;
     return (entity.equipCountdown ?? 0) <= 0;
@@ -604,7 +607,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     const c = f.c;
     return {
       renderer, canvas: c, entity, art: c ? artFor(item) : null, weapon: drawnPiece(item),   // APPEARANCES: the clone's atlas is the look's (one copy a look - the clone compares its weapon by identity)
-      weaponType: heldType(item), material: drawnPiece(item)?.material ?? -1, glow: glowOf(item),   // WEAPON-GLOW1: the set the art is - the plain one while an element shows - and its outline: each hand's own item's
+      weaponType: heldType(item), material: drawnPiece(item)?.material ?? -1, glow: item ? glowOf(item) : handGlowOf(hand),   // WEAPON-GLOW1: the set the art is - the plain one while an element shows - and its outline: each hand's own item's (HAND-WRAPS: a bare fist its wraps')
       equipCountdown: entity?.equipCountdown ?? 0, castPlaying: fpsSpellCasting.isPlayingAnim, spellArmed: spellArmed(),
       thirdPerson: fpArm.thirdActive() || eotbHidesWeapon(), reach: WEAPON_REACH,   // AUDIT-EOTB2: the widget's third-person gate asked the Morrowind arm alone
       motion: f.motion,
@@ -914,9 +917,14 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   // the hand swings the PLAIN sheet (plainWeaponType) and the outline is drawn over it. The answer is the weapon's it
   // was asked of: a hand changed later in the frame is asked again, never handed the last weapon's glow (or its sheet).
   let heldGlow = null, heldFor = null;
-  const askHeld = () => { heldFor = playerWeapon.weapon; heldGlow = spriteGlow(heldFor); };
+  const heldNow = () => playerWeapon.weapon ?? playerWeapon.wraps ?? null;   // HAND-WRAPS: a bare fist glows with its wraps
+  const askHeld = () => { heldFor = heldNow(); heldGlow = spriteGlow(heldFor); };
   const glowOf = (item) => (item && item === heldFor ? heldGlow : spriteGlow(item));
-  const heldGlowNow = () => { if (playerWeapon.weapon !== heldFor) askHeld(); return heldGlow; };
+  const heldGlowNow = () => { if (heldNow() !== heldFor) askHeld(); return heldGlow; };
+  /** HAND-WRAPS (AUDIT C): a hand's glow - its weapon's, else the wraps its fist wears (the hand in use with none named). */
+  const handGlowOf = (hand) => { const item = hand ? playerWeapon.handItem(hand) : playerWeapon.weapon; if (item) return glowOf(item); const w = hand ? playerWeapon.wrapsOf(hand) : playerWeapon.wraps; return w ? glowOf(w) : null; };
+  /** HAND-WRAPS (AUDIT C2): the Morrowind hands' one glow - the first pair's of the right fist, then the left, with one. */
+  const wrapsMeshGlow = () => { for (const h of ['R', 'L']) { const w = playerWeapon.wrapsOf(h); const g = w ? meshGlow(w) : null; if (g) return g; } return null; };
   const heldType = (item) => (glowOf(item) ? plainWeaponType(weaponTypeForItem(item)) : weaponTypeForItem(item));
   let _dx = 0, _dy = 0, _held = false;
   let wolfForm = false, wolfSkin = null;   // WEREWOLF1 / SHADOW-FANG (AUDIT D5): the form handed to the rig last, and the skin read at its change
@@ -1386,7 +1394,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     // right to left, the melee pair's own door (handsLaw.js MIRROR_UV, FPSWeapon.cs:381-390).
     const uv = flip ? MIRROR_UV : undefined;
     renderer.drawScreenQuad(tex, rect, uv, lit ?? undefined);
-    const elementGlow = hand ? glowOf(playerWeapon.handItem(hand)) : heldGlowNow();   // WEAPON-GLOW1: the element's outline over the frame, the held weapon's own (PISTOLET: each pistol's)
+    const elementGlow = hand ? handGlowOf(hand) : heldGlowNow();   // WEAPON-GLOW1: the element's outline over the frame, the held weapon's own (PISTOLET: each pistol's)
     if (elementGlow) renderer.drawScreenQuadGlow?.(tex, rect, uv, elementGlow, { art: art.native ? [art.native.w, art.native.h] : [art.unionBox.w, art.unionBox.h], view: [canvas.width, canvas.height] });   // the frame is the union box, in native pixels (AUDIT PISTOLET B4: the Pistolet's union is in design pixels, its texture native)
   }
 
@@ -2011,6 +2019,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         // left blade its own
         fpArm.setWeaponGlow?.(meshGlow(armItem), armItem);
         fpArm.setOffWeaponGlow?.(offItem ? meshGlow(offItem) : null, offItem);
+        fpArm.setHandGlow?.(wrapsMeshGlow());   // HAND-WRAPS: the fists wear the wraps' glow (bible/05-Combat/Hand-Wraps.md)
         // MW-D32: THE BODY FOLLOWS THE EQUIP TABLE. The same per-frame
         // read that swaps the weapon now hands the rig its worn list;
         // setWorn's fast path is one key compare, and a change - a
@@ -2018,7 +2027,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         // those clothes. D29-D31 dressed the BUILD; this dresses the
         // GAME.
         // WEREWOLF1: the form was handed over above, ahead of the gate; the wolf keeps this table for the way back.
-        if (entity) fpArm.setWorn(dfWornEquipment(equipTableOf(entity), EQUIP_SLOTS, ARMOR_ENUM));
+        if (entity) fpArm.setWorn(dfWornEquipment(drawnEquipTable(entity), EQUIP_SLOTS, ARMOR_ENUM));   // CAPE-TOGGLE: the table as the body is drawn
         // The held draw comes up when the machine leaves StrikeUp - the
         // arrow is loosed, so the arm's wind-up must stop holding at max
         // attack and run to its release key.
@@ -2519,7 +2528,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         const gh = playerWeapon.gunHand;
         const o = { widget, widgetOn: widgetOn(), shown: spriteShown(), tint: fpTint, offsetHeight: weaponOffsetHeight() - climbDrop(_climbLower, c.height), running: false };
         for (const h of twoHands.drawOrder()) {
-          if (h !== gh) { twoHands.drawPair(renderer, c, { ...o, only: h, artFor: (hand) => artFor(playerWeapon.handItem(hand)), glowFor: (hand) => glowOf(playerWeapon.handItem(hand)) }); continue; }
+          if (h !== gh) { twoHands.drawPair(renderer, c, { ...o, only: h, artFor: (hand) => artFor(playerWeapon.handItem(hand)), glowFor: handGlowOf }); continue; }
           const art = artFor(playerWeapon.handItem(gh));
           // CLIMB4: the gun has no slide to lend - halfway down the climb's lowering it is gone, as a lone gun is (the
           // early return's `thunderlockHeld` leg is the right hand's gun), while the blade slides the whole way
@@ -2531,8 +2540,8 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         const o = { widget, widgetOn: widgetOn(), shown: spriteShown(), tint: fpTint, offsetHeight: weaponOffsetHeight() - climbDrop(_climbLower, c.height) };   // CLIMB4: lowered for the climb, as the one sprite is
         // TWO-HANDS (AUDIT): the running fists first, then the pair over them - a punch thrown on the run is drawn from its
         // first frame, over the other fist easing from the pump to its guard (drawRun leaves the striking hand to drawPair)
-        if (runDrawn) twoHands.drawRun(renderer, c, artFor(null), pairUp() && shown() ? o : { ...o, shown: false });
-        if (pairUp() && shown()) twoHands.drawPair(renderer, c, { ...o, running: runDrawn, artFor: (hand) => artFor(playerWeapon.handItem(hand)), glowFor: (hand) => glowOf(playerWeapon.handItem(hand)) });   // WEAPON-GLOW1: each hand's own element
+        if (runDrawn) twoHands.drawRun(renderer, c, artFor(null), { ...(pairUp() && shown() ? o : { ...o, shown: false }), glowFor: handGlowOf });   // HAND-WRAPS: the running fists in their wraps' glow
+        if (pairUp() && shown()) twoHands.drawPair(renderer, c, { ...o, running: runDrawn, artFor: (hand) => artFor(playerWeapon.handItem(hand)), glowFor: handGlowOf });   // WEAPON-GLOW1: each hand's own element
         return;
       }
       _armDrewLast = !eotbHidesWeapon() && fpArm.active();   // MAP3: the two lines below draw the arm exactly when this is true

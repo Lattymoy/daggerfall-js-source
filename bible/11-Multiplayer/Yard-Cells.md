@@ -1,7 +1,7 @@
 # YARD-CELL - a town's yards kept, synced and stood by block (2026-10-26)
 
-**Status: YC1 BUILT (section 10), the owner's final approval given 2026-10-26; YC5 BUILT (section 12); YC2, YC3 and
-YC4 to come.** The plan was
+**Status: YC1 BUILT (section 10), the owner's final approval given 2026-10-26; YC2 BUILT (section 11); YC5 BUILT
+(section 12); YC3 BUILT (section 13); YC4 DECIDED (section 14), not built yet.** The plan was
 revised with the owner's answers before it was approved. The plan replaces the whole-town yard snapshot that YARD-SNAP (`Scale-Arc.md`) built and
 YARD-TOWN (`06-Systems/Online-Arc.md`, merged as #1276) bounded at 6,500 pieces a town.
 
@@ -129,7 +129,7 @@ CREATE TABLE home_yard_cells (
 - **Kept for rollback, dropped later.** `home_yards`, `home_yards_ver` and their triggers stay until YC1 has been
   live without a rollback. Nothing builds a town row any more; the old triggers still move the town's version, so
   acct192's read (the rows as they stand where the built row is behind) stays correct if the service is rolled back.
-  YC3 drops them.
+  YC3 dropped them (migration 0193, section 13).
 - **The number.** 0190 and acct208 (0176 and acct193 when this was written, renumbered past main's numbers at the merges, last past TESA's 0183 to 0188 and acct205, SHOP's 0189 and acct206 and SHOP-LOCAL's acct207) are the next free ones on main. #1184 carries 0174-0177 and acct189 on its
   branch and renumbers at its merge, as its own pages say; whichever lands second renumbers.
 
@@ -504,10 +504,12 @@ Departures from the plan:
 5. **`YARD_STAND_BUDGET_MS` is 3 ms**, set by check 1 below.
 
 **The capitals, measured** (section 4.1, gaps 1 and 3) on #1184's branch at 4d8200b017 with ARENA2: 7 capitals, 57
-slices, 1,397 port blocks holding no building record; the most records in any block a slice lays 23 (the Imperial
-City's TEMPAAD0.RMB), under the 32 the cells are bounded by; the densest slice the Imperial City's 18th - 794 buildings,
-707 houses - past the old HOME_TOWN_MAX of 512 (its 16th slice, 606, the first past it) and inside 2,048.
-`test/world/yardcells_capitals.test.js` holds both bounds over every slice; it skips until #1184 is on main.
+slices, 1,397 port blocks holding no building record. AUDIT TAMRIEL-WIDE A2 (2026-10-28): those counts read each
+Imperial City block off BLOCKS.BSA, which holds none of the city's own, so they were 0. Served (withFabricBuildings),
+a block holds up to 75 records (7,722 of 19,994 over 32) - inside the fabric's cap of 255 and the key's cell of 256 the
+cells are read by - and a slice up to 3,487 buildings, 2,773 of them houses (45 slices past 2,048 houses). The homes
+answer cuts at HOME_TOWN_MAX OWNED homes, so no slice is near it; raising it is a relay and account release, left open.
+`test/world/yardcells_capitals.test.js` counts the city as served.
 
 **Tests**: `test/server/yard_cells.test.js` (the law, the migration's triggers and backfill, YARD-SNAP's oracle carried
 to cells with the old town version still moving - the rollback's net, the build and the clock, a cell at the law's
@@ -698,3 +700,87 @@ time: base 2.5 ms a frame, 1.1 of it draw submission; YC5 1.4 ms, 0.1 of it subm
 **Tests.** `test/scenes/yardblock.test.js` runs real pools on a block's door: one merge a block, a piece going and
 landing, the range's crossings, the budget and its order, the cull and the recentre, the flats and a yard leaving.
 `tools/mutants/yardblock.json` (14) and `yardmerge.json` (53, 8 re-aimed at the moved code): all dead.
+
+## 13. YC3 - built (2026-10-29): the town-wide yard tables dropped
+
+YC1 and YC2 merged on 2026-10-28, and the account service has deployed from main since. Nothing rolled it back. So
+migration 0193 drops `home_yards`, `home_yards_ver` and 0136's three triggers on `home_decor` (`home_yards_in`,
+`home_yards_out`, `home_yards_moved`). Nothing in the service read or built them after YC1. A yard write now moves its
+cell's version alone, one trigger instead of two.
+
+- **No code changed.** The account service moves to acct219 for the migration alone, as TAMRIEL-POST did. No relay
+  or site change.
+- **What it gives up.** A service rolled back to before YC1 (acct192) reads `home_yards` and no longer finds it. A
+  rollback past YC1 is now a rollback of the schema too.
+- **Tests.** `test/server/yard_cells.test.js`'s oracle no longer checks the town version (the net it checked is
+  gone). `test/server/decoraccess.test.js` holds its "a chest does not rebuild the yards" check on the cell's row in
+  place of the town's.
+
+## 14. YC4 - building (2026-10-29): the town's homes answer by cell and by version
+
+**Status: DECIDED 2026-10-29 (section 14.6). Not built yet.**
+
+Section 6 decided that the homes answer goes by cell and by version, as the yards did. `HOME_TOWN_MAX` is already
+2,048 (YC1), so no town is cut today. YC4 is about the answer's cost: HOMES-SHED measured `/v1/homes/town` as the
+busiest route of the 2026-10-13 overload (88,079 asks in the hour), and `Scale-Arc.md` puts its cost in its rate, not
+its read (0.6 ms a read). Every page in a town asks the whole town's homes every 60 s (`onlineHomes.js`
+HOME_TOWN_TTL_MS), and almost every answer is the one it had.
+
+### 14.1 The answer has two parts
+
+The yards' answer was the same for every caller. The homes answer is not (`homes.js` homesInTown):
+
+- **Shared**, the same for every caller: `buildingKey`, `owner`, `entry`, `rent` (`vacant`, `from`), `score`, `look`
+  (none for a shunned home), `deed`, and a hall's `hall` (name, tag, heraldry).
+- **The caller's own**: `mine`, `character`, `crossed`, `refund`, `rentDue`, `tenant`, `guildmate`, `offer`,
+  `giving`, `member`, `keeper`, `hallEntry`, `hallSell`, `insider`, `vote`, a shunned home's `look` for its insiders,
+  the KNIGHT-HOUSE deed filter, and the town's `openGates`.
+
+Only the shared part goes by cell and version. The caller's own part is one read of the caller's own rows.
+
+### 14.2 The shared part: cells and versions, as the yards
+
+- **Schema.** `home_cell_ver (map_id, cell, ver, built, stale_at)` and `home_cells (map_id, cell, built, shape, rows)`,
+  the shapes of 0190's two tables, with a backfill of every cell that holds a home.
+- **Triggers move a cell's version** on a write of `homes` (insert, delete, and an update: both cells when a home
+  moves, as arenaMoveHome does), of `home_rooms`, and of `guilds` (name, tag, heraldry: every cell that holds one of
+  its halls).
+- **Time moves vacancy too.** A room whose tenancy ends is vacant without a write. A cell's built row keeps the
+  earliest `until` of its let rooms as `stale_at`. A read at or past it treats the cell as changed and builds it again.
+- **The route.** `POST /v1/homes/cells`, `{ mapId, cells: [[cell, ver], ...] }`, answered before the session check.
+  It answers only the cells whose version moved, under a byte budget with `more`, kept per cell in the isolate, and
+  read on a replica with "a version never goes back". It is section 3.4's route for homes.
+
+### 14.3 The caller's own part
+
+`POST /v1/homes/own`, `{ mapId, character }`: the homes in the town that the caller owns, is a member of, rents, voted
+on, has an open offer on, or may enter as a guildmate, each with its own fields, plus `openGates`. It reads by the
+caller's rows, not the whole town, so its cost follows what the caller holds. It stays on the primary: its rows are
+the caller's own writes.
+
+### 14.4 The push: the HOME CELL ORDER
+
+A home write that moved a cell answers a signed order, `{o:'hcell', s, m, c, v, i, e}`, as a decor write answers its
+YARD ORDER (section 3.6). The acting client carries it to the hub, which checks it and fans `{t:'hcell', l:[[m, c, v],
+...]}` to every page at most once a second, each cell's highest version kept. The hub's welcome says `hc: 1`, and a
+client carries an order only to a hub that said it. A page acts on a word only by asking that cell. A write that moves
+many cells at once (a guild's heraldry, which redraws all its halls) answers no order: the poll finds those.
+
+### 14.5 The client
+
+`onlineHomes.js` keeps one registry, and `homeAt` reads it as today. It merges the shared rows by cell with the
+caller's own rows by building key. It asks a town's cells as `yardCellSync.js` asks the yards: nearest first, with the
+versions it holds, every 60 s and at once on a home word. It asks its own part every 60 s and after each of its own
+writes, as `wrote` does now. QUEST-HOME's home words (`hearHome`) still make it ask at once.
+
+### 14.6 Decided (2026-10-29)
+
+1. **The full split**, not a single town version.
+2. **Old builds keep the old answer for one release.** `/v1/homes/town` answers as it does today, so a page that has
+   not reloaded sees every home. A later release removes it.
+3. **The push is a signed order now**, with this release, so the poll can stay cheap and a door moves at once.
+
+### 14.7 Release
+
+One release: the account service (the migration, the two routes, the order) and the relay (the hub's arm, a new
+RELAY_VERSION) before the site.

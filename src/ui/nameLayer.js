@@ -43,6 +43,8 @@
 // file does to a line is CUT it: a bubble is a glance, not a letter.
 //
 // Not a DFU member: Daggerfall Unity has no other players and no chat. Ledger A row (ONLINE).
+import { skullSrc, skullGlow } from './pvpSkull.js';   // PVP-SKULL
+import { nameConeTarget, nameConeStep } from './nameCone.js';   // PVP-CONE
 import { PIXELIFY_FIVE_FACE, PIXEL_STACK } from './pixelifyFive.js';   // the enhanced face, with FIX-D's five ahead of it
 import { NAME_GAP_PX, namePixelSize, nameViewportScale } from '../net/remotePlayers.js';
 import { titleBadge, glyphBadges, glyphSvgNode, cssRgba, titlePaint, TITLE_PAINT_KEYS } from './playerBadge.js';   // ACC3: the same table the classic pass reads - one law, two faces   // the anchor's gap, and the size law's own two doors (AUDIT NAME1 F3)
@@ -185,6 +187,17 @@ export const NAME_CSS = `${PIXELIFY_FIVE_FACE}
 .dfname-title { white-space: nowrap; line-height: 1; font-size: .78em; margin-bottom: .18em;
   letter-spacing: .04em; text-shadow: 0 1px 0 #000, 0 0 3px #000, 0 0 3px #000; }
 .dfname-title:empty { display: none; }
+.dfname-skull { width: 1.6em; height: 1.6em; margin: 0 auto .15em; background: center / contain no-repeat; image-rendering: pixelated; }
+.dfname-skull.off { display: none; }
+/* PVP-BAR: a flagged player's health in red under the skull, a thin blue Shield strip on top. */
+.dfname-bar { width: 3.4em; margin: 0 auto .2em; border: 1px solid #000; background: #3a0d0a; }
+.dfname-bar.off { display: none; }
+.dfname-bar-s { height: .14em; background: #3d7be0; }
+.dfname-bar-h { height: .32em; background: #d42a1e; }
+/* PVP-HUD (the mockup): a flagged player's bar under 20% health flashes. */
+.dfname-bar.low { animation: dfname-low .5s steps(2) infinite; }
+@keyframes dfname-low { 50% { border-color: #ff9a8a; background: #7a1a12; } }
+@media (prefers-reduced-motion: reduce) { .dfname-bar.low { animation: none; border-color: #ff9a8a; } }
 /* ACC3 - THE GLYPHS, right of the name. Sized off the label's own em so
    they shrink with distance exactly as the name does, and drawn in
    currentColor so ui/playerBadge.js is the only place a colour is
@@ -247,6 +260,10 @@ export const NAME_CSS = `${PIXELIFY_FIVE_FACE}
 .dfname-ribbon.off { display: none; }
 `;
 
+/** PVP-HUD: a bar flashes under PVP_BAR_LOW per cent of health, never at 0 (fallen). */
+export const PVP_BAR_LOW = 20;
+export const pvpBarLow = (/** @type {{ h: number } | null | undefined} */ b) => !!b && b.h > 0 && b.h < PVP_BAR_LOW;
+
 /** The sheet, once (ui/partyPanel.js injectPartyStyle's own shape). */
 export function injectNameStyle(doc = document) {
   if (doc.getElementById?.(NAME_STYLE_ID)) return;
@@ -287,6 +304,13 @@ export function createNameLayer({ doc = document, now = () => Date.now(), armsOf
   const setCls = (n, c) => { if (n.className !== c) n.className = c; };
   /** PERF-NAMES1: one tag's value, written when it differs from what THIS LAYER last wrote there (`tag[slot]`). */
   const put = (tag, slot, v, write) => { if (tag[slot] !== v) { tag[slot] = v; write(v); } };
+  /** PVP-BAR: the bar shown at its health and Shield (per cent), or hidden where the point carries none. */
+  const paintBar = (tag, b) => {
+    setCls(tag.bar, !b ? 'dfname-bar off' : pvpBarLow(b) ? 'dfname-bar low' : 'dfname-bar');
+    if (!b) return;
+    tag.barH.style.width = `${Math.max(0, Math.min(100, b.h))}%`;
+    tag.barS.style.width = `${Math.max(0, Math.min(100, b.s ?? 0))}%`;
+  };
   const live = new Set();   // PERF-NAMES1: the frame's ids, one set refilled
 
   const makeTag = () => {
@@ -319,12 +343,21 @@ export function createNameLayer({ doc = document, now = () => Date.now(), armsOf
     // LEGACY7: the house, a line under the name row ("☠ Ysolde II of House Hlaalu" - net/houseLaw.js houseLine)
     const house = doc.createElement('div');
     house.className = 'dfname-house';
-    node.append(bubble, title, tag, house, ribbon);
+    const skull = doc.createElement('div');   // PVP-SKULL: over the title, the flagged player's mark (ui/pvpSkull.js)
+    skull.className = 'dfname-skull off';
+    const bar = doc.createElement('div');   // PVP-BAR: under the skull, above the name - its Shield strip and its health
+    bar.className = 'dfname-bar off';
+    const barS = doc.createElement('div');
+    barS.className = 'dfname-bar-s';
+    const barH = doc.createElement('div');
+    barH.className = 'dfname-bar-h';
+    bar.append(barS, barH);
+    node.append(bubble, skull, bar, title, tag, house, ribbon);
     root.append(node);
-    return { node, bubble, title, tag, lv, name, guild, glyphs, house, ribbon, worn: null, titled: null, inked: undefined, banded: '', armed: '',
+    return { node, bubble, skull, skullOf: '', bar, barS, barH, barOf: '', title, tag, lv, name, guild, glyphs, house, ribbon, worn: null, titled: null, inked: undefined, banded: '', armed: '',
       // PERF-NAMES1: what this tag's DOM was last told, kept here and compared here - a read of `style.x` or
       // `textContent` asks the browser to serialise the value back, a cost a frame for every label
-      at: null, size: null, lvOf: undefined, gtOf: undefined, houseOf: undefined, said: null, nameText: null, titleText: null, bubbleOn: null, bubbleText: null, bubbleAlpha: null };   // HERALDRY-SHOWN: `armed`, the frame as written   // SEASON1 part two: `banded`, the ribbon as written   // SHADOW-FANG: `titled`, the title whose paint is on; AUDIT A10: `inked`, the name's colour as written
+      at: null, size: null, lvOf: undefined, gtOf: undefined, houseOf: undefined, said: null, nameText: null, titleText: null, bubbleOn: null, bubbleText: null, bubbleAlpha: null, cone: NaN, coneAt: NaN, coneAlpha: null };   // HERALDRY-SHOWN: `armed`, the frame as written   // SEASON1 part two: `banded`, the ribbon as written   // SHADOW-FANG: `titled`, the title whose paint is on; AUDIT A10: `inked`, the name's colour as written
   };
 
   /** ACC3: the glyph run, REBUILT ONLY WHEN IT CHANGES. A glyph set is
@@ -434,6 +467,9 @@ export function createNameLayer({ doc = document, now = () => Date.now(), armsOf
         // edge lands the gap above it. PERF-NAMES1: the anchor rides the TRANSFORM (the sheet's own lift after it) -
         // the same whole pixels `left`/`top` held, and no layout for a label that only moved.
         put(tag, 'at', `translate(${Math.round(p.x)}px, ${Math.round(p.y - NAME_GAP_PX)}px) translate(-50%, -100%)`, (v) => { tag.node.style.transform = v; });
+        // PVP-CONE (ui/nameCone.js): the whole tag - skull, bars and bubble with it - near the crosshair, eased; a new tag starts where it stands
+        tag.cone = nameConeStep(tag.cone, nameConeTarget(p), t - tag.coneAt); tag.coneAt = t;
+        put(tag, 'coneAlpha', tag.cone.toFixed(2), (v) => { tag.node.style.opacity = v === '1.00' ? '' : v; tag.node.style.visibility = v === '0.00' ? 'hidden' : ''; });
         put(tag, 'size', `${namePixelSize(p.scale ?? 1, vp, hudScale).toFixed(1)}px`, (v) => { tag.node.style.fontSize = v; });
         // PERF-NAMES1: the words are worked out when the stamp they come from changes, not every frame
         if (tag.lvOf !== p.lv) { tag.lvOf = p.lv; setText(tag.lv, renownText(p.lv) ?? ''); }   // RENOWN1: "12" in its box, or nothing
@@ -482,6 +518,8 @@ export function createNameLayer({ doc = document, now = () => Date.now(), armsOf
           for (const k of TITLE_PAINT_KEYS) tag.title.style[k] = paint[k];
           setTitleFlame(tag.title, badge?.flame ? badge.key : null);   // SHOP: Genesis on its fire, written with its paint
         }
+        put(tag, 'skullOf', p.skull ?? '', (k) => { setCls(tag.skull, k ? 'dfname-skull' : 'dfname-skull off'); tag.skull.style.backgroundImage = k ? `url("${skullSrc(k)}")` : ''; tag.skull.style.filter = skullGlow(k); });   // PVP-SKULL
+        put(tag, 'barOf', p.bar ? `${p.bar.h}/${p.bar.s ?? 0}` : '', () => paintBar(tag, p.bar));   // PVP-BAR
         if (p.glyphs?.length || tag.worn !== '') setGlyphs(tag, p);   // PERF-NAMES1: a peer with no glyph and none worn has nothing to compare
         const b = bubbles.get(p.id);
         // AUDIT NAME1 F9: a bubble is SHOWN when it can be seen. A negative age - a clock stepped backwards, a

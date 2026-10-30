@@ -20,8 +20,8 @@
   {
     "name": "SHOP-kind-read-as-another",
     "file": "src/net/shopLaw.js",
-    "old": "return SHOP_WARES.filter((w) => w.kind === kind && held.includes(w.id)).map((w) => w.key);",
-    "new": "return SHOP_WARES.filter((w) => held.includes(w.id)).map((w) => w.key);",
+    "old": "const keys = SHOP_WARES.filter((w) => w.kind === kind && held.includes(w.id)).flatMap(",
+    "new": "const keys = SHOP_WARES.filter((w) => held.includes(w.id)).flatMap(",
     "tests": [
       "test/server/shop_service.test.js"
     ]
@@ -83,7 +83,7 @@
   {
     "name": "SHOP-held-unchecked-at-press",
     "file": "server-account/src/shop.js",
-    "old": "  if (shopHeldOf(player.shop_wares).includes(ware.id)) return { page: 'held' };\n",
+    "old": "  if (shopOwns(player.shop_wares, ware.id)) return { page: 'held' };\n",
     "new": "",
     "tests": [
       "test/server/shop_service.test.js"

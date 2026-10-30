@@ -299,8 +299,8 @@
   {
     "name": "AUDIT-TESA-II-C7-the-centre-carrier-alone",
     "file": "src/world/tamrielCapitals.js",
-    "old": "flats: slices.get(s) === cell ? capitalSliceMarkers(cap, s)",
-    "new": "flats: s === capitalCentre(cap) && slices.get(s) === cell ? capitalSliceMarkers(cap, s)",
+    "old": "flats: [...(slices.get(s) === cell ? capitalSliceMarkers(cap, s)",
+    "new": "flats: [...(s === capitalCentre(cap) && slices.get(s) === cell ? capitalSliceMarkers(cap, s)",
     "tests": [
       "test/audit_tesa.test.js"
     ]

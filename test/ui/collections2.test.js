@@ -16,6 +16,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { setPref, _resetForTests } from '../../src/systems/uiPrefs.js';
 import { TITLES, AURAS, ICONS, GLYPHS, SEAT_TITLES, CHAPTER_TITLES } from '../../src/net/identityToken.js';
+import { ARMORY_KEYS } from '../../src/net/armoryLaw.js';   // ARMORY: the Aura Armory's pieces, a kind of their own
 import * as W from '../../src/ui/collections/wardrobeCatalogue.js';
 import { setLocale, currentLocale, PSEUDO_LOCALE } from '../../src/systems/textManager.js';
 import { drawWardrobePart, wardrobeFilterPasses, resetWardrobePart, WARDROBE_PART_CSS, WARDROBE_THEME_CSS, auraRingNode } from '../../src/ui/collections/wardrobePart.js';
@@ -140,12 +141,16 @@ const CATALOGUE = {
   'glyph:shadowfang': 'bestowed bestowed', 'glyph:penitent': 'bestowed bestowed', 'glyph:aegis': 'bestowed bestowed', 'glyph:primarch': 'bestowed bestowed',
   'glyph:crystalfist': 'bestowed bestowed', 'glyph:wikimaid': 'bestowed bestowed', 'glyph:nirnrootsage': 'bestowed bestowed' /* NIRNROOT-SAGE (PIN MOVED) */,
   'title:genesis': 'shop shop', 'glyph:origin': 'shop shop', 'aura:eternal': 'shop shop' /* SHOP (PIN MOVED): sold in the shop during the pre-alpha */,
+  /* ARMORY (PIN MOVED): the Aura Armory - the Dagonfire line the Sigil Broker's, the Eternal line the shop's */
+  'armory:burningcrown': 'broker open', 'armory:emberheart': 'broker open', 'armory:ashbound': 'broker open', 'armory:cinderstride': 'broker open',
+  'armory:breachbrand': 'broker open', 'armory:eternalhalo': 'shop shop', 'armory:eternalsigil': 'shop shop', 'armory:eternalarmlets': 'shop shop',
+  'armory:eternalgreaves': 'shop shop', 'armory:eternaledge': 'shop shop',
 };
 
 // ── THE CATALOGUE ──────────────────────────────────────────────────────────────────────────────────────────────────────
 
 test('COLLECTIONS-II THE CATALOGUE IS WHOLE AND AS RECORDED: every title, aura, icon and glyph of the vocabulary has one entry and none else, its source and availability the record\'s literal (AUDIT COLLECTIONS-II lane 5: only legal values were held, so an Arena Champion said open, a bestowed aura open, Firstlight open survived), the sources in their order, words of how with every argument filled, an aura\'s look, High Master alone a `via` (mutants: an entry dropped; any entry\'s availability or source; the sources\' order)', () => {
-  const vocab = { title: TITLES, aura: AURAS, icon: ICONS, glyph: GLYPHS };
+  const vocab = { title: TITLES, aura: AURAS, armory: ARMORY_KEYS, icon: ICONS, glyph: GLYPHS };   // PIN MOVED (ARMORY): and the armory's pieces
   for (const kind of W.WARDROBE_KINDS) assert.deepEqual(Object.keys(W.WARDROBE[kind]).sort(), [...vocab[kind]].sort(), `${kind}: the vocabulary exactly`);
   const got = {};
   for (const kind of W.WARDROBE_KINDS) for (const e of W.wardrobeEntries(kind)) got[`${kind}:${e.key}`] = [e.src, e.avail, ...(e.scope ? [e.scope] : [])].join(' ');
@@ -155,7 +160,7 @@ test('COLLECTIONS-II THE CATALOGUE IS WHOLE AND AS RECORDED: every title, aura, 
     const how = e.how();
     assert.ok(typeof how === 'string' && how.length > 12, `${kind}:${e.key} says how`);
     assert.doesNotMatch(how, /\{|undefined|NaN|\b0 (Deadlands|Soul)/, `${kind}:${e.key}: its words filled - ${how}`);
-    if (kind === 'aura') assert.ok(e.look?.().length > 12, `${e.key} says what it looks like`);
+    if (kind === 'aura' || kind === 'armory') assert.ok(e.look?.().length > 12, `${e.key} says what it looks like`);   // PIN MOVED (ARMORY): a piece too
     assert.ok(W.AVAIL_TAG[e.avail] && W.availLine(e, DURING).length > 4);
   }
   assert.deepEqual(W.WARDROBE_KINDS.flatMap((k) => W.wardrobeEntries(k).filter((e) => e.via).map((e) => [k, e.key, e.via])), [['title', 'highmaster', 'chaptermaster']]);
@@ -318,7 +323,7 @@ test('COLLECTIONS-II THE PAGE: six tiles, each its part\'s name over its count a
   const p = page({ flow, player: me });
   await settle();
   const tiles = cls(p.root, 'coll-part');
-  assert.deepEqual(tiles.map((b) => b.attrs['data-focus']), ['titles', 'auras', 'icons', 'glyphs', 'appearances', 'codex', 'cards', 'trophies', 'fish', 'annals'].map((id) => `coll-part-${id}`));   // PIN MOVED (HUNTERS-MARK): the gathered parts after them, always shown; PIN MOVED (APPEARANCES): the looks' part, first of the character's
+  assert.deepEqual(tiles.map((b) => b.attrs['data-focus']), ['titles', 'auras', 'armory', 'icons', 'glyphs', 'appearances', 'codex', 'cards', 'trophies', 'fish', 'annals'].map((id) => `coll-part-${id}`));   // PIN MOVED (ARMORY): the Aura Armory after the auras; PIN MOVED (HUNTERS-MARK): the gathered parts after them, always shown; PIN MOVED (APPEARANCES): the looks' part, first of the character's
   assert.equal(tiles[0].children[1].textContent, `3 / ${TITLES.length - 1}`);
   assert.equal(cls(tiles[0], 'px-meter')[0].textContent, `3/${TITLES.length - 1}`, 'the meter, held of all');
   assert.equal(tiles[0].attrs['aria-pressed'], 'true');
@@ -576,7 +581,7 @@ test('COLLECTIONS-II DRESSED BY THE KIT, AND ON THE PAGE: the filters and a "com
   assert.ok(themeRules.length >= 3 && themeRules.every((l) => l.split('{')[0].split(',').every((s) => s.trim().startsWith(':root[data-plus-theme="stone"] .px-sys .coll-'))), 'all of it Stone\'s');
   assert.deepEqual(themeRules.filter((l) => /background/.test(l)).map((l) => l.split('{')[0].trim()), [':root[data-plus-theme="stone"] .px-sys .coll-plate'], 'a ground on the plate alone');
   assert.deepEqual(Object.values(WARDROBE_PARTS), W.WARDROBE_KINDS, 'a part a kind, in the kinds\' order');
-  assert.deepEqual(collectionParts({ items: [] }).slice(0, 4).map(([id]) => id), Object.keys(WARDROBE_PARTS));
+  assert.deepEqual(collectionParts({ items: [] }).slice(0, 5).map(([id]) => id), Object.keys(WARDROBE_PARTS));   // PIN MOVED (ARMORY): five wardrobe parts
   // the sheet in the document, once
   const laid = [];
   globalThis.document = { getElementById: (id) => laid.find((x) => x.id === id) ?? null, createElement: () => ({ id: '', textContent: '' }), head: { appendChild: (x) => laid.push(x) } };

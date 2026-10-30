@@ -92,8 +92,8 @@
   {
     "name": "LW-LOOKS-sex",
     "file": "src/systems/livingWorld/looks.js",
-    "old": "  const list = STILL_FLATS[role][res.sex === 'female' ? 'female' : 'male'];",
-    "new": "  const list = STILL_FLATS[role].male;",
+    "old": "  const list = STILL_FLATS[role][res.sex === 'female' ? 'female' : 'male'].filter(",
+    "new": "  const list = STILL_FLATS[role].male.filter(",
     "tests": [
       "test/systems/livingWorld/lwlooks_town.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "LW-LOOKS-still-standing",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "        const role = !p.moving && this._inCircle",
-    "new": "        const role = this._inCircle",
+    "old": "        const role = !p.moving && !attending ? stillRoleOf(res, w.e) : null;",
+    "new": "        const role = !attending ? stillRoleOf(res, w.e) : null;",
     "tests": [
       "test/systems/livingWorld/lwlooks_town.test.js"
     ]

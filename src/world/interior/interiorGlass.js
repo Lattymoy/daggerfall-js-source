@@ -85,6 +85,14 @@ export function windowGlassTexels(win, twin) {
     const i = y * W + x;
     cand[i] = d[i] === GLASS_INDEX || (fresh[i] && RAMP.has(d[i]) && dense(x, y)) ? 1 : 0;
   }
+  return paneTexels(cand, W, H);
+}
+
+/** GLASS-ALL's cleanup, one home (WL1: the exterior rule's too, world/exteriorGlass.js): of the candidate texels `cand`
+ *  (1 = maybe glass, rows as given), only the panes - a texel with GLASS_CORE_NEIGHBOURS candidate neighbours, joined
+ *  across GLASS_BRIDGE, GLASS_MIN_TEXELS of them - and their edges. Pure. */
+export function paneTexels(cand, W, H) {
+  const n = W * H;
   const core = new Uint8Array(n);
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
     if (!cand[y * W + x]) continue;

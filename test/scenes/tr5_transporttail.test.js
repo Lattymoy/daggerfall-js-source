@@ -44,7 +44,7 @@ test('TR5/MAC-K3: ONE place changes the mode - and it is ONE PLACE ACROSS THE PO
   // and simply ABSENT from `scenes/exterior.js`, which had no
   // transport surface at all.
   const rig = read('src/player/mountRig.js');
-  assert.match(rig, /function setMode\(mode\) \{\s*\n\s*player\.setTransportMode\(mode\);/);
+  assert.match(rig, /function setMode\(mode\) \{\s*\n\s*if \(mode === TRANSPORT_MODES\.Dragon && !hasDragon\([^\n]*\n\s*if \(refused\(mode\)\) return;[^\n]*\n\s*player\.setTransportMode\(mode\);/);   // PIN MOVED (DRAGON5): no dragon held, none ridden - first; PIN MOVED (PVP-RULES): a saddle refused under the PvP flag before the one motor call
   assert.match(rig, /animator\.mount\(mode\);\s*\n\s*art = null;/, 'the art is dropped on every change');
   // The door ENDS on the art drop and the SPRITE's own load (HC1,
   // 2026-09-14: the one place loads the mount it just set, so a loaded
@@ -56,12 +56,12 @@ test('TR5/MAC-K3: ONE place changes the mode - and it is ONE PLACE ACROSS THE PO
   // still ends on it
   assert.match(rig, /art = null;\s*\n(?:\s*\/\/[^\n]*\n)*\s*loadArt\(mode\);\s*\n\s*\}/,
     'the door: the drop, the sprite load, and nothing else');
-  assert.match(rig, /function loadArt\(mode\) \{\s*\n\s*_artFor = isRiding\(mode\) \? artKey\(mode\) : null;\s*\n\s*if \(!_artFor\) return;[\s\S]{0,120}loadRidingArt\(fetchBytes, palette, renderer, mode, lookNow\(mode\)\)/, 'the load: a riding mode\'s CFA, and nothing else');
+  assert.match(rig, /function loadArt\(mode\) \{\s*\n\s*_artFor = isHorseRide\(mode\) \? artKey\(mode\) : null;\s*\n\s*if \(!_artFor\) return;[\s\S]{0,120}loadRidingArt\(fetchBytes, palette, renderer, mode, lookNow\(mode\)\)/, 'the load: a riding mode\'s CFA, and nothing else');   // PIN MOVED (DRAGON5): a horse ride's alone - a dragon's rider sees its saddle (isHorseRide)
   const door = rig.slice(rig.indexOf('function setMode(mode) {'), rig.indexOf('\n  }', rig.indexOf('function setMode(mode) {')));
   assert.ok(!/pegas|mesh|rig|nif/i.test(door), 'no 3D horse hangs off it');
   // TR4 put the Ship arm in front of the mode set - it is a teleport,
   // not a mode - so the pick reaches setMode past it.
-  assert.match(rig, /if \(mode === TRANSPORT_MODES\.Ship\) \{ onShip\?\.\(\); return; \}\s*\n\s*if \(rt && \(mode === TRANSPORT_MODES\.Horse \|\| mode === TRANSPORT_MODES\.Cart\)\) \{ rt\.tryUseTransport\(mode\); return; \}[^\n]*\n\s*setMode\(mode\);/, 'the T-key pick (HCC: the mod\'s TryUseTransport stands between the ship arm and the mode set, and reaches setMode through the runtime\'s transport.set)');
+  assert.match(rig, /if \(mode === TRANSPORT_MODES\.Ship\) \{ onShip\?\.\(\); return; \}\s*\n\s*if \(rt && \(mode === TRANSPORT_MODES\.Horse \|\| mode === TRANSPORT_MODES\.Cart\)\) \{ rt\.tryUseTransport\(mode\); return; \}[^\n]*\n(?:\s*if \(mode === TRANSPORT_MODES\.Dragon && dragonKeepDoor\(\)\) \{ dragonKeepDoor\(\)\.ride\(\); return; \}[^\n]*\n)?\s*setMode\(mode\);/, 'the T-key pick (HCC: the mod\'s TryUseTransport stands between the ship arm and the mode set, and reaches setMode through the runtime\'s transport.set)');   // PIN MOVED (DRAGON5b): the Dragon row through the keep - mounted beside it, else called
 
   // ONE MOTOR CALL IN THE WHOLE PORT, derived rather than counted in
   // one file: `player.setTransportMode(` may be spelled exactly once

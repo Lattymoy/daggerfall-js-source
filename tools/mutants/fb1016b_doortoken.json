@@ -20,8 +20,8 @@
   {
     "name": "DOOR-TOKEN-ahead-the-spent-room-unasked",
     "file": "src/net/accountClient.js",
-    "old": " && by - held.at < TOKEN_REUSE_MS && !(room != null && held.rooms.has(room));",
-    "new": " && by - held.at < TOKEN_REUSE_MS;",
+    "old": " && lives(by, session.secret) && !(room != null && held.rooms.has(room));",
+    "new": " && lives(by, session.secret);",
     "tests": [
       "test/net/fb1016b_doortoken.test.js"
     ]

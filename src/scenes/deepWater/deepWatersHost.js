@@ -46,6 +46,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { openDeepWaters, deepWatersLocationRects } from '../../world/deepWater/deepWatersClient.js';
+import { meetsTown } from '../townMeetsHost.js';   // ACROSS-EDGE: the towns a pixel's ground meets
 import { inFrame } from '../../world/deepWater/deepWatersBake.js';
 import { waterFrameOf } from '../../world/etherWatersBake.js';   // ETHER-DEEP: a pixel's frame - the Bay's map, or the Eltheric Ocean's box
 import { tamrielWaterFrame } from '../../world/tamrielWatersBake.js';   // TAMRIEL-DEEP: the continent's frame
@@ -204,7 +205,7 @@ export function wallColliderIndices(floor) {
 export function createDeepWatersHost({ woods, woodsBytes = null, locations = [], maps = null, blocks = null, built, climateAt, currentPixel, collider = null, pixelTranslation = null, floatingFrame = null, gpu = null, client = null,
   canRunHeavy = () => true, onFloorRefreshed = null, onSeafloorBuilt = null, canMutateTerrainData = () => true, clock = () => performance.now(), ether = null }) {
   const continent = !!woods?.isTamrielGround;   // TAMRIEL-DEEP: the land past the Bay streams - its sea is carved by its own bake
-  const dw = client ?? openDeepWaters({ woods, woodsBytes, rects: deepWatersLocationRects(woods, locations, maps, blocks), ether, continent });
+  const dw = client ?? openDeepWaters({ woods, woodsBytes, rects: deepWatersLocationRects(woods, locations, maps, blocks, meetsTown), ether, continent });   // ACROSS-EDGE: and the towns the meets read
   let bake = null;
   let disposed = false;
   const deferred = new Map();   // key -> entry, promoted when its turn comes

@@ -18,7 +18,8 @@ import { getSeed, setSeed } from '../../src/formats/dfRandom.js';
 import { PERSON_TEXTURES, PERSON_FACE_RECORDS, NUM_PERSON_FACE_VARIANTS, GUARD_TEXTURE, spriteRaceOf } from '../../src/characters/mobile/mobilePerson.js';
 import { TownPopulation } from '../../src/systems/town/townPopulation.js';
 import { folkActor, folkVariant } from '../../src/characters/folkBodies.js';
-import { mintResident, residentName } from '../../src/systems/livingWorld/census.js';
+import { mintResident } from '../../src/systems/livingWorld/census.js';
+import { personName, seededPersonName } from '../../src/characters/personNames.js';   // REGION-NAMES: PIN MOVED - a name off its own bank's draw, by its people's customs
 import { townKeeper } from '../../src/systems/merchantYards.js';
 import { raceOf, peopleOf } from '../../src/scenes/portHost.js';
 import { foeLook, rosterLook, FOE_RACES } from '../../src/characters/foeBodies.js';
@@ -126,7 +127,7 @@ test('PROVINCE-FOLK the street: past the Bay each walker one of the province\'s 
     assert.ok(f >= 0 && f < NUM_PERSON_FACE_VARIANTS, 'the face of that picture');   // AUDIT PROVINCE-FOLK C9: a guard's too
     if (p.guard && sprite === 'Nord') guards++;
     setSeed(saved);
-    assert.equal(p.nameNPC, fullName(folkNameBank(p.folk), p.gender), `${p.folk}: named from their own people's bank`);
+    assert.equal(p.nameNPC, personName(folkNameBank(p.folk), p.gender, { race: p.folk }), `${p.folk}: named from their own people's bank`);
   }
   assert.ok(guards > 0, 'a Nord of Morrowind on the watch\'s arm, his face a Nord\'s');
   assert.ok(share(folk, 'DarkElf') > 0.75 && share(folk, 'DarkElf') < 0.9, `Morrowind's own: ${share(folk, 'DarkElf')}`);
@@ -177,7 +178,7 @@ test('PROVINCE-FOLK the yards and the ports: a keeper past the Bay one of the pr
     const k = townKeeper(s * 7919, MORROWIND);
     races.push(k.race);
     assert.ok(PROVINCE_FOLK.Morrowind.some(([r]) => r === k.race));
-    assert.equal(k.name, residentName(s * 7919, folkNameBank(k.race), k.gender), 'named from their own people\'s bank (AUDIT PROVINCE-FOLK C6)');
+    assert.equal(k.name, seededPersonName(s * 7919, folkNameBank(k.race), k.gender, { race: k.race, region: MORROWIND, home: 'Morrowind' }), 'named from their own people\'s bank (AUDIT PROVINCE-FOLK C6)');
     assert.equal(k.home, 'Morrowind', 'and whose people they are');
   }
   assert.ok(share(races, 'DarkElf') > 0.72, `Morrowind's own: ${share(races, 'DarkElf')}`);

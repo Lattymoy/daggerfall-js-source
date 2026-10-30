@@ -14,7 +14,7 @@ and never the repository) was read for the two measures alone - the dungeons' th
 
 | | Report | What it was | Done |
 |---|---|---|---|
-| 1 | "a lot of missing decor items with house decoration" - the town mods' furnishings | the catalogue read Daggerfall's own blocks alone (WD3): nothing Beautiful Villages, Beautiful Cities or Detailed Ships furnish - the coloured beds, the paintings, tapestries and banners, the set tables and stocked shelves - could be set in a house, and the Detailed Ships flats DECOR-MODFLATS had made placeable had gone with them | DECOR-MODS |
+| 1 | "a lot of missing decor items with house decoration" - the town mods' furnishings | the catalogue read Daggerfall's own blocks alone (WD3): nothing Beautiful Villages, Beautiful Cities or the ship mod of the day furnish - the coloured beds, the paintings, tapestries and banners, the set tables and stocked shelves - could be set in a house, and the ship mod's flats DECOR-MODFLATS had made placeable had gone with them | DECOR-MODS |
 | 1 | "a lot of missing decor items with house decoration" - the dungeons' furnishings | the catalogue read the town blocks' rooms alone: nothing Daggerfall stands only in its dungeons - a throne, a cage, a coffin, a statue, chains - could be set in a house | DECOR-DUNGEON |
 | 1 | "a lot of missing decor items with house decoration" - the outdoor pieces for a yard | a yard offered the rooms' furniture alone: none of what Daggerfall stands in its streets - a fence, a well, a fountain, a cart, a lamp - and none of its trees and plants | DECOR-OUTDOOR |
 | 1 | "plus elements should recieve the low poly overhaul style like trees got" - placed trees and plants | a yard's tree or plant stood as its classic picture, at the classic size, where Low Poly Trees stood the town's own as 3D trees | DECOR-LPT |
@@ -210,15 +210,15 @@ THE FOUR HOSTS: `world.js` WIRED (its Low Poly Trees handed to the yards, their 
 it when the town mods came: the scan reads BLOCKS.BSA past the world-data door (`systems/decor/decorScan.js`), so the 1,400
 interiors Beautiful Villages and Beautiful Cities redecorate would never renumber the catalogue nor leave it when a mod
 went off. The owner asked for the mods' furnishings. WD3's rule also took back what DECOR-MODFLATS (2026-09-27) had made
-placeable - Detailed Ships' own flats, which the scan had read out of its ships through the door.
+placeable - a ship mod's flats, which the scan had read out of its ships through the door.
 
 **The pieces** (`systems/decor/decorMods.js`) are the port's own stand-ins for what the mods place (`world/townStandIns.js`,
-`world/detStandIns.js`, `systems/detailedShips.js`), MEASURED over both packs and Detailed Ships' two ships rebuilt from
+`world/detStandIns.js`), MEASURED over both packs and a ship mod's two ships rebuilt from
 the player's BLOCKS.BSA: 297 - 223 a room's (any of it stands inside: offered in every room, and a yard) and 74 a
 street's (all of it stands outside: a yard's alone) - each counted as the mods place it (the panel's "most common
 first"). The beds (18), the paintings (62), Rosy's hangings and rugs, DET's tapestries and banners (the regions', the
 Eight's, the decorative), its pillars, ensign staff, stump, flower pot, wind vane, column drum, sea chest, weapon rack
-and rugs; Cliffworms' bottles and his statuette; the galley's food, the stores' odds and ends, the towns' set tables and
+and rugs; that mod's bottles and statuette; the galley's food, the stores' odds and ends, the towns' set tables and
 stocked shelves; outside, the boulders, the market stalls, a column's head, the fowl, sheep, cattle, horses and doves,
 the grain, a temple's garden rows. Never the town's own structure - its hills, a temple's platform and foundation, the
 roofs' domes, the docks and their ramp and steps, the city wall's fill, a chimney - nor the crop fields (a field sown by
@@ -226,7 +226,7 @@ id, no model), nor the dolphins (drawn to break the sea's surface, half their pi
 in alike are offered once (`DECOR_MOD_TWINS`, the count both's), and DET's old archive numbers are their new ones'.
 
 **While they stand.** A piece is offered while the port stands it - its stand-in's own switch, the one the mods' towns
-are drawn by (a town mod loaded for the game, or a save's town pinned to one; Detailed Ships' own switch for its ships'
+are drawn by (a town mod loaded for the game, or a save's town pinned to one; that mod's own switch for its ships'
 pieces; online the town mods are on for every player) - and a piece placed stands while its mod does, as the mod's
 towns do: a mod switched off offline is a mod never loaded, its pieces with it. AUDIT 05b A3: every piece is in the
 catalogue whatever is on, and the switch is asked as the piece is offered (`decorModsLive`, `decorRoomEntries`) - the

@@ -35,7 +35,8 @@ So, as decided here (each decision is argued in its section):
 - **One at a time, until it is beaten.** The hub keeps ONE record (section 2). A Super dungeon stands until its boss
   falls - then it collapses - or until its time runs out unbeaten (48 hours) - then it fades. After either, the next
   one rises somewhere else. Since WW5 (section 16, WW5), one at a time in each theatre: the Bay's and each province's
-  lane keeps its own record, Cyrodiil's open zone none.
+  lane keeps its own record, Cyrodiil's open zone none - since FRONTS a province's rises on its turn, two at most
+  past the Bay (`03-World/World-Wide.md` FRONTS).
 - **"Where population is at its most" in both of its senses.** The relay counts the players in each of the Bay's 62
   regions at the moment one rises and picks the fullest (section 3); inside that region every client places it by the
   first of the region's cities, ranked as its hub is (a city, the one named for its region, then the largest), that has
@@ -3711,13 +3712,13 @@ kill's collapse has run (SD_COLLAPSE_MS from `fell.at`), the copy refuses one wh
 
 **A shared Hour for players in no party (SD-SOLO).** The owner: *"if no one is in a party allow them to be put into a 8
 player instance so randoms arnt turned away"*. Its owner is `p<n>` (`sdPubOwner`, n under SD_PUB_MAX 64). Its door
-takes anyone to SD_PUB_SEATS (8); the seats are the first eight's and are never freed, so its dead can come back. The
+takes anyone to SD_PUB_SEATS (40 - SD-SOLO-40, the owner: *"lets up the amount in a non party to 40"*; it was 8); the seats are the first 40's and are never freed, so its dead can come back. The
 page asks the Worker's `/sd/open?s=&o=<my digest>` (`sdOpenDoor`), which walks the shared Hours in order and answers
 the first that holds me, else the first with a seat and its Remnant standing. None answering, the page goes to its
 own Hour. A party of one counts as no party.
 
 **The entry line.** The owner: *"player are told that only the party or how many player are already in that
-instance"*. Once the Hour has welcomed the page, it says *"Only your party can enter this Hour."* or *"3 of 8 players
+instance"*. Once the Hour has welcomed the page, it says *"Only your party can enter this Hour."* or *"3 of 40 players
 are in this shared Hour."* (`sdCopyLine`, said from `sdAloneFrame`). Refusals that name the Hour are said as the relay
 says them.
 
@@ -3735,3 +3736,14 @@ kill's collapse pins (`sd8b_fight`, `sd10b_audit`, `sd11b_relay`, `sdherald`) ru
 **The relay changed:** RELAY_VERSION world275 (world274 on its branch, renumbered past LADDER-CUT at the merge), `server/src/sdCopy.js` joins the bundle. THE FOUR HOSTS:
 `scenes/world.js` WIRED (one line builds the chooser, two existing lines carry the owner); `createWorldModes` no longer;
 the relay's `_message` one existing line.
+
+### AUDIT TAMRIEL-WIDE B1 - one life and one win past the Bay (2026-10-28)
+
+The hub's answer to a realm (`sdAcctInternal`) read the Bay's lane alone: the record under SD_KEY and the Bay's death and
+receipt keys. Since WW5 a province's Hollow is kept under its lane's keys, so a slot past the Bay never matched: the hub
+answered ok and kept nothing. A player who died in one party's copy of a province's Hour came into another's, and a
+winner came into a second. The hub now reads the slot's own lane (`server/src/sdCopy.js:"const lane = sdLaneOf(c.s);"`):
+its record, its receipt, and a death kept as `sdac:<account>.<lane>`
+(`server/src/sdCopy.js:"export const sdAcctKey = (sub, lane = 0) =>"`). The Bay's key is `sdac:<account>`, as it was.
+Pins: `test/world/worldWide/audit_tamrielwide_relay.test.js` B1 (the Bay's Hollow beside Skyrim's). Mutants: `tools/mutants/audit_tamrielwide_relay.json` (5, dead); `sdparty.json` SD-BACK-the-last-copy-kept
+re-aimed by content. Relay world284.

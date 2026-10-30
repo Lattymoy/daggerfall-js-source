@@ -3,7 +3,7 @@
 // The two town mods are world data (src/formats/worldData/worldDataPack.js), and their blocks place pieces of five peer mods
 // the port does not carry - Daggerfall Expanded Textures, Diep's Rosy's Resources, New Paintings, the RMB Resource
 // Pack and DET's Harvestable Crops - and eighteen beds of their own whose prefabs point at nothing (their meshes and
-// textures are Daggerfall's, recoloured). Mac's answer for a peer the port lacks was "Build your own" (DS1), and the
+// textures are Daggerfall's, recoloured). Mac's answer for a peer the port lacks was "Build your own" (2026-09-25), and the
 // handover asks it again: "For anything missing I need you to curate, like textures". So each piece here is the
 // PORT'S OWN, made for the places the author put it - read off the placements (thousands for most ids: where they
 // stand, how they turn, what they stand beside, how far from the wall) and the catalogues' names - never a copy of a
@@ -17,9 +17,9 @@
 //     on a frame hung where each id hangs;
 //   - the RMB Resource Pack's CITY-WALL PIECE (53210): the middle of Daggerfall's own wall segment out of the player's
 //     ARCH3D, closing the gap the author left it at every corner of Beautiful Cities' walls;
-//   - DET's pieces, shared with Detailed Ships: world/detStandIns.js;
-//   - Cliffworms' Items (archive 1210 - his bottles, and the classic pieces he moved there): Detailed Ships' pictures of
-//     them, by the same author and carried with his leave, shared (systems/detailedShips.js);
+//   - DET's pieces: world/detStandIns.js;
+//   - the RMB Resource Pack's items (archive 1210 - bottles, bread and ham on shelves and tables): Daggerfall's own
+//     pictures of the same things (TOWN_ITEMS, below);
 //   - the cloth and the drawn sprites: world/townPictures.js, world/standInSprites.js.
 //
 // All of it stands behind the town mods' own load (scenes/modWorldData.js installs it when a town pack is opened -
@@ -28,18 +28,22 @@
 import { registerCustomModel, registerModelAlias, customModelFor } from './customModels.js';
 import { addVendorTextures } from '../systems/textureReplacement.js';
 import { buildDerivedPicture } from '../formats/derivedTexture.js';
-import { installDetStandIns, MeshBuilder } from './detStandIns.js';
 import { TOWN_PICTURE_ARCHIVE, PICTURE } from './townPictures.js';
 import { registerFlatField } from './flatFields.js';
 import { RMBRP_HILL_SHAPES, SHAPE_BEARINGS, SHAPE_RINGS } from './rmbrpHillShapes.js';   // FIELD BUGS 2026-10-05 HILL-SHAPES: the pack's hills, measured
 import { wrapAngle } from './mat4.js';   // FIELD BUGS 2026-10-13e HILL-SEAT: a pad corner's turn, in one step
 import { DOOR_APPROACH_M } from './curatedPlacements.js';   // FIELD BUGS 2026-10-15f TEMPLE-STEPS: a door's approach, HILL-HOUSE's rule
-import { shareDetailedShipsArt } from '../systems/detailedShips.js';   // Cliffworms' Items (archive 1210): his pictures, the towns' too
+import { installDetStandIns, MeshBuilder, classicFlatEntry } from './detStandIns.js';
 
 const U = 0.025;   // MeshReader.GlobalScale: one classic unit in metres
 
 // ---- the beds ---------------------------------------------------------------------------------------------------
 export const TOWN_BED_FIRST = 42069;
+/** BED-TURN (FIELD BUGS 2026-10-29e, "Beds backwards" in Alinor): the mods' bed prefab faces half a turn from Daggerfall's
+ *  bed, and their rooms are turned to suit it. The alias draws Daggerfall's mesh, so the room's record is turned back by
+ *  this. AUDIT FB1029e H6, measured on the shell: of the 4,029 coloured beds the packs lay, 2,806 stood through the room's
+ *  walls unturned and 141 turned, none made worse. */
+export const TOWN_BED_TURN = 1024;
 export const TOWN_BED_COUNT = 18;
 /** The port's archive of recoloured bedclothes: record `colour * 3 + cloth`. */
 export const TOWN_BED_ARCHIVE = 38201;
@@ -1007,6 +1011,22 @@ export const TOWN_CLUTTER = Object.freeze({
 });
 export const TOWN_CLUTTER_ARCHIVE = 56790;
 
+// ---- the items of archive 1210 ---------------------------------------------------------------------------------
+/** Archive 1210 is the RMB Resource Pack's item set, which the port does not carry: 740 placements on the towns' shelves
+ *  and tables. Each record stands in as Daggerfall's own picture of the thing, at `size` times the size it stands at
+ *  itself: [archive, record, size]; 13, 16 and 24 (75 placements) are named nowhere and draw nothing. The bottles are
+ *  TEXTURE.205's at three fifths, as small as the shelves hold them. 1210_1, _3, _4, _8 and _9 and 1230_30 no town
+ *  places: a removed mod's ships stood them and the decorator offered them, so they are offered still. */
+export const TOWN_ITEMS = Object.freeze({
+  1210: Object.freeze({
+    10: [205, 14, 0.6], 11: [205, 11, 0.6], 12: [205, 34, 0.6],   // a green, a blue and a brown bottle
+    17: [211, 31, 0.5], 18: [211, 40, 0.75],                     // a loaf of bread; a ham
+    19: [205, 13, 1], 20: [205, 16, 1],                          // two bottles of wine
+    1: [209, 8, 0.5], 3: [209, 5, 0.75], 4: [209, 6, 0.5], 8: [205, 9, 1], 9: [205, 9, 1],   // a map, a scroll, scrolls, two baskets
+  }),
+  1230: Object.freeze({ 30: [202, 6, 1] }),   // a statuette
+});
+
 // ---- the temple gardens of archive 10035 ---------------------------------------------------------------------
 /** Archive 10035 is in no catalogue either: 151 placements, every one on the ground of three temples (TEMPASD0, TEMPASF0,
  *  TEMPAAE0), in rows of one record each - a temple's garden. Each record stands in as one of Daggerfall's own garden
@@ -1017,16 +1037,15 @@ export const TOWN_GARDEN_ARCHIVE = 10035;
 
 // ---- install --------------------------------------------------------------------------------------------------------
 let _installed = false;
-/** Once: everything above on the model and texture doors behind `isOn`, and DET's pieces (shared with Detailed Ships)
- *  with `isOn` among their switches. Answers the pictures registered. */
+/** Once: everything above on the model and texture doors behind `isOn`, and DET's pieces with `isOn` among their
+ *  switches. Answers the pictures registered. */
 export function installTownStandIns(isOn = () => true) {
   if (_installed) return 0;
   _installed = true;
   let n = installDetStandIns(isOn);
-  shareDetailedShipsArt(isOn);   // the bottles and moved classic pieces of archive 1210 the towns' shelves hold - Detailed Ships' pictures of them
   for (let k = 0; k < TOWN_BED_COUNT; k++) {
     const { model, colour } = townBedOf(TOWN_BED_FIRST + k);
-    registerModelAlias(TOWN_BED_FIRST + k, { model, remap: bedRemap(colour) }, isOn);
+    registerModelAlias(TOWN_BED_FIRST + k, { model, remap: bedRemap(colour), turn: TOWN_BED_TURN }, isOn);
   }
   for (const [id, spec] of Object.entries(TOWN_PAINTINGS)) registerCustomModel(Number(id), () => paintingModel(spec), isOn);
   for (const [id, build] of Object.entries(ROSYS_PIECES)) registerCustomModel(Number(id), build, isOn);
@@ -1051,5 +1070,21 @@ export function installTownStandIns(isOn = () => true) {
   n += addVendorTextures(Object.entries(TOWN_GARDEN).map(classicPicture(TOWN_GARDEN_ARCHIVE, 'garden')).map((e) => ({ ...e, yields: true })));
   return n;
 }
+
+let _portInstalled = false;
+/**
+ * AUDIT SHIP-REFIT (2026-10-29): THE PIECES THAT STAND AT EVERY BOOT - DET's (world/detStandIns.js) and archive 1210/1230's
+ * items (TOWN_ITEMS), each the port's own picture of the thing. A removed mod registered them at boot behind its own
+ * switch, on by default and the room's online, so a decoration a player placed from them stood whatever else was on; they
+ * still do. The towns' other pieces stand while a town mod does. Once; answers the pictures registered.
+ */
+export function installPortStandIns() {
+  if (_portInstalled) return 0;
+  _portInstalled = true;
+  const items = Object.entries(TOWN_ITEMS).flatMap(([archive, recs]) => Object.entries(recs).map(([record, [a, r, size]]) => classicFlatEntry({
+    archive: Number(archive), record: Number(record), from: [a, r], size, gate: () => true, fileName: `town-item-${archive}_${record}`,
+  })));
+  return installDetStandIns(() => true) + addVendorTextures(items.map((e) => ({ ...e, yields: true })));   // a player's own RMB Resource Pack answers first
+}
 /** Test seam. */
-export function _resetTownStandIns() { _installed = false; }
+export function _resetTownStandIns() { _installed = false; _portInstalled = false; }

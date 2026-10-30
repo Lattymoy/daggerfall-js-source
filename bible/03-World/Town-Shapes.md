@@ -187,7 +187,7 @@ its own tile: at distance 0 alone Aldwall Rock's model 323 stood 1.9 m in its gr
 level, so only the core's corners past a tile ease with the seam. Where buildings stand in the band (Sentinel fills its
 pixel) the seam stays steeper than the grade: easing it would stand them off their ground, as TS2 did.
 
-**Across the edge (assessed, not built).** The worst seams meet the next pixel: Tunmont's west 130 m over its
+**Across the edge (BUILT: ACROSS-EDGE, `../01-Overview/bugs/Field-Bugs-2026-10-29c.md`).** The worst seams meet the next pixel: Tunmont's west 130 m over its
 neighbour's sea, Kalunnunu's north 109 m over open sea, Naresa's south 166 m under a hillside rising away, Sentinel's
 south 47 m under land its neighbour's tavern leaves 54 tiles of room. A run at the grade needs 34, 29, 43 and 12 samples
 past the edge. Every producer of a pixel's ground (the stream's worker, its classic pass, the landforms' lift, the
@@ -461,6 +461,13 @@ and gate dressing standing only where Daggerfall's blocks put them.
   read the wall's own cells - FB1028 measured the houses: none within 2 m); 3,280
   boards, every one inside its wall; 1,640 carriages and 1,640 drivers, every carriage outside; every piece clear of the
   wall and the houses and on the town's ground.
+- **Off the roads, at every gate** (AUDIT CAPITAL-CARRIAGES L2 and L3, 2026-10-29; townGateOutside, GATE_ROAD_CLEAR,
+  `world/townGates.js`): a wall built on its pixel's roads can have more gates than its template's four frames, and the
+  things outside a gate stood where its road came in. A gate past the frames takes its nearest frame's things again,
+  turned to face it. The things outside stand on the town's own ground, 2.5 tiles and their reach off each painted road's
+  and track's line and off each gate's passage, the group moved along the wall up to 32 m. A gate's laid road goes round
+  the carriage's models. The Bay, every second walled city, the packs off, on Basic Roads' roads: 731 of 780 gates
+  dressed, now 780; 29 carriages on a road, now 0. Past the Bay 2 of 109 gates (Jehanna, Rihad) have no clear place.
 - **The yards** (`world/merchantYards/merchantYardSites.js` townGroundOf's `shut`, `scenes/world.js` townPlacesFor,
   `scenes/pixelBuild.js`): a town's Stable, Wagon Yard, joinery and port places are placed on its walk grid shut as its
   walkers' is (`world/townWalls.js` townWalkShut: off its ground, on its wall). Measured over a quarter of the cities and
@@ -972,6 +979,9 @@ reach), none over another. The 55 moved:
 | Umberadax | Wagon Yard | on a gate's new road |
 | Whitewark | Stable | on a gate's new road |
 | Zenirijet | Stable | on a gate's new road |
+
+Westhead Moor's shipyard and lighthouse moved again since, on purpose: WESTHEAD-NORTH
+(`01-Overview/bugs/Field-Bugs-2026-10-28.md`).
 
 The three by the gate dressing (Y1): TS7 steps a gate's boards and carriage clear of the grown towers, up to 0.8 m
 over #1184's (Knightsgate's two). On the things as #1184 laid them, all three stables are placed on #1184's cells.

@@ -33,7 +33,7 @@ import { PIXEL_STACK } from '../pixelifyFive.js';
 import { isOnlinePage } from '../../systems/online/onlineLane.js';
 import { deathPenaltyLine } from '../../systems/deathPenalty.js';   // DEATH-PENALTY: the line about the loss
 import { armDrawWatchdog, disarmDraw } from '../drawWatchdog.js';
-import { wildDeathLines } from '../../systems/wild/wildZone.js';   // WILD1: a death in the open zone says what it cost
+import { wildDeathLines, wildDeathSlain } from '../../systems/wild/wildZone.js';   // WILD1: a death in the open zone says what it cost
 import { t } from '../../systems/textManager.js';   // L10N4: the death screen's words in the player's language
 
 export const ENHANCED_DEATH_ID = 'enhanced-death';
@@ -80,8 +80,8 @@ function build(screen) {
   // under it in a second face. A death that costs nothing (no respawn - BAL4: an offline Legacy rise pays - or a purse under ten coins) keeps its words.
   const lossLine = screen.goldLoss > 0 ? (screen.goldLossLine || deathPenaltyLine(screen.goldLoss)) : '';
   const line = el('p', `dth-line${lossLine ? ' dth-lossline' : ''}`, lossLine || (online || screen.rises
-    ? t('death.lineOnline', 'Your body falls. The Bay is not done with you yet.')
-    : t('death.line', 'Your tale in the Iliac Bay ends here.')));
+    ? t('death.lineOnline', 'Your body falls. The world is not done with you yet.')
+    : t('death.line', 'Your tale ends here.')));
   const keys = el('div', 'dth-keys');
   for (const k of deathKeys(screen.hint, online, !!screen.rises)) {
     const b = el(k.confirm ? 'button' : 'span', 'dth-key');
@@ -119,17 +119,17 @@ export function drawEnhancedDeath(screen, fade = 0) {
     const text = left >= 60 ? t('death.risingInClock', 'Rising in {m}:{s}', { m: Math.floor(left / 60), s: String(left % 60).padStart(2, '0') }) : t('death.risingInCount', 'Rising in {n}', { n: left });   // WILD1: two minutes read as a clock
     if (c && c.textContent !== text) c.textContent = text;
   }
-  // WILD1: the zone's block and its key - the lines once they are known, and no "Rise now" while the zone holds
-  const lines = wildDeathLines(screen.wild ?? null);
+  // WILD1: the zone's block - the lines once they are known. DEATH-15: "Rise now" once Enter rises, zone or not
+  const slain = wildDeathSlain(screen.wild ?? null), lines = [slain, ...wildDeathLines(screen.wild ?? null)].filter(Boolean);   // PVP-HUD: "Slain by" first
   const w = node.querySelector('.dth-wild');
   const key = lines.join('|');
   if (w && w.dataset.key !== key) {
     w.dataset.key = key;
-    w.replaceChildren(...lines.map((l, i) => el('p', i === 0 && screen.wild?.killer ? 'dth-wild-line dth-wild-claim' : 'dth-wild-line', l)));
+    w.replaceChildren(...lines.map((l, i) => el('p', i === (slain ? 1 : 0) && screen.wild?.killer ? 'dth-wild-line dth-wild-claim' : i === 0 && slain ? 'dth-wild-line dth-wild-slain' : 'dth-wild-line', l)));
     w.hidden = !lines.length;
-    const keys = node.querySelector('.dth-keys');
-    if (keys) keys.hidden = lines.length > 0;
   }
+  const keys = node.querySelector('.dth-keys');
+  if (keys && keys.hidden !== !screen.canRise) keys.hidden = !screen.canRise;
   disarmDraw(watch);
   watch = armDrawWatchdog(STALE_MS, removeEnhancedDeath);
 }
@@ -225,6 +225,7 @@ button.dth-key:focus-visible { outline: 1px solid rgba(142,27,20,0.8); outline-o
 .dth-wild-line { margin: 0; font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none; font-size: clamp(13px, 1.6vw, 16px);
   line-height: 1.45; letter-spacing: 0.05em; color: #b3a893; text-shadow: 2px 2px 0 #000; }
 .dth-wild-claim { color: #d0563f; }
+.dth-wild-slain { color: #e8c9a0; font-size: clamp(15px, 1.9vw, 19px); }
 .dth-keys[hidden] { display: none; }
 
 @media (prefers-reduced-motion: reduce) {

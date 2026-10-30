@@ -563,7 +563,7 @@ export function createProfBook({ door, storage = null, character = () => null, n
     },
 
     // ─── THE DUNGEONS (PROF2) ───────────────────────────────────────
-    /** A dungeon's witnessed state today (its id DFU's MapId & 0xfffff), or null not yet asked. */
+    /** A dungeon's witnessed state today (its id scenes/dungeonIdentity.js's), or null not yet asked. */
     dungeon(id) { const d = dungeons.get(id); return d && d.day >= heldDay() ? d : null; },   // DAY-TURN: as the pixels
     /** GROUND-STALE: whether the host should ask after a dungeon - not yet known today, or a harvest answered in it since. */
     dungeonWanted(id) { const d = this.dungeon(id); return !d || d.stale === true; },
