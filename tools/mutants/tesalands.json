@@ -381,8 +381,8 @@
   {
     "name": "TL-inset-off",
     "file": "src/world/lands/landProps.js",
-    "old": "const tx = cx * C + C * (in0 + (in1 - in0) * draw(wx, wz, S))",
-    "new": "const tx = cx * C + C * draw(wx, wz, S)",
+    "old": "        const tx = cx * C + C * (in0 + (in1 - in0) * draw(wx, wz, S)),",
+    "new": "        const tx = cx * C + C * draw(wx, wz, S),",
     "tests": [
       "test/world/tesalands_props.test.js"
     ]
@@ -390,8 +390,8 @@
   {
     "name": "TL-rate-ignored",
     "file": "src/world/lands/landProps.js",
-    "old": "if (u >= prop.rate * share) continue;",
-    "new": "if (u >= share) continue;",
+    "old": "          if (u >= prop.rate * share) continue;",
+    "new": "          if (u >= share) continue;",
     "tests": [
       "test/world/tesalands_props.test.js"
     ]
@@ -399,8 +399,8 @@
   {
     "name": "TL-road-stood-on",
     "file": "src/world/lands/landProps.js",
-    "old": "if (clear(ti) || !(FOOT_OK[rec] || (wet && WET[rec] && rec !== 0))) return false;",
-    "new": "if (!(FOOT_OK[rec] || (wet && WET[rec] && rec !== 0))) return false;",
+    "old": "        if (clear(ti) || !(FOOT_OK[rec] || (wet && WET[rec] && rec !== 0))) return false;",
+    "new": "        if (!(FOOT_OK[rec] || (wet && WET[rec] && rec !== 0))) return false;",
     "tests": [
       "test/world/tesalands_props.test.js"
     ]
@@ -408,8 +408,8 @@
   {
     "name": "TL-reeds-on-open-water",
     "file": "src/world/lands/landProps.js",
-    "old": "if (clear(ti) || !(FOOT_OK[rec] || (wet && WET[rec] && rec !== 0))) return false;",
-    "new": "if (clear(ti) || !(FOOT_OK[rec] || (wet && WET[rec]))) return false;",
+    "old": "        if (clear(ti) || !(FOOT_OK[rec] || (wet && WET[rec] && rec !== 0))) return false;",
+    "new": "        if (clear(ti) || !(FOOT_OK[rec] || (wet && WET[rec]))) return false;",
     "tests": [
       "test/world/tesalands_props.test.js"
     ]
@@ -417,8 +417,8 @@
   {
     "name": "TL-floating",
     "file": "src/world/lands/landProps.js",
-    "old": "out.push(mx, lowest(mx, mz, sinkR) - law.sink * scale,",
-    "new": "out.push(mx, ground(mx, mz) - law.sink * scale,",
+    "old": "          lowest(mx, mz, sinkR) - law.sink * scale,",
+    "new": "          ground(mx, mz) - law.sink * scale,",
     "tests": [
       "test/world/tesalands_props.test.js"
     ]
@@ -426,8 +426,8 @@
   {
     "name": "TL-vines-one-row",
     "file": "src/world/lands/landProps.js",
-    "old": "for (const f of [0.25, 0.75]) {",
-    "new": "for (const f of [0.25]) {",
+    "old": "          for (const f of [0.25, 0.75]) {",
+    "new": "          for (const f of [0.25]) {",
     "tests": [
       "test/world/tesalands_props.test.js"
     ]
@@ -435,8 +435,8 @@
   {
     "name": "TL-smaller-first",
     "file": "src/world/lands/landProps.js",
-    "old": "const kinds = LAND_KINDS.filter((k) => !named || named.has(k)).sort(",
-    "new": "const kinds = LAND_KINDS.filter((k) => !named || named.has(k)) || [].sort(",
+    "old": "  const kinds = LAND_KINDS.filter((k) => !named || named.has(k)).sort(\n    (a, b) => /** @type {any} */ (LAND_KIND_LAW)[a].rank - /** @type {any} */ (LAND_KIND_LAW)[b].rank,\n  );",
+    "new": "  const kinds =\n    LAND_KINDS.filter((k) => !named || named.has(k)) ||\n    [].sort((a, b) => /** @type {any} */ (LAND_KIND_LAW)[a].rank - /** @type {any} */ (LAND_KIND_LAW)[b].rank);",
     "tests": [
       "test/world/tesalands_props.test.js"
     ]
@@ -444,8 +444,8 @@
   {
     "name": "TL-flats-clearance",
     "file": "src/world/lands/landProps.js",
-    "old": "const r = (landMeasures(kind, props[i + 6]).foot + FLAT_CLEAR) * props[i + 4];",
-    "new": "const r = landMeasures(kind, props[i + 6]).foot * props[i + 4];",
+    "old": "    const r = (landMeasures(kind, props[i + 6]).foot + FLAT_CLEAR) * props[i + 4];",
+    "new": "    const r = landMeasures(kind, props[i + 6]).foot * props[i + 4];",
     "tests": [
       "test/world/tesalands_flora.test.js"
     ]
@@ -453,8 +453,8 @@
   {
     "name": "TL-reeds-bodied",
     "file": "src/world/lands/landProps.js",
-    "old": "far: 260, steep: 20, sink: 0.1, body: false, sway: 0.35",
-    "new": "far: 260, steep: 20, sink: 0.1, body: true, sway: 0.35",
+    "old": "    sink: 0.1,\n    body: false,\n    sway: 0.35,",
+    "new": "    sink: 0.1,\n    body: true,\n    sway: 0.35,",
     "tests": [
       "test/world/tesalands_props.test.js"
     ]
@@ -462,8 +462,8 @@
   {
     "name": "TL-keep-ignored",
     "file": "src/world/lands/landProps.js",
-    "old": "if (keep(raw[i], raw[i + 2])) for (let k = 0; k < LAND_PROP_FLOATS; k++)",
-    "new": "if (true) for (let k = 0; k < LAND_PROP_FLOATS; k++)",
+    "old": "    if (keep(raw[i], raw[i + 2])) for (let k = 0; k < LAND_PROP_FLOATS; k++) kept.push(raw[i + k]);",
+    "new": "    if (true) for (let k = 0; k < LAND_PROP_FLOATS; k++) kept.push(raw[i + k]);",
     "tests": [
       "test/world/tesalands_props.test.js"
     ]
@@ -561,8 +561,8 @@
   {
     "name": "TL-face-inward",
     "file": "src/world/lands/landPropMesh.js",
-    "old": "if (dot(cross(sub3(b, a), sub3(c, a)), out) >= 0) tri(s, a, b, c, ua, ub, uc);",
-    "new": "if (dot(cross(sub3(b, a), sub3(c, a)), out) < 0) tri(s, a, b, c, ua, ub, uc);",
+    "old": "    if (dot(cross(sub3(b, a), sub3(c, a)), out) >= 0) tri(s, a, b, c, ua, ub, uc);",
+    "new": "    if (dot(cross(sub3(b, a), sub3(c, a)), out) < 0) tri(s, a, b, c, ua, ub, uc);",
     "tests": [
       "test/world/tesalands_props.test.js"
     ]
@@ -570,8 +570,8 @@
   {
     "name": "TL-lod-finer",
     "file": "src/world/lands/landPropMesh.js",
-    "old": "const crownFrom = within(r, [11, 15]), r0 = within(r, [2.6, 3.4]), sides = [12, 8, 5][lod];",
-    "new": "const crownFrom = within(r, [11, 15]), r0 = within(r, [2.6, 3.4]), sides = [5, 8, 12][lod];",
+    "old": "    sides = [12, 8, 5][lod];",
+    "new": "    sides = [5, 8, 12][lod];",
     "tests": [
       "test/world/tesalands_props.test.js"
     ]
@@ -579,8 +579,8 @@
   {
     "name": "TL-seed-unread",
     "file": "src/world/lands/landPropMesh.js",
-    "old": "^ Math.imul(variant + 1, 0x9e3779b1)) >>> 0;",
-    "new": "^ Math.imul(1, 0x9e3779b1)) >>> 0;",
+    "old": "  (0x4c414e44 ^ Math.imul(LAND_KINDS.indexOf(kind) + 1, 0x85ebca6b) ^ Math.imul(variant + 1, 0x9e3779b1)) >>> 0;",
+    "new": "  (0x4c414e44 ^ Math.imul(LAND_KINDS.indexOf(kind) + 1, 0x85ebca6b) ^ Math.imul(1, 0x9e3779b1)) >>> 0;",
     "tests": [
       "test/world/tesalands_props.test.js"
     ]
@@ -750,8 +750,8 @@
   {
     "name": "TL-named-unwalked",
     "file": "src/world/lands/landProps.js",
-    "old": "const kinds = LAND_KINDS.filter((k) => !named || named.has(k)).sort(",
-    "new": "const kinds = LAND_KINDS.filter((k) => !named || !named.has(k)).sort(",
+    "old": "  const kinds = LAND_KINDS.filter((k) => !named || named.has(k)).sort(",
+    "new": "  const kinds = LAND_KINDS.filter((k) => !named || !named.has(k)).sort(",
     "tests": [
       "test/world/tesalands_props.test.js",
       "test/world/tesalands_flora.test.js"
@@ -923,8 +923,8 @@
   {
     "name": "TL-one-body-a-landmark",
     "file": "src/world/lands/landProps.js",
-    "old": "parts: bodied ? made.parts : Object.freeze([])",
-    "new": "parts: bodied ? made.parts.slice(0, 1) : Object.freeze([])",
+    "old": "      parts: bodied ? made.parts : Object.freeze([]),",
+    "new": "      parts: bodied ? made.parts.slice(0, 1) : Object.freeze([]),",
     "tests": [
       "test/world/tesalands_props.test.js"
     ]
@@ -932,8 +932,8 @@
   {
     "name": "TL-parts-unturned",
     "file": "src/world/lands/landProps.js",
-    "old": "c = Math.cos(props[i + 3]), sn = Math.sin(props[i + 3]);",
-    "new": "c = 1, sn = 0;",
+    "old": "    c = Math.cos(props[i + 3]),\n    sn = Math.sin(props[i + 3]); // an unbodied kind's parts none (landMeasures)",
+    "new": "    c = 1,\n    sn = 0; // an unbodied kind's parts none (landMeasures)",
     "tests": [
       "test/world/tesalands_props.test.js"
     ]
@@ -941,8 +941,8 @@
   {
     "name": "TL-foot-the-stalks",
     "file": "src/world/lands/landProps.js",
-    "old": "foot: bodied ? Math.max(0.5, made.foot) : sink",
-    "new": "foot: sink",
+    "old": "      foot: bodied ? Math.max(0.5, made.foot) : sink,",
+    "new": "      foot: sink,",
     "tests": [
       "test/world/tesalands_props.test.js"
     ]
@@ -950,8 +950,8 @@
   {
     "name": "TL-hist-no-trunk-body",
     "file": "src/world/lands/landPropMesh.js",
-    "old": "  m.part(0, 0, () => sweep(m, BODY, rings, sides, { jit: (k, i) => (lod === 2 ? 0.05 : 0.12)",
-    "new": "  ((_x, _z, f) => f())(0, 0, () => sweep(m, BODY, rings, sides, { jit: (k, i) => (lod === 2 ? 0.05 : 0.12)",
+    "old": "  const seed = (r() * 4294967296) >>> 0;\n  m.part(0, 0, () =>",
+    "new": "  const seed = (r() * 4294967296) >>> 0;\n  ((_x, _z, f) => f())(0, 0, () =>",
     "tests": [
       "test/world/tesalands_props.test.js"
     ]
@@ -959,8 +959,8 @@
   {
     "name": "TL-the-grove-one-stalk",
     "file": "src/world/lands/landPropMesh.js",
-    "old": "take(m.part(x, z, () => parasolOne(m, r, lod, x, z,",
-    "new": "take(((_x, _z, f) => f())(x, z, () => parasolOne(m, r, lod, x, z,",
+    "old": "      take(m.part(x, z, () => parasolOne(m, r, lod, x, z, h * s, r0 * s * 1.1, within(r, [4, 5.5]) * s * 1.2)));",
+    "new": "      take(\n        ((_x, _z, f) => f())(x, z, () =>\n          parasolOne(m, r, lod, x, z, h * s, r0 * s * 1.1, within(r, [4, 5.5]) * s * 1.2),\n        ),\n      );",
     "tests": [
       "test/world/tesalands_props.test.js"
     ]
@@ -1004,8 +1004,8 @@
   {
     "name": "TL-vine-row-middle-kept",
     "file": "src/world/lands/landProps.js",
-    "old": "if (!kept(mx - half / 2, mz, half / 2) || !kept(mx, mz, half / 2) || !kept(mx + half / 2, mz, half / 2)) continue;",
-    "new": "if (!kept(mx, mz, half / 2)) continue;",
+    "old": "            if (!kept(mx - half / 2, mz, half / 2) || !kept(mx, mz, half / 2) || !kept(mx + half / 2, mz, half / 2))\n              continue;",
+    "new": "            if (!kept(mx, mz, half / 2)) continue;",
     "tests": [
       "test/world/tesalands_props.test.js"
     ]
@@ -1013,8 +1013,8 @@
   {
     "name": "TL-vine-row-middle-ground",
     "file": "src/world/lands/landProps.js",
-    "old": "Math.min(lowest(mx, mz, 0), ground(mx - half, mz), ground(mx + half, mz)) - law.sink",
-    "new": "lowest(mx, mz, 0) - law.sink",
+    "old": "            out.push(\n              mx,\n              Math.min(lowest(mx, mz, 0), ground(mx - half, mz), ground(mx + half, mz)) - law.sink,\n              mz,\n              0,\n              1,\n              K,\n              variant,\n              LOOK_INDEX.get(name) ?? 0,\n            );",
+    "new": "            out.push(mx, lowest(mx, mz, 0) - law.sink, mz, 0, 1, K, variant, LOOK_INDEX.get(name) ?? 0);",
     "tests": [
       "test/world/tesalands_props.test.js"
     ]
@@ -1022,8 +1022,8 @@
   {
     "name": "TL-vine-slope-as-it-was",
     "file": "src/world/lands/landProps.js",
-    "old": "far: 420, steep: 6, sink: 0.1,",
-    "new": "far: 420, steep: 14, sink: 0.1,",
+    "old": "    steep: 6,",
+    "new": "    steep: 14,",
     "tests": [
       "test/world/tesalands_props.test.js"
     ]

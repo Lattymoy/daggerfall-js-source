@@ -40,6 +40,10 @@
 /src/ui/starfall/*/
 !/src/ui/wardrobe/
 /src/ui/wardrobe/*/
+!/src/world/
+/src/world/*
+!/src/world/lands/
+/src/world/lands/*/
 !/tools/
 /tools/*
 !/tools/layered-armor/
