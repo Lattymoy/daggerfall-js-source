@@ -607,8 +607,8 @@
   {
     "name": "AUDITTELL-wound-cadence",
     "file": "src/combat/blood/bloodBleed.js",
-    "old": "      if (wound && s.next > WOUND_WAIT) s.next = WOUND_WAIT;   // AUDIT TELL: a wound opened drips on its own cadence\n",
-    "new": "",
+    "old": "      if (wound && s.next > WOUND_WAIT) s.next = WOUND_WAIT; // AUDIT TELL: a wound opened drips on its own cadence\n      s.next -= dt;",
+    "new": "      s.next -= dt;",
     "tests": [
       "test/scenes/audittell.test.js"
     ]
@@ -616,8 +616,8 @@
   {
     "name": "AUDITTELL-wound-share",
     "file": "src/combat/blood/bloodBleed.js",
-    "old": "const share = Math.max(bleedShare(v.health, v.maxHealth), wound ? WOUND_SHARE : 0);",
-    "new": "const share = bleedShare(v.health, v.maxHealth);",
+    "old": "      const share = Math.max(bleedShare(v.health, v.maxHealth), wound ? WOUND_SHARE : 0);",
+    "new": "      const share = bleedShare(v.health, v.maxHealth);",
     "tests": [
       "test/scenes/audittell.test.js"
     ]

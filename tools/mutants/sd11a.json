@@ -204,8 +204,8 @@
   {
     "name": "SD11A-L2F8-blood-on-a-mover-the-wall",
     "file": "src/combat/blood/bloodMarks.js",
-    "old": "          if (onMover(col, wall)) continue;   // AUDIT SD II (L2 F8): it met a surface that moves\n",
-    "new": "",
+    "old": "          if (onMover(col, wall)) continue; // AUDIT SD II (L2 F8): it met a surface that moves\n          const wx = pos[0] + (ox / run) * wall.dist,",
+    "new": "          const wx = pos[0] + (ox / run) * wall.dist,",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js"
     ],
@@ -214,8 +214,8 @@
   {
     "name": "SD11A-L2F8-blood-on-a-mover-the-floor",
     "file": "src/combat/blood/bloodMarks.js",
-    "old": "      if (onMover(col, h)) continue;   // AUDIT SD II (L2 F8): a surface that moves takes no mark\n",
-    "new": "",
+    "old": "      if (onMover(col, h)) continue; // AUDIT SD II (L2 F8): a surface that moves takes no mark\n      const at = [fromX, pos[1] + dir[1] * h.dist, fromZ];",
+    "new": "      const at = [fromX, pos[1] + dir[1] * h.dist, fromZ];",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js"
     ],
@@ -224,8 +224,8 @@
   {
     "name": "SD11A-L2F8-blood-on-a-mover-the-pool",
     "file": "src/combat/blood/bloodMarks.js",
-    "old": "    if (onMover(col, h)) return null;   // AUDIT SD II (L2 F8): nor one that moves\n",
-    "new": "",
+    "old": "    if (onMover(col, h)) return null; // AUDIT SD II (L2 F8): nor one that moves\n    ensure();",
+    "new": "    ensure();",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js"
     ],
@@ -234,8 +234,8 @@
   {
     "name": "SD11A-L2F8-blood-on-a-mover-the-print",
     "file": "src/combat/blood/bloodMarks.js",
-    "old": "    if (onMover(col, h)) return null;   // AUDIT SD II (L2 F8): a foot on a surface that moves prints nothing, and picks nothing up\n",
-    "new": "",
+    "old": "    if (onMover(col, h)) return null; // AUDIT SD II (L2 F8): a foot on a surface that moves prints nothing, and picks nothing up\n    const foot = [pos[0], pos[1] + DRIP_FROM - h.dist, pos[2]];",
+    "new": "    const foot = [pos[0], pos[1] + DRIP_FROM - h.dist, pos[2]];",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js"
     ],

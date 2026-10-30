@@ -121,7 +121,10 @@ export function createBleedLedger({ rng = Math.random } = {}) {
       // before this ledger was born. Its blood is not on this floor and
       // never was, and a pool that starts spreading under a body that
       // died an hour ago is a body dying twice.
-      if (!s) { s = { next: wait(), pooled: !!v.dead, bleeding: false, last: null, walked: 0 }; state.set(body, s); }
+      if (!s) {
+        s = { next: wait(), pooled: !!v.dead, bleeding: false, last: null, walked: 0 };
+        state.set(body, s);
+      }
       // BLOOD2d: THE STEPS, off the ground covered - alive or not (a
       // corpse does not walk, but the ledger does not have to know that:
       // it does not move). One `step` every STRIDE, ALONG the run and
@@ -132,21 +135,32 @@ export function createBleedLedger({ rng = Math.random } = {}) {
       // so its view says `strides: false` and the ledger counts none -
       // or every stride would print twice.
       if (s.last && v.strides !== false) {
-        const dx = v.feet[0] - s.last[0], dy = v.feet[1] - s.last[1], dz = v.feet[2] - s.last[2];
+        const dx = v.feet[0] - s.last[0],
+          dy = v.feet[1] - s.last[1],
+          dz = v.feet[2] - s.last[2];
         const run = Math.hypot(dx, dz);
         if (run > 0 && run <= TELEPORT_SPEED * dt) {
-          const fx = dx / run, fz = dz / run;
+          const fx = dx / run,
+            fz = dz / run;
           for (let a = STRIDE - s.walked; a <= run; a += STRIDE) {
             const f = a / run;
-            out.push({ kind: 'step', body, pos: [s.last[0] + dx * f, s.last[1] + dy * f, s.last[2] + dz * f], forward: [fx, 0, fz] });
+            out.push({
+              kind: 'step',
+              body,
+              pos: [s.last[0] + dx * f, s.last[1] + dy * f, s.last[2] + dz * f],
+              forward: [fx, 0, fz],
+            });
           }
           s.walked = (s.walked + run) % STRIDE;
-        } else if (run > 0) s.walked = 0;   // a teleport is not a walk
+        } else if (run > 0) s.walked = 0; // a teleport is not a walk
       }
       s.last = [v.feet[0], v.feet[1], v.feet[2]];
       if (v.dead) {
         // BLEEDS OUT: once, at the feet, only with a body to bleed from
-        if (!s.pooled && v.corpse) { s.pooled = true; out.push({ kind: 'pool', body, pos: [v.feet[0], v.feet[1], v.feet[2]], bloodIndex: v.bloodIndex ?? 0 }); }
+        if (!s.pooled && v.corpse) {
+          s.pooled = true;
+          out.push({ kind: 'pool', body, pos: [v.feet[0], v.feet[1], v.feet[2]], bloodIndex: v.bloodIndex ?? 0 });
+        }
         s.bleeding = false;
         continue;
       }
@@ -155,19 +169,29 @@ export function createBleedLedger({ rng = Math.random } = {}) {
       // so the latch that says "this body has pooled" was the previous
       // life's, and the foe killed a second time lay in no pool.
       s.pooled = false;
-      const wound = !!v.wound;   // AUDIT TELL: a sweep's bleed
+      const wound = !!v.wound; // AUDIT TELL: a sweep's bleed
       const share = Math.max(bleedShare(v.health, v.maxHealth), wound ? WOUND_SHARE : 0);
       if (!(share > 0)) {
         // healed past the threshold: the next wound starts a fresh wait
-        if (s.bleeding) { s.bleeding = false; s.next = wait(); }
+        if (s.bleeding) {
+          s.bleeding = false;
+          s.next = wait();
+        }
         continue;
       }
       s.bleeding = true;
-      if (wound && s.next > WOUND_WAIT) s.next = WOUND_WAIT;   // AUDIT TELL: a wound opened drips on its own cadence
+      if (wound && s.next > WOUND_WAIT) s.next = WOUND_WAIT; // AUDIT TELL: a wound opened drips on its own cadence
       s.next -= dt;
       if (s.next > 0) continue;
       s.next = wound ? WOUND_WAIT : wait();
-      out.push({ kind: 'drip', body, pos: [v.feet[0], v.feet[1], v.feet[2]], bloodIndex: v.bloodIndex ?? 0, count: bleedDrops(share), share });
+      out.push({
+        kind: 'drip',
+        body,
+        pos: [v.feet[0], v.feet[1], v.feet[2]],
+        bloodIndex: v.bloodIndex ?? 0,
+        count: bleedDrops(share),
+        share,
+      });
     }
     return out;
   }
@@ -176,7 +200,9 @@ export function createBleedLedger({ rng = Math.random } = {}) {
    *  it - what was pooled, what was walked - so the bodies of the next
    *  room (or the same room, reloaded) are met fresh. A WeakMap cannot
    *  be emptied; it is replaced. */
-  function clear() { state = new WeakMap(); }
+  function clear() {
+    state = new WeakMap();
+  }
 
   return { tick, clear, _state: (body) => state.get(body) ?? null };
 }

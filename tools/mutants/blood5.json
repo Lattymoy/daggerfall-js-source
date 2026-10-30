@@ -29,8 +29,8 @@
   {
     "name": "BLOOD5-the-pool-flies-too",
     "file": "src/combat/blood/bloodMarks.js",
-    "old": "      if (i > 0) { land(fly, pos, at,",
-    "new": "      if (i >= 0) { land(fly, pos, at,",
+    "old": "      if (i > 0) {",
+    "new": "      if (i >= 0) {",
     "tests": [
       "test/combat/blood5_flight.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "BLOOD5-a-room-thrown-away-keeps-its-drops-in-the-air",
     "file": "src/combat/blood/bloodMarks.js",
-    "old": "    _flying = [];               // BLOOD5:",
-    "new": "    // BLOOD5:",
+    "old": "    _flying = []; // BLOOD5: ...and the droplets still in the air (their batch is kept - it is the pool's for life)",
+    "new": "    // BLOOD5: ...and the droplets still in the air (their batch is kept - it is the pool's for life)",
     "tests": [
       "test/combat/blood5_flight.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "BLOOD5-the-switch-lets-the-drops-land",
     "file": "src/combat/blood/bloodMarks.js",
-    "old": "    if (!on()) { _flying = []; return 0; }",
-    "new": "",
+    "old": "    if (!on()) {\n      _flying = [];\n      return 0;\n    }\n    let landed = false;",
+    "new": "    let landed = false;",
     "tests": [
       "test/combat/blood5_flight.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "BLOOD5-a-recentre-leaves-the-landing-behind",
     "file": "src/combat/blood/bloodMarks.js",
-    "old": "for (const p of [f.from, f.to, f.pos])",
-    "new": "for (const p of [f.from, f.pos])",
+    "old": "        for (const p of [f.from, f.to, f.pos]) {",
+    "new": "        for (const p of [f.from, f.pos]) {",
     "tests": [
       "test/combat/blood5_flight.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "BLOOD5-the-droplet-casts-a-shadow",
     "file": "src/combat/blood/bloodMarks.js",
-    "old": "      if (_dropBatch) _dropBatch.noShadow = true;",
-    "new": "",
+    "old": "      if (_dropBatch) _dropBatch.noShadow = true; // a droplet is too small to cast one, and the lane records every caster it is shown",
+    "new": "      // a droplet is too small to cast one, and the lane records every caster it is shown",
     "tests": [
       "test/combat/blood5_flight.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "BLOOD5-the-cap-drops-the-overflow",
     "file": "src/combat/blood/bloodMarks.js",
-    "old": "    return settle(at, normal, opts, kind, drips);\n  }",
-    "new": "    return fly ? null : settle(at, normal, opts, kind, drips);\n  }",
+    "old": "    return settle(at, normal, opts, kind, drips);",
+    "new": "    return fly ? null : settle(at, normal, opts, kind, drips);",
     "tests": [
       "test/combat/blood5_flight.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "BLOOD5-a-ceiling-drop-falls-short",
     "file": "src/combat/blood/bloodMarks.js",
-    "old": "    const vy = need * (DROP_CEILING_SPARE.min",
-    "new": "    const vy = need * 0.9 * (DROP_CEILING_SPARE.min",
+    "old": "    const vy = need * (DROP_CEILING_SPARE.min + rng() * (DROP_CEILING_SPARE.max - DROP_CEILING_SPARE.min));",
+    "new": "    const vy = need * 0.9 * (DROP_CEILING_SPARE.min + rng() * (DROP_CEILING_SPARE.max - DROP_CEILING_SPARE.min));",
     "tests": [
       "test/combat/blood5_flight.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "BLOOD5-a-stepped-sheet-skips-a-cell",
     "file": "src/combat/blood/bloodArt.js",
-    "old": "    const row = Math.floor(next / cells), col = next % cells;\n    next++;",
-    "new": "    const row = Math.floor(next / cells), col = next % cells;\n    next += next === 3 ? 2 : 1;",
+    "old": "    next++;",
+    "new": "    next += next === 3 ? 2 : 1;",
     "tests": [
       "test/combat/blood5_flight.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "BLOOD5-the-droplet-has-a-soft-edge",
     "file": "src/combat/blood/bloodArt.js",
-    "old": "      colors[o + 3] = 255;\n    }\n  }\n  return (_droplet",
-    "new": "      colors[o + 3] = Math.round(255 * (1 - rim * 0.5));\n    }\n  }\n  return (_droplet",
+    "old": "      colors[o + 3] = 255;",
+    "new": "      colors[o + 3] = Math.round(255 * (1 - rim * 0.5));",
     "tests": [
       "test/combat/blood5_flight.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "BLOOD5-a-bleed-drip-is-flung",
     "file": "src/combat/blood/bloodMarks.js",
-    "old": "BLEED_RADIUS, BLEED_RATE, null, { up: false, streak: false, launch: DRIP_LAUNCH });",
-    "new": "BLEED_RADIUS, BLEED_RATE, null, { up: false, streak: false });",
+    "old": "      launch: DRIP_LAUNCH,\n    }); // BLOOD5: and it falls, it is not flung",
+    "new": "    }); // BLOOD5: and it falls, it is not flung",
     "tests": [
       "test/combat/blood5_flight.test.js"
     ]

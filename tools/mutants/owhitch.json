@@ -56,8 +56,8 @@
   {
     "name": "OW-HITCH-blood-no-wait",
     "file": "src/combat/blood/bloodArt.js",
-    "old": "    idle(slice, { timeout: BLOOD_PREWARM_WAIT_MS });\n  };\n  idle(slice, { timeout: BLOOD_PREWARM_WAIT_MS });",
-    "new": "    idle(slice, { timeout: BLOOD_PREWARM_WAIT_MS });\n  };\n  idle(slice);",
+    "old": "  };\n  idle(slice, { timeout: BLOOD_PREWARM_WAIT_MS });",
+    "new": "  };\n  idle(slice);",
     "tests": [
       "test/render/owhitch.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "OW-HITCH-blood-whole-on-timeout",
     "file": "src/combat/blood/bloodArt.js",
-    "old": "    while ((deadline?.timeRemaining?.() ?? 0) > 6);",
-    "new": "    while ((deadline?.timeRemaining?.() ?? 0) > 6 || deadline?.didTimeout);",
+    "old": "    } while ((deadline?.timeRemaining?.() ?? 0) > 6);",
+    "new": "    } while ((deadline?.timeRemaining?.() ?? 0) > 6 || deadline?.didTimeout);",
     "tests": [
       "test/render/owhitch.test.js"
     ]

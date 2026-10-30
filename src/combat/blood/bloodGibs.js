@@ -78,7 +78,7 @@ export const GIB_SPRAY_LIFT = 0.1;
 export function throwGibs(pos, rng = Math.random, count = GIB_COUNT) {
   const out = [];
   if (!pos || !(count > 0)) return out;
-  const n = Math.min(Math.floor(Number.isFinite(count) ? count : GIB_COUNT), GIB_COUNT * 10);   // BLOOD1 AUDIT 3: an Infinity looped for ever
+  const n = Math.min(Math.floor(Number.isFinite(count) ? count : GIB_COUNT), GIB_COUNT * 10); // BLOOD1 AUDIT 3: an Infinity looped for ever
   for (let i = 0; i < n; i++) {
     out.push({
       pos: [pos[0], pos[1], pos[2]],
@@ -88,7 +88,7 @@ export function throwGibs(pos, rng = Math.random, count = GIB_COUNT) {
         (rng() * 2 - 1) * GIB_THROW_SIDE,
       ],
       age: 0,
-      acc: 0,   // BLOOD1 AUDIT 3: the fixed-step accumulator
+      acc: 0, // BLOOD1 AUDIT 3: the fixed-step accumulator
       still: false,
     });
   }
@@ -105,7 +105,10 @@ export function throwGibs(pos, rng = Math.random, count = GIB_COUNT) {
 export function gibStep(g, dt) {
   if (!g || g.still || !(dt > 0)) return null;
   g.age += dt;
-  if (g.age >= GIB_LIFE) { g.still = true; return null; }   // the physics is destroyed and it freezes where it lies
+  if (g.age >= GIB_LIFE) {
+    g.still = true;
+    return null;
+  } // the physics is destroyed and it freezes where it lies
   // Unity's `Rigidbody.drag` damps the WHOLE velocity, gravity is
   // added as an acceleration, and both land before the move - at the
   // FIXED step (GIB_FIXED_DT), as many times as the frame's dt holds,
@@ -114,14 +117,20 @@ export function gibStep(g, dt) {
   // own accumulator): a frame shorter than a step moves nothing and
   // banks its time, so the trajectory is the same list of points on
   // every machine and a frame only decides how many of them it sees.
-  let dx = 0, dy = 0, dz = 0;
+  let dx = 0,
+    dy = 0,
+    dz = 0;
   g.acc = (g.acc ?? 0) + dt;
   while (g.acc >= GIB_FIXED_DT - 1e-9) {
     g.acc -= GIB_FIXED_DT;
     const damp = Math.max(0, 1 - GIB_DRAG * GIB_FIXED_DT);
-    g.vel[0] *= damp; g.vel[1] *= damp; g.vel[2] *= damp;
+    g.vel[0] *= damp;
+    g.vel[1] *= damp;
+    g.vel[2] *= damp;
     g.vel[1] -= GIB_GRAVITY * GIB_FIXED_DT;
-    dx += g.vel[0] * GIB_FIXED_DT; dy += g.vel[1] * GIB_FIXED_DT; dz += g.vel[2] * GIB_FIXED_DT;
+    dx += g.vel[0] * GIB_FIXED_DT;
+    dy += g.vel[1] * GIB_FIXED_DT;
+    dz += g.vel[2] * GIB_FIXED_DT;
   }
   const dist = Math.hypot(dx, dy, dz);
   if (!(dist > 0)) return null;
@@ -136,14 +145,20 @@ export function gibStep(g, dt) {
 /** Nothing in the way: the chunk goes where it wanted to. */
 export function gibFly(g, step) {
   if (!g || !step) return false;
-  g.pos[0] = step.to[0]; g.pos[1] = step.to[1]; g.pos[2] = step.to[2];
+  g.pos[0] = step.to[0];
+  g.pos[1] = step.to[1];
+  g.pos[2] = step.to[2];
   return true;
 }
 
 /** Something was: the chunk stops there, for good. */
 export function gibLand(g, point) {
   if (!g) return false;
-  if (point) { g.pos[0] = point[0]; g.pos[1] = point[1]; g.pos[2] = point[2]; }
+  if (point) {
+    g.pos[0] = point[0];
+    g.pos[1] = point[1];
+    g.pos[2] = point[2];
+  }
   g.still = true;
   return true;
 }
@@ -180,6 +195,12 @@ export const DRIP_SPLASH_RATE = 1;
 export function shiftGibs(gibs, delta) {
   if (!gibs || !delta) return 0;
   let n = 0;
-  for (const g of gibs) { if (!g) continue; g.pos[0] += delta[0]; g.pos[1] += delta[1]; g.pos[2] += delta[2]; n++; }
+  for (const g of gibs) {
+    if (!g) continue;
+    g.pos[0] += delta[0];
+    g.pos[1] += delta[1];
+    g.pos[2] += delta[2];
+    n++;
+  }
   return n;
 }

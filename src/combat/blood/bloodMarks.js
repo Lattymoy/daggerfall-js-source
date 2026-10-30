@@ -26,18 +26,54 @@
 // before the arc reached the peer and fall seams.)
 
 import {
-  createBloodDecalPool, writeDecalQuad, bloodRate, marksBlood, DECAL_FLOATS,
-  sprayCount, sprayRadius, sprayPattern, dropSize,   // BLOOD1b: the scatter BLOOD1a left to this slice (BLOOD5: in lobes, not on an even turn)
-  isOverkill, burstCount, burstRate, burstReach,    // BLOOD1b: and the killing blow's own spray
-  scaleRate, looksUp, isCeilingNormal, streakFor, impactStretch,   // BLOOD2a: the streak              // BLOOD1b: and the drops that find a ceiling
-  CEILING_DOT,                                       // BLOOD AUDIT 4: a floor is the same test the ceiling is, the other way up
+  createBloodDecalPool,
+  writeDecalQuad,
+  bloodRate,
+  marksBlood,
+  DECAL_FLOATS,
+  sprayCount,
+  sprayRadius,
+  sprayPattern,
+  dropSize, // BLOOD1b: the scatter BLOOD1a left to this slice (BLOOD5: in lobes, not on an even turn)
+  isOverkill,
+  burstCount,
+  burstRate,
+  burstReach, // BLOOD1b: and the killing blow's own spray
+  scaleRate,
+  looksUp,
+  isCeilingNormal,
+  streakFor,
+  impactStretch, // BLOOD2a: the streak              // BLOOD1b: and the drops that find a ceiling
+  CEILING_DOT, // BLOOD AUDIT 4: a floor is the same test the ceiling is, the other way up
 } from './bloodDecals.js';
 import {
-  throwGibs, gibStep, gibFly, gibLand, gibSprayOrigin, shiftGibs, dripFrom,
-  GIB_SPLASH_RATE, GIB_COUNT, DRIP_SPLASH_RATE,
-} from './bloodGibs.js';   // BLOOD1b: what a warhammer leaves of a body, and what a ceiling lets go of
-import { bloodAtlas, prewarmBloodAtlas, bloodDropletArt, BLOOD_DROP_RECORD, pickCell, bloodMarkKind, freshTint, dryStage, driedTint, wetAt, DRY_TICK, BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD } from './bloodArt.js';   // BLOOD2f: and how wet a mark is   // BLOOD2b: the port's own art, made at boot, and how a mark dries
-import { BLEED_RADIUS, BLEED_RATE, POOL_SIZE, POOL_SPREAD, POOL_STEPS, poolSizeAt } from './bloodBleed.js';   // BLOOD2c: a wounded body's drip and a corpse's spreading pool
+  throwGibs,
+  gibStep,
+  gibFly,
+  gibLand,
+  gibSprayOrigin,
+  shiftGibs,
+  dripFrom,
+  GIB_SPLASH_RATE,
+  GIB_COUNT,
+  DRIP_SPLASH_RATE,
+} from './bloodGibs.js'; // BLOOD1b: what a warhammer leaves of a body, and what a ceiling lets go of
+import {
+  bloodAtlas,
+  prewarmBloodAtlas,
+  bloodDropletArt,
+  BLOOD_DROP_RECORD,
+  pickCell,
+  bloodMarkKind,
+  freshTint,
+  dryStage,
+  driedTint,
+  wetAt,
+  DRY_TICK,
+  BLOOD_ATLAS_ARCHIVE,
+  BLOOD_ATLAS_RECORD,
+} from './bloodArt.js'; // BLOOD2f: and how wet a mark is   // BLOOD2b: the port's own art, made at boot, and how a mark dries
+import { BLEED_RADIUS, BLEED_RATE, POOL_SIZE, POOL_SPREAD, POOL_STEPS, poolSizeAt } from './bloodBleed.js'; // BLOOD2c: a wounded body's drip and a corpse's spreading pool
 
 /** How far down a mark looks for something to stain. Blood spawns at
  *  chest height (`bloodCentre` is five eighths up the capsule), so the
@@ -171,7 +207,7 @@ export function dropArc(from, to, rng = Math.random, g = DROP_GRAVITY, launch = 
   if (dy > 0) {
     const need = Math.sqrt(2 * g * dy);
     const vy = need * (DROP_CEILING_SPARE.min + rng() * (DROP_CEILING_SPARE.max - DROP_CEILING_SPARE.min));
-    const T = (vy - Math.sqrt(Math.max(0, vy * vy - 2 * g * dy))) / g;   // the first time it gets there - rising
+    const T = (vy - Math.sqrt(Math.max(0, vy * vy - 2 * g * dy))) / g; // the first time it gets there - rising
     return T > 0 ? { vy, T } : null;
   }
   const vy = launch.min + rng() * (launch.max - launch.min);
@@ -198,7 +234,13 @@ export function dropAt(f, t, out = [0, 0, 0], g = DROP_GRAVITY) {
  * reference would be marking a world that no longer exists within one
  * doorway.
  */
-export function createBloodMarks({ renderer = null, collider = null, settings = null, texture = null, rng = Math.random } = {}) {
+export function createBloodMarks({
+  renderer = null,
+  collider = null,
+  settings = null,
+  texture = null,
+  rng = Math.random,
+} = {}) {
   let _pool = null;
   let _batch = null;
   /** BLOOD2b: THE ATLAS, uploaded once through the renderer's own cache
@@ -230,7 +272,7 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
    *  frame. HARD1 - this pool OWNS it, like the ring, and ends it by
    *  name in `dispose()` and whenever the last chunk comes to rest. */
   let _gibBatch = null;
-  let _gibArt = null;   // { archive, record } - the splash pool tells us
+  let _gibArt = null; // { archive, record } - the splash pool tells us
   /** Blood a ceiling has not finished with. A drip falls exactly as a
    *  chunk does, but wears no quad and leaves one mark rather than
    *  two, so it is its OWN list - the chunks' batch has one quad per
@@ -274,7 +316,8 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
   let _dropPos = [];
 
   const liveCollider = () => (typeof collider === 'function' ? collider() : null);
-  const on = () => !_dead && !!(settings?.enabled?.() ?? false) && typeof collider === 'function' && !!renderer?.createDecalBatch;
+  const on = () =>
+    !_dead && !!(settings?.enabled?.() ?? false) && typeof collider === 'function' && !!renderer?.createDecalBatch;
   // BLOOD1b: the killing blow's own row, read LIVE like the rest - a
   // player who turns it off mid-fight gets the next blow plain.
   //
@@ -287,11 +330,15 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
   // BLOOD5: THE DROPS FLY where the host says so (bloodSwitch's bag) and
   // a renderer can draw them; a host or a pin that says nothing gets
   // the marks at once, as before this slice.
-  const flightOn = () => !!(settings?.flight?.() ?? false) && !!renderer?.createBillboardBatch && !!renderer?.moveBillboardBatch && !!renderer?.uploadTexture;
+  const flightOn = () =>
+    !!(settings?.flight?.() ?? false) &&
+    !!renderer?.createBillboardBatch &&
+    !!renderer?.moveBillboardBatch &&
+    !!renderer?.uploadTexture;
   const markTexture = texture ?? (() => _atlasTex);
 
   function ensure() {
-    if (_pool) return;   // BLOOD AUDIT 5: ONCE. A renderer whose batch came back empty used to re-mint the ring (and the mirror) on every drop
+    if (_pool) return; // BLOOD AUDIT 5: ONCE. A renderer whose batch came back empty used to re-mint the ring (and the mirror) on every drop
     const cap = Math.max(1, Math.floor(settings?.capacity?.() ?? 1000));
     // ONE SOURCE OF CHANCE for the whole pool: the ring spins each
     // mark's own turn and the spray below picks where the drops land,
@@ -310,7 +357,8 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
    *  ring is cheap and is built at boot (AUDIT 3's law); the sheet is
    *  the seventy milliseconds, and a player with blood off never pays it. */
   function wear() {
-    if (!_atlasTex && renderer?.uploadTexture) _atlasTex = renderer.uploadTexture(BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD, atlas(), { smooth: true }) ?? null;
+    if (!_atlasTex && renderer?.uploadTexture)
+      _atlasTex = renderer.uploadTexture(BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD, atlas(), { smooth: true }) ?? null;
   }
 
   /** Write one mark's quad into the mirror and name its slot dirty. */
@@ -321,13 +369,19 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
   /** Upload the dirty slots, each contiguous run as one call. Answers
    *  how many uploads it took. */
   function flush() {
-    if (!_dirty.length || !_batch) { _dirty = []; return 0; }
+    if (!_dirty.length || !_batch) {
+      _dirty = [];
+      return 0;
+    }
     _dirty.sort((a, b) => a - b);
     let n = 0;
     for (let i = 0; i < _dirty.length;) {
       const lo = _dirty[i];
       let hi = lo + 1;
-      while (i + 1 < _dirty.length && _dirty[i + 1] <= hi) { i++; if (_dirty[i] === hi) hi++; }   // the same slot twice is one slot
+      while (i + 1 < _dirty.length && _dirty[i + 1] <= hi) {
+        i++;
+        if (_dirty[i] === hi) hi++;
+      } // the same slot twice is one slot
       renderer.writeDecalSlot(_batch, lo, _mirror.subarray(lo * DECAL_FLOATS, hi * DECAL_FLOATS));
       n++;
       i++;
@@ -371,11 +425,11 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
     wear();
     d.uv = pickCell(atlas(), kind, rng);
     d.fresh = freshTint(rng);
-    d.fresh[3] = alpha;   // BLOOD2d: a print's fade rides the tint's alpha, and drying keeps it
+    d.fresh[3] = alpha; // BLOOD2d: a print's fade rides the tint's alpha, and drying keeps it
     d.tint = d.fresh;
     d.born = _clock;
     d.stage = 0;
-    d.wet = wetAt(0);   // BLOOD2f: born wet - the lane glints it
+    d.wet = wetAt(0); // BLOOD2f: born wet - the lane glints it
     return d;
   }
   /** Lay one dressed mark: place, dress, write its slot (into the mirror;
@@ -401,7 +455,15 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
           opts.stretch = impactStretch(across, arc.vy - DROP_GRAVITY * arc.T);
           kind = bloodMarkKind({ stretch: opts.stretch });
         }
-        _flying.push({ from: [from[0], from[1], from[2]], to: at, vy: arc.vy, T: arc.T, age: 0, pos: [from[0], from[1], from[2]], land: { normal, opts, kind, drips } });
+        _flying.push({
+          from: [from[0], from[1], from[2]],
+          to: at,
+          vy: arc.vy,
+          T: arc.T,
+          age: 0,
+          pos: [from[0], from[1], from[2]],
+          land: { normal, opts, kind, drips },
+        });
         return null;
       }
     }
@@ -415,11 +477,20 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
     return d;
   }
 
-  function spray(col, pos, n, radius, rate, thrown = null, { up: mayLookUp = true, streak: mayStreak = true, launch = DROP_LAUNCH } = {}) {
+  function spray(
+    col,
+    pos,
+    n,
+    radius,
+    rate,
+    thrown = null,
+    { up: mayLookUp = true, streak: mayStreak = true, launch = DROP_LAUNCH } = {},
+  ) {
     let pool = null;
     // BLOOD1b: WHICH WAY THE SWING THREW IT. The site worked the two
     // numbers out, because only it knows the state and the basis.
-    const tx = thrown?.[0] ?? 0, tz = thrown?.[1] ?? 0;
+    const tx = thrown?.[0] ?? 0,
+      tz = thrown?.[1] ?? 0;
     // BLOOD5: in lobes the blow threw, not on an even turn (bloodDecals
     // `sprayPattern`) - the even turn was the starburst.
     const pattern = sprayPattern(n, radius, thrown, rng);
@@ -430,13 +501,15 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
       // body, not blood thrown from it, so it stays at the body's own
       // spot whatever the swing did - and that is what keeps "a hit
       // stains where it happened" true.
-      const fromX = pos[0] + dx + (i > 0 ? tx : 0), fromZ = pos[2] + dz + (i > 0 ? tz : 0);
+      const fromX = pos[0] + dx + (i > 0 ? tx : 0),
+        fromZ = pos[2] + dz + (i > 0 ? tz : 0);
       // ONE DROP IN FOUR LOOKS UP. The reference's particles fly in
       // every direction and the ones that go up find the ceiling; this
       // port rays, so the share is a number. Drop zero never does - it
       // is the pool under the body.
-      const up = mayLookUp && looksUp(i);   // BLOOD2c: a drip at the feet is gravity's and never looks up
-      const dir = up ? UP : DOWN, reach = up ? CEILING_REACH : MARK_DROP;
+      const up = mayLookUp && looksUp(i); // BLOOD2c: a drip at the feet is gravity's and never looks up
+      const dir = up ? UP : DOWN,
+        reach = up ? CEILING_REACH : MARK_DROP;
       // BLOOD1 AUDIT 3: BLOOD DOES NOT PASS THROUGH WALLS. The drop's
       // XZ is the body's plus the spray's offset plus the swing's throw
       // - up to four metres and more for a warhammer overkill - and the
@@ -451,13 +524,15 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
       // reference's particles do, and what a corridor fight looks like.
       // A wall mark is round: cast-off runs along its travel on a floor,
       // but a spurt meeting a wall head-on spreads.
-      const ox = fromX - pos[0], oz = fromZ - pos[2];
+      const ox = fromX - pos[0],
+        oz = fromZ - pos[2];
       const run = i > 0 ? Math.hypot(ox, oz) : 0;
       if (run > 1e-6 && col.raycastHit) {
         const wall = col.raycastHit(pos, [ox / run, 0, oz / run], run);
         if (wall && Number.isFinite(wall.dist) && wall.dist <= run) {
-          if (onMover(col, wall)) continue;   // AUDIT SD II (L2 F8): it met a surface that moves
-          const wx = pos[0] + (ox / run) * wall.dist, wz = pos[2] + (oz / run) * wall.dist;
+          if (onMover(col, wall)) continue; // AUDIT SD II (L2 F8): it met a surface that moves
+          const wx = pos[0] + (ox / run) * wall.dist,
+            wz = pos[2] + (oz / run) * wall.dist;
           ensure();
           // BLOOD2b: a wall's mark is a RUN - the bead where it met the
           // wall and gravity's trail below it; `turn: 0` on a vertical
@@ -473,7 +548,17 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
           // the trail stops looking like it ran and starts looking like
           // it was thrown.
           const lean = (rng() * 2 - 1) * WALL_RUN_LEAN;
-          land(fly, pos, [wx, pos[1], wz], wall.normal ?? [-ox / run, 0, -oz / run], { size: dropSize(i, rate, rng) * scale, turn: lean }, bloodMarkKind({ wall: true }), false, false, launch);
+          land(
+            fly,
+            pos,
+            [wx, pos[1], wz],
+            wall.normal ?? [-ox / run, 0, -oz / run],
+            { size: dropSize(i, rate, rng) * scale, turn: lean },
+            bloodMarkKind({ wall: true }),
+            false,
+            false,
+            launch,
+          );
           continue;
         }
       }
@@ -493,7 +578,7 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
       // `surfaceHit` is the same ray plus that floor, nearer wins.
       const h = col.surfaceHit([fromX, pos[1], fromZ], dir, reach);
       if (!h || !Number.isFinite(h.dist) || h.dist > reach) continue;
-      if (onMover(col, h)) continue;   // AUDIT SD II (L2 F8): a surface that moves takes no mark
+      if (onMover(col, h)) continue; // AUDIT SD II (L2 F8): a surface that moves takes no mark
       const at = [fromX, pos[1] + dir[1] * h.dist, fromZ];
       // A CEILING IS A SURFACE TEST, not a position one: the
       // reference's own `Dot(normal, down) > 0.7`. A drop that went up
@@ -506,16 +591,19 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
       // body to here, and it lands stretched that way - the further it
       // flew, the longer - which is what cast-off blood is. The pool
       // under the body flew nowhere and stays round.
-      const stretch = mayStreak ? streakFor(run, radius) : 1;   // BLOOD AUDIT 4: a drip's drops fell, they did not fly - no streak at the edge of the radius
+      const stretch = mayStreak ? streakFor(run, radius) : 1; // BLOOD AUDIT 4: a drip's drops fell, they did not fly - no streak at the edge of the radius
       const opts = {
         size: dropSize(i, rate, rng) * scale,
         along: run > 1e-6 ? [ox, 0, oz] : null,
         stretch,
       };
-      const kind = bloodMarkKind({ pool: i === 0, stretch });   // BLOOD2b: the pool wears a pool, a drop that flew a streak, the rest spatter
+      const kind = bloodMarkKind({ pool: i === 0, stretch }); // BLOOD2b: the pool wears a pool, a drop that flew a streak, the rest spatter
       // BLOOD5: THE POOL IS LAID NOW; every other drop is carried there.
-      if (i > 0) { land(fly, pos, at, h.normal ?? (up ? DOWN : [0, 1, 0]), opts, kind, up, mayStreak, launch); continue; }
-      const d = lay(at, h.normal ?? (up ? DOWN : [0, 1, 0]), opts, kind);   // drop zero never looks up (`looksUp`), so its drip is `settle`'s alone
+      if (i > 0) {
+        land(fly, pos, at, h.normal ?? (up ? DOWN : [0, 1, 0]), opts, kind, up, mayStreak, launch);
+        continue;
+      }
+      const d = lay(at, h.normal ?? (up ? DOWN : [0, 1, 0]), opts, kind); // drop zero never looks up (`looksUp`), so its drip is `settle`'s alone
       if (!d) continue;
       pool = d;
     }
@@ -552,7 +640,11 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
     const col = liveCollider();
     if (!col?.surfaceHit) return null;
     const n = Math.max(1, Math.min(BLEED_DROPS_CAP, count | 0));
-    const d = spray(col, [feet[0], feet[1] + DRIP_FROM, feet[2]], n, BLEED_RADIUS, BLEED_RATE, null, { up: false, streak: false, launch: DRIP_LAUNCH });   // BLOOD5: and it falls, it is not flung
+    const d = spray(col, [feet[0], feet[1] + DRIP_FROM, feet[2]], n, BLEED_RADIUS, BLEED_RATE, null, {
+      up: false,
+      streak: false,
+      launch: DRIP_LAUNCH,
+    }); // BLOOD5: and it falls, it is not flung
     flush();
     return d;
   }
@@ -568,10 +660,15 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
     if (!col?.surfaceHit) return null;
     const h = col.surfaceHit([feet[0], feet[1] + DRIP_FROM, feet[2]], DOWN, MARK_DROP);
     if (!h || !Number.isFinite(h.dist) || h.dist > MARK_DROP) return null;
-    if (h.dist < DRIP_FROM - STEP_ABOVE) return null;   // BLOOD AUDIT 5: a surface above the feet is not the floor the body lies on
-    if (onMover(col, h)) return null;   // AUDIT SD II (L2 F8): nor one that moves
+    if (h.dist < DRIP_FROM - STEP_ABOVE) return null; // BLOOD AUDIT 5: a surface above the feet is not the floor the body lies on
+    if (onMover(col, h)) return null; // AUDIT SD II (L2 F8): nor one that moves
     ensure();
-    const d = lay([feet[0], feet[1] + DRIP_FROM - h.dist, feet[2]], h.normal ?? [0, 1, 0], { size: POOL_SIZE.start }, 'pool');
+    const d = lay(
+      [feet[0], feet[1] + DRIP_FROM - h.dist, feet[2]],
+      h.normal ?? [0, 1, 0],
+      { size: POOL_SIZE.start },
+      'pool',
+    );
     flush();
     if (!d) return null;
     if (_spreads.length >= MAX_SPREADS) _spreads.shift();
@@ -628,7 +725,7 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
     // the terrain's drawn ground the knee ray exists for sits centimetres
     // above the capsule's floor, never a quarter of a metre.
     if (h.dist < DRIP_FROM - STEP_ABOVE) return null;
-    if (onMover(col, h)) return null;   // AUDIT SD II (L2 F8): a foot on a surface that moves prints nothing, and picks nothing up
+    if (onMover(col, h)) return null; // AUDIT SD II (L2 F8): a foot on a surface that moves prints nothing, and picks nothing up
     const foot = [pos[0], pos[1] + DRIP_FROM - h.dist, pos[2]];
     // in a wet mark? A FLOOR mark - the ceiling's test the other way up
     // (BLOOD AUDIT 4: the same number, by its name), never a print, and
@@ -638,17 +735,25 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
     for (let i = 0, cap = _pool.capacity; i < cap; i++) {
       const d = _pool.at(i);
       if (!d || d.uv?.kind === 'print' || !(d.normal[1] > CEILING_DOT) || (d.stage ?? 0) > TRACK_WET_STAGE) continue;
-      const dx = foot[0] - d.pos[0], dz = foot[2] - d.pos[2];
-      if (dx * dx + dz * dz <= (d.size * 0.5) * (d.size * 0.5) && Math.abs(foot[1] - d.pos[1]) < 0.5) { wet = true; break; }
+      const dx = foot[0] - d.pos[0],
+        dz = foot[2] - d.pos[2];
+      if (dx * dx + dz * dz <= d.size * 0.5 * (d.size * 0.5) && Math.abs(foot[1] - d.pos[1]) < 0.5) {
+        wet = true;
+        break;
+      }
     }
     let t = _tracks.get(walker);
     if (wet) {
-      if (!t) { t = { left: TRACK_STEPS, side: 1 }; _tracks.set(walker, t); } else t.left = TRACK_STEPS;
-      return null;   // standing in it: nothing to print over the pool
+      if (!t) {
+        t = { left: TRACK_STEPS, side: 1 };
+        _tracks.set(walker, t);
+      } else t.left = TRACK_STEPS;
+      return null; // standing in it: nothing to print over the pool
     }
     if (!t || t.left <= 0) return null;
     const f = forward && Math.hypot(forward[0], forward[2]) > 1e-6 ? [forward[0], 0, forward[2]] : null;
-    const rx = f ? f[2] / Math.hypot(f[0], f[2]) : 1, rz = f ? -f[0] / Math.hypot(f[0], f[2]) : 0;   // the walker's right (mat4's law: (f.z, 0, -f.x))
+    const rx = f ? f[2] / Math.hypot(f[0], f[2]) : 1,
+      rz = f ? -f[0] / Math.hypot(f[0], f[2]) : 0; // the walker's right (mat4's law: (f.z, 0, -f.x))
     t.side = -t.side;
     const at = [foot[0] + rx * PRINT_SPREAD * t.side, foot[1], foot[2] + rz * PRINT_SPREAD * t.side];
     const share = t.left / TRACK_STEPS;
@@ -656,7 +761,13 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
     ensure();
     // the print's fade rides the tint's alpha, dressed in with the rest
     // (BLOOD AUDIT 4: one write, not a write and a rewrite)
-    const d = lay(at, h.normal ?? [0, 1, 0], { size: PRINT_SIZE, along: f, stretch: 1 }, bloodMarkKind({ print: true }), share);
+    const d = lay(
+      at,
+      h.normal ?? [0, 1, 0],
+      { size: PRINT_SIZE, along: f, stretch: 1 },
+      bloodMarkKind({ print: true }),
+      share,
+    );
     flush();
     return d;
   }
@@ -668,8 +779,9 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
     // before this arc.
     if (!marksBlood(bloodIndex)) return null;
     const col = liveCollider();
-    if (!col?.surfaceHit) return null;   // between two worlds: a pixel unloaded, a mode half changed   // MAC-BUG W5: surfaceHit, not raycastHit - the ground outside is `heightAt`, not a mesh
-    const damage = hit?.damage ?? 0, maxHealth = hit?.maxHealth ?? 0;
+    if (!col?.surfaceHit) return null; // between two worlds: a pixel unloaded, a mode half changed   // MAC-BUG W5: surfaceHit, not raycastHit - the ground outside is `heightAt`, not a mesh
+    const damage = hit?.damage ?? 0,
+      maxHealth = hit?.maxHealth ?? 0;
     const density = settings?.density?.() ?? 1;
     if (overkillOn() && isOverkill(damage, maxHealth)) {
       // ONLY A PLAYER'S WARHAMMER TAKES THE HEAVY BRANCH. The
@@ -688,11 +800,14 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
       // of a body's whole health is ALWAYS lethal, so here the hit IS
       // the death and four hosts are spared a wire they would each
       // have had to remember.
-      if (heavy && _gibs.length < GIB_COUNT * MAX_BODIES) { _gibs = _gibs.concat(throwGibs(pos, rng)); reseatGibs(); }
+      if (heavy && _gibs.length < GIB_COUNT * MAX_BODIES) {
+        _gibs = _gibs.concat(throwGibs(pos, rng));
+        reseatGibs();
+      }
     }
     const rate = bloodRate(damage, maxHealth, density);
     const pool = spray(col, pos, sprayCount(rate), sprayRadius(rate), rate, hit?.throw);
-    flush();   // BLOOD AUDIT 4: the blow's marks, in runs
+    flush(); // BLOOD AUDIT 4: the blow's marks, in runs
     return pool;
   }
 
@@ -702,12 +817,13 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
    *  is no way to blank a spare one the way an empty decal slot is
    *  blanked - the batch is exactly as long as the flight. */
   function reseatGibs() {
-    if (_gibBatch) { renderer?.destroyBillboardBatch?.(_gibBatch); _gibBatch = null; }
-    _gibPos = _gibs.map((g) => g.pos);   // the chunks' OWN arrays, written through in place
+    if (_gibBatch) {
+      renderer?.destroyBillboardBatch?.(_gibBatch);
+      _gibBatch = null;
+    }
+    _gibPos = _gibs.map((g) => g.pos); // the chunks' OWN arrays, written through in place
     if (!_gibs.length || !renderer?.createBillboardBatch || !_gibArt) return;
-    _gibBatch = renderer.createBillboardBatch(
-      _gibArt.archive, _gibArt.record, GIB_QUAD, _gibPos, { dynamic: true },
-    );
+    _gibBatch = renderer.createBillboardBatch(_gibArt.archive, _gibArt.record, GIB_QUAD, _gibPos, { dynamic: true });
     if (_gibBatch) _gibBatch.frame = GIB_FRAME;
   }
 
@@ -726,7 +842,10 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
       // reads as "still in the air" exactly as it should for a thing
       // thrown off a ledge.
       const h = col?.surfaceHit ? col.surfaceHit(step.from, step.dir, step.dist) : null;
-      if (!h || !Number.isFinite(h.dist) || h.dist > step.dist) { gibFly(g, step); continue; }
+      if (!h || !Number.isFinite(h.dist) || h.dist > step.dist) {
+        gibFly(g, step);
+        continue;
+      }
       gibLand(g, [
         step.from[0] + step.dir[0] * h.dist,
         step.from[1] + step.dir[1] * h.dist,
@@ -751,7 +870,7 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
       if (stage === (d.stage ?? 0)) continue;
       d.stage = stage;
       d.tint = driedTint(d.fresh ?? d.tint ?? [1, 1, 1, 1], stage);
-      d.wet = wetAt(stage);   // BLOOD2f: the sheen goes with the stages, on the same rewrites
+      d.wet = wetAt(stage); // BLOOD2f: the sheen goes with the stages, on the same rewrites
       writeSlot(d);
       n++;
     }
@@ -759,20 +878,32 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
   }
   /** The drying pass by name (a pin drives it): the cohort that crossed
    *  together goes up together - runs, not a call a mark (BLOOD AUDIT 4). */
-  function dry() { const n = dryPass(); flush(); return n; }
+  function dry() {
+    const n = dryPass();
+    flush();
+    return n;
+  }
 
   function tick(dt) {
     if (!(dt > 0)) return 0;
     _clock += dt;
     let wrote = 0;
-    if (_clock >= _dryDue) { _dryDue = _clock + DRY_TICK; wrote += dryPass(); }
-    wrote += spread();   // BLOOD2c: the corpses' pools, a step at a time
-    if (wrote) flush();   // BLOOD AUDIT 5: the dry cohort and the spreads in ONE flush, not two
-    const flew = _flying.length ? flyDrops(dt) : 0;   // BLOOD5: the droplets in the air, and the marks the arrivals lay
+    if (_clock >= _dryDue) {
+      _dryDue = _clock + DRY_TICK;
+      wrote += dryPass();
+    }
+    wrote += spread(); // BLOOD2c: the corpses' pools, a step at a time
+    if (wrote) flush(); // BLOOD AUDIT 5: the dry cohort and the spreads in ONE flush, not two
+    const flew = _flying.length ? flyDrops(dt) : 0; // BLOOD5: the droplets in the air, and the marks the arrivals lay
     if (!_gibs.length && !_drips.length) return flew;
     // BLOOD1 AUDIT 3: the switch drops what is in the air - the row the
     // gibs ride (see `overkillOn`) is off, so they stop, and their quads go.
-    if (!on()) { _gibs = []; _drips = []; reseatGibs(); return flew; }
+    if (!on()) {
+      _gibs = [];
+      _drips = [];
+      reseatGibs();
+      return flew;
+    }
     // BLOOD1 AUDIT: THE ART CAN ARRIVE AFTER THE THROW. `_gibArt` is
     // set when a splash's texture resolves, and on the FIRST blood of
     // a session that resolution lands after `place` has already
@@ -787,7 +918,7 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
     // A DRIP CARRIES A DROP, not a body's worth: one mark where it
     // lands, against a chunk's twenty particles' worth.
     moved += fall(_drips, dt, col, scaleRate(DRIP_SPLASH_RATE, density));
-    flush();   // what the chunks and drips laid this frame
+    flush(); // what the chunks and drips laid this frame
     if (_drips.length && _drips.every((g) => g.still)) _drips = [];
     // THE QUADS FOLLOW THE CHUNKS, written rather than rebuilt: ten of
     // them at sixty frames is 2,400 batch rebuilds for one death, each
@@ -801,7 +932,10 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
     // reseat on every frame of the fall. It no-opped, which is how it
     // went unseen, and it is the same guard the drips' line above
     // already had.
-    if (_gibs.length && _gibs.every((g) => g.still)) { _gibs = []; reseatGibs(); }
+    if (_gibs.length && _gibs.every((g) => g.still)) {
+      _gibs = [];
+      reseatGibs();
+    }
     return moved + flew;
   }
 
@@ -810,7 +944,10 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
    *  same arc - and leaves the air. Blood switched off takes them with
    *  it, as it takes the chunks. Answers how many are still flying. */
   function flyDrops(dt) {
-    if (!on()) { _flying = []; return 0; }
+    if (!on()) {
+      _flying = [];
+      return 0;
+    }
     let landed = false;
     let keep = 0;
     for (let k = 0; k < _flying.length; k++) {
@@ -839,15 +976,19 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
       const art = bloodDropletArt();
       renderer.uploadTexture(BLOOD_ATLAS_ARCHIVE, BLOOD_DROP_RECORD, art);
       _dropPos = Array.from({ length: MAX_FLYING }, () => [0, 0, 0]);
-      _dropBatch = renderer.createBillboardBatch(BLOOD_ATLAS_ARCHIVE, BLOOD_DROP_RECORD, DROP_QUAD, _dropPos, { dynamic: true }) ?? null;
-      if (_dropBatch) _dropBatch.noShadow = true;   // a droplet is too small to cast one, and the lane records every caster it is shown
+      _dropBatch =
+        renderer.createBillboardBatch(BLOOD_ATLAS_ARCHIVE, BLOOD_DROP_RECORD, DROP_QUAD, _dropPos, { dynamic: true }) ??
+        null;
+      if (_dropBatch) _dropBatch.noShadow = true; // a droplet is too small to cast one, and the lane records every caster it is shown
     }
     if (!_dropBatch) return;
     const lead = _flying[0].pos;
     for (let k = 0; k < MAX_FLYING; k++) {
       const p = k < _flying.length ? _flying[k].pos : lead;
       const c = _dropPos[k];
-      c[0] = p[0]; c[1] = p[1]; c[2] = p[2];
+      c[0] = p[0];
+      c[1] = p[1];
+      c[2] = p[2];
     }
     renderer.moveBillboardBatch(_dropBatch, _dropPos);
   }
@@ -857,8 +998,8 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
    *  and the VERTEX BUFFER moves with it, because a decal's corners are
    *  baked into it. */
   function shiftOrigin(offset) {
-    shiftGibs(_gibs, offset);    // BLOOD1b: a chunk mid-flight is in world space too
-    shiftGibs(_drips, offset);   // ...and so is a drip still falling
+    shiftGibs(_gibs, offset); // BLOOD1b: a chunk mid-flight is in world space too
+    shiftGibs(_drips, offset); // ...and so is a drip still falling
     // BLOOD1 AUDIT 3: and their QUADS move now, not next tick. The host
     // shifts, then draws, then ticks - so for the one frame between, the
     // chunks drew from the buffer of the old frame, 819.2 units behind.
@@ -866,7 +1007,12 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
     // BLOOD5: and a droplet's whole arc - where it left, where it lands,
     // where it is - moves with the frame, so it still lands on its mark
     if (offset && _flying.length) {
-      for (const f of _flying) for (const p of [f.from, f.to, f.pos]) { p[0] += offset[0]; p[1] += offset[1]; p[2] += offset[2]; }
+      for (const f of _flying)
+        for (const p of [f.from, f.to, f.pos]) {
+          p[0] += offset[0];
+          p[1] += offset[1];
+          p[2] += offset[2];
+        }
       moveDrops();
     }
     if (!_pool || !_pool.count || !offset) return 0;
@@ -875,7 +1021,7 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
       const d = _pool.at(i);
       if (d) writeSlot(d);
     }
-    flush();   // BLOOD AUDIT 4: one upload a run - the whole ring moved, and it went up a slot at a time
+    flush(); // BLOOD AUDIT 4: one upload a run - the whole ring moved, and it went up a slot at a time
     return n;
   }
 
@@ -894,8 +1040,11 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
     if (!on()) return false;
     let drew = false;
     const tex = markTexture();
-    flush();   // BLOOD AUDIT 4: whatever a pass left in the mirror, before the buffer is read
-    if (_batch && _pool && _pool.count && tex) { renderer.drawDecals(_batch, tex, _pool.ranges?.() ?? null); drew = true; }   // BLOOD1 AUDIT 3: the touched slots alone, oldest first
+    flush(); // BLOOD AUDIT 4: whatever a pass left in the mirror, before the buffer is read
+    if (_batch && _pool && _pool.count && tex) {
+      renderer.drawDecals(_batch, tex, _pool.ranges?.() ?? null);
+      drew = true;
+    } // BLOOD1 AUDIT 3: the touched slots alone, oldest first
     // BLOOD1b: the chunks are BILLBOARDS and go through the pass every
     // other sprite does - over the marks, because a chunk in the air is
     // above the blood it will become.
@@ -923,11 +1072,12 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
    *  it is drawn. The mirror keeps its stale floats for the same
    *  reason the buffer does. */
   function clear() {
-    _spreads = [];             // BLOOD2c: a room thrown away takes its spreading pools with it
-    _gibs = []; reseatGibs();   // BLOOD1b: a room thrown away takes the chunks still in the air with it, and their quads
-    _drips = [];                // ...and the blood its ceilings had not finished with
-    _flying = [];               // BLOOD5: ...and the droplets still in the air (their batch is kept - it is the pool's for life)
-    _tracks = new WeakMap();    // BLOOD AUDIT 4: ...and the blood on everyone's boots
+    _spreads = []; // BLOOD2c: a room thrown away takes its spreading pools with it
+    _gibs = [];
+    reseatGibs(); // BLOOD1b: a room thrown away takes the chunks still in the air with it, and their quads
+    _drips = []; // ...and the blood its ceilings had not finished with
+    _flying = []; // BLOOD5: ...and the droplets still in the air (their batch is kept - it is the pool's for life)
+    _tracks = new WeakMap(); // BLOOD AUDIT 4: ...and the blood on everyone's boots
     _dirty = [];
     if (!_pool) return 0;
     const n = _pool.count;
@@ -957,29 +1107,41 @@ export function createBloodMarks({ renderer = null, collider = null, settings = 
   if (renderer?.createDecalBatch && on()) prewarmBloodAtlas();
 
   return {
-    place, draw, tick, shiftOrigin, clear, useArt,
-    drip, spreadPool,          // BLOOD2c
-    step,                      // BLOOD2d
-    tracked: (walker) => _tracks.get(walker)?.left ?? 0,   // BLOOD2d
-    spreads: () => _spreads.slice(),   // BLOOD2c
+    place,
+    draw,
+    tick,
+    shiftOrigin,
+    clear,
+    useArt,
+    drip,
+    spreadPool, // BLOOD2c
+    step, // BLOOD2d
+    tracked: (walker) => _tracks.get(walker)?.left ?? 0, // BLOOD2d
+    spreads: () => _spreads.slice(), // BLOOD2c
     gibs: () => _gibs.slice(),
     drips: () => _drips.slice(),
-    flying: () => _flying.slice(),   // BLOOD5
+    flying: () => _flying.slice(), // BLOOD5
     count: () => (_pool ? _pool.count : 0),
     /** HARD1: this pool ENDS WHAT IT OWNS. The ring is a thousand quads
      *  of vertex data and a VAO, handed to nobody, so the context that
      *  built it frees it here by this binding's own name. */
     dispose() {
-      clear();   // BLOOD1b: which drops the chunks and, through reseatGibs, their batch
+      clear(); // BLOOD1b: which drops the chunks and, through reseatGibs, their batch
       if (_batch) renderer?.destroyDecalBatch?.(_batch);
-      if (_dropBatch) renderer?.destroyBillboardBatch?.(_dropBatch);   // BLOOD5: the droplets' quads, this pool's own
-      _dropBatch = null; _dropPos = [];
-      _batch = null; _pool = null; _mirror = null; _dirty = []; _atlasTex = null; _gibArt = null;   // BLOOD2b: the atlas handle goes; the texture is the renderer cache's, page-lifetime like every cached texture; BLOOD AUDIT 5: and the mirror, the pool's largest CPU allocation
-      _dead = true;   // BLOOD1 AUDIT: and nothing this pool owns is ever built again
+      if (_dropBatch) renderer?.destroyBillboardBatch?.(_dropBatch); // BLOOD5: the droplets' quads, this pool's own
+      _dropBatch = null;
+      _dropPos = [];
+      _batch = null;
+      _pool = null;
+      _mirror = null;
+      _dirty = [];
+      _atlasTex = null;
+      _gibArt = null; // BLOOD2b: the atlas handle goes; the texture is the renderer cache's, page-lifetime like every cached texture; BLOOD AUDIT 5: and the mirror, the pool's largest CPU allocation
+      _dead = true; // BLOOD1 AUDIT: and nothing this pool owns is ever built again
     },
     _pool: () => _pool,
-    _mirror: () => _mirror,   // tests only (BLOOD AUDIT 5)
-    dry,                       // BLOOD2b: the drying pass, for a pin to drive by name
-    clock: () => _clock,       // BLOOD2b
+    _mirror: () => _mirror, // tests only (BLOOD AUDIT 5)
+    dry, // BLOOD2b: the drying pass, for a pin to drive by name
+    clock: () => _clock, // BLOOD2b
   };
 }

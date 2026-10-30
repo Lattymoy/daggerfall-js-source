@@ -70,8 +70,8 @@ export const OVERKILL_SPEED = Object.freeze({ min: 5, max: 10 });
 export const ORDINARY_SPEED = Object.freeze({ min: 1, max: 5 });
 /** 7.5 over 3 - the midpoints of the two bands above, and the whole of
  *  what the burst does to where the blood goes. */
-export const OVERKILL_REACH_SCALE = (OVERKILL_SPEED.min + OVERKILL_SPEED.max)
-  / (ORDINARY_SPEED.min + ORDINARY_SPEED.max);
+export const OVERKILL_REACH_SCALE =
+  (OVERKILL_SPEED.min + OVERKILL_SPEED.max) / (ORDINARY_SPEED.min + ORDINARY_SPEED.max);
 
 /** THE WEAPON THAT ALWAYS THROWS THE BIG ONE. Item template 126 is the
  *  WARHAMMER - not a joke weapon, which the first reading assumed from
@@ -129,7 +129,8 @@ export const MARK_SIZE_MAX = 1.2;
  * five swings.
  */
 export function markSize(rate) {
-  const lo = ladderRate(0), hi = RATE_MAX;                 // the ladder's own ends, never a second copy of 30/200
+  const lo = ladderRate(0),
+    hi = RATE_MAX; // the ladder's own ends, never a second copy of 30/200
   const t = Math.max(0, Math.min(1, (rate - lo) / (hi - lo)));
   return MARK_SIZE_MIN + (MARK_SIZE_MAX - MARK_SIZE_MIN) * t;
 }
@@ -172,7 +173,8 @@ export function sprayCount(rate) {
 export const SPRAY_RADIUS_MIN = 0.35;
 export const SPRAY_RADIUS_MAX = 1.8;
 export function sprayRadius(rate) {
-  const lo = ladderRate(0), hi = RATE_MAX;                 // the ladder's own ends, never a second copy
+  const lo = ladderRate(0),
+    hi = RATE_MAX; // the ladder's own ends, never a second copy
   const t = Math.max(0, Math.min(1, (rate - lo) / (hi - lo)));
   return SPRAY_RADIUS_MIN + (SPRAY_RADIUS_MAX - SPRAY_RADIUS_MIN) * t;
 }
@@ -244,7 +246,8 @@ export function sprayPattern(count, radius, thrown = null, rng = Math.random) {
   const R = radius > 0 ? radius : 0;
   const out = [{ dx: 0, dz: 0, scale: 1 }];
   if (n === 1) return out;
-  const tx = thrown?.[0] ?? 0, tz = thrown?.[1] ?? 0;
+  const tx = thrown?.[0] ?? 0,
+    tz = thrown?.[1] ?? 0;
   const main = Math.hypot(tx, tz) > 1e-6 ? Math.atan2(tz, tx) + (rng() - 0.5) * 0.4 : rng() * TAU;
   const k = Math.min(SPRAY_LOBES_MAX, 1 + Math.floor(rng() * SPRAY_LOBES_MAX));
   const lobes = [];
@@ -259,13 +262,21 @@ export function sprayPattern(count, radius, thrown = null, rng = Math.random) {
     let ang;
     if (frac(rng() + i * 0.7548776662) < SPRAY_STRAY) ang = frac(rng() + i * 0.6180339887) * TAU;
     else {
-      let pick = frac(rng() + i * 0.6180339887) * weight, lobe = lobes[0];
-      for (const l of lobes) { lobe = l; pick -= l.w; if (pick < 0) break; }
-      ang = lobe.ang + gauss(rng(), frac(rng() + i * 0.5698402910)) * lobe.spread;
+      let pick = frac(rng() + i * 0.6180339887) * weight,
+        lobe = lobes[0];
+      for (const l of lobes) {
+        lobe = l;
+        pick -= l.w;
+        if (pick < 0) break;
+      }
+      ang = lobe.ang + gauss(rng(), frac(rng() + i * 0.569840291)) * lobe.spread;
     }
     let r = R * (SPRAY_NEAR + (1 - SPRAY_NEAR) * Math.pow(frac(rng() + i * 0.4142135624), 0.8));
     let scale = sprayScale(rng());
-    if (rng() < SPRAY_FLYER) { r *= SPRAY_FLYER_REACH; scale *= 0.6; }   // a flyer went far because it was small
+    if (rng() < SPRAY_FLYER) {
+      r *= SPRAY_FLYER_REACH;
+      scale *= 0.6;
+    } // a flyer went far because it was small
     out.push({ dx: Math.cos(ang) * r, dz: Math.sin(ang) * r, scale });
   }
   return out;
@@ -405,7 +416,7 @@ export const SWING_LEAN = 0.08;
  * straight up and it comes straight back down.
  */
 export function swingThrow(state, forward) {
-  const p = Object.hasOwn(SWING_PUSH, state) ? SWING_PUSH[state] : null;   // BLOOD1 AUDIT 3: a frozen object still has a prototype - 'constructor' answered a function and the maths NaN
+  const p = Object.hasOwn(SWING_PUSH, state) ? SWING_PUSH[state] : null; // BLOOD1 AUDIT 3: a frozen object still has a prototype - 'constructor' answered a function and the maths NaN
   if (!p) return [0, 0];
   // The push is in the player's frame, so it needs their basis - and
   // only the FLAT part of it, since the answer is a ground offset.
@@ -416,7 +427,8 @@ export function swingThrow(state, forward) {
   // is (f.z, 0, -f.x). Taken from the forward handed in rather than
   // from a yaw, because the sites that know one do not all hold the
   // other.
-  const rx = f[2], rz = -f[0];
+  const rx = f[2],
+    rz = -f[0];
   return [(rx * p[0] + f[0] * p[2]) * SWING_LEAN, (rz * p[0] + f[2] * p[2]) * SWING_LEAN];
 }
 
@@ -476,7 +488,13 @@ export function bloodHit(damage, entity, { fromPlayer = false, weapon = null, sw
  *  civilian dies to ONE weapon hit whatever the weapon was, so the
  *  share of their health it took is all of it - which the ladder reads
  *  as its hundred rung, not as an overkill. */
-export const LETHAL_HIT = Object.freeze({ damage: 1, maxHealth: 1, fromPlayer: true, heavy: false, throw: Object.freeze([0, 0]) });
+export const LETHAL_HIT = Object.freeze({
+  damage: 1,
+  maxHealth: 1,
+  fromPlayer: true,
+  heavy: false,
+  throw: Object.freeze([0, 0]),
+});
 
 /** How far off the surface a mark floats, so it does not fight the
  *  wall it is on. hitEffects.js nudges its splash by the same 2cm for
@@ -497,8 +515,9 @@ export function surfaceBasis(normal, turn = 0) {
   const n = unit(normal) ?? [0, 1, 0];
   const seed = Math.abs(n[1]) > 0.9 ? [0, 0, 1] : [0, 1, 0];
   const r0 = unit(cross(seed, n)) ?? [1, 0, 0];
-  const u0 = cross(n, r0);   // already unit: n and r0 are unit and perpendicular
-  const c = Math.cos(turn), s = Math.sin(turn);
+  const u0 = cross(n, r0); // already unit: n and r0 are unit and perpendicular
+  const c = Math.cos(turn),
+    s = Math.sin(turn);
   return {
     normal: n,
     right: [r0[0] * c + u0[0] * s, r0[1] * c + u0[1] * s, r0[2] * c + u0[2] * s],
@@ -549,7 +568,8 @@ export function streakFor(flown, reach) {
  *  from the body - a wheel. Most drops of a real spray fall steeply and
  *  land round; only the fast, far-flung few streak. */
 export function impactStretch(across, down) {
-  const h = Math.abs(across), v = Math.abs(down);
+  const h = Math.abs(across),
+    v = Math.abs(down);
   if (!(h > 0) || !Number.isFinite(h)) return 1;
   if (!(v > 0)) return STREAK_MAX;
   return Math.min(STREAK_MAX, Math.hypot(h, v) / v);
@@ -597,22 +617,33 @@ const WHITE = Object.freeze([1, 1, 1, 1]);
  * Answers the next free offset, so a loop over the ring can chain.
  */
 export function writeDecalQuad(out, offset, decal, uv = null) {
-  const u0 = uv?.u0 ?? 0, v0 = uv?.v0 ?? 0, u1 = uv?.u1 ?? 1, v1 = uv?.v1 ?? 1;
+  const u0 = uv?.u0 ?? 0,
+    v0 = uv?.v0 ?? 0,
+    u1 = uv?.u1 ?? 1,
+    v1 = uv?.v1 ?? 1;
   const [px, py, pz] = decal.pos;
   const h = decal.size / 2;
-  const hs = h * (decal.stretch ?? 1);   // BLOOD2a: longer along `right` by the streak
-  const rx = decal.right[0] * hs, ry = decal.right[1] * hs, rz = decal.right[2] * hs;
-  const ux = decal.up[0] * h, uy = decal.up[1] * h, uz = decal.up[2] * h;
+  const hs = h * (decal.stretch ?? 1); // BLOOD2a: longer along `right` by the streak
+  const rx = decal.right[0] * hs,
+    ry = decal.right[1] * hs,
+    rz = decal.right[2] * hs;
+  const ux = decal.up[0] * h,
+    uy = decal.up[1] * h,
+    uz = decal.up[2] * h;
   const c = decal.tint ?? WHITE;
-  const wet = Number.isFinite(decal.wet) ? Math.max(0, Math.min(1, decal.wet)) : 0;   // BLOOD2f: a mark that says nothing is dry
+  const wet = Number.isFinite(decal.wet) ? Math.max(0, Math.min(1, decal.wet)) : 0; // BLOOD2f: a mark that says nothing is dry
   const corner = (i, sx, sy, u, v) => {
     const o = offset + i * DECAL_FLOATS_PER_VERTEX;
     out[o] = px + rx * sx + ux * sy;
     out[o + 1] = py + ry * sx + uy * sy;
     out[o + 2] = pz + rz * sx + uz * sy;
-    out[o + 3] = u; out[o + 4] = v;
-    out[o + 5] = c[0]; out[o + 6] = c[1]; out[o + 7] = c[2]; out[o + 8] = c[3] ?? 1;
-    out[o + 9] = wet;   // BLOOD2f
+    out[o + 3] = u;
+    out[o + 4] = v;
+    out[o + 5] = c[0];
+    out[o + 6] = c[1];
+    out[o + 7] = c[2];
+    out[o + 8] = c[3] ?? 1;
+    out[o + 9] = wet; // BLOOD2f
   };
   corner(0, -1, -1, u0, v0);
   corner(1, -1, 1, u0, v1);
@@ -639,9 +670,14 @@ export function clearDecalQuad(out, offset) {
 export function decalIndices(capacity) {
   const out = new Uint32Array(capacity * 6);
   for (let q = 0; q < capacity; q++) {
-    const b = q * DECAL_VERTS, o = q * 6;
-    out[o] = b; out[o + 1] = b + 2; out[o + 2] = b + 1;
-    out[o + 3] = b; out[o + 4] = b + 3; out[o + 5] = b + 2;
+    const b = q * DECAL_VERTS,
+      o = q * 6;
+    out[o] = b;
+    out[o + 1] = b + 2;
+    out[o + 2] = b + 1;
+    out[o + 3] = b;
+    out[o + 4] = b + 3;
+    out[o + 5] = b + 2;
   }
   return out;
 }
@@ -664,8 +700,8 @@ export function createBloodDecalPool({ capacity = 1000, rng = Math.random } = {}
   const cap = Math.max(1, Math.floor(Number.isFinite(Number(capacity)) ? Number(capacity) : 1000));
   /** @type {Array<any>} */
   const ring = new Array(cap).fill(null);
-  let next = 0;        // the slot `place` takes
-  let serial = 0;      // how many have ever been placed
+  let next = 0; // the slot `place` takes
+  let serial = 0; // how many have ever been placed
   let live = 0;
   // BLOOD1 AUDIT 3: THE HIGH-WATER MARK - the slots ever touched, so a
   // ring holding three marks draws three quads and not its capacity.
@@ -683,7 +719,9 @@ export function createBloodDecalPool({ capacity = 1000, rng = Math.random } = {}
     if (!point || !Number.isFinite(point[0]) || !Number.isFinite(point[1]) || !Number.isFinite(point[2])) return null;
     // BLOOD2a: a drop that flew lies ALONG its travel; one that did not
     // spins as it always has.
-    const basis = along ? basisAlong(normal, along, Number.isFinite(turn) ? turn : rng() * Math.PI * 2) : surfaceBasis(normal, Number.isFinite(turn) ? turn : rng() * Math.PI * 2);
+    const basis = along
+      ? basisAlong(normal, along, Number.isFinite(turn) ? turn : rng() * Math.PI * 2)
+      : surfaceBasis(normal, Number.isFinite(turn) ? turn : rng() * Math.PI * 2);
     const slot = next;
     const d = {
       slot,
@@ -725,7 +763,9 @@ export function createBloodDecalPool({ capacity = 1000, rng = Math.random } = {}
   /** The mark in one slot, or null - BLOOD AUDIT 4: the walk that asks
    *  "is this mark still the one I hold" and the walk over every slot
    *  read this rather than allocating the whole ring as an array. */
-  function at(slot) { return ring[slot] ?? null; }
+  function at(slot) {
+    return ring[slot] ?? null;
+  }
 
   /** Every live mark, oldest first. The draw reads this. */
   function decals() {
@@ -753,7 +793,9 @@ export function createBloodDecalPool({ capacity = 1000, rng = Math.random } = {}
     let n = 0;
     for (const d of ring) {
       if (!d) continue;
-      d.pos[0] += delta[0]; d.pos[1] += delta[1]; d.pos[2] += delta[2];
+      d.pos[0] += delta[0];
+      d.pos[1] += delta[1];
+      d.pos[2] += delta[2];
       n++;
     }
     return n;
@@ -762,7 +804,9 @@ export function createBloodDecalPool({ capacity = 1000, rng = Math.random } = {}
   /** A mode change throws the room away, and the blood with it. */
   function clear() {
     ring.fill(null);
-    next = 0; live = 0; touched = 0;
+    next = 0;
+    live = 0;
+    touched = 0;
     return true;
   }
 
@@ -778,16 +822,33 @@ export function createBloodDecalPool({ capacity = 1000, rng = Math.random } = {}
    */
   function ranges() {
     if (touched < cap) return touched > 0 ? [[0, touched]] : [];
-    return next > 0 ? [[next, cap], [0, next]] : [[0, cap]];
+    return next > 0
+      ? [
+          [next, cap],
+          [0, next],
+        ]
+      : [[0, cap]];
   }
 
   return {
     ranges,
-    get touched() { return touched; },
-    place, decals, at, shiftOrigin, clear,
-    get capacity() { return cap; },
-    get count() { return live; },
-    get placed() { return serial; },
+    get touched() {
+      return touched;
+    },
+    place,
+    decals,
+    at,
+    shiftOrigin,
+    clear,
+    get capacity() {
+      return cap;
+    },
+    get count() {
+      return live;
+    },
+    get placed() {
+      return serial;
+    },
     /** Tests only: the ring as it stands, holes included. */
     _ring: () => ring.slice(),
   };

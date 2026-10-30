@@ -12,6 +12,8 @@
 /src/characters/ownModels/*/
 !/src/combat/
 /src/combat/*
+!/src/combat/blood/
+/src/combat/blood/*/
 !/src/combat/gun/
 /src/combat/gun/*/
 !/src/combat/technique/

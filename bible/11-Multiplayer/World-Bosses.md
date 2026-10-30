@@ -2825,7 +2825,7 @@ the fix is the stand-in's, as a duel's was (`combat/duelCombat.js` DUEL_STAND_IN
   every lasting family is forgotten at once - nothing here empties a stand-in, pinned on every factory. An "under its
   health" power reads the relay's word (RELAY-SHARE, `relayHealth`); the weapon masteries the same. The blood ladder read
   the placeholder and bled the bottom rung on every blow; a whole of 975 would have bled a body of 975's rungs, so it
-  measures no whole on a stand-in (`bloodDecals.js:"maxHealth: Number.isFinite(entity?.maxHealth) && !entity?.relayHealth ? entity.maxHealth : 0,"`):
+  measures no whole on a stand-in (`bloodDecals.js:"maxHealth: Number.isFinite"`):
   the same rung, by law now; a host body's real whole still comes as its `bloodOf`.
 - **MEHRUNES' RAZOR STAYS PASSED BY** (`artifactEffects.js:"if (!target || !item || target.spareGear) return null;"`, AUDIT
   WBX F1). Its two reasons were the 1e9 billed to its condition and a blow the wire refused; the wire carries the whole

@@ -492,7 +492,7 @@ THE FIX - ONE WHOLE, ONE DOOR.
   on every factory (two Disintegrates and a swing, the whole untouched). `healthShare` and the masteries read the relay's
   word (`relayHealth`, RELAY-SHARE). The blood ladder read the placeholder and bled the bottom rung every blow; at 975 it
   would bleed a body of 975's rungs, so it measures no whole on a stand-in
-  (`bloodDecals.js:"maxHealth: Number.isFinite(entity?.maxHealth) && !entity?.relayHealth ? entity.maxHealth : 0,"`) - the same
+  (`bloodDecals.js:"maxHealth: Number.isFinite"`) - the same
   rung, by law. Berserker's leech reads `min(damage, target.health)`: unchanged under 975.
 - **Mehrunes' Razor stays passed by** (`artifactEffects.js:"if (!target || !item || target.spareGear) return null;"`). Its two
   reasons were the 1e9 billed to its condition and a blow the wire refused. The wire carries the whole now and no Strikes
