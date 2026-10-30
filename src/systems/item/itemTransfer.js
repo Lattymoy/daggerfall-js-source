@@ -41,7 +41,7 @@
 import {
   addItem, canHoldAmount, effectiveUnitWeightInKg, totalWeight, isSummoned,
   splitStack, GOLD_PIECE_WEIGHT_KG, goldPiecesOf, addGoldPieces, isGoldPieces, tellTaken,
-  findExistingStack, goldStack,
+  findExistingStack, goldStack, claimedCarryKg,
 } from '../inventory.js';
 import { LOOT_STACK_MAX } from '../loot/loot.js';   // GOLD-WIRE: the most one stack rides the room's word in
 import { isRoomCarried } from '../loot/roomCarriedList.js';   // GOLD-WIRE: whether the room's word carries the list a drop lands in
@@ -449,10 +449,14 @@ export function planTake(item, {
   // adds the basket to it); the coin term is the entity's and is
   // added here, so a purse of 400,000 pieces weighs its thousand
   // kilograms against the gate exactly as the old bag stack did.
+  // CARRY-CLAIMS: and the takes off shared piles still waiting on
+  // their grant (inventory.js claimedCarryKg) - lifted out of the pack
+  // until then, they were weightless to this gate, and a run of takes
+  // inside the wait all landed past the limit.
   const canCarry = entity
     ? canHoldAmount(stack, effectiveUnitWeightInKg(item),
       entityMaxEncumbrance(entity),
-      totalWeight(bag) + goldPiecesOf(entity) * GOLD_PIECE_WEIGHT_KG)
+      totalWeight(bag) + goldPiecesOf(entity) * GOLD_PIECE_WEIGHT_KG + claimedCarryKg(entity))
     : stack;
   // The window's own gate went silent when it had no entity to read
   // and spoke when it did; there is one answer here, because the only
