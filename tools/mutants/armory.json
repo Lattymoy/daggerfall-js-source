@@ -160,7 +160,7 @@
   {
     "name": "ARMORY-a-beast-dressed",
     "file": "src/render/armoryPass.js",
-    "old": "w.kindle : 1)) * (w.torn >= 0 ? 0 : 1);",
+    "old": "w.kindle : 1)) * (w.torn >= 0 && !ARMORY_BEAST_SLOTS.includes(slot) ? 0 : 1);",
     "new": "w.kindle : 1));",
     "tests": [
       "test/render/armory.test.js"
@@ -223,8 +223,8 @@
   {
     "name": "ARMORY-a-peers-morrowind-bones-unread",
     "file": "src/scenes/auraHost.js",
-    "old": "if (body && poseFromBones(body.bones, w.pose)) {",
-    "new": "if (body && poseFromBones(body, w.pose)) {",
+    "old": "if (body && poseFromBones(body.bones, w.pose, w.torn >= 0)) {",
+    "new": "if (body && poseFromBones(body, w.pose, w.torn >= 0)) {",
     "tests": [
       "test/render/armory.test.js"
     ]
@@ -555,6 +555,33 @@
     "file": "src/render/armoryPose.js",
     "old": "rows = at0.map((r) => Math.round(r * A));",
     "new": "rows = at0;",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "WOLF-KIT-every-piece-off-the-beast",
+    "file": "src/render/armoryPass.js",
+    "old": "(w.torn >= 0 && !ARMORY_BEAST_SLOTS.includes(slot) ? 0 : 1)",
+    "new": "(w.torn >= 0 ? 0 : 1)",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "WOLF-KIT-the-crown-on-the-muzzle",
+    "file": "src/render/armoryPass.js",
+    "old": "export const ARMORY_BEAST_SLOTS = Object.freeze(['torso', 'arms', 'legs']);",
+    "new": "export const ARMORY_BEAST_SLOTS = Object.freeze(['head', 'torso', 'arms', 'legs']);",
+    "tests": [
+      "test/render/armory.test.js"
+    ]
+  },
+  {
+    "name": "WOLF-KIT-the-wolf-at-a-persons-scale",
+    "file": "src/render/armoryPose.js",
+    "old": "const k = beast ? ARMORY_BEAST_FIT : 1, face",
+    "new": "const k = 1, face",
     "tests": [
       "test/render/armory.test.js"
     ]

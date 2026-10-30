@@ -13,12 +13,12 @@ import { INSIGNIA, ARMORY_BROKER_PRICE } from '../../src/net/insignia.js';
 import { SHOP_WARES, shopKeysOf, shopOwns } from '../../src/net/shopLaw.js';
 import { ARMORY_SET_TEXT } from '../../src/ui/armoryText.js';
 import { badged, readArmory } from '../../src/net/wire.js';
-import { POSE_AT, REST_POINTS, newPose, poseFromBones, poseFromFigure, poseAtRest, poseWorld, spriteMarks, spriteArmsSeen } from '../../src/render/armoryPose.js';
+import { POSE_AT, REST_POINTS, newPose, poseFromBones, poseFromFigure, poseAtRest, poseWorld, spriteMarks, spriteArmsSeen, ARMORY_BEAST_FIT } from '../../src/render/armoryPose.js';
 import { spriteFor } from '../../src/player/eyeOfTheBeholder/eotbSprite.js';
 import { auraSpriteBones, auraClothOver } from '../../src/render/auraRing.js';
 import {
   armoryDraws, armoryWearers, armoryMotionStep, armoryEyeAtHead, armoryPrograms, armoryRatesWhole, ARMORY_BODY_PIECES, ARMORY_PROGRAMS,
-  ARMORY_RANGE_M, ARMORY_DRAW_MAX, ARMORY_TRAIL, ARMORY_STRIDE_M, ArmoryRenderer,
+  ARMORY_RANGE_M, ARMORY_DRAW_MAX, ARMORY_TRAIL, ARMORY_STRIDE_M, ArmoryRenderer, ARMORY_BEAST_SLOTS,
 } from '../../src/render/armoryPass.js';
 import { createAuraHost, armoryOthersOf, armoryLayers, ARMORY_NEAR_M } from '../../src/scenes/auraHost.js';
 import { weaponPieceArt, weaponPieceLayout, startWeaponPiecePreview, BLADE_W, BLADE_H, BLADE_FILL } from '../../src/render/weaponPiecePreview.js';
@@ -120,7 +120,7 @@ test('ARMORY the words: the client\'s English each piece\'s service name and eac
 test('ARMORY the pose: a rig\'s bones its joints, a sprite\'s figure its card and its upper limbs, the rest pose crouched and saddled, a point turned with the body (mutants: a sprite\'s forearm called measured; the yaw unturned; the picture\'s marks ignored)', () => {
   const pose = newPose();
   assert.equal(poseFromBones(null, pose), false, 'no skeleton, nothing written');
-  assert.equal(poseFromBones({ 'bip01 head': [0, 1.7, 0] }, pose), false, 'no shoulders - the wolf');
+  assert.equal(poseFromBones({ 'bip01 head': [0, 1.7, 0] }, pose), false, 'no shoulders');
   const bones = { 'bip01 head': [0, 1.65, 0], 'bip01 neck': [0, 1.5, 0], 'bip01 l upperarm': [-0.2, 1.42, 0], 'bip01 r upperarm': [0.2, 1.42, 0], 'bip01 l forearm': [-0.25, 1.15, 0.02], 'bip01 r calf': [0.1, 0.5, 0] };
   assert.equal(poseFromBones(bones, pose), true);
   assert.deepEqual([...pose.pts.slice(POSE_AT.elL, POSE_AT.elL + 3)].map((v) => +v.toFixed(3)), [-0.25, 1.15, 0.02], 'the forearm\'s origin is the elbow');
@@ -313,7 +313,7 @@ test('ARMORY the pass draws a worn piece and nothing over my own eyes, a torn be
   pass.draw([wearer()], I, I, [0, 1.6, 3], 1, null, true);
   assert.equal(pass.drawn, 1, 'the crown drawn');
   assert.ok(count('drawArrays') >= 3, 'its tubes and its embers');
-  for (const [why, w] of [['my own first person', wearer({ atHead: true })], ['turned beast', wearer({ torn: 1 })], ['not yet kindled', wearer({ kindle: 0 })], ['a weapon\'s piece', wearer({ kit: '0000a' })]]) {
+  for (const [why, w] of [['my own first person', wearer({ atHead: true })], ['turned beast, the crown off the muzzle', wearer({ torn: 1 })], ['not yet kindled', wearer({ kindle: 0 })], ['a weapon\'s piece', wearer({ kit: '0000a' })]]) {
     log.length = 0;
     pass.draw([w], I, I, [0, 1.6, 3], 1, null, true);
     assert.deepEqual([pass.drawn, count('drawArrays')], [0, 0], why);
@@ -321,6 +321,25 @@ test('ARMORY the pass draws a worn piece and nothing over my own eyes, a torn be
   const tail = log.map((c) => c[0]).slice(-5);
   assert.deepEqual(tail, ['bindVertexArray', 'enable', 'depthMask', 'blendFunc', 'disable'], 'the state handed back');
   assert.deepEqual(log.find((c) => c[0] === 'depthMask' && c[1] === true)?.[1], true);
+});
+
+test('WOLF-KIT turned beast, the chest, arm and leg pieces stay worn on the wolf and the head\'s does not; the wolf\'s pose fitted wider (mutants: every piece off the beast; the head\'s crown on the muzzle; the wolf posed at a person\'s scale)', () => {
+  const { gl, count } = logGl();
+  const pass = new ArmoryRenderer(/** @type {any} */ (gl));
+  const I = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+  const wearer = (/** @type {any} */ o = {}) => ({ kit: 'aaaaa', at: [0, 0, 0], yaw: 0, pose: newPose(), kindle: 1, torn: 1, _d: 3, ...o });
+  assert.deepEqual([...ARMORY_BEAST_SLOTS], ['torso', 'arms', 'legs']);
+  pass.draw([wearer()], I, I, [0, 1.6, 3], 1, null, true);
+  assert.equal(pass.drawn, 3, 'the heart, the bracers and the stride on the wolf - never the crown, and the brand is the claws\' glow');
+  for (const kit of ['0a000', '00a00', '000a0', '0b000', '00b00', '000b0']) { pass.draw([wearer({ kit })], I, I, [0, 1.6, 3], 1, null, true); assert.equal(pass.drawn, 1, `${kit} worn turned`); }
+  for (const kit of ['a0000', 'b0000']) { pass.draw([wearer({ kit })], I, I, [0, 1.6, 3], 1, null, true); assert.equal(pass.drawn, 0, `${kit}: no head piece on the wolf`); }
+  assert.ok(count('drawArrays') > 0);
+  const bones = { 'bip01 head': [0, 1.65, 0.3], 'bip01 neck': [0, 1.5, 0.2], 'bip01 spine2': [0, 1.3, 0], 'bip01 l upperarm': [-0.25, 1.42, 0.1], 'bip01 r upperarm': [0.25, 1.42, 0.1] };
+  const person = newPose(), wolf = newPose();
+  poseFromBones(bones, person); poseFromBones(bones, wolf, true);
+  assert.deepEqual([person.scale, wolf.scale], [1, ARMORY_BEAST_FIT], 'the wolf\'s pieces as wide as its limbs');
+  assert.ok(ARMORY_BEAST_FIT > 1);
+  assert.ok(wolf.pts[POSE_AT.chest + 2] > person.pts[POSE_AT.chest + 2], 'the chest\'s face forward of a deeper chest');
 });
 
 test('ARMORY a weapon piece\'s own stage: a longsword of Daggerfall\'s pixels, point up, laid at whole pixels a cell; its outline the classic hand\'s shaders, the field baked once and the band drawn over the blade each frame; a weapon piece alone takes it, any other kit the figure\'s (mutants: the field baked every frame; the band drawn under the blade; a kit with a body piece on the blade\'s stage)', () => {

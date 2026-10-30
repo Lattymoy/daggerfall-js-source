@@ -40,6 +40,12 @@ export const ARMORY_HEAD = Object.freeze({
 /** Every rate whole over AURA_CLOCK_PERIOD. Pure. */
 export const armoryRatesWhole = () => Object.values(ARMORY_HZ).every((r) => Number.isInteger(Math.round(r * AURA_CLOCK_PERIOD * 1e6) / 1e6));
 
+/** WOLF-KIT (2026-10-30, mob: "the feet chest and arm and hand cosmetic ... on werewolf form", "like the weapon glow on
+ *  claws"): the slots still worn turned beast - the chest, the arms to the claws and the legs, fitted to the wolf
+ *  (armoryPose.js ARMORY_BEAST_FIT). The head's crown and halo stay off the wolf's muzzle, and its weapon piece is the
+ *  claws' own glow already (systems/weaponGlow.js fistGlow). */
+export const ARMORY_BEAST_SLOTS = Object.freeze(['torso', 'arms', 'legs']);
+
 /** A draw's mesh: a tube round a segment, camera-facing cards, a decal on a surface. */
 const TUBE = 0, CARDS = 1, DECAL = 2;
 /** A piece's index in ARMORY_PIECES - its program's constant. */
@@ -631,7 +637,7 @@ export class ArmoryRenderer {
         let P0 = null;
         for (const w of list) {
           if (w._pieces[slot] !== key) continue;
-          const kindle = Math.max(0, Math.min(1, Number.isFinite(w.kindle) ? w.kindle : 1)) * (w.torn >= 0 ? 0 : 1);
+          const kindle = Math.max(0, Math.min(1, Number.isFinite(w.kindle) ? w.kindle : 1)) * (w.torn >= 0 && !ARMORY_BEAST_SLOTS.includes(slot) ? 0 : 1);   // WOLF-KIT: turned beast, the body's pieces stay on the wolf
           if (!(kindle > 0) || w.atHead) continue;
           const draws = armoryDraws(key, w, eye, !(w._d > ARMORY_DETAIL_M), right);
           if (!draws.length) continue;
