@@ -19,13 +19,33 @@ export const MAGIC_ITEM_TYPES = Object.freeze({ RegularMagicItem: 0, ArtifactCla
  *  the enchantment system that consumes the registry. */
 export const ENCHANTMENT_TYPES = Object.freeze({
   None: -1,
-  CastWhenUsed: 0, CastWhenHeld: 1, CastWhenStrikes: 2, ExtraSpellPts: 3,
-  PotentVs: 4, RegensHealth: 5, VampiricEffect: 6, IncreasedWeightAllowance: 7,
-  RepairsObjects: 8, AbsorbsSpells: 9, EnhancesSkill: 10, FeatherWeight: 11,
-  StrengthensArmor: 12, ImprovesTalents: 13, GoodRepWith: 14, SoulBound: 15,
-  ItemDeteriorates: 16, UserTakesDamage: 17, VisionProblems: 18,
-  WalkingProblems: 19, LowDamageVs: 20, HealthLeech: 21, BadReactionsFrom: 22,
-  ExtraWeight: 23, WeakensArmor: 24, BadRepWith: 25, SpecialArtifactEffect: 26,
+  CastWhenUsed: 0,
+  CastWhenHeld: 1,
+  CastWhenStrikes: 2,
+  ExtraSpellPts: 3,
+  PotentVs: 4,
+  RegensHealth: 5,
+  VampiricEffect: 6,
+  IncreasedWeightAllowance: 7,
+  RepairsObjects: 8,
+  AbsorbsSpells: 9,
+  EnhancesSkill: 10,
+  FeatherWeight: 11,
+  StrengthensArmor: 12,
+  ImprovesTalents: 13,
+  GoodRepWith: 14,
+  SoulBound: 15,
+  ItemDeteriorates: 16,
+  UserTakesDamage: 17,
+  VisionProblems: 18,
+  WalkingProblems: 19,
+  LowDamageVs: 20,
+  HealthLeech: 21,
+  BadReactionsFrom: 22,
+  ExtraWeight: 23,
+  WeakensArmor: 24,
+  BadRepWith: 25,
+  SpecialArtifactEffect: 26,
 });
 
 export function readMagicDef(bytes) {
@@ -34,7 +54,7 @@ export function readMagicDef(bytes) {
   const items = [];
   let o = 4;
   for (let r = 0; r < count && o + MAGIC_ITEM_RECORD_SIZE <= bytes.byteLength; r++) {
-    const index = o;   // stream position, per the source
+    const index = o; // stream position, per the source
     // MagicItemsFile.cs:87 reads the name with a NON-ZERO readLength
     // (`nameLength = 32`), which skips ReadCString's terminator scan
     // entirely: only TRAILING NULs come off, an embedded one and its tail
@@ -46,8 +66,10 @@ export function readMagicDef(bytes) {
     const groupIndex = v.getUint8(o++);
     const enchantments = [];
     for (let i = 0; i < 10; i++) enchantments.push({ type: v.getInt8(o++), param: v.getInt8(o++) });
-    const uses = v.getInt16(o, true); o += 2;
-    const value = v.getInt32(o, true); o += 4;
+    const uses = v.getInt16(o, true);
+    o += 2;
+    const value = v.getInt32(o, true);
+    o += 4;
     const material = v.getUint8(o++);
     items.push({ index, name, type, group, groupIndex, enchantments, uses, value, material });
   }

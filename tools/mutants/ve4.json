@@ -83,8 +83,8 @@
       "test/systems/ve4_vanillaEnhancedShipped.test.js",
       "test/systems/auditve.test.js"
     ],
-    "old": "  while (Math.max(w, h) > maxSize && (w > 1 || h > 1)) { w = Math.max(1, w >> 1); h = Math.max(1, h >> 1); }",
-    "new": "  if (Math.max(w, h) > maxSize && (w > 1 || h > 1)) { w = Math.max(1, w >> 1); h = Math.max(1, h >> 1); }"
+    "old": "  while (Math.max(w, h) > maxSize && (w > 1 || h > 1)) {",
+    "new": "  if (Math.max(w, h) > maxSize && (w > 1 || h > 1)) {"
   },
   {
     "name": "VE4-slices-served-from-the-wrong-mod",

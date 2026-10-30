@@ -25,7 +25,7 @@ export function stringHash(s) {
 // each day's context for its gusts: each is a pure function of its sequence, so a different generator paints
 // different stars, fog, shimmer and gusts - a DATA law, not an engine detail, and the Ledger's engine-PRNG row (which
 // covers UnityEngine.Random) does not cover it.
-const MBIG = 2147483647;   // int.MaxValue
+const MBIG = 2147483647; // int.MaxValue
 const MSEED = 161803398;
 
 export class NetRandom {

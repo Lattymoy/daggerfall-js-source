@@ -110,10 +110,10 @@ export class WoodsFile {
    */
   getHeightMapValue(mapPixelX, mapPixelY) {
     if (mapPixelX < 0) mapPixelX = 0;
-    if (mapPixelX >= MAP_WIDTH - 1) mapPixelX = MAP_WIDTH - 1;   // BAY-OWN: WOODS.WLD's own grid
+    if (mapPixelX >= MAP_WIDTH - 1) mapPixelX = MAP_WIDTH - 1; // BAY-OWN: WOODS.WLD's own grid
     if (mapPixelY < 0) mapPixelY = 0;
-    if (mapPixelY >= MAP_HEIGHT - 1) mapPixelY = MAP_HEIGHT - 1;   // BAY-OWN: WOODS.WLD's own grid
-    return this.heightMapBuffer[mapPixelY * MAP_WIDTH + mapPixelX];   // BAY-OWN: WOODS.WLD's own grid
+    if (mapPixelY >= MAP_HEIGHT - 1) mapPixelY = MAP_HEIGHT - 1; // BAY-OWN: WOODS.WLD's own grid
+    return this.heightMapBuffer[mapPixelY * MAP_WIDTH + mapPixelX]; // BAY-OWN: WOODS.WLD's own grid
   }
 
   /**
@@ -136,10 +136,10 @@ export class WoodsFile {
    */
   getLargeMapData(mapPixelX, mapPixelY) {
     if (mapPixelX < 0) mapPixelX = 0;
-    if (mapPixelX >= MAP_WIDTH - 1) mapPixelX = MAP_WIDTH - 1;   // BAY-OWN: WOODS.WLD's own grid
+    if (mapPixelX >= MAP_WIDTH - 1) mapPixelX = MAP_WIDTH - 1; // BAY-OWN: WOODS.WLD's own grid
     if (mapPixelY < 0) mapPixelY = 0;
-    if (mapPixelY >= MAP_HEIGHT - 1) mapPixelY = MAP_HEIGHT - 1;   // BAY-OWN: WOODS.WLD's own grid
-    const pos = this.dataOffsets[mapPixelY * MAP_WIDTH + mapPixelX] + 22;   // BAY-OWN: WOODS.WLD's own grid
+    if (mapPixelY >= MAP_HEIGHT - 1) mapPixelY = MAP_HEIGHT - 1; // BAY-OWN: WOODS.WLD's own grid
+    const pos = this.dataOffsets[mapPixelY * MAP_WIDTH + mapPixelX] + 22; // BAY-OWN: WOODS.WLD's own grid
     const data = [];
     for (let x = 0; x < 5; x++) data.push(new Uint8Array(5));
     for (let y = 0; y < 5; y++) {

@@ -65,13 +65,22 @@ export function parseRscMarkup(value) {
   let cur = '';
   const s = String(value ?? '').replace(/\r?\n/g, '');
   const re = /\[\/(record|end|left|center|newline|input|pos[^\]]*|font[^\]]*|color[^\]]*|scale[^\]]*|image[^\]]*)\]/g;
-  let last = 0, m;
+  let last = 0,
+    m;
   while ((m = re.exec(s))) {
     cur += s.slice(last, m.index);
     last = m.index + m[0].length;
     const tag = m[1];
-    if (tag === 'record') { variants.push(cur); cur = ''; continue; }
-    if (tag === 'end') { variants.push(cur); cur = null; break; }
+    if (tag === 'record') {
+      variants.push(cur);
+      cur = '';
+      continue;
+    }
+    if (tag === 'end') {
+      variants.push(cur);
+      cur = null;
+      break;
+    }
     if (tag === 'left' || tag === 'center' || tag === 'newline') cur += '\n';
   }
   if (cur !== null) variants.push(cur + s.slice(last));

@@ -17,9 +17,16 @@ import { readCStringFixed } from './fileProxy.js';
 
 /** RumorFile.RumorTypes (:44-56). */
 export const CLASSIC_RUMOR_TYPES = Object.freeze({
-  Plague: 4, Famine: 7, WitchBurnings: 10, CrimeWave: 11, NewRuler: 12,
-  PersecutedTemple: 18, AllianceSignMessage: 26, EnemySignMessage: 27,
-  WarSignMessage: 28, FactionRumor: 100,
+  Plague: 4,
+  Famine: 7,
+  WitchBurnings: 10,
+  CrimeWave: 11,
+  NewRuler: 12,
+  PersecutedTemple: 18,
+  AllianceSignMessage: 26,
+  EnemySignMessage: 27,
+  WarSignMessage: 28,
+  FactionRumor: 100,
 });
 
 export class RumorFile {
@@ -35,12 +42,18 @@ export class RumorFile {
     this.rumors = [];
     let pos = 0;
     while (pos < bytes.length) {
-      const faction1 = v.getUint16(pos, true); pos += 2;
-      const faction2 = v.getUint16(pos, true); pos += 2;
-      const type = v.getUint32(pos, true); pos += 4;
-      const regionID = bytes[pos]; pos += 1;
-      const flags = bytes[pos]; pos += 1;
-      const questID = bytes[pos]; pos += 1;
+      const faction1 = v.getUint16(pos, true);
+      pos += 2;
+      const faction2 = v.getUint16(pos, true);
+      pos += 2;
+      const type = v.getUint32(pos, true);
+      pos += 4;
+      const regionID = bytes[pos];
+      pos += 1;
+      const flags = bytes[pos];
+      pos += 1;
+      const questID = bytes[pos];
+      pos += 1;
       // ReadCString(position, 9). AUDIT 24 formats: a NON-ZERO
       // readLength SKIPS the null-terminator scan entirely - the arm
       // is `if (readLength == 0) { ...find the NUL... }` and then
@@ -50,14 +63,32 @@ export class RumorFile {
       // the stale tail behind it (classic fixed-size records leave
       // one whenever a longer name was overwritten) stay in the
       // string. The port stopped at the FIRST NUL.
-      const questName = readCStringFixed(bytes, pos, 9);   // AUDIT 68: the one FileProxy law
+      const questName = readCStringFixed(bytes, pos, 9); // AUDIT 68: the one FileProxy law
       pos += 9;
-      const unknown = v.getUint16(pos, true); pos += 2;
-      const npcID = v.getUint32(pos, true); pos += 4;
-      const textLength = v.getUint32(pos, true); pos += 4;
-      const timeLimit = v.getUint32(pos, true); pos += 4;
-      const rumorText = bytes.slice(pos, pos + textLength); pos += textLength;
-      this.rumors.push({ faction1, faction2, type, regionID, flags, questID, questName, unknown, npcID, textLength, timeLimit, rumorText });
+      const unknown = v.getUint16(pos, true);
+      pos += 2;
+      const npcID = v.getUint32(pos, true);
+      pos += 4;
+      const textLength = v.getUint32(pos, true);
+      pos += 4;
+      const timeLimit = v.getUint32(pos, true);
+      pos += 4;
+      const rumorText = bytes.slice(pos, pos + textLength);
+      pos += textLength;
+      this.rumors.push({
+        faction1,
+        faction2,
+        type,
+        regionID,
+        flags,
+        questID,
+        questName,
+        unknown,
+        npcID,
+        textLength,
+        timeLimit,
+        rumorText,
+      });
     }
     return this;
   }

@@ -13,11 +13,7 @@
 import { BaseImageFile, COMPRESSION_FORMATS, emptyBitmap } from './baseImageFile.js';
 
 // The three IMG filenames below have no image data or are otherwise invalid.
-export const UNSUPPORTED_IMG_FILENAMES = Object.freeze([
-  'FMAP0I00.IMG',
-  'FMAP0I01.IMG',
-  'FMAP0I16.IMG',
-]);
+export const UNSUPPORTED_IMG_FILENAMES = Object.freeze(['FMAP0I00.IMG', 'FMAP0I01.IMG', 'FMAP0I16.IMG']);
 
 // IMG files that define their own palette following the image data.
 // ReadPalette's switch, verbatim (ImgFile.cs:477-489) - these six and
@@ -42,26 +38,46 @@ export const PALETTIZED_FILENAMES = Object.freeze([
  */
 export function getHeaderlessFileImageDimensions(length) {
   switch (length) {
-    case 44: return { width: 22, height: 22 };
-    case 289: return { width: 17, height: 17 };
-    case 441: return { width: 49, height: 9 };
-    case 512: return { width: 32, height: 16 };
-    case 720: return { width: 9, height: 80 };
-    case 990: return { width: 45, height: 22 };
-    case 1720: return { width: 43, height: 40 };
-    case 2140: return { width: 107, height: 20 };
-    case 2916: return { width: 81, height: 36 };
-    case 3200: return { width: 40, height: 80 };
-    case 3938: return { width: 179, height: 22 };
-    case 4280: return { width: 107, height: 40 };
-    case 4508: return { width: 322, height: 14 };
-    case 20480: return { width: 320, height: 64 };
-    case 26496: return { width: 184, height: 144 };
-    case 64000: return { width: 320, height: 200 };
-    case 64768: return { width: 320, height: 200 };
-    case 68800: return { width: 320, height: 215 };
-    case 112128: return { width: 512, height: 219 };
-    default: return { width: 0, height: 0 };
+    case 44:
+      return { width: 22, height: 22 };
+    case 289:
+      return { width: 17, height: 17 };
+    case 441:
+      return { width: 49, height: 9 };
+    case 512:
+      return { width: 32, height: 16 };
+    case 720:
+      return { width: 9, height: 80 };
+    case 990:
+      return { width: 45, height: 22 };
+    case 1720:
+      return { width: 43, height: 40 };
+    case 2140:
+      return { width: 107, height: 20 };
+    case 2916:
+      return { width: 81, height: 36 };
+    case 3200:
+      return { width: 40, height: 80 };
+    case 3938:
+      return { width: 179, height: 22 };
+    case 4280:
+      return { width: 107, height: 40 };
+    case 4508:
+      return { width: 322, height: 14 };
+    case 20480:
+      return { width: 320, height: 64 };
+    case 26496:
+      return { width: 184, height: 144 };
+    case 64000:
+      return { width: 320, height: 200 };
+    case 64768:
+      return { width: 320, height: 200 };
+    case 68800:
+      return { width: 320, height: 215 };
+    case 112128:
+      return { width: 512, height: 219 };
+    default:
+      return { width: 0, height: 0 };
   }
 }
 
@@ -90,9 +106,12 @@ export class ImgFile extends BaseImageFile {
     if (fn.slice(0, 4) === 'FMAP') return 'FMAP_PAL.COL';
     if (fn.slice(0, 4) === 'NITE') return 'NIGHTSKY.COL';
     switch (fn) {
-      case 'DANK02I0.IMG': return 'DANKBMAP.COL';
-      case 'TMAP00I0.IMG': return 'MAP.PAL';
-      default: return 'ART_PAL.COL';
+      case 'DANK02I0.IMG':
+        return 'DANKBMAP.COL';
+      case 'TMAP00I0.IMG':
+        return 'MAP.PAL';
+      default:
+        return 'ART_PAL.COL';
     }
   }
 
