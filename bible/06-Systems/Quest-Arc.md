@@ -7270,3 +7270,13 @@ Pins: `test/systems/quest/bayleftb_quest.test.js` (8, the freeware: the quests' 
 compass's bound; the table's keys; the pipeline over the province; provinceRow; the reveal run off world.js's own text
 past the Bay and on the Bay's road; the scrying's lair; %lp's eleven). Mutants: `tools/mutants/bayleftb.json`
 (BAY-LEFT-B-B3-*, -B5-*, -B6-*, -B7-*).
+
+## TRIP-FROM-START and TRIP-PIXEL - a travel clock measures its trip as it starts (FIELD BUGS 2026-10-30e)
+
+A flag-16 clock (and the bit-0 hack's) measured its trip once, at the parse, as Clock.cs does - Q3's travel arm above.
+S0000002 is parsed wherever level 4 finds the player, and Helseth starts its `_1stparton_` in Wayrest: 2.5 days for 44
+to 80 days of road, and any journey ended the quest. Now `start timer` measures the trip again from where the player
+stands and keeps the longer (`systems/quest/clock.js` startTimer, the saved `travelArm`). And `travelTimeSeconds` reads a
+site past the Bay at its own pixel (`worldPixel`), not its row's world coords. The record:
+`01-Overview/bugs/Field-Bugs-2026-10-30e.md`; Port-Ledger A, TRIP-FROM-START. Pins:
+`test/systems/quest/fb1030e_triphome.test.js`; mutants: `tools/mutants/fb1030e_triphome.json`.

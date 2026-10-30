@@ -66,11 +66,13 @@ export function travelTimeSeconds(quest, place = null, returnTrip = true) {
   }
   const sd = place.siteDetails;
   const location = sd ? world.maps.getLocationByName(sd.regionName, sd.locationName) : null;
-  if (!location) {
+  if (!location && !sd?.worldPixel) {
     console.warn(`[quest] Could not find Quest Place ${sd?.regionName}/${sd?.locationName}`);
     return 0;
   }
-  const endPos = worldCoordToMapPixel(location.exterior.recordElement.header.x, location.exterior.recordElement.header.y);
+  // TRIP-PIXEL (FIELD BUGS 2026-10-30e): a site past the Bay stands on its own pixel (place.js siteWorldPixel); its
+  // row's world coords read a pixel in the Bay, so a manor near Solitude measured 149 days
+  const endPos = sd.worldPixel ?? worldCoordToMapPixel(location.exterior.recordElement.header.x, location.exterior.recordElement.header.y);
   const { minutes } = calculateTravelTime(world.playerPixel(), endPos,
     { speedCautious: true, sleepModeInn: false, travelShip: false, hasHorse: false, hasCart: true },
     (x, y) => world.maps.getClimateIndex(x, y));
@@ -410,6 +412,7 @@ export class Clock extends QuestResource {
     this._closesOnSuccess = false;   // AUDIT TIMEFREE T1: a task started it, so a success makes it a closing
     this.declaredAtOnce = false;   // AUDIT TIMEFREE T3: `Clock _x_ 00:00`, no travel arm (setResource; saved - AUDIT REST-PARTY D3)
     this.startedAfterSuccess = false;   // AUDIT TIMEFREE T5: started once the quest was already a success (saved)
+    this.travelArm = false;   // TRIP-FROM-START: armed by its trip (travelArmed at the parse; saved)
     if (line !== null) this.setResource(line);
   }
 
@@ -454,6 +457,7 @@ export class Clock extends QuestResource {
     // flag&1 + maxRange>0 + zero-time HACK forces the same check.
     if (travelArmed(this.flag, this.maxRange, clockTimeInSeconds)) {
       this.declaredAtOnce = false;   // (a travel clock: 2.5 trips, not "at once")
+      this.travelArm = true;
       const travel = this.parentQuest?.travelSeconds?.();
       if (travel != null) clockTimeInSeconds = travel;
       else { this.travelTimePending = true; clockTimeInSeconds = 0; }
@@ -598,6 +602,17 @@ export class Clock extends QuestResource {
         }
       }
     }
+    // TRIP-FROM-START (FIELD BUGS 2026-10-30e): a travel clock measures its trip again as it starts, from where the
+    // player stands, and keeps the longer. Clock.cs arms it at the parse: S0000002 is parsed wherever level 4 finds the
+    // player, its manor drawn in that region, and Helseth starts the clock in Wayrest - 2.5 days for weeks of road.
+    if (this.travelArm && !this.clockFinished && this.remainingTimeInSeconds === this.startingTimeInSeconds) {
+      const travel = this.parentQuest.travelSeconds?.();
+      if (Number.isFinite(travel) && travel > this.startingTimeInSeconds) {
+        this.startingTimeInSeconds = travel;
+        this.remainingTimeInSeconds = travel;
+        this.travelTimePending = false;
+      }
+    }
     // AUDIT quest-P15: a flag&16 / hack clock whose travel time pends
     // Q3 would otherwise arm at 0s and fire on the FIRST tick - the
     // exact instant-end symptom the C# hack exists to prevent. HELD
@@ -639,6 +654,7 @@ export class Clock extends QuestResource {
       clockFinished: this.clockFinished,
       startedAfterSuccess: this.startedAfterSuccess,   // AUDIT TIMEFREE T5 (the port's; absent from a save before it - false)
       declaredAtOnce: this.declaredAtOnce,   // AUDIT REST-PARTY D3 (the port's; a restore has no declaration to read)
+      travelArm: this.travelArm,   // TRIP-FROM-START (the port's, for the same reason)
     };
   }
 
@@ -664,6 +680,8 @@ export class Clock extends QuestResource {
     // either way; only a two-value range drawn at zero (`00:00 01:00`) could differ, and no script declares one.
     this.declaredAtOnce = typeof dataIn.declaredAtOnce === 'boolean' ? dataIn.declaredAtOnce
       : this.startingTimeInSeconds === 0 && !travelArmed(this.flag, this.maxRange, 0);
+    // TRIP-FROM-START: a save from before the mark - flag 16 alone, which no declared time defeats (the bit-0 hack needs one)
+    this.travelArm = typeof dataIn.travelArm === 'boolean' ? dataIn.travelArm : (this.flag & 16) === 16;
     this.travelTimePending = false;
   }
 }

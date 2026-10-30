@@ -1,0 +1,10 @@
+[
+  {"name": "TRIP-FROM-START-the-start-unmeasured", "file": "src/systems/quest/clock.js", "old": "travel > this.startingTimeInSeconds", "new": "travel < 0", "tests": ["test/systems/quest/fb1030e_triphome.test.js"]},
+  {"name": "TRIP-FROM-START-the-shorter-taken", "file": "src/systems/quest/clock.js", "old": "travel > this.startingTimeInSeconds", "new": "travel > 0", "tests": ["test/systems/quest/fb1030e_triphome.test.js"]},
+  {"name": "TRIP-FROM-START-a-run-clock-measured-again", "file": "src/systems/quest/clock.js", "old": " && this.remainingTimeInSeconds === this.startingTimeInSeconds) {", "new": ") {", "tests": ["test/systems/quest/fb1030e_triphome.test.js"]},
+  {"name": "TRIP-FROM-START-the-arm-unmarked", "file": "src/systems/quest/clock.js", "old": "      this.travelArm = true;\n", "new": "", "tests": ["test/systems/quest/fb1030e_triphome.test.js"]},
+  {"name": "TRIP-FROM-START-the-mark-unsaved", "file": "src/systems/quest/clock.js", "old": "      travelArm: this.travelArm,", "new": "", "tests": ["test/systems/quest/fb1030e_triphome.test.js"]},
+  {"name": "TRIP-FROM-START-an-old-save-unread", "file": "src/systems/quest/clock.js", "old": ": (this.flag & 16) === 16;", "new": ": false;", "tests": ["test/systems/quest/fb1030e_triphome.test.js"]},
+  {"name": "TRIP-PIXEL-the-rows-coords-past-the-Bay", "file": "src/systems/quest/clock.js", "old": "const endPos = sd.worldPixel ?? worldCoordToMapPixel(", "new": "const endPos = worldCoordToMapPixel(", "tests": ["test/systems/quest/fb1030e_triphome.test.js"]},
+  {"name": "TRIP-PIXEL-a-site-past-the-Bay-unfound-counted-0", "file": "src/systems/quest/clock.js", "old": "if (!location && !sd?.worldPixel) {", "new": "if (!location) {", "tests": ["test/systems/quest/fb1030e_triphome.test.js"]}
+]
