@@ -2,7 +2,7 @@
   {
     "name": "AUDITPOI-L1-the-press-unheard",
     "file": "src/ui/poi/poiEditorPanel.js",
-    "old": "  root.addEventListener('pointerdown', () => { pressAt = Date.now(); }, true);",
+    "old": "  root.addEventListener(\n    'pointerdown',\n    () => {\n      pressAt = Date.now();\n    },\n    true,\n  );",
     "new": "  root.addEventListener('pointerdown', () => {}, true);",
     "tests": [
       "test/poi/auditpoi_lead.test.js"
@@ -11,8 +11,8 @@
   {
     "name": "AUDITPOI-L1-the-release-unheard",
     "file": "src/ui/poi/poiEditorPanel.js",
-    "old": "  const released = () => { setTimeout(() => { pressAt = -Infinity; schedule(); }, 0); };",
-    "new": "  const released = () => { setTimeout(() => { schedule(); }, 0); };",
+    "old": "      pressAt = -Infinity;\n      schedule();",
+    "new": "      schedule();",
     "tests": [
       "test/poi/auditpoi_lead.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDITPOI-L1-the-hold-unbounded",
     "file": "src/ui/poi/poiEditorPanel.js",
-    "old": "    if (pressed < PRESS_HOLD_MS) { setTimeout(() => schedule(), PRESS_HOLD_MS - pressed + 1); return; }",
-    "new": "    if (pressAt > -Infinity) { setTimeout(() => schedule(), PRESS_HOLD_MS); return; }",
+    "old": "    if (pressed < PRESS_HOLD_MS) {\n      setTimeout(() => schedule(), PRESS_HOLD_MS - pressed + 1);",
+    "new": "    if (pressAt > -Infinity) {\n      setTimeout(() => schedule(), PRESS_HOLD_MS);",
     "tests": [
       "test/poi/auditpoi_lead.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDITPOI-L2-the-unwrap-on-this-thread",
     "file": "src/ui/poi/poiUvPanel.js",
-    "old": "      ed.unwrapOffThread().then((n) => {",
-    "new": "      Promise.resolve(ed.unwrap()).then((n) => {",
+    "old": "        ed.unwrapOffThread().then((n) => {",
+    "new": "        Promise.resolve(ed.unwrap()).then((n) => {",
     "tests": [
       "test/poi/auditpoi_lead.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDITPOI-L2-applys-press-unguarded",
     "file": "src/ui/poi/poiUvPanel.js",
-    "old": "    if (applying || ed.busy()) return;",
-    "new": "    if (applying) return;",
+    "old": "    if (applying || ed.busy()) return; // AUDIT POI M13: never the UVs from before an unwrap still out",
+    "new": "    if (applying) return; // AUDIT POI M13: never the UVs from before an unwrap still out",
     "tests": [
       "test/poi/auditpoi_lead.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDITPOI-L2-the-worker-kept-at-close",
     "file": "src/ui/poi/poiUvPanel.js",
-    "old": "closed = true; ed.dispose(); root.remove?.();",
-    "new": "closed = true; root.remove?.();",
+    "old": "    ed.dispose();\n    root.remove?.();",
+    "new": "    root.remove?.();",
     "tests": [
       "test/poi/auditpoi_lead.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "AUDITPOI-L2-the-answer-said-after-close",
     "file": "src/ui/poi/poiUvPanel.js",
-    "old": "        if (closed) return;\n        say(t('poi.uv.unwrapped'",
-    "new": "        say(t('poi.uv.unwrapped'",
+    "old": "          if (closed) return;\n          say(t('poi.uv.unwrapped', 'Unwrapped {n, plural, one {# island} other {# islands}}.', { n }));",
+    "new": "          say(t('poi.uv.unwrapped', 'Unwrapped {n, plural, one {# island} other {# islands}}.', { n }));",
     "tests": [
       "test/poi/auditpoi_lead.test.js"
     ]
@@ -111,7 +111,7 @@
     "name": "AUDITPOI-L4-openpack-inflating-the-whole-archive",
     "file": "src/ui/poi/poiEditorPanel.js",
     "old": "      pack = await readPackBytes(bytes);",
-    "new": "      pack = await (await import('../../poi/poiPack.js')).readPack(await (await import('../../scenes/dataSource.js')).readZipEntries({ arrayBuffer: async () => bytes.slice().buffer }));",
+    "new": "      pack = await (\n        await import('../../poi/poiPack.js')\n      ).readPack(\n        await (\n          await import('../../scenes/dataSource.js')\n        ).readZipEntries({ arrayBuffer: async () => bytes.slice().buffer }),\n      );",
     "tests": [
       "test/poi/auditpoi_lead.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "AUDITPOI-L6-the-lists-change-outside-the-refusal",
     "file": "src/ui/poi/poiEditorPanel.js",
-    "old": "(v) => { split = v; if (lastRead) shown(lastRead); });",
-    "new": "(v) => { split = v; if (lastRead) show(lastRead); });",
+    "old": "        if (lastRead) shown(lastRead);",
+    "new": "        if (lastRead) show(lastRead);",
     "tests": [
       "test/poi/auditpoi_lead.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "AUDITPOI-L7-the-lights-unlisted",
     "file": "src/ui/poi/poiEditorPanel.js",
-    "old": "      if (prep.lights?.length) rows.push(",
-    "new": "      if (prep.lights?.length < 0) rows.push(",
+    "old": "      if (prep.lights?.length)",
+    "new": "      if (prep.lights?.length < 0)",
     "tests": [
       "test/poi/auditpoi_lead.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "AUDITPOI-L7-kept-without-them",
     "file": "src/ui/poi/poiEditorPanel.js",
-    "old": "lights: r.asset.lights ?? [], meshes });",
-    "new": "lights: [], meshes });",
+    "old": "        await library.keepNow({ name: r.asset.name, parts: r.asset.parts, lights: r.asset.lights ?? [], meshes });",
+    "new": "        await library.keepNow({ name: r.asset.name, parts: r.asset.parts, lights: [], meshes });",
     "tests": [
       "test/poi/auditpoi_lead.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "AUDITPOI-L9-a-models-facts-its-submeshes-alone",
     "file": "src/ui/poi/poiEditorPanel.js",
-    "old": "{ kind: 'mesh', ...poiMeshFacts(m.mesh), bytes: bytes.byteLength }",
-    "new": "{ kind: 'mesh', submeshes: m.mesh.submeshes.length }",
+    "old": "          if (!('error' in m)) facts.set(sha, { kind: 'mesh', ...poiMeshFacts(m.mesh), bytes: bytes.byteLength });",
+    "new": "          if (!('error' in m)) facts.set(sha, { kind: 'mesh', submeshes: m.mesh.submeshes.length });",
     "tests": [
       "test/poi/auditpoi_lead.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "AUDITPOI-L9-a-pictures-bytes-unread",
     "file": "src/ui/poi/poiEditorPanel.js",
-    "old": "{ kind: 'texture', w: im.w, h: im.h, bytes: bytes.byteLength }",
-    "new": "{ kind: 'texture', w: im.w, h: im.h }",
+    "old": "            facts.set(sha, 'error' in im ? null : { kind: 'texture', w: im.w, h: im.h, bytes: bytes.byteLength });",
+    "new": "            facts.set(sha, 'error' in im ? null : { kind: 'texture', w: im.w, h: im.h });",
     "tests": [
       "test/poi/auditpoi_lead.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "AUDITPOI-L9-a-picture-puts-bytes-untold",
     "file": "src/ui/poi/poiEditorPanel.js",
-    "old": "{ kind: 'texture', ...r.data.meta, bytes: bytes.byteLength }",
-    "new": "{ kind: 'texture', ...r.data.meta }",
+    "old": "    facts.put(r.data.sha, { kind: 'texture', ...r.data.meta, bytes: bytes.byteLength });",
+    "new": "    facts.put(r.data.sha, { kind: 'texture', ...r.data.meta });",
     "tests": [
       "test/poi/auditpoi_lead.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "AUDITPOI-L9-a-uv-puts-bytes-untold",
     "file": "src/ui/poi/poiEditorPanel.js",
-    "old": "{ kind: 'mesh', ...r.data.meta, bytes: out.byteLength }",
-    "new": "{ kind: 'mesh', ...r.data.meta }",
+    "old": "        facts.put(r.data.sha, { kind: 'mesh', ...r.data.meta, bytes: out.byteLength });",
+    "new": "        facts.put(r.data.sha, { kind: 'mesh', ...r.data.meta });",
     "tests": [
       "test/poi/auditpoi_lead.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "AUDITPOI-L9-a-packs-bytes-untold",
     "file": "src/ui/poi/poiEditorPanel.js",
-    "old": "facts.put(sha, { ...a, bytes: bytes.byteLength });",
-    "new": "facts.put(sha, { ...a, bytes });",
+    "old": "    for (const [sha, { bytes, ...a }] of pack.assets) facts.put(sha, { ...a, bytes: bytes.byteLength });",
+    "new": "    for (const [sha, { bytes, ...a }] of pack.assets) facts.put(sha, { ...a, bytes });",
     "tests": [
       "test/poi/auditpoi_lead.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "AUDITPOI-L10-read-as-taken-back-to-its-own",
     "file": "src/ui/poi/poiEditorPanel.js",
-    "old": "    if (r.data?.state === 'withdrawn') {",
-    "new": "    if (r.data?.state === 'never') {",
+    "old": "      if (r.data?.state === 'withdrawn') {",
+    "new": "      if (r.data?.state === 'never') {",
     "tests": [
       "test/poi/auditpoi_lead.test.js"
     ]

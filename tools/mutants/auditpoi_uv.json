@@ -218,8 +218,8 @@
   {
     "name": "AUDITPOI-M9-the-panels-word-unsaid",
     "file": "src/ui/poi/poiUvPanel.js",
-    "old": "() => { if (!ed.pack({ margin, rotate })) say(",
-    "new": "() => { if (!ed.pack({ margin, rotate }) && false) say(",
+    "old": "      if (!ed.pack({ margin, rotate }))",
+    "new": "      if (!ed.pack({ margin, rotate }) && false)",
     "tests": [
       "test/poi/auditpoi_uv.test.js"
     ]

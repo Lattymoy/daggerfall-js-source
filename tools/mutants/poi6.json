@@ -110,8 +110,8 @@
   {
     "name": "POI6-the-queue-for-a-builder",
     "file": "src/ui/poi/poiEditorPanel.js",
-    "old": "      ...(me.approver ? [btn(t('poi.review.title', 'Approvals')",
-    "new": "      ...(true ? [btn(t('poi.review.title', 'Approvals')",
+    "old": "      ...(me.approver",
+    "new": "      ...(true",
     "tests": [
       "test/poi/poi6_review.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "POI6-sent-back-without-a-word",
     "file": "src/ui/poi/poiReviewPanel.js",
-    "old": "    if (verdict === 'reject' && !word) { say(t('poi.review.needWord', 'Say why it goes back. The builder reads it.'), 'bad'); return; }\n",
-    "new": "\n",
+    "old": "    if (verdict === 'reject' && !word) {\n      say(t('poi.review.needWord', 'Say why it goes back. The builder reads it.'), 'bad');\n      return;\n    }",
+    "new": "",
     "tests": [
       "test/poi/poi6_review.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "POI6-opened-as-saved",
     "file": "src/ui/poi/poiReviewPanel.js",
-    "old": "doc: structuredClone(rev.doc), saved: live, base:",
-    "new": "doc: structuredClone(rev.doc), base:",
+    "old": "      saved: live,\n      base: h.liveRev ?? null,",
+    "new": "      base: h.liveRev ?? null,",
     "tests": [
       "test/poi/poi6_review.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "POI6-put-back-at-the-first-press",
     "file": "src/ui/poi/poiReviewPanel.js",
-    "old": "    if (puttingBack !== rev.rev) { puttingBack = rev.rev; drawHistory(); return; }\n",
-    "new": "\n",
+    "old": "    if (puttingBack !== rev.rev) {\n      puttingBack = rev.rev;\n      drawHistory();\n      return;\n    }\n    puttingBack = null;",
+    "new": "    puttingBack = null;",
     "tests": [
       "test/poi/poi6_review.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "POI6-the-law-report-never-redrawn",
     "file": "src/ui/poi/poiEditorPanel.js",
-    "old": "() => { schedule(); review?.learned(); });",
-    "new": "() => schedule());",
+    "old": "    () => {\n      schedule();\n      review?.learned();\n    },",
+    "new": "    () => schedule(),",
     "tests": [
       "test/poi/poi6_review.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "POI6-the-pack-overwrites-unsaved-work",
     "file": "src/ui/poi/poiEditorPanel.js",
-    "old": "      if (edit.has(o.id) && edit.dirty(o.id)) { kept++; continue; }\n",
-    "new": "\n",
+    "old": "      if (edit.has(o.id) && edit.dirty(o.id)) {\n        kept++;\n        continue;\n      }",
+    "new": "",
     "tests": [
       "test/poi/poi6_review.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "POI6-the-look-left-open",
     "file": "src/ui/poi/poiReviewPanel.js",
-    "old": "edit.entryOf(item.id)?.state === 'submitted') edit.close(item.id);",
-    "new": "edit.entryOf(item.id)?.state === 'submitted') void 0;",
+    "old": "    if (edit.has(item.id) && !edit.dirty(item.id) && edit.entryOf(item.id)?.state === 'submitted') edit.close(item.id);",
+    "new": "    if (edit.has(item.id) && !edit.dirty(item.id) && edit.entryOf(item.id)?.state === 'submitted') void 0;",
     "tests": [
       "test/poi/poi6_review.test.js"
     ]

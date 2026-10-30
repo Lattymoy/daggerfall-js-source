@@ -126,6 +126,8 @@
 /src/ui/map/*/
 !/src/ui/menu/
 /src/ui/menu/*/
+!/src/ui/poi/
+/src/ui/poi/*/
 !/src/ui/questlines/
 /src/ui/questlines/*/
 !/src/ui/starfall/

@@ -128,7 +128,7 @@
   {
     "name": "POI5-the-header-unread",
     "file": "src/ui/poi/poiEditorPanel.js",
-    "old": "    if ('error' in meta) { say(imageErrorText(meta.error), 'bad'); return false; }\n    const r = await act((i) => poiPutAsset(i, bytes, 'texture'));",
+    "old": "    if ('error' in meta) {\n      say(imageErrorText(meta.error), 'bad');\n      return false;\n    }\n    const r = await act((i) => poiPutAsset(i, bytes, 'texture'));",
     "new": "    const r = await act((i) => poiPutAsset(i, bytes, 'texture'));",
     "tests": [
       "test/ui/poi5_panel.test.js"
@@ -137,8 +137,8 @@
   {
     "name": "POI5-the-strength-unread",
     "file": "src/ui/poi/poiEditorPanel.js",
-    "old": "numberInput(strength, (k2) => change('material', mat((x) => { x.emissiveColor = glowAs(glow.value, k2); })),",
-    "new": "numberInput(strength, (k2) => change('material', mat((x) => { x.emissiveColor = glowAs(glow.value, 1); })),",
+    "old": "                  x.emissiveColor = glowAs(glow.value, k2);",
+    "new": "                  x.emissiveColor = glowAs(glow.value, 1);",
     "tests": [
       "test/ui/poi5_panel.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "POI5-the-zoom-drifts",
     "file": "src/ui/poi/poiUvPanel.js",
-    "old": "      v.cu = before[0] - (x - v.w / 2) / k(); v.cv = before[1] - (y - v.h / 2) / k();",
-    "new": "",
+    "old": "      v.cu = before[0] - (x - v.w / 2) / k();\n      v.cv = before[1] - (y - v.h / 2) / k();\n    },",
+    "new": "    },",
     "tests": [
       "test/ui/poi5_panel.test.js"
     ]
@@ -155,7 +155,7 @@
   {
     "name": "POI5-the-part-never-wears-it",
     "file": "src/ui/poi/poiEditorPanel.js",
-    "old": "        edit.edit(id, 'uv', (x) => { const p = x.parts.find((q) => q.key === key); if (p) p.mesh = r.data.sha; });",
+    "old": "        edit.edit(id, 'uv', (x) => {\n          const p = x.parts.find((q) => q.key === key);\n          if (p) p.mesh = r.data.sha;\n        });",
     "new": "        void id;",
     "tests": [
       "test/ui/poi5_panel.test.js"
@@ -164,8 +164,8 @@
   {
     "name": "POI5-the-first-act-frees-the-save",
     "file": "src/ui/poi/poiEditorPanel.js",
-    "old": "    try { return await fn(i); } finally { busy--; schedule(); }",
-    "new": "    try { return await fn(i); } finally { busy = 0; schedule(); }",
+    "old": "      busy--;",
+    "new": "      busy = 0;",
     "tests": [
       "test/ui/poi5_panel.test.js"
     ]

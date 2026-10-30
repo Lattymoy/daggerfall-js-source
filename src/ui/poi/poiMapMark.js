@@ -10,7 +10,7 @@
 //
 // Not a DFU member. Ledger A (POI).
 import { BOUNTY_RING_R } from '../bounty/bountyMapMark.js';
-import { t } from '../../systems/textManager.js';   // L10N4: the words through the text core
+import { t } from '../../systems/textManager.js'; // L10N4: the words through the text core
 
 /** The held map's ink - a deep violet, read on the parchment as the bounty's black and the lode's teal are, and apart
  *  from every other circle's colour. */
@@ -29,4 +29,5 @@ export const poiLegendText = () => t('poi.map.legend', 'Point of interest');
  * @param {ReadonlyArray<{ px: number, py: number, label?: string }>} marks
  * @returns {Array<{ cx: number, cy: number, r: number, label: string }>}
  */
-export const poiMapMarks = (marks) => (marks ?? []).map((m) => ({ cx: m.px + 0.5, cy: m.py + 0.5, r: BOUNTY_RING_R, label: m.label || poiLegendText() }));
+export const poiMapMarks = (marks) =>
+  (marks ?? []).map((m) => ({ cx: m.px + 0.5, cy: m.py + 0.5, r: BOUNTY_RING_R, label: m.label || poiLegendText() }));

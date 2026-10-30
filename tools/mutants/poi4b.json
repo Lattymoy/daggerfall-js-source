@@ -158,8 +158,8 @@
   {
     "name": "POI4B-mine-by-case",
     "file": "src/ui/poi/poiLibraryPanel.js",
-    "old": "String(item.by ?? '').toLowerCase() === me.handle.toLowerCase()",
-    "new": "String(item.by ?? '') === me.handle",
+    "old": "  const mine = (item) => !!me.handle && String(item.by ?? '').toLowerCase() === me.handle.toLowerCase();",
+    "new": "  const mine = (item) => !!me.handle && String(item.by ?? '') === me.handle;",
     "tests": [
       "test/poi/poi4b_library.test.js"
     ]
@@ -176,8 +176,8 @@
   {
     "name": "POI4B-taken-off-at-the-first-press",
     "file": "src/ui/poi/poiLibraryPanel.js",
-    "old": "    if (dropping !== it.id) { dropping = it.id; draw(); return; }\n",
-    "new": "\n",
+    "old": "    if (dropping !== it.id) {\n      dropping = it.id;\n      draw();\n      return;\n    }\n    dropping = null;",
+    "new": "    dropping = null;",
     "tests": [
       "test/poi/poi4b_library.test.js"
     ]
@@ -185,8 +185,8 @@
   {
     "name": "POI4B-the-lights-left-behind",
     "file": "src/ui/poi/poiEditorPanel.js",
-    "old": "lights: structuredClone(d.lights ?? []) }); }));",
-    "new": "lights: [] }); }));",
+    "old": "          library.keep({ name: d.name, parts: structuredClone(d.parts), lights: structuredClone(d.lights ?? []) });",
+    "new": "          library.keep({ name: d.name, parts: structuredClone(d.parts), lights: [] });",
     "tests": [
       "test/poi/poi4b_library.test.js"
     ]

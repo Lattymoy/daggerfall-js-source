@@ -498,8 +498,8 @@
   {
     "name": "AUDITPOI-T5-the-history-not-drawn-again",
     "file": "src/ui/poi/poiReviewPanel.js",
-    "old": "    await loadHistory(h.id);\n  }\n",
-    "new": "  }\n",
+    "old": "    await loadHistory(h.id);\n  }",
+    "new": "  }",
     "tests": [
       "test/poi/poi6_review.test.js"
     ]
@@ -507,8 +507,8 @@
   {
     "name": "AUDITPOI-T6-a-clean-open-poi-kept",
     "file": "src/ui/poi/poiEditorPanel.js",
-    "old": "      if (edit.has(o.id) && edit.dirty(o.id)) { kept++; continue; }",
-    "new": "      if (edit.has(o.id)) { kept++; continue; }",
+    "old": "      if (edit.has(o.id) && edit.dirty(o.id)) {",
+    "new": "      if (edit.has(o.id)) {",
     "tests": [
       "test/poi/poi6_review.test.js"
     ]
