@@ -218,8 +218,8 @@
   {
     "name": "AUDIT-IT1-W1-the-sell-label",
     "file": "src/ui/merchant/merchantServiceDoor.js",
-    "old": "          { label: hooks.label ?? merchantServiceLabel(hooks.service), onClick:",
-    "new": "          { label: merchantServiceLabel(hooks.service), onClick:",
+    "old": "            label: hooks.label ?? merchantServiceLabel(hooks.service),",
+    "new": "            label: merchantServiceLabel(hooks.service),",
     "tests": [
       "test/systems/auditit1.test.js"
     ]

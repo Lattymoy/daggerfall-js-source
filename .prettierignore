@@ -136,6 +136,8 @@
 /src/ui/map/*/
 !/src/ui/menu/
 /src/ui/menu/*/
+!/src/ui/merchant/
+/src/ui/merchant/*/
 !/src/ui/poi/
 /src/ui/poi/*/
 !/src/ui/questlines/

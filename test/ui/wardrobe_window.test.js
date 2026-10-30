@@ -57,7 +57,7 @@ test('APPEARANCES THE ROW: the port\'s rows stack under the popup\'s art - the P
   assert.equal(opened, 5);
   // the Enhanced Plus panels list it as a press of its own, above the Portal Stone's (which stays above Exit)
   for (const f of ['src/ui/merchant/merchantServiceDoor.js', 'src/ui/merchant/merchantRepairDoor.js']) {
-    assert.match(read(f), /\.\.\.\(hooks\.wardrobe \? \[\{ label: hooks\.wardrobe\.label, icon: 'clothing', onClick: \(\) => \{ close\(\); hooks\.wardrobe\.onOpen\?\.\(\); \} \}\] : \[\]\),/, f);
+    assert.match(read(f), /\.\.\.\(hooks\.wardrobe\n\s*\? \[\n\s*\{\n\s*label: hooks\.wardrobe\.label,\n\s*icon: 'clothing',\n\s*onClick: \(\) => \{\n\s*close\(\);\n\s*hooks\.wardrobe\.onOpen\?\.\(\);\n\s*\},\n\s*\},\n\s*\]\n\s*: \[\]\),/, f);
   }
 });
 

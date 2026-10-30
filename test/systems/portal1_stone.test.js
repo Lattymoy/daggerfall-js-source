@@ -741,10 +741,10 @@ test('PORTAL1 the counter\'s row on the classic popups: under the art, drawn in 
   const msw = read('src/ui/merchant/merchantServiceWindow.js');
   assert.match(msw, /drawRect\(renderer, m, px \+ rx, py \+ ry, rw, rh, REFORGE_ROW_BG\);\n\s+shadowText\(renderer, font, label, m, px \+ rx, py \+ ry \+ 2, \{ align: 'center', w: rw \}\);/, 'the Reforge row\'s one dark, the label centred on it');
   assert.deepEqual(REFORGE_ROW_BG, [0.16, 0.11, 0.06, 0.92]);
-  assert.match(msw, /if \(this\.hooks\.portal\) drawPortalRow\(renderer, m, font, MERCHANT_PANEL_X, MERCHANT_PANEL_Y, MERCHANT_PANEL_H, this\.hooks\.portal\.label\);/, 'the plain popup draws it');
-  assert.match(read('src/ui/merchant/merchantRepairWindow.js'), /if \(this\.hooks\.portal && font\) drawPortalRow\(renderer, m, font, REPAIR_PANEL_X, REPAIR_PANEL_Y, REPAIR_PANEL_H, this\.hooks\.portal\.label\);/, 'the repair popup draws it');
+  assert.match(msw, /if \(this\.hooks\.portal\)\n\s*drawPortalRow\(renderer, m, font, MERCHANT_PANEL_X, MERCHANT_PANEL_Y, MERCHANT_PANEL_H, this\.hooks\.portal\.label\);/, 'the plain popup draws it');
+  assert.match(read('src/ui/merchant/merchantRepairWindow.js'), /if \(this\.hooks\.portal && font\)\n\s*drawPortalRow\(renderer, m, font, REPAIR_PANEL_X, REPAIR_PANEL_Y, REPAIR_PANEL_H, this\.hooks\.portal\.label\);/, 'the repair popup draws it');
   for (const door of ['src/ui/merchant/merchantServiceDoor.js', 'src/ui/merchant/merchantRepairDoor.js']) {
-    assert.match(read(door), /\.\.\.\(hooks\.portal \? \[\{ label: hooks\.portal\.label, onClick: \(\) => \{ close\(\); hooks\.portal\.onBuy\?\.\(\); \} \}\] : \[\]\),[^\n]*\n\s+\{ label: 'Exit', onClick: close \},/, `${door}: the Enhanced Plus panel's button, above Exit`);
+    assert.match(read(door), /\.\.\.\(hooks\.portal\n\s*\? \[\n\s*\{\n\s*label: hooks\.portal\.label,\n\s*onClick: \(\) => \{\n\s*close\(\);\n\s*hooks\.portal\.onBuy\?\.\(\);\n\s*\},\n\s*\},\n\s*\]\n\s*: \[\]\), \/\/ PORTAL1: the Portal Stone, for shards\n\s*\{ label: 'Exit', onClick: close \},/, `${door}: the Enhanced Plus panel's button, above Exit`);
   }
 });
 

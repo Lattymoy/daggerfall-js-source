@@ -44,19 +44,31 @@
 
 import { loadImg, nativeMetrics, drawImg } from '../native/nativePanel.js';
 import { drawScreenDimBackdrop } from '../chargenArt.js';
-import { audio } from '../../systems/audio.js';   // F141: the ButtonClick roster
+import { audio } from '../../systems/audio.js'; // F141: the ButtonClick roster
 import { SOUND } from '../../systems/soundClips.js';
-import { firstHotkey } from '../../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
-import { portalRowRect, PORTAL_ROW_KEY, drawPortalRow, shopRowRect, WARDROBE_ROW_KEY, wardrobeRowIndex, drawShopRow } from './merchantServiceWindow.js';   // PORTAL1: the Portal Stone's row, the shop popups' one; APPEARANCES: and the Wardrobe's under it
+import { firstHotkey } from '../../systems/dialogShortcuts.js'; // A8: the DaggerfallShortcut table
+import {
+  portalRowRect,
+  PORTAL_ROW_KEY,
+  drawPortalRow,
+  shopRowRect,
+  WARDROBE_ROW_KEY,
+  wardrobeRowIndex,
+  drawShopRow,
+} from './merchantServiceWindow.js'; // PORTAL1: the Portal Stone's row, the shop popups' one; APPEARANCES: and the Wardrobe's under it
 
 /** The window's DaggerfallShortcut.Buttons in ctor ADD order (:82-103),
  *  which is the order Panel.ProcessHotkeySequences asks them in. */
 export const MERCHANT_REPAIR_BUTTONS = Object.freeze([
-  'MerchantRepair', 'MerchantTalk', 'MerchantSell', 'MerchantExit',
+  'MerchantRepair',
+  'MerchantTalk',
+  'MerchantSell',
+  'MerchantExit',
 ]);
 
 /** mainPanel.Size (:79) - and the size REPR01I0.IMG ships. */
-export const REPAIR_PANEL_W = 130, REPAIR_PANEL_H = 51;
+export const REPAIR_PANEL_W = 130,
+  REPAIR_PANEL_H = 51;
 /** Center/Middle on the 320x200 native panel (:75-76). */
 export const REPAIR_PANEL_X = Math.round((320 - REPAIR_PANEL_W) / 2);
 export const REPAIR_PANEL_Y = Math.round((200 - REPAIR_PANEL_H) / 2);
@@ -72,13 +84,16 @@ export const REPAIR_RECTS = Object.freeze({
 let _art = null;
 export async function preloadMerchantRepairArt(deps) {
   if (_art) return;
-  try { _art = await loadImg(deps, 'REPR01I0.IMG'); }
-  catch { console.warn('[repair] REPR01I0 unavailable; the repair popup stays the keyed flow'); }
+  try {
+    _art = await loadImg(deps, 'REPR01I0.IMG');
+  } catch {
+    console.warn('[repair] REPR01I0 unavailable; the repair popup stays the keyed flow');
+  }
 }
 export const merchantRepairArtLoaded = () => !!_art;
 
-const inRect = ([rx, ry, rw, rh], x, y) => x >= rx + REPAIR_PANEL_X && y >= ry + REPAIR_PANEL_Y
-  && x < rx + REPAIR_PANEL_X + rw && y < ry + REPAIR_PANEL_Y + rh;
+const inRect = ([rx, ry, rw, rh], x, y) =>
+  x >= rx + REPAIR_PANEL_X && y >= ry + REPAIR_PANEL_Y && x < rx + REPAIR_PANEL_X + rw && y < ry + REPAIR_PANEL_Y + rh;
 
 /**
  * hooks:
@@ -92,48 +107,103 @@ export class MerchantRepairWindow {
   constructor(hooks) {
     this.hooks = hooks;
     this.done = false;
-    this.isChoiceWindow = true;   // raw codes through the overlay seam
+    this.isChoiceWindow = true; // raw codes through the overlay seam
   }
 
-  _close() { this.done = true; this.hooks.onClose?.(); }
+  _close() {
+    this.done = true;
+    this.hooks.onClose?.();
+  }
 
   /** Every handler is click-sound, CloseWindow, then the action. */
-  _act(fn) { audio.playOneShot(SOUND.ButtonClick, 1); this._close(); fn?.(); }
+  _act(fn) {
+    audio.playOneShot(SOUND.ButtonClick, 1);
+    this._close();
+    fn?.();
+  }
 
   input(code, e = null) {
-    if (e?.repeat) return;   // AUDIT HORIZONTAL E7: a key held as the popup opened is no press (merchantServiceWindow.js input)
+    if (e?.repeat) return; // AUDIT HORIZONTAL E7: a key held as the popup opened is no press (merchantServiceWindow.js input)
     // Escape/Enter are the port host's close keys, not DFU buttons.
-    if (code === 'Escape' || code === 'Enter') { this._act(null); return; }
-    if (code === PORTAL_ROW_KEY && this.hooks.portal) { this._act(this.hooks.portal.onBuy); return; }   // PORTAL1
-    if (code === WARDROBE_ROW_KEY && this.hooks.wardrobe) { this._act(this.hooks.wardrobe.onOpen); return; }   // APPEARANCES
+    if (code === 'Escape' || code === 'Enter') {
+      this._act(null);
+      return;
+    }
+    if (code === PORTAL_ROW_KEY && this.hooks.portal) {
+      this._act(this.hooks.portal.onBuy);
+      return;
+    } // PORTAL1
+    if (code === WARDROBE_ROW_KEY && this.hooks.wardrobe) {
+      this._act(this.hooks.wardrobe.onOpen);
+      return;
+    } // APPEARANCES
     const hit = firstHotkey(MERCHANT_REPAIR_BUTTONS, code, e);
     if (hit === null) return;
     switch (hit) {
-      case 'MerchantRepair': this._act(this.hooks.onRepair); return;
-      case 'MerchantTalk': this._act(this.hooks.onTalk); return;
-      case 'MerchantSell': this._act(this.hooks.onSell); return;
-      default: this._act(null);   // MerchantExit
+      case 'MerchantRepair':
+        this._act(this.hooks.onRepair);
+        return;
+      case 'MerchantTalk':
+        this._act(this.hooks.onTalk);
+        return;
+      case 'MerchantSell':
+        this._act(this.hooks.onSell);
+        return;
+      default:
+        this._act(null); // MerchantExit
     }
   }
 
   click(vx, vy) {
-    if (inRect(REPAIR_RECTS.repair, vx, vy)) { this._act(this.hooks.onRepair); return true; }
-    if (inRect(REPAIR_RECTS.talk, vx, vy)) { this._act(this.hooks.onTalk); return true; }
-    if (inRect(REPAIR_RECTS.sell, vx, vy)) { this._act(this.hooks.onSell); return true; }
-    if (inRect(REPAIR_RECTS.exit, vx, vy)) { this._act(null); return true; }
-    if (this.hooks.portal && inRect(portalRowRect(REPAIR_PANEL_H), vx, vy)) { this._act(this.hooks.portal.onBuy); return true; }   // PORTAL1
-    if (this.hooks.wardrobe && inRect(shopRowRect(REPAIR_PANEL_H, wardrobeRowIndex(this.hooks)), vx, vy)) { this._act(this.hooks.wardrobe.onOpen); return true; }   // APPEARANCES
-    return true;   // the panel eats its own clicks
+    if (inRect(REPAIR_RECTS.repair, vx, vy)) {
+      this._act(this.hooks.onRepair);
+      return true;
+    }
+    if (inRect(REPAIR_RECTS.talk, vx, vy)) {
+      this._act(this.hooks.onTalk);
+      return true;
+    }
+    if (inRect(REPAIR_RECTS.sell, vx, vy)) {
+      this._act(this.hooks.onSell);
+      return true;
+    }
+    if (inRect(REPAIR_RECTS.exit, vx, vy)) {
+      this._act(null);
+      return true;
+    }
+    if (this.hooks.portal && inRect(portalRowRect(REPAIR_PANEL_H), vx, vy)) {
+      this._act(this.hooks.portal.onBuy);
+      return true;
+    } // PORTAL1
+    if (this.hooks.wardrobe && inRect(shopRowRect(REPAIR_PANEL_H, wardrobeRowIndex(this.hooks)), vx, vy)) {
+      this._act(this.hooks.wardrobe.onOpen);
+      return true;
+    } // APPEARANCES
+    return true; // the panel eats its own clicks
   }
 
   draw(renderer, canvas, font = null) {
-    if (!_art) { this._close(); return; }   // art gone mid-session: release the slot
+    if (!_art) {
+      this._close();
+      return;
+    } // art gone mid-session: release the slot
     const m = nativeMetrics(canvas);
     // AUDIT 26 F136 / AUDIT 24 ui: `ParentPanel.BackgroundColor =
     // Color.clear` (:62) - the letterbox is NOT painted, the room shows.
     drawScreenDimBackdrop(renderer, canvas);
     drawImg(renderer, _art, m, REPAIR_PANEL_X, REPAIR_PANEL_Y);
-    if (this.hooks.portal && font) drawPortalRow(renderer, m, font, REPAIR_PANEL_X, REPAIR_PANEL_Y, REPAIR_PANEL_H, this.hooks.portal.label);   // PORTAL1
-    if (this.hooks.wardrobe && font) drawShopRow(renderer, m, font, REPAIR_PANEL_X, REPAIR_PANEL_Y, REPAIR_PANEL_H, this.hooks.wardrobe.label, wardrobeRowIndex(this.hooks));   // APPEARANCES
+    if (this.hooks.portal && font)
+      drawPortalRow(renderer, m, font, REPAIR_PANEL_X, REPAIR_PANEL_Y, REPAIR_PANEL_H, this.hooks.portal.label); // PORTAL1
+    if (this.hooks.wardrobe && font)
+      drawShopRow(
+        renderer,
+        m,
+        font,
+        REPAIR_PANEL_X,
+        REPAIR_PANEL_Y,
+        REPAIR_PANEL_H,
+        this.hooks.wardrobe.label,
+        wardrobeRowIndex(this.hooks),
+      ); // APPEARANCES
   }
 }

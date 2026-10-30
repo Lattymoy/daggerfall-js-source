@@ -500,8 +500,8 @@
   {
     "name": "PORTAL1-row-key-without-a-row",
     "file": "src/ui/merchant/merchantServiceWindow.js",
-    "old": "    if (code === PORTAL_ROW_KEY && this.hooks.portal) this._portal();",
-    "new": "    if (code === PORTAL_ROW_KEY) this._portal();",
+    "old": "    if (code === PORTAL_ROW_KEY && this.hooks.portal) this._portal(); // PORTAL1",
+    "new": "    if (code === PORTAL_ROW_KEY) this._portal(); // PORTAL1",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -509,8 +509,8 @@
   {
     "name": "PORTAL1-row-buys-before-it-closes",
     "file": "src/ui/merchant/merchantServiceWindow.js",
-    "old": "  _portal() { this._click(); this._close(); this.hooks.portal?.onBuy?.(); }",
-    "new": "  _portal() { this._click(); this.hooks.portal?.onBuy?.(); this._close(); }",
+    "old": "    this._close();\n    this.hooks.portal?.onBuy?.();",
+    "new": "    this.hooks.portal?.onBuy?.();\n    this._close();",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -518,8 +518,8 @@
   {
     "name": "PORTAL1-row-never-drawn",
     "file": "src/ui/merchant/merchantServiceWindow.js",
-    "old": "    if (this.hooks.portal) drawPortalRow(renderer, m, font, MERCHANT_PANEL_X, MERCHANT_PANEL_Y, MERCHANT_PANEL_H, this.hooks.portal.label);",
-    "new": "",
+    "old": "    if (this.hooks.portal)\n      drawPortalRow(renderer, m, font, MERCHANT_PANEL_X, MERCHANT_PANEL_Y, MERCHANT_PANEL_H, this.hooks.portal.label); // PORTAL1",
+    "new": "    // PORTAL1",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -527,8 +527,8 @@
   {
     "name": "PORTAL1-repair-row-on-the-art",
     "file": "src/ui/merchant/merchantRepairWindow.js",
-    "old": "inRect(portalRowRect(REPAIR_PANEL_H), vx, vy)",
-    "new": "inRect(portalRowRect(REPAIR_PANEL_H - 9), vx, vy)",
+    "old": "    if (this.hooks.portal && inRect(portalRowRect(REPAIR_PANEL_H), vx, vy)) {",
+    "new": "    if (this.hooks.portal && inRect(portalRowRect(REPAIR_PANEL_H - 9), vx, vy)) {",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]

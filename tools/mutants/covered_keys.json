@@ -137,8 +137,8 @@
   {
     "name": "CK-the-merchant-service-door-names-no-window",
     "file": "src/ui/merchant/merchantServiceDoor.js",
-    "old": "        owner: overlay,",
-    "new": "",
+    "old": "        owner: overlay, // COVERED-KEYS: the window the panel's keys are gated on (ui/windowStack.js listenWindowKeys)",
+    "new": "        // COVERED-KEYS: the window the panel's keys are gated on (ui/windowStack.js listenWindowKeys)",
     "tests": [
       "test/ui/coveredkeys.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "CK-the-merchant-repair-door-names-no-window",
     "file": "src/ui/merchant/merchantRepairDoor.js",
-    "old": "        owner: overlay,",
-    "new": "",
+    "old": "        owner: overlay, // COVERED-KEYS: the window the panel's keys are gated on (ui/windowStack.js listenWindowKeys)",
+    "new": "        // COVERED-KEYS: the window the panel's keys are gated on (ui/windowStack.js listenWindowKeys)",
     "tests": [
       "test/ui/coveredkeys.test.js"
     ]

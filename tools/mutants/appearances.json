@@ -505,8 +505,8 @@
   {
     "name": "APPEARANCES-the-rows-on-one-place",
     "file": "src/ui/merchant/merchantServiceWindow.js",
-    "old": "Object.freeze([5, panelH + 2 + 12 * i, 120, 10]);",
-    "new": "Object.freeze([5, panelH + 2 + 0 * i, 120, 10]);",
+    "old": "export const shopRowRect = (panelH, i) => Object.freeze([5, panelH + 2 + 12 * i, 120, 10]);",
+    "new": "export const shopRowRect = (panelH, i) => Object.freeze([5, panelH + 2 + 0 * i, 120, 10]);",
     "tests": [
       "test/ui/wardrobe_window.test.js"
     ]
@@ -523,8 +523,8 @@
   {
     "name": "APPEARANCES-a-key-with-no-hook",
     "file": "src/ui/merchant/merchantServiceWindow.js",
-    "old": "    if (code === WARDROBE_ROW_KEY && this.hooks.wardrobe) this._wardrobe();",
-    "new": "    if (code === WARDROBE_ROW_KEY) this._wardrobe();",
+    "old": "    if (code === WARDROBE_ROW_KEY && this.hooks.wardrobe) this._wardrobe(); // APPEARANCES",
+    "new": "    if (code === WARDROBE_ROW_KEY) this._wardrobe(); // APPEARANCES",
     "tests": [
       "test/ui/wardrobe_window.test.js"
     ]
@@ -532,8 +532,8 @@
   {
     "name": "APPEARANCES-the-repair-row-unread",
     "file": "src/ui/merchant/merchantRepairWindow.js",
-    "old": "    if (this.hooks.wardrobe && inRect(shopRowRect(REPAIR_PANEL_H, wardrobeRowIndex(this.hooks)), vx, vy)) { this._act(this.hooks.wardrobe.onOpen); return true; }   // APPEARANCES\n",
-    "new": "",
+    "old": "    if (this.hooks.wardrobe && inRect(shopRowRect(REPAIR_PANEL_H, wardrobeRowIndex(this.hooks)), vx, vy)) {\n      this._act(this.hooks.wardrobe.onOpen);\n      return true;\n    } // APPEARANCES\n    return true; // the panel eats its own clicks",
+    "new": "    return true; // the panel eats its own clicks",
     "tests": [
       "test/ui/wardrobe_window.test.js"
     ]
@@ -785,8 +785,8 @@
   {
     "name": "AUDIT-E7-a-repeat-a-press-on-the-merchant-s-popup",
     "file": "src/ui/merchant/merchantServiceWindow.js",
-    "old": "    if (e?.repeat) return;\n    // ROAD-G G7:",
-    "new": "    // ROAD-G G7:",
+    "old": "    if (e?.repeat) return;\n    // ROAD-G G7: these three letters ARE the port's own, and the",
+    "new": "    // ROAD-G G7: these three letters ARE the port's own, and the",
     "tests": [
       "test/systems/appearances_audit.test.js"
     ]
@@ -794,8 +794,8 @@
   {
     "name": "AUDIT-E7-a-repeat-a-press-on-the-repair-popup",
     "file": "src/ui/merchant/merchantRepairWindow.js",
-    "old": "    if (e?.repeat) return;   // AUDIT HORIZONTAL E7",
-    "new": "    // AUDIT HORIZONTAL E7",
+    "old": "    if (e?.repeat) return; // AUDIT HORIZONTAL E7: a key held as the popup opened is no press (merchantServiceWindow.js input)",
+    "new": "    // AUDIT HORIZONTAL E7: a key held as the popup opened is no press (merchantServiceWindow.js input)",
     "tests": [
       "test/systems/appearances_audit.test.js"
     ]
