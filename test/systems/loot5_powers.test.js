@@ -318,10 +318,10 @@ test('LOOT5: death, the vigil, the kill, the round, the absorption, the find', (
   door([], me);
   assert.equal(LP.lootFind(), 1);
   wear(me, legendary('foxglove'));
-  assert.equal(LP.lootFind(), 1.5);
-  assert.equal(LR.legendaryFindMult(), 1.5, 'registered: the host door\'s finders');
-  const c = LR.rarityChances({ kind: 'pile', tier: 10, find: 1.5 }), c0 = LR.rarityChances({ kind: 'pile', tier: 10 });
-  assert.equal(c.legendary, c0.legendary * 1.5, 'the source\'s own chance, times one and a half');
+  assert.equal(LP.lootFind(), 1.25, 'PIN MOVED (FOX-STACK, Loot-Arc.md section 22): a quarter, it was a half');
+  assert.equal(LR.legendaryFindMult(), 1.25, 'registered: the host door\'s finders');
+  const c = LR.rarityChances({ kind: 'pile', tier: 10, find: 1.25 }), c0 = LR.rarityChances({ kind: 'pile', tier: 10 });
+  assert.equal(c.legendary, c0.legendary * 1.25, 'the source\'s own chance, times one and a quarter');
   assert.ok(LR.rarityChances({ kind: 'corpse', tier: 0, luck: 100, find: 1000 }).legendary <= LR.rarityChances({ kind: 'corpse', tier: 0, luck: 100 }).rare, 'never past the Rare');
   setPlayerDoor(null);
 });
