@@ -19475,7 +19475,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const auraHost = createAuraHost({
     renderer, online: () => online, travelActive: () => !!travelView?.active, quiet: () => !!egClient?.quiet?.(), player: () => player, camYaw: () => cam.yaw,
     spawned: () => playerSpawned, beast: () => !!liveLycanthropy(playerEntity)?.isTransformed, veiled: (id) => _veils.has(id), toScene: (shown) => onlineToScene(shown),
-    walkers: () => peerWalkers, riders: () => peerRiders, bodies: () => peerBodies, selfLift: () => dragonView.auraLift(), peerLift: (d) => (d.shown?.rd === POSE_RIDE.Dragon ? dragonAuraLift(remotePlayers?.spriteHeightOf(d.id) ?? 0) : 0),   // AURA-ON-DRAGON: mine on my dragon out of the head, and a peer's on theirs, worn in its seat
+    sprites: () => [peerWalkers, peerRiders, remotePlayers], bodies: () => peerBodies, selfLift: () => dragonView.auraLift(), peerLift: (d) => (d.shown?.rd === POSE_RIDE.Dragon ? dragonAuraLift(remotePlayers?.spriteHeightOf(d.id) ?? 0) : 0),   // AURA-ON-DRAGON: mine on my dragon out of the head, and a peer's on theirs, worn in its seat; CAPE-CARD: `sprites`, every layer that draws a peer as a picture (remotePlayers' paperdolls and class sprites with the sets')
   });
   const renownXpAdopt = (xp) => {
     if (onlineOn && Number.isSafeInteger(xp) && xp >= 0 && (renownXp === null || xp > renownXp)) renownXp = xp;
@@ -27831,7 +27831,10 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // AUDIT DEEP2 D6: under the travel view the riders and the walkers take the VIEW's eye and its right, as R-11 gave the
     // dolls - their 8-way picture, their sprite's offset and their lantern were the traveller's, edge-on as the view orbited
     const peerYaw = travelView?.active && travelView.camera ? travelView.camera.yaw : cam.yaw;
-    const peerEye = travelView?.eye ?? cam.pos, peerRight = [Math.cos(peerYaw), 0, -Math.sin(peerYaw)];
+    // AUDIT CAPE-CARD A1: and every picture turns to the eye that DRAWS it (WAGONS3's law, hcc.faceTeams) - the frame's
+    // camera, last placed by the renderer (this frame's is placed after the peers); `cam.pos` is the head, 2.7 m off it in
+    // third person, so a peer beside me showed the camera one side and hung a cape on the other
+    const peerEye = travelView?.eye ?? (renderer._view ? renderer._camPos : cam.pos), peerRight = [Math.cos(peerYaw), 0, -Math.sin(peerYaw)];
     const tvGrow = travelView?.active ? peerGrow : null;   // OW-PEERS: the others grown under the Overworld, as the traveller is
     const drawable = isCellRoom(online.room) && csaOn() ? csaAboard.glue(staffFollow.drawable(), { poseOf: (o, i) => csaPoseAhead(o, i, dt) ?? naval?.deckAhead?.(o, gamePaused() ? 0 : dt * worldTimeScale()) ?? null, toWire: campToWire, dt }) : staffFollow.drawable(); if (hccOn()) hcc.seatGlue(drawable, { toWire: campToWire });   // WAGONS2: the others seated in a wagon's back drawn on its seats as it is drawn here   // CSA-K: a peer aboard a boat stands on its deck as it is drawn here - its owner's (mine among them) or the one led here - never a stride behind it
     _peerMapPoses.clear();
@@ -27872,7 +27875,6 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     // after the bodies (a Morrowind player's own choice for everyone they meet), before the class sprite and the doll
     peerWalkers.sync(seen, onlineToScene, { eye: peerEye, right: peerRight, dt, skip: (id) => peerBodies.heightOf(id) > 0, hurt: (id) => peerHurtAge(id) < PEER_FLINCH_S, conceal: veilOf, grow: tvGrow });   // PEERFX3: a class skin's hurt pose
     peerRiders.settle((id) => peerBodies.wolfStands(id), (id) => peerBodies.has(id));   // COATS3D (AUDIT A3): a rider on the 3D horse whose body did not stand is drawn as the sprite rider   // WEREWOLF1 (AUDIT E4): the deferred werewolves, now the bodies have stood - before anything reads the riders
-    auraHost.frame(seen);   // WB9g: the auras at the feet - mine and the drawn peers' - gathered with the rest; ARMORY: and the Aura Armory's pieces
     // PCORPSE1: a body heard in a room this scene has left for another KIND of space (a dungeon's local frame, the
     // street's world frame) is not this scene's to draw; one heard anywhere in the overworld's cells still is
     // PCORPSE3: a party member's body their party pose tells of, that the death pose never brought me (I was between
@@ -27890,8 +27892,9 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       for (const acct of [..._partyBodies]) if (!others.some((m) => m.acct === acct)) { _partyBodies.delete(acct); remotePlayers.partyForget(acct); }
     }
     if (online.room) remotePlayers.keepCorpses((r) => r === online.room || ((isWorldRoom(r) || isCellRoom(r)) && (isWorldRoom(online.room) || isCellRoom(online.room))));   // PCORPSE2: never judged while between rooms (a cell crossing's gap) - no room is not another space
-    remotePlayers.sync(visiblePeers, onlineToScene, { bodyHeight: (id) => peerRiders.heightOf(id) || peerBodies.heightOf(id) || peerWalkers.heightOf(id), dt, eye: travelView?.eye ?? player.pos, poseAgeMs: (p) => online.poseAgeMs(p), conceal: veilOf, hidden: (id) => _hiddenPeers.has(id) && (pvpFlag.barKept(id) ? 'bar' : true), grow: tvGrow, room: drawable });   // AUDIT PEER-RANGE A L1/L6: the room's whole list - a rise past the draw distance is seen, and a cut peer keeps its sprite's bundle   // AUDIT (pre-merge) I-G: every peer HEARD (a concealed one's steps, swings and hooves - sound is no renderer), the classic lane's concealed drawn nowhere   // 2026-09-17: dt drives the class-enemy billboard path's own animation clock; eye is the local player's own position, needed for mobileOrientation's facing calculation (see remotePlayers.js _syncMobilePeer)   // AUDIT DEEP R-11: under the travel view, the view's own eye - the picture each peer shows is the one the camera sees
+    remotePlayers.sync(visiblePeers, onlineToScene, { bodyHeight: (id) => peerRiders.heightOf(id) || peerBodies.heightOf(id) || peerWalkers.heightOf(id), dt, eye: travelView?.eye ?? player.pos, view: peerEye, poseAgeMs: (p) => online.poseAgeMs(p), conceal: veilOf, hidden: (id) => _hiddenPeers.has(id) && (pvpFlag.barKept(id) ? 'bar' : true), grow: tvGrow, room: drawable });   // AUDIT PEER-RANGE A L1/L6: the room's whole list - a rise past the draw distance is seen, and a cut peer keeps its sprite's bundle   // AUDIT (pre-merge) I-G: every peer HEARD (a concealed one's steps, swings and hooves - sound is no renderer), the classic lane's concealed drawn nowhere   // 2026-09-17: dt drives the class-enemy billboard path's own animation clock; eye is the local player's own position, the listener's (the steps', the swings', the hooves'); AUDIT CAPE-CARD A1: `view` the drawing camera, the eye a class sprite turns to (remotePlayers.js _syncMobilePeer)   // AUDIT DEEP R-11: under the travel view, the view's own eye - the picture each peer shows is the one the camera sees
     peerFlashFrame();   // PEERFX3: after every layer has (re)made its sprites this frame
+    auraHost.frame(seen);   // WB9g: the auras at the feet - mine and the drawn peers' - gathered with the rest; ARMORY: and the Aura Armory's pieces; AUDIT CAPE-CARD A5: after every layer drew its peers, the classic one's last, so a face is this frame's
   };
   /** SPELLFX1 (the Unity co-op's RpcPlayPlayerSpellCastVisual): EVERY PEER'S CAST, DRAWN. The pose already carries the
    *  cast count, its range and now its element; a count that moves on a peer I could see last frame is one cast, and

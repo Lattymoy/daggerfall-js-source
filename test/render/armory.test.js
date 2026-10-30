@@ -374,7 +374,7 @@ test('ARMORY the world host: my kit gathered at my feet and a peer\'s off the re
       renderer: { gl: null }, online: () => online, travelActive: () => false, quiet: () => false, camYaw: () => 0,
       player: () => ({ feetAt: () => [1, 0, 2], bodyYawFor: () => 0, height: 1.8, riding: false }),
       spawned: () => true, beast: () => false, veiled: (id) => id === 'p3', toScene: (s) => s.at,
-      walkers: () => null, riders: () => null, bodies: () => ({ bonesOf: (/** @type {string} */ id) => (id === 'p2' ? { feet: [5.1, 0, 5.2], yaw: 1, bones: mwBones } : null) })
+      sprites: () => [], bodies: () => ({ bonesOf: (/** @type {string} */ id) => (id === 'p2' ? { feet: [5.1, 0, 5.2], yaw: 1, bones: mwBones } : null) })
     });
     host.issued({ armory: null });
     host.frame([{ id: 'p2', shown: { at: [5, 0, 5] } }, { id: 'p3', shown: { at: [6, 0, 6] } }, { id: 'p4', shown: { at: [7, 0, 7] } }]);
@@ -426,7 +426,7 @@ test('ARMORY-SEEN the world host lays my pieces under my Eternal cape where the 
       renderer, online: () => online, travelActive: () => false, quiet: () => false, camYaw: () => 0,
       player: () => ({ feetAt: () => [0, 0, 0], bodyFeetAt: () => [0, 0, 0], bodyYawFor: () => 0, height: 1.8, riding: false }),
       spawned: () => true, beast: () => false, veiled: () => false, toScene: (/** @type {any} */ s) => s.at,
-      walkers: () => null, riders: () => null, bodies: () => null,
+      sprites: () => [], bodies: () => null,
     });
     const order = (/** @type {number[]} */ eye) => {
       renderer._camPos = eye;
@@ -457,7 +457,7 @@ test('ARMORY HOST-SPLIT: the world host wires the module and keeps none of it (m
   const h = rd('src/scenes/auraHost.js');
   assert.match(h, /const vw = renderer\._view, right = vw \? \[vw\[0\], vw\[4\], vw\[8\]\] : null;/, 'the view\'s right, the draw\'s (ArmoryRenderer.draw)');
   assert.match(h, /selfPose\(selfKit\.pose, player, selfLiftNow > 0\); armoryMotionStep\(selfKit, now, vw \? \[vw\[0\], vw\[4\], vw\[8\]\] : null\);/, 'FOLLOW-NOW (PIN MOVED): mine posed and stepped at the draw, where my body is drawn');
-  assert.match(h, /peerPose\(d\.id, w\); armoryMotionStep\(w, t, right\);/, 'a sprite\'s embers off its feet, mine and a peer\'s');
+  assert.match(h, /peerPose\(d\.id, w, layers\); armoryMotionStep\(w, t, right\);/, 'a sprite\'s embers off its feet, mine and a peer\'s');   // CAPE-CARD (PIN MOVED): posed off the sprite layers' list
 });
 
 test('ARMORY a record drawn at another scale (eotbSprite.js spriteArtScale - ACRO-SHORT\'s Acrobat seen three-quarter on, 81 px where the sets draw 110): its marks read at the sets\' rows scaled by it, and its pose stands at the body\'s own heights (mutants: the art unread; the pose\'s rows the picture\'s pixels)', () => {
