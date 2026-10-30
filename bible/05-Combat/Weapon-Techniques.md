@@ -660,8 +660,8 @@ binding of its own to name).
   stands: the formula trebles, the technique weighs the trebled number. Shafts keep the host's read at the hit.
 - **TECH-CANCEL.** A swing in flight and the attack's cooldown (a bow's recovery with it) no longer refuse the key. The
   rig's `startSwing` cuts them first (`weaponStates.js` machineCut, `PlayerWeapon.cutForTechnique`, the Morrowind arm's
-  `cutAttack`): the cut swing's hit is lost. The hands' own gate (`ready`) still holds - a spell, a climb, a shot still
-  loosing. A technique in flight still refuses another.
+  `cutAttack`): the cut swing's hit is lost. A gun's shot and reload stand (the Thunderlock's: a technique waits for
+  them, AUDIT PISTOL-PORT C1). The hands' own gate (`ready`) still holds - a spell, a climb, a shot still loosing.
 - **TECH-KEY2.** A second key, **Martial technique** (`SignatureTechnique`, appended last, unbound - the letters are spent),
   answers the held martial path's signature for the weapon in hand whatever line it carries (`techniques.js`
   handOfKey). The technique key keeps its law: a line first, the signature when free. One runner, one aim and one act
@@ -682,7 +682,7 @@ to it yet; a pad binds it on the Controller bindings window.
 
 Pinned: `test/systems/tech1_runner.test.js` (TECH-BACKSTAB, TECH-CANCEL), `test/systems/martial_paths.test.js`
 (TECH-KEY2), `test/scenes/tech1_hosts.test.js` (the rig, the row, the word). Mutants: `tools/mutants/techfeedback.json`
-(19, all dead); fifteen records of `tech1`, `techcard1`, `techfx1`, `audit_martial` and `town_marks` re-aimed by
+(20, all dead); fifteen records of `tech1`, `techcard1`, `techfx1`, `audit_martial` and `town_marks` re-aimed by
 content, all dead.
 
 ## The Test Room

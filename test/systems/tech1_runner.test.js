@@ -649,6 +649,10 @@ test('TECH-CANCEL ("independent of your regular attack cooldown / animation canc
   const drawing = { ...bow, bowIdleDrawn: false, cooldownUntil: 4 };
   machineCut(drawing);
   assert.equal(drawing.frame, 0, 'BowDrawback on: the bow rests at 0');
+  // a gun (ranged, no bow - the Thunderlock) keeps its reload: a technique waits for it (AUDIT PISTOL-PORT C1)
+  const gun = { ...bow, isBow: false, ranged: true, cooldownUntil: 9 };
+  assert.equal(machineCut(gun), false);
+  assert.equal(gun.cooldownUntil, 9);
   // AUDIT TECH-FEEDBACK F2: a strike that still cannot begin (a gun's reload, a pair's other hand) puts the swing back
   const p2 = weaponOf(piece(() => createWeapon(120, 1), 'whirlwind', 10));
   assert.ok(p2.clickAttack(() => 0.5));

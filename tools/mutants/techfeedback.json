@@ -189,5 +189,16 @@
       "test/scenes/tech1_hosts.test.js"
     ],
     "note": "AUDIT TECH-FEEDBACK F2: the cut never made - the swing in flight refuses the technique again"
+  },
+  {
+    "name": "TECH-CANCEL-gun-reload-waived",
+    "file": "src/characters/weaponStates.js",
+    "old": "  if (m.ranged && !m.isBow) return false;",
+    "new": "  if (false) return false;",
+    "tests": [
+      "test/systems/tech1_runner.test.js",
+      "test/combat/gun/pistolport_audit.test.js"
+    ],
+    "note": "TECH-CANCEL: a gun's reload waived by a technique - an extra shot past the reload"
   }
 ]
