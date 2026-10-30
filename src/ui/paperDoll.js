@@ -57,6 +57,7 @@ import { ownItemImage } from '../systems/item/itemTemplates.js';   // THUNDERLOC
 import { clampArmorVariant, armorArchive, HUMAN_MORPHOLOGY, ARMOR_MATERIAL } from '../systems/armorMaterials.js';
 import { raceArt, FACES_PER_RACE, raceByKey } from '../systems/races.js';   // S3c/U9: all eight races
 import { drawnPiece } from '../net/appearanceLaw.js';   // APPEARANCES: a worn piece's look
+import { isHandWraps } from '../characters/handWrapsIds.js';   // HAND-WRAPS: no doll layer
 
 export const PAPERDOLL_W = 110;
 export const PAPERDOLL_H = 184;
@@ -142,7 +143,7 @@ export function paperdollItemImage(worn, { gender = 'male', race = 'Breton' } = 
   const item = drawnPiece(worn);   // APPEARANCES (bible/04-Characters/Wardrobe.md): a piece wearing a look is drawn as the look - the player's doll and every peer's
   const morph = raceByKey(race)?.morphologyIndex ?? HUMAN_MORPHOLOGY;
   const t = getTemplate(item.templateIndex);
-  if (!t) return null;
+  if (!t || isHandWraps(item)) return null;   // HAND-WRAPS: worn on the fists, no layer of the doll's own
   // RRI1: GetItemImage(forPaperDoll) reads the same two virtuals the
   // inventory does (ItemHelper.cs:405-406), then bumps an Either-hand
   // weapon worn right by one (:412-414) - the Archer's Axe's second

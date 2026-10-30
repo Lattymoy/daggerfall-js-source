@@ -191,8 +191,8 @@
   {
     "name": "SIGIL1-foe-blow-taken",
     "file": "src/systems/sigil/sigil.js",
-    "old": "if (!(damage > 0) || !weapon || !attacker?.isPlayer || attacker.peer",
-    "new": "if (!(damage > 0) || !weapon || attacker?.peer",
+    "old": "if (!(damage > 0) || !held || !attacker?.isPlayer || attacker.peer",
+    "new": "if (!(damage > 0) || !held || attacker?.peer",
     "tests": [
       "test/systems/sigil/sigil1.test.js"
     ]
@@ -200,7 +200,7 @@
   {
     "name": "SIGIL1-carry-dropped",
     "file": "src/systems/sigil/sigil.js",
-    "old": "const exact = (damage * pct) / 100 + (_carry.get(weapon) ?? 0);",
+    "old": "const exact = (damage * pct) / 100 + (_carry.get(held) ?? 0);",
     "new": "const exact = (damage * pct) / 100;",
     "tests": [
       "test/systems/sigil/sigil1.test.js"

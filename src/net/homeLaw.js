@@ -70,6 +70,14 @@ export function homeOnlinePrice(footprintM2, townBlocks) {
   const price = Math.round((footprintM2 * HOME_PRICE_PER_M2 * homeTownFactor(townBlocks)) / HOME_PRICE_STEP) * HOME_PRICE_STEP;
   return Math.min(HOME_PRICE_MAX, Math.max(HOME_PRICE_MIN, price));
 }
+/** DECOR-ROOMY: the widest ground a home may name, square metres (Daggerfall's widest house is under 1,000). */
+export const HOME_GROUND_MAX = 2000;
+/** DECOR-ROOMY: THE GROUND A HOME NAMES, held to its price - the service measures nothing (no ARENA2), so a claim's ground
+ *  stands only where its price is the one homeOnlinePrice sets from it and the town's blocks (0: unknown, one block). */
+export const homeGroundOk = (ground, townBlocks, price) => typeof ground === 'number' && Number.isFinite(ground) && ground > 0 && ground <= HOME_GROUND_MAX
+  && Number.isSafeInteger(townBlocks) && townBlocks >= 0 && townBlocks <= HOME_TOWN_BLOCKS_MAX && homeOnlinePrice(ground, townBlocks) === price;
+/** DECOR-ROOMY: the ground as the service keeps it - to a tenth of a square metre. */
+export const homeGroundKept = (ground) => Math.round(ground * 10) / 10;
 /** Claims an account may make an hour - a cap stops a hoard, this stops a claim-and-release churn. */
 export const HOME_CLAIMS_MAX = 20;
 export const HOME_CLAIMS_WINDOW_S = 3600;

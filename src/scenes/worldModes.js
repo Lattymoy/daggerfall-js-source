@@ -75,7 +75,8 @@ import { wagonLoadedHeld } from '../systems/tradePack.js';   // WAGONS2 (AUDIT):
 import { caravanPaintRows } from '../systems/wagon/wagonLooks.js';   // WAGONS2: the caravan's inside, painted from the decorator
 import { caravanDecorDoc, readCaravanDecor, readCaravanHidden } from '../systems/caravanVisit.js';   // WAGONS2-VISIT: what a caravan's owner placed, said to its room and stood for its visitor
 import { caravanKeyOf } from '../net/privateInterior.js';   // WAGONS2-VISIT: a caravan's own room
-import { INTERIOR_SHELL_BUCKET } from './decor/decorBase.js';   // HOME-DOORS: a doorway is an opening in the shell's walls   // AUDIT 63 F22: AddFlats' RandomTreasure arm lives with the walk that finds its markers
+import { INTERIOR_SHELL_BUCKET, standRoomHidden } from './decor/decorBase.js';   // HOME-DOORS: a doorway is an opening in the shell's walls   // AUDIT 63 F22: AddFlats' RandomTreasure arm lives with the walk that finds its markers; DOOR-KEPT: the room's list stood whole
+import { noteHomeDecorList, homeDecorCap } from '../systems/decor/homeDecorCap.js';   // DECOR-ROOMY: a wider house holds more
 import { advanceMachinery, mountMachineryChild, machineryChildPos, MILL_SOUND } from '../world/windmills.js';   // WM4b: the machinery's moving parts; WM4c: its hum
 import { buildDungeonContext } from './dungeonContext.js';
 import { ambushNight } from '../systems/rest/restAct.js';   // AUDIT REST II P3: a quest's CreateFoe reaches the act's night, window or none
@@ -377,7 +378,8 @@ import {
   homeVoteRows, homeVotePressable, homeVoteOfVerb, homeVoteChoices, homeVoteLines, isHomeVoteVerb,   // HOME-VOTE: the town's word on it, at its door
   homeStationsServe,   // FB1018D HOME-BENCH: a home's stations serve its owner's account, as its door does
 } from '../systems/online/onlineHomes.js';
-import { homeDecorShown, homeVotedLine, homeVotesLine, homeVoteRefusalLine, decorStaysShunned, HOME_VOTE_GONE_LINE } from '../net/homeVoteLaw.js';   // HOME-VOTE: a shunned home's decor stands for its insiders alone
+import { homeVotedLine, homeVotesLine, homeVoteRefusalLine, decorStaysShunned, HOME_VOTE_GONE_LINE } from '../net/homeVoteLaw.js';   // HOME-VOTE: a shunned home's decor stands for its insiders alone
+import { homeDecorShownHere, homeMuteRows, homeMuteLines, homeMuteOptions, pressHomeMute } from '../systems/online/homeMute.js';   // HOME-MUTE: a home's decor hidden for me alone, at its door
 import { goldSum, accountWords } from '../systems/homeWords.js';   // AUDIT HOME-PRICE E4: a home's sums and the account they moved in
 import { guildHallPrice, GUILD_HALL_ENTRY_WORDS } from '../net/hallLaw.js';   // GUILD1d: what a hall costs, in its refusal's words; who may walk in
 import { SEAT_HALL_DECOR_CAP, SEAT_HALL_CLEAR_M, SEAT_HALL_TEXT } from '../net/townSeatLaw.js';   // SEAT-HALL: the palace as the holder's hall
@@ -391,8 +393,8 @@ import {
   RENT_NONE_FREE, RENT_REALM_ONLY, rentWelcomeLine, homeBedIsMine, rentDayRows, rentNoneLine, RENT_FULL_LINE,   // FIELD BUGS 2026-10-01: RENT-REST, RENT-RENEW
 } from '../systems/homeRent.js';
 // DECOR1c: the pieces a room's owner placed (their law, and the pool that stands them in the room)
-import { decorPieceOf, decorSaleBack, DECOR_STATION_SERVICES, DECOR_STATION_NAMES } from '../net/decorLaw.js';
-import { noteDecorGrants, decorMayStorage, decorMayStation, decorIsShared, decorStationShut, bindDecorHouseFrom, openSharedChest, openDecorChest, openOwnChest } from '../systems/decor/decorGrants.js';   // DECOR-ACCESS
+import { decorPieceOf, decorSaleBack, decorCapOf, DECOR_STATION_SERVICES, DECOR_STATION_NAMES } from '../net/decorLaw.js';   // DECOR-ROOMY: an offline house's cap
+import { noteDecorGrants, decorMayRest, decorMayStorage, decorMayStation, decorIsShared, decorStationShut, bindDecorHouseFrom, openSharedChest, openDecorChest, openOwnChest } from '../systems/decor/decorGrants.js';   // DECOR-ACCESS
 import { openHomeTransfer, answerHomeTransfer } from '../ui/homeTransferWindow.js';
 import { VENDOR_STATION, VENDOR_COLD_LINE } from '../net/vendorLaw.js';   // HOME-VENDOR: a trader, and its word where none can trade
 import { forgeOffered, PROF_STATIONS, stationColdLine, enchantGoldPct, STORES_ACT_STATIONS, stationDoorAt, stationActLabel } from '../ui/professions/profPages.js';   // AUDIT 29 B2: a Forge worked only where the Stores page is; PROF4: a Workbench
@@ -456,8 +458,9 @@ import { ItemMakerWindow, preloadItemMakerArt, itemMakerArtLoaded, ITEM_RECTS, r
 import { getMagicItemTemplates, LOOT_NEWER_TEXT, shownSpellName } from '../systems/loot/loot.js';   // M2: ItemBuilder.CreatePotion, one minter; G4: the MAGIC.DEF registry; L10N3e: a spell's name as shown
 import { SITE_TYPES } from '../systems/quest/place.js';
 import { personOwnName } from '../systems/quest/person.js';   // QUEST-NAME-ONE: a quest stand answers to its Person's own name
-import { placeFoeFreely, questStandBox, rideSceneMarker, markerScenePosition, siteMarkerSpots, standSpot, buildingStandSpot, MARKER_FLOOR_REACH, freeQuestStand } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring, finally called; TOTEM-CAGE: a stand's box where it IS; QUEST-MARKERS: the building's backstop; FB1020c CROWD-CLEAR: a Person clear of the room's people
+import { placeFoeFreely, questStandBox, questFlatTargets, rideSceneMarker, markerScenePosition, siteMarkerSpots, standSpot, buildingStandSpot, MARKER_FLOOR_REACH, freeQuestStand } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring, finally called; TOTEM-CAGE: a stand's box where it IS; QUEST-MARKERS: the building's backstop; FB1020c CROWD-CLEAR: a Person clear of the room's people
 import { chestIdentity, matchChests } from './chestRecords.js';   // HOLD-KEPT: a house chest's record by which chest it is
+import { createArrivalSetDown } from './arrivalSetDown.js';   // HOLD-KEPT ON ARRIVAL: what a restored room cannot hold, set down where the player stands
 import { placeFoeEnv, placeRoomQuestFoe, entityOccupancy, questFoeGender, reviveQuestBehaviour as reviveQuestBehaviourFromSave, heldSpots, holdSpotWhile, restandMendedQuestFoe } from './quest/questFoeHost.js';   // B1 (PlaceFoeFreely reads the fieldOfView import below)   // AUDIT 63 F24: SerializableEnemy.cs:206-217 re-adds the component on restore
 import { standLooseFoe } from './hostEnchant.js';   // ROAD-G G1: SoulBound's break release / the Sanguine Rose, inside a building
 import { ENEMY_BASICS, enemyDisplayName } from '../characters/enemy/enemyBasics.js';   // MERGE: FinalizeFoe's Flying lift reads the behaviour flag // WORLD-HOVER H2: GetLocalizedEnemyName - Entity.Name for a live one (.cs:310)
@@ -1724,6 +1727,7 @@ export function createWorldModes(host) {
    *  NO pixel key - that argument is `TrackLooseObject`, and DFU puts
    *  it behind `!IsPlayerInside`. */
   const interiorDropped = createDroppedLoot({ renderer, getTexture, uploadRecordFrame });
+  const arrivalSetDown = createArrivalSetDown({ dropPile: (items, feet) => interiorDropped.dropPile(items, feet), say: (line) => say(line) });   // AUDIT SHIP-REFIT: held while a room restores, landed once the player stands
   // PI1 (Physical Items, scenes/physicalItemsLayer.js): THE ROOM'S HALF of the layer - the room's collider, the room's
   // foes' bodies (the pool lives as long as the interior does), the pack's wearer, the take's hooks and the outer host's
   // reveal for a map. Read at the frame.
@@ -3001,24 +3005,6 @@ export function createWorldModes(host) {
     if (!res || res.isPerson === true || res.isFoe === true) return null;
     const t = questResourceName(questStandItem(res), { archive: st.archive ?? -1, record: st.record ?? -1, getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null });   // WHERE-ROBES: the Item's own item; AUDIT N1: a letter's signoff
     return t ? { title: t } : null;
-  };
-  /** DQ1: a quest stand's activation target, for whichever list the
-   *  host keeps. Extracted at DQ1 because the DUNGEON ray needed the
-   *  same walk and the alternative was a second copy of it - the shape
-   *  of the stand record is identical in both lists by construction
-   *  (standQuestFlatIn builds both). */
-  const questFlatTargets = (list) => {
-    const out = [];
-    list.forEach((s, i) => {
-      if (!s.width || !s.active || s.dead) return;
-      const isPerson = s.behaviour?.targetResource?.isPerson === true;
-      out.push({
-        key: `questflat:${i}`,
-        aabb: questStandBox(s),   // TOTEM-CAGE: where the stand IS - a stand riding an acting marker is clicked where it rode to
-        distance: isPerson ? STATIC_NPC_ACTIVATION_DISTANCE : DEFAULT_ACTIVATION_DISTANCE,
-      });
-    });
-    return out;
   };
   /** DQ1: and the click itself. `buildingKey` is the one thing that
    *  differs between the hosts - StaticNPC reads it from the runtime
@@ -4872,7 +4858,7 @@ export function createWorldModes(host) {
     const decor = interiorHome || _seatHallVisit ? interiorDecor.kept() : interiorDecor.list();   // SEAT-HALL: a palace's Charter Room is the service's too - AUDIT SEATS-3 C2: for the whole visit
     const decorItems = interiorDecor.itemsSnapshot();
     const decorOwn = interiorDecor.ownSnapshot();   // DECOR2a: the owner's own things standing here - the save's, in every room
-    const hiddenBase = [...(interiorHome || _seatHallVisit ? _keptHidden : (ctx.base?.hidden() ?? [])), ...(ctx.base?.roomDoors?.hidden?.() ?? [])];   // BASE-HIDE: an online home's list is the service's - the save's own is written back as it came. A room door taken out rides the same list.
+    const hiddenBase = interiorHome || _seatHallVisit ? _keptHidden : [...(ctx.base?.hidden() ?? []), ...(ctx.base?.roomDoors?.hidden?.() ?? [])];   // BASE-HIDE: an online home's list is the service's - the save's own is written back as it came. A room door taken out rides the same list (AUDIT FB1029f A3: an online home's doors too are the service's).
     const guildShelves = ctx.guildShelves ?? {};   // GUILD-SHELF: the day's guild shelves, as bought down - the building's, as its shop shelves are
     return { lootContainers, actionDoors, droppedPiles, droppedTorches, decor, decorItems, decorOwn, hiddenBase, frame: 'building', terrainScale: STREAMING_TERRAIN_SCALE, guildShelves };
   }
@@ -4929,6 +4915,7 @@ export function createWorldModes(host) {
    *  which is every first visit. */
   function restoreInteriorScene() {
     _keptHidden = [];   // BASE-HIDE: this visit's
+    arrivalSetDown.reset();   // AUDIT SHIP-REFIT: nothing held from another room
     _sceneHeldForLayout = null;
     // WAGONS2 (AUDIT): a PRIVATE ROOM THAT TRAVELS - a ship's cabin, a caravan - is no town's: its room is the same in
     // every layout, so the town it stands in this visit neither stamps its scene nor holds it back (a ship furnished in
@@ -4956,20 +4943,15 @@ export function createWorldModes(host) {
       if (!data) return;
     }
     const chestOf = matchChests(data.lootContainers, interiorCtx.containers, buildingOrigin());   // HOLD-KEPT: a chest by what it is, not where it fell in the list
-    let setDown = 0;
     for (const c of data.lootContainers) {
       const [kind, i] = c.key.split(':');
       const target = kind === 'shelf' ? interiorCtx.shelves?.[+i] : chestOf.get(c);
       // ARENA2: A HOUSE THE ARENA MOVED brought its chests', its storage pieces' and its floor's things in its first
       // container (systems/arena/arenaMove.js emptyArenaScene, `crate`): a house with none has them set down as a crate where
       // its owner first walks in - a pile of their own, in the building's frame, cached with the floor from here on.
-      // HOLD-KEPT: and so is what any chest held that no chest of this visit stands for - never dropped
-      if (!target && kind === 'container' && c.items?.length) {
-        const o = buildingOrigin(), f = player.pos;
-        data.droppedPiles = [...(data.droppedPiles ?? []), { pos: [f[0] - o[0], f[1] - o[1], f[2] - o[2]], items: c.items.map((it) => ({ ...it })) }];
-        if (!c.crate) setDown++;
-        continue;
-      }
+      // HOLD-KEPT: and so is what any chest held that no chest of this visit stands for - never dropped. AUDIT SHIP-REFIT:
+      // held, and set down where the player stands once stood (scenes/arrivalSetDown.js) - the restore runs before that
+      if (!target && kind === 'container' && c.items?.length) { arrivalSetDown.hold(c.items, { crate: !!c.crate }); continue; }
       // `items: null` is a shelf that was never opened - restoring it
       // as null keeps the LAZY stock, which is what makes a first
       // browse still roll fresh goods after an uneventful visit.
@@ -4983,7 +4965,6 @@ export function createWorldModes(host) {
       if (target && kind === 'container') target.openedOn = c.openedOn ?? 0;   // UXB1-O: a record cached before it carries none - never searched
     }
     interiorLootAside(interiorCtx, _intShared);   // OUTDOOR-LOOT: the cache has laid a stranger's cupboard the list of an earlier visit - online that is no one's word, the room's is
-    if (setDown) say('A chest that stood here is gone. What it held was set down at your feet.');   // HOLD-KEPT
     interiorCtx.guildShelves = data.guildShelves ?? {};   // GUILD-SHELF: a stale day's shelf is left for guildShelf to replace at the next open
     // #32: through the system's own restore, which settles the matrix
     // and the collider bucket (syncRestored) - a door restored open
@@ -5006,7 +4987,7 @@ export function createWorldModes(host) {
     const place = data.frame === 'building'
       ? (p) => [p[0] + o[0], p[1] + o[1], p[2] + o[2]]
       : (p) => [p[0], host.restandSceneHeight ? host.restandSceneHeight(p[1], p[0], p[2], was) : p[1], p[2]];
-    interiorDropped.restorePiles(data.droppedPiles ? data.droppedPiles.map((p) => ({ ...p, pos: place(p.pos) })) : data.droppedPiles);
+    interiorDropped.restorePiles(data.droppedPiles ? arrivalSetDown.unburied(data.droppedPiles.map((p) => ({ ...p, pos: place(p.pos) })), interiorCtx.collider) : data.droppedPiles);   // AUDIT SHIP-REFIT: a pile furniture now stands over is held for the arrival
     interiorTorches.restore(data.droppedTorches, place);   // HT1: a scene cached before this shipped carries none - cleared, as the piles are
     // DECOR1c: what the owner placed in the offline house or ship (the building's frame, as every piece is - the pool
     // stands it on this visit's origin), projected by the law on the way in; and what the storage pieces hold. An online
@@ -5021,7 +5002,7 @@ export function createWorldModes(host) {
     if (!(interiorHome || _seatHallVisit)) returnUnstood(interiorDecor, placed, decorPackGive, say);
     // BASE-HIDE: what the owner took out of the offline house's or ship's own furniture; an online home's comes from the
     // account service with its pieces (loadHomeDecor), and the save's own record for the building is kept to go back
-    if (interiorHome || _seatHallVisit) (_keptHidden = (data.hiddenBase ?? []).filter((k) => !String(k).startsWith('intdoor:')), interiorCtx.base?.roomDoors?.apply?.(data.hiddenBase)); else (interiorCtx.base?.setHidden(data.hiddenBase ?? []), interiorCtx.base?.roomDoors?.apply?.(data.hiddenBase));
+    if (interiorHome || _seatHallVisit) _keptHidden = data.hiddenBase ?? []; else (interiorCtx.base?.setHidden(data.hiddenBase ?? []), interiorCtx.base?.roomDoors?.apply?.(data.hiddenBase));
   }
   /** BASE-HIDE: the save's own list for an online home's building, written back as it came (the service's is the room's). */
   let _keptHidden = [];
@@ -5341,13 +5322,13 @@ export function createWorldModes(host) {
     // owner's taken-out furniture, whose whole list the first piece taken out would write over the service's
     if ((interiorHome || interiorSeatHall) && _decorListed !== _decorVisit) return null;
     if (interiorHome?.hall) return { kind: 'home', hall: true, where: "Your guild's hall", mapId: homeTownOf(b), buildingKey: b.buildingKey };   // GUILD1d
-    if (interiorHome) return { kind: 'home', where: 'Your home', mapId: homeTownOf(b), buildingKey: b.buildingKey };
+    if (interiorHome) return { kind: 'home', where: 'Your home', mapId: homeTownOf(b), buildingKey: b.buildingKey, cap: homeDecorCap(Number(homeTownOf(b)) >>> 0, b.buildingKey) ?? undefined };   // DECOR-ROOMY: the service's cap
     // SEAT-HALL (7.2): the palace's Charter Room - its keepers', DECOR's catalogue, at most a hundred pieces, in its
     // largest room and clear of the court (decorTool.js charterWhyNot; charterClear below)
     if (interiorSeatHall?.keeper) return { kind: 'home', hall: true, seat: true, charter: true, cap: SEAT_HALL_DECOR_CAP, where: SEAT_HALL_TEXT.where, mapId: homeTownOf(b), buildingKey: b.buildingKey };
     if (isCaravanRoom(interiorCabin)) return { kind: 'caravan', where: CARAVAN_TEXT.where };   // WAGONS1: the caravan, furnished as a ship is (the save's, paid from the purse)
     if (b.buildingType === BUILDING_TYPES.Ship) return { kind: 'ship', where: 'Your ship' };
-    return { kind: 'house', where: 'Your house' };
+    return { kind: 'house', where: 'Your house', cap: decorCapOf(houseFootprintM2(b)) };   // DECOR-ROOMY: offline, the house's own ground
   }
   /** DECOR1d: what the catalogue scan reads - the town blocks (DECOR-DUNGEON: and the dungeons'), a model's radius off
    *  its ARCH3D header, a flat's billboard as the room stands it - the one constructor the yards' host builds too. */
@@ -5472,14 +5453,15 @@ export function createWorldModes(host) {
         // HOME-VOTE: a home the town voted below zero stands as Daggerfall furnished it for everyone but its insiders - no
         // placed piece but its hired trader, nothing taken out (net/homeVoteLaw.js homeDecorShown, decorStaysShunned; the
         // owner, and a hall's guild, see theirs; the service hands out no more - decor.js decorOf)
-        const shown = homeDecorShown(interiorHome);
+        const shown = homeDecorShownHere(interiorHome, homeTownOf(b));   // HOME-MUTE: nor for me, a home I hid
         const pieces = r.data.pieces.map(decorPieceOf).filter((p) => p && (shown || decorStaysShunned(p)));   // AUDIT B2: its trader stands
         interiorDecor.set(pieces);
         if (interiorHome?.own) decorReturnStrays(pieces);   // DECOR2a: the owner's own things the room no longer stands
         if (interiorHome?.own && !_sceneHeldForLayout) decorSetDownHeld(r.data.pieces);   // HOLD-KEPT: and what a piece the service no longer has held
+        noteDecorGrants(host.homeDecor, Number(homeTownOf(b)) >>> 0, b.buildingKey, host.decorCharacter?.() ?? null, interiorHome?.own && !_sceneHeldForLayout ? interiorDecor : null, playerEntity);   // DECOR-ACCESS; HOME-STRANDED; REST-GUEST: asked whatever stands, so a guest rests in a home they hid: the owner's chests take back what the old pour left under the building
         if (!shown) { interiorCtx?.base?.setHidden([]); return; }   // HOME-VOTE: the room as Daggerfall furnished it
-        interiorCtx?.base?.setHidden(Array.isArray(r.data.hidden) ? r.data.hidden : []);   // BASE-HIDE: the room its owner cleared, for everyone
-        noteDecorGrants(host.homeDecor, Number(homeTownOf(b)) >>> 0, b.buildingKey, host.decorCharacter?.() ?? null, interiorHome?.own && !_sceneHeldForLayout ? interiorDecor : null, playerEntity);   // DECOR-ACCESS; HOME-STRANDED: the owner's chests take back what the old pour left under the building
+        standRoomHidden(interiorCtx?.base, Array.isArray(r.data.hidden) ? r.data.hidden : []);   // BASE-HIDE: the room its owner cleared, for everyone; DOOR-KEPT: its doors too
+        noteHomeDecorList(Number(homeTownOf(b)) >>> 0, b.buildingKey, r.data, interiorHome?.own ? houseFootprintM2(b) : null, b.townBlocks ?? 0, host.homeDecor, host.decorCharacter?.() ?? null);   // DECOR-ROOMY: its cap, and its ground named once
         bindDecorHouseFrom(host, playerEntity, say, accountRefusalText, Number(homeTownOf(b)) >>> 0, b.buildingKey, (loot) => (interiorOverlay = openDecorChest(interiorInventory, loot) ?? interiorOverlay));
       },
     });
@@ -7640,7 +7622,7 @@ export function createWorldModes(host) {
     if (home) {
       // HOME-RENT: a tenant's own room, or a room to rent; GUILD1d: a hall's members go in, its keepers say who may;
       // HOME-VOTE: and the town's word on it, under whatever else the door does, to anyone who is not its insider - where the plaque DRAWS a list (AUDIT HOME-VOTE II D1: the classic face folds a door's rows it never draws, and a wheel notch lit a vote the click cast unseen; there the Info box asks)
-      const rows = [...(homeVisitorRows(home, homeDoorFor(bd, home)) ?? []), ...(worldPlaqueOn() ? homeVoteRows(home) : [])];
+      const rows = [...(homeVisitorRows(home, homeDoorFor(bd, home)) ?? []), ...(worldPlaqueOn() ? [...homeVoteRows(home), ...homeMuteRows(home, homeTownOf(bd))] : [])];   // HOME-MUTE: and hidden for me
       return rows.length ? rows : null;
     }
     const price = homeOfferPrice(bd);
@@ -7656,7 +7638,7 @@ export function createWorldModes(host) {
   function homeVoteDoorText(text, bd, home, verbs) {
     if (!text || !home) return text;
     const voteOnly = isHomeVoteVerb(verbs?.[0]?.id);
-    const lines = [...(voteOnly && homeDoorFor(bd, home) === 'locked' ? ['Locked'] : []), ...homeVoteLines(home)];
+    const lines = [...(voteOnly && homeDoorFor(bd, home) === 'locked' ? ['Locked'] : []), ...homeVoteLines(home), ...homeMuteLines(home, homeTownOf(bd))];
     const said = lines.length ? { ...text, subs: [...(text.subs ?? []), ...lines] } : text;
     return voteOnly ? { ...said, actionsUnlit: true } : said;
   }
@@ -7918,6 +7900,7 @@ export function createWorldModes(host) {
           // the plaque lists no rows (AUDIT B1: a touch screen, World Tooltips off; a drawn plaque's plain click goes in)
           if (!isBash && !homeAsked && getInteractionMode() !== 'steal') {
             if (isHomeVoteVerb(verb)) { if (homeVotePressable(home, homeVoteOfVerb(verb))) pressHomeVote(bd, homeVoteOfVerb(verb)); else if (!home) townTalk?.say?.(HOME_VOTE_GONE_LINE); return true; }
+            if (pressHomeMute(verb, homeTownOf(bd), home, host, townTalk)) return true;   // HOME-MUTE: hidden for me, or shown again
             if (verb == null && getInteractionMode() === 'info' && homeVoteRows(home).length && !listed) { openHomeVoteMenu(bd, home, door, door === 'enter' ? homeOnward(hit, entries) : null); return true; }
           }
           if (door === 'locked') { townTalk?.say?.(homeLockedLine(home)); return true; }
@@ -8161,6 +8144,7 @@ export function createWorldModes(host) {
     const purse = bankPurse();
     const r = await buyOnlineHome(homes, {
       mapId, buildingKey: bd.buildingKey, region, price,
+      ground: [houseFootprintM2(bd), bd.townBlocks ?? 0],   // DECOR-ROOMY: the measure its price was set from, kept with the claim
       afford: (n) => n <= purse.totalGold() + (homeAccount(region)?.accountGold ?? 0),
       pay: (n) => purse.pay(n, homeAccount(region)),   // MARKET-AUDIT: answering the undo of exactly what it took
       // REALM P2.2b: a realm character's record pays in the claim's own batch; a refusal gives the price back to the account
@@ -8204,6 +8188,7 @@ export function createWorldModes(host) {
       lines: [...rentPickLines(got.owner || home.owner), ...homeVoteLines(home)],   // AUDIT HOME-VOTE II B1: and its votes - where no plaque is drawn this box is the door's whole say
       options: [
         ...homeVoteChoices(home).map((c) => ({ code: c.code, label: c.label, action: () => pressHomeVote(bd, c.vote) })),   // AUDIT HOME-VOTE II B1
+        ...homeMuteOptions(home, homeTownOf(bd), host, townTalk),   // HOME-MUTE
         ...list.map((r, i) => ({
           code: `Digit${i + 1}`, label: `${i + 1} - Room ${r.room}: ${goldSum(r.price)} gold a day${r.yours ? ' (yours, renew it)' : ''}`,
           action: () => { const days = rentDayRows(r, nowS); if (days.length) openHomeRentDays(bd, r, days); else townTalk?.say?.(RENT_FULL_LINE); },   // RENT-RENEW: only the days the service takes - none left, said
@@ -8294,6 +8279,7 @@ export function createWorldModes(host) {
       options: [
         ...(onward ? [{ code: 'KeyG', label: 'G - go in', action: onward }] : []),
         ...homeVoteChoices(home).map((c) => ({ code: c.code, label: c.label, action: () => pressHomeVote(bd, c.vote) })),
+        ...homeMuteOptions(home, homeTownOf(bd), host, townTalk),   // HOME-MUTE
         { code: 'Escape', label: 'Esc - close', action: () => {} },
       ],
     }));
@@ -8771,6 +8757,7 @@ export function createWorldModes(host) {
       // a click.
       const spot = restore?.pos ?? floored;
       player.spawn(spot[0], spot[1], spot[2]);
+      arrivalSetDown.land(spot);   // AUDIT SHIP-REFIT: what the restore held, set down where the player now stands
       interiorNav.mount(ctx, spot);   // INDOOR-WATCH: the room's mesh, anchored on the arrival, the ways in and the doors' watch spots
       _hccLanded = true; host.horseCart?.()?.handleSuccessfulInteriorTransition({ type: 'ToBuildingInterior', buildingKey: interiorBuilding?.buildingKey ?? 0 });   // HCC: OnTransitionInterior [IL_99ac] - the wagon parks, the horse waits, the access id is this building's
       setMode('interior');
@@ -12266,7 +12253,7 @@ export function createWorldModes(host) {
       // that lets you sleep in it" - and that moment arrived in the
       // same merge: DaggerfallBankManager.IsHouseOwned is live over
       // the region's own registry slot.
-      houseOwned: !interiorHome && houseOwnedAt(b, b?.buildingKey ?? 0), homeBed: homeBedIsMine(interiorHome, Math.floor(Date.now() / 1000)) || !!interiorSeatHall?.member,   // HOME1: my online home's bed is mine; HOME-RENT: and a tenant rests in the home they rent in - RENT-REST (FIELD BUGS 2026-10-01): handed as the home's BED (homeBed), which the bag stands where a bought house stands (a tenant's visit is no permanent scene, and houseOwned alone was asked inside that test - refused); an online home never asks the offline bank's houses; GUILD1d: and a member's bed in their guild's hall (homeRent.js homeBedIsMine); SEAT-HALL: and the holder's members in their palace
+      houseOwned: !interiorHome && houseOwnedAt(b, b?.buildingKey ?? 0), homeBed: homeBedIsMine(interiorHome, Math.floor(Date.now() / 1000)) || !!interiorSeatHall?.member || (!!interiorHome && decorMayRest(Number(homeTownOf(b)) >>> 0, b?.buildingKey)),   // REST-GUEST: a guest its owner named   // HOME1: my online home's bed is mine; HOME-RENT: and a tenant rests in the home they rent in - RENT-REST (FIELD BUGS 2026-10-01): handed as the home's BED (homeBed), which the bag stands where a bought house stands (a tenant's visit is no permanent scene, and houseOwned alone was asked inside that test - refused); an online home never asks the offline bank's houses; GUILD1d: and a member's bed in their guild's hall (homeRent.js homeBedIsMine); SEAT-HALL: and the holder's members in their palace
       ...(caravanGuestHere() ? { homeBed: true } : {}),   // WAGONS2-VISIT: and a caravan's visitor rests in it (over the line above - a visit is no home of mine)
       // GetRentedRoom(mapId, buildingKey), through the SAME finder the
       // tavern window rents with - so the bed this answers is the bed

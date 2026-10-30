@@ -24,9 +24,9 @@
 // 560 - systems/thunderlock.js): what the Warp kept of a Dwemer smith's
 // last commission, gilded in the Hour that never ended. A STATIC ROLL -
 // every number is its record's, minted whole and KNOWN, never rolled,
-// reforged, honed, socketed, imprinted, cursed or enchanted - so the
-// wire holds it to its record EXACTLY (validGildedMarks), as no other
-// tier can be held.
+// reforged, honed, socketed, imprinted or cursed (the item maker's rows
+// sit beside them - GILDED-MAKER) - so the wire holds it to its record
+// EXACTLY (validGildedMarks), as no other tier can be held.
 //
 // POWERFUL, NOT OVERPOWERED. Its lines stand at the Legendary band's
 // TOP and no higher (+40% damage, +15 Agility, +30 Archery, +10 shock a
@@ -101,6 +101,7 @@ import { createPistolet } from './pistolet.js';   // PISTOLET: the Sunken Sovere
 import { createWeapon } from '../combat/enemyEquipment.js';   // GILDED2: a DFU weapon's own mint (CreateWeapon)
 import { itemBaseValue } from './item/itemTemplates.js';
 import { affixesWorth, validAffix, registerGildedRecords } from './loot/lootRarity.js';
+import { makerLaid } from './enchanting.js';   // GILDED-MAKER: the item maker's own rows, the one kind a Gilded piece carries
 import { SKILLS } from './skills.js';
 
 /** The tier's id, as `item.rarity` wears it. */
@@ -363,8 +364,8 @@ const NEVER_ON_GILDED = Object.freeze(['sigil', 'legendary', 'aetheric', 'imprin
  * THE MARKS AGREE WITH THE ITEM (the wire's check - systems/loot/loot.js validLootItem, beside the Aetheric's validSetMarks):
  * a Gilded piece only as its record mints it - a record that exists, its group, its template and its make, its lines
  * EXACTLY its record's (a static roll has no band to sit inside: one number off is a forgery), and nothing else laid on
- * it, no DFU enchantment among it. A piece that names no Gilded record and wears no Gilded tier passes untouched.
- * Answers the item or null.
+ * it. GILDED-MAKER: its DFU rows the item maker's own alone, which the item law holds to the maker's law (makerFindings).
+ * A piece that names no Gilded record and wears no Gilded tier passes untouched. Answers the item or null.
  * @param {any} item an item whose fields are each their declared kind (itemFields.js validItemFields)
  */
 export function validGildedMarks(item) {
@@ -379,6 +380,6 @@ export function validGildedMarks(item) {
     if (a?.id !== w.id || (a.param ?? null) !== (w.param ?? null) || a.value !== w.value) return null;
   }
   for (const k of NEVER_ON_GILDED) if (item[k] != null) return null;
-  if (item.enchantments?.length || item.customEnchantments?.length) return null;
+  if (item.customEnchantments?.length || (Array.isArray(item.enchantments) && item.enchantments.some((e) => !makerLaid(e)))) return null;
   return item;
 }

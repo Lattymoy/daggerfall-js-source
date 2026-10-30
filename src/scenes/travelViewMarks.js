@@ -237,6 +237,14 @@ export function createTravelViewMarks(host) {
     // about 200 m as it opens) - so the players nearest (a party travelling together) went nameless; those names stand
     // down under the view (drawPeerNames) and these stand for them
     const near = new Set();
+    // PVP-HUD (the Villain board: "villains shown to all players"): a villain the room says is red is marked where the
+    // law would hide or drop it - nameless, in the enemy's red, its red skull, held at the edge
+    const villainMark = (id, at, dropped) => {
+      if (host.social?.isPartyPeer(id) || pvpSkullOf(id) !== 'red' || !dropped()) return false;
+      near.add(id);
+      marks.push({ key: `peer:${id}`, at, label: WILD_TEXT.stranger, kind: 'stranger', edge: true, skull: 'red' });
+      return true;
+    };
     const book = travellerBook.live(Date.now());
     const sharing = new Map();   // the region's travellers by id: the players who share where they are with it
     for (const t of book) sharing.set(t.id, t);
@@ -258,6 +266,8 @@ export function createTravelViewMarks(host) {
       // AUDIT NAMES N2-2: THE SWITCH HOLDS - a player who shares nothing with the region ("Show me to travellers" off)
       // and is not of my party is named only as close as play names them (NAME_RANGE from where I stand) and never held
       // at the edge; my party, and a player whose mark the region already has, are named wherever they stand
+      if (villainMark(d.id, [f[0], f[1] + TV_PEER_HEAD_M, f[2]], () => (!sharing.has(d.id) && Math.hypot(f[0] - player.pos[0], f[2] - player.pos[2]) > NAME_RANGE)
+        || wildHidesPlayer({ kin: travellerKin({ friend: !!host.social?.isFriendPeer(d.id), gt: d.gt }, myGt), wire: [d.shown.x, 0, d.shown.z] }))) continue;   // PVP-HUD
       const party = !!host.social?.isPartyPeer(d.id), t = sharing.get(d.id);
       if (!party && !t && Math.hypot(f[0] - player.pos[0], f[2] - player.pos[2]) > NAME_RANGE) continue;
       if (wildHidesPlayer({ kin: travellerKin({ friend: !!host.social?.isFriendPeer(d.id), gt: d.gt }, myGt), wire: [d.shown.x, 0, d.shown.z], party })) continue;   // WILD1: in or near the open zone, my party and my guild alone
@@ -276,7 +286,7 @@ export function createTravelViewMarks(host) {
       // AUDIT TV C3: the peer's id, asked of the party's seats (a token's subject is another id space) - AUDIT NAMES N1-10:
       // as play's names ask it (colorOf), so my own other tab is never my party's green
       const kind = host.social?.isPartyPeer(t.id) ? 'party' : 'traveller';
-      if (wildHidesPlayer({ kin: travellerKin({ friend: !!host.social?.isFriendPeer(t.id), gt: t.gt }, myGt), wire: [w.x, 0, w.z], party: kind === 'party' })) continue;   // WILD1: in or near the open zone, my party and my guild alone
+      if (wildHidesPlayer({ kin: travellerKin({ friend: !!host.social?.isFriendPeer(t.id), gt: t.gt }, myGt), wire: [w.x, 0, w.z], party: kind === 'party' })) { if (pvpSkullOf(t.id) === 'red') villainMark(t.id, tvSceneKept(t, w.x, w.z, 2, isShipMark(t.p)), () => true); continue; }   // WILD1: in or near the open zone, my party and my guild alone
       const ship = isShipMark(t.p);   // OWS1: at sea, a ship - riding the sea's top
       marks.push({ key: `trav:${t.id}`, at: tvSceneKept(t, w.x, w.z, 2, ship), label: t.name, kind: `${kind}${ship ? ' ship' : ''}${t.p.tv ? ' journey' : ''}`, edge: true, badge: tvBadgeOf(t),
         kin: travellerKin({ friend: !!host.social?.isFriendPeer(t.id), gt: t.gt }, myGt), lv: t.lv ?? null, skull: pvpSkullOf(t.id) });   // OW-KIN / OW-WHO

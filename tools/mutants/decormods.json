@@ -11,8 +11,8 @@
   {
     "name": "DECORMODS-twin-offered",
     "file": "src/systems/decor/decorMods.js",
-    "old": "    45169: 42, 45190: 548, 45191: 363, 45192: 14, 45194: 8,\n",
-    "new": "    45169: 42, 45190: 548, 45191: 363, 45192: 14, 45194: 8, 45113: 1,\n",
+    "old": "    45169: 42, 45190: 547, 45191: 362, 45192: 14, 45194: 8,\n",
+    "new": "    45169: 42, 45190: 547, 45191: 362, 45192: 14, 45194: 8, 45113: 1,\n",
     "tests": [
       "test/systems/decor/decormods.test.js"
     ]
@@ -67,11 +67,12 @@
   {
     "name": "DECORMODS-kind-unset",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "    if (c.from === 'mod' && (kind === 'furniture' || kind === 'decor')) kind = 'mods';",
-    "new": "    if (false) kind = 'mods';",
+    "old": "    else if (c.from === 'mod' && plain) kind = 'mods';",
+    "new": "    else if (false) kind = 'mods';",
     "tests": [
       "test/systems/decor/decormods.test.js"
-    ]
+    ],
+    "note": "DECOR-KINDS (FIELD BUGS 2026-10-29f, PIN MOVED): re-aimed by content - a piece is filed by what it is first."
   },
   {
     "name": "DECORMODS-street-indoors",
@@ -189,5 +190,23 @@
       "test/systems/decor/decormods.test.js"
     ],
     "note": "AUDIT 05b A11: a second copy of the key's format, drifted - the mods' flats never meet their entries or a room's"
+  },
+  {
+    "name": "DECORMODS-kept-dropped",
+    "file": "src/systems/decor/decorMods.js",
+    "old": "{ table: DECOR_MOD_ROOMS, from: 'mod' }, { table: DECOR_MOD_KEPT, from: 'mod' }, { table: DECOR_MOD_STREETS, from: 'modstreet' }",
+    "new": "{ table: DECOR_MOD_ROOMS, from: 'mod' }, { table: DECOR_MOD_STREETS, from: 'modstreet' }",
+    "tests": [
+      "test/systems/decor/decormods.test.js"
+    ]
+  },
+  {
+    "name": "DECORMODS-items-unnamed",
+    "file": "src/systems/decor/decorMods.js",
+    "old": "  if (named) return { base: named, as: archive === 1210 ? 205 : archive };   // the bottles are bottles\n",
+    "new": "",
+    "tests": [
+      "test/systems/decor/decormods.test.js"
+    ]
   }
 ]

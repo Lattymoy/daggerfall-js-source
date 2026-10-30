@@ -119,7 +119,7 @@ test('WEAPON-GLOW1: the element is the blow\'s - a minted line names it, at the 
   }
 });
 
-test('WEAPON-GLOW1: the Legendary band reads level 3 - an Exalted\'s own elemental line, and the Hourlock\'s', () => {
+test('WEAPON-GLOW1: the Legendary band reads level 3 - an Exalted\'s own elemental line, and the Hourlock\'s (its hand the rung\'s crimson since GILDED-GLOW)', () => {
   on();
   // exaltLegendary, the producer of the Exalted line, aimed at its elemental kind
   const it = sword();
@@ -132,15 +132,18 @@ test('WEAPON-GLOW1: the Legendary band reads level 3 - an Exalted\'s own element
   const line = it.affixes.find((a) => a.id === 'elemental');
   assert.ok(line.value > LR.AFFIX_RANGES.elemental.rare[1]);
   assert.deepEqual(WG.weaponGlow(it, { on: true }), { look: line.param, level: 3 });
-  // the Gilded rung's: the Hourlock's line is the Legendary band's top - and it carries no DFU enchantment
+  // the Gilded rung's: the Hourlock's line is the Legendary band's top, its element shock at level 3 - PIN MOVED
+  // (GILDED-GLOW): and its hand wears the rung's crimson over it (law 8, gildedglow.test.js)
   const hour = mintHourlock();
-  assert.deepEqual(WG.weaponGlow(hour, { on: true }), { look: 'shock', level: 3 });
-  assert.equal(WG.spriteGlow(hour, { on: true }), WG.glowSpec('shock', 3));
-  // AUDIT WEAPON-GLOW LAW-2: a Gilded piece with no element is BARE in both hands - its powers are its record's, and
-  // it carries no enchantment for the arcane look to say (bible/05-Combat/Weapon-Glow.md "Not done")
+  assert.deepEqual(WG.weaponElement(hour), { element: 'shock', total: 10 });
+  assert.equal(WG.glowLevel(10), 3);
+  assert.deepEqual(WG.weaponGlow(hour, { on: true }), { look: 'gilded', level: WG.GILDED_LEVEL });
+  assert.equal(WG.spriteGlow(hour, { on: true }), WG.glowSpec('gilded', WG.GILDED_LEVEL));
+  // AUDIT WEAPON-GLOW LAW-2 - PIN MOVED (GILDED-GLOW): a Gilded piece with no element and no enchantment is no longer bare
+  // in either hand - the rung's crimson is its own
   const oath = mintGilded(DRAGONFIRE_OATH);
   assert.equal(isEnchanted(oath), false);
-  assert.equal(WG.meshGlow(oath, { on: true }), null);
+  assert.equal(WG.meshGlow(oath, { on: true }), WG.glowSpec('gilded', WG.GILDED_LEVEL));
 });
 
 test('WEAPON-GLOW1: gems count as the blow reads them - capped; the most wins, a tie in PROC_ELEMENTS\' order', () => {
@@ -225,19 +228,19 @@ test('WEAPON-GLOW1: a spec is built once a look and level - the frame asks and a
   assert.equal(WG.glowSpec('poison', 1), null, 'no element but the blow\'s three and the arcane');
   for (const level of [0, 4, 1.5, '2', null, undefined, -1]) assert.equal(WG.glowSpec('fire', level), null, `level ${String(level)}`);
   assert.equal(WG.glowSpec('hasOwnProperty', 1), null, 'no prototype key is a look');
-  assert.deepEqual(WG.GLOW_LOOKS, ['none', 'fire', 'frost', 'shock', 'arcane', 'brand', 'edge']);   // PIN MOVED (ARMORY): the Aura Armory's two weapon pieces
-  for (const look of ['fire', 'frost', 'shock', 'arcane', 'brand', 'edge']) {
+  assert.deepEqual(WG.GLOW_LOOKS, ['none', 'fire', 'frost', 'shock', 'arcane', 'brand', 'edge', 'gilded']);   // PIN MOVED (GILDED-GLOW): the rung's; PIN MOVED (ARMORY): the Aura Armory's two weapon pieces
+  for (const look of ['fire', 'frost', 'shock', 'arcane', 'brand', 'edge', 'gilded']) {
     const r = WG.GLOW_RAMPS[look];
     assert.equal(r.length, 4);
     const lum = (c) => 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2];
     for (let i = 1; i < 4; i++) assert.ok(lum(r[i]) > lum(r[i - 1]), `${look}: the ramp climbs, dark to hot`);
   }
   // AUDIT WEAPON-GLOW LAW-7 / NET-4: the specs' words are EXACTLY the words the wire's pattern takes - ten; PIN MOVED
-  // (ARMORY): twelve, the Aura Armory's Brand and Edge at their one strength
+  // (ARMORY): twelve, the Aura Armory's Brand and Edge at their one strength; PIN MOVED (GILDED-GLOW): thirteen, gilded2
   const words = [];
   for (const look of WG.GLOW_LOOKS) for (let l = 0; l <= 4; l++) words.push(`${look}${l}`);
   const specWords = words.filter((w) => WG.glowFromWord(w));
-  assert.equal(specWords.length, 12);
+  assert.equal(specWords.length, 13);
   assert.deepEqual(words.filter((w) => LOOK_GLOW_RE.test(w)), specWords);
   for (const w of specWords) assert.equal(WG.glowWord(WG.glowFromWord(w)), w, 'the word reads back to itself');
   for (const bad of [null, 3, '', 'FIRE1', 'fire1 ']) assert.equal(WG.glowFromWord(bad), null);
@@ -258,9 +261,10 @@ test('WEAPON-GLOW1: the classic hand swings the PLAIN sheet while an element sho
   assert.equal(atlasFileName(it, 'WEAPON04.CIF', true), 'LONGSWORDMAGIC.CIF');
   // the rig: one ask a frame, the art's type and key and loader all off it, the clone told the plain set
   const rig = strip(read('src/combat/weapon/weaponRig.js'));
-  assert.match(rig, /const askHeld = \(\) => \{ heldFor = playerWeapon\.weapon; heldGlow = spriteGlow\(heldFor\); \};/);
+  assert.match(rig, /const askHeld = \(\) => \{ heldFor = heldNow\(\); heldGlow = spriteGlow\(heldFor\); \};/);   // PIN MOVED (HAND-WRAPS, AUDIT C): the held weapon, else the fist's wraps
+  assert.match(rig, /const heldNow = \(\) => playerWeapon\.weapon \?\? playerWeapon\.wraps \?\? null;/);
   assert.match(rig, /const glowOf = \(item\) => \(item && item === heldFor \? heldGlow : spriteGlow\(item\)\);/, 'the weapon it was asked of, never another\'s');
-  assert.match(rig, /const heldGlowNow = \(\) => \{ if \(playerWeapon\.weapon !== heldFor\) askHeld\(\); return heldGlow; \};/);
+  assert.match(rig, /const heldGlowNow = \(\) => \{ if \(heldNow\(\) !== heldFor\) askHeld\(\); return heldGlow; \};/);   // PIN MOVED (HAND-WRAPS, AUDIT C): asked again when the held item, the wraps included, changes
   assert.match(rig, /syncWorn\(\);[^\n]*\n\s*askHeld\(\);/, 'asked once a frame, after the hand is synced');
   assert.match(rig, /const heldType = \(item\) => \(glowOf\(item\) \? plainWeaponType\(weaponTypeForItem\(item\)\) : weaponTypeForItem\(item\)\);/);
   assert.match(rig, /const plain = !!glowOf\(held\);\s*const type = heldType\(held\);/);   // PIN MOVED (APPEARANCES): the weapon held is `held` - its glow and its type the piece's own, its art the look it wears (drawnPiece)
@@ -268,11 +272,13 @@ test('WEAPON-GLOW1: the classic hand swings the PLAIN sheet while an element sho
   assert.match(rig, /loadFpsWeaponArt\(fetchBytes, palette, renderer, type, item\?\.material \?\? 0, item, \{ plain \}\)/);
   // PIN MOVED (TWO-HANDS): a clone's frame is built per hand's item (weaponRig.js cloneFrame - the one hand's, or each of
   // a pair's), its set and outline that item's own
-  assert.match(rig, /weaponType: heldType\(item\), material: drawnPiece\(item\)\?\.material \?\? -1, glow: glowOf\(item\),/, 'the clone told the set and the outline');   // PIN MOVED (APPEARANCES): the metal the look's
+  // PIN MOVED (HAND-WRAPS, AUDIT C2): a bare fist's clone its wraps' outline
+  assert.match(rig, /weaponType: heldType\(item\), material: drawnPiece\(item\)\?\.material \?\? -1, glow: item \? glowOf\(item\) : handGlowOf\(hand\),/, 'the clone told the set and the outline');   // PIN MOVED (APPEARANCES): the metal the look's
   // PIN MOVED (PISTOLET): the frame drawn through the hand's mirror (`uv`), each pistol of a pair outlined by its own
   // glow, and the field in the art's NATIVE pixels - the Thunderlock's union box, the Pistolet's own texture size (AUDIT
   // PISTOLET B4: its union box is in design pixels)
-  assert.match(rig, /renderer\.drawScreenQuad\(tex, rect, uv, lit \?\? undefined\);\s*const elementGlow = hand \? glowOf\(playerWeapon\.handItem\(hand\)\) : heldGlowNow\(\);[^\n]*\n\s*if \(elementGlow\) renderer\.drawScreenQuadGlow\?\.\(tex, rect, uv, elementGlow, \{ art: art\.native \? \[art\.native\.w, art\.native\.h\] : \[art\.unionBox\.w, art\.unionBox\.h\], view: \[canvas\.width, canvas\.height\] \}\);/, 'the Thunderlock\'s frame, then its outline - in its art\'s native pixels');
+  // PIN MOVED (HAND-WRAPS, AUDIT C2): a hand's outline its item's, or a bare fist's wraps' (weaponRig.js handGlowOf)
+  assert.match(rig, /renderer\.drawScreenQuad\(tex, rect, uv, lit \?\? undefined\);\s*const elementGlow = hand \? handGlowOf\(hand\) : heldGlowNow\(\);[^\n]*\n\s*if \(elementGlow\) renderer\.drawScreenQuadGlow\?\.\(tex, rect, uv, elementGlow, \{ art: art\.native \? \[art\.native\.w, art\.native\.h\] : \[art\.unionBox\.w, art\.unionBox\.h\], view: \[canvas\.width, canvas\.height\] \}\);/, 'the Thunderlock\'s frame, then its outline - in its art\'s native pixels');
   // PIN MOVED (SPELL-HAND): the sprite's offset is the climb's (`offsetHeight`, built once on the line above) less the
   // spell hand's guard (was: `weaponOffsetHeight() - climbDrop(...)` inline); the glow did not move
   // AUDIT SPELL-HAND L5-9: one pin, in order - the climb's offset, the guard's drop off it, the sprite drawn at their difference

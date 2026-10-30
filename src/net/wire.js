@@ -279,11 +279,11 @@ export const LOOK_GROUPS = Object.freeze(['MensClothing', 'WomensClothing', 'Arm
  *  `arcane2` (systems/weaponGlow.js glowWord) - so a peer's Morrowind body draws the weapon as its owner sees it: the
  *  affixes that decide it never travel. A weapon's alone, OMITTED when none (`class`'s law: an item without it keeps
  *  the bytes it always had); anything else is dropped, never the item. */
-export const LOOK_GLOW_RE = /^(?:(?:fire|frost|shock)[123]|arcane2|brand2|edge2)$/;   // AUDIT WEAPON-GLOW NET-4: the ten words a client can say - the arcane look has one strength; ARMORY: and the Aura Armory's two weapon pieces, one each
+export const LOOK_GLOW_RE = /^(?:(?:fire|frost|shock)[123]|arcane2|brand2|edge2|gilded2)$/;   // AUDIT WEAPON-GLOW NET-4: the words a client can say (thirteen) - the arcane look has one strength; ARMORY: and the Aura Armory's two weapon pieces, one each; GILDED-GLOW: and the Gilded rung's crimson, one
 /** AUDIT WEAPON-GLOW NET-4: the slots a glowing weapon is said in - the hands (the equip table's RightHand and LeftHand,
  *  the siege referee's own pair); a weapon anywhere else is in no hand. */
 export const LOOK_GLOW_SLOTS = SIEGE_HAND_SLOTS;
-/** Whether an item as the look carries it may say a glow - a weapon, in a hand, its word one of the ten. */
+/** Whether an item as the look carries it may say a glow - a weapon, in a hand, its word one LOOK_GLOW_RE takes. */
 export const lookGlowOk = (it) => it?.group === 'Weapons' && LOOK_GLOW_SLOTS.includes(it.equipSlot) && typeof it.glow === 'string' && LOOK_GLOW_RE.test(it.glow);
 /** AUDIT MW-NPC II K2: a foe record's worn kit (`lw`) - a piece a slot of the equip table's 27 at most. */
 export const WORN_PIECES_MAX = 27;
@@ -1224,7 +1224,7 @@ export const CELL_OLD_REASON = 'old cells';
  *  a container without it, and every peer landed that. A loot room's hello says it (`ll`); while `lootDoor` is on
  *  (net/relayCfg.js) the relay refuses a hello there that says less or none (LOOT_OLD_REASON). It moves, and RELAY_VERSION
  *  with it, when the item law takes a piece an older law refuses. */
-export const LOOT_HELLO_LAW = 1;
+export const LOOT_HELLO_LAW = 2;   // 2: HAND-WRAPS - the Hand Wraps (563)
 /** The most `ll` a hello may say - a later build's number, read; past it, read as none. */
 export const LOOT_HELLO_LAW_WIRE_MAX = 65535;
 /** LOOT-DOOR: the rooms whose words carry a shared list - a world room's acts (a container) and a cell's or a world
@@ -1708,10 +1708,14 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
 // Integrated Arena spectator visibility with staff teleport, stable boat identity and private ownership; deploy relay before clients.
-export const RELAY_VERSION = 'world289';   // world289: DELVE II DLV3 (2026-10-29, NOT YET DEPLOYED; world284 then world288 on its branch, renumbered past AUDIT TAMRIEL-WIDE's world284, CAPE-TOGGLE's world285, FB1029 GROUND's world286, FRONTS's world287 and DRAGON's world288 at the merges of main): a dungeon's room keeps its encounters (`dv`, DELVE_RELAY_MIN - server/src/delveRoom.js, net/delve/delveLaw.js joins the bundle), the `delve` grant kind (a world room's alone, GRANT_ROOM_KINDS) and the token's level stamped in a dungeon's room; a game-made dungeon's curated block names its room, `.c<n>` (AUDIT DLV5-6 M3). Deploy the relay first, then the site.
+export const RELAY_VERSION = 'world292';   // world292: DELVE II DLV3 (2026-10-29, NOT YET DEPLOYED; world284, world288 then world289 on its branch, renumbered past AUDIT TAMRIEL-WIDE's world284, CAPE-TOGGLE's world285, FB1029 GROUND's world286, FRONTS's world287, DRAGON's world288, HAND-WRAPS' world289, PVP-LINGER's world290 and GILDED-GLOW's world291 at the merges of main): a dungeon's room keeps its encounters (`dv`, DELVE_RELAY_MIN - server/src/delveRoom.js, net/delve/delveLaw.js joins the bundle), the `delve` grant kind (a world room's alone, GRANT_ROOM_KINDS) and the token's level stamped in a dungeon's room; a game-made dungeon's curated block names its room, `.c<n>` (AUDIT DLV5-6 M3). Deploy the relay first, then the site.
+// world291: GILDED-GLOW and DECOR-ROOMY (world286, world287, world289 then world290 on its branch, renumbered past FB1029 GROUND's world286, FRONTS' world287, DRAGON's world288, HAND-WRAPS' world289 and PVP-LINGER's world290 at the merges of main; 2026-10-29, #feature-feedback: "gilded weapons should have a cool crimson glow"; bible/05-Combat/Weapon-Glow.md law 8; NOT YET DEPLOYED): a look's weapon may say `gilded2` (LOOK_GLOW_RE) - a Gilded weapon's crimson, which an older relay strips (its peers' Gilded weapon draws bare until it is deployed); and net/homeLaw.js's ground law (FIELD BUGS 2026-10-29f DECOR-ROOMY), which the relay bundles and never calls. Deploy the relay first, then the site.
+// world290: PVP-LINGER (world288, then world289, on its branch, renumbered past DRAGON's world288 and HAND-WRAPS' world289 at the merges of main; 2026-10-29, the owner: "keep their body in game if they login in the window of cooldown"; bible/11-Multiplayer/PvP-Rework.md PVP-LINGER; NOT YET DEPLOYED): a fighter whose last socket closes inside its PvP lock leaves its body in the zone - its pose said again, struck and killed by the referee's law, its fall signed for its killer to carry - until the lock runs out (net/wild/wildLinger.js, server/src/pvpLinger.js); its account's hello here, or its word from another room at the hub, takes the body back. PVP-LINGER-RISE: a body slain while away is kept in the room's storage, and its player's next zone word is a `down` word with `aw` 1 and its killer's name `n` (validWildDown) - a death, then the zone's rise in a town. The site may deploy first: an older page reads the word as WILD-REJOIN's.
+// world289: HAND-WRAPS (world286 on its branch, renumbered past FB1029 GROUND's world286, FRONTS' world287 and DRAGON's world288 at the merge of main; 2026-10-29, AUDIT HAND-WRAPS B2; bible/05-Combat/Hand-Wraps.md; NOT YET DEPLOYED): LOOT_HELLO_LAW 1 to 2 - a build that reads the Hand Wraps (template 563); while `lootDoor` is on, a loot room refuses an older one, which would drop a pair from a shared container. Deploy the relay first, then the site.
 // world288: DRAGON (2026-10-29, bible/11-Multiplayer/Dwarven-Dragon.md; NOT YET DEPLOYED; world281, world283, world284, world285, world286 then world287 on its branch, renumbered past the PvP rework's world281 and world282, PVP-SAFE-HIT's world283, AUDIT TAMRIEL-WIDE's world284, CAPE-TOGGLE's world285, FB1029 GROUND's world286 and FRONTS' world287 at the merges of main): the pose's `rd` keeps 3, a rider on the Dwarven Dragon (POSE_RIDE.Dragon, DRAGON_RIDE_RELAY_MIN), and the Dwarven Dragon's fight (server/src/dragonFights.js, its cell's words and its z1 receipts). Deploy the relay first.
 // world287: FRONTS (world286 on its branch, renumbered past FB1029 GROUND's world286 at the merge of main; 2026-10-29, the owner: "events are way overdone with their spawning"; bible/03-World/World-Wide.md FRONTS; NOT YET DEPLOYED): net/frontLaw.js JOINS THE BUNDLE - past the Bay two provinces stir a game day, and only they open a gate (gateLaw.js isGateDay), land a star (starfallLaw.js starInWindow), roll raid slots (raid/raidLaw.js raidDaySlots) or raise a Hollow, at most two of those standing (superDungeon/sdLaw.js sdDue, sdRise; the hub's _sdHeldPast). AUDIT FRONTS (re-hashed in place, undeployed): the hub beats the provinces that waited longest first (sdBeatOrder), arms a turn that ended mid-census, and its Hollow cards name the next's turn and a free place (sdRiseNotBefore). The Bay's lane unchanged. The site may deploy first: it sends nothing world287 alone reads (bible/03-World/World-Wide.md FRONTS, the deploy).
 // world286: FB1029 GROUND (2026-10-29, NOT YET DEPLOYED; world284 on its branch, renumbered past world284 and world285 on main at the merge): GROUND_LAW 4 to 5 - the ground about a Bay town meets it across its pixel's edge (ACROSS-EDGE) and the Bay's paving over the sea stands dry (ROAD-DRY), so the relay refuses a ground room's hello from the old ground while `groundGate` is on; the bundle's files otherwise unchanged. world285: CAPE-TOGGLE (world284 on its branch, renumbered past AUDIT TAMRIEL-WIDE's world284 at the merge of main; 2026-10-29, the owner: "add a cape/helmet toggle option in the inventory for people"; bible/04-Characters/Cape-Toggle.md; NOT YET DEPLOYED): a look may say `hc` 1 - its player hides their capes, so a peer draws no aura on them (validLook keeps it, omitted otherwise). Deploy the relay first, then the site.
+// world285: CAPE-TOGGLE (world284 on its branch, renumbered past AUDIT TAMRIEL-WIDE's world284 at the merge of main; 2026-10-29, the owner: "add a cape/helmet toggle option in the inventory for people"; bible/04-Characters/Cape-Toggle.md; NOT YET DEPLOYED): a look may say `hc` 1 - its player hides their capes, so a peer draws no aura on them (validLook keeps it, omitted otherwise). Deploy the relay first, then the site.
 // world284: AUDIT TAMRIEL-WIDE B1, B2, B5 and E3 (world280, world281 then world283 on its branch, renumbered past ARMORY's world280, then PVP-REWORK's world281 and PVP-FOLLOWUP's world282, then PVP-SAFE-HIT's world283, at the merges of main; 2026-10-28, bible/01-Overview/audits/Audit-Tamriel-Wide.md; NOT YET DEPLOYED) - the hub keeps a death and a win in a province's Hollow under its lane's keys (server/src/sdCopy.js); a staff /tp takes an abyss whose pit stands past the Bay (net/staffTeleport.js); the hub keeps two days of every lane's cleansed raids (RAID_CLEANS_MAX 576); and a serpent's `site` word says its site law (`sl`, net/serpent/serpentLaw.js SERPENT_SITE_LAW 2), which the hub folds alone, into its own record. Deploy the relay first, then the site: a new build's sites on an older relay join the older law's vote. Until two of the new site's builds name a site, the hub folds none, its herald names no place, and that day's kill is not posted (AUDIT TAMRIEL-WIDE II R4); a new build says no site to an older relay (SERPENT_SITE_RELAY_MIN, II R2).
 // world283: PVP-SAFE-HIT (2026-10-29, NOT YET DEPLOYED): a non-villain in a settlement's streets of the zone says it (`zone` with `sf` 1, WILD_STREETS_RELAY_MIN) - the referee lands its blow on a red villain alone and no blow on it (net/wild/wildRef.js wildStreetsBar). Deploy the relay first, then the site.
 // world282: PVP-FOLLOWUP (2026-10-29, the PvP rework's follow-up; NOT YET DEPLOYED): PVP-RISE - the zone's death wait a minute (WILD_DEATH_HOLD_S 60, WILD_REF.riseMs and the `down` word's ceiling 60 s, were two minutes); Enter rises after 15 s (DEATH-15). Deploy the relay first, then the site.
@@ -5096,12 +5100,14 @@ export function validWildRefOut(m) {
 /** WILD-REJOIN: a `down` word projected - its time left, and the body's remains' id and place together or neither. */
 function validWildDown(/** @type {any} */ m) {
   if (!intIn(m.ms, 1, WILD_DOWN_MS_MAX)) return null;
-  if (m.r === undefined && m.p === undefined) return { k: 'down', ms: m.ms };
+  // PVP-LINGER-RISE: `aw` 1, slain while away, and `n` its killer's name
+  const away = m.aw === 1 ? { aw: 1, ...(typeof m.n === 'string' && m.n.length > 0 && m.n.length <= NAME_MAX ? { n: m.n } : {}) } : {};
+  if (m.r === undefined && m.p === undefined) return { k: 'down', ms: m.ms, ...away };
   const r = typeof m.r === 'string' && WILD_ID_RE.test(m.r) ? m.r : null;
   if (!r) return null;
-  if (m.p === undefined) return { k: 'down', ms: m.ms, r };
+  if (m.p === undefined) return { k: 'down', ms: m.ms, r, ...away };
   const p = wildPoint(m.p);
-  return p ? { k: 'down', ms: m.ms, r, p } : null;
+  return p ? { k: 'down', ms: m.ms, r, p, ...away } : null;
 }
 // ─── SHARED-HEALTH (2026-10-26, net/siege/refereeHealthShare.js): ONE HEALTH POOL UNDER THE REFEREE ───
 // A client's report of its health (`{t:'vit', n, s, seen}`) to the referee that holds a fight of its - the open zone's, a
@@ -6108,7 +6114,7 @@ export const STAR_RC_KEEP_MS = 24 * 60 * 60 * 1000;
 // party's words (`w`), acts (`a`) and blows (`x`); it says the ledger back (`dl`, each socket its own `me`) with what
 // moved it (`ev`), and an earner asks to open its share (`v`). No law imported: its bounds are pinned equal by test.
 /** The first relay that keeps a dungeon's encounters. An older one CLOSES the socket on `dv`, so a client says none. */
-export const DELVE_RELAY_MIN = 289;
+export const DELVE_RELAY_MIN = 292;
 export const relaySupportsDelve = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= DELVE_RELAY_MIN; };
 /** A socket's `dv` words a second: a word each site a second, an act, and a hand of four blows - a second's slack. */
 export const DELVE_HZ_MAX = 8;

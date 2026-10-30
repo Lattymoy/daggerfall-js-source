@@ -152,7 +152,7 @@ referee says each flagged fighter's bar to the room when it moves, in whole per 
 (`wildRef.js:"export function wildBarWords(st, now) {"`), off the zone's beat
 (`server/src/index.js:"_wildBarSay(st, now) {"`), and every bar to one entering. The referee knows a Shield spell as on
 or off, never its amount, so the strip is whole or gone. A flagged stranger, nameless in the 3D scene, still shows its
-skull and bar (`pvpFlagHost.js:"const shown = !q ||"`).
+skull and bar (`pvpFlagHost.js:"const shown = k && (!q ||"`).
 
 "So a hidden player u only see the skull and hp bar", "They always have some body just fiant": a Chameleon or
 Invisible player whose skull is gold is drawn faint, with skull and bar and no name
@@ -383,3 +383,54 @@ My doors agree: from the streets a red body alone is fair
 (`world.js:"if (!inTown || !wildHere() || zoneSafe()) return;"`). The safe line says so (`zoneSafe.js:"get enter()"`).
 A relay before world283 does not read `sf`, so it hears 0 there, as before
 (`wire.js:"export const WILD_STREETS_RELAY_MIN = 283;"`). Relay world283. A departure: DFU has no PvP.
+
+## PVP-LINGER: a body stays out its lock
+
+"keep their body in game if they login in the window of cooldown": a fighter whose last socket in a room closes inside
+the lock of a PvP blow given or taken leaves its body in the zone until the lock runs out
+(`wildLinger.js:"export function lingerUntil("`). Peers keep its last pose, said again before their silence law hides it,
+and one who enters is shown it (`pvpLinger.js:"export async function lingerHello("`). Flagged players strike it by the
+referee's law (`server/src/index.js:"const target = this._idFirst(d.to) ?? lingerTarget(this, d.to);"`); it moves and
+casts nothing, and a blow on it renews its lock, never past three minutes from the close. A kill is a normal PvP kill: the
+villain points, and a fall signed with its fallen away (`g` 1), so its killer carries the receipt at once and the
+account service rolls the reward as for any kill. No account change was needed.
+
+The body goes as a normal leave when its lock runs out or its fall is signed (`wildLinger.js:"export function lingerOver("`).
+Its account's hello in that room takes it back, with the health the referee kept and no safe passage
+(`pvpLinger.js:"function lingerTaken("`); a hello in another room ends it at the room's next ask of the hub. A villain
+stays only when a blow fell in the lock. A close outside the lock, a hidden socket, or the room's last socket leaves at
+once. Relay world290. A departure: DFU has no PvP.
+
+PVP-LINGER-RISE ("So u respawn in town if u get killed and log back in?"): yes. A body slain while its player is away
+is kept in its room's storage for a week (`pvpLinger.js:"export async function lingerSlain("`). The player's next word
+that it stands in the zone is a `down` word with `aw` 1 and its killer's name
+(`wildLinger.js:"export function lingerAwayWord("`): ten seconds on the death screen, or the referee's own wait if it is
+still down, then the zone's rise in the nearest town outside it, with no safe passage (PVP-DEATH). The screen says who
+killed it (`wildZone.js:"deathAway: "`). A log-in in another room, or after a week, hears nothing, and the player stands
+where the save left it. The relay says it, not the account service: no account change.
+
+## PVP-HUD: the combat lock, shown
+
+"do we show comag timer rong and cooldown flkag rinf?", "was in mock up": the approved mockup, client only
+(`pvpHud.js:"export function createPvpHud("`, wired by `pvpFlagHost.js:"if (doc.body && typeof doc.createElementNS === 'function') hud = createPvpHud("`).
+The lock is PVP_FLAG.lockMs, 60 s for all. A red SVG ring round the flag button empties over it and fills again at each
+PvP blow, its seconds under it; a villain's ring is full (`pvpHud.js:"export function pvpRing("`). While the lock runs
+the next frame is asked, so the ring moves smoothly; out of it nothing runs. A small bronze banner top-centre says "In
+combat" and the seconds. There is no "turning off" ring: the flag drops at once outside the lock.
+
+The lock's lines are said mid-screen 3 s (`pvpHud.js:"export const PVP_SAY_S = 3;"`): the flag's own drop, a Portal
+Stone (`portalStoneHost.js:"const lockRefused = () => {"` - a new hold: flagged in the lock, the door and the pick
+refuse; unflagged the stone stays free), rest (`pvpRulesHost.js:"const restLock = () => pvpLimited() && lockS() > 0;"`,
+asked before the flag's own line) and the end, "You are out of combat." (`pvpFlagHost.js:"const beat = () => {"`).
+Log out in combat is the relay's, built apart.
+
+"Last hits", bottom right: my three newest PvP blows, flagged in the zone while the lock runs
+(`pvpHud.js:"export function pvpHitLine("`). The referee's `hp` word carries who, on whom and what was dealt, so a Shield's
+share and a resist are not shown. A name is the one my name layer shows; a stranger's is "a player". My party wears its
+green name and bar, no skull, and a bar under 20% flashes (`nameLayer.js:"export const pvpBarLow = "`).
+
+My kill says "You slew" (`pvpHud.js:"export const pvpSlewText = "`); the fallen's screen heads its lines "Slain by"
+(`wildZone.js:"export const wildDeathSlain = "`). A villain the room says is red is marked on the Overworld where the
+law would hide it, nameless (`travelViewMarks.js:"const villainMark = (id, at, dropped) => {"`); one in no room of mine
+is unknown to this client. The owed level 29 reads "Level 29 · 1 level owed", its button "Go to 30"
+(`pvp30Ask.js:"export const pvp30Owed = "`). Tests: `test/ui/pvphud.test.js`. A departure: DFU has no PvP.

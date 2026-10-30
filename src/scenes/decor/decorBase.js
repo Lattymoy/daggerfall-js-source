@@ -23,7 +23,7 @@
 // what it holds would go with it, out of reach.
 // ═══════════════════════════════════════════════════════════════════
 
-import { DECOR_BASE_KEY_RE, DECOR_HIDDEN_CAP, decorHiddenOf } from '../../net/decorLaw.js';
+import { DECOR_BASE_KEY_RE, DECOR_HIDDEN_CAP, decorHiddenOf, decorIsDoorKey } from '../../net/decorLaw.js';   // DOOR-KEPT: a door's name is the doors' list's
 import { lateSolidsOf } from '../../player/lateSolid.js';   // DECOR-CLEAR: a piece put back round the body is withheld until it is clear
 import { DEFAULT_ACTIVATION_DISTANCE, RAY_DISTANCE } from '../../player/activate.js';
 
@@ -32,6 +32,14 @@ export const baseBucketOf = (key) => `base:${key}`;
 /** The collider bucket the room's own shell stands in - its walls, floors and ceilings (interiorContext.js); HOME-DOORS
  *  looks for doorways in it alone. */
 export const INTERIOR_SHELL_BUCKET = 'interior';
+
+/** DOOR-KEPT (FIELD BUGS 2026-10-29f): a room's list as the account service keeps it, stood whole - the pieces taken out,
+ *  and the swing doors (`roomDoors`, systems/decor/decorInteriorDoors.js). */
+export function standRoomHidden(base, list) {
+  if (!base) return;
+  base.setHidden(list);
+  base.roomDoors?.apply?.(list);
+}
 
 /**
  * THE ROOM'S OWN PIECES. `drawList` - the room's draw list; `batches()`, `lights()` - its billboard batches and its
@@ -123,7 +131,7 @@ export function createBaseRoom({ drawList, batches, lights, collider }) {
      *  does not take is no name, and no more than the cap is kept. Anything but a list changes nothing. */
     setHidden(keys) {
       if (!Array.isArray(keys)) return false;
-      const named = [...new Set(keys.filter((k) => typeof k === 'string' && DECOR_BASE_KEY_RE.test(k)))].slice(0, DECOR_HIDDEN_CAP);
+      const named = [...new Set(keys.filter((k) => typeof k === 'string' && DECOR_BASE_KEY_RE.test(k) && !decorIsDoorKey(k)))].slice(0, DECOR_HIDDEN_CAP);
       const want = decorHiddenOf(named) ?? [];
       const set = new Set(want);
       stray.clear();

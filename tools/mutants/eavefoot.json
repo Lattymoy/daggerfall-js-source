@@ -1,0 +1,20 @@
+[
+  {
+    "name": "EAVEFOOT-crossings-counted",
+    "file": "src/scenes/homeYards.js",
+    "old": "if (ax + ((z - az) / (bz - az)) * (bx - ax) > x) crossed.add(line);",
+    "new": "if (ax + ((z - az) / (bz - az)) * (bx - ax) > x) crossed.add(crossed.size);",
+    "tests": [
+      "test/world/eavefoot.test.js"
+    ]
+  },
+  {
+    "name": "EAVEFOOT-every-wall",
+    "file": "src/scenes/homeYards.js",
+    "old": "      if (Math.min(ay, by, cy) < YARD_ROOF_Y && !seen.has(key)) { seen.add(key); walls.push([...best, lineOf(best)]); }",
+    "new": "      if (!seen.has(key)) { seen.add(key); walls.push([...best, lineOf(best)]); }",
+    "tests": [
+      "test/world/eavefoot.test.js"
+    ]
+  }
+]

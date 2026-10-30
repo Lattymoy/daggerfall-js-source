@@ -58,6 +58,7 @@ import { localizedText, localizedTable, formatText, t } from '../textManager.js'
 import { getLocalizedItemName, getLocalizedMagicItemName, getLocalizedEnemyName } from '../textManager.js';   // L10N3e: the names of things, by their own ids
 import { getMagicItemTemplates } from '../loot/loot.js';   // L10N3e: the MAGIC.DEF template a magic item's name came from
 import { makerMark, PROVENANCE_RE } from '../../net/recipeLaw.js';   // AUDIT 30 C7: a maker's mark as the law writes it
+import { isHandWraps } from '../../characters/handWrapsIds.js';   // HAND-WRAPS: its name says no metal
 /** RPT1026-CLIENT (private reports: Weir Keys that seemed to vanish, and one back again at the next sign-in): the Weir Keys are the
  *  account's balance (Elite-Gates.md section 5), shared by every character on it, and nothing the player saw said so. The
  *  card's second line - EG_TEXT's own lines ride the relay's bundle, so this one is the card's. */
@@ -255,7 +256,7 @@ export function armourModString(item) {
  * @returns {string|null} the line to show, or null if this item has none
  */
 export const itemDamageLine = (item) => (
-  item?.group === 'Weapons' && !isAmmunition(item)
+  item?.group === 'Weapons' && !isAmmunition(item) && !isHandWraps(item)   // HAND-WRAPS: the fists' damage, no weapon's
     ? weaponDamageString(item) : null);
 
 /**
@@ -712,7 +713,7 @@ export function itemNameParts(item, opts = {}) {
 /** The metal a weapon or a piece of armour says, or '' where DFU's own gates withhold it (an arrow, a helm
  *  or shield under HelmAndShieldMaterialDisplay). */
 function gearMaterialText(item) {
-  if (item?.group === 'Weapons' && !isAmmunition(item)) return materialText(item);
+  if (item?.group === 'Weapons' && !isAmmunition(item) && !isHandWraps(item)) return materialText(item);   // HAND-WRAPS: cloth, no metal
   if (item?.group === 'Armor' && armorShouldShowMaterial(item)) return materialText(item);
   return '';
 }

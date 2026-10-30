@@ -9738,7 +9738,7 @@ changes to a placed piece.
   hangings), that stands doing nothing (no action, never a door), a flat but a marker, an acting flat or nature; found
   only there, a piece is "Dungeon furniture"; every place's names are numbered after the earlier places' (a room's
   first), so no room's name moves (`01-Overview/bugs/Field-Bugs-2026-10-05b.md`). DECOR-MODS (the same record, the town
-  mods' furnishings): and the pieces it stands in for what Beautiful Villages, Beautiful Cities and Detailed Ships place
+  mods' furnishings): and the pieces it stands in for what Beautiful Villages and Beautiful Cities place
   - 297, measured over their own blocks, a room's or a street's as the mods stand them, never the town's own structure -
   named and numbered after every place of Daggerfall's (`systems/decor/decorMods.js`), every one catalogued whatever is on and
   offered while the port stands it (AUDIT 05b A3: asked as the offer is made).
@@ -10608,10 +10608,9 @@ lighting isnt shown lantern light anymore?"
 - **The law: an outdoor lamp IS the town's.** Daggerfall lights every TEXTURE.210 flat standing in a town block
   (RMBLayout.AddLight - `world/city/cityLights.js` collectCityLights), so a yard's lights too (`scenes/homeYards.js`
   yardLampOf): the town's lantern (YARD_LAMP - DaggerfallLight [City]: range 18, intensity 1, white - the law's numbers;
-  the frame lights it as it lights the street's, below), hung where the town hangs its own - the flat's drawn top and
-  the 0.15 m the town's billboards are sunk by and their lights are not (YARD_LAMP_RAISE: `world/rmbFlats.js`
-  BLOCK_FLATS_OFFSET_Y) - and a scaled lamp is the lamp scaled, its height and its reach alike (AUDIT YARD-LIGHT L5,
-  L6). Any other piece gives none.
+  the frame lights it as it lights the street's, below), a candle burning as a room's (CANDLE-DIM), each hung at its
+  flame (LAMP-FLAME, `scenes/decor/decorRoom.js` decorLightLift; `01-Overview/bugs/Field-Bugs-2026-10-29f.md`) - and a
+  scaled lamp is the lamp scaled, its height and its reach alike (AUDIT YARD-LIGHT L6). Any other piece gives none.
   Nothing is stored and nothing is switched: the piece still carries no light of its own, the service and its law are
   untouched, and a lamp placed before this lights as it stands.
 - **Standing.** The room's own machinery carries it (`scenes/decor/decorRoom.js` `lampOf` - a host's law over the light a
@@ -10665,8 +10664,8 @@ mutants of the 42 other lists aimed at decorRoom.js, homeYards.js, decorTool.js 
   refilled in place (PERF-LIGHTS' law), and the slot is set once, when the lamp is mounted.
 - **LOW - L5: a yard's lamp hung 0.15 m below the town's.** (B, the author) The town draws its TEXTURE.210 flats sunk
   by blockFlatsOffsetY (-6 native units, 0.15 m) and hangs their lights unsunk (RMBLayout.AddLight), so the town's light
-  stands 0.15 m above its picture's top; YARD-LIGHT hung the yard's at the top. FIXED: YARD_LAMP_RAISE, read off
-  `world/rmbFlats.js` BLOCK_FLATS_OFFSET_Y (exported for it), pinned against the real collectors.
+  stands 0.15 m above its picture's top; YARD-LIGHT hung the yard's at the top. FIXED then by YARD_LAMP_RAISE; since
+  LAMP-FLAME (FIELD BUGS 2026-10-29f) every lit piece's light hangs at its flame.
 - **LOW - L6: a scaled lamp lit away from itself.** (B) Its light hung at its scaled top but kept the town's 18 m
   reach, so the town's commonest lamp post (210.29, drawn 4 m tall) scaled four times stood its light 16 m up and lit
   its own foot a fiftieth as much as at its own size (0.012 against 0.605 on the classic falloff; 0.021 against 1.112
@@ -13836,9 +13835,8 @@ read by the station, the popup's onService, the probe door and both popups' own 
 `ui/covenWindow.js`). `test/ui/stationrows.test.js`.
 
 **DECOR-MODFLATS ("Above #49 decorations stopped working. Most sprites decorations are invisable above this
-number").** The catalogue is read out of the world's own blocks, and the ships Detailed Ships lays in them carry its
-own flats (1210, 1230) and the DET flats the port stands in (10009 to 10027): named in id order, "Decoration 49"
-onward. The piece law's archive bound was 999, so none of them was ever a piece - no ghost drawn, and Place did
+number").** The catalogue is read out of the world's own blocks, and a mod's ships laid in them carried its own flats
+(1210, 1230) and the DET flats the port stands in (10009 to 10027): named in id order, "Decoration 49" onward. The piece law's archive bound was 999, so none of them was ever a piece - no ghost drawn, and Place did
 nothing. `DECOR_ARCHIVE_MAX` is 99,999 now (the account service reads the same law, and takes it at its deploy). And
 the panel's row pictures ask `ui/textureCanvas.js` loadIcon, which read its answer four turns after the classic file's
 read - a race a mod's picture, which has no classic file and decodes in its own time, could lose, the panel keeping the

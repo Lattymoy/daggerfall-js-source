@@ -38,6 +38,7 @@ import { SPECIAL_ABILITY_BITS, PROFICIENCY_BITS } from '../systems/specialAdvant
 import { weaponMinDamage, weaponMaxDamage, weaponSkillUsed } from '../characters/weapons.js';   // AUDIT 18: GetBaseDamageMin/Max and GetWeaponSkillIDAsShort resolve the TEMPLATE, never a baked field or a display name
 import { equipTableOf, lowerCondition, dfuBlowWear, slotForBodyPart, EQUIP_SLOTS, weaponProficiencyFlag } from '../systems/equip.js';   // C-slice: DamageEquipment; CF1: GetWeaponSkillUsed as a ProficiencyFlag, -1 quirk included
 import { SHIELD_PARTS } from '../systems/armorMaterials.js';
+import { isHandWraps } from '../characters/handWrapsIds.js';   // HAND-WRAPS: the fists' weapon (a leaf)
 import { clawMetalDamage } from './clawMetal.js';   // BAL6-GAUNTLETS: the beast's claws take its gauntlets' metal
 import { totalWeight } from '../systems/inventory.js';   // EW1: ItemCollection.GetWeight, the one home for a stack's kg
 import { liveVampirism } from '../systems/racialLive.js';   // VU1: an import-free LEAF - vampirism.js cycles back here through loot.js
@@ -421,6 +422,7 @@ export function handToHandAttackDamage(attacker, target, damageMod, isPlayer, ro
   const min = handToHandMinDamage(h2h);
   const max = handToHandMaxDamage(h2h);
   let damage = min + Math.floor(rolls() * (max + 1 - min));  // Range(min, max+1)
+  if (isPlayer && info?.wraps) damage = weaponDamageMods(info.wraps, damage);   // HAND-WRAPS: the wraps' own lines over the fist's roll, as a weapon's over its own
   damage += damageMod;
   // FormulaHelper.cs:786 reads Stats.LiveStrength here exactly as the
   // weapon path does (:755) - AUDIT 18: this arm read the RAW stat, so
@@ -594,8 +596,13 @@ export function damageEquipment(attacker, target, damage, weapon, struckBodyPart
   }
 }
 
-export function calculateAttackDamage(attacker, target, { weapon = null, damageMod = 0, toHitMod = 0, backstabChance = 0, weaponAnimTime = 0, rolls = Math.random, dfRand = rand, onMonsterHit = null, onInflictPoison = null, say = null, enchantCtx = null, playerReflexes = null, unaware = false, blowInfo = null, blowShare = null, blowWeight = 1 } = {}) {
+export function calculateAttackDamage(attacker, target, { weapon = null, wraps: wrapsIn = null, damageMod = 0, toHitMod = 0, backstabChance = 0, weaponAnimTime = 0, rolls = Math.random, dfRand = rand, onMonsterHit = null, onInflictPoison = null, say = null, enchantCtx = null, playerReflexes = null, unaware = false, blowInfo = null, blowShare = null, blowWeight = 1 } = {}) {
   if (!attacker || !target) return 0;
+  // HAND-WRAPS (bible/05-Combat/Hand-Wraps.md): the Hand Wraps' blow is the fists' - either core, the report and the
+  // listeners see no weapon. What the wraps carry rides beside it: their lines (`wraps`, to the blow modifiers and the
+  // strike listeners) and their Strikes payload.
+  const wraps = isHandWraps(weapon) ? weapon : isHandWraps(wrapsIn) ? wrapsIn : null;
+  if (isHandWraps(weapon)) weapon = null;
   // SOFTCAP1: THE FOE THIS BLOW WAS TRADED WITH, remembered on the player
   // for the tallies that follow it (hit or miss - a swing at a tough foe is
   // real use; skillSoftcap.js overcapTallyWeight). Both directions: my
@@ -634,7 +641,7 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
   // WIDGET-RECOIL (FIELD BUGS 2026-10-03, SlipperyPeasant: "I think the recoil module isnt working either"): a core
   // that rolls its own part hands it back (`onStruck`) - PCAAO's, on by default, rolled one the tail never saw, so the
   // struck hook said -1 on every blow and the Shield Widget's "Attack On Shield" Recoil (its default) never fired
-  const overridden = core ? core(attacker, target, { weapon, damageMod, toHitMod, backstabChance, weaponAnimTime, rolls, dfRand, onMonsterHit, onInflictPoison, say, playerReflexes, notes, onStruck: (part) => (struckPart = part), unaware, blowShare }) : undefined;
+  const overridden = core ? core(attacker, target, { weapon, wraps, damageMod, toHitMod, backstabChance, weaponAnimTime, rolls, dfRand, onMonsterHit, onInflictPoison, say, playerReflexes, notes, onStruck: (part) => (struckPart = part), unaware, blowShare }) : undefined;
   let damage = 0;
   // TWO-HANDS (AUDIT, bible/05-Combat/Two-Hands.md): THE BLOW'S SHARE - the off hand's (handsLaw.js offHandDamage), a
   // function of the rolled damage - laid where the blow is rolled, before anything reads it: in the stock core ahead of
@@ -723,7 +730,7 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
       }
     } else if (calculateSuccessfulHit(attacker, target, chanceToHitMod, struck, rolls, notes)) {
       notes.hit = true;
-      damage = handToHandAttackDamage(attacker, target, damageModifiers, !!attacker.isPlayer, rolls, { unaware: !!unaware });   // BAL10: the host's word for the fists' blow modifiers too
+      damage = handToHandAttackDamage(attacker, target, damageModifiers, !!attacker.isPlayer, rolls, { unaware: !!unaware, wraps });   // BAL10: the host's word for the fists' blow modifiers too; HAND-WRAPS: and the wraps' lines
       // INSIDE the hit, exactly as :627 - see the note below
       const before = damage;
       damage = backstabDamage(damage, backstabChance, rolls, say);
@@ -821,8 +828,9 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
   // whole that share of the time, and otherwise sets off neither the weapon's Strikes payloads below (Cast When Strikes'
   // spell, Potent Vs' five) nor a power's per-blow charge (the strike listeners' `blow`). Every other blow is whole.
   const whole = !(blowWeight < 1) || rolls() < blowWeight;
-  if (weapon && isEnchantedItem(weapon) && (attacker.isPlayer || damage > 0) && whole) {
-    damage = doItemEnchantmentPayloads(PAYLOAD.Strikes, weapon, {
+  const charged = weapon ?? wraps;   // HAND-WRAPS: the wraps' enchantment strikes with the fist
+  if (charged && isEnchantedItem(charged) && (attacker.isPlayer || damage > 0) && whole) {
+    damage = doItemEnchantmentPayloads(PAYLOAD.Strikes, charged, {
       entity: attacker, target, damage,
       // AUDIT 39: null, not 0 - no caller passes an enchantCtx here, and
       // a literal 0 stamped HealthLeech's use clock at the epoch. The
@@ -865,7 +873,7 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
   // core's crits, materials and armour, which PCAAO's apply after the blow modifiers), so a power that shares the blow
   // (Ruhn's Cleave) shares what landed, never the number before the struck foe's own armour took its part
   if (attacker.isPlayer && !attacker.peer && !target.isPlayer && damage > 0) {
-    const info = { backstab: notes.backstab, blow: whole };   // RVN1: and whether it was a backstab (the fight's ledger, systems/feudLedger.js); AUDIT 2: whether it counts whole for a per-blow charge
+    const info = { backstab: notes.backstab, blow: whole, wraps };   // HAND-WRAPS: the wraps of a fist's blow, for their lines   // RVN1: and whether it was a backstab (the fight's ledger, systems/feudLedger.js); AUDIT 2: whether it counts whole for a per-blow charge
     for (const fn of _playerStrikeListeners.values()) { try { fn(attacker, target, damage, weapon, info); } catch { /* a set is not the blow's problem */ } }
   }
   return report(damage);

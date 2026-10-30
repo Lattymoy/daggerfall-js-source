@@ -206,7 +206,7 @@ session's door (`net/online.js` sendDelve), the one link (`net/delve/delveLink.j
 - **THE VAULT.** Won, the ledger names its earners: the owning party's members who stood at the site in its last 15 s.
   Each asks the room for its share once; the share is rolled on the earner's machine when the room says yes.
 - **INSTANCES.** An instanced dungeon (`Instances.md`) is a room like any other: the ledger lives in it.
-- `world289` (DELVE_RELAY_MIN; world284 then world288 on its branch, renumbered past main at the merges): a page at an older relay stands no site online. Online a window does not hold the
+- `world292` (DELVE_RELAY_MIN; world284, world288 then world289 on its branch, renumbered past main at the merges): a page at an older relay stands no site online. Online a window does not hold the
   world (WINDOW-ONLINE), and the encounters run on under it.
 
 Strangers in the room may fight a wave's foes (they are hostile to all) and earn nothing; they may not work another
@@ -253,7 +253,7 @@ party's puzzle. Offline the same law runs in the client, its ledger saved with t
 | DLV0 | This record | merged |
 | DLV1 | The law: `net/delve/delveLaw.js` (kinds, numbers, the ledger machine, its words, earned) and `world/dungeon/delveSites.js` (the site law); the census probe | DONE 2026-10-28: `test/net/delve/dlv1_law.test.js` and `test/world/dlv1_sites.test.js`, their mutants dead (`tools/mutants/dlv1.json`); the census in section 4 |
 | DLV2 | Offline in the game: `scenes/delve/delveHost.js` wired by `buildDungeonContext`; the Hold and the Litany; the vault; the HUD's words; the Features row `dungeon-encounters`; the Ledger A row | DONE 2026-10-29: stood and won in the real game; save and load; frame cost measured (section 12). AUDIT DELVE II the same day. An Elite stands online alone, so DLV3 stands it |
-| DLV3 | Online: the relay's ledger, the party's door, the plan's hash, the `delve` grant kind | DONE 2026-10-29: `test/net/delve/dlv3_relay.test.js` (the room through the real Room: a party of three with a guest wins a Hold and opens its shares, a stranger refused, the plans side by side), `test/scenes/delve/dlv3_online.test.js`, `test/scenes/delve/dlv3_e2e.test.js` (the real host on the real Room, every kind); `tools/mutants/dlv3.json`; `world289`; AUDIT DLV3 (`01-Overview/audits/Audit-Delve-II.md` G) |
+| DLV3 | Online: the relay's ledger, the party's door, the plan's hash, the `delve` grant kind | DONE 2026-10-29: `test/net/delve/dlv3_relay.test.js` (the room through the real Room: a party of three with a guest wins a Hold and opens its shares, a stranger refused, the plans side by side), `test/scenes/delve/dlv3_online.test.js`, `test/scenes/delve/dlv3_e2e.test.js` (the real host on the real Room, every kind); `tools/mutants/dlv3.json`; `world292`; AUDIT DLV3 (`01-Overview/audits/Audit-Delve-II.md` G) |
 | DLV4 | The Wellsprings, the Vigil, the Brazier Rite, the Weighing, the Seals; their audit | DONE 2026-10-29: each won in the real game (section 14); `test/net/delve/dlv4_law.test.js`, `test/scenes/delve/dlv4_host.test.js`, a party through the real Room in `dlv3_e2e`; `tools/mutants/dlv4.json`; AUDIT DLV4 (`01-Overview/audits/Audit-Delve-II.md` F) |
 | DLV5 | Curated blocks: the format, the registry, the splice law, the lab page | DONE 2026-10-29: `test/world/dlv5_curated.test.js`; a spawned clone takes its block, laid as the world lays it (`dlv56_audit`); `tools/mutants/dlv5.json` |
 | DLV6 | The first curated blocks, their set pieces; AUDIT DLV5-6 | BUILT 2026-10-29 (section 15): four blocks, `crypt-hall` won in the real game; `test/world/dlv6_blocks.test.js`, `dlv56_audit`; `tools/mutants/dlv6.json`, `dlv56.json`; AUDIT DLV5-6 (Audit-Delve-II H). Done as the owner plays them |
@@ -330,7 +330,7 @@ its state back. The row's note says a party wins an encounter together online.
 | A save | online the room keeps the won sites: a save keeps none, and a load restores none |
 | The session | a word leaves a welcomed socket in a dungeon's room at a relay that keeps them, its pose made current first |
 | The grant | `delve`: 12 a grant, a third a second, 8 deep, hostile - a world room's alone |
-| The relay | `world289` (world284 then world288 on its branch); a page at an older one stands no site online |
+| The relay | `world292` (world284, world288 then world289 on its branch); a page at an older one stands no site online |
 
 ## 14. DLV4: what stands (2026-10-29)
 

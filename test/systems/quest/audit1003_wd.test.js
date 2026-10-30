@@ -83,7 +83,7 @@ test('AUDIT PRE-MERGE 1003 WD1: a hall in ANOTHER layout of a town that holds ho
   assert.deepEqual([old.status, old.body?.error], [426, 'home-update'], 'a build from before the town mods: its key may name a stranger\'s building');
   const bad = await buy({ layout: 'classic' });
   assert.deepEqual([bad.status, bad.body?.error], [400, 'bad-home']);
-  assert.equal((await buy({ layout: 'detailed-ships@1.0.0' })).body?.error, 'bad-home', 'a mod that moves no building');
+  assert.equal((await buy({ layout: 'warm-ashes-ships@1.1' })).body?.error, 'bad-home', 'a mod that moves no building');
   assert.equal(treasury(), before, 'nothing paid');
   assert.equal(raw.prepare('SELECT COUNT(*) AS n FROM homes WHERE guild_id IS NOT NULL').get().n, 0, 'nothing seated');
   // the same town in its own layout: bought, the town's stamp kept

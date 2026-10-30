@@ -12,7 +12,7 @@ corrections are made below, and its fixes are their own pull request.
 | | Report | What it was | Done |
 |---|---|---|---|
 | 1 | Lee: Westhead Moor - "Weird crop hovering, giant craters and cliffs on the outskirts.." | TS2's town ground: the sea kept a sample from a town raised over it, an ease of twelve samples whatever the height, the pixel's edge band easing the town's own ground, and a crop field's record tile alone on the outline | FIXED (TOWN-GROUND) |
-| 2 | Lee: "the shipyard moved from the North side of town to the West side" | TS7 placed the Bay's yards on the walk grid | KEPT (the owner's decision) |
+| 2 | Lee: "the shipyard moved from the North side of town to the West side" | TS7 placed the Bay's yards on the walk grid | KEPT, then MOVED NORTH (WESTHEAD-NORTH, the owner, 2026-10-29) |
 | 3 | Pergo: "Can confirm." - a cobbled cliff dropping to the water at night | 1 | FIXED (TOWN-GROUND) |
 | 4 | Urmanin: "They did NOT check how their new generated topology would work in the vanilla map" | 1, measured over every town of the Bay | FIXED (TOWN-GROUND) |
 | 5 | Cruor: "Bigtime Terrain Bugs: Aldwall Rock" - "big holes and uhm.. cubic mistakes ... The ports are now off a cliff instead of smooth?" | 1 | FIXED (TOWN-GROUND) |
@@ -55,6 +55,32 @@ Tests `test/world/terrain/fb1028_townground.test.js` (7) and `fb1028_townground_
 Lee and other players bought homes on Westhead Moor's north side for its shipyard, which TS7 moved to the west. The owner
 chose to keep every yard where #1184 put it and to fix only a yard that is broken. Westhead Moor's is not broken; it
 stays on the west side. No home moved: in the Bay no building moved (`03-World/Town-Shapes.md` TS2).
+
+WESTHEAD-NORTH (2026-10-29). A guild's player posted again in #feature-feedback, and the owner chose to move Westhead
+Moor's shipyard back to the north side, no other port. TS7 had moved it to the west side in both of the town's layouts,
+and its old places are off TS7's ground in both.
+
+In Daggerfall's layout it stood at the north-west corner (cells 1, 437, turned 2). It now stands on the north strip
+between the wall and the sea, at the westmost place a shipyard fits (149, 401, turned 2), its lighthouse by the old
+corner (57, 394). The wall stands between it and the town with no gate there: the walk to it stays long, as at TS7's
+west place.
+
+In Beautiful Cities' layout (on by default, and online) it stood on the north edge (corner cell 181, 424). The audit
+found the first fix reached Daggerfall's layout alone, and the owner chose "North in both layouts". It now stands on the
+north farmland nearest its old place (265, 413, turned 1), its lighthouse at (25, 114).
+
+`world/portSites.js` PORT_PLACES_NEAR holds a row a layout, and the host hands a town the row of the layout it stands in
+(`portPlacesNear`, the layout pins). portSite stands the place as near its cell as fits, by the sea's face and not the
+sea's distance. Daggerfall's cell is an aim on the strip, not the old corner, which would pull the yard back west;
+Beautiful Cities' is its old place's middle. The kept record keys on the row's value.
+
+THE FOUR HOSTS: `scenes/world.js` places a town's ports (`townPlacesFor`), so it alone hands the row.
+`scenes/worldModes.js` presses the yards wherever they stand, `scenes/dungeonContext.js` stands no street, and
+`scenes/exterior.js` stands no port (FLAGGED, `scenes/portHost.js`).
+
+Tests `test/world/westheadnorth.test.js` (5, one on ARENA2) and `test/world/westheadnorth_bc.test.js` (1, on ARENA2;
+`test/bayPortGround.mjs` builds either layout's ground). Mutants `tools/mutants/westheadnorth.json` (16, all dead, with ARENA2 and without it). The
+audit's record: `01-Overview/audits/Audit-Westhead-Hand-Wraps.md`.
 
 ## WALL-FLICKER: a wall's length clear of its tower (6)
 

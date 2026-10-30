@@ -102,7 +102,7 @@ test('RENT-REST: a tenant rests in the home they rent, as its owner does - the r
   // the host hands it (the interior host is the one that stands in an online home)
   const wm = src('src/scenes/worldModes.js');
   const bag = wm.slice(wm.indexOf('const interiorRestPlaceHere = () => {'), wm.indexOf('const interiorRestMarkers = () =>'));
-  assert.match(bag, /homeBed: homeBedIsMine\(interiorHome, Math\.floor\(Date\.now\(\) \/ 1000\)\) \|\| !!interiorSeatHall\?\.member,/);   // PIN MOVED (SEAT-HALL): and the palace holder's members rest there
+  assert.match(bag, /homeBed: homeBedIsMine\(interiorHome, Math\.floor\(Date\.now\(\) \/ 1000\)\) \|\| !!interiorSeatHall\?\.member(?:,| \|\| \(!!interiorHome && decorMayRest\()/);   // PIN MOVED (SEAT-HALL): and the palace holder's members rest there; PIN MOVED (REST-GUEST): a guest its owner named after
   // PIN MOVED (AUDIT CAPTAIN'S SEA P9): the deed read where the building stands - never an isle town's (houseOwnedAt)
   assert.match(bag, /houseOwned: !interiorHome && houseOwnedAt\(/, 'an online home answers by its bed alone');
 });

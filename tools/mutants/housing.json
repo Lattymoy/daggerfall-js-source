@@ -359,11 +359,12 @@
   {
     "name": "HOME-YARD-one-cap-for-both",
     "file": "server-account/src/decor.js",
-    "old": "...countBinds, out ? DECOR_YARD_CAP : (guildHall ? DECOR_HALL_CAP : S.cap),",
-    "new": "...countBinds, S.cap,",
+    "old": "...countBinds, out ? DECOR_YARD_CAP : (guildHall ? DECOR_HALL_CAP : roomCap),",
+    "new": "...countBinds, roomCap,",
     "tests": [
       "test/scenes/homeyard.test.js"
-    ]
+    ],
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "HOME-YARD-the-flag-unsent",
@@ -651,8 +652,8 @@
   {
     "name": "HOME-LOOK-the-preview-rebuilding",
     "file": "src/scenes/world.js",
-    "old": "((row?.look && homeDecorShown(row)) || row?.mine || row?.keeper)) merged = true;",
-    "note": "HOME-VOTE (PIN MOVED): a look counts only where it is shown - a shunned home's stays in the merge",
+    "old": "((row?.look && homeDecorShownHere(row, p.homeTown)) || row?.mine || row?.keeper)) merged = true;",
+    "note": "HOME-VOTE (PIN MOVED): a look counts only where it is shown - a shunned home's stays in the merge FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew.",
     "new": "lookOfHome(p.homeTown, bk, row)) merged = true;",
     "tests": [
       "test/net/homelook.test.js"

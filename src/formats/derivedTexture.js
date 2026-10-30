@@ -1,18 +1,15 @@
 // WD2 (2026-09-25): A MOD'S SPRITE THAT IS A CLASSIC RECORD, OR ONE WITH
 // THE AUTHOR'S EDITS ON IT - REBUILT FROM THE PLAYER'S OWN ART.
 //
-// Detailed Ships (Cliffworms) ships thirteen pictures under two archives
-// of its own, 1210 and 1230. Measured against every record of every
-// TEXTURE file (tools/detailedShipsAssets.mjs), five of them are classic
-// records exported whole - a map, a loaf, a scroll - moved to the new
-// archive so an xml can size them; four more are classic records with
-// the author's paint on them (fruit in an empty basket, a potion's
-// colour, a cork). A render of game data IS game data (Port-Doctrine),
-// so none of those nine are carried: the spec below names the classic
-// record, where it stands on the picture, and the pixels the author
-// changed, and the picture is rebuilt from the player's own ARENA2 when
-// the archive loads (systems/textureReplacement.js `build`). The author's
-// own drawings - which no classic record is - ship as the files they are.
+// A mod's picture is often a classic record exported whole and moved to an
+// archive of the mod's own, or a classic record with the author's paint on
+// it (tools/lib/classicSource.mjs finds which). A render of game data IS
+// game data (Port-Doctrine), so such a picture is never carried: the spec
+// below names the classic record, where it stands on the picture, and the
+// pixels the author changed, and the picture is rebuilt from the player's
+// own ARENA2 when the archive loads (systems/textureReplacement.js
+// `build`). The port's own stand-ins use the same door with no edits. The
+// author's own drawings - which no classic record is - ship as files.
 //
 // A spec:
 //   { from: [archive, record, frame?],    the classic record, frame 0 by default

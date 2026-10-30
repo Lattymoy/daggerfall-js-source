@@ -511,7 +511,7 @@ wired), the relay's law row; mutant records re-aimed where their text moved (`sc
   search party's leader - so a grant's marks never contradict a mark its caller decided.
 - **The dungeon's kind** (DELVE II DLV3, `03-World/Delve-II.md` section 7): `delve`, a dungeon encounter's foes - its
   law's largest wave in one grant (HOLD_WAVE_MAX, twelve), a world room's alone (GRANT_ROOM_KINDS: the open country
-  refuses it `kind`), asked only by a host linked to a relay that keeps the encounters (`world289`); grantKindOf names
+  refuses it `kind`), asked only by a host linked to a relay that keeps the encounters (`world292`); grantKindOf names
   it before a loose stand.
 - **The building's lane**: world.js hands the grants' host to the building's pool with its net (interiorFoesNet's
   `grants`), so a building's own stands ask, carry and read as the street's. The relay takes a world room's asks

@@ -64,15 +64,15 @@ test('WD3 the stamp: the layout mods serving a town, `vendor@version` sorted and
   assert.equal(CLASSIC_LAYOUT, 'classic');
   assert.equal(layoutStampOf([BV]), 'beautiful-villages@1.4.2');
   assert.equal(layoutStampOf([BV, BC]), 'beautiful-cities@0.5.0+beautiful-villages@1.4.2', 'sorted - one spelling a layout');
-  assert.equal(layoutStampOf([BC, BV, 'detailed-ships']), layoutStampOf([BV, BC]), 'a mod that moves no building is no part of a layout');
+  assert.equal(layoutStampOf([BC, BV, 'warm-ashes-ships']), layoutStampOf([BV, BC]), 'a mod that moves no building is no part of a layout');
   assert.equal(layoutStampOf([]), CLASSIC_LAYOUT);
   configureLayoutPins({ vendorVersion: () => '' });
   assert.equal(layoutStampOf([BV]), 'beautiful-villages@?', 'a version the loader could not say');
   for (const s of [layoutStampOf([BV]), layoutStampOf([BV, BC]), 'beautiful-villages@?']) assert.equal(homeLayoutOk(s), true, s);
   assert.equal(homeLayoutOk(null), true, 'Daggerfall\'s own town');
-  for (const bad of ['classic', '', 'beautiful-villages', 'detailed-ships@1.0.0', 'beautiful-villages@1+beautiful-villages@2', 'a'.repeat(97), 42]) assert.equal(homeLayoutOk(bad), false, JSON.stringify(bad));
+  for (const bad of ['classic', '', 'beautiful-villages', 'warm-ashes-ships@1.1', 'beautiful-villages@1+beautiful-villages@2', 'a'.repeat(97), 42]) assert.equal(homeLayoutOk(bad), false, JSON.stringify(bad));
   assert.deepEqual([...stampVendors('beautiful-cities@0.5.0+beautiful-villages@1.4.2')].sort(), [BC, BV]);
-  for (const none of [undefined, null, '', CLASSIC_LAYOUT, 'detailed-ships@1.0.0']) assert.equal(stampVendors(none).size, 0, String(none));
+  for (const none of [undefined, null, '', CLASSIC_LAYOUT, 'warm-ashes-ships@1.1']) assert.equal(stampVendors(none).size, 0, String(none));
   assert.equal(layoutsMatch('beautiful-villages@1.4.2', 'beautiful-villages@1.5.0'), true, 'a mod updated is the same layout\'s mod');
   assert.equal(layoutsMatch(undefined, CLASSIC_LAYOUT), true, 'a record from before WD3 is classic');
   assert.equal(layoutsMatch('beautiful-villages@1.4.2', CLASSIC_LAYOUT), false);
@@ -96,7 +96,7 @@ test('WD3 which mods CHANGE a town: the one carrying its location file, or a blo
   assert.equal(layoutModTouches(BV, DUNGEON), false, 'a graveyard neither touches');
   assert.equal(layoutModTouches(BV, makeLocationKey(40, 9)), true, 'a town whose grid the host cannot say');
   assert.equal(layoutModTouches(BV, null), true);
-  assert.equal(layoutModTouches('detailed-ships', VILLAGE), false, 'a mod that is not on the door carries nothing');
+  assert.equal(layoutModTouches('warm-ashes-ships', VILLAGE), false, 'a mod that is not on the door carries nothing');
 });
 
 test('WD3 the layout a town is served in now: the mods loaded for the game that change it - less a pin out, plus a pin in; a map id, a pixel and a discovered town each resolve to it, and a town the host cannot place to the mods as loaded', () => {

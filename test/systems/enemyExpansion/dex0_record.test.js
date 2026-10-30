@@ -19,7 +19,7 @@ import { DEX_TABLE_TEXT } from '../../../src/systems/enemyExpansion/dexTableText
 import { MOD_SETTINGS } from '../../../src/systems/modSettings.js';
 import { splitCsvLine, parseArrayArg, parseBool, readCsvTable } from '../../../src/systems/enemyExpansion/dexCsv.js';
 import { REPAINTED_ARCHIVES, SILHOUETTE_ALLOWED, SILHOUETTE_IOU, SILHOUETTE_TRACED, silhouetteLedger, outlinesBySize, bestTrace } from '../../../tools/dexExtract.mjs';
-import { classicRecords } from '../../../tools/detailedShipsAssets.mjs';
+import { classicRecords } from '../../../tools/lib/classicSource.mjs';
 import { readPng } from '../../../tools/pngIO.mjs';
 import { DFPalette } from '../../../src/formats/dfPalette.js';
 

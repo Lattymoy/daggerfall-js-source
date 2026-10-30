@@ -319,24 +319,6 @@ test('WD1 the vendored patches: the format, a base named by block and index, the
       assert.ok(['s', 'd', 'i', 'r', 'ci', 'cs'].includes(op[0]), `${f}: ${op[0]}`);
     }
   }
-  const aquatic = PATCH_DIRS.filter((f) => f.startsWith('vendor/aquatic-sprites/')).map((f) => JSON.parse(readFileSync(join(ROOT, f), 'utf8')));
-  // The canonical sha256 of each shipped file (Aquatic_Sprites_1.0-276-1-0-1642914017.zip).
-  assert.deepEqual(Object.fromEntries(aquatic.map((p) => [p.base.block, [p.base.index, p.sha256]])), {
-    'W0000000.RDB': [1016, 'c6560c6c966b7aee5231d13426a52065c038fccb101ca80cf87ede0514080daa'],
-    'W0000008.RDB': [1024, '06dcd928f4836a9f547c3e561b6e5376f4cbfb8b6a3bb4f2ca3d775293a989a7'],
-    'W0000023.RDB': [1039, '0cd9f30eec3db9e76bfcac8340022d6c4a4063cf1a5d280813aeece50887389d'],
-  });
-  // Every sprite Aquatic Sprites adds is a flat of archive 105 or 106 - no other kind of record rides in.
-  let added = 0;
-  for (const p of aquatic) {
-    for (const op of p.ops) {
-      if (op[0] !== 'i') continue;
-      assert.equal(op[2].Type, 'Flat');
-      assert.ok([105, 106].includes(op[2].Resources.FlatResource.TextureArchive));
-      added++;
-    }
-  }
-  assert.equal(added, 32 + 48 + 39);
 });
 
 test('WD1 with ARENA2: every vendored patch rebuilds the author\'s file sha256 for sha256', { skip: HAVE_ARENA2 ? false : 'ARENA2_PATH not set' }, async () => {

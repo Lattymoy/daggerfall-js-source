@@ -153,12 +153,12 @@
   {
     "name": "KNIGHT-HOUSE-hold-unwritten",
     "file": "server-account/src/homes.js",
-    "old": "  await deedStatement(db, player, { mapId, buildingKey, region, character, layout: layout ?? null }, nowS).run();\n",
+    "old": "  await db.batch([accessOrphansCleared(db, mapId, buildingKey), deedStatement(db, player, { mapId, buildingKey, region, character, layout: layout ?? null }, nowS)]);   // AUDIT FB1029f A1\n",
     "new": "",
     "tests": [
       "test/systems/fb1004d_knight_house.test.js"
     ],
-    "note": "The hold answers and writes nothing: the building stays claimable."
+    "note": "The hold answers and writes nothing: the building stays claimable. AUDIT FB1029f (PIN MOVED): re-aimed by content."
   },
   {
     "name": "KNIGHT-HOUSE-hold-a-bought-home",
@@ -273,8 +273,8 @@
   {
     "name": "KNIGHT-HOUSE-move-drops-deed",
     "file": "server-account/src/homes.js",
-    "old": "'rent_due', 'look', 'layout', 'deed']);",
-    "new": "'rent_due', 'look', 'layout']);",
+    "old": "'rent_due', 'look', 'layout', 'deed', 'ground']);",
+    "new": "'rent_due', 'look', 'layout', 'ground']);",
     "tests": [
       "test/net/arena4b_homes.test.js"
     ],
@@ -283,7 +283,7 @@
   {
     "name": "KNIGHT-HOUSE-version-unmoved",
     "file": "server-account/src/service.js",
-    "old": "export const ACCOUNT_VERSION = 'acct223';",
+    "old": "export const ACCOUNT_VERSION = 'acct225';",
     "new": "export const ACCOUNT_VERSION = 'acct76';",
     "tests": [
       "test/systems/fb1004d_knight_house.test.js"

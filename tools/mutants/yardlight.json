@@ -11,8 +11,8 @@
   {
     "name": "YARDLIGHT-at-middle",
     "file": "src/scenes/homeYards.js",
-    "old": "  return { light: { ...YARD_LAMP, range: YARD_LAMP.range * k, slot }, lift: size.h + YARD_LAMP_RAISE * k };",
-    "new": "  return { light: { ...YARD_LAMP, range: YARD_LAMP.range * k, slot }, lift: size.h / 2 + YARD_LAMP_RAISE * k };",
+    "old": "  const lift = decorLightLift(piece, size);\n",
+    "new": "  const lift = size.h / 2;\n",
     "tests": [
       "test/scenes/yardlight.test.js"
     ]
@@ -120,7 +120,7 @@
   {
     "name": "YARDLIGHT-host-unwired",
     "file": "src/scenes/world.js",
-    "old": "      if (yards) yardLampRows(yards.lamps(), _yardRows, worldLightAnimator.ranges, CITY_LIGHT_COLOR_F32, csaLit);\n",
+    "old": "      if (yards) yardLampRows(yards.lamps(), _yardRows, worldLightAnimator.ranges, CITY_LIGHT_COLOR_F32, csaLit, lightingOn);   // CANDLE-DIM: a candle as a room's on the same lane\n",
     "new": "",
     "tests": [
       "test/scenes/yardlight.test.js"
@@ -138,8 +138,8 @@
   {
     "name": "YARDLIGHT-host-white",
     "file": "src/scenes/world.js",
-    "old": "_yardRows, worldLightAnimator.ranges, CITY_LIGHT_COLOR_F32, csaLit);",
-    "new": "_yardRows, worldLightAnimator.ranges, new Float32Array([1, 1, 1]), csaLit);",
+    "old": "_yardRows, worldLightAnimator.ranges, CITY_LIGHT_COLOR_F32, csaLit, lightingOn);",
+    "new": "_yardRows, worldLightAnimator.ranges, new Float32Array([1, 1, 1]), csaLit, lightingOn);",
     "tests": [
       "test/scenes/yardlight.test.js"
     ]

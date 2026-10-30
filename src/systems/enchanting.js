@@ -51,7 +51,6 @@ import { recipeById, jewelPoints } from '../net/recipeLaw.js';   // AUDIT PROF10
 import { enchantmentSettings } from './enchantmentCatalogue.js';   // AUDIT PROF10 J2: a crafted piece's own enchantments, costed as the maker costs a row
 import { ENCHANTMENT_TYPES } from '../formats/magicDef.js';   // and their classic type back to the catalogue's key
 import { isAetheric } from './aetheric.js';   // AETHERIC-MAKER: an Aetheric piece is the port's own tier, never the maker's
-import { isGilded } from './gilded.js';   // GILDED1: nor a Gilded one - a static roll takes no enchantment
 import { isCursed, lootRarityOn, RARE_FLAVOURS } from './loot/lootRarity.js';   // MAKER-RARE: a Rare's own rows - its flavour, a curse's drawback - and the ladder's switch
 
 /** SetEnchantments' `maxEnchantments` (:1273) - and the same ten the
@@ -170,9 +169,23 @@ export function rareKeeps(item) {
   return rest.length === 1 && isCursed(item) && rest[0]?.type === item.cursed.type && rest[0]?.param === item.cursed.param;
 }
 /**
+ * GILDED-MAKER (2026-10-29, #feature-feedback: "feels like gilded items are missing something ... making them enchantable
+ * would close this gap"): A GILDED PIECE THE ITEM MAKER TAKES, as it takes a Rare. Its record's lines stay as minted -
+ * the maker lays DFU rows beside them, paid from the piece's own points like any piece of its make - so no line, rung or
+ * power grows (bible/05-Combat/Power-Ceiling.md). Only the maker's own rows may stand on it (gilded.js validGildedMarks).
+ * With the ladder switched off the maker is DFU's, as for a Rare (AUDIT MAKER-RARE A2).
+ */
+export function gildedKeeps(item) {
+  if (!lootRarityOn() || item?.rarity !== 'gilded') return false;
+  return (item.enchantments ?? []).every(makerLaid);
+}
+/** GILDED-MAKER: the item maker leaves a Gilded piece's name alone - it is its record's, named as an artifact is
+ *  (itemInfo.js withholdsMaterialPrefix), and its codex row, card and lore read that record. */
+export const makerKeepsName = (item) => item?.rarity === 'gilded';
+export const gildedKeepsNameText = () => t('enchant.gildedName', 'A Gilded piece keeps its own name.');
+/**
  * THE ENCHANTMENTS A PIECE KEEPS in the item maker. DFU's maker refuses any enchanted item (AddFilteredItem :415-443);
- * two doors take one with what it carries, each row kept at the head of its list, counted in the guard and the
- * filters, never taken off:
+ * three doors take one with its rows: each at its list's head, counted in the guard and the filters, never taken off:
  * - AUDIT PROF10 J2 (DECIDED, Mac: "Item maker can add to it" - bible/06-Systems/Professions-Arc.md 36): a crafted piece
  *   of jewellery (craftedJewelRecipe), every row costed as the maker costs a row (the catalogue's - never a cost the item
  *   says of itself) against its budget - its Rare roll was drawn among those its points hold (J4).
@@ -181,15 +194,16 @@ export function rareKeeps(item) {
  *   Cuirass's 400): counted, 622 of 1,144 Rare armour piece, metal and flavour pairs would start over budget. Free is
  *   this door's choice, not a cap's (Field-Bugs-2026-10-26.md MAKER-RARE), and it is the item law's budget already - it
  *   costs a crafted jewel's kept rows alone (itemLaw.js makerFindings).
- * Answers [] for an item with none, the rows as EnchantmentSettings for either door, and null for any other enchanted
- * item (DFU's refusal) or a row the catalogue cannot cost.
+ * - GILDED-MAKER: a Gilded piece (gildedKeeps), whose rows are all the maker's own, each costing as ever.
+ * Answers [] for an item with none, the rows as EnchantmentSettings for any of the doors, and null for any other
+ * enchanted item (DFU's refusal) or a row the catalogue cannot cost.
  */
 export function keptEnchantments(item) {
   if (item?.rarity === 'legendary') return null;   // MASTER-ART: a Master's work carries no rows, and is refused with every Legendary
   const list = item?.enchantments ?? [];
   if (!list.length) return [];
   const jewel = craftedJewelRecipe(item) != null;
-  if (!jewel && !rareKeeps(item)) return null;
+  if (!jewel && !rareKeeps(item) && !gildedKeeps(item)) return null;
   const out = [];
   for (const e of list) {
     const parent = typeof e?.parentEnchantment === 'string' ? e.parentEnchantment : 0;
@@ -251,9 +265,10 @@ export const NO_MORE_SIDE_EFFECTS = 'No further side-effects may be enchanted in
  * DFU's own. An Aetheric piece carries no DFU enchantment (aetheric.js's header: its affixes and its sigil are the
  * port's own), so DFU's IsEnchanted refusal (AddFilteredItem :419-422) never met it and the maker spent its Daedric
  * budget over its powers. It is refused as the port's other services refuse it (reforge.js salvageRefusal,
- * reforgePrice). The line is the port's own.
+ * reforgePrice). The line is the port's own. GILDED-MAKER: a Gilded piece is the maker's now (gildedKeeps), so the
+ * one piece refused is the Aetheric, and the line is its own.
  */
-export const itemMakerRefuses = (item) => isAetheric(item) || isGilded(item);
+export const itemMakerRefuses = (item) => isAetheric(item);
 export const AETHERIC_TAKES_NO_ENCHANTMENT = 'An Aetheric piece takes no enchantment.';
 
 /**

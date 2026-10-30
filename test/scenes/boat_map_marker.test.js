@@ -32,6 +32,7 @@ function markers(raw, drawn, hidden = new Set()) {
     const isShipMark = () => true, tvBadgeOf = () => null;
     const _wildStrangerIds = new Set(), WILD_TEXT = { stranger: 'Stranger' }, wildHidesPlayer = () => false;   // WILD1/WILD3: out of the zone - no stranger, no one hidden
     const pvpSkullOf = () => null;   // PVP-SKULL: no flag heard here
+    const villainMark = () => false;   // PIN MOVED (PVP-HUD): the loop asks the villain's mark first - no villain here
     const host = { online, onlineToScene, social, peerRiders, peerBodies, peerWalkers };
     ${loop}
     return marks;

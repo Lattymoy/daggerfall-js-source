@@ -154,7 +154,9 @@ wielding - and the word rides my look, so peers' Morrowind bodies show it too (`
 Breach is molten fire running down the blade, a gout of it falling down each column in turn and sparks caught in it;
 the Eternal Edge a blue-violet line with a light running along it, a fainter one running back, and glints.
 
-**What wins.** An element shows first, because it is the blow's truth. The armory piece shows before the arcane look.
+**What wins.** A Gilded weapon's crimson shows first, as its rung's own look (`05-Combat/Weapon-Glow.md` law 8,
+GILDED-GLOW; AUDIT FB1029f D3: the owner may turn this round). An element shows next, because it is the blow's truth.
+The armory piece shows before the arcane look.
 On the classic hand the piece's outline is drawn on the plain sheet, so an enchanted weapon's own sheet gives way to it
 while the piece is worn. A sprite in third person shows no weapon piece: its weapon is painted into the picture, with
 nothing to measure.

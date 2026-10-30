@@ -98,7 +98,7 @@ import {
 import {
   equipItem, unequipSlot, equipTableOf, isEquipped,
   isForbiddenEquip, isBrokenItem, getEquipSlot, bodyPartForSlot,   // getEquipSlot - Mac (2026-09-18): Wear only where a slot would take it; bodyPartForSlot - AC-COMPARE: GetBodyPartForEquipSlot, the part a worn panel stands for}
-  swapHands, canSwapHands,   // SWAP-HANDS
+  swapHands, canSwapHands, mayHold,   // SWAP-HANDS; HAND-DROP: the hand law a drop on a hand's panel asks
 } from '../../systems/equip.js';
 import { armourBadge, armourPlaque, compareBlock, lineCompareBlock, wearComparison } from '../armourCard.js';   // AC-COMPARE: the doll's numbers on the map, the overall figure, the card's comparison
 import { drawnEquipTable, capeShown, setCapeShown } from '../../systems/capeShown.js';   // CAPE-TOGGLE: the Cape switch on the Cloaks panel, and the worn set as it is drawn
@@ -997,14 +997,16 @@ function stowIntent(item) {
 /** HAND-DRAG (2026-10-08, the owner: "dragging and dropping the left hand weapon to the right hand one or when empty
  *  should be possible in the inventory"): A HAND'S OWN PANEL AS A TARGET. A piece held in one hand, released on the
  *  other hand's panel, moves there - into the empty hand, or trading places with what that hand holds - wherever the
- *  hand law lets it (systems/equip.js canSwapHands: a shield keeps the left, a two-hander the right). A weapon carried
- *  out of the pack onto a hand's panel is put in THAT hand. Null off the hand panels. */
+ *  hand law lets it (systems/equip.js canSwapHands: a shield keeps the left, a two-hander the right). A piece carried
+ *  out of the pack onto a hand's panel is put in THAT hand (HAND-DROP), and refused on a hand it cannot go in, as a
+ *  held piece is. Null off the hand panels. */
 const HAND_OF = Object.freeze({ rhand: EQUIP_SLOTS.RightHand, lhand: EQUIP_SLOTS.LeftHand });
 function handIntent(item, over, source) {
   const panel = over?.closest?.('.wornrow');
   const to = panel ? HAND_OF[panel.dataset?.fam] : undefined;
   if (to == null) return null;
-  const label = to === EQUIP_SLOTS.RightHand ? 'Right hand' : 'Left hand';
+  const labelOf = (h) => (h === EQUIP_SLOTS.RightHand ? 'Right hand' : 'Left hand');
+  const label = labelOf(to);
   if (source === 'worn') {
     if (item.equipSlot !== EQUIP_SLOTS.RightHand && item.equipSlot !== EQUIP_SLOTS.LeftHand) return null;
     if (item.equipSlot === to) return { kind: 'none', label: '' };
@@ -1012,18 +1014,18 @@ function handIntent(item, over, source) {
   }
   if (item.group !== 'Weapons' && !(item.group === 'Armor' && getEquipSlot(deps.entity, item) === EQUIP_SLOTS.LeftHand)) return null;
   const act = localPrimaryAct(item, deps.entity);
-  return act?.kind === 'wear' ? { kind: 'hand', label, to } : { kind: 'nope', label: null };
+  if (act?.kind !== 'wear') return { kind: 'nope', label: null };
+  // AUDIT FB1029f D5: a piece the panel's hand cannot hold goes to the hand that holds it - a two-hander dropped on the
+  // left is worn in both, a shield dropped on the right in the left - as a drop before HAND-DROP wore it
+  const at = mayHold(item, to) ? to : [EQUIP_SLOTS.RightHand, EQUIP_SLOTS.LeftHand].find((h) => mayHold(item, h));
+  return at == null ? { kind: 'nope', label: null } : { kind: 'hand', label: labelOf(at), to: at };
 }
-/** HAND-DRAG: the release - a held piece moved to the other hand, or a pack piece worn and set in the hand it was
- *  dropped on (worn where the table puts it, then the hands traded if that was the other one and the law allows). */
+/** HAND-DRAG: the release - a held piece moved to the other hand, or a pack piece worn in the hand it was dropped on:
+ *  HAND-DROP, one equip into that hand, so only that hand's piece comes off - not the table's first open hand. */
 function dropOnHand(item, to) {
+  if (!isEquipped(item)) return wear(item, to);
   notice = null;
-  if (!isEquipped(item)) {
-    const before = getEquipSlot(deps.entity, item);
-    wear(item);
-    if (!isEquipped(item)) return;   // the wear refused (and said why)
-    if (item.equipSlot !== to && before !== EQUIP_SLOTS.None && canSwapHands(deps.entity).ok) swapHands(deps.entity);
-  } else if (item.equipSlot !== to) {
+  if (item.equipSlot !== to) {
     const r = swapHands(deps.entity);
     if (!r.ok) notice = r.why;
   }
@@ -1472,7 +1474,7 @@ function reorderPack(item, before) {
   render();
 }
 
-function wear(item) {
+function wear(item, hand = null) {
   notice = null;
   { const no = chestActRefusal(deps, { wear: true, item }); if (no) return refuse(no); }   // AUDIT RPT1026 B4: a piece the pack does not hold yet
   const named = itemLongName(item, { getQuest: deps.getQuest ?? null });   // RF6: the resolver's name, never the record's raw one (an unidentified magic item's)
@@ -1481,7 +1483,7 @@ function wear(item) {
     notice = `A ${deps.entity?.career?.name ?? 'character'} may not use ${named}.`;
     return render();
   }
-  if (equipItem(deps.entity, item) === null) { notice = `${named} cannot be worn.`; return render(); }
+  if (equipItem(deps.entity, item, hand) === null) { notice = `${named} cannot be worn.`; return render(); }   // HAND-DROP: `hand`, the panel it was dropped on
   refresh();
   refreshFigure();   // U59: the avatar is wearing it now
   picked = null;     // PX24 (Mac): an action taken CLOSES the tooltip; a refusal above keeps it

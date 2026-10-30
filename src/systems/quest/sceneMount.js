@@ -57,6 +57,7 @@ import { GENDERS } from '../../characters/nameHelper.js';
 import { RDB_SIDE } from '../../world/rdbLayout.js';
 import { MARKER_TYPES } from './place.js';   // TOTEM-CAGE: the two records that carry a DaggerfallMarker
 import { freeLodgedFeet } from '../../characters/foeSpacing.js';   // LODGED-STAND: a quest Person never stands in a model
+import { STATIC_NPC_ACTIVATION_DISTANCE, DEFAULT_ACTIVATION_DISTANCE } from '../../player/activate.js';   // DQ1: a stand's reach
 
 /** FactionFile.GetFlatData: archive packs above bit 7. */
 export const getFlatData = (flat) => ({ archive: flat >> 7, record: flat & 0x7f });
@@ -284,6 +285,23 @@ export function questStandBox(s) {
   const o = s.off;
   const x = o ? s.x + o[0] : s.x, y = o ? s.y + o[1] : s.y, z = o ? s.z + o[2] : s.z;
   return { min: [x - s.width / 2, y, z - s.width / 2], max: [x + s.width / 2, y + s.height, z + s.width / 2] };
+}
+
+/** DQ1: a quest stand's activation targets, for whichever list a host keeps (the interior's and the dungeon's - one
+ *  walk; the stand record is the same in both, standQuestFlatIn builds both). A Person keeps the static-NPC reach,
+ *  anything else DFU's default (PlayerActivate.cs:326-332). Moved out of scenes/worldModes.js (HOST-SPLIT), unchanged. */
+export function questFlatTargets(list) {
+  const out = [];
+  list.forEach((s, i) => {
+    if (!s.width || !s.active || s.dead) return;
+    const isPerson = s.behaviour?.targetResource?.isPerson === true;
+    out.push({
+      key: `questflat:${i}`,
+      aabb: questStandBox(s),   // TOTEM-CAGE: where the stand IS - a stand riding an acting marker is clicked where it rode to
+      distance: isPerson ? STATIC_NPC_ACTIVATION_DISTANCE : DEFAULT_ACTIVATION_DISTANCE,
+    });
+  });
+  return out;
 }
 
 // ---- FIELD BUGS 2026-10-04d QUEST-MARKERS: the building's backstop ----

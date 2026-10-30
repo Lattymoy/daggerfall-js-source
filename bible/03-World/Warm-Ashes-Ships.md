@@ -68,10 +68,10 @@ members. The world host (`scenes/world.js`) is its GameManager:
 
 The six variants are the author's edits over the player's own
 `BLOCKS.BSA` (`WorldDataPatches/`), served under their DFU names; the
-copies of the classic ship subrecord are COPY ops. With Detailed Ships on
-too, DFU lays the building file over the variant block
-(`ReplaceRmbBlockBuildingData`) - the player's ship is the detailed one,
-the pirates' stay classic - and so does the port's door.
+copies of the classic ship subrecord are COPY ops. The port's ship refit
+(`03-World/Ship-Refit.md`) is a building file, and the door lays it over the
+variant block as DFU lays one (`ReplaceRmbBlockBuildingData`) - the player's
+ship is the furnished one, the pirates' stay classic.
 
 ### What WA1 changed outside the mod
 

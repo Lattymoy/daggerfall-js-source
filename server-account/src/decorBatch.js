@@ -7,7 +7,7 @@ import { GUILD_TREASURY_MAX } from '../../src/net/guild/guildLaw.js';
 import { CHAR_ID_RE } from './service.js';
 import { homeMapIdOk, homeBuildingKeyOk } from '../../src/net/homeLaw.js';
 import {
-  DECOR_BATCH_OPS, DECOR_CAP, DECOR_HALL_CAP, DECOR_ID_RE, DECOR_OPS_MAX, DECOR_OPS_WINDOW_S, DECOR_TXN_RE, DECOR_YARD_CAP,
+  DECOR_BATCH_OPS, decorCapOf, DECOR_HALL_CAP, DECOR_ID_RE, DECOR_OPS_MAX, DECOR_OPS_WINDOW_S, DECOR_TXN_RE, DECOR_YARD_CAP,
   decorGoldMove, decorPieceOf, decorScaleOk, decorYardHighOk, decorYardPieceOf,
 } from '../../src/net/decorLaw.js';
 import { OWNS, provenOf, vendorStocked } from './decor.js';
@@ -93,7 +93,7 @@ export async function commitDecorBatch(ctx, player, body = {}) {
     try { return { ...JSON.parse(prior.result), repeat: true }; } catch { return { error: 'decor-txn' }; }
   }
 
-  const home = await db.prepare('SELECT guild_id, region FROM homes WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey).first();
+  const home = await db.prepare('SELECT guild_id, region, ground FROM homes WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey).first();   // DECOR-ROOMY: and its ground
   if (!home) return { error: 'no-home' };
   const hall = home.guild_id != null;
 
@@ -148,7 +148,7 @@ export async function commitDecorBatch(ctx, player, body = {}) {
     addGold(decorGoldMove(had.piece, null, had.row.paid).delta);
     next.delete(id);
   }
-  const cap = yard ? DECOR_YARD_CAP : (hall ? DECOR_HALL_CAP : DECOR_CAP);
+  const cap = yard ? DECOR_YARD_CAP : (hall ? DECOR_HALL_CAP : decorCapOf(home.ground));   // DECOR-ROOMY: a wider house holds more
   /** @type {{ p: any, had: any }[]} */
   const writes = [];
   for (const p of puts) {

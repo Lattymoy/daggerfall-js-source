@@ -130,7 +130,7 @@
   {
     "name": "SE-law-not-moved",
     "file": "src/systems/item/itemLaw.js",
-    "old": "export const ITEM_LAW_VERSION = 15;",
+    "old": "export const ITEM_LAW_VERSION = 16;",
     "new": "export const ITEM_LAW_VERSION = 9;",
     "tests": [
       "test/systems/pistolet.test.js",
@@ -413,7 +413,7 @@
   {
     "name": "WR-pair-wears-the-held-glow",
     "file": "src/combat/weapon/weaponRig.js",
-    "old": "const elementGlow = hand ? glowOf(playerWeapon.handItem(hand)) : heldGlowNow();",
+    "old": "const elementGlow = hand ? handGlowOf(hand) : heldGlowNow();",
     "new": "const elementGlow = heldGlowNow();",
     "tests": [
       "test/combat/weapon/pistoletRig.test.js"
