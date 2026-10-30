@@ -6,12 +6,12 @@
 // few hooks that call in here; the state rides the room under `_dg`.
 import { DRAGON_SEAM } from '../../src/net/bossSeam.js';
 import * as dragonBrain from '../../src/net/dragon/dragonBrain.js';
-import { dragonHolds, dragonAdmits, dragonFightId, dragonLookOf, dragonTimes, dragonSeedTold, dragonWatchesAbout, DRAGON_SITES_MAX, DRAGON_NATIVE_PER_M, DRAGON_BRAIN_MIN, DRAGON_REMAINS_MS } from '../../src/net/dragon/dragonLaw.js';
+import { dragonHolds, dragonAdmits, dragonFightId, dragonLookOf, dragonTimes, dragonSeedTold, dragonWatchesAbout, dragonSiteOk, DRAGON_SITES_MAX, DRAGON_NATIVE_PER_M, DRAGON_BRAIN_MIN, DRAGON_REMAINS_MS } from '../../src/net/dragon/dragonLaw.js';
 import { dragonWatchKeyOf, dragonWatchSeed } from '../../src/net/dragon/dragonSeed.js';
 import { roostLeg } from '../../src/net/dragon/dragonBody.js';
 import { mintDragonReceipt, readDragonReceipt } from '../../src/net/dragon/dragonReceipt.js';
 import { bodyCensus } from '../../src/net/bossBody.js';
-import { validDragonOut, cellRoomOfWire, SOCIAL_ROOM, DRAGON_INTERNAL_FELL, DRAGON_TELL_RETRY_MS, DRAGON_FIGHT_KEY, DRAGON_FIGHTS_KEY, DRAGON_RC_PREFIX } from '../../src/net/wire.js';
+import { validDragonOut, cellRoomOfWire, isCellRoom, SOCIAL_ROOM, DRAGON_INTERNAL_FELL, DRAGON_TELL_RETRY_MS, DRAGON_FIGHT_KEY, DRAGON_FIGHTS_KEY, DRAGON_RC_PREFIX } from '../../src/net/wire.js';
 import { junkOutsideCover } from './cellNodes.js';
 import { ROOM_CALL_MS, Bounded, HUB_KEEP_MAX } from './relayScale.js';
 
@@ -40,7 +40,9 @@ export async function dragonOmenOf(room, w) {
   return { w, s: s.seeds.get(w) };
 }
 
-/** The fights this cell holds, by id - the instance's while it is awake, else storage's (woken past their checkpoints). */
+/** The fights this cell holds, by id - the instance's while it is awake, else storage's (woken past their checkpoints).
+ *  AUDIT DRAGON-HIDDEN A4: an unslain fight a law older than DRAGON_BRAIN_MIN made is let go - its site and shares were
+ *  that law's, and its fighters, told to reload, would stand outside the new one's for its watch. A slain one stays. */
 export async function dragonFights(room) {
   const s = dg(room);
   if (s.fights === undefined) {
@@ -48,7 +50,13 @@ export async function dragonFights(room) {
     const list = Array.isArray(ids) ? ids.filter((id) => typeof id === 'string').slice(0, 4 * DRAGON_SITES_MAX) : [];
     const got = list.length ? await room.state.storage.get(list.map(storeKey)) : new Map();
     s.fights = new Map();
-    for (const id of list) { const f = got.get(storeKey(id)); if (f && typeof f === 'object') s.fights.set(id, dragonBrain.dragonWoke(f)); }
+    const old = [];
+    for (const id of list) {
+      const f = got.get(storeKey(id));
+      if (!f || typeof f !== 'object') continue;
+      if (!f.fell && !(f.v >= DRAGON_BRAIN_MIN)) old.push(id); else s.fights.set(id, dragonBrain.dragonWoke(f));
+    }
+    if (old.length) { await room.state.storage.delete(old.map(storeKey)); await index(room, s.fights); }
   }
   return s.fights;
 }
@@ -126,7 +134,8 @@ function roomFor(room, fights, w) {
  * @param {any} room @param {any} ws @param {any} a @param {any} m @param {number} now
  */
 export async function dragonWord(room, ws, a, m, now) {
-  if (m.k === 'ask') { await dragonAsk(room, ws, a, m, now); return; }
+  if (m.k === 'ask') { await dragonAsk(room, ws, m, now); return; }
+  if (!isCellRoom(a.key)) { room._junk(ws); return; }
   if (a.ly) { if (m.k === 'in') say(room, ws, { k: 'no', m: 'full' }); return; }
   const fights = await dragonFights(room);
   if (m.k === 'in') { await dragonIn(room, ws, a, m, now, fights); return; }
@@ -142,18 +151,19 @@ export async function dragonWord(room, ws, a, m, now) {
   if (!f.fell && !f.gone) await arm(room, now);
 }
 
-/** DRAGON-HIDDEN: an `ask` - watch `w`'s omen, told once a socket a watch, and only for a watch about whose landing is
- *  past (never one to come); its seed null where this relay holds no secret. */
-async function dragonAsk(room, ws, a, m, now) {
+/** DRAGON-HIDDEN: an `ask` - watch `w`'s omen, only for a watch about whose landing is past (never one to come); its
+ *  seed null where this relay holds no secret. AUDIT DRAGON-HIDDEN B1, B2: in any room (the omen is the relay's, never a
+ *  cell's - a siege's battle sees the sky too), and each time asked: a socket told learns nothing new, and the dragon
+ *  bucket bounds the asking. */
+async function dragonAsk(room, ws, m, now) {
   if (!dragonWatchesAbout(now).includes(m.w) || !dragonSeedTold(m.w, now)) return;
-  if (a.dga?.includes(m.w)) return;
-  room._setAttach(ws, { ...(room._all().get(ws) ?? a), dga: [m.w, ...(a.dga ?? [])].slice(0, 2) });
   const o = await dragonOmenOf(room, m.w);
   say(room, ws, { k: 'omen', w: m.w, s: o ? o.s : null });
 }
 
 /** An `in`: its receipt again to one who has it; refused for an older game, a watch the clock is not about, a site in
- *  another cell, a pose past DRAGON_ADMIT_R, a fourth site; else joined, and the whole state told either way. */
+ *  another cell or one its omen's dragon could not stand at (dragonSiteOk), a pose past DRAGON_ADMIT_R, a fourth site;
+ *  else joined, and the whole state told either way. */
 async function dragonIn(room, ws, a, m, now, fights) {
   const no = (why) => say(room, ws, { k: 'no', m: why });
   const o = dragonWatchesAbout(now).includes(m.w) ? await dragonOmenOf(room, m.w) : null, t = dragonTimes(m.w), id = dragonFightId(m.w, m.sx, m.sz);
@@ -164,6 +174,7 @@ async function dragonIn(room, ws, a, m, now, fights) {
   if (was?.[1].players[a.sub]?.stale) delete was[1].players[a.sub].stale;
   if (!dragonHolds(o, now)) { if (f) say(room, ws, { ...DRAGON_SEAM.stateOf(f) }); if (!f?.rc?.[a.sub]) no('gone'); return; }   // a fallen one's remains still lie: its state tells them
   if (junkOutsideCover(room, ws, a, cellRoomOfWire(m.sx, m.sz))) return;
+  if (!dragonSiteOk(o, m.sx, m.sz)) { no('gone'); return; }   // AUDIT DRAGON-HIDDEN A1: the most a relay with no map can bound a forged site
   if (!a.pose || a.pose.dd) return;
   const at = frameOf(f ?? { sx: m.sx, sz: m.sz }, a.pose);
   if (Math.hypot(at.x, at.z) > dragonBrain.DRAGON_ADMIT_R) { no('far'); return; }

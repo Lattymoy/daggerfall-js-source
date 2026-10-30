@@ -35,13 +35,6 @@
     "tests": ["test/net/dragon/dragonhidden.test.js"]
   },
   {
-    "name": "DRAGON-HIDDEN-told-twice",
-    "file": "server/src/dragonFights.js",
-    "old": "  if (a.dga?.includes(m.w)) return;\n",
-    "new": "",
-    "tests": ["test/net/dragon/dragonhidden.test.js"]
-  },
-  {
     "name": "DRAGON-HIDDEN-the-seed-not-the-relays",
     "file": "server/src/dragonFights.js",
     "old": "say(room, ws, { k: 'omen', w: m.w, s: o ? o.s : null });",
@@ -74,6 +67,20 @@
     "file": "src/scenes/dragonHost.js",
     "old": "word: (w) => (w?.k === 'omen' ? host.omen(w) : link.word(w)),",
     "new": "word: (w) => link.word(w),",
+    "tests": ["test/net/dragon/dragonhiddenaudit.test.js"]
+  },
+  {
+    "name": "DRAGON-HIDDEN-a-watch-to-come-told",
+    "file": "src/net/dragon/dragonLaw.js",
+    "old": "nowMs >= dragonTimes(w).landAt;",
+    "new": "nowMs >= dragonTimes(w).landAt - DRAGON_WATCH_MS;",
+    "tests": ["test/net/dragon/dragonhidden.test.js"]
+  },
+  {
+    "name": "DRAGON-HIDDEN-a-dragon-drawn-untold",
+    "file": "src/scenes/dragonHost.js",
+    "old": "if (s == null || !isDragonOmen(o)) continue;",
+    "new": "if (s != null && !isDragonOmen(o)) continue;",
     "tests": ["test/net/dragon/dragonhidden.test.js"]
   }
 ]

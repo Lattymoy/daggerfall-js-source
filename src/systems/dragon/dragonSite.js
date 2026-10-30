@@ -7,12 +7,8 @@
 // (systems/serpent/serpentSite.js sitePixelOfNative's inverse). Not a DFU member. Ledger A (DRAGON).
 import { findGateSite } from '../gate/gateSite.js';
 import { gateNumber } from '../../net/gate/gateLaw.js';
-import { dragonSiteDay, dragonLaneOf } from '../../net/dragon/dragonLaw.js';
-import { PIXEL_UNITS } from '../../net/wire.js';
+import { dragonSiteDay, dragonLaneOf, pixelCentreNative } from '../../net/dragon/dragonLaw.js';
 import { BAY_THEATRE } from '../../world/worldWide/worldGrid.js';
-
-/** A map pixel's centre, in native units (x east, z north). @param {number} px @param {number} py */
-export const pixelCentreNative = (px, py) => ({ sx: (px + 0.5) * PIXEL_UNITS, sz: (499 - py + 0.5) * PIXEL_UNITS });
 
 /**
  * An omen's site, or null while its theatre's scan is not whole (asked again later) or the theatre has no ground.

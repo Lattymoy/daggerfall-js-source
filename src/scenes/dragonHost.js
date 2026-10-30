@@ -51,8 +51,9 @@ export const DRAGON_NOTICE_WAIT_MS = 6000;
 /** The `in` again while answered, and soon again while not (ms). */
 export const DRAGON_IN_RESEND_MS = 20_000;
 export const DRAGON_IN_RETRY_MS = 3000;
-/** DRAGON-HIDDEN: an `ask` for a watch's omen, again this often until its cell answers. */
-export const DRAGON_ASK_RETRY_MS = 15_000;
+/** DRAGON-HIDDEN: an `ask` for a watch's omen, again this often until it is answered (AUDIT DRAGON-HIDDEN A5: a clock a
+ *  little ahead of the relay's asks before the landing there, and is answered at the next). */
+export const DRAGON_ASK_RETRY_MS = 2000;
 /** A fight unheard this long (three of its whole states) is left and asked again (ms). */
 export const DRAGON_HEARD_MS = 3 * DRAGON_STATE_SEND_MS;
 /** A landing seen later than this is neither judged nor heard (ms - the gate's), and a shape lingers this long after (ms). */
@@ -117,7 +118,7 @@ export function skyWatchAt(t, seedOf) {
 export const dragonBoxesWith = (sky, others) => (sky ? sky.boxes(others) : others);
 
 /**
- * deps = { now, link (dragonLink.js), sites (dragonSite.js), online: { ready(cell), send(word, cell) }, local(nx, nz) -> [x, z]
+ * deps = { now, link (dragonLink.js), sites (dragonSite.js), online: { ready(cell), send(word, cell?) }, local(nx, nz) -> [x, z]
  * (a native point in the scene), native(x, z) -> [nx, nz], ground(x, z), feet(), eye(), level(), renderer?, getTexture?,
  * uploadRecordFrame?, audio?, say?(text, s), mid?(text, s), player?(), hurt?(n, el), save?(e, el), takeSpoil?(p), relayNowS?(),
  * chatNotice?(text) } - the last three its rewards' (scenes/dragonRewards.js) 
@@ -129,13 +130,12 @@ export function createDragonHost(deps) {
   let memW = null, lastIn = { w: null, at: -Infinity }, noticed = null, nearSince = null, roarSlot = null;
   const omens = new Map(), asked = new Map();   // DRAGON-HIDDEN: each watch's seed its cell told (null: none here), and when I last asked
   const seedOf = (w) => omens.get(w);
-  /** DRAGON-HIDDEN: an `ask` to my own cell for each watch about whose landing is past, until its cell answers. */
-  function ask(t, f) {
-    if (!f || !deps.native) return;
-    const [nx, nz] = deps.native(f[0], f[2]), cell = cellRoomOfWire(nx, nz);
+  /** DRAGON-HIDDEN: an `ask` for each watch about whose landing is past, until it is answered - down whatever room I
+   *  stand in (AUDIT DRAGON-HIDDEN B1: net/online.js sendDragon - a siege's battle sees the sky too). */
+  function ask(t) {
     for (const w of dragonWatchesAbout(t)) {
       if (omens.has(w) || !dragonSeedTold(w, t) || t >= dragonTimes(w).leaveAt + DRAGON_REMAINS_MS || t - (asked.get(w) ?? -Infinity) < DRAGON_ASK_RETRY_MS) continue;
-      if (deps.online?.ready?.(cell) && deps.online.send({ k: 'ask', w }, cell)) asked.set(w, t);
+      if (deps.online?.send?.({ k: 'ask', w })) asked.set(w, t);
     }
     for (const m of [omens, asked]) for (const w of m.keys()) if (!dragonWatchesAbout(t).includes(w)) m.delete(w);
   }
@@ -307,7 +307,7 @@ export function createDragonHost(deps) {
     frame() {
       const t = deps.now();
       _batches.length = 0; _shapes.length = 0; foe = null; box = null; live = null;
-      ask(t, deps.feet?.() ?? null);
+      ask(t);
       const d = skyWatchAt(t, seedOf), site = d ? deps.sites.of(d) : null;
       if (!d || !site) { if (batch) putAway(); return false; }
       if (site.w !== memW) forget(site.w);

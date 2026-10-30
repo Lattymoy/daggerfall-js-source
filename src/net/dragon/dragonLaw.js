@@ -6,7 +6,7 @@
 // secret (net/dragon/dragonSeed.js), told only once its landing is past. The site is the client's to find over the
 // world's own data (systems/dragon/dragonSite.js); the relay never reads a map. Pure. Not a DFU member. Ledger A (DRAGON).
 import { gateHash } from '../gate/gateLaw.js';
-import { GATE_LANES_OPEN } from '../wire.js';
+import { GATE_LANES_OPEN, PIXEL_UNITS, mapPixelOfWire, gateLanePixelOk } from '../wire.js';
 
 /** A watch of the real clock, ms; one in DRAGON_WATCH_ONE_IN brings a dragon down (about eight a day). */
 export const DRAGON_WATCH_MS = 3_600_000;
@@ -56,6 +56,15 @@ export const DRAGON_SITE_BASE = 50_000_000;
 export const dragonSiteDay = (o) => DRAGON_SITE_BASE + (dragonRoll(o, 5) % DRAGON_SITE_BASE);
 /** Which theatre (the gate's lane) an omen's dragon comes down in - any that stands. @param {{w: number, s: number}} o */
 export const dragonLaneOf = (o) => GATE_LANES_OPEN[dragonRoll(o, 2) % GATE_LANES_OPEN.length];
+/** A map pixel's centre, in native units (x east, z north) - every site's point. @param {number} px @param {number} py */
+export const pixelCentreNative = (px, py) => ({ sx: (px + 0.5) * PIXEL_UNITS, sz: (499 - py + 0.5) * PIXEL_UNITS });
+/** AUDIT DRAGON-HIDDEN A1: could an omen's dragon stand at this site, as far as a relay with no map can judge - a pixel's
+ *  centre on its theatre's side of the Bay's edge (wire.js gateLanePixelOk; no province's border is the relay's).
+ *  @param {{w: number, s: number}} o @param {number} sx @param {number} sz */
+export function dragonSiteOk(o, sx, sz) {
+  const [px, py] = mapPixelOfWire(sx, sz), c = pixelCentreNative(px, py);
+  return gateLanePixelOk(dragonLaneOf(o), px, py) && sx === c.sx && sz === c.sz;
+}
 
 /** Native units to the metre (wire.js PIXEL_UNITS over gateLaw.js PIXEL_M - pinned equal, serpentLaw.js's own). */
 export const DRAGON_NATIVE_PER_M = 40;
@@ -63,7 +72,7 @@ export const DRAGON_NATIVE_PER_M = 40;
 export const dragonSiteKey = (sx, sz) => `${Math.round(sx)},${Math.round(sz)}`;
 /** A fight's id in its cell: the watch and the site. */
 export const dragonFightId = (w, sx, sz) => `${w}@${dragonSiteKey(sx, sz)}`;
-/** The most sites one cell keeps a fight for in a watch (a forged site stands a fight of its own - section 4). */
+/** The most sites one cell keeps a fight for in a watch (a forged site stands a fight of its own - section 2). */
 export const DRAGON_SITES_MAX = 3;
 
 /** The brain's law a client fights by: the relay tells an older game to reload (the gate's GATE-RELOAD law). */

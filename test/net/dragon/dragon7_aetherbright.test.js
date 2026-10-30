@@ -16,8 +16,7 @@ import { inventoryItemImage } from '../../../src/systems/item/itemTemplates.js';
 import { createDragonHost } from '../../../src/scenes/dragonHost.js';
 import { createDragonLink } from '../../../src/net/dragon/dragonLink.js';
 import { createDragonSaddle } from '../../../src/player/dragonSaddle.js';
-import { pixelCentreNative } from '../../../src/systems/dragon/dragonSite.js';
-import { isDragonOmen, dragonTimes, dragonLookOf } from '../../../src/net/dragon/dragonLaw.js';
+import { isDragonOmen, dragonTimes, dragonLookOf, pixelCentreNative } from '../../../src/net/dragon/dragonLaw.js';
 /** DRAGON-HIDDEN: a watch's omen under the tests' seed, as its cell would tell it. */
 const om = (w, s = 0x5eed1234) => ({ w, s });
 import { orbitLeg } from '../../../src/net/dragon/dragonBody.js';

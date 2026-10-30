@@ -9,8 +9,7 @@ import { readFileSync } from 'node:fs';
 import { createDragonHost, DRAGON_TARGET, DRAGON_IN_RESEND_MS, DRAGON_IN_RETRY_MS, DRAGON_HIT_GAP_MS, DRAGON_NOTICE_WAIT_MS, DRAGON_SCALE, REMAINS_WASH } from '../../src/scenes/dragonHost.js';
 import { installDwarvenDragon } from '../../src/characters/dwarvenDragon.js';
 import { createDragonLink } from '../../src/net/dragon/dragonLink.js';
-import { pixelCentreNative } from '../../src/systems/dragon/dragonSite.js';
-import { isDragonOmen, dragonTimes, DRAGON_BRAIN_V, DRAGON_REMAINS_MS } from '../../src/net/dragon/dragonLaw.js';
+import { isDragonOmen, dragonTimes, DRAGON_BRAIN_V, pixelCentreNative, DRAGON_REMAINS_MS } from '../../src/net/dragon/dragonLaw.js';
 /** DRAGON-HIDDEN: a watch's omen under the tests' seed, as its cell would tell it. */
 const om = (w, s = 0x5eed1234) => ({ w, s });
 import { orbitLeg, lineLeg, fallLeg, planAt } from '../../src/net/dragon/dragonBody.js';
@@ -181,8 +180,8 @@ test('DRAGON3 world: the host\'s wiring - its sites, link and host made online; 
   ]) assert.ok(w.includes(wired), wired);
   const o = readFileSync('src/net/online.js', 'utf8');
   assert.match(o, /if \(primary\) this\.dragonOk = relaySupportsDragon\(relayV\);/);
-  assert.match(o, /if \(r && \(isSocialRoom\(room\) \? r\.k === 'rcpt' : isCellRoom\(room\)\)\) this\._deliver\('dragon', \(\) => this\.onDragon\?\.\(r, room\)\);/);
-  assert.match(o, /const w = validDragonIn\(word\);\n\s+if \(!w \|\| !this\.dragonReady\(cell\)\) return false;/);
+  assert.match(o, /if \(r && \(isSocialRoom\(room\) \? r\.k === 'rcpt' : isCellRoom\(room\) \|\| r\.k === 'omen'\)\) this\._deliver\('dragon', \(\) => this\.onDragon\?\.\(r, room\)\);/);   // PIN MOVED (AUDIT DRAGON-HIDDEN B1): and an omen from any room
+  assert.match(o, /const w = validDragonIn\(word\);\n\s+const ask = w\?\.k === 'ask';\n\s+if \(!w \|\| \(ask \? [^\n]+ : !this\.dragonReady\(cell\)\)\) return false;/);   // PIN MOVED (AUDIT DRAGON-HIDDEN B1): an ask down my primary
 });
 
 test('AUDIT DRAGON the sky made whole (HOST-SPLIT): its online frame ticks its claims, runs its fight on the street alone (leaving it off the street), draws its bar unless another boss\'s is up, and its away puts the bar away; bootWorld keeps none of its state (mutants: the bar over the serpent\'s; the bar left up; the fight off the street)', async () => {

@@ -3,8 +3,8 @@
 // bible/11-Multiplayer/Dwarven-Dragon.md section 2): A WATCH'S SEED, THE RELAY'S SECRET. The law's rolls
 // (net/dragon/dragonLaw.js) take a watch's omen `{w, s}`; `s` is HMAC-SHA-256 of the watch under a key HKDF draws from the
 // relay's GATE_SIGNING_KEY (the room lease's way, net/roomLease.js leaseKeyOf), so nobody without the relay's secret can
-// roll a watch, and the relay tells a seed only once its landing is past (dragonSeedTold). The relay's alone.
-// Not a DFU member. Ledger A (DRAGON).
+// roll a watch, and the relay tells a seed only once its landing is past (dragonSeedTold). The relay's alone. Rotating
+// the secret moves every dragon, one standing now too. Not a DFU member. Ledger A (DRAGON).
 
 /** The HKDF label: its own, so the seed's key is never the lease's or the receipts'. */
 export const DRAGON_SEED_INFO = 'dfo-dragon-seed:v1';

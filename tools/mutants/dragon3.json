@@ -172,7 +172,7 @@
   {
     "name": "DRAGON3-the-hub-says-every-word",
     "file": "src/net/online.js",
-    "old": "      if (r && (isSocialRoom(room) ? r.k === 'rcpt' : isCellRoom(room))) this._deliver('dragon', () => this.onDragon?.(r, room));",
+    "old": "      if (r && (isSocialRoom(room) ? r.k === 'rcpt' : isCellRoom(room) || r.k === 'omen')) this._deliver('dragon', () => this.onDragon?.(r, room));",
     "new": "      if (r) this._deliver('dragon', () => this.onDragon?.(r, room));",
     "tests": ["test/scenes/dragon3_host.test.js"]
   },

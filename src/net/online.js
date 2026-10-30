@@ -2089,11 +2089,13 @@ export class OnlineSession {
 
   /** DRAGON3: my word on a dragon's fight (net/wire.js validDragonIn) - down the socket of the CELL its site stands in (my
    *  own cell's or a halo's, the serpent's law), DRAGON_HZ_MAX a second, never at a relay that would close the socket for
-   *  it. TRUE MEANS THE WORD LEFT THE SOCKET. */
+   *  it. AUDIT DRAGON-HIDDEN B1: an `ask` down my primary whatever its room (a siege's battle, a tourney) - the omen is
+   *  the relay's, never a cell's. TRUE MEANS THE WORD LEFT THE SOCKET. */
   sendDragon(word, cell) {
     const w = validDragonIn(word);
-    if (!w || !this.dragonReady(cell)) return false;
-    const ws = this._mine(cell) ? this._ws : this._haloFor(cell)?.ws;
+    const ask = w?.k === 'ask';
+    if (!w || (ask ? !(this.dragonOk && this.status === 'open' && this._ws) : !this.dragonReady(cell))) return false;
+    const ws = ask || this._mine(cell) ? this._ws : this._haloFor(cell)?.ws;
     const gate = dragonGate(this._dragonBucket, this._now());
     if (!gate.pass) return false;
     try { ws.send(JSON.stringify({ t: 'dragon', ...w })); } catch { return false; }
@@ -3940,9 +3942,10 @@ export class OnlineSession {
       const r = validSerpentOut(m);
       if (r && (isSocialRoom(room) ? r.k === 'fell' || r.k === 'rcpt' || r.k === 'at' : isCellRoom(room) && r.k !== 'at')) this._deliver('serpent', () => this.onSerpent?.(r, room));
     } else if (m.t === 'dragon') {
-      // DRAGON3: a dragon's cell's word (on any cell socket I hold), or the hub's - my receipt alone, kept for me past its kill
+      // DRAGON3: a dragon's cell's word (on any cell socket I hold), or the hub's - my receipt alone, kept for me past its kill;
+      // AUDIT DRAGON-HIDDEN B1: and a watch's omen from whatever room my `ask` went to
       const r = validDragonOut(m);
-      if (r && (isSocialRoom(room) ? r.k === 'rcpt' : isCellRoom(room))) this._deliver('dragon', () => this.onDragon?.(r, room));
+      if (r && (isSocialRoom(room) ? r.k === 'rcpt' : isCellRoom(room) || r.k === 'omen')) this._deliver('dragon', () => this.onDragon?.(r, room));
     } else if (m.t === 'wdun') {
       // PVPDUNGEONS: the hub's word on the zone's halls (the day, my locks, an entry's answer, the crows) - the hub's alone
       const w = isSocialRoom(room) ? validWdunOut(m) : null;
