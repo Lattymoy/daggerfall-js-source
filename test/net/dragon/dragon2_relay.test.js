@@ -14,8 +14,8 @@ import { DRAGON_KEEP_MS } from '../../../server/src/dragonFights.js';
 import { fakeRooms } from '../../fakeRoom.mjs';
 
 const subtle = globalThis.crypto.subtle;
-const { w: W } = await dragonOmenFrom(500_000);   // DRAGON-HIDDEN: a dragon's watch under the relay's own secret
-const TT = dragonTimes(W);
+const OMEN = await dragonOmenFrom(500_000), { w: W } = OMEN;   // DRAGON-HIDDEN: a dragon's watch under the relay's own secret
+const TT = dragonTimes(OMEN);
 const PX = 205, PY = 214;
 const SX = (PX + 0.5) * PIXEL_UNITS, SZ = (499 - PY + 0.5) * PIXEL_UNITS;
 const CELL = cellRoomOfWire(SX, SZ);

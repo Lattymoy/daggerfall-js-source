@@ -22,7 +22,7 @@ import { hostText } from '../hostText.mjs';
 installDwarvenDragon({ fetchBytes: async () => new Uint8Array(0) });   // its row, as the game's boot registers it (scenes/shared.js)
 let W = 500_000;
 while (!isDragonOmen(om(W))) W++;
-const TT = dragonTimes(W);
+const TT = dragonTimes(om(W));
 const SITE = { w: W, lane: 0, px: 205, py: 214, ...pixelCentreNative(205, 214), near: 'Here' };
 const CELL = cellRoomOfWire(SITE.sx, SITE.sz);
 const M = 40;   // the scene's metre in native units (the fakes' scene is the native world over 40)

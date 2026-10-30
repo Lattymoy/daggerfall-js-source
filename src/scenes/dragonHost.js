@@ -5,7 +5,7 @@
 // the `in`, its blows draped on the land and judged on MY feet (egBlowVerdict), my shafts, spells and swings out to its
 // cell, its bar's model, its voice, its fall and its remains. scenes/world.js wires it; every seam is in `deps` (below,
 // createDragonHost), so it runs in Node. Not a DFU member. Ledger A (DRAGON).
-import { dragonTimes, dragonWatchesAbout, dragonSeedTold, isDragonOmen, dragonLookOf, DRAGON_CLIMB_MS, DRAGON_REMAINS_MS, DRAGON_BRAIN_V, DRAGON_NATIVE_PER_M } from '../net/dragon/dragonLaw.js';
+import { dragonTimes, dragonWatchesAbout, dragonQuietAt, dragonAskEnd, isDragonOmen, dragonLookOf, DRAGON_CLIMB_MS, DRAGON_REMAINS_MS, DRAGON_BRAIN_V, DRAGON_NATIVE_PER_M, DRAGON_LAND_SPAN_MS } from '../net/dragon/dragonLaw.js';
 import { planAt, dragonLegAt, roostLeg, climbLeg, DRAGON_BODY_R, DRAGON_BODY_H } from '../net/dragon/dragonBody.js';
 import { DRAGON_BLOWS, DRAGON_BLOW, DRAGON_ADMIT_R, DRAGON_FAN_R, DRAGON_ENGAGE_R, DRAGON_MODE, DRAGON_STATE_SEND_MS } from '../net/dragon/dragonBrain.js';
 import { HIT_KINDS } from '../net/gate/gateBrain.js';
@@ -51,9 +51,9 @@ export const DRAGON_NOTICE_WAIT_MS = 6000;
 /** The `in` again while answered, and soon again while not (ms). */
 export const DRAGON_IN_RESEND_MS = 20_000;
 export const DRAGON_IN_RETRY_MS = 3000;
-/** DRAGON-HIDDEN: an `ask` for a watch's omen, again this often until it is answered (AUDIT DRAGON-HIDDEN A5: a clock a
- *  little ahead of the relay's asks before the landing there, and is answered at the next). */
-export const DRAGON_ASK_RETRY_MS = 2000;
+/** DRAGON-HIDDEN: an `ask` for a watch's omen, again this often until it is answered. DRAGON-HIDDEN-TIME: asked from the
+ *  watch's start (its landing is nobody's to count), so a landing is heard within this of it, at four asks a minute. */
+export const DRAGON_ASK_RETRY_MS = 15_000;
 /** A fight unheard this long (three of its whole states) is left and asked again (ms). */
 export const DRAGON_HEARD_MS = 3 * DRAGON_STATE_SEND_MS;
 /** A landing seen later than this is neither judged nor heard (ms - the gate's), and a shape lingers this long after (ms). */
@@ -108,7 +108,7 @@ export function skyWatchAt(t, seedOf) {
   for (const w of dragonWatchesAbout(t)) {
     const s = seedOf(w), o = { w, s };
     if (s == null || !isDragonOmen(o)) continue;
-    const p = dragonTimes(w);
+    const p = dragonTimes(o);
     if (t >= p.landAt && t < p.leaveAt + DRAGON_REMAINS_MS) return { ...p, s };
   }
   return null;
@@ -134,7 +134,7 @@ export function createDragonHost(deps) {
    *  stand in (AUDIT DRAGON-HIDDEN B1: net/online.js sendDragon - a siege's battle sees the sky too). */
   function ask(t) {
     for (const w of dragonWatchesAbout(t)) {
-      if (omens.has(w) || !dragonSeedTold(w, t) || t >= dragonTimes(w).leaveAt + DRAGON_REMAINS_MS || t - (asked.get(w) ?? -Infinity) < DRAGON_ASK_RETRY_MS) continue;
+      if (omens.has(w) || t < dragonQuietAt(w) - DRAGON_LAND_SPAN_MS || t >= dragonAskEnd(w) || t - (asked.get(w) ?? -Infinity) < DRAGON_ASK_RETRY_MS) continue;   // DRAGON-HIDDEN-TIME: from the watch's start, its landing being nobody's to count
       if (deps.online?.send?.({ k: 'ask', w })) asked.set(w, t);
     }
     for (const m of [omens, asked]) for (const w of m.keys()) if (!dragonWatchesAbout(t).includes(w)) m.delete(w);

@@ -75,7 +75,7 @@ export const planEnd = (legs) => { const l = legs?.[legs.length - 1]; return !l 
 
 /** An omen's roost before its fight: an orbit about its site, high, from its landing. @param {{w: number, s: number}} o */
 export function roostLeg(o) {
-  return orbitLeg(dragonTimes(o.w).landAt, 0, 0, ROOST_R, (dragonRoll(o, 3) / 4294967296) * TAU, dragonRoll(o, 4) & 1 ? 1 : -1, ROOST_ALT);
+  return orbitLeg(dragonTimes(o).landAt, 0, 0, ROOST_R, (dragonRoll(o, 3) / 4294967296) * TAU, dragonRoll(o, 4) & 1 ? 1 : -1, ROOST_ALT);
 }
 /** An orbit that takes up from where `p` stands at `at`: about a centre ORBIT_R toward the site (kept inside its ground),
  *  so it flies on with no jump; climbing to `ta` over `ams`. */

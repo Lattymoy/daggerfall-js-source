@@ -24,7 +24,7 @@ import { TELEGRAPH_KIND } from '../../../src/render/gate/gateTelegraph.js';
 const om = (w, s = 0x5eed1234) => ({ w, s });
 let W = 500_000;
 while (!isDragonOmen(om(W))) W++;
-const TT = { ...dragonTimes(W), s: om(W).s };
+const TT = { ...dragonTimes(om(W)), s: om(W).s };
 const SITE = { w: W, ...pixelCentreNative(205, 214) };
 const word = (o) => validDragonOut({ t: 'dragon', w: W, sx: SITE.sx, sz: SITE.sz, ...o });
 const ST = (o = {}) => word({ k: 'st', b: 0, ph: 1, h: 1000, m: 1000, md: 0, mu: 0, sh: 0, legs: [orbitLeg(TT.landAt, 0, 0, 55, 0, 1, 30)], blows: [], n: 1, lv: TT.leaveAt, op: 0, fell: null, gone: null, ...o });

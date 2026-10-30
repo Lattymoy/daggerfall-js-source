@@ -21,7 +21,7 @@ import { RELAY_KEY, dragonOmenFrom } from '../../dragonOmen.mjs';
 const src = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
 const seeded = (s = 7) => () => ((s = (Math.imul(s, 1103515245) + 12345) >>> 0) / 4294967296);
 const OMEN = await dragonOmenFrom(500_000), W = OMEN.w;   // DRAGON-HIDDEN: a dragon's watch under the relay's own secret
-const T = dragonTimes(W);
+const T = dragonTimes(OMEN);
 const birth = (now = T.landAt + 60_000) => DRAGON_SEAM.new({ w: W, b: 0, sx: 0, sz: 0, now, leaveAt: T.leaveAt, roost: roostLeg(OMEN) });
 const BODIES = [{ sub: 'a', x: 10, z: 0 }, { sub: 'b', x: -15, z: 20 }, { sub: 'c', x: 5, z: -25 }];
 /** The brain stepped until `pred` holds of a word it says: `{ f, word, now }`. */

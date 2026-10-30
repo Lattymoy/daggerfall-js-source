@@ -18,7 +18,7 @@ import { RELAY_KEY, omenOf, dragonOmenFrom } from '../../dragonOmen.mjs';
 
 const subtle = globalThis.crypto.subtle;
 const src = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
-const OMEN = await dragonOmenFrom(500_000), W = OMEN.w, TT = Law.dragonTimes(W);
+const OMEN = await dragonOmenFrom(500_000), W = OMEN.w, TT = Law.dragonTimes(OMEN);
 const PX = 205, PY = 214, SX = (PX + 0.5) * PIXEL_UNITS, SZ = (499 - PY + 0.5) * PIXEL_UNITS, CELL = cellRoomOfWire(SX, SZ);
 const at = (mx, mz) => ({ x: SX + mx * Law.DRAGON_NATIVE_PER_M, y: 0, z: SZ + mz * Law.DRAGON_NATIVE_PER_M, yaw: 0, pitch: 0 });
 
@@ -40,13 +40,13 @@ test('DRAGON-HIDDEN the seed: HMAC of the relay\'s secret under its own label - 
   assert.equal(await dragonWatchKeyOf('', { subtle }), null);
 });
 
-test('DRAGON-HIDDEN the law keeps no salt: nothing a client holds rolls a watch - every roll takes an omen, and no watch to come is ever told (mutants: the seed told before its landing; a watch to come told)', () => {
+test('DRAGON-HIDDEN the law keeps no salt: nothing a client holds rolls a watch - every roll takes an omen, and no watch to come is ever told (mutants: the seed told before its landing; a watch to come told)', async () => {
   assert.equal(/** @type {any} */ (Law).DRAGON_SALT, undefined);
   for (const gone of ['dragonAt', 'isDragonWatch']) assert.equal(/** @type {any} */ (Law)[gone], undefined, `${gone} is gone`);
   assert.doesNotMatch(src('src/net/dragon/dragonLaw.js'), /0xd7a6/i, 'the old public salt');
-  assert.equal(Law.dragonSeedTold(W, TT.landAt - 1), false);
-  assert.equal(Law.dragonSeedTold(W, TT.landAt), true);
-  assert.equal(Law.dragonSeedTold(W + 1, TT.landAt + Law.DRAGON_WATCH_MS - 1), false);
+  assert.equal(Law.dragonSeedTold(OMEN, W, TT.landAt - 1), false);
+  assert.equal(Law.dragonSeedTold(OMEN, W, TT.landAt), true);
+  assert.equal(Law.dragonSeedTold(await omenOf(W + 1), W + 1, (W + 1) * Law.DRAGON_WATCH_MS - 1), false);
 });
 
 async function withRelay(fn, { start = TT.landAt + 60_000, key = RELAY_KEY.pkcs8 } = {}) {
@@ -86,13 +86,13 @@ test('DRAGON-HIDDEN the cell tells a watch\'s omen once its landing is past - fo
     assert.deepEqual(omens(a).map(({ w, s }) => [w, s]), [[W, null]], 'no secret here: no dragon');
     await say(a, { k: 'in', w: W, bv: Law.DRAGON_BRAIN_V, lv: 20, sx: SX, sz: SZ });
     assert.equal(r.room._dg.fights.size, 0, 'and no fight stands');
-  }, { key: null });
+  }, { key: null, start: Law.dragonQuietAt(W) });   // DRAGON-HIDDEN-TIME: no secret is told quiet, at the latest landing
 });
 
 test('DRAGON-HIDDEN the cell holds no fight for a watch its secret brings no dragon, and tells an old game - the public salt\'s - to reload (mutants: the brain\'s floor left at 1; the quiet watch is two guards - dragonHolds and dragonAdmits each refuse it - so no one mutant of either moves it, and DRAGON2-every-watch-a-dragon holds the roll they share)', async () => {
   let quiet = W + 1;
   while (Law.isDragonOmen(await omenOf(quiet))) quiet++;
-  const Tq = Law.dragonTimes(quiet);
+  const Tq = { landAt: Law.dragonQuietAt(quiet) };
   await withRelay(async ({ r, say }) => {
     const a = r.connect();
     await r.hello(a, 'peer-0001', at(40, 0));
@@ -109,9 +109,9 @@ test('DRAGON-HIDDEN the cell holds no fight for a watch its secret brings no dra
   });
 });
 
-test('DRAGON-HIDDEN the client asks once a landing is past, naming no cell - never before, again while unanswered, never once told - and draws nothing it was not told (mutants: asked before the landing; the ask never again; a dragon drawn untold)', () => {
+test('DRAGON-HIDDEN the client asks from its watch\'s start (DRAGON-HIDDEN-TIME: the landing is nobody\'s to count), naming no cell - never before, again while unanswered, never once told - and draws nothing it was not told (mutants: asked before the landing; the ask never again; a dragon drawn untold)', () => {
   const M = 40, SITE = { w: W, lane: 0, px: PX, py: PY, ...Law.pixelCentreNative(PX, PY), near: 'Here' };
-  const S = { t: TT.landAt - 5000, sent: [], made: 0 };
+  const S = { t: W * Law.DRAGON_WATCH_MS - 5000, sent: [], made: 0 };
   const link = createDragonLink({ now: () => S.t, site: () => S.host.site() });
   S.host = createDragonHost({
     now: () => S.t, link, sites: { of: (o) => (o.w === W ? SITE : null) },
@@ -122,8 +122,8 @@ test('DRAGON-HIDDEN the client asks once a landing is past, naming no cell - nev
   });
   const asks = () => S.sent.filter((w) => w.k === 'ask' && w.w === W);
   S.host.frame();
-  assert.equal(asks().length, 0, 'before its landing, no ask');
-  S.t = TT.landAt;
+  assert.equal(asks().length, 0, 'before its watch, no ask');
+  S.t = W * Law.DRAGON_WATCH_MS;
   assert.equal(S.host.frame(), false);
   assert.equal(S.host.site(), null, 'nothing drawn untold');   // AUDIT DRAGON-HIDDEN B3: the frame's answer is a fight of mine alone
   assert.deepEqual(asks().map((w) => w.cell), [undefined], 'asked of whatever room I stand in (AUDIT DRAGON-HIDDEN B1)');
@@ -134,5 +134,6 @@ test('DRAGON-HIDDEN the client asks once a landing is past, naming no cell - nev
   S.host.omen({ w: W, s: OMEN.s });
   S.t += DRAGON_ASK_RETRY_MS; S.host.frame();
   assert.equal(asks().length, 2, 'never once told');
+  S.t = Math.max(S.t, TT.landAt); S.host.frame();
   assert.equal(S.host.site()?.w, W, 'told, its site found and its sky drawn');
 });

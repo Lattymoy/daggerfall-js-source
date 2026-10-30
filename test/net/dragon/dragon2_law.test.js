@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  DRAGON_WATCH_MS, DRAGON_WATCH_ONE_IN, DRAGON_LAND_AT_MS, DRAGON_STAY_MS, DRAGON_CLIMB_MS, DRAGON_SHINY_ONE_IN, dragonWatchAt, isDragonOmen, dragonOmenOk,
+  DRAGON_WATCH_MS, DRAGON_WATCH_ONE_IN, DRAGON_LAND_SPAN_MS, DRAGON_STAY_MS, dragonLandOf, dragonQuietAt, dragonAskEnd, DRAGON_CLIMB_MS, DRAGON_SHINY_ONE_IN, dragonWatchAt, isDragonOmen, dragonOmenOk,
   dragonShinyOf, dragonLookOf, dragonTimes, dragonSeedTold, dragonWatchesAbout, dragonAdmits, dragonHolds, dragonSiteDay, dragonLaneOf, DRAGON_SITE_BASE, dragonFightId, dragonSiteKey,
 } from '../../../src/net/dragon/dragonLaw.js';
 import { lineLeg, orbitLeg, dragonLegAt, planAt, planEnd, orbitFrom, fallLeg, roostLeg, ROOST_ALT, ROOST_R, FLY_V, EASE, DRAGON_BODY_R } from '../../../src/net/dragon/dragonBody.js';
@@ -33,8 +33,8 @@ const W = firstWatch(500_000);
 
 // ═══ THE CLOCK ═══════════════════════════════════════════════════════════════════════════════════
 
-test('DRAGON2 law: one watch in three brings a dragon down, one dragon in twenty is the Aetherbright, a quarter past its watch it lands and forty minutes on it climbs away (mutants: every watch a dragon; the shiny every dragon; the stay unbounded)', () => {
-  assert.deepEqual([DRAGON_WATCH_MS, DRAGON_WATCH_ONE_IN, DRAGON_LAND_AT_MS, DRAGON_STAY_MS, DRAGON_CLIMB_MS, DRAGON_SHINY_ONE_IN], [3_600_000, 3, 900_000, 2_400_000, 15_000, 20]);
+test('DRAGON2 law: one watch in three brings a dragon down, one dragon in twenty is the Aetherbright, its landing a second its seed rolls in the first twenty minutes of its watch and forty minutes on it climbs away (mutants: every watch a dragon; the shiny every dragon; the stay unbounded)', () => {
+  assert.deepEqual([DRAGON_WATCH_MS, DRAGON_WATCH_ONE_IN, DRAGON_LAND_SPAN_MS, DRAGON_STAY_MS, DRAGON_CLIMB_MS, DRAGON_SHINY_ONE_IN], [3_600_000, 3, 1_200_000, 2_400_000, 15_000, 20]);
   let n = 0, shiny = 0;
   const N = 30_000;
   const seeds = seeded(11);
@@ -45,14 +45,24 @@ test('DRAGON2 law: one watch in three brings a dragon down, one dragon in twenty
   assert.equal(isDragonOmen(om(1.5)), false);
   assert.equal(isDragonOmen({ w: W }), false, 'no seed, no dragon');
   assert.equal(dragonOmenOk(om(W, 2 ** 32)), false, 'a seed past 32 bits is none');
-  const t = dragonTimes(W);
-  assert.deepEqual(t, { w: W, landAt: W * DRAGON_WATCH_MS + DRAGON_LAND_AT_MS, leaveAt: W * DRAGON_WATCH_MS + DRAGON_LAND_AT_MS + DRAGON_STAY_MS });
+  const t = dragonTimes(om(W));
+  assert.deepEqual(t, { w: W, landAt: W * DRAGON_WATCH_MS + dragonLandOf(om(W)), leaveAt: W * DRAGON_WATCH_MS + dragonLandOf(om(W)) + DRAGON_STAY_MS });
+  // DRAGON-HIDDEN-TIME: its landing is the seed's, a whole second in the watch's first twenty minutes, spread over them
+  const lands = new Set();
+  for (let s = 1; s <= 400; s++) { const l = dragonLandOf(om(W, s * 0x9e3779b1 >>> 0)); assert.ok(l >= 0 && l < DRAGON_LAND_SPAN_MS && l % 1000 === 0); lands.add(Math.floor(l / 60_000)); }
+  assert.equal(lands.size, 20, 'every minute of the span lands some dragon');
+  assert.equal(dragonQuietAt(W), W * DRAGON_WATCH_MS + DRAGON_LAND_SPAN_MS);
+  assert.ok(dragonAskEnd(W) >= t.leaveAt + DRAGON_CLIMB_MS);
   assert.equal(dragonWatchAt(t.landAt), W);
   assert.equal(dragonLookOf(om(W)), dragonShinyOf(om(W)) ? 1 : 0);
   // DRAGON-HIDDEN: a watch's seed is told only once its landing is past, and only for the watches about
-  assert.equal(dragonSeedTold(W, t.landAt - 1), false, 'never before it lands');
-  assert.equal(dragonSeedTold(W, t.landAt), true);
-  assert.equal(dragonSeedTold(W + 1, t.landAt), false, 'never a watch to come');
+  assert.equal(dragonSeedTold(om(W), W, t.landAt - 1), false, 'never before it lands');
+  assert.equal(dragonSeedTold(om(W), W, t.landAt), true);
+  assert.equal(dragonSeedTold(om(W + 1), W + 1, t.landAt), false, 'never a watch to come');
+  const Q = firstWatch(W + 1, (w) => !isDragonWatch(w));
+  assert.equal(dragonSeedTold(om(Q), Q, dragonQuietAt(Q) - 1), false, 'a quiet watch is told no sooner than the latest landing');
+  assert.equal(dragonSeedTold(om(Q), Q, dragonQuietAt(Q)), true);
+  assert.equal(dragonSeedTold(null, Q, dragonQuietAt(Q)), true, 'no secret: told quiet at the latest landing');
   assert.deepEqual(dragonWatchesAbout(t.landAt), [W, W - 1]);
   // a fight begins from its landing until it leaves; one already joined holds through the climb
   assert.equal(dragonAdmits(om(W), t.landAt - 1), false);
@@ -110,12 +120,12 @@ test('DRAGON2 body: a path, not a physics - a line eased at both ends or falling
   assert.deepEqual([dragonLegAt(fl, 1e6).x, dragonLegAt(fl, 1e6).z, dragonLegAt(fl, 1e6).a], [3, 4, 0]);
   assert.ok(fl.ms >= 3000 && fl.ms <= 3100, 'forty-five metres under gravity, about three seconds');
   const r = roostLeg(om(W));
-  assert.deepEqual([r.k, r.at, r.r, r.a], [1, dragonTimes(W).landAt, ROOST_R, ROOST_ALT]);
+  assert.deepEqual([r.k, r.at, r.r, r.a], [1, dragonTimes(om(W)).landAt, ROOST_R, ROOST_ALT]);
 });
 
 // ═══ THE BRAIN ═══════════════════════════════════════════════════════════════════════════════════
 
-const T = dragonTimes(W);
+const T = dragonTimes(om(W));
 const birth = (now = T.landAt + 60_000) => DRAGON_SEAM.new({ w: W, b: 0, sx: 0, sz: 0, now, leaveAt: T.leaveAt, roost: roostLeg(om(W)) });
 const BODIES = [{ sub: 'a', x: 10, z: 0 }, { sub: 'b', x: -15, z: 20 }, { sub: 'c', x: 5, z: -25 }];
 function fightOf(n = 3, lv = 20) {

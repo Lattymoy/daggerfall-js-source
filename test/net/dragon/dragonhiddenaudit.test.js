@@ -23,7 +23,7 @@ import { fakeSocketClass } from '../../fakeSocket.mjs';
 import { RELAY_KEY, dragonOmenFrom } from '../../dragonOmen.mjs';
 
 const subtle = globalThis.crypto.subtle;
-const OMEN = await dragonOmenFrom(500_000), W = OMEN.w, TT = Law.dragonTimes(W);
+const OMEN = await dragonOmenFrom(500_000), W = OMEN.w, TT = Law.dragonTimes(OMEN);
 const PROV = GATE_LANES_OPEN.find((l) => l !== 0);
 const FAR = await dragonOmenFrom(W + 1, { lane: PROV });   // a dragon past the Bay's edge
 const SHINY = await dragonOmenFrom(W + 1, { look: 1 });   // the Aetherbright, in the Bay
@@ -66,7 +66,7 @@ test('AUDIT DRAGON-HIDDEN A1 the site: a relay with no map holds a forged one to
     await r.hello(a, 'peer-0001', at(40, 0));
     await say(a, IN({ w: FAR.w }));
     assert.deepEqual([words(a, 'no').map((m) => m.m), r.room._dg.fights.size], [['gone'], 0], 'a province\'s dragon stands no fight in a Bay cell');
-  }, { start: Law.dragonTimes(FAR.w).landAt + 60_000 });
+  }, { start: Law.dragonTimes(FAR).landAt + 60_000 });
 });
 
 test('AUDIT DRAGON-HIDDEN A4 the deploy: a cell waking lets go of an unslain fight a law older than DRAGON_BRAIN_MIN made - record and index - and keeps a slain one (its receipts) and its own law\'s (mutants: none let go; a slain one let go too; its record kept)', async () => {
@@ -145,7 +145,7 @@ test('AUDIT DRAGON-HIDDEN A3, C2 the Aetherbright: its omen\'s look is its fight
     assert.equal((await dragonFellInternal(hub.room, new Request('https://relay.internal/', { method: 'POST', body: JSON.stringify(body) }))).status, 200);
     const c = readDragonReceipt(hub.store.get(`${DRAGON_RC_PREFIX}acct-peer-0007`)?.r);
     assert.deepEqual([c?.s, c?.x, c?.l, c?.b], ['acct-peer-0007', 'stood', 18, 1], 'a party-mate\'s share, the Aetherbright\'s');
-  }, { start: Law.dragonTimes(SHINY.w).landAt + 60_000 });
+  }, { start: Law.dragonTimes(SHINY).landAt + 60_000 });
 });
 
 test('AUDIT DRAGON-HIDDEN B4 the omen word is the host\'s, every other the fight\'s link\'s (mutant: the omen to the link)', () => {
@@ -174,20 +174,20 @@ function screen(t0, told = [], me = [0, -1400]) {
 }
 
 test('AUDIT DRAGON-HIDDEN B5 the ask\'s bounds: soon again after an ask before the relay\'s landing, never again once told none, never once its remains are gone; and an Aetherbright\'s sighting names it before any fight is mine (mutants: again only at fifteen seconds; asked after a null omen; asked past its remains; the sighting brass)', () => {
-  assert.equal(DRAGON_ASK_RETRY_MS, 2000, 'a clock a little ahead of the relay\'s is answered within two seconds');
+  assert.equal(DRAGON_ASK_RETRY_MS, 15_000, 'DRAGON-HIDDEN-TIME: asked from the watch\'s start, a landing heard within fifteen seconds, four asks a minute');
   const S = screen(TT.landAt);
   S.run(DRAGON_ASK_RETRY_MS + 50);
   assert.equal(S.asks(W), 2, 'again while unanswered');
   S.host.omen({ w: W, s: null });
   S.run(3 * DRAGON_ASK_RETRY_MS);
   assert.equal(S.asks(W), 2, 'no secret there: asked no more');
-  const late = TT.leaveAt + Law.DRAGON_REMAINS_MS;
+  const late = Law.dragonAskEnd(W);   // DRAGON-HIDDEN-TIME: the latest any dragon of the watch may still lie
   assert.equal(Law.dragonWatchesAbout(late).includes(W), true, 'still a watch about');
   const L = screen(late - 1); L.host.frame();
   assert.equal(L.asks(W), 1, 'its remains still lie');
   const G = screen(late); G.host.frame();
   assert.equal(G.asks(W), 0, 'its remains gone: nothing to ask for');
-  const B = screen(Law.dragonTimes(SHINY.w).landAt + 1000, [SHINY]);
+  const B = screen(Law.dragonTimes(SHINY).landAt + 1000, [SHINY]);
   B.run(DRAGON_NOTICE_WAIT_MS + 2000);
   assert.equal(B.mid.filter((x) => /A blue dragon circles/.test(x)).length, 1, B.mid.join(' | '));
 });

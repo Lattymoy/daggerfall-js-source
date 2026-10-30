@@ -156,8 +156,9 @@ export async function dragonWord(room, ws, a, m, now) {
  *  cell's - a siege's battle sees the sky too), and each time asked: a socket told learns nothing new, and the dragon
  *  bucket bounds the asking. */
 async function dragonAsk(room, ws, m, now) {
-  if (!dragonWatchesAbout(now).includes(m.w) || !dragonSeedTold(m.w, now)) return;
+  if (!dragonWatchesAbout(now).includes(m.w)) return;
   const o = await dragonOmenOf(room, m.w);
+  if (!dragonSeedTold(o, m.w, now)) return;   // DRAGON-HIDDEN-TIME: silent until it lands (a quiet watch until the latest landing), so an asker learns no time ahead
   say(room, ws, { k: 'omen', w: m.w, s: o ? o.s : null });
 }
 
@@ -166,7 +167,7 @@ async function dragonAsk(room, ws, m, now) {
  *  else joined, and the whole state told either way. */
 async function dragonIn(room, ws, a, m, now, fights) {
   const no = (why) => say(room, ws, { k: 'no', m: why });
-  const o = dragonWatchesAbout(now).includes(m.w) ? await dragonOmenOf(room, m.w) : null, t = dragonTimes(m.w), id = dragonFightId(m.w, m.sx, m.sz);
+  const o = dragonWatchesAbout(now).includes(m.w) ? await dragonOmenOf(room, m.w) : null, t = o ? dragonTimes(o) : null, id = dragonFightId(m.w, m.sx, m.sz);
   let f = fights.get(id) ?? null;
   if (f?.rc?.[a.sub]) say(room, ws, { k: 'rcpt', r: f.rc[a.sub] });
   const was = fightBy(fights, a.sub);
