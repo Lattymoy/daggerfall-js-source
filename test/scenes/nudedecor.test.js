@@ -189,6 +189,7 @@ const NO_PERSON = Object.freeze({
   'src/net/peer/peerRiders.js': 'a peer\'s horse or cart under them',
   'src/net/remotePlayers.js': 'peers as their class\'s mobile sprites, their dolls and their corpses',
   'src/player/eyeOfTheBeholder/eotbBody.js': 'the player\'s own body as mobile sprites',
+  'src/player/eyeOfTheBeholder/eotbHolster.js': 'the weapon on a sprite\'s back',
   'src/player/eyeOfTheBeholder/eotbLantern.js': 'the body\'s lantern',
   'src/render/renderer.js': 'the method itself',
   'src/scenes/camps.js': 'a camp\'s fire',
