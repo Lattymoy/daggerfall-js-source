@@ -1214,6 +1214,14 @@ nothing.
 **Drawn in the hand, none on the back.** My sprite reads the rig's own word (`weaponRig.js` `eotbState`, `sheathed`); a
 spell readied over a sheathed weapon keeps it there. A walker's `wd` 1 or 2 (a weapon or a bow drawn) takes it off.
 
+**Its glow** (Mac: "if the weapon has an effect, like the shock effect or an equipped weapon aura, does it show?",
+then "Do this and yes to #2"). Sheathed, the weapon on the back wears the weapon glow's look - its element, a set
+glow, the Gilded crimson, the Aura Armory's piece or the arcane look - drawn round its picture by the third glow
+drawer (`05-Combat/Weapon-Glow.md` "The world picture"). Drawn, the glow stands round the whole sprite. It turns,
+mirrors and hides with the weapon, and the aura host draws it last, over the cape. The weapon on the back and its glow
+are the rig's hand in use (`weaponRig.js` `eotbState` `handItem`), a walker's by its pose's `lh`. Full strength, as in
+the hand: one law.
+
 **Where.** `player/eyeOfTheBeholder/eotbHolster.js` (the law, the picture, the store, the hang, the batch);
 `eotbBody.js` draws mine after the body (`drawHolster`); `net/peer/peerRiders.js` hangs each walker's (`slingHolster`)
 and draws it in `drawLanterns`, beside the bodies; `scenes/auraHost.js` draws both again over the auras. No host
@@ -1225,10 +1233,14 @@ its handle with its chain and ball off to the side. Not yet checked in the runni
 the slant, length, face and depth in all eight views and three facings; the side past the painted back; glued to the
 picture; the store; my body's gates in the rig's own words; the walkers'; the redraw over the aura; `chestHalf`, the
 across law and the capes moved for the pass); `tools/mutants/backholster.json` (37, all killed); three records in
-`htwaist.json` and `seraphwings.json` re-aimed by content.
+`htwaist.json` and `seraphwings.json` re-aimed by content. The glow: `test/player/eyeOfTheBeholder/spriteglow.test.js`
+(the law, the lists, the renderer's primitive call by call, the shaders' rows, the wiring) and
+`tools/mutants/spriteglow.json` (41, all killed).
 
 **The probe.** `tools/backHolsterProbe.mjs` draws it in the real renderer
 (the game's mirrored lens) on a skin and on Layered Gearing, five weapons from ARENA2, eight views each, and the
 claymore under the Shadow Cloak through the real aura pass, hung as the host hangs it: 34 checks - it leans to the
 right shoulder from behind, hides in front, shows past the back from the side with no pixel over the body, the cape's
-mass is behind the painted body from the side, and after the redraw no weapon pixel is tinted (up to 468 were).
+mass is behind the painted body from the side, and after the redraw no weapon pixel is tinted (up to 468 were). And
+the glow: a shock and the Brand on the back from behind, none over the body from the front, alive as its clock runs,
+over the cape, and round the whole sprite drawn from every side - 46 checks.

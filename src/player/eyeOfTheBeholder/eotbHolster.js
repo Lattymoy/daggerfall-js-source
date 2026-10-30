@@ -40,8 +40,11 @@ export function holstersOnBack(item) {
   return BACK_SKILLS.has(/** @type {number} */ (weaponSkillUsed(t)));
 }
 
-/** The weapon in a look's items (net/wire.js validLookItem) - the one in the weapon hand - or null. */
-export const holsterItemOfLook = (items) => (Array.isArray(items) ? items.find((it) => it?.equipSlot === HOLSTER_HAND_SLOT) ?? null : null);
+/** EQUIP_SLOTS.LeftHand - a literal, as HOLSTER_HAND_SLOT is. */
+export const HOLSTER_LEFT_SLOT = 21;
+/** The weapon in a look's items (net/wire.js validLookItem) in the hand in use - the left with the pose's `lh` - or null. */
+export const holsterItemOfLook = (items, left = false) => (Array.isArray(items)
+  ? items.find((it) => it?.equipSlot === (left ? HOLSTER_LEFT_SLOT : HOLSTER_HAND_SLOT)) ?? null : null);
 
 /**
  * A weapon picture stood upright: its long axis (the opaque pixels' principal axis) turned to the vertical, the widest
@@ -194,7 +197,7 @@ export function createSpriteHolster() {
   return {
     batch: null, list: [],            // the billboard, and the one-element list drawBillboards takes
     right: [1, 0, 0], up: [0, 1, 0], origin: [0, 0, 0], mid: [0, 0, 0],
-    w: 0, h: 0, fullH: 0, mirror: false, archive: null,
+    w: 0, h: 0, fullH: 0, mirror: false, archive: null, cellW: 0, cellH: 0,   // BACK-HOLSTER GLOW: its picture's pixels
   };
 }
 
@@ -235,6 +238,7 @@ export function hangSpriteHolster(l, fig, view, feet, eye, camRight, art) {
   l.mid[0] = cx; l.mid[1] = cy; l.mid[2] = cz;
   l.mirror = rec < 2;   // seen from the front or its three-quarter the weapon shows its other face
   l.archive = art.archive ?? null;
+  l.cellW = art.pic?.width ?? 0; l.cellH = art.pic?.height ?? 0;
   return l;
 }
 

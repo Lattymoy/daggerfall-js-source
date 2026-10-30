@@ -4,7 +4,9 @@
 // changed must lean to the right shoulder from behind, stand upright from the side and hide behind the body in front.
 // From the side no pixel of it lies over the body. Under the Shadow Cloak (the real aura pass, hung at the painted body
 // as the aura host hangs it) the cape's mass is behind the body, and after the redraw no weapon pixel is tinted.
-// --shots writes a sheet of the crops - a render of game data, so never into the repo.
+// BACK-HOLSTER GLOW: a shock and the Brand glow on the claymore on its back, and round the whole sprite drawn - seen
+// from the back, hidden with the weapon from the front, animated, over the cape. --shots writes sheets of the crops -
+// a render of game data, so never into the repo.
 //     ARENA2_PATH=... node tools/backHolsterProbe.mjs [--shots DIR]
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
@@ -46,7 +48,7 @@ const page = await browser.newPage({ viewport: { width: 400, height: 400 } });
 page.on('pageerror', (e) => console.log('pageerror', e.message));
 await page.goto(`http://127.0.0.1:${PORT}/LICENSE`, { waitUntil: 'domcontentloaded', timeout: 180000 });   // a page at the origin, nothing of its own to boot
 const W = 240, H = 320;
-const shots = await page.evaluate(async ({ pics, W, H }) => {
+const { out: shots, glowOut } = await page.evaluate(async ({ pics, W, H }) => {
   const [{ Renderer }, m4, Hs, bb, sp, ap, ar] = await Promise.all([
     import('/src/render/renderer.js'), import('/src/world/mat4.js'), import('/src/player/eyeOfTheBeholder/eotbHolster.js'),
     import('/src/player/eyeOfTheBeholder/eotbBillboard.js'), import('/src/player/eyeOfTheBeholder/eotbSprite.js'), import('/src/render/armoryPose.js'),
@@ -65,7 +67,7 @@ const shots = await page.evaluate(async ({ pics, W, H }) => {
     const archive = Hs.holsterArtArchive(`probe-${name}`);
     r.uploadTexture(archive, 0, { width: p.width, height: p.height, colors: b64(p.colors) });
     r.uploadTexture(archive, 1, { width: p.width, height: p.height, colors: b64(p.mirror) });
-    arts[name] = { archive, w: p.w, h: p.h };
+    arts[name] = { archive, w: p.w, h: p.h, pic: { width: p.width, height: p.height } };   // as the store holds it (eotbHolster.js createHolsterArt)
   }
   /** a PNG as color32 (row 0 the bottom), mirrored by its columns when asked */
   async function color32(url, mirror) {
@@ -153,7 +155,68 @@ const shots = await page.evaluate(async ({ pics, W, H }) => {
       }
     }
   }
-  return out;
+  // BACK-HOLSTER GLOW: the weapon's glow on its back (the claymore) and round the whole sprite, in the real primitive
+  const [wg] = await Promise.all([import('/src/systems/weaponGlow.js')]);
+  const LOOKS = { shock: wg.glowSpec('shock', 3), brand: wg.glowSpec('brand', 2) };
+  const glowOut = [];
+  for (const [bodyName, body] of Object.entries(BODIES)) {
+    for (let o = 0; o < 8; o++) {
+      const rec = body.base + bb.RECORD_OFFSETS[o], mirror = bb.MIRRORED[o], key = `${bodyName}-${rec}${mirror ? 'm' : ''}`;
+      const pic = await color32(body.url(rec), mirror);
+      r.uploadTexture('probe-body', key, pic);
+      const xml = sp.spriteOffset(body.archive, rec), size = sp.spriteSize(pic.width, pic.height, {}, xml.scale), art = sp.spriteArtScale(body.archive, rec);
+      const a = o * Math.PI / 4 + 0.05, eye = [3.6 * Math.sin(a), 1.4, 3.6 * Math.cos(a)];
+      const yaw = Math.atan2(-eye[0], -eye[2]), right = [Math.cos(yaw), 0, -Math.sin(yaw)];
+      const proj = m4.mirrorProjectionX(m4.perspective(50 * Math.PI / 180, W / H, 0.1, 50)), view = m4.lookAt(eye, [0, 0.95, 0], [0, 1, 0]);
+      const x = (xml.x / xml.scale) * (mirror ? -1 : 1), base = xml.y / xml.scale;
+      const fig = { base, mpp: size.h / pic.height, marks: ap.spriteMarks(new Uint32Array(pic.colors.buffer), pic.width, pic.height, { arms: o % 4 !== 2, art }), shift: x };
+      const origin = [right[0] * x, base, right[2] * x];
+      const frame = ({ back = false, look = null, hand = null, cape = false } = {}) => {
+        r.beginFrame(proj, view, new Float32Array([0.3, -0.9, 0.2]));
+        const bodyBatch = r.createBillboardBatch('probe-body', key, size, [[0, 0, 0]]);
+        bodyBatch.origin = origin.slice();
+        r.drawBillboards([bodyBatch], right, [0, 1, 0]);
+        let l = null;
+        if (back) { l = Hs.hangSpriteHolster(Hs.createSpriteHolster(), fig, o, [0, 0, 0], eye, right, arts.claymore); Hs.mintSpriteHolster(l, r); r.drawBillboards(l.list, l.right, l.up); }
+        if (cape) {
+          const w = { at: [0, 0, 0], seed: 0.37, kindle: 1, aura: 'shadowcloak', torn: -1, yaw: 0 };
+          ar.auraCapeStep(w, { feet: [0, 0, 0], yaw: bb.portrayedYaw(o, [eye[0], 0, eye[2]]), bones: ar.auraSpriteBones(fig) });
+          ar.auraMotionStep(w, 1); w.across = ar.auraSpriteAcross(fig);
+          ar.auraShiftAcross([w], right, 1); auras.draw([w], proj, view, new Float32Array(eye), 1, null); ar.auraShiftAcross([w], right, -1);
+          r.markForeignPass();
+          if (l) Hs.redrawHolstersOver(r, [l]);
+        }
+        // the aura host's last: the glows (eotbGlow.js drawSpriteGlows' one call a glow)
+        if (look && l) r.drawBillboardGlow(`${l.archive}_${l.mirror ? 1 : 0}`, LOOKS[look], { origin: l.origin, right: l.right, up: l.up, w: l.w, h: l.h, art: [l.cellW, l.cellH] });
+        if (hand) r.drawBillboardGlow(`probe-body_${key}`, LOOKS[hand], { origin, right, up: [0, 1, 0], w: size.w, h: size.h, art: [pic.width / art, pic.height / art] });
+        const px = new Uint8Array(cv.width * cv.height * 4);
+        gl.readPixels(0, 0, cv.width, cv.height, gl.RGBA, gl.UNSIGNED_BYTE, px);
+        r.destroyBillboardBatch(bodyBatch);
+        if (l) Hs.dropSpriteHolster(l, r);
+        return px;
+      };
+      const plain = frame(), worn = frame({ back: true }), shock = frame({ back: true, look: 'shock' });
+      await new Promise((res) => setTimeout(res, 260));   // the clock moves on: shock steps twelve times a second
+      const shock2 = frame({ back: true, look: 'shock' }), brand = frame({ back: true, look: 'brand' });
+      const caped = frame({ back: true, cape: true }), capedGlow = frame({ back: true, cape: true, look: 'shock' });
+      const handGlow = frame({ hand: 'shock' });
+      const same = (p, q, i) => p[i * 4] === q[i * 4] && p[i * 4 + 1] === q[i * 4 + 1] && p[i * 4 + 2] === q[i * 4 + 2];
+      const bg = [plain[0], plain[1], plain[2]];
+      const isBg = (p, i) => p[i * 4] === bg[0] && p[i * 4 + 1] === bg[1] && p[i * 4 + 2] === bg[2];
+      const n = cv.width * cv.height;
+      let glow = 0, glowOnBodyHidden = 0, moved = 0, brandN = 0, overCape = 0, handBand = 0, handOnBody = 0;
+      for (let i = 0; i < n; i++) {
+        const weapon = !same(worn, plain, i), bodyPx = !isBg(plain, i);
+        if (!same(shock, worn, i)) { glow++; if (bodyPx && !weapon) glowOnBodyHidden++; }
+        if (!same(shock, shock2, i)) moved++;
+        if (!same(brand, worn, i)) brandN++;
+        if (!same(capedGlow, caped, i)) overCape++;
+        if (!same(handGlow, plain, i)) { if (bodyPx) handOnBody++; else handBand++; }
+      }
+      glowOut.push({ body: bodyName, o, w: cv.width, h: cv.height, glow, glowOnBodyHidden, moved, brandN, overCape, handBand, handOnBody, shot: toB64(shock), hand: toB64(handGlow), cape: toB64(capedGlow) });
+    }
+  }
+  return { out, glowOut };
 }, { pics, W, H });
 await browser.close();
 await server.close();
@@ -208,6 +271,32 @@ if (SHOTS) {
   });
   writeFileSync(join(SHOTS, 'back-holster.png'), PNG.sync.write(sheet));
   console.log(`sheet: ${join(SHOTS, 'back-holster.png')} (rows: ${shots.filter((s) => s.o === 0).map((s) => `${s.body} ${s.weapon}`).join(', ')}; views 0-7 across)`);
+}
+// BACK-HOLSTER GLOW
+for (const body of ['skin', 'layered']) {
+  const v = glowOut.filter((g) => g.body === body);
+  const list = (k) => v.map((g) => g[k]).join(',');
+  check(`${body}: the shock glows round the weapon on the back from behind and its diagonals`, [3, 4, 5].every((o) => v[o].glow > 150), `glow px ${list('glow')}`);
+  check(`${body}: from the front its glow hides with the weapon - not one glowing pixel over the body where the weapon is hidden`, [0, 1, 7].every((o) => v[o].glowOnBodyHidden === 0) && v[0].glow < v[4].glow * 0.6, `over the body ${list('glowOnBodyHidden')}`);
+  check(`${body}: the glow lives - the shock's pixels change as its clock runs`, [3, 4, 5].every((o) => v[o].moved > 20), `changed ${list('moved')}`);
+  check(`${body}: the Aura Armory's Brand glows on the back too`, [3, 4, 5].every((o) => v[o].brandN > 100), `brand px ${list('brandN')}`);
+  check(`${body}: over the Shadow Cloak, drawn after it`, [3, 4, 5].every((o) => v[o].overCape > 150), `over the cape ${list('overCape')}`);
+  check(`${body}: drawn, the glow stands round the whole sprite from every side`, v.every((g) => g.handBand > 150), `band ${list('handBand')}; rim ${list('handOnBody')}`);
+}
+if (SHOTS) {
+  const cw = 150, ch = 230, rows = 6;
+  const sheet = new PNG({ width: cw * 8, height: ch * rows });
+  const lay = (row, g, b64) => {
+    const px = Buffer.from(b64, 'base64'), x0 = Math.floor((g.w - cw) / 2), y0 = Math.floor((g.h - ch) / 2);
+    for (let y = 0; y < ch; y++) for (let x = 0; x < cw; x++) {
+      const si = ((g.h - 1 - (y0 + y)) * g.w + x0 + x) * 4, di = ((row * ch + y) * sheet.width + g.o * cw + x) * 4;
+      for (let k = 0; k < 3; k++) sheet.data[di + k] = px[si + k];
+      sheet.data[di + 3] = 255;
+    }
+  };
+  for (const g of glowOut) { const b = g.body === 'skin' ? 0 : 3; lay(b, g, g.shot); lay(b + 1, g, g.cape); lay(b + 2, g, g.hand); }
+  writeFileSync(join(SHOTS, 'back-holster-glow.png'), PNG.sync.write(sheet));
+  console.log(`glow sheet: ${join(SHOTS, 'back-holster-glow.png')} (rows: skin shock on the back, under the cape, drawn; layered the same; views 0-7 across)`);
 }
 const failed = results.filter((ok) => !ok).length;
 console.log(`${results.length - failed}/${results.length} ok`);

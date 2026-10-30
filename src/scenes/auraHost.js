@@ -20,6 +20,7 @@ import { ownAura, ownArmory } from '../systems/ownGlyphs.js';
 import { getPref } from '../systems/uiPrefs.js';
 import { redrawHolstersOver } from '../player/eyeOfTheBeholder/eotbHolster.js';   // BACK-HOLSTER: a weapon on a sprite's back over its cape
 import { eotbBody } from '../player/eyeOfTheBeholder/eotbBody.js';
+import { drawSpriteGlows } from '../player/eyeOfTheBeholder/eotbGlow.js';   // BACK-HOLSTER GLOW: the sprites' weapon glows, over the capes
 
 /** ARMORY: the "Others' armory" choice (systems/features.js 'armory-others') - every peer's pieces, those within this many
  *  metres, or none. One's own always draws. */
@@ -218,6 +219,9 @@ export function createAuraHost(deps) {
         if (pass?.drawn) { renderer.markForeignPass(); redrawHolstersOver(renderer, eotbBody.holstersDrawn(), deps.walkers()?.holstersDrawn?.()); }   // BACK-HOLSTER: the weapons on the backs over the capes
       }
       drawArmory(armoryOver, proj, view, eye, now);
+      // BACK-HOLSTER GLOW: last of all, every frame, capes or none - a sprite's weapon glow on its back and in its hand,
+      // mine and the walkers', over the cape it wears
+      if (proj && view) drawSpriteGlows(renderer, eotbBody.glowsDrawn(), deps.walkers()?.glowsDrawn?.());
     },
     /** SERAPH-WINGS: the gold of the nearest wings, for every host's light list. */
     wingLights: (/** @type {number[]} */ eye) => auraWingLights(auraList, eye, auraLights),

@@ -112,6 +112,9 @@ export const GLOW_SPRITE_WINDOW = Object.freeze(Object.fromEntries(['fire', 'fro
  *  weapon's sheet is seven records of a few frames each, so two weapons' worth and the Thunderlock's; the least
  *  recently drawn goes first. */
 export const GLOW_FIELDS_MAX = 128;
+/** BACK-HOLSTER GLOW: the most WORLD pictures' fields kept (renderer.js drawBillboardGlow) - a list of their own, so a
+ *  crowd of sprites never pushes the first-person sheet's fields out; a sprite's walk is eight views of a few frames. */
+export const GLOW_WORLD_FIELDS_MAX = 256;
 
 /** The shared half: hash, periodic value noise, and the four looks' reach, shade, rim and charge. `c` is a place in
  *  glow cells with y UP; `uRamp` the look's four stops, dark to hot. */
@@ -246,6 +249,34 @@ void main() {
   gl_Position = vec4(px.x / uCanvas.x * 2.0 - 1.0, 1.0 - px.y / uCanvas.y * 2.0, 0.0, 1.0);
 }`;
 
+/** BACK-HOLSTER GLOW: THE WORLD PICTURE'S QUAD - a billboard standing in the world (an Eye of the Beholder sprite, a
+ *  weapon on its back): its foot's middle `uOrigin`, its `uRight` and `uUp`, its `uSize` (m), grown by `uPad` cells a
+ *  side (left, top, right, bottom). `vQ` runs top-down as the classic quad's does (the field's rows), past 0..1 into the
+ *  pad; `uPull` a hair toward the eye, so the rim on the picture's own pixels is never lost to the card's depth. */
+export const GLOW_WORLD_VS = `#version 300 es
+layout(location=0) in vec2 aPos;
+uniform mat4 uVP;
+uniform vec3 uOrigin;
+uniform vec3 uRight;
+uniform vec3 uUp;
+uniform vec2 uSize;
+uniform vec4 uPad;
+uniform ivec2 uArt;
+uniform float uPull;
+out vec2 vQ;
+// a place on the picture (q: 0..1 across, 0..1 down from its top) in the world, on the billboard's own basis
+vec3 gwWorld(vec2 q) {
+  return uOrigin + uRight * ((q.x - 0.5) * uSize.x) + uUp * ((1.0 - q.y) * uSize.y);
+}
+void main() {
+  vec2 p = aPos * 0.5 + 0.5;
+  vec2 art = vec2(uArt);
+  vec2 q = mix(-uPad.xy / art, 1.0 + uPad.zw / art, vec2(p.x, 1.0 - p.y));
+  vQ = q;
+  gl_Position = uVP * vec4(gwWorld(q), 1.0);
+  gl_Position.z += uPull * gl_Position.w;
+}`;
+
 /** The field's bake covers its whole target - the screen quad's corners, as they are. */
 export const GLOW_FIELD_VS = `#version 300 es
 layout(location=0) in vec2 aPos;
@@ -271,6 +302,7 @@ uniform ivec3 uWin;
 uniform ivec3 uCut;
 uniform int uLook;
 uniform float uDmax;
+uniform int uFlipY;   // BACK-HOLSTER GLOW: a world picture's rows run bottom-up (color32) - its row 0 is the frame's foot
 out vec4 outColor;
 ${GLOW_LOOK_GLSL}
 bool gwCell(ivec2 a) {
@@ -278,6 +310,7 @@ bool gwCell(ivec2 a) {
   if (uCut.y == 1 && a.x >= uArt.x) a.x = uArt.x - 1;
   if (uCut.z == 1 && a.y >= uArt.y) a.y = uArt.y - 1;
   if (a.x < 0 || a.y < 0 || a.x >= uArt.x || a.y >= uArt.y) return false;
+  if (uFlipY == 1) a.y = uArt.y - 1 - a.y;
   vec2 k = vec2(textureSize(uTex, 0)) / vec2(uArt);
   return texelFetch(uTex, ivec2((vec2(a) + 0.5) * k), 0).a >= 0.5;
 }
@@ -320,6 +353,7 @@ uniform float uLevel;
 uniform float uTime;
 uniform float uDmax;
 uniform float uReachMax;
+uniform int uFlipY;   // BACK-HOLSTER GLOW: the world picture's bottom-up rows, its cells counted from its top as the field's are
 out vec4 outColor;
 ${GLOW_LOOK_GLSL}
 void main() {
@@ -328,6 +362,7 @@ void main() {
   ivec2 tc = ivec2(floor(uv * vec2(ts)));
   bool solid = tc.x >= 0 && tc.y >= 0 && tc.x < ts.x && tc.y < ts.y && texelFetch(uTex, tc, 0).a >= 0.5;
   ivec2 a = ivec2(floor(uv * vec2(uArt)));
+  if (uFlipY == 1) a.y = uArt.y - 1 - a.y;
   vec4 f = texelFetch(uField, clamp(a + uFieldAt, ivec2(0), textureSize(uField, 0) - 1), 0);
   vec2 c = vec2(float(a.x), -float(a.y));
   float t = uTime;

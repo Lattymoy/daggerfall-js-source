@@ -1601,7 +1601,7 @@ import { ecotoneGlsl, ECO_UNITS } from './ecotoneGlsl.js';   // ECOTONE1: the gr
 import { snowCoverGlsl, TWIN_LAYERS, SNOW_LINES_UNIT, SNOW_TILE_M } from './snowCoverGlsl.js';   // PRECIP4: the snow the ground keeps - the chunk, a twin set's summer half, the frame's lines' unit
 import { snowCapGlsl } from './snowCapGlsl.js';   // PEAKS1: a steep face over the cap's line is bare rock
 import { SNOW_VS, snowTerrainFs, SNOW_UNITS, SNOW_LAYER, snowSurfaceRise } from './snowfallGlsl.js';   // SNOWFALL1: the mod's snow surface, lit as the ground is
-import { GLOW_SPRITE_VS, GLOW_SPRITE_FS, GLOW_FIELD_VS, GLOW_FIELD_FS, GLOW_FIELDS_MAX, GLOW_REACH_MAX, glowFieldReach, GLOW_MESH_FS, GLOW_CLOCK_PERIOD, GLOW_CHARGE_PULL, GLOW_DRAWS_MAX, GLOW_DEPTH_FLOOR, glowUnit, glowMeshVs, glowRingDraws } from './weaponGlowGlsl.js';   // WEAPON-GLOW1: a weapon's element, drawn
+import { GLOW_SPRITE_VS, GLOW_SPRITE_FS, GLOW_FIELD_VS, GLOW_FIELD_FS, GLOW_FIELDS_MAX, GLOW_REACH_MAX, glowFieldReach, GLOW_MESH_FS, GLOW_CLOCK_PERIOD, GLOW_CHARGE_PULL, GLOW_DRAWS_MAX, GLOW_DEPTH_FLOOR, glowUnit, glowMeshVs, glowRingDraws, GLOW_WORLD_VS, GLOW_WORLD_FIELDS_MAX } from './weaponGlowGlsl.js';   // WEAPON-GLOW1: a weapon's element, drawn
 const SNOW_UNIT_LIST = Object.entries(SNOW_UNITS);   // AUDIT ENVIRONS P1: the five pictures' units, listed once
 
 /** WEAPON-GLOW1: the glow's seconds, wrapped where every rate in it is whole (render/weaponGlowGlsl.js). A wall clock,
@@ -1900,6 +1900,7 @@ export class Renderer {
     this._bbPlanes = new Float32Array(24);
     this._reachSphere = new Float64Array(4);   // AUDIT 68 S16-batch-sphere-dup: shadowReachBatch's scratch
     this._bbPv = new Float32Array(16);
+    this._glowVp = new Float32Array(16);   // BACK-HOLSTER GLOW: proj * view, for a world picture's glow (drawBillboardGlow)
     this._bbCullOff = cullDisabled();   // the ?cull=off door, read once
     this._tFrameStamp = -1;
     // LA-COST1 (2026-09-27): the stamp each of the other three programs' frame blocks last went up under (drawBillboards,
@@ -3521,7 +3522,7 @@ export class Renderer {
       { start: () => this._startFoeTelegraph(), run: () => { this._loadFoeTelegraph(); }, need: () => !this._foeTelegraph },
       { start: () => startPrograms(this.gl, [[VIEW_BG_VS, VIEW_BG_FS]]), run: () => { this._rwBg ??= this._rwBgProgram(); }, need: () => !this._rwBg },
       { start: () => startPrograms(this.gl, [[glowMeshVs(CHAR_SKIN_VS), GLOW_MESH_FS]]), run: () => this._ensureWeaponGlowMeshProgram(), need: () => !this.weaponGlowMeshProgram },   // AUDIT WEAPON-GLOW MW-6: the glow's two, before the first glowing weapon
-      { start: () => startPrograms(this.gl, [[GLOW_SPRITE_VS, GLOW_SPRITE_FS], [GLOW_FIELD_VS, GLOW_FIELD_FS]]), run: () => this._ensureWeaponGlowQuadProgram(), need: () => !this.weaponGlowQuadProgram },
+      { start: () => startPrograms(this.gl, [[GLOW_SPRITE_VS, GLOW_SPRITE_FS], [GLOW_FIELD_VS, GLOW_FIELD_FS], [GLOW_WORLD_VS, GLOW_SPRITE_FS]]), run: () => this._ensureWeaponGlowQuadProgram(), need: () => !this.weaponGlowQuadProgram },   // BACK-HOLSTER GLOW: and the world picture's
     ];
   }
 
@@ -5156,15 +5157,18 @@ void main() {
    *  off, as its quad needs them), into its own small target, and hands back the target and viewport a sprite pass
    *  hands back (renderCharacterSprite: the frame's, or the canvas, and the world's rect), a UI scissor lifted for it and
    *  put back, the blend off. */
-  _glowField(tex, glow, aw, ah, cutL, cutR) {
+  _glowField(tex, glow, aw, ah, cutL, cutR, world = false) {
     const gl = this.gl;
     let byTex = this._glowFields.get(tex);
     if (!byTex) { byTex = new Map(); this._glowFields.set(tex, byTex); }
-    const key = glow.code + 8 * ((cutL ? 1 : 0) + (cutR ? 2 : 0)) + 32 * (aw * 4096 + ah);
+    const flat = glow.code + 8 * ((cutL ? 1 : 0) + (cutR ? 2 : 0)) + 32 * (aw * 4096 + ah);
+    const key = world ? -1 - flat : flat;   // BACK-HOLSTER GLOW: a world picture's its own
     const hit = byTex.get(key);
     if (hit) { hit.used = ++this._glowFieldClock; return hit.tex; }
     const [wx, up, down] = glow.win;
-    const fw = aw + 2 * wx, fh = ah + down;   // no pad below: the bottom is always a cut
+    // no pad below a first-person frame: its bottom is always a cut. BACK-HOLSTER GLOW: a world picture stands whole -
+    // a cell under its foot looks up for it as one over its head looks down
+    const fw = aw + 2 * wx, fh = ah + down + (world ? up : 0);
     const ftex = gl.createTexture();
     this._activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, ftex);
@@ -5185,9 +5189,10 @@ void main() {
       this._use(this.weaponGlowFieldProgram);
       const u = this._wgf;
       gl.uniform2i(u.art, aw, ah);
-      gl.uniform4i(u.fieldPad, wx, down, wx, 0);
+      gl.uniform4i(u.fieldPad, wx, down, wx, world ? up : 0);
       gl.uniform3i(u.win, wx, up, down);
-      gl.uniform3i(u.cut, cutL ? 1 : 0, cutR ? 1 : 0, 1);
+      gl.uniform3i(u.cut, cutL ? 1 : 0, cutR ? 1 : 0, world ? 0 : 1);
+      gl.uniform1i(u.flipY, world ? 1 : 0);   // BACK-HOLSTER GLOW: a world picture's rows run bottom-up
       gl.uniform1i(u.look, glow.code);
       gl.uniform1f(u.dmax, glowFieldReach(glow.look));
       this._bindTex0(tex);
@@ -5200,9 +5205,9 @@ void main() {
     }
     const entry = { tex: ftex, used: ++this._glowFieldClock, byTex, key };
     byTex.set(key, entry);
-    const list = this._glowFieldList;
+    const list = world ? this._glowWorldFieldList : this._glowFieldList;   // BACK-HOLSTER GLOW: a crowd's never the sheet's
     list.push(entry);
-    if (list.length > GLOW_FIELDS_MAX) {
+    if (list.length > (world ? GLOW_WORLD_FIELDS_MAX : GLOW_FIELDS_MAX)) {
       let old = 0;
       for (let i = 1; i < list.length; i++) if (list[i].used < list[old].used) old = i;
       const gone = list.splice(old, 1)[0];
@@ -5229,10 +5234,26 @@ void main() {
     gl.uniform1i(at('uField'), 1);
     const f = this._buildProgram(GLOW_FIELD_VS, GLOW_FIELD_FS);
     const fat = (n) => gl.getUniformLocation(f, n);
-    this._wgf = { art: fat('uArt'), fieldPad: fat('uFieldPad'), win: fat('uWin'), cut: fat('uCut'), look: fat('uLook'), dmax: fat('uDmax') };
+    this._wgf = { art: fat('uArt'), fieldPad: fat('uFieldPad'), win: fat('uWin'), cut: fat('uCut'), look: fat('uLook'), dmax: fat('uDmax'), flipY: fat('uFlipY') };
     this._use(f);
     gl.uniform1i(fat('uTex'), 0);
     this.weaponGlowFieldProgram = f;
+    // BACK-HOLSTER GLOW: the world picture's outline - the classic outline's fragment half on a billboard's quad
+    const w = this._buildProgram(GLOW_WORLD_VS, GLOW_SPRITE_FS);
+    const wat = (n) => gl.getUniformLocation(w, n);
+    this._wgw = {
+      vp: wat('uVP'), origin: wat('uOrigin'), right: wat('uRight'), up: wat('uUp'), size: wat('uSize'), pad: wat('uPad'), art: wat('uArt'),
+      pull: wat('uPull'), src: wat('uSrc'), fieldAt: wat('uFieldAt'), look: wat('uLook'), level: wat('uLevel'), time: wat('uTime'),
+      ramp: wat('uRamp'), dmax: wat('uDmax'), reachMax: wat('uReachMax'),
+    };
+    this._use(w);
+    gl.uniform1i(wat('uTex'), 0);
+    gl.uniform1i(wat('uField'), 1);
+    gl.uniform1i(wat('uFlipY'), 1);
+    gl.uniform4f(wat('uSrc'), 0, 1, 1, 0);   // its rows bottom-up, read from the top as the field is
+    gl.uniform1f(wat('uPull'), GLOW_CHARGE_PULL);
+    this.weaponGlowWorldProgram = w;
+    this._glowWorldFieldList = [];
     this._glowFields = new WeakMap();   // the frame's texture -> its fields, by look, cut and size
     this._glowFieldList = [];
     this._glowFieldClock = 0;
@@ -8666,6 +8687,62 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     const held = this._heldFlats;
     if (held.length) this.drawBillboards(held, camRight, camUp);
     held.length = 0;
+  }
+
+  /**
+   * BACK-HOLSTER GLOW (bible/05-Combat/Weapon-Glow.md, THE WORLD PICTURE): a weapon's glow round a picture standing in
+   * the world - an Eye of the Beholder sprite, a weapon on its back. `key` its texture (`archive_record`), `glow`
+   * systems/weaponGlow.js's spec, `q` its quad as the billboard stands: `origin` its foot's middle, `right`, `up`, `w`
+   * and `h` (m), and `art` its cells (the picture's own pixels). Its field is _glowField's world arm. Depth tested,
+   * written nowhere, a hair toward the eye; premultiplied; culling off for its quad. Answers whether it drew.
+   */
+  drawBillboardGlow(key, glow, q) {
+    const tex = this.textures.get(key);
+    if (!tex || !glow?.ramp || !(glow.code > 0) || !glow.win || !this._proj || !this._view || !q) return false;
+    if (!(q.art?.[0] >= 1) || !(q.art?.[1] >= 1) || !(q.w > 0) || !(q.h > 0)) return false;   // no picture's cells: never a smear the size of its pad
+    this._close2D();
+    const gl = this.gl;
+    this._ensureScreenQuadProgram();   // its VAO is the quad this draws
+    this._ensureWeaponGlowQuadProgram();
+    const aw = Math.max(1, Math.round(q.art[0])), ah = Math.max(1, Math.round(q.art[1]));
+    const [wx, up, down] = glow.win;
+    gl.disable(gl.CULL_FACE);
+    this._bindVao(this._screenQuadVao);
+    try {
+      const field = this._glowField(tex, glow, aw, ah, false, false, true);
+      this._use(this.weaponGlowWorldProgram);
+      const u = this._wgw;
+      gl.uniformMatrix4fv(u.vp, false, mat4Multiply(this._proj, this._view, this._glowVp));
+      gl.uniform3f(u.origin, q.origin[0], q.origin[1], q.origin[2]);
+      gl.uniform3f(u.right, q.right[0], q.right[1], q.right[2]);
+      gl.uniform3f(u.up, q.up[0], q.up[1], q.up[2]);
+      gl.uniform2f(u.size, q.w, q.h);
+      gl.uniform4f(u.pad, wx, down, wx, up);
+      gl.uniform2i(u.art, aw, ah);
+      gl.uniform2i(u.fieldAt, wx, down);
+      gl.uniform1i(u.look, glow.code);
+      gl.uniform1f(u.level, glow.level);
+      gl.uniform1f(u.time, glowSeconds());
+      gl.uniform1f(u.dmax, glowFieldReach(glow.look));
+      gl.uniform1f(u.reachMax, GLOW_REACH_MAX[glow.look]);
+      gl.uniform3fv(u.ramp, glow.ramp);
+      this._bindEmission(field);   // unit 1, the field; unit 0 left active
+      this._bindTex0(tex);
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+      gl.depthMask(false);
+      gl.depthFunc(gl.LEQUAL);
+      gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 0);
+      this.stats.draws++;
+    } finally {
+      gl.depthFunc(gl.LESS);
+      gl.depthMask(true);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+      gl.disable(gl.BLEND);
+      gl.enable(gl.CULL_FACE);
+      this._bindVao(null);
+    }
+    return true;
   }
 
   drawBillboards(batches, camRight, camUp) {

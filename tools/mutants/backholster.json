@@ -128,8 +128,8 @@
   {
     "name": "BACK-HOLSTER-on-the-back-while-drawn",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "!last.transformed && last.sheathed ? holsterItem()",
-    "new": "!last.transformed ? holsterItem()",
+    "old": "!last.transformed && last.sheathed ? handItemNow()",
+    "new": "!last.transformed ? handItemNow()",
     "tests": [
       "test/player/eyeOfTheBeholder/backholster.test.js"
     ]
