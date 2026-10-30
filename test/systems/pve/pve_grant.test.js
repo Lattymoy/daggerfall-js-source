@@ -56,7 +56,7 @@ test('STAGE 7: a grant\'s members are its seed\'s templates - the same on every 
 
 test('STAGE 7: a template stands at its own numbers, never the owner\'s level', () => {
   const f = templateFoe('orc-grunt');
-  assert.deepEqual({ ...f }, { key: 'orc-grunt', mobile: 7, ...templateStats(TEMPLATE_BY_KEY.get('orc-grunt')) });
+  assert.deepEqual({ ...f }, { key: 'orc-grunt', name: 'Orc Grunt', mobile: 7, ...templateStats(TEMPLATE_BY_KEY.get('orc-grunt')) });
   assert.equal(templateFoe(null), null);
   assert.equal(templateFoe('nobody'), null);
 });
@@ -94,7 +94,7 @@ test('STAGE 7: the grant host stands templates only when handed a table - and th
 test('STAGE 8: a template foe stands at its own level, health and blow - and lands its blow in range, under its elite\'s scale', () => {
   const foe = templateFoe('orc-grunt');
   const e = standTemplate({ level: 3, maxHealth: 10, health: 10 }, foe);
-  assert.deepEqual([e.level, e.maxHealth, e.health, e.pveBlow, e.pveTemplate], [foe.level, foe.health, foe.health, [...foe.damage], 'orc-grunt']);
+  assert.deepEqual([e.name, e.level, e.maxHealth, e.health, e.pveBlow, e.pveTemplate], ['Orc Grunt', foe.level, foe.health, foe.health, [...foe.damage], 'orc-grunt']);
   assert.equal(standTemplate(null, foe), null);
   const plain = { level: 3 };
   assert.equal(standTemplate(plain, null), plain);

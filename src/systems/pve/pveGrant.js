@@ -59,7 +59,7 @@ export function templateFoe(key) {
   const t = key ? TEMPLATE_BY_KEY.get(key) : null;
   const body = t ? SPECIES_BY_KEY.get(t.species)?.body : undefined;
   if (!t || body == null) return null;
-  return Object.freeze({ key: t.key, mobile: body, ...templateStats(t) });
+  return Object.freeze({ key: t.key, name: t.name, mobile: body, ...templateStats(t) });
 }
 
 /** A reader's word on record `r` ({ t: mobile, l: level, gr: [g, i] }) under grant `gr` at `table`: 'dice' when its body
@@ -70,7 +70,7 @@ export function templateDiceRefusal(gr, r, table) {
   return r.t !== f.mobile || (Number.isInteger(r.l) && r.l !== f.level) ? 'dice' : null;
 }
 
-/** Stand `entity` as template `foe`: its own level and health, and every blow it lands in the template's range
+/** Stand `entity` as template `foe`: its own name, level and health, and every blow it lands in the template's range
  *  (combat/formulas.js reads `pveBlow`) - after which nothing of the player's moves it. @param {any} entity @param {ReturnType<typeof templateFoe>} foe */
 export function standTemplate(entity, foe) {
   if (!entity || !foe) return entity;
@@ -78,6 +78,7 @@ export function standTemplate(entity, foe) {
   entity.maxHealth = foe.health; entity.health = foe.health;
   entity.pveBlow = [foe.damage[0], foe.damage[1]];
   entity.pveTemplate = foe.key;
+  entity.name = foe.name;   // its own name over its body's, on the hover and the target bar
   return entity;
 }
 
