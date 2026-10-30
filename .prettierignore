@@ -22,6 +22,8 @@
 /src/net/delve/*/
 !/src/net/dragon/
 /src/net/dragon/*/
+!/src/net/duel/
+/src/net/duel/*/
 !/src/net/gambit/
 /src/net/gambit/*/
 !/src/net/safety/

@@ -27,7 +27,15 @@
 // Pure: no clock (every `now` an argument), no socket, no storage - the relay's room (server/src/index.js) keeps the
 // state in its memory (DECIDED: a room that restarts mid-bout - a deploy - ends it as a cancel, recording nothing).
 // ═════════════════════════════════════════════════════════════════════
-import { ROYAL_RING, SIEGE_UNITS_PER_M, SIEGE_HIT, newFighter, refereeBlow, refereeCast, refereeStep } from '../siege/siegeRef.js';
+import {
+  ROYAL_RING,
+  SIEGE_UNITS_PER_M,
+  SIEGE_HIT,
+  newFighter,
+  refereeBlow,
+  refereeCast,
+  refereeStep,
+} from '../siege/siegeRef.js';
 
 /** DUEL1's own numbers the ring does not carry (net/duel/duelSession.js DUEL_START_WAIT_MS, DUEL_OUT_MS - pinned equal: this
  *  leaf imports no client module). */
@@ -68,22 +76,46 @@ const poseOk = (p) => !!p && Number.isFinite(p.x) && Number.isFinite(p.z);
  * word: 'timeout' - the handshake was never seen, or has lapsed; 'busy'; 'range').
  */
 export function duelOpen(st, { a, b, s, c, n }, now) {
-  const ask = st.asks.get(noteKey(a?.sub, b?.sub)), yes = st.yes.get(noteKey(b?.sub, a?.sub));
-  if (!ask || !yes || ask.s !== s || yes.s !== s || now - ask.at > ROYAL_RING.askMs + DUEL_REF.startWaitMs || now - yes.at > DUEL_REF.startWaitMs) return { no: 'timeout' };
-  if (st.of.has(a.sub) || st.of.has(b.sub) || st.bouts.size >= DUEL_REF_BOUTS_MAX || st.bouts.has(s)) return { no: 'busy' };
-  if (!Array.isArray(c) || c.length !== 3 || !c.every(Number.isFinite) || !poseOk(a.pose) || !poseOk(b.pose)) return { no: 'range' };
+  const ask = st.asks.get(noteKey(a?.sub, b?.sub)),
+    yes = st.yes.get(noteKey(b?.sub, a?.sub));
+  if (
+    !ask ||
+    !yes ||
+    ask.s !== s ||
+    yes.s !== s ||
+    now - ask.at > ROYAL_RING.askMs + DUEL_REF.startWaitMs ||
+    now - yes.at > DUEL_REF.startWaitMs
+  )
+    return { no: 'timeout' };
+  if (st.of.has(a.sub) || st.of.has(b.sub) || st.bouts.size >= DUEL_REF_BOUTS_MAX || st.bouts.has(s))
+    return { no: 'busy' };
+  if (!Array.isArray(c) || c.length !== 3 || !c.every(Number.isFinite) || !poseOk(a.pose) || !poseOk(b.pose))
+    return { no: 'range' };
   if (fromCentre(a.pose, c) > ROYAL_RING.radiusM || fromCentre(b.pose, c) > ROYAL_RING.radiusM) return { no: 'range' };
-  st.asks.delete(noteKey(a.sub, b.sub)); st.yes.delete(noteKey(b.sub, a.sub));
-  const side = (x) => ({ sub: x.sub, id: x.id, f: newFighter(x.lv, now), pose: { ...x.pose }, poseAt: now, outAt: null, goneAt: null });
+  st.asks.delete(noteKey(a.sub, b.sub));
+  st.yes.delete(noteKey(b.sub, a.sub));
+  const side = (x) => ({
+    sub: x.sub,
+    id: x.id,
+    f: newFighter(x.lv, now),
+    pose: { ...x.pose },
+    poseAt: now,
+    outAt: null,
+    goneAt: null,
+  });
   const startMs = now + ROYAL_RING.countdownMs;
   const bout = { s, n, c: [c[0], c[1], c[2]], a: side(a), b: side(b), startMs, endMs: startMs + ROYAL_RING.boutMs };
   st.bouts.set(s, bout);
-  st.of.set(a.sub, s); st.of.set(b.sub, s);
+  st.of.set(a.sub, s);
+  st.of.set(b.sub, s);
   return { bout };
 }
 
 /** The bout `sub` fights, or null. */
-export const duelBoutOf = (st, sub) => { const s = st.of.get(sub); return s ? st.bouts.get(s) ?? null : null; };
+export const duelBoutOf = (st, sub) => {
+  const s = st.of.get(sub);
+  return s ? (st.bouts.get(s) ?? null) : null;
+};
 /** A bout's two sides as `[mine, theirs]` for `sub`, or null. */
 const sidesOf = (bout, sub) => (bout?.a.sub === sub ? [bout.a, bout.b] : bout?.b.sub === sub ? [bout.b, bout.a] : null);
 /** The fighters' vitality, as the referee's word says it: `[[id, hp, max], [id, hp, max]]`, the challenger first. */
@@ -99,14 +131,16 @@ export const duelVitals = (bout) => [bout.a, bout.b].map((x) => [x.id, Math.max(
  * @param {number} now
  */
 export function duelBlow(st, sub, to, { d = 0, r = SIEGE_HIT.Melee, held = null, wa = null, el = null } = {}, now) {
-  const bout = duelBoutOf(st, sub), sides = sidesOf(bout, sub);
+  const bout = duelBoutOf(st, sub),
+    sides = sidesOf(bout, sub);
   if (!bout || !sides) return { ok: false, dealt: 0, fell: false, bout: null, why: 'no-bout' };
   const [me, them] = sides;
   if (them.id !== to) return { ok: false, dealt: 0, fell: false, bout, why: 'not-opponent' };
   if (now < bout.startMs || now >= bout.endMs) return { ok: false, dealt: 0, fell: false, bout, why: 'not-live' };
-  const res = r === SIEGE_HIT.Spell
-    ? refereeCast(me.f, them.f, { from: me.pose, at: them.pose, d, el }, now)
-    : refereeBlow(me.f, them.f, { from: me.pose, at: them.pose, held, d, r, wa }, now);
+  const res =
+    r === SIEGE_HIT.Spell
+      ? refereeCast(me.f, them.f, { from: me.pose, at: them.pose, d, el }, now)
+      : refereeBlow(me.f, them.f, { from: me.pose, at: them.pose, held, d, r, wa }, now);
   return { ok: res.ok, dealt: res.dealt, fell: res.fell, bout, why: res.why };
 }
 
@@ -116,10 +150,15 @@ export function duelBlow(st, sub, to, { d = 0, r = SIEGE_HIT.Melee, held = null,
  * and its slack, the time it left is kept (duelStep ends the bout on it). Answers whether `sub` fights a bout.
  */
 export function duelPose(st, sub, p, now) {
-  const bout = duelBoutOf(st, sub), me = sidesOf(bout, sub)?.[0];
+  const bout = duelBoutOf(st, sub),
+    me = sidesOf(bout, sub)?.[0];
   if (!bout || !me || !poseOk(p)) return false;
-  if (refereeStep(me.pose, p, now - me.poseAt, me.f)) { me.pose = { x: p.x, y: Number.isFinite(p.y) ? p.y : 0, z: p.z }; me.poseAt = now; }
-  if (fromCentre(p, bout.c) > ROYAL_RING.radiusM + ROYAL_RING.outSlackM) me.outAt ??= now; else me.outAt = null;
+  if (refereeStep(me.pose, p, now - me.poseAt, me.f)) {
+    me.pose = { x: p.x, y: Number.isFinite(p.y) ? p.y : 0, z: p.z };
+    me.poseAt = now;
+  }
+  if (fromCentre(p, bout.c) > ROYAL_RING.radiusM + ROYAL_RING.outSlackM) me.outAt ??= now;
+  else me.outAt = null;
   return true;
 }
 
@@ -137,7 +176,8 @@ export function duelEnd(st, bout, winner, why) {
 /** A FIGHTER'S OWN WORD that it is out (a yield, gone indoors, fallen to something else, left): before the countdown has
  *  run, the bout called off; after it, the sender's loss ('yield' for a yield, else 'left'). Null when `sub` fights none. */
 export function duelForfeit(st, sub, why, now) {
-  const bout = duelBoutOf(st, sub), sides = sidesOf(bout, sub);
+  const bout = duelBoutOf(st, sub),
+    sides = sidesOf(bout, sub);
   if (!bout || !sides) return null;
   if (now < bout.startMs) return duelEnd(st, bout, null, 'cancelled');
   return duelEnd(st, bout, sides[1].sub, why === 'yield' ? 'yield' : 'left');
@@ -151,15 +191,27 @@ export function duelForfeit(st, sub, why, now) {
 export function duelStep(st, here, now) {
   const out = [];
   for (const bout of [...st.bouts.values()]) {
-    if (now >= bout.endMs) { out.push(duelEnd(st, bout, null, 'draw')); continue; }
-    for (const x of [bout.a, bout.b]) { if (here(x.sub)) x.goneAt = null; else x.goneAt ??= now; }
+    if (now >= bout.endMs) {
+      out.push(duelEnd(st, bout, null, 'draw'));
+      continue;
+    }
+    for (const x of [bout.a, bout.b]) {
+      if (here(x.sub)) x.goneAt = null;
+      else x.goneAt ??= now;
+    }
     const goneA = bout.a.goneAt != null && now - bout.a.goneAt >= ROYAL_RING.goneMs;
     const goneB = bout.b.goneAt != null && now - bout.b.goneAt >= ROYAL_RING.goneMs;
-    if (goneA || goneB) { out.push(duelEnd(st, bout, goneA && goneB ? null : goneA ? bout.b.sub : bout.a.sub, goneA && goneB ? 'draw' : 'left')); continue; }
+    if (goneA || goneB) {
+      out.push(
+        duelEnd(st, bout, goneA && goneB ? null : goneA ? bout.b.sub : bout.a.sub, goneA && goneB ? 'draw' : 'left'),
+      );
+      continue;
+    }
     if (now < bout.startMs) continue;
     const outA = bout.a.outAt != null && now - bout.a.outAt >= DUEL_REF.outMs;
     const outB = bout.b.outAt != null && now - bout.b.outAt >= DUEL_REF.outMs;
-    if (outA || outB) out.push(duelEnd(st, bout, outA && outB ? null : outA ? bout.b.sub : bout.a.sub, outA && outB ? 'draw' : 'left'));
+    if (outA || outB)
+      out.push(duelEnd(st, bout, outA && outB ? null : outA ? bout.b.sub : bout.a.sub, outA && outB ? 'draw' : 'left'));
   }
   return out;
 }

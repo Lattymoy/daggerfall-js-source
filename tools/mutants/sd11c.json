@@ -208,8 +208,8 @@
   {
     "name": "SD11c-L5F1-the-towns-dropped",
     "file": "src/net/duel/duelRecord.js",
-    "old": "        ...(Number.isSafeInteger(d?.raids?.defended) ? { raids: { defended: d.raids.defended } } : {}),\n",
-    "new": "",
+    "old": "            ...(Number.isSafeInteger(d?.raids?.defended) ? { raids: { defended: d.raids.defended } } : {}),\n            ...(Number.isSafeInteger(d?.serpents?.slain) ? { serpents: { slain: d.serpents.slain } } : {}),",
+    "new": "            ...(Number.isSafeInteger(d?.serpents?.slain) ? { serpents: { slain: d.serpents.slain } } : {}),",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]
@@ -217,8 +217,8 @@
   {
     "name": "SD11c-L5F1-the-serpents-dropped",
     "file": "src/net/duel/duelRecord.js",
-    "old": "        ...(Number.isSafeInteger(d?.serpents?.slain) ? { serpents: { slain: d.serpents.slain } } : {}),\n",
-    "new": "",
+    "old": "            ...(Number.isSafeInteger(d?.serpents?.slain) ? { serpents: { slain: d.serpents.slain } } : {}),\n            ...(Number.isSafeInteger(d?.dragons?.slain) ? { dragons: { slain: d.dragons.slain } } : {}), // AUDIT DRAGON",
+    "new": "            ...(Number.isSafeInteger(d?.dragons?.slain) ? { dragons: { slain: d.dragons.slain } } : {}), // AUDIT DRAGON",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]
@@ -226,8 +226,8 @@
   {
     "name": "SD11c-L5F1-the-Hours-dropped",
     "file": "src/net/duel/duelRecord.js",
-    "old": "        ...(Number.isSafeInteger(d?.sds?.broken) ? { sds: { broken: d.sds.broken } } : {}),\n",
-    "new": "",
+    "old": "            ...(Number.isSafeInteger(d?.sds?.broken) ? { sds: { broken: d.sds.broken } } : {}),\n          };",
+    "new": "          };",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]
@@ -235,8 +235,8 @@
   {
     "name": "SD11c-L5F1-a-malformed-count-kept",
     "file": "src/net/duel/duelRecord.js",
-    "old": "...(Number.isSafeInteger(d?.raids?.defended) ?",
-    "new": "...(d?.raids ?",
+    "old": "            ...(Number.isSafeInteger(d?.raids?.defended) ? { raids: { defended: d.raids.defended } } : {}),",
+    "new": "            ...(d?.raids ? { raids: { defended: d.raids.defended } } : {}),",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]
