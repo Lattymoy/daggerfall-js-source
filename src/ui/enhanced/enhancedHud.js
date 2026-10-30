@@ -63,6 +63,7 @@ import { stepGhost, chunkFrame, GHOST_HOLD } from '../barLoss.js';   // VB2 / FR
 import { mountHitNumbers, healNumberFor, showNumber } from '../hitNumbers.js';   // HN1; PARTY-BUFFS: the heal a frame shows
 import { maxRoundsRemaining } from '../hud/hudActiveSpells.js';
 import { hudHealth } from '../hud/hudVitals.js';   // DUEL-BAR: the health the bar reads, drawHud's or the entity's own
+import { clientMods } from '../../systems/clientMods.js';
 import { liveBundles, canEndBundle, endBundle, endedSpellText } from '../../systems/mysticism.js'; import { shownSpellName } from '../../systems/loot/loot.js';   // PX30: the ONE bundle walk the HUD already uses; BUFF-END: and which of them the player may end; L10N3e: a spell's name as the book shows it
 import { hudText } from '../../systems/notify.js';   // BUFF-END: the ended spell's one line
 import { cursorActive } from '../../player/pointerLock.js';   // BUFF-END: the freed mouse ends a spell
@@ -1272,7 +1273,7 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
     // than full, and a number that says otherwise is a bug wearing a
     // percent sign rather than something a player should have to read.
     const shown = now > 0 ? Math.max(1, Math.min(100, Math.round(pct))) : 0;
-    put(part.num, `${key}N`, `${shown}%`);
+    put(part.num, `${key}N`, key === 'health' ? clientMods.healthLabel(now, max, `${shown}%`) : `${shown}%`);
     // VB2: the lost chunk behind the fill, and the health frame's warning.
     lossTick(key, part, pct, dt, CHUNK_MIN_LOSS);
     const low = key === 'health' && now > 0 && pct <= LOW_HEALTH_PCT;

@@ -6,6 +6,8 @@ Read `01-Overview/Port-Doctrine.md` before touching anything.
 
 ## Process
 
+Local JavaScript extension proposal: [Client Mod API](01-Overview/Client-Mod-API.md).
+
 Doc edits are part of the change: every scripted bible edit must ASSERT
 the needle matched (a silent `.replace` no-op shipped a stale
 Rendering.md queue in the M6 audit and was only caught in the M7 audit).
