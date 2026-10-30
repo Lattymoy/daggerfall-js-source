@@ -22,6 +22,8 @@
 /src/systems/firstVisit/*/
 !/src/systems/grammar/
 /src/systems/grammar/*/
+!/src/systems/hunt/
+/src/systems/hunt/*/
 !/src/systems/snowfall/
 /src/systems/snowfall/*/
 !/src/ui/

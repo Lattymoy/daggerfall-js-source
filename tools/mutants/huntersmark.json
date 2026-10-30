@@ -427,8 +427,8 @@
   {
     "name": "HUNTERS-MARK-trophy-name-index",
     "file": "src/systems/hunt/trophies.js",
-    "old": "variant: named ? /** @type {number} */ (nameIndex) + 1 : 0,",
-    "new": "variant: named ? /** @type {number} */ (nameIndex) : 0,",
+    "old": "      variant: named ? /** @type {number} */ (nameIndex) + 1 : 0,",
+    "new": "      variant: named ? /** @type {number} */ (nameIndex) : 0,",
     "tests": [
       "test/systems/huntersmark_trophies.test.js",
       "test/scenes/huntersmark_client.test.js"
@@ -437,8 +437,8 @@
   {
     "name": "HUNTERS-MARK-trophy-no-kin",
     "file": "src/systems/hunt/trophies.js",
-    "old": "const kin = hideOfFoe(foe)?.foes?.find(",
-    "new": "const kin = [].find(",
+    "old": "  const kin = hideOfFoe(foe)?.foes?.find((f) =>\n    Number.isSafeInteger(/** @type {any} */ (ENEMY_BASICS)[f]?.maleTexture),\n  );",
+    "new": "  const kin = [].find((f) => Number.isSafeInteger(/** @type {any} */ (ENEMY_BASICS)[f]?.maleTexture));",
     "tests": [
       "test/systems/huntersmark_trophies.test.js"
     ]
@@ -446,8 +446,8 @@
   {
     "name": "HUNTERS-MARK-trophy-mods-listed",
     "file": "src/systems/hunt/trophies.js",
-    "old": "filter((f) => /** @type {any} */ (ENEMY_BASICS)[f] && trophyArchiveOf(f) != null)",
-    "new": "filter((f) => trophyArchiveOf(f) != null)",
+    "old": "  ].filter((f) => /** @type {any} */ (ENEMY_BASICS)[f] && trophyArchiveOf(f) != null),",
+    "new": "  ].filter((f) => trophyArchiveOf(f) != null),",
     "tests": [
       "test/systems/huntersmark_trophies.test.js"
     ]
@@ -572,8 +572,8 @@
   {
     "name": "HUNTERS-MARK-gathered-first-day-lost",
     "file": "src/systems/hunt/gatheredLog.js",
-    "old": "{ n: row.n + 1, day: row.day }",
-    "new": "{ n: row.n + 1, day: d }",
+    "old": "  log[kind][String(key)] = row ? { n: row.n + 1, day: row.day } : { n: 1, day: d };",
+    "new": "  log[kind][String(key)] = row ? { n: row.n + 1, day: d } : { n: 1, day: d };",
     "tests": [
       "test/systems/huntersmark_trophies.test.js"
     ]
@@ -581,8 +581,8 @@
   {
     "name": "HUNTERS-MARK-gathered-bad-row-kept",
     "file": "src/systems/hunt/gatheredLog.js",
-    "old": "if (!/^\\d{1,5}$/.test(k) || !Number.isSafeInteger(v?.n) || v.n < 1 ||",
-    "new": "if (!Number.isSafeInteger(v?.n) ||",
+    "old": "      if (!/^\\d{1,5}$/.test(k) || !Number.isSafeInteger(v?.n) || v.n < 1 || !Number.isSafeInteger(v?.day) || v.day < 0)\n        continue;",
+    "new": "      if (!Number.isSafeInteger(v?.n) || !Number.isSafeInteger(v?.day) || v.day < 0) continue;",
     "tests": [
       "test/systems/huntersmark_trophies.test.js"
     ]

@@ -22,14 +22,22 @@ export const TROPHY_GROUP = 'UselessItems2';
 export function trophyArchiveOf(/** @type {number} */ foe) {
   const own = Number(/** @type {any} */ (ENEMY_BASICS)[foe]?.maleTexture);
   if (Number.isSafeInteger(own) && own > 0) return own;
-  const kin = hideOfFoe(foe)?.foes?.find((f) => Number.isSafeInteger(/** @type {any} */ (ENEMY_BASICS)[f]?.maleTexture));
+  const kin = hideOfFoe(foe)?.foes?.find((f) =>
+    Number.isSafeInteger(/** @type {any} */ (ENEMY_BASICS)[f]?.maleTexture),
+  );
   return kin == null ? null : Number(/** @type {any} */ (ENEMY_BASICS)[kin].maleTexture);
 }
 /** Every beast a trophy can be of, in the boards' tiers' order then the high hides': a named mark is one of the boards'
  *  beasts, a Trophy Hunter's a body of a hide of HIGH_HIDE_TIER or past it - the classic ones (a mod's beast is listed
  *  once taken). The Collections page's Trophies part lists them (ui/collections/gatheredPart.js). */
-export const TROPHY_BEASTS = Object.freeze([...new Set([...BOUNTY_TIERS.flatMap((t) => t.foes),
-  ...HIDES.filter((h) => h.tier >= HIGH_HIDE_TIER).flatMap((h) => h.foes)])].filter((f) => /** @type {any} */ (ENEMY_BASICS)[f] && trophyArchiveOf(f) != null));
+export const TROPHY_BEASTS = Object.freeze(
+  [
+    ...new Set([
+      ...BOUNTY_TIERS.flatMap((t) => t.foes),
+      ...HIDES.filter((h) => h.tier >= HIGH_HIDE_TIER).flatMap((h) => h.foes),
+    ]),
+  ].filter((f) => /** @type {any} */ (ENEMY_BASICS)[f] && trophyArchiveOf(f) != null),
+);
 /** A beast's name in the player's language. */
 export const trophyBeastName = (/** @type {number} */ foe) => getLocalizedEnemyName(foe, enemyDisplayName(foe) ?? '?');
 /** What a trophy is called: "Gorefang the Grizzly Bear" for a mark's, the beast's own name otherwise. */
@@ -39,9 +47,13 @@ export function trophyTitle(/** @type {number} */ foe, /** @type {number|null} *
   return name ? t('hunt.mark.title', '{name} the {beast}', { name, beast }) : beast;
 }
 /** The item's own name in the pack: "Trophy: Gorefang the Grizzly Bear". */
-export const trophyItemName = (/** @type {number} */ foe, /** @type {number|null} */ nameIndex = null) => t('hunt.trophy.item', 'Trophy: {beast}', { beast: trophyTitle(foe, nameIndex) });
+export const trophyItemName = (/** @type {number} */ foe, /** @type {number|null} */ nameIndex = null) =>
+  t('hunt.trophy.item', 'Trophy: {beast}', { beast: trophyTitle(foe, nameIndex) });
 /** A trophy item's title, read off its numbers (a visitor's room, the decorator's list). */
-export const trophyTitleOf = (/** @type {any} */ item) => { const foe = trophyFoeOf(item); return foe == null ? null : trophyTitle(foe, trophyNameIndexOf(item)); };
+export const trophyTitleOf = (/** @type {any} */ item) => {
+  const foe = trophyFoeOf(item);
+  return foe == null ? null : trophyTitle(foe, trophyNameIndexOf(item));
+};
 
 /**
  * A MOUNTED TROPHY of `foe` - `nameIndex` a named mark's name (huntLaw.js HUNT_MARK_NAMES) - or null for a beast with no
@@ -51,26 +63,50 @@ export const trophyTitleOf = (/** @type {any} */ item) => { const foe = trophyFo
 export function mintTrophy(foe, { nameIndex = null, day = null } = {}) {
   const archive = trophyArchiveOf(foe);
   if (archive == null || !Number.isSafeInteger(foe) || foe < 0) return null;
-  const named = Number.isSafeInteger(nameIndex) && /** @type {number} */ (nameIndex) >= 0 && /** @type {number} */ (nameIndex) < HUNT_MARK_NAMES.length;
-  const item = mintCondition(setItemFields({
-    group: TROPHY_GROUP, templateIndex: TROPHY_TEMPLATE, material: 0, flags: 0, variant: named ? /** @type {number} */ (nameIndex) + 1 : 0, message: foe,
-    stackCount: 1, worldTextureArchive: archive, worldTextureRecord: 0, name: trophyItemName(foe, named ? nameIndex : null),
-  }));
+  const named =
+    Number.isSafeInteger(nameIndex) &&
+    /** @type {number} */ (nameIndex) >= 0 &&
+    /** @type {number} */ (nameIndex) < HUNT_MARK_NAMES.length;
+  const item = mintCondition(
+    setItemFields({
+      group: TROPHY_GROUP,
+      templateIndex: TROPHY_TEMPLATE,
+      material: 0,
+      flags: 0,
+      variant: named ? /** @type {number} */ (nameIndex) + 1 : 0,
+      message: foe,
+      stackCount: 1,
+      worldTextureArchive: archive,
+      worldTextureRecord: 0,
+      name: trophyItemName(foe, named ? nameIndex : null),
+    }),
+  );
   if (Number.isSafeInteger(day)) noteGathered('trophies', foe, /** @type {number} */ (day));
   return item;
 }
 /** A trophy into a pack - answers the item, or null. */
-export function giveTrophy(/** @type {any} */ entity, /** @type {number} */ foe, /** @type {{ nameIndex?: number|null, day?: number|null }} */ o = {}) {
+export function giveTrophy(
+  /** @type {any} */ entity,
+  /** @type {number} */ foe,
+  /** @type {{ nameIndex?: number|null, day?: number|null }} */ o = {},
+) {
   const item = mintTrophy(foe, o);
   if (!item || !entity) return null;
   addItem((entity.items ??= []), item);
   return item;
 }
 /** HUNTERS-MARK: a trophy into the pack and the save told - the hosts' one door (`saved` the save's own soon). */
-export function giveTrophySaved(/** @type {any} */ entity, /** @type {number} */ foe, /** @type {() => void} */ saved, /** @type {{ nameIndex?: number|null }} */ o = {}) {
+export function giveTrophySaved(
+  /** @type {any} */ entity,
+  /** @type {number} */ foe,
+  /** @type {() => void} */ saved,
+  /** @type {{ nameIndex?: number|null }} */ o = {},
+) {
   const item = giveTrophy(entity, foe, { ...o, day: Math.floor(Date.now() / 86_400_000) });
   if (item) saved?.();
   return !!item;
 }
 /** The door a host hands the hunt's kind: `saveSoon` the save's; the entity the gather host's, at each trophy. */
-export const trophyDoor = (/** @type {{ changed: () => void }} */ saveSoon) => (/** @type {number} */ foe, /** @type {any} */ entity) => giveTrophySaved(entity, foe, () => saveSoon.changed());
+export const trophyDoor =
+  (/** @type {{ changed: () => void }} */ saveSoon) => (/** @type {number} */ foe, /** @type {any} */ entity) =>
+    giveTrophySaved(entity, foe, () => saveSoon.changed());
