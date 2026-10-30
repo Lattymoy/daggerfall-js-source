@@ -126,6 +126,8 @@
 /src/world/starfall/*/
 !/src/world/underwater/
 /src/world/underwater/*/
+!/src/world/urban/
+/src/world/urban/*/
 !/tools/
 /tools/*
 !/tools/layered-armor/

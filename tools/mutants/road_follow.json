@@ -375,8 +375,8 @@
   {
     "name": "RF-a-waiting-town-plans-its-streets",
     "file": "src/world/urban/townFabricStand.js",
-    "old": "  if (dfLocation.outline?.walled && townWallWaits(dfLocation)) return null;\n",
-    "new": "",
+    "old": "  if (dfLocation.outline?.walled && townWallWaits(dfLocation)) return null;\n  const ed = dfLocation.exterior.exteriorData,",
+    "new": "  const ed = dfLocation.exterior.exteriorData,",
     "tests": [
       "test/world/road_gates.test.js"
     ]

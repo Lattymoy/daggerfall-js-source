@@ -645,7 +645,7 @@ through their ring.
   wired in `scenes/tamrielPlacesHost.js`): null while the pixel's roads are not known. While they are not, the wall is
   not made - its carrier block provisional (open ground, no model, no marker - the world-data door builds it again at
   its next read: `worldDataReplacement.js:"if (!json?.Provisional) b.block = block;"`), the town's fabric plans no streets
-  (`townFabricStand.js:"if (dfLocation.outline?.walled && townWallWaits(dfLocation)) return null;"`), and once they land
+  (`townFabricStand.js:"if (dfLocation.outline?.walled && townWallWaits(dfLocation))"`), and once they land
   its pixel is built again (`tamrielSweepsHost.js:"|| townWallReadyAt(p.px, p.py);"`, TESA4's stale law).
 - **A capital's approaches** (`world/capitalApproaches.js`): each plan names its road gates (`gateAt`, the middle of each
   opening, off the measures its wall is cut at - `capitalPlans.js:"const landwardGates = (W) =>"`, Mournhold's,
@@ -806,7 +806,7 @@ cobbles at the same height (FABRIC_ROAD_Y). GATE-ROADS stands gates on the towns
 under a gate; and where a length lies on the fabric's grid, a yard's fence can run in its face. Measured over the 407
 city templates past the Bay and Riften (each fabric planned on its whole grid, a road every way; its faces against its
 wall's, within 4 cm): 88 towns, 1,853 m2. The fabric now lays nothing on a cell that a piece of the wall touches
-(`townFabricStand.js:"const under = wall ? townWallCells(wall"`, townWallCells grown a cell's half diagonal): none now.
+(`townFabricStand.js:"const under = wall"`, townWallCells grown a cell's half diagonal): none now.
 
 **Measured after**: no two faces within 1 mm on any wall of either set, nor within 4 cm (822,943 and 495,846 m2 before),
 two that only meet along an edge aside; the same open ends seen at the towers as before, by level rays from both sides

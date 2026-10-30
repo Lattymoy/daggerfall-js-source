@@ -176,8 +176,8 @@
   {
     "name": "FB1028-fabric-wall-unread",
     "file": "src/world/urban/townFabricStand.js",
-    "old": "(!ground || onTownTile(ground, tilePos, x, z)) && !under?.[z * W + x] : null;",
-    "new": "(!ground || onTownTile(ground, tilePos, x, z)) : null;",
+    "old": "  const onGround =\n    ground || under ? (x, z) => (!ground || onTownTile(ground, tilePos, x, z)) && !under?.[z * W + x] : null;",
+    "new": "  const onGround = ground || under ? (x, z) => !ground || onTownTile(ground, tilePos, x, z) : null;",
     "tests": [
       "test/world/fb1028_wallflicker.test.js"
     ]
@@ -185,8 +185,8 @@
   {
     "name": "FB1028-fabric-cells-ungrown",
     "file": "src/world/urban/townFabricStand.js",
-    "old": "townWallCells(wall, ed.width, ed.height, NAV_CELL * Math.SQRT1_2)",
-    "new": "townWallCells(wall, ed.width, ed.height, 0)",
+    "old": "  const under = wall ? townWallCells(wall, ed.width, ed.height, NAV_CELL * Math.SQRT1_2) : null,",
+    "new": "  const under = wall ? townWallCells(wall, ed.width, ed.height, 0) : null,",
     "tests": [
       "test/world/fb1028_wallflicker.test.js"
     ]
