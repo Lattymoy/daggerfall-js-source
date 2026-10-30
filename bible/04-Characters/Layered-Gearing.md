@@ -126,11 +126,12 @@ them are on, so a butt poking past the fist into the air goes with the air: open
 behind is filled. Each such pixel copies its own source, written into the mask's colour (`fillFrom`): the builder fills
 the hole from its edge in, each pixel from the place whose neighbourhood best matches its surroundings over the
 family's outfits, so the body's texture carries on instead of a blur. Where none fits, the frame's shift, else the
-blend.
+blend. A pixel the rig marks open air (`AIR`, blue 64) is cleared whatever its edge says: the female's back walk 4-0
+holds the hammer's head past the hand, over a dark lining the fill carried up into it.
 
-**The front views** (`MIRROR`: the walk's 0-0, 0-1 and 0-3 and the idle's 15-0) copy the body's other side, mirrored,
-its alpha too, so the hidden hand comes back whole; a copied piece that touches no body (the other forearm, by the hip)
-is dropped. The front walk's 0-2 hid the whole forearm: empty-handed it is drawn as 0-0's mirror twin (`BARE_TWINS`),
+**The front views** (`MIRROR`: the walk's 0-0, 0-1 and 0-3, the female's 0-2, and the idle's 15-0) copy the body's
+other side, mirrored, its alpha too, so the hidden hand comes back whole; a copied piece that touches no body (the
+other forearm, by the hip) is dropped. The male's front walk 0-2 hid the whole forearm: empty-handed it is drawn as 0-0's mirror twin (`BARE_TWINS`),
 armed as 0-3 (`ARMED_TWINS`), so the weapon keeps its hand.
 
 **Drawing one** (the owner, 2026-10-30: *"use the actual paperdoll icon sprites. Same as we use for the
@@ -139,8 +140,13 @@ male, .233 for the female, dyed by its metal), the one BACK-HOLSTER hangs on the
 the handle, and that gap is the grip (`heldPicture`): the long axis is BACK-HOLSTER's (`eotbHolster.js`
 weaponPictureAxis), the head the gap's longer side, the guard where a picture cuts its handle off (the tanto). It is
 laid along the frame's line from the fist, foreshortened as the line is, at the body's scale (the idle is 1.8 m tall,
-a picture pixel a centimetre: the rig's `cm`), its heavier side (an axe's blade) on the hammer face's side. A flail's
-chain hangs. A katana is its flat picture; the pack shows the doll's foreshortened right-hand one.
+a picture pixel a centimetre: the rig's `cm`), its heavier side on the hammer face's side. A katana is its flat
+picture. A thin handle keeps a pixel's width.
+
+**Its chain and its grip.** A flail's chain and ball are split off the handle (`heldChain`) and hang straight down from
+its head end; in a swing they fly out with the picture. The doll's hand gap is bridged with the handle's own core
+(`bridgeGap`, never a guard's breadth), drawn only into open air: where the art lost the fist with the hammer (the side
+flinch), the pommel stays joined to the guard, and a fist the art keeps covers it.
 
 **Held.** Daggerfall's walk holds the weapon before the body, pointed ahead and a little up: its Archer's sword
 (TEXTURE.482, .481, one render with the strips) lies along the hammer's shaft wherever both show. Where the hammer hides
@@ -158,9 +164,14 @@ player. The Hand Wraps are bare hands. A weapon wearing a look is drawn as the l
 **The bow** is held in the free hand (`BOW_HAND`, the loose's own bow hand) at its middle, upright, leant 12 degrees
 forward, its back turned 22.5 degrees from the facing toward that hand's side so no view sees it edge on, the string
 toward the body. It is the paper doll's bow (`heldBow`): the string its axis (the thin line, not a short bow's thick
-limb), the gap in the limb its grip, drawn from its longer limb both ways, since the doll cuts the lower limb short. The fist closes over the grip. The side views hide that hand behind the body, so there the bow is
-in the near hand (`BOW_NEAR`), as Daggerfall's side views hold a weapon. Tip to tip it is the loose's own bow
-(`BOW_PX`, the short bow three quarters), so the shot keeps its size.
+limb), the gap in the limb its grip, drawn from its longer limb both ways, since the doll cuts the lower limb short. The
+fist closes over the grip. The side views hide that hand behind the body, so there the bow is in the near hand
+(`BOW_NEAR`), as Daggerfall's side views hold a weapon. Tip to tip it is the loose's own bow (`BOW_PX`, the short bow
+three quarters). Edge on, it is a line, not dashes.
+
+**From behind and left** (the owner, 2026-10-30: "Bow is still wrong on the back facing left. Its okay if the body
+hides it"). The back-3/4 walk draws the bow behind the body, in open air only. Where the art hides the free hand too
+(the back-3/4 idle, 18-0, and the female's 3-2) the body hides the bow, and none is drawn.
 
 **Whose hands.** My body reads the item in the hand in use (`combat/weapon/weaponRig.js` eotbState `heldWeapon`,
 `eotbBody.js` lookNow). A walker holds the tool of its gathering act, else the weapon in the hand its pose says it uses
@@ -169,13 +180,14 @@ what the hands show (`p6cl~2@ls7`, `@0` empty), so the pictures of each are thei
 go with its outfit's (`releaseOutfits`).
 
 **Known limits.** The body's motion is the hammer's in every case: a dagger chops overhead as the hammer does, and bare
-hands strike with both fists; new swings need new frames drawn in all 27 outfits. An attack frame whose hammer points
+hands strike with both fists. An attack frame whose hammer points
 at the camera draws the weapon short. Each outfit's helmet and legs draw the hammer's rim their own way, so a pixel or
 two of it can stay, and a fill can borrow a patch of another piece's colour. Male 5-1 keeps the thumb laid up the
 shaft. The female's back-view flinch (14-0) keeps its raised hand two pixels off the wrist,
-and with empty hands her back-3/4 swing (8-2) its hand, whose arm is behind the body. No weapon draws its enchanted glow. Verified by `test/player/eyeOfTheBeholder/layered_weapons.test.js` and
-`tools/mutants/layered_weapons.json` (41 mutants, all dead); the peer-art pins moved to the new codes
-(`test/net/peer/fb1022d_peerart.test.js`).
+and with empty hands her back-3/4 swing (8-2) its hand, whose arm is behind the body. A weapon's glow stands round the
+weapon alone (LAYERED-GLOW, `05-Combat/Weapon-Glow.md` "Round the weapon"). Verified by
+`test/player/eyeOfTheBeholder/layered_weapons.test.js`, `spriteglow.test.js` and `tools/mutants/layered_weapons.json`
+(66 mutants, all dead); the peer-art pins moved to the new codes (`test/net/peer/fb1022d_peerart.test.js`).
 
 ## The art - the doctrine's third exception
 

@@ -69,7 +69,7 @@ import {
   createSpriteHolster, createHolsterArt, loadHolsterPicture, hangSpriteHolster, mintSpriteHolster, dropSpriteHolster, holstersOnBack, HOLSTER_HAND_SLOT, SELF_OWNER,
 } from './eotbHolster.js';   // BACK-HOLSTER: the sheathed weapon on the sprite's back, one home - this body's and the peers'
 import { equipTableOf } from '../../systems/equip.js';   // BACK-HOLSTER: the weapon in the hand
-import { myWeaponGlow, createSpriteGlow, setSpriteGlow } from './eotbGlow.js';   // BACK-HOLSTER GLOW: its glow, on its back and in the hand
+import { myWeaponGlow, createSpriteGlow, setSpriteGlow, heldOf, heldGlowRecord, evictHeld } from './eotbGlow.js';   // BACK-HOLSTER GLOW: its glow, on its back and in the hand
 
 /** PlayerHeightChanger's controllerStandingHeight, the capsule the
  *  billboard's parent sits at the centre of - the fallback when a
@@ -294,6 +294,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
   let batchRec = null;
   let batchSize = null, batchPx = 0, batchPxW = 0, batchArt = 1;   // AUDIT 3 (SERAPH-WINGS): and the frame's own pixels tall - the figure's metres a pixel; BACK-HOLSTER GLOW: its art scale
   let batchMarks = null;   // ARMORY: where the body stands in that picture (render/armoryPose.js spriteMarks), read at its upload
+  let batchHeld = null;   // LAYERED-GLOW: the weapon's own px in that picture (eotbGlow.js heldOf), null for none of its own
   let figure = null;   // SERAPH-WINGS: the frame last drawn, as an aura reads it - its base over the feet (m), its metres a pixel and its form (AUDIT 3)
   let facingDrawn = null;   // SPRITE-FACE: the frame last drawn's facing, as an aura reads it - { yaw, turn } (facing(), below)
   /** The one sprite that decides whether this lane may open at all. See `ready()`. */
@@ -433,7 +434,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       // is its own pixels under its own key (`s.rec`, EOTB5)
       const px = s.mirror ? flipRows(colors, width, height) : colors;
       renderer.uploadTexture(s.archive, s.rec, { width, height, colors: px });
-      return { w: width, h: height, marks: spriteMarks(px, width, height, { arms: spriteArmsSeen(s.view), art: spriteArtScale(s.archive, s.record) }) };   // ARMORY: the body's place in the picture, read once
+      return { w: width, h: height, marks: spriteMarks(px, width, height, { arms: spriteArmsSeen(s.view), art: spriteArtScale(s.archive, s.record) }), held: heldOf(px, img.held, width, height, s.mirror) };   // ARMORY: the body's place in the picture, read once; LAYERED-GLOW: the weapon's own px
     })();
     tex.set(cacheKey(s), p);
     p.then((r) => { if (tex.get(cacheKey(s)) !== p) return; tex.set(cacheKey(s), r); firstUp = true; },
@@ -467,6 +468,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       if (!LAYERED_ARCHIVES.has(archive) || stands(archive, k.slice(i + 1).split('_')[0])) continue;
       tex.delete(k);
       renderer?.evictTexture?.(k.replace(':', '_'));   // the cache's `archive:rec` is the renderer's `archive_rec`
+      evictHeld(renderer, k.replace(':', '_'));   // LAYERED-GLOW: and its weapon's picture
     }
     for (const k of [...decoded.keys()]) {
       const p = isLayeredKey(k) ? k.split(':') : null;
@@ -1080,7 +1082,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
           batch.noShadow = grow > 1;   // AUDIT OW5 R2: OW-BIG's giant casts NOTHING - selfCard off was never that (render/shadowPass.js: it only keeps the card out of the lamps' maps when it is not the player's own; the sun's cascades drew the tenfold card, a fifty-metre shadow at a low sun, and the lamps' maps baked it)
           batchRec = key;
         }
-        batchSize = size; batchPx = up.h; batchPxW = up.w; batchArt = spriteArtScale(s.archive, s.record); batchMarks = up.marks ?? null;
+        batchSize = size; batchPx = up.h; batchPxW = up.w; batchArt = spriteArtScale(s.archive, s.record); batchMarks = up.marks ?? null; batchHeld = up.held ?? null;
       }
       if (!batch) return false;                 // nothing up yet: the last sprite stays until one is
       const c = place();
@@ -1109,11 +1111,13 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       else if (cfg.visibility === 1) renderer.recordShadowBillboards?.([batch], camRight, bbUp);
       if (grow === 1) drawLantern();   // HT-WAIST: the lantern at the waist, its own billboard, after the body - OW-BIG: a grown body's waist is not where the lantern hangs
       if (grow === 1) drawHolster(camRight); else dropHolster();   // BACK-HOLSTER: the weapon on the back, after the body (OW-BIG's rule too)
-      // BACK-HOLSTER GLOW: drawn, the weapon's glow round the whole sprite - in third person, on foot, alive, in your own form
+      // BACK-HOLSTER GLOW: drawn, the weapon's glow - in third person, on foot, alive, in your own form; LAYERED-GLOW:
+      // round a worn-armour body's weapon alone, else the whole sprite
       const drawn = grow === 1 && !FP && !last.sheathed && !last.riding && !last.transformed && !died && !last.died && !material();
       const look = drawn ? glowNow(handItemNow(), last.handWraps) : null;
       // AUDIT BACK-HOLSTER A5: the picture STANDING - a frame still decoding draws the last one, and so does its glow
-      if (look) glowList.push(setSpriteGlow(handGlow, batch.archive, batch.record, look, batch.origin, camRight, bbUp, batchSize.w, batchSize.h, batchPxW / batchArt, batchPx / batchArt));
+      const held = look ? heldGlowRecord(renderer, batch.archive, batch.record, batchHeld, batchPxW, batchPx) : null;
+      if (look && held !== '') glowList.push(setSpriteGlow(handGlow, batch.archive, held ?? batch.record, look, batch.origin, camRight, bbUp, batchSize.w, batchSize.h, batchPxW / batchArt, batchPx / batchArt));
       return true;
     },
 

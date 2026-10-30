@@ -221,7 +221,7 @@ test('a walk whose hammer hides its shaft draws on Daggerfall\'s sword: pointed 
     return px;
   };
   // a front view's blade comes at the camera: up from the hand, before the body - never hanging below it
-  for (const [body, rf] of [['male', '0-0'], ['male', '0-1'], ['male', '15-0'], ['female', '0-1'], ['female', '15-0']]) {
+  for (const [body, rf] of [['male', '0-0'], ['male', '0-1'], ['male', '15-0'], ['female', '0-1'], ['female', '0-2'], ['female', '15-0']]) {
     const fr = weaponRigOf(body, rf), [gx, gy] = fr.w, px = await diff(body, rf, 'ls1');
     assert.ok(fr.carry === undefined && fr.hang === undefined, `${body} ${rf}: no carry`);
     assert.ok(px.length > 15 && px.reduce((t, p) => t + p[1], 0) / px.length < gy, `${body} ${rf}: the blade rises from the hand`);
@@ -403,18 +403,122 @@ test('a flail\'s chain hangs; a katana is held as its flat picture, not the pack
   const W = 40, H = 40, colors = new Uint8Array(W * H * 4);
   for (let x = 0; x < 30; x++) if (x < 4 || x > 7) colors.set([...BLUE, 255], (20 * W + x) * 4);
   for (let y = 21; y < 38; y++) colors.set([...RED, 255], (y * W + 29) * 4);
-  for (const frame of ['2-0', '1-1']) {
+  // the handle's head end is 21 picture px past the grip (x 8): a walk's chain hangs straight down from there; a swing's
+  // flies out with the picture, across the line
+  for (const frame of ['2-0', '1-1', '0-0', '7-3']) {
     const flail = await decodeLayered(`LA:male:leather_leather_leather:${frame}:lll@fl1`, decodePng, { ...opts, heldArt: async () => ({ width: W, height: H, colors }) });
-    const fr = weaponRigOf('male', frame), [qx, qy] = fr.q, D = Math.hypot(fr.t[0] - qx, fr.t[1] - qy), ux = (fr.t[0] - qx) / D, uy = (fr.t[1] - qy) / D;
-    let below = 0, above = 0;
+    const fr = weaponRigOf('male', frame), [qx, qy, tx, ty] = fr.w ?? [...fr.q, ...fr.t], D = Math.hypot(tx - qx, ty - qy), ux = (tx - qx) / D, uy = (ty - qy) / D;
+    const along = rig.male.cm * Math.max(0.14, Math.min(1, D / rig.male.len)), hx = qx + ux * 21 * along, hy = qy + uy * 21 * along;
+    const red = [];
     for (let i = 0; i < flail.width * flail.height; i++) {
-      if (!(flail.data[i * 4] > 200 && flail.data[i * 4 + 2] < 60 && flail.data[i * 4 + 1] < 60)) continue;
-      const x = (i % flail.width) + 0.5 - qx, y = ((i / flail.width) | 0) + 0.5 - qy, v = x * -uy + y * ux;
-      if (v * (ux >= 0 ? 1 : -1) > 0) below++; else above++;   // +v (the line's normal) is down for a line running right
+      if (flail.data[i * 4] > 200 && flail.data[i * 4 + 2] < 60 && flail.data[i * 4 + 1] < 60) red.push([(i % flail.width) + 0.5, ((i / flail.width) | 0) + 0.5]);
     }
-    assert.ok(below > 3 && above === 0, `${frame}: the chain hangs (${below} below, ${above} above)`);
+    assert.ok(red.length > 3, `${frame}: the chain drawn (${red.length} px)`);
+    if (frame === '7-3') {
+      assert.ok(red.every(([x, y]) => Math.abs((x - hx) * ux + (y - hy) * uy) <= 2), `${frame}: a swing's chain lies across the line at the head end`);
+      continue;
+    }
+    assert.ok(red.every(([x, y]) => Math.abs(x - hx) <= 1.5 && y > hy), `${frame}: the chain hangs straight down from the head end (${hx.toFixed(1)}, ${hy.toFixed(1)})`);
   }
   const kt = { group: 'Weapons', templateIndex: WEAPONS.Katana, material: 0 }, ls = { group: 'Weapons', templateIndex: WEAPONS.Longsword, material: 0 };
   assert.equal(heldImage(kt, { gender: 'male' }).record, inventoryItemImage(kt, { gender: 'male' }).record - 1);
   assert.deepEqual(heldImage(ls, { gender: 'female' }), inventoryItemImage(ls, { gender: 'female' }));
+});
+
+test('the back-3/4 views: the walk\'s bow behind the body (the body may hide it); where the art hides the free hand - the idle, the female\'s 3-2 - none', { skip: !PNG && 'no pngjs' }, async () => {
+  for (const [body, frames] of [['male', ['3-0', '3-1', '3-2', '3-3']], ['female', ['3-0', '3-1', '3-3']]]) {
+    for (const rf of frames) assert.equal(weaponRigOf(body, rf).bow[2], 0, `${body} ${rf}: behind the body`);
+  }
+  for (const [body, rf] of [['male', '18-0'], ['female', '18-0'], ['female', '3-2']]) {
+    assert.equal(weaponRigOf(body, rf).bow, undefined, `${body} ${rf}: no bow hand`);
+    const plain = `LA:${body}:leather_leather_leather:${rf}:lll`;
+    const bare = await decodeLayered(`${plain}@0`, decodePng, opts), armed = await decodeLayered(`${plain}@lb1`, decodePng, opts);
+    assert.deepEqual(armed.data, bare.data, `${body} ${rf}: the body hides the bow - none drawn, no hammer left`);
+  }
+});
+
+test('the doll\'s hand gap carries the handle where no fist of the art covers it - never over the body', { skip: !PNG && 'no pngjs' }, async () => {
+  // the side flinch: the far fist is lost with the hammer, the grip in open air
+  const pic = sword({ handle: 10 }), held = heldPicture(pic);
+  assert.ok(held.bridge, 'a gap of its own: a bridge');
+  let n = 0;
+  for (let i = 0; i < held.bridge.colors.length; i += 4) if (held.bridge.colors[i + 3]) { n++; assert.deepEqual([...held.bridge.colors.subarray(i, i + 3)], BLUE, 'the handle\'s own colour'); }
+  assert.ok(n >= 4, `${n} px across the gap`);
+  assert.equal(heldPicture(sword({ gap: false })).bridge, null, 'no gap, no bridge');
+  const plain = 'LA:male:leather_leather_leather:12-0:lll', withPic = { ...opts, heldArt: async () => pic };
+  const bare = await decodeLayered(`${plain}@0`, decodePng, opts), armed = await decodeLayered(`${plain}@ls1`, decodePng, withPic);
+  const fr = weaponRigOf('male', '12-0'), [qx, qy, tx, ty] = fr.w ?? [...fr.q, ...fr.t], D = Math.hypot(tx - qx, ty - qy);
+  const ux = (tx - qx) / D, uy = (ty - qy) / D, along = rig.male.cm * Math.max(0.14, Math.min(1, D / rig.male.len));
+  const isBlue = (x, y) => { const i = (y * bare.width + x) * 4; return armed.data[i + 2] > 200 && armed.data[i] < 60; };
+  let air = 0, blue = 0, over = 0;
+  for (let s = -0.5; s >= -(4 + 10) * along + 0.5; s -= 0.5) {   // from the fist back down the gap to the pommel
+    const x = Math.floor(qx + ux * s), y = Math.floor(qy + uy * s);
+    if (bare.data[(y * bare.width + x) * 4 + 3]) { if (isBlue(x, y)) over++; continue; }
+    air++; if ([-1, 0, 1].some((dy) => [-1, 0, 1].some((dx) => isBlue(x + dx, y + dy)))) blue++;   // a line a px wide, unbroken
+  }
+  assert.ok(air > 4 && blue === air, `the handle joins guard and pommel in open air (${blue} of ${air})`);
+  assert.equal(over, 0, 'the bridge is never over the body');
+  // the side walk's fist is the art's: the gap under it stays the fist, never the handle over it
+  const walk = 'LA:male:leather_leather_leather:2-1:lll', fw = weaponRigOf('male', '2-1'), [wx, wy] = fw.q;
+  const wBare = await decodeLayered(`${walk}@0`, decodePng, opts), wArmed = await decodeLayered(`${walk}@ls1`, decodePng, withPic);
+  let fist = 0, covered = 0;
+  for (let y = Math.floor(wy) - 2; y <= wy + 2; y++) for (let x = Math.floor(wx) - 2; x <= wx + 2; x++) {
+    const i = (y * wBare.width + x) * 4;
+    if (!wBare.data[i + 3]) continue;
+    fist++; if (wArmed.data[i + 2] > 200 && wArmed.data[i] < 60 && wArmed.data[i + 1] < 60) covered++;
+  }
+  assert.ok(fist > 5 && covered === 0, `the fist round the grip (${covered} of ${fist} px under the handle)`);
+});
+
+test('a bow seen edge on - from the front, from behind - is a line, not dashes', { skip: !PNG && 'no pngjs' }, async () => {
+  const bowArt = { ...opts, heldArt: async () => bow() };
+  for (const [body, rf] of [['male', '0-0'], ['male', '4-0'], ['female', '19-0'], ['female', '0-1']]) {
+    const plain = `LA:${body}:leather_leather_leather:${rf}:lll`;
+    const bare = await decodeLayered(`${plain}@0`, decodePng, opts), held = await decodeLayered(`${plain}@lb0`, decodePng, bowArt);
+    const rows = new Map();
+    for (let i = 0; i < held.width * held.height; i++) {
+      if ([0, 1, 2, 3].some((c) => held.data[i * 4 + c] !== bare.data[i * 4 + c])) rows.set((i / held.width) | 0, true);
+    }
+    const ys = [...rows.keys()], top = Math.min(...ys), bottom = Math.max(...ys), [, hy, before] = weaponRigOf(body, rf).bow;
+    let gaps = 0;
+    for (let y = top; y <= bottom; y++) if (!rows.has(y) && (before || Math.abs(y - hy) > 6)) gaps++;   // behind the body, the body hides the grip's rows
+    assert.ok(bottom - top > 30 && gaps <= (before ? 0 : 2), `${body} ${rf}: ${gaps} rows missing of ${bottom - top}`);
+  }
+});
+
+test('a hole px the rig marks open air (a head out past the hand, over a dark lining) is cleared whatever its edge says', { skip: !PNG && 'no pngjs' }, async () => {
+  const w = 4, h = 1, data = new Uint8Array(w * h * 4), mask = Uint8Array.from([0, 1, 1, 0]);
+  for (let x = 0; x < w; x++) data.set([90, 60, 30, 255], x * 4);   // the body all round: a hole inside it
+  removeWeapon({ width: w, height: h, data }, mask, 0, Int32Array.from([-1, -1, -2, -1]));
+  assert.equal(data[1 * 4 + 3], 255, 'its own edge: the body');
+  assert.equal(data[2 * 4 + 3], 0, 'marked open air: cleared');
+  const strip = { width: 12, height: 1, data: new Uint8Array(12 * 4) };
+  strip.data.set([128, 128, 64, 255], 1 * 4); strip.data.set([128, 128, 0, 255], 2 * 4);
+  assert.deepEqual([...fillFrom(strip, 'l')], [-1, -2, -1, -1], 'blue 1..127: open air; 0: none');
+  // the female's back walk: the hammer's head and its dark underside are gone, not filled with the lining
+  for (const outfit of ['lll', 'p3cp3']) {
+    const plain = `LA:female:${outfitCombo(outfitPieces(outfit))}:4-0:${outfit}`, bare = await decodeLayered(`${plain}@0`, decodePng, opts);
+    let left = 0;
+    for (let y = 79; y <= 101; y++) for (let x = 83; x <= 93; x++) if (bare.data[(y * bare.width + x) * 4 + 3]) left++;
+    assert.equal(left, 0, `${outfit}: ${left} px of the head left past the hand`);
+  }
+});
+
+test('LAYERED-GLOW the compose keeps the weapon\'s own px: those its drawing changed, the iron warhammer\'s the art\'s; none in bare hands', { skip: !PNG && 'no pngjs' }, async () => {
+  for (const [body, rf, outfit] of [['male', '2-1', 'lll'], ['female', '17-0', 'p0p0p0~2']]) {
+    const plain = `LA:${body}:${outfitCombo(outfitPieces(outfit))}:${rf}:${outfit}`;
+    const bare = await decodeLayered(`${plain}@0`, decodePng, opts), armed = await decodeLayered(`${plain}@ls1`, decodePng, opts);
+    assert.equal(bare.held, undefined, 'bare hands: no weapon of its own');
+    let n = 0;
+    for (let i = 0; i < armed.held.length; i++) {
+      const changed = [0, 1, 2, 3].some((c) => armed.data[i * 4 + c] !== bare.data[i * 4 + c]);
+      assert.equal(armed.held[i], changed ? 1 : 0, `${body} ${rf}: px ${i}`);
+      n += armed.held[i];
+    }
+    assert.ok(n > 15, `${body} ${rf}: ${n} weapon px`);
+  }
+  const iron = await decodeLayered('LA:male:leather_leather_leather:2-1:lll@wh0', decodePng, opts), mask = maskTile(await picture('weapon/male/2-1'), 'l');
+  let k = 0;
+  for (let i = 0; i < mask.length; i++) { assert.ok(!iron.held[i] || mask[i], 'only the hammer\'s'); k += iron.held[i]; }
+  assert.ok(k > 20, `the art's own hammer: ${k} px`);
 });

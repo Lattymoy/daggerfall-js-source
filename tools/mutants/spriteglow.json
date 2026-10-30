@@ -371,8 +371,8 @@
   {
     "name": "AUDIT-A5-keyed-to-the-picture-asked",
     "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-    "old": "setSpriteGlow(handGlow, batch.archive, batch.record, look,",
-    "new": "setSpriteGlow(handGlow, s.archive, s.rec, look,",
+    "old": "setSpriteGlow(handGlow, batch.archive, held ?? batch.record, look,",
+    "new": "setSpriteGlow(handGlow, s.archive, held ?? s.rec, look,",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]

@@ -357,12 +357,12 @@ export function applyHoodFix(out, fs, pieces, dye, skip = null) {
 /**
  * Compose one strip (a decoded PNG, top row first, RGBA bytes) into the outfit's picture: the base, then each plate
  * piece's metal over its own slot's pixels, then that metal's trim, then the cloak if the outfit wears one. Pure - the
- * pins drive it.
- * @param {{width:number,height:number,data:Uint8Array|Uint8ClampedArray}} strip
+ * pins drive it. @param {{width:number,height:number,data:Uint8Array|Uint8ClampedArray}} strip
  * @param {string} code the outfit code ('p6cl', 'p6cl~2' with a cloak dyed Red)
  * @param {{strip:{width:number,height:number,data:Uint8Array|Uint8ClampedArray}, over:boolean, noSlivers?:boolean,
  *   fix?:{width:number,height:number,data:Uint8Array|Uint8ClampedArray}|null}|null} [cloak] the frame's cloak strip (and its hood fix)
- * @param {{mask:Uint8Array, fr:any, len:number, view:number, bow?:number, pic?:any, cm?:number}|null} [weapon] LAYERED-WEAPONS: the frame's rig  @returns {{width:number,height:number,data:Uint8Array}}
+ * @param {{mask:Uint8Array, fr:any, len:number, view:number, bow?:number, pic?:any, cm?:number, swing?:boolean}|null} [weapon] LAYERED-WEAPONS: the frame's rig
+ * @returns {{width:number,height:number,data:Uint8Array,held?:Uint8Array}} `held` the weapon's own px (LAYERED-GLOW)
  */
 export function composeStrip(strip, code, cloak = null, weapon = null) {
   const pieces = outfitPieces(code);
@@ -372,17 +372,22 @@ export function composeStrip(strip, code, cloak = null, weapon = null) {
   const h = strip.height, sw = strip.width, src = strip.data;
   const out = new Uint8Array(w * h * 4);
   for (let y = 0; y < h; y++) out.set(src.subarray(y * sw * 4, (y * sw + w) * 4), y * w * 4);
-  const res = { width: w, height: h, data: out };
+  const res = /** @type {{width:number,height:number,data:Uint8Array,held?:Uint8Array}} */ ({ width: w, height: h, data: out });
   const held = pieces?.weapon ?? null, hand = weapon && held && weapon.mask.length === w * h ? weapon : null;
   const takeOut = held === '0' || (held && held.slice(0, 2) !== 'wh');   // the art's hammer goes
   const finish = () => {
     if (hand && takeOut) removeWeapon(res, hand.mask, hand.fr.fill, hand.from ?? null);
     else if (hand) recolourHammer(res, hand.mask, hand.fr, Number(held.slice(2)) || 0);
+    const art = hand && !takeOut ? out.slice() : null;   // LAYERED-GLOW: the art's own hammer, before the cloak
     if (cloak && pieces?.cloak != null) {
       applyCloak(res, cloak.strip, pieces.cloak, cloak.over, pieces.head[0], cloak.noSlivers === true, pieces.top[0]);
       if (cloak.fix) applyHoodFix(res, cloak.fix, pieces, pieces.cloak, hand && takeOut ? hand.mask : null);
     }
-    if (hand && takeOut && held !== '0') drawWeapon(res, hand.fr, held, hand.len, hand.view, hand);
+    if (hand && takeOut && held !== '0') {
+      const was = out.slice();
+      drawWeapon(res, hand.fr, held, hand.len, hand.view, hand);
+      res.held = heldPx(out, was);
+    } else if (art) res.held = heldPx(out, art, hand?.mask);
     return res;
   };
   if (w === sw) return finish();
@@ -403,6 +408,17 @@ export function composeStrip(strip, code, cloak = null, weapon = null) {
     }
   }
   return finish();
+}
+
+/** LAYERED-GLOW: the weapon's own px of a composed picture, 1 each (top row first) - those its drawing changed (`was`
+ *  the picture before it), or for the art's own hammer the mask's px the cloak left as they were. */
+function heldPx(now, was, mask = null) {
+  const n = now.length >> 2, m = new Uint8Array(n);
+  for (let i = 0; i < n; i++) {
+    const k = i * 4, same = now[k] === was[k] && now[k + 1] === was[k + 1] && now[k + 2] === was[k + 2] && now[k + 3] === was[k + 3];
+    m[i] = mask ? (mask[i] && now[k + 3] && same ? 1 : 0) : (same ? 0 : 1);
+  }
+  return m;
 }
 
 /** Is the cape drawn OVER the body on this frame? The walk / attack / hurt / idle by the view (record offsets 3, 4: from
@@ -448,7 +464,7 @@ export async function decodeLayered(key, decodePng, { fetchUrl = (u) => fetch(u)
     const wu = weaponUrlOf(`weapon/${body}/${rf}`);
     try {
       const pic = wu ? await pictureOf(wu) : null;
-      if (pic) weapon = { mask: maskTile(pic, pieces.top[0]), from: fillFrom(pic, pieces.top[0]), fr, len: weaponLen(body), bow: bowLen(body), cm: weaponCm(body), pic: null, view: Number(rf.split('-')[0]) % 5 };
+      if (pic) weapon = { mask: maskTile(pic, pieces.top[0]), from: fillFrom(pic, pieces.top[0]), fr, len: weaponLen(body), bow: bowLen(body), cm: weaponCm(body), pic: null, view: Number(rf.split('-')[0]) % 5, swing: Math.floor(Number(rf.split('-')[0]) / 5) === 1 };
     } catch { weapon = null; }
     // the weapon as its paper-doll picture, held; the drawn shape where it has none
     if (weapon && pieces.weapon !== '0') weapon.pic = await heldPictureOf(pieces.weapon, body, heldArt);

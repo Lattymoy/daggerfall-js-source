@@ -72,7 +72,7 @@ export const WEAPON_SPAN = Object.freeze([...rig.span]);
  * of them, at its edge) - open air, or the body it hid - and a body px is the rig's copy (`fill`: a shift [0, dx, dy] or a mirror [1, c, dy]) where
  * that lands on the body, else the smooth blend of the body round it.
  * @param {{width:number,height:number,data:Uint8Array}} out @param {Uint8Array} mask 1 where the hammer is
- * @param {any} fill @param {Int32Array|null} [from] each hole px's own source px (fillFrom), -1 for none
+ * @param {any} fill @param {Int32Array|null} [from] each hole px's own source px (fillFrom), -1 for none, -2 open air
  */
 export function removeWeapon(out, mask, fill, from = null) {
   const w = out.width, h = out.height, d = out.data, n = w * h;
@@ -100,8 +100,9 @@ export function removeWeapon(out, mask, fill, from = null) {
   const smooth = [];   // the body px no copy reaches
   for (let i = 0; i < n; i++) {
     if (!mask[i]) continue;
-    if (side[i] !== 1) { d[i * 4] = d[i * 4 + 1] = d[i * 4 + 2] = d[i * 4 + 3] = 0; continue; }
-    const x = i % w, y = (i / w) | 0, own = from ? from[i] : -1;
+    const own = from ? from[i] : -1;
+    if (side[i] !== 1 || own === -2) { d[i * 4] = d[i * 4 + 1] = d[i * 4 + 2] = d[i * 4 + 3] = 0; continue; }
+    const x = i % w, y = (i / w) | 0;
     const X = copy ? (copy[0] ? 2 * copy[1] - x : x + copy[1]) : -1, Y = copy ? y + copy[2] : -1;
     const j = own >= 0 && known(own) ? own : (copy && X >= 0 && Y >= 0 && X < w && Y < h ? Y * w + X : -1);
     if (j >= 0 && known(j)) { d[i * 4] = d[j * 4]; d[i * 4 + 1] = d[j * 4 + 1]; d[i * 4 + 2] = d[j * 4 + 2]; }
@@ -234,7 +235,52 @@ export function heldPicture(img) {
     if (s > 0) heavy += r * s;   // the far end weighs most
   }
   if (heavy < 0) { rx = -rx; ry = -ry; }
-  return { img, gx, gy, ux, uy, rx, ry, from: from - 1, to: to + 1, half: half + 1 };
+  const bridge = gap[1] > gap[0] ? bridgeGap(img, ax, lx, ly, gap, up) : null;
+  return { img, gx, gy, ux, uy, rx, ry, from: from - 1, to: to + 1, half: half + 1, bridge };
+}
+
+/** The handle carried across the doll's hand gap (steps gap[0]..gap[1] along the axis): the handle side's edge (away
+ *  from the head, `up` +s) copied along, no wider than its core near the line and 2 px either side of it - never a
+ *  guard's or a pommel's breadth. A picture of the bridge alone, or null where that edge has nothing near the line. */
+function bridgeGap(img, ax, lx, ly, gap, up) {
+  const e = ax.s0 + (up ? gap[0] - 1 : gap[1]), at = (r) => [lx + ax.ux * e + ax.rx * r, ly + ax.uy * e + ax.ry * r];
+  const r0 = [0, -0.5, 0.5, -1, 1, -1.5, 1.5].find((r) => opaqueAt(img, ...at(r)));   // the handle, a px or so off the line
+  if (r0 === undefined) return null;
+  let lo = r0, hi = r0;
+  while (lo > r0 - 2 && opaqueAt(img, ...at(lo - 0.5))) lo -= 0.5;
+  while (hi < r0 + 2 && opaqueAt(img, ...at(hi + 0.5))) hi += 0.5;
+  const colors = new Uint8Array(img.colors.length), a = ax.s0 + gap[0] - 1, b = ax.s0 + gap[1];
+  for (let y = 0; y < img.height; y++) for (let x = 0; x < img.width; x++) {
+    const s = (x - lx) * ax.ux + (y - ly) * ax.uy, r = (x - lx) * ax.rx + (y - ly) * ax.ry;
+    if (s <= a + 0.5 || s >= b - 0.5 || r < lo - 0.5 || r > hi + 0.5) continue;
+    const [X, Y] = at(Math.max(lo, Math.min(hi, r))).map(Math.round), q = (Y * img.width + X) * 4;
+    colors.set(img.colors.subarray(q, q + 4), (y * img.width + x) * 4);
+  }
+  return { width: img.width, height: img.height, colors };
+}
+
+/** A flail's picture held (heldPicture): its chain and ball split off the handle - the px more than 3 px off the
+ *  handle's line - as `chain`, hung from the handle's head end (x, y) along its own way (dx, dy) for `len` px; the
+ *  handle alone as `handle`. The picture as it was where it has no chain. Pure. @param {any} P */
+export function heldChain(P) {
+  const { img } = P, chain = Uint8Array.from(img.colors), handle = Uint8Array.from(img.colors);
+  let top = -Infinity, n = 0, cx = 0, cy = 0;
+  for (let y = 0; y < img.height; y++) for (let x = 0; x < img.width; x++) {
+    const i = (y * img.width + x) * 4;
+    if (img.colors[i + 3] <= 127) { chain[i + 3] = 0; continue; }
+    const s = (x - P.gx) * P.ux + (y - P.gy) * P.uy, r = (x - P.gx) * P.rx + (y - P.gy) * P.ry;
+    if (Math.abs(r) > 3 && s > 0) { handle[i + 3] = 0; n++; cx += x; cy += y; } else { chain[i + 3] = 0; if (s > top) top = s; }
+  }
+  if (n < 8 || !(top > 0)) return P;
+  const x = P.gx + P.ux * top, y = P.gy + P.uy * top, D = Math.hypot(cx / n - x, cy / n - y) || 1;
+  const dx = (cx / n - x) / D, dy = (cy / n - y) / D;
+  let len = 0, half = 0;
+  for (let py = 0; py < img.height; py++) for (let px = 0; px < img.width; px++) {
+    if (chain[(py * img.width + px) * 4 + 3] <= 127) continue;
+    len = Math.max(len, (px - x) * dx + (py - y) * dy); half = Math.max(half, Math.abs((px - x) * dy - (py - y) * dx));
+  }
+  const pic = (colors) => ({ width: img.width, height: img.height, colors });
+  return { ...P, handle: pic(handle), chain: { img: pic(chain), x, y, dx, dy, len: len + 1, half: half + 1 } };
 }
 
 /** Does the axis's line run through a band wider than a string: as many px 1.5 to 4 px off it as on it? */
@@ -422,8 +468,8 @@ const depthOf = (fr) => { let v = _depth.get(fr); if (!v) { v = settleDepth(fr.d
  * weapon stays behind it (drawn only into open air); the fist round the grip covers its handle.
  * @param {{width:number,height:number,data:Uint8Array}} out @param {any} fr the frame's rig (weaponRigOf)
  * @param {string} code the weapon code ('ls7') @param {number} len the body's hammer length, px @param {number} view 0..4
- * @param {{bow?:number, pic?:any, cm?:number}} [art] the body's own bow (tip to tip, px); the weapon's paper-doll picture
- *   held (heldPicture, heldBow) and the body's px a centimetre (`cm`) it is drawn at - else the drawn shape
+ * @param {{bow?:number, pic?:any, cm?:number, swing?:boolean}} [art] the body's own bow (tip to tip, px); the weapon's
+ *   paper-doll picture held and the body's px a centimetre (`cm`) - else the drawn shape; `swing` an attack's frame
  */
 export function drawWeapon(out, fr, code, len, view = 2, art = {}) {
   const shape = code.slice(0, 2), metal = Number(code.slice(2)) || 0, pic = art.cm > 0 ? art.pic ?? null : null;
@@ -448,7 +494,14 @@ export function drawWeapon(out, fr, code, len, view = 2, art = {}) {
   const side = fr.side || 1;
   // a flail's chain hangs: its heavier side down the picture, whatever the hammer's face
   const face = shape === 'fl' || shape === 'lf' ? (ny >= 0 ? 1 : -1) : side;
-  if (pic) return drawPicture(out, pic, { qx, qy, ux, uy, nx, ny, along: /** @type {number} */ (art.cm) * f, across: /** @type {number} */ (art.cm), side: face }, shown);
+  if (pic) {
+    const L = { qx, qy, ux, uy, nx, ny, along: /** @type {number} */ (art.cm) * f, across: /** @type {number} */ (art.cm), side: face };
+    // the doll's hand gap: its handle, where no fist of the art's covers it
+    if (pic.bridge) drawPicture(out, pic, L, (a, proj) => !a && shown(a, proj), pic.bridge);
+    if (!pic.chain || art.swing) return drawPicture(out, pic, L, shown);   // a swing flings the chain out with the picture
+    drawPicture(out, pic, L, shown, pic.handle);
+    return drawChain(out, pic, L, shown);
+  }
   const parts = SHAPES[shape];
   if (!parts) return;
   const sMin = Math.min(...parts.map((p) => p.from)), sMax = Math.max(...parts.map((p) => p.to));
@@ -490,15 +543,18 @@ export function drawWeapon(out, fr, code, len, view = 2, art = {}) {
 }
 
 /** Sample a held picture over one px: the mean colour of its opaque samples where a third of them are, else null.
- *  `at(x, y)` answers the picture's point for a sample of the composed picture. */
-function samplePicture(img, x, y, n, at) {
+ *  `at(x, y)` answers the picture's point for a sample of the composed picture; a sample `spread` px either side across
+ *  the screen counts as its own (a thing thinner than the picture draws it). */
+function samplePicture(img, x, y, n, at, spread = 0) {
   let k = 0, R = 0, G = 0, B = 0;
-  for (let sy = 0; sy < n; sy++) for (let sx = 0; sx < n; sx++) {
-    const [px, py] = at(x + (sx + 0.5) / n, y + (sy + 0.5) / n), X = Math.round(px), Y = Math.round(py);
+  const offs = spread > 0 ? [0, -spread, spread, -spread / 2, spread / 2] : [0];
+  for (let sy = 0; sy < n; sy++) for (let sx = 0; sx < n; sx++) for (const o of offs) {
+    const [px, py] = at(x + (sx + 0.5) / n + o, y + (sy + 0.5) / n), X = Math.round(px), Y = Math.round(py);
     if (X < 0 || Y < 0 || X >= img.width || Y >= img.height) continue;
     const q = (Y * img.width + X) * 4;
     if (img.colors[q + 3] <= 127) continue;
     k++; R += img.colors[q]; G += img.colors[q + 1]; B += img.colors[q + 2];
+    break;
   }
   return k * 3 >= n * n ? [R / k, G / k, B / k] : null;
 }
@@ -511,7 +567,7 @@ function samplePicture(img, x, y, n, at) {
  * @param {{qx:number,qy:number,ux:number,uy:number,nx:number,ny:number,along:number,across:number,side:number}} L
  * @param {(alpha:number, proj:number) => boolean} shown
  */
-function drawPicture(out, P, L, shown) {
+function drawPicture(out, P, L, shown, img = P.img) {
   const w = out.width, h = out.height, d = out.data, sg = L.side >= 0 ? 1 : -1;
   const ends = [P.from, P.to].map((s) => [L.qx + L.ux * s * L.along, L.qy + L.uy * s * L.along]), wide = P.half * L.across + 1;
   const x0 = Math.max(0, Math.floor(Math.min(ends[0][0], ends[1][0]) - wide)), x1 = Math.min(w - 1, Math.ceil(Math.max(ends[0][0], ends[1][0]) + wide));
@@ -524,7 +580,28 @@ function drawPicture(out, P, L, shown) {
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
     const i = (y * w + x) * 4;
     if (!shown(d[i + 3], (x + 0.5 - L.qx) * L.ux + (y + 0.5 - L.qy) * L.uy)) continue;   // the body is in front here
-    const c = samplePicture(P.img, x, y, n, at);
+    const c = samplePicture(img, x, y, n, at, 0.25);   // a handle a picture px wide keeps a px on screen
+    if (!c) continue;
+    d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255;
+  }
+  return out;
+}
+
+/** A flail's chain (heldChain) hung straight down from its handle's head end, as drawPicture laid the handle: unshortened,
+ *  at the head end's depth. */
+function drawChain(out, P, L, shown) {
+  const C = P.chain, w = out.width, h = out.height, d = out.data, k = L.across, sg = L.side >= 0 ? 1 : -1;
+  const rs = (C.x - P.gx) * P.ux + (C.y - P.gy) * P.uy, rr = ((C.x - P.gx) * P.rx + (C.y - P.gy) * P.ry) * sg;
+  const hx = L.qx + L.ux * rs * L.along + L.nx * rr * k, hy = L.qy + L.uy * rs * L.along + L.ny * rr * k, proj = rs * L.along;
+  const wide = C.half * k + 1;
+  const x0 = Math.max(0, Math.floor(hx - wide)), x1 = Math.min(w - 1, Math.ceil(hx + wide));
+  const y0 = Math.max(0, Math.floor(hy - 1)), y1 = Math.min(h - 1, Math.ceil(hy + C.len * k + 1));
+  const n = Math.max(3, Math.min(12, Math.ceil(2 / k)));
+  const at = (x, y) => { const c = (y - hy) / k, v = (x - hx) / k; return [C.x + C.dx * c - C.dy * v, C.y + C.dy * c + C.dx * v]; };
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+    const i = (y * w + x) * 4;
+    if (!shown(d[i + 3], proj)) continue;
+    const c = samplePicture(C.img, x, y, n, at, 0.3);   // a chain is round: a px wide at the least, from any side
     if (!c) continue;
     d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255;
   }
@@ -542,6 +619,7 @@ function drawBowPicture(out, bow, P, view, tips) {
   const x0 = Math.max(0, Math.floor(hx - reach * Math.abs(lean) - back - 2)), x1 = Math.min(w - 1, Math.ceil(hx + reach * Math.abs(lean) + back + 2));
   const y0 = Math.max(0, Math.floor(hy - reach * up - 1)), y1 = Math.min(h - 1, Math.ceil(hy + reach * up + 1));
   const n = Math.max(3, Math.min(12, Math.ceil(2 / (cm * Math.abs(bx)))));
+  const spread = Math.max(0.3, cm * Math.sqrt(1 - bx * bx));   // the limb's own width out of the bow's plane: edge on, a line
   const at = (x, y) => {
     const s = (hy - y) / (cm * up), r = (x - hx - s * cm * lean) / (cm * bx), sl = Math.abs(s) * P.long;   // the longer limb, both ways
     return [P.gx + P.ux * sl + P.rx * r, P.gy + P.uy * sl + P.ry * r];
@@ -549,7 +627,7 @@ function drawBowPicture(out, bow, P, view, tips) {
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
     const i = (y * w + x) * 4;
     if (bowHidden(d[i + 3], before, x + 0.5 - hx, y + 0.5 - hy)) continue;
-    const c = samplePicture(P.img, x, y, n, at);
+    const c = samplePicture(P.img, x, y, n, at, spread);
     if (!c) continue;
     d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255;
   }
@@ -631,14 +709,15 @@ export function maskTile(strip, top = 'l') {
   return m;
 }
 /** Each hole px's own source px in one family's tile (the rig writes (dx, dy) + 128 in red and green, blue 255 where
- *  there is one), -1 where it has none. */
+ *  there is one), -1 where it has none, -2 where the rig marks it open air (blue 1..127: a head out past the hand). */
 export function fillFrom(strip, top = 'l') {
   const tiles = rig.families.length, w = strip.width / tiles, h = strip.height;
   const k = Math.max(0, rig.families.indexOf({ l: 'leather', c: 'chain', p: 'plate' }[top] ?? 'leather'));
   const from = new Int32Array(w * h).fill(-1);
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     const i = (y * strip.width + k * w + x) * 4, d = strip.data;
-    if (d[i + 3] < 128 || d[i + 2] < 128) continue;
+    if (d[i + 3] < 128) continue;
+    if (d[i + 2] < 128) { if (d[i + 2]) from[y * w + x] = -2; continue; }
     const X = x + d[i] - 128, Y = y + d[i + 1] - 128;
     if (X >= 0 && Y >= 0 && X < w && Y < h) from[y * w + x] = Y * w + X;
   }
@@ -649,6 +728,7 @@ export const weaponLen = (body) => rig[body]?.len ?? 30;
 export const bowLen = (body) => rig[body]?.bow ?? 70;
 /** The body's px a centimetre, for a paper-doll picture (a picture px is a centimetre, eotbHolster PAPERDOLL_MPP). */
 export const weaponCm = (body) => rig[body]?.cm ?? 0.6;
+const flailPicture = (code, P) => (P && /^(fl|lf)/.test(code) ? heldChain(P) : P);
 const _held = new WeakMap();   // the door -> `${body}:${code}` -> Promise of the held picture
 /** A weapon code's paper-doll picture held (heldPicture, a bow's heldBow), once a door, body and code - or null, asked
  *  again next time. `load` the picture's door (loadHeldPicture). */
@@ -657,7 +737,7 @@ export function heldPictureOf(code, body, load = loadHeldPicture) {
   let byKey = _held.get(load);
   if (!byKey) _held.set(load, (byKey = new Map()));
   if (!byKey.has(key)) {
-    const p = Promise.resolve().then(() => load(code, body)).then((img) => (img ? (isBowCode(code) ? heldBow(img) : heldPicture(img)) : null), () => null);
+    const p = Promise.resolve().then(() => load(code, body)).then((img) => (img ? (isBowCode(code) ? heldBow(img) : flailPicture(code, heldPicture(img))) : null), () => null);
     byKey.set(key, p);
     p.then((held) => { if (!held) byKey.delete(key); });
   }

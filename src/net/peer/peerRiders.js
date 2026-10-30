@@ -29,7 +29,7 @@ import { orientationFor, portrayedYaw, frameCount, frameTime, chooseTable, speed
 import { getMeleeWeaponAnimTime } from '../../characters/weaponStates.js';
 import { EOTB_FOOT_SET_COUNT } from '../../player/classSkins.js';   // PEERFX3: a class skin is a set past the mod's
 import { spriteMarks, spriteArmsSeen } from '../../render/armoryPose.js';   // ARMORY: where the body stands in its own picture
-import { spriteFor, eotbSpriteUrl, spriteSize, spriteOffset, spriteArtScale, flipRows, worldOrderColors, lookedPixels } from '../../player/eyeOfTheBeholder/eotbSprite.js';
+import { spriteFor, eotbSpriteUrl, spriteSize, spriteOffset, spriteArtScale, flipRows, worldOrderColors, worldOrderLayered, lookedPixels } from '../../player/eyeOfTheBeholder/eotbSprite.js';
 import { decodePng } from '../../systems/textureReplacement.js';
 import { isLayeredKey, decodeLayered, outfitOfItems, layeredGenderOf, LAYERED_OWN } from '../../player/eyeOfTheBeholder/layeredArmor.js';   // WORN-ARMOUR: a walker in the armour it wears
 import { modSetting } from '../../systems/modSettings.js';   // LAYERED-PEERS: whether this player wears Layered Gearing
@@ -41,7 +41,7 @@ import {
 import {
   createHolsterArt, loadHolsterPicture, createSpriteHolster, hangSpriteHolster, mintSpriteHolster, dropSpriteHolster, holstersOnBack, holsterItemOfLook,
 } from '../../player/eyeOfTheBeholder/eotbHolster.js';   // BACK-HOLSTER: the sheathed weapon on every EOTB sprite's back, one home
-import { peerWeaponGlow, createSpriteGlow, setSpriteGlow } from '../../player/eyeOfTheBeholder/eotbGlow.js';   // BACK-HOLSTER GLOW: its glow, on the back and in the hand
+import { peerWeaponGlow, createSpriteGlow, setSpriteGlow, heldOf, heldGlowRecord, evictHeld } from '../../player/eyeOfTheBeholder/eotbGlow.js';   // BACK-HOLSTER GLOW: its glow, on the back and in the hand
 import { quadHalfDiagonal } from '../../render/bounds.js';   // AUDIT FLICKER R1: a sprite's reach, as the batch was made with
 import { stepPeerPace } from './peerPace.js';   // HT-WAIST-BACK: the pace off the drawn pose, MWBODY1's law
 import { peerBodyYaw, peerMoving } from './peerClimb.js';   // CLIMB5: a walker on the wall faces it and takes no stride
@@ -78,7 +78,7 @@ export function spriteLookOf(s) {
 }
 
 async function decodeUrl(url) {
-  if (isLayeredKey(url)) return worldOrderColors(await decodeLayered(url, decodePng), { owned: true });   // WORN-ARMOUR: composed from its strip
+  if (isLayeredKey(url)) return worldOrderLayered(await decodeLayered(url, decodePng));   // WORN-ARMOUR: composed from its strip
   const res = await fetch(url);
   if (!res.ok) throw new Error(`${url}: ${res.status}`);
   return worldOrderColors(await decodePng(new Uint8Array(await res.arrayBuffer())), { owned: true });   // PERF-PEERS5: the decode is this door's alone - turned in its own bytes
@@ -125,7 +125,7 @@ export function createEotbArt({ renderer = null, urlFor = eotbSpriteUrl, decode 
     const old = [...looks].filter(([, l]) => idle(l)).sort((a, b) => a[1].used - b[1].used);
     for (const [code, l] of old.slice(0, looks.size - RIDER_LOOKS_KEPT)) {
       looks.delete(code);
-      for (const key of l.keys) { tex.delete(key); renderer?.evictTexture?.(key.replace(':', '_')); }   // the cache's `archive:rec` is the renderer's `archive_rec`
+      for (const key of l.keys) { tex.delete(key); renderer?.evictTexture?.(key.replace(':', '_')); evictHeld(renderer, key.replace(':', '_')); }   // the cache's `archive:rec` is the renderer's `archive_rec`; LAYERED-GLOW: and its weapon's picture
     }
   }
   function ensure(s) {
@@ -150,7 +150,7 @@ export function createEotbArt({ renderer = null, urlFor = eotbSpriteUrl, decode 
       const { width, height, colors } = lookedPixels(s, raw);   // COATS1: a rider's mount in its look
       const px = s.mirror ? flipRows(colors, width, height) : colors;
       renderer.uploadTexture(s.archive, s.rec, { width, height, colors: px });
-      return { w: width, h: height, marks: spriteMarks(px, width, height, { arms: spriteArmsSeen(s.view), art: spriteArtScale(s.archive, s.record) }) };   // ARMORY: the body's place in the picture, read once
+      return { w: width, h: height, marks: spriteMarks(px, width, height, { arms: spriteArmsSeen(s.view), art: spriteArtScale(s.archive, s.record) }), held: heldOf(px, raw.held, width, height, s.mirror) };   // ARMORY: the body's place in the picture, read once; LAYERED-GLOW: the weapon's own px
     });
     tex.set(k, p);
     p.then((r) => { if (tex.get(k) === p) tex.set(k, r); }, () => { if (tex.get(k) === p) tex.set(k, { failedAt: clock() }); });
@@ -200,7 +200,7 @@ function figureLayer(art) {
         if (r.batch.bounds) r.batch.bounds[3] = quadHalfDiagonal(size);
         r.batchKey = key;
       }
-      r.size = size; r.xml = xml; r.mirror = s.mirror; r.g = g; r.px = up.h; r.form = mode?.riding ? 'rider' : mode?.transformed ? 'beast' : 'walker'; r.marks = up.marks ?? null; r.pxW = up.w; r.artScale = spriteArtScale(s.archive, s.record);   // AUDIT 3 (SERAPH-WINGS): its pixels tall and its form - an aura's figure (figureOf); ARMORY: and where the body stands in its picture
+      r.size = size; r.xml = xml; r.mirror = s.mirror; r.g = g; r.px = up.h; r.form = mode?.riding ? 'rider' : mode?.transformed ? 'beast' : 'walker'; r.marks = up.marks ?? null; r.pxW = up.w; r.held = up.held ?? null; r.artScale = spriteArtScale(s.archive, s.record);   // AUDIT 3 (SERAPH-WINGS): its pixels tall and its form - an aura's figure (figureOf); ARMORY: and where the body stands in its picture
       if (r.batch) r.batch.noShadow = g > 1;
     }
     if (r.batch && r.xml) {
@@ -592,13 +592,15 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
   }
 
   /** BACK-HOLSTER GLOW: a walker whose weapon is drawn (`wd`) wears its glow round the whole sprite - the hand in use's
-   *  word, or a bare fist's kit piece (peer.ak); never at a gathering act (its hands hold a tool), nor concealed. */
+   *  word, or a bare fist's kit piece (peer.ak); never at a gathering act (its hands hold a tool), nor concealed.
+   *  LAYERED-GLOW: a worn-armour walker's round its weapon alone (eotbGlow.js heldGlowRecord). */
   function glowInHand(r, peer, pose, right) {
     if (!pose.wd || gatherActOf(pose) || r.veil || !r.batch || !r.size || r.form !== 'walker' || !(r.px > 0)) return;
     const look = peerWeaponGlow(holsterItemOfLook(peer.look?.items, !!pose.lh), peer.ak ?? null);
     if (!look) return;
-    const art = r.artScale > 0 ? r.artScale : 1;
-    glows.push(setSpriteGlow(r.glowHand ??= createSpriteGlow(peer.id), r.batch.archive, r.batch.record, look, r.batch.origin, right, UP, r.size.w, r.size.h, r.pxW / art, r.px / art));
+    const art = r.artScale > 0 ? r.artScale : 1, held = heldGlowRecord(store.renderer, r.batch.archive, r.batch.record, r.held, r.pxW, r.px);
+    if (held === '') return;
+    glows.push(setSpriteGlow(r.glowHand ??= createSpriteGlow(peer.id), r.batch.archive, held ?? r.batch.record, look, r.batch.origin, right, UP, r.size.w, r.size.h, r.pxW / art, r.px / art));
   }
 
   /** HT-WAIST-BACK: draw this frame's lanterns, each on its own tilted basis - the hosts call it beside the bodies

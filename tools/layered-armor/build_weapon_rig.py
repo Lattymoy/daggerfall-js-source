@@ -69,6 +69,9 @@ HEADS = {
              '15-0': (26, 48), '19-0': (55, 61)},
     'female': {'6-0': (82, 16), '8-2': (65, 71), '15-0': (40, 88)},
 }
+# Hole px that are open air whatever their edge says (x0, y0, x1, y1 inclusive): a head out past the hand, over a dark
+# lining the fill would carry up into it. The tile's blue is 64 there, and the runtime clears them.
+AIR = {('female', '4-0'): [(76, 79, 93, 101)]}
 CUT = {('female', '1-1'): [(76, 83, 81, 90)], ('female', '5-1'): [(57, 34, 63, 41)]}
 EXTRA = {('male', '1-0'): [(36, 64, 41, 66)], ('male', '1-1'): [(33, 60, 41, 62), (42, 62, 46, 64)],
          ('male', '1-2'): [(48, 64, 49, 66)], ('male', '1-3'): [(36, 61, 41, 63), (42, 61, 42, 61)],
@@ -99,7 +102,7 @@ HAND = {
     ('female', '3-1'): dict(q=(86.5, 90.5), t=(89.5, 93), lit=[], all=[(85, 89, 94, 97)]),
     ('female', '3-3'): dict(q=(86, 90), t=(88.5, 93), lit=[], all=[(85, 88, 92, 97)]),
     ('female', '4-0'): dict(q=(81.5, 91), t=(86, 86.5), lit=[(73, 93, 80, 97), (82, 88, 83, 93)],
-                            all=[(81, 80, 91, 87), (83, 87, 91, 93)]),
+                            all=[(81, 80, 91, 87), (83, 87, 91, 93), (74, 94, 89, 101)]),
     ('female', '4-1'): dict(q=(82, 88.5), t=(84, 92.5), lit=[], all=[(80, 89, 88, 96)]),
     ('female', '4-2'): dict(q=(79, 90.5), t=(81, 95), lit=[(76, 88, 81, 92)], all=[(77, 92, 85, 99)]),
     ('female', '4-3'): dict(q=(81.5, 88.5), t=(83, 93.5), lit=[(79, 82, 84, 90)], all=[(79, 90, 86, 97)]),
@@ -120,7 +123,7 @@ SHAFT = {
     ('male', '15-0'): (10.5, 58.5, 18.6, 50.9, 'f'), ('male', '16-0'): (28, 54, 18.9, 44.1, 'f'),
     ('male', '18-0'): (26.9, 50.5, 8.3, 41.7, None),
     ('female', '0-0'): (50, 88, 44.2, 86.8, 'f'), ('female', '0-1'): (51, 82, 52.9, 71.3, 'f'),
-    ('female', '0-3'): (48.5, 84, 49.4, 74.2, 'f'), ('female', '3-0'): (87.2, 93.3, 73.1, 87.3, 'b'),
+    ('female', '0-2'): (52, 85, 54.1, 74.7, 'f'), ('female', '0-3'): (48.5, 84, 49.4, 74.2, 'f'), ('female', '3-0'): (87.2, 93.3, 73.1, 87.3, 'b'),
     ('female', '3-1'): (83.7, 89.4, 60.7, 80.3, 'b'), ('female', '3-2'): (64.5, 78.5, 48.3, 71.1, None),
     ('female', '3-3'): (83.4, 88.5, 63.8, 76.8, 'b'), ('female', '4-0'): (81.5, 91, 92.6, 79.9, 'x'), ('female', '4-1'): (82, 88.5, 75.0, 74.5, 'x'),
     ('female', '4-2'): (79, 90.5, 72.6, 76.2, 'x'), ('female', '4-3'): (81.5, 88.5, 77.0, 73.5, 'x'),
@@ -129,31 +132,29 @@ SHAFT = {
     ('female', '8-2'): (63, 68, 87.4, 69.4, 'b'),   # a swing's: the fist is out at the left, the hammer behind the body
 }
 # The free (left) hand that carries a bow in the walk and the idle - the shot's own bow hand: (x, y, in front of the
-# body). Read from the bard sprites' gloves (TEXTURE.484, .483 - one render with the strips) and the hand's skin; where
-# the art hides that hand (the side views), its place half a stride on, behind the body.
+# body). Read from the bard sprites' gloves (TEXTURE.484, .483 - one render with the strips) and the hand's skin.
 BOW_HAND = {
     'male': {'0-0': (64.3, 65.3, 1), '0-1': (66.0, 60.0, 1), '0-2': (68.4, 62.9, 1), '0-3': (64.4, 61.7, 1),
              '1-0': (83.3, 65.4, 1), '1-1': (76.2, 59.9, 1), '1-2': (65.4, 62.1, 1), '1-3': (77.3, 60.8, 1),
-             '2-0': (36.6, 57.1, 0), '2-1': (45.7, 58.7, 0), '2-2': (43.5, 60.5, 0), '2-3': (42.9, 57.0, 0),
-             '3-0': (13.9, 62.6, 1), '3-1': (8.9, 56.4, 1), '3-2': (9.4, 56.4, 1), '3-3': (13.8, 57.6, 1),
+             '3-0': (13.9, 62.6, 0), '3-1': (8.9, 56.4, 0), '3-2': (9.4, 56.4, 0), '3-3': (13.8, 57.6, 0),
              '4-0': (1.7, 58.7, 0), '4-1': (4.0, 53.0, 0), '4-2': (14.0, 61.2, 0), '4-3': (3.0, 55.5, 0),
-             '15-0': (53.8, 61.0, 1), '16-0': (79.7, 60.6, 1), '17-0': (44.0, 58.0, 0), '18-0': (55.0, 64.0, 0),
+             '15-0': (53.8, 61.0, 1), '16-0': (79.7, 60.6, 1),
              '19-0': (8.2, 59.5, 0)},
     'female': {'0-0': (89.2, 90.3, 1), '0-1': (91.8, 87.1, 1), '0-2': (88.4, 91.9, 1), '0-3': (92.2, 87.3, 1),
                '1-0': (90.5, 87.5, 1), '1-1': (99.0, 87.0, 1), '1-2': (102.0, 92.0, 1), '1-3': (99.5, 86.0, 1),
-               '2-0': (74.8, 91.1, 0), '2-1': (73.9, 87.8, 0), '2-2': (79.0, 88.7, 0), '2-3': (72.4, 87.6, 0),
-               '3-0': (48.8, 88.4, 1), '3-1': (54.0, 87.6, 1), '3-2': (90.0, 90.0, 0), '3-3': (54.7, 87.8, 1),
+               '3-0': (48.8, 88.4, 0), '3-1': (54.0, 87.6, 0), '3-3': (54.7, 87.8, 0),
                '4-0': (44.0, 91.0, 0), '4-1': (39.8, 86.8, 0), '4-2': (43.4, 91.8, 0), '4-3': (39.2, 86.2, 0),
-               '15-0': (88.7, 90.5, 1), '16-0': (98.1, 90.3, 1), '17-0': (70.0, 88.0, 0), '18-0': (88.0, 93.0, 0),
+               '15-0': (88.7, 90.5, 1), '16-0': (98.1, 90.3, 1),
                '19-0': (40.0, 89.5, 0)},
 }
 # The side views hide the free hand behind the body: there, as Daggerfall's side views hold a weapon, the bow is in the
-# near hand, the one the hammer was in.
+# near hand, the one the hammer was in. The back-3/4 views draw the bow behind the body; where the art hides that hand
+# too (the idle, the female's 3-2) the body hides the bow, and none is drawn.
 BOW_NEAR = ('2-0', '2-1', '2-2', '2-3', '17-0')
 # The body's own bow (the loose's art, records 20-24), tip to tip, px: the long bow; the short bow is three quarters.
 BOW_PX = {'male': 75, 'female': 78}
 # Front views whose hole is the body's other side, mirrored: the fill copies it, alpha and all.
-MIRROR = {('male', '0-0'), ('male', '0-1'), ('male', '0-3'), ('male', '15-0')} | {('female', f'0-{i}') for i in (0, 1, 3)} | {('female', '15-0')}
+MIRROR = {('male', '0-0'), ('male', '0-1'), ('male', '0-3'), ('male', '15-0')} | {('female', f'0-{i}') for i in range(4)} | {('female', '15-0')}
 
 
 def combos(body): return sorted(os.listdir(f'{V}/{body}'))
@@ -461,9 +462,13 @@ def main(only=None):
                             'hr': round(g['hr'], 1), 'side': g['side'], 'd': depth(g), 'fill': exemplar(fam_imgs, g['m'], mirror=(body, rf) in MIRROR)})
                 lengths.append(math.hypot(g['t'][0] - g['q'][0], g['t'][1] - g['q'][1]))
                 tile = np.zeros(g['m'].shape + (4,), np.uint8); tile[g['m']] = (128, 128, 0, 255)
+                yy, xx = np.mgrid[0:g['m'].shape[0], 0:g['m'].shape[1]]; air = np.zeros(g['m'].shape, bool)
+                for x0, y0, x1, y1 in AIR.get((body, rf), []): air |= (xx >= x0) & (xx <= x1) & (yy >= y0) & (yy <= y1)
+                air &= g['m']
                 if (body, rf) not in MIRROR:   # the px each body px of the hole copies: (dx, dy) + 128, and 255 where one is
-                    off, has = inpaint(fam_imgs, g['m'], body_side(g['L'], g['m']))
+                    off, has = inpaint(fam_imgs, g['m'], body_side(g['L'], g['m']) & ~air)
                     tile[has, 0] = off[has, 0] + 128; tile[has, 1] = off[has, 1] + 128; tile[has, 2] = 255
+                tile[air, 2] = 64
                 tiles.append(tile)
             Image.fromarray(np.concatenate(tiles, axis=1)).save(f'{V}/weapon/{body}/{rf}.png', optimize=True)
             frames[rf] = per
