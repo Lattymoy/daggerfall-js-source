@@ -74,6 +74,16 @@ test('STAGE 7: a town is safe, a road keeps its base band, a dungeon is deeper, 
   assert.ok(pveZoneAt({ px: cx, py: cy, region: CYRODIIL_REGION }).tier >= ZONE_BANDS.length - 2, 'the heart stands at the top');
 });
 
+test('SAFE-ROAD: Cyrodiil\'s roads hold no hostile foe, so the Imperial start walks out of the heart; other roads keep their patrols', () => {
+  const [cx, cy] = zoneCenterPx().map(Math.floor);
+  const road = pveZoneAt({ px: cx, py: cy, region: CYRODIIL_REGION, place: 'road' });
+  assert.deepEqual([road.safe, road.area], [true, 'Imperial']);
+  assert.equal(pveZoneAt({ px: cx, py: cy, region: CYRODIIL_REGION }).safe, false, 'the wild is not');
+  const t = spawnTable({ px: cx, py: cy, region: CYRODIIL_REGION, province: 'Imperial', climate: CLIMATES.Woodlands, place: 'road', factions: ['bandits'] });
+  for (const pop of ['farming', 'encounter', 'group', 'patrol', 'rare']) assert.deepEqual(t.lists[pop], [], pop);
+  assert.equal(pveZoneAt({ px: cx, py: cy, region: SKYRIM, place: 'road' }).safe, false);
+});
+
 test('STAGE 7: the recommended score climbs with the band and is advice only', () => {
   const s = ZONE_BANDS.map(recommendedScore);
   for (let i = 1; i < s.length; i++) assert.ok(s[i] > s[i - 1]);

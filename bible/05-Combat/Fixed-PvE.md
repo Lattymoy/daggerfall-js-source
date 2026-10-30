@@ -143,6 +143,10 @@ City. A place's progress is its distance from the start over that plus its dista
 bands, so the back country stands mid-way and the center at the top. Cyrodiil, whose start is the center, reads its
 distance against the others' mean reach and stands high throughout.
 
+SAFE-ROAD ("make the road safe out of the pvp
+zone", "enemys avoid roads"): the Imperial start wakes at the center, so Cyrodiil's roads hold no hostile population
+and foes keep off them; a new character is under the PvP zone's level 30 and walks out on them.
+
 Each 96-pixel district steps one band down or up from its key alone. Four districts in a hundred are high-level
 enclaves, three bands up, with a warning; ten are farming grounds. A road keeps its base band, a town is safe, a dungeon
 is one band deeper and the old and undead ones two. The recommended Combat Score is advice and changes no foe.
