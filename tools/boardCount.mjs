@@ -1,10 +1,10 @@
-// NOTICE1b's MEASURE - BOARD-COUNT (PROF0 10.1: "Every seat and hub has one. A seat or hub whose blocks place no board
-// gets one ... SEAT-COUNT counts them"). The Notice Board is a town's RUMOUR boards' (BOUNTY1 took every other one,
-// systems/bounty/bountyBoard.js questBoardIndices), so a hub has a Notice Board wherever its blocks place at least one
-// bulletin board. This walks MAPS.BSA and BLOCKS.BSA from the player's own ARENA2 exactly as the world host's boot pass
-// does (the game's own rows, regionHubs.js pickRegionHubs), lays out every hub (world/locationLayout.js) and prints
-// each: its region, its name, whether it is a capital, how many bulletin boards its blocks place, how many of them
-// are bounty boards and how many rumour boards - and the hubs with none, which are NOTICE1b's whole list.
+// NOTICE1b's MEASURE - BOARD-COUNT (PROF0 10.1: "Every seat and hub has one"): how many bulletin boards a hub's blocks
+// place, split as BOUNTY1 split them (systems/bounty/bountyBoard.js questBoardIndices). NOTICE-PANEL (2026-10-29) stands
+// none of them - every settlement's Notice Board is its town panel - so this is DFU's own count, the one its field report
+// read (bible/01-Overview/bugs/Field-Bugs-2026-10-29g.md: only a city wall's blocks place one). It walks MAPS.BSA and
+// BLOCKS.BSA from the player's own ARENA2 as the world host's boot pass does (regionHubs.js pickRegionHubs), lays out
+// every hub (world/locationLayout.js) and prints each: its region, its name, whether it is a capital, how many boards
+// its blocks place, how many of them bounty boards and how many rumour boards - and the hubs with none.
 //
 // It writes nothing to the tree; Mac runs it (the servers and this lane hold no ARENA2).
 //
@@ -74,5 +74,5 @@ if (isMain(import.meta.url)) {
   }
   const none = hubs.filter((h) => h.boards === 0);
   const failed = hubs.filter((h) => h.boards < 0);
-  console.log(`\n${hubs.length} hubs; ${none.length} with no Notice Board${none.length ? `: ${none.map((h) => h.name).join(', ')}` : ''}${failed.length ? `; ${failed.length} not measured: ${failed.map((h) => h.name).join(', ')}` : ''}.`);
+  console.log(`\n${hubs.length} hubs; ${none.length} whose blocks place no board (DFU's own - the town panel's Notice Board stands in every one)${none.length ? `: ${none.map((h) => h.name).join(', ')}` : ''}${failed.length ? `; ${failed.length} not measured: ${failed.map((h) => h.name).join(', ')}` : ''}.`);
 }

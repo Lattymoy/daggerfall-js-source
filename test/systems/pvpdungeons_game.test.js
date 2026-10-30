@@ -10,7 +10,6 @@ import { curseOf, healCurseOffer, healCursePaid, healCursePrice, HEAL_CURSE_BASE
 import { restAilmentLines } from '../../src/systems/rest/restWarning.js';
 import { readFileSync } from 'node:fs';
 import { equipItem, swapHands, canSwapHands, equipTableOf, EQUIP_SLOTS } from '../../src/systems/equip.js';
-import { gothwayNorthSpots, isGothwayGarden } from '../../src/systems/gothwayBoards.js';
 import { planStore, REFUSAL, isKeptSpellbook } from '../../src/systems/item/itemTransfer.js';   // KEEP-SPELLBOOK
 import { shiftDrop } from '../../src/systems/physicalItems.js';
 import { setLocked } from '../../src/systems/item/itemLock.js';
@@ -119,22 +118,6 @@ test('SWAP-HANDS: two one-handers trade hands; one crosses to the empty hand; a 
   t2.items.push(claymore);
   const r2 = equipItem(t2, claymore);
   if (equipTableOf(t2)[EQUIP_SLOTS.RightHand] === claymore && canSwapHands(t2).ok === false) assert.match(canSwapHands(t2).why, /right hand/);
-});
-
-test('GOTHWAY-BOARDS: Gothway Garden alone; two boards at the NORTH entrance, one each side of the road in, inside the border, facing north; never in a wall', () => {
-  assert.equal(isGothwayGarden('Gothway Garden'), true);
-  assert.equal(isGothwayGarden(' gothway garden '), true);
-  assert.equal(isGothwayGarden('Daggerfall'), false);
-  const W = 256, H = 256, cell = 1.6;
-  // a road down the middle (x 124..131) and another road off to the west; buildings either side of the middle one
-  const grid = (gx, gy) => ((gx >= 124 && gx <= 131) || (gx >= 20 && gx <= 23) ? 15 : (gx > 116 && gx < 124) || (gx > 131 && gx < 139) ? 0 : 7);
-  const [w, e] = gothwayNorthSpots(grid, W, H, cell);
-  assert.deepEqual([w.side, e.side], ['west', 'east']);
-  assert.ok(w.x < 124 * cell + cell && e.x > 131 * cell, 'either side of the middle road (the way in), not the far one');
-  assert.ok(w.z > (H - 8) * cell && w.z < H * cell, 'inside the north border');
-  for (const s of [w, e]) assert.notEqual(grid(Math.floor(s.x / cell), Math.floor(s.z / cell)), 0, 'never inside a wall');
-  assert.equal(w.yawDeg, 0, 'facing north, at whoever arrives');
-  assert.equal(gothwayNorthSpots(() => 0, W, H, cell), null, 'no way in: no boards');
 });
 
 import { wildGiantsAt, WILD_GIANT_COUNT, WILD_GIANT_LEG_MS, wildGiantRing } from '../../src/systems/wild/wildGiants.js';

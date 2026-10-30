@@ -593,8 +593,8 @@
   {
     "name": "AUQ-B5-zone-marked",
     "file": "src/systems/revenant/unquietMark.js",
-    "old": "entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout;",
-    "new": "entity?.unquiet === true && !entity.wildGiant && !entity.bout;",
+    "old": "entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout && !isEventFoe(entity);",
+    "new": "entity?.unquiet === true && !entity.wildGiant && !entity.bout && !isEventFoe(entity);",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js"
     ]
@@ -602,8 +602,8 @@
   {
     "name": "AUQ-B5-giant-marked",
     "file": "src/systems/revenant/unquietMark.js",
-    "old": "entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout;",
-    "new": "entity?.unquiet === true && !entity.wildFoe && !entity.bout;",
+    "old": "entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout && !isEventFoe(entity);",
+    "new": "entity?.unquiet === true && !entity.wildFoe && !entity.bout && !isEventFoe(entity);",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js"
     ]
@@ -611,8 +611,8 @@
   {
     "name": "AUQ-B5-sand-marked",
     "file": "src/systems/revenant/unquietMark.js",
-    "old": "entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout;",
-    "new": "entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant;",
+    "old": "entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout && !isEventFoe(entity);",
+    "new": "entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !isEventFoe(entity);",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js"
     ]
@@ -620,8 +620,8 @@
   {
     "name": "AUQ-B5-title-zone",
     "file": "src/systems/foeTitle.js",
-    "old": "entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout ?",
-    "new": "entity?.unquiet === true ?",
+    "old": "entity?.unquiet === true && !entity.wildFoe && !entity.wildGiant && !entity.bout && entity.eventFoe !== true ?",
+    "new": "entity?.unquiet === true && entity.eventFoe !== true ?",
     "tests": [
       "test/systems/revenant/auditunquiet.test.js"
     ]

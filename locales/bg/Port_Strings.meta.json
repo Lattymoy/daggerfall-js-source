@@ -20639,6 +20639,11 @@
   "tr": "a97186fe7b91",
   "by": "claude-in-session"
  },
+ "menu.hud.piece.town": {
+  "en": "44a78a1f2065",
+  "tr": "04280d3b3723",
+  "by": "claude-in-session"
+ },
  "menu.hud.preview.events": {
   "en": "ce6d32fffa51",
   "tr": "5e94c65ae1d3",
@@ -38179,6 +38184,21 @@
   "tr": "6b0594bde7c1",
   "by": "claude-in-session"
  },
+ "sea.cross.homeRow": {
+  "en": "d138c9ff8a76",
+  "tr": "0175fe6c10b6",
+  "by": "claude-in-session"
+ },
+ "sea.cross.landfall": {
+  "en": "d0992f50ef01",
+  "tr": "75e57519f839",
+  "by": "claude-in-session"
+ },
+ "sea.cross.openSea": {
+  "en": "a08cbe63d371",
+  "tr": "8e399d36784b",
+  "by": "claude-in-session"
+ },
  "sea.exchange.band": {
   "en": "80c476366bce",
   "tr": "03bcb2b45a4a",
@@ -41132,6 +41152,21 @@
  "town.econ.trend.rising": {
   "en": "26b01983c6f4",
   "tr": "c93b3cbe70ff",
+  "by": "claude-in-session"
+ },
+ "town.panel.bounty": {
+  "en": "9892acbb907d",
+  "tr": "6adc45a5c531",
+  "by": "claude-in-session"
+ },
+ "town.panel.new": {
+  "en": "c06b33d8318f",
+  "tr": "ade5e3b98358",
+  "by": "claude-in-session"
+ },
+ "town.panel.notice": {
+  "en": "69f02605072e",
+  "tr": "7a10e8cd03ae",
   "by": "claude-in-session"
  },
  "trade.counter.cost.get": {

@@ -32,7 +32,7 @@ import { playerBloodScreen, SCREEN_SPATTER_MIN } from '../bloodScreen.js';   // 
 import { bloodScreenOn } from '../../combat/blood/bloodSwitch.js';   // BLOOD2e: its row
 import { bloodAtlas, prewarmBloodAtlas, BLOOD_ATLAS_ARCHIVE, BLOOD_ATLAS_RECORD } from '../../combat/blood/bloodArt.js';   // BLOOD2e: the lens wears the marks' own atlas
 import { hudFade } from '../fadeLayer.js';   // D4: FadeBehaviour's target IS the HUD's parent panel
-import { drawHudLarge, dockedLargeHudHeight, largeHudEnabled } from './hudLarge.js';   // U45: the classic bottom bar - an ALTERNATIVE HUD, see below; E5: and the docked bar's height, the crosshair's re-centre term
+import { drawHudLarge, dockedLargeHudHeight, largeHudEnabled, LARGE_HUD_RECTS } from './hudLarge.js';   // U45: the classic bottom bar - an ALTERNATIVE HUD, see below; E5: and the docked bar's height, the crosshair's re-centre term
 import { cursorActive as freedCursor } from '../../player/pointerLock.js';   // BUFF-END: the freed mouse is the tooltip's gate too (DaggerfallHUD.cs:141-147)
 import { drawActiveSpells, activeSpellAt, createBlinkClock, hudPointer } from './hudActiveSpells.js';   // U46: the buff/debuff icon rows
 // VB1: the indicator rig (F148) and the colour swap (F149) - HUDVitals'
@@ -255,6 +255,20 @@ export async function loadHud({ fetchBytes, ImgFile, palette, renderer }) {
  *  makes a click fall through to the world. */
 let lastLargeHudBar = null;
 export const largeHudBar = () => lastLargeHudBar;
+/** NOTICE-PANEL (AUDIT FB1029g P6, P13): the classic compass as last drawn - the corner box, its Detect row above it, or
+ *  the large bar's - in its canvas's pixels, so the town panel stands on it; null while no classic HUD is drawn. */
+let lastCompassBox = /** @type {{ x: number, y: number, w: number, canvas: any } | null} */ (null);
+/** A compass box in the page's pixels: the right and bottom offsets of its top-right corner from a `vw` by `vh` viewport's
+ *  edges (its canvas's own pixels scaled to the canvas's place on the page), or null.
+ *  @param {{ x: number, y: number, w: number, canvas: any } | null} b @param {number} [vw] @param {number} [vh] */
+export function compassAnchorOf(b, vw, vh) {
+  const r = b?.canvas?.getBoundingClientRect?.();
+  if (!b || !r || !b.canvas.width || !b.canvas.height) return null;
+  const kx = r.width / b.canvas.width, ky = r.height / b.canvas.height;
+  return { right: Math.max(0, Math.round((vw ?? r.right) - (r.left + (b.x + b.w) * kx))), bottom: Math.max(0, Math.round((vh ?? r.bottom) - (r.top + b.y * ky))) };
+}
+/** ...the classic compass's, as last drawn. */
+export const classicCompassAnchor = () => compassAnchorOf(lastCompassBox, globalThis.innerWidth, globalThis.innerHeight);
 
 /** WORLD-HOVER: WHERE THE RETICLE IS, for anything that must stand
  *  beside it. This module's own comment already says the geometry
@@ -530,6 +544,7 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
     readied = null, weapon = null, weaponSheathed = true, quickUse = null, quickSwap = null, quickOffHand = null, quickSpell = null, quickSwitchHand = null } = {}) {   // PX30b: for the enhanced HUD's hand plaques; AUDIT 28 W2: the arrow counter's gate; AUDIT 64 F35: the host's previousWindow answer; QS3: the diamond's sheathe state and its two phone taps; QS6: the caption's spell chip press
   // RETRO-UI (FIELD BUGS 2026-10-03): under retro mode's pillarbox the HUD lays out in DFU's CustomScreenRect - the
   // pillarbox's canvas, drawn at its place (ui/uiScreen.js) - not over the black bars. Once: a UI canvas answers itself.
+  lastCompassBox = null;   // NOTICE-PANEL: set again only where a classic compass is drawn below
   const ui = uiCanvas(canvas);
   if (ui !== canvas) return onUiScreen(renderer, ui, () => drawHud(renderer, ui, art, vitals, heading01, dt, arguments[6]));
   // AUDIT 24 (wave 39): ShowPlayerDamage's red flash, under the bars.
@@ -782,6 +797,8 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
       ...largeHud,
       vitalsBars: { rig, skin, indicators },
     });
+    const cb = LARGE_HUD_RECTS.compass, bar = lastLargeHudBar;
+    if (bar) lastCompassBox = { x: bar.x + cb[0] * bar.s, y: bar.y, w: cb[2] * bar.s, canvas };   // NOTICE-PANEL: over the bar
     // ROAD-E E5: ...and it MOVES with the viewport. HUDCrosshair.cs
     // :43-52 re-centres the reticle into the view a DOCKED bar leaves,
     // because the world pass is now drawn there (ViewportChanger.cs
@@ -838,6 +855,7 @@ export function drawHud(renderer, canvas, art, vitals, heading01, dt = 0,
   const bx = canvas.width - art.compassBox.w * s;
   const by = canvas.height - art.compassBox.h * s;
   const { bw, bh } = drawCompassStrip(renderer, art, bx, by, s, heading01);
+  lastCompassBox = { x: bx, y: by - DETECT_MARKER_H * s, w: bw, canvas };   // NOTICE-PANEL: over its Detect row
   drawArrowCount(renderer, canvas, font, vitals, weaponSheathed, { bw, bh }, s);
   // NODE-MARKS: every profession's nodes near (a Prospector's veins, 500 m; a Tracker's animals, 100 m) - FIRST, so the
   drawNodeCompassMarks(renderer, nodes, playerXZ, heading01, { bx, by, bw, s });   // AUDIT: Detect markers, the party and the ships stand over them

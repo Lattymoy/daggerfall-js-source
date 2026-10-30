@@ -19,10 +19,10 @@
     "note": "PIN MOVED (IC-GRAND): a model that is drawn, never solid (a far skyline), adds no collider."
   },
   {
-    "name": "RC-gothways-boards-past-the-gate",
+    "name": "RC-the-fabric-past-the-gate",
     "file": "src/scenes/pixelBuild.js",
-    "old": "            late.add(key, cpuB.positions, cpuB.indices, local, { translation: onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])) });",
-    "new": "            collider.addMesh(key, cpuB.positions, cpuB.indices, local, onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])));",
+    "old": "          late.add(key, cpuF.positions, cpuF.indices, local, { translation: onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])) });",
+    "new": "          collider.addMesh(key, cpuF.positions, cpuF.indices, local, onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])));",
     "tests": [
       "test/world/worldOfDaggerfall/fb1019f_rockclear.test.js"
     ]

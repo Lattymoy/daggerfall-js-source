@@ -11,14 +11,12 @@
 //      (scenes/hallBanners.js hallBannerAnchors);
 //   2. one beside each city gate (world/rmbLayout.js isCityGate), on its
 //      town side, at a post;
-//   3. one pennant above each Notice Board - a town's RUMOUR boards, every
-//      board BOUNTY1 did not take (systems/bounty/bountyBoard.js
-//      questBoardIndices).
 // and CASTLE-GATE (2026-10-02): a crown seat's two more flanking its
 // castle's entrance in the city - the lowest of the pixel's dungeon-
 // entrance doors (systems/siegeField.js castleEntranceOf), after the
 // palace's two. A town that is no seat, or whose seats are not open to
-// this account, hangs none.
+// this account, hangs none. NOTICE-PANEL (2026-10-29): the pennant over each
+// rumour board went with the boards (scenes/townPanelHost.js).
 //
 // THE BANNER: while a seat is unheld, the kingdom's plain banner - the
 // crown's metal, no device; a March's its two claimants' metals; a Free
@@ -37,9 +35,8 @@ import { BUILDING_TYPES } from '../world/buildingNames.js';
 import { hallBannerAnchors, bannerKeyOf, BANNER_REFRESH_MS } from './hallBanners.js';
 import { SEAT_BANNERS_MAX, seatBannerOf, festivalRules } from '../net/townSeatLaw.js';
 
-/** A gate banner's top below the gate model's own top, and a board's pennant's top above the board's - metres. */
+/** A gate banner's top below the gate model's own top - metres. */
 export const GATE_BANNER_DROP_M = 0.6;
-export const BOARD_PENNANT_RISE_M = 3.2;
 /** How far a banner hangs off the face it hangs on - metres. */
 export const SEAT_BANNER_OUT_M = 0.2;
 
@@ -82,15 +79,6 @@ export function gateBannerAnchor(gate, centre) {
   return { top: [cx + rx * side + ox * out, box[4] - GATE_BANNER_DROP_M, cz + rz * side + oz * out], right: [rx, 0, rz], out: [ox, 0, oz] };
 }
 
-/** A NOTICE BOARD'S PENNANT - `board` its `{ local, box }`: one cloth over the board, facing as the board does. Pure. */
-export function boardPennantAnchor(board) {
-  const ax = groundAxes(board?.local ?? []);
-  const box = board?.box;
-  if (!ax || !Array.isArray(box) || box.length < 6) return null;
-  const cx = (box[0] + box[3]) / 2, cz = (box[2] + box[5]) / 2;
-  return { top: [cx, box[4] + BOARD_PENNANT_RISE_M, cz], right: [ax.rx, 0, ax.rz], out: [ax.fx, 0, ax.fz] };
-}
-
 /** The town's middle on the ground, [x, z]: the mean of its buildings' own places (`homeFrames` values' `at`). */
 export function townCentreOf(frames) {
   let x = 0, z = 0, n = 0;
@@ -101,18 +89,16 @@ export function townCentreOf(frames) {
 /**
  * A SEAT TOWN'S ANCHORS, in the record's order, at most SEAT_BANNERS_MAX: the palace door's two (each palace, while room
  * remains), CASTLE-GATE's two at a crown's castle entrance (`castle`, its `{ door, box }` frame, or null), a banner at
- * each city gate, a pennant over each rumour board (`bounty` the boards' indices BOUNTY1 took). `frames` the pixel's
- * building frames (`homeFrames`), `palaceKeys` its palaces' building keys, `gates` and `boards` `{ local, box }`,
- * `centre` the town's middle [x, z]. Pure.
+ * each city gate. `frames` the pixel's building frames (`homeFrames`), `palaceKeys` its palaces' building keys, `gates`
+ * `{ local, box }`, `centre` the town's middle [x, z]. Pure.
  */
-export function seatBannerAnchors({ frames = null, palaceKeys = [], castle = null, gates = [], boards = [], bounty = new Set(), centre = [0, 0] } = {}) {
+export function seatBannerAnchors({ frames = null, palaceKeys = [], castle = null, gates = [], centre = [0, 0] } = {}) {
   const out = [];
   const add = (a) => { if (a && out.length < SEAT_BANNERS_MAX) out.push(a); };
   const pair = (frame) => { const two = hallBannerAnchors(frame); if (two && out.length + 2 <= SEAT_BANNERS_MAX) two.forEach(add); };
   for (const k of palaceKeys) pair(frames?.get?.(k));
   pair(castle);   // CASTLE-GATE: a crown's two at its castle's entrance
   for (const g of gates) add(gateBannerAnchor(g, centre));
-  boards.forEach((b, i) => { if (!bounty.has(i)) add(boardPennantAnchor(b)); });
   return out;
 }
 

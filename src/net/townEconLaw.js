@@ -376,3 +376,18 @@ export function townTipOf({ name, p, prev, raided = false, players = 0, seat = n
   if (backers && lines.length <= TOWN_TIP_PATRONS_ROOM) lines.push(backers);   // AUDIT TOWN-ECON 2 LIV-3: where the card has room
   return { title: name, lines };
 }
+/**
+ * NOTICE-PANEL (bible/01-Overview/bugs/Field-Bugs-2026-10-29g.md): A TOWN'S LINES ON THE PANEL under the compass - the
+ * card's lines in the owner's order ("the town name, guild control, prosperity"): a seat's own card lines or the area's
+ * holder, then the economy, the prices and the strongest reason. `area` null in a region with no seat, which no guild
+ * can hold, so control is left out (the owner: "If a place cannot be guild controlled, then this can be left out").
+ * @param {{ p: number, prev: number, raided?: boolean, players?: number, seat?: any, area?: any, lanes?: number }} t
+ * @param {number} [nowMs] the seat card's clock (a called siege)
+ */
+export function townPanelLinesOf({ p, prev, raided = false, players = 0, seat = null, area = undefined, lanes = 0 }, nowMs = Date.now()) {
+  const lines = seat ? [...(seatTipOf(seat, nowMs)?.lines ?? [])] : area ? [townAreaLine(area)] : [];
+  lines.push(townEconomyLine(p, prev), townPriceLine(p, seatShopFactor(seat, null)));
+  const reason = townReasonLine({ raided, edict: seat?.holder?.edict ?? null, players, lanes });
+  if (reason) lines.push(reason);
+  return lines;
+}

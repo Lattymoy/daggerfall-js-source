@@ -13,7 +13,6 @@ import {
   TALK_CATEGORIES_IMG, TALK_HIGHLIGHT_IMG,
 } from '../../../src/ui/native/nativeTalk.js';
 import { TOO_FAR_AWAY_TEXT, YOU_SEE_TEXT, presentNpcInfoText } from '../../../src/player/activate.js';
-import { TOO_FAR_AWAY_TEXT as BOARD_TOO_FAR } from '../../../src/systems/bulletinBoard.js';
 import { MODE_ACTIONS, MODES, getInteractionMode, setInteractionMode } from '../../../src/player/interactionMode.js';
 import { createTownTalk } from '../../../src/scenes/townTalk.js';
 import { setBindings, actionOf } from '../../../src/ui/input.js';
@@ -261,7 +260,7 @@ test('AUDIT 58 talk: the topic list PANS - two arrows, a slider, no truncation (
 
 test('AUDIT 58 talk: youAreTooFarAway is ONE string in ONE place (Internal_Strings.csv:22)', () => {
   assert.equal(TOO_FAR_AWAY_TEXT, 'You are too far away...');
-  assert.equal(BOARD_TOO_FAR, TOO_FAR_AWAY_TEXT, 'the bulletin board re-exports the same constant');
+  assert.doesNotMatch(src('src/systems/bulletinBoard.js'), /TOO_FAR_AWAY_TEXT/, 'NOTICE-PANEL: no board reach is gated, so no second home of it');
   const tt = src('src/scenes/townTalk.js');
   assert.equal(/'You are too far away\.'/.test(tt), false,
     'the full-stop spelling is gone from the three PlayerActivate refusals');
