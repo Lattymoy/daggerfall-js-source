@@ -1,0 +1,100 @@
+// WET1 (bible/07-Rendering/Weather-Arc.md WET1): the ground soaks in the front's rain and dries after, on the game's
+// clock, and the lane's ground and walls draw it. The law is place-free - it reads the front at the player, wherever in
+// Tamriel that is - so no case here names a place.
+import '../../modsOff.js';
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import {
+  rainOf, wetStep, createWetness, wetOn, WET_SOAK_MIN, PUDDLE_FILL_MIN, WET_DRY_MIN, PUDDLE_DRY_MIN, WET_FULL_RAIN, PUDDLE_RAIN,
+} from '../../../src/systems/weather/wetness.js';
+import { EL_TERRAIN_FS, EL_MESH_FS } from '../../../src/render/enhancedLighting.js';
+import { snowTerrainFs } from '../../../src/render/snowfallGlsl.js';
+import { RIPPLE_RATE } from '../../../src/render/wetGlsl.js';
+import { Renderer } from '../../../src/render/renderer.js';
+
+const close = (a, b, msg) => assert.ok(Math.abs(a - b) < 1e-9, `${msg}: ${a} vs ${b}`);
+
+test('WET1 rainOf: rain and storm wet at their intensity, less the snow share; snow, sand, ash and clear wet nothing', () => {
+  assert.equal(rainOf('rain', 0.5), 0.5);
+  assert.equal(rainOf('storm', 1), 1);
+  assert.equal(rainOf('rain', 0.8, 0.5), 0.4);
+  assert.equal(rainOf('rain', 2), 1);
+  for (const k of ['snow', 'sand', 'ash', null, undefined]) assert.equal(rainOf(k, 1), 0, String(k));
+});
+
+test('WET1 wetStep: a downpour soaks the ground over WET_SOAK_MIN and fills the puddles over PUDDLE_FILL_MIN', () => {
+  assert.deepEqual([WET_SOAK_MIN, PUDDLE_FILL_MIN, WET_DRY_MIN, PUDDLE_DRY_MIN, WET_FULL_RAIN, [...PUDDLE_RAIN]], [10, 45, 120, 240, 0.25, [0.3, 0.8]]);
+  const s = wetStep({ wet: 0, puddle: 0 }, 1, 5);
+  close(s.wet, 0.5, 'half soaked at half the soak');
+  close(s.puddle, 5 / 45, 'the puddles slower');
+  assert.deepEqual(wetStep({ wet: 0.9, puddle: 0 }, 1, 60), { wet: 1, puddle: 1 }, 'capped at the target');
+});
+
+test('WET1 wetStep: a dry spell dries the ground over WET_DRY_MIN and the puddles over PUDDLE_DRY_MIN', () => {
+  const s = wetStep({ wet: 1, puddle: 1 }, 0, 60);
+  close(s.wet, 0.5, 'half dry');
+  close(s.puddle, 0.75, 'the puddles last longer');
+  assert.deepEqual(wetStep({ wet: 0.1, puddle: 0.1 }, 0, 600), { wet: 0, puddle: 0 }, 'never below dry');
+});
+
+test('WET1 wetStep: a sprinkle darkens the ground but stands no puddle; a shower past PUDDLE_RAIN[0] does', () => {
+  const sprinkle = wetStep(null, 0.1, NaN);
+  close(sprinkle.wet, 0.4, 'a sprinkle\'s wet');
+  assert.equal(sprinkle.puddle, 0);
+  close(wetStep(null, 0.55, NaN).puddle, 0.5, 'a shower half way up the puddle band');
+});
+
+test('WET1 wetStep: a first tick or a clock run back lands on the weather whole; a rest has run its course', () => {
+  const dry = { wet: 0, puddle: 0 };
+  assert.deepEqual(wetStep(null, 1, 1), { wet: 1, puddle: 1 });
+  assert.deepEqual(wetStep(dry, 1, -5), { wet: 1, puddle: 1 });
+  assert.deepEqual(wetStep(dry, 1, NaN), { wet: 1, puddle: 1 });
+  assert.deepEqual(wetStep({ wet: 1, puddle: 1 }, 0, 8 * 60), dry, 'a night\'s rest after the rain: dry');
+});
+
+test('WET1 createWetness: the uniform is [wet, puddle, seconds mod 1000, rain], integrated on the game minutes; ?wet=off keeps it dry', () => {
+  const w = createWetness({ on: () => true });
+  w.tick({ minutes: 100, shown: null, intensity: 0, tsec: 1 });
+  assert.deepEqual([...w.uniform], [0, 0, 1, 0], 'a dry first tick');
+  w.tick({ minutes: 105, shown: 'rain', intensity: 1, tsec: 1001.5 });
+  assert.deepEqual([...w.uniform], [0.5, Math.fround(5 / 45), 1.5, 1]);
+  const off = createWetness({ on: () => false });
+  assert.deepEqual([...off.tick({ minutes: 0, shown: 'storm', intensity: 1, tsec: 3 })], [0, 0, 3, 0]);
+  assert.equal(wetOn('?wet=off'), false);
+  assert.equal(wetOn('?x=1'), true);
+  assert.ok(Number.isInteger(RIPPLE_RATE * 1000), 'the ripples\' phase is whole at the clock\'s wrap');
+});
+
+test('WET1 the lane draws it: the ground and the walls read uWet, glint every lamp and the sun in the wet, and show the sky', () => {
+  for (const [name, fs] of [['terrain', EL_TERRAIN_FS], ['mesh', EL_MESH_FS]]) {
+    assert.ok(fs.includes('uniform vec4 uWet;'), name);
+    assert.ok(fs.includes('elPointLitWet(vWorldPos, n, wetG, wetGlint)'), `${name}: the lamps in the wet`);
+    assert.ok(fs.includes('wetSunGlint(n, wetV, ndl > 0.0 ? diff / ndl : 0.0, wetG)'), `${name}: the sun in the wet`);
+    assert.ok(/outColor = vec4\(elFinish\([^\n]*\n  outColor\.rgb = wetSky\(outColor\.rgb, n, wetV, wetG/.test(fs), `${name}: the sky over the finished colour`);
+    assert.ok(!fs.includes('elPointLit(vWorldPos, n)'), `${name}: no dry lantern loop left`);
+  }
+  assert.ok(EL_TERRAIN_FS.includes('vec2 wetW = wetGround(vLocalXZ, n, wetAt.x, wetAt.y);'), 'the ground\'s puddles');
+});
+
+test('WET1 the Snowfall variant: the mod\'s snow replaces the decode and says it is dry, once', () => {
+  const fs = snowTerrainFs(EL_TERRAIN_FS);
+  assert.equal(fs.split('vec2 wetAt = ').length - 1, 1, 'one wetAt');
+  assert.ok(fs.includes('vec2 wetAt = vec2(1.0, 0.0);'), 'the snow is never wet ground');
+  assert.ok(!fs.includes('vec2 wetAt = vec2(snowC'), 'the ground\'s own is cut with its decode');
+});
+
+test('WET1 the renderer: setWet stores and moves the frame stamp on a change alone; beginFrame dries it', () => {
+  const r = Object.create(Renderer.prototype);
+  r._frameStamp = 0;
+  r.setWet(new Float32Array([0.5, 0.25, 3, 1]));
+  assert.deepEqual([...r._wet], [0.5, 0.25, 3, 1]);
+  assert.equal(r._frameStamp, 1);
+  r.setWet(new Float32Array([0.5, 0.25, 3, 1]));
+  assert.equal(r._frameStamp, 1, 'the same wet uploads nothing again');
+  r.setWet(null);
+  assert.deepEqual([...r._wet], [0.5, 0.25, 3, 1], 'null is no word');
+  const src = readFileSync(new URL('../../../src/render/renderer.js', import.meta.url), 'utf8');
+  const begin = src.slice(src.indexOf('  beginFrame(proj, view, lightDir, opts = null) {'), src.indexOf('this._frameStamp++;   // PERF3'));
+  assert.ok(begin.includes('this._wet?.fill(0);'), 'an interior or a dungeon never inherits the street\'s wet');
+});

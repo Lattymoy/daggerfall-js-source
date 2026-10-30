@@ -1529,3 +1529,41 @@ flake gone before it fills the screen; the front's wet fall never the ash's on t
 the ear" reads `rain` and `flakes` with the law on - off it they are null, and the test had read nothing); the shares
 measured again (above).
 
+
+## WET1 - the wet world (2026-10-30)
+
+The request, 2026-10-30: "Мы не собираемся отказываться от ретро-вида, но хотим добавить реалистичные эффекты погоды" - keep
+the retro look, add realistic weather, as Minecraft's shaders light a world of blocks and sprites. The first slice is the
+wet ground: the rain now leaves a mark on what it falls on.
+
+**The law** (`systems/weather/wetness.js`). The ground about the player soaks while rain falls and dries after, on the
+game's minutes: a full rain soaks it in WET_SOAK_MIN (10) and fills the puddles in PUDDLE_FILL_MIN (45); a dry spell
+undoes them over WET_DRY_MIN (120) and PUDDLE_DRY_MIN (240). The rain is the front's shown fall (WX2) at its
+intensity, less its snow share; sand and ash wet nothing. A fall at WET_FULL_RAIN (a quarter of its profile) soaks the
+ground whole, so a sprinkle darkens it a little; puddles stand only past PUDDLE_RAIN[0] (0.3). A first tick or a clock
+run back lands on the weather whole; a rest has run its course by the same steps.
+
+**The draw** (`render/wetGlsl.js`, in the lane's EL_TERRAIN_FS and EL_MESH_FS). One uniform, uWet: the wetness, the
+puddles' fill, a clock and the rain now. A soaked surface's albedo darkens (WET_DARK, walls WET_WALL_DARK), puddles
+stand on the flat ground in the snow's own noise lattice (snowNoise, so they hold still across pixels) and fade with
+the footprint, and drops ring them near the eye while it rains. Every lamp glints in the wet through the lantern loop
+BLOOD3 built for blood (`elPointLitWet`, `wetFresnel`), the sun through a lobe that tightens from a sheen to a puddle's
+point, and the sky shows by Fresnel: the fog's colour mixed over the finished display colour, as a mirror shows it.
+
+**Where.** `renderer.js` setWet takes the frame's uniform after beginFrame, which dries it, as the cloud deck is a
+frame's (VC4). The two street hosts wire it: `scenes/world.js` and `scenes/exterior.js` tick it beside setCloudShadow.
+`scenes/worldModes.js` (interiors) and `scenes/dungeonContext.js` never set it, so they draw dry; a sprite pass, a bake
+or a panel uploads it dry too. The Snowfall mod's variant (`snowfallGlsl.js` snowTerrainFs) cuts the ground's decode,
+and its own text says its snow is never wet. The classic lane has no uWet: DFU's look is untouched. `?wet=off` is the
+door. The law reads the front at the player and nothing of the place, so it holds in every province as it does in the
+Bay.
+
+**Pinned and seen.** `test/systems/weather/wet1_wetness.test.js`: the law's rates, a sprinkle, a shower, a load, the
+door, the uniform, both lane programs and the Snowfall variant's one `wetAt`, and the renderer's stamp and beginFrame's
+dry. The three programs were compiled in WebGL2 (Edge), and a misspelt call was refused. `tools/wetProbe.mjs` shoots a
+street wet and with `?wet=off`: Sentinel at noon in rain differed by 7.66 a channel on the mean, at 21:30 in a storm
+by 6.86, and a night's sprinkle (rain 0.04) by 0.86, as its law says. In Daggerfall and Wayrest on the boot's late-autumn
+date the ground lay under snow, and the wet stayed under it. No probe stood past the Bay.
+
+**Not yet.** The wet shows the sky, not the world: a puddle mirrors no tower until a screen-space reflection pass
+lands. Nothing knows what is roofed, so a porch's floor wets as the street does. Meshes take no puddles.

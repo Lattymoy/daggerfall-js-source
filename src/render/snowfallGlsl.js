@@ -244,6 +244,7 @@ const snowFragment = (decode) => `  // SNOWFALL1: THE MOD'S SNOW IN PLACE OF THE
   float dd = clamp(depth * 1.3333334, 0.0, 1.0);
   dd = (dd + (sqrt(dd) - dd) * 0.25) * uSnowDarkening;
   vec3 tex = albedo * (1.0 - dd * (1.0 - remain));
+  vec2 wetAt = vec2(1.0, 0.0);   // WET1: the mod's snow is never wet ground (EL_TERRAIN_FS reads it past the decode)
 `;
 
 /** The fragment's own declarations: the law (the blanket's path test with it), the far mask and the albedo. */

@@ -1179,6 +1179,7 @@ export function terrainClipFs(fs) {
 
 const ZERO_CONTACT = new Float32Array(4);   // EL8: the contact params with the air off
 const ZERO_TINT = new Float32Array(3);   // MID-RING: no pixel easing in
+const DRY = new Float32Array(4);   // WET1: a draw that is no world's
 /** BLOOD1b: a billboard quad's four corners, ONE copy. `createBillboardBatch`
  *  bakes them and `moveBillboardBatch` rewrites them, and the two disagreeing
  *  about the winding would tear every moved quad. */
@@ -1944,6 +1945,7 @@ export class Renderer {
     // (world/deepWater/deepWaterLook.js distanceFogUniforms). A FRAME's, as the cloud
     // deck is: beginFrame clears it and the exterior host sets it after.
     this._dwFog = new Float32Array(20);
+    this._wet = new Float32Array(4);   // WET1: the frame's wet ground (setWet), dried by beginFrame
     // BANTHA1: the jungle's haze - render/hazeGlsl.js uJungleHaze, two vec4s (world/jungle/jungleHaze.js hazeUniforms). A
     // FRAME's, as the travel view's focus is: setJungleHaze arms it, and a beginFrame no setJungleHaze armed clears it - so an
     // interior, a dungeon or a panel never inherits the jungle's air
@@ -2621,7 +2623,7 @@ export class Renderer {
     // EL1: the lane's own uniforms, per program (null on the classic set, which never declares them)
     // EL2: the shadow receiver's six ride the same table (null on the classic set)
     const elLocs = (p) => {
-      /** @type {any[] & { shadow?: object, ao?: object, contact?: object, cluster?: object, wl?: object }} */
+      /** @type {any[] & { shadow?: object, ao?: object, contact?: object, cluster?: object, wl?: object, wet?: WebGLUniformLocation | null }} */
       const a = [gl.getUniformLocation(p, 'uELExposure'), gl.getUniformLocation(p, 'uELScatter')];
       a.shadow = {
         sunShadow: gl.getUniformLocation(p, 'uSunShadow'), sunVP: gl.getUniformLocation(p, 'uSunVP'), sunParams: gl.getUniformLocation(p, 'uSunShadowParams'), sunTexel: gl.getUniformLocation(p, 'uSunTexel'), sunOrigin: gl.getUniformLocation(p, 'uSunOrigin'),
@@ -2633,6 +2635,7 @@ export class Renderer {
       a.cluster = { grid: gl.getUniformLocation(p, 'uClusterGrid'), list: gl.getUniformLocation(p, 'uClusterList'), rect: gl.getUniformLocation(p, 'uClusterRect'), z: gl.getUniformLocation(p, 'uClusterZ'), fwd: gl.getUniformLocation(p, 'uCamFwd'), on: gl.getUniformLocation(p, 'uClusterOn') };   // LC1
       a.contact = { prevDepth: gl.getUniformLocation(p, 'uPrevDepth'), prevVP: gl.getUniformLocation(p, 'uPrevVP'), prevProjInfo: gl.getUniformLocation(p, 'uPrevProjInfo'), prevRect: gl.getUniformLocation(p, 'uPrevRect'), contactParams: gl.getUniformLocation(p, 'uContactParams') };   // EL8
       a.wl = { on: gl.getUniformLocation(p, 'uWinOn'), rect: gl.getUniformLocation(p, 'uClusterRect'), z: gl.getUniformLocation(p, 'uClusterZ'), fwd: gl.getUniformLocation(p, 'uCamFwd') };   // WL1: both sets
+      a.wet = gl.getUniformLocation(p, 'uWet');   // WET1: the ground's and the walls' (null where a program has none)
       return a;
     };
     this._el = { mesh: elLocs(set.mesh), char: elLocs(set.char), bb: elLocs(set.bb), terrain: elLocs(this.terrainProgram), decal: elLocs(set.decal) };   // MAC-BUG W6: the decal's lane uniforms ride the same table; FAR-CLIP1: the terrain's are the installed variant's
@@ -2948,6 +2951,16 @@ export class Renderer {
     else this._uploadNoContact(this._el[key].contact);
     // LC1: the grid, under the contact block's own gate - a world draw of the frame the grid was built for; a sprite pass, a bake or a panel walks every light
     this._uploadClusters(this._el[key].cluster, this._clustersLive && this._spriteDepth === 0 && this._studioDepth === 0 && !this._panelSaved);
+    const wet = this._el[key].wet;   // WET1: a world draw's alone - a sprite pass, a bake or a panel is dry
+    if (wet) gl.uniform4fv(wet, this._spriteDepth === 0 && this._studioDepth === 0 && !this._panelSaved ? this._wet ?? DRY : DRY);
+  }
+  /** WET1: the frame's wet ground (systems/weather/wetness.js's uniform), set after beginFrame - which dries it, so an
+   *  interior or a dungeon that never sets it draws dry. */
+  setWet(w) {
+    const d = (this._wet ??= new Float32Array(4));
+    if (!w || (d[0] === Math.fround(w[0]) && d[1] === Math.fround(w[1]) && d[2] === Math.fround(w[2]) && d[3] === Math.fround(w[3]))) return;
+    d.set(w);
+    this._frameStamp++;
   }
   /** EL8: with the air off the contact sampler still needs a texture (AUDIT-EL F1's law) and the params say off. */
   _uploadNoContact(loc) {
@@ -5897,6 +5910,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // VC6c: `_deckOwed` keeps it one moment longer, for an image the air pass still owes this frame (airPass.setCloudShadow); `_beginLane` drops it the instant that resolve is done.
     if (this._cloudShadow) { this._deckOwed = this._cloudShadow; this._cloudShadow = null; this._csStamp++; }
     this._dwFog[0] = 0;   // DW-C: the sea's distance fog is a frame's too - no interior, dungeon or panel inherits it
+    this._wet?.fill(0);   // WET1: and the wet ground
     if (!this._hazeArmed && this._haze[4] !== 0) this._haze[4] = 0;   // BANTHA1: and the jungle's haze, unless set since the last beginFrame (setJungleHaze)
     this._hazeArmed = false;
     this._seaHaze[0] = 0;   // FAR-SEA1: and so is the far ring's haze on the sea - set by the host on a frame it draws the ring
