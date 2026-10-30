@@ -2180,7 +2180,7 @@ unbuilt.
 **THE SWEEP** (`tools/pixelBuildSweep.mjs`, on a player's own ARENA2 - nothing of it kept, nothing of it rendered to a
 file: Port-Doctrine). The world host booted in headless Chromium (SwiftShader) in shot mode, its frame held so nothing
 else runs, and the pump's own build driven pixel by pixel through the host's probe door
-(worldShotHooks.js:"window.__pixelBuild = async"): the stream re-centred on the pixel as a teleport re-centres it, then
+(worldShotHooks.js:"window.__pixelBuild"): the stream re-centred on the pixel as a teleport re-centres it, then
 `buildPixel`, a throw caught as the pump's catch catches it and kept with its stack. The places: every town of the
 location index (city, town, village, hamlet, a mod's row) and every fourth other place, the Bay's wilderness on a
 ten-pixel lattice (every region, every climate) and its sea on every other point of it, the land past the Bay in

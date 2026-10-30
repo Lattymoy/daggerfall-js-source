@@ -62,7 +62,7 @@ test('FIX-C: the dungeon start IS the spawn - the exterior gate cannot re-fire o
 
 test('FIX-C: the probe can see it - __standing reports spawned, the ground under the feet and the pixel\u2019s build state, and the classic-start probe reads it after the exit', () => {
   // PIN MOVED (HOST-SPLIT SHOT-HOOKS): the probe surface is scenes/worldShotHooks.js, which reads `playerSpawned` live
-  assert.match(world, /window\.__standing = \(\) => JSON\.stringify\(\{\s*\n\s*spawned: host\.playerSpawned, y: \+player\.pos\[1\]\.toFixed\(2\),\s*\n\s*ground: heightAt\(player\.pos\[0\], player\.pos\[2\]\), built: built\.has\(`\$\{state\.current\.x\},\$\{state\.current\.y\}`\),/);
+  assert.match(world, /window\.__standing = \(\) =>\n\s*JSON\.stringify\(\{\n\s*spawned: host\.playerSpawned,\n\s*y: \+player\.pos\[1\]\.toFixed\(2\),\n\s*ground: heightAt\(player\.pos\[0\], player\.pos\[2\]\),\n\s*built: built\.has\(`\$\{state\.current\.x\},\$\{state\.current\.y\}`\),/);
   const probe = read('tools/classicStartProbe.mjs');
   assert.match(probe, /const st = JSON\.parse\(await page\.evaluate\(\(\) => window\.__standing\(\)\)\);/);
   assert.match(probe, /check\(st\.spawned === true,/);

@@ -42,8 +42,8 @@
   {
     "name": "YARD-SWEEP-client-unfiltered",
     "file": "src/scenes/yardCellSync.js",
-    "old": "yard.pieces.map(decorYardPieceOf).filter((piece) => piece && decorYardHighOk(piece))",
-    "new": "yard.pieces.map(decorYardPieceOf).filter(Boolean)",
+    "old": "      byKey.set(\n        yard.buildingKey,\n        yard.pieces.map(decorYardPieceOf).filter((piece) => piece && decorYardHighOk(piece)),\n      );",
+    "new": "      byKey.set(yard.buildingKey, yard.pieces.map(decorYardPieceOf).filter(Boolean));",
     "tests": [
       "test/server/yardsweep.test.js"
     ],

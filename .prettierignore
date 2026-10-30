@@ -577,6 +577,13 @@
 !/src/scenes/startsHost.js
 !/src/scenes/wagon/
 /src/scenes/wagon/*/
+!/src/scenes/windowWorld.js
+!/src/scenes/witchesHost.js
+!/src/scenes/worldShotHooks.js
+!/src/scenes/worldShotProbes.js
+!/src/scenes/yardBlockMerge.js
+!/src/scenes/yardCellSync.js
+!/src/scenes/yardNature.js
 !/src/systems/
 /src/systems/*
 !/src/systems/card/

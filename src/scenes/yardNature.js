@@ -46,15 +46,16 @@
 import { getNatureArchive } from '../world/climateSwaps.js';
 import { isNatureArchive } from '../world/rmbFlats.js';
 import { floraSwayOf } from '../systems/wind/windDrive.js';
-import { windfallResponse } from '../systems/windfall.js';   // WINDFALL1: a piece's share of Windfall's lean (its record's wind mask)
-import { archivePrefix } from '../systems/seasonsIliacBay.js';   // WINDFALL1: the mod's tables for the season's atlases
+import { windfallResponse } from '../systems/windfall.js'; // WINDFALL1: a piece's share of Windfall's lean (its record's wind mask)
+import { archivePrefix } from '../systems/seasonsIliacBay.js'; // WINDFALL1: the mod's tables for the season's atlases
 import { decorFlatMirrored } from '../net/decorLaw.js';
 import { LPT_SCALE_MAX, LPT_SET_FLOATS } from '../world/lowPolyTrees.js';
-import { naturePicture } from '../world/naturePicture.js';   // AUDIT 05b A12: the town's own choice of a nature flat's picture
+import { naturePicture } from '../world/naturePicture.js'; // AUDIT 05b A12: the town's own choice of a nature flat's picture
 
 /** Whether a placed piece is the climate's nature - a flat of a nature set's archive (any piece of the catalogue's
  *  "Trees and plants" stores its set's summer archive). */
-export const isNaturePiece = (piece) => piece?.model == null && Array.isArray(piece?.flat) && isNatureArchive(piece.flat[0]) && !piece.item;
+export const isNaturePiece = (piece) =>
+  piece?.model == null && Array.isArray(piece?.flat) && isNatureArchive(piece.flat[0]) && !piece.item;
 
 /** The flat a nature piece draws in `season` (world/climateSwaps.js SEASON): its set's archive for the season, its own
  *  record - [archive, record]. */
@@ -71,11 +72,15 @@ export const yardTreeYaw = (piece) => (Number(piece?.rot?.[0]) || 0) * (Math.PI 
  * @param {{ handle: any, pos: number[], scale: number, yaw: number }[]} trees
  */
 export function yardTreeSet(trees) {
-  const handles = [], centers = [];
+  const handles = [],
+    centers = [];
   const out = new Float32Array(trees.length * LPT_SET_FLOATS);
   trees.forEach((t, k) => {
     let h = handles.indexOf(t.handle);
-    if (h < 0) { h = handles.length; handles.push(t.handle); }
+    if (h < 0) {
+      h = handles.length;
+      handles.push(t.handle);
+    }
     out.set([h, t.pos[0], t.pos[1], t.pos[2], t.scale, t.yaw], k * LPT_SET_FLOATS);
     centers.push(t.pos);
   });
@@ -114,15 +119,33 @@ export function createYardNature({ renderer, getTexture, uploadRecord, seasonal 
     const seasons = seasonal?.() ?? null;
     const pic = await naturePicture({ door, seasons, renderer, uploadRecord }, t, archive, record);
     const sway = floraSwayOf(archive, natureArchive ?? archive, pic.plain.h);
-    const windfall = windfallResponse(archive, record, pic.sib && !pic.far && seasons ? archivePrefix(seasons.installedSeason, archive) : null);   // WINDFALL1: the season's atlas's table while its picture stands (a far picture is the stock record's tree)
+    const windfall = windfallResponse(
+      archive,
+      record,
+      pic.sib && !pic.far && seasons ? archivePrefix(seasons.installedSeason, archive) : null,
+    ); // WINDFALL1: the season's atlas's table while its picture stands (a far picture is the stock record's tree)
     const far = pic.far;
     if (far) {
       door.acquire(far);
-      trees?.sway?.(pic.proto, sway);   // its 3D trees lean as its far pictures do (the pixel's own record of it)
-      trees?.windfall?.(pic.proto, windfall);   // WINDFALL1: ...by either law
+      trees?.sway?.(pic.proto, sway); // its 3D trees lean as its far pictures do (the pixel's own record of it)
+      trees?.windfall?.(pic.proto, windfall); // WINDFALL1: ...by either law
       let held = true;
-      const release = () => { if (held) { held = false; door.release(far); } };
-      return { archive, key: pic.key, size: { w: far.size.w / LPT_SCALE_MAX, h: far.size.h / LPT_SCALE_MAX }, sway, windfall, handle: far, mirrors: false, release };
+      const release = () => {
+        if (held) {
+          held = false;
+          door.release(far);
+        }
+      };
+      return {
+        archive,
+        key: pic.key,
+        size: { w: far.size.w / LPT_SCALE_MAX, h: far.size.h / LPT_SCALE_MAX },
+        sway,
+        windfall,
+        handle: far,
+        mirrors: false,
+        release,
+      };
     }
     return { archive, key: pic.key, size: pic.size, sway, windfall, handle: null, mirrors: true, release: () => {} };
   }
@@ -138,23 +161,33 @@ export function createYardNature({ renderer, getTexture, uploadRecord, seasonal 
     if (!isNaturePiece(piece) || !renderer?.createBillboardBatch) return null;
     const pic = await picture(piece.flat, season, natureArchive);
     if (!pic) return null;
-    if (!live()) { pic.release(); return null; }
+    if (!live()) {
+      pic.release();
+      return null;
+    }
     const size = { w: pic.size.w * piece.scale, h: pic.size.h * piece.scale };
     const where = [[at[0] + piece.pos[0], at[1] + piece.pos[1], at[2] + piece.pos[2]]];
     if (pic.handle) {
       // DECOR-LPT: the far picture as the pixel stands one - the batch sized for the tallest tree, this one's share on its
       // corner - giving way near the eye to its 3D tree. AUDIT 05b A9: no far rings' height - a yard's flats stand outside
       // MAC1's rings (scenes/world.js lists them apart, as every yard flat), so nothing would read one
-      const batch = renderer.createBillboardBatch(pic.archive, pic.key, pic.handle.size, where, { scales: [piece.scale / LPT_SCALE_MAX] });
+      const batch = renderer.createBillboardBatch(pic.archive, pic.key, pic.handle.size, where, {
+        scales: [piece.scale / LPT_SCALE_MAX],
+      });
       batch.lptProto = pic.handle;
       batch.sway = pic.sway;
-      batch.windfall = pic.windfall;   // WINDFALL1
-      return { batch, size, release: pic.release, tree: { handle: pic.handle, pos: [...piece.pos], scale: piece.scale, yaw: yardTreeYaw(piece) } };
+      batch.windfall = pic.windfall; // WINDFALL1
+      return {
+        batch,
+        size,
+        release: pic.release,
+        tree: { handle: pic.handle, pos: [...piece.pos], scale: piece.scale, yaw: yardTreeYaw(piece) },
+      };
     }
     const drawn = decorFlatMirrored(piece) ? { w: -size.w, h: size.h } : size;
     const batch = renderer.createBillboardBatch(pic.archive, pic.key, drawn, where);
     batch.sway = pic.sway;
-    batch.windfall = pic.windfall;   // WINDFALL1
+    batch.windfall = pic.windfall; // WINDFALL1
     return { batch, size, release: pic.release, tree: null };
   }
   return { picture, stand };

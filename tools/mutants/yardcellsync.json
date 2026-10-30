@@ -2,9 +2,11 @@
   {
     "name": "YARD-CELL-SYNC-an-older-version-believed",
     "file": "src/scenes/yardCellSync.js",
-    "old": "        if (held && Number(cellAnswer.ver) < held.ver) continue;   // a version older than the one held never takes a cell back\n",
-    "new": "",
-    "tests": ["test/scenes/yardcellsync.test.js"],
+    "old": "        if (held && Number(cellAnswer.ver) < held.ver) continue; // a version older than the one held never takes a cell back\n        town.cells.set(cellAnswer.cell, heldOf(cellAnswer, askedTurn, held));",
+    "new": "        town.cells.set(cellAnswer.cell, heldOf(cellAnswer, askedTurn, held));",
+    "tests": [
+      "test/scenes/yardcellsync.test.js"
+    ],
     "note": "a replica behind the page takes a cell back"
   },
   {
@@ -12,7 +14,9 @@
     "file": "src/scenes/yardCellSync.js",
     "old": "      const inReach = townWishes.filter((wish) => wish.distance <= YARD_ASK_M);",
     "new": "      const inReach = townWishes.filter((wish) => wish.distance <= YARD_ASK_M + YARD_KEEP_MARGIN_M);",
-    "tests": ["test/scenes/yardcellsync.test.js"],
+    "tests": [
+      "test/scenes/yardcellsync.test.js"
+    ],
     "note": "a cell past the reach asked"
   },
   {
@@ -20,15 +24,19 @@
     "file": "src/scenes/yardCellSync.js",
     "old": "    for (const wish of [...wishes].sort((a, b) => a.distance - b.distance)) {",
     "new": "    for (const wish of [...wishes].sort((a, b) => b.distance - a.distance)) {",
-    "tests": ["test/scenes/yardcellsync.test.js"],
+    "tests": [
+      "test/scenes/yardcellsync.test.js"
+    ],
     "note": "the farthest town asked first"
   },
   {
     "name": "YARD-CELL-SYNC-never-let-go",
     "file": "src/scenes/yardCellSync.js",
-    "old": "        town.cells.delete(cell);\n",
-    "new": "",
-    "tests": ["test/scenes/yardcellsync.test.js"],
+    "old": "        town.cells.delete(cell);\n        town.pushed.delete(cell);",
+    "new": "        town.pushed.delete(cell);",
+    "tests": [
+      "test/scenes/yardcellsync.test.js"
+    ],
     "note": "Re-aimed by content (YARD-CELL YC2): the line YC2 changed. a cell out of reach held for ever - memory by the town, not the reach"
   },
   {
@@ -36,15 +44,19 @@
     "file": "src/scenes/yardCellSync.js",
     "old": "        cells = inReach.map((wish) => [wish.cell, town.cells.get(wish.cell)?.ver ?? 0]);",
     "new": "        cells = inReach.map((wish) => [wish.cell, 0]);",
-    "tests": ["test/scenes/yardcellsync.test.js"],
+    "tests": [
+      "test/scenes/yardcellsync.test.js"
+    ],
     "note": "every poll asks the whole reach again, unchanged cells sent"
   },
   {
     "name": "YARD-CELL-SYNC-the-poll-unpaused",
     "file": "src/scenes/yardCellSync.js",
-    "old": "      const due = pollingNow && (now() - town.polledAt >=",
-    "new": "      const due = (now() - town.polledAt >=",
-    "tests": ["test/scenes/yardcellsync.test.js"],
+    "old": "      const due =\n        pollingNow && (now() - town.polledAt >= (slow ? town.interval : YARD_TOWN_TTL_MS) || (asked && broke));",
+    "new": "      const due = now() - town.polledAt >= (slow ? town.interval : YARD_TOWN_TTL_MS) || (asked && broke);",
+    "tests": [
+      "test/scenes/yardcellsync.test.js"
+    ],
     "note": "Re-aimed by content (YARD-CELL YC2): the line YC2 changed. polls indoors, under a window and with the tab hidden"
   },
   {
@@ -52,7 +64,9 @@
     "file": "src/scenes/yardCellSync.js",
     "old": "      } else if (fresh.length || town.more.length || pushedDue.length) {",
     "new": "      } else if (pollingNow && (fresh.length || town.more.length || pushedDue.length)) {",
-    "tests": ["test/scenes/yardcellsync.test.js"],
+    "tests": [
+      "test/scenes/yardcellsync.test.js"
+    ],
     "note": "Re-aimed by content (YARD-CELL YC2): the line YC2 changed. a cell new in reach not asked while the poll is paused"
   },
   {
@@ -60,7 +74,9 @@
     "file": "src/scenes/yardCellSync.js",
     "old": "      if (town.asking || now() - town.failedAt < yardRetryMs(town.failures)) continue;",
     "new": "      if (town.asking || now() - town.failedAt < YARD_RETRY_MS) continue;",
-    "tests": ["test/scenes/yardcellsync.test.js"],
+    "tests": [
+      "test/scenes/yardcellsync.test.js"
+    ],
     "note": "a failed town asked every YARD_RETRY_MS (YARD-SHED)"
   },
   {
@@ -68,7 +84,9 @@
     "file": "src/scenes/homeYards.js",
     "old": "    waiting.sort((a, b) => a.distance - b.distance);\n",
     "new": "",
-    "tests": ["test/scenes/yardcellsync.test.js"],
+    "tests": [
+      "test/scenes/yardcellsync.test.js"
+    ],
     "note": "strangers' yards stood in map order, the far side of a town first"
   },
   {
@@ -76,7 +94,9 @@
     "file": "src/scenes/homeYards.js",
     "old": "      if (stood > 0 && standClock() - started >= YARD_STAND_BUDGET_MS) {",
     "new": "      if (false) {",
-    "tests": ["test/scenes/yardcellsync.test.js"],
+    "tests": [
+      "test/scenes/yardcellsync.test.js"
+    ],
     "note": "a town's every yard stood in one frame"
   },
   {
@@ -84,7 +104,9 @@
     "file": "src/scenes/homeYards.js",
     "old": "          if (y.kept || cur?.yard === y) stand(y, p, t, pieces, sig, holding);",
     "new": "          if (cur?.yard === y) stand(y, p, t, pieces, sig, holding);",
-    "tests": ["test/scenes/yardcellsync.test.js"],
+    "tests": [
+      "test/scenes/yardcellsync.test.js"
+    ],
     "note": "the owner's own yard waits its turn behind strangers'"
   },
   {
@@ -92,7 +114,9 @@
     "file": "src/scenes/homeYards.js",
     "old": "        if (home && heard && distance <= YARD_ASK_M + YARD_KEEP_MARGIN_M) {",
     "new": "        if (heard && distance <= YARD_ASK_M + YARD_KEEP_MARGIN_M) {",
-    "tests": ["test/scenes/yardcellsync.test.js"],
+    "tests": [
+      "test/scenes/yardcellsync.test.js"
+    ],
     "note": "a cell with no listed home asked"
   }
 ]
