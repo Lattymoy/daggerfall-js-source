@@ -208,6 +208,8 @@
 /src/world/arena/*/
 !/src/world/card/
 /src/world/card/*/
+!/src/world/city/
+/src/world/city/*/
 !/src/world/deepWater/
 /src/world/deepWater/*/
 !/src/world/interior/

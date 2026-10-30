@@ -2313,12 +2313,12 @@ bounds the beam and the glow in the glass's own frame, and `buildLightClusterBox
 half-axes under the sphere's rules (`src/render/lightClusters.js:"export function cellsOfViewBox(x0, x1, y0, y1, d0, dFar, proj, box, at) {"`).
 
 **Farther from the source.** A window's lamp reaches 12 m (`WL_LAMP_RANGE`, WL1's 8). On the lane a town lantern
-reaches 27 (`src/world/city/cityLights.js:"export const STREET_LIGHT_REACH = 1.5;"`, half again the prefab's 18), its
+reaches 27 (`src/world/city/cityLights.js:"export const STREET_LIGHT_REACH"`, half again the prefab's 18), its
 flicker's variance and step scaled with it, so it flickers by the same share of its range. The classic set keeps DFU's
 18 and DaggerfallLight's Animate exactly. A yard's lamp-post rides the town's flicker and reaches with it; a yard's
 candle reaches as its room's (AUDIT LIGHT-REACH S1). The harbour's lamps lit beside the town's, in their hours and
 colour - the quays' lanterns, the shipyard's office lantern, the lighthouse's lamp - take the same share, so each keeps
-its size to its neighbours (S5, `src/world/city/cityLights.js:"export const streetLightReach = (lane) => (lane ? STREET_LIGHT_REACH : 1);"`).
+its size to its neighbours (S5, `src/world/city/cityLights.js:"export const streetLightReach"`).
 
 **What the lanterns' reach costs, and what pays for it.** Half again the reach is more than twice the lit area, and
 the cells listing a lantern doubled with it. A sphere is listed in each depth slice only by the tiles of its widest

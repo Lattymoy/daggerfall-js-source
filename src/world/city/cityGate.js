@@ -42,7 +42,7 @@
 // one of them forgets. The classic state machine above is untouched; `online`
 // only decides whether NIGHT is a thing this gate is told about, and it is
 // injectable so the law is testable without a clock.
-import { sharedClockOn } from '../../systems/worldTick.js';   // the one predicate every clock-derived online law reads (RESTX2, OL3, OL4, ECON1)
+import { sharedClockOn } from '../../systems/worldTick.js'; // the one predicate every clock-derived online law reads (RESTX2, OL3, OL4, ECON1)
 import { CITY_GATE_OPEN_MODEL_ID, CITY_GATE_CLOSED_MODEL_ID } from '../rmbLayout.js';
 
 /**
