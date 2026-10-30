@@ -178,7 +178,7 @@ test('DRAGON5 the saddle, one home: both pictures asked once, drawn as wide as t
   assert.equal(drawn.at(-1)?.[0], 'dragon:saddle-0');
   // PIN MOVED (DRAGON-BLUE): the Admin's ride hands the saddle its look, the Aetherbright's colours (was: `{ renderer, load }`)
   assert.match(src('src/scenes/staffDragonHost.js'), /const saddle = createDragonSaddle\(\{ renderer, load, look: dragonRideLook \}\);/);
-  assert.match(src('src/player/mountRig.js'), /if \(player\.transportMode === TRANSPORT_MODES\.Dragon && !ridePaused\) saddle\.draw\(canvas\);/);
+  assert.match(src('src/player/mountRig.js'), /if \(player\.transportMode === TRANSPORT_MODES\.Dragon && !ridePaused && !mwViewThirdPerson\(\)\) saddle\.draw\(canvas\);/);   // PIN MOVED, DRAGON-POV: in first person alone
 });
 
 test('DRAGON5 the judge: every dragon a save holds against the service\'s tames - its id drawn for this account and character in this look, held once (mutants: any id lawful; another character\'s tame; a second copy)', async () => {
