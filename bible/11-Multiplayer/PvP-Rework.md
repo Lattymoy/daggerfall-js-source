@@ -108,7 +108,7 @@ come next. A departure: DFU has no flag.
 the key and the button do nothing and the button is hidden (`pvpFlagHost.js:"const here = () => !!online()?.wildOk && !!zone();"`);
 a flag carried out comes down once the lock and a villain's meter let it (`pvpFlagHost.js:"const leave = () => {"`).
 "left center or right center" (PVP-FLAG-SPOT): the button stands at the screen's right edge, just over its middle, clear of the Decorate button
-centred there ("fix this"); flag down,
+centred there ("fix this"), and PVP-HUD's ring and seconds follow it (`pvpHud.js:"export const PVP_FLAG_SPOT = Object.freeze({ lift: 64, size: 36 });"`); flag down,
 it shows a dim skull, never a green ring (PVP-FLAG-LOOK, "The green one looks bad the other r perfect").
 
 ## PVP-SKULL: the mark over a flagged player
