@@ -21,7 +21,7 @@
 // the singleton and could hand the inventory a stranger's doll, or the
 // stranger the player's, panel and all.
 import { composePaperDollPixels } from '../ui/paperDoll.js';
-import { drawnEquipTable, capeShown } from '../systems/capeShown.js';   // CAPE-TOGGLE: my cloak and my aura hidden, on everyone's screen
+import { drawnEquipTable, capeShown } from '../systems/capeShown.js';   // CAPE-TOGGLE: my cloak hidden, on everyone's screen
 import { createEquipTable } from '../characters/equipTable.js';
 import { CAPSULE_HEIGHT } from '../player/motor.js';
 import { drawText, measureText } from '../ui/text.js';
@@ -429,7 +429,7 @@ export function composeLook(entity, { eotbSet = ownEotbSet(), layered = ownLayer
   const klass = careerName(entity);
   // DISC23-B: `eo` OMITTED while the mod is off, `class`'s law - a look without it keeps the bytes it always had
   // LAYERED-GEAR: `lg` OMITTED while the skin is off, the same law
-  // CAPE-TOGGLE: `hc` while my capes are hidden, so a peer draws no aura on me (scenes/auraHost.js) - OMITTED otherwise
+  // CAPE-TOGGLE: `hc` while my capes are hidden (my aura stays on: scenes/auraHost.js) - OMITTED otherwise
   const hc = entity?.isPlayer === true && !capeShown();
   return { race: entity?.race ?? 'Breton', gender: entity?.gender ?? 'male', faceIndex: entity?.faceIndex ?? 0, ...(klass ? { class: klass } : {}), ...(Number.isInteger(eotbSet) ? { eo: eotbSet } : {}), ...(layered === 1 || layered === 2 ? { lg: layered } : {}), ...(hc ? { hc: 1 } : {}), items };
 }
@@ -1292,6 +1292,8 @@ export class RemotePlayers {
   /** The batches for the hosts' billboard pass. */
   /** PEERFX3: a peer's drawn sprite (doll or class body), for the hurt flash; null when this layer draws none. */
   batchOf(id) { return this._batches.get(id)?.batch ?? null; }
+  /** AURA-ON-DRAGON: a peer's class sprite's drawn height (m) - a dragon's rider's, the dragon's - or 0 with none drawn. */
+  spriteHeightOf(id) { const e = this._batches.get(id); return e?.kind === 'mobile' && e.height > 0 ? e.height : 0; }
 
   batches() {
     const out = [];
