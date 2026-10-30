@@ -183,8 +183,8 @@
   {
     "name": "GILDED1-the-twin-never-worn",
     "file": "src/characters/ownModels/ownWeaponModels.js",
-    "old": "(item && ((item.rarity === 'gilded' && OWN_MW_GILDED[item.templateIndex]) || OWN_MW_MODELS[item.templateIndex])) || null;",
-    "new": "(item && OWN_MW_MODELS[item.templateIndex]) || null;",
+    "old": "export const ownWeaponModelFor = (item) =>\n  (item && ((item.rarity === 'gilded' && OWN_MW_GILDED[item.templateIndex]) || OWN_MW_MODELS[item.templateIndex])) ||\n  null;",
+    "new": "export const ownWeaponModelFor = (item) => (item && OWN_MW_MODELS[item.templateIndex]) || null;",
     "tests": [
       "test/systems/gilded1_gilded.test.js"
     ]

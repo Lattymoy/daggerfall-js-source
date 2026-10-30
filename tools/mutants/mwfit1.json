@@ -31,8 +31,8 @@
   {
     "name": "MWFIT1-the-closed-steel-helm-shows-the-head",
     "file": "src/characters/ownModels/ownArmorModels.js",
-    "old": "  const helmClosed = Object.freeze([part('hair', 'steel_plate_helm_closed.nif', ['head'])]);",
-    "new": "  const helmClosed = Object.freeze([part('hair', 'steel_plate_helm_closed.nif')]);",
+    "old": "  const helmClosed = Object.freeze([part('hair', 'steel_plate_helm_closed.nif', ['head'])]); // MW-FIT1: a closed helm is the head",
+    "new": "  const helmClosed = Object.freeze([part('hair', 'steel_plate_helm_closed.nif')]); // MW-FIT1: a closed helm is the head",
     "tests": [
       "test/formats/morrowind/mwfit1.test.js",
       "test/tooling/mwsteel1.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "MWFIT1-the-ebony-helm-shows-the-head",
     "file": "src/characters/ownModels/ownArmorModels.js",
-    "old": "{ parts: [part('hair', 'ebony_plate_helm.nif', ['head'])] }),",
-    "new": "{ parts: [part('hair', 'ebony_plate_helm.nif')] }),",
+    "old": "      parts: [part('hair', 'ebony_plate_helm.nif', ['head'])],",
+    "new": "      parts: [part('hair', 'ebony_plate_helm.nif')],",
     "tests": [
       "test/formats/morrowind/mwfit1.test.js",
       "test/tooling/mwebony1.test.js"

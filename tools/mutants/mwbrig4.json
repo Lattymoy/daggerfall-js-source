@@ -12,8 +12,8 @@
   {
     "name": "MWBRIG4-every-metal-in-steel",
     "file": "src/characters/ownModels/ownArmorModels.js",
-    "old": "  parts: Object.freeze([Object.freeze({ part: 'cuirass', model: `brigandine_${metal.toLowerCase()}.nif` })]),",
-    "new": "  parts: Object.freeze([Object.freeze({ part: 'cuirass', model: 'brigandine_steel.nif' })]),",
+    "old": "    parts: Object.freeze([Object.freeze({ part: 'cuirass', model: `brigandine_${metal.toLowerCase()}.nif` })]),",
+    "new": "    parts: Object.freeze([Object.freeze({ part: 'cuirass', model: 'brigandine_steel.nif' })]),",
     "tests": [
       "test/formats/morrowind/mwbrig4.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "MWBRIG4-the-row-keyed-on-steel",
     "file": "src/characters/ownModels/ownArmorModels.js",
-    "old": "  material: ARMOR_MATERIAL[metal],\n  skinFrom: BRIGANDINE_SKIN_FROM,",
-    "new": "  material: ARMOR_MATERIAL.Steel,\n  skinFrom: BRIGANDINE_SKIN_FROM,",
+    "old": "    material: ARMOR_MATERIAL[metal],",
+    "new": "    material: ARMOR_MATERIAL.Steel,",
     "tests": [
       "test/formats/morrowind/mwbrig4.test.js"
     ]
@@ -31,7 +31,7 @@
   {
     "name": "MWBRIG4-not-fitted",
     "file": "src/characters/ownModels/ownArmorModels.js",
-    "old": "  fitTo: 'chest',   // MW-BRIG3: its closed top sits where the chest skin it hides ends, at the base of the neck",
+    "old": "    fitTo: 'chest', // MW-BRIG3: its closed top sits where the chest skin it hides ends, at the base of the neck",
     "new": "",
     "tests": [
       "test/formats/morrowind/mwbrig4.test.js"

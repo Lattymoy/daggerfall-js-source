@@ -20,8 +20,8 @@
   {
     "name": "MWSTEEL1-gauntlet-bares-the-forearm",
     "file": "src/characters/ownModels/ownArmorModels.js",
-    "old": "part('right hand', 'steel_plate_gauntlet_right.nif', ['right wrist', 'right forearm']),",
-    "new": "part('right hand', 'steel_plate_gauntlet_right.nif', ['right wrist']),",
+    "old": "        part('right hand', 'steel_plate_gauntlet_right.nif', ['right wrist', 'right forearm']),",
+    "new": "        part('right hand', 'steel_plate_gauntlet_right.nif', ['right wrist']),",
     "tests": [
       "test/tooling/mwsteel1.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "MWSTEEL1-helm-in-the-head-slot",
     "file": "src/characters/ownModels/ownArmorModels.js",
-    "old": "const helmClosed = Object.freeze([part('hair', 'steel_plate_helm_closed.nif', ['head'])]);",
-    "new": "const helmClosed = Object.freeze([part('head', 'steel_plate_helm_closed.nif', ['head'])]);",
+    "old": "  const helmClosed = Object.freeze([part('hair', 'steel_plate_helm_closed.nif', ['head'])]); // MW-FIT1: a closed helm is the head",
+    "new": "  const helmClosed = Object.freeze([part('head', 'steel_plate_helm_closed.nif', ['head'])]); // MW-FIT1: a closed helm is the head",
     "tests": [
       "test/tooling/mwsteel1.test.js"
     ]
