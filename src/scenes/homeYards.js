@@ -598,6 +598,22 @@ function yardInHouse(lot, pos, ground, bottom) {
   return out;
 }
 /**
+ * DECK-ROAD (FIELD BUGS 2026-10-30c, "it's clearly not on the road, it's still on the balcony of the house"): the road
+ * squares `rs` a piece stands on. 175 of the 1,114 residences with a deck stand part of it over the town's road tiles. A
+ * piece whose foot stands on its house's deck stands on those its ground meets past the house's own (`walls`); on the
+ * ground, on every one.
+ */
+function yardRoadsUnder(lot, pos, ground, bottom, rs) {
+  const meets = (r) => inRect(pos[0], pos[2], r) || yardFootMeets(ground, r);
+  if (!rs?.length || !(lot.grounds ?? []).some((g) => g.decks.some((d) => d[4] <= bottom + YARD_DECK_SLACK && meets(d)))) return rs;
+  const house = lot.walls ?? [lot.house];
+  return rs.filter((r) => {
+    const b = [r[0] + YARD_EDGE_PAD, r[1] + YARD_EDGE_PAD, r[2] - YARD_EDGE_PAD, r[3] - YARD_EDGE_PAD];
+    const under = house.filter((w) => w[0] <= b[2] && w[2] >= b[0] && w[1] <= b[3] && w[3] >= b[1]);
+    return groundSamples(ground, pos[0], pos[2], b).some(([x, z]) => !under.some((w) => inRect(x, z, w)));
+  });
+}
+/**
  * WHY A PIECE CANNOT STAND at `pos` (from the frame's origin), or null: off the lot, inside the house's footprint (a
  * piece on its roof too - FB1009 HOME-FOOT: the lot's `walls`, the ground its faces cover), or on another building's
  * (`others`, their ground's rects in the same frame [x0, z0, x1, z1]); a piece's middle on one of a building's rects is on
@@ -630,6 +646,7 @@ export function yardWhyNot(pos, lot, others = [], foot = [], roads = [], lines =
   if ((others ?? []).some(meets)) return YARD_ON_OTHER;
   const own = lot.walls ?? [lot.house];
   if (!lot.alone && points.some(([px, pz]) => yardGapTo(lines, px, pz) < yardGapTo(own, px, pz))) return YARD_ON_OTHER;   // HOME-LINE; YARD-LINE: a lot's holder's; IC-BACKYARD: an `alone` lot's line is the fabric's
+  roads = yardRoadsUnder(lot, pos, ground, pos[1] + (/** @type {any} */ (foot)?.bottom ?? 0), roads);   // DECK-ROAD: a deck over the road is the house's
   if ((roads ?? []).some((r) => yardFootMeets(ground, r, YARD_EDGE_PAD))) return YARD_ON_ROAD;
   if (!decorYardHighOk({ pos })) return YARD_TOO_HIGH;   // YARD-HEIGHT: never a tower - the service's own law
   return null;

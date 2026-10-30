@@ -1,4 +1,4 @@
-// BEAT-LANE (bible/01-Overview/bugs/Field-Bugs-2026-10-30c.md; a player: sailing in the Eltheric "will try to have my
+// BEAT-LANE (bible/01-Overview/bugs/Field-Bugs-2026-10-30d.md; a player: sailing in the Eltheric "will try to have my
 // ship steer 40 million miles off screen to move an inch forward"). Under the Classic helm the journey's hand beats up
 // to a mark in the wind's eye and went about only when the mark's bearing swung 20 degrees past the eye. SEA-TAUT made a
 // voyage's sea legs long - 29 to 43 km past Veilhaven - so a tack's lane was 23% of the leg: 9.4 km off the line.

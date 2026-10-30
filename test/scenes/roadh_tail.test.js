@@ -249,7 +249,7 @@ test('ROAD-H tail (review): the player\'s OWN spell missile meets a foe at its C
   // by its call and by the absence of the point form it was converted
   // from (the ceiling-bats count carries the same law by number).
   const d = src('src/scenes/dungeonContext.js');
-  assert.match(d, /^\s*if \(missileHitsFoe\(m\.pos, f\)\) \{ {3}\/\/ ROAD-H tail: DaggerfallMissile\.cs:339/m,
+  assert.match(d, /^\s*if \(missileHitsFoe\(m\.pos, f, _from\)\) \{ {3}\/\/ ROAD-H tail: DaggerfallMissile\.cs:339/m,
     'the dungeon\'s PLAYER shaft meets a foe through the one capsule test');
   assert.doesNotMatch(d, /const fx = f\.ai\.feet\[0\] - m\.pos\[0\]/,
     'and not at the foe\'s capsule centre as a point');

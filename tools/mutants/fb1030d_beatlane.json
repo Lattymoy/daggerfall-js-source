@@ -5,7 +5,7 @@
     "old": "st.tack * off < -H.laneDeg || -st.tack * (q.dist ?? 0) * Math.sin((off * Math.PI) / 180) > H.laneM",
     "new": "st.tack * off < -H.laneDeg",
     "tests": [
-      "test/systems/travel/fb1030c_beatlane.test.js"
+      "test/systems/travel/fb1030d_beatlane.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "st.tack * off < -H.laneDeg || -st.tack * (q.dist ?? 0) * Math.sin((off * Math.PI) / 180) > H.laneM",
     "new": "-st.tack * (q.dist ?? 0) * Math.sin((off * Math.PI) / 180) > H.laneM",
     "tests": [
-      "test/systems/travel/fb1030c_beatlane.test.js"
+      "test/systems/travel/fb1030d_beatlane.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "-st.tack * (q.dist ?? 0) * Math.sin((off * Math.PI) / 180) > H.laneM",
     "new": "st.tack * (q.dist ?? 0) * Math.sin((off * Math.PI) / 180) > H.laneM",
     "tests": [
-      "test/systems/travel/fb1030c_beatlane.test.js"
+      "test/systems/travel/fb1030d_beatlane.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  laneM: 400,",
     "new": "  laneM: 4000,",
     "tests": [
-      "test/systems/travel/fb1030c_beatlane.test.js"
+      "test/systems/travel/fb1030d_beatlane.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "bearing: seaHeadingOf(mark[0] - p[0], mark[2] - p[2]), dist, wind:",
     "new": "bearing: seaHeadingOf(mark[0] - p[0], mark[2] - p[2]), wind:",
     "tests": [
-      "test/systems/travel/fb1030c_beatlane.test.js"
+      "test/systems/travel/fb1030d_beatlane.test.js"
     ]
   }
 ]
