@@ -9,6 +9,7 @@ import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
 
 import { standService } from '../accountDb.mjs';
+import { legacyPageFor, legacyCentsFor } from './legacyOrders.mjs';   // AURUM-ONLY: an item's page opened before the switch
 import { fulfilOrder, STRIPE_API, STRIPE_REFUND_API, heldGranted, heldRevoked, orderCovers, revokePost, refundPost } from '../../server-account/src/shop.js';
 import { shopDemand } from '../../server-account/src/staffShop.js';
 import { effectsHeld } from '../../server-account/src/titles.js';
@@ -16,7 +17,7 @@ import { shopWareById, SHOP_WARES, shopHeldIds, shopLostOf, shopCreditOf, shopCl
 import { passSeasonById } from '../../src/net/battlePassLaw.js';
 import { POST_BODY_MAX, POST_SUBJECT_MAX } from '../../src/net/postLaw.js';
 
-const ON = { STRIPE_SECRET_KEY: 'sk_test_au', STRIPE_WEBHOOK_SECRET: 'whsec_au', SHOP_ON_SALE: SHOP_WARES.filter((w) => w.alone).map((w) => w.id).join(','), PASS_OPEN: 'on' };
+const ON = { STRIPE_SECRET_KEY: 'sk_test_au', STRIPE_WEBHOOK_SECRET: 'whsec_au', SHOP_ON_SALE: SHOP_WARES.filter((w) => w.alone).map((w) => w.id).join(','), PASS_OPEN: 'on', AURUM_OPEN: 'on' };   // AURUM-ONLY: the packs on sale
 const S1 = passSeasonById('s1');
 const IN_TREMOR = S1.fromMs + 3 * 86_400_000 + 3_600_000;
 
@@ -49,8 +50,10 @@ async function stand(extra = ON) {
     const body = JSON.stringify({ id: 'evt_au', type, data: { object } }), t = Math.floor(Date.now() / 1000);
     return s.fetch('https://accounts.invalid/v1/shop/webhook', { method: 'POST', body, headers: { 'content-type': 'application/json', 'stripe-signature': `t=${t},v1=${createHmac('sha256', ON.STRIPE_WEBHOOK_SECRET).update(`${t}.${body}`).digest('hex')}` } });
   };
-  /** Press Buy for a ware: its open order. */
-  const open = async (who, id) => {
+  /** PIN MOVED (AURUM-ONLY): an item's page opened before the switch - at its price for the row then, with its credit. */
+  const open = async (who, id) => { const o = legacyPageFor(raw, who, id, rowOf(who)); return orders(who).find((x) => x.id === o.id); };
+  /** Press Buy for a pack (AURUM-ONLY: the one thing sold for money): its open order. */
+  const openPack = async (who, id) => {
     const st = stripe();
     try { await press(await ticketOf(who, id)); } finally { st.restore(); }
     return orders(who).filter((x) => x.ware === id && x.status === 'open').at(-1);
@@ -64,7 +67,7 @@ async function stand(extra = ON) {
   };
   const buy = async (who, id) => paid(await open(who, id));
   const letters = (who) => raw.prepare('SELECT batch, subject, body, ware FROM server_post WHERE to_id = ? ORDER BY sent_at, rowid').all(who.id);
-  return { ...s, raw, account, rowOf, orders, hook, open, paid, buy, letters };
+  return { ...s, raw, account, rowOf, orders, hook, open, openPack, paid, buy, letters };
 }
 
 // ── S1: A PAYMENT TAKEN BACK TAKES WHAT IT ALONE COVERED ─────────────
@@ -135,42 +138,36 @@ test('AUDIT-STOREFRONT S1 the letters: a refund that leaves the ware held says s
 
 // ── S3: A REPLACED PAGE CLOSES; A WARE PAID TWICE IS REFUNDED ────────
 
-test('AUDIT-STOREFRONT S3 end to end: a bundle\'s page opened, the Pyre bought, Buy pressed again - the old page closes at Stripe and on the order; a grant closes the pages it made wrong; a page paid anyway for a ware held is refunded in full under the order\'s key, said in a letter, and held as owed while Stripe is down (mutants: an old page left open; a payment for a ware held kept; the refund asked twice under two keys; owed never cleared)', async (t) => {
+test('AUDIT-STOREFRONT S3 end to end: a bundle\'s page opened, the Pyre bought - a grant closes the pages it made wrong; a pack\'s Buy pressed again goes back to its page at one price and closes it at another; an item\'s page paid anyway for a ware held is refunded in full under the order\'s key, said in a letter, and held as owed while Stripe is down (PIN MOVED, AURUM-ONLY: the pages are those opened before the switch, a press a pack\'s) (mutants: the old page left open; a ware paid twice granted twice; the refund owed dropped)', async (t) => {
   t.mock.timers.enable({ apis: ['Date'], now: Date.UTC(2026, 11, 26, 12) });
   const s = await stand();
   const me = await s.registered('Twice');
   const a = await s.open(me, 'bundle:daedricchampion');
-  assert.equal(a.cents, shopWareById('bundle:daedricchampion').cents);   // PIN MOVED (AUDIT-STOREFRONT II): the law's price
+  assert.equal(a.cents, legacyCentsFor({}, 'bundle:daedricchampion'));   // PIN MOVED (AUDIT-STOREFRONT II): the law's price; AURUM-ONLY: its dollar price then
   const st = stripe();
   try {
     assert.equal((await s.paid(await s.open(me, 'kill:pyre'), st)).applied, 1);
     assert.ok(st.asked.some((x) => x.url === `${STRIPE_API}/${a.stripe_session}/expire`), 'the grant closed the bundle\'s page: its price moved');
   } finally { st.restore(); }
   assert.equal(s.orders(me).find((x) => x.id === a.id).status, 'expired');
-  const b = await s.open(me, 'bundle:daedricchampion');
-  assert.ok(b.cents < a.cents, 'the new page at the new price');
-  const c = await s.open(me, 'title:dawnbringer');
-  const st2 = stripe();
-  try {
-    const c2 = await s.open(me, 'title:dawnbringer');
-    assert.equal(c2.id, c.id, 'the same price: the open page gone back to');
-  } finally { st2.restore(); }
-  // a press at another price closes the older page
+  // a pack's press: the same price goes back to the open page; another closes the older one
+  const c = await s.openPack(me, 'aurum:500');
+  const c2 = await s.openPack(me, 'aurum:500');
+  assert.equal(c2.id, c.id, 'the same price: the open page gone back to');
   s.raw.prepare('UPDATE shop_orders SET cents = 1 WHERE id = ?').run(c.id);
-  const st3 = stripe();
-  let d;
-  try {
-    d = await s.open(me, 'title:dawnbringer');
-  } finally { st3.restore(); }
+  const d = await s.openPack(me, 'aurum:500');
   assert.notEqual(d.id, c.id);
   assert.equal(s.orders(me).find((x) => x.id === c.id).status, 'expired', 'the replaced page closed');
-  // the old page paid anyway, after the new one granted: refunded, not granted twice
-  assert.equal((await s.paid(d)).applied, 1);
-  const late = { ...s.orders(me).find((x) => x.id === c.id), cents: 1 };
+  // an item's old page paid anyway, after another page for it granted: refunded, not granted twice
+  const old = await s.open(me, 'title:dawnbringer');
+  s.raw.prepare("UPDATE shop_orders SET status = 'expired' WHERE id = ?").run(old.id);   // closed when the switch's first grant came
+  const fresh = await s.open(me, 'title:dawnbringer');
+  assert.equal((await s.paid(fresh)).applied, 1);
+  const late = s.orders(me).find((x) => x.id === old.id);
   const down = stripe({ refunds: false });
   let r;
   try {
-    r = await s.hook('checkout.session.completed', { payment_status: 'paid', metadata: { order: late.id }, payment_intent: 'pi_twice', amount_subtotal: 1, currency: 'usd' });
+    r = await s.hook('checkout.session.completed', { payment_status: 'paid', metadata: { order: late.id }, payment_intent: 'pi_twice', amount_subtotal: late.cents, currency: 'usd' });
     assert.equal(r.status, 503, 'Stripe down: told again');
     assert.ok(down.asked.some((x) => x.url === STRIPE_REFUND_API && x.init.headers['idempotency-key'] === `shop-refund-${late.id}`));
   } finally { down.restore(); }
@@ -179,7 +176,7 @@ test('AUDIT-STOREFRONT S3 end to end: a bundle\'s page opened, the Pyre bought, 
   assert.equal((await shopDemand(s.env.DB, {}, Math.floor(Date.now() / 1000), 5)).refundsOwed[0]?.order, late.id, 'the staff see it owed');
   const up = stripe();
   try {
-    assert.equal((await s.hook('checkout.session.completed', { payment_status: 'paid', metadata: { order: late.id }, payment_intent: 'pi_twice', amount_subtotal: 1, currency: 'usd' })).status, 200, 'Stripe\'s word again: asked again');
+    assert.equal((await s.hook('checkout.session.completed', { payment_status: 'paid', metadata: { order: late.id }, payment_intent: 'pi_twice', amount_subtotal: late.cents, currency: 'usd' })).status, 200, 'Stripe\'s word again: asked again');
     assert.equal(up.asked.filter((x) => x.url === STRIPE_REFUND_API).length, 1);
   } finally { up.restore(); }
   o = s.orders(me).find((x) => x.id === late.id);
@@ -196,14 +193,15 @@ test('AUDIT-STOREFRONT S3 end to end: a bundle\'s page opened, the Pyre bought, 
 
 // ── S12: A GIVER HELD IN PART ───────────────────────────────────────
 
-test('AUDIT-STOREFRONT S12 the confirm page says why a bundle costs less - the Pyre held inside the Daedric Champion, counted (PIN MOVED, PASS-PANELS: the Premium inside the Collector\'s Deluxe was the case, and no ware gives a giver now; the words for one held in part are pinned in storefront_audit_window) (mutants: a lower price with no word why)', async (t) => {
+test('AUDIT-STOREFRONT S12 the card says why a bundle costs less - the Pyre held inside the Daedric Champion, its price this account\'s (PIN MOVED, AURUM-ONLY: the bundle is bought for Aurum from the window, so its card carries the share, never a confirm page; PASS-PANELS: the Premium inside the Collector\'s Deluxe was the case) (mutants: the list price on the card)', async (t) => {
   t.mock.timers.enable({ apis: ['Date'], now: IN_TREMOR });
   const s = await stand();
   const me = await s.registered('Partial');
   assert.equal((await s.buy(me, 'kill:pyre')).applied, 1);
-  const ticket = new URL((await s.account(me)).shop.wares.find((w) => w.id === 'bundle:daedricchampion').buy).searchParams.get('t');
-  const html = await (await s.fetch(`https://accounts.invalid/v1/shop/buy?t=${encodeURIComponent(ticket)}`)).text();
-  assert.match(html, /holds 1 of them already, so the price is less/);
+  const row = (await s.account(me)).shop.wares.find((w) => w.id === 'bundle:daedricchampion');
+  assert.equal(row.buy ?? null, null, 'no money page');
+  assert.ok(row.price < shopWareById('bundle:daedricchampion').price, 'less than its own price');
+  assert.equal(row.price, Math.round(2800 * (4300 - 1500) / 4300), 'the Pyre\'s share taken off');
 });
 
 // ── S7: TWO GRANTS AT ONCE ──────────────────────────────────────────

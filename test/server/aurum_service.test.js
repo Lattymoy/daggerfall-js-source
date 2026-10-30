@@ -7,9 +7,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { standService } from '../accountDb.mjs';
-import { SHOP_WARES, shopHeldIds } from '../../src/net/shopLaw.js';
+import { SHOP_WARES, shopHeldIds, shopWareById } from '../../src/net/shopLaw.js';
 import { AURUM_DEEDS, AURUM_DAILY, aurumDailyOf, aurumWeekOf } from '../../src/net/aurumLaw.js';
-import { buyDaily } from '../../server-account/src/aurum.js';
+import { buyWare } from '../../server-account/src/aurum.js';   // PIN MOVED (AURUM-ONLY): buyDaily was the daily wares' alone
 import { utcDay } from '../../src/net/marksLaw.js';
 
 const NOW = Date.UTC(2026, 10, 18, 12);   // a Wednesday in Season One
@@ -24,7 +24,7 @@ async function stand(env = ON) {
     : { method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${who.secret}` }, body: JSON.stringify(body) })
     .then(async (r) => ({ status: r.status, body: await r.json() }));
   const card = async (who) => (await ask(who, '/v1/account')).body.aurum;
-  const buy = (who, ware) => ask(who, '/v1/aurum/buy', { ware });
+  const buy = (who, ware, price) => ask(who, '/v1/aurum/buy', { ware, ...(price === undefined ? {} : { price }) });
   const pack = (who, id, aurum, status = 'paid') => raw.prepare("INSERT INTO shop_orders (id, player, ware, cents, currency, status, created_at, expires_at, aurum) VALUES (?, ?, ?, 1, 'usd', ?, ?, ?, ?)")
     .run(`${who.id}${id}`.replace(/[^0-9a-z]/gi, '').slice(-20).padStart(24, '0'), who.id, id, status, NOW / 1000, NOW / 1000 + 60, aurum);
   const lines = (who) => raw.prepare('SELECT kind, ref, amount FROM aurum_ledger WHERE account = ? ORDER BY kind, ref').all(who.id).map((l) => ({ ...l }));
@@ -90,7 +90,7 @@ test('AURUM the balance: the paid packs and every ledger line - a find\'s day, a
   assert.deepEqual(Object.keys(s.raw.prepare('SELECT * FROM players WHERE id = ?').get(me.id)).filter((k) => /aurum|balance/.test(k)), [], 'no balance on the row');
 });
 
-test('AURUM a daily ware bought: one batch spends its price and puts it on the account; then held; a ware not among today\'s, an unknown one, a short balance, a guest and a closed shop each refused - nothing spent (mutants: the price never spent; the ware never given; a ware off the day sold)', async (t) => {
+test('AURUM a ware bought (PIN MOVED, AURUM-ONLY: any ware but a pack, a deal at its deal price, any other at its own): one batch spends its price and puts it on the account; then held; a ware not on sale, a price the page showed that moved, an unknown one, a pack, a short balance, a guest and a closed shop each refused - nothing spent (mutants: the price never spent; the ware never given; a ware off the day sold)', async (t) => {
   t.mock.timers.enable({ apis: ['Date'], now: NOW });
   const s = await stand();
   const me = await s.registered('Spender');
@@ -107,15 +107,26 @@ test('AURUM a daily ware bought: one batch spends its price and puts it on the a
   assert.ok((slot === 'title' ? r.body.titles : slot === 'icon' ? r.body.icons : r.body.effectsHeld[slot]).includes(key), 'the wardrobe holds it');
   assert.deepEqual(s.lines(me), [{ kind: 'buy', ref: first, amount: -price }]);
   assert.deepEqual((await s.buy(me, first)).body, { error: 'aurum-held' });
-  const off = AURUM_DAILY.find((d) => !today().includes(d.id));
-  assert.equal((await s.buy(me, off.id)).body.error, 'aurum-today');
+  // PIN MOVED (AURUM-ONLY): a ware not among today's deals is sold all the same, at its own price - never the deal's
+  const off = AURUM_DAILY.filter((d) => !today().includes(d.id)).sort((a, b) => a.aurum - b.aurum)[0], list = shopWareById(off.id).price;
+  assert.deepEqual((await s.buy(me, off.id, off.aurum)).body, { error: 'aurum-price', price: list }, 'the deal\'s price asked off its day: told the price, nothing spent');
+  const full = await s.buy(me, off.id, list);
+  assert.equal(full.status, 200, JSON.stringify(full.body));
+  assert.equal(full.body.spent, list, 'off its deal day, its own price');
+  assert.deepEqual(s.lines(me), [{ kind: 'buy', ref: first, amount: -price }, { kind: 'buy', ref: off.id, amount: -list }].sort((a, b) => (a.ref < b.ref ? -1 : 1)));
   assert.equal((await s.buy(me, 'icon:nope')).status, 400);
+  assert.deepEqual((await s.buy(me, 'aurum:500')).body, { error: 'aurum-ware' }, 'a pack is bought with money alone');
+  assert.deepEqual((await s.buy(me, 'glyph:oblivion')).body, { error: 'aurum-ware' }, 'a ware a bundle alone gives');
+  const narrow = await stand({ ...ON, SHOP_ON_SALE: SHOP_WARES.filter((w) => w.alone && w.id !== off.id).map((w) => w.id).join(',') });
+  const n = await narrow.registered('Narrow');
+  narrow.pack(n, 'aurum:2400', 2400);
+  assert.deepEqual((await narrow.buy(n, off.id)).body, { error: 'aurum-sale' }, 'a ware the sale does not name');
   const dear = today().filter((id) => id !== first).sort((a, b) => AURUM_DAILY.find((d) => d.id === b).aurum - AURUM_DAILY.find((d) => d.id === a).aurum)[0];
   s.raw.prepare("UPDATE shop_orders SET status = 'refunded' WHERE player = ?").run(me.id);
   const short = await s.buy(me, dear);
   assert.equal(short.status, 409);
-  assert.deepEqual(short.body, { error: 'aurum-short', balance: -price }, 'the pack taken back: the balance below nothing');
-  assert.equal(s.lines(me).length, 1, 'nothing more spent');
+  assert.deepEqual(short.body, { error: 'aurum-short', balance: -price - list }, 'the pack taken back: the balance below nothing');
+  assert.equal(s.lines(me).length, 2, 'nothing more spent');
   const closed = await stand({ ...ON, AURUM_OPEN: 'off' });
   const c = await closed.registered('Closed');
   assert.equal((await closed.buy(c, today()[0])).body.error, 'aurum-closed');
@@ -132,7 +143,7 @@ test('AURUM the batch\'s guards: a balance spent elsewhere between the read and 
   // another buy spends all but a coin while this one is between its read and its batch
   let once = true;
   const spentMeanwhile = { ...db, prepare: (q) => db.prepare(q), batch: (l) => { if (once) { once = false; s.raw.prepare("INSERT INTO aurum_ledger (account, kind, ref, amount, day, at) VALUES (?, 'buy', 'x', ?, 0, 0)").run(me.id, -(2400 - price + 1)); } return db.batch(l); } };
-  const r = await buyDaily({ db: spentMeanwhile, nowS }, player, { ware }, ON);
+  const r = await buyWare({ db: spentMeanwhile, nowS }, player, { ware }, ON);
   assert.deepEqual(r, { error: 'aurum-short', balance: price - 1 }, 'read again: short');
   assert.equal(s.lines(me).filter((l) => l.ref === ware).length, 0, 'never spent');
   s.raw.prepare("DELETE FROM aurum_ledger WHERE ref = 'x'").run();
@@ -140,7 +151,7 @@ test('AURUM the batch\'s guards: a balance spent elsewhere between the read and 
   const granted = SHOP_WARES.find((w) => w.alone && !w.bit && w.kind === 'bundle').id;
   let first = true;
   const moved = { ...db, prepare: (q) => db.prepare(q), batch: (l) => { if (first) { first = false; s.raw.prepare('UPDATE players SET shop_held = ? WHERE id = ?').run(granted, me.id); } return db.batch(l); } };
-  const ok = await buyDaily({ db: moved, nowS }, player, { ware }, ON);
+  const ok = await buyWare({ db: moved, nowS }, player, { ware }, ON);
   assert.equal(ok.ok, true);
   assert.equal(s.lines(me).filter((l) => l.ref === ware).length, 1, 'one line');
   assert.ok(shopHeldIds(s.raw.prepare('SELECT * FROM players WHERE id = ?').get(me.id)).includes(granted), 'the grant kept');

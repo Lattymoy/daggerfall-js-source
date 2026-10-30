@@ -206,10 +206,11 @@ function worthLeft(/** @type {any} */ w, /** @type {ReadonlyArray<string>} */ he
   if (!w || held.includes(w.id)) return 0;
   return w.gives.length ? w.gives.reduce((a, /** @type {string} */ g) => a + worthLeft(shopWareById(g), held), 0) : w.price;
 }
-/** Whether a row holds what a ware gives - its own id, or everything it gives: a ware so held is not sold again. Pure. */
+/** Whether a row holds what a ware gives - its own id, or everything it gives: a ware so held is not sold again. An
+ *  Aurum pack is never held (AURUM-ONLY: its Aurum `price` is none, which is not "nothing left to buy"). Pure. */
 export const shopOwns = (/** @type {unknown} */ row, /** @type {string} */ id) => {
   const w = shopWareById(id);
-  return !!w && worthLeft(w, shopHeldIds(row)) === 0;
+  return !!w && !shopRepeatable(w) && worthLeft(w, shopHeldIds(row)) === 0;
 };
 /** STOREFRONT: A WARE'S PRICE FOR A ROW, in Aurum - a giver's price times the share of its worth not yet held (never
  *  under SHOP_MIN_PRICE), any other ware's own; null when it is owned, and for a pack (its price is its `cents`). The

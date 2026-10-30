@@ -102,38 +102,42 @@
   {
     "name": "AURUM-service-off-day-sold",
     "file": "server-account/src/aurum.js",
-    "old": "  if (!dailyWaresAt(env, nowS).includes(d.id)) return { error: 'aurum-today' };",
+    "old": "  if (!deals.includes(w.id) && !soldForAurum(env, w, nowS)) return { error: 'aurum-sale' };\n",
     "new": "",
     "tests": [
       "test/server/aurum_service.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AURUM-ONLY, 2026-10-30: every ware but a pack bought for Aurum, money buys the packs alone)."
   },
   {
     "name": "AURUM-service-price-never-spent",
     "file": "server-account/src/aurum.js",
-    "old": ".bind(player.id, d.id, -d.aurum, utcDay(nowS), nowS, d.aurum)",
-    "new": ".bind(player.id, d.id, 0, utcDay(nowS), nowS, d.aurum)",
+    "old": ".bind(player.id, w.id, -at.price, utcDay(nowS), nowS, at.price)",
+    "new": ".bind(player.id, w.id, 0, utcDay(nowS), nowS, at.price)",
     "tests": [
       "test/server/aurum_service.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AURUM-ONLY, 2026-10-30: every ware but a pack bought for Aurum, money buys the packs alone)."
   },
   {
     "name": "AURUM-service-ware-never-given",
     "file": "server-account/src/aurum.js",
-    "old": "shop_held: (w.bit || toks.includes(d.id) ? toks : [...toks, d.id]).join(' ')",
+    "old": "shop_held: (w.bit || toks.includes(w.id) ? toks : [...toks, w.id]).join(' ')",
     "new": "shop_held: toks.join(' ')",
     "tests": [
       "test/server/aurum_service.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AURUM-ONLY, 2026-10-30: every ware but a pack bought for Aurum, money buys the packs alone)."
   },
   {
     "name": "AURUM-service-balance-guard-dropped",
     "file": "server-account/src/aurum.js",
-    "old": "WHERE ${AURUM_BALANCE_SQL} >= ?6`).bind(player.id, d.id,",
-    "new": "WHERE ?6 > 0`).bind(player.id, d.id,",
+    "old": "WHERE ${AURUM_BALANCE_SQL} >= ?6`).bind(player.id, w.id,",
+    "new": "WHERE ?6 > 0`).bind(player.id, w.id,",
     "tests": [
       "test/server/aurum_service.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AURUM-ONLY, 2026-10-30: every ware but a pack bought for Aurum, money buys the packs alone)."
   },
   {
     "name": "AURUM-service-row-guard-dropped",
@@ -354,10 +358,11 @@
   {
     "name": "AUDIT-STOREFRONT-II-a-daily-ware-dearer-than-its-money",
     "file": "src/net/aurumLaw.js",
-    "old": "daily('title:dawnbringer', 300, 'name')",
-    "new": "daily('title:dawnbringer', 400, 'name')",
+    "old": "export const aurumDealOf = (/** @type {number} */ price) => Math.round(price * AURUM_DEAL);",
+    "new": "export const aurumDealOf = (/** @type {number} */ price) => Math.round(price * 1.1);",
     "tests": [
       "test/net/aurum_law.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AURUM-ONLY, 2026-10-30: every ware but a pack bought for Aurum, money buys the packs alone)."
   }
 ]

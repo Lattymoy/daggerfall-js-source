@@ -122,9 +122,9 @@ test('ARMORY the Broker\'s Dagonfire line: a piece a slot at 75 Deadlands Embers
   for (const k of DAGONFIRE) assert.equal(shopWareById(`armory:${k}`), null, `${k}: never sold for money`);
 });
 
-test('ARMORY the shop\'s Eternal line: the set whole at $20 (bit 256) and a piece a slot at $6; the set gives its five, each once; a ware is owned through the set or the singles - so neither is sold again (mutants: the set priced as the singles; a set giving one piece; a single sold over the set; the set sold over the five singles)', () => {
+test('ARMORY the shop\'s Eternal line: the set whole at 2,000 Aurum (bit 256) and a piece a slot at 600 (PIN MOVED, AURUM-ONLY: $20 and $6 at $1 = 100 Aurum); the set gives its five, each once; a ware is owned through the set or the singles - so neither is sold again (mutants: the set priced as the singles; a set giving one piece; a single sold over the set; the set sold over the five singles)', () => {
   const armory = SHOP_WARES.filter((w) => w.kind === 'armory');
-  assert.deepEqual(armory.map((w) => [w.id, w.cents, w.bit]), [
+  assert.deepEqual(armory.map((w) => [w.id, w.price, w.bit]), [   // PIN MOVED (AURUM-ONLY): each priced in Aurum
     ['armory:eternalset', 2000, 256],
     ['armory:eternalhalo', 600, 8], ['armory:eternalsigil', 600, 16], ['armory:eternalarmlets', 600, 32],
     ['armory:eternalgreaves', 600, 64], ['armory:eternaledge', 600, 128],
