@@ -69,7 +69,7 @@ test('FB1009 HOME-FOOT a roof past the walls is an eave: the ground under it is 
   assert.equal(covers(-1.8, -1.8), true, 'under the leg roof');
   assert.equal(covers(4.4, 1.8), false, 'under the eave');
   assert.equal(covers(4.6, -1.4), true, 'on the step');
-  assert.equal(covers(4.6, -0.6), false, 'and no cell past its edge (a face sampled inside itself - WALL-TOUCH takes the yards\' tests past a cell\'s slack)');
+  assert.equal(covers(3.8, -1.4), false, 'and no cell past its edge (a face sampled inside itself - WALL-TOUCH takes the yards\' tests past a cell\'s slack)');
   const origin = [0, 0, 0];
   const place = trs(0, 0, 0, 0, 0, 0);
   const box = transformedAabb(localAabb(house.positions), place);
