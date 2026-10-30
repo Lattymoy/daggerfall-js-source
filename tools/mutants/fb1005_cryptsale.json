@@ -62,8 +62,8 @@
   {
     "name": "CRYPTSALE-arena-move-unasked",
     "file": "src/systems/arena/arenaMove.js",
-    "old": "(s) => homeCandidate(s) && s.hasInterior !== false)",
-    "new": "(s) => homeCandidate(s))",
+    "old": "(s) => homeCandidate(s) && s.hasInterior !== false && !homeListedOff(o?.mapId, s.buildingKey, undefined, homeClaimLayout(o?.mapId)))",
+    "new": "(s) => homeCandidate(s) && !homeListedOff(o?.mapId, s.buildingKey, undefined, homeClaimLayout(o?.mapId)))",
     "tests": [
       "test/systems/talk/fb1005_cryptsale.test.js"
     ],

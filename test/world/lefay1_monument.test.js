@@ -1,5 +1,6 @@
-// LEFAY1 (2026-10-08): THE MONUMENT TO JULIAN LEFAY - in the middle of Gothway Garden until HOLD-MONUMENT (2026-10-14)
-// stood it outside Privateer's Hold - and the flowers laid at it -
+// LEFAY1 (2026-10-08): THE MONUMENT TO JULIAN LEFAY - in the middle of Gothway Garden, outside Privateer's Hold from
+// HOLD-MONUMENT (2026-10-14), at Gothway Garden's north entrance from GOTHWAY-MONUMENT (2026-10-30) - and (STEWART-MONUMENT)
+// Patrick Stewart's by the White-Gold Tower, and the flowers laid at them -
 // world/lefayMonument.js (where, what, the flowers' law), world/lefayArt.js (its stone and its plaque),
 // scenes/lefayMonumentHost.js (the pool) and the wiring in the four hosts and the save.
 import { test } from 'node:test';
@@ -9,20 +10,24 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   LEFAY_TOWN, LEFAY_REGION, isLefayTown, LEFAY_TEXT, LEFAY_ROWS, LEFAY_KEY, MONUMENT_CLEAR_M, MONUMENT_CARVE_M,
-  MONUMENT_ROAD_COST, discCells, lefaySpot, lefaySpotOf, carveLefay, MONUMENT_LANDING_M, MONUMENT_CAMP_KEEP_M, MONUMENT_RUIN_KEEP_M, MONUMENT_DOOR_BACK_M, MONUMENT_WALK_M, lefayExitOf, isRuinModel, LEFAY_ARCHIVE, LEFAY_GRANITE, LEFAY_MARBLE,
+  MONUMENT_ROAD_COST, discCells, lefaySpot, lefaySpotOf, carveLefay, MONUMENT_WAY_M, MONUMENT_WAY_IN_M, ENTRANCE_BAND_M, northEntrance, LEFAY_ARCHIVE, LEFAY_GRANITE, LEFAY_MARBLE,
+  STEWART_TEXT, STEWART_KEY, STEWART_PLAQUE, STEWART_AT, STEWART_SLICE, isStewartSlice, stewartSpot, monumentSpotOf, MONUMENTS,
   LEFAY_GILT, LEFAY_PLAQUE, LEFAY_BRONZE, MONUMENT_STEPS, MONUMENT_FOOT, PEDESTAL, OBELISK, PLAQUE, MONUMENT_BOXES,
   buildLefayModel, LEFAY_FLOWERS, FLOWER_RINGS, MONUMENT_FLOWERS_KEPT, TOSS_MS, TOSS_ARC, TOSS_EVERY_MS, TOSS_SPREAD,
   tossRest, flowerPlace, tossPoint, normalTribute, layFlower,
 } from '../../src/world/lefayMonument.js';
 import { lefayArt, lefayPlaqueArt, LEFAY_GLYPHS, lefayGlyph, lineWidth, PLAQUE_SCALES, LEFAY_PLAQUE_W, LEFAY_PLAQUE_H, GLYPH_H } from '../../src/world/lefayArt.js';
-import { createLefayMonument, bodyTrapped, LEFAY_REACH, TOSS_HAND_DROP } from '../../src/scenes/lefayMonumentHost.js';
+import { createLefayMonument, createMonuments, bodyTrapped, LEFAY_REACH, TOSS_HAND_DROP } from '../../src/scenes/lefayMonumentHost.js';
 import { CAPSULE_RADIUS, CAPSULE_HEIGHT } from '../../src/player/motor.js';
 import { CityNavigation, NAV_CELL, HALF_CELL } from '../../src/world/city/cityNavigation.js';
 import { THROWN_FLOWERS } from '../../src/systems/arena/arenaCrowd.js';
 import { REGION_NAMES } from '../../src/formats/mapsTables.js';
 import { STATIC_NPC_ACTIVATION_DISTANCE, RAY_DISTANCE } from '../../src/player/activate.js';
 import { snapshotPlayer, restorePlayer } from '../../src/systems/save/save.js';
-import { PRIVATEERS_HOLD_BLOCK, HOLD_MODELS } from '../../src/world/worldOfDaggerfall/wodPrivateersHold.js';
+import { IMPERIAL, IMPERIAL_CELLS, imperialTile } from '../../src/world/imperialCity.js';
+import { imperialOpenAt, imperialAnchorOf } from '../../src/world/imperialBlocks.js';
+import { CAPITALS } from '../../src/world/tamrielCapitals.js';
+import { BLOCK_M } from '../../src/world/blockHash.js';
 import { hostText } from '../hostText.mjs';   // HOST-SPLIT 2: the world host whole
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -37,13 +42,13 @@ function navOf(w, h, weight = 12) {
   return nav;
 }
 
-test('LEFAY1: THE TOWN - HOLD-MONUMENT: Privateer\'s Hold in the Daggerfall region, by its names (a pack\'s read keeps both)', () => {
+test('GOTHWAY-MONUMENT: THE TOWN - Gothway Garden in the Daggerfall region, by its names (a pack\'s read keeps both)', () => {
   assert.equal(LEFAY_REGION, 17);
   assert.equal(REGION_NAMES[LEFAY_REGION], 'Daggerfall');
-  assert.equal(LEFAY_TOWN, 'Privateer\'s Hold');   // PIN MOVED (HOLD-MONUMENT, Mac 2026-10-14): 'Gothway Garden' -> the Hold
-  assert.equal(isLefayTown({ regionIndex: 17, name: 'Privateer\'s Hold' }), true);
-  assert.equal(isLefayTown({ regionIndex: 17, name: 'Gothway Garden' }), false, 'its old town stands it no longer');
-  assert.equal(isLefayTown({ regionIndex: 18, name: 'Privateer\'s Hold' }), false, 'another region\'s place of the name');
+  assert.equal(LEFAY_TOWN, 'Gothway Garden');   // PIN MOVED (GOTHWAY-MONUMENT, the owner 2026-10-30): Privateer's Hold -> Gothway Garden's north entrance
+  assert.equal(isLefayTown({ regionIndex: 17, name: 'Gothway Garden' }), true);
+  assert.equal(isLefayTown({ regionIndex: 17, name: 'Privateer\'s Hold' }), false, 'the Hold stands it no longer');
+  assert.equal(isLefayTown({ regionIndex: 18, name: 'Gothway Garden' }), false, 'another region\'s place of the name');
   assert.equal(isLefayTown({ regionIndex: 17, name: 'Daggerfall' }), false);
   assert.equal(isLefayTown(null), false);
 });
@@ -88,24 +93,27 @@ test('LEFAY1: THE SPOT OF A LAID-OUT TOWN - its blocks carved as the people\'s n
   const auto = (closed) => { const a = new Uint8Array(64 * 64); for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) if (closed(x, y)) a[y * 64 + x] = 1; return a; };
   const tiles = (rec) => Array.from({ length: 16 }, (_, tx) => Array.from({ length: 16 }, (_, ty) => ({ textureRecord: rec(tx, ty) })));
   const block = (x, autoMapData, groundTiles) => ({ x, y: 0, dfBlock: { rmbBlock: { fldHeader: { autoMapData, groundData: { groundTiles } } } } });
+  // GOTHWAY-MONUMENT: the north border's band built over (the automap's first rows are the north's), so no way in - the
+  // grid's middle, as LEFAY1 looked
   const loc = {
     width: 2, height: 1,
     blocks: [
-      block(0, auto((x) => x >= 32), tiles(() => 2)),   // grass (12), its east half built over
-      block(1, auto(() => false), tiles((tx) => (tx < 4 ? 0 : 2))),   // its west quarter water (0)
+      block(0, auto((x, y) => x >= 32 || y < 5), tiles(() => 2)),   // grass (12), its east half built over
+      block(1, auto((x, y) => y < 5), tiles((tx) => (tx < 4 ? 0 : 2))),   // its west quarter water (0)
     ],
   };
   const s = lefaySpotOf(loc);
-  // the same answer as the people's own navgrid carved by hand
+  // the same answer as the people's own navgrid carved by hand, with no way in
   const nav = new CityNavigation(2, 1);
   for (const b of loc.blocks) nav.setBlockData(b.x, b.y, b.dfBlock.rmbBlock.fldHeader.autoMapData, (tx, ty) => b.dfBlock.rmbBlock.fldHeader.groundData.groundTiles[tx][ty].textureRecord, { enhancedWater: true });
+  assert.equal(northEntrance(nav), null);
   assert.deepEqual(s, lefaySpot(nav));
   // open land begins at x 80 (block 1's water to 79): the middle (64) is shut both ways, so the first clear cell east
   assert.deepEqual([s.gx, s.gy], [83, 31]);
   assert.equal(lefaySpotOf({ width: 0, height: 0, blocks: [] }), null);
   // AUDIT LEFAY1 A3: the shallows the classic table walks (record 8, a shore the player wades) are water to it on every
   // lane - one spot for every client, never in the water
-  const shallows = { width: 1, height: 1, blocks: [block(0, auto(() => false), tiles((tx, ty) => (tx >= 6 && tx < 10 && ty >= 6 && ty < 10 ? 8 : 2)))] };
+  const shallows = { width: 1, height: 1, blocks: [block(0, auto((x, y) => y < 5), tiles((tx, ty) => (tx >= 6 && tx < 10 && ty >= 6 && ty < 10 ? 8 : 2)))] };   // no way in: searched from the middle
   const dry = lefaySpotOf(shallows);
   for (const [dx, dy] of discCells(MONUMENT_CLEAR_M)) {
     const gx = dry.gx + dx, gy = 63 - (dry.gy + dy);   // the block's own row (setBlockData flips it)
@@ -113,78 +121,118 @@ test('LEFAY1: THE SPOT OF A LAID-OUT TOWN - its blocks carved as the people\'s n
   }
 });
 
-test('HOLD-MONUMENT: outside Privateer\'s Hold - the open ground nearest its start marker, the landing kept, World of Daggerfall\'s camp closed whether it stands or not', () => {
-  assert.equal(MONUMENT_LANDING_M, 3.2);
-  assert.equal(MONUMENT_CAMP_KEEP_M, 4);
-  assert.equal(MONUMENT_RUIN_KEEP_M, 8);
-  // CUSTAA30's shape: one block, open grass, its one start marker (archive 199 record 10) at (x, z) metres in its frame
-  const open = new Uint8Array(64 * 64);
-  const grass = Array.from({ length: 16 }, () => Array.from({ length: 16 }, () => ({ textureRecord: 2 })));
-  const marker = (x, z) => ({ textureArchive: 199, textureRecord: 10, xPos: x * 40, yPos: 0, zPos: z * 40 - 4096, factionID: 0, flags: 0, position: 0 });
-  const hold = (flats, blockName = PRIVATEERS_HOLD_BLOCK) => ({ width: 1, height: 1, blocks: [{ x: 0, y: 0, originX: 0, originZ: 0, blockName, dfBlock: { rmbBlock: { fldHeader: { autoMapData: open, groundData: { groundTiles: grass } }, miscFlatObjectRecords: flats } } }] });
-  const camp = { block: PRIVATEERS_HOLD_BLOCK, models: HOLD_MODELS };
-  const centre = (gx, gy) => [gx * NAV_CELL + HALF_CELL, gy * NAV_CELL + HALF_CELL];
-  const clear = discCells(MONUMENT_CLEAR_M);
-  // west of the camp: beside the landing, never on it
-  const west = lefaySpotOf(hold([marker(20, 50)]), { camp });
-  assert.deepEqual([west.gx, west.gy], [7, 31], 'the nearest cell to the marker whose disc misses the landing');
-  for (const [dx, dy] of clear) { const [x, z] = centre(west.gx + dx, west.gy + dy); assert.ok(Math.hypot(x - 20, z - 50) > MONUMENT_LANDING_M, 'no cell of its disc on the landing'); }
-  // in the camp's middle: clear of every one of its models - and handed no camp, it would have stood among them
-  const mid = hold([marker(60, 40)]);
-  const s = lefaySpotOf(mid, { camp });
-  assert.deepEqual([s.gx, s.gy], [39, 30]);
-  for (const m of HOLD_MODELS) {
-    const keep = m.modelId >= 43500 && m.modelId < 43600 ? MONUMENT_RUIN_KEEP_M : MONUMENT_CAMP_KEEP_M;
-    for (const [dx, dy] of clear) { const [x, z] = centre(s.gx + dx, s.gy + dy); assert.ok(Math.hypot(x - m.pos[0], z - m.pos[2]) > keep, `clear of the camp's ${m.modelId}`); }
-  }
-  const bare = lefaySpotOf(mid);
-  assert.deepEqual([bare.gx, bare.gy], [32, 25], 'no camp handed in: nearer the marker, in the camp');
-  // the ruins stand wide: beside the ruin at (42.5, 49.6) the spot keeps MONUMENT_RUIN_KEEP_M from it, not a tent's 4 m
-  const byRuin = lefaySpotOf(hold([marker(40, 48)]), { camp });
-  assert.deepEqual([byRuin.gx, byRuin.gy], [18, 30]);
-  // the search starts at its cell's centre: on open ground the start cell itself, never a neighbour the corner ties to
-  const opened = navOf(64, 64);
-  const at = lefaySpot(opened, { gx: 40, gy: 20 });
-  assert.deepEqual([at.gx, at.gy], [40, 20]);
-  // the camp is closed only in a block of its name
-  assert.deepEqual(lefaySpotOf(hold([marker(60, 40)], 'CUSTAA31.RMB'), { camp }), bare);
-  // no start marker: the block grid's middle, as LEFAY1 looked
-  const none = lefaySpotOf(hold([]));
-  assert.deepEqual([none.gx, none.gy], [31, 31]);
-  // the hosts hand it the camp: one spot whether World of Daggerfall stands the camp or not
-  for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) assert.equal(/wodOn\(\)[^\n]*lefaySpotOf|holdOn[^\n]*lefaySpotOf/.test(read(f)), false, `${f} closes the camp on or off`);
+test('GOTHWAY-MONUMENT: THE WAY IN - the run of road across the north border nearest its middle, else of open ground; a border with none, none', () => {
+  assert.equal(ENTRANCE_BAND_M, 8);
+  // two roads cross the north border (the grid's last rows): columns 20-23 and 70-75; the middle is 63.5
+  const nav = navOf(128, 64);
+  for (let gy = 50; gy < 64; gy++) { for (let gx = 20; gx < 24; gx++) nav.set(gx, gy, 15); for (let gx = 70; gx < 76; gx++) nav.set(gx, gy, 15); }
+  assert.deepEqual(northEntrance(nav), { x: 73 * NAV_CELL, z: 64 * NAV_CELL, nx: 0, nz: -1 }, 'the road nearest the middle, its middle on the border, facing in');
+  // a road one cell wide is no way in; one that stops a row short of the band (8 m, five rows) is none either
+  const thin = navOf(128, 64);
+  for (let gy = 0; gy < 64; gy++) thin.set(40, gy, 15);
+  for (let gy = 0; gy < 59; gy++) for (let gx = 60; gx < 64; gx++) thin.set(gx, gy, 15);
+  for (let gx = 0; gx < 128; gx++) for (let gy = 59; gy < 64; gy++) if (gx < 30 || gx > 33) thin.set(gx, gy, gx === 40 ? 15 : 0);
+  assert.deepEqual(northEntrance(thin), { x: 32 * NAV_CELL, z: 64 * NAV_CELL, nx: 0, nz: -1 }, 'no road: the open way in (columns 30-33)');
+  // the band is five rows deep: a road in the fifth row from the top is in it
+  const deep = navOf(64, 64, 0);
+  for (let gx = 10; gx < 14; gx++) deep.set(gx, 59, 15);
+  assert.deepEqual(northEntrance(deep), { x: 12 * NAV_CELL, z: 64 * NAV_CELL, nx: 0, nz: -1 });
+  deep.set(10, 59, 0); deep.set(11, 59, 0); deep.set(12, 59, 0); deep.set(10, 58, 15); deep.set(11, 58, 15);
+  assert.equal(northEntrance(deep), null, 'one road cell left in the band, two below it: no way in');
+  assert.equal(northEntrance(navOf(64, 64, 0)), null, 'all built over');
+  const two = navOf(64, 64, 0);
+  for (let gx = 5; gx < 7; gx++) two.set(gx, 63, 12);
+  assert.equal(northEntrance(two), null, 'two open cells are no way in');
 });
 
-test('AUDIT FIVE-ASKS B1/B3: beside the Hold\'s way out - DFU\'s exit landing, its doorway and its walk out kept; the ruins by their ids; the camp in its own block\'s frame', () => {
-  assert.deepEqual([MONUMENT_DOOR_BACK_M, MONUMENT_WALK_M], [4, 8]);
-  const open = new Uint8Array(64 * 64);
-  const grass = Array.from({ length: 16 }, () => Array.from({ length: 16 }, () => ({ textureRecord: 2 })));
-  const marker = (x, z) => ({ textureArchive: 199, textureRecord: 10, xPos: x * 40, yPos: 0, zPos: z * 40 - 4096, factionID: 0, flags: 0, position: 0 });
-  const blk = (bx, blockName, flats) => ({ x: bx, y: 0, originX: bx * 102.4, originZ: 0, blockName, dfBlock: { rmbBlock: { fldHeader: { autoMapData: open, groundData: { groundTiles: grass } }, miscFlatObjectRecords: flats } } });
-  const hold = (flats) => ({ width: 1, height: 1, blocks: [blk(0, PRIVATEERS_HOLD_BLOCK, flats)] });
-  const camp = { block: PRIVATEERS_HOLD_BLOCK, models: HOLD_MODELS };
-  const centre = (gx, gy) => [gx * NAV_CELL + HALF_CELL, gy * NAV_CELL + HALF_CELL];
-  const clear = discCells(MONUMENT_CLEAR_M);
-  // the exit (20, 50) stepping out along +x: beside the walk out, the marker (60, 40) never asked
-  const s = lefaySpotOf(hold([marker(60, 40)]), { camp, exit: { x: 20, z: 50, nx: 1, nz: 0 } });
-  assert.deepEqual([s.gx, s.gy], [12, 36], 'the open ground nearest the landing, off the line out');
-  for (const [dx, dy] of clear) {
-    const [x, z] = centre(s.gx + dx, s.gy + dy);
-    const t = Math.max(-MONUMENT_DOOR_BACK_M, Math.min(MONUMENT_WALK_M, x - 20));
-    assert.ok(Math.hypot(x - (20 + t), z - 50) > MONUMENT_LANDING_M - 0.01, 'no cell of its disc on the doorway or the walk out');
+test('GOTHWAY-MONUMENT: THE SPOT - the open ground nearest the way in, its road kept clear, just inside the border', () => {
+  assert.deepEqual([MONUMENT_WAY_M, MONUMENT_WAY_IN_M], [3.2, 16]);
+  // one block of grass, a road (record 46) down its ninth column of tiles - cells 32 to 35
+  const auto = new Uint8Array(64 * 64);
+  const tiles = Array.from({ length: 16 }, (_, tx) => Array.from({ length: 16 }, () => ({ textureRecord: tx === 8 ? 46 : 2 })));
+  const loc = { width: 1, height: 1, blocks: [{ x: 0, y: 0, dfBlock: { rmbBlock: { fldHeader: { autoMapData: auto, groundData: { groundTiles: tiles } } } } }] };
+  const s = lefaySpotOf(loc);
+  assert.deepEqual([s.gx, s.gy], [39, 60], 'beside the road, its disc just inside the border (the search starts in cell 34, the way in\'s)');
+  assert.deepEqual([s.x, s.z], [39 * NAV_CELL + HALF_CELL, 60 * NAV_CELL + HALF_CELL]);
+  const line = 34 * NAV_CELL;
+  for (const [dx, dy] of discCells(MONUMENT_CLEAR_M)) {
+    const gx = s.gx + dx, gy = s.gy + dy;
+    assert.ok(gx >= 0 && gx < 64 && gy >= 0 && gy < 64, 'its disc inside the town');
+    assert.ok(gx < 32 || gx > 35, 'no cell of its disc on the road');
+    assert.ok(Math.abs(gx * NAV_CELL + HALF_CELL - line) > MONUMENT_WAY_M, 'none on the way in');
   }
-  const s2 = lefaySpotOf(hold([]), { camp, exit: { x: 30, z: 20, nx: 0, nz: 1 } });
-  assert.deepEqual([s2.gx, s2.gy], [13, 12], 'the line out turned with the door');
-  // the host's measure: DFU's landing (its frame) less the location origin
-  assert.deepEqual(lefayExitOf({ pos: [110, 3, 70], normal: [0, 0, -1] }, [100, 1, 20]), { x: 10, z: 50, nx: 0, nz: -1 });
-  assert.equal(lefayExitOf(null), null, 'no door measured: the marker\'s fallback');
-  // B3: the camp's ruins by their ids - all seven take the ruins' keep
-  assert.deepEqual([...new Set(HOLD_MODELS.map((m) => m.modelId).filter(isRuinModel))].sort(), [43502, 43506, 43508, 43509, 43512, 43513, 43514]);
-  for (const id of [41606, 41607, 41610, 41717, 41731, 41834, 41214, 42560]) assert.equal(isRuinModel(id), false, `${id} keeps a tent's ground`);
-  // B3: the Hold block second in a 2x1 layout - its camp closed in its own block's frame (its origin), not the location's corner
-  const two = { width: 2, height: 1, blocks: [blk(0, 'RESIBM00.RMB', []), blk(1, PRIVATEERS_HOLD_BLOCK, [])] };
-  const t2 = lefaySpotOf(two, { camp, exit: { x: 162.4, z: 40, nx: 0, nz: -1 } });
-  assert.deepEqual([t2.gx, t2.gy], [102, 32]);
+  assert.ok(64 * NAV_CELL - s.z < MONUMENT_CLEAR_M, 'the first thing a traveller coming in sees');
+  // a road between houses: off the road's cost alone it would stand on it, so the way in is kept - the first open
+  // ground past the houses (cells 24-29 and 38-43, the town's last twenty rows), never on the way
+  const housed = new Uint8Array(64 * 64).map((_, i) => { const x = i % 64, y = Math.floor(i / 64); return y < 20 && ((x >= 24 && x < 30) || (x >= 38 && x < 44)) ? 1 : 0; });
+  const h = lefaySpotOf({ width: 1, height: 1, blocks: [{ x: 0, y: 0, dfBlock: { rmbBlock: { fldHeader: { autoMapData: housed, groundData: { groundTiles: tiles } } } } }] });
+  assert.deepEqual([h.gx, h.gy], [47, 60]);
+  for (const [dx, dy] of discCells(MONUMENT_CLEAR_M)) {
+    const x = (h.gx + dx) * NAV_CELL + HALF_CELL, z = (h.gy + dy) * NAV_CELL + HALF_CELL;
+    assert.ok(Math.abs(x - line) > MONUMENT_WAY_M || 64 * NAV_CELL - z > MONUMENT_WAY_IN_M, 'none on the way in');
+  }
+  // the road turned off the border: no way in, the middle
+  const west = Array.from({ length: 16 }, () => Array.from({ length: 16 }, () => ({ textureRecord: 2 })));
+  const shut = new Uint8Array(64 * 64).map((_, i) => (Math.floor(i / 64) < 5 ? 1 : 0));
+  assert.deepEqual(lefaySpotOf({ width: 1, height: 1, blocks: [{ x: 0, y: 0, dfBlock: { rmbBlock: { fldHeader: { autoMapData: shut, groundData: { groundTiles: west } } } } }] }), { gx: 31, gy: 31, x: 31 * NAV_CELL + HALF_CELL, z: 31 * NAV_CELL + HALF_CELL });
+  assert.equal(lefaySpotOf(null), null);
+});
+
+test('GOTHWAY-MONUMENT ON THE FREEWARE: Gothway Garden\'s own layout - beside the road in from Privateer\'s Hold, at its north border', { skip: process.env.ARENA2_PATH ? false : 'ARENA2_PATH not set - sh tools/fetch-data.sh' }, async () => {
+  const A2 = process.env.ARENA2_PATH, bytes = (n) => new Uint8Array(readFileSync(join(A2, n)));
+  const { BlocksFile } = await import('../../src/formats/blocksFile.js');
+  const { MapsFile } = await import('../../src/formats/mapsFile.js');
+  const { layoutLocation } = await import('../../src/world/locationLayout.js');
+  const blocks = new BlocksFile(); blocks.load(bytes('BLOCKS.BSA'));
+  const maps = new MapsFile(); maps.load(bytes('MAPS.BSA'), bytes('CLIMATE.PAK'), bytes('POLITIC.PAK'));
+  let town = null, hold = null;
+  for (let l = 0; l < maps.getRegion(LEFAY_REGION).locationCount; l++) {
+    const at = maps.getLocation(LEFAY_REGION, l);
+    if (isLefayTown(at)) town = at;
+    if (at?.name === 'Privateer\'s Hold') hold = at;
+  }
+  assert.ok(town && hold);
+  assert.ok(hold.mapTableData.latitude > town.mapTableData.latitude, 'the Hold lies north of the town');
+  const loc = layoutLocation(town, maps, blocks, { enhanced: true, windmills: false });
+  const s = monumentSpotOf(town, loc);
+  assert.deepEqual({ id: s.id, gx: s.gx, gy: s.gy }, { id: 'lefay', gx: 88, gy: 188 });
+  assert.equal(loc.height * 64 - 1 - s.gy, 3, 'its disc against the north border');
+});
+
+test('STEWART-MONUMENT: by the White-Gold Tower - on its plaza\'s open stone, before the palace door and off its walk, clear of the arrivals', () => {
+  assert.equal(STEWART_SLICE, 312);
+  assert.equal(isStewartSlice({ capital: { key: 'imperial-city', s: 312 } }), true);
+  assert.equal(isStewartSlice({ capital: { key: 'imperial-city', s: 311 } }), false, 'another slice of the city');
+  assert.equal(isStewartSlice({ capital: { key: 'solitude', s: 312 } }), false, 'another capital');
+  assert.equal(isStewartSlice({ regionIndex: 17, name: 'Gothway Garden' }), false);
+  const [ax, az] = STEWART_AT, T = IMPERIAL.tower;
+  assert.ok(Math.abs(Math.hypot(ax, az) - T.plinthR - 25) < 1e-9, '25 m out from the rotunda\'s wall');
+  assert.ok(ax > T.plinthR && az < 0 && -az > T.door + MONUMENT_CLEAR_M, 'east, before the door, north of its walk');
+  assert.ok(Math.hypot(ax, az) + MONUMENT_CLEAR_M < IMPERIAL.plaza, 'on the plaza');
+  const ic = CAPITALS.find((c) => c.key === 'imperial-city');
+  for (const [mx, mz] of ic.markers) assert.ok(Math.hypot(mx - ax, mz - az) > 40, `clear of the arrival at ${mx}, ${mz}`);
+  for (let dx = -MONUMENT_CLEAR_M; dx <= MONUMENT_CLEAR_M; dx += 0.5) for (let dz = -MONUMENT_CLEAR_M; dz <= MONUMENT_CLEAR_M; dz += 0.5) {
+    if (Math.hypot(dx, dz) > MONUMENT_CLEAR_M) continue;
+    assert.equal(imperialTile(ax + dx, az + dz), 3, 'the plaza\'s stone');
+    assert.ok(imperialOpenAt(ax + dx, az + dz), 'open ground');
+  }
+});
+
+test('STEWART-MONUMENT: THE FRAME - the centre slice\'s location frame, back to the city\'s metres through the blocks\' own sum from every cell', () => {
+  const s = stewartSpot();
+  assert.deepEqual([s.x, s.z], [s.gx * NAV_CELL + HALF_CELL, s.gy * NAV_CELL + HALF_CELL], 'on a cell\'s centre - the carve round it');
+  const sx = 12, sy = 12;   // the centre slice's column and row of slices
+  assert.equal(sy * 25 + sx, STEWART_SLICE);
+  assert.equal(IMPERIAL_CELLS / 2 - sx * 8, 4, 'the city\'s middle four blocks in');
+  for (let i = 0; i < 64; i++) {
+    // world/tamrielCapitals.js: a slice's block i stands at (i % 8, i / 8), its plan row counted from the south
+    const bx = i % 8, by = Math.floor(i / 8), r = sy * 8 + (7 - by), c = sx * 8 + bx;
+    const [x, z] = imperialAnchorOf(r, c, s.x - bx * BLOCK_M, s.z - by * BLOCK_M);
+    assert.ok(Math.abs(x - STEWART_AT[0]) <= HALF_CELL && Math.abs(z - STEWART_AT[1]) <= HALF_CELL, `block ${i}`);
+  }
+  assert.deepEqual(monumentSpotOf({ capital: { key: 'imperial-city', s: 312 } }, null), { id: 'stewart', ...s });
+  assert.equal(monumentSpotOf({ capital: { key: 'imperial-city', s: 313 } }, null), null);
+  assert.equal(monumentSpotOf(null, null), null);
 });
 
 test('LEFAY1: THE CARVE - the people\'s navgrid closed within MONUMENT_CARVE_M of its middle, and only there', () => {
@@ -356,6 +404,12 @@ test('LEFAY1: THE TRIBUTE - the count and the newest MONUMENT_FLOWERS_KEPT where
   const back2 = {};
   restorePlayer(back2, old);
   assert.deepEqual(back2.lefayTribute, { count: 0, laid: [] }, 'a save from before it laid none');
+  // STEWART-MONUMENT: his pile its own field, beside LeFay's
+  const both = snapshotPlayer({ name: 'Hero', items: [], lefayTribute: t, stewartTribute: { count: 2, laid: [[10, 1, 0, 3]] } }, {});
+  const back3 = {};
+  restorePlayer(back3, JSON.parse(JSON.stringify(both)));
+  assert.deepEqual([back3.lefayTribute, back3.stewartTribute], [t, { count: 2, laid: [[10, 1, 0, 3]] }]);
+  assert.deepEqual(back2.stewartTribute, { count: 0, laid: [] }, 'a save from before it laid none');
 });
 
 /** A renderer and a collider that record what the pool asks of them. */
@@ -510,30 +564,96 @@ test('LEFAY1: THE PRESS - Read (or Info) reads it, Steal takes nothing, anything
   assert.deepEqual(m.batches(), []);
 });
 
-test('LEFAY1: THE FOUR HOSTS - world.js and exterior.js stand it, the street press both share reaches it, the save carries it', () => {
+test('LEFAY1: THE FOUR HOSTS - world.js and exterior.js stand them, the street press both share reaches them, the save carries each', () => {
   const world = hostText('src/scenes/world.js'), ext = read('src/scenes/exterior.js'), modes = read('src/scenes/worldModes.js'), save = read('src/systems/save/save.js');
   const dungeon = read('src/scenes/dungeonContext.js');
+  assert.match(world, /lefaySpot = farView \? null : monumentSpotOf\(dfLocation, loc\);\n[^\n]*\n[^\n]*\n[^\n]*\n[^\n]*\n[^\n]*townPlacesFor\(dfLocation, lefaySpot,/, 'the pixel finds its spot before the yards, which keep off it (GOTHWAY-MONUMENT)');
+  assert.match(ext, /lefaySpot = monumentSpotOf\(dfLocation, loc\);/, 'the bench finds it');
   for (const [name, src] of [['world.js', world], ['exterior.js', ext]]) {
-    assert.match(src, /lefaySpot = lefaySpotOf\(loc, \{ camp: \{ block: PRIVATEERS_HOLD_BLOCK, models: HOLD_MODELS \}, exit: lefayExitOf\(dungeonEntranceLanding\(/, `${name} finds the spot off the place's own navgrid beside DFU's exit landing, WoD's camp closed on it (HOLD-MONUMENT, AUDIT FIVE-ASKS B1)`);
     assert.match(src, /if \(lefaySpot\) carveLefay\((nav|cityNav), lefaySpot\);/, `${name} carves the people's navgrid`);
-    assert.match(src, /createLefayMonument\(\{/, `${name} makes the pool`);
-    assert.match(src, /lefay\??\.frame\(\)/, `${name} frames it`);
-    assert.match(src, /lefay\??\.draw\(renderer\)/, `${name} draws it`);
-    assert.match(src, /\.\.\.lefay\.batches\(\)/, `${name} draws its flowers`);
-    assert.match(src, /monumentTargets: \(\) => lefay\??\.targets\(\)/, `${name} hands the street's ray its box`);
-    assert.match(src, /activateMonument: \(key, mode, verb\) => lefay\??\.activate\(key, mode, verb\)/, `${name} hands it the press`);
-    assert.match(src, /\(key\) => lefay\??\.hoverName\(key\)/, `${name} names it on the plaque`);
-    assert.match(src, /lefay\??\.destroyAll\(\);/, `${name} takes it down at a change of place`);
-    assert.match(src, /tribute: \(\) => playerEntity\.lefayTribute, keep: \(next\) => \{ playerEntity\.lefayTribute = next; \}/, `${name} keeps the pile on the character`);
+    assert.match(src, /createMonuments\(\{/, `${name} makes the pools`);
+    assert.match(src, /lefay\??\.frame\(\)/, `${name} frames them`);
+    assert.match(src, /lefay\??\.draw\(renderer\)/, `${name} draws them`);
+    assert.match(src, /\.\.\.lefay\.batches\(\)/, `${name} draws their flowers`);
+    assert.match(src, /monumentTargets: \(\) => lefay\??\.targets\(\)/, `${name} hands the street's ray their boxes`);
+    assert.match(src, /activateMonument: \(key, mode, verb\) => lefay\??\.activate\(key, mode, verb\)/, `${name} hands them the press`);
+    assert.match(src, /\(key\) => lefay\??\.hoverName\(key\)/, `${name} names them on the plaque`);
+    assert.match(src, /lefay\??\.destroyAll\(\);/, `${name} takes them down at a change of place`);
+    assert.match(src, /tribute: \(field\) => playerEntity\[field\], keep: \(field, next\) => \{ playerEntity\[field\] = next; \}/, `${name} keeps each pile on the character`);
   }
-  assert.match(world, /lefay: lefaySpot,/, 'the pixel keeps its spot');
+  assert.match(world, /if \(p\.monument\?\.id !== id \|\| !p\.locOrigin\) continue;/, 'each monument where its own pixel stands it');
+  assert.match(world, /monument: lefaySpot,/, 'the pixel keeps its spot');
+  assert.match(ext, /site: \(id\) => \(_mode\(\) === 'exterior' && lefaySpot\?\.id === id \? _lefaySite : null\),/);
   assert.match(modes, /for \(const t of host\.monumentTargets\?\.\(\) \?\? \[\]\) targets\.push\(t\);/);
   assert.match(modes, /return host\.activateMonument\?\.\(key, getInteractionMode\(\), plaqueActionFor\(key\)\) \?\? true;/);
-  assert.match(modes, /key\.startsWith\('lefay:'\)\) \{[^\n]*\n\s*if \(_hitDist > _hitReach\) \{ setMidScreenText\(tooFarAwayText\(\)\); return true; \}/, 'too far speaks the refusal');
+  assert.match(modes, /key\.startsWith\('monument:'\)\) \{[^\n]*\n\s*if \(_hitDist > _hitReach\) \{ setMidScreenText\(tooFarAwayText\(\)\); return true; \}/, 'too far speaks the refusal');
   assert.equal(/lefay/i.test(dungeon), false, 'the dungeon host stands no street, and nothing of it');
   assert.match(save, /snap\.lefayTribute = normalTribute\(entity\.lefayTribute\);/);
   assert.match(save, /entity\.lefayTribute = normalTribute\(snap\.lefayTribute\);/);
-  assert.equal(LEFAY_KEY.startsWith('lefay:'), true, 'the press\'s arm reads its key\'s prefix');
+  assert.match(save, /snap\.stewartTribute = normalTribute\(entity\.stewartTribute\);/);
+  assert.match(save, /entity\.stewartTribute = normalTribute\(snap\.stewartTribute\);/);
+  for (const m of Object.values(MONUMENTS)) assert.equal(m.key.startsWith('monument:'), true, 'the press\'s arm reads its key\'s prefix');
+  assert.deepEqual(Object.values(MONUMENTS).map((m) => m.tribute), ['lefayTribute', 'stewartTribute'], 'the save\'s fields');
+});
+
+test('STEWART-MONUMENT: THE POOLS - each monument at its own site, its own key, words, plaque and pile; the press and the plaque find the one named', async () => {
+  const { log, st, deps } = rig();
+  const piles = {};
+  const sites = { lefay: null, stewart: [100, 50] };
+  const m = createMonuments({ ...deps, site: (id) => sites[id], tribute: (f) => piles[f], keep: (f, next) => { piles[f] = next; } });
+  assert.deepEqual(m.frame(), [100, 2, 50], 'Stewart\'s stands; LeFay\'s place is not built');
+  assert.equal(log.buckets.has(STEWART_KEY), true);
+  assert.equal(log.buckets.has(LEFAY_KEY), false);
+  assert.ok(log.uploads.some(([a, r]) => a === LEFAY_ARCHIVE && r === STEWART_PLAQUE), 'its own plaque\'s picture');
+  assert.equal(m.draw(deps.renderer), 1);
+  assert.ok(m.targets().length === 2 && m.targets().every((t) => t.key === STEWART_KEY));
+  assert.equal(m.hoverName(LEFAY_KEY), null, 'LeFay\'s is not standing');
+  assert.deepEqual(m.hoverName(STEWART_KEY), { title: 'Monument to Patrick Stewart', subs: ['The voice of Emperor Uriel Septim VII'], actions: LEFAY_ROWS.map((r) => ({ ...r })) });
+  assert.equal(m.activate(STEWART_KEY, 'info'), true);
+  assert.deepEqual(log.say, [...STEWART_TEXT.read]);
+  assert.equal(m.activate(STEWART_KEY, 'grab'), true);
+  assert.deepEqual(log.mid, ['You lay flowers for Patrick Stewart.']);
+  st.t += 5000;
+  m.frame();
+  assert.equal(piles.stewartTribute.count, 1, 'laid in Stewart\'s pile');
+  assert.equal(piles.lefayTribute, undefined, 'and not LeFay\'s');
+  assert.deepEqual(m.hoverName(STEWART_KEY).subs.at(-1), 'You have laid 1 flower here');
+  assert.equal(m.activate('monument:nobody', 'grab'), false);
+  // both stand where both are built: each its own bucket and boxes
+  sites.lefay = [10, 20];
+  m.frame();
+  assert.ok(log.buckets.has(LEFAY_KEY) && log.buckets.has(STEWART_KEY));
+  assert.equal(m.targets().length, 4);
+  assert.equal(m.draw(deps.renderer), 2);
+  assert.deepEqual(Object.keys(m.state()), ['lefay', 'stewart']);
+  m.destroyAll();
+  assert.equal(log.buckets.size, 0, 'a transition takes both down');
+  m.dispose();
+  assert.equal(log.destroyedMeshes, 2, 'each frees its mesh');
+});
+
+test('STEWART-MONUMENT: THE PLAQUE - his name over two lines (it is too long for one at twice the size), every letter drawn, every line fitting; its own picture', () => {
+  assert.deepEqual(STEWART_TEXT.plaque, ['PATRICK', 'STEWART', 'THE VOICE OF', 'URIEL SEPTIM VII']);
+  assert.ok(lineWidth('PATRICK STEWART', PLAQUE_SCALES[0]) > LEFAY_PLAQUE_W - 16, 'one line would not fit');
+  for (const [i, line] of STEWART_TEXT.plaque.entries()) {
+    for (const ch of line) assert.ok(lefayGlyph(ch), `a glyph for "${ch}"`);
+    assert.ok(lineWidth(line, PLAQUE_SCALES[i]) <= LEFAY_PLAQUE_W - 16, `"${line}" fits`);
+  }
+  const art = lefayArt(MONUMENTS.stewart);
+  assert.deepEqual(art.map(([r]) => r), [LEFAY_GRANITE, LEFAY_MARBLE, LEFAY_GILT, STEWART_PLAQUE, LEFAY_BRONZE]);
+  assert.deepEqual(art[3][1].colors, lefayPlaqueArt(STEWART_TEXT.plaque).colors);
+  assert.notDeepEqual(art[3][1].colors, lefayArt()[3][1].colors, 'not LeFay\'s');
+  const model = buildLefayModel(STEWART_PLAQUE);
+  assert.deepEqual(model.subMeshes.map((sm) => sm.textureRecord), [LEFAY_GRANITE, LEFAY_MARBLE, LEFAY_GILT, LEFAY_BRONZE, STEWART_PLAQUE], 'its plaques wear his picture');
+  // P, K, W, V, M read the right way round: P's bowl at the top, K's arms to the right, W's vee at the bottom
+  const G = (ch) => LEFAY_GLYPHS[ch];
+  assert.ok(G('P')[0][0] === '#' && G('P')[6][4] === '.' && G('P')[1][4] === '#', 'P');
+  assert.ok(G('K')[0][4] === '#' && G('K')[3][1] === '#' && G('K')[6][4] === '#', 'K');
+  assert.ok(G('W')[5][2] === '.' && G('W')[4][2] === '#' && G('W')[0][2] === '.', 'W');
+  assert.ok(G('V')[6][2] === '#' && G('V')[6][0] === '.', 'V');
+  assert.ok(G('M')[1][1] === '#' && G('M')[6][2] === '.', 'M');
+  // the words are plain (PLAIN-TEXT): each read line a sentence of 25 words at most
+  for (const line of [...STEWART_TEXT.read, STEWART_TEXT.laid, ...STEWART_TEXT.subs]) assert.ok(line.split(/\s+/).length <= 25, line);
 });
 
 // ── AUDIT LEFAY1 (lens B): the host's lifecycle, the pool's own laws, the plaque read as a reader reads it ──────────

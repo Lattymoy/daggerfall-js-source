@@ -78,7 +78,7 @@ export const ITEM_PLACES = Object.freeze(['carried', 'bag', 'wagon', 'furnisher'
  *  guild's id). */
 export const NAME_COPIES = Object.freeze([
   ['letters', 'from_name', 'from_id = ?3'], ['homes', 'owner_name', 'player = ?3 AND guild_id IS NULL'], ['home_rooms', 'tenant_name', 'tenant = ?3'],
-  ['board_notes', 'author_name', 'author = ?3'], ['board_notices', 'author_name', 'author = ?3'], ['guilds', 'moved_by'], ['guild_members', 'name', 'player = ?3'],
+  ['board_notes', 'author_name', 'author = ?3'], ['board_notices', 'author_name', 'author = ?3'], ['guilds', 'moved_by'], ['guild_members', 'name', 'player = ?3'], ['guild_requests', 'name', 'player = ?3'],
   ['guild_invites', 'by_name'], ['guild_ledger', 'who'], ['guild_notes', 'author_name', 'author = ?3'], ['guild_renames', 'who'],
   ['guild_vault', 'dep_name', 'dep_player = ?3'], ['guild_vault_log', 'who'], ['guild_writ_budgets', 'set_by'], ['guild_prof_stores', 'moved_by'],
   ['guild_store_ledger', 'who'],

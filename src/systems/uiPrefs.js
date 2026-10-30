@@ -220,6 +220,9 @@ export const PREF_DEFAULTS = Object.freeze({
   // front door, and on the classic skin no ANIM0001 splash before the title (main.js). ?nointro and ?novideo do the
   // same for one visit. Off by default: the film is how the game introduces itself.
   skipStartVideo: false,
+  // AUTO-UPDATE (2026-10-30, the owner: "turn off the automatic updates by default"): a new version saves and restarts the
+  // game after a minute's warning (ui/updateScreen.js) only with this on; off, the player is told and updates when ready.
+  autoUpdates: false,
   // LOAD1 (2026-10-05): the PrintScreen key's download - on, the PNG is saved as KB1 always saved it; off, the shot is
   // kept in the gallery alone (ui/screenshot.js). The Screenshots pane's own switch, so it is no Features row.
   shotDownload: true,

@@ -1369,11 +1369,6 @@
   "tr": "86b9ff6b71ba",
   "by": "claude-in-session"
  },
- "account.refusal.guildRenameGold": {
-  "en": "a91541390908",
-  "tr": "d8629d1ce104",
-  "by": "claude-in-session"
- },
  "account.refusal.guildRenameMoved": {
   "en": "114d8b59f29d",
   "tr": "146f486a5b3b",
@@ -1617,6 +1612,11 @@
  "account.refusal.homeTowns": {
   "en": "e8303b3d7726",
   "tr": "aabc5d09bf90",
+  "by": "claude-in-session"
+ },
+ "account.refusal.homeUnlisted": {
+  "en": "8845fe7a3a8a",
+  "tr": "acbab1f86d6a",
   "by": "claude-in-session"
  },
  "account.refusal.homeUpdate": {
@@ -2052,6 +2052,11 @@
  "account.refusal.noLineage": {
   "en": "1720f337da24",
   "tr": "7aa27bb15336",
+  "by": "claude-in-session"
+ },
+ "account.refusal.noLogo": {
+  "en": "ea92e7a4ca08",
+  "tr": "71332eb6da11",
   "by": "claude-in-session"
  },
  "account.refusal.noMember": {
@@ -7399,6 +7404,16 @@
   "tr": "606a08a89291",
   "by": "claude-in-session"
  },
+ "menu.autoUpdates.name": {
+  "en": "1e138bf814eb",
+  "tr": "cf1ba79e03fe",
+  "by": "claude-in-session"
+ },
+ "menu.autoUpdates.note": {
+  "en": "4541de510f7f",
+  "tr": "5428e2b80c5e",
+  "by": "claude-in-session"
+ },
  "menu.begin.blurb": {
   "en": "e4e4d4d671eb",
   "tr": "316b919f2192",
@@ -11522,6 +11537,11 @@
  "net.update.build": {
   "en": "f1068141ad9f",
   "tr": "c43f71835b7f",
+  "by": "claude-in-session"
+ },
+ "net.update.buildReady": {
+  "en": "b489ad1935f5",
+  "tr": "94a64ce7672d",
   "by": "claude-in-session"
  },
  "net.update.button": {
@@ -16082,6 +16102,11 @@
  "wagon.upkeep.boons.rickety": {
   "en": "8dcc1fe1e4b7",
   "tr": "3881bd259145",
+  "by": "claude-in-session"
+ },
+ "wild.bank.shut": {
+  "en": "838ae35da1d4",
+  "tr": "e044ec6b399e",
   "by": "claude-in-session"
  },
  "wild.death.away": {

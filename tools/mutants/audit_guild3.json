@@ -164,8 +164,8 @@
   {
     "name": "AG3-W2-a-member-kind-the-guild",
     "file": "src/ui/socialPanel.js",
-    "old": "export const GUILD_SILVER_MEMBER_KINDS = Object.freeze(['guild-deposit', 'guild-withdraw', 'heraldry', 'guild-deed', 'contract-escrow', 'tribute', 'patron-escrow']);",
-    "new": "export const GUILD_SILVER_MEMBER_KINDS = Object.freeze(['guild-deposit', 'guild-withdraw', 'heraldry', 'guild-deed', 'contract-escrow', 'patron-escrow']);",
+    "old": "'contract-escrow', 'tribute', 'patron-escrow', 'guild-rename',",
+    "new": "'contract-escrow', 'patron-escrow', 'guild-rename',",
     "tests": [
       "test/net/audit_guild3.test.js"
     ]
@@ -365,8 +365,8 @@
   {
     "name": "AG3-S3-the-room-the-refusals-word",
     "file": "src/ui/socialPanel.js",
-    "old": "  'guild-vault', 'guild-seat', 'guild-battle', 'guild-patron', 'marks-full']);",
-    "new": "  'guild-vault', 'guild-seat', 'guild-battle', 'guild-patron']);",
+    "old": "'guild-patron', 'guild-logo', 'marks-full']);",
+    "new": "'guild-patron', 'guild-logo']);",
     "tests": [
       "test/net/audit_guild3.test.js"
     ]
@@ -419,8 +419,8 @@
   {
     "name": "AG3-W3-the-rule-unread",
     "file": "src/net/guild/guildPowers.js",
-    "old": "return typeof may === 'function' ? RANKS.filter((r) => may(r)) : [];",
-    "new": "return typeof may === 'function' ? [...RANKS] : [];",
+    "old": "return typeof may === 'function' ? all.filter((r) => may(r)) : [];",
+    "new": "return typeof may === 'function' ? [...all] : [];",
     "tests": [
       "test/net/guild3_plain.test.js"
     ]

@@ -46,6 +46,7 @@ import { shipNameVerdict, SHIP_NAME_MAX } from '../fleet.js';
 import { flagCode, flagOfCode } from '../naval/shipFlag.js';
 import { liveryCode, liveryOfCode } from '../naval/shipLivery.js';   // SHIP-LIVERY: her paint
 import { fittingsCode, fittingsOfCode } from '../naval/deckFittings.js';   // DECK-PROPS: her fittings
+import { figureheadOfCode } from '../naval/figurehead.js';   // FIGUREHEAD: `h`, each boat's carving (0 none) while one is carved - an older build reads no key it does not know, and draws her stem bare
 
 /** The boats one word carries - a player's shore holds few, and a frame's size is the room's. DECK-POSE: the pose's place
  *  aboard names one of them, so the count's one home is the pose's door (net/wire.js POSE_ABOARD_SLOTS). */
@@ -77,12 +78,12 @@ const int = (v, lo, hi) => Number.isInteger(v) && v >= lo && v <= hi;
  * @returns {{ b: number[][], m?: number[][], u?: number[], n?: string[], f?: (number|number[])[] } | null} null when none stands (the
  *   reader drops mine); `m` only while a boat is under way; `u` only while one carries her number; HOLDINGS: `n` only while
  *   one is named; SHIP-COLOURS: `f` only while one flies a flag (each view's `flag`); SHIP-PLAQUE: `p` (1: her name shown on
- *   her bows, each view's `plaque` - a named boat's) only while one shows it
+ *   her bows, each view's `plaque` - a named boat's) only while one shows it; FIGUREHEAD: `h` (each view's `figurehead`) while one is carved
  */
 export function csaWireRecord(view, toWire = (p) => p) {
   if (!Array.isArray(view)) return null;
-  const b = [], m = [], n = [], u = [], f = [], l = [], d = [], pl = [];
-  let underWay = false, named = false, flagged = false, painted = false, fitted = false, boarded = false;
+  const b = [], m = [], n = [], u = [], f = [], l = [], d = [], pl = [], h = [];
+  let underWay = false, named = false, flagged = false, painted = false, fitted = false, boarded = false, carved = false;
   for (const v of view) {
     if (b.length >= CSA_WIRE_BOATS_MAX) break;
     if (!v || !int(v.hull, 0, HULL_NAMES.length - 1) || !finite3(v.position) || !Array.isArray(v.rotation) || v.rotation.length !== 4) continue;
@@ -115,9 +116,12 @@ export function csaWireRecord(view, toWire = (p) => p) {
     const shows = v.plaque === true && !!(name?.ok && name.name);   // SHIP-PLAQUE: her name on her bows - a named boat's
     pl.push(shows ? 1 : 0);
     if (shows) boarded = true;
+    const carving = figureheadOfCode(v.figurehead);   // FIGUREHEAD: her carving, or 0 - none
+    h.push(carving);
+    if (carving) carved = true;
   }
   if (!b.length) return null;
-  return { b, ...(underWay ? { m } : {}), ...(u.some(Boolean) ? { u } : {}), ...(named ? { n } : {}), ...(flagged ? { f } : {}), ...(painted ? { l } : {}), ...(fitted ? { d } : {}), ...(boarded ? { p: pl } : {}) };   // SHIP-PLAQUE: `p` while one shows her name; HOLDINGS: `n` only while one is named; SHIP-COLOURS: `f` while one flies a flag; SHIP-LIVERY: `l` while one is painted
+  return { b, ...(underWay ? { m } : {}), ...(u.some(Boolean) ? { u } : {}), ...(named ? { n } : {}), ...(flagged ? { f } : {}), ...(painted ? { l } : {}), ...(fitted ? { d } : {}), ...(boarded ? { p: pl } : {}), ...(carved ? { h } : {}) };   // FIGUREHEAD: `h` while one is carved; SHIP-PLAQUE: `p` while one shows her name; HOLDINGS: `n` only while one is named; SHIP-COLOURS: `f` while one flies a flag; SHIP-LIVERY: `l` while one is painted
 }
 
 /**
@@ -162,6 +166,8 @@ export function validCsaRecord(raw) {
     const fits = Array.isArray(raw.d) && raw.d.length === raw.b.length ? fittingsOfCode(raw.d[boats.length]) : [];   // DECK-PROPS: hers, where she is fitted
     if (fits.length) boat.fittings = fits;
     if (name && Array.isArray(raw.p) && raw.p.length === raw.b.length && raw.p[boats.length] === 1) boat.plaque = true;   // SHIP-PLAQUE: her name on her bows - never a reason to drop the word
+    const carving = Array.isArray(raw.h) && raw.h.length === raw.b.length ? figureheadOfCode(raw.h[boats.length]) : 0;   // FIGUREHEAD: hers, where she is carved - never a reason to drop the word
+    if (carving) boat.figurehead = carving;
     boats.push(boat);
   }
   // A cabin keeps its owner's fleet on the exterior stream; only the player is below deck.
@@ -181,4 +187,4 @@ function shipNameOf(n, count, i) {
 
 /** A change key, so a frame carries the record only when the word moved (the full frame always does). CSA-K: the way
  *  is in it, so a boat brought up short is said at once (its readers stop leading it). */
-export const csaRecordKey = (rec) => (rec ? JSON.stringify(rec.u || rec.cabin || rec.n || rec.f || rec.l || rec.d || rec.p ? [rec.b, rec.m ?? null, rec.u ?? null, rec.cabin ?? null, rec.n ?? null, rec.f ?? null, rec.l ?? null, rec.d ?? null, rec.p ?? null] : rec.m ? [rec.b, rec.m] : rec.b) : '');   // HOLDINGS: a renamed boat is said at once; SHIP-COLOURS: and a new flag; SHIP-LIVERY: and a new paint; AUDIT 2: and her name board shown or taken down (SHIP-PLAQUE's `p`)
+export const csaRecordKey = (rec) => (rec ? JSON.stringify(rec.u || rec.cabin || rec.n || rec.f || rec.l || rec.d || rec.p || rec.h ? [rec.b, rec.m ?? null, rec.u ?? null, rec.cabin ?? null, rec.n ?? null, rec.f ?? null, rec.l ?? null, rec.d ?? null, rec.p ?? null, rec.h ?? null] : rec.m ? [rec.b, rec.m] : rec.b) : '');   // HOLDINGS: a renamed boat is said at once; SHIP-COLOURS: and a new flag; SHIP-LIVERY: and a new paint; AUDIT 2: and her name board shown or taken down (SHIP-PLAQUE's `p`); FIGUREHEAD: and her carving (`h`)

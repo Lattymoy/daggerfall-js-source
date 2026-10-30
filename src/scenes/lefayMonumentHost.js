@@ -1,33 +1,24 @@
 // @ts-check
-// LEFAY1 (2026-10-08): THE MONUMENT TO JULIAN LEFAY, WHERE IT STANDS - the exterior hosts' pool on the runtime pools'
-// shape (scenes/sigilBrokerPool.js, scenes/gate/gatePool.js): its stone drawn in the host's world pass, its collider bucket,
-// the eye's box and its name, the press on it, and the flowers - thrown, in flight, and laid.
+// LEFAY1 (2026-10-08): THE MONUMENTS, WHERE THEY STAND - the exterior hosts' pool on the runtime pools' shape
+// (scenes/sigilBrokerPool.js): a monument's stone drawn in the host's world pass, its collider bucket, the eye's box and
+// its name, the press on it, and the flowers - thrown, in flight, and laid. createMonuments holds one pool a monument
+// (world/lefayMonument.js MONUMENTS: Julian LeFay's in Gothway Garden, Patrick Stewart's by the White-Gold Tower).
 //
-// WHERE: the host says (`site`: the scene's x, z of its middle - world/lefayMonument.js lefaySpot's, carried by the
-// host's own frame - or null where Privateer's Hold is not built - HOLD-MONUMENT; it was Gothway Garden); the ground there is the host's (`groundAt`), read when
-// the spot moves (a floating-origin recentre, across or up) and every LEFAY_GROUND_EVERY frames, never every frame. Its
-// collider bucket is restood when it moves, and held back while a body stands where it would first rise - anywhere in
-// its footprint (`bodyTrapped` - AUDIT SET W1's law: a body a wall rises round is sealed in).
-//
-// THE FLOWERS: a press throws one (a lit Throw row, or any mode but Info and Steal) - at most one every TOSS_EVERY_MS -
-// from the thrower's hand on an arc to its rest on the thrower's side (lefayMonument.js tossRest), where it is laid:
-// the character's tribute counts it and keeps it (`keep`, the save's - systems/save/save.js). The laid flowers are one
-// billboard batch to a kind of flower, made again when the pile changes, riding the monument's middle. Their pictures
-// are Daggerfall's (TEXTURE.254, the player's own); a game folder that will not give them leaves the flowers unseen,
-// and the count still counts.
-//
+// WHERE: the host says (`site(id)`: the scene's x, z of its middle, or null where its place is not built); the ground
+// there is the host's (`groundAt`), read when the spot moves and every LEFAY_GROUND_EVERY frames. Its collider is held
+// back while a body stands where it would first rise (`bodyTrapped` - AUDIT SET W1's law).
+
+// THE FLOWERS: a press throws one (a lit Throw row, or any mode but Info and Steal), at most one every TOSS_EVERY_MS, to
+// its rest on the thrower's side, where the character's tribute for that monument keeps it (`keep` - the save's). The
+// laid flowers are one billboard batch a kind; TEXTURE.254's, the player's own (none loaded: unseen, still counted).
 // NOTHING HERE IS SENT: each character keeps its own pile.
 //
-// THE FOUR HOSTS (bible/Home.md): scenes/world.js - WIRED (the pixel's build finds the spot and carves the people's
-// navgrid where there is one; the pool is made beside the Sigil Broker, framed, drawn, its flats on the live axis, taken down at a change
-// of place, a re-anchor and a load). scenes/exterior.js - WIRED (the bench's Privateer's Hold: the same pool on its fixed
-// frame). scenes/worldModes.js - WIRED for the press both exterior hosts share (`monumentTargets` in the street's one
-// ray, the `lefay:` arm with the too-far refusal and the plaque's lit row); its interiors stand no street and no
-// monument. scenes/dungeonContext.js - stands no street: nothing here reaches it.
-//
-// Not a DFU member. Ledger A (LEFAY).
+// THE FOUR HOSTS (bible/Home.md): scenes/world.js and scenes/exterior.js - WIRED (the pixel's or the bench's spot; the
+// pool framed, drawn, its flats on the live axis, taken down at a change of place, a re-anchor and a load).
+// scenes/worldModes.js - WIRED for the street's press both share (`monumentTargets`, the `monument:` arm).
+// scenes/dungeonContext.js - stands no street: nothing here reaches it. Not a DFU member. Ledger A (LEFAY).
 import {
-  LEFAY_KEY, LEFAY_TEXT, LEFAY_ROWS, LEFAY_ARCHIVE, MONUMENT_BOXES, MONUMENT_STEPS, MONUMENT_FOOT, OBELISK, LEFAY_FLOWERS, FLOWER_SCALE,
+  MONUMENTS, LEFAY_ROWS, LEFAY_ARCHIVE, MONUMENT_BOXES, MONUMENT_STEPS, MONUMENT_FOOT, OBELISK, LEFAY_FLOWERS, FLOWER_SCALE,
   TOSS_MS, TOSS_EVERY_MS, buildLefayModel, tossRest, flowerPlace, tossPoint, normalTribute, layFlower,
 } from '../world/lefayMonument.js';
 import { lefayArt } from '../world/lefayArt.js';
@@ -64,13 +55,13 @@ export function bodyTrapped(at, f) {
  *   eye?: () => (number[]|null), feet?: () => (number[]|null),
  *   tribute?: () => any, keep?: (next: {count: number, laid: number[][]}) => void,
  *   say?: (text: string) => void, midText?: (text: string) => void, sound?: () => void,
- *   now?: () => number, rand?: () => number, restores?: () => number,
+ *   now?: () => number, rand?: () => number, restores?: () => number, subject?: import('../world/lefayMonument.js').MonumentSubject,
  * }} deps  `site` the scene x, z of its middle (null where it does not stand), and the frame's vertical compensation
  *   when the host has one (a change re-reads the ground); `tribute`/`keep` the character's record; `restores` how many
- *   saves the page has restored (systems/save/save.js restoresSoFar)
+ *   saves the page has restored (systems/save/save.js restoresSoFar); `subject` which monument (MONUMENTS)
  */
 export function createLefayMonument({
-  renderer = null, getTexture = null, uploadRecord = null, billboardSize = null, site, groundAt, collider = () => null,
+  subject = MONUMENTS.lefay, renderer = null, getTexture = null, uploadRecord = null, billboardSize = null, site, groundAt, collider = () => null,
   eye = () => null, feet = () => null, tribute = () => null, keep = () => {},
   say = () => {}, midText = () => {}, sound = () => {}, now = () => Date.now(), rand = Math.random, restores = () => 0,
 }) {
@@ -81,7 +72,8 @@ export function createLefayMonument({
   /** Its collider, where it was stood ([x, y, z]), or null. */
   let colAt = null;
   /** Its mesh, made once; the model it was made from (the collider's triangles). */
-  const model = buildLefayModel();
+  const model = buildLefayModel(subject.plaque);
+  const { key: KEY, text: TEXT } = subject;
   let mesh = null, meshTried = false;
   /** The flowers' pictures: loading, loaded ({tex, sizes}), or failed. */
   let flowers = null, flowerLoad = null;
@@ -146,7 +138,7 @@ export function createLefayMonument({
     if (meshTried || !renderer?.createMesh) return;
     meshTried = true;
     try {
-      for (const [rec, art] of lefayArt()) wearPainted(LEFAY_ARCHIVE, rec, () => dfLook(art, lookSeed(LEFAY_ARCHIVE, rec)), (pic, { late }) => { if (late) renderer.releaseTexture?.(LEFAY_ARCHIVE, rec); renderer.uploadTexture?.(LEFAY_ARCHIVE, rec, pic); }, { topDown: true });
+      for (const [rec, art] of lefayArt(subject)) wearPainted(LEFAY_ARCHIVE, rec, () => dfLook(art, lookSeed(LEFAY_ARCHIVE, rec)), (pic, { late }) => { if (late) renderer.releaseTexture?.(LEFAY_ARCHIVE, rec); renderer.uploadTexture?.(LEFAY_ARCHIVE, rec, pic); }, { topDown: true });
       mesh = renderer.createMesh(model);
     } catch (e) { console.warn('[lefay] the monument would not build', e?.message ?? e); }
   }
@@ -155,9 +147,9 @@ export function createLefayMonument({
     if (!col?.addMesh) return;
     if (colAt && at && colAt[0] === at[0] && colAt[1] === at[1] && colAt[2] === at[2]) return;
     const moved = colAt !== null;   // stood, and the land moved under it (a recentre carries the body with it)
-    if (colAt) { col.removeBucket?.(LEFAY_KEY); colAt = null; }
+    if (colAt) { col.removeBucket?.(KEY); colAt = null; }
     if (!at || (!moved && bodyTrapped(at, feet()))) return;   // held back while a body stands where it would first rise - asked every frame; AUDIT LEFAY1 C1: never as it moves, which would drop a body standing on its steps
-    col.addMesh(LEFAY_KEY, model.positions, model.indices, matrix);
+    col.addMesh(KEY, model.positions, model.indices, matrix);
     colAt = [at[0], at[1], at[2]];
   }
   function throwFlower() {
@@ -173,13 +165,13 @@ export function createLefayMonument({
     if (flowers?.sizes) { f.batch = flowerBatch(entry[1], [[0, 0, 0]]); }
     tosses.push(f);
     sound();
-    midText(LEFAY_TEXT.laid);
+    midText(TEXT.laid);
     return true;
   }
-  const ours = (key) => key === LEFAY_KEY && !!at;
+  const ours = (key) => key === KEY && !!at;
   /** A transition takes its collider down and lays what is in flight: it is stood again by the next frame that finds it. */
   function destroyAll() {
-    collider()?.removeBucket?.(LEFAY_KEY);
+    collider()?.removeBucket?.(KEY);
     colAt = null; at = null; box = null;
     for (const f of tosses) land(f);
     tosses = [];
@@ -240,23 +232,23 @@ export function createLefayMonument({
     targets() {
       if (!at) return NONE;
       box ??= MONUMENT_BOXES.map((B) => ({
-        key: LEFAY_KEY, aabb: { min: [at[0] + B[0], at[1] + B[1], at[2] + B[2]], max: [at[0] + B[3], at[1] + B[4], at[2] + B[5]] },
+        key: KEY, aabb: { min: [at[0] + B[0], at[1] + B[1], at[2] + B[2]], max: [at[0] + B[3], at[1] + B[4], at[2] + B[5]] },
         distance: RAY_DISTANCE, reach: LEFAY_REACH, meshCollider: true,
       }));
       return box;
     },
-    /** WORLD-HOVER: its name, the man's years and his name in the world, what this character has laid, and its rows. */
+    /** WORLD-HOVER: its name, its lines, what this character has laid, and its rows. */
     hoverName(key) {
       if (!ours(key)) return null;
       const n = normalTribute(tribute()).count;
-      return { title: LEFAY_TEXT.title, subs: [LEFAY_TEXT.years, LEFAY_TEXT.epithet, ...(n > 0 ? [LEFAY_TEXT.count(n)] : [])], actions: LEFAY_ROWS.map((r) => ({ id: r.id, label: r.label })) };
+      return { title: TEXT.title, subs: [...TEXT.subs, ...(n > 0 ? [TEXT.count(n)] : [])], actions: LEFAY_ROWS.map((r) => ({ id: r.id, label: r.label })) };
     },
     /** A press on it: the Read row (or Info mode, no row lit) reads its inscription, Steal takes nothing, anything else
      *  throws a flower. */
     activate(key, mode = 'grab', verb = null) {
       if (!ours(key)) return false;
-      if (verb === 'read' || (verb == null && mode === 'info')) { for (const line of LEFAY_TEXT.read) say(line); return true; }
-      if (verb == null && mode === 'steal') { midText(LEFAY_TEXT.steal); return true; }
+      if (verb === 'read' || (verb == null && mode === 'info')) { for (const line of TEXT.read) say(line); return true; }
+      if (verb == null && mode === 'steal') { midText(TEXT.steal); return true; }
       throwFlower();
       return true;
     },
@@ -271,5 +263,32 @@ export function createLefayMonument({
       if (mesh) renderer?.destroyMesh?.(mesh);
       mesh = null; meshTried = false;
     },
+  };
+}
+
+/**
+ * STEWART-MONUMENT: EVERY MONUMENT, one pool each (MONUMENTS), as one pool to the hosts. `site(id)`, `tribute(field)` and
+ * `keep(field, next)` as createLefayMonument's, asked for a monument's id and its tribute's field (`lefayTribute`,
+ * `stewartTribute`); the rest handed to each.
+ * @param {Parameters<typeof createLefayMonument>[0] & { site: (id: string) => (number[]|null), tribute?: (field: string) => any, keep?: (field: string, next: {count: number, laid: number[][]}) => void }} deps
+ */
+export function createMonuments({ site, tribute = () => null, keep = () => {}, ...deps }) {
+  const pools = Object.values(MONUMENTS).map((subject) => createLefayMonument({
+    ...deps, subject, site: () => site(subject.id), tribute: () => tribute(subject.tribute), keep: (next) => keep(subject.tribute, next),
+  }));
+  const byKey = new Map(Object.values(MONUMENTS).map((m, i) => [m.key, pools[i]]));
+  const _all = [], _targets = [];
+  return {
+    /** One frame of each. Answers where the one standing stands, or null. */
+    frame() { let at = null; for (const p of pools) at = p.frame() ?? at; return at; },
+    draw(r) { let n = 0; for (const p of pools) n += p.draw(r); return n; },
+    batches() { _all.length = 0; for (const p of pools) _all.push(...p.batches()); return _all; },
+    targets() { _targets.length = 0; for (const p of pools) _targets.push(...p.targets()); return _targets; },
+    hoverName: (key) => byKey.get(key)?.hoverName(key) ?? null,
+    activate: (key, mode = 'grab', verb = null) => byKey.get(key)?.activate(key, mode, verb) ?? false,
+    /** Each pool's state, by its monument's id - for the tests and the probes. */
+    state: () => Object.fromEntries(Object.values(MONUMENTS).map((m, i) => [m.id, pools[i].state()])),
+    destroyAll() { for (const p of pools) p.destroyAll(); },
+    dispose() { for (const p of pools) p.dispose(); },
   };
 }

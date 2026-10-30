@@ -179,6 +179,11 @@ export const MARKS_KINDS = Object.freeze({
   'domain-fold': 'mint',      // DOMAIN3: a Charter folded into its region's at the region law's first Turning, its claim fee home (seatTurning.js)
   firmament: 'burn',          // FIRM1: the Firmament's refunds - silver a star taken back, at Renown 10 and past (firmamentLaw.js refundSilver)
   'craft-writ': 'mint',       // CRAFT-WRITS: a crafting writ filled - goods the service saw made, out of the realm record (server-account/src/craftWrits.js)
+  'guild-rename': 'burn',     // GUILD-SHOP: a guild's new name, from its treasury (guildShopLaw.js GUILD_RENAME_SILVER)
+  'guild-shop': 'burn',       // GUILD-SHOP: a guild shop ware - an account's from its balance, a guild's from its treasury (the ware the line's dst_id)
+  'logo-escrow': 'move',      // GUILD-LOGO: a logo's review fee, held from the treasury while the moderators decide (`logo:<id>`)
+  'logo-fee': 'burn',         // GUILD-LOGO: the fee, burnt out of its escrow when the logo is approved
+  'logo-return': 'move',      // GUILD-LOGO: the fee home, the logo turned down or withdrawn
 });
 
 /** The switch the service's config holds (MARKS_OPEN): off, dev (the developers alone), on. */
