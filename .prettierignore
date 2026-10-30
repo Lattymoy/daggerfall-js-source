@@ -48,6 +48,8 @@
 /src/net/firmament/*/
 !/src/net/gambit/
 /src/net/gambit/*/
+!/src/net/guild/
+/src/net/guild/*/
 !/src/net/herald/
 /src/net/herald/*/
 !/src/net/iliac/

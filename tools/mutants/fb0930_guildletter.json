@@ -101,8 +101,8 @@
   {
     "name": "GUILD-LETTER-the-letter-unasked",
     "file": "src/net/guild/guildBook.js",
-    "old": "this.door.withdraw(character, gold, at, letter)",
-    "new": "this.door.withdraw(character, gold, at)",
+    "old": "            call: (/** @type {any} */ at) => this.door.withdraw(character, gold, at, letter),",
+    "new": "            call: (/** @type {any} */ at) => this.door.withdraw(character, gold, at),",
     "tests": [
       "test/systems/fb0930_guildletter.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "GUILD-LETTER-the-apply-pays-coins",
     "file": "src/net/guild/guildBook.js",
-    "old": "        apply: () => this.wallet().credit(gold, { letter }),",
-    "new": "        apply: () => this.wallet().credit(gold),",
+    "old": "            apply: () => this.wallet().credit(gold, { letter }),",
+    "new": "            apply: () => this.wallet().credit(gold),",
     "tests": [
       "test/systems/fb0930_guildletter.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "GUILD-LETTER-the-old-lane-pays-coins",
     "file": "src/net/guild/guildBook.js",
-    "old": "      if (r?.ok) this.wallet().credit(gold, { letter });",
-    "new": "      if (r?.ok) this.wallet().credit(gold);",
+    "old": "        if (r?.ok) this.wallet().credit(gold, { letter });",
+    "new": "        if (r?.ok) this.wallet().credit(gold);",
     "tests": [
       "test/systems/fb0930_guildletter.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "GUILD-LETTER-the-answer-unsaid",
     "file": "src/net/guild/guildBook.js",
-    "old": "const said = (/** @type {any} */ r) => (r.ok && letter ? { ...r, letter } : r);",
-    "new": "const said = (/** @type {any} */ r) => r;",
+    "old": "    const said = (/** @type {any} */ r) => (r.ok && letter ? { ...r, letter } : r);",
+    "new": "    const said = (/** @type {any} */ r) => r;",
     "tests": [
       "test/systems/fb0930_guildletter.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "GUILD-LETTER-a-refusal-says-a-letter",
     "file": "src/net/guild/guildBook.js",
-    "old": "(r.ok && letter ? { ...r, letter } : r)",
-    "new": "(letter ? { ...r, letter } : r)",
+    "old": "    const said = (/** @type {any} */ r) => (r.ok && letter ? { ...r, letter } : r);",
+    "new": "    const said = (/** @type {any} */ r) => (letter ? { ...r, letter } : r);",
     "tests": [
       "test/systems/fb0930_guildletter.test.js"
     ]

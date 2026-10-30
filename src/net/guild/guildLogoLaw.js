@@ -22,7 +22,9 @@ export const GUILD_LOGO_ID_RE = /^[0-9a-f]{32}$/;
 export const GUILD_LOGO_PATH = '/v1/guilds/logo/';
 /** A logo's address under the service's origin `base`, or null for no logo. */
 export const guildLogoUrl = (/** @type {string} */ base, /** @type {unknown} */ id) =>
-  (typeof id === 'string' && GUILD_LOGO_ID_RE.test(id) ? `${String(base ?? '').replace(/\/$/, '')}${GUILD_LOGO_PATH}${id}` : null);
+  typeof id === 'string' && GUILD_LOGO_ID_RE.test(id)
+    ? `${String(base ?? '').replace(/\/$/, '')}${GUILD_LOGO_PATH}${id}`
+    : null;
 /** The logo id a path names, or null. */
 export const guildLogoPathOf = (/** @type {unknown} */ path) => {
   const m = typeof path === 'string' ? /^\/v1\/guilds\/logo\/([0-9a-f]{32})$/.exec(path) : null;

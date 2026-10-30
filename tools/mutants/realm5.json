@@ -130,8 +130,8 @@
   {
     "name": "REALM5-book-never-reserves",
     "file": "src/net/guild/guildBook.js",
-    "old": "        reserve: walletReserve(w, gold).reserve,   // MARKET-AUDIT: a refusal gives back exactly what it took\n        call: (/** @type {any} */ at) => this.door.deposit(",
-    "new": "        call: (/** @type {any} */ at) => this.door.deposit(",
+    "old": "          reserve: walletReserve(w, gold).reserve, // MARKET-AUDIT: a refusal gives back exactly what it took\n          call: (/** @type {any} */ at) => this.door.deposit(character, gold, at, w.region?.() ?? null),",
+    "new": "          call: (/** @type {any} */ at) => this.door.deposit(character, gold, at, w.region?.() ?? null),",
     "tests": [
       "test/net/realm5.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "REALM5-book-withdraw-uncredited",
     "file": "src/net/guild/guildBook.js",
-    "old": "        apply: () => this.wallet().credit(gold, { letter }),\n",
-    "new": "",
+    "old": "            apply: () => this.wallet().credit(gold, { letter }),\n            call: (/** @type {any} */ at) => this.door.withdraw(character, gold, at, letter),",
+    "new": "            call: (/** @type {any} */ at) => this.door.withdraw(character, gold, at, letter),",
     "tests": [
       "test/net/realm5.test.js"
     ],
@@ -149,8 +149,8 @@
   {
     "name": "REALM5-book-deposit-no-region",
     "file": "src/net/guild/guildBook.js",
-    "old": "this.door.deposit(character, gold, at, w.region?.() ?? null),",
-    "new": "this.door.deposit(character, gold, at, null),",
+    "old": "          call: (/** @type {any} */ at) => this.door.deposit(character, gold, at, w.region?.() ?? null),",
+    "new": "          call: (/** @type {any} */ at) => this.door.deposit(character, gold, at, null),",
     "tests": [
       "test/net/realm5.test.js"
     ]

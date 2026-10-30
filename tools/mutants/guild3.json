@@ -127,8 +127,8 @@
   {
     "name": "GUILD3c-a-table-unread",
     "file": "src/net/guild/guildPowers.js",
-    "old": "return Object.hasOwn(table, row?.power) ? [...table[row.power]] : [];",
-    "new": "return [GUILD_RANK_MASTER];",
+    "old": "  return Object.hasOwn(table, row?.power) ? [...table[row.power]] : [];",
+    "new": "  return [GUILD_RANK_MASTER];",
     "tests": [
       "test/net/guild3_plain.test.js"
     ]
@@ -136,8 +136,8 @@
   {
     "name": "GUILD3c-the-levers-unread",
     "file": "src/net/guild/guildPowers.js",
-    "old": "if (row?.table === 'levers') return [...SEAT_LEVER_RANKS];",
-    "new": "if (row?.table === 'levers') return [GUILD_RANK_MASTER];",
+    "old": "  if (row?.table === 'levers') return [...SEAT_LEVER_RANKS];",
+    "new": "  if (row?.table === 'levers') return [GUILD_RANK_MASTER];",
     "tests": [
       "test/net/guild3_plain.test.js"
     ]
@@ -145,8 +145,8 @@
   {
     "name": "GUILD3c-a-power-unworded",
     "file": "src/net/guild/guildPowers.js",
-    "old": "  Object.freeze({ table: 'hall', power: 'heraldry', words: 'choose the guild\\'s arms' }),\n",
-    "new": "",
+    "old": "  Object.freeze({ table: 'hall', power: 'heraldry', words: \"choose the guild's arms\" }),\n  Object.freeze({ table: 'guild', power: 'vaultGrant', words: \"grant or take back each member's use of the vault\" }),",
+    "new": "  Object.freeze({ table: 'guild', power: 'vaultGrant', words: \"grant or take back each member's use of the vault\" }),",
     "tests": [
       "test/net/guild3_plain.test.js"
     ]
@@ -154,8 +154,8 @@
   {
     "name": "GUILD3c-the-vault-limit-unsaid",
     "file": "src/net/guild/guildPowers.js",
-    "old": "const takeWords = (/** @type {number} */ limit) => (limit > 0 ? `${limit} a day` : 'any number');",
-    "new": "const takeWords = (/** @type {number} */ limit) => '';",
+    "old": "const takeWords = (/** @type {number} */ limit) => (limit > 0 ? `${limit} a day` : 'any number'); // AUDIT GUILD3 W11: the vault grant's own words (guildVaultLaw.js vaultStandingText)",
+    "new": "const takeWords = (/** @type {number} */ limit) => ''; // AUDIT GUILD3 W11: the vault grant's own words (guildVaultLaw.js vaultStandingText)",
     "tests": [
       "test/net/guild3_plain.test.js"
     ]
@@ -163,8 +163,8 @@
   {
     "name": "GUILD3c-the-same-never-said",
     "file": "src/net/guild/guildPowers.js",
-    "old": "text = more.length ? `Everything ${them} may, and: ${more.join('; ')}.` : `The same as ${them}.`;",
-    "new": "text = `Everything ${them} may, and: ${more.join('; ')}.`;",
+    "old": "      if (!less.length)\n        text = more.length ? `Everything ${them} may, and: ${more.join('; ')}.` : `The same as ${them}.`;",
+    "new": "      if (!less.length) text = `Everything ${them} may, and: ${more.join('; ')}.`;",
     "tests": [
       "test/net/guild3_plain.test.js"
     ]
@@ -217,8 +217,8 @@
   {
     "name": "GUILD3c-the-book-drops-the-list",
     "file": "src/net/guild/guildBook.js",
-    "old": "...(Array.isArray(r?.keeps) ? { keeps: [...r.keeps] } : {}) };",
-    "new": "};",
+    "old": "            ...(Array.isArray(r?.keeps) ? { keeps: [...r.keeps] } : {}),\n          };",
+    "new": "          };",
     "tests": [
       "test/net/guild3_plain.test.js"
     ]

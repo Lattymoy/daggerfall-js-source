@@ -410,8 +410,8 @@
   {
     "name": "AG3-W3-an-officer-fills-its-own",
     "file": "src/net/guild/guildPowers.js",
-    "old": "  Object.freeze({ rule: 'deliver', words: 'fill the guild\\'s own writs for their pay' }),\n",
-    "new": "",
+    "old": "  Object.freeze({ rule: 'deliver', words: \"fill the guild's own writs for their pay\" }),\n  Object.freeze({ rule: 'paid', words: \"be paid by the guild's own contracts\" }),",
+    "new": "  Object.freeze({ rule: 'paid', words: \"be paid by the guild's own contracts\" }),",
     "tests": [
       "test/net/guild3_plain.test.js"
     ]
@@ -419,8 +419,8 @@
   {
     "name": "AG3-W3-the-rule-unread",
     "file": "src/net/guild/guildPowers.js",
-    "old": "return typeof may === 'function' ? all.filter((r) => may(r)) : [];",
-    "new": "return typeof may === 'function' ? [...all] : [];",
+    "old": "    return typeof may === 'function' ? all.filter((r) => may(r)) : [];",
+    "new": "    return typeof may === 'function' ? [...all] : [];",
     "tests": [
       "test/net/guild3_plain.test.js"
     ]
@@ -428,8 +428,8 @@
   {
     "name": "AG3-W3-no-except",
     "file": "src/net/guild/guildPowers.js",
-    "old": "      else if (less.length <= EXCEPT_MAX && more.length) text =",
-    "new": "      else if (false) text =",
+    "old": "      else if (less.length <= EXCEPT_MAX && more.length)\n        text = `Everything ${them} may except ${less.join(' or ')}, and: ${more.join('; ')}.`;",
+    "new": "      else if (false) text = `Everything ${them} may except ${less.join(' or ')}, and: ${more.join('; ')}.`;",
     "tests": [
       "test/net/guild3_plain.test.js",
       "test/net/audit_guild3.test.js"
@@ -438,8 +438,8 @@
   {
     "name": "AG3-C5-a-lesser-take-holds-a-greater",
     "file": "src/net/guild/guildPowers.js",
-    "old": "&& (a.key !== 'vault-out' || a.limit === 0 || (b.limit !== 0 && Number(a.limit) >= Number(b.limit)));",
-    "new": "&& true;",
+    "old": "const covers = (/** @type {Act} */ a, /** @type {Act} */ b) =>\n  a.key === b.key && (a.key !== 'vault-out' || a.limit === 0 || (b.limit !== 0 && Number(a.limit) >= Number(b.limit)));",
+    "new": "const covers = (/** @type {Act} */ a, /** @type {Act} */ b) => a.key === b.key && true;",
     "tests": [
       "test/net/audit_guild3.test.js"
     ]
@@ -447,8 +447,8 @@
   {
     "name": "AG3-W4-the-sellswords-unsaid",
     "file": "src/net/guild/guildPowers.js",
-    "old": "  Object.freeze({ master: true, words: 'hire Sellswords for the guild\\'s battles' }),\n",
-    "new": "",
+    "old": "  Object.freeze({ master: true, words: \"hire Sellswords for the guild's battles\" }),\n  Object.freeze({ master: true, words: 'give a held Charter up' }),",
+    "new": "  Object.freeze({ master: true, words: 'give a held Charter up' }),",
     "tests": [
       "test/net/guild3_plain.test.js"
     ]
@@ -456,8 +456,8 @@
   {
     "name": "AG3-W4-any-writ-unsaid",
     "file": "src/net/guild/guildPowers.js",
-    "old": "  Object.freeze({ master: true, words: 'withdraw any guild writ or contract' }),\n",
-    "new": "",
+    "old": "  Object.freeze({ master: true, words: 'withdraw any guild writ or contract' }),\n  Object.freeze({ table: 'seat', power: 'tribute', words: 'pay Tribute at the seat the guild pledged' }),",
+    "new": "  Object.freeze({ table: 'seat', power: 'tribute', words: 'pay Tribute at the seat the guild pledged' }),",
     "tests": [
       "test/net/guild3_plain.test.js"
     ]
@@ -474,8 +474,8 @@
   {
     "name": "AG3-C5-the-vault-unsaid",
     "file": "src/net/guild/guildPowers.js",
-    "old": "  Object.freeze({ vault: true }),\n",
-    "new": "",
+    "old": "  Object.freeze({ vault: true }),\n  Object.freeze({ any: true, words: \"pin notes on the guild's board\" }),",
+    "new": "  Object.freeze({ any: true, words: \"pin notes on the guild's board\" }),",
     "tests": [
       "test/net/guild3_plain.test.js"
     ]

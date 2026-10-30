@@ -204,8 +204,8 @@
   {
     "name": "AUDIT-PROF-541-G1-the-ranks-move-untold",
     "file": "src/net/guild/guildBook.js",
-    "old": "const moved = ranked !== this._ranked;",
-    "new": "const moved = false;",
+    "old": "    const moved = ranked !== this._ranked;",
+    "new": "    const moved = false;",
     "tests": [
       "test/net/guild_yard.test.js"
     ]

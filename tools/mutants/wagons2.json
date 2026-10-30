@@ -509,8 +509,8 @@
   {
     "name": "WAGONS2-AUDIT-the-vaults-refusal-unread",
     "file": "src/net/guild/guildBook.js",
-    "old": "if (this.pack.refuses?.(item)) return { ok: false, error: 'vault-goods' };",
-    "new": "if (false) return { ok: false, error: 'vault-goods' };",
+    "old": "    if (this.pack.refuses?.(item)) return { ok: false, error: 'vault-goods' }; // WAGONS2 (AUDIT): the pack's own refusal - the loaded wagon stays",
+    "new": "    if (false) return { ok: false, error: 'vault-goods' }; // WAGONS2 (AUDIT): the pack's own refusal - the loaded wagon stays",
     "tests": [
       "test/systems/wagon/wagons2.test.js"
     ]

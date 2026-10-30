@@ -65,8 +65,8 @@
   {
     "name": "GUILD-SEEN-the-stamp-compared-with-the-rest",
     "file": "src/net/guild/guildBook.js",
-    "old": "{ ...guild, members: guild.members.map((m) => ({ ...m, seenAt: undefined })) }",
-    "new": "{ ...guild }",
+    "old": "  JSON.stringify([\n    state,\n    Array.isArray(guild?.members)\n      ? { ...guild, members: guild.members.map((m) => ({ ...m, seenAt: undefined })) }\n      : guild,\n    invites,\n  ]);",
+    "new": "  JSON.stringify([state, Array.isArray(guild?.members) ? { ...guild } : guild, invites]);",
     "tests": [
       "test/net/guildseen.test.js"
     ]

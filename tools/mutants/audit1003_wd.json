@@ -102,8 +102,8 @@
   {
     "name": "AUDIT1003-WD1-the-book-drops-it",
     "file": "src/net/guild/guildBook.js",
-    "old": "region, price, layout })));",
-    "new": "region, price })));",
+    "old": "      await this._act((c) => this.door.hallBuy({ character: c, mapId, buildingKey, region, price, layout })),",
+    "new": "      await this._act((c) => this.door.hallBuy({ character: c, mapId, buildingKey, region, price })),",
     "tests": [
       "test/systems/quest/audit1003_wd.test.js",
       "test/net/guild1d_client.test.js"

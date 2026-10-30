@@ -393,8 +393,8 @@
   {
     "name": "AUDIT-GUILD1d-R14-older-answer-clears",
     "file": "src/net/guild/guildBook.js",
-    "old": "&& this._heraldryAsk?.rid === rid) this._heraldryAsk = null;",
-    "new": ") this._heraldryAsk = null;",
+    "old": "      if ((r?.ok || guildRefused(r?.error) || HERALDRY_REFUSED.has(r?.error)) && this._heraldryAsk?.rid === rid)\n        this._heraldryAsk = null;",
+    "new": "      if (r?.ok || guildRefused(r?.error) || HERALDRY_REFUSED.has(r?.error)) this._heraldryAsk = null;",
     "tests": [
       "test/net/auditguild1d.test.js"
     ]

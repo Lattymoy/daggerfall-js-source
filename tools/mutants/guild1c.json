@@ -403,8 +403,8 @@
   {
     "name": "GUILD1c-every-look-hands-an-order",
     "file": "src/net/guild/guildBook.js",
-    "old": "if (key !== this._carried && typeof mine.data?.order === 'string')",
-    "new": "if (typeof mine.data?.order === 'string')",
+    "old": "    if (key !== this._carried && typeof mine.data?.order === 'string') {",
+    "new": "    if (typeof mine.data?.order === 'string') {",
     "tests": [
       "test/net/guild1c.test.js"
     ]
@@ -421,8 +421,8 @@
   {
     "name": "GUILD1c-the-acts-out-order-dropped",
     "file": "src/net/guild/guildBook.js",
-    "old": "      if (r?.ok && typeof r.data?.outOrder === 'string') this._hand({ outOrder: r.data.outOrder });\n",
-    "new": "",
+    "old": "      if (r?.ok && typeof r.data?.outOrder === 'string') this._hand({ outOrder: r.data.outOrder });\n      // AUDIT2 GUILD2 S2/S7: a refusal's own reason kept - the word the name filter caught (`why`), and when a refused act may",
+    "new": "      // AUDIT2 GUILD2 S2/S7: a refusal's own reason kept - the word the name filter caught (`why`), and when a refused act may",
     "tests": [
       "test/net/guild1c.test.js"
     ]
@@ -430,8 +430,8 @@
   {
     "name": "GUILD1c-the-unpaid-foundings-out-order-dropped",
     "file": "src/net/guild/guildBook.js",
-    "old": "        if (gone?.ok && typeof gone.data?.outOrder === 'string') this._hand({ outOrder: gone.data.outOrder });",
-    "new": "",
+    "old": "        if (gone?.ok && typeof gone.data?.outOrder === 'string') this._hand({ outOrder: gone.data.outOrder }); // GUILD1c: a room that heard the founding hears it gone",
+    "new": "        // GUILD1c: a room that heard the founding hears it gone",
     "tests": [
       "test/net/guild1c.test.js"
     ]

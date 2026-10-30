@@ -277,8 +277,8 @@
   {
     "name": "GUILD1d-hall-town-untold",
     "file": "src/net/guild/guildBook.js",
-    "old": "    if (r?.ok && Number.isSafeInteger(mapId)) { try { this.onHall?.(mapId);",
-    "new": "    if (false) { try { this.onHall?.(mapId);",
+    "old": "    if (r?.ok && Number.isSafeInteger(mapId)) {",
+    "new": "    if (false) {",
     "tests": [
       "test/net/guild1d_client.test.js"
     ]

@@ -47,8 +47,8 @@
   {
     "name": "MARKET-AUDIT2-guild-found-credit",
     "file": "src/net/guild/guildBook.js",
-    "old": "          reserve: walletReserve(w, GUILD_FOUND_GOLD).reserve,",
-    "new": "          reserve: () => { w.pay(GUILD_FOUND_GOLD); return () => w.credit(GUILD_FOUND_GOLD); },",
+    "old": "          reserve: walletReserve(w, GUILD_FOUND_GOLD).reserve, // MARKET-AUDIT: a refusal gives back exactly what it took",
+    "new": "          reserve: () => {\n            w.pay(GUILD_FOUND_GOLD);\n            return () => w.credit(GUILD_FOUND_GOLD);\n          }, // MARKET-AUDIT: a refusal gives back exactly what it took",
     "tests": [
       "test/systems/marketaudit2.test.js"
     ]
