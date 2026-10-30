@@ -9,7 +9,7 @@
 // arrival turns the relay's `clockAt` into seconds left here.
 //
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
-import { noteAct } from '../questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
+import { noteAct } from '../questlines/qlActs.js'; // QL11: the features' acts, heard by the running quests
 
 export class RemoteIliacTable {
   /** @param {{myId: string|null}} p */
@@ -23,9 +23,13 @@ export class RemoteIliacTable {
   }
 
   /** My seat at the table (0 or 1), or -1. */
-  seat() { return this.state?.seats?.findIndex((s) => s && s.id === this.myId) ?? -1; }
+  seat() {
+    return this.state?.seats?.findIndex((s) => s && s.id === this.myId) ?? -1;
+  }
   /** Whether I sit and the table waits for a second player. */
-  waiting() { return this.seat() >= 0 && !this.state?.game && !this.state?.seats?.every(Boolean); }
+  waiting() {
+    return this.seat() >= 0 && !this.state?.game && !this.state?.seats?.every(Boolean);
+  }
 
   /**
    * A frame of the relay's for this table, at this client's `localNow` (ms, the epoch's). Answers the room's events it
@@ -34,12 +38,25 @@ export class RemoteIliacTable {
    */
   apply(f, localNow) {
     if (Number.isFinite(f.now)) this.skew = f.now - localNow;
-    if (typeof f.error === 'string') { this.error = f.error; return []; }
-    if (typeof f.receipt === 'string') { this.receipts.push(f.receipt); return []; }
-    if (f.mine) { this.mine = f.mine; this.error = null; return []; }
+    if (typeof f.error === 'string') {
+      this.error = f.error;
+      return [];
+    }
+    if (typeof f.receipt === 'string') {
+      this.receipts.push(f.receipt);
+      return [];
+    }
+    if (f.mine) {
+      this.mine = f.mine;
+      this.error = null;
+      return [];
+    }
     if (!f.state && Array.isArray(f.events)) {
       // AUDIT CARDS-6 C8: a seat's commit said alone (net/iliac/iliacTable.js iliacCommit) - the table I was told, that seat committed
-      for (const e of f.events) { const pl = e.t === 'commit' ? this.state?.game?.players?.[e.seat] : null; if (pl) pl.committed = true; }
+      for (const e of f.events) {
+        const pl = e.t === 'commit' ? this.state?.game?.players?.[e.seat] : null;
+        if (pl) pl.committed = true;
+      }
       return f.events;
     }
     if (f.state) {
@@ -60,9 +77,19 @@ export class RemoteIliacTable {
    *  cloth. */
   view() {
     if (!this.state) return null;
-    const v = this.seat() >= 0 ? (this.mine?.gameNo === this.state.gameNo ? this.mine.view : this.state.game) : this.state.game ?? this.state.last?.view ?? null;
+    const v =
+      this.seat() >= 0
+        ? this.mine?.gameNo === this.state.gameNo
+          ? this.mine.view
+          : this.state.game
+        : (this.state.game ?? this.state.last?.view ?? null);
     if (!v) return null;
-    return { ...v, names: this.state.seats.map((s) => s?.name ?? null), forKeeps: false, ranked: !!(this.state.ranked || this.state.last?.ranked) };
+    return {
+      ...v,
+      names: this.state.seats.map((s) => s?.name ?? null),
+      forKeeps: false,
+      ranked: !!(this.state.ranked || this.state.last?.ranked),
+    };
   }
 
   /** The seconds my turn's clock has left at `localNow` (0 with no game). */

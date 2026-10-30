@@ -68,7 +68,7 @@
   {
     "name": "KGSET-words-own-ids",
     "file": "src/systems/iliac/iliacCardWords.js",
-    "old": "const wordsOf = (/** @type {any} */ card) => (typeof card?.id === 'string' && Object.hasOwn(WORDS, card.id) ? WORDS[card.id] : null);",
+    "old": "const wordsOf = (/** @type {any} */ card) =>\n  typeof card?.id === 'string' && Object.hasOwn(WORDS, card.id) ? WORDS[card.id] : null;",
     "new": "const wordsOf = (/** @type {any} */ card) => WORDS[card?.id] ?? null;",
     "tests": [
       "test/systems/kgset_cards.test.js"

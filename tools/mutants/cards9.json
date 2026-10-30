@@ -11,8 +11,8 @@
   {
     "name": "CARDS9-worth-mint",
     "file": "src/systems/iliac/iliacItems.js",
-    "old": "  it.value = cardWorth(id);   // CARDS9",
-    "new": "  it.value = 1;   // CARDS9",
+    "old": "  it.value = cardWorth(id); // CARDS9: its tier's worth (net/card/cardWorthLaw.js CARD_WORTH) - a coin no longer",
+    "new": "  it.value = 1; // CARDS9: its tier's worth (net/card/cardWorthLaw.js CARD_WORTH) - a coin no longer",
     "tests": [
       "test/systems/cards9_sources.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "CARDS9-worth-load",
     "file": "src/systems/iliac/iliacItems.js",
-    "old": "if (isIliacCard(it)) { const w = cardWorth(it.card); if (w > 0 && it.value !== w) it.value = w; continue; }",
-    "new": "if (isIliacCard(it)) { continue; }",
+    "old": "      const w = cardWorth(it.card);\n      if (w > 0 && it.value !== w) it.value = w;\n      continue;",
+    "new": "      continue;",
     "tests": [
       "test/systems/cards9_sources.test.js"
     ]

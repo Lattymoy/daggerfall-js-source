@@ -121,8 +121,8 @@
   {
     "name": "AC6-B6-tie",
     "file": "src/systems/iliac/iliacTableSession.js",
-    "old": " || (b === key ? 1 : 0) - (a === key ? 1 : 0)",
-    "new": "",
+    "old": "  const keys = Object.keys(next).sort(\n    (a, b) => (next[b]?.day ?? 0) - (next[a]?.day ?? 0) || (b === key ? 1 : 0) - (a === key ? 1 : 0),\n  );",
+    "new": "  const keys = Object.keys(next).sort((a, b) => (next[b]?.day ?? 0) - (next[a]?.day ?? 0));",
     "tests": [
       "test/systems/auditcards6_b.test.js",
       "test/systems/cards10_table.test.js"

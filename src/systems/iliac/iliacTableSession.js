@@ -20,9 +20,17 @@
 // has paid, he plays for fun.
 //
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
-import { newGame, commit, reveal, iliacView, legalPlays, playsRefusal, result as gameResult } from '../../net/iliac/iliacHand.js';
+import {
+  newGame,
+  commit,
+  reveal,
+  iliacView,
+  legalPlays,
+  playsRefusal,
+  result as gameResult,
+} from '../../net/iliac/iliacHand.js';
 import { patronPlays, forfeitCard } from './iliacPatrons.js';
-import { noteAct } from '../questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
+import { noteAct } from '../questlines/qlActs.js'; // QL11: the features' acts, heard by the running quests
 
 /** MEASURE (CARDS10): a regular's thought before he commits a turn, and its spread. */
 export const ILIAC_THINK_MS = 1400;
@@ -39,26 +47,36 @@ export class IliacTableSession {
    */
   constructor({ player, patron, rand32, now, forKeeps = false }) {
     /** @type {[any, {id: string, name: string, temper: string, grade: number, deck: string[], kind: string}]} */
-    this.seats = [{ ...player, kind: 'player' }, { ...patron, kind: 'patron' }];
+    this.seats = [
+      { ...player, kind: 'player' },
+      { ...patron, kind: 'patron' },
+    ];
     this.rand32 = rand32;
     this.unit = unit32(rand32);
     this.forKeeps = !!forKeeps;
     this.state = newGame({ decks: [player.deck, patron.deck], rand32 });
     this.events = [];
-    this.over = this.state ? null : 'refused';   // a deck the rules refuse plays no game
-    this.prize = null;                           // { from: 'patron'|'player', card } once a game for keeps is decided
+    this.over = this.state ? null : 'refused'; // a deck the rules refuse plays no game
+    this.prize = null; // { from: 'patron'|'player', card } once a game for keeps is decided
     this.revealAt = null;
     this.thinkAt = now + this._thought();
     // AUDIT CARDS-6 B1: the player's card staked, drawn now - the one he pays if he loses or concedes (the host holds it)
     this.stake = this.forKeeps && this.state ? forfeitCard(player.deck, this.unit) : null;
-    if (this.state) this._say({ t: 'game', holdings: this.state.holdings.map((h) => h.id), forKeeps: this.forKeeps }, now);
+    if (this.state)
+      this._say({ t: 'game', holdings: this.state.holdings.map((h) => h.id), forKeeps: this.forKeeps }, now);
   }
 
-  _thought() { return ILIAC_THINK_MS + Math.floor(this.unit() * ILIAC_THINK_SPREAD_MS); }
-  _say(e, now) { this.events.push({ ...e, at: now }); }
+  _thought() {
+    return ILIAC_THINK_MS + Math.floor(this.unit() * ILIAC_THINK_SPREAD_MS);
+  }
+  _say(e, now) {
+    this.events.push({ ...e, at: now });
+  }
 
   /** Both have committed: the reveal waits its beat. */
-  _armReveal(now) { if (this.state.players[0].plays && this.state.players[1].plays) this.revealAt = now + ILIAC_REVEAL_MS; }
+  _armReveal(now) {
+    if (this.state.players[0].plays && this.state.players[1].plays) this.revealAt = now + ILIAC_REVEAL_MS;
+  }
 
   /** The player's plays for this turn; null, or the rules' refusal word (nothing changes). */
   playerCommit(plays, now) {
@@ -77,7 +95,7 @@ export class IliacTableSession {
     if (!st.players[1].plays && now >= this.thinkAt) {
       const s = this.seats[1];
       const plays = patronPlays(st, 1, s.temper, s.grade, this.unit);
-      if (commit(st, 1, plays) !== null) commit(st, 1, []);   // a line the rules refuse (never, by its build) is a pass
+      if (commit(st, 1, plays) !== null) commit(st, 1, []); // a line the rules refuse (never, by its build) is a pass
       this._say({ t: 'commit', p: 1, n: st.players[1].plays.length }, now);
       this._armReveal(now);
     }
@@ -95,37 +113,50 @@ export class IliacTableSession {
     this.over = r.winner === 0 ? 'won' : r.winner === 1 ? 'lost' : 'draw';
     if (this.forKeeps && r.winner !== null) {
       const from = r.winner === 0 ? 'patron' : 'player';
-      const card = from === 'patron' ? forfeitCard(this.seats[1].deck, this.unit) : this.stake;   // AUDIT CARDS-6 B1: the player's, his stake
+      const card = from === 'patron' ? forfeitCard(this.seats[1].deck, this.unit) : this.stake; // AUDIT CARDS-6 B1: the player's, his stake
       this.prize = card ? { from, card } : null;
     }
-    this._say({ t: 'end', why: this.over, result: r, prize: this.prize }, now);   // the table's word (the rules' own 'over' came before it)
-    if (r.winner === 0) noteAct('cards-won');   // QL11: a hand won - the player's game, seat 0 (a concession is `leave`'s, never here)
+    this._say({ t: 'end', why: this.over, result: r, prize: this.prize }, now); // the table's word (the rules' own 'over' came before it)
+    if (r.winner === 0) noteAct('cards-won'); // QL11: a hand won - the player's game, seat 0 (a concession is `leave`'s, never here)
   }
 
   /** The plays the player may commit one at a time now (empty once he has, or the game is over). */
-  legal() { return this.over || !this.state ? [] : legalPlays(this.state, 0); }
+  legal() {
+    return this.over || !this.state ? [] : legalPlays(this.state, 0);
+  }
   /** Why a list of plays would be refused, or null - the panel's staging asks it. */
-  refusal(plays) { return this.over || !this.state ? 'over' : playsRefusal(this.state, 0, plays); }
+  refusal(plays) {
+    return this.over || !this.state ? 'over' : playsRefusal(this.state, 0, plays);
+  }
 
   /** The game as the player sees it (iliacView at seat 0), and the table's own: names, temper, keeps, the end. */
   view() {
     if (!this.state) return null;
     return {
       ...iliacView(this.state, 0),
-      names: this.seats.map((s) => s.name), temper: this.seats[1].temper, grade: this.seats[1].grade,
-      forKeeps: this.forKeeps, end: this.over, prize: this.prize ? { ...this.prize } : null,
-      thinking: !this.over && !this.state.players[1].plays, revealing: this.revealAt !== null,
+      names: this.seats.map((s) => s.name),
+      temper: this.seats[1].temper,
+      grade: this.seats[1].grade,
+      forKeeps: this.forKeeps,
+      end: this.over,
+      prize: this.prize ? { ...this.prize } : null,
+      thinking: !this.over && !this.state.players[1].plays,
+      revealing: this.revealAt !== null,
     };
   }
 
   /** The events since the last drain. */
-  drain() { const e = this.events; this.events = []; return e; }
+  drain() {
+    const e = this.events;
+    this.events = [];
+    return e;
+  }
 
   /** The player stands up: a game under way is conceded - for keeps, his card is the regular's. Answers the prize. */
   leave(now) {
     if (!this.over && this.state) {
       this.over = 'left';
-      if (this.forKeeps) this.prize = this.stake ? { from: 'player', card: this.stake } : null;   // AUDIT CARDS-6 B1: his stake
+      if (this.forKeeps) this.prize = this.stake ? { from: 'player', card: this.stake } : null; // AUDIT CARDS-6 B1: his stake
       this._say({ t: 'end', why: 'left', result: null, prize: this.prize }, now);
     }
     return this.prize;
@@ -142,11 +173,18 @@ export function forfeitsFor(/** @type {any} */ book, /** @type {string} */ key, 
   return e && e.day === day && Array.isArray(e.paid) ? e.paid.filter((n) => typeof n === 'string') : [];
 }
 /** The book after regular `name` paid at `key` on `day`: a new book, the oldest days dropped past FORFEITS_BOOK_MAX. */
-export function forfeitsAfter(/** @type {any} */ book, /** @type {string} */ key, /** @type {number} */ day, /** @type {string} */ name) {
+export function forfeitsAfter(
+  /** @type {any} */ book,
+  /** @type {string} */ key,
+  /** @type {number} */ day,
+  /** @type {string} */ name,
+) {
   const paid = [...new Set([...forfeitsFor(book, key, day), name])];
   const next = { ...(book && typeof book === 'object' && !Array.isArray(book) ? book : {}), [key]: { day, paid } };
   // AUDIT CARDS-6 B6: a tie in the day puts the tavern just booked first - a full book of the same day dropped it
-  const keys = Object.keys(next).sort((a, b) => (next[b]?.day ?? 0) - (next[a]?.day ?? 0) || (b === key ? 1 : 0) - (a === key ? 1 : 0));
+  const keys = Object.keys(next).sort(
+    (a, b) => (next[b]?.day ?? 0) - (next[a]?.day ?? 0) || (b === key ? 1 : 0) - (a === key ? 1 : 0),
+  );
   return Object.fromEntries(keys.slice(0, FORFEITS_BOOK_MAX).map((k) => [k, next[k]]));
 }
 /** The book as the save keeps it, and back - only well-formed entries, never more than FORFEITS_BOOK_MAX. */

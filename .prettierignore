@@ -104,6 +104,8 @@
 /src/systems/grammar/*/
 !/src/systems/hunt/
 /src/systems/hunt/*/
+!/src/systems/iliac/
+/src/systems/iliac/*/
 !/src/systems/ketch/
 /src/systems/ketch/*/
 !/src/systems/lockpick/

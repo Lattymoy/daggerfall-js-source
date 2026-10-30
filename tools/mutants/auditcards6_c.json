@@ -434,7 +434,7 @@
   {
     "name": "AC6-C8-client-commit-unmarked",
     "file": "src/systems/iliac/iliacRemoteTable.js",
-    "old": "      for (const e of f.events) { const pl = e.t === 'commit' ? this.state?.game?.players?.[e.seat] : null; if (pl) pl.committed = true; }",
+    "old": "      for (const e of f.events) {\n        const pl = e.t === 'commit' ? this.state?.game?.players?.[e.seat] : null;\n        if (pl) pl.committed = true;\n      }",
     "new": "",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js"
@@ -461,8 +461,8 @@
   {
     "name": "AC6-C9-watcher-forgets-the-last",
     "file": "src/systems/iliac/iliacRemoteTable.js",
-    "old": ": this.state.game ?? this.state.last?.view ?? null;",
-    "new": ": this.state.game;",
+    "old": "      this.seat() >= 0\n        ? this.mine?.gameNo === this.state.gameNo\n          ? this.mine.view\n          : this.state.game\n        : (this.state.game ?? this.state.last?.view ?? null);",
+    "new": "      this.seat() >= 0 ? (this.mine?.gameNo === this.state.gameNo ? this.mine.view : this.state.game) : this.state.game;",
     "tests": [
       "test/net/iliac/auditcards6_c.test.js",
       "test/net/iliac/cards10_relay.test.js",

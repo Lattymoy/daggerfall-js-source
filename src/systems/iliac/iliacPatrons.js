@@ -24,10 +24,22 @@
 //
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
 import { ILIAC_CARDS, cardById, ILIAC_TIERS, STARTER_DECK } from '../../net/iliac/iliacCards.js';
-import { ILIAC_DECK_SIZE, ILIAC_COPIES_MAX, ILIAC_LEGENDARY_COPIES_MAX, ILIAC_TURNS, ILIAC_HOLDINGS, deckValid, commit, reveal, iliacView, legalPlays, playsRefusal } from '../../net/iliac/iliacHand.js';
+import {
+  ILIAC_DECK_SIZE,
+  ILIAC_COPIES_MAX,
+  ILIAC_LEGENDARY_COPIES_MAX,
+  ILIAC_TURNS,
+  ILIAC_HOLDINGS,
+  deckValid,
+  commit,
+  reveal,
+  iliacView,
+  legalPlays,
+  playsRefusal,
+} from '../../net/iliac/iliacHand.js';
 import { TEMPER_NAMES } from '../card/cardPatrons.js';
-import { BOSS_CARD_IDS } from '../bossCards.js';   // CARDS9: a boss's own card is found, never dealt
-import { FESTIVAL_CARD_IDS } from '../../net/festivalLaw.js';   // WITCH1: the Witches' Festival's are the Wyrd Sisters' alone - never a regular's
+import { BOSS_CARD_IDS } from '../bossCards.js'; // CARDS9: a boss's own card is found, never dealt
+import { FESTIVAL_CARD_IDS } from '../../net/festivalLaw.js'; // WITCH1: the Witches' Festival's are the Wyrd Sisters' alone - never a regular's
 const BOSS_IDS = new Set([...BOSS_CARD_IDS, ...FESTIVAL_CARD_IDS]);
 
 /** The tavern's grade by its building's quality (1..20): the Hold'em stakes' own bands (cardTableSession.js
@@ -51,9 +63,30 @@ export const GRADE_SLIP = Object.freeze([0.25, 0.1, 0]);
  *  `scale` how close a holding's margin is weighed (the larger, the more he likes a big lead), `greed` his liking for
  *  power on the board, `hold` the turns he holds his hand to one play, `veil` his liking for a veiled holding. */
 export const ILIAC_TEMPERS = Object.freeze({
-  tight: Object.freeze({ tags: Object.freeze(['knight', 'temple', 'priest', 'guild', 'noble']), spells: Object.freeze(['heal', 'recall', 'turn-undead', 'banish-daedra']), scale: 3, greed: 0, hold: 0, veil: 0 }),
-  loose: Object.freeze({ tags: Object.freeze(['beast', 'orc', 'giant', 'were', 'warrior', 'centaur', 'sea']), spells: Object.freeze(['fireball', 'shock', 'frostbite']), scale: 5, greed: 0.04, hold: 0, veil: 0 }),
-  bluffer: Object.freeze({ tags: Object.freeze(['undead', 'vampire', 'daedra', 'thief', 'assassin', 'atronach', 'fey']), spells: Object.freeze(['animate-dead', 'shock', 'recall']), scale: 3, greed: 0.01, hold: 2, veil: 0.35 }),
+  tight: Object.freeze({
+    tags: Object.freeze(['knight', 'temple', 'priest', 'guild', 'noble']),
+    spells: Object.freeze(['heal', 'recall', 'turn-undead', 'banish-daedra']),
+    scale: 3,
+    greed: 0,
+    hold: 0,
+    veil: 0,
+  }),
+  loose: Object.freeze({
+    tags: Object.freeze(['beast', 'orc', 'giant', 'were', 'warrior', 'centaur', 'sea']),
+    spells: Object.freeze(['fireball', 'shock', 'frostbite']),
+    scale: 5,
+    greed: 0.04,
+    hold: 0,
+    veil: 0,
+  }),
+  bluffer: Object.freeze({
+    tags: Object.freeze(['undead', 'vampire', 'daedra', 'thief', 'assassin', 'atronach', 'fey']),
+    spells: Object.freeze(['animate-dead', 'shock', 'recall']),
+    scale: 3,
+    greed: 0.01,
+    hold: 2,
+    veil: 0.35,
+  }),
 });
 /** Iliac Hand's tempers are Hold'em's names, pinned equal - the names, not the draw (AUDIT CARDS-6 B9). */
 export const ILIAC_TEMPER_NAMES = Object.freeze(Object.keys(ILIAC_TEMPERS));
@@ -62,7 +95,7 @@ export const ILIAC_TEMPER_NAMES = Object.freeze(Object.keys(ILIAC_TEMPERS));
 export function seededUnit(seed) {
   let a = seed >>> 0;
   return () => {
-    a = (a + 0x6D2B79F5) >>> 0;
+    a = (a + 0x6d2b79f5) >>> 0;
     let t = a;
     t = Math.imul(t ^ (t >>> 15), t | 1);
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
@@ -108,13 +141,23 @@ export function patronDeck(seed, temper, grade) {
   const fixed = new Set();
   const count = new Map();
   const tiers = {};
-  const tally = (id, d) => { count.set(id, (count.get(id) ?? 0) + d); const t = cardById(id).tier; tiers[t] = (tiers[t] ?? 0) + d; };
+  const tally = (id, d) => {
+    count.set(id, (count.get(id) ?? 0) + d);
+    const t = cardById(id).tier;
+    tiers[t] = (tiers[t] ?? 0) + d;
+  };
   for (const id of deck) tally(id, 1);
   const room = (c) => {
-    const most = ILIAC_TIERS.indexOf(c.tier) >= ILIAC_TIERS.indexOf('legendary') ? ILIAC_LEGENDARY_COPIES_MAX : ILIAC_COPIES_MAX;
+    const most =
+      ILIAC_TIERS.indexOf(c.tier) >= ILIAC_TIERS.indexOf('legendary') ? ILIAC_LEGENDARY_COPIES_MAX : ILIAC_COPIES_MAX;
     return (count.get(c.id) ?? 0) < most && (tiers[c.tier] ?? 0) < (caps[c.tier] ?? 0);
   };
-  const swap = (at, id) => { tally(deck[at], -1); tally(id, 1); deck[at] = id; fixed.add(at); };
+  const swap = (at, id) => {
+    tally(deck[at], -1);
+    tally(id, 1);
+    deck[at] = id;
+    fixed.add(at);
+  };
   const ups = TEMPER_UPGRADES[tp].filter((id) => (g === 2 ? true : g === 1 ? cardById(id).kind !== 'prince' : false));
   for (const id of g === 1 ? ups.slice(0, 2) : ups) {
     const c = cardById(id);
@@ -123,21 +166,33 @@ export function patronDeck(seed, temper, grade) {
     // more, so a Prince takes a four's (MUT-AIM's survivor: a Prince's own rule here was the same law said twice)
     const want = c.cost;
     let at = -1;
-    for (let cost = want; cost >= 1 && at < 0; cost--) at = deck.findIndex((x, i) => !fixed.has(i) && cardById(x).cost === cost && cardById(x).kind !== 'spell');
+    for (let cost = want; cost >= 1 && at < 0; cost--)
+      at = deck.findIndex((x, i) => !fixed.has(i) && cardById(x).cost === cost && cardById(x).kind !== 'spell');
     if (at >= 0) swap(at, id);
   }
-  const pool = ILIAC_CARDS.filter((c) => c.kind === 'unit' || c.kind === 'spell').filter((c) => c.tier !== 'artifact' && caps[c.tier] !== undefined && !BOSS_IDS.has(c.id));
-  const weight = (c) => (c.kind === 'spell' ? (T.spells.includes(c.id) ? 3 : 0.3) : c.tags.some((t) => T.tags.includes(t)) ? 6 : 1);
+  const pool = ILIAC_CARDS.filter((c) => c.kind === 'unit' || c.kind === 'spell').filter(
+    (c) => c.tier !== 'artifact' && caps[c.tier] !== undefined && !BOSS_IDS.has(c.id),
+  );
+  const weight = (c) =>
+    c.kind === 'spell' ? (T.spells.includes(c.id) ? 3 : 0.3) : c.tags.some((t) => T.tags.includes(t)) ? 6 : 1;
   const order = deck.map((_, i) => i).filter((i) => !fixed.has(i));
-  for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(u() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(u() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
   for (const at of order.slice(0, GRADE_SWAPS[g])) {
     const was = cardById(deck[at]);
-    const open = pool.filter((c) => c.cost === was.cost && c.id !== was.id && room(c) && (c.kind === 'spell') === (was.kind === 'spell'));
+    const open = pool.filter(
+      (c) => c.cost === was.cost && c.id !== was.id && room(c) && (c.kind === 'spell') === (was.kind === 'spell'),
+    );
     if (!open.length) continue;
     const w = open.map(weight);
     let r = u() * w.reduce((a, b) => a + b, 0);
     let k = 0;
-    while (k < open.length - 1 && r >= w[k]) { r -= w[k]; k++; }
+    while (k < open.length - 1 && r >= w[k]) {
+      r -= w[k];
+      k++;
+    }
     swap(at, open[k].id);
   }
   return deck.sort();
@@ -151,7 +206,9 @@ export function patronDeck(seed, temper, grade) {
  * @param {number} p @param {any} T  the temper's numbers
  */
 export function boardScore(view, p, T) {
-  let s = 0, held = 0, mine = 0;
+  let s = 0,
+    held = 0,
+    mine = 0;
   for (const hd of view.holdings) {
     const m = hd.power[p] - hd.power[1 - p];
     s += Math.tanh(m / T.scale);
@@ -172,11 +229,14 @@ function trial(state, p, plays, T) {
   // AUDIT CARDS-6 B2: the last turn's reveal unveils every face-down card, and the trial judged the other side's at
   // their true power - he saw what he never may. A card of theirs that lay face down stays face down to his eye: worth
   // nothing, as his view counts it during play
-  const veiled = new Set(state.holdings.flatMap((hd) => hd.sides[1 - p].filter((inst) => inst.down).map((inst) => inst.uid)));
+  const veiled = new Set(
+    state.holdings.flatMap((hd) => hd.sides[1 - p].filter((inst) => inst.down).map((inst) => inst.uid)),
+  );
   for (const hd of copy.holdings) for (const inst of hd.sides[1 - p]) if (veiled.has(inst.uid)) inst.down = true;
   const v = iliacView(copy, p);
   let s = boardScore(v, p, T);
-  for (const x of plays) if (T.veil && state.holdings[x.holding] && copy.holdings[x.holding]) s += vetoVeil(state, x.holding) ? T.veil : 0;
+  for (const x of plays)
+    if (T.veil && state.holdings[x.holding] && copy.holdings[x.holding]) s += vetoVeil(state, x.holding) ? T.veil : 0;
   return s;
 }
 /** Whether holding `h` lays its cards face down (its own rule). */
@@ -199,7 +259,9 @@ export function patronPlays(state, p, temper, grade, unit) {
   const T = ILIAC_TEMPERS[temper] ?? ILIAC_TEMPERS.tight;
   const slip = GRADE_SLIP[Math.max(0, Math.min(2, grade | 0))];
   const most = T.hold && state.turn <= T.hold ? 1 : Infinity;
-  let chosen = [], best = trial(state, p, [], T), trials = 1;
+  let chosen = [],
+    best = trial(state, p, [], T),
+    trials = 1;
   while (chosen.length < most && trials < ILIAC_THINK_TRIALS) {
     const used = new Set(chosen.map((x) => x.card));
     const options = [];
@@ -212,7 +274,8 @@ export function patronPlays(state, p, temper, grade, unit) {
     }
     const better = options.filter((o) => o.score > best + 1e-9).sort((a, b) => b.score - a.score);
     if (!better.length) break;
-    const pick = slip > 0 && better.length > 1 && unit() < slip ? better[1 + Math.floor(unit() * (better.length - 1))] : better[0];
+    const pick =
+      slip > 0 && better.length > 1 && unit() < slip ? better[1 + Math.floor(unit() * (better.length - 1))] : better[0];
     chosen = pick.plays;
     best = pick.score;
   }
@@ -229,10 +292,14 @@ export function patronDeckSound(deck, grade) {
   if (deckValid(deck) !== null) return false;
   const caps = GRADE_TIERS[Math.max(0, Math.min(2, grade | 0))];
   const by = {};
-  for (const id of deck) { const t = cardById(id).tier; by[t] = (by[t] ?? 0) + 1; }
+  for (const id of deck) {
+    const t = cardById(id).tier;
+    by[t] = (by[t] ?? 0) + 1;
+  }
   return Object.entries(by).every(([t, n]) => (caps[t] ?? 0) >= n);
 }
 
 /** Hold'em's tempers and Iliac Hand's are the same three names. */
-export const TEMPERS_AGREE = TEMPER_NAMES.length === ILIAC_TEMPER_NAMES.length && TEMPER_NAMES.every((n) => ILIAC_TEMPER_NAMES.includes(n));
+export const TEMPERS_AGREE =
+  TEMPER_NAMES.length === ILIAC_TEMPER_NAMES.length && TEMPER_NAMES.every((n) => ILIAC_TEMPER_NAMES.includes(n));
 export { ILIAC_HOLDINGS };

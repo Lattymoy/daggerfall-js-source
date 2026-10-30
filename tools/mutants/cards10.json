@@ -65,8 +65,8 @@
   {
     "name": "CARDS10-evening-think",
     "file": "src/systems/iliac/iliacTableSession.js",
-    "old": "  _thought() { return ILIAC_THINK_MS + Math.floor(this.unit() * ILIAC_THINK_SPREAD_MS); }",
-    "new": "  _thought() { return 0; }",
+    "old": "    return ILIAC_THINK_MS + Math.floor(this.unit() * ILIAC_THINK_SPREAD_MS);",
+    "new": "    return 0;",
     "tests": [
       "test/systems/cards10_table.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "CARDS10-evening-beat",
     "file": "src/systems/iliac/iliacTableSession.js",
-    "old": "this.revealAt = now + ILIAC_REVEAL_MS; }",
-    "new": "this.revealAt = now; }",
+    "old": "    if (this.state.players[0].plays && this.state.players[1].plays) this.revealAt = now + ILIAC_REVEAL_MS;",
+    "new": "    if (this.state.players[0].plays && this.state.players[1].plays) this.revealAt = now;",
     "tests": [
       "test/systems/cards10_table.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "CARDS10-evening-payer",
     "file": "src/systems/iliac/iliacTableSession.js",
-    "old": "      const card = from === 'patron' ? forfeitCard(this.seats[1].deck, this.unit) : this.stake;",
-    "new": "      const card = forfeitCard(this.seats[from === 'patron' ? 0 : 1].deck, this.unit);",
+    "old": "      const card = from === 'patron' ? forfeitCard(this.seats[1].deck, this.unit) : this.stake; // AUDIT CARDS-6 B1: the player's, his stake",
+    "new": "      const card = forfeitCard(this.seats[from === 'patron' ? 0 : 1].deck, this.unit); // AUDIT CARDS-6 B1: the player's, his stake",
     "tests": [
       "test/systems/cards10_table.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "CARDS10-evening-concession",
     "file": "src/systems/iliac/iliacTableSession.js",
-    "old": "      if (this.forKeeps) this.prize = this.stake ? { from: 'player', card: this.stake } : null;   // AUDIT CARDS-6 B1: his stake\n",
-    "new": "",
+    "old": "      if (this.forKeeps) this.prize = this.stake ? { from: 'player', card: this.stake } : null; // AUDIT CARDS-6 B1: his stake\n      this._say({ t: 'end', why: 'left', result: null, prize: this.prize }, now);",
+    "new": "      this._say({ t: 'end', why: 'left', result: null, prize: this.prize }, now);",
     "tests": [
       "test/systems/cards10_table.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "CARDS10-book-day",
     "file": "src/systems/iliac/iliacTableSession.js",
-    "old": "  return e && e.day === day && Array.isArray(e.paid)",
-    "new": "  return e && Array.isArray(e.paid)",
+    "old": "  return e && e.day === day && Array.isArray(e.paid) ? e.paid.filter((n) => typeof n === 'string') : [];",
+    "new": "  return e && Array.isArray(e.paid) ? e.paid.filter((n) => typeof n === 'string') : [];",
     "tests": [
       "test/systems/cards10_table.test.js"
     ]
@@ -438,8 +438,8 @@
   {
     "name": "CARDS10-client-my-view",
     "file": "src/systems/iliac/iliacRemoteTable.js",
-    "old": "const v = this.seat() >= 0 ? (this.mine?.gameNo === this.state.gameNo ? this.mine.view : this.state.game) :",
-    "new": "const v = this.seat() >= 0 ? this.state.game :",
+    "old": "    const v =\n      this.seat() >= 0\n        ? this.mine?.gameNo === this.state.gameNo\n          ? this.mine.view\n          : this.state.game\n        : (this.state.game ?? this.state.last?.view ?? null);",
+    "new": "    const v = this.seat() >= 0 ? this.state.game : (this.state.game ?? this.state.last?.view ?? null);",
     "tests": [
       "test/net/iliac/cards10_client.test.js"
     ]

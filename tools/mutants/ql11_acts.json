@@ -182,8 +182,8 @@
   {
     "name": "AUDIT-QL-ACTS-M11-iliacTableSession-a-lost-game-counts",
     "file": "src/systems/iliac/iliacTableSession.js",
-    "old": "if (r.winner === 0) noteAct('cards-won');",
-    "new": "if (r.winner !== null) noteAct('cards-won');",
+    "old": "    if (r.winner === 0) noteAct('cards-won'); // QL11: a hand won - the player's game, seat 0 (a concession is `leave`'s, never here)",
+    "new": "    if (r.winner !== null) noteAct('cards-won'); // QL11: a hand won - the player's game, seat 0 (a concession is `leave`'s, never here)",
     "tests": [
       "test/systems/questlines/ql11_acts.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "AUDIT-QL-ACTS-M11b-iliacTableSession-a-draw-counts",
     "file": "src/systems/iliac/iliacTableSession.js",
-    "old": "if (r.winner === 0) noteAct('cards-won');",
-    "new": "if (r.winner !== 1) noteAct('cards-won');",
+    "old": "    if (r.winner === 0) noteAct('cards-won'); // QL11: a hand won - the player's game, seat 0 (a concession is `leave`'s, never here)",
+    "new": "    if (r.winner !== 1) noteAct('cards-won'); // QL11: a hand won - the player's game, seat 0 (a concession is `leave`'s, never here)",
     "tests": [
       "test/systems/questlines/ql11_acts.test.js"
     ]
