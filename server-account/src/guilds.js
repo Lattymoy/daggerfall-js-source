@@ -100,7 +100,14 @@ export function mintGuildId(rand) {
 
 /** The character's own membership, or null. */
 async function memberRow(db, playerId, charId) {
-  return db.prepare('SELECT rowid AS rid, * FROM guild_members WHERE player = ? AND char_id = ?').bind(playerId, charId).first();
+  return db.prepare('SELECT m.rowid AS rid, m.*, g.id AS gid FROM guild_members m LEFT JOIN guilds g ON g.id = m.guild_id WHERE m.player = ? AND m.char_id = ?').bind(playerId, charId).first();
+}
+/** GUILD-ORPHAN (2026-10-30, the owner: "Ability to leave guild if it doesnt exist"): a member row whose guild's row is
+ *  gone is let go - its character is in no guild, and may found or join one. Answers whether one went. */
+async function dropOrphan(db, row) {
+  if (!row || row.gid != null) return false;
+  const r = await db.prepare('DELETE FROM guild_members WHERE rowid = ? AND NOT EXISTS (SELECT 1 FROM guilds WHERE id = ?)').bind(row.rid, row.guild_id).run();
+  return !!r?.meta?.changes;
 }
 
 /** SCALE4f part two (2026-10-10; bible/11-Multiplayer/Scale-Arc.md SCALE4f): THE NAMED CHARACTER'S MEMBERSHIP AS THE
@@ -163,6 +170,7 @@ async function actorOf(db, player, character) {
   if (!charOk(character)) return { error: 'guild-character' };
   const first = await memberRow(db, player.id, character);
   if (!first) return { error: 'no-guild' };
+  if (first.gid == null) return { error: 'no-guild', orphan: (await dropOrphan(db, first)) ? { gi: first.guild_id, gm: `m${first.rid}` } : null };   // GUILD-ORPHAN
   await succeed(db, first.guild_id);
   return { me: first.rank === GUILD_RANK_MASTER ? first : await memberRow(db, player.id, character) };
 }
@@ -416,7 +424,8 @@ export async function foundGuild(ctx, player, { character, name, tag, realm = nu
   if (await spend(ctx, player)) return { error: 'guild-rate' };
   const track = await renownTrackOf({ db }, player.id, character);   // RENOWN-CHAR: the founding character's own
   if ((track?.level ?? 1) < GUILD_FOUND_RENOWN) return { error: 'guild-renown' };
-  if (await memberRow(db, player.id, character)) return { error: 'guild-already' };
+  const was = await memberRow(db, player.id, character);
+  if (was && !(await dropOrphan(db, was))) return { error: 'guild-already' };   // GUILD-ORPHAN: a gone guild's row holds nobody back
   const key = guildNameKey(n);
   // a guild nobody is left in holds its name and tag for no one - AUDIT 31 S7: while it keeps nothing, as any going
   // (endGuild's): its gold, its Marks, its guild Stores and its writs stay with the name until they are answered for
@@ -499,7 +508,8 @@ export async function answerInvite({ db, nowS, env }, player, { character, guild
   if (!charOk(character)) return { error: 'guild-character' };
   const standing = () => db.prepare('SELECT 1 FROM guild_invites WHERE guild_id = ? AND player = ? AND at > ?').bind(guild, player.id, live).first();
   if (!(await standing())) return { error: 'no-invite' };
-  if (await memberRow(db, player.id, character)) return { error: 'guild-already' };
+  const was = await memberRow(db, player.id, character);
+  if (was && !(await dropOrphan(db, was))) return { error: 'guild-already' };   // GUILD-ORPHAN: a gone guild's row holds nobody back
   let joined;
   try {
     [joined] = await db.batch([
@@ -621,6 +631,8 @@ const notGone = (/** @type {string[]} */ keeps) => ({ error: keeps[0], keeps });
  *  guild goes, its Marks to the guildmaster (AUDIT 28 M3); one with members is handed on first. */
 export async function leaveGuild({ db, nowS }, player, { character } = {}) {
   const a = await actorOf(db, player, character);
+  // GUILD-ORPHAN: a guild that is gone is left - the row let go, and the hub told as for any leaving
+  if (a.error === 'no-guild' && a.orphan) return { ok: true, badge: {}, out: { s: player.id, ...a.orphan } };
   if (a.error) return a;
   if (a.me.rank === GUILD_RANK_MASTER) {
     // one batch: nobody joins between the count and the going, and the Marks go where the guild's gold went
