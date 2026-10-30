@@ -47,7 +47,12 @@ export const createFoeGender = (rolls) => (rolls() < FOE_MALE_CHANCE ? 'male' : 
 const THIEF_ARMS = Object.freeze([MOBILE_TYPES.Thief, MOBILE_TYPES.Rogue, MOBILE_TYPES.Barbarian]);
 /** SpawnWarriors' six (:348-395). */
 const WARRIOR_ARMS = Object.freeze([
-  MOBILE_TYPES.Warrior, MOBILE_TYPES.Sorcerer, MOBILE_TYPES.Ranger, MOBILE_TYPES.Mage, MOBILE_TYPES.Knight, MOBILE_TYPES.Healer,
+  MOBILE_TYPES.Warrior,
+  MOBILE_TYPES.Sorcerer,
+  MOBILE_TYPES.Ranger,
+  MOBILE_TYPES.Mage,
+  MOBILE_TYPES.Knight,
+  MOBILE_TYPES.Healer,
 ]);
 
 export class WodSpawner {
@@ -59,9 +64,9 @@ export class WodSpawner {
     this.spawnType = spawnType;
     this.enemyID = enemyID;
     this.questID = questID;
-    this.spawnFinished = false;   // :25
-    this.active = true;           // the GameObject's own activeSelf
-    this.started = false;         // Unity runs Start once, before the first Update
+    this.spawnFinished = false; // :25
+    this.active = true; // the GameObject's own activeSelf
+    this.started = false; // Unity runs Start once, before the first Update
   }
 
   /**
@@ -86,13 +91,17 @@ export class WodSpawner {
     if (!this.active) return null;
     if (!this.started) {
       this.started = true;
-      if (dist <= WOD_STAND_DOWN_RADIUS) { this.active = false; return null; }   // Start, :53-56
+      if (dist <= WOD_STAND_DOWN_RADIUS) {
+        this.active = false;
+        return null;
+      } // Start, :53-56
     }
     if (!(dist <= WOD_SPAWN_RADIUS)) return null;
     // :94-151 - the arms are separate `if`s, but every one that acts
     // deactivates the object, so at most one ever runs.
     switch (this.spawnType) {
-      case WOD_SPAWN_TYPE.Quest: return this._quest(rolls);
+      case WOD_SPAWN_TYPE.Quest:
+        return this._quest(rolls);
       case WOD_SPAWN_TYPE.Enemy:
         if (this.enemyID === WOD_ENEMY_ID.Bandits) return this._thieves(rolls, true);
         if (this.enemyID === WOD_ENEMY_ID.Bears) return this._bears(rolls);
@@ -104,15 +113,17 @@ export class WodSpawner {
         // nothing, for as long as the player stands near it.
         if (this.enemyID === WOD_ENEMY_ID.Bandits) return this._thieves(rolls, false);
         return null;
-      case WOD_SPAWN_TYPE.Loot: return this._loot(rolls);
-      default: return null;   // 1, "Billboard Person", is an empty arm
+      case WOD_SPAWN_TYPE.Loot:
+        return this._loot(rolls);
+      default:
+        return null; // 1, "Billboard Person", is an empty arm
     }
   }
 
   /** CreateFoeGameObjects' own gender roll, then the caller's Rotate. */
   _foe(mobileType, hostile, rolls) {
     const gender = createFoeGender(rolls);
-    const yawDeg = rangeInt(0, 180, rolls);   // transform.Rotate(0, Random.Range(0, 180), 0)
+    const yawDeg = rangeInt(0, 180, rolls); // transform.Rotate(0, Random.Range(0, 180), 0)
     return { kind: 'foe', mobileType, hostile, allied: !hostile, gender, yawDeg };
   }
 

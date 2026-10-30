@@ -57,8 +57,8 @@
   {
     "name": "TS1-wod-sites-on-the-prefab",
     "file": "src/world/worldOfDaggerfall/wodLocationLoader.js",
-    "old": "Math.fround(MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE)",
-    "new": "Math.fround(MAX_TERRAIN_HEIGHT * 1.5)",
+    "old": "export const WOD_TERRAIN_HEIGHT_MAX = Math.fround(MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE);",
+    "new": "export const WOD_TERRAIN_HEIGHT_MAX = Math.fround(MAX_TERRAIN_HEIGHT * 1.5);",
     "tests": [
       "test/world/terrain/terrainscale1.test.js"
     ]

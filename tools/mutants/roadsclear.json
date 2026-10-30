@@ -56,8 +56,8 @@
   {
     "name": "ROADS-CLEAR-the-loader-ignores-the-verdict",
     "file": "src/world/worldOfDaggerfall/wodLocationLoader.js",
-    "old": "  if (st.siteClear && !st.siteClear(session.prefab[i], prefab, rect)) return;\n",
-    "new": "",
+    "old": "  if (st.siteClear && !st.siteClear(session.prefab[i], prefab, rect)) return;\n  // :175-230 - types 0 and 2 run the identical smoothing arm and set",
+    "new": "  // :175-230 - types 0 and 2 run the identical smoothing arm and set",
     "tests": [
       "test/world/worldOfDaggerfall/roadsclear.test.js"
     ]

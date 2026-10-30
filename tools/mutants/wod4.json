@@ -2,8 +2,8 @@
   {
     "name": "a-ruin-turns-the-other-way",
     "file": "src/world/worldOfDaggerfall/wodPrivateersHold.js",
-    "old": "model(43509, at(45.55, 4.71, 5.41), -210),",
-    "new": "model(43509, at(45.55, 4.71, 5.41), -201),",
+    "old": "  model(43509, at(45.55, 4.71, 5.41), -210),",
+    "new": "  model(43509, at(45.55, 4.71, 5.41), -201),",
     "tests": [
       "test/world/worldOfDaggerfall/wod4_privateershold.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "a-fire-loses-its-light",
     "file": "src/world/worldOfDaggerfall/wodPrivateersHold.js",
-    "old": "flat(210, 17, at(77.889, 2.88, 8.46), true),",
-    "new": "flat(210, 17, at(77.889, 2.88, 8.46), false),",
+    "old": "  flat(210, 17, at(77.889, 2.88, 8.46), true),",
+    "new": "  flat(210, 17, at(77.889, 2.88, 8.46), false),",
     "tests": [
       "test/world/worldOfDaggerfall/wod4_privateershold.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "the-firelight-reaches-21",
     "file": "src/world/worldOfDaggerfall/wodPrivateersHold.js",
-    "old": "lift: 1, range: 20, intensity: 1,",
-    "new": "lift: 1, range: 21, intensity: 1,",
+    "old": "  range: 20,",
+    "new": "  range: 21,",
     "tests": [
       "test/world/worldOfDaggerfall/wod4_privateershold.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "the-firelight-sits-on-the-fire",
     "file": "src/world/worldOfDaggerfall/wodPrivateersHold.js",
-    "old": "lift: 1, range: 20,",
-    "new": "lift: 0, range: 20,",
+    "old": "  lift: 1,",
+    "new": "  lift: 0,",
     "tests": [
       "test/world/worldOfDaggerfall/wod4_privateershold.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "the-assassin-is-a-thief",
     "file": "src/world/worldOfDaggerfall/wodPrivateersHold.js",
-    "old": "mobileType: MOBILE_TYPES.Assassin, pos: at(81.2, 1, 43)",
-    "new": "mobileType: MOBILE_TYPES.Thief, pos: at(81.2, 1, 43)",
+    "old": "  Object.freeze({ mobileType: MOBILE_TYPES.Assassin, pos: at(81.2, 1, 43) }),",
+    "new": "  Object.freeze({ mobileType: MOBILE_TYPES.Thief, pos: at(81.2, 1, 43) }),",
     "tests": [
       "test/world/worldOfDaggerfall/wod4_privateershold.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "twenty-stands-a-foe",
     "file": "src/world/worldOfDaggerfall/wodPrivateersHold.js",
-    "old": "if (!(enemyChance > 20)) continue;",
-    "new": "if (!(enemyChance >= 20)) continue;",
+    "old": "    if (!(enemyChance > 20)) continue;",
+    "new": "    if (!(enemyChance >= 20)) continue;",
     "tests": [
       "test/world/worldOfDaggerfall/wod4_privateershold.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "the-chance-reaches-30",
     "file": "src/world/worldOfDaggerfall/wodPrivateersHold.js",
-    "old": "const enemyChance = rangeInt(0, 30, rolls);",
-    "new": "const enemyChance = rangeInt(0, 31, rolls);",
+    "old": "    const enemyChance = rangeInt(0, 30, rolls);",
+    "new": "    const enemyChance = rangeInt(0, 31, rolls);",
     "tests": [
       "test/world/worldOfDaggerfall/wod4_privateershold.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "the-turn-is-doubled",
     "file": "src/world/worldOfDaggerfall/wodPrivateersHold.js",
-    "old": "const half = (m.yawDeg * Math.PI) / 360;",
-    "new": "const half = (m.yawDeg * Math.PI) / 180;",
+    "old": "  const half = (m.yawDeg * Math.PI) / 360;",
+    "new": "  const half = (m.yawDeg * Math.PI) / 180;",
     "tests": [
       "test/world/worldOfDaggerfall/wod4_privateershold.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "the-turn-is-mirrored",
     "file": "src/world/worldOfDaggerfall/wodPrivateersHold.js",
-    "old": "{ x: 0, y: Math.sin(half), z: 0, w: Math.cos(half) }",
-    "new": "{ x: 0, y: -Math.sin(half), z: 0, w: Math.cos(half) }",
+    "old": "  return objectMatrix(m.pos, { x: 0, y: Math.sin(half), z: 0, w: Math.cos(half) }, UNIT_SCALE);",
+    "new": "  return objectMatrix(m.pos, { x: 0, y: -Math.sin(half), z: 0, w: Math.cos(half) }, UNIT_SCALE);",
     "tests": [
       "test/world/worldOfDaggerfall/wod4_privateershold.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "the-turn-is-a-double",
     "file": "src/world/worldOfDaggerfall/wodPrivateersHold.js",
-    "old": "yawDeg: f(yawDeg) });",
-    "new": "yawDeg });",
+    "old": "const model = (modelId, pos, yawDeg = 0) => Object.freeze({ modelId, pos, yawDeg: f(yawDeg) }); // Rotate takes floats",
+    "new": "const model = (modelId, pos, yawDeg = 0) => Object.freeze({ modelId, pos, yawDeg }); // Rotate takes floats",
     "tests": [
       "test/world/worldOfDaggerfall/wod4_privateershold.test.js"
     ]

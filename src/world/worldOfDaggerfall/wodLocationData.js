@@ -135,7 +135,9 @@ export function parseXml(xml) {
   let root = null;
   let i = 0;
   const n = xml.length;
-  const fail = (why) => { throw new Error(`XmlException: ${why} at offset ${i}`); };
+  const fail = (why) => {
+    throw new Error(`XmlException: ${why} at offset ${i}`);
+  };
   while (i < n) {
     const lt = xml.indexOf('<', i);
     const textEnd = lt < 0 ? n : lt;
@@ -182,7 +184,9 @@ function innerXml(list, i) {
   const el = list[i];
   if (!el) throw new TypeError(`NullReferenceException: GetElementsByTagName(...)[${i}] is null`);
   return el.children.length ? fail() : el.text;
-  function fail() { throw new Error('InnerXml of a non-leaf element is outside the subset'); }
+  function fail() {
+    throw new Error('InnerXml of a non-leaf element is outside the subset');
+  }
 }
 
 // ── the two loaders ──────────────────────────────────────────────────
@@ -197,12 +201,17 @@ function innerXml(list, i) {
 export function loadLocationInstance(xml) {
   if (xml == null) return null;
   const doc = parseXml(xml);
-  if (!doc.elements.some((e) => e.tag === 'locations')) return null;   // "Wrong file format"
+  if (!doc.elements.some((e) => e.tag === 'locations')) return null; // "Wrong file format"
   const inst = byTag(doc, 'locationInstance');
   const t = {
-    name: byTag(doc, 'name'), locationID: byTag(doc, 'locationID'), type: byTag(doc, 'type'),
-    prefab: byTag(doc, 'prefab'), worldX: byTag(doc, 'worldX'), worldY: byTag(doc, 'worldY'),
-    terrainX: byTag(doc, 'terrainX'), terrainY: byTag(doc, 'terrainY'),
+    name: byTag(doc, 'name'),
+    locationID: byTag(doc, 'locationID'),
+    type: byTag(doc, 'type'),
+    prefab: byTag(doc, 'prefab'),
+    worldX: byTag(doc, 'worldX'),
+    worldY: byTag(doc, 'worldY'),
+    terrainX: byTag(doc, 'terrainX'),
+    terrainY: byTag(doc, 'terrainY'),
   };
   const out = [];
   for (let i = 0; i < inst.length; i++) {
@@ -234,14 +243,28 @@ const OBJ_INT = ['type', 'objectID'];
 export function loadLocationPrefab(xml) {
   if (xml == null) return null;
   const doc = parseXml(xml);
-  if (!doc.elements.some((e) => e.tag === 'locationPrefab')) return null;   // "Wrong file format"
+  if (!doc.elements.some((e) => e.tag === 'locationPrefab')) return null; // "Wrong file format"
   const p = newLocationPrefab();
   p.height = tryParseInt32(innerXml(byTag(doc, 'height'), 0));
   p.width = tryParseInt32(innerXml(byTag(doc, 'width'), 0));
   const count = byTag(doc, 'object').length;
   const L = {};
-  for (const tag of ['type', 'name', 'objectID', 'posX', 'posY', 'posZ',
-    'scaleX', 'scaleY', 'scaleZ', 'rotW', 'rotX', 'rotY', 'rotZ']) L[tag] = byTag(doc, tag);
+  for (const tag of [
+    'type',
+    'name',
+    'objectID',
+    'posX',
+    'posY',
+    'posZ',
+    'scaleX',
+    'scaleY',
+    'scaleZ',
+    'rotW',
+    'rotX',
+    'rotY',
+    'rotZ',
+  ])
+    L[tag] = byTag(doc, tag);
   for (let i = 0; i < count; i++) {
     const o = newLocationObject();
     p.obj.push(o);

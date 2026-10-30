@@ -198,6 +198,8 @@
 /src/world/urban/*/
 !/src/world/water/
 /src/world/water/*/
+!/src/world/worldOfDaggerfall/
+/src/world/worldOfDaggerfall/*/
 !/tools/
 /tools/*
 !/tools/layered-armor/

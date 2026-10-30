@@ -20,8 +20,8 @@
   {
     "name": "WOD7-self-yields",
     "file": "src/world/worldOfDaggerfall/wodShared.js",
-    "old": "mine === theirs) return false;",
-    "new": "false) return false;",
+    "old": "  if (typeof mine !== 'string' || typeof theirs !== 'string' || !mine || !theirs || mine === theirs) return false;",
+    "new": "  if (typeof mine !== 'string' || typeof theirs !== 'string' || !mine || !theirs || false) return false;",
     "tests": [
       "test/scenes/wod7_sharedcamps.test.js"
     ],
@@ -40,8 +40,8 @@
   {
     "name": "WOD7-sites-duplicated",
     "file": "src/world/worldOfDaggerfall/wodShared.js",
-    "old": " || seen.has(s) || !Number.isFinite(age)) continue;",
-    "new": " || !Number.isFinite(age)) continue;",
+    "old": "    if (typeof s !== 'string' || !WOD_SITE_RE.test(s) || seen.has(s) || !Number.isFinite(age)) continue;",
+    "new": "    if (typeof s !== 'string' || !WOD_SITE_RE.test(s) || !Number.isFinite(age)) continue;",
     "tests": [
       "test/scenes/wod7_sharedcamps.test.js"
     ]
@@ -49,8 +49,8 @@
   {
     "name": "WOD7-tags-unchecked",
     "file": "src/world/worldOfDaggerfall/wodShared.js",
-    "old": "if (Number.isInteger(i) && i >= 0 && typeof s === 'string' && WOD_SITE_RE.test(s)) out.set(i, s);",
-    "new": "out.set(i, s);",
+    "old": "    if (Number.isInteger(i) && i >= 0 && typeof s === 'string' && WOD_SITE_RE.test(s)) out.set(i, s);",
+    "new": "    out.set(i, s);",
     "tests": [
       "test/scenes/wod7_sharedcamps.test.js"
     ]
@@ -232,8 +232,8 @@
   {
     "name": "WOD7-unheard-age-decides",
     "file": "src/world/worldOfDaggerfall/wodShared.js",
-    "old": "  if (!Number.isFinite(theirAge) || !Number.isFinite(myAge)) return false;\n",
-    "new": "",
+    "old": "  if (!Number.isFinite(theirAge) || !Number.isFinite(myAge)) return false;\n  if (Math.abs(myAge - theirAge) <= WOD_CLAIM_WINDOW_MS) return theirs < mine;",
+    "new": "  if (Math.abs(myAge - theirAge) <= WOD_CLAIM_WINDOW_MS) return theirs < mine;",
     "tests": [
       "test/scenes/wod7_sharedcamps.test.js"
     ]

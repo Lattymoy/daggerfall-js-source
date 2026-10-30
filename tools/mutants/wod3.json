@@ -2,8 +2,8 @@
   {
     "name": "start-spares-a-marker-at-300",
     "file": "src/world/worldOfDaggerfall/wodSpawner.js",
-    "old": "      if (dist <= WOD_STAND_DOWN_RADIUS) { this.active = false; return null; }   // Start, :53-56",
-    "new": "      if (dist < WOD_STAND_DOWN_RADIUS) { this.active = false; return null; }   // Start, :53-56",
+    "old": "      if (dist <= WOD_STAND_DOWN_RADIUS) {",
+    "new": "      if (dist < WOD_STAND_DOWN_RADIUS) {",
     "tests": [
       "test/world/worldOfDaggerfall/wod3_spawner.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "update-misses-a-marker-at-100",
     "file": "src/world/worldOfDaggerfall/wodSpawner.js",
-    "old": "if (!(dist <= WOD_SPAWN_RADIUS)) return null;",
-    "new": "if (!(dist < WOD_SPAWN_RADIUS)) return null;",
+    "old": "    if (!(dist <= WOD_SPAWN_RADIUS)) return null;",
+    "new": "    if (!(dist < WOD_SPAWN_RADIUS)) return null;",
     "tests": [
       "test/world/worldOfDaggerfall/wod3_spawner.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "start-runs-every-frame",
     "file": "src/world/worldOfDaggerfall/wodSpawner.js",
-    "old": "      this.started = true;\n",
-    "new": "",
+    "old": "      this.started = true;\n      if (dist <= WOD_STAND_DOWN_RADIUS) {",
+    "new": "      if (dist <= WOD_STAND_DOWN_RADIUS) {",
     "tests": [
       "test/world/worldOfDaggerfall/wod3_spawner.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "the-barbarian-becomes-reachable",
     "file": "src/world/worldOfDaggerfall/wodSpawner.js",
-    "old": "const enemyType = rangeInt(1, 3, rolls);",
-    "new": "const enemyType = rangeInt(1, 4, rolls);",
+    "old": "    const enemyType = rangeInt(1, 3, rolls);",
+    "new": "    const enemyType = rangeInt(1, 4, rolls);",
     "tests": [
       "test/world/worldOfDaggerfall/wod3_spawner.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "the-thieves-need-51",
     "file": "src/world/worldOfDaggerfall/wodSpawner.js",
-    "old": "if (!this.spawnFinished && spawnTrue >= 50) out = this._foe(THIEF_ARMS",
-    "new": "if (!this.spawnFinished && spawnTrue > 50) out = this._foe(THIEF_ARMS",
+    "old": "    if (!this.spawnFinished && spawnTrue >= 50) out = this._foe(THIEF_ARMS[enemyType - 1], hostile, rolls);",
+    "new": "    if (!this.spawnFinished && spawnTrue > 50) out = this._foe(THIEF_ARMS[enemyType - 1], hostile, rolls);",
     "tests": [
       "test/world/worldOfDaggerfall/wod3_spawner.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "the-bears-need-41",
     "file": "src/world/worldOfDaggerfall/wodSpawner.js",
-    "old": "spawnTrue >= 40",
-    "new": "spawnTrue > 40",
+    "old": "    if (!this.spawnFinished && spawnTrue >= 40) out = this._foe(MOBILE_TYPES.GrizzlyBear, true, rolls);",
+    "new": "    if (!this.spawnFinished && spawnTrue > 40) out = this._foe(MOBILE_TYPES.GrizzlyBear, true, rolls);",
     "tests": [
       "test/world/worldOfDaggerfall/wod3_spawner.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "the-healer-becomes-reachable",
     "file": "src/world/worldOfDaggerfall/wodSpawner.js",
-    "old": "const enemyType = rangeInt(1, 6, rolls);",
-    "new": "const enemyType = rangeInt(1, 7, rolls);",
+    "old": "    const enemyType = rangeInt(1, 6, rolls);",
+    "new": "    const enemyType = rangeInt(1, 7, rolls);",
     "tests": [
       "test/world/worldOfDaggerfall/wod3_spawner.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "the-warriors-need-51",
     "file": "src/world/worldOfDaggerfall/wodSpawner.js",
-    "old": "if (!this.spawnFinished && spawnTrue >= 50) out = this._foe(WARRIOR_ARMS",
-    "new": "if (!this.spawnFinished && spawnTrue > 50) out = this._foe(WARRIOR_ARMS",
+    "old": "    if (!this.spawnFinished && spawnTrue >= 50) out = this._foe(WARRIOR_ARMS[enemyType - 1], true, rolls);",
+    "new": "    if (!this.spawnFinished && spawnTrue > 50) out = this._foe(WARRIOR_ARMS[enemyType - 1], true, rolls);",
     "tests": [
       "test/world/worldOfDaggerfall/wod3_spawner.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "the-gender-threshold-takes-its-edge",
     "file": "src/world/worldOfDaggerfall/wodSpawner.js",
-    "old": "rolls() < FOE_MALE_CHANCE",
-    "new": "rolls() <= FOE_MALE_CHANCE",
+    "old": "export const createFoeGender = (rolls) => (rolls() < FOE_MALE_CHANCE ? 'male' : 'female');",
+    "new": "export const createFoeGender = (rolls) => (rolls() <= FOE_MALE_CHANCE ? 'male' : 'female');",
     "tests": [
       "test/world/worldOfDaggerfall/wod3_spawner.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "the-facing-rolls-before-the-gender",
     "file": "src/world/worldOfDaggerfall/wodSpawner.js",
-    "old": "    const gender = createFoeGender(rolls);\n    const yawDeg = rangeInt(0, 180, rolls);",
-    "new": "    const yawDeg = rangeInt(0, 180, rolls);\n    const gender = createFoeGender(rolls);",
+    "old": "    const gender = createFoeGender(rolls);\n    const yawDeg = rangeInt(0, 180, rolls); // transform.Rotate(0, Random.Range(0, 180), 0)",
+    "new": "    const yawDeg = rangeInt(0, 180, rolls);\n    const gender = createFoeGender(rolls); // transform.Rotate(0, Random.Range(0, 180), 0)",
     "tests": [
       "test/world/worldOfDaggerfall/wod3_spawner.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "the-good-thieves-are-not-allied",
     "file": "src/world/worldOfDaggerfall/wodSpawner.js",
-    "old": "allied: !hostile",
-    "new": "allied: false",
+    "old": "    return { kind: 'foe', mobileType, hostile, allied: !hostile, gender, yawDeg };",
+    "new": "    return { kind: 'foe', mobileType, hostile, allied: false, gender, yawDeg };",
     "tests": [
       "test/world/worldOfDaggerfall/wod3_spawner.test.js"
     ]
@@ -111,7 +111,7 @@
     "name": "the-good-bear-arm-spends-the-marker",
     "file": "src/world/worldOfDaggerfall/wodSpawner.js",
     "old": "        if (this.enemyID === WOD_ENEMY_ID.Bandits) return this._thieves(rolls, false);\n        return null;",
-    "new": "        if (this.enemyID === WOD_ENEMY_ID.Bandits) return this._thieves(rolls, false);\n        this.active = false; return null;",
+    "new": "        if (this.enemyID === WOD_ENEMY_ID.Bandits) return this._thieves(rolls, false);\n        this.active = false;\n        return null;",
     "tests": [
       "test/world/worldOfDaggerfall/wod3_spawner.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "the-bear-arm-runs-the-warriors",
     "file": "src/world/worldOfDaggerfall/wodSpawner.js",
-    "old": "if (this.enemyID === WOD_ENEMY_ID.Bears) return this._bears(rolls);",
-    "new": "if (this.enemyID === WOD_ENEMY_ID.Bears) return this._warriors(rolls);",
+    "old": "        if (this.enemyID === WOD_ENEMY_ID.Bears) return this._bears(rolls);",
+    "new": "        if (this.enemyID === WOD_ENEMY_ID.Bears) return this._warriors(rolls);",
     "tests": [
       "test/world/worldOfDaggerfall/wod3_spawner.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "the-loot-needs-under-50",
     "file": "src/world/worldOfDaggerfall/wodSpawner.js",
-    "old": "spawnTrue <= 50 ?",
-    "new": "spawnTrue < 50 ?",
+    "old": "    const out = spawnTrue <= 50 ? { kind: 'loot', record: rangeInt(0, 47, rolls) } : null;",
+    "new": "    const out = spawnTrue < 50 ? { kind: 'loot', record: rangeInt(0, 47, rolls) } : null;",
     "tests": [
       "test/world/worldOfDaggerfall/wod3_spawner.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "the-loot-record-loses-46",
     "file": "src/world/worldOfDaggerfall/wodSpawner.js",
-    "old": "record: rangeInt(0, 47, rolls)",
-    "new": "record: rangeInt(0, 46, rolls)",
+    "old": "    const out = spawnTrue <= 50 ? { kind: 'loot', record: rangeInt(0, 47, rolls) } : null;",
+    "new": "    const out = spawnTrue <= 50 ? { kind: 'loot', record: rangeInt(0, 46, rolls) } : null;",
     "tests": [
       "test/world/worldOfDaggerfall/wod3_spawner.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "the-loot-marker-stays-live",
     "file": "src/world/worldOfDaggerfall/wodSpawner.js",
-    "old": "    const out = spawnTrue <= 50 ? { kind: 'loot', record: rangeInt(0, 47, rolls) } : null;\n    this.active = false;\n",
-    "new": "    const out = spawnTrue <= 50 ? { kind: 'loot', record: rangeInt(0, 47, rolls) } : null;\n",
+    "old": "    const out = spawnTrue <= 50 ? { kind: 'loot', record: rangeInt(0, 47, rolls) } : null;\n    this.active = false;\n    return out;",
+    "new": "    const out = spawnTrue <= 50 ? { kind: 'loot', record: rangeInt(0, 47, rolls) } : null;\n    return out;",
     "tests": [
       "test/world/worldOfDaggerfall/wod3_spawner.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "the-captive-band-takes-11",
     "file": "src/world/worldOfDaggerfall/wodSpawner.js",
-    "old": "if (spawnTrue < 11)",
-    "new": "if (spawnTrue <= 11)",
+    "old": "      if (spawnTrue < 11) out = { kind: 'billboard', archive: 357, record: 6 };",
+    "new": "      if (spawnTrue <= 11) out = { kind: 'billboard', archive: 357, record: 6 };",
     "tests": [
       "test/world/worldOfDaggerfall/wod3_spawner.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "the-merchant-band-takes-19",
     "file": "src/world/worldOfDaggerfall/wodSpawner.js",
-    "old": "if (spawnTrue > 19 && spawnTrue < 30)",
-    "new": "if (spawnTrue >= 19 && spawnTrue < 30)",
+    "old": "      if (spawnTrue > 19 && spawnTrue < 30) out = { kind: 'billboard', archive: 182, record: 0 };",
+    "new": "      if (spawnTrue >= 19 && spawnTrue < 30) out = { kind: 'billboard', archive: 182, record: 0 };",
     "tests": [
       "test/world/worldOfDaggerfall/wod3_spawner.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "the-quest-range-takes-40",
     "file": "src/world/worldOfDaggerfall/wodSpawner.js",
-    "old": "const spawnTrue = rangeInt(1, 40, rolls);",
-    "new": "const spawnTrue = rangeInt(1, 41, rolls);",
+    "old": "    const spawnTrue = rangeInt(1, 40, rolls);",
+    "new": "    const spawnTrue = rangeInt(1, 41, rolls);",
     "tests": [
       "test/world/worldOfDaggerfall/wod3_spawner.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "the-quest-marker-stays-live",
     "file": "src/world/worldOfDaggerfall/wodSpawner.js",
-    "old": "record: 31 };\n    }\n    this.active = false;\n",
-    "new": "record: 31 };\n    }\n",
+    "old": "    }\n    this.active = false;\n    return out;",
+    "new": "    }\n    return out;",
     "tests": [
       "test/world/worldOfDaggerfall/wod3_spawner.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "the-spent-guard-goes",
     "file": "src/world/worldOfDaggerfall/wodSpawner.js",
-    "old": "if (!this.spawnFinished && spawnTrue >= 40)",
-    "new": "if (spawnTrue >= 40)",
+    "old": "    if (!this.spawnFinished && spawnTrue >= 40) out = this._foe(MOBILE_TYPES.GrizzlyBear, true, rolls);",
+    "new": "    if (spawnTrue >= 40) out = this._foe(MOBILE_TYPES.GrizzlyBear, true, rolls);",
     "tests": [
       "test/world/worldOfDaggerfall/wod3_spawner.test.js"
     ],

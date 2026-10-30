@@ -2,8 +2,8 @@
   {
     "name": "SEA-LEVEL-off",
     "file": "src/world/worldOfDaggerfall/wodLocationLoader.js",
-    "old": "      if (a <= SEA_SAMPLE && avg > a && d > SEA_RAMP) continue;",
-    "new": "      if (false) continue;",
+    "old": "      if (a <= SEA_SAMPLE && avg > a && d > SEA_RAMP) continue; // FIELD BUGS 2026-10-02b SEA-LEVEL (below)",
+    "new": "      if (false) continue; // FIELD BUGS 2026-10-02b SEA-LEVEL (below)",
     "tests": [
       "test/world/terrain/fb1002b_sealevel.test.js",
       "test/world/terrain/wod2_loader.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "SEA-LEVEL-no-ramp",
     "file": "src/world/worldOfDaggerfall/wodLocationLoader.js",
-    "old": "      if (a <= SEA_SAMPLE && avg > a && d > SEA_RAMP) continue;",
-    "new": "      if (a <= SEA_SAMPLE && avg > a && d > 0) continue;",
+    "old": "      if (a <= SEA_SAMPLE && avg > a && d > SEA_RAMP) continue; // FIELD BUGS 2026-10-02b SEA-LEVEL (below)",
+    "new": "      if (a <= SEA_SAMPLE && avg > a && d > 0) continue; // FIELD BUGS 2026-10-02b SEA-LEVEL (below)",
     "tests": [
       "test/world/terrain/fb1002b_sealevel.test.js"
     ]
@@ -31,7 +31,7 @@
     "name": "SEA-SAMPLE-under-the-sea",
     "file": "src/world/worldOfDaggerfall/wodLocationLoader.js",
     "old": "export const SEA_SAMPLE = f32(SCALED_OCEAN_ELEVATION / MAX_TERRAIN_HEIGHT);",
-    "new": "export const SEA_SAMPLE = f32(0.99 * SCALED_OCEAN_ELEVATION / MAX_TERRAIN_HEIGHT);",
+    "new": "export const SEA_SAMPLE = f32((0.99 * SCALED_OCEAN_ELEVATION) / MAX_TERRAIN_HEIGHT);",
     "tests": [
       "test/world/terrain/fb1002b_sealevel.test.js"
     ]

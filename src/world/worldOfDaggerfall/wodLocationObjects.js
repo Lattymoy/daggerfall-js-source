@@ -36,7 +36,7 @@
 export const WOD_LIGHTS_ARCHIVE = 210;
 export const WOD_ANIMALS_ARCHIVE = 201;
 export const WOD_TREASURE_ARCHIVE = 216;
-export const WOD_EDITOR_ARCHIVE = 199;   // FlatTypes.Editor - DaggerfallBillboard.Start disables the renderer
+export const WOD_EDITOR_ARCHIVE = 199; // FlatTypes.Editor - DaggerfallBillboard.Start disables the renderer
 /** WOD-BUSH: the shrub model the camps ring their sites with (45 of its 202 placements, every bandit camp among them). */
 export const WOD_BUSH_MODEL = 60610;
 /** ROCK-SUNK (2026-10-02, the field: "Insane glitched geometry over at Hadus"): the instance names whose layouts are
@@ -59,7 +59,10 @@ export const isWodShrub = (modelId, siteName) => modelId === WOD_BUSH_MODEL && !
 export const WOD_ROCK_SEAT_M = 0.5;
 /** ROCK-SEAT: how far to lower a rock field's piece whose lowest point is `bottom`, over ground whose lowest point under
  *  it is `ground` - zero for a piece already in the ground, never positive. */
-export const rockSeatDrop = (ground, bottom) => (Number.isFinite(ground) && Number.isFinite(bottom) && bottom > ground - WOD_ROCK_SEAT_M ? ground - WOD_ROCK_SEAT_M - bottom : 0);
+export const rockSeatDrop = (ground, bottom) =>
+  Number.isFinite(ground) && Number.isFinite(bottom) && bottom > ground - WOD_ROCK_SEAT_M
+    ? ground - WOD_ROCK_SEAT_M - bottom
+    : 0;
 
 /** LocationEnemySpawner.SpawnType (LocationEnemySpawner.cs:28-35). */
 export const WOD_SPAWN_TYPE = Object.freeze({ Quest: 0, BillboardPerson: 1, Enemy: 2, Loot: 3, Good: 4 });
@@ -92,9 +95,9 @@ export function classifyObject(obj) {
   const spawners = [];
   // :1203 - the container's own AddLootSpawn...
   if (treasure) spawners.push({ spawnType: WOD_SPAWN_TYPE.Loot, enemyID: 0, questID: 0 });
-  if (arg[0] === '479') spawners.push({ spawnType: WOD_SPAWN_TYPE.Enemy, enemyID: WOD_ENEMY_ID.Bandits, questID: 0 });   // :1218-1219
-  if (arg[0] === '483') spawners.push({ spawnType: WOD_SPAWN_TYPE.Good, enemyID: WOD_ENEMY_ID.Bandits, questID: 0 });    // :1221-1222
-  if (arg[0] === '457') spawners.push({ spawnType: WOD_SPAWN_TYPE.Enemy, enemyID: WOD_ENEMY_ID.Bears, questID: 0 });    // :1224-1225
+  if (arg[0] === '479') spawners.push({ spawnType: WOD_SPAWN_TYPE.Enemy, enemyID: WOD_ENEMY_ID.Bandits, questID: 0 }); // :1218-1219
+  if (arg[0] === '483') spawners.push({ spawnType: WOD_SPAWN_TYPE.Good, enemyID: WOD_ENEMY_ID.Bandits, questID: 0 }); // :1221-1222
+  if (arg[0] === '457') spawners.push({ spawnType: WOD_SPAWN_TYPE.Enemy, enemyID: WOD_ENEMY_ID.Bears, questID: 0 }); // :1224-1225
   // :1227-1228 - ...and AddLootSpawn AGAIN. On a container that already
   // carries one this ADDS A SECOND LocationEnemySpawner, and
   // GetComponent<> hands the first back to be set, so the second keeps
@@ -102,8 +105,8 @@ export function classifyObject(obj) {
   // first component's Update deactivates the GameObject on the frame
   // either could act (SpawnLoot ends in SetActive(false)), and Unity
   // calls no further Update on an inactive object. So one spawner.
-  if (arg[0] === '357' && arg[1] === '6') spawners.push({ spawnType: WOD_SPAWN_TYPE.Quest, enemyID: 0, questID: 0 });   // :1230-1231
-  if (arg[0] === '478') spawners.push({ spawnType: WOD_SPAWN_TYPE.Enemy, enemyID: WOD_ENEMY_ID.Warriors, questID: 0 });   // :1233-1234
+  if (arg[0] === '357' && arg[1] === '6') spawners.push({ spawnType: WOD_SPAWN_TYPE.Quest, enemyID: 0, questID: 0 }); // :1230-1231
+  if (arg[0] === '478') spawners.push({ spawnType: WOD_SPAWN_TYPE.Enemy, enemyID: WOD_ENEMY_ID.Warriors, questID: 0 }); // :1233-1234
   return {
     kind: 'flat',
     archive,
@@ -111,8 +114,8 @@ export function classifyObject(obj) {
     // Every Add*Spawn blanks the flat (the alpha-0.1 colour above); an
     // editor flat is hidden by its own billboard.
     visible: spawners.length === 0 && archive !== WOD_EDITOR_ARCHIVE,
-    light: arg[0] === '210',     // :1211-1212
-    animal: arg[0] === '201',    // :1214-1215
+    light: arg[0] === '210', // :1211-1212
+    animal: arg[0] === '201', // :1214-1215
     treasure,
     spawners,
   };
@@ -126,9 +129,24 @@ export function classifyObject(obj) {
  *  the mod lifts record 29 (Street Lantern 2) by half its height where
  *  DFU's is a "todo". */
 const LIGHT_LIFT = new Map([
-  [0, -0.1], [2, 0.1], [3, 0.1], [5, 0.15], [6, 0.6], [9, 0.4],
-  [11, -0.4], [13, -0.35], [14, 'half'], [15, 'half'], [17, 0.2], [20, 0.6],
-  [21, 'fifth'], [22, -0.5], [24, -1.85], [25, -1.0], [27, -0.02], [29, 'half'],
+  [0, -0.1],
+  [2, 0.1],
+  [3, 0.1],
+  [5, 0.15],
+  [6, 0.6],
+  [9, 0.4],
+  [11, -0.4],
+  [13, -0.35],
+  [14, 'half'],
+  [15, 'half'],
+  [17, 0.2],
+  [20, 0.6],
+  [21, 'fifth'],
+  [22, -0.5],
+  [24, -1.85],
+  [25, -1.0],
+  [27, -0.02],
+  [29, 'half'],
 ]);
 
 // The light starts as DaggerfallUnity.Option_InteriorLightPrefab's own
@@ -136,7 +154,8 @@ const LIGHT_LIFT = new Map([
 // not animated - world/interior/interiorLights.js carries the same prefab).
 const PREFAB = Object.freeze({ range: 15, intensity: 1, color: Object.freeze([1, 1, 1]) });
 const c32 = (r, g, b) => Object.freeze([r / 255, g / 255, b / 255]);
-const L = (range, intensity, color) => Object.freeze({ range, intensity, color: color ? Object.freeze(color) : PREFAB.color });
+const L = (range, intensity, color) =>
+  Object.freeze({ range, intensity, color: color ? Object.freeze(color) : PREFAB.color });
 
 /** Its SECOND switch (:1354-1474), resolved against the prefab. Two arms
  *  are the mod's own and NOT DaggerfallInterior's: record 0 (Bowl of
@@ -197,9 +216,26 @@ export function wodLightPosition(base, record, size, scaleY = 1) {
 /** A unit quaternion's rotation columns, Unity's component order. */
 function rotationColumns({ x, y, z, w }) {
   const n = Math.hypot(x, y, z, w);
-  if (n > 0) { x /= n; y /= n; z /= n; w /= n; } else { x = 0; y = 0; z = 0; w = 1; }
-  const xx = x * x, yy = y * y, zz = z * z;
-  const xy = x * y, xz = x * z, yz = y * z, wx = w * x, wy = w * y, wz = w * z;
+  if (n > 0) {
+    x /= n;
+    y /= n;
+    z /= n;
+    w /= n;
+  } else {
+    x = 0;
+    y = 0;
+    z = 0;
+    w = 1;
+  }
+  const xx = x * x,
+    yy = y * y,
+    zz = z * z;
+  const xy = x * y,
+    xz = x * z,
+    yz = y * z,
+    wx = w * x,
+    wy = w * y,
+    wz = w * z;
   return [
     [1 - 2 * (yy + zz), 2 * (xy + wz), 2 * (xz - wy)],
     [2 * (xy - wz), 1 - 2 * (xx + zz), 2 * (yz + wx)],

@@ -424,7 +424,7 @@ test('PROF2 hosts: the streaming world stands every kind through the one host, i
   assert.match(src('src/scenes/mineHost.js'), /return \(specs\('mining'\)\[50\] === 'prospector' && PROSPECTOR_MARKS\[n\.what\]\) \|\| MINE_MARKS\[n\.what\] \|\| MINE_MARKS\.vein;/, 'NODE-MARKS: the Prospector\'s veins marked from PROSPECT_M off, in the mine kind\'s own mark');
   assert.match(w, /onDungeonLeave: \(\) => \{ if \(_wdunInside\) wdunLeft\(false\); const n = handOverRoomFoes\(\);[^\n]*gatherHost\?\.leaveDungeon\(\); worldPublish\(performance\.now\(\), true\); \},/, 'the veins dropped while the dungeon still stands');   // PVPDUNGEONS: a zone hall's leaving said first (wdunLeft)
   assert.match(w, /profPress: \(\) => gatherHost\?\.press\(\) \?\? false,/);
-  assert.match(src('src/world/worldOfDaggerfall/worldOfDaggerfall.js'), /name: session\.name\[pick\.index\], prefabName: session\.prefab\[pick\.index\] \}\)\);/);   // FOREST1: and the prefab's name - a site or a rock field
+  assert.match(src('src/world/worldOfDaggerfall/worldOfDaggerfall.js'), /name: session\.name\[pick\.index\],\n\s*prefabName: session\.prefab\[pick\.index\],\n\s*\}\)\);/);   // FOREST1: and the prefab's name - a site or a rock field
   const m = src('src/scenes/worldModes.js');
   assert.match(m, /\n\s*dungeonLoc = dfLocation;\n\s*host\.profDungeonEntered\?\.\(ctx\);/, 'after the flip and its lock, once the dungeon is the one stood in');
   assert.match(m, /if \(interact && !pressCast && host\.profPress\?\.\(\)\) return true;/, 'AUDIT 29: Interact alone, above QG1');
