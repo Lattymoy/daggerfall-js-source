@@ -306,7 +306,9 @@ numbers. Inside a zone dungeon the bar is off. A departure: DFU has no PvP.
 PVP-KIT-REGEN (2026-10-30: "cure is worthless in pvp"): Regenerate takes Cure's slot, the classic Regenerate at
 2% to 4% of the receiver's health each round for a minute, 10% of maximum magicka
 (`pvpKit.js:"regen: Object.freeze({ cost: 10, scale: Object.freeze([2, 4]), icon: 1 }),"`). Each round is its receiver's own
-rise, so PVP-HEAL's window caps it with every other heal. A saved Cure slot loads as Regenerate
+rise, so PVP-HEAL's window caps it with every other heal. The relay prices it in Cure's place and banks its rounds
+as health credit for the minute, at most `regenKit` (4%) a second (`pvpVitals.js:"else if (id === 'regen') {"`). A
+saved Cure slot loads as Regenerate
 (`pvpKit.js:"if (raw?.id === 'cure') raw = {"`). A departure: DFU has no PvP.
 
 PVP-KIT-REZ (the owner, 2026-10-29: "Add resurrection to the. Mages tool belt"): Resurrect is a slot spell at 25% of
@@ -347,16 +349,23 @@ gear. The service is acct214 (acct211 on its branch). A departure: DFU has no Pv
 
 "Need to have to eake up im nearest town", "Jist like pve deaths": a death in the zone rises at the nearest town or temple
 outside it (Wild-Zone.md THE RISE, as before), after the online PvE wait of 60 s
-(`wildZone.js:"export const WILD_DEATH_HOLD_S = 60;"`), not two minutes. The referee keeps the fighter down as long
-(`wildRef.js:"riseMs: 60_000,"`, the wire's `down` word at most `wire.js:"export const WILD_DOWN_MS_MAX = 60_000;"`). A
-departure: DFU has no PvP.
+(`WILD_DEATH_HOLD_S`, 60 s then; DEATH-10 below), not two minutes. The referee keeps the fighter down as long
+(`WILD_REF.riseMs`, the wire's `down` word at most `WILD_DOWN_MS_MAX`). A departure: DFU has no PvP.
 
 DEATH-15 ("Change that to 15 second on death", "For both"; the owner chose to keep the Resurrect minute): online, in
-the zone or out of it, Enter rises once `deathScreen.js:"export const DEATH_RISE_MIN_S = 15;"` have passed (a rejoin's
+the zone or out of it, Enter rose once 15 s of `DEATH_RISE_MIN_S` had passed (DEATH-10 below; a rejoin's
 served time counts, `canRise`); until then the screen says only the count. The rest of the minute is for a party
 member's Resurrect, and the body still lies the minute. The raise window is the longest screen and half a minute,
 `revived.js:"export const REZ_HOLD_S = 90;"` (150 while the zone held two minutes). Relay world282. A departure: DFU
 rises after its three seconds.
+
+DEATH-10 (2026-10-30, the owner: "give death a 10 second timer let them click respawn now but at 10 auto respawn
+them", "for pve and pvp"): online, Enter rises at once (`deathScreen.js:"export const DEATH_RISE_MIN_S = 0;"`) and the
+screen rises by itself at `deathScreen.js:"export const DEATH_AUTO_RISE_S = 10;"`, in the zone
+`wildZone.js:"export const WILD_DEATH_HOLD_S = 10;"`. The referee keeps a fallen down 10 s
+(`wildRef.js:"riseMs: 10_000,"`, the wire's word at most `wire.js:"export const WILD_DOWN_MS_MAX = 10_000;"`). A step
+out of the zone still heals whole only after the minute (`awayMs`). A party Resurrect has those 10 s, and the body
+still lies the minute. Relay world293. A departure: DFU rises after its three seconds.
 
 ## PVP-NO-TENTH: no tenth at a kill, gold as the last roll
 
@@ -474,3 +483,30 @@ My kill says "You slew" (`pvpHud.js:"export const pvpSlewText = "`); the fallen'
 law would hide it, nameless (`travelViewMarks.js:"const villainMark = (id, at, dropped) => {"`); one in no room of mine
 is unknown to this client. The owed level 29 reads "Level 29 · 1 level owed", its button "Go to 30"
 (`pvp30Ask.js:"export const pvp30Owed = "`). Tests: `test/ui/pvphud.test.js`. A departure: DFU has no PvP.
+
+## PVP-VITALS: the relay owns a flagged fighter's pools
+
+"we need to make sure players cant cheat health in pvp", "cheat health mana or fatigue": a game could freeze or set its
+own bars, and the relay believed its reports. While a fighter's flag is up in the open zone, its health rises by report
+only out of a credit the relay grants: a slow regen, a declared potion on the relay's own 15 s clock, or a heal it saw
+paid for (`refereeHealthShare.js:"const got = Math.min(fighter.max - fighter.hp, Math.round(target) - fighter.hp, healRoom(fighter, now), sourced"`).
+
+Magicka and fatigue are the relay's own ledgers, anchored at the game's word while the flag is down. Each refereed cast
+and swing pays the PvP bar's cheapest price, or lands nothing (`wildRef.js:"if (spell ? !castPaid(a.f, c, to, now)"`).
+A party member's gift is paid where the relay passes it (`server/src/index.js:"async _wildCastPaid(a, tb, data, now) {"`).
+A Shield counts only while a paid one runs. The health whole is held to the signed level's.
+
+The game declares its potions and self-cast bar spells in its report (`pvpDeclare.js:"export function declarePotion("`).
+A harmful cast carries its number, so one area cast is one price. Not yet the relay's: armour and
+resistances. Relay world293. Tests: `test/net/pvpvitals.test.js`. A departure: DFU has no PvP.
+
+BOW-RATE: an arrow comes no sooner than the fastest honest bow, its four-tick loose with no reload, so 0.25 s. Two may
+arrive together over a late network. A sooner one lands nothing (`wildRef.js:"if (r === SIEGE_HIT.Shaft ? !shaftPaid(a.f, now)"`).
+The relay cannot trust a Speed, so it holds every build to that floor. A slower bow law can raise it.
+
+SWING-RATE: a melee blow on one player comes no sooner than the quickest swing, five frames at the 0.09 s floor, so
+0.45 s, two deep. It is counted per target, because a Cleave lands on each player in its arc.
+
+BOW-FAST: the relay cuts a shaft it judges by a fifth for each arrow within its bow's window of the last (a Short Bow 0.75 s, a Long Bow 1.25 s, else 1 s), four at most
+(`pvpVitals.js:"export function bowFastCut(f, d, now, w = null) {"`). The game sends that claim uncut, so it cannot skip the cut. The zone strike is marked `relayCut`, and the game keeps
+only the bow's pull (`duelCombat.js:"bowFastDamage(d.relayCut ? { ...landingShaft(), fast: 0 } : landingShaft()"`).

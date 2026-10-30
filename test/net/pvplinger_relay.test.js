@@ -182,7 +182,8 @@ test('PVP-LINGER-RISE THE RELAY: a body slain while its player was away is kept 
 test('PVP-LINGER-RISE THE WORD AND THE PAGE: the word lies out at least LINGER_AWAY.downMs (the referee\'s own wait where it is still down), never past LINGER_AWAY.keepMs; a living page that hears it is dead - its screen names the killer and says it was slain while away, then the zone\'s rise (mutants: the keep unread; the wait unread; the line unsaid)', () => {
   const rec = { at: 1_000, n: 'Borin' };
   assert.deepEqual(lingerAwayWord(rec, null, 2_000), { t: 'wref', k: 'down', ms: LINGER_AWAY.downMs, aw: 1, n: 'Borin' });
-  assert.equal(lingerAwayWord(rec, { down: true, downAt: 1_000 }, 2_000).ms, WILD_REF.riseMs - 1_000, 'still down: the referee\'s wait');
+  assert.equal(lingerAwayWord(rec, { down: true, downAt: 1_000 }, 2_000).ms, Math.max(LINGER_AWAY.downMs, WILD_REF.riseMs - 1_000), 'still down: the referee\'s wait, the word\'s least');   // PIN MOVED (DEATH-10): the rise is 10 s, the word's least
+  assert.equal(lingerAwayWord(rec, { down: true, downAt: 1_000 }, 1_500).ms, WILD_REF.riseMs, 'never past the rise');
   assert.equal(lingerAwayWord(rec, null, 1_000 + LINGER_AWAY.keepMs), null, 'kept a week at most');
   assert.deepEqual(validWildRefOut({ t: 'wref', k: 'down', ms: 10_000, aw: 1, n: 'Borin' }), { k: 'down', ms: 10_000, aw: 1, n: 'Borin' });
   let presented = 0;

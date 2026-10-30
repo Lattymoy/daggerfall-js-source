@@ -3974,6 +3974,11 @@
   "tr": "1725fabe43de",
   "by": "claude-in-session"
  },
+ "pvp.evade": {
+  "en": "3ad2db0403c9",
+  "tr": "4d4adb196d14",
+  "by": "claude-in-session"
+ },
  "pvp.flag.level": {
   "en": "64776e968136",
   "tr": "bf2cbfe0fdd3",
@@ -4787,6 +4792,11 @@
  "sea.wild.chipTip": {
   "en": "88c4bc67ac34",
   "tr": "b967135c3d07",
+  "by": "claude-in-session"
+ },
+ "sea.wild.deathRise": {
+  "en": "29d9b075a86b",
+  "tr": "d49745dfcd4b",
   "by": "claude-in-session"
  },
  "sea.wild.dropLate": {

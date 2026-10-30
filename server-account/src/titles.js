@@ -103,7 +103,8 @@ import { SD_HONOUR_TITLE, SD_HONOUR_AURA } from './sds.js';   // SD9b: the Hour'
 import { SERPENT_HONOUR_TITLE, SERPENT_HONOUR_AURA } from './serpents.js';   // SERPENT5: the Old Coil's grants on the row
 import { EG_HONOUR, EG_HONOUR_TITLES, EG_HONOUR_AURA, EG_CHAMPION_TITLE, EG_FIRST_TITLE, EG_FIRST_AURA } from './egHonours.js';   // EG-E2: the Spire's honours on the row
 import { LAMP_TITLE } from './lamp.js';   // LAMP-KEEPER II: I Love Lamp on the row
-import { QL_TITLES, qlTitleBit } from '../../src/net/questlineClaims.js';   // QL12: the questlines' titles on the row
+import { QL_TITLES, qlTitleBit } from '../../src/net/questlineClaims.js';
+import { DRAGON_TITLES } from '../../src/net/huntLaw.js';   // WYRM-RIDER: a look's First is one tamer's, never an admin's   // QL12: the questlines' titles on the row
 import { festivalWaresHeld, HEARTHKEEPER_GIVEN, SOULCAKE_TAKEN } from '../../src/net/festivalLaw.js';   // WITCH1: the Witches' Festival's wares and honours on the row
 import { STAFF_GLYPHS } from '../../src/net/staffCommands.js';   // STAFF-PANEL2-FIX: the glyphs that open the staff's commands, none held while cut off
 import { MASTERY_MARKS } from '../../src/net/huntLaw.js';   // HUNTERS-MARK, MARKS-OF-MASTERY: the hunt's, a Master's and the sea's titles
@@ -334,8 +335,8 @@ export const canModerate = (player, env) => isModerator(player, env) || isDevelo
  *  and a glyph that is a fact or a right (sprout, mod, the staff's STAFF_GLYPHS, the laurel, a seat's tower and crowns) -
  *  the glyphs held are a listed title's own (TIER_GLYPH) and the shop's. */
 export const holdsAll = isDeveloper;
-/** ADMIN-ALL: the titles an admin holds - every one but a claim's. */
-const ADMIN_TITLES = TITLES.filter((t) => !titleClaimed(t));
+/** ADMIN-ALL: the titles an admin holds - every one but a claim's and a dragon's First (WYRM-RIDER: one tamer's). */
+const ADMIN_TITLES = TITLES.filter((t) => !titleClaimed(t) && t !== DRAGON_TITLES.first && t !== DRAGON_TITLES.firstAether);
 /** ADMIN-ALL: the paint glyphs an admin holds, in GLYPHS's order. */
 const ADMIN_GLYPHS = GLYPHS.filter((g) => !STAFF_GLYPHS.includes(g)
   && (Object.values(TIER_GLYPH).includes(g) || SHOP_WARES.some((w) => w.kind === 'glyph' && w.key === g)));

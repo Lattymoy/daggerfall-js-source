@@ -47,8 +47,8 @@
   {
     "name": "PVP-GUARD-the-change-unseen",
     "file": "src/net/siege/refereeHealthMirror.js",
-    "old": "        || `${guard()}|${ward()}|${shieldWord()}` !== lastSentGuard;",
-    "new": "        || false;",
+    "old": "        || `${guard()}|${ward()}|${shieldWord()}` !== lastSentGuard   // PVP-GUARD, PVP-WARD, PVP-SHIELD: armour, a resistance or a Shield on or off\n",
+    "new": "        || false\n",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
@@ -128,7 +128,7 @@
   {
     "name": "PVP-TRIANGLE-the-arrow-unscaled",
     "file": "src/combat/duelCombat.js",
-    "old": "  const n = d.by === 'arrow' ? bowFastDamage(landingShaft(), Math.floor(scaled * pvpArrowScale(d.a?.pl))) : scaled;",
+    "old": "  const n = d.by === 'arrow' ? bowFastDamage(d.relayCut ? { ...landingShaft(), fast: 0 } : landingShaft(), Math.floor(scaled * pvpArrowScale(d.a?.pl))) : scaled;",
     "new": "  const n = scaled;",
     "tests": [
       "test/combat/pvp_guard.test.js"
@@ -416,7 +416,32 @@
     ],
     "why": "PVP-SPELL-CRIT: the hosts' count crits"
   },
-  {"name": "PVP-CAST-SKILL-the-hold-off", "file": "src/combat/siegeCombat.js", "old": "pvpCritHarm(caster ? Math.min(harm, pvpCastHold(caster)) : harm, caster, rolls)", "new": "pvpCritHarm(harm, caster, rolls)", "tests": ["test/combat/pvp_guard.test.js"]},
-  {"name": "PVP-CAST-SKILL-the-factor", "file": "src/combat/pvpSpellCrit.js", "old": "export const PVP_CAST_PER_SKILL = 0.15;", "new": "export const PVP_CAST_PER_SKILL = 0.2;", "tests": ["test/combat/pvp_guard.test.js"]},
-  {"name": "PVP-CAST-SKILL-the-bar-on-level-dice", "file": "src/systems/wild/pvpKit.js", "old": "case 'damage': return [{ ...FIREBALL, ...kitMagnitude(PVP_CAST_PER_SKILL * skill, level) }];", "new": "case 'damage': return [{ ...FIREBALL }];", "tests": ["test/combat/pvp_guard.test.js", "test/systems/wild/pvpkit.test.js"]}
+  {
+    "name": "PVP-CAST-SKILL-the-hold-off",
+    "file": "src/combat/siegeCombat.js",
+    "old": "pvpCritHarm(caster ? Math.min(harm, pvpCastHold(caster)) : harm, caster, rolls)",
+    "new": "pvpCritHarm(harm, caster, rolls)",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-CAST-SKILL-the-factor",
+    "file": "src/combat/pvpSpellCrit.js",
+    "old": "export const PVP_CAST_PER_SKILL = 0.15;",
+    "new": "export const PVP_CAST_PER_SKILL = 0.2;",
+    "tests": [
+      "test/combat/pvp_guard.test.js"
+    ]
+  },
+  {
+    "name": "PVP-CAST-SKILL-the-bar-on-level-dice",
+    "file": "src/systems/wild/pvpKit.js",
+    "old": "case 'damage': return [{ ...FIREBALL, ...kitMagnitude(PVP_CAST_PER_SKILL * skill, level) }];",
+    "new": "case 'damage': return [{ ...FIREBALL }];",
+    "tests": [
+      "test/combat/pvp_guard.test.js",
+      "test/systems/wild/pvpkit.test.js"
+    ]
+  }
 ]

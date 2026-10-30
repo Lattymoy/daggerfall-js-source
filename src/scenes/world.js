@@ -532,7 +532,8 @@ import { makeInView } from '../player/cameraView.js';   // AUDIT 17e F24
 import { isBackFacing, SIGHT_RADIUS, foeFrameDt } from '../characters/enemy/enemyMotor.js';   // OW6: SIGHT_RADIUS, a foe's own sight (a camp's is its own)   // DUEL1: a duel opponent's blow from behind me is a backstab's chance
 import { markFoeStruck } from '../ui/hud/hudFoeTarget.js';   // DUEL1: my duel opponent's health, on the enhanced HUD's target bar
 import { lowerCondition, dfuBlowWear } from '../systems/equip.js';   // DUEL1: my weapon wears on a blow that landed on my opponent; BALANCE1: on the port's wear scale
-import { reportPlayerAttack, registerAttackResolutionListener } from '../combat/formulas.js';   // DUEL1: the defender's answer, on my HUD's damage numbers
+import { reportPlayerAttack, registerAttackResolutionListener } from '../combat/formulas.js';
+import { pvpEvadeHeard } from '../combat/pvpEvade.js';   // PVP-EVADE   // DUEL1: the defender's answer, on my HUD's damage numbers
 import { worldHoverFrame, hideWorldPlaque, destroyWorldPlaque, worldPlaqueOn, reticleAnchor } from '../ui/worldPlaque.js';   // WORLD-HOVER: the one seam each host calls, its hide door for the branches that return above it, and the teardown
 import { TV_DUNGEON_MODELS_MAX } from '../systems/travel/travelDungeonModels.js';   // OW-DUNGEONS: each dungeon's own model, grown under the Overworld; TV-BURST: started one a frame
 import { keysHeading, axesToward, tvOwnGrow } from '../player/travelCamera.js';   // OW-FACE: the body faces the keys' way under the Overworld; OW-PEERS: the others grown as the traveller is
@@ -21939,7 +21940,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const wildStrikeOut = (to, by, weapon, swing, drawMs = 0, { off = false } = {}) => {
     if (!wildFair(to)) return false;
     const a = withoutFirmament(playerEntity, () => duelAttackerOf(playerEntity, weapon, weaponRig?.playerWeapon?.wraps, to)), w = duelWeaponOf(weapon), sw = duelSwingOf(swing);
-    const at = drawMs > 0 ? { at: Math.min(60000, Math.trunc(drawMs)) } : {};
+    const at = { relayCut: true, ...(drawMs > 0 ? { at: Math.min(60000, Math.trunc(drawMs)) } : {}) };   // BOW-FAST: the zone referee cuts a quick shaft
     const r = resolveDuelStrike({ by, a, ...(w ? { w } : {}), ...(sw ? { sw } : {}), ...at, ...(off ? { off } : {}) }, duelStandIn(playerEntity));
     if (!(r.dmg > 0)) { reportPlayerAttack({ hit: false, damage: 0, critical: false, backstab: false, ineffective: false }); zoneWatchCall(); return true; }
     const n = wildFight.blow(to, 'strike', { by, p: campToWire(player.feetAt()), d: Math.trunc(r.dmg), ...(w ? { w } : {}), ...(sw ? { sw } : {}), ...at });
@@ -21997,7 +21998,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  let land - the duel's own); a blow on me - its flash, its sound and my voice. */
   const wildHpIn = (g) => {
     const me = online?.id ?? '';
-    if (g.by !== me && g.to !== me) return;
+    if ((g.by !== me && g.to !== me) || (g.ev && pvpEvadeHeard(g.by === me))) return;   // PVP-EVADE: a blow evaded is said, no more
     noteWildBlow();   // AUDIT PVP-EASE L2-1: a blow landed, mine or on me - storing locked (wildZone.js WILD_STORE_LOCK_MS)
     const foeId = g.by === me ? g.to : g.by;
     const theirs = g.h.find((x) => x[0] === foeId);

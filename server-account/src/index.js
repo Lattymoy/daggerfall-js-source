@@ -324,7 +324,7 @@ const withSeatTitles = async (ctx, player, env) => withChapterTitles(ctx, seatsO
 /** CHAP4c: and the chapters' seats' titles its characters hold, while CHAPTER_TITLES is on (npcChapters.js). MARKS-OF-MASTERY:
  *  and the Marks of Mastery its rows earn (hunts.js) - the mint reads this one too. */
 const withChapterTitles = async (/** @type {any} */ ctx, /** @type {any} */ player, /** @type {any} */ env) => withMasteryMarks(ctx, chapterTitlesOpenFor(player, env)
-  ? { ...player, chapterTitles: [...new Set((await chapterTitlesOfAccount(ctx.db, player.id, ctx.nowS, seasonZeroOf(env.SEASON_ZERO_WEEK))).map((t) => t.title))] } : player);
+  ? { ...player, chapterTitles: [...new Set((await chapterTitlesOfAccount(ctx.db, player.id, ctx.nowS, seasonZeroOf(env.SEASON_ZERO_WEEK))).map((t) => t.title))] } : player, env);
 import { huntState, huntClear, withMasteryMarks, HUNT_STATUS } from './hunts.js';   // HUNTERS-MARK: the hunt's ledger; MARKS-OF-MASTERY: the titles read off it
 import { MASTERY_MARKS } from '../../src/net/huntLaw.js';   // MINT-TITLE-GATE: the mastery titles, read at a mint only for one worn
 import { decorOf, placeDecor, moveDecor, removeDecor, hideDecorBase } from './decor.js';

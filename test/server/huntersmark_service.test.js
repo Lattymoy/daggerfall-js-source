@@ -69,7 +69,8 @@ test('HUNTERS-MARK THE LAW: a board clear inside the event clock\'s window, a ma
   assert.equal(huntTierFits(30, null), true, 'no level judged yet');
   assert.deepEqual(masteryMarksOf({ clears: 99, masters: ['fishing', 'mining'], serpents: 40 }), ['bloodhound', 'mastermining', 'masterfishing', 'serpenthunter', 'deepbane']);
   assert.deepEqual(masteryMarksOf({ clears: 100 }), ['bloodhound', 'beastbane']);
-  assert.deepEqual(MASTERY_MARKS.length, HUNT_TITLES.length + Object.keys(MASTERY_TITLES).length + SEA_TITLES.length);
+  // PIN MOVED (WYRM-RIDER): and the tamed dragons' four (was: the three lists alone)
+  assert.deepEqual(MASTERY_MARKS.length, HUNT_TITLES.length + Object.keys(MASTERY_TITLES).length + SEA_TITLES.length + 4);
 });
 
 test('HUNTERS-MARK THE LEDGER through the real Worker: a clear recorded once a character - the same notice again a repeat, never twice - each region tallied; shape, window and the trusted level refused; asked of the seat; the bounties\' stream spent by a recorded clear alone (mutants: the key; the region tally; the tier check; the seat; the spend)', async (t) => {

@@ -52,8 +52,8 @@
   {
     "name": "PVP-HEAL-the-cap-unread",
     "file": "src/net/siege/refereeHealthShare.js",
-    "old": "    const got = Math.min(fighter.max - fighter.hp, Math.round(target) - fighter.hp, healRoom(fighter, now));",
-    "new": "    const got = Math.min(fighter.max - fighter.hp, Math.round(target) - fighter.hp);",
+    "old": "Math.round(target) - fighter.hp, healRoom(fighter, now), sourced",
+    "new": "Math.round(target) - fighter.hp, sourced",
     "tests": [
       "test/net/siege/sharedhealth_law.test.js",
       "test/ui/fb1019f_duelbar.test.js"
@@ -321,7 +321,7 @@
   {
     "name": "PVP-HEALTH-the-maximum-unread",
     "file": "src/net/siege/refereeHealthShare.js",
-    "old": "  if (Number.isFinite(report.max)) setPoolMax(fighter, report.max, now);",
+    "old": "  if (Number.isFinite(report.max)) setPoolMax(fighter, Math.min(report.max, healthCapAt(cl, PVP_HEALTH_MAX)), now);",
     "new": "",
     "tests": [
       "test/net/siege/sharedhealth_law.test.js"

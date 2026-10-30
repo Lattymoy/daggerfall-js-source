@@ -143,7 +143,7 @@ peer underground was refused. In a dungeon a room's peer is fair by the place no
 the zone where it fights (`zone` - its audit: never a halo's, again at each crossing and every `WILD_ZONE_KEEP_MS`; never
 in a settlement's streets, ZONE-SAFE) and a blow lands only
 where both fighters said so in the same cell, as a share of the player's own health (SHARED-HEALTH, `06-Systems/Integrity-Arc.md` section 5; the bar kept at
-the hub as I cross, whole again away `WILD_REF.riseMs`), every strike and spell a number the striker's own sheet rolled, judged on the weapon its look holds and the
+the hub as I cross, whole again away `WILD_REF.awayMs`), every strike and spell a number the striker's own sheet rolled, judged on the weapon its look holds and the
 arms its token signs, the reach from the places the relay believes; the referee's word (`wref`) says what landed, and
 a fall. There is no floor - a blow can kill. AUDIT FOE-KEEPS E2 (the owner, 2026-10-24, asked: "Credit the last
 player"): A DEATH THE REFEREE DID NOT SEE - a foe's, a fall's, the sea's - within `WILD_REF.creditMs` (10 s, pinned equal
@@ -365,11 +365,11 @@ Either death, at the first dead frame, while the room is still the player's (`wi
 - A DEATH IN A HALL (HALL-CROWS, the owner: "i dont see the crows circleling around the dungeon where i died on the
   zone map"): always locks the hall for the hour and sets the crows over it, whether or not the pack had anything to
   drop (`world.js:"if (modes?.mode === 'dungeon' && _wdunInside)"`; section 13).
-- THE WAIT: the death screen holds `WILD_DEATH_HOLD_S` (60 s, PVP-RISE: "Jist like pve deaths" - 120 s before); Enter
-  rises after 15 s (DEATH-15, PvP-Rework.md PVP-RISE); the killer's body lies as long.
+- THE WAIT: the death screen holds `WILD_DEATH_HOLD_S` (10 s, DEATH-10; 60 s at PVP-RISE, 120 s before); Enter
+  rises at once (PvP-Rework.md DEATH-10); the killer's body lies the minute.
 - A GAME CLOSED ON THE DEATH SCREEN (WILD-REJOIN, FIELD BUGS 2026-10-25h, a player's report: "if you die in the
   wilderness and alt f4 before you are looted you wont be able to be looted by who killed you. you can also skip the
-  death timer this way"): the fall is the referee's, and the referee keeps the fighter down its two minutes
+  death timer this way"): the fall is the referee's, and the referee keeps the fighter down its 10 s
   (`WILD_REF.riseMs`) - in its room, and by the hub's carry in any other. The record the game comes back to is the save
   from before the fall (a dead character is never saved), so a page that comes back alive and says it stands in the
   zone is told it is still down (`wref` `down`, `wildRef.js:"export function wildDownWord"`): the time left and, from
@@ -1326,7 +1326,7 @@ town. The open country, the roads, the dungeons (a city's own too) and the zone'
   zone to the referee is 0 (INT9 - `world.js:"setWildZone?.(wildCan() ? 1 : wildCan(true)"`) and
   the referee, which lands a blow only where both fighters said they stand in the zone
   (`wildRef.js:"export function wildBlow"`), refuses every blow and cast into the streets and out of them. A fighter who steps into the streets is
-  away from the zone as the referee reads it: whole again `WILD_REF.riseMs` later. THE RELAY IS UNCHANGED (no wire, no
+  away from the zone as the referee reads it: whole again `WILD_REF.awayMs` later. THE RELAY IS UNCHANGED (no wire, no
   relay version): it has no map, and the defender's own word protects the defender (section 22's known limits).
   Now 2 there: a villain is fair from them (PvP-Rework.md PVP-SAFE-HIT).
 - EVERY DOOR (`world.js:"const wildFair = (peerId) => {"`): no body whose shown pose stands in a settlement's streets is
