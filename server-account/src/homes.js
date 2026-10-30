@@ -59,6 +59,7 @@ import {
   homeDeedOf,   // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: the deed a record holds to a building, as the door reads it
   homeGroundOk, homeGroundKept,   // DECOR-ROOMY: the ground a claim names, held to its price
 } from '../../src/net/homeLaw.js';
+import { homeListedOff, homeListedPrice } from '../../src/net/homeListingLaw.js';   // FOUNDATION F3: the listings' rows
 import { PATRON_HOUR_S } from '../../src/net/patronLaw.js';   // AUDIT LW-II P7: a door opened marks its trader's patrons' hours
 import { reckonPatrons } from './market.js';   // AUDIT LW-II-2 S4: a door leaving public reckons its town first
 import { GUILD_TREASURY_MAX } from '../../src/net/guild/guildLaw.js';   // ARENA4b: a hall's pieces paid back, into a treasury under its cap
@@ -158,6 +159,9 @@ export async function claimHome(ctx, player, body = {}) {
   // radius x 1280) - asked to update, never seated at it
   if (!homePriceOk(price)) return { error: 'home-update' };
   if (!homeLayoutOk(layout)) return { error: 'bad-home' };   // WD3: the layout the claimant's town stands in (null: Daggerfall's)
+  // FOUNDATION F3 (net/homeListingLaw.js): a building its row takes off the market, or a price not its row's
+  if (homeListedOff(mapId, buildingKey)) return { error: 'home-unlisted' };
+  if (homeListedPrice(mapId, buildingKey, price) !== price) return { error: 'home-update' };
   // ARENA4b: THE ARENA STANDS THERE. No building of Daggerfall's cell (4,3) has a key since ARENA1, but a build from
   // before the arena still stands GEMSAL03 and could buy one of its houses - a home keyed to nothing. Refused by the key,
   // with the shapes (no record moves for it, so no record is asked first)

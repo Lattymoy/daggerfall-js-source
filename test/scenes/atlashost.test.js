@@ -72,14 +72,30 @@ test(`F1 host: the check walks every listed place in slices of ${ATLAS_SLICE} at
     assert.equal(drain(), Math.ceil(1201 / ATLAS_SLICE));
     report = await done;
   } finally { console.warn = warn; }
-  assert.deepEqual(report, { checked: 1201, unlocated: 1, problems: [{ place: 105, part: 'exterior', name: 'GONE01.RMB', why: 'unresolved' }] });
+  assert.deepEqual(report, { checked: 1201, unlocated: 1, problems: [{ place: 105, part: 'exterior', name: 'GONE01.RMB', why: 'unresolved' }], unplaced: [] });
   assert.deepEqual(warned, ['[atlas] 1 block reference(s) serve nothing: GONE01.RMB (exterior of place 105)']);
   assert.equal(host.atlas().counts().places, 0, 'the check\'s bundles are its own');
   assert.ok(ATLAS_SAID >= 1);
 });
 
+test('F1 host: a client\'s own world-data additions are checked with the listed places, and a property row naming no town is said (mutants: the additions unread, the rows unchecked)', async () => {
+  const places = createWorldPlaces();
+  places.register('bay', BAY.slice(0, 3));
+  const queue = [], said = [], warn = console.warn;
+  const fort = { mapId: 5000, name: 'A fort', px: 300, py: 300, type: 0, region: 16, area: 16, theatre: 0, key: 1 };
+  const host = createAtlasHost({ places, blocks: BLOCKS, standing: () => loc(['AAA.RMB']), schedule: (fn) => queue.push(fn),
+    additions: () => [[fort, loc(['GONE09.RMB'])]], listings: () => [{ map: 4242, cell: [0, 0], sale: false }, { map: 100, cell: [0, 0], sale: false }] });
+  console.warn = (...a) => said.push(a.join(' '));
+  let report;
+  try { const done = host.check(); while (queue.length) queue.shift()(); report = await done; } finally { console.warn = warn; }
+  assert.deepEqual(report.problems.map((q) => [q.place, q.name]), [[5000, 'GONE09.RMB']]);
+  assert.deepEqual(report.unplaced.map((u) => [u.row.map, u.why]), [[4242, 'no such town']]);
+  assert.equal(said.length, 2);
+});
+
 test('F1 host: the streaming world wires it - the places host makes it over the registry (none without one), the blocks and the index, and checks when the world-data door serves edits (scenes/tamrielPlacesHost.js)', () => {
   const src = readFileSync(new URL('../../src/scenes/tamrielPlacesHost.js', import.meta.url), 'utf8');
   assert.match(src, /const worldAtlas = worldPlaces \? createAtlasHost\(\{ places: worldPlaces, blocks, standing: /);
-  assert.match(src, /if \(worldAtlas && worldDataDoorOpen\(\)\) worldAtlas\.check\(\);/);
+  assert.match(src, /if \(worldAtlas && \(worldDataDoorOpen\(\) \|\| homeListings\(\)\.length\)\) worldAtlas\.check\(\);/);
+  assert.match(src, /listings: homeListings, additions: modAdditions \}\) : null;/);
 });

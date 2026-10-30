@@ -7,6 +7,7 @@
 // Wired by scenes/tamrielPlacesHost.js, which holds the registry, the blocks and the place index.
 import { createAtlas, fillAtlas, ATLAS_VERSION } from '../world/atlas/atlas.js';
 import { servedBlockOf } from '../world/atlas/atlasServed.js';
+import { homeListingsUnplaced } from '../net/homeListingLaw.js';   // FOUNDATION F3: the property rows checked against the places
 
 /** Places checked in one idle slice. */
 export const ATLAS_SLICE = 500;
@@ -17,11 +18,12 @@ const idle = (/** @type {() => void} */ fn) => (typeof globalThis.requestIdleCal
 
 /**
  * @param {{ places: any, blocks: { checkName: (n: string) => string, getBlockIndex: (n: string) => number, count: number }, standing: (p: any) => any, stand?: (p: any) => any,
- *   schedule?: (fn: () => void) => unknown }} o - `places` the registry
+ *   schedule?: (fn: () => void) => unknown, listings?: () => readonly any[], additions?: () => ReadonlyArray<readonly [any, any]> }} o - `places` the registry
  *   (world/worldWide/worldPlaces.js); `standing` the location the host already holds for a place (no side effect), `stand`
- *   the one it would stand on asking (a place past the Bay cloned and indexed) - `standing` when not given
+ *   the one it would stand on asking (a place past the Bay cloned and indexed); `listings` the property rows, each
+ *   checked to name a town and a cell; `additions` this client's world-data additions, `[place, location]`
  */
-export function createAtlasHost({ places, blocks, standing, stand = standing, schedule = idle }) {
+export function createAtlasHost({ places, blocks, standing, stand = standing, schedule = idle, listings = () => [], additions = () => [] }) {
   const resolveBlock = servedBlockOf(blocks);
   let atlas = createAtlas({ resolveBlock });
   let generation = places.generation();
@@ -31,7 +33,7 @@ export function createAtlasHost({ places, blocks, standing, stand = standing, sc
     if (g !== generation) { generation = g; atlas = createAtlas({ resolveBlock }); }
     return atlas;
   };
-  /** @type {null | { checked: number, unlocated: number, problems: import('../world/atlas/atlas.js').Problem[] }} */
+  /** @type {null | { checked: number, unlocated: number, problems: import('../world/atlas/atlas.js').Problem[], unplaced: any[] }} */
   let report = null;
   let checking = false;
 
@@ -60,11 +62,13 @@ export function createAtlasHost({ places, blocks, standing, stand = standing, sc
         unlocated += r.unlocated.length;
         i += ATLAS_SLICE;
         if (i < list.length) { schedule(slice); return; }
-        report = { checked: list.length, unlocated, problems: scratch.problems().filter((q) => q.why === 'unresolved') };
+        for (const [p, loc] of additions()) scratch.add(p, loc);   // a mod's places, each client's own
+        report = { checked: list.length, unlocated, problems: scratch.problems().filter((q) => q.why === 'unresolved'), unplaced: homeListingsUnplaced(listings(), bundle) };
         checking = false;
         if (report.problems.length) {
           console.warn(`[atlas] ${report.problems.length} block reference(s) serve nothing: ${report.problems.slice(0, ATLAS_SAID).map((q) => `${q.name} (${q.part} of place ${q.place})`).join(', ')}`);
         }
+        if (report.unplaced.length) console.warn(`[atlas] ${report.unplaced.length} property row(s) name nothing: ${report.unplaced.slice(0, ATLAS_SAID).map((u) => `${u.row.map} (${u.why})`).join(', ')}`);
         done(report);
       };
       schedule(slice);

@@ -27,6 +27,9 @@ import { townClimateAt } from '../world/urban/townLook.js';   // URBANIZER U1: a
 import { locationKeyOf } from '../world/locationKey.js';   // BAY-LEFT-B: a capital's MapTable key its own buildings'
 import { fabricSliceSites } from '../world/imperialFabricBuildings.js';   // BAY-LEFT-B: and the Imperial City's fabric's
 import { createAtlasHost } from './atlasHost.js';   // FOUNDATION F1: the world's places read whole
+import { homeListings } from '../net/homeListingLaw.js';   // FOUNDATION F3: the property rows the atlas checks
+import { placeOfRow } from '../world/worldWide/worldPlaces.js';   // FOUNDATION F1: a mod's addition as the registry would read it
+import { bayPlaceRows } from '../world/worldWide/bayPlaces.js';
 import { worldDataDoorOpen } from '../formats/worldData/worldDataReplacement.js';   // FOUNDATION F1: a check when the door serves edits
 
 /** @param {any} host */
@@ -474,10 +477,23 @@ export function createTamrielPlaces(host) {
     regionAt: (px, py) => maps.getRegionIndexAt(px, py),
     standAt, rowAt,   // BAY-LEFT-MAPS
   });
+  /** FOUNDATION F1: this client's world-data additions with their locations - a mod's places past a region's base rows
+   *  (HUB1 keeps them off the registry: each client's own) - for the atlas's check. */
+  const modAdditions = () => {
+    const out = [];
+    for (let r = 0; r < maps.regionCount; r++) {   // BAY-OWN: a mod's addition is a MAPS.BSA region's row past its base count (formats/mapsFile.js baseLocationCount)
+      const reg = maps.getRegion(r);
+      for (let l = reg ? maps.baseLocationCount(r) : 0; l < (reg?.locationCount ?? 0); l++) {
+        const loc = maps.getLocation(r, l), p = loc?.mapTableData ? placeOfRow(bayPlaceRows([loc])[0], 'additions') : null;
+        if (p) out.push([p, loc]);
+      }
+    }
+    return out;
+  };
   /** FOUNDATION F1 (scenes/atlasHost.js): the world's places whole - a place's bundle off the location the host holds
    *  for it (the Bay's in the index, a place past the Bay as the build stands it); checked once at idle where the door
    *  serves edits. */
-  const worldAtlas = worldPlaces ? createAtlasHost({ places: worldPlaces, blocks, standing: (p) => locationIndex.get(`${p.px},${p.py}`) ?? null, stand: (p) => locationIndex.get(`${p.px},${p.py}`) ?? standAt(p.px, p.py) }) : null;
-  if (worldAtlas && worldDataDoorOpen()) worldAtlas.check();
+  const worldAtlas = worldPlaces ? createAtlasHost({ places: worldPlaces, blocks, standing: (p) => locationIndex.get(`${p.px},${p.py}`) ?? null, stand: (p) => locationIndex.get(`${p.px},${p.py}`) ?? standAt(p.px, p.py), listings: homeListings, additions: modAdditions }) : null;
+  if (worldAtlas && (worldDataDoorOpen() || homeListings().length)) worldAtlas.check();   // FOUNDATION F3: and where property rows stand
   return { _tamrielRoads, arenaLocationAt, arenaWarm, capitalLocationAt, countryLocationAt, lairLocationAt, nearestTownOf, provinceQuestPlaces, registerTamrielPlaces, startLairAt, tamrielPlaceName, worldAtlas };
 }

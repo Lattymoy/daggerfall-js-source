@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
-import { HOSTS, measureHosts, measureTests, measureLayer, measureArt, measureBible, measureTextRings, measureAll } from '../../tools/foundationMeasure.mjs';
+import { HOSTS, measureHosts, measureTests, measureLayer, measureArt, measureBible, measureTextRings, measureMessageRing, measureSkins, measureAll } from '../../tools/foundationMeasure.mjs';
 
 const fixture = () => {
   const root = mkdtempSync(join(tmpdir(), 'foundation-'));
@@ -23,6 +23,8 @@ const fixture = () => {
   put('public/art/a.png', 'xx');
   put('vendor/mod/b.PNG', 'xyz');
   put('bible/Home.md', 'one two three\nfour\n');
+  put('src/ui/enhanced/enhancedPorts.js', 'export const PORT_SPECS = Object.freeze({ guild, bank });\nisEnhanced();\n');
+  put('src/ui/talkDoor.js', 'isEnhancedPlus();\n');
   return root;
 };
 
@@ -36,6 +38,8 @@ test('F0 the method on a fixture tree: a host\'s lines and logical lines, the as
     assert.deepEqual(measureArt(root), { public: { files: 1, bytes: 2 }, vendor: { files: 1, bytes: 3 }, src: { files: 0, bytes: 0 } });
     assert.deepEqual(measureBible(root), { pages: 1, lines: 3, words: 4 });
     assert.deepEqual(measureTextRings(root), ['src/scenes/townTalk.js']);
+    assert.deepEqual(measureMessageRing(root).map(([, w]) => w), [false, false, false, false]);
+    assert.deepEqual(measureSkins(root), { enhancedFiles: 1, enhancedLines: 3, doors: 1, ports: 2, calls: 2 });
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -48,4 +52,6 @@ test('F0 on this tree: the four hosts found and measured, the suite and the laye
   assert.ok(m.tests.files > 1000 && m.tests.readerFiles > 0 && m.tests.asserts > m.tests.textPins);
   assert.ok(m.systems.files > m.systems.touching && m.formats.files > 0);
   assert.ok(m.textRings.includes('src/scenes/dungeonContext.js'));
+  assert.deepEqual(m.ring, HOSTS.map(([, name]) => [name, true]), 'all four hosts file the HUD\'s lines in the message ring');
+  assert.ok(m.skins.doors > 0 && m.skins.ports > 0);
 });

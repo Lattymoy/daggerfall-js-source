@@ -35,7 +35,8 @@ import { theatreAt } from '../worldWide/worldGrid.js';   // WW-R: a province's l
 import { WATER_BYTE } from '../roadsProducer.js';   // AUDIT TESA II R1: the beach line the land stands over - one constant
 import { rumareBasin, rumareMouthPixel } from '../rumareWaters.js';   // RUMARE-WATER: the land let down about the Imperial City at the sea
 import { perlinNoise } from '../perlin.js';   // RELIEF-PEAKS: the large map before it (largeMapBefore), for the records written on it
-import { inEtherLaw } from '../ethericSea.js';   // RELIEF-PEAKS: the Eltheric Ocean's box keeps its own large map
+import { inEtherLaw } from '../ethericSea.js';
+import { landLayer } from '../land/landLayer.js';   // FOUNDATION F4: the land's rows, asked before the law   // RELIEF-PEAKS: the Eltheric Ocean's box keeps its own large map
 import { BASE_HEIGHT_SCALE, NOISE_MAP_SCALE, MAX_TERRAIN_HEIGHT, EXTRA_NOISE_SCALE, cubicInterpolator } from '../terrain/terrainSampler.js';   // RELIEF-PEAKS: the kernel's own two terms
 
 /** The height law's bytes (WOODS' own units: byte * 8 metres; the sea at 3 and under). AUDIT TESA II R1/G12: the shore - the
@@ -130,6 +131,7 @@ export function tamrielHeightByte(x, y) {
   let byte = rumareMouthPixel(x, y) ? 0 : authoredHeightByte(px, py, (groundHash(x, y) - 0.5) * 4);   // RUMARE-WATER: the mouth's pixels the sea's
   const basin = byte > SHORE_BYTE ? rumareBasin(x, y) : 0;
   if (basin > 0) byte = Math.round(byte - (byte - SHORE_BYTE) * basin);
+  byte = landLayer().heightAt(x, y) ?? byte;   // FOUNDATION F4: a row of the land's (world/land/landLayer.js) over the law
   if (_bytes.size >= GROUND_CACHE_MAX) _bytes.clear();
   _bytes.set(k, byte);
   return byte;
@@ -281,7 +283,7 @@ export function groundWoods(woods) {
 /** The climate read with the continent round it: the Bay's own on the Bay (the reader's, after the coastal
  *  dilation), the province's past it. */
 export function groundClimateIndex(bayClimateIndex) {
-  return (x, y) => (inBay(x, y) ? bayClimateIndex(x, y) : tamrielClimateAt(x, y));
+  return (x, y) => (inBay(x, y) ? bayClimateIndex(x, y) : landLayer().climateAt(x, y) ?? tamrielClimateAt(x, y));   // FOUNDATION F4: a row's climate first
 }
 
 /** TESA-BIOME: THE AIR'S CLIMATE with the continent round it - the Bay's own on the Bay, past it a zone's `air` where the

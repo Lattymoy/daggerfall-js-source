@@ -11,7 +11,7 @@ import { loadWorldAtlas } from '../../../tools/atlasMeasure.mjs';
 const ARENA2 = process.env.ARENA2_PATH;
 const skipReal = !ARENA2 || !existsSync(join(ARENA2 ?? '', 'TAMRIEL2.IMG')) ? 'ARENA2_PATH not set or missing - real-data validation skipped' : false;
 
-test('F1 with ARENA2, the town packs on: the same 15,534 places, every block they name served, the packs\' towns their own grids (mutant: the door unasked)', { skip: skipReal }, async () => {
+test('F1 with ARENA2, the town packs on: the same 16,160 places, every block they name served, the packs\' towns their own grids (mutant: the door unasked)', { skip: skipReal }, async () => {
   const log = console.log;
   console.log = () => {};
   let got;
@@ -20,6 +20,6 @@ test('F1 with ARENA2, the town packs on: the same 15,534 places, every block the
   assert.deepEqual(filled.unlocated, []);
   assert.deepEqual(atlas.problems(), [], 'every block a pack\'s town names is served');
   const c = atlas.counts();
-  assert.deepEqual([c.places, c.exteriorSlots, c.doors], [15534, 59845, 43054]);
+  assert.deepEqual([c.places, c.exteriorSlots, c.doors], [16160, 100192, 195762]);
   assert.ok(c.rmb > 1124, 'the packs name blocks of their own');
 });

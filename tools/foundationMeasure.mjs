@@ -5,7 +5,7 @@
 // `node tools/atlasMeasure.mjs`.
 //   node tools/foundationMeasure.mjs          the table
 //   node tools/foundationMeasure.mjs --json   the figures as JSON
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isMain } from './lib/isMain.mjs';
@@ -111,6 +111,25 @@ export function measureTextRings(root = ROOT) {
     .map((f) => relative(root, join(root, f)));
 }
 
+/** Which of the four hosts files the HUD's lines in the message ring (the notebook's addMessage): its file names the
+ *  sink the ring is reached by (`hudMessageSink` - set on the talk host, or threaded to a dungeon). */
+export function measureMessageRing(root = ROOT) {
+  return HOSTS.map(([file, name]) => [name, /\bhudMessageSink\b/.test(readFileSync(join(root, file), 'utf8'))]);
+}
+
+/** The two skins: the enhanced face's files and lines, the screens a door picks a face for (`ui/**Door.js`), the
+ *  classic windows PORT2 wears in both (ui/enhanced/enhancedPorts.js PORT_SPECS' entries), and the skin's call sites. */
+export function measureSkins(root = ROOT) {
+  const enhanced = walk('src/ui/enhanced', (p) => p.endsWith('.js'), root);
+  const lines = enhanced.reduce((n, f) => n + readFileSync(join(root, f), 'utf8').split('\n').length, 0);
+  const doors = walk('src/ui', (p) => /Door\.js$/.test(p), root).length;
+  const portsFile = join(root, 'src/ui/enhanced/enhancedPorts.js');
+  const spec = existsSync(portsFile) ? /PORT_SPECS = Object\.freeze\(\{([^}]*)\}\)/.exec(readFileSync(portsFile, 'utf8')) : null;
+  const ports = spec ? spec[1].split(',').filter((w) => w.trim()).length : 0;
+  const calls = walk('src', (p) => p.endsWith('.js'), root).reduce((n, f) => n + (readFileSync(join(root, f), 'utf8').match(/\bisEnhanced(?:Plus)?\(/g) ?? []).length, 0);
+  return { enhancedFiles: enhanced.length, enhancedLines: lines, doors, ports, calls };
+}
+
 export function measureAll(root = ROOT) {
   return {
     hosts: measureHosts(root),
@@ -120,6 +139,8 @@ export function measureAll(root = ROOT) {
     art: measureArt(root),
     bible: measureBible(root),
     textRings: measureTextRings(root),
+    ring: measureMessageRing(root),
+    skins: measureSkins(root),
   };
 }
 
@@ -137,5 +158,8 @@ if (isMain(import.meta.url)) {
     for (const [k, v] of Object.entries(m.art)) console.log(`png ${k}: ${v.files} files, ${(v.bytes / 1e6).toFixed(1)} MB`);
     console.log(`bible ${m.bible.pages} pages, ${m.bible.lines} lines, ${m.bible.words} words`);
     console.log(`PopupText rings: ${m.textRings.join(', ')}`);
+    console.log(`the message ring: ${m.ring.map(([n, w]) => `${n} ${w ? 'files' : 'does not file'}`).join(', ')}`);
+    const k = m.skins;
+    console.log(`skins: ${k.enhancedFiles} enhanced files (${k.enhancedLines} lines), ${k.doors} doors pick a face, ${k.ports} classic windows worn in both, ${k.calls} skin call sites`);
   }
 }
