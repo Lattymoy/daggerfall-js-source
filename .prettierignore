@@ -14,6 +14,8 @@
 /src/systems/*
 !/src/systems/firstVisit/
 /src/systems/firstVisit/*/
+!/src/systems/grammar/
+/src/systems/grammar/*/
 !/src/ui/
 /src/ui/*
 !/src/ui/ketch/
