@@ -73,5 +73,6 @@ test('ADMIN-ALL: the shop card shows an admin every ware held, with no Buy link 
   const card = await shopCardOf(admin, { ...env, STRIPE_SECRET_KEY: 'sk_test', STRIPE_WEBHOOK_SECRET: 'wh', SHOP_ON_SALE: SHOP_WARES.map((w) => w.id).join(',') },
     { subtle: crypto.subtle, rand: (b) => crypto.getRandomValues(b), nowS: NOW, origin: 'https://x' });
   assert.ok(card.wares.length > 0);
-  for (const w of card.wares) { assert.equal(w.held, true, w.id); assert.equal(w.buy, null, w.id); }
+  // PIN MOVED (AURUM-ONLY): an item carries no money link at all (bought with Aurum), and the card no longer lists the packs as held
+  for (const w of card.wares) { if (!w.id.startsWith('aurum:')) assert.equal(w.held, true, w.id); assert.equal(w.buy ?? null, null, w.id); }
 });

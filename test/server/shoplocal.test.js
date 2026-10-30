@@ -17,20 +17,21 @@ import { stripeMethods, accountDefault, methodState, PAY_METHOD_NAME } from '../
 import { shopWareById } from '../../src/net/shopLaw.js';
 import { graph } from '../importGraph.mjs';
 
-const ON = { STRIPE_SECRET_KEY: 'sk_test_shop', STRIPE_WEBHOOK_SECRET: 'whsec_shop', SHOP_ON_SALE: 'title:genesis,glyph:origin,aura:eternal' };
+// AURUM-ONLY (PIN MOVED): money buys the Aurum packs alone, so the checkout is a pack's - the 2,400, $19.99
+const ON = { STRIPE_SECRET_KEY: 'sk_test_shop', STRIPE_WEBHOOK_SECRET: 'whsec_shop', SHOP_ON_SALE: 'title:genesis,glyph:origin,aura:eternal,aurum:2400', AURUM_OPEN: 'on' };
 const KEY = 'sk_live_never_said';
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
-const order = () => ({ id: 'a'.repeat(24), player: 'p1', handle: 'Buyer', ware: shopWareById('aura:eternal'), origin: 'https://accounts.invalid', expiresAt: 123 });
+const order = () => ({ id: 'a'.repeat(24), player: 'p1', handle: 'Buyer', ware: shopWareById('aurum:2400'), origin: 'https://accounts.invalid', expiresAt: 123 });
 
 test('SHOP-LOCAL the checkout asks Stripe for the buyer\'s own currency (Adaptive Pricing), still priced in dollars by the service; the confirm page says Stripe can show it (mutants: the ask dropped; the line dropped)', () => {
   const f = checkoutFields(order());
   assert.equal(f['adaptive_pricing[enabled]'], 'true');
   assert.equal(f['line_items[0][price_data][currency]'], 'usd', 'the price stays the service\'s, in dollars');
-  assert.equal(f['line_items[0][price_data][unit_amount]'], 2000);
+  assert.equal(f['line_items[0][price_data][unit_amount]'], 1999);
   assert.ok(!Object.keys(f).some((k) => k.startsWith('payment_method_types')), 'no list of methods: Stripe offers the account\'s');
-  const p = shopConfirmPage({ handle: 'Buyer', ware: shopWareById('title:genesis'), ticket: 't1' });
+  const p = shopConfirmPage({ handle: 'Buyer', ware: shopWareById('aurum:2400'), ticket: 't1' });
   assert.ok(p.lines.includes("Stripe can show the price in your own currency, with your country's ways to pay."));
-  assert.ok(p.lines.indexOf('Price: $5.00 (USD), paid once.') < p.lines.findIndex((l) => l.startsWith('Stripe can show')), 'after the price it is about');
+  assert.ok(p.lines.indexOf('Price: $19.99 (USD), paid once.') < p.lines.findIndex((l) => l.startsWith('Stripe can show')), 'after the price it is about');
 });
 
 test('SHOP-LOCAL a session Stripe refuses (400) with Adaptive Pricing is asked again without it, in dollars, under a key of its own; any other failure is not asked again (mutants: no second ask; the second ask still localised; the same key)', async () => {
@@ -52,7 +53,7 @@ test('SHOP-LOCAL a session Stripe refuses (400) with Adaptive Pricing is asked a
   assert.equal(again.asked.length, 2);
   assert.ok(again.asked.every((a) => a.url === STRIPE_API));
   assert.equal(again.asked[1].sent.get('adaptive_pricing[enabled]'), null, 'the second ask in dollars');
-  assert.equal(again.asked[1].sent.get('line_items[0][price_data][unit_amount]'), '2000');
+  assert.equal(again.asked[1].sent.get('line_items[0][price_data][unit_amount]'), '1999');
   assert.deepEqual(again.asked.map((a) => a.init.headers['idempotency-key']), [`shop-${'a'.repeat(24)}`, `shop-${'a'.repeat(24)}-usd`], 'a key of its own: the refused ask saved nothing under the first');
   const down = await run([() => new Response('', { status: 500 })]);
   assert.deepEqual(down.r, { error: 'stripe-down' });
@@ -62,7 +63,7 @@ test('SHOP-LOCAL a session Stripe refuses (400) with Adaptive Pricing is asked a
 test('SHOP-LOCAL, end to end: a payment the buyer made in euros reads USD and the order\'s amount to the webhook (Stripe\'s Adaptive Pricing), so it grants as any other (mutants: the presentment read as the amount)', async () => {
   const s = await standService(ON);
   const me = await s.registered('Buyer');
-  const ticket = new URL((await (await s.fetch('https://accounts.invalid/v1/account', { headers: { authorization: `Bearer ${me.secret}` } })).json()).shop.wares.find((w) => w.id === 'aura:eternal').buy).searchParams.get('t');
+  const ticket = new URL((await (await s.fetch('https://accounts.invalid/v1/account', { headers: { authorization: `Bearer ${me.secret}` } })).json()).shop.wares.find((w) => w.id === 'aurum:2400').buy).searchParams.get('t');
   const real = globalThis.fetch;
   globalThis.fetch = async (url) => { if (String(url) === STRIPE_API) return Response.json({ id: 'cs_test_1', url: 'https://checkout.stripe.com/c/pay/cs_test_1' }); throw new Error(`no stand-in for ${url}`); };
   try {
@@ -71,11 +72,13 @@ test('SHOP-LOCAL, end to end: a payment the buyer made in euros reads USD and th
   const o = s.env.DB._raw.prepare('SELECT * FROM shop_orders WHERE player = ?').get(me.id);
   // Stripe's own example (docs.stripe.com, Adaptive Pricing, "Event destinations and reporting"): the integration's
   // currency and amount on the session, the buyer's in presentment_details
-  const paid = { id: 'cs_test_1', client_reference_id: o.id, metadata: { order: o.id }, payment_status: 'paid', payment_intent: 'pi_eur', currency: 'usd', amount_subtotal: 2000, amount_total: 2000, presentment_details: { presentment_amount: 1876, presentment_currency: 'eur' } };
+  const paid = { id: 'cs_test_1', client_reference_id: o.id, metadata: { order: o.id }, payment_status: 'paid', payment_intent: 'pi_eur', currency: 'usd', amount_subtotal: 1999, amount_total: 1999, presentment_details: { presentment_amount: 1876, presentment_currency: 'eur' } };
   const t = Math.floor(Date.now() / 1000), body = JSON.stringify({ id: 'evt_eur', type: 'checkout.session.completed', data: { object: paid } });
   const res = await s.fetch('https://accounts.invalid/v1/shop/webhook', { method: 'POST', body, headers: { 'content-type': 'application/json', 'stripe-signature': `t=${t},v1=${createHmac('sha256', ON.STRIPE_WEBHOOK_SECRET).update(`${t}.${body}`).digest('hex')}` } });
   assert.deepEqual(await res.json(), { ok: true, applied: 1 });
-  assert.equal(s.env.DB._raw.prepare('SELECT shop_wares FROM players WHERE id = ?').get(me.id).shop_wares, 4, 'Eternal held');
+  assert.equal(s.env.DB._raw.prepare('SELECT status FROM shop_orders WHERE id = ?').get(o.id).status, 'paid');
+  const balance = (await (await s.fetch('https://accounts.invalid/v1/account', { headers: { authorization: `Bearer ${me.secret}` } })).json()).aurum.balance;
+  assert.equal(balance, 2400, 'the pack\'s Aurum on the account (PIN MOVED, AURUM-ONLY: a pack, not Eternal)');
 });
 
 // ── THE WAYS TO PAY, SET BY THE DEPLOY ───────────────────────────────

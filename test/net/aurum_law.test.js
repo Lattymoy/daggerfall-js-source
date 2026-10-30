@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 
 import {
   AURUM_DAILY, AURUM_DAILY_SLOTS, AURUM_DAILY_FROM, AURUM_PACKS, AURUM_DEEDS, AURUM_MAX, aurumDailyOf, aurumDailyById, aurumPriceOf,
-  aurumBonusOf, aurumWeekOf, aurumWeekEndMs, aurumDayEndMs, aurumCardOf, aurumSwitchOf,
+  aurumBonusOf, aurumWeekOf, aurumWeekEndMs, aurumDayEndMs, aurumCardOf, aurumSwitchOf, AURUM_DEAL, aurumDealOf,
 } from '../../src/net/aurumLaw.js';
 import { SHOP_WARES, shopWareById } from '../../src/net/shopLaw.js';
 import { PASS_ALL_GRANTS } from '../../src/net/battlePassLaw.js';
@@ -47,21 +47,23 @@ test('AURUM the day\'s wares, cached or not: a day asked cold is the day asked a
   for (let d = AURUM_DAILY_FROM; d < AURUM_DAILY_FROM + 20; d++) assert.equal(aurumDailyOf(d, someDay).filter((id) => id.startsWith('icon:')).length, d % 2 ? 0 : 2, 'a day it may not, none');
 });
 
-test('AURUM what the daily wares sell: shop wares only, never a season\'s (its tracks are how those are had), the icons for Aurum alone and every other for money too; each price a whole hundred, and one sold for money too a little under its money at the smallest pack\'s rate (mutants: a track\'s item in the pool; an icon sold for money; a daily ware dearer than its money)', () => {
+test('AURUM what the daily deals sell (PIN MOVED, AURUM-ONLY: the daily wares are the day\'s deals): shop wares only, never a season\'s (its tracks are how those are had), every one sold alone for Aurum and none for money; each a quarter off its own Aurum price, never dearer and never a giveaway (mutants: a track\'s item in the pool; a deal at the full price; a deal off the wrong price)', () => {
+  assert.equal(AURUM_DEAL, 0.75);
   for (const d of AURUM_DAILY) {
     const w = shopWareById(d.id);
     assert.ok(w, d.id);
     assert.ok(!PASS_ALL_GRANTS.includes(d.id), `${d.id}: never a season's`);
-    assert.equal(w.cash, d.slot !== 'icon', `${d.id}: an icon for Aurum alone`);
-    assert.ok(Number.isSafeInteger(d.aurum) && d.aurum > 0 && d.aurum % 100 === 0);
+    assert.ok(w.alone && !w.cash && w.price > 0, `${d.id}: sold alone, for Aurum (PIN MOVED, AURUM-ONLY: none for money)`);
+    assert.equal(d.aurum, aurumDealOf(w.price), `${d.id}: its deal, off its own price`);
+    assert.equal(d.aurum, Math.round(w.price * 3 / 4), `${d.id}: a quarter off`);
+    assert.ok(d.aurum < w.price && d.aurum >= 0.75 * w.price - 0.5, `${d.id}: ${d.aurum} against ${w.price}`);
     assert.equal(aurumPriceOf(d.id), d.aurum);
-    // AUDIT-STOREFRONT II: Aurum never the dearer way to buy a ware, nor a giveaway
-    const atBase = w.cents * AURUM_PACKS[0].aurum / AURUM_PACKS[0].cents;
-    if (w.cash) assert.ok(d.aurum < atBase && d.aurum >= 0.75 * atBase, `${d.id}: ${d.aurum} Aurum against ${atBase.toFixed(1)}`);
   }
-  assert.equal(aurumPriceOf('glyph:gearcrown'), 0, 'a track\'s item has no daily price');
+  assert.equal(aurumPriceOf('glyph:gearcrown'), 0, 'a track\'s item has no deal price');
+  assert.equal(aurumPriceOf('kill:pyre'), aurumDealOf(shopWareById('kill:pyre').price));
   assert.ok(PASS_ALL_GRANTS.every((g) => !shopWareById(g)), 'nor is it a shop ware');
-  assert.deepEqual(SHOP_WARES.filter((w) => !w.cash).map((w) => w.id).sort(), AURUM_DAILY.filter((d) => d.slot === 'icon').map((d) => d.id).sort(), 'every ware not sold for money is a daily icon');
+  // PIN MOVED (AURUM-ONLY): every ware but a pack is bought with Aurum, the packs alone with money
+  assert.deepEqual(SHOP_WARES.filter((w) => w.cash).map((w) => w.id), AURUM_PACKS.map((w) => w.id), 'money buys the packs alone');
 });
 
 test('AURUM the packs: four, sold for money and never held, each a larger share than the smallest - 10, 20 and 30 more in a hundred (mutants: a bonus off the wrong base; a pack held)', () => {

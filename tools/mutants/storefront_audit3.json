@@ -56,11 +56,12 @@
   {
     "name": "AUDIT3-A5-the-paid-line-asked-again",
     "file": "server-account/src/aurum.js",
-    "old": "    const paid = !!(await db.prepare(\"SELECT 1 AS x FROM aurum_ledger WHERE account = ?1 AND kind = 'buy' AND ref = ?2\").bind(player.id, d.id).first());",
+    "old": "    const paid = !!(await db.prepare(\"SELECT 1 AS x FROM aurum_ledger WHERE account = ?1 AND kind = 'buy' AND ref = ?2\").bind(player.id, w.id).first());",
     "new": "    const paid = false;",
     "tests": [
       "test/server/storefront_audit3_money.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AURUM-ONLY, 2026-10-30: every ware but a pack bought for Aurum, money buys the packs alone)."
   },
   {
     "name": "AUDIT3-A6-the-aurum-buy-closing-nothing",

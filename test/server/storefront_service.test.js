@@ -10,6 +10,7 @@ import { createHmac } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
 import { standService } from '../accountDb.mjs';
+import { legacyOrder } from './legacyOrders.mjs';   // AURUM-ONLY: an item's money order, made before the switch
 import { fulfilOrder, shopCardOf, STRIPE_API } from '../../server-account/src/shop.js';
 import { shopDemand, DEMAND_DAYS_MAX } from '../../server-account/src/staffShop.js';
 import { dailyWaresAt } from '../../server-account/src/aurum.js';   // AURUM: the day's wares beside the demand
@@ -18,7 +19,7 @@ import { effectsHeld, effectRefusal } from '../../server-account/src/titles.js';
 import { ECON_ROUTES } from '../../server-account/src/staffEconomy.js';
 import { ROUTES } from '../../server-account/src/service.js';
 import {
-  SHOP_WARES, shopPriceFor, shopWorth, shopHeldIds, shopOwns, shopFeaturedOf, shopFeaturedNow, shopSellable, shopOnSaleOf, SHOP_MIN_CENTS,
+  SHOP_WARES, shopPriceFor, shopWorth, shopHeldIds, shopOwns, shopFeaturedOf, shopFeaturedNow, shopSellable, shopOnSaleOf, SHOP_MIN_PRICE,
   shopWhenOf, SHOP_CHECKOUT_MS,
 } from '../../src/net/shopLaw.js';
 import { PASS_DAY_AURUM, PASS_DAY_ASKS, PASS_CHALLENGES, passSeasonById, passCardOf } from '../../src/net/battlePassLaw.js';
@@ -48,41 +49,44 @@ async function stand(extra = ON) {
   const raw = s.env.DB._raw;
   const rowOf = (who) => raw.prepare('SELECT shop_wares, shop_held, effects, pass_items FROM players WHERE id = ?').get(who.id);
   const orders = (who) => raw.prepare('SELECT * FROM shop_orders WHERE player = ? ORDER BY created_at').all(who.id);
-  const pay = async (who, id) => {
-    const st = stripe();
-    try { await press(await ticketOf(who, id)); } finally { st.restore(); }
-    const o = orders(who).find((x) => x.ware === id && x.status === 'open');
+  // AURUM-ONLY (PIN MOVED): an item's money order is one made before the switch, paid at its old cents
+  const pay = async (who, id, cents) => {
+    const o = legacyOrder(raw, who, id, { cents });
     return fulfilOrder({ db: s.env.DB, nowS: Math.floor(Date.now() / 1000) }, o.id, { intent: `pi_${o.id}`, amount: o.cents, currency: 'usd' });
   };
+  /** AURUM-ONLY: Aurum given (a cache's line), and a ware bought with it in the window's way - at `price` if the page said one. */
+  const gift = (who, n) => raw.prepare("INSERT INTO aurum_ledger (account, kind, ref, amount, day, at) VALUES (?, 'cache', ?, ?, 0, 0)").run(who.id, `gift-${n}-${Math.random()}`, n);
+  const buy = (who, ware, price) => post('/v1/aurum/buy', who, { ware, ...(price === undefined ? {} : { price }) });
   const hook = (object) => {
     const body = JSON.stringify({ id: 'evt_sf', type: 'checkout.session.completed', data: { object } }), t = Math.floor(Date.now() / 1000);
     return s.fetch('https://accounts.invalid/v1/shop/webhook', { method: 'POST', body, headers: { 'content-type': 'application/json', 'stripe-signature': `t=${t},v1=${createHmac('sha256', ON.STRIPE_WEBHOOK_SECRET).update(`${t}.${body}`).digest('hex')}` } });
   };
-  return { ...s, get, post, account, ticketOf, rowOf, orders, pay, hook, raw };
+  return { ...s, get, post, account, ticketOf, rowOf, orders, pay, gift, buy, hook, raw, press, stripe };
 }
 
 // ── THE LAW ─────────────────────────────────────────────────────────
 
-test('STOREFRONT the law: a bundle\'s worth is what it gives; its price for an account is cut by the share of it held, never under Stripe\'s floor, and nothing once all of it is held; a giver held holds what it gives (mutants: the price never cut; the floor dropped; a held bundle sold again)', () => {
-  // PIN MOVED (AUDIT-STOREFRONT II): every price under SHOP_PRICE_CAP, the bundle's arithmetic the same
-  assert.equal(shopWorth('bundle:daedricchampion'), 1499 + 1499 + 999 + 299, 'Daedric Dominion, the Pyre, Eternal Champion, the Oblivion Sigil');
-  assert.equal(shopWorth('bundle:lordofoblivion'), 2499 + 1299 + 1499 + 1499);
-  assert.equal(shopPriceFor({}, 'bundle:daedricchampion'), 2799);
+test('STOREFRONT the law: a bundle\'s worth is what it gives; its price for an account is cut by the share of it held, never under its floor (PIN MOVED, AURUM-ONLY: in Aurum, SHOP_MIN_PRICE), and nothing once all of it is held; a giver held holds what it gives (mutants: the price never cut; the floor dropped; a held bundle sold again)', () => {
+  // PIN MOVED (AUDIT-STOREFRONT II): every price under SHOP_PRICE_CAP, the bundle's arithmetic the same; PIN MOVED (AURUM-ONLY): in Aurum
+  assert.equal(shopWorth('bundle:daedricchampion'), 1500 + 1500 + 1000 + 300, 'Daedric Dominion, the Pyre, Eternal Champion, the Oblivion Sigil');
+  assert.equal(shopWorth('bundle:lordofoblivion'), 2500 + 1300 + 1500 + 1500);
+  assert.equal(shopPriceFor({}, 'bundle:daedricchampion'), 2800);
   const pyre = { shop_held: 'kill:pyre' };
-  assert.equal(shopPriceFor(pyre, 'bundle:daedricchampion'), Math.round(2799 * (4296 - 1499) / 4296), 'the Pyre held: its share taken off');
-  assert.equal(shopPriceFor({ shop_held: 'kill:pyre aura:dominion title:eternalchampion' }, 'bundle:daedricchampion'), Math.max(SHOP_MIN_CENTS, Math.round(2799 * 299 / 4296)));
+  assert.equal(shopPriceFor(pyre, 'bundle:daedricchampion'), Math.round(2800 * (4300 - 1500) / 4300), 'the Pyre held: its share taken off');
+  assert.equal(shopPriceFor({ shop_held: 'kill:pyre aura:dominion title:eternalchampion' }, 'bundle:daedricchampion'), Math.max(SHOP_MIN_PRICE, Math.round(2800 * 300 / 4300)));
+  assert.equal(shopPriceFor({}, 'aurum:500'), null, 'AURUM-ONLY: a pack has no Aurum price - its price is its cents');
   assert.equal(shopPriceFor({ shop_held: 'bundle:daedricchampion' }, 'bundle:daedricchampion'), null, 'held: not sold again');
   assert.equal(shopPriceFor({ shop_held: 'kill:pyre aura:dominion title:eternalchampion glyph:oblivion' }, 'bundle:daedricchampion'), null, 'all it gives held: not sold again');
   assert.ok(shopOwns({ shop_held: 'bundle:lordofoblivion' }, 'portal:daedric'), 'a bundle held holds its portal skin');
   assert.deepEqual(shopHeldIds({ shop_held: 'bundle:portalmaster' }).sort(), ['aura:dominion', 'bundle:portalmaster', 'glyph:gatesigil', 'portal:daedric'], 'a bundle held holds what it gives');
-  assert.equal(shopPriceFor({ shop_held: 'glyph:oblivion' }, 'kill:pyre'), 1499, 'a ware that gives nothing is its own price');
-  // every giver, with every part of what it gives held: a price between Stripe's floor and its own, or none once all is
+  assert.equal(shopPriceFor({ shop_held: 'glyph:oblivion' }, 'kill:pyre'), 1500, 'a ware that gives nothing is its own price');
+  // every giver, with every part of what it gives held: a price between its floor and its own, or none once all is
   for (const w of SHOP_WARES.filter((x) => x.gives.length)) {
     for (let mask = 0; mask < 1 << w.gives.length; mask++) {
       const held = w.gives.filter((_, i) => mask & (1 << i));
       const price = shopPriceFor({ shop_held: held.filter((id) => !SHOP_WARES.find((x) => x.id === id)?.bit).join(' '), shop_wares: held.reduce((a, id) => a | (SHOP_WARES.find((x) => x.id === id)?.bit ?? 0), 0) }, w.id);
       if (held.length === w.gives.length) assert.equal(price, null, `${w.id}: all it gives held`);
-      else assert.ok(price >= SHOP_MIN_CENTS && price <= w.cents, `${w.id} holding ${held.join(',') || 'nothing'}: ${price}`);
+      else assert.ok(price >= SHOP_MIN_PRICE && price <= w.price, `${w.id} holding ${held.join(',') || 'nothing'}: ${price}`);
     }
   }
   assert.deepEqual(shopOnSaleOf('glyph:oblivion,aura:dominion,kill:pyre'), ['kill:pyre'], 'a bundle\'s own wares are never sold alone');
@@ -129,23 +133,27 @@ test('STOREFRONT the schedule\'s dates read strictly - a date that rolls over is
 
 // ── END TO END ──────────────────────────────────────────────────────
 
-test('STOREFRONT end to end: a bundle bought by an account holding part of it - its page and Stripe priced for that account, the grant writing what it gives by id, its pieces held and worn; told twice, granted once (mutants: the list price charged; a piece written twice)', async (t) => {
+test('STOREFRONT end to end: a bundle bought by an account holding part of it - its card and its buy priced for that account (PIN MOVED, AURUM-ONLY: in Aurum, bought from the window), the grant writing what it gives by id, its pieces held and worn; bought again, held and nothing spent twice (mutants: the list price charged; a piece written twice)', async (t) => {
   t.mock.timers.enable({ apis: ['Date'], now: IN_TREMOR });
   const s = await stand();
   const me = await s.registered('Collector');
-  assert.equal((await s.pay(me, 'kill:pyre')).applied, 1);
+  s.gift(me, 10_000);
+  assert.equal((await s.buy(me, 'kill:pyre')).status, 200);
   let card = (await s.account(me)).shop;
-  assert.equal(card.wares.find((w) => w.id === 'bundle:daedricchampion').cents, shopPriceFor({ shop_held: 'kill:pyre' }, 'bundle:daedricchampion'), 'the account\'s own price on its card');
-  assert.equal((await s.pay(me, 'bundle:daedricchampion')).applied, 1);
-  const o = s.orders(me).find((x) => x.ware === 'bundle:daedricchampion');
-  assert.equal(o.cents, shopPriceFor({ shop_held: 'kill:pyre' }, 'bundle:daedricchampion'), 'charged what its card said');
+  const price = shopPriceFor({ shop_held: 'kill:pyre' }, 'bundle:daedricchampion');
+  assert.ok(price < shopPriceFor({}, 'bundle:daedricchampion'), 'the Pyre held: less');
+  assert.equal(card.wares.find((w) => w.id === 'bundle:daedricchampion').price, price, 'the account\'s own price on its card');
+  const r = await s.buy(me, 'bundle:daedricchampion', price);
+  assert.equal(r.status, 200, JSON.stringify(r.body));
+  assert.equal(r.body.spent, price, 'charged what its card said');
   assert.deepEqual(s.rowOf(me).shop_held.split(' ').sort(), ['bundle:daedricchampion', 'kill:pyre']);
   const a = await s.account(me);
   assert.ok(a.wardrobe.auras.includes('dominion') && a.wardrobe.titles.includes('eternalchampion') && a.wardrobe.glyphs.includes('oblivion'), 'what it gives, held');
   assert.equal(a.shop.wares.find((w) => w.id === 'bundle:daedricchampion').held, true);
   card = a.shop;
   assert.equal(card.wares.find((w) => w.id === 'kill:pyre').held, true);
-  assert.equal((await fulfilOrder({ db: s.env.DB, nowS: Math.floor(Date.now() / 1000) }, o.id, { intent: 'again', amount: o.cents, currency: 'usd' })).applied, 0, 'told twice, granted once');
+  assert.deepEqual((await s.buy(me, 'bundle:daedricchampion', price)).body, { error: 'aurum-held' }, 'bought again: held');
+  assert.equal(s.raw.prepare("SELECT COUNT(*) AS n FROM aurum_ledger WHERE account = ? AND kind = 'buy' AND ref = 'bundle:daedricchampion'").get(me.id).n, 1, 'spent once');
   assert.deepEqual(s.rowOf(me).shop_held.split(' ').sort(), ['bundle:daedricchampion', 'kill:pyre'], 'nothing written twice');
 });
 
@@ -164,7 +172,7 @@ test('STOREFRONT end to end: a launch window on the card - a featured ware leads
   t.mock.timers.setTime(Date.UTC(2026, 10, 28, 12));
   card = (await s.account(me)).shop;
   assert.equal(card.wares.find((w) => w.id === 'portal:aetheric').sale, false, 'its window ended: no longer sold');
-  assert.equal(card.wares.find((w) => w.id === 'portal:aetheric').buy, null);
+  assert.equal(card.wares.find((w) => w.id === 'portal:aetheric').buy ?? null, null);   // PIN MOVED (AURUM-ONLY): an item carries no link at all
   assert.deepEqual([card.wares.find((w) => w.id === 'portal:aetheric').until, card.wares.find((w) => w.id === 'portal:aetheric').limited], [undefined, undefined], 'AUDIT-STOREFRONT S9: an ended window is not told beside it');
   t.mock.timers.setTime(Date.UTC(2026, 11, 12, 12));
   assert.equal((await s.account(me)).shop.wares.find((w) => w.id === 'mount:warhorse').sale, true, 'its drop landed: told and sold');
@@ -177,7 +185,8 @@ test('STOREFRONT end to end: an effect is worn only when held - the door refuses
   assert.equal((await s.post('/v1/account/effect', me, { slot: 'kill', key: 'pyre' })).status, 403, 'not held');
   assert.equal(effectRefusal('kill', 'pyre', { handle: 'x', shop_held: '' }, Math.floor(IN_TREMOR / 1000)), 'not-held');
   assert.equal(effectRefusal('kill', 'warhorse', { handle: 'x', shop_held: 'mount:warhorse' }, Math.floor(IN_TREMOR / 1000)), 'no-effect', 'a key of another slot');
-  assert.equal((await s.pay(me, 'bundle:lordofoblivion')).applied, 1);
+  s.gift(me, 10_000);
+  assert.equal((await s.buy(me, 'bundle:lordofoblivion')).status, 200, 'PIN MOVED (AURUM-ONLY): bought with Aurum');
   assert.deepEqual(effectsHeld(s.raw.prepare('SELECT * FROM players WHERE id = ?').get(me.id), Math.floor(IN_TREMOR / 1000)), { kill: ['pyre'], portal: ['daedric'], mount: ['warhorse'] });
   const r = await s.post('/v1/account/effect', me, { slot: 'mount', key: 'warhorse' });
   assert.equal(r.status, 200);
@@ -255,8 +264,8 @@ test('STOREFRONT the demand: a day a row over the span asked, each ware\'s order
   t.mock.timers.enable({ apis: ['Date'], now: Date.UTC(2026, 10, 20, 12) });
   const s = await stand({ ...ON, SHOP_FEATURED: 'kill:pyre 2026-11-18 2026-11-19' });
   const me = await s.registered('Buyer');
-  await s.pay(me, 'kill:pyre');
-  await s.pay(me, 'portal:runic');
+  await s.pay(me, 'kill:pyre', 1499);   // PIN MOVED (AURUM-ONLY): two money orders made before the switch, at their dollar prices
+  await s.pay(me, 'portal:runic', 799);
   s.raw.prepare("UPDATE shop_orders SET status = 'refunded' WHERE ware = 'portal:runic'").run();
   const nowS = Math.floor(Date.now() / 1000);
   // AURUM: a daily ware bought for Aurum today, counted beside the money's (aurum_ledger's buys)

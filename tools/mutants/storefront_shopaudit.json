@@ -65,11 +65,12 @@
   {
     "name": "AUDIT-STOREFRONT-the-credit-never-kept",
     "file": "server-account/src/shop.js",
-    "old": "const credit = shopCreditOf(player, ware.id).join(' ');",
-    "new": "const credit = '';",
+    "old": "  const credit = String(order?.credit ?? '').split(' ');",
+    "new": "  const credit = [];",
     "tests": [
       "test/server/storefront_audit.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AURUM-ONLY, 2026-10-30: every ware but a pack bought for Aurum, money buys the packs alone)."
   },
   {
     "name": "AUDIT-STOREFRONT-a-replaced-page-left-open",
@@ -173,13 +174,12 @@
   {
     "name": "AUDIT-STOREFRONT-a-part-held-giver-unsaid",
     "file": "server-account/src/shop.js",
-    "old": "part = !holds && shopCreditOf(player, ware.id).length > 0;",
-    "new": "part = false;",
+    "old": "      const at = isHeld ? null : aurumPriceAt(registered(player) ? player : null, w, deals);",
+    "new": "      const at = isHeld ? null : aurumPriceAt(null, w, deals);",
     "tests": [
       "test/server/storefront_audit.test.js"
     ],
-    "equivalent": true,
-    "why": "PASS-PANELS retired the one ware that gave a giver (the Seasonal Collector, which gave the Deluxe that gave the Premium): a giver held in part with none of its own gives held cannot happen with the catalogue as it stands, so `part` is false either way. The words are pinned on the page itself (storefront_audit_window S12) and return to a verdict with the first bundle that holds a bundle."
+    "note": "Re-aimed by content (AURUM-ONLY, 2026-10-30): the confirm page is a pack's, so a bundle held in part is said by its share on the card (aurumPriceAt over what the account holds); no longer equivalent - storefront_audit S12 kills it."
   },
   {
     "name": "AUDIT-STOREFRONT-a-press-stripe-never-saw-counted",

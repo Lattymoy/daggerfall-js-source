@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
 
 import { standService } from '../accountDb.mjs';
+import { legacyPageFor, LEGACY_CENTS } from './legacyOrders.mjs';   // AURUM-ONLY: an item's page opened before the switch
 import { STRIPE_API, STRIPE_REFUND_API, shopDonePage, receiptUse } from '../../server-account/src/shop.js';
 import { dailySaleOf, dailyWaresAt } from '../../server-account/src/aurum.js';
 import { shopDemand } from '../../server-account/src/staffShop.js';
@@ -48,11 +49,8 @@ async function stand(env = ON) {
     const r = await s.fetch('https://accounts.invalid/v1/shop/webhook', { method: 'POST', body, headers: { 'content-type': 'application/json', 'stripe-signature': `t=${t},v1=${createHmac('sha256', ON.STRIPE_WEBHOOK_SECRET).update(`${t}.${body}`).digest('hex')}` } });
     return { status: r.status, ...(await r.json()) };
   };
-  const open = async (who, id) => {
-    const st = stripe();
-    try { await press(await ticketOf(who, id)); } finally { st.restore(); }
-    return orders(who).filter((x) => x.ware === id && x.status === 'open').at(-1);
-  };
+  /** PIN MOVED (AURUM-ONLY): an item's money page is one opened before the switch, at its price for the row then. */
+  const open = async (who, id) => { const o = legacyPageFor(raw, who, id, rowOf(who)); return orders(who).find((x) => x.id === o.id); };
   const pi = (o) => `pi_${o.ware.replace(':', '_')}_${o.id.slice(0, 4)}`;
   const paid = async (o) => {
     const st = stripe();
@@ -61,8 +59,9 @@ async function stand(env = ON) {
   const quiet = async (fn) => { const st = stripe(); try { return await fn(st); } finally { st.restore(); } };
   return { ...s, raw, ask, rowOf, orders, give, spent, hook, open, paid, pi, quiet };
 }
-/** Today's first daily ware also sold for money (a ware a money page can be opened for). */
-const moneyWareToday = (env) => dailyWaresAt(env, NOW / 1000).find((id) => shopWareById(id)?.cash);
+/** Today's first deal that was sold for money before AURUM-ONLY (a ware a money page could be open for). PIN MOVED: no
+ *  item is sold for money now. */
+const moneyWareToday = (env) => dailyWaresAt(env, NOW / 1000).find((id) => Object.hasOwn(LEGACY_CENTS, id));
 
 test('AUDIT-STOREFRONT III A1: Aurum shut (or a developer\'s alone) shuts the Folios\' unlock and buys too, as the window reads it - nothing spent (mutants: the Folios\' gate asking PASS_OPEN alone)', async (t) => {
   t.mock.timers.enable({ apis: ['Date'], now: passSeasonById('s1').fromMs + 5 * 86_400_000 });

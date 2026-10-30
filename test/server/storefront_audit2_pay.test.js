@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
 
 import { standService } from '../accountDb.mjs';
+import { legacyPageFor } from './legacyOrders.mjs';   // AURUM-ONLY: an item's page opened before the switch
 import { fulfilOrder, STRIPE_API, STRIPE_REFUND_API } from '../../server-account/src/shop.js';
 import { SHOP_WARES, shopHeldIds } from '../../src/net/shopLaw.js';
 
@@ -30,8 +31,6 @@ async function stand() {
   const raw = s.env.DB._raw;
   const get = (path, who) => s.fetch(`https://accounts.invalid${path}`, { headers: { authorization: `Bearer ${who.secret}` } });
   const account = async (who) => (await get('/v1/account', who)).json();
-  const press = (ticket) => s.fetch('https://accounts.invalid/v1/shop/checkout', { method: 'POST', redirect: 'manual', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ ticket }).toString() });
-  const ticketOf = async (who, id) => new URL((await account(who)).shop.wares.find((w) => w.id === id).buy).searchParams.get('t');
   const rowOf = (who) => raw.prepare('SELECT shop_wares, shop_held FROM players WHERE id = ?').get(who.id);
   const orders = (who) => raw.prepare('SELECT * FROM shop_orders WHERE player = ? ORDER BY created_at, rowid').all(who.id);
   const hook = async (type, object) => {
@@ -39,11 +38,9 @@ async function stand() {
     const r = await s.fetch('https://accounts.invalid/v1/shop/webhook', { method: 'POST', body, headers: { 'content-type': 'application/json', 'stripe-signature': `t=${t},v1=${createHmac('sha256', ON.STRIPE_WEBHOOK_SECRET).update(`${t}.${body}`).digest('hex')}` } });
     return { status: r.status, ...(await r.json()) };
   };
-  const open = async (who, id) => {
-    const st = stripe();
-    try { await press(await ticketOf(who, id)); } finally { st.restore(); }
-    return orders(who).filter((x) => x.ware === id && x.status === 'open').at(-1);
-  };
+  /** PIN MOVED (AURUM-ONLY): an item's page opened before the switch - at its price for the row then, with its credit
+   *  (shopCheckout sells packs alone now); every case here is Stripe's words on such a page. */
+  const open = async (who, id) => { const o = legacyPageFor(raw, who, id, rowOf(who)); return orders(who).find((x) => x.id === o.id); };
   const pi = (o) => `pi_${o.ware.replace(':', '_')}_${o.id.slice(0, 4)}`;
   const paid = async (o) => {
     const st = stripe();

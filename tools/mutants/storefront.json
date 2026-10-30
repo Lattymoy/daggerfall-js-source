@@ -11,22 +11,24 @@
   {
     "name": "STOREFRONT-a-bundle-never-prorated",
     "file": "src/net/shopLaw.js",
-    "old": "  return Math.max(SHOP_MIN_CENTS, Math.min(w.cents, Math.round((w.cents * left) / shopWorth(w.id))));",
-    "new": "  return w.cents;",
+    "old": "  return Math.max(SHOP_MIN_PRICE, Math.min(w.price, Math.round((w.price * left) / shopWorth(w.id))));",
+    "new": "  return w.price;",
     "tests": [
       "test/server/storefront_service.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AURUM-ONLY, 2026-10-30: every ware but a pack bought for Aurum, money buys the packs alone)."
   },
   {
     "name": "STOREFRONT-the-price-floor-dropped",
     "file": "src/net/shopLaw.js",
-    "old": "  return Math.max(SHOP_MIN_CENTS, Math.min(w.cents, Math.round((w.cents * left) / shopWorth(w.id))));",
-    "new": "  return Math.min(w.cents, Math.round((w.cents * left) / shopWorth(w.id)));",
+    "old": "  return Math.max(SHOP_MIN_PRICE, Math.min(w.price, Math.round((w.price * left) / shopWorth(w.id))));",
+    "new": "  return Math.min(w.price, Math.round((w.price * left) / shopWorth(w.id)));",
     "tests": [
       "test/server/storefront_service.test.js"
     ],
     "equivalent": true,
-    "why": "No ware in the catalogue gives so much that a leftover share prices under fifty cents (the least is the Daedric Champion's last glyph, $3.52); the floor is the law for a bundle to come. test/server/storefront_service.test.js walks every giver with every part held."
+    "why": "No ware in the catalogue gives so much that a leftover share prices under fifty cents (the least is the Daedric Champion's last glyph, $3.52); the floor is the law for a bundle to come. test/server/storefront_service.test.js walks every giver with every part held.",
+    "note": "Re-aimed by content (AURUM-ONLY, 2026-10-30: every ware but a pack bought for Aurum, money buys the packs alone)."
   },
   {
     "name": "STOREFRONT-a-bundles-own-ware-sold-alone",

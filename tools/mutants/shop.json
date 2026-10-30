@@ -74,11 +74,12 @@
   {
     "name": "SHOP-sale-unchecked-at-press",
     "file": "server-account/src/shop.js",
-    "old": "  if (!shopSoldNow(env, ware, nowS)) return { page: 'sold' };\n",
+    "old": "  if (!shopSoldForMoney(env, ware, nowS)) return { page: 'sold' };\n",
     "new": "",
     "tests": [
       "test/server/shop_service.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AURUM-ONLY, 2026-10-30: every ware but a pack bought for Aurum, money buys the packs alone)."
   },
   {
     "name": "SHOP-held-unchecked-at-press",
@@ -87,7 +88,9 @@
     "new": "",
     "tests": [
       "test/server/shop_service.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "AURUM-ONLY (2026-10-30): shopCheckout goes on only for an Aurum pack (shopRepeatable before it), and a pack is never held (shopOwns answers false for one, ADMIN-ALL holds none), so this guard cannot fire - a press for an item answers the 'aurum' page first. Kept as the money path's belt for a ware ever sold for money again."
   },
   {
     "name": "SHOP-second-order",
@@ -382,10 +385,22 @@
   {
     "name": "AUDIT-STOREFRONT-II-a-ware-over-the-cap",
     "file": "src/net/shopLaw.js",
-    "old": "  ware('bundle', 'lordofoblivion', 2999, { tier: 'exclusive'",
-    "new": "  ware('bundle', 'lordofoblivion', 3999, { tier: 'exclusive'",
+    "old": "  ware('bundle', 'lordofoblivion', 3000, { tier: 'exclusive'",
+    "new": "  ware('bundle', 'lordofoblivion', 4000, { tier: 'exclusive'",
     "tests": [
       "test/server/shop_service.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AURUM-ONLY, 2026-10-30: every ware but a pack bought for Aurum, money buys the packs alone)."
+  },
+  {
+    "name": "AURUM-ONLY-a-pack-owned",
+    "file": "src/net/shopLaw.js",
+    "old": "  return !!w && !shopRepeatable(w) && worthLeft(w, shopHeldIds(row)) === 0;",
+    "new": "  return !!w && worthLeft(w, shopHeldIds(row)) === 0;",
+    "tests": [
+      "test/server/shop_service.test.js",
+      "test/server/admin_all_storefront.test.js"
+    ],
+    "note": "AURUM-ONLY (2026-10-30): a pack's Aurum price is none, which worthLeft read as nothing left to buy - every pack owned, its checkout refused as held."
   }
 ]
