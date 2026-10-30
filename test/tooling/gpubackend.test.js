@@ -9,12 +9,12 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { createRequire } from 'node:module';
 
-import { setPref, _resetForTests as resetPrefs } from '../../src/systems/uiPrefs.js';
+import { setPref, getPref, overridesOf, PREF_DEFAULTS, _resetForTests as resetPrefs } from '../../src/systems/uiPrefs.js';
 import { codeHasOnce } from '../codeOnly.mjs';
 
 const require = createRequire(import.meta.url);
 const B = require('../../app/lib/graphicsBackend.cjs');
-const { createFileStorage } = require('../../app/lib/fileStorage.cjs');
+const { createFileStorage, readPref, writePref } = require('../../app/lib/fileStorage.cjs');
 const { frameRateSwitches, VSYNC_OFF_SWITCHES } = require('../../app/lib/frameRate.cjs');
 const read = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 
@@ -131,10 +131,13 @@ test('GPU-BACKEND: the record\'s key is the physical GPU and its driver, another
   assert.equal(B.gpuKey(null), null);
 });
 
-/** A fake Electron app and main.cjs's config store, over one launch. */
-function rig({ launch, info, config = {}, clock = 0, chromium = '142.0.7444.0', reportTimeoutMs = 50, writable = true, argv = ['app.exe', 'main'] }) {
+/** A fake Electron app and main.cjs's config store, over one launch. `answer` is the player's to the VULKAN-BLANK box:
+ *  0 Keep, 1 Go back, 'never' a box that never closes, 'throw' one that fails; `seen` puts their Keep on record
+ *  already, for the tests about the other checks. */
+function rig({ launch, info, config = {}, clock = 0, chromium = '142.0.7444.0', reportTimeoutMs = 50, writable = true, argv = ['app.exe', 'main'], answer = 0, seen = false, confirmTimeoutMs = 50 }) {
   const calls = [];
-  const state = { config: structuredClone(config), now: clock };
+  const seenRecord = { [B.CONFIRM_RECORD]: { backend: launch.backend, gpu: '10de:2c02@32.0.16.1088', chromium, at: 'x' } };
+  const state = { config: structuredClone(seen ? { ...config, ...seenRecord } : config), now: clock, signals: [] };
   const app = {
     getGPUInfo: async () => (typeof info === 'function' ? info() : info),
     releaseSingleInstanceLock: () => calls.push('unlock'),
@@ -146,12 +149,20 @@ function rig({ launch, info, config = {}, clock = 0, chromium = '142.0.7444.0', 
     loadConfig: () => structuredClone(state.config),
     saveConfig: (c) => { if (writable) state.config = structuredClone(c); calls.push('save'); },
     notify: async (opts) => { calls.push(`notice: ${opts.message}`); return { response: 0 }; },
+    confirm: async (opts, signal) => {
+      calls.push(`ask: ${opts.message}`);
+      state.signals.push(signal);
+      if (answer === 'never') return new Promise(() => {});
+      if (answer === 'throw') throw new Error('no box');
+      return { response: answer };
+    },
     beforeExit: () => calls.push('flush'),
     chromium,
     now: () => state.now,
     log: () => {},
     infoTimeoutMs: 50,
     reportTimeoutMs,
+    confirmTimeoutMs,
     argv,
   });
   return { guard, calls, state };
@@ -174,8 +185,8 @@ test('GPU-BACKEND: a launch on Vulkan that lands on a software renderer records 
   assert.deepEqual([notice.buttons, notice.defaultId, notice.cancelId], [['Restart'], 0, 0], 'one answer: the relaunch');
 });
 
-test('GPU-BACKEND: Vulkan drawing on the card is left alone, and so is a launch on the default (mutant: the guard armed without the switches)', async () => {
-  const onVulkan = rig({ launch: ARMED, info: infoOf(VK) });
+test('GPU-BACKEND: Vulkan drawing on the card is left alone once the player has seen it (VULKAN-BLANK), and so is a launch on the default (mutant: the guard armed without the switches)', async () => {
+  const onVulkan = rig({ launch: ARMED, info: infoOf(VK), seen: true });
   await onVulkan.guard.check();
   assert.deepEqual(onVulkan.calls, []);
   const onDefault = rig({ launch: { backend: 'default', switches: [], held: null }, info: infoOf(WARP, { warp: true }) });
@@ -239,7 +250,7 @@ test('GPU-BACKEND refresh on update: the record keeps the Chromium it failed on;
 });
 
 test('GPU-BACKEND: a getGPUInfo that never answers does not hold the guard (mutant: no deadline)', async () => {
-  const { guard, calls } = rig({ launch: ARMED, info: () => new Promise(() => {}) });
+  const { guard, calls } = rig({ launch: ARMED, info: () => new Promise(() => {}), answer: 0 });
   // The deadline's timer is unref'd so it never holds the shell open; this one keeps the test's own loop alive past it.
   const hold = setInterval(() => {}, 1000);
   try {
@@ -247,7 +258,7 @@ test('GPU-BACKEND: a getGPUInfo that never answers does not hold the guard (muta
   } finally {
     clearInterval(hold);
   }
-  assert.deepEqual(calls, []);
+  assert.deepEqual(calls, ['ask: Can you see DFO Online on Vulkan?', 'save'], 'no renderer read is no failure: the player is asked, and keeps it');
 });
 
 test('GPU-BACKEND by source: the shell appends the switches before the app is ready, checks once the first window loads, and hears the GPU process gone; the shelf and the config file are the page\'s and main.cjs\'s', () => {
@@ -287,7 +298,7 @@ test('GPU-BACKEND webgl2Report: the page\'s own WebGL2 context, its unmasked ren
 });
 
 test('GPU-BACKEND: an armed launch whose game page got no WebGL2 context records the failure and relaunches, though Chromium\'s renderer names Vulkan (mutant: the page\'s report unread)', async () => {
-  const { guard, calls, state } = rig({ launch: ARMED, info: infoOf(VK) });
+  const { guard, calls, state } = rig({ launch: ARMED, info: infoOf(VK), seen: true });
   await guard.check();
   assert.deepEqual(calls, [], 'Chromium\'s own renderer passes');
   assert.equal(guard.pageAsks(), true, 'an armed launch asks the page for its context');
@@ -316,7 +327,7 @@ test('GPU-BACKEND: the d3d9 probe door draws on the card under its own name, so 
   const launch = B.backendLaunch(root, { platform: 'win32', env: { [B.BACKEND_ENV]: 'd3d9' } });
   assert.deepEqual(launch.switches, [['use-gl', 'angle'], ['use-angle', 'd3d9']]);
   const D3D9 = 'ANGLE (NVIDIA, NVIDIA GeForce RTX 5080 Direct3D9Ex vs_3_0 ps_3_0, nvldumdx.dll -32.0.16.1088)';
-  const { guard, calls, state } = rig({ launch, info: infoOf(D3D9) });
+  const { guard, calls, state } = rig({ launch, info: infoOf(D3D9), seen: true });
   await guard.check();
   assert.deepEqual(calls, [], 'Chromium\'s renderer names the backend');
   await guard.pageReport(B.webgl2Report(docWith(null)));
@@ -417,4 +428,137 @@ test('GPU-BACKEND: a launch on Vulkan keeps VSync on - the resize freeze with VS
     writeFileSync(join(root, 'config.json'), JSON.stringify({ [B.FAILURE_RECORD]: { backend: 'vulkan', gpu: null, chromium: process.versions.chrome, reason: 'x', at: 'then' } }));
     assert.equal(B.holdsVSync(B.backendLaunch(root, WIN)), false, 'after the fallback, the same profile gets VSync off back');
   } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+// VULKAN-BLANK (#1379, 2026-10-30): "the interface is blank, but the buttons are still here" - the launcher and the game
+// drew nothing on Vulkan, every check above passed, and the switch back was in the game's own settings.
+const ASK = 'ask: Can you see DFO Online on Vulkan?';
+const RELAUNCH_QUIET = ['save', 'flush', 'unlock', 'relaunch', 'exit 0'];
+
+test('VULKAN-BLANK: a launch that passed every check asks the player once a GPU, driver and Chromium; Keep is kept and not asked again (mutants: never asked; asked every launch; the record unkeyed)', async () => {
+  const first = rig({ launch: ARMED, info: infoOf(VK), config: { arena2Path: 'X' } });
+  await first.guard.check();
+  assert.deepEqual(first.calls, [ASK, 'save'], 'asked, kept, no relaunch');
+  const record = first.state.config[B.CONFIRM_RECORD];
+  assert.deepEqual([record.backend, record.gpu, record.chromium], ['vulkan', '10de:2c02@32.0.16.1088', '142.0.7444.0']);
+  assert.equal(first.state.config.arena2Path, 'X', 'the rest of config.json kept');
+  assert.equal(first.state.signals[0].aborted, true, 'the timeout is let go once the player answered');
+  const again = rig({ launch: ARMED, info: infoOf(VK), config: first.state.config });
+  await again.guard.check();
+  assert.deepEqual(again.calls, [], 'the same GPU, driver and Chromium: not asked');
+  const newDriver = rig({ launch: ARMED, info: infoOf(VK, { driver: '32.0.16.2000' }), config: first.state.config });
+  await newDriver.guard.check();
+  assert.deepEqual(newDriver.calls, [ASK, 'save'], 'a driver update: asked again');
+  const newApp = rig({ launch: ARMED, info: infoOf(VK), config: first.state.config, chromium: '144.0.7559.0' });
+  await newApp.guard.check();
+  assert.deepEqual(newApp.calls, [ASK, 'save'], 'a new Chromium: asked again');
+});
+
+test('VULKAN-BLANK: Go back, a box that fails, or no answer in time fails the launch as a failed check does, without the notice (mutants: Go back kept; the notice shown; no timeout; a box that never closes holds the launch)', async () => {
+  const back = rig({ launch: ARMED, info: infoOf(VK), answer: 1 });
+  await back.guard.check();
+  assert.deepEqual(back.calls, [ASK, ...RELAUNCH_QUIET]);
+  assert.equal(back.state.config[B.FAILURE_RECORD].reason, 'the player saw no picture');
+  assert.equal(back.state.config[B.FAILURE_RECORD].gpu, '10de:2c02@32.0.16.1088', 'keyed: the held launches keep it on this driver');
+  assert.equal(back.state.config[B.CONFIRM_RECORD], undefined);
+  const silent = rig({ launch: ARMED, info: infoOf(VK), answer: 'never' });
+  await silent.guard.check();
+  assert.deepEqual(silent.calls, [ASK, ...RELAUNCH_QUIET]);
+  assert.match(silent.state.config[B.FAILURE_RECORD].reason, /^the player did not answer within /);
+  assert.equal(silent.state.signals[0].aborted, true, 'the box is closed at the timeout');
+  const broken = rig({ launch: ARMED, info: infoOf(VK), answer: 'throw' });
+  await broken.guard.check();
+  assert.deepEqual(broken.calls, [ASK, ...RELAUNCH_QUIET]);
+});
+
+test('VULKAN-BLANK: a failure while the box is up is the one relaunch; a launch held on the default is never asked (mutants: two relaunches; the held launch asked)', async () => {
+  const both = rig({ launch: ARMED, info: infoOf(VK), answer: 'never' });
+  const asking = both.guard.check();
+  await new Promise((r) => setImmediate(r));
+  await both.guard.pageReport({ webgl2: false, renderer: '' });
+  await asking;
+  assert.equal(both.calls.filter((c) => c === 'relaunch').length, 1);
+  assert.equal(both.state.config[B.FAILURE_RECORD].reason, 'the game page got no WebGL2 context');
+  const held = rig({ launch: { backend: 'vulkan', switches: [], held: { backend: 'vulkan', gpu: '10de:2c02@32.0.16.1088' } }, info: infoOf(D3D11) });
+  await held.guard.check();
+  assert.ok(!held.calls.includes(ASK));
+});
+
+test('VULKAN-BLANK: the box - Enter, Escape and closing it all go back; Keep is a press (mutants: Keep the default; no cancel)', () => {
+  const box = B.backendConfirmNotice('vulkan');
+  assert.deepEqual(box.buttons, ['Keep Vulkan', 'Go back']);
+  assert.deepEqual([box.defaultId, box.cancelId], [1, 1]);
+  assert.match(box.detail, new RegExp(`in ${B.CONFIRM_TIMEOUT_MS / 1000} seconds`));
+  assert.equal(B.CONFIRM_TIMEOUT_MS, 20_000);
+});
+
+/** The game page's next boot over `root`: a store of its own (its read cache is a process's, the page's a fresh one). */
+function pageBoots(root) {
+  globalThis.daggerShell = { storage: createFileStorage(root), platform: 'win32' };
+  resetPrefs();
+}
+
+test('GPU-BACKEND-LAUNCHER: the launcher writes the page\'s own shelf - the page reads Vulkan as if its own row had set it, every other pref kept, the default dropped (mutants: another shelf; the other prefs lost; the default stored)', () => {
+  const root = shell();
+  const cfg = { loadConfig: () => ({}), saveConfig: () => {} };
+  assert.ok(setPref('showFps', true));
+  assert.equal(B.chooseBackend(root, 'vulkan', cfg), true);
+  assert.equal(B.savedBackend(root), 'vulkan', 'the shell\'s launch read');
+  pageBoots(root);
+  assert.deepEqual([getPref(B.GRAPHICS_BACKEND_PREF), getPref('showFps')], ['vulkan', true], 'the page\'s read');
+  assert.equal(B.chooseBackend(root, 'default', cfg), true);
+  assert.equal(B.savedBackend(root), 'default');
+  assert.equal(Object.hasOwn(JSON.parse(readPref(root, B.UI_PREFS)), B.GRAPHICS_BACKEND_PREF), false, 'a default is never stored (uiPrefs overridesOf)');
+  // a new player's first shelf, written by the launcher, loads as the one the page would have written
+  const byPage = shell();
+  setPref(B.GRAPHICS_BACKEND_PREF, 'vulkan');
+  const pagePrefs = overridesOf({ ...PREF_DEFAULTS, ...JSON.parse(readPref(byPage, B.UI_PREFS)) });
+  const byLauncher = shell();
+  assert.equal(B.chooseBackend(byLauncher, 'vulkan', cfg), true);
+  pageBoots(byLauncher);
+  const loaded = {};
+  for (const k of Object.keys(PREF_DEFAULTS)) loaded[k] = getPref(k);
+  assert.deepEqual(overridesOf(loaded), pagePrefs);
+});
+
+test('GPU-BACKEND-LAUNCHER: a shelf that is not the page\'s JSON is left alone; Vulkan chosen clears the failure record, the default keeps it (mutants: a broken shelf overwritten; the record kept on Vulkan)', () => {
+  const root = shell();
+  writePref(root, B.UI_PREFS, 'not json');
+  let config = { arena2Path: 'X', [B.FAILURE_RECORD]: { backend: 'vulkan', gpu: null } };
+  const cfg = { loadConfig: () => structuredClone(config), saveConfig: (c) => { config = structuredClone(c); } };
+  assert.equal(B.chooseBackend(root, 'vulkan', cfg), false);
+  assert.equal(readPref(root, B.UI_PREFS), 'not json');
+  assert.ok(config[B.FAILURE_RECORD], 'nothing written, nothing cleared');
+  writePref(root, B.UI_PREFS, '[]');
+  assert.equal(B.chooseBackend(root, 'vulkan', cfg), false);
+  writePref(root, B.UI_PREFS, '{}');
+  assert.equal(B.chooseBackend(root, 'default', cfg), true);
+  assert.ok(config[B.FAILURE_RECORD], 'the default leaves the record');
+  assert.equal(B.chooseBackend(root, 'vulkan', cfg), true);
+  assert.deepEqual(config, { arena2Path: 'X' }, 'the player asked to try again');
+});
+
+test('GPU-BACKEND-LAUNCHER: the option reads the pref, the record and this launch; the restart drops the guard\'s one-launch hold (mutants: running read off the pref; the hold carried)', () => {
+  const root = shell();
+  const fallen = { backend: 'vulkan', switches: [], held: null };
+  assert.deepEqual(B.backendOption(root, { backend: 'default', switches: [], held: null }), { chosen: 'default', held: false, running: false });
+  setPref(B.GRAPHICS_BACKEND_PREF, 'vulkan');
+  assert.deepEqual(B.backendOption(root, ARMED), { chosen: 'vulkan', held: false, running: true });
+  writeConfig(root, { [B.FAILURE_RECORD]: { backend: 'vulkan' } });
+  assert.deepEqual(B.backendOption(root, fallen), { chosen: 'vulkan', held: true, running: false });
+  assert.deepEqual(B.restartArgs(['app.exe', 'main', B.HOLD_DEFAULT_ARG, '--play']), ['main', '--play']);
+});
+
+test('VULKAN-BLANK and GPU-BACKEND-LAUNCHER by source: the box closes on its signal; the launcher\'s option and restart are the shell\'s, on Windows only, never after Play or over an install', () => {
+  const main = read('app/main.cjs');
+  codeHasOnce(main, /confirm: \(opts, signal\) => dialog\.showMessageBox\(\{ \.\.\.opts, signal \}\),/);
+  codeHasOnce(main, /backend: process\.platform === 'win32' \? backendOption\(app\.getPath\('userData'\), BACKEND_LAUNCH\) : null,/);
+  codeHasOnce(main, /case 'set-backend': setBackendFromLauncher\(arg\); break;/);
+  codeHasOnce(main, /case 'restart': restartFromLauncher\(\); break;/);
+  const set = main.slice(main.indexOf('function setBackendFromLauncher('), main.indexOf('function restartFromLauncher('));
+  assert.match(set, /if \(!launcher\?\.state\.backend \|\| launcher\.state\.launch\) return;/);
+  assert.match(set, /const backend = arg === 'vulkan' \? 'vulkan' : 'default';/, 'only a real "vulkan" turns it on');
+  assert.match(set, /else renderLauncher\(\);/, 'a refused write redraws the box as it was');
+  const restart = main.slice(main.indexOf('function restartFromLauncher('), main.indexOf('/** DA10: Reinstall'));
+  assert.match(restart, /if \(!launcher \|\| !canRestart\(launcher\.state\)\) return;\n  app\.releaseSingleInstanceLock\(\);\n  app\.relaunch\(\{ args: restartArgs\(process\.argv\) \}\);\n  app\.quit\(\);/);
 });

@@ -37,7 +37,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { frameRateSwitches } = require('./lib/frameRate.cjs');   // FPS-VSYNC: VSync off lifts Chromium's wait
-const { backendLaunch, holdsVSync, watchBackend } = require('./lib/graphicsBackend.cjs');   // GPU-BACKEND: the Vulkan opt-in and its guard
+const { backendLaunch, holdsVSync, watchBackend, backendOption, chooseBackend, restartArgs } = require('./lib/graphicsBackend.cjs');   // GPU-BACKEND: the Vulkan opt-in and its guard
 
 // DAGGER_USER_DATA points saves/config somewhere else - the probe's
 // door (tools/appShellProbe.mjs writes into a temp dir it can read
@@ -57,10 +57,11 @@ else app.setPath('userData', path.join(app.getPath('appData'), 'Daggerfall JavaS
 
 // GPU-BACKEND (2026-10-26): Vulkan on Windows, the player's opt-in (`graphicsBackend`), held on the default while a
 // failure is on record. The guard reads the renderer once the first window is up and relaunches on the default when
-// the chosen backend did not start (app/lib/graphicsBackend.cjs).
+// the chosen backend did not start (app/lib/graphicsBackend.cjs). VULKAN-BLANK (#1379): and asks the player whether they
+// see the window, in a box Windows draws without Chromium (confirm; the signal closes it at the timeout).
 const BACKEND_LAUNCH = backendLaunch(app.getPath('userData'));
 for (const [name, value] of BACKEND_LAUNCH.switches) app.commandLine.appendSwitch(name, value);
-const backendGuard = watchBackend({ app, launch: BACKEND_LAUNCH, loadConfig, saveConfig, notify: (opts) => dialog.showMessageBox(opts), beforeExit: () => gpuGone.flush() });
+const backendGuard = watchBackend({ app, launch: BACKEND_LAUNCH, loadConfig, saveConfig, notify: (opts) => dialog.showMessageBox(opts), confirm: (opts, signal) => dialog.showMessageBox({ ...opts, signal }), beforeExit: () => gpuGone.flush() });
 app.once('browser-window-created', (_e, w) => w.webContents.on('did-finish-load', backendGuard.check));
 
 // FPS-VSYNC (2026-09-28): the player's saved VSync, read BEFORE the app is ready - Chromium takes its switches at
@@ -519,7 +520,7 @@ const { RELEASES_URL, latestDownloadUrl, releaseAssetUrl, manualDownloadFile } =
 const { assetCheck, swapPlan, swapScript } = require('./lib/selfSwap.cjs');   // UPDATE-SWAP: the Mac app and the portable exe update themselves
 const {
   CHECK_TIMEOUT_MS, RECHECK_MS, INSTALL_NOTICE_MS, INSTALL_GIVEUP_MS, DOWNLOAD_STALL_MS, DETECT_DEADLINE_MS, JUDGE_DEADLINE_MS, PICK_DEADLINE_MS,
-  initialState, reduce, nextStep, viewOf, newsFrom, cachedNews, notArena2Detail, installAttemptFor, directPlay, PLAY_SWITCH,
+  initialState, reduce, nextStep, viewOf, newsFrom, cachedNews, notArena2Detail, installAttemptFor, directPlay, PLAY_SWITCH, canRestart,
 } = require('./lib/launcherState.cjs');
 
 /** Which transport THIS copy updates by - lib/autoUpdate.cjs's table
@@ -1590,7 +1591,7 @@ const fromLauncher = (e) => !!launcher && e.sender === launcher.win.webContents 
 function openLauncherWindow() {
   const win = new BrowserWindow({
     width: 960,
-    height: 600,
+    height: 660,   // GPU-BACKEND-LAUNCHER: the Graphics option's room in the side column
     useContentSize: true,
     resizable: false,
     maximizable: false,
@@ -1762,6 +1763,25 @@ async function launcherChooseFolder() {
   }));
 }
 
+/** GPU-BACKEND-LAUNCHER (#1379): the launcher's Graphics option. The game's own row was the only switch, and a game
+ *  that drew blank on Vulkan hid it. Same pref, so the two never disagree; not once Play was pressed. A write that
+ *  failed redraws the box as it was. */
+function setBackendFromLauncher(arg) {
+  if (!launcher?.state.backend || launcher.state.launch) return;
+  const backend = arg === 'vulkan' ? 'vulkan' : 'default';
+  if (chooseBackend(app.getPath('userData'), backend, { loadConfig, saveConfig })) launcherDispatch({ type: 'backend-chosen', backend });
+  else renderLauncher();
+}
+
+/** GPU-BACKEND-LAUNCHER: Restart, once the Graphics option differs from this launch - Chromium takes its switches at
+ *  launch or never. Never over a download or an install (canRestart). The lock is the new copy's (R2-A1). */
+function restartFromLauncher() {
+  if (!launcher || !canRestart(launcher.state)) return;
+  app.releaseSingleInstanceLock();
+  app.relaunch({ args: restartArgs(process.argv) });
+  app.quit();
+}
+
 /** DA10: Reinstall - this copy's own installer, the newest, by the name
  *  that never moves (REL5), downloaded in the player's browser to install
  *  over this copy. Asked first: the player hears that their saves are safe
@@ -1871,6 +1891,8 @@ function runLauncher() {
       // a config.json written before DA10 has no lastPlayed: the build it runs now is new to that player
       returning,
       installFailedFor: attempt.failed,
+      // GPU-BACKEND-LAUNCHER: the Graphics option, on Windows only - a browser and the other platforms choose their own
+      backend: process.platform === 'win32' ? backendOption(app.getPath('userData'), BACKEND_LAUNCH) : null,
     }),
   };
   buildMenu();
@@ -1951,6 +1973,8 @@ ipcMain.on('launcher:act', async (e, msg) => {
     case 'open-saves': openSavesFolder(); break;
     case 'set-update-check': setCheckOnLaunch(arg === true); break;
     case 'reinstall': await reinstallFromLauncher(); break;
+    case 'set-backend': setBackendFromLauncher(arg); break;
+    case 'restart': restartFromLauncher(); break;
     case 'open': if (Object.hasOwn(LAUNCHER_LINKS, arg)) shell.openExternal(LAUNCHER_LINKS[arg]); break;
     default: break;
   }

@@ -688,6 +688,9 @@ Along the bottom, the status bar - checking, downloading with its MB
 and "Play without updating", installing, "Updated to v...", "Up to
 date", offline, off - and PLAY.
 
+On Windows the column also has **Graphics** (2026-10-30): Use Vulkan, the
+game's own row, the same setting (GPU-BACKEND-LAUNCHER, below).
+
 **Play is held only while something is being decided for the player**:
 an update checked for (at most CHECK_TIMEOUT_MS), fetched or installing,
 or no game files. Detection runs at once (the player chooses while the
@@ -1202,7 +1205,8 @@ Chromium draws on its software renderer (WARP, 2 fps). So Vulkan is the player's
 
 - **The choice.** `graphicsBackend` on the port's own shelf (`dagger.ui.v1`, `src/systems/uiPrefs.js`): `default` or
   `vulkan`. Settings > Graphics > Display draws it after VSync, in the app on Windows only, with the restart tier's dot
-  and words (`enhancedMenu.js` graphicsBackendRow). A browser chooses its own backend.
+  and words (`enhancedMenu.js` graphicsBackendRow). The launcher's Graphics option sets the same pref
+  (GPU-BACKEND-LAUNCHER, below). A browser chooses its own backend.
 - **The switches.** `lib/graphicsBackend.cjs` backendLaunch reads the pref before the app is ready (one file, through
   `fileStorage.cjs` readPref, as FPS-VSYNC reads VSync) and answers `use-gl=angle`, `use-angle=vulkan` and `disable-gpu-sandbox` (see "The GPU sandbox" below), and skips FPS-VSYNC's switches ("VSync stays on"). `main.cjs`
   appends them beside FPS-VSYNC's. A failure on record in `config.json` (`graphicsBackendFailure`) holds the launch on
@@ -1390,6 +1394,34 @@ filter to `none`, and a pack opened after it never blurs, its arrival transition
 its end on a Vulkan GPU. On Linux, Chromium composites SwiftShader's Vulkan in software, and the backdrop stood upright
 there with and without Vulkan's switches, headless and under Xvfb. The check on a Windows GPU: open the pack on a
 Vulkan launch, and the world behind it stands upright, unblurred. Pins: `test/ui/vulkanflip.test.js`.
+
+### The player's word, and the launcher's option (VULKAN-BLANK, GPU-BACKEND-LAUNCHER, 2026-10-30)
+
+Issue #1379, a player after the Vulkan release: *"the interface is blank, but the buttons are still here"*, in the
+launcher and in the game. Every check above passed: Chromium named Vulkan and the page got its context. The one
+switch back was the game's own row, behind a blank window. Not reproduced: no Windows GPU here, and the cause on that
+machine is not known.
+
+**VULKAN-BLANK.** A launch that passed check 1 asks the player (`watchBackend` askPlayer):
+"Can you see DFO Online on Vulkan?", Keep Vulkan or Go back, in `dialog.showMessageBox`. Windows draws that box, not
+Chromium, so it shows over a blank window. Go back, Enter, Escape, a failed box, or no answer within 20 s
+(`CONFIRM_TIMEOUT_MS`, the box closed by its `signal`) fails the launch as a failed check does: the record, keyed,
+and the relaunch, without the "could not start" notice. Keep writes `graphicsBackendConfirmed` in `config.json`
+(backend, GPU key, Chromium), and a launch on the same three is not asked again. A driver or app update asks again.
+
+**GPU-BACKEND-LAUNCHER.** The launcher's side column has Graphics, on Windows only: Use Vulkan, the box showing the
+backend the next start uses (`launcherState.cjs` graphicsView). It writes the page's shelf from the shell
+(`graphicsBackend.cjs` chooseBackend, `fileStorage.cjs` writePref), so the game's row and the launcher never
+disagree. A shelf that is not JSON is left alone. Vulkan chosen here clears the failure record: the player asked to try
+again, and the guard still stands. "Restart to apply" relaunches without `--dagger-default-backend`, never after Play
+or over a download or an install (`canRestart`). A held choice says "Vulkan did not work on this graphics card." The
+window grew from 600 to 660 px for the row.
+
+The two cover each other: a blank launcher gets the box, and a launcher that draws over a blank game gets the
+option before the next Play. The fix is in the shell, which the game's own update (DA13) does not carry: a player
+stuck on an older build gets it from the launcher's install before Play (DA8), which needs no click, so a blank
+launcher still takes it. Pins: `test/tooling/gpubackend.test.js`, `test/tooling/da10_launcher.test.js`. Not verified on
+a Windows GPU: the box over a blank window, and the restart.
 
 ## The compiled scripts are kept (CODE-CACHE, 2026-10-27)
 
