@@ -470,9 +470,7 @@ export async function realmSaveTextOf(/** @type {any} */ object) {
  * AUDIT REALM2 S1: THE FIRST SAVE IS READ. The service took any bytes as a character's first checkpoint, so a character
  * "born online" could be any offline save (ten million gold, level sixty), customs' allowance was the client's alone to
  * apply - and the first save is the start every later check of the realm measures from. A character born online starts
- * as chargen starts one: level REALM_BIRTH_LEVEL, no more liquid wealth than REALM_BIRTH_WEALTH_MAX, and a skill start a
- * creation gives (systems/levelClimb.js birthSkillOk - its bounded start, current sum, career and skills agree; a Legacy
- * person's Hearth gets its own upper bound) ('realm-birth').
+ * as chargen starts one: level REALM_BIRTH_LEVEL, wealth to REALM_BIRTH_WEALTH_MAX, skills a creation's ('realm-birth').
  * A customs character brings no more than the allowance at the level customs was asked at - the level on its row's
  * summary, which nothing writes before the first save lands, never the first save's own word ('customs-allowance').
  * Wealth is customs' own measure (net/realm/realmGoldLaw.js liquidWealthOf): the purse, the banks, and every gold-piece item
