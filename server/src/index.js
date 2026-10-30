@@ -4497,7 +4497,7 @@ export class Room {
     if (m.t === 'dragon') {   // DRAGON2: a word on the Dwarven Dragon's fight, to its site's cell (server/src/dragonFights.js)
       const now = Date.now();
       if (!this._spend(ws, now, dragonGate, 'dragonBucket', 'dragonDrops', 'too many dragon frames')) return;
-      if (!isCellRoom(a.key) || typeof a.sub !== 'string' || !a.sub) { this._junk(ws); return; }
+      if (typeof a.sub !== 'string' || !a.sub) { this._junk(ws); return; }   // AUDIT DRAGON-HIDDEN B1: the room's kind is dragonWord's to judge - an `ask` in any
       try { await dragonWord(this, ws, a, m, now); } catch (e) { console.warn('[dragon] word failed', e?.message ?? e); }
       return;
     }

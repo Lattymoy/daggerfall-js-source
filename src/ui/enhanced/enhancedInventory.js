@@ -2315,8 +2315,8 @@ function equippedList() {
   return wrap;
 }
 
-/** CAPE-TOGGLE: THE CAPE SWITCH, an eye in the Cloaks panel's bottom-right corner - my worn cloak and my aura drawn or
- *  hidden, for me and every player (systems/capeShown.js). A sibling in the panel's grid cell, since a filled panel is a
+/** CAPE-TOGGLE: THE CAPE SWITCH, an eye in the Cloaks panel's bottom-right corner - my worn cloak drawn or hidden, for me
+ *  and every player (systems/capeShown.js); my aura stays on either way. A sibling in the panel's grid cell, since a filled panel is a
  *  button and holds none; an icon of one size, clear of the count and a raised hood's chip, in every language. */
 function capeSwitch(/** @type {string} */ area) {
   const on = capeShown();
@@ -2325,7 +2325,7 @@ function capeSwitch(/** @type {string} */ area) {
   b.style.gridArea = area;
   b.setAttribute('aria-pressed', String(on));
   b.setAttribute('aria-label', t('inventory.cape.label', 'Show cape'));
-  b.title = t('inventory.cape.title', 'Shows or hides your cloak and your aura. Other players see the same.');
+  b.title = t('inventory.cape.title', 'Shows or hides your cloak. Your aura stays on. Other players see the same.');
   const eye = svg('svg', { viewBox: '0 0 16 16', width: 14, height: 14, 'aria-hidden': 'true' });
   eye.append(svg('path', { d: 'M1 8 Q8 0 15 8 Q8 16 1 8 Z', fill: 'none', stroke: 'currentColor', 'stroke-width': 1.5 }), svg('circle', { cx: 8, cy: 8, r: 2.2, fill: 'currentColor' }));
   if (!on) eye.append(svg('path', { d: 'M2 14 L14 2', stroke: 'currentColor', 'stroke-width': 1.8 }));   // struck through: hidden

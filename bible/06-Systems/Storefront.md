@@ -250,9 +250,9 @@ the pose's own (`slimPose`). The session keeps a peer's kit with its id, so a pe
 effects. The service answers glyphs in GLYPHS' order, the order the mask gives the room, and GLYPHS grows only at its
 end. Pinned by `test/net/storefront_wireaudit.test.js`.
 
-**Deploy, and the rollback floor.** The relay (world294) goes before the account service (acct228) that mints `gb`, and
-`account-deploy.yml` waits for it. A relay before world294 drops a `gb` token's glyphs, or refuses one that also carries
-`gx`. So world294 is the relay's floor while acct228 or later mints: to roll the relay back, roll the service back first
+**Deploy, and the rollback floor.** The relay (world295) goes before the account service (acct228) that mints `gb`, and
+`account-deploy.yml` waits for it. A relay before world295 drops a `gb` token's glyphs, or refuses one that also carries
+`gx`. So world295 is the relay's floor while acct228 or later mints: to roll the relay back, roll the service back first
 and wait MAX_TTL_S (five minutes) for its tokens to lapse.
 
 **An Admin holds it all** (ADMIN-ALL, main's, at the merge of 2026-10-30; the owner: "give staff all in shop items" -
