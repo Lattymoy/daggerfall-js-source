@@ -177,7 +177,9 @@
     "new": "part = false;",
     "tests": [
       "test/server/storefront_audit.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "PASS-PANELS retired the one ware that gave a giver (the Seasonal Collector, which gave the Deluxe that gave the Premium): a giver held in part with none of its own gives held cannot happen with the catalogue as it stands, so `part` is false either way. The words are pinned on the page itself (storefront_audit_window S12) and return to a verdict with the first bundle that holds a bundle."
   },
   {
     "name": "AUDIT-STOREFRONT-a-press-stripe-never-saw-counted",

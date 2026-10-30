@@ -206,6 +206,27 @@ test('AUDIT-STOREFRONT S12 the confirm page says why a bundle costs less - the P
   assert.match(html, /holds 1 of them already, so the price is less/);
 });
 
+// ── S7: TWO GRANTS AT ONCE ──────────────────────────────────────────
+
+test('AUDIT-STOREFRONT S7 three wares paid at the same moment - two held by id, one by its bit - are all granted, none written over another: a grant whose row guard is refused reads the row again and lands (PIN MOVED, PASS-PANELS: the Deluxe and the Seasonal Collector were the case, retired) (mutants: the row guard dropped; the retry dropped)', async (t) => {
+  t.mock.timers.enable({ apis: ['Date'], now: IN_TREMOR });
+  const s = await stand();
+  const me = await s.registered('Racer');
+  const ids = ['kill:ashen', 'portal:runic', 'armory:eternalhalo'];
+  const os = [];
+  for (const id of ids) os.push(await s.open(me, id));
+  const ctx = { db: s.env.DB, nowS: Math.floor(Date.now() / 1000) };
+  const st = stripe();
+  let rs;
+  try {
+    rs = await Promise.all(os.map((o) => fulfilOrder(ctx, o.id, { intent: `pi_${o.id}`, amount: o.cents, currency: 'usd' }, { env: ON, fetch: globalThis.fetch })));
+  } finally { st.restore(); }
+  assert.deepEqual(rs.map((r) => r.applied), [1, 1, 1], 'each granted');
+  const held = shopHeldIds(s.rowOf(me));
+  for (const id of ids) assert.ok(held.includes(id), `${id} held`);
+  assert.deepEqual(s.orders(me).map((o) => o.status), ['paid', 'paid', 'paid'], 'none refunded');
+});
+
 // ── S8: THE DEMAND ──────────────────────────────────────────────────
 
 test('AUDIT-STOREFRONT S8 the demand counts as opened only a press that reached Stripe (mutants: a press Stripe never saw counted)', async (t) => {
