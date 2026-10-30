@@ -96,6 +96,8 @@
 /src/systems/studioArt/*/
 !/src/ui/
 /src/ui/*
+!/src/ui/card/
+/src/ui/card/*/
 !/src/ui/collections/
 /src/ui/collections/*/
 !/src/ui/ketch/

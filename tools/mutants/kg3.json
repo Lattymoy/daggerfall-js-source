@@ -711,8 +711,8 @@
   {
     "name": "KG3-C-kit-selector",
     "file": "src/ui/card/cardPanelKit.js",
-    "old": "/\\.df(?:cards|iliac|gambit)(?![\\w-])|\\.dfgambit-[a-z]/",
-    "new": "/\\.df(?:cards|iliac)(?![\\w-])/",
+    "old": "export const isCardPanelSelector = (/** @type {string} */ sel) =>\n  /\\.df(?:cards|iliac|gambit)(?![\\w-])|\\.dfgambit-[a-z]/.test(sel); // KG3: the third panel, and its own parts",
+    "new": "export const isCardPanelSelector = (/** @type {string} */ sel) => /\\.df(?:cards|iliac)(?![\\w-])/.test(sel); // KG3: the third panel, and its own parts",
     "tests": [
       "test/systems/kg3_panel.test.js",
       "test/ui/cardsplus.test.js"

@@ -120,8 +120,8 @@
   {
     "name": "CH-raise-line",
     "file": "src/ui/card/cardTableHud.js",
-    "old": "`${who} raise${s} to ${e.to}.`",
-    "new": "`${who} raise${s} ${e.to}.`",
+    "old": "      if (e.type === 'raise') return e.bet ? `${who} bet${s} ${e.to}.` : `${who} raise${s} to ${e.to}.`;",
+    "new": "      if (e.type === 'raise') return e.bet ? `${who} bet${s} ${e.to}.` : `${who} raise${s} ${e.to}.`;",
     "tests": [
       "test/systems/card/cards4_hud.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "CH-keys-leak",
     "file": "src/ui/card/cardTableHud.js",
-    "old": "{ if (e.target?.type === 'range' && SLIDER_KEYS.has(e.key)) e.stopPropagation(); }",
-    "new": "{ if (e.target?.type === 'range' && SLIDER_KEYS.has(e.key)) void 0; }",
+    "old": "    if (e.target?.type === 'range' && SLIDER_KEYS.has(e.key)) e.stopPropagation();",
+    "new": "    if (e.target?.type === 'range' && SLIDER_KEYS.has(e.key)) void 0;",
     "tests": [
       "test/systems/auditcards2_host.test.js",
       "test/systems/card/cards4_hud.test.js"

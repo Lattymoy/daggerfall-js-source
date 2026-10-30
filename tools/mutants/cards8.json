@@ -199,8 +199,8 @@
   {
     "name": "C8-builder-past-held",
     "file": "src/ui/card/cardBinderPage.js",
-    "old": "    else if (inDeck >= held) _said =",
-    "new": "    else if (false) _said =",
+    "old": "    else if (inDeck >= held)\n      _said = `Your binder's ${copies(held, c.name)} ${held === 1 ? 'is' : 'are all'} in this deck.`;",
+    "new": "    else if (false) _said = `Your binder's ${copies(held, c.name)} ${held === 1 ? 'is' : 'are all'} in this deck.`;",
     "tests": [
       "test/systems/auditcards5_ui.test.js",
       "test/systems/auditrealm.test.js",
@@ -228,8 +228,8 @@
   {
     "name": "C8-drop-at-once",
     "file": "src/ui/card/cardBinderPage.js",
-    "old": "      if (_dropArmed !== i) { _dropArmed = i; rerender(); return; }\n",
-    "new": "",
+    "old": "      if (_dropArmed !== i) {\n        _dropArmed = i;\n        rerender();\n        return;\n      }\n      dropBinderDeck(binder, i);",
+    "new": "      dropBinderDeck(binder, i);",
     "tests": [
       "test/systems/auditrealm.test.js",
       "test/net/iliac/cards7_rules.test.js",

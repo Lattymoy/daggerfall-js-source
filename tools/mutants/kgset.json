@@ -12,8 +12,8 @@
   {
     "name": "KGSET-face-cache-stale",
     "file": "src/ui/card/cardBinderPage.js",
-    "old": "  if (_facesRev !== textRevision()) { _faces.clear(); _facesRev = textRevision(); }",
-    "new": "  if (_facesRev < 0) { _facesRev = textRevision(); }",
+    "old": "  if (_facesRev !== textRevision()) {\n    _faces.clear();",
+    "new": "  if (_facesRev < 0) {",
     "tests": [
       "test/systems/kgset_cards.test.js"
     ]

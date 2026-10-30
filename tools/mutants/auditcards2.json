@@ -211,8 +211,8 @@
   {
     "name": "E-hud-allin-state",
     "file": "src/ui/card/cardTableHud.js",
-    "old": "h.allIn ? 'all in' : ",
-    "new": "",
+    "old": "              : h.allIn\n                ? 'all in'\n                : hand.toAct === k\n                  ? 'to act'\n                  : '',",
+    "new": "              : hand.toAct === k\n                ? 'to act'\n                : '',",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -230,8 +230,8 @@
   {
     "name": "E-hud-out-state",
     "file": "src/ui/card/cardTableHud.js",
-    "old": "!h ? (hand ? 'out' : '') :",
-    "new": "!h ? '' :",
+    "old": "            ? hand\n              ? 'out'\n              : ''",
+    "new": "            ? ''",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -249,8 +249,8 @@
   {
     "name": "E-hud-folded-backs",
     "file": "src/ui/card/cardTableHud.js",
-    "old": ": h && !h.folded ? [cardFace(-1), cardFace(-1)] : []",
-    "new": ": h ? [cardFace(-1), cardFace(-1)] : []",
+    "old": "          : h && !h.folded",
+    "new": "          : h",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -268,8 +268,8 @@
   {
     "name": "E-hud-empty-msg",
     "file": "src/ui/card/cardTableHud.js",
-    "old": "why === 'empty' ? 'The table has emptied. Every patron is broke.' :",
-    "new": "why === 'empty' ? 'You leave the table.' :",
+    "old": "          ? 'The table has emptied. Every patron is broke.'",
+    "new": "          ? 'You leave the table.'",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -287,8 +287,8 @@
   {
     "name": "E-hud-allin-press",
     "file": "src/ui/card/cardTableHud.js",
-    "old": "else if (a.id === 'allin') onPress('raise', a.to);",
-    "new": "else if (a.id === 'allin') onPress('allin');",
+    "old": "          else if (a.id === 'allin') onPress('raise', a.to);",
+    "new": "          else if (a.id === 'allin') onPress('allin');",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -306,8 +306,8 @@
   {
     "name": "E-hud-raise-press-min",
     "file": "src/ui/card/cardTableHud.js",
-    "old": "b.addEventListener('click', () => onPress('raise', Number(range.value)));",
-    "new": "b.addEventListener('click', () => onPress('raise', a.min));",
+    "old": "          b.addEventListener('click', () => onPress('raise', Number(range.value)));",
+    "new": "          b.addEventListener('click', () => onPress('raise', a.min));",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -325,8 +325,8 @@
   {
     "name": "E-hud-bet-label",
     "file": "src/ui/card/cardTableHud.js",
-    "old": "label: bet ? 'Bet' : 'Raise to'",
-    "new": "label: 'Raise to'",
+    "old": "        label: bet ? 'Bet' : 'Raise to',",
+    "new": "        label: 'Raise to',",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1522,7 +1522,7 @@
   {
     "name": "A2-hud-no-showdown",
     "file": "src/ui/card/cardTableHud.js",
-    "old": "  const sd = !hand ? view?.showdown ?? null : null;",
+    "old": "  const sd = !hand ? (view?.showdown ?? null) : null;",
     "new": "  const sd = null;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
@@ -1541,8 +1541,8 @@
   {
     "name": "A2-hud-keys-all",
     "file": "src/ui/card/cardTableHud.js",
-    "old": "{ if (e.target?.type === 'range' && SLIDER_KEYS.has(e.key)) e.stopPropagation(); }",
-    "new": "{ e.stopPropagation(); }",
+    "old": "    if (e.target?.type === 'range' && SLIDER_KEYS.has(e.key)) e.stopPropagation();",
+    "new": "    e.stopPropagation();",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1560,8 +1560,8 @@
   {
     "name": "A2-hud-wide",
     "file": "src/ui/card/cardTableHud.js",
-    "old": "min-width:min(520px,calc(100vw - 32px));",
-    "new": "min-width:520px;",
+    "old": ".dfcards{left:50%;bottom:18px;transform:translateX(-50%);box-sizing:border-box;min-width:min(520px,calc(100vw - 32px));max-width:min(760px,calc(100vw - 32px))}",
+    "new": ".dfcards{left:50%;bottom:18px;transform:translateX(-50%);box-sizing:border-box;min-width:520px;max-width:min(760px,calc(100vw - 32px))}",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",

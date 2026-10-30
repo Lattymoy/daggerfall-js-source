@@ -1094,8 +1094,8 @@
   {
     "name": "D-hud-timeout-line",
     "file": "src/ui/card/cardTableHud.js",
-    "old": "      if (e.timeout) return `${who} ${me ? 'are' : 'is'} out of time and",
-    "new": "      if (false) return `${who} ${me ? 'are' : 'is'} out of time and",
+    "old": "      if (e.timeout)",
+    "new": "      if (false)",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1116,8 +1116,8 @@
   {
     "name": "D-hud-sit-line",
     "file": "src/ui/card/cardTableHud.js",
-    "old": "    case 'sit': return me ? 'You sit down.' : `${e.name} sits down.`;",
-    "new": "    case 'sit': return '';",
+    "old": "      return me ? 'You sit down.' : `${e.name} sits down.`;",
+    "new": "      return '';",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1270,8 +1270,8 @@
   {
     "name": "D2-hud-no-clock",
     "file": "src/ui/card/cardTableHud.js",
-    "old": "(online?.clock ? `Your turn - ${online.clock} s.` : 'Your turn.')",
-    "new": "'Your turn.'",
+    "old": "              ? online?.clock\n                ? `Your turn - ${online.clock} s.`\n                : 'Your turn.'",
+    "new": "              ? 'Your turn.'",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -1292,8 +1292,8 @@
   {
     "name": "D2-hud-refusal-raw",
     "file": "src/ui/card/cardTableHud.js",
-    "old": "`${message} (${HOLDEM_REFUSALS[online.error] ?? 'The table refused that.'})`",
-    "new": "`${message} (${online.error})`",
+    "old": "    message:\n      online?.error && !legal ? `${message} (${HOLDEM_REFUSALS[online.error] ?? 'The table refused that.'})` : message,",
+    "new": "    message: online?.error && !legal ? `${message} (${online.error})` : message,",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2111,8 +2111,8 @@
   {
     "name": "B5-rebuilt-every-second",
     "file": "src/ui/card/cardTableHud.js",
-    "old": "      if (key === shownKey && msgEl) { msgEl.textContent = m.message; return; }\n",
-    "new": "",
+    "old": "      if (key === shownKey && msgEl) {\n        msgEl.textContent = m.message;\n        return;\n      }\n      shownKey = key;",
+    "new": "      shownKey = key;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2133,8 +2133,8 @@
   {
     "name": "B5-reset-keeps-slider",
     "file": "src/ui/card/cardTableHud.js",
-    "old": "    resetSlider() { sliderValue = null; shownKey = null; },",
-    "new": "    resetSlider() { sliderValue = null; },",
+    "old": "      shownKey = null;\n    }, // the next render rebuilds the slider at the law's own value",
+    "new": "    }, // the next render rebuilds the slider at the law's own value",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2155,8 +2155,8 @@
   {
     "name": "B7-leave-third-person",
     "file": "src/ui/card/cardTableHud.js",
-    "old": ": me ? (e.broke ? 'You are out of chips and stand up.' : 'You stand up.') : e.broke",
-    "new": ": e.broke",
+    "old": "        : me\n          ? e.broke\n            ? 'You are out of chips and stand up.'\n            : 'You stand up.'\n          : e.broke\n            ? `${e.name} is out of chips and stands up.`\n            : `${e.name} stands up.`; // CARDS5: a player at the relay's table, not a regular; AUDIT CARDS-3 B7: said to me when it is me",
+    "new": "        : e.broke\n          ? `${e.name} is out of chips and stands up.`\n          : `${e.name} stands up.`; // CARDS5: a player at the relay's table, not a regular; AUDIT CARDS-3 B7: said to me when it is me",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",
       "test/systems/auditcards2_host.test.js",
@@ -2463,7 +2463,7 @@
   {
     "name": "BAY-panel-unpainted",
     "file": "src/ui/card/cardTableHud.js",
-    "old": "    if (c.back) paintBack(ctx, cv.width, cv.height); else paintFace(ctx, c.card, cv.width, cv.height);",
+    "old": "    if (c.back) paintBack(ctx, cv.width, cv.height);\n    else paintFace(ctx, c.card, cv.width, cv.height);",
     "new": "    void c;",
     "tests": [
       "test/world/card/auditcards2_cloth.test.js",

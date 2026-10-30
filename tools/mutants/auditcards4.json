@@ -706,8 +706,8 @@
   {
     "name": "AC4-T-hud-no-topup",
     "file": "src/ui/card/cardTableHud.js",
-    "old": "if (phase === 'playing' && topUp > 0)",
-    "new": "if (false)",
+    "old": "  if (phase === 'playing' && topUp > 0) actions.push({ id: 'topup', label: `Top up ${topUp}`, enabled: !staking }); // CARDS6 follow-up: between hands, a gold seat",
+    "new": "  if (false) actions.push({ id: 'topup', label: `Top up ${topUp}`, enabled: !staking }); // CARDS6 follow-up: between hands, a gold seat",
     "tests": [
       "test/net/card/auditcards4_client.test.js",
       "test/net/auditcards4_pins.test.js",

@@ -29,7 +29,7 @@
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
 import { frameCss, scopeRules, FRAME_TONES } from '../enhanced/enhancedFrame.js';
 import { injectEnhancedFonts } from '../enhanced/enhancedStyle.js';
-import { STONE_DIM, STONE_WORD, STONE_RED } from '../enhanced/enhancedPlusStyle.js';   // AUDIT MERGE-PLUS D3: the words lifted on Stone's light ground
+import { STONE_DIM, STONE_WORD, STONE_RED } from '../enhanced/enhancedPlusStyle.js'; // AUDIT MERGE-PLUS D3: the words lifted on Stone's light ground
 import { PIXEL_FONT_CSS } from '../pixelifyFive.js';
 import { isEnhancedPlus } from '../../systems/uiSkin.js';
 import { t } from '../../systems/textManager.js';
@@ -37,7 +37,8 @@ import { t } from '../../systems/textManager.js';
 /** The classic skin's copy of the kit, cut to the two panels. */
 export const CARD_KIT_STYLE_ID = 'dfcards-kit-style';
 /** A selector that dresses one of the two panels (or something in one). */
-export const isCardPanelSelector = (/** @type {string} */ sel) => /\.df(?:cards|iliac|gambit)(?![\w-])|\.dfgambit-[a-z]/.test(sel);   // KG3: the third panel, and its own parts
+export const isCardPanelSelector = (/** @type {string} */ sel) =>
+  /\.df(?:cards|iliac|gambit)(?![\w-])|\.dfgambit-[a-z]/.test(sel); // KG3: the third panel, and its own parts
 /** The kit's rules cut to the panels' own selectors - the classic skin's copy of their Plus dress. */
 export const cardKitCss = () => scopeRules(frameCss(), isCardPanelSelector);
 
@@ -48,7 +49,7 @@ export const cardKitCss = () => scopeRules(frameCss(), isCardPanelSelector);
  */
 export function dressCardPanel(doc = globalThis.document) {
   if (!doc?.createElement) return false;
-  if (doc.head) injectEnhancedFonts(doc);   // AUDIT NAV1's law: on the classic skin nothing else asked for the face
+  if (doc.head) injectEnhancedFonts(doc); // AUDIT NAV1's law: on the classic skin nothing else asked for the face
   if (isEnhancedPlus() || doc.getElementById?.(CARD_KIT_STYLE_ID)) return false;
   const st = doc.createElement('style');
   st.id = CARD_KIT_STYLE_ID;
@@ -111,7 +112,9 @@ export const cardPanelChromeCss = (/** @type {string} */ root) => CHROME_CSS.rep
  * @param {any} fold @param {boolean} collapsed
  */
 export function foldWords(fold, collapsed) {
-  const words = collapsed ? t('cards.table.fold.show', 'Expand the panel') : t('cards.table.fold.hide', 'Collapse the panel');
+  const words = collapsed
+    ? t('cards.table.fold.show', 'Expand the panel')
+    : t('cards.table.fold.hide', 'Collapse the panel');
   fold.title = words;
   fold.setAttribute?.('aria-label', words);
 }

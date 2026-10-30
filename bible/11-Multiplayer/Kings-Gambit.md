@@ -280,7 +280,7 @@ or that has no piece left, loses. Played against the innkeeper (four tiers) for 
 - `Tavern-Cards.md` section 7's refusal - "No card game from a menu. The table is the game" (Mac: "needing to be in a
   tavern"): The King's Gambit is played seated at a tavern's card table - either of its two (section 30 there) - as
   Hold'em and Iliac Hand are, one game a cloth. The Hold'em panel offers **Play The King's Gambit** beside Play Iliac Hand
-  (`cardTableHud.js:"if (iliac) actions.push("`'s way), Iliac Hand's panel offers it too, and its own panel offers the
+  (`cardTableHud.js:"if (iliac) actions.push"`'s way), Iliac Hand's panel offers it too, and its own panel offers the
   other two back.
 - The mod's two doors are not carried: the HUD's K key (a game anywhere, from a menu) and the tavern window's "Challenge
   the innkeeper" offer (its G key) - the table is the door.
