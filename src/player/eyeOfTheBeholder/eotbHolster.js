@@ -258,3 +258,29 @@ export function dropSpriteHolster(l, renderer) {
   l.batch = null;
   l.list.length = 0;
 }
+
+// OVER THE AURA (2026-10-30, Mac: "if a cape aura is present, the holster should appear over the aura"). The auras
+// draw after the bodies, added light that writes no depth, so the Shadow Cloak's cape glowed over the weapon. The aura
+// pass (scenes/auraHost.js) draws the frame's holsters again after itself, each owner's list of what it drew this
+// frame: at LEQUAL each passes exactly where it stood and stays hidden where the body hid it.
+/** Draw again, over what was drawn since them, the holsters in `lists` (eotbBody and the walkers' holstersDrawn): the
+ *  depth test LEQUAL, no second shadow, the baseline LESS given back. Answers how many. */
+export function redrawHolstersOver(renderer, ...lists) {
+  const gl = renderer?.gl;
+  if (!gl || !lists.some((l) => l?.length)) return 0;
+  let n = 0;
+  gl.depthFunc(gl.LEQUAL);
+  try {
+    for (const list of lists) {
+      for (const l of list ?? []) {
+        const b = l?.batch;
+        if (!b || b._dead) continue;
+        b.noShadow = true;
+        renderer.drawBillboards(l.list, l.right, l.up);
+        b.noShadow = false;
+        n++;
+      }
+    }
+  } finally { gl.depthFunc(gl.LESS); }
+  return n;
+}

@@ -560,8 +560,8 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
   }
 
   /** BACK-HOLSTER: a walker's sheathed weapon on its back (`wd` 0), by the local body's law - its look's weapon hand, the
-   *  picture its own client would draw, hung off this walker's figure as drawn. Its batch goes when it is drawn, or the
-   *  walker is drawn, no longer. A concealed walker's is veiled as the walker is. */
+   *  picture its own client would draw, hung off this walker's figure as drawn. Its batch goes once it is not hung, or
+   *  with the walker. A concealed walker's is veiled as the walker is. */
   function slingHolster(r, peer, pose, feet, view, eye, right) {
     const item = pose && !pose.wd ? holsterItemOfLook(peer.look?.items) : null;
     const art = item && holstersOnBack(item) ? store.holster?.ensure(item, peer.look) : null;
@@ -597,6 +597,7 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
     faceOf: layer.faceOf,   // SPRITE-FACE
     batches: layer.batches,
     drawLanterns,   // HT-WAIST-BACK
+    holstersDrawn: () => slung,   // BACK-HOLSTER, OVER THE AURA: this frame's weapons on the walkers' backs
     offsetAll: layer.offsetAll,
     destroy() { lit.length = 0; slung.length = 0; layer.destroy(); },   // HT-WAIST-BACK: and every lantern with its walker (the figure's drop)
     get walkers() { return walkers; },

@@ -18,6 +18,8 @@ import { CAPSULE_HEIGHT } from '../player/motor.js';
 import { mwViewBodyBones, mwViewSpriteFigure, mwViewSpriteFacing } from '../player/mwView.js';
 import { ownAura, ownArmory } from '../systems/ownGlyphs.js';
 import { getPref } from '../systems/uiPrefs.js';
+import { redrawHolstersOver } from '../player/eyeOfTheBeholder/eotbHolster.js';   // BACK-HOLSTER: a weapon on a sprite's back over its cape
+import { eotbBody } from '../player/eyeOfTheBeholder/eotbBody.js';
 
 /** ARMORY: the "Others' armory" choice (systems/features.js 'armory-others') - every peer's pieces, those within this many
  *  metres, or none. One's own always draws. */
@@ -206,7 +208,7 @@ export function createAuraHost(deps) {
       if (auraDraw.length) {
         const pass = auraPassOf();   // AURA-STALL: null while its program compiles - the capes still hang and swing above
         pass?.draw(auraDraw, proj, view, eye, now, fogNow());
-        if (pass?.drawn) renderer.markForeignPass();
+        if (pass?.drawn) { renderer.markForeignPass(); redrawHolstersOver(renderer, eotbBody.holstersDrawn(), deps.walkers()?.holstersDrawn?.()); }   // BACK-HOLSTER: the weapons on the backs over the capes
       }
       drawArmory(armoryOver, proj, view, eye, now);
     },

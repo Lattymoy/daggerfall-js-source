@@ -305,6 +305,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
   const holster = createSpriteHolster();
   const holsterArt = createHolsterArt(() => renderer, loadHolster);
   let holsterDrawn = false;
+  const holsterList = [holster], noHolsters = Object.freeze([]);
   const dropHolster = () => { dropSpriteHolster(holster, renderer); holsterDrawn = false; };
   /** Draw the weapon on the sprite's back: alive, in your own form, sheathed, a weapon that rides the back, its picture
    *  up and the body drawn this frame - on foot and in third person, where alone `figure` stands. After the body, so the
@@ -911,6 +912,8 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
      *  this frame's; null when nothing was drawn or in the saddle. What an aura on the back reads for the bones a sprite
      *  has not got (render/auraRing.js auraSpriteBones). */
     figure() { return figure; },
+    /** BACK-HOLSTER, OVER THE AURA: the weapon on the back drawn this frame, as a list (eotbHolster.js redrawHolstersOver). */
+    holstersDrawn() { return holsterDrawn ? holsterList : noHolsters; },
     /** SPRITE-FACE (2026-10-05): THE WAY THE FRAME LAST DRAWN FACES - { yaw, turn }: `yaw` the facing its picture shows
      *  (the shown orientation about the eye it was drawn for - eotbBillboard.js portrayedYaw), `turn` the facing the body
      *  turns by (its walk's); this frame's, in the saddle too; null when nothing was drawn or in first person. An aura on

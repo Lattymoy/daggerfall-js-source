@@ -2,7 +2,8 @@
 // eight views, on a skin's idle (112364) and on Layered Gearing's (male, leather). Each weapon's picture is read from the
 // player's ARENA2 (ARENA2_PATH) and stood up by the game's own law. Each view is drawn with and without the weapon; what
 // changed must lean to the right shoulder from behind, stand upright from the side and hide behind the body in front.
-// --shots writes a sheet of the crops - a render of game data, so never into the repo.
+// And OVER THE AURA: under the Shadow Cloak's cape (the real aura pass), redrawn after it, the weapon's pixels are its
+// own, untinted. --shots writes a sheet of the crops - a render of game data, so never into the repo.
 //     ARENA2_PATH=... node tools/backHolsterProbe.mjs [--shots DIR]
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
@@ -45,15 +46,17 @@ page.on('pageerror', (e) => console.log('pageerror', e.message));
 await page.goto(`http://127.0.0.1:${PORT}/LICENSE`, { waitUntil: 'domcontentloaded', timeout: 180000 });   // a page at the origin, nothing of its own to boot
 const W = 240, H = 320;
 const shots = await page.evaluate(async ({ pics, W, H }) => {
-  const [{ Renderer }, m4, Hs, bb, sp, ap] = await Promise.all([
+  const [{ Renderer }, m4, Hs, bb, sp, ap, ar] = await Promise.all([
     import('/src/render/renderer.js'), import('/src/world/mat4.js'), import('/src/player/eyeOfTheBeholder/eotbHolster.js'),
     import('/src/player/eyeOfTheBeholder/eotbBillboard.js'), import('/src/player/eyeOfTheBeholder/eotbSprite.js'), import('/src/render/armoryPose.js'),
+    import('/src/render/auraRing.js'),
   ]);
   const cv = document.createElement('canvas');
   Object.assign(cv.style, { position: 'fixed', left: '0', top: '0', width: `${W}px`, height: `${H}px` });
   document.body.append(cv);
   const r = new Renderer(cv);
   const gl = r.gl;
+  const auras = new ar.AuraRingRenderer(gl);
   const b64 = (s) => Uint8Array.from(atob(s), (ch) => ch.charCodeAt(0));
   const toB64 = (u8) => { let t = ''; for (let i = 0; i < u8.length; i += 0x8000) t += String.fromCharCode(...u8.subarray(i, i + 0x8000)); return btoa(t); };
   const arts = {};
@@ -95,7 +98,7 @@ const shots = await page.evaluate(async ({ pics, W, H }) => {
         const x = (xml.x / xml.scale) * (mirror ? -1 : 1), base = xml.y / xml.scale;
         const u32 = new Uint32Array(pic.colors.buffer);
         const fig = { base, mpp: size.h / pic.height, marks: ap.spriteMarks(u32, pic.width, pic.height, { arms: o % 4 !== 2, art: sp.spriteArtScale(body.archive, rec) }), shift: x };
-        const frame = (withWeapon) => {
+        const frame = (withWeapon, cape = 0) => {   // cape: 1 the cloak drawn over, 2 and the holsters drawn again after it
           r.beginFrame(proj, view, new Float32Array([0.3, -0.9, 0.2]));
           const bodyBatch = r.createBillboardBatch('probe-body', key, size, [[0, 0, 0]]);
           bodyBatch.origin = [right[0] * x, base, right[2] * x];
@@ -106,6 +109,14 @@ const shots = await page.evaluate(async ({ pics, W, H }) => {
             Hs.mintSpriteHolster(l, r);
             r.drawBillboards(l.list, l.right, l.up);
           }
+          if (cape) {   // the aura host's own steps: hung on the sprite as drawn, then the pass
+            const w = { at: [0, 0, 0], seed: 0.37, kindle: 1, aura: 'shadowcloak', torn: -1, yaw: 0 };
+            ar.auraCapeStep(w, { feet: [0, 0, 0], yaw: bb.portrayedYaw(o, [eye[0], 0, eye[2]]), bones: ar.auraSpriteBones(fig) });
+            ar.auraMotionStep(w, 1);
+            auras.draw([w], proj, view, new Float32Array(eye), 1, null);
+            r.markForeignPass();
+            if (cape === 2) Hs.redrawHolstersOver(r, l ? [l] : []);   // the aura host's redraw
+          }
           const px = new Uint8Array(cv.width * cv.height * 4);
           gl.readPixels(0, 0, cv.width, cv.height, gl.RGBA, gl.UNSIGNED_BYTE, px);
           r.destroyBillboardBatch(bodyBatch);
@@ -113,9 +124,19 @@ const shots = await page.evaluate(async ({ pics, W, H }) => {
           return px;
         };
         const plain = frame(false), worn = frame(true);
+        const caped = weapon === 'claymore' ? [frame(true, 1), frame(true, 2)] : null;
         const diff = new Uint8Array(cv.width * cv.height);
         for (let i = 0; i < diff.length; i++) diff[i] = plain[i * 4] !== worn[i * 4] || plain[i * 4 + 1] !== worn[i * 4 + 1] || plain[i * 4 + 2] !== worn[i * 4 + 2] ? 1 : 0;
-        out.push({ body: bodyName, weapon, o, w: cv.width, h: cv.height, worn: toB64(worn), diff: toB64(diff) });
+        // over the weapon's own pixels: how many the cape changed, and how many are still changed after the redraw
+        let tinted = 0, still = 0, shown = 0;
+        if (caped) for (let i = 0; i < diff.length; i++) {
+          if (!diff[i]) continue;
+          shown++;
+          const same = (px) => px[i * 4] === worn[i * 4] && px[i * 4 + 1] === worn[i * 4 + 1] && px[i * 4 + 2] === worn[i * 4 + 2];
+          if (!same(caped[0])) tinted++;
+          if (!same(caped[1])) still++;
+        }
+        out.push({ body: bodyName, weapon, o, w: cv.width, h: cv.height, worn: toB64(caped ? caped[1] : worn), diff: toB64(diff), cape: caped ? { shown, tinted, still } : null });
       }
     }
   }
@@ -145,6 +166,12 @@ for (const body of ['skin', 'layered']) {
     check(`${body} ${weapon}: from the side it stands upright`, [2, 6].every((o) => v[o].n > 0 && Math.abs(v[o].lean) < v[o].tall * 0.15));
     check(`${body} ${weapon}: from the front it is mostly behind the body`, v[0].n < v[4].n * 0.6, `front ${v[0].n} px against the back's ${v[4].n}`);
   }
+}
+for (const body of ['skin', 'layered']) {
+  const v = by(body, 'claymore');
+  check(`${body} claymore under the Shadow Cloak: the cape glows over the weapon from behind, and after the redraw not one of its pixels`,
+    [3, 4, 5].every((o) => v[o].cape.tinted > 20) && v.every((s) => s.cape.still === 0),
+    `tinted ${v.map((s) => s.cape.tinted).join(',')}; still ${v.map((s) => s.cape.still).join(',')} of ${v.map((s) => s.cape.shown).join(',')}`);
 }
 if (SHOTS) {
   // one sheet: a row a body and weapon, the eight views across, each crop the figure's middle

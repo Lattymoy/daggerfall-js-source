@@ -169,5 +169,86 @@
     "tests": [
       "test/player/eyeOfTheBeholder/backholster.test.js"
     ]
+  },
+  {
+    "name": "BACK-HOLSTER-the-origin-shift-misses-it",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "r.lantern?.batch?.origin, r.holster?.batch?.origin, r.paceFeet]",
+    "new": "r.lantern?.batch?.origin, r.paceFeet]",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-OVER-the-redraw-at-LESS",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": "  gl.depthFunc(gl.LEQUAL);\n  try {",
+    "new": "  gl.depthFunc(gl.LESS);\n  try {",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-OVER-a-second-shadow",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": "        b.noShadow = true;\n",
+    "new": "\n",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-OVER-its-shadow-lost",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": "        b.noShadow = false;\n",
+    "new": "\n",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-OVER-a-freed-one-redrawn",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": "        if (!b || b._dead) continue;",
+    "new": "        if (b._dead) continue;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-OVER-the-host-never-asks",
+    "file": "src/scenes/auraHost.js",
+    "old": "if (pass?.drawn) { renderer.markForeignPass(); redrawHolstersOver(renderer, eotbBody.holstersDrawn(), deps.walkers()?.holstersDrawn?.()); }",
+    "new": "if (pass?.drawn) { renderer.markForeignPass(); }",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-OVER-the-host-forgets-the-walkers",
+    "file": "src/scenes/auraHost.js",
+    "old": "redrawHolstersOver(renderer, eotbBody.holstersDrawn(), deps.walkers()?.holstersDrawn?.());",
+    "new": "redrawHolstersOver(renderer, eotbBody.holstersDrawn());",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-OVER-my-own-never-said",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "    holstersDrawn() { return holsterDrawn ? holsterList : noHolsters; },",
+    "new": "    holstersDrawn() { return noHolsters; },",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-OVER-the-walkers-never-say",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "    holstersDrawn: () => slung,",
+    "new": "    holstersDrawn: () => [],",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
   }
 ]

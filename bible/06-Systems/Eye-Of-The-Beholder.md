@@ -1198,15 +1198,32 @@ plane: from behind it leans to the right shoulder, from the front the other way 
 upright and shorter. From the front the body's card hides it but the hilt and the tip. From the side and behind it lies
 3 cm toward the eye: drawn behind the card there, a longsword vanished into the side view's profile.
 
+**Over the aura** (Mac, the same day: "if a cape aura is present, the holster should appear over the aura"). The auras
+draw after the bodies as added light that writes no depth, so the Shadow Cloak's cape glowed over the weapon from behind.
+After the aura pass, `scenes/auraHost.js` draws again the holsters each owner drew this frame (`eotbBody.holstersDrawn`,
+the walkers' `holstersDrawn`): `redrawHolstersOver` at LEQUAL, so each passes exactly where it stood and stays hidden where
+the body hid it, with no second shadow and LESS given back. A per-frame list in the module was tried first: the
+renderer's `_frameStamp` is no frame count (LA-COST1 bumps it on every setter), and the probe caught the redraw doing
+nothing.
+
+**Drawn in the hand, none on the back.** My sprite reads the rig's own word (`weaponRig.js` `eotbState`, `sheathed`); a
+spell readied over a sheathed weapon keeps it there. A walker's `wd` 1 or 2 (a weapon or a bow drawn) takes it off.
+
 **Where.** `player/eyeOfTheBeholder/eotbHolster.js` (the law, the picture, the store, the hang, the batch);
 `eotbBody.js` draws mine after the body (`drawHolster`); `net/peer/peerRiders.js` hangs each walker's (`slingHolster`)
-and draws it in `drawLanterns`, beside the bodies. No host changed. **Known limits.** Layered Gearing's art holds its
+and draws it in `drawLanterns`, beside the bodies; `scenes/auraHost.js` draws both again over the auras. No host
+function grew. **Known limits.** Layered Gearing's art holds its
 mace in every frame, so a sheathed layered body shows the mace in hand and the weapon on its back. A flail stands on
-its handle with its chain and ball off to the side. Not yet checked in the running game.
+its handle with its chain and ball off to the side. The cape hangs from the sprite's feet (`auraSpriteBones` reads no
+marks), the holster from its painted body, so in a side view whose sword arm stretches the picture the two stand apart.
+Not yet checked in the running game.
 
 **Pins.** `test/player/eyeOfTheBeholder/backholster.test.js` (which weapons; the picture stood up, end and side kept;
 the slant, length, face and depth in all eight views and three facings; glued to the picture; the store; my body's
-gates; the walkers'); `tools/mutants/backholster.json` (nineteen, all killed). Three records in `htwaist.json` and
+gates in the rig's own words; the walkers', a drawn bow and the floating origin; the redraw over the aura and the
+host's order); `tools/mutants/backholster.json` (twenty-eight, all killed). Three records in `htwaist.json` and
 `seraphwings.json` re-aimed by content at the lines this touched. `tools/backHolsterProbe.mjs` draws it in the real
-renderer (the game's mirrored lens) on a skin and on Layered Gearing with five weapons from ARENA2, eight views each:
-30 checks that it leans to the right shoulder from behind, stands upright from the side and hides in front.
+renderer (the game's mirrored lens) on a skin and on Layered Gearing with five weapons from ARENA2, eight views each,
+and the claymore under the Shadow Cloak through the real aura pass: 32 checks - it leans to the right shoulder from
+behind, stands upright from the side, hides in front, and after the redraw no pixel of it is tinted by the cape (up
+to 416 were before).

@@ -7,8 +7,9 @@ import assert from 'node:assert/strict';
 
 import {
   HOLSTER_HAND_SLOT, BACK_HOLSTER, PAPERDOLL_MPP, holstersOnBack, holsterItemOfLook, uprightWeaponPicture, hangSpriteHolster,
-  createSpriteHolster, createHolsterArt, HOLSTER_ART_KEPT,
+  createSpriteHolster, createHolsterArt, HOLSTER_ART_KEPT, redrawHolstersOver, mintSpriteHolster, dropSpriteHolster,
 } from '../../../src/player/eyeOfTheBeholder/eotbHolster.js';
+import { readFileSync } from 'node:fs';
 import { EOTB_FIGURE } from '../../../src/render/auraRing.js';
 import { EQUIP_SLOTS } from '../../../src/systems/equip.js';
 import { createEotbBody } from '../../../src/player/eyeOfTheBeholder/eotbBody.js';
@@ -167,20 +168,23 @@ test('BACK-HOLSTER hang: glued to the picture - turning the eye within one view 
 
 function recordingRenderer() {
   return {
+    _frameStamp: 1, depth: [],
+    gl: { LESS: 513, LEQUAL: 515, depthFunc(f) { this.owner.depth.push(f); }, owner: null },
     uploads: [], batches: [], draws: [], destroyed: [], evicted: [], textures: new Map(),
     uploadTexture(archive, rec, img) { this.uploads.push({ archive, rec, img }); this.textures.set(`${archive}_${rec}`, img); },
     evictTexture(key) { this.evicted.push(key); this.textures.delete(key); },
     createBillboardBatch(archive, record, size) { const b = { archive, record, size: { ...size }, origin: [0, 0, 0] }; this.batches.push(b); return b; },
     destroyBillboardBatch(b) { this.destroyed.push(b); },
-    drawBillboards(batches, right, up) { this.draws.push({ batch: batches[0], archive: batches[0].archive, record: batches[0].record, right: [...right], up: [...up] }); },
+    drawBillboards(batches, right, up) { this.draws.push({ batch: batches[0], archive: batches[0].archive, record: batches[0].record, right: [...right], up: [...up], noShadow: !!batches[0].noShadow, depth: this.depth.at(-1) ?? 513 }); },
   };
 }
+const renderer = () => { const r = recordingRenderer(); r.gl.owner = r; return r; };
 const isHolster = (a) => typeof a === 'string' && a.startsWith('eotb-holster:');
 const PIC = uprightWeaponPicture(picture(40, 64, (x, y) => (Math.abs(x - 20) <= 1 && y <= 60) || (x >= 21 && x <= 34 && y >= 44 && y <= 58)));
 const LONGSWORD = { templateIndex: 120, group: 'Weapons', equipSlot: 19, material: 1 };
 
 test('BACK-HOLSTER picture store: asked once while it loads, uploaded as drawn and mirrored, kept to HOLSTER_ART_KEPT (the oldest let go from the renderer), uploaded again when the renderer let it go (mutants: asked every frame; no eviction)', async () => {
-  const r = recordingRenderer();
+  const r = renderer();
   let asked = 0;
   const store = createHolsterArt(() => r, async () => { asked++; return PIC; });
   for (let i = 0; i < 3; i++) assert.equal(store.ensure(LONGSWORD, null), null);   // no wearer named: the pack's default
@@ -198,7 +202,7 @@ test('BACK-HOLSTER picture store: asked once while it loads, uploaded as drawn a
 });
 
 async function liveBody(item = LONGSWORD) {
-  const r = recordingRenderer();
+  const r = renderer();
   let weapon = item;
   const b = createEotbBody({
     count: () => 3035, urlFor: (k) => `/art/${k}.png`,
@@ -233,9 +237,10 @@ test('BACK-HOLSTER (your sprite): sheathed, the weapon is drawn on the back from
     assert.equal(b.state().holster.drawn, true);
   }
   const drawnWith = (extra) => { const before = r.draws.length; viewFrom(b, 4, extra); return r.draws.slice(before).some((d) => isHolster(d.archive)); };
-  assert.equal(drawnWith({ weaponReady: true }), false, 'drawn in the hand: not on the back');
+  assert.equal(drawnWith({ sheathed: false, weaponReady: true }), false, 'drawn in the hand (the rig\'s own words, weaponRig.js eotbState): not on the back');
   assert.equal(b.state().holster.batch, false, 'and its batch let go');
   assert.equal(drawnWith({}), true, 'sheathed again: on the back again');
+  assert.equal(drawnWith({ sheathed: true, weaponReady: true, spellcasting: true }), true, 'a spell readied over a sheathed weapon: still on the back');
   assert.equal(drawnWith({ riding: true }), false, 'in the saddle: the horse\'s picture, no back');
   assert.equal(drawnWith({ transformed: true, lycanthropyType: 1 }), false, 'a beast carries nothing');
   wield({ ...LONGSWORD, templateIndex: 113 });
@@ -252,14 +257,14 @@ test('BACK-HOLSTER (your sprite): sheathed, the weapon is drawn on the back from
   assert.equal(drawnWith({}), false, 'first person: no back to see');
 });
 
-test('BACK-HOLSTER (the others): a walker whose look holds a back weapon in the weapon hand carries it, sheathed (`wd` 0), drawn beside the lanterns - not drawn (`wd` 1), not a dagger, and its batch goes with the walker (mutants: the walkers never sling it; wd ignored)', async () => {
-  const renderer = recordingRenderer();
+test('BACK-HOLSTER (the others): a walker whose look holds a back weapon in the weapon hand carries it, sheathed (`wd` 0), drawn beside the lanterns - not with its weapon or bow drawn (`wd` 1, 2), not a dagger; it follows the floating origin and goes with the walker (mutants: the walkers never sling it; wd ignored; the origin shift misses it)', async () => {
+  const rr = renderer();
   let asked = 0;
-  const art = createEotbArt({ renderer, urlFor: (k) => `u:${k}`, decode: async () => ({ width: 50, height: 110, colors: new Uint32Array(50 * 110) }), loadHolster: async () => { asked++; return PIC; } });
+  const art = createEotbArt({ renderer: rr, urlFor: (k) => `u:${k}`, decode: async () => ({ width: 50, height: 110, colors: new Uint32Array(50 * 110) }), loadHolster: async () => { asked++; return PIC; } });
   const w = createPeerWalkers({ art });
   const pose = (o = {}) => ({ x: FEET[0], y: FEET[1], z: FEET[2], yaw: 0, pitch: 0, mv: 0, wd: 0, an: 0, sr: 0, cn: 0, ar: 0, ...o });
   const walker = (o = {}, items = [LONGSWORD]) => ({ id: 'p1', look: { eo: 2, gender: 'male', race: 'Breton', items }, shown: pose(o) });
-  const frame = (peers, o) => { const cam = cameraFor(o, FEET); w.sync(peers, (p) => [p.x, p.y, p.z], { eye: cam.eye, right: cam.right, dt: 1 / 60 }); const before = renderer.draws.length; w.drawLanterns(); return renderer.draws.slice(before).filter((d) => isHolster(d.archive)); };
+  const frame = (peers, o) => { const cam = cameraFor(o, FEET); w.sync(peers, (p) => [p.x, p.y, p.z], { eye: cam.eye, right: cam.right, dt: 1 / 60 }); const before = rr.draws.length; w.drawLanterns(); return rr.draws.slice(before).filter((d) => isHolster(d.archive)); };
   frame([walker()], 4); await settle(); frame([walker()], 4); await settle();
   for (const o of EIGHT) {
     const d = frame([walker()], o);
@@ -267,10 +272,47 @@ test('BACK-HOLSTER (the others): a walker whose look holds a back weapon in the 
     assert.equal(d[0].record, [0, 1, 7].includes(o) ? 1 : 0, `view ${o}: its face`);
   }
   assert.equal(asked, 1, 'the picture asked once');
-  assert.equal(frame([walker({ wd: 1 })], 4).length, 0, 'drawn: in the hand, not on the back');
+  assert.equal(frame([walker({ wd: 1 })], 4).length, 0, 'its weapon drawn: in the hand, not on the back');
+  assert.equal(w.walkers.get('p1').holster, null, 'and its batch let go');
+  assert.equal(frame([walker({ wd: 2 }, [{ ...LONGSWORD, templateIndex: 130 }])], 4).length, 0, 'its bow drawn: not on the back');
+  frame([walker({}, [{ ...LONGSWORD, templateIndex: 130 }])], 4); await settle();   // the bow's own picture, asked
+  assert.equal(frame([walker({}, [{ ...LONGSWORD, templateIndex: 130 }])], 4).length, 1, 'its bow put away: on the back');
   assert.equal(frame([walker({}, [{ ...LONGSWORD, templateIndex: 113 }])], 4).length, 0, 'a dagger');
   assert.equal(frame([walker()], 4).length, 1);
-  const batch = w.walkers.get('p1').holster.batch;
+  assert.equal(w.holstersDrawn().length, 1, 'over the aura: the walkers say what they drew this frame');
+  frame([walker({ wd: 1 })], 4);
+  assert.equal(w.holstersDrawn().length, 0);
+  frame([walker()], 4); await settle(); frame([walker()], 4);
+  const batch = w.walkers.get('p1').holster.batch, at = [...batch.origin];
+  w.offsetAll([10, 0, -4]);
+  assert.deepEqual(batch.origin, [at[0] + 10, at[1], at[2] - 4], 'the floating origin moved: the weapon with the walker');
   frame([], 4);
-  assert.ok(renderer.destroyed.includes(batch), 'the walker gone, its weapon\'s batch freed');
+  assert.ok(rr.destroyed.includes(batch), 'the walker gone, its weapon\'s batch freed');
+});
+
+test('BACK-HOLSTER over the aura: the holsters each owner drew this frame - mine and the walkers\' - drawn again after the aura pass, at LEQUAL with no second shadow and LESS given back; a freed one skipped; the aura host asks both after the capes and before the armory over them (mutants: LESS kept; a second shadow; the shadow lost; the host never asks; an owner never says)', async () => {
+  const r = renderer();
+  const a = createSpriteHolster(), b = createSpriteHolster(), gone = createSpriteHolster(), c = cameraFor(4, FEET);
+  for (const l of [a, b, gone]) { hangSpriteHolster(l, FIG, 4, FEET, c.eye, c.right, ART); mintSpriteHolster(l, r); }
+  dropSpriteHolster(gone, r);
+  assert.equal(redrawHolstersOver(r, [a], [b, gone]), 2, 'both owners\' - never a freed one');
+  assert.deepEqual(r.draws.map((d) => [d.batch === a.batch || d.batch === b.batch, d.depth, d.noShadow]), [[true, 515, true], [true, 515, true]], 'at LEQUAL, casting nothing twice');
+  assert.deepEqual(r.depth, [515, 513], 'and LESS, the baseline, given back');
+  assert.equal(a.batch.noShadow, false, 'its own shadow kept for the next frame');
+  assert.equal(redrawHolstersOver(r, [], undefined), 0, 'none drawn: nothing touched');
+  assert.deepEqual(r.depth, [515, 513]);
+  // my own body says what it drew this frame
+  const { b: body, r: br } = await liveBody();
+  const behind = cameraFor(4, [0, 0, 0]);
+  for (let i = 0; i < 12; i++) body.tick(1 / 60, { ...bodyState(behind), motion: { forward: 1, standing: false, speed: 5, grounded: true, height: 1.8 } });
+  viewFrom(body, 4); await settle(); viewFrom(body, 4);
+  assert.equal(body.holstersDrawn().length, 1, 'mine, drawn this frame');
+  const n = br.draws.length;
+  assert.equal(redrawHolstersOver(br, body.holstersDrawn()), 1);
+  assert.ok(isHolster(br.draws[n].archive));
+  viewFrom(body, 4, { sheathed: false, weaponReady: true });
+  assert.equal(body.holstersDrawn().length, 0, 'drawn in the hand: none to draw again');
+  const host = readFileSync(new URL('../../../src/scenes/auraHost.js', import.meta.url), 'utf8');
+  const capes = host.indexOf('pass?.draw(auraDraw'), over = host.indexOf('redrawHolstersOver(renderer, eotbBody.holstersDrawn(), deps.walkers()?.holstersDrawn?.())'), armory = host.indexOf('drawArmory(armoryOver');
+  assert.ok(capes > 0 && over > capes && armory > over, 'scenes/auraHost.js: mine and the walkers\', after the capes, before the armory drawn over them');
 });
