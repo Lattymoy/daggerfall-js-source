@@ -101,8 +101,8 @@
   {
     "name": "TOUCH-HOLD-no-knife-use",
     "file": "src/systems/foraging/foragingInstall.js",
-    "old": "  registerItemUseHandler(SKINNING_KNIFE.templateIndex, knifeUse);\n",
-    "new": "",
+    "old": "  registerItemUseHandler(SKINNING_KNIFE.templateIndex, knifeUse);\n  const eat = (item, collection, ctx) => eatForagingFood(item, collection, ctx);",
+    "new": "  const eat = (item, collection, ctx) => eatForagingFood(item, collection, ctx);",
     "tests": [
       "test/systems/fb1001_touchhold.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "TOUCH-HOLD-the-knife-usable-offline",
     "file": "src/systems/foraging/foragingInstall.js",
-    "old": "knifeUse.usable = (item) => !!professionToolLine(item?.templateIndex);",
-    "new": "knifeUse.usable = () => true;",
+    "old": "  knifeUse.usable = (item) => !!professionToolLine(item?.templateIndex);",
+    "new": "  knifeUse.usable = () => true;",
     "tests": [
       "test/systems/fb1001_touchhold.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "TOUCH-HOLD-the-knife-line-unsaid",
     "file": "src/systems/foraging/foragingInstall.js",
-    "old": "  [SKINNING_KNIFE.templateIndex]: (k) => `Hunting is done at a body",
-    "new": "  [-1]: (k) => `Hunting is done at a body",
+    "old": "  [SKINNING_KNIFE.templateIndex]: (k) =>",
+    "new": "  [-1]: (k) =>",
     "tests": [
       "test/systems/fb1001_touchhold.test.js"
     ]

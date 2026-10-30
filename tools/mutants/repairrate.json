@@ -208,8 +208,8 @@
   {
     "name": "AUDIT-ECON-R3-a-tool-line-said-twice",
     "file": "src/systems/foraging/foragingInstall.js",
-    "old": "text: how, said: true };",
-    "new": "text: how };",
+    "old": "    return { kind: 'foraging', refused: true, text: how, said: true }; // AUDIT ECON R3: said - the hotbar never says it twice",
+    "new": "    return { kind: 'foraging', refused: true, text: how }; // AUDIT ECON R3: said - the hotbar never says it twice",
     "tests": [
       "test/systems/fb0930b_toolsaid.test.js"
     ]

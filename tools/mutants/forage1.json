@@ -11,8 +11,8 @@
   {
     "name": "FORAGE1-2-the-load-refuses-only-past-the-maximum",
     "file": "src/systems/foraging/foragingLaw.js",
-    "old": "    case 'encumbered': return w.carriedWeight >= w.maxEncumbrance;",
-    "new": "    case 'encumbered': return w.carriedWeight > w.maxEncumbrance;",
+    "old": "      return w.carriedWeight >= w.maxEncumbrance;",
+    "new": "      return w.carriedWeight > w.maxEncumbrance;",
     "tests": [
       "test/systems/foraging/forage1_law.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "FORAGE1-3-the-net-asks-water-before-enemies",
     "file": "src/systems/foraging/foragingLaw.js",
-    "old": "Object.freeze(['inside', 'dungeon', 'town', 'daylight', 'enemies', 'encumbered', 'water'])",
-    "new": "Object.freeze(['inside', 'dungeon', 'town', 'daylight', 'water', 'enemies', 'encumbered'])",
+    "old": "  [FT.FishingNet]: Object.freeze(['inside', 'dungeon', 'town', 'daylight', 'enemies', 'encumbered', 'water']), // IL_1aa4-IL_1c45",
+    "new": "  [FT.FishingNet]: Object.freeze(['inside', 'dungeon', 'town', 'daylight', 'water', 'enemies', 'encumbered']), // IL_1aa4-IL_1c45",
     "tests": [
       "test/systems/foraging/forage1_law.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "FORAGE1-6-a-wood-axe-list-drifts",
     "file": "src/systems/foraging/foragingLaw.js",
-    "old": "other: Object.freeze([[0, 0, 0, 1, 2], [0, 0, 1, 2, 3], [0, 1, 2, 3, 4], [1, 2, 3, 4, 4]]",
-    "new": "other: Object.freeze([[0, 0, 0, 1, 2], [0, 0, 1, 2, 2], [0, 1, 2, 3, 4], [1, 2, 3, 4, 4]]",
+    "old": "      [0, 0, 1, 2, 3],",
+    "new": "      [0, 0, 1, 2, 2],",
     "tests": [
       "test/systems/foraging/forage1_law.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "FORAGE1-9-the-fatigue-floor-is-zero",
     "file": "src/systems/foraging/foragingLaw.js",
-    "old": "export const reduceFatigueBy = (current, max, percent) => Math.max(1, Math.trunc(current - max * percent / 100));",
-    "new": "export const reduceFatigueBy = (current, max, percent) => Math.max(0, Math.trunc(current - max * percent / 100));",
+    "old": "export const reduceFatigueBy = (current, max, percent) => Math.max(1, Math.trunc(current - (max * percent) / 100));",
+    "new": "export const reduceFatigueBy = (current, max, percent) => Math.max(0, Math.trunc(current - (max * percent) / 100));",
     "tests": [
       "test/systems/foraging/forage1_law.test.js",
       "test/systems/forage2_tools.test.js"
@@ -129,8 +129,8 @@
   {
     "name": "FORAGE1-15-the-switch-is-ignored",
     "file": "src/systems/foraging/foragingInstall.js",
-    "old": "  if (!foragingOn() || !entity) return null;\n  const w = worldNow();",
-    "new": "  if (!entity) return null;\n  const w = worldNow();",
+    "old": "  }\n  if (!foragingOn() || !entity) return null;",
+    "new": "  }\n  if (!entity) return null;",
     "tests": [
       "test/systems/forage2_tools.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "FORAGE1-17-a-food-gives-raw-fatigue",
     "file": "src/systems/foraging/foragingInstall.js",
-    "old": "(entity.fatigue ?? 0) + f.fatigue * FATIGUE_MULTIPLIER);",
-    "new": "(entity.fatigue ?? 0) + f.fatigue);",
+    "old": "  entity.fatigue = Math.min(maxFatigue(entity), (entity.fatigue ?? 0) + f.fatigue * FATIGUE_MULTIPLIER); // IncreaseFatigue(n, true)",
+    "new": "  entity.fatigue = Math.min(maxFatigue(entity), (entity.fatigue ?? 0) + f.fatigue); // IncreaseFatigue(n, true)",
     "tests": [
       "test/systems/forage2_tools.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "FORAGE1-18-a-refusal-wears-the-tool",
     "file": "src/systems/foraging/foragingInstall.js",
-    "old": "    hudText(refusal);\n    return { kind: 'foraging', refused: true };",
-    "new": "    hudText(refusal);\n    wear(item, collection, entity);\n    return { kind: 'foraging', refused: true };",
+    "old": "    return { kind: 'foraging', refused: true }; // DFU's false falls to NextVariant: nothing visible",
+    "new": "    wear(item, collection, entity);\n    return { kind: 'foraging', refused: true }; // DFU's false falls to NextVariant: nothing visible",
     "tests": [
       "test/systems/forage2_tools.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "FORAGE1-21-the-list-left-unmended",
     "file": "src/systems/foraging/foragingLaw.js",
-    "old": "    { old: ', Commoner, ', new: ', Commoners, ', count: 2 },",
-    "new": "    { old: ', Commoner, ', new: ', Commoner, ', count: 2 },",
+    "old": "      { old: ', Commoner, ', new: ', Commoners, ', count: 2 },",
+    "new": "      { old: ', Commoner, ', new: ', Commoner, ', count: 2 },",
     "tests": [
       "test/systems/foraging/forage1_law.test.js",
       "test/systems/quest/foragefix.test.js"
@@ -202,8 +202,8 @@
   {
     "name": "FORAGE1-23-an-unpatched-nan-refuses",
     "file": "src/systems/foraging/foragingLaw.js",
-    "old": "    case 'encumbered': return w.carriedWeight >= w.maxEncumbrance;",
-    "new": "    case 'encumbered': return !(w.carriedWeight < w.maxEncumbrance);",
+    "old": "      return w.carriedWeight >= w.maxEncumbrance;",
+    "new": "      return !(w.carriedWeight < w.maxEncumbrance);",
     "tests": [
       "test/systems/foraging/forage1_law.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "FORAGE1-28-a-food-eaten-off-the-stack",
     "file": "src/systems/foraging/foragingInstall.js",
-    "old": "  if (collection) { const i = collection.indexOf(item); if (i >= 0) collection.splice(i, 1); }   // RemoveItem(this)",
-    "new": "  if (collection && (item.stackCount ?? 1) > 1) item.stackCount -= 1; else if (collection) { const i = collection.indexOf(item); if (i >= 0) collection.splice(i, 1); }   // RemoveItem(this)",
+    "old": "  if (f.magicka) entity.magicka = Math.min(entity.maxMagicka ?? Infinity, (entity.magicka ?? 0) + f.magicka); // IncreaseMagicka\n  if (collection) {",
+    "new": "  if (f.magicka) entity.magicka = Math.min(entity.maxMagicka ?? Infinity, (entity.magicka ?? 0) + f.magicka); // IncreaseMagicka\n  if (collection && (item.stackCount ?? 1) > 1) item.stackCount -= 1;\n  else if (collection) {",
     "tests": [
       "test/systems/forage2_tools.test.js"
     ]

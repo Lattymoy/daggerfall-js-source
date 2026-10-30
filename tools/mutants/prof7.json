@@ -225,8 +225,8 @@
   {
     "name": "PROF7-broke-as-a-tool",
     "file": "src/systems/foraging/foragingLaw.js",
-    "old": "?.name ?? name ?? 'tool'} broke.`;",
-    "new": "?.name ?? 'tool'} broke.`;",
+    "old": "  `Your ${FORAGING_TEMPLATES.find((t) => t.index === templateIndex)?.name ?? name ?? 'tool'} broke.`; // PROF7: a tool not Foraging's by its own name (the Skinning Knife)",
+    "new": "  `Your ${FORAGING_TEMPLATES.find((t) => t.index === templateIndex)?.name ?? 'tool'} broke.`; // PROF7: a tool not Foraging's by its own name (the Skinning Knife)",
     "tests": [
       "test/net/prof7_law.test.js"
     ]

@@ -110,6 +110,8 @@
 /src/systems/festival/*/
 !/src/systems/firstVisit/
 /src/systems/firstVisit/*/
+!/src/systems/foraging/
+/src/systems/foraging/*/
 !/src/systems/gambit/
 /src/systems/gambit/*/
 !/src/systems/grammar/
