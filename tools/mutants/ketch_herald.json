@@ -11,8 +11,8 @@
   {
     "name": "KTH-the-family-another",
     "file": "src/net/herald/heraldCard.js",
-    "old": "ketch: Object.freeze({ name: 'The Sky-Ketch', colour: 0x7cc4ff,",
-    "new": "ketch: Object.freeze({ name: 'The Ketch', colour: 0x7cc4ff,",
+    "old": "  ketch: Object.freeze({ name: 'The Sky-Ketch', colour: 0x7cc4ff, thread: 'ktThread' }), // KETCH: her ring on the map (ui/ketch/ketchMapMark.js KT_RING_CSS)",
+    "new": "  ketch: Object.freeze({ name: 'The Ketch', colour: 0x7cc4ff, thread: 'ktThread' }), // KETCH: her ring on the map (ui/ketch/ketchMapMark.js KT_RING_CSS)",
     "tests": [
       "test/net/ketch/ketch_herald.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "KTH-her-colour-not-her-ring",
     "file": "src/net/herald/heraldCard.js",
-    "old": "ketch: Object.freeze({ name: 'The Sky-Ketch', colour: 0x7cc4ff,",
-    "new": "ketch: Object.freeze({ name: 'The Sky-Ketch', colour: 0x7cc4fe,",
+    "old": "  ketch: Object.freeze({ name: 'The Sky-Ketch', colour: 0x7cc4ff, thread: 'ktThread' }), // KETCH: her ring on the map (ui/ketch/ketchMapMark.js KT_RING_CSS)",
+    "new": "  ketch: Object.freeze({ name: 'The Sky-Ketch', colour: 0x7cc4fe, thread: 'ktThread' }), // KETCH: her ring on the map (ui/ketch/ketchMapMark.js KT_RING_CSS)",
     "tests": [
       "test/net/ketch/ketch_herald.test.js"
     ]

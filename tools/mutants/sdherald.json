@@ -11,8 +11,8 @@
   {
     "name": "SD-HERALD-every-mention",
     "file": "src/net/herald/heraldCard.js",
-    "old": "allowed_mentions: r ? { roles: [r] } : { parse: [] }",
-    "new": "allowed_mentions: { parse: ['everyone', 'roles', 'users'] }",
+    "old": "  const body = { embeds: [embed], allowed_mentions: r ? { roles: [r] } : { parse: [] } };",
+    "new": "  const body = { embeds: [embed], allowed_mentions: { parse: ['everyone', 'roles', 'users'] } };",
     "tests": [
       "test/net/superDungeon/sdherald.test.js"
     ]

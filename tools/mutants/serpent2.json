@@ -20,8 +20,8 @@
   {
     "name": "SERPENT2-bells-every-mention",
     "file": "src/net/herald/heraldCard.js",
-    "old": "allowed_mentions: r ? { roles: [r] } : { parse: [] }",
-    "new": "allowed_mentions: { parse: ['everyone', 'roles', 'users'] }",
+    "old": "  const body = { embeds: [embed], allowed_mentions: r ? { roles: [r] } : { parse: [] } };",
+    "new": "  const body = { embeds: [embed], allowed_mentions: { parse: ['everyone', 'roles', 'users'] } };",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SERPENT2-name-taken-raw",
     "file": "src/net/herald/heraldCard.js",
-    "old": ".map(heraldName).filter(Boolean)",
-    "new": ".map(String).filter(Boolean)",
+    "old": "  const shown = (Array.isArray(names) ? names : []).map(heraldName).filter(Boolean);",
+    "new": "  const shown = (Array.isArray(names) ? names : []).map(String).filter(Boolean);",
     "tests": [
       "test/net/serpent/serpent2_herald.test.js"
     ]

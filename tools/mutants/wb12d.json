@@ -2929,8 +2929,8 @@
   {
     "name": "AUDIT-WB12d-T-herald-rite-names-raw",
     "file": "src/net/herald/heraldCard.js",
-    "old": ".map(heraldName).filter(Boolean)",
-    "new": ".filter(Boolean)",
+    "old": "  const shown = (Array.isArray(names) ? names : []).map(heraldName).filter(Boolean);",
+    "new": "  const shown = (Array.isArray(names) ? names : []).filter(Boolean);",
     "tests": [
       "test/net/gate/wb12d_rite_relay.test.js",
       "test/net/gate/discordgates.test.js",

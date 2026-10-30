@@ -2,7 +2,7 @@
   {
     "name": "DISCORD-GATES-any-https-a-webhook",
     "file": "src/net/herald/heraldCard.js",
-    "old": "const WEBHOOK_RE = /^https:\\/\\/(?:(?:ptb|canary)\\.)?discord(?:app)?\\.com\\/api(?:\\/v\\d{1,2})?\\/webhooks\\/\\d{1,20}\\/[A-Za-z0-9_-]{1,128}$/;",
+    "old": "const WEBHOOK_RE =\n  /^https:\\/\\/(?:(?:ptb|canary)\\.)?discord(?:app)?\\.com\\/api(?:\\/v\\d{1,2})?\\/webhooks\\/\\d{1,20}\\/[A-Za-z0-9_-]{1,128}$/;",
     "new": "const WEBHOOK_RE = /^https:\\/\\/\\S+$/;",
     "tests": [
       "test/net/gate/discordgates.test.js"
@@ -11,8 +11,8 @@
   {
     "name": "DISCORD-GATES-the-role-taken-unread",
     "file": "src/net/herald/heraldCard.js",
-    "old": "export const heraldRole = (raw) => { const s = String(raw ?? '').trim(); return SNOWFLAKE_RE.test(s) ? s : null; };",
-    "new": "export const heraldRole = (raw) => { const s = String(raw ?? '').trim(); return s || null; };",
+    "old": "export const heraldRole = (raw) => {\n  const s = String(raw ?? '').trim();\n  return SNOWFLAKE_RE.test(s) ? s : null;\n};",
+    "new": "export const heraldRole = (raw) => {\n  const s = String(raw ?? '').trim();\n  return s || null;\n};",
     "tests": [
       "test/net/gate/discordgates.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "DISCORD-GATES-every-mention-allowed",
     "file": "src/net/herald/heraldCard.js",
-    "old": "allowed_mentions: r ? { roles: [r] } : { parse: [] }",
-    "new": "allowed_mentions: { parse: ['everyone', 'roles', 'users'] }",
+    "old": "  const body = { embeds: [embed], allowed_mentions: r ? { roles: [r] } : { parse: [] } };",
+    "new": "  const body = { embeds: [embed], allowed_mentions: { parse: ['everyone', 'roles', 'users'] } };",
     "tests": [
       "test/net/gate/discordgates.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "DISCORD-GATES-the-others-miscounted",
     "file": "src/net/herald/heraldCard.js",
-    "old": "Math.max(0, n - shown.length)",
-    "new": "Math.max(0, n)",
+    "old": "  const others = Number.isSafeInteger(n) ? Math.max(0, n - shown.length) : 0;",
+    "new": "  const others = Number.isSafeInteger(n) ? Math.max(0, n) : 0;",
     "tests": [
       "test/net/gate/discordgates.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "DISCORD-GATES-a-name-posted-raw",
     "file": "src/net/herald/heraldCard.js",
-    "old": "String(n ?? '').replace(/[^A-Za-z0-9 '-]/g, '')",
-    "new": "String(n ?? '')",
+    "old": "    .replace(/[^A-Za-z0-9 '-]/g, '')\n    .replace(/\\s+/g, ' ')",
+    "new": "    .replace(/\\s+/g, ' ')",
     "tests": [
       "test/net/gate/discordgates.test.js"
     ]
