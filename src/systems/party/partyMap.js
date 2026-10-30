@@ -36,8 +36,20 @@ export const hasSharedCartography = (entity) => hasActiveEffect(entity, SHARED_C
 
 /** The ready-made spell the spell shop sells online: Shared Cartography, on the caster, Magic. */
 export function sharedCartographySpell() {
-  return buildCustomSpell({ slots: [{ type: SHARED_CARTOGRAPHY_TYPE, subType: SHARED_CARTOGRAPHY_SUBTYPE, settings: { ...SHARED_CARTOGRAPHY_DURATION } }],
-    rangeType: 0, element: 4, name: 'Shared Cartography', icon: 21, index: SHARED_CARTOGRAPHY_SPELL_INDEX });
+  return buildCustomSpell({
+    slots: [
+      {
+        type: SHARED_CARTOGRAPHY_TYPE,
+        subType: SHARED_CARTOGRAPHY_SUBTYPE,
+        settings: { ...SHARED_CARTOGRAPHY_DURATION },
+      },
+    ],
+    rangeType: 0,
+    element: 4,
+    name: 'Shared Cartography',
+    icon: 21,
+    index: SHARED_CARTOGRAPHY_SPELL_INDEX,
+  });
 }
 
 /**
@@ -58,10 +70,21 @@ export function createPartyMapSender({ sendMs = AMAP_SEND_MS, max = AMAP_KEYS_MA
   let syncAt = -Infinity;
   return {
     next({ active, inDungeon, partied = true, key: k, rec, nowMs }) {
-      if (!inDungeon || !k || !rec) { key = null; sent = new Set(); return null; }   // left: the next dungeon starts whole
-      if (k !== key) { key = k; sent = new Set(); syncAt = nowMs; }
+      if (!inDungeon || !k || !rec) {
+        key = null;
+        sent = new Set();
+        return null;
+      } // left: the next dungeon starts whole
+      if (k !== key) {
+        key = k;
+        sent = new Set();
+        syncAt = nowMs;
+      }
       if (!active || !partied) return null;
-      if (nowMs - syncAt >= resyncMs) { sent = new Set(); syncAt = nowMs; }   // AUDIT PARTY-MAP F2: the whole map again
+      if (nowMs - syncAt >= resyncMs) {
+        sent = new Set();
+        syncAt = nowMs;
+      } // AUDIT PARTY-MAP F2: the whole map again
       if (nowMs - lastAt < sendMs) return null;
       const r = [];
       for (const row of rec.visitedThisRun ?? []) {
@@ -77,6 +100,8 @@ export function createPartyMapSender({ sendMs = AMAP_SEND_MS, max = AMAP_KEYS_MA
       for (const row of frame.r) sent.add(row);
     },
     /** How many rows have gone for the dungeon now held (tests and the console). */
-    get sentCount() { return sent.size; },
+    get sentCount() {
+      return sent.size;
+    },
   };
 }

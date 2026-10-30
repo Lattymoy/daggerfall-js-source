@@ -186,8 +186,8 @@
   {
     "name": "AUDITREST3-C1-the-debt-never-asked",
     "file": "src/systems/party/partyRestLaw.js",
-    "old": "(now - rec.answered >= gapMs || !!(typeof due === 'function' ? due() : due))",
-    "new": "(now - rec.answered >= gapMs)",
+    "old": "      const move =\n        nightMoved(rec.high, at, now, isNight, freshMs) &&\n        (now - rec.answered >= gapMs || !!(typeof due === 'function' ? due() : due));",
+    "new": "      const move = nightMoved(rec.high, at, now, isNight, freshMs) && now - rec.answered >= gapMs;",
     "tests": [
       "test/systems/auditrest3.test.js"
     ]
@@ -195,8 +195,8 @@
   {
     "name": "AUDITREST3-C1-always-owed",
     "file": "src/systems/party/partyRestLaw.js",
-    "old": "(now - rec.answered >= gapMs || !!(typeof due === 'function' ? due() : due))",
-    "new": "(now - rec.answered >= gapMs || true)",
+    "old": "      const move =\n        nightMoved(rec.high, at, now, isNight, freshMs) &&\n        (now - rec.answered >= gapMs || !!(typeof due === 'function' ? due() : due));",
+    "new": "      const move = nightMoved(rec.high, at, now, isNight, freshMs) && (now - rec.answered >= gapMs || true);",
     "tests": [
       "test/systems/auditrest3.test.js",
       "test/systems/auditrest2_party.test.js"
@@ -205,8 +205,8 @@
   {
     "name": "AUDITREST3-C1-the-debt-asked-first",
     "file": "src/systems/party/partyRestLaw.js",
-    "old": "(now - rec.answered >= gapMs || !!(typeof due === 'function' ? due() : due))",
-    "new": "(!!(typeof due === 'function' ? due() : due) || now - rec.answered >= gapMs)",
+    "old": "        (now - rec.answered >= gapMs || !!(typeof due === 'function' ? due() : due));",
+    "new": "        (!!(typeof due === 'function' ? due() : due) || now - rec.answered >= gapMs);",
     "tests": [
       "test/systems/auditrest3.test.js"
     ]

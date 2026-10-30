@@ -610,8 +610,8 @@
   {
     "name": "SHIP-SAIL-coins-words-dropped",
     "file": "src/systems/party/partyTravelLaw.js",
-    "old": "  if (!afford && coinsShort) return `You cannot afford the journey (${Math.max(0, Math.round(computed?.piecesCost ?? 0))} gold in coin for the inns).`;\n",
-    "new": "",
+    "old": "  if (!afford && coinsShort)\n    return `You cannot afford the journey (${Math.max(0, Math.round(computed?.piecesCost ?? 0))} gold in coin for the inns).`;\n  if (!afford) return `You cannot afford the journey (${total} gold).`;",
+    "new": "  if (!afford) return `You cannot afford the journey (${total} gold).`;",
     "tests": [
       "test/systems/travel/disc28e_shipport.test.js"
     ]

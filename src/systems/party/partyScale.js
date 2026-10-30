@@ -94,7 +94,8 @@ export const partyDamageFactor = (n) => 1 + (PARTY_SCALE_DAMAGE_PCT * (partySize
 
 /** How many more foes an outdoor encounter stands for a party of `n`: none for one or two, one for three or four,
  *  two for five or six, three for seven or eight. */
-export const partyExtraFoes = (n) => Math.min(PARTY_SCALE_EXTRA_MAX, Math.floor((partySizeOf(n) - 1) / PARTY_SCALE_EXTRA_EVERY));
+export const partyExtraFoes = (n) =>
+  Math.min(PARTY_SCALE_EXTRA_MAX, Math.floor((partySizeOf(n) - 1) / PARTY_SCALE_EXTRA_EVERY));
 
 /** A camp's or a pack's members for a party of `n`: its own, then `partyExtraFoes(n)` more drawn from its own in
  *  order - a bandit gang grows by bandits, a vermin nest by vermin. Alone, the members themselves. */
@@ -146,8 +147,8 @@ export function foeFightersUpTo(foe, now, max) {
 
 /** `amount` over `t`, kept whole by a remainder carried in `carry` for `key` (none kept without a key). */
 function weighDown(carry, key, amount, t) {
-  const exact = amount / t + (key ? carry.get(key) ?? 0 : 0);
-  const whole = Math.floor(exact + 1e-9);   // 1.2 + 0.8 is 1.9999999999999998 in a double: a point owed is a point paid
+  const exact = amount / t + (key ? (carry.get(key) ?? 0) : 0);
+  const whole = Math.floor(exact + 1e-9); // 1.2 + 0.8 is 1.9999999999999998 in a double: a point owed is a point paid
   if (key) carry.set(key, Math.max(0, exact - whole));
   return whole;
 }
@@ -199,7 +200,10 @@ export function partyFoeHits(damage, n, victim = null) {
 let _whole = new WeakMap();
 /** A strike about to land on `entity` is a KILL, not a blow (Mehrunes' Razor's whole-health strike): the next door it
  *  reaches takes it undivided. Read once (`takeWholeBlow`). */
-export function markWholeBlow(entity) { const key = _obj(entity); if (key) _whole.set(key, true); }
+export function markWholeBlow(entity) {
+  const key = _obj(entity);
+  if (key) _whole.set(key, true);
+}
 /** Whether a whole-blow mark waits on `entity` - and spend it. */
 export function takeWholeBlow(entity) {
   const key = _obj(entity);

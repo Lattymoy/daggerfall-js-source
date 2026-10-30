@@ -9,7 +9,10 @@ export const PARTY_ARRIVAL_TEXT = Object.freeze({
   returned: 'No safe landing found. You were sent back and not charged.',
 });
 export class PartyArrivalUnavailable extends Error {
-  constructor() { super('No supported party arrival'); this.name = 'PartyArrivalUnavailable'; }
+  constructor() {
+    super('No supported party arrival');
+    this.name = 'PartyArrivalUnavailable';
+  }
 }
 
 /** Probe a COPY with the actual player capsule. A ray alone can miss a deck
@@ -19,23 +22,35 @@ export function supportedPartyPosition(collider, at, minimumY = -Infinity) {
   if (!at?.every(Number.isFinite)) return null;
   const pos = new Float32Array(at);
   const hit = collider.move(pos, 0, -BESIDE_LEVEL, 0, CAPSULE_HEIGHT, true);
-  if (!hit.grounded || hit.hitCeiling || Math.hypot(pos[0] - at[0], pos[2] - at[2]) > 0.15
-      || Math.abs(pos[1] - at[1]) > BESIDE_LEVEL || pos[1] < minimumY) return null;
+  if (
+    !hit.grounded ||
+    hit.hitCeiling ||
+    Math.hypot(pos[0] - at[0], pos[2] - at[2]) > 0.15 ||
+    Math.abs(pos[1] - at[1]) > BESIDE_LEVEL ||
+    pos[1] < minimumY
+  )
+    return null;
   return { pos: [...pos], groundKey: hit.groundKey ?? null };
 }
 
 export function partyArrivalBeside(at, collider, seat = 0, minimumY = -Infinity) {
   if (!at?.every(Number.isFinite)) return null;
   const start = Number.isInteger(seat) && seat > 0 ? seat % BESIDE_OFFSETS.length : 0;
-  for (const scale of [1, 0.5, 2]) for (let i = 0; i < BESIDE_OFFSETS.length; i++) {
-    const [ox, oz] = BESIDE_OFFSETS[(start + i) % BESIDE_OFFSETS.length];
-    const dx = ox * scale, dz = oz * scale;
-    const distance = Math.hypot(dx, dz);
-    const blocked = collider.raycast([at[0], at[1] + 1, at[2]], [dx / distance, 0, dz / distance], distance + BESIDE_REACH);
-    if (Number.isFinite(blocked) && blocked < distance + BESIDE_REACH) continue;
-    const fit = supportedPartyPosition(collider, [at[0] + dx, at[1], at[2] + dz], minimumY);
-    if (fit) return { ...fit, yaw: Math.atan2(-dx, -dz) };
-  }
+  for (const scale of [1, 0.5, 2])
+    for (let i = 0; i < BESIDE_OFFSETS.length; i++) {
+      const [ox, oz] = BESIDE_OFFSETS[(start + i) % BESIDE_OFFSETS.length];
+      const dx = ox * scale,
+        dz = oz * scale;
+      const distance = Math.hypot(dx, dz);
+      const blocked = collider.raycast(
+        [at[0], at[1] + 1, at[2]],
+        [dx / distance, 0, dz / distance],
+        distance + BESIDE_REACH,
+      );
+      if (Number.isFinite(blocked) && blocked < distance + BESIDE_REACH) continue;
+      const fit = supportedPartyPosition(collider, [at[0] + dx, at[1], at[2] + dz], minimumY);
+      if (fit) return { ...fit, yaw: Math.atan2(-dx, -dz) };
+    }
   const own = supportedPartyPosition(collider, at, minimumY);
   return own ? { ...own, yaw: null } : null;
 }
@@ -45,11 +60,16 @@ export function partyArrivalBeside(at, collider, seat = 0, minimumY = -Infinity)
  * `probe(last)` returns a landing, or null to be asked again. `last` is true on
  * the final attempt: a caller that waits for a better landing than its fallback
  * (beside the leader, not the place's own arrival) takes the fallback then. */
-export async function waitForPartyArrival(probe, {
-  wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
-  now = () => performance.now(), onWait = () => {},
-} = {}) {
-  const start = now(), attempts = Math.ceil(PARTY_ARRIVAL_WAIT_MS / PARTY_ARRIVAL_POLL_MS);
+export async function waitForPartyArrival(
+  probe,
+  {
+    wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+    now = () => performance.now(),
+    onWait = () => {},
+  } = {},
+) {
+  const start = now(),
+    attempts = Math.ceil(PARTY_ARRIVAL_WAIT_MS / PARTY_ARRIVAL_POLL_MS);
   for (let i = 0; i <= attempts; i++) {
     const last = i === attempts || now() - start >= PARTY_ARRIVAL_WAIT_MS;
     const landing = probe(last);
@@ -92,19 +112,27 @@ export function createPartyArrival(/** @type {PartyArrivalSeams} */ seams) {
   async function land(/** @type {PartyPick} */ pick, /** @type {number[]} */ fallback) {
     /** @type {PartyLanding|null} */
     let beside = null;
-    const landing = await waitForPartyArrival((last) => {
-      seams.sync();
-      const target = pick.besideAt();
-      beside = target ? seams.besideLanding(target, pick.besideSeat ?? 0) : null;
-      if (beside) return beside;
-      return target && !last ? null : seams.supportedLanding(fallback);
-    }, { ...seams.clock, onWait: () => seams.waiting(PARTY_ARRIVAL_TEXT.waiting) });
+    const landing = await waitForPartyArrival(
+      (last) => {
+        seams.sync();
+        const target = pick.besideAt();
+        beside = target ? seams.besideLanding(target, pick.besideSeat ?? 0) : null;
+        if (beside) return beside;
+        return target && !last ? null : seams.supportedLanding(fallback);
+      },
+      { ...seams.clock, onWait: () => seams.waiting(PARTY_ARRIVAL_TEXT.waiting) },
+    );
     return { landing, beside };
   }
 
   /** The line an arrival says: the pick's own when it stood beside the leader, the pick's "no room" line when a
    *  party arrival took the place's landing instead, else `ordinaryLine`. */
-  function arrivalLine(/** @type {PartyPick} */ pick, /** @type {boolean} */ partyArrival, /** @type {PartyLanding|null} */ beside, /** @type {string} */ ordinaryLine) {
+  function arrivalLine(
+    /** @type {PartyPick} */ pick,
+    /** @type {boolean} */ partyArrival,
+    /** @type {PartyLanding|null} */ beside,
+    /** @type {string} */ ordinaryLine,
+  ) {
     if (beside && pick.besideText) return pick.besideText;
     if (partyArrival && pick.besideMissedText) return pick.besideMissedText;
     return ordinaryLine;
@@ -115,7 +143,13 @@ export function createPartyArrival(/** @type {PartyArrivalSeams} */ seams) {
 
 /** The leader's feet in this scene's frame (`state`, the streaming world's floating origin), then a spot beside them
  *  against the capsule that will stand there, never below the sea (`seaY`). */
-export function besideLeaderLanding(/** @type {LeaderFeet} */ feet, /** @type {number} */ seat, /** @type {any} */ state, /** @type {any} */ collider, /** @type {number} */ seaY) {
+export function besideLeaderLanding(
+  /** @type {LeaderFeet} */ feet,
+  /** @type {number} */ seat,
+  /** @type {any} */ state,
+  /** @type {any} */ collider,
+  /** @type {number} */ seaY,
+) {
   const [localX, localZ] = state.localFromWorld(feet.x, feet.z);
   return partyArrivalBeside([localX, feet.y + state.compensation[1], localZ], collider, seat, seaY - 0.1);
 }

@@ -90,6 +90,8 @@
 /src/systems/ketch/*/
 !/src/systems/lockpick/
 /src/systems/lockpick/*/
+!/src/systems/party/
+/src/systems/party/*/
 !/src/systems/region/
 /src/systems/region/*/
 !/src/systems/sea/

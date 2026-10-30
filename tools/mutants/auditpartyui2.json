@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-PARTY-UI2-2-the-walk-read-as-a-journey",
     "file": "src/systems/party/partyTravel.js",
-    "old": "away: !!p && !host.journeying() && ",
-    "new": "away: !!p && !host.moving() && ",
+    "old": "        away: !!p && !host.journeying() && leaderJourneyed({ px: here.x, py: here.y }, p),",
+    "new": "        away: !!p && !host.moving() && leaderJourneyed({ px: here.x, py: here.y }, p),",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-PARTY-UI2-3-status-asks-who-is-gathered",
     "file": "src/systems/party/partyTravel.js",
-    "old": "hub: host.relayOk(), gathered: company, held: !!t",
-    "new": "hub: host.relayOk(), gathered: host.gathered().length > 0, held: !!t",
+    "old": "          gathered: company,",
+    "new": "          gathered: host.gathered().length > 0,",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-PARTY-UI2-4-a-new-round-over-a-held-one",
     "file": "src/systems/party/partyTravel.js",
-    "old": "    if (trip && trip.go != null) return false;\n",
-    "new": "",
+    "old": "    if (trip && trip.go != null) return false;\n    const here = host.here();",
+    "new": "    const here = host.here();",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-PARTY-UI2-4-an-open-round-held-too",
     "file": "src/systems/party/partyTravel.js",
-    "old": "if (trip && trip.go != null) return false;",
-    "new": "if (trip) return false;",
+    "old": "    if (trip && trip.go != null) return false;",
+    "new": "    if (trip) return false;",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "AUDIT-PARTY-UI2-4-held-never-said",
     "file": "src/systems/party/partyTravel.js",
-    "old": "gathered: company, held: !!t };",
-    "new": "gathered: company, held: false };",
+    "old": "          held: !!t,",
+    "new": "          held: false,",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "AUDIT-PARTY-UI2-the-no-round-flags-beside-a-round",
     "file": "src/systems/party/partyTravel.js",
-    "old": "set: t.go != null } };",
-    "new": "set: t.go != null }, gathered: company };",
+    "old": "          return { role: 'leader', round: { dest: t.name, count: t.count ?? '', set: t.go != null } };",
+    "new": "          return {\n            role: 'leader',\n            round: { dest: t.name, count: t.count ?? '', set: t.go != null },\n            gathered: company,\n          };",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]

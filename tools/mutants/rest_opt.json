@@ -20,8 +20,8 @@
   {
     "name": "REST-OPT-law-mine-ignored",
     "file": "src/systems/party/partyRestLaw.js",
-    "old": "  if (!mineOn) return false;\n",
-    "new": "",
+    "old": "  if (!mineOn) return false;\n  if (!party || iLead) return true;",
+    "new": "  if (!party || iLead) return true;",
     "tests": [
       "test/systems/party/restopt.test.js"
     ]

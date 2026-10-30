@@ -323,8 +323,8 @@
   {
     "name": "AUDIT-F4-in-settings",
     "file": "src/systems/party/partyRestLaw.js",
-    "old": "Turn on \"Rest with my party\" (${optionPath('card:peerSprites')}) to rest with them.",
-    "new": "Turn on \"Rest with my party\" in Settings to rest with them.",
+    "old": "    : `You rest on your own. Turn on \"Rest with my party\" (${optionPath('card:peerSprites')}) to rest with them.`; // ORG2: where the map puts it",
+    "new": "    : `You rest on your own. Turn on \"Rest with my party\" in Settings to rest with them.`; // ORG2: where the map puts it",
     "tests": [
       "test/systems/audit27d.test.js"
     ]

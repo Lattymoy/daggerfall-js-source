@@ -10,7 +10,12 @@ import { searchableKind, searchName } from '../../systems/searchables.js';
 import { nearestPerson, rayPersonDistance } from '../../scenes/townTalk.js';
 import { pickPeerInFront } from '../../player/socialPick.js';
 
-const clean = (s) => String(s ?? '').replace(/\s+/g, ' ').replace(/[^\w .'-]/g, '').trim().slice(0, 48);
+const clean = (s) =>
+  String(s ?? '')
+    .replace(/\s+/g, ' ')
+    .replace(/[^\w .'-]/g, '')
+    .trim()
+    .slice(0, 48);
 
 /**
  * The named thing under a look, the nearest of a foe and an action object.
@@ -20,7 +25,11 @@ const clean = (s) => String(s ?? '').replace(/\s+/g, ' ').replace(/[^\w .'-]/g, 
  * @param {{ collider?: { raycast?: (o: ArrayLike<number>, d: ArrayLike<number>, m: number) => number }|null, foes?: ReadonlyArray<object>|null, objects?: Map<string, { key?: string, modelIdNum?: number, currentLockValue?: number, kind?: string }>|null, look?: { targets?: ReadonlyArray<object>, name?: (key: string) => string }|null, crowd?: ReadonlyArray<{ name?: string, elite?: boolean, dist: number }>|null, reach?: number }} src
  * @returns {{ name: string, elite: boolean, dist: number }|null}
  */
-export function pingSubject(eye, dir, { collider = null, foes = null, objects = null, look = null, crowd = null, reach = 64 } = {}) {
+export function pingSubject(
+  eye,
+  dir,
+  { collider = null, foes = null, objects = null, look = null, crowd = null, reach = 64 } = {},
+) {
   if (!eye || !dir || !collider) return null;
   /** @type {{ name: string, elite: boolean, dist: number }[]} */
   const found = [];
@@ -38,7 +47,12 @@ export function pingSubject(eye, dir, { collider = null, foes = null, objects = 
     const title = act ? clean(look.name(act.key)) : '';
     if (title && Number.isFinite(act.distance)) found.push({ name: title, elite: false, dist: act.distance });
   } else if (objects && typeof objects.values === 'function' && typeof objects.get === 'function') {
-    const act = pickActivatableHit(eye, dir, activationTargets(/** @type {Map<string, object>} */ (objects), reach), collider);
+    const act = pickActivatableHit(
+      eye,
+      dir,
+      activationTargets(/** @type {Map<string, object>} */ (objects), reach),
+      collider,
+    );
     const o = act ? objects.get(act.key) : null;
     const name = objectName(o);
     if (name && act && Number.isFinite(act.distance)) found.push({ name, elite: false, dist: act.distance });
@@ -80,7 +94,8 @@ export function pingCrowd(eye, dir, reach, persons, peers, personName, peerName,
     const w = collider?.raycast?.(eye, dir, d);
     return Number.isFinite(w) && w < d - 0.05;
   };
-  const o = [eye[0], eye[1], eye[2]], d = [dir[0], dir[1], dir[2]];
+  const o = [eye[0], eye[1], eye[2]],
+    d = [dir[0], dir[1], dir[2]];
   const n = nearestPerson(o, d, persons);
   if (n && n.distance <= reach && !blocked(n.distance)) {
     const name = clean(typeof personName === 'function' ? personName(n.entry) : '');

@@ -238,8 +238,8 @@
   {
     "name": "OW5-P4-future-stamp",
     "file": "src/systems/party/partyWalk.js",
-    "old": " && /** @type {number} */ (s) <= latest) return true;",
-    "new": ") return true;",
+    "old": "  for (const s of stops ?? [])\n    if (Number.isFinite(s) && /** @type {number} */ (s) > tw.go && /** @type {number} */ (s) <= latest) return true;",
+    "new": "  for (const s of stops ?? []) if (Number.isFinite(s) && /** @type {number} */ (s) > tw.go) return true;",
     "tests": [
       "test/systems/travel/tv8_party_walk.test.js"
     ],

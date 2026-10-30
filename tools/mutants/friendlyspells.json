@@ -128,8 +128,8 @@
   {
     "name": "PR29-supersede-dropped",
     "file": "src/systems/party/partyRestLaw.js",
-    "old": "    if (stampOf(m?.p?.voteAt, now) > t) continue;\n",
-    "new": "",
+    "old": "    if (stampOf(m?.p?.voteAt, now) > t) continue;\n    latest = Math.max(latest, t);",
+    "new": "    latest = Math.max(latest, t);",
     "tests": [
       "test/systems/friendlyspells.test.js"
     ]

@@ -26,7 +26,7 @@
 //    sender - so a Stop from a tab younger than the last canceller's was ignored, and a reload of the resting
 //    player's tab (the mark back at zero) let a follower's old request end their next rest on its first tick.
 //    Compared per sender against the value seen when THIS rest began, the same law `restEnemyAt` already keeps.
-import { optionPath } from '../../ui/settings/settingsMap.js';   // ORG2: the rest message names the switch where the map puts it
+import { optionPath } from '../../ui/settings/settingsMap.js'; // ORG2: the rest message names the switch where the map puts it
 
 /** PARTY-REST2b, per-request (2026-09-22, "make this 60 seconds"): how long a vote stands - long enough to coordinate
  *  a round, short enough that a stale yes from an earlier attempt cannot approve a later one. Lived in world.js;
@@ -149,8 +149,9 @@ export function partyRestsTogether(mineOn, party, iLead) {
 
 /** REST-OPT: what a vote (`/ready`) is told while my rest is my own - my switch, or the leader's. */
 export function restAloneText(mineOn) {
-  return mineOn ? 'Your leader rests on their own, so everyone rests for themselves.'
-    : `You rest on your own. Turn on "Rest with my party" (${optionPath('card:peerSprites')}) to rest with them.`;   // ORG2: where the map puts it
+  return mineOn
+    ? 'Your leader rests on their own, so everyone rests for themselves.'
+    : `You rest on your own. Turn on "Rest with my party" (${optionPath('card:peerSprites')}) to rest with them.`; // ORG2: where the map puts it
 }
 
 // AUDIT REST-PARTY (2026-10-03, the party rest under REST5): THE PARTY'S NIGHT, the pure half of world.js's
@@ -210,8 +211,13 @@ export function createNightWatch({ freshMs = PARTY_NIGHT_FRESH_MS, gapMs = PARTY
     moved(acct, posed, at, now, isNight, due = /** @type {boolean | (() => boolean)} */ (false)) {
       if (!posed) return false;
       const rec = marks.get(acct);
-      if (!rec) { marks.set(acct, { high: at, answered: -Infinity }); return false; }
-      const move = nightMoved(rec.high, at, now, isNight, freshMs) && (now - rec.answered >= gapMs || !!(typeof due === 'function' ? due() : due));
+      if (!rec) {
+        marks.set(acct, { high: at, answered: -Infinity });
+        return false;
+      }
+      const move =
+        nightMoved(rec.high, at, now, isNight, freshMs) &&
+        (now - rec.answered >= gapMs || !!(typeof due === 'function' ? due() : due));
       if (at > rec.high) rec.high = at;
       if (move) rec.answered = now;
       return move;
@@ -220,11 +226,17 @@ export function createNightWatch({ freshMs = PARTY_NIGHT_FRESH_MS, gapMs = PARTY
     keep(members) {
       for (const acct of marks.keys()) {
         let here = false;
-        for (const m of members) if (m?.acct === acct) { here = true; break; }
+        for (const m of members)
+          if (m?.acct === acct) {
+            here = true;
+            break;
+          }
         if (!here) marks.delete(acct);
       }
     },
-    clear() { marks.clear(); },
+    clear() {
+      marks.clear();
+    },
     /** The mark held for `acct` (undefined before the first sight) - for the tests. */
     highOf: (acct) => marks.get(acct)?.high,
   };
@@ -248,12 +260,14 @@ export function carriedNightAction({ withParty, resterAlone, exempt, dead, near,
  *  so the order is total. */
 const KIND_RANK = Object.freeze({ rough: 0, camp: 1, bed: 2 });
 /** @param {unknown} k */
-const rankOf = (k) => (typeof k === 'string' && Object.hasOwn(KIND_RANK, k) ? KIND_RANK[/** @type {'rough'|'camp'|'bed'} */ (k)] : -1);
+const rankOf = (k) =>
+  typeof k === 'string' && Object.hasOwn(KIND_RANK, k) ? KIND_RANK[/** @type {'rough'|'camp'|'bed'} */ (k)] : -1;
 /** The kind a carried night is slept as: the better of my own spot (`own`) and the rester's (`theirs`, off their
  *  night's stamp) - beside their fire I sleep by it, and at my own fire beside their Bedroll I sleep by mine. An
  *  unknown kind on either side yields to the other; neither known is null (the host's own reading stands). */
 export function carriedRestKind(own, theirs) {
-  const o = rankOf(own), t = rankOf(theirs);
+  const o = rankOf(own),
+    t = rankOf(theirs);
   if (o < 0) return t < 0 ? null : theirs;
   return t > o ? theirs : own;
 }
@@ -284,7 +298,10 @@ export const CAMP_OPEN_FRESH_MS = 40_000;
 
 /** A camp mate's pose as the law reads it: their stamp through stampOf, and their enemy break marker (the sender's
  *  own clock - compared only against the value seen before, never against mine). */
-const campSnap = (m, now) => ({ at: stampOf(m?.p?.restStartedAt, now), enemy: Number.isFinite(m?.p?.restEnemyAt) ? m.p.restEnemyAt : null });
+const campSnap = (m, now) => ({
+  at: stampOf(m?.p?.restStartedAt, now),
+  enemy: Number.isFinite(m?.p?.restEnemyAt) ? m.p.restEnemyAt : null,
+});
 
 /** THE CAMP WATCH - one rest window's view of its camp. `open` at the channel's open snapshots every party mate's
  *  stamps (a move is a move SINCE my act began: a mate's night that lands while I hold the channel is mine to sleep);
@@ -305,7 +322,10 @@ export function createCampWatch({ kindOf, campOf, waitMs = CAMP_WAIT_MS, freshMs
       for (const m of members ?? []) if (m?.acct) base.set(m.acct, campSnap(m, now));
     },
     isOpen: () => base !== null,
-    close() { base = null; firstAsk = null; },
+    close() {
+      base = null;
+      firstAsk = null;
+    },
     /** Whose night my act's is now: `{ act: 'enemy'|'night'|'wait', acct, name, kind? }`, `{ act: 'roll' }`, or null
      *  with no watch open. `me` my account; `members` the party's other rows (net/social.js others()); `inCamp(m)`
      *  whether a mate stands in my camp (present, the same place, within the party's reach). A mate first seen after
@@ -315,16 +335,27 @@ export function createCampWatch({ kindOf, campOf, waitMs = CAMP_WAIT_MS, freshMs
     verdict({ me, members, inCamp, now }) {
       if (!base) return null;
       if (firstAsk === null) firstAsk = now;
-      let night = null, leader = null;
+      let night = null,
+        leader = null;
       for (const m of members ?? []) {
         if (!m?.acct || restsAlone(m) || !inCamp(m)) continue;
         const was = base.get(m.acct);
         const cur = campSnap(m, now);
-        if (!was) { base.set(m.acct, cur); continue; }
+        if (!was) {
+          base.set(m.acct, cur);
+          continue;
+        }
         if (cur.enemy !== null && cur.enemy !== was.enemy) return { act: 'enemy', acct: m.acct, name: m.name };
         const kind = cur.at > was.at && now - cur.at <= freshMs ? kindOf(cur.at) : null;
         if (kind && !night) night = { act: 'night', acct: m.acct, name: m.name, kind };
-        if (m.p?.rs && campOf(cur.at) === 'open' && now - cur.at <= freshMs && m.acct < me && (!leader || m.acct < leader.acct)) leader = m;
+        if (
+          m.p?.rs &&
+          campOf(cur.at) === 'open' &&
+          now - cur.at <= freshMs &&
+          m.acct < me &&
+          (!leader || m.acct < leader.acct)
+        )
+          leader = m;
       }
       if (night) return night;
       if (now - firstAsk >= waitMs || !leader) return { act: 'roll' };
@@ -349,7 +380,8 @@ export function campClear(p, feet, min) {
   const m2 = min * min;
   for (const f of feet ?? []) {
     if (!f) continue;
-    const dx = f[0] - p.x, dz = f[2] - p.z;
+    const dx = f[0] - p.x,
+      dz = f[2] - p.z;
     if (dx * dx + dz * dz < m2) return false;
   }
   return true;

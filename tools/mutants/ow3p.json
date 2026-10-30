@@ -42,8 +42,8 @@
   {
     "name": "OW3P1-halt-unsaid",
     "file": "src/systems/party/partyWalk.js",
-    "old": "{ tw: { ...tw, h: Math.round(now) }, halt: true }",
-    "new": "{ tw: { ...tw, h: Math.round(now) }, halt: false }",
+    "old": "    if (leaderMustHalt(tw, stops, now)) return { tw: { ...tw, h: Math.round(now) }, halt: true };",
+    "new": "    if (leaderMustHalt(tw, stops, now)) return { tw: { ...tw, h: Math.round(now) }, halt: false };",
     "tests": [
       "test/systems/travel/tv8_party_walk.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "OW3P2-elsewhere-walks-on",
     "file": "src/systems/party/partyWalk.js",
-    "old": "    if (!mine) return { tw: null, halt: false };\n",
-    "new": "",
+    "old": "    if (!mine) return { tw: null, halt: false };\n    if (leaderMustHalt(tw, stops, now)) return { tw: { ...tw, h: Math.round(now) }, halt: true };",
+    "new": "    if (leaderMustHalt(tw, stops, now)) return { tw: { ...tw, h: Math.round(now) }, halt: true };",
     "tests": [
       "test/systems/travel/tv8_party_walk.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "OW3P3-leave-never",
     "file": "src/systems/party/partyWalk.js",
-    "old": "  if (journeying && !onWalk) return 'leave';\n",
-    "new": "",
+    "old": "  if (journeying && !onWalk) return 'leave';\n  if (tw.h != null && tw.h >= (mine.go ?? -Infinity)) return !journeying ? null : was ? 'halt' : 'leave';",
+    "new": "  if (tw.h != null && tw.h >= (mine.go ?? -Infinity)) return !journeying ? null : was ? 'halt' : 'leave';",
     "tests": [
       "test/systems/travel/tv8_party_walk.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "OW3P4-box-in-danger",
     "file": "src/systems/party/partyWalk.js",
-    "old": "now - tw.at <= PARTY_WALK_ASK_MS && !danger;",
-    "new": "now - tw.at <= PARTY_WALK_ASK_MS;",
+    "old": "  return !!tw && tw.at === round && now - tw.at <= PARTY_WALK_ASK_MS && !danger;",
+    "new": "  return !!tw && tw.at === round && now - tw.at <= PARTY_WALK_ASK_MS;",
     "tests": [
       "test/systems/travel/tv8_party_walk.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "OW3P4-box-other-round",
     "file": "src/systems/party/partyWalk.js",
-    "old": "  return !!tw && tw.at === round && now",
-    "new": "  return !!tw && now",
+    "old": "  return !!tw && tw.at === round && now - tw.at <= PARTY_WALK_ASK_MS && !danger;",
+    "new": "  return !!tw && now - tw.at <= PARTY_WALK_ASK_MS && !danger;",
     "tests": [
       "test/systems/travel/tv8_party_walk.test.js"
     ],
@@ -232,8 +232,8 @@
   {
     "name": "OW3P3-released-stop-said",
     "file": "src/systems/party/partyWalk.js",
-    "old": "  const stop = was && following && !journeying;",
-    "new": "  const stop = was && !journeying;",
+    "old": "  const stop = was && following && !journeying; // released in the same breath (the walk gone, a new round): my stop is mine",
+    "new": "  const stop = was && !journeying; // released in the same breath (the walk gone, a new round): my stop is mine",
     "tests": [
       "test/systems/travel/tv8_party_walk.test.js"
     ],
@@ -252,8 +252,8 @@
   {
     "name": "OW3P6-start-anyway",
     "file": "src/systems/party/partyWalk.js",
-    "old": "return free && (journeying || !mine.balk) ? 'start' : null;",
-    "new": "return (journeying || !mine.balk) ? 'start' : null;",
+    "old": "  if (tw.h == null && tw.go !== mine.go) return free && (journeying || !mine.balk) ? 'start' : null;",
+    "new": "  if (tw.h == null && tw.go !== mine.go) return journeying || !mine.balk ? 'start' : null;",
     "tests": [
       "test/systems/travel/tv8_party_walk.test.js"
     ],
@@ -292,8 +292,8 @@
   {
     "name": "OW3P7-grace-forever",
     "file": "src/systems/party/partyWalk.js",
-    "old": "  return h.tw && now - h.at <= PARTY_WALK_GRACE_MS ? h",
-    "new": "  return h.tw ? h",
+    "old": "  return h.tw && now - h.at <= PARTY_WALK_GRACE_MS ? h : { acct, tw: null, at: h.at };",
+    "new": "  return h.tw ? h : { acct, tw: null, at: h.at };",
     "tests": [
       "test/systems/travel/tv8_party_walk.test.js"
     ],
@@ -332,8 +332,8 @@
   {
     "name": "OW3P9-walking-set-out",
     "file": "src/systems/party/partyWalk.js",
-    "old": "    if (live.h == null && !moved) return live;\n",
-    "new": "",
+    "old": "    if (live.h == null && !moved) return live;\n    const w = { ...live, go: Math.round(now), h: null };",
+    "new": "    const w = { ...live, go: Math.round(now), h: null };",
     "tests": [
       "test/systems/travel/tv8_party_walk.test.js"
     ],
@@ -342,7 +342,7 @@
   {
     "name": "OW3P9-spot-point-stale",
     "file": "src/systems/party/partyWalk.js",
-    "old": "    if (dest.point) { w.sx = Math.round(dest.point.x); w.sz = Math.round(dest.point.z); }\n    return w;",
+    "old": "    if (dest.point) {\n      w.sx = Math.round(dest.point.x);\n      w.sz = Math.round(dest.point.z);\n    }\n    return w;",
     "new": "    return w;",
     "tests": [
       "test/systems/travel/tv8_party_walk.test.js"

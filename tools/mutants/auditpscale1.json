@@ -22,8 +22,8 @@
   {
     "name": "AUDIT-PSCALE1-fighters-count-blows",
     "file": "src/systems/party/partyScale.js",
-    "old": "  m.set(who, now);\n}",
-    "new": "  m.set(`${String(who)}:${now}`, now);\n}",
+    "old": "  m.set(who, now);",
+    "new": "  m.set(`${String(who)}:${now}`, now);",
     "tests": [
       "test/systems/party/pscale1.test.js",
       "test/systems/auditpscale1.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "AUDIT-PSCALE1-remainder-shared-across-foes",
     "file": "src/systems/party/partyScale.js",
-    "old": "  const exact = amount / t + (key ? carry.get(key) ?? 0 : 0);",
-    "new": "  const exact = amount / t + (key ? carry.get(_carry) ?? 0 : 0);",
+    "old": "  const exact = amount / t + (key ? (carry.get(key) ?? 0) : 0);",
+    "new": "  const exact = amount / t + (key ? (carry.get(_carry) ?? 0) : 0);",
     "tests": [
       "test/systems/party/pscale1.test.js",
       "test/systems/auditpscale1.test.js"
