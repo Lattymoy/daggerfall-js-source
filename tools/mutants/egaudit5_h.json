@@ -244,8 +244,8 @@
   {
     "name": "EGA5H-trail-undrawn",
     "file": "src/render/eliteGates/egLinePass.js",
-    "old": "if (tn > 0 && trail) {",
-    "new": "if (false) {",
+    "old": "    if (tn > 0 && trail) {",
+    "new": "    if (false) {",
     "tests": [
       "test/net/eliteGates/egaudit5_h.test.js",
       "test/net/eliteGates/egaudit5_h_client.test.js"

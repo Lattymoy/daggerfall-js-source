@@ -790,8 +790,8 @@
   {
     "name": "EGA5E-mist-pass-sliced",
     "file": "src/render/eliteGates/egMistPass.js",
-    "old": "      const s = sheets[k];\n",
-    "new": "      const s = sheets.slice(0, EG_MIST_MAX)[k];\n",
+    "old": "      const s = sheets[k];",
+    "new": "      const s = sheets.slice(0, EG_MIST_MAX)[k];",
     "tests": [
       "test/net/eliteGates/egaudit5_e_alloc.test.js"
     ]
@@ -799,8 +799,8 @@
   {
     "name": "EGA5E-mist-pass-cap-lost",
     "file": "src/render/eliteGates/egMistPass.js",
-    "old": "n = Math.min(sheets.length, EG_MIST_MAX); k < n;",
-    "new": "n = sheets.length; k < n;",
+    "old": "    for (let k = 0, n = Math.min(sheets.length, EG_MIST_MAX); k < n; k++) {",
+    "new": "    for (let k = 0, n = sheets.length; k < n; k++) {",
     "tests": [
       "test/net/eliteGates/egaudit5_e_alloc.test.js"
     ]

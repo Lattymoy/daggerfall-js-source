@@ -54,7 +54,10 @@ export const EG_SKY_HAZE = Object.freeze([
   Object.freeze({ up: 10, down: 6, far: 0.5 }),
 ]);
 /** EG_SKY_HAZE's law in JS: the share of the fog a ray at elevation `e` (rad) keeps in band `band`. Pure - the painters'. */
-export function egSkyHaze(band, e) { const H = EG_SKY_HAZE[band]; return e >= 0 ? Math.exp(-e * H.up) : Math.exp(e * H.down); }
+export function egSkyHaze(band, e) {
+  const H = EG_SKY_HAZE[band];
+  return e >= 0 ? Math.exp(-e * H.up) : Math.exp(e * H.down);
+}
 /** THE LIVE DRIFTS, whole cycles a period, a band a row (the painters read them): the ash lid's loop, the fire-sea's
  *  and the magma lake's loop, the currents' pulses, a vent's smoke and the plumes' churn, the aurorae, the swells, the
  *  mist, the stars' breath and the mist's glints. */
@@ -66,45 +69,100 @@ export const EG_SKY_DRIFT = Object.freeze([
 ]);
 /** THE DEADLANDS' VOLCANO SPIRES: azimuth (rad from +z toward +x), the crag's elevation, the foot's half-width (rad), a
  *  vent burning at its crag (1). */
-export const EG_SKY_SPIRES = Object.freeze([
-  [0.42, 0.22, 0.065, 1], [0.78, 0.1, 0.036, 0], [0.12, 0.07, 0.026, 0], [1.6, 0.13, 0.05, 0], [2.35, 0.2, 0.06, 1], [3.0, 0.09, 0.035, 0],
-  [-0.5, 0.14, 0.048, 0], [-0.82, 0.08, 0.03, 0], [-1.25, 0.17, 0.055, 1], [-2.05, 0.11, 0.04, 0], [-2.7, 0.065, 0.028, 0],
-].map((s) => Object.freeze(s)));
+export const EG_SKY_SPIRES = Object.freeze(
+  [
+    [0.42, 0.22, 0.065, 1],
+    [0.78, 0.1, 0.036, 0],
+    [0.12, 0.07, 0.026, 0],
+    [1.6, 0.13, 0.05, 0],
+    [2.35, 0.2, 0.06, 1],
+    [3.0, 0.09, 0.035, 0],
+    [-0.5, 0.14, 0.048, 0],
+    [-0.82, 0.08, 0.03, 0],
+    [-1.25, 0.17, 0.055, 1],
+    [-2.05, 0.11, 0.04, 0],
+    [-2.7, 0.065, 0.028, 0],
+  ].map((s) => Object.freeze(s)),
+);
 /** THE SOUL CAIRN'S CAIRNS on the mist's line: azimuth, the top's elevation, the foot's half-width, a seed (its stones). */
-export const EG_SKY_CAIRNS = Object.freeze([
-  [0.3, 0.06, 0.008, 1], [0.95, 0.045, 0.007, 2], [1.9, 0.07, 0.009, 3], [2.8, 0.05, 0.007, 4], [-0.7, 0.055, 0.008, 5], [-1.6, 0.04, 0.006, 6], [-2.4, 0.065, 0.009, 7],
-].map((s) => Object.freeze(s)));
+export const EG_SKY_CAIRNS = Object.freeze(
+  [
+    [0.3, 0.06, 0.008, 1],
+    [0.95, 0.045, 0.007, 2],
+    [1.9, 0.07, 0.009, 3],
+    [2.8, 0.05, 0.007, 4],
+    [-0.7, 0.055, 0.008, 5],
+    [-1.6, 0.04, 0.006, 6],
+    [-2.4, 0.065, 0.009, 7],
+  ].map((s) => Object.freeze(s)),
+);
 /** THE SOUL-STREAM's pole (the stars crowd along the great circle about it). */
-export const EG_SKY_STREAM = Object.freeze((() => { const v = [0.35, 0.25, -0.9], l = Math.hypot(...v); return v.map((x) => x / l); })());
+export const EG_SKY_STREAM = Object.freeze(
+  (() => {
+    const v = [0.35, 0.25, -0.9],
+      l = Math.hypot(...v);
+    return v.map((x) => x / l);
+  })(),
+);
 /** THE EVERGLOAM'S MOON: its bearing - THE SHADE'S KEY LIGHT'S own (world/eliteGates/egAtmos.js: "a cold silver key from the
  *  moon's bearing" - the key's azimuth, toward the light), so the moon hangs where the light falls from; its elevation
  *  (rad - low: its lower limb a few degrees over the line, where every hall's view sees it) and its angular radius: huge.
  *  `dir` its centre's direction. */
-export const EG_SKY_MOON = Object.freeze((() => {
-  const k = egAtmosOf(2).key.dir, az = Math.atan2(k[0], k[2]), elev = 0.3;
-  return { az, elev, r: 0.21, dir: Object.freeze([Math.cos(elev) * Math.sin(az), Math.sin(elev), Math.cos(elev) * Math.cos(az)]) };
-})());
+export const EG_SKY_MOON = Object.freeze(
+  (() => {
+    const k = egAtmosOf(2).key.dir,
+      az = Math.atan2(k[0], k[2]),
+      elev = 0.3;
+    return {
+      az,
+      elev,
+      r: 0.21,
+      dir: Object.freeze([Math.cos(elev) * Math.sin(az), Math.sin(elev), Math.cos(elev) * Math.cos(az)]),
+    };
+  })(),
+);
 /** The moon's craters on its face (u right, v up, its radius 1): centre, radius, rays (1: a young crater's bright rays). */
-export const EG_SKY_CRATERS = Object.freeze([
-  [-0.35, 0.3, 0.2, 0], [0.42, -0.2, 0.16, 1], [0.1, -0.55, 0.11, 0], [-0.52, -0.36, 0.09, 0], [0.32, 0.5, 0.12, 0], [0.64, 0.22, 0.07, 0], [-0.1, 0.05, 0.06, 0], [-0.72, 0.04, 0.08, 0],
-].map((s) => Object.freeze(s)));
+export const EG_SKY_CRATERS = Object.freeze(
+  [
+    [-0.35, 0.3, 0.2, 0],
+    [0.42, -0.2, 0.16, 1],
+    [0.1, -0.55, 0.11, 0],
+    [-0.52, -0.36, 0.09, 0],
+    [0.32, 0.5, 0.12, 0],
+    [0.64, 0.22, 0.07, 0],
+    [-0.1, 0.05, 0.06, 0],
+    [-0.72, 0.04, 0.08, 0],
+  ].map((s) => Object.freeze(s)),
+);
 /** THE EVERGLOAM'S THORNS: black glass spines standing up against the moon's lower limb - azimuth off the moon's, the
  *  tip's elevation, the foot's half-width, how far the tip bends (rad). */
-export const EG_SKY_THORNS = Object.freeze([
-  [-0.13, 0.33, 0.012, 0.03], [0.04, 0.22, 0.009, -0.02], [0.16, 0.29, 0.011, -0.04], [-0.3, 0.14, 0.008, 0.02], [0.33, 0.12, 0.007, -0.015],
-].map((s) => Object.freeze(s)));
+export const EG_SKY_THORNS = Object.freeze(
+  [
+    [-0.13, 0.33, 0.012, 0.03],
+    [0.04, 0.22, 0.009, -0.02],
+    [0.16, 0.29, 0.011, -0.04],
+    [-0.3, 0.14, 0.008, 0.02],
+    [0.33, 0.12, 0.007, -0.015],
+  ].map((s) => Object.freeze(s)),
+);
 /** THE WELLHEAD'S CRATER: its basalt columns round the line (a whole number - no seam at the back), the cliffs' foot
  *  height and how much higher they rise (rad). */
 export const EG_SKY_CRATER = Object.freeze({ columns: 720, base: 0.035, rise: 0.06 });
 /** THE WELLHEAD'S ERUPTIONS, standing on the crater's rim: azimuth, the fountain's half-width, the plume's top (its
  *  elevation), how wide the plume spreads at its top (rad). */
-export const EG_SKY_ERUPTIONS = Object.freeze([
-  [0.55, 0.012, 0.42, 0.34], [-0.9, 0.009, 0.32, 0.28], [2.4, 0.014, 0.48, 0.4], [-2.6, 0.008, 0.26, 0.26],
-].map((s) => Object.freeze(s)));
+export const EG_SKY_ERUPTIONS = Object.freeze(
+  [
+    [0.55, 0.012, 0.42, 0.34],
+    [-0.9, 0.009, 0.32, 0.28],
+    [2.4, 0.014, 0.48, 0.4],
+    [-2.6, 0.008, 0.26, 0.26],
+  ].map((s) => Object.freeze(s)),
+);
 
 const f4 = (v) => v.toFixed(4);
 const v3 = (c) => `vec3(${c.map((v) => v.toFixed(4)).join(', ')})`;
-const vec4s = (name, rows) => `const vec4 ${name}[${rows.length}] = vec4[${rows.length}](${rows.map((r) => `vec4(${r.map(f4).join(', ')})`).join(', ')});`;
+const vec4s = (name, rows) =>
+  `const vec4 ${name}[${rows.length}] = vec4[${rows.length}](${rows.map((r) => `vec4(${r.map(f4).join(', ')})`).join(', ')});`;
 const turns = (k) => `${Number(k).toFixed(1)}`;
 
 /** The paint's vertex stage: the quadrant painted (`uQuad` - its corner and its size on the map, 0..1). */
@@ -118,7 +176,8 @@ void main() { vUv = uQuad.xy + (aPos * HALF + HALF) * uQuad.zw; gl_Position = ve
 
 /** Every painter's head: its band's haze law and colours, the noise, the octahedral decode, the drifts. */
 function paintHead(band) {
-  const A = egAtmosOf(band), H = EG_SKY_HAZE[band];
+  const A = egAtmosOf(band),
+    H = EG_SKY_HAZE[band];
   return `#version 300 es
 precision highp float;
 in vec2 vUv;
@@ -173,8 +232,11 @@ const LID_GLSL = `float lidAt(vec2 p) { vec2 w = vec2(dfbm(p * 0.45 + 3.1, 3), d
 
 // ── THE DEADLANDS (the Broken Galleries) ──────────────────────────────────────────────────────────────────────────────
 function deadlandsFs() {
-  const S = /** @type {any} */ (egAtmosOf(0).sky), D = /** @type {any} */ (EG_SKY_DRIFT[0]);
-  return paintHead(0) + `const vec3 LID = ${v3(S.lid)};
+  const S = /** @type {any} */ (egAtmosOf(0).sky),
+    D = /** @type {any} */ (EG_SKY_DRIFT[0]);
+  return (
+    paintHead(0) +
+    `const vec3 LID = ${v3(S.lid)};
 const vec3 LIT = ${v3(S.lit)};
 const vec3 ROCK = ${v3(S.rock)};
 ${vec4s('SPIRE', EG_SKY_SPIRES)}
@@ -237,17 +299,25 @@ vec4 skyAt(vec3 d, vec2 cell) {
     }
   }
   return vec4(col, hz);
-}` + PAINT_MAIN;
+}` +
+    PAINT_MAIN
+  );
 }
 
 // ── THE SOUL CAIRN ────────────────────────────────────────────────────────────────────────────────────────────────────
 function soulCairnFs() {
-  const S = /** @type {any} */ (egAtmosOf(1).sky), D = /** @type {any} */ (EG_SKY_DRIFT[1]), P = EG_SKY_STREAM;
+  const S = /** @type {any} */ (egAtmosOf(1).sky),
+    D = /** @type {any} */ (EG_SKY_DRIFT[1]),
+    P = EG_SKY_STREAM;
   // the stream's own frame: two directions across its pole
   const a = Math.abs(P[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0];
-  const c1 = [P[1] * a[2] - P[2] * a[1], P[2] * a[0] - P[0] * a[2], P[0] * a[1] - P[1] * a[0]], l1 = Math.hypot(...c1), S1 = c1.map((v) => v / l1);
+  const c1 = [P[1] * a[2] - P[2] * a[1], P[2] * a[0] - P[0] * a[2], P[0] * a[1] - P[1] * a[0]],
+    l1 = Math.hypot(...c1),
+    S1 = c1.map((v) => v / l1);
   const S2 = [P[1] * S1[2] - P[2] * S1[1], P[2] * S1[0] - P[0] * S1[2], P[0] * S1[1] - P[1] * S1[0]];
-  return paintHead(1) + `const vec3 STAR = ${v3(S.star)};
+  return (
+    paintHead(1) +
+    `const vec3 STAR = ${v3(S.star)};
 const vec3 SOUL = ${v3(S.soul)};
 const vec3 AURORA = ${v3(S.aurora)};
 const vec3 HEM = ${v3(S.hem)};
@@ -316,18 +386,27 @@ vec4 skyAt(vec3 d, vec2 cell) {
     if (x < wd) { col = ROCK; hz = hazeFar(e); }
   }
   return vec4(col, hz);
-}` + PAINT_MAIN;
+}` +
+    PAINT_MAIN
+  );
 }
 
 // ── THE EVERGLOAM (the Shade Perilous) ────────────────────────────────────────────────────────────────────────────────
 function evergloamFs() {
-  const S = /** @type {any} */ (egAtmosOf(2).sky), D = /** @type {any} */ (EG_SKY_DRIFT[2]), M = EG_SKY_MOON.dir;
+  const S = /** @type {any} */ (egAtmosOf(2).sky),
+    D = /** @type {any} */ (EG_SKY_DRIFT[2]),
+    M = EG_SKY_MOON.dir;
   // the moon's face: right and up across its bearing
-  const r0 = [M[2], 0, -M[0]], lr = Math.hypot(...r0), R1 = r0.map((v) => v / lr);
+  const r0 = [M[2], 0, -M[0]],
+    lr = Math.hypot(...r0),
+    R1 = r0.map((v) => v / lr);
   const U1 = [M[1] * R1[2] - M[2] * R1[1], M[2] * R1[0] - M[0] * R1[2], M[0] * R1[1] - M[1] * R1[0]];
-  const up = U1[1] < 0 ? U1.map((v) => -v) : U1, right = U1[1] < 0 ? R1.map((v) => -v) : R1;
+  const up = U1[1] < 0 ? U1.map((v) => -v) : U1,
+    right = U1[1] < 0 ? R1.map((v) => -v) : R1;
   const moonAz = Math.atan2(M[0], M[2]);
-  return paintHead(2) + `const vec3 MOON = vec3(${M.map(f4).join(', ')});   // the key light's own bearing
+  return (
+    paintHead(2) +
+    `const vec3 MOON = vec3(${M.map(f4).join(', ')});   // the key light's own bearing
 const vec3 MOON_R = vec3(${right.map(f4).join(', ')});
 const vec3 MOON_U = vec3(${up.map(f4).join(', ')});
 const float MOON_RAD = ${f4(EG_SKY_MOON.r)};
@@ -401,13 +480,19 @@ vec4 skyAt(vec3 d, vec2 cell) {
     if (x < s.z * (1.0 - h) + 0.0015) { col = ROCK; hz = hazeFar(e); }
   }
   return vec4(col, hz);
-}` + PAINT_MAIN;
+}` +
+    PAINT_MAIN
+  );
 }
 
 // ── THE HAVOC WELLHEAD ────────────────────────────────────────────────────────────────────────────────────────────────
 function wellheadFs() {
-  const S = /** @type {any} */ (egAtmosOf(3).sky), D = /** @type {any} */ (EG_SKY_DRIFT[3]), K = EG_SKY_CRATER;
-  return paintHead(3) + `const vec3 LID = ${v3(S.lid)};
+  const S = /** @type {any} */ (egAtmosOf(3).sky),
+    D = /** @type {any} */ (EG_SKY_DRIFT[3]),
+    K = EG_SKY_CRATER;
+  return (
+    paintHead(3) +
+    `const vec3 LID = ${v3(S.lid)};
 const vec3 LIT = ${v3(S.lit)};
 const vec3 ROCK = ${v3(S.rock)};
 const vec3 FIRE = ${v3(S.fire)};
@@ -483,7 +568,9 @@ vec4 skyAt(vec3 d, vec2 cell) {
     hz = hazeFar(e) * 0.85 * (1.0 - fire * 0.5);
   }
   return vec4(col, hz);
-}` + PAINT_MAIN;
+}` +
+    PAINT_MAIN
+  );
 }
 
 /** THE PAINTERS, a band each (index the band). */
@@ -505,7 +592,8 @@ export class EgSkyMap {
     this.vbo = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
     gl.bindVertexArray(null);
     /** the band the map holds (-1: none yet), the next quadrant, the calls made, the quadrants painted */
     this.band = -1;
@@ -520,9 +608,14 @@ export class EgSkyMap {
     this._quads = () => {
       for (let k = 0; k < 4; k++) {
         if (!this._all && k !== this.next) continue;
-        const qx = k & 1, qy = k >> 1, h = EG_SKY_MAP / 2;
+        const qx = k & 1,
+          qy = k >> 1,
+          h = EG_SKY_MAP / 2;
         this.gl.viewport(qx * h, qy * h, h, h);
-        this._quad[0] = qx * 0.5; this._quad[1] = qy * 0.5; this._quad[2] = 0.5; this._quad[3] = 0.5;
+        this._quad[0] = qx * 0.5;
+        this._quad[1] = qy * 0.5;
+        this._quad[2] = 0.5;
+        this._quad[3] = 0.5;
         this.gl.uniform4fv(this._u.uQuad, this._quad);
         this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4);
       }
@@ -540,41 +633,67 @@ export class EgSkyMap {
     return this.painters[b];
   }
   /** Whether the map holds band `band` whole (the fetch draws only then). */
-  holds(band) { return this.band === band && this.painted >= 4; }
+  holds(band) {
+    return this.band === band && this.painted >= 4;
+  }
   /**
    * Paint band `band`'s next quadrant at `seconds` on the sky's clock (wrapped here) - the whole map when it held another
    * band. `viewport` the world viewport to hand back (null: the drawing buffer's). A DRAW PATH: binds its target and
    * hands back the frame's (render/renderTarget.js). Answers whether it painted.
    */
   paint(band, seconds, viewport = null) {
-    const gl = this.gl, b = Math.max(0, Math.min(3, band | 0));
+    const gl = this.gl,
+      b = Math.max(0, Math.min(3, band | 0));
     const all = this.band !== b || this.painted < 4;
     this.calls++;
     if (!all && this.lite && (this.calls & 3) !== 0) return false;
     const P = this.painter(b);
-    this._all = all; this._u = P.u;
+    this._all = all;
+    this._u = P.u;
     let vp = viewport;
-    if (!vp) { const V = this._vp; V[0] = 0; V[1] = 0; V[2] = gl.drawingBufferWidth; V[3] = gl.drawingBufferHeight; vp = V; }
-    gl.disable(gl.BLEND); gl.disable(gl.DEPTH_TEST); gl.disable(gl.CULL_FACE);
+    if (!vp) {
+      const V = this._vp;
+      V[0] = 0;
+      V[1] = 0;
+      V[2] = gl.drawingBufferWidth;
+      V[3] = gl.drawingBufferHeight;
+      vp = V;
+    }
+    gl.disable(gl.BLEND);
+    gl.disable(gl.DEPTH_TEST);
+    gl.disable(gl.CULL_FACE);
     gl.useProgram(P.program);
     gl.uniform1f(P.u.uTime, egSkyClock(seconds));
     gl.bindVertexArray(this.vao);
     withTarget(gl, this.target, vp, this._quads);
     gl.bindVertexArray(null);
-    gl.enable(gl.DEPTH_TEST); gl.enable(gl.CULL_FACE);
-    if (all) { this.band = b; this.painted = 4; this.next = 0; } else { this.next = (this.next + 1) & 3; this.painted++; }
+    gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.CULL_FACE);
+    if (all) {
+      this.band = b;
+      this.painted = 4;
+      this.next = 0;
+    } else {
+      this.next = (this.next + 1) & 3;
+      this.painted++;
+    }
     return true;
   }
-  get texture() { return this.target.tex; }
+  get texture() {
+    return this.target.tex;
+  }
   /** Every GL object it made, freed once. */
   release() {
     const gl = this.gl;
     if (!this.target) return;
-    gl.deleteTexture(this.target.tex); gl.deleteFramebuffer(this.target.fbo);
+    gl.deleteTexture(this.target.tex);
+    gl.deleteFramebuffer(this.target.fbo);
     for (const p of this.painters) if (p) gl.deleteProgram(p.program);
-    gl.deleteBuffer(this.vbo); gl.deleteVertexArray(this.vao);
+    gl.deleteBuffer(this.vbo);
+    gl.deleteVertexArray(this.vao);
     this.painters = [null, null, null, null];
     this.target = /** @type {any} */ (null);
-    this.band = -1; this.painted = 0;
+    this.band = -1;
+    this.painted = 0;
   }
 }

@@ -27,7 +27,7 @@ import { BAYER_GLSL, SD_PIXEL_GLSL } from '../orderedDither.js';
 import { sdSkyBasisInto } from '../superDungeon/sdSky.js';
 import { EG_SKIES } from '../../world/eliteGates/egLook.js';
 import { EG_DRESS } from '../../world/eliteGates/egBandArt.js';
-import { EG_SKY_MOON } from './egSkyMap.js';   // EG-LOOK: the moon the sky paints
+import { EG_SKY_MOON } from './egSkyMap.js'; // EG-LOOK: the moon the sky paints
 
 /** The stair's modes (ui/gate/gateVeil.js VEIL_EG_MODE): the full fall, the veil, the plain cut. */
 export const EG_STAIR_MODE = Object.freeze({ fall: 0, veil: 1, cut: 2 });
@@ -38,14 +38,25 @@ export const EG_STAIR_LOOK = Object.freeze({ rate: 0.9, streak: 1.5, veilDim: 0.
  *  face side-on, the horizon's on every face, the zenith's on a face looking up, the moon's (the Shade's - EG_SKIES
  *  `moon`) on a face toward it; the void's haze it melts into (exponential, 1/m); the embers' columns about the eye (a
  *  radian's worth). Stone and metal are structure and do not glow (SD-LOOK): nothing here is lit but by the place. */
-export const EG_UNDERSIDE_LOOK = Object.freeze({ deep: 0.9, side: 0.22, hor: 0.3, zen: 0.5, moon: 0.55, fog: 0.004, azimuth: 2 });
+export const EG_UNDERSIDE_LOOK = Object.freeze({
+  deep: 0.9,
+  side: 0.22,
+  hor: 0.3,
+  zen: 0.5,
+  moon: 0.55,
+  fog: 0.004,
+  azimuth: 2,
+});
 /** The Shade's moon: its colour, and where it stands - EG-LOOK: the sky's own (render/eliteGates/egSkyMap.js EG_SKY_MOON, on the
  *  Shade's key light's bearing), so the fall sees the moon the halls do. */
 export const EG_MOON = Object.freeze({ color: Object.freeze([0.62, 0.66, 0.74]), dir: EG_SKY_MOON.dir });
 
 const v3 = (c) => `vec3(${c.map((v) => v.toFixed(4)).join(', ')})`;
 const f4 = (v) => v.toFixed(4);
-const unit = (c) => { const l = Math.hypot(c[0], c[1], c[2]); return c.map((v) => v / l); };
+const unit = (c) => {
+  const l = Math.hypot(c[0], c[1], c[2]);
+  return c.map((v) => v / l);
+};
 
 /** The deep's share risen to meet the faller after `t` seconds of the fall (0 at its first frame, toward 1). Pure - the
  *  shader's own law, pinned equal. */
@@ -168,8 +179,15 @@ void main() {
 export class EgUnderside {
   /** @param {WebGL2RenderingContext} gl @param {any} model @param {Map<number, WebGLTexture>} tex @param {{ vao: any, bufs: any[] }} vb */
   constructor(gl, model, tex, vb) {
-    this.gl = gl; this.tex = tex; this.vao = vb.vao; this.bufs = vb.bufs;
-    this.subMeshes = model.subMeshes.map((s) => ({ rec: s.textureRecord, start: s.startIndex, count: s.primitiveCount * 3 }));
+    this.gl = gl;
+    this.tex = tex;
+    this.vao = vb.vao;
+    this.bufs = vb.bufs;
+    this.subMeshes = model.subMeshes.map((s) => ({
+      rec: s.textureRecord,
+      start: s.startIndex,
+      count: s.primitiveCount * 3,
+    }));
     this.live = true;
   }
   destroy() {
@@ -191,21 +209,32 @@ export class EgStairRenderer {
     this.gl = gl;
     this.prog = buildProgram(gl, EG_STAIR_VS, EG_STAIR_FS, 'eg stair');
     this.u = {};
-    for (const n of ['uRes', 'uTime', 'uCover', 'uMode', 'uBand', 'uRight', 'uUp', 'uFwd', 'uLens']) this.u[n] = gl.getUniformLocation(this.prog, n);
+    for (const n of ['uRes', 'uTime', 'uCover', 'uMode', 'uBand', 'uRight', 'uUp', 'uFwd', 'uLens'])
+      this.u[n] = gl.getUniformLocation(this.prog, n);
     /** EG-ZO: the underside's program (built at the first upload and kept with the pass), whether it would not build, its
      *  uniforms, and the camera's ray basis (filled each frame, nothing made) */
-    this.under = null; this.underBroken = false; this.uu = {};
-    this._basis = { right: new Float32Array(3), up: new Float32Array(3), fwd: new Float32Array(3), lens: new Float32Array(4) };
+    this.under = null;
+    this.underBroken = false;
+    this.uu = {};
+    this._basis = {
+      right: new Float32Array(3),
+      up: new Float32Array(3),
+      fwd: new Float32Array(3),
+      lens: new Float32Array(4),
+    };
     this.vao = gl.createVertexArray();
     gl.bindVertexArray(this.vao);
     this.vbo = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
     gl.bindVertexArray(null);
   }
   draw(w, h, t, v, look) {
-    const gl = this.gl, U = this.u, cam = look?.mode === EG_STAIR_MODE.fall ? look?.cam ?? null : null;
+    const gl = this.gl,
+      U = this.u,
+      cam = look?.mode === EG_STAIR_MODE.fall ? (look?.cam ?? null) : null;
     gl.viewport(0, 0, w, h);
     gl.clearColor(0, 0, 0, 0);
     gl.clear(cam ? gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT : gl.COLOR_BUFFER_BIT);
@@ -215,9 +244,13 @@ export class EgStairRenderer {
     gl.uniform1f(U.uCover, v.cover);
     gl.uniform1f(U.uMode, look?.mode ?? EG_STAIR_MODE.veil);
     gl.uniform1i(U.uBand, (look?.band ?? 0) | 0);
-    if (cam) {   // EG-ZO: the void as the falling camera sees it
+    if (cam) {
+      // EG-ZO: the void as the falling camera sees it
       const B = sdSkyBasisInto(cam.view, cam.proj, this._basis);
-      gl.uniform3fv(U.uRight, B.right); gl.uniform3fv(U.uUp, B.up); gl.uniform3fv(U.uFwd, B.fwd); gl.uniform4fv(U.uLens, B.lens);
+      gl.uniform3fv(U.uRight, B.right);
+      gl.uniform3fv(U.uUp, B.up);
+      gl.uniform3fv(U.uFwd, B.fwd);
+      gl.uniform4fv(U.uLens, B.lens);
     }
     gl.bindVertexArray(this.vao);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -227,15 +260,20 @@ export class EgStairRenderer {
   /** EG-ZO: THE UNDERSIDE drawn over the void through the falling camera - depth-tested and written, its back faces
    *  culled, a sub-mesh a picture - and the state given back. */
   drawUnderside(under, cam, cover, band) {
-    const gl = this.gl, U = this.uu;
+    const gl = this.gl,
+      U = this.uu;
     gl.useProgram(this.under);
-    gl.uniformMatrix4fv(U.uProj, false, cam.proj); gl.uniformMatrix4fv(U.uView, false, cam.view);
+    gl.uniformMatrix4fv(U.uProj, false, cam.proj);
+    gl.uniformMatrix4fv(U.uView, false, cam.view);
     gl.uniform3fv(U.uEye, cam.eye);
     gl.uniform1f(U.uCover, cover);
     gl.uniform1i(U.uBand, band);
     gl.uniform1i(U.uTex, 0);
-    gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LESS); gl.depthMask(true);
-    gl.enable(gl.CULL_FACE); gl.cullFace(gl.BACK);
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LESS);
+    gl.depthMask(true);
+    gl.enable(gl.CULL_FACE);
+    gl.cullFace(gl.BACK);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindVertexArray(under.vao);
     for (const s of under.subMeshes) {
@@ -246,7 +284,8 @@ export class EgStairRenderer {
     }
     gl.bindVertexArray(null);
     gl.bindTexture(gl.TEXTURE_2D, null);
-    gl.disable(gl.CULL_FACE); gl.disable(gl.DEPTH_TEST);
+    gl.disable(gl.CULL_FACE);
+    gl.disable(gl.DEPTH_TEST);
   }
   /**
    * EG-ZO: THE UNDERSIDE UPLOADED - `parts` world/eliteGates/egUnderside.js egUndersideParts' made whole (its `model` and its `art`,
@@ -260,21 +299,33 @@ export class EgStairRenderer {
     if (!this.under && !this.underBroken) {
       try {
         this.under = buildProgram(gl, EG_UNDERSIDE_VS, EG_UNDERSIDE_FS, 'eg underside');
-        for (const n of ['uProj', 'uView', 'uEye', 'uCover', 'uBand', 'uTex']) this.uu[n] = gl.getUniformLocation(this.under, n);
-      } catch (e) { console.warn('[eg] the underside would not build', e?.message ?? e); this.underBroken = true; this.under = null; }
+        for (const n of ['uProj', 'uView', 'uEye', 'uCover', 'uBand', 'uTex'])
+          this.uu[n] = gl.getUniformLocation(this.under, n);
+      } catch (e) {
+        console.warn('[eg] the underside would not build', e?.message ?? e);
+        this.underBroken = true;
+        this.under = null;
+      }
     }
     if (!this.under || !parts?.model) return null;
-    const m = parts.model, tex = new Map(), bufs = [];
+    const m = parts.model,
+      tex = new Map(),
+      bufs = [];
     let vao = null;
     try {
       vao = gl.createVertexArray();
       gl.bindVertexArray(vao);
-      for (const [loc, data, size] of /** @type {Array<[number, Float32Array, number]>} */ ([[0, m.positions, 3], [1, m.normals, 3], [2, m.uvs, 2]])) {
+      for (const [loc, data, size] of /** @type {Array<[number, Float32Array, number]>} */ ([
+        [0, m.positions, 3],
+        [1, m.normals, 3],
+        [2, m.uvs, 2],
+      ])) {
         const b = gl.createBuffer();
         bufs.push(b);
         gl.bindBuffer(gl.ARRAY_BUFFER, b);
         gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
-        gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, size, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(loc);
+        gl.vertexAttribPointer(loc, size, gl.FLOAT, false, 0, 0);
       }
       const ib = gl.createBuffer();
       bufs.push(ib);
@@ -282,7 +333,8 @@ export class EgStairRenderer {
       gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, m.indices, gl.STATIC_DRAW);
       gl.bindVertexArray(null);
       for (const [rec, art] of parts.art) {
-        const img = art.albedo, t = gl.createTexture();
+        const img = art.albedo,
+          t = gl.createTexture();
         tex.set(rec, t);
         gl.bindTexture(gl.TEXTURE_2D, t);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, img.width, img.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, img.colors);
@@ -296,14 +348,16 @@ export class EgStairRenderer {
       return new EgUnderside(gl, m, tex, { vao, bufs });
     } catch (e) {
       console.warn('[eg] the underside would not upload', e?.message ?? e);
-      new EgUnderside(gl, m, tex, { vao, bufs }).destroy();   // what was made is freed
+      new EgUnderside(gl, m, tex, { vao, bufs }).destroy(); // what was made is freed
       return null;
     }
   }
   destroy() {
     const gl = this.gl;
-    gl.deleteBuffer(this.vbo); gl.deleteVertexArray(this.vao); gl.deleteProgram(this.prog);
-    if (this.under) gl.deleteProgram(this.under);   // EG-ZO: the underside's program, kept with the pass
+    gl.deleteBuffer(this.vbo);
+    gl.deleteVertexArray(this.vao);
+    gl.deleteProgram(this.prog);
+    if (this.under) gl.deleteProgram(this.under); // EG-ZO: the underside's program, kept with the pass
     this.under = null;
   }
 }

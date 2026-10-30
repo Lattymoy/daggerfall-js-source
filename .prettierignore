@@ -36,6 +36,8 @@
 /src/render/*
 !/src/render/dragon/
 /src/render/dragon/*/
+!/src/render/eliteGates/
+/src/render/eliteGates/*/
 !/src/render/ketch/
 /src/render/ketch/*/
 !/src/render/starfall/

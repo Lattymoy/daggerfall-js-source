@@ -78,7 +78,9 @@ const NO_FOG = new Float32Array(3);
 
 /** FIRST-USE (#1144): the pass's one program, as its constructor builds it - what the hall's load starts and the
  *  look's door waits on (render/glProgram.js startPrograms, compiledPass). */
-export const EG_SKY_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[EG_SKY_VS, EG_SKY_FS]]));
+export const EG_SKY_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (
+  Object.freeze([[EG_SKY_VS, EG_SKY_FS]])
+);
 
 /** The pass: the fetch and the map it owns. */
 export class EgSkyPass {
@@ -88,22 +90,31 @@ export class EgSkyPass {
     const [[vs, fs]] = EG_SKY_PROGRAMS;
     this.program = buildProgram(gl, vs, fs, 'eg sky');
     this.u = {};
-    for (const n of ['uRight', 'uUp', 'uFwd', 'uProj', 'uSkyMap', 'uLift', 'uFog', 'uSteps']) this.u[n] = gl.getUniformLocation(this.program, n);
+    for (const n of ['uRight', 'uUp', 'uFwd', 'uProj', 'uSkyMap', 'uLift', 'uFog', 'uSteps'])
+      this.u[n] = gl.getUniformLocation(this.program, n);
     this.vao = gl.createVertexArray();
     gl.bindVertexArray(this.vao);
     this.vbo = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
     gl.bindVertexArray(null);
-    this._b = { right: new Float32Array(3), up: new Float32Array(3), fwd: new Float32Array(3), lens: new Float32Array(4) };
+    this._b = {
+      right: new Float32Array(3),
+      up: new Float32Array(3),
+      fwd: new Float32Array(3),
+      lens: new Float32Array(4),
+    };
     /** EG-LOOK: the painted map (render/eliteGates/egSkyMap.js) */
     this.map = new EgSkyMap(gl, { lite });
     this.drawn = false;
   }
   /** Band `band`'s map's next quadrant at `seconds` on the sky's clock, `viewport` handed back (render/eliteGates/egSkyMap.js
    *  EgSkyMap.paint). Answers whether it painted. */
-  paint(band, seconds, viewport = null) { return this.map.paint(band, seconds, viewport); }
+  paint(band, seconds, viewport = null) {
+    return this.map.paint(band, seconds, viewport);
+  }
   /** Fetch band `band`'s sky where nothing nearer has drawn: `gain` the band's fog against the frame's (the realm's light
    *  at egSkyLift of it), `fog` the frame's fog colour (the haze), `steps` the pixel law's - nothing (false) until its map
    *  is painted whole.
@@ -111,19 +122,29 @@ export class EgSkyPass {
   draw(proj, view, band, gain = 1, fog = null, steps = /** @type {number} */ (EG_SKY_STEPS.lane)) {
     this.drawn = false;
     if (!this.program || !this.map.holds(band | 0)) return false;
-    const gl = this.gl, U = this.u, b = sdSkyBasisInto(view, proj, this._b);
-    gl.disable(gl.BLEND); gl.disable(gl.CULL_FACE);
+    const gl = this.gl,
+      U = this.u,
+      b = sdSkyBasisInto(view, proj, this._b);
+    gl.disable(gl.BLEND);
+    gl.disable(gl.CULL_FACE);
     gl.useProgram(this.program);
-    gl.uniform3fv(U.uRight, b.right); gl.uniform3fv(U.uUp, b.up); gl.uniform3fv(U.uFwd, b.fwd); gl.uniform4fv(U.uProj, b.lens);
+    gl.uniform3fv(U.uRight, b.right);
+    gl.uniform3fv(U.uUp, b.up);
+    gl.uniform3fv(U.uFwd, b.fwd);
+    gl.uniform4fv(U.uProj, b.lens);
     gl.uniform1f(U.uLift, egSkyLift(gain));
     gl.uniform3fv(U.uFog, fog ?? NO_FOG);
     gl.uniform1f(U.uSteps, steps);
-    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.map.texture); gl.uniform1i(U.uSkyMap, 0);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.map.texture);
+    gl.uniform1i(U.uSkyMap, 0);
     gl.depthMask(false);
-    gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL);   // PERF2: only where nothing nearer has drawn - z is the far plane
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LEQUAL); // PERF2: only where nothing nearer has drawn - z is the far plane
     gl.bindVertexArray(this.vao);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
-    gl.depthFunc(gl.LESS); gl.depthMask(true);
+    gl.depthFunc(gl.LESS);
+    gl.depthMask(true);
     gl.bindVertexArray(null);
     gl.enable(gl.CULL_FACE);
     this.drawn = true;
@@ -134,7 +155,9 @@ export class EgSkyPass {
     const gl = this.gl;
     if (!this.program) return;
     this.map.release();
-    gl.deleteBuffer(this.vbo); gl.deleteVertexArray(this.vao); gl.deleteProgram(this.program);
+    gl.deleteBuffer(this.vbo);
+    gl.deleteVertexArray(this.vao);
+    gl.deleteProgram(this.program);
     this.program = /** @type {any} */ (null);
   }
 }

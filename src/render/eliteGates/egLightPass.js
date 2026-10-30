@@ -29,7 +29,14 @@ export const EG_RING_SIDES = 32;
 /** The kept buffer's room (vertices): every light a ring's worth. */
 export const EG_LIGHT_VERTS_MAX = EG_LIGHTS_MAX * EG_RING_SIDES * 6;
 /** A quad's six corners: [across, along]. */
-const QUAD = Object.freeze([[-1, 0], [1, 0], [1, 1], [-1, 0], [1, 1], [-1, 1]]);
+const QUAD = Object.freeze([
+  [-1, 0],
+  [1, 0],
+  [1, 1],
+  [-1, 0],
+  [1, 1],
+  [-1, 1],
+]);
 
 /**
  * The lights (world/eliteGates/egLights.js egSpireLights) as the pass's vertices into `out` - `eye` the camera, `right` and `up` the
@@ -43,18 +50,30 @@ export function egLightVertices(lights, eye, right, up, out) {
   let n = 0;
   const put = (x, y, z, u, v, k, x2, c, a) => {
     const o = n * EG_LIGHT_FLOATS;
-    out[o] = x; out[o + 1] = y; out[o + 2] = z; out[o + 3] = u; out[o + 4] = v; out[o + 5] = k; out[o + 6] = x2; out[o + 7] = c[0] * a; out[o + 8] = c[1] * a; out[o + 9] = c[2] * a;
+    out[o] = x;
+    out[o + 1] = y;
+    out[o + 2] = z;
+    out[o + 3] = u;
+    out[o + 4] = v;
+    out[o + 5] = k;
+    out[o + 6] = x2;
+    out[o + 7] = c[0] * a;
+    out[o + 8] = c[1] * a;
+    out[o + 9] = c[2] * a;
     n++;
   };
   for (const L of lights) {
     if (!(L.a > 0)) continue;
     if (L.k === EG_LIGHT_KIND.ring) {
       if (n + EG_RING_SIDES * 6 > room) break;
-      const r0 = Math.max(0, L.r - L.w / 2), r1 = L.r + L.w / 2;
+      const r0 = Math.max(0, L.r - L.w / 2),
+        r1 = L.r + L.w / 2;
       for (let i = 0; i < EG_RING_SIDES; i++) {
-        const a0 = (i / EG_RING_SIDES) * Math.PI * 2, a1 = ((i + 1) / EG_RING_SIDES) * Math.PI * 2;
+        const a0 = (i / EG_RING_SIDES) * Math.PI * 2,
+          a1 = ((i + 1) / EG_RING_SIDES) * Math.PI * 2;
         for (const [s, e] of QUAD) {
-          const ang = e ? a1 : a0, r = s < 0 ? r0 : r1;
+          const ang = e ? a1 : a0,
+            r = s < 0 ? r0 : r1;
           put(L.x + Math.cos(ang) * r, L.y, L.z + Math.sin(ang) * r, s, (i + e) / EG_RING_SIDES, L.k, L.f, L.c, L.a);
         }
       }
@@ -65,16 +84,34 @@ export function egLightVertices(lights, eye, right, up, out) {
       const h = L.w / 2;
       for (const [s, e] of QUAD) {
         const v = e * 2 - 1;
-        put(L.x + (right[0] * s + up[0] * v) * h, L.y + (right[1] * s + up[1] * v) * h, L.z + (right[2] * s + up[2] * v) * h, s, v, L.k, L.f, L.c, L.a);
+        put(
+          L.x + (right[0] * s + up[0] * v) * h,
+          L.y + (right[1] * s + up[1] * v) * h,
+          L.z + (right[2] * s + up[2] * v) * h,
+          s,
+          v,
+          L.k,
+          L.f,
+          L.c,
+          L.a,
+        );
       }
       continue;
     }
     if (!(L.h > 0)) continue;
     // a column: faces the eye about its upright axis (its side square to the line from the eye in the ground's plane)
-    let dx = eye[0] - L.x, dz = eye[2] - L.z;
+    let dx = eye[0] - L.x,
+      dz = eye[2] - L.z;
     const d = Math.hypot(dx, dz);
-    if (d > 1e-4) { dx /= d; dz /= d; } else { dx = 0; dz = 1; }
-    const sx = -dz * (L.w / 2), sz = dx * (L.w / 2);
+    if (d > 1e-4) {
+      dx /= d;
+      dz /= d;
+    } else {
+      dx = 0;
+      dz = 1;
+    }
+    const sx = -dz * (L.w / 2),
+      sz = dx * (L.w / 2);
     for (const [s, e] of QUAD) put(L.x + sx * s, L.y + L.h * e, L.z + sz * s, s, e, L.k, 0, L.c, L.a);
   }
   return n;
@@ -159,7 +196,9 @@ void main() {
 
 /** FIRST-USE (#1144): the pass's one program, as its constructor builds it - what the hall's load starts and the
  *  look's door waits on (render/glProgram.js startPrograms, compiledPass). */
-export const EG_LIGHT_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[EG_LIGHT_VS, EG_LIGHT_FS]]));
+export const EG_LIGHT_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (
+  Object.freeze([[EG_LIGHT_VS, EG_LIGHT_FS]])
+);
 
 /** The pass. */
 export class EgLightPass {
@@ -169,19 +208,38 @@ export class EgLightPass {
     const [[vs, fs]] = EG_LIGHT_PROGRAMS;
     this.program = buildProgram(gl, vs, fs, 'eg lights');
     this.u = {};
-    for (const n of ['uVP', 'uTime', 'uStill', 'uFogFloor', 'uBeamFog', 'uSpent', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos']) this.u[n] = gl.getUniformLocation(this.program, n);
-    this.vao = gl.createVertexArray(); this.vbo = gl.createBuffer();
-    gl.bindVertexArray(this.vao); gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
+    for (const n of [
+      'uVP',
+      'uTime',
+      'uStill',
+      'uFogFloor',
+      'uBeamFog',
+      'uSpent',
+      'uFogMode',
+      'uFogDensity',
+      'uFogRange',
+      'uCamPos',
+    ])
+      this.u[n] = gl.getUniformLocation(this.program, n);
+    this.vao = gl.createVertexArray();
+    this.vbo = gl.createBuffer();
+    gl.bindVertexArray(this.vao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
     gl.bufferData(gl.ARRAY_BUFFER, EG_LIGHT_VERTS_MAX * EG_LIGHT_FLOATS * 4, gl.DYNAMIC_DRAW);
     const S = EG_LIGHT_FLOATS * 4;
-    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, S, 0);
-    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 2, gl.FLOAT, false, S, 12);
-    gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 2, gl.FLOAT, false, S, 20);
-    gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 3, gl.FLOAT, false, S, 28);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, S, 0);
+    gl.enableVertexAttribArray(1);
+    gl.vertexAttribPointer(1, 2, gl.FLOAT, false, S, 12);
+    gl.enableVertexAttribArray(2);
+    gl.vertexAttribPointer(2, 2, gl.FLOAT, false, S, 20);
+    gl.enableVertexAttribArray(3);
+    gl.vertexAttribPointer(3, 3, gl.FLOAT, false, S, 28);
     gl.bindVertexArray(null);
     this._data = new Float32Array(EG_LIGHT_VERTS_MAX * EG_LIGHT_FLOATS);
     this._vp = new Float32Array(16);
-    this._right = new Float32Array(3); this._up = new Float32Array(3);
+    this._right = new Float32Array(3);
+    this._up = new Float32Array(3);
     this.drawn = 0;
   }
   /**
@@ -191,12 +249,26 @@ export class EgLightPass {
   draw(proj, view, eye, seconds, fog = null, lights = null, still = false) {
     this.drawn = 0;
     if (!lights?.length) return false;
-    const gl = this.gl, U = this.u, V = this._vp, R = this._right, P = this._up;
-    R[0] = view[0]; R[1] = view[4]; R[2] = view[8];   // the view's own right and up (its rotation's rows)
-    P[0] = view[1]; P[1] = view[5]; P[2] = view[9];
+    const gl = this.gl,
+      U = this.u,
+      V = this._vp,
+      R = this._right,
+      P = this._up;
+    R[0] = view[0];
+    R[1] = view[4];
+    R[2] = view[8]; // the view's own right and up (its rotation's rows)
+    P[0] = view[1];
+    P[1] = view[5];
+    P[2] = view[9];
     const n = egLightVertices(lights, eye ?? fog?.camPos ?? NO_EYE, R, P, this._data);
     if (!n) return false;
-    for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) V[c * 4 + r] = proj[r] * view[c * 4] + proj[4 + r] * view[c * 4 + 1] + proj[8 + r] * view[c * 4 + 2] + proj[12 + r] * view[c * 4 + 3];
+    for (let c = 0; c < 4; c++)
+      for (let r = 0; r < 4; r++)
+        V[c * 4 + r] =
+          proj[r] * view[c * 4] +
+          proj[4 + r] * view[c * 4 + 1] +
+          proj[8 + r] * view[c * 4 + 2] +
+          proj[12 + r] * view[c * 4 + 3];
     gl.useProgram(this.program);
     gl.uniformMatrix4fv(U.uVP, false, V);
     gl.uniform1f(U.uTime, seconds % 60);
@@ -208,19 +280,27 @@ export class EgLightPass {
     gl.uniform1f(U.uFogDensity, fog?.density ?? 0);
     gl.uniform2fv(U.uFogRange, fog?.range ?? NO_FOG_RANGE);
     gl.uniform3fv(U.uCamPos, fog?.camPos ?? eye ?? NO_EYE);
-    gl.enable(gl.DEPTH_TEST); gl.depthMask(false); gl.disable(gl.CULL_FACE);
-    gl.enable(gl.BLEND); gl.blendFuncSeparate(gl.ONE, gl.ONE_MINUS_SRC_ALPHA, gl.ZERO, gl.ONE);
-    gl.bindVertexArray(this.vao); gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthMask(false);
+    gl.disable(gl.CULL_FACE);
+    gl.enable(gl.BLEND);
+    gl.blendFuncSeparate(gl.ONE, gl.ONE_MINUS_SRC_ALPHA, gl.ZERO, gl.ONE);
+    gl.bindVertexArray(this.vao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, this._data, 0, n * EG_LIGHT_FLOATS);
     gl.drawArrays(gl.TRIANGLES, 0, n);
     gl.bindVertexArray(null);
-    gl.depthMask(true); gl.disable(gl.BLEND); gl.enable(gl.CULL_FACE);
+    gl.depthMask(true);
+    gl.disable(gl.BLEND);
+    gl.enable(gl.CULL_FACE);
     this.drawn = n;
     return true;
   }
   destroy() {
     const gl = this.gl;
-    gl.deleteBuffer(this.vbo); gl.deleteVertexArray(this.vao); gl.deleteProgram(this.program);
+    gl.deleteBuffer(this.vbo);
+    gl.deleteVertexArray(this.vao);
+    gl.deleteProgram(this.program);
   }
 }
 const NO_FOG_RANGE = new Float32Array([0, 1]);

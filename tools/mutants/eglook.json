@@ -422,8 +422,8 @@
   {
     "name": "EGLOOK-lines-track-solid",
     "file": "src/render/eliteGates/egLinePass.js",
-    "old": "{ if (fract(vAlong / ${(2 * EG_TRACK.dash).toFixed(3)}) > 0.5) discard; c = uGold * 0.85; }",
-    "new": "{ c = uGold * 0.85; }",
+    "old": "  if (vKind == ${EG_LINE_KIND.track}) { if (fract(vAlong / ${(2 * EG_TRACK.dash).toFixed(3)}) > 0.5) discard; c = uGold * 0.85; }",
+    "new": "  if (vKind == ${EG_LINE_KIND.track}) { c = uGold * 0.85; }",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js"
     ]
@@ -431,8 +431,8 @@
   {
     "name": "EGLOOK-lines-lost-in-fog",
     "file": "src/render/eliteGates/egLinePass.js",
-    "old": "float f = max(fogFactorAt(vWorld), kept);",
-    "new": "float f = fogFactorAt(vWorld);",
+    "old": "  float f = max(fogFactorAt(vWorld), kept);",
+    "new": "  float f = fogFactorAt(vWorld);",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js"
     ]
@@ -440,8 +440,8 @@
   {
     "name": "EGLOOK-mist-no-feather",
     "file": "src/render/eliteGates/egMistPass.js",
-    "old": "if (a <= 0.004) discard;",
-    "new": "if (a < 0.0) discard;",
+    "old": "  if (a <= 0.004) discard;",
+    "new": "  if (a < 0.0) discard;",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js"
     ]
@@ -449,8 +449,8 @@
   {
     "name": "EGLOOK-sky-deep-unlit",
     "file": "src/render/eliteGates/egSkyMap.js",
-    "old": "col = mix(DEEP * (0.45 + 0.4 * dnoise(q * 2.5)), GLOW, heat);",
-    "new": "col = DEEP * 0.1;",
+    "old": "    col = mix(DEEP * (0.45 + 0.4 * dnoise(q * 2.5)), GLOW, heat);",
+    "new": "    col = DEEP * 0.1;",
     "tests": [
       "test/world/eliteGates/eglook_lines.test.js"
     ]

@@ -62,7 +62,9 @@ void main() {
 
 /** FIRST-USE (#1144): the pass's one program, as its constructor builds it - what the hall's load starts and the
  *  look's door waits on (render/glProgram.js startPrograms, compiledPass). */
-export const EG_MIST_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[EG_MIST_VS, EG_MIST_FS]]));
+export const EG_MIST_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (
+  Object.freeze([[EG_MIST_VS, EG_MIST_FS]])
+);
 
 /** The pass. */
 export class EgMistPass {
@@ -72,13 +74,28 @@ export class EgMistPass {
     const [[vs, fs]] = EG_MIST_PROGRAMS;
     this.program = buildProgram(gl, vs, fs, 'eg mist');
     this.u = {};
-    for (const n of ['uVP', 'uRect', 'uY', 'uColor', 'uAlpha', 'uTime', 'uSteps', 'uRound', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos']) this.u[n] = gl.getUniformLocation(this.program, n);
+    for (const n of [
+      'uVP',
+      'uRect',
+      'uY',
+      'uColor',
+      'uAlpha',
+      'uTime',
+      'uSteps',
+      'uRound',
+      'uFogMode',
+      'uFogDensity',
+      'uFogRange',
+      'uCamPos',
+    ])
+      this.u[n] = gl.getUniformLocation(this.program, n);
     this.vao = gl.createVertexArray();
     gl.bindVertexArray(this.vao);
     this.vbo = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1]), gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
     gl.bindVertexArray(null);
     this._vp = new Float32Array(16);
     this.drawn = 0;
@@ -90,8 +107,16 @@ export class EgMistPass {
   draw(proj, view, eye, sheets, color, seconds, fog = null, steps = 10) {
     this.drawn = 0;
     if (!sheets?.length) return false;
-    const gl = this.gl, U = this.u, V = this._vp;
-    for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) V[c * 4 + r] = proj[r] * view[c * 4] + proj[4 + r] * view[c * 4 + 1] + proj[8 + r] * view[c * 4 + 2] + proj[12 + r] * view[c * 4 + 3];
+    const gl = this.gl,
+      U = this.u,
+      V = this._vp;
+    for (let c = 0; c < 4; c++)
+      for (let r = 0; r < 4; r++)
+        V[c * 4 + r] =
+          proj[r] * view[c * 4] +
+          proj[4 + r] * view[c * 4 + 1] +
+          proj[8 + r] * view[c * 4 + 2] +
+          proj[12 + r] * view[c * 4 + 3];
     gl.useProgram(this.program);
     gl.uniformMatrix4fv(U.uVP, false, V);
     gl.uniform3f(U.uColor, color[0], color[1], color[2]);
@@ -102,9 +127,13 @@ export class EgMistPass {
     gl.uniform2fv(U.uFogRange, fog?.range ?? NO_FOG_RANGE);
     gl.uniform3fv(U.uCamPos, fog?.camPos ?? eye ?? NO_FOG_EYE);
     gl.bindVertexArray(this.vao);
-    gl.enable(gl.DEPTH_TEST); gl.depthMask(false); gl.disable(gl.CULL_FACE);
-    gl.enable(gl.BLEND); gl.blendFuncSeparate(gl.ONE, gl.ONE_MINUS_SRC_ALPHA, gl.ZERO, gl.ONE);
-    for (let k = 0, n = Math.min(sheets.length, EG_MIST_MAX); k < n; k++) {   // AUDIT EG V (L6-4): read in place, never sliced a frame
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthMask(false);
+    gl.disable(gl.CULL_FACE);
+    gl.enable(gl.BLEND);
+    gl.blendFuncSeparate(gl.ONE, gl.ONE_MINUS_SRC_ALPHA, gl.ZERO, gl.ONE);
+    for (let k = 0, n = Math.min(sheets.length, EG_MIST_MAX); k < n; k++) {
+      // AUDIT EG V (L6-4): read in place, never sliced a frame
       const s = sheets[k];
       if (!(s.alpha > 0)) continue;
       gl.uniform4f(U.uRect, s.rect[0], s.rect[1], s.rect[2], s.rect[3]);
@@ -115,10 +144,17 @@ export class EgMistPass {
       this.drawn++;
     }
     gl.bindVertexArray(null);
-    gl.depthMask(true); gl.disable(gl.BLEND); gl.enable(gl.CULL_FACE);
+    gl.depthMask(true);
+    gl.disable(gl.BLEND);
+    gl.enable(gl.CULL_FACE);
     return this.drawn > 0;
   }
-  destroy() { const gl = this.gl; gl.deleteBuffer(this.vbo); gl.deleteVertexArray(this.vao); gl.deleteProgram(this.program); }
+  destroy() {
+    const gl = this.gl;
+    gl.deleteBuffer(this.vbo);
+    gl.deleteVertexArray(this.vao);
+    gl.deleteProgram(this.program);
+  }
 }
 const NO_FOG_RANGE = new Float32Array([0, 1]);
 const NO_FOG_EYE = new Float32Array(3);

@@ -299,8 +299,8 @@
   {
     "name": "EGZ-the-dither-inverted",
     "file": "src/render/eliteGates/egStairPass.js",
-    "old": "if (bayer4(px) >= uCover) { o = vec4(0.0); return; }",
-    "new": "if (bayer4(px) < uCover) { o = vec4(0.0); return; }",
+    "old": "  if (bayer4(px) >= uCover) { o = vec4(0.0); return; }",
+    "new": "  if (bayer4(px) < uCover) { o = vec4(0.0); return; }",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "EGZ-the-cut-moves",
     "file": "src/render/eliteGates/egStairPass.js",
-    "old": "(mode < 1.5 ? t * 0.8 : 0.0)",
-    "new": "t * 0.8",
+    "old": "    vec2 g = vec2(p.x * 30.0, e * 30.0 - (mode < 1.5 ? t * 0.8 : 0.0));",
+    "new": "    vec2 g = vec2(p.x * 30.0, e * 30.0 - t * 0.8);",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "EGZ-the-deep-never-rises",
     "file": "src/render/eliteGates/egStairPass.js",
-    "old": "c += DEEP[b] * 0.35 * k * smoothstep(0.0, 1.0, -e);",
-    "new": "c += DEEP[b] * 0.35 * smoothstep(0.0, 1.0, -e);",
+    "old": "    c += DEEP[b] * 0.35 * k * smoothstep(0.0, 1.0, -e);   // never a reversed edge (SD20c V14)",
+    "new": "    c += DEEP[b] * 0.35 * smoothstep(0.0, 1.0, -e);   // never a reversed edge (SD20c V14)",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "EGZ-the-veil-not-dimmed",
     "file": "src/render/eliteGates/egStairPass.js",
-    "old": "c *= ${f4(EG_STAIR_LOOK.veilDim)};",
-    "new": "",
+    "old": "  c *= ${f4(EG_STAIR_LOOK.veilDim)};",
+    "new": "  ",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "EGZ-the-column-edge-on",
     "file": "src/render/eliteGates/egLightPass.js",
-    "old": "const sx = -dz * (L.w / 2), sz = dx * (L.w / 2);",
-    "new": "const sx = dx * (L.w / 2), sz = dz * (L.w / 2);",
+    "old": "    const sx = -dz * (L.w / 2),\n      sz = dx * (L.w / 2);",
+    "new": "    const sx = dx * (L.w / 2),\n      sz = dz * (L.w / 2);",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "EGZ-the-ring-overruns",
     "file": "src/render/eliteGates/egLightPass.js",
-    "old": "if (n + EG_RING_SIDES * 6 > room) break;",
-    "new": "",
+    "old": "      if (n + EG_RING_SIDES * 6 > room) break;\n      const r0 = Math.max(0, L.r - L.w / 2),",
+    "new": "      const r0 = Math.max(0, L.r - L.w / 2),",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "EGZ-the-ring-off-its-radii",
     "file": "src/render/eliteGates/egLightPass.js",
-    "old": "const r0 = Math.max(0, L.r - L.w / 2), r1 = L.r + L.w / 2;",
-    "new": "const r0 = L.r, r1 = L.r + L.w;",
+    "old": "      const r0 = Math.max(0, L.r - L.w / 2),\n        r1 = L.r + L.w / 2;",
+    "new": "      const r0 = L.r,\n        r1 = L.r + L.w;",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "EGZ-the-glyph-not-facing",
     "file": "src/render/eliteGates/egLightPass.js",
-    "old": "put(L.x + (right[0] * s + up[0] * v) * h, L.y + (right[1] * s + up[1] * v) * h, L.z + (right[2] * s + up[2] * v) * h,",
-    "new": "put(L.x + s * h, L.y + v * h, L.z,",
+    "old": "        put(\n          L.x + (right[0] * s + up[0] * v) * h,\n          L.y + (right[1] * s + up[1] * v) * h,\n          L.z + (right[2] * s + up[2] * v) * h,\n          s,\n          v,\n          L.k,\n          L.f,\n          L.c,\n          L.a,\n        );",
+    "new": "        put(L.x + s * h, L.y + v * h, L.z, s, v, L.k, L.f, L.c, L.a);",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "EGZ-the-spent-arc-lit",
     "file": "src/render/eliteGates/egLightPass.js",
-    "old": "I = (1.0 - u * u) * (v <= vX ? 1.0 : uSpent);",
-    "new": "I = (1.0 - u * u);",
+    "old": "    I = (1.0 - u * u) * (v <= vX ? 1.0 : uSpent);",
+    "new": "    I = (1.0 - u * u);",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "EGZ-the-beam-lost-in-the-haze",
     "file": "src/render/eliteGates/egLightPass.js",
-    "old": "if (vKind == ${EG_LIGHT_KIND.beam}) kept = max(kept, uBeamFog);",
-    "new": "",
+    "old": "  if (vKind == ${EG_LIGHT_KIND.beam}) kept = max(kept, uBeamFog);",
+    "new": "  ",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "EGZ-the-ripple-never-stilled",
     "file": "src/render/eliteGates/egLightPass.js",
-    "old": "float ripple = uStill > 0.5 ? 1.0 : 0.88 + 0.12 * sin(v * 24.0 - uTime * 2.4);",
-    "new": "float ripple = 0.88 + 0.12 * sin(v * 24.0 - uTime * 2.4);",
+    "old": "    float ripple = uStill > 0.5 ? 1.0 : 0.88 + 0.12 * sin(v * 24.0 - uTime * 2.4);",
+    "new": "    float ripple = 0.88 + 0.12 * sin(v * 24.0 - uTime * 2.4);",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "EGZ-the-lights-fog-floor-dropped",
     "file": "src/render/eliteGates/egLightPass.js",
-    "old": "float f = max(fogFactorAt(vWorld), kept);",
-    "new": "float f = fogFactorAt(vWorld);",
+    "old": "  float f = max(fogFactorAt(vWorld), kept);",
+    "new": "  float f = fogFactorAt(vWorld);",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "EGZ-the-glyph-unread",
     "file": "src/render/eliteGates/egLightPass.js",
-    "old": "a = 0.6 * I;",
-    "new": "a = 0.0;",
+    "old": "    a = 0.6 * I;",
+    "new": "    a = 0.0;",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "EGZ-the-beam-not-fading-up",
     "file": "src/render/eliteGates/egLightPass.js",
-    "old": "I = (exp(-u * u * 10.0) + 0.35 * (1.0 - u)) * pow(1.0 - v, 1.5) * ripple;",
-    "new": "I = (exp(-u * u * 10.0) + 0.35 * (1.0 - u)) * ripple;",
+    "old": "    I = (exp(-u * u * 10.0) + 0.35 * (1.0 - u)) * pow(1.0 - v, 1.5) * ripple;",
+    "new": "    I = (exp(-u * u * 10.0) + 0.35 * (1.0 - u)) * ripple;",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "EGZ-the-blend-left-on",
     "file": "src/render/eliteGates/egLightPass.js",
-    "old": "gl.depthMask(true); gl.disable(gl.BLEND); gl.enable(gl.CULL_FACE);\n    this.drawn = n;",
-    "new": "gl.depthMask(true); gl.enable(gl.CULL_FACE);\n    this.drawn = n;",
+    "old": "    gl.disable(gl.BLEND);\n    gl.enable(gl.CULL_FACE);",
+    "new": "    gl.enable(gl.CULL_FACE);",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "EGZ-the-still-never-told",
     "file": "src/render/eliteGates/egLightPass.js",
-    "old": "gl.uniform1f(U.uStill, still ? 1 : 0);",
-    "new": "gl.uniform1f(U.uStill, 0);",
+    "old": "    gl.uniform1f(U.uStill, still ? 1 : 0);",
+    "new": "    gl.uniform1f(U.uStill, 0);",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
