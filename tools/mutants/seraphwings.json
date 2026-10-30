@@ -454,7 +454,7 @@
   {
     "name": "SERAPHWINGS-a-peers-sprite-ignored",
     "file": "src/scenes/auraHost.js",
-    "old": " ?? auraSpritePosed(w, walkers?.figureOf(w.id) ?? riders?.figureOf?.(w.id), walkers?.faceOf?.(w.id) ?? riders?.faceOf?.(w.id))",
+    "old": " ?? auraSpritePosed(w, spriteAnswer(layers, 'figureOf', w.id), spriteAnswer(layers, 'faceOf', w.id, eye))",
     "new": "",
     "tests": [
       "test/net/seraphwings.test.js"
@@ -928,7 +928,7 @@
   {
     "name": "WINGSFIT-the-rest-keeps-a-sprites",
     "file": "src/render/auraRing.js",
-    "old": "c.sunk = false; c.wingBack = 0;",
+    "old": "c.sunk = false; c.wingBack = card ? WING_SPRITE_BACK : 0;",
     "new": "c.sunk = false;",
     "tests": [
       "test/net/seraphwings.test.js"

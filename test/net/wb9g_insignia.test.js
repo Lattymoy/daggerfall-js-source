@@ -673,7 +673,7 @@ test('WB9g the world host, by source: the auras gathered with the peers each fra
   assert.match(h, /const proj = renderer\._proj, view = renderer\._view, eye = renderer\._camPos;/);
   assert.match(h, /if \(pass\?\.drawn\) renderer\.markForeignPass\(\);/);
   assert.match(h, /auraList\.length = 0;   \/\/ this frame's, drawn once: a frame that gathers none \(the seat left, death, offline\) draws none/, 'a frame that gathers none draws none');
-  assert.match(w, /peerRiders\.settle\([^\n]*\n    auraHost\.frame\(seen\);   \/\/ WB9g/, 'gathered once the bodies and the riders have stood');
+  assert.match(w, /remotePlayers\.sync\(visiblePeers[^\n]*\n    peerFlashFrame\(\);[^\n]*\n    auraHost\.frame\(seen\);   \/\/ WB9g/, 'gathered once every layer has drawn its peers - the bodies, the riders, the walkers and the classic layer (AUDIT CAPE-CARD A5, PIN MOVED)');
   // PIN MOVED (AURA-STALL, #1137): the build is its door's (render/glProgram.js compiledPass), whose throw is told and answers no pass for good
   // PIN MOVED (AURA-SPLIT, #1143): the door waits on no program - each look's is the pass's own (render/auraRing.js programOf)
   assert.match(h, /const auraPassOf = compiledPass\(renderer\.gl, \[\], \(\) => new AuraRingRenderer\(renderer\.gl\), \(\/\*\* @type \{any\} \*\/ e\) => console\.warn\('\[online\] the aura would not build'/, 'a fire that will not build costs the fire, never the game');

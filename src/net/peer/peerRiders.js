@@ -226,7 +226,8 @@ function figureLayer(art) {
      *  misallign"): the way the figure drawn faces - { yaw, turn }: `yaw` its picture's (the eight-way view it was drawn
      *  in, about the eye it was drawn for - eotbBillboard.js portrayedYaw), `turn` the pose's own facing - this frame's,
      *  in the saddle too; null when not drawn or seen from its own feet. An aura on the sprite is hung on `yaw`, which the
-     *  pose's facing runs up to half a view off (render/auraRing.js auraSpritePosed). */
+     *  pose's facing runs up to half a view off (render/auraRing.js auraSpritePosed); `card` (AUDIT CAPE-CARD A3), a flat
+     *  card, so a rider's wings stand behind it as a walker's do. */
     faceOf: (id) => { const r = figs.get(id); return r?.batch && r.face && r.face.yaw !== null ? r.face : null; },
     batches: () => [...figs.values()].map((r) => r.batch).filter(Boolean),
     offsetAll(offset) {
@@ -243,7 +244,7 @@ const viewOf = (yaw, feet, eye) => orientationFor([Math.sin(yaw), 0, Math.cos(ya
 /** SPRITE-FACE: figure `r`'s facing as drawn this frame - the picture's (`view` about `eye`) and the pose's (`yaw`) - on
  *  its own record, written in place (the layer's `faceOf`). */
 function faceDrawn(r, view, yaw, feet, eye) {
-  const f = r.face ?? (r.face = { yaw: null, turn: 0 });
+  const f = r.face ?? (r.face = { yaw: null, turn: 0, card: true });   // AUDIT CAPE-CARD A3: a flat card - a rider, with no figure to read, hangs behind it (a walker's figure wins)
   f.yaw = eye ? portrayedYaw(view, [eye[0] - feet[0], 0, eye[2] - feet[2]]) : null;
   f.turn = yaw;
 }

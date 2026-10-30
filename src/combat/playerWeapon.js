@@ -38,7 +38,7 @@ import { calculateAttackDamage } from './formulas.js';
 import { isShieldTemplate } from '../systems/armorMaterials.js';   // a12: UpdateHands' IsShield leg
 import { equipDelayFor } from '../systems/equip.js';               // a12: ToggleHand's EquipDelayTimes[GroupIndex]
 import { getBool, getFloat, getInt } from '../systems/settings/settings.js';   // AUDIT 28 W2b: MeleeAttackFriendlyProtection; W11: WeaponAttackThreshold, WeaponSwingMode
-import { blowReaches, blowMult, scaleBlowDamage, playerBody, tellTechniqueLanded } from './technique/techniqueBlow.js';   // TECH1: a technique's blow - its shape and its weight, a leaf; MARTIAL3: and its landing told
+import { blowReaches, blowMult, scaleBlowDamage, playerBody, tellTechniqueLanded, techniqueBackstab } from './technique/techniqueBlow.js';   // TECH1: a technique's blow - its shape and its weight, a leaf; MARTIAL3: and its landing told
 import { HANDS_MODE, handsModeOf, strikeHandOf, twoHanded, offHandToHit, OFF_HAND_BLOW, offHandBurden, offHandHold, DUAL, gunHandOf, mixedStrike, otherHand, MIXED } from './twoHands/handsLaw.js';   // TWO-HANDS: which hand strikes, and what the off hand costs; MIXED-PAIR: a blade and a gun
 import { isHandWraps, fistWrapsOf } from '../characters/handWrapsIds.js';   // HAND-WRAPS: the wraps are no weapon; both fists wear them
 import { getItemHands } from '../systems/equip.js';   // TWO-HANDS: a hand's item as the law reads it (one-handed or not)
@@ -86,7 +86,7 @@ export const INTERIM_WEAPON = Object.freeze({
  */
 // WeaponManager.cs:343's click draw lives in characters/weaponStates.js beside the gesture's own ways (AUDIT
 // TOUCH-BUTTONS A7: the touch Attack button draws from it too, and the door's menu reads that module)
-import { CLICK_ATTACK_DIRECTIONS } from '../characters/weaponStates.js';
+import { CLICK_ATTACK_DIRECTIONS, machineCut } from '../characters/weaponStates.js';   // TECH-CANCEL: a technique cuts the swing
 export { CLICK_ATTACK_DIRECTIONS };
 
 export function playerMeleeCanHit(dist, inView, losClear) {
@@ -908,11 +908,18 @@ export class PlayerWeapon {
     return [this._gx, this._gy];
   }
 
+  /** AUDIT TECH-FEEDBACK II F3: a leap's or a dash's launch cuts the swing in flight (its strike is the landing's), so
+   *  one press is never two blows. True when there was one to cut - the rig cuts the Morrowind arm's with it. */
+  cutSwing() { return !!machineCut(this.machine); }
+
   /** TECH1 (bible/05-Combat/Weapon-Techniques.md): A TECHNIQUE'S STRIKE - the machine's own strike `strike` begun for a
    *  weapon's technique (combat/techniques.js), by the same machineAttack a click takes; a bow's loose writes its draw
-   *  time as the click's does (PCO1). True when it began - never mid-swing or in a bow's recovery. */
+   *  time as the click's does (PCO1). True when it began. TECH-CANCEL: a swing in flight and the attack's cooldown are
+   *  cut first (weaponStates.js machineCut) - and put back as they were if the strike still cannot begin (AUDIT
+   *  TECH-FEEDBACK F2: a gun's reload, a pair's other hand), so a refused technique costs the swing nothing. */
   techniqueStrike(strike) {
-    if (!this._attack(strike, { lead: true })) return false;   // TWO-HANDS: a technique is the lead hand's - its weapon's (techniques.js reads it), never a flurry's
+    const was = machineCut(this.machine);
+    if (!this._attack(strike, { lead: true })) { if (was) Object.assign(this.machine, was); return false; }   // TWO-HANDS: a technique is the lead hand's - its weapon's (techniques.js reads it), never a flurry's
     if (this.machine.isBow) this.lastDrawMs = this._bowAnimTimeMs();
     return true;
   }
@@ -1051,7 +1058,8 @@ export class PlayerWeapon {
     const off = this.offStrike;   // AUDIT 2: the one predicate every arm reads (the duel's, the wild's, this)
     const offToHit = off ? offHandToHit(playerCombat ? liveStat(playerCombat, 'agility') : 50) : 0;
     const strike = (foe) => {
-      const opts = playerAttackOptions(this.strikingWeapon, this.machine.state, backstabOf(foe), rolls);
+      const back = backstabOf(foe) || (techOn(foe) ? techniqueBackstab(tb, playerCombat, foe) : 0);   // TECH-BACKSTAB: its back was to me at the press
+      const opts = playerAttackOptions(this.strikingWeapon, this.machine.state, back, rolls);
       if (!opts.weapon) opts.wraps = this.wraps;   // HAND-WRAPS (AUDIT B): a fist's blow carries its wraps' lines
       if (off) { opts.toHitMod += offToHit; Object.assign(opts, OFF_HAND_BLOW); }   // TWO-HANDS (AUDIT): the share inside the formula, ahead of every report; AUDIT 2: and the blow's weight
       if (techOn(foe) && Number.isFinite(tb.toHit)) opts.toHitMod += tb.toHit;   // the technique's own term beside the swing's

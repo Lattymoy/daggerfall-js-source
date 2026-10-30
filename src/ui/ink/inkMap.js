@@ -36,6 +36,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { CLIMATES, LOCATION_TYPES } from '../../formats/mapsFile.js';
+import { CLASSIC_ARGB, argbChannels } from '../town/townQuarters.js';   // VENDOR-HOUSES: classic's shop blue, the trader's house's fill
 import {
   isWaterPixel, buildMarkerModel, traceChains, simplifyChain,
   TREELINE_BYTE, SNOWLINE_BYTE,
@@ -75,6 +76,7 @@ export const rgba = (rgb, a) => `rgba(${Math.round(rgb[0])}, ${Math.round(rgb[1]
  *  @returns {number[]} */
 export const mixRgb = (from, to, t) => [0, 1, 2].map((i) => from[i] + (to[i] - from[i]) * t);
 
+const SHOP_BLUE = argbChannels(CLASSIC_ARGB.shop);
 export const PEN = Object.freeze({
   line: rgba(INK_RGB, 0.92),         // the pen
   soft: rgba(INK_RGB, 0.42),         // borders, tracks, minor marks
@@ -86,6 +88,7 @@ export const PEN = Object.freeze({
   player: 'rgba(120, 28, 20, 0.95)',  // the player's own mark
   coords: 'rgba(120, 28, 20, 0.75)',  // MAP2: a bare-pixel destination's cross
   halo: rgba(PARCHMENT_RGB, 0.80),    // MAP-FIELD6: the parchment, quieted under a glyph or a name
+  vendor: rgba([SHOP_BLUE.r, SHOP_BLUE.g, SHOP_BLUE.b], 0.95),   // VENDOR-HOUSES: a player's trader's house, in classic's shop blue
 });
 
 /**

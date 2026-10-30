@@ -80,6 +80,14 @@ export function blowMult(blow, foe) {
 /** The formula's number weighed by the technique: a blow that landed lands for at least 1, a miss stays a miss. */
 export const scaleBlowDamage = (damage, mult) => (damage > 0 ? Math.max(1, Math.round(damage * mult)) : damage);
 
+// TECH-BACKSTAB (Mac, 2026-10-30, forwarding #feature-feedback: "Let them work with backstab"): a blow's `backs` are the
+// foes whose back was to me when I committed it (techniques.js backsAt) - each a backstab's chance however it turns
+// before the hit. The chance is the hosts' own (hostCombat.js backstabChanceOf), registered so this leaf imports no host.
+let _backstab = null;
+export function registerTechniqueBackstab(fn) { _backstab = typeof fn === 'function' ? fn : null; }
+/** The backstab chance a technique's blow gives `foe`: 0 unless the blow marked its back. */
+export const techniqueBackstab = (blow, player, foe) => (_backstab && blow?.backs?.has?.(foe) ? _backstab(player, foe) : 0);
+
 // MARTIAL3 (bible/05-Combat/Martial-Specialisations.md section 6): A TECHNIQUE'S BLOW LANDED - NAMED listeners
 // `fn({ blow, foe, damage })`, told by the two resolutions every host shares, once for each foe a technique's blow reached
 // (its weighed number, a miss its 0), before the pool's own door lands it: the swing (combat/playerWeapon.js resolveHit)

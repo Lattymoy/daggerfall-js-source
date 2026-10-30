@@ -3270,6 +3270,12 @@ export const AURA_CARDS = Math.max(...Object.values(AURA_LOOK).map((l) => l.glyp
  *  its turn from the body's, rad), and no knee to press it (at the feet's own axis, nowhere). A wearer with no posed
  *  body hangs it from this. */
 export const CLOAK_REST_POSE = Object.freeze({ shoulders: Float32Array.of(0, CLOAK_SHOULDER_Y, 0, 1), head: Float32Array.of(0, CLOAK_HOOD_Y, 0, 0), kneeL: new Float32Array(3), kneeR: new Float32Array(3), torso: Float32Array.of(0, 1, 0, 0, 0, 1), wingBack: 0 });   // SERAPH-WINGS: the torso upright and facing forward; WINGS-FIT: the wings at the back itself
+/** CAPE-CARD: the rest pose on a flat card with no figure to read (a paperdoll, a class sprite, a sprite rider -
+ *  auraSpritePosed): the wings and the Eternal cape stand WING_SPRITE_BACK behind the card, WINGS-FIT's law (AUDIT
+ *  CAPE-CARD D4: the Holo Shadow Cloak wraps the body and reads no `uWingBack`). Shared, as the rest pose is: never
+ *  written. */
+export const CLOAK_CARD_POSE = Object.freeze({ ...CLOAK_REST_POSE, wingBack: WING_SPRITE_BACK });
+const posedOwn = (p) => (p && p !== CLOAK_REST_POSE && p !== CLOAK_CARD_POSE ? p : null);   // a wearer's own pose, to write into - never a shared one
 /** SHADOW-CLOAK: THE BONES IT HANGS FROM - the retail third-person skeleton's (base_anim.nif and its kin, lowercase as
  *  the skeleton's byName keeps them): the shoulder joints, the neck and the head, the knees. */
 export const CLOAK_BONES = Object.freeze(['bip01 l upperarm', 'bip01 r upperarm', 'bip01 neck', 'bip01 head', 'bip01 l calf', 'bip01 r calf', 'bip01 spine2']);   // SERAPH-WINGS: and the upper spine, the back's own up
@@ -3347,9 +3353,12 @@ export function auraSpriteBones(fig) {
  *  Mac: "The sprite rotation on character input is a little finicky and make the aura misallign"): FACING AS ITS PICTURE
  *  DOES - `face` the sprite layer's { yaw, turn } (net/peer/peerRiders.js faceOf): hung on the picture's facing, its eight-way
  *  view, where the pose's own facing runs up to half a view off it; swung by the pose's (`turn`). A sprite with a face and
- *  no figure (a rider's, the horse's picture) is faced and hung from the rest pose; neither, null. Pure. */
+ *  no figure (a rider's, the horse's picture) is faced and hung from the rest pose; neither, null. CAPE-CARD (2026-10-30,
+ *  the owner, with a shot of the Eternal cape over a peer's front: "Did we learn nothing from the angel wings aura?"): a
+ *  face that says `card` - a paperdoll's or a class sprite's (net/remotePlayers.js faceOf), a flat card with no figure to
+ *  read - hangs from the rest pose behind its card (CLOAK_CARD_POSE, WINGS-FIT); a doll's `front`, its swing too. Pure. */
 export const auraSpritePosed = (w, fig, face = null) => (fig || face
-  ? { feet: w.at, yaw: face ? face.yaw : w.yaw, turn: face ? face.turn : null, bones: fig ? auraSpriteBones(fig) : null }
+  ? { feet: w.at, yaw: face ? face.yaw : w.yaw, turn: face ? face.turn : null, bones: fig ? auraSpriteBones(fig) : null, card: !fig && face?.card === true, front: !fig && face?.front === true }
   : null);
 /** SERAPH-WINGS: THE WINGS' LIGHT ON THE WORLD - a gold light where they grow, behind the shoulders, for the nearest
  *  wearers of them within `reach` of the eye (at most `max`): `range` (m) as the wings are kindled, `rgb` its colour.
@@ -3389,14 +3398,16 @@ export const AURA_SADDLE_M = 0.81;
 export function auraCapeStep(w, posed, crouch = 1) {
   if (posed?.feet && Number.isFinite(posed.yaw)) { w.at[0] = posed.feet[0]; w.at[1] = posed.feet[1]; w.at[2] = posed.feet[2]; w.yaw = posed.yaw; }   // where the body is drawn
   // SPRITE-FACE: and the way the body TURNS, where it is not the way it is drawn (a sprite: its picture faces a view at a
-  // time, behind the walk) - what the swing reads (auraMotionStep); none for a body drawn as it turns
-  w.turnYaw = Number.isFinite(posed?.turn) ? posed.turn : null;
-  const o = posed?.bones ? auraCapePose(posed.bones, w.cape && w.cape !== CLOAK_REST_POSE ? w.cape : null) : null;
+  // time, behind the walk) - what the swing reads (auraMotionStep); none for a body drawn as it turns. AUDIT CAPE-CARD
+  // A6: and whether its picture shows every eye its front (a doll), whose swing must stay behind it (auraSwingDrawn)
+  w.turnYaw = Number.isFinite(posed?.turn) ? posed.turn : null; w.front = posed?.front === true;
+  const o = posed?.bones ? auraCapePose(posed.bones, posedOwn(w.cape)) : null;
   if (o) { w.cape = o; return w; }
   const k = Number.isFinite(crouch) ? Math.max(0.4, Math.min(1, crouch)) : 1, lift = w.mounted === true ? AURA_SADDLE_M : 0;   // SERAPH-WINGS: a rider's shoulders over the saddle
-  if (k >= 1 && !lift) { w.cape = CLOAK_REST_POSE; return w; }
-  const c = w.cape && w.cape !== CLOAK_REST_POSE ? w.cape : { shoulders: new Float32Array(4), head: new Float32Array(4), kneeL: new Float32Array(3), kneeR: new Float32Array(3), torso: new Float32Array(6) };
-  c.shoulders.fill(0); c.shoulders[1] = CLOAK_SHOULDER_Y * k + lift; c.shoulders[3] = 1; c.head.fill(0); c.head[1] = CLOAK_HOOD_Y * k + lift; c.kneeL.fill(0); c.kneeR.fill(0); c.sunk = false; c.wingBack = 0;   // AUDIT 4: a reused pose never stays sunk (a swim, then a ride: the wings stayed closed); WINGS-FIT: nor rooted back for a sprite no longer drawn
+  const card = posed?.card === true;   // CAPE-CARD: a flat card with no figure - behind it
+  if (k >= 1 && !lift) { w.cape = card ? CLOAK_CARD_POSE : CLOAK_REST_POSE; return w; }
+  const c = posedOwn(w.cape) ?? { shoulders: new Float32Array(4), head: new Float32Array(4), kneeL: new Float32Array(3), kneeR: new Float32Array(3), torso: new Float32Array(6) };
+  c.shoulders.fill(0); c.shoulders[1] = CLOAK_SHOULDER_Y * k + lift; c.shoulders[3] = 1; c.head.fill(0); c.head[1] = CLOAK_HOOD_Y * k + lift; c.kneeL.fill(0); c.kneeR.fill(0); c.sunk = false; c.wingBack = card ? WING_SPRITE_BACK : 0;   // AUDIT 4: a reused pose never stays sunk (a swim, then a ride: the wings stayed closed); WINGS-FIT: nor rooted back for a sprite no longer drawn; CAPE-CARD: a card's, behind it
   (c.torso ?? (c.torso = new Float32Array(6))).set(CLOAK_REST_POSE.torso);
   w.cape = c;
   return w;
@@ -3451,6 +3462,18 @@ export function auraMotionStep(w, t) {
   const sw = w.swing ?? (w.swing = { x: 0, z: 0, lift: 0, twist: 0 });
   sw.x = m.p[0]; sw.z = m.p[1]; sw.lift = m.p[2]; sw.twist = m.p[3];
   return w;
+}
+
+/** AUDIT CAPE-CARD A2: THE SWING AS THE CLOTH IS DRAWN - [x, z, lift, twist]. auraMotionStep reads it along the way the
+ *  body turns (`turnYaw`); the shader lays it along the way the picture faces (`yaw`). Turned from the one frame into the
+ *  other, the hem trails the walk whichever way the picture faces. A6: a doll (`front`) faces every eye, so a peer running
+ *  away trails toward it - through the picture; its part along the eye folds behind. Written into `out`. Pure but for
+ *  `out`. */
+export function auraSwingDrawn(w, out) {
+  const sw = w.swing, x = sw?.x || 0, z = sw?.z || 0, yaw = Number.isFinite(w.yaw) ? w.yaw : 0;
+  const d = Number.isFinite(w.turnYaw) ? w.turnYaw - yaw : 0, c = Math.cos(d), s = Math.sin(d), back = -x * s + z * c;
+  out[0] = x * c + z * s; out[1] = w.front === true ? -Math.abs(back) : back; out[2] = sw?.lift || 0; out[3] = sw?.twist || 0;
+  return out;
 }
 
 /** SHADOW-CLOAK: THE BEAST FORM, a wearer's step each frame - `beast` whether they stand turned lycanthrope, `t` the
@@ -3534,6 +3557,7 @@ export class AuraRingRenderer {
     gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
     gl.bindVertexArray(null);
     this._vp = new Float32Array(16);
+    this._swing = [0, 0, 0, 0];   // AUDIT CAPE-CARD A2: the swing as uploaded, refilled per wearer
     this._resLit = new Float32Array(RESONANCE_COLUMNS);   // CRYSTAL-FIST AUDIT: one list, refilled per wearer
     this._resCap = new Float32Array(RESONANCE_COLUMNS);   // AURA DETAIL: and the caps over them
     this._warren = new Float32Array(WARREN_BUNNIES * 4);   // WIKIMAID: the rabbits, and their tracks - refilled per wearer
@@ -3627,8 +3651,8 @@ export class AuraRingRenderer {
         gl.uniform1f(U.uYaw, Number.isFinite(w.yaw) ? w.yaw : 0);   // SHADOW-CLOAK: the facing its opening is at
         const torn = Number.isFinite(w.torn) ? w.torn : -1;
         gl.uniform1f(U.uTorn, torn);   // SHADOW-CLOAK: turned beast, the cloak torn (auraBeastStep)
-        const sw = w.swing, pose = w.cape ?? CLOAK_REST_POSE;   // SHADOW-CLOAK: its swing (auraMotionStep) and the body's pose it hangs from (auraCapePose)
-        gl.uniform4f(U.uSwing, sw?.x || 0, sw?.z || 0, sw?.lift || 0, sw?.twist || 0);
+        const sw = auraSwingDrawn(w, this._swing), pose = w.cape ?? CLOAK_REST_POSE;   // SHADOW-CLOAK: its swing (auraMotionStep) and the body's pose it hangs from (auraCapePose); AUDIT CAPE-CARD A2: the swing in the frame the cloth is drawn in
+        gl.uniform4f(U.uSwing, sw[0], sw[1], sw[2], sw[3]);
         gl.uniform4fv(U.uCapeS, pose.shoulders); gl.uniform4fv(U.uCapeH, pose.head);
         gl.uniform3fv(U.uKneeL, pose.kneeL); gl.uniform3fv(U.uKneeR, pose.kneeR);
         const torso = pose.torso ?? CLOAK_REST_POSE.torso;   // SERAPH-WINGS: the back the wings grow from

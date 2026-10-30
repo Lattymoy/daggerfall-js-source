@@ -277,6 +277,24 @@ export function machineAttack(m, strikeState) {
   return true;
 }
 
+/** A gun's machine (ranged, no bow - the Thunderlock) mid-shot or reloading: a technique waits for it (AUDIT PISTOL-PORT
+ *  C1), so the key refuses it as the busy hands it is (AUDIT TECH-FEEDBACK II F2). */
+export const machineGunBusy = (m) => !!m && m.ranged && !m.isBow && (m.state !== 'Idle' || m.now < m.cooldownUntil);
+
+/** TECH-CANCEL (Mac, 2026-10-30, forwarding #feature-feedback: "Make them independent of your regular attack cooldown /
+ *  animation cancel"): a weapon technique cuts the swing in flight - its hit not yet landed is lost - and waives the
+ *  attack's cooldown (a bow's reload with it), so the technique's strike starts now. Answers the machine as it was, to
+ *  put back if the strike cannot begin, or null when there was nothing to cut. */
+export function machineCut(m) {
+  if (m.state === 'Idle' && !(m.now < m.cooldownUntil)) return null;
+  if (m.ranged && !m.isBow) return null;   // a gun's shot and its reload stand (AUDIT PISTOL-PORT C1: a technique waits for them)
+  const was = { ...m };
+  m.state = 'Idle'; m.frame = m.isBow && m.bowIdleDrawn ? BOW_DRAWN_HOLD_FRAME : 0; m.ticks = 0; m.acc = 0; m.hold = 0;   // AUDIT TECH-FEEDBACK F1: a bow rests drawn (ARROW2)
+  m.animIndex = 0; m.damageDone = false;
+  m.cooldownUntil = m.now;
+  return was;
+}
+
 /** ActivateCenterObject / the hold cap: un-draw WITHOUT releasing an
  *  arrow (WeaponManager.cs:355-357). AUDIT 24 combat: the un-draw
  *  leaves isAttacking TRUE, so the very next Update takes the

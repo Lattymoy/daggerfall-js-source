@@ -5735,6 +5735,11 @@ export function createFpArm() {
       })();
     },
 
+    /** TECH-CANCEL: a technique cuts the blow the arm is in - its wind-up, release or follow-through - so its own
+     *  strike's clip starts at once - asked whenever a technique's strike began (PlayerWeapon.techniqueStrike). */
+    cutAttack() {
+      if (upper === UPPER_BODY.AttackWindUp || upper === UPPER_BODY.AttackRelease || upper === UPPER_BODY.AttackEnd) endAttack();
+    },
     /**
      * A BLOW STARTS. `strike` is Daggerfall's own six-way gesture result,
      * which rule 11's recorded divergence maps onto Morrowind's three

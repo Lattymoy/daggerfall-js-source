@@ -77,7 +77,7 @@ test('INVIS-LOOK executed: the doll and the body - a concealed peer\'s doll carr
   const src = rd('src/net/remotePlayers.js');
   assert.equal((src.match(/entry\.batch\.conceal = veil;/g) ?? []).length, 2, 'the doll and the class sprite');
   assert.equal((src.match(/if \(!veil \|\| (?:\/\*\* @type \{any\} \*\/ \(veil\)|veil)\.named\) this\._shown\.push\(\{ peer, height: (?:bodyH|entry\.doll\.h \* g - sink|entry\.height - sink) \}\);/g) ?? []).length, 3, 'no name: the body, the doll and the class sprite');   // PIN MOVED (AUDIT EG V, h): a veil that keeps the name (an ally drawn at 60% in the Spire, section 8.2) shows it - a concealed peer's look never does   // PIN MOVED (OW-PEERS): the doll's height grown under the Overworld; PIN MOVED (CARDS2c): a seated sprite's sink taken off it
-  assert.match(src, /this\._syncMobilePeer\(peer, bundle, toScene, dt, eye, veil\); continue; \}/);
+  assert.match(src, /this\._syncMobilePeer\(peer, bundle, toScene, dt, view \?\? eye, veil\); continue; \}/);   // AUDIT CAPE-CARD A1 (PIN MOVED): turned to the camera that draws it
 });
 
 test('INVIS-LOOK executed: the walker and the rider - the chosen set and the saddle carry the look, a sprite made later keeps it, and a concealed walker\'s lantern is not drawn', async () => {

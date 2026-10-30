@@ -407,9 +407,9 @@
   },
   {
     "name": "FINALAUDIT-the-world-word-pad-blind",
-    "file": "src/scenes/world.js",
-    "old": " || _techKeyRev !== rev || _techKeyPad !== pad) {",
-    "new": " || _techKeyRev !== rev) {",
+    "file": "src/ui/techniqueKeyWord.js",
+    "old": " || _rev !== rev || _pad !== pad) {",
+    "new": " || _rev !== rev) {",
     "tests": [
       "test/scenes/tech1_hosts.test.js"
     ]

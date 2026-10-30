@@ -5314,6 +5314,11 @@
   "tr": "a1ac99d94a23",
   "by": "claude-in-session"
  },
+ "technique.noSignature": {
+  "en": "512147f4746c",
+  "tr": "b9235f7834c6",
+  "by": "claude-in-session"
+ },
  "town.econ.area.crownHeld": {
   "en": "d931fe766a2a",
   "tr": "b6b9c23e9238",
@@ -5457,6 +5462,11 @@
  "town.econ.trend.rising": {
   "en": "26b01983c6f4",
   "tr": "f79df18dcbe0",
+  "by": "claude-in-session"
+ },
+ "town.home.trader": {
+  "en": "e4224318b32c",
+  "tr": "5a36fe6c3711",
   "by": "claude-in-session"
  },
  "town.panel.new": {
