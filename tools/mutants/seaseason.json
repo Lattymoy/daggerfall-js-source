@@ -38,8 +38,8 @@
   {
     "name": "SEA-SEASON-rise-wall",
     "file": "src/net/sea/seaSeasonLaw.js",
-    "old": "SEA_LEGEND_RISE_DAYS * 1440 / ONLINE_MINUTES_PER_MS / 1000);",
-    "new": "SEA_LEGEND_RISE_DAYS * 1440 / ONLINE_MINUTES_PER_MS / 1200);",
+    "old": "export const SEA_LEGEND_RISE_S = Math.round((SEA_LEGEND_RISE_DAYS * 1440) / ONLINE_MINUTES_PER_MS / 1000);",
+    "new": "export const SEA_LEGEND_RISE_S = Math.round((SEA_LEGEND_RISE_DAYS * 1440) / ONLINE_MINUTES_PER_MS / 1200);",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SEA-SEASON-day-clock",
     "file": "src/net/sea/seaSeasonLaw.js",
-    "old": "wallMsForClassicMinutes(Math.floor(Number(day) || 0) * 1440) / 1000",
-    "new": "wallMsForClassicMinutes(Math.floor(Number(day) || 0) * 1440 + 1440) / 1000",
+    "old": "  arenaSeasonOf(Math.floor(wallMsForClassicMinutes(Math.floor(Number(day) || 0) * 1440) / 1000));",
+    "new": "  arenaSeasonOf(Math.floor(wallMsForClassicMinutes(Math.floor(Number(day) || 0) * 1440 + 1440) / 1000));",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SEA-SEASON-start-off-one",
     "file": "src/net/sea/seaSeasonLaw.js",
-    "old": "ARENA_SEASON_EPOCH_S + (Math.max(1, Math.floor(season)) - 1) * ARENA_SEASON_S;",
-    "new": "ARENA_SEASON_EPOCH_S + Math.max(1, Math.floor(season)) * ARENA_SEASON_S;",
+    "old": "  ARENA_SEASON_EPOCH_S + (Math.max(1, Math.floor(season)) - 1) * ARENA_SEASON_S;",
+    "new": "  ARENA_SEASON_EPOCH_S + Math.max(1, Math.floor(season)) * ARENA_SEASON_S;",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SEA-SEASON-possible-no-first",
     "file": "src/net/sea/seaSeasonLaw.js",
-    "old": "/ SEA_LEGEND_RISE_S) + 1);",
-    "new": "/ SEA_LEGEND_RISE_S));",
+    "old": "  SEA_LEGENDS * (Math.floor(Math.max(0, nowS - seaSeasonStartS(arenaSeasonOf(nowS))) / SEA_LEGEND_RISE_S) + 1);",
+    "new": "  SEA_LEGENDS * Math.floor(Math.max(0, nowS - seaSeasonStartS(arenaSeasonOf(nowS))) / SEA_LEGEND_RISE_S);",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SEA-SEASON-possible-one",
     "file": "src/net/sea/seaSeasonLaw.js",
-    "old": "export const seaLegendsPossible = (/** @type {number} */ nowS) => SEA_LEGENDS * (",
-    "new": "export const seaLegendsPossible = (/** @type {number} */ nowS) => (",
+    "old": "  SEA_LEGENDS * (Math.floor(Math.max(0, nowS - seaSeasonStartS(arenaSeasonOf(nowS))) / SEA_LEGEND_RISE_S) + 1);",
+    "new": "  Math.floor(Math.max(0, nowS - seaSeasonStartS(arenaSeasonOf(nowS))) / SEA_LEGEND_RISE_S) + 1;",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SEA-SEASON-figures-past-rises",
     "file": "src/net/sea/seaSeasonLaw.js",
-    "old": "legends < 0 || legends > seaLegendsPossible(before ? turnS - 1 : nowS)) return null;",
-    "new": "legends < 0) return null;",
+    "old": "  if (!Number.isSafeInteger(legends) || legends < 0 || legends > seaLegendsPossible(before ? turnS - 1 : nowS))\n    return null;",
+    "new": "  if (!Number.isSafeInteger(legends) || legends < 0) return null;",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "SEA-SEASON-figures-negative-legends",
     "file": "src/net/sea/seaSeasonLaw.js",
-    "old": "  if (!Number.isSafeInteger(legends) || legends < 0 || legends >",
-    "new": "  if (!Number.isSafeInteger(legends) || legends >",
+    "old": "  if (!Number.isSafeInteger(legends) || legends < 0 || legends > seaLegendsPossible(before ? turnS - 1 : nowS))\n    return null;",
+    "new": "  if (!Number.isSafeInteger(legends) || legends > seaLegendsPossible(before ? turnS - 1 : nowS)) return null;",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "SEA-SEASON-read-any-length",
     "file": "src/net/sea/seaSeasonLaw.js",
-    "old": "  const rows = (/** @type {any} */ list, max) => (Array.isArray(list) ? list : []).slice(0, max)",
-    "new": "  const rows = (/** @type {any} */ list, max) => (Array.isArray(list) ? list : [])",
+    "old": "      .slice(0, max)\n      .filter((r) => r && typeof r.name === 'string' && r.name.length > 0 && r.name.length <= 64)",
+    "new": "      .filter((r) => r && typeof r.name === 'string' && r.name.length > 0 && r.name.length <= 64)",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "SEA-SEASON-read-unnamed",
     "file": "src/net/sea/seaSeasonLaw.js",
-    "old": "    .filter((r) => r && typeof r.name === 'string' && r.name.length > 0 && r.name.length <= 64)",
-    "new": "    .filter((r) => r && typeof r.name === 'string' && r.name.length <= 64)",
+    "old": "      .filter((r) => r && typeof r.name === 'string' && r.name.length > 0 && r.name.length <= 64)",
+    "new": "      .filter((r) => r && typeof r.name === 'string' && r.name.length <= 64)",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "SEA-SEASON-read-rank-none",
     "file": "src/net/sea/seaSeasonLaw.js",
-    "old": "(m && Number.isSafeInteger(m.rank) && m.rank >= 1 ? { rank: m.rank, n: whole(m.n) } : null)",
-    "new": "(m && Number.isSafeInteger(m.rank) && m.rank >= 0 ? { rank: m.rank, n: whole(m.n) } : null)",
+    "old": "    m && Number.isSafeInteger(m.rank) && m.rank >= 1 ? { rank: m.rank, n: whole(m.n) } : null;",
+    "new": "    m && Number.isSafeInteger(m.rank) && m.rank >= 0 ? { rank: m.rank, n: whole(m.n) } : null;",
     "tests": [
       "test/systems/sea/seaseason.test.js"
     ]

@@ -1224,10 +1224,10 @@ and was unshootable after twenty seconds).
   the hub with the zone's own carry on every shot that took any of it
   (`server/src/index.js:"if (res.dealt > 0) this._wildCarryPut(tb.sub, this._zoneCarry(st, tb.sub, now, a.key));"`), taken at
   her first helm there while it is newer than what the room knows and within `SEA_REF.mendMs`
-  (`seaRef.js:"if (c) { x.seaCarry = null; if (now - c.at < SEA_REF.mendMs && c.at > s.struckAt) { s.hp = s.max * c.h; s.struckAt = c.at; } }"`).
+  (`seaRef.js:"if (c) {"`).
   A captain who stands in the zone saying nothing (a hidden tab) is at sea all the same - never forgotten for her quiet.
 - A SHOT lands only between two captains at their helms in the zone, NEITHER OFF, WRECKED OR AT NONE
-  (`seaRef.js:"if (!me || !her || me.wrecked || her.wrecked || me.off || her.off || !(me.hp > 1e-6) || !(her.hp > 1e-6)) return no('ship');"`
+  (`seaRef.js:"|| !her || me.wrecked"`
   - a ship the sea's own guns broke is out of the fight both ways until she mends), never kin, THE SHOOTER'S word no
   older than `SEA_REF.helmMs` (AUDIT SEA VENTURES E6A: her target's word was asked too - a captain whose page said none
   could not be shot), the shooter no jumper, within `SEA_REF.reachM` (both believed places, in metres), at most
@@ -1248,7 +1248,7 @@ and was unshootable after twenty seconds).
   relay asks nothing of her socket). The page's guns say `board` - its id alone, to the room that wrecked her - when my
   ship is within `SEA_BOARD_NEAR_M` of her boat, of where it last saw her, or of where she lay when the wreck was said
   (her shown place copied - it moves each frame), again each `SEA_BOARD_RETRY_MS` until answered. A jumper boards
-  nothing (`seaRef.js:"if (!a?.pose || now - a.jumpAt < WILD_REF.jumpMs) return null;"` - AUDIT SEA VENTURES A6). Boarded,
+  nothing (`seaRef.js:"if (!a?.pose || now - a.jumpAt < WILD_REF.jumpMs)"` - AUDIT SEA VENTURES A6). Boarded,
   or its time out (the room's beat, or THE ROOM'S ALARM - `server/src/index.js:"async _seaAlarm(now) {"`, armed for each
   wreck's boarding's end: AUDIT SEA VENTURES A8, a room nobody came back to took no frame to beat on and its wreck stayed
   unsigned), the relay signs the wreck (`net/wild/wildReceipt.js` `n1`: both captains' accounts and characters, the

@@ -119,8 +119,8 @@
   {
     "name": "SHIP-PVP-tough-max",
     "file": "src/net/sea/seaRef.js",
-    "old": "  toughMax: 2.4, mendMs",
-    "new": "  toughMax: 2, mendMs",
+    "old": "  toughMax: 2.4,",
+    "new": "  toughMax: 2,",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SHIP-PVP-helm-ms",
     "file": "src/net/sea/seaRef.js",
-    "old": "fireMs: 10_000, helmMs: 20_000,",
-    "new": "fireMs: 10_000, helmMs: 9_000,",
+    "old": "  helmMs: 20_000,",
+    "new": "  helmMs: 9_000,",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SHIP-PVP-board-m",
     "file": "src/net/sea/seaRef.js",
-    "old": "wreckMs: 600_000, boardMs: 180_000, boardM: 40,",
-    "new": "wreckMs: 600_000, boardMs: 180_000, boardM: 20,",
+    "old": "  boardM: 40,",
+    "new": "  boardM: 20,",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -146,7 +146,7 @@
   {
     "name": "SHIP-PVP-units",
     "file": "src/net/sea/seaRef.js",
-    "old": "const apartM = (/** @type {any} */ a, /** @type {any} */ b) => Math.hypot((a.x - b.x) / SIEGE_UNITS_PER_M, (a.z - b.z) / SIEGE_UNITS_PER_M);",
+    "old": "const apartM = (/** @type {any} */ a, /** @type {any} */ b) =>\n  Math.hypot((a.x - b.x) / SIEGE_UNITS_PER_M, (a.z - b.z) / SIEGE_UNITS_PER_M);",
     "new": "const apartM = (/** @type {any} */ a, /** @type {any} */ b) => Math.hypot(a.x - b.x, a.z - b.z);",
     "tests": [
       "test/systems/sea/shippvp.test.js"
@@ -155,8 +155,8 @@
   {
     "name": "SHIP-PVP-tough-floor",
     "file": "src/net/sea/seaRef.js",
-    "old": "export const seaTough = (/** @type {unknown} */ t) => (Number.isFinite(t) ? Math.max(1, Math.min(SEA_REF.toughMax, /** @type {number} */ (t))) : 1);",
-    "new": "export const seaTough = (/** @type {unknown} */ t) => (Number.isFinite(t) ? Math.min(SEA_REF.toughMax, /** @type {number} */ (t)) : 1);",
+    "old": "  Number.isFinite(t) ? Math.max(1, Math.min(SEA_REF.toughMax, /** @type {number} */ (t))) : 1;",
+    "new": "  Number.isFinite(t) ? Math.min(SEA_REF.toughMax, /** @type {number} */ (t)) : 1;",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -164,7 +164,7 @@
   {
     "name": "SHIP-PVP-tough-ceiling",
     "file": "src/net/sea/seaRef.js",
-    "old": "export const seaTough = (/** @type {unknown} */ t) => (Number.isFinite(t) ? Math.max(1, Math.min(SEA_REF.toughMax, /** @type {number} */ (t))) : 1);",
+    "old": "export const seaTough = (/** @type {unknown} */ t) =>\n  Number.isFinite(t) ? Math.max(1, Math.min(SEA_REF.toughMax, /** @type {number} */ (t))) : 1;",
     "new": "export const seaTough = (/** @type {unknown} */ t) => (Number.isFinite(t) ? Math.max(1, /** @type {number} */ (t)) : 1);",
     "tests": [
       "test/systems/sea/shippvp.test.js"
@@ -173,8 +173,8 @@
   {
     "name": "SHIP-PVP-helm-out-of-zone",
     "file": "src/net/sea/seaRef.js",
-    "old": "  if (clampHull(hl) < 0 || !x?.zone) { offShip(ships, sub, s, now); return null; }",
-    "new": "  if (clampHull(hl) < 0) { offShip(ships, sub, s, now); return null; }",
+    "old": "  if (clampHull(hl) < 0 || !x?.zone) {",
+    "new": "  if (clampHull(hl) < 0) {",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "SHIP-PVP-helm-wreck-raised",
     "file": "src/net/sea/seaRef.js",
-    "old": "    if (now - s.wreckAt < SEA_REF.wreckMs) { s.at = now; return null; }   // a wreck stays one her while",
-    "new": "    if (false) { s.at = now; return null; }   // a wreck stays one her while",
+    "old": "    if (now - s.wreckAt < SEA_REF.wreckMs) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "SHIP-PVP-helm-new-whole",
     "file": "src/net/sea/seaRef.js",
-    "old": "    s.hl = hl; s.u = uid; s.max = max; s.sailMax = sailMax; s.hp = max * was;",
-    "new": "    s.hl = hl; s.u = uid; s.max = max; s.sailMax = sailMax; s.hp = max;",
+    "old": "    s.hp = max * was;",
+    "new": "    s.hp = max;",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -200,7 +200,7 @@
   {
     "name": "SHIP-PVP-helm-never-mends",
     "file": "src/net/sea/seaRef.js",
-    "old": "  if (now - s.struckAt >= SEA_REF.mendMs) s.hp = s.max;   // unstruck so long: whole again, to her own word",
+    "old": "  if (now - s.struckAt >= SEA_REF.mendMs) s.hp = s.max; // unstruck so long: whole again, to her own word",
     "new": "",
     "tests": [
       "test/systems/sea/shippvp.test.js"
@@ -209,8 +209,8 @@
   {
     "name": "SHIP-PVP-helm-word-unread",
     "file": "src/net/sea/seaRef.js",
-    "old": "  s.hp = Math.min(s.hp, share(h) * s.max);\n",
-    "new": "",
+    "old": "  s.hp = Math.min(s.hp, share(h) * s.max);\n  if (s.hp > 1e-6) return null;",
+    "new": "  if (s.hp > 1e-6) return null;",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "SHIP-PVP-helm-credit-forever",
     "file": "src/net/sea/seaRef.js",
-    "old": "  if (!s.by || now - s.byAt > SEA_REF.creditMs) return null;",
-    "new": "  if (!s.by) return null;",
+    "old": "  if (!s.by || now - s.byAt > SEA_REF.creditMs) return null; // the sea's guns broke her, no captain's",
+    "new": "  if (!s.by) return null; // the sea's guns broke her, no captain's",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "SHIP-PVP-helm-credit-none",
     "file": "src/net/sea/seaRef.js",
-    "old": "  if (!s.by || now - s.byAt > SEA_REF.creditMs) return null;",
-    "new": "  return null;",
+    "old": "  if (!s.by || now - s.byAt > SEA_REF.creditMs) return null; // the sea's guns broke her, no captain's",
+    "new": "  return null; // the sea's guns broke her, no captain's",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "SHIP-PVP-shot-kin",
     "file": "src/net/sea/seaRef.js",
-    "old": "  if (kin) return no('kin');\n",
-    "new": "",
+    "old": "  if (kin) return no('kin');\n  const ships = shipsOf(st),",
+    "new": "  const ships = shipsOf(st),",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "SHIP-PVP-shot-zone",
     "file": "src/net/sea/seaRef.js",
-    "old": "  if (!a.zone || !x.zone) return no('zone');\n",
-    "new": "",
+    "old": "  if (!a.zone || !x.zone) return no('zone');\n  if (wildStreetsBar(a, x)) return no('streets'); // PVP-SAFE-HIT: a harbour's safe streets, as a blow's",
+    "new": "  if (wildStreetsBar(a, x)) return no('streets'); // PVP-SAFE-HIT: a harbour's safe streets, as a blow's",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "SHIP-PVP-shot-down",
     "file": "src/net/sea/seaRef.js",
-    "old": "  if (a.down || x.down) return no('down');\n",
-    "new": "",
+    "old": "  if (a.down || x.down) return no('down');\n  if (kin) return no('kin');",
+    "new": "  if (kin) return no('kin');",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -263,7 +263,7 @@
   {
     "name": "SHIP-PVP-shot-no-ship",
     "file": "src/net/sea/seaRef.js",
-    "old": "  if (!me || !her || me.wrecked || her.wrecked || me.off || her.off || !(me.hp > 1e-6) || !(her.hp > 1e-6)) return no('ship');",
+    "old": "  if (!me || !her || me.wrecked || her.wrecked || me.off || her.off || !(me.hp > 1e-6) || !(her.hp > 1e-6))\n    return no('ship');",
     "new": "  if (!me || !her) return no('ship');",
     "tests": [
       "test/systems/sea/shippvp.test.js"
@@ -272,8 +272,8 @@
   {
     "name": "SHIP-PVP-shot-stale",
     "file": "src/net/sea/seaRef.js",
-    "old": "  if (now - me.at > SEA_REF.helmMs) return no('helm');   // E6A: the shooter's word alone - her target's page may be paused\n",
-    "new": "",
+    "old": "  if (now - me.at > SEA_REF.helmMs) return no('helm'); // E6A: the shooter's word alone - her target's page may be paused\n  if (now - a.jumpAt < WILD_REF.jumpMs) return no('jump'); // a jumper fires at nothing, as it strikes nothing",
+    "new": "  if (now - a.jumpAt < WILD_REF.jumpMs) return no('jump'); // a jumper fires at nothing, as it strikes nothing",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "SHIP-PVP-shot-jump",
     "file": "src/net/sea/seaRef.js",
-    "old": "  if (now - a.jumpAt < WILD_REF.jumpMs) return no('jump');   // a jumper fires at nothing, as it strikes nothing\n",
-    "new": "",
+    "old": "  if (now - a.jumpAt < WILD_REF.jumpMs) return no('jump'); // a jumper fires at nothing, as it strikes nothing\n  // AUDIT PVP-EASE L3-3 (ZONE-GRACE, as wildRef.js wildBlow): my shot at a fair captain ends my safe passage; hers keeps",
+    "new": "  // AUDIT PVP-EASE L3-3 (ZONE-GRACE, as wildRef.js wildBlow): my shot at a fair captain ends my safe passage; hers keeps",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -290,7 +290,7 @@
   {
     "name": "SHIP-PVP-shot-reach",
     "file": "src/net/sea/seaRef.js",
-    "old": "  if (!a.pose || !x.pose || apartM(a.pose, x.pose) > SEA_REF.reachM + SEA_REF.slackM) return { ...no('reach'), graceEnded };",
+    "old": "  if (!a.pose || !x.pose || apartM(a.pose, x.pose) > SEA_REF.reachM + SEA_REF.slackM)\n    return { ...no('reach'), graceEnded };",
     "new": "  if (!a.pose || !x.pose) return { ...no('reach'), graceEnded };",
     "tests": [
       "test/systems/sea/shippvp.test.js"
@@ -299,8 +299,8 @@
   {
     "name": "SHIP-PVP-shot-guns",
     "file": "src/net/sea/seaRef.js",
-    "old": "  if (!(ref > 0)) return { ...no('guns'), graceEnded };\n",
-    "new": "",
+    "old": "  if (!(ref > 0)) return { ...no('guns'), graceEnded };\n  if (!spendWord(me, now)) return { ...no('rate'), graceEnded };",
+    "new": "  if (!spendWord(me, now)) return { ...no('rate'), graceEnded };",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "SHIP-PVP-shot-rate",
     "file": "src/net/sea/seaRef.js",
-    "old": "  if (!spendWord(me, now)) return { ...no('rate'), graceEnded };\n",
-    "new": "",
+    "old": "  if (!spendWord(me, now)) return { ...no('rate'), graceEnded };\n  const bucket = Math.min(",
+    "new": "  const bucket = Math.min(",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -317,7 +317,7 @@
   {
     "name": "SHIP-PVP-purse-full",
     "file": "src/net/sea/seaRef.js",
-    "old": "  const bucket = Math.min(SEA_REF.depthX * ref, me.bucket + (Math.max(0, now - me.bucketAt) / 1000) * SEA_REF.rateX * ref);",
+    "old": "  const bucket = Math.min(\n    SEA_REF.depthX * ref,\n    me.bucket + (Math.max(0, now - me.bucketAt) / 1000) * SEA_REF.rateX * ref,\n  );",
     "new": "  const bucket = SEA_REF.depthX * ref;",
     "tests": [
       "test/systems/sea/shippvp.test.js"
@@ -335,8 +335,8 @@
   {
     "name": "SHIP-PVP-purse-unspent",
     "file": "src/net/sea/seaRef.js",
-    "old": "  me.bucket = bucket - got; me.bucketAt = now;",
-    "new": "  me.bucket = bucket; me.bucketAt = now;",
+    "old": "  me.bucket = bucket - got;",
+    "new": "  me.bucket = bucket;",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "SHIP-PVP-canvas-no-cap",
     "file": "src/net/sea/seaRef.js",
-    "old": "Math.max(0, Math.min(Number.isFinite(sail) ? sail : 0, SEA_REF.sailCapX * ref)) / her.sailMax",
-    "new": "Math.max(0, Number.isFinite(sail) ? sail : 0) / her.sailMax",
+    "old": "  const canvas =\n    her.sailMax > 0 ? Math.max(0, Math.min(Number.isFinite(sail) ? sail : 0, SEA_REF.sailCapX * ref)) / her.sailMax : 0;",
+    "new": "  const canvas = her.sailMax > 0 ? Math.max(0, Number.isFinite(sail) ? sail : 0) / her.sailMax : 0;",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "SHIP-PVP-wreck-never",
     "file": "src/net/sea/seaRef.js",
-    "old": "  const [wreck, evicted] = her.hp <= 1e-6 ? wreckOf(st, to, her, by, now, rid, room) : [null, null];",
-    "new": "  const [wreck, evicted] = [null, null];",
+    "old": "  const [wreck, evicted] = her.hp <= 1e-6 ? wreckOf(st, to, her, by, now, rid, room) : [null, null]; // a shot lands only on a bar above none: one that took none wrecks nothing",
+    "new": "  const [wreck, evicted] = [null, null]; // a shot lands only on a bar above none: one that took none wrecks nothing",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "SHIP-PVP-wreck-killer-unkept",
     "file": "src/net/sea/seaRef.js",
-    "old": "  if (got > 0) { her.hp -= got; her.by = by; her.byAt = now; }",
-    "new": "  if (got > 0) { her.hp -= got; }",
+    "old": "    her.by = by;\n    her.byAt = now;\n  } // E6B: her killer is a captain whose shot took her bar",
+    "new": "  } // E6B: her killer is a captain whose shot took her bar",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "SHIP-PVP-wreck-room-lost",
     "file": "src/net/sea/seaRef.js",
-    "old": "m: typeof room === 'string' ? room : '', x: lay",
-    "new": "m: '', x: lay",
+    "old": "    m: typeof room === 'string' ? room : '',",
+    "new": "    m: '',",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "SHIP-PVP-wreck-place-none",
     "file": "src/net/sea/seaRef.js",
-    "old": "x: lay ? lay.x : null, z: lay ? lay.z : null, at: now",
-    "new": "x: null, z: null, at: now",
+    "old": "    x: lay ? lay.x : null,\n    z: lay ? lay.z : null,",
+    "new": "    x: null,\n    z: null,",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "SHIP-PVP-wreck-uneviction",
     "file": "src/net/sea/seaRef.js",
-    "old": "  if (wrecks.size >= SEA_REF.wrecksMax) { evicted = wrecks.values().next().value; wrecks.delete(evicted.r); }\n",
-    "new": "",
+    "old": "  if (wrecks.size >= SEA_REF.wrecksMax) {\n    evicted = wrecks.values().next().value;\n    wrecks.delete(evicted.r);\n  }\n  wrecks.set(rid, w);",
+    "new": "  wrecks.set(rid, w);",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "SHIP-PVP-board-lay-unknown",
     "file": "src/net/sea/seaRef.js",
-    "old": "near(Number.isFinite(w.x) && Number.isFinite(w.z) ? { x: w.x, z: w.z } : null)",
-    "new": "near({ x: w.x, z: w.z })",
+    "old": "  if (!(near(her) || near(Number.isFinite(w.x) && Number.isFinite(w.z) ? { x: w.x, z: w.z } : null))) return null;",
+    "new": "  if (!(near(her) || near({ x: w.x, z: w.z }))) return null;",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "SHIP-PVP-read-place-any",
     "file": "src/net/sea/seaRef.js",
-    "old": "x: Number.isFinite(v.x) ? v.x : null, z: Number.isFinite(v.z) ? v.z : null,",
-    "new": "x: v.x, z: v.z,",
+    "old": "    x: Number.isFinite(v.x) ? v.x : null,\n    z: Number.isFinite(v.z) ? v.z : null,",
+    "new": "    x: v.x,\n    z: v.z,",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "SHIP-PVP-read-place-lost",
     "file": "src/net/sea/seaRef.js",
-    "old": "x: Number.isFinite(v.x) ? v.x : null, z: Number.isFinite(v.z) ? v.z : null,",
-    "new": "x: null, z: null,",
+    "old": "    x: Number.isFinite(v.x) ? v.x : null,\n    z: Number.isFinite(v.z) ? v.z : null,",
+    "new": "    x: null,\n    z: null,",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "SHIP-PVP-board-kept",
     "file": "src/net/sea/seaRef.js",
-    "old": "  w.boarded = true;\n  wrecks.delete(r);",
-    "new": "  w.boarded = true;",
+    "old": "  wrecks.delete(r);\n  return w;",
+    "new": "  return w;",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "SHIP-PVP-step-never-signs",
     "file": "src/net/sea/seaRef.js",
-    "old": "  for (const [r, w] of wrecksOf(st)) if (now - w.at > SEA_REF.boardMs) { wrecksOf(st).delete(r); out.push(w); }\n",
-    "new": "",
+    "old": "  for (const [r, w] of wrecksOf(st))\n    if (now - w.at > SEA_REF.boardMs) {\n      wrecksOf(st).delete(r);\n      out.push(w);\n    }\n  for (const [k, s] of ships) {",
+    "new": "  for (const [k, s] of ships) {",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "SHIP-PVP-step-forgets-wrecks",
     "file": "src/net/sea/seaRef.js",
-    "old": "    if (s.wrecked) { if (now - s.wreckAt >= SEA_REF.wreckMs) ships.delete(k); continue; }",
-    "new": "    if (s.wrecked) { ships.delete(k); continue; }",
+    "old": "      if (now - s.wreckAt >= SEA_REF.wreckMs) ships.delete(k);",
+    "new": "      ships.delete(k);",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "SHIP-PVP-read-any",
     "file": "src/net/sea/seaRef.js",
-    "old": "  if (!v || typeof v !== 'object' || typeof v.r !== 'string' || typeof v.fallen !== 'string' || typeof v.killer !== 'string' || !Number.isFinite(v.at)) return null;\n  return { r: v.r, fallen: v.fallen, fallenId",
-    "new": "  if (!v || typeof v !== 'object') return null;\n  return { r: v.r, fallen: v.fallen, fallenId",
+    "old": "  if (\n    !v ||\n    typeof v !== 'object' ||\n    typeof v.r !== 'string' ||\n    typeof v.fallen !== 'string' ||\n    typeof v.killer !== 'string' ||\n    !Number.isFinite(v.at)\n  )\n    return null;",
+    "new": "  if (!v || typeof v !== 'object') return null;",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -516,7 +516,7 @@
     "name": "SHIP-PVP-gone-wreck",
     "file": "src/net/sea/seaRef.js",
     "old": "  if (!s || s.wrecked) return;",
-    "new": "  if (!s) return;\n  if (s.wrecked) { ships.delete(sub); return; }",
+    "new": "  if (!s) return;\n  if (s.wrecked) {\n    ships.delete(sub);\n    return;\n  }",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -722,8 +722,8 @@
   {
     "name": "SHIP-PVP-prize-locked",
     "file": "src/net/sea/seaPrizeLaw.js",
-    "old": "!classicPiece(it) && !isLocked(it)",
-    "new": "!classicPiece(it)",
+    "old": "  !isLocked(it) &&\n  itemWorth(it) > 0 &&",
+    "new": "  itemWorth(it) > 0 &&",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -731,8 +731,8 @@
   {
     "name": "SHIP-PVP-prize-classic",
     "file": "src/net/sea/seaPrizeLaw.js",
-    "old": "!classicPiece(it) && !isLocked(it)",
-    "new": "!isLocked(it)",
+    "old": "  !classicPiece(it) &&\n  !isLocked(it) &&",
+    "new": "  !isLocked(it) &&",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -740,8 +740,8 @@
   {
     "name": "SHIP-PVP-prize-bound",
     "file": "src/net/sea/seaPrizeLaw.js",
-    "old": "!classicPiece(it) && !isLocked(it) && itemWorth(it) > 0\n  && tradeableRecord({ ...it, equipSlot: undefined });",
-    "new": "!classicPiece(it) && !isLocked(it) && itemWorth(it) > 0;",
+    "old": "  !!it &&\n  typeof it === 'object' &&\n  !classicPiece(it) &&\n  !isLocked(it) &&\n  itemWorth(it) > 0 &&\n  tradeableRecord({ ...it, equipSlot: undefined });",
+    "new": "  !!it && typeof it === 'object' && !classicPiece(it) && !isLocked(it) && itemWorth(it) > 0;",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -749,8 +749,8 @@
   {
     "name": "SHIP-PVP-prize-kept",
     "file": "src/net/sea/seaPrizeLaw.js",
-    "old": ".filter((x) => prizeable(x.it) && !keep(x.it))",
-    "new": ".filter((x) => prizeable(x.it))",
+    "old": "    .filter((x) => prizeable(x.it) && !keep(x.it))",
+    "new": "    .filter((x) => prizeable(x.it))",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -776,8 +776,8 @@
   {
     "name": "SHIP-PVP-prize-worst-first",
     "file": "src/net/sea/seaPrizeLaw.js",
-    "old": ".sort((a, b) => b.w - a.w || a.i - b.i);",
-    "new": ".sort((a, b) => a.w - b.w || a.i - b.i);",
+    "old": "    .sort((a, b) => b.w - a.w || a.i - b.i);",
+    "new": "    .sort((a, b) => a.w - b.w || a.i - b.i);",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -794,7 +794,7 @@
   {
     "name": "SHIP-PVP-take-bad-place",
     "file": "src/net/sea/seaPrizeLaw.js",
-    "old": "  if (!hold || !Array.isArray(places) || places.some((i) => !Number.isSafeInteger(i) || i < 0 || i >= hold.length)) return null;",
+    "old": "  if (!hold || !Array.isArray(places) || places.some((i) => !Number.isSafeInteger(i) || i < 0 || i >= hold.length))\n    return null;",
     "new": "  if (!hold || !Array.isArray(places)) return null;",
     "tests": [
       "test/systems/sea/shippvp.test.js"
@@ -812,8 +812,8 @@
   {
     "name": "SHIP-PVP-took-bag",
     "file": "src/net/sea/seaPrizeLaw.js",
-    "old": "wildTookOf(taken, taken.map(() => SEA_HOLD_F))",
-    "new": "wildTookOf(taken, taken.map(() => 'bag'))",
+    "old": "    taken.map(() => SEA_HOLD_F),",
+    "new": "    taken.map(() => 'bag'),",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]
@@ -1640,8 +1640,8 @@
   {
     "name": "SHIP-PVP-rate",
     "file": "src/net/sea/seaRef.js",
-    "old": "reachM: 300, slackM: 30, hz: 10,",
-    "new": "reachM: 300, slackM: 30, hz: 6,",
+    "old": "  hz: 10,",
+    "new": "  hz: 6,",
     "tests": [
       "test/systems/sea/shippvp.test.js"
     ]

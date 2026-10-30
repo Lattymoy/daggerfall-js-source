@@ -417,7 +417,7 @@ may strike a red villain, and nobody may strike that player there. My word on th
 `sf` (`online.js:"const sf = zone === 1 && this._wildStreets"`). The referee holds both sides
 (`wildRef.js:"export function wildStreetsBar(a, t) {"`): no blow lands on a fighter in the streets who is no villain on
 the meter it keeps, and one from there lands on a villain alone. A villain who says the streets is struck all the same.
-The sea's guns read the same bar (`seaRef.js:"if (wildStreetsBar(a, x)) return no('streets');"`).
+The sea's guns read the same bar (`seaRef.js:"if (wildStreetsBar(a, x))"`).
 
 My doors agree: from the streets a red body alone is fair
 (`world.js:"&& streetsStrike(zoneSafe(), pvpFlag.skullOf(peerId) === 'red');"`), and a blow there calls no watch

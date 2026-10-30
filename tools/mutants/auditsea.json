@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-SEA-E5-quest-piece-a-prize",
     "file": "src/net/sea/seaPrizeLaw.js",
-    "old": "  && tradeableRecord({ ...it, equipSlot: undefined });",
-    "new": "  && tradeableRecord({ ...it, equipSlot: undefined, questItem: undefined });",
+    "old": "  tradeableRecord({ ...it, equipSlot: undefined });",
+    "new": "  tradeableRecord({ ...it, equipSlot: undefined, questItem: undefined });",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -264,8 +264,8 @@
   {
     "name": "AUDIT-SEA-B6-no-day-after",
     "file": "src/net/sea/seaSeasonLaw.js",
-    "old": "const before = n === cur - 1 && nowS - turnS < SEA_WORLD_DAY_S;",
-    "new": "const before = false;",
+    "old": "  const before = n === cur - 1 && nowS - turnS < SEA_WORLD_DAY_S;",
+    "new": "  const before = false;",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -273,8 +273,8 @@
   {
     "name": "AUDIT-SEA-B6-legends-of-the-new",
     "file": "src/net/sea/seaSeasonLaw.js",
-    "old": "seaLegendsPossible(before ? turnS - 1 : nowS)",
-    "new": "seaLegendsPossible(nowS)",
+    "old": "  if (!Number.isSafeInteger(legends) || legends < 0 || legends > seaLegendsPossible(before ? turnS - 1 : nowS))\n    return null;",
+    "new": "  if (!Number.isSafeInteger(legends) || legends < 0 || legends > seaLegendsPossible(nowS)) return null;",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -282,8 +282,8 @@
   {
     "name": "AUDIT-SEA-E6A-target-must-speak",
     "file": "src/net/sea/seaRef.js",
-    "old": "  if (now - me.at > SEA_REF.helmMs) return no('helm');",
-    "new": "  if (now - me.at > SEA_REF.helmMs || now - her.at > SEA_REF.helmMs) return no('helm');",
+    "old": "  if (now - me.at > SEA_REF.helmMs) return no('helm'); // E6A: the shooter's word alone - her target's page may be paused",
+    "new": "  if (now - me.at > SEA_REF.helmMs || now - her.at > SEA_REF.helmMs) return no('helm'); // E6A: the shooter's word alone - her target's page may be paused",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -336,8 +336,8 @@
   {
     "name": "AUDIT-SEA-F1-off-shootable",
     "file": "src/net/sea/seaRef.js",
-    "old": "me.wrecked || her.wrecked || me.off || her.off ||",
-    "new": "me.wrecked || her.wrecked ||",
+    "old": "  if (!me || !her || me.wrecked || her.wrecked || me.off || her.off || !(me.hp > 1e-6) || !(her.hp > 1e-6))\n    return no('ship');",
+    "new": "  if (!me || !her || me.wrecked || her.wrecked || !(me.hp > 1e-6) || !(her.hp > 1e-6)) return no('ship');",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -345,8 +345,8 @@
   {
     "name": "AUDIT-SEA-F1-carry-untaken",
     "file": "src/net/sea/seaRef.js",
-    "old": "if (c) { x.seaCarry = null; if (now - c.at < SEA_REF.mendMs && c.at > s.struckAt) { s.hp = s.max * c.h; s.struckAt = c.at; } }",
-    "new": "if (c) { x.seaCarry = null; }",
+    "old": "    if (now - c.at < SEA_REF.mendMs && c.at > s.struckAt) {\n      s.hp = s.max * c.h;\n      s.struckAt = c.at;\n    }\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -392,8 +392,8 @@
   {
     "name": "AUDIT-SEA-E6B-canvas-claims",
     "file": "src/net/sea/seaRef.js",
-    "old": "  if (got > 0) { her.hp -= got; her.by = by; her.byAt = now; }",
-    "new": "  her.hp -= got; her.by = by; her.byAt = now;",
+    "old": "  if (got > 0) {\n    her.hp -= got;\n    her.by = by;\n    her.byAt = now;\n  } // E6B: her killer is a captain whose shot took her bar",
+    "new": "  her.hp -= got;\n  her.by = by;\n  her.byAt = now; // E6B: her killer is a captain whose shot took her bar",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -401,8 +401,8 @@
   {
     "name": "AUDIT-SEA-E6B-sea-sunk-fights-on",
     "file": "src/net/sea/seaRef.js",
-    "old": "me.off || her.off || !(me.hp > 1e-6) || !(her.hp > 1e-6)) return no('ship');",
-    "new": "me.off || her.off) return no('ship');",
+    "old": "  if (!me || !her || me.wrecked || her.wrecked || me.off || her.off || !(me.hp > 1e-6) || !(her.hp > 1e-6))\n    return no('ship');",
+    "new": "  if (!me || !her || me.wrecked || her.wrecked || me.off || her.off) return no('ship');",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -464,8 +464,8 @@
   {
     "name": "AUDIT-SEA-A6-jumper-boards",
     "file": "src/net/sea/seaRef.js",
-    "old": "  if (!a?.pose || now - a.jumpAt < WILD_REF.jumpMs) return null;",
-    "new": "  if (!a?.pose) return null;",
+    "old": "  if (!a?.pose || now - a.jumpAt < WILD_REF.jumpMs) return null; // AUDIT SEA VENTURES A6: a jumper boards nothing, as it fires at nothing",
+    "new": "  if (!a?.pose) return null; // AUDIT SEA VENTURES A6: a jumper boards nothing, as it fires at nothing",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -818,8 +818,8 @@
   {
     "name": "AUDIT-SEA-F5-board-window-longer",
     "file": "src/net/sea/seaRef.js",
-    "old": "boardMs: 180_000",
-    "new": "boardMs: 240_000",
+    "old": "  boardMs: 180_000,",
+    "new": "  boardMs: 240_000,",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -827,8 +827,8 @@
   {
     "name": "AUDIT-SEA-F5-reach-longer",
     "file": "src/net/sea/seaRef.js",
-    "old": "reachM: 300,",
-    "new": "reachM: 400,",
+    "old": "  reachM: 300,",
+    "new": "  reachM: 400,",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -836,8 +836,8 @@
   {
     "name": "AUDIT-SEA-F5-credit-longer",
     "file": "src/net/sea/seaRef.js",
-    "old": "creditMs: 30_000,",
-    "new": "creditMs: 60_000,",
+    "old": "  creditMs: 30_000,",
+    "new": "  creditMs: 60_000,",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]

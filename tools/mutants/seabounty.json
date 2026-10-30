@@ -634,8 +634,8 @@
   {
     "name": "SEA-BOUNTY-gold-fractional",
     "file": "src/net/sea/seaBountyLaw.js",
-    "old": "export const seaBountyGoldOk = (n) => Number.isSafeInteger(n) && n >= SEA_BOUNTY_MIN",
-    "new": "export const seaBountyGoldOk = (n) => Number.isFinite(n) && n >= SEA_BOUNTY_MIN",
+    "old": "export const seaBountyGoldOk = (n) => Number.isSafeInteger(n) && n >= SEA_BOUNTY_MIN && n <= SEA_BOUNTY_MAX;",
+    "new": "export const seaBountyGoldOk = (n) => Number.isFinite(n) && n >= SEA_BOUNTY_MIN && n <= SEA_BOUNTY_MAX;",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -643,8 +643,8 @@
   {
     "name": "SEA-BOUNTY-read-any-length",
     "file": "src/net/sea/seaBountyLaw.js",
-    "old": "  const wanted = v.wanted.slice(0, SEA_BOARD_MAX)",
-    "new": "  const wanted = v.wanted",
+    "old": "    .slice(0, SEA_BOARD_MAX)\n    .filter(",
+    "new": "    .filter(",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -652,8 +652,8 @@
   {
     "name": "SEA-BOUNTY-read-unnamed",
     "file": "src/net/sea/seaBountyLaw.js",
-    "old": "typeof w.name === 'string' && w.name.length > 0 && w.name.length <= 64)",
-    "new": "typeof w.name === 'string' && w.name.length <= 64)",
+    "old": "        w &&\n        typeof w.char === 'string' &&\n        w.char.length <= 40 &&\n        typeof w.name === 'string' &&\n        w.name.length > 0 &&\n        w.name.length <= 64,",
+    "new": "        w && typeof w.char === 'string' && w.char.length <= 40 && typeof w.name === 'string' && w.name.length <= 64,",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]

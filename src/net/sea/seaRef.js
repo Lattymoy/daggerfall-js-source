@@ -50,9 +50,23 @@ export const SEA_SAIL_HP = Object.freeze([0, 96, 256, 144, 352]);
  *  and one word's cap, the canvas's cap); a fire once so often; how long a helm's word stands; the most ships and wrecks
  *  a room keeps. */
 export const SEA_REF = Object.freeze({
-  toughMax: 2.4, mendMs: 120_000, creditMs: 30_000, wreckMs: 600_000, boardMs: 180_000, boardM: 40,
-  reachM: 300, slackM: 30, hz: 10, rateX: 1.5, depthX: 20, capX: 14, sailCapX: 4, fireMs: 10_000, helmMs: 20_000,
-  shipsMax: 200, wrecksMax: 64,
+  toughMax: 2.4,
+  mendMs: 120_000,
+  creditMs: 30_000,
+  wreckMs: 600_000,
+  boardMs: 180_000,
+  boardM: 40,
+  reachM: 300,
+  slackM: 30,
+  hz: 10,
+  rateX: 1.5,
+  depthX: 20,
+  capX: 14,
+  sailCapX: 4,
+  fireMs: 10_000,
+  helmMs: 20_000,
+  shipsMax: 200,
+  wrecksMax: 64,
 });
 /** A wreck awaiting its boarding is kept in the room's storage under this prefix (a restarted room signs it all the same). */
 export const SEA_WRECK_PREFIX = 'seawreck:';
@@ -61,15 +75,23 @@ export const SEA_WRECK_PREFIX = 'seawreck:';
 const shipsOf = (/** @type {any} */ st) => (st.ships ??= new Map());
 const wrecksOf = (/** @type {any} */ st) => (st.wrecks ??= new Map());
 /** Two believed places apart, metres (the zone's poses are the world frame's units - siegeRef.js SIEGE_UNITS_PER_M). */
-const apartM = (/** @type {any} */ a, /** @type {any} */ b) => Math.hypot((a.x - b.x) / SIEGE_UNITS_PER_M, (a.z - b.z) / SIEGE_UNITS_PER_M);
+const apartM = (/** @type {any} */ a, /** @type {any} */ b) =>
+  Math.hypot((a.x - b.x) / SIEGE_UNITS_PER_M, (a.z - b.z) / SIEGE_UNITS_PER_M);
 /** A ship's toughness as said, kept within the law. */
-export const seaTough = (/** @type {unknown} */ t) => (Number.isFinite(t) ? Math.max(1, Math.min(SEA_REF.toughMax, /** @type {number} */ (t))) : 1);
+export const seaTough = (/** @type {unknown} */ t) =>
+  Number.isFinite(t) ? Math.max(1, Math.min(SEA_REF.toughMax, /** @type {number} */ (t))) : 1;
 /** A captain's said hull - a share of her own whole, 0 to 1. */
-const share = (/** @type {unknown} */ h) => (Number.isFinite(h) ? Math.max(0, Math.min(1, /** @type {number} */ (h))) : 1);
+const share = (/** @type {unknown} */ h) =>
+  Number.isFinite(h) ? Math.max(0, Math.min(1, /** @type {number} */ (h))) : 1;
 /** AUDIT SEA VENTURES F1/A1: a ship whose captain has left her helm, the zone or the room - forgotten if her bar would be
  *  whole at her next word anyway, else kept OFF the guns with it (no shot lands on her, nor hers on another). A wreck stays
  *  one. */
-function offShip(/** @type {Map<string, any>} */ ships, /** @type {string} */ sub, /** @type {any} */ s, /** @type {number} */ now) {
+function offShip(
+  /** @type {Map<string, any>} */ ships,
+  /** @type {string} */ sub,
+  /** @type {any} */ s,
+  /** @type {number} */ now,
+) {
   if (!s || s.wrecked) return;
   if (now - s.struckAt >= SEA_REF.mendMs) ships.delete(sub);
   else s.off = true;
@@ -86,32 +108,79 @@ function offShip(/** @type {Map<string, any>} */ ships, /** @type {string} */ su
  * @param {number} now @param {{ rid?: string, room?: string }} [w] the id a wreck would take, and the room
  */
 export function seaHelm(st, sub, { id, ci = '', hl, t = 1, u = 0, h = 1 }, now, { rid = '', room = '' } = {}) {
-  const ships = shipsOf(st), x = st.fighters?.get(sub);
+  const ships = shipsOf(st),
+    x = st.fighters?.get(sub);
   let s = ships.get(sub);
-  if (clampHull(hl) < 0 || !x?.zone) { offShip(ships, sub, s, now); return null; }
+  if (clampHull(hl) < 0 || !x?.zone) {
+    offShip(ships, sub, s, now);
+    return null;
+  }
   if (s?.wrecked) {
-    if (now - s.wreckAt < SEA_REF.wreckMs) { s.at = now; return null; }   // a wreck stays one her while
-    ships.delete(sub); s = undefined;
+    if (now - s.wreckAt < SEA_REF.wreckMs) {
+      s.at = now;
+      return null;
+    } // a wreck stays one her while
+    ships.delete(sub);
+    s = undefined;
   }
   const uid = Number.isSafeInteger(u) && u > 0 ? u : 0;
-  const max = SEA_SHIP_HP[hl] * seaTough(t), sailMax = SEA_SAIL_HP[hl] * seaTough(t);
+  const max = SEA_SHIP_HP[hl] * seaTough(t),
+    sailMax = SEA_SAIL_HP[hl] * seaTough(t);
   if (!s) {
-    if (ships.size >= SEA_REF.shipsMax) for (const [k, v] of ships) if (!v.wrecked && (v.off || now - v.at >= SEA_REF.helmMs)) { ships.delete(k); break; }
+    if (ships.size >= SEA_REF.shipsMax)
+      for (const [k, v] of ships)
+        if (!v.wrecked && (v.off || now - v.at >= SEA_REF.helmMs)) {
+          ships.delete(k);
+          break;
+        }
     if (ships.size >= SEA_REF.shipsMax) return null;
-    s = { id, ci, hl, u: uid, max, sailMax, hp: max, at: now, struckAt: -Infinity, by: null, byAt: -Infinity, fireAt: -Infinity, wrecked: false, wreckAt: -Infinity, off: false, bucket: 0, bucketAt: now, rate: SEA_REF.hz, rateAt: now };
+    s = {
+      id,
+      ci,
+      hl,
+      u: uid,
+      max,
+      sailMax,
+      hp: max,
+      at: now,
+      struckAt: -Infinity,
+      by: null,
+      byAt: -Infinity,
+      fireAt: -Infinity,
+      wrecked: false,
+      wreckAt: -Infinity,
+      off: false,
+      bucket: 0,
+      bucketAt: now,
+      rate: SEA_REF.hz,
+      rateAt: now,
+    };
     ships.set(sub, s);
   } else if (s.hl !== hl || s.u !== uid || s.max !== max) {
     const was = s.max > 0 ? s.hp / s.max : 1;
-    s.hl = hl; s.u = uid; s.max = max; s.sailMax = sailMax; s.hp = max * was;
+    s.hl = hl;
+    s.u = uid;
+    s.max = max;
+    s.sailMax = sailMax;
+    s.hp = max * was;
   }
-  s.id = id; if (ci) s.ci = ci; s.at = now; s.off = false;
-  const c = x.seaCarry;   // F1/A1: the bar she carries from another room's guns (the hub's, seaCarry) - newer than this room's
-  if (c) { x.seaCarry = null; if (now - c.at < SEA_REF.mendMs && c.at > s.struckAt) { s.hp = s.max * c.h; s.struckAt = c.at; } }
-  if (now - s.struckAt >= SEA_REF.mendMs) s.hp = s.max;   // unstruck so long: whole again, to her own word
+  s.id = id;
+  if (ci) s.ci = ci;
+  s.at = now;
+  s.off = false;
+  const c = x.seaCarry; // F1/A1: the bar she carries from another room's guns (the hub's, seaCarry) - newer than this room's
+  if (c) {
+    x.seaCarry = null;
+    if (now - c.at < SEA_REF.mendMs && c.at > s.struckAt) {
+      s.hp = s.max * c.h;
+      s.struckAt = c.at;
+    }
+  }
+  if (now - s.struckAt >= SEA_REF.mendMs) s.hp = s.max; // unstruck so long: whole again, to her own word
   s.hp = Math.min(s.hp, share(h) * s.max);
   if (s.hp > 1e-6) return null;
   s.hp = 0;
-  if (!s.by || now - s.byAt > SEA_REF.creditMs) return null;   // the sea's guns broke her, no captain's
+  if (!s.by || now - s.byAt > SEA_REF.creditMs) return null; // the sea's guns broke her, no captain's
   const [wreck, evicted] = wreckOf(st, sub, s, s.by, now, rid, room);
   return { wreck, evicted };
 }
@@ -119,12 +188,41 @@ export function seaHelm(st, sub, { id, ci = '', hl, t = 1, u = 0, h = 1 }, now, 
 /** A ship wrecked: the referee's record of it - `{ r, fallen, fallenId, ci, killer, killerId, kc, u, m, x, z, at, boarded }`,
  *  `x`/`z` where she lay (her captain's believed place, or null) - and the room's oldest wreck, put out to make room (or
  *  null). */
-function wreckOf(/** @type {any} */ st, /** @type {string} */ sub, /** @type {any} */ s, /** @type {string} */ by, /** @type {number} */ now, /** @type {string} */ rid, /** @type {string} */ room) {
-  s.wrecked = true; s.wreckAt = now; s.hp = 0;
-  const k = st.fighters?.get(by), wrecks = wrecksOf(st), lay = st.fighters?.get(sub)?.pose;
-  const w = { r: rid, fallen: sub, fallenId: s.id, ci: s.ci, killer: by, killerId: k?.id ?? '', kc: k?.ci ?? '', u: s.u, m: typeof room === 'string' ? room : '', x: lay ? lay.x : null, z: lay ? lay.z : null, at: now, boarded: false };
+function wreckOf(
+  /** @type {any} */ st,
+  /** @type {string} */ sub,
+  /** @type {any} */ s,
+  /** @type {string} */ by,
+  /** @type {number} */ now,
+  /** @type {string} */ rid,
+  /** @type {string} */ room,
+) {
+  s.wrecked = true;
+  s.wreckAt = now;
+  s.hp = 0;
+  const k = st.fighters?.get(by),
+    wrecks = wrecksOf(st),
+    lay = st.fighters?.get(sub)?.pose;
+  const w = {
+    r: rid,
+    fallen: sub,
+    fallenId: s.id,
+    ci: s.ci,
+    killer: by,
+    killerId: k?.id ?? '',
+    kc: k?.ci ?? '',
+    u: s.u,
+    m: typeof room === 'string' ? room : '',
+    x: lay ? lay.x : null,
+    z: lay ? lay.z : null,
+    at: now,
+    boarded: false,
+  };
   let evicted = null;
-  if (wrecks.size >= SEA_REF.wrecksMax) { evicted = wrecks.values().next().value; wrecks.delete(evicted.r); }
+  if (wrecks.size >= SEA_REF.wrecksMax) {
+    evicted = wrecks.values().next().value;
+    wrecks.delete(evicted.r);
+  }
   wrecks.set(rid, w);
   return [w, evicted];
 }
@@ -149,40 +247,88 @@ function spendWord(/** @type {any} */ s, /** @type {number} */ now) {
  * @param {{ d?: number, s?: number, f?: boolean, kin?: boolean, rid?: string, room?: string }} o @param {number} now
  */
 export function seaShot(st, by, to, { d = 0, s: sail = 0, f = false, kin = false, rid = '', room = '' } = {}, now) {
-  const no = (/** @type {string} */ why) => ({ ok: false, dealt: 0, frac: 0, sail: 0, fire: false, left: 1, wreck: null, evicted: null, why });
-  const a = st.fighters?.get(by), x = st.fighters?.get(to);
+  const no = (/** @type {string} */ why) => ({
+    ok: false,
+    dealt: 0,
+    frac: 0,
+    sail: 0,
+    fire: false,
+    left: 1,
+    wreck: null,
+    evicted: null,
+    why,
+  });
+  const a = st.fighters?.get(by),
+    x = st.fighters?.get(to);
   if (!a || !x || by === to) return no('no-fighter');
   if (!a.zone || !x.zone) return no('zone');
-  if (wildStreetsBar(a, x)) return no('streets');   // PVP-SAFE-HIT: a harbour's safe streets, as a blow's
+  if (wildStreetsBar(a, x)) return no('streets'); // PVP-SAFE-HIT: a harbour's safe streets, as a blow's
   if (a.down || x.down) return no('down');
   if (kin) return no('kin');
-  const ships = shipsOf(st), me = ships.get(by), her = ships.get(to);
+  const ships = shipsOf(st),
+    me = ships.get(by),
+    her = ships.get(to);
   // F1/A1: neither off the guns; E6B: neither at none by the sea's guns (out of the fight both ways until she mends)
-  if (!me || !her || me.wrecked || her.wrecked || me.off || her.off || !(me.hp > 1e-6) || !(her.hp > 1e-6)) return no('ship');
-  if (now - me.at > SEA_REF.helmMs) return no('helm');   // E6A: the shooter's word alone - her target's page may be paused
-  if (now - a.jumpAt < WILD_REF.jumpMs) return no('jump');   // a jumper fires at nothing, as it strikes nothing
+  if (!me || !her || me.wrecked || her.wrecked || me.off || her.off || !(me.hp > 1e-6) || !(her.hp > 1e-6))
+    return no('ship');
+  if (now - me.at > SEA_REF.helmMs) return no('helm'); // E6A: the shooter's word alone - her target's page may be paused
+  if (now - a.jumpAt < WILD_REF.jumpMs) return no('jump'); // a jumper fires at nothing, as it strikes nothing
   // AUDIT PVP-EASE L3-3 (ZONE-GRACE, as wildRef.js wildBlow): my shot at a fair captain ends my safe passage; hers keeps
   // her ship from it - a graced captain wrecked a sloop under it, and a ship under it was broadsided and boarded
   const graceEnded = a.graceUntil > now;
   if (graceEnded) a.graceUntil = -Infinity;
   if (x.graceUntil > now) return { ...no('grace'), graceEnded };
-  if (!a.pose || !x.pose || apartM(a.pose, x.pose) > SEA_REF.reachM + SEA_REF.slackM) return { ...no('reach'), graceEnded };
+  if (!a.pose || !x.pose || apartM(a.pose, x.pose) > SEA_REF.reachM + SEA_REF.slackM)
+    return { ...no('reach'), graceEnded };
   const ref = SHIP_REF[clampHull(me.hl)] ?? 0;
   if (!(ref > 0)) return { ...no('guns'), graceEnded };
   if (!spendWord(me, now)) return { ...no('rate'), graceEnded };
-  const bucket = Math.min(SEA_REF.depthX * ref, me.bucket + (Math.max(0, now - me.bucketAt) / 1000) * SEA_REF.rateX * ref);
+  const bucket = Math.min(
+    SEA_REF.depthX * ref,
+    me.bucket + (Math.max(0, now - me.bucketAt) / 1000) * SEA_REF.rateX * ref,
+  );
   const got = Math.max(0, Math.min(Number.isFinite(d) ? d : 0, SEA_REF.capX * ref, bucket, her.hp));
-  me.bucket = bucket - got; me.bucketAt = now;
-  const canvas = her.sailMax > 0 ? Math.max(0, Math.min(Number.isFinite(sail) ? sail : 0, SEA_REF.sailCapX * ref)) / her.sailMax : 0;
+  me.bucket = bucket - got;
+  me.bucketAt = now;
+  const canvas =
+    her.sailMax > 0 ? Math.max(0, Math.min(Number.isFinite(sail) ? sail : 0, SEA_REF.sailCapX * ref)) / her.sailMax : 0;
   const fire = !!f && now - her.fireAt >= SEA_REF.fireMs;
   if (fire) her.fireAt = now;
-  if (!(got > 0) && !(canvas > 0) && !fire) return { ok: true, dealt: 0, frac: 0, sail: 0, fire: false, left: her.max > 0 ? her.hp / her.max : 0, wreck: null, evicted: null, why: null, graceEnded };
+  if (!(got > 0) && !(canvas > 0) && !fire)
+    return {
+      ok: true,
+      dealt: 0,
+      frac: 0,
+      sail: 0,
+      fire: false,
+      left: her.max > 0 ? her.hp / her.max : 0,
+      wreck: null,
+      evicted: null,
+      why: null,
+      graceEnded,
+    };
   her.struckAt = now;
-  a.fightAt = now; x.fightAt = now;   // AUDIT PVP-EASE L3-3: a gunfight is a fight, for an entry's ask (wildRef.js wildZone)
-  if (got > 0) { her.hp -= got; her.by = by; her.byAt = now; }   // E6B: her killer is a captain whose shot took her bar
+  a.fightAt = now;
+  x.fightAt = now; // AUDIT PVP-EASE L3-3: a gunfight is a fight, for an entry's ask (wildRef.js wildZone)
+  if (got > 0) {
+    her.hp -= got;
+    her.by = by;
+    her.byAt = now;
+  } // E6B: her killer is a captain whose shot took her bar
   const frac = her.max > 0 ? got / her.max : 0;
-  const [wreck, evicted] = her.hp <= 1e-6 ? wreckOf(st, to, her, by, now, rid, room) : [null, null];   // a shot lands only on a bar above none: one that took none wrecks nothing
-  return { ok: true, dealt: got, frac, sail: Math.min(1, canvas), fire, left: her.max > 0 ? Math.max(0, her.hp) / her.max : 0, wreck, evicted, why: null, graceEnded };
+  const [wreck, evicted] = her.hp <= 1e-6 ? wreckOf(st, to, her, by, now, rid, room) : [null, null]; // a shot lands only on a bar above none: one that took none wrecks nothing
+  return {
+    ok: true,
+    dealt: got,
+    frac,
+    sail: Math.min(1, canvas),
+    fire,
+    left: her.max > 0 ? Math.max(0, her.hp) / her.max : 0,
+    wreck,
+    evicted,
+    why: null,
+    graceEnded,
+  };
 }
 
 /**
@@ -193,11 +339,13 @@ export function seaShot(st, by, to, { d = 0, s: sail = 0, f = false, kin = false
  * @param {any} st @param {string} by @param {string} r @param {number} now
  */
 export function seaBoard(st, by, r, now) {
-  const wrecks = wrecksOf(st), w = wrecks.get(r);
+  const wrecks = wrecksOf(st),
+    w = wrecks.get(r);
   if (!w || w.killer !== by || w.boarded || now - w.at > SEA_REF.boardMs) return null;
-  const a = st.fighters?.get(by), her = st.fighters?.get(w.fallen)?.pose;
+  const a = st.fighters?.get(by),
+    her = st.fighters?.get(w.fallen)?.pose;
   const near = (/** @type {any} */ p) => !!p && apartM(a.pose, p) <= SEA_REF.boardM + SEA_REF.slackM;
-  if (!a?.pose || now - a.jumpAt < WILD_REF.jumpMs) return null;   // AUDIT SEA VENTURES A6: a jumper boards nothing, as it fires at nothing
+  if (!a?.pose || now - a.jumpAt < WILD_REF.jumpMs) return null; // AUDIT SEA VENTURES A6: a jumper boards nothing, as it fires at nothing
   if (!(near(her) || near(Number.isFinite(w.x) && Number.isFinite(w.z) ? { x: w.x, z: w.z } : null))) return null;
   w.boarded = true;
   wrecks.delete(r);
@@ -209,10 +357,18 @@ export function seaBoard(st, by, r, now) {
  *  her bar would be whole; wrecks of ships past SEA_REF.wreckMs forgotten. AUDIT SEA VENTURES E6A: a ship whose captain
  *  stands in the zone saying nothing (a hidden tab) is at sea all the same - never forgotten for her quiet. */
 export function seaStep(/** @type {any} */ st, /** @type {number} */ now) {
-  const out = [], ships = shipsOf(st);
-  for (const [r, w] of wrecksOf(st)) if (now - w.at > SEA_REF.boardMs) { wrecksOf(st).delete(r); out.push(w); }
+  const out = [],
+    ships = shipsOf(st);
+  for (const [r, w] of wrecksOf(st))
+    if (now - w.at > SEA_REF.boardMs) {
+      wrecksOf(st).delete(r);
+      out.push(w);
+    }
   for (const [k, s] of ships) {
-    if (s.wrecked) { if (now - s.wreckAt >= SEA_REF.wreckMs) ships.delete(k); continue; }
+    if (s.wrecked) {
+      if (now - s.wreckAt >= SEA_REF.wreckMs) ships.delete(k);
+      continue;
+    }
     if (s.off || !st.fighters?.get(k)?.zone) offShip(ships, k, s, now);
   }
   return out;
@@ -229,8 +385,30 @@ export function seaCarry(/** @type {any} */ st, /** @type {string} */ sub) {
 
 /** A wreck read back from storage, checked for the shape wreckOf writes - or null. */
 export function seaWreckOf(/** @type {any} */ v) {
-  if (!v || typeof v !== 'object' || typeof v.r !== 'string' || typeof v.fallen !== 'string' || typeof v.killer !== 'string' || !Number.isFinite(v.at)) return null;
-  return { r: v.r, fallen: v.fallen, fallenId: typeof v.fallenId === 'string' ? v.fallenId : '', ci: typeof v.ci === 'string' ? v.ci : '', killer: v.killer, killerId: typeof v.killerId === 'string' ? v.killerId : '', kc: typeof v.kc === 'string' ? v.kc : '', u: Number.isSafeInteger(v.u) ? v.u : 0, m: typeof v.m === 'string' ? v.m : '', x: Number.isFinite(v.x) ? v.x : null, z: Number.isFinite(v.z) ? v.z : null, at: v.at, boarded: v.boarded === true };
+  if (
+    !v ||
+    typeof v !== 'object' ||
+    typeof v.r !== 'string' ||
+    typeof v.fallen !== 'string' ||
+    typeof v.killer !== 'string' ||
+    !Number.isFinite(v.at)
+  )
+    return null;
+  return {
+    r: v.r,
+    fallen: v.fallen,
+    fallenId: typeof v.fallenId === 'string' ? v.fallenId : '',
+    ci: typeof v.ci === 'string' ? v.ci : '',
+    killer: v.killer,
+    killerId: typeof v.killerId === 'string' ? v.killerId : '',
+    kc: typeof v.kc === 'string' ? v.kc : '',
+    u: Number.isSafeInteger(v.u) ? v.u : 0,
+    m: typeof v.m === 'string' ? v.m : '',
+    x: Number.isFinite(v.x) ? v.x : null,
+    z: Number.isFinite(v.z) ? v.z : null,
+    at: v.at,
+    boarded: v.boarded === true,
+  };
 }
 
 /** A captain's socket gone from the room: her ship off the guns (offShip - AUDIT SEA VENTURES F1/A1: her bar kept until it

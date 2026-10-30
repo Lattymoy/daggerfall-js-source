@@ -36,8 +36,13 @@ export const SEA_HOLD_F = 'hold';
 
 /** May a piece of her hold be a prize? - a record of the law's, worth something, never classic or locked, and one the realm
  *  lets pass between players (tradeableRecord - never bound, by its mark or its row's; a hold's piece is worn by no one). */
-export const prizeable = (/** @type {any} */ it) => !!it && typeof it === 'object' && !classicPiece(it) && !isLocked(it) && itemWorth(it) > 0
-  && tradeableRecord({ ...it, equipSlot: undefined });
+export const prizeable = (/** @type {any} */ it) =>
+  !!it &&
+  typeof it === 'object' &&
+  !classicPiece(it) &&
+  !isLocked(it) &&
+  itemWorth(it) > 0 &&
+  tradeableRecord({ ...it, equipSlot: undefined });
 
 /** Her hold in a save: the Items of the placed boat whose uid is `uid` - or null. */
 export function seaHoldOf(/** @type {any} */ save, /** @type {number} */ uid) {
@@ -56,7 +61,10 @@ export function seaHoldOf(/** @type {any} */ save, /** @type {number} */ uid) {
  */
 export function seaPrizePlaces(hold, keep = () => false) {
   if (!Array.isArray(hold)) return [];
-  const ranked = hold.map((it, i) => ({ i, w: itemWorth(it), it })).filter((x) => prizeable(x.it) && !keep(x.it)).sort((a, b) => b.w - a.w || a.i - b.i);
+  const ranked = hold
+    .map((it, i) => ({ i, w: itemWorth(it), it }))
+    .filter((x) => prizeable(x.it) && !keep(x.it))
+    .sort((a, b) => b.w - a.w || a.i - b.i);
   const whole = ranked.reduce((n, x) => n + x.w, 0);
   const out = [];
   let taken = 0;
@@ -76,7 +84,11 @@ export function seaPrizePlaces(hold, keep = () => false) {
  * another piece, and a piece the record kept went with it).
  * @param {any[]} taken
  */
-export const seaPrizeTook = (taken) => wildTookOf(taken, taken.map(() => SEA_HOLD_F));
+export const seaPrizeTook = (taken) =>
+  wildTookOf(
+    taken,
+    taken.map(() => SEA_HOLD_F),
+  );
 
 /**
  * THE PRIZE TAKEN off a save, in place: her hold's pieces at `places` (seaPrizePlaces') out of it. Answers the pieces,
@@ -85,7 +97,8 @@ export const seaPrizeTook = (taken) => wildTookOf(taken, taken.map(() => SEA_HOL
  */
 export function takeSeaPrize(save, uid, places) {
   const hold = seaHoldOf(save, uid);
-  if (!hold || !Array.isArray(places) || places.some((i) => !Number.isSafeInteger(i) || i < 0 || i >= hold.length)) return null;
+  if (!hold || !Array.isArray(places) || places.some((i) => !Number.isSafeInteger(i) || i < 0 || i >= hold.length))
+    return null;
   const set = new Set(places);
   const taken = hold.filter((_, i) => set.has(i));
   const kept = hold.filter((_, i) => !set.has(i));
