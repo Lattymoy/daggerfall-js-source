@@ -2,11 +2,9 @@
 // rest shrinks; the first shot after a rest flies true.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { BOW_BLOOM, BOW_FAST, BOW_KINDS, bowKindOf, bowShotStamp, bowBloomNow, bowBloomShot, bowFastShot, bowFastDamage, whileShaftLands, landingShaft, setBowFight, bowPvpRules, _resetBowBloomForTests } from '../../src/combat/bowBloom.js';
+import { BOW_BLOOM, BOW_FAST, BOW_KINDS, bowKindOf, bowShotStamp, bowBloomNow, bowBloomShot, bowFastShot, bowFastDamage, whileShaftLands, landingShaft, _resetBowBloomForTests } from '../../src/combat/bowBloom.js';
 import { bloomRingPx, paintBowBloomRing } from '../../src/ui/bowBloomRing.js';
 import { ArrowFlight, shaftOnRelayBody } from '../../src/combat/arrowFlight.js';
-import { bowShotAim, bowShotExtra } from '../../src/ui/bowBloomRing.js';
-import { setPvpFight } from '../../src/combat/pvpPotions.js';
 
 const deg = (a, b) => (Math.acos(Math.min(1, a[0] * b[0] + a[1] * b[1] + a[2] * b[2])) * 180) / Math.PI;
 const FWD = [0, 0, -1];
@@ -50,12 +48,10 @@ test('BOW-BLOOM THE RING: its size on screen, hidden once it closes (mutants: th
 
 test('BOW-BLOOM THE LANE: a player\'s bow shot blooms; a foe\'s, a technique\'s never (mutants: the lane unwired; a technique bloomed)', () => {
   _resetBowBloomForTests();
-  setBowFight(true);   // BOW-PVP-ONLY: in a fight
   const fl = new ArrowFlight({ getGpuMesh: () => null });
   fl.fire([0, 0, 0], FWD, { fromPlayer: true, weapon: null });
   assert.ok(bowBloomNow() > BOW_BLOOM.step - 0.1, 'the player\'s shot widened the circle');
   _resetBowBloomForTests();
-  setBowFight(true);
   fl.fire([0, 0, 0], FWD, { fromPlayer: false, weapon: null });
   fl.fire([0, 0, 0], FWD, { fromPlayer: true, weapon: null, technique: { id: 'volley' } });
   assert.equal(bowBloomNow(), 0, 'a foe\'s shot and a technique\'s leave it');
@@ -80,7 +76,6 @@ test('BOW-FAST: a rested shot whole; each quick one a stack more, to four; a res
 
 test('BOW-FAST THE LANE: the player\'s bow shaft carries its stacks; a duel\'s door reads the shaft landing; a foe\'s shaft none (mutants: the stamp off; the landing unset)', () => {
   _resetBowBloomForTests();
-  setBowFight(true);   // BOW-PVP-ONLY: in a fight
   const fl = new ArrowFlight({ getGpuMesh: () => null });
   fl.fire([0, 0, 0], FWD, { fromPlayer: true, weapon: null });
   fl.fire([0, 0, 0], FWD, { fromPlayer: true, weapon: null });
@@ -110,25 +105,4 @@ test('BOW-KINDS: the short bow whole at 0.75 s, its circle back 4 a second; the 
   assert.equal(bowBloomNow(900.25), 1, 'the short bow\'s circle: 2 - 4 x 0.25');
   bowBloomShot(FWD, 901, () => 0.5, BOW_KINDS[130]);
   assert.equal(bowBloomNow(901.5), 0.5, 'the long bow\'s: 2 - 3 x 0.5');
-});
-
-test('BOW-PVP-ONLY: out of a refereed fight a player\'s bow shot flies true, carries no stacks and no pull, and opens no circle - on both lanes; the health mirror\'s word sets it (mutants: the gate off; the word unwired)', () => {
-  _resetBowBloomForTests();
-  assert.equal(bowPvpRules(), false);
-  const fl = new ArrowFlight({ getGpuMesh: () => null });
-  for (let i = 0; i < 6; i++) fl.fire([0, 0, 0], FWD, { fromPlayer: true, weapon: { templateIndex: 130 } });
-  assert.equal(bowBloomNow(), 0, 'no circle');
-  assert.deepEqual(fl.arrows.map((a) => [a.fast, a.pull]), Array(6).fill([undefined, undefined]), 'no stacks, no pull');
-  for (const a of fl.arrows) assert.deepEqual(a.dir, FWD, 'every shot true');
-  // the dungeon's lane
-  for (let i = 0; i < 6; i++) assert.deepEqual(bowShotAim(FWD, { templateIndex: 129 }), FWD);
-  assert.deepEqual(bowShotExtra(false, false, { templateIndex: 130 }), {});
-  assert.deepEqual(bowShotExtra(false, true, null), { summoned: true });
-  // the mirror's word
-  setPvpFight(true);
-  assert.equal(bowPvpRules(), true);
-  assert.deepEqual(bowShotExtra(false, false, { templateIndex: 130 }), { fast: 0, pull: 1.5 });
-  setPvpFight(false);
-  assert.equal(bowPvpRules(), false);
-  _resetBowBloomForTests();
 });

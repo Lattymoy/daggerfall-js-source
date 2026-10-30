@@ -441,7 +441,7 @@ test('AUDIT STARTS W3 a load at a running province start\'s own dungeon, its com
   assert.match(W, /modes\?\.startInDungeon\?\.\(\{ locationKey: extras\.locationKey, fromLoad: true, recorded: starts\.resumesAt\(pixel\) \? undefined : extras\.dungeon \?\? \{\} \}\)/);
 });
 
-test('START-INSTANCE (FIELD BUGS 2026-10-30e) the door asks whether a dungeon is a running province start\'s own, its commission still in it - by its map id, as resumesAt asks by its pixel (mutants: the commission found still counted; any map id)', () => {
+test('START-INSTANCE (FIELD BUGS 2026-10-30g) the door asks whether a dungeon is a running province start\'s own, its commission still in it - by its map id, as resumesAt asks by its pixel (mutants: the commission found still counted; any map id)', () => {
   const p = played();
   const h = startsHost({ machine: p.m });
   assert.equal(h.lairOpen(LAIR_MAP_ID), false, 'no start running');

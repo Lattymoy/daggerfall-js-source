@@ -1,4 +1,4 @@
-// WORN-CONCEAL (FIELD BUGS 2026-10-30e, #bug-reports: "Permanent effect from trinket randomly disappears after
+// WORN-CONCEAL (FIELD BUGS 2026-10-30g, #bug-reports: "Permanent effect from trinket randomly disappears after
 // travel/rest" - a Mark of Skill's Cast When Held: Chameleon gone, the Mark still worn). A landed blow ends a worn
 // piece's normal-power concealment (HELD-CONCEAL); DFU brings it back at the piece's 6-hour reroll. Here the piece casts
 // it again WORN_CONCEAL_BACK_ROUNDS on. The fixtures are test/systems/fb1019f_heldconceal.test.js's, on the same

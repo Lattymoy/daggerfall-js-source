@@ -1,4 +1,4 @@
-// WALL-SHAFT (FIELD BUGS 2026-10-30e): a player's shaft at a foe by a wall meets the foe. DaggerfallMissile.cs:337's
+// WALL-SHAFT (FIELD BUGS 2026-10-30g): a player's shaft at a foe by a wall meets the foe. DaggerfallMissile.cs:337's
 // Raycast meets whichever collider is nearer, body or wall; the port tested the wall over the step's whole reach before
 // the bodies, so a step that reached both was spent on the wall.
 import { test } from 'node:test';
@@ -7,6 +7,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { coverStep } from '../../src/ai/cover.js';
 import { ArrowFlight } from '../../src/combat/arrowFlight.js';
+import { _resetBowBloomForTests } from '../../src/combat/bowBloom.js';   // BOW-GENERAL: each shot from rest flies true
 import { flightStop } from '../../src/scenes/hostMagic.js';
 import { missileReach, missileHitsFoe, sweepFrom, ARROW_FLIGHT_SPEED, MISSILE_COLLIDER_RADIUS } from '../../src/systems/spellcast.js';
 import { CAPSULE_RADIUS } from '../../src/player/motor.js';
@@ -81,7 +82,9 @@ test('WALL-SHAFT: the street\'s and a building\'s flight (ArrowFlight) lands eve
     let missed = 0;
     for (let k = 0; k < 40; k++) {
       const a = new ArrowFlight({ getGpuMesh: () => null, collider: { raycast: wallCollider.raycast, heightAt: () => -100 } });
-      a.fire([0, 1.2, (k * 0.0379) % 2.2], [0, 0, 1], { fromPlayer: true, weapon: {} });
+      _resetBowBloomForTests();
+      _resetBowBloomForTests();
+    a.fire([0, 1.2, (k * 0.0379) % 2.2], [0, 0, 1], { fromPlayer: true, weapon: {} });
       const foe = { feet: [0, 0, W - 0.45], ref: { ai: { height: 1.8 } } };
       let hit = false;
       for (let i = 0; i < 200 && a.arrows.some((m) => !m.dead); i++) a.update(1 / fps, { foeTargets: [foe], onPlayerArrowHitFoe: () => { hit = true; } });
@@ -120,6 +123,7 @@ test('AUDIT WALL-SHAFT W1: a shaft parked by a door never meets a foe pressed be
   for (let k = 0; k < 40; k++) {
     const door = slab(0.05, 0);
     const a = new ArrowFlight({ getGpuMesh: () => null, collider: { raycast: door.raycast, heightAt: () => -100 } });
+    _resetBowBloomForTests();
     a.fire([0, 1.2, (k * 0.0379) % 2.2], [0, 0, 1], { fromPlayer: true, weapon: {} });
     const foe = { feet: [0, 0, W + 0.05 + CAPSULE_RADIUS], ref: { ai: { height: 1.8 } } };
     for (let i = 0; i < 200 && a.arrows.some((m) => !m.dead); i++) a.update(1 / 30, { foeTargets: [foe], onPlayerArrowHitFoe: () => { streetStruck++; } });

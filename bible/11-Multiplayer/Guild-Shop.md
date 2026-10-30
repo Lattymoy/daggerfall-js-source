@@ -52,6 +52,12 @@ in the guild's field and device colours. On its outer face stands the guild's cr
 approved logo - as a texture painted once a pair of arms (`src/ui/guild/guildCrestArt.js`), with a soft halo under it.
 `armletSide` keeps it on one side: the rig's left arm, and on a sprite the side that faces the eye.
 
+ARMORY-MIRROR (`01-Overview/bugs/Field-Bugs-2026-10-30e.md`). A sprite's side view
+has no arms read off its picture, so its points are the body's own and the armlet takes its left arm, as a rig's.
+Seen from behind and to its right, or from its right side, that arm is behind the body and no armlet is drawn. On a
+sprite the patch stands where the picture paints that arm clear of the body, as wide as it is painted (`ARM_BAND`); a
+side view's at the body's back edge, where its near arm hangs.
+
 A peer's armlet shows their guild's arms, read by the tag their token carries (`/v1/guilds/arms`, batched and kept by
 `src/net/guild/guildArmsBook.js`). The relay bundles the armory law and the token's icons, so the relay is world295.
 

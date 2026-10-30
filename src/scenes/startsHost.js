@@ -162,7 +162,7 @@ export function createStartsHost(host) {
   function resumesAt(px) {
     return !!px && commissionIn((sd) => sd.worldPixel?.x === px.x && sd.worldPixel?.y === px.y);
   }
-  /** START-INSTANCE (FIELD BUGS 2026-10-30e): is dungeon `mapId` a running province start's own, its commission still in
+  /** START-INSTANCE (FIELD BUGS 2026-10-30g): is dungeon `mapId` a running province start's own, its commission still in
    *  it? Its door offers no Public row then (scenes/instanceDoor.js): that room is laid smaller and stands none of it. */
   function lairOpen(mapId) {
     return Number.isFinite(mapId) && commissionIn((sd) => (Number(sd.mapId) >>> 0) === (mapId >>> 0));

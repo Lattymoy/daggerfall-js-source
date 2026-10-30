@@ -153,7 +153,7 @@ THE LAW is pure (instancePlaces.js):
   things (questMountsHere) and lacks blocks the whole dungeon has, so the first row, taken by habit, is one the quest can
   be done in. Everywhere else the order above stands.
 
-  START-INSTANCE (`01-Overview/bugs/Field-Bugs-2026-10-30e.md` section 3): a province start's own dungeon, its commission
+  START-INSTANCE (`01-Overview/bugs/Field-Bugs-2026-10-30g.md` section 3): a province start's own dungeon, its commission
   still in it and its public room laid smaller, offers no Public row, as the Hold offers none (`startsHost.js` lairOpen,
   `instancePlaces.js` startPublicShut). With no party there is no popup: the door enters my instance and says why.
 

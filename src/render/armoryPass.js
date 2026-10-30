@@ -10,7 +10,7 @@ import { FOG_FACTOR_GLSL } from './labGrass.js';
 import { buildProgram, compiledPass } from './glProgram.js';
 import { AURA_NOISE_GLSL, auraClock, AURA_CLOCK_PERIOD, ETERNAL_RGB } from './auraRing.js';
 import { ARMORY_PIECES, ARMORY_SLOTS, armoryKitPieces } from '../net/armoryLaw.js';
-import { POSE_AT, poseWorld } from './armoryPose.js';
+import { POSE_AT, poseWorld, ARM_BAND } from './armoryPose.js';
 import { heraldryOf, heraldryColourOf, heraldryInk } from '../net/heraldryLaw.js';   // GUILD-SHOP: the Insignia Armlet wears its wearer's guild's arms
 import { armsKey, ownGuildArms } from '../net/guild/guildArmsBook.js';
 import { paintCrest, CREST_PX } from '../ui/guild/guildCrestArt.js';
@@ -52,7 +52,7 @@ export const ARMORY_PIECE_INDEX = Object.freeze(Object.fromEntries(ARMORY_PIECES
  *  `tall` along the arm and `r` round it; the crest `size` across (half), standing `off` proud of the band; the glow
  *  behind it `halo` across; the crest and glow drawn `lift` toward the eye, so an arm thicker than the pose's (the
  *  stand-in's) never buries them. The one piece drawn with its colours over what is behind it, not added to it. */
-export const ARMORY_ARMLET = Object.freeze({ at: 0.36, tall: 0.07, r: 0.066, size: 0.058, off: 0.004, halo: 0.09, lift: 0.03 });
+export const ARMORY_ARMLET = Object.freeze({ at: ARM_BAND.at, tall: 0.07, r: 0.066, size: 0.058, off: 0.004, halo: 0.09, lift: 0.03 });
 const ARMLET = ARMORY_PIECE_INDEX.insigniaarmlet;
 
 const v3 = (/** @type {ReadonlyArray<number>} */ c) => `vec3(${c.map((x) => x.toFixed(3)).join(', ')})`;
@@ -485,15 +485,26 @@ export function armoryHeadTip(w) {
 }
 
 /**
- * GUILD-SHOP: THE SIDE OF THE POSE THE WEARER'S LEFT ARM IS. A rig's `L` points are its left bones. A sprite's are the
- * picture's left as the eye sees it, so the body's left arm is the picture's right while the eye stands before it (in
- * front of the chest along the body's facing). Pure. @param {any} pose @param {number[]} fwd @param {number[]} chest
- * @param {ArrayLike<number>} eye
+ * GUILD-SHOP: THE SIDE OF THE POSE A BODY'S ARM IS (`arm` 'left' or 'right'). A rig's `L` points are its left bones; a
+ * sprite's are the picture's left as seen, so its left arm is the picture's right from before the chest. ARMORY-MIRROR:
+ * a side view's arms are the body's own sides, as a rig's. From behind and to the other side, or from the other side,
+ * every picture hides that arm: null. Pure. @param {any} pose @param {number[]} fwd @param {number[]} chest
+ * @param {ArrayLike<number>} eye @param {'left'|'right'} [arm] @returns {'L'|'R'|null}
  */
-export function armletSide(pose, fwd, chest, eye) {
-  if (!pose?.card) return 'L';
-  return (eye[0] - chest[0]) * fwd[0] + (eye[2] - chest[2]) * fwd[2] > 0 ? 'R' : 'L';
+export function armSide(pose, fwd, chest, eye, arm = 'left') {
+  const own = arm === 'left' ? 'L' : 'R';
+  if (!pose?.card) return own;
+  const ex = eye[0] - chest[0], ez = eye[2] - chest[2], l = Math.hypot(ex, ez) || 1;
+  const ahead = (ex * fwd[0] + ez * fwd[2]) / l, away = (arm === 'left' ? 1 : -1) * (ex * fwd[2] - ez * fwd[0]) / l;   // toward the body's other side
+  if (away > ARM_HIDDEN_SIN && (ahead < 0 || (pose.armsTurned && ahead < ARM_HIDDEN_SIN))) return null;   // and from that side: its glow past the back
+  if (pose.armsTurned) return own;
+  return (ahead > 0) === (arm === 'left') ? 'R' : 'L';
 }
+/** The Insignia Armlet's arm, the wearer's left. Pure. */
+export const armletSide = (/** @type {any} */ pose, /** @type {number[]} */ fwd, /** @type {number[]} */ chest, /** @type {ArrayLike<number>} */ eye) => armSide(pose, fwd, chest, eye, 'left');
+/** ARMORY-MIRROR: half an eighth of a turn's sine - past it, off the line straight behind, the picture is a three-quarter
+ *  back view's (eotbBillboard.js RECORD_OFFSETS 3). */
+export const ARM_HIDDEN_SIN = Math.sin(Math.PI / 8);
 
 /**
  * WHAT A PIECE DRAWS on wearer `w` this frame - its draws `{ mesh, part, A, B, N, U, r, size, count, face, gain }` in the
@@ -517,6 +528,28 @@ export function armoryDraws(key, w, eye, near, right = null) {
   if (w.mounted && slot === 'legs') return out;
   const full = pose.limbs === 'full', speed = Math.min(1, Math.hypot(w.vel?.[0] ?? 0, w.vel?.[2] ?? 0) / 4);
   const head = pt('head'), up = unit(sub(head, pt('neck')));
+  /** ARMORY-MIRROR: a body arm's upper arm as its picture paints it - null where the picture hides it (armSide). On its
+   *  band (where it stands clear of the body) the shoulder and elbow are moved across onto it, `mid` the band and `k` its
+   *  painted width over a piece `r0` round; a side view's onto the arm at the body's back edge, along the eye's line.
+   *  `along(t)` its point `t` of the way from the shoulder to the elbow. */
+  const upperArm = (/** @type {'left'|'right'} */ arm, /** @type {number} */ r0) => {
+    const side = armSide(pose, fwd, pt('chest'), eye, arm);
+    if (!side) return null;
+    const sh0 = pt(`sh${side}`), el0 = pt(`el${side}`);
+    let sh = sh0, el = el0, mid = null, onArm = (/** @type {number[]} */ p) => p;
+    const band = pose.card && right ? pose.bands?.[side] : null, flank = pose.card && pose.armsTurned && right ? pose.flank : null;
+    if (band && right) {
+      mid = [at[0] + right[0] * band.dx, at[1] + band.y, at[2] + right[2] * band.dx];
+      const on = mix(sh, el, (mid[1] - sh[1]) / ((el[1] - sh[1]) || 1)), off = [mid[0] - on[0], 0, mid[2] - on[2]];
+      sh = add(sh, off); el = add(el, off);
+    } else if (flank && right) {   // toward the eye as far as that arm stands, so it stays on the painted arm
+      const back = fwd[0] * right[0] + fwd[2] * right[2] < 0 ? flank.hi : flank.lo;
+      onArm = (p) => { const card = [at[0] + right[0] * back, p[1], at[2] + right[2] * back], e = unit(sub(/** @type {any} */ (eye), card)); return add(card, e, (p[0] - at[0]) * e[0] + (p[2] - at[2]) * e[2]); };
+      sh = onArm(sh0); el = onArm(el0);
+    }
+    const along = (/** @type {number} */ t) => (flank && !band ? onArm(mix(sh0, el0, t)) : mix(sh, el, t));
+    return { side, sh, el, mid, along, k: band ? band.w / (2 * r0 * s) : 1 };
+  };
   if (key === 'burningcrown') {
     const C = ARMORY_HEAD.burningcrown, brow = add(head, up, C.brow * s), r = C.r * s, top = add(brow, up, C.band * s);
     tube(0, brow, top, C.r, 0.133);
@@ -534,17 +567,19 @@ export function armoryDraws(key, w, eye, near, right = null) {
     if (key === 'emberheart') cards(2, 8, chest, chest, UP, [0, 0], 0, f);
     else { const back = add(chest, fwd, -(pose.card ? 0.24 : 0.27) * s), nb = [-fwd[0], 0, -fwd[2]]; decal(0, back, nb, 0.13 * s, facing(back, nb)); }   // AUDIT ARMORY: a rig's back clear of its torso - a Morrowind body's back stands about 0.22 m behind its chest's face
   } else if (key === 'ashbound' || key === 'eternalarmlets') {
-    for (const side of ['L', 'R']) {
-      const sh = pt(`sh${side}`), el = pt(`el${side}`), wa = pt(`wa${side}`);
+    for (const arm of /** @type {const} */ (['left', 'right'])) {
+      const u = upperArm(arm, key === 'ashbound' ? 0.06 : 0.064);
+      if (!u) continue;   // ARMORY-MIRROR: an arm the picture hides behind the body
+      const { sh, el, k } = u, wa = pt(`wa${u.side}`);
       if (key === 'ashbound') {
-        tube(0, sh, el, 0.065, 0.056);
+        tube(0, sh, el, 0.065 * k, 0.056 * k);
         if (full) tube(0, el, wa, 0.054, 0.046);
-        cards(1, 8, sh, full ? wa : el, UP, [0.06 * s, 0]);
+        cards(1, 8, sh, full ? wa : el, UP, [0.06 * s * k, 0]);
       } else {
         // a band's flames rise off it: each tube runs from its lower edge up the arm
-        const d = unit(sub(el, sh)), mid = mix(sh, el, 0.45);
-        tube(0, add(mid, d, 0.03 * s), add(mid, d, -0.08 * s), 0.062, 0.066);
-        cards(1, 8, add(mid, d, 0.03 * s), add(mid, d, -0.03 * s), d, [0.07 * s, 0], 0, 1, speed);
+        const d = unit(sub(el, sh)), mid = u.mid ?? u.along(0.45);
+        tube(0, add(mid, d, 0.03 * k * s), add(mid, d, -0.08 * k * s), 0.062 * k, 0.066 * k);
+        cards(1, 8, add(mid, d, 0.03 * k * s), add(mid, d, -0.03 * k * s), d, [0.07 * k * s, 0], 0, 1, speed);
         if (full) { const dw = unit(sub(wa, el)), cuff = mix(el, wa, 0.82); tube(0, add(cuff, dw, 0.025 * s), add(cuff, dw, -0.06 * s), 0.056, 0.06); }
       }
     }
@@ -558,18 +593,19 @@ export function armoryDraws(key, w, eye, near, right = null) {
   } else if (key === 'insigniaarmlet') {
     // GUILD-SHOP (the owner: "shows your guild insigia in a detailed format on one of the upper arms. Just one side"): the
     // wearer's left arm. A sprite's points are the picture's sides, so seen from the front its left arm is the right one
-    const side = armletSide(pose, fwd, pt('chest'), eye), A = ARMORY_ARMLET;
-    const sh = pt(`sh${side}`), el = pt(`el${side}`), d = unit(sub(el, sh)), mid = mix(sh, el, A.at), up = [-d[0], -d[1], -d[2]];
-    tube(0, add(mid, d, (A.tall / 2) * s), add(mid, d, (-A.tall / 2) * s), A.r, A.r * 1.04);
+    const A = ARMORY_ARMLET, u = upperArm('left', A.r);
+    if (!u) return out;   // ARMORY-MIRROR: the left arm behind the body
+    const { sh, el, k } = u, d = unit(sub(el, sh)), up = [-d[0], -d[1], -d[2]], mid = u.mid ?? u.along(A.at);
+    tube(0, add(mid, d, (A.tall * k / 2) * s), add(mid, d, (-A.tall * k / 2) * s), A.r * k, A.r * k * 1.04);
     // out from the body: its own left (the facing turned a quarter), toward whichever side this shoulder stands, square to the arm
     const lat = sub(sh, pt('chest')), left = [-fwd[2], 0, fwd[0]], way = Math.sign(lat[0] * left[0] + lat[2] * left[2]) || 1;
     const side0 = [left[0] * way, 0, left[2] * way], along = side0[0] * d[0] + side0[2] * d[2];
     const outward = unit(sub(side0, [d[0] * along, d[1] * along, d[2] * along]));
     const toEye = unit(sub(/** @type {any} */ (eye), mid));
     const N = pose.card ? toEye : unit(add(outward, fwd, 0.35));   // a sprite's on its arm, facing the eye
-    const on = add(mid, N, A.r * s), f = facing(on, N);
-    out.push({ mesh: DECAL, part: 2, A: add(on, N, (A.off / 2) * s), B: on, N, U: up, r: [0, 0], size: A.halo * s, count: 0, face: f, gain: 1 });
-    out.push({ mesh: DECAL, part: 1, A: add(on, N, A.off * s), B: on, N, U: up, r: [0, 0], size: A.size * s, count: 0, face: f, gain: 1 });
+    const on = add(mid, N, A.r * k * s), f = facing(on, N);
+    out.push({ mesh: DECAL, part: 2, A: add(on, N, (A.off / 2) * s), B: on, N, U: up, r: [0, 0], size: A.halo * k * s, count: 0, face: f, gain: 1 });
+    out.push({ mesh: DECAL, part: 1, A: add(on, N, A.off * s), B: on, N, U: up, r: [0, 0], size: A.size * k * s, count: 0, face: f, gain: 1 });
   }   // the weapon's pieces are drawn on the weapon itself, by the weapon glow (systems/weaponGlow.js law 7)
   return out;
 }
@@ -653,6 +689,13 @@ export function mirroredVp(/** @type {ArrayLike<number>} */ m) {
   const det = m[0] * (m[5] * m[10] - m[9] * m[6]) - m[4] * (m[1] * m[10] - m[9] * m[2]) + m[8] * (m[1] * m[6] - m[5] * m[2]);
   return det > 0;
 }
+/** ARMORY-MIRROR (2026-10-30, the owner: "Head aura doesnt allign on the sprite"): the right a sprite's card is drawn
+ *  along, the billboards' camRight. The view's first row is the screen's right under a plain lens (the profile's stage)
+ *  and its LEFT under the world's mirrorProjectionX, so a sprite's head and arms were placed mirrored across the card. */
+export function cardRightOf(/** @type {ArrayLike<number>} */ proj, /** @type {ArrayLike<number>} */ view) {
+  const k = proj && mirroredVp(proj) ? -1 : 1;
+  return [view[0] * k, view[4] * k, view[8] * k];
+}
 /** GUILD-SHOP: the crest's picture for `arms` on a canvas of this page's - null where no canvas can be made (a pin's
  *  node), and the armlet then draws its band and glow alone. */
 function paintCrestCanvas(/** @type {any} */ arms) {
@@ -718,7 +761,7 @@ export class ArmoryRenderer {
     const gl = this.gl;
     mat4Multiply(this._vp, proj, view);
     this._frame++;
-    const right = [view[0], view[4], view[8]], up = [view[1], view[5], view[9]];
+    const right = cardRightOf(proj, view), up = [view[1], view[5], view[9]];   // ARMORY-MIRROR: the card's right, not the view's first row
     const t = auraClock(seconds);
     gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);
     gl.depthMask(false);

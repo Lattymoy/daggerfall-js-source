@@ -1,101 +1,93 @@
-# FIELD BUGS 2026-10-30e - a shaft by a wall, the beast's pick, a start's commission, a worn Chameleon (WALL-SHAFT, WERE-PICK, START-INSTANCE, WORN-CONCEAL)
+# FIELD BUGS 2026-10-30e - the Aura Armory across a sprite's card (ARMORY-MIRROR)
 
-Four Discord #bug-reports threads, handed over in a session. Read on main's `a0c18be6a` with the freeware's data
-(`tools/fetch-data.sh`). The pins are `test/combat/wallshaft.test.js`, `test/systems/disc10_lycan.test.js`,
-`test/systems/quest/instances3_door.test.js`, `test/systems/starts/auditstarts.test.js` (START-INSTANCE) and
-`test/systems/fb1030e_wornconceal.test.js`. The mutants
-are `tools/mutants/fb1030e_fieldbugs.json` and `tools/mutants/disc10.json` (WERE-PICK).
+Two reports from the owner, of the Aura Armory (`04-Characters/Aura-Armory.md`) on an Eye of the Beholder sprite: "New
+guild arm band isnt correct on the sprite" and "Head aura doesnt allign on the sprite". Then, of the fixes as they
+landed: "Arm band still has issues", "Guild patch is still wrong", "Still wrong on one of the angles", and "Dont worry
+about the skin system. Only worry about the layered system". Then: "ensure the armory aura sets dont show through the
+body and allign perfectly on the sprites".
+
+Read on `b92fd38e1` with the freeware's data (`tools/fetch-data.sh`). Not a DFU member: Daggerfall Unity has no
+cosmetic pieces. The pins are
+`test/render/armorymirror.test.js` and `test/render/armory.test.js` (HOST-SPLIT, its pins moved), the mutants
+`tools/mutants/armorymirror.json` (22, all dead). The probe `tools/armorySpriteProbe.mjs`, on Layered Gearing: 10 of 257
+before (none of the armlet's), 296 of 296 after, 96 of 96 close up, and 392 of 392 for both sets piece by piece.
+
+The names `-30c` and `-30d` are main's DECK-ROAD and BEAT-LANE pages, which took them first.
 
 | | Report | What it was | Done |
 |---|---|---|---|
-| 1 | "Enemies standing very close to walls don't have a hitbox": arrows go through them | A wall within a step's whole reach took the shaft before the bodies on the step were tested | WALL-SHAFT |
-| 2 | "werewolf transformation loot menu loots all items" | WERE-LOOT sent every press of the beast to the take-all loop | WERE-PICK |
-| 3 | Summerset's start, "The Emperor's commission": the quest item is in none of its 3 places online | The door offered Public, a room laid smaller that stands no quest item | START-INSTANCE |
-| 4 | A worn Mark's Chameleon goes after a rest or a journey | A landed blow ended it until the piece's 6-hour reroll | WORN-CONCEAL |
+| 1 | "New guild arm band isnt correct on the sprite" | Every sprite piece stood mirrored across the card; a side view put the band on the right arm, a three-quarter back view on the back | ARMORY-MIRROR 1, 2 |
+| 4 | "ensure the armory aura sets dont show through the body" | The Ashbound Bracers and Eternal Armlets drew on an arm the picture hides, on the back; a side view's on the body's middle | ARMORY-MIRROR 4 |
+| 3 | "Guild patch is still wrong", "Still wrong on one of the angles" | The patch stood half a guessed arm in from the arm's edge, on the strap and the shoulder's shadow, wider than the arm; a side view's on the body's middle | ARMORY-MIRROR 3 |
+| 2 | "Head aura doesnt allign on the sprite" | The same mirror: the crown and the halo stood beside the head | ARMORY-MIRROR 1 |
 
-## 1. A shaft at a foe by a wall (WALL-SHAFT)
+## 1. The card's right (ARMORY-MIRROR 1)
 
-FOUND. Every flight of a player's shaft asks the walls first: a wall within the step's reach plus the shaft's radius
-retires it there (`cover.js` coverStep, `hostMagic.js` flightStop). The bodies are tested after the step is flown. So
-when one step reached both a foe and the wall behind it, the wall took the shaft. DaggerfallMissile.cs:337 casts one
-ray, and its first hit is the nearer collider, body or wall.
+FOUND. A sprite's pieces stand at its picture's own marks: each point moved across the card by its offset (`dx`,
+`render/armoryPose.js` poseFromFigure) along the card's right. The pass took that right from the view's first row
+(`render/armoryPass.js` draw, `scenes/auraHost.js`). The world's lens is mirrored (`world/mat4.js` mirrorProjectionX),
+so that row is the screen's left. The billboard paints the picture along its camRight, the row's negative. So every
+offset landed mirrored - the head, the chest, the arms, the legs - and the quad's own offset twice. In the real renderer
+at 2.4 m a crown or a halo stood 15 to 115 px beside the head, and the armlet 6 to 135 px off its arm.
 
-MEASURED. A foe whose body touches a wall, shot dead centre down a straight flight: 20% of shafts passed through at
-30 frames a second and 45% at 20. In the street's flight (`ArrowFlight`) at 15 frames a second, 37 of 60.
+The profile's stage draws under a plain lens, its card along that row, so the pieces fit there. `tools/armoryProbe.mjs`
+draws its own card the same way. Neither could see it.
 
-FIXED. A player's shaft is tested along its whole step (SHAFT-SWEEP), so it now meets a wall by touch as it meets
-cover (AUDIT TACT B5). Short of the touch it flies only to it, and the bodies are tested first. It stops on the wall a
-step later at most, at the same point. The dungeon's flight passes `!!m.fromPlayer` to flightStop and `ArrowFlight`
-passes it to coverStep. Every shaft in the probe lands at 15, 20 and 30 frames a second.
+FIXED. `cardRightOf` (`render/armoryPass.js`) is the view's first row, turned round under a mirrored lens (mirroredVp).
+The pass and the world host's footfall step read it. On the stage it is the row, as before.
 
-NOT CHANGED. A foe's shaft and a spell still meet a wall at the step's whole reach: they are tested where the step
-ends, not along it.
+## 2. The armlet on a side view (ARMORY-MIRROR 2)
 
-AUDIT FB1030e W1. Parked a radius short of a wall, the shaft's 0.45 m and a body's 0.45 m reached a foe pressed behind a
-door: at 30 frames a second, 200 of 200 through a 0.15 m door at 30 degrees. A swept contact now needs no geometry
-between the shaft and the foe's axis (`spellcast.js` sweepFrom, walledOff). The axis, not the hit surface: a foe walks
-0.35 m off a wall, so its 0.45 m body pokes through a thin door. None go through now, straight on or at a slant, in
-both flights. Not changed: the box a sea serpent or a dragon is struck by keeps the radius, so a grazing shot may still
-meet one through a thin hull.
+FOUND. A side view's arms are not read off its picture (`spriteArmsSeen`). Its arm points are the sets' rows turned
+with the body, its own left and right. `armletSide` read them as the picture's sides. With the body's right side to the
+eye, the band stood on the right arm; with its left side to the eye, on the far arm, hidden behind the body.
 
-## 2. The beast's pick (WERE-PICK)
+FIXED. A pose says when its arms were not read (`armsTurned`). The armlet then takes the body's left arm, as on a rig.
 
-FOUND. WERE-LOOT (`05-Combat/Hand-Wraps.md`) let a transformed player loot with the pack window shut. Its press went to
-the take-all loop for every key (`quickLoot.js` quickLootTake, `how === 'all' || beast`). Quick loot is on by default,
-so the plaque still lit a row and the wheel still moved it, and the press took everything.
+FOUND TOO, after the owner's "Arm band still has issues", in close-ups. Seen from behind and to the body's right, the
+three-quarter back picture (mirrored) hides the left arm behind the torso in every set. Its picture's left edge is the
+back's or the cape's, so the band stood on the back. The three-quarter front picture shows both arms, so it keeps them.
 
-FIXED. With quick loot on, a beast's press takes one row, through the one-item take (`takeOneItem`): the row the plaque
-has lit, else the plaque's first row. E and J take it, the wheel moves it, and P takes the lot. With quick loot off a
-press takes the lot as before, and the quick-loot filter's leavings stay on the pile.
+FIXED TOO. `armletSide` answers none there (`ARM_HIDDEN_SIN`, the eighth's edge off straight behind), and nothing is
+drawn. A side view with the right side to the eye draws none either: the far arm's glow showed past the body's back.
 
-AUDIT FB1030e P1. A touch screen draws no plaque, and a search find, a vault before its rows arrive and a body that
-lists verbs light no row. The first cut took the lot there, so a beast on a phone still took everything. Now it takes
-the first row. Not changed: a lit map is read in the window, never taken, so a beast's press on one says the window
-is shut.
+## 3. The patch on the painted arm (ARMORY-MIRROR 3)
 
-NOT CHANGED. The pack window stays shut while shapechanged (DaggerfallInventoryWindow's GetSuppressInventory).
+FOUND. The arm reader stands an arm's points half an arm (`ARM_PX.half`, 3.5 px) in from its outer edge, and the patch
+stood a third of the way down. A painted upper arm is 3 to 7 px, and at that row it is often behind a strap or in the
+shoulder's shadow, joined to the body's silhouette. So the patch stood on the strap and the armpit, wider than the arm.
+A side view has no arms read, so its patch stood on the body's middle; its near arm is painted at the body's back edge.
 
-## 3. A start's commission (START-INSTANCE)
+FIXED. The reader also finds the arm's band (`ARM_BAND`): from a third of the way down, the first row where the arm's
+own run stands clear of the body, its middle and its width. The patch stands there, its band and crest that wide. A side
+view's patch stands half an arm in from the body's back edge, brought toward the eye along its line of sight, so it
+stays on the painted arm from any distance. The arm reader's own points are unchanged.
 
-FOUND. A province start (`systems/starts/quests/_STARTSU.txt` for Summerset) places its commission at one of its lair's
-item markers, chosen online on the dungeon whole (`questWorld.js` questSized). Online the Laboratory of Silinaire's
-public room is laid small: 5 blocks, of which only the start block holds a marker. No quest item stands in a re-laid
-room (`instancePlaces.js` questMountsHere), so it is in none of the 3 places there. Offline the dungeon is whole.
+## 4. Both arms' pieces (ARMORY-MIRROR 4)
 
-Every automatic way in reaches the whole dungeon: a load inside resumes through the quest's instance (AUDIT STARTS W3),
-and a relay with no instances gives the whole room. The door did not: it offered Public, last since QUEST-FIRST.
+FOUND. Drawn on Layered Gearing from all eight views, the crown, the halo, the heart, the sigil and both legs' pieces
+stood on their parts. The Ashbound Bracers and the Eternal Armlets drew on both arms from every view. From three-quarters
+behind, the far arm is hidden in the picture, so its piece stood on the back. A side view's near arm piece stood on the
+body's middle, and both drew on the reader's guessed line.
 
-FIXED. While a province start's commission is still in its dungeon and the public room is laid smaller, the door
-offers no Public row, as Privateer's Hold's door offers none (HOLD-ONCE). With no party it enters my instance and says
-why (`instanceDoor.js` INSTANCE_TEXT.questHere). A party member's room is still offered. A Recall anchored in the public
-room goes in by the quest. A player already in the public room leaves and comes back in.
+FIXED. `armSide` answers each arm as `armletSide` answers the left: the picture's side, or none where the picture hides
+it. Each arm's piece stands on its band where the arm stands clear, as wide, its line moved across to pass through it; a
+side view's on the arm at the body's back edge, along the eye's line.
 
-AUDIT FB1030e S1-S4. The first cut shut Public at every start; Black Marsh's and Valenwood's public rooms are laid whole
-and stand the commission, so theirs is kept (`startPublicShut`). It entered with no word (S2), let a Recall into the
-public room (S3), and pinned the unsigned map id with no signed case (S4). Not reproduced: the player may have been in
-the instance, where no path loses the item.
+FOUND TOO, close up. From three-quarters behind, the near arm is painted against the back and never stands clear, so
+the guess half an arm in stood its chain a picture's pixel or two outward: that arm is 9 px. FIXED: where no row stands
+clear, the arm ends where its colour steps (`ARM_BAND.step`), when most rows agree on a steady width; else the guess.
 
-## 4. A worn Mark's Chameleon (WORN-CONCEAL)
+## 5. How it is checked
 
-FOUND. A Mark of Skill with Cast When Held: Chameleon loses its Chameleon "after rest or travel", the Mark still worn.
-A rest or a journey alone did not do it: 300 of them, on the real equip, magic rounds and reroll, kept it. The one way
-found is a landed blow (`concealment.js` breakNormalPowerConcealment, DFU's ChameleonNormal law). It ended a worn
-piece's Chameleon in place until the piece's 6-hour reroll (EntityEffectManager.RerollItemEffects), up to 30 real
-minutes online. A fight on a rest or a journey lands one.
+`tools/armorySpriteProbe.mjs` draws Layered Gearing as the world composes it (`eotbSprite.js` spriteFor, decodeSprite,
+flipRows), through the renderer's own billboard under the game's lens, from all eight views: male and female, leather,
+chain and plate chests, and a cloak. It measures each piece against the picture's marks: the crown and the halo over
+the head, the armlet on the left upper arm and no wider than it (hidden where the body covers that arm), the Ember Heart
+on the chest seen square on, and the Eternal Greaves between the knees and feet. `CLOSE=1` draws it at 1.2 m. `SETS=1`
+draws every body piece of both lines alone and each line whole, full length: no arm piece over an arm the picture hides,
+and each arm's band no wider than the painted arm.
 
-FIXED. Asked to choose, the session's answer was "Whatever is best". A blow still ends a worn Chameleon, Invisibility or
-Shadow, so an attack shows the attacker. It stands again in place 2 magic rounds after the last blow (`enchantments.js`
-WORN_CONCEAL_BACK_ROUNDS; each blow starts the count again in `concealment.js`), about 10 seconds online, with no
-condition spent. A departure, Port-Ledger A (WORN-CONCEAL).
-
-AUDIT FB1030e C1-C2. The first cut rerolled the whole piece two rounds after the first blow: a second power was rolled
-again (a Strength of 41 to 50, fished for by a blow) and a busted Shield on it refilled (C1), and in a fight a worn
-Invisibility stood every other round (C2). Now only the ended concealment stands up, the piece's 6-hour clock stands, and
-a blow each round keeps it down.
-
-OTHER WAYS IT GOES, unchanged. Online, flagged for PvP in the open zone or the open sea, worn concealment is taken until
-the flag drops (PVP-RULES). A piece worn to 0 condition drops its power, and a repair does not bring it back until it is
-worn again. Dispel Magic takes it, as in DFU.
-
-The second report's Hircine's Ring quest (X0C00Y00) ran whole on the machine: the Wereboar placed, the kill making the
-contact, the ring given. No defect found.
+Three measures allow for the pieces' own design, in the picture's pixels. The halo is read by its ring's ends, since its
+comet and its spark run round the ring. The heart is read square on only: its point stands 0.1 m forward of the body's
+axis. A side view's greaves are held to 3 px, as its knees and feet stand 2 cm either side of the card.

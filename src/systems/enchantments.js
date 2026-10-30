@@ -282,7 +282,7 @@ export function setEnchantmentEffectDoors(doors) { Object.assign(_fx, doors); }
  *  effects re-roll once the item has been worn this many classic
  *  hours since the last roll. */
 export const REROLL_MINIMUM_HOURS = 6;
-/** WORN-CONCEAL (FIELD BUGS 2026-10-30e; a DEPARTURE, Port-Ledger A): magic rounds after the last blow that ended a worn
+/** WORN-CONCEAL (FIELD BUGS 2026-10-30g; a DEPARTURE, Port-Ledger A): magic rounds after the last blow that ended a worn
  *  piece's Chameleon, Invisibility or Shadow before it stands again. DFU waits for the 6-hour reroll. */
 export const WORN_CONCEAL_BACK_ROUNDS = 2;
 const MINUTES_PER_HOUR = 60;

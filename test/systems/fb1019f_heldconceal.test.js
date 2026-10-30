@@ -83,8 +83,8 @@ test('HELD-CONCEAL: a worn Invisibility a landed blow broke is broken now - unre
   assert.deepEqual(pins(w), [['invisNormal', 'ended', 0]], 'EndIncumbentEffect: RoundsRemaining = 0, End() - the entry stays on its item');
   assert.deepEqual(icons(w), [], 'the HUD shows no concealment that is not there');
   assert.equal(breakNormalPowerConcealment(w), false, 'an ended one is nothing left to break');
-  // PIN MOVED (WORN-CONCEAL, FIELD BUGS 2026-10-30e): the piece casts it again WORN_CONCEAL_BACK_ROUNDS on, where DFU
-  // waits for the six-hour reroll (test/systems/fb1030e_wornconceal.test.js)
+  // PIN MOVED (WORN-CONCEAL, FIELD BUGS 2026-10-30g): the piece casts it again WORN_CONCEAL_BACK_ROUNDS on, where DFU
+  // waits for the six-hour reroll (test/systems/fb1030g_wornconceal.test.js)
   until(EQUIPPED_AT + WORN_CONCEAL_BACK_ROUNDS - 1);
   assert.equal(isInvisible(w), false, 'broken for a round');
   assert.deepEqual(pins(w), [['invisNormal', 'ended', 0]]);

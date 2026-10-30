@@ -353,7 +353,7 @@ test('QUEST-FIRST (FIELD BUGS 2026-10-26, runa: "The Masoleum of Darkivaron ... 
   await pend;
 });
 
-test('START-INSTANCE (FIELD BUGS 2026-10-30e, #bug-reports: "The emperor\'s commission ... quest item doesn\'t spawn in the dungeon for me"): a province start\'s dungeon, its commission still in it, offers no Public row - that room is laid smaller and stands none of it; with no party there is no popup, and the door enters my instance (mutants: Public offered; the Hold\'s rule lost)', async () => {
+test('START-INSTANCE (FIELD BUGS 2026-10-30g, #bug-reports: "The emperor\'s commission ... quest item doesn\'t spawn in the dungeon for me"): a province start\'s dungeon, its commission still in it, offers no Public row - that room is laid smaller and stands none of it; with no party there is no popup, and the door enters my instance (mutants: Public offered; the Hold\'s rule lost)', async () => {
   const partners = [{ name: 'Ann', acct: 'a1', owner: '0123456789abcdef', epoch: '89abcdef' }];
   const kinds = (o) => instanceOffer({ online: true, instanceOk: true, ...o })?.map((r) => r.kind) ?? null;
   assert.equal(kinds({ questHere: true, relaid: true, startLair: true }), null, 'my instance alone: no choice to make');

@@ -113,7 +113,7 @@
     "old": "      concealBack(entity, item);   // WORN-CONCEAL\n",
     "new": "",
     "tests": [
-      "test/systems/fb1030e_wornconceal.test.js"
+      "test/systems/fb1030g_wornconceal.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "    if (a.heldItem !== item || !a.ended || !NORMAL_POWER_CONCEALMENTS.includes(a.kind)) continue;",
     "new": "    if (a.heldItem !== item || !a.ended) continue;",
     "tests": [
-      "test/systems/fb1030e_wornconceal.test.js"
+      "test/systems/fb1030g_wornconceal.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "export const WORN_CONCEAL_BACK_ROUNDS = 2;",
     "new": "export const WORN_CONCEAL_BACK_ROUNDS = 3;",
     "tests": [
-      "test/systems/fb1030e_wornconceal.test.js"
+      "test/systems/fb1030g_wornconceal.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "    if (a.endedRounds >= WORN_CONCEAL_BACK_ROUNDS) { a.ended = false; delete a.endedRounds; }",
     "new": "    { a.ended = false; delete a.endedRounds; }",
     "tests": [
-      "test/systems/fb1030e_wornconceal.test.js"
+      "test/systems/fb1030g_wornconceal.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "  for (const a of list) if (a.heldItem && a.ended && NORMAL_POWER_CONCEALMENTS.includes(a.kind)) a.endedRounds = 0;",
     "new": "",
     "tests": [
-      "test/systems/fb1030e_wornconceal.test.js"
+      "test/systems/fb1030g_wornconceal.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "    if (a.endedRounds >= WORN_CONCEAL_BACK_ROUNDS) { a.ended = false; delete a.endedRounds; }",
     "new": "    if (a.endedRounds >= WORN_CONCEAL_BACK_ROUNDS) { _fx.removeItemPinnedEffects?.(entity, item); doItemEnchantmentPayloads(PAYLOAD.RerollEffect, item, { entity }); item.timeEffectsLastRerolled = (item.timeEffectsLastRerolled ?? 0) + 1; return; }",
     "tests": [
-      "test/systems/fb1030e_wornconceal.test.js"
+      "test/systems/fb1030g_wornconceal.test.js"
     ]
   }
 ]
