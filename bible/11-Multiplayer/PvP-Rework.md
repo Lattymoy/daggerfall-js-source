@@ -104,8 +104,14 @@ costs 42% more and casts 21% slower. PvE is left whole. A departure: DFU has no 
 "spell cit is for this", "otherwise maghes fall off": a harmful spell at a player crits as a blow does under the overhaul
 (`combat/combatStats.js` criticalModel's damage arm): `pvpSpellCrit.js:"export function pvpSpellCrit(caster) {"` -
 Critical Strike / (4 - the Luck term) per cent, x(1 + 5% for each 5 points). Rolled once a cast on the caster's machine
-(`siegeCombat.js:"harm: Math.round(pvpCritHarm(harm, caster, rolls)"`), before PVP-TRIANGLE's scale; the referee clips.
+(`siegeCombat.js:"harm: Math.round(pvpCritHarm(caster ? Math.min(harm, pvpCastHold(caster)) : harm, caster, rolls)"`), before PVP-TRIANGLE's scale; the referee clips.
 PvE is left whole. A departure: DFU's spells never crit.
+
+PVP-CAST-SKILL (2026-10-30: "it was ment to scale with skill"): before the crit, a harmful spell at a player lands at most
+0.15 x the caster's live Destruction, gear counted and no ceiling, as PvE's PVE-CAST holds it
+(`pvpSpellCrit.js:"export const pvpCastHold = (caster) =>"`). The bar's Damage is that size, no level dice
+(`pvpKit.js:"case 'damage': return [{ ...FIREBALL, ...kitMagnitude(PVP_CAST_PER_SKILL * skill, level) }];"`). Destruction
+870 and Critical Strike 860 land about 1,250 before the triangle and PVP-HIT. A departure: DFU sizes a spell by level.
 
 ## PVP-FLAG: in the open zone only a flagged player strikes
 
