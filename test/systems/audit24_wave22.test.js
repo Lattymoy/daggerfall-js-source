@@ -104,7 +104,7 @@ test('audit24 wave22: a quest ITEM gets the 128 reach, a quest PERSON the 256', 
   assert.equal(STATIC_NPC_ACTIVATION_DISTANCE, 256 * 0.025);
   assert.equal(STATIC_NPC_ACTIVATION_DISTANCE, DEFAULT_ACTIVATION_DISTANCE * 2, 'twice, exactly');
 
-  const s = rd('src/scenes/worldModes.js');
+  const s = rd('src/systems/quest/sceneMount.js');   // PIN MOVED (FIELD BUGS 2026-10-29f, HOST-SPLIT): questFlatTargets moved out of worldModes.js
   assert.match(s, /const isPerson = s\.behaviour\?\.targetResource\?\.isPerson === true;/);
   assert.match(s, /distance: isPerson \? STATIC_NPC_ACTIVATION_DISTANCE : DEFAULT_ACTIVATION_DISTANCE,/);
   // `=== true` is load-bearing: a behaviour with NO target resource is

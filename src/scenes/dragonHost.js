@@ -88,7 +88,8 @@ export function dragonAct(s, t, blow, moving, hurtAt) {
   if (blow && t < blow.at) { const k = (t - (blow.at - blow.wu)) / Math.max(1, blow.wu); return { act: 'windup', anims: tab('attack'), frame: k >= 0.5 ? 1 : 0, loop: false, k }; }
   if (blow && t - blow.at < 600) return { act: 'strike', anims: tab('attack'), frame: 2 + Math.floor(((t - blow.at) / 1000) * PRIMARY_ATTACK_ANIM_SPEED), loop: false };
   if (t - hurtAt < 350) return { act: 'flinch', anims: tab('hurt'), frame: Math.floor(((t - hurtAt) / 1000) * HURT_ANIM_SPEED), loop: false };
-  const T = tab(moving ? 'move' : 'idle');
+  const aloft = s?.md !== DRAGON_MODE.ground || t < (s?.ma ?? 0);   // DRAGON-HOVER: at rest in the air it hovers, records 20-24
+  const T = tab(moving ? 'move' : aloft ? 'ranged' : 'idle');
   return { act: moving ? 'walk' : 'fly', anims: T, frame: Math.floor((t / 1000) * (T[0]?.fps ?? 6)), loop: true };
 }
 

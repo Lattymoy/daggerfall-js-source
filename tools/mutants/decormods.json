@@ -67,11 +67,12 @@
   {
     "name": "DECORMODS-kind-unset",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "    if (c.from === 'mod' && (kind === 'furniture' || kind === 'decor')) kind = 'mods';",
-    "new": "    if (false) kind = 'mods';",
+    "old": "    else if (c.from === 'mod' && plain) kind = 'mods';",
+    "new": "    else if (false) kind = 'mods';",
     "tests": [
       "test/systems/decor/decormods.test.js"
-    ]
+    ],
+    "note": "DECOR-KINDS (FIELD BUGS 2026-10-29f, PIN MOVED): re-aimed by content - a piece is filed by what it is first."
   },
   {
     "name": "DECORMODS-street-indoors",

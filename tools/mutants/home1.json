@@ -12,9 +12,9 @@
   {
     "name": "HOME1-claim-cap-unread",
     "file": "server-account/src/homes.js",
-    "old": "paid, mapId, mapId, layout, player.id, character, region, HOME_CAP, mapId, ...layoutMatchBinds(layout));",
-    "new": "paid, mapId, mapId, layout, player.id, character, region, HOME_CAP + 1, mapId, ...layoutMatchBinds(layout));",
-    "note": "Re-aimed by content (HOUSES-3): the region's three deeds.",
+    "old": "paid, mapId, mapId, layout, ground, player.id, character, region, HOME_CAP, mapId, ...layoutMatchBinds(layout));",
+    "new": "paid, mapId, mapId, layout, ground, player.id, character, region, HOME_CAP + 1, mapId, ...layoutMatchBinds(layout));",
+    "note": "Re-aimed by content (HOUSES-3): the region's three deeds. FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew.",
     "tests": [
       "test/server/home1.test.js"
     ]
@@ -32,12 +32,12 @@
   {
     "name": "HOME1-claim-two-owners",
     "file": "server-account/src/homes.js",
-    "old": "INSERT OR IGNORE INTO homes (map_id, building_key, player, char_id, owner_name, region, entry, price, bought_at, paid, layout)",
-    "new": "INSERT OR REPLACE INTO homes (map_id, building_key, player, char_id, owner_name, region, entry, price, bought_at, paid, layout)",
+    "old": "INSERT OR IGNORE INTO homes (map_id, building_key, player, char_id, owner_name, region, entry, price, bought_at, paid, layout, ground)",
+    "new": "INSERT OR REPLACE INTO homes (map_id, building_key, player, char_id, owner_name, region, entry, price, bought_at, paid, layout, ground)",
     "tests": [
       "test/server/home1.test.js"
     ],
-    "note": "FIELD BUGS 2026-10-04d KNIGHT-HOUSE (PIN MOVED, re-aimed by content): the deed's hold is an INSERT OR IGNORE too - aimed at the claim's, whose column list ends at `layout`."
+    "note": "FIELD BUGS 2026-10-04d KNIGHT-HOUSE (PIN MOVED, re-aimed by content): the deed's hold is an INSERT OR IGNORE too - aimed at the claim's, whose column list ends at `layout`. FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "HOME1-claim-repeat-refused",
@@ -52,12 +52,12 @@
   {
     "name": "HOME1-claim-rate-unread",
     "file": "server-account/src/homes.js",
-    "old": "  if (await overRate({ db, nowS }, `home:${player.id}`, HOME_CLAIMS_MAX, HOME_CLAIMS_WINDOW_S)) return { error: 'home-rate' };\n  return realmClaim(",
-    "new": "  return realmClaim(",
+    "old": "  if (await overRate({ db, nowS }, `home:${player.id}`, HOME_CLAIMS_MAX, HOME_CLAIMS_WINDOW_S)) return { error: 'home-rate' };\n  // DECOR-ROOMY: the ground its price was set from",
+    "new": "  // DECOR-ROOMY: the ground its price was set from",
     "tests": [
       "test/server/home1.test.js"
     ],
-    "note": "FIELD BUGS 2026-10-04d KNIGHT-HOUSE (PIN MOVED, re-aimed by content): holdDeed counts the same hour - aimed at the claim's, whose next line is realmClaim."
+    "note": "FIELD BUGS 2026-10-04d KNIGHT-HOUSE (PIN MOVED, re-aimed by content): holdDeed counts the same hour - aimed at the claim's, whose next line is realmClaim. FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "HOME1-release-anyones",
@@ -274,11 +274,12 @@
   {
     "name": "HOME1-the-claims-character",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "const r = await api.claim({ mapId: id, buildingKey, region, character: me, price, ...(realm ? { realm } : {}), layout: layout || null });",
-    "new": "const r = await api.claim({ mapId: id, buildingKey, region, character: null, price, ...(realm ? { realm } : {}), layout: layout || null });",
+    "old": "const r = await api.claim({ mapId: id, buildingKey, region, character: me, price, ...(realm ? { realm } : {}), layout: layout || null, ...(ground ? { ground: ground[0], townBlocks: ground[1] } : {}) });",
+    "new": "const r = await api.claim({ mapId: id, buildingKey, region, character: null, price, ...(realm ? { realm } : {}), layout: layout || null, ...(ground ? { ground: ground[0], townBlocks: ground[1] } : {}) });",
     "tests": [
       "test/server/home1.test.js"
-    ]
+    ],
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "HOME1-no-read-back",
@@ -319,11 +320,12 @@
   {
     "name": "HOME1-a-refusal-paid-for",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "    const r = await homes.claim({ mapId, buildingKey, region, price, layout });\n    if (!r.ok) return r;\n",
-    "new": "    const r = await homes.claim({ mapId, buildingKey, region, price, layout });\n",
+    "old": "    const r = await homes.claim({ mapId, buildingKey, region, price, layout, ground });\n    if (!r.ok) return r;\n",
+    "new": "    const r = await homes.claim({ mapId, buildingKey, region, price, layout, ground });\n",
     "tests": [
       "test/server/home1.test.js"
-    ]
+    ],
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
   },
   {
     "name": "HOME1-credited-before-the-service-agrees",

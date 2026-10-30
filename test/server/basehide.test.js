@@ -12,8 +12,10 @@ import { DatabaseSync } from 'node:sqlite';
 import worker from '../../server-account/src/index.js';
 import { ROUTES } from '../../server-account/src/service.js';
 import { _resetKeyForTests } from '../../server-account/src/signing.js';
-import { DECOR_BASE_KEY_RE, DECOR_HIDDEN_CAP, decorBaseModelKey, decorBaseFlatKey, decorBaseWhat, decorHiddenOf } from '../../src/net/decorLaw.js';
-import { createBaseRoom, baseBucketOf } from '../../src/scenes/decor/decorBase.js';
+import { DECOR_BASE_KEY_RE, DECOR_HIDDEN_CAP, decorBaseModelKey, decorBaseFlatKey, decorBaseWhat, decorHiddenOf, decorIsDoorKey } from '../../src/net/decorLaw.js';
+import { createBaseRoom, baseBucketOf, standRoomHidden } from '../../src/scenes/decor/decorBase.js';
+import { createInteriorDoors } from '../../src/systems/decor/decorInteriorDoors.js';   // DOOR-KEPT
+import { ActionSystem } from '../../src/world/actionSystem.js';
 import { createSceneCache, cacheScene, restoreCachedScene, clearSceneHidden, interiorSceneName } from '../../src/systems/sceneCache.js';
 import { accountDecor, SESSION_KEY } from '../../src/net/accountClient.js';
 import { createDecorPanel, decorBaseSub, DECOR_HOLDS_LINE, DECOR_BASE_EMPTY } from '../../src/ui/decorPanel.js';
@@ -293,9 +295,70 @@ test('BASE-HIDE by source: the build stands a furnishable room\'s props and flat
   assert.match(m, /houseOwned, peopleVisible, baseEditable,/);
   for (const [list, v] of [['containers', 'c'], ['shelves', 's']]) assert.match(m, new RegExp(`interiorCtx\\.${list}\\.forEach\\(\\(${v}, i\\) => \\{\\s*if \\(${v}\\.hidden\\) return;`), `${list}: a piece out is no target`);
   assert.match(m, /interiorCtx\.beds\?\.forEach\(\(bd, i\) => \{[^\n]*\n\s*if \(bd\.hidden\) return;/);
-  assert.match(m, /const hiddenBase = \[\.\.\.\(interiorHome \|\| _seatHallVisit \? _keptHidden : \(ctx\.base\?\.hidden\(\) \?\? \[\]\)\), \.\.\.\(ctx\.base\?\.roomDoors\?\.hidden\?\.\(\) \?\? \[\]\)\];/, 'the scene keeps the list - an online home\'s save record as it came, and any room door taken out');   // PIN MOVED (SEAT-HALL): the palace's hall shares the line   // PIN MOVED (AUDIT SEATS-3): the visit's latch (C2)
-  assert.match(m, /if \(interiorHome \|\| _seatHallVisit\) \(_keptHidden = \(data\.hiddenBase \?\? \[\]\)\.filter\(\(k\) => !String\(k\)\.startsWith\('intdoor:'\)\), interiorCtx\.base\?\.roomDoors\?\.apply\?\.\(data\.hiddenBase\)\); else \(interiorCtx\.base\?\.setHidden\(data\.hiddenBase \?\? \[\]\), interiorCtx\.base\?\.roomDoors\?\.apply\?\.\(data\.hiddenBase\)\);/);   // PIN MOVED (SEAT-HALL): the palace's hall shares the line   // PIN MOVED (AUDIT SEATS-3): the visit's latch (C2)
-  assert.match(m, /interiorCtx\?\.base\?\.setHidden\(Array\.isArray\(r\.data\.hidden\) \? r\.data\.hidden : \[\]\);/, 'the room its owner cleared, for everyone');
+  assert.match(m, /const hiddenBase = interiorHome \|\| _seatHallVisit \? _keptHidden : \[\.\.\.\(ctx\.base\?\.hidden\(\) \?\? \[\]\), \.\.\.\(ctx\.base\?\.roomDoors\?\.hidden\?\.\(\) \?\? \[\]\)\];/, 'the scene keeps the list - an online home\'s save record as it came, and any room door taken out');   // PIN MOVED (SEAT-HALL): the palace's hall shares the line   // PIN MOVED (AUDIT SEATS-3): the visit's latch (C2)
+  assert.match(m, /if \(interiorHome \|\| _seatHallVisit\) _keptHidden = data\.hiddenBase \?\? \[\]; else \(interiorCtx\.base\?\.setHidden\(data\.hiddenBase \?\? \[\]\), interiorCtx\.base\?\.roomDoors\?\.apply\?\.\(data\.hiddenBase\)\);/);   // PIN MOVED (SEAT-HALL): the palace's hall shares the line   // PIN MOVED (AUDIT SEATS-3): the visit's latch (C2)   // PIN MOVED (AUDIT FB1029f A3): an online home's save list kept whole and unapplied - its doors are the service's
+  assert.match(m, /standRoomHidden\(interiorCtx\?\.base, Array\.isArray\(r\.data\.hidden\) \? r\.data\.hidden : \[\]\);/, 'the room its owner cleared, for everyone - PIN MOVED (DOOR-KEPT): its doors with it (decorBase.js standRoomHidden)');
   assert.match(m, /function decorSold\(sceneName, region\) \{\s*clearSceneHidden\(sceneCache\(\), sceneName\);/, 'a sale brings it back');
   assert.match(m, /base: \(\) => interiorCtx\?\.base \?\? null,/, 'the tool\'s door');
 });
+
+/** DOOR-KEPT: a room's swing doors, hung on a real action system beside the room's own pieces. */
+function doorRoom() {
+  const r = baseRoom();
+  const actions = new ActionSystem({ addMesh() {}, removeBucket() {} });
+  const draws = [];
+  const doors = createInteriorDoors({ draws, addDoor: (c, m) => actions.addDoor(c, m), removeDoor: (key) => actions.removeDoor(key) });
+  const cpu = { positions: new Float32Array([0, 0, 0, 1, 0, 0, 1, 2, 0, 0, 2, 0]), indices: new Uint16Array([0, 1, 2, 0, 2, 3]) };
+  const m = new Float32Array(16); m[0] = m[5] = m[10] = m[15] = 1;
+  for (const i of [0, 1]) { draws.push({ gpu: {}, object: actions.addDoor(cpu, m) }); doors.adopt(i, cpu, draws[draws.length - 1]); }
+  r.base.roomDoors = doors;
+  return { ...r, doors };
+}
+
+test('DOOR-KEPT (FIELD BUGS 2026-10-29f, the housing thread\'s item 9: "Make it possible to remove doors inside the houses"): a swing door taken out is a name on the room\'s list - an online home\'s on the service, so every visitor and every device meets the room without it, where it was the owner\'s save\'s alone; the doors stand off the list as the furniture does, and the room\'s pieces never keep a door\'s name (mutants: DOORKEPT-law-refused, DOORKEPT-door-a-piece, DOORKEPT-write-without-doors, DOORKEPT-doors-unstood, DOORKEPT-door-before-the-answer)', async () => {
+  for (const k of ['intdoor:0', 'intdoor:2', 'intdoor:499']) { assert.match(k, DECOR_BASE_KEY_RE, k); assert.equal(decorIsDoorKey(k), true); }
+  for (const k of ['intdoor:01', 'intdoor:-1', 'intdoor:1000', 'intdoor:', 'door:2']) assert.doesNotMatch(k, DECOR_BASE_KEY_RE, k);
+  assert.equal(decorBaseWhat('intdoor:2'), null, 'no piece of the room');
+  assert.deepEqual(decorHiddenOf(['m12:41000', 'intdoor:2']), ['intdoor:2', 'm12:41000']);
+  // the service keeps it, for every visitor
+  const { call, registered, oldHome } = await stand();
+  const aldric = await registered('Aldric');
+  const mara = await registered('Mara');
+  oldHome('Aldric', 'char-aldric');
+  const w = await call('/v1/homes/decor/hidden', { ...HOME, character: 'char-aldric', keys: ['intdoor:2', 'm12:41000'] }, aldric);
+  assert.deepEqual(w.body, { ok: true, hidden: ['intdoor:2', 'm12:41000'] });
+  assert.deepEqual((await call('/v1/homes/decor', HOME, mara)).body.hidden, ['intdoor:2', 'm12:41000'], 'a visitor reads the door out');
+  // the room stands it: the pieces keep no door's name, the doors take theirs
+  const v = doorRoom();
+  v.add('m12:41000', 41000);
+  standRoomHidden(v.base, ['intdoor:1', 'm12:41000']);
+  assert.deepEqual(v.base.hidden(), ['m12:41000'], 'the pieces\' own list');
+  assert.deepEqual(v.doors.hidden(), ['intdoor:1'], 'the door out');
+  // the tool: an online home writes its whole list - its pieces and its doors - and stands the door once the service has it
+  const r = doorRoom();
+  r.add('m0:41100', 41100);
+  const writes = [];
+  let answer = { ok: false, error: 'no-home' };
+  const homeDecor = { hidden: async (b) => { writes.push(b); return answer; } };
+  const home = toolRig({ room: { kind: 'home', where: 'Your home', mapId: 5, buildingKey: 6 }, homeDecor, base: r.base });
+  assert.equal(await home.tool.setBase(['m0:41100'], true), false, 'refused');
+  answer = { ok: true };
+  assert.equal(await home.tool.setBase(['m0:41100'], true), true);
+  const refusedDoor = { hidden: async (b) => { writes.push(b); assert.deepEqual(r.doors.hidden(), [], 'the door still hangs while the service is asked'); return { ok: false, error: 'no-home' }; } };
+  const shut = toolRig({ room: { kind: 'home', where: 'Your home', mapId: 5, buildingKey: 6 }, homeDecor: refusedDoor, base: r.base });
+  assert.equal(await shut.tool.setBase(['intdoor:1'], true), false);
+  assert.deepEqual(r.doors.hidden(), [], 'refused: the door stays');
+  assert.equal(await home.tool.setBase(['intdoor:1'], true), true);
+  assert.deepEqual(writes.at(-1).keys, ['intdoor:1', 'm0:41100'], 'the whole list, the door among it');
+  assert.deepEqual(r.doors.hidden(), ['intdoor:1']);
+  assert.equal(home.said.at(-1), 'Door taken out.');
+  assert.equal(await home.tool.setBase(['intdoor:1'], false), true);
+  assert.deepEqual(writes.at(-1).keys, ['m0:41100'], 'put back: off the list');
+  assert.deepEqual(r.doors.hidden(), []);
+  // a house offline: at once, nothing written (the save carries it - worldModes.js's scene record)
+  const off = doorRoom();
+  const house = toolRig({ base: off.base });
+  assert.equal(await house.tool.setBase(['intdoor:0'], true), true);
+  assert.deepEqual(off.doors.hidden(), ['intdoor:0']);
+});
+

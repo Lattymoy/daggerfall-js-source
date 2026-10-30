@@ -19,8 +19,8 @@ export { DWARVEN_DRAGON_ID, DWARVEN_DRAGON_ARCHIVE, AETHERBRIGHT_ARCHIVE };
 /** Its name in the player's language; the game's own English (the save, the log) is the career's. */
 export const dwarvenDragonName = () => t('enemy.dwarvenDragon', 'Dwarven Dragon');
 export const DWARVEN_DRAGON_ART = 'art/dwarven-dragon/';
-/** Frames by record: 0-4 move, 5-9 claw attack, 10-14 hurt, 15-19 idle. */
-export const DWARVEN_DRAGON_FRAMES = Object.freeze([8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]);
+/** Frames by record: 0-4 move, 5-9 claw attack, 10-14 hurt, 15-19 idle, 20-24 hovering (DRAGON-HOVER). */
+export const DWARVEN_DRAGON_FRAMES = Object.freeze([8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 8, 8, 8, 8, 8]);
 
 /** The Iron Atronach's row (36) made a boss: a metal golem's career, sounds and remains. */
 export const DWARVEN_DRAGON_ROW = Object.freeze({

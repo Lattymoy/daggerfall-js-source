@@ -6,7 +6,7 @@
 import '../modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { PlayerWeapon } from '../../src/combat/playerWeapon.js';
+import { PlayerWeapon, applyWeaponPose } from '../../src/combat/playerWeapon.js';
 import { createWeaponRig } from '../../src/combat/weapon/weaponRig.js';
 import { fpArm } from '../../src/combat/fpArm.js';
 import { EQUIP_SLOTS } from '../../src/systems/equip.js';
@@ -18,10 +18,12 @@ const KITE = { name: 'Kite Shield', templateIndex: 111, material: 0 };
 test('MW-HAND: an empty hand in use gives way to the other when it holds a weapon - and to nothing else', () => {
   const w = new PlayerWeapon();
   w.updateHands(null, DAGGER);
+  w.usingRightHand = true;   // PIN MOVED (HAND-FOLLOWS): updateHands follows on a change - the hand put back on the empty one
   assert.equal(w.followHeldHand(), true);
   assert.equal(w.usingRightHand, false, 'the dagger\'s hand');
   assert.equal(w.applyWeapon(), DAGGER, 'the weapon, never fists');
   w.updateHands(SWORD, null);
+  w.usingRightHand = false;   // PIN MOVED (HAND-FOLLOWS)
   assert.equal(w.followHeldHand(), true);
   assert.equal(w.usingRightHand, true, 'back to the sword\'s');
   w.updateHands(SWORD, DAGGER);
@@ -81,7 +83,7 @@ test('MW-HAND: under the Morrowind arm H moves only between two held weapons', (
   });
 });
 
-test('MW-HAND: the classic lane keeps DFU\'s ToggleHand whole - H to an empty left hand is fists', () => {
+test('MW-HAND: the classic lane keeps DFU\'s ToggleHand whole - H to an empty left hand is fists; PIN MOVED (HAND-FOLLOWS): a lone weapon in the left hand is the hand in use once it is put there, and H still picks the bare hand after', () => {
   withArm(false, () => {
     const { r, said } = rigFor(SWORD, null);
     assert.equal(r.switchHand(), true);
@@ -90,7 +92,22 @@ test('MW-HAND: the classic lane keeps DFU\'s ToggleHand whole - H to an empty le
     assert.equal(said.length, 1, 'with its line');
     const left = rigFor(null, DAGGER);
     left.r.refreshWorn();
-    assert.equal(left.r.playerWeapon.usingRightHand, true, 'the hand does not follow');
-    assert.equal(left.r.playerWeapon.weapon, null);
+    assert.equal(left.r.playerWeapon.usingRightHand, false, 'the hand follows the dagger put there');
+    assert.equal(left.r.playerWeapon.weapon, DAGGER);
+    assert.equal(left.r.switchHand(), true);
+    left.r.refreshWorn();
+    assert.equal(left.r.playerWeapon.weapon, null, 'H to the bare right hand: fists, kept while the hands hold the same');
   });
+});
+
+test('MW-HAND: under the Morrowind arm even a hand a save restored to the empty one gives way at once - HAND-FOLLOWS keeps it on the classic lane (mutant: MWHAND-the-hand-never-follows)', () => {
+  for (const arm of [true, false]) {
+    withArm(arm, () => {
+      const { r } = rigFor(null, DAGGER);
+      r.refreshWorn();
+      applyWeaponPose(r.playerWeapon, { weaponDrawn: true, usingRightHand: true });
+      r.refreshWorn();
+      assert.equal(r.playerWeapon.weapon, arm ? DAGGER : null, arm ? 'the dagger: never an empty hand' : 'fists, as the save had it');
+    });
+  }
 });

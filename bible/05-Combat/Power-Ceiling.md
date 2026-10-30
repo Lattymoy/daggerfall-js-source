@@ -151,6 +151,10 @@ section.
 - **A fight's own moments are the fight's, not the gear's:** the technique's multiplier (its line is held per line),
   a staggered or overreached foe (`systems/blowTaken.js`), a critical strike.
 - **The +damage line** is folded at the weapon's roll, not among the blow powers; the per-line law holds it.
+- **The item maker's rows are no line** (GILDED-MAKER, 2026-10-29; `06-Systems/Gilded.md` section 11). They are DFU's
+  own enchantments, on a plain piece, a Rare or a Gilded piece alike, each held to the maker's law and paid from the
+  piece's own points, which are its make's (`systems/item/itemLaw.js:"function makerFindings("`). A Gilded piece's
+  record lines stay at the Legendary top beside them; no line, rung, band or power number moves.
 
 ## 8. The four hosts, the service and the save
 

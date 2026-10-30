@@ -38,8 +38,8 @@
   {
     "name": "AUDITYL-before-tick",
     "file": "src/scenes/world.js",
-    "old": "      worldLightAnimator.tick(dt);\n      // YARD-LIGHT: the yards' lamps - the town's own (homeYards.js yardLampOf: an outdoor lamp is the town's) - scene lights beside\n      // the quays', never the player's extras; in the lanterns' hours and colour, each on the town's flicker at its slot (AUDIT\n      // YARD-LIGHT L3: after the tick, as the street reads it) at its own reach, rows refilled in place (L4: PERF-LIGHTS' law)\n      if (yards) yardLampRows(yards.lamps(), _yardRows, worldLightAnimator.ranges, CITY_LIGHT_COLOR_F32, csaLit);\n",
-    "new": "      if (yards) yardLampRows(yards.lamps(), _yardRows, worldLightAnimator.ranges, CITY_LIGHT_COLOR_F32, csaLit);\n      worldLightAnimator.tick(dt);\n",
+    "old": "      worldLightAnimator.tick(dt);\n      // YARD-LIGHT: the yards' lamps - the town's own (homeYards.js yardLampOf: an outdoor lamp is the town's) - scene lights beside\n      // the quays', never the player's extras; in the lanterns' hours and colour, each on the town's flicker at its slot (AUDIT\n      // YARD-LIGHT L3: after the tick, as the street reads it) at its own reach, rows refilled in place (L4: PERF-LIGHTS' law)\n      if (yards) yardLampRows(yards.lamps(), _yardRows, worldLightAnimator.ranges, CITY_LIGHT_COLOR_F32, csaLit, lightingOn);   // CANDLE-DIM: a candle as a room's on the same lane\n",
+    "new": "      if (yards) yardLampRows(yards.lamps(), _yardRows, worldLightAnimator.ranges, CITY_LIGHT_COLOR_F32, csaLit, lightingOn);   // CANDLE-DIM: a candle as a room's on the same lane\n      worldLightAnimator.tick(dt);\n",
     "tests": [
       "test/world/audityardlight.test.js"
     ]
@@ -56,17 +56,17 @@
   {
     "name": "AUDITYL-raise-dropped",
     "file": "src/scenes/homeYards.js",
-    "old": "  return { light: { ...YARD_LAMP, range: YARD_LAMP.range * k, slot }, lift: size.h + YARD_LAMP_RAISE * k };",
-    "new": "  return { light: { ...YARD_LAMP, range: YARD_LAMP.range * k, slot }, lift: size.h };",
+    "old": "  const lift = decorLightLift(piece, size);\n",
+    "new": "  const lift = size.h;\n",
     "tests": [
       "test/world/audityardlight.test.js"
     ]
   },
   {
     "name": "AUDITYL-raise-unscaled",
-    "file": "src/scenes/homeYards.js",
-    "old": "  return { light: { ...YARD_LAMP, range: YARD_LAMP.range * k, slot }, lift: size.h + YARD_LAMP_RAISE * k };",
-    "new": "  return { light: { ...YARD_LAMP, range: YARD_LAMP.range * k, slot }, lift: size.h + YARD_LAMP_RAISE };",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "  return own ? own.y * k : size.h / 2;",
+    "new": "  return own ? own.y : size.h / 2;",
     "tests": [
       "test/world/audityardlight.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "AUDITYL-reach-unscaled",
     "file": "src/scenes/homeYards.js",
-    "old": "  return { light: { ...YARD_LAMP, range: YARD_LAMP.range * k, slot }, lift: size.h + YARD_LAMP_RAISE * k };",
-    "new": "  return { light: { ...YARD_LAMP, range: YARD_LAMP.range, slot }, lift: size.h + YARD_LAMP_RAISE * k };",
+    "old": "  return { light: { ...YARD_LAMP, range: YARD_LAMP.range * k, slot }, lift };",
+    "new": "  return { light: { ...YARD_LAMP, range: YARD_LAMP.range, slot }, lift };",
     "tests": [
       "test/world/audityardlight.test.js"
     ]

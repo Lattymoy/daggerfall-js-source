@@ -28,7 +28,7 @@ import { drawText, measureText } from '../ui/text.js';
 import { titleBadge, glyphMarks, gradientAt } from '../ui/playerBadge.js';   // ACC3: what a title and a glyph LOOK like - one home, both faces (the DOM layer reads the same module)
 import { projectToScreen } from '../player/tapRay.js'; import { multiply } from '../world/mat4.js';   // one home (audit24 onehome): the touch layer's own projection
 import { LOOK_ITEM_FIELDS, LOOK_GROUPS, LOOK_GLOW_SLOTS, lookGlowOk, POSE_RIDE } from './wire.js';   // the look's vocabulary: the wire's own; WEAPON-GLOW1: and a weapon's glow; DRAGON1: the dragon's ride
-import { DWARVEN_DRAGON_ID, dragonArchiveOf } from '../characters/dwarvenDragonId.js';   // DRAGON1: the sprite a dragon's rider stands as; DRAGON7: an Aetherbright's own pictures
+import { DWARVEN_DRAGON_ID, dragonArchiveOf, dragonHoverFrame } from '../characters/dwarvenDragonId.js';   // DRAGON1: the sprite a dragon's rider stands as; DRAGON7: an Aetherbright's own pictures; DRAGON-HOVER: its rest in the air
 import { appearanceOf, validWireAppearance } from './appearanceLaw.js';   // APPEARANCES: a worn piece's look, said and read
 import { meshGlow, glowWord } from '../systems/weaponGlow.js';   // WEAPON-GLOW1: a held weapon's glow, said on the look
 import { renownText } from './renown.js';   // RENOWN1: Renown's words, left of the name in the bitmap face too
@@ -1240,7 +1240,9 @@ export class RemotePlayers {
     const stepped = bundle.mobileUnit.update(dt, { moving, striking }, yaw, f, viewer);
     // PEER-ACTS: kneeling at an act - a herb, the Basket's search, the knife at a body - the sprite kneels as a yielding foe
     // kneels (REVENANT-FATE's held hurt frame, systems/revenant/revenantFate.js), its own clock untouched; a one-shot plays through
-    const out = peerKneeling(shown) && !moving && !bundle.mobileUnit.isPlayingOneShot() ? bundle.mobileUnit.heldPose('hurt', -1, yaw, f, viewer) : stepped;
+    // DRAGON-HOVER: a dragon's rider at rest hovers, wings beating (characters/dwarvenDragonId.js), never the ground's still idle
+    const hover = shown.rd === POSE_RIDE.Dragon && !moving && bundle.mobileUnit.state === 'idle' && !bundle.mobileUnit.isPlayingOneShot();
+    const out = hover ? bundle.mobileUnit.heldPose('ranged', dragonHoverFrame(performance.now()), yaw, f, viewer) : peerKneeling(shown) && !moving && !bundle.mobileUnit.isPlayingOneShot() ? bundle.mobileUnit.heldPose('hurt', -1, yaw, f, viewer) : stepped;
     const rkey = `${out.record}#${out.frame}`;
     if (!this.renderer.textures?.has?.(`${bundle.archive}_${rkey}`)) this.deps.uploadRecordFrame(bundle.archive, out.record, out.frame);
     const sz = mobileBillboardSize(bundle.tex, out.record);
