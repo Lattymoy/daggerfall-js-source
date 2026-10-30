@@ -175,6 +175,12 @@ function writeAtomic(file, data) {
   fs.renameSync(tmp, file);
 }
 
+/** ONE pref, written straight to its file as setItem writes it (GPU-BACKEND-LAUNCHER: the launcher sets the graphics
+ *  backend before the game's page is up). Throws on failure, as setItem does. */
+function writePref(root, key, value) {
+  writeAtomic(prefPath(root, String(key)), String(value));
+}
+
 /**
  * The store. `root` is the shell's user-data directory; everything
  * this writes lives under root/Saves and root/Prefs and nothing else.
@@ -377,7 +383,7 @@ function createFileStorage(root, { scanTtlMs = 2000, readTtlMs = 1000 } = {}) {
 }
 
 module.exports = {
-  createFileStorage, readPref,
+  createFileStorage, readPref, writePref,
   // exported for the test pins
   SAVE_DATA_PREFIX, SAVE_INFO_PREFIX, SAVE_SHOT_PREFIX,
   encodePrefName, decodePrefName, parseDataUrl,
