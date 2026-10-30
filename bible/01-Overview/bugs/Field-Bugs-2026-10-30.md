@@ -102,7 +102,8 @@ floor or the terrain's). Departure in Port-Ledger A. `test/player/fb1030_talldoo
 RECORDS-SAID: an empty Hall says "No guild has held this seat yet. Its claims, sieges and holders are written here."
 
 NOT FOUND. The screenshot's dark void with green blocks. `tools/torvalCastleProbe.mjs` walks the castle in the real
-game; its run is recorded below. Border blocks were checked: over all 4,232 MAPS.BSA dungeons each B block closes any
+game; it never reached the castle here (SwiftShader's stream had not gone idle after an hour, then 30 minutes), and the
+owner stopped the probes. Border blocks were checked: over all 4,232 MAPS.BSA dungeons each B block closes any
 side, so the copy's borders are not the cause. The report's question of why there are few walled cities past the Bay
 is a design question, left for the owner.
 

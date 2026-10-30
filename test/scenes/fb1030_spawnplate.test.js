@@ -19,7 +19,7 @@ function travelViewPlacesOf(env) {
   return new Function(...Object.keys(env), `${W.slice(at, end + 4)}\nreturn travelViewPlaces;`)(...Object.values(env));
 }
 
-test('SPAWN-PLATE a found spawned dungeon within the Overworld\'s grid stands one plate - the dungeons\' - past the Bay as on the Bay; a town keeps the place\'s (mutant: the spawn platted twice)', () => {
+test('SPAWN-PLATE a found spawned dungeon within the Overworld\'s grid stands one plate - the dungeons\' - past the Bay as on the Bay; a town keeps the place\'s; past the twelve nearest too (mutants: the spawn platted twice; a found spawn in the grid capped)', () => {
   const template = { name: 'The Hold of Gaerfeld', regionIndex: 63, mapTableData: { mapId: 1, locationType: 7 }, exterior: { exteriorData: {} }, dungeon: { recordElement: { header: {} } } };
   const at = { x: 3286, y: 546 };   // the report's: past the Bay
   const spawn = synthesizeDungeonLocation(template, { salt: WORLD_SALT, px: at.x, py: at.y });
@@ -33,6 +33,11 @@ test('SPAWN-PLATE a found spawned dungeon within the Overworld\'s grid stands on
   assert.deepEqual(travelViewPlaces().map((p) => p.summary.name), ['Leyawiin'], 'the town keeps its plate, the spawn wears none of the places\'');
   const dungeons = nearDungeons({ at, dungeons: [], locAt: () => null, isFound: () => true, spawns: [{ x: at.x, y: at.y, loc: spawn }], spawnKnown: () => true, spawnFound: () => true, grid: 1 });
   assert.deepEqual(dungeons.map((g) => [g.key, g.loc.name]), [[`spawn:${spawn.mapTableData.mapId}`, 'The Hold of Gaerfeld (3286,546)']], 'its one plate: the dungeons\'');
+  // AUDIT FB1030 Z1: every found spawn inside the grid keeps its one plate - past the twelve the cap kept, it had none
+  const many = [];
+  for (let dx = -3; dx <= 3; dx++) for (let dz = -3; dz <= 3; dz++) many.push({ x: at.x + dx, y: at.y + dz, loc: { name: `S${dx},${dz}`, mapTableData: { mapId: 5000 + (dx + 3) * 7 + dz + 3 } } });
+  const plated = nearDungeons({ at, dungeons: [], locAt: () => null, isFound: () => true, spawns: many, spawnKnown: () => true, spawnFound: () => true, grid: 3 });
+  assert.equal(plated.length, 49, 'all 49 found spawns of a 7 x 7 grid plated');
   // the Bay's: a spawn on a Bay pixel is no place's plate either
   const bay = { x: 200, y: 300 }, bs = synthesizeDungeonLocation(template, { salt: WORLD_SALT, px: bay.x, py: bay.y });
   places.set(`${bay.x},${bay.y}`, bs);
