@@ -32,7 +32,7 @@ import { snapshotPlayer, restorePlayer } from '../../src/systems/save/save.js';
 import { maxFatigue, liveStat } from '../../src/systems/statMods.js';
 import { setPref } from '../../src/systems/uiPrefs.js';
 import { LOOT_RARITY_KEY, validAffix } from '../../src/systems/loot/lootRarity.js';
-import { techniqueInHand, refusal, stepTechnique, techniqueWait, techniqueHudChips, LADDER_OFF_TEXT, _resetTechniquesForTests } from '../../src/combat/techniques.js';
+import { techniqueInHand, refusal, stepTechnique, techniqueWait, techniqueHudChips, LADDER_OFF_TEXT, _resetTechniquesForTests, handOfKey, noSignatureText, BEAST_TEXT, SIGNATURE_ACTION } from '../../src/combat/techniques.js';
 import { TECHNIQUES, TECHNIQUE_FAMILIES, techniqueFamily, techniquesFor, GAUNTLETS_TEMPLATE } from '../../src/combat/technique/techniqueRoster.js';
 import { tellTechniqueLanded, tellTechniqueUsed } from '../../src/combat/technique/techniqueBlow.js';
 import { PlayerWeapon } from '../../src/combat/playerWeapon.js';
@@ -621,6 +621,48 @@ test('MARTIAL THE SEAMS: every host\'s rig registers the powers; the one ask, th
   assert.match(src('src/systems/roleplayRealismItems/rriKits.js'), /shortBlade: !melee && techniqueFamily\(weapon\) === 'shortBlade',/);
   assert.match(src('src/systems/roleplayRealism/rrInstall.js'), /weight, shortBlade: !!w\?\.shortBlade \}\);/);
   assert.match(src('src/combat/combatStats.js'), /return entity\.isInBeastForm \? d : weaponBlowMods\(null, d, entity, foe, wraps \? \{ \.\.\.ESTIMATE, wraps \} : ESTIMATE\);/);   // PIN MOVED (HAND-WRAPS): the estimate carries the Hand Wraps; PIN MOVED (AUDIT MARTIAL L2 F7): the estimate's own word
+});
+
+test('TECH-KEY2 THE SIGNATURE KEY (Mac, 2026-10-30, forwarding #feature-feedback: "access to both your specialization technique and your weapons technique"): the second key answers the held path\'s signature whatever line the weapon carries, the first key the line; each its own clock; with no path, said; the claws refused; the HUD shows both chips (mutants: the second key reads the line; its press never stepped; its refusal unsaid; one chip)', () => {
+  reset();
+  const ranger = pathFighter('ranger');
+  ranger.fatigue = maxFatigue(ranger);
+  const lined = weapon(WEAPONS.Longsword, { affixes: [{ id: 'technique', param: 'whirlwind', value: 20 }] });
+  assert.equal(handOfKey(1, ranger, { weapon: lined })?.id, 'whirlwind', 'the technique key: the line');
+  assert.equal(handOfKey(2, ranger, { weapon: lined })?.id, 'huntersPounce', 'the signature key: the path\'s form, past the line');
+  const said = [];
+  const ctx = (h1, h2) => ({ ...press(ranger, lined, { held: h1 }), held2: h2, say: (l) => said.push(l), startSwing: () => true });
+  stepTechnique(1 / 60, ctx(false, false));
+  stepTechnique(1 / 60, ctx(true, false));
+  assert.equal(techniqueWait('whirlwind'), 10, 'the first key: the line\'s Whirlwind');
+  assert.equal(techniqueWait('huntersPounce'), 0);
+  stepTechnique(1 / 60, ctx(false, false));
+  // the pounce aims (a leap) and goes on the release; this press has no motor, so it is refused there - but it was the signature asked
+  stepTechnique(1 / 60, ctx(false, true));
+  stepTechnique(1 / 60, ctx(false, false));
+  assert.deepEqual(said, ['Not here.'], 'the second key asked the pounce, which needs a motor this press has none of');
+  // a swing form goes on the press: the Crusader's mace, its line a Skull Crack
+  reset();
+  const cr = pathFighter('crusader'); cr.fatigue = maxFatigue(cr);
+  const mace = weapon(WEAPONS.Mace, { affixes: [{ id: 'technique', param: 'crush', value: 20 }] });
+  const c2 = (h1, h2) => ({ ...press(cr, mace, { held: h1 }), held2: h2 });
+  stepTechnique(1 / 60, c2(false, false));
+  stepTechnique(1 / 60, c2(false, true));
+  assert.equal(techniqueWait('hallowedStrike'), 12, 'the second key: the path\'s form');
+  assert.equal(techniqueWait('crush'), 0, 'the line\'s clock untouched');
+  // the HUD: both chips, each its own key's word
+  const chips = techniqueHudChips(cr, { weapon: mace }, (a) => (a === 'WeaponTechnique' ? 'M3' : a === 'SignatureTechnique' ? 'G' : ''));
+  assert.deepEqual(chips.map((c) => [c.key, c.name, c.text, c.state]), [['technique', 'Skull Crack', 'M3', 'active'], ['technique2', 'Hallowed Strike', '12s', 'recovering']]);
+  assert.equal(techniqueHudChips(cr, { weapon: weapon(WEAPONS.Mace) }, 'X').length, 1, 'no line: the signature is the technique key\'s, one chip');
+  // no path held, or the claws: said, nothing paid
+  reset();
+  const none = fighter([]); none.fatigue = maxFatigue(none);
+  const n = []; const before = none.fatigue;
+  stepTechnique(1 / 60, { ...press(none, lined, { held: false }), held2: true, say: (l) => n.push(l) });
+  assert.deepEqual(n, [noSignatureText()]);
+  assert.equal(none.fatigue, before);
+  assert.equal(refusal(null, { pw: { weapon: { werecreatureClaws: true } } }, 2), BEAST_TEXT, 'the beast knows no technique on either key');
+  assert.equal(SIGNATURE_ACTION, 'SignatureTechnique');
 });
 
 // AUDIT MARTIAL L5 L2: every hook back at its rest when the file ends, whatever a test left

@@ -241,7 +241,8 @@ test('TI1 touch.js: the five buttons, the gate-by-hook dial, and the three route
   // test/scenes/audit62_touch.test.js, executed both ways).
   // TOUCH-BUTTONS: jump and sheathe are the corner's two default HOLD slots (ui/touch/touchButtons.js), each held on its
   // action's live code and lifted against liveNeeds() - the same arm for any held action a player puts there
-  assert.match(s, /if \(action\.kind === 'hold'\) \{\s*\n\s*b = button\(action\.glyph, \.\.\.at, \(\) => \{ slotHeld\.set\(b, downAction\(action\.id\)\); \}, \(\) => \{ const c = slotHeld\.get\(b\) \?\? null; slotHeld\.delete\(b\); upCode\(c, liveNeeds\(\)\); \}\);/, 'a held slot, on its action\'s live code');
+  // PIN MOVED (AUDIT TECH-FEEDBACK II F6): and the action itself held for the reader of a key-less one (ui/touch/touchHeld.js)
+  assert.match(s, /if \(action\.kind === 'hold'\) \{\s*\n\s*b = button\(action\.glyph, \.\.\.at, \(\) => \{ slotHeld\.set\(b, downAction\(action\.id\)\); setTouchHeld\(action\.id, true\); \}, \(\) => \{ const c = slotHeld\.get\(b\) \?\? null; slotHeld\.delete\(b\); upCode\(c, liveNeeds\(\)\); setTouchHeld\(action\.id, false\); \}\);/, 'a held slot, on its action\'s live code');
   // PIN MOVED (2026-10-01 part four, TOUCH-HOLD - Mac: "Interact button + knife Use"): and Interact, the third
   assert.match(read('src/ui/touch/touchButtons.js'), /TOUCH_BUTTON_DEFAULTS = Object\.freeze\(\{ touchButton1: 'Jump', touchButton2: 'ReadyWeapon', touchButton3: 'Interact' \}\)/, 'jump and sheathe by default, and Interact');
   assert.match(s, /on\('MoveForwards',[\s\S]*on\('Run',/, 'the stick holds the four move actions and Run');

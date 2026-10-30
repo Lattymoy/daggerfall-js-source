@@ -318,6 +318,7 @@ Generated from `ACTION_GROUPS` and the two default tables; the enhanced pane dra
 | `SwingWeapon` | RIGHT CLICK | `JoystickAxis10Button0` | Swing weapon |
 | `SwitchHand` | H |  | Switch hand |
 | `WeaponTechnique` | MOUSE3 |  | Weapon technique (hold to aim) |
+| `SignatureTechnique` | (unbound) |  | Martial technique (hold to aim) |
 | `ShotCycle` | (unbound) |  | Shot (aboard) |
 
 ### Magic

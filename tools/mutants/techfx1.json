@@ -137,8 +137,8 @@
   {
     "name": "TECHFX1-the-leap-release-uncued",
     "file": "src/combat/techniques.js",
-    "old": "foe: target.foe ?? null, from: [from[0], from[1], from[2]], use };\n  cue(hand, 'release', ctx);   // TECH-FX\n",
-    "new": "foe: target.foe ?? null, from: [from[0], from[1], from[2]], use };\n",
+    "old": "foe: foe ?? null, from: [from[0], from[1], from[2]], use, backs: behind ? (backs ?? new Set()).add(foe) : backs };\n  cue(hand, 'release', ctx);   // TECH-FX\n",
+    "new": "foe: foe ?? null, from: [from[0], from[1], from[2]], use, backs: behind ? (backs ?? new Set()).add(foe) : backs };\n",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -177,8 +177,8 @@
   {
     "name": "TECHFX1-the-run-start-forgotten",
     "file": "src/combat/techniques.js",
-    "old": ", from: [from[0], from[1], from[2]], use };",
-    "new": ", use };",
+    "old": ", from: [from[0], from[1], from[2]], use, backs: behind ? (backs ?? new Set()).add(foe) : backs };",
+    "new": ", use, backs: behind ? (backs ?? new Set()).add(foe) : backs };",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -505,8 +505,8 @@
   {
     "name": "TECHFX1-AUDIT-the-run-start-aliased",
     "file": "src/combat/techniques.js",
-    "old": ", from: [from[0], from[1], from[2]], use };",
-    "new": ", from, use };",
+    "old": ", from: [from[0], from[1], from[2]], use, backs: behind ? (backs ?? new Set()).add(foe) : backs };",
+    "new": ", from, use, backs: behind ? (backs ?? new Set()).add(foe) : backs };",
     "tests": [
       "test/systems/techfx1.test.js",
       "test/systems/techfx1_audit.test.js"
@@ -625,8 +625,8 @@
   {
     "name": "TECHFX1-AUDIT-the-chip-word-every-frame",
     "file": "src/combat/techniques.js",
-    "old": "  const left = techniqueWait(hand.id);\n  _chip.name",
-    "new": "  const left = techniqueWait(hand.id);\n  if (typeof keyName === 'function') keyName();\n  _chip.name",
+    "old": "  const left = techniqueWait(hand.id);\n  chip.name = techniqueName(hand);",
+    "new": "  const left = techniqueWait(hand.id);\n  if (typeof keyName === 'function') keyName(action);\n  chip.name = techniqueName(hand);",
     "tests": [
       "test/systems/techfx1.test.js",
       "test/systems/techfx1_audit.test.js"
@@ -635,8 +635,8 @@
   {
     "name": "TECHFX1-AUDIT-a-fresh-chip-a-frame",
     "file": "src/combat/techniques.js",
-    "old": "  return _chips;\n}",
-    "new": "  return [{ ..._chip }];\n}",
+    "old": "  if (!sig) return _chips;",
+    "new": "  if (!sig) return [{ ..._chip }];",
     "tests": [
       "test/systems/techfx1.test.js",
       "test/systems/techfx1_audit.test.js"
@@ -654,8 +654,8 @@
   },
   {
     "name": "TECHFX1-AUDIT-the-world-word-uncached",
-    "file": "src/scenes/world.js",
-    "old": "if (_techKey === null || _techKeyStore !== b || _techKeyRev !== rev || _techKeyPad !== pad) {",
+    "file": "src/ui/techniqueKeyWord.js",
+    "old": "if (_store !== b || _rev !== rev || _pad !== pad) {",
     "new": "if (true) {",
     "tests": [
       "test/scenes/tech1_hosts.test.js"
