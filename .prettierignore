@@ -6,6 +6,7 @@
 /src/*
 !/src/ai/
 /src/ai/*/
+!/src/buildTag.js
 !/src/characters/
 /src/characters/*
 !/src/characters/bodyMotion/
