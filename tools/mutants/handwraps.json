@@ -242,18 +242,18 @@
   {
     "name": "HANDWRAPS-sheathed",
     "file": "src/combat/fpArm.js",
-    "old": "  const handGlowShown = () => (handGlowSpec && !climbHands && !sheathed && !spellStance() && wornWeaponKey === EMPTY_HAND_KEY && !(viewMode === 'first' && held) ? handGlowSpec : null);",
-    "new": "  const handGlowShown = () => (handGlowSpec && !climbHands && !spellStance() && wornWeaponKey === EMPTY_HAND_KEY && !(viewMode === 'first' && held) ? handGlowSpec : null);",
+    "old": "  const handGlowShown = () => (handGlowSpec && !climbHands && !(sheathed && viewMode === 'first') && !spellStance() && wornWeaponKey === EMPTY_HAND_KEY && !(viewMode === 'first' && held) ? handGlowSpec : null);   // WRAPS-AWAY (mob: \"keep glow on wrap whern put away\"): put away, the body's hands still glow",
+    "new": "  const handGlowShown = () => (handGlowSpec && !climbHands && !spellStance() && wornWeaponKey === EMPTY_HAND_KEY && !(viewMode === 'first' && held) ? handGlowSpec : null);   // WRAPS-AWAY (mob: \"keep glow on wrap whern put away\"): put away, the body's hands still glow",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
-    "note": "the fists glow put away"
+    "note": "the fists glow put away in first person"
   },
   {
     "name": "HANDWRAPS-casting",
     "file": "src/combat/fpArm.js",
-    "old": "  const handGlowShown = () => (handGlowSpec && !climbHands && !sheathed && !spellStance() && wornWeaponKey === EMPTY_HAND_KEY && !(viewMode === 'first' && held) ? handGlowSpec : null);",
-    "new": "  const handGlowShown = () => (handGlowSpec && !climbHands && !sheathed && wornWeaponKey === EMPTY_HAND_KEY && !(viewMode === 'first' && held) ? handGlowSpec : null);",
+    "old": "  const handGlowShown = () => (handGlowSpec && !climbHands && !(sheathed && viewMode === 'first') && !spellStance() && wornWeaponKey === EMPTY_HAND_KEY && !(viewMode === 'first' && held) ? handGlowSpec : null);   // WRAPS-AWAY (mob: \"keep glow on wrap whern put away\"): put away, the body's hands still glow",
+    "new": "  const handGlowShown = () => (handGlowSpec && !climbHands && !(sheathed && viewMode === 'first') && wornWeaponKey === EMPTY_HAND_KEY && !(viewMode === 'first' && held) ? handGlowSpec : null);   // WRAPS-AWAY (mob: \"keep glow on wrap whern put away\"): put away, the body's hands still glow",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
@@ -334,8 +334,8 @@
   {
     "name": "HANDWRAPS-climb",
     "file": "src/combat/fpArm.js",
-    "old": "  const handGlowShown = () => (handGlowSpec && !climbHands && !sheathed && !spellStance() && wornWeaponKey === EMPTY_HAND_KEY && !(viewMode === 'first' && held) ? handGlowSpec : null);",
-    "new": "  const handGlowShown = () => (handGlowSpec && !sheathed && !spellStance() && wornWeaponKey === EMPTY_HAND_KEY && !(viewMode === 'first' && held) ? handGlowSpec : null);",
+    "old": "  const handGlowShown = () => (handGlowSpec && !climbHands && !(sheathed && viewMode === 'first') && !spellStance() && wornWeaponKey === EMPTY_HAND_KEY && !(viewMode === 'first' && held) ? handGlowSpec : null);   // WRAPS-AWAY (mob: \"keep glow on wrap whern put away\"): put away, the body's hands still glow",
+    "new": "  const handGlowShown = () => (handGlowSpec && !(sheathed && viewMode === 'first') && !spellStance() && wornWeaponKey === EMPTY_HAND_KEY && !(viewMode === 'first' && held) ? handGlowSpec : null);   // WRAPS-AWAY (mob: \"keep glow on wrap whern put away\"): put away, the body's hands still glow",
     "tests": [
       "test/combat/handwraps_arm.test.js"
     ],
@@ -344,8 +344,8 @@
   {
     "name": "HANDWRAPS-mid-swap",
     "file": "src/combat/fpArm.js",
-    "old": "  const handGlowShown = () => (handGlowSpec && !climbHands && !sheathed && !spellStance() && wornWeaponKey === EMPTY_HAND_KEY && !(viewMode === 'first' && held) ? handGlowSpec : null);",
-    "new": "  const handGlowShown = () => (handGlowSpec && !climbHands && !sheathed && !spellStance() && !(viewMode === 'first' && held) ? handGlowSpec : null);",
+    "old": "  const handGlowShown = () => (handGlowSpec && !climbHands && !(sheathed && viewMode === 'first') && !spellStance() && wornWeaponKey === EMPTY_HAND_KEY && !(viewMode === 'first' && held) ? handGlowSpec : null);   // WRAPS-AWAY (mob: \"keep glow on wrap whern put away\"): put away, the body's hands still glow",
+    "new": "  const handGlowShown = () => (handGlowSpec && !climbHands && !(sheathed && viewMode === 'first') && !spellStance() && !(viewMode === 'first' && held) ? handGlowSpec : null);   // WRAPS-AWAY (mob: \"keep glow on wrap whern put away\"): put away, the body's hands still glow",
     "tests": [
       "test/combat/handwraps_arm.test.js"
     ],
@@ -354,8 +354,8 @@
   {
     "name": "HANDWRAPS-sheet",
     "file": "src/combat/fpArm.js",
-    "old": "  const handGlowShown = () => (handGlowSpec && !climbHands && !sheathed && !spellStance() && wornWeaponKey === EMPTY_HAND_KEY && !(viewMode === 'first' && held) ? handGlowSpec : null);",
-    "new": "  const handGlowShown = () => (handGlowSpec && !climbHands && !sheathed && !spellStance() && wornWeaponKey === EMPTY_HAND_KEY ? handGlowSpec : null);",
+    "old": "  const handGlowShown = () => (handGlowSpec && !climbHands && !(sheathed && viewMode === 'first') && !spellStance() && wornWeaponKey === EMPTY_HAND_KEY && !(viewMode === 'first' && held) ? handGlowSpec : null);   // WRAPS-AWAY (mob: \"keep glow on wrap whern put away\"): put away, the body's hands still glow",
+    "new": "  const handGlowShown = () => (handGlowSpec && !climbHands && !(sheathed && viewMode === 'first') && !spellStance() && wornWeaponKey === EMPTY_HAND_KEY ? handGlowSpec : null);   // WRAPS-AWAY (mob: \"keep glow on wrap whern put away\"): put away, the body's hands still glow",
     "tests": [
       "test/combat/handwraps_arm.test.js"
     ],
