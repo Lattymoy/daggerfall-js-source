@@ -141,8 +141,8 @@
   {
     "name": "THUNDERLOCK-ART2-every-hot-texel-averaged",
     "file": "src/combat/gun/gunFlash.js",
-    "old": "    if (n > size) { size = n; body = one; }",
-    "new": "    if (n) { size += n; body = body ? body.map((v, k) => v | one[k]) : one; }",
+    "old": "    if (n > size) {\n      size = n;\n      body = one;",
+    "new": "    if (n) {\n      size += n;\n      body = body ? body.map((v, k) => v | one[k]) : one;",
     "tests": [
       "test/systems/thunderlockart2.test.js"
     ],
@@ -181,8 +181,8 @@
   {
     "name": "THUNDERLOCK-ART2-the-last-body",
     "file": "src/combat/gun/gunFlash.js",
-    "old": "    if (n > size) { size = n; body = one; }",
-    "new": "    if (n) { size = n; body = one; }",
+    "old": "    if (n > size) {",
+    "new": "    if (n) {",
     "tests": [
       "test/systems/thunderlockart2.test.js"
     ],
@@ -211,8 +211,8 @@
   {
     "name": "THUNDERLOCK-ART2-the-lab-a-tick-early",
     "file": "src/combat/gun/gunMachine.js",
-    "old": "const adv = Math.floor(m._t * m.fps + 1e-9);",
-    "new": "const adv = Math.floor(m._t * m.fps);",
+    "old": "      const adv = Math.floor(m._t * m.fps + 1e-9); // THUNDERLOCK-ART2's audit: a frame's edge read on its later side - sixty 1/60s sum a hair short of 1",
+    "new": "      const adv = Math.floor(m._t * m.fps); // THUNDERLOCK-ART2's audit: a frame's edge read on its later side - sixty 1/60s sum a hair short of 1",
     "tests": [
       "test/systems/thunderlock.test.js"
     ],

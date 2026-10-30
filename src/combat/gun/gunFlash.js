@@ -6,19 +6,34 @@
 
 /** White-hot: a texel at or over this luma (0..255) is the flash's core. */
 export const FLASH_LUMA = 215;
-const NB = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
+const NB = [
+  [1, 0],
+  [-1, 0],
+  [0, 1],
+  [0, -1],
+  [1, 1],
+  [1, -1],
+  [-1, 1],
+  [-1, -1],
+];
 
 /** Texels joined to `seeds` (8-connected) that are drawn and pass `ok`, marked 1 in `into`. */
 function flood(w, h, data, seeds, into, ok) {
   const st = [...seeds];
   for (const i of st) into[i] = 1;
   while (st.length) {
-    const i = st.pop(), x = i % w, y = (i / w) | 0;
+    const i = st.pop(),
+      x = i % w,
+      y = (i / w) | 0;
     for (const [dx, dy] of NB) {
-      const nx = x + dx, ny = y + dy;
+      const nx = x + dx,
+        ny = y + dy;
       if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
       const j = ny * w + nx;
-      if (!into[j] && data[j * 4 + 3] >= 128 && ok(j)) { into[j] = 1; st.push(j); }
+      if (!into[j] && data[j * 4 + 3] >= 128 && ok(j)) {
+        into[j] = 1;
+        st.push(j);
+      }
     }
   }
   return into;
@@ -30,13 +45,21 @@ export function flashBody({ width: w, height: h, data }) {
   const luma = (i) => data[i * 4] * 0.299 + data[i * 4 + 1] * 0.587 + data[i * 4 + 2] * 0.114;
   const hot = (i) => luma(i) >= FLASH_LUMA;
   const seen = new Uint8Array(w * h);
-  let body = null, size = 0;
+  let body = null,
+    size = 0;
   for (let i = 0; i < w * h; i++) {
     if (seen[i] || data[i * 4 + 3] < 128 || !hot(i)) continue;
     const one = flood(w, h, data, [i], new Uint8Array(w * h), hot);
     let n = 0;
-    for (let k = 0; k < w * h; k++) if (one[k]) { seen[k] = 1; n++; }
-    if (n > size) { size = n; body = one; }
+    for (let k = 0; k < w * h; k++)
+      if (one[k]) {
+        seen[k] = 1;
+        n++;
+      }
+    if (n > size) {
+      size = n;
+      body = one;
+    }
   }
   return body;
 }
@@ -46,8 +69,15 @@ export function flashBody({ width: w, height: h, data }) {
 export function flashBodyPoint(img) {
   const body = img?.data ? flashBody(img) : null;
   if (!body) return null;
-  let sx = 0, sy = 0, n = 0;
-  for (let i = 0; i < body.length; i++) if (body[i]) { sx += (i % img.width) + 0.5; sy += ((i / img.width) | 0) + 0.5; n++; }
+  let sx = 0,
+    sy = 0,
+    n = 0;
+  for (let i = 0; i < body.length; i++)
+    if (body[i]) {
+      sx += (i % img.width) + 0.5;
+      sy += ((i / img.width) | 0) + 0.5;
+      n++;
+    }
   return { x: sx / n / img.width, y: sy / n / img.height };
 }
 

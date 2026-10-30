@@ -9,8 +9,15 @@
 // wires, never grown into the rig).
 
 import {
-  PISTOL_HANDS, PISTOL_PANEL, createPistolHands, pistolHandFired, pistolHandsStep, pistolReloadVoice, pistolHandRect,
-  pistolDrawOrder, pistolWidgetSettings,
+  PISTOL_HANDS,
+  PISTOL_PANEL,
+  createPistolHands,
+  pistolHandFired,
+  pistolHandsStep,
+  pistolReloadVoice,
+  pistolHandRect,
+  pistolDrawOrder,
+  pistolWidgetSettings,
 } from './pistolViewmodel.js';
 import { muzzleGlow } from './gunFeel.js';
 import { gunMotion } from './gunViewmodel.js';
@@ -20,7 +27,8 @@ import { handOnLeft } from '../twoHands/handsLaw.js';
  *  handOnLeft); one pistol, where DFU draws the one weapon in use - the Handedness setting's side, whichever hand holds it.
  *  MIXED-PAIR: a blade-and-gun pair's one pistol is a hand of a pair (`inPair`, combat/playerWeapon.js _pistolsFor) - drawn
  *  on its own hand's side, the blade on the other. */
-const flipFor = (pistols, h, leftHanded) => (pistols.hands().length === 2 || pistols.inPair ? handOnLeft(h, leftHanded) : leftHanded);
+const flipFor = (pistols, h, leftHanded) =>
+  pistols.hands().length === 2 || pistols.inPair ? handOnLeft(h, leftHanded) : leftHanded;
 /** A pistol's muzzle flash this frame - its machine's, the picture it is drawn with. */
 const glowOf = (pistols, h) => muzzleGlow(pistols[h].state === 'Firing', pistols[h].frame);
 
@@ -35,7 +43,11 @@ export function createPistolLane() {
     /** The pistols that fired since the last frame - each machine's own count of its shots - each punched at the gun's
      *  kick: the page's `shot`. */
     fired(pistols, feel) {
-      if (of !== pistols) { of = pistols; shots.R = 0; shots.L = 0; }   // a new pair's machines start at no shots - one pulled before its first frame still sounds
+      if (of !== pistols) {
+        of = pistols;
+        shots.R = 0;
+        shots.L = 0;
+      } // a new pair's machines start at no shots - one pulled before its first frame still sounds
       const out = [];
       for (const h of PISTOL_HANDS) {
         if (pistols[h].shots === shots[h]) continue;
@@ -46,23 +58,52 @@ export function createPistolLane() {
       return out;
     },
     /** One frame of the hands, the page's (pistolHandsStep) - `frame` the rig's screen, motion and look. */
-    step(dt, pistols, { feel, switches = null, frame = null, leftHanded = false, sheathed = false, liveSpeed = 50, cursorActive = false, lowered = () => false }) {
+    step(
+      dt,
+      pistols,
+      {
+        feel,
+        switches = null,
+        frame = null,
+        leftHanded = false,
+        sheathed = false,
+        liveSpeed = 50,
+        cursorActive = false,
+        lowered = () => false,
+      },
+    ) {
       pistolHandsStep(hands, dt, {
-        lowered,   // MIXED-PAIR / SPELL-HAND: the other hand strikes - a blade's blow, a spell's cast - so this pistol lowers (its guard)
-        machines: pistols, drawn: pistols.hands(), spring: feel,
+        lowered, // MIXED-PAIR / SPELL-HAND: the other hand strikes - a blade's blow, a spell's cast - so this pistol lowers (its guard)
+        machines: pistols,
+        drawn: pistols.hands(),
+        spring: feel,
         settings: pistolWidgetSettings(PISTOL_PANEL, switches),
-        screenRect: { width: frame?.width ?? 320, height: frame?.height ?? 200 }, motion: frame?.motion ?? gunMotion({}), look: frame?.look ?? [0, 0],
-        liveSpeed, cursorActive, hiddenTarget: feel.hiddenTarget, away: sheathed, awayTarget: feel.sheathTarget,
+        screenRect: { width: frame?.width ?? 320, height: frame?.height ?? 200 },
+        motion: frame?.motion ?? gunMotion({}),
+        look: frame?.look ?? [0, 0],
+        liveSpeed,
+        cursorActive,
+        hiddenTarget: feel.hiddenTarget,
+        away: sheathed,
+        awayTarget: feel.sheathTarget,
         flipOf: (h) => flipFor(pistols, h, leftHanded),
       });
     },
     /** Each pistol's reload, its two clacks - the page's (pistolReloadVoice). */
-    voice(pistols, feel, play) { pistolReloadVoice(hands, pistols, feel.reloadMs, play); },
+    voice(pistols, feel, play) {
+      pistolReloadVoice(hands, pistols, feel.reloadMs, play);
+    },
     /** Where hand `h` is drawn - the page's draw block (pistolHandRect), at the art's pose. */
     rect(pistols, h, art, canvas, leftHanded = false) {
       return pistolHandRect(hands, h, {
-        canvasW: canvas.width, canvasH: canvas.height, anchor: art.anchor, union: art.unionBox,
-        widthPct: art.pose.widthPct, offset: art.pose.offset ?? 0, raise: art.pose.raise, heightPx: art.anchor.h,
+        canvasW: canvas.width,
+        canvasH: canvas.height,
+        anchor: art.anchor,
+        union: art.unionBox,
+        widthPct: art.pose.widthPct,
+        offset: art.pose.offset ?? 0,
+        raise: art.pose.raise,
+        heightPx: art.anchor.h,
         flip: flipFor(pistols, h, leftHanded),
       });
     },
@@ -74,9 +115,13 @@ export function createPistolLane() {
     glow: (pistols) => Math.max(0, ...pistols.hands().map((h) => glowOf(pistols, h))),
     /** AUDIT PISTOL-PORT B4: the hand the room's light is thrown from - the brightest drawn pistol's flash, the last to
      *  fire on a tie (a flurry's second shot lit the room from its side while the first's flame was the bright one). */
-    brightest: (pistols) => pistols.hands().reduce((best, h) => (glowOf(pistols, h) > glowOf(pistols, best) ? h : best), pistols.last ?? pistols.lead),
+    brightest: (pistols) =>
+      pistols
+        .hands()
+        .reduce((best, h) => (glowOf(pistols, h) > glowOf(pistols, best) ? h : best), pistols.last ?? pistols.lead),
     /** Is a drawn pistol still on screen while they are put away - the Offset module easing it off the bottom. */
-    sliding: (pistols, feel) => pistols.hands().some((h) => Math.abs(hands[h].rig.offsetCurrent[1]) < Math.abs(feel.sheathTarget[1]) - 1e-3),
+    sliding: (pistols, feel) =>
+      pistols.hands().some((h) => Math.abs(hands[h].rig.offsetCurrent[1]) < Math.abs(feel.sheathTarget[1]) - 1e-3),
   };
   return lane;
 }

@@ -175,8 +175,8 @@
   {
     "name": "GGLOW-the-pistolet-shimmer-over-the-gold",
     "file": "src/combat/gun/pistoletArt.js",
-    "old": "bleedArm(gilded ? gildFrame(own, pistoletGildKeep(own)) : shimmer(own), lean)",
-    "new": "bleedArm(magic ? shimmer(own) : gildFrame(own, pistoletGildKeep(own)), lean)",
+    "old": "    return bleedArm(gilded ? gildFrame(own, pistoletGildKeep(own)) : shimmer(own), lean);",
+    "new": "    return bleedArm(magic ? shimmer(own) : gildFrame(own, pistoletGildKeep(own)), lean);",
     "tests": [
       "test/systems/gildedglow.test.js"
     ]

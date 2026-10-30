@@ -11,8 +11,8 @@
   {
     "name": "GH-the-pistol-as-a-rifle",
     "file": "src/combat/gun/gunHold.js",
-    "old": "return holdAs === 'pistol' ? applyPistolStance(",
-    "new": "return holdAs === 'pistolet' ? applyPistolStance(",
+    "old": "  return holdAs === 'pistol'",
+    "new": "  return holdAs === 'pistolet'",
     "tests": [
       "test/combat/pistolstance.test.js"
     ]
@@ -49,8 +49,8 @@
   {
     "name": "PS-aim-scrunched",
     "file": "src/combat/gun/pistolStance.js",
-    "old": "aim: Object.freeze({ grip: Object.freeze([-0.14, 1.12, 0.06]), pitch: 0, yaw: 7,",
-    "new": "aim: Object.freeze({ grip: Object.freeze([-0.1, 0.92, 0.02]), pitch: 0, yaw: 4,",
+    "old": "      grip: Object.freeze([-0.14, 1.12, 0.06]),\n      pitch: 0,\n      yaw: 7,",
+    "new": "      grip: Object.freeze([-0.1, 0.92, 0.02]),\n      pitch: 0,\n      yaw: 4,",
     "tests": [
       "test/combat/pistolstance.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "PS-free-hand-on-a-gun",
     "file": "src/combat/gun/pistolStance.js",
-    "old": "only === 'L' || (only === 'R' && !(freeW > 0)) ? null : { ...freeHand(), w: freeW };",
-    "new": "only === 'L' || (only === 'R' && !(freeW > 0)) ? null : gunHand('L');",
+    "old": "    L = needL ? gunHand('L') : only === 'L' || (only === 'R' && !(freeW > 0)) ? null : { ...freeHand(), w: freeW };",
+    "new": "    L = needL ? gunHand('L') : only === 'L' || (only === 'R' && !(freeW > 0)) ? null : gunHand('L');",
     "tests": [
       "test/combat/pistolstance.test.js"
     ]
@@ -67,8 +67,8 @@
   {
     "name": "PS-pair-the-single-rows",
     "file": "src/combat/gun/pistolStance.js",
-    "old": "const guns = pair ? set.pair : set;",
-    "new": "const guns = set;",
+    "old": "  const guns = pair ? set.pair : set; // a pair's own rows, wider than the single's mirror",
+    "new": "  const guns = set; // a pair's own rows, wider than the single's mirror",
     "tests": [
       "test/combat/pistolstance.test.js"
     ]
@@ -76,8 +76,8 @@
   {
     "name": "PS-left-gun-unmirrored",
     "file": "src/combat/gun/pistolStance.js",
-    "old": "g.grip, attitude, s === 'L');",
-    "new": "g.grip, attitude, false);",
+    "old": "    const h = handOnGun(mats, bones[s], s, s === 'L' ? wbL : wb, G, g.grip, attitude, s === 'L');",
+    "new": "    const h = handOnGun(mats, bones[s], s, s === 'L' ? wbL : wb, G, g.grip, attitude, false);",
     "tests": [
       "test/combat/pistolstance.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "PS-left-from-the-right-shoulder",
     "file": "src/combat/gun/pistolStance.js",
-    "old": "return { grip: add(f[s], scale(inBody(f, m(st.grip)), f.arm)), barrel, top };",
-    "new": "return { grip: add(f.R, scale(inBody(f, m(st.grip)), f.arm)), barrel, top };",
+    "old": "  return { grip: add(f[s], scale(inBody(f, m(st.grip)), f.arm)), barrel, top };",
+    "new": "  return { grip: add(f.R, scale(inBody(f, m(st.grip)), f.arm)), barrel, top };",
     "tests": [
       "test/combat/pistolstance.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "PS-pair-left-turned-out",
     "file": "src/combat/gun/pistolStance.js",
-    "old": "y = (s === 'L' ? -st.yaw : st.yaw) * RAD",
-    "new": "y = st.yaw * RAD",
+    "old": "    y = (s === 'L' ? -st.yaw : st.yaw) * RAD,",
+    "new": "    y = st.yaw * RAD,",
     "tests": [
       "test/combat/pistolstance.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "PS-ready-ignored",
     "file": "src/combat/gun/pistolStance.js",
-    "old": "const k = Math.min(1, Math.max(0, ready));",
-    "new": "const k = 0;",
+    "old": "  const k = Math.min(1, Math.max(0, ready));",
+    "new": "  const k = 0;",
     "tests": [
       "test/combat/pistolstance.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "PS-first-aim-over-the-crosshair",
     "file": "src/combat/gun/pistolStance.js",
-    "old": "aim: Object.freeze({ grip: Object.freeze([0.22, 0.82, -0.35]), pitch: 2, yaw: 12,",
-    "new": "aim: Object.freeze({ grip: Object.freeze([0.16, 0.62, -0.25]), pitch: 3, yaw: 3,",
+    "old": "      grip: Object.freeze([0.22, 0.82, -0.35]),\n      pitch: 2,\n      yaw: 12,",
+    "new": "      grip: Object.freeze([0.16, 0.62, -0.25]),\n      pitch: 3,\n      yaw: 3,",
     "tests": [
       "test/combat/pistolstance.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "PS-no-weight-still-holds",
     "file": "src/combat/gun/pistolStance.js",
-    "old": "  if (!(w > 0)) return null;\n  const bones = climbBones(skeleton);\n  const wb = skeleton?.byName?.get('weapon bone'), wbL",
-    "new": "  const bones = climbBones(skeleton);\n  const wb = skeleton?.byName?.get('weapon bone'), wbL",
+    "old": "  if (!(w > 0)) return null;\n  const bones = climbBones(skeleton);",
+    "new": "  const bones = climbBones(skeleton);",
     "tests": [
       "test/combat/pistolstance.test.js"
     ]

@@ -241,8 +241,8 @@
   {
     "name": "PA-gilded-keep-of-the-rest-frame",
     "file": "src/combat/gun/pistoletArt.js",
-    "old": "gilded ? gildFrame(own, pistoletGildKeep(own))",
-    "new": "gilded ? gildFrame(own, pistoletGildKeep(cells[0]))",
+    "old": "    return bleedArm(gilded ? gildFrame(own, pistoletGildKeep(own)) : shimmer(own), lean);",
+    "new": "    return bleedArm(gilded ? gildFrame(own, pistoletGildKeep(cells[0])) : shimmer(own), lean);",
     "tests": [
       "test/systems/pistolet_pins.test.js"
     ]
@@ -250,8 +250,8 @@
   {
     "name": "PA-enchanted-is-plain",
     "file": "src/combat/gun/pistoletArt.js",
-    "old": "const type = magic ? WEAPON_TYPES.Pistolet_Magic : WEAPON_TYPES.Pistolet;",
-    "new": "const type = WEAPON_TYPES.Pistolet;",
+    "old": "  const type = magic ? WEAPON_TYPES.Pistolet_Magic : WEAPON_TYPES.Pistolet;",
+    "new": "  const type = WEAPON_TYPES.Pistolet;",
     "tests": [
       "test/systems/pistolet_pins.test.js"
     ]
@@ -259,8 +259,8 @@
   {
     "name": "PA-sleeve-gilded",
     "file": "src/combat/gun/pistoletArt.js",
-    "old": "((c === 'g' || c === '#' || c === '?') && !sleeve[i])",
-    "new": "(c === 'g' || c === '#' || c === '?')",
+    "old": "    keep[i] = !flame[i] && (c === 'O' || c === 'T' || ((c === 'g' || c === '#' || c === '?') && !sleeve[i])) ? 1 : 0;",
+    "new": "    keep[i] = !flame[i] && (c === 'O' || c === 'T' || c === 'g' || c === '#' || c === '?') ? 1 : 0;",
     "tests": [
       "test/systems/pistolet.test.js",
       "test/systems/pistolet_pins.test.js"
@@ -269,8 +269,8 @@
   {
     "name": "PA-muzzle-off-the-wrong-frame",
     "file": "src/combat/gun/pistoletArt.js",
-    "old": "muzzle: flashPoint(cropImage(bled[1], union))",
-    "new": "muzzle: flashPoint(cropImage(bled[0], union)) ?? { x: 0.5, y: 0.5 }",
+    "old": "    muzzle: flashPoint(cropImage(bled[1], union)),",
+    "new": "    muzzle: flashPoint(cropImage(bled[0], union)) ?? { x: 0.5, y: 0.5 },",
     "tests": [
       "test/systems/pistolet.test.js",
       "test/systems/pistolet_pins.test.js"
@@ -289,8 +289,8 @@
   {
     "name": "FM-flame-gilded",
     "file": "src/combat/gun/pistoletArt.js",
-    "old": "keep[i] = !flame[i] && (",
-    "new": "keep[i] = (",
+    "old": "    keep[i] = !flame[i] && (c === 'O' || c === 'T' || ((c === 'g' || c === '#' || c === '?') && !sleeve[i])) ? 1 : 0;",
+    "new": "    keep[i] = c === 'O' || c === 'T' || ((c === 'g' || c === '#' || c === '?') && !sleeve[i]) ? 1 : 0;",
     "tests": [
       "test/systems/pistolet_pins.test.js"
     ]
@@ -298,8 +298,8 @@
   {
     "name": "FM-glow-unbounded",
     "file": "src/combat/gun/gunFlash.js",
-    "old": "(j) => data[j * 4] >= 245 && luma(j) >= 150",
-    "new": "(j) => luma(j) >= 150",
+    "old": "  return flood(w, h, data, seeds, mask, (j) => data[j * 4] >= 245 && luma(j) >= 150);",
+    "new": "  return flood(w, h, data, seeds, mask, (j) => luma(j) >= 150);",
     "tests": [
       "test/systems/pistolet_pins.test.js"
     ]
@@ -377,8 +377,8 @@
   {
     "name": "GV-preset-over-the-tuning",
     "file": "src/combat/gun/gunViewmodel.js",
-    "old": "{ ...widgetDefaults(), ...tuning }), { preset: false });",
-    "new": "{ ...widgetDefaults(), ...tuning }), { preset: true });",
+    "old": "  const t = readWidgetSettings(() => ({ ...widgetDefaults(), ...tuning }), { preset: false });",
+    "new": "  const t = readWidgetSettings(() => ({ ...widgetDefaults(), ...tuning }), { preset: true });",
     "tests": [
       "test/systems/pistolet.test.js"
     ]

@@ -128,8 +128,8 @@
   {
     "name": "MIXEDMW-stance-one-hand-unread",
     "file": "src/combat/gun/pistolStance.js",
-    "old": "  const needR = only !== 'L', needL = pair || only === 'L';",
-    "new": "  const needR = true, needL = pair;",
+    "old": "  const needR = only !== 'L',\n    needL = pair || only === 'L';",
+    "new": "  const needR = true,\n    needL = pair;",
     "tests": [
       "test/combat/spellhand_mw.test.js"
     ]

@@ -18,19 +18,34 @@ import { FIRE_FRAMES } from './gunSheet.js';
  * 2 for melee) and a one-shot that cannot be interrupted
  * (FPSWeapon.OnAttackDirection's rule). `auto` holds the trigger.
  */
-export function createGunMachine({ fps = 14, cooldownMs = 1700, hitFrame = 1, frames = FIRE_FRAMES } = {}) {   // THUNDERLOCK-ART2: `frames` the cycle's length - the sheet's six by default, the owner's strip seven
+export function createGunMachine({ fps = 14, cooldownMs = 1700, hitFrame = 1, frames = FIRE_FRAMES } = {}) {
+  // THUNDERLOCK-ART2: `frames` the cycle's length - the sheet's six by default, the owner's strip seven
   const m = {
-    state: 'Idle', frame: 0, fps, cooldownMs, hitFrame, frames,
-    trigger: false, shots: 0,
-    _t: 0, _cool: 0, _hitThisShot: false,
+    state: 'Idle',
+    frame: 0,
+    fps,
+    cooldownMs,
+    hitFrame,
+    frames,
+    trigger: false,
+    shots: 0,
+    _t: 0,
+    _cool: 0,
+    _hitThisShot: false,
     /** How far into the pump we are, in ms - what a caller needs to
      *  land a sound or a second animation ON the reload rather than
      *  after it. Zero outside Cooling. */
-    get cooledMs() { return m.state === 'Cooling' ? m._cool : 0; },
+    get cooledMs() {
+      return m.state === 'Cooling' ? m._cool : 0;
+    },
   };
   m.fire = () => {
-    if (m.state !== 'Idle') return false;   // the one-shot cannot be replaced
-    m.state = 'Firing'; m.frame = 0; m._t = 0; m._hitThisShot = false; m.shots++;
+    if (m.state !== 'Idle') return false; // the one-shot cannot be replaced
+    m.state = 'Firing';
+    m.frame = 0;
+    m._t = 0;
+    m._hitThisShot = false;
+    m.shots++;
     return true;
   };
   /** Answers the event this step produced: 'hit' on the hit frame,
@@ -39,13 +54,23 @@ export function createGunMachine({ fps = 14, cooldownMs = 1700, hitFrame = 1, fr
     let event = null;
     if (m.state === 'Firing') {
       m._t += dt;
-      const adv = Math.floor(m._t * m.fps + 1e-9);   // THUNDERLOCK-ART2's audit: a frame's edge read on its later side - sixty 1/60s sum a hair short of 1
+      const adv = Math.floor(m._t * m.fps + 1e-9); // THUNDERLOCK-ART2's audit: a frame's edge read on its later side - sixty 1/60s sum a hair short of 1
       m.frame = Math.min(adv, m.frames - 1);
-      if (!m._hitThisShot && m.frame >= m.hitFrame) { m._hitThisShot = true; event = 'hit'; }
-      if (adv >= m.frames) { m.state = 'Cooling'; m._cool = 0; m.frame = 0; }
+      if (!m._hitThisShot && m.frame >= m.hitFrame) {
+        m._hitThisShot = true;
+        event = 'hit';
+      }
+      if (adv >= m.frames) {
+        m.state = 'Cooling';
+        m._cool = 0;
+        m.frame = 0;
+      }
     } else if (m.state === 'Cooling') {
       m._cool += dt * 1000;
-      if (m._cool >= m.cooldownMs) { m.state = 'Idle'; event = 'ready'; }
+      if (m._cool >= m.cooldownMs) {
+        m.state = 'Idle';
+        event = 'ready';
+      }
     } else if (m.trigger) {
       m.fire();
     }

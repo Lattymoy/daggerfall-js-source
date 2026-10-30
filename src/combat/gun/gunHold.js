@@ -13,5 +13,7 @@ export const holdsGun = (weapon) => weapon?.holdAs === 'rifle' || weapon?.holdAs
 /** The stance for a row's `holdAs`, solved on this frame's body (poseAssembly's `hold`): answers the solver's fit, or null.
  *  `opts` are the stances' own - `pair` the pistol's alone (the left hand on the second pistol). */
 export function applyGunStance(holdAs, skeleton, pose, rootRef, skelMats, opts) {
-  return holdAs === 'pistol' ? applyPistolStance(skeleton, pose, rootRef, skelMats, opts) : applyRifleStance(skeleton, pose, rootRef, skelMats, opts);
+  return holdAs === 'pistol'
+    ? applyPistolStance(skeleton, pose, rootRef, skelMats, opts)
+    : applyRifleStance(skeleton, pose, rootRef, skelMats, opts);
 }

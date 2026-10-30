@@ -6,6 +6,10 @@
 /src/characters/*
 !/src/characters/bodyMotion/
 /src/characters/bodyMotion/*/
+!/src/combat/
+/src/combat/*
+!/src/combat/gun/
+/src/combat/gun/*/
 !/src/formats/
 /src/formats/*
 !/src/formats/save/

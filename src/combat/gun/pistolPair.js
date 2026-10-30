@@ -6,7 +6,7 @@
 // back from here. Not a line of it changed on the way; one door was added for the game (`fireHand`, below).
 
 import { createGunMachine } from './gunMachine.js';
-import { PISTOL_STRIP } from './pistolStrip.js';   // THUNDERLOCK-ART2's audit: the cycle the Pistolet's own strip's, never the lab sheet's by coincidence
+import { PISTOL_STRIP } from './pistolStrip.js'; // THUNDERLOCK-ART2's audit: the cycle the Pistolet's own strip's, never the lab sheet's by coincidence
 import { HANDS_MODE, strikeHandOf, otherHand } from '../twoHands/handsLaw.js';
 
 /** How the trigger is pulled with a pistol in each hand. */
@@ -43,9 +43,13 @@ export const PAIR_TRIGGER = Object.freeze({
 export function createPair({ trigger = PAIR_TRIGGER.Alternate, lead = 'R', fps, cooldownMs, hitFrame } = {}) {
   const opts = { fps, cooldownMs, hitFrame, frames: PISTOL_STRIP.frames };
   const pair = {
-    trigger, lead,
-    R: createGunMachine(opts), L: createGunMachine(opts),
-    t: 0, last: null, lastEnd: -Infinity,
+    trigger,
+    lead,
+    R: createGunMachine(opts),
+    L: createGunMachine(opts),
+    t: 0,
+    last: null,
+    lastEnd: -Infinity,
     /** The hands in the order they fired, most recent last - the
      *  draw order (Two-Hands: the striking hand is drawn over the other). */
     order: ['L', 'R'],
@@ -74,7 +78,7 @@ export function createPair({ trigger = PAIR_TRIGGER.Alternate, lead = 'R', fps, 
     if (pair.trigger === PAIR_TRIGGER.Alternate) {
       const s = strikeHandOf({ mode: HANDS_MODE.Dual, lead: pair.lead, last: pair.last, sinceLast: sinceLast() });
       // the gun's departure: the named hand is empty, the other is loaded
-      const h = loaded(s.hand) ? s.hand : (loaded(otherHand(s.hand)) ? otherHand(s.hand) : null);
+      const h = loaded(s.hand) ? s.hand : loaded(otherHand(s.hand)) ? otherHand(s.hand) : null;
       if (h && shoot(h, { off: h !== pair.lead, flurry: s.flurry })) fired.push(h);
       return fired;
     }

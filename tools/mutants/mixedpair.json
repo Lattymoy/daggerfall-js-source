@@ -164,8 +164,8 @@
   {
     "name": "MIXEDPAIR-flip-the-lone-side",
     "file": "src/combat/gun/pistolLane.js",
-    "old": "(pistols.hands().length === 2 || pistols.inPair ? handOnLeft(h, leftHanded) : leftHanded)",
-    "new": "(pistols.hands().length === 2 ? handOnLeft(h, leftHanded) : leftHanded)",
+    "old": "const flipFor = (pistols, h, leftHanded) =>\n  pistols.hands().length === 2 || pistols.inPair ? handOnLeft(h, leftHanded) : leftHanded;",
+    "new": "const flipFor = (pistols, h, leftHanded) => (pistols.hands().length === 2 ? handOnLeft(h, leftHanded) : leftHanded);",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "MIXEDPAIR-guard-unread",
     "file": "src/combat/gun/pistolViewmodel.js",
-    "old": " || (m.state !== 'Firing' && !!lowered(h)), dt);",
-    "new": ", dt);",
+    "old": "    s.guard = guardStep(\n      s.guard,\n      (dual && guard && other.state === 'Firing' && m.state !== 'Firing') || (m.state !== 'Firing' && !!lowered(h)),\n      dt,\n    );",
+    "new": "    s.guard = guardStep(s.guard, dual && guard && other.state === 'Firing' && m.state !== 'Firing', dt);",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]

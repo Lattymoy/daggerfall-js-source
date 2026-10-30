@@ -1170,7 +1170,7 @@ No PvP multiplier was added to meet it. The paperdoll viewer still flies a shaft
 
 The Thunderlock's reload was the lab's fixed 1.7 s. It is now
 `Math.max(1, 1.7 * (1 - 0.004 * (speed - 50)))` on effective Speed
-(`combat/gun/gunFeel.js:"export function thunderlockReloadSeconds(speed) {"`), committed onto the machine's
+(`combat/gun/gunFeel.js:"export function thunderlockReloadSeconds"`), committed onto the machine's
 `cooldownUntil` when the shot ends, so the pump and the next trigger share that span. Speed 50 is 1.70 s,
 75 is 1.53 s, 100 is 1.36 s, 150 is 1.02 s, and it does not go under 1 s. The frame clock stays 14 fps.
 A Pistolet's reload stays 1.4 s. At this build the Thunderlock's sustained DPS went from 11.95 to 12.82.
