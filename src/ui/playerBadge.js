@@ -52,7 +52,7 @@
 import { TITLES, GLYPHS, SEAT_TITLES, CHAPTER_TITLES } from '../net/identityToken.js';
 import { chapterTitleText } from '../net/npcChapterLaw.js';   // CHAP4c: a chapter's seat's title, worded off its claim
 import { seatTitleText } from '../net/townSeatLaw.js';   // SEAT1c: a seat title in words, off its claim
-import { setTitleFlame } from './titleFlame.js';   // SHOP: a flame title's plate, on the faces paintTitle paints
+import { setTitleFlame, TITLE_PLATE } from './titleFlame.js';   // SHOP: a flame title's plate, on the faces paintTitle paints
 
 /** SEAT1c: THE PLACE A SEAT TITLE NAMES - the client's own seat by key (`{ name, region }`), or null. The host sets it
  *  once its seats are derived (scenes/world.js); until then, and offline, a seat title reads its plain word. */
@@ -158,6 +158,10 @@ export const TITLE_TEXT = Object.freeze({
   masterenchanting: 'Master Enchanter',
   serpenthunter: 'Serpent Hunter',
   deepbane: 'Bane of the Deep',
+  wyrmrider: 'Wyrm Rider',   // WYRM-RIDER (2026-10-30, the owner): a tamed Dwarven Dragon's
+  firstwyrmrider: 'First Wyrm Rider',   // WYRM-RIDER: the earliest brass tame
+  aetherrider: 'Aether Rider',   // WYRM-RIDER: a tamed Aetherbright's
+  firstaetherrider: 'First Aether Rider',   // WYRM-RIDER: the earliest Aetherbright tame
   genesis: 'Genesis',   // SHOP (2026-10-28): the shop's pre-alpha title, the owner's word for it
 });
 
@@ -264,6 +268,12 @@ export const HOUR_SUN = Object.freeze([1, 0.969, 0.918, 1]);         // #fff7ea
 export const COIL_SEA = Object.freeze([0.165, 0.561, 0.651, 1]);    // #2a8fa6
 export const COIL_TIDE = Object.freeze([0.122, 0.682, 0.549, 1]);   // #1fae8c
 export const COIL_FOAM = Object.freeze([0.847, 0.976, 0.937, 1]);   // #d8f9ef
+/** WYRM-RIDER (2026-10-30, the owner: "we need a title thats basd ass for this DRAGON TAMER"): the dragon tamers' letters,
+ *  on their plates (ui/titleFlame.js TITLE_PLATE) - cream on brass, ice on aetherium, gold on the First's. */
+export const WYRM_CREAM = Object.freeze([1, 0.906, 0.651, 1]);        // #ffe7a6
+export const WYRM_ICE = Object.freeze([0.788, 0.949, 1, 1]);          // #c9f2ff
+export const WYRM_GOLD = Object.freeze([1, 0.910, 0.627, 1]);         // #ffe8a0
+export const WYRM_FROST = Object.freeze([0.910, 0.984, 1, 1]);        // #e8fbff
 /** EG-E2 (2026-10-12, Mac: "I said I want everything"; bible/11-Multiplayer/Elite-Gates.md section 19, THE HONOURS): THE
  *  SPIRE'S COLOURS, named once - the three titles whose auras are drawn in them read them here, as the auras do
  *  (render/auraRing.js SPIRE_RGB): the beacon's flame and its white heart (Beacon-Lighter; Kynbane's Beaconlight, its
@@ -451,6 +461,10 @@ export const TITLE_RGBA = Object.freeze({
   masterenchanting: Object.freeze([0.435, 0.459, 0.882, 1]),    // #6f75e1
   serpenthunter: Object.freeze([0.2, 0.835, 0.706, 1]),         // #33d5b4
   deepbane: Object.freeze([0.118, 0.353, 0.553, 1]),            // #1e5a8d
+  wyrmrider: WYRM_CREAM,   // WYRM-RIDER: cream on its brass plate, #ffe7a6
+  firstwyrmrider: WYRM_GOLD,   // WYRM-RIDER: its gold, #ffe8a0
+  aetherrider: WYRM_ICE,   // WYRM-RIDER: ice on its aetherium plate, #c9f2ff
+  firstaetherrider: WYRM_FROST,   // WYRM-RIDER: frost on the First's, #e8fbff
   genesis: GENESIS_HEART,   // SHOP: the flame's heart - its letters over the plate, and the colour a face with no plate uses
 });
 
@@ -504,6 +518,7 @@ export const TITLE_FLAME = Object.freeze({
     tips: Object.freeze([GENESIS_DEEP, GENESIS_VIOLET, GENESIS_HEART, GENESIS_CORE].map(rgb3)),
   }),
 });
+
 
 /** A glyph's colour. The sprout is green because Mac said green; the
  *  dev glyph takes the Developer title's own red, read from it rather
@@ -770,7 +785,7 @@ export function titleBadge(peer) {
   // chapter's seat's
   const text = (SEAT_TITLES.includes(key) ? seatTitleText(key, peer?.ts, _seatPlace) : CHAPTER_TITLES.includes(key) ? chapterTitleText(key, peer?.ts) : null) ?? TITLE_TEXT[key];
   if (!text) return null;
-  return { key, text, rgba: TITLE_RGBA[key] ?? null, gradient: TITLE_GRADIENT[key] ?? null, edge: TITLE_EDGE[key] ?? null, flame: Object.hasOwn(TITLE_FLAME, key) };   // PENITENT: `edge`; SHOP: `flame`, its plate
+  return { key, text, rgba: TITLE_RGBA[key] ?? null, gradient: TITLE_GRADIENT[key] ?? null, edge: TITLE_EDGE[key] ?? null, flame: Object.hasOwn(TITLE_FLAME, key) || Object.hasOwn(TITLE_PLATE, key), plate: Object.hasOwn(TITLE_PLATE, key) };   // PENITENT: `edge`; SHOP: `flame`, its plate; WYRM-RIDER: a metal one (`plate`)
 }
 
 /** SHADOW-FANG: a gradient's colour at `t` along it (0 the first stop, 1
@@ -811,6 +826,9 @@ export function titlePaint(badge) {
   out.color = cssRgba(badge.rgba) ?? '';
   // SHOP: a flame title's letters are its heart over the plate (ui/titleFlame.js, the class setTitleFlame gives), edged
   // dark all round and lit violet - the fire is behind them, never clipped into them
+  // WYRM-RIDER: a metal plate's letters are one colour, edged by the plate's own rule (titleFlame.js plateCss) - a
+  // gradient clipped to them would paint under the plate
+  if (badge.plate) { out.fontWeight = '500'; return out; }
   if (badge.flame) {
     out.textShadow = '0 1px 0 #0b0620, 1px 0 0 #0b0620, -1px 0 0 #0b0620, 0 -1px 0 #0b0620, 0 0 .35em rgba(143,91,255,.9)'; out.fontWeight = '500';
     return out;

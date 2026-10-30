@@ -681,7 +681,7 @@ test('AUDIT UICALM-FIRM1 L5 H5: a small star\'s Spell Points share is of the max
 
 test('AUDIT UICALM-FIRM1 L5 H2/H3: the hosts - every strike and spell at a player rolled with the sky off; offline no sky; the seat given up puts it to sleep; the book\'s tree the one in force; a rise read and said as its own Stars', () => {
   const w = read('src/scenes/world.js');
-  const strikes = [...w.matchAll(/duelAttackerOf\(playerEntity, weapon\)/g)].map((m) => w.slice(m.index - 48, m.index));
+  const strikes = [...w.matchAll(/duelAttackerOf\(playerEntity, weapon[,)]/g)].map((m) => w.slice(m.index - 48, m.index));
   assert.ok(strikes.length >= 4, `${strikes.length} strikes`);
   for (const pre of strikes) assert.match(pre, /withoutFirmament\(playerEntity, \(\) => $/, pre);
   const spells = [...w.matchAll(/siegeSpellNumbers\(sp, /g)].map((m) => w.slice(m.index - 48, m.index));

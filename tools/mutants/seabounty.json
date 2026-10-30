@@ -146,8 +146,8 @@
   {
     "name": "SEA-BOUNTY-relay-room-unpassed",
     "file": "server/src/index.js",
-    "old": "{ d: d.d, r, held, wa: a.wa ?? null, kin, rid, room: a.key, el: d.el ?? null }, now)",
-    "new": "{ d: d.d, r, held, wa: a.wa ?? null, kin, rid, el: d.el ?? null }, now)",
+    "old": "{ d: d.d, r, held, wa: a.wa ?? null, kin, rid, room: a.key, el: d.el ?? null, c: d.c ?? null }, now)",
+    "new": "{ d: d.d, r, held, wa: a.wa ?? null, kin, rid, el: d.el ?? null, c: d.c ?? null }, now)",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]

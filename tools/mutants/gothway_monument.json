@@ -1,0 +1,236 @@
+[
+  {
+    "name": "GOTHWAY-MONUMENT-back-at-the-hold",
+    "file": "src/world/lefayMonument.js",
+    "old": "export const LEFAY_TOWN = 'Gothway Garden';",
+    "new": "export const LEFAY_TOWN = 'Privateer\\'s Hold';",
+    "tests": [
+      "test/world/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "GOTHWAY-MONUMENT-the-way-in-not-kept",
+    "file": "src/world/lefayMonument.js",
+    "old": "  for (let t = 0; t <= MONUMENT_WAY_IN_M + 1e-9; t += HALF_CELL) closeRound(nav, way.x + way.nx * t, way.z + way.nz * t, MONUMENT_WAY_M);\n",
+    "new": "\n",
+    "tests": [
+      "test/world/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "GOTHWAY-MONUMENT-searched-from-the-middle",
+    "file": "src/world/lefayMonument.js",
+    "old": "  return lefaySpot(nav, { gx: at[0], gy: at[1] });",
+    "new": "  return lefaySpot(nav);",
+    "tests": [
+      "test/world/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "GOTHWAY-MONUMENT-the-road-unread",
+    "file": "src/world/lefayMonument.js",
+    "old": "  let found = runs((wt) => wt >= ROAD_WEIGHT, 2);",
+    "new": "  let found = runs(() => false, 2);",
+    "tests": [
+      "test/world/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "GOTHWAY-MONUMENT-no-open-way-in",
+    "file": "src/world/lefayMonument.js",
+    "old": "  if (!found.length) found = runs((wt) => wt > 0, 3);",
+    "new": "  if (!found.length) found = [];",
+    "tests": [
+      "test/world/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "GOTHWAY-MONUMENT-the-farthest-road",
+    "file": "src/world/lefayMonument.js",
+    "old": "  found.sort((p, q) => Math.abs((p[0] + p[1]) / 2 - mid) - Math.abs((q[0] + q[1]) / 2 - mid));",
+    "new": "  found.sort((p, q) => Math.abs((q[0] + q[1]) / 2 - mid) - Math.abs((p[0] + p[1]) / 2 - mid));",
+    "tests": [
+      "test/world/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "GOTHWAY-MONUMENT-the-band-shallow",
+    "file": "src/world/lefayMonument.js",
+    "old": "band = Math.max(2, Math.round(ENTRANCE_BAND_M / NAV_CELL));",
+    "new": "band = 2;",
+    "tests": [
+      "test/world/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "GOTHWAY-MONUMENT-a-thin-run-a-way",
+    "file": "src/world/lefayMonument.js",
+    "old": "if (gx - start >= least) out.push",
+    "new": "if (gx - start >= 1) out.push",
+    "tests": [
+      "test/world/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "GOTHWAY-MONUMENT-the-south-border",
+    "file": "src/world/lefayMonument.js",
+    "old": "ok = want(nav.weightAt(gx, h - 1 - k));",
+    "new": "ok = want(nav.weightAt(gx, k));",
+    "tests": [
+      "test/world/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "GOTHWAY-MONUMENT-the-way-off-its-middle",
+    "file": "src/world/lefayMonument.js",
+    "old": "return { x: ((a + b + 1) / 2) * NAV_CELL,",
+    "new": "return { x: ((a + b) / 2) * NAV_CELL,",
+    "tests": [
+      "test/world/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "GOTHWAY-MONUMENT-found-after-the-yards",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "townPlacesFor(dfLocation, lefaySpot, climate?.people",
+    "new": "townPlacesFor(dfLocation, null, climate?.people",
+    "tests": [
+      "test/world/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "GOTHWAY-MONUMENT-stood-in-a-far-view",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "lefaySpot = farView ? null : monumentSpotOf(dfLocation, loc);",
+    "new": "lefaySpot = monumentSpotOf(dfLocation, loc);",
+    "tests": [
+      "test/world/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "STEWART-MONUMENT-any-slice",
+    "file": "src/world/lefayMonument.js",
+    "old": "loc.capital.s === STEWART_SLICE",
+    "new": "loc.capital.s >= 0",
+    "tests": [
+      "test/world/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "STEWART-MONUMENT-any-capital",
+    "file": "src/world/lefayMonument.js",
+    "old": "loc?.capital?.key === 'imperial-city' &&",
+    "new": "!!loc?.capital &&",
+    "tests": [
+      "test/world/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "STEWART-MONUMENT-the-frame-unflipped",
+    "file": "src/world/lefayMonument.js",
+    "old": "gy = Math.floor((mid - STEWART_AT[1]) / NAV_CELL)",
+    "new": "gy = Math.floor((mid + STEWART_AT[1]) / NAV_CELL)",
+    "tests": [
+      "test/world/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "STEWART-MONUMENT-off-the-middle",
+    "file": "src/world/lefayMonument.js",
+    "old": "const mid = (IMPERIAL_CELLS / 2 - ((IMPERIAL_SPAN - 1) / 2) * 8) * BLOCK_M;",
+    "new": "const mid = (IMPERIAL_CELLS / 2 - (IMPERIAL_SPAN - 1) / 2 * 8 + 1) * BLOCK_M;",
+    "tests": [
+      "test/world/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "STEWART-MONUMENT-a-cell-corner",
+    "file": "src/world/lefayMonument.js",
+    "old": "  return { gx, gy, x: gx * NAV_CELL + HALF_CELL, z: gy * NAV_CELL + HALF_CELL };",
+    "new": "  return { gx, gy, x: gx * NAV_CELL, z: gy * NAV_CELL };",
+    "tests": [
+      "test/world/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "STEWART-MONUMENT-on-the-door's-walk",
+    "file": "src/world/lefayMonument.js",
+    "old": "polar(80, IMPERIAL.tower.plinthR + 25)",
+    "new": "polar(90, IMPERIAL.tower.plinthR + 25)",
+    "tests": [
+      "test/world/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "STEWART-MONUMENT-lefay's-plaque",
+    "file": "src/world/lefayMonument.js",
+    "old": "  for (let k = 0; k < 4; k++) plaque(f, (k * Math.PI) / 2, plaqueRec);",
+    "new": "  for (let k = 0; k < 4; k++) plaque(f, (k * Math.PI) / 2, LEFAY_PLAQUE);",
+    "tests": [
+      "test/world/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "STEWART-MONUMENT-one-pile",
+    "file": "src/scenes/lefayMonumentHost.js",
+    "old": "keep: (next) => keep(subject.tribute, next),",
+    "new": "keep: (next) => keep('lefayTribute', next),",
+    "tests": [
+      "test/world/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "STEWART-MONUMENT-the-first-pool-answers",
+    "file": "src/scenes/lefayMonumentHost.js",
+    "old": "    hoverName: (key) => byKey.get(key)?.hoverName(key) ?? null,",
+    "new": "    hoverName: (key) => pools[0].hoverName(key) ?? null,",
+    "tests": [
+      "test/world/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "STEWART-MONUMENT-the-first-pool-pressed",
+    "file": "src/scenes/lefayMonumentHost.js",
+    "old": "    activate: (key, mode = 'grab', verb = null) => byKey.get(key)?.activate(key, mode, verb) ?? false,",
+    "new": "    activate: (key, mode = 'grab', verb = null) => pools[0].activate(key, mode, verb) ?? false,",
+    "tests": [
+      "test/world/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "STEWART-MONUMENT-lefay's-art",
+    "file": "src/scenes/lefayMonumentHost.js",
+    "old": "      for (const [rec, art] of lefayArt(subject)) wearPainted(",
+    "new": "      for (const [rec, art] of lefayArt()) wearPainted(",
+    "tests": [
+      "test/world/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "STEWART-MONUMENT-lefay's-words",
+    "file": "src/scenes/lefayMonumentHost.js",
+    "old": "  const { key: KEY, text: TEXT } = subject;",
+    "new": "  const { key: KEY } = subject, TEXT = MONUMENTS.lefay.text;",
+    "tests": [
+      "test/world/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "STEWART-MONUMENT-unsaved",
+    "file": "src/systems/save/save.js",
+    "old": "  snap.stewartTribute = normalTribute(entity.stewartTribute);",
+    "new": "  void entity;",
+    "tests": [
+      "test/world/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "STEWART-MONUMENT-unrestored",
+    "file": "src/systems/save/save.js",
+    "old": "  entity.stewartTribute = normalTribute(snap.stewartTribute);",
+    "new": "  void snap;",
+    "tests": [
+      "test/world/lefay1_monument.test.js"
+    ]
+  }
+]

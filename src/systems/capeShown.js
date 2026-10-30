@@ -1,8 +1,11 @@
 // @ts-check
-// CAPE-TOGGLE (2026-10-29, the owner: "add a cape/helmet toggle option in the inventory for people", seen by everyone,
-// the helmet later): WHETHER THIS PLAYER'S WORN CLOAK IS DRAWN (the Cloak1 and Cloak2 slots). Hidden, my body is drawn
-// without it on my screen and on everyone's: the look leaves the cloak out. What is worn is unchanged, and the aura
-// stays drawn (CAPE-AURA, 2026-10-30). bible/04-Characters/Cape-Toggle.md. Not a DFU member: DFU has no such switch.
+// CAPE-TOGGLE (2026-10-29, the owner: "add a cape/helmet toggle option in the inventory for people", then "Worn cloaks
+// plus any aura", seen by everyone, the helmet later): WHETHER THIS PLAYER'S CAPES ARE DRAWN - a worn cloak (the
+// Cloak1 and Cloak2 slots). Hidden, my body is drawn without it on my screen and on everyone's: the look leaves the
+// cloak out and says `hc` (net/wire.js validLook). What is worn is unchanged. AURA-STAYS (2026-10-30, mob: "aura turn off
+// when u toggle cap", "it saposta help show the aura not tuen it off"): the aura is no longer hidden with it - the
+// switch takes the cloak off so the aura shows (scenes/auraHost.js).
+// bible/04-Characters/Cape-Toggle.md. Not a DFU member: Daggerfall Unity has no such switch.
 import { getPref, setPref } from './uiPrefs.js';
 import { equipTableOf } from './equip.js';
 import { EQUIP_SLOTS } from '../characters/paperdoll/paperdoll.js';
@@ -24,3 +27,6 @@ export function drawnEquipTable(/** @type {any} */ entity, shown = capeShown()) 
   for (const s of CAPE_SLOTS) out[s] = null;
   return out;
 }
+
+/** Whether a look says its player hides their capes (`hc`, validLook's). Pure. */
+export const lookCapesHidden = (/** @type {any} */ look) => look?.hc === 1;

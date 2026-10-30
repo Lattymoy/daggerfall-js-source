@@ -289,7 +289,7 @@ export function repositionFeetY(terrainY, centreY, height = CAPSULE_HEIGHT) {
   return Math.max(minFeet, centreY - height / 2);
 }
 
-/** TALL-DOOR (FIELD BUGS 2026-10-30, Torval's castle: "on exiting the place it teleports you in the air"): THE FEET A
+/** TALL-DOOR (FIELD BUGS 2026-10-30b, Torval's castle: "on exiting the place it teleports you in the air"): THE FEET A
  *  DUNGEON'S WAY OUT LANDS ON - repositionFeetY's, never higher than the floor under the landing (floorLanding). DFU
  *  stands the body's centre at the door's; before a classic door that is a hand over the street, before a tall one (the
  *  capitals' castle doors, 4.5 to 19.2 m) metres in the air; on the Bay a crypt's 3.2 m door dropped it 0.7 m. A departure from

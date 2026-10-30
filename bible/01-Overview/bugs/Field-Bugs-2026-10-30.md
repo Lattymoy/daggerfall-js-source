@@ -1,125 +1,66 @@
-# FIELD BUGS 2026-10-30 - the court, the yard, the zone's banks, the map's plates, the floor indoors, Torval, the cape
+# FIELD BUGS 2026-10-30 - the Eternal cape on a peer's front, and its curved cut (CAPE-CARD, CAPE-FLAT)
 
-Seven Discord reports and the owner's own, handed over in a session. Read on main's `b793e26e1` with the freeware's data
-(`tools/fetch-data.sh`). The owner chose three of the fixes when asked (sections 2, 3 and 5). Then read cold and
-corrected (`../audits/Audit-FB1030.md`). The mutants are
-`tools/mutants/fb1030_fieldbugs.json` and `tools/mutants/capetoggle.json`. Relay world293 (`net/wire.js`).
+The owner, with a screenshot of a player in the Eternal cape: "With the new cape why is it showing on the front of the
+player? Did we learn nothing from the angel wings aura? And the cape sides and top shouldnt be curved". Read on main's
+`cc2e350af` with the freeware's data. The pins are `test/render/capecard.test.js`, the mutants
+`tools/mutants/capecard.json`.
 
 | | Report | What it was | Done |
 |---|---|---|---|
-| 1 | "Castle Daggerfall NPCs" - the Queen and Lord Bridwell have "strange hit-boxes for interacting/talking to them" | A person's own Dialogue action took the person's box and won every press within 3.2 m | CASTLE-TALK |
-| 2 | "Unable to place decorations on exterior home walls, counted as inside home"; "Outside area considered inside" (a balcony) | A flat's ground was its picture's diagonal; the house's ground stands up to half a cell past its wall; every roof was the house | WALL-TOUCH, YARD-DECK |
-| 3 | "Banker in IC referred to mountains" - "the banks in the IC should work, or they should be removed" | PVPDUNGEONS shut every bank in the zone, and the zone is Cyrodiil since WW-C2; its words were still the Wrothgarian Mountains' | ZONE-BANK |
-| 4 | "Dungeon Titles stacked on top of each other" - "happens only to procedurally generated dungeons", "mainly in the new areas of the map" | Past the Bay a found spawn within the Overworld's grid stood two plates on one spot | SPAWN-PLATE |
-| 5 | "Player models falling through floor" (Gothway Garden's Mages Guild), and players "floating over them ... due to z-axis misalignment" | A peer's height indoors was the sender's town ground's | INDOOR-FLOOR |
-| 6 | "torval castle in game is ...": leaving "teleports you in the air", and the palace's records "say not implemented yet" | The way out landed at a 9 m door's middle; a new seat's Hall of Records said only "Nothing is written here yet." | TALL-DOOR, RECORDS-SAID |
-| 7 | The owner: "the cape toggle in the inventory also toggles off your aura" | CAPE-TOGGLE hid the aura with the cloak, as asked on 2026-10-29 | CAPE-AURA |
+| 1 | The cape on the front of the player | A peer drawn as a paperdoll or a class sprite had no face and no figure, so the cape hung on the pose's yaw, on the body's axis | CAPE-CARD |
+| 2 | "the cape sides and top shouldnt be curved" | The cape was a span of the turn round the body, 0.64 of it at the collar | CAPE-FLAT, reverted at the owner's word |
 
-## 1. The court that would not talk (CASTLE-TALK)
+## 1. The cape on a peer's front (CAPE-CARD)
 
-FOUND. Castle Daggerfall is a dungeon (S0000160.RDB, `dungeonContext.js`). Of its 21 people, 20 carry a Dialogue (29)
-action record and one (TEXTURE.183 record 3) shows text. `registerFlatAction` gave each relay the person's own box, and
-the relay stands first in the target list: two boxes met at one distance, and the first wins the tie. So within the
-relay's 3.2 m a press named no one and did nothing (Dialogue has no delegate). Where the boxes' floats differ by a hair
-the person won: 5 of the 20, King Gothryd among them (AUDIT FB1030, the record lane). DFU's PlayerActivate fires the
-action and talks to the person on one hit.
+FOUND. The ring and spark in the shot are the cape's outside, between the shoulder blades. They face the eye, under a
+picture that shows its face, so the cape hung on the far side from the way the picture faces. A peer stands in one of
+four layers: a Morrowind body (bones), the Eye of the Beholder walkers and riders (a figure and a face, WINGS-FIT and
+SPRITE-FACE), or `net/remotePlayers.js`'s paperdoll or class sprite. The aura host asked only the first three. On the
+fourth the cape hung on the pose's yaw from the rest pose on the axis. A paperdoll always shows its front, so a peer
+facing away wore the cape over the doll's chest. The figures in the shot stand as Daggerfall's paperdolls do.
 
-MEASURED. The game's RDBs hold 85 person flats with actions: 79 Dialogue, 1 Activate, 5 that show text. No Dialogue or
-Activate relay chains on; the three that chain show text. AUDIT FB1030 D2: DFU's Receive rang 28 of them as a sound
-(the faction id's high byte read as the action's sound index); the port does not.
+A class sprite had the same gap. Its picture is chosen for my own place, not my camera, so its cape could hang up to a
+view off the picture. From the side it lay over the card, as the wings did before WINGS-FIT.
 
-FIXED. A person's own relay takes no box unless the person shows text (`showsText`, the law `npcTargets` reads too), so
-the person takes the press. Departure in Port-Ledger A. The capitals' castles copy the Bay's halls with their court
-re-seated, so the same fix stands past the Bay. AUDIT FB1030 D1: the three copies of Castle Daggerfall dropped its foyer
-guard, who opens the doors the court stands behind; the copy keeps a flat that starts a chain. Pinned through the real pick
-(`test/scenes/fb1030_castletalk.test.js`): the Queen from two metres, and a noble of Torval's copy of Sentinel's halls.
+FIXED. `RemotePlayers.faceOf(id, eye)` says how its picture faces as the eye sees it - a doll its front, a class sprite
+its view (`mobilePortrayedYaw`, mobileOrientation run backwards) - with the pose's yaw as `turn`. A class sprite's face
+says `card`, and `auraSpritePosed` hangs the wings and the Eternal cape from the rest pose WING_SPRITE_BACK behind it
+(`CLOAK_CARD_POSE`). A doll's says it too: the cut's sides and collar reach the card's plane at the body. The aura
+host reads every sprite layer as one list (`sprites`,
+`spriteAnswer`), so the Aura Armory's pieces on a doll face as the doll does too. In `scenes/world.js` the list replaces
+the two getters it held, so bootWorld does not grow.
 
-## 2. The yard against the wall and on the roof (WALL-TOUCH, YARD-DECK)
+WHY THE PINS PASSED. ETERNAL-FIT's pin hung the cape on an Eye of the Beholder sprite's pose. No pin drew a peer as a
+doll or a class sprite under an aura. The new pins build both with `RemotePlayers`' own producers (`Home.md`, TEST THE
+SHAPE THE PRODUCER MINTS), and one hangs the cape on the doll from the shot: all of it behind the card now, more than a
+hundred points in front of it before.
 
-FOUND. The lantern is a flat. The placer stands a flat off a wall by half its width (WALL-CLEAR), and the lot read its
-ground as half its picture's diagonal, which reached a third of a metre into the wall. The house's ground is measured in
-0.4 m cells, and a cell whose middle is inside the walls is wholly the house's, so the ground stands up to 0.2 m past the
-wall. The balcony is the flat roof of a house's one-storey wing (ARCH3D 541, a deck at 3.22 m beside a 6.45 m storey).
-Every roof inside the ground floor's walls was the house.
+SEEN. A scratch Chromium probe drew the real pass over an Eye of the Beholder front picture standing for a doll whose
+peer faces away. Before, the cape covered the picture's front with its sigil out, as in the shot. After, it hangs
+behind the picture and shows at its edge.
 
-The owner, asked which flat roofs are decks: "Every flat roof".
+THE FOUR HOSTS: world.js WIRED (the list); worldModes.js and dungeonContext.js draw through world.js's aura host,
+unchanged; exterior.js draws no aura, unchanged.
 
-FIXED. WALL-TOUCH: a flat's ground is the circle of half its width (`decorTool.js` footprintOf). Each model of a home
-keeps its ground floor's wall lines (`modelFootParts` `walls`, a frame's `grounds`). A point of a piece's ground is in
-the house only past those lines by more than the wall's clip; a cell past them is the yard's. Ground outside the walls
-(a step, a post with none, a joined lot's other house) is judged by its cells, 5 cm in, as before. A lot with no parts
-known (its box, an Imperial City door) is the house wherever met. A flat's turn is refused only for a reason it did not
-stand in already (its ground is the same turned), so a lamp on a wall turns; a model's whenever its turned box is.
+## 2. The cut (CAPE-FLAT), reverted
 
-YARD-DECK: every level roof facing up inside the ground floor's walls is a deck (`decks`, the lowest in a cell). A piece
-whose foot stands on one is the yard's, unless walls standing a metre over the deck enclose it (`storeys`, whatever
-their foot - a storey's; a parapet is lower). Under it, the house's. A model's foot is its origin less its reach below
-(`foot.bottom`). A deck under 4 m² (a stair's tread or landing) is none. The yard's 4 m height still holds, so a 6.45 m
-roof is refused as too high.
+FOUND. Eternal's cloth was the Holo Shadow Cloak's shell cut to a span of the turn round the body: 0.47 of it at the
+hem, 0.5 at the shoulders, 0.64 at the collar. Its top wrapped the neck, its sides bowed round the body, and its hem
+rose at the sides.
 
-Measured over BLOCKS.BSA's town blocks: of 8,058 residences (a house for sale, House1 to House6), 1,114 stand a deck
-at 4 m or lower, 122 of them beside sloped roofs. Pinned on synthetic houses and on ARCH3D 541, 125, 606, 709 and 41902
-(`test/world/fb1030_yarddeck.test.js`). Past the Bay the law reads a model's faces and no place. AUDIT FB1030 Y1-Y8
-(`../audits/Audit-FB1030.md`) reworked both.
+MADE, THEN REVERTED. `eternalPoint` cut it straight, a top edge across the shoulders and straight sides to a level hem.
+The owner then: "Revert what I said about making it flat". The cape is the shape above again, the base's own lines;
+the cut's pins, mutants and its audit findings (`../audits/Audit-Cape-Card.md` B, C1, C3, D2, D3) went with it.
 
-## 3. The banks of the zone (ZONE-BANK)
+PINS MOVED. `test/net/shadowcloak.test.js`, `test/net/seraphwings.test.js`,
+`test/player/eyeOfTheBeholder/spriteface.test.js` and `test/render/armory.test.js` (the host's lines, now one list);
+and the five host fixtures that named the two getters, in `armorylive`, `armory` (two), `capetoggle` and
+`profileslots`. Mutant records re-aimed by content: `armory.json`, `seraphwings.json`, `shadowcloak.json` and
+`spriteface.json`.
 
-FOUND. The Imperial City is in the open zone, and PVPDUNGEONS refuses every bank there ("Players cant use banks in
-zone"). The refusal said "There are no banks in the mountains." - the zone's place before WW-C2. The bank's own region
-reads right (the province's, 70).
+## Not changed
 
-The owner, asked: banks "Work in settlements".
-
-FIXED. A bank in a city, town or village of the zone serves (`zoneSafe.js` zoneBankOpen: the place its door's pixel
-stands, a settlement's kind, ZONE-SAFE's law). Elsewhere in the zone the door says "In the open zone, banks serve only
-cities, towns and villages." (`wild.bank.shut`, every language). Pinned with the Imperial City's slice as the producer
-mints it (`test/systems/wild/fb1030_zonebank.test.js`).
-
-## 4. The plates stacked (SPAWN-PLATE)
-
-FOUND. The Overworld plates every known place within its grid (`travelViewPlaces`) and every known dungeon past it
-(`nearDungeons`). On the Bay a spawn has no MAPS.BSA row, so it has the dungeons' plate alone. Past the Bay the place
-summary reads the live index, so a found spawn within the grid stood both plates on one spot: one name, two second
-lines ("Regular Dungeon, Small" and "... - 0.4 km").
-
-FIXED. A spawned dungeon wears the dungeons' plate alone, as a zone hall does (HALL-PLATE). Its journey is unchanged:
-`tvPlaceSummary` still answers it. Pinned on the report's pixel and on the Bay (`test/scenes/fb1030_spawnplate.test.js`).
-
-## 5. The floor indoors (INDOOR-FLOOR)
-
-FOUND. A building's rooms stand on its door's matrix, at the height each client builds its town's ground. A pose
-indoors carried the sender's height alone, so two copies whose ground differs drew each other sunk or floating by that
-much. GROUND-GATE (`Field-Bugs-2026-10-17f.md`) turns an older ground away once the relay runs it with its switch on;
-GROUND_LAW 5 (world286) is not yet deployed. Gothway Garden's guild stands its doors on one model, so the door entered
-is not a cause there.
-
-The owner, asked: "Room-relative height".
-
-FIXED. A pose indoors carries its room's origin, `fy` (`net/peer/indoorFloor.js`, kept by `validPose` from world293 and
-by the eased pose). A reader indoors draws the peer as high over its own room's floor as over the sender's. A sender
-without it, or a reader outdoors, reads the height as before. Foes indoors are still their owner's height.
-`test/net/fb1030_indoorfloor.test.js`, on the Bay and in Torval.
-
-## 6. Torval's castle (TALL-DOOR, RECORDS-SAID)
-
-FOUND. The way out lands at the lowest dungeon door's centre less half a body (DFU's law). The Mane's palace door is
-9 m tall, so the feet stood 3.6 m over the plaza; the capitals' castle doors are 4.5 to 19.2 m tall (the White-Gold
-Tower's the tallest, 8.7 m up). On the Bay the tallest door a way out lands at is a crypt's, 3.2 m: 0.7 m up
-(AUDIT FB1030 D3: ARCH3D's 19.2 m doors stand only inside a dungeon, S0000003). The palace's "records" are the Hall of Records' shelves; a new seat's book said only "Nothing is written
-here yet."
-
-FIXED. TALL-DOOR: the feet never stand over the floor before the door (`enterExit.js` dungeonExitFeet, the footprint's
-floor or the terrain's). Departure in Port-Ledger A. `test/player/fb1030_talldoor.test.js`, with the Mane's own door.
-RECORDS-SAID: an empty Hall says "No guild has held this seat yet. Its claims, sieges and holders are written here."
-
-NOT FOUND. The screenshot's dark void with green blocks. `tools/torvalCastleProbe.mjs` walks the castle in the real
-game; it never reached the castle here (SwiftShader's stream had not gone idle after an hour, then 30 minutes), and the
-owner stopped the probes. Border blocks were checked: over all 4,232 MAPS.BSA dungeons each B block closes any
-side, so the copy's borders are not the cause. The report's question of why there are few walled cities past the Bay
-is a design question, left for the owner.
-
-## 7. The cape and the aura (CAPE-AURA)
-
-The owner, 2026-10-30, reporting CAPE-TOGGLE as built: "the cape toggle in the inventory also toggles off your aura".
-The switch now hides the worn cloak alone; the look says no `hc`, and world293's `validLook` drops one an older build
-sends (`04-Characters/Cape-Toggle.md` section 4). `test/ui/capetoggle.test.js`.
+From the side, the cape on a card stands WING_SPRITE_BACK behind the picture's back, ETERNAL-FIT's law. The audit
+(`../audits/Audit-Cape-Card.md`) turned every peer's picture to the camera that draws it, laid the swing in the frame
+the cloth is drawn in with a doll's kept behind it, and made a sprite rider a card; its last section says what it left
+to the owner.

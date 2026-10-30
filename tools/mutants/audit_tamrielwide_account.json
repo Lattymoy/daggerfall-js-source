@@ -63,8 +63,8 @@
   {
     "name": "AUDIT-TW-B4-the-bay's-grammar-first",
     "file": "src/scenes/staffTp.js",
-    "old": "  if (!m) return parseStaffCommand(text, now);",
-    "new": "  return parseStaffCommand(text, now);",
+    "old": "  if (!m) return parseGlowCommand(text) ?? parseStaffCommand(text, now);   // GLOW-SET",
+    "new": "  return parseGlowCommand(text) ?? parseStaffCommand(text, now);   // GLOW-SET",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_account.test.js"
     ],
@@ -93,8 +93,8 @@
   {
     "name": "AUDIT-TW-B4-the-help's-bay-bound",
     "file": "src/scenes/staffTp.js",
-    "old": "export const staffHelpLines = () => STAFF_HELP_LINES.map((l) => l.replace(BAY_BOUND, ''));",
-    "new": "export const staffHelpLines = () => STAFF_HELP_LINES;",
+    "old": "export const staffHelpLines = () => [...STAFF_HELP_LINES.map((l) => l.replace(BAY_BOUND, '')), GLOW_HELP_LINE];",
+    "new": "export const staffHelpLines = () => [...STAFF_HELP_LINES, GLOW_HELP_LINE];",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_account.test.js"
     ],

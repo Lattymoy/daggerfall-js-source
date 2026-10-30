@@ -146,8 +146,8 @@
   {
     "name": "PVP-BAR-the-page-veil-unworn",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "if (look?.kind === 'plain' || (bits & 7) === 7 || !['gold', 'red'].includes(skullOf(id) ?? '')) return look;",
-    "new": "return look;",
+    "old": "if (k === 'gold' || k === 'red') return { kind: 'conceal', visual: PVP_FIGHT_VEIL };",
+    "new": "",
     "tests": [
       "test/net/pvpbar.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "PVP-BAR-the-page-staff-veiled",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "if (look?.kind === 'plain' || (bits & 7) === 7 || !['gold', 'red'].includes(skullOf(id) ?? '')) return look;",
-    "new": "if (look?.kind === 'plain' || !['gold', 'red'].includes(skullOf(id) ?? '')) return look;",
+    "old": "if (look?.kind === 'plain' || (bits & 7) === 7 || !k) return look;",
+    "new": "if (look?.kind === 'plain' || !k) return look;",
     "tests": [
       "test/net/pvpbar.test.js"
     ]

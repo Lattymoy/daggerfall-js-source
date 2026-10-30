@@ -1,4 +1,4 @@
-// FIELD BUGS 2026-10-30 SPAWN-PLATE (bible/01-Overview/bugs/Field-Bugs-2026-10-30.md section 4): "Dungeon Titles
+// FIELD BUGS 2026-10-30b SPAWN-PLATE (bible/01-Overview/bugs/Field-Bugs-2026-10-30b.md section 4): "Dungeon Titles
 // stacked on top of each other ... happens only to procedurally generated dungeons ... mainly in the new areas of the
 // map". Past the Bay a found spawned dungeon within the Overworld's grid stood two plates on one spot - the place's
 // (travelViewPlaces, its name and its tier) and the dungeons' (nearDungeons' `spawn:`, its name, its tier and its

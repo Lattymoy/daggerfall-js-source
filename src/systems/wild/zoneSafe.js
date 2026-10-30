@@ -75,7 +75,7 @@ export function landsSettled(p, locAt) {
   const loc = locAt(px.x, px.y);
   return isSettlement(loc) && isInLocationRect(p[0], p[2], locationWorldRect(loc, px.x, px.y));
 }
-/** ZONE-BANK (FIELD BUGS 2026-10-30; the owner: banks "Work in settlements"): does a bank serve here - outside the open
+/** ZONE-BANK (FIELD BUGS 2026-10-30b; the owner: banks "Work in settlements"): does a bank serve here - outside the open
  *  zone, or in a building of a settlement (the place `locAt` stands on `px`, its door's pixel). PVPDUNGEONS shut them
  *  all, the Imperial City's too. @param {boolean} inZone @param {{ x: number, y: number }} px
  *  @param {(px: number, py: number) => any} locAt */

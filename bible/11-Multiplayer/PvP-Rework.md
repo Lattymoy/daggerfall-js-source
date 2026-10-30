@@ -13,7 +13,7 @@ reference it reads. It ships in stages; this page holds what is built.
   and `siegeRef.js:"export const PVP_CASTS = Object.freeze({ max: 19, windowMs: 10_000 });"` pace a fight.
 - **PVP-HEAL.** For 30 s after a player's blow, all heals together restore 25% of the whole a 15 s, plus 1% for each 20
   Restoration past 100, to 35%. A duel heals under that cap; a siege still blocks heals by report.
-- **PVP-SCALE.** A player's blow scales with the weapon's climb and gear percent (`wp`), and skill reads to 1,000.
+- **PVP-SCALE.** A player's blow scales with the weapon's climb and gear percent (`wp`), and skill reads to 1,100 (PVP-SKILL-TOP, 2026-10-30: past a full geared set; 1,000 cut one).
 - **PVP-SPELLS.** A spell at a player uses its first effect: Damage, or a heal. Drain is off between players until it is balanced (PVP-NO-DRAIN).
 
 ## PVP-GUARD: armour against a player's blow
@@ -23,8 +23,27 @@ row for each kind of blow (edged, blunt, unarmed), its condition and the natural
 parts as a blow picks them, a shield's block left out (`pvpGuard.js:"export function pvpArmorKept("`). The report
 carries the three shares (`g`); the referee holds each to 10..150 and takes that share of the blow before PVP-HIT's cap
 (`refereeHealthShare.js:"export function guardedBlow("`). Bare at 50s is 100; Daedric plate keeps 34, 40 and 30, and 14,
-20 and 10 at 100s. The client is trusted for its own armour as it is for its health share. Guard powers (loot, sets,
-the sky) are not read yet.
+20 and 10 at 100s. The client is trusted for its own armour as it is for its health share. The loot ladder's guard
+powers ride the same shares (PVP-GEAR, below); the sets' and the sky's are not read yet.
+
+## PVP-GEAR: gear powers between players, capped
+
+2026-10-30, the owner: gear was planned to count in PvP ("we have the cap", then "all imprint"). The striker's sheet
+carries `gp`, a percent on its blow after PVP-SCALE, at most 40 (`pvpGearPowers.js:"export function pvpGearBlowPct("`):
+the striking piece's damage lines and gems (a fist's own pair of Hand Wraps), Way of the Sword's stacks from blows on
+players, Many Endings' chance as its mean, Open Hand on a bare fist, Hunter's Moon at night, Orc Rage when low, Sweet
+Mother's Kiss on a foe whose bar is under 25%, and First Blood and Silent Death on a foe not struck in the lock's minute.
+Serpent's Kiss adds its flat 8 to a landed blow, 16 on a foe under half (`gf`).
+
+The struck player's guard powers take a share off each armour share it reports, at most 30 off
+(`pvpGearPowers.js:"export function pvpGearKept("`): Dawnward's every sixth blow as its mean,
+Last Stand under its line, Bedrock's stacks and Hex's window from player hits taken, Bulwark's 5 as 5%. Client only:
+the relay reads the same `g`, and the client is trusted for its gear as for its armour. The Raven is not a
+share: PVP-EVADE rolls it on the relay as a miss.
+
+Not between players: a slayer, bane or foe-group line (the owner: "same as human"); the splash of Chain Lightning and
+Earthshaker (one blow, one target). Vigil, Divine Grace, Hist-Sap, Unyielding and the kill effects need the relay to
+keep a heal or a count.
 
 ## PVP-WARD: resistances against a player's spell
 
@@ -86,8 +105,14 @@ costs 42% more and casts 21% slower. PvE is left whole. A departure: DFU has no 
 "spell cit is for this", "otherwise maghes fall off": a harmful spell at a player crits as a blow does under the overhaul
 (`combat/combatStats.js` criticalModel's damage arm): `pvpSpellCrit.js:"export function pvpSpellCrit(caster) {"` -
 Critical Strike / (4 - the Luck term) per cent, x(1 + 5% for each 5 points). Rolled once a cast on the caster's machine
-(`siegeCombat.js:"harm: Math.round(pvpCritHarm(harm, caster, rolls)"`), before PVP-TRIANGLE's scale; the referee clips.
+(`siegeCombat.js:"harm: Math.round(pvpCritHarm(caster ? Math.min(harm, pvpCastHold(caster)) : harm, caster, rolls)"`), before PVP-TRIANGLE's scale; the referee clips.
 PvE is left whole. A departure: DFU's spells never crit.
+
+PVP-CAST-SKILL (2026-10-30: "it was ment to scale with skill"): before the crit, a harmful spell at a player lands at most
+0.15 x the caster's live Destruction, gear counted and no ceiling, as PvE's PVE-CAST holds it
+(`pvpSpellCrit.js:"export const pvpCastHold = (caster) =>"`). The bar's Damage is that size, no level dice
+(`pvpKit.js:"case 'damage': return [{ ...FIREBALL, ...kitMagnitude(PVP_CAST_PER_SKILL * skill, level) }];"`). Destruction
+870 and Critical Strike 860 land about 1,250 before the triangle and PVP-HIT. A departure: DFU sizes a spell by level.
 
 ## PVP-FLAG: in the open zone only a flagged player strikes
 
@@ -98,16 +123,17 @@ The zone word carries it; the referee holds the lock and says each flag to the r
 (`server/src/index.js:"_wildFlagSay(st, a, x, flagWas, wasIn, fl) {"`).
 
 "flaggin is so yu dont hit a player when ur trying to kill a monster": an unflagged striker touches no player
-(`wildRef.js:"if (!a.flag) return"`), and the flag never shields its bearer; party, duel and guild kin stay unhittable as before. While the flag is down
-the Portal Stone works anywhere in the zone (`portalStoneHost.js:"const zoneRefused = (to = null) =>"`), its arrival
-too (`portalStoneHost.js:"teleportTo(g.dest, { zoneFree: !pvpFlagOn() })"`, AUDIT TAMRIEL-WIDE III F1). Chat types no
+(`wildRef.js:"if (!a.flag) return"`), and the flag never shields its bearer; party, duel and guild kin stay unhittable as before. The Portal Stone
+works anywhere in the zone, flagged or not (PVP-PORTAL, below; `portalStoneHost.js:"const teleportRefused = (to) =>"`), its
+arrival too (`portalStoneHost.js:"teleportTo(g.dest, { zoneFree: true })"`, AUDIT TAMRIEL-WIDE III F1). Chat types no
 capitals under the flag's Caps Lock (`capsFix.js:"export function capsFixKey(e, field) {"`). Skulls overhead
 come next. A departure: DFU has no flag.
 
 "or i can flag anywerte": the flag is the zone's alone (PVP-FLAG-ZONE). Out of Cyrodiil, the open sea and their halls
 the key and the button do nothing and the button is hidden (`pvpFlagHost.js:"const here = () => !!online()?.wildOk && !!zone();"`);
 a flag carried out comes down once the lock and a villain's meter let it (`pvpFlagHost.js:"const leave = () => {"`).
-"left center or right center" (PVP-FLAG-SPOT): the button stands at the middle of the screen's right edge; flag down,
+"left center or right center" (PVP-FLAG-SPOT): the button stands at the screen's right edge, just over its middle, clear of the Decorate button
+centred there ("fix this"), and PVP-HUD's ring and seconds follow it (`pvpHud.js:"export const PVP_FLAG_SPOT = Object.freeze({ lift: 64, size: 36 });"`); flag down,
 it shows a dim skull, never a green ring (PVP-FLAG-LOOK, "The green one looks bad the other r perfect").
 
 ## PVP-SKULL: the mark over a flagged player
@@ -277,6 +303,14 @@ reports its pool's share of my health, 10 to 25 (`pvpGuard.js:"export function p
 referee takes that part of PVP-SHIELD's 25% and 35% off (the `vit` report's `sh`). Speed is Fortify Speed on Fortify's
 numbers. Inside a zone dungeon the bar is off. A departure: DFU has no PvP.
 
+PVP-KIT-REGEN (2026-10-30: "cure is worthless in pvp"): Regenerate takes Cure's slot, the classic Regenerate at
+2% to 4% of the receiver's health each round for a minute, 10% of maximum magicka
+(`pvpKit.js:"regen: Object.freeze({ cost: 10, scale: Object.freeze([2, 4]), icon: 1 }),"`). Each round is its receiver's own
+rise, so PVP-HEAL's window caps it with every other heal. The relay prices it in Cure's place and banks its rounds
+as health credit for the minute, at most `regenKit` (4%) a second (`pvpVitals.js:"else if (id === 'regen') {"`). A
+saved Cure slot loads as Regenerate
+(`pvpKit.js:"if (raw?.id === 'cure') raw = {"`). A departure: DFU has no PvP.
+
 PVP-KIT-REZ (the owner, 2026-10-29: "Add resurrection to the. Mages tool belt"): Resurrect is a slot spell at 25% of
 maximum magicka (`pvpKit.js:"resurrect: Object.freeze({ cost: 25, icon: 10 }),"`). It is the shop's own Resurrection,
 by touch (`pvpKit.js:"case 'resurrect': return [{ ...resurrectionSpell().effects[0] }];"`), with no 15 m gift: it goes
@@ -315,16 +349,23 @@ gear. The service is acct214 (acct211 on its branch). A departure: DFU has no Pv
 
 "Need to have to eake up im nearest town", "Jist like pve deaths": a death in the zone rises at the nearest town or temple
 outside it (Wild-Zone.md THE RISE, as before), after the online PvE wait of 60 s
-(`wildZone.js:"export const WILD_DEATH_HOLD_S = 60;"`), not two minutes. The referee keeps the fighter down as long
-(`wildRef.js:"riseMs: 60_000,"`, the wire's `down` word at most `wire.js:"export const WILD_DOWN_MS_MAX = 60_000;"`). A
-departure: DFU has no PvP.
+(`WILD_DEATH_HOLD_S`, 60 s then; DEATH-10 below), not two minutes. The referee keeps the fighter down as long
+(`WILD_REF.riseMs`, the wire's `down` word at most `WILD_DOWN_MS_MAX`). A departure: DFU has no PvP.
 
 DEATH-15 ("Change that to 15 second on death", "For both"; the owner chose to keep the Resurrect minute): online, in
-the zone or out of it, Enter rises once `deathScreen.js:"export const DEATH_RISE_MIN_S = 15;"` have passed (a rejoin's
+the zone or out of it, Enter rose once 15 s of `DEATH_RISE_MIN_S` had passed (DEATH-10 below; a rejoin's
 served time counts, `canRise`); until then the screen says only the count. The rest of the minute is for a party
 member's Resurrect, and the body still lies the minute. The raise window is the longest screen and half a minute,
 `revived.js:"export const REZ_HOLD_S = 90;"` (150 while the zone held two minutes). Relay world282. A departure: DFU
 rises after its three seconds.
+
+DEATH-10 (2026-10-30, the owner: "give death a 10 second timer let them click respawn now but at 10 auto respawn
+them", "for pve and pvp"): online, Enter rises at once (`deathScreen.js:"export const DEATH_RISE_MIN_S = 0;"`) and the
+screen rises by itself at `deathScreen.js:"export const DEATH_AUTO_RISE_S = 10;"`, in the zone
+`wildZone.js:"export const WILD_DEATH_HOLD_S = 10;"`. The referee keeps a fallen down 10 s
+(`wildRef.js:"riseMs: 10_000,"`, the wire's word at most `wire.js:"export const WILD_DOWN_MS_MAX = 10_000;"`). A step
+out of the zone still heals whole only after the minute (`awayMs`). A party Resurrect has those 10 s, and the body
+still lies the minute. Relay world293. A departure: DFU rises after its three seconds.
 
 ## PVP-NO-TENTH: no tenth at a kill, gold as the last roll
 
@@ -419,10 +460,18 @@ the next frame is asked, so the ring moves smoothly; out of it nothing runs. A s
 combat" and the seconds. There is no "turning off" ring: the flag drops at once outside the lock.
 
 The lock's lines are said mid-screen 3 s (`pvpHud.js:"export const PVP_SAY_S = 3;"`): the flag's own drop, a Portal
-Stone (`portalStoneHost.js:"const lockRefused = () => {"` - a new hold: flagged in the lock, the door and the pick
-refuse; unflagged the stone stays free), rest (`pvpRulesHost.js:"const restLock = () => pvpLimited() && lockS() > 0;"`,
+Stone (`portalStoneHost.js:"const lockRefused = () => {"` - a hold: in the lock the door and the pick refuse, flagged or
+not, PVP-PORTAL), rest (`pvpRulesHost.js:"const restLock = () => pvpLimited() && lockS() > 0;"`,
 asked before the flag's own line) and the end, "You are out of combat." (`pvpFlagHost.js:"const beat = () => {"`).
 Log out in combat is the relay's, built apart.
+
+**PVP-PORTAL** (2026-10-30, the owner: "they need to work all over", held only by "agro or flag time cool down"): a
+Portal Stone asks none of the zone's teleport law, flagged or not - its door, its pick and its step go into, out of and
+across Cyrodiil (`portalStoneHost.js:"const teleportRefused = (to) =>"`). Two holds stand in the zone: the combat lock
+after a PvP blow, whatever the flag (`portalStoneHost.js:"const lockRefused = () => {"`), and a monster alerted to me -
+the owner's pick, "Only one attacking me" - never one merely near
+(`portalStoneHost.js:"enemies: wildHere() ? exteriorFoes.foes.some(foeAlerted) :"`). Out of the zone the stone keeps
+its holds. The guild's teleport, Recall and a party's journey keep the zone's law.
 
 "Last hits", bottom right: my three newest PvP blows, flagged in the zone while the lock runs
 (`pvpHud.js:"export function pvpHitLine("`). The referee's `hp` word carries who, on whom and what was dealt, so a Shield's
@@ -434,3 +483,30 @@ My kill says "You slew" (`pvpHud.js:"export const pvpSlewText = "`); the fallen'
 law would hide it, nameless (`travelViewMarks.js:"const villainMark = (id, at, dropped) => {"`); one in no room of mine
 is unknown to this client. The owed level 29 reads "Level 29 · 1 level owed", its button "Go to 30"
 (`pvp30Ask.js:"export const pvp30Owed = "`). Tests: `test/ui/pvphud.test.js`. A departure: DFU has no PvP.
+
+## PVP-VITALS: the relay owns a flagged fighter's pools
+
+"we need to make sure players cant cheat health in pvp", "cheat health mana or fatigue": a game could freeze or set its
+own bars, and the relay believed its reports. While a fighter's flag is up in the open zone, its health rises by report
+only out of a credit the relay grants: a slow regen, a declared potion on the relay's own 15 s clock, or a heal it saw
+paid for (`refereeHealthShare.js:"const got = Math.min(fighter.max - fighter.hp, Math.round(target) - fighter.hp, healRoom(fighter, now), sourced"`).
+
+Magicka and fatigue are the relay's own ledgers, anchored at the game's word while the flag is down. Each refereed cast
+and swing pays the PvP bar's cheapest price, or lands nothing (`wildRef.js:"if (spell ? !castPaid(a.f, c, to, now)"`).
+A party member's gift is paid where the relay passes it (`server/src/index.js:"async _wildCastPaid(a, tb, data, now) {"`).
+A Shield counts only while a paid one runs. The health whole is held to the signed level's.
+
+The game declares its potions and self-cast bar spells in its report (`pvpDeclare.js:"export function declarePotion("`).
+A harmful cast carries its number, so one area cast is one price. Not yet the relay's: armour and
+resistances. Relay world293. Tests: `test/net/pvpvitals.test.js`. A departure: DFU has no PvP.
+
+BOW-RATE: an arrow comes no sooner than the fastest honest bow, its four-tick loose with no reload, so 0.25 s. Two may
+arrive together over a late network. A sooner one lands nothing (`wildRef.js:"if (r === SIEGE_HIT.Shaft ? !shaftPaid(a.f, now)"`).
+The relay cannot trust a Speed, so it holds every build to that floor. A slower bow law can raise it.
+
+SWING-RATE: a melee blow on one player comes no sooner than the quickest swing, five frames at the 0.09 s floor, so
+0.45 s, two deep. It is counted per target, because a Cleave lands on each player in its arc.
+
+BOW-FAST: the relay cuts a shaft it judges by a fifth for each arrow within its bow's window of the last (a Short Bow 0.75 s, a Long Bow 1.25 s, else 1 s), four at most
+(`pvpVitals.js:"export function bowFastCut(f, d, now, w = null) {"`). The game sends that claim uncut, so it cannot skip the cut. The zone strike is marked `relayCut`, and the game keeps
+only the bow's pull (`duelCombat.js:"bowFastDamage(d.relayCut ? { ...landingShaft(), fast: 0 } : landingShaft()"`).

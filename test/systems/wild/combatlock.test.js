@@ -90,5 +90,5 @@ test('AUDIT PVP-EASE L2-1 THE DOORS: both inventories ask at every store and gol
   assert.ok(nat.includes("if (plan.refusal?.reason === 'ground' || plan.refusal?.reason === 'store') this._refuse(plan.refusal);"));
   assert.ok(rd('src/systems/revenant/revenantCompanions.js').includes('const why = gearRefusal(r, item, { kindName }) ?? wildStoreRefusal();'), 'a sworn one\'s kit');
   const w = hostText('src/scenes/world.js');
-  assert.ok(/if \(g\.by !== me && g\.to !== me\) return;\n {4}noteWildBlow\(\);/.test(w), 'a landed blow, mine or on me');
+  assert.ok(/if \(\(g\.by !== me && g\.to !== me\) \|\| \(g\.ev && pvpEvadeHeard\(g\.by === me\)\)\) return;[^\n]*\n {4}noteWildBlow\(\);/.test(w), 'a landed blow, mine or on me');   // PIN MOVED (PVP-EVADE): 'if (g.by !== me && g.to !== me) return;' - an evaded blow is said and notes nothing
 });

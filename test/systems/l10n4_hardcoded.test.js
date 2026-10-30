@@ -23,6 +23,7 @@ const HARDCODED = {
   'src/characters/daedra.js': 4,
   'src/systems/handWraps.js': 2,   // HAND-WRAPS: the template row's name, 'Hand Wraps', as the Pistolet's; its lore, an item's own record, as the guns' is
   'src/systems/staffDragon.js': 1,   // DRAGON-RIDE: /dragon's /staff line, the staff list's English as the rest of it (net/staffCommands.js)
+  'src/systems/staffGlow.js': 6,   // GLOW-SET: /glow's help, usage and answers - a staff member's words, as the other /staff lines, never a player's
   'src/scenes/delve/delveLab.js': 18,   // DELVE II DLV5-6: the curated blocks' lab panel (the bench's `?dungeon=lab`; a lab's module, moved from src/tools/ to stand with the bench a played page boots - AUDIT ANTICHEAT A2's premise) - a designer's tool, never the game's
   'src/scenes/staffDragonHost.js': 6,   // DRAGON-RIDE: /dragon's answers, said to the Admin alone, as the staff commands' own (world.js runStaffCommand); DRAGON-BLUE: and the look changed in the saddle
   'src/characters/dwarvenDragon.js': 2,   // DWARVEN-DRAGON: its career's English (the save's and the staff list's - a player reads t()'s) and its census miss, never shown
@@ -336,7 +337,7 @@ const HARDCODED = {
   'src/scenes/treeHost.js': 3,
   'src/scenes/windfallHost.js': 5,
   'src/scenes/vendorHost.js': 7,   // VENDOR-LOST: the home traders' words, moved verbatim out of world.js
-  'src/scenes/world.js': 314,   // ZONE-BANK (FIELD BUGS 2026-10-30): -1, the zone bank's refusal through zoneSafe.js's t(). ZONE-HOMES: -1, the zone's house refusal through zoneSafe.js's t(). SHARED-HEALTH: -2, the battles' readouts print no 'Your vitality' line (my own health is my bar). THE SIXTH MERGE OF MAIN INTO #1184: MENTOR2 (main's): -1, mentoring's end through mentorText.js's t(). THE FOURTH MERGE OF MAIN INTO #1184: 319 measured on the merged host (RPT1026-MARKET's Collect through t() on main). BAY-LEFT-SEA: -4, the market's pieces' words moved verbatim to scenes/marketPiecesHost.js (HOST-SPLIT). TESA x MAIN (the merge of main into TESA, AUDIT RELEASE R3): 325 measured - TESA's -6 (the quick save's words moved whole to scenes/worldQuickSave.js) on main's 331. VENDOR-LOST: -7, the home traders' words moved verbatim to vendorHost.js; QUEST-AUDIT III SHARE-WORDS: -4, the share's lines through questShare.js's t(); AUDIT QA3: -2, the sender's (shareSentLine); STAFF-PANEL5-FOLLOW-FIX: -1 already at the relay base (ec3d522d61), written down; FB1020c ONE-SAVE: the kept words moved to the Stores page (BAG_PAGE_WORDS.kept); CABIN-FOES: Transport > Ship's helm refusal read off CABIN_REFUSAL; AUDIT SEA VENTURES C6: -1, /unstuck's outdoor refusal read off the zone's words; SEASON-BOOK: -1, /mail's refusal read off chatCommands.js pauseCommandRefusal (344 at the merge of main #1161: both -1s stand)
+  'src/scenes/world.js': 314,   // ZONE-BANK (FIELD BUGS 2026-10-30b): -1, the zone bank's refusal through zoneSafe.js's t(). ZONE-HOMES: -1, the zone's house refusal through zoneSafe.js's t(). SHARED-HEALTH: -2, the battles' readouts print no 'Your vitality' line (my own health is my bar). THE SIXTH MERGE OF MAIN INTO #1184: MENTOR2 (main's): -1, mentoring's end through mentorText.js's t(). THE FOURTH MERGE OF MAIN INTO #1184: 319 measured on the merged host (RPT1026-MARKET's Collect through t() on main). BAY-LEFT-SEA: -4, the market's pieces' words moved verbatim to scenes/marketPiecesHost.js (HOST-SPLIT). TESA x MAIN (the merge of main into TESA, AUDIT RELEASE R3): 325 measured - TESA's -6 (the quick save's words moved whole to scenes/worldQuickSave.js) on main's 331. VENDOR-LOST: -7, the home traders' words moved verbatim to vendorHost.js; QUEST-AUDIT III SHARE-WORDS: -4, the share's lines through questShare.js's t(); AUDIT QA3: -2, the sender's (shareSentLine); STAFF-PANEL5-FOLLOW-FIX: -1 already at the relay base (ec3d522d61), written down; FB1020c ONE-SAVE: the kept words moved to the Stores page (BAG_PAGE_WORDS.kept); CABIN-FOES: Transport > Ship's helm refusal read off CABIN_REFUSAL; AUDIT SEA VENTURES C6: -1, /unstuck's outdoor refusal read off the zone's words; SEASON-BOOK: -1, /mail's refusal read off chatCommands.js pauseCommandRefusal (344 at the merge of main #1161: both -1s stand)
   'src/scenes/worldModes.js': 79,   // NOTICE-PANEL: 82 -> 80, the board's two plaque words out with its press; the merge of main: 79, main's set-down line gone to scenes/arrivalSetDown.js, through t()
   'src/systems/aetheric.js': 168,   // SEA-SET: +17, the Eltheric Tidemail's nine names and lore, as the Weave's - the records' own data, minted onto the item; WITCH1: the Wyrd's Raiment's nine pieces, each its name and its affixes' names (+18) - an item's canonical name, as every Aetheric set's; STAR7: +18, the Starspun Weave's nine names and lore - the records' own data, minted onto the item, never read at load
   'src/systems/alchemyItems.js': 3,
@@ -428,7 +429,7 @@ const HARDCODED = {
   'src/systems/immersiveFootsteps.js': 10,
   'src/systems/immersiveTravel.js': 13,
   'src/systems/improvedInteriorLighting.js': 1,
-  'src/systems/inputActions.js': 85,
+  'src/systems/inputActions.js': 86,   // TECH-KEY2: +1, the signature key's row label, beside its sibling rows'
   'src/systems/inventory.js': 2,
   'src/systems/item/itemBound.js': 4,
   'src/systems/item/itemInfo.js': 8,
@@ -705,7 +706,7 @@ const HARDCODED = {
   'src/ui/intro/set/imperialCity.js': 23,   // INTRO4's set (at the merge of main into #1184): main's world/imperialCity.js as the film was shot on it, kept as shot - TOWN-SHAPES TS5's lake and the districts' proper names
   'src/ui/inventoryDoor.js': 1,
   'src/ui/joystickControlsWindow.js': 1,
-  'src/ui/legacy/legacyModelChoice.js': 26,
+  'src/ui/legacy/legacyModelChoice.js': 25,
   'src/ui/legacy/legacySuccession.js': 3,
   'src/ui/levelUp/levelNotice.js': 6,   // AUDIT UICALM-FIRM1 L4 M8: the Renown rise routed (level.renown.*)
   'src/ui/levelingChoice.js': 16,
@@ -731,10 +732,10 @@ const HARDCODED = {
   'src/ui/pickupFeed.js': 1,
   'src/ui/pixelDial.js': 3,
   'src/ui/pixelifyFive.js': 2,
-  'src/ui/playerBadge.js': 51,   // HUNTERS-MARK: the hunt's and the Marks of Mastery's fourteen two-word titles in words, beside the other titles'; NIRNROOT-SAGE: the Nirnroot Sage's title in words, beside the other titles'; QL12: the questlines' five titles in words ("Witness of the Hour" the one two-word phrase); SERPENT5: The Maelstrom's word, beside the other auras'; EG-E2: the Spire's thirteen titles and three auras in words; WIKIMAID: the Lilac Warren's word, beside the other auras'
+  'src/ui/playerBadge.js': 55,   // WYRM-RIDER: the four dragon riders' titles in words, beside the other titles'; HUNTERS-MARK: the hunt's and the Marks of Mastery's fourteen two-word titles in words, beside the other titles'; NIRNROOT-SAGE: the Nirnroot Sage's title in words, beside the other titles'; QL12: the questlines' five titles in words ("Witness of the Hour" the one two-word phrase); SERPENT5: The Maelstrom's word, beside the other auras'; EG-E2: the Spire's thirteen titles and three auras in words; WIKIMAID: the Lilac Warren's word, beside the other auras'
   'src/ui/playerHistory.js': 1,
   'src/ui/plus/plusPad.js': 18,
-  'src/ui/plus/plusPadBinds.js': 30,
+  'src/ui/plus/plusPadBinds.js': 31,   // TECH-KEY2: +1, the signature key's bind row, beside the technique's
   'src/ui/prisonScreen.js': 1,
   'src/ui/professions/profPages.js': 29,   // FB1020c ONE-SAVE: the kept words, moved here from the world host; REFORGE-REPLACE: the Reforge with Essence's two words through t()
   'src/ui/profileBadge.js': 4,
@@ -785,7 +786,7 @@ const HARDCODED = {
   'src/ui/techniqueGlyph.js': 2,
   'src/ui/temperatureCard.js': 8,
   'src/ui/textFont.js': 4,
-  'src/ui/touch/touchButtons.js': 10,
+  'src/ui/touch/touchButtons.js': 11,   // TECH-KEY2: +1, the Martial technique's corner button, beside the technique's
   'src/ui/town/townMapMarks.js': 1,   // NOTICE-PANEL: 2 -> 1, the board's mark and its label out
   'src/ui/travel/travelMapWindow.js': 14,
   'src/ui/travel/travelPopUp.js': 5,
@@ -821,7 +822,7 @@ const HARDCODED = {
   'src/world/gate/gateBoss.js': 17,
   'src/world/ships/largeBoatModel.js': 8,
   'src/world/ships/largeBoatRig.js': 5,
-  'src/world/lefayMonument.js': 13,
+  'src/world/lefayMonument.js': 11,
   'src/world/oceanHoles.js': 9,
   'src/world/outdoors.js': 2,
   'src/world/passiveFish.js': 5,

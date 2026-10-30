@@ -1,4 +1,4 @@
-// FIELD BUGS 2026-10-30 ZONE-BANK (bible/01-Overview/bugs/Field-Bugs-2026-10-30.md section 3): "Banker in IC referred
+// FIELD BUGS 2026-10-30b ZONE-BANK (bible/01-Overview/bugs/Field-Bugs-2026-10-30b.md section 3): "Banker in IC referred
 // to mountains" - "the banks in the IC should work, or they should be removed". The owner, asked: banks "Work in
 // settlements". PVPDUNGEONS shut every bank in the open zone, and the zone has been Cyrodiil since WW-C2.
 import { test } from 'node:test';

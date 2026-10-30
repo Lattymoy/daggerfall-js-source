@@ -1,4 +1,4 @@
-// FIELD BUGS 2026-10-30 INDOOR-FLOOR (bible/01-Overview/bugs/Field-Bugs-2026-10-30.md section 5): "Player models falling
+// FIELD BUGS 2026-10-30b INDOOR-FLOOR (bible/01-Overview/bugs/Field-Bugs-2026-10-30b.md section 5): "Player models falling
 // through floor" in Gothway Garden's Mages Guild, and peers "floating over them not via levitation but due to z-axis
 // misalignment". The owner: "Room-relative height".
 import { test } from 'node:test';

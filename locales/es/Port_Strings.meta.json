@@ -8839,6 +8839,11 @@
   "tr": "d47b007703a6",
   "by": "claude-in-session"
  },
+ "coll.how.aetherrider": {
+  "en": "f7563349e6a6",
+  "tr": "f036019efab3",
+  "by": "claude-in-session"
+ },
  "coll.how.apostle": {
   "en": "ac3219b0f8b3",
   "tr": "4a6624491d52",
@@ -8892,6 +8897,16 @@
  "coll.how.dungeonmaster": {
   "en": "8dcf67393a4b",
   "tr": "67ed782d7209",
+  "by": "claude-in-session"
+ },
+ "coll.how.firstaetherrider": {
+  "en": "6864f47f182d",
+  "tr": "a8cb70fecad0",
+  "by": "claude-in-session"
+ },
+ "coll.how.firstwyrmrider": {
+  "en": "339cd150428c",
+  "tr": "1cc06d09654a",
   "by": "claude-in-session"
  },
  "coll.how.formermaster": {
@@ -9077,6 +9092,11 @@
  "coll.how.wyrdSister": {
   "en": "7d58d7b53bed",
   "tr": "a1f3ba1c1e4a",
+  "by": "claude-in-session"
+ },
+ "coll.how.wyrmrider": {
+  "en": "253f170e3564",
+  "tr": "ab3f7ea1d1fb",
   "by": "claude-in-session"
  },
  "coll.kind.armory": {
@@ -9327,6 +9347,11 @@
  "coll.src.chapters": {
   "en": "b1777cd77f1e",
   "tr": "070fc9790cb4",
+  "by": "claude-in-session"
+ },
+ "coll.src.dragon": {
+  "en": "4d27e12d38a5",
+  "tr": "dda50a72368c",
   "by": "claude-in-session"
  },
  "coll.src.festival": {
@@ -15414,9 +15439,9 @@
   "tr": "6033d19f489c",
   "by": "claude-in-session"
  },
- "growth.spec.useTechniqueOwn": {
-  "en": "0bb82f12f4e7",
-  "tr": "75fd1f2fe20a",
+ "growth.spec.useTechniqueBoth": {
+  "en": "f91674506bb7",
+  "tr": "d462949cded2",
   "by": "claude-in-session"
  },
  "growth.spec.weapon.archery": {
@@ -16640,8 +16665,8 @@
   "by": "claude-in-session"
  },
  "inventory.cape.title": {
-  "en": "838ab1aae12b",
-  "tr": "af1478fca029",
+  "en": "cd250f3b92e7",
+  "tr": "8e1ee6b33873",
   "by": "claude-in-session"
  },
  "inventory.quest.item": {
@@ -20072,6 +20097,16 @@
  "menu.audio.monsterVolumeNote": {
   "en": "5f135fa9ad51",
   "tr": "5853febf861f",
+  "by": "claude-in-session"
+ },
+ "menu.autoUpdates.name": {
+  "en": "1e138bf814eb",
+  "tr": "971e42d2484b",
+  "by": "claude-in-session"
+ },
+ "menu.autoUpdates.note": {
+  "en": "4541de510f7f",
+  "tr": "bccf4e1d57cd",
   "by": "claude-in-session"
  },
  "menu.begin.blurb": {
@@ -25064,6 +25099,56 @@
   "tr": "c20aee75a4d1",
   "by": "claude-in-session"
  },
+ "monument.count": {
+  "en": "4b14913453aa",
+  "tr": "81f89ad27df5",
+  "by": "claude-in-session"
+ },
+ "monument.row.flowers": {
+  "en": "de433a3a3afb",
+  "tr": "fbfb0caf1e61",
+  "by": "claude-in-session"
+ },
+ "monument.row.read": {
+  "en": "677735560db9",
+  "tr": "841df4084de8",
+  "by": "claude-in-session"
+ },
+ "monument.steal": {
+  "en": "ac6702cfc6a6",
+  "tr": "d9079f8914a2",
+  "by": "claude-in-session"
+ },
+ "monument.stewart.laid": {
+  "en": "a08c1d74b0cd",
+  "tr": "38e0032e583b",
+  "by": "claude-in-session"
+ },
+ "monument.stewart.name": {
+  "en": "4d088ced2d4d",
+  "tr": "4d088ced2d4d",
+  "by": "claude-in-session"
+ },
+ "monument.stewart.read": {
+  "en": "89fc7ab6af45",
+  "tr": "594229c0b9d1",
+  "by": "claude-in-session"
+ },
+ "monument.stewart.title": {
+  "en": "b8eabbcc9e8d",
+  "tr": "bc87f4ab5abc",
+  "by": "claude-in-session"
+ },
+ "monument.stewart.voice": {
+  "en": "ae6918d79af0",
+  "tr": "789a81936a3a",
+  "by": "claude-in-session"
+ },
+ "monument.travelers": {
+  "en": "0c52cabb8d6b",
+  "tr": "f2d6cf948392",
+  "by": "claude-in-session"
+ },
  "naval.class.fishingSkiff": {
   "en": "7038dbd7a355",
   "tr": "344a2e6b9971",
@@ -26864,6 +26949,26 @@
   "tr": "bc0e4001e47c",
   "by": "claude-in-session"
  },
+ "net.update.appBanner": {
+  "en": "828450b15581",
+  "tr": "954902b689df",
+  "by": "claude-in-session"
+ },
+ "net.update.appBody": {
+  "en": "e81e53388700",
+  "tr": "7dfef4b12130",
+  "by": "claude-in-session"
+ },
+ "net.update.appBuild": {
+  "en": "05017b1922f5",
+  "tr": "028ca07baa28",
+  "by": "claude-in-session"
+ },
+ "net.update.appHold": {
+  "en": "98aca0313218",
+  "tr": "371beae2a87b",
+  "by": "claude-in-session"
+ },
  "net.update.banner": {
   "en": "134e714f0b6f",
   "tr": "29eba1b68672",
@@ -26877,6 +26982,11 @@
  "net.update.build": {
   "en": "f1068141ad9f",
   "tr": "84d19b174062",
+  "by": "claude-in-session"
+ },
+ "net.update.buildReady": {
+  "en": "b489ad1935f5",
+  "tr": "45bd80d15a2b",
   "by": "claude-in-session"
  },
  "net.update.button": {
@@ -26897,6 +27007,16 @@
  "net.update.reloading": {
   "en": "ea3678c2b08b",
   "tr": "e5c61e3a1d54",
+  "by": "claude-in-session"
+ },
+ "net.update.restartButton": {
+  "en": "84c07ca92acc",
+  "tr": "1bf8a349d510",
+  "by": "claude-in-session"
+ },
+ "net.update.restarting": {
+  "en": "f3d4bca3a858",
+  "tr": "265ae2250650",
   "by": "claude-in-session"
  },
  "net.update.saving": {
@@ -33259,6 +33379,11 @@
   "tr": "e0a9fe9ded08",
   "by": "claude-in-session"
  },
+ "pvp.evade": {
+  "en": "3ad2db0403c9",
+  "tr": "c2b6833cfaee",
+  "by": "claude-in-session"
+ },
  "pvp.flag.level": {
   "en": "64776e968136",
   "tr": "073146ed8d21",
@@ -33369,11 +33494,6 @@
   "tr": "4b0816bbd5e9",
   "by": "claude-in-session"
  },
- "pvp.kit.cure": {
-  "en": "741ccd1eaaed",
-  "tr": "da395f9022ff",
-  "by": "claude-in-session"
- },
  "pvp.kit.damage": {
   "en": "7bf6d1d3a58a",
   "tr": "d9673c572606",
@@ -33452,6 +33572,11 @@
  "pvp.kit.reflect": {
   "en": "11a5b905dd43",
   "tr": "798b01700ee8",
+  "by": "claude-in-session"
+ },
+ "pvp.kit.regen": {
+  "en": "b04c991e58e7",
+  "tr": "541d8701aa09",
   "by": "claude-in-session"
  },
  "pvp.kit.resist": {
@@ -38579,9 +38704,9 @@
   "tr": "e08a23a88324",
   "by": "claude-in-session"
  },
- "sea.wild.deathHold": {
-  "en": "ffab1c13da5b",
-  "tr": "f64c44489ad1",
+ "sea.wild.deathRise": {
+  "en": "29d9b075a86b",
+  "tr": "69ef6211e1bf",
   "by": "claude-in-session"
  },
  "sea.wild.deeper": {
@@ -40929,6 +41054,11 @@
   "tr": "7874218a12c6",
   "by": "claude-in-session"
  },
+ "technique.noSignature": {
+  "en": "512147f4746c",
+  "tr": "0a51ed26ed78",
+  "by": "claude-in-session"
+ },
  "timers.at": {
   "en": "ed220995fa6d",
   "tr": "926c970f3762",
@@ -41152,6 +41282,11 @@
  "town.econ.trend.rising": {
   "en": "26b01983c6f4",
   "tr": "e119b36f703a",
+  "by": "claude-in-session"
+ },
+ "town.home.trader": {
+  "en": "e4224318b32c",
+  "tr": "359216432aaf",
   "by": "claude-in-session"
  },
  "town.panel.bounty": {

@@ -228,6 +228,9 @@ export const ITEM_FIELDS = Object.freeze({
   // APPEARANCES (bible/04-Characters/Wardrobe.md): the look a worn piece is drawn in (net/appearanceLaw.js) - `{ t, m, v }`, a
   // look there is, or absent. The WEARER's mark (net/realm/realmTradeLaw.js RECEIVER_MARKS): stripped off the wire
   appearance: rec(validAppearanceField),
+  // GLOW-SET (bible/05-Combat/Weapon-Glow.md law 9): a staff's pick of glow, one of the wire's words (net/wire.js
+  // LOOK_GLOW_RE, test/systems/glowset.test.js holds the two equal). The piece's own, so it rides a trade
+  glowSet: oneOf(['fire1', 'fire2', 'fire3', 'frost1', 'frost2', 'frost3', 'shock1', 'shock2', 'shock3', 'arcane2', 'brand2', 'edge2', 'gilded2']),
 });
 
 /** The declared names, and those of one kind. */

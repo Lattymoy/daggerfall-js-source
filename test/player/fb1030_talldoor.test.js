@@ -1,4 +1,4 @@
-// FIELD BUGS 2026-10-30 TALL-DOOR (bible/01-Overview/bugs/Field-Bugs-2026-10-30.md section 6): Torval's castle - "on
+// FIELD BUGS 2026-10-30b TALL-DOOR (bible/01-Overview/bugs/Field-Bugs-2026-10-30b.md section 6): Torval's castle - "on
 // exiting the place it teleports you in the air on one or both of the doors". DFU's way out stands the body's centre at
 // the lowest dungeon door's centre (StreamingWorld.PositionPlayerToDungeonExit, RepositionPlayer); the Mane's palace door
 // is 9 m tall, so its centre less half a body stood the feet 3.6 m over the plaza.

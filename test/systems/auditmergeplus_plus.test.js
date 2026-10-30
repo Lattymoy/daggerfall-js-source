@@ -114,7 +114,7 @@ test('AUDIT MERGE-PLUS B1 the struck point rides the mode\'s own law, by source:
   assert.match(W, /let onlineToScene = \(p\) => \[p\.x, p\.y, p\.z\];\s+let sceneToOnline = campToWire;/, 'declared beside the pose\'s own law');
   assert.match(W, /setSplashObserver\(\(bloodIndex, pos, hit\) => \{ peerFxPlayer\.splashed\(pos\); if \(hit\?\.fromPlayer\) noteMyBlow\(pos, bloodIndex, hit, \(q\) => sceneToOnline\(q\)\); \}\);/, 'my blow goes out through the law of the frame it was struck in');
   assert.ok(!/noteMyBlow\([^;]*campToWire/.test(W), 'no blow of mine is mapped by the overworld\'s law alone');
-  assert.match(frame, /\(p\) => \[p\.x, shedY \? indoorSceneY\(p, mode === 'interior' && modes\?\.interiorCtx, state\.compensation\[1\]\) : p\.y, p\.z\];\s*sceneToOnline = nativeFrame \? campToWire : \(q\) => \[q\[0\], shedY \? q\[1\] - state\.compensation\[1\] : q\[1\], q\[2\]\];$/, 'written each frame, beside its inverse');   // PIN MOVED (INDOOR-FLOOR, FIELD BUGS 2026-10-30): over the room's floor where both say one
+  assert.match(frame, /\(p\) => \[p\.x, shedY \? indoorSceneY\(p, mode === 'interior' && modes\?\.interiorCtx, state\.compensation\[1\]\) : p\.y, p\.z\];\s*sceneToOnline = nativeFrame \? campToWire : \(q\) => \[q\[0\], shedY \? q\[1\] - state\.compensation\[1\] : q\[1\], q\[2\]\];$/, 'written each frame, beside its inverse');   // PIN MOVED (INDOOR-FLOOR, FIELD BUGS 2026-10-30b): over the room's floor where both say one
   assert.equal((W.match(/\bsceneToOnline =/g) ?? []).length, 2, 'the declaration and the frame, nowhere else');
 });
 

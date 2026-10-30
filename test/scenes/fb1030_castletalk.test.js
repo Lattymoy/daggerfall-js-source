@@ -1,4 +1,4 @@
-// FIELD BUGS 2026-10-30 CASTLE-TALK (bible/01-Overview/bugs/Field-Bugs-2026-10-30.md section 1): "the Queen of
+// FIELD BUGS 2026-10-30b CASTLE-TALK (bible/01-Overview/bugs/Field-Bugs-2026-10-30b.md section 1): "the Queen of
 // Daggerfall, and some of the other Courtesans, having strange hit-boxes for interacting/talking to them". Every person
 // in Castle Daggerfall (S0000160.RDB) carries a Dialogue action; its relay took the person's own box, came first in the
 // target list and won every tie within its 3.2 m - a press there talked to no one and named no one.

@@ -21,7 +21,7 @@ import { COLUMN_GLSL } from './columnGlsl.js';   // DW-F: the water column's sha
 // this is already guaranteed - the lines stand where they read as the rule.
 import { buildProgram, startPrograms, parallelCompile } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link; SHADER-STALL: and a start that never waits
 import { realWindowsGlsl, RW_MAIN_DERIVS, RW_MAIN_CUTOUT, RW_MAIN_GLASS, RW_MAIN_ROOM, GLASS_NONE, GLASS_EXTERIOR, GLASS_INTERIOR, winModeFor, roomLightFor, sphereNdcRect, cropProjection, viewTargetSize, viewSkyFrom, viewRays, VIEW_BG_VS, VIEW_BG_FS, VIEW_PANES_MAX, VIEW_PANE_UNIT, VIEW_PANE_VS, VIEW_PANE_FS } from './realWindows.js';   // RW1: the real windows - the rooms, the glass, the view out
-import { windowLightGlsl, WindowLightPass, windowLightOn, windowAperturesOf, WL_MASK_UNIT, WL_UBO_BINDING, WL_GRID_ROW, WL_LIST_BASE, WL_OUTSIDE_EVERY_MS } from './windowLight.js';   // WL1: the windows' light - a lit room's out onto the street, the sun's in onto a floor
+import { windowLightGlsl, WindowLightPass, windowLightOn, windowAperturesOf, WL_MASK_UNIT, WL_UBO_BINDING, WL_FAR_UBO_BINDING, WL_GRID_ROW, WL_LIST_BASE, WL_FAR_GRID_ROW, WL_FAR_LIST_BASE, WL_OUTSIDE_EVERY_MS } from './windowLight.js';   // WL1: the windows' light - a lit room's out onto the street, the sun's in onto a floor
 import { MESH_ALPHA_GLSL, samplerParams, samplerKey } from './meshAlpha.js';   // POI-2: a translucent mesh draw, and a texture's own wrap and filter
 import { frameTarget, setFrameTarget } from './renderTarget.js';   // RW1: the view out's pass hands the frame target back as it found it (EL4's restore)
 import { CLIP_SENTINEL } from '../world/terrain/terrainSurface.js';   // FAR-CLIP1: the byte the terrain's clip variant discards - the TileMap format's module, already in this file's closure (waterCorners.js)
@@ -2879,14 +2879,16 @@ export class Renderer {
       decode: this._lane ? (c) => this._lane.decode3(c, [0, 0, 0]) : null,
     });
     if (!n) return false;
-    const gl = this.gl, sp = this._wl.space;
-    this._activeTexture(gl.TEXTURE0 + CLUSTER_GRID_UNIT);
-    gl.bindTexture(gl.TEXTURE_2D, this._clusterTex.grid);
-    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, WL_GRID_ROW, CLUSTER_GRID_W, CLUSTER_GRID_H, gl.RG_INTEGER, gl.UNSIGNED_SHORT, sp.grid);
-    if (sp.rows > 0) {
-      this._activeTexture(gl.TEXTURE0 + CLUSTER_LIST_UNIT);
-      gl.bindTexture(gl.TEXTURE_2D, this._clusterTex.list);
-      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, WL_LIST_BASE / CLUSTER_LIST_W, CLUSTER_LIST_W, sp.rows, gl.RED_INTEGER, gl.UNSIGNED_BYTE, sp.list.subarray(0, sp.rows * CLUSTER_LIST_W));
+    const gl = this.gl;
+    for (const { sp, row, base } of [{ sp: this._wl.space, row: WL_GRID_ROW, base: WL_LIST_BASE }, { sp: this._wl.farSpace, row: WL_FAR_GRID_ROW, base: WL_FAR_LIST_BASE }]) {   // LIGHT-REACH: and the far rows' band
+      this._activeTexture(gl.TEXTURE0 + CLUSTER_GRID_UNIT);
+      gl.bindTexture(gl.TEXTURE_2D, this._clusterTex.grid);
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, row, CLUSTER_GRID_W, CLUSTER_GRID_H, gl.RG_INTEGER, gl.UNSIGNED_SHORT, sp.grid);
+      if (sp.rows > 0) {
+        this._activeTexture(gl.TEXTURE0 + CLUSTER_LIST_UNIT);
+        gl.bindTexture(gl.TEXTURE_2D, this._clusterTex.list);
+        gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, base / CLUSTER_LIST_W, CLUSTER_LIST_W, sp.rows, gl.RED_INTEGER, gl.UNSIGNED_BYTE, sp.list.subarray(0, sp.rows * CLUSTER_LIST_W));
+      }
     }
     this._activeTexture(gl.TEXTURE0);
     const vp = this._wlViewport ?? this._worldViewportPx ?? [0, 0, this.canvas.width, this.canvas.height];
@@ -3462,8 +3464,10 @@ export class Renderer {
    *  integer sampler there is an INVALID_OPERATION at every draw). */
   _wlBindProgram(p) {
     const gl = this.gl;
-    const bi = gl.getUniformBlockIndex?.(p, 'WinLights');
-    if (typeof bi === 'number' && bi !== gl.INVALID_INDEX) gl.uniformBlockBinding(p, bi, WL_UBO_BINDING);
+    for (const [block, point] of [['WinLights', WL_UBO_BINDING], ['WinFar', WL_FAR_UBO_BINDING]]) {   // LIGHT-REACH: and the far rows'
+      const bi = gl.getUniformBlockIndex?.(p, block);
+      if (typeof bi === 'number' && bi !== gl.INVALID_INDEX) gl.uniformBlockBinding(p, bi, point);
+    }
     for (const [name, unit] of [['uWinMask', WL_MASK_UNIT], ['uClusterGrid', CLUSTER_GRID_UNIT], ['uClusterList', CLUSTER_LIST_UNIT]]) {
       const loc = gl.getUniformLocation(p, name);
       if (!loc) continue;

@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs';
 
 import {
   duelAttackerOf, duelWeaponOf, duelStub, resolveDuelStrike, duelBlowPlausible, duelSpellOf, duelSpellFromWire, duelSwingOf,
-  DUEL_SPELL_TYPES, DUEL_MELEE_SLACK_M, DUEL_POS_SLACK_M,
+  DUEL_SPELL_TYPES, DUEL_MELEE_SLACK_M, DUEL_POS_SLACK_M, PVP_SKILL_TOP,
 } from '../../src/combat/duelCombat.js';
 import { calculateAttackDamage, setPlayerAttackHook, reportPlayerAttack } from '../../src/combat/formulas.js';
 import { installPcaao, uninstallPcaao } from '../../src/combat/pcaao.js';
@@ -90,8 +90,9 @@ test('DUEL1 the sheet the wire carries: level and attributes clamped at the hone
   assert.deepEqual(Object.keys(SWING_MODS).sort(), [...DUEL_SWINGS].sort(), 'the wire\'s swings are the formula\'s');
 });
 
-test('PVP-SCALE (the PvP rework, 2026-10-28: "damage scales with skill + gear"): the sheet carries a skill past 100 (DUEL_SKILL_MAX 1000), and a blow takes the weapon\'s climb and gear percent (`wp`) on top of its roll (mutants: the old 100 clamp; `wp` unread)', () => {
-  assert.equal(DUEL_SKILL_MAX, 1000);
+test('PVP-SCALE (the PvP rework, 2026-10-28: "damage scales with skill + gear"): the sheet carries a skill past 100 (PVP_SKILL_TOP 1100: a mastered 200 and a full geared set), and a blow takes the weapon\'s climb and gear percent (`wp`) on top of its roll (mutants: the old 100 clamp; `wp` unread)', () => {
+  assert.equal(PVP_SKILL_TOP, 1100);
+  assert.equal(duelAttackerOf(mkPlayer({ skillOverrides: { [SKILLS.HandToHand]: 1075 } }), null).sk[1], 1075, 'a geared top past 1000 stands');
   const fists = duelAttackerOf(mkPlayer({ skillOverrides: { [SKILLS.HandToHand]: 600 } }), null);
   assert.equal(fists.sk[1], 600, 'skill and gear, unclamped at 100');
   assert.equal(fists.wp, 0, 'a fist: its roll reads the skill whole, no percent on top');

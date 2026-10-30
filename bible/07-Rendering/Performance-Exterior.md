@@ -1248,6 +1248,9 @@ one-a-frame queue (no Worker, `?terrainthread=off`, a dead one) as it
 always was. Demotions stay inline (0.21 ms each, and a late one would
 leave stride-1 geometry in the far ring).
 
+SUPERSEDED at OW-DEMOTE (2026-10-30, `Performance-Priority.md` OW-WIDE): past the Bay a crossing's demotions are 30-60
+ms, so with the worker up they go there too. The finer surface stands for one round trip.
+
 What moves on the screen: a promoted pixel keeps its stride-4 surface for
 one worker round trip instead of up to five frames in the queue - the
 same heightfield, 819 m or more away.

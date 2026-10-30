@@ -1,12 +1,12 @@
-// CAPE-TOGGLE (2026-10-29, the owner: "add a cape/helmet toggle option in the inventory for people", seen by everyone,
-// the helmet later; bible/04-Characters/Cape-Toggle.md): THE CAPE SWITCH'S PINS - the law (the equip table as the body
-// is drawn), the look (the cloak left out), the auras (CAPE-AURA, 2026-10-30: drawn whatever the switch says), the
-// drawers' one door, and the pack's switch itself.
+// CAPE-TOGGLE (2026-10-29, the owner: "add a cape/helmet toggle option in the inventory for people", then "Worn cloaks
+// plus any aura", seen by everyone, the helmet later; bible/04-Characters/Cape-Toggle.md): THE CAPE SWITCH'S PINS - the
+// law (the equip table as the body is drawn), the look (the cloak left out, `hc` said, kept by the wire), the auras (mine
+// and a peer's), the drawers' one door, and the pack's switch itself.
 import '../modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { CAPE_PREF, CAPE_SLOTS, capeShown, setCapeShown, drawnEquipTable } from '../../src/systems/capeShown.js';
+import { CAPE_PREF, CAPE_SLOTS, capeShown, setCapeShown, drawnEquipTable, lookCapesHidden } from '../../src/systems/capeShown.js';
 import { getPref } from '../../src/systems/uiPrefs.js';
 import { equipItem, equipTableOf } from '../../src/systems/equip.js';
 import { mintCondition, setItemFields } from '../../src/systems/item/itemTemplates.js';
@@ -50,32 +50,36 @@ test('CAPE-TOGGLE the law: shown by default; hidden, the player\'s table as draw
   assert.equal(drawnEquipTable(foe, false), equipTableOf(foe), 'a foe\'s cloak is its own');
   const bare = hero();
   assert.equal(drawnEquipTable(bare, false), equipTableOf(bare), 'no cloak: nothing to take');
+  assert.deepEqual([lookCapesHidden({ hc: 1 }), lookCapesHidden({ hc: true }), lookCapesHidden({}), lookCapesHidden(null)], [true, false, false, false]);
 });
 
-test('CAPE-TOGGLE the look: hidden, my look leaves the cloak out - shown, the cloak rides it; neither says `hc` (CAPE-AURA); a foe\'s look keeps its cloak whatever my switch says; the wire keeps no `hc`, and the hidden look reaches a room on the Bay and past it without its cloak (mutants: the cloak sent while hidden; `hc` said again; the wire keeping it)', () => {
+test('CAPE-TOGGLE the look: hidden, my look leaves the cloak out and says `hc` 1 - shown, the cloak and no `hc`; a foe\'s look keeps its cloak whatever my switch says; the wire keeps `hc` 1 and nothing else, and the session answers a look by id, on the Bay and past it (mutants: the cloak sent while hidden; `hc` never said; `hc` on a foe; the wire dropping it; any `hc` kept)', () => {
   const e = hero(), c = cloak();
   e.items.push(c); equipItem(e, c);
   const shown = withCape(true, () => composeLook(e));
   assert.equal(cloakItems(shown).length, 1, 'shown: the cloak rides the look');
+  assert.equal('hc' in shown, false, 'and no `hc` - a look keeps the bytes it had');
   const hidden = withCape(false, () => composeLook(e));
-  assert.deepEqual([cloakItems(hidden).length, 'hc' in hidden, 'hc' in shown], [0, false, false], 'hidden: no cloak, and no `hc` either way');
+  assert.deepEqual([cloakItems(hidden).length, hidden.hc], [0, 1], 'hidden: no cloak, `hc` said');
   const foe = { ...hero(), isPlayer: false, items: [] }, fc = cloak();
   foe.items.push(fc); equipItem(foe, fc);
   const fl = withCape(false, () => composeLook(foe, { eotbSet: null }));
-  assert.equal(cloakItems(fl).length, 1, 'a foe is drawn as it is dressed');
-  assert.equal('hc' in validLook({ ...hidden, hc: 1 }), false, 'an older build\'s `hc` is not passed on');
-  assert.equal(RELAY_VERSION, 'world293', 'the relay that drops it');   // PIN MOVED: world293, FIELD BUGS 2026-10-30 (CAPE-AURA: validLook keeps no `hc`)
-  // TAMRIEL-WIDE: the switch reads no place - a room past the Bay (Whiterun's cell) is told the look as the Bay's is
+  assert.deepEqual([cloakItems(fl).length, 'hc' in fl], [1, false], 'a foe is drawn as it is dressed');
+  assert.equal(validLook(hidden).hc, 1, 'the wire keeps it');
+  assert.deepEqual([validLook({ ...hidden, hc: 2 }).hc, validLook({ ...hidden, hc: '1' }).hc, 'hc' in validLook(shown)], [undefined, undefined, false], 'one word, 1, or nothing');
+  assert.equal(RELAY_VERSION, 'world295', 'the relay that keeps it');   // PIN MOVED: world295, FIELD BUGS 2026-10-30b (INDOOR-FLOOR: `fy` kept in a pose); PIN MOVED: world293, PVP-VITALS and WYRM-RIDER (the relay owns a flagged fighter pools; the dragon riders titles, world294 on its branch); world292, DELVE II (DLV3, the dungeon encounters kept by their room; world284, world288 then world289 on its branch, renumbered past world284 to world291 on main at the merges); PIN MOVED: world291, GILDED-GLOW and DECOR-ROOMY (gilded2 on a look; world286, world287, world289 then world290 on its branch, renumbered past world286 to world290 of main at the merges); PIN MOVED: world288, DRAGON (the pose keeps rd 3, a rider on the Dwarven Dragon, and the fight of the Dwarven Dragon; world281, world283, world284, world285, world286 then world287 on its branch, renumbered past world281 to world287 at the merges of main); PIN MOVED: world287, FRONTS (world286 on its branch, renumbered past world286 of FB1029 GROUND at the merge of main); world286, FB1029 GROUND (world284 on its branch, renumbered past world284 and world285 on main at the merge)
+  // TAMRIEL-WIDE: the switch reads no place - a room past the Bay (Whiterun's cell) answers as the Bay's does
   for (const room of ['world:2,12', worldRoom(1820, -300)]) {
     const { FakeWS, sockets } = fakeSocketClass();
     const s = new OnlineSession({ url: 'wss://relay.test', name: 'Mac', id: 'mac-0001', secret: 'secret-of-mac-0001', WebSocketImpl: FakeWS, now: () => 1000, look: hidden });
-    s.join(room, { x: 1, y: 2, z: 3, yaw: 0, pitch: 0, mv: 0 }); sockets[0].open();
-    const hello = sockets[0].sent.map((/** @type {string} */ m) => JSON.parse(m)).find((/** @type {any} */ m) => m.t === 'hello');
-    assert.deepEqual([cloakItems(hello.look).length, 'hc' in hello.look], [0, false], room);
+    const pose = { x: 1, y: 2, z: 3, yaw: 0, pitch: 0, mv: 0 };
+    s.join(room, pose); sockets[0].open();
+    sockets[0].receive({ t: 'welcome', id: 'mac-0001', peers: [{ id: 'peer-0002', name: 'Ember', look: hidden, pose }, { id: 'peer-0003', name: 'Ash', look: shown, pose }], host: null, world: null });
+    assert.deepEqual([lookCapesHidden(s.lookOf('peer-0002')), lookCapesHidden(s.lookOf('peer-0003')), lookCapesHidden(s.lookOf('mac-0001')), s.lookOf('nobody')], [true, false, true, null], room);
   }
 });
 
-test('CAPE-AURA the auras: my aura is drawn whether my capes are shown or hidden, and a peer\'s is drawn even when an older build\'s look says `hc`; their Aura Armory pieces stay (mutants: my aura hidden with the cape; a peer\'s hidden by `hc`)', () => {
+test('CAPE-TOGGLE the auras (AURA-STAYS, 2026-10-30, mob: "it saposta help show the aura not tuen it off"): the switch never hides an aura - mine stays gathered while my cape is hidden, and a peer whose look says `hc` wears theirs and their Aura Armory pieces; the token still says mine, so nothing is said again (mutants: my aura dropped while hidden; a hidden peer\'s aura dropped)', () => {
   const was = globalThis.localStorage;
   const m = new Map(), st = { getItem: (/** @type {string} */ k) => m.get(k) ?? null, setItem: (/** @type {string} */ k, /** @type {string} */ v) => m.set(k, String(v)), removeItem: (/** @type {string} */ k) => m.delete(k) };
   keepSession(st, { id: 'u1', name: 'Me', kind: 'linked', sessionId: 's1', secret: 'x' });
@@ -83,22 +87,25 @@ test('CAPE-AURA the auras: my aura is drawn whether my capes are shown or hidden
   globalThis.localStorage = /** @type {any} */ (st);
   try {
     let rehellos = 0;
-    const looks = /** @type {Record<string, any>} */ ({ p2: { hc: 1, items: [] }, p3: { items: [] } });   // p2 an older build hiding its capes
+    const looks = /** @type {Record<string, any>} */ ({ p2: { items: [] }, p3: { items: [] } });
     const online = { rehello: () => { rehellos++; return true; }, auraOf: () => 'dagonfire', armoryOf: (/** @type {string} */ id) => (id === 'p2' ? '000b0' : null), lookOf: (/** @type {string} */ id) => looks[id] ?? null };
     const host = createAuraHost({
       renderer: { gl: null }, online: () => online, travelActive: () => false, quiet: () => false, camYaw: () => 0,
       player: () => ({ feetAt: () => [1, 0, 2], bodyFeetAt: () => [1, 0, 2], bodyYawFor: () => 0, height: 1.8, riding: false }),
       spawned: () => true, beast: () => false, veiled: () => false, toScene: (/** @type {any} */ s) => s.at,
-      walkers: () => null, riders: () => null, bodies: () => null,
+      sprites: () => [], bodies: () => null,
     });
     host.issued({ aura: 'eternal' });
     const seen = [{ id: 'p2', shown: { at: [5, 0, 5] } }, { id: 'p3', shown: { at: [6, 0, 6] } }];
     withCape(true, () => host.frame(seen));
     assert.equal(host.counts().auras, 3, 'shown: mine and both peers\'');
+    looks.p2 = { hc: 1, items: [] };
+    withCape(true, () => host.frame(seen));
+    assert.equal(host.counts().auras, 3, 'p2 hides their cloak, never their aura');
+    assert.deepEqual(host.armoryWearersNow().map((w) => w.id), ['p2'], 'and keeps their pieces');
     withCape(false, () => host.frame(seen));
-    assert.equal(host.counts().auras, 3, 'hidden: still mine and both peers\'');
-    assert.deepEqual(host.armoryWearersNow().map((w) => w.id), ['p2'], 'and p2 keeps their pieces');
-    assert.equal(rehellos, 0, 'nothing to say again');
+    assert.equal(host.counts().auras, 3, 'my cape hidden: my aura still on');
+    assert.equal(rehellos, 0, 'the token says my aura still, as it is worn: nothing to say again');
   } finally {
     if (was === undefined) delete globalThis.localStorage; else globalThis.localStorage = was;
   }
@@ -143,7 +150,7 @@ test('CAPE-TOGGLE the pack: the Cloaks panel\'s cell holds the switch - an eye, 
       assert.ok(sw(), 'the switch is drawn');
       assert.equal(sw().style.gridArea, panel.style.gridArea, 'in the Cloaks panel\'s own cell');
       assert.deepEqual([sw().getAttribute('aria-pressed'), sw().getAttribute('aria-label'), sw().querySelectorAll('path').length], ['true', 'Show cape', 1]);
-      assert.equal(sw().title, 'Shows or hides your cloak. Other players see the same.');
+      assert.match(sw().title, /Your aura stays on/);
       const cloakWorn = () => worn.at(-1).some((/** @type {any} */ p) => p.templateIndex === 154);
       assert.ok(cloakWorn(), 'the body wears the cloak');
       sw().onclick({});

@@ -1,4 +1,4 @@
-// FIELD BUGS 2026-10-30 WALL-TOUCH and YARD-DECK (bible/01-Overview/bugs/Field-Bugs-2026-10-30.md section 2).
+// FIELD BUGS 2026-10-30b WALL-TOUCH and YARD-DECK (bible/01-Overview/bugs/Field-Bugs-2026-10-30b.md section 2).
 // "Trying to place lighting and other objects on the outside of home ... Outside wall is considered in the house" and
 // "This area is considered inside the house instead of yard ... Please mark it as yard area" (a flat roof, a balcony).
 import { test } from 'node:test';

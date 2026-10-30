@@ -1,6 +1,6 @@
-# AUDIT FB1030 - FIELD BUGS 2026-10-30 read cold, 2026-10-30
+# AUDIT FB1030 - FIELD BUGS 2026-10-30b read cold, 2026-10-30
 
-The owner: *"Audit this"*, of FIELD BUGS 2026-10-30 (`../bugs/Field-Bugs-2026-10-30.md`) at `6a38e6c1e` against its
+The owner: *"Audit this"*, of FIELD BUGS 2026-10-30b (`../bugs/Field-Bugs-2026-10-30b.md`) at `6a38e6c1e` against its
 base `b793e26e1`. Five cold lanes read the change in a frozen worktree, each given the files and the reports, never a
 conclusion. Each finding was reproduced with a probe on the real code and the freeware's data, and checked again here
 before it was fixed.
@@ -8,7 +8,7 @@ before it was fixed.
 | Lane | Read | Found |
 |---|---|---|
 | ZONE | ZONE-BANK, SPAWN-PLATE, RECORDS-SAID: every bank window, every plate, every shelf | 3 |
-| NET | INDOOR-FLOOR and CAPE-AURA: every reader of a peer's height, the wire, a redeploy | 5 |
+| NET | INDOOR-FLOOR and CAPE-AURA (withdrawn at the merge for main's AURA-STAYS): every reader of a peer's height, the wire, a redeploy | 5 |
 | DOOR | CASTLE-TALK and TALL-DOOR: every person flat in the RDBs and the copies, every way out | 3 |
 | YARD | WALL-TOUCH and YARD-DECK: every home model's walls, decks and stairs | 8 |
 | RECORD | the record against the code, the suite and the bible's rules | 13 |
@@ -29,7 +29,7 @@ old words in `06-Systems/Online-Arc.md`, and a probe run said to be recorded tha
 floating, and Resurrect could not pick it. Both keep it (`remotePlayers.js` addCorpse, `indoorFloor.js`
 keepIndoorFloor). **N2.** The point a peer's blow lands was drawn off the floor; it rides the pose's `fy`
 (`peerFx.js`). **N3.** `poseChanged` was blind to `fy`, so a standing peer kept the old height through a relay
-redeploy; world293 is re-hashed in place, undeployed. **N4, open.** Foes indoors and the zone's remains are still their
+redeploy; world293 was re-hashed in place, undeployed (world295 since the merge of main). **N4, open.** Foes indoors and the zone's remains are still their
 owner's height; a peer and its foe can now disagree by the rooms' difference. Recorded in the field bugs' section 5.
 **N5.** A comment moved off its line in `online.js` lerpPose.
 

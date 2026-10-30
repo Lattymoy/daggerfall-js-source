@@ -88,7 +88,7 @@ ESCORTING FACES - the quest escorts' portrait column, FE1 - and the CREDITS TABL
 - and SHADER-EASE GFX-BAR's ONE (`gfxPrepBar.js`: the boot menus' graphics bar and Fix stutter panel - `10-UI/Loading-Screens.md`);
 - and NOTICE-PANEL's ONE (`hud/townPanel.js`: the town's panel under the compass, its Notice Board and Bounty Board - `01-Overview/bugs/Field-Bugs-2026-10-29g.md`);
 - and PVP-HUD's ONE (`pvpHud.js`: the combat lock's ring, banner and last hits - `11-Multiplayer/PvP-Rework.md` PVP-HUD);
-467 modules
+470 modules
 live under `src/ui/`. Items still routed here are
 collected in `01-Overview/Port-Ledger.md` section C; scope in
 `01-Overview/Port-Doctrine.md` phase plan.

@@ -1,9 +1,9 @@
 // @ts-check
-// INDOOR-FLOOR (FIELD BUGS 2026-10-30, peers "falling through floor" indoors; the owner: "Room-relative height"): A POSE
+// INDOOR-FLOOR (FIELD BUGS 2026-10-30b, peers "falling through floor" indoors; the owner: "Room-relative height"): A POSE
 // INDOORS CARRIES ITS ROOM'S FLOOR. Rooms stand at each client's own town ground, so two copies whose ground differs
 // drew each other sunk or floating. `fy` is the sender's room origin in the wire's frame (net/wire.js validPose); a
 // reader indoors draws the peer as high over its own room. Without it, the wire's height as before. Not a DFU member.
-// bible/01-Overview/bugs/Field-Bugs-2026-10-30.md section 5.
+// bible/01-Overview/bugs/Field-Bugs-2026-10-30b.md section 5.
 
 /** The room's origin height in the wire's frame - the interior's parent origin less the floating origin `comp` - or
  *  null with no room (`ctx` falsy: outdoors). @param {any} ctx @param {number} comp */

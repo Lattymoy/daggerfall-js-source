@@ -3968,7 +3968,7 @@ export function createWorldModes(host) {
       // mode IS the merchant's collection, so the goods are already on
       // the shelf by now and `remoteItems.Clear()` (:1051) only drops
       // the window's view of them. The port stages into the window and
-      // lands them here, which is what makes a sold item buyable back.
+      // lands them here; SOLD-POOF: landSold shelves nothing, so it is gone.
       for (const it of staged) {
         const i = playerEntity.items.indexOf(it);
         if (i >= 0) playerEntity.items.splice(i, 1);
@@ -7186,7 +7186,7 @@ export function createWorldModes(host) {
     // 2026-10-16): measured from the BODY to the stone's box (searchReachFor), as the dungeon's searchables are.
     const graves = host.graveTargets?.() ?? [];
     graves.forEach((aabb, i) => targets.push({ key: `grave:${i}`, aabb, distance: RAY_DISTANCE, reach: searchReachFor(aabb, player.pos, player.eye[1]) }));
-    // LEFAY1 (scenes/lefayMonumentHost.js): the monument to Julian LeFay outside Privateer's Hold - both exterior hosts stand it
+    // LEFAY1 (scenes/lefayMonumentHost.js): the monuments - Julian LeFay's, Patrick Stewart's - both exterior hosts stand them
     // (their `monumentTargets`), its steps' box and its column's met at its stone, its reach a static NPC's beside the ray's
     for (const t of host.monumentTargets?.() ?? []) targets.push(t);
     // MERCHANT-YARDS (scenes/merchantYardsHost.js): every city's and town's Stable and Wagon Yard - the streaming host's
@@ -7725,7 +7725,7 @@ export function createWorldModes(host) {
       if (_hitDist > _hitReach) { setMidScreenText(tooFarAwayText()); return true; }
       return host.activateGrave?.(graves[Number(key.split(':')[1])], getInteractionMode()) ?? true;
     }
-    if (typeof key === 'string' && key.startsWith('lefay:')) {   // LEFAY1: the monument - too far speaks the refusal; the plaque's lit row is the verb
+    if (typeof key === 'string' && key.startsWith('monument:')) {   // LEFAY1: a monument - too far speaks the refusal; the plaque's lit row is the verb
       if (_hitDist > _hitReach) { setMidScreenText(tooFarAwayText()); return true; }
       return host.activateMonument?.(key, getInteractionMode(), plaqueActionFor(key)) ?? true;
     }

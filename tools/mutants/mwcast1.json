@@ -2,8 +2,8 @@
   {
     "name": "MWCAST1-no-release-key",
     "file": "src/combat/fpArm.js",
-    "old": "    else if (upper === UPPER_BODY.Casting && attackType && action === `${attackType} release`) castReleased = true;",
-    "new": "    else if (upper === UPPER_BODY.Casting && attackType && action === `${attackType} stop`) castReleased = true;",
+    "old": "    else if (upper === UPPER_BODY.Casting && attackType && action === `${attackType} release`) {",
+    "new": "    else if (upper === UPPER_BODY.Casting && attackType && action === `${attackType} stop`) {",
     "tests": [
       "test/combat/mwcast1.test.js"
     ]

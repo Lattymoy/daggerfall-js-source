@@ -1,4 +1,4 @@
-// FIELD BUGS 2026-10-30 (bible/01-Overview/bugs/Field-Bugs-2026-10-30.md section 6) - TORVAL'S CASTLE, SEEN in the real
+// FIELD BUGS 2026-10-30b (bible/01-Overview/bugs/Field-Bugs-2026-10-30b.md section 6) - TORVAL'S CASTLE, SEEN in the real
 // game: the world host boots, jumps to the capital's pixel (`__tesaJump`), walks in through the palace's dungeon door,
 // shoots the halls and reads the exits, then leaves by the first exit and reads where the way out landed (feet against
 // the ground). Frame-synced on the shot-mode `__frame` counter, but for one wait before the first frame exists.

@@ -32,7 +32,7 @@
 // person at all, and the wheel then does nothing rather than pulling
 // the eye out of an invisible head.
 
-import { mwCamera, MW_UNITS_PER_METER, FOCAL_HEIGHT, PITCH_LIMIT } from './mwCamera.js';
+import { mwCamera, MW_UNITS_PER_METER, FOCAL_HEIGHT, PITCH_LIMIT, MAX_DISTANCE } from './mwCamera.js';
 import { fpArm } from '../combat/fpArm.js';
 import { eotbCamera } from './eyeOfTheBeholder/eotbCamera.js';
 import { eotbBody } from './eyeOfTheBeholder/eotbBody.js';
@@ -262,6 +262,9 @@ let pendingClicks = 0;
  * @returns {{eye:number[], thirdPerson:boolean, distance:number, look?:number[]}}
  */
 export function mwViewFrame({ fpEye, feet, yaw, pitch, heightScale = null, raycast = null, spherecast = null, eyeOverride = null, seaReach = 0, pivotFloor = null, ...state }) {
+  // DRAGON-POV: on a dragon (`dragon` the rider's seat over my feet, m) the camera turns about the seat, and the wheel reaches
+  // out past the foot's far end - a helm's reach wins
+  if (state.dragon > 0) { pivotFloor ??= feet[1] + state.dragon; seaReach ||= DRAGON_VIEW_REACH_M; }
   standInEdge({ fpEye, feet, yaw, pitch });   // BEAST-SELF: the view carried across the arm's stand-aside
   benchSeated = !!state.seated;   // WAGONS3: the host's word that the player drives from a wagon's bench, either lane
   // FLAGGED: Eye Of The Beholder has no sitting art - on that lane the driver's sprite stands on the bench's footboard, still (bible/06-Systems/Wagons.md WAGONS3).
@@ -329,8 +332,10 @@ export function mwViewFrame({ fpEye, feet, yaw, pitch, heightScale = null, rayca
   // height action) it rises under them: never a first-person eye inside its back. SINK_SLACK keeps a step's bob out.
   ownSink = fpEye && feet ? Math.max(0, RIDE_EYE_HEIGHT - (fpEye[1] - feet[1]) - SINK_SLACK) : 0;
   saddled = !!state.riding && stepOwnHorse(state.horse, feet, yaw, state.dt ?? 0);
-  mounted = !!state.riding && !saddled;
+  onDragon = !!state.dragon;   // DRAGON-POV: on a dragon the dragon is what third person shows (scenes/dragonViewHost.js)
+  mounted = !!state.riding && !saddled && !onDragon;
   if (mounted) { mwIntoHead(); pendingClicks = 0; }
+  const wasThird = mwCamera.thirdPerson();
   if (pendingClicks) {
     mwCamera.wheel(pendingClicks, { ready: fpArm.upperBodyReady() });
     pendingClicks = 0;
@@ -341,6 +346,8 @@ export function mwViewFrame({ fpEye, feet, yaw, pitch, heightScale = null, rayca
   // (MW-D25's law); a caller may still hand an explicit value.
   if (heightScale == null) heightScale = fpArm.raceHeightScale();
   mwCamera.update({ ready: fpArm.upperBodyReady() });
+  // DRAGON-POV: out of the head on a dragon the camera starts at the foot's far end - the closest ring stands inside its body
+  if (onDragon && !wasThird && mwCamera.thirdPerson()) mwCamera.restore({ firstPerson: false, baseDistance: MAX_DISTANCE });
   if (mwCamera.thirdPerson()) {
     if (!fpArm.setViewMode('third')) {
       // The body refused (or was never built): third person does not
@@ -539,6 +546,11 @@ function mwIntoHead() {
 // COATS3D: `mounted` is RIDE-POV's hold - in the saddle of no 3D horse (the cart's seat, or a horse the rig cannot draw
 // yet); astride the 3D horse (`saddled`) the body has a saddle to show, and the head is not held.
 let mounted = false;
+/** DRAGON-POV: the frame's word that I sit a dragon (the host's `dragon`) - no saddle hold, and no body of mine drawn in
+ *  third person: the dragon sprite with its rider is (scenes/dragonViewHost.js). */
+let onDragon = false;
+/** DRAGON-POV: how far the wheel reaches out on a dragon (m) - a few of its lengths. */
+export const DRAGON_VIEW_REACH_M = 40;
 
 // COATS3D (2026-10-11, the owner: "These are to be applied to horses for people using morrowind with the character
 // properly rigged when riding"; asked, "Yes, unlock it" for third person in the saddle, and "The 3D horse" for first
@@ -741,6 +753,7 @@ export function mwViewDrawBody(canvas, { proj, view, eye, feet, yaw, viewYaw = y
   // AUDIT CLIMB-ARC N1: the sprite lane's `yaw` is its QUAD's plane and its camera's (eotbBody.js) - the view's - never
   // the body's on the wall (CLIMB5 handed it the body's, and a hanging player looking along the wall saw the sprite
   // edge-on); the Morrowind body below turns to the wall (`yaw`, the body's)
+  if (onDragon && mwViewThirdPerson()) { spriteFigure = null; spriteFacing = null; return false; }   // DRAGON-POV: the dragon's sprite carries its rider
   if (eotbLane()) { const drawn = drawEotbBody(canvas, { proj, view, eye, feet, yaw: viewYaw, face }); spriteFigure = drawn ? eotbFigure() : null; spriteFacing = drawn ? eotbFacing() : null; return drawn; }   // AUDIT DEEP R-2: `face` - the travel view's basis for the quad; SERAPH-WINGS: the figure it drew kept for the aura on its back
   lastCamera = { proj, view, feet, yaw };   // COATS3D: the frame's camera, for the horse in first person (mwViewDrawSaddle)
   if (!mwCamera.thirdPerson()) return false;

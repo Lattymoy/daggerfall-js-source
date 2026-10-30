@@ -54,6 +54,7 @@ import {
   MINUTES_PER_DAY, DAYS_PER_MONTH, isFullMoonFromMinutes, isFullMoonNightFromMinutes,
 } from './gameDate.js';
 import { EQUIP_SLOTS, equipTableOf, unequipSlot } from './equip.js';
+import { isHandWraps } from '../characters/handWrapsIds.js';   // WERE-WRAPS
 import { spellRecordOfIndex } from './loot/loot.js';
 import { SKILLS } from './skills.js';
 import { WEAPON_MATERIALS } from '../characters/weapons.js';
@@ -356,8 +357,8 @@ export function morphSelf(entity, { force = false, nowMinutes = 0, refreshHead =
       return { ok: false, refused: ONCE_PER_DAY };
     }
     entry.isTransformed = true;
-    unequipSlot(entity, EQUIP_SLOTS.RightHand);
-    unequipSlot(entity, EQUIP_SLOTS.LeftHand);
+    // WERE-WRAPS (2026-10-30, the owner: "let them keep the wraps", "make them useful"): Hand Wraps stay on the claws
+    for (const slot of [EQUIP_SLOTS.RightHand, EQUIP_SLOTS.LeftHand]) if (!isHandWraps(equipTableOf(entity)[slot])) unequipSlot(entity, slot);
     entry.raceNameOverride = entry.infectionType === LYCANTHROPY_TYPES.Wereboar ? 'Wereboar' : 'Werewolf';
     // "// Initialise move sound timer" (:519-521), the third call site
     // - the wait restarts at every change INTO beast form, never

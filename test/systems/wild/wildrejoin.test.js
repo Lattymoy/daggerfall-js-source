@@ -42,7 +42,7 @@ function fallen(now = 10_000) {
 test('WILD-REJOIN THE REFEREE\'S WORD: a fallen still down is told how long it has left to lie and, where its fall was refereed, the remains\' id and where the body lies; a fighter up, unknown, or within WILD_DOWN_SAY_MIN_MS of rising is told nothing; a fall carried from another room says its time alone (mutants: the word to a fighter up; the margin unread; the body\'s place dropped)', () => {
   const { st, fall } = fallen();
   assert.deepEqual(wildDownWord(st, 'acct-b', fall.at), { k: 'down', ms: WILD_REF.riseMs, r: fall.r, p: [1000 * M + M, 2, 1000 * M] });
-  assert.equal(wildDownWord(st, 'acct-b', fall.at + 30_000).ms, WILD_REF.riseMs - 30_000, 'the time left, from the fall');
+  assert.equal(wildDownWord(st, 'acct-b', fall.at + 3_000).ms, WILD_REF.riseMs - 3_000, 'the time left, from the fall');   // PIN MOVED (DEATH-10): the rise is 10 s
   assert.equal(wildDownWord(st, 'acct-b', fall.at + WILD_REF.riseMs - WILD_DOWN_SAY_MIN_MS).ms, WILD_DOWN_SAY_MIN_MS);
   assert.equal(wildDownWord(st, 'acct-b', fall.at + WILD_REF.riseMs - WILD_DOWN_SAY_MIN_MS + 1), null, 'a moment from rising: a risen fallen is never killed again');
   assert.equal(wildDownWord(st, 'acct-a', fall.at), null, 'the killer stands');
@@ -53,8 +53,8 @@ test('WILD-REJOIN THE REFEREE\'S WORD: a fallen still down is told how long it h
   // another room: the hub's carry says it is down, and no body lies here
   const other = newWildRef();
   const carry = { hp: 0, max: 400, down: true, downAt: fall.at, at: fall.at };
-  wildZone(other, 'acct-b', { id: 'peer-b2', lv: 10, ci: RC2, carry }, true, { x: 0, y: 0, z: 0 }, fall.at + 20_000);
-  assert.deepEqual(wildDownWord(other, 'acct-b', fall.at + 20_000), { k: 'down', ms: WILD_REF.riseMs - 20_000 });
+  wildZone(other, 'acct-b', { id: 'peer-b2', lv: 10, ci: RC2, carry }, true, { x: 0, y: 0, z: 0 }, fall.at + 2_000);
+  assert.deepEqual(wildDownWord(other, 'acct-b', fall.at + 2_000), { k: 'down', ms: WILD_REF.riseMs - 2_000 });
 });
 
 test('WILD-REJOIN THE WIRE: the `down` word projected - its time inside the referee\'s rise, and the body\'s remains id and place together, or the id alone, or neither; a place with no id, a time of none or past the rise, refused; anything else on it dropped (mutants: the kind unknown; the bound off the rise; a place with no id)', () => {
@@ -135,16 +135,16 @@ test('WILD-REJOIN THE RELAY: a fall signed after its fallen\'s socket left says 
   const v = await verifyWildReceipt(refs(a, 'rc')[0].rc, relayKp.publicKey, { subtle, nowS: nowS() });
   assert.ok(v.ok, v.why);
   assert.equal(v.claims.g, 1, 'nobody of theirs in the room to take the drop first');
-  step(20_000);
+  step(2_000);   // PIN MOVED (DEATH-10): the rise is 10 s (was 20 s into two minutes)
   const back = await join('peer-0002', 5);   // the save before the fall: alive, a few paces off
   await say(back, { k: 'zone', z: 1 });
   const words = refs(back).map((m) => m.k).filter((k) => k !== 'flag' && k !== 'vil');   // PVP-FLAG: the flags said to one entering are no fall's - PVP-VILLAIN: nor its own meter
   assert.deepEqual(words.slice(0, 2), ['down', 'rc'], 'down first, then the owed receipt');
   const [down] = refs(back, 'down');
   assert.deepEqual(validWildRefOut(down), { k: 'down', ms: down.ms, r: f.r, p: W(1) });
-  assert.ok(down.ms <= WILD_REF.riseMs - 20_000 && down.ms > WILD_REF.riseMs - 25_000, `about the rest of the two minutes: ${down.ms}`);
+  assert.ok(down.ms <= WILD_REF.riseMs - 2_000 && down.ms > WILD_REF.riseMs - 2_500, `about the rest of the ten seconds: ${down.ms}`);
   // near the rise, nothing
-  step(WILD_REF.riseMs - 20_000 - WILD_DOWN_SAY_MIN_MS + 1_000);
+  step(WILD_REF.riseMs - 2_000 - WILD_DOWN_SAY_MIN_MS + 1_000);
   const before = refs(back, 'down').length;
   await say(back, { k: 'zone', z: 0 });
   await say(back, { k: 'zone', z: 1 });
@@ -174,27 +174,27 @@ test('WILD-REJOIN THE PAGE: a living page told it is down - and that saw no deat
   try {
     setWildDeath(null);
     const page = createWildRejoin({ now: () => t, present: () => presented.push(t) });
-    const death = page.heard({ k: 'down', ms: 30_000, r: '0123456789ab', p: [1, 2, 3] }, { alive: true });
-    assert.deepEqual(death, { servedS: 30, p: [1, 2, 3] });
+    const death = page.heard({ k: 'down', ms: 5_000, r: '0123456789ab', p: [1, 2, 3] }, { alive: true });
+    assert.deepEqual(death, { servedS: 5, p: [1, 2, 3] });
     assert.deepEqual(presented, [t], 'put down');
-    assert.deepEqual([wildDeath().served, wildDeath().killer, wildDeath().dropped, wildDeathKill()], [30, null, 0, true]);
+    assert.deepEqual([wildDeath().served, wildDeath().killer, wildDeath().dropped, wildDeathKill()], [5, null, 0, true]);
     assert.equal(wildDeathLines()[0], 'Another player may take one uninsured worn piece of yours, or gold.', 'a kill by a killer this page never heard named');   // PIN MOVED (PVP-WORDS): 'Another player may claim one piece of your worn gear.'
     setWildDeath({ killer: null, kill: true, dropped: 4 });   // the drop's answer, later
-    assert.equal(wildDeath().served, 30, 'kept through the death\'s later words');
+    assert.equal(wildDeath().served, 5, 'kept through the death\'s later words');
     const screen = new DeathScreen({ online: true });
-    assert.equal(screen.holdSeconds, WILD_DEATH_HOLD_S - 30);
-    assert.equal(screen.respawnIn, 30);   // PIN MOVED (PVP-RISE): the 60 s hold less the 30 served
+    assert.equal(screen.holdSeconds, WILD_DEATH_HOLD_S - 5);
+    assert.equal(screen.respawnIn, 5);   // PIN MOVED (DEATH-10): the 10 s hold less the 5 served
     assert.deepEqual(page.begin(), death, 'the first dead frame takes it');
     assert.equal(page.begin(), null, 'once');
     t += 1_000;
-    assert.equal(page.heard({ k: 'down', ms: 60_000 }, { alive: true }), null, 'it knows its death');
+    assert.equal(page.heard({ k: 'down', ms: 9_000 }, { alive: true }), null, 'it knows its death');
     t += WILD_REJOIN_KNOWN_MS;
-    assert.equal(page.heard({ k: 'down', ms: 60_000 }, { alive: false }), null, 'the dead take nothing');
+    assert.equal(page.heard({ k: 'down', ms: 9_000 }, { alive: false }), null, 'the dead take nothing');
     // a page that died here and was raised by a party's Resurrect: the referee still holds it down, and it stands
     const raised = createWildRejoin({ now: () => t });
     raised.begin();
-    t += 10_000;
-    assert.equal(raised.heard({ k: 'down', ms: 50_000 }, { alive: true }), null);
+    t += 2_000;
+    assert.equal(raised.heard({ k: 'down', ms: 8_000 }, { alive: true }), null);
     // a word whose death never reached a dead frame in the zone is never a later death's
     const lost = createWildRejoin({ now: () => t });
     assert.ok(lost.heard({ k: 'down', ms: 10_000 }, { alive: true }));

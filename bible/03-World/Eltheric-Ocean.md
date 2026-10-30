@@ -719,8 +719,8 @@ its "+75% loot" English.
 - A DEATH: at another player's hand, the bag and a tenth of the purse into the room's remains, a killer's pick of one
   worn piece in the open (the two-phase handoff); to a foe - a monster, a ship, the sea - nothing dropped and the usual
   tenth of the purse paid at the rise (FOE-KEEPS, 2026-10-24, the owner: "I feel like the eltheric sea can be too
-  punishing. I dont want people to lose everything they have"; `11-Multiplayer/Wild-Zone.md` section 4); the two
-  minutes' wait ("Past the Veil the dead wait two minutes." - the death keeps the ground it
+  punishing. I dont want people to lose everything they have"; `11-Multiplayer/Wild-Zone.md` section 4); the wait
+  ("Past the Veil the dead rise after 10 seconds." - the death keeps the ground it
   fell on, `setWildDeath`'s `kind`), the remains twelve minutes, marked for their owner. THE RISE is the sea's own,
   AUDIT CAPTAIN'S SEA P4's: THE NEAREST FREEPORT'S TOWN, however far - sought from `ETHER_RISE_PX` out, the reach doubled
   until a port stands within it (`etherWild.js:"for (let r = ETHER_RISE_PX; ; r *= 2) {"`, `etherRisePort`; Veilhaven
@@ -1042,7 +1042,7 @@ service's gold acts (a card table's stake, a market's collect) and the open zone
 
 **A KILL AT SEA** is a fall the relay refereed in a room of the open sea at another player's hand. The relay already
 signs every such fall (`f1` - `06-Systems/Integrity-Arc.md` lane 2); it now signs WHERE - `m`, the room that refereed it
-(`server/src/index.js:"const res = wildBlow(st, a.sub, tb.sub, { d: d.d, r, held, wa: a.wa ?? null, kin, rid, room: a.key, el: d.el ?? null }, now);"`)
+(`server/src/index.js:"const res = wildBlow(st, a.sub, tb.sub, { d: d.d, r, held, wa: a.wa ?? null, kin, rid, room: a.key, el: d.el ?? null, c: d.c ?? null }, now);"`)
 - and WHOSE HAND by character - `kc`, the killer's realm character off its hello (`net/wild/wildRef.js` wildBlow, kept
 through a restart by `wildFallOf`). Both are optional in the receipt's law (`WILD_ROOM_RE`, `REALM_CHARACTER_RE`; a
 collect `g1` carries neither), so an older relay's receipt still verifies and simply names no kill at sea;

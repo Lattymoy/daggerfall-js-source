@@ -363,6 +363,7 @@ import { createSearchRoom } from './searchRoom.js';   // GRAVE-PARTY: whose a se
 import { monsterVolume } from '../systems/monsterVolume.js';   // MONSTER-VOL: a monster's pain cry rides the Audio tab's Monster Volume
 import { isAbyssMapId } from '../world/oceanHoles.js';   // PITS-WORLD: an Ocean Hole's abyss, the Bay's or one past it - never a hall's or an Abyss Dungeon's id
 import { dungeonIdentity } from './dungeonIdentity.js';   // AUDIT TAMRIEL-WIDE C3: the professions' name for a dungeon, past the Bay too
+import { bowShotAim, bowShotExtra } from '../ui/bowBloomRing.js';   // BOW-BLOOM: the player's bow shot inside its circle; BOW-FAST: its stacks
 
 
 
@@ -722,7 +723,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const o = actions.addMoveFlat(ns, position, action, [x, y, z], aabb);
       moveFlats.push({ o, archive, record, drawn });
     } else {
-      // CASTLE-TALK (FIELD BUGS 2026-10-30): a person's own Dialogue is no target of its own - its box was the person's,
+      // CASTLE-TALK (FIELD BUGS 2026-10-30b): a person's own Dialogue is no target of its own - its box was the person's,
       // and it won every tie within 3.2 m, so the court said nothing. DFU's ladder fires both on one hit; none of the
       // game's 80 person relays chains on - 28 rang a sound byte (their faction's high byte), lost (AUDIT FB1030 D2).
       actions.addRelay(ns, position, action, person ? null : aabb, [x, y, z]);
@@ -7685,7 +7686,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
           // a bow spends an Arrow, the Thunderlock a Dwemer Pellet.
           const shot = { summoned: false };   // STUCK-ARROWS: DFU's isArrowSummoned, carried by the shaft
           if (!spendAmmoFor(playerEntity.items, playerWeapon.weapon, shot)) continue;
-          fireArrow(eye, lookDir, playerWeapon.weapon, true, null, null, weaponRig.thunderlockMuzzle(fieldOfView()), shot.summoned ? { summoned: true } : null); weaponRig.noteShot?.(playerWeapon.weapon);   // SPELLFX1: the peers draw it   // FIELD-GUN17: the barrel's own offset when the hand holds the gun, null for every bow - the rig answers, the lane forks   // ROAD-H H1c: fireArrow applies GetAimPosition's player arm (the bow hand), as DFU's missile does its own
+          fireArrow(eye, orbArchiveFor(playerWeapon.weapon) ? lookDir : bowShotAim(lookDir, playerWeapon.weapon), playerWeapon.weapon, true, null, null, weaponRig.thunderlockMuzzle(fieldOfView()), bowShotExtra(!!orbArchiveFor(playerWeapon.weapon), shot.summoned, playerWeapon.weapon)); weaponRig.noteShot?.(playerWeapon.weapon);   // SPELLFX1: the peers draw it   // FIELD-GUN17: the barrel's own offset when the hand holds the gun, null for every bow - the rig answers, the lane forks   // ROAD-H H1c: fireArrow applies GetAimPosition's player arm (the bow hand), as DFU's missile does its own
           // WeaponManager.cs:419-436, in DFU's order: the swing costs
           // fatigue whatever it hits, and a BOW always takes the tally
           // arm (`!hitEnemy && WeaponType != Bow` is false for a bow),

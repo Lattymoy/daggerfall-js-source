@@ -14,7 +14,7 @@ import { readFileSync } from 'node:fs';
 import { yardLampOf, yardLampSlot, yardLampRows, YARD_LAMP, YARD_CANDLE_RECORDS } from '../../src/scenes/homeYards.js';
 import { interiorLightProperties } from '../../src/world/interior/interiorLights.js';
 import { createDecorRoom, decorLightLift, DECOR_LAMP_FLAME } from '../../src/scenes/decor/decorRoom.js';   // PIN MOVED (LAMP-FLAME): a yard's lamp hangs at its flame
-import { CITY_LIGHT_RANGE, CITY_LIGHT_INTENSITY, CITY_LIGHT_COLOR } from '../../src/world/city/cityLights.js';
+import { CITY_LIGHT_RANGE, CITY_LIGHT_INTENSITY, CITY_LIGHT_COLOR, streetLanternAnimator, streetLightRange } from '../../src/world/city/cityLights.js';
 import { decorYardPieceOf } from '../../src/net/decorLaw.js';
 import { yardWorld, yardPiece, sized, settle } from '../decorFakes.mjs';
 import { exteriorFrame, streetColor, same } from '../yardLightRig.mjs';
@@ -57,6 +57,23 @@ test('a candle outdoors reaches as the candle it is indoors, and a lantern, torc
   yardLampRows([{ x: 1, y: 2, z: 3, ...candle.light }], [], ranges, [1, 0, 0], out);
   assert.ok(Math.abs(out[0].range - 12 * (indoor.range / CITY_LIGHT_RANGE)) < 1e-6, 'the town flicker, at the candle\'s reach');
   assert.deepEqual([...out[0].color], [1, 1, 1], 'PIN MOVED (CANDLE-DIM): its own white at intensity 1, never the street\'s colour');
+});
+
+test('AUDIT LIGHT-REACH S1: on either set a yard\'s candle reaches its room\'s candle and a lamp-post the town\'s lantern, on the animator the world host runs, still and flickering (mutants: LR-yard-candle-by-prefab, LR-yard-candle-classic-start)', () => {
+  const size = { w: 0.2, h: 0.4 };
+  const indoor = interiorLightProperties(3);
+  const candle = yardLampOf({ id: 'c', flat: [210, 3], scale: 1 }, size).light;
+  const post = yardLampOf({ id: 'p', flat: [210, 29], scale: 1 }, size).light;
+  for (const lane of [false, true]) {
+    const a = streetLanternAnimator(64, lane), start = streetLightRange(lane);
+    for (const dt of [0, 7.3]) {
+      a.tick(dt);
+      const out = yardLampRows([{ x: 0, y: 0, z: 0, ...candle }, { x: 1, y: 0, z: 0, ...post }], [], a.ranges, [1, 0, 0], [], lane);
+      const share = (l) => a.ranges[l.slot % 64] / start;
+      assert.ok(Math.abs(out[0].range - indoor.range * share(candle)) < 1e-5, `${lane ? 'lane' : 'classic'} t+${dt}: the candle ${out[0].range}, its room's ${indoor.range}`);
+      assert.ok(Math.abs(out[1].range - start * share(post)) < 1e-4, `${lane ? 'lane' : 'classic'} t+${dt}: the lamp-post ${out[1].range}, the town's ${start}`);
+    }
+  }
 });
 
 test('YARD-LIGHT the flicker: each lamp\'s slot on the town\'s animator is named by its piece (FNV-1a of its id), so it keeps its own flicker whatever else stands (mutants: YARDLIGHT-slot-basis, YARDLIGHT-slot-prime, YARDLIGHT-slot-signed)', () => {
