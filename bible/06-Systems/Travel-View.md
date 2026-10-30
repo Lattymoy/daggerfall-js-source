@@ -4014,3 +4014,28 @@ killed by the lean asked of an all-open plan alone); two old ones killed by new 
 -no-layer-still-searched over the Bay's roads); four recorded equivalent with why (TV-BEYOND's two box records, ROAD-BEYOND's
 step edge, AUDIT STARTS V4's pad). OPEN: road_follow's RF-the-ends-legs-everywhere hangs its tests on main too (an end's leg
 of Infinity loops), so it is no verdict; its record wants a finite mutant.
+
+## ZONE-ROADS - a road journey across Cyrodiil is planned to its end (2026-10-30, the owner)
+
+The owner: *"overworld travel in the pvp zone currently looks to be bugged ... not allowing you to traverse to different
+locations reliably"*.
+
+**What stood.** Past the Bay a journey by the roads searches the roads alone (`searchByRoad`, ROAD-BEYOND) and gave up
+after 100,000 cells. Cyrodiil's roads wind (the Red Ring Road, the Niben's crossings, a track to every village), and a
+long trip there needs more. Measured on the freeware with the roads of Cyrodiil and its neighbours laid as the game lays
+them (24 regions): of 992 trips between the zone's 32 towns, 111 said "There is no way there by land" after some 316,000
+cells and up to two seconds. A flood over the same ground joins every one of them. Anvil, Kvatch and Chorrol to the
+towns of the south-east were among them.
+
+**What it is now.** The roads' search spends up to 300,000 cells
+(`travelRoute.js:"export const BY_ROAD_MAX_EXPANSIONS = 300000;"`). The longest of the 992 needs 255,449, and all 992 are
+ways now. From five of Cyrodiil's cities to 83 towns of the six provinces round it, the longest needs 271,420. A harder
+lean on the goal was measured and not taken: at 2 the longest still needs 177,148, and a way is up to 16 per cent dearer.
+
+- The cost: the longest plans in 2.8 s in node, in slices (PLAN-SLICES) - about what the refusal took before.
+- Every province: the same law past the Bay; the Bay's own plans never ask the roads' search (ROAD-BEYOND).
+- OPEN: FREE mode's box stands (GREEDY-BEYOND's OPEN). A free plan with no way falls back to the roads (OW-PATH), which
+  reach now. Before a region's roads have landed (a first visit there), a trip still has only the walk across country.
+- The hosts: none changes; the planner is the Overworld's, the held map's journey and its own click alike.
+- Pins `test/systems/travel/zone_roads.test.js` (2: Cyrodiil and Skyrim); mutant `tools/mutants/zone_roads.json` (1, dead).
+  PIN MOVED: ROAD-BEYOND's dial (`road_beyond.test.js`).

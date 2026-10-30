@@ -544,8 +544,10 @@ export const BEYOND_MAX_EXPANSIONS = 100000;
 /** ROAD-BEYOND: the widest rung past the table, pixels about the ends - a box no wider than the ladder's spend walks (the
  *  whole map's rung there was a box of the ends and a thousand pixels about them: millions of cells to allot for none). */
 export const BEYOND_MARGIN = 240;
-/** ROAD-BEYOND: the most cells searchByRoad expands - the roads and tracks past the Bay, and the ground about its ends. */
-export const BY_ROAD_MAX_EXPANSIONS = 100000;
+/** ROAD-BEYOND: the most cells searchByRoad expands - the roads and tracks past the Bay, and the ground about its ends.
+ *  ZONE-ROADS: Cyrodiil's winding roads need up to 255,449 between two of its towns; at 100,000 one trip in nine there
+ *  failed and said "no way". */
+export const BY_ROAD_MAX_EXPANSIONS = 300000;
 /** ROAD-BEYOND: searchByRoad leans on its goal by this much (a weighted A*: a way by the roads at most this much dearer than
  *  the cheapest, for a search that does not walk every road of a province to prove it). */
 export const BY_ROAD_GREED = 1.25;

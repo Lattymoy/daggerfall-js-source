@@ -41,7 +41,7 @@ const count = (kinds, k) => kinds.filter((q) => q === k).length;
 test('ROAD-BEYOND the dials: the ladder\'s whole spend past the table, the roads\' search\'s, the open ground about its ends and how far it looks for a road from the wilds - op counts, never a clock', () => {
   assert.equal(BEYOND_MAX_EXPANSIONS, 100000);
   assert.equal(BEYOND_MARGIN, 240);
-  assert.equal(BY_ROAD_MAX_EXPANSIONS, 100000);
+  assert.equal(BY_ROAD_MAX_EXPANSIONS, 300000);   // PIN MOVED (ZONE-ROADS, Travel-View.md): Cyrodiil's winding roads need up to 255,449
   assert.equal(BY_ROAD_GREED, 1.25);
   // PIN MOVED (ROAD-FOLLOW, Travel-View.md ROAD-FOLLOW): BY_ROAD_REACH (24 pixels of open ground about either end) is gone -
   // the open ground is each end's own leg (ROAD_END_SLACK rings past its nearest road) and a gap's narrowest crossing
