@@ -49,7 +49,7 @@ export const MOB_TEMPLATES = Object.freeze([
   T({ key: 'orc-warchief', name: 'Warchief of the Iron Clan', species: 'orc-warlord', level: 45, category: 'raidBoss', roles: ['commander', 'berserker'], abilities: ['warCry', 'rally', 'callHelp', 'rage', 'curbing', 'warded', 'wrathful'], disposition: 'hostile', faction: 'orc-clans', kit: 'orcish' }),
 ]);
 
-/** @typedef {{ key: string, name: string, members: Array<[string, number]>, leader?: string }} GroupTemplate */
+/** @typedef {{ key: string, name: string, members: Array<[string, number]>, leader?: string, community?: boolean }} GroupTemplate */
 
 /** @type {ReadonlyArray<GroupTemplate>} */
 export const GROUP_TEMPLATES = Object.freeze(/** @type {GroupTemplate[]} */ ([
@@ -57,6 +57,8 @@ export const GROUP_TEMPLATES = Object.freeze(/** @type {GroupTemplate[]} */ ([
   Object.freeze({ key: 'orc-war-party', name: 'Orc War Party', members: [['orc-grunt', 2], ['orc-defender', 1], ['orc-shaman', 1], ['orc-warlord', 1]], leader: 'orc-warlord' }),
   Object.freeze({ key: 'bandit-camp', name: 'Bandit Camp', members: [['bandit-cutthroat', 2], ['bandit-archer', 2], ['bandit-hedge-healer', 1], ['bandit-chief', 1]], leader: 'bandit-chief' }),
   Object.freeze({ key: 'crypt-patrol', name: 'Crypt Patrol', members: [['crypt-skeleton', 3], ['crypt-guardian', 1]] }),
+  // STAGE 4: a peaceful community - its people meet a player by the clan's standing (pveStanding.js)
+  Object.freeze({ key: 'orc-stronghold', name: 'Orc Stronghold', members: [['orc-merchant', 1], ['orc-stronghold-guard', 2], ['orc-hunter', 1], ['orc-shaman', 1]], leader: 'orc-stronghold-guard', community: true }),
 ]));
 
 export const TEMPLATE_BY_KEY = new Map(MOB_TEMPLATES.map((t) => [t.key, t]));
@@ -93,6 +95,7 @@ export function groupProblems(g, byKey = TEMPLATE_BY_KEY) {
     if (!(Number.isInteger(n) && n > 0)) out.push(`${k} count ${n}`);
   }
   if (g?.leader != null && !(g.members ?? []).some(([k]) => k === g.leader)) out.push(`leader ${g.leader} is not a member`);
+  if (g?.community) for (const [k] of g.members ?? []) if (byKey.get(k)?.disposition === 'hostile') out.push(`a community's ${k} starts hostile`);
   return out;
 }
 

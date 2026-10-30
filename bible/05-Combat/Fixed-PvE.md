@@ -1,7 +1,7 @@
 # Fixed PvE - the world sets the foe (FIXED-PVE, 2026-10-28)
 
 The PvE overhaul replaces player-scaled foes with fixed ones: a foe's level, health and blow come from its own
-template, never from the player who meets it. This page holds Stages 2 and 3 of twelve: the data and the balance tools. Nothing in the game
+template, never from the player who meets it. This page holds Stages 2 to 4 of twelve: the data, the balance tools and how a creature meets a player. Nothing in the game
 reads it yet - `src/systems/pve/pveSwitch.js` `fixedPveOn` is off, and every foe stands as it does today. Daggerfall
 Unity has no templates: its monsters stand at their row and its class foes at the player's level
 (`EnemyEntity.SetEnemyCareer`). A departure: Ledger A (FIXED-PVE).
@@ -15,6 +15,7 @@ Unity has no templates: its monsters stand at their row and its class foes at th
 | Role | `pveRoles.js` | 9 combat roles (a stance and a target for `ai/tactics.js`, a share of health and blow) and 13 noncombat roles |
 | Ability | `pveAbilities.js` | Abilities on systems the game has: tactics gap closers, boss traits, a body's classic spell list, heals |
 | Disposition | `pveDisposition.js` | 7 states, 5 wildlife ways, the services a peaceful creature offers |
+| Standing | `pveStanding.js` | Stage 4: the state a creature meets a player in, what a blow on it costs, the services it offers (section 6) |
 | Template | `pveTemplates.js` | One gameplay variant: species, level 1-45, category, 1-2 roles, abilities, disposition, faction, kit metal |
 
 ## 2. The numbers
@@ -69,3 +70,24 @@ Two departures that run in the game now, so that an archer and a mage keep up wi
 
 The tests: `test/systems/pve/pve_fixes.test.js`.
 
+## 6. Stage 4: how a creature meets a player (2026-10-30)
+
+One law for hostile, neutral and friendly creatures, in `pveStanding.js`, still behind the switch. `effectiveDisposition`
+reads, in order: an event's word, a blow on the creature or its kin, a crime against its faction, the player's standing
+with its faction, then the template's start (a wildlife way's, if it has one). The standing is the game's own reputation
+(`systems/faction/factionRep.js` `getReputation`): the orc clans read Orsinium, FACTION.TXT #358. At -20 or under its
+members fight; at 20 or over, or as an ally, they are friendly, and a hostile clansman only stands down. Bandits are an
+outlaw band: no standing moves them. A territorial creature warns inside 20 m and fights inside 10 m or after 4 s of
+warning; a neutral or friendly one starts nothing (`neutralAction`).
+
+| A blow on | Is | Costs |
+|---|---|---|
+| A protected creature | `protected` | Assault, or Murder for a kill (`systems/crimes.js`), -5 or -15 standing, its services close |
+| A faction's member | `factionMember` | -5 or -15 standing, its services close |
+| A foe, wildlife, an outlaw, or one that struck first | `foe`, `hunting`, `selfDefence` | Nothing |
+
+A kill pays by how the creature started (`killShare`): a foe or wildlife whole, a peaceful one a quarter, a protected one
+nothing - so farming the peaceful never beats hunting the hostile. A service needs the creature out of a fight and the
+standing it asks (`SERVICE_REP`: trade 0, quest 10, train 20, hire 30). A group marked `community` holds no member that
+starts hostile; the first is the Orc Stronghold. Daggerfall Unity's monsters are all hostile and its people all peaceful.
+The tests: `test/systems/pve/pve_standing.test.js`.

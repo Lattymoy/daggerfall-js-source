@@ -855,7 +855,7 @@ const HARDCODED = {
   'src/systems/pve/pveCategories.js': 1,
   'src/systems/pve/pveRoles.js': 4,
   'src/systems/pve/pveSpecies.js': 8,
-  'src/systems/pve/pveTemplates.js': 34,
+  'src/systems/pve/pveTemplates.js': 36,   // stage 4: the Orc Stronghold's name and the validator's community line - a planner's, behind the switch
 };
 
 test('L10N4 the ratchet: no file holds more hard-coded English than it did - route a new sentence through t(key, en, args); when a count falls, write the map down again', () => {
