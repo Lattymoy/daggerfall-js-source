@@ -7,6 +7,7 @@
 import { t } from '../textManager.js';
 import { effectSchool } from '../spellcost.js';
 import { resurrectionSpell } from '../resurrect.js';
+import { PVP_CAST_PER_SKILL } from '../../combat/pvpSpellCrit.js';
 
 /** The old bar's eight slots (keys 3 to 0, carried into the PvP set); a gift goes to the party member under the crosshair within `reachM`, else to me; a buff
  *  runs `rounds` magic rounds (a minute - combat/pvpBuffs.js PVP_BUFF_ROUNDS); scaling runs from skill `lo` to `hi`. */
@@ -98,7 +99,7 @@ const NONE = Object.freeze({ magnitudeBaseLow: 0, magnitudeBaseHigh: 0, magnitud
 /** A buff's settings: a minute, and `chance` per cent where it has one. @param {number} type @param {number} subType @param {number} [chance] @param {Readonly<Record<string, number>>} [mag] */
 const buff = (type, subType, chance = 0, mag = NONE) => ({ type, subType, durationBase: PVP_KIT.rounds, durationMod: 0, durationPerLevel: 1,
   chanceBase: chance, chanceMod: 0, chancePerLevel: 1, ...mag });
-/** Damage is the classic Fireball's own record (SPELLS.STD 14: Area at Range, 1 + 1-7 a level), its element the pick. */
+/** Damage is the classic Fireball's record (SPELLS.STD 14: Area at Range), its element the pick, its size PVP-CAST-SKILL's. */
 const FIREBALL = Object.freeze({ type: 4, subType: 0, durationBase: 1, durationMod: 1, durationPerLevel: 1, chanceBase: 1, chanceMod: 1, chancePerLevel: 1,
   magnitudeBaseLow: 1, magnitudeBaseHigh: 1, magnitudeLevelBase: 1, magnitudeLevelHigh: 7, magnitudePerLevel: 1 });
 
@@ -106,7 +107,7 @@ const FIREBALL = Object.freeze({ type: 4, subType: 0, durationBase: 1, durationM
 export function kitEffects(id, pick, { skill = 0, level = 1, maxHealth = 0 } = {}) {
   const n = kitScale(id, skill);
   switch (id) {
-    case 'damage': return [{ ...FIREBALL }];
+    case 'damage': return [{ ...FIREBALL, ...kitMagnitude(PVP_CAST_PER_SKILL * skill, level) }];   // PVP-CAST-SKILL: sized by live Destruction, no dice
     case 'heal': return [buff(10, 8, 0, kitMagnitude((n / 100) * maxHealth, level))];
     case 'shield': return [buff(35, -1, 0, kitMagnitude((n / 100) * maxHealth, level))];
     case 'resist': return [buff(8, pick, Math.round(n))];

@@ -65,7 +65,11 @@ test('PVP-KIT THE SPELLS: Damage is the classic Fireball at Area at Range in the
   assert.equal(dmg.rangeType, 4);
   assert.equal(dmg.element, 3);
   assert.equal(dmg.pvpReach, undefined, 'Damage is aimed, never given');
-  assert.deepEqual([dmg.effects[0].type, dmg.effects[0].subType, dmg.effects[0].magnitudeLevelHigh], [4, 0, 7], 'SPELLS.STD 14');
+  assert.deepEqual([dmg.effects[0].type, dmg.effects[0].subType], [4, 0], 'SPELLS.STD 14');
+  // PVP-CAST-SKILL: no level dice - 0.15 x live Destruction, to 875 and past
+  assert.equal(rollMagnitude(dmg.effects[0], 30, () => 0.99), 45, '0.15 x 300');
+  assert.equal(rollMagnitude(dmg.effects[0], 30, () => 0), 45, 'no dice');
+  assert.equal(rollMagnitude(kitSpell({ id: 'damage', pick: 0 }, { ...at, skill: 875, level: 45 }).effects[0], 45), 131, '0.15 x 875');
   assert.equal(dmg.pvpKitCost, 32);
   const heal = kitSpell({ id: 'heal' }, at);
   assert.deepEqual([heal.rangeType, heal.pvpReach, heal.element], [0, 15, 4]);
