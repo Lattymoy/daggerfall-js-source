@@ -10,7 +10,13 @@ function resolve(spec, fromFile) {
   if (!spec.startsWith('.')) return null;
   const p = path.resolve(path.dirname(fromFile), spec);
   const cands = [p, p + '.js', path.join(p, 'index.js')];
-  for (const c of cands) { try { if (fs.statSync(c).isFile()) return c; } catch { /* ignore */ } }
+  for (const c of cands) {
+    try {
+      if (fs.statSync(c).isFile()) return c;
+    } catch {
+      /* ignore */
+    }
+  }
   return null;
 }
 
@@ -19,7 +25,11 @@ function deps(file) {
   if (cache.has(file)) return cache.get(file);
   cache.set(file, new Set());
   let src;
-  try { src = fs.readFileSync(file, 'utf8'); } catch { return cache.get(file); }
+  try {
+    src = fs.readFileSync(file, 'utf8');
+  } catch {
+    return cache.get(file);
+  }
   const out = new Set();
   let m;
   IMPORT_RE.lastIndex = 0;
@@ -36,16 +46,28 @@ function closure(file) {
   const stack = [file];
   while (stack.length) {
     const f = stack.pop();
-    for (const d of deps(f)) if (!seen.has(d)) { seen.add(d); stack.push(d); }
+    for (const d of deps(f))
+      if (!seen.has(d)) {
+        seen.add(d);
+        stack.push(d);
+      }
   }
   return seen;
 }
 
 const map = {};
 const rev = {};
-for (const t of fs.readdirSync(TEST, { recursive: true }).map(String).filter(f => f.endsWith('.test.js')).sort()) {   // TIDY5: the tests in their folders
+for (const t of fs
+  .readdirSync(TEST, { recursive: true })
+  .map(String)
+  .filter((f) => f.endsWith('.test.js'))
+  .sort()) {
+  // TIDY5: the tests in their folders
   const abs = path.join(TEST, t);
-  const cl = [...closure(abs)].map(f => path.relative(ROOT, f)).filter(f => f.startsWith('src/')).sort();
+  const cl = [...closure(abs)]
+    .map((f) => path.relative(ROOT, f))
+    .filter((f) => f.startsWith('src/'))
+    .sort();
   map[t] = cl;
   for (const s of cl) (rev[s] ||= []).push(t);
 }
@@ -57,6 +79,15 @@ const allSrc = [];
     else if (e.name.endsWith('.js')) allSrc.push(path.relative(ROOT, p));
   }
 })(path.join(ROOT, 'src'));
-const orphans = allSrc.filter(s => !rev[s]).sort();
+const orphans = allSrc.filter((s) => !rev[s]).sort();
 fs.writeFileSync(process.argv[3], JSON.stringify({ map, rev, orphans, allSrc: allSrc.sort() }, null, 1));
-console.log('tests', Object.keys(map).length, 'srcReached', Object.keys(rev).length, 'srcTotal', allSrc.length, 'orphans', orphans.length);
+console.log(
+  'tests',
+  Object.keys(map).length,
+  'srcReached',
+  Object.keys(rev).length,
+  'srcTotal',
+  allSrc.length,
+  'orphans',
+  orphans.length,
+);

@@ -11,20 +11,35 @@ fs.rmSync(DIR, { recursive: true, force: true });
 fs.mkdirSync(DIR, { recursive: true });
 
 const r = spawnSync(process.execPath, ['--test'], {
-  cwd: ROOT, encoding: 'utf8', timeout: 600000, maxBuffer: 1 << 28,   // AUDIT 68: a whole-suite TAP outgrows the 1 MiB default
+  cwd: ROOT,
+  encoding: 'utf8',
+  timeout: 600000,
+  maxBuffer: 1 << 28, // AUDIT 68: a whole-suite TAP outgrows the 1 MiB default
   env: { ...process.env, NODE_V8_COVERAGE: DIR },
 });
 process.stderr.write('suite status=' + r.status + '\n');
 // A suite the harness lost part-way has coverage for part of the tree, and every assert past the cut would read as dead.
-if (r.error || r.status === null) { console.error(`HARNESS ERROR (${r.error?.code ?? r.signal}) - the coverage is partial, no verdict`); process.exit(2); }
+if (r.error || r.status === null) {
+  console.error(`HARNESS ERROR (${r.error?.code ?? r.signal}) - the coverage is partial, no verdict`);
+  process.exit(2);
+}
 
 const ranges = {};
-for (const f of fs.readdirSync(DIR).filter(x => x.endsWith('.json'))) {
+for (const f of fs.readdirSync(DIR).filter((x) => x.endsWith('.json'))) {
   let j;
-  try { j = JSON.parse(fs.readFileSync(path.join(DIR, f), 'utf8')); } catch { continue; }
+  try {
+    j = JSON.parse(fs.readFileSync(path.join(DIR, f), 'utf8'));
+  } catch {
+    continue;
+  }
   for (const sc of j.result || []) {
     if (!sc.url || !sc.url.startsWith('file://')) continue;
-    let abs; try { abs = fileURLToPath(sc.url); } catch { continue; }
+    let abs;
+    try {
+      abs = fileURLToPath(sc.url);
+    } catch {
+      continue;
+    }
     if (!abs.startsWith(path.join(ROOT, 'test') + path.sep)) continue;
     if (!abs.endsWith('.test.js')) continue;
     const acc = (ranges[abs] ||= []);
@@ -32,17 +47,27 @@ for (const f of fs.readdirSync(DIR).filter(x => x.endsWith('.json'))) {
   }
 }
 
-let totalSites = 0, deadSites = 0;
+let totalSites = 0,
+  deadSites = 0;
 const out = [];
 for (const [abs, rs] of Object.entries(ranges).sort()) {
   const text = fs.readFileSync(abs, 'utf8');
   const n = text.length;
   const paint = new Int32Array(n);
-  rs.sort((a, b) => (b.endOffset - b.startOffset) - (a.endOffset - a.startOffset));
+  rs.sort((a, b) => b.endOffset - b.startOffset - (a.endOffset - a.startOffset));
   for (const rng of rs) paint.fill(rng.count > 0 ? 1 : -1, Math.max(0, rng.startOffset), Math.min(n, rng.endOffset));
   const ls = [0];
   for (let i = 0; i < n; i++) if (text[i] === '\n') ls.push(i + 1);
-  const lineOf = (o) => { let lo = 0, hi = ls.length - 1; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (ls[m] <= o) lo = m; else hi = m - 1; } return lo + 1; };
+  const lineOf = (o) => {
+    let lo = 0,
+      hi = ls.length - 1;
+    while (lo < hi) {
+      const m = (lo + hi + 1) >> 1;
+      if (ls[m] <= o) lo = m;
+      else hi = m - 1;
+    }
+    return lo + 1;
+  };
   for (const m of text.matchAll(/\bassert\s*\./g)) {
     totalSites++;
     if (paint[m.index] !== 1) {
