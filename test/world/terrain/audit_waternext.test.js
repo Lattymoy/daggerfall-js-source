@@ -322,7 +322,7 @@ test('AUDIT WATER-NEXT M1/G13/P2: a field with live rings slides with the eye an
   const rr = rd('src/render/renderer.js');
   assert.match(rr, /gl\.uniform3f\(L\.rippleRect, r\.packed\[0\], r\.packed\[1\], this\._rippleSpan\);/);
   const src = rd('src/world/water/waterRipples.js');
-  assert.match(src, /origin\[0\] = ox; origin\[1\] = oz;\n[^\n]*\n[^\n]*\n\s*if \(!live\) return true;/, 'asleep, the slide is the origin alone');
+  assert.match(src, /origin\[0\] = ox;\n\s*origin\[1\] = oz;\n\s*\/\/ AUDIT WATER-NEXT P2: asleep, the field is still water everywhere - there is nothing to slide\. Every outdoor frame\n\s*\/\/ the eye crossed a cell in had slid two arrays of zeros \(0\.13 ms a frame walking anywhere, water or none\)\n\s*if \(!live\) return true;/, 'asleep, the slide is the origin alone');
   assert.match(src, /for \(let z = 1; z < cells - 1; z\+\+\) \{\n\s*const sz = z \+ dz;/, 'the slide writes the inside only');
 });
 

@@ -180,6 +180,8 @@
 /src/world/underwater/*/
 !/src/world/urban/
 /src/world/urban/*/
+!/src/world/water/
+/src/world/water/*/
 !/tools/
 /tools/*
 !/tools/layered-armor/
