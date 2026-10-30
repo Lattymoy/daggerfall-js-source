@@ -54,7 +54,7 @@ function powerAt(e, entry, skill) {
   if (entry.magnitude) {
     const P = isSpellDamage(e) ? L : pointsLevel(L);
     const m = (e.magnitudeBaseLow + e.magnitudeBaseHigh) / 2 + ((e.magnitudeLevelBase + e.magnitudeLevelHigh) / 2) * Math.floor(P / Math.max(1, e.magnitudePerLevel));
-    v.m = isSpellDamage(e) ? Math.min(m, PVE_CAST_PER_SKILL * Math.max(0, skill)) : m;   // damage pays for what its hold lets land
+    v.m = damageKind(e) === 'health' ? Math.min(m, PVE_CAST_PER_SKILL * Math.max(0, skill)) : m;   // health damage pays for what its hold lets land
   }
   if (entry.chance) v.c = Math.min(100, e.chanceBase + e.chanceMod * Math.floor(T / Math.max(1, e.chancePerLevel)));
   if (entry.duration) v.d = e.durationBase + e.durationMod * Math.max(1, Math.floor(T / Math.max(1, e.durationPerLevel)));

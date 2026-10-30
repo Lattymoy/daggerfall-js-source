@@ -50,6 +50,8 @@ test('SPELL-SKILL PRICE: damage pays for what its hold lets land, a duration sto
   near(castCostScale(fireball, dmg, 1000), CAST_COST_SHARE * Math.sqrt(10) * disc(100) / disc(50), 'held 150 against 15, its square root');
   near(castCostScale(fireball, dmg, 50), CAST_COST_SHARE * 0.5, 'held 7.5 against 15, at the classic skill, half paid');
   near(castCostScale(levitate, lev, 1000), castCostScale(levitate, lev, 100));
+  const drain = fx({ type: 4, subType: 2, magnitudeLevelHigh: 7 });
+  assert.ok(castCostScale(drain, EFFECT_COST_TABLE['4,2'], 1000) > castCostScale(fireball, dmg, 1000), 'a drain of magicka has no hold, so it pays for all it does');
   const k = castCostScale(heal, hp, 1000) / castCostScale(heal, hp, 100);
   assert.ok(k > Math.sqrt(5) && k < Math.sqrt(6), `a heal at half speed past 100 (level 249, not 454), priced at its root (x${k})`);
   assert.doesNotMatch(readFileSync(new URL('../../../src/systems/spell/castLevel.js', import.meta.url), 'utf8'), /CriticalStrike/, 'crit is not read');

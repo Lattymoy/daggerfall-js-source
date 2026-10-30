@@ -4,7 +4,7 @@
   {"name": "SPELL-SKILL-points-full-speed", "file": "src/systems/spell/castLevel.js", "old": "CAST_LEVEL_TOP + Math.floor((L - CAST_LEVEL_TOP) / 2)", "new": "L", "tests": ["test/systems/pve/pve_castlevel.test.js"]},
   {"name": "SPELL-SKILL-a-peer-reads", "file": "src/systems/spell/castLevel.js", "old": "on && !!caster?.isPlayer && !caster.peer;", "new": "on && !!caster?.isPlayer;", "tests": ["test/systems/pve/pve_castlevel.test.js"]},
   {"name": "SPELL-SKILL-a-foe-reads", "file": "src/systems/spell/castLevel.js", "old": "on && !!caster?.isPlayer && !caster.peer;", "new": "on && !caster?.peer;", "tests": ["test/systems/pve/pve_castlevel.test.js"]},
-  {"name": "SPELL-SKILL-unheld-price", "file": "src/systems/spell/castLevel.js", "old": "isSpellDamage(e) ? Math.min(m, PVE_CAST_PER_SKILL * Math.max(0, skill)) : m;", "new": "m;", "tests": ["test/systems/pve/pve_castlevel.test.js"]},
+  {"name": "SPELL-SKILL-unheld-price", "file": "src/systems/spell/castLevel.js", "old": "damageKind(e) === 'health' ? Math.min(m, PVE_CAST_PER_SKILL * Math.max(0, skill)) : m;", "new": "m;", "tests": ["test/systems/pve/pve_castlevel.test.js"]},
   {"name": "SPELL-SKILL-linear-price", "file": "src/systems/spell/castLevel.js", "old": "(g > 1 ? Math.sqrt(g) : g)", "new": "g", "tests": ["test/systems/pve/pve_castlevel.test.js"]},
   {"name": "SPELL-SKILL-whole-price", "file": "src/systems/spell/castLevel.js", "old": "export const CAST_COST_SHARE = 0.5;", "new": "export const CAST_COST_SHARE = 1;", "tests": ["test/systems/pve/pve_castlevel.test.js"]},
   {"name": "SPELL-SKILL-no-discount", "file": "src/systems/spell/castLevel.js", "old": "export const CAST_COST_DISCOUNT = 0.25;", "new": "export const CAST_COST_DISCOUNT = 0;", "tests": ["test/systems/pve/pve_castlevel.test.js"]},
