@@ -28,6 +28,8 @@
 /src/systems/lockpick/*/
 !/src/systems/snowfall/
 /src/systems/snowfall/*/
+!/src/systems/studioArt/
+/src/systems/studioArt/*/
 !/src/ui/
 /src/ui/*
 !/src/ui/ketch/
