@@ -257,7 +257,8 @@ autonomy"* - the two decisions this page left to the owner, the dependency and t
   suite is the `--check` (four mutants, all dead).
 - **The pilot, `src/poi/`.** 23 files, quiet that week. `node tools/carryPins.mjs --transform tools/format.mjs
   src/poi/*.js --write` carried all 299 mutant records and 22 cites; `node tools/sameProgram.mjs --against HEAD` proved
-  all 23 files the same programs. The commit is in `.git-blame-ignore-revs`.
+  all 23 files the same programs. The seventeen lists holding them, 578 records, all dead after the format. The
+  commit is in `.git-blame-ignore-revs`.
 
 The next folder is the same three commands, in a window the owner calls. A folder's tests that match source text by
 regular expression are not carried; the pilot's 19 test files passed unchanged.
