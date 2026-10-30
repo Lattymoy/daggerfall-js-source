@@ -200,8 +200,8 @@
   {
     "name": "HORSEWALK-peer-horse-ungated",
     "file": "src/net/peer/peerBodies.js",
-    "old": "look: shown.rc | 0, gallops: !shown.hs, pose: false });",
-    "new": "look: shown.rc | 0, gallops: true, pose: false });",
+    "old": "      gallops: !shown.hs,",
+    "new": "      gallops: true,",
     "tests": [
       "test/systems/horsewalk.test.js"
     ]

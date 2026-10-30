@@ -119,8 +119,8 @@
   {
     "name": "CLIMB6-peer-move-ignores-time",
     "file": "src/net/peer/peerClimb.js",
-    "old": "shown.cd ? shown.cd / 100 : PEER_MOVE_DUR",
-    "new": "PEER_MOVE_DUR",
+    "old": "      this.move = peerMove(\n        kind,\n        base.feet,\n        fwd,\n        Number.isFinite(shown.cy) ? shown.cy / 100 : null,\n        shown.cd ? shown.cd / 100 : PEER_MOVE_DUR,\n      );",
+    "new": "      this.move = peerMove(kind, base.feet, fwd, Number.isFinite(shown.cy) ? shown.cy / 100 : null, PEER_MOVE_DUR);",
     "tests": [
       "test/player/climb/climb6.test.js"
     ]

@@ -694,8 +694,8 @@
   {
     "name": "AUDIT-E1-the-hand-reads-template-and-slot-alone",
     "file": "src/net/peer/peerBodies.js",
-    "old": "      if (want !== b.weapon && heldWeaponKey(want) !== heldWeaponKey(b.weapon)   // AUDIT HORIZONTAL E1: and its metal and its look",
-    "new": "      if (want !== b.weapon && (want?.templateIndex !== b.weapon?.templateIndex || want?.equipSlot !== b.weapon?.equipSlot)",
+    "old": "        heldWeaponKey(want) !== heldWeaponKey(b.weapon) && // AUDIT HORIZONTAL E1: and its metal and its look",
+    "new": "        (want?.templateIndex !== b.weapon?.templateIndex || want?.equipSlot !== b.weapon?.equipSlot) &&",
     "tests": [
       "test/systems/appearances_audit.test.js"
     ]
@@ -703,8 +703,8 @@
   {
     "name": "AUDIT-E1-the-hand-blind-to-the-look",
     "file": "src/net/peer/peerBodies.js",
-    "old": "|${it.equipSlot}|${appearanceSig(it)}` : '');",
-    "new": "|${it.equipSlot}|` : '');",
+    "old": "  it ? `${it.templateIndex}|${it.material ?? ''}|${it.equipSlot}|${appearanceSig(it)}` : '';",
+    "new": "  it ? `${it.templateIndex}|${it.material ?? ''}|${it.equipSlot}|` : '';",
     "tests": [
       "test/systems/appearances_audit.test.js"
     ]
@@ -712,8 +712,8 @@
   {
     "name": "AUDIT-E1-the-hand-blind-to-the-metal",
     "file": "src/net/peer/peerBodies.js",
-    "old": "`${it.templateIndex}|${it.material ?? ''}|${it.equipSlot}",
-    "new": "`${it.templateIndex}||${it.equipSlot}",
+    "old": "  it ? `${it.templateIndex}|${it.material ?? ''}|${it.equipSlot}|${appearanceSig(it)}` : '';",
+    "new": "  it ? `${it.templateIndex}||${it.equipSlot}|${appearanceSig(it)}` : '';",
     "tests": [
       "test/systems/appearances_audit.test.js"
     ]

@@ -236,8 +236,8 @@
   {
     "name": "SB-peer-never-rebuilt",
     "file": "src/net/peer/peerBodies.js",
-    "old": "  if (b.seatKey !== key) { b.seatKey = key;",
-    "new": "  if (!b.seatSpec) { b.seatKey = key;",
+    "old": "  if (b.seatKey !== key) {",
+    "new": "  if (!b.seatSpec) {",
     "tests": [
       "test/net/peer/cards2b_seated.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "SB-peer-key-no-st",
     "file": "src/net/peer/peerBodies.js",
-    "old": "${yaw.toFixed(3)},${st}`;",
-    "new": "${yaw.toFixed(3)}`;",
+    "old": "  const key = `${f[0].toFixed(2)},${f[1].toFixed(2)},${f[2].toFixed(2)},${yaw.toFixed(3)},${st}`;",
+    "new": "  const key = `${f[0].toFixed(2)},${f[1].toFixed(2)},${f[2].toFixed(2)},${yaw.toFixed(3)}`;",
     "tests": [
       "test/net/peer/cards2b_seated.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "SB-peer-key-no-yaw",
     "file": "src/net/peer/peerBodies.js",
-    "old": "${f[2].toFixed(2)},${yaw.toFixed(3)},${st}`;",
-    "new": "${f[2].toFixed(2)},${st}`;",
+    "old": "  const key = `${f[0].toFixed(2)},${f[1].toFixed(2)},${f[2].toFixed(2)},${yaw.toFixed(3)},${st}`;",
+    "new": "  const key = `${f[0].toFixed(2)},${f[1].toFixed(2)},${f[2].toFixed(2)},${st}`;",
     "tests": [
       "test/net/peer/cards2b_seated.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "SB-peer-top-default",
     "file": "src/net/peer/peerBodies.js",
-    "old": "top: seatTopOf(st) };",
-    "new": "top: undefined };",
+    "old": "    b.seatSpec = { feet: [f[0], f[1], f[2]], yaw, top: seatTopOf(st) };",
+    "new": "    b.seatSpec = { feet: [f[0], f[1], f[2]], yaw, top: undefined };",
     "tests": [
       "test/net/peer/cards2b_seated.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "SB-sitter-walks",
     "file": "src/net/peer/peerClimb.js",
-    "old": "!peerClimbing(shown) && !shown?.st;",
-    "new": "!peerClimbing(shown);",
+    "old": "export const peerMoving = (shown) => !!shown?.mv && !peerClimbing(shown) && !shown?.st; // CARDS2b (AUDIT CARDS C5): nor is a sitter - one law for every body, sound and sprite stride",
+    "new": "export const peerMoving = (shown) => !!shown?.mv && !peerClimbing(shown); // CARDS2b (AUDIT CARDS C5): nor is a sitter - one law for every body, sound and sprite stride",
     "tests": [
       "test/net/peer/cards2b_seated.test.js"
     ]

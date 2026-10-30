@@ -139,8 +139,8 @@
   {
     "name": "INVISLOOK-body-veil-unread",
     "file": "src/net/peer/peerBodies.js",
-    "old": "      b.veil = conceal ? (conceal(id) ?? null) : null;",
-    "new": "      b.veil = null;",
+    "old": "      b.veil = conceal ? (conceal(id) ?? null) : null; // INVIS-LOOK: a concealed peer's body keeps standing, drawn translucent (drawVeiled)",
+    "new": "      b.veil = null; // INVIS-LOOK: a concealed peer's body keeps standing, drawn translucent (drawVeiled)",
     "tests": [
       "test/net/invislook.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "INVISLOOK-late-pass-no-camera",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    const c = this._cam ?? (this._cam = { canvas: null, proj: null, view: null, eye: null, flashOf: null, grow: null, up: null, fxOf: null, scaleOf: null, anchoredOf: null });\n",
-    "new": "    const c = { canvas: null, proj: null, view: null, eye: null, flashOf: null, grow: null, up: null, fxOf: null, scaleOf: null, anchoredOf: null };\n",
+    "old": "    const c =\n      this._cam ??\n      (this._cam = {\n        canvas: null,\n        proj: null,\n        view: null,\n        eye: null,\n        flashOf: null,\n        grow: null,\n        up: null,\n        fxOf: null,\n        scaleOf: null,\n        anchoredOf: null,\n      });",
+    "new": "    const c = {\n      canvas: null,\n      proj: null,\n      view: null,\n      eye: null,\n      flashOf: null,\n      grow: null,\n      up: null,\n      fxOf: null,\n      scaleOf: null,\n      anchoredOf: null,\n    };",
     "tests": [
       "test/net/invislook.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "INVISLOOK-body-drawn-plain",
     "file": "src/net/peer/peerBodies.js",
-    "old": "hitFlash: flashOf ? flashOf(b.id) : 0, conceal: b.veil ?? null, grow: g",
-    "new": "hitFlash: flashOf ? flashOf(b.id) : 0, conceal: null, grow: g",
+    "old": "            conceal: b.veil ?? null,",
+    "new": "            conceal: null,",
     "tests": [
       "test/net/invislook.test.js"
     ]

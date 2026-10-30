@@ -2,8 +2,8 @@
   {
     "name": "PEERCADENCE-the-far-band-poses-every-frame",
     "file": "src/net/peer/peerBodies.js",
-    "old": "export const POSE_CADENCE = [[10, 1], [25, 2], [Infinity, 3]];",
-    "new": "export const POSE_CADENCE = [[10, 1], [25, 2], [Infinity, 1]];",
+    "old": "  [Infinity, 3],",
+    "new": "  [Infinity, 1],",
     "tests": [
       "test/net/peer/peercadence.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "PEERCADENCE-every-body-shares-one-phase",
     "file": "src/net/peer/peerBodies.js",
-    "old": "        posed: false, phase: this._phase++, bank: 0,   // PEER-CADENCE",
-    "new": "        posed: false, phase: 0, bank: 0,   // PEER-CADENCE",
+    "old": "        phase: this._phase++,",
+    "new": "        phase: 0,",
     "tests": [
       "test/net/peer/peercadence.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PEERCADENCE-the-skipped-frame-does-not-step-the-clocks",
     "file": "src/net/peer/peerBodies.js",
-    "old": "      else b.rig.update(dt, { pose: false });",
-    "new": "      else { /* skipped */ }",
+    "old": "      } else b.rig.update(dt, { pose: false });",
+    "new": "      } else {\n        /* skipped */\n      }",
     "tests": [
       "test/net/peer/peercadence.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PEERCADENCE-the-bank-is-never-emptied",
     "file": "src/net/peer/peerBodies.js",
-    "old": "b.bank = 0; b.posed = true; b.owed = false;",
-    "new": "b.posed = true; b.owed = false;",
+    "old": "        b.bank = 0;\n        b.posed = true;",
+    "new": "        b.posed = true;",
     "tests": [
       "test/net/peer/peercadence.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "PEERCADENCE-the-bank-is-never-filled",
     "file": "src/net/peer/peerBodies.js",
-    "old": "      b.bank = Math.min(EFFECTS_BANK_MAX_S, b.bank + dt);   // AUDIT WB9 (bodies F1)",
-    "new": "      b.bank = dt;   // AUDIT WB9 (bodies F1)",
+    "old": "      b.bank = Math.min(EFFECTS_BANK_MAX_S, b.bank + dt); // AUDIT WB9 (bodies F1)",
+    "new": "      b.bank = dt; // AUDIT WB9 (bodies F1)",
     "tests": [
       "test/net/peer/peercadence.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "PEERCADENCE-the-cadence-is-read-off-the-body-when-it-stood",
     "file": "src/net/peer/peerBodies.js",
-    "old": "(this._frame + b.phase) % poseCadenceFor(eye && b.feet ? cadenceD2(b.feet, eye, lens) : b.d2) === 0 ? 1 : 0;",
-    "new": "(this._frame + b.phase) % poseCadenceFor(b.cadenceD2 ??= (eye && b.feet ? cadenceD2(b.feet, eye, lens) : b.d2)) === 0 ? 1 : 0;",
+    "old": "            : (this._frame + b.phase) % poseCadenceFor(eye && b.feet ? cadenceD2(b.feet, eye, lens) : b.d2) === 0",
+    "new": "            : (this._frame + b.phase) %\n                  poseCadenceFor((b.cadenceD2 ??= eye && b.feet ? cadenceD2(b.feet, eye, lens) : b.d2)) ===\n                0",
     "tests": [
       "test/net/peer/peercadence.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "AUDIT-PEERCADENCE-every-body-takes-an-even-phase",
     "file": "src/net/peer/peerBodies.js",
-    "old": "        posed: false, phase: this._phase++, bank: 0,",
-    "new": "        posed: false, phase: (this._phase += 2), bank: 0,",
+    "old": "        phase: this._phase++,",
+    "new": "        phase: (this._phase += 2),",
     "tests": [
       "test/net/peer/peercadence.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "AUDIT-PEERCADENCE-the-module-never-counts-a-frame",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    this._frame++;\n",
-    "new": "",
+    "old": "    this._frame++;\n    // SLAM4: the failed looks age out. A look was only ever forgotten when a peer wearing THAT look asked again",
+    "new": "    // SLAM4: the failed looks age out. A look was only ever forgotten when a peer wearing THAT look asked again",
     "tests": [
       "test/net/peer/peercadence.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "AUDIT-PEERCADENCE-a-far-body-keeps-its-stale-skin",
     "file": "src/net/peer/peerBodies.js",
-    "old": "if (b.far || dt > 0 || !this._buildInRange) { b.posed = false; b.stale = false; b.owed = false; }   // AUDIT PEER-CADENCE F2: far",
-    "new": "if (b.far || dt > 0 || !this._buildInRange) { b.stale = false; b.owed = false; }   // AUDIT PEER-CADENCE F2: far",
+    "old": "          b.posed = false;\n          b.stale = false;",
+    "new": "          b.stale = false;",
     "tests": [
       "test/net/peer/peercadence.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "AUDIT-PEERCADENCE-a-lingering-body-keeps-its-stale-skin",
     "file": "src/net/peer/peerBodies.js",
-    "old": "b.swing = null; b.pending = null; b.posed = false; }",
-    "new": "b.swing = null; b.pending = null; }",
+    "old": "        b.posed = false;\n      } // AUDIT WORLD C7: a body that lingers re-latches its counts on the way back - what happened out of sight is not replayed. AUDIT PEER-CADENCE F2: and its skin is stale on the way back - the first frame back poses",
+    "new": "      } // AUDIT WORLD C7: a body that lingers re-latches its counts on the way back - what happened out of sight is not replayed. AUDIT PEER-CADENCE F2: and its skin is stale on the way back - the first frame back poses",
     "tests": [
       "test/net/peer/peercadence.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "AUDIT-PEERCADENCE-a-body-with-no-mesh-waits-for-its-slot",
     "file": "src/net/peer/peerBodies.js",
-    "old": "const must = !b.posed || !(b.rig.thirdActive?.() ?? true);",
-    "new": "const must = !b.posed;",
+    "old": "      const must = !b.posed || !(b.rig.thirdActive?.() ?? true);",
+    "new": "      const must = !b.posed;",
     "tests": [
       "test/net/peer/peercadence.test.js"
     ]

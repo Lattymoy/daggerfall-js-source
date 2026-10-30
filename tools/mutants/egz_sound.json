@@ -245,8 +245,8 @@
   {
     "name": "EGZ-fx-outside-scope",
     "file": "src/net/peer/peerFx.js",
-    "old": "if (!dup) peerHeard(() => (q.hurt",
-    "new": "if (!dup) ((f) => f())(() => (q.hurt",
+    "old": "          peerHeard(() => (q.hurt ? play?.hurt : play?.blow)?.({ at: q.at, bloodIndex: q.bloodIndex, share: q.share })); // the owner drew and rang it already; EG-ZH: a peer's ring, as the place hears it",
+    "new": "          ((f) => f())(() =>\n            (q.hurt ? play?.hurt : play?.blow)?.({ at: q.at, bloodIndex: q.bloodIndex, share: q.share }),\n          ); // the owner drew and rang it already; EG-ZH: a peer's ring, as the place hears it",
     "tests": [
       "test/net/eliteGates/egz_sound.test.js"
     ]

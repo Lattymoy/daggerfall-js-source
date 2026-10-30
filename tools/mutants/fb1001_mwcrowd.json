@@ -11,8 +11,8 @@
   {
     "name": "MW-CROWD-the-lead-dropped",
     "file": "src/net/peer/peerBodies.js",
-    "old": "this._sees(b, turnLeadMargin(Math.sqrt(b.d2), this._turn))",
-    "new": "this._sees(b, CULL_MARGIN_M)",
+    "old": "    b.inView = !this._planesOk || this._sees(b, turnLeadMargin(Math.sqrt(b.d2), this._turn)); // WB9h: in the last pass's view, with the margin a turning eye needs - MW-CROWD: led by the turn",
+    "new": "    b.inView = !this._planesOk || this._sees(b, CULL_MARGIN_M); // WB9h: in the last pass's view, with the margin a turning eye needs - MW-CROWD: led by the turn",
     "tests": [
       "test/net/peer/fb1001_mwcrowd.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "MW-CROWD-the-lead-not-capped",
     "file": "src/net/peer/peerBodies.js",
-    "old": "Math.tan(Math.min(TURN_LEAD_MAX, turn * TURN_LEAD_FRAMES))",
-    "new": "Math.tan(turn * TURN_LEAD_FRAMES)",
+    "old": "  CULL_MARGIN_M + (turn > 0 ? Math.max(0, dist) * Math.tan(Math.min(TURN_LEAD_MAX, turn * TURN_LEAD_FRAMES)) : 0);",
+    "new": "  CULL_MARGIN_M + (turn > 0 ? Math.max(0, dist) * Math.tan(turn * TURN_LEAD_FRAMES) : 0);",
     "tests": [
       "test/net/peer/fb1001_mwcrowd.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "MW-CROWD-a-stand-in-every-frame",
     "file": "src/net/peer/peerBodies.js",
-    "old": "if (look && typeof look === 'object') _stubSlots.set(look, slots); }",
-    "new": "}",
+    "old": "    if (look && typeof look === 'object') _stubSlots.set(look, slots);\n  }",
+    "new": "  }",
     "tests": [
       "test/net/peer/fb1001_mwcrowd.test.js"
     ]
@@ -56,7 +56,7 @@
   {
     "name": "MW-CROWD-weapons-back-in-the-key",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    k = (items.some((it) => it?.group === 'Weapons') ? lookKey({ ...look, items: items.filter((it) => it?.group !== 'Weapons') }) : lookKey(look)) + npcKeyOf(look) + outfitKeyOf(look);",
+    "old": "    k =\n      (items.some((it) => it?.group === 'Weapons')\n        ? lookKey({ ...look, items: items.filter((it) => it?.group !== 'Weapons') })\n        : lookKey(look)) +\n      npcKeyOf(look) +\n      outfitKeyOf(look);",
     "new": "    k = lookKey(look) + npcKeyOf(look) + outfitKeyOf(look);",
     "tests": [
       "test/net/peer/fb1001_mwcrowd.test.js"
@@ -65,8 +65,8 @@
   {
     "name": "MW-CROWD-the-lingering-body-unloaded",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    this._release(victim.id, true, key);   // MW-CROWD",
-    "new": "    this._release(victim.id, victim.goneAt == null, key);   // MW-CROWD",
+    "old": "    this._release(victim.id, true, key); // MW-CROWD: a LINGERING body is kept too - its peer mounted or dropped out of the list a moment, and came back to a whole rebuild (_release spares only a built, skinned rig)",
+    "new": "    this._release(victim.id, victim.goneAt == null, key); // MW-CROWD: a LINGERING body is kept too - its peer mounted or dropped out of the list a moment, and came back to a whole rebuild (_release spares only a built, skinned rig)",
     "tests": [
       "test/net/peer/fb1001_mwcrowd.test.js"
     ]

@@ -1075,7 +1075,7 @@ local player's goes through `mwView.mwViewDrawBody` (`mwView.js:"export function
 `worldModes.js:"renderer.everyLightCasts();   // LA-SHADOW3".."mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.bodyFeetAt(), yaw: player.bodyYawFor(cam.yaw), viewYaw: cam.yaw });   // MW-D24; DISC18: the body at the capsule's own feet, not the camera's smoothed ones"` and `worldModes.js:"if (!overlayHeld) interiorCtx.automapTick?.(dt, cam.pos, fwd)".."mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.bodyFeetAt(), yaw: player.bodyYawFor(cam.yaw), viewYaw: cam.yaw });   // MW-D24; DISC18: the body at the capsule's own feet, not the camera's smoothed ones"` (the dungeon and the interior passes),
 and `dungeon.js:"if (walkMode) mwViewDrawBody"`. `dungeonContext.js`, the fourth motor host, builds
 the dungeon for those hosts and draws no body of its own. The other players'
-bodies go through `peerBodies.js:"{ proj, view, eye, feet"` (`PeerBodies.draw`, and INVIS-LOOK's `drawVeiled`, by `_drawBodies`). The open world
+bodies go through `peerBodies.js:": null; // COATS3D".."try {"` (`PeerBodies.draw`, and INVIS-LOOK's `drawVeiled`, by `_drawBodies`). The open world
 calls it at `world.js:"drawPeerBodies(proj, view, mwv.eye, tvf ? tvFace : null)"`, and the modal passes reach it through
 `host.drawPeerBodies` (`worldModes.js:"renderer.everyLightCasts();   // LA-SHADOW3".."host.drawPeerBodies?.({ proj, view, eye: mwv.eye });   // MWBODY1: the others' bodies, after the player's own"`, `worldModes.js:"if (!overlayHeld) interiorCtx.automapTick?.(dt, cam.pos, fwd)".."host.drawPeerBodies?.({ proj, view, eye: mwv.eye });   // MWBODY1: the others' bodies, after the player's own"`). The fix therefore
 sits in one place and reaches every host.

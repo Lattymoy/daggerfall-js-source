@@ -238,8 +238,8 @@
   {
     "name": "AUDITMWNPC2-K5-opts-drop-flies",
     "file": "src/net/peer/peerBodies.js",
-    "old": ", ...(look.flies ? { flies: true } : {}) };",
-    "new": " };",
+    "old": "  if (look?.creature) return { creature: look.creature, reachSweep: false, ...(look.flies ? { flies: true } : {}) }; // MWNPC9: its CREA record (fpArm buildCreatureBody) - nothing worn or held; AUDIT MW-NPC II K5: a flyer's must fly",
+    "new": "  if (look?.creature) return { creature: look.creature, reachSweep: false }; // MWNPC9: its CREA record (fpArm buildCreatureBody) - nothing worn or held; AUDIT MW-NPC II K5: a flyer's must fly",
     "tests": [
       "test/characters/mwnpc_audit2.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "AUDITMWNPC2-K5-key-one-body",
     "file": "src/net/peer/peerBodies.js",
-    "old": "`crea|${look.creature}${look.flies ? '|flies' : ''}`",
-    "new": "`crea|${look.creature}`",
+    "old": "  if (look?.creature) return `crea|${look.creature}${look.flies ? '|flies' : ''}`; // MWNPC9: a creature is its record - every one of a kind one body, never a person's; AUDIT MW-NPC II K5: one asked to fly another",
+    "new": "  if (look?.creature) return `crea|${look.creature}`; // MWNPC9: a creature is its record - every one of a kind one body, never a person's; AUDIT MW-NPC II K5: one asked to fly another",
     "tests": [
       "test/characters/mwnpc_audit2.test.js"
     ]
@@ -364,8 +364,8 @@
   {
     "name": "AUDITMWNPC2-L1-one-line",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    (low ? gate.low : gate.high).push(",
-    "new": "    gate.low.push(",
+    "old": "    (low ? gate.low : gate.high).push(() =>",
+    "new": "    gate.low.push(() =>",
     "tests": [
       "test/characters/mwnpc_audit2.test.js"
     ]
@@ -391,8 +391,8 @@
   {
     "name": "AUDITMWNPC2-L1-npc-builds-high",
     "file": "src/net/peer/peerBodies.js",
-    "old": "gateBuild(this._gate, build, this._buildInRange);",
-    "new": "gateBuild(this._gate, build, false);",
+    "old": "          this._queue = gateBuild(this._gate, build, this._buildInRange); // AUDIT MW-NPC II L1: an NPC's behind a player's",
+    "new": "          this._queue = gateBuild(this._gate, build, false); // AUDIT MW-NPC II L1: an NPC's behind a player's",
     "tests": [
       "test/characters/mwnpc_audit2.test.js"
     ]
@@ -400,8 +400,8 @@
   {
     "name": "AUDITMWNPC2-L2-frozen-forgets",
     "file": "src/net/peer/peerBodies.js",
-    "old": "        if (b.far || dt > 0 || !this._buildInRange) { b.posed = false;",
-    "new": "        if (true) { b.posed = false;",
+    "old": "        if (b.far || dt > 0 || !this._buildInRange) {",
+    "new": "        if (true) {",
     "tests": [
       "test/characters/mwnpc_audit2.test.js"
     ]

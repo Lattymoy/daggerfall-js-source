@@ -65,8 +65,8 @@
   {
     "name": "FBSEA-1-the-pace-off-the-world-feet",
     "file": "src/net/peer/peerBodies.js",
-    "old": "const on = peer.shown.deckKey ?? null, at = on ? peer.shown.deck : f;",
-    "new": "const on = peer.shown.deckKey ?? null, at = f;",
+    "old": "      at = on ? peer.shown.deck : f;",
+    "new": "      at = f;",
     "tests": [
       "test/net/peer/fbsea_deck.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "FBSEA-1-the-deck-key-unasked",
     "file": "src/net/peer/peerBodies.js",
-    "old": "b.speed = stepPeerPace(b.speed, b.paceKey === on ? b.paceAt : null, at, dt);",
-    "new": "b.speed = stepPeerPace(b.speed, b.paceAt, at, dt);",
+    "old": "    b.speed = stepPeerPace(b.speed, b.paceKey === on ? b.paceAt : null, at, dt); // HT-WAIST-BACK: net/peer/peerPace.js, the one home",
+    "new": "    b.speed = stepPeerPace(b.speed, b.paceAt, at, dt); // HT-WAIST-BACK: net/peer/peerPace.js, the one home",
     "tests": [
       "test/net/peer/fbsea_deck.test.js"
     ]

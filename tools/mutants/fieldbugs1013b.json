@@ -128,8 +128,8 @@
   {
     "name": "ONE-BAD-BODY-the-place-taken-as-it-came",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    if (!(Number.isFinite(f?.[0]) && Number.isFinite(f[1]) && Number.isFinite(f[2]))) { this._notFinite('place', peer.shown); return; }\n",
-    "new": "",
+    "old": "    if (!(Number.isFinite(f?.[0]) && Number.isFinite(f[1]) && Number.isFinite(f[2]))) {\n      this._notFinite('place', peer.shown);\n      return;\n    }\n    // the ground speed off the drawn pose, eased; a jump (a snap, a recenter missed) resets it rather than reading as a sprint.",
+    "new": "    // the ground speed off the drawn pose, eased; a jump (a snap, a recenter missed) resets it rather than reading as a sprint.",
     "tests": [
       "test/net/peer/fb1013b_onebadbody.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "ONE-BAD-BODY-the-yaw-taken-as-it-came",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    if (!Number.isFinite(want)) this._notFinite('yaw', peer.shown);   // ONE-BAD-BODY: the yaw it had stands\n    else b.yaw",
-    "new": "    b.yaw",
+    "old": "    if (!Number.isFinite(want))\n      this._notFinite('yaw', peer.shown); // ONE-BAD-BODY: the yaw it had stands\n    else\n      b.yaw = Number.isFinite(b.yaw)\n        ? b.yaw + wrapAngle(want - b.yaw) * (dt > 0 ? Math.min(1, dt * YAW_EASE) : 1)\n        : want; // ...and one born on a bad one takes the first good one",
+    "new": "    b.yaw = Number.isFinite(b.yaw) ? b.yaw + wrapAngle(want - b.yaw) * (dt > 0 ? Math.min(1, dt * YAW_EASE) : 1) : want; // ...and one born on a bad one takes the first good one",
     "tests": [
       "test/net/peer/fb1013b_onebadbody.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "ONE-BAD-BODY-the-bad-yaw-kept",
     "file": "src/net/peer/peerBodies.js",
-    "old": "else b.yaw = Number.isFinite(b.yaw) ? b.yaw + wrapAngle(want - b.yaw) * (dt > 0 ? Math.min(1, dt * YAW_EASE) : 1) : want;",
-    "new": "else b.yaw = b.yaw + wrapAngle(want - b.yaw) * (dt > 0 ? Math.min(1, dt * YAW_EASE) : 1);",
+    "old": "    else\n      b.yaw = Number.isFinite(b.yaw)\n        ? b.yaw + wrapAngle(want - b.yaw) * (dt > 0 ? Math.min(1, dt * YAW_EASE) : 1)\n        : want; // ...and one born on a bad one takes the first good one",
+    "new": "    else b.yaw = b.yaw + wrapAngle(want - b.yaw) * (dt > 0 ? Math.min(1, dt * YAW_EASE) : 1); // ...and one born on a bad one takes the first good one",
     "tests": [
       "test/net/peer/fb1013b_onebadbody.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "ONE-BAD-BODY-said-every-frame",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    if (this._notFiniteSaid) return;\n",
-    "new": "",
+    "old": "    if (this._notFiniteSaid) return;\n    this._notFiniteSaid = true;",
+    "new": "    this._notFiniteSaid = true;",
     "tests": [
       "test/net/peer/fb1013b_onebadbody.test.js"
     ]

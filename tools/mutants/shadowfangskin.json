@@ -121,8 +121,8 @@
   {
     "name": "SFSKIN-peer-skin-off-the-key",
     "file": "src/net/peer/peerBodies.js",
-    "old": "`wolf|${wolfLookKey(look)}|${werewolfSkinOf(glyphs) ?? ''}`",
-    "new": "`wolf|${wolfLookKey(look)}|`",
+    "old": "  return peerIsWolf(shown) ? `wolf|${wolfLookKey(look)}|${werewolfSkinOf(glyphs) ?? ''}` : bodyLookKey(look); // SHADOW-FANG: and the wolf's skin; MWNPC17: and an NPC's own picks (bodyLookKey) - two people in one outfit are two bodies",
+    "new": "  return peerIsWolf(shown) ? `wolf|${wolfLookKey(look)}|` : bodyLookKey(look); // SHADOW-FANG: and the wolf's skin; MWNPC17: and an NPC's own picks (bodyLookKey) - two people in one outfit are two bodies",
     "tests": [
       "test/net/shadowfangskin.test.js"
     ]

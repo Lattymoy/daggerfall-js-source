@@ -51,20 +51,30 @@ export const peerRangeOf = (v) => (PEER_RANGE_TIERS.includes(v) ? v : PEER_RANGE
  * @param {Set<any>} [out]
  * @returns {Set<any>}
  */
-export function rangeDrawn(peers, me, { at, range = PEER_RANGE_DEFAULT, mate = () => false, was = null, hold = PEER_RANGE_HOLD }, out = new Set()) {
+export function rangeDrawn(
+  peers,
+  me,
+  { at, range = PEER_RANGE_DEFAULT, mate = () => false, was = null, hold = PEER_RANGE_HOLD },
+  out = new Set(),
+) {
   out.clear();
   if (!(range > 0) || !me) {
     for (const p of peers) out.add(p.id);
     return out;
   }
-  const near = range * range, kept = range * hold * range * hold;
+  const near = range * range,
+    kept = range * hold * range * hold;
   for (const p of peers) {
     const f = at(p);
     if (f) {
-      const dx = f[0] - me[0], dz = f[2] - me[2];
-      if (dx * dx + dz * dz <= (was?.has(p.id) ? kept : near)) { out.add(p.id); continue; }
+      const dx = f[0] - me[0],
+        dz = f[2] - me[2];
+      if (dx * dx + dz * dz <= (was?.has(p.id) ? kept : near)) {
+        out.add(p.id);
+        continue;
+      }
     }
-    if (mate(p.id)) out.add(p.id);   // AUDIT A L5: the party asked of a player past the range alone (social's answer allocates)
+    if (mate(p.id)) out.add(p.id); // AUDIT A L5: the party asked of a player past the range alone (social's answer allocates)
   }
   return out;
 }
@@ -77,7 +87,9 @@ export function rangeDrawn(peers, me, { at, range = PEER_RANGE_DEFAULT, mate = (
  * GATE-CROWD's (the crosshair's pick and a gift's aim, a blow's spark and a cry).
  */
 export function createPeerRange() {
-  let held = new Set(), spare = new Set(), live = false;
+  let held = new Set(),
+    spare = new Set(),
+    live = false;
   const gone = new Set();
   /** @type {any[]} */
   const drawn = [];
@@ -91,12 +103,19 @@ export function createPeerRange() {
     cut(peers, { on = true, me, at, range = PEER_RANGE_DEFAULT, mate = () => false }) {
       gone.clear();
       live = !!on && range > 0 && !!me;
-      if (!live) { held.clear(); return peers; }
+      if (!live) {
+        held.clear();
+        return peers;
+      }
       const now = rangeDrawn(peers, me, { at, range, mate, was: held }, spare);
-      spare = held; held = now;
+      spare = held;
+      held = now;
       if (held.size === peers.length) return peers;
       drawn.length = 0;
-      for (const p of peers) { if (held.has(p.id)) drawn.push(p); else gone.add(p.id); }
+      for (const p of peers) {
+        if (held.has(p.id)) drawn.push(p);
+        else gone.add(p.id);
+      }
       return drawn;
     },
     /** Whether the last cut left `id` drawn - true for every player it did not cut for distance. */
@@ -104,6 +123,8 @@ export function createPeerRange() {
     /** The ids drawn by the last cut while it was live (the tests' window on the held set). */
     held: () => held,
     /** Whether the last cut was live (a range, a place, not the travel view). */
-    get live() { return live; },
+    get live() {
+      return live;
+    },
   };
 }

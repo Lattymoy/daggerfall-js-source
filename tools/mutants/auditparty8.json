@@ -110,7 +110,7 @@
   {
     "name": "AP-stranger-takes-a-mate",
     "file": "src/net/peer/peerBodies.js",
-    "old": "      if (b.pri && !pri) continue;   // AUDIT PARTY8: a stranger never takes a party mate's slot",
+    "old": "      if (b.pri && !pri) continue; // AUDIT PARTY8: a stranger never takes a party mate's slot",
     "new": "      // (a stranger may take a party mate's slot)",
     "tests": [
       "test/net/auditparty8.test.js"

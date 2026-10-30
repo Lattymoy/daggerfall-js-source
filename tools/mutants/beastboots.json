@@ -173,8 +173,8 @@
   {
     "name": "BEAST-BOOTS-npc-list-cut",
     "file": "src/net/peer/peerBodies.js",
-    "old": "withNpcPicks(worn, npc)",
-    "new": "withNpcPicks(worn.filter((p) => !WARDROBE_BEAST_RACES.includes(stub.race) || p.templateIndex !== ARMOR_ENUM.Boots), npc)",
+    "old": "    armor: [...(npc ? withNpcPicks(worn, npc) : worn), ...outfitPiece(look, wolf)], // MWNPC17: each garment its rung and its pick; BEAST-BOOTS: a beast NPC's helm and boots go to the composer as a player's do; MW-FOLK1: and a townsperson's outfit",
+    "new": "    armor: [\n      ...(npc\n        ? withNpcPicks(\n            worn.filter((p) => !WARDROBE_BEAST_RACES.includes(stub.race) || p.templateIndex !== ARMOR_ENUM.Boots),\n            npc,\n          )\n        : worn),\n      ...outfitPiece(look, wolf),\n    ], // MWNPC17: each garment its rung and its pick; BEAST-BOOTS: a beast NPC's helm and boots go to the composer as a player's do; MW-FOLK1: and a townsperson's outfit",
     "tests": [
       "test/characters/mwnpc17_wardrobe.test.js"
     ]

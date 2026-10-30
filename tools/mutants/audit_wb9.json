@@ -283,7 +283,7 @@
   {
     "name": "AUDIT-WB9-the-bank-unbounded",
     "file": "src/net/peer/peerBodies.js",
-    "old": "      b.bank = Math.min(EFFECTS_BANK_MAX_S, b.bank + dt);   // AUDIT WB9 (bodies F1)",
+    "old": "      b.bank = Math.min(EFFECTS_BANK_MAX_S, b.bank + dt); // AUDIT WB9 (bodies F1)",
     "new": "      b.bank += dt;",
     "tests": [
       "test/net/gate/audit_wb9.test.js",
@@ -302,8 +302,8 @@
   {
     "name": "AUDIT-WB9-the-build-reading-the-look-late",
     "file": "src/net/peer/peerBodies.js",
-    "old": "this._build(b, look, shown, glyphs)",
-    "new": "this._build(b, peer.look, peer.shown, peer.glyphs)",
+    "old": "        const build = () => this._build(b, look, shown, glyphs);",
+    "new": "        const build = () => this._build(b, peer.look, peer.shown, peer.glyphs);",
     "tests": [
       "test/net/gate/audit_wb9.test.js"
     ]
@@ -311,8 +311,8 @@
   {
     "name": "AUDIT-WB9-the-spares-first-frame-drawn-open",
     "file": "src/net/peer/peerBodies.js",
-    "old": "veil: conceal ? (conceal(peer.id) ?? null) : null };",
-    "new": "veil: null };",
+    "old": "        veil: conceal ? (conceal(peer.id) ?? null) : null,",
+    "new": "        veil: null,",
     "tests": [
       "test/net/gate/audit_wb9.test.js"
     ]

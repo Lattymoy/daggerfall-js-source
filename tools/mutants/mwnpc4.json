@@ -182,8 +182,8 @@
   {
     "name": "MWNPC4-peer-dead-arms",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    if (this._react(b, shown)) { b.swing = shown.an | 0; b.cast = shown.cn | 0; b.pending = null; b.held = false; peerGatherSwing(b.gather ??= {}, shown); return; }",
-    "new": "    if (this._react(b, shown)) { b.swing = shown.an | 0; b.cast = shown.cn | 0; b.pending = null; b.held = false; peerGatherSwing(b.gather ??= {}, shown); }",
+    "old": "      return;\n    } // PEER-ACTS: and its act's",
+    "new": "    } // PEER-ACTS: and its act's",
     "tests": [
       "test/combat/mwnpc4_npclane.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "MWNPC4-peer-dead-counts-not-followed",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    if (this._react(b, shown)) { b.swing = shown.an | 0; b.cast = shown.cn | 0; b.pending = null; b.held = false; peerGatherSwing(b.gather ??= {}, shown); return; }",
-    "new": "    if (this._react(b, shown)) { b.pending = null; b.held = false; peerGatherSwing(b.gather ??= {}, shown); return; }",
+    "old": "      b.swing = shown.an | 0;\n      b.cast = shown.cn | 0;\n      b.pending = null;",
+    "new": "      b.pending = null;",
     "tests": [
       "test/combat/mwnpc4_npclane.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "MWNPC4-peer-corpse-replayed",
     "file": "src/net/peer/peerBodies.js",
-    "old": "if (dd) b.rig.die?.(dd - 1, { startPoint: 1 }); else b.rig.revive?.(); }",
-    "new": "if (dd) b.rig.die?.(dd - 1); else b.rig.revive?.(); }",
+    "old": "      if (dd) b.rig.die?.(dd - 1, { startPoint: 1 });",
+    "new": "      if (dd) b.rig.die?.(dd - 1);",
     "tests": [
       "test/combat/mwnpc4_npclane.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "MWNPC4-peer-death-roll-unshifted",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    else if (dd !== b.dead) { b.dead = dd; b.posedAt = 0; if (dd) b.rig.die?.(dd - 1); else b.rig.revive?.(); }",
-    "new": "    else if (dd !== b.dead) { b.dead = dd; b.posedAt = 0; if (dd) b.rig.die?.(dd); else b.rig.revive?.(); }",
+    "old": "      if (dd) b.rig.die?.(dd - 1);",
+    "new": "      if (dd) b.rig.die?.(dd);",
     "tests": [
       "test/combat/mwnpc4_npclane.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "MWNPC4-peer-never-revived",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    else if (dd !== b.dead) { b.dead = dd; b.posedAt = 0; if (dd) b.rig.die?.(dd - 1); else b.rig.revive?.(); }",
-    "new": "    else if (dd !== b.dead) { b.dead = dd; b.posedAt = 0; if (dd) b.rig.die?.(dd - 1); }",
+    "old": "      else b.rig.revive?.();\n    } // AUDIT MWNPC16-18 B F2: its pose no longer the one it stands in - no cast until posed again",
+    "new": "    } // AUDIT MWNPC16-18 B F2: its pose no longer the one it stands in - no cast until posed again",
     "tests": [
       "test/combat/mwnpc4_npclane.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "MWNPC4-peer-born-count-recoils",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    if (b.hit == null || dd) b.hit = ht;\n    else if (ht !== b.hit)",
-    "new": "    if (dd) b.hit = ht;\n    else if (ht !== b.hit)",
+    "old": "    if (b.hit == null || dd) b.hit = ht;",
+    "new": "    if (dd) b.hit = ht;",
     "tests": [
       "test/combat/mwnpc4_npclane.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "MWNPC4-peer-linger-not-relatched",
     "file": "src/net/peer/peerBodies.js",
-    "old": "if (b.goneAt == null) { b.goneAt = now; b.hit = null; b.dead = null; b.swing",
-    "new": "if (b.goneAt == null) { b.goneAt = now; b.swing",
+    "old": "        b.hit = null;\n        b.dead = null;\n        b.swing = null;",
+    "new": "        b.swing = null;",
     "tests": [
       "test/combat/mwnpc4_npclane.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "MWNPC4-gate-ignored",
     "file": "src/net/peer/peerBodies.js",
-    "old": "        if (this._gate) this._queue = gateBuild(this._gate, build, this._buildInRange);",
-    "new": "        if (false) this._queue = gateBuild(this._gate, build, this._buildInRange);",
+    "old": "        if (this._gate)",
+    "new": "        if (false)",
     "tests": [
       "test/combat/mwnpc4_npclane.test.js"
     ]

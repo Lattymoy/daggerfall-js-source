@@ -25,11 +25,12 @@
 // one of its own when the hit frame lands); for hu, the same Hit1..5 ring at the peer's body, as I hear my own. A
 // count seen for the first time (a late joiner, a peer walking into view) plays nothing - an old blow is not replayed.
 
-export const HIT_CLIP_FIRST = 108;   // soundClips SOUND.Hit1
-export const HIT_CLIP_LAST = 112;    // Hit5
+export const HIT_CLIP_FIRST = 108; // soundClips SOUND.Hit1
+export const HIT_CLIP_LAST = 112; // Hit5
 const U16 = 65535;
 /** A splash this near, this recently, is the same blow drawn already (the foe owner's own). */
-const DEDUPE_M = 1.2, DEDUPE_S = 0.6;
+const DEDUPE_M = 1.2,
+  DEDUPE_S = 0.6;
 /** A peer's blow waits this long before it plays, so the owner's own splash (the hit frame) can land first. */
 const FX_DELAY_S = 0.18;
 /** AUDIT MERGE-PLUS B6: the least time between two plays of one peer's blows, or of their hurts - no swing, shot or string
@@ -44,13 +45,21 @@ export const FX_MIN_GAP_S = 0.25;
 /** @type {((run: () => any) => any) | null} */
 let _peerScope = null;
 /** The place's scope over every peer sound (`(run) => run()` with a gain about it), or null to let them be. */
-export function setPeerSoundScope(fn) { _peerScope = typeof fn === 'function' ? fn : null; }
+export function setPeerSoundScope(fn) {
+  _peerScope = typeof fn === 'function' ? fn : null;
+}
 /** GATE-MIX: the scope set now (null: none) - a place that hands one in takes it back only while it is still its own. */
-export function peerSoundScope() { return _peerScope; }
+export function peerSoundScope() {
+  return _peerScope;
+}
 /** A peer's sound (`run` plays it), through the place's scope where one is set. Answers what `run` answers. */
 export function peerHeard(run) {
   if (!_peerScope) return run();
-  try { return _peerScope(run); } catch { return undefined; }
+  try {
+    return _peerScope(run);
+  } catch {
+    return undefined;
+  }
 }
 
 // ── the sender ──────────────────────────────────────────────────────
@@ -73,16 +82,32 @@ export function noteMyHurt(share = null) {
   mine.uq = Number.isFinite(share) ? Math.max(0, Math.min(100, Math.round(share * 100))) : 20;
 }
 /** Is this one-shot the "a blow landed on me" ring. */
-export const isHurtClip = (clip, volume, playerHitVolume = 1) => clip >= HIT_CLIP_FIRST && clip <= HIT_CLIP_LAST && volume === playerHitVolume;
+export const isHurtClip = (clip, volume, playerHitVolume = 1) =>
+  clip >= HIT_CLIP_FIRST && clip <= HIT_CLIP_LAST && volume === playerHitVolume;
 
 /** The pose's fields - absent while their counts are 0. */
 export function poseFx() {
   const out = {};
-  if (mine.hk && mine.hp) { out.hk = mine.hk; out.hp = mine.hp.slice(); out.hb = mine.hb; out.hq = mine.hq; }
-  if (mine.hu) { out.hu = mine.hu; out.uq = mine.uq; }
+  if (mine.hk && mine.hp) {
+    out.hk = mine.hk;
+    out.hp = mine.hp.slice();
+    out.hb = mine.hb;
+    out.hq = mine.hq;
+  }
+  if (mine.hu) {
+    out.hu = mine.hu;
+    out.uq = mine.uq;
+  }
   return out;
 }
-export function _resetPeerFxForTests() { mine.hk = 0; mine.hp = null; mine.hb = 0; mine.hq = 0; mine.hu = 0; mine.uq = 0; }
+export function _resetPeerFxForTests() {
+  mine.hk = 0;
+  mine.hp = null;
+  mine.hb = 0;
+  mine.hq = 0;
+  mine.hu = 0;
+  mine.uq = 0;
+}
 
 // ── the receiver ────────────────────────────────────────────────────
 
@@ -94,19 +119,23 @@ export function _resetPeerFxForTests() { mine.hk = 0; mine.hp = null; mine.hb = 
  *   toScene?: (p: {x: number, y: number, z: number}) => any, now?: () => number}} [opts]
  */
 export function createPeerFxPlayer({ play, toScene, now = () => performance.now() / 1000 } = {}) {
-  const seen = new Map();   // id -> { hk, hu, tick, bt, ut }
-  const queue = [];         // { due, at, bloodIndex, share }
-  const recent = [];        // { t, pos }
-  let tick = 0;             // AUDIT MERGE-PLUS B3: frames drawn - an entry not refreshed on the last one is a peer gone
+  const seen = new Map(); // id -> { hk, hu, tick, bt, ut }
+  const queue = []; // { due, at, bloodIndex, share }
+  const recent = []; // { t, pos }
+  let tick = 0; // AUDIT MERGE-PLUS B3: frames drawn - an entry not refreshed on the last one is a peer gone
   return {
     update(id, pose, feet, height = 0) {
       if (!pose || !id) return;
-      const hk = pose.hk | 0, hu = pose.hu | 0;
+      const hk = pose.hk | 0,
+        hu = pose.hu | 0;
       const s = seen.get(id);
       // AUDIT MERGE-PLUS B3: A PEER WHO WENT AWAY AND CAME BACK IS SEEN FOR THE FIRST TIME AGAIN. Only a peer still in the
       // room was forgotten when it fell from view; one that left kept its entry, and on its return (a party mate out of
       // a dungeon) its last blow and hurt played again, at a point long stale - the replay this file refuses.
-      if (!s || s.tick < tick - 1) { seen.set(id, { hk, hu, tick }); return; }
+      if (!s || s.tick < tick - 1) {
+        seen.set(id, { hk, hu, tick });
+        return;
+      }
       s.tick = tick;
       const t = now();
       if (hk && hk !== s.hk) {
@@ -117,20 +146,35 @@ export function createPeerFxPlayer({ play, toScene, now = () => performance.now(
         // on every one of its twenty frames a second, blood and a ring at any point it liked
         if (at && !(t - (s.bt ?? -Infinity) < FX_MIN_GAP_S)) {
           s.bt = t;
-          queue.push({ due: t + FX_DELAY_S, at, bloodIndex: pose.hb | 0, share: Math.max(0, Math.min(100, pose.hq | 0)) / 100 });
+          queue.push({
+            due: t + FX_DELAY_S,
+            at,
+            bloodIndex: pose.hb | 0,
+            share: Math.max(0, Math.min(100, pose.hq | 0)) / 100,
+          });
         }
       }
       // PEERFX2 (the player: "when the other player gets hit make the same feedback as if he would've hit a mob"): a
       // peer struck gets a blow's whole feedback on their own body - the ring AND the blood splash, sized by what it
       // cost them - queued like a blow, so a splash the attacker's owner already drew there is not drawn twice
-      if (hu && hu !== s.hu && !(t - (s.ut ?? -Infinity) < FX_MIN_GAP_S)) {   // AUDIT MERGE-PLUS B6: and a hurt the same
+      if (hu && hu !== s.hu && !(t - (s.ut ?? -Infinity) < FX_MIN_GAP_S)) {
+        // AUDIT MERGE-PLUS B6: and a hurt the same
         s.hu = hu;
         s.ut = t;
-        play?.flinch?.(id);   // PEERFX3: the red flash (and a class skin's hurt pose) at once, deduped or not
-        if (feet) queue.push({ due: t + FX_DELAY_S, at: [feet[0], feet[1] + (height > 0 ? height / 2 : 0.9), feet[2]], bloodIndex: 0, share: Math.max(0, Math.min(100, (pose.uq ?? 20) | 0)) / 100, hurt: true });
+        play?.flinch?.(id); // PEERFX3: the red flash (and a class skin's hurt pose) at once, deduped or not
+        if (feet)
+          queue.push({
+            due: t + FX_DELAY_S,
+            at: [feet[0], feet[1] + (height > 0 ? height / 2 : 0.9), feet[2]],
+            bloodIndex: 0,
+            share: Math.max(0, Math.min(100, (pose.uq ?? 20) | 0)) / 100,
+            hurt: true,
+          });
       }
     },
-    forget(id) { seen.delete(id); },
+    forget(id) {
+      seen.delete(id);
+    },
     splashed(pos) {
       if (!pos) return;
       recent.push({ t: now(), pos: [pos[0], pos[1], pos[2]] });
@@ -138,7 +182,7 @@ export function createPeerFxPlayer({ play, toScene, now = () => performance.now(
     },
     frame() {
       tick++;
-      if (seen.size > 64) for (const [id, s] of seen) if (s.tick < tick - 1) seen.delete(id);   // AUDIT MERGE-PLUS B3: bounded
+      if (seen.size > 64) for (const [id, s] of seen) if (s.tick < tick - 1) seen.delete(id); // AUDIT MERGE-PLUS B3: bounded
       if (!queue.length) return;
       const t = now();
       while (recent.length && t - recent[0].t > DEDUPE_S + FX_DELAY_S) recent.shift();
@@ -146,8 +190,13 @@ export function createPeerFxPlayer({ play, toScene, now = () => performance.now(
         const q = queue[i];
         if (q.due > t) continue;
         queue.splice(i, 1);
-        const dup = recent.some((r) => t - r.t <= DEDUPE_S + FX_DELAY_S && Math.hypot(r.pos[0] - q.at[0], r.pos[1] - q.at[1], r.pos[2] - q.at[2]) <= DEDUPE_M);
-        if (!dup) peerHeard(() => (q.hurt ? play?.hurt : play?.blow)?.({ at: q.at, bloodIndex: q.bloodIndex, share: q.share }));   // the owner drew and rang it already; EG-ZH: a peer's ring, as the place hears it
+        const dup = recent.some(
+          (r) =>
+            t - r.t <= DEDUPE_S + FX_DELAY_S &&
+            Math.hypot(r.pos[0] - q.at[0], r.pos[1] - q.at[1], r.pos[2] - q.at[2]) <= DEDUPE_M,
+        );
+        if (!dup)
+          peerHeard(() => (q.hurt ? play?.hurt : play?.blow)?.({ at: q.at, bloodIndex: q.bloodIndex, share: q.share })); // the owner drew and rang it already; EG-ZH: a peer's ring, as the place hears it
       }
     },
   };

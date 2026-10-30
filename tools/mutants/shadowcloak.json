@@ -730,8 +730,8 @@
   {
     "name": "SHADOWCLOAK-a-peer-with-no-body",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    if (!this._standing(b)) return null;\n    let bones = null; try { bones = b.rig.thirdBones",
-    "new": "    if (!b) return null;\n    let bones = null; try { bones = b.rig.thirdBones",
+    "old": "    if (!this._standing(b)) return null;",
+    "new": "    if (!b) return null;",
     "tests": [
       "test/net/shadowcloak.test.js"
     ]
@@ -1329,8 +1329,8 @@
   {
     "name": "SHADOWCLOAK-a-throwing-rig-ends-the-frame",
     "file": "src/net/peer/peerBodies.js",
-    "old": "let bones = null; try { bones = b.rig.thirdBones?.(names) ?? null; } catch (e) { console.error('[peerBodies] bonesOf', e); }",
-    "new": "let bones = b.rig.thirdBones?.(names) ?? null;",
+    "old": "    let bones = null;\n    try {\n      bones = b.rig.thirdBones?.(names) ?? null;\n    } catch (e) {\n      console.error('[peerBodies] bonesOf', e);\n    } // as every rig call here (AUDIT MWBODY A1): a throw never ends the frame",
+    "new": "    let bones = b.rig.thirdBones?.(names) ?? null; // as every rig call here (AUDIT MWBODY A1): a throw never ends the frame",
     "tests": [
       "test/net/shadowcloak.test.js"
     ]

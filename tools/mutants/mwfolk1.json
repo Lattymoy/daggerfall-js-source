@@ -132,8 +132,8 @@
   {
     "name": "MWFOLK1-one-body-two-outfits",
     "file": "src/net/peer/peerBodies.js",
-    "old": "lookKey(look)) + npcKeyOf(look) + outfitKeyOf(look);",
-    "new": "lookKey(look)) + npcKeyOf(look);",
+    "old": "        : lookKey(look)) +\n      npcKeyOf(look) +\n      outfitKeyOf(look);",
+    "new": "        : lookKey(look)) + npcKeyOf(look);",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],
@@ -292,8 +292,8 @@
   {
     "name": "MWFOLK1-AUDIT-beast-boots",
     "file": "src/net/peer/peerBodies.js",
-    "old": "typeof look?.outfit === 'string' && !WARDROBE_BEAST_RACES.includes(look.race) ? ownOutfitFor(look.outfit) : null",
-    "new": "typeof look?.outfit === 'string' ? ownOutfitFor(look.outfit) : null",
+    "old": "const lookOutfit = (look) =>\n  typeof look?.outfit === 'string' && !WARDROBE_BEAST_RACES.includes(look.race) ? ownOutfitFor(look.outfit) : null;",
+    "new": "const lookOutfit = (look) => (typeof look?.outfit === 'string' ? ownOutfitFor(look.outfit) : null);",
     "tests": [
       "test/tooling/mwfolk1.test.js"
     ],

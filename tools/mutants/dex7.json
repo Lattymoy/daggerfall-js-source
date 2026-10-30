@@ -162,8 +162,8 @@
   {
     "name": "DEX7-the-body-casts-for-a-noshadow-row",
     "file": "src/net/peer/peerBodies.js",
-    "old": " && !dissolveShadowless(fx?.dissolve) && !fx?.noShadow;",
-    "new": " && !dissolveShadowless(fx?.dissolve);",
+    "old": "      const cast = this._casts && !veiled && !(ow > 1) && !dissolveShadowless(fx?.dissolve) && !fx?.noShadow;",
+    "new": "      const cast = this._casts && !veiled && !(ow > 1) && !dissolveShadowless(fx?.dissolve);",
     "why": "AUDIT DEX B2: a NoShadow row's Morrowind body casts its shadow (SetupDemoEnemy.cs:137-140 turns the mobile's off)",
     "tests": [
       "test/systems/enemyExpansion/dex7_bodies.test.js"

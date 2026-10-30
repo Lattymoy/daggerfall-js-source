@@ -2,8 +2,8 @@
   {
     "name": "WB9h-a-side-of-the-view-dropped",
     "file": "src/net/peer/peerBodies.js",
-    "old": "const SIDES = [[0, 1], [0, -1], [1, 1], [1, -1], [2, 1]];",
-    "new": "const SIDES = [[0, 1], [0, -1], [1, 1], [2, 1]];",
+    "old": "  [1, -1],\n  [2, 1],",
+    "new": "  [2, 1],",
     "tests": [
       "test/net/peer/wb9h_crowd_bodies.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "WB9h-the-reach-ignored",
     "file": "src/net/peer/peerBodies.js",
-    "old": "planes[i + 2] * z + planes[i + 3] < -r) return false;",
-    "new": "planes[i + 2] * z + planes[i + 3] < 0) return false;",
+    "old": "    if (planes[i] * x + planes[i + 1] * y + planes[i + 2] * z + planes[i + 3] < -r) return false;",
+    "new": "    if (planes[i] * x + planes[i + 1] * y + planes[i + 2] * z + planes[i + 3] < 0) return false;",
     "tests": [
       "test/net/peer/wb9h_crowd_bodies.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "WB9h-a-stub-read-as-a-lens",
     "file": "src/net/peer/peerBodies.js",
-    "old": "  if (proj?.length !== 16 || view?.length !== 16) return null;\n",
-    "new": "",
+    "old": "  if (proj?.length !== 16 || view?.length !== 16) return null;\n  for (let r = 0; r < 4; r++) {",
+    "new": "  for (let r = 0; r < 4; r++) {",
     "tests": [
       "test/net/peer/wb9h_crowd_bodies.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WB9h-the-culled-skinned",
     "file": "src/net/peer/peerBodies.js",
-    "old": ": !b.inView ? 0 : (b.owed || b.stale) ? 2",
-    "new": ": false ? 0 : (b.owed || b.stale) ? 2",
+    "old": "        : !b.inView",
+    "new": "        : false",
     "tests": [
       "test/net/peer/wb9h_crowd_bodies.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WB9h-the-skin-margin-dropped",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    b.inView = !this._planesOk || this._sees(b, turnLeadMargin(Math.sqrt(b.d2), this._turn));",
-    "new": "    b.inView = !this._planesOk || this._sees(b, 0);",
+    "old": "    b.inView = !this._planesOk || this._sees(b, turnLeadMargin(Math.sqrt(b.d2), this._turn)); // WB9h: in the last pass's view, with the margin a turning eye needs - MW-CROWD: led by the turn",
+    "new": "    b.inView = !this._planesOk || this._sees(b, 0); // WB9h: in the last pass's view, with the margin a turning eye needs - MW-CROWD: led by the turn",
     "tests": [
       "test/net/peer/wb9h_crowd_bodies.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "WB9h-the-stale-drawn-stale",
     "file": "src/net/peer/peerBodies.js",
-    "old": "      if (b.stale) {\n",
-    "new": "      if (false) {\n",
+    "old": "      if (b.stale) {",
+    "new": "      if (false) {",
     "tests": [
       "test/net/peer/wb9h_crowd_bodies.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "WB9h-the-bank-dropped-at-the-catch-up",
     "file": "src/net/peer/peerBodies.js",
-    "old": "b.rig.update(0, { pose: true, effectsDt: b.bank });",
-    "new": "b.rig.update(0, { pose: true, effectsDt: 0 });",
+    "old": "          b.rig.update(0, { pose: true, effectsDt: b.bank });",
+    "new": "          b.rig.update(0, { pose: true, effectsDt: 0 });",
     "tests": [
       "test/net/peer/wb9h_crowd_bodies.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "WB9h-the-budget-ignored",
     "file": "src/net/peer/peerBodies.js",
-    "old": "(b.rank > 0 && skins < this._skinBudget)",
-    "new": "(b.rank > 0)",
+    "old": "      const pose = b.rank === 3 || (b.rank > 0 && skins < this._skinBudget);",
+    "new": "      const pose = b.rank === 3 || b.rank > 0;",
     "tests": [
       "test/net/peer/wb9h_crowd_bodies.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "WB9h-the-owed-forgotten",
     "file": "src/net/peer/peerBodies.js",
-    "old": "      else if (b.rank > 0) b.owed = true;\n",
-    "new": "",
+    "old": "      else if (b.rank > 0) b.owed = true;\n      else if (!b.inView) b.stale = true;",
+    "new": "      else if (!b.inView) b.stale = true;",
     "tests": [
       "test/net/peer/wb9h_crowd_bodies.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "WB9h-a-swap-queued-behind-a-build",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    for (const b of this._bodies.values()) if (b.state === 'building') return false;\n",
-    "new": "",
+    "old": "    for (const b of this._bodies.values()) if (b.state === 'building') return false;\n    return true;",
+    "new": "    return true;",
     "tests": [
       "test/net/peer/wb9h_crowd_bodies.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "WB9h-the-swap-never-timed",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    if (!unseen) this._swappedAt = this._now();\n",
-    "new": "",
+    "old": "    if (!unseen) this._swappedAt = this._now();\n    this._release(victim.id, true, key); // MW-CROWD: a LINGERING body is kept too - its peer mounted or dropped out of the list a moment, and came back to a whole rebuild (_release spares only a built, skinned rig)",
+    "new": "    this._release(victim.id, true, key); // MW-CROWD: a LINGERING body is kept too - its peer mounted or dropped out of the list a moment, and came back to a whole rebuild (_release spares only a built, skinned rig)",
     "tests": [
       "test/net/peer/wb9h_crowd_bodies.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "WB9h-the-spare-never-taken",
     "file": "src/net/peer/peerBodies.js",
-    "old": "      const spare = this._takeSpare(w.key);",
-    "new": "      const spare = null;",
+    "old": "      const spare = this._takeSpare(w.key); // WB9h: a body given up for this one's, built - no build",
+    "new": "      const spare = null; // WB9h: a body given up for this one's, built - no build",
     "tests": [
       "test/net/peer/wb9h_crowd_bodies.test.js",
       "test/net/peer/mwbody1.test.js"
@@ -149,8 +149,8 @@
   {
     "name": "WB9h-another-bodys-spare-taken",
     "file": "src/net/peer/peerBodies.js",
-    "old": "if (this._spares[i].key === key) return this._spares.splice(i, 1)[0];",
-    "new": "if (this._spares[i]) return this._spares.splice(i, 1)[0];",
+    "old": "    for (let i = this._spares.length - 1; i >= 0; i--)\n      if (this._spares[i].key === key) return this._spares.splice(i, 1)[0];",
+    "new": "    for (let i = this._spares.length - 1; i >= 0; i--) if (this._spares[i]) return this._spares.splice(i, 1)[0];",
     "tests": [
       "test/net/peer/wb9h_crowd_bodies.test.js"
     ]
@@ -158,8 +158,8 @@
   {
     "name": "WB9h-spares-kept-forever",
     "file": "src/net/peer/peerBodies.js",
-    "old": "if (now - this._spares[i].at > SPARE_MS) this._unloadSpare",
-    "new": "if (false) this._unloadSpare",
+    "old": "    for (let i = this._spares.length - 1; i >= 0; i--)\n      if (now - this._spares[i].at > SPARE_MS) this._unloadSpare(this._spares.splice(i, 1)[0]);",
+    "new": "    for (let i = this._spares.length - 1; i >= 0; i--) if (false) this._unloadSpare(this._spares.splice(i, 1)[0]);",
     "tests": [
       "test/net/peer/wb9h_crowd_bodies.test.js"
     ]
@@ -176,8 +176,8 @@
   {
     "name": "WB9h-a-spare-on-its-old-camera",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    b.rig.attach(this.renderer, null);\n",
-    "new": "",
+    "old": "    b.rig.attach(this.renderer, null);\n    this._spares.push({ key: b.key, rig: b.rig, weapon: b.weapon, ammo: b.ammo, at: this._now() });",
+    "new": "    this._spares.push({ key: b.key, rig: b.rig, weapon: b.weapon, ammo: b.ammo, at: this._now() });",
     "tests": [
       "test/net/peer/wb9h_crowd_bodies.test.js"
     ]
@@ -185,8 +185,8 @@
   {
     "name": "WB9h-a-spare-seen-unposed",
     "file": "src/net/peer/peerBodies.js",
-    "old": "        if (!b.far && dt > 0) { b.peer = peer; this._step(b, dt, b.inView); }",
-    "new": "        if (!b.far && dt > 0) { b.peer = peer; this._step(b, dt, false); }",
+    "old": "          this._step(b, dt, b.inView);",
+    "new": "          this._step(b, dt, false);",
     "tests": [
       "test/net/peer/wb9h_crowd_bodies.test.js"
     ]
@@ -194,8 +194,8 @@
   {
     "name": "WB9h-the-spares-outlive-the-data",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    for (const s of this._spares) this._unloadSpare(s);\n",
-    "new": "",
+    "old": "    for (const s of this._spares) this._unloadSpare(s);\n    this._spares.length = 0;",
+    "new": "    this._spares.length = 0;",
     "tests": [
       "test/net/peer/wb9h_crowd_bodies.test.js"
     ]
@@ -203,8 +203,8 @@
   {
     "name": "WB9h-the-spares-outlive-the-gate",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    if (!this.enabled()) { if (this._bodies.size || this._spares.length) this.destroy(); return; }",
-    "new": "    if (!this.enabled()) { if (this._bodies.size) this.destroy(); return; }",
+    "old": "      if (this._bodies.size || this._spares.length) this.destroy();",
+    "new": "      if (this._bodies.size) this.destroy();",
     "tests": [
       "test/net/peer/wb9h_crowd_bodies.test.js"
     ]

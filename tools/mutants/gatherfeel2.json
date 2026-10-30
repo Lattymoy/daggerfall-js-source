@@ -624,8 +624,8 @@
   {
     "name": "GF2-PEERACTS-a-cancelled-act-named",
     "file": "src/net/peer/peerGather.js",
-    "old": "if (!st || st.cancelled) return 0;",
-    "new": "if (!st) return 0;",
+    "old": "  if (!st || st.cancelled) return 0;",
+    "new": "  if (!st) return 0;",
     "tests": [
       "test/systems/gf2_peeracts.test.js"
     ]
@@ -633,8 +633,8 @@
   {
     "name": "GF2-PEERACTS-the-count-unwrapped",
     "file": "src/net/peer/peerGather.js",
-    "old": "n = (n % 255) + 1;",
-    "new": "n = n + 1;",
+    "old": "    n = (n % 255) + 1;",
+    "new": "    n = n + 1;",
     "tests": [
       "test/systems/gf2_peeracts.test.js"
     ]
@@ -642,8 +642,8 @@
   {
     "name": "GF2-PEERACTS-the-kind-crossed",
     "file": "src/net/peer/peerGather.js",
-    "old": "gb = n * 16 + GATHER_POSE_BEATS.indexOf(kind);",
-    "new": "gb = n * 16;",
+    "old": "    gb = n * 16 + GATHER_POSE_BEATS.indexOf(kind);",
+    "new": "    gb = n * 16;",
     "tests": [
       "test/systems/gf2_peeracts.test.js"
     ]
@@ -651,8 +651,8 @@
   {
     "name": "GF2-PEERACTS-a-frame-counted-twice",
     "file": "src/net/peer/peerGather.js",
-    "old": "      if (act !== heard) { heard = act; prev = {}; }\n      if (!act?.state) return;\n      for (const b of actBeats(prev, act.state, 0)) {",
-    "new": "      heard = act; prev = {};\n      if (!act?.state) return;\n      for (const b of actBeats(prev, act.state, 0)) {",
+    "old": "      if (act !== heard) {\n        heard = act;\n        prev = {};\n      }",
+    "new": "      heard = act;\n      prev = {};",
     "tests": [
       "test/systems/gf2_peeracts.test.js"
     ]
@@ -660,8 +660,8 @@
   {
     "name": "GF2-PEERACTS-the-throw-while-winding",
     "file": "src/net/peer/peerGather.js",
-    "old": "if (st.kind === 'fish' && st.phase !== 'wind' && Number(st.throwM) > 0)",
-    "new": "if (st.kind === 'fish')",
+    "old": "        if (st.kind === 'fish' && st.phase !== 'wind' && Number(st.throwM) > 0)\n          out.gm = Math.max(1, Math.min(POSE_GATHER_THROW_MAX, Math.round(st.throwM)));",
+    "new": "        if (st.kind === 'fish') out.gm = Math.max(1, Math.min(POSE_GATHER_THROW_MAX, Math.round(st.throwM)));",
     "tests": [
       "test/systems/gf2_peeracts.test.js"
     ]
@@ -678,8 +678,8 @@
   {
     "name": "GF2-PEERACTS-the-knife-unsent",
     "file": "src/net/peer/peerGather.js",
-    "old": "knife: 'knife', slice: 'slice', tear: 'tear', peel: 'peel', netOut: 'out' });",
-    "new": "slice: 'slice', tear: 'tear', peel: 'peel', netOut: 'out' });",
+    "old": "  pluck: 'pluck',\n  find: 'find',\n  miss: 'miss',\n  knife: 'knife',\n  slice: 'slice',\n  tear: 'tear',\n  peel: 'peel',\n  netOut: 'out',",
+    "new": "  pluck: 'pluck',\n  find: 'find',\n  miss: 'miss',\n  slice: 'slice',\n  tear: 'tear',\n  peel: 'peel',\n  netOut: 'out',",
     "tests": [
       "test/systems/gf2_peeracts.test.js"
     ]
@@ -714,8 +714,8 @@
   {
     "name": "GF2-PEERACTS-an-old-act-replayed",
     "file": "src/net/peer/peerGather.js",
-    "old": "if (!s) { this.peers.set(id, { ga, gb, net: null, cueAt: -Infinity, plipAt: Infinity, thrashAt: Infinity, held: [] }); return; }",
-    "new": "if (!s) { s = { ga: 0, gb: 0, net: null, cueAt: -Infinity, plipAt: Infinity, thrashAt: Infinity, held: [] }; this.peers.set(id, s); }",
+    "old": "      this.peers.set(id, { ga, gb, net: null, cueAt: -Infinity, plipAt: Infinity, thrashAt: Infinity, held: [] });\n      return;",
+    "new": "      s = { ga: 0, gb: 0, net: null, cueAt: -Infinity, plipAt: Infinity, thrashAt: Infinity, held: [] };\n      this.peers.set(id, s);",
     "tests": [
       "test/systems/gf2_peeracts.test.js"
     ]
@@ -723,8 +723,8 @@
   {
     "name": "GF2-PEERACTS-the-blow-on-the-swings-frame",
     "file": "src/net/peer/peerGather.js",
-    "old": "s.held.push({ due: t + PEER_BLOW_DELAY_S[tool] * 1000,",
-    "new": "s.held.push({ due: t,",
+    "old": "          s.held.push({\n            due: t + PEER_BLOW_DELAY_S[tool] * 1000,\n            name: blow,\n            at: place,\n            pitch: 1,\n            gain: 1,\n            n: gb >> 4,\n          });",
+    "new": "          s.held.push({ due: t, name: blow, at: place, pitch: 1, gain: 1, n: gb >> 4 });",
     "tests": [
       "test/systems/gf2_peeracts.test.js"
     ]
@@ -732,8 +732,8 @@
   {
     "name": "GF2-PEERACTS-the-place-the-feet",
     "file": "src/net/peer/peerGather.js",
-    "old": "=> [feet[0] + Math.sin(yaw) * reach, feet[1] + high, feet[2] + Math.cos(yaw) * reach];",
-    "new": "=> [feet[0], feet[1], feet[2]];",
+    "old": "export const peerActAt = (feet, yaw, reach = PEER_ACT_REACH_M, high = PEER_ACT_HIGH_M) => [\n  feet[0] + Math.sin(yaw) * reach,\n  feet[1] + high,\n  feet[2] + Math.cos(yaw) * reach,\n];",
+    "new": "export const peerActAt = (feet, yaw, reach = PEER_ACT_REACH_M, high = PEER_ACT_HIGH_M) => [feet[0], feet[1], feet[2]];",
     "tests": [
       "test/systems/gf2_peeracts.test.js"
     ]
@@ -750,8 +750,8 @@
   {
     "name": "GF2-PEERACTS-the-clean-blow-plain",
     "file": "src/net/peer/peerGather.js",
-    "old": "mine: f({ blow: 'pick', clean: 'pickGlint' }) });",
-    "new": "mine: f({ blow: 'pick', clean: 'pick' }) });",
+    "old": "const BLOW_SAYS = f({ chop: f({ blow: 'chop', clean: 'chopClean' }), mine: f({ blow: 'pick', clean: 'pickGlint' }) });",
+    "new": "const BLOW_SAYS = f({ chop: f({ blow: 'chop', clean: 'chopClean' }), mine: f({ blow: 'pick', clean: 'pick' }) });",
     "tests": [
       "test/systems/gf2_peeracts.test.js"
     ]
@@ -759,8 +759,8 @@
   {
     "name": "GF2-PEERACTS-the-last-blow-unheard",
     "file": "src/net/peer/peerGather.js",
-    "old": "const tool = doing === 'chop' || doing === 'mine' ? doing : before === 'chop' || before === 'mine' ? before : null;",
-    "new": "const tool = doing === 'chop' || doing === 'mine' ? doing : null;",
+    "old": "        const tool =\n          doing === 'chop' || doing === 'mine' ? doing : before === 'chop' || before === 'mine' ? before : null;",
+    "new": "        const tool = doing === 'chop' || doing === 'mine' ? doing : null;",
     "tests": [
       "test/systems/gf2_peeracts.test.js"
     ]
@@ -768,8 +768,8 @@
   {
     "name": "GF2-PEERACTS-the-kneel-lost",
     "file": "src/net/peer/peerGather.js",
-    "old": "        if (doing === 'hand' || doing === 'steady' || doing === 'basket') { this._say('kneel', place); cued = true; }",
-    "new": "",
+    "old": "        if (doing === 'hand' || doing === 'steady' || doing === 'basket') {\n          this._say('kneel', place);\n          cued = true;\n        }\n        if (doing === 'fly') {",
+    "new": "        if (doing === 'fly') {",
     "tests": [
       "test/systems/gf2_peeracts.test.js"
     ]
@@ -777,8 +777,8 @@
   {
     "name": "GF2-PEERACTS-the-knife-kneels",
     "file": "src/net/peer/peerGather.js",
-    "old": "if (doing === 'hand' || doing === 'steady' || doing === 'basket') {",
-    "new": "if (doing === 'hand' || doing === 'steady' || doing === 'basket' || doing === 'trace') {",
+    "old": "        if (doing === 'hand' || doing === 'steady' || doing === 'basket') {",
+    "new": "        if (doing === 'hand' || doing === 'steady' || doing === 'basket' || doing === 'trace') {",
     "tests": [
       "test/systems/gf2_peeracts.test.js"
     ]
@@ -795,8 +795,8 @@
   {
     "name": "GF2-PEERACTS-the-water-silent",
     "file": "src/net/peer/peerGather.js",
-    "old": "else if (t >= s.plipAt) { if (ok) this._say('plip'",
-    "new": "else if (t >= s.plipAt) { if (false) this._say('plip'",
+    "old": "        if (ok) this._say('plip', s.net ?? place);",
+    "new": "        if (false) this._say('plip', s.net ?? place);",
     "tests": [
       "test/systems/gf2_peeracts.test.js"
     ]
@@ -804,8 +804,8 @@
   {
     "name": "GF2-PEERACTS-the-catch-silent",
     "file": "src/net/peer/peerGather.js",
-    "old": "else if (t >= s.thrashAt) { if (ok) this._say('thrash'",
-    "new": "else if (t >= s.thrashAt) { if (false) this._say('thrash'",
+    "old": "        if (ok) this._say('thrash', s.net ?? place);",
+    "new": "        if (false) this._say('thrash', s.net ?? place);",
     "tests": [
       "test/systems/gf2_peeracts.test.js"
     ]
@@ -813,8 +813,8 @@
   {
     "name": "GF2-PEERACTS-the-net-in-unheard",
     "file": "src/net/peer/peerGather.js",
-    "old": "this._say(BEAT_SAYS[/** @type {keyof typeof BEAT_SAYS} */ (kind)], kind === 'out' ? peerActAt(feet, yaw, 0, PEER_ACT_HIGH_M) : place);",
-    "new": "this._say(BEAT_SAYS[/** @type {keyof typeof BEAT_SAYS} */ (kind)], place);",
+    "old": "          this._say(\n            BEAT_SAYS[/** @type {keyof typeof BEAT_SAYS} */ (kind)],\n            kind === 'out' ? peerActAt(feet, yaw, 0, PEER_ACT_HIGH_M) : place,\n          );",
+    "new": "          this._say(BEAT_SAYS[/** @type {keyof typeof BEAT_SAYS} */ (kind)], place);",
     "tests": [
       "test/systems/gf2_peeracts.test.js"
     ]
@@ -822,8 +822,8 @@
   {
     "name": "GF2-PEERACTS-the-classic-skin-silent",
     "file": "src/net/peer/peerGather.js",
-    "old": "const cue = say.classic ? PROF_CUES[/** @type {keyof typeof PROF_CUES} */ (say.classic)] : null;",
-    "new": "const cue = null;",
+    "old": "      const cue = say.classic ? PROF_CUES[/** @type {keyof typeof PROF_CUES} */ (say.classic)] : null;",
+    "new": "      const cue = null;",
     "tests": [
       "test/systems/gf2_peeracts.test.js"
     ]
@@ -831,8 +831,8 @@
   {
     "name": "GF2-PEERACTS-out-of-earshot-replayed",
     "file": "src/net/peer/peerGather.js",
-    "old": "    s.ga = ga;\n    if (gb > 0) s.gb = gb;\n  }",
-    "new": "    if (ok) s.ga = ga;\n    if (ok && gb > 0) s.gb = gb;\n  }",
+    "old": "    s.ga = ga;\n    if (gb > 0) s.gb = gb;",
+    "new": "    if (ok) s.ga = ga;\n    if (ok && gb > 0) s.gb = gb;",
     "tests": [
       "test/systems/gf2_peeracts.test.js"
     ]
@@ -840,8 +840,8 @@
   {
     "name": "GF2-PEERACTS-the-held-blow-kept-out-of-earshot",
     "file": "src/net/peer/peerGather.js",
-    "old": "if (!ok) s.held.length = 0;",
-    "new": "if (false) s.held.length = 0;",
+    "old": "      if (!ok) s.held.length = 0;",
+    "new": "      if (false) s.held.length = 0;",
     "tests": [
       "test/systems/gf2_peeracts.test.js"
     ]
@@ -849,8 +849,8 @@
   {
     "name": "GF2-PEERACTS-no-floor",
     "file": "src/net/peer/peerGather.js",
-    "old": "const cueOk = t - s.cueAt >= PEER_GATHER_CUE_MS;",
-    "new": "const cueOk = true;",
+    "old": "    const cueOk = t - s.cueAt >= PEER_GATHER_CUE_MS;",
+    "new": "    const cueOk = true;",
     "tests": [
       "test/systems/gf2_peeracts.test.js"
     ]
@@ -858,7 +858,7 @@
   {
     "name": "GF2-PEERACTS-the-rebase-keeps",
     "file": "src/net/peer/peerGather.js",
-    "old": "    for (const s of this.peers.values()) for (const p of [s.net, ...s.held.map((h) => h.at)]) if (p) { p[0] += offset[0]; p[1] += offset[1]; p[2] += offset[2]; }",
+    "old": "    for (const s of this.peers.values())\n      for (const p of [s.net, ...s.held.map((h) => h.at)])\n        if (p) {\n          p[0] += offset[0];\n          p[1] += offset[1];\n          p[2] += offset[2];\n        }",
     "new": "    void offset;",
     "tests": [
       "test/systems/gf2_peeracts.test.js"
@@ -867,8 +867,8 @@
   {
     "name": "GF2-PEERACTS-the-forget-keeps",
     "file": "src/net/peer/peerGather.js",
-    "old": "forget(id) { this.peers.delete(id); }",
-    "new": "forget(id) {}",
+    "old": "  forget(id) {\n    this.peers.delete(id);\n  }",
+    "new": "  forget(id) {}",
     "tests": [
       "test/systems/gf2_peeracts.test.js"
     ]
@@ -966,8 +966,8 @@
   {
     "name": "GF2-PEERACTS-the-body-holds-no-tool",
     "file": "src/net/peer/peerBodies.js",
-    "old": "const want = b.wolf ? null : tool ?? (hands?.dual ? hands.right : peerWeaponOf(look, shown));",
-    "new": "const want = b.wolf ? null : (hands?.dual ? hands.right : peerWeaponOf(look, shown));",
+    "old": "      const want = b.wolf ? null : (tool ?? (hands?.dual ? hands.right : peerWeaponOf(look, shown))); // WEREWOLF1: the wolf's hands are its claws; PEER-ACTS: the act's tool before the look's weapon; AUDIT MIXED-PAIR L4-3: a pair's right hand holds the right's",
+    "new": "      const want = b.wolf ? null : hands?.dual ? hands.right : peerWeaponOf(look, shown); // WEREWOLF1: the wolf's hands are its claws; PEER-ACTS: the act's tool before the look's weapon; AUDIT MIXED-PAIR L4-3: a pair's right hand holds the right's",
     "tests": [
       "test/systems/gf2_peeracts.test.js"
     ]
@@ -975,8 +975,8 @@
   {
     "name": "GF2-PEERACTS-the-weapon-drawn-at-a-herb",
     "file": "src/net/peer/peerBodies.js",
-    "old": "const drawn = act ? !!tool : !!shown.wd;",
-    "new": "const drawn = !!shown.wd;",
+    "old": "    const drawn = act ? !!tool : !!shown.wd;",
+    "new": "    const drawn = !!shown.wd;",
     "tests": [
       "test/systems/gf2_peeracts.test.js"
     ]
@@ -984,8 +984,8 @@
   {
     "name": "GF2-PEERACTS-the-strike-the-swings",
     "file": "src/net/peer/peerBodies.js",
-    "old": "b.pending = { strike: GATHER_POSE_STRIKES[/** @type {keyof typeof GATHER_POSE_STRIKES} */ (act)], hold",
-    "new": "b.pending = { strike: 'StrikeDown', hold",
+    "old": "        b.pending = {\n          strike: GATHER_POSE_STRIKES[/** @type {keyof typeof GATHER_POSE_STRIKES} */ (act)],\n          hold: false,\n          left: PENDING_FRAMES,\n          blow: null,\n        };",
+    "new": "        b.pending = { strike: 'StrikeDown', hold: false, left: PENDING_FRAMES, blow: null };",
     "tests": [
       "test/systems/gf2_peeracts.test.js"
     ]
@@ -993,8 +993,8 @@
   {
     "name": "GF2-PEERACTS-the-body-blow-lost",
     "file": "src/net/peer/peerBodies.js",
-    "old": "if (acted === 'blow' && tool && ",
-    "new": "if (false && tool && ",
+    "old": "      if (acted === 'blow' && tool && GATHER_POSE_STRIKES[/** @type {keyof typeof GATHER_POSE_STRIKES} */ (act)])",
+    "new": "      if (false && tool && GATHER_POSE_STRIKES[/** @type {keyof typeof GATHER_POSE_STRIKES} */ (act)])",
     "tests": [
       "test/systems/gf2_peeracts.test.js"
     ]
@@ -1002,8 +1002,8 @@
   {
     "name": "GF2-PEERACTS-the-dead-replay",
     "file": "src/net/peer/peerBodies.js",
-    "old": "peerGatherSwing(b.gather ??= {}, shown); return; }   // PEER-ACTS",
-    "new": "return; }   // PEER-ACTS",
+    "old": "      peerGatherSwing((b.gather ??= {}), shown);\n      return;",
+    "new": "      return;",
     "tests": [
       "test/systems/gf2_peeracts.test.js"
     ]
@@ -1011,8 +1011,8 @@
   {
     "name": "GF2-PEERACTS-the-crouch-lost",
     "file": "src/net/peer/peerBodies.js",
-    "old": "c.sneaking = peerKneeling(shown);",
-    "new": "c.sneaking = false;",
+    "old": "  c.sneaking = peerKneeling(shown); // PEER-ACTS: kneeling at an act (a herb, the Basket's search, the knife at a body) - the rig's crouched idle, Morrowind's own (it has no kneel)",
+    "new": "  c.sneaking = false; // PEER-ACTS: kneeling at an act (a herb, the Basket's search, the knife at a body) - the rig's crouched idle, Morrowind's own (it has no kneel)",
     "tests": [
       "test/systems/gf2_peeracts.test.js"
     ]
@@ -1047,8 +1047,8 @@
   {
     "name": "GF2-PEERACTS-a-lane-first-sight-a-swing",
     "file": "src/net/peer/peerGather.js",
-    "old": "if (!seen.init) { seen.init = true; seen.ga = ga; seen.gb = gb; return null; }",
-    "new": "if (!seen.init) { seen.init = true; seen.ga = 0; seen.gb = 0; }",
+    "old": "    seen.ga = ga;\n    seen.gb = gb;\n    return null;",
+    "new": "    seen.ga = 0;\n    seen.gb = 0;",
     "tests": [
       "test/systems/gf2_peeracts.test.js"
     ]
@@ -1056,8 +1056,8 @@
   {
     "name": "GF2-PEERACTS-a-pluck-swings",
     "file": "src/net/peer/peerGather.js",
-    "old": "const k = gatherBeatOf(gb); if (k === 'blow' || k === 'clean') out = 'blow';",
-    "new": "out = 'blow';",
+    "old": "    const k = gatherBeatOf(gb);\n    if (k === 'blow' || k === 'clean') out = 'blow';",
+    "new": "    out = 'blow';",
     "tests": [
       "test/systems/gf2_peeracts.test.js"
     ]
@@ -1065,8 +1065,8 @@
   {
     "name": "GF2-PEERACTS-the-idle-misses-a-lone-beat",
     "file": "src/net/peer/peerGather.js",
-    "old": "if (!ga && !s.ga && !fresh && !s.held.length) return;",
-    "new": "if (!ga && !s.ga && !s.held.length) return;",
+    "old": "    if (!ga && !s.ga && !fresh && !s.held.length) return; // gathering nothing, no new beat, nothing in the air: a frame's no work (every peer in the room passes here)",
+    "new": "    if (!ga && !s.ga && !s.held.length) return; // gathering nothing, no new beat, nothing in the air: a frame's no work (every peer in the room passes here)",
     "tests": [
       "test/systems/gf2_peeracts.test.js"
     ]
@@ -1074,8 +1074,8 @@
   {
     "name": "GF2-PEERACTS-the-idle-drops-a-blow-in-the-air",
     "file": "src/net/peer/peerGather.js",
-    "old": "if (!ga && !s.ga && !fresh && !s.held.length) return;",
-    "new": "if (!ga && !s.ga && !fresh) return;",
+    "old": "    if (!ga && !s.ga && !fresh && !s.held.length) return; // gathering nothing, no new beat, nothing in the air: a frame's no work (every peer in the room passes here)",
+    "new": "    if (!ga && !s.ga && !fresh) return; // gathering nothing, no new beat, nothing in the air: a frame's no work (every peer in the room passes here)",
     "tests": [
       "test/systems/gf2_peeracts.test.js"
     ]

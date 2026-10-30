@@ -532,8 +532,8 @@
   {
     "name": "WEAPON-GLOW1-a-peer-glows-by-its-own-switch",
     "file": "src/net/peer/peerBodies.js",
-    "old": "heldNow && weaponGlowOn() ? glowFromWord",
-    "new": "heldNow ? glowFromWord",
+    "old": "    b.rig.setWeaponGlow?.(heldNow && weaponGlowOn() ? glowFromWord(heldNow.glow) : null, heldNow); // AUDIT WEAPON-GLOW NET-1: and the weapon it is of",
+    "new": "    b.rig.setWeaponGlow?.(heldNow ? glowFromWord(heldNow.glow) : null, heldNow); // AUDIT WEAPON-GLOW NET-1: and the weapon it is of",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ],
@@ -552,8 +552,8 @@
   {
     "name": "WEAPON-GLOW1-claws-glow",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    const hands = look && !look.creature && !b.wolf && !tool ? peerHandsOf",
-    "new": "    const hands = look && !look.creature && !tool ? peerHandsOf",
+    "old": "    const hands = look && !look.creature && !b.wolf && !tool ? peerHandsOf(look, shown) : null;",
+    "new": "    const hands = look && !look.creature && !tool ? peerHandsOf(look, shown) : null;",
     "tests": [
       "test/systems/weaponglow1.test.js"
     ],

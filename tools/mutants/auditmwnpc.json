@@ -2,8 +2,8 @@
   {
     "name": "AUDITMWNPC-A1-veiled-unbatched",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    if (own) r.beginCharacterSpriteBatch();\n",
-    "new": "",
+    "old": "    if (own) r.beginCharacterSpriteBatch();\n    try {",
+    "new": "    try {",
     "tests": [
       "test/characters/mwnpc_audit.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "AUDITMWNPC-A1-host-batch-reopened",
     "file": "src/net/peer/peerBodies.js",
-    "old": "own = !!r?.beginCharacterSpriteBatch && !r.characterSpriteBatchOpen;",
-    "new": "own = !!r?.beginCharacterSpriteBatch;",
+    "old": "      own = !!r?.beginCharacterSpriteBatch && !r.characterSpriteBatchOpen;",
+    "new": "      own = !!r?.beginCharacterSpriteBatch;",
     "tests": [
       "test/characters/mwnpc_audit.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AUDITMWNPC-B3-far-keeps-slot",
     "file": "src/net/peer/peerBodies.js",
-    "old": "      if (b.goneAt != null || (this._buildInRange && b.far)) { victim = b; break; }",
-    "new": "      if (b.goneAt != null) { victim = b; break; }",
+    "old": "      if (b.goneAt != null || (this._buildInRange && b.far)) {",
+    "new": "      if (b.goneAt != null) {",
     "tests": [
       "test/characters/mwnpc_audit.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "AUDITMWNPC-B3-far-waits-dwell",
     "file": "src/net/peer/peerBodies.js",
-    "old": "for (const b of this._bodies.values()) if (b.goneAt != null || (this._buildInRange && b.far)) return true;",
-    "new": "for (const b of this._bodies.values()) if (b.goneAt != null) return true;",
+    "old": "    for (const b of this._bodies.values()) if (b.goneAt != null || (this._buildInRange && b.far)) return true; // AUDIT MW-NPC B3: an NPC lane's body past the cut is its sprite already - nothing is seen to go",
+    "new": "    for (const b of this._bodies.values()) if (b.goneAt != null) return true; // AUDIT MW-NPC B3: an NPC lane's body past the cut is its sprite already - nothing is seen to go",
     "tests": [
       "test/characters/mwnpc_audit.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "AUDITMWNPC-B4-far-built",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    if (this._buildInRange && b.far) { this._release(b.id); return; }\n",
-    "new": "",
+    "old": "    if (this._buildInRange && b.far) {\n      this._release(b.id);\n      return;\n    }\n    let res = null,",
+    "new": "    let res = null,",
     "tests": [
       "test/characters/mwnpc_audit.test.js"
     ]

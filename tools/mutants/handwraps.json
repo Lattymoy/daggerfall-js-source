@@ -304,8 +304,8 @@
   {
     "name": "HANDWRAPS-peer",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    b.rig.setHandGlow?.(hands && weaponGlowOn() ? peerWrapsGlow(look) ?? (heldNow ? null : fistGlow(kit, true)) : null);",
-    "new": "",
+    "old": "    b.rig.setHandGlow?.(\n      hands && weaponGlowOn() ? (peerWrapsGlow(look) ?? (heldNow ? null : fistGlow(kit, true))) : null,\n    ); // HAND-WRAPS (AUDIT C2): their fists in their wraps' glow, whichever hand holds them",
+    "new": "    // HAND-WRAPS (AUDIT C2): their fists in their wraps' glow, whichever hand holds them",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
@@ -324,8 +324,8 @@
   {
     "name": "HANDWRAPS-peer-left",
     "file": "src/net/peer/peerBodies.js",
-    "old": "for (const w of [fistWrapsOf(R, L), fistWrapsOf(L, R)])",
-    "new": "for (const w of [fistWrapsOf(R, L)])",
+    "old": "  for (const w of [fistWrapsOf(R, L), fistWrapsOf(L, R)]) {",
+    "new": "  for (const w of [fistWrapsOf(R, L)]) {",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
@@ -514,8 +514,8 @@
   {
     "name": "HANDWRAPS-peer-switch",
     "file": "src/net/peer/peerBodies.js",
-    "old": "b.rig.setHandGlow?.(hands && weaponGlowOn() ? peerWrapsGlow(look) ?? (heldNow ? null : fistGlow(kit, true)) : null);",
-    "new": "b.rig.setHandGlow?.(hands ? peerWrapsGlow(look) ?? (heldNow ? null : fistGlow(kit, true)) : null);",
+    "old": "    b.rig.setHandGlow?.(\n      hands && weaponGlowOn() ? (peerWrapsGlow(look) ?? (heldNow ? null : fistGlow(kit, true))) : null,\n    ); // HAND-WRAPS (AUDIT C2): their fists in their wraps' glow, whichever hand holds them",
+    "new": "    b.rig.setHandGlow?.(hands ? (peerWrapsGlow(look) ?? (heldNow ? null : fistGlow(kit, true))) : null); // HAND-WRAPS (AUDIT C2): their fists in their wraps' glow, whichever hand holds them",
     "tests": [
       "test/combat/handwraps.test.js"
     ],

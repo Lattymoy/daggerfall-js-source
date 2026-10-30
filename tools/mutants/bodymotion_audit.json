@@ -213,8 +213,8 @@
   {
     "name": "AUDIT-BODY-MOTION-peer-travel-dropped",
     "file": "src/net/peer/peerBodies.js",
-    "old": "  c.move.travel = travel;",
-    "new": "  c.move.travel = null;",
+    "old": "  c.move.travel = travel; // AUDIT BODY-MOTION RIG-3: the ground the drawn feet crossed (world, cumulative) - the legs' own travel and its way",
+    "new": "  c.move.travel = null; // AUDIT BODY-MOTION RIG-3: the ground the drawn feet crossed (world, cumulative) - the legs' own travel and its way",
     "tests": [
       "test/characters/bodyMotion/bodymotion_audit.test.js"
     ]

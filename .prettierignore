@@ -260,6 +260,14 @@
 !/src/net/ownerClock.js
 !/src/net/partyBuffs.js
 !/src/net/patronLaw.js
+!/src/net/peer/
+/src/net/peer/*
+!/src/net/peer/peerBodies.js
+!/src/net/peer/peerClimb.js
+!/src/net/peer/peerFx.js
+!/src/net/peer/peerGather.js
+!/src/net/peer/peerPace.js
+!/src/net/peer/peerRange.js
 !/src/net/playClock.js
 !/src/net/postLaw.js
 !/src/net/privateInterior.js

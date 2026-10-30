@@ -152,8 +152,8 @@ test('CLIMB5 C4: the others draw a climber facing the wall, off the ground, neve
   assert.match(rp, /standingStill: !peerMoving\(shown\)/, 'no stride on the wall');
   const pb = rd('src/net/peer/peerBodies.js');
   // PIN MOVED (FIELD BUGS 2026-10-13b ONE-BAD-BODY): the eased yaw is read once as `want` and taken only when finite
-  assert.match(pb, /const want = peerBodyYaw\(peer\.shown\);[^\n]*\n[^\n]*\n\s*else b\.yaw = Number\.isFinite\(b\.yaw\) \? b\.yaw \+ wrapAngle\(want - b\.yaw\)/, 'the body eases to the wall');
-  assert.match(pb, /yaw: peerBodyYaw\(shown\), speed: 0,/, 'and stands at it');
+  assert.match(pb, /const want = peerBodyYaw\(peer\.shown\); \/\/ CLIMB5: to the wall, on the climb\n\s*if \(!Number\.isFinite\(want\)\)\n\s*this\._notFinite\('yaw', peer\.shown\); \/\/ ONE-BAD-BODY: the yaw it had stands\n\s*else\n\s*b\.yaw = Number\.isFinite\(b\.yaw\)\n\s*\? b\.yaw \+ wrapAngle\(want - b\.yaw\)/, 'the body eases to the wall');
+  assert.match(pb, /yaw: peerBodyYaw\(shown\),\n\s*speed: 0,/, 'and stands at it');
   const pr = rd('src/net/peer/peerRiders.js');
   assert.match(pr, /const standing = \(pose\) => chooseTable\(\{ stopped: !peerMoving\(pose\)/, 'the walkers stand on the wall (not only the beast: AUDIT CLIMB-ARC N2 says the same words there)');
   assert.match(pr, /const yaw = peerBodyYaw\(pose\), view = viewOf\(yaw, feet, eye\);   \/\/ CLIMB5: facing the wall it climbs/);   // SPRITE-FACE (PIN MOVED): the walker's facing named once, its view and its aura's facing off it

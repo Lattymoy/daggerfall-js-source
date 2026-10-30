@@ -331,5 +331,5 @@ test('WB9h by source: no copy of the pose and no spread of the bodies a frame (A
   const live = pb._live, want = pb._want;
   pb.sync([peer('a', 0, -3)], toScene, 1 / 60, [0, 0, 0]); pb.sync([peer('a', 0, -3)], toScene, 1 / 60, [0, 0, 0]);
   assert.equal(pb._live, live); assert.equal(pb._want, want);
-  assert.match(src, /c\.canvas = canvas; c\.proj = proj; c\.view = view; c\.eye = eye; c\.flashOf = flashOf;/);
+  assert.match(src, /c\.canvas = canvas;\n\s*c\.proj = proj;\n\s*c\.view = view;\n\s*c\.eye = eye;\n\s*c\.flashOf = flashOf;/);
 });

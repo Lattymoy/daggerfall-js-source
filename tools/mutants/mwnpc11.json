@@ -173,8 +173,8 @@
   {
     "name": "MWNPC11-pb-limits-ignored",
     "file": "src/net/peer/peerBodies.js",
-    "old": "  setLimits(o) { if (o.range >= 0) this._range = o.range; if (o.skinBudget >= 0) this._skinBudget = o.skinBudget; }",
-    "new": "  setLimits(o) { void o; }",
+    "old": "    if (o.range >= 0) this._range = o.range;\n    if (o.skinBudget >= 0) this._skinBudget = o.skinBudget;",
+    "new": "    void o;",
     "tests": [
       "test/characters/mwnpc11_budget.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "MWNPC11-pb-builds-far",
     "file": "src/net/peer/peerBodies.js",
-    "old": "      if (this._buildInRange && d2 > this._range * this._range) continue;",
-    "new": "      void 0;",
+    "old": "      if (this._buildInRange && d2 > this._range * this._range) continue; // MWNPC11: past the range, no rig built - its sprite stands",
+    "new": "      void 0; // MWNPC11: past the range, no rig built - its sprite stands",
     "tests": [
       "test/characters/mwnpc11_budget.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "MWNPC11-pb-no-hysteresis",
     "file": "src/net/peer/peerBodies.js",
-    "old": "(b.far ? 1 : this._hyst * this._hyst);",
-    "new": "1;",
+    "old": "    b.far = !!near && b.d2 > this._range * this._range * (b.far ? 1 : this._hyst * this._hyst); // MWNPC11: a standing body held to the hysteresis past the range, a far one back within it",
+    "new": "    b.far = !!near && b.d2 > this._range * this._range * 1; // MWNPC11: a standing body held to the hysteresis past the range, a far one back within it",
     "tests": [
       "test/characters/mwnpc11_budget.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "MWNPC11-pb-hysteresis-both-ways",
     "file": "src/net/peer/peerBodies.js",
-    "old": "(b.far ? 1 : this._hyst * this._hyst);",
-    "new": "this._hyst * this._hyst;",
+    "old": "    b.far = !!near && b.d2 > this._range * this._range * (b.far ? 1 : this._hyst * this._hyst); // MWNPC11: a standing body held to the hysteresis past the range, a far one back within it",
+    "new": "    b.far = !!near && b.d2 > this._range * this._range * this._hyst * this._hyst; // MWNPC11: a standing body held to the hysteresis past the range, a far one back within it",
     "tests": [
       "test/characters/mwnpc11_budget.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "MWNPC11-pb-holds-far",
     "file": "src/net/peer/peerBodies.js",
-    "old": "  holds(id) { const b = this._bodies.get(id); return !!b && b.goneAt == null && !b.far; }",
-    "new": "  holds(id) { const b = this._bodies.get(id); return !!b && b.goneAt == null; }",
+    "old": "    return !!b && b.goneAt == null && !b.far;",
+    "new": "    return !!b && b.goneAt == null;",
     "tests": [
       "test/characters/mwnpc11_budget.test.js"
     ]

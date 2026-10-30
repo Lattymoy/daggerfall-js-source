@@ -146,8 +146,8 @@
   {
     "name": "MWNPC10a-draw-unscaled",
     "file": "src/net/peer/peerBodies.js",
-    "old": "      const g = ow * this._scaleOf(b);",
-    "new": "      const g = ow;",
+    "old": "      const g = ow * this._scaleOf(b); // MWNPC10: and its own scale",
+    "new": "      const g = ow; // MWNPC10: and its own scale",
     "tests": [
       "test/net/gate/mwnpc10_gate.test.js"
     ]

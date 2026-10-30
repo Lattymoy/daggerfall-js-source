@@ -528,8 +528,8 @@
   {
     "name": "AUDITMS-L4-3-peer-off-weapon-untold",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    b.rig.setOffWeapon?.(offNow);\n",
-    "new": "",
+    "old": "    b.rig.setOffWeapon?.(offNow);\n    b.rig.setOffWeaponGlow?.(offNow && weaponGlowOn() ? glowFromWord(offNow.glow) : null, offNow);",
+    "new": "    b.rig.setOffWeaponGlow?.(offNow && weaponGlowOn() ? glowFromWord(offNow.glow) : null, offNow);",
     "tests": [
       "test/net/mixedspell_peers.test.js",
       "test/net/disc12.test.js"
@@ -538,8 +538,8 @@
   {
     "name": "AUDITMS-L4-2-peer-spell-hand-untold",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    b.rig.setSpellHand?.(!!hands?.spellHand);",
-    "new": "    b.rig.setSpellHand?.(false);",
+    "old": "    b.rig.setSpellHand?.(!!hands?.spellHand); // AUDIT SPELL-HAND L4-2: told before the stance, as the local rig tells its own",
+    "new": "    b.rig.setSpellHand?.(false); // AUDIT SPELL-HAND L4-2: told before the stance, as the local rig tells its own",
     "tests": [
       "test/net/mixedspell_peers.test.js"
     ]
@@ -547,8 +547,8 @@
   {
     "name": "AUDITMS-L4-3-peer-strike-hand-dropped",
     "file": "src/net/peer/peerBodies.js",
-    "old": "roll: b.swing, hand: b.pending.hand ?? null })",
-    "new": "roll: b.swing })",
+    "old": "        if (\n          b.rig.attack?.(b.pending.strike, {\n            hold: b.pending.hold,\n            blow: b.pending.blow ?? null,\n            roll: b.swing,\n            hand: b.pending.hand ?? null,\n          })\n        ) {",
+    "new": "        if (b.rig.attack?.(b.pending.strike, { hold: b.pending.hold, blow: b.pending.blow ?? null, roll: b.swing })) {",
     "tests": [
       "test/net/mixedspell_peers.test.js"
     ]
@@ -556,8 +556,8 @@
   {
     "name": "AUDITMS-L4-3-peer-pair-holds-the-lead",
     "file": "src/net/peer/peerBodies.js",
-    "old": "tool ?? (hands?.dual ? hands.right : peerWeaponOf(look, shown));",
-    "new": "tool ?? peerWeaponOf(look, shown);",
+    "old": "      const want = b.wolf ? null : (tool ?? (hands?.dual ? hands.right : peerWeaponOf(look, shown))); // WEREWOLF1: the wolf's hands are its claws; PEER-ACTS: the act's tool before the look's weapon; AUDIT MIXED-PAIR L4-3: a pair's right hand holds the right's",
+    "new": "      const want = b.wolf ? null : (tool ?? peerWeaponOf(look, shown)); // WEREWOLF1: the wolf's hands are its claws; PEER-ACTS: the act's tool before the look's weapon; AUDIT MIXED-PAIR L4-3: a pair's right hand holds the right's",
     "tests": [
       "test/net/mixedspell_peers.test.js",
       "test/net/disc12.test.js"

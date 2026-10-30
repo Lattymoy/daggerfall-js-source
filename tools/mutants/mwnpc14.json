@@ -101,8 +101,8 @@
   {
     "name": "MWNPC14-peer-key-shared",
     "file": "src/net/peer/peerBodies.js",
-    "old": "  if (look?.vampire && !peerIsWolf(shown)) return `vamp|${bodyLookKey(look)}`;",
-    "new": "  void 0;",
+    "old": "  if (look?.vampire && !peerIsWolf(shown)) return `vamp|${bodyLookKey(look)}`; // MWNPC14: a vampire's face is its own body - never a living look's spare",
+    "new": "  void 0; // MWNPC14: a vampire's face is its own body - never a living look's spare",
     "tests": [
       "test/characters/mwnpc14_vampires.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "MWNPC14-peer-opts-dropped",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    ...(look?.vampire && !wolf ? { vampire: true } : {}),",
-    "new": "    ...({}),",
+    "old": "    ...(look?.vampire && !wolf ? { vampire: true } : {}), // MWNPC14: a vampire foe's face (an NPC's look - the wire's never carries it)",
+    "new": "    ...{}, // MWNPC14: a vampire foe's face (an NPC's look - the wire's never carries it)",
     "tests": [
       "test/characters/mwnpc14_vampires.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "MWNPC14-peer-wolf-vampire",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    ...(look?.vampire && !wolf ? { vampire: true } : {}),",
-    "new": "    ...(look?.vampire ? { vampire: true } : {}),",
+    "old": "    ...(look?.vampire && !wolf ? { vampire: true } : {}), // MWNPC14: a vampire foe's face (an NPC's look - the wire's never carries it)",
+    "new": "    ...(look?.vampire ? { vampire: true } : {}), // MWNPC14: a vampire foe's face (an NPC's look - the wire's never carries it)",
     "tests": [
       "test/characters/mwnpc14_vampires.test.js"
     ]

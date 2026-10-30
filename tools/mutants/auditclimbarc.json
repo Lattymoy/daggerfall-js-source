@@ -500,8 +500,8 @@
   {
     "name": "N6-no-rhythm-floor",
     "file": "src/net/peer/peerClimb.js",
-    "old": "const rhythmOk = () => { if (t - (s.rhythmAt ?? -Infinity) < PEER_RHYTHM_MS) return false; s.rhythmAt = t; return true; };",
-    "new": "const rhythmOk = () => true;",
+    "old": "    const rhythmOk = () => {\n      if (t - (s.rhythmAt ?? -Infinity) < PEER_RHYTHM_MS) return false;\n      s.rhythmAt = t;\n      return true;\n    };",
+    "new": "    const rhythmOk = () => true;",
     "tests": [
       "test/systems/auditclimbarc.test.js"
     ]

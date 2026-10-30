@@ -52,8 +52,8 @@
   {
     "name": "MWHEADS2-a-peer-not-asked",
     "file": "src/net/peer/peerBodies.js",
-    "old": "({ ...peerBuildOpts(look, shown, glyphs), ownHeads: true });",
-    "new": "({ ...peerBuildOpts(look, shown, glyphs), ownHeads: false });",
+    "old": "  ownHeads: true,",
+    "new": "  ownHeads: false,",
     "tests": [
       "test/tooling/mwheads1.test.js"
     ],

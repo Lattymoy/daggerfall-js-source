@@ -83,8 +83,8 @@
   {
     "name": "MWNPC3-peers-sweep",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    reachSweep: false,   // MWNPC3",
-    "new": "    reachSweep: true,   // MWNPC3",
+    "old": "    reachSweep: false, // MWNPC3: a peer is never looked out of - no first-person reach sweep in its build",
+    "new": "    reachSweep: true, // MWNPC3: a peer is never looked out of - no first-person reach sweep in its build",
     "tests": [
       "test/combat/mwnpc3_bodyservice.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "MWNPC3-max-ignored",
     "file": "src/net/peer/peerBodies.js",
-    "old": "    this._max = limits?.max ?? BODIES_MAX;",
-    "new": "    this._max = BODIES_MAX;",
+    "old": "    this._max = limits?.max ?? BODIES_MAX; // MWNPC3: the instance's caps (limits)",
+    "new": "    this._max = BODIES_MAX; // MWNPC3: the instance's caps (limits)",
     "tests": [
       "test/combat/mwnpc3_bodyservice.test.js"
     ]

@@ -139,5 +139,5 @@ test('MWNPC10a-4 an actor\'s scale reaches its body: drawn that many times its s
   assert.deepEqual([...grows.values()].sort(), [1, 3], 'him three times, the Imp once');
   lane.destroy();
   const pb = rd('src/net/peer/peerBodies.js');
-  assert.ok(pb.includes('* this._scaleOf(b) : 0; }'), 'and his head (the name\'s height) three times as high');
+  assert.ok(pb.includes('*\n          this._scaleOf(b)\n      : 0;\n  }'), 'and his head (the name\'s height) three times as high');
 });

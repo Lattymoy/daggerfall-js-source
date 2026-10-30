@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-MERGE-PLUS-B3-a-returning-peer-not-seen-afresh",
     "file": "src/net/peer/peerFx.js",
-    "old": "if (!s || s.tick < tick - 1) { seen.set(id, { hk, hu, tick }); return; }",
-    "new": "if (!s) { seen.set(id, { hk, hu }); return; }",
+    "old": "      if (!s || s.tick < tick - 1) {\n        seen.set(id, { hk, hu, tick });",
+    "new": "      if (!s) {\n        seen.set(id, { hk, hu });",
     "tests": [
       "test/systems/auditmergeplus_plus.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-MERGE-PLUS-B3-the-entry-never-refreshed",
     "file": "src/net/peer/peerFx.js",
-    "old": "      s.tick = tick;\n",
-    "new": "",
+    "old": "      s.tick = tick;\n      const t = now();",
+    "new": "      const t = now();",
     "tests": [
       "test/systems/auditmergeplus_plus.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-MERGE-PLUS-B3-the-frame-counter-never-advanced",
     "file": "src/net/peer/peerFx.js",
-    "old": "      tick++;\n",
-    "new": "",
+    "old": "      tick++;\n      if (seen.size > 64) for (const [id, s] of seen) if (s.tick < tick - 1) seen.delete(id); // AUDIT MERGE-PLUS B3: bounded",
+    "new": "      if (seen.size > 64) for (const [id, s] of seen) if (s.tick < tick - 1) seen.delete(id); // AUDIT MERGE-PLUS B3: bounded",
     "tests": [
       "test/systems/auditmergeplus_plus.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "AUDIT-MERGE-PLUS-B3-the-store-unbounded",
     "file": "src/net/peer/peerFx.js",
-    "old": "      if (seen.size > 64) for (const [id, s] of seen) if (s.tick < tick - 1) seen.delete(id);   // AUDIT MERGE-PLUS B3: bounded\n",
-    "new": "",
+    "old": "      if (seen.size > 64) for (const [id, s] of seen) if (s.tick < tick - 1) seen.delete(id); // AUDIT MERGE-PLUS B3: bounded\n      if (!queue.length) return;",
+    "new": "      if (!queue.length) return;",
     "tests": [
       "test/systems/auditmergeplus_plus.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-MERGE-PLUS-B6-a-peers-blows-ungated",
     "file": "src/net/peer/peerFx.js",
-    "old": "if (at && !(t - (s.bt ?? -Infinity) < FX_MIN_GAP_S)) {",
-    "new": "if (at) {",
+    "old": "        if (at && !(t - (s.bt ?? -Infinity) < FX_MIN_GAP_S)) {",
+    "new": "        if (at) {",
     "tests": [
       "test/systems/auditmergeplus_plus.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-MERGE-PLUS-B6-a-peers-hurts-ungated",
     "file": "src/net/peer/peerFx.js",
-    "old": "if (hu && hu !== s.hu && !(t - (s.ut ?? -Infinity) < FX_MIN_GAP_S)) {",
-    "new": "if (hu && hu !== s.hu) {",
+    "old": "      if (hu && hu !== s.hu && !(t - (s.ut ?? -Infinity) < FX_MIN_GAP_S)) {",
+    "new": "      if (hu && hu !== s.hu) {",
     "tests": [
       "test/systems/auditmergeplus_plus.test.js"
     ]

@@ -409,9 +409,9 @@ test('COATS3D by source: the view keeps the saddle and lifts RIDE-POV astride; t
   assert.match(rd('src/render/characterSprite.js'), /queueCharacterSprite\(\{ mesh, model: rigMat, also,/);
   const pb = rd('src/net/peer/peerBodies.js');
   assert.match(pb, /b\.cam\.saddle = this\._saddle\(b, peer\.shown, f, dt\);/);
-  assert.match(pb, /if \(!rig\?\.ready\(\) \|\| shown\.rd !== POSE_RIDE\.Horse \|\| peerIsWolf\(shown\) \|\| shown\.wb\) \{ this\._unhorse\(b\); return null; \}/);
+  assert.match(pb, /if \(!rig\?\.ready\(\) \|\| shown\.rd !== POSE_RIDE\.Horse \|\| peerIsWolf\(shown\) \|\| shown\.wb\) \{\n\s*this\._unhorse\(b\);\n\s*return null;\n\s*\}/);
   assert.match(pb, /look: shown\.rc \| 0/, 'in the look the pose names');
-  assert.match(pb, /this\._unhorse\(b\);   \/\/ COATS3D: the horse is the peer's, never the spare body's/);
+  assert.match(pb, /this\._unhorse\(b\); \/\/ COATS3D: the horse is the peer's, never the spare body's/);
   const w = rd('src/scenes/world.js');
   assert.match(w, /yields: peerRidesIn3d, conceal: veilOf/);
   assert.match(w, /const peerRidesIn3d = \(d\) => !!peerBodies\?\.enabled\(\) && horseRigFor\(renderer\)\.ready\(\) && d\.shown\?\.rd === POSE_RIDE\.Horse && !d\.shown\?\.wb && !peerBodies\.failureOf\(d\.look, d\.shown, d\.glyphs\);/);
