@@ -28,7 +28,7 @@
 import manifest from '../../../vendor/layered-armor/manifest.json' with { type: 'json' };
 import cloakManifest from '../../../vendor/layered-armor/cloak/manifest.json' with { type: 'json' };
 import { drawnPiece } from '../../net/appearanceLaw.js';   // APPEARANCES: a worn piece's look
-import { weaponShownFor, weaponRigOf, offRigOf, removeWeapon, drawWeapon, recolourHammer, maskTile, fillFrom, weaponLen, bowLen, weaponCm, heldPictureOf, loadHeldPicture, BARE_TWINS, ARMED_TWINS, GUN_FIRE_FRAME, isGunCode, isBowCode } from './layeredWeapon.js';   // LAYERED-WEAPONS: the weapon in the hands
+import { weaponShownFor, weaponRigOf, offRigOf, thrustRigOf, removeWeapon, drawWeapon, recolourHammer, maskTile, fillFrom, weaponLen, bowLen, weaponCm, heldPictureOf, loadHeldPicture, BARE_TWINS, ARMED_TWINS, GUN_FIRE_FRAME, isGunCode, isBowCode, SWING_CUTS, swingCutOf } from './layeredWeapon.js';   // LAYERED-WEAPONS: the weapon in the hands
 
 /** The texture archives the composed pictures are uploaded under - one per body, clear of every vendored archive. */
 export const LAYERED_ARCHIVE = Object.freeze({ male: 1700, female: 1701 });
@@ -148,7 +148,12 @@ export function layeredSprite(tableAsked, offset, frame, tableFrames, look, mirr
   const t = Math.max(1, tableFrames | 0);
   const fc = Math.min(Math.max(frame | 0, 0), t - 1);
   const gun = table === 'AttackMelee' && isGunCode(look?.weapon);
+  // SWING-CUTS: a blow plays its weapon's cut of the swing; a pair's left hand's from the front or behind is the right's
+  // turned over (the picture flipped), from aside its cut run backwards
+  const left = table === 'AttackMelee' && look?.strike === 'L' && !!look?.offhand, square = offset === 0 || offset === 4;
+  const cut = table === 'AttackMelee' && !gun && n === SWING_CUTS.chop.length ? swingCutOf(left ? look.offhand : look?.weapon, left && !square) : null;
   const f = gun ? Math.min(GUN_FIRE_FRAME, n - 1)   // LAYERED-WEAPONS: a shot, from the hip
+    : cut ? cut[Math.min(cut.length - 1, Math.floor((fc * cut.length) / t))]
     : table === 'AttackSpell' ? Math.min(fc, n - 1) : Math.floor((fc * n) / t);   // the cast: the swing's first frames, one for one
   const cloakFrames = /** @type {string[]|undefined} */ (cloakManifest[body]?.frames);
   const cloak = pieces.cloak != null && cloakFrames?.includes(`${record}-${f}`) ? pieces.cloak : null;   // a frame with no cloak art draws without
@@ -160,7 +165,8 @@ export function layeredSprite(tableAsked, offset, frame, tableFrames, look, mirr
   // LAYERED-DUAL: a pair's other weapon, in the other hand, beside a weapon of its own (a melee stance's: weaponShownFor)
   const pair = weapon && weapon !== '0' && !isBowCode(weapon) && OFF_CODE.test(look?.offhand ?? '') ? look.offhand : null;
   const twin = (weapon === '0' ? BARE_TWINS : weapon ? ARMED_TWINS : {})[body]?.[`${record}-${f}`] ?? null;
-  const [rec, fr] = twin ? twin.split('-').map(Number) : [record, f], flip = twin && weapon === '0' ? !mirror : mirror;
+  const [rec, fr] = twin ? twin.split('-').map(Number) : [record, f];
+  const flip = left && square ? true : twin && weapon === '0' ? !mirror : mirror;
   // the art's hammer line holds the striking hand's weapon in a swing; else the right's - the left's once flipped, as the
   // flip swaps the hands
   const swap = pair && (hands === 'AttackMelee' ? look?.strike === 'L' : flip);
@@ -374,7 +380,7 @@ export function applyHoodFix(out, fs, pieces, dye, skip = null) {
  * @param {string} code the outfit code ('p6cl', 'p6cl~2' with a cloak dyed Red)
  * @param {{strip:{width:number,height:number,data:Uint8Array|Uint8ClampedArray}, over:boolean, noSlivers?:boolean,
  *   fix?:{width:number,height:number,data:Uint8Array|Uint8ClampedArray}|null}|null} [cloak] the frame's cloak strip (and its hood fix)
- * @param {{mask:Uint8Array, fr:any, len:number, view:number, bow?:number, pic?:any, offPic?:any, cm?:number, swing?:boolean, mirror?:boolean}|null} [weapon] LAYERED-WEAPONS: the frame's rig
+ * @param {{mask:Uint8Array, fr:any, len:number, view:number, bow?:number, pic?:any, offPic?:any, cm?:number, swing?:boolean, frame?:number, mirror?:boolean}|null} [weapon] LAYERED-WEAPONS: the frame's rig
  * @returns {{width:number,height:number,data:Uint8Array,held?:Uint8Array}} `held` the weapon's own px (LAYERED-GLOW)
  */
 export function composeStrip(strip, code, cloak = null, weapon = null) {
@@ -397,10 +403,11 @@ export function composeStrip(strip, code, cloak = null, weapon = null) {
       if (cloak.fix) applyHoodFix(res, cloak.fix, pieces, pieces.cloak, hand && takeOut ? hand.mask : null);
     }
     if (hand && takeOut && held !== '0') {
-      const was = out.slice(), off = pieces?.offhand ? offRigOf(hand.fr) : null;
+      const thrust = hand.swing ? thrustRigOf(hand.fr, held, hand.view, hand.frame, hand.len) : null;   // SWING-CUTS: a thrust's blade forward
+      const was = out.slice(), off = pieces?.offhand ? offRigOf(thrust ?? hand.fr) : null;
       // LAYERED-DUAL: the pair's other weapon first, in the other hand - the line's weapon over it where they cross
       if (off) drawWeapon(res, off, /** @type {string} */ (pieces?.offhand), hand.len, hand.view, { ...hand, pic: hand.offPic ?? null, mirror: false });
-      drawWeapon(res, hand.fr, held, hand.len, hand.view, hand);
+      drawWeapon(res, thrust ?? hand.fr, held, hand.len, hand.view, hand);
       res.held = heldPx(out, was);
     } else if (art) res.held = heldPx(out, art, hand?.mask);
     return res;
@@ -479,7 +486,7 @@ export async function decodeLayered(key, decodePng, { fetchUrl = (u) => fetch(u)
     const wu = weaponUrlOf(`weapon/${body}/${rf}`);
     try {
       const pic = wu ? await pictureOf(wu) : null;
-      if (pic) weapon = { mask: maskTile(pic, pieces.top[0]), from: fillFrom(pic, pieces.top[0]), fr, len: weaponLen(body), bow: bowLen(body), cm: weaponCm(body), pic: null, view: Number(rf.split('-')[0]) % 5, swing: Math.floor(Number(rf.split('-')[0]) / 5) === 1, mirror: hand === 'm' };
+      if (pic) weapon = { mask: maskTile(pic, pieces.top[0]), from: fillFrom(pic, pieces.top[0]), fr, len: weaponLen(body), bow: bowLen(body), cm: weaponCm(body), pic: null, view: Number(rf.split('-')[0]) % 5, swing: Math.floor(Number(rf.split('-')[0]) / 5) === 1, frame: Number(rf.split('-')[1]), mirror: hand === 'm' };
     } catch { weapon = null; }
     // the weapon as its paper-doll picture, held; the drawn shape where it has none
     if (weapon && pieces.weapon !== '0') weapon.pic = await heldPictureOf(pieces.weapon, body, heldArt);

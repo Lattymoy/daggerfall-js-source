@@ -6,6 +6,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import {
   layeredWeaponOf, weaponShownFor, weaponRigOf, WEAPON_SHAPES, BARE_TWINS, ARMED_TWINS, GUN_FIRE_FRAME, isGunCode, removeWeapon,
   maskTile, fillFrom, weaponLen, WEAPON_SPAN, heldPicture, heldBow, heldImage, drawWeapon, chainWay, heldChain, layeredHands, offRigOf,
+  SWING_CUTS, swingCutOf, thrustRigOf,
 } from '../../../src/player/eyeOfTheBeholder/layeredWeapon.js';
 import { inventoryItemImage } from '../../../src/systems/item/itemTemplates.js';
 import { layeredSprite, outfitPieces, outfitCombo, decodeLayered } from '../../../src/player/eyeOfTheBeholder/layeredArmor.js';
@@ -99,7 +100,7 @@ test('a gun fires from the hip in one frame; a flinch keeps what the hands held'
   const shot = [0, 1, 2, 3, 4, 5].map((f) => layeredSprite('AttackMelee', 2, f, 6, look('tl0'), false));
   assert.ok(shot.every((s) => s.frame === GUN_FIRE_FRAME && s.key.endsWith('@tl0')));
   assert.ok(isGunCode('pt3') && !isGunCode('ls1') && !isGunCode(null));
-  assert.equal(layeredSprite('AttackMelee', 2, 5, 6, look('ls7'), false).frame, 5, 'a sword swings through');
+  assert.equal(layeredSprite('AttackMelee', 2, 5, 6, look('mc7'), false).frame, 5, 'a mace swings through');   // PIN MOVED (SWING-CUTS): a sword slashes
   assert.match(layeredSprite('Death', 2, 0, 1, { ...look('ls7'), armedTable: 'IdleMelee' }, false).key, /:12-0:lll@ls7$/);
   assert.match(layeredSprite('Death', 2, 0, 1, look('ls7'), false).key, /:12-0:lll@0$/, 'the fall drops it');
   const peerSrc = readFileSync(new URL('../../../src/net/peer/peerRiders.js', import.meta.url), 'utf8');
@@ -673,4 +674,57 @@ test('LAYERED-DUAL composed: the second weapon is drawn in the other hand - ever
     assert.ok(more > 4, `${body} ${rf}: the second weapon drew ${more} px`);
     assert.ok(lost <= 2, `${body} ${rf}: the first keeps its px (${lost} lost)`);
   }
+});
+
+// ── SWING-CUTS ─────────────────────────────────────────────────────────────────────────────────────────────────────
+test('SWING-CUTS (2026-10-30, the owner: "Is there anyway to switch up the animation?"): each weapon plays its own cut of the one swing - a short blade\'s and a fist\'s thrust, a long blade\'s slash, the rest the full chop; a gun\'s shot and the cast are their own', () => {
+  const frames = (w, view = 2, o = {}) => [0, 1, 2, 3, 4, 5].map((f) => layeredSprite('AttackMelee', view, f, 6, { outfit: 'lll', gender: 'male', weapon: w, ...o }, false).frame);
+  assert.deepEqual(frames('dg3'), SWING_CUTS.thrust, 'a dagger thrusts: the chest, the arms out held, back');
+  assert.deepEqual(frames(null), SWING_CUTS.thrust, 'a bare fist jabs');
+  assert.deepEqual(frames('ls3'), SWING_CUTS.slash, 'a longsword slashes from the chest');
+  for (const w of ['mc3', 'ba3', 'sf3', 'cm3', 'fl3']) assert.deepEqual(frames(w), SWING_CUTS.chop, `${w}: the full chop`);
+  assert.deepEqual(new Set(Object.values(SWING_CUTS).flat()), new Set([0, 1, 2, 3, 4, 5]), 'every cut is the art\'s own frames');
+  assert.ok(SWING_CUTS.thrust.includes(2) && SWING_CUTS.slash.includes(2) && SWING_CUTS.chop.includes(2), 'every cut strikes');
+  assert.deepEqual(swingCutOf('ls3', true), [...SWING_CUTS.slash].reverse(), 'backhand: the cut run the other way');
+  assert.ok(frames('tl0').every((f) => f === GUN_FIRE_FRAME), 'a gun fires from the hip');
+  assert.deepEqual([0, 1, 2, 3].map((f) => layeredSprite('AttackSpell', 2, f, 4, { outfit: 'lll', gender: 'male', weapon: 'dg3' }, false).frame), [0, 1, 2, 3], 'the cast: the swing\'s first frames');
+});
+
+test('SWING-CUTS a pair\'s blows alternate: the left hand\'s, from the front or behind, is the right\'s turned over (the picture flipped); from aside its cut runs backwards - a rising backhand', () => {
+  const pair = { outfit: 'lll', gender: 'male', weapon: 'ls3', offhand: 'dg3' };
+  const blow = (view, strike, mirror = false) => [0, 1, 2, 3, 4, 5].map((f) => layeredSprite('AttackMelee', view, f, 6, { ...pair, strike }, mirror));
+  for (const view of [0, 4]) {
+    const right = blow(view, 'R'), left = blow(view, 'L');
+    assert.ok(right.every((s) => !s.mirror) && left.every((s) => s.mirror), `view ${view}: the left hand's blow flipped`);
+    assert.deepEqual(left.map((s) => s.frame), SWING_CUTS.thrust, `view ${view}: the left's own weapon's cut, forwards`);
+    assert.ok(left.every((s) => s.key.includes('@dg3+ls3')), 'its weapon on the line');
+  }
+  for (const view of [1, 2, 3]) {
+    assert.deepEqual(blow(view, 'L').map((s) => s.frame), [...SWING_CUTS.thrust].reverse(), `view ${view}: the left's cut backwards`);
+    assert.deepEqual(blow(view, 'R').map((s) => s.frame), SWING_CUTS.slash, `view ${view}: the right's forwards`);
+    assert.ok(blow(view, 'L', true).every((s) => s.mirror), `view ${view}: the wheel's own flip stands`);
+  }
+  assert.deepEqual(blow(0, 'L').map((s) => s.frame), blow(0, 'L', true).map((s) => s.frame), 'one blow, whichever way the wheel stood');
+  const one = { outfit: 'lll', gender: 'male', weapon: 'ls3', strike: 'L' };
+  assert.ok([0, 1, 2, 3, 4, 5].every((f) => !layeredSprite('AttackMelee', 0, f, 6, one, false).mirror), 'no pair: no left blow');
+});
+
+test('SWING-CUTS a thrust\'s strike points the blade the way the body faces, along the arms: from aside the whole blade forward, from behind hidden past the fists; a pair\'s second blade fans off it', { skip: !PNG && 'no pngjs' }, async () => {
+  const withPic = { ...opts, heldArt: async () => sword() };
+  const reds = (img) => { const r = []; for (let i = 0; i < img.width * img.height; i++) if (img.data[i * 4] > 200 && img.data[i * 4 + 1] < 60 && img.data[i * 4 + 2] < 60) r.push([i % img.width, (i / img.width) | 0]); return r; };
+  for (const body of ['male', 'female']) {
+    const fr = weaponRigOf(body, '7-2'), [gx, gy] = fr.w ?? fr.q;
+    const side = reds(await decodeLayered(`LA:${body}:leather_leather_leather:7-2:lll@dg1`, decodePng, withPic));
+    const ys = side.map((p) => p[1]);
+    assert.ok(side.length > 10 && side.every(([x]) => x < gx) && Math.max(...ys) - Math.min(...ys) <= 6 && Math.abs(side.reduce((t, p) => t + p[1], 0) / side.length - gy) <= 5,
+      `${body}: from aside the blade runs forward, level with the fists (${side.length} px)`);
+    assert.equal(reds(await decodeLayered(`LA:${body}:leather_leather_leather:9-2:lll@dg1`, decodePng, withPic)).length, 0, `${body}: from behind the blade is hidden`);
+    const chop = reds(await decodeLayered(`LA:${body}:leather_leather_leather:7-2:lll@mc1`, decodePng, withPic));
+    assert.notDeepEqual(chop, side, `${body}: a mace keeps the chop's line`);
+  }
+  const t = thrustRigOf(weaponRigOf('male', '7-2'), 'dg1', 2, 2, rig.male.len);
+  const turn = Math.atan2(t.off[3] - t.off[1], t.off[2] - t.off[0]) - Math.atan2(t.w[3] - t.w[1], t.w[2] - t.w[0]);
+  assert.ok(t.off[4] === 'b' && Math.abs(Math.abs(Math.atan2(Math.sin(turn), Math.cos(turn))) - (22 * Math.PI) / 180) < 0.01, 'a pair\'s second blade fanned off it');
+  assert.equal(thrustRigOf(weaponRigOf('male', '7-3'), 'dg1', 2, 3, rig.male.len), null, 'only the strike');
+  assert.equal(thrustRigOf(weaponRigOf('male', '7-2'), 'ls1', 2, 2, rig.male.len), null, 'only a thrust');
 });

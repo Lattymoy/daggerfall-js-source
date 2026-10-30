@@ -59,7 +59,7 @@ test('every outfit, table, view and frame has its strip, for both bodies', () =>
 test('the option routes spriteFor to the worn armour, and leaves it alone when off or mounted', () => {
   const look = { onFoot: 3, wornArmour: true, outfit: 'p6cl', gender: 'female' };
   const s = spriteFor('AttackMelee', 2, 3, look);
-  assert.equal(s.key, 'LA:female:plate_chain_leather:7-3:p6cl@0');   // LAYERED-WEAPONS: nothing in the hands
+  assert.equal(s.key, 'LA:female:plate_chain_leather:7-2:p6cl@0');   // LAYERED-WEAPONS: nothing in the hands; PIN MOVED (SWING-CUTS): a bare fist jabs - its fourth frame the arms out
   assert.ok(isLayeredKey(s.key) && eotbSpriteUrl(s.key) === s.key);   // the decoders compose it (decodeLayered)
   assert.ok(!isLayeredKey(spriteFor('AttackMelee', 2, 3, { ...look, wornArmour: false }).key));
   assert.ok(!isLayeredKey(spriteFor('IdleHorse', 0, 0, { onHorse: 0, wornArmour: true, outfit: 'p6cl' }).key));

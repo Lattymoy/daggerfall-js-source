@@ -188,21 +188,28 @@ the walk and the idle it is the free hand (the bow's), held as the first is, mir
 blade hidden from behind. Daggerfall's swing is two-handed - both fists meet on the haft - so in a swing, a flinch, or
 where the art hides that hand, the second is fanned 22 degrees off the first, behind the body. The glow counts both.
 
+**Its own cut of the swing** (SWING-CUTS, the owner, 2026-10-30: "Is there anyway to switch up the animation?"). The
+art has one swing, six frames: up (0, 1), the strike (2, arms out), low through (3), back at the chest (4), up again (5).
+Each weapon plays its cut (`SWING_CUTS`, `swingCutOf`): a short blade and a bare fist thrust (4 4 2 2 2 4), a long
+blade slashes (4 2 3 3 4 4), the rest chop (0-5). A thrust's strike points its blade the way the body faces, along the
+arms (`thrustRigOf`): from aside the whole blade, from the front a stub, from behind hidden. A pair's left-hand blow is
+the right's flipped from the front or behind, and its own cut run backwards from aside, a rising backhand.
+
 **Whose hands.** My body reads the item in the hand in use (`combat/weapon/weaponRig.js` eotbState `heldWeapon`,
 `eotbBody.js` lookNow). A walker holds the tool of its gathering act, else the weapon in the hand its pose says it uses
 (`net/peer/peerRiders.js` walkerWeapon, `peerBodies.js` peerWeaponOf): nothing new on the wire. The outfit code carries
 what the hands show (`p6cl~2@ls7`, `@0` empty), so the pictures of each are their own; my body lets the last weapon's
 go with its outfit's (`releaseOutfits`).
 
-**Known limits.** The body's motion is the hammer's in every case: a dagger chops overhead as the hammer does, and bare
-hands strike with both fists. An attack frame whose hammer points
+**Known limits.** The body has the hammer's one two-handed swing; each weapon plays its own cut of it (below), and new
+motion needs new frames in every outfit. An attack frame whose hammer points
 at the camera draws the weapon short. Each outfit's helmet and legs draw the hammer's rim their own way, so a pixel or
 two of it can stay, and a fill can borrow a patch of another piece's colour. Male 5-1 keeps the thumb laid up the
 shaft. The female's back-view flinch (14-0) keeps its raised hand two pixels off the wrist,
 and with empty hands her back-3/4 swing (8-2) its hand, whose arm is behind the body. A weapon's glow stands round the
 weapon alone (LAYERED-GLOW, `05-Combat/Weapon-Glow.md` "Round the weapon"). Verified by
 `test/player/eyeOfTheBeholder/layered_weapons.test.js`, `spriteglow.test.js` and `tools/mutants/layered_weapons.json`
-(84 mutants, all dead); the peer-art pins moved to the new codes (`test/net/peer/fb1022d_peerart.test.js`).
+(91 mutants, all dead); the peer-art pins moved to the new codes (`test/net/peer/fb1022d_peerart.test.js`).
 
 ## The art - the doctrine's third exception
 

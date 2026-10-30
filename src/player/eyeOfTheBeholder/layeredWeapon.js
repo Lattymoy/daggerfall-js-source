@@ -57,6 +57,43 @@ export function weaponShownFor(table, held) {
   }
 }
 
+/** SWING-CUTS (2026-10-30, the owner, of the one swing: "Is there anyway to switch up the animation?"): the art has one
+ *  swing, the hammer's six frames - up (0, 1), the strike (2, arms forward), low through (3), back at the chest (4), up
+ *  again (5). Each weapon plays its own cut of them: a thrust, a slash, the full chop. */
+export const SWING_CUTS = Object.freeze({ thrust: [4, 4, 2, 2, 2, 4], slash: [4, 2, 3, 3, 4, 4], chop: [0, 1, 2, 3, 4, 5] });
+const THRUSTS = new Set(['dg', 'tn', 'ss', 'wk']), SLASHES = new Set(['ls', 'bs', 'sa', 'kt']);
+const _thrust = new WeakMap();
+/** SWING-CUTS: a thrust's strike (the swing's frame 2, arms out) points its blade the way the body faces, along the
+ *  arms - the art's hammer line there is the chop's, at the camera: from aside the whole blade forward, from three
+ *  quarters shortened, from the front a stub at the camera, from behind hidden past the fists. A frame's rig as
+ *  drawWeapon reads one (`len` the body's hammer, px), its `off` fanned from it as the rig fans its own; null for any
+ *  other frame or weapon. */
+export function thrustRigOf(fr, code, view, frame, len = rig.male.len) {
+  if (frame !== 2 || !fr || !THRUSTS.has(String(code ?? '').slice(0, 2))) return null;
+  let o = _thrust.get(fr);
+  if (!o) {
+    const [gx, gy, ax, ay] = fr.w ?? [...fr.q, ...fr.t], D = Math.hypot(ax - gx, ay - gy) || 1, v = Math.max(0, Math.min(4, view | 0));
+    const fx = FACING_X[v], [ux, uy] = fx ? [Math.sign(fx), 0.12] : [(ax - gx) / D, (ay - gy) / D];
+    const k = fx ? Math.abs(fx) : 0.35, n = Math.hypot(ux, uy), L = len * k, [lo, hi] = rig.span;
+    const blade = v === 4 ? 'x' : v === 3 ? 'b' : 'f', c = blade === 'x' ? 'b' : blade;
+    const ex = gx + (ux / n) * L, ey = gy + (uy / n) * L, cs = Math.cos(OFF_FAN_RAD), sn = Math.sin(OFF_FAN_RAD);
+    const off = [gx, gy, gx + ((ux * cs - uy * sn) / n) * L, gy + ((ux * sn + uy * cs) / n) * L, 'b'];
+    o = { w: [gx, gy, ex, ey], d: c.repeat(-lo - 3) + 'bbb' + blade.repeat(hi + 1), side: fr.side, off };
+    _thrust.set(fr, o);
+  }
+  return o;
+}
+/** LAYERED-DUAL: the rig's fan of a pair's second weapon off the first (build_weapon_rig.py OFF_FAN), radians. */
+const OFF_FAN_RAD = (22 * Math.PI) / 180;
+
+/** The cut a weapon code swings - a short blade's and a bare fist's thrust, a long blade's slash, else the chop; `back`
+ *  (a pair's left hand) plays it the other way round, a rising backhand. */
+export function swingCutOf(code, back = false) {
+  const head = String(code ?? '0').slice(0, 2);
+  const cut = THRUSTS.has(head) || head === '0' ? SWING_CUTS.thrust : SLASHES.has(head) ? SWING_CUTS.slash : SWING_CUTS.chop;
+  return back ? [...cut].reverse() : cut;
+}
+
 /** A frame whose arm the hammer hid is drawn as another of its walk: empty-handed, its mirror twin (the front walk's
  *  0-2 is 0-0 flipped, the other leg forward); armed, the walk's next frame, so the weapon keeps its hand. */
 const TWIN = Object.freeze({ '0-2': '0-0' }), NEXT = Object.freeze({ '0-2': '0-3' });

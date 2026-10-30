@@ -112,8 +112,8 @@
   {
     "name": "LAYERED-WEAPONS-twin-unflipped",
     "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-    "old": "flip = twin && weapon === '0' ? !mirror : mirror;",
-    "new": "flip = mirror;",
+    "old": "  const flip = left && square ? true : twin && weapon === '0' ? !mirror : mirror;",
+    "new": "  const flip = left && square ? true : mirror;",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "LAYERED-WEAPONS-weapon-undrawn",
     "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-    "old": "      drawWeapon(res, hand.fr, held, hand.len, hand.view, hand);",
-    "new": "      if (false) drawWeapon(res, hand.fr, held, hand.len, hand.view, hand);",
+    "old": "      drawWeapon(res, thrust ?? hand.fr, held, hand.len, hand.view, hand);",
+    "new": "      if (false) drawWeapon(res, thrust ?? hand.fr, held, hand.len, hand.view, hand);",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "LAYERED-WEAPONS-armed-twin-flipped",
     "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-    "old": "flip = twin && weapon === '0' ? !mirror : mirror;",
-    "new": "flip = twin ? !mirror : mirror;",
+    "old": "  const flip = left && square ? true : twin && weapon === '0' ? !mirror : mirror;",
+    "new": "  const flip = left && square ? true : twin ? !mirror : mirror;",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
@@ -802,8 +802,8 @@
   {
     "name": "LAYERED-DUAL-off-blade-side",
     "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
-    "old": "'bbb' + blade.repeat(hi + 1)",
-    "new": "'bbb' + c.repeat(hi + 1)",
+    "old": "    o = { w: fr.off.slice(0, 4), d: c.repeat(-lo - 3) + 'bbb' + blade.repeat(hi + 1), side: fr.side, cv: fr.cv };",
+    "new": "    o = { w: fr.off.slice(0, 4), d: c.repeat(-lo - 3) + 'bbb' + c.repeat(hi + 1), side: fr.side, cv: fr.cv };",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
@@ -838,5 +838,75 @@
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
     "why": "a pair's pictures let go every time the outfit is looked at again"
+  },
+  {
+    "name": "SWING-CUTS-none",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "  const cut = table === 'AttackMelee' && !gun && n === SWING_CUTS.chop.length ? swingCutOf(left ? look.offhand : look?.weapon, left && !square) : null;",
+    "new": "  const cut = null;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "every weapon chops as the hammer"
+  },
+  {
+    "name": "SWING-CUTS-all-chop",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "  const cut = THRUSTS.has(head) || head === '0' ? SWING_CUTS.thrust : SLASHES.has(head) ? SWING_CUTS.slash : SWING_CUTS.chop;",
+    "new": "  const cut = SWING_CUTS.chop;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a dagger chops overhead"
+  },
+  {
+    "name": "SWING-CUTS-no-backhand",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "  return back ? [...cut].reverse() : cut;",
+    "new": "  return cut;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the left hand's blow the same as the right's from aside"
+  },
+  {
+    "name": "SWING-CUTS-left-unflipped",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "  const flip = left && square ? true : twin && weapon === '0' ? !mirror : mirror;",
+    "new": "  const flip = twin && weapon === '0' ? !mirror : mirror;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the left hand's blow from the front swung from the right"
+  },
+  {
+    "name": "SWING-CUTS-left-own-cut",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "swingCutOf(left ? look.offhand : look?.weapon, left && !square)",
+    "new": "swingCutOf(look?.weapon, left && !square)",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the left hand swings the right's weapon's cut"
+  },
+  {
+    "name": "SWING-CUTS-thrust-chop-line",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "      const thrust = hand.swing ? thrustRigOf(hand.fr, held, hand.view, hand.frame, hand.len) : null;",
+    "new": "      const thrust = null;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a thrust's blade points at the camera, a stub"
+  },
+  {
+    "name": "SWING-CUTS-thrust-not-hidden",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "    const blade = v === 4 ? 'x' : v === 3 ? 'b' : 'f', c = blade === 'x' ? 'b' : blade;",
+    "new": "    const blade = v === 3 ? 'b' : 'f', c = blade;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a thrust from behind drawn through the body"
   }
 ]
