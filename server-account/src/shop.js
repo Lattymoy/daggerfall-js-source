@@ -305,7 +305,7 @@ export async function stripeSignatureOk(/** @type {string} */ secret, /** @type 
 
 /** STOREFRONT: where a ware is used, as its receipt says it - Aurum in the shop, the rest from the profile. Pure. */
 export function receiptUse(/** @type {any} */ w) {
-  if (w.kind === 'aurum') return 'Spend it in the shop, on the Folios and the daily wares.';   // AURUM; PASS-PANELS: the Folios are bought with it (AUDIT-STOREFRONT III A7: the player's word)
+  if (w.kind === 'aurum') return 'Spend it in the shop, on any item and on the Folios.';   // AURUM; AURUM-ONLY: every item is bought with it; PASS-PANELS: the Folios are bought with it (AUDIT-STOREFRONT III A7: the player's word)
   return 'Wear it from your profile, or from the Collections page.';
 }
 /** THE RECEIPT, its words fixed here (a letter no player writes - post.js's law). Pure. */

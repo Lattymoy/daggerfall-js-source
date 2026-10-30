@@ -147,7 +147,7 @@ test('AUDIT-STOREFRONT III A7: a pack\'s words - spent, not worn; the Folios, ne
   assert.ok(shopDonePage(pack).lines.some((l) => /spend it in the shop/.test(l)));
   assert.ok(!shopDonePage(pack).lines.some((l) => /wear it/.test(l)));
   assert.ok(shopDonePage({ status: 'paid', ware: 'kill:pyre' }).lines.some((l) => /wear it from your profile/.test(l)));
-  assert.equal(receiptUse(shopWareById('aurum:500')), 'Spend it in the shop, on the Folios and the daily wares.');
+  assert.equal(receiptUse(shopWareById('aurum:500')), 'Spend it in the shop, on any item and on the Folios.');   // PIN MOVED (AURUM-ONLY)
 });
 
 test('AUDIT-STOREFRONT III B4: a find\'s answer names the UTC day its `today` counts, asked again too; one not yet answered says its day and no `today` (mutants: the day left off)', async (t) => {
