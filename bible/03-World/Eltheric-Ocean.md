@@ -941,7 +941,7 @@ where the clock puts them).
 `STORM_LIFE_MS` (fifty minutes) of it. Its eye is born at a point its number's hash draws in the deep waters - the Deep
 Aether and the Abyss's first `STORM_ABYSS_LEAGUES`, `HAUNT_SPREAD.deep` rows either side of Veilhaven's, and far enough
 west that its drift and its reach never cross into the Reaches
-(`seaEvents.js:"const x0 = lerp(cx0, cx1 - STORM_DRIFT_PX - STORM_R_PX, r()), y0 = lerp(row - spread, row + spread, r()), a = r() * Math.PI * 2;"`
+(`seaEvents.js:"const x0 = lerp(cx0, cx1 - STORM_DRIFT_PX - STORM_R_PX, r())"`
 - AUDIT SEA VENTURES D11: one storm in fourteen touched them, and its wrack there, the Reaches' share, never gave a piece
 of the Tidemail) - and drifts `STORM_DRIFT_PX` over its life on a heading of its own; it reaches `STORM_R_PX` (some 33
 km) about its eye, always inside the sea's box. Inside it:

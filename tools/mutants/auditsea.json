@@ -671,8 +671,8 @@
   {
     "name": "AUDIT-SEA-D11-storm-to-the-reaches",
     "file": "src/systems/sea/seaEvents.js",
-    "old": "lerp(cx0, cx1 - STORM_DRIFT_PX - STORM_R_PX, r())",
-    "new": "lerp(cx0, cx1, r())",
+    "old": "  const x0 = lerp(cx0, cx1 - STORM_DRIFT_PX - STORM_R_PX, r()),",
+    "new": "  const x0 = lerp(cx0, cx1, r()),",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]

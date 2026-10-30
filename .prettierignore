@@ -32,6 +32,8 @@
 /src/systems/hunt/*/
 !/src/systems/lockpick/
 /src/systems/lockpick/*/
+!/src/systems/sea/
+/src/systems/sea/*/
 !/src/systems/snowfall/
 /src/systems/snowfall/*/
 !/src/systems/soundscape/

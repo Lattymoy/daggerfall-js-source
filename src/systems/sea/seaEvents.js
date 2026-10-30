@@ -18,7 +18,17 @@
 //
 // Pure: the clock in, the storm and the fleet out; no map files.
 // ═══════════════════════════════════════════════════════════════════
-import { BANDS, VEIL_X, LEAGUE_PX, LEAGUE_M, veilhaven, etherHash, etherRng, etherBandAt, ETHER_GOODS } from '../../world/ethericSea.js';
+import {
+  BANDS,
+  VEIL_X,
+  LEAGUE_PX,
+  LEAGUE_M,
+  veilhaven,
+  etherHash,
+  etherRng,
+  etherBandAt,
+  ETHER_GOODS,
+} from '../../world/ethericSea.js';
 import { HAUNT_SPREAD, etherShipNames } from '../naval/etherShips.js';
 import { classById } from '../naval/navalShips.js';
 import { SEA_FLEET_PERIOD_MS, seaFleetSailing } from '../../net/wire.js';
@@ -58,11 +68,23 @@ export function stormOf(n) {
   const k = Math.trunc(Number(n)) || 0;
   const r = etherRng(etherHash(STORM_SALT, k));
   const [cx0, cx1] = columns(band('deep').from, band('abyss').from + STORM_ABYSS_LEAGUES);
-  const row = veilhaven().py, spread = HAUNT_SPREAD.deep;
+  const row = veilhaven().py,
+    spread = HAUNT_SPREAD.deep;
   // AUDIT SEA VENTURES D11: born far enough west that its drift and its reach never cross into the Reaches - one in fourteen
   // touched them, and its wrack there, the Reaches' share, never gave a piece of the Tidemail
-  const x0 = lerp(cx0, cx1 - STORM_DRIFT_PX - STORM_R_PX, r()), y0 = lerp(row - spread, row + spread, r()), a = r() * Math.PI * 2;
-  return { n: k, start: k * STORM_PERIOD_MS, end: k * STORM_PERIOD_MS + STORM_LIFE_MS, x0, y0, x1: x0 + Math.cos(a) * STORM_DRIFT_PX, y1: y0 + Math.sin(a) * STORM_DRIFT_PX, r: STORM_R_PX };
+  const x0 = lerp(cx0, cx1 - STORM_DRIFT_PX - STORM_R_PX, r()),
+    y0 = lerp(row - spread, row + spread, r()),
+    a = r() * Math.PI * 2;
+  return {
+    n: k,
+    start: k * STORM_PERIOD_MS,
+    end: k * STORM_PERIOD_MS + STORM_LIFE_MS,
+    x0,
+    y0,
+    x1: x0 + Math.cos(a) * STORM_DRIFT_PX,
+    y1: y0 + Math.sin(a) * STORM_DRIFT_PX,
+    r: STORM_R_PX,
+  };
 }
 /** The storm blowing at `nowMs`, or null (between storms). */
 export function stormAt(nowMs) {
@@ -93,7 +115,10 @@ export const stormWrackSlot = (s, nowMs) => Math.max(0, Math.floor((nowMs - s.st
 export function wrackOf(n, slot, bandId, yields) {
   const r = etherRng(etherHash(STORM_SALT, n, slot, 0x77));
   const good = ETHER_GOODS[Math.floor(r() * ETHER_GOODS.length) % ETHER_GOODS.length];
-  const i = Math.max(0, BANDS.findIndex((b) => b.id === bandId));
+  const i = Math.max(
+    0,
+    BANDS.findIndex((b) => b.id === bandId),
+  );
   return { good, n: yields[i] ?? yields[0], rolls: r };
 }
 /** A lightning strike's lot on the ship: whether it finds her, and what it takes - `{ hull, sail, fire }` (shares of
@@ -105,7 +130,10 @@ export function stormStrikeOf(r = Math.random) {
 /** A strike's hurt on a ship's damage (systems/naval/navalDamage.js createShipDamage): its shares of her hull and canvas,
  *  whole points, at least one of each she has; a gun's fire where it set her alight. */
 export const stormHurt = (damage, strike) => ({
-  hull: Math.max(1, Math.round(damage.maxHull * strike.hull)), sail: damage.maxSail > 0 ? Math.max(1, Math.round(damage.maxSail * strike.sail)) : 0, crew: 0, fire: !!strike.fire,
+  hull: Math.max(1, Math.round(damage.maxHull * strike.hull)),
+  sail: damage.maxSail > 0 ? Math.max(1, Math.round(damage.maxSail * strike.sail)) : 0,
+  crew: 0,
+  fire: !!strike.fire,
 });
 /** A strike laid on a ship afloat (her damage, at `now` s): hurt by stormHurt, never under her last timber by it alone.
  *  Answers whether it struck her. */
@@ -129,11 +157,19 @@ export const FLEET_SALT = 0xf1ee;
 /** Her flagship's class: a merchant carrack, laden. */
 export const FLEET_FLAGSHIP = 'merchantCarrack';
 /** Her escorts by her band: the corsairs she hired. */
-export const FLEET_ESCORTS = Object.freeze({ deep: Object.freeze(['pirateBrig', 'pirateGalley']), abyss: Object.freeze(['pirateFlagship', 'pirateGalley', 'pirateBrig']) });
+export const FLEET_ESCORTS = Object.freeze({
+  deep: Object.freeze(['pirateBrig', 'pirateGalley']),
+  abyss: Object.freeze(['pirateFlagship', 'pirateGalley', 'pirateBrig']),
+});
 /** Her flagship's purse, by her band (gold). */
 export const FLEET_PURSE = Object.freeze({ deep: 6000, abyss: 12000 });
 /** Each ship's station from the flagship's place (metres: abeam, astern) - the flagship's own first. */
-export const FLEET_STATIONS = Object.freeze([[0, 0], [-260, 180], [260, 180], [0, 420]]);
+export const FLEET_STATIONS = Object.freeze([
+  [0, 0],
+  [-260, 180],
+  [260, 180],
+  [0, 420],
+]);
 
 /** @typedef {{ seed: number, classId: string, flag: boolean, station: readonly number[] }} FleetShip */
 /** @typedef {{ n: number, start: number, end: number, band: string, from: { x: number, y: number }, to: { x: number, y: number }, name: string, purse: number, ships: FleetShip[] }} SeaFleet */
@@ -144,15 +180,35 @@ export function fleetOf(n) {
   const k = Math.trunc(Number(n)) || 0;
   const r = etherRng(etherHash(FLEET_SALT, k));
   const id = r() < 0.5 ? 'deep' : 'abyss';
-  const [x0, x1] = id === 'deep' ? columns(band('deep').from, band('abyss').from) : columns(band('abyss').from, band('abyss').from + FLEET_ABYSS_LEAGUES);
-  const row = veilhaven().py, spread = HAUNT_SPREAD.deep;
+  const [x0, x1] =
+    id === 'deep'
+      ? columns(band('deep').from, band('abyss').from)
+      : columns(band('abyss').from, band('abyss').from + FLEET_ABYSS_LEAGUES);
+  const row = veilhaven().py,
+    spread = HAUNT_SPREAD.deep;
   const from = { x: lerp(x0, x1, r()), y: lerp(row - spread, row + spread, r()) };
-  const a = (r() - 0.5) * 0.6, len = (FLEET_MPS * FLEET_SAIL_MS) / 1000 / PX_M;   // bound east, give or take
+  const a = (r() - 0.5) * 0.6,
+    len = (FLEET_MPS * FLEET_SAIL_MS) / 1000 / PX_M; // bound east, give or take
   const to = { x: from.x + Math.cos(a) * len, y: from.y + Math.sin(a) * len };
   const seedOf = (i) => etherHash(FLEET_SALT, k, i, 0x5eed) >>> 0;
-  const ships = [FLEET_FLAGSHIP, ...FLEET_ESCORTS[id]].map((classId, i) => ({ seed: seedOf(i), classId, flag: i === 0, station: FLEET_STATIONS[i] }));
+  const ships = [FLEET_FLAGSHIP, ...FLEET_ESCORTS[id]].map((classId, i) => ({
+    seed: seedOf(i),
+    classId,
+    flag: i === 0,
+    station: FLEET_STATIONS[i],
+  }));
   const start = k * SEA_FLEET_PERIOD_MS + FLEET_OFFSET_MS;
-  return { n: k, start, end: start + FLEET_SAIL_MS, band: id, from, to, name: etherShipNames(classById(FLEET_FLAGSHIP), ships[0].seed).name, purse: FLEET_PURSE[id], ships };
+  return {
+    n: k,
+    start,
+    end: start + FLEET_SAIL_MS,
+    band: id,
+    from,
+    to,
+    name: etherShipNames(classById(FLEET_FLAGSHIP), ships[0].seed).name,
+    purse: FLEET_PURSE[id],
+    ships,
+  };
 }
 /** The fleet under way at `nowMs`, or null (in port between sailings). */
 export function fleetAt(nowMs) {
@@ -168,7 +224,11 @@ export function nextFleet(nowMs) {
 /** Fleet `f`'s flagship's place at `nowMs`, `{ x, y, yaw }` (pixels; `yaw` her heading, the map's north 0, east pi/2). */
 export function fleetPlace(f, nowMs) {
   const k = Math.max(0, Math.min(1, (nowMs - f.start) / FLEET_SAIL_MS));
-  return { x: lerp(f.from.x, f.to.x, k), y: lerp(f.from.y, f.to.y, k), yaw: Math.atan2(f.to.x - f.from.x, -(f.to.y - f.from.y)) };
+  return {
+    x: lerp(f.from.x, f.to.x, k),
+    y: lerp(f.from.y, f.to.y, k),
+    yaw: Math.atan2(f.to.x - f.from.x, -(f.to.y - f.from.y)),
+  };
 }
 /** The band the fleet sails at its place (it may cross from the Abyss into the Deep Aether). */
 export const fleetBandAt = (f, nowMs) => etherBandAt(fleetPlace(f, nowMs).x).id;

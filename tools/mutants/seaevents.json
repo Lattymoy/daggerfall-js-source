@@ -164,8 +164,8 @@
   {
     "name": "SEA-EVENTS-storm-still",
     "file": "src/systems/sea/seaEvents.js",
-    "old": "x1: x0 + Math.cos(a) * STORM_DRIFT_PX, y1: y0 + Math.sin(a) * STORM_DRIFT_PX,",
-    "new": "x1: x0, y1: y0,",
+    "old": "    x1: x0 + Math.cos(a) * STORM_DRIFT_PX,\n    y1: y0 + Math.sin(a) * STORM_DRIFT_PX,",
+    "new": "    x1: x0,\n    y1: y0,",
     "tests": [
       "test/systems/sea/seaevents.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "SEA-EVENTS-storm-lingers",
     "file": "src/systems/sea/seaEvents.js",
-    "old": "  return nowMs >= s.start && nowMs < s.end ? s : null;\n}\n/** The next storm",
-    "new": "  return nowMs >= s.start && nowMs <= s.end ? s : null;\n}\n/** The next storm",
+    "old": "  return nowMs >= s.start && nowMs < s.end ? s : null;",
+    "new": "  return nowMs >= s.start && nowMs <= s.end ? s : null;",
     "tests": [
       "test/systems/sea/seaevents.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "SEA-EVENTS-fleet-abyss-shallow",
     "file": "src/systems/sea/seaEvents.js",
-    "old": "columns(band('abyss').from, band('abyss').from + FLEET_ABYSS_LEAGUES);",
-    "new": "columns(band('deep').from, band('abyss').from + FLEET_ABYSS_LEAGUES);",
+    "old": "      : columns(band('abyss').from, band('abyss').from + FLEET_ABYSS_LEAGUES);",
+    "new": "      : columns(band('deep').from, band('abyss').from + FLEET_ABYSS_LEAGUES);",
     "tests": [
       "test/systems/sea/seaevents.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "SEA-EVENTS-fleet-no-escort",
     "file": "src/systems/sea/seaEvents.js",
-    "old": "[FLEET_FLAGSHIP, ...FLEET_ESCORTS[id]].map(",
-    "new": "[FLEET_FLAGSHIP].map(",
+    "old": "  const ships = [FLEET_FLAGSHIP, ...FLEET_ESCORTS[id]].map((classId, i) => ({",
+    "new": "  const ships = [FLEET_FLAGSHIP].map((classId, i) => ({",
     "tests": [
       "test/systems/sea/seaevents.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "SEA-EVENTS-fleet-heading-north",
     "file": "src/systems/sea/seaEvents.js",
-    "old": "yaw: Math.atan2(f.to.x - f.from.x, -(f.to.y - f.from.y)) };",
-    "new": "yaw: Math.atan2(f.to.x - f.from.x, f.to.y - f.from.y) };",
+    "old": "    yaw: Math.atan2(f.to.x - f.from.x, -(f.to.y - f.from.y)),",
+    "new": "    yaw: Math.atan2(f.to.x - f.from.x, f.to.y - f.from.y),",
     "tests": [
       "test/systems/sea/seaevents.test.js"
     ]

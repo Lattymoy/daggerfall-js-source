@@ -218,8 +218,8 @@
   {
     "name": "SEA-SET-pile-bay-latitude",
     "file": "src/systems/sea/seaSpoils.js",
-    "old": "py = 499 - Math.trunc(at.latitude / 128);",
-    "new": "py = Math.trunc(at.latitude / 128);",
+    "old": "    py = 499 - Math.trunc(at.latitude / 128);",
+    "new": "    py = Math.trunc(at.latitude / 128);",
     "tests": [
       "test/systems/sea/seaset.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "SEA-SET-pile-source-any-hall",
     "file": "src/systems/sea/seaSpoils.js",
-    "old": "(loc?.ether && loc.wildRing > 0 ? 'vault' : 'ruin');",
-    "new": "(loc?.wildRing > 0 ? 'vault' : 'ruin');",
+    "old": "export const seaPileSource = (loc) => (loc?.ether && loc.wildRing > 0 ? 'vault' : 'ruin');",
+    "new": "export const seaPileSource = (loc) => (loc?.wildRing > 0 ? 'vault' : 'ruin');",
     "tests": [
       "test/systems/sea/seaset.test.js"
     ]

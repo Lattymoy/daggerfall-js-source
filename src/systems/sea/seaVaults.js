@@ -15,7 +15,17 @@
 //
 // Pure: the day in, the vaults out; no map files, no clock. Every client and the hub could draw them alike.
 // ═══════════════════════════════════════════════════════════════════
-import { BANDS, VEIL_X, LEAGUE_PX, veilhaven, etherCellOf, isleOfCell, etherHash, etherRng, etherBandAt } from '../../world/ethericSea.js';
+import {
+  BANDS,
+  VEIL_X,
+  LEAGUE_PX,
+  veilhaven,
+  etherCellOf,
+  isleOfCell,
+  etherHash,
+  etherRng,
+  etherBandAt,
+} from '../../world/ethericSea.js';
 import { HAUNT_SPREAD, ABYSS_HAUNT_LEAGUES } from '../naval/etherShips.js';
 import { seaVaultKey } from '../../net/wire.js';
 
@@ -34,9 +44,16 @@ export const SEA_VAULT_TRIES = 8;
  *  row - `{ x0, x1, y0, y1 }` in pixels. */
 export function vaultWaters(band) {
   const i = BANDS.findIndex((b) => b.id === band);
-  const from = BANDS[i].from, to = BANDS[i + 1]?.from ?? from + ABYSS_HAUNT_LEAGUES;
-  const row = veilhaven().py, spread = HAUNT_SPREAD[band] ?? HAUNT_SPREAD.deep;
-  return { x0: Math.ceil(VEIL_X - to * LEAGUE_PX), x1: Math.floor(VEIL_X - from * LEAGUE_PX), y0: row - spread, y1: row + spread };
+  const from = BANDS[i].from,
+    to = BANDS[i + 1]?.from ?? from + ABYSS_HAUNT_LEAGUES;
+  const row = veilhaven().py,
+    spread = HAUNT_SPREAD[band] ?? HAUNT_SPREAD.deep;
+  return {
+    x0: Math.ceil(VEIL_X - to * LEAGUE_PX),
+    x1: Math.floor(VEIL_X - from * LEAGUE_PX),
+    y0: row - spread,
+    y1: row + spread,
+  };
 }
 
 /** @typedef {{ key: string, cx: number, cy: number, x: number, y: number, band: string, ring: number, name: string }} SeaVault */
@@ -63,7 +80,10 @@ export function seaVaultPicks(day) {
         const r = etherRng(etherHash(SEA_VAULT_SALT, d, bi, slot, tryN));
         const [sx, sy] = etherCellOf(w.x0 + r() * (w.x1 - w.x0), w.y0 + r() * (w.y1 - w.y0));
         const v = nearestRuin(sx, sy, band, out);
-        if (v) { out.push({ ...v, ring: bi + 1 }); break; }
+        if (v) {
+          out.push({ ...v, ring: bi + 1 });
+          break;
+        }
       }
     }
   }
@@ -77,7 +97,7 @@ function nearestRuin(sx, sy, band, taken) {
   for (let ring = 0; ring <= SEA_VAULT_SEARCH_CELLS; ring++) {
     for (let cy = sy - ring; cy <= sy + ring; cy++) {
       for (let cx = sx - ring; cx <= sx + ring; cx++) {
-        if (Math.max(Math.abs(cx - sx), Math.abs(cy - sy)) !== ring) continue;   // the ring's own cells
+        if (Math.max(Math.abs(cx - sx), Math.abs(cy - sy)) !== ring) continue; // the ring's own cells
         const isle = isleOfCell(cx, cy);
         if (!isle || isle.kind !== 'ruin' || etherBandAt(isle.px).id !== band) continue;
         if (taken.some((t) => Math.max(Math.abs(t.cx - cx), Math.abs(t.cy - cy)) < SEA_VAULT_SPACING_CELLS)) continue;
