@@ -30,6 +30,8 @@
 /src/systems/lockpick/*/
 !/src/systems/snowfall/
 /src/systems/snowfall/*/
+!/src/systems/soundscape/
+/src/systems/soundscape/*/
 !/src/systems/studioArt/
 /src/systems/studioArt/*/
 !/src/ui/

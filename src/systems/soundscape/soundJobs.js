@@ -22,7 +22,10 @@ import { murmurSamples, tavernSamples } from './townBeds.js';
  * @returns {Float32Array | null}
  */
 export function runJob(job) {
-  if (job?.kind === 'bed') { const spec = /** @type {Record<string, any>} */ (SOUND_BEDS)[/** @type {string} */ (job.key)]; return spec ? bedSamples(spec) : null; }
+  if (job?.kind === 'bed') {
+    const spec = /** @type {Record<string, any>} */ (SOUND_BEDS)[/** @type {string} */ (job.key)];
+    return spec ? bedSamples(spec) : null;
+  }
   if (job?.kind === 'murmur' && job.voices?.length) return murmurSamples(job.voices);
   if (job?.kind === 'tavern' && job.voices?.length) return tavernSamples(job.voices);
   return null;
@@ -53,7 +56,13 @@ function workerFailed() {
 }
 /** A job's samples, kept for the next frame's registration - or the job given up when its maker threw. */
 function settle(key, make) {
-  try { const s = make(); if (s) _made.set(key, s); } catch (err) { _failed.add(key); console.warn(`[soundscape] ${key} could not be made:`, err); }
+  try {
+    const s = make();
+    if (s) _made.set(key, s);
+  } catch (err) {
+    _failed.add(key);
+    console.warn(`[soundscape] ${key} could not be made:`, err);
+  }
   if (_making === key) _making = null;
 }
 
@@ -65,18 +74,25 @@ function settle(key, make) {
 export function soundWorker(WorkerCtor = /** @type {any} */ (globalThis).Worker) {
   if (_worker !== undefined) return _worker;
   try {
-    _worker = typeof WorkerCtor !== 'function' ? null
-      : WorkerCtor === /** @type {any} */ (globalThis).Worker
-        ? new Worker(new URL('./soundWorker.js', import.meta.url), { type: 'module' })
-        : new WorkerCtor('./soundWorker.js', { type: 'module' });
-  } catch { _worker = null; }
+    _worker =
+      typeof WorkerCtor !== 'function'
+        ? null
+        : WorkerCtor === /** @type {any} */ (globalThis).Worker
+          ? new Worker(new URL('./soundWorker.js', import.meta.url), { type: 'module' })
+          : new WorkerCtor('./soundWorker.js', { type: 'module' });
+  } catch {
+    _worker = null;
+  }
   if (_worker) {
     _worker.onmessage = (/** @type {MessageEvent} */ e) => {
       const { id, samples, error } = e.data ?? {};
       const p = _pending.get(id);
       if (!p) return;
       _pending.delete(id);
-      settle(p.key, () => { if (error) throw new Error(error); return samples ?? null; });
+      settle(p.key, () => {
+        if (error) throw new Error(error);
+        return samples ?? null;
+      });
     };
     _worker.onerror = () => workerFailed();
   }
@@ -90,13 +106,19 @@ export function soundWorker(WorkerCtor = /** @type {any} */ (globalThis).Worker)
  * @param {string} key @param {() => any} job @param {number} rate
  * @param {{ worker?: (() => any) | null, idle?: ((fn: () => void, opts: { timeout: number }) => unknown) | null }} [opts]
  */
-export function ensureMade(engine, key, job, rate, { worker = soundWorker, idle = /** @type {any} */ (globalThis).requestIdleCallback ?? null } = {}) {
+export function ensureMade(
+  engine,
+  key,
+  job,
+  rate,
+  { worker = soundWorker, idle = /** @type {any} */ (globalThis).requestIdleCallback ?? null } = {},
+) {
   if (!engine?.registerSamples) return false;
   let on = _on.get(engine);
   if (on?.has(key)) return true;
   const have = _made.get(key);
   if (have) {
-    if (!engine.registerSamples(key, have, rate)) return false;   // no context to register it on yet
+    if (!engine.registerSamples(key, have, rate)) return false; // no context to register it on yet
     if (!on) _on.set(engine, (on = new Set()));
     on.add(key);
     _made.delete(key);
@@ -110,7 +132,10 @@ export function ensureMade(engine, key, job, rate, { worker = soundWorker, idle 
     const id = _nextId++;
     _making = key;
     _pending.set(id, { key, job: j });
-    w.postMessage({ id, job: j }, (j.voices ?? []).map((/** @type {Float32Array} */ v) => v.buffer));
+    w.postMessage(
+      { id, job: j },
+      (j.voices ?? []).map((/** @type {Float32Array} */ v) => v.buffer),
+    );
     return false;
   }
   if (typeof idle === 'function') {
@@ -129,4 +154,10 @@ export function ensureBed(engine, key, opts) {
 }
 
 /** Test seam: everything made, held, given up and posted forgotten, and the worker let go. */
-export function _resetMade() { _made.clear(); _failed.clear(); _pending.clear(); _making = null; _worker = undefined; }
+export function _resetMade() {
+  _made.clear();
+  _failed.clear();
+  _pending.clear();
+  _making = null;
+  _worker = undefined;
+}

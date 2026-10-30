@@ -25,9 +25,16 @@ export const SCAPE_SFX = Object.freeze({
 });
 
 /** Every key's file under public/sfx. */
-export const SCAPE_SFX_FILES = Object.freeze(Object.fromEntries(Object.values(SCAPE_SFX).flat().map((key) => [key, `${key}.wav`])));
+export const SCAPE_SFX_FILES = Object.freeze(
+  Object.fromEntries(
+    Object.values(SCAPE_SFX)
+      .flat()
+      .map((key) => [key, `${key}.wav`]),
+  ),
+);
 
-export const scapeSfxUrl = (/** @type {string} */ file) => new URL(`sfx/${file}`, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href;
+export const scapeSfxUrl = (/** @type {string} */ file) =>
+  new URL(`sfx/${file}`, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href;
 
 /** The loader (AUDIT SOUNDSCAPE S7: a first load that failed is asked again - clipInstall.js). */
 const _installer = createClipInstaller(SCAPE_SFX_FILES, { urlOf: scapeSfxUrl });
@@ -37,4 +44,6 @@ export const installSoundscapeSounds = (audio) => _installer.install(audio);
 /** Whether a clip stands on the bus. */
 export const soundscapeSoundReady = (/** @type {string} */ key) => _installer.has(key);
 /** Test seam. */
-export function _resetSoundscapeSounds() { _installer._reset(); }
+export function _resetSoundscapeSounds() {
+  _installer._reset();
+}

@@ -13,4 +13,5 @@ export const TOWN_BED_RATE = ARENA_SOUND_RATE;
 /** The murmur's samples. @param {Float32Array[]} voices */
 export const murmurSamples = (voices) => lowpassLoop(synthBed(voices, { seed: TOWN_SEED }), ARENA_SOUND_RATE, 2400);
 /** The tavern's samples. @param {Float32Array[]} voices */
-export const tavernSamples = (voices) => level(lowpassLoop(synthBed(voices, { seed: TOWN_SEED + 1 }), ARENA_SOUND_RATE, 1100), 0.06);
+export const tavernSamples = (voices) =>
+  level(lowpassLoop(synthBed(voices, { seed: TOWN_SEED + 1 }), ARENA_SOUND_RATE, 1100), 0.06);

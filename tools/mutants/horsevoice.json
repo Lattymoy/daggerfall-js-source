@@ -300,8 +300,8 @@
   {
     "name": "HORSE-VOICE-refetched-every-try",
     "file": "src/systems/soundscape/clipInstall.js",
-    "old": "if (await audio.registerSound(key, bytes.get(key))) { ready.add(key); bytes.delete(key); }",
-    "new": "if (await audio.registerSound(key, bytes.get(key))) { ready.add(key); bytes.delete(key); } else bytes.delete(key);",
+    "old": "        }",
+    "new": "        } else bytes.delete(key);",
     "tests": [
       "test/systems/horse/horsevoice.test.js"
     ]

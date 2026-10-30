@@ -24,7 +24,7 @@
 // keeps the clocks and plays them. Behind Enhanced Sounds (ES1) on the enhanced skin; the classic skin hears exactly
 // what DFU and the mod play. Not a DFU member - Ledger A (SOUNDSCAPE).
 import { audio as defaultAudio } from '../audio.js';
-import { ensureBed } from './soundJobs.js';   // AUDIT SOUNDSCAPE W4: made off the main thread
+import { ensureBed } from './soundJobs.js'; // AUDIT SOUNDSCAPE W4: made off the main thread
 import { SCAPE_SFX } from './soundscapeSfx.js';
 
 /** The beds' names on the engine, their bed (soundBeds.js key) and their laws' numbers. */
@@ -44,7 +44,11 @@ export const SEA_BEDS = Object.freeze({
 export const SEA_FAR = 'seaAir';
 
 /** The swell's three long waves: [period s, share, phase] - their sum's shares are 1. */
-export const SWELL_WAVES = Object.freeze([Object.freeze([8.3, 0.55, 0]), Object.freeze([12.7, 0.3, 1.3]), Object.freeze([5.1, 0.15, 0.4])]);
+export const SWELL_WAVES = Object.freeze([
+  Object.freeze([8.3, 0.55, 0]),
+  Object.freeze([12.7, 0.3, 1.3]),
+  Object.freeze([5.1, 0.15, 0.4]),
+]);
 
 /** What the weather adds to the sea a wind makes: a rain's squalls and a storm's seas. */
 export const SEA_WEATHER = Object.freeze({ rain: 0.12, thunder: 0.35, snow: 0.06 });
@@ -52,18 +56,23 @@ export const SEA_WEATHER = Object.freeze({ rain: 0.12, thunder: 0.35, snow: 0.06
 export const SEA_STATE_FLOOR = 0.15;
 
 const clamp01 = (v) => Math.max(0, Math.min(1, Number.isFinite(v) ? v : 0));
-const smooth = (a, b, x) => { const u = clamp01((x - a) / (b - a)); return u * u * (3 - 2 * u); };
+const smooth = (a, b, x) => {
+  const u = clamp01((x - a) / (b - a));
+  return u * u * (3 - 2 * u);
+};
 
 /** THE SEA STATE, 0..1: the floor, the wind's (0..1, windDrive strength01) seven tenths, and the weather's own. Pure. */
 export function seaState(wind, weather) {
-  return clamp01(SEA_STATE_FLOOR + 0.7 * clamp01(wind) + (SEA_WEATHER[/** @type {keyof typeof SEA_WEATHER} */ (weather)] ?? 0));
+  return clamp01(
+    SEA_STATE_FLOOR + 0.7 * clamp01(wind) + (SEA_WEATHER[/** @type {keyof typeof SEA_WEATHER} */ (weather)] ?? 0),
+  );
 }
 
 /** The swell at `t` seconds, 0..1: the three waves summed. Pure. */
 export function seaSwellAt(t) {
   let v = 0;
   for (const [period, share, phase] of SWELL_WAVES) {
-    const omega = (2 * Math.PI) / period;   // the wave's radians a second (ONCRASH1's sweep: no sum stepped by a whole turn)
+    const omega = (2 * Math.PI) / period; // the wave's radians a second (ONCRASH1's sweep: no sum stepped by a whole turn)
     v += share * Math.sin(omega * t + phase);
   }
   return clamp01(0.5 + 0.5 * v);
@@ -73,21 +82,30 @@ export function seaSwellAt(t) {
 export function swellBed(state, t) {
   const { min, max, depth } = SEA_BEDS.swell;
   const s = seaSwellAt(t);
-  return { volume: (min + (max - min) * clamp01(state)) * (1 - depth + depth * s), pitch: 0.9 + 0.1 * clamp01(state) + 0.06 * (s - 0.5) };
+  return {
+    volume: (min + (max - min) * clamp01(state)) * (1 - depth + depth * s),
+    pitch: 0.9 + 0.1 * clamp01(state) + 0.06 * (s - 0.5),
+  };
 }
 
 /** The wash bed's gain and pitch for `way` m/s through a sea of `state` at `t` - the swell a beat behind. Pure. */
 export function washBed(way, state, t) {
   const { max, from, full } = SEA_BEDS.wash;
   const w = smooth(from, full, way);
-  return { volume: max * w * (0.75 + 0.25 * seaSwellAt(t - 1.7)) * (0.8 + 0.2 * clamp01(state)), pitch: 0.85 + 0.3 * clamp01(way / full) };
+  return {
+    volume: max * w * (0.75 + 0.25 * seaSwellAt(t - 1.7)) * (0.8 + 0.2 * clamp01(state)),
+    pitch: 0.85 + 0.3 * clamp01(way / full),
+  };
 }
 
 /** The rigging bed's gain and pitch for a `wind` (0..1) gusting `gust` (0..1) in `weather`. Pure. */
 export function riggingBed(wind, gust, weather) {
   const { max, from } = SEA_BEDS.rigging;
   const w = clamp01(clamp01(wind) + (weather === 'thunder' ? 0.3 : weather === 'rain' ? 0.1 : 0));
-  return { volume: max * smooth(from, 1, w) * (0.6 + 0.4 * clamp01(gust)), pitch: 0.92 + 0.2 * w + 0.06 * (clamp01(gust) - 0.5) };
+  return {
+    volume: max * smooth(from, 1, w) * (0.6 + 0.4 * clamp01(gust)),
+    pitch: 0.92 + 0.2 * w + 0.06 * (clamp01(gust) - 0.5),
+  };
 }
 
 /** A gull's call: a gap drawn between these while land is near by day in fair weather; a second call follows so often. */
@@ -95,7 +113,8 @@ export const GULL_GAP_S = Object.freeze([7, 26]);
 export const GULL_PAIR = 0.3;
 
 /** Whether the gulls are about: land near, by day, out of rain, storm and snow. Pure. */
-export const gullsAbout = ({ nearLand, night, weather }) => !!nearLand && !night && weather !== 'rain' && weather !== 'thunder' && weather !== 'snow';
+export const gullsAbout = ({ nearLand, night, weather }) =>
+  !!nearLand && !night && weather !== 'rain' && weather !== 'thunder' && weather !== 'snow';
 
 /** THE WATCH BELLS (a ship's clock): the bells struck at `minuteOfDay` (0..1439) - one at the half hour after a watch
  *  begins (the watches turning at 0, 4, 8, 12, 16 and 20 o'clock), one more each half hour, eight as it ends. Pure. */
@@ -108,7 +127,11 @@ export function watchBells(minuteOfDay) {
  *  an odd bell alone at the end. The strokes' times from the first, seconds. Pure. */
 export const BELL_STROKE_S = 0.42;
 export const BELL_PAIR_S = 1.15;
-export const bellStrokes = (n) => Array.from({ length: Math.max(0, Math.floor(n)) }, (_, i) => Math.floor(i / 2) * BELL_PAIR_S + (i % 2) * BELL_STROKE_S);
+export const bellStrokes = (n) =>
+  Array.from(
+    { length: Math.max(0, Math.floor(n)) },
+    (_, i) => Math.floor(i / 2) * BELL_PAIR_S + (i % 2) * BELL_STROKE_S,
+  );
 /** The bells ring only at the world's own pace - the world's minutes a real second, read off the clock itself (AUDIT
  *  SOUNDSCAPE S9: the time dial was the test, and online a crossing's dial moves no shared clock, so its bells went
  *  silent at a pace the clock never ran): never past BELL_MAX_PACE (two and a half times DFU's 12 to 1 - a dial past x2
@@ -123,8 +146,19 @@ export const BELL_PACE_TAU_S = 3;
 export const BELL_CLIP = 107;
 export const BELL_PITCH = 1.22;
 
-const flatOf = (fwd) => { const l = Math.hypot(fwd[0], fwd[2]) || 1; return [fwd[0] / l, 0, fwd[2] / l]; };
-const at = (ear, ...parts) => { const p = [...ear]; for (const [v, k] of parts) { p[0] += v[0] * k; p[1] += v[1] * k; p[2] += v[2] * k; } return p; };
+const flatOf = (fwd) => {
+  const l = Math.hypot(fwd[0], fwd[2]) || 1;
+  return [fwd[0] / l, 0, fwd[2] / l];
+};
+const at = (ear, ...parts) => {
+  const p = [...ear];
+  for (const [v, k] of parts) {
+    p[0] += v[0] * k;
+    p[1] += v[1] * k;
+    p[2] += v[2] * k;
+  }
+  return p;
+};
 const UP = [0, 1, 0];
 /** @param {() => number} rand @param {number} a @param {number} b */
 const between = (rand, a, b) => a + (b - a) * rand();
@@ -145,24 +179,46 @@ const pick = (rand, list) => list[Math.min(list.length - 1, Math.floor(rand() * 
  * @param {{ engine?: any, rand?: () => number }} [opts]
  */
 export function createSeaAir({ engine = defaultAudio, rand = Math.random } = {}) {
-  let t = 0, on = false, lastMinute = null, lastBellT = -Infinity, pace = NORMAL_PACE, gullIn = 0;
+  let t = 0,
+    on = false,
+    lastMinute = null,
+    lastBellT = -Infinity,
+    pace = NORMAL_PACE,
+    gullIn = 0;
   /** strokes and shots due later: [{ at, play(frame) }] - played where the ear is when they fall due */
   /** @type {Array<{ at: number, play: (s: SeaFrame) => void }>} */
   let due = [];
   const play = (clip, pos, volume, { pitch = 1, ref = 3, max = 120 } = {}) => {
-    try { engine.play3d(clip, pos, volume, { refDistance: ref, maxDistance: max, pitch, far: SEA_FAR }); } catch { /* a sound is never the voyage */ }
+    try {
+      engine.play3d(clip, pos, volume, { refDistance: ref, maxDistance: max, pitch, far: SEA_FAR });
+    } catch {
+      /* a sound is never the voyage */
+    }
   };
   const bed = (spec, v) => {
     if (!ensureBed(engine, spec.bed)) return;
-    try { engine.setBed(spec.name, v.volume > 0.002 ? spec.bed : null, v); } catch { /* nothing to play it on yet */ }
+    try {
+      engine.setBed(spec.name, v.volume > 0.002 ? spec.bed : null, v);
+    } catch {
+      /* nothing to play it on yet */
+    }
   };
-  const reset = () => { lastMinute = null; due = []; gullIn = 0; pace = NORMAL_PACE; };
+  const reset = () => {
+    lastMinute = null;
+    due = [];
+    gullIn = 0;
+    pace = NORMAL_PACE;
+  };
   /** The gulls' clock as I step aboard: a gap away, never on the first frame. */
-  const seed = () => { gullIn = between(rand, 2, GULL_GAP_S[0]); };
+  const seed = () => {
+    gullIn = between(rand, 2, GULL_GAP_S[0]);
+  };
   /** Her heading: the bow given, else the ear's forward. @param {SeaFrame} c */
   const headingOf = (c) => flatOf(c.bow ?? c.fwd ?? [0, 0, 1]);
   return {
-    get on() { return on; },
+    get on() {
+      return on;
+    },
     /** @param {number} dt @param {SeaFrame} s */
     frame(dt, s) {
       if (!s || !Array.isArray(s.ear) || s.ear.length !== 3) return;
@@ -180,9 +236,17 @@ export function createSeaAir({ engine = defaultAudio, rand = Math.random } = {})
       // the gulls
       if (gullsAbout(s)) {
         if ((gullIn -= step) <= 0) {
-          const az = between(rand, -Math.PI, Math.PI), d = between(rand, 25, 70), h = between(rand, 12, 30);
+          const az = between(rand, -Math.PI, Math.PI),
+            d = between(rand, 25, 70),
+            h = between(rand, 12, 30);
           /** @param {number[]} ear @param {number} k */
-          const gull = (ear, k) => play(pick(rand, SCAPE_SFX.gull), [ear[0] + Math.sin(az) * d * k, ear[1] + h, ear[2] + Math.cos(az) * d * k], between(rand, 0.35, 0.6), { pitch: between(rand, 0.92, 1.08), ref: 18, max: 400 });
+          const gull = (ear, k) =>
+            play(
+              pick(rand, SCAPE_SFX.gull),
+              [ear[0] + Math.sin(az) * d * k, ear[1] + h, ear[2] + Math.cos(az) * d * k],
+              between(rand, 0.35, 0.6),
+              { pitch: between(rand, 0.92, 1.08), ref: 18, max: 400 },
+            );
           gull(s.ear, 1);
           if (rand() < GULL_PAIR) due.push({ at: t + between(rand, 0.5, 1.6), play: (c) => gull(c.ear, 0.9) });
           gullIn = between(rand, GULL_GAP_S[0], GULL_GAP_S[1]);
@@ -193,20 +257,33 @@ export function createSeaAir({ engine = defaultAudio, rand = Math.random } = {})
       const minute = Number(s.minute);
       if (Number.isFinite(minute)) {
         if (lastMinute != null) {
-          const dm = ((minute - lastMinute) % 1440 + 1440 + 720) % 1440 - 720;   // the minutes this frame moved, the wrap taken
+          const dm = ((((minute - lastMinute) % 1440) + 1440 + 720) % 1440) - 720; // the minutes this frame moved, the wrap taken
           if (Math.abs(dm) <= 30) pace += (dm / step - pace) * Math.min(1, step / BELL_PACE_TAU_S);
         }
         const half = Math.floor(minute / 30);
         // the minute of the day wraps at midnight: the half hour after 23:30 is 00:00, struck as the watch's eight
-        if (lastMinute != null && ((half - Math.floor(lastMinute / 30)) % 48 + 48) % 48 === 1 && pace <= BELL_MAX_PACE && t - lastBellT >= BELL_MIN_REAL_S) {
+        if (
+          lastMinute != null &&
+          (((half - Math.floor(lastMinute / 30)) % 48) + 48) % 48 === 1 &&
+          pace <= BELL_MAX_PACE &&
+          t - lastBellT >= BELL_MIN_REAL_S
+        ) {
           lastBellT = t;
-          for (const k of bellStrokes(watchBells((half * 30) % 1440))) due.push({ at: t + k, play: (c) => play(BELL_CLIP, at(c.ear, [headingOf(c), 3], [UP, 2.5]), 0.4, { pitch: BELL_PITCH, ref: 6, max: 300 }) });
+          for (const k of bellStrokes(watchBells((half * 30) % 1440)))
+            due.push({
+              at: t + k,
+              play: (c) =>
+                play(BELL_CLIP, at(c.ear, [headingOf(c), 3], [UP, 2.5]), 0.4, { pitch: BELL_PITCH, ref: 6, max: 300 }),
+            });
         }
         lastMinute = minute;
       }
       if (due.length) {
         const now = due.filter((d) => d.at <= t);
-        if (now.length) { due = due.filter((d) => d.at > t); for (const d of now) d.play(s); }
+        if (now.length) {
+          due = due.filter((d) => d.at > t);
+          for (const d of now) d.play(s);
+        }
       }
     },
     stop() {
@@ -216,7 +293,9 @@ export function createSeaAir({ engine = defaultAudio, rand = Math.random } = {})
       try {
         for (const spec of Object.values(SEA_BEDS)) engine.setBed(spec.name, null);
         engine.fadeFar?.(SEA_FAR);
-      } catch { /* nothing left to stop */ }
+      } catch {
+        /* nothing left to stop */
+      }
     },
   };
 }

@@ -12,6 +12,10 @@ globalThis.onmessage = (/** @type {MessageEvent} */ e) => {
     const samples = runJob(job);
     /** @type {any} */ (globalThis).postMessage({ id, samples }, samples ? [samples.buffer] : []);
   } catch (err) {
-    /** @type {any} */ (globalThis).postMessage({ id, samples: null, error: String(/** @type {any} */ (err)?.message ?? err) });
+    /** @type {any} */ (globalThis).postMessage({
+      id,
+      samples: null,
+      error: String(/** @type {any} */ (err)?.message ?? err),
+    });
   }
 };
