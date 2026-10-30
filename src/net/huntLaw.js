@@ -127,21 +127,23 @@ export const MASTERY_TITLES = Object.freeze(Object.fromEntries(PROFESSIONS.map((
 /** Sailing's: the serpents an account helped slay at sea - the relay's own receipts (server-account/src/serpents.js). */
 export const SEA_TITLES = Object.freeze([['serpenthunter', 10], ['deepbane', 40]].map((r) => Object.freeze(r)));
 /** WYRM-RIDER (2026-10-30, the owner: "we need a title thats basd ass for this DRAGON TAMER"): a tamed Dwarven Dragon's -
- *  Wyrm Rider while the account holds one (server-account dragon_mounts, the service's own draw), First Wyrm Rider for
- *  the account whose tame is the earliest of all. */
-export const DRAGON_TITLES = Object.freeze({ rider: 'wyrmrider', first: 'firstwyrmrider' });
+ *  Wyrm Rider while the account holds a brass one, Aether Rider an Aetherbright (server-account dragon_mounts), and each
+ *  First for the earliest tame of its look. The owner: "DONT COUNT ADMINS" - a developer's tame is never a First. */
+export const DRAGON_TITLES = Object.freeze({ rider: 'wyrmrider', first: 'firstwyrmrider', aether: 'aetherrider', firstAether: 'firstaetherrider' });
 /** Every title of this law, in TITLES' order (net/identityToken.js). */
-export const MASTERY_MARKS = Object.freeze([...HUNT_TITLES.map(([t]) => t), ...Object.values(MASTERY_TITLES), ...SEA_TITLES.map(([t]) => t), DRAGON_TITLES.rider, DRAGON_TITLES.first]);
+export const MASTERY_MARKS = Object.freeze([...HUNT_TITLES.map(([t]) => t), ...Object.values(MASTERY_TITLES), ...SEA_TITLES.map(([t]) => t), ...Object.values(DRAGON_TITLES)]);
 
 /** The titles an account holds off its counts: `clears` its board clears, `masters` the professions a living character
- *  of it has mastered, `serpents` its serpent kills, `dragons` its tamed dragons and `firstTame` whether its tame is the
- *  earliest of all (WYRM-RIDER). */
-export function masteryMarksOf({ clears = 0, masters = [], serpents = 0, dragons = 0, firstTame = false } = {}) {
+ *  of it has mastered, `serpents` its serpent kills, `dragons` and `aethers` its tamed brass and Aetherbright dragons, and
+ *  `firstTame` and `firstAether` whether it holds the earliest of each (WYRM-RIDER). */
+export function masteryMarksOf({ clears = 0, masters = [], serpents = 0, dragons = 0, aethers = 0, firstTame = false, firstAether = false } = {}) {
   const out = [];
   for (const [t, n] of HUNT_TITLES) if (clearsOk(clears) >= n) out.push(t);
   for (const p of PROFESSIONS) if (Array.isArray(masters) && masters.includes(p.id)) out.push(MASTERY_TITLES[p.id]);
   for (const [t, n] of SEA_TITLES) if (clearsOk(serpents) >= n) out.push(t);
   if (clearsOk(dragons) >= 1) out.push(DRAGON_TITLES.rider);
   if (clearsOk(dragons) >= 1 && firstTame === true) out.push(DRAGON_TITLES.first);
+  if (clearsOk(aethers) >= 1) out.push(DRAGON_TITLES.aether);
+  if (clearsOk(aethers) >= 1 && firstAether === true) out.push(DRAGON_TITLES.firstAether);
   return out;
 }

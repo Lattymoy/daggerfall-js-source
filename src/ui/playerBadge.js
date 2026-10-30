@@ -159,7 +159,9 @@ export const TITLE_TEXT = Object.freeze({
   serpenthunter: 'Serpent Hunter',
   deepbane: 'Bane of the Deep',
   wyrmrider: 'Wyrm Rider',   // WYRM-RIDER (2026-10-30, the owner): a tamed Dwarven Dragon's
-  firstwyrmrider: 'First Wyrm Rider',   // WYRM-RIDER: the earliest tame of all
+  firstwyrmrider: 'First Wyrm Rider',   // WYRM-RIDER: the earliest brass tame
+  aetherrider: 'Aether Rider',   // WYRM-RIDER: a tamed Aetherbright's
+  firstaetherrider: 'First Aether Rider',   // WYRM-RIDER: the earliest Aetherbright tame
   genesis: 'Genesis',   // SHOP (2026-10-28): the shop's pre-alpha title, the owner's word for it
 });
 
@@ -266,14 +268,11 @@ export const HOUR_SUN = Object.freeze([1, 0.969, 0.918, 1]);         // #fff7ea
 export const COIL_SEA = Object.freeze([0.165, 0.561, 0.651, 1]);    // #2a8fa6
 export const COIL_TIDE = Object.freeze([0.122, 0.682, 0.549, 1]);   // #1fae8c
 export const COIL_FOAM = Object.freeze([0.847, 0.976, 0.937, 1]);   // #d8f9ef
-/** WYRM-RIDER (2026-10-30, the owner: "we need a title thats basd ass for this DRAGON TAMER"): the tamed Dwarven Dragon's
- *  title - its bronze and brass into the Aetherbright's aetherium blue; the First's from gold into the Aetherbright's violet. */
-export const WYRM_BRONZE = Object.freeze([0.541, 0.353, 0.118, 1]);   // #8a5a1e
-export const WYRM_BRASS = Object.freeze([0.851, 0.643, 0.255, 1]);    // #d9a441
-export const WYRM_AETHER = Object.freeze([0.498, 0.831, 1, 1]);       // #7fd4ff
-export const WYRM_DEEP = Object.freeze([0.184, 0.498, 0.816, 1]);     // #2f7fd0
+/** WYRM-RIDER (2026-10-30, the owner: "we need a title thats basd ass for this DRAGON TAMER"): the dragon tamers' letters,
+ *  on their plates (TITLE_PLATE) - cream on brass, ice on aetherium, gold on the First's. */
+export const WYRM_CREAM = Object.freeze([1, 0.906, 0.651, 1]);        // #ffe7a6
+export const WYRM_ICE = Object.freeze([0.788, 0.949, 1, 1]);          // #c9f2ff
 export const WYRM_GOLD = Object.freeze([1, 0.910, 0.627, 1]);         // #ffe8a0
-export const WYRM_VIOLET = Object.freeze([0.608, 0.420, 1, 1]);       // #9b6bff
 /** EG-E2 (2026-10-12, Mac: "I said I want everything"; bible/11-Multiplayer/Elite-Gates.md section 19, THE HONOURS): THE
  *  SPIRE'S COLOURS, named once - the three titles whose auras are drawn in them read them here, as the auras do
  *  (render/auraRing.js SPIRE_RGB): the beacon's flame and its white heart (Beacon-Lighter; Kynbane's Beaconlight, its
@@ -461,8 +460,10 @@ export const TITLE_RGBA = Object.freeze({
   masterenchanting: Object.freeze([0.435, 0.459, 0.882, 1]),    // #6f75e1
   serpenthunter: Object.freeze([0.2, 0.835, 0.706, 1]),         // #33d5b4
   deepbane: Object.freeze([0.118, 0.353, 0.553, 1]),            // #1e5a8d
-  wyrmrider: WYRM_BRASS,   // WYRM-RIDER: the dragon's brass, #d9a441
+  wyrmrider: WYRM_CREAM,   // WYRM-RIDER: cream on its brass plate, #ffe7a6
   firstwyrmrider: WYRM_GOLD,   // WYRM-RIDER: its gold, #ffe8a0
+  aetherrider: WYRM_ICE,   // WYRM-RIDER: ice on its aetherium plate, #c9f2ff
+  firstaetherrider: WYRM_ICE,
   genesis: GENESIS_HEART,   // SHOP: the flame's heart - its letters over the plate, and the colour a face with no plate uses
 });
 
@@ -479,8 +480,6 @@ export const TITLE_GRADIENT = Object.freeze({
   hoursfirst: Object.freeze([HOUR_DAWN, HOUR_PEARL, HOUR_SUN]),   // HOURS-FIRST: rose gold into pearl into the dawn's white
   aegis: Object.freeze([OBLIVION_VOID, OBLIVION_VIOLET, OBLIVION_LILAC]),   // AEGIS: out of the void into the ward's light
   coilbreaker: Object.freeze([COIL_SEA, COIL_TIDE, COIL_FOAM]),   // SERPENT5: the open sea into the tide into the foam
-  wyrmrider: Object.freeze([WYRM_BRONZE, WYRM_BRASS, WYRM_AETHER, WYRM_DEEP]),   // WYRM-RIDER: the brass dragon into the Aetherbright's blue
-  firstwyrmrider: Object.freeze([WYRM_GOLD, WYRM_BRASS, WYRM_AETHER, WYRM_VIOLET]),   // WYRM-RIDER: gold into the Aetherbright's blue and violet
   wikimaid: Object.freeze([WARREN_AMETHYST, WARREN_LILAC, WARREN_BLUSH]),   // WIKIMAID: "Wiki" in the warren's amethyst, "Maid" into a rabbit's blush
   witchwarden: Object.freeze([WITCH_MOSS, WITCH_FIRE, WITCH_GLOW]),   // WITCH1: the moor's moss into the coven's fire into its heart
   genesis: Object.freeze([GENESIS_BLUE, GENESIS_VIOLET, GENESIS_HEART]),   // SHOP: the classic face's letters, the fire's blue into its heart
@@ -500,8 +499,6 @@ export const TITLE_EDGE = Object.freeze({
   aegis: Object.freeze([0, 0, 0, 1]),   // AEGIS: its lilac end is bright - edged in black, as Penitent's and the Gatebreaker's
   hoursfirst: Object.freeze([0, 0, 0, 1]),   // HOURS-FIRST: its dawn end is near white - edged in black, as Penitent's
   coilbreaker: Object.freeze([0, 0, 0, 1]),   // SERPENT5: its foam end is near white - edged in black, as Penitent's
-  wyrmrider: Object.freeze([0, 0, 0, 1]),   // WYRM-RIDER: its blue end is bright - edged in black, as the Coilbreaker's
-  firstwyrmrider: Object.freeze([0, 0, 0, 1]),   // WYRM-RIDER: its gold end is near white
   wikimaid: Object.freeze([0, 0, 0, 1]),   // WIKIMAID: its blush end is pale - edged in black, as Penitent's and the Aegis's
   witchwarden: Object.freeze([0, 0, 0, 1]),   // WITCH1: its heart end is pale - edged in black, as the WikiMaid's
   nirnrootsage: Object.freeze([0, 0, 0, 1]),   // NIRNROOT-SAGE: its haze end is pale - edged in black, as the Witchwarden's
@@ -519,6 +516,16 @@ export const TITLE_FLAME = Object.freeze({
     root: Object.freeze([GENESIS_DEEP, GENESIS_BLUE, GENESIS_ROOT, GENESIS_CORE].map(rgb3)),
     tips: Object.freeze([GENESIS_DEEP, GENESIS_VIOLET, GENESIS_HEART, GENESIS_CORE].map(rgb3)),
   }),
+});
+
+/** WYRM-RIDER (the owner: "naw just make the name plate", "perfect titles"): A TITLE ON A METAL PLATE (ui/titleFlame.js
+ *  plateCss) - a pointed plate, its `rim` and its `face` (CSS colours, top to bottom, or left to right where `across`), a
+ *  rivet each end, the letters' dark `ink` edge, and a `glow` round it where it names one. */
+export const TITLE_PLATE = Object.freeze({
+  wyrmrider: Object.freeze({ rim: ['#f2d48a', '#8a5a1e'], face: ['#c8913a', '#7a4f18', '#5c3a10'], rivet: '#ffe7a6', ink: '#3a2208', glow: null }),
+  aetherrider: Object.freeze({ rim: ['#bfefff', '#2f7fd0'], face: ['#2a5f9e', '#1b3c78', '#3b2470'], rivet: '#c9a9ff', ink: '#0b1638', glow: '#7fd4ff' }),
+  firstwyrmrider: Object.freeze({ rim: ['#ffe8a0', '#d9a441', '#7fd4ff', '#9b6bff'], across: true, face: ['#6a4310', '#23305e', '#3b2470'], rivet: '#ffe8a0', ink: '#2a1a05', glow: '#ffe8a0' }),
+  firstaetherrider: Object.freeze({ rim: ['#e8fbff', '#7fd4ff', '#9b6bff', '#e8fbff'], across: true, face: ['#1b3c78', '#2a1f5e', '#1b3c78'], rivet: '#e8fbff', ink: '#0b1638', glow: '#9b6bff' }),
 });
 
 /** A glyph's colour. The sprout is green because Mac said green; the
@@ -786,7 +793,7 @@ export function titleBadge(peer) {
   // chapter's seat's
   const text = (SEAT_TITLES.includes(key) ? seatTitleText(key, peer?.ts, _seatPlace) : CHAPTER_TITLES.includes(key) ? chapterTitleText(key, peer?.ts) : null) ?? TITLE_TEXT[key];
   if (!text) return null;
-  return { key, text, rgba: TITLE_RGBA[key] ?? null, gradient: TITLE_GRADIENT[key] ?? null, edge: TITLE_EDGE[key] ?? null, flame: Object.hasOwn(TITLE_FLAME, key) };   // PENITENT: `edge`; SHOP: `flame`, its plate
+  return { key, text, rgba: TITLE_RGBA[key] ?? null, gradient: TITLE_GRADIENT[key] ?? null, edge: TITLE_EDGE[key] ?? null, flame: Object.hasOwn(TITLE_FLAME, key) || Object.hasOwn(TITLE_PLATE, key), plate: Object.hasOwn(TITLE_PLATE, key) };   // PENITENT: `edge`; SHOP: `flame`, its plate; WYRM-RIDER: a metal one (`plate`)
 }
 
 /** SHADOW-FANG: a gradient's colour at `t` along it (0 the first stop, 1
@@ -827,6 +834,9 @@ export function titlePaint(badge) {
   out.color = cssRgba(badge.rgba) ?? '';
   // SHOP: a flame title's letters are its heart over the plate (ui/titleFlame.js, the class setTitleFlame gives), edged
   // dark all round and lit violet - the fire is behind them, never clipped into them
+  // WYRM-RIDER: a metal plate's letters are one colour, edged by the plate's own rule (titleFlame.js plateCss) - a
+  // gradient clipped to them would paint under the plate
+  if (badge.plate) { out.fontWeight = '500'; return out; }
   if (badge.flame) {
     out.textShadow = '0 1px 0 #0b0620, 1px 0 0 #0b0620, -1px 0 0 #0b0620, 0 -1px 0 #0b0620, 0 0 .35em rgba(143,91,255,.9)'; out.fontWeight = '500';
     return out;

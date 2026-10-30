@@ -7,6 +7,7 @@
 // level within reach of the level the realm trusts, one row a character a notice (or a mark's week), and the account's
 // UTC day under HUNT_CLEARS_DAY_MAX. Named, not closed: a modified client can report the day's ceiling, no more.
 import { accountKind, overRate } from './accounts.js';
+import { developerHandles } from './titles.js';   // WYRM-RIDER: a developer's tame is never a First
 import { renownCharacterOk } from './renownTracks.js';
 import { creditHunt } from './seatInfluence.js';
 import { utcDay } from '../../src/net/marksLaw.js';
@@ -110,10 +111,16 @@ export async function huntClear(ctx, player, env, body) {
 
 /** The most clears a hunt title asks (huntLaw.js HUNT_TITLES' last): a count stops there, as the titles do. */
 const CLEARS_READ = HUNT_TITLES[HUNT_TITLES.length - 1][1];
-/** WYRM-RIDER: an account's tamed dragons (dragon_mounts, dragons.js's draw) and whether it holds the earliest tame of all
- *  (by its time, then its id) - `id` the account's column in the statement it is spliced into. */
-const DRAGON_COUNTS_SQL = (/** @type {string} */ id) => `(SELECT COUNT(*) FROM dragon_mounts WHERE account = ${id}) AS dragons,
-  ((SELECT account FROM dragon_mounts ORDER BY at, id LIMIT 1) = ${id}) AS firstTame`;
+/** WYRM-RIDER: an account's tamed brass and Aetherbright dragons (dragon_mounts, dragons.js's draw; look 1 the
+ *  Aetherbright) and whether it holds the earliest tame of each (by its time, then its id) - a developer's never counted
+ *  (the owner: "DONT COUNT ADMINS"; `devs` the parameter holding titles.js developerHandles as a JSON list). */
+const FIRST_OF = (/** @type {string} */ look, /** @type {string} */ devs) => `(SELECT d.account FROM dragon_mounts d JOIN players p ON p.id = d.account
+  WHERE ${look} AND LOWER(COALESCE(p.handle, '')) NOT IN (SELECT value FROM json_each(${devs})) ORDER BY d.at, d.id LIMIT 1)`;
+const DRAGON_COUNTS_SQL = (/** @type {string} */ id, /** @type {string} */ devs) => `(SELECT COUNT(*) FROM dragon_mounts WHERE account = ${id} AND look <> 1) AS dragons,
+  (SELECT COUNT(*) FROM dragon_mounts WHERE account = ${id} AND look = 1) AS aethers,
+  (${FIRST_OF('d.look <> 1', devs)} = ${id}) AS firstTame, (${FIRST_OF('d.look = 1', devs)} = ${id}) AS firstAether`;
+/** The developers' handles, as the statements bind them. */
+const devsJson = (/** @type {any} */ env) => JSON.stringify([...developerHandles(env)]);
 /** An account's counts the titles are read off (`?1` the account, `?2` a Master's XP, `?3` CLEARS_READ): its board clears,
  *  the serpents it helped slay (serpents.js, the relay's receipts), and each profession a living realm character of it
  *  holds at Master. AUDIT HORIZONTAL (lane F): the clears read stops at the top title's count - a mint, a wardrobe and a
@@ -124,26 +131,26 @@ const MASTERY_SQL = `SELECT
   (SELECT COUNT(*) FROM serpent_kills WHERE account = ?1) AS serpents,
   (SELECT GROUP_CONCAT(profession, ' ') FROM prof_tracks t WHERE t.player = ?1 AND t.xp >= ?2
     AND EXISTS (SELECT 1 FROM realm_characters r WHERE r.id = t.char_id AND r.player = ?1 AND r.dead_at IS NULL)) AS masters,
-  ${DRAGON_COUNTS_SQL('?1')}`;
+  ${DRAGON_COUNTS_SQL('?1', '?4')}`;
 const countsOfRow = (/** @type {any} */ r) => ({ clears: int(r?.clears), serpents: int(r?.serpents), masters: String(r?.masters ?? '').split(' ').filter(Boolean),
-  dragons: int(r?.dragons), firstTame: int(r?.firstTame) === 1 });
+  dragons: int(r?.dragons), aethers: int(r?.aethers), firstTame: int(r?.firstTame) === 1, firstAether: int(r?.firstAether) === 1 });
 /** The counts an account's Marks of Mastery are read off - `{ clears, serpents, masters }`, one statement. */
-export async function masteryCountsRead(/** @type {any} */ db, /** @type {string} */ playerId) {
-  return countsOfRow(await db.prepare(MASTERY_SQL).bind(playerId, PROF_XP_MAX, CLEARS_READ).first());
+export async function masteryCountsRead(/** @type {any} */ db, /** @type {string} */ playerId, /** @type {any} */ env = null) {
+  return countsOfRow(await db.prepare(MASTERY_SQL).bind(playerId, PROF_XP_MAX, CLEARS_READ, devsJson(env)).first());
 }
 /** The Marks of Mastery an account holds (huntLaw.js MASTERY_MARKS), off its rows - one statement. */
-export async function masteryMarksRead(/** @type {any} */ db, /** @type {string} */ playerId) {
-  return masteryMarksOf(await masteryCountsRead(db, playerId));
+export async function masteryMarksRead(/** @type {any} */ db, /** @type {string} */ playerId, /** @type {any} */ env = null) {
+  return masteryMarksOf(await masteryCountsRead(db, playerId, env));
 }
 /** The row with its Marks of Mastery laid on it (`masteryMarks`, titles.js titlesHeld), for this request alone - a
  *  registered account's alone: a guest's clears and tracks earn it nothing. */
-export async function withMasteryMarks(/** @type {any} */ ctx, /** @type {any} */ player) {
+export async function withMasteryMarks(/** @type {any} */ ctx, /** @type {any} */ player, /** @type {any} */ env = ctx?.env) {
   if (!(typeof player?.handle === 'string' && player.handle)) return player;
-  return { ...player, masteryMarks: await masteryMarksRead(ctx.db, player.id) };
+  return { ...player, masteryMarks: await masteryMarksRead(ctx.db, player.id, env) };
 }
 /** The same counts for many accounts (a board's rows, a letter's senders), by id, in one batch - at most fifty ids a
  *  call; the clears read stops at CLEARS_READ an account, as masteryCountsRead's does. */
-export async function masteryCountsAll(/** @type {any} */ ctx, /** @type {string[]} */ ids) {
+export async function masteryCountsAll(/** @type {any} */ ctx, /** @type {string[]} */ ids, /** @type {any} */ env = ctx?.env) {
   if (!ids.length) return new Map();
   const list = (/** @type {number} */ from) => ids.map((_, k) => `?${k + from}`).join(', ');
   const [h, s, m, d] = await ctx.db.batch([
@@ -152,17 +159,17 @@ export async function masteryCountsAll(/** @type {any} */ ctx, /** @type {string
     ctx.db.prepare(`SELECT account AS id, COUNT(*) AS n FROM serpent_kills WHERE account IN (${list(1)}) GROUP BY account`).bind(...ids),
     ctx.db.prepare(`SELECT t.player AS id, GROUP_CONCAT(t.profession, ' ') AS p FROM prof_tracks t WHERE t.xp >= ?1 AND t.player IN (${list(2)})
       AND EXISTS (SELECT 1 FROM realm_characters r WHERE r.id = t.char_id AND r.player = t.player AND r.dead_at IS NULL) GROUP BY t.player`).bind(PROF_XP_MAX, ...ids),
-    ctx.db.prepare(`WITH v(id) AS (VALUES ${ids.map((_, k) => `(?${k + 1})`).join(', ')}) SELECT v.id AS id, ${DRAGON_COUNTS_SQL('v.id')} FROM v`).bind(...ids),   // WYRM-RIDER
+    ctx.db.prepare(`WITH v(id) AS (VALUES ${ids.map((_, k) => `(?${k + 1})`).join(', ')}) SELECT v.id AS id, ${DRAGON_COUNTS_SQL('v.id', `?${ids.length + 1}`)} FROM v`).bind(...ids, devsJson(env)),   // WYRM-RIDER
   ]);
   const by = (/** @type {any} */ res, /** @type {string} */ col) => new Map((res?.results ?? []).map((/** @type {any} */ r) => [r.id, r[col]]));
   const [hs, ss, ms] = [by(h, 'n'), by(s, 'n'), by(m, 'p')];
   const ds = new Map((d?.results ?? []).map((/** @type {any} */ r) => [r.id, r]));
-  return new Map(ids.map((id) => [id, countsOfRow({ clears: hs.get(id), serpents: ss.get(id), masters: ms.get(id), dragons: ds.get(id)?.dragons, firstTame: ds.get(id)?.firstTame })]));
+  return new Map(ids.map((id) => [id, countsOfRow({ clears: hs.get(id), serpents: ss.get(id), masters: ms.get(id), ...ds.get(id) })]));
 }
 /** The same marks for a board's rows (boardNames.js) and a letter's or a note's senders (letters.js, board.js). */
-export async function withMasteryMarksAll(/** @type {any} */ ctx, /** @type {any[]} */ rows) {
+export async function withMasteryMarksAll(/** @type {any} */ ctx, /** @type {any[]} */ rows, /** @type {any} */ env = ctx?.env) {
   const ids = rows.filter((r) => typeof r?.handle === 'string' && r.handle).map((r) => r.id);
   if (!ids.length) return rows;
-  const counts = await masteryCountsAll(ctx, ids);
+  const counts = await masteryCountsAll(ctx, ids, env);
   return rows.map((r) => (counts.has(r.id) ? { ...r, masteryMarks: masteryMarksOf(counts.get(r.id)) } : r));
 }

@@ -257,8 +257,10 @@ export const WARDROBE = Object.freeze({
     ...MASTERS,   // MARKS-OF-MASTERY: a profession's Master each
     serpenthunter: E('serpent', 'open', sea('serpenthunter')),   // MARKS-OF-MASTERY: sailing's, off the relay's serpent receipts
     deepbane: E('serpent', 'open', sea('deepbane')),
-    wyrmrider: E('dragon', 'chance', () => t('coll.how.wyrmrider', 'Tame a Dwarven Dragon. Each player who dealt it real damage has a chance of one in {n} when it falls.', { n: DRAGON_TAME_ODDS })),   // WYRM-RIDER
-    firstwyrmrider: E('dragon', 'closed', () => t('coll.how.firstwyrmrider', 'Held by the player whose tame was the first of all.')),   // WYRM-RIDER: one account's, for good
+    wyrmrider: E('dragon', 'chance', () => t('coll.how.wyrmrider', 'Tame a brass Dwarven Dragon. Each player who dealt it real damage has a chance of one in {n} when it falls.', { n: DRAGON_TAME_ODDS })),   // WYRM-RIDER
+    firstwyrmrider: E('dragon', 'closed', () => t('coll.how.firstwyrmrider', 'Held by the player who tamed the first brass dragon.')),   // WYRM-RIDER: one account's
+    aetherrider: E('dragon', 'chance', () => t('coll.how.aetherrider', 'Tame an Aetherbright, the blue Dwarven Dragon. Each player who dealt it real damage has a chance of one in {n} when it falls.', { n: DRAGON_TAME_ODDS })),   // WYRM-RIDER
+    firstaetherrider: E('dragon', 'closed', () => t('coll.how.firstaetherrider', 'Held by the player who tamed the first Aetherbright.')),   // WYRM-RIDER: one account's
   }),
   aura: Object.freeze({
     dagonfire: E('broker', 'open', broker('aura:dagonfire'), { look: () => t('coll.look.dagonfire', 'A ring of Oblivion’s fire burning on the ground at your feet.') }),

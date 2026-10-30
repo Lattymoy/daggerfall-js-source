@@ -179,11 +179,13 @@ Dwarven Dragon**, in the Transportation group - goes into the pack at the claim'
 stand-up when another stood then (`scenes/dragonRewards.js` bind), once DRAGON_MOUNT_ONLINE is on (section 13, DRAGON5a).
 
 **The title** (WYRM-RIDER, 2026-10-30, the owner: "we need a title thats basd ass for this DRAGON TAMER"). An account
-that holds a tamed dragon (a `dragon_mounts` row) holds **Wyrm Rider**, drawn from the dragon's brass into the
-Aetherbright's blue. The account whose tame is the earliest of all (by its time, then its id) also holds **First Wyrm
-Rider**, gold into blue into violet. Both are derived like the Marks of Mastery (`net/huntLaw.js` DRAGON_TITLES,
-`server-account/src/hunts.js` DRAGON_COUNTS_SQL), signed into the token (relay world293), and shown in the wardrobe
-under the Dwarven Dragon.
+that holds a tamed brass dragon (a `dragon_mounts` row, look 0) holds **Wyrm Rider**; one that holds an Aetherbright
+(look 1) holds **Aether Rider**. The earliest tame of each look (by its time, then its id) also holds **First Wyrm
+Rider** or **First Aether Rider**. A developer's tame is never a First (the owner: "DONT COUNT ADMINS"). They are
+derived like the Marks of Mastery (`net/huntLaw.js` DRAGON_TITLES, `server-account/src/hunts.js` DRAGON_COUNTS_SQL),
+signed into the token (relay world294) and shown in the wardrobe under the Dwarven Dragon. Each is worn on a metal
+name plate (the owner: "naw just make the name plate"): brass, aetherium, and the Firsts' gold and ice
+(`ui/playerBadge.js` TITLE_PLATE, `ui/titleFlame.js` plateCss).
 
 ## 9. What a player sees and hears
 

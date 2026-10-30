@@ -4,7 +4,7 @@
 // noise, into a strip of frames (flameSheetPixels, pure, so a pin can read it), and every DOM face shows it as one CSS
 // background stepped a frame at a time - a background-position animation, no script a frame, however many names burn.
 // The frames loop whole: the noise is periodic round the strip and over the loop, so the plate tiles and never jumps.
-import { TITLE_FLAME } from './playerBadge.js';
+import { TITLE_FLAME, TITLE_PLATE } from './playerBadge.js';
 
 /** A seeded number in 0..1 for an integer pair - the lattice's own, so a sheet is the same on every machine. */
 const hash2 = (/** @type {number} */ x, /** @type {number} */ y, /** @type {number} */ seed) => {
@@ -148,6 +148,36 @@ export function ensureTitleFlames(/** @type {any} */ doc = globalThis.document) 
   return laying;
 }
 
+/** WYRM-RIDER: A TITLE'S METAL PLATE, all CSS - the rim and the face are the element's two pseudo-elements, cut to the
+ *  plate's points behind the letters, so its glow (a drop shadow on the element) follows the points. */
+export const PLATE_CLASS = 'dftitle-plate';
+export const plateClassOf = (/** @type {string} */ key) => `${PLATE_CLASS}-${key}`;
+const PLATE_CUT = 'polygon(.62em 0, calc(100% - .62em) 0, 100% 50%, calc(100% - .62em) 100%, .62em 100%, 0 50%)';
+export function plateCss() {
+  const rules = [`.${PLATE_CLASS} { position: relative; isolation: isolate; width: fit-content; line-height: 1; padding: .3em 1.45em .28em; }
+.${PLATE_CLASS}::before, .${PLATE_CLASS}::after { content: ''; position: absolute; clip-path: ${PLATE_CUT}; pointer-events: none; }
+.${PLATE_CLASS}::after { inset: 0; z-index: -2; }
+.${PLATE_CLASS}::before { inset: 2px; z-index: -1; }`];
+  for (const [key, p] of Object.entries(/** @type {Record<string, any>} */ (TITLE_PLATE))) {
+    const way = p.across ? '90deg' : '180deg', c = `.${plateClassOf(key)}`, cc = `.${PLATE_CLASS}${c}`;
+    const rivet = (/** @type {string} */ at) => `radial-gradient(circle at ${at} 50%, ${p.rivet} .12em, transparent .16em)`;
+    rules.push(`${c}::after { background: linear-gradient(${way}, ${p.rim.join(', ')}); }
+${c}::before { background: ${rivet('.82em')}, ${rivet('calc(100% - .82em)')}, linear-gradient(${way}, ${p.face.join(', ')}); }
+${cc} { text-shadow: 1px 1px 0 ${p.ink}, 0 0 3px #000; }${p.glow ? `
+${cc} { filter: drop-shadow(0 0 .3em ${p.glow}a0); }` : ''}`);
+  }
+  return rules.join('\n');
+}
+export const PLATE_STYLE_ID = 'dagger-title-plates';
+/** The plates' sheet in the document, once - plain CSS, laid at the first face that wears one. */
+export function ensureTitlePlates(/** @type {any} */ doc = globalThis.document) {
+  if (!doc?.head || doc.getElementById?.(PLATE_STYLE_ID) || !doc.createElement) return;
+  const st = doc.createElement('style');
+  st.id = PLATE_STYLE_ID;
+  st.textContent = plateCss();
+  doc.head.append(st);
+}
+
 /** A title's element given its plate, or none: `key` the title worn (the classes of any other flame come off). */
 export function setTitleFlame(/** @type {any} */ node, /** @type {string|null|undefined} */ key) {
   const cl = node?.classList;
@@ -156,4 +186,8 @@ export function setTitleFlame(/** @type {any} */ node, /** @type {string|null|un
   for (const k of Object.keys(TITLE_FLAME)) cl.toggle?.(flameClassOf(k), on && k === key);
   cl.toggle?.(FLAME_CLASS, on);
   if (on) ensureTitleFlames(node.ownerDocument);
+  const plate = typeof key === 'string' && Object.hasOwn(TITLE_PLATE, key);   // WYRM-RIDER: or its metal plate
+  for (const k of Object.keys(TITLE_PLATE)) cl.toggle?.(plateClassOf(k), plate && k === key);
+  cl.toggle?.(PLATE_CLASS, plate);
+  if (plate) ensureTitlePlates(node.ownerDocument);
 }
