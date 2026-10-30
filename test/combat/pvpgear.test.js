@@ -120,11 +120,11 @@ test('the blow climbs by the sheet\'s gp after PVP-SCALE', () => {
   assert.equal(strike(40), bare + Math.floor((bare * 40) / 100));
 });
 
-test('Dawnward and the Raven as means, Last Stand under its line, held at the guard top', () => {
+test('Dawnward as its mean, the Raven left to PVP-EVADE, Last Stand under its line, held at the guard top', () => {
   const helm = rare(armorOfMaterial(107, 2), { imprint: 'aegis-of-dawn' });
   assert.equal(pvpGearKept(fighter(helm)), 83);   // 5 in 6
   const pauldron = rare(armorOfMaterial(105, 2), { imprint: 'ravens-wings' });
-  assert.equal(pvpGearKept(fighter(helm, pauldron)), 71);   // 5/6 x 0.85
+  assert.equal(pvpGearKept(fighter(helm, pauldron)), 83);   // the Raven is the relay's miss, not a share
   const boots = rare(armorOfMaterial(108, 2), { imprint: 'the-warden' });
   const low = fighter(boots);
   assert.equal(pvpGearKept(low), 100);
