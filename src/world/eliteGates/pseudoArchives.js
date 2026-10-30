@@ -78,6 +78,7 @@ export const PSEUDO_ARCHIVES = Object.freeze([
   N(38191, 'systems/naval/shipLivery.js', 'LIVERY_ARCHIVE', 'port', "a ship's paint - her painted pictures, made at run time (SHIP-LIVERY)"),
   N(38192, 'scenes/cabinLook.js', 'CABIN_ARCHIVE', 'port', "a ship's cabin stained, made at run time (CABIN-LOOK)"),
   N(38193, 'scenes/comeSailAway/shipPlaque.js', 'PLAQUE_ARCHIVE', 'port', "a ship's name boards, painted at run time (SHIP-PLAQUE)"),
+  N(38194, 'world/ships/figureheadArt.js', 'FIGUREHEAD_ARCHIVE', 'port', "a ship's figurehead - its gilt, its paints, its oak, pitch and ivory, painted at run time (FIGUREHEAD)"),
   N(38201, 'world/townStandIns.js', 'TOWN_BED_ARCHIVE', 'port', "the towns' beds"),
   N(38202, 'world/townPictures.js', 'TOWN_PICTURE_ARCHIVE', 'port', "the towns' pictures"),
   N(38211, 'world/lefayMonument.js', 'LEFAY_ARCHIVE', 'port', "Lefay's monument"),

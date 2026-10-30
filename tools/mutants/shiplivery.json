@@ -807,8 +807,8 @@
   {
     "name": "WIRE-key-paint-blind",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "rec.f ?? null, rec.l ?? null, rec.d ?? null, rec.p ?? null]",
-    "new": "rec.f ?? null, rec.d ?? null, rec.p ?? null]",
+    "old": "rec.f ?? null, rec.l ?? null, rec.d ?? null, rec.p ?? null, rec.h ?? null]",
+    "new": "rec.f ?? null, rec.d ?? null, rec.p ?? null, rec.h ?? null]",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -816,8 +816,8 @@
   {
     "name": "WIRE-key-fittings-blind",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "rec.f ?? null, rec.l ?? null, rec.d ?? null, rec.p ?? null]",
-    "new": "rec.f ?? null, rec.l ?? null, rec.p ?? null]",
+    "old": "rec.f ?? null, rec.l ?? null, rec.d ?? null, rec.p ?? null, rec.h ?? null]",
+    "new": "rec.f ?? null, rec.l ?? null, rec.p ?? null, rec.h ?? null]",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]

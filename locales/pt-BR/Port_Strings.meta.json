@@ -25234,6 +25234,96 @@
   "tr": "ad9d68b85ee7",
   "by": "claude-in-session"
  },
+ "naval.figurehead.apply": {
+  "en": "77eae8c077cc",
+  "tr": "52952e89694d",
+  "by": "claude-in-session"
+ },
+ "naval.figurehead.bad": {
+  "en": "7dff610ed3cc",
+  "tr": "4ca747003199",
+  "by": "claude-in-session"
+ },
+ "naval.figurehead.bare": {
+  "en": "1fb58d4cebf2",
+  "tr": "b72245f8f2d6",
+  "by": "claude-in-session"
+ },
+ "naval.figurehead.c.dragon": {
+  "en": "eb22c5e28adf",
+  "tr": "472eba0cbe7b",
+  "by": "claude-in-session"
+ },
+ "naval.figurehead.c.dreugh": {
+  "en": "8dc988dc8644",
+  "tr": "8dc988dc8644",
+  "by": "claude-in-session"
+ },
+ "naval.figurehead.c.eagle": {
+  "en": "0af99bc6a304",
+  "tr": "7ecf079ee543",
+  "by": "claude-in-session"
+ },
+ "naval.figurehead.c.horse": {
+  "en": "26dfe8116b93",
+  "tr": "96b3d93ccb18",
+  "by": "claude-in-session"
+ },
+ "naval.figurehead.c.lion": {
+  "en": "9f19d4dcd451",
+  "tr": "829c7b8209de",
+  "by": "claude-in-session"
+ },
+ "naval.figurehead.c.maiden": {
+  "en": "9584c9649acc",
+  "tr": "3643d260a115",
+  "by": "claude-in-session"
+ },
+ "naval.figurehead.c.serpent": {
+  "en": "06fa2c4d2433",
+  "tr": "bf701f083a5a",
+  "by": "claude-in-session"
+ },
+ "naval.figurehead.c.wolf": {
+  "en": "5b7c6cb41497",
+  "tr": "f41c9abb72b9",
+  "by": "claude-in-session"
+ },
+ "naval.figurehead.done": {
+  "en": "ead95ddc6359",
+  "tr": "9e0614d8bb44",
+  "by": "claude-in-session"
+ },
+ "naval.figurehead.noStem": {
+  "en": "55eac7f3d86a",
+  "tr": "0b28ceff65b7",
+  "by": "claude-in-session"
+ },
+ "naval.figurehead.none": {
+  "en": "6eef6648406c",
+  "tr": "761716310a91",
+  "by": "claude-in-session"
+ },
+ "naval.figurehead.note": {
+  "en": "59141aa30aea",
+  "tr": "8f6c1768d9c4",
+  "by": "claude-in-session"
+ },
+ "naval.figurehead.open": {
+  "en": "5b9c84d51607",
+  "tr": "e23719a95bde",
+  "by": "claude-in-session"
+ },
+ "naval.figurehead.preview": {
+  "en": "54f4be1a1cc2",
+  "tr": "a044580b7b40",
+  "by": "claude-in-session"
+ },
+ "naval.figurehead.remove": {
+  "en": "9a574a9d95f5",
+  "tr": "1f77c8a3ec2c",
+  "by": "claude-in-session"
+ },
  "naval.flag.bad": {
   "en": "16ba3bd89c8f",
   "tr": "19b9d47edd48",

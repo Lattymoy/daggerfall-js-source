@@ -25,7 +25,7 @@
 import {
   fleetShip, fleetShips, fleetBook, titleOf, titleDeedsIn, knowShip, renameShip, addRefit, setShipPort, retitle, refitOf, loanOwed, settleCredit,
   shipLabel, upgradeCost, materialCount, UPGRADE_LINES, UPGRADE_TIERS, MATERIALS, BOAT_PARTS_TEMPLATE, setShipColours,
-  REFIT_NUMERALS, meltCounts, materialsFor, takeAllMaterials, refitShare, setShipLivery, setShipCabin, setShipFittings, setShipPlaque,
+  REFIT_NUMERALS, meltCounts, materialsFor, takeAllMaterials, refitShare, setShipLivery, setShipCabin, setShipFittings, setShipPlaque, setShipFigurehead,
 } from '../systems/fleet.js';
 import { captainRefit } from '../systems/naval/captainTree.js';   // CAPTAIN-TREE: her captain's stars over her refits
 import { flagSizeOf } from '../systems/naval/shipFlag.js';   // SHIP-COLOURS: the hulls that fly a flag
@@ -42,6 +42,7 @@ import { optionPath } from '../ui/settings/settingsMap.js';   // ORG2: a switch 
 import { holdsCargo } from './holdDoor.js';   // CARGO-ANYWHERE: the hulls that carry a hold
 import { t } from '../systems/textManager.js';   // CARGO-ANYWHERE: the hold's words in the player's language
 import { etherWildRingAt } from '../systems/wild/etherWild.js';   // AUDIT FOE-KEEPS E3: the open sea's PvP waters
+import { figureheadHull, liveryCarvingPaint } from '../systems/naval/figurehead.js';   // FIGUREHEAD: the hulls with a stem for a carving
 
 /** The hulls whose prefab carries a live `Crewed` node (Come Sail Away's Small Ship, Large Galley and Carrack - the
  *  Rowboat's is inactive): a ship with hands, who sail her to a port and mend her where she lies. */
@@ -196,6 +197,7 @@ export function createFleetHost(deps) {
         cabin: cabinShipType(rec.hull) !== SHIP_TYPES.None ? rec.cabin ?? 0 : null,   // CABIN-LOOK: her cabin's stain (null: she has no cabin)
         fittings: rec.deck?.length ?? 0,   // DECK-PROPS: how many fittings stand on her deck
         plaque: !!rec.plaque, named: !!rec.name,   // SHIP-PLAQUE: her name on her bows, and whether she has one to show
+        carvable: figureheadHull(rec.hull), figurehead: rec.figurehead ?? 0, carvingPaint: liveryCarvingPaint(rec.hull, rec.livery),   // FIGUREHEAD: her stem, her carving, its paint
         can: { summon: why.summon, away: why.away, repair: why.repair, yard: why.yard, refit: why.refit },
       });
     }
@@ -254,6 +256,13 @@ export function createFleetHost(deps) {
       if (!setShipPlaque(uid, arg)) return said(false, t('naval.plaque.bad', 'That\'s not a valid option.'));   // shown or not, nothing else
       deps.changed?.();
       return said(true, rec.plaque ? t('naval.plaque.shown', 'Ship name shown on the bow.') : t('naval.plaque.hidden', 'Ship name hidden.'));
+    }
+    if (verb === 'figurehead') {
+      // FIGUREHEAD: her carving stood at her stem, or taken down (0) - wherever she lies, free; her word said again
+      if (!figureheadHull(rec.hull)) return said(false, t('naval.figurehead.noStem', 'This ship has no stem for a figurehead.'));
+      if (!setShipFigurehead(uid, arg)) return said(false, t('naval.figurehead.bad', 'Unknown figurehead.'));
+      deps.changed?.();
+      return said(true, rec.figurehead ? t('naval.figurehead.done', 'Figurehead carved. Other players will see it.') : t('naval.figurehead.bare', 'Figurehead removed.'));
     }
     if (verb === 'colours') {
       // SHIP-COLOURS: her flag hoisted (systems/naval/shipFlag.js's), or struck for the mod's pennant (null) - wherever she lies
