@@ -1,7 +1,7 @@
 # Fixed PvE - the world sets the foe (FIXED-PVE, 2026-10-28)
 
 The PvE overhaul replaces player-scaled foes with fixed ones: a foe's level, health and blow come from its own
-template, never from the player who meets it. This page holds Stages 2 to 5 of twelve: the data, the balance tools, how a creature meets a player and where it lives. Nothing in the game
+template, never from the player who meets it. This page holds Stages 2 to 6 of twelve: the data, the balance tools, how a creature meets a player, where it lives, and how a fight is built and paid. Nothing in the game
 reads it yet - `src/systems/pve/pveSwitch.js` `fixedPveOn` is off, and every foe stands as it does today. Daggerfall
 Unity has no templates: its monsters stand at their row and its class foes at the player's level
 (`EnemyEntity.SetEnemyCareer`). A departure: Ledger A (FIXED-PVE).
@@ -17,6 +17,7 @@ Unity has no templates: its monsters stand at their row and its class foes at th
 | Disposition | `pveDisposition.js` | 7 states, 5 wildlife ways, the services a peaceful creature offers |
 | Standing | `pveStanding.js` | Stage 4: the state a creature meets a player in, what a blow on it costs, the services it offers (section 6) |
 | Bestiary | `pveBestiary.js` | Stage 5: where each species lives, by province, region, climate, dungeon type, faction and need (section 7) |
+| Encounter | `pveThreat.js`, `pveContribution.js`, `pveEncounter.js` | Stage 6: whom a foe fights, who earns the kill, the encounter director and who joins a fight (section 8) |
 | Template | `pveTemplates.js` | One gameplay variant: species, level 1-45, category, 1-2 roles, abilities, disposition, faction, kit metal |
 
 ## 2. The numbers
@@ -107,3 +108,26 @@ Daggerfall names it (Orsinium, a crypt, a harpy nest), else inferred; a proposed
 nowhere. `regionalSpecies` and `regionalTemplates` read the place alone, sorted by key, so every player gets the same
 list. Daggerfall Unity picks a foe from a climate's or a dungeon's encounter table, with no provinces and no factions.
 The tests: `test/systems/pve/pve_bestiary.test.js`.
+
+## 8. Stage 6: threat, contribution, the director and who joins (2026-10-30)
+
+Still behind the switch, and no relay change yet: the authority that hears a foe's blows will keep these tables when
+spawns turn on (Stage 7). Threat (`pveThreat.js`) steers a foe: damage counts whole, healing half split over the foes in
+the fight, a hold or stun 30, a taunt puts the taunter 10% over the top for 4 s. A foe turns only when a challenger passes
+its target by 10% within 4 m or 30% further off, never to a player it cannot reach, and an idle player fades out after
+10 s.
+
+Contribution (`pveContribution.js`) pays the kill and nothing else: damage up to the foe's health in all, healing
+of a player in the fight, damage soaked, interrupts. A qualifier acted within Renown's 30 s assist window
+(`net/renownTracker.js` RENOWN_ASSIST_MS) and earned 5% of the points. A world boss, a raid or a public event gives each
+qualifier a roll; any other kill goes to the party, or lone player, that earned most.
+
+The director (`pveEncounter.js` `directEncounters`) builds a place's encounters from the bestiary, the zone's level band
+and a seed from the place's key - never a player, a Combat Score or a party size. Peaceful and protected creatures are
+ambient unless an event turns them; a community never becomes an encounter. Every harmful ability must give a 0.3 s tell,
+0.8 s for an area strike.
+
+When a creature is struck its own group joins within 40 m; within 20 m its faction's kin join if
+already hostile, its guards if the blow wronged the faction. A shared species alone brings nobody, at most 6 join, and a
+joiner calls no one. Party scaling (`systems/party/partyScale.js`) is for today's foes; a template foe's difficulty is its
+composition. Daggerfall Unity has one player and none of this. The tests: `test/systems/pve/pve_encounter.test.js`.
