@@ -67,19 +67,27 @@ export const HELD_POSE_DEFAULT = Object.freeze({
     'right hand': Object.freeze([0, 0, 0]),
   }),
   paper: Object.freeze({
-    width: 0.46,      // metres across
-    forward: 0.42,    // metres in front of the eye
-    drop: 0.14,       // metres below the eye
-    tilt: 22,         // degrees the sheet leans back (top away from the eye)
-    colour: Object.freeze([0.80, 0.68, 0.47]),   // parchment, lit by the pass
+    width: 0.46, // metres across
+    forward: 0.42, // metres in front of the eye
+    drop: 0.14, // metres below the eye
+    tilt: 22, // degrees the sheet leans back (top away from the eye)
+    colour: Object.freeze([0.8, 0.68, 0.47]), // parchment, lit by the pass
   }),
 });
 
 /** The bones a held pose may name: the two arms, hands to clavicles,
  *  in the part-attach names (mwNpc.js PART_BONES, lowercased). */
 export const HELD_BONES = Object.freeze([
-  'left clavicle', 'left upper arm', 'left forearm', 'left wrist', 'left hand',
-  'right clavicle', 'right upper arm', 'right forearm', 'right wrist', 'right hand',
+  'left clavicle',
+  'left upper arm',
+  'left forearm',
+  'left wrist',
+  'left hand',
+  'right clavicle',
+  'right upper arm',
+  'right forearm',
+  'right wrist',
+  'right hand',
 ]);
 /** AUDIT-MAP2: retail skeletons carry BOTH families - the animated
  *  `Bip01 L Forearm` and, under it, the part-attach node `Left Forearm`
@@ -89,8 +97,14 @@ export const HELD_BONES = Object.freeze([
  *  spellings the CLIP keys, then to whichever the skeleton has - the
  *  fixture rig keys the attach names, retail keys the Bip01 ones. */
 export const HELD_BONE_ALIASES = Object.freeze({
-  'left clavicle': 'bip01 l clavicle', 'left upper arm': 'bip01 l upperarm', 'left forearm': 'bip01 l forearm', 'left hand': 'bip01 l hand',
-  'right clavicle': 'bip01 r clavicle', 'right upper arm': 'bip01 r upperarm', 'right forearm': 'bip01 r forearm', 'right hand': 'bip01 r hand',
+  'left clavicle': 'bip01 l clavicle',
+  'left upper arm': 'bip01 l upperarm',
+  'left forearm': 'bip01 l forearm',
+  'left hand': 'bip01 l hand',
+  'right clavicle': 'bip01 r clavicle',
+  'right upper arm': 'bip01 r upperarm',
+  'right forearm': 'bip01 r forearm',
+  'right hand': 'bip01 r hand',
 });
 export function resolveHeldBone(name, base, skeleton) {
   const key = String(name).toLowerCase();
@@ -103,7 +117,8 @@ export function resolveHeldBone(name, base, skeleton) {
 // ── QUATERNIONS ([w, x, y, z], Hamilton - the rig's own packing) ──
 export const QUAT_IDENTITY = Object.freeze([1, 0, 0, 0]);
 export function quatMul(a, b) {
-  const [aw, ax, ay, az] = a, [bw, bx, by, bz] = b;
+  const [aw, ax, ay, az] = a,
+    [bw, bx, by, bz] = b;
   return [
     aw * bw - ax * bx - ay * by - az * bz,
     aw * bx + ax * bw + ay * bz - az * by,
@@ -112,8 +127,9 @@ export function quatMul(a, b) {
   ];
 }
 export function quatAxis(axis, deg) {
-  const h = deg * Math.PI / 360;
-  const s = Math.sin(h), c = Math.cos(h);
+  const h = (deg * Math.PI) / 360;
+  const s = Math.sin(h),
+    c = Math.cos(h);
   return axis === 0 ? [c, s, 0, 0] : axis === 1 ? [c, 0, s, 0] : [c, 0, 0, s];
 }
 /** X, then Y, then Z, each about the bone's own (already rotated) axes.
@@ -129,16 +145,28 @@ export function mat33ToQuat(m) {
   let x, y, z, w;
   if (tr > 0) {
     const s = Math.sqrt(tr + 1) * 2;
-    w = 0.25 * s; x = (m21 - m12) / s; y = (m02 - m20) / s; z = (m10 - m01) / s;
+    w = 0.25 * s;
+    x = (m21 - m12) / s;
+    y = (m02 - m20) / s;
+    z = (m10 - m01) / s;
   } else if (m00 > m11 && m00 > m22) {
     const s = Math.sqrt(1 + m00 - m11 - m22) * 2;
-    w = (m21 - m12) / s; x = 0.25 * s; y = (m01 + m10) / s; z = (m02 + m20) / s;
+    w = (m21 - m12) / s;
+    x = 0.25 * s;
+    y = (m01 + m10) / s;
+    z = (m02 + m20) / s;
   } else if (m11 > m22) {
     const s = Math.sqrt(1 + m11 - m00 - m22) * 2;
-    w = (m02 - m20) / s; x = (m01 + m10) / s; y = 0.25 * s; z = (m12 + m21) / s;
+    w = (m02 - m20) / s;
+    x = (m01 + m10) / s;
+    y = 0.25 * s;
+    z = (m12 + m21) / s;
   } else {
     const s = Math.sqrt(1 + m22 - m00 - m11) * 2;
-    w = (m10 - m01) / s; x = (m02 + m20) / s; y = (m12 + m21) / s; z = 0.25 * s;
+    w = (m10 - m01) / s;
+    x = (m02 + m20) / s;
+    y = (m12 + m21) / s;
+    z = 0.25 * s;
   }
   return [w, x, y, z];
 }
@@ -161,11 +189,11 @@ export function deltaTracks(base, spec, skeleton) {
   const out = new Map(base ?? []);
   const bones = spec?.bones ?? {};
   for (const name of Object.keys(bones)) {
-    if (isZero(bones[name])) continue;   // a zero delta leaves the idle alone
+    if (isZero(bones[name])) continue; // a zero delta leaves the idle alone
     const key = resolveHeldBone(name, base, skeleton);
     const ref = key != null ? skeleton?.byName?.get(key) : null;
     const node = ref != null ? skeleton?.nodes?.get(ref) : null;
-    if (!node) continue;                 // a bone this skeleton does not have (under either name) is not posed
+    if (!node) continue; // a bone this skeleton does not have (under either name) is not posed
     out.set(key, {
       __delta: quatFromEulerDeg(bones[name]),
       __base: base?.get(key) ?? null,
@@ -205,11 +233,14 @@ export function heldSampler(sampleTrack) {
 export function paperCornersRig(eye, paper, aspect) {
   const w = paper.width * UNITS_PER_METRE;
   const h = w / (aspect > 0 ? aspect : 1.6);
-  const t = (paper.tilt ?? 0) * Math.PI / 180;
-  const cx = eye[0], cy = eye[1] + paper.forward * UNITS_PER_METRE, cz = eye[2] - paper.drop * UNITS_PER_METRE;
+  const t = ((paper.tilt ?? 0) * Math.PI) / 180;
+  const cx = eye[0],
+    cy = eye[1] + paper.forward * UNITS_PER_METRE,
+    cz = eye[2] - paper.drop * UNITS_PER_METRE;
   // the sheet's up vector leans back: up = (0, sin t, cos t)
-  const uy = Math.sin(t), uz = Math.cos(t);
-  const at = (sx, sv) => [cx + sx * w / 2, cy + sv * (h / 2) * uy, cz + sv * (h / 2) * uz];
+  const uy = Math.sin(t),
+    uz = Math.cos(t);
+  const at = (sx, sv) => [cx + (sx * w) / 2, cy + sv * (h / 2) * uy, cz + sv * (h / 2) * uz];
   return [at(-1, 1), at(1, 1), at(1, -1), at(-1, -1)];
 }
 
@@ -227,14 +258,31 @@ export function paperCornersRig(eye, paper, aspect) {
 export function paperPiece(eye, paper, aspect) {
   const c = paperCornersRig(eye, paper, aspect);
   const source = new Float32Array(12);
-  c.forEach((p, i) => { source[i * 3] = p[0]; source[i * 3 + 1] = p[1]; source[i * 3 + 2] = p[2]; });
+  c.forEach((p, i) => {
+    source[i * 3] = p[0];
+    source[i * 3 + 1] = p[1];
+    source[i * 3 + 2] = p[2];
+  });
   return {
-    slot: 'paper', bone: null, kind: 'rigid', mirrored: false, tag: null,
-    batch: null, source, attachRef: null, boneOffset: null,
+    slot: 'paper',
+    bone: null,
+    kind: 'rigid',
+    mirrored: false,
+    tag: null,
+    batch: null,
+    source,
+    attachRef: null,
+    boneOffset: null,
     uvs: new Float32Array([0, 0, 1, 0, 1, 1, 0, 1]),
     colors: null,
     indices: new Uint16Array([0, 2, 1, 0, 3, 2]),
-    material: { diffuse: [...(paper.colour ?? HELD_POSE_DEFAULT.paper.colour)], vertexColorMode: 0, textureFile: null, clampMode: 3, alphaTest: false },
+    material: {
+      diffuse: [...(paper.colour ?? HELD_POSE_DEFAULT.paper.colour)],
+      vertexColorMode: 0,
+      textureFile: null,
+      clampMode: 3,
+      alphaTest: false,
+    },
     positions: new Float32Array(12),
   };
 }
@@ -246,7 +294,9 @@ export function refreshPaperSource(piece, eye, paper, aspect) {
   const c = paperCornersRig(eye, paper, aspect);
   let far = 0;
   c.forEach((p, i) => {
-    piece.source[i * 3] = p[0]; piece.source[i * 3 + 1] = p[1]; piece.source[i * 3 + 2] = p[2];
+    piece.source[i * 3] = p[0];
+    piece.source[i * 3 + 1] = p[1];
+    piece.source[i * 3 + 2] = p[2];
     const d = Math.hypot(p[0] - eye[0], p[1] - eye[1], p[2] - eye[2]);
     if (d > far) far = d;
   });
@@ -266,7 +316,8 @@ export function projectPaperCorners(positions, cam, rect) {
   const out = [];
   for (let i = 0; i < 4; i++) {
     const [x, y, z] = transformPoint(cam.model, positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]);
-    const v = cam.view, p = cam.proj;
+    const v = cam.view,
+      p = cam.proj;
     const vx = v[0] * x + v[4] * y + v[8] * z + v[12];
     const vy = v[1] * x + v[5] * y + v[9] * z + v[13];
     const vz = v[2] * x + v[6] * y + v[10] * z + v[14];
@@ -293,9 +344,16 @@ export function normaliseHeldPose(spec, base = HELD_POSE_DEFAULT) {
   const d = { ...HELD_POSE_DEFAULT.paper, ...(base?.paper ?? {}) };
   const p = spec?.paper ?? {};
   const num = (v, fb) => (Number.isFinite(+v) ? +v : fb);
-  const colour = Array.isArray(p.colour) && p.colour.length === 3 ? p.colour.map((v, i) => num(v, d.colour[i])) : [...d.colour];
+  const colour =
+    Array.isArray(p.colour) && p.colour.length === 3 ? p.colour.map((v, i) => num(v, d.colour[i])) : [...d.colour];
   return {
     bones,
-    paper: { width: num(p.width, d.width), forward: num(p.forward, d.forward), drop: num(p.drop, d.drop), tilt: num(p.tilt, d.tilt), colour },
+    paper: {
+      width: num(p.width, d.width),
+      forward: num(p.forward, d.forward),
+      drop: num(p.drop, d.drop),
+      tilt: num(p.tilt, d.tilt),
+      colour,
+    },
   };
 }

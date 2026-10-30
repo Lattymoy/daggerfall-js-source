@@ -1,7 +1,7 @@
 # The PvP rework
 
 The owner's rework of every fight between players (2026-10-28): a duel, the Wild Zone and a siege. Daggerfall Unity has
-no PvP, so all of it is a departure; the overhaul's armour (`pcaao.js:"export function pcaaoPartKept("`) is the one
+no PvP, so all of it is a departure; the overhaul's armour (`pcaao.js:"export function pcaaoPartKept"`) is the one
 reference it reads. It ships in stages; this page holds what is built.
 
 ## Stage 1: the fight's numbers (relay world280)
@@ -20,7 +20,7 @@ reference it reads. It ships in stages; this page holds what is built.
 
 The striker rolls against a neutral stand-in, so the struck player reports what its armour lets through: the overhaul's
 row for each kind of blow (edged, blunt, unarmed), its condition and the natural resistance, averaged over the body
-parts as a blow picks them, a shield's block left out (`pvpGuard.js:"export function pvpArmorKept("`). The report
+parts as a blow picks them, a shield's block left out (`pvpGuard.js:"export function pvpArmorKept"`). The report
 carries the three shares (`g`); the referee holds each to 10..150 and takes that share of the blow before PVP-HIT's cap
 (`refereeHealthShare.js:"export function guardedBlow"`). Bare at 50s is 100; Daedric plate keeps 34, 40 and 30, and 14,
 20 and 10 at 100s. The client is trusted for its own armour as it is for its health share. The loot ladder's guard
@@ -29,14 +29,14 @@ powers ride the same shares (PVP-GEAR, below); the sets' and the sky's are not r
 ## PVP-GEAR: gear powers between players, capped
 
 2026-10-30, the owner: gear was planned to count in PvP ("we have the cap", then "all imprint"). The striker's sheet
-carries `gp`, a percent on its blow after PVP-SCALE, at most 40 (`pvpGearPowers.js:"export function pvpGearBlowPct("`):
+carries `gp`, a percent on its blow after PVP-SCALE, at most 40 (`pvpGearPowers.js:"export function pvpGearBlowPct"`):
 the striking piece's damage lines and gems (a fist's own pair of Hand Wraps), Way of the Sword's stacks from blows on
 players, Many Endings' chance as its mean, Open Hand on a bare fist, Hunter's Moon at night, Orc Rage when low, Sweet
 Mother's Kiss on a foe whose bar is under 25%, and First Blood and Silent Death on a foe not struck in the lock's minute.
 Serpent's Kiss adds its flat 8 to a landed blow, 16 on a foe under half (`gf`).
 
 The struck player's guard powers take a share off each armour share it reports, at most 30 off
-(`pvpGearPowers.js:"export function pvpGearKept("`): Dawnward's every sixth blow as its mean,
+(`pvpGearPowers.js:"export function pvpGearKept"`): Dawnward's every sixth blow as its mean,
 Last Stand under its line, Bedrock's stacks and Hex's window from player hits taken, Bulwark's 5 as 5%. Client only:
 the relay reads the same `g`, and the client is trusted for its gear as for its armour. The Raven is not a
 share: PVP-EVADE rolls it on the relay as a miss.
@@ -50,7 +50,7 @@ keep a heal or a count.
 A cast carries its spell's element (`el`, DFU's 0-4: fire, frost, poison, shock, magic;
 `siegeCombat.js:"export const pvpSpellElement = (sp) =>"`). The struck player reports, per element, what its Resist
 effects let through, then its own saving throw - race, Willpower and gear, as a monster's spell meets it - summed over
-the dice (`spellcast.js:"export function savingLands("`; `pvpGuard.js:"export function pvpWardKept("`, the report's
+the dice (`spellcast.js:"export function savingLands("`; `pvpGuard.js:"export function pvpWardKept"`, the report's
 `w`). The caster's stand-in rolls no save. The referee holds each share to at least 15 - the owner's "85% resist", immunity included - and
 takes it before PVP-HIT's cap (`refereeHealthShare.js:"export function wardedCast"`).
 
@@ -59,8 +59,8 @@ takes it before PVP-HIT's cap (`refereeHealthShare.js:"export function wardedCas
 The owner's triangle (2026-10-29: "tune it to 55% win", "just barely"), from a sim of the PvE overhaul's builds and gear
 by level, its bow on the swing law, with players landing 30-50% of their attacks: the favoured side wins 42-67% at
 levels 30-45. A player's arrow at a player is 1.28x, a harmful spell 0.96x; from level 40, as the last gear tiers land,
-1.67x and 0.81x (`pvpTriangle.js:"export const PVP_TRIANGLE = Object.freeze("`). A live Shield spell on a player is
-reported (`sh`, `pvpGuard.js:"export const pvpShielded = (entity) =>"`), and the referee takes 25% off a swing and 35%
+1.67x and 0.81x (`pvpTriangle.js:"export const PVP_TRIANGLE"`). A live Shield spell on a player is
+reported (`sh`, `pvpGuard.js:"export const pvpShielded"`), and the referee takes 25% off a swing and 35%
 off a shaft (`refereeHealthShare.js:"export const PVP_SHIELD"`) - the plan's "Shields max 25%". Aim and
 movement decide the rest; staff fights tune these numbers.
 
@@ -68,17 +68,17 @@ movement decide the rest; staff fights tune these numbers.
 ## PVP-BUFFS: a buff runs a minute in a fight
 
 The plan's "buffs last 1 min": each frame a refereed fight may hold the player (the health mirror's `active`), a spell
-effect it cast for itself is cut to `pvpBuffs.js:"export const PVP_BUFF_ROUNDS = 12;"` magic rounds - a round is a game
+effect it cast for itself is cut to `pvpBuffs.js:"export const PVP_BUFF_ROUNDS"` magic rounds - a round is a game
 minute, five seconds at DFU's 12x. A worn item's effect (`heldItem`) and a foe's harm are left whole
-(`pvpBuffs.js:"export function capPvpBuffs("`). A departure: DFU has no PvP.
+(`pvpBuffs.js:"export function capPvpBuffs"`). A departure: DFU has no PvP.
 
 ## PVP-POTIONS: one potion of a kind each 15 s in a fight
 
 The plan's "potion timers 15 s, health / magicka / other": while a refereed fight may hold the player (the health mirror
-sets `pvpPotions.js:"export function setPvpFight(active)"`), each kind waits
-`pvpPotions.js:"export const PVP_POTION_MS = 15_000;"` after the last of its kind, and the bottle is kept
-(`pvpPotions.js:"export function pvpPotionRefusal("`). The kind is the first effect's: Heal Health, Heal Spell Points,
-or other. A potion drunk in a fight lands its first effect alone (`pvpPotions.js:"export const pvpPotionBundle ="`,
+sets `pvpPotions.js:"export function setPvpFight"`), each kind waits
+`pvpPotions.js:"export const PVP_POTION_MS"` after the last of its kind, and the bottle is kept
+(`pvpPotions.js:"export function pvpPotionRefusal"`). The kind is the first effect's: Heal Health, Heal Spell Points,
+or other. A potion drunk in a fight lands its first effect alone (`pvpPotions.js:"export const pvpPotionBundle"`,
 laid on at `hostMagic.js:"applySpellToPlayer(pvpPotionBundle(bundle)"`). A departure: DFU has no PvP and no potion clock.
 
 ## PVP-NO-DRAIN: Drain stays home
@@ -90,13 +90,13 @@ alone, and a Heal Health, reach a player. Backstab was already off between playe
 
 "poison need diable in pvp": a Damage spell of DFU's poison element
 (`siegeCombat.js:"export const PVP_POISON_ELEMENT = 2;"`) reaches no player. A weapon's poison never rode a PvP blow:
-the striker's stub weapon carries none (`duelCombat.js:"weapon.poisonType = -1;"`).
+the striker's stub weapon carries none (`duelCombat.js:"weapon.poisonType"`).
 
 ## PVP-ARMOUR-CAST: plate and chain slow a caster in a fight
 
 "do the plate cost and half its cost for chain": while a refereed fight may hold the player, each worn piece adds to a
 spell's cost and takes off the cast rate by its own type
-(`pvpArmourCasting.js:"export const PVP_ARMOUR_CAST = Object.freeze({"`): plate 6% and 3%, chain half, leather nothing.
+(`pvpArmourCasting.js:"export const PVP_ARMOUR_CAST ="`): plate 6% and 3%, chain half, leather nothing.
 An RRI light set piece reads leather (`rriItems.js:"export function rriNativeMaterialValue(item) {"`). Full plate
 costs 42% more and casts 21% slower. PvE is left whole. A departure: DFU has no such cost.
 
@@ -298,8 +298,8 @@ The rest are CasterOnly gifts, a minute long, scaled with the governing school f
 15m": the party member under the crosshair within 15 m takes one, else I do
 (`hostMagic.js:"const allyReach = sp.pvpReach ?? allyReachFor(sp.rangeType);"`); a stranger never does. A heal lands as
 its receiver's own rise, so PVP-HEAL's window still caps it. Resist rides PVP-WARD's report; Reflect and Absorb take
-their chance off it, never bouncing (`pvpGuard.js:"const turned = (100 - pvpReflectChance(entity))"`). A Shield
-reports its pool's share of my health, 10 to 25 (`pvpGuard.js:"export function pvpShieldShare(entity) {"`), and the
+their chance off it, never bouncing (`pvpGuard.js:"= ((100 - pvpReflectChance(entity)) * (100 - pvpAbsorbChance(entity)))"`). A Shield
+reports its pool's share of my health, 10 to 25 (`pvpGuard.js:"export function pvpShieldShare"`), and the
 referee takes that part of PVP-SHIELD's 25% and 35% off (the `vit` report's `sh`). Speed is Fortify Speed on Fortify's
 numbers. Inside a zone dungeon the bar is off. A departure: DFU has no PvP.
 
@@ -496,7 +496,7 @@ and swing pays the PvP bar's cheapest price, or lands nothing (`wildRef.js:"? !c
 A party member's gift is paid where the relay passes it (`server/src/index.js:"async _wildCastPaid(a, tb, data, now) {"`).
 A Shield counts only while a paid one runs. The health whole is held to the signed level's.
 
-The game declares its potions and self-cast bar spells in its report (`pvpDeclare.js:"export function declarePotion("`).
+The game declares its potions and self-cast bar spells in its report (`pvpDeclare.js:"export function declarePotion"`).
 A harmful cast carries its number, so one area cast is one price. Not yet the relay's: armour and
 resistances. Relay world293. Tests: `test/net/pvpvitals.test.js`. A departure: DFU has no PvP.
 
@@ -509,4 +509,4 @@ SWING-RATE: a melee blow on one player comes no sooner than the quickest swing, 
 
 BOW-FAST: the relay cuts a shaft it judges by a fifth for each arrow within its bow's window of the last (a Short Bow 0.75 s, a Long Bow 1.25 s, else 1 s), four at most
 (`pvpVitals.js:"export function bowFastCut"`). The game sends that claim uncut, so it cannot skip the cut. The zone strike is marked `relayCut`, and the game keeps
-only the bow's pull (`duelCombat.js:"bowFastDamage(d.relayCut ? { ...landingShaft(), fast: 0 } : landingShaft()"`).
+only the bow's pull (`duelCombat.js:"const scaled = geared".."const n ="`).

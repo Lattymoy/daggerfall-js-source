@@ -6,6 +6,8 @@
 /** From `late` the gear's last tiers land, and the arrows and spells take their late numbers. */
 export const PVP_TRIANGLE = Object.freeze({ late: 40, arrow: 1.28, arrowLate: 1.67, spell: 0.96, spellLate: 0.81 });
 /** What an arrow of a striker at `level` multiplies by against a player. */
-export const pvpArrowScale = (level) => ((Number(level) || 0) >= PVP_TRIANGLE.late ? PVP_TRIANGLE.arrowLate : PVP_TRIANGLE.arrow);
+export const pvpArrowScale = (level) =>
+  (Number(level) || 0) >= PVP_TRIANGLE.late ? PVP_TRIANGLE.arrowLate : PVP_TRIANGLE.arrow;
 /** What a harmful spell of a caster at `level` multiplies by against a player. */
-export const pvpSpellScale = (level) => ((Number(level) || 0) >= PVP_TRIANGLE.late ? PVP_TRIANGLE.spellLate : PVP_TRIANGLE.spell);
+export const pvpSpellScale = (level) =>
+  (Number(level) || 0) >= PVP_TRIANGLE.late ? PVP_TRIANGLE.spellLate : PVP_TRIANGLE.spell;

@@ -2,8 +2,8 @@
   {
     "name": "AP-A2-two-hits-one-update",
     "file": "src/combat/playerWeapon.js",
-    "old": "      evs.push('hit');\n      break;\n",
-    "new": "      evs.push('hit');\n",
+    "old": "      break;\n    }",
+    "new": "    }",
     "tests": [
       "test/combat/gun/pistolport_audit.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "AP-A2-later-shot-first",
     "file": "src/combat/playerWeapon.js",
-    "old": "    if (due.length === 2 && due[0] === p.last) due.reverse();   // the earlier shot first - `last` fired most recently\n",
-    "new": "",
+    "old": "    if (due.length === 2 && due[0] === p.last) due.reverse(); // the earlier shot first - `last` fired most recently\n    this._pistolHits.push(...due);",
+    "new": "    this._pistolHits.push(...due);",
     "tests": [
       "test/combat/gun/pistolport_audit.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AP-A2-queue-dropped",
     "file": "src/combat/playerWeapon.js",
-    "old": "    this._pistolHits.push(...due);\n",
-    "new": "    this._pistolHits.push(...due.slice(0, 1));\n",
+    "old": "    this._pistolHits.push(...due);",
+    "new": "    this._pistolHits.push(...due.slice(0, 1));",
     "tests": [
       "test/combat/gun/pistolport_audit.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AP-A6-stowed-pistol-fires",
     "file": "src/combat/playerWeapon.js",
-    "old": "      if (!p.hands().includes(h)) continue;\n",
-    "new": "",
+    "old": "      if (!p.hands().includes(h)) continue;\n      this.strike = this._pistolStrikes[h] ?? this.strike;",
+    "new": "      this.strike = this._pistolStrikes[h] ?? this.strike;",
     "tests": [
       "test/combat/gun/pistolport_audit.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AP-A3-reload-stays-with-the-hand",
     "file": "src/combat/playerWeapon.js",
-    "old": "    if (was && ((R && R === was.L && R !== was.R) || (L && L === was.R && L !== was.L))) [this.pistols.R, this.pistols.L] = [this.pistols.L, this.pistols.R];\n",
-    "new": "",
+    "old": "    if (was && ((R && R === was.L && R !== was.R) || (L && L === was.R && L !== was.L)))\n      [this.pistols.R, this.pistols.L] = [this.pistols.L, this.pistols.R];\n    this._pistolHeld = { R, L };",
+    "new": "    this._pistolHeld = { R, L };",
     "tests": [
       "test/combat/gun/pistolport_audit.test.js"
     ]
@@ -47,7 +47,7 @@
   {
     "name": "AP-A9-mirror-left-mid-shot",
     "file": "src/combat/playerWeapon.js",
-    "old": "    m.state = 'Idle'; m.frame = 0; m.cooldownUntil = Math.max(this._classicCooldown, m.now); this.strike = null;",
+    "old": "    m.state = 'Idle';\n    m.frame = 0;\n    m.cooldownUntil = Math.max(this._classicCooldown, m.now);\n    this.strike = null;",
     "new": "    m.cooldownUntil = Math.max(this._classicCooldown, m.now);",
     "tests": [
       "test/combat/gun/pistolport_audit.test.js"
@@ -56,8 +56,8 @@
   {
     "name": "AP-A9-put-by-never-runs",
     "file": "src/combat/playerWeapon.js",
-    "old": "      if (this.pistols) this._pistolsPutBy();\n",
-    "new": "      if (this.pistols) { this._pistolsAway = this.pistols; this.pistols = null; }\n",
+    "old": "      if (this.pistols) this._pistolsPutBy();",
+    "new": "      if (this.pistols) {\n        this._pistolsAway = this.pistols;\n        this.pistols = null;\n      }",
     "tests": [
       "test/combat/gun/pistolport_audit.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AP-C1-reload-erased",
     "file": "src/combat/playerWeapon.js",
-    "old": "m.cooldownUntil = Math.max(this._classicCooldown, m.now);",
-    "new": "m.cooldownUntil = m.now;",
+    "old": "    m.cooldownUntil = Math.max(this._classicCooldown, m.now);",
+    "new": "    m.cooldownUntil = m.now;",
     "tests": [
       "test/combat/gun/pistolport_audit.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "AP-C1-owed-never-kept",
     "file": "src/combat/playerWeapon.js",
-    "old": "    if (!this.pistols) this._classicCooldown = this.machine.cooldownUntil;   // AUDIT PISTOL-PORT C1: kept for the weapon put by\n",
-    "new": "",
+    "old": "    if (!this.pistols) this._classicCooldown = this.machine.cooldownUntil; // AUDIT PISTOL-PORT C1: kept for the weapon put by\n    this.pistols ??=",
+    "new": "    this.pistols ??=",
     "tests": [
       "test/combat/gun/pistolport_audit.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AP-C4-the-last-weapons-tick",
     "file": "src/combat/playerWeapon.js",
-    "old": "    m.tick = 1 / p.R.fps; m.hitFrame = p.R.hitFrame;   // AUDIT PISTOL-PORT C4: the pistols' own frame clock - the arm's flash runs on it\n",
-    "new": "",
+    "old": "    m.tick = 1 / p.R.fps;\n    m.hitFrame = p.R.hitFrame; // AUDIT PISTOL-PORT C4: the pistols' own frame clock - the arm's flash runs on it\n    // MIXED-PAIR: the gun's reload is the gun's alone - the blade beside it swings as soon as the shot's frames end",
+    "new": "    // MIXED-PAIR: the gun's reload is the gun's alone - the blade beside it swings as soon as the shot's frames end",
     "tests": [
       "test/combat/gun/pistolport_audit.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AP-A5-firing-pistols-owe-nothing",
     "file": "src/combat/playerWeapon.js",
-    "old": "p[h].state === 'Firing' && p[h].frame < p[h].hitFrame",
-    "new": "false",
+    "old": "    return p\n      ? this._pistolHits.length + p.hands().filter((h) => p[h].state === 'Firing' && p[h].frame < p[h].hitFrame).length\n      : 0;",
+    "new": "    return p ? this._pistolHits.length + p.hands().filter((h) => false).length : 0;",
     "tests": [
       "test/combat/gun/pistolport_audit.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "AP-A5-queued-hits-owe-nothing",
     "file": "src/combat/playerWeapon.js",
-    "old": "return p ? this._pistolHits.length + p.hands()",
-    "new": "return p ? p.hands()",
+    "old": "    return p\n      ? this._pistolHits.length + p.hands().filter((h) => p[h].state === 'Firing' && p[h].frame < p[h].hitFrame).length\n      : 0;",
+    "new": "    return p ? p.hands().filter((h) => p[h].state === 'Firing' && p[h].frame < p[h].hitFrame).length : 0;",
     "tests": [
       "test/combat/gun/pistolport_audit.test.js"
     ],
@@ -303,8 +303,8 @@
   {
     "name": "AP-D11-pistols-not-ranged",
     "file": "src/combat/playerWeapon.js",
-    "old": "    m.ranged = true;\n",
-    "new": "",
+    "old": "    m.ranged = true;\n    const ev = p.step(dt);",
+    "new": "    const ev = p.step(dt);",
     "tests": [
       "test/combat/gun/pistolport_audit.test.js"
     ]

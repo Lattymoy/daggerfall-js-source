@@ -244,8 +244,8 @@
   {
     "name": "AUDIT-MARTIAL-L2F5-the-hide-unweighed",
     "file": "src/combat/arrowFlight.js",
-    "old": "  const dmg = bowFastDamage(m, m?.technique ? scaleBlowDamage(rolled, blowMult(m.technique, body)) : rolled);",
-    "new": "  const dmg = bowFastDamage(m, rolled);",
+    "old": "  const dmg = bowFastDamage(m, m?.technique ? scaleBlowDamage(rolled, blowMult(m.technique, body)) : rolled); // BOW-FAST",
+    "new": "  const dmg = bowFastDamage(m, rolled); // BOW-FAST",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -254,8 +254,8 @@
   {
     "name": "AUDIT-MARTIAL-L2F5-the-hide-untold",
     "file": "src/combat/arrowFlight.js",
-    "old": "  if (m?.technique) tellTechniqueLanded(m.technique, body, dmg);\n",
-    "new": "",
+    "old": "  if (m?.technique) tellTechniqueLanded(m.technique, body, dmg);\n  const owed = takeOwed(entity);",
+    "new": "  const owed = takeOwed(entity);",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -884,8 +884,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-shaft-told-twice",
     "file": "src/combat/arrowFlight.js",
-    "old": "tellTechniqueLanded(m.technique, foe, dmg);",
-    "new": "tellTechniqueLanded(m.technique, foe, dmg); tellTechniqueLanded(m.technique, foe, dmg);",
+    "old": "  if (m.technique && !playerBody(foe)) tellTechniqueLanded(m.technique, foe, dmg); // MARTIAL3: a path's rider answers its signature's shaft",
+    "new": "  if (m.technique && !playerBody(foe)) tellTechniqueLanded(m.technique, foe, dmg);\n  tellTechniqueLanded(m.technique, foe, dmg); // MARTIAL3: a path's rider answers its signature's shaft",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -894,8 +894,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-overhaul-host-word-dropped",
     "file": "src/combat/pcaao.js",
-    "old": "damage = pcaaoHandToHandAttackDamage(attacker, target, damageModifiers, isPlayer(attacker), rolls, { unaware: !!unaware, wraps });",
-    "new": "damage = pcaaoHandToHandAttackDamage(attacker, target, damageModifiers, isPlayer(attacker), rolls);",
+    "old": "        damage = pcaaoHandToHandAttackDamage(attacker, target, damageModifiers, isPlayer(attacker), rolls, {\n          unaware: !!unaware,\n          wraps,\n        }); // BAL10: the host's word, for the fists' blow modifiers; HAND-WRAPS: and the wraps' lines (formulas.js)",
+    "new": "        damage = pcaaoHandToHandAttackDamage(attacker, target, damageModifiers, isPlayer(attacker), rolls); // BAL10: the host's word, for the fists' blow modifiers; HAND-WRAPS: and the wraps' lines (formulas.js)",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -904,8 +904,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-stock-foe-fists-read",
     "file": "src/combat/formulas.js",
-    "old": "  if (isPlayer && !attacker.isInBeastForm) damage = weaponBlowMods(",
-    "new": "  if (!attacker.isInBeastForm) damage = weaponBlowMods(",
+    "old": "  if (isPlayer && !attacker.isInBeastForm) damage = weaponBlowMods(null, damage, attacker, target, info); // BAL10: the fists' blow modifiers - the Firmament's fist stars, the sets, the loot, the paths",
+    "new": "  if (!attacker.isInBeastForm) damage = weaponBlowMods(null, damage, attacker, target, info); // BAL10: the fists' blow modifiers - the Firmament's fist stars, the sets, the loot, the paths",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -1039,8 +1039,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-stock-fists-result-discarded",
     "file": "src/combat/formulas.js",
-    "old": "  if (isPlayer && !attacker.isInBeastForm) damage = weaponBlowMods(null, damage, attacker, target, info);",
-    "new": "  if (isPlayer && !attacker.isInBeastForm) weaponBlowMods(null, damage, attacker, target, info);",
+    "old": "  if (isPlayer && !attacker.isInBeastForm) damage = weaponBlowMods(null, damage, attacker, target, info); // BAL10: the fists' blow modifiers - the Firmament's fist stars, the sets, the loot, the paths",
+    "new": "  if (isPlayer && !attacker.isInBeastForm) weaponBlowMods(null, damage, attacker, target, info); // BAL10: the fists' blow modifiers - the Firmament's fist stars, the sets, the loot, the paths",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -1049,8 +1049,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-overhaul-fists-result-discarded",
     "file": "src/combat/pcaao.js",
-    "old": "  if (player && !attacker.isInBeastForm) damage = weaponBlowMods(null, damage, attacker, target, info);",
-    "new": "  if (player && !attacker.isInBeastForm) weaponBlowMods(null, damage, attacker, target, info);",
+    "old": "  if (player && !attacker.isInBeastForm) damage = weaponBlowMods(null, damage, attacker, target, info); // BAL10: the fists' blow modifiers",
+    "new": "  if (player && !attacker.isInBeastForm) weaponBlowMods(null, damage, attacker, target, info); // BAL10: the fists' blow modifiers",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -1079,8 +1079,8 @@
   {
     "name": "AUDIT-MARTIAL-BAL10-the-sheet-reads-no-fist-modifiers",
     "file": "src/combat/combatStats.js",
-    "old": "      return entity.isInBeastForm ? d : weaponBlowMods(null, d, entity, foe, wraps ? { ...ESTIMATE, wraps } : ESTIMATE);",
-    "new": "      return d;",
+    "old": "      return entity.isInBeastForm ? d : weaponBlowMods(null, d, entity, foe, wraps ? { ...ESTIMATE, wraps } : ESTIMATE); // BAL10: both cores read the fists' blow modifiers now - never the beast's claws",
+    "new": "      return d; // BAL10: both cores read the fists' blow modifiers now - never the beast's claws",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -1099,8 +1099,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-swing-tells-raw-roll",
     "file": "src/combat/playerWeapon.js",
-    "old": "      if (techOn(foe)) tellTechniqueLanded(tb, foe, blow);",
-    "new": "      if (techOn(foe)) tellTechniqueLanded(tb, foe, rolled);",
+    "old": "      if (techOn(foe)) tellTechniqueLanded(tb, foe, blow); // MARTIAL3: a path's rider answers its signature's blow",
+    "new": "      if (techOn(foe)) tellTechniqueLanded(tb, foe, rolled); // MARTIAL3: a path's rider answers its signature's blow",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -1109,8 +1109,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-shaft-tells-raw-roll",
     "file": "src/combat/arrowFlight.js",
-    "old": "tellTechniqueLanded(m.technique, foe, dmg);",
-    "new": "tellTechniqueLanded(m.technique, foe, rolled);",
+    "old": "  if (m.technique && !playerBody(foe)) tellTechniqueLanded(m.technique, foe, dmg); // MARTIAL3: a path's rider answers its signature's shaft",
+    "new": "  if (m.technique && !playerBody(foe)) tellTechniqueLanded(m.technique, foe, rolled); // MARTIAL3: a path's rider answers its signature's shaft",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"
@@ -1119,8 +1119,8 @@
   {
     "name": "AUDIT-MARTIAL-L5-card-claws-read",
     "file": "src/combat/combatStats.js",
-    "old": "      return entity.isInBeastForm ? d : weaponBlowMods(null, d, entity, foe, wraps ? { ...ESTIMATE, wraps } : ESTIMATE);",
-    "new": "      return weaponBlowMods(null, d, entity, foe, wraps ? { ...ESTIMATE, wraps } : ESTIMATE);",
+    "old": "      return entity.isInBeastForm ? d : weaponBlowMods(null, d, entity, foe, wraps ? { ...ESTIMATE, wraps } : ESTIMATE); // BAL10: both cores read the fists' blow modifiers now - never the beast's claws",
+    "new": "      return weaponBlowMods(null, d, entity, foe, wraps ? { ...ESTIMATE, wraps } : ESTIMATE); // BAL10: both cores read the fists' blow modifiers now - never the beast's claws",
     "tests": [
       "test/systems/audit_martial.test.js",
       "test/systems/martial_paths.test.js"

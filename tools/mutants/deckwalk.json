@@ -308,8 +308,8 @@
   {
     "name": "SHIPMATES-deck-unread",
     "file": "src/combat/friendlyFire.js",
-    "old": "(t.deckBoat != null || t.shipmate === true)",
-    "new": "(true || t.shipmate === true)",
+    "old": "export const isShipmate = (t) =>\n  !!t && (t.deckBoat != null || t.shipmate === true) && !t.dead && t.entity?.team === 'PlayerAlly';",
+    "new": "export const isShipmate = (t) => !!t && (true || t.shipmate === true) && !t.dead && t.entity?.team === 'PlayerAlly';",
     "tests": [
       "test/systems/naval/deckwalk.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "SHIPMATES-named-unread",
     "file": "src/combat/friendlyFire.js",
-    "old": "(t.deckBoat != null || t.shipmate === true)",
-    "new": "(t.deckBoat != null)",
+    "old": "export const isShipmate = (t) =>\n  !!t && (t.deckBoat != null || t.shipmate === true) && !t.dead && t.entity?.team === 'PlayerAlly';",
+    "new": "export const isShipmate = (t) => !!t && t.deckBoat != null && !t.dead && t.entity?.team === 'PlayerAlly';",
     "tests": [
       "test/systems/naval/deckwalk.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "SHIPMATES-team-unread",
     "file": "src/combat/friendlyFire.js",
-    "old": "(t.deckBoat != null || t.shipmate === true) && !t.dead && t.entity?.team === 'PlayerAlly';",
-    "new": "(t.deckBoat != null || t.shipmate === true) && !t.dead;",
+    "old": "export const isShipmate = (t) =>\n  !!t && (t.deckBoat != null || t.shipmate === true) && !t.dead && t.entity?.team === 'PlayerAlly';",
+    "new": "export const isShipmate = (t) => !!t && (t.deckBoat != null || t.shipmate === true) && !t.dead;",
     "tests": [
       "test/systems/naval/deckwalk.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "SHIPMATES-the-dead-spared",
     "file": "src/combat/friendlyFire.js",
-    "old": "(t.deckBoat != null || t.shipmate === true) && !t.dead && t.entity?.team === 'PlayerAlly';",
-    "new": "(t.deckBoat != null || t.shipmate === true) && t.entity?.team === 'PlayerAlly';",
+    "old": "export const isShipmate = (t) =>\n  !!t && (t.deckBoat != null || t.shipmate === true) && !t.dead && t.entity?.team === 'PlayerAlly';",
+    "new": "export const isShipmate = (t) => !!t && (t.deckBoat != null || t.shipmate === true) && t.entity?.team === 'PlayerAlly';",
     "tests": [
       "test/systems/naval/deckwalk.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "SHIPMATES-shaft-unspared",
     "file": "src/combat/arrowFlight.js",
-    "old": "if (m.fromPlayer && sparedByPlayer(t.ref)) continue;",
-    "new": "if (m.fromPlayer && t.ref?.defender === true) continue;",
+    "old": "          if (m.fromPlayer && sparedByPlayer(t.ref)) continue; // DISC19-F (AUDIT DISC19): the player's shaft flies through the town's defenders, as their spells do (hostMagic.js sparedFromPlayer) - SHIPMATES: and the player's own crew (combat/friendlyFire.js)",
+    "new": "          if (m.fromPlayer && t.ref?.defender === true) continue; // DISC19-F (AUDIT DISC19): the player's shaft flies through the town's defenders, as their spells do (hostMagic.js sparedFromPlayer) - SHIPMATES: and the player's own crew (combat/friendlyFire.js)",
     "tests": [
       "test/systems/naval/deckwalk.test.js"
     ]

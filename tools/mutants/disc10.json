@@ -187,8 +187,8 @@
   {
     "name": "DISC10-D-H1-the-arrow-dispatches-nothing",
     "file": "src/combat/arrowFlight.js",
-    "old": "  playerWeaponHitEntity(playerEntity, foe.entity, { mobileType: foe.mobileType ?? null });\n",
-    "new": "",
+    "old": "  playerWeaponHitEntity(playerEntity, foe.entity, { mobileType: foe.mobileType ?? null });\n  return dmg;",
+    "new": "  return dmg;",
     "tests": [
       "test/systems/disc10_vampire.test.js",
       "test/systems/disc10_lycan.test.js"
@@ -470,8 +470,8 @@
   {
     "name": "DISC10-E-L2-the-claws-strike-as-a-weapon",
     "file": "src/combat/playerWeapon.js",
-    "old": "const opts = playerAttackOptions(this.strikingWeapon, this.machine.state",
-    "new": "const opts = playerAttackOptions(this.weapon, this.machine.state",
+    "old": "      const opts = playerAttackOptions(this.strikingWeapon, this.machine.state, back, rolls);",
+    "new": "      const opts = playerAttackOptions(this.weapon, this.machine.state, back, rolls);",
     "tests": [
       "test/systems/disc10_lycan.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "DISC10-E-L2-the-striking-weapon-is-the-screens",
     "file": "src/combat/playerWeapon.js",
-    "old": "    if (!this.weapon?.werecreatureClaws) return this.weapon;\n    return this.handItem(this.activeHand);",
-    "new": "    if (!this.weapon?.werecreatureClaws) return this.weapon;\n    return this.weapon;",
+    "old": "    return this.handItem(this.activeHand); // TWO-HANDS: the used hand - the beast is always single, so its lead",
+    "new": "    return this.weapon; // TWO-HANDS: the used hand - the beast is always single, so its lead",
     "tests": [
       "test/systems/disc10_lycan.test.js"
     ]
@@ -812,8 +812,8 @@
   {
     "name": "WERE-WRAPS-the-claws-strike-bare",
     "file": "src/combat/playerWeapon.js",
-    "old": "  get wraps() { return this.wrapsOf(this.activeHand); }",
-    "new": "  get wraps() { return this.weapon?.werecreatureClaws ? null : this.wrapsOf(this.activeHand); }",
+    "old": "    return this.wrapsOf(this.activeHand);",
+    "new": "    return this.weapon?.werecreatureClaws ? null : this.wrapsOf(this.activeHand);",
     "tests": [
       "test/systems/disc10_lycan.test.js"
     ]

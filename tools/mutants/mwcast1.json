@@ -49,8 +49,8 @@
   {
     "name": "MWCAST1-held-for-ever",
     "file": "src/combat/fpsSpellCasting.js",
-    "old": "      if (this._hold() || this._heldAge >= HELD_RELEASE_MAX_S) { this._hold = null; released = true; this._raiseRelease(); }",
-    "new": "      if (this._hold()) { this._hold = null; released = true; this._raiseRelease(); }",
+    "old": "      if (this._hold() || this._heldAge >= HELD_RELEASE_MAX_S) {",
+    "new": "      if (this._hold()) {",
     "tests": [
       "test/combat/mwcast1.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "MWCAST1-frame-five-goes-anyway",
     "file": "src/combat/fpsSpellCasting.js",
-    "old": "      if (this.currentFrame === RELEASE_FRAME && !this._hold) { released = true; this._raiseRelease(); }",
-    "new": "      if (this.currentFrame === RELEASE_FRAME) { released = true; this._raiseRelease(); }",
+    "old": "      if (this.currentFrame === RELEASE_FRAME && !this._hold) {",
+    "new": "      if (this.currentFrame === RELEASE_FRAME) {",
     "tests": [
       "test/combat/mwcast1.test.js"
     ]

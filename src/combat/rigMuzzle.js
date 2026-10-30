@@ -23,10 +23,14 @@ import { transformPoint } from '../world/mat4.js';
 /** The index of the vertex farthest from the piece's own origin (the
  *  grip), off its unposed `source`; -1 for an empty piece. */
 export function farthestVertexIndex(source) {
-  let best = -1, bestD = -1;
+  let best = -1,
+    bestD = -1;
   for (let i = 0; i + 2 < source.length; i += 3) {
     const d = source[i] * source[i] + source[i + 1] * source[i + 1] + source[i + 2] * source[i + 2];
-    if (d > bestD) { bestD = d; best = i / 3; }
+    if (d > bestD) {
+      bestD = d;
+      best = i / 3;
+    }
   }
   return best;
 }

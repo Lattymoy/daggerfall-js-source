@@ -155,8 +155,8 @@
   {
     "name": "DUEL1-stub-race-dropped",
     "file": "src/combat/duelCombat.js",
-    "old": "    level: a.lv, raceId: a.r, stats, skillOverrides,",
-    "new": "    level: a.lv, raceId: 0, stats, skillOverrides,",
+    "old": "    raceId: a.r,",
+    "new": "    raceId: 0,",
     "tests": [
       "test/combat/duel_combat.test.js"
     ]
@@ -173,7 +173,7 @@
   {
     "name": "DUEL1-stub-condition-lost",
     "file": "src/combat/duelCombat.js",
-    "old": "    if (Number(weapon.maxCondition) > 0) weapon.currentCondition = Math.max(0, Math.round((weapon.maxCondition * w.c) / 100));",
+    "old": "    if (Number(weapon.maxCondition) > 0)\n      weapon.currentCondition = Math.max(0, Math.round((weapon.maxCondition * w.c) / 100));",
     "new": "    if (Number(weapon.maxCondition) > 0) weapon.currentCondition = weapon.maxCondition;",
     "tests": [
       "test/combat/duel_combat.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "DUEL1-stub-swing-mods-ignored",
     "file": "src/combat/duelCombat.js",
-    "old": "    weapon, damageMod: swing.damage, toHitMod: swing.toHit + (off ? offHandToHit(stub.stats.agility) : 0),",
-    "new": "    weapon, damageMod: 0, toHitMod: 0,",
+    "old": "    damageMod: swing.damage,\n    toHitMod: swing.toHit + (off ? offHandToHit(stub.stats.agility) : 0),",
+    "new": "    damageMod: 0,\n    toHitMod: 0,",
     "tests": [
       "test/combat/duel_combat.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "DUEL1-a-swing-from-across-the-ring",
     "file": "src/combat/duelCombat.js",
-    "old": "  if (melee) return mines.some((m) => { const me = worldApart(d.p, m); return me.ground <= WEAPON_REACH + DUEL_MELEE_SLACK_M && me.up <= 3; });",
-    "new": "  if (melee) return mines.some((m) => { const me = worldApart(d.p, m); return me.ground <= 2 * ringRadius; });",
+    "old": "      return me.ground <= WEAPON_REACH + DUEL_MELEE_SLACK_M && me.up <= 3;",
+    "new": "      return me.ground <= 2 * ringRadius;",
     "tests": [
       "test/combat/duel_combat.test.js"
     ]

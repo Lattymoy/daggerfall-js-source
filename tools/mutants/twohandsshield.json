@@ -2,8 +2,8 @@
   {
     "name": "TWO-HANDS-SHIELD-any-left-hand-item-blocks",
     "file": "src/combat/pcaao.js",
-    "old": "const leftHandShield = (e) => { const it = equipTableOf(e)[EQUIP_SLOTS.LeftHand] ?? null; return isShield(it) ? it : null; };",
-    "new": "const leftHandShield = (e) => { const it = equipTableOf(e)[EQUIP_SLOTS.LeftHand] ?? null; return it; };",
+    "old": "  return isShield(it) ? it : null;",
+    "new": "  return it;",
     "tests": [
       "test/systems/pcaao.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "TWO-HANDS-SHIELD-the-block-roll-reads-the-hand",
     "file": "src/combat/pcaao.js",
-    "old": "  const shield = leftHandShield(target);\n  let shieldStrongSpot = false;",
-    "new": "  const shield = equipTableOf(target)[EQUIP_SLOTS.LeftHand] ?? null;\n  let shieldStrongSpot = false;",
+    "old": "  const naturalDamResist = pcaaoNaturalDamageResistance(target);\n  const shield = leftHandShield(target);",
+    "new": "  const naturalDamResist = pcaaoNaturalDamageResistance(target);\n  const shield = equipTableOf(target)[EQUIP_SLOTS.LeftHand] ?? null;",
     "tests": [
       "test/systems/pcaao.test.js"
     ]

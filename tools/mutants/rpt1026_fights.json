@@ -132,7 +132,7 @@
   {
     "name": "STRIKE-UNVEILS-striker-never-unveiled",
     "file": "src/combat/duelCombat.js",
-    "old": "  if (n > 0 && target?.struckBy) breakNormalPowerConcealment(target.struckBy);   // RPT1026-FIGHTS (STRIKE-UNVEILS): on the striker, never its stub",
+    "old": "  if (n > 0 && target?.struckBy) breakNormalPowerConcealment(target.struckBy); // RPT1026-FIGHTS (STRIKE-UNVEILS): on the striker, never its stub",
     "new": "",
     "tests": [
       "test/combat/rpt1026_fights_unveil.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "STRIKE-UNVEILS-unveiled-on-a-miss",
     "file": "src/combat/duelCombat.js",
-    "old": "  if (n > 0 && target?.struckBy) breakNormalPowerConcealment(target.struckBy);   // RPT1026-FIGHTS (STRIKE-UNVEILS): on the striker, never its stub",
-    "new": "  if (target?.struckBy) breakNormalPowerConcealment(target.struckBy);   // RPT1026-FIGHTS (STRIKE-UNVEILS): on the striker, never its stub",
+    "old": "  if (n > 0 && target?.struckBy) breakNormalPowerConcealment(target.struckBy); // RPT1026-FIGHTS (STRIKE-UNVEILS): on the striker, never its stub",
+    "new": "  if (target?.struckBy) breakNormalPowerConcealment(target.struckBy); // RPT1026-FIGHTS (STRIKE-UNVEILS): on the striker, never its stub",
     "tests": [
       "test/combat/rpt1026_fights_unveil.test.js"
     ],

@@ -1286,7 +1286,7 @@ test('TWO-HANDS rig, by source: the two-hands branch is the classic body\'s own 
   // the classic sprite's placement is FPSWeapon's, shared by the second hand
   const fps = rd('src/combat/fpsWeapon.js');
   // the record rides the quad (WEAPON-GLOW1's outline is measured in its own pixels), the draw's two lines main's own
-  assert.match(fps, /const q = fpsWeaponQuad\(canvas, art, state, frame, \{ flipHorizontal, offsetHeight \}\);\n\s*if \(!q\) return;\n\s*const \{ tex, rect: \{ x, y, w, h \}, uv: src, rec \} = q;\n\s*renderer\.drawScreenQuad\(tex, \{ x, y, w, h \}, src, tint \?\? undefined\);[^\n]*\n\s*if \(glow\) renderer\.drawScreenQuadGlow\?\.\(tex, \{ x, y, w, h \}, src, glow, \{ art: \[rec\.width, rec\.height\]/);
+  assert.match(fps, /const q = fpsWeaponQuad\(canvas, art, state, frame, \{ flipHorizontal, offsetHeight \}\);\n\s*if \(!q\) return;\n\s*const \{\n\s*tex,\n\s*rect: \{ x, y, w, h \},\n\s*uv: src,\n\s*rec,\n\s*\} = q;\n\s*renderer\.drawScreenQuad\(tex, \{ x, y, w, h \}, src, tint \?\? undefined\); \/\/ MAC-I: Tint\n\s*if \(glow\)\n\s*renderer\.drawScreenQuadGlow\?\.\(tex, \{ x, y, w, h \}, src, glow, \{\n\s*art: \[rec\.width, rec\.height\]/);
   // and the one hand's clone draws the mod's own line; only a hand of a pair takes the guard and the mirror
   assert.match(rd('src/combat/weapon/weaponWidget.js'), /if \(!transform && !mirror\) \{\n\s*renderer\.drawScreenQuad\(tex, getWeaponRect\(\), w\.curAnimRect, tint \?\? undefined\);\n\s*if \(ctx\.glow\) renderer\.drawScreenQuadGlow\?\.\(tex, getWeaponRect\(\), w\.curAnimRect, ctx\.glow,[^\n]*\n\s*return true;\n\s*\}/);
 });

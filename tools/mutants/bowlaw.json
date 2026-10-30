@@ -29,8 +29,8 @@
   {
     "name": "BOW-LAW-the-machine-unwired",
     "file": "src/combat/playerWeapon.js",
-    "old": "      : t === WEAPON_TYPES.Bow ? bowReloadSeconds(this.liveSpeed, this.animCtx?.() ?? null) : null;",
-    "new": "      : null;",
+    "old": "    this.machine.cooldown = thunderlock\n      ? thunderlockReloadSeconds(this.liveSpeed)\n      : t === WEAPON_TYPES.Bow\n        ? bowReloadSeconds(this.liveSpeed, this.animCtx?.() ?? null)\n        : null;",
+    "new": "    this.machine.cooldown = thunderlock ? thunderlockReloadSeconds(this.liveSpeed) : null;",
     "tests": [
       "test/combat/balArchery.test.js"
     ]

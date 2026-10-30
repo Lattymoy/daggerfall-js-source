@@ -180,7 +180,7 @@ test('BAL2 one rule for every striker: a foe\'s weapon skill counts x1.5 to hit,
   const src = rd('src/combat/pcaao.js');
   assert.match(src, /^ {2}chanceToHitMod = Math\.ceil\(F\(skill\(attacker, skillID\) \* F\(1\.5\)\)\);$/m);
   assert.doesNotMatch(src, /^\s*critDamMulti = F\(F\(int\(crit \/ 5\) \* F\(0\.025\)\)|^\s*critHitAddi = int\(crit \/ 10\)|return dice100\(int\(crit \/ \(5 - luckTerm\)\)|isPlayer\(attacker\) \? Math\.ceil/m, 'the foe\'s lesser arms are gone');
-  assert.match(src, /if \(isPlayer\(target\)\) result = 100 - entityEnchantArmorMod\(target\) - entityArmorPoints\(target, struckBodyPart\);/, 'the armour term is the mod\'s: the player reads 100');
+  assert.match(src, /if \(isPlayer\(target\)\)\n\s*result = 100 - entityEnchantArmorMod\(target\) - entityArmorPoints\(target, struckBodyPart\);/, 'the armour term is the mod\'s: the player reads 100');
   assert.match(src, /else if \(isClassEnemy\(target\)\) result = 60;/, 'and a class foe its flat 60');
 });
 

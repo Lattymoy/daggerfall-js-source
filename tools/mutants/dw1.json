@@ -323,7 +323,7 @@
   {
     "name": "AUDITDW-F2-a-frame-is-awaited-alone",
     "file": "src/combat/fpsWeapon.js",
-    "old": "      asks.push(Promise.resolve(ask(name)).then((img) => { row[f] = img ?? null; }, () => { row[f] = null; }));",
+    "old": "      asks.push(\n        Promise.resolve(ask(name)).then(\n          (img) => {\n            row[f] = img ?? null;\n          },\n          () => {\n            row[f] = null;\n          },\n        ),\n      );",
     "new": "      row[f] = (await Promise.resolve(ask(name)).catch(() => null)) ?? null;",
     "tests": [
       "test/combat/weapon/auditdw.test.js"

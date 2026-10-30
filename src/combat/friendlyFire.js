@@ -18,7 +18,8 @@
 // other (hostMagic.js). A summoned daedra or a quest's companion keeps DFU's own friendly fire.
 
 /** Whether `t` (a pool's foe) is a shipmate: an ally of the player's, alive, on a ship's deck. */
-export const isShipmate = (t) => !!t && (t.deckBoat != null || t.shipmate === true) && !t.dead && t.entity?.team === 'PlayerAlly';
+export const isShipmate = (t) =>
+  !!t && (t.deckBoat != null || t.shipmate === true) && !t.dead && t.entity?.team === 'PlayerAlly';
 
 /** AUDIT WORLD-EVENTS L4-5: whether `t` is one of a raid's refugees (RAID5's Exodus, scenes/raidSitesHost.js) - the
  *  player's ally, alive, walking to the square: spared as a shipmate is (one blow turned one on the player, and one
@@ -37,6 +38,7 @@ export const sparedByPlayer = (t) => !!t && (t.defender === true || sparedBySwin
  *  spell (hostMagic.js explodeAt) still burst on the partner beside it, which read as the two fighting. Its blast
  *  passes a teammate by. A Grand Melee is every fighter a side of its own, so nobody there is anybody's teammate. */
 export function boutTeammates(a, b) {
-  const x = a?.entity?.bout ?? null, y = b?.entity?.bout ?? null;
+  const x = a?.entity?.bout ?? null,
+    y = b?.entity?.bout ?? null;
   return !!x && !!y && a !== b && String(x.id) === String(y.id) && (x.side | 0) === (y.side | 0);
 }

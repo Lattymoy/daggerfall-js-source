@@ -2,8 +2,8 @@
   {
     "name": "TECH-BACKSTAB-unread",
     "file": "src/combat/playerWeapon.js",
-    "old": "      const back = backstabOf(foe) || (techOn(foe) ? techniqueBackstab(tb, playerCombat, foe) : 0);",
-    "new": "      const back = backstabOf(foe);",
+    "old": "      const back = backstabOf(foe) || (techOn(foe) ? techniqueBackstab(tb, playerCombat, foe) : 0); // TECH-BACKSTAB: its back was to me at the press",
+    "new": "      const back = backstabOf(foe); // TECH-BACKSTAB: its back was to me at the press",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "AUDIT-TECH-FEEDBACK-F2-refused-strike-keeps-cut",
     "file": "src/combat/playerWeapon.js",
-    "old": "{ if (was) Object.assign(this.machine, was); return false; }",
-    "new": "{ return false; }",
+    "old": "      if (was) Object.assign(this.machine, was);\n      return false;",
+    "new": "      return false;",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "AUDIT-TECH-FEEDBACK-F2-cut-skipped",
     "file": "src/combat/playerWeapon.js",
-    "old": "    const was = machineCut(this.machine);\n",
-    "new": "    const was = null;\n",
+    "old": "    const was = machineCut(this.machine);",
+    "new": "    const was = null;",
     "tests": [
       "test/systems/tech1_runner.test.js",
       "test/scenes/tech1_hosts.test.js"

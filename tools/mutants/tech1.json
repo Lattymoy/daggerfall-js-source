@@ -289,8 +289,8 @@
   {
     "name": "TECH1-the-to-hit-unread",
     "file": "src/combat/playerWeapon.js",
-    "old": "      if (techOn(foe) && Number.isFinite(tb.toHit)) opts.toHitMod += tb.toHit;",
-    "new": "",
+    "old": "      if (techOn(foe) && Number.isFinite(tb.toHit)) opts.toHitMod += tb.toHit; // the technique's own term beside the swing's",
+    "new": "      // the technique's own term beside the swing's",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -307,8 +307,8 @@
   {
     "name": "TECH1-the-swing-weight-unread",
     "file": "src/combat/playerWeapon.js",
-    "old": "      const blow = techOn(foe) ? scaleBlowDamage(rolled, blowMult(tb, foe)) : rolled;",
-    "new": "      const blow = rolled;",
+    "old": "      const blow = techOn(foe) ? scaleBlowDamage(rolled, blowMult(tb, foe)) : rolled; // TECH1: a miss stays a miss",
+    "new": "      const blow = rolled; // TECH1: a miss stays a miss",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -316,8 +316,8 @@
   {
     "name": "TECH1-single-strikes-all",
     "file": "src/combat/playerWeapon.js",
-    "old": "      if (tb?.single && techOn(foe)) { singles.push({ foe, dist }); continue; }",
-    "new": "",
+    "old": "      if (tb?.single && techOn(foe)) {\n        singles.push({ foe, dist });\n        continue;\n      } // TECH1: the one blow waits for the nearest",
+    "new": "      // TECH1: the one blow waits for the nearest",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -325,8 +325,8 @@
   {
     "name": "TECH1-the-blow-unread",
     "file": "src/combat/playerWeapon.js",
-    "old": "if (!(techOn(foe) ? blowReaches(tb, foe, sight) : playerMeleeCanHit(dist, inView, losClear))) continue;",
-    "new": "if (!playerMeleeCanHit(dist, inView, losClear)) continue;",
+    "old": "      if (!(techOn(foe) ? blowReaches(tb, foe, sight) : playerMeleeCanHit(dist, inView, losClear))) continue;",
+    "new": "      if (!playerMeleeCanHit(dist, inView, losClear)) continue;",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -352,8 +352,8 @@
   {
     "name": "TECH1-the-shaft-weight-unread",
     "file": "src/combat/arrowFlight.js",
-    "old": "const dmg = bowFastDamage(m, m.technique && !playerBody(foe) ? scaleBlowDamage(rolled, blowMult(m.technique, foe)) : rolled);",
-    "new": "const dmg = bowFastDamage(m, rolled);",
+    "old": "  const dmg = bowFastDamage(\n    m,\n    m.technique && !playerBody(foe) ? scaleBlowDamage(rolled, blowMult(m.technique, foe)) : rolled,\n  ); // BOW-FAST",
+    "new": "  const dmg = bowFastDamage(m, rolled); // BOW-FAST",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -361,8 +361,8 @@
   {
     "name": "TECH1-the-shaft-at-a-player",
     "file": "src/combat/arrowFlight.js",
-    "old": "if (m.technique && (playerBody(t.ref) || m.technique.struck?.includes(t.ref))) continue;",
-    "new": "if (m.technique && m.technique.struck?.includes(t.ref)) continue;",
+    "old": "          if (m.technique && (playerBody(t.ref) || m.technique.struck?.includes(t.ref))) continue; // TECH1: a technique's shaft passes a player's body by (TECH law 3), and a piercing shot a foe it has struck",
+    "new": "          if (m.technique && m.technique.struck?.includes(t.ref)) continue; // TECH1: a technique's shaft passes a player's body by (TECH law 3), and a piercing shot a foe it has struck",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -895,8 +895,8 @@
   {
     "name": "TECH1-AUDIT-the-fallback-widened",
     "file": "src/combat/playerWeapon.js",
-    "old": "if (!techOn(foe) || playerMeleeCanHit(dist, inView, losClear)) protectedInReach.push({ foe, dist }); continue; }",
-    "new": "protectedInReach.push({ foe, dist }); continue; }",
+    "old": "        if (!techOn(foe) || playerMeleeCanHit(dist, inView, losClear)) protectedInReach.push({ foe, dist });",
+    "new": "        protectedInReach.push({ foe, dist });",
     "tests": [
       "test/systems/tech1_audit.test.js"
     ]
@@ -985,8 +985,8 @@
   {
     "name": "TECH1-AUDIT-the-shaft-each-body",
     "file": "src/combat/arrowFlight.js",
-    "old": "  t.seq = t.struck?.length > 0 && t.seq === back ? back : q;\n",
-    "new": "  t.seq = q;\n",
+    "old": "  t.seq = t.struck?.length > 0 && t.seq === back ? back : q;",
+    "new": "  t.seq = q;",
     "tests": [
       "test/systems/tech1_audit.test.js"
     ]
@@ -994,8 +994,8 @@
   {
     "name": "TECH1-AUDIT-the-newest-unasked",
     "file": "src/combat/arrowFlight.js",
-    "old": "t.struck?.length > 0 && t.seq === back ? back : q;",
-    "new": "t.struck?.length > 0 ? t.seq : q;",
+    "old": "  t.seq = t.struck?.length > 0 && t.seq === back ? back : q;",
+    "new": "  t.seq = t.struck?.length > 0 ? t.seq : q;",
     "tests": [
       "test/systems/tech1_audit.test.js"
     ]

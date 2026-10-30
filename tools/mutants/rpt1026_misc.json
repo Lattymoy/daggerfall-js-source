@@ -233,7 +233,7 @@
     "name": "rpt1026-misc-cast-pace-rateless",
     "file": "src/combat/fpsSpellCasting.js",
     "old": "export const castReleaseS = (rate = 1) => (RELEASE_FRAME * CAST_FRAME_PERIOD) / validCastRate(rate);",
-    "new": "export const castReleaseS = (rate = 1) => (RELEASE_FRAME * CAST_FRAME_PERIOD);",
+    "new": "export const castReleaseS = (rate = 1) => RELEASE_FRAME * CAST_FRAME_PERIOD;",
     "tests": [
       "test/combat/rpt1026_misc_cast.test.js"
     ],

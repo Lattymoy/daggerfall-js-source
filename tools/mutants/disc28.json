@@ -119,8 +119,8 @@
   {
     "name": "DISC28-D-speed-read-once",
     "file": "src/combat/playerWeapon.js",
-    "old": "set liveSpeed(v) { this._liveSpeed = typeof v === 'function' ? v : () => v; }",
-    "new": "set liveSpeed(v) { const x = typeof v === 'function' ? v() : v; this._liveSpeed = () => x; }",
+    "old": "    this._liveSpeed = typeof v === 'function' ? v : () => v;",
+    "new": "    const x = typeof v === 'function' ? v() : v;\n    this._liveSpeed = () => x;",
     "tests": [
       "test/combat/disc28_speed.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "DISC28-D-speed-ignored",
     "file": "src/combat/playerWeapon.js",
-    "old": "get liveSpeed() { return this._liveSpeed(); }",
-    "new": "get liveSpeed() { return 50; }",
+    "old": "    return this._liveSpeed();",
+    "new": "    return 50;",
     "tests": [
       "test/combat/disc28_speed.test.js"
     ]

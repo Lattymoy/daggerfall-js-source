@@ -265,8 +265,8 @@
   {
     "name": "WRECOIL-not-handed",
     "file": "src/combat/pcaao.js",
-    "old": "  onStruck?.(struckBodyPart);",
-    "new": "",
+    "old": "  onStruck?.(struckBodyPart); // WIDGET-RECOIL: the part this core rolled, to the port's tail (the Shield Widget's \"on shield\" Recoil)",
+    "new": "  // WIDGET-RECOIL: the part this core rolled, to the port's tail (the Shield Widget's \"on shield\" Recoil)",
     "tests": [
       "test/combat/weapon/fb1003_widgetlook.test.js"
     ]

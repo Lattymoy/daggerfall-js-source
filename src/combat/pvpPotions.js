@@ -5,7 +5,7 @@ import { potionBundle } from '../systems/potions.js';
 import { HEAL_SPELL_POINTS_KEY } from '../systems/potionRecipes.js';
 import { isHealHealth } from '../systems/effects.js';
 import { t } from '../systems/textManager.js';
-import { declarePotion } from './pvpDeclare.js';   // PVP-VITALS: the referee hears of it
+import { declarePotion } from './pvpDeclare.js'; // PVP-VITALS: the referee hears of it
 
 /** Real milliseconds a potion kind waits after one of its kind is drunk in a fight. */
 export const PVP_POTION_MS = 15_000;
@@ -19,7 +19,9 @@ let fight = false;
 const last = new Map();
 
 /** The health mirror's word each frame (net/siege/refereeHealthMirror.js): may a refereed fight hold the player? */
-export function setPvpFight(active) { fight = !!active; }
+export function setPvpFight(active) {
+  fight = !!active;
+}
 export const playerInPvpFight = () => fight;
 
 /** 'health', 'magicka' or 'other', by the first effect of the bottle's recipe; null for no recipe. Pure. */
@@ -39,11 +41,18 @@ export function pvpPotionRefusal(item, now = Date.now()) {
 /** A potion drunk: in a fight, its kind's clock starts. */
 export function pvpPotionDrunk(item, now = Date.now()) {
   const kind = fight ? pvpPotionKind(item) : null;
-  if (kind) { last.set(kind, now); declarePotion(kind); }
+  if (kind) {
+    last.set(kind, now);
+    declarePotion(kind);
+  }
 }
 
 /** The bundle a potion lands: its first effect alone in a fight, else whole. */
-export const pvpPotionBundle = (bundle) => (fight && bundle?.effects?.length > 1 ? { ...bundle, effects: bundle.effects.slice(0, 1) } : bundle);
+export const pvpPotionBundle = (bundle) =>
+  fight && bundle?.effects?.length > 1 ? { ...bundle, effects: bundle.effects.slice(0, 1) } : bundle;
 
 /** Pins only: forget the fight and every clock. */
-export function resetPvpPotions() { fight = false; last.clear(); }
+export function resetPvpPotions() {
+  fight = false;
+  last.clear();
+}

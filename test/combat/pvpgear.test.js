@@ -145,8 +145,8 @@ test('each armour share loses the powers\' share', () => {
 test('the wiring: the sheet carries gp, gf and its foe, a landed blow stacks, my hits taken counted, the foe\'s bar read, the mirror\'s guard', () => {
   const src = (p) => readFileSync(new URL(`../../src/${p}`, import.meta.url), 'utf8');
   const duel = src('combat/duelCombat.js');
-  assert.match(duel, /gp: pvpGearBlowPct\(entity, weapon\?\.werecreatureClaws \? wraps : weapon \?\? wraps, undefined, foe\)/, 'WERE-WRAPS: the claws strike in the wraps');
-  assert.match(duel, /gf: pvpGearBlowFlat\(entity, weapon\?\.werecreatureClaws \? wraps : weapon \?\? wraps, foe\)/);
+  assert.match(duel, /gp: pvpGearBlowPct\(entity, weapon\?\.werecreatureClaws \? wraps : \(weapon \?\? wraps\), undefined, foe\)/, 'WERE-WRAPS: the claws strike in the wraps');
+  assert.match(duel, /gf: pvpGearBlowFlat\(entity, weapon\?\.werecreatureClaws \? wraps : \(weapon \?\? wraps\), foe\)/);
   assert.match(duel, /pvpGearLanded\(target\.struckBy, undefined, d\.a\?\.fo \?\? null\)/);
   const world = src('scenes/world.js');
   assert.equal(world.match(/duelAttackerOf\(playerEntity, weapon, weaponRig\?\.playerWeapon\?\.wraps, to\)/g)?.length, 3, 'a blow at a player names its foe');

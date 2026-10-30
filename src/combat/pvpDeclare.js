@@ -10,7 +10,10 @@ import { DECLARE, DECLARES_PER_REPORT, KIT_ORDER } from '../net/wild/pvpVitals.j
 const queue = /** @type {number[]} */ ([]);
 /** The most declarations held while none can leave (offline): the newest are kept. */
 const QUEUE_MAX = 32;
-const push = (code) => { queue.push(code); if (queue.length > QUEUE_MAX) queue.shift(); };
+const push = (code) => {
+  queue.push(code);
+  if (queue.length > QUEUE_MAX) queue.shift();
+};
 let castNo = 0;
 
 /** A potion of `kind` ('health', 'magicka', 'other' - combat/pvpPotions.js pvpPotionKind) drunk in a fight. */
@@ -24,10 +27,17 @@ export function declareKitSelf(id) {
 }
 /** The declarations owed, at most a report's worth - left queued until `sent` says they went. */
 export const pendingDeclares = () => queue.slice(0, DECLARES_PER_REPORT);
-export function declaresSent(n) { queue.splice(0, n); }
+export function declaresSent(n) {
+  queue.splice(0, n);
+}
 /** My last cast's number, for a harmful cast's frame. */
 export const pvpCastNo = () => castNo;
 /** Pins only. */
-export function resetPvpDeclares() { queue.length = 0; castNo = 0; }
+export function resetPvpDeclares() {
+  queue.length = 0;
+  castNo = 0;
+}
 
-registerPlayerCastListener('pvp-vitals', () => { castNo = castNo >= 1_000_000 ? 1 : castNo + 1; });
+registerPlayerCastListener('pvp-vitals', () => {
+  castNo = castNo >= 1_000_000 ? 1 : castNo + 1;
+});

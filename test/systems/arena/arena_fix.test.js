@@ -396,7 +396,7 @@ test('ARENA-FIX 9/10: the misses and the real crits - every resolution heard, a 
   const W = rd('src/scenes/world.js'), PW = rd('src/combat/playerWeapon.js');
   assert.match(W, /registerAttackResolutionListener\('arena', \(r\) => arenaBouts\.attackResolved\(r\)\);/);
   assert.match(W, /registerPlayerSwingListener\('arena', \(n\) => arenaBouts\.playerSwing\(n\)\);/);
-  assert.match(PW, /for \(const fn of _swingListeners\.values\(\)\) \{ try \{ fn\(results\.length\); \}/);
+  assert.match(PW, /for \(const fn of _swingListeners\.values\(\)\) \{\n\s*try \{\n\s*fn\(results\.length\);\n\s*\}/);
 });
 
 test('ARENA-FIX 11: a light left burning on the old floor is put out and carried - the item picking it up gives', () => {

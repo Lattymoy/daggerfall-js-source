@@ -335,7 +335,7 @@
   {
     "name": "RVN2-stock-core-ignores-the-veto",
     "file": "src/combat/formulas.js",
-    "old": "    if (weapon.material === 2 && silverDoubles(target)) damage *= 2;    // Silver (RVN2: unless a veto keeps it plain)",
+    "old": "    if (weapon.material === 2 && silverDoubles(target)) damage *= 2; // Silver (RVN2: unless a veto keeps it plain)",
     "new": "    if (weapon.material === 2) damage *= 2;",
     "tests": [
       "test/systems/rvn2_adapt.test.js"
@@ -344,8 +344,8 @@
   {
     "name": "RVN2-pcaao-ignores-the-veto",
     "file": "src/combat/pcaao.js",
-    "old": "SILVER_DOUBLED_CAREERS.includes(target.careerIndex) && weapon.material === 2 && silverDoubles(target)) {",
-    "new": "SILVER_DOUBLED_CAREERS.includes(target.careerIndex) && weapon.material === 2) {",
+    "old": "    } else if (SILVER_DOUBLED_CAREERS.includes(target.careerIndex) && weapon.material === 2 && silverDoubles(target)) {",
+    "new": "    } else if (SILVER_DOUBLED_CAREERS.includes(target.careerIndex) && weapon.material === 2) {",
     "tests": [
       "test/systems/rvn2_adapt.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "RVN2-the-veto-inverted",
     "file": "src/combat/formulas.js",
-    "old": "  for (const fn of _silverVetoes.values()) { try { if (fn(target) === true) return false; }",
-    "new": "  for (const fn of _silverVetoes.values()) { try { if (fn(target) === false) return false; }",
+    "old": "      if (fn(target) === true) return false;",
+    "new": "      if (fn(target) === false) return false;",
     "tests": [
       "test/systems/rvn2_adapt.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "RVN2-unaware-kept",
     "file": "src/combat/playerWeapon.js",
-    "old": "foe.ai.detected === false && foe.entity?.revenant?.edge?.watchful !== true;",
-    "new": "foe.ai.detected === false;",
+    "old": "export const foeUnaware = (foe) =>\n  !!foe?.ai && !foe.puppet && foe.ai.detected === false && foe.entity?.revenant?.edge?.watchful !== true; // RVN2: a Watchful revenant is never unaware",
+    "new": "export const foeUnaware = (foe) => !!foe?.ai && !foe.puppet && foe.ai.detected === false; // RVN2: a Watchful revenant is never unaware",
     "tests": [
       "test/systems/rvn2_adapt.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "RVN2-the-arrow-foe-unread",
     "file": "src/combat/arrowFlight.js",
-    "old": "backstabChance: backstabChanceOf(playerEntity, back, foe),",
-    "new": "backstabChance: backstabChanceOf(playerEntity, back),",
+    "old": "    backstabChance: backstabChanceOf(playerEntity, back, foe),",
+    "new": "    backstabChance: backstabChanceOf(playerEntity, back),",
     "tests": [
       "test/systems/rvn2_adapt.test.js"
     ]

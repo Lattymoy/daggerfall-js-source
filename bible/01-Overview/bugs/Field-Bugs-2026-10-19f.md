@@ -991,7 +991,7 @@ FOUND, on the code. A player's private report: an item that makes its wearer inv
 stopped working after Overworld travel, and worked again only once it was taken off and put on again. Travel alone does
 not end it - on the real equip door and the real magic-round pump the worn pin rode 37 hours of travel rounds and the
 six-hour reroll untouched. One landed blow does. AUDIT 24 wave 31's break - at the attack formula's tail,
-`formulas.js:"if (damage > 0) breakNormalPowerConcealment(attacker);"`, and at every FromSource damage door
+`formulas.js:"if (damage > 0) breakNormalPowerConcealment"`, and at every FromSource damage door
 (`handleAttackFromSource`) - ran a filter that DELETED every normal-power concealment entry, a spell's and a worn item's
 alike, and the worn one's pin went with it. The reroll that recasts a worn item's spell visits only an item that still
 holds a pin (`enchantments.js:"if (!entity.activeEffects.some((a) => a.heldItem === item)) continue;"`), so the piece

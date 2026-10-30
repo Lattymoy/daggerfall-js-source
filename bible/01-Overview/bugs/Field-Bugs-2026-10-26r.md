@@ -1169,7 +1169,7 @@ the striker's own Chameleon, Invisibility or Shadow stood through every blow it 
 
 FIXED. The one stand-in carries the entity that strikes it (`duelStandIn(striker)`, `struckBy`), and a blow that lands
 damage unveils that entity:
-`duelCombat.js:"if (n > 0 && target?.struckBy) breakNormalPowerConcealment(target.struckBy);"`. The world host's four
+`duelCombat.js:"if (n > 0 && target?.struckBy) breakNormalPowerConcealment"`. The world host's four
 rolls hand the player (a duel's, a siege work's, a battle's, the zone's - a hall's swing reaches the zone's). A miss
 unveils nothing; the true powers stand. A spell's harm is counted with the player as its caster, whose damage arms
 already unveil (`effects.js` handleAttackFromSource).

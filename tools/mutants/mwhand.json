@@ -2,8 +2,8 @@
   {
     "name": "MWHAND-an-empty-right-hand-stays-the-defect",
     "file": "src/combat/playerWeapon.js",
-    "old": "    if (this.usingRightHand && !this.currentRightHandWeapon && this.currentLeftHandWeapon) { this.usingRightHand = false; return true; }\n",
-    "new": "",
+    "old": "    if (this.usingRightHand && !this.currentRightHandWeapon && this.currentLeftHandWeapon) {\n      this.usingRightHand = false;\n      return true;\n    }\n    if (!this.usingRightHand && !this.currentLeftHandWeapon && this.currentRightHandWeapon) {",
+    "new": "    if (!this.usingRightHand && !this.currentLeftHandWeapon && this.currentRightHandWeapon) {",
     "tests": [
       "test/combat/mwhand.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "MWHAND-an-empty-left-hand-stays",
     "file": "src/combat/playerWeapon.js",
-    "old": "    if (!this.usingRightHand && !this.currentLeftHandWeapon && this.currentRightHandWeapon) { this.usingRightHand = true; return true; }\n",
-    "new": "",
+    "old": "    if (!this.usingRightHand && !this.currentLeftHandWeapon && this.currentRightHandWeapon) {\n      this.usingRightHand = true;\n      return true;\n    }\n    return false;",
+    "new": "    return false;",
     "tests": [
       "test/combat/mwhand.test.js"
     ]

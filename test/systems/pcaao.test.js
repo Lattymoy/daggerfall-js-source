@@ -575,7 +575,7 @@ test('AUDIT PCO1: the archery arm registers on the STOCK path too - InitMod regi
   const f = rd('src/combat/formulas.js');
   assert.match(f, /if \(weapon\) chanceToHitMod = adjustWeaponHitChanceMod\(attacker, target, chanceToHitMod, weaponAnimTime, weapon\);/, 'after CalculateWeaponToHit');
   assert.match(f, /damage = adjustWeaponAttackDamage\(attacker, target, damage, weaponAnimTime, weapon\);\n\s+return damage;\n\}/, 'CalculateWeaponAttackDamage\'s last line');
-  assert.match(f, /weaponAttackDamage\(attacker, target, damageModifiers, weapon, rolls, weaponAnimTime, \{ unaware: !!unaware \}\)/, 'the stock core hands the draw down (SET2: and the host\'s word the foe had not noticed me)');
+  assert.match(f, /weaponAttackDamage\(attacker, target, damageModifiers, weapon, rolls, weaponAnimTime, \{\n\s*unaware: !!unaware,\n\s*\}\)/, 'the stock core hands the draw down (SET2: and the host\'s word the foe had not noticed me)');
 });
 
 test('AUDIT PCO1: a CLASS enemy\'s bare fists deal nothing under the overhaul - CalculateHandToHandAttackDamage gives a non-player only its damageModifier, which is 0 for anyone but the player (bug for bug; a knight whose sword the wear broke fights for 0)', () => {

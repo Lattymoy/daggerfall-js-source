@@ -4,8 +4,20 @@
 
 /** One real minute of magic rounds. */
 export const PVP_BUFF_ROUNDS = 12;
-const HARM = new Set(['continuousDamage', 'continuousDamageFatigue', 'continuousDamageSpellPoints', 'damageFatigue', 'damageHealth',
-  'damageSpellPoints', 'drainAttribute', 'paralyze', 'transferAttribute', 'transferFatigue', 'transferHealth', 'soulTrap']);
+const HARM = new Set([
+  'continuousDamage',
+  'continuousDamageFatigue',
+  'continuousDamageSpellPoints',
+  'damageFatigue',
+  'damageHealth',
+  'damageSpellPoints',
+  'drainAttribute',
+  'paralyze',
+  'transferAttribute',
+  'transferFatigue',
+  'transferHealth',
+  'soulTrap',
+]);
 
 /** Cut every buff on `entity` past `rounds` to `rounds`; answers how many were cut. */
 export function capPvpBuffs(entity, rounds = PVP_BUFF_ROUNDS) {

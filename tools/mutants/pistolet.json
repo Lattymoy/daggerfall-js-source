@@ -150,8 +150,8 @@
   {
     "name": "OH-no-share",
     "file": "src/combat/arrowFlight.js",
-    "old": "    ...(off ? OFF_HAND_BLOW : {}),\n    backstabChance",
-    "new": "    backstabChance",
+    "old": "    ...(off ? OFF_HAND_BLOW : {}),\n    backstabChance: backstabChanceOf(playerEntity, back, foe),",
+    "new": "    backstabChance: backstabChanceOf(playerEntity, back, foe),",
     "tests": [
       "test/combat/pistolet_law.test.js"
     ]
@@ -159,8 +159,8 @@
   {
     "name": "OH-duel-melee-only",
     "file": "src/combat/duelCombat.js",
-    "old": "const off = (d.by === 'melee' || d.by === 'arrow') && d.off === true;",
-    "new": "const off = d.by === 'melee' && d.off === true;",
+    "old": "  const off = (d.by === 'melee' || d.by === 'arrow') && d.off === true;",
+    "new": "  const off = d.by === 'melee' && d.off === true;",
     "tests": [
       "test/combat/pistolet_law.test.js"
     ]
@@ -168,8 +168,8 @@
   {
     "name": "OH-lead-read-as-off",
     "file": "src/combat/playerWeapon.js",
-    "old": "item === this.handItem(this.leadHand === 'L' ? 'R' : 'L');",
-    "new": "item === this.handItem(this.leadHand);",
+    "old": "    return !!item && this.handsMode === HANDS_MODE.Dual && item === this.handItem(this.leadHand === 'L' ? 'R' : 'L');",
+    "new": "    return !!item && this.handsMode === HANDS_MODE.Dual && item === this.handItem(this.leadHand);",
     "tests": [
       "test/combat/pistolet_law.test.js"
     ]

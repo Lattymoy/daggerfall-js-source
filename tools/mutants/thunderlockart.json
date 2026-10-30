@@ -131,8 +131,8 @@
   {
     "name": "THUNDERLOCK-ART2-the-pistolet-on-the-thunderlocks",
     "file": "src/combat/fpsWeapon.js",
-    "old": "return PISTOLET_ANIMS;   // PISTOLET:",
-    "new": "return THUNDERLOCK_ANIMS;   // PISTOLET:",
+    "old": "  if (weaponType === T.Pistolet || weaponType === T.Pistolet_Magic) return PISTOLET_ANIMS; // PISTOLET: an idle and six fire frames, AlignRight, every direction alike (THUNDERLOCK-ART2: its own table now - the Thunderlock plays seven)",
+    "new": "  if (weaponType === T.Pistolet || weaponType === T.Pistolet_Magic) return THUNDERLOCK_ANIMS; // PISTOLET: an idle and six fire frames, AlignRight, every direction alike (THUNDERLOCK-ART2: its own table now - the Thunderlock plays seven)",
     "tests": [
       "test/systems/thunderlockart2.test.js"
     ],

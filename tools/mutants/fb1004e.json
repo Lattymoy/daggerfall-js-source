@@ -332,8 +332,8 @@
   {
     "name": "SHOTTALLY-the-lodge-uncounted",
     "file": "src/combat/arrowFlight.js",
-    "old": "    if (!foe.entity.bout && foe.rival == null) noteShotRecoverable(ARROW_TEMPLATE);",
-    "new": "",
+    "old": "    if (!foe.entity.bout && foe.rival == null) noteShotRecoverable(ARROW_TEMPLATE); // ARENA-ARROWS: lodged in a pack that can be looted - not the bout's to pay (a bout fighter's goes with it, and a relay opponent's stand-in is no corpse)",
+    "new": "    // ARENA-ARROWS: lodged in a pack that can be looted - not the bout's to pay (a bout fighter's goes with it, and a relay opponent's stand-in is no corpse)",
     "tests": [
       "test/systems/arena/fb1004e_arena.test.js"
     ],
@@ -342,8 +342,8 @@
   {
     "name": "SHOTTALLY-the-bout-fighters-lodge-uncounted",
     "file": "src/combat/arrowFlight.js",
-    "old": "if (!foe.entity.bout && foe.rival == null)",
-    "new": "if (foe.rival == null)",
+    "old": "    if (!foe.entity.bout && foe.rival == null) noteShotRecoverable(ARROW_TEMPLATE); // ARENA-ARROWS: lodged in a pack that can be looted - not the bout's to pay (a bout fighter's goes with it, and a relay opponent's stand-in is no corpse)",
+    "new": "    if (foe.rival == null) noteShotRecoverable(ARROW_TEMPLATE); // ARENA-ARROWS: lodged in a pack that can be looted - not the bout's to pay (a bout fighter's goes with it, and a relay opponent's stand-in is no corpse)",
     "tests": [
       "test/systems/arena/fb1004e_arena.test.js"
     ],
@@ -352,8 +352,8 @@
   {
     "name": "SHOTTALLY-the-rivals-lodge-uncounted",
     "file": "src/combat/arrowFlight.js",
-    "old": "if (!foe.entity.bout && foe.rival == null)",
-    "new": "if (!foe.entity.bout)",
+    "old": "    if (!foe.entity.bout && foe.rival == null) noteShotRecoverable(ARROW_TEMPLATE); // ARENA-ARROWS: lodged in a pack that can be looted - not the bout's to pay (a bout fighter's goes with it, and a relay opponent's stand-in is no corpse)",
+    "new": "    if (!foe.entity.bout) noteShotRecoverable(ARROW_TEMPLATE); // ARENA-ARROWS: lodged in a pack that can be looted - not the bout's to pay (a bout fighter's goes with it, and a relay opponent's stand-in is no corpse)",
     "tests": [
       "test/systems/arena/fb1004e_arena.test.js"
     ],
@@ -412,8 +412,8 @@
   {
     "name": "ARENATEAMS-the-side-ignored",
     "file": "src/combat/friendlyFire.js",
-    "old": "String(x.id) === String(y.id) && (x.side | 0) === (y.side | 0);",
-    "new": "String(x.id) === String(y.id);",
+    "old": "  return !!x && !!y && a !== b && String(x.id) === String(y.id) && (x.side | 0) === (y.side | 0);",
+    "new": "  return !!x && !!y && a !== b && String(x.id) === String(y.id);",
     "tests": [
       "test/systems/arena/fb1004e_arena.test.js"
     ],

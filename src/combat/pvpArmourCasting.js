@@ -15,7 +15,8 @@ const PIECES = ['Head', 'RightArm', 'LeftArm', 'ChestArmor', 'Gloves', 'LegsArmo
 /** The per cents `entity`'s worn armour adds to cost and takes off speed. Pure over the equip table. */
 export function pvpArmourCast(entity) {
   const t = entity ? equipTableOf(entity) : null;
-  let cost = 0, slow = 0;
+  let cost = 0,
+    slow = 0;
   for (const slot of PIECES) {
     const it = t?.[EQUIP_SLOTS[slot]];
     if (it?.group !== 'Armor') continue;
@@ -27,9 +28,11 @@ export function pvpArmourCast(entity) {
 }
 
 /** The cost door: a player's cast in a fight, by its armour. */
-export const pvpArmourCastCost = (entity, sp) => (playerInPvpFight() ? sp * (1 + pvpArmourCast(entity).cost / 100) : sp);
+export const pvpArmourCastCost = (entity, sp) =>
+  playerInPvpFight() ? sp * (1 + pvpArmourCast(entity).cost / 100) : sp;
 /** The rate door: the percent off a player's cast rate in a fight. */
-export const pvpArmourCastSpeed = (entity) => (playerInPvpFight() && entity?.isPlayer ? -pvpArmourCast(entity).slow : 0);
+export const pvpArmourCastSpeed = (entity) =>
+  playerInPvpFight() && entity?.isPlayer ? -pvpArmourCast(entity).slow : 0;
 
 export const PVP_ARMOUR_CAST_MOD = 'pvp-armour-cast';
 registerSpellCostMod(PVP_ARMOUR_CAST_MOD, pvpArmourCastCost);

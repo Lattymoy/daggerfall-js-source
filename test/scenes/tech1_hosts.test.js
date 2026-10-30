@@ -66,7 +66,7 @@ test('TECH1 THE RIG: the one runner stepped AHEAD of the gesture on the swing\'s
   // PIN MOVED (TWO-HANDS, bible/05-Combat/Two-Hands.md): the machine's attack through _attack, which starts it the same
   // way and names the strike's hand - a technique's always the lead's, never a flurry's
   // PIN MOVED (TECH-CANCEL): the swing in flight cut first, put back if the strike cannot begin
-  assert.match(code('src/combat/playerWeapon.js'), /techniqueStrike\(strike\) \{\s*const was = machineCut\(this\.machine\);\s*if \(!this\._attack\(strike, \{ lead: true \}\)\) \{ if \(was\) Object\.assign\(this\.machine, was\); return false; \}/);   // AUDIT TECH-FEEDBACK II F8: the cut answers the machine as it was
+  assert.match(code('src/combat/playerWeapon.js'), /techniqueStrike\(strike\) \{\n\s*const was = machineCut\(this\.machine\);\n\s*if \(!this\._attack\(strike, \{ lead: true \}\)\) \{\n\s*if \(was\) Object\.assign\(this\.machine, was\);\n\s*return false;\n\s*\}/);   // AUDIT TECH-FEEDBACK II F8: the cut answers the machine as it was
   // PIN MOVED (PISTOL-PORT, bible/05-Combat/Dwarven-Pistolet.md): the strike is `const` again - a Pistolet's pull is the
   // pistol lab's pair's (`_pistolShot`), so nothing re-names a strike between naming it and starting the machine - and a
   // technique's is still the lead's

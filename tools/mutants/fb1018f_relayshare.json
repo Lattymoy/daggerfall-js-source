@@ -12,8 +12,8 @@
   {
     "name": "RELAY-SHARE-the-reader-never-asked",
     "file": "src/combat/healthShare.js",
-    "old": "try { s = typeof e.relayShare === 'function' ? e.relayShare() : null; } catch { s = null; }",
-    "new": "try { s = null; } catch { s = null; }",
+    "old": "      s = typeof e.relayShare === 'function' ? e.relayShare() : null;",
+    "new": "      s = null;",
     "tests": [
       "test/systems/loot/fb1018f_relayshare.test.js"
     ],
@@ -22,7 +22,7 @@
   {
     "name": "RELAY-SHARE-a-throw-let-through",
     "file": "src/combat/healthShare.js",
-    "old": "    try { s = typeof e.relayShare === 'function' ? e.relayShare() : null; } catch { s = null; }",
+    "old": "    try {\n      s = typeof e.relayShare === 'function' ? e.relayShare() : null;\n    } catch {\n      s = null;\n    }",
     "new": "    s = typeof e.relayShare === 'function' ? e.relayShare() : null;",
     "tests": [
       "test/systems/loot/fb1018f_relayshare.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "RELAY-SHARE-the-clamp-dropped",
     "file": "src/combat/healthShare.js",
-    "old": "Math.max(0, Math.min(1, s))",
-    "new": "s",
+    "old": "    return typeof s === 'number' && Number.isFinite(s) ? Math.max(0, Math.min(1, s)) : null;",
+    "new": "    return typeof s === 'number' && Number.isFinite(s) ? s : null;",
     "tests": [
       "test/systems/loot/fb1018f_relayshare.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "RELAY-SHARE-a-NaN-passed",
     "file": "src/combat/healthShare.js",
-    "old": "typeof s === 'number' && Number.isFinite(s) ? ",
-    "new": "typeof s === 'number' ? ",
+    "old": "    return typeof s === 'number' && Number.isFinite(s) ? Math.max(0, Math.min(1, s)) : null;",
+    "new": "    return typeof s === 'number' ? Math.max(0, Math.min(1, s)) : null;",
     "tests": [
       "test/systems/loot/fb1018f_relayshare.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "RELAY-SHARE-a-zero-whole-divided",
     "file": "src/combat/healthShare.js",
-    "old": "&& max > 0 ? hp / max : null",
-    "new": "&& max >= 0 ? hp / max : null",
+    "old": "  typeof hp === 'number' && Number.isFinite(hp) && typeof max === 'number' && Number.isFinite(max) && max > 0",
+    "new": "  typeof hp === 'number' && Number.isFinite(hp) && typeof max === 'number' && Number.isFinite(max) && max >= 0",
     "tests": [
       "test/systems/loot/fb1018f_relayshare.test.js"
     ],

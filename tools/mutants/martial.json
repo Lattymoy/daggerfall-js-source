@@ -407,8 +407,8 @@
   {
     "name": "MARTIAL3-the-swing-tell-dropped",
     "file": "src/combat/playerWeapon.js",
-    "old": "      if (techOn(foe)) tellTechniqueLanded(tb, foe, blow);   // MARTIAL3: a path's rider answers its signature's blow\n",
-    "new": "",
+    "old": "      if (techOn(foe)) tellTechniqueLanded(tb, foe, blow); // MARTIAL3: a path's rider answers its signature's blow\n      const damage = blow; // TWO-HANDS (AUDIT): the off hand's share was laid inside the formula (blowShare)",
+    "new": "      const damage = blow; // TWO-HANDS (AUDIT): the off hand's share was laid inside the formula (blowShare)",
     "tests": [
       "test/systems/martial_paths.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "MARTIAL3-the-shaft-tell-dropped",
     "file": "src/combat/arrowFlight.js",
-    "old": "  if (m.technique && !playerBody(foe)) tellTechniqueLanded(m.technique, foe, dmg);   // MARTIAL3: a path's rider answers its signature's shaft\n",
-    "new": "",
+    "old": "  if (m.technique && !playerBody(foe)) tellTechniqueLanded(m.technique, foe, dmg); // MARTIAL3: a path's rider answers its signature's shaft\n  const at = foe.ai?.feet ?? [m.pos[0], m.pos[1], m.pos[2]];",
+    "new": "  const at = foe.ai?.feet ?? [m.pos[0], m.pos[1], m.pos[2]];",
     "tests": [
       "test/systems/martial_paths.test.js"
     ]
@@ -642,8 +642,8 @@
   {
     "name": "BAL10-the-stock-fists-unread",
     "file": "src/combat/formulas.js",
-    "old": "  if (isPlayer && !attacker.isInBeastForm) damage = weaponBlowMods(null, damage, attacker, target, info);   // BAL10: the fists' blow modifiers - the Firmament's fist stars, the sets, the loot, the paths\n",
-    "new": "",
+    "old": "  if (isPlayer && !attacker.isInBeastForm) damage = weaponBlowMods(null, damage, attacker, target, info); // BAL10: the fists' blow modifiers - the Firmament's fist stars, the sets, the loot, the paths\n  return damage;",
+    "new": "  return damage;",
     "tests": [
       "test/systems/martial_paths.test.js"
     ]
@@ -651,7 +651,7 @@
   {
     "name": "BAL10-the-stock-claws-read",
     "file": "src/combat/formulas.js",
-    "old": "  if (isPlayer && !attacker.isInBeastForm) damage = weaponBlowMods(null, damage, attacker, target, info);   // BAL10: the fists' blow modifiers - the Firmament's fist stars, the sets, the loot, the paths",
+    "old": "  if (isPlayer && !attacker.isInBeastForm) damage = weaponBlowMods(null, damage, attacker, target, info); // BAL10: the fists' blow modifiers - the Firmament's fist stars, the sets, the loot, the paths",
     "new": "  if (isPlayer) damage = weaponBlowMods(null, damage, attacker, target, info);",
     "tests": [
       "test/systems/martial_paths.test.js"
@@ -660,8 +660,8 @@
   {
     "name": "BAL10-the-stock-host-word-dropped",
     "file": "src/combat/formulas.js",
-    "old": "      damage = handToHandAttackDamage(attacker, target, damageModifiers, !!attacker.isPlayer, rolls, { unaware: !!unaware, wraps });",
-    "new": "      damage = handToHandAttackDamage(attacker, target, damageModifiers, !!attacker.isPlayer, rolls);",
+    "old": "        damage = handToHandAttackDamage(attacker, target, damageModifiers, !!attacker.isPlayer, rolls, {\n          unaware: !!unaware,\n          wraps,\n        }); // BAL10: the host's word for the fists' blow modifiers too; HAND-WRAPS: and the wraps' lines",
+    "new": "        damage = handToHandAttackDamage(attacker, target, damageModifiers, !!attacker.isPlayer, rolls); // BAL10: the host's word for the fists' blow modifiers too; HAND-WRAPS: and the wraps' lines",
     "tests": [
       "test/systems/martial_paths.test.js"
     ]
@@ -669,8 +669,8 @@
   {
     "name": "BAL10-the-overhaul-fists-unread",
     "file": "src/combat/pcaao.js",
-    "old": "  if (player && !attacker.isInBeastForm) damage = weaponBlowMods(null, damage, attacker, target, info);   // BAL10: the fists' blow modifiers\n",
-    "new": "",
+    "old": "  if (player && !attacker.isInBeastForm) damage = weaponBlowMods(null, damage, attacker, target, info); // BAL10: the fists' blow modifiers\n  return damage;",
+    "new": "  return damage;",
     "tests": [
       "test/systems/martial_paths.test.js"
     ]
@@ -678,7 +678,7 @@
   {
     "name": "BAL10-the-overhaul-claws-read",
     "file": "src/combat/pcaao.js",
-    "old": "  if (player && !attacker.isInBeastForm) damage = weaponBlowMods(null, damage, attacker, target, info);   // BAL10: the fists' blow modifiers",
+    "old": "  if (player && !attacker.isInBeastForm) damage = weaponBlowMods(null, damage, attacker, target, info); // BAL10: the fists' blow modifiers",
     "new": "  if (player) damage = weaponBlowMods(null, damage, attacker, target, info);",
     "tests": [
       "test/systems/martial_paths.test.js"
@@ -687,8 +687,8 @@
   {
     "name": "BAL10-the-sheet-reads-no-fist-modifiers",
     "file": "src/combat/combatStats.js",
-    "old": "      return entity.isInBeastForm ? d : weaponBlowMods(null, d, entity, foe, wraps ? { ...ESTIMATE, wraps } : ESTIMATE);",
-    "new": "      return d;",
+    "old": "      return entity.isInBeastForm ? d : weaponBlowMods(null, d, entity, foe, wraps ? { ...ESTIMATE, wraps } : ESTIMATE); // BAL10: both cores read the fists' blow modifiers now - never the beast's claws",
+    "new": "      return d; // BAL10: both cores read the fists' blow modifiers now - never the beast's claws",
     "tests": [
       "test/systems/martial_paths.test.js"
     ]

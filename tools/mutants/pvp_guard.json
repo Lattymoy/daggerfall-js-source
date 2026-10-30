@@ -2,8 +2,8 @@
   {
     "name": "PVP-GUARD-a-row-swapped",
     "file": "src/combat/pcaao.js",
-    "old": "  const rows = kind === 'unarmed' ? UNARMED_ROWS : kind === 'blunt' ? BLUNT_ROWS : EDGED_ROWS;\n  return table(rows, pcaaoArmorMaterialIdentifier(armor), 100, condOf(armor, modules), naturalDamResist);",
-    "new": "  const rows = kind === 'unarmed' ? UNARMED_ROWS : kind === 'blunt' ? EDGED_ROWS : EDGED_ROWS;\n  return table(rows, pcaaoArmorMaterialIdentifier(armor), 100, condOf(armor, modules), naturalDamResist);",
+    "old": "  const rows = kind === 'unarmed' ? UNARMED_ROWS : kind === 'blunt' ? BLUNT_ROWS : EDGED_ROWS;",
+    "new": "  const rows = kind === 'unarmed' ? UNARMED_ROWS : kind === 'blunt' ? EDGED_ROWS : EDGED_ROWS;",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "PVP-TRIANGLE-the-late-step-unread",
     "file": "src/combat/pvpTriangle.js",
-    "old": "export const pvpArrowScale = (level) => ((Number(level) || 0) >= PVP_TRIANGLE.late ? PVP_TRIANGLE.arrowLate : PVP_TRIANGLE.arrow);",
-    "new": "export const pvpArrowScale = (level) => ((Number(level) || 0) >= PVP_TRIANGLE.late ? PVP_TRIANGLE.arrow : PVP_TRIANGLE.arrow);",
+    "old": "  (Number(level) || 0) >= PVP_TRIANGLE.late ? PVP_TRIANGLE.arrowLate : PVP_TRIANGLE.arrow;",
+    "new": "  (Number(level) || 0) >= PVP_TRIANGLE.late ? PVP_TRIANGLE.arrow : PVP_TRIANGLE.arrow;",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "PVP-TRIANGLE-the-spell-late-unread",
     "file": "src/combat/pvpTriangle.js",
-    "old": "export const pvpSpellScale = (level) => ((Number(level) || 0) >= PVP_TRIANGLE.late ? PVP_TRIANGLE.spellLate : PVP_TRIANGLE.spell);",
-    "new": "export const pvpSpellScale = (level) => ((Number(level) || 0) >= PVP_TRIANGLE.late ? PVP_TRIANGLE.spell : PVP_TRIANGLE.spell);",
+    "old": "  (Number(level) || 0) >= PVP_TRIANGLE.late ? PVP_TRIANGLE.spellLate : PVP_TRIANGLE.spell;",
+    "new": "  (Number(level) || 0) >= PVP_TRIANGLE.late ? PVP_TRIANGLE.spell : PVP_TRIANGLE.spell;",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "PVP-TRIANGLE-the-arrow-unscaled",
     "file": "src/combat/duelCombat.js",
-    "old": "  const n = d.by === 'arrow' ? bowFastDamage(d.relayCut ? { ...landingShaft(), fast: 0 } : landingShaft(), Math.floor(scaled * pvpArrowScale(d.a?.pl))) : scaled;",
-    "new": "  const n = scaled;",
+    "old": "  const n =\n    d.by === 'arrow'\n      ? bowFastDamage(\n          d.relayCut ? { ...landingShaft(), fast: 0 } : landingShaft(),\n          Math.floor(scaled * pvpArrowScale(d.a?.pl)),\n        )\n      : scaled; // PVP-TRIANGLE: an arrow's; BOW-FAST: its stacks (the relay's to cut, `relayCut`: its pull alone)",
+    "new": "  const n = scaled; // PVP-TRIANGLE: an arrow's; BOW-FAST: its stacks (the relay's to cut, `relayCut`: its pull alone)",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "PVP-TRIANGLE-the-capped-level-read",
     "file": "src/combat/duelCombat.js",
-    "old": "pvpArrowScale(d.a?.pl))",
-    "new": "pvpArrowScale(d.a?.lv))",
+    "old": "          Math.floor(scaled * pvpArrowScale(d.a?.pl)),",
+    "new": "          Math.floor(scaled * pvpArrowScale(d.a?.lv)),",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "PVP-SHIELD-a-spent-pool-counted",
     "file": "src/combat/pvpGuard.js",
-    "old": "a.kind === 'shield' && !a.ended && a.shieldRemaining > 0",
-    "new": "a.kind === 'shield'",
+    "old": "export const pvpShielded = (entity) =>\n  (entity?.activeEffects ?? []).some((a) => a.kind === 'shield' && !a.ended && a.shieldRemaining > 0);",
+    "new": "export const pvpShielded = (entity) => (entity?.activeEffects ?? []).some((a) => a.kind === 'shield');",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "PVP-BUFFS-a-worn-item-cut",
     "file": "src/combat/pvpBuffs.js",
-    "old": "if (a.ended || a.heldItem || HARM.has(a.kind)",
-    "new": "if (a.ended || HARM.has(a.kind)",
+    "old": "    if (a.ended || a.heldItem || HARM.has(a.kind) || !(a.roundsRemaining > rounds)) continue;",
+    "new": "    if (a.ended || HARM.has(a.kind) || !(a.roundsRemaining > rounds)) continue;",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "PVP-BUFFS-harm-cut",
     "file": "src/combat/pvpBuffs.js",
-    "old": "if (a.ended || a.heldItem || HARM.has(a.kind)",
-    "new": "if (a.ended || a.heldItem",
+    "old": "    if (a.ended || a.heldItem || HARM.has(a.kind) || !(a.roundsRemaining > rounds)) continue;",
+    "new": "    if (a.ended || a.heldItem || !(a.roundsRemaining > rounds)) continue;",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
@@ -248,8 +248,8 @@
   {
     "name": "PVP-POTIONS-every-effect",
     "file": "src/combat/pvpPotions.js",
-    "old": "? { ...bundle, effects: bundle.effects.slice(0, 1) } : bundle);",
-    "new": "? { ...bundle, effects: bundle.effects } : bundle);",
+    "old": "  fight && bundle?.effects?.length > 1 ? { ...bundle, effects: bundle.effects.slice(0, 1) } : bundle;",
+    "new": "  fight && bundle?.effects?.length > 1 ? { ...bundle, effects: bundle.effects } : bundle;",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ],
@@ -258,8 +258,8 @@
   {
     "name": "PVP-POTIONS-always-a-fight",
     "file": "src/combat/pvpPotions.js",
-    "old": "export function setPvpFight(active) { fight = !!active; }",
-    "new": "export function setPvpFight(active) { fight = true; }",
+    "old": "  fight = !!active;",
+    "new": "  fight = true;",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ],
@@ -308,8 +308,8 @@
   {
     "name": "PVP-ARMOUR-CAST-plate-cheap",
     "file": "src/combat/pvpArmourCasting.js",
-    "old": "cost: Object.freeze([0, 3, 6])",
-    "new": "cost: Object.freeze([0, 3, 3])",
+    "old": "export const PVP_ARMOUR_CAST = Object.freeze({ cost: Object.freeze([0, 3, 6]), slow: Object.freeze([0, 1.5, 3]) });",
+    "new": "export const PVP_ARMOUR_CAST = Object.freeze({ cost: Object.freeze([0, 3, 3]), slow: Object.freeze([0, 1.5, 3]) });",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ],
@@ -318,8 +318,8 @@
   {
     "name": "PVP-ARMOUR-CAST-chain-free",
     "file": "src/combat/pvpArmourCasting.js",
-    "old": "cost: Object.freeze([0, 3, 6])",
-    "new": "cost: Object.freeze([0, 0, 6])",
+    "old": "export const PVP_ARMOUR_CAST = Object.freeze({ cost: Object.freeze([0, 3, 6]), slow: Object.freeze([0, 1.5, 3]) });",
+    "new": "export const PVP_ARMOUR_CAST = Object.freeze({ cost: Object.freeze([0, 0, 6]), slow: Object.freeze([0, 1.5, 3]) });",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ],
@@ -328,8 +328,8 @@
   {
     "name": "PVP-ARMOUR-CAST-no-slow",
     "file": "src/combat/pvpArmourCasting.js",
-    "old": "slow: Object.freeze([0, 1.5, 3])",
-    "new": "slow: Object.freeze([0, 1.5, 0])",
+    "old": "export const PVP_ARMOUR_CAST = Object.freeze({ cost: Object.freeze([0, 3, 6]), slow: Object.freeze([0, 1.5, 3]) });",
+    "new": "export const PVP_ARMOUR_CAST = Object.freeze({ cost: Object.freeze([0, 3, 6]), slow: Object.freeze([0, 1.5, 0]) });",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ],
@@ -338,8 +338,8 @@
   {
     "name": "PVP-ARMOUR-CAST-always",
     "file": "src/combat/pvpArmourCasting.js",
-    "old": "(playerInPvpFight() ? sp * (1 + pvpArmourCast(entity).cost / 100) : sp)",
-    "new": "(true ? sp * (1 + pvpArmourCast(entity).cost / 100) : sp)",
+    "old": "export const pvpArmourCastCost = (entity, sp) =>\n  playerInPvpFight() ? sp * (1 + pvpArmourCast(entity).cost / 100) : sp;",
+    "new": "export const pvpArmourCastCost = (entity, sp) => (true ? sp * (1 + pvpArmourCast(entity).cost / 100) : sp);",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ],
@@ -348,8 +348,8 @@
   {
     "name": "PVP-ARMOUR-CAST-a-piece-unread",
     "file": "src/combat/pvpArmourCasting.js",
-    "old": "const PIECES = ['Head', 'RightArm',",
-    "new": "const PIECES = ['RightArm',",
+    "old": "const PIECES = ['Head', 'RightArm', 'LeftArm', 'ChestArmor', 'Gloves', 'LegsArmor', 'Feet'];",
+    "new": "const PIECES = ['RightArm', 'LeftArm', 'ChestArmor', 'Gloves', 'LegsArmor', 'Feet'];",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ],
@@ -358,8 +358,8 @@
   {
     "name": "PVP-ARMOUR-CAST-the-material-not-the-class",
     "file": "src/combat/pvpArmourCasting.js",
-    "old": "const kind = Math.max(0, Math.min(2, rriNativeMaterialValue(it) >> 8));",
-    "new": "const kind = Math.max(0, Math.min(2, it.material >> 8));",
+    "old": "    const kind = Math.max(0, Math.min(2, rriNativeMaterialValue(it) >> 8));",
+    "new": "    const kind = Math.max(0, Math.min(2, it.material >> 8));",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ],

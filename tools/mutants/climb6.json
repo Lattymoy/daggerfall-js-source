@@ -2,8 +2,8 @@
   {
     "name": "CLIMB6-palm-flipped",
     "file": "src/combat/climbRig.js",
-    "old": "side === 'R' ? -1 : 1);",
-    "new": "side === 'R' ? 1 : -1);",
+    "old": "    if (len(lateral) > 1e-6) palm = scale(norm(cross(f, norm(lateral))), side === 'R' ? -1 : 1);",
+    "new": "    if (len(lateral) > 1e-6) palm = scale(norm(cross(f, norm(lateral))), side === 'R' ? 1 : -1);",
     "tests": [
       "test/player/climb/climb6.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "CLIMB6-fit-farther-hand-at-full-reach",
     "file": "src/combat/climbRig.js",
-    "old": "+ len(sub(Wr, E))) * 0.97;",
-    "new": "+ len(sub(Wr, E))) * 1.2;",
+    "old": "      const reach = (len(sub(E, S)) + len(sub(Wr, E))) * 0.97;",
+    "new": "      const reach = (len(sub(E, S)) + len(sub(Wr, E))) * 1.2;",
     "tests": [
       "test/player/climb/climb6.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "CLIMB6-fit-unbounded-down",
     "file": "src/combat/climbRig.js",
-    "old": "Math.min(up, Math.max(-down, need)) * w",
-    "new": "Math.min(up, need) * w",
+    "old": "      const dz = Math.min(up, Math.max(-down, need)) * w;",
+    "new": "      const dz = Math.min(up, need) * w;",
     "tests": [
       "test/player/climb/climb6.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "CLIMB6-fit-farther-hand-not-deciding",
     "file": "src/combat/climbRig.js",
-    "old": "Math.max(need, rise);   // the farther hand decides",
-    "new": "Math.min(need, rise);   // the farther hand decides",
+    "old": "      need = need == null ? rise : Math.max(need, rise); // the farther hand decides",
+    "new": "      need = need == null ? rise : Math.min(need, rise); // the farther hand decides",
     "tests": [
       "test/player/climb/climb6.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "CLIMB6-shrug-after-nothing",
     "file": "src/combat/climbRig.js",
-    "old": "if (req.hands) for (const s of ['L', 'R']) if (req.hands[s]) shrug(",
-    "new": "if (false) for (const s of ['L', 'R']) if (req.hands[s]) shrug(",
+    "old": "  // 4. the shoulders drawn up toward the hands (before the fit: a shrug brings the shoulder nearer its hold)\n  if (req.hands)",
+    "new": "  // 4. the shoulders drawn up toward the hands (before the fit: a shrug brings the shoulder nearer its hold)\n  if (false)",
     "tests": [
       "test/player/climb/climb6.test.js"
     ]

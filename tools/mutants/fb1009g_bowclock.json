@@ -83,8 +83,8 @@
   {
     "name": "BOWCLOCK-the-held-instant-shot-fires-once",
     "file": "src/combat/playerWeapon.js",
-    "old": "if (held && machineAttack(m, 'StrikeDown')) { this.lastDrawMs",
-    "new": "if (rise && machineAttack(m, 'StrikeDown')) { this.lastDrawMs",
+    "old": "      if (held && machineAttack(m, 'StrikeDown')) {",
+    "new": "      if (rise && machineAttack(m, 'StrikeDown')) {",
     "tests": [
       "test/systems/fb1009g_bowclock.test.js"
     ]

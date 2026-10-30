@@ -146,8 +146,8 @@
   {
     "name": "PVP-KIT-reflect-unread",
     "file": "src/combat/pvpGuard.js",
-    "old": "const turned = (100 - pvpReflectChance(entity)) * (100 - pvpAbsorbChance(entity)) / 100;",
-    "new": "const turned = 100 * (100 - pvpAbsorbChance(entity)) / 100;",
+    "old": "  const turned = ((100 - pvpReflectChance(entity)) * (100 - pvpAbsorbChance(entity))) / 100; // PVP-KIT: what Reflect and Absorb let by",
+    "new": "  const turned = (100 * (100 - pvpAbsorbChance(entity))) / 100; // PVP-KIT: what Reflect and Absorb let by",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "PVP-KIT-absorb-unread",
     "file": "src/combat/pvpGuard.js",
-    "old": "const turned = (100 - pvpReflectChance(entity)) * (100 - pvpAbsorbChance(entity)) / 100;",
-    "new": "const turned = (100 - pvpReflectChance(entity)) * 100 / 100;",
+    "old": "  const turned = ((100 - pvpReflectChance(entity)) * (100 - pvpAbsorbChance(entity))) / 100; // PVP-KIT: what Reflect and Absorb let by",
+    "new": "  const turned = ((100 - pvpReflectChance(entity)) * 100) / 100; // PVP-KIT: what Reflect and Absorb let by",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "PVP-KIT-absorb-uncapped",
     "file": "src/combat/pvpGuard.js",
-    "old": "return Math.max(0, Math.min(SPELL_ABSORPTION_CHANCE_CAP, best));",
-    "new": "return Math.max(0, Math.min(100, best));",
+    "old": "  return Math.max(0, Math.min(SPELL_ABSORPTION_CHANCE_CAP, best));",
+    "new": "  return Math.max(0, Math.min(100, best));",
     "tests": [
       "test/systems/wild/pvpkit.test.js"
     ]

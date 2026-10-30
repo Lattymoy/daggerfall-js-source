@@ -167,8 +167,8 @@
   {
     "name": "JAN1-the-pair-crosses-as-the-sheath-alone",
     "file": "src/combat/playerWeapon.js",
-    "old": "  if (pose.usingRightHand != null) { w.usingRightHand = !!pose.usingRightHand; w.handRestored = pose.handKept === true; }\n",
-    "new": "",
+    "old": "  if (pose.usingRightHand != null) {\n    w.usingRightHand = !!pose.usingRightHand;\n    w.handRestored = pose.handKept === true;\n  }\n  return true;",
+    "new": "  return true;",
     "tests": [
       "test/world/terrain/jan1_field.test.js"
     ],

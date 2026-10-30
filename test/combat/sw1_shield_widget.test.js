@@ -510,7 +510,7 @@ test('SW1: the attack-resolution seam fires on EVERY resolution, hit or miss, wi
   // V3's hook above it is gated on damage; this one must not be - three
   // of the six Recoil conditions are MISS conditions.
   assert.match(f, /if \(target\?\.isPlayer && !attacker\.isPlayer\) \{\s*_attackOnPlayerHook\?\.\(attacker, target, damage, struckPart\);/);
-  assert.match(f, /export function setAttackOnPlayerHook\(fn\) \{ _attackOnPlayerHook = fn \?\? null; \}/);
+  assert.match(f, /export function setAttackOnPlayerHook\(fn\) \{\n\s*_attackOnPlayerHook = fn \?\? null;\n\s*\}/);
   // and the struck part is carried out of the block the roll is made in
   assert.match(f, /struckPart = struck;/);
 });

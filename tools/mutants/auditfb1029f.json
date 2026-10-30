@@ -209,8 +209,8 @@
   {
     "name": "AUDITFB1029F-D4-old-pose-kept",
     "file": "src/combat/playerWeapon.js",
-    "old": "w.handRestored = pose.handKept === true; }",
-    "new": "w.handRestored = true; }",
+    "old": "    w.handRestored = pose.handKept === true;",
+    "new": "    w.handRestored = true;",
     "tests": [
       "test/combat/handfollows.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "AUDITFB1029F-D4-pose-unmarked",
     "file": "src/combat/playerWeapon.js",
-    "old": "usingRightHand: w.usingRightHand, handKept: true } : null);",
-    "new": "usingRightHand: w.usingRightHand } : null);",
+    "old": "export const weaponPoseOf = (w) =>\n  w ? { weaponDrawn: !w.sheathed, usingRightHand: w.usingRightHand, handKept: true } : null; // AUDIT FB1029f D4: a hand chosen under HAND-FOLLOWS",
+    "new": "export const weaponPoseOf = (w) => (w ? { weaponDrawn: !w.sheathed, usingRightHand: w.usingRightHand } : null); // AUDIT FB1029f D4: a hand chosen under HAND-FOLLOWS",
     "tests": [
       "test/combat/handfollows.test.js"
     ]

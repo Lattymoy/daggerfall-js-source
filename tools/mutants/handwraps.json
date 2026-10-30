@@ -2,8 +2,8 @@
   {
     "name": "HANDWRAPS-metal-kept",
     "file": "src/combat/enemyEquipment.js",
-    "old": "  if (templateIndex === HAND_WRAPS_TEMPLATE) material = 0;",
-    "new": "  if (false) material = 0;",
+    "old": "  if (templateIndex === HAND_WRAPS_TEMPLATE) material = 0; // HAND-WRAPS: cloth - no metal, whatever the roll (systems/handWraps.js)",
+    "new": "  if (false) material = 0; // HAND-WRAPS: cloth - no metal, whatever the roll (systems/handWraps.js)",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "HANDWRAPS-art",
     "file": "src/combat/fpsWeapon.js",
-    "old": "  if (isHandWraps(item)) return T.Melee;",
-    "new": "",
+    "old": "  if (isHandWraps(item)) return T.Melee; // HAND-WRAPS: the bare hands' art and swing, never a magic sheet (Melee has none)",
+    "new": "  // HAND-WRAPS: the bare hands' art and swing, never a magic sheet (Melee has none)",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "HANDWRAPS-mods-unread",
     "file": "src/combat/formulas.js",
-    "old": "  if (isPlayer && info?.wraps) damage = weaponDamageMods(info.wraps, damage);",
-    "new": "",
+    "old": "  if (isPlayer && info?.wraps) damage = weaponDamageMods(info.wraps, damage); // HAND-WRAPS: the wraps' own lines over the fist's roll, as a weapon's over its own",
+    "new": "  // HAND-WRAPS: the wraps' own lines over the fist's roll, as a weapon's over its own",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "HANDWRAPS-fists-untold",
     "file": "src/combat/formulas.js",
-    "old": "rolls, { unaware: !!unaware, wraps });   // BAL10: the host's word for the fists' blow modifiers too",
-    "new": "rolls, { unaware: !!unaware });   // BAL10: the host's word for the fists' blow modifiers too",
+    "old": "          wraps,\n        }); // BAL10: the host's word for the fists' blow modifiers too; HAND-WRAPS: and the wraps' lines",
+    "new": "        }); // BAL10: the host's word for the fists' blow modifiers too; HAND-WRAPS: and the wraps' lines",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "HANDWRAPS-listeners-untold",
     "file": "src/combat/formulas.js",
-    "old": "    const info = { backstab: notes.backstab, blow: whole, wraps };",
-    "new": "    const info = { backstab: notes.backstab, blow: whole };",
+    "old": "    const info = { backstab: notes.backstab, blow: whole, wraps }; // HAND-WRAPS: the wraps of a fist's blow, for their lines   // RVN1: and whether it was a backstab (the fight's ledger, systems/feudLedger.js); AUDIT 2: whether it counts whole for a per-blow charge",
+    "new": "    const info = { backstab: notes.backstab, blow: whole }; // HAND-WRAPS: the wraps of a fist's blow, for their lines   // RVN1: and whether it was a backstab (the fight's ledger, systems/feudLedger.js); AUDIT 2: whether it counts whole for a per-blow charge",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "HANDWRAPS-strikes",
     "file": "src/combat/formulas.js",
-    "old": "  const charged = weapon ?? wraps;",
-    "new": "  const charged = weapon;",
+    "old": "  const charged = weapon ?? wraps; // HAND-WRAPS: the wraps' enchantment strikes with the fist",
+    "new": "  const charged = weapon; // HAND-WRAPS: the wraps' enchantment strikes with the fist",
     "tests": [
       "test/combat/handwraps_audit.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "HANDWRAPS-core-untold",
     "file": "src/combat/formulas.js",
-    "old": "core(attacker, target, { weapon, wraps, damageMod,",
-    "new": "core(attacker, target, { weapon, damageMod,",
+    "old": "        wraps,\n        damageMod,",
+    "new": "        damageMod,",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "HANDWRAPS-pcaao-fists",
     "file": "src/combat/pcaao.js",
-    "old": "rolls, { unaware: !!unaware, wraps });   // BAL10: the host's word, for the fists' blow modifiers; HAND-WRAPS",
-    "new": "rolls, { unaware: !!unaware });   // BAL10: the host's word, for the fists' blow modifiers; HAND-WRAPS",
+    "old": "          wraps,\n        }); // BAL10: the host's word, for the fists' blow modifiers; HAND-WRAPS: and the wraps' lines (formulas.js)",
+    "new": "        }); // BAL10: the host's word, for the fists' blow modifiers; HAND-WRAPS: and the wraps' lines (formulas.js)",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "HANDWRAPS-stats",
     "file": "src/combat/combatStats.js",
-    "old": "  const wraps = isHandWraps(held) ? held : null, weapon = wraps ? null : held;",
-    "new": "  const wraps = null, weapon = held;",
+    "old": "  const wraps = isHandWraps(held) ? held : null,\n    weapon = wraps ? null : held; // HAND-WRAPS: the fists' blow, the wraps' lines over it (combat/formulas.js)",
+    "new": "  const wraps = null,\n    weapon = held; // HAND-WRAPS: the fists' blow, the wraps' lines over it (combat/formulas.js)",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
@@ -394,8 +394,8 @@
   {
     "name": "HANDWRAPS-duel",
     "file": "src/combat/duelCombat.js",
-    "old": "  if (!item || isHandWraps(item) || !Number.isInteger(",
-    "new": "  if (!item || !Number.isInteger(",
+    "old": "    isHandWraps(item) ||\n    !Number.isInteger(item.templateIndex) ||",
+    "new": "    !Number.isInteger(item.templateIndex) ||",
     "tests": [
       "test/combat/handwraps_audit.test.js"
     ],
@@ -454,8 +454,8 @@
   {
     "name": "HANDWRAPS-stats-other-hand",
     "file": "src/combat/combatStats.js",
-    "old": "  return fistWrapsOf(it ?? null, t[usingRightHand ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand] ?? null);",
-    "new": "  return isHandWraps(it) ? it : null;",
+    "old": "  return fistWrapsOf(it ?? null, t[usingRightHand ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand] ?? null); // HAND-WRAPS (AUDIT B10): an empty fist beside them wears them",
+    "new": "  return isHandWraps(it) ? it : null; // HAND-WRAPS (AUDIT B10): an empty fist beside them wears them",
     "tests": [
       "test/combat/handwraps_audit.test.js"
     ],
@@ -464,8 +464,8 @@
   {
     "name": "HANDWRAPS-stats-estimate",
     "file": "src/combat/combatStats.js",
-    "old": "wraps ? { ...ESTIMATE, wraps } : ESTIMATE",
-    "new": "ESTIMATE",
+    "old": "      return entity.isInBeastForm ? d : weaponBlowMods(null, d, entity, foe, wraps ? { ...ESTIMATE, wraps } : ESTIMATE); // BAL10: both cores read the fists' blow modifiers now - never the beast's claws",
+    "new": "      return entity.isInBeastForm ? d : weaponBlowMods(null, d, entity, foe, ESTIMATE); // BAL10: both cores read the fists' blow modifiers now - never the beast's claws",
     "tests": [
       "test/combat/handwraps_audit.test.js"
     ],
@@ -474,8 +474,8 @@
   {
     "name": "HANDWRAPS-pcaao-mods",
     "file": "src/combat/pcaao.js",
-    "old": "    if (info?.wraps) damage = weaponDamageMods(info.wraps, damage);",
-    "new": "",
+    "old": "    if (info?.wraps) damage = weaponDamageMods(info.wraps, damage); // HAND-WRAPS: the wraps' own lines over the fist's roll, as a weapon's over its own",
+    "new": "    // HAND-WRAPS: the wraps' own lines over the fist's roll, as a weapon's over its own",
     "tests": [
       "test/combat/handwraps_audit.test.js"
     ],

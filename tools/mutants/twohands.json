@@ -165,8 +165,8 @@
   {
     "name": "TWOHANDS-AUDIT2-off-blow-drops-its-carry",
     "file": "src/combat/playerWeapon.js",
-    "old": "this.machine.hold = owed.hold; this._burdenCarry = owed.carry;",
-    "new": "this.machine.hold = owed.hold;",
+    "old": "        this._burdenCarry = owed.carry;\n      }",
+    "new": "      }",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "TWOHANDS-AUDIT2-off-blow-holds-nothing",
     "file": "src/combat/playerWeapon.js",
-    "old": "this.machine.hold = owed.hold; this._burdenCarry = owed.carry;",
-    "new": "this._burdenCarry = owed.carry;",
+    "old": "        this.machine.hold = owed.hold;\n        this._burdenCarry = owed.carry;",
+    "new": "        this._burdenCarry = owed.carry;",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "TWOHANDS-AUDIT2-lead-blow-held-too",
     "file": "src/combat/playerWeapon.js",
-    "old": "    if (this.offStrike) {\n      const ctx = this.animCtx?.() ?? null;",
-    "new": "    if (twoHanded(this.handsMode)) {\n      const ctx = this.animCtx?.() ?? null;",
+    "old": "    if (this.offStrike) {",
+    "new": "    if (twoHanded(this.handsMode)) {",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "TWOHANDS-AUDIT2-burden-on-a-whole-swing",
     "file": "src/combat/playerWeapon.js",
-    "old": "ticks: strikeTicks(this.machine), tick,",
-    "new": "ticks: 5, tick,",
+    "old": "          ticks: strikeTicks(this.machine),",
+    "new": "          ticks: 5,",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -284,7 +284,7 @@
   {
     "name": "TWOHANDS-weapon-not-the-striking-hand",
     "file": "src/combat/playerWeapon.js",
-    "old": "if (twoHanded(this.handsMode) && !this.weapon?.werecreatureClaws) this.weapon = this.handItem(s.hand);",
+    "old": "    if (twoHanded(this.handsMode) && !this.weapon?.werecreatureClaws) this.weapon = this.handItem(s.hand);",
     "new": "",
     "tests": [
       "test/combat/twohands.test.js"
@@ -293,8 +293,8 @@
   {
     "name": "TWOHANDS-apply-the-lead-always",
     "file": "src/combat/playerWeapon.js",
-    "old": "this.weapon = this.handItem(this.activeHand);",
-    "new": "this.weapon = this.handItem(this.leadHand);",
+    "old": "    this.weapon = this.handItem(this.activeHand);",
+    "new": "    this.weapon = this.handItem(this.leadHand);",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -302,8 +302,8 @@
   {
     "name": "TWOHANDS-last-hand-forgotten",
     "file": "src/combat/playerWeapon.js",
-    "old": "this._lastHand = this.strike?.hand ?? this.leadHand;",
-    "new": "this._lastHand = this.leadHand;",
+    "old": "      this._lastHand = this.strike?.hand ?? this.leadHand;",
+    "new": "      this._lastHand = this.leadHand;",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -311,8 +311,8 @@
   {
     "name": "TWOHANDS-off-hand-sure",
     "file": "src/combat/playerWeapon.js",
-    "old": "const offToHit = off ? offHandToHit(playerCombat ? liveStat(playerCombat, 'agility') : 50) : 0;",
-    "new": "const offToHit = 0;",
+    "old": "    const offToHit = off ? offHandToHit(playerCombat ? liveStat(playerCombat, 'agility') : 50) : 0;",
+    "new": "    const offToHit = 0;",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -320,8 +320,8 @@
   {
     "name": "TWOHANDS-off-hand-full-damage",
     "file": "src/combat/playerWeapon.js",
-    "old": "if (off) { opts.toHitMod += offToHit; Object.assign(opts, OFF_HAND_BLOW); }",
-    "new": "if (off) { opts.toHitMod += offToHit; Object.assign(opts, { blowWeight: OFF_HAND_BLOW.blowWeight }); }",
+    "old": "        Object.assign(opts, OFF_HAND_BLOW);",
+    "new": "        Object.assign(opts, { blowWeight: OFF_HAND_BLOW.blowWeight });",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -329,8 +329,8 @@
   {
     "name": "TWOHANDS-mode-ignores-the-light",
     "file": "src/combat/playerWeapon.js",
-    "old": "leftBusy: this.leftBusy,",
-    "new": "leftBusy: false,",
+    "old": "          leftBusy: this.leftBusy,",
+    "new": "          leftBusy: false,",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -338,8 +338,8 @@
   {
     "name": "TWOHANDS-technique-takes-the-flurry",
     "file": "src/combat/playerWeapon.js",
-    "old": "return this._swing(state, lead ? { hand: this.leadHand, flurry: false, off: false } : this._nextStrike());",
-    "new": "return this._swing(state, this._nextStrike());",
+    "old": "    return this._swing(state, lead ? { hand: this.leadHand, flurry: false, off: false } : this._nextStrike());",
+    "new": "    return this._swing(state, this._nextStrike());",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -590,8 +590,8 @@
   {
     "name": "TWOHANDS-AUDIT-h-keeps-the-exchange",
     "file": "src/combat/playerWeapon.js",
-    "old": "    if (twoHanded(this.handsMode)) { this._lastHand = null; this._lastEnd = -Infinity; }\n",
-    "new": "",
+    "old": "    if (twoHanded(this.handsMode)) {\n      this._lastHand = null;\n      this._lastEnd = -Infinity;\n    }\n    if (bowSwitching && !twoHanded(this.handsMode)) {",
+    "new": "    if (bowSwitching && !twoHanded(this.handsMode)) {",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -608,8 +608,8 @@
   {
     "name": "TWOHANDS-AUDIT-share-after-the-report",
     "file": "src/combat/formulas.js",
-    "old": "  damage = shared(Math.max(0, damage));",
-    "new": "  damage = Math.max(0, damage);",
+    "old": "    damage = shared(Math.max(0, damage));",
+    "new": "    damage = Math.max(0, damage);",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -626,8 +626,8 @@
   {
     "name": "TWOHANDS-AUDIT-off-strike-never",
     "file": "src/combat/playerWeapon.js",
-    "old": "  get offStrike() { return !!(this.handsMode === HANDS_MODE.Dual && this.strike && this.machine.state !== 'Idle' && this.strike.off); }",
-    "new": "  get offStrike() { return false; }",
+    "old": "    return !!(this.handsMode === HANDS_MODE.Dual && this.strike && this.machine.state !== 'Idle' && this.strike.off);",
+    "new": "    return false;",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -635,8 +635,8 @@
   {
     "name": "TWOHANDS-AUDIT-flurry-from-the-first-frame",
     "file": "src/combat/playerWeapon.js",
-    "old": "    if (s.flurry) this.machine.frame = DUAL.FLURRY_FROM_FRAME;\n",
-    "new": "",
+    "old": "    if (s.flurry) this.machine.frame = DUAL.FLURRY_FROM_FRAME;\n    // TWO-HANDS (AUDIT 2): the off hand's burden, in whole ticks held at its swing's end (handsLaw.js offHandHold) - read",
+    "new": "    // TWO-HANDS (AUDIT 2): the off hand's burden, in whole ticks held at its swing's end (handsLaw.js offHandHold) - read",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -662,8 +662,8 @@
   {
     "name": "TWOHANDS-AUDIT-resting-is-in-use",
     "file": "src/combat/playerWeapon.js",
-    "old": "  get restingWeapon() { return twoHanded(this.handsMode) && !this.weapon?.werecreatureClaws ? this.handItem(this.leadHand) : this.weapon; }",
-    "new": "  get restingWeapon() { return this.weapon; }",
+    "old": "    return twoHanded(this.handsMode) && !this.weapon?.werecreatureClaws ? this.handItem(this.leadHand) : this.weapon;",
+    "new": "    return this.weapon;",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -779,8 +779,8 @@
   {
     "name": "TWOHANDS-AUDIT-off-hand-to-hit-kept",
     "file": "src/combat/playerWeapon.js",
-    "old": "      if (off) { opts.toHitMod += offToHit; Object.assign(opts, OFF_HAND_BLOW); }",
-    "new": "      if (off) { Object.assign(opts, OFF_HAND_BLOW); }",
+    "old": "        opts.toHitMod += offToHit;\n        Object.assign(opts, OFF_HAND_BLOW);",
+    "new": "        Object.assign(opts, OFF_HAND_BLOW);",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -860,8 +860,8 @@
   {
     "name": "TWOHANDS-AUDIT-PINS-every-flurry-blow-pays-the-off-hand",
     "file": "src/combat/playerWeapon.js",
-    "old": "const off = this.offStrike;",
-    "new": "const off = !!this.strikeInFlight?.flurry;",
+    "old": "    const off = this.offStrike; // AUDIT 2: the one predicate every arm reads (the duel's, the wild's, this)",
+    "new": "    const off = !!this.strikeInFlight?.flurry; // AUDIT 2: the one predicate every arm reads (the duel's, the wild's, this)",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -887,8 +887,8 @@
   {
     "name": "TWOHANDS-AUDIT-PINS-shield-and-empty-right-is-fists",
     "file": "src/combat/playerWeapon.js",
-    "old": "left: this.holdingShield ? SHIELD_HAND : handDesc(this.currentLeftHandWeapon),",
-    "new": "left: handDesc(this.currentLeftHandWeapon),",
+    "old": "          left: this.holdingShield ? SHIELD_HAND : handDesc(this.currentLeftHandWeapon),",
+    "new": "          left: handDesc(this.currentLeftHandWeapon),",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -1166,8 +1166,8 @@
   {
     "name": "TWOHANDS-AUDIT2-strikes-payload-every-blow",
     "file": "src/combat/formulas.js",
-    "old": "(attacker.isPlayer || damage > 0) && whole) {",
-    "new": "(attacker.isPlayer || damage > 0)) {",
+    "old": "  if (charged && isEnchantedItem(charged) && (attacker.isPlayer || damage > 0) && whole) {",
+    "new": "  if (charged && isEnchantedItem(charged) && (attacker.isPlayer || damage > 0)) {",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -1175,8 +1175,8 @@
   {
     "name": "TWOHANDS-AUDIT2-weight-never-rolled",
     "file": "src/combat/formulas.js",
-    "old": "const whole = !(blowWeight < 1) || rolls() < blowWeight;",
-    "new": "const whole = true;",
+    "old": "  const whole = !(blowWeight < 1) || rolls() < blowWeight;",
+    "new": "  const whole = true;",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -1184,8 +1184,8 @@
   {
     "name": "TWOHANDS-AUDIT2-listeners-not-told",
     "file": "src/combat/formulas.js",
-    "old": "const info = { backstab: notes.backstab, blow: whole, wraps };",
-    "new": "const info = { backstab: notes.backstab, wraps };",
+    "old": "    const info = { backstab: notes.backstab, blow: whole, wraps }; // HAND-WRAPS: the wraps of a fist's blow, for their lines   // RVN1: and whether it was a backstab (the fight's ledger, systems/feudLedger.js); AUDIT 2: whether it counts whole for a per-blow charge",
+    "new": "    const info = { backstab: notes.backstab, wraps }; // HAND-WRAPS: the wraps of a fist's blow, for their lines   // RVN1: and whether it was a backstab (the fight's ledger, systems/feudLedger.js); AUDIT 2: whether it counts whole for a per-blow charge",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -1193,8 +1193,8 @@
   {
     "name": "TWOHANDS-AUDIT2-swing-hands-no-weight",
     "file": "src/combat/playerWeapon.js",
-    "old": "if (off) { opts.toHitMod += offToHit; Object.assign(opts, OFF_HAND_BLOW); }",
-    "new": "if (off) { opts.toHitMod += offToHit; opts.blowShare = OFF_HAND_BLOW.blowShare; }",
+    "old": "        Object.assign(opts, OFF_HAND_BLOW);",
+    "new": "        opts.blowShare = OFF_HAND_BLOW.blowShare;",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -1202,8 +1202,8 @@
   {
     "name": "TWOHANDS-AUDIT2-core-not-handed-the-share",
     "file": "src/combat/formulas.js",
-    "old": "onStruck: (part) => (struckPart = part), unaware, blowShare }) : undefined;",
-    "new": "onStruck: (part) => (struckPart = part), unaware }) : undefined;",
+    "old": "        blowShare,\n      })",
+    "new": "      })",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -1211,8 +1211,8 @@
   {
     "name": "TWOHANDS-AUDIT2-shared-twice-under-a-core",
     "file": "src/combat/formulas.js",
-    "old": "damage = notes.shared ? overridden : shared(overridden);",
-    "new": "damage = shared(overridden);",
+    "old": "    damage = notes.shared ? overridden : shared(overridden);",
+    "new": "    damage = shared(overridden);",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -1220,8 +1220,8 @@
   {
     "name": "TWOHANDS-AUDIT2-pcaao-never-shares",
     "file": "src/combat/pcaao.js",
-    "old": "  damage = shared(damage);\n  // WEAR-VANILLA",
-    "new": "  // WEAR-VANILLA",
+    "old": "  damage = shared(damage);\n  // WEAR-VANILLA, the module off: FormulaHelper's DamageEquipment (formulas.js damageEquipment, Roleplay Realism's slot",
+    "new": "  // WEAR-VANILLA, the module off: FormulaHelper's DamageEquipment (formulas.js damageEquipment, Roleplay Realism's slot",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -1229,8 +1229,8 @@
   {
     "name": "TWOHANDS-AUDIT2-pcaao-does-not-say",
     "file": "src/combat/pcaao.js",
-    "old": "  if (blowShare && notes) notes.shared = true;\n",
-    "new": "",
+    "old": "  if (blowShare && notes) notes.shared = true;\n  if (modules.equipmentDamageEnhanced)",
+    "new": "  if (modules.equipmentDamageEnhanced)",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -1256,8 +1256,8 @@
   {
     "name": "TWOHANDS-AUDIT2-blow-always-whole",
     "file": "src/combat/playerWeapon.js",
-    "old": "get blowWeight() { return this.offStrike ? OFF_HAND_BLOW.blowWeight : 1; }",
-    "new": "get blowWeight() { return 1; }",
+    "old": "    return this.offStrike ? OFF_HAND_BLOW.blowWeight : 1;",
+    "new": "    return 1;",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -1320,8 +1320,8 @@
   {
     "name": "TWOHANDS-AUDIT2-beast-h-loses-the-claws",
     "file": "src/combat/playerWeapon.js",
-    "old": "if (apply) this.applyWeapon(this.weapon?.werecreatureClaws ? this.weapon : null);",
-    "new": "if (apply) this.applyWeapon();",
+    "old": "    if (apply) this.applyWeapon(this.weapon?.werecreatureClaws ? this.weapon : null);",
+    "new": "    if (apply) this.applyWeapon();",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -1329,8 +1329,8 @@
   {
     "name": "TWOHANDS-AUDIT2-off-surety-the-sheet",
     "file": "src/combat/playerWeapon.js",
-    "old": "offHandToHit(playerCombat ? liveStat(playerCombat, 'agility') : 50)",
-    "new": "offHandToHit(playerCombat ? playerCombat.stats.agility : 50)",
+    "old": "    const offToHit = off ? offHandToHit(playerCombat ? liveStat(playerCombat, 'agility') : 50) : 0;",
+    "new": "    const offToHit = off ? offHandToHit(playerCombat ? playerCombat.stats.agility : 50) : 0;",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -1338,8 +1338,8 @@
   {
     "name": "TWOHANDS-AUDIT2-duel-surety-fixed",
     "file": "src/combat/duelCombat.js",
-    "old": "offHandToHit(stub.stats.agility)",
-    "new": "offHandToHit(50)",
+    "old": "    toHitMod: swing.toHit + (off ? offHandToHit(stub.stats.agility) : 0),",
+    "new": "    toHitMod: swing.toHit + (off ? offHandToHit(50) : 0),",
     "tests": [
       "test/combat/twohands.test.js"
     ]

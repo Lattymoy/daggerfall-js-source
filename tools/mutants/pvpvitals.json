@@ -160,8 +160,8 @@
   {
     "name": "BOW-FAST-skip-unread",
     "file": "src/combat/duelCombat.js",
-    "old": "bowFastDamage(d.relayCut ? { ...landingShaft(), fast: 0 } : landingShaft(),",
-    "new": "bowFastDamage(landingShaft(),",
+    "old": "  const n =\n    d.by === 'arrow'\n      ? bowFastDamage(\n          d.relayCut ? { ...landingShaft(), fast: 0 } : landingShaft(),\n          Math.floor(scaled * pvpArrowScale(d.a?.pl)),\n        )\n      : scaled; // PVP-TRIANGLE: an arrow's; BOW-FAST: its stacks (the relay's to cut, `relayCut`: its pull alone)",
+    "new": "  const n = d.by === 'arrow' ? bowFastDamage(landingShaft(), Math.floor(scaled * pvpArrowScale(d.a?.pl))) : scaled; // PVP-TRIANGLE: an arrow's; BOW-FAST: its stacks (the relay's to cut, `relayCut`: its pull alone)",
     "tests": [
       "test/net/pvpvitals.test.js"
     ],

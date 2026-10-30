@@ -48,8 +48,8 @@
   {
     "name": "ACCOMPARE-a-struck-table-entry-moved",
     "file": "src/combat/formulas.js",
-    "old": "export const STRUCK_BODY_PARTS = Object.freeze([0, 0, 1, 1, 1,",
-    "new": "export const STRUCK_BODY_PARTS = Object.freeze([0, 1, 1, 1, 1,",
+    "old": "export const STRUCK_BODY_PARTS = Object.freeze([0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 6]);",
+    "new": "export const STRUCK_BODY_PARTS = Object.freeze([0, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 6]);",
     "tests": [
       "test/systems/fb0929d_accompare.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "ACCOMPARE-the-formulas-read-the-wrong-name",
     "file": "src/combat/formulas.js",
-    "old": "_overrides.get('struckBodyPartTable')?.()",
-    "new": "_overrides.get('struckBodyParts')?.()",
+    "old": "export const struckBodyPartTable = () => _overrides.get('struckBodyPartTable')?.() ?? STRUCK_BODY_PARTS;",
+    "new": "export const struckBodyPartTable = () => _overrides.get('struckBodyParts')?.() ?? STRUCK_BODY_PARTS;",
     "tests": [
       "test/systems/fb0929d_accompare.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "ACCOMPARE-the-overhauls-table-off-its-switch",
     "file": "src/combat/pcaao.js",
-    "old": "registerFormulaOverride('struckBodyPartTable', () => (modules().armorHitFormulaRedone ? PCAAO_BODY_PARTS : undefined));",
-    "new": "registerFormulaOverride('struckBodyPartTable', () => PCAAO_BODY_PARTS);",
+    "old": "  registerFormulaOverride('struckBodyPartTable', () =>\n    modules().armorHitFormulaRedone ? PCAAO_BODY_PARTS : undefined,\n  );",
+    "new": "  registerFormulaOverride('struckBodyPartTable', () => PCAAO_BODY_PARTS);",
     "tests": [
       "test/systems/fb0929d_accompare.test.js"
     ]
@@ -75,7 +75,7 @@
   {
     "name": "ACCOMPARE-the-overhauls-table-never-registered",
     "file": "src/combat/pcaao.js",
-    "old": "registerFormulaOverride('struckBodyPartTable', () => (modules().armorHitFormulaRedone ? PCAAO_BODY_PARTS : undefined));",
+    "old": "  registerFormulaOverride('struckBodyPartTable', () =>\n    modules().armorHitFormulaRedone ? PCAAO_BODY_PARTS : undefined,\n  );",
     "new": "",
     "tests": [
       "test/systems/fb0929d_accompare.test.js"
@@ -84,8 +84,8 @@
   {
     "name": "ACCOMPARE-the-uninstall-leaves-the-table",
     "file": "src/combat/pcaao.js",
-    "old": "  registerFormulaOverride('struckBodyPartTable', null);   // AC-COMPARE\n",
-    "new": "",
+    "old": "  registerFormulaOverride('struckBodyPartTable', null); // AC-COMPARE\n  registerFormulaOverride('adjustWeaponHitChanceMod', null);",
+    "new": "  registerFormulaOverride('adjustWeaponHitChanceMod', null);",
     "tests": [
       "test/systems/fb0929d_accompare.test.js"
     ]

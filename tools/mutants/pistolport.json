@@ -236,8 +236,8 @@
   {
     "name": "PW-one-pistol-on-the-pair-trigger",
     "file": "src/combat/playerWeapon.js",
-    "old": "const trigger = pair ? PAIR_TRIGGER.Alternate : PAIR_TRIGGER.Single;",
-    "new": "const trigger = PAIR_TRIGGER.Alternate;",
+    "old": "    const trigger = pair ? PAIR_TRIGGER.Alternate : PAIR_TRIGGER.Single;",
+    "new": "    const trigger = PAIR_TRIGGER.Alternate;",
     "tests": [
       "test/combat/gun/pistolport.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "PW-one-pistol-always-the-right",
     "file": "src/combat/playerWeapon.js",
-    "old": "(held === this.handItem('L') && held !== this.handItem('R') ? 'L' : 'R')",
-    "new": "'R'",
+    "old": "    this.pistols.lead = pair\n      ? this.leadHand\n      : (gh ?? (held === this.handItem('L') && held !== this.handItem('R') ? 'L' : 'R'));",
+    "new": "    this.pistols.lead = pair ? this.leadHand : (gh ?? 'R');",
     "tests": [
       "test/combat/gun/pistolport.test.js",
       "test/combat/pistolet_law.test.js"
@@ -255,8 +255,8 @@
   {
     "name": "PW-reload-forgets-the-frames",
     "file": "src/combat/playerWeapon.js",
-    "old": "return Math.max(0, g.frames / g.fps - g._t) + g.cooldownMs / 1000;",
-    "new": "return g.cooldownMs / 1000;",
+    "old": "    return Math.max(0, g.frames / g.fps - g._t) + g.cooldownMs / 1000; // THUNDERLOCK-ART2's audit: the machine's own cycle length, never the lab sheet's",
+    "new": "    return g.cooldownMs / 1000; // THUNDERLOCK-ART2's audit: the machine's own cycle length, never the lab sheet's",
     "tests": [
       "test/combat/gun/pistolport.test.js",
       "test/combat/pistolet_law.test.js",
@@ -266,8 +266,8 @@
   {
     "name": "PW-mirror-first-firing",
     "file": "src/combat/playerWeapon.js",
-    "old": "const h = firing.includes(p.last) ? p.last : firing[0];",
-    "new": "const h = firing[0];",
+    "old": "    const h = firing.includes(p.last) ? p.last : firing[0];",
+    "new": "    const h = firing[0];",
     "tests": [
       "test/combat/gun/pistolport.test.js",
       "test/combat/weapon/pistoletRig.test.js"
@@ -276,8 +276,8 @@
   {
     "name": "PW-mirror-waits-for-both",
     "file": "src/combat/playerWeapon.js",
-    "old": "m.now + Math.min(...hands.map((x) => this._pistolLeft(x)));",
-    "new": "m.now + Math.max(...hands.map((x) => this._pistolLeft(x)));",
+    "old": "      : m.now + Math.min(...hands.map((x) => this._pistolLeft(x))); // AUDIT MIXED-PAIR L1-5: and what the machine was owed when the pistols took it (AUDIT PISTOL-PORT C1)",
+    "new": "      : m.now + Math.max(...hands.map((x) => this._pistolLeft(x))); // AUDIT MIXED-PAIR L1-5: and what the machine was owed when the pistols took it (AUDIT PISTOL-PORT C1)",
     "tests": [
       "test/combat/gun/pistolport.test.js",
       "test/combat/pistolet_law.test.js",
@@ -287,8 +287,8 @@
   {
     "name": "PW-technique-to-the-off-hand",
     "file": "src/combat/playerWeapon.js",
-    "old": "const fired = lead ? p.fireHand(p.lead) : p.pull(0);",
-    "new": "const fired = p.pull(0);",
+    "old": "    const fired = lead ? p.fireHand(p.lead) : p.pull(0);",
+    "new": "    const fired = p.pull(0);",
     "tests": [
       "test/combat/gun/pistolport.test.js",
       "test/combat/pistolet_law.test.js"
@@ -297,8 +297,8 @@
   {
     "name": "PW-off-hand-full-blow",
     "file": "src/combat/playerWeapon.js",
-    "old": "off: pair && h !== this.leadHand };",
-    "new": "off: false };",
+    "old": "    this._pistolStrikes[h] = s ?? {\n      hand: pair ? h : this.leadHand,\n      flurry: !!p.lastShot?.flurry,\n      off: pair && h !== this.leadHand,\n    };",
+    "new": "    this._pistolStrikes[h] = s ?? { hand: pair ? h : this.leadHand, flurry: !!p.lastShot?.flurry, off: false };",
     "tests": [
       "test/combat/gun/pistolport.test.js"
     ]
@@ -306,8 +306,8 @@
   {
     "name": "PW-hit-wears-the-last-pull",
     "file": "src/combat/playerWeapon.js",
-    "old": "      this.strike = this._pistolStrikes[h] ?? this.strike;\n      if (this.gunPair) this.weapon = this.handItem(h);\n",
-    "new": "",
+    "old": "      this.strike = this._pistolStrikes[h] ?? this.strike;\n      if (this.gunPair) this.weapon = this.handItem(h);\n      this._shotHand = h;",
+    "new": "      this._shotHand = h;",
     "tests": [
       "test/combat/gun/pistolport.test.js"
     ]
@@ -315,8 +315,8 @@
   {
     "name": "PW-pistol-on-the-classic-machine",
     "file": "src/combat/playerWeapon.js",
-    "old": "    if (this._pistolsFor()) return this._pistolShot(state, lead);   // PISTOL-PORT: a Pistolet's pull is the page's\n",
-    "new": "",
+    "old": "    if (this._pistolsFor()) return this._pistolShot(state, lead); // PISTOL-PORT: a Pistolet's pull is the page's\n    return this._swing(state, lead ? { hand: this.leadHand, flurry: false, off: false } : this._nextStrike());",
+    "new": "    return this._swing(state, lead ? { hand: this.leadHand, flurry: false, off: false } : this._nextStrike());",
     "tests": [
       "test/combat/gun/pistolport.test.js",
       "test/systems/pistolet.test.js"
@@ -325,8 +325,8 @@
   {
     "name": "PW-strike-never-ends",
     "file": "src/combat/playerWeapon.js",
-    "old": "      evs.push('done');\n",
-    "new": "",
+    "old": "      evs.push('done');\n      // MIXED-PAIR: a blade-and-gun pair's exchange is the classic clock's, the blade's and the shot's alike - the shot's end",
+    "new": "      // MIXED-PAIR: a blade-and-gun pair's exchange is the classic clock's, the blade's and the shot's alike - the shot's end",
     "tests": [
       "test/combat/gun/pistolport.test.js",
       "test/combat/weapon/pistoletRig.test.js",
@@ -336,8 +336,8 @@
   {
     "name": "PW-reloading-pistol-loaded",
     "file": "src/combat/playerWeapon.js",
-    "old": "handLoaded(hand) { return this.pistols ? this.pistols[hand].state === 'Idle' : true; }",
-    "new": "handLoaded(hand) { return true; }",
+    "old": "    return this.pistols ? this.pistols[hand].state === 'Idle' : true;",
+    "new": "    return true;",
     "tests": [
       "test/combat/gun/pistolport.test.js",
       "test/combat/pistolet_law.test.js",
@@ -484,8 +484,8 @@
   {
     "name": "PW-swap-skips-the-reload",
     "file": "src/combat/playerWeapon.js",
-    "old": "this.pistols ??= this._pistolsAway ?? createPair(",
-    "new": "this.pistols ??= createPair(",
+    "old": "    this.pistols ??=\n      this._pistolsAway ??\n      createPair({\n        trigger,\n        fps: PISTOLET_FEEL.fps,\n        cooldownMs: PISTOLET_FEEL.reloadMs,\n        hitFrame: PISTOLET_FEEL.hitFrame,\n      });",
+    "new": "    this.pistols ??= createPair({\n      trigger,\n      fps: PISTOLET_FEEL.fps,\n      cooldownMs: PISTOLET_FEEL.reloadMs,\n      hitFrame: PISTOLET_FEEL.hitFrame,\n    });",
     "tests": [
       "test/combat/gun/pistolport.test.js"
     ]
@@ -493,8 +493,8 @@
   {
     "name": "PW-put-by-pistols-frozen",
     "file": "src/combat/playerWeapon.js",
-    "old": "    (pistols ?? this._pistolsAway)?.step(dt);",
-    "new": "    pistols?.step(dt);",
+    "old": "    (pistols ?? this._pistolsAway)?.step(dt); // and pistols put by for another weapon reload on (MIXED-PAIR: the pair's gun beside its blade)",
+    "new": "    pistols?.step(dt); // and pistols put by for another weapon reload on (MIXED-PAIR: the pair's gun beside its blade)",
     "tests": [
       "test/combat/gun/pistolport.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "AUDITMS-L1-1-held-shot-the-blades",
     "file": "src/combat/playerWeapon.js",
-    "old": "    if (this.mixedPair && this._gunStriking()) return /** @type {'R'|'L'} */ (this.gunHand);\n",
-    "new": "",
+    "old": "    if (this.mixedPair && this._gunStriking()) return /** @type {'R'|'L'} */ (this.gunHand);\n    if (this.gunPair && this._shotHand && this.shotHeld() === true) return this._shotHand;",
+    "new": "    if (this.gunPair && this._shotHand && this.shotHeld() === true) return this._shotHand;",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "AUDITMS-L1-1-gun-pair-held-shot-the-leads",
     "file": "src/combat/playerWeapon.js",
-    "old": "    if (this.gunPair && this._shotHand && this.shotHeld() === true) return this._shotHand;\n",
-    "new": "",
+    "old": "    if (this.gunPair && this._shotHand && this.shotHeld() === true) return this._shotHand;\n    return twoHanded(this.handsMode) && this.strike && this.machine.state !== 'Idle' ? this.strike.hand : this.leadHand;",
+    "new": "    return twoHanded(this.handsMode) && this.strike && this.machine.state !== 'Idle' ? this.strike.hand : this.leadHand;",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDITMS-L1-4-gun-striking-by-hand",
     "file": "src/combat/playerWeapon.js",
-    "old": "  _gunStriking() { return !!this.gunHand && (this._shotMirror || this.shotHeld() === true); }",
-    "new": "  _gunStriking() { return !!this.gunHand && ((!!this.strike && this.strike.hand === this.gunHand) || this.shotHeld() === true); }",
+    "old": "    return !!this.gunHand && (this._shotMirror || this.shotHeld() === true);",
+    "new": "    return !!this.gunHand && ((!!this.strike && this.strike.hand === this.gunHand) || this.shotHeld() === true);",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDITMS-L1-4-mirror-never-marked",
     "file": "src/combat/playerWeapon.js",
-    "old": "    this.strike = this._pistolStrikes[h];\n    this._shotMirror = true;",
-    "new": "    this.strike = this._pistolStrikes[h];",
+    "old": "    this._shotMirror = true;\n    if (pair || s) this.weapon = this.handItem(h);",
+    "new": "    if (pair || s) this.weapon = this.handItem(h);",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDITMS-L1-1-shot-hand-unkept",
     "file": "src/combat/playerWeapon.js",
-    "old": "      this._shotHand = h;\n",
-    "new": "",
+    "old": "      this._shotHand = h;\n      evs.push('hit');",
+    "new": "      evs.push('hit');",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDITMS-L1-6-reload-share-dropped",
     "file": "src/combat/playerWeapon.js",
-    "old": "      if (g.state === 'Cooling' && g.cooldownMs > 0) g._cool *= ms / g.cooldownMs;\n",
-    "new": "",
+    "old": "      if (g.state === 'Cooling' && g.cooldownMs > 0) g._cool *= ms / g.cooldownMs;\n      g.cooldownMs = ms;",
+    "new": "      g.cooldownMs = ms;",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDITMS-L1-5-mirror-wipes-owed",
     "file": "src/combat/playerWeapon.js",
-    "old": "m.cooldownUntil = this.mixedPair ? Math.max(m.now, this._classicCooldown) :",
-    "new": "m.cooldownUntil = this.mixedPair ? m.now :",
+    "old": "    m.cooldownUntil = this.mixedPair\n      ? Math.max(m.now, this._classicCooldown)\n      : m.now + Math.min(...hands.map((x) => this._pistolLeft(x))); // AUDIT MIXED-PAIR L1-5: and what the machine was owed when the pistols took it (AUDIT PISTOL-PORT C1)",
+    "new": "    m.cooldownUntil = this.mixedPair ? m.now : m.now + Math.min(...hands.map((x) => this._pistolLeft(x))); // AUDIT MIXED-PAIR L1-5: and what the machine was owed when the pistols took it (AUDIT PISTOL-PORT C1)",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -65,7 +65,7 @@
   {
     "name": "AUDITMS-L1-5-putby-wipes-owed",
     "file": "src/combat/playerWeapon.js",
-    "old": "    if (this._bladeTurn) { m.cooldownUntil = Math.max(this._classicCooldown, m.cooldownUntil); return; }",
+    "old": "    if (this._bladeTurn) {\n      m.cooldownUntil = Math.max(this._classicCooldown, m.cooldownUntil);\n      return;\n    }",
     "new": "    if (this._bladeTurn) return;",
     "equivalent": true,
     "why": "Belt-and-braces: while the pistols hold the machine nothing lowers its cooldown below _classicCooldown - the mirror keeps it (AUDITMS-L1-5-mirror-wipes-owed, pinned) and the blade's own blow cannot start before it - so the put-by's max restates a bound that already holds.",
@@ -76,8 +76,8 @@
   {
     "name": "AUDITMS-L1-3-reload-edge-unsettled",
     "file": "src/combat/playerWeapon.js",
-    "old": "    settleReload(p?.[gh]);\n",
-    "new": "",
+    "old": "    settleReload(p?.[gh]);\n    const gunReady = !!p && p[gh].state === 'Idle' && this.gunReady() !== false;",
+    "new": "    const gunReady = !!p && p[gh].state === 'Idle' && this.gunReady() !== false;",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -603,8 +603,8 @@
   {
     "name": "AUDITMS-L5-gunHand-any-mode",
     "file": "src/combat/playerWeapon.js",
-    "old": "return this.handsMode === HANDS_MODE.Dual ? gunHandOf(handDesc(this.handItem('R')), handDesc(this.handItem('L'))) : null;",
-    "new": "return gunHandOf(handDesc(this.handItem('R')), handDesc(this.handItem('L')));",
+    "old": "    return this.handsMode === HANDS_MODE.Dual\n      ? gunHandOf(handDesc(this.handItem('R')), handDesc(this.handItem('L')))\n      : null;",
+    "new": "    return gunHandOf(handDesc(this.handItem('R')), handDesc(this.handItem('L')));",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -612,8 +612,8 @@
   {
     "name": "AUDITMS-L5-pistolsFor-blade-held",
     "file": "src/combat/playerWeapon.js",
-    "old": "const held = pair ? this.handItem('R') : gh ? this.handItem(gh) : (",
-    "new": "const held = pair ? this.handItem('R') : (",
+    "old": "    const held = pair\n      ? this.handItem('R')\n      : gh\n        ? this.handItem(gh)\n        : (this.weapon ?? (this.sheathed ? this.handItem(this.leadHand) : null));",
+    "new": "    const held = pair ? this.handItem('R') : (this.weapon ?? (this.sheathed ? this.handItem(this.leadHand) : null));",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -621,8 +621,8 @@
   {
     "name": "AUDITMS-L5-pistolShot-strike-unread",
     "file": "src/combat/playerWeapon.js",
-    "old": "this._pistolStrikes[h] = s ?? {",
-    "new": "this._pistolStrikes[h] = {",
+    "old": "    this._pistolStrikes[h] = s ?? {",
+    "new": "    this._pistolStrikes[h] = {",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -630,8 +630,8 @@
   {
     "name": "AUDITMS-L5-pistolShot-weapon-unset",
     "file": "src/combat/playerWeapon.js",
-    "old": "if (pair || s) this.weapon = this.handItem(h);",
-    "new": "if (pair) this.weapon = this.handItem(h);",
+    "old": "    if (pair || s) this.weapon = this.handItem(h);",
+    "new": "    if (pair) this.weapon = this.handItem(h);",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -639,8 +639,8 @@
   {
     "name": "AUDITMS-L5-mixedAttack-gunReady-unasked",
     "file": "src/combat/playerWeapon.js",
-    "old": "if (s.hand === gh) return gunReady && this._pistolShot(state, true, s);",
-    "new": "if (s.hand === gh) return this._pistolShot(state, true, s);",
+    "old": "    if (s.hand === gh) return gunReady && this._pistolShot(state, true, s);",
+    "new": "    if (s.hand === gh) return this._pistolShot(state, true, s);",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -648,8 +648,8 @@
   {
     "name": "AUDITMS-L5-mixedAttack-held-shot-unasked",
     "file": "src/combat/playerWeapon.js",
-    "old": "if (this.machine.state !== 'Idle' || this._gunStriking()) return false;",
-    "new": "if (this.machine.state !== 'Idle') return false;",
+    "old": "    if (this.machine.state !== 'Idle' || this._gunStriking()) return false;",
+    "new": "    if (this.machine.state !== 'Idle') return false;",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -657,8 +657,8 @@
   {
     "name": "AUDITMS-L5-update-type-of-weapon",
     "file": "src/combat/playerWeapon.js",
-    "old": "const t = weaponTypeForItem(blade ?? this.weapon);",
-    "new": "const t = weaponTypeForItem(this.weapon);",
+    "old": "    const t = weaponTypeForItem(blade ?? this.weapon);",
+    "new": "    const t = weaponTypeForItem(this.weapon);",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -666,8 +666,8 @@
   {
     "name": "AUDITMS-L5-update-blade-on-pistol-step",
     "file": "src/combat/playerWeapon.js",
-    "old": "if (pistols && !blade) return this._pistolsStep(dt);",
-    "new": "if (pistols) return this._pistolsStep(dt);",
+    "old": "    if (pistols && !blade) return this._pistolsStep(dt); // PISTOL-PORT: a Pistolet steps on the pistol lab's machines",
+    "new": "    if (pistols) return this._pistolsStep(dt); // PISTOL-PORT: a Pistolet steps on the pistol lab's machines",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]

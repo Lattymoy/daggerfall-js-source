@@ -74,8 +74,8 @@
   {
     "name": "F2-nearest-vertex-is-the-muzzle",
     "file": "src/combat/rigMuzzle.js",
-    "old": "    if (d > bestD) { bestD = d; best = i / 3; }",
-    "new": "    if (bestD < 0 || d < bestD) { bestD = d; best = i / 3; }",
+    "old": "    if (d > bestD) {",
+    "new": "    if (bestD < 0 || d < bestD) {",
     "tests": [
       "test/combat/fieldgunmwaudit.test.js"
     ]

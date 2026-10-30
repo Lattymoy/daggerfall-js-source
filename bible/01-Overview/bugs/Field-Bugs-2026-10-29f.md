@@ -225,7 +225,7 @@ a second weapon's free hand, an H swap, a drop on L-Hand - was never swung: the 
 the classic lane swung fists, training Hand-to-Hand.
 
 FIXED. When what the hands hold changes, an empty hand in use gives way to a lone weapon in the other
-(`combat/playerWeapon.js:"if (changed && !restored) this.followHeldHand();"`). H still picks the bare hand after, and a
+(`combat/playerWeapon.js:"if (changed && !restored)"`). H still picks the bare hand after, and a
 hand restored from a save is kept - one saved before this follows once. The swap key sets the hand where the
 weapon lands, never toggles it, and its bare hands stay bare (AUDIT FB1029f D1, D2, D4).
 

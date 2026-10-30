@@ -128,8 +128,8 @@
   {
     "name": "AUDIT-DUEL1-B6-the-trail-unread",
     "file": "src/combat/duelCombat.js",
-    "old": "  if (melee) return mines.some((m) => {",
-    "new": "  if (melee) return [mines.at(-1)].some((m) => {",
+    "old": "    return mines.some((m) => {",
+    "new": "    return [mines.at(-1)].some((m) => {",
     "tests": [
       "test/combat/auditduel1.test.js"
     ]

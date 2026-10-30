@@ -23,58 +23,79 @@
 // symmetric states, as FPSWeapon :378-388 and :459-464 have them.
 
 import { CifRciFile } from '../formats/cifRciFile.js';
-import { getInt } from '../systems/settings/settings.js';   // AUDIT 28 W13: Controls/Handedness
-import { getPref } from '../systems/uiPrefs.js';   // MAC-I: the first-person lighting switch
-import { isEnchanted } from '../systems/inventory.js';   // AUDIT 17e C2
+import { getInt } from '../systems/settings/settings.js'; // AUDIT 28 W13: Controls/Handedness
+import { getPref } from '../systems/uiPrefs.js'; // MAC-I: the first-person lighting switch
+import { isEnchanted } from '../systems/inventory.js'; // AUDIT 17e C2
 import { WEAPONS, WEAPON_MATERIALS, weaponDyeColor } from '../characters/weapons.js';
-import { atlasFileName } from './diverseWeapons/diverseWeapons.js';   // DW1: FPSWeapon.cs:637-644 - the per-template name under Diverse Weapons' flag
-import { customWeaponImage } from './diverseWeapons/diverseWeaponsAssets.js';   // DW1: TryImportCifRci's answer, off the player's own bundles
-import { MATERIAL_NAMES } from '../systems/item/itemInfo.js';   // MetalTypes' names, for GetNameCifRci's suffix
-import { customItemClass } from '../systems/roleplayRealismItems/rriItems.js';   // RRI1: GetWeaponType is a virtual a custom class answers
-import { THUNDERLOCK_TEMPLATE, PISTOLET_TEMPLATE } from '../characters/thunderlockIds.js';   // the port's own weapon (a leaf - see the file)
-import { isHandWraps } from '../characters/handWrapsIds.js';   // HAND-WRAPS: the fists' weapon (a leaf)
-import { THUNDERLOCK_STRIP } from './gun/thunderlockStrip.js';   // THUNDERLOCK-ART2: each gun's cycle its strip's own frame count - leaves both
+import { atlasFileName } from './diverseWeapons/diverseWeapons.js'; // DW1: FPSWeapon.cs:637-644 - the per-template name under Diverse Weapons' flag
+import { customWeaponImage } from './diverseWeapons/diverseWeaponsAssets.js'; // DW1: TryImportCifRci's answer, off the player's own bundles
+import { MATERIAL_NAMES } from '../systems/item/itemInfo.js'; // MetalTypes' names, for GetNameCifRci's suffix
+import { customItemClass } from '../systems/roleplayRealismItems/rriItems.js'; // RRI1: GetWeaponType is a virtual a custom class answers
+import { THUNDERLOCK_TEMPLATE, PISTOLET_TEMPLATE } from '../characters/thunderlockIds.js'; // the port's own weapon (a leaf - see the file)
+import { isHandWraps } from '../characters/handWrapsIds.js'; // HAND-WRAPS: the fists' weapon (a leaf)
+import { THUNDERLOCK_STRIP } from './gun/thunderlockStrip.js'; // THUNDERLOCK-ART2: each gun's cycle its strip's own frame count - leaves both
 import { PISTOL_STRIP } from './gun/pistolStrip.js';
 import { applyDyeToIndex, DYE_TARGETS } from '../characters/dyes.js';
 
 // WeaponTypes (DaggerfallUnityEnums), the animation-set ids.
 export const WEAPON_TYPES = Object.freeze({
   None: -1,
-  LongBlade: 0, LongBlade_Magic: 1,
-  Staff: 2, Staff_Magic: 3,
-  Dagger: 4, Dagger_Magic: 5,
-  Mace: 6, Mace_Magic: 7,
-  Flail: 8, Flail_Magic: 9,
-  Warhammer: 10, Warhammer_Magic: 11,
-  Battleaxe: 12, Battleaxe_Magic: 13,
-  Bow: 14, Melee: 15, Werecreature: 16,
+  LongBlade: 0,
+  LongBlade_Magic: 1,
+  Staff: 2,
+  Staff_Magic: 3,
+  Dagger: 4,
+  Dagger_Magic: 5,
+  Mace: 6,
+  Mace_Magic: 7,
+  Flail: 8,
+  Flail_Magic: 9,
+  Warhammer: 10,
+  Warhammer_Magic: 11,
+  Battleaxe: 12,
+  Battleaxe_Magic: 13,
+  Bow: 14,
+  Melee: 15,
+  Werecreature: 16,
   // THE PORT'S OWN, past the end of DFU's enum so nothing classic
   // shifts: the Dwarven Thunderlock (systems/thunderlock.js). It has
   // no WEAPON*.CIF - its frames come off one sheet, which is why
   // WEAPON_FILE below has no row for it and combat/thunderlockArt.js
   // loads it instead.
-  Thunderlock: 17, Thunderlock_Magic: 18,
+  Thunderlock: 17,
+  Thunderlock_Magic: 18,
   // PISTOLET (2026-10-21): the Dwarven Pistolet, the second gun, on the same terms - its frames off one strip
   // (combat/gun/pistoletArt.js), no WEAPON*.CIF.
-  Pistolet: 19, Pistolet_Magic: 20,
+  Pistolet: 19,
+  Pistolet_Magic: 20,
 });
 
 /** PISTOLET: is this weapon type one of the port's own guns - the Thunderlock or the Pistolet, plain or enchanted? The one
  *  question the machine, the rig and the arm ask of a gun that is not about which gun. */
-export const isGunType = (t) => t === WEAPON_TYPES.Thunderlock || t === WEAPON_TYPES.Thunderlock_Magic
-  || t === WEAPON_TYPES.Pistolet || t === WEAPON_TYPES.Pistolet_Magic;
+export const isGunType = (t) =>
+  t === WEAPON_TYPES.Thunderlock ||
+  t === WEAPON_TYPES.Thunderlock_Magic ||
+  t === WEAPON_TYPES.Pistolet ||
+  t === WEAPON_TYPES.Pistolet_Magic;
 /** PISTOLET: the Pistolet's types, plain or enchanted. */
 export const isPistoletType = (t) => t === WEAPON_TYPES.Pistolet || t === WEAPON_TYPES.Pistolet_Magic;
 
 // GetWeaponFilename, verbatim.
 export const WEAPON_FILE = Object.freeze({
-  [WEAPON_TYPES.LongBlade]: 'WEAPON04.CIF', [WEAPON_TYPES.LongBlade_Magic]: 'WEAPO104.CIF',
-  [WEAPON_TYPES.Staff]: 'WEAPON01.CIF', [WEAPON_TYPES.Staff_Magic]: 'WEAPO101.CIF',
-  [WEAPON_TYPES.Dagger]: 'WEAPON02.CIF', [WEAPON_TYPES.Dagger_Magic]: 'WEAPO102.CIF',
-  [WEAPON_TYPES.Mace]: 'WEAPON05.CIF', [WEAPON_TYPES.Mace_Magic]: 'WEAPO105.CIF',
-  [WEAPON_TYPES.Flail]: 'WEAPON06.CIF', [WEAPON_TYPES.Flail_Magic]: 'WEAPO106.CIF',
-  [WEAPON_TYPES.Warhammer]: 'WEAPON07.CIF', [WEAPON_TYPES.Warhammer_Magic]: 'WEAPO107.CIF',
-  [WEAPON_TYPES.Battleaxe]: 'WEAPON08.CIF', [WEAPON_TYPES.Battleaxe_Magic]: 'WEAPO108.CIF',
+  [WEAPON_TYPES.LongBlade]: 'WEAPON04.CIF',
+  [WEAPON_TYPES.LongBlade_Magic]: 'WEAPO104.CIF',
+  [WEAPON_TYPES.Staff]: 'WEAPON01.CIF',
+  [WEAPON_TYPES.Staff_Magic]: 'WEAPO101.CIF',
+  [WEAPON_TYPES.Dagger]: 'WEAPON02.CIF',
+  [WEAPON_TYPES.Dagger_Magic]: 'WEAPO102.CIF',
+  [WEAPON_TYPES.Mace]: 'WEAPON05.CIF',
+  [WEAPON_TYPES.Mace_Magic]: 'WEAPO105.CIF',
+  [WEAPON_TYPES.Flail]: 'WEAPON06.CIF',
+  [WEAPON_TYPES.Flail_Magic]: 'WEAPO106.CIF',
+  [WEAPON_TYPES.Warhammer]: 'WEAPON07.CIF',
+  [WEAPON_TYPES.Warhammer_Magic]: 'WEAPO107.CIF',
+  [WEAPON_TYPES.Battleaxe]: 'WEAPON08.CIF',
+  [WEAPON_TYPES.Battleaxe_Magic]: 'WEAPO108.CIF',
   [WEAPON_TYPES.Bow]: 'WEAPON09.CIF',
   [WEAPON_TYPES.Melee]: 'WEAPON10.CIF',
   [WEAPON_TYPES.Werecreature]: 'WEAPON11.CIF',
@@ -90,8 +111,8 @@ import { ALIGN } from './weapon/weaponAlign.js';
 // AUDIT 24 (wave 24): the classic 320x200 panel has one home in
 // ui/native/nativePanel.js.
 import { NATIVE_W, NATIVE_H } from '../ui/native/nativePanel.js';
-import { weaponOffsetHeight } from '../ui/hud/hudLarge.js';   // ROAD-D D10: LargeHUDUndockedOffsetWeapon / the docked force
-import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
+import { weaponOffsetHeight } from '../ui/hud/hudLarge.js'; // ROAD-D D10: LargeHUDUndockedOffsetWeapon / the docked force
+import { pageParam } from '../systems/pageQuery.js'; // PERF-URL: the page's query, parsed once a search
 
 export { NATIVE_W, NATIVE_H };
 
@@ -99,12 +120,20 @@ export { NATIVE_W, NATIVE_H };
 // enum's comment IS the record mapping for most sets; MagicBattleAxe
 // shuffles records, which is why the tables carry Record explicitly).
 export const STATE_INDEX = Object.freeze({
-  Idle: 0, StrikeDown: 1, StrikeDownLeft: 2, StrikeLeft: 3,
-  StrikeRight: 4, StrikeDownRight: 5, StrikeUp: 6,
+  Idle: 0,
+  StrikeDown: 1,
+  StrikeDownLeft: 2,
+  StrikeLeft: 3,
+  StrikeRight: 4,
+  StrikeDownRight: 5,
+  StrikeUp: 6,
 });
 
 // WeaponBasics animation speeds (frames per second).
-const IDLE_FPS = 10, STRIKE_FPS = 10, WERE_FPS = 20, BOW_FPS = 10;
+const IDLE_FPS = 10,
+  STRIKE_FPS = 10,
+  WERE_FPS = 20,
+  BOW_FPS = 10;
 
 const A = (Record, NumFrames, FramePerSecond, Alignment, Offset) =>
   Object.freeze({ Record, NumFrames, FramePerSecond, Alignment, Offset });
@@ -150,7 +179,7 @@ export const MAGIC_BATTLEAXE_ANIMS = Object.freeze([
   A(0, 1, IDLE_FPS, ALIGN.Right, 0),
   A(1, 5, STRIKE_FPS, ALIGN.Right, 0),
   A(2, 5, STRIKE_FPS, ALIGN.Right, 0),
-  A(4, 5, STRIKE_FPS, ALIGN.Right, 0),   // records shuffled, verbatim
+  A(4, 5, STRIKE_FPS, ALIGN.Right, 0), // records shuffled, verbatim
   A(5, 5, STRIKE_FPS, ALIGN.Left, 0),
   A(3, 5, STRIKE_FPS, ALIGN.Left, 0),
   A(6, 5, STRIKE_FPS, ALIGN.Right, 0),
@@ -180,7 +209,11 @@ export const WERECREATURE_ANIMS = Object.freeze([
  *  frames, and every strike direction plays the same: a gun does not care
  *  which way you dragged. AlignRight, because that is where the lab
  *  settled it and where the classic weapons sit. */
-const gunAnims = (n) => Object.freeze([A(0, 1, IDLE_FPS, ALIGN.Right, 0), ...Array.from({ length: 6 }, () => A(1, n, STRIKE_FPS, ALIGN.Right, 0))]);
+const gunAnims = (n) =>
+  Object.freeze([
+    A(0, 1, IDLE_FPS, ALIGN.Right, 0),
+    ...Array.from({ length: 6 }, () => A(1, n, STRIKE_FPS, ALIGN.Right, 0)),
+  ]);
 /** The Thunderlock's: THUNDERLOCK-ART2 - the owner's seven frames (combat/thunderlockArt.js THUNDERLOCK_STRIP), the rest
  *  frame first and the flash on the second, as the six-frame sheet had them. */
 export const THUNDERLOCK_ANIMS = gunAnims(THUNDERLOCK_STRIP.frames);
@@ -190,8 +223,8 @@ export const PISTOLET_ANIMS = gunAnims(PISTOL_STRIP.frames);
 /** GetWeaponAnims, verbatim routing. */
 export function getWeaponAnims(weaponType) {
   const T = WEAPON_TYPES;
-  if (weaponType === T.Thunderlock || weaponType === T.Thunderlock_Magic) return THUNDERLOCK_ANIMS;   // the port's own, ahead of the verbatim routing
-  if (weaponType === T.Pistolet || weaponType === T.Pistolet_Magic) return PISTOLET_ANIMS;   // PISTOLET: an idle and six fire frames, AlignRight, every direction alike (THUNDERLOCK-ART2: its own table now - the Thunderlock plays seven)
+  if (weaponType === T.Thunderlock || weaponType === T.Thunderlock_Magic) return THUNDERLOCK_ANIMS; // the port's own, ahead of the verbatim routing
+  if (weaponType === T.Pistolet || weaponType === T.Pistolet_Magic) return PISTOLET_ANIMS; // PISTOLET: an idle and six fire frames, AlignRight, every direction alike (THUNDERLOCK-ART2: its own table now - the Thunderlock plays seven)
   if (weaponType === T.Melee) return MELEE_ANIMS;
   if (weaponType === T.Dagger || weaponType === T.Dagger_Magic) return DAGGER_ANIMS;
   if (weaponType === T.Staff || weaponType === T.Staff_Magic) return STAFF_ANIMS;
@@ -208,29 +241,40 @@ export function getWeaponAnims(weaponType) {
 export function plainWeaponType(type) {
   const T = WEAPON_TYPES;
   switch (type) {
-    case T.LongBlade_Magic: return T.LongBlade;
-    case T.Staff_Magic: return T.Staff;
-    case T.Dagger_Magic: return T.Dagger;
-    case T.Mace_Magic: return T.Mace;
-    case T.Flail_Magic: return T.Flail;
-    case T.Warhammer_Magic: return T.Warhammer;
-    case T.Battleaxe_Magic: return T.Battleaxe;
-    case T.Thunderlock_Magic: return T.Thunderlock;
-    case T.Pistolet_Magic: return T.Pistolet;
-    default: return type;
+    case T.LongBlade_Magic:
+      return T.LongBlade;
+    case T.Staff_Magic:
+      return T.Staff;
+    case T.Dagger_Magic:
+      return T.Dagger;
+    case T.Mace_Magic:
+      return T.Mace;
+    case T.Flail_Magic:
+      return T.Flail;
+    case T.Warhammer_Magic:
+      return T.Warhammer;
+    case T.Battleaxe_Magic:
+      return T.Battleaxe;
+    case T.Thunderlock_Magic:
+      return T.Thunderlock;
+    case T.Pistolet_Magic:
+      return T.Pistolet;
+    default:
+      return type;
   }
 }
 
 /** ConvertItemToAPIWeaponType, verbatim: template index -> animation
  *  set, then the enchanted promotion. Bare hands (no item) = Melee. */
 export function weaponTypeForItem(item) {
-  const W = WEAPONS, T = WEAPON_TYPES;
+  const W = WEAPONS,
+    T = WEAPON_TYPES;
   if (!item) return T.Melee;
   // V4: SetFPSWeapon's claws (LycanthropyEffect.cs:332-345) - the
   // transformed rig binds the WERECLAWS_ITEM marker, which is not a
   // template at all
   if (item.werecreatureClaws) return T.Werecreature;
-  if (isHandWraps(item)) return T.Melee;   // HAND-WRAPS: the bare hands' art and swing, never a magic sheet (Melee has none)
+  if (isHandWraps(item)) return T.Melee; // HAND-WRAPS: the bare hands' art and swing, never a magic sheet (Melee has none)
   // THE PORT'S OWN WEAPON, ahead of the verbatim switch so the switch
   // stays exactly ConvertItemToAPIWeaponType. It takes the enchanted
   // promotion the classic weapons take - there is no WEAPO1xx sheet
@@ -239,33 +283,74 @@ export function weaponTypeForItem(item) {
   if (item.templateIndex === THUNDERLOCK_TEMPLATE) {
     return isEnchanted(item) ? T.Thunderlock_Magic : T.Thunderlock;
   }
-  if (item.templateIndex === PISTOLET_TEMPLATE) return isEnchanted(item) ? T.Pistolet_Magic : T.Pistolet;   // PISTOLET: the same arm
-  const cls = customItemClass(item.templateIndex);   // RRI1: an Archer's Axe swings the battleaxe sheet, a Light Flail the flail's
+  if (item.templateIndex === PISTOLET_TEMPLATE) return isEnchanted(item) ? T.Pistolet_Magic : T.Pistolet; // PISTOLET: the same arm
+  const cls = customItemClass(item.templateIndex); // RRI1: an Archer's Axe swings the battleaxe sheet, a Light Flail the flail's
   if (cls?.weaponType) return T[cls.weaponType(isEnchanted(item))];
   let result;
   switch (item.templateIndex) {
-    case W.Dagger: result = T.Dagger; break;
-    case W.Staff: result = T.Staff; break;
-    case W.Tanto: case W.Shortsword: case W.Wakazashi: case W.Broadsword:
-    case W.Saber: case W.Longsword: case W.Katana: case W.Claymore:
-    case W.Dai_Katana: result = T.LongBlade; break;
-    case W.Mace: result = T.Mace; break;
-    case W.Flail: result = T.Flail; break;
-    case W.Warhammer: result = T.Warhammer; break;
-    case W.Battle_Axe: case W.War_Axe: result = T.Battleaxe; break;
-    case W.Short_Bow: case W.Long_Bow: result = T.Bow; break;
-    default: return T.None;
+    case W.Dagger:
+      result = T.Dagger;
+      break;
+    case W.Staff:
+      result = T.Staff;
+      break;
+    case W.Tanto:
+    case W.Shortsword:
+    case W.Wakazashi:
+    case W.Broadsword:
+    case W.Saber:
+    case W.Longsword:
+    case W.Katana:
+    case W.Claymore:
+    case W.Dai_Katana:
+      result = T.LongBlade;
+      break;
+    case W.Mace:
+      result = T.Mace;
+      break;
+    case W.Flail:
+      result = T.Flail;
+      break;
+    case W.Warhammer:
+      result = T.Warhammer;
+      break;
+    case W.Battle_Axe:
+    case W.War_Axe:
+      result = T.Battleaxe;
+      break;
+    case W.Short_Bow:
+    case W.Long_Bow:
+      result = T.Bow;
+      break;
+    default:
+      return T.None;
   }
-  if (isEnchanted(item)) {   // AUDIT 17e C2: the enchanted WEAPO1xx set was unreachable
+  if (isEnchanted(item)) {
+    // AUDIT 17e C2: the enchanted WEAPO1xx set was unreachable
     switch (result) {
-      case T.Dagger: result = T.Dagger_Magic; break;
-      case T.Staff: result = T.Staff_Magic; break;
-      case T.LongBlade: result = T.LongBlade_Magic; break;
-      case T.Mace: result = T.Mace_Magic; break;
-      case T.Flail: result = T.Flail_Magic; break;
-      case T.Warhammer: result = T.Warhammer_Magic; break;
-      case T.Battleaxe: result = T.Battleaxe_Magic; break;
-      default: break;
+      case T.Dagger:
+        result = T.Dagger_Magic;
+        break;
+      case T.Staff:
+        result = T.Staff_Magic;
+        break;
+      case T.LongBlade:
+        result = T.LongBlade_Magic;
+        break;
+      case T.Mace:
+        result = T.Mace_Magic;
+        break;
+      case T.Flail:
+        result = T.Flail_Magic;
+        break;
+      case T.Warhammer:
+        result = T.Warhammer_Magic;
+        break;
+      case T.Battleaxe:
+        result = T.Battleaxe_Magic;
+        break;
+      default:
+        break;
     }
   }
   return result;
@@ -279,7 +364,7 @@ export function frameToColor32(bmp, palette, dye) {
   const u8 = new Uint8Array(colors.buffer);
   for (let i = 0; i < bmp.data.length; i++) {
     let idx = bmp.data[i];
-    if (idx === 0) continue;   // classic CIF index 0 = transparent
+    if (idx === 0) continue; // classic CIF index 0 = transparent
     // No Unchanged short-circuit here (parity audit 2026-08-17): DFU's
     // DyeColors aliases Silver = SilverOrElven = Chain = Unchanged =
     // 18, and ChangeDye's switch routes 18 into the SILVER metal
@@ -290,7 +375,10 @@ export function frameToColor32(bmp, palette, dye) {
     if (dye != null) idx = applyDyeToIndex(idx, dye, DYE_TARGETS.WeaponsAndArmor);
     const c = palette.get(idx);
     const o = i * 4;
-    u8[o] = c.r; u8[o + 1] = c.g; u8[o + 2] = c.b; u8[o + 3] = 255;
+    u8[o] = c.r;
+    u8[o + 1] = c.g;
+    u8[o + 2] = c.b;
+    u8[o + 3] = 255;
   }
   return { width: bmp.width, height: bmp.height, colors };
 }
@@ -301,7 +389,16 @@ export function frameToColor32(bmp, palette, dye) {
  *   { weaponType, anims, records: [{ width, height, frames: [tex] }] }
  * Cache by `${weaponType}:${material}` at the call site.
  */
-export async function loadFpsWeaponArt(getBytes, palette, renderer, weaponType, material = WEAPON_MATERIALS.Iron, item = null, { customImage = customWeaponImage, plain = false } = {}) {   // WEAPON-GLOW1: `plain` - the item's element shows, and Diverse Weapons is asked its plain set too
+export async function loadFpsWeaponArt(
+  getBytes,
+  palette,
+  renderer,
+  weaponType,
+  material = WEAPON_MATERIALS.Iron,
+  item = null,
+  { customImage = customWeaponImage, plain = false } = {},
+) {
+  // WEAPON-GLOW1: `plain` - the item's element shows, and Diverse Weapons is asked its plain set too
   const fileName = WEAPON_FILE[weaponType];
   if (!fileName) return null;
   const cif = new CifRciFile();
@@ -363,7 +460,16 @@ export async function customFrames(askName, metal, shape, ask = customWeaponImag
     for (let f = 0; f < shape.getFrameCount(r); f++) {
       const name = frameName(askName, r, f, metal);
       row.push(null);
-      asks.push(Promise.resolve(ask(name)).then((img) => { row[f] = img ?? null; }, () => { row[f] = null; }));
+      asks.push(
+        Promise.resolve(ask(name)).then(
+          (img) => {
+            row[f] = img ?? null;
+          },
+          () => {
+            row[f] = null;
+          },
+        ),
+      );
     }
     customs.push(row);
   }
@@ -390,30 +496,46 @@ export const FLIP_STATES = Object.freeze(['Idle', 'StrikeDown', 'StrikeUp']);
  * what takes the tint, and the classic skin is where it is always drawn.
  */
 export function fpLightingOn(search = globalThis.location?.search ?? '') {
-  return !!getPref('firstPersonLighting') && pageParam('fplight', search) !== 'off';   // PERF-URL
+  return !!getPref('firstPersonLighting') && pageParam('fplight', search) !== 'off'; // PERF-URL
 }
 
-export function drawFpsWeapon(renderer, canvas, art, state, frame, {
-  flipHorizontal = getInt('Controls', 'Handedness', 0, 3) === 1,
-  // ROAD-D D10: weaponOffsetHeight (FPSWeapon.cs:146-155). Read
-  // through the ONE home for the large HUD's laws rather than
-  // recomputed - and DEFAULTED here, so the single caller
-  // (combat/weapon/weaponRig.js) does not have to know the bar exists.
-  offsetHeight = weaponOffsetHeight(),
-  // MAC-I: FPSWeapon.Tint (FPSWeapon.cs:108), which DFU passes to its
-  // own draw (:182) and never writes - the port writes it from the
-  // light the room's flats take (render/renderer.js flatLightAt). null
-  // is Color.white, byte for byte, which is every caller before this.
-  tint = null,
-  // WEAPON-GLOW1: the element's outline over the frame (systems/weaponGlow.js spriteGlow; render/renderer.js
-  // drawScreenQuadGlow) - null draws none, which is every weapon without one.
-  glow = null,
-} = {}) {
+export function drawFpsWeapon(
+  renderer,
+  canvas,
+  art,
+  state,
+  frame,
+  {
+    flipHorizontal = getInt('Controls', 'Handedness', 0, 3) === 1,
+    // ROAD-D D10: weaponOffsetHeight (FPSWeapon.cs:146-155). Read
+    // through the ONE home for the large HUD's laws rather than
+    // recomputed - and DEFAULTED here, so the single caller
+    // (combat/weapon/weaponRig.js) does not have to know the bar exists.
+    offsetHeight = weaponOffsetHeight(),
+    // MAC-I: FPSWeapon.Tint (FPSWeapon.cs:108), which DFU passes to its
+    // own draw (:182) and never writes - the port writes it from the
+    // light the room's flats take (render/renderer.js flatLightAt). null
+    // is Color.white, byte for byte, which is every caller before this.
+    tint = null,
+    // WEAPON-GLOW1: the element's outline over the frame (systems/weaponGlow.js spriteGlow; render/renderer.js
+    // drawScreenQuadGlow) - null draws none, which is every weapon without one.
+    glow = null,
+  } = {},
+) {
   const q = fpsWeaponQuad(canvas, art, state, frame, { flipHorizontal, offsetHeight });
   if (!q) return;
-  const { tex, rect: { x, y, w, h }, uv: src, rec } = q;
-  renderer.drawScreenQuad(tex, { x, y, w, h }, src, tint ?? undefined);   // MAC-I: Tint
-  if (glow) renderer.drawScreenQuadGlow?.(tex, { x, y, w, h }, src, glow, { art: [rec.width, rec.height], view: [canvas.width, canvas.height] });   // WEAPON-GLOW1: emissive - the room's light never dims it; measured in the record's own pixels (an HD frame's texels are finer)
+  const {
+    tex,
+    rect: { x, y, w, h },
+    uv: src,
+    rec,
+  } = q;
+  renderer.drawScreenQuad(tex, { x, y, w, h }, src, tint ?? undefined); // MAC-I: Tint
+  if (glow)
+    renderer.drawScreenQuadGlow?.(tex, { x, y, w, h }, src, glow, {
+      art: [rec.width, rec.height],
+      view: [canvas.width, canvas.height],
+    }); // WEAPON-GLOW1: emissive - the room's light never dims it; measured in the record's own pixels (an HD frame's texels are finer)
 }
 
 /**
@@ -422,10 +544,13 @@ export function drawFpsWeapon(renderer, canvas, art, state, frame, {
  * second hand of a pair (combat/twoHands/twoHands.js) is placed by the very arithmetic the first is, and then mirrored whole.
  * Null when the art has no such record.
  */
-export function fpsWeaponQuad(canvas, art, state, frame, {
-  flipHorizontal = getInt('Controls', 'Handedness', 0, 3) === 1,
-  offsetHeight = weaponOffsetHeight(),
-} = {}) {
+export function fpsWeaponQuad(
+  canvas,
+  art,
+  state,
+  frame,
+  { flipHorizontal = getInt('Controls', 'Handedness', 0, 3) === 1, offsetHeight = weaponOffsetHeight() } = {},
+) {
   if (!art) return null;
   const flip = flipHorizontal && FLIP_STATES.includes(state);
   const stateIdx = STATE_INDEX[state] ?? 0;
@@ -442,7 +567,7 @@ export function fpsWeaponQuad(canvas, art, state, frame, {
   let x;
   // AlignRight's flip arm (:459-464) is AlignLeft; AlignLeft itself is
   // not swapped (:439-446).
-  const alignment = (flip && anim.Alignment === ALIGN.Right) ? ALIGN.Left : anim.Alignment;
+  const alignment = flip && anim.Alignment === ALIGN.Right ? ALIGN.Left : anim.Alignment;
   if (alignment === ALIGN.Left) x = canvas.width * anim.Offset;
   else if (alignment === ALIGN.Center) x = canvas.width / 2 - w / 2;
   else x = canvas.width * (1 - anim.Offset) - w;

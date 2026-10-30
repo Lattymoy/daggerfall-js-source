@@ -92,8 +92,8 @@
   {
     "name": "SHIELD-FIST-the-shield-strikes",
     "file": "src/combat/playerWeapon.js",
-    "old": "    if (left && isShieldTemplate(left.templateIndex)) {\n      this.usingRightHand = true;\n      this.holdingShield = true;\n      left = null;\n    }\n",
-    "new": "    if (left && isShieldTemplate(left.templateIndex)) {\n      this.holdingShield = true;\n    }\n",
+    "old": "      this.usingRightHand = true;\n      this.holdingShield = true;\n      left = null;",
+    "new": "      this.holdingShield = true;",
     "tests": [
       "test/systems/fb1015e_rose.test.js"
     ]

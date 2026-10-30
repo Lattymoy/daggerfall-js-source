@@ -714,8 +714,8 @@
   {
     "name": "OH-E-arrow-value-floor",
     "file": "src/combat/enemyEquipment.js",
-    "old": "    value: t ? materialValue(t.basePrice, material) : 1,   // F103",
-    "new": "    value: itemBaseValue({ group: 'Weapons', templateIndex, material }),   // F103",
+    "old": "    value: t ? materialValue(t.basePrice, material) : 1, // F103: SetItem's basePrice through SetItemPropertiesByMaterial (:649)",
+    "new": "    value: itemBaseValue({ group: 'Weapons', templateIndex, material }), // F103: SetItem's basePrice through SetItemPropertiesByMaterial (:649)",
     "tests": [
       "test/scenes/oh_abyss.test.js"
     ]
