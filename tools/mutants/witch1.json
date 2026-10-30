@@ -153,8 +153,8 @@
   {
     "name": "WITCH1-a-body-asks-twice",
     "file": "src/systems/festival/festivalClient.js",
-    "old": "neverPays(entity) || _asked.has(entity)) return;",
-    "new": "neverPays(entity)) return;",
+    "old": "  if (!entity || typeof entity !== 'object' || neverPays(entity) || _asked.has(entity)) return;",
+    "new": "  if (!entity || typeof entity !== 'object' || neverPays(entity)) return;",
     "tests": [
       "test/systems/festival/witch1_client.test.js"
     ],
@@ -163,8 +163,8 @@
   {
     "name": "WITCH1-a-lost-sale-never-asked-again",
     "file": "src/systems/festival/festivalClient.js",
-    "old": "  learn(r.data);\n  await resumeSale();\n  return true;",
-    "new": "  learn(r.data);\n  return true;",
+    "old": "  await resumeSale();\n  return true;",
+    "new": "  return true;",
     "tests": [
       "test/systems/festival/witch1_client.test.js"
     ],
@@ -273,7 +273,7 @@
   {
     "name": "WITCH1-tallow-ward-blind",
     "file": "src/systems/festival/festivalFoes.js",
-    "old": "export const hallowedFoe = (/** @type {any} */ e) => FESTIVAL_UNDEAD.includes(e?.mobileType) || FESTIVAL_SUMMONED.includes(e?.mobileType);",
+    "old": "export const hallowedFoe = (/** @type {any} */ e) =>\n  FESTIVAL_UNDEAD.includes(e?.mobileType) || FESTIVAL_SUMMONED.includes(e?.mobileType);",
     "new": "export const hallowedFoe = (/** @type {any} */ e) => FESTIVAL_UNDEAD.includes(e?.mobileType);",
     "tests": [
       "test/systems/festival/witch1_wares.test.js"
@@ -293,8 +293,8 @@
   {
     "name": "WITCH1-AUDIT-the-watch-pays",
     "file": "src/systems/festival/festivalClient.js",
-    "old": "e?.mobileType === KNIGHT_CITY_WATCH || e?.team",
-    "new": "false || e?.team",
+    "old": "const neverPays = (/** @type {any} */ e) =>\n  e?.mobileType === KNIGHT_CITY_WATCH || e?.team === 'PlayerAlly' || e?.mobileTeam === 'PlayerAlly';",
+    "new": "const neverPays = (/** @type {any} */ e) => false || e?.team === 'PlayerAlly' || e?.mobileTeam === 'PlayerAlly';",
     "tests": [
       "test/systems/festival/witch1_client.test.js"
     ],
@@ -303,8 +303,8 @@
   {
     "name": "WITCH1-AUDIT-the-pack-unrestacked",
     "file": "src/systems/festival/festivalClient.js",
-    "old": "if (Array.isArray(items)) restackSoulCakes(items, d.cakes);",
-    "new": "if (false && Array.isArray(items)) restackSoulCakes(items, d.cakes);",
+    "old": "    if (Array.isArray(items)) restackSoulCakes(items, d.cakes);",
+    "new": "    if (false && Array.isArray(items)) restackSoulCakes(items, d.cakes);",
     "tests": [
       "test/systems/festival/witch1_client.test.js"
     ],
@@ -313,8 +313,8 @@
   {
     "name": "WITCH1-AUDIT-the-bowls-unrestacked",
     "file": "src/systems/festival/festivalClient.js",
-    "old": "if (Array.isArray(items)) restackHearthOfferings(items, d.bowls);",
-    "new": "if (false && Array.isArray(items)) restackHearthOfferings(items, d.bowls);",
+    "old": "    if (Array.isArray(items)) restackHearthOfferings(items, d.bowls); // OVERLOAD-EASE: as the cakes",
+    "new": "    if (false && Array.isArray(items)) restackHearthOfferings(items, d.bowls); // OVERLOAD-EASE: as the cakes",
     "tests": [
       "test/systems/festival/witch1_client.test.js"
     ],
@@ -323,8 +323,8 @@
   {
     "name": "WITCH1-AUDIT-one-deed-two-finds",
     "file": "src/systems/festival/festivalClient.js",
-    "old": "  if (_actTurn.has(g)) return;\n",
-    "new": "",
+    "old": "  if (_actTurn.has(g)) return;\n  _actTurn.add(g);",
+    "new": "  _actTurn.add(g);",
     "tests": [
       "test/systems/festival/witch1_client.test.js"
     ],
@@ -343,8 +343,8 @@
   {
     "name": "WITCH1-AUDIT-sale-mints-twice",
     "file": "src/systems/festival/festivalClient.js",
-    "old": "  if (_asking?.sale === sale) return _asking.p;\n",
-    "new": "",
+    "old": "  if (_asking?.sale === sale) return _asking.p;\n  const p = (async () => {",
+    "new": "  const p = (async () => {",
     "tests": [
       "test/systems/festival/witch1_client.test.js"
     ],
@@ -383,8 +383,8 @@
   {
     "name": "WITCH1-AUDIT-pieces-unbound",
     "file": "src/systems/festival/festivalClient.js",
-    "old": "if (it) it.bound = true; return it;",
-    "new": "return it;",
+    "old": "    if (it) it.bound = true;\n    return it;",
+    "new": "    return it;",
     "tests": [
       "test/systems/festival/witch1_client.test.js",
       "test/systems/festival/witch1_wares.test.js"
@@ -584,8 +584,8 @@
   {
     "name": "WITCH1-AUDIT-the-world-boss-finds-twice",
     "file": "src/systems/festival/festivalFoes.js",
-    "old": "  if (e?.worldBoss === true) return null;\n",
-    "new": "",
+    "old": "  if (e?.worldBoss === true) return null;\n  if (e?.eliteFoe === true || (typeof e?.champion === 'string' && e.champion !== '')) return 'elite';",
+    "new": "  if (e?.eliteFoe === true || (typeof e?.champion === 'string' && e.champion !== '')) return 'elite';",
     "tests": [
       "test/systems/festival/witch1_wares.test.js",
       "test/systems/festival/witch1_client.test.js"
@@ -665,8 +665,8 @@
   {
     "name": "WITCH1-AUDIT-G2-learned-onto-anothers",
     "file": "src/systems/festival/festivalClient.js",
-    "old": "  if (who !== _stateOf) { _state = UNHEARD; _stateOf = who; }",
-    "new": "  if (who !== _stateOf) { _stateOf = who; }",
+    "old": "    _state = UNHEARD;\n    _stateOf = who;",
+    "new": "    _stateOf = who;",
     "tests": [
       "test/systems/festival/witch1_client.test.js"
     ],

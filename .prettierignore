@@ -36,6 +36,8 @@
 /src/systems/deepWater/*/
 !/src/systems/dungeon/
 /src/systems/dungeon/*/
+!/src/systems/festival/
+/src/systems/festival/*/
 !/src/systems/firstVisit/
 /src/systems/firstVisit/*/
 !/src/systems/grammar/

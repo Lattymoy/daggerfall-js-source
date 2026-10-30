@@ -2,8 +2,8 @@
   {
     "name": "CAKE-WEIGHT-old-weight",
     "file": "src/systems/festival/festivalRows.js",
-    "old": "index: 2000, baseWeight: 0,",
-    "new": "index: 2000, baseWeight: 0.05,",
+    "old": "  index: 2000,\n  baseWeight: 0,",
+    "new": "  index: 2000,\n  baseWeight: 0.05,",
     "tests": [
       "test/systems/festival/cake_weight.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "HEARTH-SIBLING-bowl-weight",
     "file": "src/systems/festival/festivalRows.js",
-    "old": "index: 2001, baseWeight: 0,",
-    "new": "index: 2001, baseWeight: 2,",
+    "old": "  index: 2001,\n  baseWeight: 0,",
+    "new": "  index: 2001,\n  baseWeight: 2,",
     "tests": [
       "test/systems/festival/cake_weight.test.js"
     ],
