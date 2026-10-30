@@ -37,20 +37,21 @@ test('AUDIT-STOREFRONT II (lane B 2): a find asked again by its own id is answer
   const s = await stand();
   const me = await s.seated('Finder');
   const first = await s.call('/v1/pass/find', { source: 'foe', rid: rid(1) }, me.secret);
-  assert.deepEqual([first.status, first.body.gained, first.body.repeat], [200, 12, undefined]);
+  assert.deepEqual([first.status, first.body.gained, first.body.repeat], [200, 1, undefined]);
   const again = await s.call('/v1/pass/find', { source: 'foe', rid: rid(1) }, me.secret);   // its answer lost: asked again
   assert.deepEqual(again.body, { ...first.body, repeat: true }, 'answered as it was');
-  assert.equal(s.player(me).pass_s1, 12, 'counted once');
-  assert.deepEqual({ ...s.raw.prepare('SELECT asks, xp FROM pass_days WHERE account = ?').get(me.id) }, { asks: 1, xp: 12 }, 'one of the day\'s asks');
+  const found = () => s.raw.prepare("SELECT COALESCE(SUM(amount), 0) AS n FROM aurum_ledger WHERE account = ? AND kind = 'find'").get(me.id).n;
+  assert.equal(found(), 1, 'counted once');
+  assert.deepEqual({ ...s.raw.prepare('SELECT asks, aurum FROM pass_days WHERE account = ?').get(me.id) }, { asks: 1, aurum: 1 }, 'one of the day\'s asks');
   assert.deepEqual(s.raw.prepare("SELECT amount FROM progress_hours WHERE player = ? AND stream = 'pass'").all(me.id).map((r) => r.amount), [1], 'the stream spent once');
   assert.deepEqual(progressSpentOf('/v1/pass/find', again.body), [], 'a repeat spends nothing');
-  assert.equal((await s.call('/v1/pass/find', { source: 'foe', rid: rid(2) }, me.secret)).body.gained, 12, 'a new id is a new find');
+  assert.equal((await s.call('/v1/pass/find', { source: 'foe', rid: rid(2) }, me.secret)).body.gained, 1, 'a new id is a new find');
   assert.deepEqual((await s.call('/v1/pass/find', { source: 'foe', rid: 'nope' }, me.secret)).body, { error: 'rid' });
   assert.equal(BATTLE_PASS_STATUS.rid, 400);
   // two of one find out together (the page's retry overtaking the first): one counted, both answered
   const [a, b] = await Promise.all([findPass(s.ctx(), s.player(me), { source: 'elite', rid: rid(3) }, ON), findPass(s.ctx(), s.player(me), { source: 'elite', rid: rid(3) }, ON)]);
-  assert.equal(s.player(me).pass_s1, 12 + 12 + 60, 'the twin counted nothing');
-  assert.deepEqual([a.gained, b.repeat], [60, true]);
+  assert.equal(found(), 1 + 1 + 4, 'the twin counted nothing');
+  assert.deepEqual([a.gained, b.repeat], [4, true]);
   // kept PASS_ASK_KEEP_DAYS past its day, then gone with the account's first find of a later day - no hourly job
   const day = Math.floor(IN_TREMOR / DAY_MS), ids = () => s.raw.prepare('SELECT rid FROM pass_asks WHERE account = ? ORDER BY rid').all(me.id).map((r) => r.rid);
   t.mock.timers.setTime((day + PASS_ASK_KEEP_DAYS) * DAY_MS + 60_000);
@@ -69,17 +70,17 @@ test('AUDIT-STOREFRONT II (lane B 2): the page asks a find with its own id throu
   let down = 2, online = true;
   const door = accountBattlePass({ fetch: async (u, i) => {
     const body = JSON.parse(i.body);
-    if (String(u).endsWith('/v1/pass/mine')) return new Response(JSON.stringify({ season: 's1', open: true, stage: 0, xp: 0, level: 0, top: 17, tracks: { free: true }, mult: 1, today: 0, challenges: [] }), { status: 200 });
+    if (String(u).endsWith('/v1/pass/mine')) return new Response(JSON.stringify({ season: 's1', open: true, stage: 0, tracks: { free: true, premium: false }, bought: [], today: 0, dayMax: 100, challenges: [] }), { status: 200 });
     sent.push([body.source, body.rid]);
     if (down > 0) { down--; return new Response(JSON.stringify({ error: 'server' }), { status: 503 }); }
     if (body.source === 'loot') return new Response(JSON.stringify({ error: 'capped' }), { status: 429 });
-    return new Response(JSON.stringify({ gained: 12, xp: 12 * sent.length, level: 0, today: 12, done: [] }), { status: 200 });
+    return new Response(JSON.stringify({ gained: 2, found: 2, today: 2 * sent.length, done: [], season: 's1' }), { status: 200 });
   }, storage: sessionStorageOf(SESSION_KEY, { id: 'acct-1', secret: 's', kind: 'registered' }) });
   try {
     bindPass({ online: () => online, nowMs: () => IN_TREMOR, api: { ...door, me: () => 'acct-1', guest: () => false }, wait: async (ms) => { waits.push(ms); } });
     const one = askPassFind('foe'), two = askPassFind('construct');
-    assert.equal(await one, 12, 'found at the third ask');
-    assert.equal(await two, 12);
+    assert.equal(await one, 2, 'found at the third ask');
+    assert.equal(await two, 2);
     assert.deepEqual(sent.map(([src]) => src), ['foe', 'foe', 'foe', 'construct'], 'the deed behind it waited its turn');
     assert.match(sent[0][1], /^[0-9a-f]{16}$/);
     assert.deepEqual(new Set(sent.slice(0, 3).map(([, r]) => r)).size, 1, 'asked again with its own id');

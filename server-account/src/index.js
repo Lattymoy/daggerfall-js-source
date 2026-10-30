@@ -2384,8 +2384,8 @@ const service = {
         if (request.method !== 'POST') return no('method', 405, origin);
         const r = path === '/v1/pass/unlock' ? await unlockPass(ctx, who.player, body, env) : await buyPass(ctx, who.player, body, env);
         if ('error' in r) return json({ error: r.error, ...(Number.isSafeInteger(r.balance) ? { balance: r.balance } : {}) }, BATTLE_PASS_STATUS[/** @type {keyof typeof BATTLE_PASS_STATUS} */ (r.error)] ?? 400, origin);
-        const after = 'row' in r && r.row ? await withSeatTitles(ctx, r.row, env) : null;
-        return json({ ...r, row: undefined, ...(after ? accountWardrobe(after, env, nowS) : {}), aurum: await aurumCardOf(ctx, after ?? who.player, env), pass: await passOf(ctx, who.player, env) }, 200, origin);
+        const after = await withSeatTitles(ctx, r.row, env);
+        return json({ ...r, row: undefined, ...accountWardrobe(after, env, nowS), aurum: await aurumCardOf(ctx, after, env), pass: await passOf(ctx, after, env) }, 200, origin);
       }
 
       if (path === '/v1/season/maul') {

@@ -155,8 +155,9 @@ function buyGate(/** @type {any} */ player, /** @type {any} */ env, /** @type {u
 /**
  * THE PREMIUM TRACK OPENED (PASS-PANELS: "using our new currency to both unlock tracks and buy the items"): `body.season`'s
  * premium track for PASS_PREMIUM_AURUM, ONE STATEMENT - the ledger's `track` line written only while the balance as it
- * stands then covers it; the key makes a second open a no-op. `{ ok, season, spent }` or `{ error }`: pass-guest,
- * -closed, -season, -soon, -held (open already), -short (with `balance`).
+ * stands then covers it; the key makes a second open a no-op. `{ ok, season, spent, row }` - `row` the whole row, so
+ * its answer carries the wardrobe as a buy's does - or `{ error }`: pass-guest, -closed, -season, -soon, -held (open
+ * already), -short (with `balance`).
  * @param {{ db: any, nowS: number }} ctx @param {any} player @param {any} body @param {any} env
  */
 export async function unlockPass({ db, nowS }, player, body, env) {
@@ -175,7 +176,7 @@ export async function unlockPass({ db, nowS }, player, body, env) {
     if (await premiumOf(db, player.id, id)) return { error: 'pass-held' };   // a twin opened it first
     return { error: 'pass-short', balance: balanceOfRow(await aurumRow(db, player.id)) };
   }
-  return { ok: true, season: id, spent: cost };
+  return { ok: true, season: id, spent: cost, row: await db.prepare('SELECT * FROM players WHERE id = ?1').bind(player.id).first() };
 }
 
 /**

@@ -34,7 +34,7 @@ import { midScreenText } from '../../src/ui/midScreenText.js';
 import { accountRefusalText } from '../../src/net/accountClient.js';
 import { reportPlayerKill } from '../../src/systems/playerKills.js';
 import { _resetPassClientForTests } from '../../src/systems/pass/passClient.js';
-import { passGrantName } from '../../src/ui/passText.js';
+import { passChallengeText } from '../../src/ui/passText.js';
 import { gateScanner } from '../../src/systems/gate/gateSite.js';
 import { HAS_ARENA2, ARENA2, loadMaps } from '../arena1Data.mjs';
 import { WoodsFile } from '../../src/formats/woodsFile.js';
@@ -327,27 +327,29 @@ test('STOREFRONT the host\'s map, clearings and gate: a card each fissure of the
   assert.deepEqual([off.host.mapMarks(), off.host.fissureClears()], [[], []]);
 });
 
-test('STOREFRONT the pass\'s notices: a level reached said mid-screen with its rewards in the chat, a challenge paid and the day spent in the chat (mutants: a level unsaid; the rewards unnamed)', async () => {
+test('STOREFRONT the pass\'s notices (PIN MOVED, PASS-PANELS: no levels): a challenge paid said in the chat with its Aurum, and the day\'s Aurum found said once; nothing mid-screen (mutants: a challenge unsaid; its Aurum unsaid; the bound said twice)', async () => {
   _resetPassClientForTests();
-  let xp = 960;
+  let today = 98;
   const tells = [], mids = [];
   midScreenText.onMessage = (m) => mids.push(m);
   createSeasonHost({
     state: { pixelTranslation: (px, py, out) => out }, get online() { return {}; }, _sharedOffsetMs: 0, chatNotice: (s) => tells.push(s),
     passApi: {
       me: () => 'acct-1', guest: () => false,
-      mine: async () => ({ ok: true, data: { season: 's1', open: true, stage: 0, xp, level: 0, top: 17, tracks: { free: true, premium: true }, mult: 1, today: 0, challenges: [] } }),
-      find: async () => { xp += 40; return { ok: true, data: { gained: 40, xp, level: 1, today: 2000, done: ['tremor-constructs'] } }; },
+      mine: async () => ({ ok: true, data: { season: 's1', open: true, stage: 0, tracks: { free: true, premium: false }, bought: [], today, dayMax: 100, challenges: [] } }),
+      find: async () => { const found = Math.min(2, 100 - today); today += found; return { ok: true, data: { gained: found + 150, found, today, done: ['tremor-constructs'], season: 's1' } }; },
     },
   });
   Date.now = () => S1.fromMs + 3600_500;
   await settle();
   reportPlayerKill({ mobileType: PASS_CONSTRUCT_MOBILES[0] });
   await settle();
-  assert.ok(mids.some((m) => String(m.text ?? m).includes('Season level 1')), JSON.stringify(mids));
-  assert.ok(tells.includes(`New in your wardrobe: ${['glyph:tonalfork'].map(passGrantName).join(', ')}.`), JSON.stringify(tells));   // PIN MOVED (AURUM): level one's reward the premium glyph alone
-  assert.ok(tells.some((s) => s.startsWith('Season challenge done: ')));
-  assert.ok(tells.some((s) => s.includes('all the season experience')));
+  reportPlayerKill({ mobileType: PASS_CONSTRUCT_MOBILES[0] });
+  await settle();
+  const said = tells.filter((s) => s.startsWith('Season challenge done: '));
+  assert.ok(said.length >= 1 && said[0].includes(passChallengeText('tremor-constructs')) && said[0].includes('150'), JSON.stringify(tells));
+  assert.equal(tells.filter((s) => s.includes('all the Aurum')).length, 1, JSON.stringify(tells));
+  assert.deepEqual(mids, [], 'nothing mid-screen');
   midScreenText.onMessage = null;
   _resetPassClientForTests();
 });

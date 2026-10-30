@@ -1,15 +1,14 @@
 // AURUM (2026-10-29, the owner: "Implement a currency that can be earned ingame and through the past + purchased to be
 // used to purchase a selection of rotating items daily"; bible/06-Systems/Aurum.md). The service's half, on the real
-// Worker over node:sqlite: the balance counted at every ask (the pass tracks, the paid packs, the ledger), the week's
-// deeds struck by the receipts' own rows, the day's wares bought in one batch, and every refusal.
+// Worker over node:sqlite: the balance counted at every ask (the paid packs and the ledger's lines), the week's deeds
+// struck by the receipts' own rows, the day's wares bought in one batch, and every refusal.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 import { standService } from '../accountDb.mjs';
 import { SHOP_WARES, shopHeldIds } from '../../src/net/shopLaw.js';
-import { AURUM_DEEDS, AURUM_DAILY, aurumDailyOf, aurumWeekOf, aurumTrackOf } from '../../src/net/aurumLaw.js';
-import { PASS_REWARDS, PASS_XP_PER_LEVEL, passAurumGrant } from '../../src/net/battlePassLaw.js';
+import { AURUM_DEEDS, AURUM_DAILY, aurumDailyOf, aurumWeekOf } from '../../src/net/aurumLaw.js';
 import { buyDaily } from '../../server-account/src/aurum.js';
 import { utcDay } from '../../src/net/marksLaw.js';
 
@@ -78,20 +77,17 @@ test('AURUM the week\'s deeds: each witnessed receipt strikes its kind\'s Aurum 
   for (const [k, n] of Object.entries(AURUM_DEEDS)) assert.match(sql, new RegExp(`'deed', '${k}:' \\|\\| \\(\\(NEW\\.at / 86400 \\+ 3\\) / 7\\), ${n},`), k);
 });
 
-test('AURUM the pass\'s Aurum: counted from the season\'s experience and what is held - the free track\'s for every account, the premium\'s only with the pass, and gone with it (mutants: the premium\'s counted without the pass; a track\'s Aurum stored)', async (t) => {
+test('AURUM the balance: the paid packs and every ledger line - a find\'s day, a challenge, a cache, a deed - less what the daily wares and the pass took; a pack not paid counts nothing, and nothing is stored (mutants: a line\'s kind left out of the sum; an unpaid pack counted)', async (t) => {
   t.mock.timers.enable({ apis: ['Date'], now: NOW });
   const s = await stand();
-  const me = await s.registered('Climber');
-  const level = 10, upTo = (track) => PASS_REWARDS.s1.filter((r) => r.track === track && r.level <= level).reduce((a, r) => a + (passAurumGrant(r.grant) ?? 0), 0);
-  s.raw.prepare('UPDATE players SET pass_s1 = ? WHERE id = ?').run(level * PASS_XP_PER_LEVEL, me.id);
-  assert.equal((await s.card(me)).balance, upTo('free'));
-  assert.ok(upTo('free') > 0 && upTo('premium') > 0);
-  s.raw.prepare("UPDATE players SET shop_held = 'pass:s1premium' WHERE id = ?").run(me.id);
-  assert.equal((await s.card(me)).balance, upTo('free') + upTo('premium'));
-  const row = s.raw.prepare('SELECT * FROM players WHERE id = ?').get(me.id);
-  assert.equal(aurumTrackOf(row, shopHeldIds(row), NOW), upTo('free') + upTo('premium'), 'the law\'s own count');
-  s.raw.prepare("UPDATE players SET shop_held = '' WHERE id = ?").run(me.id);
-  assert.equal((await s.card(me)).balance, upTo('free'), 'the pass gone, its track\'s Aurum with it');
+  const me = await s.registered('Counter');
+  assert.equal((await s.card(me)).balance, 0);
+  s.pack(me, 'aurum:500', 500);
+  s.pack(me, 'aurum:1100', 1100, 'refunded');
+  const line = s.raw.prepare('INSERT INTO aurum_ledger (account, kind, ref, amount, day, at) VALUES (?, ?, ?, ?, 0, 0)');
+  for (const [kind, ref, amount] of [['find', '20410', 80], ['challenge', 's1:tremor-gather', 60], ['cache', 'c1', 25], ['deed', `gate:${aurumWeekOf(NOW / 1000)}`, 30], ['buy', 'icon:aurbis', -400], ['track', 's1:premium', -1000], ['panel', 's1:glyph:cog', -200]]) line.run(me.id, kind, ref, amount);
+  assert.equal((await s.card(me)).balance, 500 + 80 + 60 + 25 + 30 - 400 - 1000 - 200);
+  assert.deepEqual(Object.keys(s.raw.prepare('SELECT * FROM players WHERE id = ?').get(me.id)).filter((k) => /aurum|balance/.test(k)), [], 'no balance on the row');
 });
 
 test('AURUM a daily ware bought: one batch spends its price and puts it on the account; then held; a ware not among today\'s, an unknown one, a short balance, a guest and a closed shop each refused - nothing spent (mutants: the price never spent; the ware never given; a ware off the day sold)', async (t) => {
@@ -140,13 +136,14 @@ test('AURUM the batch\'s guards: a balance spent elsewhere between the read and 
   assert.deepEqual(r, { error: 'aurum-short', balance: price - 1 }, 'read again: short');
   assert.equal(s.lines(me).filter((l) => l.ref === ware).length, 0, 'never spent');
   s.raw.prepare("DELETE FROM aurum_ledger WHERE ref = 'x'").run();
-  // a find lands on the row between the read and the batch: the batch refused whole, read again, bought once
+  // a grant lands on the row between the read and the batch: the batch refused whole, read again, bought once
+  const granted = SHOP_WARES.find((w) => w.alone && !w.bit && w.kind === 'bundle').id;
   let first = true;
-  const moved = { ...db, prepare: (q) => db.prepare(q), batch: (l) => { if (first) { first = false; s.raw.prepare("UPDATE players SET shop_held = 'boost:s1cog' WHERE id = ?").run(me.id); } return db.batch(l); } };
+  const moved = { ...db, prepare: (q) => db.prepare(q), batch: (l) => { if (first) { first = false; s.raw.prepare('UPDATE players SET shop_held = ? WHERE id = ?').run(granted, me.id); } return db.batch(l); } };
   const ok = await buyDaily({ db: moved, nowS }, player, { ware }, ON);
   assert.equal(ok.ok, true);
   assert.equal(s.lines(me).filter((l) => l.ref === ware).length, 1, 'one line');
-  assert.ok(shopHeldIds(s.raw.prepare('SELECT * FROM players WHERE id = ?').get(me.id)).includes('boost:s1cog'), 'the find kept');
+  assert.ok(shopHeldIds(s.raw.prepare('SELECT * FROM players WHERE id = ?').get(me.id)).includes(granted), 'the grant kept');
 });
 
 test('AURUM AURUM_OPEN \'dev\': the developers alone (mutants: dev open to every account)', async (t) => {

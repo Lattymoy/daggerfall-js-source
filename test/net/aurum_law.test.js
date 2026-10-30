@@ -1,6 +1,6 @@
 // AURUM (2026-10-29, the owner: "Implement a currency that can be earned ingame and through the past + purchased to be
 // used to purchase a selection of rotating items daily"; bible/06-Systems/Aurum.md). The law both ends read
-// (src/net/aurumLaw.js): the day's wares, the packs' shares, the weeks, the pass's Aurum and the card as the client takes it.
+// (src/net/aurumLaw.js): the day's wares, the packs' shares, the weeks and the card as the client takes it.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
@@ -9,7 +9,7 @@ import {
   aurumBonusOf, aurumWeekOf, aurumWeekEndMs, aurumDayEndMs, aurumCardOf, aurumSwitchOf,
 } from '../../src/net/aurumLaw.js';
 import { SHOP_WARES, shopWareById } from '../../src/net/shopLaw.js';
-import { PASS_REWARDS, PASS_SEASONS, passAurumGrant, passAurumOf, passGrants, PASS_XP_PER_LEVEL } from '../../src/net/battlePassLaw.js';
+import { PASS_ALL_GRANTS } from '../../src/net/battlePassLaw.js';
 
 const all = () => true;
 const slotOf = (id) => aurumDailyById(id).slot;
@@ -47,12 +47,11 @@ test('AURUM the day\'s wares, cached or not: a day asked cold is the day asked a
   for (let d = AURUM_DAILY_FROM; d < AURUM_DAILY_FROM + 20; d++) assert.equal(aurumDailyOf(d, someDay).filter((id) => id.startsWith('icon:')).length, d % 2 ? 0 : 2, 'a day it may not, none');
 });
 
-test('AURUM what the daily wares sell: shop wares only, never a season\'s (the pass is how those are had), the icons for Aurum alone and every other for money too; each price a whole hundred, and one sold for money too a little under its money at the smallest pack\'s rate (mutants: a pass reward in the pool; an icon sold for money; a daily ware dearer than its money)', () => {
-  const seasonal = new Set(Object.values(PASS_REWARDS).flat().map((r) => r.grant));
+test('AURUM what the daily wares sell: shop wares only, never a season\'s (its tracks are how those are had), the icons for Aurum alone and every other for money too; each price a whole hundred, and one sold for money too a little under its money at the smallest pack\'s rate (mutants: a track\'s item in the pool; an icon sold for money; a daily ware dearer than its money)', () => {
   for (const d of AURUM_DAILY) {
     const w = shopWareById(d.id);
     assert.ok(w, d.id);
-    assert.ok(!w.season && !seasonal.has(d.id), `${d.id}: never a season's`);
+    assert.ok(!PASS_ALL_GRANTS.includes(d.id), `${d.id}: never a season's`);
     assert.equal(w.cash, d.slot !== 'icon', `${d.id}: an icon for Aurum alone`);
     assert.ok(Number.isSafeInteger(d.aurum) && d.aurum > 0 && d.aurum % 100 === 0);
     assert.equal(aurumPriceOf(d.id), d.aurum);
@@ -60,7 +59,8 @@ test('AURUM what the daily wares sell: shop wares only, never a season\'s (the p
     const atBase = w.cents * AURUM_PACKS[0].aurum / AURUM_PACKS[0].cents;
     if (w.cash) assert.ok(d.aurum < atBase && d.aurum >= 0.75 * atBase, `${d.id}: ${d.aurum} Aurum against ${atBase.toFixed(1)}`);
   }
-  assert.equal(aurumPriceOf('pass:s1premium'), 0);
+  assert.equal(aurumPriceOf('glyph:gearcrown'), 0, 'a track\'s item has no daily price');
+  assert.ok(PASS_ALL_GRANTS.every((g) => !shopWareById(g)), 'nor is it a shop ware');
   assert.deepEqual(SHOP_WARES.filter((w) => !w.cash).map((w) => w.id).sort(), AURUM_DAILY.filter((d) => d.slot === 'icon').map((d) => d.id).sort(), 'every ware not sold for money is a daily icon');
 });
 
@@ -79,23 +79,6 @@ test('AURUM the weeks and days: a week from Monday 00:00 UTC to the next; a day\
   assert.equal(aurumDayEndMs(Math.floor(Date.UTC(2026, 10, 18, 12) / 86_400_000)), Date.UTC(2026, 10, 19));
   assert.deepEqual(Object.keys(AURUM_DEEDS), ['gate', 'eg', 'serpent', 'star', 'raid']);
   assert.deepEqual(['on', 'dev', 'off', 'ON', undefined, 1].map(aurumSwitchOf), ['on', 'dev', 'off', 'off', 'off', 'off']);
-});
-
-test('AURUM the pass\'s Aurum: Season One\'s free track gives 525 and its premium 1,350, counted from the level reached and never a worn reward; the premium\'s only with the pass held (mutants: an Aurum grant handed to the wardrobe; the premium counted without the pass)', () => {
-  const sum = (track) => PASS_REWARDS.s1.filter((r) => r.track === track).reduce((a, r) => a + (passAurumGrant(r.grant) ?? 0), 0);
-  assert.equal(sum('free'), 525);
-  assert.equal(sum('premium'), 1350);
-  const s1 = PASS_SEASONS.find((s) => s.id === 's1'), mid = s1.toMs - 86_400_000;   // the last stage open: every level reachable
-  const top = 50 * PASS_XP_PER_LEVEL;
-  assert.equal(passAurumOf('s1', top, [], mid), 525);
-  assert.equal(passAurumOf('s1', top, ['pass:s1premium'], mid), 525 + 1350);
-  assert.equal(passAurumOf('s1', top, [], s1.fromMs + 86_400_000), 100, 'the first stage open: its levels alone (5 and 15)');
-  assert.equal(passAurumOf('s1', 4 * PASS_XP_PER_LEVEL, ['pass:s1premium'], mid), PASS_REWARDS.s1.filter((r) => r.level <= 4 && r.track === 'premium').reduce((a, r) => a + (passAurumGrant(r.grant) ?? 0), 0));
-  for (const g of passGrants('s1', top, ['pass:s1premium'], mid)) assert.ok(!g.startsWith('aurum:'), `${g}: never a worn reward`);
-  // NO OVERABUNDANCE (the owner: "No overbundence of titles and profile icons"): a title or two a track, an icon or two
-  const kinds = (track, kind) => PASS_REWARDS.s1.filter((r) => r.track === track && r.grant.startsWith(`${kind}:`)).length;
-  assert.ok(kinds('free', 'title') <= 1 && kinds('premium', 'title') <= 1, 'one title a track at most');
-  assert.ok(kinds('free', 'icon') <= 1 && kinds('premium', 'icon') <= 2, 'an icon or two');
 });
 
 test('AURUM the card as the client takes it: checked on the way in - a ware not the law\'s dropped, one listed twice once, its price the law\'s never the wire\'s; a balance past the bound, a deed past its kind\'s Aurum, a shape that is no card all refused (mutants: the wire\'s price trusted; a duplicate kept)', () => {

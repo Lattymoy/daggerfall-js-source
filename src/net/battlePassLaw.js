@@ -138,7 +138,7 @@ export function passBuyBlock(/** @type {unknown} */ season, /** @type {unknown} 
   const at = passItemOf(season, grant), s = passSeasonById(season);
   if (!at || !s) return 'item';
   if (!passTracksOpen(s, a.nowMs)) return 'soon';
-  if (a.bought.includes(at.grant)) return 'held';
+  if (a.bought.includes(/** @type {string} */ (grant))) return 'held';
   if (at.track === 'premium' && !a.premium) return 'track';
   if (!passPanelOpen(season, at.track, at.panel, a.bought)) return 'panel';
   return null;

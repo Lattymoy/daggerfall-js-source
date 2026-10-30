@@ -2,9 +2,8 @@
 // Audit-Storefront.md). The purchase path's holes the audit found, each driven end to end through the real Worker on
 // node:sqlite (test/accountDb.mjs) with Stripe stood in for: a payment taken back takes what it alone covered (S1); a
 // replaced page closes and a ware paid twice is refunded (S3); the schedule's typo shuts a sale (S4, in
-// storefront_service); a weaker booster is not sold (S5); a season's wares follow PASS_OPEN (S6); two grants at once
-// count a pass's levels once (S7); the demand counts what reached Stripe and the refunds owed (S8); a season's ware paid
-// after it is refunded (S10).
+// storefront_service); the confirm page says a giver held in part (S12); the demand counts what reached Stripe and the
+// refunds owed (S8). PASS-PANELS retired S5, S6, S7 and S10 with the boosters and the passes sold for money.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
@@ -13,8 +12,8 @@ import { standService } from '../accountDb.mjs';
 import { fulfilOrder, STRIPE_API, STRIPE_REFUND_API, heldGranted, heldRevoked, orderCovers, revokePost, refundPost } from '../../server-account/src/shop.js';
 import { shopDemand } from '../../server-account/src/staffShop.js';
 import { effectsHeld } from '../../server-account/src/titles.js';
-import { shopWareById, SHOP_WARES, shopHeldIds, shopLostOf, shopCreditOf, shopClosure, shopSpent, shopPriceFor, shopCardOf as clientCard } from '../../src/net/shopLaw.js';
-import { passSeasonById, passTracks, PASS_XP_PER_LEVEL } from '../../src/net/battlePassLaw.js';
+import { shopWareById, SHOP_WARES, shopHeldIds, shopLostOf, shopCreditOf, shopClosure } from '../../src/net/shopLaw.js';
+import { passSeasonById } from '../../src/net/battlePassLaw.js';
 import { POST_BODY_MAX, POST_SUBJECT_MAX } from '../../src/net/postLaw.js';
 
 const ON = { STRIPE_SECRET_KEY: 'sk_test_au', STRIPE_WEBHOOK_SECRET: 'whsec_au', SHOP_ON_SALE: SHOP_WARES.filter((w) => w.alone).map((w) => w.id).join(','), PASS_OPEN: 'on' };
@@ -44,7 +43,7 @@ async function stand(extra = ON) {
   const account = async (who) => (await get('/v1/account', who)).json();
   const press = (ticket) => s.fetch('https://accounts.invalid/v1/shop/checkout', { method: 'POST', redirect: 'manual', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ ticket }).toString() });
   const ticketOf = async (who, id) => new URL((await account(who)).shop.wares.find((w) => w.id === id).buy).searchParams.get('t');
-  const rowOf = (who) => raw.prepare('SELECT shop_wares, shop_held, effects, pass_s1 FROM players WHERE id = ?').get(who.id);
+  const rowOf = (who) => raw.prepare('SELECT shop_wares, shop_held, effects FROM players WHERE id = ?').get(who.id);
   const orders = (who) => raw.prepare('SELECT * FROM shop_orders WHERE player = ? ORDER BY created_at, rowid').all(who.id);
   const hook = (type, object) => {
     const body = JSON.stringify({ id: 'evt_au', type, data: { object } }), t = Math.floor(Date.now() / 1000);
@@ -71,7 +70,7 @@ async function stand(extra = ON) {
 // ── S1: A PAYMENT TAKEN BACK TAKES WHAT IT ALONE COVERED ─────────────
 
 test('AUDIT-STOREFRONT S1 the law: an order covers its ware and all it gives but its credit; a ware taken back that a giver held with credit for it is marked lost, and the giver no longer gives it; a payment covering it again takes the mark off (mutants: the mark never read; a mark on a ware another order covers; a mark left by a grant)', () => {
-  assert.deepEqual(shopClosure('bundle:seasonalcollector'), ['pass:s1premium', 'pass:s1deluxe', 'glyph:gearcrown', 'bundle:seasonalcollector', 'boost:s1heart']);
+  assert.deepEqual(shopClosure('bundle:lordofoblivion'), ['kill:pyre', 'portal:daedric', 'mount:warhorse', 'aura:dominion', 'bundle:lordofoblivion']);
   assert.deepEqual(shopCreditOf({ shop_held: 'kill:pyre' }, 'bundle:daedricchampion'), ['kill:pyre']);
   assert.deepEqual(shopCreditOf({}, 'bundle:daedricchampion'), []);
   const champ = { id: 'c', ware: 'bundle:daedricchampion', credit: 'kill:pyre' }, pyre = { id: 'p', ware: 'kill:pyre', credit: '' };
@@ -89,11 +88,6 @@ test('AUDIT-STOREFRONT S1 the law: an order covers its ware and all it gives but
   const bitRow = heldRevoked({ shop_wares: 8 | 256, shop_held: '' }, halo, [set]);
   assert.deepEqual([bitRow.shop_wares, bitRow.shop_held], [256, '-armory:eternalhalo']);
   assert.ok(!shopHeldIds(bitRow).includes('armory:eternalhalo'));
-  // a Premium the Collector was credited for: the Deluxe it holds plays without it
-  const collector = { id: 'k', ware: 'bundle:seasonalcollector', credit: 'pass:s1premium' }, prem = { id: 'q', ware: 'pass:s1premium', credit: '' };
-  const passRow = heldRevoked({ shop_wares: 0, shop_held: 'pass:s1premium bundle:seasonalcollector' }, prem, [collector]);
-  assert.deepEqual(passTracks('s1', shopHeldIds(passRow)), { free: true, premium: false, deluxe: true }, 'its own track, never the Premium it did not pay for');
-  assert.equal(shopPriceFor(passRow, 'pass:s1premium'), shopWareById('pass:s1premium').cents, 'and the Premium is sold again whole');   // PIN MOVED (AUDIT-STOREFRONT II): the law's price, under the cap
 });
 
 test('AUDIT-STOREFRONT S1 end to end: the Pyre bought, then the Daedric Champion with credit for it - a dispute on the Pyre takes it off the account and off the kit, and says so; the dispute won returns it; the Lord of Oblivion refunded takes the wares the Champion was credited for (mutants: a giver keeping a ware nobody paid for; the letter saying nothing left)', async (t) => {
@@ -200,84 +194,16 @@ test('AUDIT-STOREFRONT S3 end to end: a bundle\'s page opened, the Pyre bought, 
   assert.ok(shopHeldIds(s.rowOf(me)).includes('title:dawnbringer'), 'the ware the other order paid for stays');
 });
 
-// ── S5, S6, S10: WHAT A SEASON SELLS ────────────────────────────────
+// ── S12: A GIVER HELD IN PART ───────────────────────────────────────
 
-test('AUDIT-STOREFRONT S5 a booster a stronger one makes worth nothing is not sold to that account - the card marks it, its page refuses, the client reads no Buy; one with levels still is (mutants: the Cog sold beside the Heart; the Tonal refused)', async (t) => {
-  t.mock.timers.enable({ apis: ['Date'], now: IN_TREMOR });
-  assert.equal(shopSpent({ shop_held: 'boost:s1heart' }, 'boost:s1cog'), true);
-  assert.equal(shopSpent({ shop_held: 'boost:s1heart' }, 'boost:s1tonal'), false, 'the Tonal still gives three levels');
-  assert.equal(shopSpent({ shop_held: 'boost:s1cog' }, 'boost:s1heart'), false);
-  assert.equal(shopSpent({ shop_held: 'bundle:seasonalcollector' }, 'boost:s1cog'), true, 'the Collector\'s Heart counts');
-  const s = await stand();
-  const me = await s.registered('Booster');
-  const ticket = new URL((await s.account(me)).shop.wares.find((w) => w.id === 'boost:s1cog').buy).searchParams.get('t');
-  assert.equal((await s.buy(me, 'boost:s1heart')).applied, 1);
-  const cog = (await s.account(me)).shop.wares.find((w) => w.id === 'boost:s1cog');
-  assert.deepEqual([cog.held, cog.spent, cog.buy], [false, true, null]);
-  assert.deepEqual(clientCard({ on: true, wares: [{ ...cog, buy: 'https://x.invalid/b' }] }).wares[0].buy, null, 'the client never draws a Buy for it');
-  const page = await s.fetch(`https://accounts.invalid/v1/shop/buy?t=${encodeURIComponent(ticket)}`);
-  assert.equal(page.status, 409);
-  assert.match(await page.text(), /stronger booster/);
-  const pressed = await s.fetch('https://accounts.invalid/v1/shop/checkout', { method: 'POST', redirect: 'manual', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ ticket }).toString() });
-  assert.equal(pressed.status, 400);
-  assert.match(await pressed.text(), /stronger booster/, 'and its press opens no page');
-  assert.equal(typeof (await s.account(me)).shop.wares.find((w) => w.id === 'boost:s1tonal').buy, 'string');
-});
-
-test('AUDIT-STOREFRONT S6 a season\'s wares are sold only while PASS_OPEN is on - off or dev, no Buy and not on the card; S10 a season\'s ware paid after its season is refunded, not granted (mutants: the pass sold while its finds are shut; a booster granted after the season)', async (t) => {
-  t.mock.timers.enable({ apis: ['Date'], now: IN_TREMOR });
-  for (const sw of ['off', 'dev']) {
-    const s = await stand({ ...ON, PASS_OPEN: sw });
-    const me = await s.registered(`Shut${sw}`);
-    const card = (await s.account(me)).shop;
-    assert.deepEqual(card.wares.filter((w) => SHOP_WARES.find((x) => x.id === w.id).season), [], `PASS_OPEN ${sw}: none told`);
-    assert.ok(card.wares.some((w) => w.id === 'kill:pyre'), 'the rest sold as ever');
-  }
-  const s = await stand();
-  const me = await s.registered('Late');
-  const o = await s.open(me, 'boost:s1cog');
-  t.mock.timers.setTime(S1.toMs + 60_000);
-  const st = stripe();
-  try {
-    assert.deepEqual(await s.paid(o, st), { ok: true, applied: 0 });
-    assert.equal(st.asked.filter((x) => x.url === STRIPE_REFUND_API).length, 1);
-  } finally { st.restore(); }
-  const row = s.orders(me).find((x) => x.id === o.id);
-  assert.deepEqual([row.status, row.refund, row.refund_owed], ['refunded', 'late', 0]);
-  assert.ok(!shopHeldIds(s.rowOf(me)).includes('boost:s1cog'));
-  assert.match(s.letters(me).at(-1).body, /season ended before this payment/);
-});
-
-test('AUDIT-STOREFRONT S12 the confirm page says a giver held in part - the Premium inside the Collector\'s Deluxe (mutants: a lower price with no word why)', async (t) => {
+test('AUDIT-STOREFRONT S12 the confirm page says a giver held in part - the Pyre inside the Daedric Champion (PIN MOVED, PASS-PANELS: the Premium inside the Collector\'s Deluxe, retired) (mutants: a lower price with no word why)', async (t) => {
   t.mock.timers.enable({ apis: ['Date'], now: IN_TREMOR });
   const s = await stand();
   const me = await s.registered('Partial');
-  assert.equal((await s.buy(me, 'pass:s1premium')).applied, 1);
-  const ticket = new URL((await s.account(me)).shop.wares.find((w) => w.id === 'bundle:seasonalcollector').buy).searchParams.get('t');
+  assert.equal((await s.buy(me, 'kill:pyre')).applied, 1);
+  const ticket = new URL((await s.account(me)).shop.wares.find((w) => w.id === 'bundle:daedricchampion').buy).searchParams.get('t');
   const html = await (await s.fetch(`https://accounts.invalid/v1/shop/buy?t=${encodeURIComponent(ticket)}`)).text();
   assert.match(html, /holds part of it already, so the price is less/);
-});
-
-// ── S7: TWO GRANTS AT ONCE ──────────────────────────────────────────
-
-test('AUDIT-STOREFRONT S7 the Deluxe Pass and the Seasonal Collector paid at the same moment add the Deluxe\'s levels once - the second grant, refused by its row guard, is decided again on the row the first wrote, and (AUDIT-STOREFRONT II A5) refunded, its page priced before the first landed (mutants: the guard dropped; the retry dropped)', async (t) => {
-  t.mock.timers.enable({ apis: ['Date'], now: IN_TREMOR });
-  const s = await stand();
-  const me = await s.registered('Racer');
-  const deluxe = await s.open(me, 'pass:s1deluxe'), coll = await s.open(me, 'bundle:seasonalcollector');
-  const ctx = { db: s.env.DB, nowS: Math.floor(Date.now() / 1000) };
-  const st = stripe();
-  let rs;
-  try {
-    rs = await Promise.all([deluxe, coll].map((o) => fulfilOrder(ctx, o.id, { intent: `pi_${o.id}`, amount: o.cents, currency: 'usd' }, { env: ON, fetch: globalThis.fetch })));
-  } finally { st.restore(); }
-  // PIN MOVED (AUDIT-STOREFRONT II A5): both were granted - the Collector at its full price over a Deluxe already held
-  assert.deepEqual(rs.map((r) => r.applied).sort(), [0, 1], 'one granted, the other decided again and refunded');
-  const row = s.rowOf(me), held = shopHeldIds(row);
-  assert.equal(row.pass_s1, ((held.includes('pass:s1deluxe') ? 5 : 0) + (held.includes('boost:s1heart') ? 8 : 0)) * PASS_XP_PER_LEVEL, 'the levels of what is held, each once');
-  const back = s.orders(me).filter((o) => o.status === 'refunded');
-  assert.equal(back.length, 1);
-  assert.ok(['price', 'held'].includes(back[0].refund), back[0].refund);
 });
 
 // ── S8: THE DEMAND ──────────────────────────────────────────────────

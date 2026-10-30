@@ -31,10 +31,9 @@ const row = (o = {}) => ({ id: 'acct-buyer', handle: 'Buyer', created_at: AFTER,
 
 test('SHOP: the wares at the owner\'s and the sheet\'s prices, the owner\'s nine each a bit of its own, the rest held by id, each in the vocabulary (mutants: a price moved; two bits shared; a key off the vocabulary)', () => {
   // STOREFRONT (PIN MOVED, bible/06-Systems/Storefront.md section 2): the sheet's rows by section - each [id, price, bit,
-  // section, pre-alpha, tier, sold alone]; the owner's nine keep their bits, every ware since is held by its id
+  // section, pre-alpha, tier, sold alone]; the owner's nine keep their bits, every ware since is held by its id.
+  // PASS-PANELS (PIN MOVED): no pass, booster or Seasonal Collector - a season's tracks are bought with Aurum
   assert.deepEqual(SHOP_WARES.map((w) => [w.id, w.cents, w.bit, w.category, w.preAlpha, w.tier, w.alone]), [
-    ['pass:s1premium', 1499, 0, 'pass', false, 'premium', true],
-    ['pass:s1deluxe', 2499, 0, 'pass', false, 'exclusive', true],
     ['kill:ashen', 499, 0, 'kills', false, 'standard', true],
     ['kill:voidrend', 999, 0, 'kills', false, 'premium', true],
     ['kill:pyre', 1499, 0, 'kills', false, 'exclusive', true],
@@ -51,7 +50,6 @@ test('SHOP: the wares at the owner\'s and the sheet\'s prices, the owner\'s nine
     ['title:eternalchampion', 999, 0, 'names', false, 'exclusive', true],
     ['glyph:oblivion', 299, 0, 'names', false, null, false],
     ['glyph:gatesigil', 299, 0, 'names', false, null, false],
-    ['glyph:gearcrown', 299, 0, 'names', false, null, false],
     ['aura:eternal', 2000, 4, 'auras', true, null, true],
     ['aura:dominion', 1499, 0, 'auras', false, null, false],
     // ARMORY (PIN MOVED, bible/04-Characters/Aura-Armory.md section 4): the Aura Armory's Eternal line - the set whole at $20
@@ -65,10 +63,6 @@ test('SHOP: the wares at the owner\'s and the sheet\'s prices, the owner\'s nine
     ['bundle:daedricchampion', 2799, 0, 'bundles', false, 'exclusive', true],
     ['bundle:portalmaster', 1999, 0, 'bundles', false, 'premium', true],
     ['bundle:lordofoblivion', 2999, 0, 'bundles', false, 'exclusive', true],
-    ['bundle:seasonalcollector', 2999, 0, 'bundles', false, 'exclusive', true],
-    ['boost:s1cog', 299, 0, 'boosts', false, 'standard', true],
-    ['boost:s1tonal', 599, 0, 'boosts', false, 'premium', true],
-    ['boost:s1heart', 999, 0, 'boosts', false, 'exclusive', true],
     // AURUM (PIN MOVED, bible/06-Systems/Aurum.md): the daily wares' icons, sold for Aurum alone, and the Aurum's packs
     ['icon:gatefire', 300, 0, 'icons', false, 'premium', true], ['icon:aurbis', 400, 0, 'icons', false, 'exclusive', true],
     ['icon:elderscroll', 300, 0, 'icons', false, 'premium', true], ['icon:azurastar', 300, 0, 'icons', false, 'premium', true],
@@ -204,7 +198,7 @@ test('SHOP, end to end: the account read carries the card - every ware sold alon
   assert.equal(card.on, true);
   // ARMORY (PIN MOVED): every ware, the Eternal line's five with the three; STOREFRONT (PIN MOVED): every ware sold alone, at its price
   assert.deepEqual(card.wares.map((w) => [w.id, w.sale, w.held, typeof w.buy, w.cents]), SOLD.map((w) => [w.id, true, false, 'string', w.cents]));
-  assert.deepEqual(card.featured, ['pass:s1premium', 'pass:s1deluxe'], 'the live season\'s passes lead the carousel');
+  assert.deepEqual(card.featured, [], 'PASS-PANELS (PIN MOVED): no window open, nothing featured - the pass leads it no more');
   assert.match(card.wares[0].buy, /^https:\/\/accounts\.invalid\/v1\/shop\/buy\?t=/);
   assert.ok(!card.wares[0].buy.includes(me.id) && !card.wares[0].buy.includes(ON.STRIPE_SECRET_KEY), 'the ticket names nobody in clear');
   assert.deepEqual(clientCard(card).wares.map((w) => !!w.buy), SOLD.map(() => true), 'and the client reads it back whole');

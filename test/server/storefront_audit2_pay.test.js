@@ -32,7 +32,7 @@ async function stand() {
   const account = async (who) => (await get('/v1/account', who)).json();
   const press = (ticket) => s.fetch('https://accounts.invalid/v1/shop/checkout', { method: 'POST', redirect: 'manual', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ ticket }).toString() });
   const ticketOf = async (who, id) => new URL((await account(who)).shop.wares.find((w) => w.id === id).buy).searchParams.get('t');
-  const rowOf = (who) => raw.prepare('SELECT shop_wares, shop_held, pass_s1 FROM players WHERE id = ?').get(who.id);
+  const rowOf = (who) => raw.prepare('SELECT shop_wares, shop_held FROM players WHERE id = ?').get(who.id);
   const orders = (who) => raw.prepare('SELECT * FROM shop_orders WHERE player = ? ORDER BY created_at, rowid').all(who.id);
   const hook = async (type, object) => {
     const body = JSON.stringify({ id: 'evt_au', type, data: { object } }), t = Math.floor(Date.now() / 1000);

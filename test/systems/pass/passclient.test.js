@@ -1,52 +1,55 @@
 // STOREFRONT (2026-10-29; bible/06-Systems/Battle-Pass.md section 4): THE PASS AS THE PAGE PLAYS IT
 // (systems/pass/passClient.js). A kill of mine asks a find by the foe's kind - the season's constructs their own source,
 // the city watch and an ally none; an act of mine by its family, one find a turn's deeds, an elite's fall never twice;
-// the asks one after another; a level reached and a challenge paid told once each, the day's experience spent told once a
-// day; nothing asked unbound, off line, by a guest or outside the season. The pass's words (ui/passText.js) and its card
-// (net/battlePassLaw.js passCardOf) beside it.
+// the asks one after another; PASS-PANELS: a challenge paid told with its Aurum, the day's Aurum found told once a day;
+// nothing asked unbound, off line, by a guest or before the finds begin - and asked for good after the season. The pass's
+// words (ui/passText.js) and its card (net/battlePassLaw.js passCardOf) beside it.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-  bindPass, passState, passLive, askPassFind, passFoeSource, grantsAt, refreshPass, _resetPassClientForTests, PASS_CONSTRUCT_MOBILES,
+  bindPass, passState, passLive, askPassFind, passFoeSource, refreshPass, _resetPassClientForTests, PASS_CONSTRUCT_MOBILES,
 } from '../../../src/systems/pass/passClient.js';
 import { ASK_REST_MS } from '../../../src/net/askRest.js';
 import { reportPlayerKill } from '../../../src/systems/playerKills.js';
 import { noteAct } from '../../../src/systems/questlines/qlActs.js';
 import { KNIGHT_CITY_WATCH } from '../../../src/characters/mobile/mobileTypes.js';
-import { passSeasonById, passCardOf, PASS_CHALLENGES, PASS_DAY_XP } from '../../../src/net/battlePassLaw.js';
-import { passChallengeText, passBoostText, passGrantName, passGrantKind, PASS_STAGE_TEXT } from '../../../src/ui/passText.js';
+import { passSeasonById, passCardOf, passChallengeOf, passFindAurum, PASS_CHALLENGES, PASS_DAY_AURUM } from '../../../src/net/battlePassLaw.js';
+import { passChallengeText, passGrantName, passGrantKind, PASS_STAGE_TEXT } from '../../../src/ui/passText.js';
 
 const S1 = passSeasonById('s1');
 const IN = S1.fromMs + 2 * 86_400_000;
 const tick = () => new Promise((r) => setTimeout(r, 0));
 const settle = async () => { for (let i = 0; i < 6; i++) await tick(); };
 
-/** The service stood in: a find's answer by its source, the account's season as it climbs. */
-function service({ guest = false } = {}) {
+/** The service stood in: a find's Aurum by its source under the day's bound (`today` found already), the tavern
+ *  challenge paid on the first tavern find. */
+function service({ guest = false, today = 0 } = {}) {
   const asked = [];
-  let xp = 960, level = 0;
+  let paid = false;
   return {
     asked,
     api: {
       me: () => 'acct-1', guest: () => guest,
-      mine: async () => ({ ok: true, data: { season: 's1', open: true, stage: 0, xp, level, top: 17, tracks: { free: true, premium: true }, mult: 1, today: 0, challenges: [] } }),
+      mine: async () => ({ ok: true, data: { season: 's1', open: true, stage: 0, tracks: { free: true, premium: false }, bought: [], today, dayMax: PASS_DAY_AURUM, challenges: [] } }),
       find: async (source) => {
         asked.push(source);
-        const gained = source === 'construct' ? 40 : 12;
-        xp += gained; level = Math.floor(xp / 1000);
-        return { ok: true, data: { gained, xp, level, today: source === 'endgame' ? PASS_DAY_XP : 100, done: source === 'tavern' ? ['tremor-tavern'] : [] } };
+        const found = passFindAurum(source, today);
+        today += found;
+        const done = source === 'tavern' && !paid ? (paid = true, ['tremor-tavern']) : [];
+        const gained = found + (done.length ? passChallengeOf('tremor-tavern').aurum : 0);
+        return { ok: true, data: { gained, found, today, done, season: 's1' } };
       },
     },
   };
 }
 
-test('STOREFRONT the pass\'s finds: a kill of mine by the foe\'s kind - a season\'s construct its own source, the watch and an ally none, one body once; a deed by its family, one find for a turn\'s acts; the asks one after another; a level reached told with its rewards, a challenge once, the day spent once (mutants: the watch paying; a construct read as a foe; a level told twice)', async () => {
+test('STOREFRONT the pass\'s finds: a kill of mine by the foe\'s kind - a season\'s construct its own source, the watch and an ally none, one body once; a deed by its family, one find for a turn\'s acts; the asks one after another; a challenge told with its Aurum, the day\'s Aurum found once (mutants: the watch paying; a construct read as a foe; a level told twice)', async () => {
   _resetPassClientForTests();
-  const svc = service(), events = [];
+  const svc = service({ today: 70 }), events = [];
   bindPass({ online: () => true, nowMs: () => IN, onEvent: (e) => events.push(e), api: svc.api });
   await settle();
-  assert.equal(passState().level, 0, 'the season read when bound');
+  assert.equal(passState().today, 70, 'the pass read when bound');
   assert.ok(passLive());
   const construct = { mobileType: PASS_CONSTRUCT_MOBILES[0] };
   reportPlayerKill(construct); reportPlayerKill(construct);
@@ -56,31 +59,37 @@ test('STOREFRONT the pass\'s finds: a kill of mine by the foe\'s kind - a season
   await settle();
   assert.deepEqual(svc.asked, ['construct', 'foe'], 'one body once; the watch and an ally never');
   assert.equal(passFoeSource({ passConstruct: true, mobileType: 1 }), 'construct', 'a body the season stood');
-  assert.deepEqual(events.filter((e) => e.kind === 'level'), [{ kind: 'level', level: 1, grants: ['glyph:tonalfork'] }], 'level one, its premium reward (PIN MOVED, AURUM: the free track\'s first is at five)');
+  assert.deepEqual([passState().today, events], [73, []], 'the day\'s Aurum kept; a find alone is told nothing (PIN MOVED, PASS-PANELS: no levels)');
   noteAct('cards-won'); noteAct('gambit-won');
   await settle();
   assert.deepEqual(svc.asked.slice(2), ['tavern'], 'one turn\'s acts of one family: one deed');
-  assert.deepEqual(events.filter((e) => e.kind === 'challenge'), [{ kind: 'challenge', key: 'tremor-tavern' }]);
+  assert.deepEqual(events.filter((e) => e.kind === 'challenge'), [{ kind: 'challenge', key: 'tremor-tavern', aurum: passChallengeOf('tremor-tavern').aurum }]);
   noteAct('elite-foe-slain');
   await settle();
   assert.equal(svc.asked.length, 3, 'an elite\'s fall is its kill\'s find, never a second');
   noteAct('breach-closed'); await settle();
   noteAct('rite-broken'); await settle();
-  assert.equal(events.filter((e) => e.kind === 'full').length, 1, 'the day spent, told once');
-  assert.deepEqual(grantsAt({ season: 's1', tracks: { premium: false } }, 10), ['glyph:cog'], 'a free account\'s level ten (PIN MOVED, AURUM: the free track\'s glyph)');
+  noteAct('breach-closed'); await settle();
+  assert.equal(passState().today, PASS_DAY_AURUM);
+  assert.equal(events.filter((e) => e.kind === 'full').length, 1, 'the day\'s Aurum found, told once');
   _resetPassClientForTests();
 });
 
-test('STOREFRONT the pass asks nothing unbound, off line, for a guest or outside the season (mutants: a guest asking; the season\'s clock ignored)', async () => {
+test('STOREFRONT the pass asks nothing unbound, off line, for a guest or before the finds begin - and asks for good after the season (PASS-PANELS: "Never expire") (mutants: a guest asking; the finds\' first instant ignored; the finds shut with the season)', async () => {
   _resetPassClientForTests();
   assert.equal(await askPassFind('foe'), 0, 'unbound');
-  for (const [doors, why] of [[{ online: () => false, nowMs: () => IN }, 'off line'], [{ online: () => true, nowMs: () => S1.fromMs - 1 }, 'before the season'], [{ online: () => true, nowMs: () => S1.toMs }, 'after it']]) {
+  for (const [doors, why] of [[{ online: () => false, nowMs: () => IN }, 'off line'], [{ online: () => true, nowMs: () => S1.fromMs - 1 }, 'before the finds begin']]) {
     const svc = service();
     bindPass({ ...doors, api: svc.api });
     await settle();
     assert.equal(await askPassFind('foe'), 0, why);
     assert.deepEqual(svc.asked, [], why);
   }
+  const late = service();
+  bindPass({ online: () => true, nowMs: () => S1.toMs + 400 * 86_400_000, api: late.api });
+  await settle();
+  assert.equal(await askPassFind('foe'), 1, 'a year past the season');
+  assert.deepEqual(late.asked, ['foe']);
   const g = service({ guest: true });
   bindPass({ online: () => true, nowMs: () => IN, api: g.api });
   assert.equal(await refreshPass(), false);
@@ -89,32 +98,28 @@ test('STOREFRONT the pass asks nothing unbound, off line, for a guest or outside
   _resetPassClientForTests();
 });
 
-test('STOREFRONT the pass\'s words and card: each challenge said with its count, a booster with its share and levels, a reward by its name and kind; the card checked on the way in (mutants: a challenge\'s count missing; a card with a stray level)', () => {
+test('STOREFRONT the pass\'s words and card: each challenge said with its count, an item by its name and kind; the card checked on the way in (mutants: a challenge\'s count missing; a card with a stray stage)', () => {
   for (const c of PASS_CHALLENGES) assert.ok(passChallengeText(c.key).includes(c.n.toLocaleString()), c.key);
   assert.equal(passChallengeText('nope'), '');
-  // PIN MOVED (AUDIT PASS 12): and that the levels past the open stage wait for the next - a paid line says so
-  assert.equal(passBoostText('boost:s1heart'), '100% more season experience from every deed, for the whole season. And 8 levels at once. Levels past the open stage are kept for the next.');
-  assert.equal(passBoostText('boost:s1cog'), '25% more season experience from every deed, for the whole season.');
   assert.equal(passGrantName('kill:tonal'), 'Tonal Shatter');
   assert.equal(passGrantKind('portal:brass'), 'Portal skin');
   assert.deepEqual(Object.keys(PASS_STAGE_TEXT), S1.stages.map((s) => s.key));
   assert.equal(passCardOf({ season: 'nope' }), null);
-  const c = passCardOf({ season: 's1', open: true, stage: 9, xp: -5, level: 70, top: 17, tracks: { deluxe: true }, mult: 9, today: 50, challenges: [{ key: 'tremor-foes', n: 9999, paid: true }, { key: 'x', n: 3 }] });
-  assert.deepEqual([c.stage, c.xp, c.level, c.mult], [-1, 0, 0, 1], 'a stray stage, experience, level and share refused');
-  assert.deepEqual(c.tracks, { free: true, premium: false, deluxe: true }, 'the tracks as the service says them - a Deluxe whose Premium went back plays without it (AUDIT-STOREFRONT S1; PIN MOVED: the card read the Deluxe as the Premium too)');
+  const c = passCardOf({ season: 's1', open: true, stage: 9, tracks: { premium: true }, bought: ['glyph:cog'], today: 50, challenges: [{ key: 'tremor-foes', n: 9999, paid: true }, { key: 'x', n: 3 }] });
+  assert.deepEqual([c.stage, c.today, c.tracks, c.bought], [-1, 50, { free: true, premium: true }, ['glyph:cog']], 'a stray stage refused');
   assert.deepEqual(c.challenges[0], { key: 'tremor-foes', n: 100, paid: true }, 'a count no higher than the challenge asks');
   assert.equal(c.challenges.length, PASS_CHALLENGES.length);
 });
 
-test('STOREFRONT a find asked before the season is read: the season read first, so the level it reaches is told (mutant: the find before the read)', async () => {
+test('STOREFRONT a find asked before the pass is read: the pass read first, so the day\'s Aurum the find answers is the one kept (mutant: the find before the read)', async () => {
   _resetPassClientForTests();
-  const svc = service(), events = [];
+  const svc = service({ today: 10 }), events = [];
   const slowMine = svc.api.mine;
   svc.api.mine = () => new Promise((r) => setTimeout(() => r(slowMine()), 15));
   bindPass({ online: () => true, nowMs: () => IN, onEvent: (e) => events.push(e), api: svc.api });
   reportPlayerKill({ mobileType: PASS_CONSTRUCT_MOBILES[0] });   // before the bind's read lands
   await new Promise((r) => setTimeout(r, 80));
-  assert.deepEqual(events.filter((e) => e.kind === 'level').map((e) => e.level), [1]);
+  assert.equal(passState().today, 12, 'the find\'s day, never the read\'s older one');
   _resetPassClientForTests();
 });
 
@@ -153,34 +158,34 @@ test('AUDIT PASS 2: a page that read the pass shut reads it again once its rest 
   assert.equal(reads, 2, 'a minute before it is asked again, not a read a deed');
   svc.api.mine = answered;
   now += ASK_REST_MS.brief;
-  assert.equal(await askPassFind('foe'), 12, 'read again, and played');
+  assert.equal(await askPassFind('foe'), 1, 'read again, and played');
   assert.equal(reads, 3);
-  assert.equal(await askPassFind('foe'), 12, 'and played on, no read');
+  assert.equal(await askPassFind('foe'), 1, 'and played on, no read');
   assert.deepEqual([reads, svc.asked], [3, ['foe', 'foe']]);
   _resetPassClientForTests();
 });
 
-test('AUDIT PASS 9: the season read when bound waits in the finds\' queue - answered late, it never puts the level back, so no level is said twice (mutant: the bind\'s read off the queue)', async () => {
+test('AUDIT PASS 9 (PIN MOVED, PASS-PANELS): the pass read when bound waits in the finds\' queue - answered late, it never puts the day\'s Aurum back, so the bound is never said twice (mutant: the bind\'s read off the queue)', async () => {
   _resetPassClientForTests();
-  const svc = service(), events = [];
+  const svc = service({ today: 85 }), events = [];
   const mine = svc.api.mine;
   let n = 0, release = () => {};
   const slow = new Promise((r) => { release = r; });
   svc.api.mine = async () => { const r = await mine(); if (++n === 1) await slow; return r; };   // the bind's read, answered late
   bindPass({ online: () => true, nowMs: () => IN, onEvent: (e) => events.push(e), api: svc.api });
-  const first = askPassFind('construct');   // 960 + 40: level one
+  const first = askPassFind('endgame');   // 85 + 15: the day's bound
   await settle();
   release();
   await first; await settle();
-  assert.equal(passState().level, 1, 'the late read never lands over the find');
-  await askPassFind('construct');
-  assert.deepEqual(events.filter((e) => e.kind === 'level').map((e) => e.level), [1]);
+  assert.equal(passState().today, PASS_DAY_AURUM, 'the late read never lands over the find');
+  await askPassFind('endgame');
+  assert.equal(events.filter((e) => e.kind === 'full').length, 1);
   _resetPassClientForTests();
 });
 
-test('AUDIT PASS 9: a find whose bind read went unanswered reads the season first, so the level it reaches is told (mutant: the find before the read)', async () => {
+test('AUDIT PASS 9: a find whose bind read went unanswered reads the pass first, so the page holds the whole card and the find\'s day on it (mutant: the find before the read)', async () => {
   _resetPassClientForTests();
-  const svc = service(), events = [];
+  const svc = service({ today: 40 }), events = [];
   const mine = svc.api.mine;
   let n = 0;
   svc.api.mine = async () => (++n === 1 ? { ok: false, error: 'offline' } : mine());
@@ -188,7 +193,8 @@ test('AUDIT PASS 9: a find whose bind read went unanswered reads the season firs
   await settle();
   assert.equal(passState(), null, 'the bind\'s read lost');
   await askPassFind('construct');
-  assert.deepEqual(events.filter((e) => e.kind === 'level').map((e) => e.level), [1]);
+  assert.equal(n, 2, 'read again before the find');
+  assert.deepEqual([passState().season, passState().today], ['s1', 42], 'the card read, the find\'s day on it');
   _resetPassClientForTests();
 });
 

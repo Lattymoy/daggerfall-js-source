@@ -241,8 +241,8 @@ test('ACC1b: the migration is the real schema, and applying it twice changes not
   // YARD-CELL YC3 dropped two (0193, PIN MOVED): `home_yards` and `home_yards_ver` (YARD-SNAP's town rows, YC1's rollback net)
   // SHOP added one (0189, PIN MOVED): `shop_orders` (an order the shop wrote before asking Stripe, its state the webhook's word;
   // shop.js)
-  // STOREFRONT added two (0196, PIN MOVED): `pass_days` and `pass_counts` (a season's day an account, a stage's challenge -
-  // battlePass.js)
+  // STOREFRONT added two (0196, PIN MOVED): `pass_days` and `pass_counts` (a UTC day's finds an account - PASS-PANELS: their
+  // Aurum - and a stage's challenge; battlePass.js)
   // AUDIT LANE 5 added one (0196 grown in place, PIN MOVED): `season_mauls` (the Resonant Maul's day an account - seasonClaim.js)
   // AUDIT-STOREFRONT II (lane B 2) added one (0196 grown in place, PIN MOVED): `pass_asks` (a pass find's own id an account -
   // battlePass.js findPass)
@@ -320,10 +320,10 @@ test('ACC1b: the migration is the real schema, and applying it twice changes not
   // STAFF-HIDE-TOGGLE added one (0165, PIN MOVED): `staff_hide_on`, Hide me's switch off by default (staffHidden.js) - 0159's
   // `staff_hide` stays for an older Worker, read by this one no more
   // SHOP added `shop_wares` (0189, PIN MOVED): a bit a ware the shop sold the account, read at every ask (titles.js shopKeys)
-  // STOREFRONT added three (0196, PIN MOVED): `shop_held` (the wares held by id), `effects` (the effects kit worn) and `pass_s1`
-  // (Season One's experience) - shop.js, titles.js, battlePass.js
+  // STOREFRONT added three (0196, PIN MOVED): `shop_held` (the wares held by id), `effects` (the effects kit worn) and
+  // `pass_items` (PASS-PANELS: the tracks' items bought) - shop.js, titles.js, battlePass.js
   // ARMORY added one (0191, PIN MOVED): `armory`, the kit worn - what is held is the insignia's and the shop's (titles.js armoryHeld)
-  assert.deepEqual(cols.sort(), ['armory', 'aura', 'ban_admin', 'ban_reason', 'banned_by', 'banned_until', 'conduct_v', 'created_at', 'effects', 'eg_annals', 'eg_first', 'eg_honours', 'eg_key_miss', 'eg_keys', 'eg_live_b', 'eg_live_until', 'eg_mercy', 'eg_pity', 'eg_rh_day', 'eg_valk_wk', 'email', 'fest_bowls', 'fest_cakes', 'fest_given', 'fest_taken', 'fest_wares', 'first_played_at', 'freeze_live', 'freeze_rev', 'frozen_at', 'frozen_by', 'frozen_reason', 'frozen_until', 'glyphs_off', 'guest_name', 'handle', 'handle_lc', 'icon', 'id', 'insignia', 'insignia_spent', 'lamp_title', 'last_seen', 'legal_accepted_at', 'mute_admin', 'muted_by', 'muted_until', 'name_as', 'pass_s1', 'password', 'patreon_at', 'patreon_status', 'patreon_tiers', 'patreon_user', 'played_at', 'played_s', 'privacy_version', 'ql_key', 'ql_titles', 'recovery_hash', 'registered_at', 'renown_hour', 'renown_hour_xp', 'renown_last_credit', 'sd_honours', 'serpent_honours', 'shop_held', 'shop_wares', 'staff_hide', 'staff_hide_on', 'staff_mod', 'staff_suspended', 'terms_version', 'title']);
+  assert.deepEqual(cols.sort(), ['armory', 'aura', 'ban_admin', 'ban_reason', 'banned_by', 'banned_until', 'conduct_v', 'created_at', 'effects', 'eg_annals', 'eg_first', 'eg_honours', 'eg_key_miss', 'eg_keys', 'eg_live_b', 'eg_live_until', 'eg_mercy', 'eg_pity', 'eg_rh_day', 'eg_valk_wk', 'email', 'fest_bowls', 'fest_cakes', 'fest_given', 'fest_taken', 'fest_wares', 'first_played_at', 'freeze_live', 'freeze_rev', 'frozen_at', 'frozen_by', 'frozen_reason', 'frozen_until', 'glyphs_off', 'guest_name', 'handle', 'handle_lc', 'icon', 'id', 'insignia', 'insignia_spent', 'lamp_title', 'last_seen', 'legal_accepted_at', 'mute_admin', 'muted_by', 'muted_until', 'name_as', 'pass_items', 'password', 'patreon_at', 'patreon_status', 'patreon_tiers', 'patreon_user', 'played_at', 'played_s', 'privacy_version', 'ql_key', 'ql_titles', 'recovery_hash', 'registered_at', 'renown_hour', 'renown_hour_xp', 'renown_last_credit', 'sd_honours', 'serpent_honours', 'shop_held', 'shop_wares', 'staff_hide', 'staff_hide_on', 'staff_mod', 'staff_suspended', 'terms_version', 'title']);
   // GLYPH-WEAR: `glyphs_off` is the one glyph column, and it grants nothing - it is the choice of which true glyphs to hide
   assert.ok(!cols.some((c) => c !== 'glyphs_off' && /founder|developer|sprout|glyph|grant/i.test(c)), `a grant became a column: ${cols}`);
   // SAVES AND PROVIDER LINKS ARE STILL NOT HERE. They arrive as their
