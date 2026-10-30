@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import {
   layeredWeaponOf, weaponShownFor, weaponRigOf, WEAPON_SHAPES, BARE_TWINS, ARMED_TWINS, GUN_FIRE_FRAME, isGunCode, removeWeapon,
-  maskTile, weaponLen, WEAPON_SPAN,
+  maskTile, fillFrom, weaponLen, WEAPON_SPAN,
 } from '../../../src/player/eyeOfTheBeholder/layeredWeapon.js';
 import { layeredSprite, outfitPieces, outfitCombo, decodeLayered } from '../../../src/player/eyeOfTheBeholder/layeredArmor.js';
 import { ALL_LOOKS, APPEARANCE_KINDS } from '../../../src/net/appearanceLaw.js';
@@ -134,6 +134,28 @@ test('taking the hammer out: a hole in the body is filled from the body round it
   assert.deepEqual([...data.subarray((w + 4) * 4, (w + 4) * 4 + 4)], [0, 0, 0, 0], 'the px in the air is air');
 });
 
+test('a thin piece out in the air goes with the air, though it touches the body at one end', () => {
+  // the body at column 0; the hammer a stick along row 1 from it, open air above and below
+  const w = 7, h = 3, data = new Uint8Array(w * h * 4), mask = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) data.set([100, 50, 20, 255], y * w * 4);
+  for (let x = 1; x < 6; x++) { data.set([20, 20, 20, 255], (w + x) * 4); mask[w + x] = 1; }
+  removeWeapon({ width: w, height: h, data }, mask, 0);
+  for (let x = 1; x < 6; x++) assert.equal(data[(w + x) * 4 + 3], 0, `px ${x} cleared`);
+});
+
+test('a hole px copies its own source where the rig gives one, before the frame\'s shift or the blend', () => {
+  const w = 8, h = 3, data = new Uint8Array(w * h * 4), mask = new Uint8Array(w * h), from = new Int32Array(w * h).fill(-1);
+  for (let i = 0; i < w * h; i++) data.set([(i % w) * 20, 0, 0, 255], i * 4);
+  mask[w + 3] = 1; from[w + 3] = w + 6;
+  removeWeapon({ width: w, height: h, data }, mask, 0, from);
+  assert.deepEqual([...data.subarray((w + 3) * 4, (w + 3) * 4 + 4)], [120, 0, 0, 255]);
+  // the rig's tile: (dx, dy) + 128 in red and green, blue 255 where there is a source; one tile a chest family
+  const strip = { width: 12, height: 1, data: new Uint8Array(12 * 4) };
+  strip.data.set([130, 128, 255, 255], 1 * 4); strip.data.set([128, 128, 0, 255], 2 * 4); strip.data.set([127, 128, 255, 255], 9 * 4);
+  assert.deepEqual([...fillFrom(strip, 'l')], [-1, 3, -1, -1]);
+  assert.deepEqual([...fillFrom(strip, 'p')], [-1, 0, -1, -1]);
+});
+
 test('a mirror fill keeps what joins the body and drops a copied piece that floats', () => {
   // the body at columns 4-5, the other arm alone at 8; the hole at 0 (the arm's mirror) and 3 (the body's)
   const w = 9, h = 3, data = new Uint8Array(w * h * 4), mask = new Uint8Array(w * h);
@@ -172,6 +194,18 @@ test('composed: empty hands lose the hammer and nothing else; a weapon adds itse
   }
   const iron = layeredSprite('IdleMelee', 2, 0, 1, { outfit: 'lll', gender: 'male', weapon: 'wh0' }, false);
   assert.ok(!iron.key.includes('@'));
+});
+
+test('composed: the chest a swing crossed is the body\'s own px, copied from where the rig says', { skip: !PNG && 'no pngjs' }, async () => {
+  const plain = 'LA:male:leather_leather_leather:7-4:lll', strip = await picture('weapon/male/7-4');
+  const mask = maskTile(strip, 'l'), from = fillFrom(strip, 'l');
+  const art = await decodeLayered(plain, decodePng, opts), bare = await decodeLayered(`${plain}@0`, decodePng, opts);
+  let n = 0, same = 0;
+  for (let i = 0; i < mask.length; i++) {
+    if (!mask[i] || from[i] < 0 || !bare.data[i * 4 + 3]) continue;
+    n++; if ([0, 1, 2].every((c) => bare.data[i * 4 + c] === art.data[from[i] * 4 + c])) same++;
+  }
+  assert.ok(n > 40 && same > n * 0.9, `${same} of ${n} hole px are their source's`);
 });
 
 test('a walk whose hammer pointed at the camera hangs the weapon from the hand: down, the handle behind the fist', { skip: !PNG && 'no pngjs' }, async () => {

@@ -28,7 +28,9 @@ K8 = np.ones((3, 3), bool)
 LO, HI = -16, 70   # the depth string's span along the shaft, px from the grip
 
 # The grip (where the shaft leaves the fist, read by eye) and, where the head is not the hammer-grey blob nearest the
-# grip's line, its centre; EXTRA: shaft pieces past the fist the trace cannot reach (x0, y0, x1, y1, half-width).
+# grip's line, its centre (a grip with a third entry is where the shaft leaves the fist already, not snapped); EXTRA:
+# shaft pieces past the fist the trace cannot reach (x0, y0, x1, y1, half-width) or boxes; CUT: boxes it took that are
+# the body.
 GRIPS = {
     'male': {
         '0-0': (12, 47), '0-1': (11, 43), '0-2': (14, 49), '0-3': (10, 44),
@@ -42,7 +44,7 @@ GRIPS = {
         '8-0': (76, 25), '8-1': (66, 28), '8-2': (78, 53), '8-3': (38, 84), '8-4': (46, 74), '8-5': (42, 26),
         '9-0': (61, 27), '9-1': (74, 30), '9-2': (76, 72), '9-3': (32, 81), '9-4': (16, 76), '9-5': (29, 29),
         '10-0': (18, 44), '11-0': (24, 50), '12-0': (55, 47), '13-0': (86, 40), '14-0': (84, 46),
-        '15-0': (9, 58), '16-0': (29, 51), '17-0': (40, 51), '18-0': (27, 48), '19-0': (44, 49),
+        '15-0': (9, 58), '16-0': (29, 51), '17-0': (40.5, 55.5, 1), '18-0': (27, 48), '19-0': (44, 49),
     },
     'female': {
         '0-0': (52, 88), '0-1': (54, 79), '0-2': (50, 66), '0-3': (55, 72),
@@ -64,7 +66,13 @@ HEADS = {
              '15-0': (26, 48), '19-0': (55, 61)},
     'female': {'6-0': (82, 16), '8-2': (65, 71), '15-0': (40, 88)},
 }
-EXTRA = {('male', '6-5'): [(89, 19, 74, 27, 2.0)], ('male', '16-0'): [(27, 57, 24, 66, 3.0), (27, 58, 34, 64, 2.5)],
+CUT = {('female', '1-1'): [(76, 83, 81, 90)], ('female', '5-1'): [(57, 34, 63, 41)]}
+EXTRA = {('male', '1-0'): [(36, 64, 41, 66)], ('male', '1-1'): [(33, 60, 41, 62), (42, 62, 46, 64)],
+         ('male', '1-2'): [(48, 64, 49, 66)], ('male', '1-3'): [(36, 61, 41, 63), (42, 61, 42, 61)],
+         ('female', '1-1'): [(66, 88, 75, 92.5, 1.3), (68, 88, 75, 93)], ('female', '1-3'): [(66, 87.5, 72, 91, 1.2)],
+         ('female', '17-0'): [(63, 84, 70, 85), (59, 86, 64, 90)], ('female', '5-1'): [(59, 32, 62, 33)],
+         ('female', '7-4'): [(95, 26, 100, 43)], ('female', '10-0'): [(25, 50, 32, 58)],
+         ('male', '6-5'): [(89, 19, 74, 27, 2.0)], ('male', '16-0'): [(27, 57, 24, 66, 3.0), (27, 58, 34, 64, 2.5)],
          ('male', '7-5'): [(59, 19, 66, 22), (42, 25, 52, 34)], ('male', '0-0'): [(2, 64, 11, 73)], ('male', '15-0'): [(1, 61, 11, 70)]}
 # Back views, whose glove is as dark as the hammer's iron (and male 8-4, the head before a dark hood): the hammer is the
 # light px in the `lit` boxes, every px but skin in the `all` boxes (x0, y0, x1, y1 inclusive) and in the `seg` shaft
@@ -80,8 +88,11 @@ HAND = {
     ('male', '4-3'): dict(q=(56.5, 57), t=(60, 61.5), lit=[(46, 39, 51, 45), (52, 48, 58, 57)], all=[(56, 57, 64, 66)]),
     ('male', '9-4'): dict(q=(16, 76), t=(12, 57.5), lit=[], all=[(0, 48, 23, 66)], seg=[(14.5, 66, 16, 73.5, 1.3)]),
     ('female', '9-4'): dict(q=(17, 80), t=(12.5, 62), lit=[], all=[(2, 53, 23, 70)], seg=[(14, 70, 16.5, 77.5, 1.3)]),
+    ('male', '11-0'): dict(q=(34.5, 42), t=(51.3, 20.3), lit=[(26, 46, 30, 50)], all=[(40, 10, 61, 32), (20, 49, 28, 56)],
+                           seg=[(34.5, 41.5, 46, 28, 2.0)]),
+    ('female', '5-2'): dict(q=(61, 63), t=(31, 54), lit=[], all=[(20, 44, 42, 63)], seg=[(41, 57, 60, 63.5, 1.6)]),
     ('male', '8-4'): dict(q=(44.5, 74), t=(52, 52.5), lit=[(46, 44, 58, 61)], all=[], seg=[(45.5, 71, 50, 60, 1.2)]),
-    ('female', '3-0'): dict(q=(90, 94.5), t=(94, 96), lit=[(86, 93, 91, 97)], all=[(91, 93, 98, 100)]),
+    ('female', '3-0'): dict(q=(90, 94.5), t=(94, 96), lit=[(86, 93, 91, 97)], all=[(91, 93, 98, 100), (86, 96, 90, 96)]),
     ('female', '3-1'): dict(q=(86.5, 90.5), t=(89.5, 93), lit=[], all=[(85, 89, 94, 97)]),
     ('female', '3-3'): dict(q=(86, 90), t=(88.5, 93), lit=[], all=[(85, 88, 92, 97)]),
     ('female', '4-0'): dict(q=(81.5, 91), t=(86, 86.5), lit=[(73, 93, 80, 97), (82, 88, 83, 93)],
@@ -136,7 +147,7 @@ def head_guess(body, rf):
 
 
 def trace(body, rf, fam, cap=16):
-    gx, gy = GRIPS[body][rf]
+    gx, gy = GRIPS[body][rf][:2]; fixed = len(GRIPS[body][rf]) > 2
     tx, ty = HEADS[body].get(rf) or head_guess(body, rf)
     stab, L, st = stable(body, rf, fam); H, W = L.shape[:2]; opq = L[..., 3] > 0; sk = skin(L)
     s, _ = hsv(L)
@@ -164,7 +175,7 @@ def trace(body, rf, fam, cap=16):
     px, py = gx + nx * o, gy + ny * o
     shaft = stab & ~sk
     Q = 0.0
-    for tt in np.arange(6, -10, -0.5):   # walking from the head side: where the shaft meets the fist
+    for tt in np.arange(6, -10, -0.5) if not fixed else ():   # walking from the head side: where the shaft meets the fist
         ix, iy = int(round(px + ux * tt)), int(round(py + uy * tt)); jx, jy = int(round(px + ux * (tt - 0.5))), int(round(py + uy * (tt - 0.5)))
         if not (0 <= ix < W and 0 <= iy < H and 0 <= jx < W and 0 <= jy < H): continue
         if shaft[iy, ix] and not shaft[jy, jx] and opq[jy, jx]: Q = tt - 0.5; break
@@ -184,12 +195,14 @@ def trace(body, rf, fam, cap=16):
     edge_ok = stab & ~sk & (((t > Q + 1) & (e <= 3.2)) | disc)   # the hammer's own shaded edge
     for _ in range(2): m |= nd.binary_dilation(m, K8, 1) & edge_ok
     m &= ~((t >= Q - 6) & (t <= Q + 0.5) & (e <= 3.5))            # the fist round the grip is never the weapon
+    m |= stab & ~sk & (t > Q + 0.5) & (t <= Q + 4) & (e <= 1.3)   # and the shaft just out of it always is
     for ex in EXTRA.get((body, rf), []):   # a segment (x0, y0, x1, y1, half-width), or a box (x0, y0, x1, y1)
         sx0, sy0, sx1, sy1 = ex[:4]
-        if len(ex) == 4: m |= stab & ~sk & (xx >= sx0) & (xx <= sx1) & (yy >= sy0) & (yy <= sy1); continue
+        if len(ex) == 4: m |= opq & ~sk & (xx >= sx0) & (xx <= sx1) & (yy >= sy0) & (yy <= sy1); continue
         vx, vy = sx1 - sx0, sy1 - sy0; ln = math.hypot(vx, vy); vx, vy = vx / ln, vy / ln
         tt = (xx - sx0) * vx + (yy - sy0) * vy; ee = np.abs((xx - sx0) * -vy + (yy - sy0) * vx)
-        m |= stab & ~sk & (tt >= -1) & (tt <= ln + 1) & (ee <= ex[4])
+        m |= opq & ~sk & (tt >= -1) & (tt <= ln + 1) & (ee <= ex[4])
+    for x0, y0, x1, y1 in CUT.get((body, rf), []): m &= ~((xx >= x0) & (xx <= x1) & (yy >= y0) & (yy <= y1))
     rest = opq & ~m                                               # a piece left floating is the hammer's too
     lab3, k3 = nd.label(rest, structure=K8)
     if k3 > 1:
@@ -269,14 +282,18 @@ def carry(body, rf, p, ln):
 
 
 def body_side(img, m):
-    """Which mask px the body was behind (nearest outside px opaque) - the runtime's own rule (layeredWeapon.js)."""
+    """Which mask px the body was behind (nearest outside px opaque, most of them at the edge) - the runtime's own rule
+    (layeredWeapon.js)."""
     H, W = m.shape; src = -np.ones((H, W), np.int8); q = deque()
     for y, x in zip(*np.nonzero(m)):
+        body = air = 0
         for dy in (-1, 0, 1):
             for dx in (-1, 0, 1):
                 Y, X = y + dy, x + dx
-                if src[y, x] < 0 and 0 <= Y < H and 0 <= X < W and not m[Y, X]:
-                    src[y, x] = 1 if img[Y, X, 3] else 0; q.append((y, x))
+                if 0 <= Y < H and 0 <= X < W and not m[Y, X]:
+                    if img[Y, X, 3]: body += 1
+                    else: air += 1
+        if body + air: src[y, x] = 1 if body > air else 0; q.append((y, x))
     while q:
         y, x = q.popleft()
         for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, -1), (1, -1), (-1, 1)):
@@ -313,6 +330,45 @@ def exemplar(imgs, m, R=16, worst=220, mirror=False):
         cost = cost / len(imgs) + bad * 6
         if best is None or cost < best[0]: best = (cost, mode, a, dy)
     return [best[1], best[2], best[3]] if best and (mirror or best[0] <= worst) else 0
+def inpaint(imgs, m, bp, R=11, P=2):
+    """Each body px of the hole, the px to copy it from (dx, dy): from the hole's edge in, the source whose neighbourhood
+    best matches what is known round it over the family's outfits - a neighbour's own source kept where it is nearly as
+    good, so a patch carries on whole. Only a px every outfit draws, off the hole, is a source."""
+    H, W = m.shape
+    A = np.stack([im[..., :3].astype(np.float32) for im in imgs])
+    src_ok = np.all([im[..., 3] > 0 for im in imgs], axis=0) & ~m
+    known = src_ok.copy(); C = A.copy()
+    off = np.zeros((H, W, 2), np.int16); has = np.zeros((H, W), bool)
+    cy, cx = np.mgrid[-R:R + 1, -R:R + 1]; cdx, cdy = cx.ravel(), cy.ravel(); keep = (cdx != 0) | (cdy != 0); cdx, cdy = cdx[keep], cdy[keep]
+    wy, wx = np.mgrid[-P:P + 1, -P:P + 1]; wy, wx = wy.ravel(), wx.ravel()
+    dist = nd.distance_transform_cdt(m, metric='chessboard')
+    order = sorted(zip(*np.nonzero(bp)), key=lambda p: (dist[p], p))
+    for y, x in order:
+        sx, sy = x + cdx, y + cdy
+        ci = np.nonzero((sx >= 0) & (sx < W) & (sy >= 0) & (sy < H))[0]
+        ci = ci[src_ok[sy[ci], sx[ci]]]
+        if not len(ci): continue
+        ys, xs = y + wy, x + wx; inb = (ys >= 0) & (ys < H) & (xs >= 0) & (xs < W); ys, xs = ys[inb], xs[inb]
+        kn = known[ys, xs]; ys, xs = ys[kn], xs[kn]
+        if len(ys):
+            WY, WX = ys[None, :] + cdy[ci, None], xs[None, :] + cdx[ci, None]
+            ok = (WY >= 0) & (WY < H) & (WX >= 0) & (WX < W); WY, WX = np.clip(WY, 0, H - 1), np.clip(WX, 0, W - 1)
+            ok &= src_ok[WY, WX]
+            d = np.abs(C[:, ys, xs][:, None, :, :] - A[:, WY, WX]).sum(-1).mean(0)
+            cost = np.where(ok, d, 240.0).mean(1)
+        else:
+            cost = np.abs(cdx[ci]) + np.abs(cdy[ci]) + 0.0
+        for dy in (-1, 0, 1):                                    # a neighbour's source, nearly as good, carries on
+            for dx in (-1, 0, 1):
+                Y, X = y + dy, x + dx
+                if 0 <= Y < H and 0 <= X < W and has[Y, X]:
+                    k = np.nonzero((cdx[ci] == off[Y, X, 0]) & (cdy[ci] == off[Y, X, 1]))[0]
+                    cost[k] *= 0.85
+        b = ci[int(np.argmin(cost))]
+        off[y, x] = (cdx[b], cdy[b]); has[y, x] = True; known[y, x] = True; C[:, y, x] = A[:, y + cdy[b], x + cdx[b]]
+    return off, has
+
+
 def depth(g, lo=LO, hi=HI):
     (qx, qy), (tx, ty), m, L = g['q'], g['t'], g['m'], g['L']; H, W = m.shape
     D = math.hypot(tx - qx, ty - qy) or 1.0; ux, uy = (tx - qx) / D, (ty - qy) / D; nx, ny = -uy, ux
@@ -369,7 +425,11 @@ def main(only=None):
                 per.append({'q': [round(g['q'][0], 1), round(g['q'][1], 1)], 't': [round(g['t'][0], 1), round(g['t'][1], 1)],
                             'hr': round(g['hr'], 1), 'side': g['side'], 'd': depth(g), 'fill': exemplar(fam_imgs, g['m'], mirror=(body, rf) in MIRROR)})
                 lengths.append(math.hypot(g['t'][0] - g['q'][0], g['t'][1] - g['q'][1]))
-                tile = np.zeros(g['m'].shape + (4,), np.uint8); tile[g['m']] = 255; tiles.append(tile)
+                tile = np.zeros(g['m'].shape + (4,), np.uint8); tile[g['m']] = (128, 128, 0, 255)
+                if (body, rf) not in MIRROR:   # the px each body px of the hole copies: (dx, dy) + 128, and 255 where one is
+                    off, has = inpaint(fam_imgs, g['m'], body_side(g['L'], g['m']))
+                    tile[has, 0] = off[has, 0] + 128; tile[has, 1] = off[has, 1] + 128; tile[has, 2] = 255
+                tiles.append(tile)
             Image.fromarray(np.concatenate(tiles, axis=1)).save(f'{V}/weapon/{body}/{rf}.png', optimize=True)
             frames[rf] = per
             print(body, rf, [p['fill'] for p in per])

@@ -28,7 +28,7 @@
 import manifest from '../../../vendor/layered-armor/manifest.json' with { type: 'json' };
 import cloakManifest from '../../../vendor/layered-armor/cloak/manifest.json' with { type: 'json' };
 import { drawnPiece } from '../../net/appearanceLaw.js';   // APPEARANCES: a worn piece's look
-import { weaponShownFor, weaponRigOf, removeWeapon, drawWeapon, recolourHammer, maskTile, weaponLen, BARE_TWINS, ARMED_TWINS, GUN_FIRE_FRAME, isGunCode } from './layeredWeapon.js';   // LAYERED-WEAPONS: the weapon in the hands
+import { weaponShownFor, weaponRigOf, removeWeapon, drawWeapon, recolourHammer, maskTile, fillFrom, weaponLen, BARE_TWINS, ARMED_TWINS, GUN_FIRE_FRAME, isGunCode } from './layeredWeapon.js';   // LAYERED-WEAPONS: the weapon in the hands
 
 /** The texture archives the composed pictures are uploaded under - one per body, clear of every vendored archive. */
 export const LAYERED_ARCHIVE = Object.freeze({ male: 1700, female: 1701 });
@@ -376,7 +376,7 @@ export function composeStrip(strip, code, cloak = null, weapon = null) {
   const held = pieces?.weapon ?? null, hand = weapon && held && weapon.mask.length === w * h ? weapon : null;
   const takeOut = held === '0' || (held && held.slice(0, 2) !== 'wh');   // the art's hammer goes
   const finish = () => {
-    if (hand && takeOut) removeWeapon(res, hand.mask, hand.fr.fill);
+    if (hand && takeOut) removeWeapon(res, hand.mask, hand.fr.fill, hand.from ?? null);
     else if (hand) recolourHammer(res, hand.mask, hand.fr, Number(held.slice(2)) || 0);
     if (cloak && pieces?.cloak != null) {
       applyCloak(res, cloak.strip, pieces.cloak, cloak.over, pieces.head[0], cloak.noSlivers === true, pieces.top[0]);
@@ -446,7 +446,10 @@ export async function decodeLayered(key, decodePng, { fetchUrl = (u) => fetch(u)
   let weapon = null;
   if (fr) {
     const wu = weaponUrlOf(`weapon/${body}/${rf}`);
-    try { if (wu) weapon = { mask: maskTile(await pictureOf(wu), pieces.top[0]), fr, len: weaponLen(body), view: Number(rf.split('-')[0]) % 5 }; } catch { weapon = null; }
+    try {
+      const pic = wu ? await pictureOf(wu) : null;
+      if (pic) weapon = { mask: maskTile(pic, pieces.top[0]), from: fillFrom(pic, pieces.top[0]), fr, len: weaponLen(body), view: Number(rf.split('-')[0]) % 5 };
+    } catch { weapon = null; }
   }
   return composeStrip(strip, code, cloak, weapon);
 }

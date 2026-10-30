@@ -64,23 +64,25 @@ export const WEAPON_SPAN = Object.freeze([...rig.span]);
 
 // ── TAKING THE HAMMER OUT ──────────────────────────────────────────────────────────────────────────────────────────
 /**
- * Clear the hammer from a composed picture, in place: each of its px takes the side of the nearest px outside it - open
- * air, or the body it hid - and a body px is the rig's copy (`fill`: a shift [0, dx, dy] or a mirror [1, c, dy]) where
+ * Clear the hammer from a composed picture, in place: each of its px takes the side of the nearest px outside it (most
+ * of them, at its edge) - open air, or the body it hid - and a body px is the rig's copy (`fill`: a shift [0, dx, dy] or a mirror [1, c, dy]) where
  * that lands on the body, else the smooth blend of the body round it.
  * @param {{width:number,height:number,data:Uint8Array}} out @param {Uint8Array} mask 1 where the hammer is
- * @param {any} fill
+ * @param {any} fill @param {Int32Array|null} [from] each hole px's own source px (fillFrom), -1 for none
  */
-export function removeWeapon(out, mask, fill) {
+export function removeWeapon(out, mask, fill, from = null) {
   const w = out.width, h = out.height, d = out.data, n = w * h;
   const side = new Int8Array(n).fill(-1), queue = new Int32Array(n);
   let qh = 0, qt = 0;
-  for (let i = 0; i < n; i++) {
+  for (let i = 0; i < n; i++) {   // an edge px takes the side most of its outside neighbours are on
     if (!mask[i]) continue;
     const x = i % w, y = (i / w) | 0;
-    for (let dy = -1; dy <= 1 && side[i] < 0; dy++) for (let dx = -1; dx <= 1 && side[i] < 0; dx++) {
+    let body = 0, air = 0;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
       const X = x + dx, Y = y + dy, j = Y * w + X;
-      if (X >= 0 && Y >= 0 && X < w && Y < h && !mask[j]) { side[i] = d[j * 4 + 3] ? 1 : 0; queue[qt++] = i; }
+      if (X >= 0 && Y >= 0 && X < w && Y < h && !mask[j]) { if (d[j * 4 + 3]) body++; else air++; }
     }
+    if (body + air) { side[i] = body > air ? 1 : 0; queue[qt++] = i; }
   }
   while (qh < qt) {
     const i = queue[qh++], x = i % w, y = (i / w) | 0;
@@ -95,9 +97,10 @@ export function removeWeapon(out, mask, fill) {
   for (let i = 0; i < n; i++) {
     if (!mask[i]) continue;
     if (side[i] !== 1) { d[i * 4] = d[i * 4 + 1] = d[i * 4 + 2] = d[i * 4 + 3] = 0; continue; }
-    const x = i % w, y = (i / w) | 0;
-    const X = copy ? (copy[0] ? 2 * copy[1] - x : x + copy[1]) : -1, Y = copy ? y + copy[2] : -1, j = Y * w + X;
-    if (copy && X >= 0 && Y >= 0 && X < w && Y < h && known(j)) { d[i * 4] = d[j * 4]; d[i * 4 + 1] = d[j * 4 + 1]; d[i * 4 + 2] = d[j * 4 + 2]; }
+    const x = i % w, y = (i / w) | 0, own = from ? from[i] : -1;
+    const X = copy ? (copy[0] ? 2 * copy[1] - x : x + copy[1]) : -1, Y = copy ? y + copy[2] : -1;
+    const j = own >= 0 && known(own) ? own : (copy && X >= 0 && Y >= 0 && X < w && Y < h ? Y * w + X : -1);
+    if (j >= 0 && known(j)) { d[i * 4] = d[j * 4]; d[i * 4 + 1] = d[j * 4 + 1]; d[i * 4 + 2] = d[j * 4 + 2]; }
     else { smooth.push(i); d[i * 4] = d[i * 4 + 1] = d[i * 4 + 2] = 0; }
     d[i * 4 + 3] = 255;
   }
@@ -365,5 +368,19 @@ export function maskTile(strip, top = 'l') {
   const m = new Uint8Array(w * h);
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) m[y * w + x] = strip.data[(y * strip.width + k * w + x) * 4 + 3] > 127 ? 1 : 0;
   return m;
+}
+/** Each hole px's own source px in one family's tile (the rig writes (dx, dy) + 128 in red and green, blue 255 where
+ *  there is one), -1 where it has none. */
+export function fillFrom(strip, top = 'l') {
+  const tiles = rig.families.length, w = strip.width / tiles, h = strip.height;
+  const k = Math.max(0, rig.families.indexOf({ l: 'leather', c: 'chain', p: 'plate' }[top] ?? 'leather'));
+  const from = new Int32Array(w * h).fill(-1);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = (y * strip.width + k * w + x) * 4, d = strip.data;
+    if (d[i + 3] < 128 || d[i + 2] < 128) continue;
+    const X = x + d[i] - 128, Y = y + d[i + 1] - 128;
+    if (X >= 0 && Y >= 0 && X < w && Y < h) from[y * w + x] = Y * w + X;
+  }
+  return from;
 }
 export const weaponLen = (body) => rig[body]?.len ?? 30;

@@ -117,12 +117,17 @@ is at the shaft's foot. The boxes are read on the leather chest's picture; anoth
 draws 8-4 and 9-4 three pixels lower). A light pixel in a walk is the hammer's only where the leather chest draws it
 too, so a chain or plate sleeve stays.
 
-**Taking it out.** Each hammer pixel takes the side of the nearest pixel outside it: open air is cleared, a pixel the
-body was behind is filled. The fill copies the body from a shift that best continues it round the hole, over the
-family's outfits, else blends the body round it. The front views (`MIRROR`: the walk's 0-0, 0-1 and 0-3 and the idle's
-15-0) copy the body's other side, mirrored, its alpha too, so the hidden hand comes back whole; a copied piece that
-touches no body (the other forearm, by the hip) is dropped. The front walk's 0-2 hid the whole forearm: empty-handed it
-is drawn as 0-0's mirror twin (`BARE_TWINS`), armed as 0-3 (`ARMED_TWINS`), so the weapon keeps its hand.
+**Taking it out.** Each hammer pixel takes the side of the nearest pixels outside it - at its edge, the side most of
+them are on, so a butt poking past the fist into the air goes with the air: open air is cleared, a pixel the body was
+behind is filled. Each such pixel copies its own source, written into the mask's colour (`fillFrom`): the builder fills
+the hole from its edge in, each pixel from the place whose neighbourhood best matches what is round it over the
+family's outfits, keeping a neighbour's source where it is nearly as good, so the body's texture carries on instead of
+a blur. Where none fits, the frame's shift, else the blend.
+
+**The front views** (`MIRROR`: the walk's 0-0, 0-1 and 0-3 and the idle's 15-0) copy the body's other side, mirrored,
+its alpha too, so the hidden hand comes back whole; a copied piece that touches no body (the other forearm, by the hip)
+is dropped. The front walk's 0-2 hid the whole forearm: empty-handed it is drawn as 0-0's mirror twin (`BARE_TWINS`),
+armed as 0-3 (`ARMED_TWINS`), so the weapon keeps its hand.
 
 **Drawing one.** The weapon is drawn by the game, not stored: each template a shape in centimetres (the hammer's grip to
 head is 70), laid along the hammer's shaft from the grip, foreshortened as the shaft is, supersampled, shaded from the
@@ -149,7 +154,7 @@ hands strike with both fists; new swings need new frames drawn in all 27 outfits
 at the camera draws the weapon short. Each outfit's helmet and legs draw the hammer's rim their own way, so a pixel or
 two of it can stay, and a fill can borrow a patch of another piece's colour. Male 5-1 keeps the thumb laid up the
 shaft. No weapon draws its enchanted glow. Verified by `test/player/eyeOfTheBeholder/layered_weapons.test.js` and
-`tools/mutants/layered_weapons.json` (25 mutants, all dead); the peer-art pins moved to the new codes
+`tools/mutants/layered_weapons.json` (28 mutants, all dead); the peer-art pins moved to the new codes
 (`test/net/peer/fb1022d_peerart.test.js`).
 
 ## The art - the doctrine's third exception

@@ -122,8 +122,8 @@
   {
     "name": "LAYERED-WEAPONS-hammer-kept",
     "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-    "old": "    if (hand && takeOut) removeWeapon(res, hand.mask, hand.fr.fill);",
-    "new": "    if (false) removeWeapon(res, hand.mask, hand.fr.fill);",
+    "old": "    if (hand && takeOut) removeWeapon(res, hand.mask, hand.fr.fill, hand.from ?? null);",
+    "new": "    if (false) removeWeapon(res, hand.mask, hand.fr.fill, hand.from ?? null);",
     "tests": [
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
@@ -248,5 +248,35 @@
       "test/player/eyeOfTheBeholder/layered_weapons.test.js"
     ],
     "why": "a front view's mirror fill leaves the other forearm floating by the hip"
+  },
+  {
+    "name": "LAYERED-WEAPONS-edge-first-neighbour",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "    if (body + air) { side[i] = body > air ? 1 : 0; queue[qt++] = i; }",
+    "new": "    if (body + air) { side[i] = body ? 1 : 0; queue[qt++] = i; }",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a butt sticking out past the fist refilled as a brown stick of body"
+  },
+  {
+    "name": "LAYERED-WEAPONS-own-source-unread",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": "const x = i % w, y = (i / w) | 0, own = from ? from[i] : -1;",
+    "new": "const x = i % w, y = (i / w) | 0, own = -1;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "a chest the hammer crossed refilled as a smooth blur"
+  },
+  {
+    "name": "LAYERED-WEAPONS-source-tile-unread",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "from: fillFrom(pic, pieces.top[0]), ",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/layered_weapons.test.js"
+    ],
+    "why": "the game never reads the rig's per-pixel sources"
   }
 ]
