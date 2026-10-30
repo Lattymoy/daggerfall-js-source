@@ -28,6 +28,8 @@
 /src/render/starfall/*/
 !/src/systems/
 /src/systems/*
+!/src/systems/deepWater/
+/src/systems/deepWater/*/
 !/src/systems/firstVisit/
 /src/systems/firstVisit/*/
 !/src/systems/grammar/

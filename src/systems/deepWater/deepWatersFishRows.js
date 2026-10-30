@@ -11,6 +11,12 @@ export const FISH_GROUP = 'UselessItems2';
 export const fishIconArchive = (templateIndex) => templateIndex;
 
 /** The mod's rows, each drawn from its own picture (above). */
-export const DEEP_WATERS_FISH_TEMPLATES = Object.freeze(FISH_TEMPLATES_JSON.map((t) => Object.freeze({
-  ...t, worldTextureArchive: fishIconArchive(t.index), worldTextureRecord: 0,
-})));
+export const DEEP_WATERS_FISH_TEMPLATES = Object.freeze(
+  FISH_TEMPLATES_JSON.map((t) =>
+    Object.freeze({
+      ...t,
+      worldTextureArchive: fishIconArchive(t.index),
+      worldTextureRecord: 0,
+    }),
+  ),
+);

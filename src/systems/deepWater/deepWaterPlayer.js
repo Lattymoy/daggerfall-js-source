@@ -21,33 +21,54 @@ let pending = false;
 const stateListeners = new Set();
 const suppressors = new Set();
 let suppressionFailureLogged = false;
-let columnSource = null;   // () => ?{terrain, surfaceY, seafloorY, depth}
+let columnSource = null; // () => ?{terrain, surfaceY, seafloorY, depth}
 
 export const deepWaterPlayer = {
-  get isInWater() { return state.inWater; },
-  get isSwimming() { return state.swimming; },
-  get isHeadSubmerged() { return state.headSubmerged; },
-  get isUnderwater() { return state.underwater; },
+  get isInWater() {
+    return state.inWater;
+  },
+  get isSwimming() {
+    return state.swimming;
+  },
+  get isHeadSubmerged() {
+    return state.headSubmerged;
+  },
+  get isUnderwater() {
+    return state.underwater;
+  },
 
   /** OnStateChanged += fn; the returned function is its -=. */
-  onStateChanged(fn) { stateListeners.add(fn); return () => stateListeners.delete(fn); },
+  onStateChanged(fn) {
+    stateListeners.add(fn);
+    return () => stateListeners.delete(fn);
+  },
 
   /** ShouldSuppressOutdoorSwimming += fn; the returned function is its -=. */
   shouldSuppressOutdoorSwimming(fn) {
     suppressors.add(fn);
-    return () => { suppressors.delete(fn); if (!suppressors.size) suppressionFailureLogged = false; };
+    return () => {
+      suppressors.delete(fn);
+      if (!suppressors.size) suppressionFailureLogged = false;
+    };
   },
 
   /** TryGetWaterColumn: {terrain, surfaceY, seafloorY, depth} or null. */
-  tryGetWaterColumn() { return columnSource ? columnSource() : null; },
+  tryGetWaterColumn() {
+    return columnSource ? columnSource() : null;
+  },
 };
 
 /** EvaluateSwimmingSuppression: every subscriber asked, any true wins. */
 export function evaluateSwimmingSuppression() {
   let flag = false;
   for (const fn of [...suppressors]) {
-    try { flag = !!fn() || flag; } catch (e) {
-      if (!suppressionFailureLogged) { suppressionFailureLogged = true; console.warn('[DeepWaters.Player] ShouldSuppressOutdoorSwimming subscriber threw:', e?.message ?? e); }
+    try {
+      flag = !!fn() || flag;
+    } catch (e) {
+      if (!suppressionFailureLogged) {
+        suppressionFailureLogged = true;
+        console.warn('[DeepWaters.Player] ShouldSuppressOutdoorSwimming subscriber threw:', e?.message ?? e);
+      }
     }
   }
   return flag;
@@ -55,8 +76,16 @@ export function evaluateSwimmingSuppression() {
 
 /** PublishState: a change marks the frame's announcement due. */
 export function publishState(inWater, swimming, headSubmerged, underwater) {
-  if (state.inWater !== inWater || state.swimming !== swimming || state.headSubmerged !== headSubmerged || state.underwater !== underwater) {
-    state.inWater = inWater; state.swimming = swimming; state.headSubmerged = headSubmerged; state.underwater = underwater;
+  if (
+    state.inWater !== inWater ||
+    state.swimming !== swimming ||
+    state.headSubmerged !== headSubmerged ||
+    state.underwater !== underwater
+  ) {
+    state.inWater = inWater;
+    state.swimming = swimming;
+    state.headSubmerged = headSubmerged;
+    state.underwater = underwater;
     pending = true;
   }
 }
@@ -69,9 +98,15 @@ export function flushStateChange() {
   if (!pending) return;
   pending = false;
   for (const fn of [...stateListeners]) {
-    try { fn(); } catch (e) { console.warn('[DeepWaters.Player] OnStateChanged subscriber threw:', e?.message ?? e); }
+    try {
+      fn();
+    } catch (e) {
+      console.warn('[DeepWaters.Player] OnStateChanged subscriber threw:', e?.message ?? e);
+    }
   }
 }
 
 /** The host's column lookup for TryGetWaterColumn (null: none - the exterior context is not live). */
-export function setColumnSource(fn) { columnSource = fn; }
+export function setColumnSource(fn) {
+  columnSource = fn;
+}

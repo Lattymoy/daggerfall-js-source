@@ -976,8 +976,8 @@
   {
     "name": "DW-E3-template-remap-dropped",
     "file": "src/systems/deepWater/deepWatersFishRows.js",
-    "old": "  ...t, worldTextureArchive: fishIconArchive(t.index), worldTextureRecord: 0,",
-    "new": "  ...t,",
+    "old": "      worldTextureArchive: fishIconArchive(t.index),\n      worldTextureRecord: 0,\n    }),",
+    "new": "    }),",
     "tests": [
       "test/systems/item/dwe_fish.test.js"
     ]
@@ -994,8 +994,8 @@
   {
     "name": "DW-E3-icon-aspect",
     "file": "src/systems/deepWater/deepWatersFishItems.js",
-    "old": "build: async () => restoreIconAspect(await decode(await fetchBytes(s.textureName)), s.billboardAspect),",
-    "new": "build: async () => await decode(await fetchBytes(s.textureName)),",
+    "old": "      build: async () => restoreIconAspect(await decode(await fetchBytes(s.textureName)), s.billboardAspect),",
+    "new": "      build: async () => await decode(await fetchBytes(s.textureName)),",
     "tests": [
       "test/systems/item/dwe_fish.test.js"
     ]
@@ -1012,8 +1012,8 @@
   {
     "name": "DW-E3-normalize-misses-stray",
     "file": "src/systems/deepWater/deepWatersFishItems.js",
-    "old": "if (!it || it.group === FISH_GROUP || !isFishTemplateIndex(it.templateIndex)) continue;",
-    "new": "if (!it || it.group !== FISH_GROUP || !isFishTemplateIndex(it.templateIndex)) continue;",
+    "old": "    if (!it || it.group === FISH_GROUP || !isFishTemplateIndex(it.templateIndex)) continue;",
+    "new": "    if (!it || it.group !== FISH_GROUP || !isFishTemplateIndex(it.templateIndex)) continue;",
     "tests": [
       "test/systems/item/dwe_fish.test.js"
     ]
@@ -1048,8 +1048,8 @@
   {
     "name": "DW-E3-normalize-keeps-old-fields",
     "file": "src/systems/deepWater/deepWatersFishItems.js",
-    "old": "    for (const k of SET_ITEM_FIELDS) delete it[k];\n",
-    "new": "",
+    "old": "    for (const k of SET_ITEM_FIELDS) delete it[k];\n    Object.assign(it, fresh, { stackCount, currentCondition, maxCondition });",
+    "new": "    Object.assign(it, fresh, { stackCount, currentCondition, maxCondition });",
     "tests": [
       "test/systems/item/dwe_fish.test.js"
     ]

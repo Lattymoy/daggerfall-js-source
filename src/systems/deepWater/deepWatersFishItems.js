@@ -22,11 +22,21 @@
 // powers of two).
 // ═══════════════════════════════════════════════════════════════════
 
-import { FISH_GROUP, fishIconArchive, DEEP_WATERS_FISH_TEMPLATES } from './deepWatersFishRows.js';   // INT1: the rows' leaf - the item law reads them headless
-import { registerCustomTemplates, setItemFields, mintCondition, registerCustomItemGroup } from '../item/itemTemplates.js';   // CSA-H: DeepWaters.Init's RegisterCustomItem group, on the shelves' one table (FORAGE1's one home)
+import { FISH_GROUP, fishIconArchive, DEEP_WATERS_FISH_TEMPLATES } from './deepWatersFishRows.js'; // INT1: the rows' leaf - the item law reads them headless
+import {
+  registerCustomTemplates,
+  setItemFields,
+  mintCondition,
+  registerCustomItemGroup,
+} from '../item/itemTemplates.js'; // CSA-H: DeepWaters.Init's RegisterCustomItem group, on the shelves' one table (FORAGE1's one home)
 import { modSetting, modLatchedOn } from '../modSettings.js';
 import { addVendorTextures, decodePng } from '../textureReplacement.js';
-import { PASSIVE_FISH_SPECIES, isFishTemplateIndex, speciesOfTemplate, restoreIconAspect } from '../../world/passiveFish.js';
+import {
+  PASSIVE_FISH_SPECIES,
+  isFishTemplateIndex,
+  speciesOfTemplate,
+  restoreIconAspect,
+} from '../../world/passiveFish.js';
 
 export { FISH_GROUP, fishIconArchive, DEEP_WATERS_FISH_TEMPLATES };
 registerCustomTemplates(DEEP_WATERS_FISH_TEMPLATES);
@@ -36,10 +46,16 @@ registerCustomTemplates(DEEP_WATERS_FISH_TEMPLATES);
 // had never put them on that table.
 // AUDIT PRE-MERGE 0928 S4: while the mod is loaded for the world - the world host's answer at its mount (the sea is built
 // then or not at all), the switch as it stands only where no host latched it
-for (const t of DEEP_WATERS_FISH_TEMPLATES) registerCustomItemGroup(t.index, FISH_GROUP, () => modLatchedOn('iliac-puddle-no-more') ?? modSetting('iliac-puddle-no-more', 'Enabled') === true);
+for (const t of DEEP_WATERS_FISH_TEMPLATES)
+  registerCustomItemGroup(
+    t.index,
+    FISH_GROUP,
+    () => modLatchedOn('iliac-puddle-no-more') ?? modSetting('iliac-puddle-no-more', 'Enabled') === true,
+  );
 
 /** A fish's own drawn picture's URL (the vendored Flats/<name>.png). */
-export const fishPictureUrl = (name) => new URL(`../../../vendor/iliac-puddle-no-more/Flats/${name}.png`, import.meta.url).href;
+export const fishPictureUrl = (name) =>
+  new URL(`../../../vendor/iliac-puddle-no-more/Flats/${name}.png`, import.meta.url).href;
 
 async function fetchPicture(name) {
   const r = await fetch(fishPictureUrl(name));
@@ -57,13 +73,21 @@ let _iconsInstalled = false;
 export function installDeepWatersFishIcons({ fetchBytes = fetchPicture, decode = decodePng } = {}) {
   if (_iconsInstalled) return 0;
   _iconsInstalled = true;
-  return addVendorTextures(PASSIVE_FISH_SPECIES.map((s) => ({
-    archive: fishIconArchive(s.templateIndex), record: 0, frame: 0, standIn: true, fileName: `${s.textureName}.png`,
-    build: async () => restoreIconAspect(await decode(await fetchBytes(s.textureName)), s.billboardAspect),
-  })));
+  return addVendorTextures(
+    PASSIVE_FISH_SPECIES.map((s) => ({
+      archive: fishIconArchive(s.templateIndex),
+      record: 0,
+      frame: 0,
+      standIn: true,
+      fileName: `${s.textureName}.png`,
+      build: async () => restoreIconAspect(await decode(await fetchBytes(s.textureName)), s.billboardAspect),
+    })),
+  );
 }
 /** Tests: install again. */
-export function _resetFishIconsForTests() { _iconsInstalled = false; }
+export function _resetFishIconsForTests() {
+  _iconsInstalled = false;
+}
 
 /**
  * TryCreateFishItem: ItemBuilder.CreateItem(UselessItems2, the species'
@@ -72,7 +96,17 @@ export function _resetFishIconsForTests() { _iconsInstalled = false; }
  */
 export function createFishItem(species) {
   if (!species) return null;
-  const item = mintCondition(setItemFields({ group: FISH_GROUP, templateIndex: species.templateIndex, material: 0, flags: 0, variant: 0, message: 0, stackCount: 1 }));
+  const item = mintCondition(
+    setItemFields({
+      group: FISH_GROUP,
+      templateIndex: species.templateIndex,
+      material: 0,
+      flags: 0,
+      variant: 0,
+      message: 0,
+      stackCount: 1,
+    }),
+  );
   return item?.templateIndex === species.templateIndex ? item : null;
 }
 
@@ -84,9 +118,26 @@ export function createFishItem(species) {
  * carries none, so SetItem is these dropped and the mint's own written.
  */
 const SET_ITEM_FIELDS = Object.freeze([
-  'name', 'playerTextureArchive', 'playerTextureRecord', 'worldTextureArchive', 'worldTextureRecord', 'material', 'nativeMaterialValue',
-  'dye', 'dyeColor', 'weightInKg', 'variant', 'rriVariant', 'value', 'flags', 'currentCondition', 'maxCondition', 'typeDependentData',
-  'enchantmentPoints', 'message', 'stackCount',
+  'name',
+  'playerTextureArchive',
+  'playerTextureRecord',
+  'worldTextureArchive',
+  'worldTextureRecord',
+  'material',
+  'nativeMaterialValue',
+  'dye',
+  'dyeColor',
+  'weightInKg',
+  'variant',
+  'rriVariant',
+  'value',
+  'flags',
+  'currentCondition',
+  'maxCondition',
+  'typeDependentData',
+  'enchantmentPoints',
+  'message',
+  'stackCount',
 ]);
 
 /**
@@ -112,4 +163,5 @@ export function normalizeFishItems(items) {
 }
 
 /** The species an item is, or null. */
-export const fishSpeciesOfItem = (item) => (item && isFishTemplateIndex(item.templateIndex) ? speciesOfTemplate(item.templateIndex) : null);
+export const fishSpeciesOfItem = (item) =>
+  item && isFishTemplateIndex(item.templateIndex) ? speciesOfTemplate(item.templateIndex) : null;
