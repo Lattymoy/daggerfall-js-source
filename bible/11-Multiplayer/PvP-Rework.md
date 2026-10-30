@@ -36,9 +36,10 @@ Mother's Kiss on a foe whose bar is under 25%, and First Blood and Silent Death 
 Serpent's Kiss adds its flat 8 to a landed blow, 16 on a foe under half (`gf`).
 
 The struck player's guard powers take a share off each armour share it reports, at most 30 off
-(`pvpGearPowers.js:"export function pvpGearKept("`): Dawnward's every sixth blow and the Raven's evasion as their means,
+(`pvpGearPowers.js:"export function pvpGearKept("`): Dawnward's every sixth blow as its mean,
 Last Stand under its line, Bedrock's stacks and Hex's window from player hits taken, Bulwark's 5 as 5%. Client only:
-the relay reads the same `g`, and the client is trusted for its gear as for its armour.
+the relay reads the same `g`, and the client is trusted for its gear as for its armour. The Raven is not a
+share: PVP-EVADE rolls it on the relay as a miss.
 
 Not between players: a slayer, bane or foe-group line (the owner: "same as human"); the splash of Chain Lightning and
 Earthshaker (one blow, one target). Vigil, Divine Grace, Hist-Sap, Unyielding and the kill effects need the relay to

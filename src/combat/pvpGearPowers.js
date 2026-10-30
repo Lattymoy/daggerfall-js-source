@@ -100,15 +100,14 @@ export function pvpGearStruck(entity, now = _now()) {
   }
 }
 
-/** THE STRUCK FIGHTER'S GUARD POWERS, per cent of a player's blow they let through: Dawnward's every sixth blow and
- *  the Raven's evasion as their means, Last Stand under its line, Bedrock's stacks, Hex after a hit, Bulwark's flat as
- *  a share. Never under 100 - PVP_GEAR.guard. */
+/** THE STRUCK FIGHTER'S GUARD POWERS, per cent of a player's blow they let through: Dawnward's every sixth blow as its
+ *  mean, Last Stand under its line, Bedrock's stacks, Hex after a hit, Bulwark's flat as a share. Never under
+ *  100 - PVP_GEAR.guard. The Raven is not here: PVP-EVADE rolls it as a real miss on the relay. */
 export function pvpGearKept(entity, now = _now()) {
   let kept = 1;
   const low = healthShare(entity);
   for (const { power: p } of pvpWornPowers(entity)) {
     if (p.kind === 'dawnward') kept *= p.charges / (p.charges + 1);
-    else if (p.kind === 'evade') kept *= 1 - p.chance / 100;
     else if (p.kind === 'laststand' && low < p.below / 100) kept *= 1 - p.less / 100;
     else if (p.kind === 'bedrock' && now < _bedrockUntil) kept *= 1 - (p.less * _bedrock) / 100;
     else if (p.kind === 'hex' && now < _hexUntil) kept *= 1 - p.less / 100;
