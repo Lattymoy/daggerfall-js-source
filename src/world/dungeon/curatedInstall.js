@@ -9,6 +9,11 @@ import { CURATED_RECORDS } from './curatedRecords.js';
 
 /** Every record registered under its name and index; a record may be registered again (the lab's draft). */
 export function installCuratedBlocks(records = CURATED_RECORDS) {
-  for (const rec of records) registerPortBlockOf(curatedBlockName(rec.n), (blocksFile) => curatedBlockOf(blocksFile?.readClassicBlock?.(blocksFile.getBlockIndex(rec.base)) ?? null, rec), CURATED_BLOCK_INDEX + rec.n);
+  for (const rec of records)
+    registerPortBlockOf(
+      curatedBlockName(rec.n),
+      (blocksFile) => curatedBlockOf(blocksFile?.readClassicBlock?.(blocksFile.getBlockIndex(rec.base)) ?? null, rec),
+      CURATED_BLOCK_INDEX + rec.n,
+    );
   return records.length;
 }

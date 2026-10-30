@@ -2,8 +2,8 @@
   {
     "name": "DLV6-light-uncounted",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "a.marker !== undefined, a.light !== undefined].filter(Boolean).length;",
-    "new": "a.marker !== undefined].filter(Boolean).length;",
+    "old": "    const kinds = [a.model !== undefined, a.flat !== undefined, a.marker !== undefined, a.light !== undefined].filter(\n      Boolean,\n    ).length;",
+    "new": "    const kinds = [a.model !== undefined, a.flat !== undefined, a.marker !== undefined].filter(Boolean).length;",
     "tests": [
       "test/world/dlv6_blocks.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "DLV6-light-unbounded",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "a.light >= CURATED_LIGHT_M[0] && a.light <= CURATED_LIGHT_M[1]",
-    "new": "a.light > 0",
+    "old": "    if (\n      a.light !== undefined &&\n      !(Number.isFinite(a.light) && a.light >= CURATED_LIGHT_M[0] && a.light <= CURATED_LIGHT_M[1])\n    )",
+    "new": "    if (a.light !== undefined && !(Number.isFinite(a.light) && a.light > 0))",
     "tests": [
       "test/world/dlv6_blocks.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "DLV6-light-units",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "Math.round(m / (GLOBAL_SCALE * 3))",
-    "new": "Math.round(m / GLOBAL_SCALE)",
+    "old": "export const lightRadiusOf = (m) => Math.round(m / (GLOBAL_SCALE * 3));",
+    "new": "export const lightRadiusOf = (m) => Math.round(m / GLOBAL_SCALE);",
     "tests": [
       "test/world/dlv6_blocks.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "DLV6-light-made-a-flat",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "type: RDB_RESOURCE_TYPES.Light, resources:",
-    "new": "type: RDB_RESOURCE_TYPES.Flat, resources:",
+    "old": "        type: RDB_RESOURCE_TYPES.Light,",
+    "new": "        type: RDB_RESOURCE_TYPES.Flat,",
     "tests": [
       "test/world/dlv6_blocks.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "DLV6-light-radius-zero",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "lightResource: { ...lightNone(), radius: lightRadiusOf(a.light) }",
-    "new": "lightResource: lightNone()",
+    "old": "        resources: {\n          modelResource: modelNone(),\n          flatResource: flatOf(0, 0),\n          lightResource: { ...lightNone(), radius: lightRadiusOf(a.light) },\n        },",
+    "new": "        resources: { modelResource: modelNone(), flatResource: flatOf(0, 0), lightResource: lightNone() },",
     "tests": [
       "test/world/dlv6_blocks.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "DLV6-fires-anchors-unread",
     "file": "src/world/dungeon/dungeonFires.js",
-    "old": ".filter((c) => anchors.every((a) => d2(a.at, c.pos) >= SQ(DFIRE.anchorM)))",
-    "new": "",
+    "old": "    count > 0\n      ? landCandidates(cands, { probe, doors, enemies: enemyMarks(blocks), items: itemMarks(blocks) }).filter((c) =>\n          anchors.every((a) => d2(a.at, c.pos) >= SQ(DFIRE.anchorM)),\n        )\n      : [];",
+    "new": "    count > 0 ? landCandidates(cands, { probe, doors, enemies: enemyMarks(blocks), items: itemMarks(blocks) }) : [];",
     "tests": [
       "test/world/dlv6_blocks.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "DLV6-fires-anchor-reach",
     "file": "src/world/dungeon/dungeonFires.js",
-    "old": "  anchorM: 12,",
-    "new": "  anchorM: 6,",
+    "old": "  anchorM: 12, // DELVE II (DLV6): from a curated block's encounter - the site law's own fire rule (delveSites.js DSITE.fireM)",
+    "new": "  anchorM: 6, // DELVE II (DLV6): from a curated block's encounter - the site law's own fire rule (delveSites.js DSITE.fireM)",
     "tests": [
       "test/world/dlv6_blocks.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "DLV6-anchor-crowded-stands",
     "file": "src/world/dungeon/delveSites.js",
-    "old": "kinds.includes(a.kind) && fires.every((q) => d2(q, a.at) >= SQ(lawOf(a).fireM))",
-    "new": "kinds.includes(a.kind)",
+    "old": "    : anchors.filter(\n        (a) =>\n          kinds.includes(a.kind) &&\n          fires.every((q) => d2(q, a.at) >= SQ(lawOf(a).fireM)) &&\n          (!start || d2(start, a.at) >= SQ(lawOf(a).startM)),\n      );",
+    "new": "    : anchors.filter((a) => kinds.includes(a.kind) && (!start || d2(start, a.at) >= SQ(lawOf(a).startM)));",
     "tests": [
       "test/world/dlv6_blocks.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "DLV6-record-unlisted",
     "file": "src/world/dungeon/curatedRecords.js",
-    "old": "checkedRecords([CRYPT_HALL, MINE_GALLERY, DESECRATED_CHAPEL, THRONE_HALL])",
-    "new": "checkedRecords([CRYPT_HALL, MINE_GALLERY, THRONE_HALL])",
+    "old": "export const CURATED_RECORDS = checkedRecords([CRYPT_HALL, MINE_GALLERY, DESECRATED_CHAPEL, THRONE_HALL]);",
+    "new": "export const CURATED_RECORDS = checkedRecords([CRYPT_HALL, MINE_GALLERY, THRONE_HALL]);",
     "tests": [
       "test/world/dlv6_blocks.test.js"
     ],

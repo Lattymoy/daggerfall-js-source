@@ -41,5 +41,10 @@ export function reachableEndOf(from, marks, reaches = null) {
   if (typeof reaches !== 'function') return dungeonEndOf(from, marks);
   const list = Array.isArray(marks) ? marks.filter((m) => Number.isFinite(m?.x) && Number.isFinite(m?.z)) : [];
   const d = (/** @type {M} */ m) => (from ? Math.hypot(m.x - from.x, m.z - from.z) : 0);
-  return list.map((m, i) => ({ m, i, d: d(m) })).sort((a, b) => b.d - a.d || a.i - b.i).find(({ m }) => reaches(m))?.m ?? null;
+  return (
+    list
+      .map((m, i) => ({ m, i, d: d(m) }))
+      .sort((a, b) => b.d - a.d || a.i - b.i)
+      .find(({ m }) => reaches(m))?.m ?? null
+  );
 }

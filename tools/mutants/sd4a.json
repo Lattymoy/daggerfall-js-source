@@ -92,8 +92,8 @@
   {
     "name": "SD4A-the-fires-lit",
     "file": "src/world/dungeon/dungeonFires.js",
-    "old": "  if (cold) return { fires: [], doorFire: null, candidates: 0, valid: 0 };",
-    "new": "  if (false) return { fires: [], doorFire: null, candidates: 0, valid: 0 };",
+    "old": "  if (cold) return { fires: [], doorFire: null, candidates: 0, valid: 0 }; // SD4a: a Super dungeon - the Hour is cold, no ray cast",
+    "new": "  if (false) return { fires: [], doorFire: null, candidates: 0, valid: 0 }; // SD4a: a Super dungeon - the Hour is cold, no ray cast",
     "tests": [
       "test/systems/sd4a_super.test.js"
     ]

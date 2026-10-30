@@ -29,8 +29,8 @@
   {
     "name": "LAIR-WALK-the-walk-unread",
     "file": "src/world/dungeon/dungeonEnd.js",
-    "old": "  if (typeof reaches !== 'function') return dungeonEndOf(from, marks);\n",
-    "new": "  return dungeonEndOf(from, marks);\n",
+    "old": "  if (typeof reaches !== 'function') return dungeonEndOf(from, marks);",
+    "new": "  return dungeonEndOf(from, marks);",
     "tests": [
       "test/systems/revenant/lair_walk.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "LAIR-WALK-the-nearest-first",
     "file": "src/world/dungeon/dungeonEnd.js",
-    "old": ".sort((a, b) => b.d - a.d || a.i - b.i)",
-    "new": ".sort((a, b) => a.d - b.d || a.i - b.i)",
+    "old": "      .sort((a, b) => b.d - a.d || a.i - b.i)",
+    "new": "      .sort((a, b) => a.d - b.d || a.i - b.i)",
     "tests": [
       "test/systems/revenant/lair_walk.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "LAIR-WALK-a-tie-reordered",
     "file": "src/world/dungeon/dungeonEnd.js",
-    "old": ".sort((a, b) => b.d - a.d || a.i - b.i)",
-    "new": ".sort((a, b) => b.d - a.d || b.i - a.i)",
+    "old": "      .sort((a, b) => b.d - a.d || a.i - b.i)",
+    "new": "      .sort((a, b) => b.d - a.d || b.i - a.i)",
     "tests": [
       "test/systems/revenant/lair_walk.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "LAIR-WALK-a-cap-on-the-walk",
     "file": "src/world/dungeon/dungeonEnd.js",
-    "old": ".sort((a, b) => b.d - a.d || a.i - b.i).find(",
-    "new": ".sort((a, b) => b.d - a.d || a.i - b.i).slice(0, 1).find(",
+    "old": "      .find(({ m }) => reaches(m))?.m ?? null",
+    "new": "      .slice(0, 1)\n      .find(({ m }) => reaches(m))?.m ?? null",
     "tests": [
       "test/systems/revenant/lair_walk.test.js"
     ]

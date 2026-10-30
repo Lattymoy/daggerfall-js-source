@@ -14,55 +14,124 @@ import { isDungeonExitDoor } from './dungeonLayout.js';
 import { itemMarks, enemyMarks } from './dungeonFires.js';
 
 export const SEABED = Object.freeze({
-  depthM: 1,          // the floor this far under its own block's water at least
-  flatNy: 0.99,       // a floor, not a slope (the fires' C3: 0.9 passed a 25.8 degree ramp)
-  levelR: 0.5,        // the floor sampled this far out on eight bearings...
-  reachR: 1,          // ...and this far (the fires' F4: a tabletop or a plinth is level under the first ring alone)
-  levelM: 0.05,       // ...each within this of the spot's
-  doorM: 1.5,         // from every door's middle
-  markerM: 1.5,       // from every marker a pile, a quest's item, a foe or the way in stands on (the fires' F3)
-  flatM: 1,           // from every flat the layout stands
-  storeyM: 3,         // the height band a marker or a flat counts in
-  spacingM: 2.4,      // from every other plant in the dungeon
-  ceilingM: 10,       // a ceiling within this far: inside a room
-  enclosedM: 30,      // ...and walls round it: `enclosedRays` of the eight meet one within this far
+  depthM: 1, // the floor this far under its own block's water at least
+  flatNy: 0.99, // a floor, not a slope (the fires' C3: 0.9 passed a 25.8 degree ramp)
+  levelR: 0.5, // the floor sampled this far out on eight bearings...
+  reachR: 1, // ...and this far (the fires' F4: a tabletop or a plinth is level under the first ring alone)
+  levelM: 0.05, // ...each within this of the spot's
+  doorM: 1.5, // from every door's middle
+  markerM: 1.5, // from every marker a pile, a quest's item, a foe or the way in stands on (the fires' F3)
+  flatM: 1, // from every flat the layout stands
+  storeyM: 3, // the height band a marker or a flat counts in
+  spacingM: 2.4, // from every other plant in the dungeon
+  ceilingM: 10, // a ceiling within this far: inside a room
+  enclosedM: 30, // ...and walls round it: `enclosedRays` of the eight meet one within this far
   enclosedRays: 4,
-  clearM: 0.1,        // past the plant's half width, all round, from its foot to its top
-  footM: 0.06,        // the lowest of those rays: over the 5 cm a level floor may rise (a stone under a fan)
-  gapM: 0.15,         // no gap between those rays, round its edge or up its height, wider than this
+  clearM: 0.1, // past the plant's half width, all round, from its foot to its top
+  footM: 0.06, // the lowest of those rays: over the 5 cm a level floor may rise (a stone under a fan)
+  gapM: 0.15, // no gap between those rays, round its edge or up its height, wider than this
   perBlock: 14,
 });
 /** The seabed's flats by kind, and how often each is picked (out of the weights' sum). TEXTURE.106 record 6 is a column
  *  of bubbles, no plant, and stands nowhere. */
 export const FLORA_KINDS = Object.freeze([
-  Object.freeze({ kind: 'kelp', weight: 4, records: Object.freeze([[106, 2], [106, 3], [106, 4]]) }),
-  Object.freeze({ kind: 'bed', weight: 3, records: Object.freeze([[105, 5], [105, 6], [105, 7], [105, 8], [105, 9], [105, 10], [106, 0], [106, 1]]) }),
-  Object.freeze({ kind: 'fan', weight: 2, records: Object.freeze([[105, 1], [105, 2]]) }),
-  Object.freeze({ kind: 'star', weight: 1, records: Object.freeze([[105, 3], [105, 4]]) }),
-  Object.freeze({ kind: 'reef', weight: 1, records: Object.freeze([[106, 5], [105, 0]]) }),   // a reef; an anchor
+  Object.freeze({
+    kind: 'kelp',
+    weight: 4,
+    records: Object.freeze([
+      [106, 2],
+      [106, 3],
+      [106, 4],
+    ]),
+  }),
+  Object.freeze({
+    kind: 'bed',
+    weight: 3,
+    records: Object.freeze([
+      [105, 5],
+      [105, 6],
+      [105, 7],
+      [105, 8],
+      [105, 9],
+      [105, 10],
+      [106, 0],
+      [106, 1],
+    ]),
+  }),
+  Object.freeze({
+    kind: 'fan',
+    weight: 2,
+    records: Object.freeze([
+      [105, 1],
+      [105, 2],
+    ]),
+  }),
+  Object.freeze({
+    kind: 'star',
+    weight: 1,
+    records: Object.freeze([
+      [105, 3],
+      [105, 4],
+    ]),
+  }),
+  Object.freeze({
+    kind: 'reef',
+    weight: 1,
+    records: Object.freeze([
+      [106, 5],
+      [105, 0],
+    ]),
+  }), // a reef; an anchor
 ]);
 export const FLORA_ARCHIVES = Object.freeze([105, 106]);
 const WEIGHTS = FLORA_KINDS.reduce((n, k) => n + k.weight, 0);
 const WATER_NONE = 10000;
 
-const ringOf = (r) => { const d = r * Math.SQRT1_2; return [[r, 0], [-r, 0], [0, r], [0, -r], [d, d], [d, -d], [-d, d], [-d, -d]]; };
+const ringOf = (r) => {
+  const d = r * Math.SQRT1_2;
+  return [
+    [r, 0],
+    [-r, 0],
+    [0, r],
+    [0, -r],
+    [d, d],
+    [d, -d],
+    [-d, d],
+    [-d, -d],
+  ];
+};
 /** Where round a seed a plant may stand, in order: the seed's own floor, then two rings. */
 const SPOTS = Object.freeze([[0, 0], ...ringOf(1.8), ...ringOf(3.6)].map(Object.freeze));
 /** The floor's sixteen samples round a spot: SEABED.levelR out, then SEABED.reachR. */
 const LEVEL_RINGS = Object.freeze([...ringOf(SEABED.levelR), ...ringOf(SEABED.reachR)].map(Object.freeze));
-const d2 = (a, b) => { const x = a[0] - b[0], y = a[1] - b[1], z = a[2] - b[2]; return x * x + y * y + z * z; };
+const d2 = (a, b) => {
+  const x = a[0] - b[0],
+    y = a[1] - b[1],
+    z = a[2] - b[2];
+  return x * x + y * y + z * z;
+};
 /** AUDIT SHIP-REFIT: N bearings round a spot, turned by a literal cosine and sine - plain products, no Math.sin (an
  *  engine's own last bit), so every client casts the same rays. Eight left a gap of a metre at a wide bed's edge, and a
  *  column stood in it. */
-const TURNS = Object.freeze({ 8: [0.7071067811865476, 0.7071067811865475], 16: [0.9238795325112867, 0.3826834323650898], 32: [0.9807852804032304, 0.19509032201612825], 64: [0.9951847266721969, 0.0980171403295606] });
+const TURNS = Object.freeze({
+  8: [0.7071067811865476, 0.7071067811865475],
+  16: [0.9238795325112867, 0.3826834323650898],
+  32: [0.9807852804032304, 0.19509032201612825],
+  64: [0.9951847266721969, 0.0980171403295606],
+});
 const bearingsOf = (n) => {
-  const [c, s] = TURNS[n], out = [[0, 1]];
-  while (out.length < n) { const [x, z] = out[out.length - 1]; out.push([x * c + z * s, z * c - x * s]); }
+  const [c, s] = TURNS[n],
+    out = [[0, 1]];
+  while (out.length < n) {
+    const [x, z] = out[out.length - 1];
+    out.push([x * c + z * s, z * c - x * s]);
+  }
   return Object.freeze(out.map(Object.freeze));
 };
 const BEARINGS = Object.freeze(Object.fromEntries(Object.keys(TURNS).map((n) => [n, bearingsOf(Number(n))])));
 /** The bearings a plant's clearance is read on: enough that no gap at its edge is wider than SEABED.gapM. */
-export const clearanceBearings = (half) => BEARINGS[[8, 16, 32].find((n) => (2 * Math.PI * half) / n <= SEABED.gapM) ?? 64];
+export const clearanceBearings = (half) =>
+  BEARINGS[[8, 16, 32].find((n) => (2 * Math.PI * half) / n <= SEABED.gapM) ?? 64];
 /** AUDIT SHIP-REFIT: the heights it is read at, from SEABED.footM to its top, none further apart than SEABED.gapM - rays
  *  a fifth of its height apart passed a bar 0.45 m deep at a fan's edge. Plain arithmetic: every client's the same. */
 export const clearanceHeights = (height) => {
@@ -93,14 +162,25 @@ export function floraDoors(blocks, positionsOf = () => null) {
   for (const b of blocks ?? []) {
     const om = trs(b.originX, 0, b.originZ, 0, 0, 0);
     for (const d of b?.layout?.actionDoors ?? []) {
-      const p = positionsOf(d.modelIdNum), m = multiply(om, d.matrix);
-      if (!p?.length) { out.push([m[12], m[13], m[14]]); continue; }
-      const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
-      for (let i = 0; i < p.length; i += 3) for (let k = 0; k < 3; k++) { lo[k] = Math.min(lo[k], p[i + k]); hi[k] = Math.max(hi[k], p[i + k]); }
+      const p = positionsOf(d.modelIdNum),
+        m = multiply(om, d.matrix);
+      if (!p?.length) {
+        out.push([m[12], m[13], m[14]]);
+        continue;
+      }
+      const lo = [Infinity, Infinity, Infinity],
+        hi = [-Infinity, -Infinity, -Infinity];
+      for (let i = 0; i < p.length; i += 3)
+        for (let k = 0; k < 3; k++) {
+          lo[k] = Math.min(lo[k], p[i + k]);
+          hi[k] = Math.max(hi[k], p[i + k]);
+        }
       out.push(transformPoint(m, (lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2, (lo[2] + hi[2]) / 2));
     }
     for (const d of (b?.layout?.exitDoors ?? []).filter(isDungeonExitDoor)) {
-      const c = d.centre ? transformPoint(d.matrix, d.centre.x, d.centre.y, d.centre.z) : [d.matrix[12], d.matrix[13], d.matrix[14]];
+      const c = d.centre
+        ? transformPoint(d.matrix, d.centre.x, d.centre.y, d.centre.z)
+        : [d.matrix[12], d.matrix[13], d.matrix[14]];
       out.push([c[0] + b.originX, c[1], c[2] + b.originZ]);
     }
   }
@@ -126,7 +206,9 @@ const footRing = (half) => clearanceBearings(half).map(([x, z]) => [x * half, z 
 export function dungeonFloraPlan({ blocks, probe, sizeOf, doors = [], seed = 0 } = {}) {
   const out = [];
   const marks = [...itemMarks(blocks), ...enemyMarks(blocks)];
-  const flats = (blocks ?? []).flatMap((b) => (b?.layout?.flats ?? []).map((f) => [f.x + b.originX, f.y, f.z + b.originZ]));
+  const flats = (blocks ?? []).flatMap((b) =>
+    (b?.layout?.flats ?? []).map((f) => [f.x + b.originX, f.y, f.z + b.originZ]),
+  );
   (blocks ?? []).forEach((b, bi) => {
     const lay = b?.layout;
     if (!lay || !Number.isFinite(lay.waterLevel) || lay.waterLevel === WATER_NONE) return;
@@ -138,8 +220,9 @@ export function dungeonFloraPlan({ blocks, probe, sizeOf, doors = [], seed = 0 }
     const spots = [];
     for (const [si, s] of seeds.entries()) {
       for (const [oi, [dx, dz]] of SPOTS.entries()) {
-        const x = s[0] + dx, z = s[2] + dz;
-        if (!inBlock(b, x, z)) continue;   // its own block's water, the one the host draws and swims in there
+        const x = s[0] + dx,
+          z = s[2] + dz;
+        if (!inBlock(b, x, z)) continue; // its own block's water, the one the host draws and swims in there
         const floor = probe.floor([x, s[1], z]);
         if (!floor || !(floor.ny >= SEABED.flatNy) || floor.y > water - SEABED.depthM) continue;
         const pos = [x, floor.y, z];
@@ -162,15 +245,19 @@ export function dungeonFloraPlan({ blocks, probe, sizeOf, doors = [], seed = 0 }
     // (squared distances: the same on every client)
     const chosen = [];
     while (chosen.length < SEABED.perBlock) {
-      let best = null, bestD = -1;
+      let best = null,
+        bestD = -1;
       for (const c of spots) {
         if (chosen.includes(c)) continue;
         let d = Infinity;
         for (const o of chosen) d = Math.min(d, d2(o.pos, c.pos));
         for (const o of out) d = Math.min(d, d2(o.pos, c.pos));
         if (d < SEABED.spacingM * SEABED.spacingM) continue;
-        const ranked = chosen.length ? d : Infinity;   // the first of a block by its hash alone, as ever
-        if (ranked > bestD || (ranked === bestD && c.h < best.h)) { best = c; bestD = ranked; }
+        const ranked = chosen.length ? d : Infinity; // the first of a block by its hash alone, as ever
+        if (ranked > bestD || (ranked === bestD && c.h < best.h)) {
+          best = c;
+          bestD = ranked;
+        }
       }
       if (!best) break;
       chosen.push(best);
@@ -193,7 +280,9 @@ export function colliderFloraProbe(collider) {
     floor: (p) => {
       const from = [p[0], p[1] + 1, p[2]];
       const hit = met(from, [0, -1, 0], 6);
-      return Number.isFinite(hit?.dist) && hit.normal && !hit.back && hit.key === 'dungeon' ? { y: from[1] - hit.dist, ny: hit.normal[1] } : null;   // never a lift's platform (the fires' C4)
+      return Number.isFinite(hit?.dist) && hit.normal && !hit.back && hit.key === 'dungeon'
+        ? { y: from[1] - hit.dist, ny: hit.normal[1] }
+        : null; // never a lift's platform (the fires' C4)
     },
     room: (p, half, height) => {
       const up = met([p[0], p[1] + 0.05, p[2]], [0, 1, 0], SEABED.ceilingM);
@@ -223,19 +312,29 @@ export function colliderFloraProbe(collider) {
  * clamped the swimming player). `positionsOf(modelIdNum)` the host's model vertices, for the doors' middles.
  */
 export async function standDungeonFlora({ blocks, collider, getTexture, flatGroups, positionsOf, seed = 0 }) {
-  if (!(blocks ?? []).some((b) => Number.isFinite(b?.layout?.waterLevel) && b.layout.waterLevel !== WATER_NONE)) return [];
+  if (!(blocks ?? []).some((b) => Number.isFinite(b?.layout?.waterLevel) && b.layout.waterLevel !== WATER_NONE))
+    return [];
   const tex = new Map();
   for (const a of FLORA_ARCHIVES) tex.set(a, await getTexture(a).catch(() => null));
-  const has = (a, r) => { const t = tex.get(a); return t && r < t.recordCount ? t : null; };
+  const has = (a, r) => {
+    const t = tex.get(a);
+    return t && r < t.recordCount ? t : null;
+  };
   const plan = dungeonFloraPlan({
-    blocks, probe: colliderFloraProbe(collider), seed, doors: floraDoors(blocks, positionsOf),
-    sizeOf: (a, r) => { const t = has(a, r); return t ? classicBillboardSize(t, r) : null; },
+    blocks,
+    probe: colliderFloraProbe(collider),
+    seed,
+    doors: floraDoors(blocks, positionsOf),
+    sizeOf: (a, r) => {
+      const t = has(a, r);
+      return t ? classicBillboardSize(t, r) : null;
+    },
   });
   for (const f of plan) {
     const size = billboardSize(has(f.archive, f.record), f.record);
     const key = `${f.archive}_${f.record}`;
     if (!flatGroups.has(key)) flatGroups.set(key, []);
-    flatGroups.get(key).push(Object.assign([f.pos[0], f.pos[1] + size.h / 2, f.pos[2]], { noCover: true }));   // a dungeon flat's point is its centre
+    flatGroups.get(key).push(Object.assign([f.pos[0], f.pos[1] + size.h / 2, f.pos[2]], { noCover: true })); // a dungeon flat's point is its centre
   }
   return plan;
 }

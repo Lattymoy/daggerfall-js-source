@@ -21,13 +21,19 @@ import { dungeonLocationFor, SMALLER_DUNGEON_THRESHOLD, MEDIUM_DUNGEON_THRESHOLD
 import { isArenaUndercroft } from '../arena/arenaCity.js';
 import { isGateArena } from '../gate/gateArena.js';
 import { isArenaFloor } from '../arena/arenaFloor.js';
-import { isSdRealm } from '../superDungeon/sdRealm.js';   // SD5a: the Shattered Hour, a made place
-import { isEgHall } from '../eliteGates/egHall.js';   // KETCH: an Elite Breach's hall, a made place
-import { isKetchShip } from '../ketch/ketchShip.js';   // KETCH: the Sky-Ketch, a made place
+import { isSdRealm } from '../superDungeon/sdRealm.js'; // SD5a: the Shattered Hour, a made place
+import { isEgHall } from '../eliteGates/egHall.js'; // KETCH: an Elite Breach's hall, a made place
+import { isKetchShip } from '../ketch/ketchShip.js'; // KETCH: the Sky-Ketch, a made place
 import { dungeonTier, DUNGEON_TIER_TEXT, DUNGEON_SIZE_TEXT } from '../../systems/dungeon/dungeonTier.js';
 
 /** Is this a place the port made, standing in the dungeon host - no dungeon to tier? */
-export const madeDungeon = (loc) => isGateArena(loc) || isArenaFloor(loc) || isArenaUndercroft(loc) || isSdRealm(loc) || isEgHall(loc) || isKetchShip(loc);
+export const madeDungeon = (loc) =>
+  isGateArena(loc) ||
+  isArenaFloor(loc) ||
+  isArenaUndercroft(loc) ||
+  isSdRealm(loc) ||
+  isEgHall(loc) ||
+  isKetchShip(loc);
 
 /** A BUILT dungeon's size class by its block count: 'small' (five or fewer), 'medium' (eight or fewer), 'large' - or
  *  null when it carries no blocks (a summary row, not a built location). */

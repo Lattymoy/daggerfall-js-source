@@ -429,8 +429,8 @@
   {
     "name": "AUDITRESTPARTY-C7-the-modded-foot",
     "file": "src/world/dungeon/dungeonFires.js",
-    "old": "[h.x, h.lawFoot ?? h.foot ?? h.y, h.z]",
-    "new": "[h.x, h.foot ?? h.y, h.z]",
+    "old": "  const existing = (hearths ?? []).filter((h) => h && !h.placed).map((h) => [h.x, h.lawFoot ?? h.foot ?? h.y, h.z]); // AUDIT REST-PARTY C7: the classic foot - never a texture mod's",
+    "new": "  const existing = (hearths ?? []).filter((h) => h && !h.placed).map((h) => [h.x, h.foot ?? h.y, h.z]); // AUDIT REST-PARTY C7: the classic foot - never a texture mod's",
     "tests": [
       "test/systems/survival/auditrestparty_camps.test.js"
     ]

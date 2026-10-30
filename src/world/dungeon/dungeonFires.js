@@ -27,8 +27,8 @@
 import { hash32 } from '../spawnedDungeons.js';
 import { GLOBAL_SCALE } from '../meshReader.js';
 import { RDB_SIDE } from '../rdbLayout.js';
-import { isDungeonExitDoor } from './dungeonLayout.js';   // AUDIT REST-PARTY C6: the doors the law keeps clear of are the host's
-import { transformPoint } from '../mat4.js';   // AUDIT REST II F7: a door's face centre, as dungeonLayout's own overlap test reads it
+import { isDungeonExitDoor } from './dungeonLayout.js'; // AUDIT REST-PARTY C6: the doors the law keeps clear of are the host's
+import { transformPoint } from '../mat4.js'; // AUDIT REST II F7: a door's face centre, as dungeonLayout's own overlap test reads it
 import { curatedAnchors } from './curatedBlocks.js';
 import { curatedRecordsLive } from './curatedRecords.js';
 
@@ -41,40 +41,44 @@ export const ENEMY_MARKER_RECORDS = Object.freeze([15, 16]);
 /** Fixed treasure's archive (rdbLayout FIXED_TREASURE_FLATS_ARCHIVE) - its entries carry `archive`, a 199 marker none. */
 export const FIXED_TREASURE_ARCHIVE = 216;
 export const DFIRE = Object.freeze({
-  floorM: 4,          // a floor within this far below the candidate
-  flatNy: 0.99,       // ...and flat: no stair, no ramp (AUDIT REST-PARTY C3: 0.9 passed a 25.8 degree slope)
-  levelR: 0.5,        // AUDIT REST-PARTY C3: ...and level all round - the floor sampled this far out on eight bearings
-  levelM: 0.05,       // ...each within this of the centre's (a stair's next tread, a ramp's next half metre, a ledge)
-  roomM: 1.5,         // eight chest-height rays clear this far
-  reachR: 1.4,        // AUDIT REST II F4: ...and the floor level on a second ring this far out (roomM - 0.1): no tabletop, plinth or ledge
-  itemM: 1.5,         // AUDIT REST II F3: never this near (across, on its storey) a start, enter, treasure, quest or fixed-treasure marker
-  ringM: 2,           // AUDIT REST II F3: a marker's fire stands on a ring this far out from it, never on the marker
-  dryM: 0.5,          // over the block's water
-  doorM: 3,           // from every action and exit door
-  enemyM: 8,          // from every enemy marker
-  entranceM: 25,      // the entrance fire's reach from the start
-  spacingM: 80,       // about a block and a half
-  storeyM: 6,         // the height band that stands in for a storey (automapFloors builds off the draw, after these)
-  wardM: 15,          // no wandering spawn stands this near a placed fire (OPEN 9)
-  anchorM: 12,        // DELVE II (DLV6): from a curated block's encounter - the site law's own fire rule (delveSites.js DSITE.fireM)
-  ceilingM: 10,       // a ceiling within this far over it: inside a room, never on a room's roof
-  enclosedM: 30,      // ...and walls round it - at least `enclosedRays` of the eight rays meet one within this far
+  floorM: 4, // a floor within this far below the candidate
+  flatNy: 0.99, // ...and flat: no stair, no ramp (AUDIT REST-PARTY C3: 0.9 passed a 25.8 degree slope)
+  levelR: 0.5, // AUDIT REST-PARTY C3: ...and level all round - the floor sampled this far out on eight bearings
+  levelM: 0.05, // ...each within this of the centre's (a stair's next tread, a ramp's next half metre, a ledge)
+  roomM: 1.5, // eight chest-height rays clear this far
+  reachR: 1.4, // AUDIT REST II F4: ...and the floor level on a second ring this far out (roomM - 0.1): no tabletop, plinth or ledge
+  itemM: 1.5, // AUDIT REST II F3: never this near (across, on its storey) a start, enter, treasure, quest or fixed-treasure marker
+  ringM: 2, // AUDIT REST II F3: a marker's fire stands on a ring this far out from it, never on the marker
+  dryM: 0.5, // over the block's water
+  doorM: 3, // from every action and exit door
+  enemyM: 8, // from every enemy marker
+  entranceM: 25, // the entrance fire's reach from the start
+  spacingM: 80, // about a block and a half
+  storeyM: 6, // the height band that stands in for a storey (automapFloors builds off the draw, after these)
+  wardM: 15, // no wandering spawn stands this near a placed fire (OPEN 9)
+  anchorM: 12, // DELVE II (DLV6): from a curated block's encounter - the site law's own fire rule (delveSites.js DSITE.fireM)
+  ceilingM: 10, // a ceiling within this far over it: inside a room, never on a room's roof
+  enclosedM: 30, // ...and walls round it - at least `enclosedRays` of the eight rays meet one within this far
   enclosedRays: 4,
-  min: 2, max: 7, perBlocks: 3,
+  min: 2,
+  max: 7,
+  perBlocks: 3,
 });
 const WATER_NONE = 10000;
 
 export const isBorderBlock = (name) => /^B/i.test(String(name ?? ''));
 /** A block's water plane's y in the dungeon's frame, or -Infinity for a dry block (DELVE II's site law reads it too). */
-export const blockWaterY = (lay) => (Number.isFinite(lay?.waterLevel) && lay.waterLevel !== WATER_NONE ? -lay.waterLevel * GLOBAL_SCALE : -Infinity);
+export const blockWaterY = (lay) =>
+  Number.isFinite(lay?.waterLevel) && lay.waterLevel !== WATER_NONE ? -lay.waterLevel * GLOBAL_SCALE : -Infinity;
 
 /** How many fires a dungeon of `blocks` non-border blocks stands: clamp(round(blocks / 3), 2, 7) - an elite half, at least one. */
 export function dungeonFireCount(blocks, elite = false) {
-  const n = Math.max(DFIRE.min, Math.min(DFIRE.max, Math.round((Math.max(0, blocks | 0)) / DFIRE.perBlocks)));
+  const n = Math.max(DFIRE.min, Math.min(DFIRE.max, Math.round(Math.max(0, blocks | 0) / DFIRE.perBlocks)));
   return elite ? Math.max(1, Math.floor(n / 2)) : n;
 }
 
-const isFireMarker = (m) => m && (m.archive === FIXED_TREASURE_ARCHIVE || (m.archive == null && FIRE_MARKER_RECORDS.includes(m.record)));
+const isFireMarker = (m) =>
+  m && (m.archive === FIXED_TREASURE_ARCHIVE || (m.archive == null && FIRE_MARKER_RECORDS.includes(m.record)));
 const isEnemyMarker = (m) => m && m.archive == null && ENEMY_MARKER_RECORDS.includes(m.record);
 const half = RDB_SIDE / 2;
 
@@ -88,16 +92,28 @@ export function fireCandidates(blocks) {
   const out = [];
   (blocks ?? []).forEach((b, bi) => {
     const lay = b?.layout;
-    if (!lay || lay.castleBlock) return;   // AUDIT REST: a palace's block is a court, never a camp
+    if (!lay || lay.castleBlock) return; // AUDIT REST: a palace's block is a court, never a camp
     const water = blockWaterY(lay);
     for (const m of lay.markers ?? []) {
       if (!isFireMarker(m)) continue;
-      out.push({ pos: [m.x + b.originX, m.y, m.z + b.originZ], block: bi, start: !!b.isStartingBlock, water, marker: true });
+      out.push({
+        pos: [m.x + b.originX, m.y, m.z + b.originZ],
+        block: bi,
+        start: !!b.isStartingBlock,
+        water,
+        marker: true,
+      });
     }
     if (!isBorderBlock(b.name)) {
       // a block's centre, at the height of its first marker (a block's floor sits near its markers), else zero
       const y0 = (lay.markers ?? []).find((m) => m && m.archive == null)?.y ?? 0;
-      out.push({ pos: [b.originX + half, y0, b.originZ + half], block: bi, start: !!b.isStartingBlock, water, centre: true });
+      out.push({
+        pos: [b.originX + half, y0, b.originZ + half],
+        block: bi,
+        start: !!b.isStartingBlock,
+        water,
+        centre: true,
+      });
     }
   });
   return out;
@@ -114,11 +130,17 @@ export function dungeonStart(blocks) {
 }
 
 /** Every enemy marker, in the dungeon's frame. */
-export const enemyMarks = (blocks) => (blocks ?? []).flatMap((b) => (b?.layout?.markers ?? []).filter(isEnemyMarker).map((m) => [m.x + b.originX, m.y, m.z + b.originZ]));
+export const enemyMarks = (blocks) =>
+  (blocks ?? []).flatMap((b) =>
+    (b?.layout?.markers ?? []).filter(isEnemyMarker).map((m) => [m.x + b.originX, m.y, m.z + b.originZ]),
+  );
 /** AUDIT REST II F3: every start, enter, treasure, quest and fixed-treasure marker, in the dungeon's frame - the spots a
  *  loot pile, a quest's item or foe, or the player's own entry stands on (dungeonContext stands a pile at every 199.19
  *  and 216) - which no fire stands within DFIRE.itemM of. */
-export const itemMarks = (blocks) => (blocks ?? []).flatMap((b) => (b?.layout?.markers ?? []).filter(isFireMarker).map((m) => [m.x + b.originX, m.y, m.z + b.originZ]));
+export const itemMarks = (blocks) =>
+  (blocks ?? []).flatMap((b) =>
+    (b?.layout?.markers ?? []).filter(isFireMarker).map((m) => [m.x + b.originX, m.y, m.z + b.originZ]),
+  );
 
 /** AUDIT REST II F2: a palace - a layout with a castle block in it (rdbLayout's castleBlock, the court DFU's
  *  IsPlayerInsideDungeonCastle reads). "A palace has none": fireCandidates kept the castle's own block out, and the
@@ -145,23 +167,35 @@ export function fireLayoutInputs(blocks, hearths) {
   // doorWorldPosition's reading, which every other reader of an exit door takes), not its model's origin, which can sit
   // metres off the opening; a door with no face of its own (an action door - a model; no `centre`) at its origin
   const at = (b, d) => {
-    const p = d.centre ? transformPoint(d.matrix, d.centre.x, d.centre.y, d.centre.z) : [d.matrix[12], d.matrix[13], d.matrix[14]];
+    const p = d.centre
+      ? transformPoint(d.matrix, d.centre.x, d.centre.y, d.centre.z)
+      : [d.matrix[12], d.matrix[13], d.matrix[14]];
     return [p[0] + b.originX, p[1], p[2] + b.originZ];
   };
   const doors = (blocks ?? []).flatMap((b) => [
     ...(b?.layout?.actionDoors ?? []).map((d) => at(b, d)),
     ...(b?.layout?.exitDoors ?? []).filter(isDungeonExitDoor).map((d) => at(b, d)),
   ]);
-  const existing = (hearths ?? []).filter((h) => h && !h.placed).map((h) => [h.x, h.lawFoot ?? h.foot ?? h.y, h.z]);   // AUDIT REST-PARTY C7: the classic foot - never a texture mod's
+  const existing = (hearths ?? []).filter((h) => h && !h.placed).map((h) => [h.x, h.lawFoot ?? h.foot ?? h.y, h.z]); // AUDIT REST-PARTY C7: the classic foot - never a texture mod's
   return { doors, existing };
 }
 
 // AUDIT REST: every measure the choice compares is a SQUARED distance in plain arithmetic - Math.hypot's last bit differs
 // between engines (and with its arguments' order), and a tie the hash breaks only on exact equality must be the same tie
 // on every client. Thresholds are squared to match.
-const d2 = (a, b) => { const x = a[0] - b[0], y = a[1] - b[1], z = a[2] - b[2]; return x * x + y * y + z * z; };
+const d2 = (a, b) => {
+  const x = a[0] - b[0],
+    y = a[1] - b[1],
+    z = a[2] - b[2];
+  return x * x + y * y + z * z;
+};
 /** The deep fire's measure: 3D, height counted twice. */
-const deep = (a, b) => { const x = a[0] - b[0], y = 2 * (a[1] - b[1]), z = a[2] - b[2]; return x * x + y * y + z * z; };
+const deep = (a, b) => {
+  const x = a[0] - b[0],
+    y = 2 * (a[1] - b[1]),
+    z = a[2] - b[2];
+  return x * x + y * y + z * z;
+};
 const SQ = (m) => m * m;
 
 /** The room's rays read the dungeon's own mesh (its 'dungeon' bucket) - never a door's or a platform's (PROF2's veins'
@@ -171,7 +205,21 @@ const ONLY_DUNGEON = Object.freeze({ only: Object.freeze(['dungeon']) });
 const DUNGEON_BUCKET = 'dungeon';
 /** AUDIT REST II: eight points `r` out round a spot - the four axis bearings, then the four diagonals - literals and one
  *  IEEE product (Math.SQRT1_2; no sine, whose last bit is an engine's own), in this fixed order on every client. */
-const ringOf = (r) => { const d = r * Math.SQRT1_2; return Object.freeze([[r, 0], [-r, 0], [0, r], [0, -r], [d, d], [d, -d], [-d, d], [-d, -d]].map(Object.freeze)); };
+const ringOf = (r) => {
+  const d = r * Math.SQRT1_2;
+  return Object.freeze(
+    [
+      [r, 0],
+      [-r, 0],
+      [0, r],
+      [0, -r],
+      [d, d],
+      [d, -d],
+      [-d, d],
+      [-d, -d],
+    ].map(Object.freeze),
+  );
+};
 /** The room's eight chest-height rays, unit [x, z] - ringOf's bearings (REST3 turned k * PI / 4 through Math.sin and
  *  Math.cos, an engine's own last bit in every diagonal ray, where the law must be one answer on every client). */
 const ROOM_RAYS = ringOf(1);
@@ -199,10 +247,13 @@ export function colliderFireProbe(collider) {
     floor: (p) => {
       const from = [p[0], p[1] + 1, p[2]];
       const hit = collider.raycastHit(from, [0, -1, 0], DFIRE.floorM + 1);
-      return Number.isFinite(hit?.dist) && hit.normal && !hit.back && hit.key === DUNGEON_BUCKET ? { y: from[1] - hit.dist, ny: hit.normal[1] } : null;   // AUDIT REST II F4: a face that looks up
+      return Number.isFinite(hit?.dist) && hit.normal && !hit.back && hit.key === DUNGEON_BUCKET
+        ? { y: from[1] - hit.dist, ny: hit.normal[1] }
+        : null; // AUDIT REST II F4: a face that looks up
     },
     room: (p) => {
-      if (!Number.isFinite(collider.raycast([p[0], p[1] + 0.2, p[2]], [0, 1, 0], DFIRE.ceilingM, ONLY_DUNGEON))) return false;
+      if (!Number.isFinite(collider.raycast([p[0], p[1] + 0.2, p[2]], [0, 1, 0], DFIRE.ceilingM, ONLY_DUNGEON)))
+        return false;
       let walls = 0;
       for (const [dx, dz] of ROOM_RAYS) {
         const d = collider.raycast([p[0], p[1] + 0.9, p[2]], [dx, 0, dz], DFIRE.enclosedM, ONLY_DUNGEON);
@@ -246,7 +297,10 @@ function levelRound(probe, pos) {
 function candidateSpots(cands) {
   const out = [];
   for (const c of cands ?? []) {
-    if (!c?.marker) { out.push({ c, at: c.pos }); continue; }
+    if (!c?.marker) {
+      out.push({ c, at: c.pos });
+      continue;
+    }
     for (const [dx, dz] of MARKER_RING) out.push({ c, at: [c.pos[0] + dx, c.pos[1], c.pos[2] + dz] });
   }
   return out;
@@ -261,7 +315,7 @@ function candidateSpots(cands) {
  */
 export function landCandidates(cands, { probe, doors = [], enemies = [], items = [] } = {}) {
   const out = [];
-  let landed = null;   // the candidate whose spot was just kept: its later spots are not asked
+  let landed = null; // the candidate whose spot was just kept: its later spots are not asked
   for (const { c, at } of candidateSpots(cands)) {
     if (c === landed) continue;
     const f = probe?.floor?.(at);
@@ -269,9 +323,19 @@ export function landCandidates(cands, { probe, doors = [], enemies = [], items =
     const pos = [at[0], f.y, at[2]];
     if (pos[1] < c.water + DFIRE.dryM) continue;
     if (doors.some((d) => d2(d, pos) < SQ(DFIRE.doorM))) continue;
-    if (enemies.some((e) => SQ(e[0] - pos[0]) + SQ(e[2] - pos[2]) < SQ(DFIRE.enemyM) && Math.abs(e[1] - pos[1]) < DFIRE.storeyM)) continue;
-    if (items.some((m) => SQ(m[0] - pos[0]) + SQ(m[2] - pos[2]) < SQ(DFIRE.itemM) && Math.abs(m[1] - pos[1]) < DFIRE.storeyM)) continue;   // AUDIT REST II F3: never on a pile, a quest's item or the way in
-    if (!levelRound(probe, pos)) continue;   // AUDIT REST-PARTY C3: no stair, no ramp, no ledge
+    if (
+      enemies.some(
+        (e) => SQ(e[0] - pos[0]) + SQ(e[2] - pos[2]) < SQ(DFIRE.enemyM) && Math.abs(e[1] - pos[1]) < DFIRE.storeyM,
+      )
+    )
+      continue;
+    if (
+      items.some(
+        (m) => SQ(m[0] - pos[0]) + SQ(m[2] - pos[2]) < SQ(DFIRE.itemM) && Math.abs(m[1] - pos[1]) < DFIRE.storeyM,
+      )
+    )
+      continue; // AUDIT REST II F3: never on a pile, a quest's item or the way in
+    if (!levelRound(probe, pos)) continue; // AUDIT REST-PARTY C3: no stair, no ramp, no ledge
     if (!probe?.room?.(pos)) continue;
     out.push({ ...c, pos });
     landed = c;
@@ -281,11 +345,16 @@ export function landCandidates(cands, { probe, doors = [], enemies = [], items =
 
 /** AUDIT REST II F5: the fire of `list` nearest `p` - a tie to the lesser x, then y, then z, so the answer is the
  *  layout's and never its list's order. */
-const nearestOf = (list, p) => list.reduce((best, q) => {
-  if (!best) return q;
-  const a = d2(q, p), b = d2(best, p);
-  return a < b || (a === b && (q[0] < best[0] || (q[0] === best[0] && (q[1] < best[1] || (q[1] === best[1] && q[2] < best[2]))))) ? q : best;
-}, null);
+const nearestOf = (list, p) =>
+  list.reduce((best, q) => {
+    if (!best) return q;
+    const a = d2(q, p),
+      b = d2(best, p);
+    return a < b ||
+      (a === b && (q[0] < best[0] || (q[0] === best[0] && (q[1] < best[1] || (q[1] === best[1] && q[2] < best[2])))))
+      ? q
+      : best;
+  }, null);
 
 /**
  * THE CHOICE: the entrance fire, the deep fire, the spread. `valid` the landed candidates (layout order), `seed` the
@@ -298,7 +367,10 @@ export function chooseFirePlan(valid, { seed = 0, existing = [], start = null, c
   const chosen = [];
   if (!pool.length || count <= 0) return { fires: [], doorFire: null };
   const better = (a, b, sa, sb) => (sa !== sb ? sa > sb : a.tie < b.tie);
-  const take = (c) => { chosen.push(c); pool.splice(pool.indexOf(c), 1); };
+  const take = (c) => {
+    chosen.push(c);
+    pool.splice(pool.indexOf(c), 1);
+  };
   const clearOf = (p, list, m) => list.every((q) => d2(q, p) >= SQ(m));
   // 1. the entrance fire - unless the layout already stands one by the door in
   // AUDIT REST-PARTY C2: and never beside one the layout stands. The layout's fires were measured from the START alone,
@@ -307,7 +379,8 @@ export function chooseFirePlan(valid, { seed = 0, existing = [], start = null, c
   // entrance's only DFIRE.entranceM clear of every layout fire: the reach that makes a layout fire the door's own (the
   // test below) is the reach that makes a candidate one standing beside it. The deep fire and the spread keep their 80.
   const from = start ?? pool.find((c) => c.start)?.pos ?? pool[0].pos;
-  const near = (list) => list.reduce((best, c) => (!best || better(c, best, -d2(c.pos, from), -d2(best.pos, from)) ? c : best), null);
+  const near = (list) =>
+    list.reduce((best, c) => (!best || better(c, best, -d2(c.pos, from), -d2(best.pos, from)) ? c : best), null);
   const clear = pool.filter((c) => clearOf(c.pos, existing, DFIRE.entranceM));
   const inReach = clear.filter((c) => d2(c.pos, from) <= SQ(DFIRE.entranceM));
   const first = near(inReach.length ? inReach : clear.filter((c) => c.start)) ?? near(clear);
@@ -321,14 +394,18 @@ export function chooseFirePlan(valid, { seed = 0, existing = [], start = null, c
   // AUDIT REST II F5: ...and the law says WHICH (the nearest the door): the ward, the compass and the map read only what
   // it reports, so a brazier it adopted for the entrance's kept none of a campfire's promises
   const adopted = doorFire ? nearestOf(existing, from) : null;
-  if (!doorFire) take(first);   // never null here: no clear candidate means a layout fire, and none is "nearer" than Infinity
+  if (!doorFire) take(first); // never null here: no clear candidate means a layout fire, and none is "nearer" than Infinity
   const want = doorFire ? count - 1 : count;
   const anchors = () => [...existing, ...chosen.map((c) => c.pos)];
   const anchorFrom = chosen[0]?.pos ?? from;
   // 2. the deep fire - the far reach, where the quest's target usually waits
   if (chosen.length < want) {
-    const far = pool.filter((c) => clearOf(c.pos, anchors(), DFIRE.spacingM))
-      .reduce((best, c) => (!best || better(c, best, deep(c.pos, anchorFrom), deep(best.pos, anchorFrom)) ? c : best), null);
+    const far = pool
+      .filter((c) => clearOf(c.pos, anchors(), DFIRE.spacingM))
+      .reduce(
+        (best, c) => (!best || better(c, best, deep(c.pos, anchorFrom), deep(best.pos, anchorFrom)) ? c : best),
+        null,
+      );
     if (far) take(far);
   }
   // 3. the spread - a height band with candidates and no fire first, then farthest-point
@@ -349,7 +426,8 @@ export const chooseFires = (valid, opts) => chooseFirePlan(valid, opts).fires;
 
 /** THE WARD: is a spawn's spot (`{ x, y, z }`) within DFIRE.wardM of a placed fire? The bonfire's promise, not a
  *  guarantee - a layout foe can still walk up. */
-export const inFireWard = (fires, spot) => !!spot && (fires ?? []).some((q) => SQ(q[0] - spot.x) + SQ(q[1] - spot.y) + SQ(q[2] - spot.z) < SQ(DFIRE.wardM));
+export const inFireWard = (fires, spot) =>
+  !!spot && (fires ?? []).some((q) => SQ(q[0] - spot.x) + SQ(q[1] - spot.y) + SQ(q[2] - spot.z) < SQ(DFIRE.wardM));
 
 /**
  * The whole law in one call, for the scene: `blocks` the layout's, `probe` the collider's answers, `doors` the
@@ -360,11 +438,25 @@ export const inFireWard = (fires, spot) => !!spot && (fires ?? []).some((q) => S
  * doorFire, candidates, valid }`: the fires placed ([[x, y, z], ...], in pick order), the layout fire adopted as the
  * entrance's or null (F5), and the candidates' and the landed ones' counts (tools/dungeonFireProbe.mjs reports them).
  */
-export function dungeonFirePlan({ blocks, probe, doors = [], existing = [], seed = 0, elite = false, cold = false, anchors = curatedAnchors(blocks, curatedRecordsLive()) } = {}) {
-  if (cold) return { fires: [], doorFire: null, candidates: 0, valid: 0 };   // SD4a: a Super dungeon - the Hour is cold, no ray cast
+export function dungeonFirePlan({
+  blocks,
+  probe,
+  doors = [],
+  existing = [],
+  seed = 0,
+  elite = false,
+  cold = false,
+  anchors = curatedAnchors(blocks, curatedRecordsLive()),
+} = {}) {
+  if (cold) return { fires: [], doorFire: null, candidates: 0, valid: 0 }; // SD4a: a Super dungeon - the Hour is cold, no ray cast
   const count = layoutFireCount(blocks, elite);
   const cands = fireCandidates(blocks);
-  const valid = count > 0 ? landCandidates(cands, { probe, doors, enemies: enemyMarks(blocks), items: itemMarks(blocks) }).filter((c) => anchors.every((a) => d2(a.at, c.pos) >= SQ(DFIRE.anchorM))) : [];
+  const valid =
+    count > 0
+      ? landCandidates(cands, { probe, doors, enemies: enemyMarks(blocks), items: itemMarks(blocks) }).filter((c) =>
+          anchors.every((a) => d2(a.at, c.pos) >= SQ(DFIRE.anchorM)),
+        )
+      : [];
   const { fires, doorFire } = chooseFirePlan(valid, { seed, existing, start: dungeonStart(blocks), count });
   return { fires, doorFire, candidates: cands.length, valid: valid.length };
 }

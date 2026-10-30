@@ -8,7 +8,7 @@
 // (worldClock.LightFlicker). Dungeon ambient is PlayerAmbientLight's
 // verbatim DungeonAmbientLight (0.12, 0.12, 0.12); there is no sun.
 
-import { getFloat } from '../../systems/settings/settings.js';   // AUDIT 28 W1: DungeonAmbientLightScale
+import { getFloat } from '../../systems/settings/settings.js'; // AUDIT 28 W1: DungeonAmbientLightScale
 import { GLOBAL_SCALE } from '../meshReader.js';
 import { RDB_RESOURCE_TYPES } from '../../formats/blocksFile.js';
 
@@ -73,7 +73,9 @@ export const DUNGEON_LIGHT_BLOCK_RANGE = UNSCALED_BLOCK_RANGE * GLOBAL_SCALE;
 
 export const DUNGEON_LIGHT_INTENSITY = 0.8;
 export const DUNGEON_LIGHT_COLOR = Object.freeze([
-  DUNGEON_LIGHT_INTENSITY, DUNGEON_LIGHT_INTENSITY, DUNGEON_LIGHT_INTENSITY,
+  DUNGEON_LIGHT_INTENSITY,
+  DUNGEON_LIGHT_INTENSITY,
+  DUNGEON_LIGHT_INTENSITY,
 ]);
 
 /**

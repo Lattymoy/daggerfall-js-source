@@ -19,7 +19,7 @@
 //     disabled; survivors join the registry.
 
 import { layoutRdbBlock, RDB_SIDE } from '../rdbLayout.js';
-import { dungeonTextureTable } from './dungeonTextures.js';   // AUDIT 28 W3c: the whole modes-0-4 fork
+import { dungeonTextureTable } from './dungeonTextures.js'; // AUDIT 28 W3c: the whole modes-0-4 fork
 import { DOOR_TYPE } from '../meshReader.js';
 import { transformPoint } from '../mat4.js';
 
@@ -59,7 +59,7 @@ export function layoutDungeon(dfLocation, blocksFile, getModel) {
   // the setting had sat stored while the port always answered mode 0.
   const textureTable = dungeonTextureTable({
     locationId: dfLocation.dungeon.recordElement.header.locationId,
-    mapId: dfLocation.mapTableData?.mapId ?? 0,   // a fixture without a map-table entry is nobody's main story
+    mapId: dfLocation.mapTableData?.mapId ?? 0, // a fixture without a map-table entry is nobody's main story
     worldClimate: dfLocation.climate.worldClimate,
   });
 
@@ -124,11 +124,7 @@ function removeOverlappingDoors(blocks) {
 
   for (const b of blocks) {
     for (const actionDoor of b.layout.actionDoors) {
-      const pos = [
-        actionDoor.matrix[12] + b.originX,
-        actionDoor.matrix[13],
-        actionDoor.matrix[14] + b.originZ,
-      ];
+      const pos = [actionDoor.matrix[12] + b.originX, actionDoor.matrix[13], actionDoor.matrix[14] + b.originZ];
       let duplicateFound = false;
       for (const p of registry) {
         const d = Math.hypot(pos[0] - p[0], pos[1] - p[1], pos[2] - p[2]);

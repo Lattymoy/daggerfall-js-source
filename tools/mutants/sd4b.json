@@ -11,8 +11,8 @@
   {
     "name": "SD4B-the-height-asked",
     "file": "src/world/dungeon/dungeonEnd.js",
-    "old": "Math.hypot(m.x - from.x, m.z - from.z);",
-    "new": "Math.hypot(m.x - from.x, /** @type {any} */ (m).y ?? 0, m.z - from.z);",
+    "old": "  const d = (/** @type {M} */ m) => Math.hypot(m.x - from.x, m.z - from.z);",
+    "new": "  const d = (/** @type {M} */ m) => Math.hypot(m.x - from.x, /** @type {any} */ (m).y ?? 0, m.z - from.z);",
     "tests": [
       "test/world/superDungeon/sd4b_rift.test.js"
     ]

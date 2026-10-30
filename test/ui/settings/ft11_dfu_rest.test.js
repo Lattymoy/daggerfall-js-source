@@ -63,7 +63,7 @@ test('FT11: the port reads each key where DFU reads it', () => {
   assert.match(read('src/combat/playerWeapon.js'), /bowSwitching = getBool\('Enhancements', 'BowLeftHandWithSwitching'\),/);
   assert.match(read('src/characters/equipTable.js'), /bowLeftHand = getBool\('Enhancements', 'BowLeftHandWithSwitching'\)/, 'the hands an item takes');
   assert.match(read('src/scenes/quest/questBridge.js'), /get guildQuestListBox\(\) \{ return getBool\('Enhancements', 'GuildQuestListBox'\); \},/, 'a getter - read at the offer');
-  assert.match(read('src/world/dungeon/dungeonTextures.js'), /mode = getInt\('Video', 'RandomDungeonTextures', 0, 4\) \} = \{\}\) \{/);
+  assert.match(read('src/world/dungeon/dungeonTextures.js'), /mode = getInt\('Video', 'RandomDungeonTextures', 0, 4\),\n\s*\} = \{\}\) \{/);
   // and the dials are NOT rows - a dial is a setting
   for (const key of ['Enhancements/LoiterLimitInHours', 'Enhancements/DungeonAmbientLightScale', 'Enhancements/NightAmbientLightScale', 'Enhancements/PlayerTorchLightScale']) {
     assert.equal(featureForControl('settings', key), null, `${key} stays in Settings`);

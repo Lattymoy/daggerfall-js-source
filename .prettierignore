@@ -232,6 +232,8 @@
 /src/world/city/*/
 !/src/world/deepWater/
 /src/world/deepWater/*/
+!/src/world/dungeon/
+/src/world/dungeon/*/
 !/src/world/interior/
 /src/world/interior/*/
 !/src/world/jungle/

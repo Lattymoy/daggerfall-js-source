@@ -62,8 +62,8 @@
   {
     "name": "TIER1-the-label-made-every-frame",
     "file": "src/world/dungeon/dungeonLabel.js",
-    "old": "  if (kept) return kept;\n",
-    "new": "",
+    "old": "  if (kept) return kept;\n  const size = dungeonSizeOnline(loc);",
+    "new": "  const size = dungeonSizeOnline(loc);",
     "tests": [
       "test/world/tier1_dungeontiers.test.js"
     ],

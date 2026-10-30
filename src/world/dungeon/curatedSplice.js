@@ -20,7 +20,8 @@ export const CURATED_LANE = 0xd1f5;
 export const gameMade = (loc) => !!loc?.spawned || loc?.country?.dungeon === true;
 /** AUDIT DLV5-6 M7: one that takes a curated block - never a Hollow (its encounters stand none, Super-Dungeons.md) nor a
  *  zone hall (its room is its lane's law: the relay's reset, its PvP - net/wire.js wdunHallOfRoom). */
-export const curatedTakes = (loc) => gameMade(loc) && dungeonTier(loc) !== 'super' && !isHallMapId(loc?.mapTableData?.mapId);
+export const curatedTakes = (loc) =>
+  gameMade(loc) && dungeonTier(loc) !== 'super' && !isHallMapId(loc?.mapTableData?.mapId);
 const border = (b) => /^b/i.test(b?.blockName ?? '');
 /** The draw: a share of the lane, and a pick among `n`. */
 const share = (id, k) => hash32(id, CURATED_LANE, k) / 4294967296;
@@ -44,7 +45,9 @@ export function curatedSlot(loc, records, blocks = loc?.dungeon?.blocks ?? []) {
   if (share(id, 0) >= CURATED_CHANCE) return null;
   const slots = blocks.map((b, j) => j).filter((j) => !border(blocks[j]) && !blocks[j].isStartingBlock);
   if (!slots.length) return null;
-  const rec = pool.reduce((best, r) => (weight(id, r) > weight(id, best) || (weight(id, r) === weight(id, best) && r.n < best.n) ? r : best));
+  const rec = pool.reduce((best, r) =>
+    weight(id, r) > weight(id, best) || (weight(id, r) === weight(id, best) && r.n < best.n) ? r : best,
+  );
   return { j: slots[pick(id, 2, slots.length)], rec };
 }
 /** The block list laid: `blocks` with the curated record's block in its slot (a new list), or `blocks` itself. Pure. */
