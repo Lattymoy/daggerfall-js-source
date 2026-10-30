@@ -173,8 +173,8 @@
   {
     "name": "FB1016-STOLEN-GOODS-a-receivers-mark",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "export const RECEIVER_MARKS = Object.freeze(['equipSlot', 'questItem', 'acquired', 'wagonEntry', 'horseBond', 'horseFed', 'appearance']);",
-    "new": "export const RECEIVER_MARKS = Object.freeze(['equipSlot', 'questItem', 'acquired', 'wagonEntry', 'horseBond', 'horseFed', 'appearance', 'stolen']);",
+    "old": "]); // APPEARANCES (bible/04-Characters/Wardrobe.md): the look a piece wears is its wearer's, who collected it - a piece handed over arrives in its own; WAGONS2-VISIT (AUDIT): who may enter a caravan is its owner's word - a buyer's caravan opens to its owner alone; STEED1: a horse's bond is with its owner - it comes to the next a stranger; AUDIT STEED1: and its food's clock is its owner's character's - it comes fed as a horse first seen (steedCare.js NEW_HORSE_FED), and an offer's record never mismatches its checkpoint for a minute's grazing",
+    "new": "  'stolen',\n]); // APPEARANCES (bible/04-Characters/Wardrobe.md): the look a piece wears is its wearer's, who collected it - a piece handed over arrives in its own; WAGONS2-VISIT (AUDIT): who may enter a caravan is its owner's word - a buyer's caravan opens to its owner alone; STEED1: a horse's bond is with its owner - it comes to the next a stranger; AUDIT STEED1: and its food's clock is its owner's character's - it comes fed as a horse first seen (steedCare.js NEW_HORSE_FED), and an offer's record never mismatches its checkpoint for a minute's grazing",
     "tests": [
       "test/systems/fb1016b_stolengoods.test.js"
     ]

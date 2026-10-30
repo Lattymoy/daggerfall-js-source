@@ -1301,7 +1301,7 @@ temple's alike.
 
 What PURSE-MEND does not reach. A purse a payment has since set to nothing is no longer below nothing. The service's
 payFromSave counts a purse below nothing as none, and where the letters fall short it pays the rest from the bank and
-writes the purse 0 (`realmGoldLaw.js:"else { owed -= purse; save.goldPieces = 0; }"`). The sale's loss then stands with
+writes the purse 0 (`realmGoldLaw.js:"} else {"`). The sale's loss then stands with
 nothing in the record to show it, the mend refuses it (`mend-not-negative`), and no act gives gold alone: the repair's
 needs a faction's flag. An offline character's purse is its own device's save, which no judge reads and no staff act
 reaches. And an online lot the old arithmetic overpaid left a purse above nothing, with no finding; the budget's measure

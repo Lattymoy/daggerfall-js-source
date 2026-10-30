@@ -147,8 +147,8 @@
   {
     "name": "BAG1-the-realm-blind-to-it",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": ", ...lists(snap?.wagonItems), ...lists(snap?.bagItems), ...lists(snap?.items)];",
-    "new": ", ...lists(snap?.wagonItems), ...lists(snap?.items)];",
+    "old": "  ...lists(snap?.bagItems),\n  ...lists(snap?.items),",
+    "new": "  ...lists(snap?.items),",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]

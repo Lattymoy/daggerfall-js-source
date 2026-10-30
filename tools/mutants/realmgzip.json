@@ -146,8 +146,8 @@
   {
     "name": "REALM-GZIP-the-bound-never-kept",
     "file": "src/net/realm/realmSaveCodec.js",
-    "old": "      if (size > max) { reader.cancel().catch(() => {}); return null; }\n",
-    "new": "",
+    "old": "      if (size > max) {\n        reader.cancel().catch(() => {});\n        return null;\n      }\n      parts.push(value);",
+    "new": "      parts.push(value);",
     "tests": [
       "test/net/realm_gzip.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "REALM-GZIP-plain-text-past-its-bound",
     "file": "src/net/realm/realmSaveCodec.js",
-    "old": "  return bytes.byteLength > max ? null : new TextDecoder().decode(bytes);\n",
-    "new": "  return new TextDecoder().decode(bytes);\n",
+    "old": "  return bytes.byteLength > max ? null : new TextDecoder().decode(bytes);",
+    "new": "  return new TextDecoder().decode(bytes);",
     "tests": [
       "test/net/realm_gzip.test.js"
     ]

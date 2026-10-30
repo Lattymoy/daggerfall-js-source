@@ -227,8 +227,8 @@
   {
     "name": "WAGONS2-FINAL-the-services-loaded-wagon-sold",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "  if (loaded) left[items.indexOf(loaded)] = 0;\n",
-    "new": "\n",
+    "old": "  if (loaded) left[items.indexOf(loaded)] = 0;",
+    "new": "",
     "tests": [
       "test/systems/wagons2_final.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "WAGONS2-FINAL-the-untouched-wagon-dropped",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "    if (left[i] === had[i]) return [rec];   // untouched",
-    "new": "    if (left[i] === (tradeableRecord(rec) ? recordCount(rec) : 0)) return [rec];   // untouched",
+    "old": "    if (left[i] === had[i]) return [rec]; // untouched",
+    "new": "    if (left[i] === (tradeableRecord(rec) ? recordCount(rec) : 0)) return [rec]; // untouched",
     "tests": [
       "test/systems/wagons2_final.test.js"
     ]

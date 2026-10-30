@@ -184,8 +184,8 @@
   {
     "name": "HOUSES3-gold-the-slots-alone",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": "for (const slot of deedsOfHouses(snap?.houses)) {",
-    "new": "for (const slot of (Array.isArray(snap?.houses) ? snap.houses : []).filter((s) => s?.buildingKey > 0)) {",
+    "old": "  for (const slot of deedsOfHouses(snap?.houses)) {",
+    "new": "  for (const slot of (Array.isArray(snap?.houses) ? snap.houses : []).filter((s) => s?.buildingKey > 0)) {",
     "tests": [
       "test/systems/houses3.test.js"
     ]

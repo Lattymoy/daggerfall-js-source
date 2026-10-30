@@ -265,8 +265,8 @@
   {
     "name": "RPT1026-MARKET-HOLD-SAID-staff-s-contact-dropped",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": " To ask why, send them a private report with /bug, or ask on the game\\'s Discord.'); },",
-    "new": "'); },",
+    "old": "    return t(\n      'realm.held.staff',\n      \"The realm's staff have frozen this character's trading, gathering and crafting. To ask why, send them a private report with /bug, or ask on the game's Discord.\",\n    );",
+    "new": "    return t('realm.held.staff', \"The realm's staff have frozen this character's trading, gathering and crafting.\");",
     "tests": [
       "test/systems/rpt1026_market_held.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "RPT1026-MARKET-HOLD-SAID-a-notice-back-to-trading-alone",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "const HELD_LAW = 'The realm is reviewing this character: it carries an item the game could not have made. Its trading, gathering and crafting are frozen until it is gone.';",
-    "new": "const HELD_LAW = 'The realm is reviewing this character: it carries an item the game could not have made. Trading is frozen until it is gone.';",
+    "old": "  'The realm is reviewing this character: it carries an item the game could not have made. Its trading, gathering and crafting are frozen until it is gone.';",
+    "new": "  'The realm is reviewing this character: it carries an item the game could not have made. Trading is frozen until it is gone.';",
     "tests": [
       "test/systems/rpt1026_market_held.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "RPT1026-MARKET-HOLD-SAID-the-timed-one-s-three-dropped",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "  : t('realm.held.until', 'This character has been held 3 times. Its trading, gathering and crafting are frozen until {date}, then reopen on their own.'",
-    "new": "  : t('realm.held.until', 'This character has been held 3 times. Its trading is frozen until {date}, then reopens on its own.'",
+    "old": "        'This character has been held 3 times. Its trading, gathering and crafting are frozen until {date}, then reopen on their own.',",
+    "new": "        'This character has been held 3 times. Its trading is frozen until {date}, then reopens on its own.',",
     "tests": [
       "test/systems/rpt1026_market_held.test.js",
       "test/server/autohold.test.js"

@@ -2,7 +2,7 @@
   {
     "name": "MARKET-AUDIT2-reserve-credits-whole",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": "    if (undo) undo(); else wallet.credit?.(n);",
+    "old": "    if (undo) undo();\n    else wallet.credit?.(n);",
     "new": "    wallet.credit?.(n);",
     "tests": [
       "test/systems/marketaudit2.test.js"

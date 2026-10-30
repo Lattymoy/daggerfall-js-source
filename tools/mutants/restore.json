@@ -135,8 +135,8 @@
   {
     "name": "RESTORE-A-a-crossed-house-counted",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": "    if (!slot.crossed) deeds.push(",
-    "new": "    if (slot) deeds.push(",
+    "old": "    if (!slot.crossed)",
+    "new": "    if (slot)",
     "note": "Re-aimed by content (HOUSES-3): the region's three deeds.",
     "tests": [
       "test/systems/house_loss.test.js",
@@ -146,8 +146,8 @@
   {
     "name": "RESTORE-A-a-crossed-ship-counted",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": "if (ownsShip(snap) && !snap.shipCrossed) {",
-    "new": "if (ownsShip(snap)) {",
+    "old": "  if (ownsShip(snap) && !snap.shipCrossed) {",
+    "new": "  if (ownsShip(snap)) {",
     "tests": [
       "test/systems/house_loss.test.js",
       "test/systems/auditrealm2_customs.test.js"

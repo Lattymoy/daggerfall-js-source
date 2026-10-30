@@ -2,7 +2,7 @@
   {
     "name": "AUDIT-REALM-F1-the-row-unread",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "export const boundRecord = (/** @type {any} */ rec) => rec?.bound === true || BOUND_TEMPLATES.includes(rec?.templateIndex);",
+    "old": "export const boundRecord = (/** @type {any} */ rec) =>\n  rec?.bound === true || BOUND_TEMPLATES.includes(rec?.templateIndex);",
     "new": "export const boundRecord = (/** @type {any} */ rec) => rec?.bound === true;",
     "tests": [
       "test/systems/auditrealm.test.js"
@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-REALM-F1-the-stone-unlisted",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "export const BOUND_TEMPLATES = Object.freeze([570, 571, 572, 575, 580, 582, 1820, 2000, 2001]);",
-    "new": "export const BOUND_TEMPLATES = Object.freeze([571, 572, 575, 580, 582, 1820, 2000, 2001]);",
+    "old": "export const BOUND_TEMPLATES = Object.freeze([570, 571, 572, 575, 580, 582, 1820, 2000, 2001]); // DRAGON5: the Dwarven Dragon's (systems/dragon/dragonMount.js) - a tame is its character's alone -   // WITCH1: the Soul Cake's and the Hearth Offering's (systems/festival/festivalRows.js) -   // EG-PLAY: the Weir Key's (systems/eliteGates/weirKey.js) -   // LOOT9: the Welkynd Shard's row beside the Stone's; PORTAL1: the Portal Stone's beside the shard's; WALLET1: the Wallet's (systems/walletItem.js); CARDS8: the Card Binder's (systems/iliac/iliacItems.js)",
+    "new": "export const BOUND_TEMPLATES = Object.freeze([571, 572, 575, 580, 582, 1820, 2000, 2001]); // DRAGON5: the Dwarven Dragon's (systems/dragon/dragonMount.js) - a tame is its character's alone -   // WITCH1: the Soul Cake's and the Hearth Offering's (systems/festival/festivalRows.js) -   // EG-PLAY: the Weir Key's (systems/eliteGates/weirKey.js) -   // LOOT9: the Welkynd Shard's row beside the Stone's; PORTAL1: the Portal Stone's beside the shard's; WALLET1: the Wallet's (systems/walletItem.js); CARDS8: the Card Binder's (systems/iliac/iliacItems.js)",
     "tests": [
       "test/systems/auditrealm.test.js"
     ],
@@ -21,8 +21,8 @@
   {
     "name": "AUDIT-REALM-F1-the-mark-alone",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "  if (boundRecord(rec)) return false;",
-    "new": "  if (rec.bound === true) return false;",
+    "old": "  if (boundRecord(rec)) return false; // bound (itemBound.js isBound): its mark or its row's - AUDIT REALM F1",
+    "new": "  if (rec.bound === true) return false; // bound (itemBound.js isBound): its mark or its row's - AUDIT REALM F1",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "AUDIT-REALM-F2-no-stash-counted",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": "export const carriedItemLists = (/** @type {any} */ snap) => [...stashedItemLists(snap), ...lists(snap?.wagonItems), ...lists(snap?.bagItems), ...lists(snap?.items)];",
-    "new": "export const carriedItemLists = (/** @type {any} */ snap) => [...lists(snap?.wagonItems), ...lists(snap?.bagItems), ...lists(snap?.items)];",
+    "old": "  ...stashedItemLists(snap),\n  ...lists(snap?.wagonItems),",
+    "new": "  ...lists(snap?.wagonItems),",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "AUDIT-REALM-F2-the-wagon-uncounted",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": "export const carriedItemLists = (/** @type {any} */ snap) => [...stashedItemLists(snap), ...lists(snap?.wagonItems), ...lists(snap?.bagItems), ...lists(snap?.items)];",
-    "new": "export const carriedItemLists = (/** @type {any} */ snap) => [...stashedItemLists(snap), ...lists(snap?.bagItems), ...lists(snap?.items)];",
+    "old": "  ...lists(snap?.wagonItems),\n  ...lists(snap?.bagItems),",
+    "new": "  ...lists(snap?.bagItems),",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "AUDIT-REALM-F2-a-room-pile-uncounted",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": "    for (const pile of scene?.droppedPiles ?? []) out.push(...lists(pile?.items));\n",
-    "new": "",
+    "old": "    for (const pile of scene?.droppedPiles ?? []) out.push(...lists(pile?.items));\n    for (const held of Object.values(scene?.decorItems ?? {})) out.push(...lists(held));",
+    "new": "    for (const held of Object.values(scene?.decorItems ?? {})) out.push(...lists(held));",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "AUDIT-REALM-F2-a-storage-piece-uncounted",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": "    for (const held of Object.values(scene?.decorItems ?? {})) out.push(...lists(held));\n",
-    "new": "",
+    "old": "    for (const held of Object.values(scene?.decorItems ?? {})) out.push(...lists(held));\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "AUDIT-REALM-L1F1-a-letter-any-value",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "  if (VALUE_IS_IDENTITY_TEMPLATES.includes(rec?.templateIndex) && canon(offered.value) !== canon(rec?.value)) return false;\n",
-    "new": "",
+    "old": "  if (VALUE_IS_IDENTITY_TEMPLATES.includes(rec?.templateIndex) && canon(offered.value) !== canon(rec?.value))\n    return false;\n  return true;",
+    "new": "  return true;",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "AUDIT-REALM-L1F1-the-first-like-record-taken",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "    const offered = side.items[k], at = pick[k], n = recordCount(offered);",
-    "new": "    const offered = side.items[k], n = recordCount(offered), at = items.findIndex((rec, i) => left[i] >= n && recordIsOffered(rec, offered));",
+    "old": "      at = pick[k],\n      n = recordCount(offered);",
+    "new": "      n = recordCount(offered),\n      at = items.findIndex((rec, i) => left[i] >= n && recordIsOffered(rec, offered));",
     "tests": [
       "test/systems/auditrealm.test.js",
       "test/net/realm4.test.js"

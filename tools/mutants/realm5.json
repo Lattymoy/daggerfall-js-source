@@ -2,8 +2,8 @@
   {
     "name": "REALM5-letters-before-coins",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": "  if (amount <= purse) { save.goldPieces = purse - amount; return true; }\n",
-    "new": "",
+    "old": "  if (amount <= purse) {\n    save.goldPieces = purse - amount;\n    return true;\n  }\n  let owed = amount;",
+    "new": "  let owed = amount;",
     "tests": [
       "test/net/realm5.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "REALM5-pays-past-its-reach",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": "  if (payableOf(save, region) < amount) return false;\n",
-    "new": "",
+    "old": "  if (payableOf(save, region) < amount) return false;\n  const purse = whole(save.goldPieces);",
+    "new": "  const purse = whole(save.goldPieces);",
     "tests": [
       "test/net/realm5.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "REALM5-bank-never-pays",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": "    a.accountGold -= take;\n",
-    "new": "",
+    "old": "    a.accountGold -= take;\n    owed -= take;",
+    "new": "    owed -= take;",
     "tests": [
       "test/net/realm5.test.js"
     ],
@@ -39,7 +39,7 @@
   {
     "name": "REALM5-letters-never-count",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": "  const letters = (Array.isArray(save?.items) ? save.items : []).filter((it) => it?.templateIndex === REALM_LETTER_TEMPLATE).reduce((s, it) => s + whole(it.value), 0);",
+    "old": "  const letters = (Array.isArray(save?.items) ? save.items : [])\n    .filter((it) => it?.templateIndex === REALM_LETTER_TEMPLATE)\n    .reduce((s, it) => s + whole(it.value), 0);",
     "new": "  const letters = 0;",
     "tests": [
       "test/net/realm5.test.js"

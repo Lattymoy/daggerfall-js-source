@@ -192,8 +192,8 @@
   {
     "name": "STEED1-the-bond-carried-to-the-next",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "'wagonEntry', 'horseBond', 'horseFed', 'appearance']);",
-    "new": "'wagonEntry', 'horseFed', 'appearance']);",
+    "old": "  'horseBond',\n  'horseFed',",
+    "new": "  'horseFed',",
     "tests": [
       "test/systems/steed1_horsecare.test.js"
     ]
@@ -284,8 +284,8 @@
   {
     "name": "AUDIT-STEED1-fed-traded",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "'horseBond', 'horseFed', 'appearance']",
-    "new": "'horseBond', 'appearance']",
+    "old": "  'horseFed',\n  'appearance',",
+    "new": "  'appearance',",
     "tests": [
       "test/systems/steed1_horsecare.test.js"
     ]

@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-REALM2-S4-the-offer-compared-one-way",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "for (const k of new Set([...Object.keys(offered), ...(plain(rec) ? Object.keys(rec) : [])])) {",
-    "new": "for (const k of new Set([...Object.keys(offered)])) {",
+    "old": "  for (const k of new Set([...Object.keys(offered), ...(plain(rec) ? Object.keys(rec) : [])])) {",
+    "new": "  for (const k of new Set([...Object.keys(offered)])) {",
     "tests": [
       "test/systems/auditrealm2_service.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-REALM2-S4-the-record-unbounded",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "    if (JSON.stringify(items[at]).length > REALM_TRADE_RECORD_MAX) return null;",
-    "new": "    if (false) return null;",
+    "old": "    if (JSON.stringify(items[at]).length > REALM_TRADE_RECORD_MAX) return null; // AUDIT REALM2 S4: the record that moves, bounded",
+    "new": "    if (false) return null; // AUDIT REALM2 S4: the record that moves, bounded",
     "tests": [
       "test/systems/auditrealm2_service.test.js"
     ]

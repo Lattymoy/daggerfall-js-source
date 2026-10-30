@@ -246,8 +246,8 @@
   {
     "name": "EMPIRE-ACCOUNT-service-pays-the-branch",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": "    ? save.bankAccounts[REALM_EMPIRE_ACCOUNT] ?? save.bankAccounts[",
-    "new": "    ? save.bankAccounts[",
+    "old": "    ? (save.bankAccounts[REALM_EMPIRE_ACCOUNT] ?? save.bankAccounts[/** @type {number} */ (region)] ?? null)",
+    "new": "    ? (save.bankAccounts[/** @type {number} */ (region)] ?? null)",
     "tests": [
       "test/systems/empireaccount.test.js"
     ]

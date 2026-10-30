@@ -209,8 +209,8 @@
   {
     "name": "DRAGON5b-the-bags-left-out-of-customs",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": "  out.push(...lists(snap?.dragonKeep?.bags));   // DRAGON5b: the tamed dragon's saddlebags (systems/dragon/dragonKeep.js)\n",
-    "new": "",
+    "old": "  out.push(...lists(snap?.dragonKeep?.bags)); // DRAGON5b: the tamed dragon's saddlebags (systems/dragon/dragonKeep.js)\n  return out;",
+    "new": "  return out;",
     "tests": [
       "test/net/dragon/dragon5b_keep.test.js"
     ]

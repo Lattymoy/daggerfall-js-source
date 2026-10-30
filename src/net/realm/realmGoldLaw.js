@@ -23,17 +23,24 @@
 // service imports this and never systems/court.js, whose imports the
 // Worker does not bundle.
 // ═══════════════════════════════════════════════════════════════════
-import { decorSaleBack } from '../decorLaw.js';   // AUDIT REALM2 T3: what a room's placed pieces pay back
-import { deedsOfHouses } from '../homeLaw.js';   // HOUSES-3: every region's three deeds
+import { decorSaleBack } from '../decorLaw.js'; // AUDIT REALM2 T3: what a room's placed pieces pay back
+import { deedsOfHouses } from '../homeLaw.js'; // HOUSES-3: every region's three deeds
 
 /** The letter of credit's template (systems/inventory.js LETTER_OF_CREDIT_TEMPLATE, pinned equal; a name of its own, so no symbol is declared twice - audit24 wave24). */
 export const REALM_LETTER_TEMPLATE = 275;
 /** GUILD-LETTER (FIELD BUGS 2026-09-30): THE LETTER OF CREDIT, as the game mints one (systems/inventory.js letterOfCredit,
  *  pinned equal - its name is the item template's, which the Worker does not bundle). One maker for both ends: the
  *  service writes it on the record and the client's wallet into the pack, so the two never differ. */
-export const realmLetterOfCredit = (/** @type {number} */ value) => ({ group: 'MiscItems', templateIndex: REALM_LETTER_TEMPLATE, name: 'Letter of Credit', value, stackCount: 1 });
+export const realmLetterOfCredit = (/** @type {number} */ value) => ({
+  group: 'MiscItems',
+  templateIndex: REALM_LETTER_TEMPLATE,
+  name: 'Letter of Credit',
+  value,
+  stackCount: 1,
+});
 
-const whole = (/** @type {unknown} */ v) => (Number.isSafeInteger(v) && /** @type {number} */ (v) > 0 ? /** @type {number} */ (v) : 0);
+const whole = (/** @type {unknown} */ v) =>
+  Number.isSafeInteger(v) && /** @type {number} */ (v) > 0 ? /** @type {number} */ (v) : 0;
 /** EMPIRE-ACCOUNT (2026-10-01, Mac: "2" - online, every region one Empire-wide account): A REALM CHARACTER KEEPS ONE
  *  BANK ACCOUNT, the Empire's, at Daggerfall's index (systems/banking.js EMPIRE_ACCOUNT_REGION, pinned equal - the
  *  Worker does not bundle banking.js). Whatever region a wallet names, its gold is that account's. */
@@ -41,8 +48,9 @@ export const REALM_EMPIRE_ACCOUNT = 17;
 /** The bank account `region`'s gold moves in, in a save - the Empire's (EMPIRE-ACCOUNT; the region's own where a short
  *  table has none) - or null. */
 export const accountOfSave = (/** @type {any} */ save, /** @type {unknown} */ region) =>
-  (Number.isSafeInteger(region) && /** @type {number} */ (region) >= 0 && Array.isArray(save?.bankAccounts)
-    ? save.bankAccounts[REALM_EMPIRE_ACCOUNT] ?? save.bankAccounts[/** @type {number} */ (region)] ?? null : null);
+  Number.isSafeInteger(region) && /** @type {number} */ (region) >= 0 && Array.isArray(save?.bankAccounts)
+    ? (save.bankAccounts[REALM_EMPIRE_ACCOUNT] ?? save.bankAccounts[/** @type {number} */ (region)] ?? null)
+    : null;
 /** The accounts a realm save pays from when `region` names one, in the order they pay: the Empire's (the region's own
  *  where a short table has none), then every other branch still holding gold - a record written before its character
  *  booted since EMPIRE-ACCOUNT, whose client folds them into the Empire's at that boot (banking.js foldEmpireAccounts).
@@ -57,7 +65,9 @@ const accountsOfSave = (/** @type {any} */ save, /** @type {unknown} */ region) 
  *  any branch a record not yet folded still holds gold in). */
 export function payableOf(/** @type {any} */ save, /** @type {unknown} */ region = null) {
   const coins = whole(save?.goldPieces);
-  const letters = (Array.isArray(save?.items) ? save.items : []).filter((it) => it?.templateIndex === REALM_LETTER_TEMPLATE).reduce((s, it) => s + whole(it.value), 0);
+  const letters = (Array.isArray(save?.items) ? save.items : [])
+    .filter((it) => it?.templateIndex === REALM_LETTER_TEMPLATE)
+    .reduce((s, it) => s + whole(it.value), 0);
   const bank = accountsOfSave(save, region).reduce((s, a) => s + Math.max(0, Number(a.accountGold) || 0), 0);
   return coins + letters + bank;
 }
@@ -72,18 +82,31 @@ export function payFromSave(save, amount, region = null) {
   if (!Number.isSafeInteger(amount) || amount < 0 || !save || typeof save !== 'object') return false;
   if (payableOf(save, region) < amount) return false;
   const purse = whole(save.goldPieces);
-  if (amount <= purse) { save.goldPieces = purse - amount; return true; }
+  if (amount <= purse) {
+    save.goldPieces = purse - amount;
+    return true;
+  }
   let owed = amount;
   const items = Array.isArray(save.items) ? save.items : [];
   for (;;) {
     const loc = items.find((it) => it?.templateIndex === REALM_LETTER_TEMPLATE);
     if (!loc) break;
-    if (owed < (loc.value ?? 0)) { loc.value -= owed; owed = 0; break; }
+    if (owed < (loc.value ?? 0)) {
+      loc.value -= owed;
+      owed = 0;
+      break;
+    }
     owed -= loc.value ?? 0;
     items.splice(items.indexOf(loc), 1);
   }
   if (owed > 0) {
-    if (owed <= purse) { save.goldPieces = purse - owed; owed = 0; } else { owed -= purse; save.goldPieces = 0; }
+    if (owed <= purse) {
+      save.goldPieces = purse - owed;
+      owed = 0;
+    } else {
+      owed -= purse;
+      save.goldPieces = 0;
+    }
   }
   // payableOf counted it: the accounts are there and cover it - the Empire's first (EMPIRE-ACCOUNT)
   for (const a of accountsOfSave(save, region)) {
@@ -100,7 +123,11 @@ export function payFromSave(save, amount, region = null) {
  *  GUILD-LETTER (FIELD BUGS 2026-09-30): or, `letter` true, A LETTER OF CREDIT worth all of it, at the front of the pack
  *  as the trade window and the bank put one - what the pack cannot carry as coin (a guild withdrawal, which the client
  *  weighs as tradeModes.js sellProceeds does). Only `true` is a letter: any other word is the purse. */
-export function creditSave(/** @type {any} */ save, /** @type {number} */ amount, /** @type {{ bank?: number | null, letter?: unknown }} */ { bank = null, letter = false } = {}) {
+export function creditSave(
+  /** @type {any} */ save,
+  /** @type {number} */ amount,
+  /** @type {{ bank?: number | null, letter?: unknown }} */ { bank = null, letter = false } = {},
+) {
   if (!Number.isSafeInteger(amount) || amount < 0 || !save || typeof save !== 'object') return false;
   const a = bank == null ? null : accountOfSave(save, bank);
   if (a) a.accountGold = (Number.isFinite(a.accountGold) ? a.accountGold : 0) + amount;
@@ -122,7 +149,8 @@ export function creditSave(/** @type {any} */ save, /** @type {number} */ amount
 export const CUSTOMS_WEALTH_BASE = 20_000;
 export const CUSTOMS_WEALTH_PER_LEVEL = 10_000;
 /** The allowance at a level. */
-export const customsAllowance = (/** @type {number} */ level) => CUSTOMS_WEALTH_BASE + CUSTOMS_WEALTH_PER_LEVEL * Math.max(1, Math.trunc(level) || 1);
+export const customsAllowance = (/** @type {number} */ level) =>
+  CUSTOMS_WEALTH_BASE + CUSTOMS_WEALTH_PER_LEVEL * Math.max(1, Math.trunc(level) || 1);
 /** A CHARACTER BORN ONLINE starts where chargen starts one: level 1, and the gold chargen hands it - 100
  *  (systems/startingGear.js STARTING_GOLD) and what its biography's answers add (BiogFile's GP lines, a handful a file).
  *  The bound is a first setting with room past both; OPEN, as every number of the realm is. */
@@ -135,7 +163,8 @@ const COINS_TEMPLATE = 276;
 const isCoins = (/** @type {any} */ it) => it?.group === 'Currency' && it?.templateIndex === COINS_TEMPLATE;
 const isLetter = (/** @type {any} */ it) => it?.templateIndex === REALM_LETTER_TEMPLATE;
 /** A record's liquid worth: a gold-piece item's count, a letter of credit's value - anything else none. */
-export const liquidWorthOf = (/** @type {any} */ it) => (isCoins(it) ? Math.max(0, it?.stackCount ?? 0) : isLetter(it) ? Math.max(0, it?.value ?? 0) : 0);
+export const liquidWorthOf = (/** @type {any} */ it) =>
+  isCoins(it) ? Math.max(0, it?.stackCount ?? 0) : isLetter(it) ? Math.max(0, it?.value ?? 0) : 0;
 const lists = (/** @type {any[]} */ ...ls) => ls.filter(Array.isArray);
 /** Come Sail Away's record in a save's per-mod slot (systems/comeSailAway/comeSailAway.js COME_SAIL_AWAY_VENDOR, pinned equal - that
  *  module is the mod's runtime, which neither the Online door nor the Worker loads). */
@@ -186,17 +215,24 @@ export function stashedItemLists(snap) {
   const csa = snap?.modData?.[CSA_VENDOR];
   for (const boat of csa?.placedBoats ?? []) out.push(...lists(boat?.Items));
   out.push(...lists(...Object.values(csa?.packedCargoes ?? {})));
-  const party = snap?.modData?.[NAVAL_VENDOR]?.party?.party;   // AUDIT WK-P1
+  const party = snap?.modData?.[NAVAL_VENDOR]?.party?.party; // AUDIT WK-P1
   for (const c of Array.isArray(party) ? party : []) out.push(...lists(c?.items));
-  const feud = snap?.modData?.[REVENANT_VENDOR]?.list;   // ITEM-WALK C
+  const feud = snap?.modData?.[REVENANT_VENDOR]?.list; // ITEM-WALK C
   for (const r of Array.isArray(feud) ? feud : []) if (r?.sworn && !r.defeated) out.push(...lists(r.companion?.items));
-  for (const r of Array.isArray(feud) ? feud : []) if (r?.sworn && !r.defeated && r.companion?.gear && typeof r.companion.gear === 'object') out.push(...lists(Object.values(r.companion.gear).filter((it) => it && typeof it === 'object')));   // RVN-GEAR: and the kit it wears (revenantGear.js)
-  out.push(...lists(snap?.dragonKeep?.bags));   // DRAGON5b: the tamed dragon's saddlebags (systems/dragon/dragonKeep.js)
+  for (const r of Array.isArray(feud) ? feud : [])
+    if (r?.sworn && !r.defeated && r.companion?.gear && typeof r.companion.gear === 'object')
+      out.push(...lists(Object.values(r.companion.gear).filter((it) => it && typeof it === 'object'))); // RVN-GEAR: and the kit it wears (revenantGear.js)
+  out.push(...lists(snap?.dragonKeep?.bags)); // DRAGON5b: the tamed dragon's saddlebags (systems/dragon/dragonKeep.js)
   return out;
 }
 /** Every list of the character's own things where liquid wealth can lie, in the order customs takes from them: the
  *  stashes, then the wagon, then the pack. (The banks and the purse are counts, not lists.) */
-export const carriedItemLists = (/** @type {any} */ snap) => [...stashedItemLists(snap), ...lists(snap?.wagonItems), ...lists(snap?.bagItems), ...lists(snap?.items)];   // BAG1: the Materials Bag's, between the wagon and the pack
+export const carriedItemLists = (/** @type {any} */ snap) => [
+  ...stashedItemLists(snap),
+  ...lists(snap?.wagonItems),
+  ...lists(snap?.bagItems),
+  ...lists(snap?.items),
+]; // BAG1: the Materials Bag's, between the wagon and the pack
 
 /** OPEN (AUDIT REALM2 T3), as the allowance is: the price customs counts a Daggerfall house at. A save carries no measure
  *  of its house - the bank reads it off the building at its counter - so customs counts every deed at one figure.
@@ -216,7 +252,8 @@ const ownedShipType = (/** @type {any} */ player) => player?.ownedShip ?? -1;
 const ownsShip = (/** @type {any} */ player) => ownedShipType(player) !== -1;
 const SHIP_INTERIOR_MAP_IDS = Object.freeze([1050578, 2102157]);
 const BUILDING_KEY_0 = 1 << 24;
-const interiorSceneName = (/** @type {number} */ mapId, /** @type {number} */ buildingKey) => `DaggerfallInterior [MapID=${mapId}, BuildingKey=${buildingKey}]`;
+const interiorSceneName = (/** @type {number} */ mapId, /** @type {number} */ buildingKey) =>
+  `DaggerfallInterior [MapID=${mapId}, BuildingKey=${buildingKey}]`;
 
 /** AUDIT REALM2 T3: THE DEEDS THE REALM'S BANK BUYS BACK - the ship at shipSellPrice and each house at the deed's share
  *  of CUSTOMS_HOUSE_PRICE, each with what the pieces placed in its own room pay back (net/decorLaw.js decorSaleBack:
@@ -233,10 +270,20 @@ export function deedsOf(snap) {
   const deeds = [];
   if (ownsShip(snap) && !snap.shipCrossed) {
     const ship = ownedShipType(snap);
-    deeds.push({ slot: null, room: roomOf(interiorSceneName(SHIP_INTERIOR_MAP_IDS[ship], BUILDING_KEY_0)), value: shipSellPrice(ship) });
+    deeds.push({
+      slot: null,
+      room: roomOf(interiorSceneName(SHIP_INTERIOR_MAP_IDS[ship], BUILDING_KEY_0)),
+      value: shipSellPrice(ship),
+    });
   }
-  for (const slot of deedsOfHouses(snap?.houses)) {   // HOUSES-3: three a region
-    if (!slot.crossed) deeds.push({ slot, room: roomOf(interiorSceneName(slot.mapId, slot.buildingKey)), value: Math.trunc(CUSTOMS_HOUSE_PRICE * DEED_SELL_MULT) });
+  for (const slot of deedsOfHouses(snap?.houses)) {
+    // HOUSES-3: three a region
+    if (!slot.crossed)
+      deeds.push({
+        slot,
+        room: roomOf(interiorSceneName(slot.mapId, slot.buildingKey)),
+        value: Math.trunc(CUSTOMS_HOUSE_PRICE * DEED_SELL_MULT),
+      });
   }
   for (const d of deeds) d.value += decorSaleBack(d.room?.decor);
   return deeds;
@@ -247,7 +294,10 @@ export function deedsOf(snap) {
  *  (stashedItemLists) - and (AUDIT REALM2 T3) each deed at what the realm's bank buys it back for (deedsOf). */
 export function liquidWealthOf(/** @type {any} */ snap) {
   const purse = Math.max(0, snap?.goldPieces ?? 0);
-  const banks = (Array.isArray(snap?.bankAccounts) ? snap.bankAccounts : []).reduce((s, a) => s + Math.max(0, a?.accountGold ?? 0), 0);
+  const banks = (Array.isArray(snap?.bankAccounts) ? snap.bankAccounts : []).reduce(
+    (s, a) => s + Math.max(0, a?.accountGold ?? 0),
+    0,
+  );
   const items = carriedItemLists(snap).reduce((s, list) => s + list.reduce((t, it) => t + liquidWorthOf(it), 0), 0);
   const deeds = deedsOf(snap).reduce((s, d) => s + d.value, 0);
   return purse + banks + items + deeds;
@@ -263,12 +313,20 @@ export function liquidWealthOf(/** @type {any} */ snap) {
  * @param {{ pay: (n: number) => ((() => void) | void), credit?: (n: number) => void }} wallet @param {number} n
  */
 export function walletReserve(wallet, n) {
-  let undo = /** @type {(() => void) | null} */ (null), paid = false, done = false;
+  let undo = /** @type {(() => void) | null} */ (null),
+    paid = false,
+    done = false;
   const back = () => {
     if (!paid || done) return;
     done = true;
-    if (undo) undo(); else wallet.credit?.(n);
+    if (undo) undo();
+    else wallet.credit?.(n);
   };
-  const reserve = () => { const u = wallet.pay(n); undo = typeof u === 'function' ? u : null; paid = true; return back; };
+  const reserve = () => {
+    const u = wallet.pay(n);
+    undo = typeof u === 'function' ? u : null;
+    paid = true;
+    return back;
+  };
   return { reserve, back };
 }

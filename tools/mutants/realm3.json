@@ -47,8 +47,8 @@
   {
     "name": "REALM3-letters-uncounted",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": ": isLetter(it) ? Math.max(0, it?.value ?? 0) : 0);",
-    "new": ": 0);",
+    "old": "export const liquidWorthOf = (/** @type {any} */ it) =>\n  isCoins(it) ? Math.max(0, it?.stackCount ?? 0) : isLetter(it) ? Math.max(0, it?.value ?? 0) : 0;",
+    "new": "export const liquidWorthOf = (/** @type {any} */ it) => (isCoins(it) ? Math.max(0, it?.stackCount ?? 0) : 0);",
     "tests": [
       "test/systems/realm3.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "REALM3-allowance-flat",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": "export const customsAllowance = (/** @type {number} */ level) => CUSTOMS_WEALTH_BASE + CUSTOMS_WEALTH_PER_LEVEL * Math.max(1, Math.trunc(level) || 1);",
-    "new": "export const customsAllowance = (/** @type {number} */ level) => CUSTOMS_WEALTH_BASE + CUSTOMS_WEALTH_PER_LEVEL * (void level, 1);",
+    "old": "  CUSTOMS_WEALTH_BASE + CUSTOMS_WEALTH_PER_LEVEL * Math.max(1, Math.trunc(level) || 1);",
+    "new": "  CUSTOMS_WEALTH_BASE + CUSTOMS_WEALTH_PER_LEVEL * (void level, 1);",
     "tests": [
       "test/systems/realm3.test.js"
     ]

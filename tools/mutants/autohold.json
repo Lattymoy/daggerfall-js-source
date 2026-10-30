@@ -445,8 +445,8 @@
   {
     "name": "AUTOHOLD-AUDIT-the-end-in-tenths",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "new Date(until * 1000)",
-    "new": "new Date(until * 100)",
+    "old": "  new Date(until * 1000).toLocaleString(intlLocale(), {",
+    "new": "  new Date(until * 100).toLocaleString(intlLocale(), {",
     "tests": [
       "test/server/autohold.test.js"
     ]

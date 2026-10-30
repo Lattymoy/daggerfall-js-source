@@ -200,8 +200,8 @@
   {
     "name": "WK-P1-packs-unread",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": "  for (const c of Array.isArray(party) ? party : []) out.push(...lists(c?.items));\n",
-    "new": "",
+    "old": "  for (const c of Array.isArray(party) ? party : []) out.push(...lists(c?.items));\n  const feud = snap?.modData?.[REVENANT_VENDOR]?.list; // ITEM-WALK C",
+    "new": "  const feud = snap?.modData?.[REVENANT_VENDOR]?.list; // ITEM-WALK C",
     "tests": [
       "test/systems/auditwatchkit_ui.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "WK-P1-vendor-misspelt",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": "const NAVAL_VENDOR = 'NavalCombat';",
-    "new": "const NAVAL_VENDOR = 'naval-combat';",
+    "old": "export const NAVAL_VENDOR = 'NavalCombat';",
+    "new": "export const NAVAL_VENDOR = 'naval-combat';",
     "tests": [
       "test/systems/auditwatchkit_ui.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "WK-P1-resting-read",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": "?.[NAVAL_VENDOR]?.party?.party;",
-    "new": "?.[NAVAL_VENDOR]?.party?.resting;",
+    "old": "  const party = snap?.modData?.[NAVAL_VENDOR]?.party?.party; // AUDIT WK-P1",
+    "new": "  const party = snap?.modData?.[NAVAL_VENDOR]?.party?.resting; // AUDIT WK-P1",
     "tests": [
       "test/systems/auditwatchkit_ui.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "WK-P1-malformed-thrown-on",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": "for (const c of Array.isArray(party) ? party : [])",
-    "new": "for (const c of party ?? [])",
+    "old": "  for (const c of Array.isArray(party) ? party : []) out.push(...lists(c?.items));",
+    "new": "  for (const c of party ?? []) out.push(...lists(c?.items));",
     "tests": [
       "test/systems/auditwatchkit_ui.test.js"
     ]
