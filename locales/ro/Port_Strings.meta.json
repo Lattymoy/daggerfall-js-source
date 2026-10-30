@@ -15586,7 +15586,7 @@
  },
  "growth.swap.askTrade": {
   "en": "1bbcedae9751",
-  "tr": "f358691773f2",
+  "tr": "76a5e7fac79e",
   "by": "claude-in-session"
  },
  "growth.swap.askTradeGroup": {
@@ -15624,14 +15624,29 @@
   "tr": "496fd2d367e5",
   "by": "claude-in-session"
  },
+ "growth.swap.label.major": {
+  "en": "8a52ed17c589",
+  "tr": "8a3599fa5797",
+  "by": "claude-in-session"
+ },
+ "growth.swap.label.minor": {
+  "en": "100b45547163",
+  "tr": "2bdfd5cf9a63",
+  "by": "claude-in-session"
+ },
+ "growth.swap.label.primary": {
+  "en": "a9a96ec01949",
+  "tr": "0c049f28b9eb",
+  "by": "claude-in-session"
+ },
  "growth.swap.lead": {
   "en": "bfe1e1c66c0c",
   "tr": "8247eb38d33b",
   "by": "claude-in-session"
  },
  "growth.swap.leadTrade": {
-  "en": "7797b18e810b",
-  "tr": "52be0992ea17",
+  "en": "497642a8a554",
+  "tr": "86601ce2d1e9",
   "by": "claude-in-session"
  },
  "growth.swap.lockOff": {

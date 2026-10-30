@@ -13,7 +13,8 @@ import { isVillain } from '../systems/wild/villainLaw.js';   // PVP-VILLAIN
 import { wildHere, WILD_TEXT } from '../systems/wild/wildZone.js';   // PVP-FLAG-ZONE
 import { setPvpFoeSight, pvpGearStruck } from '../combat/pvpGearPowers.js';   // PVP-GEAR: a foe's bar and my hits taken
 import { PVP_FLAG_SPOT, createPvpHud, pvpHitLine, pvpHitsAdd, pvpLockOverText, pvpSlewText, PVP_SAY_S } from '../ui/pvpHud.js';   // PVP-HUD
-import { actionsOf, mouseCode } from '../ui/input.js';   // PVP-KEY: the flag's key is the registry's
+import { eventActions, mouseCode, isDomControlTarget, neverTheFocus } from '../ui/input.js';   // PVP-KEY: the flag's key is the registry's
+import { overlayOpen } from '../ui/enhanced/enhancedOverlays.js';   // AUDIT PVP-KEY B1: a window up has the keys
 import { actionKeyWord } from '../ui/quickslotTags.js';
 
 /** PVP-KEY: the flag's action in the bindings registry (systems/inputActions.js). */
@@ -33,11 +34,11 @@ const SKULL_EDGE = Object.freeze({ off: '#5a4a30', white: '#8a7246', gold: '#e8b
 /**
  * The host's own (positional, so the wiring is one line of it): its live link, the player, the mid-screen line and the
  * town talk a line is said on.
- * @param {() => any} online @param {any} player @param {(line: string, s?: number) => void} midScreen @param {{ say: (line: string) => void }} talk
- * @param {{ doc?: Document | null, now?: () => number, zone?: () => boolean, keyActions?: (e: { code: string | null }) => string[], keyWord?: () => string }} [o]
+ * @param {() => any} online @param {any} player @param {(line: string, s?: number) => void} midScreen @param {{ say: (line: string) => void, overlayActive?: boolean }} talk
+ * @param {{ doc?: Document | null, now?: () => number, zone?: () => boolean, keyActions?: (e: { code: string | null, shiftKey?: boolean, ctrlKey?: boolean, altKey?: boolean }) => string[], keyWord?: () => string, windowUp?: () => boolean }} [o]
  */
 export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeof document === 'undefined' ? null : document, now = Date.now, zone = wildHere,
-  keyActions = (e) => actionsOf(e), keyWord = () => actionKeyWord(PVP_FLAG_ACTION) } = {}) {
+  keyActions = eventActions, keyWord = () => actionKeyWord(PVP_FLAG_ACTION), windowUp = () => !!talk?.overlayActive || overlayOpen() } = {}) {
   const level = () => Math.trunc(player?.level || 1);
   const say = (line) => { midScreen(line); talk.say(line); };
   const sayLock = (line) => { midScreen(line, PVP_SAY_S); talk.say(line); };   // PVP-HUD: a combat timer's line, 3 s
@@ -118,23 +119,32 @@ export function createPvpFlagHost(online, player, midScreen, talk, { doc = typeo
     for (const [id, hp, max] of g.h ?? []) if (max > 0) bars.set(id, { h: hp > 0 ? Math.max(1, Math.min(100, Math.round((100 * hp) / max))) : 0, s: bars.get(id)?.s ?? 0 });   // PVP-BAR: a blow's own count, at once
     return false;
   };
+  /** AUDIT PVP-KEY B1: the world has the key - no window up (a game window, the pause, the Tab dial) and no window's own
+   *  control in focus. A letter bound to the flag was typed into the game's text boxes as a flag. */
+  const inGame = (el) => !windowUp() && !isDomControlTarget(el) && !el?.closest?.('[data-dom-focus]');
   if (doc) {
     doc.addEventListener('keydown', (e) => {
       const el = /** @type {any} */ (e.target);
       if (e.repeat || el?.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el?.tagName ?? '')) return;
-      if (e.code === 'CapsLock') {   // PVP-FLAG-CAPS: the light a press in the game turns on, whatever the key is bound to
-        noteCaps('game');
+      const acts = inGame(el) ? keyActions(e) : [];   // AUDIT PVP-KEY B2: eventActions - a combo's own, never its bare key's
+      if (e.code === 'CapsLock') {   // PVP-FLAG-CAPS: the light is the game's only where its press did something (AUDIT PVP-KEY B6)
+        noteCaps(acts.length ? 'game' : null);
       }
-      if (here() && keyActions(e).includes(PVP_FLAG_ACTION)) toggle();
+      if (here() && acts.includes(PVP_FLAG_ACTION)) toggle();
     });
-    // PVP-KEY: a mouse button the player bound to the flag
-    doc.addEventListener('mousedown', (e) => { const code = mouseCode(e.button); if (code && here() && keyActions({ code }).includes(PVP_FLAG_ACTION)) toggle(); });
+    // PVP-KEY: a mouse button bound to the flag, on the world alone (AUDIT PVP-KEY B3: a window's button, the chat and this
+    // button were pressed through)
+    doc.addEventListener('mousedown', (e) => {
+      const code = mouseCode(e.button), el = /** @type {any} */ (e.target);
+      if (code && el?.tagName === 'CANVAS' && inGame(el) && here() && keyActions({ code, shiftKey: e.shiftKey, ctrlKey: e.ctrlKey, altKey: e.altKey }).includes(PVP_FLAG_ACTION)) toggle();
+    });
     // PVP-FLAG-SPOT (the owner: "left center or right center"): the screen's right edge, just over its middle -
     // clear of the Decorate button centred there (ui/decorPanel.js .dfdecor-open).
     button = doc.createElement('button');
     button.type = 'button';
     Object.assign(button.style, { position: 'fixed', top: `calc(50% - ${PVP_FLAG_SPOT.lift}px)`, right: '8px', transform: 'none', zIndex: '40', width: '36px', height: '36px', backgroundColor: '#2a241c', backgroundSize: '24px', backgroundRepeat: 'no-repeat', backgroundPosition: 'center', imageRendering: 'pixelated', border: '2px solid', cursor: 'pointer', display: 'none' });
     button.addEventListener('click', () => toggle());
+    neverTheFocus(button);   // AUDIT PVP-KEY B5 (FB1020h HUD-FOCUS): clicked, it kept the focus and the next Space pressed it again
     doc.body?.appendChild(button);
     if (doc.body && typeof doc.createElementNS === 'function') hud = createPvpHud(doc, () => { beat(); paint(); });   // PVP-HUD: the ring, the banner, the last hits
     paint();

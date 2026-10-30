@@ -59,8 +59,9 @@ export function skillStandText(s) {
   }
 }
 const groupWord = (g) => (g === 'primary' ? t('growth.spec.group.primary', 'primary') : g === 'major' ? t('growth.spec.group.major', 'major') : t('growth.spec.group.minor', 'minor'));
-/** SKILL-TRADE: a group's name standing alone, the level-up screen's own (ui/levelUp/levelUpView.js). */
-const groupLabel = (g) => (g === 'primary' ? t('levelup.group.primary', 'Primary') : g === 'major' ? t('levelup.group.major', 'Major') : t('levelup.group.minor', 'Minor'));
+/** SKILL-TRADE: a group's name standing alone, in a pick's label - its own words (AUDIT SKILL-TRADE C10: the level-up
+ *  screen's read as "head" and "beside" in German and Norwegian there). */
+const groupLabel = (g) => (g === 'primary' ? t('growth.swap.label.primary', 'Primary') : g === 'major' ? t('growth.swap.label.major', 'Major') : t('growth.swap.label.minor', 'Minor'));
 
 /** A signature spell in the spellbook's words: what it is cast at, its element, and each effect's line. Pure. */
 export function spellLines(pathId) {
@@ -409,7 +410,7 @@ function drawSkillSwap(detail, rerender, { el, divider, askCard }, sw) {
   if (!ins.includes(_swapIn)) _swapIn = ins[0];
   detail.append(divider(t('growth.swap.title', 'Change a class skill')));
   detail.append(el('p', 'gr-lead', t('growth.swap.lead', 'Give up a class skill you have not mastered, and take a skill from outside your class in its place, in the same group. It costs {gold, number} gold. Your level and your skills\' values do not change.', { gold: SKILL_SWAP_GOLD })));
-  detail.append(el('p', 'gr-lead', t('growth.swap.leadTrade', 'You can also take a class skill from another group that you have not mastered. The two skills change groups.')));
+  detail.append(el('p', 'gr-lead', t('growth.swap.leadTrade', 'You can also take an unmastered class skill from another group. The two skills change groups.')));
   const box = el('section', 'px-mgroup gr-swap');
   const pick = (label, ids, value, onPick) => {
     const s = el('select', 'act');
@@ -428,12 +429,15 @@ function drawSkillSwap(detail, rerender, { el, divider, askCard }, sw) {
   const words = { out: SKILL_NAMES[out], inn: SKILL_NAMES[inn], gold: SKILL_SWAP_GOLD, group: groupWord(sw.group(out)), other: other ? groupWord(other) : '' };
   // AUDIT SUGGESTIONS-1019 L5-1/L5-2 and SWAP-CYCLE: what the swap costs beyond the gold, said beside the picks and again in the ask
   const lock = sw.lockTurn(out, inn), short = Math.ceil(sw.shortfall(out, inn));
+  // AUDIT SKILL-TRADE A1: the lock's words name the skill entering the primaries and the one leaving - on a trade from
+  // the primaries those are `out` and `inn`, not `inn` and `out`
+  const fromPrimary = other === 'primary', lockWords = { inn: SKILL_NAMES[fromPrimary ? out : inn], out: SKILL_NAMES[fromPrimary ? inn : out] };
   const warns = [
     ...(short > 0 ? [t('growth.swap.ground', 'Your level stays, but your class skills then earn nothing toward your next level until they make up {n, plural, one {# point} other {# points}}.', { n: short })] : []),
     ...(sw.slotsLeft(out) === 0 ? [t('growth.swap.noSlots', 'Your {group} mastery slots are spent, so {inn} could never be mastered.', words)] : []),
     ...(other && sw.slotsLeft(inn) === 0 ? [t('growth.swap.noSlotsOut', 'Your {other} mastery slots are spent, so {out} could never be mastered.', words)] : []),
-    ...(lock === 'on' ? [t('growth.swap.lockOn', 'With Master Skills off, {inn} at 100 as a primary skill holds your other skills at 95.', words)]
-      : lock === 'off' ? [t('growth.swap.lockOff', 'With Master Skills off, your other skills are no longer held at 95 once {out} leaves your primary skills.', words)] : []),
+    ...(lock === 'on' ? [t('growth.swap.lockOn', 'With Master Skills off, {inn} at 100 as a primary skill holds your other skills at 95.', lockWords)]
+      : lock === 'off' ? [t('growth.swap.lockOff', 'With Master Skills off, your other skills are no longer held at 95 once {out} leaves your primary skills.', lockWords)] : []),
   ];
   for (const w of warns) box.append(el('p', 'gr-fine gr-swap-warn', w));
   const acts = el('div', 'gr-acts');
@@ -447,7 +451,12 @@ function drawSkillSwap(detail, rerender, { el, divider, askCard }, sw) {
         : [t('growth.swap.ask', 'Give up {out} for {inn} for {gold, number} gold?', words),
           t('growth.swap.askGroup', '{inn} becomes one of your {group} skills. {out} becomes a miscellaneous skill: it keeps its value but can no longer be mastered.', words)]),
       ...warns,
-    ], () => { _note = sw.go(out, inn).text; _noteFresh = true; rerender(); });
+    ], () => {
+      const r = sw.go(out, inn);
+      _note = r.text; _noteFresh = true;
+      if (r.ok) { _swapOut = null; _swapIn = null; }   // AUDIT SKILL-TRADE A3: a trade's two stayed picked - the reverse, one Yes away
+      rerender();
+    });
   };
   acts.append(b);
   box.append(acts);

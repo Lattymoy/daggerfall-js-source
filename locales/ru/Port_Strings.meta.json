@@ -15624,13 +15624,28 @@
   "tr": "496fd2d367e5",
   "by": "claude-in-session"
  },
+ "growth.swap.label.major": {
+  "en": "8a52ed17c589",
+  "tr": "ae1d564f68f8",
+  "by": "claude-in-session"
+ },
+ "growth.swap.label.minor": {
+  "en": "100b45547163",
+  "tr": "aa30e9846915",
+  "by": "claude-in-session"
+ },
+ "growth.swap.label.primary": {
+  "en": "a9a96ec01949",
+  "tr": "8a174a7d7bcf",
+  "by": "claude-in-session"
+ },
  "growth.swap.lead": {
   "en": "bfe1e1c66c0c",
   "tr": "254c6ef86214",
   "by": "claude-in-session"
  },
  "growth.swap.leadTrade": {
-  "en": "7797b18e810b",
+  "en": "497642a8a554",
   "tr": "f90499820eb4",
   "by": "claude-in-session"
  },

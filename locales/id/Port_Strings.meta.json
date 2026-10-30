@@ -15624,14 +15624,29 @@
   "tr": "496fd2d367e5",
   "by": "claude-in-session"
  },
+ "growth.swap.label.major": {
+  "en": "8a52ed17c589",
+  "tr": "e6a04b67d241",
+  "by": "claude-in-session"
+ },
+ "growth.swap.label.minor": {
+  "en": "100b45547163",
+  "tr": "fee63d97ca76",
+  "by": "claude-in-session"
+ },
+ "growth.swap.label.primary": {
+  "en": "a9a96ec01949",
+  "tr": "d4a960b3480d",
+  "by": "claude-in-session"
+ },
  "growth.swap.lead": {
   "en": "bfe1e1c66c0c",
   "tr": "2d2ed031b64a",
   "by": "claude-in-session"
  },
  "growth.swap.leadTrade": {
-  "en": "7797b18e810b",
-  "tr": "216667394008",
+  "en": "497642a8a554",
+  "tr": "dd89dec03e3f",
   "by": "claude-in-session"
  },
  "growth.swap.lockOff": {
@@ -39561,12 +39576,12 @@
  },
  "skillswap.refuse.in": {
   "en": "e4a7c34be270",
-  "tr": "fd694cda5c18",
+  "tr": "525917720479",
   "by": "claude-in-session"
  },
  "skillswap.refuse.inMastered": {
   "en": "ee39e3d7142f",
-  "tr": "72db4e2f506a",
+  "tr": "cedb4ffb2ae9",
   "by": "claude-in-session"
  },
  "skillswap.refuse.mastered": {

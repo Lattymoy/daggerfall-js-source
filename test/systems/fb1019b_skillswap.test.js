@@ -13,6 +13,7 @@ import { SKILLS, levelUpSkillSum } from '../../src/systems/skills.js';
 import { masterSkill, careerGroupOf } from '../../src/systems/masterSkills.js';
 import { martialPossible } from '../../src/systems/martialPaths.js';
 import { calculatePlayerLevel } from '../../src/systems/advancement.js';
+import { onlineLevelFor, onlineLevelFraction } from '../../src/systems/levelClimb.js';
 import { SKILL_SWAP_GOLD, swapOutChoices, swapInChoices, skillSwapRefusal, swapSkill } from '../../src/systems/skillSwap.js';
 import { SPEC_RESET_GOLD } from '../../src/systems/arcanePaths.js';
 import { snapshotPlayer, restorePlayer } from '../../src/systems/save/save.js';
@@ -63,17 +64,23 @@ test('SKILL-SWAP the price: exactly SKILL_SWAP_GOLD, half a specialisation\'s re
   assert.ok(poor.career.minorSkills.includes(SE));
 });
 
-test('SKILL-SWAP the level does not move: a trained skill brought into the class pays no levels - both sums moved by its rise; an untrained one owes none - both sums stand, the class\'s sum under them by the ground its skills make up (SWAP-CYCLE, test/systems/swapcycle.test.js; mutants: either sum left)', () => {
-  for (const [inn, value] of [[LB, 95], [LB, 1]]) {
-    const p = frank();
-    p.skills[inn] = value;
-    const level = calculatePlayerLevel(p.startingLevelUpSkillSum, p.currentLevelUpSkillSum);
-    const span = p.currentLevelUpSkillSum - p.startingLevelUpSkillSum, held = p.currentLevelUpSkillSum;
-    swapSkill(p, ET, inn);   // a primary - the sum's every point
-    if (value === 95) assert.equal(p.currentLevelUpSkillSum, levelUpSkillSum(p), 'a rise: the stored sum is the new class\'s');
-    else assert.deepEqual([p.currentLevelUpSkillSum, held - levelUpSkillSum(p)], [held, 40 - 1], 'a drop: the stored sum stands, Etiquette\'s 40 less Long Blade\'s 1 to make up');
-    assert.equal(p.currentLevelUpSkillSum - p.startingLevelUpSkillSum, span, `value ${value}: the progress stands`);
-    assert.equal(calculatePlayerLevel(p.startingLevelUpSkillSum, p.currentLevelUpSkillSum), level);
+test('SKILL-SWAP the level does not move: a trained skill brought into the class pays no levels - both sums moved by its rise offline, the start online so the climb\'s share stands (AUDIT SKILL-TRADE A2); an untrained one owes none - both sums stand, the class\'s sum under them by the ground its skills make up (SWAP-CYCLE, test/systems/swapcycle.test.js; mutants: either sum left)', () => {
+  for (const online of [false, true]) {
+    for (const [inn, value] of [[LB, 95], [LB, 1]]) {
+      const p = frank();
+      p._online = online;
+      p.currentLevelUpSkillSum = levelUpSkillSum(p);   // offline Master Skills is off: Blunt's 117 reads as 100
+      p.skills[inn] = value;
+      const lane = online ? onlineLevelFor : calculatePlayerLevel;
+      const level = lane(p.startingLevelUpSkillSum, p.currentLevelUpSkillSum), share = onlineLevelFraction(p.startingLevelUpSkillSum, p.currentLevelUpSkillSum);
+      const span = p.currentLevelUpSkillSum - p.startingLevelUpSkillSum, held = p.currentLevelUpSkillSum;
+      swapSkill(p, ET, inn);   // a primary - the sum's every point
+      if (value === 95) assert.equal(p.currentLevelUpSkillSum, levelUpSkillSum(p), 'a rise: the stored sum is the new class\'s');
+      else assert.deepEqual([p.currentLevelUpSkillSum, held - levelUpSkillSum(p)], [held, 40 - 1], 'a drop: the stored sum stands, Etiquette\'s 40 less Long Blade\'s 1 to make up');
+      if (online) assert.ok(Math.abs(onlineLevelFraction(p.startingLevelUpSkillSum, p.currentLevelUpSkillSum) - share) < 1e-9, `value ${value} online: the bar stands`);
+      else assert.equal(p.currentLevelUpSkillSum - p.startingLevelUpSkillSum, span, `value ${value}: the progress stands`);
+      assert.equal(lane(p.startingLevelUpSkillSum, p.currentLevelUpSkillSum), level, `online ${online}, value ${value}: the level`);
+    }
   }
 });
 

@@ -36,6 +36,7 @@ import { careerGroupOf, isMasteredSkill } from './masterSkills.js';
 import { resetGold } from './specReset.js';   // SPEC-RESET's purse: coins, letters and online the Empire's account
 import { payUndoable } from './court.js';
 import { accountOfSave, REALM_EMPIRE_ACCOUNT } from '../net/realm/realmGoldLaw.js';
+import { onlineLevelFor, LEVEL_SUM_TOP } from './levelClimb.js';   // AUDIT SKILL-TRADE A2: the online level reads the start
 import { t } from './textManager.js';
 
 /** SKILL-SWAP: what one swap costs. */
@@ -50,7 +51,7 @@ export function swapOutChoices(entity) {
 }
 /** The skills that may take a place in the class: every one outside it. */
 export const swapInChoices = (entity) => (entity?.career ? ALL.filter((id) => careerGroupOf(entity, id) == null) : []);
-/** SKILL-TRADE (Discord #feature-feedback, Spat: "Pls allow us to swap class skills from other categories"): the class
+/** SKILL-TRADE (Discord #feature-feedback, Spat: "Pls allow us to swap class skills from other catagories"): the class
  *  skills that may take `out`'s place - unmastered, in another group - and `out` takes theirs. Both stay class skills
  *  and neither is mastered, so no mastery slot moves. */
 export function swapTradeChoices(entity, out) {
@@ -107,6 +108,19 @@ function heldSum(entity) {
 export const swapShortfall = (entity, out, inn) => (entity?.career
   ? Math.max(0, heldSum(entity) - levelUpSkillSum({ ...entity, career: swappedCareer(entity, out, inn) })) : 0);
 
+/** AUDIT SKILL-TRADE A2: the starting sum that keeps the level when the stored sum rises from `held` to `now`. Offline
+ *  the level reads the climb (current less start), so the start rises as much. Online it reads the climb's share of
+ *  the room to LEVEL_SUM_TOP (levelClimb.js onlineLevelFor): a start moved as much shrank the room and paid levels, so
+ *  the start moves to keep the share. At or past the top no start keeps it, and the offline move stands. */
+export function startAfterRise(entity, held, now) {
+  const start = entity.startingLevelUpSkillSum ?? 0, room = LEVEL_SUM_TOP - start;
+  if (entity._online !== true || !(room > 0) || now >= LEVEL_SUM_TOP || now === held) return start + (now - held);
+  const share = (held - start) / room, level = onlineLevelFor(start, held);
+  let s = (now - LEVEL_SUM_TOP * share) / (1 - share);
+  for (let i = 0; i < 8 && onlineLevelFor(s, now) !== level; i++) s += onlineLevelFor(s, now) > level ? 1e-9 : -1e-9;   // a float's edge
+  return s;
+}
+
 /** Swap them: pay SKILL_SWAP_GOLD, put `inn` in `out`'s place in its group on the character's own copy of the career
  *  (and `out` in `inn`'s, SKILL-TRADE), and move both level sums by what the swap takes the class's sum above the one
  *  the level stands on - nothing for a swap that lowers it (SWAP-CYCLE). Returns { ok, text }. */
@@ -118,7 +132,7 @@ export function swapSkill(entity, out, inn) {
   payUndoable(entity, SKILL_SWAP_GOLD, entity._online === true ? accountOfSave(entity, REALM_EMPIRE_ACCOUNT) : null);
   entity.career = swappedCareer(entity, out, inn);
   const rise = Math.max(0, levelUpSkillSum(entity) - held);
-  entity.startingLevelUpSkillSum = (entity.startingLevelUpSkillSum ?? 0) + rise;
+  entity.startingLevelUpSkillSum = startAfterRise(entity, held, held + rise);
   entity.currentLevelUpSkillSum = held + rise;
   const words = { inn: SKILL_NAMES[inn], out: SKILL_NAMES[out], group: groupWord(group), other: groupWord(other) };
   return { ok: true, text: other ? t('skillswap.trade.done', '{inn} is now one of your {group} skills, and {out} one of your {other} skills.', words)

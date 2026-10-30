@@ -111,7 +111,7 @@ test('MODE-WHEEL: press opens, the mouse steers it, the opening key\'s release c
 });
 
 test('MODE-WHEEL: a v2 bindings file lets Left Alt go of Sneak, once, so the wheel lands there; a player\'s own Alt stands and the lost wheel is told; their F1-F4 stand (mutants: the let-go run for every version; the v2 report listing every keyless default)', () => {
-  assert.equal(KEYBINDS_VERSION, 3);
+  assert.equal(KEYBINDS_VERSION, 4);   // PIN MOVED (AUDIT PVP-KEY B7: v4 tells a file whose Caps Lock is spent that the flag has no key)
   const old = createBindings();
   resetDefaults(old);
   old.primary.delete('AltLeft');

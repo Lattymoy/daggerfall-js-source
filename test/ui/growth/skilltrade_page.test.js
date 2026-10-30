@@ -43,7 +43,7 @@ beforeEach(() => resetSpecGuide('arcane'));
 
 test('SKILL-TRADE THE PICKS: Take instead offers the other groups\' unmastered class skills after the outsiders, each with its group, never the given-up skill\'s own group nor a mastered one; the lead says so (mutants: the trades not offered; the group unnamed)', () => {
   const { detail } = page(mage({ mastered: [TH] }));
-  assert.ok(texts(detail, 'gr-lead').includes('You can also take a class skill from another group that you have not mastered. The two skills change groups.'));
+  assert.ok(texts(detail, 'gr-lead').includes('You can also take an unmastered class skill from another group. The two skills change groups.'));
   const [out, inn] = picks(detail);
   assert.equal(out.children.find((o) => o.selected)?.value, String(DE));
   const names = inn.children.map((o) => o.textContent);
@@ -74,4 +74,43 @@ test('SKILL-TRADE THE HINT: six weapon skills all minor (one slot) meet no marti
   const { detail } = page(mage({ primary: [ET, ST, ME], major: [DO, LP, CL], minor: [LB, SB, AX, BL, AR, HH] }));
   assert.match(texts(detail, 'gr-headline').join(' '), /Your class can't master two weapon skills/);
   assert.ok(texts(detail, 'gr-fine').includes('You can change one of your class skills for a weapon skill below.'));
+});
+
+/** The swap form's warnings for `out` given up and `inn` taken, offline with Master Skills off (DFU's 95 lock). */
+function lockWarns(entity, out, inn) {
+  const { detail } = page(entity);
+  const [o] = picks(detail);
+  o.value = String(out); o.onchange?.();
+  const [, i] = picks(detail);
+  i.value = String(inn); i.onchange?.();
+  return texts(swapBox(detail), 'gr-swap-warn');
+}
+
+test('AUDIT SKILL-TRADE A1 THE LOCK\'S WORDS: a trade out of the primaries names the skill entering them at 100 and the one leaving - not `inn` and `out` as a swap does (mutant: the swap\'s words on a trade)', () => {
+  const offline = (at100) => { const e = mage(); e._online = false; e.masterSkills = false; e.skills[at100] = 100; return e; };
+  assert.deepEqual(lockWarns(offline(RE), RE, DE), ['With Master Skills off, Restoration at 100 as a primary skill holds your other skills at 95.']);
+  assert.deepEqual(lockWarns(offline(DE), RE, DE), ['With Master Skills off, your other skills are no longer held at 95 once Destruction leaves your primary skills.']);
+  assert.deepEqual(lockWarns(offline(RE), DE, RE), ['With Master Skills off, Restoration at 100 as a primary skill holds your other skills at 95.'], 'the trade the other way round says the same');
+});
+
+test('AUDIT SKILL-TRADE A3 A NEW START AFTER YES: a swap or trade done, both picks go back to the first of each list - the reverse trade is never left one Yes away (mutant: the picks kept)', () => {
+  const e = mage();
+  e.goldPieces = 2 * SKILL_SWAP_GOLD;
+  const { detail, asked } = page(e);
+  const [, inn] = picks(detail);
+  inn.value = String(RE); inn.onchange?.();
+  pressSwap(detail).onclick();
+  asked[0].yes();
+  const [o2, i2] = picks(detail);
+  assert.equal(o2.children.find((o) => o.selected)?.value, String(e.career.primarySkills[0]));
+  assert.equal(i2.children.find((o) => o.selected)?.value, i2.children[0].value);
+  assert.ok(!i2.children[0].textContent.includes('('), 'the first outsider, not a trade');
+});
+
+test('AUDIT SKILL-TRADE C8: a major skill given up is offered the primaries, each named so (mutant: the primary label wrong)', () => {
+  const { detail } = page(mage());
+  const [o] = picks(detail);
+  o.value = String(RE); o.onchange?.();
+  const [, i] = picks(detail);
+  assert.deepEqual(i.children.map((n) => n.textContent).filter((x) => x.includes('(Primary)')), ['Destruction (Primary)', 'Alteration (Primary)', 'Illusion (Primary)']);
 });

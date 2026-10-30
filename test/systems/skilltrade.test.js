@@ -9,8 +9,9 @@ import { playerEntity } from '../../src/characters/playerEntity.js';
 import { createCharacter } from '../../src/systems/chargen.js';
 import { SKILLS, levelUpSkillSum } from '../../src/systems/skills.js';
 import { masterSkill, masterySlots, isMasteredSkill } from '../../src/systems/masterSkills.js';
-import { calculatePlayerLevel } from '../../src/systems/advancement.js';
-import { SKILL_SWAP_GOLD, swapTradeChoices, skillSwapRefusal, swapSkill } from '../../src/systems/skillSwap.js';
+import { calculatePlayerLevel, checkForLevelUp } from '../../src/systems/advancement.js';
+import { onlineLevelFor, LEVEL_SUM_TOP } from '../../src/systems/levelClimb.js';
+import { SKILL_SWAP_GOLD, swapTradeChoices, skillSwapRefusal, swapSkill, startAfterRise } from '../../src/systems/skillSwap.js';
 import { snapshotPlayer, restorePlayer } from '../../src/systems/save/save.js';
 
 const { Destruction: DE, Alteration: AL, Illusion: IL, Restoration: RE, Mysticism: MY, Thaumaturgy: TH, Climbing: CL, Medical: MD, Running: RU, Jumping: JU, Swimming: SW, Stealth: SE, LongBlade: LB } = SKILLS;
@@ -56,15 +57,21 @@ test('SKILL-TRADE the choices: another group\'s unmastered class skills, never `
   assert.ok(isMasteredSkill(p, MY) && p.career.majorSkills.includes(MY), 'nothing moved');
 });
 
-test('SKILL-TRADE the level stands: a trained minor skill traded into the primaries moves both sums by its rise, and a trade that lowers the sum moves neither (SWAP-CYCLE; mutants: either sum left)', () => {
-  const rise = spat();
-  rise.skills[CL] = 90; rise.skills[MD] = 90;   // the highest minor stays 90 when Climbing leaves
-  rise.currentLevelUpSkillSum = levelUpSkillSum(rise);
-  const level = calculatePlayerLevel(rise.startingLevelUpSkillSum, rise.currentLevelUpSkillSum), span = rise.currentLevelUpSkillSum - rise.startingLevelUpSkillSum;
-  swapSkill(rise, DE, CL);
-  assert.equal(rise.currentLevelUpSkillSum, levelUpSkillSum(rise), 'the stored sum the new class\'s');
-  assert.equal(rise.currentLevelUpSkillSum - rise.startingLevelUpSkillSum, span);
-  assert.equal(calculatePlayerLevel(rise.startingLevelUpSkillSum, rise.currentLevelUpSkillSum), level);
+test('SKILL-TRADE the level stands: a trained minor skill traded into the primaries moves the sums by its rise - offline both, online the start so the climb\'s share stands (AUDIT SKILL-TRADE A2: online a start moved as much paid levels) - and a trade that lowers the sum moves neither (SWAP-CYCLE; mutants: either sum left; the online start moved as offline\'s)', () => {
+  for (const online of [false, true]) {
+    const rise = spat();
+    rise._online = online;
+    rise.skills[CL] = 90; rise.skills[MD] = 90;   // the highest minor stays 90 when Climbing leaves
+    rise.currentLevelUpSkillSum = levelUpSkillSum(rise);
+    const lane = online ? onlineLevelFor : calculatePlayerLevel;
+    const level = lane(rise.startingLevelUpSkillSum, rise.currentLevelUpSkillSum), span = rise.currentLevelUpSkillSum - rise.startingLevelUpSkillSum;
+    rise.level = level;
+    swapSkill(rise, DE, CL);
+    assert.equal(rise.currentLevelUpSkillSum, levelUpSkillSum(rise), 'the stored sum the new class\'s');
+    if (!online) assert.equal(rise.currentLevelUpSkillSum - rise.startingLevelUpSkillSum, span);
+    assert.equal(lane(rise.startingLevelUpSkillSum, rise.currentLevelUpSkillSum), level, `online ${online}`);
+    assert.equal(checkForLevelUp(rise), false, `online ${online}: no level owed`);
+  }
   const drop = spat();
   drop.skills[SE] = 10; drop.skills[CL] = 90;
   drop.currentLevelUpSkillSum = levelUpSkillSum(drop);
@@ -79,4 +86,20 @@ test('SKILL-TRADE the save keeps both groups', () => {
   const back = structuredClone(playerEntity);
   restorePlayer(back, JSON.parse(JSON.stringify(snapshotPlayer(p))));
   assert.deepEqual([back.career.primarySkills, back.career.minorSkills], [[DE, AL, SE], [CL, MD, RU, JU, SW, IL]]);
+});
+
+test('AUDIT SKILL-TRADE A2 THE ONLINE START: a rise keeps the online level on every start, held sum and rise - the float\'s edge walked back (start 153, held 230, a rise of 7 fell to level 6 from 7); offline the start moves by the rise (mutants: the online start moved as offline\'s; the edge unwalked)', () => {
+  assert.equal(startAfterRise({ startingLevelUpSkillSum: 153, _online: false }, 230, 237), 160);
+  assert.equal(onlineLevelFor(startAfterRise({ startingLevelUpSkillSum: 153, _online: true }, 230, 237), 237), onlineLevelFor(153, 230));
+  for (let s = 140; s <= 320; s += 3) for (let h = s; h < LEVEL_SUM_TOP; h += 2) for (const d of [1, 7, 40]) {
+    if (h + d >= LEVEL_SUM_TOP) continue;
+    assert.equal(onlineLevelFor(startAfterRise({ startingLevelUpSkillSum: s, _online: true }, h, h + d), h + d), onlineLevelFor(s, h), `start ${s}, held ${h}, rise ${d}`);
+  }
+});
+
+test('AUDIT SKILL-TRADE C9 THE REFUSALS\' ORDER: a mastered skill given up is said before a pick, and a pick before the price - a player short of gold is told the pick is wrong, not the price (mutants: the gold asked first; the mastered skill asked after the pick)', () => {
+  const poor = spat({ gold: 0, mastered: [MY] });
+  assert.equal(skillSwapRefusal(poor, DE, AL), 'Choose a skill outside your class, or one from another group, to take its place.');
+  assert.equal(skillSwapRefusal(poor, MY, TH), 'A mastered skill stays in your class.');
+  assert.match(skillSwapRefusal(poor, DE, RE), /^Changing a class skill costs 100,000 gold/);
 });

@@ -175,7 +175,7 @@ test('PVP-FLAG-CAPS (ui/capsFix.js, ui/chatPanel.js): the flag\'s Caps Lock type
   key('CapsLock', { code: 'CapsLock' });
   assert.deepEqual(key('E'), [false, false], 'pressed in the field: the player\'s own capitals');
   assert.ok(rd('src/ui/chatPanel.js').includes('if (capsFixKey(e, input)) { e.stopPropagation(); return; }'));
-  assert.ok(rd('src/scenes/pvpFlagHost.js').includes("      noteCaps('game');"));
+  assert.ok(rd('src/scenes/pvpFlagHost.js').includes("noteCaps(acts.length ? 'game' : null);"));   // PIN MOVED (AUDIT PVP-KEY B6: the game's only where its press did something - test/net/pvpkey.test.js)
 });
 
 test('PVP-SKULL THE REFEREE AND THE WIRE (net/wild/wildRef.js wildAggroWord, wildFlagWord; net/wire.js): a flagged fighter in a blow is said in aggro, its ms left riding `a`, once each ten seconds; an unflagged one never; one entering hears each flagged fighter\'s aggro left; the wire keeps `a` on a flag up alone (mutants: the aggro unsaid; said each blow; the newcomer\'s aggro dropped; the wire\'s `a` dropped)', () => {

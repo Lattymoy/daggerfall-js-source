@@ -15624,14 +15624,29 @@
   "tr": "496fd2d367e5",
   "by": "claude-in-session"
  },
+ "growth.swap.label.major": {
+  "en": "8a52ed17c589",
+  "tr": "b06899c9634d",
+  "by": "claude-in-session"
+ },
+ "growth.swap.label.minor": {
+  "en": "100b45547163",
+  "tr": "29f4821d66b0",
+  "by": "claude-in-session"
+ },
+ "growth.swap.label.primary": {
+  "en": "a9a96ec01949",
+  "tr": "1b3d7f7f6445",
+  "by": "claude-in-session"
+ },
  "growth.swap.lead": {
   "en": "bfe1e1c66c0c",
   "tr": "06bfe910e56b",
   "by": "claude-in-session"
  },
  "growth.swap.leadTrade": {
-  "en": "7797b18e810b",
-  "tr": "b54bf1c45caa",
+  "en": "497642a8a554",
+  "tr": "578102896f49",
   "by": "claude-in-session"
  },
  "growth.swap.lockOff": {
@@ -39561,7 +39576,7 @@
  },
  "skillswap.refuse.in": {
   "en": "e4a7c34be270",
-  "tr": "bb7826b9945f",
+  "tr": "e25d3052b030",
   "by": "claude-in-session"
  },
  "skillswap.refuse.inMastered": {
