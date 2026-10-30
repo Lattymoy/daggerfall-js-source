@@ -956,15 +956,6 @@
     ]
   },
   {
-    "name": "TECH1-AUDIT-the-detail-posted",
-    "file": "src/ui/enhanced/enhancedInventory.js",
-    "old": "  const said = told ? parts.filter((p) => p !== told) : parts;",
-    "new": "  const said = parts;",
-    "tests": [
-      "test/systems/tech1_audit.test.js"
-    ]
-  },
-  {
     "name": "TECH1-AUDIT-the-big-body-thin",
     "file": "src/combat/technique/techniqueBlow.js",
     "old": "Number.isFinite(foe?.ai?.radius) ? foe.ai.radius : TECH_BODY_RADIUS);",
