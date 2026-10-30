@@ -11,6 +11,7 @@ import { HEALTH_SHARE_WHOLE, PVP_RESTORATION_MAX } from './refereeHealthShare.js
 import { SKILLS, skillValue } from '../../systems/skills.js';
 import { pvpArmorKept, pvpWardKept, pvpShieldShare } from '../../combat/pvpGuard.js';
 import { pvpDodging, pvpGearEvade } from '../../combat/pvpEvade.js';   // PVP-EVADE
+import { pvpGuardWithGear } from '../../combat/pvpGearPowers.js';   // PVP-GEAR: the guard powers' share
 import { capPvpBuffs } from '../../combat/pvpBuffs.js';
 import { setPvpFight } from '../../combat/pvpPotions.js';
 import { pendingDeclares, declaresSent } from '../../combat/pvpDeclare.js';   // PVP-VITALS: what I drank and cast on myself
@@ -184,7 +185,7 @@ export function createPlayerHealthMirror(player, onlineOf) {
     },
     send: (report) => onlineOf()?.sendVit?.(report) === true,
     restoration: () => skillValue(player, SKILLS.Restoration),
-    guard: () => pvpArmorKept(player),
+    guard: () => pvpGuardWithGear(pvpArmorKept(player), player),
     ward: () => pvpWardKept(player),
     shield: () => pvpShieldShare(player),   // PVP-KIT: the Shield's share
     evasion: () => ({ dg: pvpDodging(player), pe: pvpGearEvade(player) }),   // PVP-EVADE

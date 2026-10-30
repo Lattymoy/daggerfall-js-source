@@ -1400,8 +1400,8 @@
   {
     "name": "ACS-P6-map-false",
     "file": "src/scenes/portalStoneHost.js",
-    "old": "    if (zoneRefused() || host.veilRefused()) return false;",
-    "new": "    if (zoneRefused()) return false;",
+    "old": "    if (host.veilRefused()) return false;   // AUDIT CAPTAIN'S SEA P6",
+    "new": "    if (false) return false;   // AUDIT CAPTAIN'S SEA P6",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1409,8 +1409,8 @@
   {
     "name": "ACS-P6-stone",
     "file": "src/scenes/portalStoneHost.js",
-    "old": "const teleportRefused = (to) => zoneRefused(to) || host.veilRefused(to) || ",
-    "new": "const teleportRefused = (to) => zoneRefused(to) || ",
+    "old": "const teleportRefused = (to) => host.veilRefused(to) || ",
+    "new": "const teleportRefused = (to) => ",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ],

@@ -541,7 +541,7 @@ test('PORTAL1 the pool, a peer\'s: believed only near its opener\'s own feet, na
   assert.equal(far.grounded, true);
 });
 
-test('PORTAL1 the door, the pick and the arrival, as world.js runs them (PIN MOVED, PORTAL-BAY: scenes/portalStoneHost.js, the module world.js wires): every refusal at the door in its order and again at the pick, the map in teleport mode with no fee, the black lifted only where the classic box made it, one stone spent on a placed portal, the frame owed full; the arrival black, off the frame, the following team around it, a failure lifting the black; AUDIT TESA II Z5: the open zone\'s teleport law at the door, the pick and every step (mutants: the door\'s zone unread; the pick\'s; the step\'s)', async () => {
+test('PORTAL1 the door, the pick and the arrival, as world.js runs them (PIN MOVED, PORTAL-BAY: scenes/portalStoneHost.js, the module world.js wires): every refusal at the door in its order and again at the pick, the map in teleport mode with no fee, the black lifted only where the classic box made it, one stone spent on a placed portal, the frame owed full; the arrival black, off the frame, the following team around it, a failure lifting the black; PVP-PORTAL (the owner: "they need to work all over"): the open zone\'s teleport law asked at none of them, and inside the zone only a foe on me holds the stone (mutants: the stone asking the zone again; the zone\'s hold any foe near)', async () => {
   const w = read('src/scenes/world.js');
   const sh = read('src/scenes/portalStoneHost.js');   // PIN MOVED (PORTAL-BAY): the door, the pick and the step moved out of bootWorld verbatim (HOST-SPLIT) - its live reads are `host.<name>`, this scope
   const fade = new FadeBehaviour();
@@ -588,8 +588,8 @@ test('PORTAL1 the door, the pick and the arrival, as world.js runs them (PIN MOV
   // gate under the teleport's law past the Bay, mounted
   Object.assign(scope, { pastBayJourney, teleportJourney, wildJourney, legacyGold: () => 0 });
   scope.wildTravelGate = mount(scope, cut(w, 'const wildTravelGate = (to, spoken = 0, law = pastBayJourney) => {', '\n  };\n'), 'wildTravelGate');
-  scope.pvpFlagOn = () => true;   // PIN MOVED (PVP-FLAG): the zone's law asked of a flagged player - the page's own flag, mounted
-  scope.zoneRefused = mount(scope, cut(sh, 'const zoneRefused = (to = null) =>', ';\n'), 'zoneRefused');
+  // PIN MOVED (PVP-PORTAL): the zone's hold - a foe alerted to me (systems/encounters.js foeAlerted), never one near
+  Object.assign(scope, { inZone: false, wildHere: () => scope.inZone, foeAlerted: (f) => !!f?.onMe });
   // PIN MOVED (PVP-HUD): the door and the pick ask the combat lock first - none runs in these pins (test/ui/pvphud.test.js holds it)
   Object.assign(scope, { pvpFightLeft: () => 0, pvpLockSay: () => {}, pvpLockSecs: (ms) => (ms > 0 ? Math.ceil(ms / 1000) : 0), pvpPortalLockText: (n) => `lock ${n}` });
   scope.lockRefused = mount(scope, cut(sh, 'const lockRefused = () => {', '\n  };\n'), 'lockRefused');
@@ -679,38 +679,38 @@ test('PORTAL1 the door, the pick and the arrival, as world.js runs them (PIN MOV
   await new Promise((res) => setTimeout(res, 0));
   assert.deepEqual([arrivals.length, fresh.backgroundColor[3]], [2, 0], 'a move already under way: no arrival, no black left');
   scope.busy = false;
-  // AUDIT TESA II Z5: A STONE'S PORTAL IS A TELEPORT (PVPDUNGEONS, the owner: "Teleport to leader etc and of any kind into, in
-  // the zone should not be possible"; WILD3's journeys) - online, never opened inside the open zone, never to a place in it,
-  // and never stepped through into, out of or inside it, whoever opened it. A zone of world pixels x 2000..2099
+  // PVP-PORTAL (2026-10-30, the owner: "they need to work all over", held only by "agro or flag time cool down"; AUDIT TESA
+  // II Z5's zone law retired for the stone): online, a stone opens inside the open zone, picks a place in it, and is
+  // stepped through into, out of and inside it. A zone of world pixels x 2000..2099
   const zone = buildWildMask({ width: 100, height: 100, ox: 2000, oy: 600, inZone: () => true });
   Object.assign(scope, { online: { wildOk: true }, wildMapMask: () => zone, etherSea: false });
-  const ZONE = `In ${WILD_NAME} you can teleport only to or from a city, town or village. Walk or ride its roads.`;   // PIN MOVED (WILD-CITY-PORT): the words name the ends the zone lets go
-  const stones = [portalStones(2)];
+  const stones = [portalStones(3)];
   scope.portalGates.clear();
   scope.here = { x: 2050, y: 650 };
+  scope.inZone = true;
+  // the zone's hold: a foe near is none, a foe on me is
+  Object.assign(scope, { enemies: true, exteriorFoes: { foes: [{ onMe: false }] } });
   said.length = 0;
-  const maps0 = built.length;
-  assert.equal(openPortalStone(stones[0], stones), false, 'no door inside the zone');
-  assert.deepEqual([said, built.length], [[ZONE], maps0], 'said, and no map built');
-  scope.here = { x: 12, y: 345 };
-  assert.equal(openPortalStone(stones[0], stones), true, 'outside it, the door opens');
+  assert.equal(openPortalStone(stones[0], stones), true, 'inside the zone the door opens, a foe near or not');
+  scope.exteriorFoes = { foes: [{ onMe: false }, { onMe: true }] };
+  door({}, PS.PORTAL_HOLD_TEXT.enemies);
+  Object.assign(scope, { enemies: false, exteriorFoes: { foes: [] } });
+  built.at(-1).deps.onTeleport({ pixel: { x: 2060, y: 660 }, name: 'Imperial City' });
+  assert.deepEqual([stones[0].stackCount, scope.portalGates.mine()?.dest.name], [2, 'Imperial City'], 'inside to inside, spent');
   scope.portalGates.clear();
-  built.at(-1).deps.onTeleport({ pixel: { x: 2050, y: 650 }, name: 'Imperial City' });
-  assert.deepEqual([said.at(-1), stones[0].stackCount, scope.portalGates.mine()], [ZONE, 2, null], 'never to a place in the zone: nothing spent');
-  built.at(-1).deps.onTeleport({ pixel: { x: 40, y: 40 }, name: 'Wayrest' });
-  assert.deepEqual([stones[0].stackCount, scope.portalGates.mine()?.dest.name], [1, 'Wayrest'], 'outside to outside, as ever');
-  const went = arrivals.length;
-  portalArrive({ dest: { pixel: { x: 2050, y: 650 }, name: 'Imperial City' } });   // a peer's portal into the zone
-  await new Promise((res) => setTimeout(res, 0));
-  assert.deepEqual([arrivals.length, said.at(-1), fresh.backgroundColor[3]], [went, ZONE, 0], 'a step into the zone: no arrival, the black lifted');
-  scope.here = { x: 2050, y: 650 };
-  portalArrive({ dest: { pixel: { x: 40, y: 40 }, name: 'Wayrest' } });   // a portal another opened by me, inside
-  await new Promise((res) => setTimeout(res, 0));
-  assert.equal(arrivals.length, went, 'nor out of it');
+  scope.inZone = false;
   scope.here = { x: 12, y: 345 };
-  portalArrive({ dest: { pixel: { x: 40, y: 40 }, name: 'Wayrest' } });
+  assert.equal(openPortalStone(stones[0], stones), true);
+  built.at(-1).deps.onTeleport({ pixel: { x: 2050, y: 650 }, name: 'Imperial City' });
+  assert.deepEqual([stones[0].stackCount, scope.portalGates.mine()?.dest.name], [1, 'Imperial City'], 'to a place in the zone');
+  const went = arrivals.length;
+  portalArrive({ dest: { pixel: { x: 2050, y: 650 }, name: 'Imperial City' } });   // a step into the zone
   await new Promise((res) => setTimeout(res, 0));
-  assert.equal(arrivals.length, went + 1, 'outside to outside, the step as ever');
+  scope.here = { x: 2050, y: 650 };
+  portalArrive({ dest: { pixel: { x: 40, y: 40 }, name: 'Wayrest' } });   // and out of it
+  await new Promise((res) => setTimeout(res, 0));
+  assert.equal(arrivals.length, went + 2, 'into and out of the zone, both arrive');
+  scope.here = { x: 12, y: 345 };
 });
 
 test('PORTAL1 the counter\'s row on the classic popups: under the art, drawn in the Reforge row\'s dark with its label, its key P, the popup closed before the sale asks - no hook, no row; the panels\' button', () => {

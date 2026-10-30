@@ -15702,7 +15702,6 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     get travelOptions() { return travelOptions; },
     get travelView() { return travelView; },
     get veilRefused() { return veilRefused; },
-    get wildTeleportRefused() { return wildTeleportRefused; },
     get wildTravelGate() { return wildTravelGate; },   // PORTAL-BAY: the teleport's gate, asked at the pick and the step
   });
 
@@ -21228,7 +21227,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  back as `duelHpIn`. */
   const duelStrikeOut = (by, weapon, swing, drawMs = 0, to = null, { off = false } = {}) => {   // TWO-HANDS (AUDIT): `off` - the striking rig's off-hand blow
     if (!duelMgr.fighting) return siegeStrikeOut(to, by, weapon, swing, drawMs, { off });   // AUDIT-SEATS G5: outside a duel, my shaft on a battle's foe (`to`)
-    const a = withoutFirmament(playerEntity, () => duelAttackerOf(playerEntity, weapon)), w = duelWeaponOf(weapon), sw = duelSwingOf(swing);
+    const a = withoutFirmament(playerEntity, () => duelAttackerOf(playerEntity, weapon, weaponRig?.playerWeapon?.wraps, to)), w = duelWeaponOf(weapon), sw = duelSwingOf(swing);
     const at = drawMs > 0 ? { at: Math.min(60000, Math.trunc(drawMs)) } : {};
     const r = resolveDuelStrike({ by, a, ...(w ? { w } : {}), ...(sw ? { sw } : {}), ...at, ...(off ? { off } : {}) }, duelStandIn(playerEntity));
     if (!(r.dmg > 0)) { reportPlayerAttack({ hit: false, damage: 0, critical: false, backstab: false, ineffective: false }); return true; }
@@ -21296,7 +21295,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     const size = to === SIEGE_WORK_IDS.gate ? SIEGE_GATEHOUSE.sizeM : SIEGE_RAM.sizeM;
     if (Math.hypot(me[0] - at[0], me[2] - at[1]) / SIEGE_UNITS_PER_M > SIEGE_REACH.melee + size) return false;
     const weapon = weaponRig.playerWeapon.strikingWeapon;
-    const a = withoutFirmament(playerEntity, () => duelAttackerOf(playerEntity, weapon)), w = duelWeaponOf(weapon), sw = duelSwingOf(weaponRig.playerWeapon.machine?.state);
+    const a = withoutFirmament(playerEntity, () => duelAttackerOf(playerEntity, weapon, weaponRig?.playerWeapon?.wraps)), w = duelWeaponOf(weapon), sw = duelSwingOf(weaponRig.playerWeapon.machine?.state);
     const r = resolveDuelStrike({ by: 'melee', a, ...(w ? { w } : {}), ...(sw ? { sw } : {}), ...(weaponRig.playerWeapon.offStrike ? { off: true } : {}) }, duelStandIn(playerEntity));
     if (r.dmg > 0) {
       const held = weapon ? (composeLook(playerEntity)?.items ?? []).find((i) => i?.group === 'Weapons' && i.templateIndex === weapon.templateIndex) ?? null : null;
@@ -21311,7 +21310,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const siegeStrikeOut = (to, by, weapon, swing, drawMs = 0, { off = false } = {}) => {
     const battle = royalSession?.active() ? royalSession : siegeSession;
     if (!to || !battle?.active() || !battle.foes().includes(to)) return wildStrikeOut(to, by, weapon, swing, drawMs, { off });   // WILD1: not the battle's - perhaps a fair player of the open zone's
-    const a = withoutFirmament(playerEntity, () => duelAttackerOf(playerEntity, weapon)), w = duelWeaponOf(weapon), sw = duelSwingOf(swing);
+    const a = withoutFirmament(playerEntity, () => duelAttackerOf(playerEntity, weapon, weaponRig?.playerWeapon?.wraps, to)), w = duelWeaponOf(weapon), sw = duelSwingOf(swing);
     const r = resolveDuelStrike({ by, a, ...(w ? { w } : {}), ...(sw ? { sw } : {}), ...(drawMs > 0 ? { at: Math.min(60000, Math.trunc(drawMs)) } : {}), ...(off ? { off } : {}) }, duelStandIn(playerEntity));
     if (r.dmg > 0) {
       const held = weapon ? (composeLook(playerEntity)?.items ?? []).find((i) => i?.group === 'Weapons' && i.templateIndex === weapon.templateIndex) ?? null : null;
@@ -21936,7 +21935,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  zone's. */
   const wildStrikeOut = (to, by, weapon, swing, drawMs = 0, { off = false } = {}) => {
     if (!wildFair(to)) return false;
-    const a = withoutFirmament(playerEntity, () => duelAttackerOf(playerEntity, weapon)), w = duelWeaponOf(weapon), sw = duelSwingOf(swing);
+    const a = withoutFirmament(playerEntity, () => duelAttackerOf(playerEntity, weapon, weaponRig?.playerWeapon?.wraps, to)), w = duelWeaponOf(weapon), sw = duelSwingOf(swing);
     const at = drawMs > 0 ? { at: Math.min(60000, Math.trunc(drawMs)) } : {};
     const r = resolveDuelStrike({ by, a, ...(w ? { w } : {}), ...(sw ? { sw } : {}), ...at, ...(off ? { off } : {}) }, duelStandIn(playerEntity));
     if (!(r.dmg > 0)) { reportPlayerAttack({ hit: false, damage: 0, critical: false, backstab: false, ineffective: false }); zoneWatchCall(); return true; }
