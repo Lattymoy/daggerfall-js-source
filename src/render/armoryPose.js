@@ -106,6 +106,13 @@ export function spriteMarks(/** @type {ArrayLike<number>} */ colors, /** @type {
     for (let r = Math.round(rows[0] * k); r <= Math.round(rows[1] * k); r++) { const run = runAt(r, minW); if (run) { sum += run.c; n++; } }
     return n ? sum / n - mid : null;
   };
+  /** BACK-HOLSTER: half the body's run over `rows`, as `across` picks it (px) - how far the painted torso reaches either
+   *  side of its middle; a side view's depth to its back. */
+  const halfOf = (/** @type {number[]} */ rows, k = 1) => {
+    let sum = 0, n = 0;
+    for (let r = Math.round(rows[0] * k); r <= Math.round(rows[1] * k); r++) { const run = runAt(r); if (run) { sum += run.wd / 2; n++; } }
+    return n ? sum / n : null;
+  };
   /** The head's top: up from the neck the run over the body's middle, each row the run most over the last - never the
    *  orb of a staff or the tip of a blade beside it, on runs of their own; a run three rows under 3 px is a shaft. */
   const topOf = (/** @type {number} */ k) => {
@@ -172,7 +179,7 @@ export function spriteMarks(/** @type {ArrayLike<number>} */ colors, /** @type {
   // the arms of a standing figure (a beast's are its own, and wear nothing)
   const cx = mid + (own.chest ?? own.head ?? 0), L = arms ? armOf(-1, cx) : null, R = arms ? armOf(1, cx) : null;
   const knee = legsAt(Math.round(SPRITE_ROWS.knee * A)), ankle = legsAt(Math.round(SPRITE_ROWS.ankle * A));
-  return { ...own, arms: L && R ? { L, R } : null, legs: knee && ankle ? { knee, ankle } : null, beast: read(EOTB_FIGURE.beast * A), art: A };
+  return { ...own, chestHalf: halfOf(MARK_ROWS.chest, A), arms: L && R ? { L, R } : null, legs: knee && ankle ? { knee, ankle } : null, beast: read(EOTB_FIGURE.beast * A), art: A };
 }
 
 const set = (/** @type {Float32Array} */ pts, /** @type {string} */ name, /** @type {ArrayLike<number>} */ v) => { const i = POSE_AT[name]; pts[i] = v[0]; pts[i + 1] = v[1]; pts[i + 2] = v[2]; };

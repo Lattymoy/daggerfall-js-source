@@ -9,7 +9,7 @@ import {
   AuraRingRenderer, auraWearers, auraLookOf, auraBeastStep, auraMotionStep, auraCapeStep, auraSpriteBones, auraSpritePosed, auraWingLights,
   CLOAK_BONES, AURA_KINDLE_S, AURA_FORGET_S,
 } from '../render/auraRing.js';
-import { auraClothOver } from '../render/auraRing.js';   // ARMORY-SEEN: whether a body's cloth covers its pieces from the eye
+import { auraClothOver, auraSpriteAcross, auraShiftAcross } from '../render/auraRing.js';   // ARMORY-SEEN: whether a body's cloth covers its pieces from the eye
 import { ArmoryRenderer, armoryWearers, armoryMotionStep, armoryEyeAtHead, armoryHeadTip, ARMORY_DETAIL_M } from '../render/armoryPass.js';
 import { ARMORY_BONES, newPose, poseFromBones, poseFromFigure, poseAtRest } from '../render/armoryPose.js';
 import { compiledPass } from '../render/glProgram.js';
@@ -59,6 +59,7 @@ export function createAuraHost(deps) {
   let auraHeard, armoryHeard;
   let gathered = 0;
   let selfLiftNow = 0;   // AURA-ON-DRAGON: the frame's lift of my own (frame's), for the cape hung in draw   // PROFILE-SLOTS: the frames gathered - a name lifts only over a piece drawn in this one (nameTopOf)
+  const acrossRight = [1, 0, 0];   // BACK-HOLSTER: the view's right the capes are moved along (auraShiftAcross)
   const auraList = [], auraDraw = [], auraPool = new Map(), auraLights = [], armoryList = [], armoryDraw = [], armoryPool = new Map();
   const armoryUnder = [], armoryOver = [];   // ARMORY-SEEN: this frame's pieces under the cloth on their back, and the rest
   const self = { id: 'self', at: [0, 0, 0], aura: null, seed: 0.37, kindle: 1, since: 0, yaw: 0 };   // SHADOW-CLOAK: `yaw` the facing the cloak's opening faces
@@ -192,6 +193,8 @@ export function createAuraHost(deps) {
         // rest, crouched with a crouch - and swung by how it moves where it is drawn; SPRITE-FACE: a sprite's faced as its
         // PICTURE is, in the saddle too, and swung by the way the body turns (`turn`)
         for (const w of auraDraw) if (auraLookOf(w.aura).mesh) { auraCapeStep(w, w === self ? { feet: liftedFeet(player.bodyFeetAt(), selfLiftNow), yaw: faced?.yaw ?? player.bodyYawFor(deps.camYaw()), turn: faced?.turn, bones: selfLiftNow > 0 ? null : mwViewBodyBones(CLOAK_BONES) ?? auraSpriteBones(mwViewSpriteFigure()) } : deps.bodies()?.bonesOf(w.id, CLOAK_BONES) ?? auraSpritePosed(w, walkers?.figureOf(w.id) ?? riders?.figureOf?.(w.id), walkers?.faceOf?.(w.id) ?? riders?.faceOf?.(w.id)), w === self ? player.height / CAPSULE_HEIGHT : 1); auraMotionStep(w, now); }
+        // BACK-HOLSTER: a sprite's cape and wings stand at its painted body (auraSpriteAcross), moved there for the pass alone
+        for (const w of auraDraw) w.across = auraLookOf(w.aura).mesh ? auraSpriteAcross(w === self ? (selfLiftNow > 0 || mwViewBodyBones(CLOAK_BONES) ? null : mwViewSpriteFigure()) : deps.bodies()?.bonesOf(w.id, CLOAK_BONES) ? null : walkers?.figureOf(w.id) ?? riders?.figureOf?.(w.id)) : 0;
       }
       auraList.length = 0;   // this frame's, drawn once: a frame that gathers none (the seat left, death, offline) draws none
       armoryDraw.length = 0;
@@ -207,7 +210,11 @@ export function createAuraHost(deps) {
       drawArmory(armoryUnder, proj, view, eye, now);
       if (auraDraw.length) {
         const pass = auraPassOf();   // AURA-STALL: null while its program compiles - the capes still hang and swing above
+        const yaw = deps.camYaw();
+        acrossRight[0] = Math.cos(yaw); acrossRight[2] = -Math.sin(yaw);   // the view's right, as the sprites' quads take it
+        auraShiftAcross(auraDraw, acrossRight, 1);
         pass?.draw(auraDraw, proj, view, eye, now, fogNow());
+        auraShiftAcross(auraDraw, acrossRight, -1);
         if (pass?.drawn) { renderer.markForeignPass(); redrawHolstersOver(renderer, eotbBody.holstersDrawn(), deps.walkers()?.holstersDrawn?.()); }   // BACK-HOLSTER: the weapons on the backs over the capes
       }
       drawArmory(armoryOver, proj, view, eye, now);

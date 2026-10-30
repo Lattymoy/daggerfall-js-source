@@ -2,8 +2,9 @@
 // eight views, on a skin's idle (112364) and on Layered Gearing's (male, leather). Each weapon's picture is read from the
 // player's ARENA2 (ARENA2_PATH) and stood up by the game's own law. Each view is drawn with and without the weapon; what
 // changed must lean to the right shoulder from behind, stand upright from the side and hide behind the body in front.
-// And OVER THE AURA: under the Shadow Cloak's cape (the real aura pass), redrawn after it, the weapon's pixels are its
-// own, untinted. --shots writes a sheet of the crops - a render of game data, so never into the repo.
+// From the side no pixel of it lies over the body. Under the Shadow Cloak (the real aura pass, hung at the painted body
+// as the aura host hangs it) the cape's mass is behind the body, and after the redraw no weapon pixel is tinted.
+// --shots writes a sheet of the crops - a render of game data, so never into the repo.
 //     ARENA2_PATH=... node tools/backHolsterProbe.mjs [--shots DIR]
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
@@ -109,11 +110,14 @@ const shots = await page.evaluate(async ({ pics, W, H }) => {
             Hs.mintSpriteHolster(l, r);
             r.drawBillboards(l.list, l.right, l.up);
           }
-          if (cape) {   // the aura host's own steps: hung on the sprite as drawn, then the pass
+          if (cape) {   // the aura host's own steps: hung on the sprite as drawn, moved to its painted body, the pass
             const w = { at: [0, 0, 0], seed: 0.37, kindle: 1, aura: 'shadowcloak', torn: -1, yaw: 0 };
             ar.auraCapeStep(w, { feet: [0, 0, 0], yaw: bb.portrayedYaw(o, [eye[0], 0, eye[2]]), bones: ar.auraSpriteBones(fig) });
             ar.auraMotionStep(w, 1);
+            w.across = ar.auraSpriteAcross(fig);
+            ar.auraShiftAcross([w], right, 1);
             auras.draw([w], proj, view, new Float32Array(eye), 1, null);
+            ar.auraShiftAcross([w], right, -1);
             r.markForeignPass();
             if (cape === 2) Hs.redrawHolstersOver(r, l ? [l] : []);   // the aura host's redraw
           }
@@ -125,10 +129,19 @@ const shots = await page.evaluate(async ({ pics, W, H }) => {
         };
         const plain = frame(false), worn = frame(true);
         const caped = weapon === 'claymore' ? [frame(true, 1), frame(true, 2)] : null;
+        const capeOnly = weapon === 'claymore' ? frame(false, 1) : null;
+        // the screen column a world point lands on (the game's mirrored lens), and the painted body's middle
+        const vp = new Float32Array(16);
+        for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { let t = 0; for (let q = 0; q < 4; q++) t += proj[q * 4 + i] * view[j * 4 + q]; vp[j * 4 + i] = t; }
+        const colOf = (pt) => { const c = [0, 1, 2, 3].map((i) => vp[i] * pt[0] + vp[4 + i] * pt[1] + vp[8 + i] * pt[2] + vp[12 + i]); return (c[0] / c[3] * 0.5 + 0.5) * cv.width; };
+        const acr = ar.auraSpriteAcross(fig), bodyCol = colOf([right[0] * acr, 1.2, right[2] * acr]), backCol = colOf([right[0] * acr, 1.2, right[2] * acr - 0.3]);
         const diff = new Uint8Array(cv.width * cv.height);
         for (let i = 0; i < diff.length; i++) diff[i] = plain[i * 4] !== worn[i * 4] || plain[i * 4 + 1] !== worn[i * 4 + 1] || plain[i * 4 + 2] !== worn[i * 4 + 2] ? 1 : 0;
         // over the weapon's own pixels: how many the cape changed, and how many are still changed after the redraw
-        let tinted = 0, still = 0, shown = 0;
+        let tinted = 0, still = 0, shown = 0, onBody = 0, capeCol = 0, capeN = 0;
+        const bg = [plain[0], plain[1], plain[2]];   // the clear colour, at a corner
+        for (let i = 0; i < diff.length; i++) if (diff[i] && (plain[i * 4] !== bg[0] || plain[i * 4 + 1] !== bg[1] || plain[i * 4 + 2] !== bg[2])) onBody++;
+        if (capeOnly) for (let i = 0; i < diff.length; i++) if (capeOnly[i * 4] !== plain[i * 4] || capeOnly[i * 4 + 1] !== plain[i * 4 + 1] || capeOnly[i * 4 + 2] !== plain[i * 4 + 2]) { capeCol += i % cv.width; capeN++; }
         if (caped) for (let i = 0; i < diff.length; i++) {
           if (!diff[i]) continue;
           shown++;
@@ -136,7 +149,7 @@ const shots = await page.evaluate(async ({ pics, W, H }) => {
           if (!same(caped[0])) tinted++;
           if (!same(caped[1])) still++;
         }
-        out.push({ body: bodyName, weapon, o, w: cv.width, h: cv.height, worn: toB64(caped ? caped[1] : worn), diff: toB64(diff), cape: caped ? { shown, tinted, still } : null });
+        out.push({ body: bodyName, weapon, o, w: cv.width, h: cv.height, worn: toB64(caped ? caped[1] : worn), diff: toB64(diff), onBody, cape: caped ? { shown, tinted, still, behind: capeN ? (capeCol / capeN - bodyCol) * Math.sign(backCol - bodyCol) : 0 } : null });
       }
     }
   }
@@ -146,7 +159,8 @@ await browser.close();
 await server.close();
 
 for (const s of shots) { s.worn = Buffer.from(s.worn, 'base64'); s.diff = Buffer.from(s.diff, 'base64'); }
-// what the weapon changed, per view: how much, and its top and bottom fifths' mean column (row 0 the bottom)
+// what the weapon changed, per view: how much, and its top and bottom fifths' mean column (row 0 the bottom) - the
+// side views' slant is the pins' (backholster.test.js): there a weapon is mostly behind the body, its lean unreadable
 for (const s of shots) {
   const ys = [], xs = [];
   for (let i = 0; i < s.diff.length; i++) if (s.diff[i]) { ys.push(Math.floor(i / s.w)); xs.push(i % s.w); }
@@ -163,9 +177,16 @@ for (const body of ['skin', 'layered']) {
     const v = by(body, weapon);
     const n = v.map((s) => s.n), lean = v.map((s) => (s.n ? s.lean.toFixed(0) : '-'));
     check(`${body} ${weapon}: drawn from the back and its diagonals, leaning to the right shoulder`, [3, 4, 5].every((o) => v[o].n > 30 && v[o].lean > 2), `px ${n.join(',')} lean ${lean.join(',')}`);
-    check(`${body} ${weapon}: from the side it stands upright`, [2, 6].every((o) => v[o].n > 0 && Math.abs(v[o].lean) < v[o].tall * 0.15));
     check(`${body} ${weapon}: from the front it is mostly behind the body`, v[0].n < v[4].n * 0.6, `front ${v[0].n} px against the back's ${v[4].n}`);
   }
+}
+for (const body of ['skin', 'layered']) {
+  for (const weapon of Object.keys(WEAPONS)) {
+    const v = by(body, weapon);
+    check(`${body} ${weapon}: from the side it shows past the back and no pixel of it lies over the body`, [2, 6].every((o) => v[o].n > 0 && v[o].onBody === 0), `shown ${v.map((s) => s.n).join(',')}; on the body ${v.map((s) => s.onBody).join(',')}`);
+  }
+  const c = by(body, 'claymore');
+  check(`${body}: from the side the Shadow Cloak's mass is behind the painted body, not on its chest`, [2, 6].every((o) => c[o].cape.behind > 1), `px behind the body's middle ${c.map((s) => s.cape.behind.toFixed(1)).join(',')}`);
 }
 for (const body of ['skin', 'layered']) {
   const v = by(body, 'claymore');

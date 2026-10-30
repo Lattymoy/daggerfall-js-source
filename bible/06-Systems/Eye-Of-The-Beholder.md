@@ -1191,12 +1191,17 @@ resamples it at the sprites' pixel size: the paper doll's 0.01 m a pixel against
 drawn and mirrored; a store keeps eight.
 
 **The hang.** A line in the body's frame from the right shoulder to the left hip, 35 degrees off the spine, a quarter
-of its height over the shoulder row (`EOTB_FIGURE.shoulder`), 0.16 m behind the body's middle (past a side view's
-painted back), centred on the painted body (`spriteMarks`), scaled with the sprite. Its frame is the picture's facing
-(`portrayedYaw`), so it turns with the eight views and never between them. Each frame the line is laid into the view
-plane: from behind it leans to the right shoulder, from the front the other way and mirrored, from the side it stands
-upright and shorter. From the front the body's card hides it but the hilt and the tip. From the side and behind it lies
-3 cm toward the eye: drawn behind the card there, a longsword vanished into the side view's profile.
+of its height over the shoulder row (`EOTB_FIGURE.shoulder`), 0.16 m behind the body's middle, centred on the painted
+body (`auraSpriteAcross`, the cape's law), scaled with the sprite. Its frame is the picture's facing (`portrayedYaw`),
+so it turns with the eight views and never between them. Each frame the line is laid into the view plane: from behind
+it leans to the right shoulder, from the front the other way and mirrored, from the side it stands upright and shorter.
+It stands 3 cm before the body's card only where the eye sees the back (views 3, 4, 5); elsewhere 3 cm behind it, so
+the card covers it where they meet and only the hilt and the tip show past the body.
+
+**The side** (Mac: "On the side facing, the holstered weapon is wrong and overlays the body"). Drawn before the card
+there, a longsword lay over the torso: the painted torso reaches 0.22 m to its back, past the fixed 0.16. From the side
+the line now stands just past the painted back - half the chest's run (`spriteMarks` `chestHalf`) and 3 cm - and
+behind the card, so not one pixel of it lies over the body.
 
 **Over the aura** (Mac, the same day: "if a cape aura is present, the holster should appear over the aura"). The auras
 draw after the bodies as added light that writes no depth, so the Shadow Cloak's cape glowed over the weapon from behind.
@@ -1214,16 +1219,16 @@ spell readied over a sheathed weapon keeps it there. A walker's `wd` 1 or 2 (a w
 and draws it in `drawLanterns`, beside the bodies; `scenes/auraHost.js` draws both again over the auras. No host
 function grew. **Known limits.** Layered Gearing's art holds its
 mace in every frame, so a sheathed layered body shows the mace in hand and the weapon on its back. A flail stands on
-its handle with its chain and ball off to the side. The cape hangs from the sprite's feet (`auraSpriteBones` reads no
-marks), the holster from its painted body, so in a side view whose sword arm stretches the picture the two stand apart.
-Not yet checked in the running game.
+its handle with its chain and ball off to the side. Not yet checked in the running game.
 
 **Pins.** `test/player/eyeOfTheBeholder/backholster.test.js` (which weapons; the picture stood up, end and side kept;
-the slant, length, face and depth in all eight views and three facings; glued to the picture; the store; my body's
-gates in the rig's own words; the walkers', a drawn bow and the floating origin; the redraw over the aura and the
-host's order); `tools/mutants/backholster.json` (twenty-eight, all killed). Three records in `htwaist.json` and
-`seraphwings.json` re-aimed by content at the lines this touched. `tools/backHolsterProbe.mjs` draws it in the real
-renderer (the game's mirrored lens) on a skin and on Layered Gearing with five weapons from ARENA2, eight views each,
-and the claymore under the Shadow Cloak through the real aura pass: 32 checks - it leans to the right shoulder from
-behind, stands upright from the side, hides in front, and after the redraw no pixel of it is tinted by the cape (up
-to 416 were before).
+the slant, length, face and depth in all eight views and three facings; the side past the painted back; glued to the
+picture; the store; my body's gates in the rig's own words; the walkers'; the redraw over the aura; `chestHalf`, the
+across law and the capes moved for the pass); `tools/mutants/backholster.json` (37, all killed); three records in
+`htwaist.json` and `seraphwings.json` re-aimed by content.
+
+**The probe.** `tools/backHolsterProbe.mjs` draws it in the real renderer
+(the game's mirrored lens) on a skin and on Layered Gearing, five weapons from ARENA2, eight views each, and the
+claymore under the Shadow Cloak through the real aura pass, hung as the host hangs it: 34 checks - it leans to the
+right shoulder from behind, hides in front, shows past the back from the side with no pixel over the body, the cape's
+mass is behind the painted body from the side, and after the redraw no weapon pixel is tinted (up to 468 were).

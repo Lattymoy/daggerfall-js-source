@@ -3149,6 +3149,21 @@ export function auraSpriteBones(fig) {
     'bip01 l calf': null, 'bip01 r calf': null, sunk: at(EOTB_FIGURE.shoulder) < CLOAK_SHOULDER_Y * 0.4, wingBack: WING_SPRITE_BACK * m / EOTB_FIGURE.mpp,
   };
 }
+/** BACK-HOLSTER (2026-10-30, Mac: "Why is the cape backwards on the side facing?"): where a sprite's PAINTED body stands
+ *  along the view's right from its feet (m) - the quad's offset and the picture's chest mark (armoryPose.js poseFromFigure's
+ *  `dx`, one law) - or 0. A side view's sword held out stands the body a third of a metre off its feet, and a cape hung
+ *  from the feet was worn on its chest. Pure. */
+export const auraSpriteAcross = (fig) => (fig && fig.mpp > 0
+  ? (Number.isFinite(fig.shift) ? fig.shift : 0) + (fig.marks?.chest ?? fig.marks?.head ?? 0) * fig.mpp : 0);
+/** Move each wearer `sign` times its `across` (m) along `right` - on before the pass, back after it, so the swing
+ *  (auraMotionStep) never reads a view's change as a step. Pure but for the wearers' `at`. */
+export function auraShiftAcross(list, right, sign) {
+  for (const w of list) {
+    const a = Number.isFinite(w?.across) ? w.across * sign : 0;
+    if (a) { w.at[0] += right[0] * a; w.at[2] += right[2] * a; }
+  }
+  return list;
+}
 /** A peer's sprite figure as the pose `auraCapeStep` takes - at the wearer's own feet - or null. SPRITE-FACE (2026-10-05,
  *  Mac: "The sprite rotation on character input is a little finicky and make the aura misallign"): FACING AS ITS PICTURE
  *  DOES - `face` the sprite layer's { yaw, turn } (net/peer/peerRiders.js faceOf): hung on the picture's facing, its eight-way

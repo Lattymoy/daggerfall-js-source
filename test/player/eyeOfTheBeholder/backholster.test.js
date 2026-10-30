@@ -10,7 +10,8 @@ import {
   createSpriteHolster, createHolsterArt, HOLSTER_ART_KEPT, redrawHolstersOver, mintSpriteHolster, dropSpriteHolster,
 } from '../../../src/player/eyeOfTheBeholder/eotbHolster.js';
 import { readFileSync } from 'node:fs';
-import { EOTB_FIGURE } from '../../../src/render/auraRing.js';
+import { EOTB_FIGURE, auraSpriteAcross, auraShiftAcross } from '../../../src/render/auraRing.js';
+import { spriteMarks } from '../../../src/render/armoryPose.js';
 import { EQUIP_SLOTS } from '../../../src/systems/equip.js';
 import { createEotbBody } from '../../../src/player/eyeOfTheBeholder/eotbBody.js';
 import { createPeerWalkers, createEotbArt } from '../../../src/net/peer/peerRiders.js';
@@ -139,15 +140,47 @@ test('BACK-HOLSTER hang: the line across the back turns with the view - from beh
   for (const o of EIGHT) assert.ok(Math.abs(s[o].top[1] - topY) < 1e-9, `view ${o}: top at ${s[o].top[1].toFixed(3)}`);
 });
 
-test('BACK-HOLSTER hang: behind the card from the front and its diagonals, before it from the side and behind - so the body\'s own depth hides it from the front, and from the side it lies over the back\'s edge (mutants: no back offset; the bias away from the eye)', () => {
+test('BACK-HOLSTER hang: before the card only where the eye sees the back (3, 4, 5); behind it from the front, its diagonals and the side, so the body covers it where they meet - and from the side just past the PAINTED back, as deep as the picture draws it (Mac: "On the side facing, the holstered weapon is wrong and overlays the body") (mutants: no back offset; the nudge one way everywhere; the picture\'s depth ignored)', () => {
   for (const turn of [0, Math.PI / 2, 2.2]) {
     for (const o of EIGHT) {
       const { l, cam } = hungFrom(o, { turn });
       const nearer = flatDist(cam.eye, FEET) - flatDist(cam.eye, l.mid);
-      if ([2, 3, 4, 5, 6].includes(o)) assert.ok(nearer > ([2, 6].includes(o) ? 0.01 : 0.05), `facing ${turn.toFixed(2)}, view ${o}: ${nearer.toFixed(3)} m before the card`);
-      else assert.ok(nearer < -0.05, `facing ${turn.toFixed(2)}, view ${o}: ${(-nearer).toFixed(3)} m behind the card`);
+      if ([3, 4, 5].includes(o)) assert.ok(nearer > 0.05, `facing ${turn.toFixed(2)}, view ${o}: ${nearer.toFixed(3)} m before the card`);
+      else assert.ok(nearer < -0.01, `facing ${turn.toFixed(2)}, view ${o}: ${(-nearer).toFixed(3)} m behind the card`);
     }
   }
+  // a side view whose picture paints its torso 12 px either side of its middle, the middle 8 px off the quad's
+  const fig = { ...FIG, marks: { chest: 8, chestHalf: 12 }, shift: 0 };
+  for (const o of [2, 6]) {
+    const { l, cam } = hungFrom(o, { fig });
+    const fwd = o === 2 ? 1 : -1;   // the figure faces +Z; seen from +X (view 2) +Z is the view's right
+    const body = 8 * EOTB_FIGURE.mpp, off = dot([l.mid[0] - FEET[0], 0, l.mid[2] - FEET[2]], cam.right) - body;
+    assert.ok(Math.abs(off - -fwd * (12 * EOTB_FIGURE.mpp + BACK_HOLSTER.clear)) < 0.01, `view ${o}: ${off.toFixed(3)} m from the painted middle - just past its back`);
+    assert.ok(flatDist(cam.eye, FEET) - flatDist(cam.eye, l.mid) < 0, `view ${o}: behind the card`);
+  }
+  const front = hungFrom(0, { fig }), plain = hungFrom(0);
+  assert.ok(Math.abs(flatDist(front.cam.eye, front.l.mid) - flatDist(plain.cam.eye, plain.l.mid)) < 0.01, 'the picture\'s depth is a side view\'s alone');
+});
+
+test('BACK-HOLSTER the painted body: spriteMarks reads the torso\'s half width (`chestHalf`); auraSpriteAcross is where the painted body stands along the view\'s right - one law for the holster and the cape; auraShiftAcross moves a cape there and back; the aura host moves the capes for the pass alone (Mac: "Why is the cape backwards on the side facing?") (mutants: the half a whole; the shift ignored; the cape never moved; never moved back)', () => {
+  const w = 60, h = 110, px = new Uint32Array(w * h), A = 0xff000000;
+  const fill = (x0, x1, y0, y1) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) px[y * w + x] = A; };
+  fill(30, 49, 0, 90); fill(36, 43, 91, 104);   // a torso 20 px wide, its middle at 39.5 (10 px right of the picture's), and a head
+  const m = spriteMarks(px, w, h, { arms: false });
+  assert.equal(m.chestHalf, 10, 'half the torso\'s 20 px');
+  assert.equal(m.chest, 10, 'its middle, 10 px off the picture\'s');
+  assert.equal(auraSpriteAcross({ base: 0, mpp: 0.02, marks: m, shift: 0.1 }), 0.1 + 10 * 0.02, 'the quad\'s offset and the chest, in metres');
+  assert.equal(auraSpriteAcross({ base: 0, mpp: 0.02, marks: { ...m, art: 2 }, shift: 0 }), 10 * 0.02, 'a mark is the picture\'s own pixels - never scaled by the art');
+  assert.equal(auraSpriteAcross(null), 0);
+  const wearer = { at: [1, 2, 3], across: 0.5 }, still = { at: [4, 5, 6] };
+  auraShiftAcross([wearer, still], [0, 0, 1], 1);
+  assert.deepEqual([wearer.at, still.at], [[1, 2, 3.5], [4, 5, 6]], 'along the view\'s right, the height kept; one with none stays');
+  auraShiftAcross([wearer, still], [0, 0, 1], -1);
+  assert.deepEqual(wearer.at, [1, 2, 3], 'and back');
+  const host = readFileSync(new URL('../../../src/scenes/auraHost.js', import.meta.url), 'utf8');
+  const on = host.indexOf('auraShiftAcross(auraDraw, acrossRight, 1)'), pass = host.indexOf('pass?.draw(auraDraw'), off = host.indexOf('auraShiftAcross(auraDraw, acrossRight, -1)');
+  assert.ok(on > 0 && pass > on && off > pass, 'scenes/auraHost.js: moved for the pass, and back after it');
+  assert.match(host, /w\.across = auraLookOf\(w\.aura\)\.mesh \? auraSpriteAcross\(/, 'a cape or wings alone - a ring at the feet stays at the feet');
 });
 
 test('BACK-HOLSTER hang: glued to the picture - turning the eye within one view changes nothing of the slant or the length (the picture\'s facing, portrayedYaw), and it centres on the painted body and grows with the sprite (mutants: the walk\'s own facing; marks ignored; the scale ignored)', () => {

@@ -38,8 +38,8 @@
   {
     "name": "BACK-HOLSTER-not-behind-the-back-x",
     "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
-    "old": " - fx * B.back * k",
-    "new": " + 0 * fx",
+    "old": " - fx * back + ",
+    "new": " + 0 * fx + ",
     "tests": [
       "test/player/eyeOfTheBeholder/backholster.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "BACK-HOLSTER-not-behind-the-back-z",
     "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
-    "old": " - fz * B.back * k",
-    "new": " + 0 * fz",
+    "old": " - fz * back + ",
+    "new": " + 0 * fz + ",
     "tests": [
       "test/player/eyeOfTheBeholder/backholster.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "BACK-HOLSTER-the-bias-away-from-the-eye",
     "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
-    "old": "(toEye[0] / el) * B.toward * k",
-    "new": "(toEye[0] / el) * -B.toward * k",
+    "old": "(toEye[0] / el) * nudge",
+    "new": "(toEye[0] / el) * -nudge",
     "tests": [
       "test/player/eyeOfTheBeholder/backholster.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "BACK-HOLSTER-mirrored-from-the-front-alone",
     "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
-    "old": "ORIENTATIONS) % ORIENTATIONS] < 2;",
-    "new": "ORIENTATIONS) % ORIENTATIONS] < 1;",
+    "old": "  l.mirror = rec < 2;",
+    "new": "  l.mirror = rec < 1;",
     "tests": [
       "test/player/eyeOfTheBeholder/backholster.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "BACK-HOLSTER-the-painted-body-ignored",
     "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
-    "old": "(fig.marks?.chest ?? fig.marks?.head ?? 0) * m",
-    "new": "0",
+    "old": "const across = auraSpriteAcross(fig), half",
+    "new": "const across = 0, half",
     "tests": [
       "test/player/eyeOfTheBeholder/backholster.test.js"
     ]
@@ -247,6 +247,87 @@
     "file": "src/net/peer/peerRiders.js",
     "old": "    holstersDrawn: () => slung,",
     "new": "    holstersDrawn: () => [],",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-SIDE-the-picture-depth-ignored",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": "const back = rec === 2 && Number.isFinite(half) ? half * fig.mpp + B.clear * k : B.back * k;",
+    "new": "const back = B.back * k;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-SIDE-the-nudge-one-way",
+    "file": "src/player/eyeOfTheBeholder/eotbHolster.js",
+    "old": "const nudge = (rec >= 3 ? B.nudge : -B.nudge) * k;",
+    "new": "const nudge = B.nudge * k;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-SIDE-the-half-a-whole",
+    "file": "src/render/armoryPose.js",
+    "old": "if (run) { sum += run.wd / 2; n++; }",
+    "new": "if (run) { sum += run.wd; n++; }",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-CAPE-the-shift-ignored",
+    "file": "src/render/auraRing.js",
+    "old": "  ? (Number.isFinite(fig.shift) ? fig.shift : 0) + (fig.marks?.chest ?? fig.marks?.head ?? 0) * fig.mpp : 0);",
+    "new": "  ? (fig.marks?.chest ?? fig.marks?.head ?? 0) * fig.mpp : 0);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-CAPE-a-mark-scaled-by-the-art",
+    "file": "src/render/auraRing.js",
+    "old": "(fig.marks?.chest ?? fig.marks?.head ?? 0) * fig.mpp : 0);",
+    "new": "(fig.marks?.chest ?? fig.marks?.head ?? 0) * fig.mpp * (fig.marks?.art ?? 1) : 0);",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-CAPE-never-back",
+    "file": "src/render/auraRing.js",
+    "old": "const a = Number.isFinite(w?.across) ? w.across * sign : 0;",
+    "new": "const a = Number.isFinite(w?.across) ? w.across : 0;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-CAPE-the-host-never-moves-it",
+    "file": "src/scenes/auraHost.js",
+    "old": "        auraShiftAcross(auraDraw, acrossRight, 1);\n",
+    "new": "\n",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-CAPE-the-host-never-moves-it-back",
+    "file": "src/scenes/auraHost.js",
+    "old": "        auraShiftAcross(auraDraw, acrossRight, -1);\n",
+    "new": "\n",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backholster.test.js"
+    ]
+  },
+  {
+    "name": "BACK-HOLSTER-CAPE-a-ring-moved-too",
+    "file": "src/scenes/auraHost.js",
+    "old": "w.across = auraLookOf(w.aura).mesh ? auraSpriteAcross(",
+    "new": "w.across = true ? auraSpriteAcross(",
     "tests": [
       "test/player/eyeOfTheBeholder/backholster.test.js"
     ]

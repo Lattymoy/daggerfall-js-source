@@ -4,9 +4,9 @@
 // The picture is the weapon's own paper-doll art, loaded at run time from the player's data, stood upright.
 // It hangs on a line across the back, right shoulder to left hip, turned with the picture's facing (portrayedYaw), so
 // it snaps with the eight views. From behind it slants one way, from the front the other way and mirrored, from the
-// side it stands upright and shorter. From the front it stands behind the body's card, whose depth hides it.
+// side it stands upright, shorter, just past the painted back. Except from behind it stands behind the body's card.
 
-import { EOTB_FIGURE } from '../../render/auraRing.js';
+import { EOTB_FIGURE, auraSpriteAcross } from '../../render/auraRing.js';
 import { RECORD_OFFSETS, ORIENTATIONS, portrayedYaw } from './eotbBillboard.js';
 import { weaponSkillUsed } from '../../characters/weapons.js';
 import { SKILLS } from '../../systems/skills.js';
@@ -20,10 +20,10 @@ import { itemIconColor32, itemIconKey } from '../../ui/item/itemIconColor32.js';
 export const HOLSTER_HAND_SLOT = 19;
 
 /** The hang, on a figure the sets' size (EOTB_FIGURE: 1.8 m, its shoulders at row 86). `tilt` off the spine toward the
- *  right shoulder; `back` behind the body's middle, past a side view's painted back; `over` the share of the weapon's
- *  height over the shoulder line; `toward` the eye, so from the side, edge-on to the card, it lies over the back's edge
- *  as a strap would - from the front `back` still stands it behind the card. */
-export const BACK_HOLSTER = Object.freeze({ tilt: 35 * Math.PI / 180, back: 0.16, over: 0.25, toward: 0.03 });
+ *  right shoulder; `back` behind the body's middle; `clear` past the painted back in a side view (the picture's own
+ *  depth, spriteMarks' chestHalf); `over` the share of the weapon's height over the shoulder line; `nudge` toward the
+ *  eye where the eye sees the back, else away, so from the front and the side the card covers it where they meet. */
+export const BACK_HOLSTER = Object.freeze({ tilt: 35 * Math.PI / 180, back: 0.16, clear: 0.03, over: 0.25, nudge: 0.03 });
 /** A weapon picture's metres a pixel: the paper doll's scale (a 140 px claymore, a 174 px staff). */
 export const PAPERDOLL_MPP = 0.01;
 /** How many weapon pictures a store keeps uploaded - one a weapon seen; the least recently asked goes first. */
@@ -213,13 +213,17 @@ export function hangSpriteHolster(l, fig, view, feet, eye, camRight, art) {
   const B = BACK_HOLSTER, m = fig.mpp * (fig.marks?.art > 0 ? fig.marks.art : 1), k = m / EOTB_FIGURE.mpp;
   const fx = Math.sin(yaw), fz = Math.cos(yaw), rx = fz, rz = -fx;   // the picture's forward, and its right
   const L = art.h * k, st = Math.sin(B.tilt), ct = Math.cos(B.tilt);
-  // the line's middle: on the painted body's middle across the card, behind the body, its upper end over the shoulders
-  const across = (fig.shift ?? 0) + (fig.marks?.chest ?? fig.marks?.head ?? 0) * m;
+  const rec = RECORD_OFFSETS[((view % ORIENTATIONS) + ORIENTATIONS) % ORIENTATIONS];
+  // the line's middle: on the painted body's middle across the card (the cape's law), behind the body - from the side
+  // just past its painted back, as deep as the picture draws it - its upper end over the shoulders
+  const across = auraSpriteAcross(fig), half = fig.marks?.chestHalf;
+  const back = rec === 2 && Number.isFinite(half) ? half * fig.mpp + B.clear * k : B.back * k;
+  const nudge = (rec >= 3 ? B.nudge : -B.nudge) * k;
   const top = fig.base + EOTB_FIGURE.shoulder * m + B.over * L * ct;
   const el = Math.hypot(toEye[0], toEye[2]) || 1;
-  const cx = feet[0] + camRight[0] * across - fx * B.back * k + (toEye[0] / el) * B.toward * k;
+  const cx = feet[0] + camRight[0] * across - fx * back + (toEye[0] / el) * nudge;
   const cy = feet[1] + top - 0.5 * L * ct;
-  const cz = feet[2] + camRight[2] * across - fz * B.back * k + (toEye[2] / el) * B.toward * k;
+  const cz = feet[2] + camRight[2] * across - fz * back + (toEye[2] / el) * nudge;
   // the line laid into the view plane (the view's right, the world's up): its slant and its length as seen
   const dx = (rx * st) * camRight[0] + (rz * st) * camRight[2], dy = ct;
   const len = Math.hypot(dx, dy), ax = dx / len, ay = dy / len;
@@ -229,8 +233,7 @@ export function hangSpriteHolster(l, fig, view, feet, eye, camRight, art) {
   l.w = art.w * k; l.fullH = L; l.h = L * len;
   l.origin[0] = cx - up[0] * l.h * 0.5; l.origin[1] = cy - up[1] * l.h * 0.5; l.origin[2] = cz - up[2] * l.h * 0.5;
   l.mid[0] = cx; l.mid[1] = cy; l.mid[2] = cz;
-  // seen from the front or its three-quarter the weapon shows its other face
-  l.mirror = RECORD_OFFSETS[((view % ORIENTATIONS) + ORIENTATIONS) % ORIENTATIONS] < 2;
+  l.mirror = rec < 2;   // seen from the front or its three-quarter the weapon shows its other face
   l.archive = art.archive ?? null;
   return l;
 }
