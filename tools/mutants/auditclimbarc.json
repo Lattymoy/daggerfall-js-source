@@ -337,7 +337,7 @@
   {
     "name": "F5-the-semi-implicit-spring",
     "file": "src/player/climb/climbFeel.js",
-    "old": "  const w = Math.sqrt(k), y = x - target, e = Math.exp(-w * dt), c = v + w * y;\n  return [target + (y + c * dt) * e, (v - w * c * dt) * e];",
+    "old": "  const w = Math.sqrt(k),\n    y = x - target,\n    e = Math.exp(-w * dt),\n    c = v + w * y;\n  return [target + (y + c * dt) * e, (v - w * c * dt) * e];",
     "new": "  const c = 2 * Math.sqrt(k);\n  v += (-k * (x - target) - c * v) * dt;\n  x += v * dt;\n  return [x, v];",
     "tests": [
       "test/systems/auditclimbarc.test.js"
@@ -346,8 +346,8 @@
   {
     "name": "F5-a-long-frame-cut-to-1/20",
     "file": "src/player/climb/climbFeel.js",
-    "old": "dt = Math.min(Math.max(dt, 0), 0.25);",
-    "new": "dt = Math.min(Math.max(dt, 0), 1 / 20);",
+    "old": "    dt = Math.min(Math.max(dt, 0), 0.25); // AUDIT CLIMB-ARC nit: the exact springs are stable at any step - only a stall is cut",
+    "new": "    dt = Math.min(Math.max(dt, 0), 1 / 20); // AUDIT CLIMB-ARC nit: the exact springs are stable at any step - only a stall is cut",
     "tests": [
       "test/systems/auditclimbarc.test.js"
     ]
@@ -364,8 +364,8 @@
   {
     "name": "F9-no-dip-at-the-leap's-hold",
     "file": "src/player/climb/climbFeel.js",
-    "old": "        if (this.move?.kind === 'leap') this._dip(this.move.speed ?? 0);   // AUDIT CLIMB-ARC F9: the leap lands on its hold\n",
-    "new": "",
+    "old": "        if (this.move?.kind === 'leap') this._dip(this.move.speed ?? 0); // AUDIT CLIMB-ARC F9: the leap lands on its hold\n        break;",
+    "new": "        break;",
     "tests": [
       "test/systems/auditclimbarc.test.js"
     ]
@@ -391,8 +391,8 @@
   {
     "name": "F3-the-feel-reads-the-physics-feet",
     "file": "src/player/climb/climbFeel.js",
-    "old": "    const p = m.climbTrackPos?.() ?? m.pos;   // AUDIT CLIMB-ARC F3/F8",
-    "new": "    const p = m.pos;   // AUDIT CLIMB-ARC F3/F8",
+    "old": "    const p = m.climbTrackPos?.() ?? m.pos; // AUDIT CLIMB-ARC F3/F8: the frame's own way, never a carry's",
+    "new": "    const p = m.pos; // AUDIT CLIMB-ARC F3/F8: the frame's own way, never a carry's",
     "tests": [
       "test/systems/auditclimbarc.test.js"
     ]
@@ -400,8 +400,8 @@
   {
     "name": "F3/F8-the-sounds-read-the-physics-feet",
     "file": "src/player/climb/climbSounds.js",
-    "old": "    const p = m.climbTrackPos?.() ?? m.pos;   // AUDIT CLIMB-ARC F3/F8",
-    "new": "    const p = m.pos;   // AUDIT CLIMB-ARC F3/F8",
+    "old": "    const p = m.climbTrackPos?.() ?? m.pos; // AUDIT CLIMB-ARC F3/F8: the frame's own way, never a carry's",
+    "new": "    const p = m.pos; // AUDIT CLIMB-ARC F3/F8: the frame's own way, never a carry's",
     "tests": [
       "test/systems/auditclimbarc.test.js"
     ]

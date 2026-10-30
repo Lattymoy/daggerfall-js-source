@@ -56,8 +56,8 @@
   {
     "name": "CLIMB6-climb-foot-phase-same-side",
     "file": "src/player/climb/climbPose.js",
-    "old": "s === 'R' ? 0.75 : 0.25, POSE.CLIMB_DUTY",
-    "new": "s === 'R' ? 0.25 : 0.75, POSE.CLIMB_DUTY",
+    "old": "        s === 'R' ? 0.75 : 0.25,",
+    "new": "        s === 'R' ? 0.25 : 0.75,",
     "tests": [
       "test/player/climb/climb6.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "CLIMB6-hang-legs-short",
     "file": "src/player/climb/climbPose.js",
-    "old": "HANG_LEG: 0.96,",
-    "new": "HANG_LEG: 0.5,",
+    "old": "  HANG_LEG: 0.96, // a hang's legs let out to this share of their length (the knees a little bent)...",
+    "new": "  HANG_LEG: 0.5, // a hang's legs let out to this share of their length (the knees a little bent)...",
     "tests": [
       "test/player/climb/climb6.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "CLIMB6-shimmy-leader-swapped",
     "file": "src/player/climb/climbPose.js",
-    "old": "s === 'R' ? span / 2 : 1.5 * span, POSE.SHIMMY_REACH",
-    "new": "s === 'R' ? 1.5 * span : span / 2, POSE.SHIMMY_REACH",
+    "old": "      const g = shimmyGait(this.travel, stride, s === 'R' ? span / 2 : 1.5 * span, POSE.SHIMMY_REACH * span);",
+    "new": "      const g = shimmyGait(this.travel, stride, s === 'R' ? 1.5 * span : span / 2, POSE.SHIMMY_REACH * span);",
     "tests": [
       "test/player/climb/climb6.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "CLIMB6-shimmy-bands-together",
     "file": "src/player/climb/climbPose.js",
-    "old": "s === 'R' ? span / 2 : 1.5 * span, POSE.SHIMMY_REACH",
-    "new": "s === 'R' ? span / 2 : span / 2, POSE.SHIMMY_REACH",
+    "old": "      const g = shimmyGait(this.travel, stride, s === 'R' ? span / 2 : 1.5 * span, POSE.SHIMMY_REACH * span);",
+    "new": "      const g = shimmyGait(this.travel, stride, s === 'R' ? span / 2 : span / 2, POSE.SHIMMY_REACH * span);",
     "tests": [
       "test/player/climb/climb6.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "CLIMB6-shimmy-reach-whole-turn",
     "file": "src/player/climb/climbPose.js",
-    "old": "SHIMMY_REACH: 0.8,",
-    "new": "SHIMMY_REACH: 1.2,",
+    "old": "  SHIMMY_REACH: 0.8, // the share of a hand's turn (a span of travel) it is off the stone - both hold the rest of it",
+    "new": "  SHIMMY_REACH: 1.2, // the share of a hand's turn (a span of travel) it is off the stone - both hold the rest of it",
     "tests": [
       "test/player/climb/climb6.test.js"
     ]
@@ -200,7 +200,7 @@
   {
     "name": "CLIMB6-settle-follows-gait-going-on",
     "file": "src/player/climb/climbPose.js",
-    "old": "    else if (sw >= st.prev) st.v = st.prev < 1 ? st.v + (1 - st.v) * (sw - st.prev) / (1 - st.prev) : sw;",
+    "old": "    else if (sw >= st.prev) st.v = st.prev < 1 ? st.v + ((1 - st.v) * (sw - st.prev)) / (1 - st.prev) : sw;",
     "new": "    else if (sw >= st.prev) st.v = sw;",
     "tests": [
       "test/player/climb/climb6.test.js"
@@ -209,7 +209,7 @@
   {
     "name": "CLIMB6-settle-follows-gait-going-back",
     "file": "src/player/climb/climbPose.js",
-    "old": "    else st.v = st.prev > 0 ? st.v * sw / st.prev : sw;",
+    "old": "    else st.v = st.prev > 0 ? (st.v * sw) / st.prev : sw;",
     "new": "    else st.v = sw;",
     "tests": [
       "test/player/climb/climb6.test.js"
@@ -218,8 +218,8 @@
   {
     "name": "CLIMB6-settle-finished-back-to-the-anchor",
     "file": "src/player/climb/climbPose.js",
-    "old": "    if (sw <= 0) { st.v = 0; st.cycle = null; return 0; }",
-    "new": "    if (sw <= 0 || (!moving && st.v >= 1)) { st.v = 0; st.cycle = null; return 0; }",
+    "old": "    if (sw <= 0) {",
+    "new": "    if (sw <= 0 || (!moving && st.v >= 1)) {",
     "tests": [
       "test/player/climb/climb6.test.js"
     ]

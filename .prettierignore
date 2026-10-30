@@ -22,6 +22,10 @@
 /src/net/sea/*/
 !/src/net/staffEvent/
 /src/net/staffEvent/*/
+!/src/player/
+/src/player/*
+!/src/player/climb/
+/src/player/climb/*/
 !/src/poi/
 /src/poi/*/
 !/src/poi/uv/

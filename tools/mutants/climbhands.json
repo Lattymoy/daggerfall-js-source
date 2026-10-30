@@ -22,8 +22,8 @@
   {
     "name": "CLIMBHANDS-snapshot-never-classic",
     "file": "src/player/climb/climbPose.js",
-    "old": "    classic,   // CLIMB-HANDS",
-    "new": "    classic: false,   // CLIMB-HANDS",
+    "old": "    classic, // CLIMB-HANDS: DFU's own climb - the sprite lane keeps WeaponManager's empty screen for it (combat/climbHands.js)",
+    "new": "    classic: false, // CLIMB-HANDS: DFU's own climb - the sprite lane keeps WeaponManager's empty screen for it (combat/climbHands.js)",
     "tests": [
       "test/player/climb/climbhands.test.js"
     ]
@@ -445,8 +445,8 @@
   {
     "name": "AUDIT-CLIMBHANDS-pose-restarts-every-height",
     "file": "src/player/climb/climbPose.js",
-    "old": "!(Math.abs(c.lipY - this.hangLip) <= PARKOUR_LIP_FOLLOW)",
-    "new": "this.hangLip !== c.lipY",
+    "old": "    if (this.prevMode !== 'hang' || !(Math.abs(c.lipY - this.hangLip) <= PARKOUR_LIP_FOLLOW)) {",
+    "new": "    if (this.prevMode !== 'hang' || this.hangLip !== c.lipY) {",
     "tests": [
       "test/player/climb/auditclimbhands.test.js"
     ]
@@ -674,8 +674,8 @@
   {
     "name": "AUDIT-CLIMBHANDS-pose-corner-right-leads",
     "file": "src/player/climb/climbPose.js",
-    "old": "const way = toward && m.from ? Math.sign((toward[0] - m.from[0]) * was.right[0] + (toward[2] - m.from[2]) * was.right[2]) || 1 : 1;",
-    "new": "const way = 1;",
+    "old": "    const way =\n      toward && m.from\n        ? Math.sign((toward[0] - m.from[0]) * was.right[0] + (toward[2] - m.from[2]) * was.right[2]) || 1\n        : 1;",
+    "new": "    const way = 1;",
     "tests": [
       "test/player/climb/auditclimbhands.test.js"
     ]

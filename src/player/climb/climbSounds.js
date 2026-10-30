@@ -45,61 +45,74 @@ export const CLIMB_SFX = Object.freeze({
   crumble: Object.freeze(['climb:crumble']),
 });
 /** Each key's file under public/sfx (`climb:grab-1` -> climb-grab-1.wav). */
-export const CLIMB_SFX_FILES = Object.freeze(Object.fromEntries(
-  Object.values(CLIMB_SFX).flat().map((key) => [key, `${key.replace(':', '-')}.wav`]),
-));
+export const CLIMB_SFX_FILES = Object.freeze(
+  Object.fromEntries(
+    Object.values(CLIMB_SFX)
+      .flat()
+      .map((key) => [key, `${key.replace(':', '-')}.wav`]),
+  ),
+);
 
 /** The constants of the climb's sounds: volumes (the bus's 0..1 - the stride plays at 0.7), pitches, times. */
 export const CLIMB_SOUND = Object.freeze({
-  GRAB: 0.6,               // a hand taking a lip
-  CATCH_BASE: 0.5,         // both hands and the body, at a standstill...
-  CATCH_PER_SPEED: 0.06,   // ...and per m/s it came to the lip at
+  GRAB: 0.6, // a hand taking a lip
+  CATCH_BASE: 0.5, // both hands and the body, at a standstill...
+  CATCH_PER_SPEED: 0.06, // ...and per m/s it came to the lip at
   CATCH_MAX: 0.95,
-  HARD_CATCH_SPEED: 5,     // m/s: a catch this fast is a fall caught - it wrings a grunt
-  STEP: 0.34,              // a hand placed, hand over hand
-  SHIMMY: 0.26,            // a hand re-taking the lip along it
-  SHIMMY_PITCH: 1.08,      // ...fingers, a little higher
-  FOOT: 0.22,              // a boot finding its hold
-  FOOT_PITCH: 0.72,        // ...a boot, lower
-  SCRAPE: 0.4,             // boots scrabbling
-  PULL: 0.55,              // the haul over a lip
-  STEP_UP_RISE: 0.7,       // m: a mantle lower than this is a step-up - a hand and a scuff, no haul
-  HIGH_PULL_RISE: 1.2,     // m: a mantle this high is the whole haul
-  WHOOSH: 0.42,            // a body through the air
-  CRUMBLE: 0.5,            // the grip failing
-  TRICKLE: 0.3,            // ...and the grit again while it holds
+  HARD_CATCH_SPEED: 5, // m/s: a catch this fast is a fall caught - it wrings a grunt
+  STEP: 0.34, // a hand placed, hand over hand
+  SHIMMY: 0.26, // a hand re-taking the lip along it
+  SHIMMY_PITCH: 1.08, // ...fingers, a little higher
+  FOOT: 0.22, // a boot finding its hold
+  FOOT_PITCH: 0.72, // ...a boot, lower
+  SCRAPE: 0.4, // boots scrabbling
+  PULL: 0.55, // the haul over a lip
+  STEP_UP_RISE: 0.7, // m: a mantle lower than this is a step-up - a hand and a scuff, no haul
+  HIGH_PULL_RISE: 1.2, // m: a mantle this high is the whole haul
+  WHOOSH: 0.42, // a body through the air
+  CRUMBLE: 0.5, // the grip failing
+  TRICKLE: 0.3, // ...and the grit again while it holds
   TRICKLE_MIN_S: 1.6,
   TRICKLE_MAX_S: 3.4,
-  LET_GO: 0.22,            // the hands leaving the stone
-  SLIP: 0.55,              // the grip gone: the boots scrabbling
-  PITCH_JITTER: 0.06,      // every clip's pitch moved by up to this, either way
-  STRAIN: 0.6,             // the effort's grunt (the player's attack voice)...
-  STRAIN_GAP_S: 3,         // ...never within this of the last
+  LET_GO: 0.22, // the hands leaving the stone
+  SLIP: 0.55, // the grip gone: the boots scrabbling
+  PITCH_JITTER: 0.06, // every clip's pitch moved by up to this, either way
+  STRAIN: 0.6, // the effort's grunt (the player's attack voice)...
+  STRAIN_GAP_S: 3, // ...never within this of the last
 });
 
 // ---- the clips' loading: once, the first frame the sounds are on ----------------------------------------------------
 
-export const climbSfxUrl = (file) => new URL(`sfx/${file}`, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href;
+export const climbSfxUrl = (file) =>
+  new URL(`sfx/${file}`, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href;
 
 let _install = null;
 /** Register the eleven clips, once. Answers how many took; a clip that will not load is silence, never a stopped climb. */
 export function installClimbSounds(audio, { fetchBytes = null } = {}) {
   if (!audio?.registerSound) return Promise.resolve(0);
   return (_install ??= (async () => {
-    const load = fetchBytes ?? (async (file) => {
-      const r = await fetch(climbSfxUrl(file));
-      if (!r.ok) throw new Error(`${file}: ${r.status}`);
-      return new Uint8Array(await r.arrayBuffer());
-    });
+    const load =
+      fetchBytes ??
+      (async (file) => {
+        const r = await fetch(climbSfxUrl(file));
+        if (!r.ok) throw new Error(`${file}: ${r.status}`);
+        return new Uint8Array(await r.arrayBuffer());
+      });
     let n = 0;
     for (const [key, file] of Object.entries(CLIMB_SFX_FILES)) {
-      try { if (await audio.registerSound(key, await load(file))) n++; } catch { /* the climb goes on, silently */ }
+      try {
+        if (await audio.registerSound(key, await load(file))) n++;
+      } catch {
+        /* the climb goes on, silently */
+      }
     }
     return n;
   })());
 }
 /** Test seam. */
-export function _resetClimbSounds() { _install = null; }
+export function _resetClimbSounds() {
+  _install = null;
+}
 
 /** One of `sound`'s clips - never `prev` while it has another - and `pitch` moved by up to the jitter either way:
  *  { key, pitch }, or null for a sound with no clips. The local climb's and the peers' one choice (net/peer/peerClimb.js). */
@@ -127,9 +140,16 @@ export function moveCues(e, from) {
   const cues = [];
   switch (e.kind) {
     case 'catch':
-    case 'reach': {   // AUDIT CLIMB-ARC nit: a reach round a cornice takes its lip as a catch does - and dips the eye as one, so it sounds as one
+    case 'reach': {
+      // AUDIT CLIMB-ARC nit: a reach round a cornice takes its lip as a catch does - and dips the eye as one, so it sounds as one
       const speed = e.speed ?? 0;
-      cues.push([0, 'catch', Math.min(C.CATCH_MAX, C.CATCH_BASE + C.CATCH_PER_SPEED * speed), 1, speed > C.HARD_CATCH_SPEED ? 0.5 : 0]);
+      cues.push([
+        0,
+        'catch',
+        Math.min(C.CATCH_MAX, C.CATCH_BASE + C.CATCH_PER_SPEED * speed),
+        1,
+        speed > C.HARD_CATCH_SPEED ? 0.5 : 0,
+      ]);
       break;
     }
     case 'mantle':
@@ -138,7 +158,13 @@ export function moveCues(e, from) {
         cues.push([split, 'scrape', C.SCRAPE * 0.6, 1, 0]);
       } else {
         if (!from) cues.push([0, 'grab', C.GRAB * 0.9, 1, 0]);
-        cues.push([0.06, 'pull', C.PULL * (rise >= C.HIGH_PULL_RISE ? 1 : 0.7), 1, from === 'hang' ? 0.5 : rise >= 1.4 ? 0.35 : 0]);
+        cues.push([
+          0.06,
+          'pull',
+          C.PULL * (rise >= C.HIGH_PULL_RISE ? 1 : 0.7),
+          1,
+          from === 'hang' ? 0.5 : rise >= 1.4 ? 0.35 : 0,
+        ]);
         cues.push([split, 'scrape', C.SCRAPE * 0.75, 1, 0]);
       }
       break;
@@ -156,9 +182,9 @@ export function moveCues(e, from) {
       cues.push([0.7, 'step', C.SHIMMY * 1.15, C.SHIMMY_PITCH, 0]);
       break;
     case 'leap':
-      cues.push([0, 'step', C.STEP, 0.75, rise > 0.3 ? 0.6 : 0.4]);   // the push off
+      cues.push([0, 'step', C.STEP, 0.75, rise > 0.3 ? 0.6 : 0.4]); // the push off
       cues.push([0.02, 'whoosh', C.WHOOSH, 1, 0]);
-      cues.push([1, 'grab', C.GRAB * 1.2, 1, 0]);                     // the hands taking the far hold
+      cues.push([1, 'grab', C.GRAB * 1.2, 1, 0]); // the hands taking the far hold
       break;
     case 'wallrun':
       cues.push([0, 'whoosh', C.WHOOSH * 0.5, 0.9, 0.35]);
@@ -167,7 +193,8 @@ export function moveCues(e, from) {
       cues.push([0.54, 'step', C.FOOT * 1.8, C.FOOT_PITCH * 1.03, 0]);
       cues.push([1, 'grab', C.GRAB * 1.1, 1, 0]);
       break;
-    default: break;
+    default:
+      break;
   }
   return cues.sort((a, b) => a[0] - b[0]);
 }
@@ -188,7 +215,7 @@ export class ClimbSounds {
     this.rand = rand;
     this.on = on;
     this.install = install;
-    this.last = new Map();   // sound -> the key last played (never twice running)
+    this.last = new Map(); // sound -> the key last played (never twice running)
     this.reset();
   }
 
@@ -196,9 +223,9 @@ export class ClimbSounds {
   reset() {
     this.t = 0;
     this.prev = null;
-    this.cues = null;        // the move in flight's cues not yet played
-    this.climbPhase = 0;     // reaches climbed (the camera's FEEL.REACH)
-    this.shimmyPhase = 0;    // spans moved along the lip
+    this.cues = null; // the move in flight's cues not yet played
+    this.climbPhase = 0; // reaches climbed (the camera's FEEL.REACH)
+    this.shimmyPhase = 0; // spans moved along the lip
     this.trickleAt = Infinity;
     this.lastStrain = -Infinity;
   }
@@ -206,7 +233,11 @@ export class ClimbSounds {
   /** One render frame, after the motor moved. `m` the motor (climbFeel's reading of it). */
   update(dt, m) {
     this.t += Math.min(Math.max(dt, 0), 1 / 20);
-    if (!m || !this.on()) { this.cues = null; this.prev = null; return; }
+    if (!m || !this.on()) {
+      this.cues = null;
+      this.prev = null;
+      return;
+    }
     if (this.install && this.audio) installClimbSounds(this.audio);
     const events = m.climbEvents ?? [];
     const live = m.climbMove;
@@ -223,27 +254,28 @@ export class ClimbSounds {
               this._play('crumble', CLIMB_SOUND.CRUMBLE);
               this._strain(0.7, m);
             } else {
-              this._play('step', CLIMB_SOUND.LET_GO, 1.15);   // the hands leaving the stone
+              this._play('step', CLIMB_SOUND.LET_GO, 1.15); // the hands leaving the stone
             }
           }
           this.trickleAt = Infinity;
           break;
         case 'move':
-          this._flush(1);   // a move chained on: the last one ended - what it still owed is due
+          this._flush(1); // a move chained on: the last one ended - what it still owed is due
           this.cues = moveCues(e, from);
           from = null;
           this._due(0, m);
           break;
         case 'hold':
-          this.climbPhase = 0; this.shimmyPhase = 0;
+          this.climbPhase = 0;
+          this.shimmyPhase = 0;
           if (this.cues && !live) {
-            this._flush(1, m);   // the move's arrival: its last cues are its own sound of the hold
+            this._flush(1, m); // the move's arrival: its last cues are its own sound of the hold
           } else {
-            this._play('grab', CLIMB_SOUND.GRAB * (e.mode === 'hang' ? 0.85 : 0.75));   // the hands onto the wall
+            this._play('grab', CLIMB_SOUND.GRAB * (e.mode === 'hang' ? 0.85 : 0.75)); // the hands onto the wall
           }
           break;
         case 'launch':
-          this._play('step', CLIMB_SOUND.STEP, 0.75);   // the push off
+          this._play('step', CLIMB_SOUND.STEP, 0.75); // the push off
           this._play('whoosh', CLIMB_SOUND.WHOOSH);
           this._strain(0.45, m);
           break;
@@ -251,7 +283,8 @@ export class ClimbSounds {
           this._play('crumble', CLIMB_SOUND.CRUMBLE);
           this.trickleAt = this.t + this._between(CLIMB_SOUND.TRICKLE_MIN_S, CLIMB_SOUND.TRICKLE_MAX_S);
           break;
-        default: break;
+        default:
+          break;
       }
     }
     // the move in flight: its cues as its clock reaches them; ended without a hold (onto a top, out of a vault), the rest
@@ -260,11 +293,19 @@ export class ClimbSounds {
       else this._flush(1, m);
     }
     // the hold's rhythm: hands and boots as the body moves on the wall
-    const p = m.climbTrackPos?.() ?? m.pos;   // AUDIT CLIMB-ARC F3/F8: the frame's own way, never a carry's
-    let dx = 0, dy = 0, dz = 0;
-    if (this.prev && p && m.onWall && !live) { dx = p[0] - this.prev[0]; dy = p[1] - this.prev[1]; dz = p[2] - this.prev[2]; }
+    const p = m.climbTrackPos?.() ?? m.pos; // AUDIT CLIMB-ARC F3/F8: the frame's own way, never a carry's
+    let dx = 0,
+      dy = 0,
+      dz = 0;
+    if (this.prev && p && m.onWall && !live) {
+      dx = p[0] - this.prev[0];
+      dy = p[1] - this.prev[1];
+      dz = p[2] - this.prev[2];
+    }
     this.prev = p && (m.onWall || live) ? [p[0], p[1], p[2]] : null;
-    if (Math.hypot(dx, dy, dz) > 1) { dx = dy = dz = 0; }   // a teleport (a recentre, a placement) is no travel
+    if (Math.hypot(dx, dy, dz) > 1) {
+      dx = dy = dz = 0;
+    } // a teleport (a recentre, a placement) is no travel
     if (m.onWall && !live) {
       if (m.hanging) {
         const n = m.wallNormal;
@@ -272,7 +313,8 @@ export class ClimbSounds {
         if (along > 1e-5) {
           const was = this.shimmyPhase;
           this.shimmyPhase += along / FEEL.SHIMMY_SPAN;
-          if (Math.floor(this.shimmyPhase) > Math.floor(was)) this._play('step', CLIMB_SOUND.SHIMMY, CLIMB_SOUND.SHIMMY_PITCH);
+          if (Math.floor(this.shimmyPhase) > Math.floor(was))
+            this._play('step', CLIMB_SOUND.SHIMMY, CLIMB_SOUND.SHIMMY_PITCH);
         }
       } else {
         const travel = Math.hypot(dx, dy, dz);
@@ -281,7 +323,8 @@ export class ClimbSounds {
           this.climbPhase += travel / FEEL.REACH;
           // a hand at every reach (the camera's roll crosses from one hand to the other there), a boot half a reach on
           if (Math.floor(this.climbPhase) > Math.floor(was)) this._play('step', CLIMB_SOUND.STEP);
-          if (Math.floor(this.climbPhase - 0.5) > Math.floor(was - 0.5)) this._play('step', CLIMB_SOUND.FOOT, CLIMB_SOUND.FOOT_PITCH);
+          if (Math.floor(this.climbPhase - 0.5) > Math.floor(was - 0.5))
+            this._play('step', CLIMB_SOUND.FOOT, CLIMB_SOUND.FOOT_PITCH);
         }
       }
       // the grip failing: the grit again, every few seconds while it holds
@@ -328,8 +371,10 @@ export class ClimbSounds {
     const voice = this.strain(this.rand);
     if (!voice || !(voice.clip >= 0)) return;
     this.lastStrain = this.t;
-    this.audio?.playOneShot?.(voice.clip, CLIMB_SOUND.STRAIN, 1 + (voice.pitchLift ?? 0));   // AUDIT 58: the lift spent, as every voice site spends it
+    this.audio?.playOneShot?.(voice.clip, CLIMB_SOUND.STRAIN, 1 + (voice.pitchLift ?? 0)); // AUDIT 58: the lift spent, as every voice site spends it
   }
 
-  _between(a, b) { return a + (b - a) * this.rand(); }
+  _between(a, b) {
+    return a + (b - a) * this.rand();
+  }
 }

@@ -267,8 +267,8 @@
   {
     "name": "TECHFX1-the-view-unapplied",
     "file": "src/player/climb/climbFeel.js",
-    "old": "      if (this.tech) applyClimbView(view, this.tech);\n",
-    "new": "",
+    "old": "      if (this.tech) applyClimbView(view, this.tech);\n      return view;",
+    "new": "      return view;",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -276,8 +276,8 @@
   {
     "name": "TECHFX1-first-person-ignored",
     "file": "src/player/climb/climbFeel.js",
-    "old": "this.tech = firstPerson ? techniqueView() : null;",
-    "new": "this.tech = techniqueView();",
+    "old": "      this.tech = firstPerson ? techniqueView() : null;",
+    "new": "      this.tech = techniqueView();",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -285,8 +285,8 @@
   {
     "name": "TECHFX1-the-lens-unadded",
     "file": "src/player/climb/climbFeel.js",
-    "old": "fovRad() { return (((this.fx?.fov ?? 0) + techniqueView().fov) * Math.PI) / 180; }",
-    "new": "fovRad() { return ((this.fx?.fov ?? 0) * Math.PI) / 180; }",
+    "old": "      return (((this.fx?.fov ?? 0) + techniqueView().fov) * Math.PI) / 180;",
+    "new": "      return ((this.fx?.fov ?? 0) * Math.PI) / 180;",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -294,8 +294,8 @@
   {
     "name": "TECHFX1-the-sky-pitch-dropped",
     "file": "src/player/climb/climbFeel.js",
-    "old": "pitch() { return (this.applied?.pitch ?? 0) + (this.tech?.pitch ?? 0); }",
-    "new": "pitch() { return this.applied?.pitch ?? 0; }",
+    "old": "      return (this.applied?.pitch ?? 0) + (this.tech?.pitch ?? 0);",
+    "new": "      return this.applied?.pitch ?? 0;",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -303,8 +303,8 @@
   {
     "name": "TECHFX1-AUDIT-held-with-the-body",
     "file": "src/player/climb/climbFeel.js",
-    "old": "      stepTechniqueFx(dt);\n      const m = player();\n      if (!m || held) return;\n",
-    "new": "      const m = player();\n      if (!m || held) return;\n      stepTechniqueFx(dt);\n",
+    "old": "      stepTechniqueFx(dt);\n      const m = player();\n      if (!m || held) return;",
+    "new": "      const m = player();\n      if (!m || held) return;\n      stepTechniqueFx(dt);",
     "tests": [
       "test/systems/techfx1.test.js",
       "test/systems/techfx1_audit.test.js"
@@ -486,8 +486,8 @@
   {
     "name": "TECHFX1-the-fold-eye-destructured",
     "file": "src/player/climb/climbFeel.js",
-    "old": "const e = fx.eye, ex = e[0], ey = e[1], ez = e[2];",
-    "new": "const [ex, ey, ez] = fx.eye;",
+    "old": "  const e = fx.eye,\n    ex = e[0],\n    ey = e[1],\n    ez = e[2]; // TECH-FX: read by index - a destructure made an iterator a frame (16 B, test/systems/techfx1.test.js)",
+    "new": "  const [ex, ey, ez] = fx.eye; // TECH-FX: read by index - a destructure made an iterator a frame (16 B, test/systems/techfx1.test.js)",
     "tests": [
       "test/systems/techfx1.test.js"
     ]
@@ -585,8 +585,8 @@
   {
     "name": "TECHFX1-AUDIT-the-host-reset-forgets-the-feel",
     "file": "src/player/climb/climbFeel.js",
-    "old": "sounds?.reset(); resetTechniqueFx(); this.fx",
-    "new": "sounds?.reset(); this.fx",
+    "old": "      resetTechniqueFx();\n      this.fx = null;",
+    "new": "      this.fx = null;",
     "tests": [
       "test/systems/techfx1.test.js",
       "test/systems/techfx1_audit.test.js"
