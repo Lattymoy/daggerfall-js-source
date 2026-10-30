@@ -255,5 +255,6 @@ its own level 75-100% of the time, in 4-13 seconds, so a lower party can grind a
 level, and an encounter is no pack.
 
 The heart's inner ring (`pveZones.js` `PARTY_ZONE_FROM`, 0.9 of the road to the Imperial City, wild and dungeons) is the
-party zone: its groups stand whole and the zone warns. A whole level 45 group beats one player and most pairs, and
-falls to three. Daggerfall Unity has no groups. The tests: `pve_grant.test.js`, `pve_population.test.js`.
+party zone: the owner, "they need to grind lvl 50 monsters in group as 45", "an area they have to group", "groups need
+to be able to do high packs". Every foe there stands whole at level 50 (`PARTY_FOE`: a level 45's health half again, its
+blow a quarter more) and the zone warns. Four level 45 players grind any group there, three sometimes, two never. Daggerfall Unity has no groups. The tests: `pve_grant.test.js`, `pve_population.test.js`.

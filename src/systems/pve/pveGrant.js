@@ -63,11 +63,22 @@ export const GROUP_SOLO_WEIGHT = 1.5;
 /** The pack share of group `g`: its members' health and blow over their template's, 1 where it already weighs no more. @param {any} g */
 export const packShare = (g) => Math.min(1, GROUP_SOLO_WEIGHT / Math.max(1e-9, groupWeight(g)));
 
-/** Member `i`'s template foe under grant `gr` at `table`: a camp's at its pack share, unless the zone is a party zone.
+/** GROUP-PARTY (the owner: "they need to grind lvl 50 monsters in group as 45", "so they have an area they have to
+ *  group", "groups need to be able to do high packs"): in the party zone every foe stands whole at level 50 - a level
+ *  45's health half again and its blow a quarter more. The simulator: four level 45 players grind any group there,
+ *  three sometimes, two never. */
+export const PARTY_FOE = Object.freeze({ level: 50, health: 1.5, damage: 1.25 });
+
+/** Member `i`'s template foe under grant `gr` at `table`: a camp's at its pack share; the party zone's whole, at PARTY_FOE.
  *  @param {{ k: string, s: number }} gr @param {number} i @param {any} table */
 export function grantTemplateFoe(gr, i, table) {
   const key = grantTemplateKey(gr, i, table);
-  if (!key || gr.k !== 'camp' || table?.zone?.party) return templateFoe(key);
+  if (key && table?.zone?.party) {
+    const t = TEMPLATE_BY_KEY.get(key), body = t ? SPECIES_BY_KEY.get(t.species)?.body : undefined;
+    if (!t || body == null) return null;
+    return Object.freeze({ key: t.key, name: t.name, mobile: body, ...templateStats({ ...t, pack: { health: PARTY_FOE.health, damage: PARTY_FOE.damage } }, 45), level: PARTY_FOE.level });
+  }
+  if (!key || gr.k !== 'camp') return templateFoe(key);
   const k = packShare(campGroup(gr, table));
   return templateFoe(key, { health: k, damage: k });
 }

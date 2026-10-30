@@ -177,6 +177,24 @@ test('GROUP-SOLO: a camp stands as one player\'s pack - every build grinds it at
   const camp = grant('camp', 5), whole = templateFoe(grantTemplateKey(camp, 0, orcs)), pack = grantTemplateFoe(camp, 0, orcs);
   assert.equal(pack.level, whole.level, 'a pack member keeps its level');
   assert.ok(pack.health < whole.health * 0.5 && pack.damage[1] < whole.damage[1] * 0.5);
-  assert.deepEqual(grantTemplateFoe(camp, 0, { ...orcs, zone: { ...orcs.zone, party: true } }), whole, 'the party zone keeps it whole');
+  const { PARTY_FOE } = await import('../../../src/systems/pve/pveGrant.js');
+  const party = { ...orcs, zone: { ...orcs.zone, party: true } }, big = grantTemplateFoe(camp, 0, party);
+  assert.deepEqual(PARTY_FOE, { level: 50, health: 1.5, damage: 1.25 });
+  assert.equal(big.level, 50, 'the party zone stands level 50');
+  assert.ok(big.health > whole.health * 1.2 && big.damage[1] > whole.damage[1], 'whole and past a level 45');
+  assert.equal(grantTemplateFoe(grant('encr', 77), 0, party).level, 50, 'an encounter there too');
   assert.deepEqual(grantTemplateFoe(grant('encr', 77), 0, orcs), templateFoe(grantTemplateKey(grant('encr', 77), 0, orcs)), 'an encounter is no pack');
+});
+
+test('GROUP-PARTY: level 50 groups in the party zone fall to four level 45 players, never to two', async () => {
+  const { PARTY_FOE } = await import('../../../src/systems/pve/pveGrant.js');
+  const { simMany, groupFoes } = await import('../../../src/systems/pve/pveSim.js');
+  const { buildAt } = await import('../../../src/systems/pve/pveBuilds.js');
+  const kinds = ['defender', 'melee', 'mage', 'archer', 'battlemage'];
+  for (const key of ['dread-band', 'reaver-band']) {
+    const foes = groupFoes(key).map((t) => ({ ...t, level: 45, pack: { health: PARTY_FOE.health, damage: PARTY_FOE.damage } }));
+    const win = (n) => simMany({ party: kinds.slice(0, n).map((k) => buildAt(k, 45)), foes, magicka: true }, 12).winRate;
+    assert.ok(win(4) >= 0.9 && win(5) >= 0.9, `${key}: four, five`);
+    assert.ok(win(2) === 0 && win(1) === 0, `${key}: two, one`);
+  }
 });

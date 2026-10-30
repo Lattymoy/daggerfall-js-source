@@ -175,8 +175,8 @@ export function groupProblems(g, byKey = TEMPLATE_BY_KEY) {
  * A template's own numbers: health and a blow's [min, max] from its level, category and roles - nothing else is read. Pure.
  * @param {MobTemplate} t
  */
-export function templateStats(t) {
-  const base = categoryStats(t.level, t.category);
+export function templateStats(t, level = t.level) {
+  const base = categoryStats(level, t.category);
   const s = roleShares(t.roles), h = s.health * (t.pack?.health ?? 1), d = s.damage * (t.pack?.damage ?? 1);   // GROUP-SOLO: a pack member's share
   return { level: base.level, category: base.category, health: Math.max(1, Math.round(base.health * h)),
     damage: /** @type {[number, number]} */ ([Math.max(1, Math.round(base.damage[0] * d)), Math.max(1, Math.round(base.damage[1] * d))]) };
