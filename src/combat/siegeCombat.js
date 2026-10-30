@@ -19,12 +19,13 @@
 //
 // Pure but for the one spell door (handed in for the pins), the stand-in and the rolls. Not a DFU member. Ledger A (EVERY
 // PALACE A SEAT's row).
+import { pvpCastNo } from './pvpDeclare.js';   // PVP-VITALS
 import { SIEGE_HIT } from '../net/siege/siegeRef.js';
 import { SIEGE_DMG_WIRE_MAX, PVP_ELEMENTS } from '../net/wire.js';
 import { duelSpellOf } from './duelCombat.js';
 import { applySpell } from '../systems/effects.js';
 import { pvpSpellScale } from './pvpTriangle.js';   // PVP-TRIANGLE
-import { pvpCritHarm } from './pvpSpellCrit.js';   // PVP-SPELL-CRIT
+import { pvpCritHarm, pvpCastHold } from './pvpSpellCrit.js';   // PVP-SPELL-CRIT, PVP-CAST-SKILL
 
 /** A blow's kind on the referee's wire: an arrow's a shaft's, anything else a swing's. */
 export const siegeBlowKind = (by) => (by === 'arrow' ? SIEGE_HIT.Shaft : SIEGE_HIT.Melee);
@@ -51,7 +52,7 @@ export const PVP_POISON_ELEMENT = 2;
 export const pvpSpellElement = (sp) => (Number.isInteger(sp?.element) && sp.element >= 0 && sp.element < PVP_ELEMENTS ? sp.element : PVP_ELEMENTS - 1);
 /** The one effect of `sp` that counts between players - its first, if it is a PvP family or a Heal Health - or null. */
 /** PVP-WARD: a harmful cast's frame to a duel's or the zone's referee - where I stood, its harm, its element. */
-export const pvpCastFrame = (p, harm, sp) => ({ p, d: siegeCastClamp(harm, false), el: pvpSpellElement(sp) });
+export const pvpCastFrame = (p, harm, sp) => ({ p, d: siegeCastClamp(harm, false), el: pvpSpellElement(sp), ...(pvpCastNo() > 0 ? { c: pvpCastNo() } : {}) });   // PVP-VITALS: the cast's number
 export function pvpFirstEffect(sp) {
   const e = Array.isArray(sp?.effects) ? sp.effects[0] : null;
   if (!e || !Number.isInteger(e.type)) return null;
@@ -84,5 +85,5 @@ export function siegeSpellNumbers(sp, level, standIn, caster = null, { apply = a
   if (harmful && !run({ ...harmful, rangeType: 0 }, { hurt: count('harm'), heal: none, drainFatigue: none, restoreFatigue: none, drainMagicka: none, restoreMagicka: none })) harm = 0;
   // its Heal Health (effects.js isHealHealth) landed as ALLY-CAST lands a gift - a self-cast (rangeType 0), no save rolled
   if (first?.type === 10 && !run({ ...sp, rangeType: 0, effects: [first] }, { hurt: none, heal: count('heal'), drainFatigue: none, restoreFatigue: none, drainMagicka: none, restoreMagicka: none })) heal = 0;
-  return { harm: Math.round(pvpCritHarm(harm, caster, rolls) * pvpSpellScale(level)), heal: Math.round(heal) };   // PVP-SPELL-CRIT, then PVP-TRIANGLE: a harm's
+  return { harm: Math.round(pvpCritHarm(caster ? Math.min(harm, pvpCastHold(caster)) : harm, caster, rolls) * pvpSpellScale(level)), heal: Math.round(heal) };   // PVP-CAST-SKILL, PVP-SPELL-CRIT, then PVP-TRIANGLE: a harm's
 }

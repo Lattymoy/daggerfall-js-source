@@ -36,7 +36,7 @@ import { ownWerewolfSkin } from '../../systems/ownGlyphs.js';   // SHADOW-FANG: 
 import { ARMOR_ENUM } from '../enemyEquipment.js';   // MW-D32
 import { loadFpsWeaponArt, drawFpsWeapon, fpsWeaponQuad, weaponTypeForItem, WEAPON_TYPES, fpLightingOn, WEAPON_FILE, plainWeaponType, isGunType, isPistoletType } from '../fpsWeapon.js';
 import { isHandWraps } from '../../characters/handWrapsIds.js';   // HAND-WRAPS: the fists' weapon
-import { spriteGlow, meshGlow } from '../../systems/weaponGlow.js';   // WEAPON-GLOW1: the held weapon's element, as each hand shows it
+import { spriteGlow, meshGlow, fistGlow } from '../../systems/weaponGlow.js';   // WEAPON-GLOW1: the held weapon's element, as each hand shows it
 import { loadThunderlockArt } from '../thunderlockArt.js';
 import { THUNDERLOCK_NUM_FRAMES } from '../../characters/weaponStates.js';   // THUNDERLOCK-ART2's audit: the cycle's length, never a literal six
 import { loadPistoletArt } from '../gun/pistoletArt.js';   // PISTOLET: the second gun's strip
@@ -53,7 +53,7 @@ import { installThunderlockSounds, SFX as TL_SFX } from '../../systems/thunderlo
 // separate component in DFU and a separate module here, drawn by the
 // same rig because this is the one surface every FPS-weapon host
 // already mounts - so wiring it here wires all four at once.
-import { fpsSpellCasting, loadSpellCastArt, drawSpellCastHands, magicAnimFilename, readiedHandsFrame, castReleaseS } from '../fpsSpellCasting.js';   // RSH1: the readied hands; RPT1026-MISC CAST-PACE: the spell's moment
+import { fpsSpellCasting, loadSpellCastArt, drawSpellCastHands, magicAnimFilename, readiedHandsFrame, castReleaseS, castEndS } from '../fpsSpellCasting.js';   // RSH1: the readied hands; RPT1026-MISC CAST-PACE: the spell's moment; MW-SHOT-PACE: the hands' end
 import { createClimbHands, climbLens } from '../climbHands.js';   // CLIMB-HANDS: the classic lane's hands on the wall; II: the lens they are pinned through
 import { fieldOfView } from '../../ui/viewSettings.js';   // CLIMB-HANDS II: the world's own field of view, the hands' lens
 // MW-D8: the classic sprite is still the DEFAULT and still the fallback,
@@ -919,11 +919,11 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   // was asked of: a hand changed later in the frame is asked again, never handed the last weapon's glow (or its sheet).
   let heldGlow = null, heldFor = null;
   const heldNow = () => playerWeapon.weapon ?? playerWeapon.wraps ?? null;   // HAND-WRAPS: a bare fist glows with its wraps
-  const askHeld = () => { heldFor = heldNow(); heldGlow = spriteGlow(heldFor); };
+  const askHeld = () => { heldFor = heldNow(); heldGlow = heldFor ? spriteGlow(heldFor) : fistGlow(); };   // ARMORY-FISTS: a bare fist the kit's weapon piece
   const glowOf = (item) => (item && item === heldFor ? heldGlow : spriteGlow(item));
   const heldGlowNow = () => { if (heldNow() !== heldFor) askHeld(); return heldGlow; };
   /** HAND-WRAPS (AUDIT C): a hand's glow - its weapon's, else the wraps its fist wears (the hand in use with none named). */
-  const handGlowOf = (hand) => { const item = hand ? playerWeapon.handItem(hand) : playerWeapon.weapon; if (item) return glowOf(item); const w = hand ? playerWeapon.wrapsOf(hand) : playerWeapon.wraps; return w ? glowOf(w) : null; };
+  const handGlowOf = (hand) => { const item = hand ? playerWeapon.handItem(hand) : playerWeapon.weapon; if (item) return glowOf(item); const w = hand ? playerWeapon.wrapsOf(hand) : playerWeapon.wraps; return w ? glowOf(w) : fistGlow(); };   // ARMORY-FISTS
   /** HAND-WRAPS (AUDIT C2): the Morrowind hands' one glow - the first pair's of the right fist, then the left, with one. */
   const wrapsMeshGlow = () => { for (const h of ['R', 'L']) { const w = playerWeapon.wrapsOf(h); const g = w ? meshGlow(w) : null; if (g) return g; } return null; };
   const heldType = (item) => (glowOf(item) ? plainWeaponType(weaponTypeForItem(item)) : weaponTypeForItem(item));
@@ -1704,7 +1704,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       // CAST-SPEED: ONE RATE FOR BOTH LANES, read once as the cast starts - the live Speed and the castSpeed loot line
       // (systems/castSpeed.js): the classic frames step at CAST_FRAME_PERIOD over it, the arm's spellcast group plays at it
       const rate = castRate(entity);
-      const armCasts = fpArm.castSpell(rangeType, rate, castReleaseS(rate)) && (fpArm.active() || fpArm.thirdActive());
+      const armCasts = fpArm.castSpell(rangeType, rate, castReleaseS(rate), castEndS(rate)) && (fpArm.active() || fpArm.thirdActive());
       // MW-CAST1: the Morrowind hands on screen cast the spell - it leaves on their "<type> release", or when they stop
       // casting without one (fpsSpellCasting's hold, and its ceiling); the classic lane's frame 5 is untouched
       // RPT1026-MISC CAST-PACE: an arm paced to the spell's moment (its release key brought to the classic frame 5) lets it
@@ -2027,7 +2027,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
         // left blade its own
         fpArm.setWeaponGlow?.(meshGlow(armItem), armItem);
         fpArm.setOffWeaponGlow?.(offItem ? meshGlow(offItem) : null, offItem);
-        fpArm.setHandGlow?.(wrapsMeshGlow());   // HAND-WRAPS: the fists wear the wraps' glow (bible/05-Combat/Hand-Wraps.md)
+        fpArm.setHandGlow?.(wrapsMeshGlow() ?? (armItem ? null : fistGlow()));   // HAND-WRAPS: the fists wear the wraps' glow (bible/05-Combat/Hand-Wraps.md); ARMORY-FISTS: bare, the kit's weapon piece
         // MW-D32: THE BODY FOLLOWS THE EQUIP TABLE. The same per-frame
         // read that swaps the weapon now hands the rig its worn list;
         // setWorn's fast path is one key compare, and a change - a

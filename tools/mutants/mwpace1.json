@@ -28,10 +28,10 @@
     ]
   },
   {
-    "name": "MWPACE1-a-shot-is-paced",
+    "name": "MWSHOTPACE-a-shot-keeps-the-record-pace",
     "file": "src/combat/fpArm.js",
-    "old": "    if (!blow || attackType === MW_SHOOT_ATTACK || holdWindUp) return null;",
-    "new": "    if (!blow || holdWindUp) return null;",
+    "old": "    if (!blow || holdWindUp) return null;",
+    "new": "    if (!blow || attackType === MW_SHOOT_ATTACK || holdWindUp) return null;",
     "tests": [
       "test/combat/mwpace1.test.js"
     ]

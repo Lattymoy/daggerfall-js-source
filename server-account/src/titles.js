@@ -96,20 +96,21 @@
 // worn by a row nobody has looked at since.
 // ═══════════════════════════════════════════════════════════════════
 
-import { TITLES, GLYPHS, AURAS, ICONS, SEAT_TITLES, CHAPTER_TITLES, glyphsInOrder } from '../../src/net/identityToken.js';
-import { insigniaHeld, insigniaKeys } from '../../src/net/insignia.js';   // WB9g: the Broker's insignia - a title and an aura bought
+import { TITLES, GLYPHS, AURAS, ICONS, SEAT_TITLES, CHAPTER_TITLES, titleClaimed, glyphsInOrder } from '../../src/net/identityToken.js';
+import { INSIGNIA, insigniaHeld, insigniaKeys } from '../../src/net/insignia.js';   // WB9g: the Broker's insignia - a title and an aura bought
 import { patreonTitlesOf } from './patreon.js';   // PATREON-LINK: a Patreon tier's title, held by the pledge
 import { SD_HONOUR_TITLE, SD_HONOUR_AURA } from './sds.js';   // SD9b: the Hour's grants on the row
 import { SERPENT_HONOUR_TITLE, SERPENT_HONOUR_AURA } from './serpents.js';   // SERPENT5: the Old Coil's grants on the row
 import { EG_HONOUR, EG_HONOUR_TITLES, EG_HONOUR_AURA, EG_CHAMPION_TITLE, EG_FIRST_TITLE, EG_FIRST_AURA } from './egHonours.js';   // EG-E2: the Spire's honours on the row
 import { LAMP_TITLE } from './lamp.js';   // LAMP-KEEPER II: I Love Lamp on the row
-import { QL_TITLES, qlTitleBit } from '../../src/net/questlineClaims.js';   // QL12: the questlines' titles on the row
+import { QL_TITLES, qlTitleBit } from '../../src/net/questlineClaims.js';
+import { DRAGON_TITLES } from '../../src/net/huntLaw.js';   // WYRM-RIDER: a look's First is one tamer's, never an admin's   // QL12: the questlines' titles on the row
 import { festivalWaresHeld, HEARTHKEEPER_GIVEN, SOULCAKE_TAKEN } from '../../src/net/festivalLaw.js';   // WITCH1: the Witches' Festival's wares and honours on the row
 import { STAFF_GLYPHS } from '../../src/net/staffCommands.js';   // STAFF-PANEL2-FIX: the glyphs that open the staff's commands, none held while cut off
 import { MASTERY_MARKS } from '../../src/net/huntLaw.js';   // HUNTERS-MARK, MARKS-OF-MASTERY: the hunt's, a Master's and the sea's titles
-import { shopKeysOf } from '../../src/net/shopLaw.js';   // SHOP: a ware bought, its bit on the row; STOREFRONT: or its id
-import { EFFECT_SLOTS, effectOf, effectKitHeld } from '../../src/net/effectLaw.js';   // STOREFRONT: the effects held and worn
-import { passItemsOf, passKeysOf } from '../../src/net/battlePassLaw.js';   // STOREFRONT, PASS-PANELS: the Battle Pass's items bought
+import { SHOP_WARES, shopKeysOf } from '../../src/net/shopLaw.js';   // SHOP: a ware bought, its bit on the row; STOREFRONT: or its id
+import { EFFECT_SLOTS, effectKeys, effectOf, effectKitHeld } from '../../src/net/effectLaw.js';   // STOREFRONT: the effects held and worn
+import { PASS_ALL_GRANTS, passItemsOf, passKeysOf } from '../../src/net/battlePassLaw.js';   // STOREFRONT, PASS-PANELS: the Battle Pass's items bought
 import { ARMORY_PIECES, ARMORY_SLOTS, armoryPieceOf, armoryKitHeld } from '../../src/net/armoryLaw.js';   // ARMORY: the Aura Armory's pieces and the kit worn
 
 /** THE FOUNDER CUTOFF, and it is a date rather than a count because
@@ -327,6 +328,23 @@ export const MOD_TIERS = Object.freeze(['shadowfang']);
 export const canModerate = (player, env) => isModerator(player, env) || isDeveloper(player, env)
   || MOD_TIERS.some((t) => holdsTier(t, player, env));
 
+/** ADMIN-ALL (2026-10-30, the owner: "give staff all in shop items" - "only admins" - "get all cosmetic title auras" -
+ *  "everything" - "always"): AN ADMIN HOLDS EVERY COSMETIC THERE IS - every title, aura, profile icon, Aura Armory piece
+ *  and the glyphs that are paint alone - while the handle is in DEVELOPER_HANDLES, derived at every ask as the developer
+ *  title is, so a ware added to the vocabulary later is held the moment it ships and a handle taken off the list holds
+ *  only what it earned or bought. Read off the vocabularies, never a list kept here. Left out, because they are not
+ *  things to own: a title that rides a claim (a seat's or a chapter's - "Warden of <Town>" needs its town, titleClaimed)
+ *  and a glyph that is a fact or a right (sprout, mod, the staff's STAFF_GLYPHS, the laurel, a seat's tower and crowns) -
+ *  the glyphs held are a listed title's own (TIER_GLYPH) and the shop's. */
+export const holdsAll = isDeveloper;
+/** ADMIN-ALL: the titles an admin holds - every one but a claim's and a dragon's First (WYRM-RIDER: one tamer's). */
+const ADMIN_TITLES = TITLES.filter((t) => !titleClaimed(t) && t !== DRAGON_TITLES.first && t !== DRAGON_TITLES.firstAether);
+/** ADMIN-ALL: the paint glyphs an admin holds, in GLYPHS's order - a listed title's, the shop's and the Folios'. */
+const ADMIN_GLYPHS = GLYPHS.filter((g) => !STAFF_GLYPHS.includes(g)
+  && (Object.values(TIER_GLYPH).includes(g) || SHOP_WARES.some((w) => w.kind === 'glyph' && w.key === g) || passKeysOf(PASS_ALL_GRANTS, 'glyph').includes(g)));
+/** ADMIN-ALL: the Broker's insignia an admin holds - every offer, so the Broker sells them nothing. */
+export const insigniaOf = (/** @type {any} */ player, /** @type {any} */ env) => (holdsAll(player, env) ? INSIGNIA.map((r) => r.id) : insigniaHeld(player?.insignia));
+
 /** FOUNDER3: WHEN THIS ACCOUNT FIRST PLAYED. Founder was read off
  *  `registered_at`, and registering is only the moment a player chose a
  *  name: a player here as a guest since before the cutoff who registered
@@ -412,6 +430,7 @@ export function titlesHeld(player, env) {
     for (const t of shopKeys(player, 'title')) if (!held.includes(t)) held.push(t);   // SHOP: Genesis, bought (shop.js)
     for (const t of passKeys(player, 'title')) if (!held.includes(t)) held.push(t);   // STOREFRONT: the Battle Pass's, bought
   }
+  if (holdsAll(player, env)) for (const t of ADMIN_TITLES) if (!held.includes(t)) held.push(t);   // ADMIN-ALL: and every other
   return held;
 }
 /** SHOP (bible/06-Systems/Shop.md): the keys of one kind the shop sold this row (`shop_wares`, its bits, and since
@@ -453,6 +472,7 @@ export function aurasHeld(player, env) {
   if (typeof player?.handle === 'string' && player.handle) for (const a of festivalKeys(player, 'aura')) if (!held.includes(a)) held.push(a);   // WITCH1: Witchfire, bought
   for (const a of shopKeys(player, 'aura')) if (!held.includes(a)) held.push(a);   // SHOP: Eternal, bought
   for (const a of passKeys(player, 'aura')) if (!held.includes(a)) held.push(a);   // STOREFRONT: the Battle Pass's, bought
+  if (holdsAll(player, env)) for (const a of AURAS) if (!held.includes(a)) held.push(a);   // ADMIN-ALL: and every other
   return held;
 }
 
@@ -460,22 +480,23 @@ export function aurasHeld(player, env) {
  *  Sister (`fest_wares`), and the Soul Cake once the account has taken SOULCAKE_TAKEN cakes from other players' offerings
  *  (`fest_taken`). A registered account's alone. In ICONS's order. */
 export const SOULCAKE_ICON = 'soulcake';
-export function iconsHeld(/** @type {any} */ player) {
+export function iconsHeld(/** @type {any} */ player, /** @type {any} */ env) {
   if (!(typeof player?.handle === 'string' && player.handle)) return [];
+  if (holdsAll(player, env)) return [...ICONS];   // ADMIN-ALL
   const own = new Set([...festivalKeys(player, 'icon'), ...passKeys(player, 'icon'), ...shopKeys(player, 'icon')]);   // STOREFRONT: and the Battle Pass's portraits; AURUM: and the daily wares' (shop_held)
   if (Number(player?.fest_taken) >= SOULCAKE_TAKEN) own.add(SOULCAKE_ICON);
   return ICONS.filter((i) => own.has(i));
 }
 /** WITCH1: the icon this player WEARS - the stored one, while they hold it (titleWorn's law). */
-export function iconWorn(/** @type {any} */ player) {
+export function iconWorn(/** @type {any} */ player, /** @type {any} */ env) {
   const i = player?.icon;
-  return typeof i === 'string' && i && iconsHeld(player).includes(i) ? i : undefined;
+  return typeof i === 'string' && i && iconsHeld(player, env).includes(i) ? i : undefined;
 }
 /** WITCH1: what a player may wear as their icon - the refusal word, or null; `null` (the character's face) always. */
-export function iconRefusal(/** @type {unknown} */ icon, /** @type {any} */ player) {
+export function iconRefusal(/** @type {unknown} */ icon, /** @type {any} */ player, /** @type {any} */ env) {
   if (icon === null) return null;
   if (typeof icon !== 'string' || !ICONS.includes(icon)) return 'no-icon';
-  return iconsHeld(player).includes(icon) ? null : 'not-held';
+  return iconsHeld(player, env).includes(icon) ? null : 'not-held';
 }
 /** WB9g: the aura this player WEARS - the stored one, while they hold it (titleWorn's law). AEGIS: held by a list too. */
 export function auraWorn(player, env) {
@@ -484,45 +505,46 @@ export function auraWorn(player, env) {
   return aurasHeld(player, env).includes(a) ? a : undefined;
 }
 /** STOREFRONT (bible/06-Systems/Storefront.md): THE EFFECTS THIS PLAYER HOLDS, a slot's keys in the catalogue's order -
- *  the shop's (a ware, or a bundle's) and the Battle Pass's. A registered account's alone. */
-export function effectsHeld(/** @type {any} */ player) {
+ *  the shop's (a ware, or a bundle's) and the Battle Pass's; ADMIN-ALL: an admin's, every one. A registered account's alone. */
+export function effectsHeld(/** @type {any} */ player, /** @type {any} */ env) {
   /** @type {Record<string, string[]>} */ const out = {};
   for (const slot of EFFECT_SLOTS) {
-    const own = new Set([...shopKeys(player, slot), ...passKeys(player, slot)]);
+    const own = new Set(holdsAll(player, env) ? effectKeys(slot) : [...shopKeys(player, slot), ...passKeys(player, slot)]);
     out[slot] = [...own].filter((k) => effectOf(slot, k));
   }
   return out;
 }
 /** STOREFRONT: the effects kit this player WEARS - the stored one less any effect no longer held, or undefined. */
-export const effectsWorn = (/** @type {any} */ player) => effectKitHeld(player?.effects, effectsHeld(player)) ?? undefined;
+export const effectsWorn = (/** @type {any} */ player, /** @type {any} */ env) => effectKitHeld(player?.effects, effectsHeld(player, env)) ?? undefined;
 /** STOREFRONT: what a player may wear in an effect's slot - the refusal word, or null; `null` (the slot bared) always. */
-export function effectRefusal(/** @type {unknown} */ slot, /** @type {unknown} */ key, /** @type {any} */ player) {
+export function effectRefusal(/** @type {unknown} */ slot, /** @type {unknown} */ key, /** @type {any} */ player, /** @type {any} */ env) {
   if (typeof slot !== 'string' || !EFFECT_SLOTS.includes(slot)) return 'no-effect';
   if (key === null) return null;
   if (!effectOf(slot, key)) return 'no-effect';
-  return effectsHeld(player)[slot].includes(/** @type {string} */ (key)) ? null : 'not-held';
+  return effectsHeld(player, env)[slot].includes(/** @type {string} */ (key)) ? null : 'not-held';
 }
 /** ARMORY (bible/04-Characters/Aura-Armory.md): THE AURA ARMORY PIECES THIS PLAYER HOLDS, in the catalogue's order - the
  *  Sigil Broker's off `insignia` (insignia.js, the Dagonfire line), the shop's off `shop_wares` (shop.js - a set its every
  *  piece). A registered account's alone, as the Spire's auras are. */
-export function armoryHeld(/** @type {any} */ player) {
+export function armoryHeld(/** @type {any} */ player, /** @type {any} */ env) {
   if (!(typeof player?.handle === 'string' && player.handle)) return [];
+  if (holdsAll(player, env)) return ARMORY_PIECES.map((p) => p.key);   // ADMIN-ALL
   const own = new Set([...insigniaKeys(player?.insignia, 'armory'), ...shopKeys(player, 'armory')]);
   return ARMORY_PIECES.filter((p) => own.has(p.key)).map((p) => p.key);
 }
 /** ARMORY: the kit this player WEARS - the stored one, less any piece no longer held (a refund), or undefined for none
  *  (titleWorn's law). */
-export function armoryWorn(/** @type {any} */ player) {
-  return armoryKitHeld(player?.armory, armoryHeld(player)) ?? undefined;
+export function armoryWorn(/** @type {any} */ player, /** @type {any} */ env) {
+  return armoryKitHeld(player?.armory, armoryHeld(player, env)) ?? undefined;
 }
 /** ARMORY: what a player may wear in a slot - the refusal word, or null; `null` (the slot emptied) is always allowed for a
  *  slot there is. `no-piece` for a slot or piece the vocabulary does not hold, or a piece of another slot. */
-export function armoryRefusal(/** @type {unknown} */ slot, /** @type {unknown} */ piece, /** @type {any} */ player) {
+export function armoryRefusal(/** @type {unknown} */ slot, /** @type {unknown} */ piece, /** @type {any} */ player, /** @type {any} */ env) {
   if (typeof slot !== 'string' || !ARMORY_SLOTS.includes(slot)) return 'no-piece';
   if (piece === null) return null;
   const p = armoryPieceOf(piece);
   if (!p || p.slot !== slot) return 'no-piece';
-  return armoryHeld(player).includes(p.key) ? null : 'armory-not-held';
+  return armoryHeld(player, env).includes(p.key) ? null : 'armory-not-held';
 }
 /** WB9g: what a player may wear at their feet - the refusal word, or null; `null` (none) is always allowed. */
 export function auraRefusal(aura, player, env) {
@@ -543,6 +565,7 @@ export function glyphsOf(player, env, nowS) {
   if (player?.arena?.champion === true) on.push('laurel');   // ARENA4: the laurel, true of the season's #1 while they hold it
   for (const g of shopKeys(player, 'glyph')) if (!on.includes(g)) on.push(g);   // SHOP: the Origin, bought - true of the account that paid for it
   for (const g of passKeys(player, 'glyph')) if (!on.includes(g)) on.push(g);   // STOREFRONT: the Battle Pass's, bought
+  if (holdsAll(player, env)) for (const g of ADMIN_GLYPHS) if (!on.includes(g)) on.push(g);   // ADMIN-ALL: the paint glyphs, every one
   return glyphsInOrder(on);
 }
 
@@ -599,13 +622,13 @@ export const wardrobeOf = (player, env, nowS) => ({
   ...glyphsOffOf(player, env, nowS),   // GLYPH-WEAR: the ones taken off, absent for none - `glyphs` stays all that is true
   auras: aurasHeld(player, env),   // AEGIS: a list's aura beside the Broker's
   aura: auraWorn(player, env) ?? null,
-  insignia: insigniaHeld(player?.insignia),
-  icons: iconsHeld(player),   // WITCH1: the profile icons held, and the one worn (null: the character's face)
-  icon: iconWorn(player) ?? null,
-  armoryHeld: armoryHeld(player),   // ARMORY: the Aura Armory pieces held, and the kit worn (null for none)
-  armory: armoryWorn(player) ?? null,
-  effectsHeld: effectsHeld(player),   // STOREFRONT: the kill effects, portal skins and mount looks held, and the kit worn
-  effects: effectsWorn(player) ?? null,
+  insignia: insigniaOf(player, env),   // ADMIN-ALL: an admin's, every offer
+  icons: iconsHeld(player, env),   // WITCH1: the profile icons held, and the one worn (null: the character's face)
+  icon: iconWorn(player, env) ?? null,
+  armoryHeld: armoryHeld(player, env),   // ARMORY: the Aura Armory pieces held, and the kit worn (null for none)
+  armory: armoryWorn(player, env) ?? null,
+  effectsHeld: effectsHeld(player, env),   // STOREFRONT: the kill effects, portal skins and mount looks held, and the kit worn
+  effects: effectsWorn(player, env) ?? null,
 });
 
 export { TITLES, GLYPHS };

@@ -83,7 +83,7 @@
   {
     "name": "SHOP-held-unchecked-at-press",
     "file": "server-account/src/shop.js",
-    "old": "  if (shopOwns(player, ware.id)) return { page: 'held' };\n",
+    "old": "  if (shopHolds(player, env, ware)) return { page: 'held' };   // ADMIN-ALL: an admin's too\n",
     "new": "",
     "tests": [
       "test/server/shop_service.test.js"

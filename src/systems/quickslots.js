@@ -341,9 +341,11 @@ function useQuickslotNow(slot, { entity = null, items = null, hooks = {}, say = 
   // without the window - and a transformed lycanthrope has no pack to
   // reach into (GetSuppressInventory, DaggerfallInventoryWindow.cs
   // :583-587). The window's own line, and nothing is consumed.
+  // WERE-POTIONS (2026-10-30, the owner: "let them loot and use potions just dont let them open inventory"): a potion
+  // from the hotbar is drunk; any other pack item stays refused
   const sup = racialSuppressInventory(entity);
-  if (sup) { say?.(sup.text); return { kind: 'refused' }; }
   const r = resolveConsumable(entity, slot);
+  if (sup && !isPotion(r?.item)) { say?.(sup.text); return { kind: 'refused' }; }
   if (!r) { say?.(emptySlotLine(hooks.hand?.() ?? undefined)); return { kind: 'empty' }; }
   if (!r.item) { say?.(QUICKSLOT_TEXT.noneLeft(r.name)); return { kind: 'none', name: r.name }; }
   const pack = items ?? packOf(entity);

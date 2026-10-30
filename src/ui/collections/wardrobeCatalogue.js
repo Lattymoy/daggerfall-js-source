@@ -46,6 +46,7 @@ export const WARDROBE_SOURCES = Object.freeze([
   wordPair('spire', () => t('coll.src.spire', 'The Elite Breach')),
   wordPair('abyss', () => t('coll.src.abyss', 'The Abyss Dungeons')),
   wordPair('serpent', () => t('coll.src.serpent', 'The Sea Serpent')),
+  wordPair('dragon', () => t('coll.src.dragon', 'The Dwarven Dragon')),   // WYRM-RIDER
   wordPair('broker', () => t('coll.src.broker', 'The Sigil Broker')),
   wordPair('questlines', () => t('coll.src.questlines', 'Questlines')),
   wordPair('hunt', () => t('coll.src.hunt', 'The Hunt')),   // HUNTERS-MARK: the bounty boards' clears
@@ -126,6 +127,8 @@ export const AVAIL_LINE = Object.freeze({
 export const REMNANT_ODDS = Object.freeze({ hourbreaker: 4, turninghour: 8 });
 /** The Sea Serpent's (server-account/src/serpents.js SERPENT_TITLE_CHANCE, SERPENT_AURA_CHANCE): one in twenty, fifty. */
 export const SERPENT_ODDS = Object.freeze({ coilbreaker: 20, maelstrom: 50 });
+/** WYRM-RIDER: the Dwarven Dragon's tame, one dealer's draw in this many (server-account/src/dragons.js DRAGON_TAME_ONE_IN). */
+export const DRAGON_TAME_ODDS = 100;
 /** The Redoubt an Elite Breach honour asks (server-account/src/egHonours.js EG_REDOUBT_HONOURS, EG_UNFALLEN_REDOUBT). */
 export const REDOUBT_OF = Object.freeze({ spirewalker: 2, beaconlighter: 5, kynbane: 10, unfallen: 10, battlemage: 15, wellheadwalker: 20, beaconlight: 10, burningstair: 20 });
 /** A Descent bracket's companies that hold Spire Champion (egHonours.js EG_CHAMPIONS_TOP). */
@@ -284,6 +287,10 @@ export const WARDROBE = Object.freeze({
     ...MASTERS,   // MARKS-OF-MASTERY: a profession's Master each
     serpenthunter: E('serpent', 'open', sea('serpenthunter')),   // MARKS-OF-MASTERY: sailing's, off the relay's serpent receipts
     deepbane: E('serpent', 'open', sea('deepbane')),
+    wyrmrider: E('dragon', 'chance', () => t('coll.how.wyrmrider', 'Tame a brass Dwarven Dragon. Each player who dealt it real damage has a chance of one in {n} when it falls.', { n: DRAGON_TAME_ODDS })),   // WYRM-RIDER
+    firstwyrmrider: E('dragon', 'closed', () => t('coll.how.firstwyrmrider', 'Held by the player who tamed the first brass dragon.')),   // WYRM-RIDER: one account's
+    aetherrider: E('dragon', 'chance', () => t('coll.how.aetherrider', 'Tame an Aetherbright, the blue Dwarven Dragon. Each player who dealt it real damage has a chance of one in {n} when it falls.', { n: DRAGON_TAME_ODDS })),   // WYRM-RIDER
+    firstaetherrider: E('dragon', 'closed', () => t('coll.how.firstaetherrider', 'Held by the player who tamed the first Aetherbright.')),   // WYRM-RIDER: one account's
     // STOREFRONT: the shop's three name visuals (AURUM: and the daily wares'), and Season One's three on its tracks
     dawnbringer: E('shop', 'store', shopOrDaily('title:dawnbringer')),
     voidwalker: E('shop', 'store', shopOrDaily('title:voidwalker')),

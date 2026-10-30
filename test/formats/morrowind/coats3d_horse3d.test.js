@@ -381,7 +381,7 @@ test('COATS3D one picture, rider and horse: the union of the two boxes holds bot
 
 test('COATS3D by source: the view keeps the saddle and lifts RIDE-POV astride; the hosts hand it the horse and the body the saddle; the riding sprite stands down; the peers, the pool and the road ride it; the pass takes the horse in the rider\'s picture', () => {
   const v = rd('src/player/mwView.js');
-  assert.match(v, /saddled = !!state\.riding && stepOwnHorse\(state\.horse, feet, yaw, state\.dt \?\? 0\);\n\s*mounted = !!state\.riding && !saddled;/, 'RIDE-POV holds the head only off a 3D horse');
+  assert.match(v, /saddled = !!state\.riding && stepOwnHorse\(state\.horse, feet, yaw, state\.dt \?\? 0\);\n[^\n]*\n\s*mounted = !!state\.riding && !saddled && !onDragon;/, 'RIDE-POV holds the head only off a 3D horse (PIN MOVED, DRAGON-POV: and off a dragon)');
   assert.match(v, /horseRig\?\.tick\(\);\n\s*if \(!state\.riding\) dropOwnHorse\(\);\n\s*\/\/ EOTB4: the other lane/, 'AUDIT A2/A11: the dye every frame, on foot as mounted, before either lane; my horse let go off its back');
   assert.match(v, /dropOwnHorse\(\); saddled = false;   \/\/ the sprite lane's rider is its own picture/, 'and on the sprite lane');
   assert.match(v, /ownSink = fpEye && feet \? Math\.max\(0, RIDE_EYE_HEIGHT - \(fpEye\[1\] - feet\[1\]\) - SINK_SLACK\) : 0;/, 'AUDIT A8: the horse under the eye - sunk with a swimming rider, rising under a mount');

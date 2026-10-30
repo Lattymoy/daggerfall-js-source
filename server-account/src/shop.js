@@ -15,6 +15,7 @@ import { sealKey, sealUnder, openWith } from './sealed.js';
 import { patreonPage, patreonHtml } from './patreon.js';
 import { mustChange } from './realm.js';
 import { timingSafeEqual } from './password.js';
+import { holdsAll } from './titles.js';   // ADMIN-ALL: an admin holds every ware, so is sold none
 
 /** The paths this file answers, none with a session: each is proven by what it carries (a sealed ticket, an order, or
  *  Stripe's signature). */
@@ -80,6 +81,10 @@ const hex = (/** @type {Uint8Array} */ b) => Array.from(b, (v) => v.toString(16)
 /** A new order's id: 24 hex off the Worker's own randomness. */
 export const mintOrderId = (/** @type {(b: Uint8Array) => Uint8Array} */ rand) => hex(rand(new Uint8Array(12)));
 
+/** ADMIN-ALL: does this account hold a ware - bought, or as an admin every ware but a pack of Aurum, a currency and never
+ *  held (titles.js holdsAll). The card, the checkout and the confirm page ask it, so an admin is sold nothing it holds. */
+export const shopHolds = (/** @type {any} */ player, /** @type {any} */ env, /** @type {any} */ w) => shopOwns(player, w.id) || (!shopRepeatable(w) && holdsAll(player, env));
+
 /** A ware's line as a person reads it: "Genesis (title)" - an Aurum pack's its name alone ("500 Aurum"). */
 export const wareLine = (/** @type {any} */ w) => (w.kind === 'aurum' ? SHOP_WARE_NAME[/** @type {keyof typeof SHOP_WARE_NAME} */ (w.id)] : `${SHOP_WARE_NAME[/** @type {keyof typeof SHOP_WARE_NAME} */ (w.id)] ?? w.key} (${SHOP_KIND_NAME[/** @type {keyof typeof SHOP_KIND_NAME} */ (w.kind)] ?? w.kind})`);
 
@@ -96,7 +101,7 @@ export async function shopCardOf(/** @type {any} */ player, /** @type {any} */ e
   let key = null;   // derived once a read, at its first Buy link - every account read asks this
   for (const w of SHOP_WARES) {
     if (!w.alone || !w.cash) continue;   // STOREFRONT: a ware sold only in a bundle has no row of its own; AURUM: nor one sold only for Aurum
-    const isHeld = registered(player) && shopOwns(player, w.id), onSale = shopSoldNow(env, w, nowS);   // ARMORY: a set's pieces, or the set's through its pieces; STOREFRONT: a bundle's wares
+    const isHeld = registered(player) && shopHolds(player, env, w), onSale = shopSoldNow(env, w, nowS);   // ARMORY: a set's pieces, or the set's through its pieces; STOREFRONT: a bundle's wares; ADMIN-ALL
     if (!isHeld && !onSale && (!shopDropped(w, schedule, nowS * 1000) || aurumShut(env, w))) continue;   // AUDIT-STOREFRONT S2: nothing upcoming is told; AURUM: no pack while Aurum is shut
     if (on && onSale && !isHeld && registered(player)) key ??= await sealKey(subtle, String(env.STRIPE_SECRET_KEY), SEAL_SALT, 'buy');
     const buy = key && onSale && !isHeld
@@ -224,9 +229,9 @@ export async function shopCheckout(ctx, env, claims, { fetch, origin }) {
   const ware = shopWareById(claims?.w);
   if (!ware) return { page: 'expired' };
   if (!shopSoldNow(env, ware, nowS)) return { page: 'sold' };
-  const player = await db.prepare(`SELECT id, handle, ${HELD_COLS} FROM players WHERE id = ?1`).bind(claims.p).first();
+  const player = await db.prepare(`SELECT id, handle, staff_suspended, ${HELD_COLS} FROM players WHERE id = ?1`).bind(claims.p).first();
   if (!registered(player)) return { page: 'account' };
-  if (shopOwns(player, ware.id)) return { page: 'held' };
+  if (shopHolds(player, env, ware)) return { page: 'held' };   // ADMIN-ALL: an admin's too
   const cents = shopPriceFor(player, ware.id) ?? ware.cents;   // STOREFRONT: a bundle's price for this account - what it does not hold yet
   const credit = shopCreditOf(player, ware.id).join(' ');   // AUDIT-STOREFRONT S1: what that price took off, kept on the order
   // an open page at another price (a ware bought meanwhile that the bundle holds) is not gone back to: a new order is priced now
@@ -677,9 +682,9 @@ export async function shopDoor(ctx, env, path, { method, url, bytes, signature, 
     if (!claims) return shopHtml(SHOP_PAGES.expired, 400);
     const ware = /** @type {any} */ (shopWareById(claims.w));
     if (!shopSoldNow(env, ware, ctx.nowS)) return shopHtml(SHOP_PAGES.sold, 410);
-    const player = await ctx.db.prepare(`SELECT id, handle, ${HELD_COLS} FROM players WHERE id = ?1`).bind(claims.p).first();
+    const player = await ctx.db.prepare(`SELECT id, handle, staff_suspended, ${HELD_COLS} FROM players WHERE id = ?1`).bind(claims.p).first();
     if (!registered(player)) return shopHtml(SHOP_PAGES.account, 403);
-    if (shopOwns(player, ware.id)) return shopHtml(SHOP_PAGES.held, 409);
+    if (shopHolds(player, env, ware)) return shopHtml(SHOP_PAGES.held, 409);   // ADMIN-ALL: an admin's too
     const held = shopHeldIds(player);
     const holds = ware.gives.filter((g) => held.includes(g)).length, part = !holds && shopCreditOf(player, ware.id).length > 0;
     return shopHtml(shopConfirmPage({ handle: player.handle, ware, ticket, cents: shopPriceFor(player, ware.id) ?? ware.cents, holds, part }));   // NOTHING IS WRITTEN on a GET

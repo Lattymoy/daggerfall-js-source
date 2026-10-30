@@ -290,7 +290,7 @@ export function createMountRig({
       }
       // COATS1: a look chosen in the saddle (the Stable card) dresses the sprite - the old one drawn until the new is up
       if (_artFor && isHorseRide(player.transportMode) && _artFor !== artKey(player.transportMode)) loadArt(player.transportMode);
-      if (player.transportMode === TRANSPORT_MODES.Dragon && !ridePaused) saddle.draw(canvas);   // DRAGON5
+      if (player.transportMode === TRANSPORT_MODES.Dragon && !ridePaused && !mwViewThirdPerson()) saddle.draw(canvas);   // DRAGON5; DRAGON-POV: out of the head the dragon stands in the world (scenes/dragonViewHost.js)
       // COATS3D: on the Morrowind body's 3D horse, that horse is the one in first person - drawn here, in the sprite's
       // place (after the world, under the hands), and the sprite stands down
       if (isHorseRide(player.transportMode) && !ridePaused && !mwViewHides().horse && mwViewDrawSaddle(typeof canvas === 'function' ? canvas() : canvas)) return r;

@@ -262,7 +262,8 @@ import { GATE_INTERNAL_SEAT, GATE_INTERNAL_COURT, GATE_INTERNAL_PARTY } from './
 import { riteNear, riteHeard, riteStands, cageStands, RITE_HELPERS_MAX } from '../../src/net/gate/gateRite.js';   // WB12d: the faithful's rite; BROKER-CAGE: the Broker's cage, omen to midnight
 import { isSiegeRoom, newFighter, armsOk, SIEGE_HIT, ROYAL_RING, isSiegeNpcId, siegeNpcFoe, siegeNpcPose, siegeNpcFell, siegeNpcInReach, siegeNpcProvoked, refereeBlow, refereeCast, refereeStep, siegeHeld, siegeNextWave, siegeRise, SIEGE_WAVE_MS, SIEGE_FIGHTERS_MAX, SIEGE_SPECTATORS_MAX, SIEGE_OPENS_MS, SIEGE_TICK_MS, siegeNextBeat, fieldOf, newBattle, battleStep, honoured, siegeCampPose, siegeFieldFrame, isBattleRoom, isRoyalRoom, battleOfRoom, royalAsk, royalAccept, royalMarks, royalMayStrike, royalStepOk, royalEnd, royalStep, royalLadder, royalNextBeat, ROYAL_RC_KEEP, siegePlaceFree, siegeReturn, royalPrune, worksOf, refereeWorkBlow, siegeWaveMs, siegeRamDown, siegeBreach, SIEGE_WORK_IDS, SIEGE_GATEHOUSE, SIEGE_RAM, siegeGroundOf, siegeOffGround, siegeStepLevel, royalLevel, SIEGE_HEIGHT_M } from '../../src/net/siege/siegeRef.js';   // PVP-REF: a siege's referee - siegeRef.js imports only refereeHealthShare.js, which imports nothing, so the worker's graph stays flat   // SEAT2a: and its battle   // AUDIT-SEATS T3/R5: a side's places, a fighter's return, a tourney's records   // SEAT2b part two (b): the works in battle
 import { mintSiegeReceipt, SIEGE_RECEIPT_TTL_S, mintRoyalReceipt } from '../../src/net/siege/siegeReceipt.js';   // SEAT2a: the relay's fourth signature - a fighter's result and Honours
-import { takeHealthReport, poolWord, poolUnheard } from '../../src/net/siege/refereeHealthShare.js';   // SHARED-HEALTH: one health pool under the referee
+import { takeHealthReport, poolWord, poolUnheard } from '../../src/net/siege/refereeHealthShare.js';
+import { vitalsReport, payMagicka, kitLanded, KIT_COST_BY_TYPE } from '../../src/net/wild/pvpVitals.js';   // PVP-VITALS: a flagged fighter's three pools, the relay's   // SHARED-HEALTH: one health pool under the referee
 import { newDuelRef, duelNote, duelOpen, duelBoutOf, duelBlow, duelPose, duelEnd, duelForfeit, duelStep, duelVitals } from '../../src/net/duel/duelRef.js';   // INT8: the duel refereed
 import { newWildRef, wildZone, wildTokenAtt, wildPose, wildBlow, wildKin, sameGuild, wildPick, wildSigned, wildStep, wildVitals, wildGone, wildCarry, wildCarryOf, wildSignNow, wildCredit, wildFallOf, wildDownWord, wildGraceLeft, wildGraceTaken, wildAggroWord, wildFlagWord, wildBarWord, wildBarWords, wildOpenedBy, wildVillainy, wildRed, WILD_GRACE, WILD_FALL_PREFIX, WILD_REF } from '../../src/net/wild/wildRef.js';   // INT9: the open zone refereed
 import { mintWildReceipt, mintWildCollect, mintSeaWreck, WILD_RECEIPT_TTL_S, SEA_WRECK_TTL_S } from '../../src/net/wild/wildReceipt.js';   // INT9: a fall, signed; MAC (2026-10-14): and a killer's collect; SHIP-PVP: and a wreck
@@ -4201,7 +4202,7 @@ export class Room {
       // AUDIT ALLY-CAST B2: the funnel onto the destination is PER SENDER (wire.js CAST_DEST_SENDERS_MAX) - one bucket
       // for everyone let five strangers starve a mate's heals, and this relay cannot tell a mate from a stranger.
       // The stalest sender's slot goes to a newcomer, so a mate always finds a fresh bucket unless they spam it.
-      if (!this._senderFunnel(tws, a.id, now)) return;
+      if (!this._senderFunnel(tws, a.id, now) || !(await this._wildCastPaid(a, target[1], m.data, now))) return;   // PVP-VITALS: a flagged caster's gift paid for
       this._send(tws, JSON.stringify({ t: 'cast', id: a.id, data: m.data }));
       if (isEgRoom(a.key) && a.sub && target[1]?.sub) this._egCastSeen(a.sub, target[1].sub, now);   // AUDIT EG IV (lane3 #3): a breach's cast relayed, by account, for its heal word's earner
       return;
@@ -6807,6 +6808,24 @@ export class Room {
     const sides = bout ?? { a: { sub: end.f[0] }, b: { sub: end.f[1] } };
     this._duelSay(sides, word);
   }
+  /** PVP-VITALS (net/wild/pvpVitals.js): A GIFT CAST BY A FLAGGED FIGHTER of the zone is paid from the relay's magicka at
+   *  the PvP bar's price for its first effect - false (the frame dropped) where it cannot pay - and lands on a zone fighter
+   *  it reaches: a heal's credit (the frame's own magnitude), a Shield's or an Absorb's minute. Anyone else casts as before. */
+  async _wildCastPaid(a, tb, data, now) {
+    if (!this._wildRef || !a.sub) return true;
+    const st = await this._wildSt();
+    const x = st.fighters.get(a.sub);
+    if (!x || !x.zone || !x.flag || x.down) return true;
+    const e = data?.spell?.effects?.[0];
+    const pct = KIT_COST_BY_TYPE[e?.type];
+    if (pct === undefined || !payMagicka(x.f, pct, now)) return false;   // flagged, only the bar is cast (systems/wild/pvpKit.js kitRefusal)
+    const t = tb?.sub ? st.fighters.get(tb.sub) : null;
+    if (!t || !t.zone || t.down) return true;
+    const id = e.type === 10 ? 'heal' : e.type === 35 ? 'shield' : e.type === 20 ? 'absorb' : null;
+    const hp = (e.magnitudeBaseHigh ?? 0) + (e.magnitudeLevelHigh ?? 0) * Math.max(1, Math.trunc((data.level ?? 1) / Math.max(1, e.magnitudePerLevel ?? 1)));
+    if (id) kitLanded(t.f, id, now, { hp });
+    return true;
+  }
   // ───────────────────────────── SHARED-HEALTH: ONE HEALTH POOL UNDER THE REFEREE (net/siege/refereeHealthShare.js) ─────────────────────────────
   /**
    * The pools this room's referees hold for an account: its open-zone fighter, its live duel's side, its siege fighter.
@@ -6819,7 +6838,7 @@ export class Room {
     if (this._wildRef) {
       const st = await this._wildSt();
       const x = st.fighters.get(sub);
-      if (x && !x.down) pools.push({ fighter: x.f, healsBlocked: false, kept: async () => this._wildCarryPut(sub, this._zoneCarry(st, sub, now)) });
+      if (x && !x.down) pools.push({ fighter: x.f, healsBlocked: false, flagged: x.flag === true, kept: async () => this._wildCarryPut(sub, this._zoneCarry(st, sub, now)) });   // PVP-VITALS: a flagged fighter's pools are the relay's
     }
     const bout = this._duelRef ? duelBoutOf(this._duelRef, sub) : null;
     if (bout) pools.push({ fighter: bout.a.sub === sub ? bout.a.f : bout.b.f, healsBlocked: false, kept: async () => {} });   // PVP-HEAL: a duel heals, to the fight's window
@@ -6835,7 +6854,9 @@ export class Room {
     for (const pool of await this._vitPools(a.sub, now)) {
       const hpBefore = pool.fighter.hp;
       const wasUnheard = poolUnheard(pool.fighter);
-      if (!takeHealthReport(pool.fighter, m, now, { healsBlocked: pool.healsBlocked })) continue;
+      // PVP-VITALS: the zone's ledgers, and a flagged fighter's rise to the credit they grant; the whole to its signed level
+      if (pool.flagged !== undefined && !pool.fighter.down) vitalsReport(pool.fighter, m, now, { flagged: pool.flagged, fresh: m.report > (pool.fighter.share?.report ?? 0), cl: a.cl ?? null, resto: pool.fighter.share?.resto ?? 0 });
+      if (!takeHealthReport(pool.fighter, m, now, { healsBlocked: pool.healsBlocked, sourced: pool.flagged === true, cl: a.cl ?? null })) continue;
       this._vitSay(a.sub, pool.fighter);
       // what is kept (a hub fetch, a checkpoint) follows the count: a report that moved nothing keeps nothing
       if (pool.fighter.hp !== hpBefore || wasUnheard) await pool.kept();
@@ -11522,9 +11543,10 @@ export class Room {
     const bytes = new Uint8Array(6);
     globalThis.crypto.getRandomValues(bytes);
     const rid = [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
-    const res = wildBlow(st, a.sub, tb.sub, { d: d.d, r, held, wa: a.wa ?? null, kin, rid, room: a.key, el: d.el ?? null }, now);   // SEA-BOUNTY: the room it fell in
+    const res = wildBlow(st, a.sub, tb.sub, { d: d.d, r, held, wa: a.wa ?? null, kin, rid, room: a.key, el: d.el ?? null, c: d.c ?? null }, now);   // PVP-VITALS: the cast's number   // SEA-BOUNTY: the room it fell in
     if (res.evicted) await this._wildSign(res.evicted, now);   // INT9 (AUDIT): a full room's oldest fall, signed without its pick - never forgotten
     if (res.graceEnded || res.why === 'grace') this._wildGraceBlow(a, tb, st, res, now);   // ZONE-GRACE
+    if (res.why === 'evade') { this._wildEvadeSay(st, a, tb, target[0], r); return; }   // PVP-EVADE
     if (!res.ok || !res.dealt) return;
     this._wildAggroSay(st, [a.sub, tb.sub], now);   // PVP-SKULL: the striker's and the struck one's skulls gold
     const word = JSON.stringify({ t: 'wref', k: 'hp', by: a.id, to: tb.id, d: res.dealt, r, h: wildVitals(st, a.sub, tb.sub) });
@@ -11541,6 +11563,13 @@ export class Room {
     // INT9 (AUDIT): a building's or a dungeon's room searches no body (the worn offer is the open country's) - its fall is
     // signed at once, never a minute later with the fallen gone from it
     if (!isCellRoom(a.key)) { const f = wildSignNow(st, rid); if (f) await this._wildSign(f, now); }
+  }
+  /** PVP-EVADE (wildRef.js wildBlow): a swing or a shaft evaded, said to its striker and the struck one - `d` 0, `ev` 1. */
+  _wildEvadeSay(st, a, tb, ts, r) {
+    const word = JSON.stringify({ t: 'wref', k: 'hp', by: a.id, to: tb.id, d: 0, r, h: wildVitals(st, a.sub, tb.sub), ev: 1 });
+    if (ts) this._send(ts, word);   // PVP-LINGER: a body has no socket
+    const mine = this._siegeSocketOf(a.sub);
+    if (mine) this._send(mine[0], word);
   }
   /** ZONE-GRACE (2026-10-26, the owner chose "Entry/rise grace" - wildRef.js WILD_GRACE): A FIGHTER'S SAFE PASSAGE SAID TO
    *  THE ROOM (`wref` `grace`: its id and the ms it has left; 0, ended by its own blow). */

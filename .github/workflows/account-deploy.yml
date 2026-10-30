@@ -156,6 +156,7 @@ on:
       - "src/net/eliteGates/egShape.js"
       - "src/net/siege/siegeRef.js"
       - "src/net/siege/refereeHealthShare.js"
+      - "src/net/wild/pvpVitals.js"
       - "src/net/siege/siegeReceipt.js"
       - "src/net/duel/duelReceipt.js"
       - "src/net/wild/wildReceipt.js"

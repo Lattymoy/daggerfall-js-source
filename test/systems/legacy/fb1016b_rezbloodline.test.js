@@ -42,7 +42,7 @@ import { setModSetting, _resetModSettings } from '../../../src/systems/modSettin
 import { hurtPlayer, setDeathListener } from '../../../src/characters/playerEntity.js';
 import { reviveForPlay } from '../../../src/systems/deathRespawn.js';
 import { stateDeathLoss, statedDeathLoss } from '../../../src/systems/deathPenalty.js';
-import { DeathScreen, ONLINE_RESPAWN_SECONDS } from '../../../src/ui/deathScreen.js';
+import { DeathScreen, ONLINE_RESPAWN_SECONDS, DEATH_AUTO_RISE_S } from '../../../src/ui/deathScreen.js';
 import { WILD_DEATH_HOLD_S, setWildDeath } from '../../../src/systems/wild/wildZone.js';
 import { rezSnapshot, rezFor, resurrectionSpell, RESURRECT_TEXT, RESURRECT_HEALTH_PCT, RESURRECT_HOLD_MS, RESURRECT_TYPE, RESURRECT_SUBTYPE } from '../../../src/systems/resurrect.js';
 import { buildCustomSpell } from '../../../src/systems/spell/spellMaker.js';
@@ -769,20 +769,20 @@ test('REZ-BLOODLINE AUDIT R2 the online death screen counts the wall clock, as t
         legacyT -= dt;
         if (legacyT <= 0) { legacyT = 1; r.host.tick(); }   // legacyStep: once a second of the same dt
         assert.equal(r.host.raisable(), true, `${fps} fps: raisable while the screen stands (${((Date.now() - start) / 1000).toFixed(1)} s, "RISING IN ${screen.respawnIn}")`);
-        if (f === Math.round(fps * 30)) said = screen.respawnIn;   // PIN MOVED (PVP-RISE): the zone's wait is a minute now
+        if (f === Math.round(fps * 5)) said = screen.respawnIn;   // PIN MOVED (DEATH-10): the zone's wait is 10 s now (PVP-RISE: was a minute)
       }
       const wall = (Date.now() - start) / 1000;
       assert.ok(reset && wall <= WILD_DEATH_HOLD_S + 1, `${fps} fps: the screen goes at ${wall.toFixed(1)} s on the wall`);
       assert.ok(wall * 1000 < REZ_HOLD_MS, 'inside the window');
-      assert.equal(said, WILD_DEATH_HOLD_S - 30, 'half a minute in, it says half a minute left');
+      assert.equal(said, WILD_DEATH_HOLD_S - 5, 'five seconds in, it says five left');
     } finally {
       setWildDeath(null);
     }
   }
   // a frame's own count still leads where its dt outruns the wall (a host stepping the screen by hand)
   const s = new DeathScreen({ eyeHeight: 1.6, capsuleHeight: 1.8, online: true, entity: ent(), wall: () => 0 });
-  s.tick(ONLINE_RESPAWN_SECONDS / 2);
-  assert.equal(s.respawnIn, ONLINE_RESPAWN_SECONDS / 2);
+  s.tick(DEATH_AUTO_RISE_S / 2);   // PIN MOVED (DEATH-10): the screen's 10 s
+  assert.equal(s.respawnIn, DEATH_AUTO_RISE_S / 2);
   // one window at both doors: the longest online death screen and half a minute
   assert.equal(REZ_HOLD_S, Math.max(ONLINE_RESPAWN_SECONDS, WILD_DEATH_HOLD_S) + 30);
   assert.equal(REZ_HOLD_MS, REZ_HOLD_S * 1000);

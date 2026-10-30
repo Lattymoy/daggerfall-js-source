@@ -57,7 +57,7 @@ export const wildRingName = (ring) => ['The Borderlands', 'The Wilds', 'The Hear
 export const wildRingBonus = (ring) => `+${Math.round((wildRingLoot(ring) - 1) * 100)}% loot`;
 /** PVP-RISE (the owner, 2026-10-29: "Need to have to eake up im nearest town", "Jist like pve deaths"): the wait an online
  *  PvE death has (ui/deathScreen.js ONLINE_RESPAWN_SECONDS), once "has to wait 2mins till respawn" - and a body lies as long. */
-export const WILD_DEATH_HOLD_S = 60;
+export const WILD_DEATH_HOLD_S = 10;   // DEATH-10: "give death a 10 second timer", "for pve and pvp"
 /** A blow from another player this recent at the death names them the killer (a lingering spell, a foe's last swing
  *  after a player's - the player who brought you down). */
 export const WILD_KILL_CREDIT_MS = 10_000;
@@ -635,7 +635,7 @@ export const WILD_TEXT = Object.freeze({
   deathLast: (name, gold) => (gold > 0 ? (name
     ? t('wild.death.last', '{name} took {gold} gold, a tenth of your coin and letters of credit. You had no gear to take and no insurance.', { name, gold: Number(gold).toLocaleString('en-US') })
     : t('wild.death.lastAnon', 'Your killer took {gold} gold, a tenth of your coin and letters of credit. You had no gear to take and no insurance.', { gold: Number(gold).toLocaleString('en-US') })) : ''),
-  deathHold: `In ${WILD_NAME} the dead wait two minutes.`,
+  deathHold: `In ${WILD_NAME} the dead rise after 10 seconds.`,   // DEATH-10
   remainsName: (name) => (name ? `${name}'s remains` : 'Remains'),
   mine: 'Your remains',
   taken: 'Someone took that first.',

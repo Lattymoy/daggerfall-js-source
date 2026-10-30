@@ -65,6 +65,16 @@ reference's enchantment glow as not ported.
    Hourlock's +10 shock), the armory's piece and the arcane look of rows the item maker laid. With the ladder switched
    off the card shows no rung, so the hand shows none. The classic hand draws it on the plain sheet; a Gilded gun keeps
    its gold frames under it.
+9. **A glow set on the piece shows over every other law** (GLOW-SET, 2026-10-30, mob: "can we set the glow on
+   wepaoins say like hand wraps?"): a staff member types `/glow <colour> [1-3]` (`systems/staffGlow.js`) and the weapon
+   or Hand Wraps in their hands carries one of the thirteen words as `glowSet` (`systems/item/itemFields.js`). The
+   colours are fire, frost, shock, arcane, crimson (the Gilded look), brand and edge. `/glow off` takes it away. It is
+   a choice, where laws 1 to 8 are a reading, so it shows first. The viewer's switch still answers. The words are the
+   wire's, so peers see it on every relay since world291, with no relay change.
+10. **A bare fist wears the Aura Armory's weapon piece** (ARMORY-FISTS, 2026-10-30, mob: "we lose out as a hand to
+   hand"): law 7 with no weapon and no Hand Wraps, in both hands' drawers (`systems/weaponGlow.js` `fistGlow`). A peer's
+   bare fists read their own kit, which their token carries, so no relay change. Hand Wraps wear the piece and nothing
+   else, after law 9 (WRAPS-AURA, mob: "wraps are glowing without the aura on"): no element, Gilded or arcane look.
 
 The frame asks every frame (the held weapon's, and the arm's), so the ask builds nothing: the element is summed into
 arrays kept for it, and every spec - `{ look, code, level, word, ramp, win }` - is built once, frozen whole, and
@@ -260,6 +270,9 @@ and hands the arm its spec in every one. A peer's body glows wherever `peerBodie
   it, plain and enchanted by the item maker; the look's ramp, reach, window and four shader branches; the sprite field
   through the real renderer, the classic sheet and the guns' gold frames; the Morrowind arm and pass; the word through
   `composeLook`, the wire, the stand-in and a peer's body. Its mutants: `tools/mutants/gildedglow.json`, 21, all dead.
+- `test/systems/glowset.test.js` (5 tests, GLOW-SET) - `/glow`'s grammar, the item law's words equal to the wire's, law 9
+  over an element, a Gilded piece and the arcane look in both hands, Hand Wraps, the look peers read, and the world
+  host's staff-only wiring.
   PIN MOVED in `weaponglow1.test.js`: the Hourlock and the Oath crimson, the looks' list, the thirteen words.
 - `tools/weaponGlowProbe.mjs` - the looks through the REAL renderer in headless Chromium (SwiftShader), on art that is
   not game data: a pixel sword drawn by the probe and a sword mesh built by it. Top row the sprite's outline (fire,

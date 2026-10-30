@@ -853,6 +853,12 @@
    "why": "a moon power's night"
   },
   {
+   "file": "src/combat/pvpGearPowers.js",
+   "has": "case 'moon': if (isNight(skyMinutes())) pct += p.pct; break;",
+   "clock": "sky",
+   "why": "PVP-GEAR: Hunter's Moon's night on a blow at a player"
+  },
+  {
    "file": "src/systems/revenant/revenant.js",
    "has": "const skyIsNight = () => { try { return isNight(skyMinutes()); }",
    "clock": "sky",

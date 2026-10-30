@@ -250,10 +250,17 @@ the pose's own (`slimPose`). The session keeps a peer's kit with its id, so a pe
 effects. The service answers glyphs in GLYPHS' order, the order the mask gives the room, and GLYPHS grows only at its
 end. Pinned by `test/net/storefront_wireaudit.test.js`.
 
-**Deploy, and the rollback floor.** The relay (world293) goes before the account service (acct227) that mints `gb`, and
-`account-deploy.yml` waits for it. A relay before world293 drops a `gb` token's glyphs, or refuses one that also carries
-`gx`. So world293 is the relay's floor while acct227 or later mints: to roll the relay back, roll the service back first
+**Deploy, and the rollback floor.** The relay (world294) goes before the account service (acct228) that mints `gb`, and
+`account-deploy.yml` waits for it. A relay before world294 drops a `gb` token's glyphs, or refuses one that also carries
+`gx`. So world294 is the relay's floor while acct228 or later mints: to roll the relay back, roll the service back first
 and wait MAX_TTL_S (five minutes) for its tokens to lapse.
+
+**An Admin holds it all** (ADMIN-ALL, main's, at the merge of 2026-10-30; the owner: "give staff all in shop items" -
+"everything" - "always"). An Admin holds every kill effect, portal skin and mount look, the Folios' items with both
+folios open, and the daily wares, derived at every ask (`titles.js` holdsAll, `effectsHeld`; `battlePass.js` passOf).
+The Folios' glyphs are paint, so an Admin holds them too. None of it is sold to an Admin: the shop's card and checkout
+(`shop.js` shopHolds), a daily ware (`aurum-held`), the unlock and an item (`pass-held`). A pack of Aurum is a currency,
+never held, so it still sells. Pinned by `test/server/admin_all_storefront.test.js`.
 
 ## 11. Not built, and why
 

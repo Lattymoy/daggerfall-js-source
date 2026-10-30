@@ -553,9 +553,9 @@ export async function equipAura({ db, nowS }, player, env, aura) {
  * slot changed, so a piece no longer held drops out at the write too. Answers the wardrobe after the write.
  */
 export async function equipArmory({ db, nowS }, player, env, slot, piece) {
-  const why = armoryRefusal(slot, piece, player);
+  const why = armoryRefusal(slot, piece, player, env);
   if (why) return { error: why };
-  const armory = armoryKitWith(armoryWorn(player) ?? null, /** @type {string} */ (slot), piece);
+  const armory = armoryKitWith(armoryWorn(player, env) ?? null, /** @type {string} */ (slot), piece);
   await db.prepare('UPDATE players SET armory = ?, last_seen = ? WHERE id = ?').bind(armory, nowS, player.id).run();
   return { ok: true, ...wardrobeOf({ ...player, armory }, env, nowS) };
 }
@@ -563,7 +563,7 @@ export async function equipArmory({ db, nowS }, player, env, slot, piece) {
  *  Each piece refused as one worn alone would be (armoryRefusal). Answers the wardrobe after the write. */
 export async function equipArmoryKit({ db, nowS }, player, env, kit) {
   if (kit !== null && !armoryKitOk(kit)) return { error: 'no-piece' };
-  for (const [slot, key] of Object.entries(armoryKitPieces(kit))) { const why = key ? armoryRefusal(slot, key, player) : null; if (why) return { error: why }; }
+  for (const [slot, key] of Object.entries(armoryKitPieces(kit))) { const why = key ? armoryRefusal(slot, key, player, env) : null; if (why) return { error: why }; }
   await db.prepare('UPDATE players SET armory = ?, last_seen = ? WHERE id = ?').bind(kit, nowS, player.id).run();
   return { ok: true, ...wardrobeOf({ ...player, armory: kit }, env, nowS) };
 }
@@ -572,9 +572,9 @@ export async function equipArmoryKit({ db, nowS }, player, env, kit) {
  *  effect, the portal skin and the mount look. Refused against what the player holds now (effectRefusal); the kit written
  *  is the one worn now with that slot changed. Answers the wardrobe after the write. */
 export async function equipEffect({ db, nowS }, player, env, slot, key) {
-  const why = effectRefusal(slot, key, player);
+  const why = effectRefusal(slot, key, player, env);
   if (why) return { error: why };
-  const effects = effectKitWith(effectsWorn(player) ?? null, /** @type {string} */ (slot), key);
+  const effects = effectKitWith(effectsWorn(player, env) ?? null, /** @type {string} */ (slot), key);
   await db.prepare('UPDATE players SET effects = ?, last_seen = ? WHERE id = ?').bind(effects, nowS, player.id).run();
   return { ok: true, ...wardrobeOf({ ...player, effects }, env, nowS) };
 }
@@ -584,7 +584,7 @@ export async function equipEffect({ db, nowS }, player, env, slot, key) {
  * in the portrait well. Answers the wardrobe after the write; `not-held` for one the account does not hold.
  */
 export async function equipIcon({ db, nowS }, player, env, icon) {
-  const why = iconRefusal(icon, player);
+  const why = iconRefusal(icon, player, env);
   if (why) return { error: why };
   await db.prepare('UPDATE players SET icon = ?, last_seen = ? WHERE id = ?').bind(icon, nowS, player.id).run();
   return { ok: true, ...wardrobeOf({ ...player, icon }, env, nowS) };
@@ -640,7 +640,7 @@ export async function buyInsignia({ db, nowS }, player, env, id, rid = null) {
   const had = rid ? await brokerSaleOf(db, player.id, rid) : null;
   if (had?.kind === 'fence') return { error: 'fenced' };
   if (had?.kind === 'insignia' && had.item === offer.id) return { ok: true, bought: offer.id, again: true, ...wardrobeOf(player, env, nowS), purse: await insigniaPurse({ db }, player) };
-  if (insigniaHeld(player.insignia).includes(offer.id)) return { error: 'owned' };
+  if (insigniaHeld(player.insignia).includes(offer.id) || isDeveloper(player, env)) return { error: 'owned' };   // ADMIN-ALL: an admin holds every offer (titles.js holdsAll)
   // AUDIT WB9 (insignia F3): the id APPENDED to the column the UPDATE matches, not written over it from the row read
   // before - two sales of two pieces at once each read the column empty, and the second wrote its id alone over the
   // first's: both paid for, one held (the id's shape is the law's own, insigniaWith's: space-separated, in sale order)

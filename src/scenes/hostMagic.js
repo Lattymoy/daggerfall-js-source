@@ -35,6 +35,7 @@
 //                               so exteriors answer day/night live
 //                               where the dungeon answers a constant.
 
+import { declareKitSelf } from '../combat/pvpDeclare.js';   // PVP-VITALS
 import { FlatAnimator, armFlatAnim, MISSILE_FPS } from '../render/flatAnimation.js';   // FA1
 import { castingLevel } from '../systems/mentorMode.js';   // SOFTCAP2, MENTOR2: a mentor casts at the level they fight at
 import { hasSpellbook } from '../systems/spell/spellMaker.js';   // FIX-F: RecastSpell's book test (EntityEffectManager.cs:260)
@@ -1237,6 +1238,7 @@ export function createPlayerMagic({
       // S7: CasterOnly applies to SELF (Balyna's Balm heals) - no
       // missile; AssignBundle at :2117.
       tallyCastSkills(sp);
+      if (sp.pvpKit) declareKitSelf(sp.pvpKit);   // PVP-VITALS: the referee pays for it and credits its heal
       const r = applySpellToPlayer(sp, castingLevel(playerEntity), playerCaster(cast));
       // AUDIT 24 scenes: PlayerSpellCasting_OnReleaseFrame assigns the
       // CasterOnly bundle at :2117 and only stamps

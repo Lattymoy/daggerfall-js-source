@@ -5,13 +5,13 @@
 // ledger line spent in one guarded batch (the item also on the row's `pass_items`, which the wardrobe reads). The law
 // both ends read is src/net/battlePassLaw.js; the balance is aurum.js's.
 import { overAccountRate } from './accounts.js';
-import { isDeveloper } from './titles.js';
+import { isDeveloper, holdsAll } from './titles.js';   // ADMIN-ALL: an admin holds every item and both folios, so is sold none
 import { mustChange } from './realm.js';
 import { aurumRow, balanceOfRow, AURUM_BALANCE_SQL } from './aurum.js';
 import { utcDay } from '../../src/net/marksLaw.js';
 import {
   PASS_SOURCES, PASS_DAY_ASKS, PASS_DAY_AURUM, PASS_CHALLENGES, PASS_FINDS_FROM_MS, PASS_PREMIUM_AURUM,
-  passSeasonAt, passSeasonShown, passSeasonById, passStageAt, passTracksOpen, passItemOf, passItemsOf, passBuyBlock, isPassSource,
+  passSeasonAt, passSeasonShown, passSeasonById, passStageAt, passTracksOpen, passItemOf, passItemsOf, passBuyBlock, isPassSource, PASS_ALL_GRANTS,
 } from '../../src/net/battlePassLaw.js';
 
 /** A pass's finds an account an hour, in the isolate's memory (the festival's law: the day's asks bound them across). */
@@ -56,7 +56,8 @@ export const passAskSweep = (/** @type {any} */ db, /** @type {string} */ accoun
 /**
  * THE ACCOUNT'S PASS, for the window: the season shown (the running one, else the next, else the last), its stage, the
  * tracks it opened, the items it bought, the Aurum its finds earned today and the stage's challenges with their counts.
- * A guest's is refused. AUDIT PASS 2: `open` is the switch's word for this account alone.
+ * A guest's is refused. AUDIT PASS 2: `open` is the switch's word for this account alone. ADMIN-ALL: an admin's tracks
+ * are both open and its items every one, derived here and never written, as titles.js holdsAll's are.
  * @param {{ db: any, nowS: number }} ctx @param {any} player @param {any} env
  */
 export async function passOf({ db, nowS }, player, env) {
@@ -70,10 +71,11 @@ export async function passOf({ db, nowS }, player, env) {
     db.prepare("SELECT 1 AS x FROM aurum_ledger WHERE account = ?1 AND kind = 'track' AND ref = ?2").bind(player.id, trackRef(season.id)),
   ]);
   const got = new Map((counts?.results ?? []).map((/** @type {any} */ c) => [c.challenge, c]));
+  const admin = holdsAll(player, env);
   return {
     season: season.id, open: passOpenFor(player, env), stage: passStageAt(season, nowS * 1000),
-    tracks: { free: true, premium: !!track?.results?.length },
-    bought: passItemsOf(row?.results?.[0]?.pass_items).filter((g) => !!passItemOf(season.id, g)),
+    tracks: { free: true, premium: admin || !!track?.results?.length },
+    bought: (admin ? PASS_ALL_GRANTS : passItemsOf(row?.results?.[0]?.pass_items)).filter((g) => !!passItemOf(season.id, g)),
     today: int(day?.results?.[0]?.aurum), dayMax: PASS_DAY_AURUM,
     challenges: PASS_CHALLENGES.map((c) => { const g = /** @type {any} */ (got.get(c.key)); return { key: c.key, n: Math.min(int(g?.n), c.n), paid: int(g?.paid) > 0 }; }),
   };
@@ -157,7 +159,7 @@ function buyGate(/** @type {any} */ player, /** @type {any} */ env, /** @type {u
  * premium track for PASS_PREMIUM_AURUM, ONE STATEMENT - the ledger's `track` line written only while the balance as it
  * stands then covers it; the key makes a second open a no-op. `{ ok, season, spent, row }` - `row` the whole row, so
  * its answer carries the wardrobe as a buy's does - or `{ error }`: pass-guest, -closed, -season, -soon, -held (open
- * already), -short (with `balance`).
+ * already, or an admin's), -short (with `balance`).
  * @param {{ db: any, nowS: number }} ctx @param {any} player @param {any} body @param {any} env
  */
 export async function unlockPass({ db, nowS }, player, body, env) {
@@ -165,7 +167,7 @@ export async function unlockPass({ db, nowS }, player, body, env) {
   if ('error' in g) return g;
   const id = g.season.id, cost = PASS_PREMIUM_AURUM[/** @type {keyof typeof PASS_PREMIUM_AURUM} */ (id)];
   if (!Number.isSafeInteger(cost)) return { error: 'pass-season' };
-  if (await premiumOf(db, player.id, id)) return { error: 'pass-held' };
+  if (holdsAll(player, env) || (await premiumOf(db, player.id, id))) return { error: 'pass-held' };   // ADMIN-ALL: an admin's is open
   try {
     await db.batch([
       db.prepare(`INSERT INTO aurum_ledger (account, kind, ref, amount, day, at) SELECT ?1, 'track', ?2, ?3, ?4, ?5 WHERE ${AURUM_BALANCE_SQL} >= ?6`)
@@ -192,6 +194,7 @@ export async function buyPass({ db, nowS }, player, body, env) {
   if ('error' in g) return g;
   const id = g.season.id, at = passItemOf(id, body?.grant);
   if (!at) return { error: 'pass-item' };
+  if (holdsAll(player, env)) return { error: 'pass-held' };   // ADMIN-ALL: an admin holds every item
   const grant = /** @type {string} */ (body.grant);
   const premium = at.track === 'premium' && (await premiumOf(db, player.id, id));
   for (let i = 0; i < 3; i++) {

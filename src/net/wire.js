@@ -206,7 +206,8 @@ import { TITLES, GLYPHS, GLYPHS_MAX, AURAS, ICONS, titleClaimed, seatTitleClaimO
 import { nameAllowed, maskText, textCaught } from './nameFilter.js';   // NAME-F2: the filter runs INSIDE sanitizeName, so the relay carries it; TEXT-F1: and a player's words are starred inside sanitizeChat and wordsLine, the same way - nameFilter.js imports nothing, same as mat4.js above, so the worker's graph stays flat
 import { validRollSpec, validRoll, rollDice, ROLL_DICE_MAX, ROLL_SIDES_MAX, ROLL_MOD_MAX } from './dice.js';   // DICE1: the dice's law - one home for both ends (dice.js imports nothing, so the worker's graph stays flat)
 import { ribbonClaimOk } from './heraldryLaw.js';   // SEASON1 part two: a Season's banner ribbon - heraldryLaw.js imports nothing, so the worker's graph stays flat
-import { HEALTH_SHARE_WHOLE } from './siege/refereeHealthShare.js';   // SHARED-HEALTH: a report's share is in its parts - refereeHealthShare.js imports nothing, so the worker's graph stays flat
+import { HEALTH_SHARE_WHOLE } from './siege/refereeHealthShare.js';
+import { DECLARE_MAX, DECLARES_PER_REPORT } from './wild/pvpVitals.js';   // PVP-VITALS: a report's declarations - pvpVitals.js imports nothing   // SHARED-HEALTH: a report's share is in its parts - refereeHealthShare.js imports nothing, so the worker's graph stays flat
 import { GUILD_TAG_RE } from './guild/guildLaw.js';   // GUILD1c: a guild's tag is badged beside the name - guildLaw.js imports nothing, so the worker's graph stays flat
 import { homeMapIdOk, homeBuildingKeyOk, HOME_ORDER_KEYS_MAX } from './homeLaw.js';   // QUEST-HOME: a home word's town and buildings, the homes' own shapes - homeLaw.js imports nothing, so the worker's graph stays flat
 import { RAID_KEY_RE, RAID_SIG_RE, RAID_TARGET_MIN, RAID_TARGET_MAX, RAID_TYPES, RAID_WORD_KILLS_MAX, RAID_ACCOUNTS_MAX, RAID_TOP_MAX, RAID_TOWNS_SHA_RE, RAID_TOWNS_CHUNK, RAID_TOWNS_CHUNKS_MAX, RAID_SLOTS_MAX, RAID_LANES_BEYOND } from './raid/raidLaw.js';   // RAID3: a town raid's law - raidLaw.js imports nothing, so the worker's graph stays flat
@@ -1709,7 +1710,8 @@ export const KEEPALIVE_FAN_MS = HEARTBEAT_MS / 2;
  *  is deployed by CI and the relay by hand, so a skew between them is the ordinary state of a release day, and until
  *  now nothing on either end could see it. */
 // Integrated Arena spectator visibility with staff teleport, stable boat identity and private ownership; deploy relay before clients.
-export const RELAY_VERSION = 'world293';   // world293: STOREFRONT (2026-10-29, world281, world283, world286, world288, world289, world290 then world291 on its branch, renumbered past PVP-REWORK's world281, PVP-FOLLOWUP's world282, PVP-SAFE-HIT's world283, AUDIT TAMRIEL-WIDE's world284, CAPE-TOGGLE's world285, FB1029 GROUND's world286, FRONTS' world287, DRAGON's world288, HAND-WRAPS' world289, PVP-LINGER's world290, GILDED-GLOW's world291 and DELVE II's world292 at the merges of main; the owner: "an overhaul to the ingame shop menu ... Portal effects ... and kill effects"; bible/06-Systems/Storefront.md, Battle-Pass.md; NOT YET DEPLOYED): a token's effects kit, `fx` (net/effectLaw.js JOINED THE BUNDLE), badged onto a peer's row with the armory's kit - both on the hello's row now; a pose's kill (`xk`, `xp`, `xh`), its place and a blow's (`hp`) rounded on the second wire as the pose's own (slimPose, the wire audit); the token's glyphs signed as their mask over GLYPHS (`gb`, read back as `g`) and a socket's attachment holding them so (packAttach); the camp law's brass sites are the readers'. Deploy the relay before the account service that mints `gb`. ROLLBACK FLOOR: world293 while acct227 or later mints `gb` - an older relay drops a `gb` token's glyphs, or refuses one with `gx`; roll the service back first and wait MAX_TTL_S (five minutes) before the relay (bible/06-Systems/Storefront.md section 10).
+export const RELAY_VERSION = 'world294';   // world294: STOREFRONT (2026-10-29, world281, world283, world286, world288, world289, world290, world291 then world293 on its branch, renumbered past PVP-REWORK's world281, PVP-FOLLOWUP's world282, PVP-SAFE-HIT's world283, AUDIT TAMRIEL-WIDE's world284, CAPE-TOGGLE's world285, FB1029 GROUND's world286, FRONTS' world287, DRAGON's world288, HAND-WRAPS' world289, PVP-LINGER's world290, GILDED-GLOW's world291, DELVE II's world292 and PVP-VITALS and WYRM-RIDER's world293 at the merges of main; the owner: "an overhaul to the ingame shop menu ... Portal effects ... and kill effects"; bible/06-Systems/Storefront.md, Battle-Pass.md; NOT YET DEPLOYED): a token's effects kit, `fx` (net/effectLaw.js JOINED THE BUNDLE), badged onto a peer's row with the armory's kit - both on the hello's row now; a pose's kill (`xk`, `xp`, `xh`), its place and a blow's (`hp`) rounded on the second wire as the pose's own (slimPose, the wire audit); the token's glyphs signed as their mask over GLYPHS (`gb`, read back as `g`) and a socket's attachment holding them so (packAttach); the camp law's brass sites are the readers'. Deploy the relay before the account service that mints `gb`. ROLLBACK FLOOR: world294 while acct228 or later mints `gb` - an older relay drops a `gb` token's glyphs, or refuses one with `gx`; roll the service back first and wait MAX_TTL_S (five minutes) before the relay (bible/06-Systems/Storefront.md section 10).
+// world293: WYRM-RIDER (2026-10-30, world294 on its branch, one release with PVP-VITALS): the token's TITLES take Wyrm Rider, First Wyrm Rider, Aether Rider and First Aether Rider (net/identityToken.js). PVP-VITALS (2026-10-30, NOT YET DEPLOYED): a flagged fighter's health rises, magicka and fatigue are the relay's own - net/wild/pvpVitals.js joins the bundle; a `vit` report carries `m`, `f` and `u`, a spell frame its cast's number `c`, and a flagged caster's gift frame is paid for or dropped. Deploy the relay first, then the site.
 // world292: DELVE II DLV3 (2026-10-29, NOT YET DEPLOYED; world284, world288 then world289 on its branch, renumbered past AUDIT TAMRIEL-WIDE's world284, CAPE-TOGGLE's world285, FB1029 GROUND's world286, FRONTS's world287, DRAGON's world288, HAND-WRAPS' world289, PVP-LINGER's world290 and GILDED-GLOW's world291 at the merges of main): a dungeon's room keeps its encounters (`dv`, DELVE_RELAY_MIN - server/src/delveRoom.js, net/delve/delveLaw.js joins the bundle), the `delve` grant kind (a world room's alone, GRANT_ROOM_KINDS) and the token's level stamped in a dungeon's room; a game-made dungeon's curated block names its room, `.c<n>` (AUDIT DLV5-6 M3). Deploy the relay first, then the site.
 // world291: GILDED-GLOW and DECOR-ROOMY (world286, world287, world289 then world290 on its branch, renumbered past FB1029 GROUND's world286, FRONTS' world287, DRAGON's world288, HAND-WRAPS' world289 and PVP-LINGER's world290 at the merges of main; 2026-10-29, #feature-feedback: "gilded weapons should have a cool crimson glow"; bible/05-Combat/Weapon-Glow.md law 8; NOT YET DEPLOYED): a look's weapon may say `gilded2` (LOOK_GLOW_RE) - a Gilded weapon's crimson, which an older relay strips (its peers' Gilded weapon draws bare until it is deployed); and net/homeLaw.js's ground law (FIELD BUGS 2026-10-29f DECOR-ROOMY), which the relay bundles and never calls. Deploy the relay first, then the site.
 // world290: PVP-LINGER (world288, then world289, on its branch, renumbered past DRAGON's world288 and HAND-WRAPS' world289 at the merges of main; 2026-10-29, the owner: "keep their body in game if they login in the window of cooldown"; bible/11-Multiplayer/PvP-Rework.md PVP-LINGER; NOT YET DEPLOYED): a fighter whose last socket closes inside its PvP lock leaves its body in the zone - its pose said again, struck and killed by the referee's law, its fall signed for its killer to carry - until the lock runs out (net/wild/wildLinger.js, server/src/pvpLinger.js); its account's hello here, or its word from another room at the hub, takes the body back. PVP-LINGER-RISE: a body slain while away is kept in the room's storage, and its player's next zone word is a `down` word with `aw` 1 and its killer's name `n` (validWildDown) - a death, then the zone's rise in a town. The site may deploy first: an older page reads the word as WILD-REJOIN's.
@@ -4589,7 +4591,8 @@ export function validDuelData(d) {
       const p = duelPoint(d.p);
       if (!intIn(d.n, 1, DUEL_SEQ_MAX) || !p || !intIn(d.d, 0, DUEL_DMG_MAX)) return null;
       if (d.el !== undefined && !intIn(d.el, 0, PVP_ELEMENTS - 1)) return null;   // PVP-WARD: the spell's element
-      out.n = d.n; out.p = p; out.d = d.d; if (d.el !== undefined) out.el = d.el; break;
+      if (d.c !== undefined && !intIn(d.c, 1, DUEL_SEQ_MAX)) return null;   // PVP-VITALS: the cast's number - one cast's area, one price
+      out.n = d.n; out.p = p; out.d = d.d; if (d.el !== undefined) out.el = d.el; if (d.c !== undefined) out.c = d.c; break;
     }
     default: return null;
   }
@@ -5076,7 +5079,7 @@ export const relaySupportsWildStreets = (v) => { const m = /^world(\d+)$/.exec(t
 export const WILD_REF_KINDS = Object.freeze(['hp', 'fell', 'rc', 'hull', 'wreck', 'wc', 'down', 'grace', 'flag', 'bar', 'vil']);
 /** WILD-REJOIN: the longest a `down` word says a fallen has left to lie, ms (net/wild/wildRef.js WILD_REF.riseMs, pinned
  *  equal - this leaf imports no referee). */
-export const WILD_DOWN_MS_MAX = 60_000;
+export const WILD_DOWN_MS_MAX = 10_000;   // DEATH-10
 /** ZONE-GRACE: the most a `grace` word says is left of safe passage, ms (net/wild/wildRef.js WILD_GRACE.ms, pinned equal - this
  *  leaf reads no referee). */
 export const WILD_GRACE_MS_MAX = 60_000;
@@ -5100,8 +5103,8 @@ export function validWildRefOut(m) {
   const idOk = (x) => typeof x === 'string' && ID_RE.test(x);
   if (m.k === 'hp') {
     const h = duelRefVitals(m.h);
-    if (!idOk(m.by) || !idOk(m.to) || !intIn(m.d, 0, CARD_VITAL_MAX) || !intIn(m.r, 0, 2) || !h) return null;
-    return { k: 'hp', by: m.by, to: m.to, d: m.d, r: m.r, h };
+    if (!idOk(m.by) || !idOk(m.to) || !intIn(m.d, 0, CARD_VITAL_MAX) || !intIn(m.r, 0, 2) || !h || (m.ev !== undefined && m.ev !== 1)) return null;
+    return { k: 'hp', by: m.by, to: m.to, d: m.d, r: m.r, h, ...(m.ev === 1 ? { ev: 1 } : {}) };   // PVP-EVADE: `ev` 1, a blow evaded (`d` 0)
   }
   if (m.k === 'hull') {
     // SHIP-PVP: a captain's shot landed - per mille of her bar (`d`) and her canvas (`s`), a fire (`f`), her bar left (`h`)
@@ -5155,6 +5158,8 @@ export const VIT_SHIELD_MIN = 10, VIT_SHIELD_MAX = 25;
 export const VIT_RESTORATION_MAX = 1000;
 /** PVP-GUARD: a report's armour shares, per cent, edged, blunt and unarmed (refereeHealthShare.js PVP_GUARD bounds them). */
 export const VIT_GUARD_MAX = 150;
+/** PVP-EVADE: a report's live Dodging (`dg`) and a gear power's evade, per cent (`pe`) (refereeHealthShare.js PVP_EVADE dodgeTop and max, pinned equal). */
+export const VIT_DODGE_MAX = 1000, VIT_EVADE_MAX = 40;
 /** PVP-WARD: DFU's five elements (fire 0, frost 1, poison 2, shock 3, magic 4) - a cast's `el`, a report's `w`. */
 export const PVP_ELEMENTS = 5;
 const WORD_MAX = 0x7fffffff;
@@ -5179,7 +5184,14 @@ export function validVitIn(m) {
   if (m.g !== undefined && !(Array.isArray(m.g) && m.g.length === 3 && m.g.every((n) => intIn(n, 0, VIT_GUARD_MAX)))) return null;   // PVP-GUARD
   if (m.w !== undefined && !(Array.isArray(m.w) && m.w.length === PVP_ELEMENTS && m.w.every((n) => intIn(n, 0, 100)))) return null;   // PVP-WARD
   if (m.sh !== undefined && m.sh !== 0 && m.sh !== 1 && !intIn(m.sh, VIT_SHIELD_MIN, VIT_SHIELD_MAX)) return null;   // PVP-SHIELD; PVP-KIT: its share
-  return { report: m.n, share: m.s, seen, ...(m.x !== undefined ? { max: m.x } : {}), ...(m.r !== undefined ? { resto: m.r } : {}), ...(m.g !== undefined ? { guard: [...m.g] } : {}), ...(m.w !== undefined ? { ward: [...m.w] } : {}), ...(m.sh !== undefined ? { shield: m.sh === 1 ? VIT_SHIELD_MAX : m.sh } : {}) };
+  if (m.dg !== undefined && !intIn(m.dg, 0, VIT_DODGE_MAX)) return null;   // PVP-EVADE
+  if (m.pe !== undefined && !intIn(m.pe, 0, VIT_EVADE_MAX)) return null;
+  // PVP-VITALS: my magicka's and fatigue's shares, and what I drank and cast on myself since the last report
+  if (m.m !== undefined && !intIn(m.m, 0, HEALTH_SHARE_WHOLE)) return null;
+  if (m.f !== undefined && !intIn(m.f, 0, HEALTH_SHARE_WHOLE)) return null;
+  if (m.u !== undefined && !(Array.isArray(m.u) && m.u.length <= DECLARES_PER_REPORT && m.u.every((n) => intIn(n, 1, DECLARE_MAX)))) return null;
+  const vitals = { ...(m.m !== undefined ? { mp: m.m } : {}), ...(m.f !== undefined ? { fp: m.f } : {}), ...(m.u !== undefined ? { use: [...m.u] } : {}) };
+  return { report: m.n, share: m.s, seen, ...vitals, ...(m.x !== undefined ? { max: m.x } : {}), ...(m.r !== undefined ? { resto: m.r } : {}), ...(m.g !== undefined ? { guard: [...m.g] } : {}), ...(m.w !== undefined ? { ward: [...m.w] } : {}), ...(m.sh !== undefined ? { shield: m.sh === 1 ? VIT_SHIELD_MAX : m.sh } : {}), ...(m.dg !== undefined ? { dodge: m.dg } : {}), ...(m.pe !== undefined ? { evade: m.pe } : {}) };
 }
 
 /**

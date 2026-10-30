@@ -5,6 +5,7 @@ import { potionBundle } from '../systems/potions.js';
 import { HEAL_SPELL_POINTS_KEY } from '../systems/potionRecipes.js';
 import { isHealHealth } from '../systems/effects.js';
 import { t } from '../systems/textManager.js';
+import { declarePotion } from './pvpDeclare.js';   // PVP-VITALS: the referee hears of it
 
 /** Real milliseconds a potion kind waits after one of its kind is drunk in a fight. */
 export const PVP_POTION_MS = 15_000;
@@ -38,7 +39,7 @@ export function pvpPotionRefusal(item, now = Date.now()) {
 /** A potion drunk: in a fight, its kind's clock starts. */
 export function pvpPotionDrunk(item, now = Date.now()) {
   const kind = fight ? pvpPotionKind(item) : null;
-  if (kind) last.set(kind, now);
+  if (kind) { last.set(kind, now); declarePotion(kind); }
 }
 
 /** The bundle a potion lands: its first effect alone in a fight, else whole. */

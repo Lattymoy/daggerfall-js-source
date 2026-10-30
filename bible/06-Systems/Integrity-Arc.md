@@ -771,7 +771,7 @@ receipt's carrier); `scenes/dungeonContext.js` and `scenes/worldModes.js` NO DUE
   of the zone (`wildGone`).
 - **The fight.** Counted in the Royal Tourney's units; since SHARED-HEALTH (below) the count is the
   player's own health as a share. Every blow and cast the referee's; `wref hp` to both, `wref fell` to the room. NO
-  FREE BAR: nothing refills by itself; away from the zone `WILD_REF.riseMs` a count starts again from the player's report. A fighter's bar is kept at the hub
+  FREE BAR: nothing refills by itself; away from the zone `WILD_REF.awayMs` a count starts again from the player's report. A fighter's bar is kept at the hub
   after each blow (`WILD_INTERNAL_VIT`, `wildCarry`) and taken by the next room it stands in (a step into another cell
   was a fresh bar); a fallen carried is down there too. A pose past any run is believed, and its fighter strikes nothing
   for `WILD_REF.jumpMs` (a jump was never believed, and a gallop left the place stale for good). A fallen rises whole on
@@ -980,7 +980,7 @@ healing too - only mid-PvP.
   stand, being the referee's own change. Out of a fight between players a zone heal is taken whole. A count no report has
   anchored is told to nobody (its whole would heal the client to full); the relay asks for one where it makes a count.
 - **NO FREE REFILL.** The zone's mend (whole again unstruck `WILD_REF.mendMs`) is gone. A count started again - a rise
-  after a fall, a return after `WILD_REF.riseMs` away - waits for the player's report, which can lower it and never lift
+  after a fall, a return after `WILD_REF.awayMs` away - waits for the player's report, which can lower it and never lift
   it; a bar carried from another room keeps its anchor, its no-heal window and the last report it took (`wildCarry`'s
   `heard`, `pvpAt`, `rep`). A client before world277 never answers the ask, so its count stays unheard and keeps the
   zone's old mend (wildRef.js:"const mendUnheard") - a struck old client is whole again unstruck 30 s, as before; a

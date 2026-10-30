@@ -88,7 +88,7 @@ import { HORSE_SEAT } from '../../world/horseRig.js';   // COATS3D: the 3D horse
 import { gaitShare } from '../../world/horseModel.js';
 import { JUMP_UNITS, stepPeerPace } from './peerPace.js'; import { peerBodyYaw, peerClimbing, peerMoving, PeerClimbTrack } from './peerClimb.js';   // HT-WAIST-BACK: the pace law, lifted - the walkers' lanterns swing off it too; CLIMB5: the climb's facing and pose
 import { gatherActOf, peerGatherTool, peerGatherSwing, peerKneeling, GATHER_POSE_STRIKES } from './peerGather.js';   // PEER-ACTS: a gathering act's tool, blow and kneel
-import { weaponGlowOn, glowFromWord } from '../../systems/weaponGlow.js';   // WEAPON-GLOW1: a peer's weapon, glowing as its look says
+import { weaponGlowOn, glowFromWord, fistGlow } from '../../systems/weaponGlow.js';   // WEAPON-GLOW1: a peer's weapon, glowing as its look says
 import { fieldOfView } from '../../ui/viewSettings.js';   // HORSE-VIEW (AUDIT): the frame's own lens, the cadence's base (lensOf)
 import { appearanceSig } from '../appearanceLaw.js';   // AUDIT HORIZONTAL E1: a held weapon's look is part of what the hand holds
 import { peerMountLook } from '../../systems/horse/mountLook.js';   // STOREFRONT: a rider's 3D horse in its mount look
@@ -842,7 +842,7 @@ export class PeerBodies {
     b.peer = null;
     // AUDIT MWBODY A1: a throw from one peer's rig is that peer's doll, never the frame's end
     try {
-      this._arm(b, peer.shown, peer.look);
+      this._arm(b, peer.shown, peer.look, peer.ak);   // ARMORY-FISTS: and their kit
       b.bank = Math.min(EFFECTS_BANK_MAX_S, b.bank + dt);   // AUDIT WB9 (bodies F1)
       if (pose) this._poseHorse(b);   // HORSE-VIEW: astride, its horse first - the skin is posed to the seat of the horse's own new pose
       if (pose) { b.rig.update(dt, { pose: true, effectsDt: b.bank }); b.bank = 0; b.posed = true; b.owed = false; b.stale = false; b.posedAt = this._frame; }
@@ -858,7 +858,7 @@ export class PeerBodies {
    *  spell stance (readySpell, a boolean compare on the rig's side), a cast once per count with the wire's range,
    *  and the bow's hold - a swing that arrives with wd 2 is the draw (attack with hold), and release() waits while
    *  wd stays 2, exactly as weaponRig withholds it while the machine sits in StrikeUp. */
-  _arm(b, shown, look = null) {
+  _arm(b, shown, look = null, kit = null) {
     // MWNPC4: a dead body takes no weapon, no spell and no swing - its counts follow, so nothing is replayed if it stands
     if (this._react(b, shown)) { b.swing = shown.an | 0; b.cast = shown.cn | 0; b.pending = null; b.held = false; peerGatherSwing(b.gather ??= {}, shown); return; }   // PEER-ACTS: and its act's
     // PEER-ACTS (GATHER-FEEL II): A GATHERING ACT HOLDS ITS TOOL. While the pose names an act, the hand holds the act's
@@ -889,7 +889,7 @@ export class PeerBodies {
     // template in the same hand), when MY switch shows glows; a gatherer's tool, a wolf's claws and a creature carry none
     const heldNow = hands ? (hands.dual ? hands.right : peerWeaponOf(look, shown)) : null;
     b.rig.setWeaponGlow?.(heldNow && weaponGlowOn() ? glowFromWord(heldNow.glow) : null, heldNow);   // AUDIT WEAPON-GLOW NET-1: and the weapon it is of
-    b.rig.setHandGlow?.(hands && weaponGlowOn() ? peerWrapsGlow(look) : null);   // HAND-WRAPS (AUDIT C2): their fists in their wraps' glow, whichever hand holds them
+    b.rig.setHandGlow?.(hands && weaponGlowOn() ? peerWrapsGlow(look) ?? (heldNow ? null : fistGlow(kit, true)) : null);   // HAND-WRAPS (AUDIT C2): their fists in their wraps' glow, whichever hand holds them
     // AUDIT MIXED-PAIR L4-3: A PAIR IN BOTH HANDS - the mode and the lead, and the left hand's weapon mirrored on its own
     // bone, through the rig's own doors (the local rig's handArm: each a fast path, the left bound once a change)
     b.rig.setHands?.({ mode: hands?.dual ? HANDS_MODE.Dual : HANDS_MODE.Single, lead: hands?.lead ?? 'R' });

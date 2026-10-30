@@ -8,7 +8,7 @@
 import { shopOwns, shopWareById, shopOnSaleOf, shopFeaturedOf, shopDropped } from '../../src/net/shopLaw.js';
 import { AURUM_DEEDS, aurumSwitchOf, aurumDailyOf, aurumDailyById, aurumDayEndMs, aurumWeekOf, aurumWeekEndMs } from '../../src/net/aurumLaw.js';
 import { utcDay } from '../../src/net/marksLaw.js';
-import { isDeveloper } from './titles.js';
+import { isDeveloper, holdsAll } from './titles.js';   // ADMIN-ALL: an admin holds every daily ware, so is sold none
 import { mustChange } from './realm.js';
 
 const DAY_MS = 86_400_000;
@@ -73,7 +73,7 @@ export async function aurumCardOf({ db, nowS }, player, env) {
   return {
     open: aurumOpenFor(player, env),
     balance: balanceOfRow(row),
-    daily: { until: aurumDayEndMs(day), wares: dailyWaresAt(env, nowS).map((id) => ({ id, held: shopOwns(row, id) })) },
+    daily: { until: aurumDayEndMs(day), wares: dailyWaresAt(env, nowS).map((id) => ({ id, held: shopOwns(row, id) || holdsAll(player, env) })) },
     week: { until: aurumWeekEndMs(week), deeds: struck },
   };
 }
@@ -92,6 +92,7 @@ export async function buyDaily({ db, nowS }, player, body, env) {
   const d = aurumDailyById(body?.ware);
   if (!d) return { error: 'aurum-ware' };
   if (!dailyWaresAt(env, nowS).includes(d.id)) return { error: 'aurum-today' };
+  if (holdsAll(player, env)) return { error: 'aurum-held' };   // ADMIN-ALL
   const w = /** @type {any} */ (shopWareById(d.id));
   for (let i = 0; i < 3; i++) {
     const row = await aurumRow(db, player.id);

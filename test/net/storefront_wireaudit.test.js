@@ -156,12 +156,12 @@ test('THE WIRE AUDIT 5: my kill is told by the wire\'s own reach from my feet, w
 
 test('THE WIRE AUDIT 6 and 9: the relay\'s rollback floor is written where a deploy reads it, and the pose\'s kill fields are named as the code names them - `xk`, `xp`, `xh` (mutants: the floor unsaid)', () => {
   const version = rd('src/net/wire.js').split('\n').find((l) => l.startsWith('export const RELAY_VERSION = '));
-  assert.equal(RELAY_VERSION, 'world293');   // PIN MOVED: world293, STOREFRONT (world283, world286, world288, world289, world290 then world291 on its branch, renumbered past FB1029 GROUND, FRONTS, DRAGON, HAND-WRAPS, PVP-LINGER, GILDED-GLOW and DELVE II at the merges of main); PIN MOVED: world288, STOREFRONT (world283 then world286 on its branch, renumbered past FB1029 GROUND and FRONTS at the merge of main at 05cf1838d); PIN MOVED: world286, STOREFRONT (world283 on its branch, renumbered past PVP-SAFE-HIT, AUDIT TAMRIEL-WIDE and CAPE-TOGGLE at the merge)
-  assert.match(version, /ROLLBACK FLOOR: world293 while acct227 or later mints `gb`/);
+  assert.equal(RELAY_VERSION, 'world294');   // PIN MOVED: world294, STOREFRONT (world283, world286, world288, world289, world290, world291 then world293 on its branch, renumbered past FB1029 GROUND, FRONTS, DRAGON, HAND-WRAPS, PVP-LINGER, GILDED-GLOW, DELVE II, PVP-VITALS and WYRM-RIDER at the merges of main); PIN MOVED: world288, STOREFRONT (world283 then world286 on its branch, renumbered past FB1029 GROUND and FRONTS at the merge of main at 05cf1838d); PIN MOVED: world286, STOREFRONT (world283 on its branch, renumbered past PVP-SAFE-HIT, AUDIT TAMRIEL-WIDE and CAPE-TOGGLE at the merge)
+  assert.match(version, /ROLLBACK FLOOR: world294 while acct228 or later mints `gb`/);
   assert.match(version, /a pose's kill \(`xk`, `xp`, `xh`\)/);
   const page = rd('bible/06-Systems/Storefront.md');
   assert.match(page, /\*\*Deploy, and the rollback floor\.\*\*/);
-  assert.match(page, /world293 is the relay's floor while acct227 or later mints/);
+  assert.match(page, /world294 is the relay's floor while acct228 or later mints/);
   assert.match(page, /\(`xk`,\n`xp`, `xh`\)/, 'section 4 names them as section 10 does');
   for (const [where, text] of [['wire.js', version], ['Storefront.md', page], ['relayversion.test.js', rd('test/net/relayversion.test.js')]]) assert.doesNotMatch(text, /`kc`, `kp`, `ks`/, `${where}: \`kc\` is a sea receipt's killer (world246), never the pose's kill`);
 });
@@ -180,8 +180,8 @@ test('THE WIRE AUDIT 8: my own glyphs stand in the order, and once each, the mas
   assert.deepEqual(glyphsInOrder(['tower', 'origin', 'dev', 'tower', 'nope', 'laurel']), ['dev', 'tower', 'laurel', 'origin'], 'GLYPHS\' order, each once, an unknown word dropped as the mask drops it');
   const nowS = 1_800_000_000;
   const player = { handle: 'mack', created_at: nowS, arena: { grand: false, champion: true } };   // arena.js's shape for the season's #1
-  const mine = glyphsOf(player, { DEVELOPER_HANDLES: 'mack', AEGIS_HANDLES: 'mack' }, nowS);
-  assert.deepEqual(mine, ['sprout', 'dev', 'laurel', 'aegis'], 'the laurel before the Aegis, as the room reads them');
+  const mine = glyphsOf(player, { MODERATOR_HANDLES: 'mack', AEGIS_HANDLES: 'mack' }, nowS);   // PIN MOVED (ADMIN-ALL): a moderator, not an Admin - an Admin holds every paint glyph
+  assert.deepEqual(mine, ['sprout', 'mod', 'laurel', 'aegis'], 'the laurel before the Aegis, as the room reads them');
   assert.deepEqual(mine, glyphsOfBits(glyphBitsOf(mine)), 'what I see is what the mask hands the room');
   assert.match(rd('server-account/src/index.js'), /g: glyphsInOrder\(\[\.\.\.glyphsOf\(who\.player, env, nowS\), \.\.\.\(seatBadge\?\.glyphs \?\? \[\]\)\]\),/, 'the token\'s list, the seat\'s glyphs among it in their places');
 });

@@ -23,6 +23,7 @@
 // LEGACY_ASK_KEEP_MS - with the puppet or without it (a room change, a swept owner).
 // Pure but for the player's hands. Not a DFU member: Daggerfall has one player.
 import { liftPiece, givePiece, ROOM_CLAIM_TIMEOUT_MS, ROOM_TAKEN_TEXT, ROOM_CLAIMS_MAX } from '../roomLoot.js';
+import { addCarryClaims, pieceKg } from '../inventory.js';   // CARRY-CLAIMS: a claim's lifted piece weighs on the carry gate until its verdict
 
 /** How long a claim waits for its verdict: any verdict inside it lands, past it the claim is given up. */
 export const CLAIM_KEEP_MS = 300_000;
@@ -70,6 +71,17 @@ export function createClaimLedger({ entity, say = () => {}, newId, keepMs = CLAI
   const asks = new Map();
 
   const placeKey = (/** @type {Claim} */ c) => `${c.container}|${c.p ?? c.sp}`;
+  /** CARRY-CLAIMS (inventory.js claimedCarryKg): what the claims in flight and not lapsed weigh in `e`'s hands - null once
+   *  none is, and the gate lets this ledger go until its next take. */
+  const claimedKg = (/** @type {any} */ e) => {
+    let kg = 0, any = false;
+    for (const c of claims.values()) {
+      if (c.done || c.lapsed) continue;
+      any = true;
+      if (e === entity) kg += pieceKg(c.item, c.give);
+    }
+    return any ? kg : null;
+  };
   const tell = (/** @type {string} */ line) => { try { say?.(line); } catch { /* a line that cannot be said is not the claim's */ } };
 
   /** A take of `n` of `item` off a container: lifted out of the taker's hands now, stood as a claim until its verdict. */
@@ -79,6 +91,7 @@ export function createClaimLedger({ entity, say = () => {}, newId, keepMs = CLAI
     /** @type {Claim} */
     const c = { id: newId(), container, ...(ref.p !== undefined ? { p: ref.p } : { sp: ref.sp }), n, item, give, at: now, lapsed: false, done: false, wait: resendMs, nextAt: now + resendMs, ...(by !== undefined ? { by } : {}), meta: rest };
     claims.set(c.id, c);
+    addCarryClaims(claimedKg, claimedKg);   // CARRY-CLAIMS: the lifted piece weighs on the gate until its verdict
     trim();
     return c;
   }

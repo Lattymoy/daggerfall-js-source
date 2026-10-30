@@ -137,15 +137,16 @@ test('SHADOW-FANG grant: SirMcMobdon alone holds it, case-folded, title and glyp
   const nowS = 1_900_000_000;
   for (const h of ['SirMcMobdon', 'sirmcmobdon', 'SIRMCMOBDON']) {
     // STAFF-PANEL1 (PIN MOVED, mob, 06:33Z: "add me to the dev and my shadow fang just becomes vanity"): beside the developer's
-    assert.deepEqual(titlesHeld(row(h), env), ['developer', 'shadowfang'], `${h}: Shadow Fang and the developer's, nothing else`);
-    assert.deepEqual(glyphsOf(row(h), env, nowS), ['dev', 'shadowfang'], `${h}: its glyph and no Apostle's`);
+    assert.deepEqual(titlesHeld(row(h), env).slice(0, 2), ['developer', 'shadowfang'], `${h}: Shadow Fang and the developer's first`);   // ADMIN-ALL (PIN MOVED): an Admin holds every cosmetic after these (test/server/admin_all.test.js) - the head is what is earned
+    assert.ok(['dev', 'shadowfang'].every((g) => glyphsOf(row(h), env, nowS).includes(g)), `${h}: its glyph and the developer's`);   // ADMIN-ALL (PIN MOVED): an Admin holds every paint glyph (test/server/admin_all.test.js); PIN MOVED (STOREFRONT): in GLYPHS' order, the mask's (identityToken.js glyphsInOrder), so no longer at the head
   }
-  assert.equal(titleWorn(row('SirMcMobdon', { title: 'apostle' }), env), undefined, 'the Apostle title they wore lapses - held no longer, worn no longer');
+  const notAdmin = { ...env, DEVELOPER_HANDLES: '' };   // ADMIN-ALL (PIN MOVED): an Admin holds every title (the Apostle's too), so the lapse is read as a Shadow Fang alone
+  assert.equal(titleWorn(row('SirMcMobdon', { title: 'apostle' }), notAdmin), undefined, 'the Apostle title they wore lapses - held no longer, worn no longer');
   assert.equal(titleWorn(row('SirMcMobdon', { title: 'shadowfang' }), env), 'shadowfang');
   assert.equal(equipRefusal('shadowfang', row('SirMcMobdon'), env), null, 'theirs to wear');
-  assert.equal(equipRefusal('apostle', row('SirMcMobdon'), env), 'not-held');
-  assert.deepEqual(wardrobeOf(row('sirmcmobdon', { title: 'shadowfang' }), env, nowS), { titles: ['developer', 'shadowfang'], title: 'shadowfang', glyphs: ['dev', 'shadowfang'], auras: ['shadowcloak', 'seraphwings'], aura: null, insignia: [], icons: [], icon: null, armoryHeld: [], armory: null, effectsHeld: { kill: [], portal: [], mount: [] }, effects: null })   // PIN MOVED (STOREFRONT): and the effects held and worn;   // STAFF-PANEL1 (PIN MOVED): the developer's beside, the Shadow Fang still worn; PIN MOVED (WITCH1): and no profile icon; WB9g: and no insignia bought; SHADOW-CLOAK (PIN MOVED): the list holds the Holo Shadow Cloak now, held but not worn until they put it on; ARMORY (PIN MOVED): no Aura Armory piece held or worn
-  for (const h of ['Dutchess', 'SquidKamer', 'Lattymoy', 'Stranger']) {
+  assert.equal(equipRefusal('apostle', row('SirMcMobdon'), notAdmin), 'not-held');
+  assert.deepEqual(wardrobeOf(row('sirmcmobdon', { title: 'shadowfang' }), notAdmin, nowS), { titles: ['shadowfang'], title: 'shadowfang', glyphs: ['shadowfang'], auras: ['shadowcloak'], aura: null, insignia: [], icons: [], icon: null, armoryHeld: [], armory: null, effectsHeld: { kill: [], portal: [], mount: [] }, effects: null });   // PIN MOVED (STOREFRONT): and the effects held and worn;   // STAFF-PANEL1 (PIN MOVED): the developer's beside, the Shadow Fang still worn; PIN MOVED (WITCH1): and no profile icon; WB9g: and no insignia bought; SHADOW-CLOAK (PIN MOVED): the list holds the Holo Shadow Cloak now, held but not worn until they put it on; ARMORY (PIN MOVED): no Aura Armory piece held or worn; ADMIN-ALL (PIN MOVED): read as a Shadow Fang alone - an Admin's wardrobe is every cosmetic (test/server/admin_all.test.js)
+  for (const h of ['Dutchess', 'SquidKamer', 'Stranger']) {   // ADMIN-ALL (PIN MOVED): no Admin here - an Admin holds every title
     assert.ok(!titlesHeld(row(h), env).includes('shadowfang'), `${h} does not hold it`);
     assert.ok(!glyphsOf(row(h), env, nowS).includes('shadowfang'));
     assert.equal(equipRefusal('shadowfang', row(h), env), 'not-held');

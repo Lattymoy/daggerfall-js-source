@@ -83,7 +83,7 @@ test('PASS-PANELS the premium track end to end: shut until opened for its Aurum 
 
 test('PASS-PANELS every refusal and its status: a guest, the switch off or dev for another, a season the law lacks, before its first instant, an item no track sells, a short balance; and a year past the season the tracks still sell (the owner: "Never expire") (mutants: a guest served; dev open to all; the tracks shut with the season)', async (t) => {
   t.mock.timers.enable({ apis: ['Date'], now: S1.fromMs - 86_400_000 });
-  const s = await stand({ ...ON, PASS_OPEN: 'dev', DEVELOPER_HANDLES: 'Maker,Later' });
+  const s = await stand({ ...ON, PASS_OPEN: 'dev', DEVELOPER_HANDLES: 'Maker' });
   const dev = await s.registered('Maker'), other = await s.registered('Other');
   s.give(dev, 2000); s.give(other, 2000);
   const ctx = () => ({ db: s.env.DB, nowS: Math.floor(Date.now() / 1000) });
@@ -92,7 +92,10 @@ test('PASS-PANELS every refusal and its status: a guest, the switch off or dev f
   assert.equal((await s.buy(other, 'glyph:cog')).body.error, 'pass-closed', 'dev: another account shut');
   assert.equal((await s.buy(dev, 'glyph:cog')).body.error, 'pass-soon', 'dev: the developer reaches the season\'s own word');
   assert.equal((await s.unlock(dev)).body.error, 'pass-soon');
+  const poor = await s.registered('Poor');
+  assert.deepEqual((await s.unlock(poor)).body, { error: 'pass-closed' }, 'dev: shut to a stranger before the balance is read');
   t.mock.timers.setTime(S1.toMs + 365 * 86_400_000);
+  s.env.PASS_OPEN = 'on';   // PIN MOVED (ADMIN-ALL): a developer holds every item and is sold none, so a year on is read by an account on no list, the switch on
   const late = await s.registered('Later');   // a session a year on (the first one's has lapsed)
   s.give(late, 2000);
   assert.equal((await s.buy(late, 'nope:x')).body.error, 'pass-item');
@@ -102,8 +105,6 @@ test('PASS-PANELS every refusal and its status: a guest, the switch off or dev f
   assert.equal((await s.buy(late, 'glyph:cog')).status, 200, 'a year past the season');
   assert.equal((await s.unlock(late)).status, 200);
   assert.deepEqual((await s.buy(late, 'mount:automaton')).body.error, 'pass-panel');
-  const poor = await s.registered('Poor');
-  assert.deepEqual((await s.unlock(poor)).body, { error: 'pass-closed' }, 'dev: shut to a stranger before the balance is read');
   for (const [e, st] of [['pass-guest', 403], ['pass-closed', 409], ['pass-season', 400], ['pass-item', 400], ['pass-soon', 409], ['pass-held', 409], ['pass-track', 409], ['pass-panel', 409], ['pass-short', 409], ['pass-busy', 503]]) assert.equal(BATTLE_PASS_STATUS[e], st, e);
 });
 
