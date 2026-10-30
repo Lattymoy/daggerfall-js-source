@@ -230,8 +230,8 @@
   {
     "name": "GUILD1e-scan-without-the-board",
     "file": "src/systems/decor/decorScan.js",
-    "old": "[...decorCatalogue(mods ? addDecorMods(read) : read), HALL_BOARD_ENTRY]",
-    "new": "[...decorCatalogue(mods ? addDecorMods(read) : read)]",
+    "old": "[...decorCatalogue(mods ? addDecorMods(read) : read), HALL_BOARD_ENTRY, ...GUILD_FURNITURE_ENTRIES]",
+    "new": "[...decorCatalogue(mods ? addDecorMods(read) : read), ...GUILD_FURNITURE_ENTRIES]",
     "tests": [
       "test/net/guild1e_client.test.js"
     ],

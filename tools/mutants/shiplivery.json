@@ -56,7 +56,7 @@
   {
     "name": "SL-door-none-kept",
     "file": "src/systems/naval/shipLivery.js",
-    "old": "  return LIVERY_PARTS.some((p) => out[p]) ? out : null;",
+    "old": "  return LIVERY_PARTS.some((p) => out[p]) || /** @type {any} */ (out).cloth ? out : null;",
     "new": "  return out;",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
@@ -74,8 +74,8 @@
   {
     "name": "SL-code-zero",
     "file": "src/systems/naval/shipLivery.js",
-    "old": "if (!Number.isInteger(n) || n <= 0 || n >= 1 << 16) return null;",
-    "new": "if (!Number.isInteger(n) || n < 0 || n >= 1 << 16) return null;",
+    "old": "if (!Number.isInteger(n) || n <= 0 || n >= 1 << 24) return null;",
+    "new": "if (!Number.isInteger(n) || n < 0 || n >= 1 << 24) return null;",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ],
@@ -85,7 +85,7 @@
   {
     "name": "SL-code-wide",
     "file": "src/systems/naval/shipLivery.js",
-    "old": "if (!Number.isInteger(n) || n <= 0 || n >= 1 << 16) return null;",
+    "old": "if (!Number.isInteger(n) || n <= 0 || n >= 1 << 24) return null;",
     "new": "if (!Number.isInteger(n) || n <= 0) return null;",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
@@ -177,8 +177,8 @@
   {
     "name": "SLA-cloth-families",
     "file": "src/world/ships/shipLiveryArt.js",
-    "old": "      if (sail) out.push({ record, picture: shadeCloth(pic, sail), glow: null, night: null });",
-    "new": "      if (sail) out.push({ record, picture: paintFamilies(pic, a.palette, [{ members: CANVAS, base: C.canvas, paint: sail }]).picture, glow: null, night: null });",
+    "old": "      else if (sail) out.push({ record, picture: shadeCloth(pic, sail), glow: null, night: null });",
+    "new": "      else if (sail) out.push({ record, picture: paintFamilies(pic, a.palette, [{ members: CANVAS, base: C.canvas, paint: sail }]).picture, glow: null, night: null });",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
     ]
@@ -258,7 +258,7 @@
   {
     "name": "SLP-sail-never",
     "file": "src/scenes/comeSailAway/shipLiveryPaint.js",
-    "old": "    if (sail) {\n      const pic = await classic(CLASSIC_SAIL[0], CLASSIC_SAIL[1]);",
+    "old": "    if (sail || lv.cloth) {\n      const pic = await classic(CLASSIC_SAIL[0], CLASSIC_SAIL[1]);",
     "new": "    if (false) {\n      const pic = await classic(CLASSIC_SAIL[0], CLASSIC_SAIL[1]);",
     "tests": [
       "test/systems/naval/shiplivery.test.js"
@@ -303,7 +303,7 @@
   {
     "name": "SLPOOL-unpainted",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "const paint = paints.remapOf(boat.hull, liveryCodeOf(boat), cityLights, drawRemap);",
+    "old": "const paint = paints.remapOf(boat.hull, code, cityLights, drawRemap, sailArmsOf(boat, code));",
     "new": "const paint = drawRemap;",
     "tests": [
       "test/systems/naval/shiplivery.test.js"

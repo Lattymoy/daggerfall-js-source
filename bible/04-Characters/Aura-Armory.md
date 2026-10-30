@@ -58,6 +58,10 @@ A piece is the ACCOUNT's, as an aura is: every character on the account may wear
 account. What is held is read off the account's row at every ask (`server-account/src/titles.js` armoryHeld). A guest
 holds none.
 
+GUILD-SHOP (2026-10-30, `11-Multiplayer/Guild-Shop.md` section 3): the **Insignia Armlet** is the arms slot's guild
+piece, bought for silver in the guild window's Shop - its bit on `players.guild_wares`, read by armoryHeld beside the
+others. It draws the wearer's guild's crest on a gilt band round the left upper arm.
+
 **The Sigil Broker.** The Dagonfire pieces are her insignia (`src/net/insignia.js` INSIGNIA, ids `armory:<piece>`),
 sold beside the Gatebreaker title and Dagon's Fire aura through their one door (`/v1/account/insignia`,
 `server-account/src/accounts.js` buyInsignia). Each is 75 Deadlands Embers, half again her aura's 50, so the five are

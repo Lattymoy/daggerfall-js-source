@@ -202,8 +202,8 @@
   {
     "name": "SEAT-HALL-door-list",
     "file": "src/net/accountClient.js",
-    "old": "{ mapId, buildingKey, ...(seat ? { seat: true } : {}), ...(yard && !seat ? { yard: true } : {}) }),   // SEAT-HALL",
-    "new": "{ mapId, buildingKey, ...(yard && !seat ? { yard: true } : {}) }),   // SEAT-HALL",
+    "old": "{ mapId, buildingKey, ...(seat ? { seat: true } : {}), ...(yard && !seat ? { yard: true } : {}) })\n      .then((r) =>",
+    "new": "{ mapId, buildingKey, ...(yard && !seat ? { yard: true } : {}) })\n      .then((r) =>",
     "tests": [
       "test/net/seathall_client.test.js"
     ]
