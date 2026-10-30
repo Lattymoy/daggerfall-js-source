@@ -56,8 +56,8 @@
   {
     "name": "ARENA4B-PURSE-CHIP-AT-ZERO",
     "file": "src/ui/arena/arenaWindow.js",
-    "old": "if (Number.isSafeInteger(h.purses) && h.purses > 0) id.append",
-    "new": "if (Number.isSafeInteger(h.purses)) id.append",
+    "old": "    if (Number.isSafeInteger(h.purses) && h.purses > 0) id.append(chip(W().pursesWon(h.purses), 'aw-purse'));",
+    "new": "    if (Number.isSafeInteger(h.purses)) id.append(chip(W().pursesWon(h.purses), 'aw-purse'));",
     "tests": [
       "test/systems/arena/arena4b_window.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "ARENA4B-HALL-CARD-UNDRAWN",
     "file": "src/ui/arena/arenaWindow.js",
-    "old": "if (boardPicked === 'fast' && m.hall) body.append(hallCard(m.hall));",
-    "new": "if (false) body.append(hallCard(m.hall));",
+    "old": "    if (boardPicked === 'fast' && m.hall) body.append(hallCard(m.hall)); // ARENA4b: online, the realm's Hall under its fastest",
+    "new": "    if (false) body.append(hallCard(m.hall)); // ARENA4b: online, the realm's Hall under its fastest",
     "tests": [
       "test/systems/arena/arena4b_window.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "ARENA4B-RECORDS-NOTE-MISSING",
     "file": "src/ui/arena/arenaWindow.js",
-    "old": "if (m.online) body.append(el('p', 'aw-line aw-online', m.online));   // ARENA4b",
-    "new": "if (false) body.append(el('p', 'aw-line aw-online', m.online));   // ARENA4b",
+    "old": "    if (m.online) body.append(el('p', 'aw-line aw-online', m.online)); // ARENA4b: online, the account's record - not the save's",
+    "new": "    if (false) body.append(el('p', 'aw-line aw-online', m.online)); // ARENA4b: online, the account's record - not the save's",
     "tests": [
       "test/systems/arena/arena4b_window.test.js"
     ]

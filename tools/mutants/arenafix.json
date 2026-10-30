@@ -374,8 +374,8 @@
   {
     "name": "ARENAFIX-HUD-CROWD-QUIET",
     "file": "src/ui/arena/arenaHud.js",
-    "old": "    crowd: quiet ? null : {",
-    "new": "    crowd: false ? null : {",
+    "old": "    crowd: quiet ? null : { frac: Math.round(((mood + 1) / 2) * 1000) / 1000, band, word: ARENA_TEXT.mood[band] }, // ARENA-FIX 4: the training pit has no crowd - no meter",
+    "new": "    crowd: false ? null : { frac: Math.round(((mood + 1) / 2) * 1000) / 1000, band, word: ARENA_TEXT.mood[band] }, // ARENA-FIX 4: the training pit has no crowd - no meter",
     "tests": [
       "test/systems/arena/arena_fix.test.js"
     ]

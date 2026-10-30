@@ -124,6 +124,8 @@
 /src/systems/wagon/*/
 !/src/ui/
 /src/ui/*
+!/src/ui/arena/
+/src/ui/arena/*/
 !/src/ui/card/
 /src/ui/card/*/
 !/src/ui/collections/

@@ -697,7 +697,7 @@ Every in-game DOM button, read from every module that builds one, by where it st
   - the duel prompt (`duelPrompt.js:"const yes = el('button', 'dfduel-btn', 'Accept'); yes.type = 'button';"`);
   - the Elite Breach's call (`egCall.js:"const btn = el('button', 'dfegcall-btn', 'Answer');"`);
   - the Code of Conduct card;
-  - the arena session's button (`arenaSessionButton.js:"Hidden under any window"`);
+  - the arena session's button (`arenaSessionButton.js:"members, Make Red"`);
   - the siege readout's Claim, Close and Leave;
   - the journey panel's Map, Camp and Exit (a window over it hides it:
     `enhancedTravelControl.js:"if (last.covered !== true) { last.covered = true;"`);
@@ -763,7 +763,7 @@ PIN MOVED: none. No existing pin or mutant record quotes a line this moved (muta
 
 NOT CHANGED (recorded as found):
 - THE ARENA STANDS' CHEER AND BOO keep the focus on purpose, so that a keyboard user's press keeps its place
-  (`arenaHud.js:"// AUDIT PRE-MERGE 1003 U15: SHUT, NOT DISABLED"`). A Tab from the page no longer reaches them. After a
+  (`arenaHud.js:"AUDIT PRE-MERGE 1003 U15"`). A Tab from the page no longer reaches them. After a
   mouse press, though, the next Space shouts again (they have their own keys, = and -). That call is the owner's.
 - THE SURFACES A PLAYER OPENS keep a press's focus while the player can still walk and jump: the friends panel, the
   F-menu, the profile and the page windows, and the Overworld's own HUD. Their Tab from the page is now the game's, as

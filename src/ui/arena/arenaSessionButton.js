@@ -28,12 +28,24 @@ const CSS = `
  * @param {{ open: () => any, doc?: any }} deps
  */
 export function createArenaSessionButton({ open, doc = globalThis.document }) {
-  let btn = null, shown = false, listening = false;
+  let btn = null,
+    shown = false,
+    listening = false;
   const win = doc?.defaultView ?? globalThis;
   const onKey = (e) => {
-    if (!shown || !e || e.defaultPrevented || e.repeat || e.ctrlKey || e.metaKey || e.altKey || e.code !== ARENA_SESSION_KEY) return;
+    if (
+      !shown ||
+      !e ||
+      e.defaultPrevented ||
+      e.repeat ||
+      e.ctrlKey ||
+      e.metaKey ||
+      e.altKey ||
+      e.code !== ARENA_SESSION_KEY
+    )
+      return;
     const t = e.target;
-    if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(String(t.tagName ?? '')))) return;   // never in a field
+    if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(String(t.tagName ?? '')))) return; // never in a field
     e.preventDefault?.();
     open();
   };
@@ -55,10 +67,16 @@ export function createArenaSessionButton({ open, doc = globalThis.document }) {
     key.className = 'arena-session-key';
     key.textContent = ARENA_SESSION_KEY_TEXT;
     btn.append(word, key);
-    const swallow = (e) => { e?.stopPropagation?.(); };   // the button's press is its own - never a swing, never the lock
+    const swallow = (e) => {
+      e?.stopPropagation?.();
+    }; // the button's press is its own - never a swing, never the lock
     btn.addEventListener('mousedown', swallow);
     btn.addEventListener('pointerdown', swallow);
-    btn.addEventListener('click', (e) => { e?.preventDefault?.(); e?.stopPropagation?.(); open(); });
+    btn.addEventListener('click', (e) => {
+      e?.preventDefault?.();
+      e?.stopPropagation?.();
+      open();
+    });
     btn.hidden = true;
     doc.body.append(btn);
     return btn;
@@ -71,12 +89,22 @@ export function createArenaSessionButton({ open, doc = globalThis.document }) {
       shown = on;
       if (on) make();
       if (btn) btn.hidden = !on;
-      if (on && !listening && typeof win?.addEventListener === 'function') { win.addEventListener('keydown', onKey); listening = true; }
-      else if (!on && listening) { win.removeEventListener?.('keydown', onKey); listening = false; }
+      if (on && !listening && typeof win?.addEventListener === 'function') {
+        win.addEventListener('keydown', onKey);
+        listening = true;
+      } else if (!on && listening) {
+        win.removeEventListener?.('keydown', onKey);
+        listening = false;
+      }
     },
-    get shown() { return shown; },
+    get shown() {
+      return shown;
+    },
     dispose() {
-      if (listening) { win.removeEventListener?.('keydown', onKey); listening = false; }
+      if (listening) {
+        win.removeEventListener?.('keydown', onKey);
+        listening = false;
+      }
       btn?.remove?.();
       btn = null;
       shown = false;

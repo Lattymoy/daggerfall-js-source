@@ -8,7 +8,7 @@
 // worn. A page with no document answers null. One stands at a time.
 import { mountEnhancedChunk } from '../enhanced/enhancedChunk.js';
 import { registerOverlay } from '../enhanced/enhancedOverlays.js';
-import { noteFirstUse } from '../../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { noteFirstUse } from '../../systems/tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
 
 /** The overlay standing now, or null. */
 let _open = null;
@@ -30,12 +30,12 @@ export function closeArenaDoor() {
  * @returns {any} the overlay, or null with no document
  */
 export function createArenaOverlay(deps) {
-  noteFirstUse('arena');   // TUT1
+  noteFirstUse('arena'); // TUT1
   if (typeof document === 'undefined') return null;
   _open?.dispose();
   let fired = false;
   let view = null;
-  let since = 0;   // AUDIT PRE-MERGE 1003 U1: seconds since the window last asked
+  let since = 0; // AUDIT PRE-MERGE 1003 U1: seconds since the window last asked
   const host = document.createElement('div');
   host.id = 'arena-window-host';
   host.style.cssText = 'position:fixed;inset:0;z-index:13;background:transparent;overflow:hidden';
@@ -47,18 +47,28 @@ export function createArenaOverlay(deps) {
     view?.unmount();
     view = null;
     host.remove();
-    fired = true;   // last: `done` must not read true while the DOM is up
+    fired = true; // last: `done` must not read true while the DOM is up
     if (_open === overlay) _open = null;
     deps.onClose?.();
   };
   unregister = registerOverlay(close);
   const overlay = {
     isChoiceWindow: true,
-    get done() { return fired; },
-    input() { /* the window's own capture keydown owns the keyboard */ },
-    click() { /* the window is a fixed div over the canvas; pointers never get here */ },
-    wheel() { /* its pages scroll themselves */ },
-    hover() { /* its own :hover */ },
+    get done() {
+      return fired;
+    },
+    input() {
+      /* the window's own capture keydown owns the keyboard */
+    },
+    click() {
+      /* the window is a fixed div over the canvas; pointers never get here */
+    },
+    wheel() {
+      /* its pages scroll themselves */
+    },
+    hover() {
+      /* its own :hover */
+    },
     // AUDIT PRE-MERGE 1003 U1: "a press repaints it" was the whole of it - online the window's model moves with no press
     // (the board in, the hall open, the queue heard, an offer and its 20-second clock), and the hall's socket is kept
     // only while the window asks for it (scenes/arena/arenaOnline.js model -> wantHall): an idle window lost its hall under it
@@ -70,17 +80,32 @@ export function createArenaOverlay(deps) {
       since = 0;
       view?.refresh?.();
     },
-    draw() { /* DOM, not canvas */ },
-    dispose() { close(); },
-    repaint() { view?.repaint(); },
+    draw() {
+      /* DOM, not canvas */
+    },
+    dispose() {
+      close();
+    },
+    repaint() {
+      view?.repaint();
+    },
     /** The page shown, or null while the chunk loads. */
-    page() { return view?.page?.() ?? null; },
+    page() {
+      return view?.page?.() ?? null;
+    },
   };
   _open = overlay;
   mountEnhancedChunk({
     load: () => import('./arenaWindow.js'),
-    mount: ({ mountArenaWindow }) => { view = mountArenaWindow(host, { ...deps, onExit: close }); },
-    alive: () => !fired, host, onDismiss: () => { close(); }, label: 'arena',
+    mount: ({ mountArenaWindow }) => {
+      view = mountArenaWindow(host, { ...deps, onExit: close });
+    },
+    alive: () => !fired,
+    host,
+    onDismiss: () => {
+      close();
+    },
+    label: 'arena',
   });
   return overlay;
 }

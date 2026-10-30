@@ -442,8 +442,8 @@
   {
     "name": "ARENATEAMS-the-melee-test-inverted",
     "file": "src/ui/arena/arenaHud.js",
-    "old": "const melee = bout.fighters.length > 2 && new Set",
-    "new": "const melee = bout.fighters.length <= 2 && new Set",
+    "old": "  const melee = bout.fighters.length > 2 && new Set(bout.fighters.map((f) => f.side | 0)).size === bout.fighters.length;",
+    "new": "  const melee =\n    bout.fighters.length <= 2 && new Set(bout.fighters.map((f) => f.side | 0)).size === bout.fighters.length;",
     "tests": [
       "test/systems/arena/fb1004e_arena.test.js"
     ],
@@ -452,8 +452,8 @@
   {
     "name": "ARENATEAMS-the-word-never-written",
     "file": "src/ui/arena/arenaHud.js",
-    "old": "parts.vs.textContent = shown.vs; }",
-    "new": "}",
+    "old": "    parts.vs.textContent = shown.vs;\n  } // ARENA-TEAMS",
+    "new": "  } // ARENA-TEAMS",
     "tests": [
       "test/systems/arena/fb1004e_arena.test.js"
     ],

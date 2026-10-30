@@ -65,34 +65,63 @@ const clamp01 = (x) => (x < 0 ? 0 : x > 1 ? 1 : x);
  * ARENA4b: `stands` `{ ready }` while I watch a relay's bout from the stands (null otherwise): the model's `stands`
  * `{ cheer, boo, cheerKey, booKey, ready }` - the two presses' words, their keys, whether the allowance lets one now.
  */
-export function arenaHudModel(bout, crowd, now, { you = null, stamina = null, bark = '', quiet = false, teams = null, stands = null } = {}) {
+export function arenaHudModel(
+  bout,
+  crowd,
+  now,
+  { you = null, stamina = null, bark = '', quiet = false, teams = null, stands = null } = {},
+) {
   if (!bout || bout.phase === 'done' || !Array.isArray(bout.fighters)) return null;
-  const mine = you != null ? bout.fighters.find((f) => f.id === String(you)) ?? null : null;
+  const mine = you != null ? (bout.fighters.find((f) => f.id === String(you)) ?? null) : null;
   const leftSide = mine ? mine.side : bout.fighters[0].side;
-  const darling = darlingOf(crowd), villain = villainOf(crowd);
+  const darling = darlingOf(crowd),
+    villain = villainOf(crowd);
   const row = (f) => ({
-    id: f.id, name: f.name, frac: Math.round(fighterShare(f) * 1000) / 1000,
-    out: f.out ? ARENA_TEXT.hud.out[f.out] ?? '' : '', you: !!mine && f.id === mine.id,
+    id: f.id,
+    name: f.name,
+    frac: Math.round(fighterShare(f) * 1000) / 1000,
+    out: f.out ? (ARENA_TEXT.hud.out[f.out] ?? '') : '',
+    you: !!mine && f.id === mine.id,
     tag: f.id === darling ? ARENA_TEXT.hud.darling : f.id === villain ? ARENA_TEXT.hud.villain : '',
-    banner: f.side === leftSide ? (mine ? 'you' : 'a') : (mine ? 'them' : 'b'),
+    banner: f.side === leftSide ? (mine ? 'you' : 'a') : mine ? 'them' : 'b',
     team: teams?.[f.id] === 'red' || teams?.[f.id] === 'blue' ? teams[f.id] : '',
   });
   // ARENA-TEAMS (FIELD BUGS 2026-10-04e): A GRAND MELEE IS NO TEAM. Every fighter is a side of its own, and the right
   // column stood them together under one "vs" - so the three fighting each other read as one team turning on itself
   const melee = bout.fighters.length > 2 && new Set(bout.fighters.map((f) => f.side | 0)).size === bout.fighters.length;
-  const left = bout.fighters.filter((f) => f.side === leftSide).slice(0, HUD_ROWS_MAX).map(row);
-  const right = bout.fighters.filter((f) => f.side !== leftSide).slice(0, HUD_ROWS_MAX).map(row);
+  const left = bout.fighters
+    .filter((f) => f.side === leftSide)
+    .slice(0, HUD_ROWS_MAX)
+    .map(row);
+  const right = bout.fighters
+    .filter((f) => f.side !== leftSide)
+    .slice(0, HUD_ROWS_MAX)
+    .map(row);
   const secs = Math.ceil(boutTimeLeft(bout, now) / 1000);
   const mood = Math.max(-1, Math.min(1, crowd?.mood ?? 0));
   const band = moodBand(mood);
   const live = bout.phase === 'fight';
   return {
-    phase: bout.phase, left, right, timer: ARENA_TEXT.hud.timeLeft(Math.max(0, secs)), vs: melee ? ARENA_TEXT.hud.eachAlone : ARENA_TEXT.hud.vs,
-    crowd: quiet ? null : { frac: Math.round(((mood + 1) / 2) * 1000) / 1000, band, word: ARENA_TEXT.mood[band] },   // ARENA-FIX 4: the training pit has no crowd - no meter
-    stamina: mine && Number.isFinite(stamina) ? Math.round(clamp01(/** @type {number} */ (stamina)) * 1000) / 1000 : null,
+    phase: bout.phase,
+    left,
+    right,
+    timer: ARENA_TEXT.hud.timeLeft(Math.max(0, secs)),
+    vs: melee ? ARENA_TEXT.hud.eachAlone : ARENA_TEXT.hud.vs,
+    crowd: quiet ? null : { frac: Math.round(((mood + 1) / 2) * 1000) / 1000, band, word: ARENA_TEXT.mood[band] }, // ARENA-FIX 4: the training pit has no crowd - no meter
+    stamina:
+      mine && Number.isFinite(stamina) ? Math.round(clamp01(/** @type {number} */ (stamina)) * 1000) / 1000 : null,
     hint: mine && live && !mine.out && fighterShare(mine) <= YIELD_SHARE ? ARENA_TEXT.hud.yieldHint : '',
     bark: typeof bark === 'string' ? bark : '',
-    stands: stands && !mine && !quiet ? { cheer: ARENA_TEXT.online.cheer, boo: ARENA_TEXT.online.boo, cheerKey: ARENA_TEXT.online.cheerKey, booKey: ARENA_TEXT.online.booKey, ready: !!stands.ready } : null,
+    stands:
+      stands && !mine && !quiet
+        ? {
+            cheer: ARENA_TEXT.online.cheer,
+            boo: ARENA_TEXT.online.boo,
+            cheerKey: ARENA_TEXT.online.cheerKey,
+            booKey: ARENA_TEXT.online.booKey,
+            ready: !!stands.ready,
+          }
+        : null,
   };
 }
 
@@ -186,11 +215,27 @@ body:has(.hud-foe.on.blade) .arena-hud { top: calc(18px + 28px * var(--hud-scale
 @media (prefers-reduced-motion: reduce) { .arena-fill { transition: none; } }
 `;
 
-let root = null, parts = null;
+let root = null,
+  parts = null;
 let shown = null;
-const fresh = () => ({ vis: '', rows: { left: [], right: [] }, timer: '', vs: 'vs', stam: -2, crowd: -1, word: '', bark: '', hint: '', touch: null, stands: '', standsReady: false, scale: '' });
+const fresh = () => ({
+  vis: '',
+  rows: { left: [], right: [] },
+  timer: '',
+  vs: 'vs',
+  stam: -2,
+  crowd: -1,
+  word: '',
+  bark: '',
+  hint: '',
+  touch: null,
+  stands: '',
+  standsReady: false,
+  scale: '',
+});
 /** ARENA4b: the stands' door now (the last draw's `cheer`) and the window whose keys are heard while the presses stand. */
-let cheerDoor = null, keyWin = null;
+let cheerDoor = null,
+  keyWin = null;
 /** A press of the stands (1 cheer, -1 boo): the host's door, while the row stands and the allowance lets one. */
 function shout(dir) {
   if (!shown?.standsReady || typeof cheerDoor !== 'function') return false;
@@ -209,8 +254,13 @@ function onStandsKey(e) {
 /** The stands' keys heard (`on`) or let go. */
 function listenKeys(on, doc) {
   const win = doc?.defaultView ?? globalThis;
-  if (on && !keyWin && typeof win?.addEventListener === 'function') { keyWin = win; win.addEventListener('keydown', onStandsKey); }
-  else if (!on && keyWin) { keyWin.removeEventListener?.('keydown', onStandsKey); keyWin = null; }
+  if (on && !keyWin && typeof win?.addEventListener === 'function') {
+    keyWin = win;
+    win.addEventListener('keydown', onStandsKey);
+  } else if (!on && keyWin) {
+    keyWin.removeEventListener?.('keydown', onStandsKey);
+    keyWin = null;
+  }
 }
 
 function build(doc) {
@@ -220,9 +270,14 @@ function build(doc) {
     st.textContent = ARENA_HUD_CSS;
     (doc.head ?? doc.body)?.append(st);
   }
-  const part = (tag, cls, text = '') => { const n = doc.createElement(tag); n.className = cls; if (text) n.textContent = text; return n; };
+  const part = (tag, cls, text = '') => {
+    const n = doc.createElement(tag);
+    n.className = cls;
+    if (text) n.textContent = text;
+    return n;
+  };
   root = part('div', 'arena-hud');
-  root.setAttribute('aria-hidden', 'true');   // a readout over the world: the Herald's lines say what it shows
+  root.setAttribute('aria-hidden', 'true'); // a readout over the world: the Herald's lines say what it shows
   const plate = part('div', 'arena-plate');
   const row = part('div', 'arena-row');
   const sideOf = (cls) => {
@@ -231,10 +286,13 @@ function build(doc) {
     for (let i = 0; i < HUD_ROWS_MAX; i++) {
       const r = part('div', 'arena-ftr');
       const head = part('div', 'arena-ftr-head');
-      const name = part('span', 'arena-ftr-name'), tag = part('span', 'arena-tag'), out = part('span', 'arena-out');
-      const team = part('span', 'arena-team');   // ARENA3: the banner's pennant
+      const name = part('span', 'arena-ftr-name'),
+        tag = part('span', 'arena-tag'),
+        out = part('span', 'arena-out');
+      const team = part('span', 'arena-team'); // ARENA3: the banner's pennant
       head.append(team, name, tag, out);
-      const track = part('div', 'arena-track'), fill = part('div', 'arena-fill');
+      const track = part('div', 'arena-track'),
+        fill = part('div', 'arena-fill');
       track.append(fill);
       r.append(head, track);
       r.style.display = 'none';
@@ -243,41 +301,56 @@ function build(doc) {
     }
     return { side, rows };
   };
-  const L = sideOf('left'), R = sideOf('right');
+  const L = sideOf('left'),
+    R = sideOf('right');
   const mid = part('div', 'arena-mid');
-  const timer = part('div', 'arena-timer'), vs = part('div', 'arena-vs', 'vs');
+  const timer = part('div', 'arena-timer'),
+    vs = part('div', 'arena-vs', 'vs');
   mid.append(timer, vs);
   row.append(L.side, mid, R.side);
   const stam = part('div', 'arena-stam');
-  const stamTrack = part('div', 'arena-track'), stamFill = part('div', 'arena-fill');
+  const stamTrack = part('div', 'arena-track'),
+    stamFill = part('div', 'arena-fill');
   stamTrack.append(stamFill);
   stam.append(part('span', 'arena-stam-label', ARENA_TEXT.hud.stamina), stamTrack);
   const crowd = part('div', 'arena-crowd');
-  const crowdTrack = part('div', 'arena-track'), crowdFill = part('div', 'arena-fill'), crowdMid = part('div', 'arena-crowd-mid');
+  const crowdTrack = part('div', 'arena-track'),
+    crowdFill = part('div', 'arena-fill'),
+    crowdMid = part('div', 'arena-crowd-mid');
   crowdTrack.append(crowdFill, crowdMid);
   const word = part('span', 'arena-crowd-word');
   crowd.append(part('span', 'arena-crowd-label', ARENA_TEXT.hud.crowd), crowdTrack, word);
   const bark = part('div', 'arena-bark');
   const hint = part('div', 'arena-hint');
-  plate.append(row, stam, crowd, hint);   // the fight, my stamina and the crowd on one plate - AUDIT PRE-MERGE 1003 U6: and the yield hint, which a short screen sets beside the crowd
+  plate.append(row, stam, crowd, hint); // the fight, my stamina and the crowd on one plate - AUDIT PRE-MERGE 1003 U6: and the yield hint, which a short screen sets beside the crowd
   // ARENA4b: THE STANDS' PRESSES - built hidden, shown only while I watch a relay's bout; the readout's parts carry their
   // own aria-hidden, so while the row stands (the root's lifted) the presses are the one part a screen reader meets
   const stands = part('div', 'arena-stands');
   stands.style.display = 'none';
-  const swallow = (e) => { e?.stopPropagation?.(); };   // a press on the row is the row's - never a swing, never the pointer's lock
-  stands.onpointerdown = swallow; stands.onmousedown = swallow; stands.ontouchstart = swallow; stands.oncontextmenu = swallow;
+  const swallow = (e) => {
+    e?.stopPropagation?.();
+  }; // a press on the row is the row's - never a swing, never the pointer's lock
+  stands.onpointerdown = swallow;
+  stands.onmousedown = swallow;
+  stands.ontouchstart = swallow;
+  stands.oncontextmenu = swallow;
   const press = (dir, kind) => {
     const b = part('button', 'arena-shout');
     b.setAttribute('type', 'button');
     b.dataset.shout = kind;
-    const said = part('span', 'arena-shout-word'), key = part('span', 'arena-key');
+    const said = part('span', 'arena-shout-word'),
+      key = part('span', 'arena-key');
     key.setAttribute('aria-hidden', 'true');
     b.append(said, key);
-    b.onclick = (e) => { e?.stopPropagation?.(); shout(dir); };
+    b.onclick = (e) => {
+      e?.stopPropagation?.();
+      shout(dir);
+    };
     stands.append(b);
     return { b, said, key };
   };
-  const cheer = press(1, 'cheer'), boo = press(-1, 'boo');
+  const cheer = press(1, 'cheer'),
+    boo = press(-1, 'boo');
   for (const n of [plate, bark, hint]) n.setAttribute('aria-hidden', 'true');
   root.append(plate, bark, stands);
   (doc.body ?? doc.documentElement)?.append(root);
@@ -293,9 +366,19 @@ function writeStands(m, door) {
   if (key === shown.stands) return;
   const was = shown.stands;
   shown.stands = key;
-  if (!m) { parts.stands.style.display = 'none'; root.setAttribute('aria-hidden', 'true'); return; }
-  if (!was) { parts.stands.style.display = ''; root.removeAttribute('aria-hidden'); }
-  for (const [p, said, k, code] of [[parts.cheer, m.cheer, m.cheerKey, '='], [parts.boo, m.boo, m.booKey, '-']]) {
+  if (!m) {
+    parts.stands.style.display = 'none';
+    root.setAttribute('aria-hidden', 'true');
+    return;
+  }
+  if (!was) {
+    parts.stands.style.display = '';
+    root.removeAttribute('aria-hidden');
+  }
+  for (const [p, said, k, code] of [
+    [parts.cheer, m.cheer, m.cheerKey, '='],
+    [parts.boo, m.boo, m.booKey, '-'],
+  ]) {
     if (p.said.textContent !== said) p.said.textContent = said;
     if (p.key.textContent !== k) p.key.textContent = k;
     p.b.setAttribute('aria-label', `${said} (${k})`);
@@ -303,7 +386,8 @@ function writeStands(m, door) {
     // AUDIT PRE-MERGE 1003 U15: SHUT, NOT DISABLED - a keyboard's Cheer was `disabled` the next frame, and a disabled
     // button lets the focus fall to the page; `aria-disabled` says it is shut and keeps the focus where the press was
     // (`shout` already refuses while the allowance runs)
-    if (m.ready) p.b.removeAttribute('aria-disabled'); else p.b.setAttribute('aria-disabled', 'true');
+    if (m.ready) p.b.removeAttribute('aria-disabled');
+    else p.b.setAttribute('aria-disabled', 'true');
   }
 }
 
@@ -313,7 +397,10 @@ function writeRows(list, rows, was) {
     const key = m ? `${m.id}|${m.name}|${m.frac}|${m.out}|${m.you}|${m.tag}|${m.banner}|${m.team ?? ''}` : '';
     if (was[i] === key) return;
     was[i] = key;
-    if (!m) { p.r.style.display = 'none'; return; }
+    if (!m) {
+      p.r.style.display = 'none';
+      return;
+    }
     p.r.style.display = '';
     p.r.dataset.you = m.you ? '1' : '0';
     p.r.dataset.out = m.out;
@@ -340,21 +427,39 @@ export function drawArenaHud(model, { hidden = false, touch = false, doc = globa
   const vis = want ? 'on' : 'off';
   // AUDIT PRE-MERGE 1003 U4: `.on` while it stands - the quest card and the party list step aside for it on a screen too
   // narrow for the three (ui/enhanced/enhancedStyle.js .qtrack, ui/partyPanel.js .dfparty)
-  if (vis !== shown.vis) { shown.vis = vis; root.style.display = want ? '' : 'none'; root.classList.toggle('on', want); }
+  if (vis !== shown.vis) {
+    shown.vis = vis;
+    root.style.display = want ? '' : 'none';
+    root.classList.toggle('on', want);
+  }
   const standing = want && !!model?.stands && typeof cheer === 'function';
   writeStands(standing ? model.stands : null, cheer);
   listenKeys(standing, doc);
   if (!want || !model) return;
-  if (touch !== shown.touch) { shown.touch = touch; root.classList.toggle('touch', !!touch); }
+  if (touch !== shown.touch) {
+    shown.touch = touch;
+    root.classList.toggle('touch', !!touch);
+  }
   // AUDIT PRE-MERGE 1003 U3: THE HUD'S SCALE, which the bar's top reads - the bar is a sibling of `.hud` on the page, so
   // the variable `.hud` carries never reached it and its top stood at scale 1 under a doubled compass. Copied off `.hud`
   // as the pickup feed copies it (ui/pickupFeed.js place) - 1 where no enhanced HUD stands (the classic skin)
-  const scale = String(Number.parseFloat(/** @type {any} */ (doc.querySelector?.('.hud'))?.style?.getPropertyValue?.('--hud-scale')) || 1);
-  if (scale !== shown.scale) { shown.scale = scale; root.style.setProperty?.('--hud-scale', scale); }
+  const scale = String(
+    Number.parseFloat(/** @type {any} */ (doc.querySelector?.('.hud'))?.style?.getPropertyValue?.('--hud-scale')) || 1,
+  );
+  if (scale !== shown.scale) {
+    shown.scale = scale;
+    root.style.setProperty?.('--hud-scale', scale);
+  }
   writeRows(model.left, parts.L, shown.rows.left);
   writeRows(model.right, parts.R, shown.rows.right);
-  if (model.timer !== shown.timer) { shown.timer = model.timer; parts.timer.textContent = model.timer; }
-  if ((model.vs ?? ARENA_TEXT.hud.vs) !== shown.vs) { shown.vs = model.vs ?? ARENA_TEXT.hud.vs; parts.vs.textContent = shown.vs; }   // ARENA-TEAMS
+  if (model.timer !== shown.timer) {
+    shown.timer = model.timer;
+    parts.timer.textContent = model.timer;
+  }
+  if ((model.vs ?? ARENA_TEXT.hud.vs) !== shown.vs) {
+    shown.vs = model.vs ?? ARENA_TEXT.hud.vs;
+    parts.vs.textContent = shown.vs;
+  } // ARENA-TEAMS
   const st = model.stamina == null ? -1 : model.stamina;
   if (st !== shown.stam) {
     shown.stam = st;
@@ -364,17 +469,30 @@ export function drawArenaHud(model, { hidden = false, touch = false, doc = globa
   const cf = model.crowd ? model.crowd.frac : -2;
   if (cf !== shown.crowd) {
     shown.crowd = cf;
-    parts.crowd.style.display = model.crowd ? '' : 'none';   // ARENA-FIX 4: no crowd, no meter
+    parts.crowd.style.display = model.crowd ? '' : 'none'; // ARENA-FIX 4: no crowd, no meter
     if (model.crowd) parts.crowdFill.style.width = `${(model.crowd.frac * 100).toFixed(1)}%`;
   }
-  if (model.crowd && model.crowd.word !== shown.word) { shown.word = model.crowd.word; parts.word.textContent = model.crowd.word; parts.word.dataset.band = model.crowd.band; }
-  if (model.bark !== shown.bark) { shown.bark = model.bark; parts.bark.textContent = model.bark; }
-  if (model.hint !== shown.hint) { shown.hint = model.hint; parts.hint.textContent = model.hint; }
+  if (model.crowd && model.crowd.word !== shown.word) {
+    shown.word = model.crowd.word;
+    parts.word.textContent = model.crowd.word;
+    parts.word.dataset.band = model.crowd.band;
+  }
+  if (model.bark !== shown.bark) {
+    shown.bark = model.bark;
+    parts.bark.textContent = model.bark;
+  }
+  if (model.hint !== shown.hint) {
+    shown.hint = model.hint;
+    parts.hint.textContent = model.hint;
+  }
 }
 
 /** The page is going (a test's reset): the node leaves with it, and the stands' keys. */
 export function destroyArenaHud() {
   listenKeys(false, null);
   root?.remove?.();
-  root = null; parts = null; shown = null; cheerDoor = null;
+  root = null;
+  parts = null;
+  shown = null;
+  cheerDoor = null;
 }

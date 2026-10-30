@@ -316,8 +316,8 @@
   {
     "name": "AUDIT1003b-U4-HARD-DISABLED",
     "file": "src/ui/arena/arenaWindow.js",
-    "old": "'', x.name, { soft: true, quiet: true }));",
-    "new": "'', x.name, { quiet: true }));",
+    "old": "            acts.append(\n              press(a, () => doAct(/** @type {any} */ (a.act), a.data), '', x.name, { soft: true, quiet: true }),\n            ); // AUDIT PRE-MERGE 1003b U4",
+    "new": "            acts.append(press(a, () => doAct(/** @type {any} */ (a.act), a.data), '', x.name, { quiet: true })); // AUDIT PRE-MERGE 1003b U4",
     "tests": [
       "test/ui/enhanced/audit1003b_ui.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "AUDIT1003b-U10-CODE-TWICE",
     "file": "src/ui/arena/arenaWindow.js",
-    "old": "        shown.setAttribute('aria-hidden', 'true');\n",
-    "new": "",
+    "old": "        shown.setAttribute('aria-hidden', 'true');\n        code.append(shown, el('span', 'aw-sr', `${ARENA_TEXT.online.privCodeLabel}: ${c.code.split('').join(' ')}`));",
+    "new": "        code.append(shown, el('span', 'aw-sr', `${ARENA_TEXT.online.privCodeLabel}: ${c.code.split('').join(' ')}`));",
     "tests": [
       "test/ui/enhanced/audit1003b_ui.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "AUDIT1003b-U11-ENTER-MID-COMPOSITION",
     "file": "src/ui/arena/arenaWindow.js",
-    "old": "if (e.key === 'Enter' && !e.isComposing && !c.join.why)",
-    "new": "if (e.key === 'Enter' && !c.join.why)",
+    "old": "        if (e.key === 'Enter' && !e.isComposing && !c.join.why) {",
+    "new": "        if (e.key === 'Enter' && !c.join.why) {",
     "tests": [
       "test/ui/enhanced/audit1003b_ui.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "AUDIT1003b-U11-NO-CAPITALS",
     "file": "src/ui/arena/arenaWindow.js",
-    "old": "      input.setAttribute('autocapitalize', 'characters');\n",
-    "new": "",
+    "old": "      input.setAttribute('autocapitalize', 'characters');\n      input.setAttribute('autocorrect', 'off');",
+    "new": "      input.setAttribute('autocorrect', 'off');",
     "tests": [
       "test/ui/enhanced/audit1003b_ui.test.js"
     ]

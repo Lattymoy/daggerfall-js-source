@@ -39,7 +39,7 @@ import { isEnhancedPlus } from '../../systems/uiSkin.js';
 import { scopeRules } from '../brokerWindow.js';
 import { ARENA_TEXT } from '../../systems/arena/arenaText.js';
 import { ARENA_PAGES, ARENA_BOARDS } from '../../systems/arena/arenaBoard.js';
-import { repaintKeepingScroll } from '../domRepaint.js';   // AUDIT PRE-MERGE 1003 U2: a redraw keeps the scroll and the focus
+import { repaintKeepingScroll } from '../domRepaint.js'; // AUDIT PRE-MERGE 1003 U2: a redraw keeps the scroll and the focus
 
 /** @param {string} tag @param {string|null} [cls] @param {string|null} [text] */
 const el = (tag, cls = null, text = null) => {
@@ -51,7 +51,10 @@ const el = (tag, cls = null, text = null) => {
 const button = (cls, text, onPress) => {
   const b = /** @type {HTMLButtonElement} */ (el('button', `act ${cls}`, text));
   b.setAttribute('type', 'button');
-  b.onclick = (e) => { e?.stopPropagation?.(); onPress(); };
+  b.onclick = (e) => {
+    e?.stopPropagation?.();
+    onPress();
+  };
   return b;
 };
 const W = () => ARENA_TEXT.window;
@@ -61,7 +64,15 @@ const W = () => ARENA_TEXT.window;
 const bannerMark = (p, banner) => {
   p.dataset.banner = banner ?? '';
   const name = ARENA_TEXT.teams.name[banner ?? ''];
-  if (name) { p.removeAttribute('aria-hidden'); p.setAttribute('role', 'img'); p.setAttribute('aria-label', name); } else { p.removeAttribute('role'); p.removeAttribute('aria-label'); p.setAttribute('aria-hidden', 'true'); }
+  if (name) {
+    p.removeAttribute('aria-hidden');
+    p.setAttribute('role', 'img');
+    p.setAttribute('aria-label', name);
+  } else {
+    p.removeAttribute('role');
+    p.removeAttribute('aria-label');
+    p.setAttribute('aria-hidden', 'true');
+  }
   return p;
 };
 const pennant = (banner, cls = '') => bannerMark(el('span', `aw-pennant${cls ? ` ${cls}` : ''}`), banner);
@@ -95,11 +106,13 @@ export function mountArenaWindow(host, deps) {
   let page = ARENA_PAGES.includes(deps.page ?? '') ? /** @type {string} */ (deps.page) : 'bouts';
   let tierPicked = null;
   let boardPicked = 'pve';
-  let wagerOpen = false, wagerSide = null, wagerStake = null;
-  let privCode = '';   // ARENA6: the session code typed in the join field, kept across redraws
-  let word = null;   // { ok, text } - the status line
+  let wagerOpen = false,
+    wagerSide = null,
+    wagerStake = null;
+  let privCode = ''; // ARENA6: the session code typed in the join field, kept across redraws
+  let word = null; // { ok, text } - the status line
   let alive = true;
-  let drawn;   // AUDIT PRE-MERGE 1003 U1: the model last drawn, as its words (`refresh` draws only a changed one)
+  let drawn; // AUDIT PRE-MERGE 1003 U1: the model last drawn, as its words (`refresh` draws only a changed one)
 
   const shell = el('div', 'aw-shell');
   shell.id = 'arena-window';
@@ -122,10 +135,14 @@ export function mountArenaWindow(host, deps) {
   tabs.setAttribute('aria-label', W().title);
   const tabOf = {};
   for (const [i, p] of ARENA_PAGES.entries()) {
-    const t = button('aw-tab', W().tabs[p], () => { page = p; wagerOpen = false; render(); });
+    const t = button('aw-tab', W().tabs[p], () => {
+      page = p;
+      wagerOpen = false;
+      render();
+    });
     t.setAttribute('role', 'tab');
     t.dataset.page = p;
-    t.id = `aw-tab-${p}`;   // AUDIT PRE-MERGE 1003 U14: each tab names the page it shows, and the page is named by its tab
+    t.id = `aw-tab-${p}`; // AUDIT PRE-MERGE 1003 U14: each tab names the page it shows, and the page is named by its tab
     t.setAttribute('aria-controls', 'aw-page');
     t.setAttribute('aria-keyshortcuts', String(i + 1));
     tabOf[p] = t;
@@ -137,7 +154,9 @@ export function mountArenaWindow(host, deps) {
   win.append(head, tabs, body);
   host.append(shell);
 
-  const say = (ok, text) => { word = text ? { ok, text } : null; };
+  const say = (ok, text) => {
+    word = text ? { ok, text } : null;
+  };
   /** A press the host answers - its word in the status line. */
   const doAct = (kind, data) => {
     const r = deps.act?.(kind, data);
@@ -152,11 +171,17 @@ export function mountArenaWindow(host, deps) {
    *  member row's three presses), and `a.key` its `data-focus`, so a redraw finds it again by who it is for. */
   const press = (a, onPress, cls = '', what = '', { soft = false, quiet = false } = {}) => {
     const wrap = el('span', 'aw-press');
-    const b = button(`aw-act${cls ? ` ${cls}` : ''}`, a.label, () => { if (!a.why) onPress(); });
+    const b = button(`aw-act${cls ? ` ${cls}` : ''}`, a.label, () => {
+      if (!a.why) onPress();
+    });
     b.dataset.act = a.act;
     if (a.key) b.dataset.focus = a.key;
     const named = what ? `${a.label} - ${what}` : a.label;
-    if (a.why) { b.setAttribute(soft ? 'aria-disabled' : 'disabled', soft ? 'true' : ''); b.setAttribute('title', a.why); b.setAttribute('aria-label', `${named}: ${a.why}`); } else if (what) b.setAttribute('aria-label', named);
+    if (a.why) {
+      b.setAttribute(soft ? 'aria-disabled' : 'disabled', soft ? 'true' : '');
+      b.setAttribute('title', a.why);
+      b.setAttribute('aria-label', `${named}: ${a.why}`);
+    } else if (what) b.setAttribute('aria-label', named);
     wrap.append(b);
     if (a.why && !quiet) wrap.append(el('span', 'aw-why', a.why));
     return wrap;
@@ -168,14 +193,14 @@ export function mountArenaWindow(host, deps) {
     sub.textContent = h.season;
     note.textContent = word?.text ?? '';
     note.className = `aw-note${word?.ok ? ' ok' : ''}`;
-    bannerMark(crest, h.banner);   // AUDIT PRE-MERGE 1003 U7
+    bannerMark(crest, h.banner); // AUDIT PRE-MERGE 1003 U7
     win.dataset.banner = h.banner ?? '';
     for (const c of [...id.children]) c.remove();
     id.append(el('span', 'aw-name', h.name));
     if (h.title) id.append(chip(h.title, 'aw-titlechip'));
     if (h.banner) id.append(chip(ARENA_TEXT.teams.name[h.banner], `aw-bannerchip b-${h.banner}`));
     if (h.laurel) id.append(chip(W().laurelMark, 'aw-laurel'));
-    if (h.rating) id.append(chip(h.rating, 'aw-rating'));   // ARENA4: online, the season's rating and rank
+    if (h.rating) id.append(chip(h.rating, 'aw-rating')); // ARENA4: online, the season's rating and rank
     if (h.rank) id.append(chip(h.rank, `aw-rankchip${h.champion ? ' champ' : ''}`));
     // ARENA4b: the purses won (the design's header) - left out when there is none to say, never a 0 (online the realm keeps none)
     // AUDIT PRE-MERGE 1003 U12: SAID - a bare "1050 gold" beside the name read as the purse carried, not the purses won
@@ -203,7 +228,8 @@ export function mountArenaWindow(host, deps) {
           box.append(nameRow, el('span', 'aw-fbill', f.billing), el('span', 'aw-fkind', f.kind));
           const nums = el('div', 'aw-fnums');
           // AUDIT PRE-MERGE 1003 U7: the banner in words beside its colour - the Red's against the Blue's
-          if (ARENA_TEXT.teams.short[f.banner]) nums.append(chip(ARENA_TEXT.teams.short[f.banner], `aw-bannerchip b-${f.banner}`));
+          if (ARENA_TEXT.teams.short[f.banner])
+            nums.append(chip(ARENA_TEXT.teams.short[f.banner], `aw-bannerchip b-${f.banner}`));
           nums.append(chip(f.record, 'aw-rec-chip'), chip(f.odds, 'aw-odds'));
           if (f.favourite) nums.append(chip(W().favourite, 'aw-fav'));
           box.append(nums);
@@ -221,13 +247,26 @@ export function mountArenaWindow(host, deps) {
           const li = el('li', 'aw-liveb');
           li.dataset.kind = b.kind;
           const who = el('div', 'aw-livewho');
-          const side = (f) => { const x = el('span', 'aw-livef'); x.append(pennant(f?.banner ?? null), el('span', 'aw-fn', f?.name ?? '')); if (f?.rating != null) x.append(chip(String(f.rating), 'aw-rating')); return x; };
+          const side = (f) => {
+            const x = el('span', 'aw-livef');
+            x.append(pennant(f?.banner ?? null), el('span', 'aw-fn', f?.name ?? ''));
+            if (f?.rating != null) x.append(chip(String(f.rating), 'aw-rating'));
+            return x;
+          };
           who.append(side(b.a));
           if (b.b) who.append(el('span', 'aw-vs', W().vs), side(b.b));
           const meta = el('div', 'aw-livemeta');
           meta.append(el('span', 'aw-livet', b.title), chip(b.watching, 'aw-state'));
           const acts = el('div', 'aw-acts');
-          for (const a of b.acts) acts.append(press(a, () => doAct(/** @type {any} */ (a.act), { o: b.o }), '', b.b ? `${b.a?.name ?? ''} ${W().vs} ${b.b.name ?? ''}` : `${b.a?.name ?? ''}, ${b.title}`));   // AUDIT PRE-MERGE 1003 U14: which bout
+          for (const a of b.acts)
+            acts.append(
+              press(
+                a,
+                () => doAct(/** @type {any} */ (a.act), { o: b.o }),
+                '',
+                b.b ? `${b.a?.name ?? ''} ${W().vs} ${b.b.name ?? ''}` : `${b.a?.name ?? ''}, ${b.title}`,
+              ),
+            ); // AUDIT PRE-MERGE 1003 U14: which bout
           li.append(who, meta, acts);
           ul.append(li);
         }
@@ -254,13 +293,41 @@ export function mountArenaWindow(host, deps) {
       if (c.acts?.length) {
         const acts = el('div', 'aw-acts');
         for (const a of c.acts) {
-          if (a.act === 'wager') acts.append(press(a, () => { wagerOpen = !wagerOpen; wagerSide = null; wagerStake = null; render(); }, wagerOpen ? 'on' : ''));
-          else acts.append(press(a, () => doAct(/** @type {any} */ (a.act), a.data ?? { hour: c.hour }), a.act === 'fight' || a.act === 'queue' || a.act === 'accept' || a.act === 'privHost' || a.act === 'privGo' ? 'primary' : '', '', { soft: c.kind === 'session' }));   // AUDIT PRE-MERGE 1003b: a press's own data (the lock's, a rejoin's code); a session's presses keep the focus (U4)
+          if (a.act === 'wager')
+            acts.append(
+              press(
+                a,
+                () => {
+                  wagerOpen = !wagerOpen;
+                  wagerSide = null;
+                  wagerStake = null;
+                  render();
+                },
+                wagerOpen ? 'on' : '',
+              ),
+            );
+          else
+            acts.append(
+              press(
+                a,
+                () => doAct(/** @type {any} */ (a.act), a.data ?? { hour: c.hour }),
+                a.act === 'fight' ||
+                  a.act === 'queue' ||
+                  a.act === 'accept' ||
+                  a.act === 'privHost' ||
+                  a.act === 'privGo'
+                  ? 'primary'
+                  : '',
+                '',
+                { soft: c.kind === 'session' },
+              ),
+            ); // AUDIT PRE-MERGE 1003b: a press's own data (the lock's, a rejoin's code); a session's presses keep the focus (U4)
         }
         card.append(acts);
       }
-      if (c.kind === 'session') card.append(...sessionParts(c));   // ARENA6
-      if (c.kind === 'exhibition' && wagerOpen && !c.acts.find((a) => a.act === 'wager')?.why) card.append(wagerPanel(c));
+      if (c.kind === 'session') card.append(...sessionParts(c)); // ARENA6
+      if (c.kind === 'exhibition' && wagerOpen && !c.acts.find((a) => a.act === 'wager')?.why)
+        card.append(wagerPanel(c));
       grid.append(card);
     }
     body.append(grid);
@@ -278,12 +345,15 @@ export function mountArenaWindow(host, deps) {
       for (const x of c.members) {
         const li = el('li', `aw-privm${x.red ? ' red' : ''}${x.blue ? ' blue' : ''}${x.me ? ' me' : ''}`);
         const who = el('div', 'aw-privwho');
-        who.append(pennant(x.banner), el('span', 'aw-fn', x.name));   // AUDIT PRE-MERGE 1003b U10: the member's own banner - the side is its chip's
+        who.append(pennant(x.banner), el('span', 'aw-fn', x.name)); // AUDIT PRE-MERGE 1003b U10: the member's own banner - the side is its chip's
         for (const r of x.roles) who.append(chip(r, 'aw-privrole'));
         li.append(who);
         if (x.acts.length) {
           const acts = el('div', 'aw-acts');
-          for (const a of x.acts) acts.append(press(a, () => doAct(/** @type {any} */ (a.act), a.data), '', x.name, { soft: true, quiet: true }));   // AUDIT PRE-MERGE 1003b U4
+          for (const a of x.acts)
+            acts.append(
+              press(a, () => doAct(/** @type {any} */ (a.act), a.data), '', x.name, { soft: true, quiet: true }),
+            ); // AUDIT PRE-MERGE 1003b U4
           li.append(acts);
         }
         ul.append(li);
@@ -315,11 +385,22 @@ export function mountArenaWindow(host, deps) {
       input.setAttribute('enterkeyhint', 'go');
       input.placeholder = c.join.hint;
       input.dataset.focus = 'aw-priv-code';
-      input.addEventListener('input', () => { privCode = input.value.toUpperCase(); });
+      input.addEventListener('input', () => {
+        privCode = input.value.toUpperCase();
+      });
       const join = () => doAct('privJoin', { code: privCode });
-      input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing && !c.join.why) { e.preventDefault(); join(); } });
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.isComposing && !c.join.why) {
+          e.preventDefault();
+          join();
+        }
+      });
       if (c.join.why) input.disabled = true;
-      form.append(label, input, press({ act: 'privJoin', label: c.join.label, why: c.join.why, key: 'aw-priv-join' }, join));
+      form.append(
+        label,
+        input,
+        press({ act: 'privJoin', label: c.join.label, why: c.join.why, key: 'aw-priv-join' }, join),
+      );
       out.push(form);
     }
     return out;
@@ -329,25 +410,40 @@ export function mountArenaWindow(host, deps) {
     const p = el('div', 'aw-wager');
     const sides = el('div', 'aw-wager-sides');
     c.fighters.forEach((f, i) => {
-      const b = button(`aw-side${wagerSide === i ? ' on' : ''}`, `${W().back(f.name)} - ${f.odds}`, () => { wagerSide = i; render(); });
+      const b = button(`aw-side${wagerSide === i ? ' on' : ''}`, `${W().back(f.name)} - ${f.odds}`, () => {
+        wagerSide = i;
+        render();
+      });
       b.dataset.banner = f.banner;
       b.setAttribute('aria-pressed', wagerSide === i ? 'true' : 'false');
       sides.append(b);
     });
     const stakes = el('div', 'aw-stakes');
     for (const s of c.stakes ?? []) {
-      const b = button(`aw-stake${wagerStake === s ? ' on' : ''}`, W().gold(s), () => { wagerStake = s; render(); });
+      const b = button(`aw-stake${wagerStake === s ? ' on' : ''}`, W().gold(s), () => {
+        wagerStake = s;
+        render();
+      });
       b.setAttribute('aria-pressed', wagerStake === s ? 'true' : 'false');
       stakes.append(b);
     }
     const ready = wagerSide != null && wagerStake != null;
     // AUDIT PRE-MERGE 1003 U14: "Place wager", not a second "Wager" beside the press that opened it
-    const place = button('aw-place primary', ready ? ARENA_TEXT.book.wagerOn(wagerStake, c.fighters[wagerSide].name, c.fighters[wagerSide].odds) : W().placeWager, () => {
-      if (!ready) return;
-      const side = wagerSide, stake = wagerStake;
-      wagerOpen = false; wagerSide = null; wagerStake = null;
-      doAct('wager', { hour: c.hour, side, stake });
-    });
+    const place = button(
+      'aw-place primary',
+      ready
+        ? ARENA_TEXT.book.wagerOn(wagerStake, c.fighters[wagerSide].name, c.fighters[wagerSide].odds)
+        : W().placeWager,
+      () => {
+        if (!ready) return;
+        const side = wagerSide,
+          stake = wagerStake;
+        wagerOpen = false;
+        wagerSide = null;
+        wagerStake = null;
+        doAct('wager', { hour: c.hour, side, stake });
+      },
+    );
     if (!ready) place.setAttribute('disabled', '');
     p.append(sides, stakes, place);
     return p;
@@ -368,12 +464,25 @@ export function mountArenaWindow(host, deps) {
       row.setAttribute('type', 'button');
       row.dataset.state = t.state;
       row.setAttribute('aria-pressed', i === shown ? 'true' : 'false');
-      row.onclick = (e) => { e?.stopPropagation?.(); tierPicked = i; render(); };
+      row.onclick = (e) => {
+        e?.stopPropagation?.();
+        tierPicked = i;
+        render();
+      };
       const pips = el('span', 'aw-pips');
-      for (let k = 0; k < 3; k++) { const d = el('i'); if (k < t.won) d.className = 'on'; pips.append(d); }
+      for (let k = 0; k < 3; k++) {
+        const d = el('i');
+        if (k < t.won) d.className = 'on';
+        pips.append(d);
+      }
       const crown = el('i', `crown${t.champion.beaten ? ' on' : ''}`);
       pips.append(crown);
-      row.append(el('span', 'aw-tiern', String(t.n)), el('span', 'aw-tiername', t.name), pips, el('span', 'aw-tierstate', W().tierState[t.state]));
+      row.append(
+        el('span', 'aw-tiern', String(t.n)),
+        el('span', 'aw-tiername', t.name),
+        pips,
+        el('span', 'aw-tierstate', W().tierState[t.state]),
+      );
       item.append(row);
       list.append(item);
     }
@@ -386,23 +495,39 @@ export function mountArenaWindow(host, deps) {
     const ul = el('ul', 'aw-tierbouts');
     for (const b of t.bouts) {
       const li = el('li', `aw-tb${b.won ? ' won' : ''}${b.next ? ' next' : ''}`);
-      li.append(el('span', 'aw-tbl', b.label), el('span', 'aw-tbo', b.opponents), el('span', 'aw-tbm', b.won ? W().beaten : b.next ? W().nextFight : ''));
+      li.append(
+        el('span', 'aw-tbl', b.label),
+        el('span', 'aw-tbo', b.opponents),
+        el('span', 'aw-tbm', b.won ? W().beaten : b.next ? W().nextFight : ''),
+      );
       ul.append(li);
     }
     const ch = el('li', `aw-tb champ${t.champion.beaten ? ' won' : ''}${t.champion.next ? ' next' : ''}`);
-    ch.append(el('span', 'aw-tbl', t.champion.label), el('span', 'aw-tbo', t.champion.opponents), el('span', 'aw-tbm', t.champion.beaten ? W().beaten : t.champion.next ? W().nextFight : ''));
+    ch.append(
+      el('span', 'aw-tbl', t.champion.label),
+      el('span', 'aw-tbo', t.champion.opponents),
+      el('span', 'aw-tbm', t.champion.beaten ? W().beaten : t.champion.next ? W().nextFight : ''),
+    );
     ul.append(ch);
-    card.append(ul, el('p', 'aw-line', W().tierPurse(t.purse, t.champPurse)), el('p', 'aw-line aw-gives', W().titleGiven(t.title)));
+    card.append(
+      ul,
+      el('p', 'aw-line', W().tierPurse(t.purse, t.champPurse)),
+      el('p', 'aw-line aw-gives', W().titleGiven(t.title)),
+    );
     if (t.beasts) card.append(el('p', 'aw-line aw-warn', W().beastTier));
     if (t.free) card.append(el('p', 'aw-line aw-warn', W().meleeTier));
     // ARENA-WAIT (AUDIT A1): no climb known, no titles block - "No titles yet." is a claim about a climb not in
     if (!m.waiting) {
       const titles = el('div', 'aw-titles');
       titles.append(el('h4', null, W().yourTitles));
-      if (m.titles.length) { const row = el('div', 'aw-chips'); for (const x of m.titles) row.append(chip(x, 'aw-titlechip')); titles.append(row); } else titles.append(el('p', 'aw-line', W().noTitles));
+      if (m.titles.length) {
+        const row = el('div', 'aw-chips');
+        for (const x of m.titles) row.append(chip(x, 'aw-titlechip'));
+        titles.append(row);
+      } else titles.append(el('p', 'aw-line', W().noTitles));
       card.append(titles);
     }
-    if (m.online) card.append(el('p', 'aw-line aw-online', m.online));   // ARENA4: online, the climb is the realm's
+    if (m.online) card.append(el('p', 'aw-line aw-online', m.online)); // ARENA4: online, the climb is the realm's
     wrap.append(list, card);
     body.append(wrap);
   }
@@ -417,7 +542,15 @@ export function mountArenaWindow(host, deps) {
     const t = el('table', 'aw-table');
     const thead = el('thead');
     const hr = el('tr');
-    for (const [i, c] of [...lead, ...cols].entries()) { const th = el('th', i - lead.length >= 2 ? 'opt' : i === lead.length - 1 ? 'aw-nm' : ranked && i === 0 ? 'aw-rank' : null, c); th.setAttribute('scope', 'col'); hr.append(th); }
+    for (const [i, c] of [...lead, ...cols].entries()) {
+      const th = el(
+        'th',
+        i - lead.length >= 2 ? 'opt' : i === lead.length - 1 ? 'aw-nm' : ranked && i === 0 ? 'aw-rank' : null,
+        c,
+      );
+      th.setAttribute('scope', 'col');
+      hr.append(th);
+    }
     thead.append(hr);
     const tb = el('tbody');
     const row = (r) => {
@@ -459,7 +592,12 @@ export function mountArenaWindow(host, deps) {
     red.style.width = `${(m.standings.redShare * 100).toFixed(1)}%`;
     split.append(red, el('div', 'aw-split-mid'));
     const nums = el('div', 'aw-split-nums');
-    const side = (b, n) => { const s = el('span', `aw-split-n b-${b}`); s.append(pennant(b), el('span', null, `${T.short[b]} ${n}`)); if (m.laurel === b) s.append(chip(W().laurelMark, 'aw-laurel')); return s; };
+    const side = (b, n) => {
+      const s = el('span', `aw-split-n b-${b}`);
+      s.append(pennant(b), el('span', null, `${T.short[b]} ${n}`));
+      if (m.laurel === b) s.append(chip(W().laurelMark, 'aw-laurel'));
+      return s;
+    };
     nums.append(side('red', m.standings.red), side('blue', m.standings.blue));
     st.append(nums, split);
     for (const l of m.lines) st.append(el('p', 'aw-line', l));
@@ -469,11 +607,25 @@ export function mountArenaWindow(host, deps) {
       const b = m.banners.find((x) => x.banner === m.joined);
       body.append(bannerCard(b, true));
       const mine = el('div', 'aw-stats');
-      for (const [k, v] of [[W().yourPoints, String(m.given)], [W().yourWins, String(m.boutsFor)]]) { const s = el('div', 'aw-stat'); s.append(el('span', 'k', k), el('span', 'v', v)); mine.append(s); }
+      for (const [k, v] of [
+        [W().yourPoints, String(m.given)],
+        [W().yourWins, String(m.boutsFor)],
+      ]) {
+        const s = el('div', 'aw-stat');
+        s.append(el('span', 'k', k), el('span', 'v', v));
+        mine.append(s);
+      }
       body.append(mine);
       const rost = el('section', 'aw-card aw-roster');
       rost.append(el('h3', null, W().rosterHead(b.name)));
-      rost.append(table([...ARENA_TEXT.window.cols.pve.slice(0, 1), ARENA_TEXT.window.cols.pve[2], W().pointsCol], b.rows, b.pinned, { points: true }));
+      rost.append(
+        table(
+          [...ARENA_TEXT.window.cols.pve.slice(0, 1), ARENA_TEXT.window.cols.pve[2], W().pointsCol],
+          b.rows,
+          b.pinned,
+          { points: true },
+        ),
+      );
       body.append(rost);
     } else {
       const two = el('div', 'aw-cards aw-two');
@@ -493,7 +645,11 @@ export function mountArenaWindow(host, deps) {
     card.append(top, el('p', 'aw-line', b.lore));
     if (!mine) {
       const best = el('ol', 'aw-mini');
-      for (const r of b.rows.slice(0, 3)) { const li = el('li'); li.append(el('span', 'aw-n', r.name), el('span', 'aw-pts', String(r.points))); best.append(li); }
+      for (const r of b.rows.slice(0, 3)) {
+        const li = el('li');
+        li.append(el('span', 'aw-n', r.name), el('span', 'aw-pts', String(r.points)));
+        best.append(li);
+      }
       card.append(best);
     }
     return card;
@@ -503,7 +659,10 @@ export function mountArenaWindow(host, deps) {
   function renderBoards(m) {
     const bar = el('div', 'aw-subtabs');
     for (const k of ARENA_BOARDS) {
-      const b = button(`aw-subtab${k === boardPicked ? ' on' : ''}`, m[k].title, () => { boardPicked = k; render(); });
+      const b = button(`aw-subtab${k === boardPicked ? ' on' : ''}`, m[k].title, () => {
+        boardPicked = k;
+        render();
+      });
       b.setAttribute('aria-pressed', k === boardPicked ? 'true' : 'false');
       b.dataset.board = k;
       bar.append(b);
@@ -512,11 +671,11 @@ export function mountArenaWindow(host, deps) {
     const bd = m[boardPicked];
     const card = el('section', `aw-card aw-board b-${boardPicked}`);
     card.append(el('h3', null, bd.title), el('p', 'aw-boardsub', bd.sub));
-    if (bd.champion) card.append(el('p', 'aw-line aw-gives aw-champline', bd.champion));   // ARENA4: the season's #1 and the laurel
+    if (bd.champion) card.append(el('p', 'aw-line aw-gives aw-champline', bd.champion)); // ARENA4: the season's #1 and the laurel
     if (bd.rows.length) card.append(table(bd.cols, bd.rows, bd.pinned, { heads: bd.heads ?? null }));
     if (bd.empty) card.append(el('p', 'aw-empty', bd.empty));
     body.append(card);
-    if (boardPicked === 'fast' && m.hall) body.append(hallCard(m.hall));   // ARENA4b: online, the realm's Hall under its fastest
+    if (boardPicked === 'fast' && m.hall) body.append(hallCard(m.hall)); // ARENA4b: online, the realm's Hall under its fastest
   }
   /** ARENA4b: THE REALM'S HALL OF CHAMPIONS - every Grand Champion of the realm, the newest first, each with its season
    *  (systems/arena/arenaBoard.js hallBoardOnline): the banner card's short list, a name and its season a line. */
@@ -525,7 +684,11 @@ export function mountArenaWindow(host, deps) {
     card.append(el('h3', null, h.title), el('p', 'aw-boardsub', h.sub));
     if (h.rows.length) {
       const ol = el('ol', 'aw-mini aw-hallrows');
-      for (const r of h.rows) { const li = el('li', r.you ? 'you' : null); li.append(el('span', 'aw-n', r.name), el('span', 'aw-pts', r.season)); ol.append(li); }
+      for (const r of h.rows) {
+        const li = el('li', r.you ? 'you' : null);
+        li.append(el('span', 'aw-n', r.name), el('span', 'aw-pts', r.season));
+        ol.append(li);
+      }
       card.append(ol);
     }
     if (h.empty) card.append(el('p', 'aw-empty', h.empty));
@@ -534,11 +697,19 @@ export function mountArenaWindow(host, deps) {
 
   // ── RECORDS ─────────────────────────────────────────────────────────────────────────────────────────────
   function renderRecords(m) {
-    if (m.online) body.append(el('p', 'aw-line aw-online', m.online));   // ARENA4b: online, the account's record - not the save's
+    if (m.online) body.append(el('p', 'aw-line aw-online', m.online)); // ARENA4b: online, the account's record - not the save's
     const stats = el('div', 'aw-stats');
-    for (const s of m.stats) { const t = el('div', 'aw-stat'); t.append(el('span', 'k', s.k), el('span', 'v', s.v)); stats.append(t); }
+    for (const s of m.stats) {
+      const t = el('div', 'aw-stat');
+      t.append(el('span', 'k', s.k), el('span', 'v', s.v));
+      stats.append(t);
+    }
     body.append(stats);
-    if (m.titles.length) { const row = el('div', 'aw-chips'); for (const x of m.titles) row.append(chip(x, 'aw-titlechip')); body.append(row); }
+    if (m.titles.length) {
+      const row = el('div', 'aw-chips');
+      for (const x of m.titles) row.append(chip(x, 'aw-titlechip'));
+      body.append(row);
+    }
     const card = el('section', 'aw-card aw-history');
     card.append(el('h3', null, W().lastBouts));
     if (!m.bouts.length) card.append(el('p', 'aw-empty', m.empty));
@@ -548,7 +719,10 @@ export function mountArenaWindow(host, deps) {
       li.dataset.banner = b.banner ?? '';
       const res = chip(b.result, `aw-res ${b.won ? 'won' : b.draw ? 'draw' : 'lost'}`);
       const what = el('div', 'aw-boutwhat');
-      what.append(el('span', 'aw-bo', b.opp), el('span', 'aw-bt', `${b.tier}${b.label ? ` - ${b.label}` : ''}${b.how ? `, ${b.how}` : ''}`));
+      what.append(
+        el('span', 'aw-bo', b.opp),
+        el('span', 'aw-bt', `${b.tier}${b.label ? ` - ${b.label}` : ''}${b.how ? `, ${b.how}` : ''}`),
+      );
       const tail = el('div', 'aw-bouttail');
       if (b.when) tail.append(el('span', 'aw-bd', b.when));
       if (b.purse > 0) tail.append(el('span', 'aw-bp', W().gold(b.purse)));
@@ -556,7 +730,11 @@ export function mountArenaWindow(host, deps) {
       li.append(res, what, tail);
       // ARENA5: a bout the records keep - Watch the replay (the host's, refused away from the gate)
       // AUDIT PRE-MERGE 1003 U14: each named by its bout - its opponent and its day
-      if (b.replay) { const acts = el('div', 'aw-boutacts'); acts.append(press(b.replay, () => doAct('replay', { i: b.replay.i }), '', `${b.opp}, ${b.when}`)); li.append(acts); }
+      if (b.replay) {
+        const acts = el('div', 'aw-boutacts');
+        acts.append(press(b.replay, () => doAct('replay', { i: b.replay.i }), '', `${b.opp}, ${b.when}`));
+        li.append(acts);
+      }
       ol.append(li);
     }
     card.append(ol);
@@ -565,7 +743,10 @@ export function mountArenaWindow(host, deps) {
     wag.append(el('h3', null, W().wagersHead));
     if (!m.wagers.length) wag.append(el('p', 'aw-empty', W().noWagers));
     const ul = el('ul', 'aw-wagerlist');
-    for (const w of m.wagers) { const li = el('li', `aw-wl s-${w.status}`, w.text); ul.append(li); }
+    for (const w of m.wagers) {
+      const li = el('li', `aw-wl s-${w.status}`, w.text);
+      ul.append(li);
+    }
     wag.append(ul);
     body.append(wag);
   }
@@ -585,22 +766,43 @@ export function mountArenaWindow(host, deps) {
   }
 
   /** The model as its words - what `refresh` compares (a model that cannot be said is always new). */
-  const said = (m) => { try { return JSON.stringify(m); } catch { return undefined; } };
+  const said = (m) => {
+    try {
+      return JSON.stringify(m);
+    } catch {
+      return undefined;
+    }
+  };
   function render(m = deps.board()) {
     if (!alive) return;
     drawn = said(m);
     renderHead(m.header);
-    for (const [p, t] of Object.entries(tabOf)) { t.setAttribute('aria-selected', p === page ? 'true' : 'false'); t.classList.toggle('on', p === page); t.setAttribute('tabindex', p === page ? '0' : '-1'); }
+    for (const [p, t] of Object.entries(tabOf)) {
+      t.setAttribute('aria-selected', p === page ? 'true' : 'false');
+      t.classList.toggle('on', p === page);
+      t.setAttribute('tabindex', p === page ? '0' : '-1');
+    }
     body.dataset.page = page;
-    body.setAttribute('aria-labelledby', tabOf[page].id);   // AUDIT PRE-MERGE 1003 U14: the page is named by its tab
+    body.setAttribute('aria-labelledby', tabOf[page].id); // AUDIT PRE-MERGE 1003 U14: the page is named by its tab
     // AUDIT PRE-MERGE 1003 U2: EVERY PRESS IN THE BODY REDREW IT, and the focus fell to the page with the nodes (Wager, a
     // side, a stake, a tier, a sub-board, a refused press) - the next Tab started over from the top. The house's wrap:
     // the scroll kept as it was, and the control pressed found again in the redrawn body (AUDIT 28 B11, AUDIT 31 U1,
     // AUDIT 32 P3)
-    repaintKeepingScroll(win, () => {
-      for (const c of [...body.children]) c.remove();
-      ({ bouts: () => renderBouts(m.bouts), ladder: () => renderLadder(m.ladder), team: () => renderTeam(m.team), boards: () => renderBoards(m.boards), records: () => renderRecords(m.records), rules: () => renderRules(m.rules) })[page]();
-    }, { focus: true });
+    repaintKeepingScroll(
+      win,
+      () => {
+        for (const c of [...body.children]) c.remove();
+        ({
+          bouts: () => renderBouts(m.bouts),
+          ladder: () => renderLadder(m.ladder),
+          team: () => renderTeam(m.team),
+          boards: () => renderBoards(m.boards),
+          records: () => renderRecords(m.records),
+          rules: () => renderRules(m.rules),
+        })[page]();
+      },
+      { focus: true },
+    );
   }
   render();
   /** AUDIT PRE-MERGE 1003 U1: THE WINDOW DRAWS ITSELF. Online its model moves with no press - the board comes in, the
@@ -620,21 +822,36 @@ export function mountArenaWindow(host, deps) {
   const onKey = (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     if (isTextEntryTarget(e.target) && e.key !== 'Escape') return;
-    if (overlayAction(e) === 'back') { e.preventDefault(); e.stopPropagation(); exit(); return; }
+    if (overlayAction(e) === 'back') {
+      e.preventDefault();
+      e.stopPropagation();
+      exit();
+      return;
+    }
     const n = /^Digit([1-6])$/.exec(e.code ?? '');
-    if (n) { e.preventDefault(); e.stopPropagation(); page = ARENA_PAGES[Number(n[1]) - 1]; wagerOpen = false; render(); tabOf[page]?.focus?.(); return; }
+    if (n) {
+      e.preventDefault();
+      e.stopPropagation();
+      page = ARENA_PAGES[Number(n[1]) - 1];
+      wagerOpen = false;
+      render();
+      tabOf[page]?.focus?.();
+      return;
+    }
     if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && e.target?.getAttribute?.('role') === 'tab') {
       e.preventDefault();
       const i = ARENA_PAGES.indexOf(page);
       page = ARENA_PAGES[(i + (e.key === 'ArrowRight' ? 1 : ARENA_PAGES.length - 1)) % ARENA_PAGES.length];
-      wagerOpen = false; render(); tabOf[page]?.focus?.();
+      wagerOpen = false;
+      render();
+      tabOf[page]?.focus?.();
     }
   };
   globalThis.addEventListener('keydown', onKey, { capture: true });
   const offOutside = closeOnOutsideTap(shell, '.aw-win', exit);
   return {
     repaint: () => render(),
-    refresh,   // AUDIT PRE-MERGE 1003 U1: drawn again only when the model moved (the door's clock)
+    refresh, // AUDIT PRE-MERGE 1003 U1: drawn again only when the model moved (the door's clock)
     /** The page shown (the door's probe). */
     page: () => page,
     unmount() {

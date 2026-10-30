@@ -430,8 +430,8 @@
   {
     "name": "ARENA3-WINDOW-TABS-UNTURNED",
     "file": "src/ui/arena/arenaWindow.js",
-    "old": "    t.setAttribute('role', 'tab');\n",
-    "new": "",
+    "old": "    t.setAttribute('role', 'tab');\n    t.dataset.page = p;",
+    "new": "    t.dataset.page = p;",
     "tests": [
       "test/systems/arena/arena3_window.test.js"
     ]
@@ -439,8 +439,8 @@
   {
     "name": "ARENA3-WINDOW-DEAD-PRESS-LIVES",
     "file": "src/ui/arena/arenaWindow.js",
-    "old": "    const b = button(`aw-act${cls ? ` ${cls}` : ''}`, a.label, () => { if (!a.why) onPress(); });",
-    "new": "    const b = button(`aw-act${cls ? ` ${cls}` : ''}`, a.label, () => { onPress(); });",
+    "old": "      if (!a.why) onPress();",
+    "new": "      onPress();",
     "tests": [
       "test/systems/arena/arena3_window.test.js"
     ]
@@ -448,8 +448,8 @@
   {
     "name": "ARENA3-WINDOW-WAGER-SIDE",
     "file": "src/ui/arena/arenaWindow.js",
-    "old": "      doAct('wager', { hour: c.hour, side, stake });",
-    "new": "      doAct('wager', { hour: c.hour, side: 0, stake });",
+    "old": "        doAct('wager', { hour: c.hour, side, stake });",
+    "new": "        doAct('wager', { hour: c.hour, side: 0, stake });",
     "tests": [
       "test/systems/arena/arena3_window.test.js"
     ]
