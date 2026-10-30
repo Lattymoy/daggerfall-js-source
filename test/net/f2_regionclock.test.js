@@ -7,8 +7,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   REGION_CLOCK_REGIONS, REGION_CLOCK_TURN, REGION_CLOCK_MAX_LAG, REGION_HALF_DAYS, REGION_IMPULSE_MAX, REGION_TERM_MAX, REGION_TERM_HALF,
-  regionClockDue, halvedToward0, regionProsperityStep, regionProsperityStepTo, regionProsperityAt, regionTermOf,
+  regionClockDue, halvedToward0, regionProsperityStep, regionProsperityStepTo, regionProsperityAt, regionTermOf, REGION_ACTS_SETTLE_DAYS,
 } from '../../src/net/regionClockLaw.js';
+import { WATCH_RECEIPT_TTL_S } from '../../src/net/watchReceipt.js';
+import { PATRON_RECKON_HOURS } from '../../src/net/patronLaw.js';
+import { REGION_NAMES } from '../../src/formats/mapsTables.js';
 import { townProsperity } from '../../src/net/townEconLaw.js';
 import { standService, T0 } from '../accountDb.mjs';
 import { MINUTE_JOBS, runCron, CRON_MINUTE } from '../../server-account/src/cron.js';
@@ -18,7 +21,7 @@ import { _resetTownEconForTests } from '../../server-account/src/townEcon.js';
 const rng = (seed) => () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
 
 test('F2 the clock: every region 0..70, the resident stepped every tick, the rotation two more, and none ever more than its round behind - the proposal\'s bound of 45 kept (mutants: the rotation unturned, the resident unstepped)', () => {
-  assert.equal(REGION_CLOCK_REGIONS, 71);
+  assert.equal(REGION_CLOCK_REGIONS, REGION_NAMES.length, 'every region the world names: the Bay\'s 62 and the provinces\' (AUDIT FOUNDATION C5)');
   assert.equal(REGION_CLOCK_MAX_LAG, Math.ceil(71 / REGION_CLOCK_TURN));
   assert.ok(REGION_CLOCK_MAX_LAG <= 45);
   assert.deepEqual(regionClockDue([64, 17, 99, -1], 70), { due: [0, 17, 64, 70], cursor: 1 }, 'the resident, then the rotation round the end; no region past 70');
@@ -61,23 +64,28 @@ test('F2 the term: a region\'s prosperity adds 0 to REGION_TERM_MAX to its towns
   assert.equal(townProsperity({ ...town, regional: REGION_TERM_HALF }) - townProsperity(town), REGION_TERM_MAX / 2);
 });
 
-test('F2 the service: the clock starts at nothing, ticks once a UTC day off the towns\' acts the day before - a Bay region and Skyrim\'s stepped, the rest at nothing - reads each off its own tick, answers it with the shares, and falls back when nobody walks (mutants: the acts\' day, the kept regions)', async () => {
+test('F2 the service: the clock starts at nothing and ticks once a UTC day off the acts of the day REGION_ACTS_SETTLE_DAYS back - a day whole, so an act counted late on its own day still counts - a Bay region and Skyrim\'s stepped, the rest at nothing; read off its own tick, answered with the shares, back to nothing unwalked (mutants: the acts\' day, the kept regions, the settle unread)', async () => {
   let now = T0;
   const s = await standService({ PROFESSIONS_OPEN: 'on' });
   const raw = s.env.DB._raw, db = s.env.DB;
   const day = () => Math.floor(now / 86_400);
-  assert.match(String(MINUTE_JOBS.find(([n]) => n === 'town-shares')?.[1]), /tickRegionClock\(ctx\.db, ctx\.nowS\)/, 'ticked with the shares');
+  assert.match(String(MINUTE_JOBS.find(([n]) => n === 'town-shares')?.[1]), /keepTownShares\(ctx\.db, ctx\.nowS\)\) \+ \(await tickRegionClock\(ctx\.db, ctx\.nowS\)/, 'ticked with the shares, after them');
+  assert.ok(REGION_ACTS_SETTLE_DAYS * 86_400 >= WATCH_RECEIPT_TTL_S + 86_400 && REGION_ACTS_SETTLE_DAYS * 24 >= PATRON_RECKON_HOURS + 24, 'a day read once its late acts are in');
   assert.equal(await tickRegionClock(db, now), 0, 'started');
   assert.equal(raw.prepare('SELECT tick FROM region_clock_meta WHERE id = 1').get().tick, day(), 'started today; a region with no row at nothing');
   assert.equal(raw.prepare('SELECT COUNT(*) AS n FROM region_clock').get().n, 0);
+  const D = day();
   raw.prepare('INSERT INTO town_econ_towns (map, px, py, region, location, at) VALUES (?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?)').run(3_000_207, 207, 212, 17, 5, now, 9_000_001, 1500, -400, 64, -1_000_001, now);
-  raw.prepare('INSERT INTO town_econ_days (map, day, src, n) VALUES (?, ?, ?, ?), (?, ?, ?, ?), (?, ?, ?, ?)').run(3_000_207, day(), 'watch', 30, 3_000_207, day(), 'trade', 10, 9_000_001, day(), 'raid', 1);
+  raw.prepare('INSERT INTO town_econ_days (map, day, src, n) VALUES (?, ?, ?, ?), (?, ?, ?, ?), (?, ?, ?, ?)').run(3_000_207, D, 'watch', 30, 3_000_207, D, 'trade', 10, 9_000_001, D, 'raid', 1);
   now += 86_400;
-  assert.ok(await tickRegionClock(db, now) >= 2);
+  assert.equal(await tickRegionClock(db, now), 0, 'the day not whole yet');
+  raw.prepare('INSERT INTO town_econ_days (map, day, src, n) VALUES (?, ?, ?, ?)').run(3_000_207, D, 'sea', 5);   // a dealing claimed late, on its own day
+  now += 2 * 86_400;
+  assert.equal(await tickRegionClock(db, now), 2);
   assert.equal(await tickRegionClock(db, now), 0, 'once a day');
   const v = new Map((await regionsProsperity(db, now)));
   const expect = (acts) => regionProsperityStep(0, day(), acts);
-  assert.deepEqual([v.get(17), v.get(64), v.size], [expect(30 + 4 * 10), expect(20), 2], 'the Bay\'s Daggerfall and a town in Skyrim, weighed as TOWN-ECON weighs them');
+  assert.deepEqual([v.get(17), v.get(64), v.size], [expect(30 + 4 * 10 + 2 * 5), expect(20), 2], 'the Bay\'s Daggerfall and a town in Skyrim, weighed as TOWN-ECON weighs them, the late dealing in');
   _resetTownEconForTests();
   await runCron(s.env, { cron: CRON_MINUTE, nowS: now + 400 });
   const g = await s.guest();
@@ -86,4 +94,27 @@ test('F2 the service: the clock starts at nothing, ticks once a UTC day off the 
   now += 86_400 * 40;
   await tickRegionClock(db, now);
   assert.deepEqual(await regionsProsperity(db, now), [], 'forty days unwalked: back to nothing');
+});
+
+test('F2 the service\'s tick is one write: a write that fails loses no day and is asked again; a catch-up of ten days over thirty regions is five statements (mutants: the tick taken first, the day marked before the write)', async () => {
+  let now = T0;
+  const s = await standService({ PROFESSIONS_OPEN: 'on' });
+  const raw = s.env.DB._raw, real = s.env.DB;
+  let statements = 0, failNext = false;
+  const db = { prepare: (q) => { statements++; return real.prepare(q); }, batch: async (l) => { if (failNext) { failNext = false; throw new Error('D1_ERROR: network (modelled)'); } return real.batch(l); } };
+  await tickRegionClock(db, now);
+  const D = Math.floor(now / 86_400);
+  for (let r = 0; r < 30; r++) {
+    raw.prepare('INSERT INTO town_econ_towns (map, px, py, region, location, at) VALUES (?, ?, ?, ?, ?, ?)').run(5_000_000 + r, 100 + r, 100, r, r, now);
+    for (let d = 0; d < 8; d++) raw.prepare('INSERT INTO town_econ_days (map, day, src, n) VALUES (?, ?, ?, ?)').run(5_000_000 + r, D + d, 'watch', 10 + r);
+  }
+  now += 10 * 86_400;
+  failNext = true;
+  await assert.rejects(tickRegionClock(db, now), /network/);
+  assert.equal(raw.prepare('SELECT tick FROM region_clock_meta WHERE id = 1').get().tick, D, 'the tick not taken');
+  assert.equal(raw.prepare('SELECT COUNT(*) AS n FROM region_clock').get().n, 0, 'nor a row written');
+  statements = 0;
+  assert.equal(await tickRegionClock(db, now), 30, 'asked again, every region with acts stepped');
+  assert.ok(statements <= 5, `${statements} statements`);
+  assert.equal(raw.prepare('SELECT tick FROM region_clock_meta WHERE id = 1').get().tick, D + 10);
 });

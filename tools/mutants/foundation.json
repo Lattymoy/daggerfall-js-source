@@ -132,8 +132,8 @@
   {
     "name": "F1-host-generation-unread",
     "file": "src/scenes/atlasHost.js",
-    "old": "    if (g !== generation) { generation = g; atlas = createAtlas({ resolveBlock }); }",
-    "new": "    if (false) { generation = g; atlas = createAtlas({ resolveBlock }); }",
+    "old": "    if (g !== generation || s !== stood) {",
+    "new": "    if (s !== stood) {",
     "tests": [
       "test/scenes/atlashost.test.js"
     ]
@@ -168,8 +168,8 @@
   {
     "name": "F1-host-unlocated-told",
     "file": "src/scenes/atlasHost.js",
-    "old": "report = { checked: list.length, unlocated, problems: scratch.problems().filter((q) => q.why === 'unresolved'), unplaced: homeListingsUnplaced(listings(), bundle) };",
-    "new": "report = { checked: list.length, unlocated, problems: [...scratch.problems(), ...list.filter((p) => !standing(p)).map((p) => ({ place: p.mapId, part: 'exterior', name: '', why: 'unresolved' }))], unplaced: homeListingsUnplaced(listings(), bundle) };",
+    "old": "problems: scratch.problems().filter((q) => q.why === 'unresolved'), unplaced:",
+    "new": "problems: [...scratch.problems(), ...list.filter((p) => !standing(p)).map((p) => ({ place: p.mapId, part: 'exterior', name: '', why: 'unresolved' }))], unplaced:",
     "tests": [
       "test/scenes/atlashost.test.js"
     ]
@@ -316,8 +316,8 @@
   {
     "name": "F2-acts-day",
     "file": "server-account/src/regionClock.js",
-    "old": "const { results = [] } = await db.prepare(ACTS_SQL).bind(t - 1).all();",
-    "new": "const { results = [] } = await db.prepare(ACTS_SQL).bind(t).all();",
+    "old": "const acts = byDay.get(t - REGION_ACTS_SETTLE_DAYS) ?? new Map();",
+    "new": "const acts = byDay.get(t - 1) ?? new Map();",
     "tests": [
       "test/net/f2_regionclock.test.js"
     ]
@@ -397,7 +397,7 @@
   {
     "name": "F4-between-kept",
     "file": "src/world/land/landLayer.js",
-    "old": "(r.height <= WATER_LINE || r.height >= LAND_LEAST)",
+    "old": "(r.height === 0 || r.height >= LAND_LEAST)",
     "new": "true",
     "tests": [
       "test/world/land/f4_landlayer.test.js"
@@ -469,8 +469,8 @@
   {
     "name": "F4-climate-unread",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": ": landLayer().climateAt(x, y) ?? tamrielClimateAt(x, y));",
-    "new": ": tamrielClimateAt(x, y));",
+    "old": "  return landLayer().climateAt(x, y) ?? tamrielBiomeAt(x, y)?.climate ?? CLIMATES.Ocean;",
+    "new": "  return tamrielBiomeAt(x, y)?.climate ?? CLIMATES.Ocean;",
     "tests": [
       "test/world/land/f4_landlayer.test.js"
     ]
@@ -514,8 +514,8 @@
   {
     "name": "F5-busy-failed",
     "file": "scripts/openFileLimit.mjs",
-    "old": "if (e?.code === 'EMFILE' || e?.code === 'ENFILE') { retried++; queue.push(job); } else job.no(e);",
-    "new": "job.no(e);",
+    "old": "if ((e?.code === 'EMFILE' || e?.code === 'ENFILE') && job.tries < retries) {",
+    "new": "if (false) {",
     "tests": [
       "test/tooling/f5_openfiles.test.js"
     ]
@@ -541,7 +541,7 @@
   {
     "name": "F1-host-rows-unchecked",
     "file": "src/scenes/atlasHost.js",
-    "old": "unplaced: homeListingsUnplaced(listings(), bundle) };",
+    "old": "unplaced: homeListingsUnplaced(listings(), (map) => held(scratch, places.byMapId(map)) ?? undefined) };",
     "new": "unplaced: [] };",
     "tests": [
       "test/scenes/atlashost.test.js"
@@ -563,6 +563,141 @@
     "new": "  return HOSTS.map(([, name]) => [name, true]);",
     "tests": [
       "test/tooling/foundationmeasure.test.js"
+    ]
+  },
+  {
+    "name": "AF-C1-settle-unread",
+    "file": "src/net/regionClockLaw.js",
+    "old": "export const REGION_ACTS_SETTLE_DAYS = 3;",
+    "new": "export const REGION_ACTS_SETTLE_DAYS = 1;",
+    "tests": [
+      "test/net/f2_regionclock.test.js"
+    ]
+  },
+  {
+    "name": "AF-C2-day-marked-first",
+    "file": "server-account/src/regionClock.js",
+    "old": "  const [, took] = await db.batch([",
+    "new": "  _tickedDay = today;\n  const [, took] = await db.batch([",
+    "tests": [
+      "test/net/f2_regionclock.test.js"
+    ]
+  },
+  {
+    "name": "AF-C2-tick-taken-first",
+    "file": "server-account/src/regionClock.js",
+    "old": "  const [, took] = await db.batch([\n    db.prepare(ROWS_SQL).bind(write, from),",
+    "new": "  await db.prepare('UPDATE region_clock_meta SET tick = ?1 WHERE id = 1').bind(today).run();\n  const [, took] = await db.batch([\n    db.prepare(ROWS_SQL).bind(write, from),",
+    "tests": [
+      "test/net/f2_regionclock.test.js"
+    ]
+  },
+  {
+    "name": "AF-P1-key0-cell",
+    "file": "src/net/homeListingLaw.js",
+    "old": "(k === HOME_KEY_MAX ? [0, 0] : [k >> 16, (k >> 8) & 0xff])",
+    "new": "[k >> 16, (k >> 8) & 0xff]",
+    "tests": [
+      "test/net/f3_homelistings.test.js"
+    ]
+  },
+  {
+    "name": "AF-P2-ground-held-to-row",
+    "file": "src/net/homeListingLaw.js",
+    "old": "(homeListingOf(mapId, key)?.price != null\n  ? homeOnlinePrice",
+    "new": "(false\n  ? homeOnlinePrice",
+    "tests": [
+      "test/net/f3_homelistings.test.js"
+    ]
+  },
+  {
+    "name": "AF-P3-pick-unasked",
+    "file": "src/systems/arena/arenaMove.js",
+    "old": " && !homeListedOff(o?.mapId, s.buildingKey)), opts);",
+    "new": "), opts);",
+    "tests": [
+      "test/net/f3_homelistings.test.js"
+    ]
+  },
+  {
+    "name": "AF-P3-move-unasked",
+    "file": "server-account/src/homes.js",
+    "old": "  if (homeListedOff(mapId, to)) return { error: 'home-unlisted' };   // AUDIT FOUNDATION P3: nor one its row takes off the market\n",
+    "new": "",
+    "tests": [
+      "test/net/f3_homelistings.test.js"
+    ]
+  },
+  {
+    "name": "AF-L1-water-not-zero",
+    "file": "src/world/land/landLayer.js",
+    "old": "(r.height === 0 || r.height >= LAND_LEAST)",
+    "new": "(r.height <= WATER_LINE || r.height >= LAND_LEAST)",
+    "tests": [
+      "test/world/land/f4_landlayer.test.js"
+    ]
+  },
+  {
+    "name": "AF-L2-seam-unread",
+    "file": "src/world/land/landLayer.js",
+    "old": "  else if (inSeam(r.x, r.y, w, h)) out.push('seam');\n",
+    "new": "",
+    "tests": [
+      "test/world/land/f4_landlayer.test.js"
+    ]
+  },
+  {
+    "name": "AF-L3-land-climate-unasked",
+    "file": "src/world/land/landLayer.js",
+    "old": "  else if (r.climate === CLIMATES.Ocean ? r.height !== 0 : r.height >= LAND_LEAST && r.climate === undefined) out.push('land-climate');\n",
+    "new": "",
+    "tests": [
+      "test/world/land/f4_landlayer.test.js"
+    ]
+  },
+  {
+    "name": "AF-A1-harbour-region-pixel",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "    const regionIndex = regionOfTheatre(THEATRE_KEYS.indexOf(CAPITALS[at.k]?.province));",
+    "new": "    const regionIndex = maps.getRegionIndexAt(px, py);",
+    "tests": [
+      "test/world/atlas/f1_atlas_served.test.js"
+    ]
+  },
+  {
+    "name": "AF-A2-stamp-unread",
+    "file": "src/scenes/atlasHost.js",
+    "old": "    if (g !== generation || s !== stood) {",
+    "new": "    if (g !== generation) {",
+    "tests": [
+      "test/scenes/atlashost.test.js"
+    ]
+  },
+  {
+    "name": "AF-A3-near-stands",
+    "file": "src/scenes/atlasHost.js",
+    "old": "places.near(px, py, r).map((p) => held(current(), p)).filter(Boolean)",
+    "new": "places.near(px, py, r).map(bundle).filter(Boolean)",
+    "tests": [
+      "test/scenes/atlashost.test.js"
+    ]
+  },
+  {
+    "name": "AF-A4-wait-unwaited",
+    "file": "scripts/openFileLimit.mjs",
+    "old": "Math.min(OPEN_FILES_WAIT_MAX_MS, 2 ** job.tries)",
+    "new": "0",
+    "tests": [
+      "test/tooling/f5_openfiles.test.js"
+    ]
+  },
+  {
+    "name": "AF-A5-check-left-running",
+    "file": "src/scenes/atlasHost.js",
+    "old": "        try { step(); } catch (e) { checking = false; console.warn('[atlas] the check stopped:', e); done(null); }   // AUDIT FOUNDATION A5: never left running\n",
+    "new": "        step();\n",
+    "tests": [
+      "test/scenes/atlashost.test.js"
     ]
   }
 ]

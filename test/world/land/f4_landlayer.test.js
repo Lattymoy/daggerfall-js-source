@@ -7,20 +7,30 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { landRowProblems, landLayerOf, landLayer, setLandLayer, landServedBytes, WATER_LINE, LAND_LEAST } from '../../../src/world/land/landLayer.js';
+import { landRowProblems, landLayerOf, landLayer, setLandLayer, landServedBytes, WATER_LINE, LAND_LEAST, LAND_SEAM_REACH } from '../../../src/world/land/landLayer.js';
 import { addLandRow } from '../../../tools/landEdit.mjs';
-import { tamrielHeightByte, groundClimateIndex, dropGroundCache, tamrielLargeMap } from '../../../src/world/tamriel/tamrielGround.js';
+import { tamrielHeightByte, groundClimateIndex, dropGroundCache, tamrielLargeMap, tamrielClimateAt, groundWoods, SEAM_PX, BLEND_PX } from '../../../src/world/tamriel/tamrielGround.js';
 import { isWaterPixel } from '../../../src/ui/overworldModel.js';
 import { WATER_BYTE } from '../../../src/world/roadsProducer.js';
 import { roadsCacheKey } from '../../../src/world/roadsCache.js';
 import { regionKey } from '../../../src/world/tamrielRoads.js';
 import { CLIMATES } from '../../../src/formats/mapsTables.js';
 
-test('F4 the row: a rectangle of the world\'s pixels, water at the water line and under or land at the shore and over - nothing between, so no two readers of the water disagree - a climate the game knows, and why (mutants: the between bytes kept, the note unasked)', () => {
+test('F4 the row: a rectangle of the world\'s pixels, water at 0 or land at the shore and over with a land climate - nothing between, and none in the seam band past the Bay\'s edge - so no two readers of the water disagree, and why (mutants: the between bytes kept, the note unasked, the land climate unasked, the seam unread)', () => {
   assert.deepEqual(landRowProblems({ x: 100, y: 100, height: 0, note: 'a cove' }), []);
   assert.deepEqual(landRowProblems({ x: -900, y: -300, w: 4, h: 2, climate: CLIMATES.Swamp, note: 'past the Bay' }), []);
-  for (const height of [WATER_LINE + 1, LAND_LEAST - 1]) assert.deepEqual(landRowProblems({ x: 1, y: 1, height, note: 'n' }), ['height']);
+  for (const height of [1, WATER_LINE, WATER_LINE + 1, LAND_LEAST - 1]) assert.deepEqual(landRowProblems({ x: 1, y: 1, height, note: 'n' }), ['height'], `${height}`);
   assert.ok(WATER_LINE * 8 <= 27.2 && LAND_LEAST > WATER_BYTE, 'the bytes between are the readers\' disagreement');
+  // AUDIT FOUNDATION L3: a land row names its land climate, and the Ocean is water's alone - a height alone over the sea
+  // stood land under the Ocean's climate, water to every reader of the climate
+  assert.deepEqual(landRowProblems({ x: 1, y: 1, height: 40, note: 'n' }), ['land-climate']);
+  assert.deepEqual(landRowProblems({ x: 1, y: 1, height: 40, climate: CLIMATES.Ocean, note: 'n' }), ['land-climate']);
+  assert.deepEqual(landRowProblems({ x: 1, y: 1, climate: CLIMATES.Ocean, note: 'n' }), ['land-climate']);
+  assert.deepEqual(landRowProblems({ x: 1, y: 1, height: 40, climate: CLIMATES.Woodlands, note: 'n' }), []);
+  // AUDIT FOUNDATION L2: the band past the Bay's edge is the Bay's ground, then blended - a row there is refused
+  assert.equal(LAND_SEAM_REACH, SEAM_PX + BLEND_PX);
+  for (const r of [{ x: -5, y: 100 }, { x: 990, y: 100, w: 20 }, { x: 500, y: 499 + LAND_SEAM_REACH }]) assert.deepEqual(landRowProblems({ ...r, height: 0, note: 'n' }), ['seam'], JSON.stringify(r));
+  assert.deepEqual(landRowProblems({ x: -1 - LAND_SEAM_REACH, y: 100, height: 0, note: 'n' }), [], 'just past the band');
   assert.deepEqual(landRowProblems({ x: 1, y: 1, climate: 99, note: '' }), ['climate', 'note']);
   assert.deepEqual(landRowProblems({ x: 9000, y: 1, height: 0, note: 'n' }), ['pixel']);
   assert.deepEqual(landRowProblems({ x: 1, y: 1, w: 65, height: 0, note: 'n' }), ['size']);
@@ -58,9 +68,11 @@ test('F4 past the Bay: a row\'s height and climate are the ground\'s - the byte,
   for (let x = 1200; x < 1900 && !at; x += 9) for (let y = -800; y < -100 && !at; y += 9) if (tamrielHeightByte(x, y) >= 20) at = [x, y];   // Skyrim's
   assert.ok(at, 'a land pixel past the Bay');
   const [x, y] = at, bay = () => CLIMATES.Woodlands;
-  setLandLayer(landLayerOf({ edits: [{ x, y, height: 0, climate: CLIMATES.Ocean, note: 'a cove past the Bay' }] }));
+  setLandLayer(landLayerOf({ edits: [{ x, y, height: 0, climate: CLIMATES.Ocean, note: 'a cove past the Bay' }, { x: x + 20, y, climate: CLIMATES.Desert, note: 'a dry patch' }] }));
   dropGroundCache();
   try {
+    // AUDIT FOUNDATION L5: the climate law itself reads the row - the landforms, the far ring and the gates call it
+    assert.deepEqual([tamrielClimateAt(x + 20, y), groundClimateIndex(bay)(x + 20, y)], [CLIMATES.Desert, CLIMATES.Desert]);
     assert.equal(tamrielHeightByte(x, y), 0);
     assert.ok(tamrielLargeMap(x, y).every((col) => col.every((v) => v === 0)), 'no detail at sea');
     const climate = groundClimateIndex(bay)(x, y);
@@ -119,4 +131,15 @@ test('F4 with ARENA2, on the Bay: the served WOODS.WLD holds the rows\' heights 
   for (let i = 0; i < p0.buffer.length; i++) if (p0.buffer[i] !== p1.buffer[i]) moved++;
   assert.ok(moved <= 25 && moved > 0);
   assert.equal(isWaterPixel(p1.getValue(x + 1, y), w.getHeightMapValue(x, y)), true);
+  // AUDIT FOUNDATION L1: past the Bay the composed ground (tamrielGround.js groundWoods, the world's reader) stands a
+  // water row as water too - the kernel's samples under the ocean's line across its middle pixel
+  let far = null;
+  for (let fx = 1200; fx < 1900 && !far; fx += 9) for (let fy = -800; fy < -100 && !far; fy += 9) if (tamrielHeightByte(fx, fy) >= 20) far = [fx, fy];
+  setLandLayer(landLayerOf({ edits: [{ x: far[0] - 2, y: far[1] - 2, w: 5, h: 5, height: 0, climate: CLIMATES.Ocean, note: 'a lake past the Bay' }] }));
+  dropGroundCache();
+  try {
+    const ground = groundWoods(plain);
+    assert.equal(ground.getHeightMapValue(far[0], far[1]), 0);
+    assert.ok(Math.max(...generateSamples(ground, far[0], far[1])) * MAX_TERRAIN_HEIGHT <= SCALED_OCEAN_ELEVATION + 1e-3, 'the kernel stands water past the Bay');
+  } finally { setLandLayer(); dropGroundCache(); }
 });

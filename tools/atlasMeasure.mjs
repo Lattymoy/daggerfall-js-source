@@ -21,6 +21,7 @@ import { BlocksFile } from '../src/formats/blocksFile.js';
 import { createWorldPlaces } from '../src/world/worldWide/worldPlaces.js';
 import { bayPlaceRows, BAY_SOURCE } from '../src/world/worldWide/bayPlaces.js';
 import * as GRID from '../src/world/worldWide/worldGrid.js';
+import { landServedBytes } from '../src/world/land/landLayer.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 /** The town packs and their load order (scenes/modWorldData.js WORLD_DATA_PRIORITY). */
@@ -39,7 +40,7 @@ export const TRACE_FIT = Object.freeze({ ox: 38 * 15.5, oy: 57 * 15.5, ppu: 15.5
  */
 export async function loadWorldAtlas(arena2, { served = false, packs = false, world = false } = {}) {
   served ||= packs || world;
-  const bytes = (/** @type {string} */ n) => new Uint8Array(readFileSync(join(arena2, n)));
+  const bytes = (/** @type {string} */ n) => landServedBytes(n, new Uint8Array(readFileSync(join(arena2, n))));   // the land's rows on the Bay, as fetchBytes serves them
   const blocks = new BlocksFile(); blocks.load(bytes('BLOCKS.BSA'));
   const maps = new MapsFile(); maps.load(bytes('MAPS.BSA'), bytes('CLIMATE.PAK'), bytes('POLITIC.PAK')); maps.autoDiscard = false;
   if (served) {

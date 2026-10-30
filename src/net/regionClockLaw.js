@@ -5,6 +5,10 @@
 // steps a region's integer state a day at a time: a catch-up of n days is n steps, nothing added a closed form. The
 // account service keeps the state (server-account/src/regionClock.js). Leaf: imports nothing.
 export const REGION_CLOCK_REGIONS = 71;   // regions 0..70: the Bay's 62 and the nine provinces'
+/** The days a day's acts take to be whole: tick t adds day t - 3's. A Watch receipt is claimed up to two days after its
+ *  tick (watchReceipt.js WATCH_RECEIPT_TTL_S) and a patron's sale reckoned up to 48 hours after its hour (patronLaw.js
+ *  PATRON_RECKON_HOURS), each counted on its own day; a day read sooner missed them for good. */
+export const REGION_ACTS_SETTLE_DAYS = 3;
 /** The regions the rotation steps a tick, resident or not. */
 export const REGION_CLOCK_TURN = 2;
 /** The most ticks a region falls behind the clock: the rotation's round. The proposal's bound is 45. */

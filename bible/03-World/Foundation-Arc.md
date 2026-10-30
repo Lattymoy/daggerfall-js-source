@@ -137,16 +137,21 @@ served and its block not, the fill finds `RRFORT01.RMB` unresolved before any pl
 ## F2 - the residency clock and prosperity (BUILT, 2026-10-30)
 
 `src/net/regionClockLaw.js` is the clock and its first rule; `server-account/src/regionClock.js` keeps it
-(`region_clock`, `region_clock_meta`, migration 0198). A tick is a UTC day, TOWN-ECON's. A region is resident on a tick
-when players acted at one of its towns the day before (`town_econ_days` by `town_econ_towns.region`): derived each
-tick, never stored. A resident region steps; the rotation steps two more, so none of the 71 regions is ever more than
-36 ticks behind (the proposal's bound is 45). The cron's minute asks (`region-clock`); the tick is taken first, so a
+(`region_clock`, `region_clock_meta`, migration 0198). A tick is a UTC day, TOWN-ECON's. Tick t adds the acts of day t - 3
+(`REGION_ACTS_SETTLE_DAYS`): a Watch receipt is claimed up to two days late and a patron's sale reckoned up to 48 hours
+late, each on its own day.
+
+A region is resident on a tick when players acted at one of its towns that day
+(`town_econ_days` by `town_econ_towns.region`): derived each tick, never stored. This departs from the proposal's
+radius round the player: the service knows players by their acts at towns. A resident region steps; the rotation steps
+two more, so none of the 71 regions is more than 36 ticks behind (the proposal's bound is 45). The cron's `town-shares`
+job ticks it after keeping the shares; the rows and the tick are one write, so a failed write loses no day and a
 second runner writes nothing.
 
 The rule steps a region's integer state a day at a time, so a catch-up of n days is n steps. The day's acts, weighed
 as TOWN-ECON weighs them, are added; on every fourth day the state halves toward nothing with a shift that falls the
 same either side. A region read off its own tick reads its closed form. The service answers each region's prosperity
-with the towns' shares (`/v1/towns/econ`, `regions`), and a town adds 0 to 6 for its region's
+with the towns' shares (`/v1/towns/econ`, `regions`), and a town adds 0 to 5 for its region's
 (`townEconLaw.js` `townProsperity`, `regionTermOf`). A region nobody walks falls back to its towns' own economy.
 
 ## F3 - property as data (BUILT, 2026-10-30)
@@ -156,24 +161,58 @@ names a town by its map id and one building (`key`) or one cell of its grid (`ce
 market; `price` sets what it costs, in the law's range. The door asks (`systems/online/onlineHomes.js`
 `homePurchasable`, the door's price); the service refuses a claim or a hall's buy of a row's building
 (`home-unlisted`) or at another price (`home-update`). The game ships no row: the market is the law's until one is
-written. The atlas checks every row names a real town and a cell of its grid, in the tests and in the game. Open land
-for homesteads is PLOT1's, the owner's planned slice; a building key cannot name it.
+written.
+
+The atlas checks every row names a real town and a cell of its grid, in the tests and in the game. A key row
+names a building of Daggerfall's own layout; a town a pack lays out anew is curated by cell. A row's price sells only a
+house the door can measure, and its ground is held to the law's price for that ground. A Knightly Order's house is a
+grant, not a sale, and ignores the rows. Open land for homesteads is PLOT1's, the owner's planned slice.
 
 ## F4 - the land as data (BUILT, 2026-10-30)
 
 `src/world/land/landEdits.json` holds the land's rows; `src/world/land/landLayer.js` reads them. A row names a
-rectangle of world pixels and its ground: a height (water at 3 and under, land at 6 and over, nothing between, so
-every reader of the water agrees) and a climate. On the Bay the rows are written into WOODS.WLD and CLIMATE.PAK as
+rectangle of world pixels and its ground: a height (water 0, land 6 and over with a land climate) and a climate (the
+Ocean on water alone), so every reader of the water agrees. A row in the 14 pixels past the Bay's edge is refused: the
+ground there is the Bay's, then blended.
+
+On the Bay the rows are written into WOODS.WLD and CLIMATE.PAK as
 `scenes/shared.js` `fetchBytes` serves them, a water pixel's 5 x 5 detail flattened; every host, worker and reader reads
-those bytes. Past the Bay `tamrielHeightByte` and `groundClimateIndex` ask the rows first. The roads' kept caches carry
-the rows' stamp in their keys. `node tools/landEdit.mjs --x .. --y .. --height 0 --note ".."` writes a row through the
-same check. The game ships no row. A row within twelve pixels past the Bay's edge is blended by the seam's law.
+those bytes, and DFU's two boot repairs (the coast's climate dilated, a steep town's neighbours smoothed) run over a row
+as over the file's own. Past the Bay `tamrielHeightByte` and `tamrielClimateAt` ask the rows first. The roads' kept
+caches carry the rows' stamp. `node tools/landEdit.mjs` writes a row through the same check. The game ships no row.
 
 ## F5 - the build's open files (BUILT, 2026-10-30)
 
 `scripts/openFileLimit.mjs` wraps the shared `node:fs/promises` readFile Vite reads its assets with: 256 reads open at
 most, and a read refused with EMFILE or ENFILE asked again. `vite.config.js` installs it before the build reads
 anything. Windows' C runtime caps a process near 8,192 open files; the eager globs name 13,134 vendor PNGs at once.
+
+## AUDIT FOUNDATION (2026-10-30)
+
+The owner: *"Audit this."* Four reviews read the branch's code, one slice each, apart from the writer. What they found,
+and what was done:
+
+- **C1 (bug)** A day's acts were read the morning after, before late Watch claims and patron sales landed on it; those
+  were never counted. Tick t now reads day t - 3.
+- **C2 (risk)** The tick was taken before the rows were written; a failed write lost the day. Now one batch, the rows
+  written only while the clock stands where they were read.
+- **C3, C4 (risk)** The shares now keep first, so a failing clock leaves them kept; a tick is five statements.
+- **P1 (bug)** Block 0,0's record 0 (key `1 << 24`) read as cell 256,0, so a cell row missed it. `homeKeyCell`.
+- **P2 (bug)** A row's price dropped the home's ground, and its decor's room with it. `homeGroundPrice`.
+- **P3 (risk)** An arena-displaced home could move into a house off the market; the pick and the service refuse it.
+  **P4** the door's row and the claim key one town: the world host stamps every door's town (`townMapId`), and no other
+  host buys homes - recorded, not changed (`createWorldModes` is at its ceiling).
+- **L1, L2, L3 (bug)** Past the Bay a water row of 1 to 3 stood as land; a row in the seam band was diluted; a land row
+  over the sea kept the Ocean's climate and read as water. The row law refuses all three.
+- **L5 (bug)** The landforms, the far ring, the gates and the halls read the climate law directly; `tamrielClimateAt`
+  now asks the rows. **L6** an empty layer no longer moves the roads' print.
+- **A1 (risk)** A harbour slice's location read region 0 while its row read its province; the slice now stands in its
+  capital's province. **A2, A3** the atlas starts anew when the host stands a location again, and `near` stands
+  nothing. **A4** a refused read waits longer each time and fails after 40. **A5** a check that throws ends.
+
+Recorded, not changed: the card's yesterday reads today's regional term; the measurement's patterns are approximate
+(a host's ring is read off its file, not its function); the tool's served world is the game's installs without its
+loose mod files.
 
 ## THE FOUR HOSTS (Home.md)
 
@@ -192,7 +231,7 @@ anything. Windows' C runtime caps a process near 8,192 open files; the eager glo
 - `test/net/f3_homelistings.test.js` - the rows, the door, the claim, the atlas's check.
 - `test/world/land/f4_landlayer.test.js` - the rows, past the Bay, the kept keys, the served files on ARENA2.
 - `test/tooling/f5_openfiles.test.js`, `test/tooling/foundationmeasure.test.js`.
-- `tools/mutants/foundation.json` - 62 mutants.
+- `tools/mutants/foundation.json` - 78 mutants, the audit's among them.
 
 ## Port-Ledger
 

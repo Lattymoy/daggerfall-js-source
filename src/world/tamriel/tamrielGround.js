@@ -142,7 +142,7 @@ export function tamrielHeightByte(x, y) {
  *  biomeAtPicture answers one for any point of a province's land), so the province's own climate it fell back to answered
  *  nothing and is gone; every reader asks of a pixel past the Bay (the Bay's own read the Bay's map). */
 export function tamrielClimateAt(x, y) {
-  return tamrielBiomeAt(x, y)?.climate ?? CLIMATES.Ocean;
+  return landLayer().climateAt(x, y) ?? tamrielBiomeAt(x, y)?.climate ?? CLIMATES.Ocean;   // FOUNDATION F4: a row's climate first, for every reader
 }
 
 /** AUDIT TESA-BIOME Z4: whether a pixel (px, py)'s 3x3 of climates (ECOTONE1, the host's climates3x3) reads its neighbour
@@ -283,7 +283,7 @@ export function groundWoods(woods) {
 /** The climate read with the continent round it: the Bay's own on the Bay (the reader's, after the coastal
  *  dilation), the province's past it. */
 export function groundClimateIndex(bayClimateIndex) {
-  return (x, y) => (inBay(x, y) ? bayClimateIndex(x, y) : landLayer().climateAt(x, y) ?? tamrielClimateAt(x, y));   // FOUNDATION F4: a row's climate first
+  return (x, y) => (inBay(x, y) ? bayClimateIndex(x, y) : tamrielClimateAt(x, y));
 }
 
 /** TESA-BIOME: THE AIR'S CLIMATE with the continent round it - the Bay's own on the Bay, past it a zone's `air` where the

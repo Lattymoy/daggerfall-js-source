@@ -26,7 +26,11 @@ test('F1 with ARENA2, the served world: the Bay\'s 15,251 and the 909 listed pas
   const past = [...atlas.parts('region')].filter((r) => r.region >= 62).map((r) => [r.region, r.places]);
   assert.deepEqual(past, [[62, 29], [63, 31], [64, 33], [65, 31], [66, 33], [67, 31], [68, 32], [69, 32], [70, 657]]);
   assert.deepEqual(atlas.inRegion(-1), [], 'no place stands in no province');
-  assert.deepEqual(['Alinor Harbour', 'Torval Docks'].map((n) => places.all().find((p) => p.name === n)?.region), [66, 68]);
+  const harbours = ['Alinor Harbour', 'Torval Docks'].map((n) => places.all().find((p) => p.name === n));
+  assert.deepEqual(harbours.map((p) => p?.region), [66, 68]);
+  // AUDIT FOUNDATION A1: the slice the build stands is in the same province - a home's claim, a quest's place and a bank
+  // read the location's region, the registry's systems the row's
+  assert.deepEqual(harbours.map((p) => tamriel.provinceQuestPlaces.sliceAt(p.px, p.py)?.regionIndex), [66, 68]);
   for (const b of atlas.inRegion(64)) {
     assert.equal(b.place.theatre, 3, `${b.place.name} stands in Skyrim's theatre`);
     assert.ok(b.exterior && b.exterior.blocks.every((w) => w >= 0), `${b.place.name}: a whole grid`);

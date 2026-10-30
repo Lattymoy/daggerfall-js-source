@@ -25,8 +25,8 @@
 
 import { seatTipOf, seatShopFactor, kingdomName, CROWN_SEAT_REGIONS, seatRegionOk, SEAT_PIXEL_SPAN } from './townSeatLaw.js';   // TE0 decision 5: a seat town's card, its area's holder; AUDIT TOWN-ECON UI-4: Market Day on the card's price
 import { t } from '../systems/textManager.js';   // L10N4: the card's words in the player's language, each read when it is said
-import { CAPITAL_LANE } from '../world/capitalLane.js';
-import { regionTermOf } from './regionClockLaw.js';   // FOUNDATION F2: the region's prosperity, a town's term   // BAY-LEFT-SEA: the staff audit's order - a capital's map id
+import { CAPITAL_LANE } from '../world/capitalLane.js';   // BAY-LEFT-SEA: the staff audit's order - a capital's map id
+import { regionTermOf } from './regionClockLaw.js';   // FOUNDATION F2: the region's prosperity, a town's term
 
 /** The location types that are towns (mapsFile.js LOCATION_TYPES TownCity, TownHamlet, TownVillage). */
 export const TOWN_ECON_TYPES = Object.freeze([0, 1, 2]);

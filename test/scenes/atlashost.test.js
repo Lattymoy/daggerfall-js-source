@@ -20,15 +20,15 @@ const world = () => {
   places.register('tesa', [{ mapId: 9000, name: 'Skyrim town', px: 1500, py: -400, type: 0, area: areaOfDistrict(3, cx, cy) }]);
   const stood = new Map(BAY.map((r) => [r.mapId, loc([r.mapId === 105 ? 'GONE01.RMB' : 'AAA.RMB'])]));
   const queue = [];
-  let stands = 0;
+  let stands = 0, gen = 0;
   const host = createAtlasHost({
     places, blocks: BLOCKS,
     standing: (p) => stood.get(p.mapId) ?? null,
-    stand: (p) => { stands++; return stood.get(p.mapId) ?? (p.mapId === 9000 ? loc(['TESAOPEN.RMB']) : null); },
-    schedule: (fn) => queue.push(fn),
+    stand: (p) => { stands++; if (stood.has(p.mapId)) return stood.get(p.mapId); const l = p.mapId === 9000 ? loc(['TESAOPEN.RMB']) : null; if (l) { stood.set(p.mapId, l); gen++; } return l; },   // stood anew: into the index, its stamp moved
+    schedule: (fn) => queue.push(fn), stamp: () => gen,
   });
   const drain = () => { let n = 0; while (queue.length) { queue.shift()(); n++; } return n; };
-  return { places, host, drain, stands: () => stands };
+  return { places, host, drain, stands: () => stands, stood, bump: () => { gen++; } };
 };
 
 test('F1 host: a bundle is made when first asked, from the location the host would stand - the Bay\'s and a place past the Bay alike - and kept; one no location answers is null (mutants: the stand asked every time, the keep)', () => {
@@ -44,20 +44,26 @@ test('F1 host: a bundle is made when first asked, from the location the host wou
   assert.equal(host.bundle(424242), null);
 });
 
-test('F1 host: residency is the registry\'s near, asked each time - the bundles within the reach of a pixel, none kept for being near (mutant: a reach kept)', () => {
-  const { host } = world();
+test('F1 host: residency is the registry\'s near, asked each time - the bundles of the places the host holds within the reach of a pixel; nothing stood for being near (AUDIT FOUNDATION A3; mutants: a reach kept, near standing)', () => {
+  const { host, stands } = world();
   assert.deepEqual(host.near(10, 10, 3).map((b) => b.id).sort((a, b) => a - b), [100, 101, 140, 141]);
-  assert.deepEqual(host.near(1500, -400, 1).map((b) => b.id), [9000]);
+  assert.deepEqual(host.near(1500, -400, 1).map((b) => b.id), [], 'a place past the Bay not stood yet: none');
+  assert.equal(stands(), 0, 'near stood nothing');
+  host.bundle(9000);
+  assert.deepEqual(host.near(1500, -400, 1).map((b) => b.id), [9000], 'stood by the host: near it');
   assert.deepEqual(host.near(-3000, 2000, 2), []);
 });
 
-test('F1 host: a provider that moves starts a new atlas - a bundle is never answered off a registry that changed (mutant: the generation unread)', () => {
-  const { host, places } = world();
+test('F1 host: a provider that moves, or a location the host stands again (a town\'s layout pinned anew), starts a new atlas - a bundle is never answered off a world that changed (AUDIT FOUNDATION A2; mutants: the generation unread, the stamp unread)', () => {
+  const { host, places, stood, bump } = world();
   const before = host.bundle(100);
   places.register('more', [{ mapId: 9001, name: 'Another', px: 900, py: 400, type: 0, region: 30 }]);
   const after = host.bundle(100);
   assert.notEqual(after, before);
   assert.deepEqual([after.id, host.atlas().counts().places], [100, 1]);
+  stood.set(100, loc(['AAA.RMB', 'BBB.RMB']));
+  bump();
+  assert.equal(host.bundle(100).exterior.w, 2, 'the town as it stands now');
 });
 
 test(`F1 host: the check walks every listed place in slices of ${ATLAS_SLICE} at idle, keeps no bundle, and tells the console once of a block that serves nothing - a place not yet stood counted, not told (mutants: one slice, the warning unsaid, the unlocated told)`, async () => {
@@ -78,24 +84,42 @@ test(`F1 host: the check walks every listed place in slices of ${ATLAS_SLICE} at
   assert.ok(ATLAS_SAID >= 1);
 });
 
-test('F1 host: a client\'s own world-data additions are checked with the listed places, and a property row naming no town is said (mutants: the additions unread, the rows unchecked)', async () => {
+test('F1 host: a client\'s own world-data additions are checked with the listed places, and a property row naming a cell past its town\'s grid is said - read off what the host holds, nothing stood (mutants: the additions unread, the rows unchecked)', async () => {
   const places = createWorldPlaces();
   places.register('bay', BAY.slice(0, 3));
   const queue = [], said = [], warn = console.warn;
   const fort = { mapId: 5000, name: 'A fort', px: 300, py: 300, type: 0, region: 16, area: 16, theatre: 0, key: 1 };
   const host = createAtlasHost({ places, blocks: BLOCKS, standing: () => loc(['AAA.RMB']), schedule: (fn) => queue.push(fn),
-    additions: () => [[fort, loc(['GONE09.RMB'])]], listings: () => [{ map: 4242, cell: [0, 0], sale: false }, { map: 100, cell: [0, 0], sale: false }] });
+    additions: () => [[fort, loc(['GONE09.RMB'])]], listings: () => [{ map: 4242, cell: [0, 0], sale: false }, { map: 100, cell: [0, 0], sale: false }, { map: 101, cell: [3, 0], sale: false }] });
   console.warn = (...a) => said.push(a.join(' '));
   let report;
   try { const done = host.check(); while (queue.length) queue.shift()(); report = await done; } finally { console.warn = warn; }
   assert.deepEqual(report.problems.map((q) => [q.place, q.name]), [[5000, 'GONE09.RMB']]);
-  assert.deepEqual(report.unplaced.map((u) => [u.row.map, u.why]), [[4242, 'no such town']]);
+  assert.deepEqual(report.unplaced.map((u) => [u.row.map, u.why]), [[101, 'no such cell']], 'a cell past its town\'s grid said; a town not known here passed over, town 100\'s cell stands');
   assert.equal(said.length, 2);
+});
+
+test('F1 host: a check whose slice throws ends - said, answered null, and asked again later (AUDIT FOUNDATION A5; mutant: the check left running)', async () => {
+  const places = createWorldPlaces();
+  places.register('bay', BAY.slice(0, 2));
+  const queue = [], warn = console.warn;
+  let fail = true;
+  const host = createAtlasHost({ places, blocks: BLOCKS, standing: () => { if (fail) throw new Error('a location unread'); return loc(['AAA.RMB']); }, schedule: (fn) => queue.push(fn) });
+  console.warn = () => {};
+  try {
+    const first = host.check();
+    while (queue.length) queue.shift()();
+    assert.equal(await first, null);
+    fail = false;
+    const again = host.check();
+    while (queue.length) queue.shift()();
+    assert.equal((await again)?.checked, 2, 'asked again, the check runs');
+  } finally { console.warn = warn; }
 });
 
 test('F1 host: the streaming world wires it - the places host makes it over the registry (none without one), the blocks and the index, and checks when the world-data door serves edits (scenes/tamrielPlacesHost.js)', () => {
   const src = readFileSync(new URL('../../src/scenes/tamrielPlacesHost.js', import.meta.url), 'utf8');
   assert.match(src, /const worldAtlas = worldPlaces \? createAtlasHost\(\{ places: worldPlaces, blocks, standing: /);
   assert.match(src, /if \(worldAtlas && \(worldDataDoorOpen\(\) \|\| homeListings\(\)\.length\)\) worldAtlas\.check\(\);/);
-  assert.match(src, /listings: homeListings, additions: modAdditions \}\) : null;/);
+  assert.match(src, /listings: homeListings, additions: modAdditions, stamp: \(\) => host\._locIndexGen \}\) : null;/);
 });

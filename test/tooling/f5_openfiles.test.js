@@ -5,7 +5,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { limitOpenFiles, OPEN_FILES_MAX } from '../../scripts/openFileLimit.mjs';
+import { limitOpenFiles, OPEN_FILES_MAX, OPEN_FILES_RETRIES, OPEN_FILES_WAIT_MAX_MS } from '../../scripts/openFileLimit.mjs';
 
 const fake = ({ failFirst = 0 } = {}) => {
   let open = 0, most = 0, calls = 0;
@@ -39,6 +39,16 @@ test('F5 a read refused with EMFILE is asked again and lands; any other failure 
   assert.deepEqual(await Promise.all(['a', 'b', 'c'].map((n) => fs.readFile(n))), ['bytes of a', 'bytes of b', 'bytes of c']);
   assert.ok(tally.retried() >= 3);
   await assert.rejects(fs.readFile('missing'), /ENOENT/);
+});
+
+test('F5 a read refused for good fails after its retries, each after a wait - a descriptor never freed fails the build, never spins it (AUDIT FOUNDATION A4; mutant: the wait unwaited)', async () => {
+  const fs = fake({ failFirst: Infinity });
+  const tally = limitOpenFiles(fs, 4, 5);
+  const t0 = Date.now();
+  await assert.rejects(fs.readFile('a'), /EMFILE/);
+  assert.equal(tally.retried(), 5);
+  assert.ok(Date.now() - t0 >= 2 + 4 + 8 + 16 + 32, 'each retry waited longer');
+  assert.ok(OPEN_FILES_RETRIES >= 10 && OPEN_FILES_WAIT_MAX_MS <= 1000);
 });
 
 test('F5 the build installs it - the Vite config wraps the shared fs/promises before anything is read; the cap is far under Windows\' 8,192 (mutant: the config without it)', async () => {

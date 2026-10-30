@@ -13,6 +13,7 @@ import { isWaterPixel } from '../ui/overworldModel.js';
 import { LAIR_TYPES, lairBlockCount, lairCellOf, lairLayout, lairMayStandAt, lairName, lairNameSeed, lairPlaceId, lairSite, lairStandsAt, synthesizeLairLocation } from '../world/tamrielDungeons.js';
 import { provinceKeyBeyondBay, tamrielLandVersion, PROVINCE_OF_ID } from '../world/tamriel/tamrielLand.js';
 import { regionOfTheatre } from '../formats/mapsTables.js';
+import { THEATRE_KEYS } from '../world/worldWide/worldGrid.js';   // AUDIT FOUNDATION A1: a capital's province's theatre
 import { replaceSeats, tamrielSeatsOf } from '../systems/town/townSeats.js';
 import { inBay, inBay as onBayPixel, tamrielFit } from '../world/tamriel/tamrielFrame.js';   // AUDIT TESA II P7: the registry's live list's stamp
 import { provinceNameBank } from '../world/tamrielPeople.js';
@@ -225,7 +226,7 @@ export function createTamrielPlaces(host) {
   /** A capital's slice laid out by its plan on (px, py) - NOT stood (AUDIT RELEASE R2-5f: the quest layer reads a slice's
    *  buildings by kind before it stands one; capitalLocationAt stands the same clone). */
   function capitalCloneOf(at, px, py, slot) {
-    const regionIndex = maps.getRegionIndexAt(px, py);
+    const regionIndex = regionOfTheatre(THEATRE_KEYS.indexOf(CAPITALS[at.k]?.province));   // AUDIT FOUNDATION A1: its capital's province, as the registry's row (pastBayRows.js) - a harbour on the picture's sea read 0
     const loc = synthesizeCapitalLocation(at, { base: _capitalBase, names: _capitalNames, blockOf: (name) => blocks.getBlockByName(name), px, py, arena: slot, pinPort: capitalPinPort(at.k),   // BAY-LEFT-SEA: its harbour's port word
       where: { regionIndex, regionName: REGION_NAMES[regionIndex], politic: 128 + regionIndex, climate: at.k === 0 ? getWorldClimateSettings(maps.getClimateIndex(px, py)) : townClimateAt(px, py, getWorldClimateSettings(maps.getClimateIndex(px, py))) } });
     // BAY-LEFT-B (world/locationKey.js): its MapTable key its own buildings' - its blocks', and the Imperial City's fabric's
@@ -493,7 +494,7 @@ export function createTamrielPlaces(host) {
   /** FOUNDATION F1 (scenes/atlasHost.js): the world's places whole - a place's bundle off the location the host holds
    *  for it (the Bay's in the index, a place past the Bay as the build stands it); checked once at idle where the door
    *  serves edits. */
-  const worldAtlas = worldPlaces ? createAtlasHost({ places: worldPlaces, blocks, standing: (p) => locationIndex.get(`${p.px},${p.py}`) ?? null, stand: (p) => locationIndex.get(`${p.px},${p.py}`) ?? standAt(p.px, p.py), listings: homeListings, additions: modAdditions }) : null;
+  const worldAtlas = worldPlaces ? createAtlasHost({ places: worldPlaces, blocks, standing: (p) => locationIndex.get(`${p.px},${p.py}`) ?? null, stand: (p) => locationIndex.get(`${p.px},${p.py}`) ?? standAt(p.px, p.py), listings: homeListings, additions: modAdditions, stamp: () => host._locIndexGen }) : null;
   if (worldAtlas && (worldDataDoorOpen() || homeListings().length)) worldAtlas.check();   // FOUNDATION F3: and where property rows stand
   return { _tamrielRoads, arenaLocationAt, arenaWarm, capitalLocationAt, countryLocationAt, lairLocationAt, nearestTownOf, provinceQuestPlaces, registerTamrielPlaces, startLairAt, tamrielPlaceName, worldAtlas };
 }

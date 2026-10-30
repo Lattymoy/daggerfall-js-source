@@ -1,19 +1,22 @@
 // @ts-check
 // FOUNDATION F4 (2026-10-30, bible/03-World/Foundation-Arc.md) - THE LAND AS DATA: a shore or a hill fixed by a row of
-// landEdits.json. A row is a rectangle of world pixels and its ground: `height` a WOODS byte (water at WATER_LINE and
-// under, land at LAND_LEAST and over, nothing between, so every reader of the water agrees), `climate` a CLIMATE.PAK
-// byte. Later rows win. On the Bay the rows are written into WOODS.WLD and CLIMATE.PAK as they are served
+// landEdits.json. A row is a rectangle of world pixels and its ground: `height` a WOODS byte (water 0, land LAND_LEAST and
+// over with a land climate, so every reader of the water agrees), `climate` a CLIMATE.PAK byte (Ocean only on water).
+// Later rows win; a row in the seam band past the Bay's edge is refused (its ground there is the Bay's, blended). On the Bay the rows are written into WOODS.WLD and CLIMATE.PAK as they are served
 // (scenes/shared.js fetchBytes), so every host, worker and reader reads one ground; past the Bay the ground's two reads
 // ask them first (world/tamriel/tamrielGround.js). Ours: DFU has no land edits.
 import LAND from './landEdits.json' with { type: 'json' };
 import { worldPixelKey, inWorldGrid } from '../worldWide/worldGrid.js';
-import { inBay } from '../tamriel/tamrielFrame.js';
+import { inBay, BAY_W, BAY_H } from '../tamriel/tamrielFrame.js';
 import { CLIMATES } from '../../formats/mapsTables.js';
 import { WoodsFile, MAP_WIDTH } from '../../formats/woodsFile.js';
 import { PakFile } from '../../formats/pakFile.js';
 
-/** The highest water byte - ui/overworldModel.js isWaterPixel's (byte x 8 at or under 27.2). */
+/** The highest water byte - ui/overworldModel.js isWaterPixel's (byte x 8 at or under 27.2). A row's water is 0: past the
+ *  Bay the ground lifts any other byte to its shore (tamrielGround.js groundWoods) and reads sea at 0 alone. */
 export const WATER_LINE = 3;
+/** The band past the Bay's edge whose ground is the Bay's own, then blended (tamrielGround.js SEAM_PX + BLEND_PX). */
+export const LAND_SEAM_REACH = 14;
 /** The least land byte - tamrielGround.js SHORE_BYTE, over the roads' beach line (roadsProducer.js WATER_BYTE). */
 export const LAND_LEAST = 6;
 /** The widest side of one row's rectangle, pixels. */
@@ -29,11 +32,23 @@ export function landRowProblems(r) {
   const side = (v) => Number.isSafeInteger(v) && v >= 1 && v <= LAND_ROW_SIDE_MAX;
   if (!inWorldGrid(r.x, r.y)) out.push('pixel');   // whole pixels of the world's grid (the terrain worker reads this module: no net/ import)
   else if (!side(w) || !side(h) || !inWorldGrid(r.x + w - 1, r.y + h - 1)) out.push('size');
-  if (r.height !== undefined && !(Number.isSafeInteger(r.height) && r.height >= 0 && r.height <= 255 && (r.height <= WATER_LINE || r.height >= LAND_LEAST))) out.push('height');
+  else if (inSeam(r.x, r.y, w, h)) out.push('seam');
+  if (r.height !== undefined && !(Number.isSafeInteger(r.height) && r.height <= 255 && (r.height === 0 || r.height >= LAND_LEAST))) out.push('height');
   if (r.climate !== undefined && !CLIMATE_BYTES.has(r.climate)) out.push('climate');
+  else if (r.climate === CLIMATES.Ocean ? r.height !== 0 : r.height >= LAND_LEAST && r.climate === undefined) out.push('land-climate');
   if (r.height === undefined && r.climate === undefined) out.push('says nothing');
   if (typeof r.note !== 'string' || !r.note.trim()) out.push('note');
   return out;
+}
+
+/** Whether a rectangle touches the band past the Bay's edge where the ground is the Bay's (Chebyshev, as the seam is).
+ *  @param {number} x @param {number} y @param {number} w @param {number} h */
+function inSeam(x, y, w, h) {
+  for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) {
+    const d = Math.max(0, -i, i - (BAY_W - 1), -j, j - (BAY_H - 1));
+    if (d > 0 && d <= LAND_SEAM_REACH) return true;
+  }
+  return false;
 }
 
 /** FNV-1a of a string. @param {string} s */

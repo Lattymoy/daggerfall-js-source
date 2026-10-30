@@ -153,8 +153,9 @@ export const MINUTE_JOBS = Object.freeze([
   // AUDIT TOWN-ECON 2 SVC-3 (townEcon.js keepTownShares): the towns' shares counted once for the whole service each keeping,
   // into the one row every isolate reads - where every isolate read every town's days on the primary
   // FOUNDATION F2 (regionClock.js tickRegionClock): and the regions' clock, ticked once a UTC day off the towns' acts - in
-  // this job, so no job's share of the firing shrinks (AUDIT SCALE A2); a quiet minute asks it nothing
-  ['town-shares', async (ctx, env) => (townsOpen(env) ? (await tickRegionClock(ctx.db, ctx.nowS)) + (await keepTownShares(ctx.db, ctx.nowS)) : 0)],
+  // this job, so no job's share of the firing shrinks (AUDIT SCALE A2); a quiet minute asks it nothing. AUDIT FOUNDATION
+  // C3: the shares first, so a clock that fails leaves them kept
+  ['town-shares', async (ctx, env) => (townsOpen(env) ? (await keepTownShares(ctx.db, ctx.nowS)) + (await tickRegionClock(ctx.db, ctx.nowS)) : 0)],
   // YARD-CELL (yardCells.js settleStaleYardCells): a town's yard cells built again where a write no decor route made left
   // them stale - a home released, an account gone, a sweep; until then such a cell is read from its rows, as before
   ['yard-cells', (ctx) => settleStaleYardCells(ctx.db)],

@@ -8,6 +8,14 @@
 
 Newest first.
 
+**2026-10-30 - AUDIT FOUNDATION.** The owner: *"Audit this"*, of FOUNDATION F0-F5 (the atlas, the regions' clock, property
+and the land as data, the build's open files). Four reviews, one a slice, read the code apart from its writer. Paid: a
+day's acts read before its late Watch claims and patron sales landed (never counted); a cell row that missed block 0,0's
+first building; a curated price that dropped a home's ground; past the Bay a shallow water row that stood as land, a row
+in the seam band diluted, a land row over the sea read as water, and a climate row the landforms and the far ring never
+read; a harbour slice whose location read region 0. All fixed, with fifteen mutants, all dead. Record:
+`03-World/Foundation-Arc.md` AUDIT FOUNDATION.
+
 **2026-10-28 - AUDIT TAMRIEL-NODES.** The request: *"audit the main tamriel PR and just ensure the new gathering points
 show in the overworld across tamriel properly"*, of #1184's gathering past the Bay (WW-C1). The Overworld's groups, marks
 and filter read no ground of the Bay's, and every zone's herbs, veins and trees stood their law on the kernel's own
