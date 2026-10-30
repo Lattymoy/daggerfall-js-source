@@ -857,7 +857,7 @@ that was a claim once and is a pointer at a stranger now.
   writs. *`06-Systems/Professions-Arc.md` section 49: a realm character's crafting writs are the Notice Board's Work tab
   in the streaming host; the fixed-city bench never goes online, so it posts none, as it posts no Court writ. The day it
   goes online, the sentence goes.*
-- **`src/scenes/soundscapeHost.js:"FLAGGED: the fixed-city bench stands no sea, no boats and no streamed shore"`** - the
+- **`src/scenes/soundscapeHost.js:"scenes/exterior.js -"`** - the
   `?exterior` bench's soundscape. *`08-Audio/Audio.md` SOUNDSCAPE: the deck's air, the sea's songs, the surf and the
   town's and the wild's air are the streaming host's; the fixed-city bench stands no sea, no boats and no streamed shore,
   and its ambience is DFU's. The day it streams a shore, the sentence goes.*

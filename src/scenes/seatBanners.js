@@ -47,14 +47,16 @@ export function palaceKeysOf(blocks, makeKey) {
   for (const b of blocks ?? []) {
     const list = b?.dfBlock?.rmbBlock?.fldHeader?.buildingDataList ?? [];
     const count = Math.min(list.length, b?.dfBlock?.rmbBlock?.subRecords?.length ?? list.length);
-    for (let i = 0; i < count; i++) if (list[i]?.buildingType === BUILDING_TYPES.Palace) out.push(makeKey(b.x ?? 0, b.y ?? 0, i));
+    for (let i = 0; i < count; i++)
+      if (list[i]?.buildingType === BUILDING_TYPES.Palace) out.push(makeKey(b.x ?? 0, b.y ?? 0, i));
   }
   return out;
 }
 
 /** A model's own x and z axes on the ground, unit, off its column-major matrix - or null for a degenerate one. */
 function groundAxes(m) {
-  const xl = Math.hypot(m[0], m[2]), zl = Math.hypot(m[8], m[10]);
+  const xl = Math.hypot(m[0], m[2]),
+    zl = Math.hypot(m[8], m[10]);
   if (!(xl > 1e-6) || !(zl > 1e-6)) return null;
   return { rx: m[0] / xl, rz: m[2] / xl, fx: m[8] / zl, fz: m[10] / zl };
 }
@@ -70,19 +72,36 @@ export function gateBannerAnchor(gate, centre) {
   const ax = groundAxes(gate?.local ?? []);
   const box = gate?.box;
   if (!ax || !Array.isArray(box) || box.length < 6) return null;
-  const cx = (box[0] + box[3]) / 2, cz = (box[2] + box[5]) / 2;
-  let ox = ax.fx, oz = ax.fz;
-  if ((centre[0] - cx) * ox + (centre[1] - cz) * oz < 0) { ox = 0 - ox; oz = 0 - oz; }   // the town side (0 -: never a signed zero)
-  const rx = 0 - oz, rz = ox + 0;   // (+0: never a signed zero - AUDIT GUILD1d R4's measure)
+  const cx = (box[0] + box[3]) / 2,
+    cz = (box[2] + box[5]) / 2;
+  let ox = ax.fx,
+    oz = ax.fz;
+  if ((centre[0] - cx) * ox + (centre[1] - cz) * oz < 0) {
+    ox = 0 - ox;
+    oz = 0 - oz;
+  } // the town side (0 -: never a signed zero)
+  const rx = 0 - oz,
+    rz = ox + 0; // (+0: never a signed zero - AUDIT GUILD1d R4's measure)
   const side = Math.max(0, halfAlong(box, rx, rz) - BANNER_W_M / 2);
   const out = halfAlong(box, ox, oz) + SEAT_BANNER_OUT_M;
-  return { top: [cx + rx * side + ox * out, box[4] - GATE_BANNER_DROP_M, cz + rz * side + oz * out], right: [rx, 0, rz], out: [ox, 0, oz] };
+  return {
+    top: [cx + rx * side + ox * out, box[4] - GATE_BANNER_DROP_M, cz + rz * side + oz * out],
+    right: [rx, 0, rz],
+    out: [ox, 0, oz],
+  };
 }
 
 /** The town's middle on the ground, [x, z]: the mean of its buildings' own places (`homeFrames` values' `at`). */
 export function townCentreOf(frames) {
-  let x = 0, z = 0, n = 0;
-  for (const f of frames?.values?.() ?? []) if (Array.isArray(f?.at)) { x += f.at[0]; z += f.at[2]; n++; }
+  let x = 0,
+    z = 0,
+    n = 0;
+  for (const f of frames?.values?.() ?? [])
+    if (Array.isArray(f?.at)) {
+      x += f.at[0];
+      z += f.at[2];
+      n++;
+    }
   return n ? [x / n, z / n] : [0, 0];
 }
 
@@ -94,10 +113,15 @@ export function townCentreOf(frames) {
  */
 export function seatBannerAnchors({ frames = null, palaceKeys = [], castle = null, gates = [], centre = [0, 0] } = {}) {
   const out = [];
-  const add = (a) => { if (a && out.length < SEAT_BANNERS_MAX) out.push(a); };
-  const pair = (frame) => { const two = hallBannerAnchors(frame); if (two && out.length + 2 <= SEAT_BANNERS_MAX) two.forEach(add); };
+  const add = (a) => {
+    if (a && out.length < SEAT_BANNERS_MAX) out.push(a);
+  };
+  const pair = (frame) => {
+    const two = hallBannerAnchors(frame);
+    if (two && out.length + 2 <= SEAT_BANNERS_MAX) two.forEach(add);
+  };
   for (const k of palaceKeys) pair(frames?.get?.(k));
-  pair(castle);   // CASTLE-GATE: a crown's two at its castle's entrance
+  pair(castle); // CASTLE-GATE: a crown's two at its castle's entrance
   for (const g of gates) add(gateBannerAnchor(g, centre));
   return out;
 }
@@ -108,7 +132,14 @@ export function seatBannerAnchors({ frames = null, palaceKeys = [], castle = nul
  * pixel's place in the scene now, `eye()` where the view stands, `now()` ms, `version()` what moves the seats' answer (a
  * read of the service's list). `list()` answers this frame's banners for render/bannerPass.js.
  */
-export function createSeatBanners({ built, seatAt, translation, eye = () => null, now = () => Date.now(), version = () => 0 }) {
+export function createSeatBanners({
+  built,
+  seatAt,
+  translation,
+  eye = () => null,
+  now = () => Date.now(),
+  version = () => 0,
+}) {
   /** @type {{px: number, py: number, a: any, key: string, heraldry: any, phase: number}[]} */
   let held = [];
   let at = -Infinity;
@@ -121,35 +152,66 @@ export function createSeatBanners({ built, seatAt, translation, eye = () => null
   /** @type {any[]} */
   const nearest = [];
   let eyeAt = null;
-  const byEye = (x, y) => Math.hypot(x.top[0] - eyeAt[0], x.top[2] - eyeAt[2]) - Math.hypot(y.top[0] - eyeAt[0], y.top[2] - eyeAt[2]);
+  const byEye = (x, y) =>
+    Math.hypot(x.top[0] - eyeAt[0], x.top[2] - eyeAt[2]) - Math.hypot(y.top[0] - eyeAt[0], y.top[2] - eyeAt[2]);
   function read() {
     const out = [];
     for (const [, p] of built?.() ?? []) {
       if (!p?.homeTown || !p.seatAnchors?.length) continue;
       const seat = seatAt(p.homeTown);
-      const h = seat ? seatBannerOf(seat) : null;   // SEAT1c: a held seat's in its holder's own colours
+      const h = seat ? seatBannerOf(seat) : null; // SEAT1c: a held seat's in its holder's own colours
       if (!h) continue;
-      p.seatAnchors.forEach((a, i) => out.push({ px: p.px, py: p.py, a, key: bannerKeyOf(h), heraldry: h, phase: ((p.homeTown % 11) * 0.9) + i * 1.7 }));
+      p.seatAnchors.forEach((a, i) =>
+        out.push({ px: p.px, py: p.py, a, key: bannerKeyOf(h), heraldry: h, phase: (p.homeTown % 11) * 0.9 + i * 1.7 }),
+      );
       // FESTIVAL-STAGE (7.6): a Festival's more, after the seat's own (scenes/seatFestival.js festivalBannerAnchors)
-      if (festivalRules(seat)) (p.festivalAnchors ?? []).forEach((a, i) => out.push({ px: p.px, py: p.py, a, key: bannerKeyOf(h), heraldry: h, phase: ((p.homeTown % 11) * 0.9) + (p.seatAnchors.length + i) * 1.7 }));
+      if (festivalRules(seat))
+        (p.festivalAnchors ?? []).forEach((a, i) =>
+          out.push({
+            px: p.px,
+            py: p.py,
+            a,
+            key: bannerKeyOf(h),
+            heraldry: h,
+            phase: (p.homeTown % 11) * 0.9 + (p.seatAnchors.length + i) * 1.7,
+          }),
+        );
     }
     held = out;
-    outs = held.map((b) => ({ key: b.key, heraldry: b.heraldry, phase: b.phase, top: [0, 0, 0], right: b.a.right, out: b.a.out }));
+    outs = held.map((b) => ({
+      key: b.key,
+      heraldry: b.heraldry,
+      phase: b.phase,
+      top: [0, 0, 0],
+      right: b.a.right,
+      out: b.a.out,
+    }));
   }
   return {
     list() {
       const v = version();
-      if (v !== seen || now() - at >= BANNER_REFRESH_MS) { read(); seen = v; at = now(); }
-      if (!held.length) return outs;   // (empty)
+      if (v !== seen || now() - at >= BANNER_REFRESH_MS) {
+        read();
+        seen = v;
+        at = now();
+      }
+      if (!held.length) return outs; // (empty)
       for (let i = 0; i < held.length; i++) {
-        const b = held[i], t = translation(b.px, b.py), top = outs[i].top;
-        top[0] = t[0] + b.a.top[0]; top[1] = t[1] + b.a.top[1]; top[2] = t[2] + b.a.top[2];
+        const b = held[i],
+          t = translation(b.px, b.py),
+          top = outs[i].top;
+        top[0] = t[0] + b.a.top[0];
+        top[1] = t[1] + b.a.top[1];
+        top[2] = t[2] + b.a.top[2];
       }
       if (outs.length <= BANNERS_MAX) return outs;
       const e = eye();
       nearest.length = 0;
       for (const o of outs) nearest.push(o);
-      if (e) { eyeAt = e; nearest.sort(byEye); }
+      if (e) {
+        eyeAt = e;
+        nearest.sort(byEye);
+      }
       nearest.length = BANNERS_MAX;
       return nearest;
     },

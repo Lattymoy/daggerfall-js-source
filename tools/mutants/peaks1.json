@@ -164,8 +164,8 @@
   {
     "name": "PEAKS1-the-host-s-merge",
     "file": "src/scenes/snowCoverHost.js",
-    "old": "    bareLine(mergeCapLine(snowlineOf(lattice.packNow(pt, t, _pack), _line, pt.n), l.cap), l.ash, BARE_LINE[0]);",
-    "new": "    bareLine(snowlineOf(lattice.packNow(pt, t, _pack), _line, pt.n), l.ash, BARE_LINE[0]);",
+    "old": "    bareLine(mergeCapLine(snowlineOf(lattice.packNow(pt, t, _pack), _line, pt.n), l.cap), l.ash, BARE_LINE[0]); // PEAKS1: the cap a floor under the pack; RED-MOUNTAIN: the ash bare",
+    "new": "    bareLine(snowlineOf(lattice.packNow(pt, t, _pack), _line, pt.n), l.ash, BARE_LINE[0]); // PEAKS1: the cap a floor under the pack; RED-MOUNTAIN: the ash bare",
     "tests": [
       "test/world/peaks1_snowcap.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "PEAKS1-the-host-s-corner",
     "file": "src/scenes/snowCoverHost.js",
-    "old": "cap: capOf(pt.i * S, pt.j * S)",
-    "new": "cap: capOf(pt.i, pt.j)",
+    "old": "          cap: capOf(pt.i * S, pt.j * S),",
+    "new": "          cap: capOf(pt.i, pt.j),",
     "tests": [
       "test/world/peaks1_snowcap.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "PEAKS1-the-land-s-own-unhanded",
     "file": "src/scenes/snowCoverHost.js",
-    "old": "airGround()?.landforms ? capLineAt(cx, cy, climateAt) : CAP_NONE",
-    "new": "CAP_NONE",
+    "old": "  const capOf = (cx, cy) =>\n    capLine !== undefined\n      ? capLine\n        ? capLine(cx, cy)\n        : CAP_NONE\n      : airGround()?.landforms\n        ? capLineAt(cx, cy, climateAt)\n        : CAP_NONE;",
+    "new": "  const capOf = (cx, cy) => (capLine !== undefined ? (capLine ? capLine(cx, cy) : CAP_NONE) : CAP_NONE);",
     "tests": [
       "test/world/peaks1_snowcap.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "PEAKS1-the-frame-s-alpha",
     "file": "src/scenes/snowCoverHost.js",
-    "old": "tex[o + 3] = lines.get(latticeKey(i0 + i, j0 + j))?.cap ?? CAP_NONE;",
-    "new": "tex[o + 3] = CAP_NONE;",
+    "old": "            tex[o + 3] = lines.get(latticeKey(i0 + i, j0 + j))?.cap ?? CAP_NONE; // PEAKS1: the cap's line, the bare faces'",
+    "new": "            tex[o + 3] = CAP_NONE; // PEAKS1: the cap's line, the bare faces'",
     "tests": [
       "test/world/peaks1_snowcap.test.js"
     ]

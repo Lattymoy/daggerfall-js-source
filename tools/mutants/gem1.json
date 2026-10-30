@@ -482,8 +482,8 @@
   {
     "name": "GEM2-the-floor-no-gem",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    ...gems,   // GEM2: the Warden's gem, after the card\n",
-    "new": "",
+    "old": "    ...gems, // GEM2: the Warden's gem, after the card\n    ember,",
+    "new": "    ember,",
     "tests": [
       "test/systems/item/wb5_gate_spoils.test.js"
     ]

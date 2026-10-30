@@ -146,8 +146,8 @@
   {
     "name": "AC6-A7-stored-name",
     "file": "src/scenes/spoilsPool.js",
-    "old": "(isIliacCard(item) ? iliacCardName(item) : item.name)",
-    "new": "(item.name)",
+    "old": "    const name = (/** @type {any} */ item) => (isIliacCard(item) ? iliacCardName(item) : item.name);",
+    "new": "    const name = (/** @type {any} */ item) => item.name;",
     "tests": [
       "test/systems/auditcards6_a.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "AC6-A8-gate-card-before-gold",
     "file": "src/scenes/spoilsPool.js",
-    "old": "  const gold = { kind: 'gold', gold: s.gold, tier: 'common', record: flat() };\n",
-    "new": "  const gold = { kind: 'gold', gold: s.gold, tier: 'common', record: s.card ? (flat(), flat()) : flat() };\n",
+    "old": "  const gold = { kind: 'gold', gold: s.gold, tier: 'common', record: flat() };",
+    "new": "  const gold = { kind: 'gold', gold: s.gold, tier: 'common', record: s.card ? (flat(), flat()) : flat() };",
     "tests": [
       "test/systems/auditcards6_a.test.js"
     ]

@@ -146,8 +146,8 @@
   {
     "name": "ASB-the-winter-waits-for-a-read",
     "file": "src/scenes/snowCoverHost.js",
-    "old": "      if (!centre || !lines.size) return fallback;",
-    "new": "      if (nowRead === null) return fallback;",
+    "old": "      if (!centre || !lines.size) return fallback; // AUDIT SNOW-BUDGET F2: the lines the window kept across a move answer while it catches up - not the calendar's",
+    "new": "      if (nowRead === null) return fallback; // AUDIT SNOW-BUDGET F2: the lines the window kept across a move answer while it catches up - not the calendar's",
     "tests": [
       "test/systems/weather/snowbudget.test.js"
     ]

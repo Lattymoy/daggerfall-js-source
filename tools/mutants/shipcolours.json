@@ -191,8 +191,8 @@
   {
     "name": "SC-host-arms-unread",
     "file": "src/scenes/shipFlagHost.js",
-    "old": "flownFlag(deps.coloursOf(boat.uid), deps.guildArms?.() ?? null)",
-    "new": "flownFlag(deps.coloursOf(boat.uid), null)",
+    "old": "  const mineOf = (boat) => (boat?.uid ? flownFlag(deps.coloursOf(boat.uid), deps.guildArms?.() ?? null) : null);",
+    "new": "  const mineOf = (boat) => (boat?.uid ? flownFlag(deps.coloursOf(boat.uid), null) : null);",
     "tests": [
       "test/systems/naval/shipcolours.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "SC-host-masthead",
     "file": "src/scenes/shipFlagHost.js",
-    "old": "list.push({ key: flagKey(flag), flag, top, fly:",
-    "new": "list.push({ key: flagKey(flag), flag, top: boat.GameObject.position, fly:",
+    "old": "        top,",
+    "new": "        top: boat.GameObject.position,",
     "tests": [
       "test/systems/naval/shipcolours.test.js"
     ]
@@ -218,7 +218,7 @@
   {
     "name": "SC-host-pennant-kept",
     "file": "src/scenes/shipFlagHost.js",
-    "old": "      flown.set(boat, flag);   // flown where it is drawn - her pennant's cubes left out for it",
+    "old": "      flown.set(boat, flag); // flown where it is drawn - her pennant's cubes left out for it",
     "new": "",
     "tests": [
       "test/systems/naval/shipcolours.test.js"

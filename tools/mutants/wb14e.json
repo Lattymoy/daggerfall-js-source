@@ -354,7 +354,7 @@
   {
     "name": "WB14e-the-pool-s-door-shut",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    take(piece) { take(piece); },",
+    "old": "    take(piece) {\n      take(piece);\n    },",
     "new": "    take() {},",
     "tests": [
       "test/net/gate/wb14e_tithe.test.js"

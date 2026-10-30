@@ -179,7 +179,7 @@ test('AUDIT INT15 THE CLIENT\'S WORD: a body\'s `vt` leaves on its own bucket - 
     }
   } finally { console.info = log; }
   const host = rd('src/scenes/serpentHost.js');
-  assert.match(host, /const sayHull = bodySayer\(\(v\) => !!live && !!deps\.online\?\.send\?\.\(\{ k: 'vt', v \}/, 'the host asks no version of its own - the session asks the socket\'s');
+  assert.match(host, /const sayHull = bodySayer\(\n\s*\(v\) => !!live && !!deps\.online\?\.send\?\.\(\{ k: 'vt', v \}/, 'the host asks no version of its own - the session asks the socket\'s');
 });
 
 // ═══ THE TRAIL ═══════════════════════════════════════════════════════════════════

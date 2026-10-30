@@ -65,8 +65,8 @@
   {
     "name": "MWNPC10b-siege-one-look",
     "file": "src/scenes/siegeNpcs.js",
-    "old": "seed: idSeed(n.id), kind: n.kind,",
-    "new": "seed: 0, kind: n.kind,",
+    "old": "            seed: idSeed(n.id),",
+    "new": "            seed: 0,",
     "tests": [
       "test/systems/mwnpc10b_rosters.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "MWNPC10b-siege-unoffered",
     "file": "src/scenes/siegeNpcs.js",
-    "old": "        bodiesLane.offer(rosterActor(b, { id: b.id,",
-    "new": "        void (rosterActor(b, { id: b.id,",
+    "old": "        bodiesLane.offer(\n          rosterActor(b, {\n            id: b.id,\n            look,\n            feet: b.batch.origin,\n            yaw: b.yaw,\n            moving: b.act === 'walk',\n            swingKey: b.down || !(b.atk > 0) ? null : b.atk,\n            hitKey: b.down ? null : b.hurtAt, // `atk` 0 is no attack\n            dead: b.down ? 1 + (b.seed % 3) : 0,\n            scale: b.look.scale,\n          }),\n          b.batch,\n        );",
+    "new": "        void (rosterActor(b, {\n          id: b.id,\n          look,\n          feet: b.batch.origin,\n          yaw: b.yaw,\n          moving: b.act === 'walk',\n          swingKey: b.down || !(b.atk > 0) ? null : b.atk,\n          hitKey: b.down ? null : b.hurtAt, // `atk` 0 is no attack\n          dead: b.down ? 1 + (b.seed % 3) : 0,\n          scale: b.look.scale,\n        }),\n        b.batch);",
     "tests": [
       "test/systems/mwnpc10b_rosters.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "MWNPC10b-siege-life-size",
     "file": "src/scenes/siegeNpcs.js",
-    "old": "dead: b.down ? 1 + (b.seed % 3) : 0, scale: b.look.scale }), b.batch);",
-    "new": "dead: b.down ? 1 + (b.seed % 3) : 0, scale: 1 }), b.batch);",
+    "old": "            scale: b.look.scale,",
+    "new": "            scale: 1,",
     "tests": [
       "test/systems/mwnpc10b_rosters.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "MWNPC10b-siege-standing-still",
     "file": "src/scenes/siegeNpcs.js",
-    "old": "moving: b.act === 'walk',",
-    "new": "moving: false,",
+    "old": "            moving: b.act === 'walk',",
+    "new": "            moving: false,",
     "tests": [
       "test/systems/mwnpc10b_rosters.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "MWNPC10b-siege-zero-a-blow",
     "file": "src/scenes/siegeNpcs.js",
-    "old": "swingKey: b.down || !(b.atk > 0) ? null : b.atk,",
-    "new": "swingKey: b.down ? null : b.atk,",
+    "old": "            swingKey: b.down || !(b.atk > 0) ? null : b.atk,",
+    "new": "            swingKey: b.down ? null : b.atk,",
     "tests": [
       "test/systems/mwnpc10b_rosters.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "MWNPC10b-siege-unhurt",
     "file": "src/scenes/siegeNpcs.js",
-    "old": "hitKey: b.down ? null : b.hurtAt,",
-    "new": "hitKey: null,",
+    "old": "            hitKey: b.down ? null : b.hurtAt, // `atk` 0 is no attack",
+    "new": "            hitKey: null, // `atk` 0 is no attack",
     "tests": [
       "test/systems/mwnpc10b_rosters.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "MWNPC10b-siege-undying",
     "file": "src/scenes/siegeNpcs.js",
-    "old": "dead: b.down ? 1 + (b.seed % 3) : 0,",
-    "new": "dead: 0,",
+    "old": "            dead: b.down ? 1 + (b.seed % 3) : 0,",
+    "new": "            dead: 0,",
     "tests": [
       "test/systems/mwnpc10b_rosters.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "MWNPC10b-siege-lane-kept",
     "file": "src/scenes/siegeNpcs.js",
-    "old": "    leave() { clear(); bodiesLane.destroy(); },",
-    "new": "    leave() { clear(); },",
+    "old": "      bodiesLane.destroy();\n    }, // MWNPC10: and their Morrowind bodies",
+    "new": "    }, // MWNPC10: and their Morrowind bodies",
     "tests": [
       "test/systems/mwnpc10b_rosters.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "MWNPC10b-siege-origin-left",
     "file": "src/scenes/siegeNpcs.js",
-    "old": "    offsetBodies(o) { bodiesLane.offsetAll(o); },",
-    "new": "    offsetBodies(o) { void o; },",
+    "old": "      bodiesLane.offsetAll(o);",
+    "new": "      void o;",
     "tests": [
       "test/systems/mwnpc10b_rosters.test.js"
     ]

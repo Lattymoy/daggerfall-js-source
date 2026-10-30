@@ -647,7 +647,7 @@
   {
     "name": "WB12d-the-rite-alone-paid-full-spoils",
     "file": "src/scenes/spoilsPool.js",
-    "old": "if (claims?.x === 'rite') return [{ kind: 'item', item: sigilStone(), tier: SIGIL_TIER, record: flat() }];",
+    "old": "  if (claims?.x === 'rite') return [{ kind: 'item', item: sigilStone(), tier: SIGIL_TIER, record: flat() }];",
     "new": "",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
@@ -656,7 +656,7 @@
   {
     "name": "WB12d-r-unpaid",
     "file": "src/scenes/spoilsPool.js",
-    "old": "...(claims?.r === 1 ? [{ ...ember, item: sigilStone() }] : []),",
+    "old": "    ...(claims?.r === 1 ? [{ ...ember, item: sigilStone() }] : []),",
     "new": "",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
@@ -665,8 +665,8 @@
   {
     "name": "WB12d-the-gold-s-dress-moved-by-r",
     "file": "src/scenes/spoilsPool.js",
-    "old": "...(claims?.r === 1 ? [{ ...ember, item: sigilStone() }] : []),",
-    "new": "...(claims?.r === 1 ? [{ ...ember, item: sigilStone(), record: flat() }] : []),",
+    "old": "    ...(claims?.r === 1 ? [{ ...ember, item: sigilStone() }] : []),",
+    "new": "    ...(claims?.r === 1 ? [{ ...ember, item: sigilStone(), record: flat() }] : []),",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -674,8 +674,8 @@
   {
     "name": "WB12d-the-spew-without-the-receipt",
     "file": "src/scenes/spoilsPool.js",
-    "old": "spoilsList(seed >>> 0, Math.max(1, level | 0), claims);   // WB12d: the receipt's rite",
-    "new": "spoilsList(seed >>> 0, Math.max(1, level | 0));   // WB12d: the receipt's rite",
+    "old": "      const list = typeof roll === 'function' ? roll() : spoilsList(seed >>> 0, Math.max(1, level | 0), claims); // WB12d: the receipt's rite; SD9e: or a pool's own roll (the Brass Remnant's)",
+    "new": "      const list = typeof roll === 'function' ? roll() : spoilsList(seed >>> 0, Math.max(1, level | 0)); // WB12d: the receipt's rite; SD9e: or a pool's own roll (the Brass Remnant's)",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -765,8 +765,8 @@
   {
     "name": "WB12d-the-grant-without-the-receipt",
     "file": "src/scenes/spoilsPool.js",
-    "old": "spoilsList(seed >>> 0, Math.max(1, level | 0), claims);   // RAID4b",
-    "new": "spoilsList(seed >>> 0, Math.max(1, level | 0));   // RAID4b",
+    "old": "      const list = typeof roll === 'function' ? roll() : spoilsList(seed >>> 0, Math.max(1, level | 0), claims); // RAID4b: a town's thanks roll their own; WB12d: the receipt's rite",
+    "new": "      const list = typeof roll === 'function' ? roll() : spoilsList(seed >>> 0, Math.max(1, level | 0)); // RAID4b: a town's thanks roll their own; WB12d: the receipt's rite",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js"
     ]
@@ -3070,8 +3070,8 @@
   {
     "name": "AUDIT-WB12d-T-spoils-rite-ember-unglowing",
     "file": "src/scenes/spoilsPool.js",
-    "old": "if (claims?.x === 'rite') return [{ kind: 'item', item: sigilStone(), tier: SIGIL_TIER, record: flat() }];",
-    "new": "if (claims?.x === 'rite') return [{ kind: 'item', item: sigilStone(), tier: 'common', record: flat() }];",
+    "old": "  if (claims?.x === 'rite') return [{ kind: 'item', item: sigilStone(), tier: SIGIL_TIER, record: flat() }];",
+    "new": "  if (claims?.x === 'rite') return [{ kind: 'item', item: sigilStone(), tier: 'common', record: flat() }];",
     "tests": [
       "test/net/gate/wb12d_rite_world.test.js",
       "test/net/gate/auditwb_spoils.test.js",

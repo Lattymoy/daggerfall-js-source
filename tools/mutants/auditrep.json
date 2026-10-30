@@ -92,8 +92,8 @@
   {
     "name": "AUDITREP-F7-the-stop-through-Invisibility",
     "file": "src/scenes/standingHost.js",
-    "old": "    if (isInvisible(playerEntity)) return false;\n",
-    "new": "",
+    "old": "    if (isInvisible(playerEntity)) return false;\n    const region = regionIndex();",
+    "new": "    const region = regionIndex();",
     "tests": [
       "test/systems/auditrep.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "AUDITREP-F5-the-raid's-words-lost",
     "file": "src/scenes/standingHost.js",
-    "old": "    case 'raid': return `${name} thanks you for its defense (${by}). You are ${word}.`;   // AUDIT REP F5\n",
-    "new": "",
+    "old": "    case 'raid':\n      return `${name} thanks you for its defense (${by}). You are ${word}.`; // AUDIT REP F5\n    default:",
+    "new": "    default:",
     "tests": [
       "test/systems/auditrep.test.js"
     ]

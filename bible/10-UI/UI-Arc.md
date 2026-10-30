@@ -20635,7 +20635,7 @@ already keeps.
   season's figures alone.
 - **The reads** (`scenes/seasonBookHost.js` createSeasonBook). AUDIT R1: a standing cannot move while the game is paused,
   so a board is asked when the window OPENS (its first read), at most once a minute however often it is opened
-  (`seasonBookHost.js:"export const SEASON_BOARD_FRESH_MS = 60_000;"`), never again while it stays open - and never on a
+  (`seasonBookHost.js:"export const SEASON_BOARD_FRESH_MS"`), never again while it stays open - and never on a
   hidden page, while the account service has asked to be let be (BUSY-GATE's hold, `busyUntil`), for a guest or for no
   one signed in. (The first build asked four boards from every open window: the arena every 20 seconds and three others
   a minute, two of them uncached whole-season queries on the primary - 31 times the timers window's load.) R2: every

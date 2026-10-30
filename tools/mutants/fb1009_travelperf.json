@@ -124,8 +124,8 @@
   {
     "name": "TVS-the-player-handed",
     "file": "src/scenes/snowfallHost.js",
-    "old": "player: enabled && !overworld ? f.player ?? null : null",
-    "new": "player: enabled ? f.player ?? null : null",
+    "old": "      player: enabled && !overworld ? (f.player ?? null) : null, // the switch off: the surfaces hidden, the snowpack still kept",
+    "new": "      player: enabled ? (f.player ?? null) : null, // the switch off: the surfaces hidden, the snowpack still kept",
     "tests": [
       "test/scenes/fb1009_travelperf.test.js"
     ]
@@ -142,8 +142,8 @@
   {
     "name": "TVS-the-frame-not-run",
     "file": "src/scenes/snowfallHost.js",
-    "old": "    runtime.frame(frame);\n    flushPromotions(f.now);",
-    "new": "    if (!overworld) runtime.frame(frame);\n    flushPromotions(f.now);",
+    "old": "    runtime.frame(frame);",
+    "new": "    if (!overworld) runtime.frame(frame);",
     "tests": [
       "test/scenes/fb1009_travelperf.test.js"
     ]

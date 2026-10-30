@@ -524,8 +524,8 @@
   {
     "name": "TS1-ship-unstamped",
     "file": "src/scenes/shipBoardHost.js",
-    "old": "yaw: cam.yaw, ...RECORD_GROUND_STAMP },",
-    "new": "yaw: cam.yaw },",
+    "old": "          ...RECORD_GROUND_STAMP,\n        },",
+    "new": "        },",
     "tests": [
       "test/world/terrain/terrainscale1.test.js"
     ],

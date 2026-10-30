@@ -11,8 +11,8 @@
   {
     "name": "REP5-every-entity-said",
     "file": "src/scenes/standingHost.js",
-    "old": "    if (player !== playerEntity) return;\n",
-    "new": "",
+    "old": "    if (player !== playerEntity) return;\n    say(legalNoticeLine({ name: regionName(regionIndex), after, delta, cause }));",
+    "new": "    say(legalNoticeLine({ name: regionName(regionIndex), after, delta, cause }));",
     "tests": [
       "test/systems/rep5_notices.test.js"
     ]

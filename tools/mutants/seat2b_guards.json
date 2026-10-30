@@ -663,8 +663,8 @@
   {
     "name": "SEAT2b2c-driver-rebel-faces",
     "file": "src/scenes/siegeNpcs.js",
-    "old": "rebel: Object.freeze({ mobiles: Object.freeze([136, 143, 138]),",
-    "new": "rebel: Object.freeze({ mobiles: Object.freeze([136]),",
+    "old": "  rebel: Object.freeze({ mobiles: Object.freeze([136, 143, 138]), name: 'Rebel', scale: 1 }),",
+    "new": "  rebel: Object.freeze({ mobiles: Object.freeze([136]), name: 'Rebel', scale: 1 }),",
     "tests": [
       "test/net/siege/seat2b_guards_client.test.js"
     ]
@@ -672,8 +672,8 @@
   {
     "name": "SEAT2b2c-driver-standing-only",
     "file": "src/scenes/siegeNpcs.js",
-    "old": "        if (!n.down) {\n          const T = (b.target",
-    "new": "        if (true) {\n          const T = (b.target",
+    "old": "        if (!n.down) {",
+    "new": "        if (true) {",
     "tests": [
       "test/net/siege/seat2b_guards_client.test.js"
     ]
@@ -681,8 +681,8 @@
   {
     "name": "SEAT2b2c-driver-act-windup",
     "file": "src/scenes/siegeNpcs.js",
-    "old": "if (now >= start && now < n.atk) return { act: 'windup'",
-    "new": "if (now >= start && now < n.atk - 1e9) return { act: 'windup'",
+    "old": "    if (now >= start && now < n.atk)",
+    "new": "    if (now >= start && now < n.atk - 1e9)",
     "tests": [
       "test/net/siege/seat2b_guards_client.test.js"
     ]
@@ -690,8 +690,8 @@
   {
     "name": "SEAT2b2c-driver-fall-gone",
     "file": "src/scenes/siegeNpcs.js",
-    "old": "if (since >= SIEGE_NPC_FALL_MS || since < 0) return { act: 'gone'",
-    "new": "if (since < 0) return { act: 'gone'",
+    "old": "    if (since >= SIEGE_NPC_FALL_MS || since < 0) return { act: 'gone', anims: HURT_ANIMS, frame: 0, loop: false };",
+    "new": "    if (since < 0) return { act: 'gone', anims: HURT_ANIMS, frame: 0, loop: false };",
     "tests": [
       "test/net/siege/seat2b_guards_client.test.js"
     ]

@@ -312,8 +312,8 @@
   {
     "name": "RELAY-SHARE-the-serpent-reads-any-fight",
     "file": "src/scenes/serpentHost.js",
-    "old": "return live && s.day === live.day ? wordShare(s.hp, s.max) : null;",
-    "new": "return wordShare(s?.hp, s?.max);",
+    "old": "      return live && s.day === live.day ? wordShare(s.hp, s.max) : null;",
+    "new": "      return wordShare(s?.hp, s?.max);",
     "tests": [
       "test/systems/loot/fb1018f_relayshare.test.js"
     ],
@@ -322,8 +322,8 @@
   {
     "name": "RELAY-SHARE-the-serpent-reads-any-day",
     "file": "src/scenes/serpentHost.js",
-    "old": "return live && s.day === live.day ? wordShare(s.hp, s.max) : null;",
-    "new": "return live ? wordShare(s.hp, s.max) : null;",
+    "old": "      return live && s.day === live.day ? wordShare(s.hp, s.max) : null;",
+    "new": "      return live ? wordShare(s.hp, s.max) : null;",
     "tests": [
       "test/systems/loot/fb1018f_relayshare.test.js"
     ],

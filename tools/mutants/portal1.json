@@ -590,8 +590,8 @@
   {
     "name": "PORTAL1-no-shop-check",
     "file": "src/scenes/shopRows.js",
-    "old": "...(isShop(/** @type {number} */ (buildingType)) ? { portal:",
-    "new": "...(true ? { portal:",
+    "old": "      ...(isShop(/** @type {number} */ (buildingType))\n        ? { portal: { label: PORTAL_TEXT.row, onBuy: () => portalCounter.ask() } }\n        : {}),",
+    "new": "      ...(true ? { portal: { label: PORTAL_TEXT.row, onBuy: () => portalCounter.ask() } } : {}),",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -997,8 +997,8 @@
   {
     "name": "PORTAL-BULK-host-row-unwired",
     "file": "src/scenes/shopRows.js",
-    "old": "onBuy: () => portalCounter.ask() }",
-    "new": "onBuy: () => {} }",
+    "old": "      ...(isShop(/** @type {number} */ (buildingType))\n        ? { portal: { label: PORTAL_TEXT.row, onBuy: () => portalCounter.ask() } }\n        : {}),",
+    "new": "      ...(isShop(/** @type {number} */ (buildingType)) ? { portal: { label: PORTAL_TEXT.row, onBuy: () => {} } } : {}),",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]

@@ -22,8 +22,8 @@
   {
     "name": "SENTENCE-MENDS-served-unsaid",
     "file": "src/scenes/standingHost.js",
-    "old": "    case 'served': return t('standing.notice.served', SERVED_TEXT, { name, by, word });\n",
-    "new": "",
+    "old": "    case 'served':\n      return t('standing.notice.served', SERVED_TEXT, { name, by, word });\n    case 'contract':",
+    "new": "    case 'contract':",
     "tests": [
       "test/systems/fb1021d_sentencemends.test.js"
     ],

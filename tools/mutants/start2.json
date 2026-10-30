@@ -155,7 +155,7 @@
   {
     "name": "START2-no-land-wait",
     "file": "src/scenes/startsHost.js",
-    "old": "      const landed = await Promise.race([Promise.resolve(landReady).then(() => true, () => true), wait(landWaitMs).then(() => false)]);",
+    "old": "      const landed = await Promise.race([\n        Promise.resolve(landReady).then(\n          () => true,\n          () => true,\n        ),\n        wait(landWaitMs).then(() => false),\n      ]);",
     "new": "      const landed = true;",
     "tests": [
       "test/systems/starts/start2_provinces.test.js"
@@ -165,8 +165,8 @@
   {
     "name": "START2-quest-before-move",
     "file": "src/scenes/startsHost.js",
-    "old": "        try { await moveInto(loc); moved = true; } catch (e) { console.warn('[starts] the move into the start dungeon failed', e); }\n        if (!live()) return;\n        then(moved ? start.quest : HAND_START_QUEST);",
-    "new": "        then(start.quest);\n        try { await moveInto(loc); moved = true; } catch (e) { console.warn('[starts] the move into the start dungeon failed', e); }\n        if (!live()) return;",
+    "old": "        try {\n          await moveInto(loc);\n          moved = true;\n        } catch (e) {\n          console.warn('[starts] the move into the start dungeon failed', e);\n        }\n        if (!live()) return;\n        then(moved ? start.quest : HAND_START_QUEST);",
+    "new": "        then(start.quest);\n        try {\n          await moveInto(loc);\n          moved = true;\n        } catch (e) {\n          console.warn('[starts] the move into the start dungeon failed', e);\n        }\n        if (!live()) return;",
     "tests": [
       "test/systems/starts/start2_provinces.test.js"
     ],
@@ -175,8 +175,8 @@
   {
     "name": "START2-failure-unsaid",
     "file": "src/scenes/startsHost.js",
-    "old": "      talk.say(STARTS_TEXT.noSite);\n",
-    "new": "",
+    "old": "      talk.say(STARTS_TEXT.noSite);\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/starts/start2_provinces.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "START2-door-ignored",
     "file": "src/scenes/startsHost.js",
-    "old": "    if (getBool('Startup', 'StartInDungeon')) { await quests().respawnLatched(loc); return; }",
-    "new": "    { await quests().respawnLatched(loc); return; }",
+    "old": "    if (getBool('Startup', 'StartInDungeon')) {",
+    "new": "    {",
     "tests": [
       "test/systems/starts/start2_provinces.test.js"
     ],
@@ -213,8 +213,8 @@
   {
     "name": "START2-writ-any-port",
     "file": "src/scenes/startsHost.js",
-    "old": "    if (port?.name !== WRIT_PORT.name || REGION_NAMES[port.region] !== WRIT_PORT.region) return false;\n",
-    "new": "",
+    "old": "    if (port?.name !== WRIT_PORT.name || REGION_NAMES[port.region] !== WRIT_PORT.region) return false;\n    for (const q of machine?.()?.quests?.values?.() ?? []) {",
+    "new": "    for (const q of machine?.()?.quests?.values?.() ?? []) {",
     "tests": [
       "test/systems/starts/start2_provinces.test.js"
     ]
@@ -390,8 +390,8 @@
   {
     "name": "START2-move-races-the-boot",
     "file": "src/scenes/startsHost.js",
-    "old": "      await worldStands();\n",
-    "new": "",
+    "old": "      await worldStands();\n      if (!live()) return;",
+    "new": "      if (!live()) return;",
     "tests": [
       "test/systems/starts/start2_provinces.test.js"
     ]
@@ -408,8 +408,8 @@
   {
     "name": "START2-begin-key-ignored",
     "file": "src/scenes/startsHost.js",
-    "old": "    begun = true;\n    choose(key);",
-    "new": "    begun = true;",
+    "old": "    choose(key);\n    const restores = machine?.()?.restores ?? 0;",
+    "new": "    const restores = machine?.()?.restores ?? 0;",
     "tests": [
       "test/systems/starts/start2_provinces.test.js"
     ]

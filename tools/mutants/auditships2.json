@@ -268,8 +268,8 @@
   {
     "name": "AUDIT2-XC4-venom-share-rounded-alone",
     "file": "src/scenes/serpentHost.js",
-    "old": "const n = venomHurt(venomBite(p, deps.maxHealth?.() ?? 0), share(), blows);",
-    "new": "const n = Math.max(1, Math.round(venomBite(p, deps.maxHealth?.() ?? 0) * share()));",
+    "old": "    const n = venomHurt(venomBite(p, deps.maxHealth?.() ?? 0), share(), blows);",
+    "new": "    const n = Math.max(1, Math.round(venomBite(p, deps.maxHealth?.() ?? 0) * share()));",
     "tests": [
       "test/net/serpent/auditships2.test.js"
     ],
@@ -278,8 +278,8 @@
   {
     "name": "AUDIT2-XC6-wake-stopped-at-the-word",
     "file": "src/scenes/serpentHost.js",
-    "old": "if ((s.fell || s.gone) && !(t < (s.legs[s.legs.length - 1]?.at ?? -Infinity))) return;",
-    "new": "if (s.fell || s.gone) return;",
+    "old": "    if ((s.fell || s.gone) && !(t < (s.legs[s.legs.length - 1]?.at ?? -Infinity))) return;",
+    "new": "    if (s.fell || s.gone) return;",
     "tests": [
       "test/net/serpent/auditships2.test.js"
     ],
@@ -288,8 +288,8 @@
   {
     "name": "AUDIT2-XC7-change-unfloored",
     "file": "src/scenes/serpentHost.js",
-    "old": "(lastIn.hl !== hl && t - lastIn.at >= IN_CHANGE_MS)",
-    "new": "lastIn.hl !== hl",
+    "old": "    const due =\n      lastIn.day !== sw.day ||\n      (lastIn.hl !== hl && t - lastIn.at >= IN_CHANGE_MS) ||\n      t - lastIn.at >= (answered ? IN_RESEND_MS : IN_RETRY_MS);",
+    "new": "    const due = lastIn.day !== sw.day || lastIn.hl !== hl || t - lastIn.at >= (answered ? IN_RESEND_MS : IN_RETRY_MS);",
     "tests": [
       "test/net/serpent/auditships.test.js"
     ],

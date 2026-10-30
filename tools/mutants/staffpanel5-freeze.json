@@ -654,8 +654,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-tab-open-frozen",
     "file": "src/scenes/staffFreezeHost.js",
-    "old": "claims: (tabId) => tabId === STAFF_TAB || chat.frozen(),",
-    "new": "claims: (tabId) => tabId === STAFF_TAB,",
+    "old": "    claims: (tabId) => tabId === STAFF_TAB || chat.frozen(),",
+    "new": "    claims: (tabId) => tabId === STAFF_TAB,",
     "why": "a frozen player talks on the World tab",
     "tests": [
       "test/net/staffpanel5_freeze_client.test.js"

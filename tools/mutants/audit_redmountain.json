@@ -359,8 +359,8 @@
   {
     "name": "AUDIT-RED-MOUNTAIN-L1-the-host's-ash-none",
     "file": "src/scenes/snowCoverHost.js",
-    "old": "ash: ashOf(pt.i * S, pt.j * S)",
-    "new": "ash: 0",
+    "old": "          ash: ashOf(pt.i * S, pt.j * S),",
+    "new": "          ash: 0,",
     "tests": [
       "test/world/audit_redmountain.test.js"
     ]

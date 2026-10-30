@@ -142,7 +142,7 @@ test('CROWN-HALL the hosts by source: the throne room stood at the dungeon\'s mo
   // (scenes/seatHallHost.js), and reads the room's instance (a castle's)
   const w = src('src/scenes/seatHallHost.js');
   const crown = w.slice(w.indexOf('    crown(mapId, instance = null) {'), w.indexOf('    castleAt: castleOf,'));
-  assert.match(crown, /const g = seat\?\.tier === 'crown' \? seat\.holder\?\.guild \?\? null : null;/);
-  assert.match(crown, /member: seatHallOf\(seat, guild\(\)\?\.id \?\? null\), heraldry: seatBannerOf\(seat\)/);
+  assert.match(crown, /const g = seat\?\.tier === 'crown' \? \(seat\.holder\?\.guild \?\? null\) : null;/);
+  assert.match(crown, /member: seatHallOf\(seat, guild\(\)\?\.id \?\? null\),\n\s*heraldry: seatBannerOf\(seat\)/);
   assert.match(src('src/scenes/world.js'), /drawDungeonBanners: \(\{ banners, proj, view, eye \}\) => \{\n      if \(banners\?\.length && bannerPass\?\.draw\(banners, proj, view, new Float32Array\(eye\), performance\.now\(\) \/ 1000, \{/);
 });

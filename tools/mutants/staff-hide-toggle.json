@@ -132,8 +132,8 @@
   {
     "name": "STAFF-HIDE-TOGGLE-relink-presence-kept",
     "file": "src/scenes/staffFollowHost.js",
-    "old": "  if (main?.room) main.leave();\n",
-    "new": "",
+    "old": "  if (main?.room) main.leave();\n  for (const link of links ?? []) {",
+    "new": "  for (const link of links ?? []) {",
     "why": "the presence room keeps its socket as it was until the player changes room",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "STAFF-HIDE-TOGGLE-relink-left-not-opened",
     "file": "src/scenes/staffFollowHost.js",
-    "old": "{ link.leave(); link.join(room); }",
-    "new": "{ link.leave(); }",
+    "old": "      link.join(room);\n    }",
+    "new": "    }",
     "why": "a chat link left and waiting for chatFrame's rejoin",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -152,8 +152,8 @@
   {
     "name": "STAFF-HIDE-TOGGLE-relink-no-room-left",
     "file": "src/scenes/staffFollowHost.js",
-    "old": "const room = link.room; if (room) {",
-    "new": "const room = link.room; if (true) {",
+    "old": "    if (room) {",
+    "new": "    if (true) {",
     "why": "a link out of the seat (or banned) left again: its word on screen overwritten",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -162,8 +162,8 @@
   {
     "name": "STAFF-HIDE-TOGGLE-page-no-relink",
     "file": "src/scenes/staffFollowHost.js",
-    "old": "const door = staffHookDoor(win, () => hook, { relink: relink ? () => { relink(); map.relink(); } : relink, mapOf: () => map, placesOf: () => ({ maps: maps(), pixel: pixel() }), pilot: (m) => pilot.word(m), pull });",
-    "new": "const door = staffHookDoor(win, () => hook, { mapOf: () => map, placesOf: () => ({ maps: maps(), pixel: pixel() }), pilot: (m) => pilot.word(m), pull });",
+    "old": "    relink: relink\n      ? () => {\n          relink();\n          map.relink();\n        }\n      : relink,\n    mapOf: () => map,",
+    "new": "    mapOf: () => map,",
     "why": "the page's door handed no relink",
     "tests": [
       "test/net/staffpanel5hook.test.js"

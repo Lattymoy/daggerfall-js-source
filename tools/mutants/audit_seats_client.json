@@ -607,8 +607,8 @@
   {
     "name": "AUDITSEATS-C12-banners-refilled",
     "file": "src/scenes/seatBanners.js",
-    "old": "top[0] = t[0] + b.a.top[0]; top[1] = t[1] + b.a.top[1];",
-    "new": "top[0] = t[0] + b.a.top[0]; top[1] = b.a.top[1];",
+    "old": "        top[1] = t[1] + b.a.top[1];",
+    "new": "        top[1] = b.a.top[1];",
     "tests": [
       "test/net/audit_seats_client.test.js",
       "test/net/seat1a_client.test.js"

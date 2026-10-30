@@ -52,7 +52,7 @@
   {
     "name": "STAFF-PULL-land-when-dead",
     "file": "src/scenes/staffPullHost.js",
-    "old": "if (!alive()) throw new Error('cancelled');",
+    "old": "        if (!alive()) throw new Error('cancelled');",
     "new": "",
     "why": "a death during the load still places",
     "tests": [

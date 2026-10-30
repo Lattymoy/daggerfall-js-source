@@ -227,8 +227,8 @@
   {
     "name": "A2-flags-uncapped",
     "file": "src/scenes/shipFlagHost.js",
-    "old": "if (!boat || !flag || list.length >= FLAGS_MAX) return;",
-    "new": "if (!boat || !flag) return;",
+    "old": "      if (!boat || !flag || list.length >= FLAGS_MAX) return; // AUDIT 2: one past the pass's cap flies her pennant - it was left out for cloth never drawn",
+    "new": "      if (!boat || !flag) return; // AUDIT 2: one past the pass's cap flies her pennant - it was left out for cloth never drawn",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "A2-flag-fade-lost",
     "file": "src/scenes/shipFlagHost.js",
-    "old": "fade: boat.fade ?? 1 });",
-    "new": "fade: 1 });",
+    "old": "      list.push({\n        key: flagKey(flag),\n        flag,\n        top,\n        fly: flyOf(node.forward),\n        size,\n        phase: flagPhaseOf(phase),\n        fade: boat.fade ?? 1,\n      }); // AUDIT 2: her fade, the cloth dissolving with her hull",
+    "new": "      list.push({ key: flagKey(flag), flag, top, fly: flyOf(node.forward), size, phase: flagPhaseOf(phase), fade: 1 }); // AUDIT 2: her fade, the cloth dissolving with her hull",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]

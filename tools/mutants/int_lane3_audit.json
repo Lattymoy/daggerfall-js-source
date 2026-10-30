@@ -113,8 +113,8 @@
   {
     "name": "AINT15-HOST-ASKS-PRIMARY",
     "file": "src/scenes/serpentHost.js",
-    "old": "const sayHull = bodySayer((v) => !!live && !!deps.online?.send?.(",
-    "new": "const sayHull = bodySayer((v) => !!live && !!deps.online?.bossOk?.() && !!deps.online?.send?.(",
+    "old": "    (v) => !!live && !!deps.online?.send?.({ k: 'vt', v }, cellRoomOfWire(live.sw.site.sx, live.sw.site.sz)),",
+    "new": "    (v) =>\n      !!live &&\n      !!deps.online?.bossOk?.() &&\n      !!deps.online?.send?.({ k: 'vt', v }, cellRoomOfWire(live.sw.site.sx, live.sw.site.sz)),",
     "tests": [
       "test/net/int_lane3_audit.test.js",
       "test/net/int12_body_relay.test.js"

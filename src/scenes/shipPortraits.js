@@ -30,7 +30,11 @@ export function shipPortraitCamera(box, aspect = SHIP_PORTRAIT_W / SHIP_PORTRAIT
   const rad = Math.hypot(x1 - x0, y1 - y0, z1 - z0) / 2 || 1;
   const dist = rad / Math.sin(FOV / 2);
   const flat = dist * Math.cos(SHIP_PORTRAIT_LOOK_DOWN);
-  const eye = [c[0] + flat * Math.sin(SHIP_PORTRAIT_TURN), c[1] + dist * Math.sin(SHIP_PORTRAIT_LOOK_DOWN), c[2] - flat * Math.cos(SHIP_PORTRAIT_TURN)];
+  const eye = [
+    c[0] + flat * Math.sin(SHIP_PORTRAIT_TURN),
+    c[1] + dist * Math.sin(SHIP_PORTRAIT_LOOK_DOWN),
+    c[2] - flat * Math.cos(SHIP_PORTRAIT_TURN),
+  ];
   return {
     proj: mirrorProjectionX(perspective(FOV, aspect, Math.max(0.05, dist - rad * 1.5), dist + rad * 1.5)),
     view: lookAt(eye, c, [0, 1, 0]),
@@ -54,10 +58,14 @@ export function createShipPortraits(deps) {
   function picture(hull, where) {
     if (!deps.renderer?.panelFrame || !deps.canvas || !deps.doc) return null;
     let p = made.get(hull);
-    for (const a of asks) if (a.hull === hull) a.where = where;   // still waiting: drawn under the window that asks now
+    for (const a of asks) if (a.hull === hull) a.where = where; // still waiting: drawn under the window that asks now
     if (!p) {
-      p = new Promise((resolve) => { asks.push({ hull, where, asked: now(), resolve }); });
-      p.then((url) => { if (!url) made.delete(hull); });   // none this time: the next window asks again
+      p = new Promise((resolve) => {
+        asks.push({ hull, where, asked: now(), resolve });
+      });
+      p.then((url) => {
+        if (!url) made.delete(hull);
+      }); // none this time: the next window asks again
       made.set(hull, p);
     }
     return p;
@@ -67,17 +75,33 @@ export function createShipPortraits(deps) {
     let drawn = 0;
     for (let i = 0; i < asks.length && drawn < SHIP_PORTRAITS_A_FRAME;) {
       const ask = asks[i];
-      if (now() - ask.asked > SHIP_PORTRAIT_WAIT_MS) { asks.splice(i, 1); ask.resolve(null); continue; }
+      if (now() - ask.asked > SHIP_PORTRAIT_WAIT_MS) {
+        asks.splice(i, 1);
+        ask.resolve(null);
+        continue;
+      }
       const rect = canvasBoxUnder(deps.canvas, ask.where?.() ?? null, SHIP_PORTRAIT_W, SHIP_PORTRAIT_H);
       const ship = rect ? deps.portrait(ask.hull) : null;
-      if (!ship) { i++; continue; }
+      if (!ship) {
+        i++;
+        continue;
+      }
       asks.splice(i, 1);
       drawn++;
       const cam = shipPortraitCamera(ship.box, rect.w / rect.h);
-      ask.resolve(panelPicture({
-        renderer: deps.renderer, canvas: deps.canvas, doc: deps.doc, rect, proj: cam.proj, view: cam.view,
-        body: () => { for (const [gpu, m] of ship.parts) deps.renderer.drawMesh(gpu, m, null); },
-      }));
+      ask.resolve(
+        panelPicture({
+          renderer: deps.renderer,
+          canvas: deps.canvas,
+          doc: deps.doc,
+          rect,
+          proj: cam.proj,
+          view: cam.view,
+          body: () => {
+            for (const [gpu, m] of ship.parts) deps.renderer.drawMesh(gpu, m, null);
+          },
+        }),
+      );
     }
     return drawn;
   }

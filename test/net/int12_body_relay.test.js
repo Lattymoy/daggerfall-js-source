@@ -365,11 +365,11 @@ test('INT15 THE CLIENT: a session notes a relay that counts (`bossOk`, off its w
   assert.match(court, /if \(alive && healLive\(s\) && e\?\.maxHealth > 0\) sayBody\(e\.health \/ e\.maxHealth, t\);/);
   assert.match(world, /if \(!sdFightLink \|\| modes\?\.sdRealmSlot\?\.\(\) == null \|\| !online\?\.bossOk\) return;\n    if \(playerEntity\.health > 0 && playerEntity\.maxHealth > 0 && sdFightLink\.joined\(\)\) _sdSayBody\(/);
   assert.match(world, /sdFightFrame\(\); sdBodyFrame\(\); sdVoiceFrame\(\);/, 'each frame of the Hour');
-  assert.match(host, /const sayHull = bodySayer\(\(v\) => !!live && !!deps\.online\?\.send\?\.\(\{ k: 'vt', v \}/);   // PIN MOVED (AUDIT INT15): the primary's version asked no more - the session asks the socket's own (sendSerpent; test/net/int_lane3_audit.test.js)
+  assert.match(host, /const sayHull = bodySayer\(\n\s*\(v\) => !!live && !!deps\.online\?\.send\?\.\(\{ k: 'vt', v \}/);   // PIN MOVED (AUDIT INT15): the primary's version asked no more - the session asks the socket's own (sendSerpent; test/net/int_lane3_audit.test.js)
   assert.match(online, /if \(w\.k === 'vt'\) return this\._bodySend\('serpent', w, ws, this\._mine\(cell\) \? this\.bossOk : !!halo\?\.bossOk\);/);   // PIN MOVED (COST-2): my own room, or a cell my socket covers
   assert.match(world, /online\.onGate = \(g\) => \{ if \(g\?\.k === 'bd'\) bossCountFell\(modes\?\.gateArenaDay\?\.\(\) != null\); else gateLink\?\.word\(g\); \};/);
   assert.match(world, /if \(w\?\.k === 'bd'\) \{ bossCountFell\(slot != null\); return; \}/);
   assert.match(world, /function bossCountFell\(inFight\) \{\n    if \(!inFight \|\| !\(playerEntity\.health > 0\)\) return;\n    setMidScreenText\(BOSS_COUNT_FELL_TEXT\);\n    forcePlayerDeath\(playerEntity\);/);
   assert.match(world, /online\.onSerpent = \(w\) => \{ if \(w\?\.k === 'bd'\) serpentHost\?\.wrecked\?\.\(w\); else serpentLink\?\.word\(w\); \};/);
-  assert.match(host, /deps\.strike\?\.\(ship\.boat, \{ hull: Math\.ceil\(ship\.maxHull \* 2\) \+ 1, sail: 0, crew: 0 \}/);
+  assert.match(host, /deps\.strike\?\.\(\n\s*ship\.boat,\n\s*\{ hull: Math\.ceil\(ship\.maxHull \* 2\) \+ 1, sail: 0, crew: 0 \}/);
 });

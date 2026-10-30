@@ -200,8 +200,8 @@
   {
     "name": "SEA-flags-uncapped",
     "file": "src/scenes/shipFlagHost.js",
-    "old": "{ if (list.length >= FLAGS_MAX) break; take(p.boat, p.flag, p.phase); }",
-    "new": "{ take(p.boat, p.flag, p.phase); }",
+    "old": "      if (list.length >= FLAGS_MAX) break;\n      take(p.boat, p.flag, p.phase);",
+    "new": "      take(p.boat, p.flag, p.phase);",
     "tests": [
       "test/systems/naval/seacolours.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "SEA-flags-phase-lost",
     "file": "src/scenes/shipFlagHost.js",
-    "old": "    for (const p of deps.seaFlags?.() ?? []) { if (list.length >= FLAGS_MAX) break; take(p.boat, p.flag, p.phase); }",
-    "new": "    for (const p of deps.seaFlags?.() ?? []) { if (list.length >= FLAGS_MAX) break; take(p.boat, p.flag); }",
+    "old": "      take(p.boat, p.flag, p.phase);",
+    "new": "      take(p.boat, p.flag);",
     "tests": [
       "test/systems/naval/seacolours.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "SEA-flags-unread",
     "file": "src/scenes/shipFlagHost.js",
-    "old": "    for (const p of deps.seaFlags?.() ?? []) { if (list.length >= FLAGS_MAX) break; take(p.boat, p.flag, p.phase); }",
-    "new": "",
+    "old": "    for (const p of deps.seaFlags?.() ?? []) {\n      if (list.length >= FLAGS_MAX) break;\n      take(p.boat, p.flag, p.phase);\n    } // SEA-COLOURS: the nearest, to the pass's cap",
+    "new": "    // SEA-COLOURS: the nearest, to the pass's cap",
     "tests": [
       "test/systems/naval/seacolours.test.js"
     ]

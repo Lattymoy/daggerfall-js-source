@@ -686,8 +686,8 @@
   {
     "name": "MENUORDER-ship-asked-each-card",
     "file": "src/scenes/shipPortraits.js",
-    "old": "    if (!p) {\n      p = new Promise",
-    "new": "    if (true) {\n      p = new Promise",
+    "old": "    if (!p) {",
+    "new": "    if (true) {",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -695,8 +695,8 @@
   {
     "name": "MENUORDER-ship-ask-stays-under-old-window",
     "file": "src/scenes/shipPortraits.js",
-    "old": "    for (const a of asks) if (a.hull === hull) a.where = where;",
-    "new": "    for (const a of asks) if (a.hull === -1) a.where = where;",
+    "old": "    for (const a of asks) if (a.hull === hull) a.where = where; // still waiting: drawn under the window that asks now",
+    "new": "    for (const a of asks) if (a.hull === -1) a.where = where; // still waiting: drawn under the window that asks now",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -704,8 +704,8 @@
   {
     "name": "MENUORDER-ship-none-kept",
     "file": "src/scenes/shipPortraits.js",
-    "old": "      p.then((url) => { if (!url) made.delete(hull); });",
-    "new": "      p.then(() => {});",
+    "old": "      p.then((url) => {\n        if (!url) made.delete(hull);\n      }); // none this time: the next window asks again",
+    "new": "      p.then(() => {}); // none this time: the next window asks again",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -722,8 +722,8 @@
   {
     "name": "MENUORDER-ship-never-given-up",
     "file": "src/scenes/shipPortraits.js",
-    "old": "      if (now() - ask.asked > SHIP_PORTRAIT_WAIT_MS) { asks.splice(i, 1); ask.resolve(null); continue; }",
-    "new": "      if (now() - ask.asked > SHIP_PORTRAIT_WAIT_MS * 1e9) { asks.splice(i, 1); ask.resolve(null); continue; }",
+    "old": "      if (now() - ask.asked > SHIP_PORTRAIT_WAIT_MS) {",
+    "new": "      if (now() - ask.asked > SHIP_PORTRAIT_WAIT_MS * 1e9) {",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -731,8 +731,8 @@
   {
     "name": "MENUORDER-ship-one-part",
     "file": "src/scenes/shipPortraits.js",
-    "old": "body: () => { for (const [gpu, m] of ship.parts) deps.renderer.drawMesh(gpu, m, null); },",
-    "new": "body: () => { const [gpu, m] = ship.parts[0]; deps.renderer.drawMesh(gpu, m, null); },",
+    "old": "            for (const [gpu, m] of ship.parts) deps.renderer.drawMesh(gpu, m, null);",
+    "new": "            const [gpu, m] = ship.parts[0];\n            deps.renderer.drawMesh(gpu, m, null);",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -758,8 +758,8 @@
   {
     "name": "MENUORDER-ship-camera-square",
     "file": "src/scenes/shipPortraits.js",
-    "old": "proj: mirrorProjectionX(perspective(FOV, aspect, ",
-    "new": "proj: mirrorProjectionX(perspective(FOV, 1, ",
+    "old": "    proj: mirrorProjectionX(perspective(FOV, aspect, Math.max(0.05, dist - rad * 1.5), dist + rad * 1.5)),",
+    "new": "    proj: mirrorProjectionX(perspective(FOV, 1, Math.max(0.05, dist - rad * 1.5), dist + rad * 1.5)),",
     "tests": [
       "test/ui/menuorder.test.js"
     ]

@@ -14,7 +14,14 @@
 // never for a transformed lycanthrope (DFU's SuppressCrime: the beast is nobody's face), never on a crime already held
 // (the chase is already under way).
 import { ChoiceWindow } from '../ui/talkWindow.js';
-import { challengeDue, noteChallenge, challengeFine, grantGrace, settleChallenge, isBanished } from '../systems/standing.js';
+import {
+  challengeDue,
+  noteChallenge,
+  challengeFine,
+  grantGrace,
+  settleChallenge,
+  isBanished,
+} from '../systems/standing.js';
 import { totalGoldAmount, deductGold, CRIMES, CRIME_NAMES, setLegalRepNotifier } from '../systems/court.js';
 import { racialSuppressCrime } from '../systems/lycanthropy.js';
 import { legalStandingWord } from '../systems/legalBands.js';
@@ -25,12 +32,19 @@ import { isInvisible } from '../systems/effects.js';
 export const STANDING_LOOK_MS = 1000;
 
 export function createStandingWatch({
-  playerEntity, townTalk, arrestFlow, cityGuards,
-  guardPool, playerFeet, regionIndex, regionName = () => 'this region',
-  ownNow, worldNow = ownNow,
-  crimeResponse,                 // the host's seen-crime response (SpawnCityGuards(true))
-  onStreet = () => true,         // the exterior mode, the player standing in it
-  blocked = () => false,         // another window, the travel view, a raid - anything the stop must wait out
+  playerEntity,
+  townTalk,
+  arrestFlow,
+  cityGuards,
+  guardPool,
+  playerFeet,
+  regionIndex,
+  regionName = () => 'this region',
+  ownNow,
+  worldNow = ownNow,
+  crimeResponse, // the host's seen-crime response (SpawnCityGuards(true))
+  onStreet = () => true, // the exterior mode, the player standing in it
+  blocked = () => false, // another window, the travel view, a raid - anything the stop must wait out
   clock = () => performance.now(),
 }) {
   let next = 0;
@@ -63,30 +77,61 @@ export function createStandingWatch({
     const canPay = totalGoldAmount(playerEntity) >= fine;
     const lines = [
       banished ? `Halt! You are banished from ${name}.` : `Halt! The watch of ${name} knows your face.`,
-      canPay ? `Pay a fine of ${fine} gold${banished ? ' and be gone' : ''}, or come with me.` : 'You will come with me.',
+      canPay
+        ? `Pay a fine of ${fine} gold${banished ? ' and be gone' : ''}, or come with me.`
+        : 'You will come with me.',
     ];
-    const answer = (fn) => () => { if (box !== win) return; box = null; fn(); };
+    const answer = (fn) => () => {
+      if (box !== win) return;
+      box = null;
+      fn();
+    };
     const options = [
-      ...(canPay ? [{ code: 'KeyP', label: `P - pay ${fine} gold`, action: answer(() => {
-        deductGold(playerEntity, fine);
-        settleChallenge(playerEntity, region);   // FINE-MENDS: the fine mends the name a penance's step, to the line at most
-        grantGrace(playerEntity, region, ownNow());
-        townTalk.say?.(`You pay the watch ${fine} gold.`);
-      }) }] : []),
-      { code: 'KeyS', label: 'S - come quietly', action: answer(() => { arrestFlow.surrenderToChallenge(); }) },
-      { code: 'KeyR', label: 'R - refuse', action: answer(() => {
-        playerEntity.crimeCommitted = CRIMES.Criminal_Conspiracy;   // the levy's own write (WERE-LEVY: the field)
-        crimeResponse();
-      }) },
+      ...(canPay
+        ? [
+            {
+              code: 'KeyP',
+              label: `P - pay ${fine} gold`,
+              action: answer(() => {
+                deductGold(playerEntity, fine);
+                settleChallenge(playerEntity, region); // FINE-MENDS: the fine mends the name a penance's step, to the line at most
+                grantGrace(playerEntity, region, ownNow());
+                townTalk.say?.(`You pay the watch ${fine} gold.`);
+              }),
+            },
+          ]
+        : []),
+      {
+        code: 'KeyS',
+        label: 'S - come quietly',
+        action: answer(() => {
+          arrestFlow.surrenderToChallenge();
+        }),
+      },
+      {
+        code: 'KeyR',
+        label: 'R - refuse',
+        action: answer(() => {
+          playerEntity.crimeCommitted = CRIMES.Criminal_Conspiracy; // the levy's own write (WERE-LEVY: the field)
+          crimeResponse();
+        }),
+      },
     ];
     const win = new ChoiceWindow({ lines, options });
     // A box thrown away unanswered (another window replaced it) is the stop let go: the two hours' wait is already noted
-    win.dispose = () => { if (box === win) box = null; };
+    win.dispose = () => {
+      if (box === win) box = null;
+    };
     box = win;
     townTalk.showOverlay(win);
   }
 
-  return { frame, get box() { return box; } };
+  return {
+    frame,
+    get box() {
+      return box;
+    },
+  };
 }
 
 /** REP5: THE LAW SAYS WHEN IT THINKS DIFFERENTLY OF YOU. DFU changes a legal standing in silence - a crime's charge, a
@@ -110,13 +155,21 @@ export function legalNoticeLine({ name, after, delta, cause }) {
   const word = legalStandingWord(after);
   const by = `${delta > 0 ? '+' : ''}${delta}`;
   switch (cause?.kind) {
-    case 'crime': return `${CRIME_NAMES[cause.crime] ?? 'A crime'}: the law of ${name} thinks less of you (${by}). You are ${word}.`;
-    case 'sentence': return `Your debt to ${name} is paid (${by}). You are ${word}.`;
-    case 'acquittal': return `The court of ${name} clears your name (${by}). You are ${word}.`;
-    case 'penance': return `Your penance is accepted in ${name} (${by}). You are ${word}.`;
-    case 'served': return t('standing.notice.served', SERVED_TEXT, { name, by, word });
-    case 'contract': return `${name} thanks you for your work (${by}). You are ${word}.`;
-    case 'raid': return `${name} thanks you for its defense (${by}). You are ${word}.`;   // AUDIT REP F5
-    default: return `Your standing with the law of ${name} ${delta < 0 ? 'falls' : 'rises'} (${by}). You are ${word}.`;
+    case 'crime':
+      return `${CRIME_NAMES[cause.crime] ?? 'A crime'}: the law of ${name} thinks less of you (${by}). You are ${word}.`;
+    case 'sentence':
+      return `Your debt to ${name} is paid (${by}). You are ${word}.`;
+    case 'acquittal':
+      return `The court of ${name} clears your name (${by}). You are ${word}.`;
+    case 'penance':
+      return `Your penance is accepted in ${name} (${by}). You are ${word}.`;
+    case 'served':
+      return t('standing.notice.served', SERVED_TEXT, { name, by, word });
+    case 'contract':
+      return `${name} thanks you for your work (${by}). You are ${word}.`;
+    case 'raid':
+      return `${name} thanks you for its defense (${by}). You are ${word}.`; // AUDIT REP F5
+    default:
+      return `Your standing with the law of ${name} ${delta < 0 ? 'falls' : 'rises'} (${by}). You are ${word}.`;
   }
 }

@@ -217,7 +217,7 @@ THE LAW NOW.
 - SNOW-YEAR: the sky's midsummer is a whole minute, so it is rounded to one before the floor
   (`snowpack.js:"const midsummer = eventMinuteOfSky(Math.round(sky - since));"`) - one snow year, one origin, at any
   fractional minute of it; and a build's wait asks the clock's minute on every pass, as the tick does
-  (`snowCoverHost.js:"while (!at(px, py, now(), arriving?.() ? Math.max(SNOW_COVER.arriveMs, breather.left()) : breather.left(), true)) await breather.breathe();"`),
+  (`snowCoverHost.js:"py, now(), arriving?.()"`),
   so a wait across the year's real turn finishes too.
 - SNOW-HOLD: the blanket's five-second prune lets a queued tile go with the overlays once it leaves the rings it draws
   (`snowfallRuntime.js:"if (B.queue.some((t) => !live.has(t))) { B.queue = B.queue.filter((t) => live.has(t)); B.queued = new Set(B.queue); }"`

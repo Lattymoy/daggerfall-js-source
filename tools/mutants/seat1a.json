@@ -331,8 +331,8 @@
   {
     "name": "SEAT1a-gate-town-side-wrong",
     "file": "src/scenes/seatBanners.js",
-    "old": "(centre[0] - cx) * ox + (centre[1] - cz) * oz < 0)",
-    "new": "(centre[0] - cx) * ox + (centre[1] - cz) * oz > 0)",
+    "old": "  if ((centre[0] - cx) * ox + (centre[1] - cz) * oz < 0) {",
+    "new": "  if ((centre[0] - cx) * ox + (centre[1] - cz) * oz > 0) {",
     "tests": [
       "test/net/seat1a_client.test.js"
     ]
@@ -340,8 +340,8 @@
   {
     "name": "SEAT1a-banners-past-eight",
     "file": "src/scenes/seatBanners.js",
-    "old": "if (a && out.length < SEAT_BANNERS_MAX) out.push(a);",
-    "new": "if (a) out.push(a);",
+    "old": "    if (a && out.length < SEAT_BANNERS_MAX) out.push(a);",
+    "new": "    if (a) out.push(a);",
     "tests": [
       "test/net/seat1a_client.test.js"
     ]
@@ -349,8 +349,8 @@
   {
     "name": "SEAT1a-palace-any-record",
     "file": "src/scenes/seatBanners.js",
-    "old": "if (list[i]?.buildingType === BUILDING_TYPES.Palace) out.push",
-    "new": "if (list[i]?.buildingType != null) out.push",
+    "old": "    for (let i = 0; i < count; i++)\n      if (list[i]?.buildingType === BUILDING_TYPES.Palace) out.push(makeKey(b.x ?? 0, b.y ?? 0, i));",
+    "new": "    for (let i = 0; i < count; i++) if (list[i]?.buildingType != null) out.push(makeKey(b.x ?? 0, b.y ?? 0, i));",
     "tests": [
       "test/net/seat1a_client.test.js"
     ]
@@ -358,8 +358,8 @@
   {
     "name": "SEAT1a-banners-while-shut",
     "file": "src/scenes/seatBanners.js",
-    "old": "      const h = seat ? seatBannerOf(seat) : null;",
-    "new": "      const h = seatBannerOf(seat ?? { region: 21 });",
+    "old": "      const h = seat ? seatBannerOf(seat) : null; // SEAT1c: a held seat's in its holder's own colours",
+    "new": "      const h = seatBannerOf(seat ?? { region: 21 }); // SEAT1c: a held seat's in its holder's own colours",
     "tests": [
       "test/net/seat1a_client.test.js"
     ],

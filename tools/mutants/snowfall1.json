@@ -248,7 +248,7 @@
   {
     "name": "SNOWFALL1-host-page-door-ignored",
     "file": "src/scenes/snowfallHost.js",
-    "old": "export const snowfallOn = (search) => modSetting(SNOWFALL_VENDOR, 'Enabled') === true && pageParam('snowfall', search) !== 'off';",
+    "old": "export const snowfallOn = (search) =>\n  modSetting(SNOWFALL_VENDOR, 'Enabled') === true && pageParam('snowfall', search) !== 'off';",
     "new": "export const snowfallOn = (search) => modSetting(SNOWFALL_VENDOR, 'Enabled') === true;",
     "tests": [
       "test/render/snowfall1_runtime.test.js"

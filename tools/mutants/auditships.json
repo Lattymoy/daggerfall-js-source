@@ -255,8 +255,8 @@
   {
     "name": "AUDIT-SHIPS-C1-client-change-unread",
     "file": "src/scenes/serpentHost.js",
-    "old": "lastIn.day !== sw.day || (lastIn.hl !== hl && t - lastIn.at >= IN_CHANGE_MS) || ",
-    "new": "lastIn.day !== sw.day || ",
+    "old": "    const due =\n      lastIn.day !== sw.day ||\n      (lastIn.hl !== hl && t - lastIn.at >= IN_CHANGE_MS) ||\n      t - lastIn.at >= (answered ? IN_RESEND_MS : IN_RETRY_MS);",
+    "new": "    const due = lastIn.day !== sw.day || t - lastIn.at >= (answered ? IN_RESEND_MS : IN_RETRY_MS);",
     "tests": [
       "test/net/serpent/auditships.test.js"
     ]
@@ -609,8 +609,8 @@
   {
     "name": "AUDIT-SHIPS-C3-host-uncarried",
     "file": "src/scenes/serpentHost.js",
-    "old": "shipHurt(A, ship, share(), blows)",
-    "new": "shipHurt(A, ship, share())",
+    "old": "    deps.strike?.(ship.boat, shipHurt(A, ship, share(), blows), {\n      shake: A.hull >= 0.18 ? 2.6 : 1.8,\n      line: `${A.name}!`,\n    }); // AUDIT SHIPS C3: carried",
+    "new": "    deps.strike?.(ship.boat, shipHurt(A, ship, share()), { shake: A.hull >= 0.18 ? 2.6 : 1.8, line: `${A.name}!` }); // AUDIT SHIPS C3: carried",
     "tests": [
       "test/net/serpent/auditships.test.js"
     ]
@@ -618,8 +618,8 @@
   {
     "name": "AUDIT-SHIPS-C4-a-frame",
     "file": "src/scenes/serpentHost.js",
-    "old": "if (t >= lastWake && t - lastWake < WAKE_MS) return;",
-    "new": "",
+    "old": "    if (t >= lastWake && t - lastWake < WAKE_MS) return;\n    lastWake = t;",
+    "new": "    lastWake = t;",
     "tests": [
       "test/net/serpent/auditships.test.js"
     ]

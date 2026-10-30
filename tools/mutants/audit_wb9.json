@@ -256,8 +256,8 @@
   {
     "name": "AUDIT-WB9-flown-over-the-collider-alone",
     "file": "src/scenes/spoilsPool.js",
-    "old": "      flyRay = plane ? (a, d, l) => ray?.(a, d, l) ?? plane(a, d, l) : ray;",
-    "new": "      flyRay = ray;",
+    "old": "      flyRay = plane ? (a, d, l) => ray?.(a, d, l) ?? plane(a, d, l) : ray; // AUDIT WB9 (spoils F1): flown over the floor they were kept to",
+    "new": "      flyRay = ray; // AUDIT WB9 (spoils F1): flown over the floor they were kept to",
     "tests": [
       "test/net/gate/audit_wb9.test.js"
     ]

@@ -406,8 +406,8 @@
   {
     "name": "AUDIT-SERPENT-H3-forget-day",
     "file": "src/scenes/serpentHost.js",
-    "old": "if (sw.day !== memDay) forget(sw.day);",
-    "new": "if (sw.day !== memDay) memDay = sw.day;",
+    "old": "      if (sw.day !== memDay) forget(sw.day);",
+    "new": "      if (sw.day !== memDay) memDay = sw.day;",
     "tests": [
       "test/net/serpent/serpent1_auditclient.test.js"
     ]
@@ -415,8 +415,8 @@
   {
     "name": "AUDIT-SERPENT-M5-silence",
     "file": "src/scenes/serpentHost.js",
-    "old": "if (!s.fell && !s.gone && t - s.heardAt > SERPENT_HEARD_MS) {",
-    "new": "if (false) {",
+    "old": "      if (!s.fell && !s.gone && t - s.heardAt > SERPENT_HEARD_MS) {",
+    "new": "      if (false) {",
     "tests": [
       "test/net/serpent/serpent1_auditclient.test.js"
     ]
@@ -424,8 +424,8 @@
   {
     "name": "AUDIT-SERPENT-M5-throes-kept",
     "file": "src/scenes/serpentHost.js",
-    "old": "if (!s.fell && !s.gone && t - s.heardAt",
-    "new": "if (t - s.heardAt",
+    "old": "      if (!s.fell && !s.gone && t - s.heardAt > SERPENT_HEARD_MS) {",
+    "new": "      if (t - s.heardAt > SERPENT_HEARD_MS) {",
     "tests": [
       "test/net/serpent/serpent1_auditclient.test.js"
     ]
@@ -433,8 +433,8 @@
   {
     "name": "AUDIT-SERPENT-B4-hull-on-deck",
     "file": "src/scenes/serpentHost.js",
-    "old": "const hl = b ? b.hull : -1;",
-    "new": "const hl = b?.atHelm ? b.hull : -1;",
+    "old": "    const hl = b ? b.hull : -1; // AUDIT SERPENT B4/H2: my own ship's, at her helm or on her deck",
+    "new": "    const hl = b?.atHelm ? b.hull : -1; // AUDIT SERPENT B4/H2: my own ship's, at her helm or on her deck",
     "tests": [
       "test/systems/serpent1_client.test.js"
     ]
@@ -442,8 +442,8 @@
   {
     "name": "AUDIT-SERPENT-L3-pending-kept",
     "file": "src/scenes/serpentHost.js",
-    "old": "kept.set(z, Math.min(5000, d));",
-    "new": "void 0;",
+    "old": "        kept.set(z, Math.min(5000, d));",
+    "new": "        void 0;",
     "tests": [
       "test/net/serpent/serpent1_auditclient.test.js"
     ]
@@ -451,8 +451,8 @@
   {
     "name": "AUDIT-SERPENT-T2-wreck-said",
     "file": "src/scenes/serpentHost.js",
-    "old": "if (deps.online?.send?.({ k: 'wr', w }, cellRoomOfWire(sw.site.sx, sw.site.sz))) wreckSaid = w;",
-    "new": "",
+    "old": "    if (deps.online?.send?.({ k: 'wr', w }, cellRoomOfWire(sw.site.sx, sw.site.sz))) wreckSaid = w;\n  }",
+    "new": "  }",
     "tests": [
       "test/net/serpent/serpent1_auditclient.test.js"
     ]
@@ -460,8 +460,8 @@
   {
     "name": "AUDIT-SERPENT-M3-wake-3d",
     "file": "src/scenes/serpentHost.js",
-    "old": "deps.fx?.('wake', [x, deps.seaY(), z], 1);",
-    "new": "deps.fx?.('wake', [x, z], 1);",
+    "old": "    deps.fx?.('wake', [x, deps.seaY(), z], 1);",
+    "new": "    deps.fx?.('wake', [x, z], 1);",
     "tests": [
       "test/net/serpent/serpent1_auditclient.test.js"
     ]
@@ -469,8 +469,8 @@
   {
     "name": "AUDIT-SERPENT-L1-hold-site-frame",
     "file": "src/scenes/serpentHost.js",
-    "old": "const [x, z] = scene(held.x, held.z);",
-    "new": "const [x, z] = [held.x, held.z];",
+    "old": "      const [x, z] = scene(held.x, held.z);",
+    "new": "      const [x, z] = [held.x, held.z];",
     "tests": [
       "test/systems/serpent1_client.test.js",
       "test/net/serpent/serpent1_auditclient.test.js"
@@ -479,8 +479,8 @@
   {
     "name": "AUDIT-SERPENT-T4-head-two",
     "file": "src/scenes/serpentHost.js",
-    "old": "return seg <= 1 && headExposed",
-    "new": "return seg === 0 && headExposed",
+    "old": "    return seg <= 1 && headExposed(s, p, t, t < s.su) ? ZONES.head : coiled ? ZONES.coil : ZONES.body;",
+    "new": "    return seg === 0 && headExposed(s, p, t, t < s.su) ? ZONES.head : coiled ? ZONES.coil : ZONES.body;",
     "tests": [
       "test/net/serpent/serpent1_auditclient.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "AUDIT-SERPENT-T4-lead-way",
     "file": "src/scenes/serpentHost.js",
-    "old": "v: [(x1 - x0) * 1000 / LEAD_DT_MS, 0, (z1 - z0) * 1000 / LEAD_DT_MS] });",
-    "new": "v: [0, 0, 0] });",
+    "old": "        out.push({\n          id: `${SERPENT_TARGET}${i}`,\n          box: segmentBox(p, i, seaY, scene),\n          rig: [],\n          v: [((x1 - x0) * 1000) / LEAD_DT_MS, 0, ((z1 - z0) * 1000) / LEAD_DT_MS],\n        });",
+    "new": "        out.push({ id: `${SERPENT_TARGET}${i}`, box: segmentBox(p, i, seaY, scene), rig: [], v: [0, 0, 0] });",
     "tests": [
       "test/net/serpent/serpent1_auditclient.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "AUDIT-SERPENT-B2-ram-move",
     "file": "src/scenes/serpentHost.js",
-    "old": "const by = A === SERPENT_ATTACK_TABLE.ram ? a.at + A.active : Math.max(t, a.at);",
-    "new": "const by = Math.max(t, a.at);",
+    "old": "        const by = A === SERPENT_ATTACK_TABLE.ram ? a.at + A.active : Math.max(t, a.at);",
+    "new": "        const by = Math.max(t, a.at);",
     "tests": [
       "test/net/serpent/serpent1_auditclient.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "AUDIT-SERPENT-T8-mael-disc",
     "file": "src/scenes/serpentHost.js",
-    "old": "} else if (A === SERPENT_ATTACK_TABLE.mael && t < a.at && !s.mael) {",
-    "new": "} else if (false) {",
+    "old": "      } else if (A === SERPENT_ATTACK_TABLE.mael && t < a.at && !s.mael) {",
+    "new": "      } else if (false) {",
     "tests": [
       "test/net/serpent/serpent1_auditclient.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "AUDIT-SERPENT-phase-joined-unsaid",
     "file": "src/scenes/serpentHost.js",
-    "old": "if (lastPhase !== null && s.ph > lastPhase)",
-    "new": "if (s.ph > (lastPhase ?? 1))",
+    "old": "      if (lastPhase !== null && s.ph > lastPhase) deps.mid?.(`${boss.name}: ${SERPENT_PHASE_NAMES[s.ph - 1]}`, 4);",
+    "new": "      if (s.ph > (lastPhase ?? 1)) deps.mid?.(`${boss.name}: ${SERPENT_PHASE_NAMES[s.ph - 1]}`, 4);",
     "tests": [
       "test/net/serpent/serpent1_auditclient.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "AUDIT-SERPENT-B11-coil-name",
     "file": "src/scenes/serpentHost.js",
-    "old": "deps.mid?.(`${serpentBossById(deps.link.state().boss).name} coils about your ship!",
-    "new": "deps.mid?.(`Sethrakul coils about your ship!",
+    "old": "      deps.mid?.(`${serpentBossById(deps.link.state().boss).name} coils about your ship! Break its grip!`, 4);",
+    "new": "      deps.mid?.(`Sethrakul coils about your ship! Break its grip!`, 4);",
     "tests": [
       "test/net/serpent/serpent1_auditclient.test.js"
     ]

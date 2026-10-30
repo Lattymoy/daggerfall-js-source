@@ -410,8 +410,8 @@
   {
     "name": "SEASON-BOOK-a-board-asked-every-tick",
     "file": "src/scenes/seasonBookHost.js",
-    "old": "!r.out && (r.askedFor !== season || (opening && now() - r.at >= SEASON_BOARD_FRESH_MS));",
-    "new": "!r.out;",
+    "old": "  const wants = (/** @type {any} */ r, /** @type {number} */ season, /** @type {boolean} */ opening) =>\n    !r.out && (r.askedFor !== season || (opening && now() - r.at >= SEASON_BOARD_FRESH_MS));",
+    "new": "  const wants = (/** @type {any} */ r, /** @type {number} */ season, /** @type {boolean} */ opening) => !r.out;",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -430,8 +430,8 @@
   {
     "name": "SEASON-BOOK-the-out-flag-ignored",
     "file": "src/scenes/seasonBookHost.js",
-    "old": "opening) =>\n    !r.out && (",
-    "new": "opening) =>\n    (",
+    "old": "    !r.out && (r.askedFor !== season || (opening && now() - r.at >= SEASON_BOARD_FRESH_MS));",
+    "new": "    r.askedFor !== season || (opening && now() - r.at >= SEASON_BOARD_FRESH_MS);",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -440,8 +440,8 @@
   {
     "name": "SEASON-BOOK-hidden-asked",
     "file": "src/scenes/seasonBookHost.js",
-    "old": "return !!hidden() || !!busy();",
-    "new": "return !!busy();",
+    "old": "      return !!hidden() || !!busy();",
+    "new": "      return !!busy();",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -450,8 +450,8 @@
   {
     "name": "SEASON-BOOK-busy-asked",
     "file": "src/scenes/seasonBookHost.js",
-    "old": "return !!hidden() || !!busy();",
-    "new": "return !!hidden();",
+    "old": "      return !!hidden() || !!busy();",
+    "new": "      return !!hidden();",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -460,8 +460,8 @@
   {
     "name": "SEASON-BOOK-the-default-busy-not-the-gate",
     "file": "src/scenes/seasonBookHost.js",
-    "old": "busy = () => busyUntil() > Date.now(),",
-    "new": "busy = () => false,",
+    "old": "    busy = () => busyUntil() > Date.now(),",
+    "new": "    busy = () => false,",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -470,8 +470,8 @@
   {
     "name": "SEASON-BOOK-the-default-clock-frozen",
     "file": "src/scenes/seasonBookHost.js",
-    "old": "now = () => globalThis.performance?.now?.() ?? Date.now(),",
-    "new": "now = () => 0,",
+    "old": "  {\n    now = () => globalThis.performance?.now?.() ?? Date.now(),\n    hidden = () => !!globalThis.document?.hidden,\n    busy = () => busyUntil() > Date.now(),\n  } = {},",
+    "new": "  { now = () => 0, hidden = () => !!globalThis.document?.hidden, busy = () => busyUntil() > Date.now() } = {},",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -480,8 +480,8 @@
   {
     "name": "SEASON-BOOK-a-read-kept-across-accounts",
     "file": "src/scenes/seasonBookHost.js",
-    "old": "if (who !== whose) { whose = who; reads = {};",
-    "new": "if (who !== whose) { whose = who;",
+    "old": "        reads = {};\n        arena = { ...fresh(), board: arena.board, who: arena.who };",
+    "new": "        arena = { ...fresh(), board: arena.board, who: arena.who };",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -490,8 +490,8 @@
   {
     "name": "SEASON-BOOK-the-arena-board-rebound",
     "file": "src/scenes/seasonBookHost.js",
-    "old": "arena = { ...fresh(), board: arena.board, who: arena.who }; }",
-    "new": "arena = { ...fresh(), board: null, who: null }; }",
+    "old": "        arena = { ...fresh(), board: arena.board, who: arena.who };",
+    "new": "        arena = { ...fresh(), board: null, who: null };",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -500,8 +500,8 @@
   {
     "name": "SEASON-BOOK-no-session-kept",
     "file": "src/scenes/seasonBookHost.js",
-    "old": "else if (SIGNED_OUT.has(a?.error)) { r.data = null; r.state = 'failed'; }",
-    "new": "else if (SIGNED_OUT.has(a?.error)) { if (!r.data) r.state = 'failed'; }",
+    "old": "            r.data = null;\n            r.state = 'failed';",
+    "new": "            if (!r.data) r.state = 'failed';",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -510,8 +510,8 @@
   {
     "name": "SEASON-BOOK-a-guest-asked",
     "file": "src/scenes/seasonBookHost.js",
-    "old": "if (!who || guest) return { signedIn: !!who, guest, boards: {}, sea };",
-    "new": "if (!who) return { signedIn: false, guest, boards: {}, sea };",
+    "old": "      if (!who || guest) return { signedIn: !!who, guest, boards: {}, sea }; // R4: nothing to ask, and nothing asked",
+    "new": "      if (!who) return { signedIn: false, guest, boards: {}, sea }; // R4: nothing to ask, and nothing asked",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -520,8 +520,8 @@
   {
     "name": "SEASON-BOOK-last-seasons-answer-shown",
     "file": "src/scenes/seasonBookHost.js",
-    "old": "if (r.data && (s == null || s === season)) return { state: 'ok', data: r.data };",
-    "new": "if (r.data) return { state: 'ok', data: r.data };",
+    "old": "    if (r.data && (s == null || s === season)) return { state: 'ok', data: r.data };",
+    "new": "    if (r.data) return { state: 'ok', data: r.data };",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -530,8 +530,8 @@
   {
     "name": "SEASON-BOOK-the-turn-never-asked",
     "file": "src/scenes/seasonBookHost.js",
-    "old": "r.askedFor !== season ||",
-    "new": "false ||",
+    "old": "    !r.out && (r.askedFor !== season || (opening && now() - r.at >= SEASON_BOARD_FRESH_MS));",
+    "new": "    !r.out && (false || (opening && now() - r.at >= SEASON_BOARD_FRESH_MS));",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -540,8 +540,8 @@
   {
     "name": "SEASON-BOOK-a-failure-wiping-the-answer",
     "file": "src/scenes/seasonBookHost.js",
-    "old": "else if (!r.data) r.state = 'failed';\n    }, () =>",
-    "new": "else { r.data = null; r.state = 'failed'; }\n    }, () =>",
+    "old": "          } else if (!r.data) r.state = 'failed';",
+    "new": "          } else {\n            r.data = null;\n            r.state = 'failed';\n          }",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -550,8 +550,8 @@
   {
     "name": "SEASON-BOOK-ok-without-data-wipes",
     "file": "src/scenes/seasonBookHost.js",
-    "old": "if (a?.ok && a.data) { r.data = a.data; r.state = 'ok'; }",
-    "new": "if (a?.ok) { r.data = a.data; r.state = 'ok'; }",
+    "old": "          if (a?.ok && a.data) {",
+    "new": "          if (a?.ok) {",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -560,8 +560,8 @@
   {
     "name": "SEASON-BOOK-a-sync-throwing-door",
     "file": "src/scenes/seasonBookHost.js",
-    "old": "try { p = w?.[SEASON_BOARDS[id]]?.board?.(); } catch { p = null; }",
-    "new": "p = w?.[SEASON_BOARDS[id]]?.board?.();",
+    "old": "    try {\n      p = w?.[SEASON_BOARDS[id]]?.board?.();\n    } catch {\n      p = null;\n    }",
+    "new": "    p = w?.[SEASON_BOARDS[id]]?.board?.();",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -570,8 +570,8 @@
   {
     "name": "SEASON-BOOK-the-ledger-throw-escapes",
     "file": "src/scenes/seasonBookHost.js",
-    "old": "try { sea = w?.ledger?.season?.() ?? null; } catch { sea = null; }",
-    "new": "sea = w?.ledger?.season?.() ?? null;",
+    "old": "      try {\n        sea = w?.ledger?.season?.() ?? null;\n      } catch {\n        sea = null;\n      }",
+    "new": "      sea = w?.ledger?.season?.() ?? null;",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -580,8 +580,8 @@
   {
     "name": "SEASON-BOOK-the-arena-throw-escapes",
     "file": "src/scenes/seasonBookHost.js",
-    "old": "try { live = !!w?.arena?.live?.(); if (live) boards.arena = arenaView(w.arena, who, season, asking, opening); } catch { live = false; }",
-    "new": "live = !!w?.arena?.live?.(); if (live) boards.arena = arenaView(w.arena, who, season, asking, opening);",
+    "old": "      try {\n        live = !!w?.arena?.live?.();\n        if (live) boards.arena = arenaView(w.arena, who, season, asking, opening);\n      } catch {\n        live = false;\n      }",
+    "new": "      live = !!w?.arena?.live?.();\n      if (live) boards.arena = arenaView(w.arena, who, season, asking, opening);",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -590,8 +590,8 @@
   {
     "name": "SEASON-BOOK-a-throw-out-of-the-source",
     "file": "src/scenes/seasonBookHost.js",
-    "old": "const held = () => { try { return world?.() ?? null; } catch { return null; } };",
-    "new": "const held = () => world?.() ?? null;",
+    "old": "  const held = () => {\n    try {\n      return world?.() ?? null;\n    } catch {\n      return null;\n    }\n  };",
+    "new": "  const held = () => world?.() ?? null;",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -600,8 +600,8 @@
   {
     "name": "SEASON-BOOK-the-arena-reading-forever",
     "file": "src/scenes/seasonBookHost.js",
-    "old": "Promise.resolve(p).then((b) => { if (b) arena.state = 'ok'; else if (!a.board?.()) arena.state = 'failed'; }, () => { arena.state = 'failed'; })",
-    "new": "Promise.resolve(p).then(() => {}, () => {})",
+    "old": "          (b) => {\n            if (b) arena.state = 'ok';\n            else if (!a.board?.()) arena.state = 'failed';\n          },\n          () => {\n            arena.state = 'failed';\n          },",
+    "new": "          () => {},\n          () => {},",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -610,8 +610,8 @@
   {
     "name": "SEASON-BOOK-the-arena-never-fetched",
     "file": "src/scenes/seasonBookHost.js",
-    "old": "p = board ? null : a.fetchBoard?.();",
-    "new": "p = null;",
+    "old": "        p = board ? null : a.fetchBoard?.();",
+    "new": "        p = null;",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -620,8 +620,8 @@
   {
     "name": "SEASON-BOOK-a-dead-arena-read",
     "file": "src/scenes/seasonBookHost.js",
-    "old": "if (!live) boards.arena = null;",
-    "new": "if (!live) boards.arena = { state: 'asking', data: null };",
+    "old": "      if (!live) boards.arena = null; // R7: an arena not live reads nothing - the row says none",
+    "new": "      if (!live) boards.arena = { state: 'asking', data: null }; // R7: an arena not live reads nothing - the row says none",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -630,8 +630,8 @@
   {
     "name": "SEASON-BOOK-a-strangers-board-shown",
     "file": "src/scenes/seasonBookHost.js",
-    "old": "const mine = board && arena.who === who && (s == null || s === season);",
-    "new": "const mine = board && (s == null || s === season);",
+    "old": "    const mine = board && arena.who === who && (s == null || s === season);",
+    "new": "    const mine = board && (s == null || s === season);",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],
@@ -640,8 +640,8 @@
   {
     "name": "SEASON-BOOK-the-arena-asked-every-tick",
     "file": "src/scenes/seasonBookHost.js",
-    "old": "if (may && !arena.out && (wants(arena, season, opening) || (board && !mine))) {",
-    "new": "if (may && !arena.out) {",
+    "old": "    if (may && !arena.out && (wants(arena, season, opening) || (board && !mine))) {",
+    "new": "    if (may && !arena.out) {",
     "tests": [
       "test/ui/enhanced/seasonbook.test.js"
     ],

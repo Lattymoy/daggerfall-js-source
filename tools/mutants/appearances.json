@@ -578,7 +578,7 @@
     "name": "APPEARANCES-the-shops-rows-no-wardrobe",
     "file": "src/scenes/shopRows.js",
     "old": "      ...(wardrobe ? { wardrobe } : {}),",
-    "new": "      ...({}),",
+    "new": "      ...{},",
     "tests": [
       "test/ui/wardrobe_window.test.js"
     ]

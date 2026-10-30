@@ -2,8 +2,8 @@
   {
     "name": "FINE-MENDS-the-fine-mends-nothing",
     "file": "src/scenes/standingHost.js",
-    "old": "        settleChallenge(playerEntity, region);",
-    "new": "",
+    "old": "                settleChallenge(playerEntity, region); // FINE-MENDS: the fine mends the name a penance's step, to the line at most",
+    "new": "                // FINE-MENDS: the fine mends the name a penance's step, to the line at most",
     "tests": [
       "test/systems/fb1014_finemends.test.js"
     ]

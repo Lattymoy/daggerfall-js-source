@@ -19,7 +19,7 @@
 // DOMAIN2, its castles).
 // ═══════════════════════════════════════════════════════════════════
 import { seatHallOf, seatBannerOf } from '../net/townSeatLaw.js';
-import { guildMay } from '../net/guild/guildLaw.js';   // SEAT-HALL: a palace's keepers are a hall's; GUILD-RANKS: as the guild set them
+import { guildMay } from '../net/guild/guildLaw.js'; // SEAT-HALL: a palace's keepers are a hall's; GUILD-RANKS: as the guild set them
 
 /** @param {{ seatHere: (mapId: number) => any, guild: () => any }} deps */
 export function createSeatHallHost({ seatHere, guild }) {
@@ -33,11 +33,16 @@ export function createSeatHallHost({ seatHere, guild }) {
     /** SEAT-HALL: a palace seat's Charter Room, as its visitor stands in it - `{ key, name, member, keeper }`, or null. */
     here(mapId) {
       const seat = seatHere(mapId);
-      const g = seat?.tier === 'palace' ? seat.holder?.guild ?? null : null;
+      const g = seat?.tier === 'palace' ? (seat.holder?.guild ?? null) : null;
       if (!g?.id) return null;
       const mine = guild();
       const member = seatHallOf(seat, mine?.id ?? null);
-      return { key: seat.key, name: g.name ?? '', member, keeper: member && guildMay(Number(mine?.rank), 'decorate', mine?.powers ?? null) };
+      return {
+        key: seat.key,
+        name: g.name ?? '',
+        member,
+        keeper: member && guildMay(Number(mine?.rank), 'decorate', mine?.powers ?? null),
+      };
     },
     /**
      * CROWN-HALL (7.2: "Crown: the castle is the hall"): a crown seat's castle, as its visitor stands in it - `{ key, name,
@@ -47,10 +52,15 @@ export function createSeatHallHost({ seatHere, guild }) {
      */
     crown(mapId, instance = null) {
       const seat = seatHere(mapId);
-      const g = seat?.tier === 'crown' ? seat.holder?.guild ?? null : null;
+      const g = seat?.tier === 'crown' ? (seat.holder?.guild ?? null) : null;
       if (!g?.id) return null;
       if (instance && !(castleOf(mapId)?.guild === g.id && castleOf(mapId)?.epoch === instance.epoch)) return null;
-      return { key: seat.key, name: g.name ?? '', member: seatHallOf(seat, guild()?.id ?? null), heraldry: seatBannerOf(seat) };
+      return {
+        key: seat.key,
+        name: g.name ?? '',
+        member: seatHallOf(seat, guild()?.id ?? null),
+        heraldry: seatBannerOf(seat),
+      };
     },
     /** DOMAIN2: my guild's own castle at the dungeon `mapId` - `{ guild, key, epoch, region }` - for the instance door. */
     castleAt: castleOf,

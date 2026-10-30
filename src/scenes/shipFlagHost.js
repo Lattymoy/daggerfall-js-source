@@ -19,7 +19,7 @@ import { flownFlag, flagKey, flagSizeOf } from '../systems/naval/shipFlag.js';
 import { flyOf, FLAGS_MAX } from '../render/shipFlagPass.js';
 
 /** A boat's wave phase from her number (radians). */
-export const flagPhaseOf = (uid) => (((Number(uid) >>> 0) * 2654435761) >>> 0) / 0xffffffff * Math.PI * 2;
+export const flagPhaseOf = (uid) => ((((Number(uid) >>> 0) * 2654435761) >>> 0) / 0xffffffff) * Math.PI * 2;
 
 /**
  * @param {{ myBoats: () => any[], coloursOf: (uid: number) => any, guildArms?: () => any, peerFlags?: () => { boat: any, flag: any }[],
@@ -42,18 +42,29 @@ export function createShipFlagHost(deps) {
     list = [];
     if (deps.shown && !deps.shown()) return;
     const take = (boat, flag, phase = boat?.uid ?? list.length) => {
-      if (!boat || !flag || list.length >= FLAGS_MAX) return;   // AUDIT 2: one past the pass's cap flies her pennant - it was left out for cloth never drawn
+      if (!boat || !flag || list.length >= FLAGS_MAX) return; // AUDIT 2: one past the pass's cap flies her pennant - it was left out for cloth never drawn
       const size = flagSizeOf(boat.hull);
       const node = boat.FlagObject;
       if (!size || !node || boat.GameObject?.activeSelf === false || (boat.fade ?? 1) <= 0) return;
       const top = node.position;
       if (!Array.isArray(top) || !top.every(Number.isFinite)) return;
-      flown.set(boat, flag);   // flown where it is drawn - her pennant's cubes left out for it
-      list.push({ key: flagKey(flag), flag, top, fly: flyOf(node.forward), size, phase: flagPhaseOf(phase), fade: boat.fade ?? 1 });   // AUDIT 2: her fade, the cloth dissolving with her hull
+      flown.set(boat, flag); // flown where it is drawn - her pennant's cubes left out for it
+      list.push({
+        key: flagKey(flag),
+        flag,
+        top,
+        fly: flyOf(node.forward),
+        size,
+        phase: flagPhaseOf(phase),
+        fade: boat.fade ?? 1,
+      }); // AUDIT 2: her fade, the cloth dissolving with her hull
     };
     for (const boat of deps.myBoats() ?? []) take(boat, mineOf(boat));
     for (const p of deps.peerFlags?.() ?? []) take(p.boat, p.flag);
-    for (const p of deps.seaFlags?.() ?? []) { if (list.length >= FLAGS_MAX) break; take(p.boat, p.flag, p.phase); }   // SEA-COLOURS: the nearest, to the pass's cap
+    for (const p of deps.seaFlags?.() ?? []) {
+      if (list.length >= FLAGS_MAX) break;
+      take(p.boat, p.flag, p.phase);
+    } // SEA-COLOURS: the nearest, to the pass's cap
   }
 
   return {

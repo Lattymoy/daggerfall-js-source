@@ -47,8 +47,8 @@
   {
     "name": "F3-pool-never-lets-go",
     "file": "src/scenes/spoilsPool.js",
-    "old": "if (h.who === whoLoaded) { held.delete(id); n++; }",
-    "new": "if (h.who === whoLoaded) { n++; }",
+    "old": "          held.delete(id);\n          n++;",
+    "new": "          n++;",
     "tests": [
       "test/net/auditonline2.test.js"
     ]

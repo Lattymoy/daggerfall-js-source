@@ -272,8 +272,8 @@
   {
     "name": "SET7-the-spot-turned-the-wrong-way",
     "file": "src/scenes/sigilBrokerPool.js",
-    "old": "const facing = Math.atan2(gx - e, gz - n), a = facing + CAGE_TURN;",
-    "new": "const facing = Math.atan2(gx - e, gz - n), a = facing - CAGE_TURN;",
+    "old": "    a = facing + CAGE_TURN;",
+    "new": "    a = facing - CAGE_TURN;",
     "tests": [
       "test/player/set7_broker_world.test.js"
     ],
@@ -282,8 +282,8 @@
   {
     "name": "SET7-the-gates-ground-taken-for-hers",
     "file": "src/scenes/sigilBrokerPool.js",
-    "old": "const x = t[0] + sp.x, z = t[2] + sp.z, h = heightAt(x, z);",
-    "new": "const x = t[0] + sp.x, z = t[2] + sp.z, h = t[1];",
+    "old": "    h = heightAt(x, z);",
+    "new": "    h = t[1];",
     "tests": [
       "test/player/set7_broker_world.test.js"
     ],
@@ -321,8 +321,8 @@
   {
     "name": "SET7-the-long-way-round",
     "file": "src/scenes/sigilBrokerPool.js",
-    "old": "  if (d > Math.PI) d -= Math.PI * 2;\n  if (d < -Math.PI) d += Math.PI * 2;\n",
-    "new": "",
+    "old": "  if (d > Math.PI) d -= Math.PI * 2;\n  if (d < -Math.PI) d += Math.PI * 2;\n  const step = rate * Math.max(0, dt);",
+    "new": "  const step = rate * Math.max(0, dt);",
     "tests": [
       "test/player/set7_broker_world.test.js"
     ]
@@ -357,8 +357,8 @@
   {
     "name": "SET7-her-billboard-off-her-feet",
     "file": "src/scenes/sigilBrokerPool.js",
-    "old": "batch.origin[1] = at.feet[1];",
-    "new": "batch.origin[1] = at.feet[1] + BROKER_H / 2;",
+    "old": "    batch.origin[1] = at.feet[1];",
+    "new": "    batch.origin[1] = at.feet[1] + BROKER_H / 2;",
     "tests": [
       "test/player/set7_broker_world.test.js"
     ]
@@ -375,8 +375,8 @@
   {
     "name": "SET7-her-plaque-a-bare-string",
     "file": "src/scenes/sigilBrokerPool.js",
-    "old": "  hoverName(key) { return ours(key) ? { title: BROKER_TEXT.name, subs: [doorOpen ? BROKER_TEXT.trade : BROKER_TEXT.caged] } : null; },",
-    "new": "  hoverName(key) { return ours(key) ? BROKER_TEXT.name : null; },",
+    "old": "      return ours(key) ? { title: BROKER_TEXT.name, subs: [doorOpen ? BROKER_TEXT.trade : BROKER_TEXT.caged] } : null;",
+    "new": "      return ours(key) ? BROKER_TEXT.name : null;",
     "tests": [
       "test/player/set7_broker_world.test.js"
     ]
@@ -384,8 +384,8 @@
   {
     "name": "SET7-steal-opening-her-stock",
     "file": "src/scenes/sigilBrokerPool.js",
-    "old": "      else if (mode === 'steal') say(BROKER_TEXT.steal);\n",
-    "new": "",
+    "old": "      else if (mode === 'steal') say(BROKER_TEXT.steal);\n      else if (!doorOpen)",
+    "new": "      else if (!doorOpen)",
     "tests": [
       "test/player/set7_broker_world.test.js"
     ]
@@ -393,8 +393,8 @@
   {
     "name": "SET7-a-stale-days-key-pressed",
     "file": "src/scenes/sigilBrokerPool.js",
-    "old": "const ours = (key) => typeof key === 'string' && key.startsWith('broker:') && key === keyOf();",
-    "new": "const ours = (key) => typeof key === 'string' && key.startsWith('broker:') && !!at;",
+    "old": "  const ours = (key) => typeof key === 'string' && key.startsWith('broker:') && key === keyOf();",
+    "new": "  const ours = (key) => typeof key === 'string' && key.startsWith('broker:') && !!at;",
     "tests": [
       "test/player/set7_broker_world.test.js"
     ]
@@ -402,8 +402,8 @@
   {
     "name": "SET7-the-post-never-taken-down",
     "file": "src/scenes/sigilBrokerPool.js",
-    "old": "    if (postAt) { col.removeBucket?.(BROKER_BUCKET); postAt = null; }",
-    "new": "    if (postAt) { postAt = null; }",
+    "old": "      col.removeBucket?.(BROKER_BUCKET);\n      postAt = null;",
+    "new": "      postAt = null;",
     "tests": [
       "test/player/set7_broker_world.test.js"
     ]
@@ -411,8 +411,8 @@
   {
     "name": "SET7-a-post-stood-every-frame",
     "file": "src/scenes/sigilBrokerPool.js",
-    "old": "    if (postAt && f && postAt[0] === f[0] && postAt[1] === f[1] && postAt[2] === f[2]) return;   // standing where she stands\n",
-    "new": "",
+    "old": "    if (postAt && f && postAt[0] === f[0] && postAt[1] === f[1] && postAt[2] === f[2]) return; // standing where she stands\n    if (postAt) {",
+    "new": "    if (postAt) {",
     "tests": [
       "test/player/set7_broker_world.test.js"
     ]
@@ -420,8 +420,8 @@
   {
     "name": "SET7-no-post-at-all",
     "file": "src/scenes/sigilBrokerPool.js",
-    "old": "    col.addMesh(BROKER_BUCKET, BROKER_POST.positions, BROKER_POST.indices, trs(f[0], f[1], f[2], 0, 0, 0));\n",
-    "new": "",
+    "old": "    col.addMesh(BROKER_BUCKET, BROKER_POST.positions, BROKER_POST.indices, trs(f[0], f[1], f[2], 0, 0, 0));\n    postAt = [f[0], f[1], f[2]];",
+    "new": "    postAt = [f[0], f[1], f[2]];",
     "tests": [
       "test/player/set7_broker_world.test.js"
     ]
@@ -449,7 +449,7 @@
     "name": "SET7-the-line-said-with-no-window",
     "file": "src/scenes/sigilBrokerPool.js",
     "old": "      if (was && (!due || s.day !== was.day) && gone()) say(BROKER_TEXT.gone);",
-    "new": "      if (was && (!due || s.day !== was.day)) { gone(); say(BROKER_TEXT.gone); }",
+    "new": "      if (was && (!due || s.day !== was.day)) {\n        gone();\n        say(BROKER_TEXT.gone);\n      }",
     "tests": [
       "test/player/set7_broker_world.test.js"
     ]
@@ -529,8 +529,8 @@
   {
     "name": "SET7-AUDIT-W3-a-beacon-shutting-the-sale",
     "file": "src/scenes/sigilBrokerPool.js",
-    "old": "if (was && (!due || s.day !== was.day) && gone())",
-    "new": "if (was && gone())",
+    "old": "      if (was && (!due || s.day !== was.day) && gone()) say(BROKER_TEXT.gone);",
+    "new": "      if (was && gone()) say(BROKER_TEXT.gone);",
     "tests": [
       "test/player/set7_broker_world.test.js"
     ],

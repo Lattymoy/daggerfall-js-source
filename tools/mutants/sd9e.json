@@ -146,8 +146,8 @@
   {
     "name": "SD9E-the-roll-unread-at-the-burst",
     "file": "src/scenes/spoilsPool.js",
-    "old": "      const list = typeof roll === 'function' ? roll() : spoilsList(seed >>> 0, Math.max(1, level | 0), claims);   // WB12d",
-    "new": "      const list = spoilsList(seed >>> 0, Math.max(1, level | 0), claims);   // WB12d",
+    "old": "      const list = typeof roll === 'function' ? roll() : spoilsList(seed >>> 0, Math.max(1, level | 0), claims); // WB12d: the receipt's rite; SD9e: or a pool's own roll (the Brass Remnant's)",
+    "new": "      const list = spoilsList(seed >>> 0, Math.max(1, level | 0), claims); // WB12d: the receipt's rite; SD9e: or a pool's own roll (the Brass Remnant's)",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "SD9E-the-gates-words",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    if (left.length > mailed.length) say(gathered);",
-    "new": "    if (left.length > mailed.length) say(SPOILS_TEXT.gathered);",
+    "old": "    if (left.length > mailed.length) say(gathered); // SD9e: the pool's own words",
+    "new": "    if (left.length > mailed.length) say(SPOILS_TEXT.gathered); // SD9e: the pool's own words",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]

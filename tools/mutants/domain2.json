@@ -168,8 +168,8 @@
   {
     "name": "DOMAIN2-any-instance-a-throne",
     "file": "src/scenes/seatHallHost.js",
-    "old": "      if (instance && !(castleOf(mapId)?.guild === g.id && castleOf(mapId)?.epoch === instance.epoch)) return null;\n",
-    "new": "",
+    "old": "      if (instance && !(castleOf(mapId)?.guild === g.id && castleOf(mapId)?.epoch === instance.epoch)) return null;\n      return {",
+    "new": "      return {",
     "tests": [
       "test/net/domain2_castles.test.js"
     ]

@@ -833,8 +833,8 @@
   {
     "name": "INT15-WRECK-PARTIAL",
     "file": "src/scenes/serpentHost.js",
-    "old": "{ hull: Math.ceil(ship.maxHull * 2) + 1, sail: 0, crew: 0 }",
-    "new": "{ hull: Math.ceil(ship.maxHull / 2), sail: 0, crew: 0 }",
+    "old": "        { hull: Math.ceil(ship.maxHull * 2) + 1, sail: 0, crew: 0 },",
+    "new": "        { hull: Math.ceil(ship.maxHull / 2), sail: 0, crew: 0 },",
     "tests": [
       "test/net/int12_body_relay.test.js"
     ]

@@ -213,8 +213,8 @@
   {
     "name": "SERPENT1-host-every-ball-a-word",
     "file": "src/scenes/serpentHost.js",
-    "old": "if (pending.size && t - pendingAt >= HIT_GATHER_MS) { pending = sayHits(pending, sw, 0); pendingAt = t; }",
-    "new": "if (pending.size) { pending = sayHits(pending, sw, 0); pendingAt = t; }",
+    "old": "    if (pending.size && t - pendingAt >= HIT_GATHER_MS) {",
+    "new": "    if (pending.size) {",
     "tests": [
       "test/systems/serpent1_client.test.js"
     ]
@@ -222,8 +222,8 @@
   {
     "name": "SERPENT1-host-blow-twice",
     "file": "src/scenes/serpentHost.js",
-    "old": "    if (t < a.at) return;\n    resolved.add(a.i);",
-    "new": "    if (t < a.at) return;",
+    "old": "    resolved.add(a.i);\n    if (resolved.size > 64) resolved.delete(resolved.values().next().value);",
+    "new": "    if (resolved.size > 64) resolved.delete(resolved.values().next().value);",
     "tests": [
       "test/systems/serpent1_client.test.js"
     ]
@@ -231,8 +231,8 @@
   {
     "name": "SERPENT1-host-coil-forever",
     "file": "src/scenes/serpentHost.js",
-    "old": "if (t > c.until + COIL_LOST_MS) { held = null; return; }",
-    "new": "",
+    "old": "    if (t > c.until + COIL_LOST_MS) {\n      held = null;\n      return;\n    } // its end never heard (a socket lost mid-coil): she is let go",
+    "new": "    // its end never heard (a socket lost mid-coil): she is let go",
     "tests": [
       "test/systems/serpent1_client.test.js"
     ]
@@ -240,8 +240,8 @@
   {
     "name": "SERPENT1-host-coil-no-word",
     "file": "src/scenes/serpentHost.js",
-    "old": "if (t - held.at > COIL_WORD_WAIT_MS) held = null; return;",
-    "new": "return;",
+    "old": "      if (t - held.at > COIL_WORD_WAIT_MS) held = null;\n      return;",
+    "new": "      return;",
     "tests": [
       "test/systems/serpent1_client.test.js"
     ]
@@ -249,8 +249,8 @@
   {
     "name": "SERPENT1-host-in-every-frame",
     "file": "src/scenes/serpentHost.js",
-    "old": "const due = lastIn.day !== sw.day || (lastIn.hl !== hl && t - lastIn.at >= IN_CHANGE_MS) || t - lastIn.at >= (answered ? IN_RESEND_MS : IN_RETRY_MS);",
-    "new": "const due = true;",
+    "old": "    const due =\n      lastIn.day !== sw.day ||\n      (lastIn.hl !== hl && t - lastIn.at >= IN_CHANGE_MS) ||\n      t - lastIn.at >= (answered ? IN_RESEND_MS : IN_RETRY_MS);",
+    "new": "    const due = true;",
     "tests": [
       "test/systems/serpent1_client.test.js"
     ]
@@ -258,8 +258,8 @@
   {
     "name": "SERPENT1-host-hull-no-ship",
     "file": "src/scenes/serpentHost.js",
-    "old": "const hl = b ? b.hull : -1;",
-    "new": "const hl = b ? b.hull : 4;",
+    "old": "    const hl = b ? b.hull : -1; // AUDIT SERPENT B4/H2: my own ship's, at her helm or on her deck",
+    "new": "    const hl = b ? b.hull : 4; // AUDIT SERPENT B4/H2: my own ship's, at her helm or on her deck",
     "tests": [
       "test/systems/serpent1_client.test.js"
     ]
@@ -267,7 +267,7 @@
   {
     "name": "SERPENT1-host-whirl-ignored",
     "file": "src/scenes/serpentHost.js",
-    "old": "if (s.mael && !s.fell && !s.gone) { const [x, z] = site(b.pos[0], b.pos[2]); const p = maelPull(s.mael, x, z, t); vx += p.v[0]; vz += p.v[1]; }",
+    "old": "      if (s.mael && !s.fell && !s.gone) {\n        const [x, z] = site(b.pos[0], b.pos[2]);\n        const p = maelPull(s.mael, x, z, t);\n        vx += p.v[0];\n        vz += p.v[1];\n      }",
     "new": "",
     "tests": [
       "test/systems/serpent1_client.test.js"

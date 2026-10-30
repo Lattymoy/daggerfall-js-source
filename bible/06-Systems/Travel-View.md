@@ -2238,7 +2238,7 @@ a pixel whose read failed once costs one build's hold; one that could never be b
 clock under x100 for about two minutes (at x20 lowest, the halvings and the climb's +5 a step) and holds nothing after
 its fifth ask.
 
-Recorded, not changed: loads that keep a failure but throw in no build - the snowfall's masks (snowfallHost.js:"failed = true; console.warn": no snow) and the helm's
+Recorded, not changed: loads that keep a failure but throw in no build - the snowfall's masks (snowfallHost.js:"failed = true;": no snow) and the helm's
 art (world.js `_csa*Load ??=`) - a session's look lost, not a hole in the world. Low Poly Trees' door no longer keeps
 one: since AUDIT BANTHA1 TREE-6 it is asked again on this backoff (lowPolyTreesAssets.js:"failedUntil = now() + (BUILD_RETRY_MS[tries] ?? Infinity);"),
 the trees flats meanwhile.

@@ -47,8 +47,8 @@
   {
     "name": "BAY-LEFT-GROUND-D3-ground-the-Bays-bound",
     "file": "src/scenes/snowGround.js",
-    "old": "      if (!inWorldGrid(px, py)) return null;",
-    "new": "      if (!inBay(px, py)) return null;",
+    "old": "      if (!inWorldGrid(px, py)) return null; // BAY-LEFT-GROUND: the world's grid, not the Bay's 1000 x 500",
+    "new": "      if (!inBay(px, py)) return null; // BAY-LEFT-GROUND: the world's grid, not the Bay's 1000 x 500",
     "tests": [
       "test/render/bayleftground_snow.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "BAY-LEFT-GROUND-D3-ground-the-Bays-roads-past-the-Bay",
     "file": "src/scenes/snowGround.js",
-    "old": "const net = !inBay(p.px, p.py) ? snowfallNetworkBeyond(p.px, p.py, p.paths) : raw?.source === 'basic-roads' ? snowfallNetwork(raw, p.px, p.py) : null;",
-    "new": "const net = raw?.source === 'basic-roads' ? snowfallNetwork(raw, p.px, p.py) : null;",
+    "old": "      const net = !inBay(p.px, p.py)\n        ? snowfallNetworkBeyond(p.px, p.py, p.paths)\n        : raw?.source === 'basic-roads'\n          ? snowfallNetwork(raw, p.px, p.py)\n          : null;",
+    "new": "      const net = raw?.source === 'basic-roads' ? snowfallNetwork(raw, p.px, p.py) : null;",
     "tests": [
       "test/render/bayleftground_snow.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "BAY-LEFT-GROUND-D3-box-the-Bays-clamp",
     "file": "src/scenes/snowfallHost.js",
-    "old": "    x0: onGrid(Math.min(a.x, b.x)), x1: onGrid(Math.max(a.x, b.x)),",
-    "new": "    x0: Math.max(0, Math.min(999, Math.min(a.x, b.x))), x1: Math.max(0, Math.min(999, Math.max(a.x, b.x))),",
+    "old": "    x0: onGrid(Math.min(a.x, b.x)),\n    x1: onGrid(Math.max(a.x, b.x)),",
+    "new": "    x0: Math.max(0, Math.min(999, Math.min(a.x, b.x))),\n    x1: Math.max(0, Math.min(999, Math.max(a.x, b.x))),",
     "tests": [
       "test/render/bayleftground_snow.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "BAY-LEFT-GROUND-D3-painted-word-unread",
     "file": "src/scenes/snowfallHost.js",
-    "old": "    if (!painted[t]) return ROAD_KIND.none;\n",
-    "new": "",
+    "old": "    if (!painted[t]) return ROAD_KIND.none;\n    if (PAVED_RECORDS.includes(tile >> 2)) return ROAD_KIND.road;",
+    "new": "    if (PAVED_RECORDS.includes(tile >> 2)) return ROAD_KIND.road;",
     "tests": [
       "test/render/bayleftground_snow.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "BAY-LEFT-GROUND-D3-nothing-painted-a-network",
     "file": "src/scenes/snowfallHost.js",
-    "old": "  if (!painted) return null;\n  const road = ",
-    "new": "  const road = ",
+    "old": "  if (!painted) return null;\n  const road = byteAt('roads', x, y),",
+    "new": "  const road = byteAt('roads', x, y),",
     "tests": [
       "test/render/bayleftground_snow.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "BAY-LEFT-GROUND-D3-the-Bays-join-unread",
     "file": "src/scenes/snowfallHost.js",
-    "old": "    roads: at(net.roads, x) | joinAt(x, y), paths: at(net.tracks, x),",
-    "new": "    roads: at(net.roads, x), paths: at(net.tracks, x),",
+    "old": "    roads: at(net.roads, x) | joinAt(x, y),",
+    "new": "    roads: at(net.roads, x),",
     "tests": [
       "test/render/bayleftground_snow.test.js"
     ]
@@ -742,8 +742,8 @@
   {
     "name": "BAY-LEFT-GROUND-D5-world-deck-reader-blind",
     "file": "src/scenes/shipBoardHost.js",
-    "old": "scaleOf(t.restore.terrainScale), t.restore.groundFrame)",
-    "new": "scaleOf(t.restore.terrainScale))",
+    "old": "      const y =\n        restandHeight(\n          localPos[1] - c,\n          localPos[0],\n          localPos[2],\n          scaleOf(t.restore.terrainScale),\n          t.restore.groundFrame,\n        ) + c; // BAY-LEFT-GROUND: by its frame's law",
+    "new": "      const y = restandHeight(localPos[1] - c, localPos[0], localPos[2], scaleOf(t.restore.terrainScale)) + c; // BAY-LEFT-GROUND: by its frame's law",
     "tests": [
       "test/world/terrain/bayleftground_frame.test.js"
     ]
@@ -787,8 +787,8 @@
   {
     "name": "BAY-LEFT-GROUND-D5-world-deck-unstamped",
     "file": "src/scenes/shipBoardHost.js",
-    "old": "yaw: cam.yaw, ...RECORD_GROUND_STAMP }",
-    "new": "yaw: cam.yaw, terrainScale: STREAMING_TERRAIN_SCALE }",
+    "old": "          ...RECORD_GROUND_STAMP,",
+    "new": "          terrainScale: STREAMING_TERRAIN_SCALE,",
     "tests": [
       "test/world/terrain/bayleftground_frame.test.js"
     ]

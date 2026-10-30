@@ -860,8 +860,8 @@
   {
     "name": "CREW-the-hall-unread",
     "file": "src/scenes/shipyardHost.js",
-    "old": "      .filter((r) => !signed.slots.has(crewSignOf(r.id)?.slot ?? -1));",
-    "new": "      .filter(() => true);",
+    "old": "    }).filter((r) => !signed.slots.has(crewSignOf(r.id)?.slot ?? -1));",
+    "new": "    }).filter(() => true);",
     "tests": [
       "test/systems/shipyards1_host.test.js"
     ]
@@ -887,8 +887,8 @@
   {
     "name": "CREW-the-pay-offs",
     "file": "src/scenes/shipyardHost.js",
-    "old": "        letGo(r.hand);\n",
-    "new": "",
+    "old": "        letGo(r.hand);\n        return said(",
+    "new": "        return said(",
     "tests": [
       "test/systems/shipyards1_host.test.js"
     ]
@@ -896,8 +896,8 @@
   {
     "name": "CREW-the-swaps",
     "file": "src/scenes/shipyardHost.js",
-    "old": "        letGo(r.out);\n",
-    "new": "",
+    "old": "          letGo(r.out);\n          return said(true, CREW_HALL_TEXT.swapped(recruit.name, r.hand.role, name, r.out?.name ?? replace));",
+    "new": "          return said(true, CREW_HALL_TEXT.swapped(recruit.name, r.hand.role, name, r.out?.name ?? replace));",
     "tests": [
       "test/systems/shipyards1_host.test.js"
     ]
@@ -905,8 +905,8 @@
   {
     "name": "CREW-the-sales",
     "file": "src/scenes/shipyardHost.js",
-    "old": "      if (s.at.boat) for (const h of naval()?.crewHands?.(s.at.boat) ?? []) letGo(h);",
-    "new": "      if (false) for (const h of naval()?.crewHands?.(s.at.boat) ?? []) letGo(h);",
+    "old": "      if (s.at.boat) for (const h of naval()?.crewHands?.(s.at.boat) ?? []) letGo(h); // CREW-SIGNED: her hands back at the hall",
+    "new": "      if (false) for (const h of naval()?.crewHands?.(s.at.boat) ?? []) letGo(h); // CREW-SIGNED: her hands back at the hall",
     "tests": [
       "test/systems/shipyards1_host.test.js"
     ]
@@ -1022,8 +1022,8 @@
   {
     "name": "CREW-C8-the-hosts-book-unaimed",
     "file": "src/scenes/shipyardHost.js",
-    "old": "character: () => deps.online?.() || null });",
-    "new": "character: () => null });",
+    "old": "  const signs =\n    deps.signs ?? createCrewSignBook({ live: () => !!deps.online?.(), character: () => deps.online?.() || null });",
+    "new": "  const signs = deps.signs ?? createCrewSignBook({ live: () => !!deps.online?.(), character: () => null });",
     "tests": [
       "test/server/crewsigned.test.js"
     ]

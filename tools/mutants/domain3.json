@@ -319,8 +319,8 @@
   {
     "name": "DOMAIN3-festival-stage",
     "file": "src/scenes/seatFestival.js",
-    "old": "festivalRules(town?.charterSeat ?? town)",
-    "new": "festivalRules(town)",
+    "old": "      r = mapId != null && festivalRules(town?.charterSeat ?? town);",
+    "new": "      r = mapId != null && festivalRules(town);",
     "tests": [
       "test/net/domain3_regions.test.js"
     ]

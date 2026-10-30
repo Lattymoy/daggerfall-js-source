@@ -205,8 +205,8 @@
   {
     "name": "AUDIT-STARTS-W2-the-zone-offered-online",
     "file": "src/scenes/startsHost.js",
-    "old": "const open = (start) => start === BAY_START || (!!pastBay && !!start?.province && !zoneShut(start));",
-    "new": "const open = (start) => start === BAY_START || (!!pastBay && !!start?.province);",
+    "old": "  const open = (start) => start === BAY_START || (!!pastBay && !!start?.province && !zoneShut(start));",
+    "new": "  const open = (start) => start === BAY_START || (!!pastBay && !!start?.province);",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -214,8 +214,8 @@
   {
     "name": "AUDIT-STARTS-W2-shut-without-why",
     "file": "src/scenes/startsHost.js",
-    "old": "const why = (start) => (zoneShut(start) ? STARTS_TEXT.openZone : null);",
-    "new": "const why = () => null;",
+    "old": "  const why = (start) => (zoneShut(start) ? STARTS_TEXT.openZone : null);",
+    "new": "  const why = () => null;",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -223,8 +223,8 @@
   {
     "name": "AUDIT-STARTS-W3-any-pixel",
     "file": "src/scenes/startsHost.js",
-    "old": "if (at && at.x === px.x && at.y === px.y && !q.getTask?.(FOUND)?.getTriggerValue?.()) return true;",
-    "new": "if (at && !q.getTask?.(FOUND)?.getTriggerValue?.()) return true;",
+    "old": "      if (at && at.x === px.x && at.y === px.y && !q.getTask?.(FOUND)?.getTriggerValue?.()) return true;",
+    "new": "      if (at && !q.getTask?.(FOUND)?.getTriggerValue?.()) return true;",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -232,8 +232,8 @@
   {
     "name": "AUDIT-STARTS-W3-commission-found-still-inside",
     "file": "src/scenes/startsHost.js",
-    "old": "if (at && at.x === px.x && at.y === px.y && !q.getTask?.(FOUND)?.getTriggerValue?.()) return true;",
-    "new": "if (at && at.x === px.x && at.y === px.y) return true;",
+    "old": "      if (at && at.x === px.x && at.y === px.y && !q.getTask?.(FOUND)?.getTriggerValue?.()) return true;",
+    "new": "      if (at && at.x === px.x && at.y === px.y) return true;",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -241,8 +241,8 @@
   {
     "name": "AUDIT-STARTS-W3-any-quest",
     "file": "src/scenes/startsHost.js",
-    "old": " || !PROVINCE_QUESTS.has(String(q.questName).toUpperCase())) continue;",
-    "new": ") continue;",
+    "old": "      if (!q || q.questComplete || q.questTombstoned || !PROVINCE_QUESTS.has(String(q.questName).toUpperCase()))\n        continue;",
+    "new": "      if (!q || q.questComplete || q.questTombstoned) continue;",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -250,8 +250,8 @@
   {
     "name": "AUDIT-STARTS-W5-never-healed",
     "file": "src/scenes/startsHost.js",
-    "old": "    if (!begun) for (const name of gameStartQuests(HAND_START_QUEST)) m.startQuestByName(name);\n",
-    "new": "",
+    "old": "    if (!begun) for (const name of gameStartQuests(HAND_START_QUEST)) m.startQuestByName(name);\n    return true;",
+    "new": "    return true;",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -259,8 +259,8 @@
   {
     "name": "AUDIT-STARTS-W5-a-begun-story-healed",
     "file": "src/scenes/startsHost.js",
-    "old": "const begun = !m || m.storyLegacy || (m.storyStarted?.size ?? 0) > 0",
-    "new": "const begun = !m || m.storyLegacy",
+    "old": "      (m.storyStarted?.size ?? 0) > 0 ||\n      [...(m.quests?.values?.() ?? [])].some(",
+    "new": "      [...(m.quests?.values?.() ?? [])].some(",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]
@@ -277,8 +277,8 @@
   {
     "name": "AUDIT-STARTS-V2-an-ended-start-a-writ",
     "file": "src/scenes/startsHost.js",
-    "old": "if (!q || q.questComplete || q.questTombstoned || !carriesWrit(q.questName)) continue;",
-    "new": "if (!q || !carriesWrit(q.questName)) continue;",
+    "old": "      if (!q || q.questComplete || q.questTombstoned || !carriesWrit(q.questName)) continue;",
+    "new": "      if (!q || !carriesWrit(q.questName)) continue;",
     "tests": [
       "test/systems/starts/start2_provinces.test.js"
     ]
@@ -286,8 +286,8 @@
   {
     "name": "AUDIT-STARTS-Q5-begun-over-a-load",
     "file": "src/scenes/startsHost.js",
-    "old": "      if (!live()) return;\n      const loc = landed",
-    "new": "      const loc = landed",
+    "old": "      if (!live()) return;\n      const loc = landed ? (quests()?.startSiteOfId?.(startSiteId(start)) ?? null) : null;",
+    "new": "      const loc = landed ? (quests()?.startSiteOfId?.(startSiteId(start)) ?? null) : null;",
     "tests": [
       "test/systems/starts/start2_provinces.test.js"
     ]
@@ -295,8 +295,8 @@
   {
     "name": "AUDIT-STARTS-Q6-an-unlanded-trace-asked",
     "file": "src/scenes/startsHost.js",
-    "old": "const loc = landed ? quests()?.startSiteOfId?.(startSiteId(start)) ?? null : null;",
-    "new": "const loc = quests()?.startSiteOfId?.(startSiteId(start)) ?? null;",
+    "old": "      const loc = landed ? (quests()?.startSiteOfId?.(startSiteId(start)) ?? null) : null;",
+    "new": "      const loc = quests()?.startSiteOfId?.(startSiteId(start)) ?? null;",
     "tests": [
       "test/systems/starts/start2_provinces.test.js"
     ]
@@ -304,8 +304,8 @@
   {
     "name": "AUDIT-STARTS-Q6-a-refused-start-left",
     "file": "src/scenes/startsHost.js",
-    "old": "        if (!running(moved ? start.quest : HAND_START_QUEST)) machine?.()?.startQuestByName?.(HAND_START_QUEST);\n",
-    "new": "",
+    "old": "        if (!running(moved ? start.quest : HAND_START_QUEST)) machine?.()?.startQuestByName?.(HAND_START_QUEST);\n        return;",
+    "new": "        return;",
     "tests": [
       "test/systems/starts/start2_provinces.test.js"
     ]
@@ -322,8 +322,8 @@
   {
     "name": "AUDIT-STARTS-W6-the-door-at-the-pixel",
     "file": "src/scenes/startsHost.js",
-    "old": "await teleport(p.x, p.y, null, { reposition: REPOSITION.RandomStartMarker });",
-    "new": "await teleport(p.x, p.y);",
+    "old": "    await teleport(p.x, p.y, null, { reposition: REPOSITION.RandomStartMarker });",
+    "new": "    await teleport(p.x, p.y);",
     "tests": [
       "test/systems/starts/start2_provinces.test.js"
     ]
@@ -331,8 +331,8 @@
   {
     "name": "AUDIT-STARTS-W5-the-move-unlatched",
     "file": "src/scenes/startsHost.js",
-    "old": "await quests().respawnLatched(loc);",
-    "new": "await quests().respawnAtSite?.(loc);",
+    "old": "      await quests().respawnLatched(loc);",
+    "new": "      await quests().respawnAtSite?.(loc);",
     "tests": [
       "test/systems/starts/start2_provinces.test.js"
     ]

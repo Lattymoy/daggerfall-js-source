@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-ENVIRONS-S2-restore-on-the-last-clock",
     "file": "src/scenes/snowfallHost.js",
-    "old": "      if (!runtime.restoreSaveData(d, 0)) console.warn",
-    "new": "      if (!runtime.restoreSaveData(d, gameSecondsNow)) console.warn",
+    "old": "      if (!runtime.restoreSaveData(d, 0))",
+    "new": "      if (!runtime.restoreSaveData(d, gameSecondsNow))",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-ENVIRONS-S2-complete-at-once",
     "file": "src/scenes/snowfallHost.js",
-    "old": "console.warn('[Dynamic Snow] ignored malformed or unsupported persistent track data.');\n      completePending = true;",
-    "new": "console.warn('[Dynamic Snow] ignored malformed or unsupported persistent track data.');\n      runtime.completeSession(gameSecondsNow, false, lastFrame?.now ?? 0);",
+    "old": "        console.warn('[Dynamic Snow] ignored malformed or unsupported persistent track data.');\n      completePending = true;",
+    "new": "        console.warn('[Dynamic Snow] ignored malformed or unsupported persistent track data.');\n      runtime.completeSession(gameSecondsNow, false, lastFrame?.now ?? 0);",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "AUDIT-ENVIRONS-S5-promotion-inside-the-build",
     "file": "src/scenes/snowfallHost.js",
-    "old": "if (was && was !== t) { t.replaced = true; if (runtime) promotions.push(t, was); }",
-    "new": "if (was && was !== t) { t.replaced = true; if (runtime) runtime.terrainPromoted(t, lastFrame?.now ?? 0, was); }",
+    "old": "      if (runtime) promotions.push(t, was);",
+    "new": "      if (runtime) runtime.terrainPromoted(t, lastFrame?.now ?? 0, was);",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "AUDIT-ENVIRONS-G3-decoded-top-down",
     "file": "src/scenes/snowfallHost.js",
-    "old": "createImageBitmap(await r.blob(), { imageOrientation: 'flipY', premultiplyAlpha: 'none', colorSpaceConversion: 'none' })",
-    "new": "createImageBitmap(await r.blob())",
+    "old": "  return createImageBitmap(await r.blob(), {\n    imageOrientation: 'flipY',\n    premultiplyAlpha: 'none',\n    colorSpaceConversion: 'none',\n  });",
+    "new": "  return createImageBitmap(await r.blob());",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "AUDIT-ENVIRONS-I5-draw-unguarded",
     "file": "src/scenes/snowfallHost.js",
-    "old": "      try { return surface.draw(runtime, outside); } catch (e) {",
-    "new": "      try { return surface.draw(runtime, outside); } catch (e) { throw e;",
+    "old": "        console.warn('[snowfall] the snow would not draw - its surface is let go:', e?.message ?? e);",
+    "new": "        throw e;\n        console.warn('[snowfall] the snow would not draw - its surface is let go:', e?.message ?? e);",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "AUDIT-ENVIRONS-I5-frame-unguarded",
     "file": "src/scenes/snowfallHost.js",
-    "old": "      try { tick(f); } catch (e) {",
-    "new": "      try { tick(f); } catch (e) { throw e;",
+    "old": "        broken = true;",
+    "new": "        throw e;\n        broken = true;",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]
@@ -219,8 +219,8 @@
   {
     "name": "AUDIT-ENVIRONS-I5-program-at-the-draw",
     "file": "src/scenes/snowfallHost.js",
-    "old": "      renderer.prepareTerrainSnow?.();\n",
-    "new": "",
+    "old": "      renderer.prepareTerrainSnow?.();\n      surface = new SnowfallSurface(gl, renderer);",
+    "new": "      surface = new SnowfallSurface(gl, renderer);",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]

@@ -166,8 +166,8 @@
   {
     "name": "SERPENT4-the-gale-off-her-helm",
     "file": "src/scenes/serpentHost.js",
-    "old": "if (!b || b.boat !== boat || !b.atHelm || !nearMe()) return null;",
-    "new": "if (!b || b.boat !== boat || !nearMe()) return null;",
+    "old": "      if (!b || b.boat !== boat || !b.atHelm || !nearMe()) return null;",
+    "new": "      if (!b || b.boat !== boat || !nearMe()) return null;",
     "tests": [
       "test/net/serpent/serpent4.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "SERPENT4-the-gale-everywhere",
     "file": "src/scenes/serpentHost.js",
-    "old": "if (!b || b.boat !== boat || !b.atHelm || !nearMe()) return null;",
-    "new": "if (!b || b.boat !== boat || !b.atHelm) return null;",
+    "old": "      if (!b || b.boat !== boat || !b.atHelm || !nearMe()) return null;",
+    "new": "      if (!b || b.boat !== boat || !b.atHelm) return null;",
     "tests": [
       "test/net/serpent/serpent4.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "SERPENT4-the-gale-line-every-ask",
     "file": "src/scenes/serpentHost.js",
-    "old": "if (!galeSaid) { galeSaid = true; deps.mid?.(GALE_LINE, 3); }",
-    "new": "deps.mid?.(GALE_LINE, 3);",
+    "old": "      if (!galeSaid) {\n        galeSaid = true;\n        deps.mid?.(GALE_LINE, 3);\n      }",
+    "new": "      deps.mid?.(GALE_LINE, 3);",
     "tests": [
       "test/net/serpent/serpent4.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "SERPENT4-the-marks-to-a-captain",
     "file": "src/scenes/serpentHost.js",
-    "old": "      if (!live || deps.boat?.()) return [];\n      return this.targets();",
-    "new": "      if (!live) return [];\n      return this.targets();",
+    "old": "      if (!live || deps.boat?.()) return [];",
+    "new": "      if (!live) return [];",
     "tests": [
       "test/net/serpent/serpent4.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "SERPENT4-the-hands-word-without-r",
     "file": "src/scenes/serpentHost.js",
-    "old": "z, ...(r ? { r } : {}) }, cell))",
-    "new": "z }, cell))",
+    "old": "      if (\n        d > 0 &&\n        !deps.online?.send?.({ k: 'hit', d: Math.min(5000, Math.round(d * 100) / 100), z, ...(r ? { r } : {}) }, cell)\n      )",
+    "new": "      if (d > 0 && !deps.online?.send?.({ k: 'hit', d: Math.min(5000, Math.round(d * 100) / 100), z }, cell))",
     "tests": [
       "test/net/serpent/serpent4.test.js"
     ]

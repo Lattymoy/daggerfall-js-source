@@ -236,8 +236,8 @@
   {
     "name": "CROWN-HALL-crown-tier",
     "file": "src/scenes/seatHallHost.js",
-    "old": "const g = seat?.tier === 'crown' ? seat.holder?.guild ?? null : null;",
-    "new": "const g = seat.holder?.guild ?? null;",
+    "old": "      const g = seat?.tier === 'crown' ? (seat.holder?.guild ?? null) : null;",
+    "new": "      const g = seat.holder?.guild ?? null;",
     "tests": [
       "test/systems/crownhall.test.js"
     ],
@@ -246,8 +246,8 @@
   {
     "name": "CROWN-HALL-banner",
     "file": "src/scenes/seatHallHost.js",
-    "old": "heraldry: seatBannerOf(seat) };",
-    "new": "heraldry: seat.holder?.guild?.heraldry ?? null };",
+    "old": "        heraldry: seatBannerOf(seat),",
+    "new": "        heraldry: seat.holder?.guild?.heraldry ?? null,",
     "tests": [
       "test/systems/crownhall.test.js"
     ],

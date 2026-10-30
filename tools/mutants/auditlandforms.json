@@ -828,8 +828,8 @@
   {
     "name": "AUDIT-LANDFORMS-C1-deck-raw",
     "file": "src/scenes/shipBoardHost.js",
-    "old": "pos: [player.pos[0], groundFrameHeight(player.pos[1] - state.compensation[1], player.pos[0], player.pos[2]) + state.compensation[1], player.pos[2]]",
-    "new": "pos: [...player.pos]",
+    "old": "        {\n          mapPixel: here,\n          pos: [\n            player.pos[0],\n            groundFrameHeight(player.pos[1] - state.compensation[1], player.pos[0], player.pos[2]) +\n              state.compensation[1],\n            player.pos[2],\n          ],\n          yaw: cam.yaw,\n          ...RECORD_GROUND_STAMP,\n        },",
+    "new": "        { mapPixel: here, pos: [...player.pos], yaw: cam.yaw, ...RECORD_GROUND_STAMP },",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js",
@@ -839,8 +839,8 @@
   {
     "name": "AUDIT-LANDFORMS-C1-deck-never-stood-again",
     "file": "src/scenes/shipBoardHost.js",
-    "old": "(scaleOf(t.restore?.terrainScale) !== STREAMING_TERRAIN_SCALE || landform)",
-    "new": "(scaleOf(t.restore?.terrainScale) !== STREAMING_TERRAIN_SCALE)",
+    "old": "    if (localPos && !legacy && (scaleOf(t.restore?.terrainScale) !== STREAMING_TERRAIN_SCALE || landform)) {",
+    "new": "    if (localPos && !legacy && scaleOf(t.restore?.terrainScale) !== STREAMING_TERRAIN_SCALE) {",
     "tests": [
       "test/systems/landform.test.js",
       "test/world/terrain/auditlandforms.test.js",

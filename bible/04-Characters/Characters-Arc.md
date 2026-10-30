@@ -3489,7 +3489,7 @@ seer see through and which leaves the 12.5 s blind pursuit (giveUpTimer) running
 stealth-detected, a seer included, and the pursuit given up at once (giveUpTimer 0, so TakeAction takes none and the
 melee, ranged and spell arms, which all ask inSight, never fire). The flag rides the senses context
 (`scenes/shared.js:"playerUnseen: entity.staffHidden === true"`), set each online frame by the page's follow
-(`scenes/staffFollowHost.js:"const unseen = () =>"`: hidden by the last token, and online). The travel view's `danger`
+(`scenes/staffFollowHost.js:"const unseen = ()"`: hidden by the last token, and online). The travel view's `danger`
 counts no foe near a hidden staff member (scenes/world.js), so the Overworld neither refuses to rise nor falls over one;
 a duel and a hostile ship still count. Pins: test/characters/enemy/staffunseen.test.js; mutants
 tools/mutants/staff-follow-frame.json.

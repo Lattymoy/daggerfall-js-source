@@ -228,8 +228,8 @@
   {
     "name": "SHIPYARDS-a-ship-unpaid",
     "file": "src/scenes/shipyardHost.js",
-    "old": "      deps.pay?.(price);\n",
-    "new": "",
+    "old": "      deps.pay?.(price);\n      if (it.templateIndex === BOAT_DEED_TEMPLATE) {",
+    "new": "      if (it.templateIndex === BOAT_DEED_TEMPLATE) {",
     "tests": [
       "test/systems/shipyards1_host.test.js"
     ]
@@ -237,8 +237,8 @@
   {
     "name": "SHIPYARDS-a-sold-ships-title-kept",
     "file": "src/scenes/shipyardHost.js",
-    "old": "      forgetShip(uid);\n",
-    "new": "",
+    "old": "      forgetShip(uid);\n      (deps.forgetBoat ?? ((u) => naval()?.forgetBoat?.(u)))(uid); // AUDIT SHIPYARDS L1-6: whatever the sea fight's switch",
+    "new": "      (deps.forgetBoat ?? ((u) => naval()?.forgetBoat?.(u)))(uid); // AUDIT SHIPYARDS L1-6: whatever the sea fight's switch",
     "tests": [
       "test/systems/shipyards1_host.test.js"
     ]
@@ -246,8 +246,8 @@
   {
     "name": "SHIPYARDS-a-sold-ships-cabin-kept",
     "file": "src/scenes/shipyardHost.js",
-    "old": "      deps.cabinSold?.(uid, site?.regionIndex ?? 0);\n",
-    "new": "",
+    "old": "      deps.cabinSold?.(uid, site?.regionIndex ?? 0);\n      if (s.at.boat) for (const h of naval()?.crewHands?.(s.at.boat) ?? []) letGo(h); // CREW-SIGNED: her hands back at the hall",
+    "new": "      if (s.at.boat) for (const h of naval()?.crewHands?.(s.at.boat) ?? []) letGo(h); // CREW-SIGNED: her hands back at the hall",
     "tests": [
       "test/systems/shipyards1_host.test.js"
     ]
@@ -255,8 +255,8 @@
   {
     "name": "SHIPYARDS-a-hand-unpaid",
     "file": "src/scenes/shipyardHost.js",
-    "old": "      deps.pay?.(hireCharge(fee, r.raise ?? 0));\n",
-    "new": "",
+    "old": "        deps.pay?.(hireCharge(fee, r.raise ?? 0));\n        return said(true, CREW_HALL_TEXT.signed(recruit.name, r.hand.role, name));",
+    "new": "        return said(true, CREW_HALL_TEXT.signed(recruit.name, r.hand.role, name));",
     "tests": [
       "test/systems/shipyards1_host.test.js"
     ]
@@ -264,8 +264,8 @@
   {
     "name": "SHIPYARDS-the-cabin-unread",
     "file": "src/scenes/shipyardHost.js",
-    "old": "    if ((deps.cabinHolds?.(s.row.uid) ?? 0) > 0) return",
-    "new": "    if (false) return",
+    "old": "    if ((deps.cabinHolds?.(s.row.uid) ?? 0) > 0)\n      return 'Empty the cabin first. Anything left in it is sold with the ship.';",
+    "new": "    if (false) return 'Empty the cabin first. Anything left in it is sold with the ship.';",
     "tests": [
       "test/systems/shipyards1_host.test.js"
     ]
@@ -273,8 +273,8 @@
   {
     "name": "SHIPYARDS-the-sale-unpaid",
     "file": "src/scenes/shipyardHost.js",
-    "old": "      deps.credit?.(offer);\n",
-    "new": "",
+    "old": "      deps.credit?.(offer);\n      deps.traded?.();",
+    "new": "      deps.traded?.();",
     "tests": [
       "test/systems/shipyards1_host.test.js"
     ]

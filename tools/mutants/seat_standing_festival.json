@@ -83,8 +83,8 @@
   {
     "name": "FESTIVAL-STAGE-taverns-uncapped",
     "file": "src/scenes/seatFestival.js",
-    "old": "if (two && out.length + 2 <= FESTIVAL_BANNERS_MAX) out.push(...two);",
-    "new": "if (two) out.push(...two);",
+    "old": "    if (two && out.length + 2 <= FESTIVAL_BANNERS_MAX) out.push(...two);",
+    "new": "    if (two) out.push(...two);",
     "tests": [
       "test/scenes/seat_standing_festival.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "FESTIVAL-STAGE-lantern-raised",
     "file": "src/scenes/seatFestival.js",
-    "old": "a.top[1] - FESTIVAL_LANTERN_DROP_M",
-    "new": "a.top[1] + FESTIVAL_LANTERN_DROP_M",
+    "old": "    a.top[1] - FESTIVAL_LANTERN_DROP_M,",
+    "new": "    a.top[1] + FESTIVAL_LANTERN_DROP_M,",
     "tests": [
       "test/scenes/seat_standing_festival.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "FESTIVAL-STAGE-music-every-env",
     "file": "src/scenes/seatFestival.js",
-    "old": "festival === true && environment === MUSIC_ENV.City ? MUSIC_ENV.Tavern",
-    "new": "festival === true ? MUSIC_ENV.Tavern",
+    "old": "export const festivalEnvironment = (environment, festival) =>\n  festival === true && environment === MUSIC_ENV.City ? MUSIC_ENV.Tavern : environment;",
+    "new": "export const festivalEnvironment = (environment, festival) => (festival === true ? MUSIC_ENV.Tavern : environment);",
     "tests": [
       "test/scenes/seat_standing_festival.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "FESTIVAL-STAGE-music-festival-ignored",
     "file": "src/scenes/seatFestival.js",
-    "old": "(festival === true && environment === MUSIC_ENV.City ?",
-    "new": "(environment === MUSIC_ENV.City ?",
+    "old": "  festival === true && environment === MUSIC_ENV.City ? MUSIC_ENV.Tavern : environment;",
+    "new": "  environment === MUSIC_ENV.City ? MUSIC_ENV.Tavern : environment;",
     "tests": [
       "test/scenes/seat_standing_festival.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "FESTIVAL-STAGE-version-unread",
     "file": "src/scenes/seatFestival.js",
-    "old": "if (v !== seen || t - at >= BANNER_REFRESH_MS)",
-    "new": "if (t - at >= BANNER_REFRESH_MS)",
+    "old": "    if (v !== seen || t - at >= BANNER_REFRESH_MS) {",
+    "new": "    if (t - at >= BANNER_REFRESH_MS) {",
     "tests": [
       "test/scenes/seat_standing_festival.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "FESTIVAL-STAGE-lanterns-any-week",
     "file": "src/scenes/seatFestival.js",
-    "old": "p?.festivalLanterns?.length && festive(p.homeTown) ?",
-    "new": "p?.festivalLanterns?.length ?",
+    "old": "    lanterns: (p) => (p?.festivalLanterns?.length && festive(p.homeTown) ? p.festivalLanterns : null),",
+    "new": "    lanterns: (p) => (p?.festivalLanterns?.length ? p.festivalLanterns : null),",
     "tests": [
       "test/scenes/seat_standing_festival.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "FESTIVAL-STAGE-banners-unhung",
     "file": "src/scenes/seatBanners.js",
-    "old": "      if (festivalRules(seat)) (p.festivalAnchors ?? [])",
-    "new": "      if (false) (p.festivalAnchors ?? [])",
+    "old": "      if (festivalRules(seat))",
+    "new": "      if (false)",
     "tests": [
       "test/scenes/seat_standing_festival.test.js"
     ]
