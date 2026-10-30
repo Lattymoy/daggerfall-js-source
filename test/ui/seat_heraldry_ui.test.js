@@ -205,8 +205,8 @@ test('HERALDRY-SHOWN THE SIEGE HUD: each side\'s shield on the bar - the defende
   assert.match(SIEGE_HUD_CSS, /\.sg-bar \{ position: relative;[^\n]*padding: 3px 34px; \}\n\.sg-arm \{ position: absolute; top: 4px; width: 22px; height: auto;[^\n]*\}\n\.sg-arm-defend \{ left: 6px; \}\n\.sg-arm-attack \{ right: 6px; \}/);
   hud.destroy();
   // the session dresses the fight it enters, once
-  assert.match(rd('src/net/siege/siegeSession.js'), /      s = \{ seat, battle: fightArmed\(battle, seat\), field, room: '',/);
-  assert.match(rd('src/net/siege/siegeSession.js'), /attacker: s\.battle\?\.attackerGuild, defender: s\.battle\?\.defenderGuild \}/);
+  assert.match(rd('src/net/siege/siegeSession.js'), /s = \{\n\s*seat,\n\s*battle: fightArmed\(battle, seat\),\n\s*field,\n\s*room: '',/);
+  assert.match(rd('src/net/siege/siegeSession.js'), /attacker: s\.battle\?\.attackerGuild,\n\s*defender: s\.battle\?\.defenderGuild,\n\s*\}/);
 });
 
 test('HERALDRY-SHOWN THE SEAT TAB\'S CHRONICLE: each line under the shield of the guild it is about - known from the standings\' answer or the seats\' list - and a line about a guild unknown, or no guild, under none; the words unchanged (mutants: the swatch; the row\'s guild; the sources)', async () => {

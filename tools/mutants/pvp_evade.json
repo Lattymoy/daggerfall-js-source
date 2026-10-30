@@ -11,8 +11,8 @@
   {
     "name": "PVP-EVADE-the-level-backwards",
     "file": "src/net/siege/refereeHealthShare.js",
-    "old": "Math.max(0, toLevel - byLevel)",
-    "new": "Math.max(0, byLevel - toLevel)",
+    "old": "  const over = Number.isSafeInteger(byLevel) && Number.isSafeInteger(toLevel) ? Math.max(0, toLevel - byLevel) : 0;",
+    "new": "  const over = Number.isSafeInteger(byLevel) && Number.isSafeInteger(toLevel) ? Math.max(0, byLevel - toLevel) : 0;",
     "tests": [
       "test/net/pvpevade.test.js"
     ]

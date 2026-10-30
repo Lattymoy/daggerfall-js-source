@@ -353,8 +353,8 @@
   {
     "name": "SR-pistolet-no-top",
     "file": "src/net/siege/siegeRef.js",
-    "old": " : w === SIEGE_PISTOLET.template ? SIEGE_PISTOLET.max",
-    "new": "",
+    "old": "  const top =\n    w === SIEGE_THUNDERLOCK.template\n      ? SIEGE_THUNDERLOCK.max\n      : w === SIEGE_PISTOLET.template\n        ? SIEGE_PISTOLET.max\n        : SIEGE_WEAPON_MAX[/** @type {any} */ (w)];",
+    "new": "  const top = w === SIEGE_THUNDERLOCK.template ? SIEGE_THUNDERLOCK.max : SIEGE_WEAPON_MAX[/** @type {any} */ (w)];",
     "tests": [
       "test/systems/pistolet.test.js",
       "test/systems/pvpref_law.test.js",

@@ -32,8 +32,8 @@
   {
     "name": "PVP-VITALS-the-rise-unsourced",
     "file": "src/net/siege/refereeHealthShare.js",
-    "old": "healRoom(fighter, now), sourced ? Math.floor(healCredit(fighter, now)) : Infinity);",
-    "new": "healRoom(fighter, now), Infinity);",
+    "old": "    const got = Math.min(\n      fighter.max - fighter.hp,\n      Math.round(target) - fighter.hp,\n      healRoom(fighter, now),\n      sourced ? Math.floor(healCredit(fighter, now)) : Infinity,\n    );",
+    "new": "    const got = Math.min(fighter.max - fighter.hp, Math.round(target) - fighter.hp, healRoom(fighter, now), Infinity);",
     "tests": [
       "test/net/pvpvitals.test.js",
       "test/net/int9_wild_ref.test.js"
@@ -43,8 +43,8 @@
   {
     "name": "PVP-VITALS-the-shield-believed",
     "file": "src/net/siege/refereeHealthShare.js",
-    "old": "  if (sourced && !shieldPaid(fighter, now)) share.shield = 0;",
-    "new": "",
+    "old": "  if (sourced && !shieldPaid(fighter, now)) share.shield = 0; // PVP-VITALS: a Shield nobody paid for is none",
+    "new": "  // PVP-VITALS: a Shield nobody paid for is none",
     "tests": [
       "test/net/pvpvitals.test.js"
     ],

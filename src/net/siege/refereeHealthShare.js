@@ -4,7 +4,7 @@
 // share and the last word it applied (`seen`); the count is that share of the referee's maximum plus every change the referee
 // made since (the word log), so a lost report or a word in flight costs nothing. A loss is taken at once, never below 1.
 // A pool no report has anchored is told to nobody. Pure: no clock, socket or storage (client half: refereeHealthMirror.js).
-import { healCredit, spendCredit, shieldPaid, healthCapAt } from '../wild/pvpVitals.js';   // PVP-VITALS: a flagged fighter's rise is paid for
+import { healCredit, spendCredit, shieldPaid, healthCapAt } from '../wild/pvpVitals.js'; // PVP-VITALS: a flagged fighter's rise is paid for
 /** A share's whole, in parts: ten thousand, so a report rounds by a hundredth of a percent of the referee's count. */
 export const HEALTH_SHARE_WHOLE = 10_000;
 
@@ -23,7 +23,10 @@ export const PVP_HEAL = Object.freeze({ windowMs: 15_000, base: 0.25, top: 0.35,
 /** PVP-HEAL: the share of the whole a fight's heals may restore per window at `restoration` (skill + gear). */
 export const pvpHealShare = (restoration) => {
   const r = Number.isFinite(restoration) ? restoration : 0;
-  return Math.min(PVP_HEAL.top, PVP_HEAL.base + PVP_HEAL.step * Math.max(0, Math.floor((r - PVP_HEAL.from) / PVP_HEAL.per)));
+  return Math.min(
+    PVP_HEAL.top,
+    PVP_HEAL.base + PVP_HEAL.step * Math.max(0, Math.floor((r - PVP_HEAL.from) / PVP_HEAL.per)),
+  );
 };
 /** The most Restoration a report may claim (skill + gear: a mastered 200 and every gear line). */
 export const PVP_RESTORATION_MAX = 1000;
@@ -48,7 +51,9 @@ export const PVP_WARD = Object.freeze({ min: 15, max: 100, elements: 5 });
 /** PVP-WARD: a cast of element `el` (0-4; unnamed, magic) on `fighter`, after its resistance - at least 1 where it was over 0. */
 export function wardedCast(fighter, el, want) {
   const w = fighter?.share?.ward;
-  const kept = Array.isArray(w) ? (w[Number.isInteger(el) && el >= 0 && el < PVP_WARD.elements ? el : PVP_WARD.elements - 1] ?? PVP_WARD.max) : PVP_WARD.max;
+  const kept = Array.isArray(w)
+    ? (w[Number.isInteger(el) && el >= 0 && el < PVP_WARD.elements ? el : PVP_WARD.elements - 1] ?? PVP_WARD.max)
+    : PVP_WARD.max;
   return want > 0 ? Math.max(1, Math.round((want * kept) / 100)) : 0;
 }
 
@@ -68,7 +73,14 @@ export function shieldedBlow(fighter, shaft, want) {
  *  in pvp"): a player's swing or shaft that hit is still evaded whole - 0.05% for each point of live Dodging (gear
  *  counted) to 25% at 500, 2% for each level the struck one stands over its striker to 20%, and a gear power's evade
  *  (the Raven's), all three to 40%. Spells are never evaded. The client reports Dodging and the power, the relay rolls. */
-export const PVP_EVADE = Object.freeze({ perDodge: 0.05, dodgeMax: 25, perLevel: 2, levelMax: 20, max: 40, dodgeTop: 1000 });
+export const PVP_EVADE = Object.freeze({
+  perDodge: 0.05,
+  dodgeMax: 25,
+  perLevel: 2,
+  levelMax: 20,
+  max: 40,
+  dodgeTop: 1000,
+});
 /** PVP-EVADE: the chance, per cent, that `fighter` (its reported Dodging and gear power) evades a blow from a striker of
  *  signed level `byLevel`, itself at signed level `toLevel` - an unsigned level gives no level part. */
 export function pvpEvadeChance(fighter, byLevel, toLevel) {
@@ -91,7 +103,21 @@ export const HEALTH_SHARE_LOG_MAX = 32;
 
 /** A fresh share state: unheard, never struck by a player. @param {number} now @returns {HealthShare} */
 export function newHealthShare(now) {
-  return { epoch: Math.trunc(now), word: 0, log: [], heard: false, report: 0, playerBlowAt: 0, heals: [], resto: 0, guard: null, ward: null, shield: 0, dodge: 0, evade: 0 };
+  return {
+    epoch: Math.trunc(now),
+    word: 0,
+    log: [],
+    heard: false,
+    report: 0,
+    playerBlowAt: 0,
+    heals: [],
+    resto: 0,
+    guard: null,
+    ward: null,
+    shield: 0,
+    dodge: 0,
+    evade: 0,
+  };
 }
 
 /** A fighter's share state - made where a fighter kept from before this law (a siege's storage) has none. */
@@ -125,11 +151,14 @@ export function resetHealthShare(fighter, now) {
   const share = shareOf(fighter, now);
   share.log = [];
   share.heard = false;
-  if (fighter.vitals) fighter.vitals.heard = false;   // PVP-VITALS: the ledgers start again from the game's word too
+  if (fighter.vitals) fighter.vitals.heard = false; // PVP-VITALS: the ledgers start again from the game's word too
 }
 
 /** Whether a fighter is in a fight: struck by a player inside PVP_HEAL_BLOCK_MS. @param {{ share?: HealthShare }} fighter @param {number} now */
-export const inPvpFight = (fighter, now) => { const at = fighter?.share?.playerBlowAt || 0; return at > 0 && now - at < PVP_HEAL_BLOCK_MS; };
+export const inPvpFight = (fighter, now) => {
+  const at = fighter?.share?.playerBlowAt || 0;
+  return at > 0 && now - at < PVP_HEAL_BLOCK_MS;
+};
 
 /**
  * PVP-HEAL: how much a fighter may still be healed now - without bound out of a fight, else its window's share
@@ -179,17 +208,17 @@ export function takeHealthReport(fighter, report, now, { healsBlocked = false, s
   if (!fighter || fighter.down) return false;
   const share = shareOf(fighter, now);
   if (Number.isFinite(report.resto)) share.resto = Math.max(0, Math.min(PVP_RESTORATION_MAX, Math.trunc(report.resto)));
-  if (Number.isFinite(report.max)) setPoolMax(fighter, Math.min(report.max, healthCapAt(cl, PVP_HEALTH_MAX)), now);   // PVP-HEALTH: the pool's whole is the real maximum; PVP-VITALS: never past its signed level's
+  if (Number.isFinite(report.max)) setPoolMax(fighter, Math.min(report.max, healthCapAt(cl, PVP_HEALTH_MAX)), now); // PVP-HEALTH: the pool's whole is the real maximum; PVP-VITALS: never past its signed level's
   if (Array.isArray(report.guard) && report.guard.length === PVP_GUARD_KINDS.length) {
-    share.guard = report.guard.map((n) => Math.max(PVP_GUARD.min, Math.min(PVP_GUARD.max, Math.trunc(Number(n) || 0))));   // PVP-GUARD
+    share.guard = report.guard.map((n) => Math.max(PVP_GUARD.min, Math.min(PVP_GUARD.max, Math.trunc(Number(n) || 0)))); // PVP-GUARD
   }
   if (Array.isArray(report.ward) && report.ward.length === PVP_WARD.elements) {
-    share.ward = report.ward.map((n) => Math.max(PVP_WARD.min, Math.min(PVP_WARD.max, Math.trunc(Number(n) || 0))));   // PVP-WARD
+    share.ward = report.ward.map((n) => Math.max(PVP_WARD.min, Math.min(PVP_WARD.max, Math.trunc(Number(n) || 0)))); // PVP-WARD
   }
-  if (typeof report.shield === 'number') share.shield = report.shield;   // PVP-SHIELD; PVP-KIT: its share, 0 none
-  if (Number.isFinite(report.dodge)) share.dodge = Math.max(0, Math.min(PVP_EVADE.dodgeTop, Math.trunc(report.dodge)));   // PVP-EVADE
-  if (Number.isFinite(report.evade)) share.evade = Math.max(0, Math.min(PVP_EVADE.max, Math.trunc(report.evade)));   // PVP-EVADE: a gear power's
-  if (sourced && !shieldPaid(fighter, now)) share.shield = 0;   // PVP-VITALS: a Shield nobody paid for is none
+  if (typeof report.shield === 'number') share.shield = report.shield; // PVP-SHIELD; PVP-KIT: its share, 0 none
+  if (Number.isFinite(report.dodge)) share.dodge = Math.max(0, Math.min(PVP_EVADE.dodgeTop, Math.trunc(report.dodge))); // PVP-EVADE
+  if (Number.isFinite(report.evade)) share.evade = Math.max(0, Math.min(PVP_EVADE.max, Math.trunc(report.evade))); // PVP-EVADE: a gear power's
+  if (sourced && !shieldPaid(fighter, now)) share.shield = 0; // PVP-VITALS: a Shield nobody paid for is none
   const target = (report.share * fighter.max) / HEALTH_SHARE_WHOLE + unseenChange(share, report.seen);
   const difference = target - fighter.hp;
   if (difference <= -0.5) {
@@ -197,8 +226,17 @@ export function takeHealthReport(fighter, report, now, { healsBlocked = false, s
   } else if (difference >= 0.5 && share.heard && !healsBlocked) {
     // An unheard pool starts whole, so nothing can rise in it. PVP-HEAL: in a fight, to the window's room.
     // PVP-VITALS: a flagged fighter's rise, to the credit the relay granted it (regen, a potion, a paid heal)
-    const got = Math.min(fighter.max - fighter.hp, Math.round(target) - fighter.hp, healRoom(fighter, now), sourced ? Math.floor(healCredit(fighter, now)) : Infinity);
-    if (got > 0) { fighter.hp += got; spendHeal(fighter, now, got); if (sourced) spendCredit(fighter, got, now); }
+    const got = Math.min(
+      fighter.max - fighter.hp,
+      Math.round(target) - fighter.hp,
+      healRoom(fighter, now),
+      sourced ? Math.floor(healCredit(fighter, now)) : Infinity,
+    );
+    if (got > 0) {
+      fighter.hp += got;
+      spendHeal(fighter, now, got);
+      if (sourced) spendCredit(fighter, got, now);
+    }
   }
   share.heard = true;
   share.report = Math.max(share.report, report.report);
@@ -214,7 +252,13 @@ export function takeHealthReport(fighter, report, now, { healsBlocked = false, s
 export function poolWord(fighter) {
   const share = fighter?.share;
   if (!share || !share.heard) return null;
-  return { health: Math.max(0, Math.trunc(fighter.hp)), max: fighter.max, epoch: share.epoch, word: share.word, report: share.report };
+  return {
+    health: Math.max(0, Math.trunc(fighter.hp)),
+    max: fighter.max,
+    epoch: share.epoch,
+    word: share.word,
+    report: share.report,
+  };
 }
 
 /** Whether a pool waits for a report to anchor it (the relay asks for one). @param {{ share?: HealthShare }} fighter */

@@ -20,8 +20,8 @@
   {
     "name": "PVP-GUARD-the-guard-unread",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  const want = shieldedBlow(to, shaft, guardedBlow(to, pvpBlowKind(held.w), Math.trunc(Number(d) || 0)));",
-    "new": "  const want = shieldedBlow(to, shaft, Math.max(0, Math.trunc(Number(d) || 0)));",
+    "old": "  const want = shieldedBlow(to, shaft, guardedBlow(to, pvpBlowKind(held.w), Math.trunc(Number(d) || 0))); // PVP-GUARD: the armour first (none below 0), then PVP-SHIELD",
+    "new": "  const want = shieldedBlow(to, shaft, Math.max(0, Math.trunc(Number(d) || 0))); // PVP-GUARD: the armour first (none below 0), then PVP-SHIELD",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PVP-GUARD-the-floor-unread",
     "file": "src/net/siege/refereeHealthShare.js",
-    "old": "    share.guard = report.guard.map((n) => Math.max(PVP_GUARD.min, Math.min(PVP_GUARD.max, Math.trunc(Number(n) || 0))));",
-    "new": "    share.guard = report.guard.map((n) => Math.max(0, Math.min(PVP_GUARD.max, Math.trunc(Number(n) || 0))));",
+    "old": "    share.guard = report.guard.map((n) => Math.max(PVP_GUARD.min, Math.min(PVP_GUARD.max, Math.trunc(Number(n) || 0)))); // PVP-GUARD",
+    "new": "    share.guard = report.guard.map((n) => Math.max(0, Math.min(PVP_GUARD.max, Math.trunc(Number(n) || 0)))); // PVP-GUARD",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PVP-GUARD-the-change-unseen",
     "file": "src/net/siege/refereeHealthMirror.js",
-    "old": "        || `${guard()}|${ward()}|${shieldWord()}` !== lastSentGuard   // PVP-GUARD, PVP-WARD, PVP-SHIELD: armour, a resistance or a Shield on or off\n",
-    "new": "        || false\n",
+    "old": "        `${guard()}|${ward()}|${shieldWord()}` !== lastSentGuard || // PVP-GUARD, PVP-WARD, PVP-SHIELD: armour, a resistance or a Shield on or off",
+    "new": "        false ||",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "PVP-WARD-the-ward-unread",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  const hurt = wardedCast(to, el, want);   // PVP-WARD: the target's resistance first",
-    "new": "  const hurt = want;   // PVP-WARD: the target's resistance first",
+    "old": "  const hurt = wardedCast(to, el, want); // PVP-WARD: the target's resistance first",
+    "new": "  const hurt = want; // PVP-WARD: the target's resistance first",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "PVP-WARD-the-floor-unread",
     "file": "src/net/siege/refereeHealthShare.js",
-    "old": "    share.ward = report.ward.map((n) => Math.max(PVP_WARD.min, Math.min(PVP_WARD.max, Math.trunc(Number(n) || 0))));   // PVP-WARD",
-    "new": "    share.ward = report.ward.map((n) => Math.max(0, Math.min(PVP_WARD.max, Math.trunc(Number(n) || 0))));   // PVP-WARD",
+    "old": "    share.ward = report.ward.map((n) => Math.max(PVP_WARD.min, Math.min(PVP_WARD.max, Math.trunc(Number(n) || 0)))); // PVP-WARD",
+    "new": "    share.ward = report.ward.map((n) => Math.max(0, Math.min(PVP_WARD.max, Math.trunc(Number(n) || 0)))); // PVP-WARD",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "PVP-SHIELD-the-report-unread",
     "file": "src/net/siege/refereeHealthShare.js",
-    "old": "  if (typeof report.shield === 'number') share.shield = report.shield;",
-    "new": "",
+    "old": "  if (typeof report.shield === 'number') share.shield = report.shield; // PVP-SHIELD; PVP-KIT: its share, 0 none",
+    "new": "  // PVP-SHIELD; PVP-KIT: its share, 0 none",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "PVP-SHIELD-the-shaft-read-as-a-swing",
     "file": "src/net/siege/refereeHealthShare.js",
-    "old": "(shaft ? PVP_SHIELD.shaft : PVP_SHIELD.melee)",
-    "new": "(PVP_SHIELD.melee)",
+    "old": "  const off = ((100 - (shaft ? PVP_SHIELD.shaft : PVP_SHIELD.melee)) * Math.min(sh, PVP_SHIELD.max)) / PVP_SHIELD.max;",
+    "new": "  const off = ((100 - PVP_SHIELD.melee) * Math.min(sh, PVP_SHIELD.max)) / PVP_SHIELD.max;",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "PVP-SHIELD-the-change-unseen",
     "file": "src/net/siege/refereeHealthMirror.js",
-    "old": "`${guard()}|${ward()}|${shieldWord()}` !== lastSentGuard",
-    "new": "`${guard()}|${ward()}|0` !== lastSentGuard",
+    "old": "        `${guard()}|${ward()}|${shieldWord()}` !== lastSentGuard || // PVP-GUARD, PVP-WARD, PVP-SHIELD: armour, a resistance or a Shield on or off",
+    "new": "        `${guard()}|${ward()}|0` !== lastSentGuard || // PVP-GUARD, PVP-WARD, PVP-SHIELD: armour, a resistance or a Shield on or off",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ]
@@ -288,8 +288,8 @@
   {
     "name": "PVP-POTIONS-the-mirror-silent",
     "file": "src/net/siege/refereeHealthMirror.js",
-    "old": "    setPvpFight(active);   // PVP-POTIONS",
-    "new": "    void setPvpFight;   // PVP-POTIONS",
+    "old": "    setPvpFight(active); // PVP-POTIONS: the potion clocks run only in a fight",
+    "new": "    void setPvpFight; // PVP-POTIONS: the potion clocks run only in a fight",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ],
@@ -368,8 +368,8 @@
   {
     "name": "PVP-ARMOUR-CAST-unregistered",
     "file": "src/net/siege/refereeHealthMirror.js",
-    "old": "import '../../combat/pvpArmourCasting.js';",
-    "new": "import '../../combat/pvpPotions.js';",
+    "old": "import '../../combat/pvpArmourCasting.js'; // PVP-ARMOUR-CAST: its doors, registered where the fight flag is set",
+    "new": "import '../../combat/pvpPotions.js'; // PVP-ARMOUR-CAST: its doors, registered where the fight flag is set",
     "tests": [
       "test/combat/pvp_guard.test.js"
     ],

@@ -1179,7 +1179,7 @@ ARCHERY-REF (2026-10-26, from the CI of the merged change): the referees kept DF
 player's blow in a siege, an arena bout, a duel and the open zone against its own copies of the weapon tables,
 pinned equal to `characters/weapons.js`, and the account service signs a character's arms reach from one of them.
 Both copies still read 16 and 18, so a top bow blow stood over the referee's bucket. They read 17 and 19 now
-(`net/siege/siegeRef.js:"126: 18, 127: 12, 128: 16, 129: 17, 130: 19,"`,
+(`net/siege/siegeRef.js:"126: 18,"`,
 `net/arena/arenaLaw.js:"export const ARENA_WEAPON_MAX"`): relay world270 and account acct196 (acct197 since the merge of main), in the TESA fold's release
 (#1184, which carried it while main stood red). The flight pins
 measured a shaft by MISSILE_SPEED's 1.25 m a 0.05 s step; they step it by the frame that flies those 1.25 m at
@@ -1192,7 +1192,7 @@ the two met with one set of values, and the relay's row is world270, past BOW-TO
 kept the old bows, so the arena's and the siege's referees would have capped a bow's top blow one short of the game's.
 Both copies now take the bows' new tops, a Short Bow 17 and a Long Bow 19
 (`net/arena/arenaLaw.js:"export const ARENA_WEAPON_MAX = Object.freeze({"`,
-`net/siege/siegeRef.js:"export const SIEGE_WEAPON_MAX = Object.freeze({"`). Both files are in the relay's bundle,
+`net/siege/siegeRef.js:"export const SIEGE_WEAPON_MAX"`). Both files are in the relay's bundle,
 so RELAY_VERSION is `world269` with its LAW row, and every pin of `world268` is moved. relay-deploy.yml deploys it
 on the merge, which drops every open socket once.
 

@@ -58,6 +58,8 @@
 /src/net/safety/*/
 !/src/net/sea/
 /src/net/sea/*/
+!/src/net/siege/
+/src/net/siege/*/
 !/src/net/staffEvent/
 /src/net/staffEvent/*/
 !/src/net/starfall/

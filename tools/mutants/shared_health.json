@@ -22,8 +22,8 @@
   {
     "name": "SHARED-HEALTH-the-pvp-window-unread",
     "file": "src/net/siege/refereeHealthShare.js",
-    "old": "return at > 0 && now - at < PVP_HEAL_BLOCK_MS; };",
-    "new": "return at > 0; };",
+    "old": "  return at > 0 && now - at < PVP_HEAL_BLOCK_MS;",
+    "new": "  return at > 0;",
     "tests": [
       "test/net/siege/sharedhealth_law.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "SHARED-HEALTH-the-sieges-block-unread",
     "file": "src/net/siege/refereeHealthShare.js",
-    "old": "} else if (difference >= 0.5 && share.heard && !healsBlocked) {",
-    "new": "} else if (difference >= 0.5 && share.heard) {",
+    "old": "  } else if (difference >= 0.5 && share.heard && !healsBlocked) {",
+    "new": "  } else if (difference >= 0.5 && share.heard) {",
     "tests": [
       "test/net/siege/sharedhealth_law.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "PVP-HEAL-the-cap-unread",
     "file": "src/net/siege/refereeHealthShare.js",
-    "old": "Math.round(target) - fighter.hp, healRoom(fighter, now), sourced",
-    "new": "Math.round(target) - fighter.hp, sourced",
+    "old": "      healRoom(fighter, now),\n      sourced ? Math.floor(healCredit(fighter, now)) : Infinity,",
+    "new": "      sourced ? Math.floor(healCredit(fighter, now)) : Infinity,",
     "tests": [
       "test/net/siege/sharedhealth_law.test.js",
       "test/net/duel/sharedhealth_duel.test.js"
@@ -63,7 +63,7 @@
   {
     "name": "SHARED-HEALTH-the-blow-opens-no-window",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  if (got > 0) noteRefereeChange(to, -got, now, true);   // SHARED-HEALTH: a report that has not seen this blow still counts it; no heal mid-PvP",
+    "old": "  if (got > 0) noteRefereeChange(to, -got, now, true); // SHARED-HEALTH: a report that has not seen this blow still counts it; no heal mid-PvP",
     "new": "  if (got > 0) noteRefereeChange(to, -got, now);",
     "tests": [
       "test/net/siege/sharedhealth_law.test.js"
@@ -133,7 +133,7 @@
   {
     "name": "SHARED-HEALTH-the-blow-unlogged",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  if (got > 0) noteRefereeChange(to, -got, now, true);   // SHARED-HEALTH: a report that has not seen this blow still counts it; no heal mid-PvP",
+    "old": "  if (got > 0) noteRefereeChange(to, -got, now, true); // SHARED-HEALTH: a report that has not seen this blow still counts it; no heal mid-PvP",
     "new": "",
     "tests": [
       "test/net/siege/sharedhealth_law.test.js"
@@ -303,8 +303,8 @@
   {
     "name": "PVP-HEALTH-the-bound-dropped",
     "file": "src/net/siege/refereeHealthShare.js",
-    "old": "const to = Math.max(1, Math.min(PVP_HEALTH_MAX, Math.trunc(Number(max) || 0)));",
-    "new": "const to = Math.max(1, Math.trunc(Number(max) || 0));",
+    "old": "  const to = Math.max(1, Math.min(PVP_HEALTH_MAX, Math.trunc(Number(max) || 0)));",
+    "new": "  const to = Math.max(1, Math.trunc(Number(max) || 0));",
     "tests": [
       "test/net/siege/sharedhealth_law.test.js"
     ]
@@ -312,8 +312,8 @@
   {
     "name": "PVP-HEALTH-the-rise-heals",
     "file": "src/net/siege/refereeHealthShare.js",
-    "old": "const kept = to > fighter.max && inPvpFight(fighter, now) ? fighter.hp : ",
-    "new": "const kept = ",
+    "old": "  const kept = to > fighter.max && inPvpFight(fighter, now) ? fighter.hp : Math.round((fighter.hp * to) / fighter.max);",
+    "new": "  const kept = Math.round((fighter.hp * to) / fighter.max);",
     "tests": [
       "test/net/siege/sharedhealth_law.test.js"
     ]
@@ -321,8 +321,8 @@
   {
     "name": "PVP-HEALTH-the-maximum-unread",
     "file": "src/net/siege/refereeHealthShare.js",
-    "old": "  if (Number.isFinite(report.max)) setPoolMax(fighter, Math.min(report.max, healthCapAt(cl, PVP_HEALTH_MAX)), now);",
-    "new": "",
+    "old": "  if (Number.isFinite(report.max)) setPoolMax(fighter, Math.min(report.max, healthCapAt(cl, PVP_HEALTH_MAX)), now); // PVP-HEALTH: the pool's whole is the real maximum; PVP-VITALS: never past its signed level's",
+    "new": "  // PVP-HEALTH: the pool's whole is the real maximum; PVP-VITALS: never past its signed level's",
     "tests": [
       "test/net/siege/sharedhealth_law.test.js"
     ]

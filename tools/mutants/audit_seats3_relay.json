@@ -1,128 +1,128 @@
 [
- {
-  "name": "SEATS3-B1-step-height-unchecked",
-  "file": "server/src/index.js",
-  "old": "    if (!siegeStepLevel(siegeGroundOf(s.battle, a.sub), f.pose, p)) { this._send(ws, JSON.stringify({ t: 'siege', k: 'back', p: f.pose })); return false; }\n",
-  "new": "",
-  "tests": [
-   "test/net/audit_seats3_relay.test.js"
-  ]
- },
- {
-  "name": "SEATS3-B1-blow-height-unchecked",
-  "file": "server/src/index.js",
-  "old": "    if (siegeOffGround(siegeGroundOf(b, a.sub), by.pose) > SIEGE_HEIGHT_M) return;\n",
-  "new": "",
-  "tests": [
-   "test/net/audit_seats3_relay.test.js"
-  ]
- },
- {
-  "name": "SEATS3-B1-npc-reach-law-flat",
-  "file": "src/net/siege/siegeRef.js",
-  "old": "  && siegeOffGround(ground, from) <= SIEGE_HEIGHT_M;   // AUDIT SEATS-3 B1",
-  "new": ";   // AUDIT SEATS-3 B1",
-  "tests": [
-   "test/net/audit_seats3_relay.test.js"
-  ]
- },
- {
-  "name": "SEATS3-B1-royal-level-unchecked",
-  "file": "server/src/index.js",
-  "old": "    if (!royalLevel(s.fighters[other].pose, s.fighters[a.sub]?.pose)) { this._send(ws, JSON.stringify({ t: 'siege', k: 'no', m: 'the ring is not level' })); return; }",
-  "new": "",
-  "tests": [
-   "test/net/audit_seats3_relay.test.js"
-  ]
- },
- {
-  "name": "SEATS3-B1-bout-ground-unrecorded",
-  "file": "src/net/siege/siegeRef.js",
-  "old": "  if (b.bout) b.bout.y = (marks[0].y + marks[1].y) / 2;   // AUDIT SEATS-3 B1",
-  "new": "",
-  "tests": [
-   "test/net/audit_seats3_relay.test.js"
-  ]
- },
- {
-  "name": "SEATS3-B1-no-walking-back",
-  "file": "src/net/siege/siegeRef.js",
-  "old": "return off <= SIEGE_HEIGHT_M || !last || off < siegeOffGround(ground, last);",
-  "new": "return off <= SIEGE_HEIGHT_M || !last;",
-  "tests": [
-   "test/net/audit_seats3_relay.test.js"
-  ]
- },
- {
-  "name": "SEATS3-B2-return-at-door-dropped",
-  "file": "server/src/index.js",
-  "old": "      if (s.battle && !s.battle.result && (mine.side === 'attack' || mine.side === 'defend') && Number.isFinite(mine.goneAt)) {",
-  "new": "      if (false) {",
-  "tests": [
-   "test/net/audit_seats3_relay.test.js"
-  ]
- },
- {
-  "name": "SEATS3-B2-siege-return-skipped",
-  "file": "server/src/index.js",
-  "old": "        if (siegeReturn(s.battle, mine, now)) await this._siegeArm(mine.upAt);\n",
-  "new": "",
-  "tests": [
-   "test/net/audit_seats3_relay.test.js"
-  ]
- },
- {
-  "name": "SEATS3-B2-leave-stamp-lost",
-  "file": "server/src/index.js",
-  "old": "        mine.goneAt = gone;\n",
-  "new": "",
-  "tests": [
-   "test/net/audit_seats3_relay.test.js"
-  ]
- },
- {
-  "name": "SEATS3-B3-duel-count-skipped",
-  "file": "server/src/index.js",
-  "old": "      if (c.sd === 'duel') { const no = this._siegeRoomFor(s, who.subject, c.sd, now); if (no) return { no }; }",
-  "new": "",
-  "tests": [
-   "test/net/audit_seats3_relay.test.js"
-  ]
- },
- {
-  "name": "SEATS3-B4-in-throttle-removed",
-  "file": "server/src/index.js",
-  "old": "      if (Number.isFinite(mt.siegeInAt) && now - mt.siegeInAt < SIEGE_IN_MS) return;\n",
-  "new": "",
-  "tests": [
-   "test/net/audit_seats3_relay.test.js"
-  ]
- },
- {
-  "name": "SEATS3-B4-in-stamp-unset",
-  "file": "server/src/index.js",
-  "old": "      mt.siegeInAt = now;\n",
-  "new": "",
-  "tests": [
-   "test/net/audit_seats3_relay.test.js"
-  ]
- },
- {
-  "name": "SEATS3-B4-roll-call-per-fighter",
-  "file": "server/src/index.js",
-  "old": "const sk = socks.get(sub); if (sk) st.push(",
-  "new": "const sk = this._siegeSocketOf(sub); if (sk) st.push(",
-  "tests": [
-   "test/net/audit_seats3_relay.test.js"
-  ]
- },
- {
-  "name": "SEATS3-B5-place-check-unskipped",
-  "file": "server/src/index.js",
-  "old": "if (s.battle && !(s.battle.result && s.receipts?.[who.subject]) && (c.sd",
-  "new": "if (s.battle && (c.sd",
-  "tests": [
-   "test/net/audit_seats3_relay.test.js"
-  ]
- }
+  {
+    "name": "SEATS3-B1-step-height-unchecked",
+    "file": "server/src/index.js",
+    "old": "    if (!siegeStepLevel(siegeGroundOf(s.battle, a.sub), f.pose, p)) { this._send(ws, JSON.stringify({ t: 'siege', k: 'back', p: f.pose })); return false; }\n",
+    "new": "",
+    "tests": [
+      "test/net/audit_seats3_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-B1-blow-height-unchecked",
+    "file": "server/src/index.js",
+    "old": "    if (siegeOffGround(siegeGroundOf(b, a.sub), by.pose) > SIEGE_HEIGHT_M) return;\n",
+    "new": "",
+    "tests": [
+      "test/net/audit_seats3_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-B1-npc-reach-law-flat",
+    "file": "src/net/siege/siegeRef.js",
+    "old": "    (SIEGE_NPC[n.kind]?.leashM ?? 0) + (SIEGE_NPC[n.kind]?.landM ?? 0) &&\n  siegeOffGround(ground, from) <= SIEGE_HEIGHT_M; // AUDIT SEATS-3 B1: and on the field's ground (`ground`, the room's units - null judges no height), as their own blow asks of its mark",
+    "new": "    (SIEGE_NPC[n.kind]?.leashM ?? 0) + (SIEGE_NPC[n.kind]?.landM ?? 0); // AUDIT SEATS-3 B1: and on the field's ground (`ground`, the room's units - null judges no height), as their own blow asks of its mark",
+    "tests": [
+      "test/net/audit_seats3_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-B1-royal-level-unchecked",
+    "file": "server/src/index.js",
+    "old": "    if (!royalLevel(s.fighters[other].pose, s.fighters[a.sub]?.pose)) { this._send(ws, JSON.stringify({ t: 'siege', k: 'no', m: 'the ring is not level' })); return; }",
+    "new": "",
+    "tests": [
+      "test/net/audit_seats3_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-B1-bout-ground-unrecorded",
+    "file": "src/net/siege/siegeRef.js",
+    "old": "  if (b.bout) b.bout.y = (marks[0].y + marks[1].y) / 2; // AUDIT SEATS-3 B1",
+    "new": "",
+    "tests": [
+      "test/net/audit_seats3_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-B1-no-walking-back",
+    "file": "src/net/siege/siegeRef.js",
+    "old": "  return off <= SIEGE_HEIGHT_M || !last || off < siegeOffGround(ground, last);",
+    "new": "  return off <= SIEGE_HEIGHT_M || !last;",
+    "tests": [
+      "test/net/audit_seats3_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-B2-return-at-door-dropped",
+    "file": "server/src/index.js",
+    "old": "      if (s.battle && !s.battle.result && (mine.side === 'attack' || mine.side === 'defend') && Number.isFinite(mine.goneAt)) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/net/audit_seats3_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-B2-siege-return-skipped",
+    "file": "server/src/index.js",
+    "old": "        if (siegeReturn(s.battle, mine, now)) await this._siegeArm(mine.upAt);\n",
+    "new": "",
+    "tests": [
+      "test/net/audit_seats3_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-B2-leave-stamp-lost",
+    "file": "server/src/index.js",
+    "old": "        mine.goneAt = gone;\n",
+    "new": "",
+    "tests": [
+      "test/net/audit_seats3_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-B3-duel-count-skipped",
+    "file": "server/src/index.js",
+    "old": "      if (c.sd === 'duel') { const no = this._siegeRoomFor(s, who.subject, c.sd, now); if (no) return { no }; }",
+    "new": "",
+    "tests": [
+      "test/net/audit_seats3_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-B4-in-throttle-removed",
+    "file": "server/src/index.js",
+    "old": "      if (Number.isFinite(mt.siegeInAt) && now - mt.siegeInAt < SIEGE_IN_MS) return;\n",
+    "new": "",
+    "tests": [
+      "test/net/audit_seats3_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-B4-in-stamp-unset",
+    "file": "server/src/index.js",
+    "old": "      mt.siegeInAt = now;\n",
+    "new": "",
+    "tests": [
+      "test/net/audit_seats3_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-B4-roll-call-per-fighter",
+    "file": "server/src/index.js",
+    "old": "const sk = socks.get(sub); if (sk) st.push(",
+    "new": "const sk = this._siegeSocketOf(sub); if (sk) st.push(",
+    "tests": [
+      "test/net/audit_seats3_relay.test.js"
+    ]
+  },
+  {
+    "name": "SEATS3-B5-place-check-unskipped",
+    "file": "server/src/index.js",
+    "old": "if (s.battle && !(s.battle.result && s.receipts?.[who.subject]) && (c.sd",
+    "new": "if (s.battle && (c.sd",
+    "tests": [
+      "test/net/audit_seats3_relay.test.js"
+    ]
+  }
 ]

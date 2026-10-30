@@ -42,7 +42,7 @@ export const SIEGE_RESULTS = Object.freeze(['attack', 'defend', 'tie', 'forfeit'
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();
-const FOREIGN = ['n', 'k', 't', 'o', 'd', 'b', 'w', 'x', 'y', 'c', 'l'];   // CROWN1 part two: and a bout's loser
+const FOREIGN = ['n', 'k', 't', 'o', 'd', 'b', 'w', 'x', 'y', 'c', 'l']; // CROWN1 part two: and a bout's loser
 
 /**
  * Everything a well-formed siege receipt's claims must be, before any signature is considered.
@@ -52,11 +52,12 @@ export function siegeReceiptValid(c) {
   if (!c || typeof c !== 'object' || Array.isArray(c)) return false;
   if (FOREIGN.some((f) => c[f] !== undefined)) return false;
   if (typeof c.s !== 'string' || !ID_RE.test(c.s)) return false;
-  if (!Number.isSafeInteger(c.sk) || c.sk < 0 || c.sk > 0xffffffff || !Number.isSafeInteger(c.sw) || c.sw < 0) return false;
+  if (!Number.isSafeInteger(c.sk) || c.sk < 0 || c.sk > 0xffffffff || !Number.isSafeInteger(c.sw) || c.sw < 0)
+    return false;
   if (c.sd !== 'attack' && c.sd !== 'defend') return false;
   if (!SIEGE_RESULTS.includes(c.r)) return false;
   if ((c.a !== 0 && c.a !== 1) || (c.h !== 0 && c.h !== 1)) return false;
-  if (c.th !== undefined && c.th !== 0 && c.th !== 1) return false;   // AUDIT-SEATS T1: the Throne reached - absent on a receipt minted before it
+  if (c.th !== undefined && c.th !== 0 && c.th !== 1) return false; // AUDIT-SEATS T1: the Throne reached - absent on a receipt minted before it
   if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
   if (c.e <= c.i || c.e - c.i > SIEGE_RECEIPT_TTL_S) return false;
   return true;
@@ -78,7 +79,9 @@ export async function mintSiegeReceipt({ s, sk, sw, sd, r, a, h, th = 0 }, priva
   if (!siegeReceiptValid(claims)) throw new TypeError('mintSiegeReceipt refused a claim set it could not verify');
   const body = _b64url.encode(enc.encode(JSON.stringify(claims)));
   if (!privateKey) return `${SIEGE_RECEIPT_V}.${body}.`;
-  const sig = new Uint8Array(await subtle.sign({ name: 'Ed25519' }, privateKey, enc.encode(`${SIEGE_RECEIPT_V}.${body}`)));
+  const sig = new Uint8Array(
+    await subtle.sign({ name: 'Ed25519' }, privateKey, enc.encode(`${SIEGE_RECEIPT_V}.${body}`)),
+  );
   return `${SIEGE_RECEIPT_V}.${body}.${_b64url.encode(sig)}`;
 }
 
@@ -94,7 +97,11 @@ export function readSiegeReceipt(r) {
   const raw = _b64url.decode(parts[1]);
   if (!raw) return null;
   let c;
-  try { c = JSON.parse(dec.decode(raw)); } catch { return null; }
+  try {
+    c = JSON.parse(dec.decode(raw));
+  } catch {
+    return null;
+  }
   return siegeReceiptValid(c) ? { ...withThrone(c), signed: parts[2].length > 0 } : null;
 }
 
@@ -118,15 +125,23 @@ export async function verifySiegeReceipt(r, publicKey, { subtle, nowS, skewS = S
   const raw = _b64url.decode(body);
   if (!raw) return { ok: false, why: 'body-shape' };
   let good = false;
-  try { good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(`${v}.${body}`)); } catch { return { ok: false, why: 'verify-threw' }; }
+  try {
+    good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(`${v}.${body}`));
+  } catch {
+    return { ok: false, why: 'verify-threw' };
+  }
   if (!good) return { ok: false, why: 'signature' };
   let claims;
-  try { claims = JSON.parse(dec.decode(raw)); } catch { return { ok: false, why: 'json' }; }
+  try {
+    claims = JSON.parse(dec.decode(raw));
+  } catch {
+    return { ok: false, why: 'json' };
+  }
   if (!siegeReceiptValid(claims)) return { ok: false, why: 'claims' };
   if (!Number.isSafeInteger(nowS)) return { ok: false, why: 'clock' };
   if (nowS >= claims.e) return { ok: false, why: 'expired' };
   if (claims.i > nowS + skewS) return { ok: false, why: 'future' };
-  return { ok: true, claims: withThrone(claims) };   // AUDIT-SEATS T1: an older receipt's Throne reads as 0
+  return { ok: true, claims: withThrone(claims) }; // AUDIT-SEATS T1: an older receipt's Throne reads as 0
 }
 
 // ═══ CROWN1 part two: A ROYAL TOURNEY'S BOUT (Seats-Arc 7.6) ═══════════════════════════════════════════════════════
@@ -141,14 +156,16 @@ export async function verifySiegeReceipt(r, publicKey, { subtle, nowS, skewS = S
 
 /** The bout receipt's version. */
 export const ROYAL_RECEIPT_V = 't1';
-const ROYAL_FOREIGN = ['sd', 'r', 'a', 'h', 'th', 'k', 't', 'o', 'd', 'b', 'w', 'x', 'y', 'c'];   // AUDIT-SEATS T1: and a siege's Throne
+const ROYAL_FOREIGN = ['sd', 'r', 'a', 'h', 'th', 'k', 't', 'o', 'd', 'b', 'w', 'x', 'y', 'c']; // AUDIT-SEATS T1: and a siege's Throne
 
 /** Everything a well-formed bout receipt's claims must be, before any signature is considered. */
 export function royalReceiptValid(c) {
   if (!c || typeof c !== 'object' || Array.isArray(c)) return false;
   if (ROYAL_FOREIGN.some((f) => c[f] !== undefined)) return false;
-  if (typeof c.s !== 'string' || !ID_RE.test(c.s) || typeof c.l !== 'string' || !ID_RE.test(c.l) || c.s === c.l) return false;
-  if (!Number.isSafeInteger(c.sk) || c.sk < 0 || c.sk > 0xffffffff || !Number.isSafeInteger(c.sw) || c.sw < 0) return false;
+  if (typeof c.s !== 'string' || !ID_RE.test(c.s) || typeof c.l !== 'string' || !ID_RE.test(c.l) || c.s === c.l)
+    return false;
+  if (!Number.isSafeInteger(c.sk) || c.sk < 0 || c.sk > 0xffffffff || !Number.isSafeInteger(c.sw) || c.sw < 0)
+    return false;
   if (!Number.isSafeInteger(c.n) || c.n < 1 || c.n > 1e9) return false;
   if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
   if (c.e <= c.i || c.e - c.i > SIEGE_RECEIPT_TTL_S) return false;
@@ -161,7 +178,9 @@ export async function mintRoyalReceipt({ s, l, sk, sw, n }, privateKey, { subtle
   if (!royalReceiptValid(claims)) throw new TypeError('mintRoyalReceipt refused a claim set it could not verify');
   const body = _b64url.encode(enc.encode(JSON.stringify(claims)));
   if (!privateKey) return `${ROYAL_RECEIPT_V}.${body}.`;
-  const sig = new Uint8Array(await subtle.sign({ name: 'Ed25519' }, privateKey, enc.encode(`${ROYAL_RECEIPT_V}.${body}`)));
+  const sig = new Uint8Array(
+    await subtle.sign({ name: 'Ed25519' }, privateKey, enc.encode(`${ROYAL_RECEIPT_V}.${body}`)),
+  );
   return `${ROYAL_RECEIPT_V}.${body}.${_b64url.encode(sig)}`;
 }
 /** READ - the client's half: the claims, signed or not, never a verdict; null for anything else. */
@@ -172,7 +191,11 @@ export function readRoyalReceipt(r) {
   const raw = _b64url.decode(parts[1]);
   if (!raw) return null;
   let c;
-  try { c = JSON.parse(dec.decode(raw)); } catch { return null; }
+  try {
+    c = JSON.parse(dec.decode(raw));
+  } catch {
+    return null;
+  }
   return royalReceiptValid(c) ? { ...c, signed: parts[2].length > 0 } : null;
 }
 /** VERIFY - the account service's half, the siege receipt's rungs: `{ ok: true, claims }` or `{ ok: false, why }`. */
@@ -188,10 +211,18 @@ export async function verifyRoyalReceipt(r, publicKey, { subtle, nowS, skewS = S
   const raw = _b64url.decode(body);
   if (!raw) return { ok: false, why: 'body-shape' };
   let good = false;
-  try { good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(`${v}.${body}`)); } catch { return { ok: false, why: 'verify-threw' }; }
+  try {
+    good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(`${v}.${body}`));
+  } catch {
+    return { ok: false, why: 'verify-threw' };
+  }
   if (!good) return { ok: false, why: 'signature' };
   let claims;
-  try { claims = JSON.parse(dec.decode(raw)); } catch { return { ok: false, why: 'json' }; }
+  try {
+    claims = JSON.parse(dec.decode(raw));
+  } catch {
+    return { ok: false, why: 'json' };
+  }
   if (!royalReceiptValid(claims)) return { ok: false, why: 'claims' };
   if (!Number.isSafeInteger(nowS)) return { ok: false, why: 'clock' };
   if (nowS >= claims.e) return { ok: false, why: 'expired' };

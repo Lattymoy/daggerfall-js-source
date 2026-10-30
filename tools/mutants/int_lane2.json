@@ -832,8 +832,8 @@
   {
     "name": "INT7-AUDIT-A-SHAFT-FROM-AN-UNSIGNED-BOW",
     "file": "src/net/siege/siegeRef.js",
-    "old": " || (shaft && armsOk(wa) && wa[1] !== 1)) return",
-    "new": ") return",
+    "old": "  if (shaft !== siegeIsBow(held.w) || (shaft && armsOk(wa) && wa[1] !== 1))\n    return { ok: false, dealt: 0, fell: false, why: 'weapon' }; // INT7: a shaft a signed bow's",
+    "new": "  if (shaft !== siegeIsBow(held.w)) return { ok: false, dealt: 0, fell: false, why: 'weapon' }; // INT7: a shaft a signed bow's",
     "tests": [
       "test/net/arena/int7_arms.test.js"
     ]
@@ -1064,8 +1064,8 @@
   {
     "name": "INT8-AUDIT-CLIENT-THE-CARRIER-ANYONES",
     "file": "src/net/siege/siegeClaims.js",
-    "old": "  mine: (c, who) => Array.isArray(c?.f) && c.f.includes(who) });",
-    "new": "  mine: () => true });",
+    "old": "    mine: (c, who) => Array.isArray(c?.f) && c.f.includes(who),",
+    "new": "    mine: () => true,",
     "tests": [
       "test/net/duel/int8_duel_ref.test.js"
     ]

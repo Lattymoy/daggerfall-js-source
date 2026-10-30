@@ -308,8 +308,8 @@
   {
     "name": "HS-hud-sides-swapped",
     "file": "src/net/siege/siegeLink.js",
-    "old": "arms: { defend: heraldryOf(battle.defender?.heraldry), attack:",
-    "new": "arms: { attack: heraldryOf(battle.defender?.heraldry), defend:",
+    "old": "      defend: heraldryOf(battle.defender?.heraldry),\n      attack: battle.kind === 'revolt' || s.revolt ? null : heraldryOf(battle.attacker?.heraldry),",
+    "new": "      attack: heraldryOf(battle.defender?.heraldry),\n      defend: battle.kind === 'revolt' || s.revolt ? null : heraldryOf(battle.attacker?.heraldry),",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "HS-hud-revolt-kind",
     "file": "src/net/siege/siegeLink.js",
-    "old": "attack: battle.kind === 'revolt' || s.revolt ? null :",
-    "new": "attack: s.revolt ? null :",
+    "old": "      attack: battle.kind === 'revolt' || s.revolt ? null : heraldryOf(battle.attacker?.heraldry),",
+    "new": "      attack: s.revolt ? null : heraldryOf(battle.attacker?.heraldry),",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "HS-hud-revolt-field",
     "file": "src/net/siege/siegeLink.js",
-    "old": "attack: battle.kind === 'revolt' || s.revolt ? null :",
-    "new": "attack: battle.kind === 'revolt' ? null :",
+    "old": "      attack: battle.kind === 'revolt' || s.revolt ? null : heraldryOf(battle.attacker?.heraldry),",
+    "new": "      attack: battle.kind === 'revolt' ? null : heraldryOf(battle.attacker?.heraldry),",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "HS-fight-own-overwritten",
     "file": "src/net/siege/siegeLink.js",
-    "old": "(g && !heraldryOf(g.heraldry) && arms.has(g.tag)",
-    "new": "(g && arms.has(g.tag)",
+    "old": "  const dress = (g) => (g && !heraldryOf(g.heraldry) && arms.has(g.tag) ? { ...g, heraldry: arms.get(g.tag) } : g);",
+    "new": "  const dress = (g) => (g && arms.has(g.tag) ? { ...g, heraldry: arms.get(g.tag) } : g);",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "HS-fight-mutated",
     "file": "src/net/siege/siegeLink.js",
-    "old": "? { ...g, heraldry: arms.get(g.tag) } : g);",
-    "new": "? Object.assign(g, { heraldry: arms.get(g.tag) }) : g);",
+    "old": "  const dress = (g) => (g && !heraldryOf(g.heraldry) && arms.has(g.tag) ? { ...g, heraldry: arms.get(g.tag) } : g);",
+    "new": "  const dress = (g) =>\n    g && !heraldryOf(g.heraldry) && arms.has(g.tag) ? Object.assign(g, { heraldry: arms.get(g.tag) }) : g;",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "HS-fight-null-dressed",
     "file": "src/net/siege/siegeLink.js",
-    "old": "  if (!fight) return fight;\n  const arms",
-    "new": "  const arms",
+    "old": "  if (!fight) return fight;\n  const arms = heraldryByTag(seat);",
+    "new": "  const arms = heraldryByTag(seat);",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "HS-fight-defender-bare",
     "file": "src/net/siege/siegeLink.js",
-    "old": "defenderGuild: dress(fight.defenderGuild) };",
-    "new": "defenderGuild: fight.defenderGuild };",
+    "old": "  return { ...fight, attackerGuild: dress(fight.attackerGuild), defenderGuild: dress(fight.defenderGuild) };",
+    "new": "  return { ...fight, attackerGuild: dress(fight.attackerGuild), defenderGuild: fight.defenderGuild };",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "HS-session-undressed",
     "file": "src/net/siege/siegeSession.js",
-    "old": "      s = { seat, battle: fightArmed(battle, seat), field,",
-    "new": "      s = { seat, battle, field,",
+    "old": "        battle: fightArmed(battle, seat),",
+    "new": "        battle,",
     "tests": [
       "test/ui/seat_heraldry_ui.test.js"
     ]
