@@ -1090,7 +1090,7 @@ warnings are unchanged. Recorded in `10-UI/Slots-Hotbar-Status.md`
 
 ## DUEL-BAR: the health bar shows the duel's vitality while a duel is on
 
-`src/net/duel/duelBar.js` (`duelVitality`, new; DELETED 2026-10-30, Integrity-Arc.md section 5), `src/ui/hud/hudVitals.js` (`hudHealth`, the detector's turn),
+`src/net/duel/duelBar.js` (`duelVitality`, DELETED), `src/ui/hud/hudVitals.js` (`hudHealth`, the detector's turn),
 `src/ui/hud/hud.js` (drawHud's `healthBar`), `src/ui/enhanced/enhancedHud.js` (the bar's pair, its held loss, falling
 piece and heal reading at the turn), `src/scenes/world.js` (its import and the one entry in its drawHud call).
 
@@ -1130,14 +1130,14 @@ nor is the open zone (its foes hurt the save, and a bar that read its referee wo
 - DFU has no other player to duel. Recorded in `06-Systems/Integrity-Arc.md` section 5, "Decisions (2026-10-19, FIELD
 BUGS DUEL-BAR)".
 
-- **Pinned**: `test/ui/fb1019f_duelbar.test.js` (DELETED 2026-10-30; 4: on the real relay Room refereeing a real bout into a real duel
+- **Pinned**: `test/ui/fb1019f_duelbar.test.js` (DELETED; 4: on the real relay Room refereeing a real bout into a real duel
   manager - my vitality none before the bout, the bout's whole, what a blow leaves, none once it is over though the
   manager holds it a moment yet; the classic HUD's bar read off it and the save's again at its end, the turn each way no
   loss and no gain to the detector, a save's heal under the duel no change of the bar; the enhanced HUD's fill and figure
   the same, the turn breaking no piece off, holding no pale loss and floating no heal, a heal after the duel floating as
   ever; the host's one entry by my own id, the leaf outside the relay's bundle, the readout's line, no host writing the
   referee's word into a health). PIN MOVED: `test/ui/enhanced/enhancedHud.test.js` (PX30d: the enhanced HUD's health
-  row reads drawHud's pair). `tools/mutants/duel_bar.json` (15, all dead; DELETED 2026-10-30).
+  row reads drawHud's pair). `tools/mutants/duel_bar.json` (15, DELETED).
 
 ## DISENCHANT-SAID: the Enchanting Station says why a piece gives nothing
 

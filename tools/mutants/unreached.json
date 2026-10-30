@@ -1,0 +1,83 @@
+[
+  {
+    "name": "UNREACHED-dynamic-import-unread",
+    "file": "tools/unreached.mjs",
+    "old": "|import\\(\\s*['\"`]([^'\"`$]+)['\"`]\\s*\\)",
+    "new": "",
+    "tests": [
+      "test/tooling/unreached.test.js"
+    ]
+  },
+  {
+    "name": "UNREACHED-query-kept",
+    "file": "tools/unreached.mjs",
+    "old": "plain.push(spec.split('?')[0])",
+    "new": "plain.push(spec)",
+    "tests": [
+      "test/tooling/unreached.test.js"
+    ]
+  },
+  {
+    "name": "UNREACHED-negated-glob-walked",
+    "file": "tools/unreached.mjs",
+    "old": "if (!p.startsWith('\\'!') && !p.startsWith('\"!')) globs.push",
+    "new": "globs.push",
+    "tests": [
+      "test/tooling/unreached.test.js"
+    ]
+  },
+  {
+    "name": "UNREACHED-walk-stops-at-depth-one",
+    "file": "tools/unreached.mjs",
+    "old": "if (!seen.has(t)) { seen.add(t); stack.push(t); }",
+    "new": "if (!seen.has(t)) { seen.add(t); }",
+    "tests": [
+      "test/tooling/unreached.test.js"
+    ]
+  },
+  {
+    "name": "UNREACHED-tools-not-an-entry",
+    "file": "tools/unreached.mjs",
+    "old": "'app', 'scripts', 'tools', 'public'",
+    "new": "'app', 'scripts', 'public'",
+    "tests": [
+      "test/tooling/unreached.test.js"
+    ]
+  },
+  {
+    "name": "UNREACHED-glob-not-followed",
+    "file": "tools/unreached.mjs",
+    "old": "      next.push(...src.filter((f) => f.startsWith(base)));\n",
+    "new": "",
+    "tests": [
+      "test/tooling/unreached.test.js"
+    ]
+  },
+  {
+    "name": "UNREACHED-dead-unread",
+    "file": "tools/unreached.mjs",
+    "old": "dead: found.filter((f) => !(f in base))",
+    "new": "dead: []",
+    "tests": [
+      "test/tooling/unreached.test.js"
+    ]
+  },
+  {
+    "name": "UNREACHED-stale-unread",
+    "file": "tools/unreached.mjs",
+    "old": "stale: Object.keys(base).filter((f) => !found.includes(f))",
+    "new": "stale: []",
+    "tests": [
+      "test/tooling/unreached.test.js"
+    ]
+  },
+  {
+    "name": "UNREACHED-page-script-unread",
+    "file": "tools/unreached.mjs",
+    "old": "|src=[\"']([^\"']+\\.m?js)[\"']",
+    "new": "",
+    "tests": [
+      "test/tooling/unreached.test.js"
+    ]
+  }
+]

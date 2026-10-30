@@ -1,0 +1,8 @@
+{
+ "src/characters/armorSet.js": "AUDIT 39: staged for the equip-table to armour-zones seam, not taken yet (paperdollPayload.js says so).",
+ "src/characters/clothing.js": "AUDIT 39: staged with armorSet.js for the same seam.",
+ "src/characters/pieces/greaves.js": "AUDIT 39: staged with armorSet.js for the same seam.",
+ "src/systems/gateTier.js": "EG1: the gate's tier words. The HUD, the timers and the herald still spell them themselves (Elite-Gates.md section 2).",
+ "src/world/peaks/massif.js": "PEAKS2: a range's relief, pinned and waiting for the kernel's shaper (03-World/Peaks.md).",
+ "src/world/tamriel/tamrielRaster.js": "TAMRIEL1: the continent as byte planes, kept for a later use (03-World/Tamriel.md, The raster)."
+}

@@ -1816,6 +1816,8 @@ palette. In-engine proof: TVRNAL06 patron, pin unchanged.
 
 ### C6b - the 1:1 piece method (SHIPPED)
 
+RETIRED 2026-10-30: nothing but its own test imported `pieceFromSprite.js`, so both were deleted; git keeps them.
+
 Mac's mandate: 1 to 1, no exceptions - so the sprite's pixels ARE the
 piece. `pieceFromSprite.js`: every opaque paperdoll pixel becomes one
 face on a shell wrapped around the torso ellipse (column -> front-arc
@@ -2013,6 +2015,9 @@ interior ambient + point lights, framed on camera; pin unchanged
 (`2 people`). DECIDE-C1 is now LIVE.
 
 ### C4a - Rewrite rig vendored (SHIPPED)
+
+RETIRED 2026-10-30: no page, relay or tool reached `characters/rewrite/` any more (the body went to the Morrowind
+replacement), so the vendored rig, its parity gate and `rigmath.test.js` were deleted; git keeps them.
 
 project-final's Rewrite Engine core + rig (math/geometry/palette,
 limb/body/muzzleFlash - 6 modules, flat-pathed under
