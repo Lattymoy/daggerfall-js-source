@@ -15,19 +15,19 @@
 /** THE KIT'S RECORDS (Elite-Gates-Look.md section 8), beside the ground's (world/eliteGates/egBandArt.js EG_DRESS: floor 0, brass 1,
  *  root 2, arena 4, cobble 31, edge 32, molten 33, pillar 56). */
 export const EG_KIT_RECORD = Object.freeze({
-  shaft: 60,      // a column's shaft, v along it (2 m a repeat): fluting, bone wrap, glass facets, basalt hex faces
-  moulding: 61,   // the cornice's and capitals' profile across v
-  voussoir: 62,   // an arch's and a vault rib's blocks
-  relief: 63,     // a frieze panel
-  banner: 64,     // cloth, its sigil, its torn edge a cutout
-  coffer: 65,     // a vault's coffers, an entablature's soffit
-  statue: 66,     // the figures' weathered stone
-  fixture: 67,    // a lamp's fixture and its flame (the band's light - the ruin's one emissive)
-  found: 68,      // the foundations' strata, top to tip (v down)
-  wreck: 69,      // the far wings' stone
-  crystal: 70,    // soul-gem, black glass, basalt prisms
-  inlay: 71,      // the courts' sigil mosaics and the rims' borders: tesserae in the band's accent and metal, laid in the floor
-  chain: 81,      // the band's metal in links
+  shaft: 60, // a column's shaft, v along it (2 m a repeat): fluting, bone wrap, glass facets, basalt hex faces
+  moulding: 61, // the cornice's and capitals' profile across v
+  voussoir: 62, // an arch's and a vault rib's blocks
+  relief: 63, // a frieze panel
+  banner: 64, // cloth, its sigil, its torn edge a cutout
+  coffer: 65, // a vault's coffers, an entablature's soffit
+  statue: 66, // the figures' weathered stone
+  fixture: 67, // a lamp's fixture and its flame (the band's light - the ruin's one emissive)
+  found: 68, // the foundations' strata, top to tip (v down)
+  wreck: 69, // the far wings' stone
+  crystal: 70, // soul-gem, black glass, basalt prisms
+  inlay: 71, // the courts' sigil mosaics and the rims' borders: tesserae in the band's accent and metal, laid in the floor
+  chain: 81, // the band's metal in links
 });
 /** @type {ReadonlyArray<number>} */
 export const EG_KIT_RECORDS = Object.freeze(Object.values(EG_KIT_RECORD));
@@ -52,10 +52,58 @@ export const EG_KIT_RECORDS = Object.freeze(Object.values(EG_KIT_RECORD));
  *   wreck     the far wings, by name: section 1's
  */
 export const EG_KIT_STYLE = Object.freeze([
-  Object.freeze({ column: 'fluted', capital: 'scroll', cornice: 'egg-and-dart', arch: 'round', statue: 'battlemage', fixture: 'tripod', found: 'courses', hanging: 'chandelier', among: null, sigil: 'star', wreck: Object.freeze(['rotunda', 'belltower', 'arcade', 'spiral']) }),
-  Object.freeze({ column: 'bone', capital: 'skull', cornice: 'skulls', arch: 'pointed', statue: 'mourner', fixture: 'lantern', found: 'ossuary', hanging: 'cage', among: 'obelisk', sigil: 'gem', wreck: Object.freeze(['tomb', 'crypt', 'gem', 'sunken']) }),
-  Object.freeze({ column: 'glass', capital: 'crescent', cornice: 'facets', arch: 'lancet', statue: 'raven', fixture: 'moonlamp', found: 'stalactites', hanging: 'shards', among: 'thorns', sigil: 'crescent', wreck: Object.freeze(['thorntower', 'shard', 'observatory', 'shard']) }),
-  Object.freeze({ column: 'basalt', capital: 'spiked', cornice: 'straps', arch: 'squat', statue: 'dremora', fixture: 'basket', found: 'prisms', hanging: 'girders', among: 'pylon', sigil: 'dagon', wreck: Object.freeze(['siegetower', 'wargate', 'crag', 'crag']) }),
+  Object.freeze({
+    column: 'fluted',
+    capital: 'scroll',
+    cornice: 'egg-and-dart',
+    arch: 'round',
+    statue: 'battlemage',
+    fixture: 'tripod',
+    found: 'courses',
+    hanging: 'chandelier',
+    among: null,
+    sigil: 'star',
+    wreck: Object.freeze(['rotunda', 'belltower', 'arcade', 'spiral']),
+  }),
+  Object.freeze({
+    column: 'bone',
+    capital: 'skull',
+    cornice: 'skulls',
+    arch: 'pointed',
+    statue: 'mourner',
+    fixture: 'lantern',
+    found: 'ossuary',
+    hanging: 'cage',
+    among: 'obelisk',
+    sigil: 'gem',
+    wreck: Object.freeze(['tomb', 'crypt', 'gem', 'sunken']),
+  }),
+  Object.freeze({
+    column: 'glass',
+    capital: 'crescent',
+    cornice: 'facets',
+    arch: 'lancet',
+    statue: 'raven',
+    fixture: 'moonlamp',
+    found: 'stalactites',
+    hanging: 'shards',
+    among: 'thorns',
+    sigil: 'crescent',
+    wreck: Object.freeze(['thorntower', 'shard', 'observatory', 'shard']),
+  }),
+  Object.freeze({
+    column: 'basalt',
+    capital: 'spiked',
+    cornice: 'straps',
+    arch: 'squat',
+    statue: 'dremora',
+    fixture: 'basket',
+    found: 'prisms',
+    hanging: 'girders',
+    among: 'pylon',
+    sigil: 'dagon',
+    wreck: Object.freeze(['siegetower', 'wargate', 'crag', 'crag']),
+  }),
 ]);
 /** A band's forms (clamped to 0-3). */
 export const egKitStyle = (band) => EG_KIT_STYLE[Math.max(0, Math.min(3, band | 0))];

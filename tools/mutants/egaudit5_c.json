@@ -894,8 +894,8 @@
   {
     "name": "AUDIT-EG-V-c-L3-10-ring-fill",
     "file": "src/world/eliteGates/egLights.js",
-    "old": "spec.arrive.r, gold, 1, G.here / G.n)); }",
-    "new": "spec.arrive.r, gold, 1, 1)); }",
+    "old": "          G.here / G.n,",
+    "new": "          1,",
     "tests": [
       "test/ui/eliteGates/egaudit5_c_hud.test.js"
     ]
@@ -903,8 +903,8 @@
   {
     "name": "AUDIT-EG-V-c-L3-10-ring-for-one",
     "file": "src/world/eliteGates/egLights.js",
-    "old": "    if (G.n > 1) { const p = egToDungeon(spec, spec.arrive.x",
-    "new": "    if (G.n > 0) { const p = egToDungeon(spec, spec.arrive.x",
+    "old": "    if (G.n > 1) {",
+    "new": "    if (G.n > 0) {",
     "tests": [
       "test/ui/eliteGates/egaudit5_c_hud.test.js"
     ]
@@ -912,8 +912,8 @@
   {
     "name": "AUDIT-EG-V-c-L3-10-arrive-unlit",
     "file": "src/world/eliteGates/egLights.js",
-    "old": "E.sg !== 'rest' && E.sg !== 'arrive' && !witness",
-    "new": "E.sg !== 'rest' && !witness",
+    "old": "  if (E.sg !== 'closing' && E.sg !== 'rest' && E.sg !== 'arrive' && !witness && !E.rises?.length && !E.pings?.length)\n    return NO_LIGHTS; // AUDIT EG V (c, L3-10): and the gather's ring",
+    "new": "  if (E.sg !== 'closing' && E.sg !== 'rest' && !witness && !E.rises?.length && !E.pings?.length) return NO_LIGHTS; // AUDIT EG V (c, L3-10): and the gather's ring",
     "tests": [
       "test/ui/eliteGates/egaudit5_c_hud.test.js"
     ]

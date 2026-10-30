@@ -47,8 +47,8 @@
   {
     "name": "EGLOOK-SKY-zenith-lifted",
     "file": "src/world/eliteGates/egAtmos.js",
-    "old": "sky: Object.freeze({ zenith: f3(0.1, 0.014, 0.011), horizon: f3(0.34, 0.05, 0.03),",
-    "new": "sky: Object.freeze({ zenith: f3(0.3, 0.05, 0.03), horizon: f3(0.34, 0.05, 0.03),",
+    "old": "      zenith: f3(0.1, 0.014, 0.011),",
+    "new": "      zenith: f3(0.3, 0.05, 0.03),",
     "tests": [
       "test/render/eliteGates/eglook_sky.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "EGLOOK-SKY-colour-of-its-own",
     "file": "src/world/eliteGates/egLook.js",
-    "old": "return Object.freeze({ zenith: k.zenith, horizon: k.horizon, deep: k.up, ...s });",
-    "new": "return Object.freeze({ zenith: [0.05, 0.012, 0.01], horizon: k.horizon, deep: k.up, ...s });",
+    "old": "    return Object.freeze({ zenith: k.zenith, horizon: k.horizon, deep: k.up, ...s });",
+    "new": "    return Object.freeze({ zenith: [0.05, 0.012, 0.01], horizon: k.horizon, deep: k.up, ...s });",
     "tests": [
       "test/render/eliteGates/eglook_sky.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "EGLOOK-AIR-count-past-1000",
     "file": "src/world/eliteGates/egAtmos.js",
-    "old": "Object.freeze({ kind: 'spark', n: 600,",
-    "new": "Object.freeze({ kind: 'spark', n: 900,",
+    "old": "      Object.freeze({ kind: 'spark', n: 600, lo: f3(0.5, 0.12, 0.03), hi: f3(1.0, 0.72, 0.3) }),",
+    "new": "      Object.freeze({ kind: 'spark', n: 900, lo: f3(0.5, 0.12, 0.03), hi: f3(1.0, 0.72, 0.3) }),",
     "tests": [
       "test/render/eliteGates/eglook_air.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "EGLOOK-AIR-cool-past-L2",
     "file": "src/world/eliteGates/egAtmos.js",
-    "old": "Object.freeze({ kind: 'soul', n: 800, lo: f3(0.2, 0.26, 0.4), hi: f3(0.32, 0.47, 0.54) }),",
-    "new": "Object.freeze({ kind: 'soul', n: 800, lo: f3(0.2, 0.26, 0.4), hi: f3(0.5, 0.7, 0.8) }),",
+    "old": "      Object.freeze({ kind: 'soul', n: 800, lo: f3(0.2, 0.26, 0.4), hi: f3(0.32, 0.47, 0.54) }),",
+    "new": "      Object.freeze({ kind: 'soul', n: 800, lo: f3(0.2, 0.26, 0.4), hi: f3(0.5, 0.7, 0.8) }),",
     "tests": [
       "test/render/eliteGates/eglook_air.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "EGLOOK-AIR-hot-past-L3",
     "file": "src/world/eliteGates/egAtmos.js",
-    "old": "hi: f3(1.0, 0.66, 0.26) }),",
-    "new": "hi: f3(1.0, 0.95, 0.8) }),",
+    "old": "      Object.freeze({ kind: 'ember', n: 600, lo: f3(0.42, 0.08, 0.03), hi: f3(1.0, 0.66, 0.26) }),",
+    "new": "      Object.freeze({ kind: 'ember', n: 600, lo: f3(0.42, 0.08, 0.03), hi: f3(1.0, 0.95, 0.8) }),",
     "tests": [
       "test/render/eliteGates/eglook_air.test.js"
     ]

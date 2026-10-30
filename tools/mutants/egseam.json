@@ -416,8 +416,8 @@
   {
     "name": "EGSWAP-the-key-groundless",
     "file": "src/world/eliteGates/egCircleParts.js",
-    "old": "`${seed >>> 0}:${c}:${geo || 0}`",
-    "new": "`${seed >>> 0}:${c}`",
+    "old": "export const egCircleKey = (seed, c, geo = 0) => `${seed >>> 0}:${c}:${geo || 0}`;",
+    "new": "export const egCircleKey = (seed, c, geo = 0) => `${seed >>> 0}:${c}`;",
     "tests": [
       "test/world/eliteGates/egswap_client.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "EGSWAP-the-gates-copied",
     "file": "src/world/eliteGates/egCircleParts.js",
-    "old": "  for (const g of parts?.gates ?? []) { model(g.model); take(g.tris); }\n",
-    "new": "",
+    "old": "  for (const g of parts?.gates ?? []) {\n    model(g.model);\n    take(g.tris);\n  }\n  for (const [, art] of parts?.art ?? []) {",
+    "new": "  for (const [, art] of parts?.art ?? []) {",
     "tests": [
       "test/world/eliteGates/egswap_client.test.js"
     ]

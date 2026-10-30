@@ -353,8 +353,8 @@
   {
     "name": "EG6A-the-runs-one-section",
     "file": "src/world/eliteGates/egLook.js",
-    "old": "      if (q.kind !== 'gust') { run = null; continue; }",
-    "new": "      if (q.kind !== 'gust') continue;",
+    "old": "        if (q.kind !== 'gust') {\n          run = null;\n          continue;\n        }",
+    "new": "        if (q.kind !== 'gust') continue;",
     "tests": [
       "test/world/eliteGates/eg6a_screen.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "EG6A-the-roads-one-breath",
     "file": "src/world/eliteGates/egLook.js",
-    "old": "      if ((q.road ?? 0) !== road) continue;\n      if (q.kind !== 'gust')",
-    "new": "      if (q.kind !== 'gust')",
+    "old": "        if ((q.road ?? 0) !== road) continue;\n        if (q.kind !== 'gust') {",
+    "new": "        if (q.kind !== 'gust') {",
     "tests": [
       "test/world/eliteGates/eg6a_screen.test.js"
     ]

@@ -344,8 +344,8 @@
   {
     "name": "EGHERO-GALLERIES-registry-the-colonnade-mesh-left-out",
     "file": "src/world/eliteGates/egHeroFragModel.js",
-    "old": "  EG_HERO_COLONNADE_MESH,\n",
-    "new": "",
+    "old": "  EG_HERO_COLONNADE_MESH,\n  EG_HERO_FORGE_GUT_MESH,",
+    "new": "  EG_HERO_FORGE_GUT_MESH,",
     "tests": [
       "test/tooling/eghero_galleries.test.js"
     ]

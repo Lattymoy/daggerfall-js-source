@@ -137,8 +137,8 @@
   {
     "name": "EGHERO-CAIRN-the-mist-stair-mesh-unregistered",
     "file": "src/world/eliteGates/egHeroFragModel.js",
-    "old": "  EG_HERO_MIST_STAIR_MESH,\n",
-    "new": "",
+    "old": "  EG_HERO_MIST_STAIR_MESH,\n  EG_HERO_GLOAM_MESH,",
+    "new": "  EG_HERO_GLOAM_MESH,",
     "tests": [
       "test/tooling/eghero_cairn.test.js"
     ]

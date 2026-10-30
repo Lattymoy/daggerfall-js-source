@@ -357,8 +357,8 @@
   {
     "name": "EGFRAG-the-islands-in-the-static-floor",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "      if (egIsleDisc(spec, d)) continue;\n      // AUDIT EG V (lane5 #15)",
-    "new": "      // AUDIT EG V (lane5 #15)",
+    "old": "      if (egIsleDisc(spec, d)) continue;\n      // AUDIT EG V (lane5 #15): a RAISED floor (a caster's pillar, a perch, a balcony - EG_RAISED_ROLES) stands its rim faces as",
+    "new": "      // AUDIT EG V (lane5 #15): a RAISED floor (a caster's pillar, a perch, a balcony - EG_RAISED_ROLES) stands its rim faces as",
     "tests": [
       "test/net/eliteGates/egfrag_client.test.js"
     ]
@@ -375,8 +375,8 @@
   {
     "name": "EGFRAG-a-wall-across-the-doorway",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "  for (const [a, b] of cuts) { if (a > z) out.push([z, a]); z = Math.max(z, b); }",
-    "new": "  for (const [a, b] of []) { if (a > z) out.push([z, a]); z = Math.max(z, b); }",
+    "old": "  for (const [a, b] of cuts) {",
+    "new": "  for (const [a, b] of []) {",
     "tests": [
       "test/net/eliteGates/egfrag_client.test.js"
     ]
@@ -384,7 +384,7 @@
   {
     "name": "EGFRAG-a-niche-with-no-floor",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "      quad([x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1]); quad([x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1]);",
+    "old": "      quad([x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1]);\n      quad([x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1]);",
     "new": "      quad([x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1]);",
     "tests": [
       "test/net/eliteGates/egfrag_client.test.js"
@@ -393,8 +393,8 @@
   {
     "name": "EGFRAG-the-colonnade-walled",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "      if (q.open) continue;\n",
-    "new": "\n",
+    "old": "      if (q.open) continue;",
+    "new": "",
     "tests": [
       "test/net/eliteGates/egfrag_client.test.js"
     ]

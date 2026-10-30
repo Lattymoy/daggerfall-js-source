@@ -209,8 +209,8 @@
   {
     "name": "EGZL-art-dissolve-keeps-all",
     "file": "src/world/eliteGates/egBandArt.js",
-    "old": "(Math.floor(x / C) & 3)] < keep) continue;",
-    "new": "(Math.floor(x / C) & 3)] < 16) continue;",
+    "old": "      if (BAYER4[((Math.floor(y / C) & 3) << 2) | (Math.floor(x / C) & 3)] < keep) continue;",
+    "new": "      if (BAYER4[((Math.floor(y / C) & 3) << 2) | (Math.floor(x / C) & 3)] < 16) continue;",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "EGZL-art-falter-a-stage-late",
     "file": "src/world/eliteGates/egBandArt.js",
-    "old": "egDissolveArt(k < SD_BEAT_DISSOLVE.keep.length / 2 ? frame : falter, keep)",
-    "new": "egDissolveArt(k < 3 ? frame : falter, keep)",
+    "old": "        egDissolveArt(k < SD_BEAT_DISSOLVE.keep.length / 2 ? frame : falter, keep),",
+    "new": "        egDissolveArt(k < 3 ? frame : falter, keep),",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]
@@ -543,8 +543,8 @@
   {
     "name": "EGZL-track-no-ticks",
     "file": "src/world/eliteGates/egLook.js",
-    "old": "seg(track, egToDungeon(spec, x - EG_TRACK.dash / 2, y, z), egToDungeon(spec, x + EG_TRACK.dash / 2, y, z));",
-    "new": "void x;",
+    "old": "          seg(track, egToDungeon(spec, x - EG_TRACK.dash / 2, y, z), egToDungeon(spec, x + EG_TRACK.dash / 2, y, z));",
+    "new": "          void x;",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]
@@ -552,8 +552,8 @@
   {
     "name": "EGZL-track-ticked-at-one-end",
     "file": "src/world/eliteGates/egLook.js",
-    "old": "for (const side of [-1, 1]) for (const z of [z0, z1]) {",
-    "new": "for (const side of [-1, 1]) for (const z of [z0]) {",
+    "old": "        for (const z of [z0, z1]) {",
+    "new": "        for (const z of [z0]) {",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]
@@ -561,8 +561,8 @@
   {
     "name": "EGZL-track-tick-past-a-dash",
     "file": "src/world/eliteGates/egLook.js",
-    "old": "egToDungeon(spec, x - EG_TRACK.dash / 2, y, z)",
-    "new": "egToDungeon(spec, x - EG_TRACK.dash, y, z)",
+    "old": "          seg(track, egToDungeon(spec, x - EG_TRACK.dash / 2, y, z), egToDungeon(spec, x + EG_TRACK.dash / 2, y, z));",
+    "new": "          seg(track, egToDungeon(spec, x - EG_TRACK.dash, y, z), egToDungeon(spec, x + EG_TRACK.dash / 2, y, z));",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]
@@ -570,8 +570,8 @@
   {
     "name": "EGZL-drop-wall-dark",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "for (const s of spec.steps) if (s.kind === 'drop') lamp(",
-    "new": "for (const s of spec.steps) if (false) lamp(",
+    "old": "      if (s.kind === 'drop') lamp(egToDungeon(spec, s.x, s.y + EG_DROP_LAMP.h, s.z + s.d / 2 - EG_DROP_LAMP.off)); // EG-ZL: a Drop's wall lit",
+    "new": "      if (false) lamp(egToDungeon(spec, s.x, s.y + EG_DROP_LAMP.h, s.z + s.d / 2 - EG_DROP_LAMP.off)); // EG-ZL: a Drop's wall lit",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]
@@ -579,8 +579,8 @@
   {
     "name": "EGZL-drop-lamp-behind-the-wall",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "s.z + s.d / 2 - EG_DROP_LAMP.off",
-    "new": "s.z + s.d / 2 + EG_DROP_LAMP.off",
+    "old": "      if (s.kind === 'drop') lamp(egToDungeon(spec, s.x, s.y + EG_DROP_LAMP.h, s.z + s.d / 2 - EG_DROP_LAMP.off)); // EG-ZL: a Drop's wall lit",
+    "new": "      if (s.kind === 'drop') lamp(egToDungeon(spec, s.x, s.y + EG_DROP_LAMP.h, s.z + s.d / 2 + EG_DROP_LAMP.off)); // EG-ZL: a Drop's wall lit",
     "tests": [
       "test/world/eliteGates/egz_tells.test.js"
     ]

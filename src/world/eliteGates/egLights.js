@@ -23,11 +23,17 @@
 // climbs, rises or shimmers (the drain of the closing's ring is a fact, not a motion, and stays).
 //
 // Not a DFU member. Ledger A (ELITE-GATES).
-import { egHallOf, egCircleOfHall, egBandOfCircle, EG_DOOR_REACH_M, EG_TWIST_LINES } from '../../net/eliteGates/egLaw.js';
-import { egBodyPlace, egGatherOf } from '../../net/eliteGates/egLink.js';   // AUDIT EG V (c, L3-10): and the gather, as the room counts it
+import {
+  egHallOf,
+  egCircleOfHall,
+  egBandOfCircle,
+  EG_DOOR_REACH_M,
+  EG_TWIST_LINES,
+} from '../../net/eliteGates/egLaw.js';
+import { egBodyPlace, egGatherOf } from '../../net/eliteGates/egLink.js'; // AUDIT EG V (c, L3-10): and the gather, as the room counts it
 import { EG_ROLE, EG_FL } from '../../net/eliteGates/egBodies.js';
 import { EG_KIND } from '../../net/eliteGates/egLegion.js';
-import { egTwistShown } from '../../net/eliteGates/egRun.js';   // AUDIT EG V (L2-4): no Bargain's line when no family is free
+import { egTwistShown } from '../../net/eliteGates/egRun.js'; // AUDIT EG V (L2-4): no Bargain's line when no family is free
 import { egToDungeon } from './egHall.js';
 import { EG_STAIR, egStairOf } from './egLook.js';
 import { EG_DANGER_PALETTES } from '../../ui/eliteGates/egAccess.js';
@@ -101,7 +107,9 @@ const clamp01 = (v) => Math.max(0, Math.min(1, v));
 const NO_LIGHTS = Object.freeze([]);
 /** Distance from (x, z) to a lane's centre line. */
 function laneDist(x, z, l) {
-  const dx = l.bx - l.ax, dz = l.bz - l.az, L2 = dx * dx + dz * dz;
+  const dx = l.bx - l.ax,
+    dz = l.bz - l.az,
+    L2 = dx * dx + dz * dz;
   const t = L2 > 0 ? clamp01(((x - l.ax) * dx + (z - l.az) * dz) / L2) : 0;
   return Math.hypot(x - (l.ax + dx * t), z - (l.az + dz * t));
 }
@@ -111,11 +119,16 @@ function laneDist(x, z, l) {
  * Road over it. A place over no floor stands on the hall's arrival plate's height. Pure.
  */
 export function egFloorUnder(spec, x, z, near = null) {
-  let top = -Infinity, best = -Infinity;
+  let top = -Infinity,
+    best = -Infinity;
   const ok = near != null && Number.isFinite(near);
-  const take = (y) => { if (y > top) top = y; if (ok && y <= near + EG_FLOOR_NEAR_UP && y > best) best = y; };
+  const take = (y) => {
+    if (y > top) top = y;
+    if (ok && y <= near + EG_FLOOR_NEAR_UP && y > best) best = y;
+  };
   for (const d of spec.discs ?? []) if (Math.hypot(x - d.x, z - d.z) <= d.r) take(d.y ?? 0);
-  for (const b of spec.bands ?? []) if (Math.abs(x - b.x) <= b.halfW && z >= Math.min(b.z0, b.z1) && z <= Math.max(b.z0, b.z1)) take(b.y ?? 0);
+  for (const b of spec.bands ?? [])
+    if (Math.abs(x - b.x) <= b.halfW && z >= Math.min(b.z0, b.z1) && z <= Math.max(b.z0, b.z1)) take(b.y ?? 0);
   for (const l of spec.lanes ?? []) if (laneDist(x, z, l) <= l.hw) take(l.y ?? 0);
   if (best > -Infinity) return best;
   if (top > -Infinity) return top;
@@ -147,47 +160,110 @@ function pillarWithGlyph(out, p, h, w, c, a, g, size) {
 export function egSpireLights(E, now, { witness = false, still = false, palette = null, ys = null } = {}) {
   if (!E?.b || !(E.h > 0) || E.end) return NO_LIGHTS;
   // a trial with nothing said: nothing stands, and nothing is made for it (asked every frame)
-  if (E.sg !== 'closing' && E.sg !== 'rest' && E.sg !== 'arrive' && !witness && !E.rises?.length && !E.pings?.length) return NO_LIGHTS;   // AUDIT EG V (c, L3-10): and the gather's ring
+  if (E.sg !== 'closing' && E.sg !== 'rest' && E.sg !== 'arrive' && !witness && !E.rises?.length && !E.pings?.length)
+    return NO_LIGHTS; // AUDIT EG V (c, L3-10): and the gather's ring
   const out = [];
-  const spec = egHallOf(E.seed, E.h, E.geo ?? 0), gold = palette?.safety ?? EG_DANGER_PALETTES.standard.safety, blue = EG_LIGHT_BLUE;
+  const spec = egHallOf(E.seed, E.h, E.geo ?? 0),
+    gold = palette?.safety ?? EG_DANGER_PALETTES.standard.safety,
+    blue = EG_LIGHT_BLUE;
   // THE DOOR: its beam climbing at the opening, and the closing's ring draining the closing's seconds
   if (E.sg === 'closing' && spec.end) {
     const p = egToDungeon(spec, spec.end.x, spec.end.y ?? 0, spec.end.z);
     const up = still ? 1 : clamp01((now - (E.sa || now)) / 1000 / EG_DOOR_BEAM.rise);
     out.push(light(EG_LIGHT_KIND.beam, p, EG_DOOR_BEAM.h * up, EG_DOOR_BEAM.w, 0, gold, 1, 0));
     const span = (E.su || 0) - (E.sa || 0);
-    out.push(light(EG_LIGHT_KIND.ring, [p[0], p[1] + EG_CLOSING_RING.lift, p[2]], 0, EG_CLOSING_RING.w, EG_CLOSING_RING.r, gold, 1, span > 0 ? clamp01((E.su - now) / span) : 0));
+    out.push(
+      light(
+        EG_LIGHT_KIND.ring,
+        [p[0], p[1] + EG_CLOSING_RING.lift, p[2]],
+        0,
+        EG_CLOSING_RING.w,
+        EG_CLOSING_RING.r,
+        gold,
+        1,
+        span > 0 ? clamp01((E.su - now) / span) : 0,
+      ),
+    );
   }
   // AUDIT EG V (c, L3-10; section 7 - "a ring fills over the plate, *3 of 6 here*"): THE GATHER's ring over the arrival
   // plate's rim, filling as the company says `here` - a company of one has nothing to gather
   if (E.sg === 'arrive' && spec.arrive) {
     const G = egGatherOf(E);
-    if (G.n > 1) { const p = egToDungeon(spec, spec.arrive.x, spec.arrive.y ?? 0, spec.arrive.z); out.push(light(EG_LIGHT_KIND.ring, [p[0], p[1] + EG_CLOSING_RING.lift, p[2]], 0, EG_CLOSING_RING.w, spec.arrive.r, gold, 1, G.here / G.n)); }
+    if (G.n > 1) {
+      const p = egToDungeon(spec, spec.arrive.x, spec.arrive.y ?? 0, spec.arrive.z);
+      out.push(
+        light(
+          EG_LIGHT_KIND.ring,
+          [p[0], p[1] + EG_CLOSING_RING.lift, p[2]],
+          0,
+          EG_CLOSING_RING.w,
+          spec.arrive.r,
+          gold,
+          1,
+          G.here / G.n,
+        ),
+      );
+    }
   }
   // THE REDOUBT'S BEACON: at the court's heart (scenes/eliteGates/egClient.js beaconAt's own place), through the rest
   const R = E.redoubt;
   if (R && R.h === E.h && E.sg === 'rest' && spec.ring) {
     const s = (now - (R.at ?? now)) / 1000 - EG_BEACON.at;
     if (s >= 0) {
-      const f = spec.fight ?? spec.end, p = egToDungeon(spec, spec.ring.x, f?.y ?? 0, spec.ring.z);
+      const f = spec.fight ?? spec.end,
+        p = egToDungeon(spec, spec.ring.x, f?.y ?? 0, spec.ring.z);
       const flare = (E.rises ?? []).some((q) => q.h === E.h && now >= q.at && now - q.at < EG_BEACON.flare * 1000);
-      out.push(light(EG_LIGHT_KIND.beam, p, EG_BEACON.h * (still ? 1 : clamp01(s / EG_BEACON.climb)), EG_BEACON.w * (flare ? EG_BEACON.flareK : 1), 0, gold, flare ? EG_BEACON.flareK : 1, 0));
+      out.push(
+        light(
+          EG_LIGHT_KIND.beam,
+          p,
+          EG_BEACON.h * (still ? 1 : clamp01(s / EG_BEACON.climb)),
+          EG_BEACON.w * (flare ? EG_BEACON.flareK : 1),
+          0,
+          gold,
+          flare ? EG_BEACON.flareK : 1,
+          0,
+        ),
+      );
     }
   }
   // THE RECALL'S PILLARS: blue, where each called-back member rises (in the hall it was said for)
   for (const q of E.rises ?? []) {
-    const s = (now - q.at) / 1000, P = EG_RECALL_PILLAR;
+    const s = (now - q.at) / 1000,
+      P = EG_RECALL_PILLAR;
     if (!(s >= 0 && s < P.s) || !(q.h > 0)) continue;
-    const hs = egHallOf(E.seed, q.h, E.geo ?? 0), p = egToDungeon(hs, q.x, egFloorUnder(hs, q.x, q.z), q.z);
-    out.push(light(EG_LIGHT_KIND.pillar, p, P.h * (still ? 1 : clamp01(s / P.rise)), P.w, 0, blue, clamp01((P.s - s) / P.fade), 0));
+    const hs = egHallOf(E.seed, q.h, E.geo ?? 0),
+      p = egToDungeon(hs, q.x, egFloorUnder(hs, q.x, q.z), q.z);
+    out.push(
+      light(
+        EG_LIGHT_KIND.pillar,
+        p,
+        P.h * (still ? 1 : clamp01(s / P.rise)),
+        P.w,
+        0,
+        blue,
+        clamp01((P.s - s) / P.fade),
+        0,
+      ),
+    );
   }
   // THE PINGS: a blue pillar and its glyph, from the floor the pinger stood on
   for (const q of E.pings ?? []) {
-    const s = (now - q.at) / 1000, P = EG_PING;
+    const s = (now - q.at) / 1000,
+      P = EG_PING;
     if (!(s >= 0 && s < P.s)) continue;
     const p = egToDungeon(spec, q.x, egFloorUnder(spec, q.x, q.z, ys?.get(q.s) ?? null), q.z);
     const g = q.w === 1 ? EG_GLYPH.danger : q.w === 2 ? EG_GLYPH.mine : EG_GLYPH.here;
-    pillarWithGlyph(out, p, P.h * (still ? 1 : clamp01(s / P.rise)), P.w, blue, clamp01((P.s - s) / P.fade), g, P.glyph);
+    pillarWithGlyph(
+      out,
+      p,
+      P.h * (still ? 1 : clamp01(s / P.rise)),
+      P.w,
+      blue,
+      clamp01((P.s - s) / P.fade),
+      g,
+      P.glyph,
+    );
   }
   // THE WITNESS'S SIGHT: the dormant Lurkers' anchors and the alcoves
   if (witness) {
@@ -197,8 +273,13 @@ export function egSpireLights(E, now, { witness = false, still = false, palette 
       out.push(light(EG_LIGHT_KIND.ring, [p[0], p[1] + EG_CLOSING_RING.lift, p[2]], 0, S.w, S.r, blue, 1, 1));
       out.push(light(EG_LIGHT_KIND.glyph, [p[0], p[1] + S.up, p[2]], 0, S.glyph, 0, blue, 1, g));
     };
-    if (E.fight?.h === E.h) for (const b of E.fight.bodies ?? []) if (b.role === EG_ROLE.add && b.k === EG_KIND.lurker && (b.fl & EG_FL.dormant) !== 0 && b.hp > 0) { const [x, z] = egBodyPlace(b, now); mark(x, z, EG_GLYPH.eye); }
-    for (const q of spec.alcoves ?? []) mark(q.x, q.z, EG_GLYPH.mine, q.y);   // an alcove's own floor (it is cut beside or under the course)
+    if (E.fight?.h === E.h)
+      for (const b of E.fight.bodies ?? [])
+        if (b.role === EG_ROLE.add && b.k === EG_KIND.lurker && (b.fl & EG_FL.dormant) !== 0 && b.hp > 0) {
+          const [x, z] = egBodyPlace(b, now);
+          mark(x, z, EG_GLYPH.eye);
+        }
+    for (const q of spec.alcoves ?? []) mark(q.x, q.z, EG_GLYPH.mine, q.y); // an alcove's own floor (it is cut beside or under the course)
   }
   return out.length > EG_LIGHTS_MAX ? out.slice(0, EG_LIGHTS_MAX) : out;
 }
@@ -218,5 +299,5 @@ export function egDoorCompass(E, witness = false) {
 export function egWitnessTwist(E) {
   if (!E?.b || !(E.h > 0) || E.end || egCircleOfHall(E.h + 1) !== egCircleOfHall(E.h)) return '';
   const next = egHallOf(E.seed, E.h + 1, E.geo ?? 0);
-  return egTwistShown(next, E.dc) ? EG_TWIST_LINES[next.twist] ?? '' : '';   // AUDIT EG V (L2-4): no Bargain's line when no family is free
+  return egTwistShown(next, E.dc) ? (EG_TWIST_LINES[next.twist] ?? '') : ''; // AUDIT EG V (L2-4): no Bargain's line when no family is free
 }

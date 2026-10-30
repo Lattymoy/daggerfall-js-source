@@ -206,8 +206,8 @@
   {
     "name": "EGA5A1-twist-witness",
     "file": "src/world/eliteGates/egLights.js",
-    "old": "  return egTwistShown(next, E.dc) ? EG_TWIST_LINES[next.twist] ?? '' : '';",
-    "new": "  return next.twist ? EG_TWIST_LINES[next.twist] ?? '' : '';",
+    "old": "  return egTwistShown(next, E.dc) ? (EG_TWIST_LINES[next.twist] ?? '') : ''; // AUDIT EG V (L2-4): no Bargain's line when no family is free",
+    "new": "  return next.twist ? (EG_TWIST_LINES[next.twist] ?? '') : ''; // AUDIT EG V (L2-4): no Bargain's line when no family is free",
     "tests": [
       "test/net/eliteGates/egaudit5_a1.test.js"
     ],

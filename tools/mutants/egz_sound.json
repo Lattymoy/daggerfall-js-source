@@ -497,8 +497,8 @@
   {
     "name": "EGZ-flames-off-the-line",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "const t = (k + 0.5) / n; at.push(",
-    "new": "const t = k / n; at.push(",
+    "old": "    const t = (k + 0.5) / n;",
+    "new": "    const t = k / n;",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "EGZ-flames-height-unread",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "h: cave ? cave.height : EG_FIRE_FALL.h };",
-    "new": "h: EG_FIRE_FALL.h };",
+    "old": "  return { at, w: len / n, h: cave ? cave.height : EG_FIRE_FALL.h };",
+    "new": "  return { at, w: len / n, h: EG_FIRE_FALL.h };",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "EGZ-flames-other-hazard",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "if (hz?.kind !== 'fall' || !Array.isArray(hz.sh)",
-    "new": "if (hz?.kind === 'never' || !Array.isArray(hz.sh)",
+    "old": "  if (hz?.kind !== 'fall' || !Array.isArray(hz.sh) || hz.sh.length < 4) return null;",
+    "new": "  if (hz?.kind === 'never' || !Array.isArray(hz.sh) || hz.sh.length < 4) return null;",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "EGZ-flames-width",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "return { at, w: len / n,",
-    "new": "return { at, w: EG_FIRE_FALL.w + 1,",
+    "old": "  return { at, w: len / n, h: cave ? cave.height : EG_FIRE_FALL.h };",
+    "new": "  return { at, w: EG_FIRE_FALL.w + 1, h: cave ? cave.height : EG_FIRE_FALL.h };",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
@@ -587,8 +587,8 @@
   {
     "name": "EGZ-key-bit-dropped",
     "file": "src/world/eliteGates/egKeyArt.js",
-    "old": "const BIT = Object.freeze([Object.freeze({ x0: 22, x1: 25, y0: 12, y1: 16 }),",
-    "new": "const BIT = Object.freeze([Object.freeze({ x0: 0, x1: 0, y0: 0, y1: 0 }),",
+    "old": "  Object.freeze({ x0: 22, x1: 25, y0: 12, y1: 16 }),",
+    "new": "  Object.freeze({ x0: 0, x1: 0, y0: 0, y1: 0 }),",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
@@ -605,8 +605,8 @@
   {
     "name": "EGZ-key-ground-coloured",
     "file": "src/world/eliteGates/egKeyArt.js",
-    "old": "img.colors[i] = 0; img.colors[i + 1] = 0; img.colors[i + 2] = 0; }",
-    "new": "void i; }",
+    "old": "        img.colors[i] = 0;\n        img.colors[i + 1] = 0;\n        img.colors[i + 2] = 0;",
+    "new": "        void i;",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
@@ -614,8 +614,8 @@
   {
     "name": "EGZ-key-light-from-below",
     "file": "src/world/eliteGates/egKeyArt.js",
-    "old": "const t = up || left ? 0.95 : down ? 0.15 : 0.62 - (x / w) * 0.25;",
-    "new": "const t = down ? 0.95 : up || left ? 0.15 : 0.62 - (x / w) * 0.25;",
+    "old": "        const t = up || left ? 0.95 : down ? 0.15 : 0.62 - (x / w) * 0.25;",
+    "new": "        const t = down ? 0.95 : up || left ? 0.15 : 0.62 - (x / w) * 0.25;",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
@@ -641,8 +641,8 @@
   {
     "name": "EGZ-key-block-moved",
     "file": "src/world/eliteGates/pseudoArchives.js",
-    "old": "key: EG_ARCH_ARCHIVES.from + 1,",
-    "new": "key: EG_ARCH_ARCHIVES.from + 3,",
+    "old": "  key: EG_ARCH_ARCHIVES.from + 1,",
+    "new": "  key: EG_ARCH_ARCHIVES.from + 3,",
     "tests": [
       "test/systems/eliteGates/egz_art.test.js"
     ]
@@ -785,8 +785,8 @@
   {
     "name": "EGZ-clamp-open-edges-held",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "if (q.open || z < q.z0 || z > q.z1) return null;",
-    "new": "if (z < q.z0 || z > q.z1) return null;",
+    "old": "    if (q.open || z < q.z0 || z > q.z1) return null; // an open passage's sides, and its two mouths, are open edges",
+    "new": "    if (z < q.z0 || z > q.z1) return null; // an open passage's sides, and its two mouths, are open edges",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]
@@ -794,8 +794,8 @@
   {
     "name": "EGZ-clamp-mouth-held",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "if (q.open || z < q.z0 || z > q.z1) return null;",
-    "new": "if (q.open) return null;",
+    "old": "    if (q.open || z < q.z0 || z > q.z1) return null; // an open passage's sides, and its two mouths, are open edges",
+    "new": "    if (q.open) return null; // an open passage's sides, and its two mouths, are open edges",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]
@@ -803,8 +803,8 @@
   {
     "name": "EGZ-clamp-slack-gone",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "Math.abs(x - q.x) <= q.halfW + EG_CLAMP_SLACK_M :",
-    "new": "Math.abs(x - q.x) <= q.halfW :",
+    "old": "          ? z >= q.z0 && z <= q.z1 && Math.abs(x - q.x) <= q.halfW + EG_CLAMP_SLACK_M",
+    "new": "          ? z >= q.z0 && z <= q.z1 && Math.abs(x - q.x) <= q.halfW",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]
@@ -812,8 +812,8 @@
   {
     "name": "EGZ-clamp-heights-unread",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "if (y < q.y - 3 || y > q.ceil + 3) continue;",
-    "new": "",
+    "old": "    if (y < q.y - 3 || y > q.ceil + 3) continue;\n    if (q.t === 'climb') {",
+    "new": "    if (q.t === 'climb') {",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]
@@ -821,8 +821,8 @@
   {
     "name": "EGZ-clamp-doorway-walled",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "return door ? null : [q.x + side * lim, z];",
-    "new": "return [q.x + side * lim, z];",
+    "old": "    return door ? null : [q.x + side * lim, z];",
+    "new": "    return [q.x + side * lim, z];",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]
@@ -830,8 +830,8 @@
   {
     "name": "EGZ-clamp-gap-ringed",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "if (d <= lim || d > q.r + EG_CLAMP_SLACK_M || ringGap(dx, dz)) return null;",
-    "new": "if (d <= lim || d > q.r + EG_CLAMP_SLACK_M) return null;",
+    "old": "  if (d <= lim || d > q.r + EG_CLAMP_SLACK_M || ringGap(dx, dz)) return null;",
+    "new": "  if (d <= lim || d > q.r + EG_CLAMP_SLACK_M) return null;",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]
@@ -839,8 +839,8 @@
   {
     "name": "EGZ-clamp-ring-slack",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "if (d <= lim || d > q.r + EG_CLAMP_SLACK_M || ringGap(dx, dz)) return null;",
-    "new": "if (d <= lim || ringGap(dx, dz)) return null;",
+    "old": "  if (d <= lim || d > q.r + EG_CLAMP_SLACK_M || ringGap(dx, dz)) return null;",
+    "new": "  if (d <= lim || ringGap(dx, dz)) return null;",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]
@@ -848,8 +848,8 @@
   {
     "name": "EGZ-clamp-ring-radius-unread",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "d = Math.hypot(dx, dz), lim = q.r - r;",
-    "new": "d = Math.hypot(dx, dz), lim = 10 - r;",
+    "old": "    lim = q.r - r;",
+    "new": "    lim = 10 - r;",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]
@@ -857,8 +857,8 @@
   {
     "name": "EGZ-clamp-trial-wall-a-fragment",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "if (d.t === 'wall' && d.kit) out.push(",
-    "new": "if (d.t === 'wall') out.push(",
+    "old": "    if (d.t === 'wall' && d.kit)\n      out.push({ t: 'chamber', x: d.x, z: d.z, r: d.r, y: d.y ?? 0, ceil: (d.y ?? 0) + d.h });",
+    "new": "    if (d.t === 'wall') out.push({ t: 'chamber', x: d.x, z: d.z, r: d.r, y: d.y ?? 0, ceil: (d.y ?? 0) + d.h });",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]
@@ -866,8 +866,8 @@
   {
     "name": "EGZ-clamp-ceiling-unheld",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "ceilAbove: Math.max(0.5, q.ceil - q.y - CLAMP_BODY_M), zone: q,",
-    "new": "ceilAbove: undefined, zone: q,",
+    "old": "    ceilAbove: Math.max(0.5, q.ceil - q.y - CLAMP_BODY_M),",
+    "new": "    ceilAbove: undefined,",
     "tests": [
       "test/systems/eliteGates/egz_body.test.js"
     ]

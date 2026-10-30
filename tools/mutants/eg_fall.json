@@ -422,8 +422,8 @@
   {
     "name": "AUDIT-EG-FALL-L1-3-carried-dropped",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "    if (l.carried) H.carried[i] = 1;",
-    "new": "    void 0;",
+    "old": "    if (l.carried) H.carried[i] = 1; // AUDIT EG-FALL (L1-3): a flash's mask, as the gate's (world/gate/gateArena.js withCourtLights) - no shadow caster",
+    "new": "    void 0; // AUDIT EG-FALL (L1-3): a flash's mask, as the gate's (world/gate/gateArena.js withCourtLights) - no shadow caster",
     "tests": [
       "test/net/eliteGates/eg_lordfall.test.js",
       "test/net/eliteGates/eg_lordfall_relay.test.js"

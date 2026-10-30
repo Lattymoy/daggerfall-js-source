@@ -2,8 +2,8 @@
   {
     "name": "EGLOOK-LORDS-presence-table-moved",
     "file": "src/world/eliteGates/egKit.js",
-    "old": "EG_LORD_PRESENCE = Object.freeze({ lord: 1.6, valkynaz: 1.8, champion: 1.4 });",
-    "new": "EG_LORD_PRESENCE = Object.freeze({ lord: 1.6, valkynaz: 1.6, champion: 1.4 });",
+    "old": "export const EG_LORD_PRESENCE = Object.freeze({ lord: 1.6, valkynaz: 1.8, champion: 1.4 });",
+    "new": "export const EG_LORD_PRESENCE = Object.freeze({ lord: 1.6, valkynaz: 1.6, champion: 1.4 });",
     "tests": [
       "test/net/eliteGates/eglook_lords.test.js"
     ]

@@ -222,8 +222,8 @@
   {
     "name": "EGA5H-trail-ride-dropped",
     "file": "src/world/eliteGates/egLook.js",
-    "old": "route.push(ride ? { pl: ride } : { at: [x, y, z] });",
-    "new": "route.push({ at: [x, y, z] });",
+    "old": "  route.push(ride ? { pl: ride } : { at: [x, y, z] });",
+    "new": "  route.push({ at: [x, y, z] });",
     "tests": [
       "test/net/eliteGates/egaudit5_h.test.js",
       "test/net/eliteGates/egaudit5_h_client.test.js"
@@ -233,8 +233,8 @@
   {
     "name": "EGA5H-trail-every-frame",
     "file": "src/world/eliteGates/egLook.js",
-    "old": "Math.hypot(x - _trailP[0], y - _trailP[1], z - _trailP[2]) < EG_TRAIL.step) return false;",
-    "new": "false) return false;",
+    "old": "  if (\n    last &&\n    trailAt(spec, last, tS, _trailP) &&\n    Math.hypot(x - _trailP[0], y - _trailP[1], z - _trailP[2]) < EG_TRAIL.step\n  )\n    return false;",
+    "new": "  if (last && trailAt(spec, last, tS, _trailP) && false) return false;",
     "tests": [
       "test/net/eliteGates/egaudit5_h.test.js",
       "test/net/eliteGates/egaudit5_h_client.test.js"

@@ -2,8 +2,8 @@
   {
     "name": "EG-SWEEP-RED-a-run-unbroken-at-its-span-link",
     "file": "src/world/eliteGates/egLook.js",
-    "old": "      if (run && q.span !== run.span) run = null;\n",
-    "new": "",
+    "old": "        if (run && q.span !== run.span) run = null;\n        if (!run) {",
+    "new": "        if (!run) {",
     "tests": [
       "test/tooling/egsweep_red.test.js"
     ]

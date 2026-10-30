@@ -264,8 +264,8 @@
   {
     "name": "EGA3C-edge-palette-ignored",
     "file": "src/world/eliteGates/egLook.js",
-    "old": "const g = pal && pal.key !== 'standard' && Array.isArray(pal.safety) ? pal.safety : EG_EDGE_LINE.color,",
-    "new": "const g = EG_EDGE_LINE.color,",
+    "old": "  const g = pal && pal.key !== 'standard' && Array.isArray(pal.safety) ? pal.safety : EG_EDGE_LINE.color,",
+    "new": "  const g = EG_EDGE_LINE.color,",
     "tests": [
       "test/scenes/eliteGates/egaudit3_client.test.js"
     ]

@@ -562,8 +562,8 @@
   {
     "name": "LAW9H-telegraph-storey-unasked",
     "file": "src/world/eliteGates/egTelegraph.js",
-    "old": "if (!anchorOn(floors[k], sh) || !egOneStorey(floors[k].y, by)) continue;",
-    "new": "if (!anchorOn(floors[k], sh)) continue;",
+    "old": "    if (!anchorOn(floors[k], sh) || !egOneStorey(floors[k].y, by)) continue;",
+    "new": "    if (!anchorOn(floors[k], sh)) continue;",
     "tests": [
       "test/net/eliteGates/law9_height.test.js"
     ],
@@ -642,8 +642,8 @@
   {
     "name": "LAW9H-peril-any-storey",
     "file": "src/world/eliteGates/egTelegraph.js",
-    "old": " || !egOneStorey(fl.y ?? 0, Number.isFinite(b.y) ? b.y : NaN)) continue;",
-    "new": ") continue;",
+    "old": "    if (\n      !(now < b.at) ||\n      now < b.at - b.wu ||\n      !inStamps(b, f[0], f[1]) ||\n      !egOneStorey(fl.y ?? 0, Number.isFinite(b.y) ? b.y : NaN)\n    )\n      continue;",
+    "new": "    if (!(now < b.at) || now < b.at - b.wu || !inStamps(b, f[0], f[1])) continue;",
     "tests": [
       "test/net/eliteGates/law9_height.test.js"
     ],

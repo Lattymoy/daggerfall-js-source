@@ -200,8 +200,8 @@
   {
     "name": "EGHERO-SHADE-the-vault-left-out-of-the-mesh-registry",
     "file": "src/world/eliteGates/egHeroFragModel.js",
-    "old": "  EG_HERO_ECLIPSE_MESH,\n",
-    "new": "",
+    "old": "  EG_HERO_ECLIPSE_MESH,\n  EG_HERO_CAVERNS_MESH,",
+    "new": "  EG_HERO_CAVERNS_MESH,",
     "tests": [
       "test/tooling/eghero_shade.test.js"
     ]

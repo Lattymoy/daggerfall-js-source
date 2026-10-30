@@ -407,8 +407,8 @@
   {
     "name": "EGZ-the-spouts-undrawn",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "      boxD(f, SD_REALM_BRASS_RECORD, x0, y0, z0, x1, y1, z1, false, 0.5);\n      quadTo(f, EG_DRESS.molten,",
-    "new": "      quadTo(f, EG_DRESS.molten,",
+    "old": "        boxD(f, SD_REALM_BRASS_RECORD, x0, y0, z0, x1, y1, z1, false, 0.5);\n        quadTo(",
+    "new": "        quadTo(",
     "tests": [
       "test/net/eliteGates/egz_frag.test.js"
     ]

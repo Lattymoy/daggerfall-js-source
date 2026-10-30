@@ -680,8 +680,8 @@
   {
     "name": "EGA5F-rim-faces-dropped",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "        if (!way) continue;\n",
-    "new": "        continue;\n",
+    "old": "        if (!way) continue;",
+    "new": "        continue;",
     "tests": [
       "test/net/eliteGates/egaudit5_f_ways.test.js"
     ],
@@ -690,8 +690,8 @@
   {
     "name": "EGA5F-rim-face-across",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "if (way.some((q) => Math.hypot(mx - q.bx, mz - q.bz) <= q.hw + EG_RAISED_WAY_PAD_M)) continue;",
-    "new": "void 0;",
+    "old": "        if (way.some((q) => Math.hypot(mx - q.bx, mz - q.bz) <= q.hw + EG_RAISED_WAY_PAD_M)) continue;",
+    "new": "        void 0;",
     "tests": [
       "test/net/eliteGates/egaudit5_f_ways.test.js"
     ],
@@ -700,8 +700,8 @@
   {
     "name": "EGA5F-door-code-built",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "hd = egHeroDoor(spec, a), xw",
-    "new": "hd = null, xw",
+    "old": "      hd = egHeroDoor(spec, a),",
+    "new": "      hd = null,",
     "tests": [
       "test/net/eliteGates/egaudit5_f_ways.test.js"
     ],
@@ -710,8 +710,8 @@
   {
     "name": "EGA5F-door-across",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "...(hd ? { along: hd.along } : {})",
-    "new": "",
+    "old": "      ...(hd ? { along: hd.along } : {}),\n    });",
+    "new": "    });",
     "tests": [
       "test/net/eliteGates/egaudit5_f_ways.test.js"
     ],
@@ -720,8 +720,8 @@
   {
     "name": "EGA5F-door-floor-height",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "door: egToDungeon(spec, xw + side * 0.3, a.y, a.z), a,",
-    "new": "door: egToDungeon(spec, xw + side * 0.3, hd ? a.y - 0.6 : a.y, a.z), a,",
+    "old": "      door: egToDungeon(spec, xw + side * 0.3, a.y, a.z),",
+    "new": "      door: egToDungeon(spec, xw + side * 0.3, hd ? a.y - 0.6 : a.y, a.z),",
     "tests": [
       "test/net/eliteGates/egaudit5_f_ways.test.js"
     ],

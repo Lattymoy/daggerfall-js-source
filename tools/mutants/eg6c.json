@@ -1697,8 +1697,8 @@
   {
     "name": "EG6C-a-baked-mesh-unmoved",
     "file": "src/world/eliteGates/meshKit.js",
-    "old": "g.p[i] = src.positions[v * 3] + at[0];",
-    "new": "g.p[i] = src.positions[v * 3];",
+    "old": "        g.p[i] = src.positions[v * 3] + at[0];",
+    "new": "        g.p[i] = src.positions[v * 3];",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -1706,8 +1706,8 @@
   {
     "name": "EG6C-a-baked-mesh-flat",
     "file": "src/world/eliteGates/meshKit.js",
-    "old": "g.n[i] = src.normals[v * 3]; g.n[i + 1] = src.normals[v * 3 + 1];",
-    "new": "g.n[i] = 0; g.n[i + 1] = src.normals[v * 3 + 1];",
+    "old": "        g.n[i] = src.normals[v * 3];",
+    "new": "        g.n[i] = 0;",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -1715,8 +1715,8 @@
   {
     "name": "EG6C-a-baked-mesh-unmapped",
     "file": "src/world/eliteGates/meshKit.js",
-    "old": "g.uv[j] = src.uvs[v * 2]; g.uv[j + 1] = src.uvs[v * 2 + 1];",
-    "new": "g.uv[j] = 0; g.uv[j + 1] = src.uvs[v * 2 + 1];",
+    "old": "        g.uv[j] = src.uvs[v * 2];",
+    "new": "        g.uv[j] = 0;",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -1724,8 +1724,8 @@
   {
     "name": "EG6C-a-baked-mesh-from-its-start",
     "file": "src/world/eliteGates/meshKit.js",
-    "old": "for (let k = start; k < start + count * 3; k++) {",
-    "new": "for (let k = 0; k < count * 3; k++) {",
+    "old": "      for (let k = start; k < start + count * 3; k++) {",
+    "new": "      for (let k = 0; k < count * 3; k++) {",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -1733,8 +1733,8 @@
   {
     "name": "EG6C-a-baked-mesh-uncounted",
     "file": "src/world/eliteGates/meshKit.js",
-    "old": "      verts += count * 3;\n",
-    "new": "",
+    "old": "      verts += count * 3;\n      return kit;",
+    "new": "      return kit;",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -1769,8 +1769,8 @@
   {
     "name": "EG6C-a-stray-mesh-registered",
     "file": "src/world/eliteGates/egHeroFragModel.js",
-    "old": "if (!law || law.band !== mesh.band || law.bake.sha256 !== mesh.bake.sha256) throw",
-    "new": "if (!law) throw",
+    "old": "        if (!law || law.band !== mesh.band || law.bake.sha256 !== mesh.bake.sha256)",
+    "new": "        if (!law)",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -1778,8 +1778,8 @@
   {
     "name": "EG6C-a-mesh-of-another-bake",
     "file": "src/world/eliteGates/egHeroFragModel.js",
-    "old": "|| law.bake.sha256 !== mesh.bake.sha256) throw",
-    "new": ") throw",
+    "old": "        if (!law || law.band !== mesh.band || law.bake.sha256 !== mesh.bake.sha256)",
+    "new": "        if (!law || law.band !== mesh.band)",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -1787,8 +1787,8 @@
   {
     "name": "EG6C-the-fragment-laid-at-the-origin",
     "file": "src/world/eliteGates/egHeroFragModel.js",
-    "old": "kit.mesh(s.record, mesh, { start: s.startIndex, count: s.primitiveCount, at });",
-    "new": "kit.mesh(s.record, mesh, { start: s.startIndex, count: s.primitiveCount });",
+    "old": "  for (const s of mesh.subMeshes) kit.mesh(s.record, mesh, { start: s.startIndex, count: s.primitiveCount, at });",
+    "new": "  for (const s of mesh.subMeshes) kit.mesh(s.record, mesh, { start: s.startIndex, count: s.primitiveCount });",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -1796,8 +1796,8 @@
   {
     "name": "EG6C-another-band-s-archive",
     "file": "src/world/eliteGates/egHeroFragModel.js",
-    "old": "pack(EG_BAND_ARCHIVES[EG_HERO_FRAGS[id].band]);",
-    "new": "pack(EG_BAND_ARCHIVES[1]);",
+    "old": "export const egHeroFragModel = (id) =>\n  egHeroFragInto(createMeshKit(), id).pack(EG_BAND_ARCHIVES[EG_HERO_FRAGS[id].band]);",
+    "new": "export const egHeroFragModel = (id) => egHeroFragInto(createMeshKit(), id).pack(EG_BAND_ARCHIVES[1]);",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]
@@ -1805,8 +1805,8 @@
   {
     "name": "EG6C-the-collider-unmoved",
     "file": "src/world/eliteGates/egHeroFragModel.js",
-    "old": "for (let i = 0; i < c.length; i++) out[i] = c[i] + at[i % 3];",
-    "new": "for (let i = 0; i < c.length; i++) out[i] = c[i];",
+    "old": "  for (let i = 0; i < c.length; i++) out[i] = c[i] + at[i % 3];",
+    "new": "  for (let i = 0; i < c.length; i++) out[i] = c[i];",
     "tests": [
       "test/net/eliteGates/eg6c_law.test.js"
     ]

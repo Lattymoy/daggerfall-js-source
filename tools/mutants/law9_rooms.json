@@ -326,8 +326,8 @@
   {
     "name": "ROOMS-a-room-s-floors-out-of-the-collider",
     "file": "src/world/eliteGates/egRoomModel.js",
-    "old": "    for (const f of q.floors) for (const [a, b, c] of fan(f.poly)) tri(D(a[0], f.y, a[1]), D(b[0], f.y, b[1]), D(c[0], f.y, c[1]));\n",
-    "new": "",
+    "old": "    for (const f of q.floors)\n      for (const [a, b, c] of fan(f.poly)) tri(D(a[0], f.y, a[1]), D(b[0], f.y, b[1]), D(c[0], f.y, c[1]));\n    for (const c of q.ceil ?? [])",
+    "new": "    for (const c of q.ceil ?? [])",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "ROOMS-its-walls-out",
     "file": "src/world/eliteGates/egRoomModel.js",
-    "old": "      tri(p0, p1, p2); tri(p0, p2, p3);\n",
-    "new": "",
+    "old": "      tri(p0, p1, p2);\n      tri(p0, p2, p3);\n    }",
+    "new": "    }",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "ROOMS-the-mesh-s-floor-a-slab-low",
     "file": "src/world/eliteGates/egRoomModel.js",
-    "old": "triTo(recs.floor, D(a[0], g.y, a[1]), D(b[0], g.y, b[1]), D(c[0], g.y, c[1]), 1);",
-    "new": "triTo(recs.floor, D(a[0], g.y - S, a[1]), D(b[0], g.y - S, b[1]), D(c[0], g.y - S, c[1]), 1);",
+    "old": "        triTo(recs.floor, D(a[0], g.y, a[1]), D(b[0], g.y, b[1]), D(c[0], g.y, c[1]), 1);",
+    "new": "        triTo(recs.floor, D(a[0], g.y - S, a[1]), D(b[0], g.y - S, b[1]), D(c[0], g.y - S, c[1]), 1);",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "ROOMS-the-room-a-baked-hero-s-box",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "(spec?.heroes ?? []).some((q) => !q.room && x >= q.box[0]",
-    "new": "(spec?.heroes ?? []).some((q) => x >= q.box[0]",
+    "old": "      !q.room &&\n      x >= q.box[0] &&",
+    "new": "      x >= q.box[0] &&",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "ROOMS-no-climb-zone",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "  const out = egClimbZones(spec);\n",
-    "new": "  const out = [];\n",
+    "old": "  const out = egClimbZones(spec);",
+    "new": "  const out = [];",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "EGSWEEP-stair-over-hero-asked-in-plan",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "\n  && (y == null || (y >= q.box[1] && y <= q.box[4])));",
-    "new": ");",
+    "old": "  (spec?.heroes ?? []).some(\n    (q) =>\n      !q.room &&\n      x >= q.box[0] &&\n      x <= q.box[3] &&\n      z >= q.box[2] &&\n      z <= q.box[5] &&\n      (y == null || (y >= q.box[1] && y <= q.box[4])),\n  );",
+    "new": "  (spec?.heroes ?? []).some((q) => !q.room && x >= q.box[0] && x <= q.box[3] && z >= q.box[2] && z <= q.box[5]);",
     "why": "a room's stair stacked over a hero's box skipped as the hero's - neither mesh nor collider, the 500-seed sweep's stuck and fell stairs",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"

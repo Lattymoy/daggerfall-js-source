@@ -222,8 +222,8 @@
   {
     "name": "EGA5E-tether-floor-unstripped",
     "file": "src/world/eliteGates/egTelegraph.js",
-    "old": "strip = telegraphStrip(sh, K.strip);",
-    "new": "strip = null;",
+    "old": "    const strip = telegraphStrip(sh, K.strip); // AUDIT EG V (L6-2): a tether's floor cut to its own strip",
+    "new": "    const strip = null; // AUDIT EG V (L6-2): a tether's floor cut to its own strip",
     "tests": [
       "test/net/eliteGates/egaudit5_e_look.test.js"
     ]
@@ -231,8 +231,8 @@
   {
     "name": "EGA5E-strip-clip-across-unread",
     "file": "src/world/eliteGates/egTelegraph.js",
-    "old": "      n = cutLine(_pa, n, _pb, 2);\n",
-    "new": "",
+    "old": "      n = cutLine(_pa, n, _pb, 2);\n      n = cutLine(_pb, n, _pa, 3);",
+    "new": "      n = cutLine(_pb, n, _pa, 3);",
     "tests": [
       "test/net/eliteGates/egaudit5_e_look.test.js"
     ]
@@ -240,8 +240,8 @@
   {
     "name": "EGA5E-strip-clip-whole-unchecked",
     "file": "src/world/eliteGates/egTelegraph.js",
-    "old": "const whole = strip ? inStrip(tris, t) && inStrip(tris, t + 2) && inStrip(tris, t + 4) :",
-    "new": "const whole = strip ? inStrip(tris, t) :",
+    "old": "    const whole = strip\n      ? inStrip(tris, t) && inStrip(tris, t + 2) && inStrip(tris, t + 4)\n      : x0 >= box[0] && x1 <= box[2] && z0 >= box[1] && z1 <= box[3];",
+    "new": "    const whole = strip ? inStrip(tris, t) : x0 >= box[0] && x1 <= box[2] && z0 >= box[1] && z1 <= box[3];",
     "tests": [
       "test/net/eliteGates/egaudit5_e_look.test.js"
     ]
@@ -312,8 +312,8 @@
   {
     "name": "EGA5E-lamps-budget-about-new-alone",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "if (by.length + 1 > N || by.some((j) => near.get(j) + 1 > N)) continue;",
-    "new": "if (by.length + 1 > N) continue;",
+    "old": "    if (by.length + 1 > N || by.some((j) => near.get(j) + 1 > N)) continue;",
+    "new": "    if (by.length + 1 > N) continue;",
     "tests": [
       "test/net/eliteGates/egaudit5_e_look.test.js"
     ]
@@ -321,8 +321,8 @@
   {
     "name": "EGA5E-lamps-meaningful-last",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "const lamp = (p, color = EG_LAMP.color, range = Number(EG_LAMP.range), pr = 0) =>",
-    "new": "const lamp = (p, color = EG_LAMP.color, range = Number(EG_LAMP.range), pr = 9) =>",
+    "old": "  const lamp = (p, color = EG_LAMP.color, range = Number(EG_LAMP.range), pr = 0) => {",
+    "new": "  const lamp = (p, color = EG_LAMP.color, range = Number(EG_LAMP.range), pr = 9) => {",
     "tests": [
       "test/net/eliteGates/egaudit5_e_look.test.js"
     ]
@@ -330,8 +330,8 @@
   {
     "name": "EGA5E-lamps-ring-one-side",
     "file": "src/world/eliteGates/egHall.js",
-    "old": ": tint, Number(EG_LAMP.range), 1 + spreadRank(k, n));",
-    "new": ": tint, Number(EG_LAMP.range), 1 + k);",
+    "old": "          1 + spreadRank(k, n),",
+    "new": "          1 + k,",
     "tests": [
       "test/net/eliteGates/egaudit5_e_look.test.js"
     ]
@@ -348,8 +348,8 @@
   {
     "name": "EGA5E-lamps-radius-30",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "const { n: N, r: R } = EG_LAMP_BUDGET,",
-    "new": "const { n: N } = EG_LAMP_BUDGET, R = 30,",
+    "old": "  const { n: N, r: R } = EG_LAMP_BUDGET,",
+    "new": "  const { n: N } = EG_LAMP_BUDGET,\n    R = 30,",
     "tests": [
       "test/net/eliteGates/egaudit5_e_look.test.js"
     ]
@@ -357,8 +357,8 @@
   {
     "name": "EGA5E-plan-fresh-a-frame",
     "file": "src/world/eliteGates/egTelegraph.js",
-    "old": "const K = keep ?? egFloorPlanKeep(), ranked = K.ranked, draws = K.plan.draws;",
-    "new": "const K = egFloorPlanKeep(), ranked = K.ranked, draws = K.plan.draws;",
+    "old": "  const K = keep ?? egFloorPlanKeep(),",
+    "new": "  const K = egFloorPlanKeep(),",
     "tests": [
       "test/net/eliteGates/egaudit5_e_alloc.test.js"
     ]
@@ -366,8 +366,8 @@
   {
     "name": "EGA5E-plan-draw-slots-anew",
     "file": "src/world/eliteGates/egTelegraph.js",
-    "old": "const d = (K.slots[K.used++] ??= { sh: null, f: null, first: 0, count: 0, over: null, i: 0, own: { r: 0, courts: [[0, 0]] } });",
-    "new": "const d = { sh: null, f: null, first: 0, count: 0, over: null, i: 0, own: { r: 0, courts: [[0, 0]] } }; K.used++;",
+    "old": "  const d = (K.slots[K.used++] ??= {\n    sh: null,\n    f: null,\n    first: 0,\n    count: 0,\n    over: null,\n    i: 0,\n    own: { r: 0, courts: [[0, 0]] },\n  });",
+    "new": "  const d = { sh: null, f: null, first: 0, count: 0, over: null, i: 0, own: { r: 0, courts: [[0, 0]] } };\n  K.used++;",
     "tests": [
       "test/net/eliteGates/egaudit5_e_alloc.test.js"
     ]
@@ -375,8 +375,8 @@
   {
     "name": "EGA5E-plan-ranks-anew",
     "file": "src/world/eliteGates/egTelegraph.js",
-    "old": "r = (K.ranks[i] ??= { sh: null, i: 0, k0: 0, k1: 0, k2: 0 });",
-    "new": "r = { sh: null, i: 0, k0: 0, k1: 0, k2: 0 };",
+    "old": "      r = (K.ranks[i] ??= { sh: null, i: 0, k0: 0, k1: 0, k2: 0 });",
+    "new": "      r = { sh: null, i: 0, k0: 0, k1: 0, k2: 0 };",
     "tests": [
       "test/net/eliteGates/egaudit5_e_alloc.test.js"
     ]
@@ -384,8 +384,8 @@
   {
     "name": "EGA5E-plan-heights-a-set",
     "file": "src/world/eliteGates/egTelegraph.js",
-    "old": "      if (!landsAt(floors, sh, f.y)) continue;",
-    "new": "      { const ys = new Set(); if (pinsFloors(sh)) for (const g of floors) if (anchorOn(g, sh)) ys.add(g.y); if (ys.size && !ys.has(f.y)) continue; }",
+    "old": "      if (!landsAt(floors, sh, f.y)) continue; // only the heights it lands on",
+    "new": "      {\n        const ys = new Set();\n        if (pinsFloors(sh)) for (const g of floors) if (anchorOn(g, sh)) ys.add(g.y);\n        if (ys.size && !ys.has(f.y)) continue;\n      } // only the heights it lands on",
     "tests": [
       "test/net/eliteGates/egaudit5_e_alloc.test.js"
     ]
@@ -393,8 +393,8 @@
   {
     "name": "EGA5E-clip-edge-handed-boxed",
     "file": "src/world/eliteGates/egTelegraph.js",
-    "old": "  const at = box[bi];\n",
-    "new": "  const at = [box[bi]][0];\n",
+    "old": "  const at = box[bi];",
+    "new": "  const at = [box[bi]][0];",
     "tests": [
       "test/net/eliteGates/egaudit5_e_alloc.test.js"
     ]
@@ -501,8 +501,8 @@
   {
     "name": "EGA5E-mist-list-anew",
     "file": "src/world/eliteGates/egLook.js",
-    "old": "export function egMistSheetsAt(sheets, t, out = []) {\n  let pool = _sheetSlots.get(out), n = 0;",
-    "new": "export function egMistSheetsAt(sheets, t, out0 = []) {\n  const out = []; let pool = _sheetSlots.get(out), n = 0;",
+    "old": "export function egMistSheetsAt(sheets, t, out = []) {",
+    "new": "export function egMistSheetsAt(sheets, t, out0 = []) {\n  const out = [];",
     "tests": [
       "test/net/eliteGates/egaudit5_e_alloc.test.js"
     ]
@@ -510,8 +510,8 @@
   {
     "name": "EGA5E-mist-slots-lost",
     "file": "src/world/eliteGates/egLook.js",
-    "old": "s = (pool[n] ??= { rect: [0, 0, 0, 0], y: 0, alpha: 0 });",
-    "new": "s = { rect: [0, 0, 0, 0], y: 0, alpha: 0 };",
+    "old": "      s = (pool[n] ??= { rect: [0, 0, 0, 0], y: 0, alpha: 0 });",
+    "new": "      s = { rect: [0, 0, 0, 0], y: 0, alpha: 0 };",
     "tests": [
       "test/net/eliteGates/egaudit5_e_alloc.test.js"
     ]
@@ -591,8 +591,8 @@
   {
     "name": "EGA5E-plan-heights-unread",
     "file": "src/world/eliteGates/egTelegraph.js",
-    "old": "if (floors[k].y === y) return true; any = true; }",
-    "new": "any = true; }",
+    "old": "    if (floors[k].y === y) return true;\n    any = true;",
+    "new": "    any = true;",
     "tests": [
       "test/world/eliteGates/egz_telegraph.test.js",
       "test/net/eliteGates/egaudit5_e_alloc.test.js"
@@ -610,8 +610,8 @@
   {
     "name": "EGA5E-build-specs-left-out",
     "file": "src/world/eliteGates/egCircleParts.js",
-    "old": "specs: egCircleSpecs(m.seed, m.c, geo), ",
-    "new": "",
+    "old": "    specs: egCircleSpecs(m.seed, m.c, geo),\n    art: band >= 0 ? egBandArt(band) : null,",
+    "new": "    art: band >= 0 ? egBandArt(band) : null,",
     "tests": [
       "test/world/eliteGates/egaudit5_e_swap.test.js"
     ]
@@ -619,8 +619,8 @@
   {
     "name": "EGA5E-build-dress-left-out",
     "file": "src/world/eliteGates/egCircleParts.js",
-    "old": "art: band >= 0 ? egBandArt(band) : null",
-    "new": "art: null",
+    "old": "    art: band >= 0 ? egBandArt(band) : null,",
+    "new": "    art: null,",
     "tests": [
       "test/world/eliteGates/egaudit5_e_swap.test.js"
     ]
@@ -628,8 +628,8 @@
   {
     "name": "EGA5E-build-dress-another-band",
     "file": "src/world/eliteGates/egCircleParts.js",
-    "old": "art: band >= 0 ? egBandArt(band) : null",
-    "new": "art: band >= 0 ? egBandArt((band + 1) % 4) : null",
+    "old": "    art: band >= 0 ? egBandArt(band) : null,",
+    "new": "    art: band >= 0 ? egBandArt((band + 1) % 4) : null,",
     "tests": [
       "test/world/eliteGates/egaudit5_e_swap.test.js"
     ]
@@ -637,8 +637,8 @@
   {
     "name": "EGA5E-build-dress-copied",
     "file": "src/world/eliteGates/egCircleParts.js",
-    "old": "  for (const [, art] of parts?.art ?? []) { take(art?.albedo?.colors); take(art?.emission?.colors); }\n",
-    "new": "",
+    "old": "  for (const [, art] of parts?.art ?? []) {\n    take(art?.albedo?.colors);\n    take(art?.emission?.colors);\n  }\n  for (const r of parts?.ruins ?? []) model(r.model); // EG-LOOK: the ruin's meshes and the wreck's",
+    "new": "  for (const r of parts?.ruins ?? []) model(r.model); // EG-LOOK: the ruin's meshes and the wreck's",
     "tests": [
       "test/world/eliteGates/egaudit5_e_swap.test.js"
     ]
@@ -700,8 +700,8 @@
   {
     "name": "EGA5E-NEW2-given-never-taken",
     "file": "src/world/eliteGates/egCircleParts.js",
-    "old": "  for (const s of Array.isArray(m.given) ? m.given : []) egSpecGive(s);\n",
-    "new": "",
+    "old": "  for (const s of Array.isArray(m.given) ? m.given : []) egSpecGive(s);\n  const geo = m.geo ?? 0,",
+    "new": "  const geo = m.geo ?? 0,",
     "tests": [
       "test/world/eliteGates/egaudit5_e_swap.test.js"
     ]

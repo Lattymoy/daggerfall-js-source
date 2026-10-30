@@ -65,8 +65,8 @@
   {
     "name": "EGAUD-binder-guard-glint",
     "file": "src/world/eliteGates/egTelegraph.js",
-    "old": "export const egRimOf = (band, fl, lord = true) => ((fl & EG_FL.lit) !== 0 && lord ?",
-    "new": "export const egRimOf = (band, fl, lord = true) => ((fl & EG_FL.lit) !== 0 ?",
+    "old": "  (fl & EG_FL.lit) !== 0 && lord",
+    "new": "  (fl & EG_FL.lit) !== 0",
     "tests": [
       "test/net/eliteGates/egperfect_lords.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "EGAUD-clamp-side-open",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "return Math.abs((x - a.x) * (az / al) - (z - a.z) * (ax / al)) <= EG_RING_DOOR.w / 2 - r &&",
-    "new": "return Math.abs((x - a.x) * (az / al) - (z - a.z) * (ax / al)) <= 3 &&",
+    "old": "      Math.abs((x - a.x) * (az / al) - (z - a.z) * (ax / al)) <= EG_RING_DOOR.w / 2 - r &&",
+    "new": "      Math.abs((x - a.x) * (az / al) - (z - a.z) * (ax / al)) <= 3 &&",
     "tests": [
       "test/world/eliteGates/egperfect_audit_screen.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "EGAUD-end-piece-unread",
     "file": "src/world/eliteGates/egHall.js",
-    "old": "    || (spec.steps ?? []).some((q) => Math.abs(q.y - y) < H && Math.abs(px - q.x) <= q.w / 2 && Math.abs(pz - q.z) <= q.d / 2)\n",
-    "new": "",
+    "old": "    (spec.steps ?? []).some(\n      (q) => Math.abs(q.y - y) < H && Math.abs(px - q.x) <= q.w / 2 && Math.abs(pz - q.z) <= q.d / 2,\n    ) ||\n    (spec.heroes ?? []).some(",
+    "new": "    (spec.heroes ?? []).some(",
     "tests": [
       "test/world/eliteGates/egperfect_audit_screen.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "EGAUD-turned-column-on-leap",
     "file": "src/world/eliteGates/egPlatformModel.js",
-    "old": "const along = s.hd % 2 === 1, side = along ? (r() < 0.5 ? 0 : 2) : r() < 0.5 ? 1 : 3",
-    "new": "const along = false, side = r() < 0.5 ? 1 : 3",
+    "old": "    const along = s.hd % 2 === 1,\n      side = along ? (r() < 0.5 ? 0 : 2) : r() < 0.5 ? 1 : 3,",
+    "new": "    const along = false,\n      side = r() < 0.5 ? 1 : 3,",
     "tests": [
       "test/world/eliteGates/egperfect_audit_screen.test.js"
     ]
