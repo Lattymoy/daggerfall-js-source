@@ -833,8 +833,8 @@
   {
     "name": "DLV3-link-send-crossed",
     "file": "src/net/delve/delveLink.js",
-    "old": "send: (w) => !!online?.sendDelve?.(w)",
-    "new": "send: () => false",
+    "old": "  wire = { send: (w) => !!online?.sendDelve?.(w), ready: () => !!online?.delveReady?.() };",
+    "new": "  wire = { send: () => false, ready: () => !!online?.delveReady?.() };",
     "tests": [
       "test/scenes/delve/dlv3_online.test.js"
     ]
@@ -842,8 +842,8 @@
   {
     "name": "DLV3-link-ready-crossed",
     "file": "src/net/delve/delveLink.js",
-    "old": "ready: () => !!online?.delveReady?.()",
-    "new": "ready: () => true",
+    "old": "  wire = { send: (w) => !!online?.sendDelve?.(w), ready: () => !!online?.delveReady?.() };",
+    "new": "  wire = { send: (w) => !!online?.sendDelve?.(w), ready: () => true };",
     "tests": [
       "test/scenes/delve/dlv3_online.test.js"
     ]
@@ -851,8 +851,8 @@
   {
     "name": "DLV3-link-detach-any",
     "file": "src/net/delve/delveLink.js",
-    "old": "if (hearer === fn) hearer = null;",
-    "new": "hearer = null;",
+    "old": "    if (hearer === fn) hearer = null;",
+    "new": "    hearer = null;",
     "tests": [
       "test/scenes/delve/dlv3_online.test.js"
     ]
@@ -1166,8 +1166,8 @@
   {
     "name": "DLV3-law-tier-unhashed",
     "file": "src/net/delve/delveLaw.js",
-    "old": "Math.round(v[2] * 100), s.tier === 'elite' ? 1 : 0);",
-    "new": "Math.round(v[2] * 100), 0);",
+    "old": "      s.tier === 'elite' ? 1 : 0,",
+    "new": "      0,",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -1175,8 +1175,8 @@
   {
     "name": "DLV3-law-seals-window-a-wave",
     "file": "src/net/delve/delveLaw.js",
-    "old": "led.sw = sealWindowMs(led.k);",
-    "new": "led.wz = sealWindowMs(led.k); led.sw = led.wz;",
+    "old": "  led.sw = sealWindowMs(led.k); // the window its own field: `wz` is a wave's size, and the wire bounds it so (AUDIT DLV3 1)",
+    "new": "  led.wz = sealWindowMs(led.k);\n  led.sw = led.wz; // the window its own field: `wz` is a wave's size, and the wire bounds it so (AUDIT DLV3 1)",
     "tests": [
       "test/scenes/delve/dlv3_e2e.test.js"
     ]

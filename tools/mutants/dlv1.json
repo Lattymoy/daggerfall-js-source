@@ -2,8 +2,8 @@
   {
     "name": "DLV1-hold-id-moved",
     "file": "src/net/delve/delveLaw.js",
-    "old": "hold: Object.freeze({ id: 1, family: 'wave' })",
-    "new": "hold: Object.freeze({ id: 3, family: 'wave' })",
+    "old": "  hold: Object.freeze({ id: 1, family: 'wave' }),",
+    "new": "  hold: Object.freeze({ id: 3, family: 'wave' }),",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "DLV1-family-swapped",
     "file": "src/net/delve/delveLaw.js",
-    "old": "litany: Object.freeze({ id: 2, family: 'puzzle' })",
-    "new": "litany: Object.freeze({ id: 2, family: 'wave' })",
+    "old": "  litany: Object.freeze({ id: 2, family: 'puzzle' }),",
+    "new": "  litany: Object.freeze({ id: 2, family: 'wave' }),",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "DLV1-pace-of-a-stronger-runner",
     "file": "src/net/delve/delveLaw.js",
-    "old": "((30 + 150) / 39.5) * (1.35 + 5 / 200)",
-    "new": "((30 + 150) / 39.5) * (1.35 + 50 / 200)",
+    "old": "export const DELVE_PACE_MPS = ((30 + 150) / 39.5) * (1.35 + 5 / 200);",
+    "new": "export const DELVE_PACE_MPS = ((30 + 150) / 39.5) * (1.35 + 50 / 200);",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "DLV1-errand-margin-dropped",
     "file": "src/net/delve/delveLaw.js",
-    "old": "/ DELVE_PACE_MPS + 1.5)",
-    "new": "/ DELVE_PACE_MPS + 0)",
+    "old": "export const delveErrandMs = (routeM) => Math.ceil(((Math.max(0, routeM) / DELVE_PACE_MPS + 1.5) * 1000) / 10) * 10;",
+    "new": "export const delveErrandMs = (routeM) => Math.ceil(((Math.max(0, routeM) / DELVE_PACE_MPS + 0) * 1000) / 10) * 10;",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "DLV1-present-lengthened",
     "file": "src/net/delve/delveLaw.js",
-    "old": "DELVE_PRESENT_MS = 15_000",
-    "new": "DELVE_PRESENT_MS = 20_000",
+    "old": "export const DELVE_PRESENT_MS = 15_000;",
+    "new": "export const DELVE_PRESENT_MS = 20_000;",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "DLV1-leave-lengthened",
     "file": "src/net/delve/delveLaw.js",
-    "old": "DELVE_LEAVE_MS = 30_000",
-    "new": "DELVE_LEAVE_MS = 45_000",
+    "old": "export const DELVE_LEAVE_MS = 30_000;",
+    "new": "export const DELVE_LEAVE_MS = 45_000;",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "DLV1-let-go-lengthened",
     "file": "src/net/delve/delveLaw.js",
-    "old": "DELVE_LET_GO_MS = 60_000",
-    "new": "DELVE_LET_GO_MS = 90_000",
+    "old": "export const DELVE_LET_GO_MS = 60_000;",
+    "new": "export const DELVE_LET_GO_MS = 90_000;",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "DLV1-earn-window-doubled",
     "file": "src/net/delve/delveLaw.js",
-    "old": "DELVE_EARN_MS = 15_000",
-    "new": "DELVE_EARN_MS = 30_000",
+    "old": "export const DELVE_EARN_MS = 15_000;",
+    "new": "export const DELVE_EARN_MS = 30_000;",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "DLV1-orphan-window-doubled",
     "file": "src/net/delve/delveLaw.js",
-    "old": "DELVE_ORPHAN_MS = 10_000",
-    "new": "DELVE_ORPHAN_MS = 20_000",
+    "old": "export const DELVE_ORPHAN_MS = 10_000;",
+    "new": "export const DELVE_ORPHAN_MS = 20_000;",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "DLV1-four-waves",
     "file": "src/net/delve/delveLaw.js",
-    "old": "HOLD_WAVES = 3;",
-    "new": "HOLD_WAVES = 4;",
+    "old": "export const HOLD_WAVES = 3;",
+    "new": "export const HOLD_WAVES = 4;",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "DLV1-gathering-skipped",
     "file": "src/net/delve/delveLaw.js",
-    "old": "HOLD_GATHER_MS = 4_000;",
-    "new": "HOLD_GATHER_MS = 0;",
+    "old": "export const HOLD_GATHER_MS = 4_000;",
+    "new": "export const HOLD_GATHER_MS = 0;",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "DLV1-breath-shortened",
     "file": "src/net/delve/delveLaw.js",
-    "old": "HOLD_BREATH_MS = 5_000;",
-    "new": "HOLD_BREATH_MS = 3_000;",
+    "old": "export const HOLD_BREATH_MS = 5_000;",
+    "new": "export const HOLD_BREATH_MS = 3_000;",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "DLV1-wave-runs-longer",
     "file": "src/net/delve/delveLaw.js",
-    "old": "HOLD_WAVE_MAX_MS = 90_000;",
-    "new": "HOLD_WAVE_MAX_MS = 120_000;",
+    "old": "export const HOLD_WAVE_MAX_MS = 90_000;",
+    "new": "export const HOLD_WAVE_MAX_MS = 120_000;",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "DLV1-a-member-counted-three",
     "file": "src/net/delve/delveLaw.js",
-    "old": "3 + 2 * (delveParty(n) - 1)",
-    "new": "3 + 3 * (delveParty(n) - 1)",
+    "old": "export const holdWaveSize = (w, n) => Math.min(HOLD_WAVE_MAX, 3 + 2 * (delveParty(n) - 1) + Math.max(0, (w | 0) - 1));",
+    "new": "export const holdWaveSize = (w, n) => Math.min(HOLD_WAVE_MAX, 3 + 3 * (delveParty(n) - 1) + Math.max(0, (w | 0) - 1));",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "DLV1-the-wave-step-dropped",
     "file": "src/net/delve/delveLaw.js",
-    "old": "+ Math.max(0, (w | 0) - 1))",
-    "new": "+ 0)",
+    "old": "export const holdWaveSize = (w, n) => Math.min(HOLD_WAVE_MAX, 3 + 2 * (delveParty(n) - 1) + Math.max(0, (w | 0) - 1));",
+    "new": "export const holdWaveSize = (w, n) => Math.min(HOLD_WAVE_MAX, 3 + 2 * (delveParty(n) - 1) + 0);",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "DLV1-elite-captain-a-regular",
     "file": "src/net/delve/delveLaw.js",
-    "old": "holdCaptainTraits = (tier) => (tier === 'elite' ? 2 : 1);",
-    "new": "holdCaptainTraits = (tier) => (tier === 'elite' ? 1 : 1);",
+    "old": "export const holdCaptainTraits = (tier) => (tier === 'elite' ? 2 : 1);",
+    "new": "export const holdCaptainTraits = (tier) => (tier === 'elite' ? 1 : 1);",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "DLV1-five-plates-everywhere",
     "file": "src/net/delve/delveLaw.js",
-    "old": "(tier === 'elite' ? 5 : 4)",
-    "new": "(tier === 'elite' ? 5 : 5)",
+    "old": "export const litanyCount = (tier) => (tier === 'elite' ? 5 : 4);",
+    "new": "export const litanyCount = (tier) => (tier === 'elite' ? 5 : 5);",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "DLV1-held-step-dropped",
     "file": "src/net/delve/delveLaw.js",
-    "old": "(k + 1) * LITANY_SHOW_STEP_MS",
-    "new": "k * LITANY_SHOW_STEP_MS",
+    "old": "export const litanyShowMs = (k) => (k + 1) * LITANY_SHOW_STEP_MS;",
+    "new": "export const litanyShowMs = (k) => k * LITANY_SHOW_STEP_MS;",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "DLV1-ring-widened",
     "file": "src/net/delve/delveLaw.js",
-    "old": "LITANY_RING_M = 2.5;",
-    "new": "LITANY_RING_M = 3;",
+    "old": "export const LITANY_RING_M = 2.5;",
+    "new": "export const LITANY_RING_M = 3;",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "DLV1-plate-reach-widened",
     "file": "src/net/delve/delveLaw.js",
-    "old": "LITANY_STAND_M = 1.2;",
-    "new": "LITANY_STAND_M = 1.5;",
+    "old": "export const LITANY_STAND_M = 1.2;",
+    "new": "export const LITANY_STAND_M = 1.5;",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "DLV1-three-woken",
     "file": "src/net/delve/delveLaw.js",
-    "old": "LITANY_WAKE = 2;",
-    "new": "LITANY_WAKE = 3;",
+    "old": "export const LITANY_WAKE = 2;",
+    "new": "export const LITANY_WAKE = 3;",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "DLV1-bearing-turned",
     "file": "src/net/delve/delveLaw.js",
-    "old": "[[0, 1], [1, 0], [0, -1], [-1, 0]]",
-    "new": "[[1, 0], [0, 1], [0, -1], [-1, 0]]",
+    "old": "  [0, 1],\n  [1, 0],",
+    "new": "  [1, 0],\n  [0, 1],",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "DLV1-five-bearing-off",
     "file": "src/net/delve/delveLaw.js",
-    "old": "[0.587785, -0.809017], [-0.587785",
-    "new": "[0.587785, -0.709017], [-0.587785",
+    "old": "  [0.587785, -0.809017],",
+    "new": "  [0.587785, -0.709017],",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "DLV1-order-site-left-out",
     "file": "src/net/delve/delveLaw.js",
-    "old": "gateHash(seed >>> 0, i, j, LITANY_SALT)",
-    "new": "gateHash(seed >>> 0, 0, j, LITANY_SALT)",
+    "old": "    const pick = gateHash(seed >>> 0, i, j, LITANY_SALT) % (j + 1);",
+    "new": "    const pick = gateHash(seed >>> 0, 0, j, LITANY_SALT) % (j + 1);",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "DLV1-order-swap-one-short",
     "file": "src/net/delve/delveLaw.js",
-    "old": "% (j + 1);",
-    "new": "% j;",
+    "old": "    const pick = gateHash(seed >>> 0, i, j, LITANY_SALT) % (j + 1);",
+    "new": "    const pick = gateHash(seed >>> 0, i, j, LITANY_SALT) % j;",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "DLV1-gates-on-the-rim",
     "file": "src/net/delve/delveLaw.js",
-    "old": "const g = site.r - 0.5;",
-    "new": "const g = site.r;",
+    "old": "  const g = site.r - 0.5;",
+    "new": "  const g = site.r;",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "DLV1-ward-pad-dropped",
     "file": "src/net/delve/delveLaw.js",
-    "old": "DELVE_WARD_PAD_M = 2;",
-    "new": "DELVE_WARD_PAD_M = 0;",
+    "old": "export const DELVE_WARD_PAD_M = 2;",
+    "new": "export const DELVE_WARD_PAD_M = 0;",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "DLV1-ward-storey-widened",
     "file": "src/net/delve/delveLaw.js",
-    "old": "Math.abs(y - site.y) <= 3;",
-    "new": "Math.abs(y - site.y) <= 4;",
+    "old": "  return dx * dx + dz * dz <= R * R && Math.abs(y - site.y) <= 3;",
+    "new": "  return dx * dx + dz * dz <= R * R && Math.abs(y - site.y) <= 4;",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "DLV1-plate-reach-unsquared",
     "file": "src/net/delve/delveLaw.js",
-    "old": "<= LITANY_STAND_M * LITANY_STAND_M",
-    "new": "<= LITANY_STAND_M",
+    "old": "    if (dx * dx + dz * dz <= LITANY_STAND_M * LITANY_STAND_M && Math.abs(y - py) <= 3) return j;",
+    "new": "    if (dx * dx + dz * dz <= LITANY_STAND_M && Math.abs(y - py) <= 3) return j;",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "DLV1-hash-vault-left-out",
     "file": "src/net/delve/delveLaw.js",
-    "old": "Math.round(v[0] * 100), Math.round(v[1] * 100), Math.round(v[2] * 100)",
-    "new": "0, 0, 0",
+    "old": "      Math.round(v[0] * 100),\n      Math.round(v[1] * 100),\n      Math.round(v[2] * 100),",
+    "new": "      0,\n      0,\n      0,",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "DLV1-hash-y-left-out",
     "file": "src/net/delve/delveLaw.js",
-    "old": "Math.round(s.y * 100), ",
-    "new": "0, ",
+    "old": "      Math.round(s.y * 100),",
+    "new": "      0,",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "DLV1-a-stranger-counted",
     "file": "src/net/delve/delveLaw.js",
-    "old": "if (led.p === DP.won || !ctx.party || !w",
-    "new": "if (led.p === DP.won || !w",
+    "old": "  if (led.p === DP.won || !ctx.party || !w || typeof w !== 'object' || !Number.isFinite(nowMs)) return [];",
+    "new": "  if (led.p === DP.won || !w || typeof w !== 'object' || !Number.isFinite(nowMs)) return [];",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "DLV1-the-corridor-counted",
     "file": "src/net/delve/delveLaw.js",
-    "old": "if (!ctx.inWard) { if (led.p === DP.work) carriedOut(led, acct, ev); return ev; }",
-    "new": "if (false) { if (led.p === DP.work) carriedOut(led, acct, ev); return ev; }",
+    "old": "  rec.last = Math.max(rec.last, nowMs); // the level the record was made at, never raised while it stands (AUDIT DLV4 F4)\n  if (!ctx.inWard) {",
+    "new": "  rec.last = Math.max(rec.last, nowMs); // the level the record was made at, never raised while it stands (AUDIT DLV4 F4)\n  if (false) {",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "DLV1-clock-runs-through-absence",
     "file": "src/net/delve/delveLaw.js",
-    "old": "to = Math.min(nowMs, led.nearAt + DELVE_PRESENT_MS);",
-    "new": "to = nowMs;",
+    "old": "    to = Math.min(nowMs, led.nearAt + DELVE_PRESENT_MS);",
+    "new": "    to = nowMs;",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "DLV1-clear-before-its-floor",
     "file": "src/net/delve/delveLaw.js",
-    "old": "led.ec - led.ws >= starClearFloorMs(led.wz, nd)",
-    "new": "led.ec - led.ws >= 0",
+    "old": "  if (led.p === DP.wave && w.wc === led.w && led.ec - led.ws >= starClearFloorMs(led.wz, nd))\n    breathStarts(led, led.ec, ev, nowMs);",
+    "new": "  if (led.p === DP.wave && w.wc === led.w && led.ec - led.ws >= 0) breathStarts(led, led.ec, ev, nowMs);",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "DLV1-a-second-owner-believed",
     "file": "src/net/delve/delveLaw.js",
-    "old": "(!delveFoeOwner(led, nowMs) || led.fo === acct)",
-    "new": "(true)",
+    "old": "  if (w.o === 1 && (!delveFoeOwner(led, nowMs) || led.fo === acct)) {",
+    "new": "  if (w.o === 1 && true) {",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "DLV1-orphan-edge",
     "file": "src/net/delve/delveLaw.js",
-    "old": "nowMs - led.foAt <= DELVE_ORPHAN_MS",
-    "new": "nowMs - led.foAt < DELVE_ORPHAN_MS",
+    "old": "export const delveFoeOwner = (led, nowMs) => (led.fo && nowMs - led.foAt <= DELVE_ORPHAN_MS ? led.fo : '');",
+    "new": "export const delveFoeOwner = (led, nowMs) => (led.fo && nowMs - led.foAt < DELVE_ORPHAN_MS ? led.fo : '');",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "DLV1-captain-least-time-skipped",
     "file": "src/net/delve/delveLaw.js",
-    "old": "led.ec - led.cs >= HOLD_CAPTAIN_MIN_MS",
-    "new": "led.ec - led.cs >= 0",
+    "old": "  if (led.p === DP.captain && w.cf === 1 && led.ec - led.cs >= HOLD_CAPTAIN_MIN_MS) win(led, nowMs, ev);",
+    "new": "  if (led.p === DP.captain && w.cf === 1 && led.ec - led.cs >= 0) win(led, nowMs, ev);",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "DLV1-earn-edge-widened",
     "file": "src/net/delve/delveLaw.js",
-    "old": "nowMs - led.a[acct].inAt <= DELVE_EARN_MS",
-    "new": "nowMs - led.a[acct].inAt <= DELVE_EARN_MS + 1",
+    "old": "    .filter((acct) => nowMs - led.a[acct].inAt <= DELVE_EARN_MS)",
+    "new": "    .filter((acct) => nowMs - led.a[acct].inAt <= DELVE_EARN_MS + 1)",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "DLV1-in-ward-from-every-word",
     "file": "src/net/delve/delveLaw.js",
-    "old": "filter((acct) => nowMs - led.a[acct].inAt <= DELVE_PRESENT_MS)",
-    "new": "filter((acct) => nowMs - led.a[acct].last <= DELVE_PRESENT_MS)",
+    "old": "    .filter((acct) => nowMs - led.a[acct].inAt <= DELVE_PRESENT_MS)",
+    "new": "    .filter((acct) => nowMs - led.a[acct].last <= DELVE_PRESENT_MS)",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "DLV1-a-lit-plate-punished",
     "file": "src/net/delve/delveLaw.js",
-    "old": "if (led.order.slice(0, led.next).includes(plate)) return ev;",
-    "new": "if (false) return ev;",
+    "old": "  if (led.order.slice(0, led.next).includes(plate)) return ev; // a plate already lit is stood on freely",
+    "new": "  if (false) return ev; // a plate already lit is stood on freely",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "DLV1-a-plate-said-not-stood",
     "file": "src/net/delve/delveLaw.js",
-    "old": "w.st !== plate || ",
-    "new": "",
+    "old": "  if (led.p !== DP.work || !Number.isInteger(w.st) || w.st !== plate || plate < 0 || plate >= led.k) return ev;",
+    "new": "  if (led.p !== DP.work || !Number.isInteger(w.st) || plate < 0 || plate >= led.k) return ev;",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "DLV1-the-last-plate-not-winning",
     "file": "src/net/delve/delveLaw.js",
-    "old": "if (led.next >= led.k) win(",
-    "new": "if (led.next > led.k) win(",
+    "old": "    if (led.next >= led.k) win(led, nowMs, ev);",
+    "new": "    if (led.next > led.k) win(led, nowMs, ev);",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "DLV1-the-wake-everywhere",
     "file": "src/net/delve/delveLaw.js",
-    "old": "if (led.tier === 'elite') ev.push({ k: 'wake'",
-    "new": "if (true) ev.push({ k: 'wake'",
+    "old": "  if (led.tier === 'elite') ev.push({ k: 'wake', n: LITANY_WAKE });",
+    "new": "  if (true) ev.push({ k: 'wake', n: LITANY_WAKE });",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "DLV1-let-go-keeps-lit-plates",
     "file": "src/net/delve/delveLaw.js",
-    "old": "foAt: 0, next: 0, sh: 0 });",
-    "new": "foAt: 0, sh: 0 });",
+    "old": "    foAt: 0,\n    next: 0,\n    sh: 0,",
+    "new": "    foAt: 0,\n    sh: 0,",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "DLV1-the-show-skipped",
     "file": "src/net/delve/delveLaw.js",
-    "old": "led.ec >= led.sh + litanyShowMs(led.k)) { led.p = DP.work;",
-    "new": "led.ec >= led.sh) { led.p = DP.work;",
+    "old": "    } else if (led.p === DP.show && led.ec >= led.sh + litanyShowMs(led.k)) {",
+    "new": "    } else if (led.p === DP.show && led.ec >= led.sh) {",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "DLV1-leave-edge",
     "file": "src/net/delve/delveLaw.js",
-    "old": "nowMs - led.inAt >= DELVE_LEAVE_MS",
-    "new": "nowMs - led.inAt > DELVE_LEAVE_MS",
+    "old": "  if (isWaveKind(led.kind) && nowMs - led.inAt >= DELVE_LEAVE_MS) {",
+    "new": "  if (isWaveKind(led.kind) && nowMs - led.inAt > DELVE_LEAVE_MS) {",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "DLV1-the-litany-fails-for-leaving",
     "file": "src/net/delve/delveLaw.js",
-    "old": "if (isWaveKind(led.kind) && nowMs - led.inAt",
-    "new": "if (nowMs - led.inAt",
+    "old": "  if (isWaveKind(led.kind) && nowMs - led.inAt >= DELVE_LEAVE_MS) {",
+    "new": "  if (nowMs - led.inAt >= DELVE_LEAVE_MS) {",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "DLV1-account-cap-raised",
     "file": "src/net/delve/delveLaw.js",
-    "old": "< DELVE_PARTY_MAX * 2",
-    "new": "< DELVE_PARTY_MAX * 3",
+    "old": "    (Object.keys(led.a).length < DELVE_PARTY_MAX * 2",
+    "new": "    (Object.keys(led.a).length < DELVE_PARTY_MAX * 3",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "DLV1-level-unclamped",
     "file": "src/net/delve/delveLaw.js",
-    "old": "Math.min(99, w.lv | 0)",
-    "new": "Math.min(999, w.lv | 0)",
+    "old": "  const lv = Math.max(1, Math.min(99, w.lv | 0));",
+    "new": "  const lv = Math.max(1, Math.min(999, w.lv | 0));",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "DLV1-state-names-the-owner",
     "file": "src/net/delve/delveLaw.js",
-    "old": "fo: delveFoeOwner(led, nowMs) ? 1 : 0",
-    "new": "fo: delveFoeOwner(led, nowMs)",
+    "old": "  fo: delveFoeOwner(led, nowMs) ? 1 : 0,",
+    "new": "  fo: delveFoeOwner(led, nowMs),",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "DLV1-wave-sized-for-one",
     "file": "src/net/delve/delveLaw.js",
-    "old": "led.n = delveParty(delveInWard(led, end - (led.ec - at)).length);",
-    "new": "led.n = 1;",
+    "old": "  led.n = delveParty(delveInWard(led, end - (led.ec - at)).length);",
+    "new": "  led.n = 1;",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "DLV1-a-non-owner-kills",
     "file": "src/net/delve/delveLaw.js",
-    "old": "if (led.fo !== acct) return ev;",
-    "new": "if (false) return ev;",
+    "old": "  if (led.fo !== acct) return ev;",
+    "new": "  if (false) return ev;",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "DLV1-another-waves-deaths",
     "file": "src/net/delve/delveLaw.js",
-    "old": "w.kw === led.w && w.kn > led.kn",
-    "new": "w.kn > led.kn",
+    "old": "  if (led.p === DP.wave && w.kw === led.w && w.kn > led.kn) led.kn = Math.min(w.kn | 0, led.wz);",
+    "new": "  if (led.p === DP.wave && w.kn > led.kn) led.kn = Math.min(w.kn | 0, led.wz);",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -902,8 +902,8 @@
   {
     "name": "DLV1-captain-forever",
     "file": "src/net/delve/delveLaw.js",
-    "old": "else if (led.p === DP.captain && led.ec >= led.cs + HOLD_CAPTAIN_MAX_MS)",
-    "new": "else if (false)",
+    "old": "    } else if (led.p === DP.captain && led.ec >= led.cs + HOLD_CAPTAIN_MAX_MS) {",
+    "new": "    } else if (false) {",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -920,8 +920,8 @@
   {
     "name": "DLV1-outlasted-unmarked",
     "file": "src/net/delve/delveLaw.js",
-    "old": "reset(led, 'failed', ev, true)",
-    "new": "reset(led, 'failed', ev)",
+    "old": "      reset(led, 'failed', ev, true);",
+    "new": "      reset(led, 'failed', ev);",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -929,8 +929,8 @@
   {
     "name": "DLV1-a-nan-step-taken",
     "file": "src/net/delve/delveLaw.js",
-    "old": "if (!Number.isFinite(nowMs) || led.p === DP.won) return ev;",
-    "new": "if (led.p === DP.won) return ev;",
+    "old": "  if (!Number.isFinite(nowMs) || led.p === DP.won) return ev;",
+    "new": "  if (led.p === DP.won) return ev;",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -938,8 +938,8 @@
   {
     "name": "DLV1-a-nan-word-taken",
     "file": "src/net/delve/delveLaw.js",
-    "old": "!w || typeof w !== 'object' || !Number.isFinite(nowMs)) return [];",
-    "new": "!w || typeof w !== 'object') return [];",
+    "old": "  if (led.p === DP.won || !ctx.party || !w || typeof w !== 'object' || !Number.isFinite(nowMs)) return [];",
+    "new": "  if (led.p === DP.won || !ctx.party || !w || typeof w !== 'object') return [];",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -947,8 +947,8 @@
   {
     "name": "DLV1-the-fold-runs-past-its-end",
     "file": "src/net/delve/delveLaw.js",
-    "old": "if (led.p === DP.won || ev.some((e) => ENDS.includes(e.k))) return ev;   // an ended ledger is dropped: the next word starts anew",
-    "new": "if (led.p === DP.won) return ev;   // an ended ledger is dropped: the next word starts anew",
+    "old": "  if (led.p === DP.won || ev.some((e) => ENDS.includes(e.k))) return ev; // an ended ledger is dropped: the next word starts anew",
+    "new": "  if (led.p === DP.won) return ev; // an ended ledger is dropped: the next word starts anew",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -956,8 +956,8 @@
   {
     "name": "DLV1-presence-moved-back",
     "file": "src/net/delve/delveLaw.js",
-    "old": "led.inAt = Math.max(led.inAt, nowMs);",
-    "new": "led.inAt = nowMs;",
+    "old": "  led.inAt = Math.max(led.inAt, nowMs);",
+    "new": "  led.inAt = nowMs;",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -965,8 +965,8 @@
   {
     "name": "DLV1-a-plain-object",
     "file": "src/net/delve/delveLaw.js",
-    "old": "a: Object.create(null),",
-    "new": "a: {},",
+    "old": "    a: Object.create(null),",
+    "new": "    a: {},",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -974,8 +974,8 @@
   {
     "name": "DLV1-an-idle-ledger-kept",
     "file": "src/net/delve/delveLaw.js",
-    "old": "    if (nowMs - Math.max(led.nearAt, led.bornAt) >= DELVE_LET_GO_MS) reset(led, 'let', ev);\n",
-    "new": "",
+    "old": "    if (nowMs - Math.max(led.nearAt, led.bornAt) >= DELVE_LET_GO_MS) reset(led, 'let', ev);\n    led.stepAt = Math.max(led.stepAt, nowMs);",
+    "new": "    led.stepAt = Math.max(led.stepAt, nowMs);",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
@@ -983,8 +983,8 @@
   {
     "name": "DLV1-wave-sized-at-the-step",
     "file": "src/net/delve/delveLaw.js",
-    "old": "delveInWard(led, end - (led.ec - at))",
-    "new": "delveInWard(led, led.stepAt)",
+    "old": "  led.n = delveParty(delveInWard(led, end - (led.ec - at)).length);",
+    "new": "  led.n = delveParty(delveInWard(led, led.stepAt).length);",
     "tests": [
       "test/net/delve/dlv1_law.test.js"
     ]
