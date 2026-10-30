@@ -302,6 +302,19 @@ test('GPU-BACKEND-LAUNCHER: the Graphics option - Windows only; the box is the b
   assert.equal(run(fresh(), { type: 'backend-chosen', backend: 'vulkan' }).backend, null, 'no option, no choice');
 });
 
+test('GPU-BACKEND-LAUNCHER: a launch the guard held alone on the default offers no Restart the player did not ask for; a record the guard cleared frees the box; a write that failed says so (mutants: Restart on a held launch; the cleared record still shown; a silent refusal)', () => {
+  const on = (backend, ...events) => L.viewOf(run(fresh({ backend }), { type: 'check-none' }, ...events)).options.graphics;
+  assert.deepEqual(on({ chosen: 'vulkan', held: false, running: false, once: true }),
+    { on: true, enabled: true, note: 'Direct3D 11 for this start only.', restart: false }, 'no answer to the box, or a record that did not land: the next start tries Vulkan');
+  assert.deepEqual(on({ chosen: 'vulkan', held: false, running: false, once: true }, { type: 'backend-chosen', backend: 'default' }),
+    { on: false, enabled: true, note: '', restart: false });
+  assert.deepEqual(on({ chosen: 'vulkan', held: true, running: false }, { type: 'backend-cleared' }),
+    { on: true, enabled: true, note: '', restart: true }, 'a driver update cleared the record as the launcher opened: the next start tries Vulkan');
+  assert.deepEqual(on({ chosen: 'default', held: false, running: false }, { type: 'backend-refused' }),
+    { on: false, enabled: true, note: 'The setting could not be saved.', restart: false });
+  assert.equal(on({ chosen: 'default', held: false, running: false }, { type: 'backend-refused' }, { type: 'backend-chosen', backend: 'vulkan' }).note, '', 'the next write that lands clears it');
+});
+
 test('GPU-BACKEND-LAUNCHER: the page - the box sends its choice by name, the note and Restart are the view\'s', () => {
   const html = rd('app/launcher/index.html');
   assert.match(html, /<section id="graphics" class="opt" hidden>/, 'hidden until the shell offers it');

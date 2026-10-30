@@ -154,7 +154,8 @@ const cmpV = (a, b) => { for (let i = 0; i < 3; i++) if (a[i] !== b[i]) return a
  *   off      the update check is off, and this request is its own (the cached one shows)
  * launch: null, 'requested' (Play), 'started' (the game's window is coming up)
  * backend: GPU-BACKEND-LAUNCHER, Windows only (null elsewhere) - { chosen: 'default' | 'vulkan', held: a failure on
- *   record holds Vulkan off, running: this launch took Vulkan's switches } (app/lib/graphicsBackend.cjs backendOption)
+ *   record holds Vulkan off, running: this launch took Vulkan's switches, once: the guard held this launch alone on the
+ *   default, refused: the last choice could not be written } (app/lib/graphicsBackend.cjs backendOption)
  */
 function initialState({
   current, transport, platform = 'win32', checkEnabled, checkOnLaunch = checkEnabled, arena2Dir = null, savedDir = null,
@@ -188,7 +189,7 @@ function initialState({
     news: { status: checkEnabled ? 'loading' : 'off', items: Array.isArray(news) ? news : [] },
     launch: null,
     backend: backend && typeof backend === 'object'
-      ? { chosen: backend.chosen === 'vulkan' ? 'vulkan' : 'default', held: !!backend.held, running: !!backend.running }
+      ? { chosen: backend.chosen === 'vulkan' ? 'vulkan' : 'default', held: !!backend.held, running: !!backend.running, once: !!backend.once, refused: false }
       : null,
   };
 }
@@ -357,7 +358,14 @@ function reduce(state, ev) {
       break;
     case 'backend-chosen':
       // Vulkan chosen here cleared the failure record (graphicsBackend.cjs chooseBackend)
-      if (s.backend) s.backend = { ...s.backend, chosen: ev.backend === 'vulkan' ? 'vulkan' : 'default', held: ev.backend === 'vulkan' ? false : s.backend.held };
+      if (s.backend) s.backend = { ...s.backend, chosen: ev.backend === 'vulkan' ? 'vulkan' : 'default', held: ev.backend === 'vulkan' ? false : s.backend.held, refused: false };
+      break;
+    case 'backend-refused':
+      if (s.backend) s.backend = { ...s.backend, refused: true };
+      break;
+    case 'backend-cleared':
+      // the guard cleared the record: another GPU, driver or Chromium, so the next start tries Vulkan again
+      if (s.backend) s.backend = { ...s.backend, held: false };
       break;
     default:
       break;
@@ -581,15 +589,18 @@ function setupView(st, platform) {
 }
 
 /** GPU-BACKEND-LAUNCHER: the Graphics option - `on` is the backend the next start uses. While that differs from this
- *  launch, Restart is offered, or the note says when it starts. One line at most under the box: the column is full. */
+ *  launch, Restart is offered, or the note says when it starts. A launch the guard held alone on the default offers no
+ *  Restart: the player changed nothing. One line at most under the box: the column is full. */
 function graphicsView(s) {
   const b = s.backend;
   if (!b) return null;
   const on = b.chosen === 'vulkan' && !b.held;
-  const pending = on !== b.running;
+  const pending = on !== b.running && !b.once;
   const restart = pending && canRestart(s);
-  const note = b.chosen === 'vulkan' && b.held ? 'Vulkan did not work on this graphics card.'
-    : pending && !restart ? 'From the next start.' : '';
+  const note = b.refused ? 'The setting could not be saved.'
+    : b.chosen === 'vulkan' && b.held ? 'Vulkan did not work on this graphics card.'
+      : b.once && on ? 'Direct3D 11 for this start only.'
+        : pending && !restart ? 'From the next start.' : '';
   return { on, enabled: !s.launch, note, restart };
 }
 

@@ -58,10 +58,11 @@ else app.setPath('userData', path.join(app.getPath('appData'), 'Daggerfall JavaS
 // GPU-BACKEND (2026-10-26): Vulkan on Windows, the player's opt-in (`graphicsBackend`), held on the default while a
 // failure is on record. The guard reads the renderer once the first window is up and relaunches on the default when
 // the chosen backend did not start (app/lib/graphicsBackend.cjs). VULKAN-BLANK (#1379): and asks the player whether they
-// see the window, in a box Windows draws without Chromium (confirm; the signal closes it at the timeout).
+// see each window, in a box Windows draws without Chromium, owned by that window (the signal closes it at the timeout).
 const BACKEND_LAUNCH = backendLaunch(app.getPath('userData'));
 for (const [name, value] of BACKEND_LAUNCH.switches) app.commandLine.appendSwitch(name, value);
-const backendGuard = watchBackend({ app, launch: BACKEND_LAUNCH, loadConfig, saveConfig, notify: (opts) => dialog.showMessageBox(opts), confirm: (opts, signal) => dialog.showMessageBox({ ...opts, signal }), beforeExit: () => gpuGone.flush() });
+const askOver = (opts, signal, win) => (win && !win.isDestroyed() ? dialog.showMessageBox(win, { ...opts, signal }) : dialog.showMessageBox({ ...opts, signal }));
+const backendGuard = watchBackend({ app, launch: BACKEND_LAUNCH, loadConfig, saveConfig, notify: (opts) => dialog.showMessageBox(opts), confirm: askOver, onCleared: () => launcherDispatch({ type: 'backend-cleared' }), beforeExit: () => gpuGone.flush() });
 app.once('browser-window-created', (_e, w) => w.webContents.on('did-finish-load', backendGuard.check));
 
 // FPS-VSYNC (2026-09-28): the player's saved VSync, read BEFORE the app is ready - Chromium takes its switches at
@@ -520,7 +521,7 @@ const { RELEASES_URL, latestDownloadUrl, releaseAssetUrl, manualDownloadFile } =
 const { assetCheck, swapPlan, swapScript } = require('./lib/selfSwap.cjs');   // UPDATE-SWAP: the Mac app and the portable exe update themselves
 const {
   CHECK_TIMEOUT_MS, RECHECK_MS, INSTALL_NOTICE_MS, INSTALL_GIVEUP_MS, DOWNLOAD_STALL_MS, DETECT_DEADLINE_MS, JUDGE_DEADLINE_MS, PICK_DEADLINE_MS,
-  initialState, reduce, nextStep, viewOf, newsFrom, cachedNews, notArena2Detail, installAttemptFor, directPlay, PLAY_SWITCH, canRestart,
+  initialState, reduce, nextStep, viewOf, newsFrom, cachedNews, notArena2Detail, installAttemptFor, directPlay, PLAY_SWITCH,
 } = require('./lib/launcherState.cjs');
 
 /** Which transport THIS copy updates by - lib/autoUpdate.cjs's table
@@ -1454,6 +1455,10 @@ async function createWindow({ onShown = null } = {}) {
   });
   gameWindow = win;
   backendGuard.pageOpened();   // GPU-BACKEND: the clock the game page's WebGL2 report must beat
+  // VULKAN-BLANK: the player is asked over the game at its first paint, or when that paint is late (reveal's own bound)
+  const askOverGame = () => backendGuard.windowShown('game', win);
+  win.once('ready-to-show', askOverGame);
+  setTimeout(askOverGame, GAME_REVEAL_MS).unref?.();
   if (onShown) {
     let shown = false;
     const reveal = () => {
@@ -1609,6 +1614,7 @@ function openLauncherWindow() {
   launcherContents.add(win.webContents);
   if (process.platform !== 'darwin') win.removeMenu();
   win.once('ready-to-show', () => { if (!win.isDestroyed()) win.show(); });
+  win.once('ready-to-show', () => backendGuard.windowShown('launcher', win));   // VULKAN-BLANK: asked over the launcher once it shows
   win.on('closed', () => {
     if (launcher?.win !== win) return;
     const handingOver = launcher.state.launch === 'started';
@@ -1765,19 +1771,20 @@ async function launcherChooseFolder() {
 
 /** GPU-BACKEND-LAUNCHER (#1379): the launcher's Graphics option. The game's own row was the only switch, and a game
  *  that drew blank on Vulkan hid it. Same pref, so the two never disagree; not once Play was pressed. A write that
- *  failed redraws the box as it was. */
+ *  failed redraws the box as it was, and says so. */
 function setBackendFromLauncher(arg) {
   if (!launcher?.state.backend || launcher.state.launch) return;
   const backend = arg === 'vulkan' ? 'vulkan' : 'default';
-  if (chooseBackend(app.getPath('userData'), backend, { loadConfig, saveConfig })) launcherDispatch({ type: 'backend-chosen', backend });
-  else renderLauncher();
+  launcherDispatch(chooseBackend(app.getPath('userData'), backend, { loadConfig, saveConfig }) ? { type: 'backend-chosen', backend } : { type: 'backend-refused' });
 }
 
-/** GPU-BACKEND-LAUNCHER: Restart, once the Graphics option differs from this launch - Chromium takes its switches at
- *  launch or never. Never over a download or an install (canRestart). The lock is the new copy's (R2-A1). */
+/** GPU-BACKEND-LAUNCHER: Restart, only while the view offers it - the Graphics option differs from this launch, and
+ *  no download or install is under way. A staged self-swap goes in by its own quit, which relaunches the new copy
+ *  (UPDATE-SWAP: a plain relaunch would start the old file while the swap moves it). Relaunch and quit, as
+ *  restartForUpdate does: only an update's quit gives up the lock (R2-A1). */
 function restartFromLauncher() {
-  if (!launcher || !canRestart(launcher.state)) return;
-  app.releaseSingleInstanceLock();
+  if (!launcher || !viewOf(launcher.state).options.graphics?.restart) return;
+  if (updateReady?.swap) { quitForSwap(); return; }
   app.relaunch({ args: restartArgs(process.argv) });
   app.quit();
 }

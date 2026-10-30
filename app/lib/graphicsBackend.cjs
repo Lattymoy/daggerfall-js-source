@@ -19,9 +19,9 @@
 //   3. A launch held by the record compares the GPU, driver and Chromium it runs on with the record's. A different one
 //      (a driver update, or an app update that brings a new Chromium and its ANGLE) clears the record, and the NEXT
 //      start tries the chosen backend again.
-//   4. VULKAN-BLANK (#1379): a window that draws blank passes every check in 2. So a launch that passed them, on a GPU,
-//      driver or Chromium the player has not confirmed, asks the player in a box Windows draws itself. Go back, or no
-//      answer within CONFIRM_TIMEOUT_MS, fails the launch as 2 does, without the notice.
+//   4. VULKAN-BLANK (#1379): a window that draws blank passes every check in 2. So on a GPU, driver or Chromium the
+//      player has not confirmed, each window that shows - the launcher, then the game - asks the player in a box Windows
+//      draws itself. Go back fails the launch as 2 does, without the notice; no answer holds this launch only.
 
 'use strict';
 
@@ -167,12 +167,12 @@ const backendFailedNotice = (backend) => ({
   cancelId: 0,
 });
 
-/** VULKAN-BLANK: the box that asks the player whether they see the window (dialog.showMessageBox options). The safe
- *  answer is the default: Enter, Escape, closing the box and no answer all go back. */
-const backendConfirmNotice = (backend) => ({
+/** VULKAN-BLANK: the box that asks the player whether they see the window - the launcher or the game
+ *  (dialog.showMessageBox options). The safe answer is the default: Enter, Escape and closing the box all go back. */
+const backendConfirmNotice = (backend, where = 'game') => ({
   type: 'question',
-  message: `Can you see DFO Online on ${BACKEND_NAMES[backend] ?? backend}?`,
-  detail: `If the window is blank, select Go back. With no answer in ${CONFIRM_TIMEOUT_MS / 1000} seconds, DFO Online restarts on Direct3D 11.`,
+  message: where === 'launcher' ? 'Can you see the DFO Online launcher?' : 'Can you see the game?',
+  detail: `You selected ${BACKEND_NAMES[backend] ?? backend}. If the window is blank, select Go back. With no answer in ${CONFIRM_TIMEOUT_MS / 1000} seconds, DFO Online restarts once on Direct3D 11.`,
   buttons: [`Keep ${BACKEND_NAMES[backend] ?? backend}`, 'Go back'],
   defaultId: 1,
   cancelId: 1,
@@ -180,12 +180,13 @@ const backendConfirmNotice = (backend) => ({
 });
 
 /** GPU-BACKEND-LAUNCHER: the launcher's Graphics option - the backend saved, whether a failure on record holds it off,
- *  and whether this launch took its switches. */
-function backendOption(userDataRoot, launch) {
+ *  whether this launch took its switches, and whether HOLD_DEFAULT_ARG holds this launch alone on the default. */
+function backendOption(userDataRoot, launch, argv = process.argv) {
   return {
     chosen: savedBackend(userDataRoot),
     held: !!failureRecord(userDataRoot),
     running: launch?.backend === 'vulkan' && launch.switches.length > 0,
+    once: argv.includes(HOLD_DEFAULT_ARG),
   };
 }
 
@@ -254,30 +255,35 @@ function gpuInfoWithin(app, level, ms) {
 /**
  * The guard over one launch. `launch` is backendLaunch's answer; `app` needs getGPUInfo, relaunch and exit;
  * `loadConfig`/`saveConfig` are main.cjs's; `notify(options)` shows the notice and resolves when it is answered;
- * `confirm(options, signal)` asks the player (VULKAN-BLANK) and resolves with { response }; the signal closes it;
+ * `confirm(options, signal, win)` asks the player over `win` (VULKAN-BLANK), resolves with { response }, and the signal
+ * closes it; `onCleared` hears a held launch clear the record (the launcher redraws its option);
  * `beforeExit` runs before the relaunch's app.exit, which skips will-quit (main.cjs flushes its held GPU-gone entry);
  * `chromium` is this build's Chromium version, kept in the record.
- * Returns { check, onGpuGone, pageOpened, pageAsks, pageReport }: main.cjs calls check() once the first window is up,
+ * Returns { check, onGpuGone, pageOpened, pageAsks, pageReport, windowShown }: main.cjs calls check() once the first window is up,
  * onGpuGone(details) from its child-process-gone handler for a GPU process, pageOpened() when the game window is made,
- * and pageAsks() / pageReport(report) for the game page's preload (whether to make its WebGL2 context, and what it got).
+ * pageAsks() / pageReport(report) for the game page's preload (whether to make its WebGL2 context, and what it got), and
+ * windowShown(kind, win) when the launcher or the game window shows.
  */
-function watchBackend({ app, launch, loadConfig, saveConfig, notify, confirm, beforeExit = () => {}, chromium = process.versions.chrome ?? null, now = Date.now, log = console.warn, infoTimeoutMs = GPU_INFO_TIMEOUT_MS, reportTimeoutMs = PAGE_REPORT_TIMEOUT_MS, confirmTimeoutMs = CONFIRM_TIMEOUT_MS, argv = process.argv }) {
+function watchBackend({ app, launch, loadConfig, saveConfig, notify, confirm, onCleared = () => {}, beforeExit = () => {}, chromium = process.versions.chrome ?? null, now = Date.now, log = console.warn, infoTimeoutMs = GPU_INFO_TIMEOUT_MS, reportTimeoutMs = PAGE_REPORT_TIMEOUT_MS, confirmTimeoutMs = CONFIRM_TIMEOUT_MS, argv = process.argv }) {
   const startedAt = now();
   const armed = launch.switches.length > 0;
   let key = null;
   let failing = false;
+  /** The open VULKAN-BLANK box's controller: a failure found while it is up closes it. */
+  let asking = null;
 
-  /** `told`: the player is shown the notice first - not when they answered the box themselves (VULKAN-BLANK). */
-  function fail(reason, { told = true } = {}) {
+  /** `told`: the player is shown the notice first - not when they answered the box themselves (VULKAN-BLANK).
+   *  `record`: false holds the next launch alone on the default (no answer, or a box that failed). */
+  function fail(reason, { told = true, record = true } = {}) {
     if (failing) return Promise.resolve();
     failing = true;
-    const record = { backend: launch.backend, gpu: key, chromium, reason, at: new Date(now()).toISOString() };
-    saveConfig({ ...loadConfig(), [FAILURE_RECORD]: record });
+    asking?.abort();
+    if (record) saveConfig({ ...loadConfig(), [FAILURE_RECORD]: { backend: launch.backend, gpu: key, chromium, reason, at: new Date(now()).toISOString() } });
     // saveConfig swallows a write error. A record that did not land (a read-only or locked userData) cannot hold the next
     // launch on the default, so the relaunch carries HOLD_DEFAULT_ARG instead; without it the next launch would fail and
     // show the notice again, on every start.
-    const recorded = !!loadConfig()[FAILURE_RECORD];
-    log(`[shell] GPU-BACKEND: ${launch.backend} failed (${reason}) on ${key ?? 'an unknown GPU'} - relaunching on the default`);
+    const recorded = record && !!loadConfig()[FAILURE_RECORD];
+    log(`[shell] GPU-BACKEND: ${launch.backend} failed (${reason}) on ${key ?? 'an unknown GPU'} - relaunching on the default${record ? '' : ' once'}`);
     return Promise.resolve()
       .then(() => (told ? notify(backendFailedNotice(launch.backend)) : null))
       .catch(() => {})
@@ -302,6 +308,7 @@ function watchBackend({ app, launch, loadConfig, saveConfig, notify, confirm, be
       const { [FAILURE_RECORD]: _cleared, ...rest } = config;
       saveConfig(rest);
       log(`[shell] GPU-BACKEND: Chromium changed (${record.chromium} -> ${chromium}) - the next start tries ${record.backend} again`);
+      onCleared();
       return;
     }
     if (!current) return;
@@ -311,46 +318,68 @@ function watchBackend({ app, launch, loadConfig, saveConfig, notify, confirm, be
       const { [FAILURE_RECORD]: _cleared, ...rest } = config;
       saveConfig(rest);
       log(`[shell] GPU-BACKEND: the GPU or driver changed (${record.gpu} -> ${current}) - the next start tries ${record.backend} again`);
+      onCleared();
     }
   }
 
   let checked = false;
+  /** The renderer check under way, which a window's box waits for: a software renderer gets the notice, not the box. */
+  let checkRun = null;
   /** Once a launch: main.cjs calls it at each load of the first window. */
-  async function check() {
-    if (checked || (!armed && !launch.held)) return;
+  function check() {
+    if (checked || (!armed && !launch.held)) return Promise.resolve();
     checked = true;
+    checkRun = runCheck();
+    return checkRun;
+  }
+  async function runCheck() {
     const info = await gpuInfoWithin(app, 'complete', infoTimeoutMs) ?? await gpuInfoWithin(app, 'basic', infoTimeoutMs);
     key = gpuKey(info) ?? key;
     if (launch.held) { review(info); return; }
     const renderer = rendererOf(info);
     if (isSoftwareRenderer(renderer)) await fail(`software renderer: ${renderer}`);
     else if (rendererMissesBackend(renderer, launch.backend)) await fail(`renderer is not ${launch.backend}: ${renderer}`);
-    else await askPlayer();
   }
 
-  /** VULKAN-BLANK (#1379): Chromium named Vulkan and the window stayed blank, and the switch back was in the game's
-   *  settings, which the player could not see. Asked once a GPU, driver and Chromium; the timeout races the box, so a
-   *  box that never closes cannot hold the launch. */
-  async function askPlayer() {
-    const record = loadConfig()[CONFIRM_RECORD];
-    if (record && record.backend === launch.backend && record.gpu === key && record.chromium === chromium) return;
+  const shown = new Set();
+  /** VULKAN-BLANK: a window the player should now see, 'launcher' or 'game', and the window that owns the box (a box with
+   *  no owner can stand behind a fullscreen game). Once a kind a launch, after the renderer check. */
+  async function windowShown(kind, win = null) {
+    if (!armed || shown.has(kind)) return;
+    shown.add(kind);
+    if (checkRun) await checkRun;
+    await askPlayer(kind, win);
+  }
+
+  /** VULKAN-BLANK (#1379): Chromium named Vulkan, the windows stayed blank, and the switch back was in the game's
+   *  settings. Only a Keep over the game is recorded: the launcher can draw while the game's canvas does not. Go back is
+   *  recorded as a failure. No answer, or a box that failed, holds this launch alone: a player away from the keys is no
+   *  proof Vulkan fails. The timeout races the box, so a box that never closes cannot hold the launch. */
+  async function askPlayer(kind, win) {
+    if (!key) key = gpuKey(await gpuInfoWithin(app, 'basic', infoTimeoutMs));
+    const seen = loadConfig()[CONFIRM_RECORD];
+    if (failing || (key && seen?.backend === launch.backend && seen.gpu === key && seen.chromium === chromium)) return;
     const stop = new AbortController();
+    asking = stop;
+    let error = null;
     const timedOut = new Promise((resolve) => {
       const timer = setTimeout(() => { stop.abort(); resolve(null); }, confirmTimeoutMs);
-      stop.signal.addEventListener('abort', () => clearTimeout(timer), { once: true });
+      stop.signal.addEventListener('abort', () => { clearTimeout(timer); resolve(null); }, { once: true });
     });
     const answered = Promise.resolve()
-      .then(() => confirm(backendConfirmNotice(launch.backend), stop.signal))
-      .then((r) => (stop.signal.aborted ? null : r?.response ?? null), () => null);
+      .then(() => confirm(backendConfirmNotice(launch.backend, kind), stop.signal, win))
+      .then((r) => (stop.signal.aborted ? null : r?.response ?? null), (e) => { error = e; return null; });
     const response = await Promise.race([answered, timedOut]);
     if (!stop.signal.aborted) stop.abort();
+    if (asking === stop) asking = null;
     if (failing) return;
     if (response === 0) {
-      saveConfig({ ...loadConfig(), [CONFIRM_RECORD]: { backend: launch.backend, gpu: key, chromium, at: new Date(now()).toISOString() } });
-      log(`[shell] GPU-BACKEND: the player sees ${launch.backend} on ${key ?? 'an unknown GPU'}`);
+      if (kind === 'game' && key) saveConfig({ ...loadConfig(), [CONFIRM_RECORD]: { backend: launch.backend, gpu: key, chromium, at: new Date(now()).toISOString() } });
+      log(`[shell] GPU-BACKEND: the player sees the ${kind} on ${launch.backend}`);
       return;
     }
-    await fail(response === null ? `the player did not answer within ${confirmTimeoutMs / 1000} s` : 'the player saw no picture', { told: false });
+    if (response !== null) await fail(`the player saw no ${kind}`, { told: false });
+    else await fail(error ? `the box failed: ${error?.message ?? error}` : `the player did not answer within ${confirmTimeoutMs / 1000} s`, { told: false, record: false });
   }
 
   async function onGpuGone(details) {
@@ -390,7 +419,7 @@ function watchBackend({ app, launch, loadConfig, saveConfig, notify, confirm, be
     return Promise.resolve();
   }
 
-  return { check, onGpuGone, pageOpened, pageAsks, pageReport };
+  return { check, onGpuGone, pageOpened, pageAsks, pageReport, windowShown };
 }
 
 module.exports = {

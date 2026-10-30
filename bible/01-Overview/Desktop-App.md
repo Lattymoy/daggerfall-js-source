@@ -1402,23 +1402,33 @@ launcher and in the game. Every check above passed: Chromium named Vulkan and th
 switch back was the game's own row, behind a blank window. Not reproduced: no Windows GPU here, and the cause on that
 machine is not known.
 
-**VULKAN-BLANK.** A launch that passed check 1 asks the player (`watchBackend` askPlayer):
-"Can you see DFO Online on Vulkan?", Keep Vulkan or Go back, in `dialog.showMessageBox`. Windows draws that box, not
-Chromium, so it shows over a blank window. Go back, Enter, Escape, a failed box, or no answer within 20 s
-(`CONFIRM_TIMEOUT_MS`, the box closed by its `signal`) fails the launch as a failed check does: the record, keyed,
-and the relaunch, without the "could not start" notice. Keep writes `graphicsBackendConfirmed` in `config.json`
-(backend, GPU key, Chromium), and a launch on the same three is not asked again. A driver or app update asks again.
+**VULKAN-BLANK.** On a Vulkan launch, each window asks the player once as it shows (`watchBackend` windowShown):
+"Can you see the DFO Online launcher?", then "Can you see the game?", Keep Vulkan or Go back. Windows draws the box,
+not Chromium, so it shows over a blank window. The box is owned by its window: a box with no owner can stand behind a
+fullscreen game. It waits for check 1, so a software renderer gets the notice instead, and any failure found while it
+is up closes it.
+
+Go back, Enter or Escape is a failure on record, keyed, with the relaunch and without the notice. No answer within
+20 s (`CONFIRM_TIMEOUT_MS`, the box closed by its `signal`), or a box that failed, holds this launch alone
+(`--dagger-default-backend`): a player away from the keys is no proof that Vulkan fails. Only a Keep over the game is
+recorded (`graphicsBackendConfirmed`: backend, GPU key, Chromium), because the launcher can draw while the game's
+canvas does not. A launch on the same three is not asked again. A driver or app update asks again, and a launch with no
+GPU key keeps and matches nothing.
 
 **GPU-BACKEND-LAUNCHER.** The launcher's side column has Graphics, on Windows only: Use Vulkan, the box showing the
 backend the next start uses (`launcherState.cjs` graphicsView). It writes the page's shelf from the shell
 (`graphicsBackend.cjs` chooseBackend, `fileStorage.cjs` writePref), so the game's row and the launcher never
-disagree. A shelf that is not JSON is left alone. Vulkan chosen here clears the failure record: the player asked to try
-again, and the guard still stands. "Restart to apply" relaunches without `--dagger-default-backend`, never after Play
-or over a download or an install (`canRestart`). A held choice says "Vulkan did not work on this graphics card." The
-window grew from 600 to 660 px for the row.
+disagree. Vulkan chosen here clears the failure record: the player asked to try again, and the guard still stands.
 
-The two cover each other: a blank launcher gets the box, and a launcher that draws over a blank game gets the
-option before the next Play. The fix is in the shell, which the game's own update (DA13) does not carry: a player
+"Restart to apply" shows only while the choice differs from this launch, never after Play or over a download or an
+install. It relaunches and quits, as `restartForUpdate` does, without `--dagger-default-backend`. A staged self-swap restarts by its own quit (UPDATE-SWAP),
+which a plain relaunch would race. The notes: "Vulkan did not work on this graphics card." (a record holds it), "Direct3D
+11 for this start only." (the one-launch hold, which offers no Restart), "The setting could not be saved." (a shelf
+that is not JSON, left alone). A record the guard clears as the launcher opens frees the box (`onCleared`). The window
+grew from 600 to 660 px for the row.
+
+The box covers a blank launcher and a blank game. The launcher's option is the way back for a player who kept Vulkan
+and later wants it off, without the game's settings. The fix is in the shell, which the game's own update (DA13) does not carry: a player
 stuck on an older build gets it from the launcher's install before Play (DA8), which needs no click, so a blank
 launcher still takes it. Pins: `test/tooling/gpubackend.test.js`, `test/tooling/da10_launcher.test.js`. Not verified on
 a Windows GPU: the box over a blank window, and the restart.
