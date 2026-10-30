@@ -18,8 +18,17 @@ export const DRAGON_GLIDE_SINK = 0.35;
 
 /** One rider's flight: `{ step(dt, s), lift(), aloft(), flyMult(), sink(), land() }`. */
 export function createDragonFlight() {
-  let aloft = false, held = 0, air = 0, winded = false;
-  const land = () => { const was = aloft; aloft = false; held = 0; air = 0; return was; };
+  let aloft = false,
+    held = 0,
+    air = 0,
+    winded = false;
+  const land = () => {
+    const was = aloft;
+    aloft = false;
+    held = 0;
+    air = 0;
+    return was;
+  };
   return {
     /**
      * One step of the motor: `mounted` on the dragon, `outdoors` (a door dismounts), `jump` held, `grounded`, `winded`
@@ -36,11 +45,19 @@ export function createDragonFlight() {
       }
       held = s.jump ? held + dt : 0;
       if (held < TAKEOFF_HOLD_S || winded) return null;
-      aloft = true; held = 0; air = 0;
+      aloft = true;
+      held = 0;
+      air = 0;
       return 'took-off';
     },
     /** Into the air whatever the jump and the breath (a dragon caught falling spreads its wings): false if aloft. */
-    lift() { if (aloft) return false; aloft = true; held = 0; air = 0; return true; },
+    lift() {
+      if (aloft) return false;
+      aloft = true;
+      held = 0;
+      air = 0;
+      return true;
+    },
     aloft: () => aloft,
     /** The motor's levitating pace times this while aloft (player/motor.js registerFlySpeedMod). */
     flyMult: () => (aloft ? DRAGON_FLY_SPEED / LEVITATE_PACE : 1),

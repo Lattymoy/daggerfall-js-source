@@ -2,7 +2,7 @@
   {
     "name": "DRAGON5b-the-bags-dropped-by-the-save",
     "file": "src/systems/dragon/dragonKeep.js",
-    "old": "  return { where: k.where, nx: k.nx, nz: k.nz, yaw: k.yaw, name: k.name, bags: (k.bags ?? []).map((it) => ({ ...it })), last: !!k.last };",
+    "old": "  return {\n    where: k.where,\n    nx: k.nx,\n    nz: k.nz,\n    yaw: k.yaw,\n    name: k.name,\n    bags: (k.bags ?? []).map((it) => ({ ...it })),\n    last: !!k.last,\n  };",
     "new": "  return { where: k.where, nx: k.nx, nz: k.nz, yaw: k.yaw, name: k.name, bags: [], last: !!k.last };",
     "tests": [
       "test/net/dragon/dragon5b_keep.test.js"
@@ -47,8 +47,8 @@
   {
     "name": "DRAGON5b-a-call-indoors",
     "file": "src/systems/dragon/dragonKeep.js",
-    "old": "  if (!outdoors) return DRAGON_KEEP_TEXT.outdoors;\n",
-    "new": "",
+    "old": "  if (!outdoors) return DRAGON_KEEP_TEXT.outdoors;\n  if (aboard) return DRAGON_KEEP_TEXT.aboard;",
+    "new": "  if (aboard) return DRAGON_KEEP_TEXT.aboard;",
     "tests": [
       "test/net/dragon/dragon5b_keep.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "DRAGON5b-called-beside-me",
     "file": "src/systems/dragon/dragonKeep.js",
-    "old": "  if (near) return DRAGON_KEEP_TEXT.here(name);\n",
-    "new": "",
+    "old": "  if (near) return DRAGON_KEEP_TEXT.here(name);\n  return null;",
+    "new": "  return null;",
     "tests": [
       "test/net/dragon/dragon5b_keep.test.js"
     ]

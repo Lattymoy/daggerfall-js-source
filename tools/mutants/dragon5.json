@@ -2,8 +2,8 @@
   {
     "name": "DRAGON5-a-dragon-sellable",
     "file": "src/systems/dragon/dragonMount.js",
-    "old": "  bound: true, packOnly: true,\n",
-    "new": "\n",
+    "old": "  bound: true,\n  packOnly: true,\n});",
+    "new": "});",
     "tests": [
       "test/net/dragon/dragon5_mount.test.js"
     ]

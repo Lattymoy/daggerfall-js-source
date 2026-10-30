@@ -119,8 +119,8 @@
   {
     "name": "DRAGON4-the-legendarys-share",
     "file": "src/systems/dragon/dragonSpoils.js",
-    "old": "rolls() < DRAGON_SPOILS_LEGENDARY ? 'legendary' : 'rare'",
-    "new": "rolls() < 0.5 ? 'legendary' : 'rare'",
+    "old": "  if (dealt)\n    pieces.push(graded(spoilsBase(lv, rolls), rolls() < DRAGON_SPOILS_LEGENDARY ? 'legendary' : 'rare', rolls));",
+    "new": "  if (dealt) pieces.push(graded(spoilsBase(lv, rolls), rolls() < 0.5 ? 'legendary' : 'rare', rolls));",
     "tests": [
       "test/net/dragon/dragon4_claims.test.js"
     ]

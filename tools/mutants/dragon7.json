@@ -84,8 +84,8 @@
   {
     "name": "DRAGON7-the-icon-brass",
     "file": "src/systems/dragon/dragonMount.js",
-    "old": "({ archive: dragonArchiveOf(dragonLookOfItem(it)), record: DRAGON_MOUNT_ICON[1] })",
-    "new": "({ archive: DWARVEN_DRAGON_ARCHIVE, record: DRAGON_MOUNT_ICON[1] })",
+    "old": "  archive: dragonArchiveOf(dragonLookOfItem(it)),",
+    "new": "  archive: DWARVEN_DRAGON_ARCHIVE,",
     "tests": [
       "test/net/dragon/dragon7_aetherbright.test.js"
     ]

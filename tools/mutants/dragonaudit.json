@@ -156,8 +156,8 @@
   {
     "name": "AUDIT-DRAGON-the-waiting-line-with-the-ride-on",
     "file": "src/systems/dragon/dragonWords.js",
-    "old": "  tamed: () => (DRAGON_MOUNT_ONLINE ? t('dragon.claim.tamed',",
-    "new": "  tamed: () => (false ? t('dragon.claim.tamed',",
+    "old": "    DRAGON_MOUNT_ONLINE",
+    "new": "    false",
     "tests": [
       "test/net/dragon/dragonaudit_account.test.js"
     ]

@@ -74,8 +74,8 @@
   {
     "name": "DRAGON6-the-governor-upside-down",
     "file": "src/systems/dragon/dragonJourney.js",
-    "old": "(DRAGON_CRUISE_M - heightOver) / DRAGON_CRUISE_BAND_M",
-    "new": "(heightOver - DRAGON_CRUISE_M) / DRAGON_CRUISE_BAND_M",
+    "old": "  return Math.max(-1, Math.min(1, (DRAGON_CRUISE_M - heightOver) / DRAGON_CRUISE_BAND_M));",
+    "new": "  return Math.max(-1, Math.min(1, (heightOver - DRAGON_CRUISE_M) / DRAGON_CRUISE_BAND_M));",
     "tests": [
       "test/systems/travel/dragon6_flight.test.js"
     ]

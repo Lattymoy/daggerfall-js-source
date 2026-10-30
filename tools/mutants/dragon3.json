@@ -29,8 +29,8 @@
   {
     "name": "DRAGON3-the-gates-day",
     "file": "src/systems/dragon/dragonSite.js",
-    "old": "  const w = o.w, lane = dragonLaneOf(o), day = dragonSiteDay(o);",
-    "new": "  const w = o.w, lane = dragonLaneOf(o), day = w;",
+    "old": "    day = dragonSiteDay(o);",
+    "new": "    day = w;",
     "tests": [
       "test/net/dragon/dragon3_client.test.js"
     ],

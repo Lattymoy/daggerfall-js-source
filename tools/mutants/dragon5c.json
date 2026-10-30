@@ -2,8 +2,8 @@
   {
     "name": "DRAGON5c-the-seed-unread",
     "file": "src/systems/dragon/dragonMount.js",
-    "old": "Math.max(1, parseInt(it.dragonId.slice(-4), 16)) : 0);",
-    "new": "1 : 0);",
+    "old": "  isDragonMount(it) && typeof it.dragonId === 'string' && DRAGON_ID_RE.test(it.dragonId)\n    ? Math.max(1, parseInt(it.dragonId.slice(-4), 16))\n    : 0;",
+    "new": "  isDragonMount(it) && typeof it.dragonId === 'string' && DRAGON_ID_RE.test(it.dragonId) ? 1 : 0;",
     "tests": [
       "test/net/dragon/dragon5c_care.test.js"
     ]

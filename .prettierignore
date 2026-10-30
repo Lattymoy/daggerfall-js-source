@@ -46,6 +46,8 @@
 /src/systems/*
 !/src/systems/deepWater/
 /src/systems/deepWater/*/
+!/src/systems/dragon/
+/src/systems/dragon/*/
 !/src/systems/dungeon/
 /src/systems/dungeon/*/
 !/src/systems/dynamicSkies/
